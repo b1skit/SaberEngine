@@ -11,6 +11,15 @@ namespace gr
 	constexpr glm::vec3 Transform::WorldAxisZ = glm::vec3(0.0f, 0.0f, 1.0f); // Note: SaberEngine uses a RHCS
 
 
+	Transform::InstancedTransformParams Transform::CreateInstancedTransformParamsData(
+		gr::Transform::RenderData const& transformData)
+	{
+		return gr::Transform::InstancedTransformParams {
+			.g_model = transformData.g_model,
+			.g_transposeInvModel = transformData.g_transposeInvModel
+		};
+	}
+
 	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
 		re::ParameterBlock::PBType pbType, glm::mat4 const* model, glm::mat4* transposeInvModel)
 	{
@@ -19,27 +28,23 @@ namespace gr
 		instancedMeshPBData.g_model = model ? *model : glm::mat4(1.f);
 		instancedMeshPBData.g_transposeInvModel = transposeInvModel ? *transposeInvModel : glm::mat4(1.f);
 
-		return re::ParameterBlock::CreateFromArray(
+		return re::ParameterBlock::CreateArray(
 			gr::Transform::InstancedTransformParams::s_shaderName,
 			&instancedMeshPBData,
-			sizeof(gr::Transform::InstancedTransformParams),
 			1,
 			pbType);
 	}
 
 
 	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
-		re::ParameterBlock::PBType pbType, gr::Transform::RenderData const& renderData)
+		re::ParameterBlock::PBType pbType, gr::Transform::RenderData const& transformData)
 	{
-		gr::Transform::InstancedTransformParams instancedMeshPBData{
-			.g_model = renderData.g_model,
-			.g_transposeInvModel = renderData.g_transposeInvModel
-		};
+		gr::Transform::InstancedTransformParams const& instancedMeshPBData = 
+			CreateInstancedTransformParamsData(transformData);
 
-		return re::ParameterBlock::CreateFromArray(
+		return re::ParameterBlock::CreateArray(
 			gr::Transform::InstancedTransformParams::s_shaderName,
 			&instancedMeshPBData,
-			sizeof(gr::Transform::InstancedTransformParams),
 			1,
 			pbType);
 	}
@@ -55,17 +60,12 @@ namespace gr
 
 		for (size_t transformIdx = 0; transformIdx < numInstances; transformIdx++)
 		{
-			instancedMeshPBData.emplace_back(InstancedTransformParams
-				{
-					.g_model = transformRenderData[transformIdx]->g_model,
-					.g_transposeInvModel = transformRenderData[transformIdx]->g_transposeInvModel
-				});
+			instancedMeshPBData.emplace_back(CreateInstancedTransformParamsData(*transformRenderData[transformIdx]));
 		}
 
-		std::shared_ptr<re::ParameterBlock> instancedMeshParams = re::ParameterBlock::CreateFromArray(
+		std::shared_ptr<re::ParameterBlock> instancedMeshParams = re::ParameterBlock::CreateArray(
 			gr::Transform::InstancedTransformParams::s_shaderName,
 			&instancedMeshPBData[0],
-			sizeof(gr::Transform::InstancedTransformParams),
 			numInstances,
 			pbType);
 

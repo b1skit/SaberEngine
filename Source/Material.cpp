@@ -160,6 +160,28 @@ namespace gr
 	}
 
 
+	void Material::CommitMaterialInstanceData(
+		re::ParameterBlock* pb, MaterialInstanceData const* instanceData, uint32_t baseOffset)
+	{
+		SEAssert(instanceData, "Instance data is null");
+		SEAssert(baseOffset < pb->GetNumElements(), "Base offset is OOB");
+		SEAssert(pb->GetType() == re::ParameterBlock::PBType::Mutable,
+			"Only mutable parameter blocks can be partially updated");
+
+		const gr::Material::MaterialType materialType = instanceData->m_type;
+		switch (materialType)
+		{
+		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
+		{
+			gr::Material_GLTF::CommitMaterialInstanceData(pb, instanceData, baseOffset);
+		}
+		break;
+		default:
+			SEAssertF("Invalid material type");
+		}
+	}
+
+
 	bool Material::ShowImGuiWindow(MaterialInstanceData& instanceData)
 	{
 		bool isDirty = false;

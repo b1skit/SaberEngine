@@ -72,17 +72,33 @@ namespace gr
 
 			InstancedPBRMetallicRoughnessParams& instancedEntry = instancedMaterialData.emplace_back();
 
-			memcpy(&instancedEntry, &instanceData[matIdx]->m_materialParamData, sizeof(InstancedPBRMetallicRoughnessParams));
+			memcpy(&instancedEntry, 
+				&instanceData[matIdx]->m_materialParamData, 
+				sizeof(InstancedPBRMetallicRoughnessParams));
 		}
 
-		std::shared_ptr<re::ParameterBlock> instancedMaterialParams = re::ParameterBlock::CreateFromArray(
+		std::shared_ptr<re::ParameterBlock> instancedMaterialParams = re::ParameterBlock::CreateArray(
 			InstancedPBRMetallicRoughnessParams::s_shaderName,
-			&instancedMaterialData[0],
-			sizeof(InstancedPBRMetallicRoughnessParams),
+			instancedMaterialData.data(),
 			numInstances,
 			pbType);
 
 		return instancedMaterialParams;
+	}
+
+
+	void Material_GLTF::CommitMaterialInstanceData(
+		re::ParameterBlock* pb, MaterialInstanceData const* instanceData, uint32_t baseOffset)
+	{
+		SEAssert(instanceData->m_type == gr::Material::MaterialType::GLTF_PBRMetallicRoughness,
+			"Incorrect material type found. All instanceData entries must have the same type");
+
+		// We commit single elements for now as we need to access each element's material param data. This isn't ideal,
+		// but it avoids copying the data into a temporary location and materials are typically updated infrequently
+		pb->Commit(
+			reinterpret_cast<InstancedPBRMetallicRoughnessParams const*>(instanceData->m_materialParamData.data()),
+			baseOffset++,
+			1);
 	}
 
 

@@ -7,11 +7,13 @@
 
 void main()
 {
-	gl_Position = g_viewProjection * g_instancedMeshParams[gl_InstanceID].g_model * vec4(in_position.xyz, 1.0);
+	const uint transformIdx = g_instanceIndexes[gl_InstanceID].g_transformIdx;
+
+	gl_Position = g_viewProjection * g_instancedTransformParams[transformIdx].g_model * vec4(in_position.xyz, 1.0);
 	
 	vOut.uv0 = in_uv0;
 	vOut.Color = in_color;
-	vOut.TBN = BuildTBN(in_normal, in_tangent, g_instancedMeshParams[gl_InstanceID].g_transposeInvModel);
+	vOut.TBN = BuildTBN(in_normal, in_tangent, g_instancedTransformParams[transformIdx].g_transposeInvModel);
 	
 	InstanceID = gl_InstanceID;
 }

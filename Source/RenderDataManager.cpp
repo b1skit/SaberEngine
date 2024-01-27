@@ -81,6 +81,16 @@ namespace gr
 			{
 				prevFrameDeletedTypes.clear();
 			}
+			for (auto& prevFrameDirtyTypes : m_perFramePerTypeDirtyDataIDs)
+			{
+				prevFrameDirtyTypes.clear();
+			}
+			for (auto& prevFrameDirtyTypeIDs : m_perFramePerTypeDirtySeenDataIDs)
+			{
+				prevFrameDirtyTypeIDs.clear();
+			}
+			m_perFrameDirtyTransformIDs.clear();
+			m_perFrameSeenDirtyTransformIDs.clear();
 		}
 
 		m_currentFrame = currentFrame;
@@ -262,6 +272,12 @@ namespace gr
 		m_transformRenderData[transformDataIdx] = transformRenderData;
 
 		transformMetadataItr->second.m_dirtyFrame = m_currentFrame;
+
+		// If this is the first time we've modified the transform this frame, add the TransformID to our tracking table
+		if (m_perFrameSeenDirtyTransformIDs.emplace(transformID).second)
+		{
+			m_perFrameDirtyTransformIDs.emplace_back(transformID);
+		}
 	}
 
 
@@ -324,6 +340,14 @@ namespace gr
 		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
 		return TransformIsDirty(renderObjectMetadata.m_transformID);
+	}
+
+
+	std::vector<gr::TransformID> const& RenderDataManager::GetIDsWithDirtyTransformData() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		return m_perFrameDirtyTransformIDs;
 	}
 
 

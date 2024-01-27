@@ -21,7 +21,7 @@ namespace gr
 
 		
 	public:
-		BatchManager() = default;
+		BatchManager();
 		~BatchManager() = default;
 
 
@@ -46,6 +46,15 @@ namespace gr
 		std::vector<re::Batch> m_permanentCachedBatches;
 		std::unordered_map<gr::RenderDataID, BatchMetadata> m_renderDataIDToBatchMetadata;
 		std::unordered_map<size_t, gr::RenderDataID> m_cacheIdxToRenderDataID;
+
+		// Instancing:
+		std::unordered_map<gr::TransformID, uint32_t> m_instancedTransformIndexes;
+		std::vector<uint32_t> m_freeTransformIndexes;
+		std::shared_ptr<re::ParameterBlock> m_instancedTransforms;
+
+		std::unordered_map<gr::RenderDataID, uint32_t> m_instancedMaterialIndexes;
+		std::vector<uint32_t> m_freeInstancedMaterialIndexes;
+		std::shared_ptr<re::ParameterBlock> m_instancedMaterials;
 	};
 }
 

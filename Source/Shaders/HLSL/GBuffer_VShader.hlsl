@@ -15,14 +15,17 @@ VertexOut VShader(VertexIn In)
 {
 	VertexOut Out;
 
-	const float4 worldPos = mul(InstancedTransformParams[In.InstanceID].g_model, float4(In.Position, 1.0f));
+	const uint transformIdx = InstanceIndexParams[In.InstanceID].g_transformIdx;
+	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_materialIdx;
+	
+	const float4 worldPos = mul(InstancedTransformParams[transformIdx].g_model, float4(In.Position, 1.0f));
 	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 	
 	Out.UV0 = In.UV0;
 
-	Out.Color = InstancedPBRMetallicRoughnessParams[In.InstanceID].g_baseColorFactor * In.Color;
+	Out.Color = InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor * In.Color;
 	
-	Out.TBN = BuildTBN(In.Normal, In.Tangent, InstancedTransformParams[In.InstanceID].g_transposeInvModel);
+	Out.TBN = BuildTBN(In.Normal, In.Tangent, InstancedTransformParams[transformIdx].g_transposeInvModel);
 	
 	Out.InstanceID = In.InstanceID;
 	

@@ -31,20 +31,28 @@ namespace re
 	}
 
 
-	void ParameterBlock::RegisterAndCommit(
-		std::shared_ptr<re::ParameterBlock> newPB, void const* data, uint32_t numBytes, uint64_t typeIDHash)
+	void ParameterBlock::Register(
+		std::shared_ptr<re::ParameterBlock> newPB, uint32_t numBytes, uint64_t typeIDHash)
 	{
-		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
-		pbm.RegisterAndAllocateParameterBlock(newPB, numBytes);
-
 		SEAssert(typeIDHash == newPB->m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
 
-		// Note: We commit via the PBM directly here, as we might be an immutable PB
+		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
+		pbm.RegisterAndAllocateParameterBlock(newPB, numBytes);
+
+		RenderManager::Get()->RegisterForCreate(newPB); // Enroll for deferred platform layer creation
+	}
+
+
+	void ParameterBlock::RegisterAndCommit(
+		std::shared_ptr<re::ParameterBlock> newPB, void const* data, uint32_t numBytes, uint64_t typeIDHash)
+	{
+		Register(newPB, numBytes, typeIDHash);
+
+		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.Commit(newPB->GetUniqueID(), data);
 
-		// TODO: We should handle this internally; No point passing around PBs to another system
-		RenderManager::Get()->RegisterForCreate(newPB); // Enroll for deferred platform layer creation
+		newPB->m_platformParams->m_isCommitted = true;
 	}
 
 
@@ -56,6 +64,8 @@ namespace re
 
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.Commit(GetUniqueID(), data);
+		
+		m_platformParams->m_isCommitted = true;
 	}
 
 
@@ -70,6 +80,8 @@ namespace re
 
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.Commit(GetUniqueID(), data, numBytes, dstBaseOffset);
+
+		m_platformParams->m_isCommitted = true;
 	}
 
 

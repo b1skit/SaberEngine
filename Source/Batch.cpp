@@ -14,16 +14,15 @@ namespace
 	constexpr size_t k_batchParamBlockIDsReserveAmount = 10;
 
 
-	bool ValidateLifetimeCompatibility(re::Batch::Lifetime liftime, re::ParameterBlock::PBType pbType)
+	void ValidateLifetimeCompatibility(re::Batch::Lifetime liftime, re::ParameterBlock::PBType pbType)
 	{
-#if defined(_DEBUG)
-		return (liftime == re::Batch::Lifetime::Permanent &&
-				(pbType == re::ParameterBlock::PBType::Mutable || pbType == re::ParameterBlock::PBType::Immutable)) ||
-			(liftime == re::Batch::Lifetime::SingleFrame &&
-				pbType == re::ParameterBlock::PBType::SingleFrame);
-#else
-		return true;
-#endif
+		SEAssert(liftime == re::Batch::Lifetime::SingleFrame ||
+			(liftime == re::Batch::Lifetime::Permanent &&
+			(pbType == re::ParameterBlock::PBType::Mutable || pbType == re::ParameterBlock::PBType::Immutable)),
+			"Trying to set a parameter block with a mismatching lifetime. Permanent batches cannot (currently) hold "
+			"single frame parameter blocks, as they'd incorrectly maintain their life beyond the frame. Single frame "
+			"batches can hold any type of parameter blocks (but should not be responsible for the lifetime of a "
+			"permanent parameter block as they're expensive to create/destroy)");
 	}
 }
 
@@ -171,8 +170,7 @@ namespace re
 #if defined(_DEBUG)
 		for (auto const& pb : result.m_batchParamBlocks)
 		{
-			SEAssert(ValidateLifetimeCompatibility(result.m_lifetime, pb->GetType()),
-				"Trying to copy a batch with a parameter block with a mismatching lifetime");
+			ValidateLifetimeCompatibility(result.m_lifetime, pb->GetType());
 		}
 #endif
 		return result;
@@ -253,12 +251,7 @@ namespace re
 	{
 		SEAssert(paramBlock != nullptr, "Cannot set a null parameter block");
 
-		SEAssert(m_type != BatchType::Graphics ||
-			paramBlock->GetNumElements() == m_graphicsParams.m_numInstances,
-			"Graphics batch number of instances does not match number of elements in the parameter block");
-
-		SEAssert(ValidateLifetimeCompatibility(m_lifetime, paramBlock->GetType()), 
-			"Trying to set a parameter block with a mismatching lifetime");
+		ValidateLifetimeCompatibility(m_lifetime, paramBlock->GetType());
 
 		m_batchParamBlocks.emplace_back(paramBlock);
 	}

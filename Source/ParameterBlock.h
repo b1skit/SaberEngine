@@ -46,7 +46,8 @@ namespace re
 		{
 			virtual ~PlatformParams() = 0;
 
-			bool m_isCreated = false;
+			bool m_isCommitted = false; // Has an initial data commitment been made?
+			bool m_isCreated = false; // Has the parameter block been created at the API level?
 
 			PBDataType m_dataType = PBDataType::PBDataType_Count;
 			uint32_t m_numElements = 0;
@@ -60,11 +61,22 @@ namespace re
 		[[nodiscard]] static std::shared_ptr<re::ParameterBlock> Create(
 			std::string const& pbName, T const& data, PBType pbType);
 
+		template<typename T>
+		[[nodiscard]] static std::shared_ptr<re::ParameterBlock> CreateUncommitted(
+			std::string const& pbName, PBType pbType);
+
 		// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 		template<typename T>
-		static std::shared_ptr<re::ParameterBlock> CreateFromArray(
-			std::string const& pbName, T const* dataArray, uint32_t dataByteSize, uint32_t numElements, PBType pbType);
+		[[nodiscard]] static std::shared_ptr<re::ParameterBlock> CreateArray(
+			std::string const& pbName, T const* dataArray, uint32_t numElements, PBType pbType);
 
+		// Create a PB, but defer the initial commit
+		template<typename T>
+		[[nodiscard]] static std::shared_ptr<re::ParameterBlock> CreateUncommittedArray(
+			std::string const& pbName, uint32_t numElements, PBType pbType);
+
+
+	public:
 		ParameterBlock(ParameterBlock&&) = default;
 		ParameterBlock& operator=(ParameterBlock&&) = default;
 		~ParameterBlock();
@@ -101,6 +113,9 @@ namespace re
 		// Use the factory Create() method instead
 		ParameterBlock(size_t typeIDHashCode, std::string const& pbName, PBType, PBDataType, uint32_t numElements); 
 
+		static void Register(
+			std::shared_ptr<re::ParameterBlock> newPB, uint32_t numBytes, uint64_t typeIDHash);
+
 		static void RegisterAndCommit(
 			std::shared_ptr<re::ParameterBlock> newPB, void const* data, uint32_t numBytes, uint64_t typeIDHash);
 		
@@ -129,10 +144,22 @@ namespace re
 	}
 
 
+	template<typename T>
+	std::shared_ptr<re::ParameterBlock> ParameterBlock::CreateUncommitted(std::string const& pbName, PBType pbType)
+	{
+		std::shared_ptr<re::ParameterBlock> newPB;
+		newPB.reset(new re::ParameterBlock(typeid(T).hash_code(), pbName, pbType, PBDataType::SingleElement, 1));
+
+		Register(newPB, sizeof(T), typeid(T).hash_code());
+
+		return newPB;
+	}
+
+
 	// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 	template<typename T>
-	static std::shared_ptr<re::ParameterBlock> ParameterBlock::CreateFromArray(
-		std::string const& pbName, T const* dataArray, uint32_t dataByteSize, uint32_t numElements, PBType pbType)
+	std::shared_ptr<re::ParameterBlock> ParameterBlock::CreateArray(
+		std::string const& pbName, T const* dataArray, uint32_t numElements, PBType pbType)
 	{
 		std::shared_ptr<re::ParameterBlock> newPB;
 		newPB.reset(new ParameterBlock(
@@ -140,10 +167,28 @@ namespace re
 			pbName, 
 			pbType, 
 			PBDataType::Array, 
-			static_cast<uint32_t>(numElements)));
+			numElements));
 
-		RegisterAndCommit(newPB, dataArray, dataByteSize * numElements, typeid(T).hash_code());
+		RegisterAndCommit(newPB, dataArray, sizeof(T) * numElements, typeid(T).hash_code());
 
+		return newPB;
+	}
+
+
+	template<typename T>
+	std::shared_ptr<re::ParameterBlock> ParameterBlock::CreateUncommittedArray(
+		std::string const& pbName, uint32_t numElements, PBType pbType)
+	{
+		std::shared_ptr<re::ParameterBlock> newPB;
+		newPB.reset(new ParameterBlock(
+			typeid(T).hash_code(),
+			pbName,
+			pbType,
+			PBDataType::Array,
+			numElements));
+
+		Register(newPB, sizeof(T) * numElements, typeid(T).hash_code());
+		
 		return newPB;
 	}
 

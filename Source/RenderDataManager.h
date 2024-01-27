@@ -42,6 +42,7 @@ namespace gr
 		template<typename T>
 		[[nodiscard]] bool HasIDsWithNewData() const;
 
+		// Get a list of IDs that had data of a specific type added for the very first time this frame
 		template<typename T>
 		[[nodiscard]] std::vector<gr::RenderDataID> const& GetIDsWithNewData() const;
 
@@ -50,6 +51,10 @@ namespace gr
 
 		template<typename T>
 		std::vector<gr::RenderDataID> const& GetIDsWithDeletedData() const;
+
+		// Get a list of IDs that had data of a specific type modified this frame
+		template<typename T>
+		std::vector<gr::RenderDataID> const& GetIDsWithDirtyData() const;
 
 		template<typename T>
 		[[nodiscard]] bool IsDirty(gr::RenderDataID) const;
@@ -100,6 +105,8 @@ namespace gr
 		[[nodiscard]] bool TransformIsDirty(gr::TransformID) const; // Was the Transform updated in the current frame?
 		[[nodiscard]] bool TransformIsDirtyFromRenderDataID(gr::RenderDataID) const; // Slower than using TransformID
 
+		[[nodiscard]] std::vector<gr::TransformID> const& GetIDsWithDirtyTransformData() const;
+
 
 	private:
 		typedef uint8_t DataTypeIndex;
@@ -145,6 +152,14 @@ namespace gr
 		
 		// IDs/IDs with data deleted in the current frame
 		std::vector<std::vector<gr::RenderDataID>> m_perFramePerTypeDeletedDataIDs;
+
+		// IDs that had data of a given type modified in the current frame. We track the IDs we've modified so we don't 
+		// double-add IDs to the vector
+		std::vector<std::vector<gr::RenderDataID>> m_perFramePerTypeDirtyDataIDs;
+		std::vector<std::unordered_set<gr::RenderDataID>> m_perFramePerTypeDirtySeenDataIDs; 
+		
+		std::vector<gr::TransformID> m_perFrameDirtyTransformIDs;
+		std::unordered_set<gr::TransformID> m_perFrameSeenDirtyTransformIDs;
 
 
 	public:
@@ -375,6 +390,14 @@ namespace gr
 		{
 			m_perFramePerTypeDeletedDataIDs.resize(s_dataTypeIndex + 1);
 		}
+		if (s_dataTypeIndex >= m_perFramePerTypeDirtyDataIDs.size())
+		{
+			m_perFramePerTypeDirtyDataIDs.resize(s_dataTypeIndex + 1);
+		}
+		if (s_dataTypeIndex >= m_perFramePerTypeDirtySeenDataIDs.size())
+		{
+			m_perFramePerTypeDirtySeenDataIDs.resize(s_dataTypeIndex + 1);
+		}
 
 		// Add/update the dirty frame number:
 		renderObjectMetadata.m_dirtyFrameMap[s_dataTypeIndex] = m_currentFrame;
@@ -398,6 +421,12 @@ namespace gr
 		{
 			const DataIndex dataIndex = objectTypeToDataIndex->second;
 			dataVector[dataIndex] = *data;
+		}
+
+		// Record the RenderDataID in the per-frame dirty data tracker:
+		if (m_perFramePerTypeDirtySeenDataIDs[s_dataTypeIndex].emplace(renderDataID).second)
+		{
+			m_perFramePerTypeDirtyDataIDs[s_dataTypeIndex].emplace_back(renderDataID);
 		}
 	}
 
@@ -499,10 +528,21 @@ namespace gr
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
-
 		SEAssert(dataTypeIndex < m_perFramePerTypeDeletedDataIDs.size(), "Data type index is OOB");
 
 		return m_perFramePerTypeDeletedDataIDs[dataTypeIndex];
+	}
+
+
+	template<typename T>
+	std::vector<gr::RenderDataID> const& RenderDataManager::GetIDsWithDirtyData() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
+		SEAssert(dataTypeIndex < m_perFramePerTypeDeletedDataIDs.size(), "Data type index is OOB");
+
+		return m_perFramePerTypeDirtyDataIDs[dataTypeIndex];
 	}
 
 

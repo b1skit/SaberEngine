@@ -778,6 +778,8 @@ namespace re
 				default: SEAssertF("Invalid PBType");
 				}
 
+				SEAssert(currentPB->GetPlatformParams()->m_isCommitted, 
+					"Trying to buffer a parameter block that has not had an initial commit made");
 
 				// Perform each of the partial commits recorded for Mutable parameter blocks:
 				if (pbType == ParameterBlock::PBType::Mutable)

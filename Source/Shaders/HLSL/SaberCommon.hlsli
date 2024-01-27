@@ -58,12 +58,23 @@ struct VertexOut
 
 // Note: Aim for StructuredBuffers with sizes divisible by 128 bits = 16 bytes = sizeof(float4)
 
-struct InstancedMeshParamsCB
+struct InstanceIndexParamsCB
+{
+	uint g_transformIdx;
+	uint g_materialIdx;
+
+	uint2 _padding;
+};
+StructuredBuffer<InstanceIndexParamsCB> InstanceIndexParams : register(t0, space0); // Indexed by instance ID
+
+
+struct InstancedTransformParamsCB
 {
 	float4x4 g_model;
 	float4x4 g_transposeInvModel;
 };
-StructuredBuffer<InstancedMeshParamsCB> InstancedTransformParams : register(t0, space0); // Indexed by instance ID
+StructuredBuffer<InstancedTransformParamsCB> InstancedTransformParams : register(t1, space0); // Indexed by instance ID
+
 
 struct InstancedPBRMetallicRoughnessParamsCB
 {
@@ -78,7 +89,7 @@ struct InstancedPBRMetallicRoughnessParamsCB
 	
 	float4 g_f0; // .xyz = f0, .w = unused. For non-metals only
 };
-StructuredBuffer<InstancedPBRMetallicRoughnessParamsCB> InstancedPBRMetallicRoughnessParams : register(t1, space0);
+StructuredBuffer<InstancedPBRMetallicRoughnessParamsCB> InstancedPBRMetallicRoughnessParams : register(t2, space0);
 
 
 struct CameraParamsCB

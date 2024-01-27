@@ -36,6 +36,8 @@ namespace gr
 		static std::shared_ptr<re::ParameterBlock> CreateInstancedParameterBlock(
 			re::ParameterBlock::PBType,
 			std::vector<MaterialInstanceData const*> const&);
+		
+		static void CommitMaterialInstanceData(re::ParameterBlock*, MaterialInstanceData const*, uint32_t baseOffset);
 
 		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified
 
