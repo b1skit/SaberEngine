@@ -154,7 +154,12 @@ namespace re
 		};
 		
 		re::Shader const* m_batchShader;
+		
+		// Note: Batches can be responsible for the lifetime of a parameter block held by a shared pointer: 
+		// e.g. single-frame resources, or permanent PBs that are to be discarded (e.g. batch manager allocated a larger
+		// one)
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_batchParamBlocks;
+
 		std::vector<BatchTextureAndSamplerInput> m_batchTextureSamplerInputs;
 		uint32_t m_batchFilterBitmask;
 

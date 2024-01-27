@@ -3,6 +3,7 @@
 #include "BatchManager.h"
 #include "CastUtils.h"
 #include "Material_GLTF.h"
+#include "MathUtils.h"
 #include "MeshPrimitive.h"
 #include "ProfilingMarkers.h"
 #include "RenderDataManager.h"
@@ -10,7 +11,8 @@
 
 namespace
 {
-	constexpr uint32_t k_maxInstancesPerDraw = 128;
+	// We'll round our parameter block array sizes up to the nearest multiple of this value
+	constexpr uint32_t k_numBlocksPerAllocation = 64;
 
 
 	struct InstanceIndexParams
@@ -46,7 +48,7 @@ namespace
 
 
 	template<typename T>
-	uint32_t AssignInstancingIndex(
+	void AssignInstancingIndex(
 		std::unordered_map<T, uint32_t>& indexMap, 
 		std::vector<uint32_t>& freeIndexes, 
 		T newID)
@@ -66,13 +68,7 @@ namespace
 			newIndex = util::CheckedCast<uint32_t>(indexMap.size());
 		}
 
-		SEAssert(newIndex < k_maxInstancesPerDraw, 
-			"Too many indexes have been assigned. Consider increasing k_maxInstancesPerDraw, or dynamically allocating "
-			"a new instancing buffer");
-
 		indexMap.emplace(newID, newIndex);
-
-		return newIndex;
 	}
 
 
@@ -88,17 +84,29 @@ namespace
 		indexMap.erase(idToFree);
 		freeIndexes.emplace_back(indexToFree);
 	}
+
+
+	template<typename T>
+	std::shared_ptr<re::ParameterBlock> CreateInstancedParameterBlock(char const* shaderName, uint32_t maxInstances)
+	{
+		std::shared_ptr<re::ParameterBlock> instanceDataPB = re::ParameterBlock::CreateUncommittedArray<T>(
+			shaderName,
+			maxInstances,
+			re::ParameterBlock::PBType::Mutable);
+
+		return instanceDataPB;
+	}
 }
 
 namespace gr
 {
 	BatchManager::BatchManager()
 	{
-		m_instancedTransformIndexes.reserve(k_maxInstancesPerDraw);
-		m_freeTransformIndexes.reserve(k_maxInstancesPerDraw);
+		m_instancedTransformIndexes.reserve(k_numBlocksPerAllocation);
+		m_freeTransformIndexes.reserve(k_numBlocksPerAllocation);
 
-		m_instancedMaterialIndexes.reserve(k_maxInstancesPerDraw);
-		m_freeInstancedMaterialIndexes.reserve(k_maxInstancesPerDraw);
+		m_instancedMaterialIndexes.reserve(k_numBlocksPerAllocation);
+		m_freeInstancedMaterialIndexes.reserve(k_numBlocksPerAllocation);
 	}
 
 
@@ -107,22 +115,6 @@ namespace gr
 		SEAssert(m_permanentCachedBatches.size() == m_renderDataIDToBatchMetadata.size() &&
 			m_permanentCachedBatches.size() == m_cacheIdxToRenderDataID.size(),
 			"Batch cache and batch maps are out of sync");
-
-		// Create our instance parameter blocks:
-		if (m_instancedTransforms == nullptr)
-		{
-			m_instancedTransforms = re::ParameterBlock::CreateUncommittedArray<gr::Transform::InstancedTransformParams>(
-				gr::Transform::InstancedTransformParams::s_shaderName,
-				k_maxInstancesPerDraw,
-				re::ParameterBlock::PBType::Mutable);
-		}
-		if (m_instancedMaterials == nullptr)
-		{
-			m_instancedMaterials = re::ParameterBlock::CreateUncommittedArray<gr::Material_GLTF::InstancedPBRMetallicRoughnessParams>(
-				gr::Material_GLTF::InstancedPBRMetallicRoughnessParams::s_shaderName,
-				k_maxInstancesPerDraw,
-				re::ParameterBlock::PBType::Mutable);
-		}
 
 		// Remove deleted batches
 		std::vector<gr::RenderDataID> const& deletedIDs = renderData.GetIDsWithDeletedData<gr::MeshPrimitive::RenderData>();
@@ -200,13 +192,90 @@ namespace gr
 				// Transforms can be shared; We only need a single index in our array
 				if (!m_instancedTransformIndexes.contains(newBatchTransformID))
 				{
-					AssignInstancingIndex(m_instancedTransformIndexes, m_freeTransformIndexes, newBatchTransformID);
+					AssignInstancingIndex(
+						m_instancedTransformIndexes, 
+						m_freeTransformIndexes, 
+						newBatchTransformID);
 				}
 
-				AssignInstancingIndex(m_instancedMaterialIndexes, m_freeInstancedMaterialIndexes, newDataID);
+				AssignInstancingIndex(
+					m_instancedMaterialIndexes, 
+					m_freeInstancedMaterialIndexes, 
+					newDataID);
 			}
 
 			++newDataItr;
+		}
+
+		
+		// Create/grow our permanent instance parameter blocks:
+		const bool mustReallocateTransformPB = m_instancedTransforms != nullptr && 
+			m_instancedTransforms->GetNumElements() < m_instancedTransformIndexes.size();
+
+		if (mustReallocateTransformPB || m_instancedTransforms == nullptr)
+		{
+			const uint32_t requestedPBElements = util::RoundUpToNearestMultiple(
+				util::CheckedCast<uint32_t>(m_instancedTransformIndexes.size()),
+				k_numBlocksPerAllocation);
+
+			m_instancedTransforms = CreateInstancedParameterBlock<gr::Transform::InstancedTransformParams>(
+				gr::Transform::InstancedTransformParams::s_shaderName,
+				requestedPBElements);
+
+			// If we reallocated, re-copy all of the data to the new parameter block
+			if (mustReallocateTransformPB)
+			{
+				LOG_WARNING("gr::BatchManager: Transform instance parameter block is being reallocated");
+
+				for (auto& transformRecord : m_instancedTransformIndexes)
+				{
+					gr::TransformID transformID = transformRecord.first;
+					const uint32_t transformIdx = transformRecord.second;
+
+					gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromTransformID(transformID);
+
+					Transform::InstancedTransformParams const& transformParams =
+						gr::Transform::CreateInstancedTransformParamsData(transformData);
+
+					m_instancedTransforms->Commit(
+						&transformParams,
+						transformIdx,
+						1);
+				}
+			}
+		}
+
+		const bool mustReallocateMaterialPB = m_instancedMaterials != nullptr &&
+			m_instancedMaterials->GetNumElements() < m_instancedMaterialIndexes.size();
+
+		if (mustReallocateMaterialPB || m_instancedMaterials == nullptr)
+		{
+			const uint32_t requestedPBElements = util::RoundUpToNearestMultiple(
+				util::CheckedCast<uint32_t>(m_instancedMaterialIndexes.size()),
+				k_numBlocksPerAllocation);
+
+			m_instancedMaterials = CreateInstancedParameterBlock<gr::Material_GLTF::InstancedPBRMetallicRoughnessParams>(
+				gr::Material_GLTF::InstancedPBRMetallicRoughnessParams::s_shaderName,
+				requestedPBElements);
+
+			if (mustReallocateMaterialPB)
+			{
+				LOG_WARNING("gr::BatchManager: Material instance parameter block is being reallocated");
+
+				for (auto& materialRecord : m_instancedMaterialIndexes)
+				{
+					gr::RenderDataID materialID = materialRecord.first;
+					const uint32_t materialIdx = materialRecord.second;
+
+					gr::Material::MaterialInstanceData const& materialData =
+						renderData.GetObjectData<gr::Material::MaterialInstanceData>(materialID);
+
+					gr::Material::CommitMaterialInstanceData(
+						m_instancedMaterials.get(),
+						&materialData,
+						materialIdx);
+				}
+			}
 		}
 
 		// Update dirty instanced transform data:
