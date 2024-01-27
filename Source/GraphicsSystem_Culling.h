@@ -36,9 +36,11 @@ namespace gr
 	private:
 		// Cached frustum planes; (Re)computed when a camera is added/dirtied
 		std::unordered_map<gr::Camera::View const, gr::Camera::Frustum> m_cachedFrustums;
+		std::mutex m_cachedFrustumsMutex;
 
 		// Mapping Camera RenderDataIDs to a list of RenderDataIDs visible after culling
 		std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>> m_viewToVisibleIDs;
+		std::mutex m_viewToVisibleIDsMutex;
 
 		bool m_cullingEnabled;
 	};

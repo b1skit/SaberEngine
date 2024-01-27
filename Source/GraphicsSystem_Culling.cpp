@@ -1,8 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "BoundsRenderData.h"
 #include "CameraRenderData.h"
+#include "CoreEngine.h"
 #include "GraphicsSystem_Culling.h"
 #include "GraphicsSystemManager.h"
+#include "ThreadSafeVector.h"
 
 
 namespace
@@ -223,101 +225,136 @@ namespace gr
 		// Cull for every camera, every frame: Even if the camera hasn't moved, something in its view might have
 		m_viewToVisibleIDs.clear();
 
+		const size_t numMeshPrimitives = m_meshPrimitivesToEncapsulatingMesh.size();
+
+		util::ThreadSafeVector<std::future<void>> cullingFutures;
+		cullingFutures.reserve(renderData.GetNumElementsOfType<gr::Camera::RenderData>());
+
 		// Cull every registered camera:
 		std::vector<gr::RenderDataID> const& cameraIDs = renderData.GetRegisteredRenderDataIDs<gr::Camera::RenderData>();
 		auto cameraItr = renderData.IDBegin(cameraIDs);
 		auto const& cameraItrEnd = renderData.IDEnd(cameraIDs);
 		while (cameraItr != cameraItrEnd)
 		{
+			// Gather the data we'll pass by value:
 			const gr::RenderDataID cameraID = cameraItr.GetRenderDataID();
 
-			gr::Camera::RenderData const& camData = cameraItr.Get<gr::Camera::RenderData>();
-			const uint8_t numViews = gr::Camera::NumViews(camData);
+			gr::Camera::RenderData const* camData = &cameraItr.Get<gr::Camera::RenderData>();
+			gr::Transform::RenderData const* camTransformData = &cameraItr.GetTransformData();
 
-			// Create/update frustum planes for dirty cameras:
-			// A Camera will be dirty if it has just been created, or if it has just been modified
 			const bool cameraIsDirty = cameraItr.IsDirty<gr::Camera::RenderData>();
-			if (cameraIsDirty)
+
+			// Enqueue the culling job:
+			cullingFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+				[this, cameraID, camData, cameraIsDirty, camTransformData, numMeshPrimitives, &renderData]()
 			{
-				// Clear any existing FrustumPlanes:
-				for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
+				// Create/update frustum planes for dirty cameras:
+				// A Camera will be dirty if it has just been created, or if it has just been modified
+				const uint8_t numViews = gr::Camera::NumViews(*camData);
+				if (cameraIsDirty)
 				{
-					gr::Camera::View const& dirtyView = gr::Camera::View(cameraID, faceIdx);
-
-					const bool hasCachedFrustumPlanes = m_cachedFrustums.contains(dirtyView);
-					if (hasCachedFrustumPlanes)
-					{
-						m_cachedFrustums.erase(dirtyView);
-					}
-				}
-
-				// Build a new set of FrustumPlanes:
-				switch (numViews)
-				{
-				case 1:
-				{
-					m_cachedFrustums.emplace(
-						gr::Camera::View(cameraID, gr::Camera::View::Face::Default),
-						gr::Camera::BuildWorldSpaceFrustumData(camData.m_cameraParams.g_invViewProjection));
-				}
-				break;
-				case 6:
-				{
-					std::vector<glm::mat4> invViewProjMats;
-					invViewProjMats.reserve(6);
-
-					std::vector<glm::mat4> const& viewMats = gr::Camera::BuildCubeViewMatrices(
-						cameraItr.GetTransformData().m_globalPosition,
-						cameraItr.GetTransformData().m_globalRight,
-						cameraItr.GetTransformData().m_globalUp,
-						cameraItr.GetTransformData().m_globalForward);
-
-					std::vector<glm::mat4> const& viewProjMats =
-						gr::Camera::BuildCubeViewProjectionMatrices(viewMats, camData.m_cameraParams.g_projection);
-
-					invViewProjMats = gr::Camera::BuildCubeInvViewProjectionMatrices(viewProjMats);
-
+					// Clear any existing FrustumPlanes:
 					for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
 					{
-						m_cachedFrustums.emplace(
-							gr::Camera::View(cameraID, faceIdx),
-							gr::Camera::BuildWorldSpaceFrustumData(invViewProjMats[faceIdx]));
+						gr::Camera::View const& dirtyView = gr::Camera::View(cameraID, faceIdx);
+
+						{
+							std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
+
+							const bool hasCachedFrustumPlanes = m_cachedFrustums.contains(dirtyView);
+							if (hasCachedFrustumPlanes)
+							{
+								m_cachedFrustums.erase(dirtyView);
+							}
+						}
+					}
+
+					// Build a new set of FrustumPlanes:
+					switch (numViews)
+					{
+					case 1:
+					{
+						{
+							std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
+
+							m_cachedFrustums.emplace(
+								gr::Camera::View(cameraID, gr::Camera::View::Face::Default),
+								gr::Camera::BuildWorldSpaceFrustumData(camData->m_cameraParams.g_invViewProjection));
+						}
+					}
+					break;
+					case 6:
+					{
+						std::vector<glm::mat4> invViewProjMats;
+						invViewProjMats.reserve(6);
+
+						std::vector<glm::mat4> const& viewMats = gr::Camera::BuildCubeViewMatrices(
+							camTransformData->m_globalPosition,
+							camTransformData->m_globalRight,
+							camTransformData->m_globalUp,
+							camTransformData->m_globalForward);
+
+						std::vector<glm::mat4> const& viewProjMats =
+							gr::Camera::BuildCubeViewProjectionMatrices(viewMats, camData->m_cameraParams.g_projection);
+
+						invViewProjMats = gr::Camera::BuildCubeInvViewProjectionMatrices(viewProjMats);
+
+						for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
+						{
+							{
+								std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
+
+								m_cachedFrustums.emplace(
+									gr::Camera::View(cameraID, faceIdx),
+									gr::Camera::BuildWorldSpaceFrustumData(invViewProjMats[faceIdx]));
+							}
+						}
+					}
+					break;
+					default: SEAssertF("Invalid number of views");
+					}
+				} //cameraIsDirty
+
+				// Clear any previous visibility results (Objects may have moved, we need to cull everything each frame)
+				for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
+				{
+					gr::Camera::View const& currentView = gr::Camera::View(cameraID, faceIdx);
+
+					std::vector<gr::RenderDataID> renderIDsOut;
+					renderIDsOut.reserve(numMeshPrimitives);
+
+					// Cull our views and populate the set of visible IDs:
+					DoCulling(
+						renderData,
+						m_meshesToMeshPrimitiveBounds,
+						m_cachedFrustums.at(currentView),
+						renderIDsOut,
+						m_cullingEnabled);
+
+					// Finally, cache the results:
+					{
+						std::lock_guard<std::mutex> lock(m_viewToVisibleIDsMutex);
+
+						auto visibleIDsItr = m_viewToVisibleIDs.find(currentView);
+						if (visibleIDsItr != m_viewToVisibleIDs.end())
+						{
+							visibleIDsItr->second = std::move(renderIDsOut);
+						}
+						else
+						{
+							m_viewToVisibleIDs.emplace(currentView, std::move(renderIDsOut)).first;
+						}
 					}
 				}
-				break;
-				default: SEAssertF("Invalid number of views");
-				}
-			} //cameraIsDirty
-
-			// Clear any previous visibility results (Objects may have moved, so we need to cull everything each frame)
-			for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
-			{
-				gr::Camera::View const& currentView = gr::Camera::View(cameraID, faceIdx);
-
-				auto visibleIDsItr = m_viewToVisibleIDs.find(currentView);
-				if (visibleIDsItr != m_viewToVisibleIDs.end())
-				{
-					visibleIDsItr->second.clear(); // Previous results exist: Clear them
-				}
-				else
-				{
-					// No previous results exist: Create an empty vector
-					visibleIDsItr = m_viewToVisibleIDs.emplace(currentView, std::vector<gr::RenderDataID>()).first;
-
-					const size_t numMeshPrimitives = m_meshPrimitivesToEncapsulatingMesh.size();
-					visibleIDsItr->second.reserve(numMeshPrimitives);
-				}
-
-				// Finally, cull our views and populate the set of visible IDs:
-				DoCulling(
-					renderData,
-					m_meshesToMeshPrimitiveBounds,
-					m_cachedFrustums.at(currentView),
-					visibleIDsItr->second,
-					m_cullingEnabled);
-			}
+			}));
 						
 			++cameraItr;
+		}
+
+		// Wait for our jobs to complete
+		for (size_t cullingFutureIdx = 0; cullingFutureIdx < cullingFutures.size(); cullingFutureIdx++)
+		{
+			cullingFutures[cullingFutureIdx].wait();
 		}
 	}
 
