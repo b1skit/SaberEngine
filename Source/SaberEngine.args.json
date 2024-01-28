@@ -3,6 +3,10 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "5a59ebe8-2088-49eb-9fa5-a25bd960b6fc",
+      "Command": "-scene abandoned_warehouse\\scene.gltf"
+    },
+    {
       "Id": "5ccbea34-0cf2-4808-bbc8-18479855fad9",
       "Command": "-brdfLUTWidthHeight 16 -iemWidthHeight 128 -pmremWidthHeight 128 -iemNumSamples 2 -pmremNumSamples 2"
     },
