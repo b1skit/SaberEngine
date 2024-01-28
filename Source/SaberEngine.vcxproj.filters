@@ -449,9 +449,6 @@
     <ClCompile Include="TransformRenderData.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="MaterialComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
     <ClCompile Include="MeshPrimitiveComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
@@ -502,6 +499,9 @@
     </ClCompile>
     <ClCompile Include="Assert.cpp">
       <Filter>Source Files\en</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialInstanceComponent.cpp">
+      <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -901,9 +901,6 @@
     <ClInclude Include="TransformRenderData.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="MaterialComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
     <ClInclude Include="MeshPrimitiveComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
@@ -957,6 +954,9 @@
     </ClInclude>
     <ClInclude Include="GraphicsSystem_Culling.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialInstanceComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
