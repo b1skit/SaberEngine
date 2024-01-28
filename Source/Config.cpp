@@ -394,8 +394,7 @@ namespace en
 
 		if (m_renderingAPI == platform::RenderingAPI::RenderingAPI_Count)
 		{
-			m_renderingAPI = platform::RenderingAPI::OpenGL; // OpenGL by default for now, as it is the most complete
-			TrySetValue(ConfigKeys::k_platformCmdLineArg, "opengl", SettingType::Runtime);
+			m_renderingAPI = platform::RenderingAPI::DX12;
 		}
 		
 		// Window:

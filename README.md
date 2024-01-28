@@ -8,14 +8,15 @@ Project Overview:
 Saber Engine is a multi-API, multi-threaded, real-time rendering R&D framework, with the architecture of a game engine.
 
 
---------
-Details:
---------
-- Currently supported graphics APIs:
-	- DirectX 12 (via the Agility SDK)  
+---------
+Features:
+---------
+- Rendering API agnostic. Currently supports:
+	- DirectX 12 (Agility SDK 1.611.2) (Default) 
 	- OpenGL 4.6  
-- C++ 20
-- Renders GLTF 2.0 scenes/assets
+- EnTT Entity Component System (ECS)  
+- Renders GLTF 2.0 scenes/assets  
+- C++ 20  
 
 
 -----------------------
@@ -24,13 +25,17 @@ Command line arguments:
 Most of the keys described in `ConfigKeys.h` can be set/overridden via key/value command line arguments using a `-keyname value` pattern.  If `value` is omitted, it will be stored as a boolean true value.  The most important command line arguments are described here:
 
 Scene loading: `-scene Folder\Name\filename.extension`  
-	- Path is relative to the `<project root>\Scenes\` directory  
-	- Supports GLTF 2.0 files
+* Path is relative to the `<project root>\Scenes\` directory  
+* Supports GLTF 2.0 files
 
 Display log messages in a system console window: `-console`  
 
+Select the backend rendering API: `-platform <API>`. If no API is specified, DirectX 12 is used. Supported <API> values are:
+* dx12
+* opengl
+
 Enable strict shader binding checks: `-strictshaderbinding`  
-	- Enables (helpful, but annoying) asserts if textures/parameters aren't found in a shader's reflected metadata  
+* Enables (helpful, but occasionally annoying) asserts if parameters aren't found when parsion reflected shader metadata  
 
 Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log verbosity, and API-specific validation  
 * 0: Default (disabled)  
@@ -39,15 +44,15 @@ Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log ve
 * 3: Level 2 + DRED breadcrumbs (DX12 only)  
 
 Enable PIX programmatic capture (DX12 only): `-enablepixgpucapture`, `-enablepixcpucapture`  
-	- This is only required for programmatic captures. It is not required for PIX markers  
-	- Captures can be triggered via the render debug menu  
-	- More info on PIX programmatic captures here: https://devblogs.microsoft.com/pix/programmatic-capture/  
+* This is only required for programmatic captures. It is not required for PIX markers  
+* Captures can be triggered via the render debug menu  
+* More info on PIX programmatic captures here: https://devblogs.microsoft.com/pix/programmatic-capture/  
 
 Enable RenderDoc programmatic capture: `-renderdoc`  
-	- This is only required for programmatic captures. RenderDoc can still launch/capture without this  
+* This is only required for programmatic captures. RenderDoc can still launch/capture without this  
 
 Enable CPU-side normalization of vertex streams when requested: `-cpunormalizevertexstreams`  
-	- This is only rarely required if a vertex stream requires normalization, but is not received in a format compatible with GPU-side normalization  
+* This is provided for strict GLTF 2.0 compatibility but only rarely required if a vertex stream requires normalization, but is not received in a format compatible with GPU normalization  
 
 
 --------------  
@@ -62,6 +67,7 @@ Runtime Configuration:
 Settings are loaded from the `<project root>\config\config.cfg` file  
 * Commands for system configuration ("set"), input ("bind"), etc  
 * See the existing file for examples  
+
 Default controls:  
 * Camera movement: WASD + mouse look  
 * Down: Shift  
@@ -130,7 +136,7 @@ vcpkg install entt
 -------------
 Dependencies:
 -------------
-Most dependencies are automatically included via Git Subtrees. Configuration details are included below for reference.  
+Most dependencies are automatically included via Git Subtrees. Installation/configuration details are included below for posterity.  
 
 
 CGLTF: https://github.com/jkuhlmann/cgltf
@@ -151,6 +157,7 @@ Direct-X Headers: https://github.com/microsoft/DirectX-Headers
 EnTT: https://github.com/skypjack/entt
 --------------------------------------
 - Installed via `vcpkg`. See the `Initial Setup` section for more info  
+
 
 Glew: https://github.com/nigels-com/glew/releases
 -------------------------------------------------
