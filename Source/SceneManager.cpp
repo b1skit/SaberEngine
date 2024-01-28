@@ -5,6 +5,7 @@
 #include "Light.h"
 #include "MeshConcept.h"
 #include "PerformanceTimer.h"
+#include "RenderManager.h"
 #include "SceneManager.h"
 #include "Transform.h"
 
@@ -67,7 +68,33 @@ namespace fr
 	{
 		LOG("Scene manager shutting down...");
 
-		m_sceneData = nullptr; // SceneData::Destroy is called during RenderManager shutdown
+
+		// NOTE: OpenGL objects must be destroyed on the render thread, so we trigger them here by recording a command
+		// to call SceneData::Destroy during RenderManager shutdown
+		class DestroySceneDataRenderCommand
+		{
+		public:
+			DestroySceneDataRenderCommand(std::shared_ptr<fr::SceneData> sceneData) : m_sceneData(sceneData) {}
+			~DestroySceneDataRenderCommand() { m_sceneData = nullptr; }
+
+			static void Execute(void* cmdData)
+			{
+				DestroySceneDataRenderCommand* cmdPtr = reinterpret_cast<DestroySceneDataRenderCommand*>(cmdData);
+				cmdPtr->m_sceneData->Destroy();
+			}
+
+			static void Destroy(void* cmdData)
+			{
+				DestroySceneDataRenderCommand* cmdPtr = reinterpret_cast<DestroySceneDataRenderCommand*>(cmdData);
+				cmdPtr->~DestroySceneDataRenderCommand();
+			}
+		private:
+			std::shared_ptr<fr::SceneData> m_sceneData;
+		};
+
+
+		re::RenderManager::Get()->EnqueueRenderCommand<DestroySceneDataRenderCommand>(
+			DestroySceneDataRenderCommand(std::move(m_sceneData)));
 	}
 
 

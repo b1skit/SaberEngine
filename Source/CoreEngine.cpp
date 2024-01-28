@@ -207,11 +207,11 @@ namespace en
 		
 		fr::EntityManager::Get()->Shutdown();
 
+		fr::SceneManager::Get()->Shutdown();
+
 		// We need to signal the render thread to shut down and wait on it to complete before we can start destroying
 		// anything it might be using
 		re::RenderManager::Get()->ThreadShutdown();
-
-		fr::SceneManager::Get()->Shutdown();
 
 		en::InputManager::Get()->Shutdown();
 		en::EventManager::Get()->Shutdown();

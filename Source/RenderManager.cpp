@@ -17,7 +17,6 @@
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
-#include "SceneManager.h"
 #include "TextureTarget.h"
 #include "VertexStream.h"
 
@@ -294,10 +293,6 @@ namespace re
 		// API-specific destruction:
 		platform::RenderManager::Shutdown(*this);
 
-		// NOTE: OpenGL objects must be destroyed on the render thread, so we trigger them here
-		// ECS_CONVERSION: Remove the SceneManager include and trigger this via a render command
-		// -> API objects should register themselves for (potentially deferred) destruction via a render command (ala create)
-		fr::SceneManager::GetSceneData()->Destroy();
 		re::Sampler::DestroySamplerLibrary();
 		
 		// Destroy render systems:
