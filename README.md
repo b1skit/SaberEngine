@@ -30,7 +30,7 @@ Scene loading: `-scene Folder\Name\filename.extension`
 
 Display log messages in a system console window: `-console`  
 
-Select the backend rendering API: `-platform <API>`. If no API is specified, DirectX 12 is used. Supported <API> values are:
+Select the backend rendering API: `-platform API`. If no API is specified, DirectX 12 is used. Supported API values are:
 * dx12
 * opengl
 
