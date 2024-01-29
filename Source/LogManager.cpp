@@ -191,11 +191,19 @@ namespace en
 	{
 		LOG("Log manager shutting down...");
 		m_isRunning = false;
+		m_logOutputStream.close();
 	}
 
 
 	void LogManager::Run()
 	{
+		std::filesystem::create_directory(en::ConfigKeys::k_logOutputDir); // No error if the directory already exists
+
+		m_logOutputStream.open(
+			std::format("{}{}", en::ConfigKeys::k_logOutputDir, en::ConfigKeys::k_logFileName).c_str(),
+			std::ios::out);
+		SEAssert(m_logOutputStream.good(), "Error creating log output stream");
+
 		auto PrintMessage = [&](char const* msg)
 			{
 				m_imGuiLogWindow->AddLog(msg);
@@ -208,6 +216,9 @@ namespace en
 				{
 					printf(msg);
 				}
+
+				m_logOutputStream << msg;
+				m_logOutputStream.flush(); // Flush every time to keep the log up to date
 			};
 
 		while (m_isRunning)

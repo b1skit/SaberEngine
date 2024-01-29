@@ -73,6 +73,9 @@ namespace en
 		std::mutex m_messagesMutex;
 		std::condition_variable m_messagesCV;
 
+		std::ofstream m_logOutputStream;
+
+
 	private:
 		enum class LogType : uint8_t
 		{

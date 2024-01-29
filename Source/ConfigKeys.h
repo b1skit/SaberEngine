@@ -14,10 +14,13 @@ namespace en::ConfigKeys
 	constexpr char const* k_documentsFolderPathKey = "documentsFolderPath"; // e.g. "C:\Users\<username>\Documents"
 
 	// Debug:
-	constexpr char const* k_pixCaptureFolderName = "PIX Captures";
-	constexpr char const* k_renderDocCaptureFolderName = "RenderDoc Captures";
-	constexpr char const* k_captureTitle = "SaberEngine";
+	constexpr char const* k_pixCaptureFolderName		= "PIX Captures";
+	constexpr char const* k_renderDocCaptureFolderName	= "RenderDoc Captures";
+	constexpr char const* k_captureTitle				= "SaberEngine";
 
+	// Logging:
+	constexpr char const* k_logFileName		= "SaberEngine.log";
+	constexpr char const* k_logOutputDir	= ".\\Logs\\";
 
 	// Config keys:
 	/*************/
