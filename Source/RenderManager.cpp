@@ -286,12 +286,12 @@ namespace re
 
 		LOG("Render manager shutting down...");
 
-		// Process any remaining render commands
+		// Flush any remaining render work:
+		platform::RenderManager::Shutdown(*this);
+
+		// Process any remaining render commands (i.e. delete platform objects)
 		m_renderCommandManager.SwapBuffers();
 		m_renderCommandManager.Execute();
-		
-		// API-specific destruction:
-		platform::RenderManager::Shutdown(*this);
 
 		re::Sampler::DestroySamplerLibrary();
 		

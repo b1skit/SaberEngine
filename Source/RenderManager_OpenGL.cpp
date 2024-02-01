@@ -469,5 +469,7 @@ namespace opengl
 
 	void RenderManager::Shutdown(re::RenderManager& renderManager)
 	{
+		// Note: Shutdown order matters. Make sure any work performed here plays nicely with the 
+		// re::RenderManager::Shutdown ordering
 	}
 }

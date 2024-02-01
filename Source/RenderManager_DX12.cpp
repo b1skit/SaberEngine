@@ -667,6 +667,9 @@ namespace dx12
 
 	void RenderManager::Shutdown(re::RenderManager& renderManager)
 	{
+		// Note: Shutdown order matters. Make sure any work performed here plays nicely with the 
+		// re::RenderManager::Shutdown ordering
+
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		
 		for (size_t i = 0; i < dx12::CommandListType_Count; i++)
