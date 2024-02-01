@@ -467,35 +467,40 @@ namespace re
 	}
 
 
-	void RenderManager::ShowRenderManagerImGuiWindow(bool* showRenderMgrDebug)
+	void RenderManager::ShowRenderSystemsImGuiWindow(bool* show)
 	{
-		if (!(*showRenderMgrDebug))
+		if (!(*show))
 		{
 			return;
 		}
 
-		constexpr char const* k_panelTitle = "Render manager debug";
-		ImGui::Begin(k_panelTitle, showRenderMgrDebug);
+		ImGui::Begin(std::format("Render Systems ({})", m_renderSystems.size()).c_str(), show);
 
 		// Render systems:
-		if (ImGui::CollapsingHeader("Render Systems", ImGuiTreeNodeFlags_None))
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			ImGui::Indent();
-			for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+			if (ImGui::CollapsingHeader(renderSystem->GetName().c_str(), ImGuiTreeNodeFlags_None))
 			{
-				if (ImGui::CollapsingHeader(renderSystem->GetName().c_str(), ImGuiTreeNodeFlags_None))
-				{
-					ImGui::Indent();
-					renderSystem->ShowImGuiWindow();
-					ImGui::Unindent();
-				}
+				ImGui::Indent();
+				renderSystem->ShowImGuiWindow();
+				ImGui::Unindent();
 			}
-			ImGui::Unindent();
 		}
 
-		ImGui::Separator();
+		ImGui::End();
+	}
 
-		if (ImGui::CollapsingHeader("RenderDoc Captures"))
+
+	void RenderManager::ShowGPUCapturesImGuiWindow(bool* show)
+	{
+		if (!(*show))
+		{
+			return;
+		}
+
+		ImGui::Begin("GPU Captures", show);
+
+		if (ImGui::CollapsingHeader("RenderDoc"))
 		{
 			ImGui::Indent();
 

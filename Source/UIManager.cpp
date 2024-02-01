@@ -331,13 +331,23 @@ namespace fr
 		// Importantly, this function does NOT modify any ImGui state. Instead, it submits commands to the render
 		// manager, which will execute the updates on the render thread
 
-		static bool s_showConsoleLog = false;
-		static bool s_showEntityMgrDebug = false;
-		static bool s_showTransformHierarchyDebug = false;
-		static bool s_showEntityComponentDebug = false;
-		static bool s_showRenderMgrDebug = false;
-		static bool s_showRenderDataDebug = false;
-		static bool s_showImguiDemo = false;
+		enum Show : uint8_t
+		{
+			LogConsole,
+			EntityMgrDbg,
+			TransformationHierarchyDbg,
+			EntityComponentDbg,
+			RenderMgrDbg,
+			RenderDataDbg,
+			GPUCaptures,
+			
+			ImGuiDemo,
+
+			Show_Count
+		};
+		static std::array<bool, Show::Show_Count> s_show = {0};
+
+
 
 //#define FORCE_SHOW_IMGUI_DEMO
 #if defined(_DEBUG) || defined(FORCE_SHOW_IMGUI_DEMO)
@@ -345,18 +355,23 @@ namespace fr
 #endif
 
 		// Early out if we can
-		if (!m_imguiMenuVisible && 
-			!s_showConsoleLog && 
-			!s_showEntityMgrDebug && 
-			!s_showTransformHierarchyDebug && 
-			!s_showEntityComponentDebug &&
-			!s_showRenderMgrDebug && 
-			!s_showRenderDataDebug &&
-			!s_showImguiDemo)
+		bool showAny = false;
+		if (!m_imguiMenuVisible)
 		{
-			return;
+			for (bool show : s_show)
+			{
+				if (show)
+				{
+					showAny = true;
+					break;
+				}
+			}
+			if (!showAny)
+			{
+				return;
+			}
 		}
-
+		
 		static const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
 		static const int windowHeight = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 
@@ -387,37 +402,36 @@ namespace fr
 
 					if (ImGui::BeginMenu("Config"))
 					{
-						// TODO...
-						ImGui::TextDisabled("Adjust input settings");
+						ImGui::TextDisabled("Adjust input settings"); // TODO...
 
 						ImGui::EndMenu();
 					}
 
 					if (ImGui::BeginMenu("Window"))
 					{
-						ImGui::MenuItem("Console log", "", &s_showConsoleLog); // Console debug log window
+						ImGui::MenuItem("Console log", "", &s_show[Show::LogConsole]); // Console debug log window
 
 						ImGui::TextDisabled("Performance statistics");
 						
 						if (ImGui::BeginMenu("Entity manager"))
 						{
-							ImGui::MenuItem("Debug scene objects", "", &s_showEntityMgrDebug);
-							ImGui::MenuItem("Debug transform hierarchy", "", &s_showTransformHierarchyDebug);
-							ImGui::MenuItem("Entity/component viewer", "", &s_showEntityComponentDebug);
+							ImGui::MenuItem("Debug scene objects", "", &s_show[Show::EntityMgrDbg]);
+							ImGui::MenuItem("Debug transform hierarchy", "", &s_show[Show::TransformationHierarchyDbg]);
+							ImGui::MenuItem("Entity/component viewer", "", &s_show[Show::EntityComponentDbg]);
 							ImGui::EndMenu();
 						}
 
 						if (ImGui::BeginMenu("Render manager"))
 						{
-							ImGui::MenuItem("Render manager debug", "", &s_showRenderMgrDebug);
-							ImGui::MenuItem("Render data viewer", "", &s_showRenderDataDebug);
+							ImGui::MenuItem("Render Systems", "", &s_show[Show::RenderMgrDbg]);
+							ImGui::MenuItem("Render data debug", "", &s_show[Show::RenderDataDbg]);
 							ImGui::EndMenu();
 						}
 						
 
 #if defined(SHOW_IMGUI_DEMO_WINDOW)
 						ImGui::Separator();
-						ImGui::MenuItem("Show ImGui demo", "", &s_showImguiDemo);
+						ImGui::MenuItem("Show ImGui demo", "", &s_show[Show::ImGuiDemo]);
 #endif
 
 						ImGui::EndMenu();
@@ -425,6 +439,8 @@ namespace fr
 
 					if (ImGui::BeginMenu("Capture"))
 					{
+						ImGui::MenuItem("GPU Captures", "", &s_show[Show::GPUCaptures]);
+
 						// TODO...
 						ImGui::TextDisabled("Save screenshot");
 
@@ -448,9 +464,9 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				en::LogManager::Get()->ShowImGuiWindow(&s_showConsoleLog);
+				en::LogManager::Get()->ShowImGuiWindow(&s_show[Show::LogConsole]);
 			};
-		if (s_showConsoleLog)
+		if (s_show[Show::LogConsole])
 		{
 			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowConsoleLog)>>(
 				re::ImGuiRenderCommand<decltype(ShowConsoleLog)>(ShowConsoleLog));
@@ -466,9 +482,9 @@ namespace fr
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
 				fr::EntityManager::Get()->ShowImGuiWindow(
-					&s_showEntityMgrDebug, &s_showTransformHierarchyDebug, &s_showEntityComponentDebug);
+					&s_show[Show::EntityMgrDbg], &s_show[Show::TransformationHierarchyDbg], &s_show[Show::EntityComponentDbg]);
 			};
-		if (s_showEntityMgrDebug || s_showTransformHierarchyDebug || s_showEntityComponentDebug)
+		if (s_show[Show::EntityMgrDbg] || s_show[Show::TransformationHierarchyDbg] || s_show[Show::EntityComponentDbg])
 		{
 			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>>(
 				re::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>(ShowEntityMgrDebug));
@@ -483,10 +499,12 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				re::RenderManager::Get()->ShowRenderManagerImGuiWindow(&s_showRenderMgrDebug);
-				re::RenderManager::Get()->ShowRenderDataImGuiWindow(&s_showRenderDataDebug);
+				re::RenderManager::Get()->ShowRenderSystemsImGuiWindow(&s_show[Show::RenderMgrDbg]);
+				re::RenderManager::Get()->ShowRenderDataImGuiWindow(&s_show[Show::RenderDataDbg]);
+				re::RenderManager::Get()->ShowGPUCapturesImGuiWindow(&s_show[Show::GPUCaptures]);
+				
 			};
-		if (s_showRenderMgrDebug || s_showRenderDataDebug)
+		if (s_show[Show::RenderMgrDbg] || s_show[Show::RenderDataDbg] || s_show[Show::GPUCaptures])
 		{
 			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>>(
 				re::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>(ShowRenderMgrDebug));
@@ -499,9 +517,9 @@ namespace fr
 			{
 				ImGui::SetNextWindowPos(
 					ImVec2(static_cast<float>(windowWidth) * 0.25f, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
-				ImGui::ShowDemoWindow(&s_showImguiDemo);
+				ImGui::ShowDemoWindow(&s_show[Show::ImGuiDemo]);
 			};
-		if (s_showImguiDemo)
+		if (s_show[Show::ImGuiDemo])
 		{
 			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowImGuiDemo)>>(
 				re::ImGuiRenderCommand<decltype(ShowImGuiDemo)>(ShowImGuiDemo));

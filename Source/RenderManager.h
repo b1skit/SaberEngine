@@ -62,7 +62,8 @@ namespace re
 
 
 	public:
-		void ShowRenderManagerImGuiWindow(bool* showRenderMgrDebug);
+		void ShowRenderSystemsImGuiWindow(bool* showRenderMgrDebug);
+		void ShowGPUCapturesImGuiWindow(bool* show);
 		void ShowRenderDataImGuiWindow(bool* showRenderDataDebug) const;
 
 
