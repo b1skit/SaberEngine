@@ -3,10 +3,6 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
-      "Id": "5a59ebe8-2088-49eb-9fa5-a25bd960b6fc",
-      "Command": "-scene abandoned_warehouse\\scene.gltf"
-    },
-    {
       "Id": "5ccbea34-0cf2-4808-bbc8-18479855fad9",
       "Command": "-brdfLUTWidthHeight 16 -iemWidthHeight 128 -pmremWidthHeight 128 -iemNumSamples 2 -pmremNumSamples 2"
     },
@@ -63,100 +59,118 @@
       "Command": "-numframesinflight 2"
     },
     {
-      "Id": "6dd1fc69-ed79-4d85-b912-fcc514e395a2",
-      "Command": "-scene MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
-    },
-    {
-      "Id": "839a8f0d-8f42-430f-9fb6-34250cda78b9",
-      "Command": "-scene MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf"
-    },
-    {
-      "Id": "98bedead-9373-4ad5-a1c2-c716f6322f5c",
-      "Command": "-scene Corset\\glTF-Binary\\Corset.glb"
-    },
-    {
-      "Id": "4655280e-785b-4a54-81ad-5f907ba49804",
-      "Command": "-scene Corset\\glTF\\Corset.gltf"
-    },
-    {
-      "Id": "98ea750c-14cb-49ec-a6fe-f66d284f3cf5",
-      "Command": "-scene SimpleSkin\\SimpleSkin.gltf"
-    },
-    {
-      "Id": "1bfead22-6f3e-43ec-b679-439e0a804f73",
-      "Command": "-scene VertexColor\\VertexColorTest.gltf"
-    },
-    {
-      "Id": "a597a9cc-5fd1-4493-9515-92281f037b50",
-      "Command": "-scene MyInstanceTest\\InstanceTest.gltf"
-    },
-    {
-      "Id": "78b72e43-f264-490c-be44-81c5face5020",
-      "Command": "-scene Duck\\glTF\\Duck.gltf"
-    },
-    {
-      "Id": "fb976e8d-28b2-45a6-8a57-b740be8156b6",
-      "Command": "-scene Duck\\glTF-Embedded\\Duck.gltf"
-    },
-    {
-      "Id": "fedc2bde-0b47-426d-958b-b2f73e676030",
-      "Command": "-scene Duck\\glTF-Binary\\Duck.glb"
-    },
-    {
-      "Id": "7c9082e9-1698-490b-b049-d34c6350685f",
-      "Command": "-scene EmissiveStrengthTest\\glTF\\EmissiveStrengthTest.gltf"
-    },
-    {
-      "Id": "fed39c3e-c597-47ba-aabb-eab3e2c2348d",
-      "Command": "-scene NormalTangentMirrorTest\\NormalTangentMirrorTest.gltf"
-    },
-    {
-      "Id": "05b3455c-11e5-4f24-9357-810a270059db",
-      "Command": "-scene NormalTangentTest\\NormalTangentTest.gltf"
-    },
-    {
-      "Id": "e8c82d8a-e5e3-4a47-90a1-45390d632948",
-      "Command": "-scene LightsPunctualLamp\\LightsPunctualLamp.gltf"
-    },
-    {
-      "Id": "9382fbc7-26a4-4ccf-aadc-544a1a934d4a",
-      "Command": "-scene Cameras\\Cameras.gltf"
-    },
-    {
-      "Id": "24ef9bef-0471-465c-9aaa-2b758fec797d",
-      "Command": "-scene WaterBottle\\WaterBottle.gltf"
-    },
-    {
-      "Id": "bb9ed7d8-2d99-4d7d-8b97-a572c67eca65",
-      "Command": "-scene OrientationTest\\OrientationTest.gltf"
-    },
-    {
-      "Id": "2940251e-a995-4b02-b726-a82d74ce9c04",
-      "Command": "-scene Sponza\\Sponza.gltf"
-    },
-    {
-      "Id": "cb55f864-2acd-4c42-ba1c-7861e297bd99",
-      "Command": "-scene Sponza_Intel\\NewSponza_Main_glTF_002.gltf"
-    },
-    {
-      "Id": "3f7808ce-703c-48b0-b666-4655b96bc979",
-      "Command": "-scene AntiqueCamera\\AntiqueCamera.gltf"
-    },
-    {
-      "Id": "41091ec8-c372-4107-bd51-ffb672bcbe78",
-      "Command": "-scene BoomBoxWithAxes\\BoomBoxWithAxes.gltf"
-    },
-    {
-      "Id": "241aa5df-00ed-4aef-b8a7-04d0f9ab5100",
-      "Command": "-scene box\\Box.gltf"
-    },
-    {
-      "Id": "32b7f201-6bda-4d56-91b3-276709892e17",
-      "Command": "-scene SunTemple\\suntemple.gltf"
-    },
-    {
-      "Id": "09ab3e01-2a8d-45c5-ba53-adc68afa5d56",
-      "Command": "-scene debug\\Duck.gltf"
+      "Id": "7f680b5a-83de-4e3e-a8b5-1009b6fe4856",
+      "Command": "Scenes",
+      "Items": [
+        {
+          "Id": "6dd1fc69-ed79-4d85-b912-fcc514e395a2",
+          "Command": "-scene MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
+        },
+        {
+          "Id": "839a8f0d-8f42-430f-9fb6-34250cda78b9",
+          "Command": "-scene MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf"
+        },
+        {
+          "Id": "98bedead-9373-4ad5-a1c2-c716f6322f5c",
+          "Command": "-scene Corset\\glTF-Binary\\Corset.glb"
+        },
+        {
+          "Id": "4655280e-785b-4a54-81ad-5f907ba49804",
+          "Command": "-scene Corset\\glTF\\Corset.gltf"
+        },
+        {
+          "Id": "98ea750c-14cb-49ec-a6fe-f66d284f3cf5",
+          "Command": "-scene SimpleSkin\\SimpleSkin.gltf"
+        },
+        {
+          "Id": "1bfead22-6f3e-43ec-b679-439e0a804f73",
+          "Command": "-scene VertexColor\\VertexColorTest.gltf"
+        },
+        {
+          "Id": "a597a9cc-5fd1-4493-9515-92281f037b50",
+          "Command": "-scene MyInstanceTest\\InstanceTest.gltf"
+        },
+        {
+          "Id": "78b72e43-f264-490c-be44-81c5face5020",
+          "Command": "-scene Duck\\glTF\\Duck.gltf"
+        },
+        {
+          "Id": "fb976e8d-28b2-45a6-8a57-b740be8156b6",
+          "Command": "-scene Duck\\glTF-Embedded\\Duck.gltf"
+        },
+        {
+          "Id": "fedc2bde-0b47-426d-958b-b2f73e676030",
+          "Command": "-scene Duck\\glTF-Binary\\Duck.glb"
+        },
+        {
+          "Id": "7c9082e9-1698-490b-b049-d34c6350685f",
+          "Command": "-scene EmissiveStrengthTest\\glTF\\EmissiveStrengthTest.gltf"
+        },
+        {
+          "Id": "fed39c3e-c597-47ba-aabb-eab3e2c2348d",
+          "Command": "-scene NormalTangentMirrorTest\\NormalTangentMirrorTest.gltf"
+        },
+        {
+          "Id": "05b3455c-11e5-4f24-9357-810a270059db",
+          "Command": "-scene NormalTangentTest\\NormalTangentTest.gltf"
+        },
+        {
+          "Id": "e8c82d8a-e5e3-4a47-90a1-45390d632948",
+          "Command": "-scene LightsPunctualLamp\\LightsPunctualLamp.gltf"
+        },
+        {
+          "Id": "9382fbc7-26a4-4ccf-aadc-544a1a934d4a",
+          "Command": "-scene Cameras\\Cameras.gltf"
+        },
+        {
+          "Id": "24ef9bef-0471-465c-9aaa-2b758fec797d",
+          "Command": "-scene WaterBottle\\WaterBottle.gltf"
+        },
+        {
+          "Id": "bb9ed7d8-2d99-4d7d-8b97-a572c67eca65",
+          "Command": "-scene OrientationTest\\OrientationTest.gltf"
+        },
+        {
+          "Id": "2940251e-a995-4b02-b726-a82d74ce9c04",
+          "Command": "-scene Sponza\\Sponza.gltf"
+        },
+        {
+          "Id": "cb55f864-2acd-4c42-ba1c-7861e297bd99",
+          "Command": "-scene Sponza_Intel\\NewSponza_Main_glTF_002.gltf"
+        },
+        {
+          "Id": "3f7808ce-703c-48b0-b666-4655b96bc979",
+          "Command": "-scene AntiqueCamera\\AntiqueCamera.gltf"
+        },
+        {
+          "Id": "41091ec8-c372-4107-bd51-ffb672bcbe78",
+          "Command": "-scene BoomBoxWithAxes\\BoomBoxWithAxes.gltf"
+        },
+        {
+          "Id": "241aa5df-00ed-4aef-b8a7-04d0f9ab5100",
+          "Command": "-scene box\\Box.gltf"
+        },
+        {
+          "Id": "32b7f201-6bda-4d56-91b3-276709892e17",
+          "Command": "-scene SunTemple\\suntemple.gltf"
+        },
+        {
+          "Id": "09ab3e01-2a8d-45c5-ba53-adc68afa5d56",
+          "Command": "-scene debug\\Duck.gltf"
+        },
+        {
+          "Id": "5a59ebe8-2088-49eb-9fa5-a25bd960b6fc",
+          "Command": "-scene abandoned_warehouse\\scene.gltf"
+        },
+        {
+          "Id": "d5f60a21-9cbb-411e-b816-c3322a2b104c",
+          "Command": "-scene DamagedHelmet\\GLTF\\DamagedHelmet.gltf"
+        },
+        {
+          "Id": "80ece5d4-ce71-4705-845e-28c8b2eeb71e",
+          "Command": "-scene FlightHelmet\\glTF\\FlightHelmet.gltf"
+        }
+      ]
     }
   ]
 }
