@@ -58,7 +58,7 @@ namespace re
 
 
 	public:
-		std::mutex& GetGlobalImGuiMutex(); // Synchronize ImGui io accesses across threads
+		std::mutex& GetGlobalImGuiMutex(); // Synchronize ImGui IO accesses across threads
 
 
 	public:
@@ -74,6 +74,11 @@ namespace re
 		en::CommandManager m_imGuiCommandManager;
 
 		std::mutex m_imGuiGlobalMutex;
+
+		// We will ignore ImGui commands if a quit event is received. The render thread is always a frame behind the
+		// front end thread; if it's processing ImGui commands it might try and access something after it is destroyed.
+		// Note: The RenderManager's lifetime is otherwise exclusively controlled by the en::EngineThread interface
+		bool m_quitEventReceived; 
 
 
 	public: // Render commands:

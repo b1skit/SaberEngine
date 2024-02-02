@@ -475,14 +475,9 @@ namespace fr
 		// Entity manager debug:
 		auto ShowEntityMgrDebug = [&]()
 			{
-				ImGui::SetNextWindowSize(ImVec2(
-					static_cast<float>(windowWidth) * 0.25f,
-					static_cast<float>(windowHeight - menuBarSize[1])),
-					ImGuiCond_FirstUseEver);
-				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
-
-				fr::EntityManager::Get()->ShowImGuiWindow(
-					&s_show[Show::EntityMgrDbg], &s_show[Show::TransformationHierarchyDbg], &s_show[Show::EntityComponentDbg]);
+				fr::EntityManager::Get()->ShowSceneObjectsImGuiWindow(&s_show[Show::EntityMgrDbg]);
+				fr::EntityManager::Get()->ShowSceneTransformImGuiWindow(&s_show[Show::TransformationHierarchyDbg]);
+				fr::EntityManager::Get()->ShowImGuiEntityComponentDebug(&s_show[Show::EntityComponentDbg]);
 			};
 		if (s_show[Show::EntityMgrDbg] || s_show[Show::TransformationHierarchyDbg] || s_show[Show::EntityComponentDbg])
 		{

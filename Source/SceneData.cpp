@@ -207,7 +207,10 @@ namespace
 						material == nullptr ? "MissingMaterial" : util::GenerateMaterialName(*material);
 					if (scene.MaterialExists(matName))
 					{
-						SEAssertF("We expect all materials in the incoming scene data are unique");
+						LOG_WARNING(
+							"Found materials with dupicate names. Assuming all instances of \"%s\" are identical", 
+							matName.c_str());
+
 						return textureFutures;
 					}
 

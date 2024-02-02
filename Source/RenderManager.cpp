@@ -66,6 +66,7 @@ namespace re
 		: m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_imGuiCommandManager(k_imGuiCommandBufferSize)
+		, m_quitEventReceived(false)
 		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<std::shared_ptr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -131,6 +132,7 @@ namespace re
 		LOG("RenderManager starting...");
 		re::Context::Get()->Create(m_renderFrameNum);
 		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleVSync, this);
+		en::EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
 
 		SEEndCPUEvent();
 	}
@@ -326,7 +328,7 @@ namespace re
 
 			switch (eventInfo.m_type)
 			{
-			case en::EventManager::EventType::InputToggleVSync:
+			case en::EventManager::InputToggleVSync:
 			{
 				if (eventInfo.m_data0.m_dataB == true)
 				{
@@ -334,6 +336,11 @@ namespace re
 					re::Context::Get()->GetSwapChain().SetVSyncMode(m_vsyncEnabled);
 					LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
 				}				
+			}
+			break;
+			case en::EventManager::EngineQuit:
+			{
+				m_quitEventReceived = true;
 			}
 			break;
 			default:
@@ -856,7 +863,7 @@ namespace re
 	void RenderManager::RenderImGui()
 	{
 		// Don't bother starting an ImGui frame if the current execution frame is empty
-		if (m_imGuiCommandManager.HasCommandsToExecute())
+		if (m_imGuiCommandManager.HasCommandsToExecute() && !m_quitEventReceived)
 		{
 			std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
 
