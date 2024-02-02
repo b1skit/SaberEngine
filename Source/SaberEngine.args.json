@@ -169,6 +169,22 @@
         {
           "Id": "80ece5d4-ce71-4705-845e-28c8b2eeb71e",
           "Command": "-scene FlightHelmet\\glTF\\FlightHelmet.gltf"
+        },
+        {
+          "Id": "44070e8c-0040-4955-bea0-a05f3fb48ae3",
+          "Command": "-scene StainedGlassLamp\\glTF\\StainedGlassLamp.gltf"
+        },
+        {
+          "Id": "8d6c419b-86e9-4ab4-a6f1-a2e1107cb399",
+          "Command": "-scene ToyCar\\glTF\\ToyCar.gltf"
+        },
+        {
+          "Id": "ed5ac280-363a-47cb-a061-34a722fbd941",
+          "Command": "-scene VC\\glTF\\VC.gltf"
+        },
+        {
+          "Id": "32bac8c3-5bfd-43c7-8a83-1db3f3583c56",
+          "Command": "-scene Fox\\glTF\\Fox.gltf"
         }
       ]
     }
