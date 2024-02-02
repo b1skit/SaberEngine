@@ -48,7 +48,7 @@ namespace util
 			.m_usage = re::Texture::Usage::Color,
 			.m_dimension = (totalFaces == 1 ?
 				re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap),
-			.m_format = re::Texture::Format::RGBA8,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
 			.m_colorSpace = colorSpace
 		};
 		glm::vec4 fillColor = errorTexFillColor;
@@ -110,21 +110,21 @@ namespace util
 					{
 					case 1:
 					{
-						if (bitDepth == 8) texParams.m_format = re::Texture::Format::R8;
+						if (bitDepth == 8) texParams.m_format = re::Texture::Format::R8_UNORM;
 						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::R16F;
 						else texParams.m_format = re::Texture::Format::R32F;
 					}
 					break;
 					case 2:
 					{
-						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8;
+						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8_UNORM;
 						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RG16F;
 						else texParams.m_format = re::Texture::Format::RG32F;
 					}
 					break;
 					case 4:
 					{
-						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGBA8;
+						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGBA8_UNORM;
 						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RGBA16F;
 						else texParams.m_format = re::Texture::Format::RGBA32F;
 					}
@@ -151,7 +151,7 @@ namespace util
 					texParams.m_height = 2;
 					texParams.m_dimension = totalFaces == 1 ?
 						re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
-					texParams.m_format = re::Texture::Format::RGBA8;
+					texParams.m_format = re::Texture::Format::RGBA8_UNORM;
 					texParams.m_colorSpace = re::Texture::ColorSpace::sRGB;
 					texParams.m_mipMode = re::Texture::MipMode::AllocateGenerate;
 
@@ -159,7 +159,7 @@ namespace util
 				}
 
 				// We'll populate the initial image data internally:
-				texture = re::Texture::Create(texturePaths[0], texParams, true, fillColor);
+				texture = re::Texture::Create(texturePaths[0], texParams, fillColor);
 				break;
 			}
 			else
@@ -173,8 +173,7 @@ namespace util
 
 		if (!texture)
 		{
-			texture = re::Texture::Create(
-				texturePaths[0], texParams, false, glm::vec4(0.f, 0.f, 0.f, 1.f), std::move(initialData));
+			texture = re::Texture::Create(texturePaths[0], texParams, std::move(initialData));
 		}
 
 		LOG("Loaded texture \"%s\" in %f seconds...", texturePaths[0].c_str(), timer.StopSec());
@@ -201,7 +200,7 @@ namespace util
 		{
 			.m_usage = re::Texture::Usage::Color,
 			.m_dimension = re::Texture::Dimension::Texture2D,
-			.m_format = re::Texture::Format::RGBA8,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
 			.m_colorSpace = colorSpace
 		};
 		glm::vec4 fillColor = re::Texture::k_errorTextureColor;
@@ -258,21 +257,21 @@ namespace util
 			{
 			case 1:
 			{
-				if (bitDepth == 8) texParams.m_format = re::Texture::Format::R8;
+				if (bitDepth == 8) texParams.m_format = re::Texture::Format::R8_UNORM;
 				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::R16F;
 				else texParams.m_format = re::Texture::Format::R32F;
 			}
 			break;
 			case 2:
 			{
-				if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8;
+				if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8_UNORM;
 				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RG16F;
 				else texParams.m_format = re::Texture::Format::RG32F;
 			}
 			break;
 			case 4:
 			{
-				if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGBA8;
+				if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGBA8_UNORM;
 				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RGBA16F;
 				else texParams.m_format = re::Texture::Format::RGBA32F;
 			}
@@ -282,9 +281,7 @@ namespace util
 			}
 
 			// Create the texture now the params are configured:
-			fillColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
-
-			texture = re::Texture::Create(texName, texParams, false, fillColor, std::move(initialData));
+			texture = re::Texture::Create(texName, texParams, std::move(initialData));
 		}
 		else
 		{

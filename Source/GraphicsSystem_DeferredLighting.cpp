@@ -4,6 +4,7 @@
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_Shadows.h"
+#include "GraphicsSystem_XeGTAO.h"
 #include "LightRenderData.h"
 #include "MeshFactory.h"
 #include "ParameterBlock.h"
@@ -94,12 +95,14 @@ namespace
 	{
 		// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
 		glm::vec4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
+		glm::vec4 g_ssaoTexDims; // .xyzw = width, height, 1/width, 1/height
 
 		static constexpr char const* const s_shaderName = "AmbientLightParams"; // Not counted towards size of struct
 	};
 
 
-	AmbientLightParams GetAmbientLightParamsData(uint32_t numPMREMMips, float diffuseScale, float specularScale)
+	AmbientLightParams GetAmbientLightParamsData(
+		uint32_t numPMREMMips, float diffuseScale, float specularScale, re::Texture const* ssaoTex)
 	{
 		AmbientLightParams ambientLightParams;
 
@@ -113,6 +116,12 @@ namespace
 			dfgTexWidthHeight,
 			diffuseScale,
 			specularScale);
+
+		ambientLightParams.g_ssaoTexDims = glm::vec4(0.f);
+		if (ssaoTex)
+		{
+			ambientLightParams.g_ssaoTexDims = ssaoTex->GetTextureDimenions();
+		}
 
 		return ambientLightParams;
 	}
@@ -248,18 +257,17 @@ namespace gr
 		, NamedObject(k_gsName)
 		, m_shadowGS(nullptr)
 	{
-		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_ambientStage = re::RenderStage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
-		m_directionalStage = re::RenderStage::CreateGraphicsStage("Keylight stage", gfxStageParams);
-		m_pointStage = re::RenderStage::CreateGraphicsStage("Pointlight stage", gfxStageParams);
-
-		// Cube mesh, for rendering of IBL cubemaps
-		m_cubeMeshPrimitive = gr::meshfactory::CreateCube();
 	}
 
 
 	void DeferredLightingGraphicsSystem::CreateResourceGenerationStages(re::StagePipeline& pipeline)
 	{
+		// Cube mesh, for rendering of IBL cubemaps
+		if (m_cubeMeshPrimitive == nullptr)
+		{
+			m_cubeMeshPrimitive = gr::meshfactory::CreateCube();
+		}
+
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
@@ -302,7 +310,7 @@ namespace gr
 			brdfParams.m_addToSceneData = false;
 			brdfParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-			m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams, false);
+			m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams);
 
 			std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
 
@@ -385,7 +393,7 @@ namespace gr
 				re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
 
 			const std::string IEMTextureName = iblTexture->GetName() + "_IEMTexture";
-			m_IEMTex = re::Texture::Create(IEMTextureName, iemTexParams, false);
+			m_IEMTex = re::Texture::Create(IEMTextureName, iemTexParams);
 
 			for (uint32_t face = 0; face < 6; face++)
 			{
@@ -461,7 +469,7 @@ namespace gr
 				re::Shader::GetOrCreate(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
 
 			const std::string PMREMTextureName = iblTexture->GetName() + "_PMREMTexture";
-			m_PMREMTex = re::Texture::Create(PMREMTextureName, pmremTexParams, false);
+			m_PMREMTex = re::Texture::Create(PMREMTextureName, pmremTexParams);
 
 			const uint32_t totalMipLevels = m_PMREMTex->GetNumMips();
 
@@ -535,6 +543,12 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
+		re::RenderStage::GraphicsStageParams gfxStageParams;
+		m_ambientStage = re::RenderStage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
+		m_directionalStage = re::RenderStage::CreateGraphicsStage("Keylight stage", gfxStageParams);
+		m_pointStage = re::RenderStage::CreateGraphicsStage("Pointlight stage", gfxStageParams);
+
+
 		m_shadowGS = m_graphicsSystemManager->GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
 		SEAssert(m_shadowGS != nullptr, "Shadow graphics system not found");
 
@@ -556,8 +570,7 @@ namespace gr
 		lightTargetTexParams.m_addToSceneData = false;
 		lightTargetTexParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		std::shared_ptr<re::Texture> outputTexture = 
-			re::Texture::Create("DeferredLightTarget", lightTargetTexParams, false);
+		std::shared_ptr<re::Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetTexParams);
 
 		re::TextureTarget::TargetParams ambientTargetParams{};
 		ambientTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
@@ -604,20 +617,33 @@ namespace gr
 		// Ambient PB:
 		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
 		
+		// Get/set the AO texture, if it exists:
+		m_AOGS = m_graphicsSystemManager->GetGraphicsSystem<XeGTAOGraphicsSystem>();
+		re::Texture const* ssaoTex = nullptr;
+		if (m_AOGS)
+		{
+			m_ambientStage->AddTextureInput(
+				"SSAOTex",
+				m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture(),
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest));
+
+			ssaoTex = m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get();
+		}
+
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
 			"We currently expect render data for exactly 1 ambient light to exist");
 
 		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
-
 		gr::Light::RenderDataAmbientIBL const& ambientRenderData =
 			renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
 
 		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 			totalPMREMMipLevels,
 			static_cast<float>(ambientRenderData.m_diffuseEnabled),
-			static_cast<float>(ambientRenderData.m_specularEnabled));
+			static_cast<float>(ambientRenderData.m_specularEnabled),
+			ssaoTex);
 
 		m_ambientParams = re::ParameterBlock::Create(
 			AmbientLightParams::s_shaderName,
@@ -625,6 +651,7 @@ namespace gr
 			re::ParameterBlock::PBType::Mutable);
 
 		m_ambientStage->AddPermanentParameterBlock(m_ambientParams);
+
 
 		// If we made it this far, append the ambient stage:
 		pipeline.AppendRenderStage(m_ambientStage);
@@ -841,10 +868,13 @@ namespace gr
 			gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
 				renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
 
+
+
 			const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 				totalPMREMMipLevels,
 				static_cast<float>(ambientRenderData.m_diffuseEnabled),
-				static_cast<float>(ambientRenderData.m_specularEnabled));
+				static_cast<float>(ambientRenderData.m_specularEnabled),
+				m_AOGS ? m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get() : nullptr);
 
 			m_ambientParams->Commit(ambientLightParams);
 		}		

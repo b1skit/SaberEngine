@@ -12,10 +12,45 @@ namespace re
 	public:
 		using ImageDataUniquePtr = std::unique_ptr<void, std::function<void(void*)>>;
 
-		static constexpr glm::vec4 k_errorTextureColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
+		struct IInitialData
+		{
+			virtual ~IInitialData() = default;
+
+			virtual void Resize(uint8_t numFaces, uint32_t bytesPerFace) = 0;
+			virtual bool HasData() const = 0;
+			virtual uint8_t NumFaces() const = 0;
+			virtual void* GetDataBytes(uint8_t faceIdx) = 0;
+			virtual void Clear() = 0;
+		};
+
+		struct InitialDataSTBIImage final : public virtual IInitialData
+		{
+			InitialDataSTBIImage(std::vector<ImageDataUniquePtr>&& initialData);
+			void Resize(uint8_t numFaces, uint32_t bytesPerFace) override;
+			bool HasData() const override;
+			uint8_t NumFaces() const override;
+			void* GetDataBytes(uint8_t faceIdx) override;
+			void Clear() override;
+
+			std::vector<ImageDataUniquePtr> m_data;
+		};
+
+		struct InitialDataVec final : public virtual IInitialData
+		{
+			InitialDataVec(std::vector<std::vector<uint8_t>> initialData);
+			void Resize(uint8_t numFaces, uint32_t bytesPerFace) override;
+			bool HasData() const override;
+			uint8_t NumFaces() const override;
+			void* GetDataBytes(uint8_t faceIdx) override;
+			void Clear() override;
+
+			std::vector<std::vector<uint8_t>> m_data; // Byte array [1, 6] faces
+		};
 
 
 	public:
+		static constexpr glm::vec4 k_errorTextureColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
+
 		static constexpr uint32_t k_allMips = std::numeric_limits<uint32_t>::max(); // Mip sentinel value
 
 
@@ -73,13 +108,19 @@ namespace re
 			RG32F,
 			R32F,
 
+			R32_UINT,
+
 			RGBA16F,	// 16 bits per channel x N channels
 			RG16F,
 			R16F,
 
-			RGBA8,		// 8 bits per channel x N channels
-			RG8,
-			R8,
+			R16_UNORM,
+
+			RGBA8_UNORM, // 8 bits per channel x N channels
+			RG8_UNORM,
+			R8_UNORM,
+
+			R8_UINT,
 
 			// GPU-only formats:
 			Depth32F,
@@ -143,9 +184,24 @@ namespace re
 		[[nodiscard]] static std::shared_ptr<re::Texture> Create(
 			std::string const& name, 
 			TextureParams const& params,
-			bool doFill, 
-			glm::vec4 fillColor = glm::vec4(0.f, 0.f, 0.f, 1.f),
-			std::vector<ImageDataUniquePtr> initialData = std::vector<ImageDataUniquePtr>());
+			std::vector<ImageDataUniquePtr>&& initialData);
+
+		[[nodiscard]] static std::shared_ptr<re::Texture> Create(
+			std::string const& name,
+			TextureParams const& params,
+			std::vector<std::vector<uint8_t>>&& initialData);
+
+		[[nodiscard]] static std::shared_ptr<re::Texture> Create(
+			std::string const& name,
+			TextureParams const& params,
+			glm::vec4 fillColor);
+
+		[[nodiscard]] static std::shared_ptr<re::Texture> Create(
+			std::string const& name,
+			TextureParams const& params);
+
+		Texture(Texture&&) = default;
+		Texture& operator=(Texture&&) = default;
 
 		~Texture();
 
@@ -183,10 +239,10 @@ namespace re
 	private:
 		explicit Texture(
 			std::string const& name, 
-			TextureParams const& params, 
-			bool doFill, 
-			glm::vec4 const& fillColor, 
-			std::vector<ImageDataUniquePtr> initialData = std::vector<ImageDataUniquePtr>());
+			TextureParams const& params);
+
+		static std::shared_ptr<re::Texture> CreateInternal(
+			std::string const& name, TextureParams const&, std::unique_ptr<IInitialData>&&);
 
 		void Fill(glm::vec4 solidColor);	// Fill texture with a solid color
 
@@ -197,7 +253,7 @@ namespace re
 		const TextureParams m_texParams;
 		std::unique_ptr<re::Texture::PlatformParams> m_platformParams;
 
-		std::vector<ImageDataUniquePtr> m_initialData; // [1, 6] faces
+		std::unique_ptr<IInitialData> m_initialData; // Owns a vector with [1,6] faces of data
 
 		const uint32_t m_numMips;
 		const uint32_t m_numSubresources; // no. of mips * no. of faces
@@ -205,9 +261,8 @@ namespace re
 
 	private:
 		Texture() = delete;
-		Texture(Texture const& rhs) = delete;
-		Texture(Texture const&& rhs) = delete;
-		Texture& operator=(Texture const& rhs) = delete;
+		Texture(Texture const&) = delete;
+		Texture& operator=(Texture const&) = delete;
 	};
 
 

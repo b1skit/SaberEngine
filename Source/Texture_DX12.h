@@ -36,7 +36,7 @@ namespace dx12
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources);
 		
 		static std::shared_ptr<re::Texture> CreateFromExistingResource(
-			std::string const& name, re::Texture::TextureParams const&, bool doClear, Microsoft::WRL::ComPtr<ID3D12Resource>);
+			std::string const& name, re::Texture::TextureParams const&, Microsoft::WRL::ComPtr<ID3D12Resource>);
 
 		static DXGI_FORMAT GetTextureFormat(re::Texture::TextureParams const&);
 

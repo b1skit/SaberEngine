@@ -225,7 +225,7 @@ namespace re
 
 		// Color targets must be set in monotonically-increasing order from 0
 		void SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget);
-		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> texTarget, TextureTarget::TargetParams const&);
+		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture>, TextureTarget::TargetParams const&);
 
 		re::TextureTarget const* GetDepthStencilTarget() const; // Returns nullptr if m_depthStencilTarget has no texture
 		void SetDepthStencilTarget(re::TextureTarget const*);

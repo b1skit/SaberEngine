@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#pragma once
 #include "MeshPrimitive.h"
 #include "ParameterBlock.h"
 #include "PipelineState.h"
@@ -139,7 +138,8 @@ namespace re
 		std::shared_ptr<RenderStage> newComputeStage;
 		newComputeStage.reset(new ComputeStage(
 			name, 
-			std::make_unique<ComputeStageParams>(stageParams), Lifetime::Permanent));
+			std::make_unique<ComputeStageParams>(stageParams),
+			Lifetime::Permanent));
 		return newComputeStage;
 	}
 
@@ -150,7 +150,8 @@ namespace re
 		std::shared_ptr<RenderStage> newComputeStage;
 		newComputeStage.reset(new ComputeStage(
 			name,
-			std::make_unique<ComputeStageParams>(stageParams), Lifetime::SingleFrame));
+			std::make_unique<ComputeStageParams>(stageParams),
+			Lifetime::SingleFrame));
 		return newComputeStage;
 	}
 
@@ -182,10 +183,7 @@ namespace re
 
 
 	RenderStage::RenderStage(
-		std::string const& name, 
-		std::unique_ptr<IStageParams>&& stageParams, 
-		Type stageType, 
-		Lifetime lifetime)
+		std::string const& name, std::unique_ptr<IStageParams>&& stageParams, Type stageType, Lifetime lifetime)
 		: NamedObject(name)
 		, m_type(stageType)
 		, m_lifetime(lifetime)
@@ -201,9 +199,7 @@ namespace re
 	}
 
 
-	ParentStage::ParentStage(
-		std::string const& name,
-		Lifetime lifetime)
+	ParentStage::ParentStage(std::string const& name, Lifetime lifetime)
 		: NamedObject(name)
 		, RenderStage(name, nullptr, Type::Parent, lifetime)
 	{
@@ -211,9 +207,7 @@ namespace re
 
 
 	ComputeStage::ComputeStage(
-		std::string const& name, 
-		std::unique_ptr<ComputeStageParams>&& stageParams, 
-		Lifetime lifetime)
+		std::string const& name, std::unique_ptr<ComputeStageParams>&& stageParams, Lifetime lifetime)
 		: NamedObject(name)
 		, RenderStage(name, std::move(stageParams), Type::Compute, lifetime)
 	{
@@ -221,8 +215,7 @@ namespace re
 
 
 	ClearStage::ClearStage(
-		std::string const& name,
-		Lifetime lifetime)
+		std::string const& name, Lifetime lifetime)
 		: NamedObject(name)
 		, RenderStage(name, nullptr, Type::Clear, lifetime)
 	{

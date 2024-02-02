@@ -16,6 +16,7 @@ struct ComputeIn
 // https://learn.microsoft.com/en-us/windows/win32/direct3d12/typed-unordered-access-view-loads
 // -> Build this in to the root sig parser
 
+#if !defined(SPECIFY_OWN_COMPUTE_OUTPUTS)
 RWTexture2D<float4> output0 : register(u0);
 RWTexture2D<float4> output1 : register(u1);
 RWTexture2D<float4> output2 : register(u2);
@@ -24,6 +25,6 @@ RWTexture2D<float4> output4 : register(u4);
 RWTexture2D<float4> output5 : register(u5);
 RWTexture2D<float4> output6 : register(u6);
 RWTexture2D<float4> output7 : register(u7);
-
+#endif
 
 #endif // SABERCOMPUTECOMMON_HLSLI

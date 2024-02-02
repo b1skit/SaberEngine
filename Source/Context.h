@@ -1,12 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "renderdoc_app.h"
-
 #include "IPlatformParams.h"
 #include "TextureTarget.h"
 #include "ParameterBlockAllocator.h"
 #include "PipelineState.h"
 #include "SwapChain.h"
+
+#include "renderdoc_app.h"
 
 
 namespace opengl

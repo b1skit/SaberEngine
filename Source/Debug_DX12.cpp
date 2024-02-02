@@ -231,24 +231,30 @@ namespace dx12
 	{
 		ComPtr<ID3D12Debug> debugInterface;
 
+		const int debugLevel = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg);
+
 		// Enable the debug layer for debuglevel 1 and above:
-		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) >= 1)
+		if (debugLevel >= 1)
 		{
 			HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface));
 			dx12::CheckHResult(hr, "Failed to get debug interface");
 			debugInterface->EnableDebugLayer();
+
+			LOG("Debug level %d: Enabled D3D12 debug layer", debugLevel);
 		}
 
 		// Enable GPU-based validation for -debuglevel 2 and above:
-		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) >= 2)
+		if (debugLevel >= 2)
 		{
 			ComPtr<ID3D12Debug1> debugInterface1;
 			HRESULT hr = debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1));
 			CheckHResult(hr, "Failed to get query interface");
 			debugInterface1->SetEnableGPUBasedValidation(true);
+
+			LOG("Debug level %d: Enabled D3D12 GPU-based validation", debugLevel);
 		}
 
-		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) >= 3)
+		if (debugLevel >= 3)
 		{
 			ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
 			HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings));
@@ -257,6 +263,8 @@ namespace dx12
 			// Turn on AutoBreadcrumbs and Page Fault reporting
 			dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 			dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+
+			LOG("Debug level %d: Enabled D3D12 DRED", debugLevel);
 		}
 	}
 

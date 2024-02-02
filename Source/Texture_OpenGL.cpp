@@ -106,6 +106,14 @@ namespace opengl
 			m_type = GL_FLOAT;
 		}
 		break;
+		case re::Texture::Format::R32_UINT:
+		{
+			SEAssert(texParams.m_colorSpace != re::Texture::ColorSpace::sRGB, "32-bit sRGB textures are not supported");
+			m_format = GL_R;
+			m_internalFormat = GL_R32UI;
+			m_type = GL_UNSIGNED_BYTE;
+		}
+		break;
 		case re::Texture::Format::RGBA16F:
 		{
 			m_format = GL_RGBA;
@@ -127,7 +135,14 @@ namespace opengl
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
-		case re::Texture::Format::RGBA8:
+		case re::Texture::Format::R16_UNORM:
+		{
+			m_format = GL_R;
+			m_internalFormat = GL_R16;
+			m_type = GL_UNSIGNED_BYTE;
+		}
+		break;
+		case re::Texture::Format::RGBA8_UNORM:
 		{
 			// Note: Alpha in GL_SRGB8_ALPHA8 is stored in linear color space, RGB are in sRGB color space
 			m_format = GL_RGBA;
@@ -154,14 +169,21 @@ namespace opengl
 			//}
 		}
 		break;
-		case re::Texture::Format::RG8:
+		case re::Texture::Format::RG8_UNORM:
 		{
 			SEAssertF("Invalid/unsupported texture format");
 		}
 		break;
-		case re::Texture::Format::R8:
+		case re::Texture::Format::R8_UNORM:
 		{
 			SEAssertF("Invalid/unsupported texture format");
+		}
+		break;
+		case re::Texture::Format::R8_UINT:
+		{
+			m_format = GL_R;
+			m_internalFormat = GL_R8;
+			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;
 		case re::Texture::Format::Depth32F:

@@ -12,33 +12,13 @@
 using Microsoft::WRL::ComPtr;
 
 
-//#define DEBUG_RESOURCE_TRANSITIONS
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
-
-// Enable one or the other:
-//#define FILTER_CMD_QUEUE_BY_EXCLUSION
-#define FILTER_CMD_QUEUE_BY_INCLUSION
-
-#if defined(FILTER_CMD_QUEUE_BY_EXCLUSION)
-constexpr char const* k_excludedNameSubstrings[] = { "Vertex" }; // Case sensitive: Exclude output with these substrings
-#define FILTER_NAMES k_excludedNameSubstrings
-
-#elif defined(FILTER_CMD_QUEUE_BY_INCLUSION)
-constexpr char const* k_showOnlyNameSubstrings[] = { "BRDFIntegrationMap" }; // Case sensitive: Only show output with these substrings
-#define FILTER_NAMES k_showOnlyNameSubstrings
-
-#endif //FILTER_CMD_QUEUE_BY_EXCLUSION / FILTER_CMD_QUEUE_BY_INCLUSION
-
-#endif //DEBUG_RESOURCE_TRANSITIONS
-
-
 //#define CHECK_TRANSITION_BARRIER_COMMAND_LIST_COMPATIBILITY
 //#define DEBUG_FENCES
 
 
 namespace
 {
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS)
 	void DebugPrintBarrier(
 		ID3D12Resource* resource, 
 		D3D12_RESOURCE_STATES beforeState,
@@ -48,20 +28,10 @@ namespace
 		std::string const& resourceName = dx12::GetDebugName(resource);
 
 		// Cut down on log spam by filtering output containing keyword substrings
-#if defined(FILTER_CMD_QUEUE_BY_EXCLUSION) || defined(FILTER_CMD_QUEUE_BY_INCLUSION)
-		constexpr size_t k_numExcludedSubstrings = sizeof(FILTER_NAMES) / sizeof(FILTER_NAMES[0]);
-		for (size_t i = 0; i < k_numExcludedSubstrings; i++)
+		if (ShouldSkipDebugOutput(resourceName.c_str()))
 		{
-#if defined(FILTER_CMD_QUEUE_BY_EXCLUSION)
-			if (strstr(resourceName.c_str(), FILTER_NAMES[i]) != nullptr)
-#else
-			if (strstr(resourceName.c_str(), FILTER_NAMES[i]) == nullptr)
-#endif
-			{
-				return;
-			}
+			return;
 		}
-#endif
 
 		LOG_WARNING("BARRIER: Resource \"%s\"\n\tSubresource #%s: From: %s To: %s",
 			resourceName.c_str(),
@@ -220,7 +190,7 @@ namespace
 				.StateBefore = beforeState,
 				.StateAfter = afterState}
 			});
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS)
 		DebugPrintBarrier(resource, beforeState, afterState, subresourceIdx);
 #endif
 	};
@@ -435,7 +405,7 @@ namespace dx12
 		{
 			std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
 
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS)
 			LOG_WARNING("\n--------------------- TransitionIncompatibleResourceStatesToCommon() ---------------------\n"
 				"\t\"%s\":",
 				dx12::GetDebugName(m_commandQueue.Get()).c_str());
@@ -620,7 +590,7 @@ namespace dx12
 		}
 
 
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS)
 		LOG_WARNING("\n------------ !DONE! TransitionIncompatibleResourceStatesToCommon() !DONE! ------------\n");
 #endif
 
@@ -648,7 +618,7 @@ namespace dx12
 		{
 			std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
 
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_STATE_TRACKER_RESOURCE_TRANSITIONS)
 			LOG_WARNING("\n--------------------- PrependBarrierCommandListsAndWaits() ---------------------\n"
 				"\t\"%s\":",
 				dx12::GetDebugName(m_commandQueue.Get()).c_str());
@@ -663,7 +633,7 @@ namespace dx12
 
 				LocalResourceStateTracker const& localResourceTracker = cmdLists[cmdListIdx]->GetLocalResourceStates();
 
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_STATE_TRACKER_RESOURCE_TRANSITIONS)
 				cmdLists[cmdListIdx]->DebugPrintResourceStates();
 
 				LOG_WARNING("\n-------------------------\n"
@@ -800,7 +770,7 @@ namespace dx12
 
 					finalCommandLists.emplace_back(barrierCommandList);
 
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS)
 					LOG_WARNING("\nRecorded %llu resource transition barriers to fixup command list \"%s\"...\n",
 						barriers.size(),
 						GetDebugName(barrierCommandList->GetD3DCommandList()).c_str());
@@ -811,7 +781,7 @@ namespace dx12
 				finalCommandLists.emplace_back(cmdLists[cmdListIdx]);
 			}
 
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_STATE_TRACKER_RESOURCE_TRANSITIONS)
 			globalResourceStates.DebugPrintResourceStates();
 			LOG_WARNING("-------------- !DONE! PrependBarrierCommandListsAndWaits() !DONE! --------------");
 #endif
@@ -879,7 +849,7 @@ namespace dx12
 		commandListPtrs.reserve(finalCommandLists.size());
 		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
 		{
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS)
 			LOG_WARNING(std::format("Queue \"{}\" executing command list {}/{}: \"{}\"",
 				dx12::GetDebugName(m_commandQueue.Get()).c_str(),
 				(i + 1),

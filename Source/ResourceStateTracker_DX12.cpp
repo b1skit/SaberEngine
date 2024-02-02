@@ -52,15 +52,26 @@ namespace dx12
 	void GlobalResourceState::SetState(
 		D3D12_RESOURCE_STATES afterState, SubresourceIdx subresourceIdx, uint64_t lastFence)
 	{
+		const D3D12_RESOURCE_STATES currentState = GetState(subresourceIdx);
+
 		const bool hasOnlyOneSubresource = m_numSubresources == 1;
 		IResourceState::SetState(afterState, subresourceIdx, false, hasOnlyOneSubresource);
 		
-		m_lastFence = lastFence;
-
-		if (IsWriteableState(afterState))
+		// Resources not created with the D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS flag cannot be written to from
+		// multiple queues simultaneously. A queue that transitions a resource to a writeable state is considered to
+		// exclusively own a resource. 
+		// We don't (currently) use the simultaneous access flag due to some of its drawbacks
+		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/executing-and-synchronizing-command-lists#accessing-resources-from-multiple-command-queues
+		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_flags
+		if (IsWriteableState(afterState) ||
+			(dx12::Fence::GetCommandListTypeFromFenceValue(lastFence) !=
+				dx12::Fence::GetCommandListTypeFromFenceValue(m_lastFence) &&
+			IsWriteableState(currentState))) // Changing command lists, and previous state was writeable
 		{
 			m_lastModificationFence = lastFence;
 		}
+
+		m_lastFence = lastFence;
 	}
 
 
@@ -153,10 +164,9 @@ namespace dx12
 		if (hasOnlyOneSubresource)
 		{
 			SEAssert(!isPendingState, "The hasOnlyOneSubresource flag is not valid for pending/local resource states");
-			subresourceIdx = 0;
+			subresourceIdx = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		}
-
-		if ((subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES && !isPendingState))
+		else if ((subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES && !isPendingState))
 		{
 			m_states.clear(); // We don't clear pending transitions: We need to keep any earlier subresource states
 		}
@@ -171,7 +181,7 @@ namespace dx12
 		{
 			const std::string prefix = state.first >= 1 ? "\tSubresource " : "Subresource ";
 			stateStr += prefix + 
-				(state.first == 4294967295 ? "ALL" : ("#" + std::to_string(state.first))) +
+				(state.first == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES ? "ALL" : ("#" + std::to_string(state.first))) +
 				": " + 
 				GetResourceStateAsCStr(state.second) + "\n";
 		}
@@ -244,6 +254,11 @@ namespace dx12
 			m_globalStates.empty() ? "<empty>" : std::to_string(m_globalStates.size()).c_str());
 		for (auto const& resource : m_globalStates)
 		{
+			if (ShouldSkipDebugOutput(GetDebugName(resource.first).c_str()))
+			{
+				continue;
+			}
+
 			LOG_WARNING("Resource \"%s\", has (%d) subresource%s:", 
 				GetDebugName(resource.first).c_str(), 
 				resource.second.GetNumSubresources(),
@@ -334,22 +349,35 @@ namespace dx12
 
 	void LocalResourceStateTracker::DebugPrintResourceStates() const
 	{
-		LOG_WARNING("-----------------------\n"
-			"\tFinal known states (%s):\n"
-			"\t-----------------------",
-			m_knownStates.empty() ? "<empty>" : std::to_string(m_knownStates.size()).c_str());
-		for (auto const& resource : m_knownStates)
-		{
-			LOG_WARNING("Resource \"%s\":", GetDebugName(resource.first).c_str());
-			resource.second.DebugPrintResourceStates();
-		}
 		LOG_WARNING("------------------------\n"
 			"\tPending transitions (%s):\n"
 			"\t------------------------", 
 			m_pendingStates.empty() ? "<empty>" : std::to_string(m_pendingStates.size()).c_str());
 		for (auto const& resource : m_pendingStates)
 		{
+			if (ShouldSkipDebugOutput(dx12::GetDebugName(resource.first).c_str()))
+			{
+				continue;
+			}
+
 			LOG_WARNING("Resource \"%s\":", GetDebugName(resource.first).c_str());
+			resource.second.DebugPrintResourceStates();
+		}
+
+		LOG_WARNING("-----------------------\n"
+			"\tFinal known states (%s):\n"
+			"\t-----------------------",
+			m_knownStates.empty() ? "<empty>" : std::to_string(m_knownStates.size()).c_str());
+		for (auto const& resource : m_knownStates)
+		{
+			std::string const& resourceName = dx12::GetDebugName(resource.first);
+
+			if (ShouldSkipDebugOutput(resourceName.c_str()))
+			{
+				continue;
+			}
+
+			LOG_WARNING("Resource \"%s\":", resourceName.c_str());
 			resource.second.DebugPrintResourceStates();
 		}
 	}

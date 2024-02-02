@@ -2,6 +2,8 @@
 #ifndef SABER_COMMON_HLSL
 #define SABER_COMMON_HLSL
 
+#include "CameraCommon.hlsli"
+
 
 #define ALPHA_CUTOFF 0.1f
 
@@ -90,25 +92,6 @@ struct InstancedPBRMetallicRoughnessParamsCB
 	float4 g_f0; // .xyz = f0, .w = unused. For non-metals only
 };
 StructuredBuffer<InstancedPBRMetallicRoughnessParamsCB> InstancedPBRMetallicRoughnessParams : register(t2, space0);
-
-
-struct CameraParamsCB
-{
-	float4x4 g_view;
-	float4x4 g_invView;
-	float4x4 g_projection;
-	float4x4 g_invProjection;
-	float4x4 g_viewProjection;
-	float4x4 g_invViewProjection;
-
-	float4 g_projectionParams; // .x = near, .y = far, .z = 1/near, .w = 1/far
-
-	float4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
-	float4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation
-	
-	float4 g_cameraWPos;
-};
-ConstantBuffer<CameraParamsCB> CameraParams;
 
 
 struct IEMPMREMGenerationParamsCB

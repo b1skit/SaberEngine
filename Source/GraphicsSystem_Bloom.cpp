@@ -148,7 +148,7 @@ namespace gr
 		bloomTargetTexParams.m_mipMode = re::Texture::MipMode::Allocate;
 		bloomTargetTexParams.m_addToSceneData = false;
 
-		std::shared_ptr<re::Texture> bloomTargetTex = re::Texture::Create("Bloom Target", bloomTargetTexParams, false);
+		std::shared_ptr<re::Texture> bloomTargetTex = re::Texture::Create("Bloom Target", bloomTargetTexParams);
 
 		const uint32_t numBloomMips = bloomTargetTex->GetNumMips();
 

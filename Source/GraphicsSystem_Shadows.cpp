@@ -126,7 +126,7 @@ namespace gr
 
 					std::string const& texName = std::format("{}_Shadow", lightName);
 
-					std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(texName, shadowParams, false);
+					std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(texName, shadowParams);
 
 					// Texture target set:
 					std::shared_ptr<re::TextureTargetSet> directionalShadowTargetSet =
@@ -214,7 +214,7 @@ namespace gr
 					shadowParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
 					shadowParams.m_faces = 6;
 
-					std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(lightName, shadowParams, false);
+					std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(lightName, shadowParams);
 
 					// Texture target set:
 					std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet =

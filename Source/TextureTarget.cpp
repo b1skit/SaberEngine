@@ -18,9 +18,9 @@ namespace re
 
 	TextureTarget::TextureTarget(std::shared_ptr<re::Texture> texture, TargetParams const& targetParams)
 		: m_texture(texture)
+		, m_targetParams(targetParams)
 	{
 		platform::TextureTarget::CreatePlatformParams(*this);
-		m_targetParams = targetParams;
 	}
 
 

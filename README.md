@@ -15,6 +15,7 @@ Features:
 	- DirectX 12 (Agility SDK 1.611.2) (Default) 
 	- OpenGL 4.6  
 - EnTT Entity Component System (ECS)  
+- Intel XeGTAO  
 - Renders GLTF 2.0 scenes/assets  
 - C++ 20  
 
@@ -185,6 +186,12 @@ Imgui: https://github.com/ocornut/imgui/
 - The dx12, opengl3, and win32 imgui_impl_* .h and .cpp files in the .\Source\Dependencies\imgui\backends\are added to the Visual Studio project (under the "imgui\backends" filter)  
 
 
+Intel XeGTAO: https://github.com/GameTechDev/XeGTAO
+- Current version: Dec 2021  
+- `<project root>\Source\Dependencies\XeGTAO\`  
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\XeGTAO\"  
+
+
 MikkTSpace: https://github.com/mmikk/MikkTSpace
 -----------------------------------------------
 - Current version: "Mar 25, 2020"  
@@ -219,6 +226,8 @@ Recommended Visual Studio extensions and Software:
 - Smart Command Line Arguments  
 - Editor Guidelines  
 - GLSL Language Integration: https://github.com/danielscherzer/GLSL  
+- HLSL Tools for Visual Studio: https://github.com/tgjones/HlslTools
+  - Configuration guide (shadertoolsconfig.json): https://github.com/tgjones/HlslTools#custom-preprocessor-definitions-and-additional-include-directories
 - License Header Manager  
 - Beyond Compare  
 

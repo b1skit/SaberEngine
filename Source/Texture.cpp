@@ -53,31 +53,95 @@ namespace re
 	std::shared_ptr<re::Texture> Texture::Create(
 		std::string const& name, 
 		TextureParams const& params, 
-		bool doFill, 
-		glm::vec4 fillColor /*= glm::vec4(0.f, 0.f, 0.f, 1.f)*/,
-		std::vector<ImageDataUniquePtr> initialData /*= std::vector<ImageDataUniquePtr>()*/)
+		std::vector<ImageDataUniquePtr>&& initialData)
 	{
-		// If the Texture already exists, return it. Otherwise, create the Texture 
-		if (params.m_addToSceneData && fr::SceneManager::GetSceneData()->TextureExists(name))
-		{
-			return fr::SceneManager::GetSceneData()->GetTexture(name);
-		}
-		// Note: It's possible that 2 threads might simultaneously fail to find a Texture in the SceneData, and create
-		// it. But that's OK, the SceneData will only allow 1 instance to be added
+		SEAssert(initialData.size() == params.m_faces, "Number of initial data entries must match the number of faces");
 
-		std::shared_ptr<re::Texture> newTexture = nullptr;
-		newTexture.reset(new re::Texture(name, params, doFill, fillColor, std::move(initialData)));
+		std::unique_ptr<IInitialData> initialDataPtr = std::make_unique<InitialDataSTBIImage>(std::move(initialData));
 
-		// If requested, register the Texture with the SceneData object for lifetime management:
-		bool foundExistingTexture = false;
-		if (params.m_addToSceneData)
-		{
-			foundExistingTexture = fr::SceneManager::GetSceneData()->AddUniqueTexture(newTexture);
-		}
+		std::shared_ptr<re::Texture> newTex = CreateInternal(name, params, std::move(initialDataPtr));
+
+		return newTex;
+	}
+
+
+	std::shared_ptr<re::Texture> Texture::Create(
+		std::string const& name,
+		TextureParams const& params,
+		std::vector<std::vector<uint8_t>>&& initialData)
+	{
+		SEAssert(initialData.size() == params.m_faces, "Number of initial data entries must match the number of faces");
+
+		std::unique_ptr<IInitialData> initialDataPtr = std::make_unique<InitialDataVec>(std::move(initialData));
+
+		std::shared_ptr<re::Texture> newTex = CreateInternal(name, params, std::move(initialDataPtr));
+
+		return newTex;
+	}
+
+
+	std::shared_ptr<re::Texture> Texture::Create(
+		std::string const& name,
+		TextureParams const& params,
+		glm::vec4 fillColor)
+	{
+		SEAssert((params.m_usage & Usage::Color), "Trying to fill a non-color texture");
+
+		std::unique_ptr<IInitialData> initialData = 
+			std::make_unique<InitialDataVec>(std::vector<std::vector<uint8_t>>());
+
+		const uint8_t bytesPerPixel = GetNumBytesPerTexel(params.m_format);
+		const uint32_t totalBytesPerFace = params.m_width * params.m_height * bytesPerPixel;
+
+		initialData->Resize(params.m_faces, totalBytesPerFace);
+
+		std::shared_ptr<re::Texture> newTex = CreateInternal(name, params, std::move(initialData));
+
+		newTex->Fill(fillColor);
 		
-		// Register new Textures with the RenderManager, so their API-level objects are created before use
-		if (!foundExistingTexture)
+		return newTex;
+	}
+
+
+	std::shared_ptr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params)
+	{
+		SEAssert((params.m_usage ^ Usage::Color), "Textures that are Usage::Color only must have initial data");
+		return CreateInternal(name, params, nullptr);
+	}
+
+
+	std::shared_ptr<re::Texture> Texture::CreateInternal(
+		std::string const& name, TextureParams const& params, std::unique_ptr<IInitialData>&& initialData)
+	{
+		std::shared_ptr<re::Texture> newTexture = nullptr;
 		{
+			static std::mutex s_createInternalMutex;
+			std::lock_guard<std::mutex> lock(s_createInternalMutex);
+
+			// If the Texture already exists, return it. Otherwise, create the Texture 
+			if (params.m_addToSceneData && fr::SceneManager::GetSceneData()->TextureExists(name))
+			{
+				// Note: In this case, we're assuming the texture is identical and ignoring the initial data
+				return fr::SceneManager::GetSceneData()->GetTexture(name);
+			}
+
+
+			newTexture.reset(new re::Texture(name, params));
+
+			// If requested, register the Texture with the SceneData object for lifetime management:
+			bool foundExistingTexture = false;
+			if (params.m_addToSceneData)
+			{
+				foundExistingTexture = fr::SceneManager::GetSceneData()->AddUniqueTexture(newTexture);
+			}
+			SEAssert(!foundExistingTexture, "Found an existing texture, this should not be possible due to the local mutex");
+
+			if (initialData)
+			{
+				newTexture->m_initialData = std::move(initialData);
+			}
+
+			// Register new Textures with the RenderManager, so their API-level objects are created before use
 			re::RenderManager::Get()->RegisterForCreate(newTexture);
 		}
 
@@ -86,17 +150,14 @@ namespace re
 
 
 	Texture::Texture(
-		string const& name, 
-		TextureParams const& params, 
-		bool doFill, 
-		glm::vec4 const& fillColor, 
-		std::vector<ImageDataUniquePtr> initialData /*= std::vector<ImageDataUniquePtr>()*/)
+		string const& name,
+		TextureParams const& params)
 		: NamedObject(name)
-		, m_texParams{ params }
-		, m_platformParams{ nullptr }
-		, m_initialData(std::move(initialData))
+		, m_texParams(params)
+		, m_platformParams(nullptr)
+		, m_initialData(nullptr)
 		, m_numMips(ComputeNumMips(params))
-		, m_numSubresources(m_numMips * params.m_faces)
+		, m_numSubresources(m_numMips* params.m_faces)
 	{
 		SEAssert(m_texParams.m_usage != Texture::Usage::Invalid, "Invalid usage");
 		SEAssert(m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid, "Invalid dimension");
@@ -107,35 +168,12 @@ namespace re
 			"Cubemap textures must have exactly 6 faces");
 
 		platform::Texture::CreatePlatformParams(*this);
-
-		if (m_texParams.m_usage & Usage::Color) // Optimization: Only fill cpu-side texels for non-target types
-		{
-			if (doFill) // Optimization: Only fill the texture if necessary
-			{
-				SEAssert(m_initialData.empty(), "Why are we filling a new texture that also has initial data?");
-				
-				const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
-				const uint32_t totalBytesPerFace = params.m_width * params.m_height * bytesPerPixel;
-
-				m_initialData.resize(params.m_faces);
-
-				for (size_t faceIdx = 0; faceIdx < params.m_faces; faceIdx++)
-				{
-					m_initialData[faceIdx] = std::move(re::Texture::ImageDataUniquePtr(
-						new uint8_t[totalBytesPerFace],
-						[](void* imageData) { delete[] imageData; }));
-				}
-
-				// Fill our newly allocated pixels with color data:
-				Fill(fillColor);
-			}
-		}
 	}
 
 
 	Texture::~Texture()
 	{
-		m_initialData.clear();
+		m_initialData = nullptr;
 
 		platform::Texture::Destroy(*this);
 
@@ -157,31 +195,35 @@ namespace re
 
 	bool Texture::HasInitialData() const
 	{
-		return !m_initialData.empty();
+		return m_initialData && m_initialData->HasData();
 	}
 
 
 	void* Texture::GetTexelData(uint8_t faceIdx) const
 	{
-		if (m_initialData.empty())
+		if (!m_initialData->HasData())
 		{
 			return nullptr;
 		}
-		return m_initialData[faceIdx].get();
+		return m_initialData->GetDataBytes(faceIdx);
 	}
 
 
 	void Texture::ClearTexelData()
 	{
-		m_initialData.clear();
+		if (m_initialData)
+		{
+			m_initialData->Clear();
+		}
+		m_initialData = nullptr;
 	}
 
 
-	void Texture::SetTexel(uint32_t face, uint32_t u, uint32_t v, glm::vec4 value)
+	void Texture::SetTexel(uint32_t faceIdx, uint32_t u, uint32_t v, glm::vec4 value)
 	{
 		// Note: If texture has < 4 channels, the corresponding channels in value are ignored
 
-		SEAssert(!m_initialData.empty() && face < m_initialData.size(),
+		SEAssert(m_initialData->HasData() && faceIdx < m_initialData->NumFaces(),
 			"There are no texels. Texels are only allocated for non-target textures");
 
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
@@ -198,7 +240,7 @@ namespace re
 			value.w >= 0.f && value.w <= 1.f,
 			"Pixel value is not normalized");
 
-		uint8_t* dataPtr = static_cast<uint8_t*>(GetTexelData(face));
+		uint8_t* dataPtr = static_cast<uint8_t*>(GetTexelData(faceIdx));
 
 		// Reinterpret the value:
 		void* const valuePtr = &value.x;
@@ -218,6 +260,11 @@ namespace re
 		case re::Texture::Format::R32F:
 		{
 			*static_cast<float*>(pixelPtr) = *static_cast<float*>(valuePtr);
+		}
+		break;
+		case re::Texture::Format::R32_UINT:
+		{
+			*static_cast<uint32_t*>(pixelPtr) = *static_cast<uint32_t*>(valuePtr);
 		}
 		break;
 		case re::Texture::Format::RGBA16F:
@@ -247,7 +294,12 @@ namespace re
 			}
 		}
 		break;
-		case re::Texture::Format::RGBA8:
+		case re::Texture::Format::R16_UNORM:
+		{
+			*static_cast<uint16_t*>(pixelPtr) = *static_cast<uint16_t*>(valuePtr);
+		}
+		break;
+		case re::Texture::Format::RGBA8_UNORM:
 		{
 			for (uint8_t i = 0; i < 4; i++)
 			{
@@ -258,7 +310,7 @@ namespace re
 			}
 		}
 		break;
-		case re::Texture::Format::RG8:
+		case re::Texture::Format::RG8_UNORM:
 		{
 			for (uint8_t i = 0; i < 2; i++)
 			{
@@ -267,7 +319,7 @@ namespace re
 			}
 		}
 		break;
-		case re::Texture::Format::R8:
+		case re::Texture::Format::R8_UNORM:
 		{
 			const uint8_t channelValue = (uint8_t)(value[0] * 255.0f);
 			*(static_cast<uint8_t*>(pixelPtr)) = channelValue;
@@ -287,7 +339,7 @@ namespace re
 
 	void re::Texture::Fill(vec4 solidColor)
 	{
-		SEAssert(!m_initialData.empty(), "There are no texels. Texels are only allocated for non-target textures");
+		SEAssert(m_initialData->HasData(), "There are no texels. Texels are only allocated for non-target textures");
 
 		for (uint32_t face = 0; face < m_texParams.m_faces; face++)
 		{
@@ -352,19 +404,21 @@ namespace re
 		}
 		break;
 		case re::Texture::Format::R32F:
+		case re::Texture::Format::R32_UINT:
 		case re::Texture::Format::RG16F:
-		case re::Texture::Format::RGBA8:
+		case re::Texture::Format::RGBA8_UNORM:
 		{
 			return 4;
 		}
 		break;
 		case re::Texture::Format::R16F:
-		case re::Texture::Format::RG8:
+		case re::Texture::Format::R16_UNORM:
+		case re::Texture::Format::RG8_UNORM:
 		{
 			return 2;
 		}
 		break;
-		case re::Texture::Format::R8:
+		case re::Texture::Format::R8_UNORM:
 		{
 			return 1;
 		}
@@ -387,21 +441,23 @@ namespace re
 		{
 		case re::Texture::Format::RGBA32F:
 		case re::Texture::Format::RGBA16F:
-		case re::Texture::Format::RGBA8:
+		case re::Texture::Format::RGBA8_UNORM:
 		{
 			return 4;
 		}
 		break;
 		case re::Texture::Format::RG32F:
 		case re::Texture::Format::RG16F:
-		case re::Texture::Format::RG8:
+		case re::Texture::Format::RG8_UNORM:
 		{
 			return 2;
 		}
 		break;
 		case re::Texture::Format::R32F:
+		case re::Texture::Format::R32_UINT:
 		case re::Texture::Format::R16F:
-		case re::Texture::Format::R8:
+		case re::Texture::Format::R16_UNORM:
+		case re::Texture::Format::R8_UNORM:
 		{
 			return 1;
 		}
@@ -414,6 +470,85 @@ namespace re
 		}
 		}
 	}
+
+
+	// ---
+
+	Texture::InitialDataSTBIImage::InitialDataSTBIImage(std::vector<ImageDataUniquePtr>&& initialData)
+	{
+		m_data = std::move(initialData);
+	}
+
+
+	void Texture::InitialDataSTBIImage::Resize(uint8_t numFaces, uint32_t bytesPerFace)
+	{
+		SEAssertF("Cannot resize initial data loaded from STBIImage");
+	}
+
+
+	bool Texture::InitialDataSTBIImage::HasData() const 
+	{
+		return !m_data.empty();
+	}
+
+
+	uint8_t Texture::InitialDataSTBIImage::NumFaces() const
+	{
+		return static_cast<uint8_t>(m_data.size());
+	}
+
+
+	void* Texture::InitialDataSTBIImage::GetDataBytes(uint8_t faceIdx)
+	{
+		SEAssert(faceIdx < m_data.size(), "Face index OOB");
+		return m_data[faceIdx].get();
+	}
+	
+
+	void Texture::InitialDataSTBIImage::Clear()
+	{
+		m_data.clear();
+	}
+
+
+	// ---
+
+
+	Texture::InitialDataVec::InitialDataVec(std::vector<std::vector<uint8_t>> initialData) { m_data = std::move(initialData); }
+
+	void Texture::InitialDataVec::Resize(uint8_t numFaces, uint32_t bytesPerFace)
+	{
+		SEAssert(numFaces == 1 || numFaces == 6, "Invalid face count");
+		m_data.resize(numFaces, std::vector<uint8_t>(bytesPerFace));
+	}
+
+
+	bool Texture::InitialDataVec::HasData() const
+	{
+		return !m_data.empty();
+	}
+
+
+	uint8_t Texture::InitialDataVec::NumFaces() const
+	{
+		return static_cast<uint8_t>(m_data.size());
+	}
+
+
+	void* Texture::InitialDataVec::GetDataBytes(uint8_t faceIdx)
+	{
+		SEAssert(faceIdx < m_data.size(), "Face index OOB");
+		return m_data[faceIdx].data();
+	}
+
+
+	void Texture::InitialDataVec::Clear()
+	{
+		m_data.clear();
+	}
+
+
+	// ---
 
 
 	void Texture::ShowImGuiWindow() const

@@ -209,6 +209,7 @@ layout(std430, binding=5) uniform AmbientLightParams
 {
 	// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
 	vec4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
+	vec4 g_ssaoTexDims; // .xyzw = width, height, 1/width, 1/height
 };
 
 

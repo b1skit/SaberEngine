@@ -13,6 +13,7 @@ namespace re
 namespace gr
 {
 	class ShadowsGraphicsSystem;
+	class XeGTAOGraphicsSystem;
 
 
 	class DeferredLightingGraphicsSystem final : public virtual GraphicsSystem
@@ -47,6 +48,8 @@ namespace gr
 		std::shared_ptr<re::RenderStage> m_directionalStage;
 
 		std::shared_ptr<re::RenderStage> m_pointStage;
+
+		XeGTAOGraphicsSystem* m_AOGS;
 
 
 	private:

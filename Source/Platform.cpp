@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Config.h"
 #include "Assert.h"
+#include "Config.h"
 #include "Platform.h"
 
 #include "Context_DX12.h"
@@ -56,19 +56,17 @@
 #include "Window_Platform.h"
 #include "Window_Win32.h"
 
-using en::Config;
-
 
 namespace platform
 {
 	// Bind API-specific strategy implementations:
 	bool RegisterPlatformFunctions()
 	{
-		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
 
 		LOG("Configuring API-specific platform bindings...");
 
-		bool result = false;
+		bool result = true;
 
 		// OS-Specific bindings (For now, we only support Windows):
 		/*********************************************************/
@@ -134,8 +132,6 @@ namespace platform
 			// Vertex stream:
 			platform::VertexStream::CreatePlatformParams	= &opengl::VertexStream::CreatePlatformParams;
 			platform::VertexStream::Destroy					= &opengl::VertexStream::Destroy;
-
-			result = true;
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -183,8 +179,6 @@ namespace platform
 			// Vertex stream:
 			platform::VertexStream::CreatePlatformParams	= &dx12::VertexStream::CreatePlatformParams;
 			platform::VertexStream::Destroy					= &dx12::VertexStream::Destroy;
-
-			result = true;
 		}
 		break;
 		default:

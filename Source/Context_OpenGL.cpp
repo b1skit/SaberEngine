@@ -264,10 +264,14 @@ namespace opengl
 			// All debug levels get all high severity messages
 			glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH, 0, NULL, true);
 
+			LOG("Debug level %d: Enabled OpenGL high severity messages", debugLevel);
+
 			// Debug levels 2+ get medium severity messages
 			if (debugLevel >= 2)
 			{
 				glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, NULL, true);				
+
+				LOG("Debug level %d: Enabled OpenGL medium severity messages", debugLevel);
 			}
 
 			// Debug levels 3+ get low and notification severity messages
@@ -283,6 +287,8 @@ namespace opengl
 				glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_PERFORMANCE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, true);
 				glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_MARKER, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, true);
 				glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_OTHER, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, true);
+
+				LOG("Debug level %d: Enabled OpenGL low & notification severity messages", debugLevel);
 			}
 
 			// Configure OpenGL logging:

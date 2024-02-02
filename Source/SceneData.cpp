@@ -132,7 +132,7 @@ namespace
 			}
 			else
 			{
-				tex = re::Texture::Create(fallbackName, colorTexParams, true, colorFallback);
+				tex = re::Texture::Create(fallbackName, colorTexParams, colorFallback);
 			}			
 		}
 
@@ -231,7 +231,7 @@ namespace
 							sceneRootPath,
 							material->pbr_metallic_roughness.base_color_texture.texture,
 							missingTextureColor,
-							re::Texture::Format::RGBA8,
+							re::Texture::Format::RGBA8_UNORM,
 							re::Texture::ColorSpace::sRGB));
 						}));
 
@@ -243,7 +243,7 @@ namespace
 							sceneRootPath,
 							material->pbr_metallic_roughness.metallic_roughness_texture.texture,
 							missingTextureColor,
-							re::Texture::Format::RGBA8,
+							re::Texture::Format::RGBA8_UNORM,
 							re::Texture::ColorSpace::Linear));
 						}));
 
@@ -255,7 +255,7 @@ namespace
 							sceneRootPath,
 							material->normal_texture.texture,
 							glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-							re::Texture::Format::RGBA8,
+							re::Texture::Format::RGBA8_UNORM,
 							re::Texture::ColorSpace::Linear));
 						}));
 
@@ -267,7 +267,7 @@ namespace
 							sceneRootPath,
 							material->occlusion_texture.texture,
 							missingTextureColor,	// Completely unoccluded
-							re::Texture::Format::RGBA8,
+							re::Texture::Format::RGBA8_UNORM,
 							re::Texture::ColorSpace::Linear));
 						}));
 
@@ -279,7 +279,7 @@ namespace
 							sceneRootPath,
 							material->emissive_texture.texture,
 							missingTextureColor,
-							re::Texture::Format::RGBA8,
+							re::Texture::Format::RGBA8_UNORM,
 							re::Texture::ColorSpace::sRGB)); // GLTF convention: Must be converted to linear before use
 						}));
 

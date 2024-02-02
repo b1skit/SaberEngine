@@ -3,6 +3,7 @@
 #include "Assert.h"
 #include "Debug_DX12.h"
 #include "GraphicsSystem_Bloom.h"
+#include "GraphicsSystem_XeGTAO.h"
 #include "GraphicsSystem_ComputeMips.h"
 #include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_Debug.h"
@@ -56,32 +57,23 @@ namespace dx12
 			// Create and add graphics systems:
 			graphicsSystems.emplace_back(std::make_shared<gr::CullingGraphicsSystem>(&gsm));
 
-			std::shared_ptr<gr::ComputeMipsGraphicsSystem> computeMipsGS = 
-				std::make_shared<gr::ComputeMipsGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(computeMipsGS);
+			graphicsSystems.emplace_back(std::make_shared<gr::ComputeMipsGraphicsSystem>(&gsm));
 
-			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = std::make_shared<gr::GBufferGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(gbufferGS);
+			graphicsSystems.emplace_back(std::make_shared<gr::GBufferGraphicsSystem>(&gsm));
 
-			std::shared_ptr<gr::ShadowsGraphicsSystem> shadowGS = std::make_shared<gr::ShadowsGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(shadowGS);
+			graphicsSystems.emplace_back(std::make_shared<gr::XeGTAOGraphicsSystem>(&gsm));
 
-			std::shared_ptr<gr::DeferredLightingGraphicsSystem> deferredLightingGS =
-				std::make_shared<gr::DeferredLightingGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(deferredLightingGS);
+			graphicsSystems.emplace_back(std::make_shared<gr::ShadowsGraphicsSystem>(&gsm));
 
-			std::shared_ptr<gr::SkyboxGraphicsSystem> skyboxGS = std::make_shared<gr::SkyboxGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(skyboxGS);
+			graphicsSystems.emplace_back(std::make_shared<gr::DeferredLightingGraphicsSystem>(&gsm));
 
-			std::shared_ptr<gr::BloomGraphicsSystem> bloomGS = std::make_shared<gr::BloomGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(bloomGS);
+			graphicsSystems.emplace_back(std::make_shared<gr::SkyboxGraphicsSystem>(&gsm));
 
-			std::shared_ptr<gr::TonemappingGraphicsSystem> tonemappingGS = 
-				std::make_shared<gr::TonemappingGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(tonemappingGS);
+			graphicsSystems.emplace_back(std::make_shared<gr::BloomGraphicsSystem>(&gsm));
 
-			std::shared_ptr<gr::DebugGraphicsSystem> debugGS = std::make_shared<gr::DebugGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(debugGS);
+			graphicsSystems.emplace_back(std::make_shared<gr::TonemappingGraphicsSystem>(&gsm));
+
+			graphicsSystems.emplace_back(std::make_shared<gr::DebugGraphicsSystem>(&gsm));
 		};
 		defaultRenderSystem->SetInitializePipeline(DefaultRenderSystemInititialzePipeline);
 
@@ -95,6 +87,7 @@ namespace dx12
 			gr::CullingGraphicsSystem* cullingGS = gsm.GetGraphicsSystem<gr::CullingGraphicsSystem>();
 			gr::ComputeMipsGraphicsSystem* computeMipsGS = gsm.GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
 			gr::GBufferGraphicsSystem* gbufferGS = gsm.GetGraphicsSystem<gr::GBufferGraphicsSystem>();
+			gr::XeGTAOGraphicsSystem* XeGTAOGS = gsm.GetGraphicsSystem<gr::XeGTAOGraphicsSystem>();
 			gr::ShadowsGraphicsSystem* shadowGS = gsm.GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
 			gr::DeferredLightingGraphicsSystem* deferredLightingGS = gsm.GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
 			gr::SkyboxGraphicsSystem* skyboxGS = gsm.GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
@@ -110,6 +103,7 @@ namespace dx12
 			deferredLightingGS->CreateResourceGenerationStages(
 				defaultRS->GetRenderPipeline().AddNewStagePipeline("Deferred Lighting Resource Creation"));
 			gbufferGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(gbufferGS->GetName()));
+			XeGTAOGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(XeGTAOGS->GetName()));
 			shadowGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(shadowGS->GetName()));
 			deferredLightingGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(deferredLightingGS->GetName()));
 			skyboxGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(skyboxGS->GetName()));
@@ -129,6 +123,7 @@ namespace dx12
 			gr::CullingGraphicsSystem* cullingGS = gsm.GetGraphicsSystem<gr::CullingGraphicsSystem>();
 			gr::ComputeMipsGraphicsSystem* computeMipsGS = gsm.GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
 			gr::GBufferGraphicsSystem* gbufferGS = gsm.GetGraphicsSystem<gr::GBufferGraphicsSystem>();
+			gr::XeGTAOGraphicsSystem* XeGTAOGS = gsm.GetGraphicsSystem<gr::XeGTAOGraphicsSystem>();
 			gr::ShadowsGraphicsSystem* shadowGS = gsm.GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
 			gr::DeferredLightingGraphicsSystem* deferredLightingGS = gsm.GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
 			gr::SkyboxGraphicsSystem* skyboxGS = gsm.GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
@@ -142,6 +137,7 @@ namespace dx12
 			cullingGS->PreRender();
 			computeMipsGS->PreRender();
 			gbufferGS->PreRender();
+			XeGTAOGS->PreRender();
 			shadowGS->PreRender();
 			deferredLightingGS->PreRender();
 			skyboxGS->PreRender();
@@ -248,7 +244,8 @@ namespace dx12
 
 							// Pre-create PSOs for stage shaders, as we're guaranteed to need them (Remaining PSOs are
 							// lazily-created on demand)
-							if (renderStage->GetStageShader()->GetNameID() == shader->GetNameID())
+							re::Shader* stageShader = renderStage->GetStageShader();
+							if (stageShader && stageShader->GetNameID() == shader->GetNameID())
 							{
 								std::shared_ptr<re::TextureTargetSet const> stageTargets = 
 									renderStage->GetTextureTargetSet();

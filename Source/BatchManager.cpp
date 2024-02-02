@@ -212,15 +212,15 @@ namespace gr
 		const bool mustReallocateTransformPB = m_instancedTransforms != nullptr && 
 			m_instancedTransforms->GetNumElements() < m_instancedTransformIndexes.size();
 
-		if (mustReallocateTransformPB || m_instancedTransforms == nullptr)
-		{
-			const uint32_t requestedPBElements = util::RoundUpToNearestMultiple(
-				util::CheckedCast<uint32_t>(m_instancedTransformIndexes.size()),
-				k_numBlocksPerAllocation);
+		const uint32_t requestedTransformPBElements = util::RoundUpToNearestMultiple(
+			util::CheckedCast<uint32_t>(m_instancedTransformIndexes.size()),
+			k_numBlocksPerAllocation);
 
+		if ((mustReallocateTransformPB || m_instancedTransforms == nullptr) && requestedTransformPBElements > 0)
+		{
 			m_instancedTransforms = CreateInstancedParameterBlock<gr::Transform::InstancedTransformParams>(
 				gr::Transform::InstancedTransformParams::s_shaderName,
-				requestedPBElements);
+				requestedTransformPBElements);
 
 			// If we reallocated, re-copy all of the data to the new parameter block
 			if (mustReallocateTransformPB)
@@ -248,15 +248,15 @@ namespace gr
 		const bool mustReallocateMaterialPB = m_instancedMaterials != nullptr &&
 			m_instancedMaterials->GetNumElements() < m_instancedMaterialIndexes.size();
 
-		if (mustReallocateMaterialPB || m_instancedMaterials == nullptr)
-		{
-			const uint32_t requestedPBElements = util::RoundUpToNearestMultiple(
-				util::CheckedCast<uint32_t>(m_instancedMaterialIndexes.size()),
-				k_numBlocksPerAllocation);
+		const uint32_t requestedMaterialPBElements = util::RoundUpToNearestMultiple(
+			util::CheckedCast<uint32_t>(m_instancedMaterialIndexes.size()),
+			k_numBlocksPerAllocation);
 
+		if ((mustReallocateMaterialPB || m_instancedMaterials == nullptr) && requestedMaterialPBElements > 0)
+		{
 			m_instancedMaterials = CreateInstancedParameterBlock<gr::Material_GLTF::InstancedPBRMetallicRoughnessParams>(
 				gr::Material_GLTF::InstancedPBRMetallicRoughnessParams::s_shaderName,
-				requestedPBElements);
+				requestedMaterialPBElements);
 
 			if (mustReallocateMaterialPB)
 			{

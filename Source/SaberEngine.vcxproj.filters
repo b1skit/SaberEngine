@@ -114,6 +114,12 @@
     <Filter Include="Source Files\fr\Concepts">
       <UniqueIdentifier>{3d2704dd-39de-409e-aaf3-57aa4f15dd86}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shaders\HLSL\Libraries">
+      <UniqueIdentifier>{9b586b40-1999-428e-b7ce-444f35713bf3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shaders\HLSL\Libraries\XeGTAO">
+      <UniqueIdentifier>{bf3c5b42-9f10-4cc4-a2cf-63169416dfde}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -502,6 +508,9 @@
     </ClCompile>
     <ClCompile Include="MaterialInstanceComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSystem_XeGTAO.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -958,6 +967,9 @@
     <ClInclude Include="MaterialInstanceComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsSystem_XeGTAO.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\GLSL\DeferredAmbientLight.frag">
@@ -1104,6 +1116,12 @@
     <None Include="packages.config">
       <Filter>Dependencies\Resources</Filter>
     </None>
+    <None Include="Dependencies\XeGTAO\XeGTAO.hlsli">
+      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </None>
+    <None Include="Shaders\HLSL\XeGTAOCommon.hlsli">
+      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">
@@ -1192,6 +1210,15 @@
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Line_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\XeGTAO_Denoise_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\XeGTAO_PrefilterDepths_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

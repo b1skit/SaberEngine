@@ -32,7 +32,7 @@ namespace re
 			Clear, // Graphics queue
 
 			Invalid
-			// TODO: Add specialist types: Fullscreen, Parent, Clear etc
+			// TODO: Add specialist types: Fullscreen, etc
 		};
 		struct IStageParams
 		{
@@ -139,7 +139,7 @@ namespace re
 		void ValidateTexturesAndTargets();
 		
 
-	private:
+	protected:
 		const Type m_type;
 		const Lifetime m_lifetime;
 		std::unique_ptr<IStageParams> m_stageParams;
@@ -152,7 +152,7 @@ namespace re
 
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_singleFrameParamBlocks; // Cleared every frame
 
-		std::vector<std::shared_ptr<re::ParameterBlock >> m_permanentParamBlocks;
+		std::vector<std::shared_ptr<re::ParameterBlock>> m_permanentParamBlocks;
 
 		std::vector<re::Batch> m_stageBatches;
 		uint32_t m_batchFilterBitmask;
@@ -166,6 +166,9 @@ namespace re
 	};
 
 
+	//---
+
+
 	class ParentStage final : public virtual RenderStage
 	{
 	public:
@@ -175,6 +178,9 @@ namespace re
 		ParentStage(std::string const& name, Lifetime);
 		friend class RenderStage;
 	};
+
+
+	//---
 
 
 	class ComputeStage final : public virtual RenderStage
@@ -188,6 +194,9 @@ namespace re
 	};
 
 
+	//---
+
+
 	class ClearStage final : public virtual RenderStage
 	{
 	public:
@@ -197,6 +206,9 @@ namespace re
 		ClearStage(std::string const& name, Lifetime);
 		friend class RenderStage;
 	};
+
+
+	//---
 
 
 	inline RenderStage::Type RenderStage::GetStageType() const

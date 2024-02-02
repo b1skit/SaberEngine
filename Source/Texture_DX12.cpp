@@ -698,6 +698,11 @@ namespace dx12
 				return DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT;
 			}
 			break;
+			case re::Texture::Format::R32_UINT:
+			{
+				return DXGI_FORMAT::DXGI_FORMAT_R32_UINT;
+			}
+			break;
 			case re::Texture::Format::RGBA16F: // 16 bits per channel x N channels
 			{
 				return DXGI_FORMAT::DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -713,20 +718,30 @@ namespace dx12
 				return DXGI_FORMAT::DXGI_FORMAT_R16_FLOAT;
 			}
 			break;
-			case re::Texture::Format::RGBA8: // 8 bits per channel x N channels
+			case re::Texture::Format::R16_UNORM:
+			{
+				return DXGI_FORMAT::DXGI_FORMAT_R16_UNORM;
+			}
+			break;
+			case re::Texture::Format::RGBA8_UNORM: // 8 bits per channel x N channels
 			{
 				return texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ?
 					DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM;
 			}
 			break;
-			case re::Texture::Format::RG8:
+			case re::Texture::Format::RG8_UNORM:
 			{
 				return DXGI_FORMAT::DXGI_FORMAT_R8G8_UNORM;
 			}
 			break;
-			case re::Texture::Format::R8:
+			case re::Texture::Format::R8_UNORM:
 			{
 				return DXGI_FORMAT::DXGI_FORMAT_R8_UNORM;
+			}
+			break;
+			case re::Texture::Format::R8_UINT:
+			{
+				return DXGI_FORMAT::DXGI_FORMAT_R8_UINT;
 			}
 			break;
 			case re::Texture::Format::Depth32F:
@@ -930,7 +945,6 @@ namespace dx12
 	std::shared_ptr<re::Texture> Texture::CreateFromExistingResource(
 		std::string const& name, 
 		re::Texture::TextureParams const& params, 
-		bool doClear, 
 		Microsoft::WRL::ComPtr<ID3D12Resource> textureResource)
 	{
 		SEAssert((params.m_usage & re::Texture::Usage::SwapchainColorProxy),
@@ -938,7 +952,7 @@ namespace dx12
 
 		// Note: re::Texture::Create will enroll the texture in API object creation, and eventually call the standard 
 		// dx12::Texture::Create above
-		std::shared_ptr<re::Texture> newTexture = re::Texture::Create(name, params, doClear);
+		std::shared_ptr<re::Texture> newTexture = re::Texture::Create(name, params);
 
 		dx12::Texture::PlatformParams* texPlatParams = 
 			newTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();

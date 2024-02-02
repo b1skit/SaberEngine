@@ -54,7 +54,7 @@ namespace dx12
 		colorParams.m_faces = 1;
 		colorParams.m_usage = re::Texture::Usage::SwapchainColorProxy;
 		colorParams.m_dimension = re::Texture::Dimension::Texture2D;
-		colorParams.m_format = re::Texture::Format::RGBA8;
+		colorParams.m_format = re::Texture::Format::RGBA8_UNORM;
 		colorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		colorParams.m_mipMode = re::Texture::MipMode::None;
 		colorParams.m_addToSceneData = false;
@@ -119,7 +119,7 @@ namespace dx12
 		depthParams.m_addToSceneData = false;
 		depthParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane
 
-		std::shared_ptr<re::Texture> depthTargetTex = re::Texture::Create("SwapChainDepthTarget", depthParams, false);
+		std::shared_ptr<re::Texture> depthTargetTex = re::Texture::Create("SwapChainDepthTarget", depthParams);
 
 		re::TextureTarget::TargetParams depthTargetParams;
 
@@ -143,7 +143,6 @@ namespace dx12
 			std::shared_ptr<re::Texture> colorTargetTex = dx12::Texture::CreateFromExistingResource(
 				"SwapChainColorTarget_" + std::to_string(backbufferIdx), 
 				colorParams, 
-				false, 
 				backbufferResource);
 
 			re::TextureTarget::TargetParams targetParams;

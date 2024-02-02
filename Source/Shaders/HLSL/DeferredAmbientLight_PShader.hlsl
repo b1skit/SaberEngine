@@ -7,13 +7,30 @@
 #include "Transformations.hlsli"
 #include "UVUtils.hlsli"
 
+Texture2D<uint> SSAOTex;
 
 struct AmbientLightParamsCB
 {
 	// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
 	float4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
+	float4 g_ssaoTexDims; // .xyzw = width, height, 1/width, 1/height
 };
 ConstantBuffer<AmbientLightParamsCB> AmbientLightParams;
+
+
+// Combine AO terms: fineAO = from GBuffer textures, coarseAO = SSAO
+float CombineAO(float fineAO, float coarseAO)
+{
+	return min(fineAO, coarseAO);
+}
+
+
+float GetSSAO(float2 screenUV, uint2 screenPxDims)
+{
+	const uint3 coords = uint3(screenUV * screenPxDims, 0);
+	
+	return SSAOTex.Load(coords).r / 255.0f; // SSAOTex is uint
+}
 
 
 // Compute diffuse AO factor
@@ -159,7 +176,11 @@ float4 PShader(VertexOut In) : SV_Target
 	const float remappedRoughness = RemapRoughness(linearRoughness);
 		
 	const float3 diffuseIlluminance = GetDiffuseIBLContribution(N, V, NoV, remappedRoughness);
-	const float diffuseAO = ComputeDiffuseAO(gbuffer.AO);
+	
+	const float ssao = GetSSAO(In.UV0, AmbientLightParams.g_ssaoTexDims.xy);
+	const float combinedAO = CombineAO(gbuffer.AO, ssao);
+	
+	const float diffuseAO = combinedAO;
 	
 	const float3 dielectricSpecular = gbuffer.MatProp0.rgb;
 	const float3 blendedF0 = ComputeBlendedF0(dielectricSpecular, gbuffer.LinearAlbedo, gbuffer.LinearMetalness);
@@ -168,11 +189,12 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	const float3 R = reflect(-V, N);
 	
-	const float3 specularIlluminance = 
+	const float3 specularIlluminance =
 		GetSpecularIBLContribution(N, R, V, NoV, linearRoughness, remappedRoughness, blendedF0);
-	const float specularAO = ComputeSpecularAO(NoV, remappedRoughness, gbuffer.AO);
+
+	const float specularAO = ComputeSpecularAO(NoV, remappedRoughness, combinedAO);
 	
-	const float3 combinedContribution = 
+	const float3 combinedContribution =
 		(diffuseColor * diffuseIlluminance * diffuseAO) + (specularIlluminance * specularAO);
 	// Note: We're omitting the pi term in the albedo
 	

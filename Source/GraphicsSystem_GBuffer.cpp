@@ -67,7 +67,7 @@ namespace gr
 		gBufferColorParams.m_faces = 1;
 		gBufferColorParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
 		gBufferColorParams.m_dimension = re::Texture::Dimension::Texture2D;
-		gBufferColorParams.m_format = re::Texture::Format::RGBA8;
+		gBufferColorParams.m_format = re::Texture::Format::RGBA8_UNORM;
 		gBufferColorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		gBufferColorParams.m_addToSceneData = false;
 		gBufferColorParams.m_mipMode = re::Texture::MipMode::None;
@@ -86,12 +86,12 @@ namespace gr
 			if (i == GBufferWNormal || i == GBufferEmissive)
 			{
 				gBufferTargets->SetColorTarget(
-					i, re::Texture::Create(GBufferTexNames[i], gbuffer16bitParams, false), gbufferTargetParams);
+					i, re::Texture::Create(GBufferTexNames[i], gbuffer16bitParams), gbufferTargetParams);
 			}
 			else
 			{
 				gBufferTargets->SetColorTarget(
-					i, re::Texture::Create(GBufferTexNames[i], gBufferColorParams, false), gbufferTargetParams);
+					i, re::Texture::Create(GBufferTexNames[i], gBufferColorParams), gbufferTargetParams);
 			}
 		}
 		
@@ -106,7 +106,7 @@ namespace gr
 		depthTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
 
 		gBufferTargets->SetDepthStencilTarget(
-			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams, false),
+			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams),
 			depthTargetParams);
 
 		const re::TextureTarget::TargetParams::BlendModes gbufferBlendModes

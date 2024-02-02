@@ -23,30 +23,10 @@
 
 using Microsoft::WRL::ComPtr;
 
-//#define DEBUG_RESOURCE_TRANSITIONS
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
-
-// Enable one or the other:
-//#define FILTER_CMD_LIST_BY_EXCLUSION
-#define FILTER_CMD_LIST_BY_INCLUSION
-
-#if defined(FILTER_CMD_LIST_BY_EXCLUSION)
-constexpr char const* k_excludedNameSubstrings[] = { "Vertex" }; // Case sensitive: Exclude output with these substrings
-#define FILTER_NAMES k_excludedNameSubstrings
-
-#elif defined(FILTER_CMD_LIST_BY_INCLUSION)
-constexpr char const* k_showOnlyNameSubstrings[] = { "BRDFIntegrationMap" }; // Case sensitive: Only show output with these substrings
-#define FILTER_NAMES k_showOnlyNameSubstrings
-
-#endif //FILTER_CMD_LIST_BY_EXCLUSION / FILTER_CMD_LIST_BY_INCLUSION
-
-#endif // DEBUG_RESOURCE_TRANSITIONS
-
-
 
 namespace
 {
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_CMD_LIST_RESOURCE_TRANSITIONS)
 	void DebugResourceTransitions(
 		dx12::CommandList const& cmdList,
 		char const* resourceName,
@@ -59,20 +39,10 @@ namespace
 		const bool isSkipping = !isPending && (fromState == toState);
 	
 		// Cut down on log spam by filtering output containing keyword substrings
-#if defined(FILTER_CMD_LIST_BY_EXCLUSION) || defined(FILTER_CMD_LIST_BY_INCLUSION)
-		constexpr size_t k_numExcludedSubstrings = sizeof(FILTER_NAMES) / sizeof(FILTER_NAMES[0]);
-		for (size_t i = 0; i < k_numExcludedSubstrings; i++)
+		if (ShouldSkipDebugOutput(resourceName))
 		{
-#if defined(FILTER_CMD_LIST_BY_EXCLUSION)
-			if (strstr(resourceName, FILTER_NAMES[i]) != nullptr)
-#else
-			if (strstr(resourceName, FILTER_NAMES[i]) == nullptr)
-#endif
-			{
-				return;
-			}
+			return;
 		}
-#endif
 
 		std::string const& debugStr = std::format("{}: Texture \"{}\", mip {}\n{}{} -> {}",
 			dx12::GetDebugName(cmdList.GetD3DCommandList()).c_str(),
@@ -701,23 +671,12 @@ namespace dx12
 		SEAssert(m_type == CommandListType::Compute, "This function should only be called from compute command lists");
 		SEAssert(m_currentPSO, "Pipeline is not currently set");
 
-		// Track the D3D resources we've seen during this call, to help us decide whether to insert a UAV barrier or 
-		// not. We search in reverse order because it seems more natural that the same resource would be attached in
-		// sequence, but this is just an assumption. The search is likely to be very short either way
-		std::vector<ID3D12Resource*> seenResources;
+		// Track the D3D resources we've seen during this call, to help us decide whether to insert a UAV barrier or not
+		std::unordered_set<ID3D12Resource const*> seenResources;
 		seenResources.reserve(textureTargetSet.GetNumColorTargets());
 		auto ResourceWasTransitionedInThisCall = [&seenResources](ID3D12Resource const* newResource) -> bool
 		{
-			std::vector<ID3D12Resource*>::iterator itr = seenResources.end();
-			while (itr != seenResources.begin())
-			{
-				itr--; // .end() is invalid; Need to decrement first
-				if (newResource == *itr)
-				{
-					return true;
-				}
-			}
-			return false;
+			return seenResources.contains(newResource);
 		};
 
 		std::vector<re::TextureTarget> const& colorTargets = textureTargetSet.GetColorTargets();
@@ -778,7 +737,7 @@ namespace dx12
 					// barriers even when it's a different subresource that was used in a UAV operation
 					InsertUAVBarrier(colorTex);
 				}
-				seenResources.emplace_back(resource);
+				seenResources.emplace(resource);
 
 				// Insert our resource transition:
 				TransitionResource(
@@ -1041,7 +1000,7 @@ namespace dx12
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 		barriers.reserve(totalSubresources);
 
-		auto InsertBarrier = [this, &resource, &barriers, &toState](uint32_t subresourceIdx)
+		auto InsertBarrier = [this, &resource, &barriers](uint32_t subresourceIdx, D3D12_RESOURCE_STATES toState)
 			{
 				// If we've already seen this resource before, we can record the transition now (as we prepend any initial
 				// transitions when submitting the command list)	
@@ -1049,7 +1008,7 @@ namespace dx12
 				{
 					const D3D12_RESOURCE_STATES currentKnownState = m_resourceStates.GetResourceState(resource, subresourceIdx);
 
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_CMD_LIST_RESOURCE_TRANSITIONS)
 					DebugResourceTransitions(
 						*this, dx12::GetDebugName(resource).c_str(), currentKnownState, toState, subresourceIdx);
 #endif
@@ -1069,7 +1028,7 @@ namespace dx12
 							.StateAfter = toState}
 						});
 				}
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
+#if defined(DEBUG_CMD_LIST_RESOURCE_TRANSITIONS)
 				else
 				{
 					DebugResourceTransitions(
@@ -1116,30 +1075,10 @@ namespace dx12
 							continue;
 						}
 
-						const D3D12_RESOURCE_STATES fromState = pendingState.second;
-						if (fromState == toState)
-						{
-							continue;
-						}
 
 						const uint32_t pendingSubresourceIdx = pendingState.first;
 
-						barriers.emplace_back(D3D12_RESOURCE_BARRIER{
-							.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-							.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
-							.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
-								.pResource = resource,
-								.Subresource = pendingSubresourceIdx,
-								.StateBefore = fromState,
-								.StateAfter = toState}
-							});
-
-						m_resourceStates.SetResourceState(resource, toState, pendingSubresourceIdx);
-						
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
-						DebugResourceTransitions(
-							*this, dx12::GetDebugName(resource).c_str(), fromState, toState, pendingSubresourceIdx);
-#endif
+						InsertBarrier(pendingSubresourceIdx, toState);
 					}
 				}
 			}
@@ -1147,7 +1086,7 @@ namespace dx12
 			// We didn't need to process our transitions one-by-one: Submit a single ALL transition:
 			if (doTransitionAllSubresources)
 			{
-				InsertBarrier(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				InsertBarrier(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, toState);
 			}
 		}
 		else
@@ -1158,7 +1097,7 @@ namespace dx12
 				// TODO: We should be able to batch multiple transitions into a single call
 				const uint32_t subresourceIdx = (faceIdx * numMips) + targetSubresource;
 
-				InsertBarrier(subresourceIdx);
+				InsertBarrier(subresourceIdx, toState);
 			}
 		}
 
