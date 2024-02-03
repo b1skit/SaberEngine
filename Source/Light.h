@@ -55,6 +55,8 @@ namespace fr
 			{
 				re::Texture const* m_IBLTex;
 
+				float m_diffuseScale;
+				float m_specularScale;
 			};
 			struct DirectionalProperties
 			{

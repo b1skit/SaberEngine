@@ -90,6 +90,8 @@ namespace fr
 
 		m_typeProperties.m_type = Type::AmbientIBL;
 		m_typeProperties.m_ambient.m_IBLTex = iblTex;
+		m_typeProperties.m_ambient.m_diffuseScale = 1.f;
+		m_typeProperties.m_ambient.m_specularScale = 1.f;
 	}
 
 
@@ -324,6 +326,27 @@ namespace fr
 			{
 				ImGui::Indent();
 				ImGui::Text("IBL texture: \"%s\"", m_typeProperties.m_ambient.m_IBLTex->GetName().c_str());
+				
+				if (!m_typeProperties.m_diffuseEnabled)
+				{
+					ImGui::BeginDisabled();
+				}
+				m_isDirty |= ImGui::SliderFloat("Diffuse scale", &m_typeProperties.m_ambient.m_diffuseScale, 0.f, 10.f);
+				if (!m_typeProperties.m_diffuseEnabled)
+				{
+					ImGui::EndDisabled();
+				}
+
+				if (!m_typeProperties.m_specularEnabled)
+				{
+					ImGui::BeginDisabled();
+				}
+				m_isDirty |= ImGui::SliderFloat("Specular scale", &m_typeProperties.m_ambient.m_specularScale, 0.f, 10.f);
+				if (!m_typeProperties.m_specularEnabled)
+				{
+					ImGui::EndDisabled();
+				}
+				
 				ImGui::Unindent();
 			}
 		}

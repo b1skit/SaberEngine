@@ -184,8 +184,8 @@ namespace fr
 
 		renderData.m_iblTex = typeProperties.m_ambient.m_IBLTex;
 
-		renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
-		renderData.m_specularEnabled = typeProperties.m_specularEnabled;
+		renderData.m_diffuseScale = typeProperties.m_diffuseEnabled * typeProperties.m_ambient.m_diffuseScale;
+		renderData.m_specularScale = typeProperties.m_specularEnabled * typeProperties.m_ambient.m_specularScale;
 
 		return renderData;
 	}

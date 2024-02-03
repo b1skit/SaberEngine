@@ -34,9 +34,8 @@ namespace gr
 			// Ambient type data:
 			re::Texture const* m_iblTex = nullptr;
 
-			// Debug params:
-			bool m_diffuseEnabled = false;
-			bool m_specularEnabled = false;
+			float m_diffuseScale = 1.f;
+			float m_specularScale = 1.f;
 
 		public:
 			RenderDataAmbientIBL(char const* name, gr::RenderDataID, gr::TransformID);

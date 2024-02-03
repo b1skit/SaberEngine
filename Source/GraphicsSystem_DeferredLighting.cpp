@@ -641,8 +641,8 @@ namespace gr
 
 		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 			totalPMREMMipLevels,
-			static_cast<float>(ambientRenderData.m_diffuseEnabled),
-			static_cast<float>(ambientRenderData.m_specularEnabled),
+			ambientRenderData.m_diffuseScale,
+			ambientRenderData.m_specularScale,
 			ssaoTex);
 
 		m_ambientParams = re::ParameterBlock::Create(
@@ -868,12 +868,10 @@ namespace gr
 			gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
 				renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
 
-
-
 			const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 				totalPMREMMipLevels,
-				static_cast<float>(ambientRenderData.m_diffuseEnabled),
-				static_cast<float>(ambientRenderData.m_specularEnabled),
+				ambientRenderData.m_diffuseScale,
+				ambientRenderData.m_specularScale,
 				m_AOGS ? m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get() : nullptr);
 
 			m_ambientParams->Commit(ambientLightParams);
