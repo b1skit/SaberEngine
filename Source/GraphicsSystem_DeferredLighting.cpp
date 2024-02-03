@@ -5,15 +5,15 @@
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystem_XeGTAO.h"
+#include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
 #include "MeshFactory.h"
 #include "ParameterBlock.h"
 #include "Sampler.h"
-#include "SceneManager.h"
-#include "ShadowMapRenderData.h"
-#include "RenderManager.h"
-#include "RenderStage.h"
 #include "Shader.h"
+#include "ShadowMapRenderData.h"
+#include "RenderDataManager.h"
+#include "RenderStage.h"
 
 
 namespace
@@ -256,6 +256,7 @@ namespace gr
 		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 		, m_shadowGS(nullptr)
+		, m_AOGS(nullptr)
 	{
 	}
 
@@ -545,9 +546,9 @@ namespace gr
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_ambientStage = re::RenderStage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
-		m_directionalStage = re::RenderStage::CreateGraphicsStage("Keylight stage", gfxStageParams);
-		m_pointStage = re::RenderStage::CreateGraphicsStage("Pointlight stage", gfxStageParams);
 
+		m_directionalStage = re::RenderStage::CreateGraphicsStage("Directional light stage", gfxStageParams);
+		m_pointStage = re::RenderStage::CreateGraphicsStage("Point light stage", gfxStageParams);
 
 		m_shadowGS = m_graphicsSystemManager->GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
 		SEAssert(m_shadowGS != nullptr, "Shadow graphics system not found");
@@ -556,7 +557,8 @@ namespace gr
 			m_graphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
 		SEAssert(gBufferGS != nullptr, "GBuffer GS not found");
 		
-		// Create a shared lighting stage texture target:
+
+		// Create a lighting texture target:
 		re::Texture::TextureParams lightTargetTexParams;
 		lightTargetTexParams.m_width = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
 		lightTargetTexParams.m_height = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
@@ -570,47 +572,69 @@ namespace gr
 		lightTargetTexParams.m_addToSceneData = false;
 		lightTargetTexParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		std::shared_ptr<re::Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetTexParams);
+		std::shared_ptr<re::Texture> lightTargetTex = re::Texture::Create("DeferredLightTarget", lightTargetTexParams);
 
-		re::TextureTarget::TargetParams ambientTargetParams{};
-		ambientTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
-		std::shared_ptr<re::TextureTargetSet> ambientTargetSet = re::TextureTargetSet::Create("Ambient light targets");
-		ambientTargetSet->SetColorTarget(0, outputTexture, ambientTargetParams);
+
+		// Create a clear stage for the lighting target:
+		std::shared_ptr<re::TextureTargetSet> clearStageTargetSet = 
+			re::TextureTargetSet::Create("Light buffer clear stage targets");
+
+		re::TextureTarget::TargetParams clearTargetParams;
+		clearTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
+
+		clearStageTargetSet->SetColorTarget(0, lightTargetTex, clearTargetParams);
+
+		// Append a color-only clear stage to clear the lighting target:
+		re::RenderStage::ClearStageParams colorClearParams;
+		colorClearParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Enabled };
+		colorClearParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
+
+		pipeline.AppendRenderStage(re::RenderStage::CreateClearStage(colorClearParams, clearStageTargetSet));
+
+
+		// Create the lighting target set (shared by all lights/stages):
+		re::TextureTarget::TargetParams deferredTargetParams{};
+		deferredTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
 
 		// We need the depth buffer attached, but with depth writes disabled:
 		re::TextureTarget::TargetParams depthTargetParams;
 		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
 
-		ambientTargetSet->SetDepthStencilTarget(
+		std::shared_ptr<re::TextureTargetSet> deferredTargetSet = re::TextureTargetSet::Create("Deferred light targets");
+		deferredTargetSet->SetColorTarget(0, lightTargetTex, deferredTargetParams);
+
+		deferredTargetSet->SetDepthStencilTarget(
 			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 			depthTargetParams);
-		
+
 		// All deferred lighting is additive
 		re::TextureTarget::TargetParams::BlendModes deferredBlendModes
 		{
 			re::TextureTarget::TargetParams::BlendMode::One,
 			re::TextureTarget::TargetParams::BlendMode::One,
 		};
-		ambientTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
+		deferredTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
 
-		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
-		m_ambientStage->SetTextureTargetSet(ambientTargetSet);
+
+		// Ambient stage:
+		// --------------
+		m_ambientStage->SetTextureTargetSet(deferredTargetSet);
 
 		// We'll be creating the data we need to render the scene's ambient light:
 		const bool ambientIsValid = m_BRDF_integrationMap && m_IEMTex && m_PMREMTex;
 
-		re::PipelineState ambientStageParams;
+		re::PipelineState fullscreenQuadStageParams;
 
 		// Ambient/directional lights use back face culling, as they're fullscreen quads
-		ambientStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back); 
+		fullscreenQuadStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back); 
 
 		// Our fullscreen quad is on the far plane; We only want to light something if the quad is behind the geo (i.e.
 		// the quad's depth is greater than what is in the depth buffer)
-		ambientStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Greater);
+		fullscreenQuadStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Greater);
 		
 		// Ambient light stage:
 		m_ambientStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_deferredAmbientLightShaderName, ambientStageParams));
+			re::Shader::GetOrCreate(en::ShaderNames::k_deferredAmbientLightShaderName, fullscreenQuadStageParams));
 
 		m_ambientStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
@@ -652,96 +676,37 @@ namespace gr
 
 		m_ambientStage->AddPermanentParameterBlock(m_ambientParams);
 
-
-		// If we made it this far, append the ambient stage:
+		// Append the ambient stage:
 		pipeline.AppendRenderStage(m_ambientStage);
 		
 
-		re::PipelineState directionalStageParams(ambientStageParams);
+		// Directional light stage:
+		//-------------------------
+		m_directionalStage->SetTextureTargetSet(deferredTargetSet);
 
-		// Key light stage:
-		const bool hasDirectionalLight = renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>() > 0;
-		if (hasDirectionalLight)
-		{
-			SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>() == 1,
-				"We currently assume there will only be 1 directional light (even though it's not necessary to)");
+		m_directionalStage->SetStageShader(
+			re::Shader::GetOrCreate(en::ShaderNames::k_deferredDirectionalLightShaderName, fullscreenQuadStageParams));
 
-			re::TextureTarget::TargetParams directionalTargetParams;
-			directionalTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
+		m_directionalStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
-			if (!ambientIsValid) // Don't clear after 1st light
-			{
-				directionalTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
-			}
-			else
-			{
-				directionalTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
-			}
-
-			std::shared_ptr<re::TextureTargetSet> directionalTargetSet = 
-				re::TextureTargetSet::Create("Directional light targets");
-
-			directionalTargetSet->SetColorTarget(0, outputTexture, directionalTargetParams);
-
-			directionalTargetSet->SetDepthStencilTarget(
-				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				depthTargetParams);
-
-			directionalTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
-
-			m_directionalStage->SetTextureTargetSet(directionalTargetSet);
-
-			m_directionalStage->SetStageShader(
-				re::Shader::GetOrCreate(en::ShaderNames::k_deferredDirectionalLightShaderName, directionalStageParams));
-
-			m_directionalStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
-
-			pipeline.AppendRenderStage(m_directionalStage);
-		}
+		pipeline.AppendRenderStage(m_directionalStage);
 
 
 		// Point light stage:
-		const bool hasPointLights = renderData.GetNumElementsOfType<gr::Light::RenderDataPoint>() > 0;
-		if (hasPointLights)
-		{
-			m_pointStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
+		//-------------------
+		m_pointStage->SetTextureTargetSet(deferredTargetSet);
 
-			re::TextureTarget::TargetParams pointTargetParams;
-			
-			if (!hasDirectionalLight && !ambientIsValid)
-			{
-				pointTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
-			}
-			else
-			{
-				pointTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
-			}
+		m_pointStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
-			std::shared_ptr<re::TextureTargetSet> pointTargetSet = 
-				re::TextureTargetSet::Create("Point light targets");
+		// Point lights only illuminate something if the sphere volume is behind it
+		re::PipelineState pointStageParams(fullscreenQuadStageParams);
+		pointStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::GEqual);
+		pointStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Front); // Cull front faces of light volumes
 
-			pointTargetSet->SetColorTarget(0, outputTexture, pointTargetParams);
+		m_pointStage->SetStageShader(
+			re::Shader::GetOrCreate(en::ShaderNames::k_deferredPointLightShaderName, pointStageParams));
 
-			pointTargetSet->SetDepthStencilTarget(
-				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				depthTargetParams);
-
-			pointTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
-
-			m_pointStage->SetTextureTargetSet(pointTargetSet);
-
-			re::PipelineState pointStageParams(directionalStageParams);
-
-			// Pointlights only illuminate something if the sphere volume is behind it
-			pointStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::GEqual);
-
-			pointStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Front); // Cull front faces of light volumes
-
-			m_pointStage->SetStageShader(
-				re::Shader::GetOrCreate(en::ShaderNames::k_deferredPointLightShaderName, pointStageParams));
-
-			pipeline.AppendRenderStage(m_pointStage);
-		}
+		pipeline.AppendRenderStage(m_pointStage);
 
 
 		// Attach GBuffer color inputs:
@@ -757,96 +722,56 @@ namespace gr
 				continue;
 			}
 
-			if (ambientIsValid)
-			{
-				m_ambientStage->AddTextureInput(
-					GBufferGraphicsSystem::GBufferTexNames[slot],
-					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
-			}
-			if (hasDirectionalLight)
-			{
-				m_directionalStage->AddTextureInput(
-					GBufferGraphicsSystem::GBufferTexNames[slot],
-					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
-			}
-			if (hasPointLights)
-			{
-				m_pointStage->AddTextureInput(
-					GBufferGraphicsSystem::GBufferTexNames[slot],
-					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
-			}
+			m_ambientStage->AddTextureInput(
+				GBufferGraphicsSystem::GBufferTexNames[slot],
+				gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+
+			m_directionalStage->AddTextureInput(
+				GBufferGraphicsSystem::GBufferTexNames[slot],
+				gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+
+			m_pointStage->AddTextureInput(
+				GBufferGraphicsSystem::GBufferTexNames[slot],
+				gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 		}
 
 
 		// Attach the GBUffer depth input:
 		constexpr uint8_t depthBufferSlot = gr::GBufferGraphicsSystem::GBufferDepth;
 
-		if (hasDirectionalLight)
-		{
-			m_directionalStage->AddTextureInput(
-				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
-				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+		m_directionalStage->AddTextureInput(
+			GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
+			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
-			SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>() == 1,
-				"We currently assume there will only be 1 directional light (even though it's not necessary to)");
+		m_pointStage->AddTextureInput(
+			GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
+			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
-			std::vector<gr::RenderDataID> const& directionalIDs = 
-				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
+		m_ambientStage->AddTextureInput(
+			GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
+			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
-			auto directionalItr = renderData.IDBegin(directionalIDs);
+		// Add IBL texture inputs for ambient stage:
+		m_ambientStage->AddTextureInput(
+			"CubeMap0",
+			m_IEMTex,
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
-			gr::Light::RenderDataDirectional const& directionalLightData = 
-				directionalItr.Get<gr::Light::RenderDataDirectional>();
+		m_ambientStage->AddTextureInput(
+			"CubeMap1",
+			m_PMREMTex,
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear));
 
-			// Directional shadow map:
-			if (directionalLightData.m_hasShadow)
-			{
-				re::Texture const* directionalShadow =
-					m_shadowGS->GetShadowMap(gr::Light::Type::Directional, directionalLightData.m_renderDataID);
-
-				// Set the key light shadow map:
-				m_directionalStage->AddTextureInput(
-					"Depth0",
-					directionalShadow,
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
-			}
-		}
-
-		if (hasPointLights)
-		{
-			m_pointStage->AddTextureInput(
-				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
-				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
-		}
-
-		if (ambientIsValid)
-		{
-			m_ambientStage->AddTextureInput(
-				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
-				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
-
-			// Add IBL texture inputs for ambient stage:
-			m_ambientStage->AddTextureInput(
-				"CubeMap0",
-				m_IEMTex,
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
-
-			m_ambientStage->AddTextureInput(
-				"CubeMap1",
-				m_PMREMTex,
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear));
-
-			m_ambientStage->AddTextureInput(
-				"Tex7",
-				m_BRDF_integrationMap,
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest));
-		}
+		m_ambientStage->AddTextureInput(
+			"Tex7",
+			m_BRDF_integrationMap,
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest));
 	}
 
 
@@ -881,147 +806,262 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
-		// TODO: We should cache our batches, and only update them (or their attached ParameterBlocks) when their render
-		// data changes
-
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		// Ambient stage batches:
-		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
-			"We currently expect render data for exactly 1 ambient light to exist");
-
-		std::vector<gr::RenderDataID> const& ambientIDs = 
-			renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>();
-
-		auto ambientItr = renderData.IDBegin(ambientIDs);
-
-		gr::Light::RenderDataAmbientIBL const& ambientRenderData = ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
-		gr::MeshPrimitive::RenderData const& ambientMeshPrimData = ambientItr.Get<gr::MeshPrimitive::RenderData>();
-
-		const re::Batch ambientFullscreenQuadBatch = 
-			re::Batch(re::Batch::Lifetime::SingleFrame, ambientMeshPrimData, nullptr);
-
-		m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
-
-		// Directional stage batches:
-		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
-			std::vector<gr::RenderDataID> const& directionalIDs =
-				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
+			SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
+				"We currently expect render data for exactly 1 ambient light to exist");
 
-			SEAssert(directionalIDs.size() == 1,
-				"We currently assume there will only be 1 directional light (even though it's not necessary to)");
+			std::vector<gr::RenderDataID> const& ambientIDs =
+				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>();
 
-			auto directionalItr = renderData.IDBegin(directionalIDs);
-			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
+			auto ambientItr = renderData.IDBegin(ambientIDs);
+
+			gr::Light::RenderDataAmbientIBL const& ambientRenderData = ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
+			gr::MeshPrimitive::RenderData const& ambientMeshPrimData = ambientItr.Get<gr::MeshPrimitive::RenderData>();
+
+			const re::Batch ambientFullscreenQuadBatch =
+				re::Batch(re::Batch::Lifetime::SingleFrame, ambientMeshPrimData, nullptr);
+
+			m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
+		}
+
+
+		// Delete removed deleted lights:
+		auto DeleteLights = []<typename T>(
+			std::vector<gr::RenderDataID> const& deletedIDs, std::unordered_map<gr::RenderDataID, T>&stageData)
+		{
+			for (gr::RenderDataID id : deletedIDs)
+			{
+				stageData.erase(id);
+			}
+		};
+		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataDirectional>())
+		{
+			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_lightData);
+		}
+		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataPoint>())
+		{
+			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_lightData);
+		}
+
+
+		// Register new directional lights:
+		if (renderData.HasIDsWithNewData<gr::Light::RenderDataDirectional>())
+		{
+			std::vector<gr::RenderDataID> const& newDirectionalIDs =
+				renderData.GetIDsWithNewData<gr::Light::RenderDataDirectional>();
+
+			auto directionalItr = renderData.IDBegin(newDirectionalIDs);
+			auto const& directionalItrEnd = renderData.IDEnd(newDirectionalIDs);
 			while (directionalItr != directionalItrEnd)
 			{
 				gr::Light::RenderDataDirectional const& directionalData = 
 					directionalItr.Get<gr::Light::RenderDataDirectional>();
 
-				if (directionalData.m_colorIntensity.w > 0.f && 
-					(directionalData.m_diffuseEnabled ||
-						directionalData.m_specularEnabled))
+				gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformData();
+				gr::MeshPrimitive::RenderData const& meshData = directionalItr.Get<gr::MeshPrimitive::RenderData>();
+
+				gr::ShadowMap::RenderData const* shadowData = nullptr;
+				gr::Camera::RenderData const* shadowCamData = nullptr;
+				if (directionalData.m_hasShadow)
 				{
-					gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformData();
+					shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(directionalData.m_renderDataID);
+					shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(directionalData.m_renderDataID);
+				}				
 
-					gr::ShadowMap::RenderData const* shadowData = nullptr;
-					gr::Camera::RenderData const* shadowCamData = nullptr;
-					if (directionalData.m_hasShadow)
-					{
-						shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(directionalData.m_renderDataID);
-						shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(directionalData.m_renderDataID);
-					}
+				LightParams const& directionalParams = GetLightParamData(
+					&directionalData,
+					gr::Light::Type::Directional,
+					directionalTransformData,
+					shadowData,
+					shadowCamData,
+					m_directionalStage->GetTextureTargetSet());
 
-					LightParams const& directionalParams = GetLightParamData(
-						&directionalData,
-						gr::Light::Type::Directional,
-						directionalTransformData,
-						shadowData,
-						shadowCamData,
-						m_directionalStage->GetTextureTargetSet());
+				std::shared_ptr<re::ParameterBlock> directionalLightParams = re::ParameterBlock::Create(
+					LightParams::s_shaderName,
+					directionalParams,
+					re::ParameterBlock::PBType::Mutable);
 
-					std::shared_ptr<re::ParameterBlock> directionalPB = re::ParameterBlock::Create(
-						LightParams::s_shaderName,
-						directionalParams,
-						re::ParameterBlock::PBType::SingleFrame);
+				m_lightData.emplace(
+					directionalItr.GetRenderDataID(),
+					PunctualLightData{
+						.m_type = gr::Light::Directional,
+						.m_lightParams = directionalLightParams,
+						.m_transformParams = nullptr,
+						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)					
+					});
 
-					gr::MeshPrimitive::RenderData const& meshData = directionalItr.Get<gr::MeshPrimitive::RenderData>();
+				re::Batch& directionalLightBatch = m_lightData.at(directionalData.m_renderDataID).m_batch;
 
-					re::Batch directionalBatch = re::Batch(re::Batch::Lifetime::SingleFrame, meshData, nullptr);
+				directionalLightBatch.SetParameterBlock(directionalLightParams);
 
-					directionalBatch.SetParameterBlock(directionalPB);
-
-					m_directionalStage->AddBatch(directionalBatch);
+				if (directionalData.m_hasShadow) // Add the shadow map texture to the batch
+				{
+					directionalLightBatch.AddTextureAndSamplerInput(
+						"Depth0",
+						m_shadowGS->GetShadowMap(gr::Light::Type::Directional, directionalData.m_renderDataID),
+						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));	
 				}
 
 				++directionalItr;
 			}
 		}
 
-
-		// Point light stage batches:
-		if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
+		// Register new point lights:
+		if (renderData.HasIDsWithNewData<gr::Light::RenderDataPoint>())
 		{
-			std::vector<gr::RenderDataID> const& pointIDs =
-				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>();
+			std::vector<gr::RenderDataID> const& newPointIDs =
+				renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
 
-			auto pointItr = renderData.IDBegin(pointIDs);
-			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
+			auto pointItr = renderData.IDBegin(newPointIDs);
+			auto const& pointItrEnd = renderData.IDEnd(newPointIDs);
 			while (pointItr != pointItrEnd)
 			{
 				gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
-				if (pointData.m_colorIntensity.w > 0.f && (pointData.m_diffuseEnabled || pointData.m_specularEnabled))
+
+				gr::MeshPrimitive::RenderData const& meshData = pointItr.Get<gr::MeshPrimitive::RenderData>();
+				gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+
+				gr::ShadowMap::RenderData const* shadowData = nullptr;
+				gr::Camera::RenderData const* shadowCamData = nullptr;
+				const bool hasShadow = pointData.m_hasShadow;
+				if (hasShadow)
 				{
-					gr::MeshPrimitive::RenderData const& meshData = pointItr.Get<gr::MeshPrimitive::RenderData>();
+					shadowData = &pointItr.Get<gr::ShadowMap::RenderData>();
+					shadowCamData = &pointItr.Get<gr::Camera::RenderData>();
+				}
 
-					re::Batch pointlightBatch = re::Batch(re::Batch::Lifetime::SingleFrame, meshData, nullptr);
+				LightParams const& pointLightParams = GetLightParamData(
+					&pointData,
+					gr::Light::Type::Point,
+					transformData,
+					shadowData,
+					shadowCamData,
+					m_pointStage->GetTextureTargetSet());
 
-					// Point light params:
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+				std::shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
+					LightParams::s_shaderName,
+					pointLightParams,
+					re::ParameterBlock::PBType::Mutable);
 
-					pointlightBatch.SetParameterBlock(gr::Transform::CreateInstancedTransformParams(
-						re::ParameterBlock::PBType::SingleFrame, transformData));
+				std::shared_ptr<re::ParameterBlock> transformPB = gr::Transform::CreateInstancedTransformParams(
+					re::ParameterBlock::PBType::Mutable, transformData);
 
-					gr::ShadowMap::RenderData const* shadowData = nullptr;
-					gr::Camera::RenderData const* shadowCamData = nullptr;
-					const bool hasShadow = pointData.m_hasShadow;
-					if (hasShadow)
+				m_lightData.emplace(
+					pointItr.GetRenderDataID(),
+					PunctualLightData{
+						.m_type = gr::Light::Point,
+						.m_lightParams = pointlightPB,
+						.m_transformParams = transformPB,
+						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)
+					});
+
+				re::Batch& pointlightBatch = m_lightData.at(pointData.m_renderDataID).m_batch;
+
+				pointlightBatch.SetParameterBlock(pointlightPB);
+
+				pointlightBatch.SetParameterBlock(transformPB);
+
+				if (hasShadow) // Add the shadow map texture to the batch
+				{
+					pointlightBatch.AddTextureAndSamplerInput(
+						"CubeMap0", 
+						m_shadowGS->GetShadowMap(gr::Light::Point, pointData.m_renderDataID),
+						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+				}
+
+				++pointItr;
+			}
+		}
+
+
+		// Update all of the lights we're tracking:
+		for (auto const& light : m_lightData)
+		{
+			const gr::RenderDataID lightID = light.first;
+
+			// Update lighting parameter blocks, if necessary:
+			if (renderData.TransformIsDirtyFromRenderDataID(lightID) ||
+				(light.second.m_type == gr::Light::Type::Directional &&
+					renderData.IsDirty<gr::Light::RenderDataDirectional>(lightID)) ||
+				(light.second.m_type == gr::Light::Type::Point &&
+					renderData.IsDirty<gr::Light::RenderDataPoint>(lightID)))
+			{
+				gr::Transform::RenderData const& lightTransformData =
+					renderData.GetTransformDataFromRenderDataID(lightID);
+
+				gr::ShadowMap::RenderData const* shadowData = nullptr;
+				gr::Camera::RenderData const* shadowCamData = nullptr;
+
+				switch (light.second.m_type)
+				{
+				case gr::Light::Type::Directional:
+				{
+					gr::Light::RenderDataDirectional const& directionalData =
+						renderData.GetObjectData<gr::Light::RenderDataDirectional>(lightID);
+
+					if (directionalData.m_hasShadow)
 					{
-						shadowData = &pointItr.Get<gr::ShadowMap::RenderData>();
-						shadowCamData = &pointItr.Get<gr::Camera::RenderData>();
+						shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(lightID);
+						shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(lightID);
+					}
+
+					LightParams const& directionalParams = GetLightParamData(
+						&directionalData,
+						gr::Light::Type::Directional,
+						lightTransformData,
+						shadowData,
+						shadowCamData,
+						m_directionalStage->GetTextureTargetSet());
+
+					light.second.m_lightParams->Commit(directionalParams);
+				}
+				break;
+				case gr::Light::Type::Point:
+				{
+					gr::Light::RenderDataPoint const& pointData = 
+						renderData.GetObjectData<gr::Light::RenderDataPoint>(lightID);
+
+					if (pointData.m_hasShadow)
+					{
+						shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(lightID);
+						shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(lightID);
 					}
 
 					LightParams const& pointLightParams = GetLightParamData(
 						&pointData,
 						gr::Light::Type::Point,
-						transformData,
+						lightTransformData,
 						shadowData,
 						shadowCamData,
 						m_pointStage->GetTextureTargetSet());
 
-					std::shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
-						LightParams::s_shaderName,
-						pointLightParams,
-						re::ParameterBlock::PBType::SingleFrame);
-					pointlightBatch.SetParameterBlock(pointlightPB);
+					light.second.m_lightParams->Commit(pointLightParams);
 
-					if (hasShadow) // Add the shadow map texture to the batch
-					{
-						re::Texture const* shadowMap =
-							m_shadowGS->GetShadowMap(gr::Light::Point, pointData.m_renderDataID);
-
-						std::shared_ptr<re::Sampler> sampler =
-							re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear);
-
-						pointlightBatch.AddTextureAndSamplerInput("CubeMap0", shadowMap, sampler);
-					}
-
-					// Finally, add the completed batch:
-					m_pointStage->AddBatch(pointlightBatch);
+					light.second.m_transformParams->Commit(gr::Transform::CreateInstancedTransformParamsData(
+							renderData.GetTransformDataFromRenderDataID(lightID)));
 				}
+				break;
+				default: SEAssertF("Invalid light type");
+				}
+			}
 
-				++pointItr;
+			// Add a batches:
+			switch (light.second.m_type)
+			{
+			case gr::Light::Type::Directional:
+			{
+				m_directionalStage->AddBatch(light.second.m_batch);
+			}
+			break;
+			case gr::Light::Type::Point:
+			{
+				m_pointStage->AddBatch(light.second.m_batch);
+			}
+			break;
+			default: SEAssertF("Invalid light type");
 			}
 		}
 	}

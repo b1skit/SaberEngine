@@ -21,10 +21,10 @@ namespace gr
 			std::array<FrustumPlane, 6> m_planes;
 			glm::vec3 m_camWorldPos;
 		};
-		struct View
+		class View
 		{
 		public:
-			gr::RenderDataID m_cameraRenderDataID = gr::k_invalidRenderDataID;
+			const gr::RenderDataID m_cameraRenderDataID;
 
 			enum Face : uint8_t // Corresponds to the ordering of cubemap view matrices
 			{
@@ -36,20 +36,34 @@ namespace gr
 				YNeg = 3,
 				ZPos = 4,
 				ZNeg = 5
-			} m_face = Face::Default;
+			} const m_face;
 
 
 		public:
-			View(gr::RenderDataID renderDataID, uint8_t faceIdx)
+			View(gr::RenderDataID renderDataID, Face face)
 				: m_cameraRenderDataID(renderDataID)
-				, m_face(static_cast<gr::Camera::View::Face>(faceIdx))
+				, m_face(face)
 			{
+			}
+
+
+			View(gr::RenderDataID renderDataID)
+				: View(renderDataID, gr::Camera::View::Face::Default)
+			{
+			}
+
+
+			View(gr::RenderDataID renderDataID, uint8_t faceIdx)
+				: View(renderDataID, static_cast<gr::Camera::View::Face>(faceIdx))
+			{
+				SEAssert(faceIdx < 6, "Face index is out of bounds");
 			}
 
 
 			bool operator==(View const& rhs) const
 			{
-				return m_cameraRenderDataID == rhs.m_cameraRenderDataID && m_face == rhs.m_face;
+				return m_cameraRenderDataID == rhs.m_cameraRenderDataID && 
+					m_face == rhs.m_face;
 			}
 		};
 

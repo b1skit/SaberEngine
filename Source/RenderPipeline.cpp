@@ -84,6 +84,34 @@ namespace re
 	}
 
 
+	StagePipeline::StagePipelineItr StagePipeline::AppendRenderStageForSingleFrame(
+		StagePipeline::StagePipelineItr const& parentItr,
+		std::shared_ptr<re::RenderStage> renderStage)
+	{
+		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
+		SEAssert(renderStage->GetStageLifetime() == re::RenderStage::Lifetime::Permanent,
+			"Incorrect stage lifetime");
+
+		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 
+		const StagePipelineItr next = std::next(parentItr);
+
+		StagePipelineItr newSingleFrameStageItr;
+		if (next == m_renderStages.end())
+		{
+			m_renderStages.emplace_back(renderStage);
+			newSingleFrameStageItr = std::prev(m_renderStages.end());
+		}
+		else
+		{
+			newSingleFrameStageItr = m_renderStages.emplace(next, std::move(renderStage));
+		}
+
+		m_singleFrameInsertionPoints.emplace_back(newSingleFrameStageItr);
+
+		return newSingleFrameStageItr;
+	}
+
+
 	void StagePipeline::EndOfFrame()
 	{
 		SEBeginCPUEvent("StagePipeline::EndOfFrame");

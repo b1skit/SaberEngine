@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Camera.h"
 #include "GraphicsSystem.h"
 #include "ShadowMap.h"
 
@@ -22,22 +23,45 @@ namespace gr
 
 
 	private:
+		std::shared_ptr<re::RenderStage> CreateRegisterDirectionalShadowStage(
+			gr::RenderDataID, gr::ShadowMap::RenderData const&, gr::Camera::RenderData const&);
+
+		std::shared_ptr<re::RenderStage> CreateRegisterPointShadowStage(
+			gr::RenderDataID, 
+			gr::ShadowMap::RenderData const&, 
+			gr::Transform::RenderData const&, 
+			gr::Camera::RenderData const&);
+
 		void CreateBatches() override;
 
+
 	private:
-		std::shared_ptr<re::RenderStage> m_directionalShadowStage;
-		std::shared_ptr<re::ParameterBlock> m_directionalShadowCamPB;
-
-		std::array<
-			std::unordered_map<gr::RenderDataID, std::shared_ptr<re::TextureTargetSet>>, 
-				gr::Light::Type::Type_Count> m_shadowTargetSets;
-
-		struct PointLightStageData
+		struct DirectionalShadowStageData
 		{
 			std::shared_ptr<re::RenderStage> m_renderStage;
+			std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
+			std::shared_ptr<re::ParameterBlock> m_shadowCamParamBlock;
+		};
+		std::unordered_map<gr::RenderDataID, DirectionalShadowStageData> m_directionalShadowStageData;
+
+		struct PointShadowStageData
+		{
+			std::shared_ptr<re::RenderStage> m_renderStage;
+			std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
 			std::shared_ptr<re::ParameterBlock> m_cubemapShadowParamBlock;
 		};
-		std::unordered_map<gr::RenderDataID, PointLightStageData> m_pointLightStageData;
-		// TODO: We will need to update this if lights are added/removed outside of Create()
+		std::unordered_map<gr::RenderDataID, PointShadowStageData> m_pointShadowStageData;
+
+		// Pipeline:
+		re::StagePipeline* m_stagePipeline;
+		re::StagePipeline::StagePipelineItr m_directionalParentStageItr;
+		re::StagePipeline::StagePipelineItr m_pointParentStageItr;
 	};
+
+
+	inline std::shared_ptr<re::TextureTargetSet const> ShadowsGraphicsSystem::GetFinalTextureTargetSet() const
+	{
+		SEAssertF("The shadow graphics system has many target set output. Use GetShadowMap() instead");
+		return nullptr;
+	}
 }

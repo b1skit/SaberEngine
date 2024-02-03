@@ -33,23 +33,31 @@ namespace gr
 
 
 	private:
-		gr::ShadowsGraphicsSystem* m_shadowGS;
-
 		// Ambient IBL resources:
 		std::shared_ptr<re::Texture> m_BRDF_integrationMap;
 		std::shared_ptr<re::Texture> m_IEMTex;
 		std::shared_ptr<re::Texture> m_PMREMTex;
 		std::shared_ptr<re::RenderStage> m_ambientStage;
 		std::shared_ptr<re::ParameterBlock> m_ambientParams;
+		XeGTAOGraphicsSystem* m_AOGS;
 
 		// TODO: We only use this in the 1st frame, we should clean it up via a virtual "end frame cleanup" GS function
 		std::shared_ptr<gr::MeshPrimitive> m_cubeMeshPrimitive; // For rendering into a cube map. 
 
-		std::shared_ptr<re::RenderStage> m_directionalStage;
+		// Punctual lights:
+		struct PunctualLightData
+		{
+			gr::Light::Type m_type;
+			std::shared_ptr<re::ParameterBlock> m_lightParams;
+			std::shared_ptr<re::ParameterBlock> m_transformParams;
+			re::Batch m_batch;
+		};
+		std::unordered_map<gr::RenderDataID, PunctualLightData> m_lightData;
 
+		std::shared_ptr<re::RenderStage> m_directionalStage;
 		std::shared_ptr<re::RenderStage> m_pointStage;
 
-		XeGTAOGraphicsSystem* m_AOGS;
+		gr::ShadowsGraphicsSystem* m_shadowGS;
 
 
 	private:

@@ -137,7 +137,6 @@ namespace gr
 			re::RenderStage::ClearStageParams depthClearStageParams;
 			depthClearStageParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Disabled };
 			depthClearStageParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
-			std::vector<re::TextureTarget::TargetParams::ClearMode> color = { re::TextureTarget::TargetParams::ClearMode::Disabled };
 			
 			m_owningPipeline->AppendSingleFrameRenderStage(re::RenderStage::CreateSingleFrameClearStage(
 				depthClearStageParams, 
