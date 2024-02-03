@@ -510,7 +510,7 @@
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsSystem_XeGTAO.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -968,7 +968,7 @@
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsSystem_XeGTAO.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1122,6 +1122,12 @@
     <None Include="Shaders\HLSL\XeGTAOCommon.hlsli">
       <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </None>
+    <None Include="Shaders\HLSL\XeGTAO_MainPass_Common.hlsli">
+      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </None>
+    <None Include="Shaders\HLSL\CameraCommon.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">
@@ -1214,10 +1220,22 @@
     <FxCompile Include="Shaders\HLSL\XeGTAO_Denoise_CShader.hlsl">
       <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_CShader.hlsl">
+    <FxCompile Include="Shaders\HLSL\XeGTAO_PrefilterDepths_CShader.hlsl">
       <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\HLSL\XeGTAO_PrefilterDepths_CShader.hlsl">
+    <FxCompile Include="Shaders\HLSL\XeGTAO_DenoiseLastPass_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_High_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Low_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Med_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Ultra_CShader.hlsl">
       <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
   </ItemGroup>
