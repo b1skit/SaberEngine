@@ -203,8 +203,6 @@ namespace gr
 			auto const& deletedBoundsItrEnd = renderData.IDEnd(deletedBoundsIDS);
 			while (deletedBoundsItr != deletedBoundsItrEnd)
 			{
-				SEAssertF("This is untested. If you hit this, set a breakpoint and step through as a sanity check");
-
 				// Note: We don't have access to the filterbits of the deleted IDs anymore; It's possible the bounds
 				// were not associated with a Mesh/MeshPrimitive (e.g. scene bounds, light mesh bounds)
 				gr::RenderDataID deletedBoundsID = deletedBoundsItr.GetRenderDataID();

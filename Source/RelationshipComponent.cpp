@@ -32,6 +32,11 @@ namespace fr
 
 	Relationship& Relationship::operator=(Relationship&& rhs) noexcept
 	{
+		if (this == &rhs)
+		{
+			return *this;
+		}
+
 		{
 			std::scoped_lock lock(m_relationshipMutex, rhs.m_relationshipMutex);
 

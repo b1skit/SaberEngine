@@ -721,7 +721,7 @@ namespace gr
 			m_perTypeRegisteredRenderDataIDs[dataTypeIndex].begin() + perTypeIDIndexToDelete);
 
 		// Add the RenderDataID to the per-frame deleted data tracker:
-		m_perFramePerTypeDeletedDataIDs.emplace_back(renderDataID);
+		m_perFramePerTypeDeletedDataIDs[dataTypeIndex].emplace_back(renderDataID);
 
 		// Finally, remove the index in the object's data index map:
 		renderObjectMetadata.m_dataTypeToDataIndexMap.erase(dataTypeIndex);

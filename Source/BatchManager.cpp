@@ -120,17 +120,13 @@ namespace gr
 		std::vector<gr::RenderDataID> const& deletedIDs = renderData.GetIDsWithDeletedData<gr::MeshPrimitive::RenderData>();
 		for (gr::RenderDataID deletedID : deletedIDs)
 		{
-			if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, renderData.GetFeatureBits(deletedID)))
+			if (m_renderDataIDToBatchMetadata.contains(deletedID))
 			{
-				SEAssert(m_renderDataIDToBatchMetadata.contains(deletedID) && 
-					m_cacheIdxToRenderDataID.contains(deletedID),
-					"Failed to find batch metadata associated with the deleted ID");
-
 				auto deletedIDMetadataItr = m_renderDataIDToBatchMetadata.find(deletedID);
 
 				// Move the last batch to replace the one being deleted:
 				const size_t cacheIdxToReplace = deletedIDMetadataItr->second.m_cacheIndex;
-				const size_t cacheIdxToMove = m_permanentCachedBatches.size();
+				const size_t cacheIdxToMove = m_permanentCachedBatches.size() - 1;
 				if (cacheIdxToReplace != cacheIdxToMove)
 				{
 					m_permanentCachedBatches[cacheIdxToReplace] = re::Batch::Duplicate(

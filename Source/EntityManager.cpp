@@ -66,66 +66,17 @@ namespace fr
 	{
 		LOG("EntityManager shutting down...");
 
-		// Issue render commands to destroy render data:
-		re::RenderManager* renderManager = re::RenderManager::Get();
-
 		{
-			std::shared_lock<std::shared_mutex> registryReadLock(m_registeryMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
 
-			// Destroy any render data components:
-			auto renderDataEntitiesView = m_registry.view<gr::RenderDataComponent>();
-			for (auto entity : renderDataEntitiesView)
+			// Add all entities to the deferred delete queue
+			for (auto entity : m_registry.storage<entt::entity>())
 			{
-				auto& renderDataComponent = renderDataEntitiesView.get<gr::RenderDataComponent>(entity);
-
-				// Bounds:
-				if (m_registry.all_of<fr::BoundsComponent>(entity))
-				{
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Bounds::RenderData>>(
-						renderDataComponent.GetRenderDataID());
-				}
-
-				// MeshPrimitives:
-				if (m_registry.all_of<fr::MeshPrimitiveComponent>(entity))
-				{
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
-						renderDataComponent.GetRenderDataID());
-				}
-
-				// Materials:
-				if (m_registry.all_of<fr::MaterialInstanceComponent>(entity))
-				{
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::MaterialInstanceData>>(
-						renderDataComponent.GetRenderDataID());
-				}
-
-				// Cameras:
-				if (m_registry.all_of<fr::CameraComponent>(entity))
-				{
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Camera::RenderData>>(
-						renderDataComponent.GetRenderDataID());
-				}
-
-				// Lights:
-				if (m_registry.all_of<fr::LightComponent>(entity))
-				{
-					fr::LightComponent const& lightCmpt = m_registry.get<fr::LightComponent>(entity);
-					renderManager->EnqueueRenderCommand<fr::DestroyLightDataRenderCommand>(lightCmpt);
-				}
-
-				// ShadowMaps:
-				if (m_registry.all_of<fr::ShadowMapComponent>(entity))
-				{
-					fr::ShadowMapComponent const& shadowMapCmpt = m_registry.get<fr::ShadowMapComponent>(entity);
-					renderManager->EnqueueRenderCommand<fr::DestroyShadowMapDataRenderCommand>(shadowMapCmpt);
-				}
-
-				// Now the render data components associated with this entity's use of the RenderDataID are destroyed, 
-				// we can destroy the render data objects themselves (or decrement the ref. count if it's a shared ID)
-				renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(
-					renderDataComponent.GetRenderDataID());
+				RegisterEntityForDelete(entity);
 			}
 		}
+
+		ExecuteDeferredDeletions();
 
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
@@ -150,6 +101,8 @@ namespace fr
 		UpdateMaterials();
 		UpdateLightsAndShadows();
 		UpdateCameras();
+
+		ExecuteDeferredDeletions();
 	}
 
 
@@ -425,6 +378,88 @@ namespace fr
 		fr::Relationship::AttachRelationshipComponent(*this, newEntity);
 
 		return newEntity;
+	}
+
+
+	void EntityManager::RegisterEntityForDelete(entt::entity entity)
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_deferredDeleteQueueMutex);
+			m_deferredDeleteQueue.emplace_back(entity);
+		}
+	}
+
+
+	void EntityManager::ExecuteDeferredDeletions()
+	{
+		re::RenderManager* renderManager = re::RenderManager::Get();
+
+		if (!m_deferredDeleteQueue.empty())
+		{
+			std::scoped_lock lock(m_registeryMutex, m_deferredDeleteQueueMutex);
+
+			for (entt::entity entity : m_deferredDeleteQueue)
+			{
+				// If the entity has a RenderDataComponent, we must enqueue delete commands for the render thread
+				if (m_registry.all_of<gr::RenderDataComponent>(entity))
+				{
+					auto& renderDataComponent = m_registry.get<gr::RenderDataComponent>(entity);
+
+					// Bounds:
+					if (m_registry.all_of<fr::BoundsComponent>(entity))
+					{
+						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Bounds::RenderData>>(
+							renderDataComponent.GetRenderDataID());
+					}
+
+					// MeshPrimitives:
+					if (m_registry.all_of<fr::MeshPrimitiveComponent>(entity))
+					{
+						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
+							renderDataComponent.GetRenderDataID());
+					}
+
+					// Materials:
+					if (m_registry.all_of<fr::MaterialInstanceComponent>(entity))
+					{
+						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::MaterialInstanceData>>(
+							renderDataComponent.GetRenderDataID());
+					}
+
+					// Cameras:
+					if (m_registry.all_of<fr::CameraComponent>(entity))
+					{
+						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Camera::RenderData>>(
+							renderDataComponent.GetRenderDataID());
+					}
+
+					// Lights:
+					if (m_registry.all_of<fr::LightComponent>(entity))
+					{
+						fr::LightComponent const& lightCmpt = m_registry.get<fr::LightComponent>(entity);
+						renderManager->EnqueueRenderCommand<fr::DestroyLightDataRenderCommand>(lightCmpt);
+					}
+
+					// ShadowMaps:
+					if (m_registry.all_of<fr::ShadowMapComponent>(entity))
+					{
+						fr::ShadowMapComponent const& shadowMapCmpt = m_registry.get<fr::ShadowMapComponent>(entity);
+						renderManager->EnqueueRenderCommand<fr::DestroyShadowMapDataRenderCommand>(shadowMapCmpt);
+					}
+
+					// Now the render data components associated with this entity's use of the RenderDataID are destroyed, 
+					// we can destroy the render data objects themselves (or decrement the ref. count if it's a shared ID)
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(
+						renderDataComponent.GetRenderDataID());
+				}
+
+				
+				// Finally, destroy the entity:
+				m_registry.destroy(entity);
+			}
+
+			m_deferredDeleteQueue.clear();
+		}
 	}
 
 
@@ -991,7 +1026,7 @@ namespace fr
 	}
 
 
-	void EntityManager::ShowImGuiEntityComponentDebug(bool* show) const
+	void EntityManager::ShowImGuiEntityComponentDebug(bool* show)
 	{
 		if (!*show)
 		{
@@ -1020,12 +1055,18 @@ namespace fr
 			expandChangeTriggered = true;
 		}
 
-		auto const& storage = m_registry.storage<entt::entity>();
-		auto storageItr = storage->cbegin();
-		auto const& storageEnd = storage->cend();
-		while (storageItr != storageEnd)
+		auto ShowEntityControls = [this](entt::entity entity)
+			{
+				if (ImGui::Button("Delete"))
+				{
+					RegisterEntityForDelete(entity);
+				}
+			};
+
+		// Iterate over all entities:
+		for (auto entityTuple : m_registry.storage<entt::entity>().each())
 		{
-			entt::entity entity = *storageItr;
+			entt::entity entity = std::get<entt::entity>(entityTuple);
 
 			fr::NameComponent const& nameCmpt = m_registry.get<fr::NameComponent>(entity);
 
@@ -1033,7 +1074,7 @@ namespace fr
 			{
 				ImGui::SetNextItemOpen(s_expandAll);
 			}
-			if (ImGui::TreeNode(std::format("Entity {} \"{}\"", 
+			if (ImGui::TreeNode(std::format("Entity {} \"{}\"",
 				static_cast<uint32_t>(entity),
 				nameCmpt.GetName()).c_str()))
 			{
@@ -1051,13 +1092,13 @@ namespace fr
 					}
 				}
 
+				ShowEntityControls(entity);
+
 				ImGui::Unindent();
 				ImGui::TreePop();
 			}
 
 			ImGui::Separator();
-
-			++storageItr;
 		}
 
 		ImGui::End();

@@ -33,6 +33,8 @@ namespace fr
 		void UpdateLightsAndShadows();
 		void UpdateCameras();
 
+		void ExecuteDeferredDeletions();
+
 
 	private:
 		template<typename T, typename R>
@@ -48,7 +50,7 @@ namespace fr
 
 		void ShowSceneObjectsImGuiWindow(bool* show);
 		void ShowSceneTransformImGuiWindow(bool* show);
-		void ShowImGuiEntityComponentDebug(bool* show) const;
+		void ShowImGuiEntityComponentDebug(bool* show);
 
 
 	private:
@@ -68,6 +70,8 @@ namespace fr
 	public: // EnTT wrappers:
 		entt::entity CreateEntity(std::string const& name);
 		entt::entity CreateEntity(char const* name);
+
+		void RegisterEntityForDelete(entt::entity);
 
 		template<typename T>
 		entt::entity GetEntityFromComponent(T const&) const;
@@ -147,6 +151,9 @@ namespace fr
 	private:
 		entt::basic_registry<entt::entity> m_registry; // uint32_t entities
 		mutable std::shared_mutex m_registeryMutex;
+
+		std::vector<entt::entity> m_deferredDeleteQueue;
+		std::mutex m_deferredDeleteQueueMutex;
 
 		bool m_processInput;
 
