@@ -777,58 +777,9 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::PreRender()
 	{
-		CreateBatches();
-
-		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
-
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
-			"We currently expect render data for exactly 1 ambient light to exist");
-		
-		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
-
-		if (renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(ambientID))
-		{
-			gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
-				renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
-
-			const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
-				totalPMREMMipLevels,
-				ambientRenderData.m_diffuseScale,
-				ambientRenderData.m_specularScale,
-				m_AOGS ? m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get() : nullptr);
-
-			m_ambientParams->Commit(ambientLightParams);
-		}		
-	}
-
-
-	void DeferredLightingGraphicsSystem::CreateBatches()
-	{
-		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
-
-		// Ambient stage batches:
-		{
-			SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
-				"We currently expect render data for exactly 1 ambient light to exist");
-
-			std::vector<gr::RenderDataID> const& ambientIDs =
-				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>();
-
-			auto ambientItr = renderData.IDBegin(ambientIDs);
-
-			gr::Light::RenderDataAmbientIBL const& ambientRenderData = ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
-			gr::MeshPrimitive::RenderData const& ambientMeshPrimData = ambientItr.Get<gr::MeshPrimitive::RenderData>();
-
-			const re::Batch ambientFullscreenQuadBatch =
-				re::Batch(re::Batch::Lifetime::SingleFrame, ambientMeshPrimData, nullptr);
-
-			m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
-		}
-
-
-		// Delete removed deleted lights:
+		// Removed any deleted directional/point lights:
 		auto DeleteLights = []<typename T>(
 			std::vector<gr::RenderDataID> const& deletedIDs, std::unordered_map<gr::RenderDataID, T>&stageData)
 		{
@@ -857,7 +808,7 @@ namespace gr
 			auto const& directionalItrEnd = renderData.IDEnd(newDirectionalIDs);
 			while (directionalItr != directionalItrEnd)
 			{
-				gr::Light::RenderDataDirectional const& directionalData = 
+				gr::Light::RenderDataDirectional const& directionalData =
 					directionalItr.Get<gr::Light::RenderDataDirectional>();
 
 				gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformData();
@@ -869,7 +820,7 @@ namespace gr
 				{
 					shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(directionalData.m_renderDataID);
 					shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(directionalData.m_renderDataID);
-				}				
+				}
 
 				LightParams const& directionalParams = GetLightParamData(
 					&directionalData,
@@ -890,7 +841,7 @@ namespace gr
 						.m_type = gr::Light::Directional,
 						.m_lightParams = directionalLightParams,
 						.m_transformParams = nullptr,
-						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)					
+						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)
 					});
 
 				re::Batch& directionalLightBatch = m_lightData.at(directionalData.m_renderDataID).m_batch;
@@ -902,7 +853,7 @@ namespace gr
 					directionalLightBatch.AddTextureAndSamplerInput(
 						"Depth0",
 						m_shadowGS->GetShadowMap(gr::Light::Type::Directional, directionalData.m_renderDataID),
-						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));	
+						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 				}
 
 				++directionalItr;
@@ -967,13 +918,64 @@ namespace gr
 				if (hasShadow) // Add the shadow map texture to the batch
 				{
 					pointlightBatch.AddTextureAndSamplerInput(
-						"CubeMap0", 
+						"CubeMap0",
 						m_shadowGS->GetShadowMap(gr::Light::Point, pointData.m_renderDataID),
 						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 				}
 
 				++pointItr;
 			}
+		}
+
+
+		// Update ambient light parameter block:
+		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
+
+		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
+			"We currently expect render data for exactly 1 ambient light to exist");
+
+		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
+
+		if (renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(ambientID))
+		{
+			gr::Light::RenderDataAmbientIBL const& ambientRenderData =
+				renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
+
+			const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
+				totalPMREMMipLevels,
+				ambientRenderData.m_diffuseScale,
+				ambientRenderData.m_specularScale,
+				m_AOGS ? m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get() : nullptr);
+
+			m_ambientParams->Commit(ambientLightParams);
+		}
+
+
+		CreateBatches();
+	}
+
+
+	void DeferredLightingGraphicsSystem::CreateBatches()
+	{
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
+		// Ambient stage batches:
+		{
+			SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
+				"We currently expect render data for exactly 1 ambient light to exist");
+
+			std::vector<gr::RenderDataID> const& ambientIDs =
+				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>();
+
+			auto ambientItr = renderData.IDBegin(ambientIDs);
+
+			gr::Light::RenderDataAmbientIBL const& ambientRenderData = ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
+			gr::MeshPrimitive::RenderData const& ambientMeshPrimData = ambientItr.Get<gr::MeshPrimitive::RenderData>();
+
+			const re::Batch ambientFullscreenQuadBatch =
+				re::Batch(re::Batch::Lifetime::SingleFrame, ambientMeshPrimData, nullptr);
+
+			m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
 		}
 
 
@@ -1049,6 +1051,7 @@ namespace gr
 			}
 
 			// Add a batches:
+			// TODO: We should cull these, and only add them if the light is active (ie. non-zero intensity etc)
 			switch (light.second.m_type)
 			{
 			case gr::Light::Type::Directional:
