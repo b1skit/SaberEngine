@@ -16,16 +16,16 @@ namespace
 {
 	struct SkyboxParams
 	{
-		glm::vec4 g_skyboxTargetResolution;
+		glm::vec4 g_backgroundColorIsEnabled; // .rgb = background color override, .a = enabled/disabled (1.f/0.f)
 
 		static constexpr char const* const s_shaderName = "SkyboxParams";
 	};
 
 
-	SkyboxParams CreateSkyboxParamsData(std::shared_ptr<re::TextureTargetSet const> targetSet)
+	SkyboxParams CreateSkyboxParamsData(glm::vec3 const& backgroundColor, bool showBackgroundColor)
 	{
 		SkyboxParams skyboxParams;
-		skyboxParams.g_skyboxTargetResolution = targetSet->GetTargetDimensions();
+		skyboxParams.g_backgroundColorIsEnabled = glm::vec4(backgroundColor.rgb, static_cast<float>(showBackgroundColor));
 		return skyboxParams;
 	}
 }
@@ -39,16 +39,23 @@ namespace gr
 		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 		, m_skyTexture(nullptr)
+		, m_backgroundColor(135.f / 255.f, 206.f / 255.f, 235.f / 255.f)
+		, m_showBackgroundColor(false)
+		, m_isDirty(true)
 	{
-		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_skyboxStage = re::RenderStage::CreateGraphicsStage("Skybox stage", gfxStageParams);
-
-		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 	}
 
 
 	void SkyboxGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
+		re::RenderStage::GraphicsStageParams gfxStageParams;
+		m_skyboxStage = re::RenderStage::CreateGraphicsStage("Skybox stage", gfxStageParams);
+
+		if (m_screenAlignedQuad == nullptr)
+		{
+			m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
+		}
+
 		re::PipelineState skyboxPipelineState;
 		skyboxPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		skyboxPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::LEqual);
@@ -57,7 +64,6 @@ namespace gr
 
 		// Load the HDR image:
 		m_skyTexture = fr::SceneManager::GetSceneData()->GetIBLTexture();
-		m_skyTextureShaderName = "Tex0";
 
 		m_skyboxStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
@@ -88,13 +94,16 @@ namespace gr
 
 		m_skyboxStage->SetTextureTargetSet(skyboxTargets);
 
-		m_skyboxStage->AddPermanentParameterBlock(re::ParameterBlock::Create(
+		m_skyboxParams = re::ParameterBlock::Create(
 			SkyboxParams::s_shaderName,
-			CreateSkyboxParamsData(skyboxTargets),
-			re::ParameterBlock::PBType::Immutable));
+			CreateSkyboxParamsData(m_backgroundColor, m_showBackgroundColor),
+			re::ParameterBlock::PBType::Mutable);
 
+		m_skyboxStage->AddPermanentParameterBlock(m_skyboxParams);
+
+		constexpr char const* k_skyboxTexShaderName = "Tex0";
 		m_skyboxStage->AddTextureInput(
-			m_skyTextureShaderName,
+			k_skyboxTexShaderName,
 			m_skyTexture,
 			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
@@ -104,6 +113,12 @@ namespace gr
 
 	void SkyboxGraphicsSystem::PreRender()
 	{
+		if (m_isDirty)
+		{
+			m_skyboxParams->Commit(CreateSkyboxParamsData(m_backgroundColor, m_showBackgroundColor));
+			m_isDirty = false;
+		}
+
 		CreateBatches();
 	}
 
@@ -122,5 +137,12 @@ namespace gr
 		}
 
 		m_skyboxStage->AddBatch(*m_fullscreenQuadBatch);
+	}
+
+
+	void SkyboxGraphicsSystem::ShowImGuiWindow()
+	{
+		m_isDirty |= ImGui::Checkbox("Use flat background color", &m_showBackgroundColor);
+		m_isDirty |= ImGui::ColorEdit3("Background color", &m_backgroundColor.r);
 	}
 }

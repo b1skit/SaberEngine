@@ -244,6 +244,6 @@ layout(std430, binding=8) uniform BloomComputeParams
 // GraphicsSystem_Skybox.cpp
 layout(std430, binding=9) uniform SkyboxParams
 {
-	vec4 g_skyboxTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
+	vec4 g_backgroundColorIsEnabled; // .rgb = background color override, .a = enabled/disabled (1.f/0.f)
 };
 #endif
