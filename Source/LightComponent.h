@@ -36,9 +36,9 @@ namespace fr
 			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 		static LightComponent& AttachDeferredDirectionalLightConcept(
-			fr::EntityManager&, entt::entity, char const* name, glm::vec4 colorIntensity, bool hasShadow);
+			fr::EntityManager&, entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);
 		static LightComponent& AttachDeferredDirectionalLightConcept(
-			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 colorIntensity, bool hasShadow);
+			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 	public:
 		static gr::Light::RenderDataAmbientIBL CreateRenderDataAmbientIBL_Deferred(

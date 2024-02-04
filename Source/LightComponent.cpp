@@ -109,7 +109,7 @@ namespace fr
 		fr::EntityManager& em,
 		entt::entity owningEntity, 
 		char const* name, 
-		glm::vec4 colorIntensity, 
+		glm::vec4 const& colorIntensity,
 		bool hasShadow)
 	{
 		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
@@ -161,7 +161,7 @@ namespace fr
 		fr::EntityManager& em,
 		entt::entity entity, 
 		std::string const& name, 
-		glm::vec4 colorIntensity, 
+		glm::vec4 const& colorIntensity,
 		bool hasShadow)
 	{
 		return AttachDeferredDirectionalLightConcept(em, entity, name.c_str(), colorIntensity, hasShadow);
