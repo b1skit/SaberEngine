@@ -595,29 +595,25 @@ namespace fr
 					auto meshConceptEntitiesView = 
 						m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent, fr::TransformComponent>();
 
-					// Make sure we have at least 1 mesh
-					auto meshConceptsViewItr = meshConceptEntitiesView.begin();
-					if (meshConceptsViewItr != meshConceptEntitiesView.end())
+					// We must process every MeshConcept in the scene, even if it hasn't changed since we last checked
+					bool seenMeshConceptEntity = false;
+					for (auto meshConceptEntity : meshConceptEntitiesView)
 					{
-						// Copy the 1st Bounds we view: We'll grow it to encompass all other Bounds
-						sceneBoundsComponent = meshConceptEntitiesView.get<fr::BoundsComponent>(*meshConceptsViewItr);
-						++meshConceptsViewItr;
+						fr::Transform const& meshTransform =
+							meshConceptEntitiesView.get<fr::TransformComponent>(meshConceptEntity).GetTransform();
 
-						while (meshConceptsViewItr != meshConceptEntitiesView.end())
+						// Copy the first bounds we see; we'll expand it to encompass all Bounds in the scene
+						if (!seenMeshConceptEntity)
 						{
-							const entt::entity meshEntity = *meshConceptsViewItr;
-
-							fr::BoundsComponent const& boundsComponent = 
-								meshConceptEntitiesView.get<fr::BoundsComponent>(meshEntity);
-
-							fr::Transform const& meshTransform = 
-								meshConceptEntitiesView.get<fr::TransformComponent>(meshEntity).GetTransform();
-
-							sceneBoundsComponent.ExpandBounds(
-								boundsComponent.GetTransformedAABBBounds(meshTransform.GetGlobalMatrix()));
-
-							++meshConceptsViewItr;
+							sceneBoundsComponent = meshConceptEntitiesView.get<fr::BoundsComponent>(meshConceptEntity);
+							seenMeshConceptEntity = true;
 						}
+
+						fr::BoundsComponent const& boundsComponent =
+							meshConceptEntitiesView.get<fr::BoundsComponent>(meshConceptEntity);
+
+						sceneBoundsComponent.ExpandBounds(
+							boundsComponent.GetTransformedAABBBounds(meshTransform.GetGlobalMatrix()));
 					}
 				});
 
@@ -625,6 +621,8 @@ namespace fr
 			sceneBoundsChanged = (newSceneBounds != prevBounds);
 		}
 
+		// Mark the scene bounds as dirty; This will trigger updates to anything that depends on it (e.g. shadow cam 
+		// frustums)
 		if (sceneBoundsChanged)
 		{
 			EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(sceneBoundsEntity);
