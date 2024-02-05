@@ -82,7 +82,6 @@ namespace fr
 	}
 
 
-
 	void Relationship::SetParent(EntityManager& em, entt::entity newParent)
 	{
 		SEAssert(newParent == entt::null || newParent != m_parent,
