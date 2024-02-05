@@ -67,7 +67,7 @@ namespace fr
 		LOG("EntityManager shutting down...");
 
 		{
-			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			// Add all entities to the deferred delete queue
 			for (auto entity : m_registry.storage<entt::entity>())
@@ -79,7 +79,7 @@ namespace fr
 		ExecuteDeferredDeletions();
 
 		{
-			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 			m_registry.clear();
 		}
 	}
@@ -136,7 +136,7 @@ namespace fr
 		// -> Use entt::organizer
 
 		{
-			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			// Register new render objects:
 			auto newRenderableEntitiesView = 
@@ -251,7 +251,7 @@ namespace fr
 	fr::BoundsComponent const* EntityManager::GetSceneBounds() const
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::SceneBoundsMarker>();
 			SEAssert(sceneBoundsEntityView.front() == sceneBoundsEntityView.back(),
@@ -276,7 +276,7 @@ namespace fr
 			"Entity does not have a valid camera component");
 
 		{
-			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			SetMainCameraInternal(camera);
 		}
@@ -336,7 +336,7 @@ namespace fr
 	entt::entity EntityManager::GetMainCamera() const
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 			return GetMainCameraInternal();
 		}
 	}
@@ -370,7 +370,7 @@ namespace fr
 	{
 		entt::entity newEntity = entt::null;
 		{
-			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 			newEntity = m_registry.create();
 		}
 
@@ -452,7 +452,6 @@ namespace fr
 					renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(
 						renderDataComponent.GetRenderDataID());
 				}
-
 				
 				// Finally, destroy the entity:
 				m_registry.destroy(entity);
@@ -516,7 +515,7 @@ namespace fr
 	void EntityManager::ConfigureRegistry()
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			m_registry.on_construct<DirtyMarker<fr::BoundsComponent>>().connect<&fr::EntityManager::OnBoundsDirty>(*this);
 		}
@@ -526,7 +525,7 @@ namespace fr
 	void EntityManager::UpdateCameraController(double stepTimeMs)
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			fr::CameraComponent* cameraComponent = nullptr;
 			fr::TransformComponent* cameraTransform = nullptr;
@@ -573,7 +572,7 @@ namespace fr
 		bool sceneBoundsChanged = false;
 		{
 			// We're only viewing the registry and modifying components in place; Only need a read lock
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::SceneBoundsMarker>();
 			bool foundSceneBoundsEntity = false;
@@ -639,7 +638,7 @@ namespace fr
 		taskFutures.reserve(prevNumRootTransforms);
 
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			auto transformComponentsView = m_registry.view<fr::TransformComponent>();
 			for (auto entity : transformComponentsView)
@@ -669,7 +668,7 @@ namespace fr
 	void EntityManager::UpdateMaterials()
 	{
 		{
-			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			auto materialView = m_registry.view<fr::MaterialInstanceComponent>();
 			for (auto entity : materialView)
@@ -691,7 +690,7 @@ namespace fr
 
 		// Add dirty markers to lights and shadows so the render data will be updated
 		{
-			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			// Ambient lights:
 			auto ambientView = m_registry.view<fr::LightComponent, fr::LightComponent::AmbientIBLDeferredMarker>();
@@ -775,7 +774,7 @@ namespace fr
 	{
 		// Check for dirty cameras, or cameras with dirty transforms
 		{
-			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			auto cameraComponentsView = m_registry.view<fr::CameraComponent>();
 			for (auto entity : cameraComponentsView)

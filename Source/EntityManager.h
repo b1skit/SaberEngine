@@ -150,7 +150,7 @@ namespace fr
 
 	private:
 		entt::basic_registry<entt::entity> m_registry; // uint32_t entities
-		mutable std::shared_mutex m_registeryMutex;
+		mutable std::recursive_mutex m_registeryMutex;
 
 		std::vector<entt::entity> m_deferredDeleteQueue;
 		std::mutex m_deferredDeleteQueueMutex;
@@ -185,7 +185,7 @@ namespace fr
 	void EntityManager::EmplaceComponent(entt::entity entity)
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			m_registry.emplace<T>(entity);
 		}
@@ -196,7 +196,7 @@ namespace fr
 	T* EntityManager::EmplaceComponent(entt::entity entity, Args&&... args)
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			T& result = m_registry.emplace<T>(entity, std::forward<Args>(args)...);
 
@@ -209,7 +209,7 @@ namespace fr
 	void EntityManager::EmplaceOrReplaceComponent(entt::entity entity)
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			m_registry.emplace_or_replace<T>(entity);
 		}
@@ -257,7 +257,7 @@ namespace fr
 			// It's only safe to add/remove/iterate components if no other thread is adding/removing/iterating
 			// components of the same type. For now, we obtain an exclusive lock on the entire registry, but this could
 			// be more granular
-			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			m_registry.erase<T>(entity);
 		}
@@ -268,7 +268,7 @@ namespace fr
 	T* EntityManager::TryGetComponent(entt::entity entity)
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			return m_registry.try_get<T>(entity);
 		}
@@ -279,7 +279,7 @@ namespace fr
 	T const* EntityManager::TryGetComponent(entt::entity entity) const
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			return m_registry.try_get<T>(entity);
 		}
@@ -290,7 +290,7 @@ namespace fr
 	bool EntityManager::HasComponent(entt::entity entity) const
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 			
 			return m_registry.any_of<T>(entity);
 		}
@@ -301,7 +301,7 @@ namespace fr
 	T& EntityManager::GetComponent(entt::entity entity)
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 			return m_registry.get<T>(entity);
 		}
 	}
@@ -311,7 +311,7 @@ namespace fr
 	T const& EntityManager::GetComponent(entt::entity entity) const
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 			return m_registry.get<T>(entity);
 		}
 	}
@@ -326,7 +326,7 @@ namespace fr
 	bool EntityManager::IsInHierarchyAbove(entt::entity entity)
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			return IsInHierarchyAboveInternal<T>(entity);
 		}
@@ -337,7 +337,7 @@ namespace fr
 	T* EntityManager::GetFirstInHierarchyAbove(entt::entity entity)
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			return GetFirstInHierarchyAboveInternal<T>(entity);
 		}
@@ -348,7 +348,7 @@ namespace fr
 	T* EntityManager::GetFirstAndEntityInHierarchyAbove(entt::entity entity, entt::entity& owningEntityOut)
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			return GetFirstAndEntityInHierarchyAboveInternal<T>(entity, owningEntityOut);
 		}
@@ -359,7 +359,7 @@ namespace fr
 	T* EntityManager::GetFirstAndEntityInChildren(entt::entity entity, entt::entity& childEntityOut)
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			return GetFirstAndEntityInChildrenInternal<T>(entity, childEntityOut);
 		}
@@ -370,7 +370,7 @@ namespace fr
 	T* EntityManager::GetFirstInChildren(entt::entity entity)
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			return GetFirstInChildrenInternal<T>(entity);
 		}

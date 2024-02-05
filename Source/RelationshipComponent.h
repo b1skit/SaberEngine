@@ -41,6 +41,8 @@ namespace fr
 	public:
 		Relationship(PrivateCTORTag, entt::entity owningEntity);
 
+		~Relationship();
+
 
 	private:
 		const entt::entity m_thisEntity;
