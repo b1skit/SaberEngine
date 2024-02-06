@@ -574,24 +574,6 @@ namespace gr
 
 		std::shared_ptr<re::Texture> lightTargetTex = re::Texture::Create("DeferredLightTarget", lightTargetTexParams);
 
-
-		// Create a clear stage for the lighting target:
-		std::shared_ptr<re::TextureTargetSet> clearStageTargetSet = 
-			re::TextureTargetSet::Create("Light buffer clear stage targets");
-
-		re::TextureTarget::TargetParams clearTargetParams;
-		clearTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
-
-		clearStageTargetSet->SetColorTarget(0, lightTargetTex, clearTargetParams);
-
-		// Append a color-only clear stage to clear the lighting target:
-		re::RenderStage::ClearStageParams colorClearParams;
-		colorClearParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Enabled };
-		colorClearParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
-
-		pipeline.AppendRenderStage(re::RenderStage::CreateClearStage(colorClearParams, clearStageTargetSet));
-
-
 		// Create the lighting target set (shared by all lights/stages):
 		re::TextureTarget::TargetParams deferredTargetParams{};
 		deferredTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
@@ -614,6 +596,13 @@ namespace gr
 			re::TextureTarget::TargetParams::BlendMode::One,
 		};
 		deferredTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
+
+
+		// Append a color-only clear stage to clear the lighting target:
+		re::RenderStage::ClearStageParams colorClearParams;
+		colorClearParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Enabled };
+		colorClearParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
+		pipeline.AppendRenderStage(re::RenderStage::CreateClearStage(colorClearParams, deferredTargetSet));
 
 
 		// Ambient stage:

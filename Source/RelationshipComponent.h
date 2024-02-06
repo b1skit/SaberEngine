@@ -25,6 +25,8 @@ namespace fr
 
 		entt::entity GetThisEntity() const;
 
+		std::vector<entt::entity> GetAllDescendents() const;
+
 
 	public:
 		Relationship(Relationship&&) noexcept;
@@ -43,9 +45,11 @@ namespace fr
 
 		~Relationship();
 
+		void Destroy();
+
 
 	private:
-		const entt::entity m_thisEntity;
+		entt::entity m_thisEntity;
 		entt::entity m_parent;
 
 		// Siblings
@@ -55,6 +59,8 @@ namespace fr
 		// Children
 		entt::entity m_firstChild;
 		entt::entity m_lastChild;
+
+		bool m_isValid;
 
 		mutable std::shared_mutex m_relationshipMutex;
 

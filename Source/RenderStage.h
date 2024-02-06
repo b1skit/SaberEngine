@@ -82,7 +82,6 @@ namespace re
 		static std::shared_ptr<RenderStage> CreateSingleFrameClearStage(
 			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const>);
 
-
 		~RenderStage() = default;
 
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline

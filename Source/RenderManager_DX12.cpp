@@ -300,6 +300,13 @@ namespace dx12
 			}
 		};
 
+		auto StageTypeChanged = [](const re::RenderStage::Type prev, const re::RenderStage::Type current) -> bool
+			{
+				// No point flushing command lists if we have a clear stage followed by a graphics stage
+				return prev != current &&
+					!(prev == re::RenderStage::Type::Clear && current == re::RenderStage::Type::Graphics);
+			};
+
 		re::RenderStage::Type prevRenderStageType = re::RenderStage::Type::Invalid;
 
 		// Render each RenderSystem in turn:
@@ -326,7 +333,7 @@ namespace dx12
 					// If the new RenderStage type is different to the previous one, we need to end recording on it
 					// to ensure the work is correctly ordered between queues:
 					const re::RenderStage::Type curRenderStageType = renderStage->GetStageType();
-					if (curRenderStageType != prevRenderStageType)
+					if (StageTypeChanged(prevRenderStageType, curRenderStageType))
 					{
 						AppendCommandLists();
 

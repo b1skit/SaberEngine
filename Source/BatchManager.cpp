@@ -49,40 +49,60 @@ namespace
 
 	template<typename T>
 	void AssignInstancingIndex(
-		std::unordered_map<T, uint32_t>& indexMap, 
+		std::unordered_map<T, gr::BatchManager::RefCountedIndex>& indexMap,
 		std::vector<uint32_t>& freeIndexes, 
 		T newID)
 	{
-		SEAssert(!indexMap.contains(newID), "ID has already been assigned an index");
-
-		uint32_t newIndex = std::numeric_limits<uint32_t>::max();
-		if (!freeIndexes.empty())
+		// Transforms can be shared; We only need a single index in our array
+		if (indexMap.contains(newID))
 		{
-			// If an index has been returned, reuse it:
-			newIndex = freeIndexes.back();
-			freeIndexes.pop_back();
+			gr::BatchManager::RefCountedIndex& refCountedIndex = indexMap.at(newID);
+			refCountedIndex.m_refCount++;
 		}
 		else
 		{
-			// No recycled indexes exist; Assign a new, monotonically-increasing index:
-			newIndex = util::CheckedCast<uint32_t>(indexMap.size());
-		}
+			uint32_t newIndex = std::numeric_limits<uint32_t>::max();
+			if (!freeIndexes.empty())
+			{
+				// If an index has been returned, reuse it:
+				newIndex = freeIndexes.back();
+				freeIndexes.pop_back();
+			}
+			else
+			{
+				// No recycled indexes exist; Assign a new, monotonically-increasing index:
+				newIndex = util::CheckedCast<uint32_t>(indexMap.size());
+			}
 
-		indexMap.emplace(newID, newIndex);
+			indexMap.emplace(newID,
+				gr::BatchManager::RefCountedIndex{
+					.m_index = newIndex,
+					.m_refCount = 1
+				});
+		}
 	}
 
 
 	template<typename T>
 	void FreeInstancingIndex(
-		std::unordered_map<T, uint32_t>& indexMap,
+		std::unordered_map<T, gr::BatchManager::RefCountedIndex>& indexMap,
 		std::vector<uint32_t>& freeIndexes,
 		T idToFree)
 	{
 		SEAssert(indexMap.contains(idToFree), "ID has not been assigned an index");
 
-		const uint32_t indexToFree = indexMap.at(idToFree);
-		indexMap.erase(idToFree);
-		freeIndexes.emplace_back(indexToFree);
+		gr::BatchManager::RefCountedIndex& refCountedIndex = indexMap.at(idToFree);
+		SEAssert(refCountedIndex.m_refCount >= 1, "Invalid ref count");
+
+		refCountedIndex.m_refCount--;
+
+		if (indexMap.at(idToFree).m_refCount == 0)
+		{
+			const uint32_t indexToFree = refCountedIndex.m_index;
+			indexMap.erase(idToFree);
+
+			freeIndexes.emplace_back(refCountedIndex.m_index);
+		}
 	}
 
 
@@ -118,34 +138,54 @@ namespace gr
 
 		// Remove deleted batches
 		std::vector<gr::RenderDataID> const& deletedIDs = renderData.GetIDsWithDeletedData<gr::MeshPrimitive::RenderData>();
-		for (gr::RenderDataID deletedID : deletedIDs)
+		for (gr::RenderDataID idToDelete : deletedIDs)
 		{
-			if (m_renderDataIDToBatchMetadata.contains(deletedID))
+			if (m_renderDataIDToBatchMetadata.contains(idToDelete))
 			{
-				auto deletedIDMetadataItr = m_renderDataIDToBatchMetadata.find(deletedID);
+				auto deletedIDMetadataItr = m_renderDataIDToBatchMetadata.find(idToDelete);
+
+				const gr::TransformID deletedTransformID = deletedIDMetadataItr->second.m_transformID;
 
 				// Move the last batch to replace the one being deleted:
 				const size_t cacheIdxToReplace = deletedIDMetadataItr->second.m_cacheIndex;
+
+				SEAssert(!m_permanentCachedBatches.empty() && cacheIdxToReplace < m_permanentCachedBatches.size(),
+					"Permanent cached batches cannot be empty, and the index being replaced must be in bounds");
+
 				const size_t cacheIdxToMove = m_permanentCachedBatches.size() - 1;
+
+				SEAssert(m_cacheIdxToRenderDataID.contains(cacheIdxToMove), "Cache index not found");
+				const gr::RenderDataID renderDataIDToMove = m_cacheIdxToRenderDataID.at(cacheIdxToMove);
+
+				SEAssert(m_cacheIdxToRenderDataID.at(cacheIdxToReplace) == idToDelete,
+					"Cache index to ID map references a different ID");
+
+				m_cacheIdxToRenderDataID.erase(cacheIdxToMove);
+				m_renderDataIDToBatchMetadata.erase(idToDelete);
+
 				if (cacheIdxToReplace != cacheIdxToMove)
 				{
 					m_permanentCachedBatches[cacheIdxToReplace] = re::Batch::Duplicate(
 						m_permanentCachedBatches[cacheIdxToMove], 
 						m_permanentCachedBatches[cacheIdxToMove].GetLifetime());
+
+					SEAssert(m_cacheIdxToRenderDataID.contains(cacheIdxToReplace), "Cache index not found");
+					
+					SEAssert(m_renderDataIDToBatchMetadata.contains(renderDataIDToMove),
+						"Cannot find the render data ID to move");
+
+					SEAssert(m_renderDataIDToBatchMetadata.at(renderDataIDToMove).m_renderDataID == renderDataIDToMove,
+						"IDs are out of sync");
+
+					m_cacheIdxToRenderDataID.at(cacheIdxToReplace) = renderDataIDToMove;
+					m_renderDataIDToBatchMetadata.at(renderDataIDToMove).m_cacheIndex = cacheIdxToReplace;
 				}
 				m_permanentCachedBatches.pop_back();
-				
+
+
 				// Update the metadata:
-				FreeInstancingIndex(
-					m_instancedTransformIndexes, m_freeTransformIndexes, deletedIDMetadataItr->second.m_transformID);
-				FreeInstancingIndex(m_instancedMaterialIndexes, m_freeInstancedMaterialIndexes, deletedID);
-
-				const gr::RenderDataID movedRenderDataID = m_cacheIdxToRenderDataID.at(cacheIdxToMove);
-				m_cacheIdxToRenderDataID.erase(cacheIdxToMove);
-				m_cacheIdxToRenderDataID.emplace(cacheIdxToReplace, movedRenderDataID);
-
-				m_renderDataIDToBatchMetadata.erase(deletedID);
-				m_renderDataIDToBatchMetadata.at(movedRenderDataID).m_cacheIndex = cacheIdxToReplace;
+				FreeInstancingIndex(m_instancedTransformIndexes, m_freeTransformIndexes, deletedTransformID);
+				FreeInstancingIndex(m_instancedMaterialIndexes, m_freeInstancedMaterialIndexes, idToDelete);
 			}
 		}
 
@@ -185,14 +225,10 @@ namespace gr
 						.m_cacheIndex = newBatchIdx
 					});
 
-				// Transforms can be shared; We only need a single index in our array
-				if (!m_instancedTransformIndexes.contains(newBatchTransformID))
-				{
-					AssignInstancingIndex(
-						m_instancedTransformIndexes, 
-						m_freeTransformIndexes, 
-						newBatchTransformID);
-				}
+				AssignInstancingIndex(
+					m_instancedTransformIndexes,
+					m_freeTransformIndexes,
+					newBatchTransformID);
 
 				AssignInstancingIndex(
 					m_instancedMaterialIndexes, 
@@ -225,8 +261,10 @@ namespace gr
 
 				for (auto& transformRecord : m_instancedTransformIndexes)
 				{
+					SEAssert(transformRecord.second.m_refCount >= 1, "Invalid ref count");
+
 					gr::TransformID transformID = transformRecord.first;
-					const uint32_t transformIdx = transformRecord.second;
+					const uint32_t transformIdx = transformRecord.second.m_index;
 
 					gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromTransformID(transformID);
 
@@ -260,8 +298,10 @@ namespace gr
 
 				for (auto& materialRecord : m_instancedMaterialIndexes)
 				{
+					SEAssert(materialRecord.second.m_refCount >= 1, "Invalid ref count");
+
 					gr::RenderDataID materialID = materialRecord.first;
-					const uint32_t materialIdx = materialRecord.second;
+					const uint32_t materialIdx = materialRecord.second.m_index;
 
 					gr::Material::MaterialInstanceData const& materialData =
 						renderData.GetObjectData<gr::Material::MaterialInstanceData>(materialID);
@@ -282,7 +322,7 @@ namespace gr
 			// instancing (e.g. MeshPrimitives)
 			if (m_instancedTransformIndexes.contains(transformID))
 			{
-				const uint32_t transformIdx = m_instancedTransformIndexes.at(transformID);
+				const uint32_t transformIdx = m_instancedTransformIndexes.at(transformID).m_index;
 
 				gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromTransformID(transformID);
 
@@ -310,7 +350,7 @@ namespace gr
 				SEAssert(m_instancedMaterialIndexes.contains(dirtyMaterialID),
 					"RenderDataID has not been registered for instancing indexes");
 
-				const uint32_t materialIdx = m_instancedMaterialIndexes.at(dirtyMaterialID);
+				const uint32_t materialIdx = m_instancedMaterialIndexes.at(dirtyMaterialID).m_index;
 
 				gr::Material::MaterialInstanceData const& materialData =
 					renderData.GetObjectData<gr::Material::MaterialInstanceData>(dirtyMaterialID);
@@ -386,10 +426,10 @@ namespace gr
 						"RenderDataID is not registered for an instanced material index");
 
 					const uint32_t transformIdx = 
-						m_instancedTransformIndexes.at(batchMetadata[unmergedSrcIdx].m_transformID);
+						m_instancedTransformIndexes.at(batchMetadata[unmergedSrcIdx].m_transformID).m_index;
 
 					const uint32_t materialIdx = 
-						m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx].m_renderDataID);
+						m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx].m_renderDataID).m_index;
 
 					instanceIndexParams.emplace_back(CreateInstanceIndexParamsData(transformIdx, materialIdx));
 				}

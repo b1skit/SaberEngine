@@ -70,8 +70,10 @@ namespace fr
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			// Add all entities to the deferred delete queue
-			for (auto entity : m_registry.storage<entt::entity>())
+			for (auto entityTuple : m_registry.storage<entt::entity>().each())
 			{
+				entt::entity entity = std::get<entt::entity>(entityTuple);
+
 				RegisterEntityForDelete(entity);
 			}
 		}
@@ -452,6 +454,9 @@ namespace fr
 					renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(
 						renderDataComponent.GetRenderDataID());
 				}
+
+				// Manually destroy the relationship, while the component is still active in the registry
+				m_registry.get<fr::Relationship>(entity).Destroy();
 				
 				// Finally, destroy the entity:
 				m_registry.destroy(entity);
@@ -1044,58 +1049,211 @@ namespace fr
 		constexpr char const* k_panelTitle = "Entity/Component View";
 		ImGui::Begin(k_panelTitle, show);
 
-		static bool s_expandAll = false;
-		bool expandChangeTriggered = false;
-		if (ImGui::Button(s_expandAll ? "Hide all" : "Expand all"))
+		if (ImGui::CollapsingHeader("Entities & Components"))
 		{
-			s_expandAll = !s_expandAll;
-			expandChangeTriggered = true;
+			static bool s_expandAll = false;
+			bool expandChangeTriggered = false;
+			if (ImGui::Button(s_expandAll ? "Hide all" : "Expand all"))
+			{
+				s_expandAll = !s_expandAll;
+				expandChangeTriggered = true;
+			}
+
+			auto ShowEntityControls = [this](entt::entity entity)
+				{
+					if (ImGui::Button("Delete"))
+					{
+						fr::Relationship const& entityRelationship = GetComponent<fr::Relationship>(entity);			
+
+						// This is executed on the render thread, so we register children for deletion first, then
+						// parents, so we don't risk having orphans between frames
+						std::vector<entt::entity> descendents = entityRelationship.GetAllDescendents();
+						for (size_t i = descendents.size(); i > 0; i--)
+						{
+							RegisterEntityForDelete(descendents[i - 1]);
+						}
+
+						RegisterEntityForDelete(entity);
+					}
+				};
+
+			// Iterate over all entities:
+			for (auto entityTuple : m_registry.storage<entt::entity>().each())
+			{
+				entt::entity entity = std::get<entt::entity>(entityTuple);
+
+				fr::NameComponent const& nameCmpt = m_registry.get<fr::NameComponent>(entity);
+				fr::Relationship const& relationshipCmpt = m_registry.get<fr::Relationship>(entity);
+
+				if (expandChangeTriggered)
+				{
+					ImGui::SetNextItemOpen(s_expandAll);
+				}
+				if (ImGui::TreeNode(std::format("Entity {} \"{}\"",
+					static_cast<uint32_t>(entity),
+					nameCmpt.GetName()).c_str()))
+				{
+					ImGui::Indent();
+
+					const entt::entity parent = relationshipCmpt.GetParent();
+					ImGui::Text(std::format("Parent: {}", 
+						(parent == entt::null) ? "<none>" : std::to_string(static_cast<uint32_t>(parent)).c_str()).c_str());
+
+					std::string descendentsStr = "Descendents: ";
+					std::vector<entt::entity> descendents = relationshipCmpt.GetAllDescendents();
+					if (!descendents.empty())
+					{
+						for (size_t i = 0; i < descendents.size(); i++)
+						{
+							constexpr uint8_t k_entriesPerLine = 12;
+							if (i % k_entriesPerLine == 0)
+							{
+								descendentsStr += "\n\t";
+							}
+							descendentsStr += std::format("{}{}",
+								static_cast<uint32_t>(descendents[i]),
+								(i == descendents.size() - 1) ? "" : ", ");
+						}
+					}
+					else
+					{
+						descendentsStr += "<none>";
+					}
+					ImGui::Text(descendentsStr.c_str());
+
+					for (auto&& curr : m_registry.storage())
+					{
+						entt::id_type cid = curr.first;
+						auto& storage = curr.second;
+						entt::type_info ctype = storage.type();
+
+						if (storage.contains(entity))
+						{
+							ImGui::BulletText(std::format("{}", ctype.name()).c_str());
+						}
+					}
+
+					ShowEntityControls(entity);
+
+					ImGui::Unindent();
+					ImGui::TreePop();
+				}
+
+				ImGui::Separator();
+			}
 		}
 
-		auto ShowEntityControls = [this](entt::entity entity)
+		if (ImGui::CollapsingHeader("Spawn Entities"))
+		{
+			ImGui::Indent();
+
+			enum EntityToSpawn : uint8_t
 			{
-				if (ImGui::Button("Delete"))
-				{
-					RegisterEntityForDelete(entity);
-				}
+				DirectionalLight,
+				PointLight,
+
+				EntityToSpawn_Count
+			};
+			std::array<char const*, EntityToSpawn::EntityToSpawn_Count> arr = {
+				"Directional Light",
+				"Point Light"
 			};
 
-		// Iterate over all entities:
-		for (auto entityTuple : m_registry.storage<entt::entity>().each())
-		{
-			entt::entity entity = std::get<entt::entity>(entityTuple);
-
-			fr::NameComponent const& nameCmpt = m_registry.get<fr::NameComponent>(entity);
-
-			if (expandChangeTriggered)
+			union SpawnParams
 			{
-				ImGui::SetNextItemOpen(s_expandAll);
-			}
-			if (ImGui::TreeNode(std::format("Entity {} \"{}\"",
-				static_cast<uint32_t>(entity),
-				nameCmpt.GetName()).c_str()))
-			{
-				ImGui::Indent();
+				SpawnParams() {}
 
-				for (auto&& curr : m_registry.storage())
+				struct LightSpawnParams
 				{
-					entt::id_type cid = curr.first;
-					auto& storage = curr.second;
-					entt::type_info ctype = storage.type();
+					LightSpawnParams() {}
+					bool m_attachShadow = true;
+					glm::vec4 m_colorIntensity = glm::vec4(1.f);
+				} m_lightSpawnParams;
+			};
+			static std::unique_ptr<SpawnParams> s_spawnParams = std::make_unique<SpawnParams>();
+			auto InitializeSpawnParams = [](std::unique_ptr<SpawnParams>& spawnParams)
+				{
+					spawnParams = std::make_unique<SpawnParams>();
+				};
+			
 
-					if (storage.contains(entity))
+			const ImGuiComboFlags flags = 0;
+
+			static uint8_t s_entitySelectionIdx = 0;
+			const uint8_t currentSelectionIdx = s_entitySelectionIdx;
+			if (ImGui::BeginCombo("Entity type", arr[s_entitySelectionIdx], flags))
+			{
+				for (uint8_t comboIdx = 0; comboIdx < arr.size(); comboIdx++)
+				{
+					const bool isSelected = comboIdx == s_entitySelectionIdx;
+					if (ImGui::Selectable(arr[comboIdx], isSelected))
 					{
-						ImGui::BulletText(std::format("{}", ctype.name()).c_str());
+						s_entitySelectionIdx = comboIdx;
+					}
+
+					// Set the initial focus:
+					if (isSelected)
+					{
+						ImGui::SetItemDefaultFocus();
 					}
 				}
+				ImGui::EndCombo();
 
-				ShowEntityControls(entity);
+				// If the selection has changed, re-initialize the spawn parameters:
+				if (s_spawnParams == nullptr || s_entitySelectionIdx != currentSelectionIdx)
+				{
+					InitializeSpawnParams(s_spawnParams);
+				}
 
-				ImGui::Unindent();
-				ImGui::TreePop();
+				// Display type-specific spawn options
+				switch (static_cast<EntityToSpawn>(s_entitySelectionIdx))
+				{
+				case EntityToSpawn::DirectionalLight:
+				case EntityToSpawn::PointLight:
+				{
+					ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_lightSpawnParams.m_attachShadow);
+					ImGui::ColorEdit4("Color/Intensity", &s_spawnParams->m_lightSpawnParams.m_colorIntensity.r);
+				}
+				break;
+				break;
+				default: SEAssertF("Invalid type");
+				}
 			}
 
-			ImGui::Separator();
+			static std::array<char, 64> s_nameInputBuffer = { "Spawned\0" };
+			ImGui::InputText("Name", s_nameInputBuffer.data(), s_nameInputBuffer.size());
+
+			if (ImGui::Button("Spawn"))
+			{
+				entt::entity sceneNode = fr::SceneNode::Create(*this, s_nameInputBuffer.data(), entt::null);
+
+				switch (static_cast<EntityToSpawn>(s_entitySelectionIdx))
+				{
+				case EntityToSpawn::DirectionalLight:
+				{
+					fr::LightComponent::AttachDeferredDirectionalLightConcept(
+						*this, 
+						sceneNode,
+						std::format("{}_DirectionalLight", s_nameInputBuffer.data()).c_str(),
+						s_spawnParams->m_lightSpawnParams.m_colorIntensity,
+						s_spawnParams->m_lightSpawnParams.m_attachShadow);
+				}
+				break;
+				case EntityToSpawn::PointLight:
+				{
+					fr::LightComponent::AttachDeferredPointLightConcept(
+						*this,
+						sceneNode,
+						std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
+						s_spawnParams->m_lightSpawnParams.m_colorIntensity,
+						s_spawnParams->m_lightSpawnParams.m_attachShadow);
+				}
+				break;
+				default: SEAssertF("Invalid type");
+				}
+			}
+
+			ImGui::Unindent();
 		}
 
 		ImGui::End();

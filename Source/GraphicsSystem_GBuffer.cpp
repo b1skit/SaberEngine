@@ -77,8 +77,7 @@ namespace gr
 		gbuffer16bitParams.m_format = re::Texture::Format::RGBA16F; 
 		gbuffer16bitParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		re::TextureTarget::TargetParams gbufferTargetParams;
-		gbufferTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
+		re::TextureTarget::TargetParams defaultTargetParams;
 
 		std::shared_ptr<re::TextureTargetSet> gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
@@ -86,28 +85,26 @@ namespace gr
 			if (i == GBufferWNormal || i == GBufferEmissive)
 			{
 				gBufferTargets->SetColorTarget(
-					i, re::Texture::Create(GBufferTexNames[i], gbuffer16bitParams), gbufferTargetParams);
+					i, re::Texture::Create(GBufferTexNames[i], gbuffer16bitParams), defaultTargetParams);
 			}
 			else
 			{
 				gBufferTargets->SetColorTarget(
-					i, re::Texture::Create(GBufferTexNames[i], gBufferColorParams), gbufferTargetParams);
+					i, re::Texture::Create(GBufferTexNames[i], gBufferColorParams), defaultTargetParams);
 			}
 		}
 		
 		// Create GBuffer depth target:
 		re::Texture::TextureParams depthTexParams(gBufferColorParams);
-		depthTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
+		depthTexParams.m_usage = static_cast<re::Texture::Usage>(
+			re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
 		depthTexParams.m_format = re::Texture::Format::Depth32F;
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		depthTexParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane
 
-		re::TextureTarget::TargetParams depthTargetParams;
-		depthTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
-
 		gBufferTargets->SetDepthStencilTarget(
 			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams),
-			depthTargetParams);
+			defaultTargetParams);
 
 		const re::TextureTarget::TargetParams::BlendModes gbufferBlendModes
 		{
@@ -120,6 +117,14 @@ namespace gr
 
 		// Camera:		
 		m_gBufferStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
+
+
+		// Create a clear stage for the GBuffer targets:
+		re::RenderStage::ClearStageParams gbufferClearParams; // Clear both color and depth
+		gbufferClearParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Enabled };
+		gbufferClearParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
+		pipeline.AppendRenderStage(re::RenderStage::CreateClearStage(gbufferClearParams, gBufferTargets));
+
 
 		// Finally, append the GBuffer stage to the pipeline:
 		pipeline.AppendRenderStage(m_gBufferStage);

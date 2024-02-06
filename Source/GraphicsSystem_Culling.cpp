@@ -216,7 +216,7 @@ namespace gr
 
 					m_meshesToMeshPrimitiveBounds.erase(deletedBoundsID);
 				}
-				else if (m_meshPrimitivesToEncapsulatingMesh.contains(deletedBoundsID)) // Handle deleted MeshPrimitive bounds:
+				else if (m_meshPrimitivesToEncapsulatingMesh.contains(deletedBoundsID)) // Deleted MeshPrimitive bounds
 				{
 					gr::RenderDataID encapsulatingBoundsID = m_meshPrimitivesToEncapsulatingMesh.at(deletedBoundsID);
 

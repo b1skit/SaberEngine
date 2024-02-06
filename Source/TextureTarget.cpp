@@ -193,6 +193,27 @@ namespace re
 	}
 
 
+	std::shared_ptr<re::TextureTargetSet> TextureTargetSet::Create(
+		TextureTargetSet const& rhs, re::TextureTarget::TargetParams const& overrideParams, char const* name)
+	{
+		std::shared_ptr<re::TextureTargetSet> newTextureTargetSet = nullptr;
+		newTextureTargetSet.reset(new re::TextureTargetSet(name));
+
+		for (uint8_t slotIdx = 0; slotIdx < rhs.GetNumColorTargets(); slotIdx++)
+		{
+			newTextureTargetSet->SetColorTarget(slotIdx, rhs.GetColorTarget(slotIdx).GetTexture(), overrideParams);
+		}
+		if (rhs.HasDepthTarget())
+		{
+			newTextureTargetSet->SetDepthStencilTarget(rhs.GetDepthStencilTarget()->GetTexture(), overrideParams);
+		}
+
+		re::RenderManager::Get()->RegisterForCreate(newTextureTargetSet);
+
+		return newTextureTargetSet;
+	}
+
+
 	TextureTargetSet::TextureTargetSet(string const& name)
 		: NamedObject(name)
 		, m_numColorTargets(0)
@@ -243,7 +264,10 @@ namespace re
 		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been committed");
 		SEAssert(slot == 0 || m_colorTargets[slot - 1].HasTexture(), 
 			"Targets must be set in monotonically-increasing order");
+		
 		m_colorTargets[slot] = texTarget;
+
+		RecomputeNumColorTargets();
 	}
 
 
@@ -253,7 +277,10 @@ namespace re
 		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been committed");
 		SEAssert(slot == 0 || m_colorTargets[slot - 1].HasTexture(),
 			"Targets must be set in monotonically-increasing order");
+		
 		m_colorTargets[slot] = re::TextureTarget(texture, targetParams);
+
+		RecomputeNumColorTargets();
 	}
 
 
@@ -465,6 +492,10 @@ namespace re
 			if (m_colorTargets[slot].HasTexture())
 			{
 				m_numColorTargets++;
+			}
+			else
+			{
+				break; // Targets must be set in monotonically-increasing order, so we can early-out here
 			}
 		}
 	}

@@ -18,37 +18,14 @@ namespace fr
 		, m_next(entt::null)
 		, m_firstChild(entt::null)
 		, m_lastChild(entt::null)
+		, m_isValid(true)
 	{
 	}
 
 
 	Relationship::Relationship(Relationship&& rhs)  noexcept
-		: m_thisEntity(rhs.m_thisEntity)
 	{
 		*this = std::move(rhs);
-	}
-
-
-	Relationship::~Relationship()
-	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
-		// When destroying an entity, EnTT does a swap_and_pop that results in our Relationship DTOR being called twice,
-		// back-to-back for the same entity. To side-step this issue, use TryGetComponent
-		fr::Relationship* relationship = em.TryGetComponent<fr::Relationship>(m_thisEntity);
-		if (relationship)
-		{
-			relationship->SetParent(em, entt::null);
-
-			entt::entity curChild = relationship->GetFirstChild();
-			while (curChild != entt::null)
-			{
-				fr::Relationship& childRelationship = em.GetComponent<fr::Relationship>(curChild);
-				childRelationship.SetParent(em, entt::null);
-
-				curChild = childRelationship.GetNext();
-			}
-		}
 	}
 
 
@@ -61,6 +38,9 @@ namespace fr
 
 		{
 			std::scoped_lock lock(m_relationshipMutex, rhs.m_relationshipMutex);
+
+			m_thisEntity = rhs.m_thisEntity;
+			rhs.m_thisEntity = entt::null;
 
 			m_parent = rhs.m_parent;
 			rhs.m_parent = entt::null;
@@ -77,7 +57,43 @@ namespace fr
 			m_lastChild = rhs.m_lastChild;
 			rhs.m_lastChild = entt::null;
 			
+			m_isValid = rhs.m_isValid;
+			rhs.m_isValid = false;
+
 			return *this;
+		}
+	}
+
+
+	Relationship::~Relationship()
+	{
+		SEAssert(!m_isValid, 
+			"Relationship is being destroyed before it is invalidated. Destroy() must be called to remove a "
+			"Relationship from its hierarchy");
+	}
+
+
+	void Relationship::Destroy()
+	{
+		SEAssert(m_isValid, "Trying to destroy a Relationship that is already invalid");
+		m_isValid = false;
+
+		// Need to manually destroy relationships; We can't rely on the DTOR as it is only called once the registry has
+		// swapped the object out with another
+		{
+			fr::EntityManager& em = *fr::EntityManager::Get();
+
+			fr::Relationship& relationship = em.GetComponent<fr::Relationship>(m_thisEntity);
+			relationship.SetParent(em, entt::null);
+
+			entt::entity curChild = relationship.GetFirstChild();
+			while (curChild != entt::null)
+			{
+				fr::Relationship& childRelationship = em.GetComponent<fr::Relationship>(curChild);
+				childRelationship.SetParent(em, entt::null);
+
+				curChild = childRelationship.GetNext();
+			}
 		}
 	}
 
@@ -253,5 +269,61 @@ namespace fr
 			childRelationship.m_prev = entt::null;
 			childRelationship.m_next = entt::null;
 		}
+	}
+
+
+	std::vector<entt::entity> Relationship::GetAllDescendents() const
+	{
+		fr::EntityManager& em = *fr::EntityManager::Get();
+
+		std::vector<entt::entity> descendents;
+
+		SEAssert((m_firstChild != entt::null && m_lastChild != entt::null) || 
+			(m_firstChild == entt::null && m_lastChild == entt::null),
+			"Either first and last child must both be null, or both be not null");
+
+		std::stack<entt::entity> remainingChildren;
+
+		// Add the first child:
+		if (m_firstChild != entt::null)
+		{
+			remainingChildren.emplace(m_firstChild);
+		}
+
+		while (!remainingChildren.empty())
+		{
+			const entt::entity current = remainingChildren.top();
+			remainingChildren.pop();
+			
+			// Add the current entity to the output:
+			descendents.emplace_back(current);
+
+			// Add any siblings at the same depth the our output:
+			fr::Relationship const& currentRelationship = em.GetComponent<fr::Relationship>(current);
+			entt::entity sibling = currentRelationship.GetNext();
+			while (sibling != current)
+			{
+				descendents.emplace_back(sibling);
+
+				fr::Relationship const& siblingRelationship = em.GetComponent<fr::Relationship>(sibling);
+
+				// If a sibling has children, add the first one to the stack for the next iteration:
+				if (siblingRelationship.m_firstChild != entt::null)
+				{
+					remainingChildren.push(siblingRelationship.m_firstChild);
+				}
+
+				sibling = siblingRelationship.GetNext();
+			}
+
+			// Add the first child of the current entity to process the next level:
+			const entt::entity firstChild = currentRelationship.GetFirstChild();
+			if (firstChild != entt::null)
+			{
+				remainingChildren.push(firstChild);
+			}
+		}
+
+		return descendents;
 	}
 }

@@ -33,6 +33,14 @@ namespace gr
 			gr::RenderDataManager const&, std::vector<gr::RenderDataID> const&) const;
 
 
+	public:
+		struct RefCountedIndex
+		{
+			uint32_t m_index;
+			uint32_t m_refCount;
+		};
+
+
 	private:
 		// We store our batches contiguously in a vector, and maintain a doubly-linked map to associate RenderDataIDs
 		// with the associated cached batch indexes
@@ -48,11 +56,11 @@ namespace gr
 		std::unordered_map<size_t, gr::RenderDataID> m_cacheIdxToRenderDataID;
 
 		// Instancing:
-		std::unordered_map<gr::TransformID, uint32_t> m_instancedTransformIndexes;
+		std::unordered_map<gr::TransformID, RefCountedIndex> m_instancedTransformIndexes;
 		std::vector<uint32_t> m_freeTransformIndexes;
 		std::shared_ptr<re::ParameterBlock> m_instancedTransforms;
 
-		std::unordered_map<gr::RenderDataID, uint32_t> m_instancedMaterialIndexes;
+		std::unordered_map<gr::RenderDataID, RefCountedIndex> m_instancedMaterialIndexes;
 		std::vector<uint32_t> m_freeInstancedMaterialIndexes;
 		std::shared_ptr<re::ParameterBlock> m_instancedMaterials;
 	};

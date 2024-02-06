@@ -216,6 +216,10 @@ namespace re
 		[[nodiscard]] static std::shared_ptr<re::TextureTargetSet> Create(std::string const& name);
 		[[nodiscard]] static std::shared_ptr<re::TextureTargetSet> Create(TextureTargetSet const&, std::string const& name);
 
+		// Copy an existing TextureTargetSet, but override the TargetParams
+		[[nodiscard]] static std::shared_ptr<re::TextureTargetSet> Create(
+			TextureTargetSet const&, re::TextureTarget::TargetParams const& overrideParams, char const* name);
+
 		~TextureTargetSet();
 
 		void Commit(); // Target sets are immutable after Commit: Called once during API creation

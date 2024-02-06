@@ -66,7 +66,7 @@ namespace
 
 		// Create a copy of the targets so we don't modify the originals
 		std::shared_ptr<re::TextureTargetSet> clearTargets =
-			re::TextureTargetSet::Create(*targetSet, targetSet->GetName() + "_Clear");
+			re::TextureTargetSet::Create(*targetSet, targetSet->GetName());
 
 		if (numColorTargets > 0)
 		{
@@ -161,7 +161,7 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
 		std::shared_ptr<RenderStage> newClearStage;
-		newClearStage.reset(new ClearStage(targetSet->GetName() + "_Clear", Lifetime::Permanent));
+		newClearStage.reset(new ClearStage("Clear: " + targetSet->GetName(), Lifetime::Permanent));
 
 		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
 
@@ -174,7 +174,7 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
 		std::shared_ptr<RenderStage> newClearStage;
-		newClearStage.reset(new ClearStage(targetSet->GetName() + "_Clear", Lifetime::SingleFrame));
+		newClearStage.reset(new ClearStage("Clear: " + targetSet->GetName(), Lifetime::SingleFrame));
 
 		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
 
