@@ -1161,13 +1161,12 @@ namespace fr
 
 			union SpawnParams
 			{
-				SpawnParams() {}
+				SpawnParams() { memset(this, 0, sizeof(SpawnParams)); }
 
 				struct LightSpawnParams
 				{
-					LightSpawnParams() {}
-					bool m_attachShadow = true;
-					glm::vec4 m_colorIntensity = glm::vec4(1.f);
+					bool m_attachShadow;
+					glm::vec4 m_colorIntensity;
 				} m_lightSpawnParams;
 			};
 			static std::unique_ptr<SpawnParams> s_spawnParams = std::make_unique<SpawnParams>();
@@ -1198,26 +1197,29 @@ namespace fr
 					}
 				}
 				ImGui::EndCombo();
+			}
 
-				// If the selection has changed, re-initialize the spawn parameters:
-				if (s_spawnParams == nullptr || s_entitySelectionIdx != currentSelectionIdx)
-				{
-					InitializeSpawnParams(s_spawnParams);
-				}
+			// If the selection has changed, re-initialize the spawn parameters:
+			if (s_spawnParams == nullptr || s_entitySelectionIdx != currentSelectionIdx)
+			{
+				InitializeSpawnParams(s_spawnParams);
+			}
 
-				// Display type-specific spawn options
-				switch (static_cast<EntityToSpawn>(s_entitySelectionIdx))
-				{
-				case EntityToSpawn::DirectionalLight:
-				case EntityToSpawn::PointLight:
-				{
-					ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_lightSpawnParams.m_attachShadow);
-					ImGui::ColorEdit4("Color/Intensity", &s_spawnParams->m_lightSpawnParams.m_colorIntensity.r);
-				}
-				break;
-				break;
-				default: SEAssertF("Invalid type");
-				}
+			// Display type-specific spawn options
+			switch (static_cast<EntityToSpawn>(s_entitySelectionIdx))
+			{
+			case EntityToSpawn::DirectionalLight:
+			case EntityToSpawn::PointLight:
+			{
+				ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_lightSpawnParams.m_attachShadow);
+				ImGui::ColorEdit3("Color", 
+					&s_spawnParams->m_lightSpawnParams.m_colorIntensity.r, 
+					ImGuiColorEditFlags_NoInputs);
+				ImGui::SliderFloat("Luminous power", &s_spawnParams->m_lightSpawnParams.m_colorIntensity.a, 0.f, 10.f);
+			}
+			break;
+			break;
+			default: SEAssertF("Invalid type");
 			}
 
 			static std::array<char, 64> s_nameInputBuffer = { "Spawned\0" };

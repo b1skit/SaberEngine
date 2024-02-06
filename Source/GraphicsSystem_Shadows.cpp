@@ -107,10 +107,16 @@ namespace gr
 			auto const& directionalItrEnd = renderData.IDEnd(newDirectionalIDs);
 			while (directionalItr != directionalItrEnd)
 			{
-				CreateRegisterDirectionalShadowStage(
-					directionalItr.GetRenderDataID(),
-					directionalItr.Get<gr::ShadowMap::RenderData>(),
-					directionalItr.Get<gr::Camera::RenderData>());
+				if (directionalItr.HasObjectData<gr::ShadowMap::RenderData>() == true)
+				{
+					SEAssert(directionalItr.HasObjectData<gr::Camera::RenderData>(),
+						"Shadow map and shadow camera render data are both required for shadows");
+
+					CreateRegisterDirectionalShadowStage(
+						directionalItr.GetRenderDataID(),
+						directionalItr.Get<gr::ShadowMap::RenderData>(),
+						directionalItr.Get<gr::Camera::RenderData>());
+				}
 
 				++directionalItr;
 			}
@@ -126,11 +132,17 @@ namespace gr
 			auto const& pointItrEnd = renderData.IDEnd(newPointIDs);
 			while (pointItr != pointItrEnd)
 			{
-				CreateRegisterPointShadowStage(
-					pointItr.GetRenderDataID(),
-					pointItr.Get<gr::ShadowMap::RenderData>(),
-					pointItr.GetTransformData(),
-					pointItr.Get<gr::Camera::RenderData>());
+				if (pointItr.HasObjectData<gr::ShadowMap::RenderData>())
+				{
+					SEAssert(pointItr.HasObjectData<gr::Camera::RenderData>(),
+						"Shadow map and shadow camera render data are both required for shadows");
+
+					CreateRegisterPointShadowStage(
+						pointItr.GetRenderDataID(),
+						pointItr.Get<gr::ShadowMap::RenderData>(),
+						pointItr.GetTransformData(),
+						pointItr.Get<gr::Camera::RenderData>());
+				}
 
 				++pointItr;
 			}
@@ -146,8 +158,12 @@ namespace gr
 			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
 			while (directionalItr != directionalItrEnd)
 			{
-				if (directionalItr.IsDirty<gr::Camera::RenderData>())
+				if (directionalItr.HasObjectData<gr::Camera::RenderData>() &&
+					directionalItr.IsDirty<gr::Camera::RenderData>())
 				{
+					SEAssert(directionalItr.HasObjectData<gr::ShadowMap::RenderData>(),
+						"Shadow map and shadow camera render data are both required for shadows");
+
 					gr::Camera::RenderData const& shadowCamData = directionalItr.Get<gr::Camera::RenderData>();
 
 					m_directionalShadowStageData.at(directionalItr.GetRenderDataID()).m_shadowCamParamBlock->Commit(
@@ -166,8 +182,12 @@ namespace gr
 			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
 			while (pointItr != pointItrEnd)
 			{
-				if (pointItr.IsDirty<gr::Camera::RenderData>() || pointItr.TransformIsDirty())
+				if (pointItr.HasObjectData<gr::Camera::RenderData>() &&
+					pointItr.IsDirty<gr::Camera::RenderData>() || pointItr.TransformIsDirty())
 				{
+					SEAssert(pointItr.HasObjectData<gr::ShadowMap::RenderData>(),
+						"Shadow map and shadow camera render data are both required for shadows");
+
 					gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
@@ -177,7 +197,6 @@ namespace gr
 					m_pointShadowStageData.at(pointItr.GetRenderDataID()).m_cubemapShadowParamBlock->Commit(
 						cubemapShadowParams);
 				}
-
 				++pointItr;
 			}
 		}

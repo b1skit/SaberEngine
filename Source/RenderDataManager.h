@@ -1106,8 +1106,8 @@ namespace gr
 	template<typename T>
 	bool RenderDataManager::IDIterator::HasObjectData() const
 	{
-		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end",
-			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
+		SEAssert(m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend(),
+			"Invalid Get: Current m_currentObjectMetadata is past-the-end");
 
 		const DataTypeIndex dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
 
