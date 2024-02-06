@@ -43,8 +43,10 @@ float4 PShader(VertexOut In) : SV_Target
 	const float2 shadowCamNearFar = LightParams.g_shadowCamNearFarBiasMinMax.xy;
 	const float2 minMaxShadowBias = LightParams.g_shadowCamNearFarBiasMinMax.zw;
 	const float cubeFaceDimension = LightParams.g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
-	const float shadowFactor = 
-		GetCubeShadowMapFactor(worldPos, lightWorldPos, NoL, shadowCamNearFar, minMaxShadowBias, cubeFaceDimension);
+	
+	const bool hasShadow = LightParams.g_intensityScaleHasShadow.z > 0.f;
+	const float shadowFactor = hasShadow ? 
+		GetCubeShadowMapFactor(worldPos, lightWorldPos, NoL, shadowCamNearFar, minMaxShadowBias, cubeFaceDimension) : 1.f;
 	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -69,8 +71,8 @@ float4 PShader(VertexOut In) : SV_Target
 	lightingParams.Exposure = CameraParams.g_exposureProperties.x;
 	
 	
-	lightingParams.DiffuseScale = LightParams.g_intensityScale.x;
-	lightingParams.SpecularScale = LightParams.g_intensityScale.y;
+	lightingParams.DiffuseScale = LightParams.g_intensityScaleHasShadow.x;
+	lightingParams.SpecularScale = LightParams.g_intensityScaleHasShadow.y;
 	
 	return float4(ComputeLighting(lightingParams), 0.f);
 }

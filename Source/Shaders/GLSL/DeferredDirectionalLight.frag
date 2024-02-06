@@ -21,7 +21,9 @@ void main()
 	// Read from 2D shadow map:
 	const float NoL = max(0.0, dot(gbuffer.WorldNormal, directionalWorldDir));
 	const vec3 shadowPos = (g_shadowCam_VP * vec4(worldPos, 1.f)).xyz;
-	const float shadowFactor = GetShadowFactor(shadowPos, Depth0, NoL);
+
+	const bool hasShadow = g_intensityScaleHasShadow.z > 0.f;
+	const float shadowFactor = hasShadow ? GetShadowFactor(shadowPos, Depth0, NoL) : 1.f;
 
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -41,8 +43,8 @@ void main()
 	lightingParams.CameraWorldPos = g_cameraWPos.xyz;
 	lightingParams.Exposure = g_exposureProperties.x;
 
-	lightingParams.DiffuseScale = g_intensityScale.x;
-	lightingParams.SpecularScale = g_intensityScale.y;
+	lightingParams.DiffuseScale = g_intensityScaleHasShadow.x;
+	lightingParams.SpecularScale = g_intensityScaleHasShadow.y;
 
 	FragColor = vec4(ComputeLighting(lightingParams), 0.f);
 } 

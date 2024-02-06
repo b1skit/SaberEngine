@@ -141,7 +141,7 @@ namespace
 		glm::mat4 g_shadowCam_VP;
 
 		glm::vec4 g_renderTargetResolution; // .xy = xRes, yRes, .zw = 1/xRes 1/yRes
-		glm::vec4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
+		glm::vec4 g_intensityScaleHasShadow; // .xy = diffuse/specular intensity scale, .z = has shadow (1.f), w = unused
 
 		static constexpr char const* const s_shaderName = "LightParams"; // Not counted towards size of struct
 	};
@@ -174,6 +174,10 @@ namespace
 		{
 			gr::Light::RenderDataDirectional const* directionalData = 
 				static_cast<gr::Light::RenderDataDirectional const*>(lightRenderData);
+
+			SEAssert((directionalData->m_hasShadow == (shadowData != nullptr)) && 
+				(directionalData->m_hasShadow == (shadowCamData != nullptr)),
+				"A shadow requires both shadow and camera data");
 			
 			lightParams.g_lightColorIntensity = directionalData->m_colorIntensity;
 			lightParams.g_lightWorldPosRadius = glm::vec4(transformData.m_globalForward, 0.f); // WorldPos == Light dir
@@ -188,6 +192,10 @@ namespace
 			gr::Light::RenderDataPoint const* pointData =
 				static_cast<gr::Light::RenderDataPoint const*>(lightRenderData);
 			
+			SEAssert((pointData->m_hasShadow == (shadowData != nullptr)) &&
+				(pointData->m_hasShadow == (shadowCamData != nullptr)),
+				"A shadow requires both shadow and camera data");
+
 			lightParams.g_lightColorIntensity = pointData->m_colorIntensity;
 			
 			lightParams.g_lightWorldPosRadius = 
@@ -236,10 +244,10 @@ namespace
 
 		lightParams.g_renderTargetResolution = targetSet->GetTargetDimensions();
 		
-		lightParams.g_intensityScale = glm::vec4(
+		lightParams.g_intensityScaleHasShadow = glm::vec4(
 			static_cast<float>(diffuseEnabled),
 			static_cast<float>(specEnabled),
-			0.f,
+			static_cast<float>(hasShadow),
 			0.f);
 
 		return lightParams;

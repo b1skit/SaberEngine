@@ -158,12 +158,16 @@ namespace gr
 			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
 			while (directionalItr != directionalItrEnd)
 			{
-				if (directionalItr.HasObjectData<gr::Camera::RenderData>() &&
-					directionalItr.IsDirty<gr::Camera::RenderData>())
-				{
-					SEAssert(directionalItr.HasObjectData<gr::ShadowMap::RenderData>(),
-						"Shadow map and shadow camera render data are both required for shadows");
+				const bool hasShadow = directionalItr.Get<gr::Light::RenderDataDirectional>().m_hasShadow;
 
+				SEAssert(hasShadow == false ||
+					(directionalItr.HasObjectData<gr::Camera::RenderData>()&&
+						directionalItr.HasObjectData<gr::ShadowMap::RenderData>()),
+					"If a light has a shadow, it must have a shadow camera");
+			
+				if (hasShadow &&
+					(directionalItr.IsDirty<gr::Camera::RenderData>() || directionalItr.TransformIsDirty()))
+				{
 					gr::Camera::RenderData const& shadowCamData = directionalItr.Get<gr::Camera::RenderData>();
 
 					m_directionalShadowStageData.at(directionalItr.GetRenderDataID()).m_shadowCamParamBlock->Commit(
@@ -182,12 +186,16 @@ namespace gr
 			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
 			while (pointItr != pointItrEnd)
 			{
-				if (pointItr.HasObjectData<gr::Camera::RenderData>() &&
-					pointItr.IsDirty<gr::Camera::RenderData>() || pointItr.TransformIsDirty())
-				{
-					SEAssert(pointItr.HasObjectData<gr::ShadowMap::RenderData>(),
-						"Shadow map and shadow camera render data are both required for shadows");
+				const bool hasShadow = pointItr.Get<gr::Light::RenderDataPoint>().m_hasShadow;
 
+				SEAssert(hasShadow == false ||
+					(pointItr.HasObjectData<gr::Camera::RenderData>() &&
+						pointItr.HasObjectData<gr::ShadowMap::RenderData>()),
+					"If a light has a shadow, it must have a shadow camera");
+
+				if (hasShadow && 
+					(pointItr.IsDirty<gr::Camera::RenderData>() || pointItr.TransformIsDirty()))
+				{
 					gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 

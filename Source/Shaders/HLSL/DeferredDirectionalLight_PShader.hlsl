@@ -18,8 +18,10 @@ float4 PShader(VertexOut In) : SV_Target
 	const float NoL = saturate(dot(gbuffer.WorldNormal, LightParams.g_lightWorldPosRadius.xyz));
 	const float2 minMaxShadowBias = LightParams.g_shadowCamNearFarBiasMinMax.zw;
 	const float2 invShadowMapWidthHeight = LightParams.g_shadowMapTexelSize.zw;
-	const float shadowFactor = 
-		Get2DShadowMapFactor(worldPos, LightParams.g_shadowCam_VP, NoL, minMaxShadowBias, invShadowMapWidthHeight);
+	
+	const bool hasShadow = LightParams.g_intensityScaleHasShadow.z > 0.f;
+	const float shadowFactor = hasShadow ?
+		Get2DShadowMapFactor(worldPos, LightParams.g_shadowCam_VP, NoL, minMaxShadowBias, invShadowMapWidthHeight) : 1.f;
 	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -43,8 +45,8 @@ float4 PShader(VertexOut In) : SV_Target
 	lightingParams.CameraWorldPos = CameraParams.g_cameraWPos.xyz;
 	lightingParams.Exposure = CameraParams.g_exposureProperties.x;
 	
-	lightingParams.DiffuseScale = LightParams.g_intensityScale.x;
-	lightingParams.SpecularScale = LightParams.g_intensityScale.y;
+	lightingParams.DiffuseScale = LightParams.g_intensityScaleHasShadow.x;
+	lightingParams.SpecularScale = LightParams.g_intensityScaleHasShadow.y;
 	
 	return float4(ComputeLighting(lightingParams), 0.f);
 }
