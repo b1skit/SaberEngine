@@ -5,11 +5,6 @@
 
 namespace fr
 {
-	class Camera;
-	class ShadowMap;
-	class Transform;
-
-
 	class Light
 	{
 	public:

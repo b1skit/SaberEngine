@@ -595,6 +595,29 @@ namespace gr
 
 		if (m_showLightCoordinateAxis)
 		{
+			auto directionalItr = renderData.ObjectBegin<gr::Light::RenderDataDirectional>();
+			auto const& directionalItrEnd = renderData.ObjectEnd<gr::Light::RenderDataDirectional>();
+			while (directionalItr != directionalItrEnd)
+			{
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(directionalItr.GetRenderDataID()))
+				{
+					gr::Transform::RenderData const& transformData = directionalItr.GetTransformData();
+					glm::mat4 const& lightTRS = transformData.g_model;
+
+					std::shared_ptr<re::ParameterBlock> directionalAxisTransformPB =
+						gr::Transform::CreateInstancedTransformParams(
+							re::ParameterBlock::PBType::SingleFrame, &lightTRS, nullptr);
+
+					re::Batch coordinateAxis = BuildAxisBatch(
+						m_lightCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor, transformData.m_globalScale);
+
+					coordinateAxis.SetParameterBlock(directionalAxisTransformPB);
+					m_debugStage->AddBatch(coordinateAxis);
+				}
+
+				++directionalItr;
+			}
+
 			auto pointItr = renderData.ObjectBegin<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
 			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
 			while (pointItr != pointItrEnd)

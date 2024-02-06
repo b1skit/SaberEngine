@@ -17,7 +17,9 @@ namespace re
 
 namespace fr
 {
+	class Camera;
 	class EntityManager;
+	class Transform;
 
 
 	class LightComponent

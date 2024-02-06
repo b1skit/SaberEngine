@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "Camera.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
@@ -248,6 +249,11 @@ namespace fr
 		fr::Light& light = lightComponent.GetLight();
 
 		bool didModify = light.Update();
+
+		if (light.GetType() != fr::Light::Type::AmbientIBL && lightTransform->HasChanged())
+		{
+			didModify = true;
+		}
 
 		if (didModify)
 		{
