@@ -62,8 +62,17 @@ namespace gr
 
 		m_skyboxStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_skyboxShaderName, skyboxPipelineState));
 
-		// Load the HDR image:
-		m_skyTexture = fr::SceneManager::GetSceneData()->GetIBLTexture();
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
+		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
+			"We currently expect render data for exactly 1 ambient light to exist");
+
+		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
+
+		gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
+			renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
+
+		m_skyTexture = ambientRenderData.m_iblTex;
 
 		m_skyboxStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
