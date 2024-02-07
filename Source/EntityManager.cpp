@@ -7,6 +7,7 @@
 #include "LightComponent.h"
 #include "MarkerComponents.h"
 #include "MaterialInstanceComponent.h"
+#include "MeshConcept.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
 #include "CameraControlComponent.h"
