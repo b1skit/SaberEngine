@@ -597,11 +597,18 @@ namespace fr
 			ImGui::PopItemWidth();
 
 			// Local rotation:
-			glm::vec3 localEulerRotation = GetLocalEulerXYZRotationRadians();
-			bool localRotationDirty = Display3ComponentTransform("Local Euler Rotation", localEulerRotation);
+			// Note: quaterion rotations are defined in terms of +/- pi/2, glm will wrap the values. This doesn't play
+			// nicely with ImGui, which gets confused if a slider value is suddenly wrapped. As a solution, we maintain
+			// the value in a local static, and sync it with the "true" value of our Transform once interaction is over
+			static glm::vec3 s_localEulerRotation = GetLocalEulerXYZRotationRadians();
+			bool localRotationDirty = Display3ComponentTransform("Local Euler Rotation", s_localEulerRotation);
 			if (localRotationDirty)
 			{
-				SetLocalRotation(localEulerRotation);
+				SetLocalRotation(s_localEulerRotation);
+			}
+			else
+			{
+				s_localEulerRotation = GetLocalEulerXYZRotationRadians();
 			}
 
 			// Local scale:
