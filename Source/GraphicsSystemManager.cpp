@@ -52,17 +52,21 @@ namespace gr
 
 
 	std::vector<re::Batch> GraphicsSystemManager::GetVisibleBatches(
-		gr::Camera::View const& cameraView) const
+		gr::Camera::View const& cameraView,
+		uint8_t pbTypeMask/*= (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)*/) const
 	{
 		gr::CullingGraphicsSystem const* cullingGS = GetGraphicsSystem<gr::CullingGraphicsSystem>();
 
 		return m_batchManager.BuildSceneBatches(
 			m_renderData,
-			cullingGS->GetVisibleRenderDataIDs(cameraView));
+			cullingGS->GetVisibleRenderDataIDs(cameraView),
+			pbTypeMask);
 	}
 
 
-	std::vector<re::Batch> GraphicsSystemManager::GetVisibleBatches(std::vector<gr::Camera::View> const& views) const
+	std::vector<re::Batch> GraphicsSystemManager::GetVisibleBatches(
+		std::vector<gr::Camera::View> const& views,
+		uint8_t pbTypeMask/*= (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)*/) const
 	{
 		gr::CullingGraphicsSystem const* cullingGS = GetGraphicsSystem<gr::CullingGraphicsSystem>();
 
@@ -88,7 +92,8 @@ namespace gr
 		// Build batches from the final set of ids:
 		return m_batchManager.BuildSceneBatches(
 			m_renderData,
-			uniqueRenderDataIDs);
+			uniqueRenderDataIDs,
+			pbTypeMask);
 	}
 
 

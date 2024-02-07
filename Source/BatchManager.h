@@ -13,11 +13,17 @@ namespace gr
 {
 	class BatchManager
 	{
-	public:
 		// Our goal is to minimize the number of draw calls by instancing as many batches together as possible.
 		// Theoretically, a system can afford to submit N batches per frame, the total number of triangles (or triangles
 		// per batch) is far less important
 		// https://www.nvidia.de/docs/IO/8230/BatchBatchBatch.pdf
+	
+	public:
+		enum InstanceType : uint8_t // Bitmask helper: Which parameter blocks to attach to batches?
+		{
+			Transform	= 0x1,
+			Material	= 0x2
+		};
 
 		
 	public:
@@ -30,7 +36,9 @@ namespace gr
 	public:
 		// Build a vector of single frame scene batches from the vector of RenderDataIDs, from the interal batch cache
 		std::vector<re::Batch> BuildSceneBatches(
-			gr::RenderDataManager const&, std::vector<gr::RenderDataID> const&) const;
+			gr::RenderDataManager const&,
+			std::vector<gr::RenderDataID> const&,
+			uint8_t pbTypeMask = (InstanceType::Transform | InstanceType::Material)) const;
 
 
 	public:

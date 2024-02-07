@@ -370,7 +370,8 @@ namespace gr
 
 	std::vector<re::Batch> BatchManager::BuildSceneBatches(
 		gr::RenderDataManager const& renderData, 
-		std::vector<gr::RenderDataID> const& renderDataIDs) const
+		std::vector<gr::RenderDataID> const& renderDataIDs,
+		uint8_t pbTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
 	{
 		// Copy the batch metadata for the requeted RenderDataIDs:
 		std::vector<BatchMetadata> batchMetadata;
@@ -438,11 +439,20 @@ namespace gr
 				}
 
 				// Finally, attach our instanced parameter blocks:
-				batches.back().SetParameterBlock(CreateInstanceIndexParameterBlock(
-					re::ParameterBlock::PBType::SingleFrame, instanceIndexParams));
+				if (pbTypeMask != 0)
+				{
+					batches.back().SetParameterBlock(CreateInstanceIndexParameterBlock(
+						re::ParameterBlock::PBType::SingleFrame, instanceIndexParams));
 
-				batches.back().SetParameterBlock(m_instancedTransforms);
-				batches.back().SetParameterBlock(m_instancedMaterials);
+					if (pbTypeMask & InstanceType::Transform)
+					{
+						batches.back().SetParameterBlock(m_instancedTransforms);
+					}
+					if (pbTypeMask & InstanceType::Material)
+					{
+						batches.back().SetParameterBlock(m_instancedMaterials);
+					}
+				}
 
 
 			} while (unmergedIdx < batchMetadata.size());

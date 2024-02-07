@@ -248,7 +248,8 @@ namespace gr
 						*m_directionalShadowStageData.at(directionalData.m_renderDataID).m_renderStage;
 
 					directionalStage.AddBatches(m_graphicsSystemManager->GetVisibleBatches(
-						gr::Camera::View(directionalData.m_renderDataID, gr::Camera::View::Face::Default)));					
+						gr::Camera::View(directionalData.m_renderDataID, gr::Camera::View::Face::Default),
+						gr::BatchManager::InstanceType::Transform));
 				}
 
 				++directionalItr;
@@ -279,7 +280,7 @@ namespace gr
 					// add all batches to the same stage. It might be worth benchmarking performance of moving this to 6
 					// individual stages instead
 					m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
-						m_graphicsSystemManager->GetVisibleBatches(views));
+						m_graphicsSystemManager->GetVisibleBatches(views, gr::BatchManager::InstanceType::Transform));
 				}
 
 				++pointItr;

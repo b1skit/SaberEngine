@@ -34,8 +34,13 @@ namespace gr
 		std::vector<std::shared_ptr<gr::GraphicsSystem>>& GetGraphicsSystems();
 
 		// Wraps access to the batch manager
-		std::vector<re::Batch> GetVisibleBatches(gr::Camera::View const&) const;
-		std::vector<re::Batch> GetVisibleBatches(std::vector<gr::Camera::View> const&) const;
+		std::vector<re::Batch> GetVisibleBatches(
+			gr::Camera::View const&,
+			uint8_t pbTypeMask = (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)) const;
+
+		std::vector<re::Batch> GetVisibleBatches(
+			std::vector<gr::Camera::View> const&, 
+			uint8_t pbTypeMask = (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)) const;
 
 		gr::RenderDataManager const& GetRenderData() const;
 
