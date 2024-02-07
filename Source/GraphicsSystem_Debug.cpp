@@ -5,13 +5,25 @@
 #include "GraphicsSystemManager.h"
 #include "ImGuiUtils.h"
 #include "LightRenderData.h"
-#include "SceneManager.h"
 #include "Shader.h"
 
 
 namespace
 {
-	re::Batch BuildAxisBatch(
+	re::VertexStream::Lifetime GetVertexStreamLifetimeFromBatchLifetime(re::Batch::Lifetime batchLifetime)
+	{
+		switch (batchLifetime)
+		{
+		case re::Batch::Lifetime::SingleFrame: return re::VertexStream::Lifetime::SingleFrame;
+		case re::Batch::Lifetime::Permanent: return re::VertexStream::Lifetime::Permanent;
+		default: SEAssertF("Invalid batch lifetime");
+		}
+		return re::VertexStream::Lifetime::SingleFrame;
+	}
+
+
+	std::unique_ptr<re::Batch> BuildAxisBatch(
+		re::Batch::Lifetime batchLifetime,
 		float axisScale, 
 		glm::vec3 const& xAxisColor, 
 		glm::vec3 const& yAxisColor, 
@@ -30,8 +42,10 @@ namespace
 			glm::vec4(zAxisColor, 1.f), glm::vec4(zAxisColor, 1.f),
 		};
 
+		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
+
 		std::shared_ptr<re::VertexStream> axisPositionStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Vertex,
 			3, // numComponents per element
 			re::VertexStream::DataType::Float,
@@ -39,7 +53,7 @@ namespace
 			std::move(axisPositions));
 
 		std::shared_ptr<re::VertexStream> axisColorStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Vertex,
 			4, // numComponents per element
 			re::VertexStream::DataType::Float,
@@ -54,11 +68,12 @@ namespace
 		axisBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = axisPositionStream.get();
 		axisBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = axisColorStream.get();
 
-		return re::Batch(re::Batch::Lifetime::SingleFrame, axisBatchGraphicsParams);
+		return std::make_unique<re::Batch>(batchLifetime, axisBatchGraphicsParams);
 	}
 
 
-	re::Batch BuildBoundingBoxBatch(gr::Bounds::RenderData const& bounds, glm::vec3 const& boxColor)
+	std::unique_ptr<re::Batch> BuildBoundingBoxBatch(
+		re::Batch::Lifetime batchLifetime, gr::Bounds::RenderData const& bounds, glm::vec3 const& boxColor)
 	{
 		/* Construct a cube from 8 points:
 		*     e----f
@@ -115,9 +130,10 @@ namespace
 			7, 3
 		};
 
+		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> boxPositionsStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Vertex,
 			3, // numComponents per element
 			re::VertexStream::DataType::Float,
@@ -125,7 +141,7 @@ namespace
 			std::move(boxPositions));
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Vertex,
 			4, // numComponents per element
 			re::VertexStream::DataType::Float,
@@ -133,7 +149,7 @@ namespace
 			std::move(boxColors));
 
 		std::shared_ptr<re::VertexStream> boxIndexStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Index,
 			1, // numComponents per element
 			re::VertexStream::DataType::UInt,
@@ -149,11 +165,12 @@ namespace
 		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
 		boundingBoxBatchGraphicsParams.m_indexStream = boxIndexStream.get();
 
-		return re::Batch(re::Batch::Lifetime::SingleFrame, boundingBoxBatchGraphicsParams);
+		return std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams);
 	}
 
 
-	re::Batch BuildVertexNormalsBatch(
+	std::unique_ptr<re::Batch> BuildVertexNormalsBatch(
+		re::Batch::Lifetime batchLifetime,
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
 		float scale,
 		glm::vec3 const& globalScale,
@@ -184,8 +201,10 @@ namespace
 		const glm::vec4 normalColorVec4 = glm::vec4(normalColor, 1.f);
 		std::vector<glm::vec4> normalColors = std::vector<glm::vec4>(linePositions.size(), normalColorVec4);
 		
+		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
+
 		std::shared_ptr<re::VertexStream> normalPositionsStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Vertex,
 			3, // numComponents per element
 			re::VertexStream::DataType::Float,
@@ -193,7 +212,7 @@ namespace
 			std::move(linePositions));
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Vertex,
 			4, // numComponents per element
 			re::VertexStream::DataType::Float,
@@ -208,12 +227,12 @@ namespace
 		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = normalPositionsStream.get();
 		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
 
-		return re::Batch(re::Batch::Lifetime::SingleFrame, boundingBoxBatchGraphicsParams);
+		return std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams);
 	}
 
-
 	
-	re::Batch BuildCameraFrustumBatch(
+	std::unique_ptr<re::Batch> BuildCameraFrustumBatch(
+		re::Batch::Lifetime batchLifetime,
 		gr::Camera::RenderData const* camData,
 		gr::Transform::RenderData const* transformData,
 		glm::vec3 const& frustumColor, 
@@ -266,8 +285,10 @@ namespace
 			3, 7
 		};
 
+		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
+
 		std::shared_ptr<re::VertexStream> frustumPositionsStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Vertex,
 			3, // numComponents per element
 			re::VertexStream::DataType::Float,
@@ -275,7 +296,7 @@ namespace
 			std::move(frustumPositions));
 
 		std::shared_ptr<re::VertexStream> frustumColorStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Vertex,
 			4, // numComponents per element
 			re::VertexStream::DataType::Float,
@@ -283,7 +304,7 @@ namespace
 			std::move(frustumColors));
 
 		std::shared_ptr<re::VertexStream> frustumIndexStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Index,
 			1, // numComponents per element
 			re::VertexStream::DataType::UInt,
@@ -299,12 +320,14 @@ namespace
 		frustumBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = frustumColorStream.get();
 		frustumBatchGraphicsParams.m_indexStream = frustumIndexStream.get();
 
-		return re::Batch(re::Batch::Lifetime::SingleFrame, frustumBatchGraphicsParams);
+		return std::make_unique<re::Batch>(batchLifetime, frustumBatchGraphicsParams);
 	}
 	
 
-
-	re::Batch BuildWireframeBatch(gr::MeshPrimitive::RenderData const& meshPrimRenderData, glm::vec3 const& meshColor)
+	std::unique_ptr<re::Batch> BuildWireframeBatch(
+		re::Batch::Lifetime batchLifetime, 
+		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
+		glm::vec3 const& meshColor)
 	{
 		re::VertexStream const* positionStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
 		re::VertexStream const* indexStream = meshPrimRenderData.m_indexStream;
@@ -313,8 +336,10 @@ namespace
 		const glm::vec4 meshColorVec4 = glm::vec4(meshColor, 1.f);
 		std::vector<glm::vec4> meshColors = std::vector<glm::vec4>(positionStream->GetNumElements(), meshColorVec4);
 
+		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
+
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::SingleFrame,
+			streamLifetime,
 			re::VertexStream::StreamType::Vertex,
 			4, // numComponents per element
 			re::VertexStream::DataType::Float,
@@ -323,14 +348,14 @@ namespace
 
 		re::Batch::GraphicsParams wireframeBatchGraphicsParams{};
 		wireframeBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
-		wireframeBatchGraphicsParams.m_numInstances = 1; // TODO: Support instancing
+		wireframeBatchGraphicsParams.m_numInstances = 1;
 		wireframeBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::TriangleList;
 
 		wireframeBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = positionStream;
 		wireframeBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
 		wireframeBatchGraphicsParams.m_indexStream = indexStream;
 
-		return re::Batch(re::Batch::Lifetime::SingleFrame, wireframeBatchGraphicsParams);
+		return std::make_unique<re::Batch>(batchLifetime, wireframeBatchGraphicsParams);
 	}
 }
 
@@ -383,13 +408,25 @@ namespace gr
 
 		if (m_showWorldCoordinateAxis)
 		{
-			re::Batch coordinateAxis = 
-				BuildAxisBatch(m_worldCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
+			if (m_worldCoordinateAxisBatch == nullptr)
+			{
+				m_worldCoordinateAxisBatch = std::move(BuildAxisBatch(re::Batch::Lifetime::Permanent, 
+						m_worldCoordinateAxisScale, 
+						m_xAxisColor, 
+						m_yAxisColor, 
+						m_zAxisColor));
 
-			std::shared_ptr<re::ParameterBlock> identityTransformPB =
-				gr::Transform::CreateInstancedTransformParams(re::ParameterBlock::PBType::SingleFrame, &k_identity, nullptr);
-			coordinateAxis.SetParameterBlock(identityTransformPB);
-			m_debugStage->AddBatch(coordinateAxis);
+				std::shared_ptr<re::ParameterBlock> identityTransformPB = gr::Transform::CreateInstancedTransformParams(
+					re::ParameterBlock::PBType::Immutable, &k_identity, nullptr);
+
+				m_worldCoordinateAxisBatch->SetParameterBlock(identityTransformPB);
+			}
+
+			m_debugStage->AddBatch(*m_worldCoordinateAxisBatch);
+		}
+		else
+		{
+			m_worldCoordinateAxisBatch = nullptr;
 		}
 
 		if (m_showAllMeshPrimitiveBoundingBoxes || 
@@ -402,15 +439,39 @@ namespace gr
 			auto const& meshPrimItrEnd = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>();
 			while (meshPrimItr != meshPrimItrEnd)
 			{
-				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(meshPrimItr.GetRenderDataID()))
+				// Skip deferred light meshes
+				if (!gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, meshPrimItr.GetFeatureBits()))
 				{
-					gr::MeshPrimitive::RenderData const& meshPrimRenderData = meshPrimItr.Get<gr::MeshPrimitive::RenderData>();
+					++meshPrimItr;
+					continue;
+				}
+
+				const gr::RenderDataID meshPrimRenderDataID = meshPrimItr.GetRenderDataID();
+
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(meshPrimRenderDataID))
+				{
+					gr::MeshPrimitive::RenderData const& meshPrimRenderData = 
+						meshPrimItr.Get<gr::MeshPrimitive::RenderData>();
 					gr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<gr::Bounds::RenderData>();
 
 					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformData();
 
-					std::shared_ptr<re::ParameterBlock> meshTransformPB =
-						gr::Transform::CreateInstancedTransformParams(re::ParameterBlock::PBType::SingleFrame, transformData);
+					// Create/update a cached parameter block:
+					if (!m_meshPrimTransformParamBlocks.contains(meshPrimRenderDataID))
+					{
+						m_meshPrimTransformParamBlocks.emplace(
+							meshPrimRenderDataID, 
+							gr::Transform::CreateInstancedTransformParams(
+								re::ParameterBlock::PBType::Mutable, 
+								transformData));
+					}
+					else
+					{
+						m_meshPrimTransformParamBlocks.at(meshPrimRenderDataID)->Commit(
+							gr::Transform::CreateInstancedTransformParamsData(transformData));
+					}
+					std::shared_ptr<re::ParameterBlock> meshTransformPB = 
+						m_meshPrimTransformParamBlocks.at(meshPrimRenderDataID);
 
 					// MeshPrimitives:
 					if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
@@ -418,42 +479,82 @@ namespace gr
 						if (m_showAllMeshPrimitiveBoundingBoxes && 
 							gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveBounds, meshPrimItr.GetFeatureBits()))
 						{
-							re::Batch primitiveBoundsBatch =
-								BuildBoundingBoxBatch(boundsRenderData, m_meshPrimitiveBoundsColor);
-							primitiveBoundsBatch.SetParameterBlock(meshTransformPB);
-							m_debugStage->AddBatch(primitiveBoundsBatch);
+							if (!m_meshPrimBoundingBoxBatches.contains(meshPrimRenderDataID))
+							{
+								m_meshPrimBoundingBoxBatches.emplace(
+									meshPrimRenderDataID,
+									BuildBoundingBoxBatch(
+										re::Batch::Lifetime::Permanent, boundsRenderData, m_meshPrimitiveBoundsColor));
+
+								m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID)->SetParameterBlock(meshTransformPB);
+							}
+							m_debugStage->AddBatch(*m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID));
 						}
 
 						if (m_showAllVertexNormals)
 						{
-							re::Batch vertexNormalsBatch = BuildVertexNormalsBatch(
-								meshPrimRenderData, m_vertexNormalsScale, transformData.m_globalScale, m_normalsColor);
-							vertexNormalsBatch.SetParameterBlock(meshTransformPB);
-							m_debugStage->AddBatch(vertexNormalsBatch);
+							if (!m_vertexNormalBatches.contains(meshPrimRenderDataID))
+							{
+								m_vertexNormalBatches.emplace(
+									meshPrimRenderDataID,
+									BuildVertexNormalsBatch(
+										re::Batch::Lifetime::Permanent,
+										meshPrimRenderData, 
+										m_vertexNormalsScale, 
+										transformData.m_globalScale, 
+										m_normalsColor));
+
+								m_vertexNormalBatches.at(meshPrimRenderDataID)->SetParameterBlock(meshTransformPB);
+							}
+							m_debugStage->AddBatch(*m_vertexNormalBatches.at(meshPrimRenderDataID));
 						}
 
 						if (m_showAllWireframe)
 						{
-							re::Batch wireframeBatch = BuildWireframeBatch(meshPrimRenderData, m_wireframeColor);
-							wireframeBatch.SetParameterBlock(meshTransformPB);
-							m_debugStage->AddBatch(wireframeBatch);
+							if (!m_wireframeBatches.contains(meshPrimRenderDataID))
+							{
+								m_wireframeBatches.emplace(
+									meshPrimRenderDataID,
+									BuildWireframeBatch(
+										re::Batch::Lifetime::Permanent, meshPrimRenderData, m_wireframeColor));
+
+								m_wireframeBatches.at(meshPrimRenderDataID)->SetParameterBlock(meshTransformPB);
+							}
+							m_debugStage->AddBatch(*m_wireframeBatches.at(meshPrimRenderDataID));
 						}
 					}
 
 					if (m_showMeshCoordinateAxis)
 					{
-						re::Batch meshCoordinateAxisBatch = BuildAxisBatch(
-							m_meshCoordinateAxisScale, 
-							m_xAxisColor, 
-							m_yAxisColor, 
-							m_zAxisColor, 
-							transformData.m_globalScale);
-						meshCoordinateAxisBatch.SetParameterBlock(meshTransformPB);
-						m_debugStage->AddBatch(meshCoordinateAxisBatch);
+						if (!m_meshCoordinateAxisBatches.contains(meshPrimRenderDataID))
+						{
+							m_meshCoordinateAxisBatches.emplace(
+								meshPrimRenderDataID, 
+								std::move(BuildAxisBatch(
+									re::Batch::Lifetime::Permanent,
+									m_meshCoordinateAxisScale,
+									m_xAxisColor,
+									m_yAxisColor,
+									m_zAxisColor,
+									transformData.m_globalScale)));
+
+							m_meshCoordinateAxisBatches.at(meshPrimRenderDataID)->SetParameterBlock(meshTransformPB);
+						}
+
+						m_debugStage->AddBatch(*m_meshCoordinateAxisBatches.at(meshPrimRenderDataID));
 					}
 				}
 				++meshPrimItr;
 			}
+		}
+		else
+		{
+			m_meshPrimTransformParamBlocks.clear();
+
+			m_meshPrimBoundingBoxBatches.clear();
+			m_vertexNormalBatches.clear();
+			m_wireframeBatches.clear();
+			m_meshCoordinateAxisBatches.clear();
 		}
 
 		// Mesh: Draw this after MeshPrimitive bounds so they're on top if the bounding box is the same
@@ -463,23 +564,45 @@ namespace gr
 			auto boundsItrEnd = renderData.ObjectEnd<gr::Bounds::RenderData>();
 			while (boundsItr != boundsItrEnd)
 			{
-				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(boundsItr.GetRenderDataID()))
+				const gr::RenderDataID meshID = boundsItr.GetRenderDataID();
+
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(meshID))
 				{
 					if (gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, boundsItr.GetFeatureBits()))
 					{
 						gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
-						std::shared_ptr<re::ParameterBlock> boundsTransformPB =
-							gr::Transform::CreateInstancedTransformParams(
-								re::ParameterBlock::PBType::SingleFrame, boundsItr.GetTransformData());
+						if (!m_meshBoundingBoxParameterBlocks.contains(meshID))
+						{
+							m_meshBoundingBoxParameterBlocks.emplace(
+								meshID,
+								gr::Transform::CreateInstancedTransformParams(
+									re::ParameterBlock::PBType::Mutable, boundsItr.GetTransformData()));
+						}
+						else
+						{
+							m_meshBoundingBoxParameterBlocks.at(meshID)->Commit(
+								gr::Transform::CreateInstancedTransformParamsData(boundsItr.GetTransformData()));
+						}
 
-						re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_meshBoundsColor);
-						boundingBoxBatch.SetParameterBlock(boundsTransformPB);
-						m_debugStage->AddBatch(boundingBoxBatch);
+						if (!m_meshBoundingBoxBatches.contains(meshID))
+						{
+							m_meshBoundingBoxBatches.emplace(meshID,
+								BuildBoundingBoxBatch(re::Batch::Lifetime::Permanent,boundsRenderData, m_meshBoundsColor));
+
+							m_meshBoundingBoxBatches.at(meshID)->SetParameterBlock(
+								m_meshBoundingBoxParameterBlocks.at(meshID));
+						}
+
+						m_debugStage->AddBatch(*m_meshBoundingBoxBatches.at(meshID));
 					}
 				}
 				++boundsItr;
 			}
+		}
+		else
+		{
+			m_meshBoundingBoxBatches.clear();
 		}
 
 		// Scene bounds
@@ -493,41 +616,71 @@ namespace gr
 				{
 					gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
-					std::shared_ptr<re::ParameterBlock> boundsTransformPB =
-						gr::Transform::CreateInstancedTransformParams(
-							re::ParameterBlock::PBType::SingleFrame, boundsItr.GetTransformData());
+					if (m_sceneBoundsTransformParameterBlock == nullptr)
+					{
+						m_sceneBoundsTransformParameterBlock = gr::Transform::CreateInstancedTransformParams(
+							re::ParameterBlock::PBType::Mutable, boundsItr.GetTransformData());
+					}
 
-					re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_sceneBoundsColor);
-					boundingBoxBatch.SetParameterBlock(boundsTransformPB);
-					m_debugStage->AddBatch(boundingBoxBatch);
+					if (m_sceneBoundsBatch == nullptr)
+					{
+						m_sceneBoundsBatch =
+							BuildBoundingBoxBatch(re::Batch::Lifetime::Permanent, boundsRenderData, m_sceneBoundsColor);
+
+						m_sceneBoundsBatch->SetParameterBlock(m_sceneBoundsTransformParameterBlock);
+					}
+					
+					m_debugStage->AddBatch(*m_sceneBoundsBatch);
 				}
 				++boundsItr;
 			}
+		}
+		else
+		{
+			m_sceneBoundsBatch = nullptr;
+			m_sceneBoundsTransformParameterBlock = nullptr;
 		}
 
 		if (m_showCameraFrustums)
 		{
 			for (auto const& camData : m_camerasToDebug)
-			{				
+			{
+				const gr::RenderDataID camID = camData.first;
+
+				// Create/update a transform block for the frustum verts:
 				// Use the inverse view matrix, as it omits any scale that might be present in the Transform hierarchy
-				glm::mat4 const& camWorldMatrix = camData.first->m_cameraParams.g_invView;
-				std::shared_ptr<re::ParameterBlock> cameraTransformPB =
-					gr::Transform::CreateInstancedTransformParams(
-						re::ParameterBlock::PBType::SingleFrame, &camWorldMatrix, nullptr);
+				glm::mat4 const& camWorldMatrix = camData.second.first->m_cameraParams.g_invView;
+
+				if (!m_cameraTransformParamBlocks.contains(camID))
+				{	
+					m_cameraTransformParamBlocks.emplace(
+						camID,
+						gr::Transform::CreateInstancedTransformParams(
+						re::ParameterBlock::PBType::Mutable, &camWorldMatrix, nullptr));
+				}
+				else
+				{
+					m_cameraTransformParamBlocks.at(camID)->Commit(gr::Transform::CreateInstancedTransformParamsData(
+						&camWorldMatrix, nullptr));
+				}
 
 				// Coordinate axis at camera origin:
-				re::Batch cameraCoordinateAxisBatch =
-					BuildAxisBatch(m_cameraCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
-				cameraCoordinateAxisBatch.SetParameterBlock(cameraTransformPB);
-				m_debugStage->AddBatch(cameraCoordinateAxisBatch);
+				if (!m_cameraAxisBatches.contains(camID))
+				{
+					m_cameraAxisBatches.emplace(
+						camID, 
+						BuildAxisBatch(
+							re::Batch::Lifetime::Permanent, 
+							m_cameraCoordinateAxisScale, 
+							m_xAxisColor, 
+							m_yAxisColor, 
+							m_zAxisColor));
 
-				// Our frustum points are already in world-space
-				const glm::mat4 identityMat = glm::mat4(1.f);
-				std::shared_ptr<re::ParameterBlock> identityPB =
-					gr::Transform::CreateInstancedTransformParams(
-						re::ParameterBlock::PBType::SingleFrame, &identityMat, nullptr);
+					m_cameraAxisBatches.at(camID)->SetParameterBlock(m_cameraTransformParamBlocks.at(camID));
+				}
+				m_debugStage->AddBatch(*m_cameraAxisBatches.at(camID));
 
-				const uint8_t numFrustums = camData.first->m_cameraConfig.m_projectionType ==
+				const uint8_t numFrustums = camData.second.first->m_cameraConfig.m_projectionType ==
 					gr::Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
 
 				std::vector<glm::mat4> invViewProjMats;
@@ -536,30 +689,57 @@ namespace gr
 				if (numFrustums == 6)
 				{
 					std::vector<glm::mat4> const& viewMats = gr::Camera::BuildCubeViewMatrices(
-						camData.second->m_globalPosition,
-						camData.second->m_globalRight,
-						camData.second->m_globalUp,
-						camData.second->m_globalForward);
+						camData.second.second->m_globalPosition,
+						camData.second.second->m_globalRight,
+						camData.second.second->m_globalUp,
+						camData.second.second->m_globalForward);
 
 					std::vector<glm::mat4> const& viewProjMats =
-						gr::Camera::BuildCubeViewProjectionMatrices(viewMats, camData.first->m_cameraParams.g_projection);
+						gr::Camera::BuildCubeViewProjectionMatrices(viewMats, camData.second.first->m_cameraParams.g_projection);
 
 					invViewProjMats = gr::Camera::BuildCubeInvViewProjectionMatrices(viewProjMats);
 				}
 				else
 				{
-					invViewProjMats.emplace_back(camData.first->m_cameraParams.g_invViewProjection);
+					invViewProjMats.emplace_back(camData.second.first->m_cameraParams.g_invViewProjection);
 				}
 				
+				std::shared_ptr<re::ParameterBlock> identityPB = nullptr;
 				for (uint8_t faceIdx = 0; faceIdx < numFrustums; faceIdx++)
 				{
-					re::Batch camFrustumBatch = BuildCameraFrustumBatch(
-						camData.first, camData.second, m_cameraFrustumColor, invViewProjMats[faceIdx]);
+					if (!m_cameraFrustumBatches.contains(camID) || 
+						faceIdx >= m_cameraFrustumBatches.at(camID).size() ||
+						m_cameraFrustumBatches.at(camID)[faceIdx] == nullptr)
+					{
+						//
+						m_cameraFrustumBatches[camID].resize(numFrustums);
 
-					camFrustumBatch.SetParameterBlock(identityPB);
-					m_debugStage->AddBatch(camFrustumBatch);
+						m_cameraFrustumBatches.at(camID)[faceIdx] = std::move(BuildCameraFrustumBatch(
+							re::Batch::Lifetime::Permanent,
+							camData.second.first, 
+							camData.second.second, 
+							m_cameraFrustumColor, 
+							invViewProjMats[faceIdx]));
+
+						if (identityPB == nullptr)
+						{
+							// Our frustum points are already in world-space
+							const glm::mat4 identityMat = glm::mat4(1.f);
+							identityPB = gr::Transform::CreateInstancedTransformParams(
+									re::ParameterBlock::PBType::Immutable, &identityMat, nullptr);
+						}
+						m_cameraFrustumBatches.at(camID)[faceIdx]->SetParameterBlock(identityPB);
+					}
+
+					m_debugStage->AddBatch(*m_cameraFrustumBatches.at(camID)[faceIdx]);
 				}
-			}		
+			}
+		}
+		else
+		{
+			m_cameraAxisBatches.clear();
+			m_cameraTransformParamBlocks.clear();
+			m_cameraFrustumBatches.clear();
 		}
 
 		if (m_showDeferredLightWireframe)
@@ -568,51 +748,106 @@ namespace gr
 			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
 			while (pointItr != pointItrEnd)
 			{
-				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointItr.GetRenderDataID()))
+				const gr::RenderDataID pointID = pointItr.GetRenderDataID();
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointID))
 				{
 					gr::Light::RenderDataPoint const& pointData =
 						pointItr.Get<gr::Light::RenderDataPoint>();
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
-
 					glm::mat4 const& lightTRS = transformData.g_model;
 
-					std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
-						gr::Transform::CreateInstancedTransformParams(
-							re::ParameterBlock::PBType::SingleFrame, &lightTRS, nullptr);
+					if (!m_deferredLightWireframeTransformParamBlocks.contains(pointID))
+					{
+						m_deferredLightWireframeTransformParamBlocks.emplace(
+							pointID,
+							gr::Transform::CreateInstancedTransformParams(
+								re::ParameterBlock::PBType::Mutable, &lightTRS, nullptr));
+					}
+					else
+					{
+						m_deferredLightWireframeTransformParamBlocks.at(pointID)->Commit(
+							gr::Transform::CreateInstancedTransformParamsData(&lightTRS, nullptr));
+					}
 
-					gr::MeshPrimitive::RenderData const& meshPrimData = pointItr.Get<gr::MeshPrimitive::RenderData>();
+					if (!m_deferredLightWireframeBatches.contains(pointID))
+					{
+						gr::MeshPrimitive::RenderData const& meshPrimData = pointItr.Get<gr::MeshPrimitive::RenderData>();
 
-					re::Batch pointLightWireframeBatch = BuildWireframeBatch(
-						meshPrimData,
-						m_deferredLightwireframeColor);
-					pointLightWireframeBatch.SetParameterBlock(pointLightMeshTransformPB);
-					m_debugStage->AddBatch(pointLightWireframeBatch);
+						m_deferredLightWireframeBatches.emplace(
+							pointID,
+							BuildWireframeBatch(
+								re::Batch::Lifetime::Permanent, meshPrimData, m_deferredLightwireframeColor));
+
+						m_deferredLightWireframeBatches.at(pointID)->SetParameterBlock(
+							m_deferredLightWireframeTransformParamBlocks.at(pointID));
+					}
+					m_debugStage->AddBatch(*m_deferredLightWireframeBatches.at(pointID));
 				}
 
 				++pointItr;
 			}
 		}
+		else
+		{
+			m_deferredLightWireframeBatches.clear();
+			m_deferredLightWireframeTransformParamBlocks.clear();
+		}
 
 		if (m_showLightCoordinateAxis)
 		{
+			auto CreateUpdateLightCSAxisTransformPB = [&](
+				gr::RenderDataID lightID, gr::Transform::RenderData const& transformData)
+				{
+					glm::mat4 const& lightTRS = transformData.g_model;
+
+					if (!m_lightCoordinateAxisTransformParameterBlocks.contains(lightID))
+					{
+						m_lightCoordinateAxisTransformParameterBlocks.emplace(
+							lightID,
+							gr::Transform::CreateInstancedTransformParams(
+								re::ParameterBlock::PBType::Mutable, &lightTRS, nullptr));
+					}
+					else
+					{
+						m_lightCoordinateAxisTransformParameterBlocks.at(lightID)->Commit(
+							gr::Transform::CreateInstancedTransformParamsData(&lightTRS, nullptr));
+					}
+				};
+
+			auto BuildLightAxisBatch = [&](
+				gr::RenderDataID lightID, gr::Transform::RenderData const& transformData)
+				{
+					if (!m_lightCoordinateAxisBatches.contains(lightID))
+					{
+						m_lightCoordinateAxisBatches.emplace(
+							lightID,
+							BuildAxisBatch(
+								re::Batch::Lifetime::Permanent,
+								m_lightCoordinateAxisScale,
+								m_xAxisColor,
+								m_yAxisColor,
+								m_zAxisColor,
+								transformData.m_globalScale));
+
+						m_lightCoordinateAxisBatches.at(lightID)->SetParameterBlock(
+							m_lightCoordinateAxisTransformParameterBlocks.at(lightID));
+					}
+				};
+
 			auto directionalItr = renderData.ObjectBegin<gr::Light::RenderDataDirectional>();
 			auto const& directionalItrEnd = renderData.ObjectEnd<gr::Light::RenderDataDirectional>();
 			while (directionalItr != directionalItrEnd)
 			{
-				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(directionalItr.GetRenderDataID()))
+				const gr::RenderDataID lightID = directionalItr.GetRenderDataID();
+
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(lightID))
 				{
 					gr::Transform::RenderData const& transformData = directionalItr.GetTransformData();
-					glm::mat4 const& lightTRS = transformData.g_model;
 
-					std::shared_ptr<re::ParameterBlock> directionalAxisTransformPB =
-						gr::Transform::CreateInstancedTransformParams(
-							re::ParameterBlock::PBType::SingleFrame, &lightTRS, nullptr);
+					CreateUpdateLightCSAxisTransformPB(lightID, transformData);
+					BuildLightAxisBatch(lightID, transformData);
 
-					re::Batch coordinateAxis = BuildAxisBatch(
-						m_lightCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor, transformData.m_globalScale);
-
-					coordinateAxis.SetParameterBlock(directionalAxisTransformPB);
-					m_debugStage->AddBatch(coordinateAxis);
+					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
 
 				++directionalItr;
@@ -622,24 +857,25 @@ namespace gr
 			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
 			while (pointItr != pointItrEnd)
 			{
-				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointItr.GetRenderDataID()))
+				const gr::RenderDataID lightID = pointItr.GetRenderDataID();
+
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(lightID))
 				{
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
-					glm::mat4 const& lightTRS = transformData.g_model;
 
-					std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
-						gr::Transform::CreateInstancedTransformParams(
-							re::ParameterBlock::PBType::SingleFrame, &lightTRS, nullptr);
+					CreateUpdateLightCSAxisTransformPB(lightID, transformData);
+					BuildLightAxisBatch(lightID, transformData);
 
-					re::Batch coordinateAxis = BuildAxisBatch(
-						m_lightCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor, transformData.m_globalScale);
-
-					coordinateAxis.SetParameterBlock(pointLightMeshTransformPB);
-					m_debugStage->AddBatch(coordinateAxis);
+					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
 
 				++pointItr;
 			}
+		}
+		else
+		{
+			m_lightCoordinateAxisBatches.clear();
+			m_lightCoordinateAxisTransformParameterBlocks.clear();
 		}
 	}
 
@@ -724,20 +960,21 @@ namespace gr
 			auto const& camEnd = renderData.ObjectEnd<gr::Camera::RenderData>();
 			while (camItr != camEnd)
 			{
+				const gr::RenderDataID camID = camItr.GetRenderDataID();
 				gr::Camera::RenderData const* camData = &camItr.Get<gr::Camera::RenderData>();
 				gr::Transform::RenderData const* transformData = &camItr.GetTransformData();
 
-				const bool cameraAlreadyAdded = m_camerasToDebug.contains(camData);
+				const bool cameraAlreadyAdded = m_camerasToDebug.contains(camID);
 				bool cameraSelected = cameraAlreadyAdded;
 				if (ImGui::Checkbox(
 						std::format("{}##", camData->m_cameraName, util::PtrToID(camData)).c_str(), &cameraSelected) &&
 					!cameraAlreadyAdded)
 				{
-					m_camerasToDebug.emplace(std::make_pair(camData, transformData));
+					m_camerasToDebug.emplace(camID, std::make_pair(camData, transformData));
 				}
 				else if (cameraAlreadyAdded && !cameraSelected)
 				{
-					m_camerasToDebug.erase(camData);
+					m_camerasToDebug.erase(camID);
 				}
 
 				++camItr;

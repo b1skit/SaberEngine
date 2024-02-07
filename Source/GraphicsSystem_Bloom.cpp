@@ -4,13 +4,10 @@
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "MeshFactory.h"
-#include "SceneManager.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"
 #include "Sampler.h"
 #include "Shader.h"
-
-
 
 
 namespace

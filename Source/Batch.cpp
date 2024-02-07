@@ -142,6 +142,7 @@ namespace re
 		for (uint8_t slotIdx = 0; slotIdx < gr::MeshPrimitive::Slot_Count; slotIdx++)
 		{
 			SEAssert((m_lifetime == Lifetime::SingleFrame) ||
+				m_graphicsParams.m_vertexStreams[slotIdx] == nullptr ||
 				(m_graphicsParams.m_vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && 
 					m_lifetime == Lifetime::Permanent),
 				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");

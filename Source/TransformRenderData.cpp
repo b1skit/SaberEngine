@@ -20,17 +20,28 @@ namespace gr
 		};
 	}
 
-	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
-		re::ParameterBlock::PBType pbType, glm::mat4 const* model, glm::mat4* transposeInvModel)
+
+	gr::Transform::InstancedTransformParams Transform::CreateInstancedTransformParamsData(
+		glm::mat4 const* model, glm::mat4* transposeInvModel)
 	{
-		gr::Transform::InstancedTransformParams instancedMeshPBData;
+		gr::Transform::InstancedTransformParams instancedMeshPBData{};
 
 		instancedMeshPBData.g_model = model ? *model : glm::mat4(1.f);
 		instancedMeshPBData.g_transposeInvModel = transposeInvModel ? *transposeInvModel : glm::mat4(1.f);
 
+		return instancedMeshPBData;
+	}
+
+
+	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
+		re::ParameterBlock::PBType pbType, glm::mat4 const* model, glm::mat4* transposeInvModel)
+	{
+		gr::Transform::InstancedTransformParams const& transformData = 
+			CreateInstancedTransformParamsData(model, transposeInvModel);
+
 		return re::ParameterBlock::CreateArray(
 			gr::Transform::InstancedTransformParams::s_shaderName,
-			&instancedMeshPBData,
+			&transformData,
 			1,
 			pbType);
 	}

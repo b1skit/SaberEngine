@@ -8,22 +8,6 @@
 #include "RenderSystem.h"
 #include "Sampler.h"
 #include "Shader.h"
-#include "SceneManager.h"
-
-
-using en::Config;
-using fr::SceneManager;
-using re::Shader;
-using gr::DeferredLightingGraphicsSystem;
-using re::TextureTargetSet;
-using re::RenderManager;
-using re::RenderStage;
-using re::Batch;
-using re::Sampler;
-using std::shared_ptr;
-using std::make_shared;
-using std::string;
-using glm::vec3;
 
 
 namespace gr
@@ -59,21 +43,21 @@ namespace gr
 		m_tonemappingStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
 		// Texture inputs:
-		std::shared_ptr<TextureTargetSet const> deferredLightTextureTargetSet =
+		std::shared_ptr<re::TextureTargetSet const> deferredLightTextureTargetSet =
 			m_graphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(
 			"Tex0",
 			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
-			Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
 		
 		gr::BloomGraphicsSystem* bloomGS = m_graphicsSystemManager->GetGraphicsSystem<BloomGraphicsSystem>();
-		std::shared_ptr<TextureTargetSet const> bloomTextureTargetSet = bloomGS->GetFinalTextureTargetSet();
+		std::shared_ptr<re::TextureTargetSet const> bloomTextureTargetSet = bloomGS->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(
 			"Tex1",
 			bloomTextureTargetSet->GetColorTarget(0).GetTexture(),
-			Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
 
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}

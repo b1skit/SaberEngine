@@ -42,6 +42,9 @@ namespace gr
 
 		static InstancedTransformParams CreateInstancedTransformParamsData(gr::Transform::RenderData const&);
 
+		static gr::Transform::InstancedTransformParams CreateInstancedTransformParamsData(
+			glm::mat4 const* model, glm::mat4* transposeInvModel);
+
 		static std::shared_ptr<re::ParameterBlock> CreateInstancedTransformParams(
 			re::ParameterBlock::PBType, glm::mat4 const* model, glm::mat4* transposeInvModel);
 		static std::shared_ptr<re::ParameterBlock> CreateInstancedTransformParams(

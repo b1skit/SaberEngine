@@ -667,7 +667,6 @@ namespace re
 		default: SEAssertF("Invalid PBType");
 		}
 
-
 		// Remove the handle from our map:
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
@@ -687,20 +686,27 @@ namespace re
 					const size_t idxToReplace = startIdx;
 					const size_t idxToMove = committed.size() - 1;
 
+					SEAssert(idxToReplace <= idxToMove &&
+						idxToReplace < committed.size(),
+						"Invalid index to move or replace");
+
 					if (idxToReplace != idxToMove)
 					{
 						committed[idxToReplace] = std::move(committed[idxToMove]);
 
 						// Update the records for the entry that we moved. This is a slow linear search through an
 						// unordered map, but permanent parameter blocks should be deallocated very infrequently
+						bool didUpdate = false;
 						for (auto& entry : m_handleToTypeAndByteIndex)
 						{
 							if (entry.second.m_startIndex == idxToMove)
 							{
 								entry.second.m_startIndex = util::CheckedCast<uint32_t>(idxToReplace);
+								didUpdate = true;
 								break;
 							}
 						}
+						SEAssert(didUpdate, "Failed to find entry to update");
 					}
 					committed.pop_back();
 				}

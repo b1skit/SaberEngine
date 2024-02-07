@@ -3,19 +3,8 @@
 #include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "RenderManager.h"
-#include "SceneData.h"
-#include "SceneManager.h"
 #include "Shader.h"
 #include "Texture.h"
-
-
-using re::Shader;
-using re::Texture;
-using en::Config;
-using fr::SceneManager;
-using re::RenderManager;
-using re::RenderStage;
-using std::string;
 
 
 namespace gr
@@ -55,15 +44,15 @@ namespace gr
 		gBufferPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		gBufferPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
 
-		std::shared_ptr<Shader> gBufferShader = 
+		std::shared_ptr<re::Shader> gBufferShader =
 			re::Shader::GetOrCreate(en::ShaderNames::k_gbufferShaderName, gBufferPipelineState);
 
 		m_gBufferStage->SetStageShader(gBufferShader);
 
 		// Create GBuffer color targets:
-		Texture::TextureParams gBufferColorParams;
-		gBufferColorParams.m_width = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
-		gBufferColorParams.m_height = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
+		re::Texture::TextureParams gBufferColorParams;
+		gBufferColorParams.m_width = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
+		gBufferColorParams.m_height = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 		gBufferColorParams.m_faces = 1;
 		gBufferColorParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
 		gBufferColorParams.m_dimension = re::Texture::Dimension::Texture2D;
@@ -73,7 +62,7 @@ namespace gr
 		gBufferColorParams.m_mipMode = re::Texture::MipMode::None;
 
 		// World normal may have negative components, emissive values may be > 1
-		Texture::TextureParams gbuffer16bitParams = gBufferColorParams;
+		re::Texture::TextureParams gbuffer16bitParams = gBufferColorParams;
 		gbuffer16bitParams.m_format = re::Texture::Format::RGBA16F; 
 		gbuffer16bitParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 

@@ -9,7 +9,6 @@
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "RenderSystem.h"
-#include "SceneManager.h"
 #include "ShadowMapComponent.h"
 #include "TransformComponent.h"
 
