@@ -337,30 +337,33 @@ namespace gr
 		}
 
 		// Update dirty instanced material data:
-		std::vector<gr::RenderDataID> const& dirtyMaterials = 
-			renderData.GetIDsWithDirtyData<gr::Material::MaterialInstanceData>();
-		auto dirtyMaterialItr = renderData.IDBegin(dirtyMaterials);
-		auto const& dirtyMaterialItrEnd = renderData.IDEnd(dirtyMaterials);
-		while (dirtyMaterialItr != dirtyMaterialItrEnd)
+		if (renderData.HasObjectData<gr::Material::MaterialInstanceData>())
 		{
-			const gr::RenderDataID dirtyMaterialID = dirtyMaterialItr.GetRenderDataID();
-
-			if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, dirtyMaterialItr.GetFeatureBits()))
+			std::vector<gr::RenderDataID> const& dirtyMaterials =
+				renderData.GetIDsWithDirtyData<gr::Material::MaterialInstanceData>();
+			auto dirtyMaterialItr = renderData.IDBegin(dirtyMaterials);
+			auto const& dirtyMaterialItrEnd = renderData.IDEnd(dirtyMaterials);
+			while (dirtyMaterialItr != dirtyMaterialItrEnd)
 			{
-				SEAssert(m_instancedMaterialIndexes.contains(dirtyMaterialID),
-					"RenderDataID has not been registered for instancing indexes");
+				const gr::RenderDataID dirtyMaterialID = dirtyMaterialItr.GetRenderDataID();
 
-				const uint32_t materialIdx = m_instancedMaterialIndexes.at(dirtyMaterialID).m_index;
+				if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, dirtyMaterialItr.GetFeatureBits()))
+				{
+					SEAssert(m_instancedMaterialIndexes.contains(dirtyMaterialID),
+						"RenderDataID has not been registered for instancing indexes");
 
-				gr::Material::MaterialInstanceData const& materialData =
-					renderData.GetObjectData<gr::Material::MaterialInstanceData>(dirtyMaterialID);
+					const uint32_t materialIdx = m_instancedMaterialIndexes.at(dirtyMaterialID).m_index;
 
-				gr::Material::CommitMaterialInstanceData(
-					m_instancedMaterials.get(),
-					&materialData,
-					materialIdx);
+					gr::Material::MaterialInstanceData const& materialData =
+						renderData.GetObjectData<gr::Material::MaterialInstanceData>(dirtyMaterialID);
+
+					gr::Material::CommitMaterialInstanceData(
+						m_instancedMaterials.get(),
+						&materialData,
+						materialIdx);
+				}
+				++dirtyMaterialItr;
 			}
-			++dirtyMaterialItr;
 		}
 	}
 
