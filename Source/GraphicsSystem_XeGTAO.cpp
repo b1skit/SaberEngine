@@ -572,6 +572,12 @@ namespace gr
 				0.f, 
 				m_prefilterDepthsTargets->GetNumColorTargets());
 
+			if (ImGui::Button("Reset to defaults"))
+			{
+				m_isDirty = true;
+				m_settings = XeGTAO::GTAOSettings{};
+			}
+
 			ImGui::Unindent();
 		}
 	}
