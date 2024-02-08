@@ -412,10 +412,7 @@ namespace re
 							{
 								if (a.m_baseOffset == b.m_baseOffset)
 								{
-									// We need to enforce the sorting order to be ???? so ??????????????????????????????????
 									return a.m_numBytes < b.m_numBytes;
-
-									// TODO: TESTS TO CONFIRM THE SORTING ORDER
 								}
 								return a.m_baseOffset < b.m_baseOffset;
 							});
@@ -677,6 +674,7 @@ namespace re
 
 		// Finally, free the committed memory:
 		auto FreePermanentCommit = [&](
+			ParameterBlock::PBType pbType,
 			std::recursive_mutex& mutex,
 			std::vector<std::vector<uint8_t>>& committed)
 			{
@@ -699,7 +697,7 @@ namespace re
 						bool didUpdate = false;
 						for (auto& entry : m_handleToTypeAndByteIndex)
 						{
-							if (entry.second.m_startIndex == idxToMove)
+							if (entry.second.m_type == pbType && entry.second.m_startIndex == idxToMove)
 							{
 								entry.second.m_startIndex = util::CheckedCast<uint32_t>(idxToReplace);
 								didUpdate = true;
@@ -715,12 +713,14 @@ namespace re
 		{
 		case ParameterBlock::PBType::Mutable:
 		{
-			FreePermanentCommit(m_mutableAllocations.m_mutex, m_mutableAllocations.m_committed);
+			FreePermanentCommit(
+				ParameterBlock::PBType::Mutable, m_mutableAllocations.m_mutex, m_mutableAllocations.m_committed);
 		}
 		break;
 		case ParameterBlock::PBType::Immutable:
 		{
-			FreePermanentCommit(m_immutableAllocations.m_mutex, m_immutableAllocations.m_committed);
+			FreePermanentCommit(ParameterBlock::PBType::Immutable,
+				m_immutableAllocations.m_mutex, m_immutableAllocations.m_committed);
 		}
 		break;
 		case ParameterBlock::PBType::SingleFrame:
