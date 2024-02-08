@@ -1040,7 +1040,7 @@ namespace fr
 			earlyLoadTasks[loadTask].wait();
 		}
 
-		m_finishedLoading = true;
+		m_isCreated = true;
 
 		return true;
 	}
@@ -1048,14 +1048,14 @@ namespace fr
 
 	SceneData::SceneData(std::string const& sceneName)
 		: NamedObject(sceneName)
-		, m_finishedLoading(false)
+		, m_isCreated(false)
 	{
 	}
 
 
 	SceneData::~SceneData()
 	{
-		SEAssert(m_finishedLoading == false, "Did the SceneData go out of scope before Destroy was called?");
+		SEAssert(m_isCreated == false, "Did the SceneData go out of scope before Destroy was called?");
 	}
 
 
@@ -1082,7 +1082,7 @@ namespace fr
 			m_shaders.clear();
 		}
 
-		m_finishedLoading = false; // Flag that Destroy has been called
+		m_isCreated = false; // Flag that Destroy has been called
 	}
 
 
@@ -1254,7 +1254,6 @@ namespace fr
 
 	void SceneData::AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial)
 	{
-		SEAssert(!m_finishedLoading, "Adding data is not thread safe once loading is complete");
 		SEAssert(newMaterial != nullptr, "Cannot add null material to material table");
 
 		{

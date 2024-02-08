@@ -77,7 +77,7 @@ namespace fr
 		std::unordered_map<size_t, std::shared_ptr<re::Shader>> m_shaders;
 		mutable std::shared_mutex m_shadersReadWriteMutex;
 
-		bool m_finishedLoading; // Used to assert scene data is not accessed while it might potentially be modified
+		bool m_isCreated; // Validate Destroy() was called after a scene was loaded
 
 
 	private:
