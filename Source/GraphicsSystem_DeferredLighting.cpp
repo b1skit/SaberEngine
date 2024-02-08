@@ -1022,11 +1022,21 @@ namespace gr
 			const gr::RenderDataID lightID = light.first;
 
 			// Update lighting parameter blocks, if anything is dirty:
-			if (renderData.TransformIsDirtyFromRenderDataID(lightID) ||
+			const bool transformIsDirty = renderData.TransformIsDirtyFromRenderDataID(lightID);
+
+			const bool lightRenderDataDirty = 
 				(light.second.m_type == gr::Light::Type::Directional &&
 					renderData.IsDirty<gr::Light::RenderDataDirectional>(lightID)) ||
 				(light.second.m_type == gr::Light::Type::Point &&
-					renderData.IsDirty<gr::Light::RenderDataPoint>(lightID)))
+					renderData.IsDirty<gr::Light::RenderDataPoint>(lightID));
+
+			const bool shadowDataIsDirty = 
+				(renderData.HasObjectData<gr::ShadowMap::RenderData>(lightID) && 
+					renderData.IsDirty<gr::ShadowMap::RenderData>(lightID) ) ||
+				(renderData.HasObjectData<gr::Camera::RenderData>(lightID) &&
+					renderData.IsDirty<gr::Camera::RenderData>(lightID));
+
+			if (transformIsDirty || lightRenderDataDirty || shadowDataIsDirty)
 			{
 				gr::Transform::RenderData const& lightTransformData =
 					renderData.GetTransformDataFromRenderDataID(lightID);
