@@ -3,8 +3,9 @@
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
 #include "ImGuiUtils.h"
-#include "RenderSystem.h"
+#include "LightRenderData.h"
 #include "ParameterBlock.h"
+#include "RenderSystem.h"
 
 
 namespace gr
@@ -14,6 +15,8 @@ namespace gr
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
 		, m_activeCameraParams(nullptr)
+		, m_activeAmbientLightRenderDataID(gr::k_invalidTransformID)
+		, m_activeAmbientLightHasChanged(true)
 	{
 	}
 
@@ -48,6 +51,67 @@ namespace gr
 			m_renderData.GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
 
 		m_activeCameraParams->Commit(cameraData.m_cameraParams);
+
+		UpdateActiveAmbientLight();
+	}
+
+
+	void GraphicsSystemManager::UpdateActiveAmbientLight()
+	{
+		// Reset our active ambient changed flag for the new frame:
+		m_activeAmbientLightHasChanged = false;
+
+		// Update the active ambient light:
+		// First, check if our currently active light has been deleted:
+		if (m_renderData.HasIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>())
+		{
+			std::vector<gr::RenderDataID> const& deletedAmbientLights =
+				m_renderData.GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
+
+			for (gr::RenderDataID ambientID : deletedAmbientLights)
+			{
+				if (ambientID == m_activeAmbientLightRenderDataID)
+				{
+					m_activeAmbientLightRenderDataID = gr::k_invalidRenderDataID;
+					m_activeAmbientLightHasChanged = true;
+					break;
+				}
+			}
+		}
+
+		// If we have an active ambient light, check that it is still actually active:
+		if (m_activeAmbientLightRenderDataID != gr::k_invalidRenderDataID &&
+			m_renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightRenderDataID))
+		{
+			gr::Light::RenderDataAmbientIBL const& activeAmbientData =
+				m_renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightRenderDataID);
+
+			if (!activeAmbientData.m_isActive)
+			{
+				m_activeAmbientLightRenderDataID = gr::k_invalidRenderDataID;
+				m_activeAmbientLightHasChanged = true;
+			}
+		}
+
+		// If we don't have an active light, see if any exist in the render data:
+		if (m_activeAmbientLightRenderDataID == gr::k_invalidRenderDataID &&
+			m_renderData.HasObjectData<gr::Light::RenderDataAmbientIBL>())
+		{
+			auto ambientItr = m_renderData.Begin<gr::Light::RenderDataAmbientIBL>();
+			auto const& ambientItrEnd = m_renderData.End<gr::Light::RenderDataAmbientIBL>();
+			while (ambientItr != ambientItrEnd)
+			{
+				if (ambientItr->m_isActive)
+				{
+					m_activeAmbientLightRenderDataID = ambientItr->m_renderDataID;
+					m_activeAmbientLightHasChanged = true;
+					break;
+				}
+				++ambientItr;
+			}
+			SEAssert(m_activeAmbientLightRenderDataID != gr::k_invalidRenderDataID,
+				"Failed to find an active ambient light. This should not be possible");
+		}
 	}
 
 
@@ -125,6 +189,24 @@ namespace gr
 
 		m_activeCameraRenderDataID = cameraRenderDataID;
 		m_activeCameraTransformDataID = cameraTransformID;
+	}
+
+
+	bool GraphicsSystemManager::ActiveAmbientLightHasChanged() const
+	{
+		return m_activeAmbientLightHasChanged;
+	}
+
+
+	bool GraphicsSystemManager::HasActiveAmbientLight() const
+	{
+		return m_activeAmbientLightRenderDataID != gr::k_invalidRenderDataID;
+	}
+
+
+	gr::RenderDataID GraphicsSystemManager::GetActiveAmbientLightID() const
+	{
+		return m_activeAmbientLightRenderDataID;
 	}
 
 

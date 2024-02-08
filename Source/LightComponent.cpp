@@ -15,7 +15,7 @@
 
 namespace fr
 {
-	LightComponent& LightComponent::CreateDeferredAmbientLightConcept(EntityManager& em, re::Texture const* iblTex)
+	entt::entity LightComponent::CreateDeferredAmbientLightConcept(EntityManager& em, re::Texture const* iblTex)
 	{
 		SEAssert(iblTex, "IBL texture cannot be null");
 
@@ -45,7 +45,7 @@ namespace fr
 		// Mark our new LightComponent as dirty:
 		em.EmplaceComponent<DirtyMarker<fr::LightComponent>>(lightEntity);
 
-		return lightComponent;
+		return lightEntity;
 	}
 
 
@@ -183,6 +183,8 @@ namespace fr
 		SEAssert(typeProperties.m_ambient.m_IBLTex, "IBL texture cannot be null");
 
 		renderData.m_iblTex = typeProperties.m_ambient.m_IBLTex;
+
+		renderData.m_isActive = typeProperties.m_ambient.m_isActive;
 
 		renderData.m_diffuseScale = typeProperties.m_diffuseEnabled * typeProperties.m_ambient.m_diffuseScale;
 		renderData.m_specularScale = typeProperties.m_specularEnabled * typeProperties.m_ambient.m_specularScale;

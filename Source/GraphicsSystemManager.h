@@ -33,7 +33,8 @@ namespace gr
 
 		std::vector<std::shared_ptr<gr::GraphicsSystem>>& GetGraphicsSystems();
 
-		// Wraps access to the batch manager
+		
+	public: // Batch manager:
 		std::vector<re::Batch> GetVisibleBatches(
 			gr::Camera::View const&,
 			uint8_t pbTypeMask = (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)) const;
@@ -44,18 +45,34 @@ namespace gr
 
 		gr::RenderDataManager const& GetRenderData() const;
 
+
+	public:
 		gr::RenderDataID GetActiveCameraRenderDataID() const;
 		gr::Camera::RenderData const& GetActiveCameraRenderData() const;
 		gr::Transform::RenderData const& GetActiveCameraTransformData() const;
 		std::shared_ptr<re::ParameterBlock> GetActiveCameraParams() const;
 
+		void SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);
+
+
+	public:
+		bool ActiveAmbientLightHasChanged() const;
+		bool HasActiveAmbientLight() const;
+		gr::RenderDataID GetActiveAmbientLightID() const;
+
+
+	public:
 		// Not thread safe: Can only be called when other threads are not accessing the render data
 		gr::RenderDataManager& GetRenderDataForModification();
 
-		void SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);
-
+	
+	public:
 		void ShowImGuiWindow();
 		void ShowImGuiRenderDataDebugWindow() const;
+
+
+	private:
+		void UpdateActiveAmbientLight();
 
 
 	private:
@@ -67,6 +84,9 @@ namespace gr
 		gr::RenderDataID m_activeCameraRenderDataID;
 		gr::TransformID m_activeCameraTransformDataID;
 		std::shared_ptr<re::ParameterBlock> m_activeCameraParams;
+
+		gr::RenderDataID m_activeAmbientLightRenderDataID;
+		bool m_activeAmbientLightHasChanged;
 
 		re::RenderSystem* const m_owningRenderSystem;
 

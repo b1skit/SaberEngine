@@ -56,23 +56,26 @@ namespace gr
 			m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 		}
 
+		if (m_fallbackColorTex == nullptr)
+		{
+			re::Texture::TextureParams fallbackParams{};
+			fallbackParams.m_usage = re::Texture::Usage::Color;
+			fallbackParams.m_dimension = re::Texture::Dimension::Texture2D;
+			fallbackParams.m_format = re::Texture::Format::RGBA32F; // Same as an IBl, for consistency
+			fallbackParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+			fallbackParams.m_mipMode = re::Texture::MipMode::AllocateGenerate;
+			fallbackParams.m_multisampleMode = re::Texture::MultisampleMode::Disabled;
+			fallbackParams.m_addToSceneData = false;
+
+			m_fallbackColorTex = 
+				re::Texture::Create("Skybox flat color fallback", fallbackParams, glm::vec4(m_backgroundColor.rgb, 1.f));
+		}
+
 		re::PipelineState skyboxPipelineState;
 		skyboxPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		skyboxPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::LEqual);
 
 		m_skyboxStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_skyboxShaderName, skyboxPipelineState));
-
-		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
-
-		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
-			"We currently expect render data for exactly 1 ambient light to exist");
-
-		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
-
-		gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
-			renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
-
-		m_skyTexture = ambientRenderData.m_iblTex;
 
 		m_skyboxStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
@@ -110,11 +113,14 @@ namespace gr
 
 		m_skyboxStage->AddPermanentParameterBlock(m_skyboxParams);
 
-		constexpr char const* k_skyboxTexShaderName = "Tex0";
+		// Start with our default texture set, in case there is no IBL
+		m_skyTexture = m_fallbackColorTex.get();
+
 		m_skyboxStage->AddTextureInput(
 			k_skyboxTexShaderName,
 			m_skyTexture,
 			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+
 
 		pipeline.AppendRenderStage(m_skyboxStage);
 	}
@@ -122,6 +128,32 @@ namespace gr
 
 	void SkyboxGraphicsSystem::PreRender()
 	{
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
+		if (m_graphicsSystemManager->ActiveAmbientLightHasChanged())
+		{
+			if (m_graphicsSystemManager->HasActiveAmbientLight())
+			{
+				const gr::RenderDataID ambientID = m_graphicsSystemManager->GetActiveAmbientLightID();
+
+				gr::Light::RenderDataAmbientIBL const& ambientRenderData =
+					renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
+
+				m_skyTexture = ambientRenderData.m_iblTex;
+			}
+			else
+			{
+				m_skyTexture = m_fallbackColorTex.get();
+			}
+
+			m_skyboxStage->AddTextureInput(
+				k_skyboxTexShaderName,
+				m_skyTexture,
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+
+		}
+		SEAssert(m_skyTexture != nullptr, "Failed to set a valid sky texture");
+
 		if (m_isDirty)
 		{
 			m_skyboxParams->Commit(CreateSkyboxParamsData(m_backgroundColor, m_showBackgroundColor));

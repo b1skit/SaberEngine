@@ -265,99 +265,270 @@ namespace gr
 		, NamedObject(k_gsName)
 		, m_shadowGS(nullptr)
 		, m_AOGS(nullptr)
+		, m_resourceCreationStagePipeline(nullptr)
 	{
+	}
+
+
+	void DeferredLightingGraphicsSystem::CreateSingleFrameBRDFPreIntegrationStage(
+		re::StagePipeline& pipeline)
+	{
+		re::RenderStage::ComputeStageParams computeStageParams;
+		std::shared_ptr<re::RenderStage> brdfStage =
+			re::RenderStage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
+
+		re::PipelineState brdfPipelineState;
+		brdfPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
+		brdfPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
+
+		brdfStage->SetStageShader(
+			re::Shader::GetOrCreate(en::ShaderNames::k_generateBRDFIntegrationMapShaderName, brdfPipelineState));
+
+		const uint32_t brdfTexWidthHeight =
+			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
+
+		// Create a render target texture:			
+		re::Texture::TextureParams brdfParams;
+		brdfParams.m_width = brdfTexWidthHeight;
+		brdfParams.m_height = brdfTexWidthHeight;
+		brdfParams.m_faces = 1;
+		brdfParams.m_usage =
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
+		brdfParams.m_dimension = re::Texture::Dimension::Texture2D;
+		brdfParams.m_format = re::Texture::Format::RGBA16F;
+		brdfParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		brdfParams.m_mipMode = re::Texture::MipMode::None;
+		brdfParams.m_addToSceneData = false;
+		brdfParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+		m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams);
+
+		std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
+
+		re::TextureTarget::TargetParams colorTargetParams;
+
+		brdfStageTargets->SetColorTarget(0, m_BRDF_integrationMap, colorTargetParams);
+		brdfStageTargets->SetViewport(re::Viewport(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
+		brdfStageTargets->SetScissorRect(re::ScissorRect(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
+
+		re::TextureTarget::TargetParams::BlendModes brdfBlendModes
+		{
+			re::TextureTarget::TargetParams::BlendMode::One,
+			re::TextureTarget::TargetParams::BlendMode::Zero,
+		};
+		brdfStageTargets->SetColorTargetBlendModes(1, &brdfBlendModes);
+
+		brdfStage->SetTextureTargetSet(brdfStageTargets);
+
+		BRDFIntegrationParams const& brdfIntegrationParams = GetBRDFIntegrationParamsData();
+		std::shared_ptr<re::ParameterBlock> brdfIntegrationPB = re::ParameterBlock::Create(
+			BRDFIntegrationParams::s_shaderName,
+			brdfIntegrationParams,
+			re::ParameterBlock::PBType::SingleFrame);
+		brdfStage->AddSingleFrameParameterBlock(brdfIntegrationPB);
+
+		// Add our dispatch information to a compute batch. Note: We use numthreads = (1,1,1)
+		re::Batch computeBatch = re::Batch(re::Batch::Lifetime::SingleFrame, re::Batch::ComputeParams{
+			.m_threadGroupCount = glm::uvec3(brdfTexWidthHeight, brdfTexWidthHeight, 1u) });
+
+		brdfStage->AddBatch(computeBatch);
+
+		pipeline.AppendSingleFrameRenderStage(std::move(brdfStage));
+	}
+
+
+	void DeferredLightingGraphicsSystem::PopulateIEMTex(
+		re::StagePipeline* pipeline, re::Texture const* iblTex, std::shared_ptr<re::Texture>& iemTexOut) const
+	{
+		// Common IBL texture generation stage params:
+		re::PipelineState iblStageParams;
+		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
+		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
+
+		const uint32_t iemTexWidthHeight =
+			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_iemTexWidthHeight));
+
+		// IEM-specific texture params:
+		re::Texture::TextureParams iemTexParams;
+		iemTexParams.m_width = iemTexWidthHeight;
+		iemTexParams.m_height = iemTexWidthHeight;
+		iemTexParams.m_faces = 6;
+		iemTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
+		iemTexParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
+		iemTexParams.m_format = re::Texture::Format::RGBA16F;
+		iemTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		iemTexParams.m_addToSceneData = false;
+		iemTexParams.m_mipMode = re::Texture::MipMode::None;
+
+		std::shared_ptr<re::Shader> iemShader =
+			re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
+
+		const std::string IEMTextureName = iblTex->GetName() + "_IEMTexture";
+		iemTexOut = re::Texture::Create(IEMTextureName, iemTexParams);
+
+		for (uint32_t face = 0; face < 6; face++)
+		{
+			re::RenderStage::GraphicsStageParams gfxStageParams;
+			std::shared_ptr<re::RenderStage> iemStage = re::RenderStage::CreateSingleFrameGraphicsStage(
+				"IEM generation: Face " + std::to_string(face + 1) + "/6", gfxStageParams);
+
+			iemStage->SetStageShader(iemShader);
+			iemStage->AddTextureInput(
+				"Tex0",
+				iblTex,
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
+
+			// Parameter blocks:
+			IEMPMREMGenerationParams const& iemGenerationParams =
+				GetIEMPMREMGenerationParamsData(0, 1, face, iblTex->Width(), iblTex->Height());
+			std::shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
+				IEMPMREMGenerationParams::s_shaderName,
+				iemGenerationParams,
+				re::ParameterBlock::PBType::SingleFrame);
+			iemStage->AddSingleFrameParameterBlock(iemGenerationPB);
+
+			iemStage->AddPermanentParameterBlock(m_cubemapRenderCamParams[face]);
+
+			std::shared_ptr<re::TextureTargetSet> iemTargets = re::TextureTargetSet::Create("IEM Stage Targets");
+
+			re::TextureTarget::TargetParams::BlendModes iemBlendModes
+			{
+				re::TextureTarget::TargetParams::BlendMode::One,
+				re::TextureTarget::TargetParams::BlendMode::Zero,
+			};
+			iemTargets->SetColorTargetBlendModes(1, &iemBlendModes);
+
+			re::TextureTarget::TargetParams targetParams;
+			targetParams.m_targetFace = face;
+			targetParams.m_targetMip = 0;
+
+			iemTargets->SetColorTarget(0, iemTexOut, targetParams);
+			iemTargets->SetViewport(re::Viewport(0, 0, iemTexWidthHeight, iemTexWidthHeight));
+			iemTargets->SetScissorRect(re::ScissorRect(0, 0, iemTexWidthHeight, iemTexWidthHeight));
+
+			iemStage->SetTextureTargetSet(iemTargets);
+
+			iemStage->AddBatch(*m_cubeMeshBatch);
+
+			pipeline->AppendSingleFrameRenderStage(std::move(iemStage));
+		}
+	}
+
+
+	void DeferredLightingGraphicsSystem::PopulatePMREMTex(
+		re::StagePipeline* pipeline, re::Texture const* iblTex, std::shared_ptr<re::Texture>& pmremTexOut) const
+	{
+		// Common IBL texture generation stage params:
+		re::PipelineState iblStageParams;
+		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
+		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
+
+		const uint32_t pmremTexWidthHeight =
+			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremTexWidthHeight));
+
+		// PMREM-specific texture params:
+		re::Texture::TextureParams pmremTexParams;
+		pmremTexParams.m_width = pmremTexWidthHeight;
+		pmremTexParams.m_height = pmremTexWidthHeight;
+		pmremTexParams.m_faces = 6;
+		pmremTexParams.m_usage = 
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
+		pmremTexParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
+		pmremTexParams.m_format = re::Texture::Format::RGBA16F;
+		pmremTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		pmremTexParams.m_addToSceneData = false;
+		pmremTexParams.m_mipMode = re::Texture::MipMode::Allocate;
+
+		std::shared_ptr<re::Shader> pmremShader =
+			re::Shader::GetOrCreate(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
+
+		const std::string PMREMTextureName = iblTex->GetName() + "_PMREMTexture";
+		pmremTexOut = re::Texture::Create(PMREMTextureName, pmremTexParams);
+
+		const uint32_t totalMipLevels = pmremTexOut->GetNumMips();
+
+		for (uint32_t face = 0; face < 6; face++)
+		{
+			for (uint32_t currentMipLevel = 0; currentMipLevel < totalMipLevels; currentMipLevel++)
+			{
+				std::string const& postFix = std::format("Face {}, Mip {}", face, currentMipLevel);
+				std::string const& stageName = std::format("PMREM generation: {}", postFix);
+
+				re::RenderStage::GraphicsStageParams gfxStageParams;
+				std::shared_ptr<re::RenderStage> pmremStage = re::RenderStage::CreateSingleFrameGraphicsStage(
+					stageName, gfxStageParams);
+
+				pmremStage->SetStageShader(pmremShader);
+				pmremStage->AddTextureInput(
+					"Tex0",
+					iblTex,
+					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
+
+				// Parameter blocks:
+				IEMPMREMGenerationParams const& pmremGenerationParams = GetIEMPMREMGenerationParamsData(
+					currentMipLevel, totalMipLevels, face, iblTex->Width(), iblTex->Height());
+				std::shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
+					IEMPMREMGenerationParams::s_shaderName,
+					pmremGenerationParams,
+					re::ParameterBlock::PBType::SingleFrame);
+				pmremStage->AddSingleFrameParameterBlock(pmremGenerationPB);
+
+				pmremStage->AddPermanentParameterBlock(m_cubemapRenderCamParams[face]);
+
+				re::TextureTarget::TargetParams targetParams;
+				targetParams.m_targetFace = face;
+				targetParams.m_targetMip = currentMipLevel;
+
+				std::shared_ptr<re::TextureTargetSet> pmremTargetSet =
+					re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);
+
+				pmremTargetSet->SetColorTarget(0, pmremTexOut, targetParams);
+
+				const glm::vec4 mipDimensions =
+					pmremTexOut->GetSubresourceDimensions(currentMipLevel);
+				const uint32_t mipWidth = static_cast<uint32_t>(mipDimensions.x);
+				const uint32_t mipHeight = static_cast<uint32_t>(mipDimensions.y);
+
+				pmremTargetSet->SetViewport(re::Viewport(0, 0, mipWidth, mipHeight));
+				pmremTargetSet->SetScissorRect(re::ScissorRect(0, 0, mipWidth, mipHeight));
+
+				re::TextureTarget::TargetParams::BlendModes pmremBlendModes
+				{
+					re::TextureTarget::TargetParams::BlendMode::One,
+					re::TextureTarget::TargetParams::BlendMode::Zero,
+				};
+				pmremTargetSet->SetColorTargetBlendModes(1, &pmremBlendModes);
+
+
+				pmremStage->SetTextureTargetSet(pmremTargetSet);
+
+				pmremStage->AddBatch(*m_cubeMeshBatch);
+
+				pipeline->AppendSingleFrameRenderStage(std::move(pmremStage));
+			}
+		}
 	}
 
 
 	void DeferredLightingGraphicsSystem::CreateResourceGenerationStages(re::StagePipeline& pipeline)
 	{
+		m_resourceCreationStagePipeline = &pipeline;
+
+		m_resourceCreationStageParentItr = pipeline.AppendRenderStage(
+			re::RenderStage::CreateParentStage("Resource creation stages parent"));
+
+
 		// Cube mesh, for rendering of IBL cubemaps
 		if (m_cubeMeshPrimitive == nullptr)
 		{
 			m_cubeMeshPrimitive = gr::meshfactory::CreateCube();
 		}
 
-		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
-
-		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
-			"We currently expect render data for exactly 1 ambient light to exist");
-
-		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
-
-		gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
-			renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
-
-		re::Texture const* iblTexture = ambientRenderData.m_iblTex;
-
-		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame compute stage:
+		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
+		if (m_cubeMeshBatch == nullptr)
 		{
-			re::RenderStage::ComputeStageParams computeStageParams;
-			std::shared_ptr<re::RenderStage> brdfStage =
-				re::RenderStage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
-
-			re::PipelineState brdfPipelineState;
-			brdfPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
-			brdfPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-
-			brdfStage->SetStageShader(
-				re::Shader::GetOrCreate(en::ShaderNames::k_generateBRDFIntegrationMapShaderName, brdfPipelineState));
-
-			const uint32_t brdfTexWidthHeight = 
-				static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
-
-			// Create a render target texture:			
-			re::Texture::TextureParams brdfParams;
-			brdfParams.m_width = brdfTexWidthHeight;
-			brdfParams.m_height = brdfTexWidthHeight;
-			brdfParams.m_faces = 1;
-			brdfParams.m_usage = 
-				static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
-			brdfParams.m_dimension = re::Texture::Dimension::Texture2D;
-			brdfParams.m_format = re::Texture::Format::RGBA16F;
-			brdfParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-			brdfParams.m_mipMode = re::Texture::MipMode::None;
-			brdfParams.m_addToSceneData = false;
-			brdfParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-
-			m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams);
-
-			std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
-
-			re::TextureTarget::TargetParams colorTargetParams;
-
-			brdfStageTargets->SetColorTarget(0, m_BRDF_integrationMap, colorTargetParams);
-			brdfStageTargets->SetViewport(re::Viewport(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
-			brdfStageTargets->SetScissorRect(re::ScissorRect(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
-
-			re::TextureTarget::TargetParams::BlendModes brdfBlendModes
-			{
-				re::TextureTarget::TargetParams::BlendMode::One,
-				re::TextureTarget::TargetParams::BlendMode::Zero,
-			};
-			brdfStageTargets->SetColorTargetBlendModes(1, &brdfBlendModes);
-
-			brdfStage->SetTextureTargetSet(brdfStageTargets);
-
-			BRDFIntegrationParams const& brdfIntegrationParams = GetBRDFIntegrationParamsData();
-			std::shared_ptr<re::ParameterBlock> brdfIntegrationPB = re::ParameterBlock::Create(
-				BRDFIntegrationParams::s_shaderName,
-				brdfIntegrationParams,
-				re::ParameterBlock::PBType::SingleFrame);
-			brdfStage->AddSingleFrameParameterBlock(brdfIntegrationPB);
-
-			// Add our dispatch information to a compute batch. Note: We use numthreads = (1,1,1)
-			re::Batch computeBatch = re::Batch(re::Batch::Lifetime::SingleFrame, re::Batch::ComputeParams{
-				.m_threadGroupCount = glm::uvec3(brdfTexWidthHeight, brdfTexWidthHeight, 1u) });
-
-			brdfStage->AddBatch(computeBatch);
-
-			pipeline.AppendSingleFrameRenderStage(std::move(brdfStage));
+			m_cubeMeshBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, m_cubeMeshPrimitive.get());
 		}
-
-		// Common IBL texture generation stage params:
-		re::PipelineState iblStageParams;
-		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
-		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
 		// Camera render params for 6 cubemap faces; Just need to update g_view for each face/stage
 		gr::Camera::CameraParams cubemapCamParams{};
@@ -374,179 +545,21 @@ namespace gr
 
 		std::vector<glm::mat4> const& cubemapViews = gr::Camera::BuildAxisAlignedCubeViewMatrices(glm::vec3(0.f));
 
-		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
-		re::Batch cubeMeshBatch = re::Batch(re::Batch::Lifetime::SingleFrame, m_cubeMeshPrimitive.get());
-
-		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
-		// -> Need to change the HLSL Get___DominantDir functions to ensure the result is normalized
-
-
-		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
+		for (uint8_t face = 0; face < 6; face++)
 		{
-			const uint32_t iemTexWidthHeight =
-				static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_iemTexWidthHeight));
-
-			// IEM-specific texture params:
-			re::Texture::TextureParams iemTexParams;
-			iemTexParams.m_width = iemTexWidthHeight;
-			iemTexParams.m_height = iemTexWidthHeight;
-			iemTexParams.m_faces = 6;
-			iemTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
-			iemTexParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
-			iemTexParams.m_format = re::Texture::Format::RGBA16F;
-			iemTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-			iemTexParams.m_addToSceneData = false;
-			iemTexParams.m_mipMode = re::Texture::MipMode::None;
-
-			std::shared_ptr<re::Shader> iemShader = 
-				re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
-
-			const std::string IEMTextureName = iblTexture->GetName() + "_IEMTexture";
-			m_IEMTex = re::Texture::Create(IEMTextureName, iemTexParams);
-
-			for (uint32_t face = 0; face < 6; face++)
+			if (m_cubemapRenderCamParams[face] == nullptr)
 			{
-				re::RenderStage::GraphicsStageParams gfxStageParams;
-				std::shared_ptr<re::RenderStage> iemStage = re::RenderStage::CreateSingleFrameGraphicsStage(
-					"IEM generation: Face " + std::to_string(face + 1) + "/6", gfxStageParams);
-
-				iemStage->SetStageShader(iemShader);
-				iemStage->AddTextureInput(
-					"Tex0",
-					iblTexture,
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
-
-				IEMPMREMGenerationParams const& iemGenerationParams = 
-					GetIEMPMREMGenerationParamsData(0, 1, face, iblTexture->Width(), iblTexture->Height());
-				std::shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
-					IEMPMREMGenerationParams::s_shaderName,
-					iemGenerationParams,
-					re::ParameterBlock::PBType::SingleFrame);
-				iemStage->AddSingleFrameParameterBlock(iemGenerationPB);
-
-				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
-				std::shared_ptr<re::ParameterBlock> cubemapCamParamsPB = re::ParameterBlock::Create(
+
+				m_cubemapRenderCamParams[face] = re::ParameterBlock::Create(
 					gr::Camera::CameraParams::s_shaderName,
 					cubemapCamParams,
-					re::ParameterBlock::PBType::SingleFrame);
-				iemStage->AddSingleFrameParameterBlock(cubemapCamParamsPB);
-
-				std::shared_ptr<re::TextureTargetSet> iemTargets = re::TextureTargetSet::Create("IEM Stage Targets");
-
-				re::TextureTarget::TargetParams::BlendModes iemBlendModes
-				{
-					re::TextureTarget::TargetParams::BlendMode::One,
-					re::TextureTarget::TargetParams::BlendMode::Zero,
-				};
-				iemTargets->SetColorTargetBlendModes(1, &iemBlendModes);
-
-				re::TextureTarget::TargetParams targetParams;
-				targetParams.m_targetFace = face;
-				targetParams.m_targetMip = 0;
-
-				iemTargets->SetColorTarget(0, m_IEMTex, targetParams);
-				iemTargets->SetViewport(re::Viewport(0, 0, iemTexWidthHeight, iemTexWidthHeight));
-				iemTargets->SetScissorRect(re::ScissorRect(0, 0, iemTexWidthHeight, iemTexWidthHeight));
-
-				iemStage->SetTextureTargetSet(iemTargets);
-
-				iemStage->AddBatch(cubeMeshBatch);
-
-				pipeline.AppendSingleFrameRenderStage(std::move(iemStage));
+					re::ParameterBlock::PBType::Immutable);
 			}
 		}
 
-		// 1st frame: Generate PMREM (Pre-filtered Mip-mapped Radiance Environment Map) cubemap for specular reflections
-		{
-			const uint32_t pmremTexWidthHeight =
-				static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremTexWidthHeight));
-
-			// PMREM-specific texture params:
-			re::Texture::TextureParams pmremTexParams;
-			pmremTexParams.m_width = pmremTexWidthHeight;
-			pmremTexParams.m_height = pmremTexWidthHeight;
-			pmremTexParams.m_faces = 6;
-			pmremTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
-			pmremTexParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
-			pmremTexParams.m_format = re::Texture::Format::RGBA16F;
-			pmremTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-			pmremTexParams.m_addToSceneData = false;
-			pmremTexParams.m_mipMode = re::Texture::MipMode::Allocate;
-
-			std::shared_ptr<re::Shader> pmremShader =
-				re::Shader::GetOrCreate(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
-
-			const std::string PMREMTextureName = iblTexture->GetName() + "_PMREMTexture";
-			m_PMREMTex = re::Texture::Create(PMREMTextureName, pmremTexParams);
-
-			const uint32_t totalMipLevels = m_PMREMTex->GetNumMips();
-
-			for (uint32_t face = 0; face < 6; face++)
-			{
-				for (uint32_t currentMipLevel = 0; currentMipLevel < totalMipLevels; currentMipLevel++)
-				{
-					std::string const& postFix = std::format("Face {}, Mip {}", face, currentMipLevel);
-					std::string const& stageName = std::format("PMREM generation: {}", postFix);
-
-					re::RenderStage::GraphicsStageParams gfxStageParams;
-					std::shared_ptr<re::RenderStage> pmremStage = re::RenderStage::CreateSingleFrameGraphicsStage(
-						stageName, gfxStageParams);
-
-					pmremStage->SetStageShader(pmremShader);
-					pmremStage->AddTextureInput(
-						"Tex0",
-						iblTexture,
-						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
-
-					// Construct a camera param block to draw into our cubemap rendering targets:
-					cubemapCamParams.g_view = cubemapViews[face];
-					std::shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
-						gr::Camera::CameraParams::s_shaderName,
-						cubemapCamParams,
-						re::ParameterBlock::PBType::SingleFrame);
-					pmremStage->AddSingleFrameParameterBlock(pb);
-
-					IEMPMREMGenerationParams const& pmremGenerationParams = GetIEMPMREMGenerationParamsData(
-							currentMipLevel, totalMipLevels, face, iblTexture->Width(), iblTexture->Height());
-					std::shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
-						IEMPMREMGenerationParams::s_shaderName,
-						pmremGenerationParams,
-						re::ParameterBlock::PBType::SingleFrame);
-					pmremStage->AddSingleFrameParameterBlock(pmremGenerationPB);
-
-					re::TextureTarget::TargetParams targetParams;
-					targetParams.m_targetFace = face;
-					targetParams.m_targetMip = currentMipLevel;
-
-					std::shared_ptr<re::TextureTargetSet> pmremTargetSet =
-						re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);
-
-					pmremTargetSet->SetColorTarget(0, m_PMREMTex, targetParams);
-
-					const glm::vec4 mipDimensions = 
-						m_PMREMTex->GetSubresourceDimensions(currentMipLevel);
-					const uint32_t mipWidth = static_cast<uint32_t>(mipDimensions.x);
-					const uint32_t mipHeight = static_cast<uint32_t>(mipDimensions.y);
-
-					pmremTargetSet->SetViewport(re::Viewport(0, 0, mipWidth, mipHeight));
-					pmremTargetSet->SetScissorRect(re::ScissorRect(0, 0, mipWidth, mipHeight));
-
-					re::TextureTarget::TargetParams::BlendModes pmremBlendModes
-					{
-						re::TextureTarget::TargetParams::BlendMode::One,
-						re::TextureTarget::TargetParams::BlendMode::Zero,
-					};
-					pmremTargetSet->SetColorTargetBlendModes(1, &pmremBlendModes);
-
-					pmremStage->SetTextureTargetSet(pmremTargetSet);
-
-					pmremStage->AddBatch(cubeMeshBatch);
-
-					pipeline.AppendSingleFrameRenderStage(std::move(pmremStage));
-				}
-			}
-		}
+		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame compute stage:
+		CreateSingleFrameBRDFPreIntegrationStage(pipeline);
 	}
 
 
@@ -617,26 +630,19 @@ namespace gr
 		// --------------
 		m_ambientStage->SetTextureTargetSet(deferredTargetSet);
 
-		// We'll be creating the data we need to render the scene's ambient light:
-		const bool ambientIsValid = m_BRDF_integrationMap && m_IEMTex && m_PMREMTex;
-
 		re::PipelineState fullscreenQuadStageParams;
 
-		// Ambient/directional lights use back face culling, as they're fullscreen quads
-		fullscreenQuadStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back); 
-
+		// Ambient/directional lights use back face culling, as they're fullscreen quads.
 		// Our fullscreen quad is on the far plane; We only want to light something if the quad is behind the geo (i.e.
 		// the quad's depth is greater than what is in the depth buffer)
+		fullscreenQuadStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back); 
 		fullscreenQuadStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Greater);
 		
 		// Ambient light stage:
 		m_ambientStage->SetStageShader(
 			re::Shader::GetOrCreate(en::ShaderNames::k_deferredAmbientLightShaderName, fullscreenQuadStageParams));
 
-		m_ambientStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
-
-		// Ambient PB:
-		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
+		m_ambientStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());	
 		
 		// Get/set the AO texture, if it exists:
 		m_AOGS = m_graphicsSystemManager->GetGraphicsSystem<XeGTAOGraphicsSystem>();
@@ -650,28 +656,6 @@ namespace gr
 
 			ssaoTex = m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get();
 		}
-
-		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
-
-		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
-			"We currently expect render data for exactly 1 ambient light to exist");
-
-		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
-		gr::Light::RenderDataAmbientIBL const& ambientRenderData =
-			renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
-
-		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
-			totalPMREMMipLevels,
-			ambientRenderData.m_diffuseScale,
-			ambientRenderData.m_specularScale,
-			ssaoTex);
-
-		m_ambientParams = re::ParameterBlock::Create(
-			AmbientLightParams::s_shaderName,
-			ambientLightParams,
-			re::ParameterBlock::PBType::Mutable);
-
-		m_ambientStage->AddPermanentParameterBlock(m_ambientParams);
 
 		// Append the ambient stage:
 		pipeline.AppendRenderStage(m_ambientStage);
@@ -754,17 +738,6 @@ namespace gr
 			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
-		// Add IBL texture inputs for ambient stage:
-		m_ambientStage->AddTextureInput(
-			"CubeMap0",
-			m_IEMTex,
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
-
-		m_ambientStage->AddTextureInput(
-			"CubeMap1",
-			m_PMREMTex,
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear));
-
 		m_ambientStage->AddTextureInput(
 			"Tex7",
 			m_BRDF_integrationMap,
@@ -785,13 +758,86 @@ namespace gr
 				stageData.erase(id);
 			}
 		};
+		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>())
+		{
+			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>(), m_ambientLightData);
+		}
 		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataDirectional>())
 		{
-			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_lightData);
+			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_punctualLightData);
 		}
 		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataPoint>())
 		{
-			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_lightData);
+			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_punctualLightData);
+		}
+
+
+		// Register new ambient lights:
+		if (renderData.HasIDsWithNewData<gr::Light::RenderDataAmbientIBL>())
+		{
+			std::vector<gr::RenderDataID> const& newAmbientIDs =
+				renderData.GetIDsWithNewData<gr::Light::RenderDataAmbientIBL>();
+
+			auto ambientItr = renderData.IDBegin(newAmbientIDs);
+			auto const& ambientItrEnd = renderData.IDEnd(newAmbientIDs);
+			while (ambientItr != ambientItrEnd)
+			{
+				gr::Light::RenderDataAmbientIBL const& ambientData = ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
+				
+				const gr::RenderDataID lightID = ambientData.m_renderDataID;
+
+				gr::MeshPrimitive::RenderData const& ambientMeshPrimData = 
+					ambientItr.Get<gr::MeshPrimitive::RenderData>();
+
+				re::Texture const* iblTex = ambientData.m_iblTex;
+				SEAssert(iblTex, "IBL texture cannot be null");
+
+				std::shared_ptr<re::Texture> iemTex = nullptr;
+				PopulateIEMTex(m_resourceCreationStagePipeline, iblTex, iemTex);
+
+				std::shared_ptr<re::Texture> pmremTex = nullptr;
+				PopulatePMREMTex(m_resourceCreationStagePipeline, iblTex, pmremTex);
+
+				const uint32_t totalPMREMMipLevels = pmremTex->GetNumMips();
+
+				re::Texture const* ssaoTex = m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get();
+
+				const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
+					totalPMREMMipLevels,
+					ambientData.m_diffuseScale,
+					ambientData.m_specularScale,
+					ssaoTex);
+
+				std::shared_ptr<re::ParameterBlock> ambientParams = re::ParameterBlock::Create(
+					AmbientLightParams::s_shaderName,
+					ambientLightParams,
+					re::ParameterBlock::PBType::Mutable);
+
+				m_ambientLightData.emplace(ambientData.m_renderDataID,
+					AmbientLightData{
+						.m_ambientParams = ambientParams,
+						.m_IEMTex = iemTex,
+						.m_PMREMTex = pmremTex,
+						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, ambientMeshPrimData, nullptr)
+					});
+
+				// Set the batch inputs:
+				re::Batch& ambientBatch = m_ambientLightData.at(lightID).m_batch;
+
+				ambientBatch.AddTextureAndSamplerInput(
+					"CubeMap0",
+					iemTex.get(),
+					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+
+				ambientBatch.AddTextureAndSamplerInput(
+					"CubeMap1",
+					pmremTex.get(),
+					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear));
+
+				ambientBatch.SetParameterBlock(ambientParams);
+
+				++ambientItr;
+			}
 		}
 
 
@@ -832,7 +878,7 @@ namespace gr
 					directionalParams,
 					re::ParameterBlock::PBType::Mutable);
 
-				m_lightData.emplace(
+				m_punctualLightData.emplace(
 					directionalItr.GetRenderDataID(),
 					PunctualLightData{
 						.m_type = gr::Light::Directional,
@@ -841,7 +887,7 @@ namespace gr
 						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)
 					});
 
-				re::Batch& directionalLightBatch = m_lightData.at(directionalData.m_renderDataID).m_batch;
+				re::Batch& directionalLightBatch = m_punctualLightData.at(directionalData.m_renderDataID).m_batch;
 
 				directionalLightBatch.SetParameterBlock(directionalLightParams);
 
@@ -897,7 +943,7 @@ namespace gr
 				std::shared_ptr<re::ParameterBlock> transformPB = gr::Transform::CreateInstancedTransformParams(
 					re::ParameterBlock::PBType::Mutable, transformData);
 
-				m_lightData.emplace(
+				m_punctualLightData.emplace(
 					pointItr.GetRenderDataID(),
 					PunctualLightData{
 						.m_type = gr::Light::Point,
@@ -906,7 +952,7 @@ namespace gr
 						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)
 					});
 
-				re::Batch& pointlightBatch = m_lightData.at(pointData.m_renderDataID).m_batch;
+				re::Batch& pointlightBatch = m_punctualLightData.at(pointData.m_renderDataID).m_batch;
 
 				pointlightBatch.SetParameterBlock(pointlightPB);
 
@@ -925,29 +971,6 @@ namespace gr
 		}
 
 
-		// Update ambient light parameter block:
-		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
-
-		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
-			"We currently expect render data for exactly 1 ambient light to exist");
-
-		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
-
-		if (renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(ambientID))
-		{
-			gr::Light::RenderDataAmbientIBL const& ambientRenderData =
-				renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
-
-			const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
-				totalPMREMMipLevels,
-				ambientRenderData.m_diffuseScale,
-				ambientRenderData.m_specularScale,
-				m_AOGS ? m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get() : nullptr);
-
-			m_ambientParams->Commit(ambientLightParams);
-		}
-
-
 		CreateBatches();
 	}
 
@@ -956,32 +979,44 @@ namespace gr
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		// Ambient stage batches:
+		// Update the ambient lights we're tracking:
+		for (auto const& ambientLight : m_ambientLightData)
 		{
-			SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
-				"We currently expect render data for exactly 1 ambient light to exist");
+			const gr::RenderDataID lightID = ambientLight.first;
 
-			std::vector<gr::RenderDataID> const& ambientIDs =
-				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>();
+			if (renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(lightID))
+			{
+				gr::Light::RenderDataAmbientIBL const& ambientRenderData =
+					renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(lightID);
 
-			auto ambientItr = renderData.IDBegin(ambientIDs);
+				const uint32_t totalPMREMMipLevels = ambientLight.second.m_PMREMTex->GetNumMips();
 
-			gr::Light::RenderDataAmbientIBL const& ambientRenderData = ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
-			gr::MeshPrimitive::RenderData const& ambientMeshPrimData = ambientItr.Get<gr::MeshPrimitive::RenderData>();
+				const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
+					totalPMREMMipLevels,
+					ambientRenderData.m_diffuseScale,
+					ambientRenderData.m_specularScale,
+					m_AOGS ? m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get() : nullptr);
 
-			const re::Batch ambientFullscreenQuadBatch =
-				re::Batch(re::Batch::Lifetime::SingleFrame, ambientMeshPrimData, nullptr);
+				ambientLight.second.m_ambientParams->Commit(ambientLightParams);
+			}
+		}
 
-			m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
+		if (m_graphicsSystemManager->HasActiveAmbientLight())
+		{
+			const gr::RenderDataID activeAmbientID = m_graphicsSystemManager->GetActiveAmbientLightID();
+
+			SEAssert(m_ambientLightData.contains(activeAmbientID), "Cannot find active ambient light");
+
+			m_ambientStage->AddBatch(m_ambientLightData.at(activeAmbientID).m_batch);
 		}
 
 
-		// Update all of the lights we're tracking:
-		for (auto const& light : m_lightData)
+		// Update all of the punctual lights we're tracking:
+		for (auto const& light : m_punctualLightData)
 		{
 			const gr::RenderDataID lightID = light.first;
 
-			// Update lighting parameter blocks, if necessary:
+			// Update lighting parameter blocks, if anything is dirty:
 			if (renderData.TransformIsDirtyFromRenderDataID(lightID) ||
 				(light.second.m_type == gr::Light::Type::Directional &&
 					renderData.IsDirty<gr::Light::RenderDataDirectional>(lightID)) ||
@@ -1047,7 +1082,7 @@ namespace gr
 				}
 			}
 
-			// Add a batches:
+			// Add punctual batches:
 			// TODO: We should cull these, and only add them if the light is active (ie. non-zero intensity etc)
 			switch (light.second.m_type)
 			{

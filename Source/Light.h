@@ -50,6 +50,8 @@ namespace fr
 			{
 				re::Texture const* m_IBLTex;
 
+				bool m_isActive; // Note: Only *one* ambient light can be active at any time
+
 				float m_diffuseScale;
 				float m_specularScale;
 			};

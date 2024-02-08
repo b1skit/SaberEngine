@@ -33,18 +33,44 @@ namespace gr
 
 
 	private:
-		// Ambient IBL resources:
+		// BRDF Pre-integration:
+		void CreateSingleFrameBRDFPreIntegrationStage(re::StagePipeline&);
 		std::shared_ptr<re::Texture> m_BRDF_integrationMap;
-		std::shared_ptr<re::Texture> m_IEMTex;
-		std::shared_ptr<re::Texture> m_PMREMTex;
+
+	private:
+		// Ambient IBL resources:
+		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
+		// -> Need to change the HLSL Get___DominantDir functions to ensure the result is normalized
+		void PopulateIEMTex(
+			re::StagePipeline*, re::Texture const* iblTex, std::shared_ptr<re::Texture>& iemTexOut) const;
+
+		void PopulatePMREMTex(
+			re::StagePipeline*, re::Texture const* iblTex, std::shared_ptr<re::Texture>& pmremTexOut) const;
+
+	private: // Ambient lights:
+		struct AmbientLightData
+		{
+			std::shared_ptr<re::ParameterBlock> m_ambientParams;
+			std::shared_ptr<re::Texture> m_IEMTex;
+			std::shared_ptr<re::Texture> m_PMREMTex;
+			re::Batch m_batch;
+		};
+		std::unordered_map<gr::RenderDataID, AmbientLightData> m_ambientLightData;
+
 		std::shared_ptr<re::RenderStage> m_ambientStage;
 		std::shared_ptr<re::ParameterBlock> m_ambientParams;
 		XeGTAOGraphicsSystem* m_AOGS;
 
-		// TODO: We only use this in the 1st frame, we should clean it up via a virtual "end frame cleanup" GS function
-		std::shared_ptr<gr::MeshPrimitive> m_cubeMeshPrimitive; // For rendering into a cube map. 
+		re::StagePipeline* m_resourceCreationStagePipeline;
+		re::StagePipeline::StagePipelineItr m_resourceCreationStageParentItr;
 
-		// Punctual lights:
+		// For rendering into a cube map (IEM/PMREM generation)
+		std::shared_ptr<gr::MeshPrimitive> m_cubeMeshPrimitive;
+		std::unique_ptr<re::Batch> m_cubeMeshBatch;
+		std::array<std::shared_ptr<re::ParameterBlock>, 6> m_cubemapRenderCamParams;
+
+
+	private: // Punctual lights:
 		struct PunctualLightData
 		{
 			gr::Light::Type m_type;
@@ -52,7 +78,7 @@ namespace gr
 			std::shared_ptr<re::ParameterBlock> m_transformParams;
 			re::Batch m_batch;
 		};
-		std::unordered_map<gr::RenderDataID, PunctualLightData> m_lightData;
+		std::unordered_map<gr::RenderDataID, PunctualLightData> m_punctualLightData;
 
 		std::shared_ptr<re::RenderStage> m_directionalStage;
 		std::shared_ptr<re::RenderStage> m_pointStage;

@@ -48,6 +48,10 @@ namespace fr
 		void SetMainCamera(entt::entity);
 		entt::entity GetMainCamera() const;
 
+		void SetActiveAmbientLight(entt::entity);
+
+
+	public:
 		void ShowSceneObjectsImGuiWindow(bool* show);
 		void ShowSceneTransformImGuiWindow(bool* show);
 		void ShowImGuiEntityComponentDebug(bool* show);

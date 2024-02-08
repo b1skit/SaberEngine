@@ -26,11 +26,15 @@ namespace fr
 	{
 	public:
 		struct AmbientIBLDeferredMarker {};
+		struct IsActiveAmbientDeferredMarker {};
+
 		struct PointDeferredMarker {};
+
 		struct DirectionalDeferredMarker {};
 
+
 	public:
-		static LightComponent& CreateDeferredAmbientLightConcept(EntityManager&, re::Texture const* iblTex);
+		static entt::entity CreateDeferredAmbientLightConcept(EntityManager&, re::Texture const* iblTex);
 
 		static LightComponent& AttachDeferredPointLightConcept(
 			fr::EntityManager&, entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);

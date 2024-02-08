@@ -247,7 +247,24 @@ namespace re
 		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::Color) != 0,
 			"Attempting to add a Texture input that does not have an appropriate usage flag");
 
-		m_textureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel });
+		bool foundExistingEntry = false;
+		if (!m_textureSamplerInputs.empty())
+		{
+			for (size_t i = 0; i < m_textureSamplerInputs.size(); i++)
+			{
+				// If we find an input with the same name, replace it:
+				if (strcmp(m_textureSamplerInputs[i].m_shaderName.c_str(), shaderName.c_str()) == 0)
+				{
+					m_textureSamplerInputs[i] = RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel };
+					foundExistingEntry = true;
+					break;
+				}
+			}
+		}
+		if (!foundExistingEntry)
+		{
+			m_textureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel });
+		}
 
 		UpdateDepthTextureInputIndex();
 
@@ -413,8 +430,6 @@ namespace re
 
 	void RenderStage::AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
 	{
-		SEAssert(m_lifetime != RenderStage::Lifetime::SingleFrame,
-			"SingleFrame RenderStages can only add single frame parameter blocks");
 		SEAssert(pb->GetType() == re::ParameterBlock::PBType::Mutable || 
 			pb->GetType() == re::ParameterBlock::PBType::Immutable,
 			"Parameter block must have a permanent lifetime");

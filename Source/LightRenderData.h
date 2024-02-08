@@ -34,6 +34,8 @@ namespace gr
 			// Ambient type data:
 			re::Texture const* m_iblTex = nullptr;
 
+			bool m_isActive; // Note: Only *one* ambient light can be active at any time
+
 			float m_diffuseScale = 1.f;
 			float m_specularScale = 1.f;
 

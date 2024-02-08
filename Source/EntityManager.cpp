@@ -46,8 +46,11 @@ namespace fr
 		// Create a scene bounds entity:
 		fr::BoundsComponent::CreateSceneBoundsConcept(*this);
 
-		// Create an Ambient light:
-		fr::LightComponent::CreateDeferredAmbientLightConcept(*this, fr::SceneManager::GetSceneData()->GetIBLTexture());
+		// Create an Ambient light, and make it active:
+		entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
+			*this, 
+			fr::SceneManager::GetSceneData()->GetIBLTexture());
+		SetActiveAmbientLight(ambientLight);
 
 		// Add a player object to the scene:
 		entt::entity mainCameraEntity = GetMainCamera();
@@ -360,6 +363,72 @@ namespace fr
 		}
 		SEAssert(mainCamEntity != entt::null, "Failed to find a main camera entity");
 		return mainCamEntity;
+	}
+
+
+	void EntityManager::SetActiveAmbientLight(entt::entity ambientLight)
+	{
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+			// Find the currently active light, and demote it:
+			entt::entity prevActiveAmbient = entt::null;
+			bool foundCurrentActiveAmbient = false;
+			auto currentActiveAmbient = m_registry.view<fr::LightComponent::IsActiveAmbientDeferredMarker>();
+			for (auto entity : currentActiveAmbient)
+			{
+				SEAssert(foundCurrentActiveAmbient == false, 
+					"Already found an active ambient light. This should not be possible");
+				foundCurrentActiveAmbient = true;
+
+				prevActiveAmbient = entity;
+			}
+
+			// We might not have a previously active ambient light, if this is the first ambient light we've added
+			if (prevActiveAmbient != entt::null)
+			{
+				fr::LightComponent& prevActiveLightComponent = GetComponent<fr::LightComponent>(prevActiveAmbient);
+
+				SEAssert(prevActiveLightComponent.GetLight().GetType() == fr::Light::Type::AmbientIBL,
+					"Light component is not the correct type");
+
+				fr::Light::TypeProperties prevLightTypeProperties =
+					prevActiveLightComponent.GetLight().GetLightTypeProperties(fr::Light::Type::AmbientIBL);
+
+				SEAssert(prevLightTypeProperties.m_ambient.m_isActive,
+					"Ambient light is not active. This should not be possible");
+
+				prevLightTypeProperties.m_ambient.m_isActive = false;
+
+				// This will mark the light as dirty, and trigger an update
+				prevActiveLightComponent.GetLight().SetLightTypeProperties(
+					fr::Light::Type::AmbientIBL, &prevLightTypeProperties.m_ambient);
+
+				RemoveComponent<fr::LightComponent::IsActiveAmbientDeferredMarker>(prevActiveAmbient);
+			}
+
+			// Promote the new light to the active one:
+			fr::LightComponent& lightComponent = GetComponent<fr::LightComponent>(ambientLight);
+
+			SEAssert(lightComponent.GetLight().GetType() == fr::Light::Type::AmbientIBL,
+				"Light component is not the correct type");
+
+			// Update the active flag:
+			fr::Light::TypeProperties currentLightTypeProperties =
+				lightComponent.GetLight().GetLightTypeProperties(fr::Light::Type::AmbientIBL);
+
+			SEAssert(!currentLightTypeProperties.m_ambient.m_isActive,
+				"Ambient light is already active. This is harmless, but unexpected");
+
+			currentLightTypeProperties.m_ambient.m_isActive = true;
+
+			// This will mark the light as dirty, and trigger an update
+			lightComponent.GetLight().SetLightTypeProperties(
+				fr::Light::Type::AmbientIBL, &currentLightTypeProperties.m_ambient);
+
+			// Mark the new light as the active light:
+			EmplaceComponent<fr::LightComponent::IsActiveAmbientDeferredMarker>(ambientLight);
+		}
 	}
 
 
