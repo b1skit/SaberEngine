@@ -276,66 +276,60 @@ namespace fr
 	}
 
 
-	void EntityManager::SetMainCamera(entt::entity camera)
+	void EntityManager::SetMainCamera(entt::entity newMainCamera)
 	{
-		SEAssert(camera != entt::null && HasComponent<fr::CameraComponent>(camera),
+		SEAssert(newMainCamera != entt::null && HasComponent<fr::CameraComponent>(newMainCamera),
 			"Entity does not have a valid camera component");
 
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
-			SetMainCameraInternal(camera);
-		}
-
-	}
-
-
-	void EntityManager::SetMainCameraInternal(entt::entity newMainCamera)
-	{
-		entt::entity currentMainCamera = entt::null;
-		bool foundCurrentMainCamera = false;
-		auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
-		for (auto entity : currentMainCameraView)
-		{
-			SEAssert(foundCurrentMainCamera == false, "Already found a main camera. This should not be possible");
-			foundCurrentMainCamera = true;
-
-			currentMainCamera = entity;
-
-			m_registry.erase<fr::CameraComponent::MainCameraMarker>(entity);
-
-			// If the main camera was added during the current frame, ensure we don't end up with 2 new camera markers
-			if (m_registry.any_of<fr::CameraComponent::NewMainCameraMarker>(entity))
+			entt::entity currentMainCamera = entt::null;
+			bool foundCurrentMainCamera = false;
+			auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
+			for (auto entity : currentMainCameraView)
 			{
-				m_registry.erase<fr::CameraComponent::NewMainCameraMarker>(entity);
+				SEAssert(foundCurrentMainCamera == false, "Already found a main camera. This should not be possible");
+				foundCurrentMainCamera = true;
+
+				currentMainCamera = entity;
+
+				m_registry.erase<fr::CameraComponent::MainCameraMarker>(entity);
+
+				// If the main camera was added during the current frame, ensure we don't end up with 2 new camera markers
+				if (m_registry.any_of<fr::CameraComponent::NewMainCameraMarker>(entity))
+				{
+					m_registry.erase<fr::CameraComponent::NewMainCameraMarker>(entity);
+				}
+			}
+
+			m_registry.emplace_or_replace<fr::CameraComponent::MainCameraMarker>(newMainCamera);
+			m_registry.emplace_or_replace<fr::CameraComponent::NewMainCameraMarker>(newMainCamera);
+
+			// Find and update the camera controller:
+			fr::TransformComponent* camControllerTransformCmpt = nullptr;
+			entt::entity camController = entt::null;
+			bool foundCamController = false;
+			auto camControllerView = m_registry.view<fr::CameraControlComponent>();
+			for (entt::entity entity : camControllerView)
+			{
+				SEAssert(!foundCamController, "Already found camera controller. This shouldn't be possible");
+				foundCamController = true;
+
+				camControllerTransformCmpt = &m_registry.get<fr::TransformComponent>(entity);
+			}
+
+			// No point trying to set a camera if the camera controller doesn't exist yet
+			if (camControllerTransformCmpt)
+			{
+				fr::TransformComponent& currentCamTransformCmpt = m_registry.get<fr::TransformComponent>(currentMainCamera);
+				fr::TransformComponent& newCamTransformCmpt = m_registry.get<fr::TransformComponent>(newMainCamera);
+
+				fr::CameraControlComponent::SetCamera(
+					*camControllerTransformCmpt, &currentCamTransformCmpt, newCamTransformCmpt);
 			}
 		}
 
-		m_registry.emplace_or_replace<fr::CameraComponent::MainCameraMarker>(newMainCamera);
-		m_registry.emplace_or_replace<fr::CameraComponent::NewMainCameraMarker>(newMainCamera);
-
-		// Find and update the camera controller:
-		fr::TransformComponent* camControllerTransformCmpt = nullptr;
-		entt::entity camController = entt::null;
-		bool foundCamController = false;
-		auto camControllerView = m_registry.view<fr::CameraControlComponent>();
-		for (entt::entity entity : camControllerView)
-		{
-			SEAssert(!foundCamController, "Already found camera controller. This shouldn't be possible");
-			foundCamController = true;
-
-			camControllerTransformCmpt = &m_registry.get<fr::TransformComponent>(entity);
-		}
-
-		// No point trying to set a camera if the camera controller doesn't exist yet
-		if (camControllerTransformCmpt)
-		{
-			fr::TransformComponent& currentCamTransformCmpt = m_registry.get<fr::TransformComponent>(currentMainCamera);
-			fr::TransformComponent& newCamTransformCmpt = m_registry.get<fr::TransformComponent>(newMainCamera);
-
-			fr::CameraControlComponent::SetCamera(
-				*camControllerTransformCmpt, &currentCamTransformCmpt, newCamTransformCmpt);
-		}
 	}
 
 
@@ -343,26 +337,22 @@ namespace fr
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-			return GetMainCameraInternal();
+			
+			entt::entity mainCamEntity = entt::null;
+
+			bool foundCurrentMainCamera = false;
+			auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
+			for (auto entity : currentMainCameraView)
+			{
+				SEAssert(foundCurrentMainCamera == false, "Already found a main camera. This should not be possible");
+				foundCurrentMainCamera = true;
+
+				mainCamEntity = entity;
+			}
+			SEAssert(mainCamEntity != entt::null, "Failed to find a main camera entity");
+
+			return mainCamEntity;
 		}
-	}
-
-
-	entt::entity EntityManager::GetMainCameraInternal() const
-	{
-		entt::entity mainCamEntity = entt::null;
-
-		bool foundCurrentMainCamera = false;
-		auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
-		for (auto entity : currentMainCameraView)
-		{
-			SEAssert(foundCurrentMainCamera == false, "Already found a main camera. This should not be possible");
-			foundCurrentMainCamera = true;
-
-			mainCamEntity = entity;
-		}
-		SEAssert(mainCamEntity != entt::null, "Failed to find a main camera entity");
-		return mainCamEntity;
 	}
 
 
@@ -985,13 +975,18 @@ namespace fr
 		{
 			ImGui::Indent();
 
-			auto ambientLightView = m_registry.view<fr::LightComponent, fr::LightComponent::AmbientIBLDeferredMarker>();
-			for (entt::entity entity : ambientLightView)
+			if (ImGui::CollapsingHeader("Ambient Lights", ImGuiTreeNodeFlags_None))
 			{
-				fr::LightComponent::ShowImGuiWindow(*this, entity);
+				ImGui::Indent();
+				auto ambientLightView = m_registry.view<fr::LightComponent, fr::LightComponent::AmbientIBLDeferredMarker>();
+				for (entt::entity entity : ambientLightView)
+				{
+					fr::LightComponent::ShowImGuiWindow(*this, entity);
+				}
+				ImGui::Unindent();
 			}
 
-			if (ImGui::CollapsingHeader("Directional Lights:", ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader("Directional Lights", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 				auto directionalLightView = m_registry.view<fr::LightComponent, fr::LightComponent::DirectionalDeferredMarker>();
@@ -1002,7 +997,7 @@ namespace fr
 				ImGui::Unindent();
 			}
 
-			if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader("Point Lights", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 				auto pointLightView = m_registry.view<fr::LightComponent, fr::LightComponent::PointDeferredMarker>();
@@ -1219,32 +1214,17 @@ namespace fr
 
 			enum EntityToSpawn : uint8_t
 			{
+				AmbientLight,
 				DirectionalLight,
 				PointLight,
 
 				EntityToSpawn_Count
 			};
 			std::array<char const*, EntityToSpawn::EntityToSpawn_Count> arr = {
+				"Ambient Light",
 				"Directional Light",
-				"Point Light"
+				"Point Light",
 			};
-
-			union SpawnParams
-			{
-				SpawnParams() { memset(this, 0, sizeof(SpawnParams)); }
-
-				struct LightSpawnParams
-				{
-					bool m_attachShadow;
-					glm::vec4 m_colorIntensity;
-				} m_lightSpawnParams;
-			};
-			static std::unique_ptr<SpawnParams> s_spawnParams = std::make_unique<SpawnParams>();
-			auto InitializeSpawnParams = [](std::unique_ptr<SpawnParams>& spawnParams)
-				{
-					spawnParams = std::make_unique<SpawnParams>();
-				};
-			
 
 			const ImGuiComboFlags flags = 0;
 
@@ -1269,6 +1249,28 @@ namespace fr
 				ImGui::EndCombo();
 			}
 
+			union SpawnParams
+			{
+				SpawnParams() { memset(this, 0, sizeof(SpawnParams)); }
+				~SpawnParams() {}
+
+				struct AmbientLightSpawnParams
+				{
+					std::string m_filepath;
+				} m_ambientLightSpawnParams;
+
+				struct PunctualLightSpawnParams
+				{
+					bool m_attachShadow;
+					glm::vec4 m_colorIntensity;
+				} m_punctualLightSpawnParams;
+			};
+			static std::unique_ptr<SpawnParams> s_spawnParams = std::make_unique<SpawnParams>();
+			auto InitializeSpawnParams = [](std::unique_ptr<SpawnParams>& spawnParams)
+				{
+					spawnParams = std::make_unique<SpawnParams>();
+				};
+
 			// If the selection has changed, re-initialize the spawn parameters:
 			if (s_spawnParams == nullptr || s_entitySelectionIdx != currentSelectionIdx)
 			{
@@ -1278,16 +1280,29 @@ namespace fr
 			// Display type-specific spawn options
 			switch (static_cast<EntityToSpawn>(s_entitySelectionIdx))
 			{
+			case EntityToSpawn::AmbientLight:
+			{
+				static std::array<char, 256> s_filepathBuffer = { '\0' };
+				if (ImGui::InputText(
+					en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_sceneRootPathKey).c_str(),
+					s_filepathBuffer.data(), 
+					s_filepathBuffer.size()))
+				{
+					s_spawnParams->m_ambientLightSpawnParams.m_filepath = 
+						en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_sceneRootPathKey) + 
+						std::string(s_filepathBuffer.data());
+				}
+			}
+			break;
 			case EntityToSpawn::DirectionalLight:
 			case EntityToSpawn::PointLight:
 			{
-				ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_lightSpawnParams.m_attachShadow);
+				ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
 				ImGui::ColorEdit3("Color", 
-					&s_spawnParams->m_lightSpawnParams.m_colorIntensity.r, 
+					&s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.r, 
 					ImGuiColorEditFlags_NoInputs);
-				ImGui::SliderFloat("Luminous power", &s_spawnParams->m_lightSpawnParams.m_colorIntensity.a, 0.f, 10.f);
+				ImGui::SliderFloat("Luminous power", &s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.a, 0.f, 10.f);
 			}
-			break;
 			break;
 			default: SEAssertF("Invalid type");
 			}
@@ -1301,14 +1316,30 @@ namespace fr
 
 				switch (static_cast<EntityToSpawn>(s_entitySelectionIdx))
 				{
+				case EntityToSpawn::AmbientLight:
+				{
+					re::Texture const* newIBL = fr::SceneManager::GetSceneData()->TryLoadUniqueTexture(
+						s_spawnParams->m_ambientLightSpawnParams.m_filepath,
+						re::Texture::ColorSpace::Linear).get();
+
+					if (newIBL)
+					{
+						entt::entity newAmbientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
+							*this,
+							newIBL);
+
+						SetActiveAmbientLight(newAmbientLight);
+					}
+				}
+				break;
 				case EntityToSpawn::DirectionalLight:
 				{
 					fr::LightComponent::AttachDeferredDirectionalLightConcept(
 						*this, 
 						sceneNode,
 						std::format("{}_DirectionalLight", s_nameInputBuffer.data()).c_str(),
-						s_spawnParams->m_lightSpawnParams.m_colorIntensity,
-						s_spawnParams->m_lightSpawnParams.m_attachShadow);
+						s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
+						s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
 				}
 				break;
 				case EntityToSpawn::PointLight:
@@ -1317,8 +1348,8 @@ namespace fr
 						*this,
 						sceneNode,
 						std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
-						s_spawnParams->m_lightSpawnParams.m_colorIntensity,
-						s_spawnParams->m_lightSpawnParams.m_attachShadow);
+						s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
+						s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
 				}
 				break;
 				default: SEAssertF("Invalid type");

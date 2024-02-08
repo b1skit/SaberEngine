@@ -2,6 +2,7 @@
 #pragma once
 #include "MeshConcept.h"
 #include "NamedObject.h"
+#include "Texture.h"
 
 
 namespace gr
@@ -13,7 +14,6 @@ namespace gr
 namespace re
 {
 	class Shader;
-	class Texture;
 	class VertexStream;
 }
 
@@ -48,6 +48,7 @@ namespace fr
 		std::shared_ptr<re::Texture> GetTexture(std::string const& texName) const;
 		std::shared_ptr<re::Texture> TryGetTexture(std::string const& texName) const;
 		bool TextureExists(std::string const& textureName) const;
+		std::shared_ptr<re::Texture> TryLoadUniqueTexture(std::string const& filepath, re::Texture::ColorSpace);
 
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);

@@ -1,15 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "EngineComponent.h"
 #include "EventListener.h"
 #include "SceneData.h"
 
-
-namespace re
-{
-	class Batch;
-}
 
 namespace fr
 {
@@ -32,12 +26,11 @@ namespace fr
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 
+		void ShowSpawnImGuiWindow() const;
+
+
 	private:
-		
-
 		std::shared_ptr<fr::SceneData> m_sceneData = nullptr;
-
-		size_t m_activeCameraIdx;
 
 
 	private:

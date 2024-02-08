@@ -43,13 +43,8 @@ namespace fr
 	public: // Public interface:
 		void EnqueueRenderUpdates();
 
-		fr::BoundsComponent const* GetSceneBounds() const;
-
+	
 		void SetMainCamera(entt::entity);
-		entt::entity GetMainCamera() const;
-
-		void SetActiveAmbientLight(entt::entity);
-
 
 	public:
 		void ShowSceneObjectsImGuiWindow(bool* show);
@@ -58,8 +53,12 @@ namespace fr
 
 
 	private:
-		void SetMainCameraInternal(entt::entity);
-		entt::entity GetMainCameraInternal() const;
+		fr::BoundsComponent const* GetSceneBounds() const;
+		
+		entt::entity GetMainCamera() const;
+
+		void SetActiveAmbientLight(entt::entity);
+
 
 	private: // EventListener interface:
 		void HandleEvents() override;
@@ -158,6 +157,8 @@ namespace fr
 
 		std::vector<entt::entity> m_deferredDeleteQueue;
 		std::mutex m_deferredDeleteQueueMutex;
+
+		//en::CommandManager m_entityCreateCommands;
 
 		bool m_processInput;
 

@@ -345,6 +345,9 @@ namespace gr
 		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
 		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
+		std::shared_ptr<re::Shader> iemShader =
+			re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
+
 		const uint32_t iemTexWidthHeight =
 			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_iemTexWidthHeight));
 
@@ -353,15 +356,13 @@ namespace gr
 		iemTexParams.m_width = iemTexWidthHeight;
 		iemTexParams.m_height = iemTexWidthHeight;
 		iemTexParams.m_faces = 6;
-		iemTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
+		iemTexParams.m_usage = 
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
 		iemTexParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
 		iemTexParams.m_format = re::Texture::Format::RGBA16F;
 		iemTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		iemTexParams.m_addToSceneData = false;
 		iemTexParams.m_mipMode = re::Texture::MipMode::None;
-
-		std::shared_ptr<re::Shader> iemShader =
-			re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
 
 		const std::string IEMTextureName = iblTex->GetName() + "_IEMTexture";
 		iemTexOut = re::Texture::Create(IEMTextureName, iemTexParams);
@@ -423,6 +424,9 @@ namespace gr
 		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
 		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
+		std::shared_ptr<re::Shader> pmremShader =
+			re::Shader::GetOrCreate(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
+
 		const uint32_t pmremTexWidthHeight =
 			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremTexWidthHeight));
 
@@ -438,9 +442,6 @@ namespace gr
 		pmremTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		pmremTexParams.m_addToSceneData = false;
 		pmremTexParams.m_mipMode = re::Texture::MipMode::Allocate;
-
-		std::shared_ptr<re::Shader> pmremShader =
-			re::Shader::GetOrCreate(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
 
 		const std::string PMREMTextureName = iblTex->GetName() + "_PMREMTexture";
 		pmremTexOut = re::Texture::Create(PMREMTextureName, pmremTexParams);
@@ -800,7 +801,11 @@ namespace gr
 
 				const uint32_t totalPMREMMipLevels = pmremTex->GetNumMips();
 
-				re::Texture const* ssaoTex = m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get();
+				re::Texture const* ssaoTex = nullptr;
+				if (m_AOGS)
+				{
+					ssaoTex = m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get();
+				}
 
 				const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 					totalPMREMMipLevels,

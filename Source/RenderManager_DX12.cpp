@@ -56,23 +56,14 @@ namespace dx12
 
 			// Create and add graphics systems:
 			graphicsSystems.emplace_back(std::make_shared<gr::CullingGraphicsSystem>(&gsm));
-
 			graphicsSystems.emplace_back(std::make_shared<gr::ComputeMipsGraphicsSystem>(&gsm));
-
 			graphicsSystems.emplace_back(std::make_shared<gr::GBufferGraphicsSystem>(&gsm));
-
 			graphicsSystems.emplace_back(std::make_shared<gr::XeGTAOGraphicsSystem>(&gsm));
-
 			graphicsSystems.emplace_back(std::make_shared<gr::ShadowsGraphicsSystem>(&gsm));
-
 			graphicsSystems.emplace_back(std::make_shared<gr::DeferredLightingGraphicsSystem>(&gsm));
-
 			graphicsSystems.emplace_back(std::make_shared<gr::SkyboxGraphicsSystem>(&gsm));
-
 			graphicsSystems.emplace_back(std::make_shared<gr::BloomGraphicsSystem>(&gsm));
-
 			graphicsSystems.emplace_back(std::make_shared<gr::TonemappingGraphicsSystem>(&gsm));
-
 			graphicsSystems.emplace_back(std::make_shared<gr::DebugGraphicsSystem>(&gsm));
 		};
 		defaultRenderSystem->SetInitializePipeline(DefaultRenderSystemInititialzePipeline);

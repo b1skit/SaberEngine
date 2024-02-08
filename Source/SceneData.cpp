@@ -89,7 +89,8 @@ namespace
 				}
 				else
 				{
-					tex = util::LoadTextureFromFilePath({ texNameStr }, false, re::Texture::k_errorTextureColor, colorSpace);
+					tex = util::LoadTextureFromFilePath(
+						{ texNameStr }, colorSpace, false, re::Texture::k_errorTextureColor);
 				}
 			}
 			else if (texture->image->buffer_view) // texture data is already loaded in memory
@@ -155,27 +156,27 @@ namespace
 
 		// MatAlbedo
 		std::shared_ptr<re::Texture> errorAlbedo = util::LoadTextureFromFilePath(
-			{ k_missingAlbedoTexName }, true, re::Texture::k_errorTextureColor, re::Texture::ColorSpace::sRGB);
+			{ k_missingAlbedoTexName }, re::Texture::ColorSpace::sRGB, true, re::Texture::k_errorTextureColor);
 		errorMat->SetTexture(0, errorAlbedo);
 
 		// MatMetallicRoughness
 		std::shared_ptr<re::Texture> errorMetallicRoughness = util::LoadTextureFromFilePath(
-			{ k_missingMetallicRoughnessTexName }, true, glm::vec4(0.f, 1.f, 0.f, 0.f), re::Texture::ColorSpace::Linear);
+			{ k_missingMetallicRoughnessTexName }, re::Texture::ColorSpace::Linear, true, glm::vec4(0.f, 1.f, 0.f, 0.f));
 		errorMat->SetTexture(1, errorMetallicRoughness);
 
 		// MatNormal
 		std::shared_ptr<re::Texture> errorNormal = util::LoadTextureFromFilePath(
-			{ k_missingNormalTexName }, true, glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), re::Texture::ColorSpace::Linear);
+			{ k_missingNormalTexName }, re::Texture::ColorSpace::Linear, true, glm::vec4(0.5f, 0.5f, 1.0f, 0.0f));
 		errorMat->SetTexture(2, errorNormal);
 
 		// MatOcclusion
 		std::shared_ptr<re::Texture> errorOcclusion = util::LoadTextureFromFilePath(
-			{ k_missingOcclusionTexName }, true, glm::vec4(1.f), re::Texture::ColorSpace::Linear);
+			{ k_missingOcclusionTexName }, re::Texture::ColorSpace::Linear, true, glm::vec4(1.f));
 		errorMat->SetTexture(3, errorOcclusion);
 
 		// MatEmissive
 		std::shared_ptr<re::Texture> errorEmissive = util::LoadTextureFromFilePath(
-			{ k_missingEmissiveTexName }, true, re::Texture::k_errorTextureColor, re::Texture::ColorSpace::sRGB);
+			{ k_missingEmissiveTexName }, re::Texture::ColorSpace::sRGB, true, re::Texture::k_errorTextureColor);
 		errorMat->SetTexture(4, errorEmissive);
 
 		scene.AddUniqueMaterial(errorMat);
@@ -529,10 +530,10 @@ namespace
 			else
 			{
 				iblTexture = util::LoadTextureFromFilePath(
-					{ IBLPath }, 
+					{ IBLPath },
+					re::Texture::ColorSpace::Linear,
 					false, 
-					re::Texture::k_errorTextureColor,
-					re::Texture::ColorSpace::Linear);
+					re::Texture::k_errorTextureColor);
 			}
 		};
 
@@ -544,7 +545,7 @@ namespace
 		
 		if (!iblTexture)
 		{
-			IBLPath = en::Config::Get()->GetValue<std::string>("defaultIBLPath");
+			IBLPath = en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_defaultIBLPathKey);
 			TryLoadIBL(IBLPath, iblTexture);
 		}
 		SEAssert(iblTexture != nullptr,
@@ -1098,7 +1099,8 @@ namespace fr
 		
 		if (!iblTexture)
 		{
-			const std::string defaultIBLPath = en::Config::Get()->GetValue<std::string>("defaultIBLPath");
+			std::string const& defaultIBLPath = 
+				en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_defaultIBLPathKey);
 			iblTexture = GetTexture(defaultIBLPath); // Guaranteed to exist
 		}
 
@@ -1166,7 +1168,6 @@ namespace fr
 
 	bool SceneData::AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture)
 	{
-		SEAssert(!m_finishedLoading, "Adding data is not thread safe once loading is complete");
 		SEAssert(newTexture != nullptr, "Cannot add null texture to textures table");
 
 		{
@@ -1227,6 +1228,27 @@ namespace fr
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 			return m_textures.find(nameID) != m_textures.end();
 		}
+	}
+
+
+	std::shared_ptr<re::Texture> SceneData::TryLoadUniqueTexture(
+		std::string const& filepath, re::Texture::ColorSpace colorSpace)
+	{
+		std::shared_ptr<re::Texture> result = TryGetTexture(filepath);
+
+		SEAssert(result == nullptr || result->GetTextureParams().m_colorSpace == colorSpace,
+			"Found a texture with the same filepath name, but different colorspace. This is unexpected");
+
+		if (result == nullptr)
+		{
+			result = util::LoadTextureFromFilePath({ filepath }, colorSpace, false);
+			if (result)
+			{
+				AddUniqueTexture(result);
+			}
+		}
+
+		return result;
 	}
 
 

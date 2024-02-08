@@ -12,9 +12,9 @@ namespace util
 
 	std::shared_ptr<re::Texture> LoadTextureFromFilePath(
 		std::vector<std::string> texturePaths,
+		re::Texture::ColorSpace colorSpace,
 		bool returnErrorTex,
-		glm::vec4 const& errorTexFillColor,
-		re::Texture::ColorSpace colorSpace);
+		glm::vec4 const& errorTexFillColor = glm::vec4(1.f, 0.f, 1.f, 1.f));
 
 
 	std::shared_ptr<re::Texture> LoadTextureFromMemory(

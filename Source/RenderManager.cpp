@@ -214,7 +214,7 @@ namespace re
 		}
 		SEEndCPUEvent();
 
-		// Create any new resources that have been by ExecuteUpdatePipeline calls (e.g. target sets, parameter blocks):
+		// Create any new resources that have been created by GS's during the ExecuteUpdatePipeline call:
 		CreateAPIResources();
 
 		// Update/buffer param blocks
@@ -244,11 +244,9 @@ namespace re
 
 		// Need to clear the PB read data now, to make sure we're not holding on to any single frame PBs beyond the
 		// end of the current frame
-		SEBeginCPUEvent("Clear data");
+		SEBeginCPUEvent("Clear parameter block data");
 		{
 			m_newParameterBlocks.ClearReadData();
-
-			m_createdTextures.clear();
 		}
 
 		SEEndCPUEvent();
@@ -369,6 +367,11 @@ namespace re
 		m_newSamplers.AquireReadLock();
 		m_newTargetSets.AquireReadLock();
 		m_newParameterBlocks.AquireReadLock();
+
+		// Clear any textures created during the last frame as late as possible. This allows systems that use this list
+		// (e.g. the MIP generation GS) to see new textures registered for creation between the last time we swapped
+		// the m_newTextures buffers and now
+		m_createdTextures.clear();
 
 		// Record any newly created textures (we clear m_newTextures during Initialize, so we maintain a separate copy)
 		// This allows us an easy way to create MIPs, and clear the initial data after buffering

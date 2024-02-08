@@ -83,28 +83,13 @@ namespace opengl
 
 			// Create and add graphics systems:
 			graphicsSystems.emplace_back(std::make_shared<gr::CullingGraphicsSystem>(&gsm));
-
-			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = std::make_shared<gr::GBufferGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(gbufferGS);
-
-			std::shared_ptr<gr::ShadowsGraphicsSystem> shadowGS = std::make_shared<gr::ShadowsGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(shadowGS);
-
-			std::shared_ptr<gr::DeferredLightingGraphicsSystem> deferredLightingGS =
-				std::make_shared<gr::DeferredLightingGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(deferredLightingGS);
-
-			std::shared_ptr<gr::SkyboxGraphicsSystem> skyboxGS = std::make_shared<gr::SkyboxGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(skyboxGS);
-
-			std::shared_ptr<gr::BloomGraphicsSystem> bloomGS = std::make_shared<gr::BloomGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(bloomGS);
-
-			std::shared_ptr<gr::TonemappingGraphicsSystem> tonemappingGS = std::make_shared<gr::TonemappingGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(tonemappingGS);
-
-			std::shared_ptr<gr::DebugGraphicsSystem> debugGS = std::make_shared<gr::DebugGraphicsSystem>(&gsm);
-			graphicsSystems.emplace_back(debugGS);
+			graphicsSystems.emplace_back(std::make_shared<gr::GBufferGraphicsSystem>(&gsm));
+			graphicsSystems.emplace_back(std::make_shared<gr::ShadowsGraphicsSystem>(&gsm));
+			graphicsSystems.emplace_back(std::make_shared<gr::DeferredLightingGraphicsSystem>(&gsm));
+			graphicsSystems.emplace_back(std::make_shared<gr::SkyboxGraphicsSystem>(&gsm));
+			graphicsSystems.emplace_back(std::make_shared<gr::BloomGraphicsSystem>(&gsm));
+			graphicsSystems.emplace_back(std::make_shared<gr::TonemappingGraphicsSystem>(&gsm));
+			graphicsSystems.emplace_back(std::make_shared<gr::DebugGraphicsSystem>(&gsm));
 		};
 		defaultRenderSystem->SetInitializePipeline(InitializePipeline);
 

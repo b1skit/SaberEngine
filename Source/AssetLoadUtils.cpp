@@ -26,9 +26,9 @@ namespace util
 
 	std::shared_ptr<re::Texture> LoadTextureFromFilePath(
 		std::vector<std::string> texturePaths,
+		re::Texture::ColorSpace colorSpace,
 		bool returnErrorTex,
-		glm::vec4 const& errorTexFillColor,
-		re::Texture::ColorSpace colorSpace)
+		glm::vec4 const& errorTexFillColor /*= glm::vec4(1.f, 0.f, 1.f, 1.f)*/)
 	{
 		SEAssert(texturePaths.size() == 1 || texturePaths.size() == 6, "Can load single faces or cubemaps only");
 		SEAssert(texturePaths.size() == 1 || texturePaths.size() == 6, "Invalid number of texture paths");

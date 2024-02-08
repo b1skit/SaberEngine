@@ -26,7 +26,6 @@ namespace fr
 
 	SceneManager::SceneManager()
 		: m_sceneData(nullptr)
-		, m_activeCameraIdx(0)
 	{
 	}
 
@@ -42,11 +41,12 @@ namespace fr
 		std::string sceneName;
 		if (en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneNameKey, sceneName))
 		{
+			LOG("Creating scene \"%s\"", sceneName.c_str());
 			m_sceneData = std::make_shared<fr::SceneData>(sceneName);
 		}
 		else
 		{
-			LOG_WARNING("No scene name found to load");			
+			LOG("Creating an empty scene");
 			m_sceneData = std::make_shared<fr::SceneData>("Empty Scene");
 		}
 
@@ -56,11 +56,13 @@ namespace fr
 		const bool loadResult = m_sceneData->Load(sceneFilePath);
 		if (!loadResult)
 		{
-			LOG_ERROR("Failed to load scene: %s", sceneFilePath);
-			en::EventManager::Get()->Notify(en::EventManager::EventInfo{ en::EventManager::EngineQuit });
+			LOG_ERROR("Failed to load scene from path \"%s\"", sceneFilePath.c_str());
 		}
-
-		LOG("\nSceneManager::Startup complete in %f seconds...\n", timer.StopSec());
+		else
+		{
+			LOG("\nSceneManager successfully loaded scene \"%s\" in %f seconds\n", 
+				sceneFilePath.c_str(), timer.StopSec());
+		}
 	}
 
 
@@ -101,6 +103,12 @@ namespace fr
 	void SceneManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		// 
+	}
+
+
+	void SceneManager::ShowSpawnImGuiWindow() const
+	{
+
 	}
 }
 

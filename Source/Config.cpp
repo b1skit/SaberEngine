@@ -420,7 +420,7 @@ namespace en
 		markDirty |= TrySetValue(en::ConfigKeys::k_sprintSpeedModifier,		2.0f,	SettingType::Common);
 
 		// Scene data:
-		markDirty |= TrySetValue("defaultIBLPath",			std::string("Assets\\DefaultIBL\\ibl.hdr"),	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_defaultIBLPathKey,	"Assets\\DefaultIBL\\ibl.hdr",	SettingType::Common);
 
 		// Key bindings:
 		//--------------
