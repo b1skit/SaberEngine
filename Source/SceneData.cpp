@@ -1279,19 +1279,6 @@ namespace fr
 	}
 
 
-	std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& SceneData::GetMaterials() const
-	{
-		// Note: This function is very dangerous: We're returning a thread-shared object by reference. It's currently
-		// used for ImGui debug access, which should be fine
-
-		SEAssert(m_finishedLoading, "Accessing this data is not thread safe during loading");
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
-			return m_materials;
-		}
-	}
-
-
 	bool SceneData::AddUniqueShader(std::shared_ptr<re::Shader>& newShader)
 	{
 		SEAssert(newShader != nullptr, "Cannot add null shader to shader table");
