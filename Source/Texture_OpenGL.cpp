@@ -235,7 +235,7 @@ namespace opengl
 		// TODO: Support texture updates after modification
 		SEAssert(params->m_isDirty == false, "Texture has been modified, and needs to be rebuffered");
 
-		glBindTextures(textureUnit, 1, &params->m_textureID);
+		glBindTextureUnit(textureUnit, params->m_textureID);
 	}
 
 

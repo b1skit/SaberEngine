@@ -7,126 +7,99 @@
 
 namespace
 {
-	D3D12_TEXTURE_ADDRESS_MODE GetD3DAddressMode(re::Sampler::AddressMode addressMode)
+	constexpr D3D12_FILTER GetD3DFilterMode(re::Sampler::FilterMode filterMode)
 	{
-		switch (addressMode)
+		switch (filterMode)
 		{
-		case re::Sampler::AddressMode::Wrap:
-		{
-			return D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+			case re::Sampler::FilterMode::MIN_MAG_MIP_POINT: return D3D12_FILTER_MIN_MAG_MIP_POINT;
+			case re::Sampler::FilterMode::MIN_MAG_POINT_MIP_LINEAR: return D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+			case re::Sampler::FilterMode::MIN_POINT_MAG_LINEAR_MIP_POINT: return D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			case re::Sampler::FilterMode::MIN_POINT_MAG_MIP_LINEAR: return D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+			case re::Sampler::FilterMode::MIN_LINEAR_MAG_MIP_POINT: return D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+			case re::Sampler::FilterMode::MIN_LINEAR_MAG_POINT_MIP_LINEAR: return D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case re::Sampler::FilterMode::MIN_MAG_LINEAR_MIP_POINT: return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+			case re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR: return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+			case re::Sampler::FilterMode::MIN_MAG_ANISOTROPIC_MIP_POINT: return D3D12_FILTER_MIN_MAG_ANISOTROPIC_MIP_POINT;
+			case re::Sampler::FilterMode::ANISOTROPIC: return D3D12_FILTER_ANISOTROPIC;
+			case re::Sampler::FilterMode::COMPARISON_MIN_MAG_MIP_POINT: return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
+			case re::Sampler::FilterMode::COMPARISON_MIN_MAG_POINT_MIP_LINEAR: return D3D12_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR;
+			case re::Sampler::FilterMode::COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT: return D3D12_FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			case re::Sampler::FilterMode::COMPARISON_MIN_POINT_MAG_MIP_LINEAR: return D3D12_FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR;
+			case re::Sampler::FilterMode::COMPARISON_MIN_LINEAR_MAG_MIP_POINT: return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT;
+			case re::Sampler::FilterMode::COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case re::Sampler::FilterMode::COMPARISON_MIN_MAG_LINEAR_MIP_POINT: return D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+			case re::Sampler::FilterMode::COMPARISON_MIN_MAG_MIP_LINEAR: return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+			case re::Sampler::FilterMode::COMPARISON_MIN_MAG_ANISOTROPIC_MIP_POINT: return D3D12_FILTER_COMPARISON_MIN_MAG_ANISOTROPIC_MIP_POINT;
+			case re::Sampler::FilterMode::COMPARISON_ANISOTROPIC: return D3D12_FILTER_COMPARISON_ANISOTROPIC;
+			case re::Sampler::FilterMode::MINIMUM_MIN_MAG_MIP_POINT: return D3D12_FILTER_MINIMUM_MIN_MAG_MIP_POINT;
+			case re::Sampler::FilterMode::MINIMUM_MIN_MAG_POINT_MIP_LINEAR: return D3D12_FILTER_MINIMUM_MIN_MAG_POINT_MIP_LINEAR;
+			case re::Sampler::FilterMode::MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT: return D3D12_FILTER_MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			case re::Sampler::FilterMode::MINIMUM_MIN_POINT_MAG_MIP_LINEAR: return D3D12_FILTER_MINIMUM_MIN_POINT_MAG_MIP_LINEAR;
+			case re::Sampler::FilterMode::MINIMUM_MIN_LINEAR_MAG_MIP_POINT: return D3D12_FILTER_MINIMUM_MIN_LINEAR_MAG_MIP_POINT;
+			case re::Sampler::FilterMode::MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return D3D12_FILTER_MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case re::Sampler::FilterMode::MINIMUM_MIN_MAG_LINEAR_MIP_POINT: return D3D12_FILTER_MINIMUM_MIN_MAG_LINEAR_MIP_POINT;
+			case re::Sampler::FilterMode::MINIMUM_MIN_MAG_MIP_LINEAR: return D3D12_FILTER_MINIMUM_MIN_MAG_MIP_LINEAR;
+			case re::Sampler::FilterMode::MINIMUM_MIN_MAG_ANISOTROPIC_MIP_POINT: return D3D12_FILTER_MINIMUM_MIN_MAG_ANISOTROPIC_MIP_POINT;
+			case re::Sampler::FilterMode::MINIMUM_ANISOTROPIC: return D3D12_FILTER_MINIMUM_ANISOTROPIC;
+			case re::Sampler::FilterMode::MAXIMUM_MIN_MAG_MIP_POINT: return D3D12_FILTER_MAXIMUM_MIN_MAG_MIP_POINT;
+			case re::Sampler::FilterMode::MAXIMUM_MIN_MAG_POINT_MIP_LINEAR: return D3D12_FILTER_MAXIMUM_MIN_MAG_POINT_MIP_LINEAR;
+			case re::Sampler::FilterMode::MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT: return D3D12_FILTER_MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT;
+			case re::Sampler::FilterMode::MAXIMUM_MIN_POINT_MAG_MIP_LINEAR: return D3D12_FILTER_MAXIMUM_MIN_POINT_MAG_MIP_LINEAR;
+			case re::Sampler::FilterMode::MAXIMUM_MIN_LINEAR_MAG_MIP_POINT: return D3D12_FILTER_MAXIMUM_MIN_LINEAR_MAG_MIP_POINT;
+			case re::Sampler::FilterMode::MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return D3D12_FILTER_MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+			case re::Sampler::FilterMode::MAXIMUM_MIN_MAG_LINEAR_MIP_POINT: return D3D12_FILTER_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT;
+			case re::Sampler::FilterMode::MAXIMUM_MIN_MAG_MIP_LINEAR: return D3D12_FILTER_MAXIMUM_MIN_MAG_MIP_LINEAR;
+			case re::Sampler::FilterMode::MAXIMUM_MIN_MAG_ANISOTROPIC_MIP_POINT: return D3D12_FILTER_MAXIMUM_MIN_MAG_ANISOTROPIC_MIP_POINT;
+			case re::Sampler::FilterMode::MAXIMUM_ANISOTROPIC: return D3D12_FILTER_MAXIMUM_ANISOTROPIC;
 		}
-		break;
-		case re::Sampler::AddressMode::Mirror:
-		{
-			return D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-		}
-		break;
-		case re::Sampler::AddressMode::MirrorOnce:
-		{
-			return D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE;
-		}
-		break;
-		case re::Sampler::AddressMode::Clamp:
-		{
-			return D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-		}
-		break;
-		case re::Sampler::AddressMode::Border:
-		{
-			return D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-		}
-		break;
-		default:
-			SEAssertF("Invalid address mode");
-		}
-		return D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		return D3D12_FILTER_MIN_MAG_MIP_LINEAR; // Return a reasonable default to suppress compiler warning
 	}
 
 
-	D3D12_FILTER GetD3DFilterMode(re::Sampler::MinFilter minFilter, re::Sampler::MagFilter maxFilter)
+	constexpr D3D12_TEXTURE_ADDRESS_MODE GetD3DAddressMode(re::Sampler::EdgeMode edgeMode)
 	{
-		switch (minFilter)
+		switch (edgeMode)
 		{
-		case re::Sampler::MinFilter::Nearest:
+		case re::Sampler::EdgeMode::Wrap: return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		case re::Sampler::EdgeMode::Mirror: return D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+		case re::Sampler::EdgeMode::MirrorOnce: return D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE;
+		case re::Sampler::EdgeMode::Clamp: return D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		case re::Sampler::EdgeMode::Border: return D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		}
+		return D3D12_TEXTURE_ADDRESS_MODE::D3D12_TEXTURE_ADDRESS_MODE_WRAP; // Suppress compiler warning
+	}
+
+
+	constexpr D3D12_COMPARISON_FUNC GetD3DComparisonFunc(re::Sampler::ComparisonFunc comparisonFunc)
+	{
+		switch (comparisonFunc)
 		{
-			switch (maxFilter)
-			{
-			case re::Sampler::MagFilter::Nearest:
-			{
-				return D3D12_FILTER_MIN_MAG_MIP_POINT;
-			}
-			break;
-			case re::Sampler::MagFilter::Linear:
-			{
-				return D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
-			}
-			break;
-			default:
-				SEAssertF("Invalid MagFilter type");
-			}
+		case re::Sampler::ComparisonFunc::None: return D3D12_COMPARISON_FUNC_NONE;
+		case re::Sampler::ComparisonFunc::Never: return D3D12_COMPARISON_FUNC_NEVER;
+		case re::Sampler::ComparisonFunc::Less: return D3D12_COMPARISON_FUNC_LESS;
+		case re::Sampler::ComparisonFunc::Equal: return D3D12_COMPARISON_FUNC_EQUAL;
+		case re::Sampler::ComparisonFunc::LessEqual: return D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		case re::Sampler::ComparisonFunc::Greater: return D3D12_COMPARISON_FUNC_GREATER;
+		case re::Sampler::ComparisonFunc::NotEqual: return D3D12_COMPARISON_FUNC_NOT_EQUAL;
+		case re::Sampler::ComparisonFunc::GreaterEqual: return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+		case re::Sampler::ComparisonFunc::Always: return D3D12_COMPARISON_FUNC_ALWAYS;
 		}
-		break;
-		case re::Sampler::MinFilter::NearestMipMapLinear:
+		return D3D12_COMPARISON_FUNC_NONE; // Suppress compiler warning
+	}
+
+
+	constexpr D3D12_STATIC_BORDER_COLOR GetD3DBorderColor(re::Sampler::BorderColor borderColor)
+	{
+		switch (borderColor)
 		{
-			switch (maxFilter)
-			{
-			case re::Sampler::MagFilter::Nearest:
-			{
-				return D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
-			}
-			break;
-			case re::Sampler::MagFilter::Linear:
-			{
-				return D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;
-			}
-			break;
-			default:
-				SEAssertF("Invalid MagFilter type");
-			}
+		case re::Sampler::BorderColor::Custom: // Fall through to transparent black, for now...
+		case re::Sampler::BorderColor::TransparentBlack: return D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		case re::Sampler::BorderColor::OpaqueBlack: return D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		case re::Sampler::BorderColor::OpaqueWhite: return D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+		case re::Sampler::BorderColor::OpaqueBlack_UInt: return D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT;
+		case re::Sampler::BorderColor::OpaqueWhite_UInt: return D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT;
 		}
-		break;
-		case re::Sampler::MinFilter::Linear:
-		{
-			switch (maxFilter)
-			{
-			case re::Sampler::MagFilter::Nearest:
-			{
-				return D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT;
-			}
-			break;
-			case re::Sampler::MagFilter::Linear:
-			{
-				return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-			}
-			break;
-			default:
-				SEAssertF("Invalid MagFilter type");
-			}
-		}
-		break;
-		case re::Sampler::MinFilter::LinearMipMapLinear:
-		{
-			switch (maxFilter)
-			{
-			case re::Sampler::MagFilter::Nearest:
-			{
-				return D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
-			}
-			break;
-			case re::Sampler::MagFilter::Linear:
-			{
-				return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-			}
-			break;
-			default:
-				SEAssertF("Invalid MagFilter type");
-			}
-		}
-		break;
-		default:
-			SEAssertF("Invalid MinFilterType");
-		}
-		return D3D12_FILTER_MIN_MAG_MIP_LINEAR; // Return a reasonable default to suppress compiler warning
+		return D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
 	}
 }
 
@@ -140,35 +113,34 @@ namespace dx12
 		SEAssert(samplerPlatParams->m_isCreated == false, "Sampler is already created");
 		samplerPlatParams->m_isCreated = true;
 
-		re::Sampler::SamplerParams const& samplerParams = sampler.GetSamplerParams();
-		SEAssert(samplerParams.m_maxAnisotropy >= 1 && samplerParams.m_maxAnisotropy <= 16, "Invalid max anisotropy");
+		re::Sampler::SamplerDesc const& samplerDesc = sampler.GetSamplerDesc();
+		
+		SEAssert(samplerDesc.m_maxAnisotropy >= 1 && samplerDesc.m_maxAnisotropy <= 16, "Invalid max anisotropy");
 
-		// We initialize a D3D12_STATIC_SAMPLER_DESC here for (re)use when creating root signatures
-		samplerPlatParams->m_staticSamplerDesc.Filter =
-			GetD3DFilterMode(samplerParams.m_texMinMode, samplerParams.m_texMagMode);
+		// Populate our D3D12_STATIC_SAMPLER_DESC from our SE SamplerDesc:
+		D3D12_STATIC_SAMPLER_DESC& staticSamplerDesc = samplerPlatParams->m_staticSamplerDesc;
 
-		// TODO: Support individual U/V/W address modes
-		samplerPlatParams->m_staticSamplerDesc.AddressU = GetD3DAddressMode(samplerParams.m_addressMode);
-		samplerPlatParams->m_staticSamplerDesc.AddressV = GetD3DAddressMode(samplerParams.m_addressMode);
-		samplerPlatParams->m_staticSamplerDesc.AddressW = GetD3DAddressMode(samplerParams.m_addressMode);
+		staticSamplerDesc.Filter = GetD3DFilterMode(samplerDesc.m_filterMode);
 
-		samplerPlatParams->m_staticSamplerDesc.MipLODBias = samplerParams.m_mipLODBias;
-		samplerPlatParams->m_staticSamplerDesc.MaxAnisotropy = samplerParams.m_maxAnisotropy;
+		staticSamplerDesc.AddressU = GetD3DAddressMode(samplerDesc.m_edgeModeU);
+		staticSamplerDesc.AddressV = GetD3DAddressMode(samplerDesc.m_edgeModeV);
+		staticSamplerDesc.AddressW = GetD3DAddressMode(samplerDesc.m_edgeModeW);
 
-		// TODO: Support comparison functions
-		samplerPlatParams->m_staticSamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		staticSamplerDesc.MipLODBias = samplerDesc.m_mipLODBias;
+		staticSamplerDesc.MaxAnisotropy = samplerDesc.m_maxAnisotropy;
 
-		// TODO: Support variable colors?
-		samplerPlatParams->m_staticSamplerDesc.BorderColor 
-			= D3D12_STATIC_BORDER_COLOR::D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+		staticSamplerDesc.ComparisonFunc = GetD3DComparisonFunc(samplerDesc.m_comparisonFunc);
 
-		samplerPlatParams->m_staticSamplerDesc.MinLOD = 0;
-		samplerPlatParams->m_staticSamplerDesc.MaxLOD = std::numeric_limits<float>::max(); // TODO: Support this. For now, no limit
+		SEAssert(samplerDesc.m_customBorderColor == glm::vec4(0.f), "Custom border colors are not currently supported");
+		staticSamplerDesc.BorderColor = GetD3DBorderColor(samplerDesc.m_borderColor);
+
+		staticSamplerDesc.MinLOD = samplerDesc.m_minLOD;
+		staticSamplerDesc.MaxLOD = samplerDesc.m_maxLOD;
 
 		// These params are set per-root signature, during root signature creation:
-		samplerPlatParams->m_staticSamplerDesc.ShaderRegister = dx12::RootSignature::k_invalidRegisterVal;
-		samplerPlatParams->m_staticSamplerDesc.RegisterSpace = dx12::RootSignature::k_invalidRegisterVal;
-		samplerPlatParams->m_staticSamplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
+		staticSamplerDesc.ShaderRegister = dx12::RootSignature::k_invalidRegisterVal;
+		staticSamplerDesc.RegisterSpace = dx12::RootSignature::k_invalidRegisterVal;
+		staticSamplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
 	}
 
 

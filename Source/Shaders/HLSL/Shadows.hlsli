@@ -39,7 +39,7 @@ float Get2DShadowMapFactor(
 	{
 		for (int col = 0; col < gridSize; col++)
 		{
-			depthSum += (biasedPointDepth < Depth0.SampleLevel(Clamp_Linear_Linear, shadowmapUVs, 0).r) ? 1.f : 0.f;
+			depthSum += (biasedPointDepth < Depth0.SampleLevel(ClampMinMagLinearMipPoint, shadowmapUVs, 0).r) ? 1.f : 0.f;
 
 			shadowmapUVs.x += LightParams.g_shadowMapTexelSize.z;
 		}
@@ -89,24 +89,244 @@ float GetCubeShadowMapFactor(
 	limit.yz -= oyz * bias;
 
 	// Get the center sample:
-	float light = CubeMap0.SampleLevel(Wrap_Linear_Linear, cubeSampleDir, 0).r > nonLinearPointDepth ? 1.f : 0.f;
+	float light = CubeMap0.SampleLevel(WrapMinMagLinearMipPoint, cubeSampleDir, 0).r > nonLinearPointDepth ? 1.f : 0.f;
 
 	// Get 4 extra samples at diagonal offsets:
 	cubeSampleDir.xy -= oxy;
 	cubeSampleDir.yz -= oyz;
 
-	light += CubeMap0.SampleLevel(Wrap_Linear_Linear, clamp(cubeSampleDir, -limit, limit), 0).r > nonLinearPointDepth ? 1.f : 0.f;
+	light += CubeMap0.SampleLevel(WrapMinMagLinearMipPoint, clamp(cubeSampleDir, -limit, limit), 0).r > nonLinearPointDepth ? 1.f : 0.f;
 	cubeSampleDir.xy += oxy * 2.f;
 
-	light += CubeMap0.SampleLevel(Wrap_Linear_Linear, clamp(cubeSampleDir, -limit, limit), 0).r > nonLinearPointDepth ? 1.f : 0.f;
+	light += CubeMap0.SampleLevel(WrapMinMagLinearMipPoint, clamp(cubeSampleDir, -limit, limit), 0).r > nonLinearPointDepth ? 1.f : 0.f;
 	cubeSampleDir.yz += oyz * 2.f;
 
-	light += CubeMap0.SampleLevel(Wrap_Linear_Linear, clamp(cubeSampleDir, -limit, limit), 0).r > nonLinearPointDepth ? 1.f : 0.f;
+	light += CubeMap0.SampleLevel(WrapMinMagLinearMipPoint, clamp(cubeSampleDir, -limit, limit), 0).r > nonLinearPointDepth ? 1.f : 0.f;
 	cubeSampleDir.xy -= oxy * 2.f;
 
-	light += CubeMap0.SampleLevel(Wrap_Linear_Linear, clamp(cubeSampleDir, -limit, limit), 0).r > nonLinearPointDepth ? 1.f : 0.f;
+	light += CubeMap0.SampleLevel(WrapMinMagLinearMipPoint, clamp(cubeSampleDir, -limit, limit), 0).r > nonLinearPointDepth ? 1.f : 0.f;
 
 	return (light * 0.2); // Return the average of our 5 samples
 }
+
+
+
+
+
+
+
+
+//#define PCSS_STUFF
+#ifdef PCSS_STUFF
+
+
+
+
+
+
+// PRESET is defined by the app when (re)loading the fx
+#define PRESET 1
+
+#if PRESET == 0
+
+#define USE_POISSON
+#define SEARCH_POISSON_COUNT 25
+#define SEARCH_POISSON Poisson25
+#define PCF_POISSON_COUNT 25
+#define PCF_POISSON Poisson25
+
+#elif PRESET == 1
+
+#define USE_POISSON
+#define SEARCH_POISSON_COUNT 32
+#define SEARCH_POISSON Poisson32
+#define PCF_POISSON_COUNT 64
+#define PCF_POISSON Poisson64
+
+#else
+
+#define BLOCKER_SEARCH_STEP_COUNT 3
+#define PCF_FILTER_STEP_COUNT 7
+
+#endif
+
+Texture2D<float> tDepthMap;
+float2 g_LightRadiusUV;
+float g_LightZNear;
+float g_LightZFar;
+
+row_major float4x4 mWorldViewProj;
+row_major float4x4 mLightView;
+row_major float4x4 mLightViewProj;
+row_major float4x4 mLightViewProjClip2Tex;
+
+// Using similar triangles from the surface point to the area light
+float2 SearchRegionRadiusUV(float zWorld)
+{
+	return g_LightRadiusUV * (zWorld - g_LightZNear) / zWorld;
+}
+
+// Using similar triangles between the area light, the blocking plane and the surface point
+float2 PenumbraRadiusUV(float zReceiver, float zBlocker)
+{
+	return g_LightRadiusUV * (zReceiver - zBlocker) / zBlocker;
+}
+
+// Project UV size to the near plane of the light
+float2 ProjectToLightUV(float2 sizeUV, float zWorld)
+{
+	return sizeUV * g_LightZNear / zWorld;
+}
+
+// Derivatives of light-space depth with respect to texture coordinates
+float2 DepthGradient(float2 uv, float z)
+{
+	float2 dz_duv = 0;
+
+	float3 duvdist_dx = ddx(float3(uv, z));
+	float3 duvdist_dy = ddy(float3(uv, z));
+
+	dz_duv.x = duvdist_dy.y * duvdist_dx.z;
+	dz_duv.x -= duvdist_dx.y * duvdist_dy.z;
+	
+	dz_duv.y = duvdist_dx.x * duvdist_dy.z;
+	dz_duv.y -= duvdist_dy.x * duvdist_dx.z;
+
+	float det = (duvdist_dx.x * duvdist_dy.y) - (duvdist_dx.y * duvdist_dy.x);
+	dz_duv /= det;
+
+	return dz_duv;
+}
+
+float BiasedZ(float z0, float2 dz_duv, float2 offset)
+{
+	return z0 + dot(dz_duv, offset);
+}
+
+float ZClipToZEye(float zClip)
+{
+	return g_LightZFar * g_LightZNear / (g_LightZFar - zClip * (g_LightZFar - g_LightZNear));
+}
+
+// Returns average blocker depth in the search region, as well as the number of found blockers.
+// Blockers are defined as shadow-map samples between the surface point and the light.
+void FindBlocker(out float avgBlockerDepth,
+				out float numBlockers,
+				Texture2D<float> tDepthMap,
+				float2 uv,
+				float z0,
+				float2 dz_duv,
+				float2 searchRegionRadiusUV)
+{
+	float blockerSum = 0;
+	numBlockers = 0;
+
+#ifdef USE_POISSON
+	for ( int i = 0; i < SEARCH_POISSON_COUNT; ++i )
+	{
+		float2 offset = SEARCH_POISSON[i] * searchRegionRadiusUV;
+		float shadowMapDepth = tDepthMap.SampleLevel(PointSampler, uv + offset, 0);
+		float z = BiasedZ(z0, dz_duv, offset);
+		if ( shadowMapDepth < z )
+		{
+			blockerSum += shadowMapDepth;
+			numBlockers++;
+		}
+	}
+#else
+	float2 stepUV = searchRegionRadiusUV / BLOCKER_SEARCH_STEP_COUNT;
+	for (float x = -BLOCKER_SEARCH_STEP_COUNT; x <= BLOCKER_SEARCH_STEP_COUNT; ++x)
+		for (float y = -BLOCKER_SEARCH_STEP_COUNT; y <= BLOCKER_SEARCH_STEP_COUNT; ++y)
+		{
+			float2 offset = float2(x, y) * stepUV;
+			float shadowMapDepth = tDepthMap.SampleLevel(PointSampler, uv + offset, 0);
+			float z = BiasedZ(z0, dz_duv, offset);
+			if (shadowMapDepth < z)
+			{
+				blockerSum += shadowMapDepth;
+				numBlockers++;
+			}
+		}
+#endif
+	avgBlockerDepth = blockerSum / numBlockers;
+}
+
+// Performs PCF filtering on the shadow map using multiple taps in the filter region.
+float PCF_Filter(float2 uv, float z0, float2 dz_duv, float2 filterRadiusUV)
+{
+	float sum = 0;
+	
+#ifdef USE_POISSON
+	for ( int i = 0; i < PCF_POISSON_COUNT; ++i )
+	{
+		float2 offset = PCF_POISSON[i] * filterRadiusUV;
+		float z = BiasedZ(z0, dz_duv, offset);
+		sum += tDepthMap.SampleCmpLevelZero(PCF_Sampler, uv + offset, z);
+	}
+	return sum / PCF_POISSON_COUNT;
+#else
+	float2 stepUV = filterRadiusUV / PCF_FILTER_STEP_COUNT;
+	for (float x = -PCF_FILTER_STEP_COUNT; x <= PCF_FILTER_STEP_COUNT; ++x)
+		for (float y = -PCF_FILTER_STEP_COUNT; y <= PCF_FILTER_STEP_COUNT; ++y)
+		{
+			float2 offset = float2(x, y) * stepUV;
+			float z = BiasedZ(z0, dz_duv, offset);
+			sum += tDepthMap.SampleCmpLevelZero(PCF_Sampler, uv + offset, z);
+		}
+	float numSamples = (PCF_FILTER_STEP_COUNT * 2 + 1);
+	return sum / (numSamples * numSamples);
+#endif
+}
+
+float PCSS_Shadow(float2 uv, float z, float2 dz_duv, float zEye)
+{
+	// ------------------------
+	// STEP 1: blocker search
+	// ------------------------
+	float avgBlockerDepth = 0;
+	float numBlockers = 0;
+	float2 searchRegionRadiusUV = SearchRegionRadiusUV(zEye);
+	FindBlocker(avgBlockerDepth, numBlockers, tDepthMap, uv, z, dz_duv, searchRegionRadiusUV);
+
+	// Early out if no blocker found
+	if (numBlockers == 0)
+		return 1.0;
+
+	// ------------------------
+	// STEP 2: penumbra size
+	// ------------------------
+	float avgBlockerDepthWorld = ZClipToZEye(avgBlockerDepth);
+	float2 penumbraRadiusUV = PenumbraRadiusUV(zEye, avgBlockerDepthWorld);
+	float2 filterRadiusUV = ProjectToLightUV(penumbraRadiusUV, zEye);
+	
+	// ------------------------
+	// STEP 3: filtering
+	// ------------------------
+	return PCF_Filter(uv, z, dz_duv, filterRadiusUV);
+}
+
+float PCF_Shadow(float2 uv, float z, float2 dz_duv, float zEye)
+{
+	// Do a blocker search to enable early out
+	float avgBlockerDepth = 0;
+	float numBlockers = 0;
+	float2 searchRegionRadiusUV = SearchRegionRadiusUV(zEye);
+	FindBlocker(avgBlockerDepth, numBlockers, tDepthMap, uv, z, dz_duv, searchRegionRadiusUV);
+	if (numBlockers == 0)
+		return 1.0;
+
+	float2 filterRadiusUV = 0.1 * g_LightRadiusUV;
+	return PCF_Filter(uv, z, dz_duv, filterRadiusUV);
+}
+
+#endif // PCSS_STUFF
+
+
+
+
+
+
+
+
 
 #endif

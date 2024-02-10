@@ -72,8 +72,8 @@ float3 ACESFilm(float3 x)
 
 float4 PShader(VertexOut In) : SV_Target
 {
-	const float3 color = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, In.UV0.xy, 0).rgb;
-	const float3 bloom = Tex1.SampleLevel(Clamp_LinearMipMapLinear_Linear, In.UV0.xy, 0).rgb;
+	const float3 color = Tex0.SampleLevel(ClampMinMagMipLinear, In.UV0.xy, 0).rgb;
+	const float3 bloom = Tex1.SampleLevel(ClampMinMagMipLinear, In.UV0.xy, 0).rgb;
 
 	// Apply exposure:
 	const float bloomExposure = CameraParams.g_bloomSettings.w;

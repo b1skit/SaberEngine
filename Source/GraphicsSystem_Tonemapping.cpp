@@ -49,7 +49,7 @@ namespace gr
 		m_tonemappingStage->AddTextureInput(
 			"Tex0",
 			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
+			re::Sampler::GetSampler("ClampMinMagMipLinear"));
 		
 		gr::BloomGraphicsSystem* bloomGS = m_graphicsSystemManager->GetGraphicsSystem<BloomGraphicsSystem>();
 		std::shared_ptr<re::TextureTargetSet const> bloomTextureTargetSet = bloomGS->GetFinalTextureTargetSet();
@@ -57,7 +57,7 @@ namespace gr
 		m_tonemappingStage->AddTextureInput(
 			"Tex1",
 			bloomTextureTargetSet->GetColorTarget(0).GetTexture(),
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
+			re::Sampler::GetSampler("ClampMinMagMipLinear"));
 
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}

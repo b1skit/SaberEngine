@@ -65,4 +65,15 @@ namespace opengl
 		}
 		return s_maxCombinedTexInputs;
 	}
+
+
+	GLint SysInfo::GetMaxAnisotropy()
+	{
+		static GLint s_maxAnisotropy = 0;
+		if (s_maxAnisotropy == 0)
+		{
+			glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &s_maxAnisotropy);
+		}
+		return s_maxAnisotropy;
+	}
 }

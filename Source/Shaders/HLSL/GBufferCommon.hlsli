@@ -29,22 +29,22 @@ GBuffer UnpackGBuffer(float2 screenUV)
 	// Note: All PBR calculations are performed in linear space
 	// However, we use sRGB-format input textures, the sRGB->Linear transformation happens for free when writing the 
 	// GBuffer, so no need to do the sRGB -> linear conversion here
-	gbuffer.LinearAlbedo = GBufferAlbedo.Sample(Wrap_Linear_Linear, screenUV).rgb;
+	gbuffer.LinearAlbedo = GBufferAlbedo.Sample(WrapMinMagLinearMipPoint, screenUV).rgb;
 
-	gbuffer.WorldNormal = GBufferWNormal.Sample(Wrap_Linear_Linear, screenUV).xyz;
+	gbuffer.WorldNormal = GBufferWNormal.Sample(WrapMinMagLinearMipPoint, screenUV).xyz;
 
-	const float3 RMAO = GBufferRMAO.Sample(Wrap_Linear_Linear, screenUV).rgb;
+	const float3 RMAO = GBufferRMAO.Sample(WrapMinMagLinearMipPoint, screenUV).rgb;
 	gbuffer.LinearRoughness = RMAO.r;
 	gbuffer.LinearMetalness = RMAO.g;
 	gbuffer.AO = RMAO.b;
 
 #if defined(GBUFFER_EMISSIVE)
-	gbuffer.Emissive = GBufferEmissive.Sample(Wrap_Linear_Linear, screenUV).rgb;
+	gbuffer.Emissive = GBufferEmissive.Sample(WrapMinMagLinearMipPoint, screenUV).rgb;
 #endif
 
-	gbuffer.MatProp0 = GBufferMatProp0.Sample(Wrap_Linear_Linear, screenUV).rgb;
+	gbuffer.MatProp0 = GBufferMatProp0.Sample(WrapMinMagLinearMipPoint, screenUV).rgb;
 
-	gbuffer.NonLinearDepth = GBufferDepth.Sample(Wrap_Linear_Linear, screenUV).r;
+	gbuffer.NonLinearDepth = GBufferDepth.Sample(WrapMinMagLinearMipPoint, screenUV).r;
 
 	return gbuffer;
 }

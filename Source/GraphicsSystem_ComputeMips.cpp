@@ -82,8 +82,7 @@ namespace gr
 
 		//CreateBatches();
 
-		std::shared_ptr<re::Sampler> const mipSampler =
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Linear_Linear);
+		std::shared_ptr<re::Sampler> const mipSampler = re::Sampler::GetSampler("ClampMinMagLinearMipPoint");
 
 		re::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
 

@@ -1,175 +1,198 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "Assert.h"
 #include "RenderManager.h"
 #include "Sampler.h"
 #include "Sampler_Platform.h"
 
-using std::string;
-using std::shared_ptr;
-using std::make_shared;
-using std::make_unique;
-using std::unordered_map;
-
 
 namespace re
 {
-	const std::vector<std::string> Sampler::SamplerTypeLibraryNames
-	{
-		ENUM_TO_STR(Wrap_Linear_Linear),
-		ENUM_TO_STR(Clamp_Linear_Linear),
-		ENUM_TO_STR(Clamp_Nearest_Nearest),
-		ENUM_TO_STR(Clamp_LinearMipMapLinear_Linear),
-		ENUM_TO_STR(Wrap_LinearMipMapLinear_Linear),
-	};
-	// Note: Sampler names must be unique
-
 	// Static members:
-	std::unique_ptr<std::unordered_map<Sampler::WrapAndFilterMode, std::shared_ptr<re::Sampler>>> Sampler::m_samplerLibrary = 
-		nullptr;
-	std::mutex Sampler::m_samplerLibraryMutex;
+	std::unique_ptr<std::unordered_map<std::string, std::shared_ptr<re::Sampler>>> Sampler::m_samplerLibrary = nullptr;
+	std::recursive_mutex Sampler::m_samplerLibraryMutex;
 
 
-	std::shared_ptr<re::Sampler> const Sampler::GetSampler(std::string const& samplerTypeLibraryName)
+	bool re::Sampler::SamplerDesc::operator==(SamplerDesc const& rhs) const
 	{
-		static const unordered_map<std::string, Sampler::WrapAndFilterMode> k_nameToSamplerLibraryIdx = {
-			{ENUM_TO_STR(Wrap_Linear_Linear),				WrapAndFilterMode::Wrap_Linear_Linear},
-			{ENUM_TO_STR(Clamp_Linear_Linear),			WrapAndFilterMode::Clamp_Linear_Linear},
-			{ENUM_TO_STR(Clamp_Nearest_Nearest),			WrapAndFilterMode::Clamp_Nearest_Nearest},
-			{ENUM_TO_STR(Clamp_LinearMipMapLinear_Linear),WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear},
-			{ENUM_TO_STR(Wrap_LinearMipMapLinear_Linear), WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear},
-		};
-		SEAssert(re::Sampler::SamplerTypeLibraryNames.size() == k_nameToSamplerLibraryIdx.size(), "Array size mismatch");
-
-		return GetSampler(k_nameToSamplerLibraryIdx.at(samplerTypeLibraryName));
+		return m_filterMode == rhs.m_filterMode &&
+			m_edgeModeU == rhs.m_edgeModeU &&
+			m_edgeModeV == rhs.m_edgeModeV &&
+			m_edgeModeW == rhs.m_edgeModeW &&
+			m_mipLODBias == rhs.m_mipLODBias &&
+			m_maxAnisotropy == rhs.m_maxAnisotropy &&
+			m_comparisonFunc == rhs.m_comparisonFunc &&
+			m_borderColor == rhs.m_borderColor &&
+			(m_borderColor != BorderColor::Custom ||
+				m_customBorderColor == rhs.m_customBorderColor) &&
+			m_minLOD == rhs.m_minLOD &&
+			m_maxLOD == rhs.m_maxLOD;
 	}
 
 
-	std::shared_ptr<re::Sampler> const Sampler::GetSampler(Sampler::WrapAndFilterMode type)
+	std::shared_ptr<re::Sampler> const Sampler::GetSampler(std::string const& samplerName)
 	{
-		std::unique_lock<std::mutex> samplerLock(m_samplerLibraryMutex);
-		// TODO: Rewrite this to be lockless once m_samplerLibrary has been created
-
-		if (Sampler::m_samplerLibrary == nullptr)
 		{
-			SEAssert(SamplerTypeLibraryNames.size() == (size_t)Sampler::WrapAndFilterMode::WrapAndFilterMode_Count,
-				"Size of sampler type enum and sampler type library names mismatch");
+			std::unique_lock<std::recursive_mutex> samplerLock(m_samplerLibraryMutex);
 
-			Sampler::m_samplerLibrary = make_unique<unordered_map<Sampler::WrapAndFilterMode, shared_ptr<Sampler>>>();
-			
-			// WrapWrapLinear: Reading/writing to the GBuffer
-			const Sampler::SamplerParams WrapLinearLinearParams = {
-				.m_addressMode = Sampler::AddressMode::Wrap,
-				.m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f),
-				.m_texMinMode = Sampler::MinFilter::Linear,
-				.m_texMagMode = Sampler::MagFilter::Linear,
-				.m_mipLODBias = 0.f,
-				.m_maxAnisotropy = 16
-			};
-			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::Wrap_Linear_Linear,
-				re::Sampler::Create(
-					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::Wrap_Linear_Linear],
-					WrapLinearLinearParams));
+			if (Sampler::m_samplerLibrary == nullptr)
+			{
+				Sampler::m_samplerLibrary = std::make_unique<std::unordered_map<std::string, std::shared_ptr<Sampler>>>();
 
-			// Clamp_Linear_Linear: Depth maps
-			const Sampler::SamplerParams ClampLinearLinearParams = {
-				.m_addressMode = Sampler::AddressMode::Clamp,
-				.m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f),
-				.m_texMinMode = Sampler::MinFilter::Linear,
-				.m_texMagMode = Sampler::MagFilter::Linear,
-				.m_mipLODBias = 0.f,
-				.m_maxAnisotropy = 16
-			};
-			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::Clamp_Linear_Linear,
-				re::Sampler::Create(
-					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::Clamp_Linear_Linear],
-					ClampLinearLinearParams));
+				// Pre-add some samplers we know we need:
 
-			// Clamp_Nearest_Nearest: BRDF pre-integration map
-			const Sampler::SamplerParams ClampNearestNearestParams = {
-				.m_addressMode = Sampler::AddressMode::Clamp,
-				.m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f),
-				.m_texMinMode = Sampler::MinFilter::Nearest,
-				.m_texMagMode = Sampler::MagFilter::Nearest,
-				.m_mipLODBias = 0.f,
-			};
-			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest, 
-				re::Sampler::Create(
-					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest],
-					ClampNearestNearestParams));
+				constexpr re::Sampler::SamplerDesc k_wrapMinMagLinearMipPoint = re::Sampler::SamplerDesc
+				{
+					.m_filterMode = re::Sampler::FilterMode::MIN_MAG_LINEAR_MIP_POINT,
+					.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
+					.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
+					.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
+					.m_mipLODBias = 0.f,
+					.m_maxAnisotropy = 16,
+					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+					.m_customBorderColor = glm::vec4(0.f),
+					.m_minLOD = 0,
+					.m_maxLOD = std::numeric_limits<float>::max() // No limit
+				};
+				const std::string wrapMinMagLinearMipPointName = "WrapMinMagLinearMipPoint";
+				Sampler::m_samplerLibrary->emplace(wrapMinMagLinearMipPointName,
+					re::Sampler::Create(wrapMinMagLinearMipPointName, k_wrapMinMagLinearMipPoint));
 
-			// Clamp, LinearMipMapLinear, Linear: HDR input images for IBL
-			const Sampler::SamplerParams ClampLinearMipMapLinearLinearParams = {
-				.m_addressMode = Sampler::AddressMode::Clamp,
-				.m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f),
-				.m_texMinMode = Sampler::MinFilter::LinearMipMapLinear,
-				.m_texMagMode = Sampler::MagFilter::Linear,
-				.m_mipLODBias = 0.f,
-				.m_maxAnisotropy = 16
-			};
-			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear,
-				re::Sampler::Create(
-					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear],
-					ClampLinearMipMapLinearLinearParams));
+				constexpr re::Sampler::SamplerDesc k_clampMinMagLinearMipPoint = re::Sampler::SamplerDesc
+				{
+					.m_filterMode = re::Sampler::FilterMode::MIN_MAG_LINEAR_MIP_POINT,
+					.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
+					.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
+					.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
+					.m_mipLODBias = 0.f,
+					.m_maxAnisotropy = 16,
+					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+					.m_customBorderColor = glm::vec4(0.f),
+					.m_minLOD = 0,
+					.m_maxLOD = std::numeric_limits<float>::max() // No limit
+				};
+				const std::string clampMinMagLinearMipPointName = "ClampMinMagLinearMipPoint";
+				Sampler::m_samplerLibrary->emplace(clampMinMagLinearMipPointName,
+					re::Sampler::Create(clampMinMagLinearMipPointName, k_clampMinMagLinearMipPoint));
 
-			// Wrap, LinearMipMapLinear, Linear: Skybox/IBL cubemaps
-			const Sampler::SamplerParams WrapLinearMipMapLinearLinearParams = {
-				.m_addressMode = Sampler::AddressMode::Wrap,
-				.m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f),
-				.m_texMinMode = Sampler::MinFilter::LinearMipMapLinear,
-				.m_texMagMode = Sampler::MagFilter::Linear,
-				.m_mipLODBias = 0.f,
-				.m_maxAnisotropy = 16
-			};
-			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear,  
-				re::Sampler::Create(
-					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear],
-					WrapLinearMipMapLinearLinearParams));
+				constexpr re::Sampler::SamplerDesc k_clampMinMagMipPoint = re::Sampler::SamplerDesc
+				{
+					.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_POINT,
+					.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
+					.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
+					.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
+					.m_mipLODBias = 0.f,
+					.m_maxAnisotropy = 16,
+					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+					.m_customBorderColor = glm::vec4(0.f),
+					.m_minLOD = 0,
+					.m_maxLOD = std::numeric_limits<float>::max() // No limit
+				};
+				const std::string clampMinMagMipPointName = "ClampMinMagMipPoint";
+				Sampler::m_samplerLibrary->emplace(clampMinMagMipPointName,
+					re::Sampler::Create(clampMinMagMipPointName, k_clampMinMagMipPoint));
+
+				constexpr re::Sampler::SamplerDesc k_clampLinearMipMapLinearLinear = re::Sampler::SamplerDesc
+				{
+					.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,
+					.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
+					.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
+					.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
+					.m_mipLODBias = 0.f,
+					.m_maxAnisotropy = 16,
+					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+					.m_customBorderColor = glm::vec4(0.f),
+					.m_minLOD = 0,
+					.m_maxLOD = std::numeric_limits<float>::max() // No limit
+				};
+				const std::string clampMinMagMipLinearName = "ClampMinMagMipLinear";
+				Sampler::m_samplerLibrary->emplace(clampMinMagMipLinearName,
+					re::Sampler::Create(clampMinMagMipLinearName, k_clampLinearMipMapLinearLinear));
+
+				constexpr re::Sampler::SamplerDesc k_wrapLinearMipMapLinearLinear = re::Sampler::SamplerDesc
+				{
+					.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,
+					.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
+					.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
+					.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
+					.m_mipLODBias = 0.f,
+					.m_maxAnisotropy = 16,
+					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+					.m_customBorderColor = glm::vec4(0.f),
+					.m_minLOD = 0,
+					.m_maxLOD = std::numeric_limits<float>::max() // No limit
+				};
+				const std::string wrapMinMagMipLinearName = "WrapMinMagMipLinear";
+				Sampler::m_samplerLibrary->emplace(wrapMinMagMipLinearName,
+					re::Sampler::Create(wrapMinMagMipLinearName, k_wrapLinearMipMapLinearLinear));
+			}
+
+			SEAssert(Sampler::m_samplerLibrary->contains(samplerName), "Invalid sampler name");
+			auto const& result = Sampler::m_samplerLibrary->find(samplerName);
+
+			return result->second;
 		}
-
-		auto const& result = Sampler::m_samplerLibrary->find(type);
-
-		SEAssert(result != Sampler::m_samplerLibrary->end(), "Invalid sampler name");
-
-		return result->second;
 	}
 
 
 	void Sampler::DestroySamplerLibrary()
 	{
-		std::unique_lock<std::mutex> samplerLock(m_samplerLibraryMutex);
-		m_samplerLibrary = nullptr;
+		{
+			std::unique_lock<std::recursive_mutex> samplerLock(m_samplerLibraryMutex);
+			m_samplerLibrary = nullptr;
+		}
 	}
 
 
-	std::shared_ptr<re::Sampler> Sampler::Create(std::string const& name, SamplerParams params)
+	// -----------------------------------------------------------------------------------------------------------------
+
+
+	std::shared_ptr<re::Sampler> Sampler::Create(std::string const& name, SamplerDesc const& samplerDesc)
 	{
-		// TODO: Get rid of the sampler library, and create samplers on demand as they're requested
-		// -> Nested unordered maps of AddressMode/MinFilter/MagFilter
-
 		std::shared_ptr<re::Sampler> newSampler = nullptr;
-		newSampler.reset(new re::Sampler(name, params));
+		{
+			std::unique_lock<std::recursive_mutex> samplerLock(m_samplerLibraryMutex);
 
-		// Register new Samplers with the RenderManager, so their API-level objects are created before use
-		re::RenderManager::Get()->RegisterForCreate(newSampler);
+			if (!Sampler::m_samplerLibrary->contains(name))
+			{
+				newSampler.reset(new re::Sampler(name, samplerDesc));
+				Sampler::m_samplerLibrary->emplace(name, newSampler);
+
+				LOG("Creating sampler \"%s\"", name.c_str());
+
+				// Register new Samplers with the RenderManager, so their API-level objects are created before use
+				re::RenderManager::Get()->RegisterForCreate(newSampler);
+			}
+			else
+			{
+				newSampler = Sampler::m_samplerLibrary->at(name);
+
+				SEAssert(newSampler->GetSamplerDesc() == samplerDesc,
+					"Requested sampler does not match the description of the existing sampler with the same name");
+			}
+		}
 
 		return newSampler;
 	}
 
 
-	Sampler::Sampler(string const& name, SamplerParams params) : en::NamedObject(name),
-		m_samplerParams{params}
+	Sampler::Sampler(std::string const& name, SamplerDesc const& samplerDesc)
+		: en::NamedObject(name)
+		, m_samplerDesc{ samplerDesc }
 	{
 		platform::Sampler::CreatePlatformParams(*this);
 	}
 
 
-	void Sampler::Destroy()
+	Sampler::~Sampler()
 	{
 		SEAssert(m_platformParams->m_isCreated, "Sampler has not been created");
 		platform::Sampler::Destroy(*this);
 		m_platformParams = nullptr;
-		m_samplerParams = {};
 	}
 }

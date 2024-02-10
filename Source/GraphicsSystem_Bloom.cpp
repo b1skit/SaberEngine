@@ -78,8 +78,7 @@ namespace gr
 	{
 		m_owningRenderSystem = &renderSystem;
 
-		std::shared_ptr<re::Sampler> const bloomSampler =
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear);
+		std::shared_ptr<re::Sampler> const bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
 
 		GBufferGraphicsSystem* gbufferGS = 
 			m_graphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();

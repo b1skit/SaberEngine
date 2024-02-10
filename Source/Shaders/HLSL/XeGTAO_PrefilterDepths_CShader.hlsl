@@ -19,7 +19,7 @@ void CShader(ComputeIn In)
 		In.GTId.xy /*: SV_GroupThreadID*/,
 		SEGTAOConstants,
 		Depth0,
-		Clamp_Nearest_Nearest,
+		ClampMinMagMipPoint,
 		output0,
 		output1,
 		output2,

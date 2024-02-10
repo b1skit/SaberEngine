@@ -119,7 +119,7 @@ namespace gr
 		m_skyboxStage->AddTextureInput(
 			k_skyboxTexShaderName,
 			m_skyTexture,
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+			re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 
 
 		pipeline.AppendRenderStage(m_skyboxStage);
@@ -149,7 +149,7 @@ namespace gr
 			m_skyboxStage->AddTextureInput(
 				k_skyboxTexShaderName,
 				m_skyTexture,
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 
 		}
 		SEAssert(m_skyTexture != nullptr, "Failed to set a valid sky texture");

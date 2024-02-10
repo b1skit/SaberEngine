@@ -6,5 +6,5 @@
 
 float4 PShader(VertexOut In) : SV_Target
 {
-	return Tex0.Sample(Clamp_Linear_Linear, In.UV0.xy);
+	return Tex0.Sample(ClampMinMagLinearMipPoint, In.UV0.xy);
 }

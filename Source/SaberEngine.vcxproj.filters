@@ -1128,6 +1128,7 @@
     <None Include="Shaders\HLSL\CameraCommon.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\Samplers.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">

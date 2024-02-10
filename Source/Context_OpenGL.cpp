@@ -309,6 +309,7 @@ namespace opengl
 		opengl::SysInfo::GetUniformBufferOffsetAlignment();
 		opengl::SysInfo::GetShaderStorageBufferOffsetAlignment();
 		opengl::SysInfo::GetMaxTextureBindPoints();
+		opengl::SysInfo::GetMaxAnisotropy();
 
 		// Parameter Block Allocator:
 		m_paramBlockAllocator.Create(currentFrame);

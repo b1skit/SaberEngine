@@ -16,7 +16,7 @@ void CShader(ComputeIn In)
 		SEGTAOConstants,
 		SourceAO, // Working AO term
 		SourceEdges, // Working edges
-		Clamp_Nearest_Nearest,
+		ClampMinMagMipPoint,
 		output0,
 		isLastPass);
 }

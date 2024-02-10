@@ -853,6 +853,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
     </FxCompile>
+    <None Include="Shaders\HLSL\Samplers.hlsli" />
     <None Include="Shaders\HLSL\Shadows.hlsli" />
     <None Include="Shaders\HLSL\Transformations.hlsli" />
     <None Include="Shaders\HLSL\UVUtils.hlsli" />

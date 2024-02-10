@@ -229,7 +229,7 @@ namespace gr
 		m_prefilterDepthsStage->AddTextureInput(
 			"Depth0", 
 			gbufferDepthTarget->GetTexture(), 
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest), 
+			re::Sampler::GetSampler("ClampMinMagMipPoint"), 
 			0);
 
 		// Append the depth prefilter stage:
@@ -292,7 +292,7 @@ namespace gr
 		m_mainStage->AddTextureInput(
 			"PrefilteredDepth",
 			prefilteredDepthTargetTex,
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest));
+			re::Sampler::GetSampler("ClampMinMagMipPoint"));
 
 		re::TextureTarget const& gbufferNormalTarget = 
 			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(GBufferGraphicsSystem::GBufferWNormal);
@@ -300,13 +300,13 @@ namespace gr
 		m_mainStage->AddTextureInput(
 			"GBufferWorldNormal",
 			gbufferNormalTarget.GetTexture(),
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest),
+			re::Sampler::GetSampler("ClampMinMagMipPoint"),
 			0);
 
 		m_mainStage->AddTextureInput(
 			k_hilbertLutTexName,
 			m_hilbertLUT,
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest));
+			re::Sampler::GetSampler("ClampMinMagMipPoint"));
 
 		// Append the main stage:
 		pipeline.AppendRenderStage(m_mainStage);
@@ -363,7 +363,7 @@ namespace gr
 				m_denoiseStages[passIdx]->AddTextureInput(
 					"SourceAO",
 					denoiseTarget, // Read from the denoise target texture
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest));
+					re::Sampler::GetSampler("ClampMinMagMipPoint"));
 
 				m_denoiseStages[passIdx]->SetTextureTargetSet(m_denoisePingPongTargets[1]);
 			}
@@ -374,7 +374,7 @@ namespace gr
 				m_denoiseStages[passIdx]->AddTextureInput(
 					"SourceAO",
 					workingAOTex, // Read from the working AO texture
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest));
+					re::Sampler::GetSampler("ClampMinMagMipPoint"));
 
 				m_denoiseStages[passIdx]->SetTextureTargetSet(m_denoisePingPongTargets[0]);
 			}
@@ -383,7 +383,7 @@ namespace gr
 			m_denoiseStages[passIdx]->AddTextureInput(
 				"SourceEdges",
 				m_mainTargets->GetColorTarget(k_workingEdgesIdx).GetTexture(),
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest));
+				re::Sampler::GetSampler("ClampMinMagMipPoint"));
 
 			pipeline.AppendRenderStage(m_denoiseStages[passIdx]);
 		}

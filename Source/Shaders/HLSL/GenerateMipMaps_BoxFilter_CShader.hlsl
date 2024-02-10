@@ -19,7 +19,7 @@ struct MipGenerationParamsCB
 };
 ConstantBuffer<MipGenerationParamsCB> MipGenerationParams;
 
-SamplerState Clamp_Linear_Linear;
+SamplerState ClampMinMagLinearMipPoint;
 Texture2DArray<float4> SrcTex;
 
 // It's recommended we use a maximum of 16KB of group shared memory to maximize occupancy on D3D10 hardware, 32KB on
@@ -70,7 +70,7 @@ void CShader(ComputeIn In)
 		case SRC_WIDTH_EVEN_HEIGHT_EVEN: // 0
 		{
 			const float2 uvs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.5f));
-			texSample0 = SrcTex.SampleLevel(Clamp_Linear_Linear, float3(uvs.xy, faceIdx), srcMip);
+			texSample0 = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(uvs.xy, faceIdx), srcMip);
 		}
 		break;
 		case SRC_WIDTH_ODD_HEIGHT_EVEN: // 1
@@ -79,8 +79,8 @@ void CShader(ComputeIn In)
 			const float2 leftUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.5f));
 			const float2 rightUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.5f));
 
-			const float4 leftSample = SrcTex.SampleLevel(Clamp_Linear_Linear, float3(leftUVs, faceIdx), srcMip);
-			const float4 rightSample = SrcTex.SampleLevel(Clamp_Linear_Linear, float3(rightUVs, faceIdx), srcMip);
+			const float4 leftSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(leftUVs, faceIdx), srcMip);
+			const float4 rightSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(rightUVs, faceIdx), srcMip);
 			
 			texSample0 = (leftSample + rightSample) * 0.5f;
 		}
@@ -91,8 +91,8 @@ void CShader(ComputeIn In)
 			const float2 topUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.25));
 			const float2 botUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.75));
 			
-			const float4 topSample = SrcTex.SampleLevel(Clamp_Linear_Linear, float3(topUVs, faceIdx), srcMip);
-			const float4 botSample = SrcTex.SampleLevel(Clamp_Linear_Linear, float3(botUVs, faceIdx), srcMip);
+			const float4 topSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(topUVs, faceIdx), srcMip);
+			const float4 botSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(botUVs, faceIdx), srcMip);
 			
 			texSample0 = (topSample + botSample) * 0.5f;
 		}
@@ -105,10 +105,10 @@ void CShader(ComputeIn In)
 			const float2 botLeftUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.75f));
 			const float2 botRightUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.75f));
 			
-			const float4 topLeftSample = SrcTex.SampleLevel(Clamp_Linear_Linear, float3(topLeftUVs, faceIdx), srcMip);
-			const float4 topRightSample = SrcTex.SampleLevel(Clamp_Linear_Linear, float3(topRightUVs, faceIdx), srcMip);
-			const float4 botLeftSample = SrcTex.SampleLevel(Clamp_Linear_Linear, float3(botLeftUVs, faceIdx), srcMip);
-			const float4 botRightSample = SrcTex.SampleLevel(Clamp_Linear_Linear, float3(botRightUVs, faceIdx), srcMip);
+			const float4 topLeftSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(topLeftUVs, faceIdx), srcMip);
+			const float4 topRightSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(topRightUVs, faceIdx), srcMip);
+			const float4 botLeftSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(botLeftUVs, faceIdx), srcMip);
+			const float4 botRightSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(botRightUVs, faceIdx), srcMip);
 			
 			texSample0 = (topLeftSample + topRightSample + botLeftSample + botRightSample) * 0.25f;
 		}

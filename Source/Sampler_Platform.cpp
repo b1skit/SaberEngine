@@ -21,7 +21,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			sampler.SetPlatformParams(std::make_unique<opengl::Sampler::PlatformParams>(sampler.GetSamplerParams()));
+			sampler.SetPlatformParams(std::make_unique<opengl::Sampler::PlatformParams>());
 		}
 		break;
 		case RenderingAPI::DX12:

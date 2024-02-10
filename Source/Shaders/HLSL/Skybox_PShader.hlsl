@@ -31,7 +31,7 @@ float4 PShader(VertexOut In) : SV_Target
 
 	// Manually sample mip 0, as otherwise we get a nasty seam due to the discontinuity in our UV derivatives (i.e.
 	// atan2 when computing the spherical UVs)
-	float3 skyboxColor = Tex0.SampleLevel(Wrap_Linear_Linear, sphericalUVs, 0).rgb;
+	float3 skyboxColor = Tex0.SampleLevel(WrapMinMagLinearMipPoint, sphericalUVs, 0).rgb;
 	
 	return float4(skyboxColor, 1.f);
 }

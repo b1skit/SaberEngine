@@ -5,7 +5,7 @@
 #include "UVUtils.hlsli"
 
 
-SamplerState Clamp_LinearMipMapLinear_Linear;
+SamplerState ClampMinMagMipLinear;
 
 Texture2D<float4> Tex0;
 
@@ -44,46 +44,46 @@ void BloomDown(ComputeIn In)
 	
 	
 	const float2 uvA = uvs + float2(-pxOffset.x, -pxOffset.y);
-	const float3 a = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvA, srcMipLevel).rgb;
+	const float3 a = Tex0.SampleLevel(ClampMinMagMipLinear, uvA, srcMipLevel).rgb;
 	
 	const float2 uvB = uvs + float2(0.f, -pxOffset.y);
-	const float3 b = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvB, srcMipLevel).rgb;
+	const float3 b = Tex0.SampleLevel(ClampMinMagMipLinear, uvB, srcMipLevel).rgb;
 	
 	const float2 uvC = uvs + float2(pxOffset.x, -pxOffset.y);
-	const float3 c = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvC, srcMipLevel).rgb;
+	const float3 c = Tex0.SampleLevel(ClampMinMagMipLinear, uvC, srcMipLevel).rgb;
 	
 	
 	const float2 uvD = uvs + float2(-halfPxOffset.x, -halfPxOffset.y);
-	const float3 d = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvD, srcMipLevel).rgb;
+	const float3 d = Tex0.SampleLevel(ClampMinMagMipLinear, uvD, srcMipLevel).rgb;
 	
 	const float2 uvE = uvs + float2(halfPxOffset.x, -halfPxOffset.y);
-	const float3 e = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvE, srcMipLevel).rgb;
+	const float3 e = Tex0.SampleLevel(ClampMinMagMipLinear, uvE, srcMipLevel).rgb;
 	
 	
 	const float2 uvF = uvs + float2(-pxOffset.x, 0.f);
-	const float3 f = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvF, srcMipLevel).rgb;
+	const float3 f = Tex0.SampleLevel(ClampMinMagMipLinear, uvF, srcMipLevel).rgb;
 	
-	const float3 g = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvs, srcMipLevel).rgb;
+	const float3 g = Tex0.SampleLevel(ClampMinMagMipLinear, uvs, srcMipLevel).rgb;
 	
 	const float2 uvH = uvs + float2(pxOffset.x, 0.f);
-	const float3 h = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvH, srcMipLevel).rgb;
+	const float3 h = Tex0.SampleLevel(ClampMinMagMipLinear, uvH, srcMipLevel).rgb;
 	
 	
 	const float2 uvI = uvs + float2(-halfPxOffset.x, halfPxOffset.y);
-	const float3 i = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvI, srcMipLevel).rgb;
+	const float3 i = Tex0.SampleLevel(ClampMinMagMipLinear, uvI, srcMipLevel).rgb;
 	
 	const float2 uvJ = uvs + float2(halfPxOffset.x, halfPxOffset.y);
-	const float3 j = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvJ, srcMipLevel).rgb;
+	const float3 j = Tex0.SampleLevel(ClampMinMagMipLinear, uvJ, srcMipLevel).rgb;
 	
 	
 	const float2 uvK = uvs + float2(-pxOffset.x, pxOffset.y);
-	const float3 k = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvK, srcMipLevel).rgb;
+	const float3 k = Tex0.SampleLevel(ClampMinMagMipLinear, uvK, srcMipLevel).rgb;
 	
 	const float2 uvL = uvs + float2(0.f, pxOffset.y);
-	const float3 l = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvL, srcMipLevel).rgb;
+	const float3 l = Tex0.SampleLevel(ClampMinMagMipLinear, uvL, srcMipLevel).rgb;
 	
 	const float2 uvM = uvs + float2(pxOffset.x, pxOffset.y);
-	const float3 m = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvM, srcMipLevel).rgb;
+	const float3 m = Tex0.SampleLevel(ClampMinMagMipLinear, uvM, srcMipLevel).rgb;
 	
 	/* We weight 4 blockS of 5 samples each centered at d, e, i, j like so:
 	*	0.125		0.125
@@ -138,32 +138,32 @@ void BloomUp(ComputeIn In)
 	
 	
 	const float2 uvA = uvs + float2(-offset.x, -offset.y);
-	const float3 a = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvA, srcMipLevel).rgb;
+	const float3 a = Tex0.SampleLevel(ClampMinMagMipLinear, uvA, srcMipLevel).rgb;
 	
 	const float2 uvB = uvs + float2(0.f, -offset.y);
-	const float3 b = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvB, srcMipLevel).rgb;
+	const float3 b = Tex0.SampleLevel(ClampMinMagMipLinear, uvB, srcMipLevel).rgb;
 	
 	const float2 uvC = uvs + float2(offset.x, -offset.y);
-	const float3 c = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvC, srcMipLevel).rgb;
+	const float3 c = Tex0.SampleLevel(ClampMinMagMipLinear, uvC, srcMipLevel).rgb;
 	
 	
 	const float2 uvD = uvs + float2(-offset.x, 0.f);
-	const float3 d = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvD, srcMipLevel).rgb;
+	const float3 d = Tex0.SampleLevel(ClampMinMagMipLinear, uvD, srcMipLevel).rgb;
 	
-	const float3 e = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvs, srcMipLevel).rgb;
+	const float3 e = Tex0.SampleLevel(ClampMinMagMipLinear, uvs, srcMipLevel).rgb;
 	
 	const float2 uvF = uvs + float2(offset.x, 0.f);
-	const float3 f = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvF, srcMipLevel).rgb;
+	const float3 f = Tex0.SampleLevel(ClampMinMagMipLinear, uvF, srcMipLevel).rgb;
 	
 	
 	const float2 uvG = uvs + float2(-offset.x, offset.y);
-	const float3 g = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvG, srcMipLevel).rgb;
+	const float3 g = Tex0.SampleLevel(ClampMinMagMipLinear, uvG, srcMipLevel).rgb;
 	
 	const float2 uvH = uvs + float2(0.f, offset.y);
-	const float3 h = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvH, srcMipLevel).rgb;
+	const float3 h = Tex0.SampleLevel(ClampMinMagMipLinear, uvH, srcMipLevel).rgb;
 	
 	const float2 uvI = uvs + float2(offset.x, offset.y);
-	const float3 i = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvI, srcMipLevel).rgb;
+	const float3 i = Tex0.SampleLevel(ClampMinMagMipLinear, uvI, srcMipLevel).rgb;
 	
 	float3 color = (a + c + g + i) * 1.f / 16.f;
 	color += (b + d + f + h) * 2.f / 16.f;
@@ -181,7 +181,7 @@ void BloomUp(ComputeIn In)
 	{
 		// Progressive upscaling: We sum the current blurred result with the previous mip
 		const uint prevSrcMip = srcMipLevel + 1;
-		const float3 prevBlurredMip = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvs, prevSrcMip).rgb;
+		const float3 prevBlurredMip = Tex0.SampleLevel(ClampMinMagMipLinear, uvs, prevSrcMip).rgb;
 				
 		const float avgFactor = 0.5f;
 		
@@ -199,7 +199,7 @@ void BilinearDown(ComputeIn In)
 	
 	const float2 uvs = PixelCoordsToUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));
 	
-	const float4 color = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, uvs, srcMipLevel);
+	const float4 color = Tex0.SampleLevel(ClampMinMagMipLinear, uvs, srcMipLevel);
 	
 	output0[texelCoord] = color;
 }

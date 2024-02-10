@@ -3,7 +3,7 @@
 #define SABER_COMMON_HLSL
 
 #include "CameraCommon.hlsli"
-
+#include "Samplers.hlsli"
 
 #define ALPHA_CUTOFF 0.1f
 
@@ -122,12 +122,6 @@ struct GaussianBlurParamsCB
 };
 ConstantBuffer<GaussianBlurParamsCB> GaussianBlurParams;
 
-
-SamplerState Wrap_Linear_Linear;
-SamplerState Clamp_Linear_Linear;
-SamplerState Clamp_Nearest_Nearest;
-SamplerState Clamp_LinearMipMapLinear_Linear;
-SamplerState Wrap_LinearMipMapLinear_Linear;
 
 Texture2D<float4> MatAlbedo;
 Texture2D<float4> MatNormal;

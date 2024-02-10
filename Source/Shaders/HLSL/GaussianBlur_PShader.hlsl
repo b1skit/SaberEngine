@@ -69,7 +69,7 @@ float weights[NUM_TAPS] =
 	float3 total = float3(0, 0, 0);
 	for (int i = 0; i < NUM_TAPS; i++)
 	{
-		total += Tex0.Sample(Clamp_Linear_Linear, uvs).rgb * weights[i];
+		total += Tex0.Sample(ClampMinMagLinearMipPoint, uvs).rgb * weights[i];
 
 		uvs += offset;
 	}

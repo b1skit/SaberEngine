@@ -91,9 +91,9 @@ float3 GetDiffuseIBLContribution(float3 N, float3 V, float NoV, float remappedRo
 	
 	const float3 dominantN = GetDiffuseDominantDir(N, V, NoV, remappedRoughness);
 	
-	const float3 diffuseLighting = CubeMap0.Sample(Wrap_Linear_Linear, WorldToCubeSampleDir(dominantN)).rgb; // IEM
+	const float3 diffuseLighting = CubeMap0.Sample(WrapMinMagLinearMipPoint, WorldToCubeSampleDir(dominantN)).rgb; // IEM
 	
-	const float fDiffuse = Tex7.SampleLevel(Clamp_Linear_Linear, float2(NoV, remappedRoughness), 0).z;
+	const float fDiffuse = Tex7.SampleLevel(ClampMinMagLinearMipPoint, float2(NoV, remappedRoughness), 0).z;
 	
 	return diffuseLighting * fDiffuse * diffuseScale;
 }
@@ -147,13 +147,13 @@ float3 GetSpecularIBLContribution(
 	const float f90 = ComputeF90(remappedRoughness, LoH);
 	
 	const float3 preIntegratedLD =
-		CubeMap1.SampleLevel(Wrap_LinearMipMapLinear_Linear, WorldToCubeSampleDir(dominantR), mipSampleLevel).rgb;
+		CubeMap1.SampleLevel(WrapMinMagMipLinear, WorldToCubeSampleDir(dominantR), mipSampleLevel).rgb;
 	
 	// Sample the pre-integrated DFG texture
 	//	Fc = (1.f - LoH)^5
 	//	PreIntegratedDFG.r = GVis * (1.f - Fc)
 	//	PreIntegratedDFG.g = GVis * Fc	
-	const float2 preIntegratedDFG = Tex7.SampleLevel(Clamp_Linear_Linear, float2(NoV, remappedRoughness), 0).xy;
+	const float2 preIntegratedDFG = Tex7.SampleLevel(ClampMinMagLinearMipPoint, float2(NoV, remappedRoughness), 0).xy;
 	
 	// LD * (f0 * GVis * (1.f - Fc) + GVis * Fc * f90)
 	return preIntegratedLD * (blendedF0 * preIntegratedDFG.r + f90 * preIntegratedDFG.g) * specScale;

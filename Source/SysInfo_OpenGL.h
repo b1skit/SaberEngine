@@ -14,5 +14,6 @@ namespace opengl
 		static GLint GetUniformBufferOffsetAlignment();
 		static GLint GetShaderStorageBufferOffsetAlignment();
 		static uint8_t GetMaxTextureBindPoints();
+		static GLint GetMaxAnisotropy();
 	};
 }

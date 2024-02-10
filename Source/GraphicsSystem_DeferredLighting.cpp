@@ -377,7 +377,7 @@ namespace gr
 			iemStage->AddTextureInput(
 				"Tex0",
 				iblTex,
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
+				re::Sampler::GetSampler("ClampMinMagMipLinear"));
 
 			// Parameter blocks:
 			IEMPMREMGenerationParams const& iemGenerationParams =
@@ -463,7 +463,7 @@ namespace gr
 				pmremStage->AddTextureInput(
 					"Tex0",
 					iblTex,
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
+					re::Sampler::GetSampler("ClampMinMagMipLinear"));
 
 				// Parameter blocks:
 				IEMPMREMGenerationParams const& pmremGenerationParams = GetIEMPMREMGenerationParamsData(
@@ -653,7 +653,7 @@ namespace gr
 			m_ambientStage->AddTextureInput(
 				"SSAOTex",
 				m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture(),
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest));
+				re::Sampler::GetSampler("ClampMinMagMipPoint"));
 
 			ssaoTex = m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get();
 		}
@@ -707,17 +707,17 @@ namespace gr
 			m_ambientStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[slot],
 				gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 
 			m_directionalStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[slot],
 				gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 
 			m_pointStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[slot],
 				gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 		}
 
 
@@ -727,22 +727,22 @@ namespace gr
 		m_directionalStage->AddTextureInput(
 			GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+			re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 
 		m_pointStage->AddTextureInput(
 			GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+			re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 
 		m_ambientStage->AddTextureInput(
 			GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+			re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 
 		m_ambientStage->AddTextureInput(
 			"Tex7",
 			m_BRDF_integrationMap,
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest));
+			re::Sampler::GetSampler("ClampMinMagMipPoint"));
 	}
 
 
@@ -832,12 +832,12 @@ namespace gr
 				ambientBatch.AddTextureAndSamplerInput(
 					"CubeMap0",
 					iemTex.get(),
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+					re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 
 				ambientBatch.AddTextureAndSamplerInput(
 					"CubeMap1",
 					pmremTex.get(),
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear));
+					re::Sampler::GetSampler("WrapMinMagMipLinear"));
 
 				ambientBatch.SetParameterBlock(ambientParams);
 
@@ -901,7 +901,7 @@ namespace gr
 					directionalLightBatch.AddTextureAndSamplerInput(
 						"Depth0",
 						m_shadowGS->GetShadowMap(gr::Light::Type::Directional, directionalData.m_renderDataID),
-						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+						re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 				}
 
 				++directionalItr;
@@ -968,7 +968,7 @@ namespace gr
 					pointlightBatch.AddTextureAndSamplerInput(
 						"CubeMap0",
 						m_shadowGS->GetShadowMap(gr::Light::Point, pointData.m_renderDataID),
-						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+						re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 				}
 
 				++pointItr;

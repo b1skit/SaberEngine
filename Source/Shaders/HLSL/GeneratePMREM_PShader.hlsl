@@ -88,7 +88,7 @@ float4 PShader(VertexOut In) : SV_Target
 
 			const float2 sphericalUV = WorldDirToSphericalUV(L);
 			
-			const float3 Li = Tex0.SampleLevel(Wrap_LinearMipMapLinear_Linear, sphericalUV, mipLevel).rgb;
+			const float3 Li = Tex0.SampleLevel(WrapMinMagMipLinear, sphericalUV, mipLevel).rgb;
 
 			result += Li * NoL;
 			resultWeight += NoL;

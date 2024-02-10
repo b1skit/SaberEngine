@@ -29,7 +29,7 @@ ConstantBuffer<GTAOConstants> SEGTAOConstants;
 
 
 // Samplers:
-SamplerState Clamp_Nearest_Nearest;
+SamplerState ClampMinMagMipPoint;
 
 
 // Texture inputs:

@@ -32,11 +32,11 @@ namespace gr
 
 		m_texSlots =
 		{
-			{nullptr, re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear), "MatAlbedo" },
-			{nullptr, re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear), "MatMetallicRoughness" }, // G = roughness, B = metalness. R & A are unused.
-			{nullptr, re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear), "MatNormal" },
-			{nullptr, re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear), "MatOcclusion" },
-			{nullptr, re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear), "MatEmissive" },
+			{nullptr, re::Sampler::GetSampler("WrapMinMagMipLinear"), "MatAlbedo" },
+			{nullptr, re::Sampler::GetSampler("WrapMinMagMipLinear"), "MatMetallicRoughness" }, // G = roughness, B = metalness. R & A are unused.
+			{nullptr, re::Sampler::GetSampler("WrapMinMagMipLinear"), "MatNormal" },
+			{nullptr, re::Sampler::GetSampler("WrapMinMagMipLinear"), "MatOcclusion" },
+			{nullptr, re::Sampler::GetSampler("WrapMinMagMipLinear"), "MatEmissive" },
 		};
 
 		// Build a map from shader sampler name, to texture slot index:

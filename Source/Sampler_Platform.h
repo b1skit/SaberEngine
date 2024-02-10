@@ -16,8 +16,5 @@ namespace platform
 
 		static void (*Create)(re::Sampler&);
 		static void (*Destroy)(re::Sampler&);
-
-	private:
-
 	};
 }
