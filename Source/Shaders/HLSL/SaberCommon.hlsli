@@ -151,4 +151,6 @@ Texture2D<float4> Tex8;
 TextureCube<float4> CubeMap0;
 TextureCube<float4> CubeMap1;
 
+TextureCube<float> CubeDepth;
+
 #endif // SABER_COMMON_HLSL

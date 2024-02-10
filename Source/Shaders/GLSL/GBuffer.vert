@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_TBN
 #define SABER_INSTANCING
+#include "NormalMapUtils.glsl"
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 

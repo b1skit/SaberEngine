@@ -725,10 +725,13 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <None Include="Shaders\GLSL\FullscreenQuadCommon.glsl" />
     <None Include="Shaders\GLSL\GaussianBlur.frag" />
     <None Include="Shaders\GLSL\GaussianBlur.vert" />
+    <None Include="Shaders\GLSL\GBufferCommon.glsl" />
     <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap.comp" />
     <None Include="Shaders\GLSL\Line.frag" />
     <None Include="Shaders\GLSL\Line.vert" />
     <None Include="Shaders\GLSL\MathConstants.glsl" />
+    <None Include="Shaders\GLSL\NormalMapUtils.glsl" />
+    <None Include="Shaders\GLSL\Shadows.glsl" />
     <None Include="Shaders\GLSL\Skybox.frag" />
     <None Include="Shaders\GLSL\Skybox.vert" />
     <None Include="Shaders\GLSL\ToneMap.frag" />

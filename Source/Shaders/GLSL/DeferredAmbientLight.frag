@@ -6,6 +6,7 @@
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
+#include "GBufferCommon.glsl"
 
 
 // Compute diffuse AO factor

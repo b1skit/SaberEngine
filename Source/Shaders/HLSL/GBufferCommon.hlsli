@@ -1,7 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #ifndef GBUFFER_COMMON
 #define GBUFFER_COMMON
-
 #include "SaberCommon.hlsli"
 
 

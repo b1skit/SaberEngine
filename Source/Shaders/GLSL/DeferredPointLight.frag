@@ -5,6 +5,8 @@
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
+#include "Shadows.glsl"
+#include "GBufferCommon.glsl"
 
 
 // As per Cem Yuksel's nonsingular point light attenuation function:
@@ -41,7 +43,7 @@ void main()
 	const vec3 lightToFrag = worldPos - g_lightWorldPosRadius.xyz; // Cubemap sampler dir length matters, so can't use -fragToLight
 
 	const bool hasShadow = g_intensityScaleHasShadow.z > 0.f;
-	const float shadowFactor = hasShadow ? GetShadowFactor(lightToFrag, CubeMap0, NoL) : 1.f;
+	const float shadowFactor = hasShadow ? GetShadowFactor(lightToFrag, CubeDepth, NoL) : 1.f;
 
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;

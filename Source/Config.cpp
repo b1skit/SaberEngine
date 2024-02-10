@@ -501,7 +501,7 @@ namespace en
 		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias,	0.001f);
 		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias,	0.005f);
 		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMinShadowBias,			0.01f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMaxShadowBias,			0.05f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMaxShadowBias,			0.12f);
 	}
 	
 

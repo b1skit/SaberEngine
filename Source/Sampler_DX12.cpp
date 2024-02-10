@@ -92,7 +92,6 @@ namespace
 	{
 		switch (borderColor)
 		{
-		case re::Sampler::BorderColor::Custom: // Fall through to transparent black, for now...
 		case re::Sampler::BorderColor::TransparentBlack: return D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
 		case re::Sampler::BorderColor::OpaqueBlack: return D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 		case re::Sampler::BorderColor::OpaqueWhite: return D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
@@ -131,7 +130,6 @@ namespace dx12
 
 		staticSamplerDesc.ComparisonFunc = GetD3DComparisonFunc(samplerDesc.m_comparisonFunc);
 
-		SEAssert(samplerDesc.m_customBorderColor == glm::vec4(0.f), "Custom border colors are not currently supported");
 		staticSamplerDesc.BorderColor = GetD3DBorderColor(samplerDesc.m_borderColor);
 
 		staticSamplerDesc.MinLOD = samplerDesc.m_minLOD;

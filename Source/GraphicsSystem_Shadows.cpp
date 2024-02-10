@@ -60,6 +60,182 @@ namespace gr
 	}
 
 
+	std::shared_ptr<re::RenderStage> ShadowsGraphicsSystem::CreateRegisterDirectionalShadowStage(
+		gr::RenderDataID lightID,
+		gr::ShadowMap::RenderData const& shadowData,
+		gr::Camera::RenderData const& shadowCamData)
+	{
+		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
+		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
+		// In future, we need to support tagging assets to not cast shadows
+		re::PipelineState shadowPipelineState;
+		shadowPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		shadowPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
+
+		char const* lightName = shadowData.m_owningLightName;
+		std::string const& stageName = std::format("{}_Shadow", lightName);
+
+		std::shared_ptr<re::RenderStage> shadowStage =
+			re::RenderStage::CreateGraphicsStage(stageName, re::RenderStage::GraphicsStageParams{});
+
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
+
+		// Directional shadow camera param block:
+		std::shared_ptr<re::ParameterBlock> shadowCamParams = re::ParameterBlock::Create(
+			gr::Camera::CameraParams::s_shaderName,
+			shadowCamData.m_cameraParams,
+			re::ParameterBlock::PBType::Mutable);
+
+		shadowStage->AddPermanentParameterBlock(shadowCamParams);
+
+		// Shader:
+		shadowStage->SetStageShader(
+			re::Shader::GetOrCreate(en::ShaderNames::k_depthShaderName, shadowPipelineState));
+
+		// Texture target:
+		re::Texture::TextureParams shadowParams;
+		shadowParams.m_width = static_cast<uint32_t>(shadowData.m_textureDims.x);
+		shadowParams.m_height = static_cast<uint32_t>(shadowData.m_textureDims.y);
+		shadowParams.m_usage =
+			static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
+		shadowParams.m_format = re::Texture::Format::Depth32F;
+		shadowParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		shadowParams.m_mipMode = re::Texture::MipMode::None;
+		shadowParams.m_addToSceneData = false;
+		shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
+		shadowParams.m_dimension = re::Texture::Dimension::Texture2D;
+		shadowParams.m_faces = 1;
+
+		std::string const& texName = std::format("{}_Shadow", lightName);
+
+		std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(texName, shadowParams);
+
+		// Texture target set:
+		std::shared_ptr<re::TextureTargetSet> directionalShadowTargetSet =
+			re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
+
+		re::TextureTarget::TargetParams depthTargetParams;
+		directionalShadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
+		directionalShadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
+		directionalShadowTargetSet->SetScissorRect(
+			{ 0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
+
+		directionalShadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
+			re::TextureTarget::TargetParams::BlendMode::Disabled,
+			re::TextureTarget::TargetParams::BlendMode::Disabled });
+
+		directionalShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
+			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
+
+		directionalShadowTargetSet->SetDepthWriteMode(re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
+		directionalShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
+
+		shadowStage->SetTextureTargetSet(directionalShadowTargetSet);
+
+		m_directionalShadowStageData.emplace(
+			lightID,
+			DirectionalShadowStageData{
+				.m_renderStage = shadowStage,
+				.m_shadowTargetSet = directionalShadowTargetSet,
+				.m_shadowCamParamBlock = shadowCamParams });
+
+		return shadowStage;
+	}
+
+
+	std::shared_ptr<re::RenderStage> ShadowsGraphicsSystem::CreateRegisterPointShadowStage(
+		gr::RenderDataID lightID,
+		gr::ShadowMap::RenderData const& shadowData,
+		gr::Transform::RenderData const& transformData,
+		gr::Camera::RenderData const& camData)
+	{
+		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
+		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
+		// In future, we need to support tagging assets to not cast shadows
+		re::PipelineState shadowPipelineState;
+		shadowPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		shadowPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
+
+		char const* lightName = shadowData.m_owningLightName;
+		std::string const& stageName = std::format("{}_Shadow", lightName);
+
+		std::shared_ptr<re::RenderStage> shadowStage =
+			re::RenderStage::CreateGraphicsStage(stageName, re::RenderStage::GraphicsStageParams{});
+
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
+
+		// Shader:
+		shadowStage->SetStageShader(
+			re::Shader::GetOrCreate(en::ShaderNames::k_cubeDepthShaderName, shadowPipelineState));
+
+		// Texture target:
+		re::Texture::TextureParams shadowParams;
+		shadowParams.m_width = static_cast<uint32_t>(shadowData.m_textureDims.x);
+		shadowParams.m_height = static_cast<uint32_t>(shadowData.m_textureDims.y);
+		shadowParams.m_usage =
+			static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
+		shadowParams.m_format = re::Texture::Format::Depth32F;
+		shadowParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		shadowParams.m_mipMode = re::Texture::MipMode::None;
+		shadowParams.m_addToSceneData = false;
+		shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
+		shadowParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
+		shadowParams.m_faces = 6;
+
+		std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(lightName, shadowParams);
+
+		// Texture target set:
+		std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet =
+			re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
+
+		re::TextureTarget::TargetParams depthTargetParams;
+		depthTargetParams.m_targetFace = re::TextureTarget::k_allFaces;
+
+		pointShadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
+		pointShadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
+		pointShadowTargetSet->SetScissorRect(
+			{ 0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
+
+		pointShadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
+			re::TextureTarget::TargetParams::BlendMode::Disabled,
+			re::TextureTarget::TargetParams::BlendMode::Disabled });
+
+		pointShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
+			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
+
+		pointShadowTargetSet->SetDepthWriteMode(re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
+		pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
+
+		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
+
+		// Cubemap shadow param block:
+		CubemapShadowRenderParams const& cubemapShadowParams =
+			GetCubemapShadowRenderParamsData(camData, transformData);
+
+		std::shared_ptr<re::ParameterBlock> cubeShadowPB = re::ParameterBlock::Create(
+			CubemapShadowRenderParams::s_shaderName,
+			cubemapShadowParams,
+			re::ParameterBlock::PBType::Mutable);
+
+		shadowStage->AddPermanentParameterBlock(cubeShadowPB);
+
+		m_pointShadowStageData.emplace(
+			lightID,
+			PointShadowStageData{
+				.m_renderStage = shadowStage,
+				.m_shadowTargetSet = pointShadowTargetSet,
+				.m_cubemapShadowParamBlock = cubeShadowPB });
+
+		return shadowStage;
+	}
+
+
 	void ShadowsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		m_stagePipeline = &pipeline;
@@ -117,7 +293,6 @@ namespace gr
 						directionalItr.Get<gr::ShadowMap::RenderData>(),
 						directionalItr.Get<gr::Camera::RenderData>());
 				}
-
 				++directionalItr;
 			}
 		}
@@ -143,7 +318,6 @@ namespace gr
 						pointItr.GetTransformData(),
 						pointItr.Get<gr::Camera::RenderData>());
 				}
-
 				++pointItr;
 			}
 		}
@@ -230,7 +404,6 @@ namespace gr
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		// TODO: Create batches specific to this GS: Cached, culled, and with only the appropriate PBs etc attached
 		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
 			std::vector<gr::RenderDataID> directionalIDs =
@@ -244,14 +417,15 @@ namespace gr
 					directionalItr.Get<gr::Light::RenderDataDirectional>();
 				if (directionalData.m_hasShadow && directionalData.m_colorIntensity.w > 0.f)
 				{
+					const gr::RenderDataID lightID = directionalData.m_renderDataID;
+
 					re::RenderStage& directionalStage = 
-						*m_directionalShadowStageData.at(directionalData.m_renderDataID).m_renderStage;
+						*m_directionalShadowStageData.at(lightID).m_renderStage;
 
 					directionalStage.AddBatches(m_graphicsSystemManager->GetVisibleBatches(
-						gr::Camera::View(directionalData.m_renderDataID, gr::Camera::View::Face::Default),
+						gr::Camera::View(lightID, gr::Camera::View::Face::Default),
 						gr::BatchManager::InstanceType::Transform));
 				}
-
 				++directionalItr;
 			}
 		}
@@ -266,6 +440,8 @@ namespace gr
 				gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
 				if (pointData.m_hasShadow && pointData.m_colorIntensity.w > 0.f)
 				{
+					const gr::RenderDataID lightID = pointData.m_renderDataID;
+
 					const std::vector<gr::Camera::View> views =
 					{
 						{pointData.m_renderDataID, gr::Camera::View::Face::XPos},
@@ -282,7 +458,6 @@ namespace gr
 					m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
 						m_graphicsSystemManager->GetVisibleBatches(views, gr::BatchManager::InstanceType::Transform));
 				}
-
 				++pointItr;
 			}
 		}
@@ -314,183 +489,5 @@ namespace gr
 		}
 
 		return nullptr;
-	}
-
-
-	std::shared_ptr<re::RenderStage> ShadowsGraphicsSystem::CreateRegisterDirectionalShadowStage(
-		gr::RenderDataID lightID, 
-		gr::ShadowMap::RenderData const& shadowData,
-		gr::Camera::RenderData const& shadowCamData)
-	{
-		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
-		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
-		// In future, we need to support tagging assets to not cast shadows
-		re::PipelineState shadowPipelineState;
-		shadowPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		shadowPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
-
-		char const* lightName = shadowData.m_owningLightName;
-		std::string const& stageName = std::format("{}_Shadow", lightName);
-
-		std::shared_ptr<re::RenderStage> shadowStage =
-			re::RenderStage::CreateGraphicsStage(stageName, re::RenderStage::GraphicsStageParams{});
-
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
-
-		// Directional shadow camera param block:
-		std::shared_ptr<re::ParameterBlock> shadowCamParams = re::ParameterBlock::Create(
-			gr::Camera::CameraParams::s_shaderName,
-			shadowCamData.m_cameraParams,
-			re::ParameterBlock::PBType::Mutable);
-
-		shadowStage->AddPermanentParameterBlock(shadowCamParams);
-
-		// Shader:
-		shadowStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_depthShaderName, shadowPipelineState));
-
-		// Texture target:
-		re::Texture::TextureParams shadowParams;
-		shadowParams.m_width = static_cast<uint32_t>(shadowData.m_textureDims.x);
-		shadowParams.m_height = static_cast<uint32_t>(shadowData.m_textureDims.y);
-		shadowParams.m_usage =
-			static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
-		shadowParams.m_format = re::Texture::Format::Depth32F;
-		shadowParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		shadowParams.m_mipMode = re::Texture::MipMode::None;
-		shadowParams.m_addToSceneData = false;
-		shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
-		// 2D:
-		shadowParams.m_dimension = re::Texture::Dimension::Texture2D;
-		shadowParams.m_faces = 1;
-
-		std::string const& texName = std::format("{}_Shadow", lightName);
-
-		std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(texName, shadowParams);
-
-		// Texture target set:
-		std::shared_ptr<re::TextureTargetSet> directionalShadowTargetSet =
-			re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
-
-		re::TextureTarget::TargetParams depthTargetParams;
-		directionalShadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
-		directionalShadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
-		directionalShadowTargetSet->SetScissorRect(
-			{ 0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
-
-		directionalShadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-			re::TextureTarget::TargetParams::BlendMode::Disabled,
-			re::TextureTarget::TargetParams::BlendMode::Disabled });
-
-		directionalShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
-
-		directionalShadowTargetSet->SetDepthWriteMode(re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
-		directionalShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
-
-		shadowStage->SetTextureTargetSet(directionalShadowTargetSet);
-
-		m_directionalShadowStageData.emplace(
-			lightID,
-			DirectionalShadowStageData{
-				.m_renderStage = shadowStage,
-				.m_shadowTargetSet = directionalShadowTargetSet,
-				.m_shadowCamParamBlock = shadowCamParams });
-
-		return shadowStage;
-	}
-
-
-	std::shared_ptr<re::RenderStage> ShadowsGraphicsSystem::CreateRegisterPointShadowStage(
-		gr::RenderDataID lightID,
-		gr::ShadowMap::RenderData const& shadowData,
-		gr::Transform::RenderData const& transformData,
-		gr::Camera::RenderData const& camData)
-	{
-		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
-		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
-		// In future, we need to support tagging assets to not cast shadows
-		re::PipelineState shadowPipelineState;
-		shadowPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		shadowPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
-
-		char const* lightName = shadowData.m_owningLightName;
-		std::string const& stageName = std::format("{}_Shadow", lightName);
-
-		std::shared_ptr<re::RenderStage> shadowStage =
-			re::RenderStage::CreateGraphicsStage(stageName, re::RenderStage::GraphicsStageParams{});
-
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
-
-		// Shader:
-		shadowStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_cubeDepthShaderName, shadowPipelineState));
-
-		// Texture target:
-		re::Texture::TextureParams shadowParams;
-		shadowParams.m_width = static_cast<uint32_t>(shadowData.m_textureDims.x);
-		shadowParams.m_height = static_cast<uint32_t>(shadowData.m_textureDims.y);
-		shadowParams.m_usage =
-			static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
-		shadowParams.m_format = re::Texture::Format::Depth32F;
-		shadowParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		shadowParams.m_mipMode = re::Texture::MipMode::None;
-		shadowParams.m_addToSceneData = false;
-		shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
-		// Cubemap:
-		shadowParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
-		shadowParams.m_faces = 6;
-
-		std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(lightName, shadowParams);
-
-		// Texture target set:
-		std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet =
-			re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
-
-		re::TextureTarget::TargetParams depthTargetParams;
-		depthTargetParams.m_targetFace = re::TextureTarget::k_allFaces;
-
-		pointShadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
-		pointShadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
-		pointShadowTargetSet->SetScissorRect(
-			{ 0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
-
-		pointShadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-			re::TextureTarget::TargetParams::BlendMode::Disabled,
-			re::TextureTarget::TargetParams::BlendMode::Disabled });
-
-		pointShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
-
-		pointShadowTargetSet->SetDepthWriteMode(re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
-		pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
-
-		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
-
-		// Cubemap shadow param block:
-		CubemapShadowRenderParams const& cubemapShadowParams =
-			GetCubemapShadowRenderParamsData(camData, transformData);
-
-		std::shared_ptr<re::ParameterBlock> cubeShadowPB = re::ParameterBlock::Create(
-			CubemapShadowRenderParams::s_shaderName,
-			cubemapShadowParams,
-			re::ParameterBlock::PBType::Mutable);
-
-		shadowStage->AddPermanentParameterBlock(cubeShadowPB);
-
-		m_pointShadowStageData.emplace(
-			lightID,
-			PointShadowStageData{
-				.m_renderStage = shadowStage,
-				.m_shadowTargetSet = pointShadowTargetSet,
-				.m_cubemapShadowParamBlock = cubeShadowPB });
-
-		return shadowStage;
 	}
 }

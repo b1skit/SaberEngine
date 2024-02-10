@@ -59,10 +59,10 @@ namespace fr
 	void ShadowMap::ShowImGuiWindow(uint64_t uniqueID)
 	{
 		std::string const& minLabel = std::format("Min shadow bias##{}", uniqueID);
-		m_isDirty |= ImGui::SliderFloat(minLabel.c_str(), &m_minMaxShadowBias.x, 0, 0.1f, "%.5f");
+		m_isDirty |= ImGui::SliderFloat(minLabel.c_str(), &m_minMaxShadowBias.x, 0.f, 1.f, "%.5f");
 		
 		std::string const& maxLabel = std::format("Max shadow bias##{}", uniqueID);
-		m_isDirty |= ImGui::SliderFloat(maxLabel.c_str(), &m_minMaxShadowBias.y, 0, 0.1f, "%.5f");
+		m_isDirty |= ImGui::SliderFloat(maxLabel.c_str(), &m_minMaxShadowBias.y, 0.f, 1.f, "%.5f");
 
 		std::string const& resetLabel = std::format("Reset biases to defaults##{}", uniqueID);
 		if (ImGui::Button(resetLabel.c_str()))

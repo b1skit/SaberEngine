@@ -23,8 +23,6 @@ namespace re
 			m_maxAnisotropy == rhs.m_maxAnisotropy &&
 			m_comparisonFunc == rhs.m_comparisonFunc &&
 			m_borderColor == rhs.m_borderColor &&
-			(m_borderColor != BorderColor::Custom ||
-				m_customBorderColor == rhs.m_customBorderColor) &&
 			m_minLOD == rhs.m_minLOD &&
 			m_maxLOD == rhs.m_maxLOD;
 	}
@@ -51,7 +49,6 @@ namespace re
 					.m_maxAnisotropy = 16,
 					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
 					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-					.m_customBorderColor = glm::vec4(0.f),
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
@@ -69,7 +66,6 @@ namespace re
 					.m_maxAnisotropy = 16,
 					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
 					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-					.m_customBorderColor = glm::vec4(0.f),
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
@@ -87,7 +83,6 @@ namespace re
 					.m_maxAnisotropy = 16,
 					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
 					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-					.m_customBorderColor = glm::vec4(0.f),
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
@@ -105,7 +100,6 @@ namespace re
 					.m_maxAnisotropy = 16,
 					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
 					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-					.m_customBorderColor = glm::vec4(0.f),
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
@@ -123,13 +117,50 @@ namespace re
 					.m_maxAnisotropy = 16,
 					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
 					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-					.m_customBorderColor = glm::vec4(0.f),
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
 				const std::string wrapMinMagMipLinearName = "WrapMinMagMipLinear";
 				Sampler::m_samplerLibrary->emplace(wrapMinMagMipLinearName,
 					re::Sampler::Create(wrapMinMagMipLinearName, k_wrapLinearMipMapLinearLinear));
+
+
+				// PCF Samplers
+				constexpr float k_maxLinearDepth = std::numeric_limits<float>::max();
+
+				constexpr re::Sampler::SamplerDesc k_borderCmpMinMagLinearMipPoint = re::Sampler::SamplerDesc
+				{
+					.m_filterMode = re::Sampler::FilterMode::COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
+					.m_edgeModeU = re::Sampler::EdgeMode::Border,
+					.m_edgeModeV = re::Sampler::EdgeMode::Border,
+					.m_edgeModeW = re::Sampler::EdgeMode::Border,
+					.m_mipLODBias = 0.f,
+					.m_maxAnisotropy = 16,
+					.m_comparisonFunc = re::Sampler::ComparisonFunc::Less,
+					.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
+					.m_minLOD = 0,
+					.m_maxLOD = std::numeric_limits<float>::max() // No limit
+				};
+				const std::string borderCmpMinMagLinearMipPointName = "BorderCmpMinMagLinearMipPoint";
+				Sampler::m_samplerLibrary->emplace(borderCmpMinMagLinearMipPointName,
+					re::Sampler::Create(borderCmpMinMagLinearMipPointName, k_borderCmpMinMagLinearMipPoint));
+
+				constexpr re::Sampler::SamplerDesc k_wrapCmpMinMagLinearMipPoint = re::Sampler::SamplerDesc
+				{
+					.m_filterMode = re::Sampler::FilterMode::COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
+					.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
+					.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
+					.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
+					.m_mipLODBias = 0.f,
+					.m_maxAnisotropy = 16,
+					.m_comparisonFunc = re::Sampler::ComparisonFunc::Less,
+					.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
+					.m_minLOD = 0,
+					.m_maxLOD = std::numeric_limits<float>::max() // No limit
+				};
+				const std::string wrapCmpMinMagLinearMipPointName = "WrapCmpMinMagLinearMipPoint";
+				Sampler::m_samplerLibrary->emplace(wrapCmpMinMagLinearMipPointName,
+					re::Sampler::Create(wrapCmpMinMagLinearMipPointName, k_wrapCmpMinMagLinearMipPoint));
 			}
 
 			SEAssert(Sampler::m_samplerLibrary->contains(samplerName), "Invalid sampler name");

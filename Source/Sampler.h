@@ -86,7 +86,6 @@ namespace re
 
 		enum class BorderColor
 		{
-			Custom, // use m_borderColor
 			TransparentBlack,
 			OpaqueBlack,
 			OpaqueWhite,
@@ -107,7 +106,6 @@ namespace re
 			ComparisonFunc m_comparisonFunc;
 
 			BorderColor m_borderColor;
-			glm::vec4 m_customBorderColor;
 
 			float m_minLOD;
 			float m_maxLOD;

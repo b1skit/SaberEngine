@@ -100,7 +100,7 @@ layout(binding=4) uniform sampler2D GBufferMatProp0;
 layout(binding=5) uniform sampler2D GBufferDepth;
 
 // Deferred light shadowmaps:
-layout(binding=10) uniform sampler2D Depth0;
+layout(binding=10) uniform sampler2DShadow Depth0;
 
 // Generic texture samplers:
 layout(binding=0) uniform sampler2D Tex0;
@@ -114,8 +114,10 @@ layout(binding=7) uniform sampler2D Tex7;
 layout(binding=8) uniform sampler2D Tex8;
 
 // Cube map samplers:
-layout(binding=11) uniform samplerCube CubeMap0;			
+layout(binding=11) uniform samplerCube CubeMap0;
 layout(binding=12) uniform samplerCube CubeMap1;
+
+layout(binding=13) uniform samplerCubeShadow CubeDepth;
 
 
 struct InstanceIndexesCB

@@ -151,7 +151,6 @@ namespace
 
 		switch (samplerDesc.m_borderColor)
 		{
-		case re::Sampler::BorderColor::Custom: return &samplerDesc.m_customBorderColor.r;
 		case re::Sampler::BorderColor::TransparentBlack: return &k_transparentBlack.r;
 		case re::Sampler::BorderColor::OpaqueBlack: return &k_opaqueBlack.r;
 		case re::Sampler::BorderColor::OpaqueWhite: return &k_opaqueWhite.r;

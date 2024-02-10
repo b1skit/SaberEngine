@@ -901,7 +901,7 @@ namespace gr
 					directionalLightBatch.AddTextureAndSamplerInput(
 						"Depth0",
 						m_shadowGS->GetShadowMap(gr::Light::Type::Directional, directionalData.m_renderDataID),
-						re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
+						re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"));
 				}
 
 				++directionalItr;
@@ -966,9 +966,9 @@ namespace gr
 				if (hasShadow) // Add the shadow map texture to the batch
 				{
 					pointlightBatch.AddTextureAndSamplerInput(
-						"CubeMap0",
+						"CubeDepth",
 						m_shadowGS->GetShadowMap(gr::Light::Point, pointData.m_renderDataID),
-						re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
+						re::Sampler::GetSampler("WrapCmpMinMagLinearMipPoint"));
 				}
 
 				++pointItr;

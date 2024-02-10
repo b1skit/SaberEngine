@@ -1129,6 +1129,15 @@
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\Samplers.hlsli" />
+    <None Include="Shaders\GLSL\Shadows.glsl">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\GBufferCommon.glsl">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\NormalMapUtils.glsl">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">

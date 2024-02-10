@@ -1,10 +1,11 @@
 #define SABER_VEC4_OUTPUT
-
 #define READ_GBUFFER
 
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
+#include "Shadows.glsl"
+#include "GBufferCommon.glsl"
 
 
 void main()
