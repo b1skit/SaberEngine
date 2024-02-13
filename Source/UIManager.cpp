@@ -271,7 +271,7 @@ namespace fr
 				const en::SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(eventInfo.m_data0.m_dataUI);
 				const bool keystate = eventInfo.m_data1.m_dataB;
 
-				if (m_imguiWantsToCaptureKeyboard)
+				// We always broadcast to ImGui, even if it doesn't want exclusive capture of input
 				{
 					std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
 					ImGuiIO& io = ImGui::GetIO();
