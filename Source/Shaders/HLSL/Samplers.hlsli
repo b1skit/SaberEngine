@@ -7,6 +7,7 @@ SamplerState ClampMinMagLinearMipPoint;
 SamplerState ClampMinMagMipPoint;
 SamplerState ClampMinMagMipLinear;
 SamplerState WrapMinMagMipLinear;
+SamplerState WrapAnisotropic;
 
 // PCF Samplers
 SamplerComparisonState BorderCmpMinMagLinearMipPoint;

@@ -90,7 +90,7 @@ namespace re
 				Sampler::m_samplerLibrary->emplace(clampMinMagMipPointName,
 					re::Sampler::Create(clampMinMagMipPointName, k_clampMinMagMipPoint));
 
-				constexpr re::Sampler::SamplerDesc k_clampLinearMipMapLinearLinear = re::Sampler::SamplerDesc
+				constexpr re::Sampler::SamplerDesc k_clampMinMagMipLinear = re::Sampler::SamplerDesc
 				{
 					.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,
 					.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
@@ -105,9 +105,9 @@ namespace re
 				};
 				const std::string clampMinMagMipLinearName = "ClampMinMagMipLinear";
 				Sampler::m_samplerLibrary->emplace(clampMinMagMipLinearName,
-					re::Sampler::Create(clampMinMagMipLinearName, k_clampLinearMipMapLinearLinear));
+					re::Sampler::Create(clampMinMagMipLinearName, k_clampMinMagMipLinear));
 
-				constexpr re::Sampler::SamplerDesc k_wrapLinearMipMapLinearLinear = re::Sampler::SamplerDesc
+				constexpr re::Sampler::SamplerDesc k_wrapMinMagMipLinear = re::Sampler::SamplerDesc
 				{
 					.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,
 					.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
@@ -122,8 +122,24 @@ namespace re
 				};
 				const std::string wrapMinMagMipLinearName = "WrapMinMagMipLinear";
 				Sampler::m_samplerLibrary->emplace(wrapMinMagMipLinearName,
-					re::Sampler::Create(wrapMinMagMipLinearName, k_wrapLinearMipMapLinearLinear));
+					re::Sampler::Create(wrapMinMagMipLinearName, k_wrapMinMagMipLinear));
 
+				constexpr re::Sampler::SamplerDesc k_wrapAnisotropic = re::Sampler::SamplerDesc
+				{
+					.m_filterMode = re::Sampler::FilterMode::ANISOTROPIC,
+					.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
+					.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
+					.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
+					.m_mipLODBias = 0.f,
+					.m_maxAnisotropy = 16,
+					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+					.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+					.m_minLOD = 0,
+					.m_maxLOD = std::numeric_limits<float>::max() // No limit
+				};
+				const std::string wrapAnisotropicName = "WrapAnisotropic";
+				Sampler::m_samplerLibrary->emplace(wrapAnisotropicName,
+					re::Sampler::Create(wrapAnisotropicName, k_wrapAnisotropic));
 
 				// PCF Samplers
 				constexpr float k_maxLinearDepth = std::numeric_limits<float>::max();

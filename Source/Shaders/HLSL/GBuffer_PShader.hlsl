@@ -21,7 +21,7 @@ GBufferOut PShader(VertexOut In)
 {
 	GBufferOut output;
 	
-	const float4 matAlbedo = MatAlbedo.Sample(WrapMinMagMipLinear, In.UV0);
+	const float4 matAlbedo = MatAlbedo.Sample(WrapAnisotropic, In.UV0);
 	clip(matAlbedo.a < ALPHA_CUTOFF ? -1 : 1); // Alpha clipping
 	
 	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_materialIdx;
@@ -35,7 +35,7 @@ GBufferOut PShader(VertexOut In)
 	const float normalScaleFactor = 
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_normalScale;
 	const float3 normalScale = float3(normalScaleFactor, normalScaleFactor, 1.f);
-	const float3 texNormal = MatNormal.Sample(WrapMinMagMipLinear, In.UV0).xyz;
+	const float3 texNormal = MatNormal.Sample(WrapAnisotropic, In.UV0).xyz;
 	output.WorldNormal = float4(WorldNormalFromTextureNormal(texNormal, normalScale, In.TBN), 0.f);
 	
 	// RMAO:
@@ -47,11 +47,11 @@ GBufferOut PShader(VertexOut In)
 	
 	// Unpack/scale metallic/roughness: .G = roughness, .B = metallness
 	const float2 roughnessMetalness = 
-		MatMetallicRoughness.Sample(WrapMinMagMipLinear, In.UV0).gb * float2(roughnessFactor, metallicFactor);
+		MatMetallicRoughness.Sample(WrapAnisotropic, In.UV0).gb * float2(roughnessFactor, metallicFactor);
 	
 	const float occlusionStrength = 
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_occlusionStrength;
-	const float occlusion = MatOcclusion.Sample(WrapMinMagMipLinear, In.UV0).r * occlusionStrength;
+	const float occlusion = MatOcclusion.Sample(WrapAnisotropic, In.UV0).r * occlusionStrength;
 	
 	output.RMAO = float4(roughnessMetalness, occlusion, 1.f);
 	
@@ -62,7 +62,7 @@ GBufferOut PShader(VertexOut In)
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_emissiveFactorStrength.w;
 	
 	const float3 emissive = 
-		MatEmissive.Sample(WrapMinMagMipLinear, In.UV0).rgb * emissiveFactor * emissiveStrength;
+		MatEmissive.Sample(WrapAnisotropic, In.UV0).rgb * emissiveFactor * emissiveStrength;
 	
 	output.Emissive = float4(emissive, 1.f);
 	
