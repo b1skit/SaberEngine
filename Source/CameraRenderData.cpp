@@ -87,6 +87,23 @@ namespace gr
 	}
 
 
+	std::vector<glm::mat4> Camera::BuildCubeInvViewMatrices(
+		glm::vec3 const& centerPos,
+		glm::vec3 const& right,		// X
+		glm::vec3 const& up,		// Y
+		glm::vec3 const& forward)
+	{
+		std::vector<glm::mat4> result = BuildCubeViewMatrices(centerPos, right, up, forward);
+
+		for (glm::mat4& view : result)
+		{
+			view = glm::inverse(view);
+		}
+
+		return result;
+	}
+
+
 	std::vector<glm::mat4> Camera::BuildCubeViewProjectionMatrices(
 		std::vector<glm::mat4> const& viewMats, glm::mat4 const& projection)
 	{

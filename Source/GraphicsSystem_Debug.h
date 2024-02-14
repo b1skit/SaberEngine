@@ -72,8 +72,9 @@ namespace gr
 		float m_cameraCoordinateAxisScale = 1.f;
 		std::unordered_map<gr::RenderDataID, std::pair<gr::Camera::RenderData const*, gr::Transform::RenderData const*>> m_camerasToDebug;
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_cameraAxisBatches;
-		std::unordered_map<gr::RenderDataID, std::shared_ptr<re::ParameterBlock>> m_cameraTransformParamBlocks;
+		std::unordered_map<gr::RenderDataID, std::shared_ptr<re::ParameterBlock>> m_cameraAxisTransformParamBlocks;
 		std::unordered_map<gr::RenderDataID, std::vector<std::unique_ptr<re::Batch>>> m_cameraFrustumBatches;
+		std::unordered_map<gr::RenderDataID, std::vector<std::shared_ptr<re::ParameterBlock>>> m_cameraFrustumTransformParamBlocks;
 
 		bool m_showAllWireframe = false;
 		glm::vec3 m_wireframeColor = glm::vec3(152/255.f, 1.f, 166/255.f);

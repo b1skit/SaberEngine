@@ -174,6 +174,12 @@ namespace gr
 			glm::vec3 const& right,		// X
 			glm::vec3 const& up,		// Y
 			glm::vec3 const& forward);	// Z
+
+		static std::vector<glm::mat4> BuildCubeInvViewMatrices(
+			glm::vec3 const& centerPos,
+			glm::vec3 const& right,		// X
+			glm::vec3 const& up,		// Y
+			glm::vec3 const& forward);	// Z
 		
 		static std::vector<glm::mat4> BuildCubeViewProjectionMatrices(
 			std::vector<glm::mat4> const& viewMats, glm::mat4 const& projection);

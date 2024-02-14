@@ -236,17 +236,17 @@ namespace
 		gr::Camera::RenderData const* camData,
 		gr::Transform::RenderData const* transformData,
 		glm::vec3 const& frustumColor, 
-		glm::mat4 const& invViewProj)
+		glm::mat4 const& invProj)
 	{
 		// Convert NDC coordinates to world space
-		glm::vec4 farTL = invViewProj * glm::vec4(-1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBL = invViewProj * glm::vec4(-1.f, -1.f, 1.f, 1.f);
-		glm::vec4 farTR = invViewProj * glm::vec4(1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBR = invViewProj * glm::vec4(1.f, -1.f, 1.f, 1.f);
-		glm::vec4 nearTL = invViewProj * glm::vec4(-1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBL = invViewProj * glm::vec4(-1.f, -1.f, 0.f, 1.f);
-		glm::vec4 nearTR = invViewProj * glm::vec4(1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBR = invViewProj * glm::vec4(1.f, -1.f, 0.f, 1.f);
+		glm::vec4 farTL = invProj * glm::vec4(-1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBL = invProj * glm::vec4(-1.f, -1.f, 1.f, 1.f);
+		glm::vec4 farTR = invProj * glm::vec4(1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBR = invProj * glm::vec4(1.f, -1.f, 1.f, 1.f);
+		glm::vec4 nearTL = invProj * glm::vec4(-1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBL = invProj * glm::vec4(-1.f, -1.f, 0.f, 1.f);
+		glm::vec4 nearTR = invProj * glm::vec4(1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBR = invProj * glm::vec4(1.f, -1.f, 0.f, 1.f);
 
 		farTL /= farTL.w;
 		farBL /= farBL.w;
@@ -651,17 +651,20 @@ namespace gr
 				// Use the inverse view matrix, as it omits any scale that might be present in the Transform hierarchy
 				glm::mat4 const& camWorldMatrix = camData.second.first->m_cameraParams.g_invView;
 
-				if (!m_cameraTransformParamBlocks.contains(camID))
+				bool camDataIsDirty = renderData.IsDirty<gr::Camera::RenderData>(camID) || 
+					renderData.TransformIsDirtyFromRenderDataID(camID);
+
+				if (!m_cameraAxisTransformParamBlocks.contains(camID))
 				{	
-					m_cameraTransformParamBlocks.emplace(
+					m_cameraAxisTransformParamBlocks.emplace(
 						camID,
 						gr::Transform::CreateInstancedTransformParams(
 						re::ParameterBlock::PBType::Mutable, &camWorldMatrix, nullptr));
 				}
-				else
+				else if (camDataIsDirty)
 				{
-					m_cameraTransformParamBlocks.at(camID)->Commit(gr::Transform::CreateInstancedTransformParamsData(
-						&camWorldMatrix, nullptr));
+					m_cameraAxisTransformParamBlocks.at(camID)->Commit(
+						gr::Transform::CreateInstancedTransformParamsData(&camWorldMatrix, nullptr));
 				}
 
 				// Coordinate axis at camera origin:
@@ -676,59 +679,72 @@ namespace gr
 							m_yAxisColor, 
 							m_zAxisColor));
 
-					m_cameraAxisBatches.at(camID)->SetParameterBlock(m_cameraTransformParamBlocks.at(camID));
+					m_cameraAxisBatches.at(camID)->SetParameterBlock(m_cameraAxisTransformParamBlocks.at(camID));
 				}
 				m_debugStage->AddBatch(*m_cameraAxisBatches.at(camID));
 
+
+				// Camera frustums:
 				const uint8_t numFrustums = camData.second.first->m_cameraConfig.m_projectionType ==
 					gr::Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
 
-				std::vector<glm::mat4> invViewProjMats;
-				invViewProjMats.reserve(numFrustums);
-
-				if (numFrustums == 6)
+				if (!m_cameraFrustumTransformParamBlocks.contains(camID))
 				{
-					std::vector<glm::mat4> const& viewMats = gr::Camera::BuildCubeViewMatrices(
-						camData.second.second->m_globalPosition,
-						camData.second.second->m_globalRight,
-						camData.second.second->m_globalUp,
-						camData.second.second->m_globalForward);
-
-					std::vector<glm::mat4> const& viewProjMats =
-						gr::Camera::BuildCubeViewProjectionMatrices(viewMats, camData.second.first->m_cameraParams.g_projection);
-
-					invViewProjMats = gr::Camera::BuildCubeInvViewProjectionMatrices(viewProjMats);
+					m_cameraFrustumTransformParamBlocks[camID].resize(numFrustums);
+					camDataIsDirty = true;
 				}
-				else
+				if (!m_cameraFrustumBatches.contains(camID))
 				{
-					invViewProjMats.emplace_back(camData.second.first->m_cameraParams.g_invViewProjection);
+					m_cameraFrustumBatches[camID].resize(numFrustums);
+					camDataIsDirty = true;
+				}
+
+				std::vector<glm::mat4> invViewMats;
+				if (camDataIsDirty)
+				{
+					invViewMats.reserve(numFrustums);
+
+					if (numFrustums == 6)
+					{
+						invViewMats = gr::Camera::BuildCubeInvViewMatrices(
+							camData.second.second->m_globalPosition,
+							camData.second.second->m_globalRight,
+							camData.second.second->m_globalUp,
+							camData.second.second->m_globalForward);
+					}
+					else
+					{
+						invViewMats.emplace_back(camData.second.first->m_cameraParams.g_invView);
+					}
 				}
 				
-				std::shared_ptr<re::ParameterBlock> identityPB = nullptr;
 				for (uint8_t faceIdx = 0; faceIdx < numFrustums; faceIdx++)
 				{
-					if (!m_cameraFrustumBatches.contains(camID) || 
-						faceIdx >= m_cameraFrustumBatches.at(camID).size() ||
-						m_cameraFrustumBatches.at(camID)[faceIdx] == nullptr)
+					if (m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx] == nullptr)
 					{
-						//
-						m_cameraFrustumBatches[camID].resize(numFrustums);
+						m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx] =
+							gr::Transform::CreateInstancedTransformParams(
+								re::ParameterBlock::PBType::Mutable,
+								&invViewMats.at(faceIdx),
+								nullptr);
+					}
+					else if (camDataIsDirty)
+					{
+						m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx]->Commit(
+							gr::Transform::CreateInstancedTransformParamsData(&invViewMats.at(faceIdx), nullptr));
+					}
 
+					if (m_cameraFrustumBatches.at(camID)[faceIdx] == nullptr)
+					{
 						m_cameraFrustumBatches.at(camID)[faceIdx] = std::move(BuildCameraFrustumBatch(
 							re::Batch::Lifetime::Permanent,
-							camData.second.first, 
-							camData.second.second, 
-							m_cameraFrustumColor, 
-							invViewProjMats[faceIdx]));
+							camData.second.first,
+							camData.second.second,
+							m_cameraFrustumColor,
+							camData.second.first->m_cameraParams.g_invProjection));
 
-						if (identityPB == nullptr)
-						{
-							// Our frustum points are already in world-space
-							const glm::mat4 identityMat = glm::mat4(1.f);
-							identityPB = gr::Transform::CreateInstancedTransformParams(
-									re::ParameterBlock::PBType::Immutable, &identityMat, nullptr);
-						}
-						m_cameraFrustumBatches.at(camID)[faceIdx]->SetParameterBlock(identityPB);
+						m_cameraFrustumBatches.at(camID)[faceIdx]->SetParameterBlock(
+							m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx]);
 					}
 
 					m_debugStage->AddBatch(*m_cameraFrustumBatches.at(camID)[faceIdx]);
@@ -738,8 +754,9 @@ namespace gr
 		else
 		{
 			m_cameraAxisBatches.clear();
-			m_cameraTransformParamBlocks.clear();
+			m_cameraAxisTransformParamBlocks.clear();
 			m_cameraFrustumBatches.clear();
+			m_cameraFrustumTransformParamBlocks.clear();
 		}
 
 		if (m_showDeferredLightWireframe)
