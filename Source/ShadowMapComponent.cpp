@@ -27,6 +27,29 @@ namespace
 
 		shadowCamConfig.m_yFOV = 0.f; // Orthographic
 
+		/* As per the GLTF KHR_lights_punctual specs, directional lights emit light in the direction of the local -Z
+		* axis:  
+		* https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md#directional
+		* 
+		* For an orthographic projection, the near (N) and far (F) planes can be at any point along the Z axis. 
+		* Importantly, in our RHCS as we look in the direction of -Z, note that F < N in all cases. 
+		*		 -Z
+		*		  ^
+		*		  |
+		*		o---o F
+		*		|	|
+		*		o---o N
+		*		  |
+		* -X ----------- +X
+		*		  |
+		*		o---o F
+		*		|	|
+		*		o---o N
+		*		  |
+		*		 +Z
+		* Our bounds are computed such that the "minimum" and "maximum" Z terms are oriented in the opposite way. 
+		* Thus, we must both swap the min/max Z terms of our bounds, AND negate them to get the correct near/far values:
+		*/
 		shadowCamConfig.m_near = -transformedBounds.zMax();
 		shadowCamConfig.m_far = -transformedBounds.zMin();
 

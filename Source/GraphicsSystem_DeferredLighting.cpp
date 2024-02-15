@@ -180,7 +180,11 @@ namespace
 				"A shadow requires both shadow and camera data");
 			
 			lightParams.g_lightColorIntensity = directionalData->m_colorIntensity;
-			lightParams.g_lightWorldPosRadius = glm::vec4(transformData.m_globalForward, 0.f); // WorldPos == Light dir
+
+			// As per the KHR_lights_punctual, directional lights are at infinity and emit light in the direction of the
+			// local -z axis. Thus, this direction is pointing towards the source of the light
+			// https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md#directional
+			lightParams.g_lightWorldPosRadius = glm::vec4(transformData.m_globalForward, 0.f); // WorldPos == Dir to light
 
 			hasShadow = directionalData->m_hasShadow;
 			diffuseEnabled = directionalData->m_diffuseEnabled;
