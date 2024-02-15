@@ -20,5 +20,5 @@ void main()
 
 	const vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir); // Normalizes incoming sampleDir
 
-	FragColor = texture(Tex0, sphericalUVs);
+	FragColor = texture(Tex0, sphericalUVs, 0);
 }

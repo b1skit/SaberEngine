@@ -60,7 +60,7 @@ namespace fr
 			"A LightComponent's owning entity requires a TransformComponent");
 
 		// Create a MeshPrimitive (owned by SceneData):
-		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = gr::meshfactory::CreateSphere();
+		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = gr::meshfactory::CreateSphere(1.f);
 
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
 

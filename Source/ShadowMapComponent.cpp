@@ -136,8 +136,7 @@ namespace fr
 			constexpr float k_defaultShadowCamNear = 0.1f;
 			shadowCamConfig.m_near = k_defaultShadowCamNear;
 
-			shadowCamConfig.m_far = 
-				owningLight.GetLightTypeProperties(fr::Light::Type::Point).m_point.m_sphericalRadius;
+			shadowCamConfig.m_far = owningLight.GetLightTypeProperties(fr::Light::Type::Point).m_point.m_sphericalRadius;
 
 			// We ignore everything else for shadow map cameras
 		}

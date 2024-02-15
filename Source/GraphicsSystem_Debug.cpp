@@ -235,27 +235,17 @@ namespace
 		re::Batch::Lifetime batchLifetime,
 		gr::Camera::RenderData const* camData,
 		gr::Transform::RenderData const* transformData,
-		glm::vec3 const& frustumColor, 
-		glm::mat4 const& invProj)
+		glm::vec3 const& frustumColor)
 	{
-		// Convert NDC coordinates to world space
-		glm::vec4 farTL = invProj * glm::vec4(-1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBL = invProj * glm::vec4(-1.f, -1.f, 1.f, 1.f);
-		glm::vec4 farTR = invProj * glm::vec4(1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBR = invProj * glm::vec4(1.f, -1.f, 1.f, 1.f);
-		glm::vec4 nearTL = invProj * glm::vec4(-1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBL = invProj * glm::vec4(-1.f, -1.f, 0.f, 1.f);
-		glm::vec4 nearTR = invProj * glm::vec4(1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBR = invProj * glm::vec4(1.f, -1.f, 0.f, 1.f);
-
-		farTL /= farTL.w;
-		farBL /= farBL.w;
-		farTR /= farTR.w;
-		farBR /= farBR.w;
-		nearTL /= nearTL.w;
-		nearBL /= nearBL.w;
-		nearTR /= nearTR.w;
-		nearBR /= nearBR.w;
+		// NDC coordinates:
+		glm::vec4 farTL = glm::vec4(-1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBL = glm::vec4(-1.f, -1.f, 1.f, 1.f);
+		glm::vec4 farTR = glm::vec4(1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBR = glm::vec4(1.f, -1.f, 1.f, 1.f);
+		glm::vec4 nearTL = glm::vec4(-1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBL = glm::vec4(-1.f, -1.f, 0.f, 1.f);
+		glm::vec4 nearTR = glm::vec4(1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBR = glm::vec4(1.f, -1.f, 0.f, 1.f);
 
 		//											  0		1		2	   3	  4		  5		  6		  7
 		std::vector<glm::vec3> frustumPositions = { farTL, farBL, farTR, farBR, nearTL, nearBL, nearTR, nearBR };
@@ -699,22 +689,25 @@ namespace gr
 					camDataIsDirty = true;
 				}
 
-				std::vector<glm::mat4> invViewMats;
+				std::vector<glm::mat4> invViewProjMats;
 				if (camDataIsDirty)
 				{
-					invViewMats.reserve(numFrustums);
+					invViewProjMats.reserve(numFrustums);
 
 					if (numFrustums == 6)
 					{
-						invViewMats = gr::Camera::BuildCubeInvViewMatrices(
-							camData.second.second->m_globalPosition,
-							camData.second.second->m_globalRight,
-							camData.second.second->m_globalUp,
-							camData.second.second->m_globalForward);
+						invViewProjMats = gr::Camera::BuildCubeInvViewProjectionMatrices(
+							gr::Camera::BuildCubeViewProjectionMatrices(
+								gr::Camera::BuildCubeViewMatrices(
+									camData.second.second->m_globalPosition,
+									camData.second.second->m_globalRight,
+									camData.second.second->m_globalUp,
+									camData.second.second->m_globalForward), 
+								camData.second.first->m_cameraParams.g_projection));
 					}
 					else
 					{
-						invViewMats.emplace_back(camData.second.first->m_cameraParams.g_invView);
+						invViewProjMats.emplace_back(camData.second.first->m_cameraParams.g_invViewProjection);
 					}
 				}
 				
@@ -725,13 +718,13 @@ namespace gr
 						m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx] =
 							gr::Transform::CreateInstancedTransformParams(
 								re::ParameterBlock::PBType::Mutable,
-								&invViewMats.at(faceIdx),
+								&invViewProjMats.at(faceIdx),
 								nullptr);
 					}
 					else if (camDataIsDirty)
 					{
 						m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx]->Commit(
-							gr::Transform::CreateInstancedTransformParamsData(&invViewMats.at(faceIdx), nullptr));
+							gr::Transform::CreateInstancedTransformParamsData(&invViewProjMats.at(faceIdx), nullptr));
 					}
 
 					if (m_cameraFrustumBatches.at(camID)[faceIdx] == nullptr)
@@ -740,8 +733,7 @@ namespace gr
 							re::Batch::Lifetime::Permanent,
 							camData.second.first,
 							camData.second.second,
-							m_cameraFrustumColor,
-							camData.second.first->m_cameraParams.g_invProjection));
+							m_cameraFrustumColor));
 
 						m_cameraFrustumBatches.at(camID)[faceIdx]->SetParameterBlock(
 							m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx]);

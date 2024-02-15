@@ -16,7 +16,7 @@ namespace
 		// unit time per unit solid angle) using phi = 4pi * I. 
 		// Intuitively, this conversion is taking the perceived intensity of a ray arriving at the eye, and adjusting
 		// it with respect to all of the rays emitted by a spherical emitter.
-		// However, for our point light approximation we're evaluating the luminous power arriving from a signel ray
+		// However, for our point light approximation we're evaluating the luminous power arriving from a single ray
 		// (not integrated over a spherical emitter) so we normalize it over the solid angle by dividing by 4pi. Thus,
 		// the 4pi's cancel and we can ignore them here
 		const float luminousIntensity = luminousPower;
@@ -68,7 +68,7 @@ namespace fr
 		case Point:
 		{
 			m_typeProperties.m_point.m_emitterRadius = 0.1f;
-			m_typeProperties.m_point.m_intensityCuttoff = 0.05f;
+			m_typeProperties.m_point.m_intensityCuttoff = 0.1f;
 		}
 		break;
 		case AmbientIBL:
