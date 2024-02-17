@@ -464,13 +464,16 @@ namespace gr
 		SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID), "renderDataID is not registered");
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
-		SEAssert(dataTypeIndex != k_invalidDataTypeIdx && dataTypeIndex < m_dataVectors.size(),
-			"Invalid data type index. This suggests we're accessing data of a specific type using an index, when "
-			"no data of that type exists");
+		SEAssert(dataTypeIndex == k_invalidDataTypeIdx || dataTypeIndex < m_dataVectors.size(),
+			"Out of bounds data type index received. This shouldn't be possible");
 
-		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
+		if (dataTypeIndex != k_invalidDataTypeIdx)
+		{
+			RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
-		return renderObjectMetadata.m_dataTypeToDataIndexMap.contains(dataTypeIndex);
+			return renderObjectMetadata.m_dataTypeToDataIndexMap.contains(dataTypeIndex);
+		}
+		return false;
 	}
 
 

@@ -202,7 +202,7 @@ layout(std430, binding=4) uniform LightParams
 	mat4 g_shadowCam_VP;
 
 	vec4 g_renderTargetResolution;
-	vec4 g_intensityScaleHasShadow; // .xy = diffuse/specular intensity scale, .z = has shadow (1.f), w = unused
+	vec4 g_intensityScaleShadowed; // .xy = diffuse/specular intensity scale, .z = shadow enabled (1.f), w = unused
 };
 
 

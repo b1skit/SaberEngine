@@ -43,6 +43,8 @@ namespace fr
 		ShadowType GetShadowMapType() const;
 		fr::Light::Type GetOwningLightType() const;
 
+		bool IsEnabled() const;
+
 		bool IsDirty() const;
 		void MarkClean();
 
@@ -56,6 +58,8 @@ namespace fr
 		glm::uvec2 m_widthHeight;
 
 		glm::vec2 m_minMaxShadowBias; // Small offsets for shadow comparisons
+
+		bool m_isEnabled;
 
 		bool m_isDirty;
 
@@ -99,6 +103,12 @@ namespace fr
 	inline fr::Light::Type ShadowMap::GetOwningLightType() const
 	{
 		return m_lightType;
+	}
+
+
+	inline bool ShadowMap::IsEnabled() const
+	{
+		return m_isEnabled;
 	}
 
 

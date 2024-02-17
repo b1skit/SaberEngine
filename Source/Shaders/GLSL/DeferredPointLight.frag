@@ -42,8 +42,8 @@ void main()
 	const float NoL = max(0.0, dot(gbuffer.WorldNormal, lightWorldDir));
 	const vec3 lightToFrag = worldPos - g_lightWorldPosRadius.xyz; // Cubemap sampler dir length matters, so can't use -fragToLight
 
-	const bool hasShadow = g_intensityScaleHasShadow.z > 0.f;
-	const float shadowFactor = hasShadow ? GetShadowFactor(lightToFrag, CubeDepth, NoL) : 1.f;
+	const bool shadowEnabled = g_intensityScaleShadowed.z > 0.f;
+	const float shadowFactor = shadowEnabled ? GetShadowFactor(lightToFrag, CubeDepth, NoL) : 1.f;
 
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -63,8 +63,8 @@ void main()
 	lightingParams.CameraWorldPos = g_cameraWPos.xyz;
 	lightingParams.Exposure = g_exposureProperties.x;
 
-	lightingParams.DiffuseScale = g_intensityScaleHasShadow.x;
-	lightingParams.SpecularScale = g_intensityScaleHasShadow.y;
+	lightingParams.DiffuseScale = g_intensityScaleShadowed.x;
+	lightingParams.SpecularScale = g_intensityScaleShadowed.y;
 
 	FragColor = vec4(ComputeLighting(lightingParams), 0.f);
 } 

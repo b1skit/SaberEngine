@@ -18,6 +18,9 @@ namespace
 	gr::Camera::Config ComputeDirectionalShadowCameraConfigFromSceneBounds(
 		fr::Transform& lightTransform, fr::BoundsComponent const& sceneWorldBounds)
 	{
+		constexpr float k_padding = 1.f;
+		constexpr float k_defaultNearDist = 1.f;
+		
 		fr::BoundsComponent transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
 			glm::inverse(lightTransform.GetGlobalMatrix()));
 
@@ -27,8 +30,6 @@ namespace
 		// to have our light oriented towards its shadow camera frustum)
 		if (sceneWorldBounds != fr::BoundsComponent::Zero() && sceneWorldBounds != fr::BoundsComponent::Uninitialized())
 		{
-			constexpr float k_defaultNearDist = 1.f;
-
 			glm::vec4 centerPoint = glm::vec4(
 				(transformedBounds.xMin() + transformedBounds.xMax()) * 0.5f,
 				(transformedBounds.yMin() + transformedBounds.yMax()) * 0.5f,
@@ -43,12 +44,9 @@ namespace
 				glm::inverse(lightTransform.GetGlobalMatrix()));
 		}
 
-
 		gr::Camera::Config shadowCamConfig{};
-
 		shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::Orthographic;
-
-		shadowCamConfig.m_yFOV = 0.f; // Orthographic
+		shadowCamConfig.m_yFOV = 0.f; // Not used
 
 		/* As per the GLTF KHR_lights_punctual specs, directional lights emit light in the direction of the local -Z
 		* axis:  
@@ -76,10 +74,10 @@ namespace
 		shadowCamConfig.m_near = -transformedBounds.zMax();
 		shadowCamConfig.m_far = -transformedBounds.zMin();
 
-		shadowCamConfig.m_orthoLeftRightBotTop.x = transformedBounds.xMin();
-		shadowCamConfig.m_orthoLeftRightBotTop.y = transformedBounds.xMax();
-		shadowCamConfig.m_orthoLeftRightBotTop.z = transformedBounds.yMin();
-		shadowCamConfig.m_orthoLeftRightBotTop.w = transformedBounds.yMax();
+		shadowCamConfig.m_orthoLeftRightBotTop.x = transformedBounds.xMin() - k_padding;
+		shadowCamConfig.m_orthoLeftRightBotTop.y = transformedBounds.xMax() + k_padding;
+		shadowCamConfig.m_orthoLeftRightBotTop.z = transformedBounds.yMin() - k_padding;
+		shadowCamConfig.m_orthoLeftRightBotTop.w = transformedBounds.yMax() + k_padding;
 
 		return shadowCamConfig;
 	}
@@ -225,6 +223,8 @@ namespace fr
 			.m_textureDims = re::Texture::ComputeTextureDimenions(shadowMap.GetWidthHeight()),
 
 			.m_minMaxShadowBias = shadowMap.GetMinMaxShadowBias(),
+
+			.m_shadowEnabled = shadowMap.IsEnabled(),
 		};
 
 		strncpy(shadowRenderData.m_owningLightName, nameCmpt.GetName().c_str(), en::NamedObject::k_maxNameLength);

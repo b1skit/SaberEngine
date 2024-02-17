@@ -32,6 +32,8 @@ namespace gr
 
 			glm::vec2 m_minMaxShadowBias;
 
+			bool m_shadowEnabled;
+
 			char m_owningLightName[en::NamedObject::k_maxNameLength];
 		};
 	};

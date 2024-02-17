@@ -141,7 +141,7 @@ namespace
 		glm::mat4 g_shadowCam_VP;
 
 		glm::vec4 g_renderTargetResolution; // .xy = xRes, yRes, .zw = 1/xRes 1/yRes
-		glm::vec4 g_intensityScaleHasShadow; // .xy = diffuse/specular intensity scale, .z = has shadow (1.f), w = unused
+		glm::vec4 g_intensityScaleShadowed; // .xy = diffuse/specular intensity scale, .z = has shadow (1.f), w = unused
 
 		static constexpr char const* const s_shaderName = "LightParams"; // Not counted towards size of struct
 	};
@@ -166,6 +166,7 @@ namespace
 
 		// Set type-specific params:
 		bool hasShadow = false;
+		bool shadowEnabled = false;
 		bool diffuseEnabled = false;
 		bool specEnabled = false;
 		switch (lightType)
@@ -187,6 +188,7 @@ namespace
 			lightParams.g_lightWorldPosRadius = glm::vec4(transformData.m_globalForward, 0.f); // WorldPos == Dir to light
 
 			hasShadow = directionalData->m_hasShadow;
+			shadowEnabled = hasShadow && shadowData->m_shadowEnabled;
 			diffuseEnabled = directionalData->m_diffuseEnabled;
 			specEnabled = directionalData->m_specularEnabled;
 		}
@@ -206,6 +208,7 @@ namespace
 				glm::vec4(transformData.m_globalPosition, pointData->m_emitterRadius);
 
 			hasShadow = pointData->m_hasShadow;
+			shadowEnabled = hasShadow && shadowData->m_shadowEnabled;
 			diffuseEnabled = pointData->m_diffuseEnabled;
 			specEnabled = pointData->m_specularEnabled;
 		}
@@ -248,10 +251,10 @@ namespace
 
 		lightParams.g_renderTargetResolution = targetSet->GetTargetDimensions();
 		
-		lightParams.g_intensityScaleHasShadow = glm::vec4(
+		lightParams.g_intensityScaleShadowed = glm::vec4(
 			static_cast<float>(diffuseEnabled),
 			static_cast<float>(specEnabled),
-			static_cast<float>(hasShadow),
+			static_cast<float>(shadowEnabled),
 			0.f);
 
 		return lightParams;

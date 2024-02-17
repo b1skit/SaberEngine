@@ -26,6 +26,7 @@ namespace fr
 		: m_shadowType(GetShadowTypeFromLightType(lightType))
 		, m_lightType(lightType)
 		, m_widthHeight(widthHeight)
+		, m_isEnabled(true)
 		, m_isDirty(true)
 	{	
 		switch (m_shadowType)
@@ -58,6 +59,8 @@ namespace fr
 
 	void ShadowMap::ShowImGuiWindow(uint64_t uniqueID)
 	{
+		m_isDirty |= ImGui::Checkbox(std::format("Shadow enabled?##{}", uniqueID).c_str(), &m_isEnabled);
+
 		std::string const& minLabel = std::format("Min shadow bias##{}", uniqueID);
 		m_isDirty |= ImGui::SliderFloat(minLabel.c_str(), &m_minMaxShadowBias.x, 0.f, 1.f, "%.5f");
 		
