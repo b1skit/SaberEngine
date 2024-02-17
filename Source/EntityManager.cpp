@@ -819,7 +819,7 @@ namespace fr
 				const bool force = m_registry.any_of<DirtyMarker<fr::ShadowMapComponent>>(entity) || 
 					m_registry.any_of<DirtyMarker<fr::LightComponent>>(entity);
 
-				fr::TransformComponent const& transformCmpt = shadowsView.get<fr::TransformComponent>(entity);
+				fr::TransformComponent& transformCmpt = shadowsView.get<fr::TransformComponent>(entity);
 				fr::ShadowMapComponent& shadowMapCmpt = shadowsView.get<fr::ShadowMapComponent>(entity);
 				fr::LightComponent const& lightCmpt = shadowsView.get<fr::LightComponent>(entity);
 				fr::CameraComponent& shadowCamCmpt = shadowsView.get<fr::CameraComponent>(entity);

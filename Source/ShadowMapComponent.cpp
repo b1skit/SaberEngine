@@ -16,10 +16,33 @@
 namespace
 {
 	gr::Camera::Config ComputeDirectionalShadowCameraConfigFromSceneBounds(
-		fr::Transform const& lightTransform, fr::BoundsComponent const& sceneWorldBounds)
+		fr::Transform& lightTransform, fr::BoundsComponent const& sceneWorldBounds)
 	{
-		fr::BoundsComponent const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
+		fr::BoundsComponent transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
 			glm::inverse(lightTransform.GetGlobalMatrix()));
+
+		// Set the light's location so that it's oriented directly in the middle of the bounds, looking towards the
+		// bounds region. This ensures the near and far planes are both on the same side of the X-axis, so that we don't
+		// have a view-space Z with a value of zero anywhere between near and far (and also just looks more correct
+		// to have our light oriented towards its shadow camera frustum)
+		if (sceneWorldBounds != fr::BoundsComponent::Zero() && sceneWorldBounds != fr::BoundsComponent::Uninitialized())
+		{
+			constexpr float k_defaultNearDist = 1.f;
+
+			glm::vec4 centerPoint = glm::vec4(
+				(transformedBounds.xMin() + transformedBounds.xMax()) * 0.5f,
+				(transformedBounds.yMin() + transformedBounds.yMax()) * 0.5f,
+				transformedBounds.zMax() + k_defaultNearDist,
+				1.f);
+
+			centerPoint = lightTransform.GetGlobalMatrix() * centerPoint; // Light view -> world space
+
+			lightTransform.SetGlobalPosition(centerPoint.xyz);
+
+			transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
+				glm::inverse(lightTransform.GetGlobalMatrix()));
+		}
+
 
 		gr::Camera::Config shadowCamConfig{};
 
@@ -140,7 +163,7 @@ namespace fr
 
 	gr::Camera::Config ShadowMapComponent::GenerateShadowCameraConfig(
 		ShadowMap const& shadowMap, 
-		fr::Transform const& lightTransform, 
+		fr::Transform& lightTransform, 
 		fr::Light const& owningLight, 
 		fr::BoundsComponent const* sceneWorldBounds)
 	{
@@ -212,7 +235,7 @@ namespace fr
 
 	bool ShadowMapComponent::Update(
 		fr::ShadowMapComponent& shadowMapCmpt,
-		fr::TransformComponent const& lightTransformCmpt,
+		fr::TransformComponent& lightTransformCmpt,
 		fr::LightComponent const& lightCmpt,
 		fr::CameraComponent& shadowCamCmpt, 
 		fr::BoundsComponent const* sceneWorldBounds,

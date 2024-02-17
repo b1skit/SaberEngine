@@ -25,7 +25,7 @@ namespace fr
 
 	public:
 		static gr::Camera::Config GenerateShadowCameraConfig(
-			ShadowMap const&, fr::Transform const&, fr::Light const&, fr::BoundsComponent const*);
+			ShadowMap const&, fr::Transform&, fr::Light const&, fr::BoundsComponent const*);
 
 		static gr::ShadowMap::RenderData CreateRenderData(
 			fr::NameComponent const& nameCmpt, fr::ShadowMapComponent const&);
@@ -33,7 +33,7 @@ namespace fr
 
 		static bool Update( // Returns true if modified (or forced to modify)
 			fr::ShadowMapComponent&,
-			fr::TransformComponent const& lightTransformCmpt,
+			fr::TransformComponent& lightTransformCmpt,
 			fr::LightComponent const&,
 			fr::CameraComponent&,
 			fr::BoundsComponent const* sceneWorldBounds, // Optional
