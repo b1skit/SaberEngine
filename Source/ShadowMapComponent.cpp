@@ -208,7 +208,7 @@ namespace fr
 
 
 	gr::ShadowMap::RenderData ShadowMapComponent::CreateRenderData(
-		fr::NameComponent const& nameCmpt, fr::ShadowMapComponent const& shadowMapCmpt)
+		fr::ShadowMapComponent const& shadowMapCmpt, fr::NameComponent const& nameCmpt)
 	{
 		fr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
 
@@ -217,7 +217,7 @@ namespace fr
 			.m_renderDataID = shadowMapCmpt.GetRenderDataID(),
 			.m_transformID = shadowMapCmpt.GetTransformID(),
 
-			.m_lightType = fr::Light::ConvertRenderDataLightType(shadowMap.GetOwningLightType()),
+			.m_lightType = fr::Light::ConvertToGrLightType(shadowMap.GetOwningLightType()),
 			.m_shadowType = fr::ShadowMap::GetRenderDataShadowMapType(shadowMap.GetShadowMapType()),
 
 			.m_textureDims = re::Texture::ComputeTextureDimenions(shadowMap.GetWidthHeight()),
@@ -297,77 +297,5 @@ namespace fr
 		, m_shadowMap(widthHeight, lightType)
 	{
 		SEAssert(widthHeight.x > 0 && widthHeight.y > 0, "Invalid resolution");
-	}
-
-
-	// ---
-
-
-	UpdateShadowMapDataRenderCommand::UpdateShadowMapDataRenderCommand(
-		fr::NameComponent const& nameCmpt, ShadowMapComponent const& shadowMapCmpt)
-		: m_renderDataID(shadowMapCmpt.GetRenderDataID())
-		, m_type(fr::Light::ConvertRenderDataLightType(shadowMapCmpt.GetShadowMap().GetOwningLightType()))
-		, m_data(fr::ShadowMapComponent::CreateRenderData(nameCmpt, shadowMapCmpt))
-	{
-	}
-
-
-	void UpdateShadowMapDataRenderCommand::Execute(void* cmdData)
-	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
-			re::RenderManager::Get()->GetRenderSystems();
-
-		UpdateShadowMapDataRenderCommand* cmdPtr = reinterpret_cast<UpdateShadowMapDataRenderCommand*>(cmdData);
-
-		for (size_t rsIdx = 0; rsIdx < renderSystems.size(); rsIdx++)
-		{
-			gr::GraphicsSystemManager& gsm = renderSystems[rsIdx]->GetGraphicsSystemManager();
-
-			gr::RenderDataManager& renderDataMgr = gsm.GetRenderDataForModification();
-
-			renderDataMgr.SetObjectData<gr::ShadowMap::RenderData>(cmdPtr->m_renderDataID, &cmdPtr->m_data);
-		}
-	}
-
-
-	void UpdateShadowMapDataRenderCommand::Destroy(void* cmdData)
-	{
-		UpdateShadowMapDataRenderCommand* cmdPtr = reinterpret_cast<UpdateShadowMapDataRenderCommand*>(cmdData);
-		cmdPtr->~UpdateShadowMapDataRenderCommand();
-	}
-
-
-	// ---
-
-
-	DestroyShadowMapDataRenderCommand::DestroyShadowMapDataRenderCommand(ShadowMapComponent const& shadowMapCmpt)
-		: m_renderDataID(shadowMapCmpt.GetRenderDataID())
-		, m_type(fr::Light::ConvertRenderDataLightType(shadowMapCmpt.GetShadowMap().GetOwningLightType()))
-	{
-	}
-
-
-	void DestroyShadowMapDataRenderCommand::Execute(void* cmdData)
-	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
-			re::RenderManager::Get()->GetRenderSystems();
-
-		DestroyShadowMapDataRenderCommand* cmdPtr = reinterpret_cast<DestroyShadowMapDataRenderCommand*>(cmdData);
-
-		for (size_t rsIdx = 0; rsIdx < renderSystems.size(); rsIdx++)
-		{
-			gr::GraphicsSystemManager& gsm = renderSystems[rsIdx]->GetGraphicsSystemManager();
-
-			gr::RenderDataManager& renderDataMgr = gsm.GetRenderDataForModification();
-
-			renderDataMgr.DestroyObjectData<gr::ShadowMap::RenderData>(cmdPtr->m_renderDataID);
-		}
-	}
-
-
-	void DestroyShadowMapDataRenderCommand::Destroy(void* cmdData)
-	{
-		DestroyShadowMapDataRenderCommand* cmdPtr = reinterpret_cast<DestroyShadowMapDataRenderCommand*>(cmdData);
-		cmdPtr->~DestroyShadowMapDataRenderCommand();
 	}
 }

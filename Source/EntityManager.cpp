@@ -222,8 +222,6 @@ namespace fr
 			EnqueueRenderUpdateHelper<fr::MaterialInstanceComponent, gr::Material::MaterialInstanceData>();
 			EnqueueRenderUpdateHelper<fr::CameraComponent, gr::Camera::RenderData>();
 
-			// Update dirty render data components that touch the GraphicsSystems directly:
-
 			// Lights:
 			auto lightComponentsView = m_registry.view<
 				fr::LightComponent, DirtyMarker<fr::LightComponent>, gr::RenderDataComponent, fr::NameComponent>();
@@ -237,19 +235,7 @@ namespace fr
 			}
 
 			// Shadows:
-			auto shadowMapComponentsView =
-				m_registry.view<fr::ShadowMapComponent, DirtyMarker<fr::ShadowMapComponent>, gr::RenderDataComponent>();
-			for (auto entity : shadowMapComponentsView)
-			{
-				fr::NameComponent const& nameComponent = lightComponentsView.get<fr::NameComponent>(entity);
-				fr::ShadowMapComponent const& shadowMapComponent = 
-					shadowMapComponentsView.get<fr::ShadowMapComponent>(entity);
-
-				renderManager->EnqueueRenderCommand<fr::UpdateShadowMapDataRenderCommand>(
-					nameComponent, shadowMapComponent);
-
-				m_registry.erase<DirtyMarker<fr::ShadowMapComponent>>(entity);
-			}
+			EnqueueRenderUpdateHelper<fr::ShadowMapComponent, gr::ShadowMap::RenderData>();
 		}
 	}
 
@@ -505,8 +491,8 @@ namespace fr
 					// ShadowMaps:
 					if (m_registry.all_of<fr::ShadowMapComponent>(entity))
 					{
-						fr::ShadowMapComponent const& shadowMapCmpt = m_registry.get<fr::ShadowMapComponent>(entity);
-						renderManager->EnqueueRenderCommand<fr::DestroyShadowMapDataRenderCommand>(shadowMapCmpt);
+						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::ShadowMap::RenderData>>(
+							renderDataComponent.GetRenderDataID());
 					}
 
 					// Now the render data components associated with this entity's use of the RenderDataID are destroyed, 

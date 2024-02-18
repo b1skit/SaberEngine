@@ -19,7 +19,7 @@ namespace fr
 		static_assert(static_cast<uint8_t>(fr::Light::Type::Type_Count) ==
 			static_cast<uint8_t>(gr::Light::Type::Type_Count));
 
-		static constexpr gr::Light::Type ConvertRenderDataLightType(fr::Light::Type);
+		static constexpr gr::Light::Type ConvertToGrLightType(fr::Light::Type);
 
 
 	public:
@@ -101,7 +101,7 @@ namespace fr
 	};
 
 
-	inline constexpr gr::Light::Type Light::ConvertRenderDataLightType(fr::Light::Type frLightType)
+	inline constexpr gr::Light::Type Light::ConvertToGrLightType(fr::Light::Type frLightType)
 	{
 		switch (frLightType)
 		{

@@ -28,7 +28,7 @@ namespace fr
 			ShadowMap const&, fr::Transform&, fr::Light const&, fr::BoundsComponent const*);
 
 		static gr::ShadowMap::RenderData CreateRenderData(
-			fr::NameComponent const& nameCmpt, fr::ShadowMapComponent const&);
+			fr::ShadowMapComponent const&, fr::NameComponent const& nameCmpt);
 
 
 		static bool Update( // Returns true if modified (or forced to modify)
@@ -65,44 +65,6 @@ namespace fr
 
 		fr::ShadowMap m_shadowMap;
 	};
-
-
-	// ---
-
-
-	class UpdateShadowMapDataRenderCommand
-	{
-	public:
-		UpdateShadowMapDataRenderCommand(fr::NameComponent const& nameCmpt, ShadowMapComponent const&);
-
-		static void Execute(void*);
-		static void Destroy(void*);
-
-	private:
-		const gr::RenderDataID m_renderDataID;
-
-		const gr::Light::Type m_type;
-
-		const gr::ShadowMap::RenderData m_data;
-	};
-
-
-	class DestroyShadowMapDataRenderCommand
-	{
-	public:
-		DestroyShadowMapDataRenderCommand(ShadowMapComponent const&);
-
-		static void Execute(void*);
-		static void Destroy(void*);
-
-	private:
-		const gr::RenderDataID m_renderDataID;
-		
-		const gr::Light::Type m_type;
-	};
-
-
-	// ---
 
 
 	inline gr::RenderDataID ShadowMapComponent::GetRenderDataID() const

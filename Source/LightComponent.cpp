@@ -365,7 +365,7 @@ namespace fr
 		: m_renderDataID(lightComponent.GetRenderDataID())
 		, m_transformID(lightComponent.GetTransformID())
 	{
-		m_type = fr::Light::ConvertRenderDataLightType(lightComponent.GetLight().GetType());
+		m_type = fr::Light::ConvertToGrLightType(lightComponent.GetLight().GetType());
 		switch (m_type)
 		{
 		case gr::Light::Type::AmbientIBL:
@@ -439,7 +439,7 @@ namespace fr
 
 	DestroyLightDataRenderCommand::DestroyLightDataRenderCommand(LightComponent const& lightCmpt)
 		: m_renderDataID(lightCmpt.GetRenderDataID())
-		, m_type(fr::Light::ConvertRenderDataLightType(lightCmpt.GetLight().GetType()))
+		, m_type(fr::Light::ConvertToGrLightType(lightCmpt.GetLight().GetType()))
 	{
 	}
 

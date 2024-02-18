@@ -26,6 +26,7 @@ namespace fr
 		: m_shadowType(GetShadowTypeFromLightType(lightType))
 		, m_lightType(lightType)
 		, m_widthHeight(widthHeight)
+		, m_minMaxShadowBias(0.f, 0.f)
 		, m_isEnabled(true)
 		, m_isDirty(true)
 	{	

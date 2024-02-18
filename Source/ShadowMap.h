@@ -6,9 +6,8 @@
 
 namespace fr
 {
-	class Transform;
 	class Light;
-	class Camera;
+	class ShadowMapComponent;
 
 
 	class ShadowMap
@@ -57,7 +56,7 @@ namespace fr
 
 		glm::uvec2 m_widthHeight;
 
-		glm::vec2 m_minMaxShadowBias; // Small offsets for shadow comparisons
+		glm::vec2 m_minMaxShadowBias;
 
 		bool m_isEnabled;
 
@@ -123,5 +122,3 @@ namespace fr
 		m_isDirty = false;
 	}
 }
-
-
