@@ -1,18 +1,16 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_TBN
 #define SABER_INSTANCING
+
 #include "NormalMapUtils.glsl"
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
-#include "SaberLighting.glsl"
 
 
-layout (location = 0) out vec4 gBuffer_out_albedo;
-layout (location = 1) out vec4 gBuffer_out_worldNormal;
-layout (location = 2) out vec4 gBuffer_out_RMAO;
-layout (location = 3) out vec4 gBuffer_out_emissive;
-layout (location = 4) out vec4 gBuffer_out_matProp0;
-layout (location = 5) out vec4 gBuffer_out_depth;
+layout (location = 0) out vec4 Albedo;
+layout (location = 1) out vec4 WorldNormal;
+layout (location = 2) out vec4 RMAOVn;
+layout (location = 3) out vec4 Emissive;
+layout (location = 4) out vec4 MatProp0Vn;
 
 
 void main()
@@ -22,13 +20,16 @@ void main()
 	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
 	// g_baseColorFactor and vOut.Color are factored into the albedo as per the GLTF 2.0 specifications
 	const vec4 baseColorFactor = g_instancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor;
-	gBuffer_out_albedo = texture(MatAlbedo, vOut.uv0.xy) * baseColorFactor * vOut.Color;
+	Albedo = texture(MatAlbedo, vOut.uv0.xy) * baseColorFactor * vOut.Color;
 
-	// Alpha clipping:
-	if (gBuffer_out_albedo.a < ALPHA_CUTOFF)
+	if (Albedo.a < ALPHA_CUTOFF) // Alpha clipping
 	{
 		discard;
 	}
+
+	// Vertex normal:
+	const vec3 vertexNormal = vOut.TBN[2];
+	const vec2 encodedVertexNormal = EncodeOctohedralNormal(vertexNormal);
 
 	// World-space normal:
 	const float normalScaleFactor = g_instancedPBRMetallicRoughnessParams[materialIdx].g_normalScale;
@@ -36,7 +37,7 @@ void main()
 	const vec3 texNormal = texture(MatNormal, vOut.uv0.xy).xyz;
 	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, vOut.TBN) * normalScale;
 
-	gBuffer_out_worldNormal = vec4(worldNormal, 0.0f);
+	WorldNormal = vec4(worldNormal, 0.0f);
 	
 	// Unpack/scale metallic/roughness: .G = roughness, .B = metallness
 	const float metallicFactor = g_instancedPBRMetallicRoughnessParams[materialIdx].g_metallicFactor;
@@ -51,15 +52,17 @@ void main()
 	// the texture scale value. For now, just use something sane.
 	
 	// Pack RMAO: 
-	gBuffer_out_RMAO = vec4(roughMetal, occlusion, 1.0f);
+	RMAOVn = vec4(roughMetal, occlusion, encodedVertexNormal.x);
 
 	// Emissive:
 	const vec3 emissiveFactor = g_instancedPBRMetallicRoughnessParams[materialIdx].g_emissiveFactorStrength.rgb;
 	const float emissiveStrength = g_instancedPBRMetallicRoughnessParams[materialIdx].g_emissiveFactorStrength.w;
 	vec3 emissive = texture(MatEmissive, vOut.uv0.xy).rgb * emissiveFactor * emissiveStrength;
 
-	gBuffer_out_emissive = vec4(emissive, 1.0f);
+	Emissive = vec4(emissive, 1.0f);
 
 	// Material properties:
-	gBuffer_out_matProp0 = g_instancedPBRMetallicRoughnessParams[materialIdx].g_f0; // .xyz = f0, .w = unused
+	MatProp0Vn = vec4(
+		g_instancedPBRMetallicRoughnessParams[materialIdx].g_f0.xyz,
+		encodedVertexNormal.y);
 }

@@ -13,15 +13,22 @@ float4 PShader(VertexOut In) : SV_Target
 {
 	const GBuffer gbuffer = UnpackGBuffer(In.UV0);
 	
-	const float4 worldPos = float4(GetWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection), 1.f);
+	const float3 worldPos = GetWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
 	
-	const float NoL = saturate(dot(gbuffer.WorldNormal, LightParams.g_lightWorldPosRadius.xyz));
 	const float2 minMaxShadowBias = LightParams.g_shadowCamNearFarBiasMinMax.zw;
 	const float2 invShadowMapWidthHeight = LightParams.g_shadowMapTexelSize.zw;
 	
 	const bool shadowEnabled = LightParams.g_intensityScaleShadowed.z > 0.f;
 	const float shadowFactor = shadowEnabled ?
-		Get2DShadowMapFactor(worldPos, LightParams.g_shadowCam_VP, NoL, minMaxShadowBias, invShadowMapWidthHeight) : 1.f;
+		Get2DShadowFactor(
+			worldPos,
+			gbuffer.WorldNormal,
+			LightParams.g_lightWorldPosRadius.xyz,
+			LightParams.g_shadowCam_VP,
+			minMaxShadowBias,
+			invShadowMapWidthHeight) : 1.f;
+	
+	const float NoL = saturate(dot(gbuffer.WorldNormal, LightParams.g_lightWorldPosRadius.xyz));
 	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -34,7 +41,7 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	lightingParams.NoL = NoL;
 	
-	lightingParams.LightWorldPos = worldPos.xyz; // Ensure attenuation = 0
+	lightingParams.LightWorldPos = worldPos; // Ensure attenuation = 0
 	lightingParams.LightWorldDir = LightParams.g_lightWorldPosRadius.xyz; 
 	lightingParams.LightColor = LightParams.g_lightColorIntensity.rgb;
 	lightingParams.LightIntensity = LightParams.g_lightColorIntensity.a;

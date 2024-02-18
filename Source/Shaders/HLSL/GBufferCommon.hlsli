@@ -2,12 +2,14 @@
 #ifndef GBUFFER_COMMON
 #define GBUFFER_COMMON
 #include "SaberCommon.hlsli"
+#include "NormalMapUtils.hlsli"
 
 
 struct GBuffer
 {
 	float3 LinearAlbedo;
 	float3 WorldNormal;
+	float3 VertexNormal;
 
 	float LinearRoughness;
 	float LinearMetalness;
@@ -32,16 +34,21 @@ GBuffer UnpackGBuffer(float2 screenUV)
 
 	gbuffer.WorldNormal = GBufferWNormal.Sample(WrapMinMagLinearMipPoint, screenUV).xyz;
 
-	const float3 RMAO = GBufferRMAO.Sample(WrapMinMagLinearMipPoint, screenUV).rgb;
-	gbuffer.LinearRoughness = RMAO.r;
-	gbuffer.LinearMetalness = RMAO.g;
-	gbuffer.AO = RMAO.b;
+	const float4 RMAOVn = GBufferRMAO.Sample(WrapMinMagLinearMipPoint, screenUV);
+	gbuffer.LinearRoughness = RMAOVn.r;
+	gbuffer.LinearMetalness = RMAOVn.g;
+	gbuffer.AO = RMAOVn.b;
 
 #if defined(GBUFFER_EMISSIVE)
 	gbuffer.Emissive = GBufferEmissive.Sample(WrapMinMagLinearMipPoint, screenUV).rgb;
 #endif
 
-	gbuffer.MatProp0 = GBufferMatProp0.Sample(WrapMinMagLinearMipPoint, screenUV).rgb;
+	const float4 matProp0Vn = GBufferMatProp0.Sample(WrapMinMagLinearMipPoint, screenUV);
+	gbuffer.MatProp0 = matProp0Vn.rgb;
+	
+	// Unpack the vertex normal:
+	const float2 packedVertexNormal = float2(RMAOVn.w, matProp0Vn.w);
+	gbuffer.VertexNormal = DecodeOctohedralNormal(packedVertexNormal);
 
 	gbuffer.NonLinearDepth = GBufferDepth.Sample(WrapMinMagLinearMipPoint, screenUV).r;
 

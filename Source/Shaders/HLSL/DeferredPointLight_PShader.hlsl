@@ -39,14 +39,22 @@ float4 PShader(VertexOut In) : SV_Target
 	const float emitterRadius = LightParams.g_lightWorldPosRadius.w;
 	const float attenuationFactor = ComputePointLightAttenuationFactor(worldPos, lightWorldPos, emitterRadius);
 	
-	const float NoL = saturate(dot(gbuffer.WorldNormal, lightWorldDir));
 	const float2 shadowCamNearFar = LightParams.g_shadowCamNearFarBiasMinMax.xy;
 	const float2 minMaxShadowBias = LightParams.g_shadowCamNearFarBiasMinMax.zw;
 	const float cubeFaceDimension = LightParams.g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
 	
 	const bool shadowEnabled = LightParams.g_intensityScaleShadowed.z > 0.f;
-	const float shadowFactor = shadowEnabled ?
-		GetCubeShadowMapFactor(worldPos, lightWorldPos, NoL, shadowCamNearFar, minMaxShadowBias, cubeFaceDimension) : 1.f;
+	const float shadowFactor = shadowEnabled ? 
+		GetCubeShadowFactor(
+			worldPos, 
+			gbuffer.WorldNormal,
+			lightWorldPos, 
+			lightWorldDir, 
+			shadowCamNearFar, 
+			minMaxShadowBias, 
+			cubeFaceDimension) : 1.f;
+	
+	const float NoL = saturate(dot(gbuffer.WorldNormal, lightWorldDir));
 	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;

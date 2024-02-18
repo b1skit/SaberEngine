@@ -10,12 +10,13 @@
 
 struct GBufferOut
 {
-	float4 Albedo				: SV_Target0;
-	float4 WorldNormal			: SV_Target1;
-	float4 RMAO					: SV_Target2;	
-	float4 Emissive				: SV_Target3;
-	float4 MatProp0				: SV_Target4;
+	float4 Albedo		: SV_Target0;
+	float4 WorldNormal	: SV_Target1;
+	float4 RMAOVn		: SV_Target2;	
+	float4 Emissive		: SV_Target3;
+	float4 MatProp0Vn	: SV_Target4;
 };
+
 
 GBufferOut PShader(VertexOut In)
 {
@@ -30,6 +31,10 @@ GBufferOut PShader(VertexOut In)
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_baseColorFactor;
 	output.Albedo = matAlbedo * baseColorFactor * In.Color;
 
+	// Vertex normal:
+	const float3 vertexNormal = float3(In.TBN[0].z, In.TBN[1].z, In.TBN[2].z);
+	const float2 encodedVertexNormal = EncodeOctohedralNormal(vertexNormal);
+	
 	// World-space normal:
 	// Note: We normalize the normal after applying the TBN and writing to the GBuffer, we may need to post-apply this
 	const float normalScaleFactor = 
@@ -38,7 +43,7 @@ GBufferOut PShader(VertexOut In)
 	const float3 texNormal = MatNormal.Sample(WrapAnisotropic, In.UV0).xyz;
 	output.WorldNormal = float4(WorldNormalFromTextureNormal(texNormal, normalScale, In.TBN), 0.f);
 	
-	// RMAO:
+	// RMAOVn:
 	const float roughnessFactor = 
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_roughnessFactor;
 	
@@ -53,7 +58,7 @@ GBufferOut PShader(VertexOut In)
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_occlusionStrength;
 	const float occlusion = MatOcclusion.Sample(WrapAnisotropic, In.UV0).r * occlusionStrength;
 	
-	output.RMAO = float4(roughnessMetalness, occlusion, 1.f);
+	output.RMAOVn = float4(roughnessMetalness, occlusion, encodedVertexNormal.x);
 	
 	// Emissive:
 	const float3 emissiveFactor = 
@@ -66,8 +71,9 @@ GBufferOut PShader(VertexOut In)
 	
 	output.Emissive = float4(emissive, 1.f);
 	
-	output.MatProp0 = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0; // .xyz = f0, .w = unused
+	output.MatProp0Vn = float4(
+		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0.xyz,
+		encodedVertexNormal.y);
 	
 	return output;
 }

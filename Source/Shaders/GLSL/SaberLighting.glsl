@@ -146,11 +146,15 @@ struct LightingParams
 	float LinearMetalness;
 	vec3 WorldPosition;
 	vec3 F0;
+
+	float NoL;
+
 	vec3 LightWorldPos; // 0 for directional lights
 	vec3 LightWorldDir;
 	vec3 LightColor;
 	float LightIntensity;
 	float LightAttenuationFactor;
+
 	float ShadowFactor;
 	
 	vec3 CameraWorldPos;

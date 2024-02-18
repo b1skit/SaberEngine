@@ -38,12 +38,22 @@ void main()
 	const float emitterRadius = g_lightWorldPosRadius.w;
 	const float attenuationFactor = ComputePointLightAttenuationFactor(worldPos, lightWorldPos, emitterRadius);
 
-	// Cube-map shadows:
-	const float NoL = max(0.0, dot(gbuffer.WorldNormal, lightWorldDir));
-	const vec3 lightToFrag = worldPos - g_lightWorldPosRadius.xyz; // Cubemap sampler dir length matters, so can't use -fragToLight
+	const vec2 shadowCamNearFar = g_shadowCamNearFarBiasMinMax.xy;
+	const vec2 minMaxShadowBias = g_shadowCamNearFarBiasMinMax.zw;
+	const float cubeFaceDimension = g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
 
 	const bool shadowEnabled = g_intensityScaleShadowed.z > 0.f;
-	const float shadowFactor = shadowEnabled ? GetShadowFactor(lightToFrag, CubeDepth, NoL) : 1.f;
+	const float shadowFactor = shadowEnabled ? 
+		GetCubeShadowFactor(
+			worldPos, 
+			gbuffer.WorldNormal,
+			lightWorldPos, 
+			lightWorldDir, 
+			shadowCamNearFar, 
+			minMaxShadowBias, 
+			cubeFaceDimension) : 1.f;
+
+	const float NoL = clamp(dot(gbuffer.WorldNormal, lightWorldDir), 0.f, 1.f);
 
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;

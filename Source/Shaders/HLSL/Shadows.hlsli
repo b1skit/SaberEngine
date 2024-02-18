@@ -6,20 +6,29 @@
 #include "UVUtils.hlsli"
 
 
-float GetSlopeScaleBias(float NoL, float2 minMaxShadowBias)
+void GetBiasedShadowWorldPos(
+	float3 worldPos, float3 worldNormal, float3 lightWDir, float2 minMaxShadowBias, out float3 shadowWorldPosOut)
 {
-	return max(minMaxShadowBias.x, minMaxShadowBias.y * (1.f - NoL));
+	const float NoL = saturate(dot(worldNormal, lightWDir));
+	
+	shadowWorldPosOut = worldPos + (worldNormal * max(minMaxShadowBias.x, minMaxShadowBias.y * (1.f - NoL)));
 }
 
 
-float Get2DShadowMapFactor(
-	float4 worldPos, float4x4 shadowCamVP, float NoL, float2 minMaxShadowBias, float2 invShadowMapWidthHeight)
+float Get2DShadowFactor(
+	float3 worldPos,
+	float3 worldNormal,
+	float3 lightWorldDir,
+	float4x4 shadowCamVP, 
+	float2 minMaxShadowBias,
+	float2 invShadowMapWidthHeight)
 {
-	// Transform our worldPos to shadow map projection space:
-	float4 shadowProjPos = mul(shadowCamVP, worldPos);
-	shadowProjPos /= shadowProjPos.w; // Not necessary for orthogonal matrices
+	float3 biasedShadowWPos;
+	GetBiasedShadowWorldPos(worldPos, worldNormal, lightWorldDir, minMaxShadowBias, biasedShadowWPos);
 	
-	const float biasedPointDepth = shadowProjPos.z - GetSlopeScaleBias(NoL, minMaxShadowBias);
+	// Transform our worldPos to shadow map projection space:
+	float4 shadowProjPos = mul(shadowCamVP, float4(biasedShadowWPos, 1.f));
+	shadowProjPos /= shadowProjPos.w; // Not necessary for orthogonal matrices
 	
 	// Shadow map UVs:
 	float2 shadowmapUVs = (shadowProjPos.xy + 1.f) * 0.5f;
@@ -39,7 +48,7 @@ float Get2DShadowMapFactor(
 	{
 		for (int col = 0; col < gridSize; col++)
 		{
-			depthSum += Depth0.SampleCmpLevelZero(BorderCmpMinMagLinearMipPoint, shadowmapUVs, biasedPointDepth);
+			depthSum += Depth0.SampleCmpLevelZero(BorderCmpMinMagLinearMipPoint, shadowmapUVs, shadowProjPos.z);
 			
 			shadowmapUVs.x += LightParams.g_shadowMapTexelSize.z;
 		}
@@ -56,10 +65,19 @@ float Get2DShadowMapFactor(
 
 // Compute a soft shadow factor from a cube map
 // Based on Lengyel's Foundations of Game Engine Development Volume 2: Rendering, p164, listing 8.8
-float GetCubeShadowMapFactor(
-	float3 worldPos, float3 lightWorldPos, float NoL, float2 shadowCamNearFar, float2 minMaxShadowBias, float cubeFaceDim)
+float GetCubeShadowFactor(
+	float3 worldPos,
+	float3 worldNormal,
+	float3 lightWorldPos,
+	float3 lightWorldDir,
+	float2 shadowCamNearFar, 
+	float2 minMaxShadowBias,
+	float cubeFaceDim)
 {
-	const float3 lightToPoint = worldPos - lightWorldPos;
+	float3 biasedShadowWPos;
+	GetBiasedShadowWorldPos(worldPos, worldNormal, lightWorldDir, minMaxShadowBias, biasedShadowWPos);
+	
+	const float3 lightToPoint = biasedShadowWPos - lightWorldPos;
 	float3 cubeSampleDir = WorldToCubeSampleDir(lightToPoint);
 	
 	// Calculate non-linear, projected depth buffer depth from the light-to-fragment direction. The eye depth w.r.t
@@ -67,10 +85,9 @@ float GetCubeShadowMapFactor(
 	const float3 absSampleDir = abs(cubeSampleDir);
 	const float maxXY = max(absSampleDir.x, absSampleDir.y);
 	const float eyeDepth = max(maxXY, absSampleDir.z);
-	const float biasedEyeDepth = eyeDepth - GetSlopeScaleBias(NoL, minMaxShadowBias);
 	
 	const float nonLinearPointDepth =
-		ConvertLinearDepthToNonLinear(shadowCamNearFar.x, shadowCamNearFar.y, biasedEyeDepth);
+		ConvertLinearDepthToNonLinear(shadowCamNearFar.x, shadowCamNearFar.y, eyeDepth);
 	
 	// Compute a sample offset for PCF shadow samples:
 	const float sampleOffset = 2.f / cubeFaceDim;
@@ -83,7 +100,7 @@ float GetCubeShadowMapFactor(
 	const float2 oyz = float2(offset - dxy, dxy);
 
 	float3 limit = float3(eyeDepth, eyeDepth, eyeDepth);
-	const float bias = 1.f / 1024.f; // Epsilon = 1/1024.
+	const float bias = 1.f / 1024.f; // Epsilon = 1/1024
 
 	limit.xy -= oxy * bias;
 	limit.yz -= oyz * bias;

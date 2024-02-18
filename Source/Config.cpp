@@ -499,9 +499,9 @@ namespace en
 
 		// Shadow map defaults:
 		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias,	0.001f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias,	0.005f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMinShadowBias,			0.01f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMaxShadowBias,			0.12f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias,	0.035f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMinShadowBias,			0.03f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMaxShadowBias,			0.055f);
 	}
 	
 

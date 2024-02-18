@@ -34,4 +34,46 @@ mat3 BuildTBN(const vec3 inFaceNormal, const vec4 inLocalTangent, const mat4 tra
 	return mat3(worldTangent, worldBitangent, worldFaceNormal);
 }
 
+
+// Octohedral normal map packing/unpacking as per Krzysztof Narkowicz
+// https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/
+vec2 OctWrap(vec2 v)
+{
+//	return (1.f - abs(v.yx)) * (v.xy >= 0.f ? 1.f : -1.f);
+
+	return vec2(
+		(1.f - abs(v.y)) * (v.x >= 0.f ? 1.f : -1.f),
+		(1.f - abs(v.x)) * (v.y >= 0.f ? 1.f : -1.f)
+	);
+	
+}
+
+
+vec2 EncodeOctohedralNormal(vec3 n)
+{
+	n /= (abs(n.x) + abs(n.y) + abs(n.z));
+
+	const vec2 octWrap = OctWrap(n.xy);
+	n.x = n.z >= 0.f ? n.x : octWrap.x;
+	n.y = n.z >= 0.f ? n.y : octWrap.y;
+
+	n.xy = n.xy * 0.5f + 0.5f;
+	return n.xy;
+}
+ 
+
+vec3 DecodeOctohedralNormal(vec2 f)
+{
+	f = f * 2.f - 1.f;
+ 
+	// https://twitter.com/Stubbesaurus/status/937994790553227264
+	vec3 n = vec3(f.x, f.y, 1.f - abs(f.x) - abs(f.y));
+	float t = clamp(-n.z, 0.f, 1.f);
+
+	n.x += n.x >= 0.f ? -t : t;
+	n.y += n.y >= 0.f ? -t : t;
+
+	return normalize(n);
+}
+
 #endif
