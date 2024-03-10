@@ -1,7 +1,7 @@
 #version 460 // Suppress IDE warnings; Stripped out at compile time
 #include "MathConstants.glsl"
-#include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
+#include "UVUtils.glsl"
 
 #define NUM_SAMPLES 1024
 

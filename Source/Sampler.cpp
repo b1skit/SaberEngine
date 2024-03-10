@@ -90,6 +90,23 @@ namespace re
 				Sampler::m_samplerLibrary->emplace(clampMinMagMipPointName,
 					re::Sampler::Create(clampMinMagMipPointName, k_clampMinMagMipPoint));
 
+				constexpr re::Sampler::SamplerDesc k_borderMinMagMipPoint = re::Sampler::SamplerDesc
+				{
+					.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_POINT,
+					.m_edgeModeU = re::Sampler::EdgeMode::Border,
+					.m_edgeModeV = re::Sampler::EdgeMode::Border,
+					.m_edgeModeW = re::Sampler::EdgeMode::Border,
+					.m_mipLODBias = 0.f,
+					.m_maxAnisotropy = 16,
+					.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+					.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
+					.m_minLOD = 0,
+					.m_maxLOD = std::numeric_limits<float>::max() // No limit
+				};
+				const std::string borderMinMagMipPointName = "WhiteBorderMinMagMipPoint";
+				Sampler::m_samplerLibrary->emplace(borderMinMagMipPointName,
+					re::Sampler::Create(borderMinMagMipPointName, k_borderMinMagMipPoint));
+
 				constexpr re::Sampler::SamplerDesc k_clampMinMagMipLinear = re::Sampler::SamplerDesc
 				{
 					.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,

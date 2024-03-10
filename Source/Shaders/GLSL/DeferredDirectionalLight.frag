@@ -2,7 +2,6 @@
 #define READ_GBUFFER
 
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
 #include "Shadows.glsl"
 #include "GBufferCommon.glsl"
@@ -16,17 +15,23 @@ void main()
 
 	const vec3 worldPos = GetWorldPos(screenUV, gbuffer.NonLinearDepth, g_invViewProjection);
 
+	const vec2 shadowCamNearFar = g_shadowCamNearFarBiasMinMax.xy;
 	const vec2 minMaxShadowBias = g_shadowCamNearFarBiasMinMax.zw;
 	const vec2 invShadowMapWidthHeight = g_shadowMapTexelSize.zw;
+	const vec2 lightUVRadiusSize = g_shadowParams.zw;
+	const float shadowQualityMode = g_shadowParams.y;
 
-	const bool shadowEnabled = g_intensityScaleShadowed.z > 0.f;
+	const bool shadowEnabled = g_shadowParams.x > 0.f;
 	const float shadowFactor = shadowEnabled ?
 		Get2DShadowFactor(
 			worldPos,
 			gbuffer.WorldNormal,
 			g_lightWorldPosRadius.xyz,
 			g_shadowCam_VP,
+			shadowCamNearFar,
 			minMaxShadowBias,
+			shadowQualityMode,
+			lightUVRadiusSize,
 			invShadowMapWidthHeight) : 1.f;
 
 	const float NoL = max(0.0, dot(gbuffer.WorldNormal, g_lightWorldPosRadius.xyz));
@@ -52,8 +57,8 @@ void main()
 	lightingParams.CameraWorldPos = g_cameraWPos.xyz;
 	lightingParams.Exposure = g_exposureProperties.x;
 
-	lightingParams.DiffuseScale = g_intensityScaleShadowed.x;
-	lightingParams.SpecularScale = g_intensityScaleShadowed.y;
+	lightingParams.DiffuseScale = g_intensityScale.x;
+	lightingParams.SpecularScale = g_intensityScale.y;
 
 	FragColor = vec4(ComputeLighting(lightingParams), 0.f);
 } 

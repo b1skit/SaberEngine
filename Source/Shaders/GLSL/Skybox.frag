@@ -1,7 +1,9 @@
+// © 2024 Adam Badke. All rights reserved.
 #define SABER_VEC4_OUTPUT
 
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
+#include "Transformations.glsl"
+#include "UVUtils.glsl"
 
 
 void main()

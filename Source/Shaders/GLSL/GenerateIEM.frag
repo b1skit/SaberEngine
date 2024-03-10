@@ -5,8 +5,8 @@
 
 #include "MathConstants.glsl"
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
+#include "UVUtils.glsl"
 
 
 // The IEM (Irradiance Environment Map) is the pre-integrated per-light-probe LD term of the diffuse portion of the

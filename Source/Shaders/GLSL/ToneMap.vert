@@ -1,5 +1,5 @@
+// © 2024 Adam Badke. All rights reserved.
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
 
 
 void main()

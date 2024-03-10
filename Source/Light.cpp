@@ -53,7 +53,7 @@ namespace fr
 	}
 
 
-	Light::Light(Type lightType,  glm::vec4 const& colorIntensity)
+	Light::Light(Type lightType, glm::vec4 const& colorIntensity)
 		: m_isDirty(true)
 	{
 		m_typeProperties.m_type = lightType;
@@ -62,7 +62,7 @@ namespace fr
 		{
 		case Directional:
 		{
-			// 
+			//
 		}
 		break;
 		case Point:

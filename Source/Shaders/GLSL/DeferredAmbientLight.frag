@@ -4,9 +4,10 @@
 #define READ_GBUFFER
 
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
+#include "Transformations.glsl"
 #include "GBufferCommon.glsl"
+#include "UVUtils.glsl"
 
 
 // Compute diffuse AO factor

@@ -28,8 +28,6 @@ namespace fr
 				cameraConfig.m_aspectRatio,
 				cameraConfig.m_near,
 				cameraConfig.m_far);
-
-			cameraParams.g_invProjection = glm::inverse(cameraParams.g_projection);
 		}
 		break;
 		case gr::Camera::Config::ProjectionType::Orthographic:
@@ -41,13 +39,12 @@ namespace fr
 				cameraConfig.m_orthoLeftRightBotTop.w,
 				cameraConfig.m_near,
 				cameraConfig.m_far);
-
-			cameraParams.g_invProjection = glm::inverse(cameraParams.g_projection);
 		}
 		break;
 		default: SEAssertF("Invalid projection type");
 		}
 
+		cameraParams.g_invProjection = glm::inverse(cameraParams.g_projection);
 		cameraParams.g_viewProjection = cameraParams.g_projection * cameraParams.g_view;
 		cameraParams.g_invViewProjection = glm::inverse(cameraParams.g_viewProjection);
 
@@ -112,11 +109,23 @@ namespace fr
 		{
 			ImGui::Indent();
 
-			const std::string nearSliderLabel = std::format("Near plane distance##{}", uniqueID);
-			m_isDirty |= ImGui::SliderFloat(nearSliderLabel.c_str(), &m_cameraConfig.m_near, 0.f, 2.0f, "near = %.3f");
+			std::string const& nearSliderLabel = std::format("Near plane distance##{}", uniqueID);
+			m_isDirty |= ImGui::SliderFloat(
+				nearSliderLabel.c_str(),
+				&m_cameraConfig.m_near, 
+				0.00001f, 
+				2.f, 
+				"near = %.5f", 
+				ImGuiSliderFlags_AlwaysClamp);
 
-			const std::string farSliderLabel = std::format("Far plane distance##{}", uniqueID);
-			m_isDirty |= ImGui::SliderFloat(farSliderLabel.c_str(), &m_cameraConfig.m_far, 0.f, 1000.0f, "far = %.3f");
+			std::string const& farSliderLabel = std::format("Far plane distance##{}", uniqueID);
+			m_isDirty |= ImGui::SliderFloat(
+				farSliderLabel.c_str(), 
+				&m_cameraConfig.m_far, 
+				m_cameraConfig.m_near + 0.1f, 
+				1000.0f, 
+				"far = %.3f", 
+				ImGuiSliderFlags_AlwaysClamp);
 
 			ImGui::Text("1/far = %f", 1.f / m_cameraConfig.m_far);
 
@@ -127,19 +136,19 @@ namespace fr
 
 			ImGui::Text("Sensor Properties");
 
-			const std::string apertureLabel = std::format("Aperture (f/stops)##{}", uniqueID);
+			std::string const& apertureLabel = std::format("Aperture (f/stops)##{}", uniqueID);
 			m_isDirty |= ImGui::SliderFloat(apertureLabel.c_str(), &m_cameraConfig.m_aperture, 0, 1.0f, "Aperture = %.3f");
 			ImGui::SetItemTooltip("Expressed in f-stops. Controls how open/closed the aperture is. f-stops indicate the\n"
 				"ratio of the lens' focal length to the diameter of the entrance pupil. High-values (f/16) indicate a\n"
 				"small aperture,small values (f/1.4) indicate a wide aperture. Controls exposition and the depth of field");
 
-			const std::string shutterSpeedLabel = std::format("Shutter Speed (seconds)##{}", uniqueID);
+			std::string const& shutterSpeedLabel = std::format("Shutter Speed (seconds)##{}", uniqueID);
 			m_isDirty |= ImGui::SliderFloat(
 				shutterSpeedLabel.c_str(), &m_cameraConfig.m_shutterSpeed, 0, 0.2f, "Shutter speed = %.3f");
 			ImGui::SetItemTooltip("Expressed in seconds. Controls how long the aperture remains opened and the timing of\n"
 				"the sensor shutter(s)). Controls exposition and motion blur.");
 
-			const std::string sensitivityLabel = std::format("Sensitivity (ISO)##{}", uniqueID);
+			std::string const& sensitivityLabel = std::format("Sensitivity (ISO)##{}", uniqueID);
 			m_isDirty |= ImGui::SliderFloat(
 				sensitivityLabel.c_str(), &m_cameraConfig.m_sensitivity, 0, 1000.0f, "Sensitivity = %.3f");
 			ImGui::SetItemTooltip("Expressed in ISO. Controls how the light reaching the sensor is quantized. Controls\n"
@@ -170,7 +179,7 @@ namespace fr
 			ImGui::SetItemTooltip("EV_s is the exposure at a given sensitivity. By convention, exposure is defined\n"
 				"for an ISO 100 sensitivity only");
 
-			const std::string exposureCompensationLabel = std::format("Exposure compensation (EC)##{}", uniqueID);
+			std::string const& exposureCompensationLabel = std::format("Exposure compensation (EC)##{}", uniqueID);
 			m_isDirty |= ImGui::SliderFloat(
 				exposureCompensationLabel.c_str(), &m_cameraConfig.m_exposureCompensation, -6.f, 6.0f, "EC = %.3f");
 			ImGui::SetItemTooltip("Exposure compensation can be used to over/under-expose an image, for artistic control\n"
@@ -178,7 +187,7 @@ namespace fr
 				"Increasing the EV is akin to closing down the lens aperture, reducing shutter speed, or reducing\n"
 				"sensitivity. Higher EVs = darker images");
 
-			const std::string boolStrengthLabel = std::format("Bloom strength##{}", uniqueID);
+			std::string const& boolStrengthLabel = std::format("Bloom strength##{}", uniqueID);
 			m_isDirty |= ImGui::SliderFloat(boolStrengthLabel.c_str(), &m_cameraConfig.m_bloomStrength, 0.f, 1.f, "Bloom strength = %.3f");
 
 
@@ -194,13 +203,13 @@ namespace fr
 			}
 			else
 			{
-				const std::string bloomRadiusLabel = std::format("Bloom radius##{}", uniqueID);
+				std::string const& bloomRadiusLabel = std::format("Bloom radius##{}", uniqueID);
 				m_isDirty |= ImGui::SliderFloat(
 					bloomRadiusLabel.c_str(), &m_cameraConfig.m_bloomRadius.x, 1.f, 10.f);
 				m_cameraConfig.m_bloomRadius.y = m_cameraConfig.m_bloomRadius.x;
 			}
 
-			const std::string boolExposureCompensationLabel = std::format("Bloom exposure compensation (Bloom EC)##{}", uniqueID);
+			std::string const& boolExposureCompensationLabel = std::format("Bloom exposure compensation (Bloom EC)##{}", uniqueID);
 			m_isDirty |= ImGui::SliderFloat(
 				boolExposureCompensationLabel.c_str(), &m_cameraConfig.m_bloomExposureCompensation, -6.f, 6.0f, "Bloom EC = %.3f");
 			ImGui::SetItemTooltip("Independently expose the lens bloom contribution");

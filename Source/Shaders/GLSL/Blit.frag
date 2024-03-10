@@ -1,7 +1,6 @@
 #define SABER_VEC4_OUTPUT
 
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
 
 
 void main()

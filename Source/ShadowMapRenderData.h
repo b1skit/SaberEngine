@@ -18,6 +18,15 @@ namespace gr
 			ShadowType_Count
 		};
 
+		enum class ShadowQuality : uint8_t
+		{
+			PCF = 0,
+			PCSS_LOW = 1,
+			PCSS_HIGH = 2,
+
+			ShadowQuality_Count
+		};
+
 
 	public:
 		struct RenderData
@@ -27,10 +36,12 @@ namespace gr
 
 			gr::Light::Type m_lightType;
 			ShadowType m_shadowType;
+			ShadowQuality m_shadowQuality;
 
 			glm::vec4 m_textureDims;
 
 			glm::vec2 m_minMaxShadowBias;
+			float m_softness; // PCSS light size [0,1]
 
 			bool m_shadowEnabled;
 

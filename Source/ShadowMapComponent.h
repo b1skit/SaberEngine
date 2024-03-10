@@ -24,7 +24,7 @@ namespace fr
 			EntityManager&, entt::entity, char const* name, fr::Light::Type);
 
 	public:
-		static gr::Camera::Config GenerateShadowCameraConfig(
+		static gr::Camera::Config SnapTransformAndGenerateShadowCameraConfig(
 			ShadowMap const&, fr::Transform&, fr::Light const&, fr::BoundsComponent const*);
 
 		static gr::ShadowMap::RenderData CreateRenderData(

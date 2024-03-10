@@ -60,8 +60,10 @@ namespace en::ConfigKeys
 	// Lights/shadows:
 	constexpr char const* k_defaultDirectionalLightMinShadowBias	= "defaultDirectionalLightMinShadowBias";
 	constexpr char const* k_defaultDirectionalLightMaxShadowBias	= "defaultDirectionalLightMaxShadowBias";
+	constexpr char const* k_defaultDirectionalLightShadowSoftness	= "defaultDirectionalLightShadowSoftness";
 	constexpr char const* k_defaultPointLightMinShadowBias			= "defaultPointLightMinShadowBias";
 	constexpr char const* k_defaultPointLightMaxShadowBias			= "defaultPointLightMaxShadowBias";
+	constexpr char const* k_defaultPointLightShadowSoftness			= "defaultPointLightMaxShadowSoftness";
 
 	// Quality:
 	constexpr char const* k_brdfLUTWidthHeight				= "brdfLUTWidthHeight";

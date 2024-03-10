@@ -3,7 +3,6 @@
 #define SABER_INSTANCING
 #include "NormalMapUtils.glsl"
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
 
 
 void main()

@@ -3,7 +3,6 @@
 #define SABER_VEC4_OUTPUT
 #include "Color.glsl"
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
 
 

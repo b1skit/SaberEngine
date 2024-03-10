@@ -2,7 +2,6 @@
 #define SABER_DEPTH
 
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
 
 
 void main()

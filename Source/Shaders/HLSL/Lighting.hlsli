@@ -19,7 +19,8 @@ struct LightParamsCB
 	float4x4 g_shadowCam_VP;
 	
 	float4 g_renderTargetResolution;
-	float4 g_intensityScaleShadowed; // .xy = diffuse/specular intensity scale, .z = shadow enabled (1.f), w = unused
+	float4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
+	float4 g_shadowParams; // .x = has shadow (1.f), .y = quality mode, .zw = light size UV radius
 };
 ConstantBuffer<LightParamsCB> LightParams;
 

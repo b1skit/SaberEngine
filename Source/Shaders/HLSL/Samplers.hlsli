@@ -5,6 +5,7 @@
 SamplerState WrapMinMagLinearMipPoint;
 SamplerState ClampMinMagLinearMipPoint;
 SamplerState ClampMinMagMipPoint;
+SamplerState WhiteBorderMinMagMipPoint;
 SamplerState ClampMinMagMipLinear;
 SamplerState WrapMinMagMipLinear;
 SamplerState WrapAnisotropic;

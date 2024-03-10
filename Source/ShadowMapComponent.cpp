@@ -15,12 +15,13 @@
 
 namespace
 {
-	gr::Camera::Config ComputeDirectionalShadowCameraConfigFromSceneBounds(
+	gr::Camera::Config SnapTransformAndComputeDirectionalShadowCameraConfigFromSceneBounds(
 		fr::Transform& lightTransform, fr::BoundsComponent const& sceneWorldBounds)
 	{
+		// TODO: Make the padding around orthographic shadow map edges tuneable
 		constexpr float k_padding = 1.f;
 		constexpr float k_defaultNearDist = 1.f;
-		
+
 		fr::BoundsComponent transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
 			glm::inverse(lightTransform.GetGlobalMatrix()));
 
@@ -143,7 +144,7 @@ namespace fr
 			em,
 			owningEntity,
 			std::format("{}_ShadowCam", name).c_str(),
-			GenerateShadowCameraConfig(
+			SnapTransformAndGenerateShadowCameraConfig(
 				shadowMapComponent.GetShadowMap(), 
 				owningTransform->GetTransform(), 
 				owningLightComponent.GetLight(),
@@ -159,7 +160,7 @@ namespace fr
 	}
 
 
-	gr::Camera::Config ShadowMapComponent::GenerateShadowCameraConfig(
+	gr::Camera::Config ShadowMapComponent::SnapTransformAndGenerateShadowCameraConfig(
 		ShadowMap const& shadowMap, 
 		fr::Transform& lightTransform, 
 		fr::Light const& owningLight, 
@@ -190,12 +191,12 @@ namespace fr
 			// Note: We use a zeroed-out bounds as a fallback if the sceneWorldBounds hasn't been created yet
 			if (sceneWorldBounds)
 			{
-				shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
+				shadowCamConfig = SnapTransformAndComputeDirectionalShadowCameraConfigFromSceneBounds(
 					lightTransform, *sceneWorldBounds);
 			}
 			else
 			{
-				shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
+				shadowCamConfig = SnapTransformAndComputeDirectionalShadowCameraConfigFromSceneBounds(
 					lightTransform, fr::BoundsComponent::Zero());
 			}
 		}
@@ -218,11 +219,13 @@ namespace fr
 			.m_transformID = shadowMapCmpt.GetTransformID(),
 
 			.m_lightType = fr::Light::ConvertToGrLightType(shadowMap.GetOwningLightType()),
-			.m_shadowType = fr::ShadowMap::GetRenderDataShadowMapType(shadowMap.GetShadowMapType()),
+			.m_shadowType = fr::ShadowMap::GetGrShadowMapType(shadowMap.GetShadowMapType()),
+			.m_shadowQuality = fr::ShadowMap::GetGrShadowQuality(shadowMap.GetShadowQuality()),
 
 			.m_textureDims = re::Texture::ComputeTextureDimenions(shadowMap.GetWidthHeight()),
 
 			.m_minMaxShadowBias = shadowMap.GetMinMaxShadowBias(),
+			.m_softness = shadowMap.GetSoftness(),
 
 			.m_shadowEnabled = shadowMap.IsEnabled(),
 		};
@@ -245,7 +248,7 @@ namespace fr
 		if (shadowMapCmpt.GetShadowMap().IsDirty() || force)
 		{
 			shadowCamCmpt.GetCameraForModification().SetCameraConfig(
-				GenerateShadowCameraConfig(
+				SnapTransformAndGenerateShadowCameraConfig(
 					shadowMapCmpt.GetShadowMap(), 
 					lightTransformCmpt.GetTransform(),
 					lightCmpt.GetLight(),

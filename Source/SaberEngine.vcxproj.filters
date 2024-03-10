@@ -999,9 +999,6 @@
     <None Include="Shaders\glsl\SaberCommon.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\SaberGlobals.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
     <None Include="Shaders\glsl\SaberLighting.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
@@ -1136,6 +1133,12 @@
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\NormalMapUtils.glsl">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\Transformations.glsl">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\UVUtils.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
   </ItemGroup>

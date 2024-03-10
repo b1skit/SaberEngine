@@ -3,7 +3,7 @@
 #include "BloomCommon.glsl"
 #include "Color.glsl"
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
+#include "UVUtils.glsl"
 
 layout(location=0, rgba32f) coherent uniform image2D outColor;
 

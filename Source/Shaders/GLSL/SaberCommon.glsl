@@ -202,12 +202,21 @@ layout(std430, binding=4) uniform LightParams
 	mat4 g_shadowCam_VP;
 
 	vec4 g_renderTargetResolution;
-	vec4 g_intensityScaleShadowed; // .xy = diffuse/specular intensity scale, .z = shadow enabled (1.f), w = unused
+	vec4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
+	vec4 g_shadowParams; // .x = has shadow (1.f), .y = quality mode, .zw = light size UV radius
+};
+
+
+layout(std430, binding=5) uniform PoissonSampleParams
+{
+	vec2 g_poissonSamples64[32];	// 64x vec2
+	vec2 g_poissonSamples32[16];	// 32x vec2
+	vec2 g_poissonSamples25[13];	// 25x vec2
 };
 
 
 // GraphicsSystem_DeferredLighting.cpp
-layout(std430, binding=5) uniform AmbientLightParams
+layout(std430, binding=6) uniform AmbientLightParams
 {
 	// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
 	vec4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
@@ -216,7 +225,7 @@ layout(std430, binding=5) uniform AmbientLightParams
 
 
 // GraphicsSystem_Shadows.h
-layout(std430, binding=6) uniform CubemapShadowRenderParams
+layout(std430, binding=7) uniform CubemapShadowRenderParams
 {
 	mat4 g_cubemapShadowCam_VP[6];
 	vec4 g_cubemapShadowCamNearFar; // .xy = near, far. .zw = unused
@@ -225,7 +234,7 @@ layout(std430, binding=6) uniform CubemapShadowRenderParams
 
 
 // GraphicsSystem_DeferredLighting.cpp
-layout(std430, binding=7) uniform IEMPMREMGenerationParams
+layout(std430, binding=8) uniform IEMPMREMGenerationParams
 {
 	vec4 g_numSamplesRoughnessFaceIdx; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
 	vec4 g_mipLevelSrcWidthSrcHeightSrcNumMips; // .x = IEM mip level, .yz = src width/height, .w = src num mips
@@ -233,7 +242,7 @@ layout(std430, binding=7) uniform IEMPMREMGenerationParams
 
 
 // GraphicsSystem_Bloom.cpp
-layout(std430, binding=8) uniform BloomComputeParams
+layout(std430, binding=9) uniform BloomComputeParams
 {
 	vec4 g_srcTexDimensions;
 	vec4 g_dstTexDimensions;
@@ -244,7 +253,7 @@ layout(std430, binding=8) uniform BloomComputeParams
 
 
 // GraphicsSystem_Skybox.cpp
-layout(std430, binding=9) uniform SkyboxParams
+layout(std430, binding=10) uniform SkyboxParams
 {
 	vec4 g_backgroundColorIsEnabled; // .rgb = background color override, .a = enabled/disabled (1.f/0.f)
 };

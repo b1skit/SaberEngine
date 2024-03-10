@@ -7,7 +7,6 @@
 namespace fr
 {
 	class Light;
-	class ShadowMapComponent;
 
 
 	class ShadowMap
@@ -23,7 +22,20 @@ namespace fr
 		static_assert(static_cast<uint8_t>(fr::ShadowMap::ShadowType::ShadowType_Count) == 
 			static_cast<uint8_t>(gr::ShadowMap::ShadowType::ShadowType_Count));
 
-		static constexpr gr::ShadowMap::ShadowType GetRenderDataShadowMapType(fr::ShadowMap::ShadowType);
+		static constexpr gr::ShadowMap::ShadowType GetGrShadowMapType(fr::ShadowMap::ShadowType);
+
+		enum class ShadowQuality : uint8_t
+		{
+			PCF = 0,
+			PCSS_LOW = 1,
+			PCSS_HIGH = 2,
+
+			ShadowQuality_Count
+		};
+		static_assert(static_cast<uint8_t>(fr::ShadowMap::ShadowQuality::ShadowQuality_Count) ==
+			static_cast<uint8_t>(gr::ShadowMap::ShadowQuality::ShadowQuality_Count));
+
+		static constexpr gr::ShadowMap::ShadowQuality GetGrShadowQuality(fr::ShadowMap::ShadowQuality);
 
 
 	public:
@@ -39,8 +51,12 @@ namespace fr
 		void SetMinMaxShadowBias(glm::vec2 const&);
 		glm::vec2 const& GetMinMaxShadowBias() const;
 
+		float GetSoftness() const;
+
 		ShadowType GetShadowMapType() const;
 		fr::Light::Type GetOwningLightType() const;
+
+		ShadowQuality GetShadowQuality() const;
 
 		bool IsEnabled() const;
 
@@ -53,10 +69,12 @@ namespace fr
 	private:
 		const ShadowType m_shadowType;
 		const fr::Light::Type m_lightType;
+		ShadowQuality m_shadowQuality;
 
 		glm::uvec2 m_widthHeight;
 
 		glm::vec2 m_minMaxShadowBias;
+		float m_softness;
 
 		bool m_isEnabled;
 
@@ -68,7 +86,7 @@ namespace fr
 	};
 
 
-	inline constexpr gr::ShadowMap::ShadowType ShadowMap::GetRenderDataShadowMapType(
+	inline constexpr gr::ShadowMap::ShadowType ShadowMap::GetGrShadowMapType(
 		fr::ShadowMap::ShadowType frShadowMapType)
 	{
 		switch (frShadowMapType)
@@ -78,6 +96,19 @@ namespace fr
 		default: throw std::logic_error("Invalid light type");
 		}
 		return gr::ShadowMap::ShadowType::ShadowType_Count;
+	}
+
+
+	inline constexpr gr::ShadowMap::ShadowQuality ShadowMap::GetGrShadowQuality(fr::ShadowMap::ShadowQuality quality)
+	{
+		switch (quality)
+		{
+		case fr::ShadowMap::ShadowQuality::PCF: return gr::ShadowMap::ShadowQuality::PCF;
+		case fr::ShadowMap::ShadowQuality::PCSS_LOW: return gr::ShadowMap::ShadowQuality::PCSS_LOW;
+		case fr::ShadowMap::ShadowQuality::PCSS_HIGH: return gr::ShadowMap::ShadowQuality::PCSS_HIGH;
+		default: SEAssertF("Invalid quality");
+		}
+		return gr::ShadowMap::ShadowQuality::PCF;
 	}
 
 
@@ -93,6 +124,12 @@ namespace fr
 	}
 
 
+	inline float ShadowMap::GetSoftness() const
+	{
+		return m_softness;
+	}
+
+
 	inline ShadowMap::ShadowType ShadowMap::GetShadowMapType() const
 	{
 		return m_shadowType;
@@ -104,6 +141,11 @@ namespace fr
 		return m_lightType;
 	}
 
+
+	inline fr::ShadowMap::ShadowQuality  fr::ShadowMap::GetShadowQuality() const
+	{
+		return m_shadowQuality;
+	}
 
 	inline bool ShadowMap::IsEnabled() const
 	{

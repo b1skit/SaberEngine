@@ -3,7 +3,6 @@
 #define SABER_LIGHTING
 
 #include "MathConstants.glsl"
-#include "SaberGlobals.glsl"
 #include "SaberCommon.glsl"
 
 
