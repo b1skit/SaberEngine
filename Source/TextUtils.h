@@ -21,8 +21,11 @@ namespace util
 		}
 		else
 		{
+			file.close();
 			return "";
 		}
+
+		file.close();
 
 		return output;
 	}
