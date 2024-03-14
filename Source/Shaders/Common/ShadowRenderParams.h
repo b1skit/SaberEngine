@@ -5,7 +5,7 @@
 #include "PlatformConversions.h"
 
 
-struct CubemapShadowRenderParamsData
+struct CubemapShadowRenderData
 {
 	float4x4 g_cubemapShadowCam_VP[6];
 	float4 g_cubemapShadowCamNearFar; // .xy = near, far. .zw = unused

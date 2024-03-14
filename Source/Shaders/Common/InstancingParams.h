@@ -5,7 +5,7 @@
 #include "PlatformConversions.h"
 
 
-struct InstanceIndexParamsData
+struct InstanceIndexData
 {
 	uint g_transformIdx;
 	uint g_materialIdx;
@@ -18,7 +18,7 @@ struct InstanceIndexParamsData
 };
 
 
-struct InstancedTransformParamsData
+struct InstancedTransformData
 {
 	float4x4 g_model;
 	float4x4 g_transposeInvModel;

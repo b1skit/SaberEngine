@@ -7,7 +7,7 @@
 
 namespace re
 {
-	class ParameterBlock;
+	class Buffer;
 	class Shader;
 	class Texture;
 	class Sampler;
@@ -74,6 +74,6 @@ namespace opengl
 			re::Texture const*, 
 			re::Sampler const*, 
 			uint32_t subresource);
-		static void SetParameterBlock(re::Shader const&, re::ParameterBlock const&);
+		static void SetBuffer(re::Shader const&, re::Buffer const&);
 	};
 }

@@ -6,17 +6,12 @@
 #include "Shader_OpenGL.h"
 #include "Shader_Platform.h"
 
-using en::Config;
-using std::ifstream;
-using std::string;
-using std::vector;
-
 
 namespace platform
 {
 	void platform::Shader::CreatePlatformParams(re::Shader& shader)
 	{
-		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

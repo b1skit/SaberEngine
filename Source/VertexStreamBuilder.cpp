@@ -10,16 +10,6 @@
 
 namespace util
 {
-	using en::Config;
-	using std::string;
-	using std::to_string;
-	using std::vector;
-	using std::move;
-	using glm::vec2;
-	using glm::vec3;
-	using glm::vec4;
-
-
 	void VertexStreamBuilder::BuildMissingVertexAttributes(MeshData* meshData)
 	{
 		util::VertexStreamBuilder tangentBuilder;
@@ -91,7 +81,7 @@ namespace util
 
 		if (!hasNormals && m_canBuildNormals)
 		{
-			meshData->m_normals->resize(maxElements, vec3(0, 0, 0));
+			meshData->m_normals->resize(maxElements, glm::vec3(0, 0, 0));
 
 			if (hasTangents)
 			{
@@ -99,21 +89,21 @@ namespace util
 				// and the provided tangents(if present) MUST be ignored.
 				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
 				meshData->m_tangents->clear();
-				meshData->m_tangents->resize(meshData->m_indices->size(), vec4(0, 0, 0, 0));
+				meshData->m_tangents->resize(meshData->m_indices->size(), glm::vec4(0, 0, 0, 0));
 				hasTangents = false;
 			}
 		}
 		if (!hasTangents && m_canBuildTangents)
 		{
-			meshData->m_tangents->resize(maxElements, vec4(0, 0, 0, 0));
+			meshData->m_tangents->resize(maxElements, glm::vec4(0, 0, 0, 0));
 		}
 		if (!hasUVs && m_canBuildUVs)
 		{
-			meshData->m_UV0->resize(maxElements, vec2(0, 0));
+			meshData->m_UV0->resize(maxElements, glm::vec2(0, 0));
 		}
 		if (!hasColors && m_canBuildColors)
 		{
-			meshData->m_colors->resize(maxElements, vec4(1.f, 1.f, 1.f, 1.f));
+			meshData->m_colors->resize(maxElements, glm::vec4(1.f, 1.f, 1.f, 1.f));
 		}
 
 		// Expand shared attributes into distinct entries
@@ -167,14 +157,14 @@ namespace util
 		SEAssert((!m_hasJoints || meshData->m_joints->size() >= meshData->m_indices->size()), "Expected a triangle list");
 		SEAssert((!m_hasWeights || meshData->m_weights->size() >= meshData->m_indices->size()), "Expected a triangle list");
 
-		vector<uint32_t> newIndices;
-		vector<vec3> newPositions;
-		vector<vec3> newNormals;
-		vector<vec4> newTangents;
-		vector<vec2> newUVs;
-		vector<vec4> newColors;
-		vector<glm::tvec4<uint8_t>> newJoints;
-		vector<vec4> newWeights;
+		std::vector<uint32_t> newIndices;
+		std::vector<glm::vec3> newPositions;
+		std::vector<glm::vec3> newNormals;
+		std::vector<glm::vec4> newTangents;
+		std::vector<glm::vec2> newUVs;
+		std::vector<glm::vec4> newColors;
+		std::vector<glm::tvec4<uint8_t>> newJoints;
+		std::vector<glm::vec4> newWeights;
 
 		// We might remove verts, so reserve rather than resize...
 		const size_t maxNumVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
@@ -197,13 +187,13 @@ namespace util
 		uint32_t insertIdx = 0;
 		for (size_t i = 0; i < meshData->m_indices->size(); i += 3)
 		{
-			const vec3& p0 = meshData->m_positions->at(meshData->m_indices->at(i));
-			const vec3& p1 = meshData->m_positions->at(meshData->m_indices->at(i + 1));
-			const vec3& p2 = meshData->m_positions->at(meshData->m_indices->at(i + 2));
+			const glm::vec3& p0 = meshData->m_positions->at(meshData->m_indices->at(i));
+			const glm::vec3& p1 = meshData->m_positions->at(meshData->m_indices->at(i + 1));
+			const glm::vec3& p2 = meshData->m_positions->at(meshData->m_indices->at(i + 2));
 
-			const vec3 v0 = p0 - p2;
-			const vec3 v1 = p1 - p2;
-			const vec3 v2 = p0 - p1;
+			const glm::vec3 v0 = p0 - p2;
+			const glm::vec3 v1 = p1 - p2;
+			const glm::vec3 v2 = p0 - p1;
 
 			const float v0Length = glm::length(v0);
 			const float v1Length = glm::length(v1);
@@ -319,14 +309,14 @@ namespace util
 
 		for (size_t i = 0; i < meshData->m_indices->size(); i += 3)
 		{
-			const vec3& p0 = meshData->m_positions->at(meshData->m_indices->at(i));
-			const vec3& p1 = meshData->m_positions->at(meshData->m_indices->at(i + 1));
-			const vec3& p2 = meshData->m_positions->at(meshData->m_indices->at(i + 2));
+			const glm::vec3& p0 = meshData->m_positions->at(meshData->m_indices->at(i));
+			const glm::vec3& p1 = meshData->m_positions->at(meshData->m_indices->at(i + 1));
+			const glm::vec3& p2 = meshData->m_positions->at(meshData->m_indices->at(i + 2));
 
-			const vec3 v0 = p0 - p2;
-			const vec3 v1 = p1 - p2;
+			const glm::vec3 v0 = p0 - p2;
+			const glm::vec3 v1 = p1 - p2;
 
-			const vec3 faceNormal = glm::normalize(glm::cross(v0, v1));
+			const glm::vec3 faceNormal = glm::normalize(glm::cross(v0, v1));
 			
 			meshData->m_normals->at(meshData->m_indices->at(i)) = faceNormal;
 			meshData->m_normals->at(meshData->m_indices->at(i + 1)) = faceNormal;
@@ -344,27 +334,27 @@ namespace util
 
 		LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 
-		platform::RenderingAPI const& api = Config::Get()->GetRenderingAPI();
+		platform::RenderingAPI const& api = en::Config::Get()->GetRenderingAPI();
 		const bool botLeftZeroZero = api == platform::RenderingAPI::OpenGL ? true : false;
 
 		// Build simple, overlapping UVs, placing the vertices of every triangle in the TL, BL, BR corners of UV space:
-		vec2 TL, BL, BR;
+		glm::vec2 TL, BL, BR;
 		if (botLeftZeroZero) // OpenGL-style: (0,0) in the bottom-left of UV space
 		{
-			TL = vec2(0, 1);
-			BL = vec2(0, 0);
-			BR = vec2(1, 0);
+			TL = glm::vec2(0, 1);
+			BL = glm::vec2(0, 0);
+			BR = glm::vec2(1, 0);
 
 		}
 		else // D3D-style: (0,0) in the top-left of UV space
 		{
-			TL = vec2(0, 0);
-			BL = vec2(0, 1);
-			BR = vec2(1, 1);
+			TL = glm::vec2(0, 0);
+			BL = glm::vec2(0, 1);
+			BR = glm::vec2(1, 1);
 		}
 
 		// Allocate our vector to ensure it's the correct size:
-		meshData->m_UV0->resize(meshData->m_positions->size(), vec2(0, 0));
+		meshData->m_UV0->resize(meshData->m_positions->size(), glm::vec2(0, 0));
 
 		for (size_t i = 0; i < meshData->m_indices->size(); i += 3)
 		{
@@ -378,14 +368,14 @@ namespace util
 	void VertexStreamBuilder::SplitSharedAttributes(MeshData* meshData)
 	{
 		const size_t numVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
-		vector<uint32_t> newIndices(numVerts);
-		vector<vec3> newPositions(numVerts);
-		vector<vec3> newNormals(numVerts);
-		vector<vec4> newTangents(numVerts);
-		vector<vec2> newUVs(numVerts);
-		vector<vec4> newColors(numVerts);
-		vector<glm::tvec4<uint8_t>> newJoints(m_hasJoints ? numVerts : 0);
-		vector<vec4> newWeights(m_hasWeights ? numVerts : 0);
+		std::vector<uint32_t> newIndices(numVerts);
+		std::vector<glm::vec3> newPositions(numVerts);
+		std::vector<glm::vec3> newNormals(numVerts);
+		std::vector<glm::vec4> newTangents(numVerts);
+		std::vector<glm::vec2> newUVs(numVerts);
+		std::vector<glm::vec4> newColors(numVerts);
+		std::vector<glm::tvec4<uint8_t>> newJoints(m_hasJoints ? numVerts : 0);
+		std::vector<glm::vec4> newWeights(m_hasWeights ? numVerts : 0);
 
 		// Use our indices to unpack duplicated vertex attributes:
 		for (size_t i = 0; i < numVerts; i++)
@@ -474,18 +464,18 @@ namespace util
 		};
 
 		// piRemapTable: iNrVerticesIn * sizeof(int)
-		vector<int> remapTable(meshData->m_positions->size(), 0); // This will contain our final indexes
+		std::vector<int> remapTable(meshData->m_positions->size(), 0); // This will contain our final indexes
 
 		// We'll pack our vertex attributes together into blocks of floats.
 		// Compute the total number of floats for all attributes per vertex:
 		const size_t floatsPerVertex = (
-			sizeof(vec3)										// position
-			+ (m_canBuildNormals ? sizeof(vec3) : 0)			// normal
-			+ (m_canBuildTangents ? sizeof(vec4) : 0)			// tangent
-			+ (m_canBuildUVs ? sizeof(vec2) : 0)				// uv0
-			+ (m_canBuildColors ? sizeof(vec4) : 0)				// color
+			sizeof(glm::vec3)										// position
+			+ (m_canBuildNormals ? sizeof(glm::vec3) : 0)			// normal
+			+ (m_canBuildTangents ? sizeof(glm::vec4) : 0)			// tangent
+			+ (m_canBuildUVs ? sizeof(glm::vec2) : 0)				// uv0
+			+ (m_canBuildColors ? sizeof(glm::vec4) : 0)				// color
 			+ (m_hasJoints ? sizeof(glm::tvec4<uint8_t>) : 0)	// joints
-			+ (m_hasWeights ? sizeof(vec4) : 0)					// weights
+			+ (m_hasWeights ? sizeof(glm::vec4) : 0)					// weights
 				) / sizeof(float);
 		
 		// Make sure we've counted for all non-index members in MeshData
@@ -504,10 +494,10 @@ namespace util
 
 		const size_t vertexStrideBytes = floatsPerVertex * sizeof(float);
 		const size_t numVertexBytesOut = numElements * vertexStrideBytes;
-		vector<float> vertexDataOut(numVertexBytesOut, 0); // Will contain only unique vertices after welding
+		std::vector<float> vertexDataOut(numVertexBytesOut, 0); // Will contain only unique vertices after welding
 
 		// pfVertexDataIn: Our tightly-packed vertex data:
-		vector<float> packedVertexData(meshData->m_positions->size() * floatsPerVertex, 0);		
+		std::vector<float> packedVertexData(meshData->m_positions->size() * floatsPerVertex, 0);		
 
 		size_t byteOffset = 0;
 		PackAttribute(
@@ -516,8 +506,8 @@ namespace util
 			byteOffset,
 			vertexStrideBytes,
 			numElements,
-			sizeof(vec3));	// Position = vec3
-		byteOffset += sizeof(vec3);
+			sizeof(glm::vec3));	// Position = glm::vec3
+		byteOffset += sizeof(glm::vec3);
 		
 		if (m_canBuildNormals)
 		{
@@ -527,8 +517,8 @@ namespace util
 				byteOffset,
 				vertexStrideBytes,
 				numElements,
-				sizeof(vec3));	// Normals = vec3
-			byteOffset += sizeof(vec3);
+				sizeof(glm::vec3));	// Normals = glm::vec3
+			byteOffset += sizeof(glm::vec3);
 		}
 
 		if (m_canBuildTangents)
@@ -539,8 +529,8 @@ namespace util
 				byteOffset,
 				vertexStrideBytes,
 				numElements,
-				sizeof(vec4));	// tangents = vec4
-			byteOffset += sizeof(vec4);
+				sizeof(glm::vec4));	// tangents = glm::vec4
+			byteOffset += sizeof(glm::vec4);
 		}
 
 		if (m_canBuildUVs)
@@ -551,8 +541,8 @@ namespace util
 				byteOffset,
 				vertexStrideBytes,
 				numElements,
-				sizeof(vec2));	// UV0 = vec2
-			byteOffset += sizeof(vec2);
+				sizeof(glm::vec2));	// UV0 = glm::vec2
+			byteOffset += sizeof(glm::vec2);
 		}
 
 		if (m_canBuildColors)
@@ -563,8 +553,8 @@ namespace util
 				byteOffset,
 				vertexStrideBytes,
 				numElements,
-				sizeof(vec4));	// colors = vec4
-			byteOffset += sizeof(vec4);
+				sizeof(glm::vec4));	// colors = glm::vec4
+			byteOffset += sizeof(glm::vec4);
 		}
 
 		if (m_hasJoints)
@@ -586,8 +576,8 @@ namespace util
 				byteOffset,
 				vertexStrideBytes,
 				numElements,
-				sizeof(vec4));	// weights = vec4
-			byteOffset += sizeof(vec4);
+				sizeof(glm::vec4));	// weights = glm::vec4
+			byteOffset += sizeof(glm::vec4);
 		}
 
 
@@ -634,28 +624,28 @@ namespace util
 
 			// Copy each element back into its individual data stream:
 			uint32_t packedVertByteOffset = 0;
-			memcpy(&meshData->m_positions->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec3));
-			packedVertByteOffset += sizeof(vec3);
+			memcpy(&meshData->m_positions->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(glm::vec3));
+			packedVertByteOffset += sizeof(glm::vec3);
 
 			if (m_canBuildNormals)
 			{
-				memcpy(&meshData->m_normals->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec3));
-				packedVertByteOffset += sizeof(vec3);
+				memcpy(&meshData->m_normals->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(glm::vec3));
+				packedVertByteOffset += sizeof(glm::vec3);
 			}
 			if (m_canBuildTangents)
 			{
-				memcpy(&meshData->m_tangents->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
-				packedVertByteOffset += sizeof(vec4);
+				memcpy(&meshData->m_tangents->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(glm::vec4));
+				packedVertByteOffset += sizeof(glm::vec4);
 			}
 			if (m_canBuildUVs)
 			{
-				memcpy(&meshData->m_UV0->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec2));
-				packedVertByteOffset += sizeof(vec2);
+				memcpy(&meshData->m_UV0->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(glm::vec2));
+				packedVertByteOffset += sizeof(glm::vec2);
 			}
 			if (m_canBuildColors)
 			{
-				memcpy(&meshData->m_colors->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
-				packedVertByteOffset += sizeof(vec4);
+				memcpy(&meshData->m_colors->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(glm::vec4));
+				packedVertByteOffset += sizeof(glm::vec4);
 			}
 
 			if (m_hasJoints)
@@ -665,8 +655,8 @@ namespace util
 			}
 			if (m_hasWeights)
 			{
-				memcpy(&meshData->m_weights->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
-				packedVertByteOffset += sizeof(vec4);
+				memcpy(&meshData->m_weights->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(glm::vec4));
+				packedVertByteOffset += sizeof(glm::vec4);
 			}
 		}
 	}
@@ -699,7 +689,7 @@ namespace util
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
 
 		int index = GetVertexIndex(m_context, faceIdx, vertIdx);
-		vec3 position = meshData->m_positions->at(index);
+		glm::vec3 position = meshData->m_positions->at(index);
 
 		outpos[0] = position.x;
 		outpos[1] = position.y;
@@ -713,7 +703,7 @@ namespace util
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
 
 		int index = GetVertexIndex(m_context, faceIdx, vertIdx);
-		vec3 normal = meshData->m_normals->at(index);;
+		glm::vec3 normal = meshData->m_normals->at(index);;
 
 		outnormal[0] = normal.x;
 		outnormal[1] = normal.y;
@@ -727,7 +717,7 @@ namespace util
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
 
 		auto const& index = GetVertexIndex(m_context, faceIdx, vertIdx);
-		vec2 uv = meshData->m_UV0->at(index);
+		glm::vec2 uv = meshData->m_UV0->at(index);
 
 		outuv[0] = uv.x;
 		outuv[1] = uv.y;
@@ -740,7 +730,7 @@ namespace util
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
 
 		int index = GetVertexIndex(m_context, faceIdx, vertIdx);
-		vec4* tangent = &meshData->m_tangents->at(index);
+		glm::vec4* tangent = &meshData->m_tangents->at(index);
 
 		tangent->x = tangentu[0];
 		tangent->y = tangentu[1];

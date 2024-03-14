@@ -75,7 +75,7 @@ namespace fr
 	{
 		gr::Camera::RenderData renderData = gr::Camera::RenderData{
 			.m_cameraConfig = cameraComponent.GetCamera().GetCameraConfig(),
-			.m_cameraParams = fr::Camera::BuildCameraParams(cameraComponent.GetCamera()),
+			.m_cameraParams = fr::Camera::BuildCameraData(cameraComponent.GetCamera()),
 			.m_transformID = cameraComponent.GetTransformID()
 		};
 

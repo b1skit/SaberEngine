@@ -3,24 +3,17 @@
 #include "KeyConfiguration.h"
 #include "TextUtils.h"
 
-// Default true/false strings. We convert config values to lowercase and compare against these
+// Default true/false std::strings. We convert config values to lowercase and compare against these
 #define TRUE_STRING		"true"
 #define FALSE_STRING	"false"
 
 #define SET_CMD		"set"		// Set a value
 #define BIND_CMD	"bind"		// Bind a key
 
-using std::ifstream;
-using std::any_cast;
-using std::string;
-using std::to_string;
-using std::unordered_map;
-using std::any;
-
 
 namespace
 {
-	// Convert a string to lower case: Used to simplify comparisons
+	// Convert a std::string to lower case: Used to simplify comparisons
 	inline std::string ToLowerCase(std::string input)
 	{
 		std::string output;
@@ -70,12 +63,12 @@ namespace en
 		keysValues.reserve(argc - 1);
 
 		// Pre-parse the args into key/value pairs:
-		string argString; // The full list of all command line args received		
+		std::string argString; // The full list of all command line args received		
 		for (int i = 1; i < argc; i++)
 		{
 			std::string currentToken = argv[i];
 
-			// Append the current token to our argument string:
+			// Append the current token to our argument std::string:
 			argString += std::format("{}{}",
 				currentToken,
 				i + 1 < argc ? " " : ""); // Don't add a space if it's the last token
@@ -104,7 +97,7 @@ namespace en
 			}
 		}
 
-		// Store the received command line string
+		// Store the received command line std::string
 		SetValue(ConfigKeys::k_commandLineArgsValueKey, argString, Config::SettingType::Runtime);
 
 		// Process the key/value pairs:
@@ -142,22 +135,22 @@ namespace en
 			// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
 
 			// sceneFilePath == ".\Scenes\Scene\Folder\Names\sceneFile.extension":
-			const string sceneFilePath = en::ConfigKeys::k_scenesDirNameKey + sceneNameParam; // k_scenesDirNameKey = ".\Scenes\"
+			const std::string sceneFilePath = en::ConfigKeys::k_scenesDirNameKey + sceneNameParam; // k_scenesDirNameKey = ".\Scenes\"
 			SetValue(en::ConfigKeys::k_sceneFilePathKey, sceneFilePath, Config::SettingType::Runtime);
 
 			// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
 			const size_t lastSlash = sceneFilePath.find_last_of("\\");
-			const string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\";
+			const std::string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\";
 			SetValue(en::ConfigKeys::k_sceneRootPathKey, sceneRootPath, Config::SettingType::Runtime);
 
 			// sceneName == "sceneFile"
-			const string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
+			const std::string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
 			const size_t extensionPeriod = filenameAndExt.find_last_of(".");
-			const string sceneName = filenameAndExt.substr(0, extensionPeriod);
+			const std::string sceneName = filenameAndExt.substr(0, extensionPeriod);
 			SetValue(en::ConfigKeys::k_sceneNameKey, sceneName, Config::SettingType::Runtime);
 
 			// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
-			const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
+			const std::string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
 			SetValue(en::ConfigKeys::k_sceneIBLPathKey, sceneIBLPath, Config::SettingType::Runtime);
 		}
 
@@ -166,12 +159,12 @@ namespace en
 			std::string const& platformParam = GetValue<std::string>(en::ConfigKeys::k_platformCmdLineArg);
 
 			bool platformValueIsValid = false;
-			if (platformParam.find("opengl") != string::npos)
+			if (platformParam.find("opengl") != std::string::npos)
 			{
 				m_renderingAPI = platform::RenderingAPI::OpenGL;
 				platformValueIsValid = true;
 			}
-			else if (platformParam.find("dx12") != string::npos)
+			else if (platformParam.find("dx12") != std::string::npos)
 			{
 				m_renderingAPI = platform::RenderingAPI::DX12;
 				platformValueIsValid = true;
@@ -192,7 +185,7 @@ namespace en
 	{
 		LOG("Loading %s...", en::ConfigKeys::k_configFileName);
 
-		ifstream file;
+		std::ifstream file;
 		file.open(std::format("{}{}", en::ConfigKeys::k_configDirName, en::ConfigKeys::k_configFileName).c_str());
 
 		// If no config is found, create one:
@@ -205,11 +198,11 @@ namespace en
 		}
 
 		// Process the config file:
-		string line;
+		std::string line;
 		bool foundInvalidString = false;
 		while (file.good())
 		{
-			// Handle malformed strings from previous iteration:
+			// Handle malformed std::strings from previous iteration:
 			if (foundInvalidString == true)
 			{
 				LOG_WARNING("Ignoring invalid command in config.cfg:\n%s", line);
@@ -221,10 +214,10 @@ namespace en
 
 			// Replace whitespace with single spaces:
 			std::regex tabMatch("([\\s])+");
-			string cleanLine = std::regex_replace(line, tabMatch, " ");
+			std::string cleanLine = std::regex_replace(line, tabMatch, " ");
 
 			// Skip empty or near-empty lines:
-			if (cleanLine.find_first_not_of(" \t\n") == string::npos || cleanLine.length() <= 2)
+			if (cleanLine.find_first_not_of(" \t\n") == std::string::npos || cleanLine.length() <= 2)
 			{
 				continue;
 			}
@@ -232,12 +225,12 @@ namespace en
 			// Remove single leading space, if it exists:
 			if (cleanLine.at(0) == ' ')
 			{
-				cleanLine = cleanLine.substr(1, string::npos);
+				cleanLine = cleanLine.substr(1, std::string::npos);
 			}
 
 			// Remove comments:
 			size_t commentStart = cleanLine.find_first_of("#");
-			if (commentStart != string::npos)
+			if (commentStart != std::string::npos)
 			{
 				// Remove the trailing space, if it exists:
 				if (commentStart > size_t(0) && cleanLine.at(commentStart - 1) == ' ')
@@ -270,24 +263,24 @@ namespace en
 
 			// Extract leading command:
 			size_t firstSpace = cleanLine.find_first_of(" \t", 1);
-			string command = cleanLine.substr(0, firstSpace);
+			std::string command = cleanLine.substr(0, firstSpace);
 
-			// Remove the command from the head of the string:
-			cleanLine = cleanLine.substr(firstSpace + 1, string::npos);
+			// Remove the command from the head of the std::string:
+			cleanLine = cleanLine.substr(firstSpace + 1, std::string::npos);
 
 			// Extract the variable property name:
 			firstSpace = cleanLine.find_first_of(" \t\n", 1);
-			string property = cleanLine.substr(0, firstSpace);
+			std::string property = cleanLine.substr(0, firstSpace);
 
-			// Remove the property from the head of the string:
-			cleanLine = cleanLine.substr(firstSpace + 1, string::npos);
+			// Remove the property from the head of the std::string:
+			cleanLine = cleanLine.substr(firstSpace + 1, std::string::npos);
 
-			// Clean up the value string:
-			string value = cleanLine;
+			// Clean up the value std::string:
+			std::string value = cleanLine;
 
-			// Remove quotation marks from value string:
+			// Remove quotation marks from value std::string:
 			bool isString = false;
-			if (value.find("\"") != string::npos)
+			if (value.find("\"") != std::string::npos)
 			{
 				isString = true;
 				std::regex quoteMatch("([\\\"])+");
@@ -298,15 +291,15 @@ namespace en
 			// will be written to disk
 			if (command == SET_CMD)
 			{
-				// Strings:
+				// std::strings:
 				if (isString)
 				{
-					TrySetValue(property, string(value), SettingType::Common);
+					TrySetValue(property, std::string(value), SettingType::Common);
 				}
 				else
 				{
 					// Booleans:
-					string boolString = ToLowerCase(value);
+					std::string boolString = ToLowerCase(value);
 					if (boolString == TRUE_STRING)
 					{
 						TrySetValue(property, true, SettingType::Common);
@@ -318,7 +311,7 @@ namespace en
 						continue;
 					}
 
-					// TODO: Handle strings without "quotations" -> If it doesn't contain numbers, assume it's a string
+					// TODO: Handle std::strings without "quotations" -> If it doesn't contain numbers, assume it's a std::string
 
 					// Numeric values: Try and cast as an int, and fallback to a float if it fails
 					size_t position = 0;
@@ -340,7 +333,7 @@ namespace en
 			{
 				if (isString)
 				{
-					TrySetValue(property, string(value), SettingType::Common);
+					TrySetValue(property, std::string(value), SettingType::Common);
 				}
 				else
 				{
@@ -355,7 +348,7 @@ namespace en
 			}
 		}
 
-		// Handle final malformed string:
+		// Handle final malformed std::string:
 		if (foundInvalidString == true)
 		{
 			LOG_WARNING("Ignoring invalid command in config.cfg:\n%s", line);
@@ -449,7 +442,7 @@ namespace en
 		// We only set these defaults if they're not specified in the (now already loaded) config file. This allows the
 		// config to override these values, if required. We also tag these keys as API-specific (but if they're found in
 		// the config, they're loaded as Common, ensuring they're be saved back out.
-		// Note: Strings must be passed as string objects (not CStrings)
+		// Note: std::strings must be passed as std::string objects (not CStrings)
 		auto TryInsertDefault = [&](std::string const& key, auto const& value)
 		{
 			TrySetValue(key, value, SettingType::APISpecific);
@@ -514,36 +507,36 @@ namespace en
 	}
 
 
-	string Config::GetValueAsString(const string& valueName) const
+	std::string Config::GetValueAsString(const std::string& valueName) const
 	{
 		auto const& result = m_configValues.find(valueName);
-		string returnVal = "";
+		std::string returnVal = "";
 		if (result != m_configValues.end())
 		{
 			try
 			{
-				if (result->second.first.type() == typeid(string))
+				if (result->second.first.type() == typeid(std::string))
 				{
-					returnVal = any_cast<string>(result->second.first);
+					returnVal = any_cast<std::string>(result->second.first);
 				}
 				else if (result->second.first.type() == typeid(char const*))
 				{
-					returnVal = string(any_cast<char const*>(result->second.first));
+					returnVal = std::string(any_cast<char const*>(result->second.first));
 				}
 				else if (result->second.first.type() == typeid(float))
 				{
 					float configValue = any_cast<float>(result->second.first);
-					returnVal = to_string(configValue);
+					returnVal = std::to_string(configValue);
 				}
 				else if (result->second.first.type() == typeid(int))
 				{
 					int configValue = any_cast<int>(result->second.first);
-					returnVal = to_string(configValue);
+					returnVal = std::to_string(configValue);
 				}
 				else if (result->second.first.type() == typeid(char))
 				{
 					char configValue = any_cast<char>(result->second.first);
-					returnVal = string(1, configValue); // Construct a string with 1 element
+					returnVal = std::string(1, configValue); // Construct a std::string with 1 element
 				}
 				else if (result->second.first.type() == typeid(bool))
 				{
@@ -589,7 +582,7 @@ namespace en
 			std::filesystem::create_directory(configPath);
 		}
 
-		// Build a list of the strings we plan to write, so we can sort them
+		// Build a list of the std::strings we plan to write, so we can sort them
 		struct ConfigEntry
 		{
 			std::string m_cmdPrefix; // SET_CMD, BIND_CMD
@@ -599,7 +592,7 @@ namespace en
 		std::vector<ConfigEntry> configEntries;
 		configEntries.reserve(m_configValues.size());
 
-		for (std::pair<string, std::pair<any, SettingType>> currentElement : m_configValues)
+		for (std::pair<std::string, std::pair<std::any, SettingType>> currentElement : m_configValues)
 		{
 			if (currentElement.second.second == SettingType::APISpecific || 
 				currentElement.second.second == SettingType::Runtime)
@@ -607,14 +600,14 @@ namespace en
 				continue;	// Skip API-specific settings
 			}
 
-			if (currentElement.second.first.type() == typeid(string) && currentElement.first.find("Input") == string::npos)
+			if (currentElement.second.first.type() == typeid(std::string) && currentElement.first.find("Input") == std::string::npos)
 			{
 				configEntries.emplace_back(ConfigEntry{
 					.m_cmdPrefix = SET_CMD,
 					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<string>(currentElement.second.first))});
+					.m_value = PropertyToConfigString(any_cast<std::string>(currentElement.second.first))});
 			}
-			else if (currentElement.second.first.type() == typeid(char const*) && currentElement.first.find("Input") == string::npos)
+			else if (currentElement.second.first.type() == typeid(char const*) && currentElement.first.find("Input") == std::string::npos)
 			{
 				configEntries.emplace_back(ConfigEntry{
 					.m_cmdPrefix = SET_CMD,
@@ -649,14 +642,14 @@ namespace en
 					.m_key = currentElement.first,
 					.m_value = PropertyToConfigString(any_cast<char>(currentElement.second.first)) });
 			}
-			else if (currentElement.second.first.type() == typeid(string) && currentElement.first.find("Input") != string::npos)
+			else if (currentElement.second.first.type() == typeid(std::string) && currentElement.first.find("Input") != std::string::npos)
 			{
 				configEntries.emplace_back(ConfigEntry{
 					.m_cmdPrefix = BIND_CMD,
 					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<string>(currentElement.second.first)) });
+					.m_value = PropertyToConfigString(any_cast<std::string>(currentElement.second.first)) });
 			}
-			else if (currentElement.second.first.type() == typeid(char const*) && currentElement.first.find("Input") != string::npos)
+			else if (currentElement.second.first.type() == typeid(char const*) && currentElement.first.find("Input") != std::string::npos)
 			{
 				configEntries.emplace_back(ConfigEntry{
 					.m_cmdPrefix = BIND_CMD,
@@ -734,8 +727,8 @@ namespace en
 	}
 
 
-	inline string Config::PropertyToConfigString(bool property)
+	inline std::string Config::PropertyToConfigString(bool property)
 	{
-		return string(" ") + (property ? TRUE_STRING : FALSE_STRING) + string("\n");
+		return std::string(" ") + (property ? TRUE_STRING : FALSE_STRING) + std::string("\n");
 	}
 }

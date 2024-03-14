@@ -8,7 +8,7 @@
 #include "../Common/IBLGenerationParams.h"
 
 
-ConstantBuffer<IEMPMREMGenerationParamsData> IEMPMREMGenerationParams;
+ConstantBuffer<IEMPMREMGenerationData> IEMPMREMGenerationParams;
 
 
 // The IEM (Irradiance Environment Map) is the pre-integrated per-light-probe LD term of the diffuse portion of the

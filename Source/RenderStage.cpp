@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "MeshPrimitive.h"
-#include "ParameterBlock.h"
+#include "Buffer.h"
 #include "PipelineState.h"
 #include "ProfilingMarkers.h"
 #include "RenderStage.h"
@@ -355,7 +355,7 @@ namespace re
 	{
 		SEBeginCPUEvent("StagePipeline::EndOfFrame");
 
-		m_singleFrameParamBlocks.clear();
+		m_singleFrameBuffers.clear();
 		m_stageBatches.clear();
 
 		SEEndCPUEvent();
@@ -399,17 +399,17 @@ namespace re
 			"Mesh topology mode is incompatible with shader pipeline state topology type");
 
 #if defined(_DEBUG)
-		for (auto const& batchPB : batch.GetParameterBlocks())
+		for (auto const& batchBuffer : batch.GetBuffers())
 		{
-			for (auto const& singleFramePB : m_singleFrameParamBlocks)
+			for (auto const& singleFrameBuffer : m_singleFrameBuffers)
 			{
-				SEAssert(batchPB->GetUniqueID() != singleFramePB->GetUniqueID(),
-					"Batch and render stage have a duplicate single frame parameter block");
+				SEAssert(batchBuffer->GetUniqueID() != singleFrameBuffer->GetUniqueID(),
+					"Batch and render stage have a duplicate single frame buffer");
 			}
-			for (auto const& permanentPB : m_permanentParamBlocks)
+			for (auto const& permanentBuffer : m_permanentBuffers)
 			{
-				SEAssert(batchPB->GetUniqueID() != permanentPB->GetUniqueID(),
-					"Batch and render stage have a duplicate permanent parameter block");
+				SEAssert(batchBuffer->GetUniqueID() != permanentBuffer->GetUniqueID(),
+					"Batch and render stage have a duplicate permanent buffer");
 			}
 		}
 #endif
@@ -428,53 +428,53 @@ namespace re
 	}
 
 
-	void RenderStage::AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
+	void RenderStage::AddPermanentBuffer(std::shared_ptr<re::Buffer> buffer)
 	{
-		SEAssert(pb->GetType() == re::ParameterBlock::PBType::Mutable || 
-			pb->GetType() == re::ParameterBlock::PBType::Immutable,
-			"Parameter block must have a permanent lifetime");
+		SEAssert(buffer->GetType() == re::Buffer::Type::Mutable || 
+			buffer->GetType() == re::Buffer::Type::Immutable,
+			"Buffer must have a permanent lifetime");
 		
 		SEAssert(std::find_if(
-				m_permanentParamBlocks.begin(),
-				m_permanentParamBlocks.end(),
-				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
-					return pb->GetNameID() == existingPB->GetNameID();
-				}) == m_permanentParamBlocks.end(),
-			"A permanent ParameterBlock with this name has already been added");
+				m_permanentBuffers.begin(),
+				m_permanentBuffers.end(),
+				[&buffer](std::shared_ptr<re::Buffer> const& existingBuffer) {
+					return buffer->GetNameID() == existingBuffer->GetNameID();
+				}) == m_permanentBuffers.end(),
+			"A permanent Buffer with this name has already been added");
 
 		SEAssert(std::find_if(
-				m_singleFrameParamBlocks.begin(),
-				m_singleFrameParamBlocks.end(),
-				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
-					return pb->GetNameID() == existingPB->GetNameID();
-				}) == m_singleFrameParamBlocks.end(),
-			"A single frame ParameterBlock with this name has already been added");
+				m_singleFrameBuffers.begin(),
+				m_singleFrameBuffers.end(),
+				[&buffer](std::shared_ptr<re::Buffer> const& existingBuffer) {
+					return buffer->GetNameID() == existingBuffer->GetNameID();
+				}) == m_singleFrameBuffers.end(),
+			"A single frame Buffer with this name has already been added");
 
-		m_permanentParamBlocks.emplace_back(pb);
+		m_permanentBuffers.emplace_back(buffer);
 	}
 
 
-	void RenderStage::AddSingleFrameParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
+	void RenderStage::AddSingleFrameBuffer(std::shared_ptr<re::Buffer> buffer)
 	{
-		SEAssert(pb->GetType() == re::ParameterBlock::PBType::SingleFrame,
-			"Parameter block must have a single frame lifetime");
+		SEAssert(buffer->GetType() == re::Buffer::Type::SingleFrame,
+			"Buffer must have a single frame lifetime");
 
 		SEAssert(std::find_if(
-				m_singleFrameParamBlocks.begin(),
-				m_singleFrameParamBlocks.end(),
-				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
-					return pb->GetNameID() == existingPB->GetNameID();
-				}) == m_singleFrameParamBlocks.end(),
-			"A single frame ParameterBlock with this name has already been added");
+				m_singleFrameBuffers.begin(),
+				m_singleFrameBuffers.end(),
+				[&buffer](std::shared_ptr<re::Buffer> const& existingBuffer) {
+					return buffer->GetNameID() == existingBuffer->GetNameID();
+				}) == m_singleFrameBuffers.end(),
+			"A single frame Buffer with this name has already been added");
 		
 		SEAssert(std::find_if(
-				m_permanentParamBlocks.begin(),
-				m_permanentParamBlocks.end(),
-				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
-					return pb->GetNameID() == existingPB->GetNameID();
-				}) == m_permanentParamBlocks.end(),
-			"A permanent ParameterBlock with this name has already been added");
+				m_permanentBuffers.begin(),
+				m_permanentBuffers.end(),
+				[&buffer](std::shared_ptr<re::Buffer> const& existingBuffer) {
+					return buffer->GetNameID() == existingBuffer->GetNameID();
+				}) == m_permanentBuffers.end(),
+			"A permanent Buffer with this name has already been added");
 
-		m_singleFrameParamBlocks.emplace_back(pb);
+		m_singleFrameBuffers.emplace_back(buffer);
 	}
 }

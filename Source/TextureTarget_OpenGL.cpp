@@ -8,8 +8,6 @@
 #include "Texture_OpenGL.h"
 #include "Texture_Platform.h"
 
-using std::string;
-
 
 namespace
 {

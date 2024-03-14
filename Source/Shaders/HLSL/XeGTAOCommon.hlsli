@@ -16,7 +16,6 @@
 #define XE_GTAO_NUMTHREADS_X 8
 #define XE_GTAO_NUMTHREADS_Y 8
 
-// Buffers/parameter blocks:
 struct SEXeGTAOSettingsCB
 {
 	float g_enabled; // Boolean: Output 1.f (white) if disabled, AO otherwise

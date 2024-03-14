@@ -5,7 +5,7 @@
 #include "PlatformConversions.h"
 
 
-struct CameraParamsData
+struct CameraData
 {
 	float4x4 g_view;
 	float4x4 g_invView;

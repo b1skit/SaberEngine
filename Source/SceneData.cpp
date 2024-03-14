@@ -10,7 +10,7 @@
 #include "Material_GLTF.h"
 #include "MeshConcept.h"
 #include "MeshPrimitiveComponent.h"
-#include "ParameterBlock.h"
+#include "Buffer.h"
 #include "RenderManager.h"
 #include "SceneData.h"
 #include "SceneNodeConcept.h"

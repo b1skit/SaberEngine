@@ -131,17 +131,17 @@ layout(binding=13) uniform samplerCubeShadow CubeDepth;
 // their names are capitalized (but only with some letters!). Totally puzzling - but the '_' prefix is preferred anyway
 
 // UBOs can't have a dynamic length; We use SSBOs for instancing instead
-layout(std430, binding=0) readonly buffer InstanceIndexParams {	InstanceIndexParamsData _InstanceIndexParams[]; };
-layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformParamsData _InstancedTransformParams[]; };
-layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	InstancedPBRMetallicRoughnessParamsData _InstancedPBRMetallicRoughnessParams[]; };
+layout(std430, binding=0) readonly buffer InstanceIndexParams {	InstanceIndexData _InstanceIndexParams[]; };
+layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformData _InstancedTransformParams[]; };
+layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	InstancedPBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
 
-layout(std430, binding=3) uniform CameraParams { CameraParamsData _CameraParams; };
-layout(std430, binding=4) uniform LightParams { LightParamsData _LightParams; };
+layout(std430, binding=3) uniform CameraParams { CameraData _CameraParams; };
+layout(std430, binding=4) uniform LightParams { LightData _LightParams; };
 layout(std430, binding=5) uniform PoissonSampleParams { PoissonSampleParamsData _PoissonSampleParams; };
-layout(std430, binding=6) uniform AmbientLightParams { AmbientLightParamsData _AmbientLightParams; };
-layout(std430, binding=7) uniform CubemapShadowRenderParams { CubemapShadowRenderParamsData _CubemapShadowRenderParams; };
-layout(std430, binding=8) uniform IEMPMREMGenerationParams { IEMPMREMGenerationParamsData _IEMPMREMGenerationParams; };
-layout(std430, binding=9) uniform BloomComputeParams { BloomComputeParamsData _BloomComputeParams; };
-layout(std430, binding=10) uniform SkyboxParams { SkyboxParamsData _SkyboxParams; };
+layout(std430, binding=6) uniform AmbientLightParams { AmbientLightData _AmbientLightParams; };
+layout(std430, binding=7) uniform CubemapShadowRenderParams { CubemapShadowRenderData _CubemapShadowRenderParams; };
+layout(std430, binding=8) uniform IEMPMREMGenerationParams { IEMPMREMGenerationData _IEMPMREMGenerationParams; };
+layout(std430, binding=9) uniform BloomComputeParams { BloomComputeData _BloomComputeParams; };
+layout(std430, binding=10) uniform SkyboxParams { SkyboxData _SkyboxParams; };
 
 #endif

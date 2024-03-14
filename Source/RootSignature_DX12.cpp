@@ -587,7 +587,7 @@ namespace dx12
 
 		// TODO: Sort rootParameters based on the .ParameterType, to ensure optimal/preferred ordering/grouping of entries
 		// -> MS recommends binding the most frequently changing elements at the start of the root signature.
-		//		-> For SaberEngine, that's probably parameter blocks: CBVs and SRVs
+		//		-> For SaberEngine, that's probably buffers: CBVs and SRVs
 
 
 		// Build our descriptor tables, and insert them into the root parameters.

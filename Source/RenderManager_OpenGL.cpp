@@ -15,7 +15,7 @@
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Tonemapping.h"
-#include "ParameterBlock_OpenGL.h"
+#include "Buffer_OpenGL.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"
@@ -205,12 +205,12 @@ namespace opengl
 			}
 		}
 
-		// Parameter Blocks:
-		if (renderManager.m_newParameterBlocks.HasReadData())
+		// Buffers:
+		if (renderManager.m_newBuffers.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newParameterBlocks.GetReadData())
+			for (auto& newObject : renderManager.m_newBuffers.GetReadData())
 			{
-				opengl::ParameterBlock::Create(*newObject);
+				opengl::Buffer::Create(*newObject);
 			}
 		}
 	}
@@ -260,13 +260,13 @@ namespace opengl
 						opengl::Shader::Bind(*shader);
 
 						// Set stage param blocks:
-						for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
+						for (std::shared_ptr<re::Buffer> permanentBuffer : renderStage->GetPermanentBuffers())
 						{
-							opengl::Shader::SetParameterBlock(*shader, *permanentPB.get());
+							opengl::Shader::SetBuffer(*shader, *permanentBuffer.get());
 						}
-						for (std::shared_ptr<re::ParameterBlock> perFramePB : renderStage->GetPerFrameParameterBlocks())
+						for (std::shared_ptr<re::Buffer> perFrameBuffer : renderStage->GetPerFrameBuffers())
 						{
-							opengl::Shader::SetParameterBlock(*shader, *perFramePB.get());
+							opengl::Shader::SetBuffer(*shader, *perFrameBuffer.get());
 						}
 
 						// Set stage texture/sampler inputs:
@@ -314,7 +314,7 @@ namespace opengl
 					std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 					for (re::Batch const& batch : batches)
 					{
-						// No stage shader: Must set stage PBs for each batch
+						// No stage shader: Must set stage buffers for each batch
 						if (!hasStageShader)
 						{
 							re::Shader const* batchShader = batch.GetShader();
@@ -322,11 +322,11 @@ namespace opengl
 							SetDrawState(batchShader);
 						}
 
-						// Batch parameter blocks:
-						std::vector<std::shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
-						for (std::shared_ptr<re::ParameterBlock> const& batchPB : batchPBs)
+						// Batch buffers:
+						std::vector<std::shared_ptr<re::Buffer>> const& batchBuffers = batch.GetBuffers();
+						for (std::shared_ptr<re::Buffer> const& batchBuffer : batchBuffers)
 						{
-							opengl::Shader::SetParameterBlock(*stageShader, *batchPB.get());
+							opengl::Shader::SetBuffer(*stageShader, *batchBuffer.get());
 						}
 
 						// Set Batch Texture/Sampler inputs:

@@ -55,7 +55,7 @@ namespace
 	}
 
 
-	// Pack the settings struct we pass to the XeGTAO library to assemble our PB data
+	// Pack the settings struct we pass to the XeGTAO library to assemble our buffer data
 	void ConfigureGTAOSettings(
 		gr::XeGTAOGraphicsSystem::Quality quality,
 		gr::XeGTAOGraphicsSystem::Denoise denoisePasses,
@@ -155,24 +155,24 @@ namespace gr
 
 		m_hilbertLUT = CreateHilbertLUT();
 
-		// Our own settings parameter block:
-		m_SEXeGTAOSettings = re::ParameterBlock::Create(
+		// Our own settings buffer:
+		m_SEXeGTAOSettings = re::Buffer::Create(
 			"SEXeGTAOSettings", 
 			CreateXeGTAOSettingsParamsData(m_XeGTAOQuality),
-			re::ParameterBlock::Mutable);
+			re::Buffer::Mutable);
 		
 		// TODO: Output bent normals
 		// NOTE: This will require recreating the pipeline if we change this value (as targets depend on it)
 		const bool outputBentNormals = false;
 
-		// XeGTAO::GTAOConstants parameter block. Note: We pass an identity projection matrix for now; we'll populate
+		// XeGTAO::GTAOConstants buffer. Note: We pass an identity projection matrix for now; we'll populate
 		// the real one during PreRender()
 		ConfigureGTAOSettings(m_XeGTAOQuality, m_XeGTAODenoiseMode, m_settings);
 		const XeGTAO::GTAOConstants gtaoConstants = GetGTAOConstantsData(m_xRes, m_yRes, m_settings, glm::mat4(1.f));
 
-		constexpr char const* k_pbShaderName = "SEGTAOConstants"; // "GTAOConstants" is already defined for us
+		constexpr char const* k_bufferShaderName = "SEGTAOConstants"; // "GTAOConstants" is already defined for us
 		m_XeGTAOConstants = 
-			re::ParameterBlock::Create(k_pbShaderName, gtaoConstants, re::ParameterBlock::PBType::Mutable);
+			re::Buffer::Create(k_bufferShaderName, gtaoConstants, re::Buffer::Type::Mutable);
 
 
 		// Depth prefilter stage:
@@ -433,7 +433,7 @@ namespace gr
 			m_prefilterDepthComputeBatch = 
 				std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, prefilterDepthBatchParams);
 
-			m_prefilterDepthComputeBatch->SetParameterBlock(m_XeGTAOConstants);
+			m_prefilterDepthComputeBatch->SetBuffer(m_XeGTAOConstants);
 		}
 		m_prefilterDepthsStage->AddBatch(*m_prefilterDepthComputeBatch);
 
@@ -454,8 +454,8 @@ namespace gr
 
 			m_mainBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, mainBatchParams);
 
-			m_mainBatch->SetParameterBlock(m_XeGTAOConstants);
-			m_mainBatch->SetParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
+			m_mainBatch->SetBuffer(m_XeGTAOConstants);
+			m_mainBatch->SetBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		}
 		m_mainStage->AddBatch(*m_mainBatch);
 
@@ -475,10 +475,10 @@ namespace gr
 			m_denoiseBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, denoiseBatchParams);
 			m_lastPassDenoiseBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, denoiseBatchParams);
 
-			m_denoiseBatch->SetParameterBlock(m_XeGTAOConstants);
-			m_lastPassDenoiseBatch->SetParameterBlock(m_XeGTAOConstants);
+			m_denoiseBatch->SetBuffer(m_XeGTAOConstants);
+			m_lastPassDenoiseBatch->SetBuffer(m_XeGTAOConstants);
 
-			m_lastPassDenoiseBatch->SetParameterBlock(m_SEXeGTAOSettings); // Needed for final stage ONLY
+			m_lastPassDenoiseBatch->SetBuffer(m_SEXeGTAOSettings); // Needed for final stage ONLY
 		}
 
 		const uint8_t lastStageIdx = util::CheckedCast<uint8_t>(m_denoiseStages.size() - 1);

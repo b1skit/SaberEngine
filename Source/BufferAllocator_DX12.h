@@ -4,15 +4,15 @@
 #include <wrl.h>
 
 #include "CPUDescriptorHeapManager_DX12.h"
-#include "ParameterBlockAllocator.h"
+#include "BufferAllocator.h"
 
 
 namespace dx12
 {
-	class ParameterBlockAllocator
+	class BufferAllocator
 	{
 	public:
-		struct PlatformParams final : public re::ParameterBlockAllocator::PlatformParams
+		struct PlatformParams final : public re::BufferAllocator::PlatformParams
 		{
 			// Constant buffer shared committed resources:
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_sharedConstantBufferResources;
@@ -23,14 +23,14 @@ namespace dx12
 
 
 		static void GetSubAllocation(
-			re::ParameterBlock::PBDataType,
+			re::Buffer::DataType,
 			uint64_t alignedSize, 
 			uint64_t& heapOffsetOut,
 			Microsoft::WRL::ComPtr<ID3D12Resource>& resourcePtrOut);
 
 
 	public:
-		static void Create(re::ParameterBlockAllocator&);
-		static void Destroy(re::ParameterBlockAllocator&);
+		static void Create(re::BufferAllocator&);
+		static void Destroy(re::BufferAllocator&);
 	};
 }

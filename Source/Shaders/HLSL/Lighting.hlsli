@@ -6,7 +6,7 @@
 #include "../Common/LightParams.h"
 
 
-ConstantBuffer<LightParamsData> LightParams;
+ConstantBuffer<LightData> LightParams;
 
 
 // Map linear roughness to "perceptually linear" roughness. 

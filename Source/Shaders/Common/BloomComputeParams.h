@@ -5,7 +5,7 @@
 #include "PlatformConversions.h"
 
 
-struct BloomComputeParamsData
+struct BloomComputeData
 {
 	float4 g_srcTexDimensions;
 	float4 g_dstTexDimensions;

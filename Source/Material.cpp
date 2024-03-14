@@ -2,7 +2,7 @@
 #include "Assert.h"
 #include "Material.h"
 #include "Material_GLTF.h"
-#include "ParameterBlock.h"
+#include "Buffer.h"
 #include "Sampler.h"
 #include "SysInfo_Platform.h"
 #include "Texture.h"
@@ -139,8 +139,8 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::ParameterBlock> Material::CreateInstancedParameterBlock(
-		re::ParameterBlock::PBType pbType, 
+	std::shared_ptr<re::Buffer> Material::CreateInstancedBuffer(
+		re::Buffer::Type bufferType, 
 		std::vector<MaterialInstanceData const*> const& instanceData)
 	{
 		SEAssert(!instanceData.empty(), "Instance data is empty");
@@ -150,7 +150,7 @@ namespace gr
 		{
 		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
 		{
-			return gr::Material_GLTF::CreateInstancedParameterBlock(pbType, instanceData);
+			return gr::Material_GLTF::CreateInstancedBuffer(bufferType, instanceData);
 		}
 		break;
 		default:
@@ -161,19 +161,19 @@ namespace gr
 
 
 	void Material::CommitMaterialInstanceData(
-		re::ParameterBlock* pb, MaterialInstanceData const* instanceData, uint32_t baseOffset)
+		re::Buffer* buffer, MaterialInstanceData const* instanceData, uint32_t baseOffset)
 	{
 		SEAssert(instanceData, "Instance data is null");
-		SEAssert(baseOffset < pb->GetNumElements(), "Base offset is OOB");
-		SEAssert(pb->GetType() == re::ParameterBlock::PBType::Mutable,
-			"Only mutable parameter blocks can be partially updated");
+		SEAssert(baseOffset < buffer->GetNumElements(), "Base offset is OOB");
+		SEAssert(buffer->GetType() == re::Buffer::Type::Mutable,
+			"Only mutable buffers can be partially updated");
 
 		const gr::Material::MaterialType materialType = instanceData->m_type;
 		switch (materialType)
 		{
 		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
 		{
-			gr::Material_GLTF::CommitMaterialInstanceData(pb, instanceData, baseOffset);
+			gr::Material_GLTF::CommitMaterialInstanceData(buffer, instanceData, baseOffset);
 		}
 		break;
 		default:

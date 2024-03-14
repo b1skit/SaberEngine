@@ -72,7 +72,7 @@ namespace re
 		, m_newTextures(util::NBufferedVector<std::shared_ptr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newSamplers(util::NBufferedVector<std::shared_ptr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
-		, m_newParameterBlocks(util::NBufferedVector<std::shared_ptr<re::ParameterBlock>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newBuffers(util::NBufferedVector<std::shared_ptr<re::Buffer>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_singleFrameVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Three, k_newObjectReserveAmount)
 	{
 		m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
@@ -113,7 +113,7 @@ namespace re
 
 			Update(m_renderFrameNum, updateParams.m_elapsed);
 
-			EndOfFrame(); // Clear batches, process pipeline and parameter block allocator EndOfFrames
+			EndOfFrame(); // Clear batches, process pipeline and buffer allocator EndOfFrames
 
 			SEEndCPUEvent();
 		}
@@ -196,7 +196,7 @@ namespace re
 
 		HandleEvents();
 
-		re::Context::Get()->GetParameterBlockAllocator().BeginFrame(frameNum);
+		re::Context::Get()->GetBufferAllocator().BeginFrame(frameNum);
 		
 		// Get the RenderDataManager(s) ready for the new frame
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
@@ -218,7 +218,7 @@ namespace re
 		CreateAPIResources();
 
 		// Update/buffer param blocks
-		re::Context::Get()->GetParameterBlockAllocator().BufferParamBlocks();
+		re::Context::Get()->GetBufferAllocator().BufferData();
 
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");
@@ -242,11 +242,11 @@ namespace re
 	{
 		SEBeginCPUEvent("re::RenderManager::EndOfFrame");
 
-		// Need to clear the PB read data now, to make sure we're not holding on to any single frame PBs beyond the
+		// Need to clear the buffer read data now, to make sure we're not holding on to any single frame buffers beyond the
 		// end of the current frame
-		SEBeginCPUEvent("Clear parameter block data");
+		SEBeginCPUEvent("Clear buffer data");
 		{
-			m_newParameterBlocks.ClearReadData();
+			m_newBuffers.ClearReadData();
 		}
 
 		SEEndCPUEvent();
@@ -272,7 +272,7 @@ namespace re
 			// Swap the single-frame resource n-buffers:
 			m_singleFrameVertexStreams.Swap();
 
-			re::Context::Get()->GetParameterBlockAllocator().EndFrame();
+			re::Context::Get()->GetBufferAllocator().EndFrame();
 		}
 		SEEndCPUEvent();
 
@@ -366,7 +366,7 @@ namespace re
 		m_newTextures.AquireReadLock();
 		m_newSamplers.AquireReadLock();
 		m_newTargetSets.AquireReadLock();
-		m_newParameterBlocks.AquireReadLock();
+		m_newBuffers.AquireReadLock();
 
 		// Clear any textures created during the last frame as late as possible. This allows systems that use this list
 		// (e.g. the MIP generation GS) to see new textures registered for creation between the last time we swapped
@@ -389,7 +389,7 @@ namespace re
 		m_newTextures.ReleaseReadLock();
 		m_newSamplers.ReleaseReadLock();
 		m_newTargetSets.ReleaseReadLock();
-		m_newParameterBlocks.ReleaseReadLock();
+		m_newBuffers.ReleaseReadLock();
 
 		// Clear the initial data of our new textures now that they have been buffered
 		for (auto const& newTexture : m_createdTextures)
@@ -411,7 +411,7 @@ namespace re
 		m_newTextures.Swap();
 		m_newSamplers.Swap();
 		m_newTargetSets.Swap();
-		m_newParameterBlocks.Swap();
+		m_newBuffers.Swap();
 
 		SEEndCPUEvent();
 	}
@@ -424,7 +424,7 @@ namespace re
 		m_newTextures.Destroy();
 		m_newSamplers.Destroy();
 		m_newTargetSets.Destroy();
-		m_newParameterBlocks.Destroy();
+		m_newBuffers.Destroy();
 	}
 
 
@@ -464,9 +464,9 @@ namespace re
 
 
 	template<>
-	void RenderManager::RegisterForCreate(std::shared_ptr<re::ParameterBlock> newObject)
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::Buffer> newObject)
 	{
-		m_newParameterBlocks.EmplaceBack(std::move(newObject));
+		m_newBuffers.EmplaceBack(std::move(newObject));
 	}
 
 

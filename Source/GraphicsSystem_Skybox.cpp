@@ -16,9 +16,9 @@
 
 namespace
 {
-	SkyboxParamsData CreateSkyboxParamsData(glm::vec3 const& backgroundColor, bool showBackgroundColor)
+	SkyboxData CreateSkyboxParamsData(glm::vec3 const& backgroundColor, bool showBackgroundColor)
 	{
-		SkyboxParamsData skyboxParams;
+		SkyboxData skyboxParams;
 		skyboxParams.g_backgroundColorIsEnabled = glm::vec4(backgroundColor.rgb, static_cast<float>(showBackgroundColor));
 		return skyboxParams;
 	}
@@ -71,7 +71,7 @@ namespace gr
 
 		m_skyboxStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_skyboxShaderName, skyboxPipelineState));
 
-		m_skyboxStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
+		m_skyboxStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
 		DeferredLightingGraphicsSystem* deferredLightGS = 
 			m_graphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
@@ -100,12 +100,12 @@ namespace gr
 
 		m_skyboxStage->SetTextureTargetSet(skyboxTargets);
 
-		m_skyboxParams = re::ParameterBlock::Create(
-			SkyboxParamsData::s_shaderName,
+		m_skyboxParams = re::Buffer::Create(
+			SkyboxData::s_shaderName,
 			CreateSkyboxParamsData(m_backgroundColor, m_showBackgroundColor),
-			re::ParameterBlock::PBType::Mutable);
+			re::Buffer::Type::Mutable);
 
-		m_skyboxStage->AddPermanentParameterBlock(m_skyboxParams);
+		m_skyboxStage->AddPermanentBuffer(m_skyboxParams);
 
 		// Start with our default texture set, in case there is no IBL
 		m_skyTexture = m_fallbackColorTex.get();

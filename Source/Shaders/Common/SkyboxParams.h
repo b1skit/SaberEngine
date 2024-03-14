@@ -5,7 +5,7 @@
 #include "PlatformConversions.h"
 
 
-struct SkyboxParamsData
+struct SkyboxData
 {
 	float4 g_backgroundColorIsEnabled; // .rgb = background color override, .a = enabled/disabled (1.f/0.f)
 

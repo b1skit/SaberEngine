@@ -105,7 +105,7 @@ namespace gr
 		m_gBufferStage->SetTextureTargetSet(gBufferTargets);
 
 		// Camera:		
-		m_gBufferStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
+		m_gBufferStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
 
 		// Create a clear stage for the GBuffer targets:

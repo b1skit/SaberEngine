@@ -336,14 +336,14 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="MeshFactory.cpp" />
     <ClCompile Include="MeshPrimitiveComponent.cpp" />
     <ClCompile Include="NameComponent.cpp" />
-    <ClCompile Include="ParameterBlock.cpp" />
-    <ClCompile Include="ParameterBlockAllocator.cpp" />
-    <ClCompile Include="ParameterBlockAllocator_DX12.cpp" />
-    <ClCompile Include="ParameterBlockAllocator_OpenGL.cpp" />
-    <ClCompile Include="ParameterBlockAllocator_Platform.cpp" />
-    <ClCompile Include="ParameterBlock_DX12.cpp" />
-    <ClCompile Include="ParameterBlock_OpenGL.cpp" />
-    <ClCompile Include="ParameterBlock_Platform.cpp" />
+    <ClCompile Include="Buffer.cpp" />
+    <ClCompile Include="BufferAllocator.cpp" />
+    <ClCompile Include="BufferAllocator_DX12.cpp" />
+    <ClCompile Include="BufferAllocator_OpenGL.cpp" />
+    <ClCompile Include="BufferAllocator_Platform.cpp" />
+    <ClCompile Include="Buffer_DX12.cpp" />
+    <ClCompile Include="Buffer_OpenGL.cpp" />
+    <ClCompile Include="Buffer_Platform.cpp" />
     <ClCompile Include="pch\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -471,7 +471,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Device_DX12.h" />
     <ClInclude Include="DoubleBufferUnorderedMap.h" />
     <ClInclude Include="NameComponent.h" />
-    <ClInclude Include="ParameterBlockAllocator_DX12.h" />
+    <ClInclude Include="BufferAllocator_DX12.h" />
     <ClInclude Include="MeshFactory.h" />
     <ClInclude Include="NBufferedVector.h" />
     <ClInclude Include="EngineThread.h" />
@@ -490,13 +490,13 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="IPlatformParams.h" />
     <ClInclude Include="Material_GLTF.h" />
     <ClInclude Include="MathUtils.h" />
-    <ClInclude Include="ParameterBlock.h" />
-    <ClInclude Include="ParameterBlockAllocator.h" />
-    <ClInclude Include="ParameterBlockAllocator_OpenGL.h" />
-    <ClInclude Include="ParameterBlockAllocator_Platform.h" />
-    <ClInclude Include="ParameterBlock_DX12.h" />
-    <ClInclude Include="ParameterBlock_OpenGL.h" />
-    <ClInclude Include="ParameterBlock_Platform.h" />
+    <ClInclude Include="Buffer.h" />
+    <ClInclude Include="BufferAllocator.h" />
+    <ClInclude Include="BufferAllocator_OpenGL.h" />
+    <ClInclude Include="BufferAllocator_Platform.h" />
+    <ClInclude Include="Buffer_DX12.h" />
+    <ClInclude Include="Buffer_OpenGL.h" />
+    <ClInclude Include="Buffer_Platform.h" />
     <ClInclude Include="pch\stdafx.h" />
     <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="PipelineState.h" />

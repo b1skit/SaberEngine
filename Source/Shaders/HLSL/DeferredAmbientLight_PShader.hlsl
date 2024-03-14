@@ -11,7 +11,7 @@
 
 
 Texture2D<uint> SSAOTex;
-ConstantBuffer<AmbientLightParamsData> AmbientLightParams;
+ConstantBuffer<AmbientLightData> AmbientLightParams;
 
 
 // Combine AO terms: fineAO = from GBuffer textures, coarseAO = SSAO

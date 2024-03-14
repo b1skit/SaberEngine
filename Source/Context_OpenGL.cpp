@@ -311,8 +311,8 @@ namespace opengl
 		opengl::SysInfo::GetMaxTextureBindPoints();
 		opengl::SysInfo::GetMaxAnisotropy();
 
-		// Parameter Block Allocator:
-		m_paramBlockAllocator.Create(currentFrame);
+		// Buffer Allocator:
+		m_bufferAllocator.Create(currentFrame);
 
 		// Setup our ImGui context
 		{
@@ -352,9 +352,9 @@ namespace opengl
 		::ReleaseDC(windowPlatformParams->m_hWindow, context.m_hDeviceContext); // Release device context
 		::wglDeleteContext(context.m_glRenderContext); // Delete the rendering context
 
-		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
-		// as parameter blocks call the ParameterBlockAllocator in their destructor
-		context.GetParameterBlockAllocator().Destroy();
+		// NOTE: We must destroy anything that holds a buffer before the BufferAllocator is destroyed, 
+		// as buffers call the BufferAllocator in their destructor
+		context.GetBufferAllocator().Destroy();
 
 		// Destroy VAO library:
 		{

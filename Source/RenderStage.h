@@ -8,7 +8,7 @@
 namespace re
 {
 	class ComputeStage;
-	class ParameterBlock;
+	class Buffer;
 	class Shader;
 	class Texture;
 
@@ -114,11 +114,11 @@ namespace re
 		bool DepthTargetIsAlsoTextureInput() const;
 		int GetDepthTargetTextureInputIdx() const;
 
-		void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
-		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPermanentParameterBlocks() const { return m_permanentParamBlocks; }
+		void AddPermanentBuffer(std::shared_ptr<re::Buffer>);
+		inline std::vector<std::shared_ptr<re::Buffer>> const& GetPermanentBuffers() const { return m_permanentBuffers; }
 		
-		void AddSingleFrameParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
-		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPerFrameParameterBlocks() const { return m_singleFrameParamBlocks; }
+		void AddSingleFrameBuffer(std::shared_ptr<re::Buffer>);
+		inline std::vector<std::shared_ptr<re::Buffer>> const& GetPerFrameBuffers() const { return m_singleFrameBuffers; }
 
 		// Stage Batches:
 		std::vector<re::Batch> const& GetStageBatches() const;
@@ -149,9 +149,9 @@ namespace re
 		std::vector<RenderStageTextureAndSamplerInput> m_textureSamplerInputs;
 		int m_depthTextureInputIdx; // k_noDepthTexAsInputFlag: Depth not attached as an input		
 
-		std::vector<std::shared_ptr<re::ParameterBlock>> m_singleFrameParamBlocks; // Cleared every frame
+		std::vector<std::shared_ptr<re::Buffer>> m_singleFrameBuffers; // Cleared every frame
 
-		std::vector<std::shared_ptr<re::ParameterBlock>> m_permanentParamBlocks;
+		std::vector<std::shared_ptr<re::Buffer>> m_permanentBuffers;
 
 		std::vector<re::Batch> m_stageBatches;
 		uint32_t m_batchFilterBitmask;

@@ -9,7 +9,7 @@
 
 SamplerState ClampMinMagMipLinear;
 Texture2D<float4> Tex0;
-ConstantBuffer<BloomComputeParamsData> BloomComputeParams;
+ConstantBuffer<BloomComputeData> BloomComputeParams;
 
 
 void BloomDown(ComputeIn In)

@@ -6,9 +6,6 @@
 #include "Texture.h"
 #include "Texture_Platform.h"
 
-using glm::vec4;
-using std::string;
-
 
 namespace
 {
@@ -150,7 +147,7 @@ namespace re
 
 
 	Texture::Texture(
-		string const& name,
+		std::string const& name,
 		TextureParams const& params)
 		: NamedObject(name)
 		, m_texParams(params)
@@ -337,7 +334,7 @@ namespace re
 	}
 
 
-	void re::Texture::Fill(vec4 solidColor)
+	void re::Texture::Fill(glm::vec4 solidColor)
 	{
 		SEAssert(m_initialData->HasData(), "There are no texels. Texels are only allocated for non-target textures");
 
@@ -355,7 +352,7 @@ namespace re
 	}
 
 
-	vec4 Texture::GetTextureDimenions() const
+	glm::vec4 Texture::GetTextureDimenions() const
 	{
 		// .xyzw = width, height, 1/width, 1/height
 		return ComputeTextureDimenions(m_texParams.m_width, m_texParams.m_height);

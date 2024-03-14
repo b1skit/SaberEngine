@@ -48,17 +48,17 @@ namespace gr
 			re::StagePipeline*, re::Texture const* iblTex, std::shared_ptr<re::Texture>& pmremTexOut) const;
 
 	private: // Ambient lights:
-		struct AmbientLightData
+		struct AmbientLightRenderData
 		{
-			std::shared_ptr<re::ParameterBlock> m_ambientParams;
+			std::shared_ptr<re::Buffer> m_ambientParams;
 			std::shared_ptr<re::Texture> m_IEMTex;
 			std::shared_ptr<re::Texture> m_PMREMTex;
 			re::Batch m_batch;
 		};
-		std::unordered_map<gr::RenderDataID, AmbientLightData> m_ambientLightData;
+		std::unordered_map<gr::RenderDataID, AmbientLightRenderData> m_ambientLightData;
 
 		std::shared_ptr<re::RenderStage> m_ambientStage;
-		std::shared_ptr<re::ParameterBlock> m_ambientParams;
+		std::shared_ptr<re::Buffer> m_ambientParams;
 		XeGTAOGraphicsSystem* m_AOGS;
 
 		re::StagePipeline* m_resourceCreationStagePipeline;
@@ -67,18 +67,18 @@ namespace gr
 		// For rendering into a cube map (IEM/PMREM generation)
 		std::shared_ptr<gr::MeshPrimitive> m_cubeMeshPrimitive;
 		std::unique_ptr<re::Batch> m_cubeMeshBatch;
-		std::array<std::shared_ptr<re::ParameterBlock>, 6> m_cubemapRenderCamParams;
+		std::array<std::shared_ptr<re::Buffer>, 6> m_cubemapRenderCamParams;
 
 
 	private: // Punctual lights:
-		struct PunctualLightData
+		struct PunctualLightRenderData
 		{
 			gr::Light::Type m_type;
-			std::shared_ptr<re::ParameterBlock> m_lightParams;
-			std::shared_ptr<re::ParameterBlock> m_transformParams;
+			std::shared_ptr<re::Buffer> m_lightParams;
+			std::shared_ptr<re::Buffer> m_transformParams;
 			re::Batch m_batch;
 		};
-		std::unordered_map<gr::RenderDataID, PunctualLightData> m_punctualLightData;
+		std::unordered_map<gr::RenderDataID, PunctualLightRenderData> m_punctualLightData;
 
 		std::shared_ptr<re::RenderStage> m_directionalStage;
 		std::shared_ptr<re::RenderStage> m_pointStage;

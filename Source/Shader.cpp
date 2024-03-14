@@ -8,12 +8,6 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
 
-using std::string;
-using std::vector;
-using std::shared_ptr;
-using std::make_shared;
-using gr::Material;
-
 
 namespace re
 {
@@ -43,7 +37,7 @@ namespace re
 		// it. But that's OK, the SceneData will tell us if this shader was actually added
 
 		// Our ctor is private; We must manually create the Shader, and then pass the ownership to a shared_ptr
-		shared_ptr<re::Shader> sharedShaderPtr;
+		std::shared_ptr<re::Shader> sharedShaderPtr;
 		sharedShaderPtr.reset(new re::Shader(extensionlessShaderFilename, rePipelineState, shaderIdentifier));
 
 		// Register the Shader with the SceneData object for lifetime management:
@@ -59,7 +53,7 @@ namespace re
 
 
 	Shader::Shader(
-		string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState, uint64_t shaderIdentifier)
+		std::string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState, uint64_t shaderIdentifier)
 		: NamedObject(extensionlessShaderFilename)
 		, m_shaderIdentifier(shaderIdentifier)
 		, m_pipelineState(rePipelineState)

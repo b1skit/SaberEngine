@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Material.h"
-#include "ParameterBlock.h"
+#include "Buffer.h"
 
 #include "Shaders/Common/MaterialParams.h"
 
@@ -11,11 +11,11 @@ namespace gr
 	class Material_GLTF : public virtual Material
 	{
 	public:
-		static std::shared_ptr<re::ParameterBlock> CreateInstancedParameterBlock(
-			re::ParameterBlock::PBType,
+		static std::shared_ptr<re::Buffer> CreateInstancedBuffer(
+			re::Buffer::Type,
 			std::vector<MaterialInstanceData const*> const&);
 		
-		static void CommitMaterialInstanceData(re::ParameterBlock*, MaterialInstanceData const*, uint32_t baseOffset);
+		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceData const*, uint32_t baseOffset);
 
 		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified
 
@@ -67,7 +67,7 @@ namespace gr
 
 
 	private:
-		InstancedPBRMetallicRoughnessParamsData GetPBRMetallicRoughnessParamsData() const;
+		InstancedPBRMetallicRoughnessData GetPBRMetallicRoughnessParamsData() const;
 	};
 
 

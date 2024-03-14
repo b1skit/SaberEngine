@@ -5,7 +5,7 @@
 #include "PlatformConversions.h"
 
 
-struct LightParamsData
+struct LightData
 {
 	float4 g_lightColorIntensity; // .rgb = hue, .a = intensity
 
@@ -28,7 +28,7 @@ struct LightParamsData
 };
 
 
-struct AmbientLightParamsData
+struct AmbientLightData
 {
 	// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
 	float4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;

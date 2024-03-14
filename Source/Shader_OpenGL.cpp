@@ -3,7 +3,7 @@
 #include "CoreEngine.h"
 #include "Assert.h"
 #include "Material.h"
-#include "ParameterBlock_OpenGL.h"
+#include "Buffer_OpenGL.h"
 #include "PerformanceTimer.h"
 #include "Sampler_OpenGL.h"
 #include "Shader.h"
@@ -635,7 +635,7 @@ namespace opengl
 	}
 
 
-	void Shader::SetParameterBlock(re::Shader const& shader, re::ParameterBlock const& paramBlock)
+	void Shader::SetBuffer(re::Shader const& shader, re::Buffer const& buffer)
 	{
 		opengl::Shader::PlatformParams const* shaderPlatformParams = 
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
@@ -654,15 +654,15 @@ namespace opengl
 		
 		GLint bindIndex = 0;
 
-		re::ParameterBlock::PlatformParams const* pbPlatformParams = paramBlock.GetPlatformParams();
-		switch (pbPlatformParams->m_dataType)
+		re::Buffer::PlatformParams const* bufferPlatformParams = buffer.GetPlatformParams();
+		switch (bufferPlatformParams->m_dataType)
 		{
-		case re::ParameterBlock::PBDataType::SingleElement: // Bind our single-element PBs as UBOs
+		case re::Buffer::DataType::SingleElement: // Bind our single-element buffers as UBOs
 		{
 			// Find the buffer binding index via introspection
 			const GLint uniformBlockIndex = glGetUniformBlockIndex(
 				shaderPlatformParams->m_shaderReference,	// program
-				paramBlock.GetName().c_str());				// Uniform block name
+				buffer.GetName().c_str());				// Uniform block name
 
 			// GL_INVALID_INDEX is returned if the the uniform block name does not identify an active uniform block
 			SEAssert(uniformBlockIndex != GL_INVALID_INDEX ||
@@ -690,13 +690,13 @@ namespace opengl
 			}
 		}
 		break;
-		case re::ParameterBlock::PBDataType::Array: // Bind our array PBs as SSBOs, as they support dynamic indexing
+		case re::Buffer::DataType::Array: // Bind our array buffers as SSBOs, as they support dynamic indexing
 		{
 			// Find the buffer binding index via introspection
 			const GLint resourceIdx = glGetProgramResourceIndex(
 			shaderPlatformParams->m_shaderReference,	// program
 			GL_SHADER_STORAGE_BLOCK,					// programInterface
-			paramBlock.GetName().c_str());				// name
+			buffer.GetName().c_str());				// name
 
 			SEAssert(resourceIdx != GL_INVALID_ENUM, "Failed to get resource index");
 
@@ -720,11 +720,11 @@ namespace opengl
 			}
 		}
 		break;
-		default: SEAssertF("Invalid PBDataType");
+		default: SEAssertF("Invalid DataType");
 		}
 
-		// Bind our PB to the retrieved bind index:
-		opengl::ParameterBlock::Bind(paramBlock, bindIndex);
+		// Bind our buffer to the retrieved bind index:
+		opengl::Buffer::Bind(buffer, bindIndex);
 
 		// Restore the state:
 		if (!isBound)

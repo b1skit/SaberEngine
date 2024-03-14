@@ -12,7 +12,7 @@
 namespace re
 {
 	class Batch;
-	class ParameterBlock;
+	class Buffer;
 	class VertexStream;
 	class Texture;
 	class TextureTarget;
@@ -74,7 +74,7 @@ namespace dx12
 
 		// GPU descriptors:
 		void CommitGPUDescriptors(); // Must be called before issuing draw commands
-		void SetParameterBlock(re::ParameterBlock const*);
+		void SetBuffer(re::Buffer const*);
 
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;

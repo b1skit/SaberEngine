@@ -7,8 +7,6 @@
 #include "Context_Platform.h"
 #include "SysInfo_Platform.h"
 
-using std::make_shared;
-
 
 namespace re
 {

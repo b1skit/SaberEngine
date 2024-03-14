@@ -14,13 +14,13 @@
 
 namespace
 {
-	// We'll round our parameter block array sizes up to the nearest multiple of this value
+	// We'll round our buffer array sizes up to the nearest multiple of this value
 	constexpr uint32_t k_numBlocksPerAllocation = 64;
 
 
-	InstanceIndexParamsData CreateInstanceIndexParamsData(uint32_t transformIdx, uint32_t materialIdx)
+	InstanceIndexData CreateInstanceIndexData(uint32_t transformIdx, uint32_t materialIdx)
 	{
-		return InstanceIndexParamsData
+		return InstanceIndexData
 		{
 			.g_transformIdx = transformIdx,
 			.g_materialIdx = materialIdx
@@ -28,15 +28,15 @@ namespace
 	}
 
 
-	std::shared_ptr<re::ParameterBlock> CreateInstanceIndexParameterBlock(
-		re::ParameterBlock::PBType pbType,
-		std::vector<InstanceIndexParamsData> const& instanceIndexParams)
+	std::shared_ptr<re::Buffer> CreateInstanceIndexBuffer(
+		re::Buffer::Type bufferType,
+		std::vector<InstanceIndexData> const& instanceIndexParams)
 	{
-		return re::ParameterBlock::CreateArray(
-			InstanceIndexParamsData::s_shaderName,
+		return re::Buffer::CreateArray(
+			InstanceIndexData::s_shaderName,
 			instanceIndexParams.data(),
 			util::CheckedCast<uint32_t>(instanceIndexParams.size()),
-			pbType);
+			bufferType);
 	}
 
 
@@ -100,14 +100,12 @@ namespace
 
 
 	template<typename T>
-	std::shared_ptr<re::ParameterBlock> CreateInstancedParameterBlock(char const* shaderName, uint32_t maxInstances)
+	std::shared_ptr<re::Buffer> CreateInstancedBuffer(char const* shaderName, uint32_t maxInstances)
 	{
-		std::shared_ptr<re::ParameterBlock> instanceDataPB = re::ParameterBlock::CreateUncommittedArray<T>(
+		return re::Buffer::CreateUncommittedArray<T>(
 			shaderName,
 			maxInstances,
-			re::ParameterBlock::PBType::Mutable);
-
-		return instanceDataPB;
+			re::Buffer::Type::Mutable);
 	}
 }
 
@@ -233,24 +231,24 @@ namespace gr
 		}
 
 		
-		// Create/grow our permanent instance parameter blocks:
-		const bool mustReallocateTransformPB = m_instancedTransforms != nullptr && 
+		// Create/grow our permanent instance buffers:
+		const bool mustReallocateTransformBuffer = m_instancedTransforms != nullptr && 
 			m_instancedTransforms->GetNumElements() < m_instancedTransformIndexes.size();
 
-		const uint32_t requestedTransformPBElements = util::RoundUpToNearestMultiple(
+		const uint32_t requestedTransformBufferElements = util::RoundUpToNearestMultiple(
 			util::CheckedCast<uint32_t>(m_instancedTransformIndexes.size()),
 			k_numBlocksPerAllocation);
 
-		if ((mustReallocateTransformPB || m_instancedTransforms == nullptr) && requestedTransformPBElements > 0)
+		if ((mustReallocateTransformBuffer || m_instancedTransforms == nullptr) && requestedTransformBufferElements > 0)
 		{
-			m_instancedTransforms = CreateInstancedParameterBlock<InstancedTransformParamsData>(
-				InstancedTransformParamsData::s_shaderName,
-				requestedTransformPBElements);
+			m_instancedTransforms = CreateInstancedBuffer<InstancedTransformData>(
+				InstancedTransformData::s_shaderName,
+				requestedTransformBufferElements);
 
-			// If we reallocated, re-copy all of the data to the new parameter block
-			if (mustReallocateTransformPB)
+			// If we reallocated, re-copy all of the data to the new buffer
+			if (mustReallocateTransformBuffer)
 			{
-				LOG_WARNING("gr::BatchManager: Transform instance parameter block is being reallocated");
+				LOG_WARNING("gr::BatchManager: Transform instance buffer is being reallocated");
 
 				for (auto& transformRecord : m_instancedTransformIndexes)
 				{
@@ -261,8 +259,8 @@ namespace gr
 
 					gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromTransformID(transformID);
 
-					InstancedTransformParamsData const& transformParams =
-						gr::Transform::CreateInstancedTransformParamsData(transformData);
+					InstancedTransformData const& transformParams =
+						gr::Transform::CreateInstancedTransformData(transformData);
 
 					m_instancedTransforms->Commit(
 						&transformParams,
@@ -272,22 +270,22 @@ namespace gr
 			}
 		}
 
-		const bool mustReallocateMaterialPB = m_instancedMaterials != nullptr &&
+		const bool mustReallocateMaterialBuffer = m_instancedMaterials != nullptr &&
 			m_instancedMaterials->GetNumElements() < m_instancedMaterialIndexes.size();
 
-		const uint32_t requestedMaterialPBElements = util::RoundUpToNearestMultiple(
+		const uint32_t requestedMaterialBufferElements = util::RoundUpToNearestMultiple(
 			util::CheckedCast<uint32_t>(m_instancedMaterialIndexes.size()),
 			k_numBlocksPerAllocation);
 
-		if ((mustReallocateMaterialPB || m_instancedMaterials == nullptr) && requestedMaterialPBElements > 0)
+		if ((mustReallocateMaterialBuffer || m_instancedMaterials == nullptr) && requestedMaterialBufferElements > 0)
 		{
-			m_instancedMaterials = CreateInstancedParameterBlock<InstancedPBRMetallicRoughnessParamsData>(
-				InstancedPBRMetallicRoughnessParamsData::s_shaderName,
-				requestedMaterialPBElements);
+			m_instancedMaterials = CreateInstancedBuffer<InstancedPBRMetallicRoughnessData>(
+				InstancedPBRMetallicRoughnessData::s_shaderName,
+				requestedMaterialBufferElements);
 
-			if (mustReallocateMaterialPB)
+			if (mustReallocateMaterialBuffer)
 			{
-				LOG_WARNING("gr::BatchManager: Material instance parameter block is being reallocated");
+				LOG_WARNING("gr::BatchManager: Material instance buffer is being reallocated");
 
 				for (auto& materialRecord : m_instancedMaterialIndexes)
 				{
@@ -319,8 +317,8 @@ namespace gr
 
 				gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromTransformID(transformID);
 
-				InstancedTransformParamsData const& transformParams = 
-					gr::Transform::CreateInstancedTransformParamsData(transformData);
+				InstancedTransformData const& transformParams = 
+					gr::Transform::CreateInstancedTransformData(transformData);
 
 				m_instancedTransforms->Commit(
 					&transformParams,
@@ -364,7 +362,7 @@ namespace gr
 	std::vector<re::Batch> BatchManager::BuildSceneBatches(
 		gr::RenderDataManager const& renderData, 
 		std::vector<gr::RenderDataID> const& renderDataIDs,
-		uint8_t pbTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
+		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
 	{
 		// Copy the batch metadata for the requeted RenderDataIDs:
 		std::vector<BatchMetadata> batchMetadata;
@@ -409,8 +407,8 @@ namespace gr
 				const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
 				batches.back().SetInstanceCount(numInstances);
 
-				// Gather the data we need to build our instanced parameter blocks:
-				std::vector<InstanceIndexParamsData> instanceIndexParams;
+				// Gather the data we need to build our instanced buffers:
+				std::vector<InstanceIndexData> instanceIndexParams;
 				instanceIndexParams.reserve(numInstances);
 
 				for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
@@ -428,22 +426,22 @@ namespace gr
 					const uint32_t materialIdx = 
 						m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx].m_renderDataID).m_index;
 
-					instanceIndexParams.emplace_back(CreateInstanceIndexParamsData(transformIdx, materialIdx));
+					instanceIndexParams.emplace_back(CreateInstanceIndexData(transformIdx, materialIdx));
 				}
 
-				// Finally, attach our instanced parameter blocks:
-				if (pbTypeMask != 0)
+				// Finally, attach our instanced buffers:
+				if (bufferTypeMask != 0)
 				{
-					batches.back().SetParameterBlock(CreateInstanceIndexParameterBlock(
-						re::ParameterBlock::PBType::SingleFrame, instanceIndexParams));
+					batches.back().SetBuffer(CreateInstanceIndexBuffer(
+						re::Buffer::Type::SingleFrame, instanceIndexParams));
 
-					if (pbTypeMask & InstanceType::Transform)
+					if (bufferTypeMask & InstanceType::Transform)
 					{
-						batches.back().SetParameterBlock(m_instancedTransforms);
+						batches.back().SetBuffer(m_instancedTransforms);
 					}
-					if (pbTypeMask & InstanceType::Material)
+					if (bufferTypeMask & InstanceType::Material)
 					{
-						batches.back().SetParameterBlock(m_instancedMaterials);
+						batches.back().SetBuffer(m_instancedMaterials);
 					}
 				}
 

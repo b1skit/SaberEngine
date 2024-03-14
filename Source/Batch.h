@@ -14,7 +14,7 @@ namespace gr
 }
 namespace re
 {
-	class ParameterBlock;
+	class Buffer;
 	class Shader;
 	class Sampler;
 }
@@ -115,8 +115,8 @@ namespace re
 		size_t GetInstanceCount() const;
 		void SetInstanceCount(uint32_t numInstances);
 
-		std::vector<std::shared_ptr<re::ParameterBlock>> const& GetParameterBlocks() const;
-		void SetParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock);
+		std::vector<std::shared_ptr<re::Buffer>> const& GetBuffers() const;
+		void SetBuffer(std::shared_ptr<re::Buffer>);
 
 		void AddTextureAndSamplerInput(
 			char const* shaderName,
@@ -155,10 +155,10 @@ namespace re
 		
 		re::Shader const* m_batchShader;
 		
-		// Note: Batches can be responsible for the lifetime of a parameter block held by a shared pointer: 
-		// e.g. single-frame resources, or permanent PBs that are to be discarded (e.g. batch manager allocated a larger
+		// Note: Batches can be responsible for the lifetime of a buffer held by a shared pointer: 
+		// e.g. single-frame resources, or permanent buffers that are to be discarded (e.g. batch manager allocated a larger
 		// one)
-		std::vector<std::shared_ptr<re::ParameterBlock>> m_batchParamBlocks;
+		std::vector<std::shared_ptr<re::Buffer>> m_batchBuffers;
 
 		std::vector<BatchTextureAndSamplerInput> m_batchTextureSamplerInputs;
 		uint32_t m_batchFilterBitmask;
@@ -198,9 +198,9 @@ namespace re
 	}
 
 
-	inline std::vector<std::shared_ptr<re::ParameterBlock>> const& Batch::GetParameterBlocks() const
+	inline std::vector<std::shared_ptr<re::Buffer>> const& Batch::GetBuffers() const
 	{
-		return m_batchParamBlocks;
+		return m_batchBuffers;
 	}
 
 

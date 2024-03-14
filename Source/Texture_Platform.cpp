@@ -6,14 +6,12 @@
 #include "Texture_OpenGL.h"
 #include "Texture_DX12.h"
 
-using en::Config;
-
 
 namespace platform
 {
 	void platform::Texture::CreatePlatformParams(re::Texture& texture)
 	{
-		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

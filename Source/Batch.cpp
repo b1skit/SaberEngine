@@ -3,7 +3,7 @@
 #include "CastUtils.h"
 #include "Assert.h"
 #include "Material.h"
-#include "ParameterBlock.h"
+#include "Buffer.h"
 #include "Sampler.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -11,18 +11,18 @@
 
 namespace
 {
-	constexpr size_t k_batchParamBlockIDsReserveAmount = 10;
+	constexpr size_t k_batchBufferIDsReserveAmount = 10;
 
 
-	void ValidateLifetimeCompatibility(re::Batch::Lifetime liftime, re::ParameterBlock::PBType pbType)
+	void ValidateLifetimeCompatibility(re::Batch::Lifetime liftime, re::Buffer::Type bufferType)
 	{
 		SEAssert(liftime == re::Batch::Lifetime::SingleFrame ||
 			(liftime == re::Batch::Lifetime::Permanent &&
-			(pbType == re::ParameterBlock::PBType::Mutable || pbType == re::ParameterBlock::PBType::Immutable)),
-			"Trying to set a parameter block with a mismatching lifetime. Permanent batches cannot (currently) hold "
-			"single frame parameter blocks, as they'd incorrectly maintain their life beyond the frame. Single frame "
-			"batches can hold any type of parameter blocks (but should not be responsible for the lifetime of a "
-			"permanent parameter block as they're expensive to create/destroy)");
+			(bufferType == re::Buffer::Type::Mutable || bufferType == re::Buffer::Type::Immutable)),
+			"Trying to set a buffer with a mismatching lifetime. Permanent batches cannot (currently) hold "
+			"single frame buffers, as they'd incorrectly maintain their life beyond the frame. Single frame "
+			"batches can hold any type of buffers (but should not be responsible for the lifetime of a "
+			"permanent buffer as they're expensive to create/destroy)");
 	}
 }
 
@@ -35,7 +35,7 @@ namespace re
 		, m_batchShader(nullptr)
 		, m_batchFilterBitmask(0)
 	{
-		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
+		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
 		m_graphicsParams = GraphicsParams{
 			.m_batchGeometryMode = GeometryMode::IndexedInstanced,
@@ -75,7 +75,7 @@ namespace re
 		, m_batchShader(nullptr)
 		, m_batchFilterBitmask(0)
 	{
-		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
+		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
 		m_graphicsParams = GraphicsParams{
 			.m_batchGeometryMode = GeometryMode::IndexedInstanced,
@@ -134,7 +134,7 @@ namespace re
 		, m_batchShader(nullptr)
 		, m_batchFilterBitmask(0)
 	{
-		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
+		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
 		m_graphicsParams = graphicsParams;
 
@@ -169,9 +169,9 @@ namespace re
 		result.m_lifetime = newLifetime;
 
 #if defined(_DEBUG)
-		for (auto const& pb : result.m_batchParamBlocks)
+		for (auto const& buf : result.m_batchBuffers)
 		{
-			ValidateLifetimeCompatibility(result.m_lifetime, pb->GetType());
+			ValidateLifetimeCompatibility(result.m_lifetime, buf->GetType());
 		}
 #endif
 		return result;
@@ -230,12 +230,12 @@ namespace re
 			AddDataBytesToHash(m_batchShader->GetNameID());
 		}
 
-		// Note: We must consider parameter blocks added before instancing has been calcualted, as they allow us to
-		// differentiate batches that are otherwise identical. We'll use the same, identical PB on the merged instanced 
+		// Note: We must consider buffers added before instancing has been calcualted, as they allow us to
+		// differentiate batches that are otherwise identical. We'll use the same, identical buffer on the merged instanced 
 		// batches later
-		for (size_t i = 0; i < m_batchParamBlocks.size(); i++)
+		for (size_t i = 0; i < m_batchBuffers.size(); i++)
 		{
-			AddDataBytesToHash(m_batchParamBlocks[i]->GetUniqueID());
+			AddDataBytesToHash(m_batchBuffers[i]->GetUniqueID());
 		}
 
 		// Note: We don't compute hashes for batch textures/samplers here; they're appended as they're added
@@ -248,13 +248,13 @@ namespace re
 	}
 
 
-	void Batch::SetParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock)
+	void Batch::SetBuffer(std::shared_ptr<re::Buffer> buffer)
 	{
-		SEAssert(paramBlock != nullptr, "Cannot set a null parameter block");
+		SEAssert(buffer != nullptr, "Cannot set a null buffer");
 
-		ValidateLifetimeCompatibility(m_lifetime, paramBlock->GetType());
+		ValidateLifetimeCompatibility(m_lifetime, buffer->GetType());
 
-		m_batchParamBlocks.emplace_back(paramBlock);
+		m_batchBuffers.emplace_back(buffer);
 	}
 
 

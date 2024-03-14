@@ -378,7 +378,7 @@ namespace gr
 		debugLinePipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 		m_debugStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_lineShaderName, debugLinePipelineState));
 
-		m_debugStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
+		m_debugStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
 		stagePipeline.AppendRenderStage(m_debugStage);
 	}
@@ -406,10 +406,10 @@ namespace gr
 						m_yAxisColor, 
 						m_zAxisColor));
 
-				std::shared_ptr<re::ParameterBlock> identityTransformPB = gr::Transform::CreateInstancedTransformParams(
-					re::ParameterBlock::PBType::Immutable, &k_identity, nullptr);
+				std::shared_ptr<re::Buffer> identityTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
+					re::Buffer::Type::Immutable, &k_identity, nullptr);
 
-				m_worldCoordinateAxisBatch->SetParameterBlock(identityTransformPB);
+				m_worldCoordinateAxisBatch->SetBuffer(identityTransformBuffer);
 			}
 
 			m_debugStage->AddBatch(*m_worldCoordinateAxisBatch);
@@ -446,22 +446,22 @@ namespace gr
 
 					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformData();
 
-					// Create/update a cached parameter block:
-					if (!m_meshPrimTransformParamBlocks.contains(meshPrimRenderDataID))
+					// Create/update a cached buffer:
+					if (!m_meshPrimTransformBuffers.contains(meshPrimRenderDataID))
 					{
-						m_meshPrimTransformParamBlocks.emplace(
+						m_meshPrimTransformBuffers.emplace(
 							meshPrimRenderDataID, 
-							gr::Transform::CreateInstancedTransformParams(
-								re::ParameterBlock::PBType::Mutable, 
+							gr::Transform::CreateInstancedTransformBuffer(
+								re::Buffer::Type::Mutable, 
 								transformData));
 					}
 					else
 					{
-						m_meshPrimTransformParamBlocks.at(meshPrimRenderDataID)->Commit(
-							gr::Transform::CreateInstancedTransformParamsData(transformData));
+						m_meshPrimTransformBuffers.at(meshPrimRenderDataID)->Commit(
+							gr::Transform::CreateInstancedTransformData(transformData));
 					}
-					std::shared_ptr<re::ParameterBlock> meshTransformPB = 
-						m_meshPrimTransformParamBlocks.at(meshPrimRenderDataID);
+					std::shared_ptr<re::Buffer> meshTransformBuffer = 
+						m_meshPrimTransformBuffers.at(meshPrimRenderDataID);
 
 					// MeshPrimitives:
 					if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
@@ -476,7 +476,7 @@ namespace gr
 									BuildBoundingBoxBatch(
 										re::Batch::Lifetime::Permanent, boundsRenderData, m_meshPrimitiveBoundsColor));
 
-								m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID)->SetParameterBlock(meshTransformPB);
+								m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 							}
 							m_debugStage->AddBatch(*m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID));
 						}
@@ -494,7 +494,7 @@ namespace gr
 										transformData.m_globalScale, 
 										m_normalsColor));
 
-								m_vertexNormalBatches.at(meshPrimRenderDataID)->SetParameterBlock(meshTransformPB);
+								m_vertexNormalBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 							}
 							m_debugStage->AddBatch(*m_vertexNormalBatches.at(meshPrimRenderDataID));
 						}
@@ -508,7 +508,7 @@ namespace gr
 									BuildWireframeBatch(
 										re::Batch::Lifetime::Permanent, meshPrimRenderData, m_wireframeColor));
 
-								m_wireframeBatches.at(meshPrimRenderDataID)->SetParameterBlock(meshTransformPB);
+								m_wireframeBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 							}
 							m_debugStage->AddBatch(*m_wireframeBatches.at(meshPrimRenderDataID));
 						}
@@ -528,7 +528,7 @@ namespace gr
 									m_zAxisColor,
 									transformData.m_globalScale)));
 
-							m_meshCoordinateAxisBatches.at(meshPrimRenderDataID)->SetParameterBlock(meshTransformPB);
+							m_meshCoordinateAxisBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 						}
 
 						m_debugStage->AddBatch(*m_meshCoordinateAxisBatches.at(meshPrimRenderDataID));
@@ -539,7 +539,7 @@ namespace gr
 		}
 		else
 		{
-			m_meshPrimTransformParamBlocks.clear();
+			m_meshPrimTransformBuffers.clear();
 
 			m_meshPrimBoundingBoxBatches.clear();
 			m_vertexNormalBatches.clear();
@@ -562,17 +562,17 @@ namespace gr
 					{
 						gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
-						if (!m_meshBoundingBoxParameterBlocks.contains(meshID))
+						if (!m_meshBoundingBoxBuffers.contains(meshID))
 						{
-							m_meshBoundingBoxParameterBlocks.emplace(
+							m_meshBoundingBoxBuffers.emplace(
 								meshID,
-								gr::Transform::CreateInstancedTransformParams(
-									re::ParameterBlock::PBType::Mutable, boundsItr.GetTransformData()));
+								gr::Transform::CreateInstancedTransformBuffer(
+									re::Buffer::Type::Mutable, boundsItr.GetTransformData()));
 						}
 						else
 						{
-							m_meshBoundingBoxParameterBlocks.at(meshID)->Commit(
-								gr::Transform::CreateInstancedTransformParamsData(boundsItr.GetTransformData()));
+							m_meshBoundingBoxBuffers.at(meshID)->Commit(
+								gr::Transform::CreateInstancedTransformData(boundsItr.GetTransformData()));
 						}
 
 						if (!m_meshBoundingBoxBatches.contains(meshID))
@@ -580,8 +580,8 @@ namespace gr
 							m_meshBoundingBoxBatches.emplace(meshID,
 								BuildBoundingBoxBatch(re::Batch::Lifetime::Permanent,boundsRenderData, m_meshBoundsColor));
 
-							m_meshBoundingBoxBatches.at(meshID)->SetParameterBlock(
-								m_meshBoundingBoxParameterBlocks.at(meshID));
+							m_meshBoundingBoxBatches.at(meshID)->SetBuffer(
+								m_meshBoundingBoxBuffers.at(meshID));
 						}
 
 						m_debugStage->AddBatch(*m_meshBoundingBoxBatches.at(meshID));
@@ -606,10 +606,10 @@ namespace gr
 				{
 					gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
-					if (m_sceneBoundsTransformParameterBlock == nullptr)
+					if (m_sceneBoundsTransformBuffer == nullptr)
 					{
-						m_sceneBoundsTransformParameterBlock = gr::Transform::CreateInstancedTransformParams(
-							re::ParameterBlock::PBType::Mutable, boundsItr.GetTransformData());
+						m_sceneBoundsTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
+							re::Buffer::Type::Mutable, boundsItr.GetTransformData());
 					}
 
 					if (m_sceneBoundsBatch == nullptr)
@@ -617,7 +617,7 @@ namespace gr
 						m_sceneBoundsBatch =
 							BuildBoundingBoxBatch(re::Batch::Lifetime::Permanent, boundsRenderData, m_sceneBoundsColor);
 
-						m_sceneBoundsBatch->SetParameterBlock(m_sceneBoundsTransformParameterBlock);
+						m_sceneBoundsBatch->SetBuffer(m_sceneBoundsTransformBuffer);
 					}
 					
 					m_debugStage->AddBatch(*m_sceneBoundsBatch);
@@ -628,7 +628,7 @@ namespace gr
 		else
 		{
 			m_sceneBoundsBatch = nullptr;
-			m_sceneBoundsTransformParameterBlock = nullptr;
+			m_sceneBoundsTransformBuffer = nullptr;
 		}
 
 		if (m_showCameraFrustums)
@@ -644,17 +644,17 @@ namespace gr
 				bool camDataIsDirty = renderData.IsDirty<gr::Camera::RenderData>(camID) || 
 					renderData.TransformIsDirtyFromRenderDataID(camID);
 
-				if (!m_cameraAxisTransformParamBlocks.contains(camID))
+				if (!m_cameraAxisTransformBuffers.contains(camID))
 				{	
-					m_cameraAxisTransformParamBlocks.emplace(
+					m_cameraAxisTransformBuffers.emplace(
 						camID,
-						gr::Transform::CreateInstancedTransformParams(
-						re::ParameterBlock::PBType::Mutable, &camWorldMatrix, nullptr));
+						gr::Transform::CreateInstancedTransformBuffer(
+						re::Buffer::Type::Mutable, &camWorldMatrix, nullptr));
 				}
 				else if (camDataIsDirty)
 				{
-					m_cameraAxisTransformParamBlocks.at(camID)->Commit(
-						gr::Transform::CreateInstancedTransformParamsData(&camWorldMatrix, nullptr));
+					m_cameraAxisTransformBuffers.at(camID)->Commit(
+						gr::Transform::CreateInstancedTransformData(&camWorldMatrix, nullptr));
 				}
 
 				// Coordinate axis at camera origin:
@@ -669,7 +669,7 @@ namespace gr
 							m_yAxisColor, 
 							m_zAxisColor));
 
-					m_cameraAxisBatches.at(camID)->SetParameterBlock(m_cameraAxisTransformParamBlocks.at(camID));
+					m_cameraAxisBatches.at(camID)->SetBuffer(m_cameraAxisTransformBuffers.at(camID));
 				}
 				m_debugStage->AddBatch(*m_cameraAxisBatches.at(camID));
 
@@ -678,9 +678,9 @@ namespace gr
 				const uint8_t numFrustums = camData.second.first->m_cameraConfig.m_projectionType ==
 					gr::Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
 
-				if (!m_cameraFrustumTransformParamBlocks.contains(camID))
+				if (!m_cameraFrustumTransformBuffers.contains(camID))
 				{
-					m_cameraFrustumTransformParamBlocks[camID].resize(numFrustums);
+					m_cameraFrustumTransformBuffers[camID].resize(numFrustums);
 					camDataIsDirty = true;
 				}
 				if (!m_cameraFrustumBatches.contains(camID))
@@ -713,18 +713,18 @@ namespace gr
 				
 				for (uint8_t faceIdx = 0; faceIdx < numFrustums; faceIdx++)
 				{
-					if (m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx] == nullptr)
+					if (m_cameraFrustumTransformBuffers.at(camID)[faceIdx] == nullptr)
 					{
-						m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx] =
-							gr::Transform::CreateInstancedTransformParams(
-								re::ParameterBlock::PBType::Mutable,
+						m_cameraFrustumTransformBuffers.at(camID)[faceIdx] =
+							gr::Transform::CreateInstancedTransformBuffer(
+								re::Buffer::Type::Mutable,
 								&invViewProjMats.at(faceIdx),
 								nullptr);
 					}
 					else if (camDataIsDirty)
 					{
-						m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx]->Commit(
-							gr::Transform::CreateInstancedTransformParamsData(&invViewProjMats.at(faceIdx), nullptr));
+						m_cameraFrustumTransformBuffers.at(camID)[faceIdx]->Commit(
+							gr::Transform::CreateInstancedTransformData(&invViewProjMats.at(faceIdx), nullptr));
 					}
 
 					if (m_cameraFrustumBatches.at(camID)[faceIdx] == nullptr)
@@ -735,8 +735,8 @@ namespace gr
 							camData.second.second,
 							m_cameraFrustumColor));
 
-						m_cameraFrustumBatches.at(camID)[faceIdx]->SetParameterBlock(
-							m_cameraFrustumTransformParamBlocks.at(camID)[faceIdx]);
+						m_cameraFrustumBatches.at(camID)[faceIdx]->SetBuffer(
+							m_cameraFrustumTransformBuffers.at(camID)[faceIdx]);
 					}
 
 					m_debugStage->AddBatch(*m_cameraFrustumBatches.at(camID)[faceIdx]);
@@ -746,9 +746,9 @@ namespace gr
 		else
 		{
 			m_cameraAxisBatches.clear();
-			m_cameraAxisTransformParamBlocks.clear();
+			m_cameraAxisTransformBuffers.clear();
 			m_cameraFrustumBatches.clear();
-			m_cameraFrustumTransformParamBlocks.clear();
+			m_cameraFrustumTransformBuffers.clear();
 		}
 
 		if (m_showDeferredLightWireframe)
@@ -765,17 +765,17 @@ namespace gr
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 					glm::mat4 const& lightTRS = transformData.g_model;
 
-					if (!m_deferredLightWireframeTransformParamBlocks.contains(pointID))
+					if (!m_deferredLightWireframeTransformBuffers.contains(pointID))
 					{
-						m_deferredLightWireframeTransformParamBlocks.emplace(
+						m_deferredLightWireframeTransformBuffers.emplace(
 							pointID,
-							gr::Transform::CreateInstancedTransformParams(
-								re::ParameterBlock::PBType::Mutable, &lightTRS, nullptr));
+							gr::Transform::CreateInstancedTransformBuffer(
+								re::Buffer::Type::Mutable, &lightTRS, nullptr));
 					}
 					else
 					{
-						m_deferredLightWireframeTransformParamBlocks.at(pointID)->Commit(
-							gr::Transform::CreateInstancedTransformParamsData(&lightTRS, nullptr));
+						m_deferredLightWireframeTransformBuffers.at(pointID)->Commit(
+							gr::Transform::CreateInstancedTransformData(&lightTRS, nullptr));
 					}
 
 					if (!m_deferredLightWireframeBatches.contains(pointID))
@@ -787,8 +787,8 @@ namespace gr
 							BuildWireframeBatch(
 								re::Batch::Lifetime::Permanent, meshPrimData, m_deferredLightwireframeColor));
 
-						m_deferredLightWireframeBatches.at(pointID)->SetParameterBlock(
-							m_deferredLightWireframeTransformParamBlocks.at(pointID));
+						m_deferredLightWireframeBatches.at(pointID)->SetBuffer(
+							m_deferredLightWireframeTransformBuffers.at(pointID));
 					}
 					m_debugStage->AddBatch(*m_deferredLightWireframeBatches.at(pointID));
 				}
@@ -799,27 +799,27 @@ namespace gr
 		else
 		{
 			m_deferredLightWireframeBatches.clear();
-			m_deferredLightWireframeTransformParamBlocks.clear();
+			m_deferredLightWireframeTransformBuffers.clear();
 		}
 
 		if (m_showLightCoordinateAxis)
 		{
-			auto CreateUpdateLightCSAxisTransformPB = [&](
+			auto CreateUpdateLightCSAxisTransformBuffer = [&](
 				gr::RenderDataID lightID, gr::Transform::RenderData const& transformData)
 				{
 					glm::mat4 const& lightTRS = transformData.g_model;
 
-					if (!m_lightCoordinateAxisTransformParameterBlocks.contains(lightID))
+					if (!m_lightCoordinateAxisTransformBuffers.contains(lightID))
 					{
-						m_lightCoordinateAxisTransformParameterBlocks.emplace(
+						m_lightCoordinateAxisTransformBuffers.emplace(
 							lightID,
-							gr::Transform::CreateInstancedTransformParams(
-								re::ParameterBlock::PBType::Mutable, &lightTRS, nullptr));
+							gr::Transform::CreateInstancedTransformBuffer(
+								re::Buffer::Type::Mutable, &lightTRS, nullptr));
 					}
 					else
 					{
-						m_lightCoordinateAxisTransformParameterBlocks.at(lightID)->Commit(
-							gr::Transform::CreateInstancedTransformParamsData(&lightTRS, nullptr));
+						m_lightCoordinateAxisTransformBuffers.at(lightID)->Commit(
+							gr::Transform::CreateInstancedTransformData(&lightTRS, nullptr));
 					}
 				};
 
@@ -838,8 +838,8 @@ namespace gr
 								m_zAxisColor,
 								transformData.m_globalScale));
 
-						m_lightCoordinateAxisBatches.at(lightID)->SetParameterBlock(
-							m_lightCoordinateAxisTransformParameterBlocks.at(lightID));
+						m_lightCoordinateAxisBatches.at(lightID)->SetBuffer(
+							m_lightCoordinateAxisTransformBuffers.at(lightID));
 					}
 				};
 
@@ -853,7 +853,7 @@ namespace gr
 				{
 					gr::Transform::RenderData const& transformData = directionalItr.GetTransformData();
 
-					CreateUpdateLightCSAxisTransformPB(lightID, transformData);
+					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
 					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
@@ -872,7 +872,7 @@ namespace gr
 				{
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
-					CreateUpdateLightCSAxisTransformPB(lightID, transformData);
+					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
 					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
@@ -884,7 +884,7 @@ namespace gr
 		else
 		{
 			m_lightCoordinateAxisBatches.clear();
-			m_lightCoordinateAxisTransformParameterBlocks.clear();
+			m_lightCoordinateAxisTransformBuffers.clear();
 		}
 	}
 

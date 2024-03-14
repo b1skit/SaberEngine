@@ -19,7 +19,7 @@ namespace gr
 		// https://www.nvidia.de/docs/IO/8230/BatchBatchBatch.pdf
 	
 	public:
-		enum InstanceType : uint8_t // Bitmask helper: Which parameter blocks to attach to batches?
+		enum InstanceType : uint8_t // Bitmask helper: Which buffers to attach to batches?
 		{
 			Transform	= 0x1,
 			Material	= 0x2
@@ -38,7 +38,7 @@ namespace gr
 		std::vector<re::Batch> BuildSceneBatches(
 			gr::RenderDataManager const&,
 			std::vector<gr::RenderDataID> const&,
-			uint8_t pbTypeMask = (InstanceType::Transform | InstanceType::Material)) const;
+			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material)) const;
 
 
 	public:
@@ -66,11 +66,11 @@ namespace gr
 		// Instancing:
 		std::unordered_map<gr::TransformID, RefCountedIndex> m_instancedTransformIndexes;
 		std::vector<uint32_t> m_freeTransformIndexes;
-		std::shared_ptr<re::ParameterBlock> m_instancedTransforms;
+		std::shared_ptr<re::Buffer> m_instancedTransforms;
 
 		std::unordered_map<gr::RenderDataID, RefCountedIndex> m_instancedMaterialIndexes;
 		std::vector<uint32_t> m_freeInstancedMaterialIndexes;
-		std::shared_ptr<re::ParameterBlock> m_instancedMaterials;
+		std::shared_ptr<re::Buffer> m_instancedMaterials;
 	};
 }
 

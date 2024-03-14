@@ -12,7 +12,7 @@
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Tonemapping.h"
-#include "ParameterBlock_DX12.h"
+#include "Buffer_DX12.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
 #include "RenderSystem.h"
@@ -252,12 +252,12 @@ namespace dx12
 				}
 			}
 		}
-		// Parameter Blocks:
-		if (renderManager.m_newParameterBlocks.HasReadData())
+		// Buffers:
+		if (renderManager.m_newBuffers.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newParameterBlocks.GetReadData())
+			for (auto& newObject : renderManager.m_newBuffers.GetReadData())
 			{
-				dx12::ParameterBlock::Create(*newObject);
+				dx12::Buffer::Create(*newObject);
 			}
 		}
 
@@ -414,14 +414,14 @@ namespace dx12
 							SEAssertF("Invalid render stage type");
 						}
 
-						// Set parameter blocks (Must happen after the root signature is set):
-						for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
+						// Set buffers (Must happen after the root signature is set):
+						for (std::shared_ptr<re::Buffer> permanentBuffer : renderStage->GetPermanentBuffers())
 						{
-							commandList->SetParameterBlock(permanentPB.get());
+							commandList->SetBuffer(permanentBuffer.get());
 						}
-						for (std::shared_ptr<re::ParameterBlock> perFramePB : renderStage->GetPerFrameParameterBlocks())
+						for (std::shared_ptr<re::Buffer> perFrameBuffer : renderStage->GetPerFrameBuffers())
 						{
-							commandList->SetParameterBlock(perFramePB.get());
+							commandList->SetBuffer(perFrameBuffer.get());
 						}
 
 						// Set per-frame stage textures/sampler inputs:
@@ -446,7 +446,7 @@ namespace dx12
 					re::Shader* stageShader = renderStage->GetStageShader();
 					const bool hasStageShader = stageShader != nullptr;
 
-					// If we have a stage shader, we can set the stage PBs once for all batches
+					// If we have a stage shader, we can set the stage buffers once for all batches
 					if (hasStageShader)
 					{
 						SetDrawState(stageShader, stageTargets.get(), currentCommandList);
@@ -478,7 +478,7 @@ namespace dx12
 					std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 					for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
 					{
-						// No stage shader: Must set stage PBs for each batch
+						// No stage shader: Must set stage buffers for each batch
 						if (!hasStageShader)
 						{
 							re::Shader const* batchShader = batches[batchIdx].GetShader();
@@ -488,12 +488,12 @@ namespace dx12
 							SetDrawState(batchShader, stageTargets.get(), currentCommandList);
 						}
 
-						// Batch parameter blocks:
-						std::vector<std::shared_ptr<re::ParameterBlock>> const& batchPBs =
-							batches[batchIdx].GetParameterBlocks();
-						for (std::shared_ptr<re::ParameterBlock> batchPB : batchPBs)
+						// Batch buffers:
+						std::vector<std::shared_ptr<re::Buffer>> const& batchBuffers =
+							batches[batchIdx].GetBuffers();
+						for (std::shared_ptr<re::Buffer> batchBuffer : batchBuffers)
 						{
-							currentCommandList->SetParameterBlock(batchPB.get());
+							currentCommandList->SetBuffer(batchBuffer.get());
 						}
 
 						// Batch Texture / Sampler inputs :

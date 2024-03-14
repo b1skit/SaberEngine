@@ -10,7 +10,7 @@ struct GeometryOut
 	uint Face		: SV_RenderTargetArrayIndex;
 };
 
-ConstantBuffer<CubemapShadowRenderParamsData> CubemapShadowRenderParams;
+ConstantBuffer<CubemapShadowRenderData> CubemapShadowRenderParams;
 
 
 [maxvertexcount(18)]

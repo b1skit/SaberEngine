@@ -9,7 +9,7 @@
 #include "../Common/IBLGenerationParams.h"
 
 
-ConstantBuffer<BRDFIntegrationParamsData> BRDFIntegrationParams;
+ConstantBuffer<BRDFIntegrationData> BRDFIntegrationParams;
 
 
 #define NUM_SAMPLES 1024

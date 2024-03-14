@@ -13,13 +13,13 @@
 
 namespace
 {
-	CubemapShadowRenderParamsData GetCubemapShadowRenderParamsData(
+	CubemapShadowRenderData GetCubemapShadowRenderParamsData(
 		gr::Camera::RenderData const& shadowCamData, gr::Transform::RenderData const& transformData)
 	{
 		SEAssert(shadowCamData.m_cameraConfig.m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap,
 			"Invalid projection type");
 
-		CubemapShadowRenderParamsData cubemapShadowParams;
+		CubemapShadowRenderData cubemapShadowParams;
 		
 		std::vector<glm::mat4> const& cubeViewMatrices = 
 			gr::Camera::BuildAxisAlignedCubeViewMatrices(transformData.m_globalPosition);
@@ -72,13 +72,13 @@ namespace gr
 
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 
-		// Directional shadow camera param block:
-		std::shared_ptr<re::ParameterBlock> shadowCamParams = re::ParameterBlock::Create(
-			CameraParamsData::s_shaderName,
+		// Directional shadow camera buffer:
+		std::shared_ptr<re::Buffer> shadowCamParams = re::Buffer::Create(
+			CameraData::s_shaderName,
 			shadowCamData.m_cameraParams,
-			re::ParameterBlock::PBType::Mutable);
+			re::Buffer::Type::Mutable);
 
-		shadowStage->AddPermanentParameterBlock(shadowCamParams);
+		shadowStage->AddPermanentBuffer(shadowCamParams);
 
 		// Shader:
 		shadowStage->SetStageShader(
@@ -206,23 +206,23 @@ namespace gr
 
 		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
 
-		// Cubemap shadow param block:
-		CubemapShadowRenderParamsData const& cubemapShadowParams =
+		// Cubemap shadow buffer:
+		CubemapShadowRenderData const& cubemapShadowParams =
 			GetCubemapShadowRenderParamsData(camData, transformData);
 
-		std::shared_ptr<re::ParameterBlock> cubeShadowPB = re::ParameterBlock::Create(
-			CubemapShadowRenderParamsData::s_shaderName,
+		std::shared_ptr<re::Buffer> cubeShadowBuf = re::Buffer::Create(
+			CubemapShadowRenderData::s_shaderName,
 			cubemapShadowParams,
-			re::ParameterBlock::PBType::Mutable);
+			re::Buffer::Type::Mutable);
 
-		shadowStage->AddPermanentParameterBlock(cubeShadowPB);
+		shadowStage->AddPermanentBuffer(cubeShadowBuf);
 
 		m_pointShadowStageData.emplace(
 			lightID,
 			PointShadowStageData{
 				.m_renderStage = shadowStage,
 				.m_shadowTargetSet = pointShadowTargetSet,
-				.m_cubemapShadowParamBlock = cubeShadowPB });
+				.m_cubemapShadowParamBlock = cubeShadowBuf });
 
 		return shadowStage;
 	}
@@ -365,7 +365,7 @@ namespace gr
 					gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
-					CubemapShadowRenderParamsData const& cubemapShadowParams =
+					CubemapShadowRenderData const& cubemapShadowParams =
 						GetCubemapShadowRenderParamsData(shadowCamData, transformData);
 
 					m_pointShadowStageData.at(pointItr.GetRenderDataID()).m_cubemapShadowParamBlock->Commit(

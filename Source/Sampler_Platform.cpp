@@ -8,14 +8,12 @@
 #include "Sampler_OpenGL.h"
 #include "Sampler_Platform.h"
 
-using en::Config;
-
 
 namespace platform
 {
 	void Sampler::CreatePlatformParams(re::Sampler& sampler)
 	{
-		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

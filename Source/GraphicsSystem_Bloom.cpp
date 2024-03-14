@@ -14,7 +14,7 @@
 
 namespace
 {
-	BloomComputeParamsData CreateBloomComputeParamsData(
+	BloomComputeData CreateBloomComputeParamsData(
 		std::shared_ptr<re::Texture> bloomSrcTex,
 		std::shared_ptr<re::Texture> bloomDstTex,
 		uint32_t srcMipLevel,
@@ -25,7 +25,7 @@ namespace
 		uint32_t firstUpsampleSrcMipLevel,
 		gr::Camera::Config const& cameraConfig)
 	{
-		BloomComputeParamsData bloomComputeParams{};
+		BloomComputeData bloomComputeParams{};
 
 		bloomComputeParams.g_srcTexDimensions = bloomSrcTex->GetSubresourceDimensions(srcMipLevel);
 		bloomComputeParams.g_dstTexDimensions = bloomDstTex->GetSubresourceDimensions(dstMipLevel);
@@ -182,13 +182,13 @@ namespace gr
 
 			downStage->SetTextureTargetSet(bloomLevelTargets);
 
-			// Parameter blocks:
-			std::shared_ptr<re::ParameterBlock> bloomDownPB = re::ParameterBlock::Create(
-				BloomComputeParamsData::s_shaderName,
-				BloomComputeParamsData{},
-				re::ParameterBlock::PBType::Mutable);
-			m_bloomDownParameterBlocks.emplace_back(bloomDownPB);
-			downStage->AddPermanentParameterBlock(bloomDownPB);
+			// Buffers:
+			std::shared_ptr<re::Buffer> bloomDownBuf = re::Buffer::Create(
+				BloomComputeData::s_shaderName,
+				BloomComputeData{},
+				re::Buffer::Type::Mutable);
+			m_bloomDownBuffers.emplace_back(bloomDownBuf);
+			downStage->AddPermanentBuffer(bloomDownBuf);
 
 			pipeline.AppendRenderStage(downStage);
 
@@ -236,13 +236,13 @@ namespace gr
 
 			upStage->SetTextureTargetSet(bloomLevelTargets);
 
-			// Parameter blocks:
-			std::shared_ptr<re::ParameterBlock> bloomUpPB = re::ParameterBlock::Create(
-				BloomComputeParamsData::s_shaderName,
-				BloomComputeParamsData{},
-				re::ParameterBlock::PBType::Mutable);
-			upStage->AddPermanentParameterBlock(bloomUpPB);
-			m_bloomUpParameterBlocks.emplace_back(bloomUpPB);
+			// Buffers:
+			std::shared_ptr<re::Buffer> bloomUpBuf = re::Buffer::Create(
+				BloomComputeData::s_shaderName,
+				BloomComputeData{},
+				re::Buffer::Type::Mutable);
+			upStage->AddPermanentBuffer(bloomUpBuf);
+			m_bloomUpBuffers.emplace_back(bloomUpBuf);
 
 			pipeline.AppendRenderStage(upStage);
 
@@ -266,11 +266,11 @@ namespace gr
 		gr::Camera::Config const& cameraConfig =
 			m_graphicsSystemManager->GetActiveCameraRenderData().m_cameraConfig;
 
-		// Parameter blocks:
+		// Buffers:
 		const uint32_t numBloomMips = bloomTargetTex->GetNumMips();
 		for (uint32_t level = 0; level < numBloomMips; level++)
 		{
-			BloomComputeParamsData bloomComputeParams{};
+			BloomComputeData bloomComputeParams{};
 
 			if (level == 0)
 			{
@@ -305,18 +305,18 @@ namespace gr
 					cameraConfig);
 			}
 
-			m_bloomDownParameterBlocks[level]->Commit(bloomComputeParams);
+			m_bloomDownBuffers[level]->Commit(bloomComputeParams);
 		}
 
 
 		const uint32_t numUpsampleStages = m_firstUpsampleSrcMipLevel;
 		uint32_t level = m_firstUpsampleSrcMipLevel;
-		for (std::shared_ptr<re::ParameterBlock> bloomUpPB : m_bloomUpParameterBlocks)
+		for (std::shared_ptr<re::Buffer> bloomUpBuf : m_bloomUpBuffers)
 		{
 			const uint32_t upsampleSrcMip = level;
 			const uint32_t upsampleDstMip = upsampleSrcMip - 1;
 			
-			BloomComputeParamsData const& bloomComputeParams = CreateBloomComputeParamsData(
+			BloomComputeData const& bloomComputeParams = CreateBloomComputeParamsData(
 				bloomTargetTex,
 				bloomTargetTex,
 				upsampleSrcMip,
@@ -327,7 +327,7 @@ namespace gr
 				m_firstUpsampleSrcMipLevel,
 				cameraConfig);
 
-			bloomUpPB->Commit(bloomComputeParams);
+			bloomUpBuf->Commit(bloomComputeParams);
 
 			level--;
 		}

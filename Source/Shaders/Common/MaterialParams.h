@@ -5,9 +5,9 @@
 #include "PlatformConversions.h"
 
 
-// GLTF metallic roughness PBR material parameter block
+// GLTF metallic roughness PBR material buffer
 // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-material
-struct InstancedPBRMetallicRoughnessParamsData
+struct InstancedPBRMetallicRoughnessData
 {
 	float4 g_baseColorFactor;
 

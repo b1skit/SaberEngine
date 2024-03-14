@@ -35,10 +35,10 @@ namespace gr
 
 		// Bloom compute:
 		std::vector<std::shared_ptr<re::RenderStage>> m_bloomDownStages;
-		std::vector<std::shared_ptr<re::ParameterBlock>> m_bloomDownParameterBlocks;
+		std::vector<std::shared_ptr<re::Buffer>> m_bloomDownBuffers;
 
 		std::vector<std::shared_ptr<re::RenderStage>> m_bloomUpStages;
-		std::vector<std::shared_ptr<re::ParameterBlock>> m_bloomUpParameterBlocks;
+		std::vector<std::shared_ptr<re::Buffer>> m_bloomUpBuffers;
 
 		std::shared_ptr<re::Shader> m_bloomComputeShader;
 

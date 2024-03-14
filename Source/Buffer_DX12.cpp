@@ -4,8 +4,8 @@
 #include "Assert.h"
 #include "Debug_DX12.h"
 #include "MathUtils.h"
-#include "ParameterBlock_DX12.h"
-#include "ParameterBlockAllocator_DX12.h"
+#include "Buffer_DX12.h"
+#include "BufferAllocator_DX12.h"
 #include "RenderManager.h"
 
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
@@ -13,26 +13,26 @@
 
 namespace
 {
-	uint64_t GetAlignedSize(re::ParameterBlock::PBDataType pbDataType, uint32_t pbSize)
+	uint64_t GetAlignedSize(re::Buffer::DataType dataType, uint32_t bufferSize)
 	{
 		uint64_t alignedSize = 0;
-		switch (pbDataType)
+		switch (dataType)
 		{
-		case re::ParameterBlock::PBDataType::SingleElement:
+		case re::Buffer::DataType::SingleElement:
 		{
 			// We must allocate CBVs in multiples of 256B			
-			alignedSize = util::RoundUpToNearestMultiple<uint64_t>(pbSize, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+			alignedSize = util::RoundUpToNearestMultiple<uint64_t>(bufferSize, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 		}
 		break;
-		case re::ParameterBlock::PBDataType::Array:
+		case re::Buffer::DataType::Array:
 		{
 			// We must allocate SRVs in multiples of 64KB
-			alignedSize = util::RoundUpToNearestMultiple<uint64_t>(pbSize, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
+			alignedSize = util::RoundUpToNearestMultiple<uint64_t>(bufferSize, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
 		}
 		break;
-		case re::ParameterBlock::PBDataType::PBDataType_Count:
+		case re::Buffer::DataType::DataType_Count:
 		default:
-			SEAssertF("Invalid parameter block data type");
+			SEAssertF("Invalid buffer data type");
 		}
 		
 		return alignedSize;
@@ -41,25 +41,25 @@ namespace
 
 namespace dx12
 {
-	void ParameterBlock::Create(re::ParameterBlock& paramBlock)
+	void Buffer::Create(re::Buffer& buffer)
 	{
-		dx12::ParameterBlock::PlatformParams* params =
-			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
-		SEAssert(!params->m_isCreated, "Parameter block is already created");
+		dx12::Buffer::PlatformParams* params =
+			buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		SEAssert(!params->m_isCreated, "Buffer is already created");
 		params->m_isCreated = true;
 
-		const uint32_t pbSize = paramBlock.GetSize();
-		const uint64_t alignedSize = GetAlignedSize(params->m_dataType, pbSize);
+		const uint32_t bufferSize = buffer.GetSize();
+		const uint64_t alignedSize = GetAlignedSize(params->m_dataType, bufferSize);
 
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
-		// Note: Our parameter blocks live in the upload heap, as they're typically small and updated frequently. 
+		// Note: Our buffers live in the upload heap, as they're typically small and updated frequently. 
 		// No point copying them to VRAM, for now
 
-		const re::ParameterBlock::PBType pbType = paramBlock.GetType();
-		switch (pbType)
+		const re::Buffer::Type bufferType = buffer.GetType();
+		switch (bufferType)
 		{
-		case re::ParameterBlock::PBType::Mutable:
+		case re::Buffer::Type::Mutable:
 		{
 			// We allocate N frames-worth of buffer space, and then set the m_heapByteOffset each frame
 			const uint8_t numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
@@ -77,13 +77,13 @@ namespace dx12
 				IID_PPV_ARGS(&params->m_resource));
 			CheckHResult(hr, "Failed to create committed resource");
 
-			std::wstring debugName = paramBlock.GetWName() + L"_Mutable";
+			std::wstring debugName = buffer.GetWName() + L"_Mutable";
 			params->m_resource->SetName(debugName.c_str());
 		}
 		break;
-		case re::ParameterBlock::PBType::Immutable:
+		case re::Buffer::Type::Immutable:
 		{
-			// Immutable parameter blocks cannot change frame-to-frame, thus only need a single buffer's worth of space
+			// Immutable buffers cannot change frame-to-frame, thus only need a single buffer's worth of space
 			const CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_UPLOAD);
 			const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedSize);
 
@@ -97,34 +97,34 @@ namespace dx12
 			CheckHResult(hr, "Failed to create committed resource");
 
 			// Debug names:
-			std::wstring debugName = paramBlock.GetWName() + L"_Immutable";;
+			std::wstring debugName = buffer.GetWName() + L"_Immutable";;
 			params->m_resource->SetName(debugName.c_str());
 		}
 		break;
-		case re::ParameterBlock::PBType::SingleFrame:
+		case re::Buffer::Type::SingleFrame:
 		{
-			dx12::ParameterBlockAllocator::GetSubAllocation(
+			dx12::BufferAllocator::GetSubAllocation(
 				params->m_dataType,
 				alignedSize,
 				params->m_heapByteOffset,
 				params->m_resource);
 		}
 		break;
-		default: SEAssertF("Invalid PBType");
+		default: SEAssertF("Invalid Type");
 		}
 		
-		// Note: We (currently) exclusively set ParameterBlocks inline directly in the root signature, so these views
+		// Note: We (currently) exclusively set Buffers inline directly in the root signature, so these views
 		// never actually get used anywhere yet. TODO: Support this
 
 		// Create the appropriate resource view:
 		switch (params->m_dataType)
 		{
-		case re::ParameterBlock::PBDataType::SingleElement:
+		case re::Buffer::DataType::SingleElement:
 		{
 			SEAssert(params->m_heapByteOffset % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0,
 				"CBV buffer offsets must be multiples of D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT");
 
-			// NOTE: dx12::CommandList::SetParameterBlock will need to be updated when we solve the PB CBV/SRV issue
+			// NOTE: dx12::CommandList::SetBuffer will need to be updated when we solve the buffer CBV/SRV issue
 			SEAssert(params->m_numElements == 1, "TODO: Handle arrays of CBVs");
 
 			// Allocate a cpu-visible descriptor to hold our view:
@@ -141,9 +141,9 @@ namespace dx12
 				params->m_cpuDescAllocation.GetBaseDescriptor());
 		}
 		break;
-		case re::ParameterBlock::PBDataType::Array:
+		case re::Buffer::DataType::Array:
 		{
-			SEAssert(paramBlock.GetSize() % params->m_numElements == 0,
+			SEAssert(buffer.GetSize() % params->m_numElements == 0,
 				"Size must be equally divisible by the number of elements");
 			SEAssert(params->m_numElements <= 1024, "Maximum offset of 1024 allowed into an SRV");
 			SEAssert(params->m_heapByteOffset % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0,
@@ -165,7 +165,7 @@ namespace dx12
 				.Buffer = D3D12_BUFFER_SRV{
 					.FirstElement = firstElementOffset,
 					.NumElements = params->m_numElements,
-					.StructureByteStride = paramBlock.GetStride(), // Size of the struct in the shader
+					.StructureByteStride = buffer.GetStride(), // Size of the struct in the shader
 					.Flags = D3D12_BUFFER_SRV_FLAGS::D3D12_BUFFER_SRV_FLAG_NONE }};
 
 			device->CreateShaderResourceView(
@@ -174,25 +174,25 @@ namespace dx12
 				params->m_cpuDescAllocation.GetBaseDescriptor());
 		}
 		break;
-		case re::ParameterBlock::PBDataType::PBDataType_Count:
+		case re::Buffer::DataType::DataType_Count:
 		default:
-			SEAssertF("Invalid parameter block data type");
+			SEAssertF("Invalid buffer data type");
 		}
 
 #if defined(_DEBUG)
 		void const* srcData = nullptr;
 		uint32_t srcSize = 0;
-		paramBlock.GetDataAndSize(srcData, srcSize);
+		buffer.GetDataAndSize(srcData, srcSize);
 		SEAssert(srcData != nullptr && srcSize <= alignedSize, "GetDataAndSize returned invalid results");
 #endif
 	}
 
 
-	void ParameterBlock::Update(
-		re::ParameterBlock const& paramBlock, uint8_t curFrameHeapOffsetFactor, uint32_t baseOffset, uint32_t numBytes)
+	void Buffer::Update(
+		re::Buffer const& buffer, uint8_t curFrameHeapOffsetFactor, uint32_t baseOffset, uint32_t numBytes)
 	{
-		dx12::ParameterBlock::PlatformParams* params =
-			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
+		dx12::Buffer::PlatformParams* params =
+			buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		constexpr uint32_t k_subresourceIdx = 0;
 
@@ -203,17 +203,17 @@ namespace dx12
 			k_subresourceIdx,
 			&readRange,
 			&cpuVisibleData);
-		CheckHResult(hr, "ParameterBlock::Update: Failed to map committed resource");
+		CheckHResult(hr, "Buffer::Update: Failed to map committed resource");
 
 		// We map and then unmap immediately; Microsoft recommends resources be left unmapped while the CPU will not 
 		// modify them, and use tight, accurate ranges at all times
 		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-map
 		void const* data = nullptr;
 		uint32_t totalBytes = 0;
-		paramBlock.GetDataAndSize(data, totalBytes);
+		buffer.GetDataAndSize(data, totalBytes);
 
 		// Update the heap offset, if required
-		if (paramBlock.GetType() == re::ParameterBlock::PBType::Mutable)
+		if (buffer.GetType() == re::Buffer::Type::Mutable)
 		{
 			const uint64_t alignedSize = GetAlignedSize(params->m_dataType, totalBytes);
 			params->m_heapByteOffset = alignedSize * curFrameHeapOffsetFactor;
@@ -228,8 +228,8 @@ namespace dx12
 		// Adjust our pointers if we're doing a partial update:
 		if (!updateAllBytes)
 		{
-			SEAssert(paramBlock.GetType() == re::ParameterBlock::PBType::Mutable,
-				"Only mutable parameter blocks can be partially updated");
+			SEAssert(buffer.GetType() == re::Buffer::Type::Mutable,
+				"Only mutable buffers can be partially updated");
 
 			// Update the source data pointer:
 			data = static_cast<uint8_t const*>(data) + baseOffset;
@@ -254,13 +254,13 @@ namespace dx12
 	}
 
 
-	void ParameterBlock::Destroy(re::ParameterBlock& paramBlock)
+	void Buffer::Destroy(re::Buffer& buffer)
 	{
-		dx12::ParameterBlock::PlatformParams* params =
-			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
-		SEAssert(params->m_isCreated, "Attempting to destroy a ParameterBlock that has not been created");
+		dx12::Buffer::PlatformParams* params =
+			buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		SEAssert(params->m_isCreated, "Attempting to destroy a Buffer that has not been created");
 
-		params->m_dataType = re::ParameterBlock::PBDataType::PBDataType_Count;
+		params->m_dataType = re::Buffer::DataType::DataType_Count;
 		params->m_numElements = 0;
 		params->m_isCreated = false;
 

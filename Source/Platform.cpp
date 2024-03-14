@@ -13,13 +13,13 @@
 #include "InputManager_Platform.h"
 #include "InputManager_Win32.h"
 
-#include "ParameterBlock_DX12.h"
-#include "ParameterBlock_OpenGL.h"
-#include "ParameterBlock_Platform.h"
+#include "Buffer_DX12.h"
+#include "Buffer_OpenGL.h"
+#include "Buffer_Platform.h"
 
-#include "ParameterBlockAllocator_DX12.h"
-#include "ParameterBlockAllocator_OpenGL.h"
-#include "ParameterBlockAllocator_Platform.h"
+#include "BufferAllocator_DX12.h"
+#include "BufferAllocator_OpenGL.h"
+#include "BufferAllocator_Platform.h"
 
 #include "RenderManager_DX12.h"
 #include "RenderManager_OpenGL.h"
@@ -92,14 +92,14 @@ namespace platform
 			// Context:
 			platform::Context::Destroy	= &opengl::Context::Destroy;
 
-			// Parameter blocks:
-			platform::ParameterBlock::Create			= &opengl::ParameterBlock::Create;
-			platform::ParameterBlock::Update			= &opengl::ParameterBlock::Update;
-			platform::ParameterBlock::Destroy			= &opengl::ParameterBlock::Destroy;
+			// Buffers:
+			platform::Buffer::Create			= &opengl::Buffer::Create;
+			platform::Buffer::Update			= &opengl::Buffer::Update;
+			platform::Buffer::Destroy			= &opengl::Buffer::Destroy;
 
-			// Parameter block allocator:
-			platform::ParameterBlockAllocator::Create	= &opengl::ParameterBlockAllocator::Create;
-			platform::ParameterBlockAllocator::Destroy	= &opengl::ParameterBlockAllocator::Destroy;
+			// Buffer allocator:
+			platform::BufferAllocator::Create	= &opengl::BufferAllocator::Create;
+			platform::BufferAllocator::Destroy	= &opengl::BufferAllocator::Destroy;
 
 			// Render manager:
 			platform::RenderManager::Initialize			= &opengl::RenderManager::Initialize;
@@ -139,14 +139,14 @@ namespace platform
 			// Context:
 			platform::Context::Destroy	= &dx12::Context::Destroy;
 
-			// Parameter blocks:
-			platform::ParameterBlock::Create			= &dx12::ParameterBlock::Create;
-			platform::ParameterBlock::Update			= &dx12::ParameterBlock::Update;
-			platform::ParameterBlock::Destroy			= &dx12::ParameterBlock::Destroy;
+			// Buffers:
+			platform::Buffer::Create			= &dx12::Buffer::Create;
+			platform::Buffer::Update			= &dx12::Buffer::Update;
+			platform::Buffer::Destroy			= &dx12::Buffer::Destroy;
 
-			// Parameter block allocator:
-			platform::ParameterBlockAllocator::Create	= &dx12::ParameterBlockAllocator::Create;
-			platform::ParameterBlockAllocator::Destroy	= &dx12::ParameterBlockAllocator::Destroy;
+			// Buffer allocator:
+			platform::BufferAllocator::Create	= &dx12::BufferAllocator::Create;
+			platform::BufferAllocator::Destroy	= &dx12::BufferAllocator::Destroy;
 			
 			// Render manager:
 			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;

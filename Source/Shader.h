@@ -2,7 +2,7 @@
 #pragma once
 
 #include "IPlatformParams.h"
-#include "ParameterBlock.h"
+#include "Buffer.h"
 #include "PipelineState.h"
 #include "NamedObject.h"
 

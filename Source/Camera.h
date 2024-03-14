@@ -13,7 +13,7 @@ namespace fr
 	class Camera
 	{
 	public:
-		static CameraParamsData BuildCameraParams(fr::Camera const&);
+		static CameraData BuildCameraData(fr::Camera const&);
 
 
 	public:

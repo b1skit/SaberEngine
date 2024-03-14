@@ -6,7 +6,7 @@
 #include "IPlatformParams.h"
 #include "Texture.h"
 #include "NamedObject.h"
-#include "ParameterBlock.h"
+#include "Buffer.h"
 
 
 namespace re

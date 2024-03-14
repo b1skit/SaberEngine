@@ -85,7 +85,7 @@ namespace en
 		// Create entity/component representations now that the scene data is loaded
 		fr::EntityManager::Get()->Startup();
 
-		renderManager->ThreadInitialize(); // Create render systems, close PB registration
+		renderManager->ThreadInitialize(); // Create render systems, close buffer registration
 
 		fr::UIManager::Get()->Startup();
 

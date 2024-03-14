@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "ParameterBlock.h"
+#include "Buffer.h"
 #include "RenderObjectIDs.h"
 
 #include "Shaders/Common/InstancingParams.h"
@@ -35,16 +35,16 @@ namespace gr
 
 
 	public:
-		static InstancedTransformParamsData CreateInstancedTransformParamsData(gr::Transform::RenderData const&);
+		static InstancedTransformData CreateInstancedTransformData(gr::Transform::RenderData const&);
 
-		static InstancedTransformParamsData CreateInstancedTransformParamsData(
+		static InstancedTransformData CreateInstancedTransformData(
 			glm::mat4 const* model, glm::mat4* transposeInvModel);
 
-		static std::shared_ptr<re::ParameterBlock> CreateInstancedTransformParams(
-			re::ParameterBlock::PBType, glm::mat4 const* model, glm::mat4* transposeInvModel);
-		static std::shared_ptr<re::ParameterBlock> CreateInstancedTransformParams(
-			re::ParameterBlock::PBType, gr::Transform::RenderData const&);
-		static std::shared_ptr<re::ParameterBlock> CreateInstancedTransformParams(
-			re::ParameterBlock::PBType, std::vector<gr::Transform::RenderData const*> const&);
+		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
+			re::Buffer::Type, glm::mat4 const* model, glm::mat4* transposeInvModel);
+		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
+			re::Buffer::Type, gr::Transform::RenderData const&);
+		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
+			re::Buffer::Type, std::vector<gr::Transform::RenderData const*> const&);
 	};
 }

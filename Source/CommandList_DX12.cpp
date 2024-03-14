@@ -8,8 +8,8 @@
 #include "CommandList_DX12.h"
 #include "Debug_DX12.h"
 #include "MeshPrimitive.h"
-#include "ParameterBlock.h"
-#include "ParameterBlock_DX12.h"
+#include "Buffer.h"
+#include "Buffer_DX12.h"
 #include "RenderManager.h"
 #include "RootSignature_DX12.h"
 #include "SwapChain_DX12.h"
@@ -291,15 +291,15 @@ namespace dx12
 	}
 
 
-	void CommandList::SetParameterBlock(re::ParameterBlock const* parameterBlock)
+	void CommandList::SetBuffer(re::Buffer const* buffer)
 	{
 		SEAssert(m_currentRootSignature != nullptr, "Root signature has not been set");
 
-		dx12::ParameterBlock::PlatformParams const* pbPlatParams =
-			parameterBlock->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
+		dx12::Buffer::PlatformParams const* bufferPlatParams =
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		RootSignature::RootParameter const* rootSigEntry = 
-			m_currentRootSignature->GetRootSignatureEntry(parameterBlock->GetName());
+			m_currentRootSignature->GetRootSignatureEntry(buffer->GetName());
 		SEAssert(rootSigEntry ||
 			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
 			"Invalid root signature entry");
@@ -308,26 +308,26 @@ namespace dx12
 		{
 			const uint32_t rootSigIdx = rootSigEntry->m_index;
 
-			switch (parameterBlock->GetPlatformParams()->m_dataType)
+			switch (buffer->GetPlatformParams()->m_dataType)
 			{
-			case re::ParameterBlock::PBDataType::SingleElement:
+			case re::Buffer::DataType::SingleElement:
 			{
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
 					rootSigIdx,
-					pbPlatParams->m_resource.Get(),
-					pbPlatParams->m_heapByteOffset);
+					bufferPlatParams->m_resource.Get(),
+					bufferPlatParams->m_heapByteOffset);
 			}
 			break;
-			case re::ParameterBlock::PBDataType::Array:
+			case re::Buffer::DataType::Array:
 			{
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
 					rootSigIdx,
-					pbPlatParams->m_resource.Get(),
-					pbPlatParams->m_heapByteOffset);
+					bufferPlatParams->m_resource.Get(),
+					bufferPlatParams->m_heapByteOffset);
 			}
 			break;
 			default:
-				SEAssertF("Invalid PBDataType");
+				SEAssertF("Invalid DataType");
 			}
 		}
 	}

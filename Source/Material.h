@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "NamedObject.h"
-#include "ParameterBlock.h"
+#include "Buffer.h"
 
 
 namespace re
@@ -68,13 +68,13 @@ namespace gr
 		};
 
 	public:
-		static std::shared_ptr<re::ParameterBlock> CreateInstancedParameterBlock(
-			re::ParameterBlock::PBType,
+		static std::shared_ptr<re::Buffer> CreateInstancedBuffer(
+			re::Buffer::Type,
 			std::vector<MaterialInstanceData const*> const&);
 
-		// Convenience helper: Partially update elements of an already committed (mutable) parameter block
+		// Convenience helper: Partially update elements of an already committed (mutable) buffer
 		static void CommitMaterialInstanceData(
-			re::ParameterBlock*, MaterialInstanceData const*, uint32_t baseOffset);
+			re::Buffer*, MaterialInstanceData const*, uint32_t baseOffset);
 
 		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified
 

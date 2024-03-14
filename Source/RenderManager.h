@@ -116,7 +116,7 @@ namespace re
 		util::NBufferedVector<std::shared_ptr<re::Texture>> m_newTextures;
 		util::NBufferedVector<std::shared_ptr<re::Sampler>> m_newSamplers;
 		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;
-		util::NBufferedVector<std::shared_ptr<re::ParameterBlock>> m_newParameterBlocks;
+		util::NBufferedVector<std::shared_ptr<re::Buffer>> m_newBuffers;
 
 		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
 		// Used as a holding ground for operations that must be performed once after creation (E.g. mip generation)

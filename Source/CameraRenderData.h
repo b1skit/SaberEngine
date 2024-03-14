@@ -136,7 +136,7 @@ namespace gr
 			gr::Camera::Config m_cameraConfig;
 
 			// We compute this once on the main thread, and then pass for reuse on the render thread
-			CameraParamsData m_cameraParams; 
+			CameraData m_cameraParams; 
 
 			gr::TransformID m_transformID;
 

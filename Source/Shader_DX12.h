@@ -1,9 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Shader.h"
+
 #include <wrl.h>
 #include <d3d12.h>
-
-#include "Shader.h"
 
 
 namespace dx12

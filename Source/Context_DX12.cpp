@@ -120,8 +120,8 @@ namespace dx12
 		re::SwapChain& swapChain = GetSwapChain();
 		swapChain.Create();
 
-		// Parameter Block Allocator:
-		m_paramBlockAllocator.Create(currentFrame);
+		// Buffer Allocator:
+		m_bufferAllocator.Create(currentFrame);
 
 		// Setup our ImGui context
 		{
@@ -197,9 +197,9 @@ namespace dx12
 
 		dx12Context.GetSwapChain().Destroy();
 
-		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
-		// as parameter blocks call the ParameterBlockAllocator in their destructor
-		dx12Context.GetParameterBlockAllocator().Destroy();
+		// NOTE: We must destroy anything that holds a buffer before the BufferAllocator is destroyed, 
+		// as buffers call the BufferAllocator in their destructor
+		dx12Context.GetBufferAllocator().Destroy();
 
 		// Clear the null descriptor libraries:
 		{
@@ -211,8 +211,8 @@ namespace dx12
 			dx12Context.s_nullUAVLibrary.clear();
 		}
 
-		// DX12 parameter blocks contain cpu descriptors, so we must destroy the cpu descriptor heap manager after the
-		// parameter block allocator
+		// DX12 buffers contain cpu descriptors, so we must destroy the cpu descriptor heap manager after the
+		// buffer allocator
 		dx12Context.m_cpuDescriptorHeapMgrs.clear();
 
 		dx12Context.m_PSOLibrary.clear();

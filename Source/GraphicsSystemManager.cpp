@@ -4,7 +4,7 @@
 #include "GraphicsSystem.h"
 #include "ImGuiUtils.h"
 #include "LightRenderData.h"
-#include "ParameterBlock.h"
+#include "Buffer.h"
 #include "RenderSystem.h"
 
 
@@ -30,12 +30,12 @@ namespace gr
 
 	void GraphicsSystemManager::Create()
 	{
-		CameraParamsData defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
+		CameraData defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
 
-		m_activeCameraParams = re::ParameterBlock::Create(
-			CameraParamsData::s_shaderName,
+		m_activeCameraParams = re::Buffer::Create(
+			CameraData::s_shaderName,
 			defaultCameraParams,
-			re::ParameterBlock::PBType::Mutable);
+			re::Buffer::Type::Mutable);
 	}
 
 
@@ -117,20 +117,20 @@ namespace gr
 
 	std::vector<re::Batch> GraphicsSystemManager::GetVisibleBatches(
 		gr::Camera::View const& cameraView,
-		uint8_t pbTypeMask/*= (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)*/) const
+		uint8_t bufferTypeMask/*= (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)*/) const
 	{
 		gr::CullingGraphicsSystem const* cullingGS = GetGraphicsSystem<gr::CullingGraphicsSystem>();
 
 		return m_batchManager.BuildSceneBatches(
 			m_renderData,
 			cullingGS->GetVisibleRenderDataIDs(cameraView),
-			pbTypeMask);
+			bufferTypeMask);
 	}
 
 
 	std::vector<re::Batch> GraphicsSystemManager::GetVisibleBatches(
 		std::vector<gr::Camera::View> const& views,
-		uint8_t pbTypeMask/*= (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)*/) const
+		uint8_t bufferTypeMask/*= (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)*/) const
 	{
 		gr::CullingGraphicsSystem const* cullingGS = GetGraphicsSystem<gr::CullingGraphicsSystem>();
 
@@ -157,7 +157,7 @@ namespace gr
 		return m_batchManager.BuildSceneBatches(
 			m_renderData,
 			uniqueRenderDataIDs,
-			pbTypeMask);
+			bufferTypeMask);
 	}
 
 
@@ -175,9 +175,9 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::ParameterBlock> GraphicsSystemManager::GetActiveCameraParams() const
+	std::shared_ptr<re::Buffer> GraphicsSystemManager::GetActiveCameraParams() const
 	{
-		SEAssert(m_activeCameraParams != nullptr, "Camera parameter block has not been created");
+		SEAssert(m_activeCameraParams != nullptr, "Camera buffer has not been created");
 		return m_activeCameraParams;
 	}
 

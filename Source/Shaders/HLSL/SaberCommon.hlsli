@@ -64,10 +64,10 @@ struct VertexOut
 // Note: Aim for StructuredBuffers with sizes divisible by 128 bits = 16 bytes = sizeof(float4)
 
 
-StructuredBuffer<InstanceIndexParamsData> InstanceIndexParams : register(t0, space0); // Indexed by instance ID
-StructuredBuffer<InstancedTransformParamsData> InstancedTransformParams : register(t1, space0); // Indexed by instance ID
+StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space0); // Indexed by instance ID
+StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t1, space0); // Indexed by instance ID
 
-StructuredBuffer<InstancedPBRMetallicRoughnessParamsData> InstancedPBRMetallicRoughnessParams : register(t2, space0);
+StructuredBuffer<InstancedPBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t2, space0);
 
 
 Texture2D<float4> MatAlbedo;

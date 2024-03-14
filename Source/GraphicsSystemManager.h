@@ -37,11 +37,11 @@ namespace gr
 	public: // Batch manager:
 		std::vector<re::Batch> GetVisibleBatches(
 			gr::Camera::View const&,
-			uint8_t pbTypeMask = (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)) const;
+			uint8_t bufferTypeMask = (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)) const;
 
 		std::vector<re::Batch> GetVisibleBatches(
 			std::vector<gr::Camera::View> const&, 
-			uint8_t pbTypeMask = (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)) const;
+			uint8_t bufferTypeMask = (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)) const;
 
 		gr::RenderDataManager const& GetRenderData() const;
 
@@ -50,7 +50,7 @@ namespace gr
 		gr::RenderDataID GetActiveCameraRenderDataID() const;
 		gr::Camera::RenderData const& GetActiveCameraRenderData() const;
 		gr::Transform::RenderData const& GetActiveCameraTransformData() const;
-		std::shared_ptr<re::ParameterBlock> GetActiveCameraParams() const;
+		std::shared_ptr<re::Buffer> GetActiveCameraParams() const;
 
 		void SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);
 
@@ -83,7 +83,7 @@ namespace gr
 
 		gr::RenderDataID m_activeCameraRenderDataID;
 		gr::TransformID m_activeCameraTransformDataID;
-		std::shared_ptr<re::ParameterBlock> m_activeCameraParams;
+		std::shared_ptr<re::Buffer> m_activeCameraParams;
 
 		gr::RenderDataID m_activeAmbientLightRenderDataID;
 		bool m_activeAmbientLightHasChanged;

@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "CastUtils.h"
-#include "ParameterBlock.h"
+#include "Buffer.h"
 #include "TransformRenderData.h"
 
 
@@ -11,75 +11,75 @@ namespace gr
 	constexpr glm::vec3 Transform::WorldAxisZ = glm::vec3(0.0f, 0.0f, 1.0f); // Note: SaberEngine uses a RHCS
 
 
-	InstancedTransformParamsData Transform::CreateInstancedTransformParamsData(
+	InstancedTransformData Transform::CreateInstancedTransformData(
 		gr::Transform::RenderData const& transformData)
 	{
-		return InstancedTransformParamsData {
+		return InstancedTransformData {
 			.g_model = transformData.g_model,
 			.g_transposeInvModel = transformData.g_transposeInvModel
 		};
 	}
 
 
-	InstancedTransformParamsData Transform::CreateInstancedTransformParamsData(
+	InstancedTransformData Transform::CreateInstancedTransformData(
 		glm::mat4 const* model, glm::mat4* transposeInvModel)
 	{
-		InstancedTransformParamsData instancedMeshPBData{};
+		InstancedTransformData instancedMeshData{};
 
-		instancedMeshPBData.g_model = model ? *model : glm::mat4(1.f);
-		instancedMeshPBData.g_transposeInvModel = transposeInvModel ? *transposeInvModel : glm::mat4(1.f);
+		instancedMeshData.g_model = model ? *model : glm::mat4(1.f);
+		instancedMeshData.g_transposeInvModel = transposeInvModel ? *transposeInvModel : glm::mat4(1.f);
 
-		return instancedMeshPBData;
+		return instancedMeshData;
 	}
 
 
-	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
-		re::ParameterBlock::PBType pbType, glm::mat4 const* model, glm::mat4* transposeInvModel)
+	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
+		re::Buffer::Type bufferType, glm::mat4 const* model, glm::mat4* transposeInvModel)
 	{
-		InstancedTransformParamsData const& transformData = 
-			CreateInstancedTransformParamsData(model, transposeInvModel);
+		InstancedTransformData const& transformData = 
+			CreateInstancedTransformData(model, transposeInvModel);
 
-		return re::ParameterBlock::CreateArray(
-			InstancedTransformParamsData::s_shaderName,
+		return re::Buffer::CreateArray(
+			InstancedTransformData::s_shaderName,
 			&transformData,
 			1,
-			pbType);
+			bufferType);
 	}
 
 
-	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
-		re::ParameterBlock::PBType pbType, gr::Transform::RenderData const& transformData)
+	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
+		re::Buffer::Type bufferType, gr::Transform::RenderData const& transformData)
 	{
-		InstancedTransformParamsData const& instancedMeshPBData = 
-			CreateInstancedTransformParamsData(transformData);
+		InstancedTransformData const& instancedMeshData = 
+			CreateInstancedTransformData(transformData);
 
-		return re::ParameterBlock::CreateArray(
-			InstancedTransformParamsData::s_shaderName,
-			&instancedMeshPBData,
+		return re::Buffer::CreateArray(
+			InstancedTransformData::s_shaderName,
+			&instancedMeshData,
 			1,
-			pbType);
+			bufferType);
 	}
 
 
-	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
-		re::ParameterBlock::PBType pbType, std::vector<gr::Transform::RenderData const*> const& transformRenderData)
+	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
+		re::Buffer::Type bufferType, std::vector<gr::Transform::RenderData const*> const& transformRenderData)
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(transformRenderData.size());
 
-		std::vector<InstancedTransformParamsData> instancedMeshPBData;
-		instancedMeshPBData.reserve(numInstances);
+		std::vector<InstancedTransformData> instancedMeshData;
+		instancedMeshData.reserve(numInstances);
 
 		for (size_t transformIdx = 0; transformIdx < numInstances; transformIdx++)
 		{
-			instancedMeshPBData.emplace_back(CreateInstancedTransformParamsData(*transformRenderData[transformIdx]));
+			instancedMeshData.emplace_back(CreateInstancedTransformData(*transformRenderData[transformIdx]));
 		}
 
-		std::shared_ptr<re::ParameterBlock> instancedMeshParams = re::ParameterBlock::CreateArray(
-			InstancedTransformParamsData::s_shaderName,
-			&instancedMeshPBData[0],
+		std::shared_ptr<re::Buffer> instancedMeshBuffer = re::Buffer::CreateArray(
+			InstancedTransformData::s_shaderName,
+			&instancedMeshData[0],
 			numInstances,
-			pbType);
+			bufferType);
 
-		return instancedMeshParams;
+		return instancedMeshBuffer;
 	}
 }

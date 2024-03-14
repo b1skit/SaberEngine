@@ -9,7 +9,7 @@
 #include "../Common/SkyboxParams.h"
 
 
-ConstantBuffer<SkyboxParamsData> SkyboxParams;
+ConstantBuffer<SkyboxData> SkyboxParams;
 
 
 float4 PShader(VertexOut In) : SV_Target

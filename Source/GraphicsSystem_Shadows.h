@@ -40,7 +40,7 @@ namespace gr
 		{
 			std::shared_ptr<re::RenderStage> m_renderStage;
 			std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
-			std::shared_ptr<re::ParameterBlock> m_shadowCamParamBlock;
+			std::shared_ptr<re::Buffer> m_shadowCamParamBlock;
 		};
 		std::unordered_map<gr::RenderDataID, DirectionalShadowStageData> m_directionalShadowStageData;
 
@@ -48,7 +48,7 @@ namespace gr
 		{
 			std::shared_ptr<re::RenderStage> m_renderStage;
 			std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
-			std::shared_ptr<re::ParameterBlock> m_cubemapShadowParamBlock;
+			std::shared_ptr<re::Buffer> m_cubemapShadowParamBlock;
 		};
 		std::unordered_map<gr::RenderDataID, PointShadowStageData> m_pointShadowStageData;
 

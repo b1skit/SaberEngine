@@ -7,14 +7,11 @@
 #include "TextureTarget_DX12.h"
 
 
-using en::Config;
-
-
 namespace platform
 {
 	void TextureTarget::CreatePlatformParams(re::TextureTarget& texTarget)
 	{
-		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{
@@ -38,7 +35,7 @@ namespace platform
 
 	void TextureTargetSet::CreatePlatformParams(re::TextureTargetSet& texTarget)
 	{
-		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

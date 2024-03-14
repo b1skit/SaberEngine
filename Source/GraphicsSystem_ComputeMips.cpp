@@ -128,10 +128,10 @@ namespace gr
 					MipGenerationParams const& mipGenerationParams =
 						CreateMipGenerationParamsData(newTexture, sourceMip, numMipStages, faceIdx);
 
-					mipGenerationStage->AddSingleFrameParameterBlock(re::ParameterBlock::Create(
+					mipGenerationStage->AddSingleFrameBuffer(re::Buffer::Create(
 						MipGenerationParams::s_shaderName,
 						mipGenerationParams,
-						re::ParameterBlock::PBType::SingleFrame));
+						re::Buffer::Type::SingleFrame));
 
 					const std::string targetSetName = newTexture->GetName() + 
 						std::format(" MIP {} - {} generation stage targets", targetMip, targetMip + numMipStages - 1);

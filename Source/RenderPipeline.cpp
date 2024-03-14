@@ -3,8 +3,6 @@
 #include "ProfilingMarkers.h"
 #include "RenderPipeline.h"
 
-using re::RenderStage;
-
 
 namespace re
 {

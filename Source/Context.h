@@ -2,7 +2,7 @@
 #pragma once
 #include "IPlatformParams.h"
 #include "TextureTarget.h"
-#include "ParameterBlockAllocator.h"
+#include "BufferAllocator.h"
 #include "PipelineState.h"
 #include "SwapChain.h"
 
@@ -44,8 +44,8 @@ namespace re
 		re::SwapChain& GetSwapChain() { return m_swapChain; }
 		re::SwapChain const& GetSwapChain() const { return m_swapChain; }
 
-		re::ParameterBlockAllocator& GetParameterBlockAllocator();
-		re::ParameterBlockAllocator const& GetParameterBlockAllocator() const;
+		re::BufferAllocator& GetBufferAllocator();
+		re::BufferAllocator const& GetBufferAllocator() const;
 
 
 	private:
@@ -56,7 +56,7 @@ namespace re
 
 
 	protected:
-		re::ParameterBlockAllocator m_paramBlockAllocator;
+		re::BufferAllocator m_bufferAllocator;
 
 
 	private:
@@ -72,17 +72,17 @@ namespace re
 	};
 
 
-	inline re::ParameterBlockAllocator& Context::GetParameterBlockAllocator()
+	inline re::BufferAllocator& Context::GetBufferAllocator()
 	{
-		SEAssert(m_paramBlockAllocator.IsValid(), "Parameter block allocator has already been destroyed");
-		return m_paramBlockAllocator;
+		SEAssert(m_bufferAllocator.IsValid(), "Buffer allocator has already been destroyed");
+		return m_bufferAllocator;
 	}
 
 
-	inline re::ParameterBlockAllocator const& Context::GetParameterBlockAllocator() const
+	inline re::BufferAllocator const& Context::GetBufferAllocator() const
 	{
-		SEAssert(m_paramBlockAllocator.IsValid(), "Parameter block allocator has already been destroyed");
-		return m_paramBlockAllocator;
+		SEAssert(m_bufferAllocator.IsValid(), "Buffer allocator has already been destroyed");
+		return m_bufferAllocator;
 	}
 
 
