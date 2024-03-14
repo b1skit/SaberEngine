@@ -2,6 +2,8 @@
 #pragma once
 #include "CameraRenderData.h"
 
+#include "Shaders/Common/CameraParams.h"
+
 
 namespace fr
 {
@@ -11,7 +13,7 @@ namespace fr
 	class Camera
 	{
 	public:
-		static gr::Camera::CameraParams BuildCameraParams(fr::Camera const&);
+		static CameraParamsData BuildCameraParams(fr::Camera const&);
 
 
 	public:

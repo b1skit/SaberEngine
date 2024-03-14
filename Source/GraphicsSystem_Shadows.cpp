@@ -8,26 +8,18 @@
 #include "Shader.h"
 #include "ShadowMapRenderData.h"
 
+#include "Shaders/Common/ShadowRenderParams.h"
+
 
 namespace
 {
-	struct CubemapShadowRenderParams
-	{
-		glm::mat4 g_cubemapShadowCam_VP[6];
-		glm::vec4 g_cubemapShadowCamNearFar; // .xy = near, far. .zw = unused
-		glm::vec4 g_cubemapLightWorldPos; // .xyz = light word pos, .w = unused
-
-		static constexpr char const* const s_shaderName = "CubemapShadowRenderParams"; // Not counted towards size of struct
-	};
-
-
-	CubemapShadowRenderParams GetCubemapShadowRenderParamsData(
+	CubemapShadowRenderParamsData GetCubemapShadowRenderParamsData(
 		gr::Camera::RenderData const& shadowCamData, gr::Transform::RenderData const& transformData)
 	{
 		SEAssert(shadowCamData.m_cameraConfig.m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap,
 			"Invalid projection type");
 
-		CubemapShadowRenderParams cubemapShadowParams;
+		CubemapShadowRenderParamsData cubemapShadowParams;
 		
 		std::vector<glm::mat4> const& cubeViewMatrices = 
 			gr::Camera::BuildAxisAlignedCubeViewMatrices(transformData.m_globalPosition);
@@ -82,7 +74,7 @@ namespace gr
 
 		// Directional shadow camera param block:
 		std::shared_ptr<re::ParameterBlock> shadowCamParams = re::ParameterBlock::Create(
-			gr::Camera::CameraParams::s_shaderName,
+			CameraParamsData::s_shaderName,
 			shadowCamData.m_cameraParams,
 			re::ParameterBlock::PBType::Mutable);
 
@@ -215,11 +207,11 @@ namespace gr
 		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
 
 		// Cubemap shadow param block:
-		CubemapShadowRenderParams const& cubemapShadowParams =
+		CubemapShadowRenderParamsData const& cubemapShadowParams =
 			GetCubemapShadowRenderParamsData(camData, transformData);
 
 		std::shared_ptr<re::ParameterBlock> cubeShadowPB = re::ParameterBlock::Create(
-			CubemapShadowRenderParams::s_shaderName,
+			CubemapShadowRenderParamsData::s_shaderName,
 			cubemapShadowParams,
 			re::ParameterBlock::PBType::Mutable);
 
@@ -373,7 +365,7 @@ namespace gr
 					gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
-					CubemapShadowRenderParams const& cubemapShadowParams =
+					CubemapShadowRenderParamsData const& cubemapShadowParams =
 						GetCubemapShadowRenderParamsData(shadowCamData, transformData);
 
 					m_pointShadowStageData.at(pointItr.GetRenderDataID()).m_cubemapShadowParamBlock->Commit(

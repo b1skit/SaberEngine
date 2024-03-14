@@ -15,22 +15,18 @@
 #include "RenderDataManager.h"
 #include "RenderStage.h"
 
+#include "Shaders\Common\IBLGenerationParams.h"
+#include "Shaders\Common\LightParams.h"
+
 
 namespace
 {
-	struct BRDFIntegrationParams
-	{
-		glm::uvec4 g_integrationTargetResolution;
-
-		static constexpr char const* const s_shaderName = "BRDFIntegrationParams";
-	};
-
-	BRDFIntegrationParams GetBRDFIntegrationParamsData()
+	BRDFIntegrationParamsData GetBRDFIntegrationParamsDataData()
 	{
 		const uint32_t brdfTexWidthHeight =
 			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
 
-		BRDFIntegrationParams brdfIntegrationParams{
+		BRDFIntegrationParamsData brdfIntegrationParams{
 			.g_integrationTargetResolution =
 				glm::uvec4(brdfTexWidthHeight, brdfTexWidthHeight, 0, 0)
 		};
@@ -39,18 +35,10 @@ namespace
 	}
 
 
-	struct IEMPMREMGenerationParams
-	{
-		glm::vec4 g_numSamplesRoughnessFaceIdx; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
-		glm::vec4 g_mipLevelSrcWidthSrcHeightSrcNumMips; // .x = IEM mip level, .yz = src width/height, .w = num src mips
-
-		static constexpr char const* const s_shaderName = "IEMPMREMGenerationParams"; // Not counted towards size of struct
-	};
-
-	IEMPMREMGenerationParams GetIEMPMREMGenerationParamsData(
+	IEMPMREMGenerationParamsData GetIEMPMREMGenerationParamsDataData(
 		int currentMipLevel, int numMipLevels, uint32_t faceIdx, uint32_t srcWidth, uint32_t srcHeight)
 	{
-		IEMPMREMGenerationParams generationParams;
+		IEMPMREMGenerationParamsData generationParams;
 
 		SEAssert(currentMipLevel >= 0 && numMipLevels >= 1,
 			"Mip level params are invalid. These must be reasonable, even if they're not used (i.e. IEM generation)");
@@ -91,64 +79,33 @@ namespace
 	}
 
 
-	struct AmbientLightParams
-	{
-		// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
-		glm::vec4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
-		glm::vec4 g_ssaoTexDims; // .xyzw = width, height, 1/width, 1/height
-
-		static constexpr char const* const s_shaderName = "AmbientLightParams"; // Not counted towards size of struct
-	};
-
-
-	AmbientLightParams GetAmbientLightParamsData(
+	AmbientLightParamsData GetAmbientLightParamsData(
 		uint32_t numPMREMMips, float diffuseScale, float specularScale, re::Texture const* ssaoTex)
 	{
-		AmbientLightParams ambientLightParams;
+		AmbientLightParamsData ambientLightParamsData{};
 
 		const uint32_t dfgTexWidthHeight = 
 			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
 
 		const uint32_t maxPMREMMipLevel = numPMREMMips - 1;
 
-		ambientLightParams.g_maxPMREMMipDFGResScaleDiffuseScaleSpec = glm::vec4(
+		ambientLightParamsData.g_maxPMREMMipDFGResScaleDiffuseScaleSpec = glm::vec4(
 			maxPMREMMipLevel,
 			dfgTexWidthHeight,
 			diffuseScale,
 			specularScale);
 
-		ambientLightParams.g_ssaoTexDims = glm::vec4(0.f);
+		ambientLightParamsData.g_ssaoTexDims = glm::vec4(0.f);
 		if (ssaoTex)
 		{
-			ambientLightParams.g_ssaoTexDims = ssaoTex->GetTextureDimenions();
+			ambientLightParamsData.g_ssaoTexDims = ssaoTex->GetTextureDimenions();
 		}
 
-		return ambientLightParams;
+		return ambientLightParamsData;
 	}
 
-	
-	struct LightParams
-	{
-		glm::vec4 g_lightColorIntensity; // .rgb = hue, .a = intensity
 
-		// .xyz = world pos (Directional lights: Normalized point -> source dir)
-		// .w = emitter radius (point lights)
-		glm::vec4 g_lightWorldPosRadius; 
-
-		glm::vec4 g_shadowMapTexelSize;	// .xyzw = width, height, 1/width, 1/height
-		glm::vec4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
-
-		glm::mat4 g_shadowCam_VP;
-
-		glm::vec4 g_renderTargetResolution; // .xy = xRes, yRes, .zw = 1/xRes 1/yRes
-		glm::vec4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
-		glm::vec4 g_shadowParams; // .x = has shadow (1.f), .y = quality mode, .zw = light size UV radius
-
-		static constexpr char const* const s_shaderName = "LightParams"; // Not counted towards size of struct
-	};
-
-
-	LightParams GetLightParamData(
+	LightParamsData GetLightParamData(
 		void const* lightRenderData,
 		gr::Light::Type lightType,
 		gr::Transform::RenderData const& transformData,
@@ -157,13 +114,13 @@ namespace
 		std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
 		SEAssert(lightType != fr::Light::Type::AmbientIBL,
-			"Ambient lights do not use the LightParams structure");
+			"Ambient lights do not use the LightParamsData structure");
 
 		SEAssert((shadowData != nullptr) == (shadowCamData != nullptr),
 			"Shadow data and shadow camera data depend on each other");
 
-		LightParams lightParams;
-		memset(&lightParams, 0, sizeof(LightParams)); // Ensure unused elements are zeroed
+		LightParamsData lightParams;
+		memset(&lightParams, 0, sizeof(LightParamsData)); // Ensure unused elements are zeroed
 
 		// Set type-specific params:
 		bool hasShadow = false;
@@ -270,17 +227,7 @@ namespace
 	}
 
 
-	struct PoissonSampleParams
-	{
-		glm::vec4 g_poissonSamples64[32];	// 64x float2
-		glm::vec4 g_poissonSamples32[16];	// 32x float2
-		glm::vec4 g_poissonSamples25[13];	// 25x float2
-
-		static constexpr char const* const s_shaderName = "PoissonSampleParams";
-	};
-
-
-	PoissonSampleParams GetPoissonSampleParamsData()
+	PoissonSampleParamsData GetPoissonSampleParamsData()
 	{
 		// TODO: Dynamically generate these values. For now, we just hard code them
 
@@ -417,7 +364,7 @@ namespace
 		};
 
 
-		PoissonSampleParams shadowSampleParams{};
+		PoissonSampleParamsData shadowSampleParams{};
 
 		memcpy(shadowSampleParams.g_poissonSamples64, k_poissonSamples64.data(), k_poissonSamples64.size() * sizeof(glm::vec2));
 		memcpy(shadowSampleParams.g_poissonSamples32, k_poissonSamples32.data(), k_poissonSamples32.size() * sizeof(glm::vec2));
@@ -493,9 +440,9 @@ namespace gr
 
 		brdfStage->SetTextureTargetSet(brdfStageTargets);
 
-		BRDFIntegrationParams const& brdfIntegrationParams = GetBRDFIntegrationParamsData();
+		BRDFIntegrationParamsData const& brdfIntegrationParams = GetBRDFIntegrationParamsDataData();
 		std::shared_ptr<re::ParameterBlock> brdfIntegrationPB = re::ParameterBlock::Create(
-			BRDFIntegrationParams::s_shaderName,
+			BRDFIntegrationParamsData::s_shaderName,
 			brdfIntegrationParams,
 			re::ParameterBlock::PBType::SingleFrame);
 		brdfStage->AddSingleFrameParameterBlock(brdfIntegrationPB);
@@ -553,10 +500,10 @@ namespace gr
 				re::Sampler::GetSampler("ClampMinMagMipLinear"));
 
 			// Parameter blocks:
-			IEMPMREMGenerationParams const& iemGenerationParams =
-				GetIEMPMREMGenerationParamsData(0, 1, face, iblTex->Width(), iblTex->Height());
+			IEMPMREMGenerationParamsData const& iemGenerationParams =
+				GetIEMPMREMGenerationParamsDataData(0, 1, face, iblTex->Width(), iblTex->Height());
 			std::shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
-				IEMPMREMGenerationParams::s_shaderName,
+				IEMPMREMGenerationParamsData::s_shaderName,
 				iemGenerationParams,
 				re::ParameterBlock::PBType::SingleFrame);
 			iemStage->AddSingleFrameParameterBlock(iemGenerationPB);
@@ -639,10 +586,10 @@ namespace gr
 					re::Sampler::GetSampler("ClampMinMagMipLinear"));
 
 				// Parameter blocks:
-				IEMPMREMGenerationParams const& pmremGenerationParams = GetIEMPMREMGenerationParamsData(
+				IEMPMREMGenerationParamsData const& pmremGenerationParams = GetIEMPMREMGenerationParamsDataData(
 					currentMipLevel, totalMipLevels, face, iblTex->Width(), iblTex->Height());
 				std::shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
-					IEMPMREMGenerationParams::s_shaderName,
+					IEMPMREMGenerationParamsData::s_shaderName,
 					pmremGenerationParams,
 					re::ParameterBlock::PBType::SingleFrame);
 				pmremStage->AddSingleFrameParameterBlock(pmremGenerationPB);
@@ -705,7 +652,7 @@ namespace gr
 		}
 
 		// Camera render params for 6 cubemap faces; Just need to update g_view for each face/stage
-		gr::Camera::CameraParams cubemapCamParams{};
+		CameraParamsData cubemapCamParams{};
 
 		cubemapCamParams.g_projection = gr::Camera::BuildPerspectiveProjectionMatrix(
 			glm::radians(90.f), // yFOV
@@ -726,7 +673,7 @@ namespace gr
 				cubemapCamParams.g_view = cubemapViews[face];
 
 				m_cubemapRenderCamParams[face] = re::ParameterBlock::Create(
-					gr::Camera::CameraParams::s_shaderName,
+					CameraParamsData::s_shaderName,
 					cubemapCamParams,
 					re::ParameterBlock::PBType::Immutable);
 			}
@@ -836,10 +783,10 @@ namespace gr
 		
 
 		// Common PCSS sampling params:
-		PoissonSampleParams const& poissonSampleParamsData = GetPoissonSampleParamsData();
+		PoissonSampleParamsData const& poissonSampleParamsData = GetPoissonSampleParamsData();
 
 		std::shared_ptr<re::ParameterBlock> poissonSampleParams = re::ParameterBlock::Create(
-			PoissonSampleParams::s_shaderName,
+			PoissonSampleParamsData::s_shaderName,
 			poissonSampleParamsData,
 			re::ParameterBlock::PBType::Immutable);
 
@@ -991,15 +938,15 @@ namespace gr
 					ssaoTex = m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get();
 				}
 
-				const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
+				const AmbientLightParamsData ambientLightParamsData = GetAmbientLightParamsData(
 					totalPMREMMipLevels,
 					ambientData.m_diffuseScale,
 					ambientData.m_specularScale,
 					ssaoTex);
 
 				std::shared_ptr<re::ParameterBlock> ambientParams = re::ParameterBlock::Create(
-					AmbientLightParams::s_shaderName,
-					ambientLightParams,
+					AmbientLightParamsData::s_shaderName,
+					ambientLightParamsData,
 					re::ParameterBlock::PBType::Mutable);
 
 				m_ambientLightData.emplace(ambientData.m_renderDataID,
@@ -1054,7 +1001,7 @@ namespace gr
 					shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(directionalData.m_renderDataID);
 				}
 
-				LightParams const& directionalLightParamData = GetLightParamData(
+				LightParamsData const& directionalLightParamData = GetLightParamData(
 					&directionalData,
 					gr::Light::Type::Directional,
 					directionalTransformData,
@@ -1063,7 +1010,7 @@ namespace gr
 					m_directionalStage->GetTextureTargetSet());
 
 				std::shared_ptr<re::ParameterBlock> directionalLightParams = re::ParameterBlock::Create(
-					LightParams::s_shaderName,
+					LightParamsData::s_shaderName,
 					directionalLightParamData,
 					re::ParameterBlock::PBType::Mutable);
 
@@ -1116,7 +1063,7 @@ namespace gr
 					shadowCamData = &pointItr.Get<gr::Camera::RenderData>();
 				}
 
-				LightParams const& pointLightParams = GetLightParamData(
+				LightParamsData const& pointLightParams = GetLightParamData(
 					&pointData,
 					gr::Light::Type::Point,
 					transformData,
@@ -1125,7 +1072,7 @@ namespace gr
 					m_pointStage->GetTextureTargetSet());
 
 				std::shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
-					LightParams::s_shaderName,
+					LightParamsData::s_shaderName,
 					pointLightParams,
 					re::ParameterBlock::PBType::Mutable);
 
@@ -1180,13 +1127,13 @@ namespace gr
 
 				const uint32_t totalPMREMMipLevels = ambientLight.second.m_PMREMTex->GetNumMips();
 
-				const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
+				const AmbientLightParamsData ambientLightParamsData = GetAmbientLightParamsData(
 					totalPMREMMipLevels,
 					ambientRenderData.m_diffuseScale,
 					ambientRenderData.m_specularScale,
 					m_AOGS ? m_AOGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture().get() : nullptr);
 
-				ambientLight.second.m_ambientParams->Commit(ambientLightParams);
+				ambientLight.second.m_ambientParams->Commit(ambientLightParamsData);
 			}
 		}
 
@@ -1241,7 +1188,7 @@ namespace gr
 						shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(lightID);
 					}
 
-					LightParams const& directionalParams = GetLightParamData(
+					LightParamsData const& directionalParams = GetLightParamData(
 						&directionalData,
 						gr::Light::Type::Directional,
 						lightTransformData,
@@ -1263,7 +1210,7 @@ namespace gr
 						shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(lightID);
 					}
 
-					LightParams const& pointLightParams = GetLightParamData(
+					LightParamsData const& pointLightParams = GetLightParamData(
 						&pointData,
 						gr::Light::Type::Point,
 						lightTransformData,

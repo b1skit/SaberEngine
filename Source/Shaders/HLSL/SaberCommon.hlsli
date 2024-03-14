@@ -5,8 +5,11 @@
 #include "CameraCommon.hlsli"
 #include "Samplers.hlsli"
 
-#define ALPHA_CUTOFF 0.1f
+#include "../Common/InstancingParams.h"
+#include "../Common/MaterialParams.h"
 
+
+#define ALPHA_CUTOFF 0.1f
 
 struct VertexIn
 {	
@@ -60,67 +63,11 @@ struct VertexOut
 
 // Note: Aim for StructuredBuffers with sizes divisible by 128 bits = 16 bytes = sizeof(float4)
 
-struct InstanceIndexParamsCB
-{
-	uint g_transformIdx;
-	uint g_materialIdx;
 
-	uint2 _padding;
-};
-StructuredBuffer<InstanceIndexParamsCB> InstanceIndexParams : register(t0, space0); // Indexed by instance ID
+StructuredBuffer<InstanceIndexParamsData> InstanceIndexParams : register(t0, space0); // Indexed by instance ID
+StructuredBuffer<InstancedTransformParamsData> InstancedTransformParams : register(t1, space0); // Indexed by instance ID
 
-
-struct InstancedTransformParamsCB
-{
-	float4x4 g_model;
-	float4x4 g_transposeInvModel;
-};
-StructuredBuffer<InstancedTransformParamsCB> InstancedTransformParams : register(t1, space0); // Indexed by instance ID
-
-
-struct InstancedPBRMetallicRoughnessParamsCB
-{
-	float4 g_baseColorFactor;
-	
-	float g_metallicFactor;
-	float g_roughnessFactor;
-	float g_normalScale;
-	float g_occlusionStrength;
-	
-	float4 g_emissiveFactorStrength; // .xyz = emissive factor, .w = emissive strength
-	
-	float4 g_f0; // .xyz = f0, .w = unused. For non-metals only
-};
-StructuredBuffer<InstancedPBRMetallicRoughnessParamsCB> InstancedPBRMetallicRoughnessParams : register(t2, space0);
-
-
-struct IEMPMREMGenerationParamsCB
-{
-	float4 g_numSamplesRoughnessFaceIdx; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
-	float4 g_mipLevelSrcWidthSrcHeightSrcNumMips; // .x = IEM mip level, .yz = src width/height, .w = src num mips
-};
-ConstantBuffer<IEMPMREMGenerationParamsCB> IEMPMREMGenerationParams;
-
-
-struct BloomTargetParamsCB
-{
-	float4 g_bloomTargetResolution; // .x = width, .y = height, .z = 1/width, .w = 1/height
-};
-ConstantBuffer<BloomTargetParamsCB> BloomTargetParams;
-
-
-struct LuminanceThresholdParamsCB
-{
-	float4 g_sigmoidParams; // .x = Sigmoid ramp power, .y = Sigmoid speed, .zw = unused
-};
-ConstantBuffer<LuminanceThresholdParamsCB> LuminanceThresholdParams;
-
-
-struct GaussianBlurParamsCB
-{
-	float4 g_blurSettings; // .x = Bloom direction (0 = horizontal, 1 = vertical), .yzw = unused
-};
-ConstantBuffer<GaussianBlurParamsCB> GaussianBlurParams;
+StructuredBuffer<InstancedPBRMetallicRoughnessParamsData> InstancedPBRMetallicRoughnessParams : register(t2, space0);
 
 
 Texture2D<float4> MatAlbedo;

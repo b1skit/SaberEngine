@@ -5,14 +5,10 @@
 #include "Transformations.hlsli"
 #include "UVUtils.hlsli"
 
+#include "../Common/LightParams.h"
 
-struct PoissonSampleParamsCB
-{
-	float4 g_poissonSamples64[32]; // 64x float2
-	float4 g_poissonSamples32[16]; // 32x float2
-	float4 g_poissonSamples25[13]; // 25x float2
-};
-ConstantBuffer<PoissonSampleParamsCB> PoissonSampleParams;
+
+ConstantBuffer<PoissonSampleParamsData> PoissonSampleParams;
 
 void Float2ToFloat4SampleIndex(uint sampleIdx, out uint baseIdxOut, out uint offsetOut)
 {

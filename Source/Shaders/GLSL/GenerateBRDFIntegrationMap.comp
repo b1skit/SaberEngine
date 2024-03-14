@@ -3,14 +3,13 @@
 #include "SaberLighting.glsl"
 #include "UVUtils.glsl"
 
-#define NUM_SAMPLES 1024
+#include "../Common/IBLGenerationParams.h"
 
-layout(std430, binding=0) uniform BRDFIntegrationParams
-{
-	uvec4 g_integrationTargetResolution;
-};
+layout(std430, binding=0) uniform BRDFIntegrationParams { BRDFIntegrationParamsData _BRDFIntegrationParams; };
 
 layout(location=0) writeonly uniform image2D outColor;
+
+#define NUM_SAMPLES 1024
 
 
 // Generate a BRDF Integration map LUT
@@ -21,11 +20,15 @@ layout(location=0) writeonly uniform image2D outColor;
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
-	const uvec2 targetResolution = g_integrationTargetResolution.xy;
+	const uvec2 targetResolution = _BRDFIntegrationParams.g_integrationTargetResolution.xy;
 
 	const ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 
-	vec2 screenUV = PixelCoordsToUV(gl_GlobalInvocationID.xy, g_integrationTargetResolution.xy, vec2(0.5f, 0.5f), false);
+	vec2 screenUV = PixelCoordsToUV(
+		gl_GlobalInvocationID.xy, 
+		_BRDFIntegrationParams.g_integrationTargetResolution.xy, 
+		vec2(0.5f, 0.5f), 
+		false);
 
 	const float NoV = screenUV.x;
 	const float NoV2 = NoV * NoV;

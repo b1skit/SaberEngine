@@ -6,9 +6,9 @@
 
 namespace gr
 {
-	Material_GLTF::InstancedPBRMetallicRoughnessParams Material_GLTF::GetPBRMetallicRoughnessParamsData() const
+	InstancedPBRMetallicRoughnessParamsData Material_GLTF::GetPBRMetallicRoughnessParamsData() const
 	{
-		return Material_GLTF::InstancedPBRMetallicRoughnessParams
+		return InstancedPBRMetallicRoughnessParamsData
 		{
 			.g_baseColorFactor = m_baseColorFactor,
 
@@ -49,10 +49,10 @@ namespace gr
 
 	void Material_GLTF::PackMaterialInstanceData(void* dst, size_t maxSize) const
 	{
-		SEAssert(maxSize <= sizeof(InstancedPBRMetallicRoughnessParams), "Not enough space to pack material instance data");
+		SEAssert(maxSize <= sizeof(InstancedPBRMetallicRoughnessParamsData), "Not enough space to pack material instance data");
 
-		InstancedPBRMetallicRoughnessParams const& materialInstanceData = GetPBRMetallicRoughnessParamsData();
-		memcpy(dst, &materialInstanceData, sizeof(InstancedPBRMetallicRoughnessParams));
+		InstancedPBRMetallicRoughnessParamsData const& materialInstanceData = GetPBRMetallicRoughnessParamsData();
+		memcpy(dst, &materialInstanceData, sizeof(InstancedPBRMetallicRoughnessParamsData));
 	}
 
 
@@ -62,7 +62,7 @@ namespace gr
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(instanceData.size());
 
-		std::vector<InstancedPBRMetallicRoughnessParams> instancedMaterialData;
+		std::vector<InstancedPBRMetallicRoughnessParamsData> instancedMaterialData;
 		instancedMaterialData.reserve(numInstances);
 
 		for (size_t matIdx = 0; matIdx < numInstances; matIdx++)
@@ -70,15 +70,15 @@ namespace gr
 			SEAssert(instanceData[matIdx]->m_type == gr::Material::MaterialType::GLTF_PBRMetallicRoughness,
 				"Incorrect material type found. All instanceData entries must have the same type");
 
-			InstancedPBRMetallicRoughnessParams& instancedEntry = instancedMaterialData.emplace_back();
+			InstancedPBRMetallicRoughnessParamsData& instancedEntry = instancedMaterialData.emplace_back();
 
 			memcpy(&instancedEntry, 
 				&instanceData[matIdx]->m_materialParamData, 
-				sizeof(InstancedPBRMetallicRoughnessParams));
+				sizeof(InstancedPBRMetallicRoughnessParamsData));
 		}
 
 		std::shared_ptr<re::ParameterBlock> instancedMaterialParams = re::ParameterBlock::CreateArray(
-			InstancedPBRMetallicRoughnessParams::s_shaderName,
+			InstancedPBRMetallicRoughnessParamsData::s_shaderName,
 			instancedMaterialData.data(),
 			numInstances,
 			pbType);
@@ -96,7 +96,7 @@ namespace gr
 		// We commit single elements for now as we need to access each element's material param data. This isn't ideal,
 		// but it avoids copying the data into a temporary location and materials are typically updated infrequently
 		pb->Commit(
-			reinterpret_cast<InstancedPBRMetallicRoughnessParams const*>(instanceData->m_materialParamData.data()),
+			reinterpret_cast<InstancedPBRMetallicRoughnessParamsData const*>(instanceData->m_materialParamData.data()),
 			baseOffset++,
 			1);
 	}
@@ -111,8 +111,8 @@ namespace gr
 		{
 			ImGui::Indent();
 
-			InstancedPBRMetallicRoughnessParams* matData =
-				reinterpret_cast<InstancedPBRMetallicRoughnessParams*>(instanceData.m_materialParamData.data());
+			InstancedPBRMetallicRoughnessParamsData* matData =
+				reinterpret_cast<InstancedPBRMetallicRoughnessParamsData*>(instanceData.m_materialParamData.data());
 			
 			isDirty |= ImGui::ColorEdit3(
 				std::format("Base color factor##{}", instanceData.m_materialUniqueID).c_str(),

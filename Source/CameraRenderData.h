@@ -5,6 +5,8 @@
 #include "RenderObjectIDs.h"
 #include "TransformRenderData.h"
 
+#include "Shaders/Common/CameraParams.h"
+
 
 namespace gr
 {
@@ -128,35 +130,13 @@ namespace gr
 		static_assert(sizeof(Config) == 72); // Don't forget to update operator== if the properties change
 
 
-	public: // Shader parameter blocks:
-		struct CameraParams
-		{
-			glm::mat4 g_view;
-			glm::mat4 g_invView;
-			glm::mat4 g_projection;
-			glm::mat4 g_invProjection;
-
-			glm::mat4 g_viewProjection;
-			glm::mat4 g_invViewProjection;
-
-			glm::vec4 g_projectionParams; // .x = near, .y = far, .z = 1/near, .w = 1/far
-
-			glm::vec4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
-			glm::vec4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation
-
-			glm::vec4 g_cameraWPos; // .xyz = world pos, .w = unused
-
-			static constexpr char const* const s_shaderName = "CameraParams"; // Not counted towards size of struct
-		};
-
-
 	public:
 		struct RenderData
 		{
 			gr::Camera::Config m_cameraConfig;
 
 			// We compute this once on the main thread, and then pass for reuse on the render thread
-			gr::Camera::CameraParams m_cameraParams; 
+			CameraParamsData m_cameraParams; 
 
 			gr::TransformID m_transformID;
 

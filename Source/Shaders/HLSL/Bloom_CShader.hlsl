@@ -4,20 +4,12 @@
 #include "Color.hlsli"
 #include "UVUtils.hlsli"
 
+#include "../Common/BloomComputeParams.h"
+
 
 SamplerState ClampMinMagMipLinear;
-
 Texture2D<float4> Tex0;
-
-struct BloomComputeParamsCB
-{
-	float4 g_srcTexDimensions;
-	float4 g_dstTexDimensions;
-	float4 g_srcMipDstMipFirstUpsampleSrcMipIsDownStage; // .xy = src/dst mip, .z = 1st upsample src mip, .w = isDownStage
-	float4 g_bloomRadiusWidthHeightLevelNumLevls; // .xy = bloom width/height, .z = level .w = current level
-	float4 g_bloomDebug; // .x = Deflicker enabled
-};
-ConstantBuffer<BloomComputeParamsCB> BloomComputeParams;
+ConstantBuffer<BloomComputeParamsData> BloomComputeParams;
 
 
 void BloomDown(ComputeIn In)

@@ -7,6 +7,11 @@
 #include "Sampling.hlsli"
 #include "UVUtils.hlsli"
 
+#include "../Common/IBLGenerationParams.h"
+
+
+ConstantBuffer<IEMPMREMGenerationParamsData> IEMPMREMGenerationParams;
+
 
 // The PMREM (Pre-filtered Mip-mapped Radiance Environment Map) is the pre-integrated per-light-probe LD term of the 
 // specular portion of the decomposed approximate microfacet BRDF.

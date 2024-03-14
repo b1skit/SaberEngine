@@ -9,6 +9,18 @@
 
 #define TEXEL_OFFSET NUM_TAPS/2
 
+struct GaussianBlurParamsCB
+{
+	float4 g_blurSettings; // .x = Bloom direction (0 = horizontal, 1 = vertical), .yzw = unused
+};
+ConstantBuffer<GaussianBlurParamsCB> GaussianBlurParams;
+
+struct BloomTargetParamsCB
+{
+	float4 g_bloomTargetResolution; // .x = width, .y = height, .z = 1/width, .w = 1/height
+};
+ConstantBuffer<BloomTargetParamsCB> BloomTargetParams;
+
 
 float4 PShader(VertexOut In) : SV_Target
 {

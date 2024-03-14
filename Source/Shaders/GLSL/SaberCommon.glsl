@@ -1,15 +1,23 @@
 #ifndef SABER_COMMON
 #define SABER_COMMON
 
-// Saber Engine Shader Common
-// Defines variables and structures common to all shaders
-
 #define ALPHA_CUTOFF 0.1f
+
+// Buffer definitions:
+#include "../Common/BloomComputeParams.h"
+#include "../Common/CameraParams.h"
+#include "../Common/IBLGenerationParams.h"
+#include "../Common/InstancingParams.h"
+#include "../Common/LightParams.h"
+#include "../Common/MaterialParams.h"
+#include "../Common/ShadowRenderParams.h"
+#include "../Common/SkyboxParams.h"
+
 
 // Vertex shader specific properties:
 //-----------------------------------
 
-#if defined(SABER_VERTEX_SHADER)
+#if defined(SE_VERTEX_SHADER)
 	layout(location = 0) in vec3 in_position;
 
 	#if !defined(SABER_DEPTH)
@@ -26,7 +34,7 @@
 // Fragment shader specific properties:
 //-------------------------------------
 
-#if defined(SABER_FRAGMENT_SHADER)
+#if defined(SE_FRAGMENT_SHADER)
 	#if defined(SABER_VEC2_OUTPUT)
 		layout (location = 0) out vec2 FragColor;
 	#elif defined(SABER_VEC3_OUTPUT)
@@ -40,9 +48,9 @@
 // Common shader properties:
 //--------------------------
 
-#if defined(SABER_VERTEX_SHADER)
+#if defined(SE_VERTEX_SHADER)
 	layout(location = 9) out struct VtoF	// Vertex output
-#elif defined(SABER_FRAGMENT_SHADER)
+#elif defined(SE_FRAGMENT_SHADER)
 	layout(location = 9) in struct VtoF		// Fragment input
 #else
 	struct VtoF	// Default/geometry in/out. If geometry, in & out must be bound to the same location
@@ -64,7 +72,7 @@
 		mat3 TBN; // Normal map change-of-basis matrix
 #endif
 
-#if defined(SABER_VERTEX_SHADER) || defined(SABER_FRAGMENT_SHADER) || defined(SABER_GEOMETRY_SHADER)
+#if defined(SE_VERTEX_SHADER) || defined(SE_FRAGMENT_SHADER) || defined(SE_GEOMETRY_SHADER)
 	} vOut;
 #else
 	};
@@ -72,9 +80,9 @@
 
 // Dynamic uniforms for instancing:
 #if defined(SABER_INSTANCING)
-	#if defined(SABER_VERTEX_SHADER)
+	#if defined(SE_VERTEX_SHADER)
 		flat out uint InstanceID;
-	#elif defined(SABER_FRAGMENT_SHADER)
+	#elif defined(SE_FRAGMENT_SHADER)
 		flat in uint InstanceID;
 	#endif
 #endif
@@ -119,142 +127,21 @@ layout(binding=12) uniform samplerCube CubeMap1;
 
 layout(binding=13) uniform samplerCubeShadow CubeDepth;
 
+// Note: OpenGL gives very strange, nonsensical compile errors if the members of our uniform blocks are structs, and
+// their names are capitalized (but only with some letters!). Totally puzzling - but the '_' prefix is preferred anyway
 
-struct InstanceIndexesCB
-{
-	uint g_transformIdx;
-	uint g_materialIdx;
-	
-	uvec2 _padding;
-};
-layout(std430, binding=0) readonly buffer InstanceIndexParams
-{
-	// Variable-sized array: Must be the bottom-most variable in the block
-	InstanceIndexesCB g_instanceIndexes[];
-};
+// UBOs can't have a dynamic length; We use SSBOs for instancing instead
+layout(std430, binding=0) readonly buffer InstanceIndexParams {	InstanceIndexParamsData _InstanceIndexParams[]; };
+layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformParamsData _InstancedTransformParams[]; };
+layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	InstancedPBRMetallicRoughnessParamsData _InstancedPBRMetallicRoughnessParams[]; };
 
+layout(std430, binding=3) uniform CameraParams { CameraParamsData _CameraParams; };
+layout(std430, binding=4) uniform LightParams { LightParamsData _LightParams; };
+layout(std430, binding=5) uniform PoissonSampleParams { PoissonSampleParamsData _PoissonSampleParams; };
+layout(std430, binding=6) uniform AmbientLightParams { AmbientLightParamsData _AmbientLightParams; };
+layout(std430, binding=7) uniform CubemapShadowRenderParams { CubemapShadowRenderParamsData _CubemapShadowRenderParams; };
+layout(std430, binding=8) uniform IEMPMREMGenerationParams { IEMPMREMGenerationParamsData _IEMPMREMGenerationParams; };
+layout(std430, binding=9) uniform BloomComputeParams { BloomComputeParamsData _BloomComputeParams; };
+layout(std430, binding=10) uniform SkyboxParams { SkyboxParamsData _SkyboxParams; };
 
-// UBOs can't have a dynamic length; We use a SSBO instead
-struct InstancedTransformParamsCB
-{
-	mat4 g_model;
-	mat4 g_transposeInvModel;
-};
-layout(std430, binding=1) readonly buffer InstancedTransformParams
-{
-	InstancedTransformParamsCB g_instancedTransformParams[]; // Variable-sized array: Must be the bottom-most variable in the block
-};
-
-
-struct InstancedPBRMetallicRoughnessParamsCB
-{
-	vec4 g_baseColorFactor;
-
-	float g_metallicFactor;
-	float g_roughnessFactor;
-	float g_normalScale;
-	float g_occlusionStrength;
-
-	// KHR_materials_emissive_strength: Multiplies emissive factor
-	vec4 g_emissiveFactorStrength; // .xyz = emissive factor, .w = emissive strength
-
-	// Non-GLTF properties:
-	vec4 g_f0; // .xyz = f0, .w = unused. For non-metals only
-};
-layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams
-{
-	// Variable-sized array: Must be the bottom-most variable in the block
-	InstancedPBRMetallicRoughnessParamsCB g_instancedPBRMetallicRoughnessParams[];
-};
-
-
-// Camera.h::CameraParams
-layout(std430, binding=3) uniform CameraParams
-{
-	mat4 g_view;				// World -> View
-	mat4 g_invView;				// View -> World
-	mat4 g_projection;			// View -> Projection
-	mat4 g_invProjection;		// Projection -> view
-	mat4 g_viewProjection;		// Projection x View: World -> Projection
-	mat4 g_invViewProjection;	// [Projection * View]^-1
-
-	vec4 g_projectionParams; // .x = near, .y = far, .z = 1/near, .w = 1/far
-
-	vec4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
-	vec4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation
-
-	vec4 g_cameraWPos; // .xyz = world pos, .w = unused
-};
-
-
-// GraphicsSystem_DeferredLighting.cpp
-layout(std430, binding=4) uniform LightParams
-{
-	vec4 g_lightColorIntensity; // .rgb = hue, .a = intensity
-
-	// .xyz = world pos (Directional lights: Normalized point -> source dir)
-	// .w = emitter radius (point lights)
-	vec4 g_lightWorldPosRadius;
-
-	vec4 g_shadowMapTexelSize;	// .xyzw = width, height, 1/width, 1/height
-	vec4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
-
-	mat4 g_shadowCam_VP;
-
-	vec4 g_renderTargetResolution;
-	vec4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
-	vec4 g_shadowParams; // .x = has shadow (1.f), .y = quality mode, .zw = light size UV radius
-};
-
-
-layout(std430, binding=5) uniform PoissonSampleParams
-{
-	vec2 g_poissonSamples64[32];	// 64x vec2
-	vec2 g_poissonSamples32[16];	// 32x vec2
-	vec2 g_poissonSamples25[13];	// 25x vec2
-};
-
-
-// GraphicsSystem_DeferredLighting.cpp
-layout(std430, binding=6) uniform AmbientLightParams
-{
-	// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
-	vec4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
-	vec4 g_ssaoTexDims; // .xyzw = width, height, 1/width, 1/height
-};
-
-
-// GraphicsSystem_Shadows.h
-layout(std430, binding=7) uniform CubemapShadowRenderParams
-{
-	mat4 g_cubemapShadowCam_VP[6];
-	vec4 g_cubemapShadowCamNearFar; // .xy = near, far. .zw = unused
-	vec4 g_cubemapLightWorldPos; // .xyz = light word pos, .w = unused
-};
-
-
-// GraphicsSystem_DeferredLighting.cpp
-layout(std430, binding=8) uniform IEMPMREMGenerationParams
-{
-	vec4 g_numSamplesRoughnessFaceIdx; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
-	vec4 g_mipLevelSrcWidthSrcHeightSrcNumMips; // .x = IEM mip level, .yz = src width/height, .w = src num mips
-};
-
-
-// GraphicsSystem_Bloom.cpp
-layout(std430, binding=9) uniform BloomComputeParams
-{
-	vec4 g_srcTexDimensions;
-	vec4 g_dstTexDimensions;
-	vec4 g_srcMipDstMipFirstUpsampleSrcMipIsDownStage; // .xy = src/dst mip, .z = 1st upsample src mip, .w = isDownStage
-	vec4 g_bloomRadiusWidthHeightLevelNumLevls; // .xy = bloom width/height, .z = level .w = current level
-	vec4 g_bloomDebug; // .x = Deflicker enabled
-};
-
-
-// GraphicsSystem_Skybox.cpp
-layout(std430, binding=10) uniform SkyboxParams
-{
-	vec4 g_backgroundColorIsEnabled; // .rgb = background color override, .a = enabled/disabled (1.f/0.f)
-};
 #endif

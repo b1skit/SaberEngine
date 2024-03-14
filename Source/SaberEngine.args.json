@@ -35,6 +35,10 @@
       "Command": "-strictshaderbinding"
     },
     {
+      "Id": "262a942f-fbe6-4439-8dfb-239931c14c35",
+      "Command": "-debugopenglshaderpreprocessing"
+    },
+    {
       "Id": "9e16609b-5425-4046-a533-7bddf6eba224",
       "Command": "-cpunormalizevertexstreams"
     },

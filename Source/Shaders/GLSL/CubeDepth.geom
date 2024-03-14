@@ -18,7 +18,7 @@ void main()
 		{				
 				FragPos = gl_in[currentVert].gl_Position; // World pos from vert shader
 
-				gl_Position = g_cubemapShadowCam_VP[currentCubeFace] * gl_in[currentVert].gl_Position;
+				gl_Position = _CubemapShadowRenderParams.g_cubemapShadowCam_VP[currentCubeFace] * gl_in[currentVert].gl_Position;
 			
 			EmitVertex();
 		}    

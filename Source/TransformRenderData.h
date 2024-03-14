@@ -3,6 +3,8 @@
 #include "ParameterBlock.h"
 #include "RenderObjectIDs.h"
 
+#include "Shaders/Common/InstancingParams.h"
+
 
 namespace gr
 {
@@ -33,16 +35,9 @@ namespace gr
 
 
 	public:
-		struct InstancedTransformParams
-		{
-			glm::mat4 g_model;
-			glm::mat4 g_transposeInvModel; // For constructing the normal map TBN matrix
-			static constexpr char const* const s_shaderName = "InstancedTransformParams"; // Not counted towards size of struct
-		};
+		static InstancedTransformParamsData CreateInstancedTransformParamsData(gr::Transform::RenderData const&);
 
-		static InstancedTransformParams CreateInstancedTransformParamsData(gr::Transform::RenderData const&);
-
-		static gr::Transform::InstancedTransformParams CreateInstancedTransformParamsData(
+		static InstancedTransformParamsData CreateInstancedTransformParamsData(
 			glm::mat4 const* model, glm::mat4* transposeInvModel);
 
 		static std::shared_ptr<re::ParameterBlock> CreateInstancedTransformParams(

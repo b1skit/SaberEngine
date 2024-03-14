@@ -11,20 +11,14 @@
 #include "Texture.h"
 #include "TextureTarget.h"
 
+#include "Shaders/Common/SkyboxParams.h"
+
 
 namespace
 {
-	struct SkyboxParams
+	SkyboxParamsData CreateSkyboxParamsData(glm::vec3 const& backgroundColor, bool showBackgroundColor)
 	{
-		glm::vec4 g_backgroundColorIsEnabled; // .rgb = background color override, .a = enabled/disabled (1.f/0.f)
-
-		static constexpr char const* const s_shaderName = "SkyboxParams";
-	};
-
-
-	SkyboxParams CreateSkyboxParamsData(glm::vec3 const& backgroundColor, bool showBackgroundColor)
-	{
-		SkyboxParams skyboxParams;
+		SkyboxParamsData skyboxParams;
 		skyboxParams.g_backgroundColorIsEnabled = glm::vec4(backgroundColor.rgb, static_cast<float>(showBackgroundColor));
 		return skyboxParams;
 	}
@@ -107,7 +101,7 @@ namespace gr
 		m_skyboxStage->SetTextureTargetSet(skyboxTargets);
 
 		m_skyboxParams = re::ParameterBlock::Create(
-			SkyboxParams::s_shaderName,
+			SkyboxParamsData::s_shaderName,
 			CreateSkyboxParamsData(m_backgroundColor, m_showBackgroundColor),
 			re::ParameterBlock::PBType::Mutable);
 

@@ -6,12 +6,10 @@
 #include "Transformations.hlsli"
 #include "UVUtils.hlsli"
 
+#include "../Common/SkyboxParams.h"
 
-struct SkyboxParamsCB
-{
-	float4 g_backgroundColorIsEnabled; // .rgb = background color override, .a = enabled/disabled (1.f/0.f)
-};
-ConstantBuffer<SkyboxParamsCB> SkyboxParams;
+
+ConstantBuffer<SkyboxParamsData> SkyboxParams;
 
 
 float4 PShader(VertexOut In) : SV_Target

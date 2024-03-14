@@ -27,9 +27,9 @@ void main()
 		vec3(0.f,		1.f,	0.f)	// Z-
 	};
 	
-	const uint numSamples = uint(g_numSamplesRoughnessFaceIdx.x);
-	const uint faceIdx = uint(g_numSamplesRoughnessFaceIdx.w);
-	const float srcMip = g_mipLevelSrcWidthSrcHeightSrcNumMips.x;
+	const uint numSamples = uint(_IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.x);
+	const uint faceIdx = uint(_IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.w);
+	const float srcMip = _IEMPMREMGenerationParams.g_mipLevelSrcWidthSrcHeightSrcNumMips.x;
 	
 	// World-space direction from the center of the cube towards the current cubemap pixel
 	const vec3 N = normalize(vOut.LocalPos);

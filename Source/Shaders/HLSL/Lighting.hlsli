@@ -3,26 +3,10 @@
 #define SABER_LIGHTING
 
 #include "MathConstants.hlsli"
+#include "../Common/LightParams.h"
 
 
-struct LightParamsCB
-{
-	float4 g_lightColorIntensity; // .rgb = hue, .a = intensity
-	
-	// .xyz = world pos (Directional lights: Normalized point -> source dir)
-	// .w = emitter radius (point lights)
-	float4 g_lightWorldPosRadius;
-	
-	float4 g_shadowMapTexelSize; // .xyzw = width, height, 1/width, 1/height
-	float4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
-
-	float4x4 g_shadowCam_VP;
-	
-	float4 g_renderTargetResolution;
-	float4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
-	float4 g_shadowParams; // .x = has shadow (1.f), .y = quality mode, .zw = light size UV radius
-};
-ConstantBuffer<LightParamsCB> LightParams;
+ConstantBuffer<LightParamsData> LightParams;
 
 
 // Map linear roughness to "perceptually linear" roughness. 

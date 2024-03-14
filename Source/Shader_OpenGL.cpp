@@ -44,29 +44,78 @@ namespace
 	constexpr char const* k_shaderPreambles[] // Per-shader-type preamble
 	{
 		// ShaderType::Vertex:
-		"#define SABER_VERTEX_SHADER\n",
+		"#define SE_VERTEX_SHADER\n",
 		
 		// ShaderType::TesselationControl:
-		"#define SABER_TESS_CONTROL_SHADER\n",
+		"#define SE_TESS_CONTROL_SHADER\n",
 
 		// ShaderType::TesselationEvaluation:
-		"#define SABER_TESS_EVALUATION_SHADER\n",
+		"#define SE_TESS_EVALUATION_SHADER\n",
 
 		// ShaderType::Geometry:
-		"#define SABER_GEOMETRY_SHADER\n",
+		"#define SE_GEOMETRY_SHADER\n",
 
 		// ShaderType::Fragment:
-		"#define SABER_FRAGMENT_SHADER\n"
+		"#define SE_FRAGMENT_SHADER\n"
 		"layout(origin_upper_left) in vec4 gl_FragCoord;\n", // Make fragment coords ([0,xRes], [0,yRes]) match our UV(0,0) = top-left convention
 
 		// ShaderType::Compute:
-		"#define SABER_COMPUTE_SHADER\n",
+		"#define SE_COMPUTE_SHADER\n",
 	};
 	static_assert(_countof(k_shaderFileExtensions) == opengl::Shader::ShaderType_Count);
 
+
 	constexpr char const* k_globalPreamble = "#version 460 core\n"
 		"#extension GL_NV_uniform_buffer_std430_layout : require\n" // Required for UBO std430 layouts
+		"#define SE_OPENGL\n"
 		"\n"; // Note: MUST be terminated with "\n"
+
+
+	bool UniformIsSamplerType(GLenum type)
+	{
+		return type == GL_SAMPLER_1D ||
+			type == GL_SAMPLER_2D ||
+			type == GL_SAMPLER_3D ||
+			type == GL_SAMPLER_CUBE ||
+			type == GL_SAMPLER_1D_SHADOW ||
+			type == GL_SAMPLER_2D_SHADOW ||
+			type == GL_SAMPLER_1D_ARRAY ||
+			type == GL_SAMPLER_2D_ARRAY ||
+			type == GL_SAMPLER_1D_ARRAY_SHADOW ||
+			type == GL_SAMPLER_2D_ARRAY_SHADOW ||
+			type == GL_SAMPLER_2D_MULTISAMPLE ||
+			type == GL_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+			type == GL_SAMPLER_CUBE_SHADOW ||
+			type == GL_SAMPLER_BUFFER ||
+			type == GL_SAMPLER_2D_RECT ||
+			type == GL_SAMPLER_2D_RECT_SHADOW ||
+			type == GL_INT_SAMPLER_1D ||
+			type == GL_INT_SAMPLER_2D ||
+			type == GL_INT_SAMPLER_3D ||
+			type == GL_INT_SAMPLER_CUBE ||
+			type == GL_INT_SAMPLER_1D_ARRAY ||
+			type == GL_INT_SAMPLER_2D_ARRAY ||
+			type == GL_INT_SAMPLER_2D_MULTISAMPLE ||
+			type == GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+			type == GL_INT_SAMPLER_BUFFER ||
+			type == GL_INT_SAMPLER_2D_RECT ||
+			type == GL_UNSIGNED_INT_SAMPLER_1D ||
+			type == GL_UNSIGNED_INT_SAMPLER_2D ||
+			type == GL_UNSIGNED_INT_SAMPLER_3D ||
+			type == GL_UNSIGNED_INT_SAMPLER_CUBE ||
+			type == GL_UNSIGNED_INT_SAMPLER_1D_ARRAY ||
+			type == GL_UNSIGNED_INT_SAMPLER_2D_ARRAY ||
+			type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE ||
+			type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+			type == GL_UNSIGNED_INT_SAMPLER_BUFFER ||
+			type == GL_UNSIGNED_INT_SAMPLER_2D_RECT ||
+			type == GL_IMAGE_2D_MULTISAMPLE ||
+			type == GL_IMAGE_2D_MULTISAMPLE_ARRAY ||
+			type == GL_INT_IMAGE_2D_MULTISAMPLE ||
+			type == GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY ||
+			type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE ||
+			type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+	}
 
 
 	void AssertShaderIsValid(std::string const& shaderName, uint32_t const& shaderRef, uint32_t const& flag, bool const& isProgram)
@@ -101,11 +150,33 @@ namespace
 
 	std::string LoadShaderText(std::string const& filename)
 	{
-		// Assemble the full shader file path:
-		std::string const& filepath = 
-			en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_shaderDirectoryKey) + filename;
+		// Assemble the default shader file path:
+		std::string const& shaderDir = en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_shaderDirectoryKey);
+		std::string filepath = shaderDir + filename;
 
-		return util::LoadTextAsString(filepath);
+		// Attempt to load the shader
+		std::string shaderText = util::LoadTextAsString(filepath);
+
+		// If loading failed, check the additional search locations:
+		if (shaderText.empty())
+		{
+			constexpr std::array<char const*, 1> k_additionalSearchDirs =
+			{
+				".\\Shaders\\Common\\",
+			};
+
+			for (size_t i = 0; i < k_additionalSearchDirs.size(); i++)
+			{
+				filepath = k_additionalSearchDirs[i] + filename;
+
+				shaderText = util::LoadTextAsString(filepath);
+				if (!shaderText.empty())
+				{
+					return shaderText;
+				}
+			}
+		}
+		return shaderText;
 	}
 
 
@@ -187,15 +258,20 @@ namespace
 					size_t firstQuoteIndex, lastQuoteIndex;
 
 					firstQuoteIndex = shaderText.find("\"", includeStartIdx + 1);
-					if (firstQuoteIndex != std::string::npos && firstQuoteIndex > 0 && firstQuoteIndex < includeEndIndex)
+					if (firstQuoteIndex != std::string::npos && 
+						firstQuoteIndex > 0 && 
+						firstQuoteIndex < includeEndIndex)
 					{
 						lastQuoteIndex = shaderText.find("\"", firstQuoteIndex + 1);
-						if (lastQuoteIndex != std::string::npos && lastQuoteIndex > firstQuoteIndex && lastQuoteIndex < includeEndIndex)
+						if (lastQuoteIndex != std::string::npos && 
+							lastQuoteIndex > firstQuoteIndex && 
+							lastQuoteIndex < includeEndIndex)
 						{
 							firstQuoteIndex++; // Move ahead 1 element from the first quotation mark
 
 							const size_t includeFileNameStrLength = lastQuoteIndex - firstQuoteIndex;
-							std::string const& includeFileName = shaderText.substr(firstQuoteIndex, includeFileNameStrLength);
+							std::string const& includeFileName = 
+								shaderText.substr(firstQuoteIndex, includeFileNameStrLength);
 
 							std:: string const& includeFile = LoadShaderText(includeFileName);
 							if (includeFile != "")
@@ -233,6 +309,27 @@ namespace
 		}
 		return true;
 	}
+
+
+	void DebugOutputShaderText(std::string const& shaderTextFilename, std::vector<GLchar const*> const& shaderTextStrings)
+	{
+		constexpr char const* k_outputDir = ".\\Shaders\\GLSL\\Debug\\";
+		std::filesystem::create_directory(k_outputDir); // No error if the directory already exists
+
+		std::ofstream shaderTextOutStream;
+
+		std::string const& outputFilepath = k_outputDir + shaderTextFilename;
+		shaderTextOutStream.open(outputFilepath.c_str(), std::ios::out);
+		SEAssert(shaderTextOutStream.good(), "Error creating shader debug output stream");
+
+		for (auto const& shaderTextStr : shaderTextStrings)
+		{
+			shaderTextOutStream << shaderTextStr;
+			shaderTextOutStream << "\n";
+		}
+
+		shaderTextOutStream.close();
+	}
 }
 
 
@@ -255,21 +352,17 @@ namespace opengl
 		std::vector<std::future<void>> const& loadShaderTextsTaskFutures = LoadShaderTexts(shader);
 
 		// Load the shaders, and assemble params we'll need soon:
-		std::vector<std::string> shaderFiles;
-		shaderFiles.resize(opengl::Shader::ShaderType_Count);
-		std::vector<std::string> shaderFileNames;	// For RenderDoc markers
-		shaderFileNames.resize(opengl::Shader::ShaderType_Count);
+		std::array<std::string, opengl::Shader::ShaderType_Count> shaderFiles;
+		std::array<std::string, opengl::Shader::ShaderType_Count> shaderFileNames; // For RenderDoc markers
 
 		// Each shader type (.vert/.frag etc) is loaded as a vector of substrings
 		std::array<std::vector<std::string>, opengl::Shader::ShaderType_Count> shaderTextStrings;
 
 		// Figure out what type of shader(s) we're loading:
-		std::vector<uint32_t> foundShaderTypeFlags;
-		foundShaderTypeFlags.resize(opengl::Shader::ShaderType_Count, 0);
+		std::array<uint32_t, opengl::Shader::ShaderType_Count> foundShaderTypeFlags{};
 
 		// Pre-process the shader text:
-		std::vector<std::future<void>> processIncludesTaskFutures;
-		processIncludesTaskFutures.resize(opengl::Shader::ShaderType_Count);
+		std::array< std::future<void>, opengl::Shader::ShaderType_Count> processIncludesTaskFutures;
 		for (size_t i = 0; i < opengl::Shader::ShaderType_Count; i++)
 		{
 			// Make sure we're done loading the shader texts before we continue:
@@ -283,7 +376,7 @@ namespace opengl
 
 				// Queue a job to parse the #include text:
 				processIncludesTaskFutures[i] = en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[&shaderFiles, &shaderTextStrings, i]()
+					[&shaderFileNames, &shaderFiles, &shaderTextStrings, i]()
 					{
 						const bool result = InsertIncludeText(shaderFiles[i], shaderTextStrings[i]);
 						SEAssert(result, "Failed to parse shader #includes");
@@ -298,6 +391,8 @@ namespace opengl
 
 		// Create an empty shader program object:
 		params->m_shaderReference = glCreateProgram();
+
+		const bool debugShaderResult = en::Config::Get()->KeyExists("debugopenglshaderpreprocessing");
 
 		// Create and attach the shader stages:
 		for (size_t i = 0; i < shaderFiles.size(); i++)
@@ -344,6 +439,11 @@ namespace opengl
 				insertIdx++;
 			}
 
+			if (debugShaderResult)
+			{
+				DebugOutputShaderText(shaderFileNames[i], shaderSourceStrings);
+			}
+
 			glShaderSource(
 				shaderObject, 
 				static_cast<GLsizei>(shaderSourceStrings.size()),
@@ -379,7 +479,7 @@ namespace opengl
 		// Store sampler uniform locations. Later, we map these locations to map samplers to texture units (ie. w/glUniform1i)
 		int size = 0; // Size of the uniform variable; currently we just ignore this
 		GLenum type; // Data type of the uniform
-		GLchar* name = new GLchar[maxUniformNameLength]; // Uniform name, as described in the shader text
+		std::vector<GLchar> name(maxUniformNameLength, '\0'); // Uniform name, as described in the shader text
 		for (size_t i = 0; i < numUniforms; i++)
 		{
 			glGetActiveUniform(
@@ -391,63 +491,20 @@ namespace opengl
 				&type,						// type
 				&name[0]);					// name
 
-			if (type == GL_SAMPLER_1D ||
-				type == GL_SAMPLER_2D ||
-				type == GL_SAMPLER_3D ||
-				type == GL_SAMPLER_CUBE ||
-				type == GL_SAMPLER_1D_SHADOW ||
-				type == GL_SAMPLER_2D_SHADOW ||
-				type == GL_SAMPLER_1D_ARRAY ||
-				type == GL_SAMPLER_2D_ARRAY ||
-				type == GL_SAMPLER_1D_ARRAY_SHADOW ||
-				type == GL_SAMPLER_2D_ARRAY_SHADOW ||
-				type == GL_SAMPLER_2D_MULTISAMPLE ||
-				type == GL_SAMPLER_2D_MULTISAMPLE_ARRAY ||
-				type == GL_SAMPLER_CUBE_SHADOW ||
-				type == GL_SAMPLER_BUFFER ||
-				type == GL_SAMPLER_2D_RECT ||
-				type == GL_SAMPLER_2D_RECT_SHADOW ||
-				type == GL_INT_SAMPLER_1D ||
-				type == GL_INT_SAMPLER_2D ||
-				type == GL_INT_SAMPLER_3D ||
-				type == GL_INT_SAMPLER_CUBE ||
-				type == GL_INT_SAMPLER_1D_ARRAY ||
-				type == GL_INT_SAMPLER_2D_ARRAY ||
-				type == GL_INT_SAMPLER_2D_MULTISAMPLE ||
-				type == GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
-				type == GL_INT_SAMPLER_BUFFER ||
-				type == GL_INT_SAMPLER_2D_RECT ||
-				type == GL_UNSIGNED_INT_SAMPLER_1D ||
-				type == GL_UNSIGNED_INT_SAMPLER_2D ||
-				type == GL_UNSIGNED_INT_SAMPLER_3D ||
-				type == GL_UNSIGNED_INT_SAMPLER_CUBE ||
-				type == GL_UNSIGNED_INT_SAMPLER_1D_ARRAY ||
-				type == GL_UNSIGNED_INT_SAMPLER_2D_ARRAY ||
-				type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE ||
-				type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
-				type == GL_UNSIGNED_INT_SAMPLER_BUFFER ||
-				type == GL_UNSIGNED_INT_SAMPLER_2D_RECT ||
-				type == GL_IMAGE_2D_MULTISAMPLE ||
-				type == GL_IMAGE_2D_MULTISAMPLE_ARRAY ||
-				type == GL_INT_IMAGE_2D_MULTISAMPLE ||
-				type == GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY ||
-				type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE ||
-				type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY)
+			if (UniformIsSamplerType(type))
 			{
 				// Get the texture unit binding value:
 				GLint val;
 				glGetUniformiv(params->m_shaderReference, (GLuint)i, &val);
 
 				// Populate the shader sampler unit map with unique entries:
-				std::string nameStr(name);
+				std::string nameStr(name.data());
 				SEAssert(params->m_samplerUnits.find(nameStr) == params->m_samplerUnits.end(),
 					"Sampler unit already found! Does the shader have a unique binding layout qualifier?");
 
 				params->m_samplerUnits.emplace(std::move(nameStr), static_cast<int32_t>(val));
 			}			
 		}
-		delete[] name;
-
 
 		LOG("Shader \"%s\" created in %f seconds", shaderFileName.c_str(), timer.StopSec());
 	}

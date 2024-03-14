@@ -7,12 +7,12 @@
 
 namespace fr
 {
-	gr::Camera::CameraParams Camera::BuildCameraParams(fr::Camera const& camera)
+	CameraParamsData Camera::BuildCameraParams(fr::Camera const& camera)
 	{
 		gr::Camera::Config const& cameraConfig = camera.GetCameraConfig();
 		fr::Transform const& transform = *camera.GetTransform();
 
-		gr::Camera::CameraParams cameraParams{};
+		CameraParamsData cameraParams{};
 
 		glm::mat4 const& globalMatrix = transform.GetGlobalMatrix();
 		cameraParams.g_view = glm::inverse(globalMatrix);
@@ -223,7 +223,7 @@ namespace fr
 		{
 			ImGui::Indent();
 
-			gr::Camera::CameraParams const& camParams = fr::Camera::BuildCameraParams(*this);
+			CameraParamsData const& camParams = fr::Camera::BuildCameraParams(*this);
 
 			util::DisplayMat4x4("View Matrix:", camParams.g_view);
 			util::DisplayMat4x4("Inverse View Matrix:", camParams.g_invView);

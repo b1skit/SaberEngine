@@ -5,6 +5,11 @@
 #include "Sampling.hlsli"
 #include "UVUtils.hlsli"
 
+#include "../Common/IBLGenerationParams.h"
+
+
+ConstantBuffer<IEMPMREMGenerationParamsData> IEMPMREMGenerationParams;
+
 
 // The IEM (Irradiance Environment Map) is the pre-integrated per-light-probe LD term of the diffuse portion of the
 // decomposed approximate microfacet BRDF.

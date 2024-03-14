@@ -120,6 +120,9 @@
     <Filter Include="Source Files\Shaders\HLSL\Libraries\XeGTAO">
       <UniqueIdentifier>{bf3c5b42-9f10-4cc4-a2cf-63169416dfde}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shaders\Common">
+      <UniqueIdentifier>{f1800b9d-29e6-4c5e-8ecf-b3d01af6a8a1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -969,6 +972,33 @@
     </ClInclude>
     <ClInclude Include="GraphicsSystem_XeGTAO.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\Common\PlatformConversions.h">
+      <Filter>Source Files\Shaders\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\Common\LightParams.h">
+      <Filter>Source Files\Shaders\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\Common\SkyboxParams.h">
+      <Filter>Source Files\Shaders\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\Common\BloomComputeParams.h">
+      <Filter>Source Files\Shaders\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\Common\IBLGenerationParams.h">
+      <Filter>Source Files\Shaders\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\Common\CameraParams.h">
+      <Filter>Source Files\Shaders\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\Common\InstancingParams.h">
+      <Filter>Source Files\Shaders\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\Common\MaterialParams.h">
+      <Filter>Source Files\Shaders\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\Common\ShadowRenderParams.h">
+      <Filter>Source Files\Shaders\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

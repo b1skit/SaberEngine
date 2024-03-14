@@ -137,6 +137,7 @@
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
+xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
 xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
 xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
@@ -185,6 +186,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
+xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
 xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
 xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y
 xcopy "$(OutDirFullPath)D3D12\" "$(SolutionDir)SaberEngine\D3D12\" /y /s
@@ -232,6 +234,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
+xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
 xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
 xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
@@ -278,6 +281,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
+xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
 xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
 xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
@@ -504,6 +508,15 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ResourceStateTracker_DX12.h" />
+    <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
+    <ClInclude Include="Shaders\Common\CameraParams.h" />
+    <ClInclude Include="Shaders\Common\IBLGenerationParams.h" />
+    <ClInclude Include="Shaders\Common\InstancingParams.h" />
+    <ClInclude Include="Shaders\Common\LightParams.h" />
+    <ClInclude Include="Shaders\Common\MaterialParams.h" />
+    <ClInclude Include="Shaders\Common\PlatformConversions.h" />
+    <ClInclude Include="Shaders\Common\ShadowRenderParams.h" />
+    <ClInclude Include="Shaders\Common\SkyboxParams.h" />
     <ClInclude Include="ShadowMapComponent.h" />
     <ClInclude Include="ShadowMapRenderData.h" />
     <ClInclude Include="SysInfo_DX12.h" />

@@ -22,12 +22,12 @@ void BloomDown(in const uvec3 DTId)
 	*/
 	
 	const ivec2 texelCoord = ivec2(DTId.xy);
-	const uint srcMipLevel = uint(g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x);
+	const uint srcMipLevel = uint(_BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x);
 	
-	const vec2 pxOffset = g_dstTexDimensions.zw;
+	const vec2 pxOffset = _BloomComputeParams.g_dstTexDimensions.zw;
 	const vec2 halfPxOffset = 0.5f * pxOffset;
 	
-	const uvec2 dstWidthHeight = uvec2(g_dstTexDimensions.xy);
+	const uvec2 dstWidthHeight = uvec2(_BloomComputeParams.g_dstTexDimensions.xy);
 	const vec2 uvs = PixelCoordsToUV(DTId.xy, dstWidthHeight, vec2(0.5f, 0.5f), false);
 	
 	
@@ -90,8 +90,8 @@ void BloomDown(in const uvec3 DTId)
 	vec3 center = (d + e + i + j) * 0.5f * 0.25f;
 	
 	// Apply the Karis average to reduce fireflies/flickering:
-	const float level = g_bloomRadiusWidthHeightLevelNumLevls.z;
-	const bool deflickerEnabled = g_bloomDebug.x > 0.5f;
+	const float level = _BloomComputeParams.g_bloomRadiusWidthHeightLevelNumLevls.z;
+	const bool deflickerEnabled = _BloomComputeParams.g_bloomDebug.x > 0.5f;
 	if (level == 0 && deflickerEnabled)
 	{
 		TL *= ComputeKarisAverageWeight(TL);
@@ -115,14 +115,14 @@ void BloomUp(in const uvec3 DTId)
 	
 	const ivec2 texelCoord = ivec2(DTId.xy);
 	
-	const uvec2 dstWidthHeight = uvec2(g_dstTexDimensions.xy);
+	const uvec2 dstWidthHeight = uvec2(_BloomComputeParams.g_dstTexDimensions.xy);
 	
-	const uint srcMipLevel = uint(g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x);
+	const uint srcMipLevel = uint(_BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x);
 	
 	const vec2 uvs = PixelCoordsToUV(DTId.xy, dstWidthHeight, vec2(0.5f, 0.5f), false);
 	
-	const vec2 bloomRadii = g_bloomRadiusWidthHeightLevelNumLevls.xy;
-	const vec2 offset = vec2(g_dstTexDimensions.zw) * bloomRadii;
+	const vec2 bloomRadii = _BloomComputeParams.g_bloomRadiusWidthHeightLevelNumLevls.xy;
+	const vec2 offset = vec2(_BloomComputeParams.g_dstTexDimensions.zw) * bloomRadii;
 	
 	
 	const vec2 uvA = uvs + vec2(-offset.x, -offset.y);
@@ -158,8 +158,8 @@ void BloomUp(in const uvec3 DTId)
 	color += e * 4.f / 16.f;
 
 	// Upsampling levels are in reverse order: <smallest mip> ...3, 2, 1 <largest mip>
-	const uint level = uint(g_bloomRadiusWidthHeightLevelNumLevls.z);
-	const uint numLevels = uint(g_bloomRadiusWidthHeightLevelNumLevls.w);
+	const uint level = uint(_BloomComputeParams.g_bloomRadiusWidthHeightLevelNumLevls.z);
+	const uint numLevels = uint(_BloomComputeParams.g_bloomRadiusWidthHeightLevelNumLevls.w);
 	if (level == numLevels) // First pass (smallest mip)
 	{
 		// First pass has no previous (correctly downsampled) mip to sample from
@@ -182,8 +182,8 @@ void BilinearDown(in const uvec3 DTId)
 {
 	const ivec2 texelCoord = ivec2(DTId.xy);
 	
-	const uvec2 dstWidthHeight = uvec2(g_dstTexDimensions.xy);
-	const uint srcMipLevel = uint(g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x);
+	const uvec2 dstWidthHeight = uvec2(_BloomComputeParams.g_dstTexDimensions.xy);
+	const uint srcMipLevel = uint(_BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x);
 	
 	const vec2 uvs = PixelCoordsToUV(DTId.xy, dstWidthHeight, vec2(0.5f, 0.5f), false);
 	
@@ -196,12 +196,12 @@ void BilinearDown(in const uvec3 DTId)
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
-	const bool isDownStage = g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.w > 0.5f;
+	const bool isDownStage = _BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.w > 0.5f;
 	
 	if (isDownStage)
 	{
-		const uint dstMipLevel = uint(g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.y);
-		const uint firstUpsampleSrcMipLevel = uint(g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.z);
+		const uint dstMipLevel = uint(_BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.y);
+		const uint firstUpsampleSrcMipLevel = uint(_BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.z);
 		if (dstMipLevel > firstUpsampleSrcMipLevel)
 		{
 			BilinearDown(gl_GlobalInvocationID);

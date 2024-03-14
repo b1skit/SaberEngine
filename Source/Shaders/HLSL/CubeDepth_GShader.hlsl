@@ -1,6 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "SaberCommon.hlsli"
 
+#include "../Common/ShadowRenderParams.h"
+
 
 struct GeometryOut
 {
@@ -8,14 +10,7 @@ struct GeometryOut
 	uint Face		: SV_RenderTargetArrayIndex;
 };
 
-
-struct CubemapShadowRenderParamsCB
-{
-	float4x4 g_cubemapShadowCam_VP[6];
-	float4 g_cubemapShadowCamNearFar; // .xy = near, far. .zw = unused
-	float4 g_cubemapLightWorldPos; // .xyz = light word pos, .w = unused
-};
-ConstantBuffer<CubemapShadowRenderParamsCB> CubemapShadowRenderParams;
+ConstantBuffer<CubemapShadowRenderParamsData> CubemapShadowRenderParams;
 
 
 [maxvertexcount(18)]
@@ -28,7 +23,7 @@ void GShader(triangle VertexToGeometry In[3], inout TriangleStream<GeometryOut> 
 		
 		for (uint vertIdx = 0; vertIdx < 3; vertIdx++)
 		{
-			Out.Position = mul(CubemapShadowRenderParams.g_cubemapShadowCam_VP[faceIdx], In[vertIdx].Position);	
+			Out.Position = mul(CubemapShadowRenderParams.g_cubemapShadowCam_VP[faceIdx], In[vertIdx].Position);
 			
 			StreamOut.Append(Out);
 		}

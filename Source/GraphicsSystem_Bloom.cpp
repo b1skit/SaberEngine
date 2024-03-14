@@ -9,22 +9,12 @@
 #include "Sampler.h"
 #include "Shader.h"
 
+#include "Shaders/Common/BloomComputeParams.h"
+
 
 namespace
 {
-	struct BloomComputeParams
-	{
-		glm::vec4 g_srcTexDimensions;
-		glm::vec4 g_dstTexDimensions;
-		glm::vec4 g_srcMipDstMipFirstUpsampleSrcMipIsDownStage; // .xy = src/dst mip, .z = 1st upsample src mip, .w = isDownStage
-		glm::vec4 g_bloomRadiusWidthHeightLevelNumLevls; // .xy = bloom width/height, .z = level .w = current level
-
-		glm::vec4 g_bloomDebug; // .x = Deflicker enabled
-
-		static constexpr char const* const s_shaderName = "BloomComputeParams";
-	};
-
-	BloomComputeParams CreateBloomComputeParamsData(
+	BloomComputeParamsData CreateBloomComputeParamsData(
 		std::shared_ptr<re::Texture> bloomSrcTex,
 		std::shared_ptr<re::Texture> bloomDstTex,
 		uint32_t srcMipLevel,
@@ -35,7 +25,7 @@ namespace
 		uint32_t firstUpsampleSrcMipLevel,
 		gr::Camera::Config const& cameraConfig)
 	{
-		BloomComputeParams bloomComputeParams{};
+		BloomComputeParamsData bloomComputeParams{};
 
 		bloomComputeParams.g_srcTexDimensions = bloomSrcTex->GetSubresourceDimensions(srcMipLevel);
 		bloomComputeParams.g_dstTexDimensions = bloomDstTex->GetSubresourceDimensions(dstMipLevel);
@@ -194,8 +184,8 @@ namespace gr
 
 			// Parameter blocks:
 			std::shared_ptr<re::ParameterBlock> bloomDownPB = re::ParameterBlock::Create(
-				BloomComputeParams::s_shaderName,
-				BloomComputeParams{},
+				BloomComputeParamsData::s_shaderName,
+				BloomComputeParamsData{},
 				re::ParameterBlock::PBType::Mutable);
 			m_bloomDownParameterBlocks.emplace_back(bloomDownPB);
 			downStage->AddPermanentParameterBlock(bloomDownPB);
@@ -248,8 +238,8 @@ namespace gr
 
 			// Parameter blocks:
 			std::shared_ptr<re::ParameterBlock> bloomUpPB = re::ParameterBlock::Create(
-				BloomComputeParams::s_shaderName,
-				BloomComputeParams{},
+				BloomComputeParamsData::s_shaderName,
+				BloomComputeParamsData{},
 				re::ParameterBlock::PBType::Mutable);
 			upStage->AddPermanentParameterBlock(bloomUpPB);
 			m_bloomUpParameterBlocks.emplace_back(bloomUpPB);
@@ -280,7 +270,7 @@ namespace gr
 		const uint32_t numBloomMips = bloomTargetTex->GetNumMips();
 		for (uint32_t level = 0; level < numBloomMips; level++)
 		{
-			BloomComputeParams bloomComputeParams{};
+			BloomComputeParamsData bloomComputeParams{};
 
 			if (level == 0)
 			{
@@ -326,7 +316,7 @@ namespace gr
 			const uint32_t upsampleSrcMip = level;
 			const uint32_t upsampleDstMip = upsampleSrcMip - 1;
 			
-			BloomComputeParams const& bloomComputeParams = CreateBloomComputeParamsData(
+			BloomComputeParamsData const& bloomComputeParams = CreateBloomComputeParamsData(
 				bloomTargetTex,
 				bloomTargetTex,
 				upsampleSrcMip,

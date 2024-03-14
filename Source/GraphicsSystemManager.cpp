@@ -30,10 +30,10 @@ namespace gr
 
 	void GraphicsSystemManager::Create()
 	{
-		gr::Camera::CameraParams defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
+		CameraParamsData defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
 
 		m_activeCameraParams = re::ParameterBlock::Create(
-			gr::Camera::CameraParams::s_shaderName,
+			CameraParamsData::s_shaderName,
 			defaultCameraParams,
 			re::ParameterBlock::PBType::Mutable);
 	}

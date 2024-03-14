@@ -7,15 +7,11 @@
 #include "Transformations.hlsli"
 #include "UVUtils.hlsli"
 
-Texture2D<uint> SSAOTex;
+#include "../Common/LightParams.h"
 
-struct AmbientLightParamsCB
-{
-	// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
-	float4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
-	float4 g_ssaoTexDims; // .xyzw = width, height, 1/width, 1/height
-};
-ConstantBuffer<AmbientLightParamsCB> AmbientLightParams;
+
+Texture2D<uint> SSAOTex;
+ConstantBuffer<AmbientLightParamsData> AmbientLightParams;
 
 
 // Combine AO terms: fineAO = from GBuffer textures, coarseAO = SSAO

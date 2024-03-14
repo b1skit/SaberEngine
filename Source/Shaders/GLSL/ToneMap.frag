@@ -75,15 +75,15 @@ void main()
 	const vec3 bloom = texture(Tex1, vOut.uv0.xy).rgb;
 
 	// Apply exposure:
-	const float bloomExposure = g_bloomSettings.w;
+	const float bloomExposure = _CameraParams.g_bloomSettings.w;
 	const vec3 exposedBloom = ApplyExposure(bloom, bloomExposure);	
 	
 	// TODO: Support auto exposure using the bottom mip of the bloom texture
-	const float exposure = g_exposureProperties.x;
+	const float exposure = _CameraParams.g_exposureProperties.x;
 	const vec3 exposedColor = ApplyExposure(color, exposure);
 	
 	// Blend the exposed bloom and scene color:
-	const float bloomStrength = g_bloomSettings.x;
+	const float bloomStrength = _CameraParams.g_bloomSettings.x;
 	const vec3 blendedColor = mix(exposedColor, exposedBloom, bloomStrength);
 	
 	// Tone mapping:

@@ -63,7 +63,7 @@ vec3 GetDiffuseDominantDir(vec3 N, vec3 V, float NoV, float remappedRoughness)
 // Based on listing 24 (p.70) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
 vec3 GetDiffuseIBLContribution(vec3 N, vec3 V, float NoV, float remappedRoughness)
 {
-	const float diffuseScale = g_maxPMREMMipDFGResScaleDiffuseScaleSpec.z;
+	const float diffuseScale = _AmbientLightParams.g_maxPMREMMipDFGResScaleDiffuseScaleSpec.z;
 	
 	const vec3 dominantN = GetDiffuseDominantDir(N, V, NoV, remappedRoughness);
 	
@@ -105,9 +105,9 @@ vec3 GetSpecularDominantDir(vec3 N, vec3 R, float NoV, float remappedRoughness)
 vec3 GetSpecularIBLContribution(
 	vec3 N, vec3 R, vec3 V, float NoV, float linearRoughness, float remappedRoughness, vec3 blendedF0)
 {
-	const float maxPMREMMipLevel = g_maxPMREMMipDFGResScaleDiffuseScaleSpec.x;
-	const float dfgTexWidthHeight = g_maxPMREMMipDFGResScaleDiffuseScaleSpec.y;
-	const float specScale = g_maxPMREMMipDFGResScaleDiffuseScaleSpec.w;
+	const float maxPMREMMipLevel = _AmbientLightParams.g_maxPMREMMipDFGResScaleDiffuseScaleSpec.x;
+	const float dfgTexWidthHeight = _AmbientLightParams.g_maxPMREMMipDFGResScaleDiffuseScaleSpec.y;
+	const float specScale = _AmbientLightParams.g_maxPMREMMipDFGResScaleDiffuseScaleSpec.w;
 
 	const vec3 dominantR = GetSpecularDominantDir(N, R, NoV, remappedRoughness);
 	
@@ -141,9 +141,9 @@ void main()
 	const GBuffer gbuffer = UnpackGBuffer(vOut.uv0.xy);
 
 	// Reconstruct the world position:
-	const vec4 worldPos = vec4(GetWorldPos(vOut.uv0.xy, gbuffer.NonLinearDepth, g_invViewProjection), 1.f);
+	const vec4 worldPos = vec4(GetWorldPos(vOut.uv0.xy, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection), 1.f);
 
-	const vec3 V = normalize(g_cameraWPos.xyz - worldPos.xyz); // point -> camera
+	const vec3 V = normalize(_CameraParams.g_cameraWPos.xyz - worldPos.xyz); // point -> camera
 	const vec3 N = normalize(gbuffer.WorldNormal);
 	
 	const float NoV = clamp(dot(gbuffer.WorldNormal, V), 0.f, 1.f);

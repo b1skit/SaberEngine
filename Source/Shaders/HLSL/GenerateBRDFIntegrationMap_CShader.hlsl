@@ -6,12 +6,10 @@
 #include "Sampling.hlsli"
 #include "UVUtils.hlsli"
 
+#include "../Common/IBLGenerationParams.h"
 
-struct BRDFIntegrationParamsCB
-{
-	uint4 g_integrationTargetResolution;
-};
-ConstantBuffer<BRDFIntegrationParamsCB> BRDFIntegrationParams;
+
+ConstantBuffer<BRDFIntegrationParamsData> BRDFIntegrationParams;
 
 
 #define NUM_SAMPLES 1024

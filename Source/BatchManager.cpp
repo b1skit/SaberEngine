@@ -8,6 +8,9 @@
 #include "ProfilingMarkers.h"
 #include "RenderDataManager.h"
 
+#include "Shaders/Common/InstancingParams.h"
+#include "Shaders/Common/MaterialParams.h"
+
 
 namespace
 {
@@ -15,19 +18,9 @@ namespace
 	constexpr uint32_t k_numBlocksPerAllocation = 64;
 
 
-	struct InstanceIndexParams
+	InstanceIndexParamsData CreateInstanceIndexParamsData(uint32_t transformIdx, uint32_t materialIdx)
 	{
-		uint32_t g_transformIdx;
-		uint32_t g_materialIdx;
-
-		glm::uvec2 _padding;
-		static constexpr char const* const s_shaderName = "InstanceIndexParams";
-	};
-
-
-	InstanceIndexParams CreateInstanceIndexParamsData(uint32_t transformIdx, uint32_t materialIdx)
-	{
-		return InstanceIndexParams
+		return InstanceIndexParamsData
 		{
 			.g_transformIdx = transformIdx,
 			.g_materialIdx = materialIdx
@@ -37,10 +30,10 @@ namespace
 
 	std::shared_ptr<re::ParameterBlock> CreateInstanceIndexParameterBlock(
 		re::ParameterBlock::PBType pbType,
-		std::vector<InstanceIndexParams> const& instanceIndexParams)
+		std::vector<InstanceIndexParamsData> const& instanceIndexParams)
 	{
 		return re::ParameterBlock::CreateArray(
-			InstanceIndexParams::s_shaderName,
+			InstanceIndexParamsData::s_shaderName,
 			instanceIndexParams.data(),
 			util::CheckedCast<uint32_t>(instanceIndexParams.size()),
 			pbType);
@@ -250,8 +243,8 @@ namespace gr
 
 		if ((mustReallocateTransformPB || m_instancedTransforms == nullptr) && requestedTransformPBElements > 0)
 		{
-			m_instancedTransforms = CreateInstancedParameterBlock<gr::Transform::InstancedTransformParams>(
-				gr::Transform::InstancedTransformParams::s_shaderName,
+			m_instancedTransforms = CreateInstancedParameterBlock<InstancedTransformParamsData>(
+				InstancedTransformParamsData::s_shaderName,
 				requestedTransformPBElements);
 
 			// If we reallocated, re-copy all of the data to the new parameter block
@@ -268,7 +261,7 @@ namespace gr
 
 					gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromTransformID(transformID);
 
-					Transform::InstancedTransformParams const& transformParams =
+					InstancedTransformParamsData const& transformParams =
 						gr::Transform::CreateInstancedTransformParamsData(transformData);
 
 					m_instancedTransforms->Commit(
@@ -288,8 +281,8 @@ namespace gr
 
 		if ((mustReallocateMaterialPB || m_instancedMaterials == nullptr) && requestedMaterialPBElements > 0)
 		{
-			m_instancedMaterials = CreateInstancedParameterBlock<gr::Material_GLTF::InstancedPBRMetallicRoughnessParams>(
-				gr::Material_GLTF::InstancedPBRMetallicRoughnessParams::s_shaderName,
+			m_instancedMaterials = CreateInstancedParameterBlock<InstancedPBRMetallicRoughnessParamsData>(
+				InstancedPBRMetallicRoughnessParamsData::s_shaderName,
 				requestedMaterialPBElements);
 
 			if (mustReallocateMaterialPB)
@@ -326,7 +319,7 @@ namespace gr
 
 				gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromTransformID(transformID);
 
-				Transform::InstancedTransformParams const& transformParams = 
+				InstancedTransformParamsData const& transformParams = 
 					gr::Transform::CreateInstancedTransformParamsData(transformData);
 
 				m_instancedTransforms->Commit(
@@ -417,7 +410,7 @@ namespace gr
 				batches.back().SetInstanceCount(numInstances);
 
 				// Gather the data we need to build our instanced parameter blocks:
-				std::vector<InstanceIndexParams> instanceIndexParams;
+				std::vector<InstanceIndexParamsData> instanceIndexParams;
 				instanceIndexParams.reserve(numInstances);
 
 				for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)

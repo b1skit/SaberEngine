@@ -33,11 +33,11 @@ float GetPCFShadowFactor(vec2 shadowmapUVs, vec2 invShadowMapWidthHeight, float 
 		{
 			depthSum += texture(Depth0, vec3(shadowmapUVs, nonLinearDepth)).r;
 
-			shadowmapUVs.x += g_shadowMapTexelSize.z;
+			shadowmapUVs.x += _LightParams.g_shadowMapTexelSize.z;
 		}
 
-		shadowmapUVs.x -= gridSize * g_shadowMapTexelSize.z;
-		shadowmapUVs.y -= g_shadowMapTexelSize.w;
+		shadowmapUVs.x -= gridSize * _LightParams.g_shadowMapTexelSize.z;
+		shadowmapUVs.y -= _LightParams.g_shadowMapTexelSize.w;
 	}
 
 	depthSum /= (gridSize * gridSize);
