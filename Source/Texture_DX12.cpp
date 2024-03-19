@@ -1,15 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
+#include "Assert.h"
 #include "CommandList_DX12.h"
 #include "Config.h"
 #include "Context_DX12.h"
-#include "Assert.h"
 #include "MathUtils.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
 #include "TextUtils.h"
+
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
 using Microsoft::WRL::ComPtr;
 
@@ -908,7 +909,7 @@ namespace dx12
 				IID_PPV_ARGS(&itermediateBufferResource));
 			CheckHResult(hr, "Failed to create intermediate texture buffer resource");
 
-			const std::wstring intermediateName = texture.GetWName() + L" intermediate buffer";
+			std::wstring const& intermediateName = texture.GetWName() + L" intermediate buffer";
 			itermediateBufferResource->SetName(intermediateName.c_str());
 
 			// Record the copy:

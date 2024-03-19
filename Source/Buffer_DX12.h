@@ -19,7 +19,7 @@ namespace dx12
 			uint64_t m_heapByteOffset = 0;
 
 			// TODO: We currently only set Buffers inline in the root signature...
-			DescriptorAllocation m_cpuDescAllocation;
+			DescriptorAllocation m_srvCPUDescAllocation;
 		};
 
 

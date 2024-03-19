@@ -117,10 +117,6 @@ namespace
 		SEAssert(currentGlobalState != D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
 			"Invalid state for transition");
 
-		SEAssert(currentGlobalState != D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ,
-			"We should genenerally avoid this state. See this page for more info: "
-			"https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states");
-
 		// If the previous and current command list type are the same, we know they'll support the same transition
 		// types. No need to go to COMMON between them
 		if (srcCmdListType == dstCmdListType)

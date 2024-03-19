@@ -9,21 +9,21 @@ namespace re
 {
 	// Private CTOR: Use one of the Create factories instead
 	Buffer::Buffer(
-		size_t typeIDHashCode, std::string const& bufferName, Type bufferType, DataType dataType, uint32_t numElements)
+		size_t typeIDHashCode, std::string const& bufferName, BufferParams const& bufferParams, uint32_t dataByteSize)
 		: NamedObject(bufferName)
 		, m_typeIDHash(typeIDHashCode)
-		, m_type(bufferType)
+		, m_dataByteSize(dataByteSize)
+		, m_bufferParams(bufferParams)
 		, m_platformParams(nullptr)
 	{
-		platform::Buffer::CreatePlatformParams(*this);
-
-		SEAssert(dataType != DataType::DataType_Count, "Invalid DataType");
-		m_platformParams->m_dataType = dataType;
-
-		SEAssert((numElements == 1 && dataType == DataType::SingleElement) || 
-			(numElements >= 1 && dataType == DataType::Array),
+		SEAssert(m_bufferParams.m_type != Type::Type_Count,
+			"Invalid Type");
+		SEAssert(m_bufferParams.m_dataType != DataType::DataType_Count, "Invalid DataType");
+		SEAssert((m_bufferParams.m_dataType == DataType::Constant && m_bufferParams.m_numElements == 1) || 
+			(m_bufferParams.m_dataType == DataType::Structured && m_bufferParams.m_numElements >= 1),
 			"Invalid number of elements");
-		m_platformParams->m_numElements = numElements;
+		
+		platform::Buffer::CreatePlatformParams(*this);
 	}
 
 
@@ -56,7 +56,7 @@ namespace re
 	{
 		SEAssert(typeIDHash == m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
-		SEAssert(m_type == Type::Mutable, "Cannot set data of an immutable buffer");
+		SEAssert(m_bufferParams.m_type == Type::Mutable, "Cannot set data of an immutable buffer");
 
 		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
 		ba.Commit(GetUniqueID(), data);
@@ -69,10 +69,10 @@ namespace re
 	{
 		SEAssert(typeIDHash == m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
-		SEAssert(m_type == re::Buffer::Type::Mutable,
+		SEAssert(m_bufferParams.m_type == re::Buffer::Type::Mutable,
 			"Only mutable buffers can be partially updated");
-		SEAssert(m_platformParams->m_dataType == DataType::Array,
-			"Only array type buffers can be partially updated");		
+		SEAssert(m_bufferParams.m_dataType == DataType::Structured,
+			"Only structured buffers can be partially updated");
 
 		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
 		ba.Commit(GetUniqueID(), data, numBytes, dstBaseOffset);
@@ -81,31 +81,12 @@ namespace re
 	}
 
 
-	void Buffer::GetDataAndSize(void const*& out_data, uint32_t& out_numBytes) const
+	void Buffer::GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const
 	{
 		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		ba.GetDataAndSize(GetUniqueID(), out_data, out_numBytes);
-	}
+		ba.GetData(GetUniqueID(), out_data);
 
-
-	uint32_t Buffer::GetSize() const
-	{
-		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		return ba.GetSize(GetUniqueID());
-	}
-
-
-	uint32_t Buffer::GetStride() const
-	{
-		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		return ba.GetSize(GetUniqueID()) / m_platformParams->m_numElements;
-	}
-
-
-	uint32_t Buffer::GetNumElements() const
-	{
-		re::Buffer::PlatformParams* params = GetPlatformParams();
-		return params->m_numElements;
+		*out_numBytes = m_dataByteSize;
 	}
 
 

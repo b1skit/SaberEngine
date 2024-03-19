@@ -15,7 +15,7 @@ namespace opengl
 
 		void const* data;
 		uint32_t numBytes;
-		buffer.GetDataAndSize(data, numBytes);
+		buffer.GetDataAndSize(&data, &numBytes);
 
 		const re::Buffer::Type bufferType = buffer.GetType();
 		switch (bufferType)
@@ -32,14 +32,14 @@ namespace opengl
 			bufferPlatParams->m_baseOffset = 0; // Permanent buffers have their own dedicated buffers
 
 			GLenum bufferTarget = 0;
-			switch (bufferPlatParams->m_dataType)
+			switch (buffer.GetBufferParams().m_dataType)
 			{
-			case re::Buffer::DataType::SingleElement:
+			case re::Buffer::DataType::Constant:
 			{
 				bufferTarget = GL_UNIFORM_BUFFER;
 			}
 			break;
-			case re::Buffer::DataType::Array:
+			case re::Buffer::DataType::Structured:
 			{
 				bufferTarget = GL_SHADER_STORAGE_BUFFER;
 			}
@@ -54,8 +54,8 @@ namespace opengl
 			glBufferData(
 				bufferTarget,
 				(GLsizeiptr)numBytes,
-				nullptr, // NULL: Data store of the specified size is created, but remains uninitialized and thus undefined
-				bufferType == re::Buffer::Type::Immutable ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
+				nullptr, // NULL: Data store of the specified size is created, but remains uninitialized/undefined
+				GL_DYNAMIC_DRAW); // Modified and used repeatedly
 
 			// RenderDoc label:
 			std::string const& bufferName = buffer.GetName() + "_Mutable";
@@ -70,14 +70,14 @@ namespace opengl
 			bufferPlatParams->m_baseOffset = 0; // Permanent buffers have their own dedicated buffers
 
 			GLenum bufferTarget = 0;
-			switch (bufferPlatParams->m_dataType)
+			switch (buffer.GetBufferParams().m_dataType)
 			{
-			case re::Buffer::DataType::SingleElement:
+			case re::Buffer::DataType::Constant:
 			{
 				bufferTarget = GL_UNIFORM_BUFFER;
 			}
 			break;
-			case re::Buffer::DataType::Array:
+			case re::Buffer::DataType::Structured:
 			{
 				bufferTarget = GL_SHADER_STORAGE_BUFFER;
 			}
@@ -92,8 +92,8 @@ namespace opengl
 			glBufferData(
 				bufferTarget,
 				(GLsizeiptr)numBytes,
-				nullptr, // NULL: Data store of the specified size is created, but remains uninitialized and thus undefined
-				bufferType == re::Buffer::Type::Immutable ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
+				nullptr, // NULL: Data store of the specified size is created, but remains uninitialized/undefined
+				GL_STATIC_DRAW); // Modified once, used repeatedly
 
 			// RenderDoc label:
 			std::string const& bufferName = buffer.GetName() + "_Immutable";
@@ -103,7 +103,7 @@ namespace opengl
 		case re::Buffer::Type::SingleFrame:
 		{
 			opengl::BufferAllocator::GetSubAllocation(
-				bufferPlatParams->m_dataType,
+				buffer.GetBufferParams().m_dataType,
 				numBytes,
 				bufferPlatParams->m_bufferName,
 				bufferPlatParams->m_baseOffset);
@@ -124,7 +124,7 @@ namespace opengl
 
 		void const* data;
 		uint32_t totalBytes;
-		buffer.GetDataAndSize(data, totalBytes);
+		buffer.GetDataAndSize(&data, &totalBytes);
 
 		//glNamedBufferSubData(
 		//	bufferPlatParams->m_bufferName,	// Target
@@ -197,14 +197,14 @@ namespace opengl
 		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
 		 
 		GLenum bufferTarget = 0;
-		switch (bufferPlatParams->m_dataType)
+		switch (buffer.GetBufferParams().m_dataType)
 		{
-		case re::Buffer::DataType::SingleElement:
+		case re::Buffer::DataType::Constant:
 		{
 			bufferTarget = GL_UNIFORM_BUFFER;
 		}
 		break;
-		case re::Buffer::DataType::Array:
+		case re::Buffer::DataType::Structured:
 		{
 			bufferTarget = GL_SHADER_STORAGE_BUFFER;
 		}
@@ -214,7 +214,7 @@ namespace opengl
 
 		void const* data;
 		uint32_t numBytes;
-		buffer.GetDataAndSize(data, numBytes);
+		buffer.GetDataAndSize(&data, &numBytes);
 		glBindBufferRange(bufferTarget, bindIndex, bufferPlatParams->m_bufferName, bufferPlatParams->m_baseOffset, numBytes);
 	}
 }

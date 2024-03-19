@@ -544,16 +544,6 @@ namespace opengl
 		PlatformParams const* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 		SEAssert(params->m_isCreated == true, "Shader has not been created yet");
 
-		// Track if the current shader is bound or not, so we can set values without breaking the current state
-		GLint currentProgram = 0;
-		bool isBound = true;	
-		glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-		if (currentProgram != params->m_shaderReference)
-		{
-			glUseProgram(params->m_shaderReference);
-			isBound = false;
-		}
-
 		GLuint uniformID = glGetUniformLocation(params->m_shaderReference, uniformName.c_str());
 
 		switch (type)
@@ -626,12 +616,6 @@ namespace opengl
 		default:
 			SEAssertF("Shader uniform upload failed: Recieved unimplemented uniform type");
 		}
-
-		// Restore the state:
-		if (!isBound)
-		{
-			glUseProgram(currentProgram);
-		}
 	}
 
 
@@ -641,79 +625,65 @@ namespace opengl
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 
 		SEAssert(shaderPlatformParams->m_isCreated == true, "Shader has not been created yet");
-
-		// Track if the current shader is bound or not, so we can set values without breaking the current state
-		GLint currentProgram = 0;
-		bool isBound = true;
-		glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-		if (currentProgram != shaderPlatformParams->m_shaderReference)
-		{
-			glUseProgram(shaderPlatformParams->m_shaderReference);
-			isBound = false;
-		}
 		
 		GLint bindIndex = 0;
+		const GLenum properties = GL_BUFFER_BINDING;
 
 		re::Buffer::PlatformParams const* bufferPlatformParams = buffer.GetPlatformParams();
-		switch (bufferPlatformParams->m_dataType)
+		switch (buffer.GetBufferParams().m_dataType)
 		{
-		case re::Buffer::DataType::SingleElement: // Bind our single-element buffers as UBOs
+		case re::Buffer::DataType::Constant: // Bind our single-element buffers as UBOs
 		{
 			// Find the buffer binding index via introspection
-			const GLint uniformBlockIndex = glGetUniformBlockIndex(
+			const GLint uniformBlockIdx = glGetProgramResourceIndex(
 				shaderPlatformParams->m_shaderReference,	// program
-				buffer.GetName().c_str());				// Uniform block name
+				GL_UNIFORM_BLOCK,							// programInterface
+				buffer.GetName().c_str());					// name
+
+			SEAssert(uniformBlockIdx != GL_INVALID_ENUM, "Failed to get resource index");
 
 			// GL_INVALID_INDEX is returned if the the uniform block name does not identify an active uniform block
-			SEAssert(uniformBlockIndex != GL_INVALID_INDEX ||
+			SEAssert(uniformBlockIdx != GL_INVALID_INDEX ||
 				en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
 				"Failed to find an active uniform block index. This is is not an error, but a useful debugging helper");
 
-			if (uniformBlockIndex != GL_INVALID_INDEX)
+			if (uniformBlockIdx != GL_INVALID_INDEX)
 			{
-				GLenum properties[1] = { GL_BUFFER_BINDING };
 				glGetProgramResourceiv(
-					shaderPlatformParams->m_shaderReference,		// program
+					shaderPlatformParams->m_shaderReference,
 					GL_UNIFORM_BLOCK,
-					uniformBlockIndex,
+					uniformBlockIdx,
 					1,
-					properties,
+					&properties,
 					1,
 					NULL,
 					&bindIndex);
-
-				// Assign binding to to an active uniform block:
-				glUniformBlockBinding(
-					shaderPlatformParams->m_shaderReference,	// program
-					uniformBlockIndex,							// Uniform block index
-					bindIndex);									// Uniform block binding
 			}
 		}
 		break;
-		case re::Buffer::DataType::Array: // Bind our array buffers as SSBOs, as they support dynamic indexing
+		case re::Buffer::DataType::Structured: // Bind our array buffers as SSBOs, as they support dynamic indexing
 		{
 			// Find the buffer binding index via introspection
-			const GLint resourceIdx = glGetProgramResourceIndex(
+			const GLint ssboIdx = glGetProgramResourceIndex(
 			shaderPlatformParams->m_shaderReference,	// program
 			GL_SHADER_STORAGE_BLOCK,					// programInterface
-			buffer.GetName().c_str());				// name
+			buffer.GetName().c_str());					// name
 
-			SEAssert(resourceIdx != GL_INVALID_ENUM, "Failed to get resource index");
+			SEAssert(ssboIdx != GL_INVALID_ENUM, "Failed to get resource index");
 
 			// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
-			SEAssert(resourceIdx != GL_INVALID_INDEX ||
+			SEAssert(ssboIdx != GL_INVALID_INDEX ||
 				en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
 				"Failed to find the resource in the shader. This is is not an error, but a useful debugging helper");
 
-			if (resourceIdx != GL_INVALID_INDEX)
+			if (ssboIdx != GL_INVALID_INDEX)
 			{
-				GLenum properties[1] = { GL_BUFFER_BINDING };
 				glGetProgramResourceiv(
 					shaderPlatformParams->m_shaderReference,
 					GL_SHADER_STORAGE_BLOCK,
-					resourceIdx,
+					ssboIdx,
 					1,
-					properties,
+					&properties,
 					1,
 					NULL,
 					&bindIndex);
@@ -725,12 +695,6 @@ namespace opengl
 
 		// Bind our buffer to the retrieved bind index:
 		opengl::Buffer::Bind(buffer, bindIndex);
-
-		// Restore the state:
-		if (!isBound)
-		{
-			glUseProgram(currentProgram);
-		}
 	}
 
 

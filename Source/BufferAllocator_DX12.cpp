@@ -1,13 +1,17 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "CastUtils.h"
-#include "Context_DX12.h"
-#include "MathUtils.h"
 #include "Buffer_DX12.h"
 #include "BufferAllocator_DX12.h"
+#include "CastUtils.h"
+#include "CommandList_DX12.h"
+#include "Context_DX12.h"
+#include "MathUtils.h"
+#include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
 #include "TextUtils.h"
 
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+
+using Microsoft::WRL::ComPtr;
 
 
 namespace dx12
@@ -26,13 +30,13 @@ namespace dx12
 
 		switch (dataType)
 		{
-		case re::Buffer::DataType::SingleElement:
+		case re::Buffer::DataType::Constant:
 		{
 			SEAssert(alignedSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
 			resourcePtrOut = baPlatParams->m_sharedConstantBufferResources[writeIdx];
 		}
 		break;
-		case re::Buffer::DataType::Array:
+		case re::Buffer::DataType::Structured:
 		{
 			SEAssert(alignedSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
 			resourcePtrOut = baPlatParams->m_sharedStructuredBufferResources[writeIdx];
@@ -48,10 +52,6 @@ namespace dx12
 
 	void BufferAllocator::Create(re::BufferAllocator& ba)
 	{
-		// Note: DX12 supports double or triple buffering. Currently we're using a hard-coded triple buffer, but we
-		// don't need to. We clear the buffer we're writing to at the beginning of each new frame to ensure its
-		// contents are no longer in use
-
 		dx12::BufferAllocator::PlatformParams* baPlatformParams =
 			ba.GetPlatformParams()->As<dx12::BufferAllocator::PlatformParams*>();
 

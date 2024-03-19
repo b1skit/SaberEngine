@@ -91,6 +91,11 @@ namespace re
 			};
 			typedef std::list<PartialCommit> CommitRecord;
 			std::unordered_map<Handle, CommitRecord> m_partialCommits;
+
+			uint32_t m_totalAllocations;
+			uint32_t m_currentAllocationsByteSize;
+			uint32_t m_maxAllocationsByteSize; // High water mark
+			uint32_t m_totalAllocationByteSize; // Total bytes over program lifetime
 			
 			mutable std::recursive_mutex m_mutex;
 		};
@@ -99,8 +104,14 @@ namespace re
 
 		struct ImmutableAllocation
 		{
-			std::vector<std::vector<uint8_t>> m_committed;
+			std::vector<std::vector<uint8_t>> m_committed; // Cleared after every frame; Immutables are written to once
 			std::unordered_map<Handle, std::shared_ptr<re::Buffer>> m_handleToPtr;
+
+			uint32_t m_totalAllocations;
+			uint32_t m_currentAllocationsByteSize;
+			uint32_t m_maxAllocationsByteSize; // High water mark
+			uint32_t m_totalAllocationsByteSize; // Total bytes over program lifetime
+
 			mutable std::recursive_mutex m_mutex;
 		};
 		ImmutableAllocation m_immutableAllocations;
@@ -109,6 +120,10 @@ namespace re
 		{
 			std::vector<uint8_t> m_committed;
 			std::unordered_map<Handle, std::shared_ptr<re::Buffer>> m_handleToPtr;
+			
+			uint32_t m_maxSingleFrameAllocations; // Debug: Track the high-water marks to report in the shutdown logs
+			uint32_t m_maxSingleFrameAllocationByteSize;
+
 			mutable std::recursive_mutex m_mutex;
 		};
 		SingleFrameAllocation m_singleFrameAllocations;
@@ -136,10 +151,6 @@ namespace re
 	private:
 		bool m_isValid;
 
-		// Debug: Track the high-water mark for the max single-frame buffer allocations
-		uint32_t m_maxSingleFrameAllocations;
-		uint32_t m_maxSingleFrameAllocationByteSize;
-
 
 	protected: // Interfaces for the Buffer friend class:
 		friend class re::Buffer;
@@ -148,8 +159,7 @@ namespace re
 		void Commit(Handle uniqueID, void const* data);	// Update the buffer data
 		void Commit(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
 		
-		void GetDataAndSize(Handle uniqueID, void const*& out_data, uint32_t& out_numBytes) const; // Get buffer metadata
-		uint32_t GetSize(Handle uniqueID) const;
+		void GetData(Handle uniqueID, void const** out_data) const;
 
 		void Deallocate(Handle uniqueID);
 
@@ -160,6 +170,12 @@ namespace re
 		BufferAllocator& operator=(BufferAllocator const&) = delete;
 		BufferAllocator& operator=(BufferAllocator&&) = delete;
 	};
+
+
+	inline bool BufferAllocator::IsValid() const
+	{
+		return m_isValid;
+	}
 
 
 	// We need to provide a destructor implementation since it's pure virtual

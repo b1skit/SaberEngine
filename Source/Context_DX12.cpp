@@ -387,56 +387,58 @@ namespace dx12
 			switch (dimension)
 			{
 			case D3D12_SRV_DIMENSION_BUFFER:
+			{
+				srvDesc.Buffer = D3D12_BUFFER_SRV{ 0 };
+			}
+			break;
 			case D3D12_SRV_DIMENSION_TEXTURE1D:
+			{
+				srvDesc.Texture1D = D3D12_TEX1D_SRV{ 0 };
+			}
+			break;
 			case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
 			{
-				SEAssertF("TODO: Handle this type");
+				srvDesc.Texture1DArray = D3D12_TEX1D_ARRAY_SRV{ 0 };
 			}
 			break;
 			case D3D12_SRV_DIMENSION_TEXTURE2D:
 			{
-				srvDesc.Texture2D.MostDetailedMip = 0;
-				srvDesc.Texture2D.MipLevels = 1;
-				srvDesc.Texture2D.PlaneSlice = 0;
-				srvDesc.Texture2D.ResourceMinLODClamp = 0;
+				srvDesc.Texture2D = D3D12_TEX2D_SRV{ 0 };
 			}
 			break;
 			case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
 			{
-				srvDesc.Texture2DArray.MostDetailedMip = 0;
-				srvDesc.Texture2DArray.MipLevels = 1;
-				srvDesc.Texture2DArray.FirstArraySlice = 0;
-				srvDesc.Texture2DArray.ArraySize = 1;
-				srvDesc.Texture2DArray.PlaneSlice = 0;
-				srvDesc.Texture2DArray.ResourceMinLODClamp = 0.f;
+				srvDesc.Texture2DArray = D3D12_TEX2D_ARRAY_SRV{ 0 };
 			}
 			break;
 			case D3D12_SRV_DIMENSION_TEXTURE2DMS:
+			{
+				srvDesc.Texture2DMS = D3D12_TEX2DMS_SRV{ 0 };
+			}
+			break;
 			case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
+			{
+				srvDesc.Texture2DMSArray = D3D12_TEX2DMS_ARRAY_SRV{ 0 };
+			}
+			break;
 			case D3D12_SRV_DIMENSION_TEXTURE3D:
 			{
-				SEAssertF("TODO: Handle this type");
+				srvDesc.Texture3D = D3D12_TEX3D_SRV{ 0 };
 			}
 			break;
 			case D3D12_SRV_DIMENSION_TEXTURECUBE:
 			{
-				srvDesc.TextureCube.MostDetailedMip = 0;
-				srvDesc.TextureCube.MipLevels = 1;
-				srvDesc.TextureCube.ResourceMinLODClamp = 0;
+				srvDesc.TextureCube = D3D12_TEXCUBE_SRV{ 0 };
 			}
 			break;
 			case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
 			{
-				srvDesc.TextureCubeArray.MostDetailedMip = 0;
-				srvDesc.TextureCubeArray.MipLevels = 1;
-				srvDesc.TextureCubeArray.First2DArrayFace = 0;
-				srvDesc.TextureCubeArray.NumCubes = 1;
-				srvDesc.TextureCubeArray.ResourceMinLODClamp = 0.f;
+				srvDesc.TextureCubeArray = D3D12_TEXCUBE_ARRAY_SRV{ 0 };
 			}
 			break;
 			case D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE:
 			{
-				SEAssertF("TODO: Handle this type");
+				srvDesc.RaytracingAccelerationStructure = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV{ 0 };
 			}
 			break;
 			case D3D12_SRV_DIMENSION_UNKNOWN:
@@ -482,28 +484,47 @@ namespace dx12
 
 			switch (dimension)
 			{
-			case D3D12_UAV_DIMENSION_UNKNOWN:
 			case D3D12_UAV_DIMENSION_BUFFER:
+			{
+				uavDesc.Buffer = D3D12_BUFFER_UAV{ 0 };
+			}
+			break;
 			case D3D12_UAV_DIMENSION_TEXTURE1D:
+			{
+				uavDesc.Texture1D = D3D12_TEX1D_UAV{ 0 };
+			}
+			break;
 			case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
 			{
-				SEAssertF("TODO: Handle this type");
+				uavDesc.Texture1DArray = D3D12_TEX1D_ARRAY_UAV{ 0 };
 			}
 			break;
 			case D3D12_UAV_DIMENSION_TEXTURE2D:
 			{
-				uavDesc.Texture2D.MipSlice = 0;
-				uavDesc.Texture2D.PlaneSlice = 0;
+				uavDesc.Texture2D = D3D12_TEX2D_UAV{ 0 };
 			}
 			break;
 			case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
-			case D3D12_UAV_DIMENSION_TEXTURE2DMS:
-			case D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY:
-			case D3D12_UAV_DIMENSION_TEXTURE3D:
 			{
-				SEAssertF("TODO: Handle this type");
+				uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{ 0 };
 			}
 			break;
+			case D3D12_UAV_DIMENSION_TEXTURE2DMS:
+			{
+				uavDesc.Texture2DMS = D3D12_TEX2DMS_UAV{ 0 };
+			}
+			break;
+			case D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY:
+			{
+				uavDesc.Texture2DMSArray = D3D12_TEX2DMS_ARRAY_UAV{ 0 };
+			}
+			break;
+			case D3D12_UAV_DIMENSION_TEXTURE3D:
+			{
+				uavDesc.Texture3D = D3D12_TEX3D_UAV{ 0 };
+			}
+			break;
+			case D3D12_UAV_DIMENSION_UNKNOWN:
 			default:
 				SEAssertF("Invalid dimension");
 			}

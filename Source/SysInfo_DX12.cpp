@@ -64,6 +64,22 @@ namespace dx12
 
 	uint32_t SysInfo::GetDeviceNodeMask()
 	{
-		return 0;// Always 0: We don't (currently) support multiple GPUs
+		return 0; // Always 0: We don't (currently) support multiple GPUs
+	}
+
+
+	bool SysInfo::GPUUploadHeapSupported()
+	{
+		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+
+		D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16{};
+
+		const HRESULT hr = device->CheckFeatureSupport(
+			D3D12_FEATURE_D3D12_OPTIONS16,
+			&options16,
+			sizeof(options16));
+		CheckHResult(hr, "Failed to check feature support");
+
+		return options16.GPUUploadHeapSupported;
 	}
 }

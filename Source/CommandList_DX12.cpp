@@ -1,15 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-
 #include "Batch.h"
+#include "Buffer.h"
+#include "Buffer_DX12.h"
 #include "CastUtils.h"
 #include "Config.h"
 #include "Context_DX12.h"
 #include "CommandList_DX12.h"
 #include "Debug_DX12.h"
+#include "MathUtils.h"
 #include "MeshPrimitive.h"
-#include "Buffer.h"
-#include "Buffer_DX12.h"
 #include "RenderManager.h"
 #include "RootSignature_DX12.h"
 #include "SwapChain_DX12.h"
@@ -20,6 +19,8 @@
 #include "TextureTarget_DX12.h"
 #include "VertexStream.h"
 #include "VertexStream_DX12.h"
+
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
 using Microsoft::WRL::ComPtr;
 
@@ -294,6 +295,8 @@ namespace dx12
 	void CommandList::SetBuffer(re::Buffer const* buffer)
 	{
 		SEAssert(m_currentRootSignature != nullptr, "Root signature has not been set");
+		SEAssert(m_type == CommandListType::Direct || m_type == CommandListType::Compute,
+			"Unexpected command list type for setting a buffer on");
 
 		dx12::Buffer::PlatformParams const* bufferPlatParams =
 			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
@@ -308,17 +311,20 @@ namespace dx12
 		{
 			const uint32_t rootSigIdx = rootSigEntry->m_index;
 
-			switch (buffer->GetPlatformParams()->m_dataType)
+			switch (buffer->GetBufferParams().m_dataType)
 			{
-			case re::Buffer::DataType::SingleElement:
+			case re::Buffer::DataType::Constant:
 			{
+				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
+					"Unexpected root signature type");
+
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
 					rootSigIdx,
 					bufferPlatParams->m_resource.Get(),
 					bufferPlatParams->m_heapByteOffset);
 			}
 			break;
-			case re::Buffer::DataType::Array:
+			case re::Buffer::DataType::Structured:
 			{
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
 					rootSigIdx,
@@ -716,12 +722,12 @@ namespace dx12
 
 				SEAssert(targetMip < texPlatParams->m_uavCpuDescAllocations.size(), "Not enough UAV descriptors");
 
-				dx12::DescriptorAllocation const* descriptorAllocation =
-					&texPlatParams->m_uavCpuDescAllocations[targetMip];
+				dx12::DescriptorAllocation const& descriptorAllocation =
+					texPlatParams->m_uavCpuDescAllocations[targetMip];
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 					rootSigEntry->m_index,
-					*descriptorAllocation,
+					descriptorAllocation,
 					rootSigEntry->m_tableEntry.m_offset,
 					1);
 
@@ -797,20 +803,24 @@ namespace dx12
 
 		for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
 		{
+			// Transition to the copy destination state:
+			TransitionResource(texture, D3D12_RESOURCE_STATE_COPY_DEST, re::Texture::k_allMips);
+
 			void const* initialData = texture->GetTexelData(faceIdx);
 			SEAssert(initialData, "Initial data cannot be null");
 
-			subresourceData.emplace_back(D3D12_SUBRESOURCE_DATA{
-				.pData = initialData,
+			subresourceData.emplace_back(D3D12_SUBRESOURCE_DATA
+				{
+					.pData = initialData,
 
-				// https://github.com/microsoft/DirectXTex/wiki/ComputePitch
-				// Row pitch: The number of bytes in a scanline of pixels: bytes-per-pixel * width-of-image
-				// - Can be larger than the number of valid pixels due to alignment padding
-				.RowPitch = bytesPerTexel * texParams.m_width,
+					// https://github.com/microsoft/DirectXTex/wiki/ComputePitch
+					// Row pitch: The number of bytes in a scanline of pixels: bytes-per-pixel * width-of-image
+					// - Can be larger than the number of valid pixels due to alignment padding
+					.RowPitch = bytesPerTexel * texParams.m_width,
 
-				// Slice pitch: The number of bytes in each depth slice
-				// - 1D/2D images: The total size of the image, including alignment padding
-				.SlicePitch = numBytesPerFace
+					// Slice pitch: The number of bytes in each depth slice
+					// - 1D/2D images: The total size of the image, including alignment padding
+					.SlicePitch = numBytesPerFace
 				});
 		}
 
@@ -824,9 +834,6 @@ namespace dx12
 			static_cast<uint32_t>(subresourceData.size()),	// Number of subresources in the subresources array
 			subresourceData.data());						// Array of subresource data structs
 		SEAssert(bufferSizeResult > 0, "UpdateSubresources returned 0 bytes. This is unexpected");
-
-		// Transition to the copy destination state:
-		TransitionResource(texture, D3D12_RESOURCE_STATE_COPY_DEST, re::Texture::k_allMips);
 	}
 
 
@@ -837,6 +844,12 @@ namespace dx12
 
 		dx12::VertexStream::PlatformParams const* streamPlatformParams =
 			stream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams const*>();
+
+		TransitionResource(
+			streamPlatformParams->m_bufferResource.Get(),
+			1,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 		const size_t bufferSize = stream->GetTotalDataByteSize();
 
@@ -855,8 +868,6 @@ namespace dx12
 			1,												// Required byte size for the update
 			&subresourceData);
 		SEAssert(bufferSizeResult > 0, "UpdateSubresources returned 0 bytes. This is unexpected");
-
-		TransitionResource(streamPlatformParams->m_bufferResource.Get(), 1, D3D12_RESOURCE_STATE_COPY_DEST, 0);
 	}
 
 
@@ -978,7 +989,7 @@ namespace dx12
 			if (!skipTransition)
 			{
 				TransitionResource(texture, toState, srcMip);
-			}			
+			}
 
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 				rootSigEntry->m_index,
@@ -1133,8 +1144,7 @@ namespace dx12
 	}
 
 
-	void CommandList::InsertUAVBarrier(
-		std::shared_ptr<re::Texture> texture)
+	void CommandList::InsertUAVBarrier(ID3D12Resource* resource)
 	{
 		/*
 		* Note: This barrier should be used in the scenario where 2 subsequent compute dispatches executed on the same
@@ -1143,12 +1153,9 @@ namespace dx12
 		* - between 2 draw/dispatch calls that only read a UAV
 		* - between 2 draw/dispatch calls that write to a UAV IFF the writes can be executed in any order
 		* https://asawicki.info/news_1722_secrets_of_direct3d_12_copies_to_the_same_buffer
-		* 
+		*
 		* This function should only be called when we know we definitely need this barrier inserted.
 		*/
-
-		ID3D12Resource* resource =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_textureResource.Get();
 
 		const D3D12_RESOURCE_BARRIER barrier{
 				.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV,
@@ -1159,6 +1166,12 @@ namespace dx12
 
 		// TODO: Support batching of multiple barriers
 		ResourceBarrier(1, &barrier);
+	}
+
+
+	void CommandList::InsertUAVBarrier(std::shared_ptr<re::Texture> texture)
+	{
+		InsertUAVBarrier(texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_textureResource.Get());
 	}
 
 

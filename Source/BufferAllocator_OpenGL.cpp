@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "Buffer_OpenGL.h"
 #include "Context.h"
 #include "MathUtils.h"
 #include "BufferAllocator.h"
@@ -24,7 +25,7 @@ namespace opengl
 		uint32_t alignedSize = 0;
 		switch (dataType)
 		{
-		case re::Buffer::DataType::SingleElement:
+		case re::Buffer::DataType::Constant:
 		{
 			bufferNameOut = baPlatParams->m_singleFrameUBOs[writeIdx];
 
@@ -35,7 +36,7 @@ namespace opengl
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, uboAlignment);
 		}
 		break;
-		case re::Buffer::DataType::Array:
+		case re::Buffer::DataType::Structured:
 		{
 			bufferNameOut = baPlatParams->m_singleFrameSSBOs[writeIdx];
 

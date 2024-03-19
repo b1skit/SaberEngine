@@ -34,10 +34,19 @@ namespace re
 
 		enum DataType : uint8_t
 		{
-			SingleElement,
-			Array,
+			Constant,
+			Structured,
 
 			DataType_Count
+		};
+
+
+		struct BufferParams
+		{
+			Type m_type = Type::Type_Count;
+
+			DataType m_dataType = DataType::DataType_Count;
+			uint32_t m_numElements = 1; // Must be 1 for Constant buffers
 		};
 
 
@@ -48,32 +57,27 @@ namespace re
 
 			bool m_isCommitted = false; // Has an initial data commitment been made?
 			bool m_isCreated = false; // Has the buffer been created at the API level?
-
-			DataType m_dataType = DataType::DataType_Count;
-			uint32_t m_numElements = 0;
 		};
 
 
 	public: // Buffer factories:
 
-		// Create a buffer for a single data object (eg. stage buffer)
+		// Create a read-only buffer for a single data object (eg. stage buffer)
 		template<typename T>
-		[[nodiscard]] static std::shared_ptr<re::Buffer> Create(
-			std::string const& bufferName, T const& data, Type bufferType);
+		[[nodiscard]] static std::shared_ptr<re::Buffer> Create(std::string const& bufferName, T const& data, Type);
 
 		template<typename T>
-		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUncommitted(
-			std::string const& bufferName, Type bufferType);
+		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUncommitted(std::string const& bufferName, Type);
 
-		// Create a buffer for an array of several objects of the same type (eg. instanced mesh matrices)
+		// Create a read-only buffer for an array of several objects of the same type (eg. instanced mesh matrices)
 		template<typename T>
 		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateArray(
-			std::string const& bufferName, T const* dataArray, uint32_t numElements, Type bufferType);
+			std::string const& bufferName, T const* dataArray, uint32_t numElements, Type);
 
-		// Create a buffer, but defer the initial commit
+		// Create a read-only buffer, but defer the initial commit
 		template<typename T>
 		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUncommittedArray(
-			std::string const& bufferName, uint32_t numElements, Type bufferType);
+			std::string const& bufferName, uint32_t numElements, Type);
 
 
 	public:
@@ -91,27 +95,30 @@ namespace re
 		template <typename T>
 		void Commit(T const* data, uint32_t baseIdx, uint32_t numElements); // Recommit mutable array data (only)
 	
-		void GetDataAndSize(void const*& out_data, uint32_t& out_numBytes) const;
+		void GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const;
 		uint32_t GetSize() const;
 		uint32_t GetStride() const;
-		inline Type GetType() const { return m_type; }
+		Type GetType() const;
 
 		uint32_t GetNumElements() const; // Instanced buffers: How many instances of data does the buffer hold?
+
+		BufferParams const& GetBufferParams() const;
 
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 
 	private:		
-		uint64_t m_typeIDHash; // Hash of the typeid(T) at Create: Used to verify committed data types don't change
+		const uint64_t m_typeIDHash; // Hash of the typeid(T) at Create: Used to verify committed data types don't change
+		const uint32_t m_dataByteSize;
 
-		const Type m_type;
+		const BufferParams m_bufferParams;		
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 		
 
 	private:
 		// Use the factory Create() method instead
-		Buffer(size_t typeIDHashCode, std::string const& bufferName, Type, DataType, uint32_t numElements); 
+		Buffer(size_t typeIDHashCode, std::string const& bufferName, BufferParams const&, uint32_t dataByteSize);
 
 		static void Register(
 			std::shared_ptr<re::Buffer> newBuffer, uint32_t numBytes, uint64_t typeIDHash);
@@ -135,10 +142,17 @@ namespace re
 	template<typename T>
 	std::shared_ptr<re::Buffer> Buffer::Create(std::string const& bufferName, T const& data, Type bufferType)
 	{
-		std::shared_ptr<re::Buffer> newBuffer;
-		newBuffer.reset(new re::Buffer(typeid(T).hash_code(), bufferName, bufferType, DataType::SingleElement, 1));
+		BufferParams bufferParams;
+		bufferParams.m_type = bufferType;
+		bufferParams.m_dataType = DataType::Constant;
+		bufferParams.m_numElements = 1;
 
-		RegisterAndCommit(newBuffer, &data, sizeof(T), typeid(T).hash_code());
+		const uint32_t dataByteSize = sizeof(T);
+
+		std::shared_ptr<re::Buffer> newBuffer;
+		newBuffer.reset(new re::Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
+
+		RegisterAndCommit(newBuffer, &data, dataByteSize, typeid(T).hash_code());
 
 		return newBuffer;
 	}
@@ -147,10 +161,17 @@ namespace re
 	template<typename T>
 	std::shared_ptr<re::Buffer> Buffer::CreateUncommitted(std::string const& bufferName, Type bufferType)
 	{
-		std::shared_ptr<re::Buffer> newBuffer;
-		newBuffer.reset(new re::Buffer(typeid(T).hash_code(), bufferName, bufferType, DataType::SingleElement, 1));
+		BufferParams bufferParams;
+		bufferParams.m_type = bufferType;
+		bufferParams.m_dataType = DataType::Constant;
+		bufferParams.m_numElements = 1;
 
-		Register(newBuffer, sizeof(T), typeid(T).hash_code());
+		const uint32_t dataByteSize = sizeof(T);
+
+		std::shared_ptr<re::Buffer> newBuffer;
+		newBuffer.reset(new re::Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
+
+		Register(newBuffer, dataByteSize, typeid(T).hash_code());
 
 		return newBuffer;
 	}
@@ -161,15 +182,17 @@ namespace re
 	std::shared_ptr<re::Buffer> Buffer::CreateArray(
 		std::string const& bufferName, T const* dataArray, uint32_t numElements, Type bufferType)
 	{
-		std::shared_ptr<re::Buffer> newBuffer;
-		newBuffer.reset(new Buffer(
-			typeid(T).hash_code(), 
-			bufferName, 
-			bufferType, 
-			DataType::Array, 
-			numElements));
+		BufferParams bufferParams;
+		bufferParams.m_type = bufferType;
+		bufferParams.m_dataType = DataType::Structured;
+		bufferParams.m_numElements = numElements;
 
-		RegisterAndCommit(newBuffer, dataArray, sizeof(T) * numElements, typeid(T).hash_code());
+		const uint32_t dataByteSize = sizeof(T) * numElements;
+
+		std::shared_ptr<re::Buffer> newBuffer;
+		newBuffer.reset(new Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
+
+		RegisterAndCommit(newBuffer, dataArray, dataByteSize, typeid(T).hash_code());
 
 		return newBuffer;
 	}
@@ -179,15 +202,17 @@ namespace re
 	std::shared_ptr<re::Buffer> Buffer::CreateUncommittedArray(
 		std::string const& bufferName, uint32_t numElements, Type bufferType)
 	{
-		std::shared_ptr<re::Buffer> newBuffer;
-		newBuffer.reset(new Buffer(
-			typeid(T).hash_code(),
-			bufferName,
-			bufferType,
-			DataType::Array,
-			numElements));
+		BufferParams bufferParams;
+		bufferParams.m_type = bufferType;
+		bufferParams.m_dataType = DataType::Structured;
+		bufferParams.m_numElements = numElements;
 
-		Register(newBuffer, sizeof(T) * numElements, typeid(T).hash_code());
+		const uint32_t dataByteSize = sizeof(T) * numElements;
+
+		std::shared_ptr<re::Buffer> newBuffer;
+		newBuffer.reset(new Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
+
+		Register(newBuffer, dataByteSize, typeid(T).hash_code());
 		
 		return newBuffer;
 	}
@@ -207,6 +232,36 @@ namespace re
 		const uint32_t numBytes = numElements * sizeof(T);
 
 		CommitInternal(data, dstBaseByteOffset, numBytes, typeid(T).hash_code());
+	}
+
+
+	inline uint32_t Buffer::GetSize() const
+	{
+		return m_dataByteSize;
+	}
+
+
+	inline uint32_t Buffer::GetStride() const
+	{
+		return m_dataByteSize / m_bufferParams.m_numElements;
+	}
+
+
+	inline Buffer::Type Buffer::GetType() const
+	{
+		return m_bufferParams.m_type;
+	}
+
+
+	inline uint32_t Buffer::GetNumElements() const
+	{
+		return m_bufferParams.m_numElements;
+	}
+
+
+	inline Buffer::BufferParams const& Buffer::GetBufferParams() const
+	{
+		return m_bufferParams;
 	}
 
 

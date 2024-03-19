@@ -151,8 +151,7 @@ namespace dx12
 
 		SEBeginGPUEvent(copyQueue->GetD3DCommandQueue(), perfmarkers::Type::CopyQueue, "Copy Queue: Create API Resources");
 
-		// Ensure any intermediate resources created on the previous frame are done. In practice this is not necessary,
-		// but we include this check as a precaution since we're about to clear the intermediate resources
+		// Ensure any updates using the intermediate resources created during the previous frame are done
 		if (!copyQueue->GetFence().IsFenceComplete(dx12RenderManager.m_intermediateResourceFenceVal))
 		{
 			copyQueue->CPUWait(dx12RenderManager.m_intermediateResourceFenceVal);
@@ -164,9 +163,10 @@ namespace dx12
 			renderManager.m_newTextures.HasReadData();
 
 		// Handle anything that requires a copy queue:		
-		std::vector<ComPtr<ID3D12Resource>>& intermediateResources = dx12RenderManager.m_intermediateResources;
 		if (hasDataToCopy)
 		{
+			std::vector<ComPtr<ID3D12Resource>>& intermediateResources = dx12RenderManager.m_intermediateResources;
+
 			// TODO: Get multiple command lists, and record on multiple threads:
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
 

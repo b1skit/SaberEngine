@@ -38,7 +38,8 @@ namespace dx12
 
 
 	private:
-
+		// TODO: We should allow N frames of intermediate resources to be held. This is a potential (albiet unlikely)
+		// bottleneck that will prevent the CPU from ever getting more than a single frame ahead
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_intermediateResources; // From resources created in the previous frame
 		uint64_t m_intermediateResourceFenceVal;
 	};

@@ -98,16 +98,16 @@ namespace platform
 			platform::Buffer::Destroy			= &opengl::Buffer::Destroy;
 
 			// Buffer allocator:
-			platform::BufferAllocator::Create	= &opengl::BufferAllocator::Create;
-			platform::BufferAllocator::Destroy	= &opengl::BufferAllocator::Destroy;
+			platform::BufferAllocator::Create		= &opengl::BufferAllocator::Create;
+			platform::BufferAllocator::Destroy		= &opengl::BufferAllocator::Destroy;
 
 			// Render manager:
-			platform::RenderManager::Initialize			= &opengl::RenderManager::Initialize;
-			platform::RenderManager::Shutdown			= &opengl::RenderManager::Shutdown;
-			platform::RenderManager::CreateAPIResources = &opengl::RenderManager::CreateAPIResources;
-			platform::RenderManager::GetNumFramesInFlight		= &opengl::RenderManager::GetNumFramesInFlight;
-			platform::RenderManager::StartImGuiFrame	= &opengl::RenderManager::StartImGuiFrame;
-			platform::RenderManager::RenderImGui		= &opengl::RenderManager::RenderImGui;
+			platform::RenderManager::Initialize				= &opengl::RenderManager::Initialize;
+			platform::RenderManager::Shutdown				= &opengl::RenderManager::Shutdown;
+			platform::RenderManager::CreateAPIResources		= &opengl::RenderManager::CreateAPIResources;
+			platform::RenderManager::GetNumFramesInFlight	= &opengl::RenderManager::GetNumFramesInFlight;
+			platform::RenderManager::StartImGuiFrame		= &opengl::RenderManager::StartImGuiFrame;
+			platform::RenderManager::RenderImGui			= &opengl::RenderManager::RenderImGui;
 
 			// Shader:
 			platform::Shader::Create	= &opengl::Shader::Create;
@@ -145,8 +145,8 @@ namespace platform
 			platform::Buffer::Destroy			= &dx12::Buffer::Destroy;
 
 			// Buffer allocator:
-			platform::BufferAllocator::Create	= &dx12::BufferAllocator::Create;
-			platform::BufferAllocator::Destroy	= &dx12::BufferAllocator::Destroy;
+			platform::BufferAllocator::Create		= &dx12::BufferAllocator::Create;
+			platform::BufferAllocator::Destroy		= &dx12::BufferAllocator::Destroy;
 			
 			// Render manager:
 			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;

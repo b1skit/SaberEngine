@@ -116,6 +116,7 @@ namespace dx12
 
 
 	private:
+		void InsertUAVBarrier(ID3D12Resource*);
 		void InsertUAVBarrier(std::shared_ptr<re::Texture>);
 
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
