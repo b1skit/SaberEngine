@@ -12,8 +12,8 @@ namespace re
 	public:
 		static constexpr uint32_t k_fixedAllocationByteSize = 64 * 1024 * 1024; // Arbitrary. Fixed GPU buffer allocation size
 		
-		static constexpr uint32_t k_singleFrameReservationBytes = 64 * 1024 * 1024; // Reservation size for single-frame CPU-side commit buffers
-		static constexpr uint32_t k_permanentReservationCount = 64; // No. of buffers permanent we expect to see
+		static constexpr uint32_t k_temporaryReservationBytes = 64 * 1024 * 1024; // Reservation size for temporary CPU-side commit buffers
+		static constexpr uint32_t k_permanentReservationCount = 128; // No. of permanent mutable buffers we expect to see
 
 
 	public:
@@ -58,7 +58,7 @@ namespace re
 		void BufferData();
 
 		void BeginFrame(uint64_t renderFrameNum);
-		void EndFrame(); // Clears single-frame buffers
+		void EndFrame(); // Clears temporary buffers
 
 		BufferAllocator::PlatformParams* GetPlatformParams() const;
 		void SetPlatformParams(std::unique_ptr<BufferAllocator::PlatformParams> params);
@@ -78,10 +78,24 @@ namespace re
 			uint32_t m_numBytes;	// Total number of allocated bytes
 		};
 
-		struct MutableAllocation
+		struct IAllocation
+		{
+			virtual ~IAllocation() = 0;
+
+			std::unordered_map<Handle, std::shared_ptr<re::Buffer>> m_handleToPtr;
+
+			uint32_t m_totalAllocations;
+			uint32_t m_totalAllocationsByteSize; // Total bytes over program lifetime
+			uint32_t m_currentAllocationsByteSize;
+			uint32_t m_maxAllocations;
+			uint32_t m_maxAllocationsByteSize; // High water mark
+
+			mutable std::recursive_mutex m_mutex;
+		};
+
+		struct MutableAllocation final : public virtual IAllocation
 		{
 			std::vector<std::vector<uint8_t>> m_committed;
-			std::unordered_map<Handle, std::shared_ptr<re::Buffer>> m_handleToPtr;
 
 			struct PartialCommit
 			{
@@ -91,42 +105,16 @@ namespace re
 			};
 			typedef std::list<PartialCommit> CommitRecord;
 			std::unordered_map<Handle, CommitRecord> m_partialCommits;
-
-			uint32_t m_totalAllocations;
-			uint32_t m_currentAllocationsByteSize;
-			uint32_t m_maxAllocationsByteSize; // High water mark
-			uint32_t m_totalAllocationByteSize; // Total bytes over program lifetime
-			
-			mutable std::recursive_mutex m_mutex;
 		};
 		MutableAllocation m_mutableAllocations;
 
-
-		struct ImmutableAllocation
+		struct TemporaryAllocation final : public virtual IAllocation
 		{
-			std::vector<std::vector<uint8_t>> m_committed; // Cleared after every frame; Immutables are written to once
-			std::unordered_map<Handle, std::shared_ptr<re::Buffer>> m_handleToPtr;
-
-			uint32_t m_totalAllocations;
-			uint32_t m_currentAllocationsByteSize;
-			uint32_t m_maxAllocationsByteSize; // High water mark
-			uint32_t m_totalAllocationsByteSize; // Total bytes over program lifetime
-
-			mutable std::recursive_mutex m_mutex;
+			std::vector<uint8_t> m_committed; // Cleared after every frame; Temporaries are written to once
 		};
-		ImmutableAllocation m_immutableAllocations;
+		TemporaryAllocation m_immutableAllocations;
+		TemporaryAllocation m_singleFrameAllocations;
 
-		struct SingleFrameAllocation
-		{
-			std::vector<uint8_t> m_committed;
-			std::unordered_map<Handle, std::shared_ptr<re::Buffer>> m_handleToPtr;
-			
-			uint32_t m_maxSingleFrameAllocations; // Debug: Track the high-water marks to report in the shutdown logs
-			uint32_t m_maxSingleFrameAllocationByteSize;
-
-			mutable std::recursive_mutex m_mutex;
-		};
-		SingleFrameAllocation m_singleFrameAllocations;
 
 		std::unordered_map<Handle, CommitMetadata> m_handleToTypeAndByteIndex;
 		mutable std::recursive_mutex m_handleToTypeAndByteIndexMutex;
@@ -180,4 +168,5 @@ namespace re
 
 	// We need to provide a destructor implementation since it's pure virtual
 	inline BufferAllocator::PlatformParams::~PlatformParams() {};
+	inline BufferAllocator::IAllocation::~IAllocation() {};
 }

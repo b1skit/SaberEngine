@@ -8,14 +8,11 @@
 #include "RenderManager.h"
 #include "RenderManager_Platform.h"
 
-// Clear immutable buffer data. We only write to immutable buffers exactly once, so no point keeping the data around.
-// Clearing can be disabled here if necessary for debugging purposes.
-#define CLEAR_IMMUTABLE_DATA
-
 
 namespace
 {
 	constexpr uint64_t k_invalidFrameNum = std::numeric_limits<uint64_t>::max();
+	constexpr uint32_t k_invalidCommitValue = std::numeric_limits<uint32_t>::max();
 }
 
 namespace re
@@ -83,7 +80,7 @@ namespace re
 
 
 	BufferAllocator::BufferAllocator()
-		: m_numFramesInFlight(3) // Safe default: We'll fetch the correct value during Create()
+		: m_numFramesInFlight(0) // We'll fetch the correct value during Create()
 		, m_currentFrameNum(k_invalidFrameNum)
 		, m_isValid(false)
 	{
@@ -93,28 +90,27 @@ namespace re
 			m_mutableAllocations.m_committed.reserve(k_permanentReservationCount);
 
 			m_mutableAllocations.m_totalAllocations = 0;
+			m_mutableAllocations.m_totalAllocationsByteSize = 0;
 			m_mutableAllocations.m_currentAllocationsByteSize = 0;
+			m_mutableAllocations.m_maxAllocations = 0;
 			m_mutableAllocations.m_maxAllocationsByteSize = 0;
-			m_mutableAllocations.m_totalAllocationByteSize = 0;
 		}
-		// Immutable:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-			m_immutableAllocations.m_committed.reserve(k_permanentReservationCount);
 
-			m_immutableAllocations.m_totalAllocations = 0;
-			m_immutableAllocations.m_currentAllocationsByteSize = 0;
-			m_immutableAllocations.m_maxAllocationsByteSize = 0;
-			m_immutableAllocations.m_totalAllocationsByteSize = 0;
-		}
-		// Single frame:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-			m_singleFrameAllocations.m_committed.reserve(k_singleFrameReservationBytes);
+		// Temporary allocations:
+		auto InitializeTemporaryAllocation = [](TemporaryAllocation& tempAllocation)
+			{
+				std::lock_guard<std::recursive_mutex> lock(tempAllocation.m_mutex);
+				tempAllocation.m_committed.reserve(k_temporaryReservationBytes);
 
-			m_singleFrameAllocations.m_maxSingleFrameAllocations = 0;
-			m_singleFrameAllocations.m_maxSingleFrameAllocationByteSize = 0;
-		}
+				tempAllocation.m_totalAllocations = 0;
+				tempAllocation.m_currentAllocationsByteSize = 0;
+				tempAllocation.m_maxAllocations = 0;
+				tempAllocation.m_maxAllocationsByteSize = 0;
+				tempAllocation.m_totalAllocationsByteSize = 0;
+			};
+		InitializeTemporaryAllocation(m_immutableAllocations);
+		InitializeTemporaryAllocation(m_singleFrameAllocations);
+
 
 		platform::BufferAllocator::CreatePlatformParams(*this);
 	}
@@ -148,36 +144,57 @@ namespace re
 				m_immutableAllocations.m_mutex,
 				m_singleFrameAllocations.m_mutex);
 
-			LOG(std::format("BufferAllocator shutting down. Session usage statistics:\n"
-				"\t\t- {} Immutable permanent allocations total, {} B lifetime total, {} B maximum simultaneous\n"
-				"\t\t- {} Mutable permanent allocations total, {} B lifetime total, {} B maximum simultaneous\n"
-				"\t\t- Maximum of {} single-frame allocations, largest frame required {} B",
+			LOG(std::format("BufferAllocator shutting down... Session usage statistics:\n"
+				"\t\t- {} Mutable permanent allocations total, {} B lifetime total, {} / {} B max simultaneous\n"
+				"\t\t- {} Immutable permanent allocations total, {} B lifetime total, {} / {} B max simultaneous\n"				
+				"\t\t- {} Single frame allocations total, {} B lifetime total, {} / {} B max simultaneous",
+				m_mutableAllocations.m_totalAllocations,
+				m_mutableAllocations.m_totalAllocationsByteSize,
+				m_mutableAllocations.m_maxAllocations,
+				m_mutableAllocations.m_maxAllocationsByteSize,
 				m_immutableAllocations.m_totalAllocations,
 				m_immutableAllocations.m_totalAllocationsByteSize,
+				m_immutableAllocations.m_maxAllocations,
 				m_immutableAllocations.m_maxAllocationsByteSize,
-				m_mutableAllocations.m_totalAllocations,
-				m_mutableAllocations.m_totalAllocationByteSize,
-				m_mutableAllocations.m_maxAllocationsByteSize,
-				m_singleFrameAllocations.m_maxSingleFrameAllocations,
-				m_singleFrameAllocations.m_maxSingleFrameAllocationByteSize).c_str());
+				m_singleFrameAllocations.m_totalAllocations,
+				m_singleFrameAllocations.m_totalAllocationsByteSize,
+				m_singleFrameAllocations.m_maxAllocations,
+				m_singleFrameAllocations.m_maxAllocationsByteSize).c_str());
+
+			if (m_mutableAllocations.m_maxAllocations >= k_permanentReservationCount)
+			{
+				LOG_WARNING("Mutable allocations required more than the default reservation amount. Consider "
+					"increasing k_permanentReservationCount");
+			}
+			if (m_immutableAllocations.m_maxAllocationsByteSize >= k_temporaryReservationBytes)
+			{
+				LOG_WARNING("Immutable allocations required more than the default reservation amount. Consider "
+					"increasing k_temporaryReservationBytes");
+			}
+			if (m_singleFrameAllocations.m_maxAllocationsByteSize >= k_temporaryReservationBytes)
+			{
+				LOG_WARNING("Single frame allocations required more than the default reservation amount. Consider "
+					"increasing k_temporaryReservationBytes");
+			}
 
 			// Must clear the buffers shared_ptrs before clearing the committed memory
 			// Destroy() removes the buffer from our unordered_map & invalidates iterators; Just loop until it's empty
-			auto ClearBufferPtrs = [](std::unordered_map<Handle, std::shared_ptr<re::Buffer>>& handleToPtr)
+			auto ClearBufferPtrs = [](IAllocation& allocation)
 				{
-					while (!handleToPtr.empty())
+					while (!allocation.m_handleToPtr.empty())
 					{
-						handleToPtr.begin()->second->Destroy();
+						allocation.m_handleToPtr.begin()->second->Destroy();
 					}
-					SEAssert(handleToPtr.empty(), "Failed to clear the map");
+					SEAssert(allocation.m_handleToPtr.empty(), "Failed to clear the map");
 				};
-			ClearBufferPtrs(m_mutableAllocations.m_handleToPtr);
-			ClearBufferPtrs(m_immutableAllocations.m_handleToPtr);
-			ClearBufferPtrs(m_singleFrameAllocations.m_handleToPtr);
+			ClearBufferPtrs(m_mutableAllocations);
+			ClearBufferPtrs(m_immutableAllocations);
+			ClearBufferPtrs(m_singleFrameAllocations);
 
-			SEAssert(m_mutableAllocations.m_committed.empty(), "Mutable committed data should be cleared by now");
-			SEAssert(m_immutableAllocations.m_committed.empty(), "Immutable committed data should be cleared by now");
-			SEAssert(m_singleFrameAllocations.m_committed.empty(), "Single frame committed data should be cleared by now");
+			SEAssert(m_mutableAllocations.m_currentAllocationsByteSize == 0 &&
+				m_immutableAllocations.m_currentAllocationsByteSize == 0 &&
+				m_singleFrameAllocations.m_currentAllocationsByteSize == 0,
+				"Deallocations and tracking data are out of sync");
 
 			SEAssert(m_handleToTypeAndByteIndex.empty(), "Handle to type and byte map should be cleared by now");
 		}
@@ -202,30 +219,28 @@ namespace re
 
 		const Handle uniqueID = buffer->GetUniqueID();
 
-		auto RecordHandleToPointer = [&](
-			std::recursive_mutex& mutex,
-			std::unordered_map<Handle, std::shared_ptr<re::Buffer>>& handleToPtr)
+		auto RecordHandleToPointer = [&](IAllocation& allocation)
 			{
-				std::lock_guard<std::recursive_mutex> lock(mutex);
-				SEAssert(!handleToPtr.contains(uniqueID), "Buffer is already registered");
-				handleToPtr[uniqueID] = buffer;
+				std::lock_guard<std::recursive_mutex> lock(allocation.m_mutex);
+				SEAssert(!allocation.m_handleToPtr.contains(uniqueID), "Buffer is already registered");
+				allocation.m_handleToPtr[uniqueID] = buffer;
 			};
 
 		switch (bufferType)
 		{
 		case Buffer::Type::Mutable:
 		{
-			RecordHandleToPointer(m_mutableAllocations.m_mutex, m_mutableAllocations.m_handleToPtr);
+			RecordHandleToPointer(m_mutableAllocations);
 		}
 		break;
 		case Buffer::Type::Immutable:
 		{
-			RecordHandleToPointer(m_immutableAllocations.m_mutex, m_immutableAllocations.m_handleToPtr);
+			RecordHandleToPointer(m_immutableAllocations);
 		}
 		break;
 		case Buffer::Type::SingleFrame:
 		{
-			RecordHandleToPointer(m_singleFrameAllocations.m_mutex, m_singleFrameAllocations.m_handleToPtr);
+			RecordHandleToPointer(m_singleFrameAllocations);
 		}
 		break;
 		default: SEAssertF("Invalid Type");
@@ -248,6 +263,21 @@ namespace re
 		// Get the index we'll be inserting the 1st byte of our data to, resize the vector, and initialize it with zeros
 		uint32_t dataIndex = -1; // Start with something obviously incorrect
 
+		auto UpdateAllocationTracking = [&numBytes](IAllocation& allocation)
+			{
+				// Note: IAllocation::m_mutex is already locked
+
+				allocation.m_totalAllocations++;
+				allocation.m_totalAllocationsByteSize += numBytes;
+				allocation.m_currentAllocationsByteSize += numBytes;
+				allocation.m_maxAllocations = std::max(
+					allocation.m_maxAllocations,
+					util::CheckedCast<uint32_t>(allocation.m_handleToPtr.size()));
+				allocation.m_maxAllocationsByteSize = std::max(
+					allocation.m_maxAllocationsByteSize,
+					allocation.m_currentAllocationsByteSize);
+			};
+
 		switch (bufferType)
 		{
 		case Buffer::Type::Mutable:
@@ -257,12 +287,7 @@ namespace re
 				dataIndex = util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed.size());
 				m_mutableAllocations.m_committed.emplace_back(numBytes, 0);
 
-				m_mutableAllocations.m_totalAllocations++;
-				m_mutableAllocations.m_currentAllocationsByteSize += numBytes;
-				m_mutableAllocations.m_maxAllocationsByteSize = std::max(
-					m_mutableAllocations.m_maxAllocationsByteSize, 
-					m_mutableAllocations.m_currentAllocationsByteSize);
-				m_mutableAllocations.m_totalAllocationByteSize += numBytes;
+				UpdateAllocationTracking(m_mutableAllocations);
 			}
 		}
 		break;
@@ -270,15 +295,14 @@ namespace re
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-				dataIndex = util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size());
-				m_immutableAllocations.m_committed.emplace_back(numBytes, 0);
 
-				m_immutableAllocations.m_totalAllocations++;
-				m_immutableAllocations.m_currentAllocationsByteSize += numBytes;
-				m_immutableAllocations.m_maxAllocationsByteSize = std::max(
-					m_immutableAllocations.m_maxAllocationsByteSize,
-					m_immutableAllocations.m_currentAllocationsByteSize);
-				m_immutableAllocations.m_totalAllocationsByteSize += numBytes;
+				dataIndex = util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size());
+
+				m_immutableAllocations.m_committed.resize(
+					util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size() + numBytes), 
+					0);
+
+				UpdateAllocationTracking(m_immutableAllocations);
 			}
 		}
 		break;
@@ -289,10 +313,11 @@ namespace re
 
 				dataIndex = util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_committed.size());
 
-				const uint32_t resizeAmt = 
-					util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_committed.size() + numBytes);
+				m_singleFrameAllocations.m_committed.resize(
+					util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_committed.size() + numBytes),
+					0);
 
-				m_singleFrameAllocations.m_committed.resize(resizeAmt, 0);
+				UpdateAllocationTracking(m_singleFrameAllocations);
 			}
 		}
 		break;
@@ -325,7 +350,6 @@ namespace re
 			bufferType = result->second.m_type;
 		}
 
-
 		// Copy the data to our pre-allocated region.
 		switch (bufferType)
 		{
@@ -338,8 +362,7 @@ namespace re
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-				SEAssert(m_immutableAllocations.m_committed[startIdx].size() == numBytes, "Size mismatch");
-				void* dest = m_immutableAllocations.m_committed[startIdx].data();
+				void* dest = &m_immutableAllocations.m_committed[startIdx];
 				memcpy(dest, data, numBytes);
 			}
 		}
@@ -365,8 +388,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::Commit(
-		Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset)
+	void BufferAllocator::Commit(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset)
 	{
 		SEAssert(numBytes > 0, "0 bytes is only valid for signalling the Buffer::Update to update all bytes");
 
@@ -377,11 +399,8 @@ namespace re
 
 			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
 
-			SEAssert(result != m_handleToTypeAndByteIndex.end(),
-				"Buffer with this ID has not been allocated");
-
-			SEAssert(result->second.m_type == re::Buffer::Type::Mutable,
-				"Can only partially commit to mutable buffers");
+			SEAssert(result != m_handleToTypeAndByteIndex.end(), "Buffer with this ID has not been allocated");
+			SEAssert(result->second.m_type == re::Buffer::Type::Mutable, "Can only partially commit to mutable buffers");
 			
 			startIdx = result->second.m_startIndex;
 			totalBytes = result->second.m_numBytes;
@@ -395,8 +414,7 @@ namespace re
 			SEAssert(totalBytes == util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed[startIdx].size()),
 				"CommitMetadata and physical allocation out of sync");
 
-			SEAssert(dstBaseByteOffset + numBytes <= totalBytes,
-				"Number of bytes is too large for the given offset");
+			SEAssert(dstBaseByteOffset + numBytes <= totalBytes, "Number of bytes is too large for the given offset");
 
 			// Copy the data into our CPU-side allocation:
 			void* dest = &m_mutableAllocations.m_committed[startIdx][dstBaseByteOffset]; // Byte address of base offset
@@ -595,22 +613,8 @@ namespace re
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-
-				SEAssert(m_immutableAllocations.m_committed.empty() || 
-					startIdx < m_immutableAllocations.m_committed.size(), 
-					"Invalid startIdx");
-#if defined(CLEAR_IMMUTABLE_DATA)
-				if (m_immutableAllocations.m_committed.empty())
-				{
-					out_data = nullptr;
-				}
-				else
-				{
-					*out_data = static_cast<void const*>(m_immutableAllocations.m_committed[startIdx].data());
-				}
-#else
-				out_data = m_immutableAllocations.m_committed[startIdx].data();
-#endif				
+				SEAssert(startIdx < m_immutableAllocations.m_committed.size(), "Invalid startIdx");
+				*out_data = static_cast<void const*>(&m_immutableAllocations.m_committed[startIdx]);
 			}
 		}
 		break;
@@ -645,42 +649,37 @@ namespace re
 		}
 
 		// Add our buffer to the deferred deletion queue, then erase the pointer from our allocation list
-		auto ProcessErasure = [&](
-			std::unordered_map<Handle, std::shared_ptr<re::Buffer>>& handleToPtr,
-			std::recursive_mutex& mutex)
+		auto ProcessErasure = [&](IAllocation& allocation)
 			{
-				AddToDeferredDeletions(m_currentFrameNum, handleToPtr.at(uniqueID));
+				AddToDeferredDeletions(m_currentFrameNum, allocation.m_handleToPtr.at(uniqueID));
 
 				// Erase the buffer from our allocations:
 				{
-					std::lock_guard<std::recursive_mutex> lock(mutex);
-					handleToPtr.erase(uniqueID);
+					std::lock_guard<std::recursive_mutex> lock(allocation.m_mutex);
+					allocation.m_handleToPtr.erase(uniqueID);
 				}
+
+				allocation.m_currentAllocationsByteSize -= numBytes;
 			};
 		switch (bufferType)
 		{
 		case Buffer::Type::Mutable:
 		{
-			ProcessErasure(m_mutableAllocations.m_handleToPtr, m_mutableAllocations.m_mutex);			
+			ProcessErasure(m_mutableAllocations);			
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
 				m_mutableAllocations.m_partialCommits.erase(uniqueID);
-				m_mutableAllocations.m_currentAllocationsByteSize -= numBytes;
 			}
 		}
 		break;
 		case Buffer::Type::Immutable:
 		{
-			ProcessErasure(m_immutableAllocations.m_handleToPtr, m_immutableAllocations.m_mutex);
-			{
-				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-				m_immutableAllocations.m_currentAllocationsByteSize -= numBytes;
-			}
+			ProcessErasure(m_immutableAllocations);
 		}
 		break;
 		case Buffer::Type::SingleFrame:
 		{
-			ProcessErasure(m_singleFrameAllocations.m_handleToPtr, m_singleFrameAllocations.m_mutex);
+			ProcessErasure(m_singleFrameAllocations);
 		}
 		break;
 		default: SEAssertF("Invalid Type");
@@ -694,69 +693,39 @@ namespace re
 			m_handleToTypeAndByteIndex.erase(buffer);
 		}
 
-		// Finally, free the committed memory:
-		auto FreePermanentCommit = [&](
-			Buffer::Type bufferType,
-			std::recursive_mutex& mutex,
-			std::vector<std::vector<uint8_t>>& committed)
+		// Finally, free any permanently committed memory:
+		if (bufferType == Buffer::Type::Mutable)
+		{
 			{
+				std::scoped_lock lock(m_mutableAllocations.m_mutex, m_handleToTypeAndByteIndexMutex);
+
+				const size_t idxToReplace = startIdx;
+				const size_t idxToMove = m_mutableAllocations.m_committed.size() - 1;
+
+				SEAssert(idxToReplace <= idxToMove &&
+					idxToReplace < m_mutableAllocations.m_committed.size(),
+					"Invalid index to move or replace");
+
+				if (idxToReplace != idxToMove)
 				{
-					std::scoped_lock lock(mutex, m_handleToTypeAndByteIndexMutex);
+					m_mutableAllocations.m_committed[idxToReplace] = std::move(m_mutableAllocations.m_committed[idxToMove]);
 
-					const size_t idxToReplace = startIdx;
-					const size_t idxToMove = committed.size() - 1;
-
-					SEAssert(idxToReplace <= idxToMove &&
-						idxToReplace < committed.size(),
-						"Invalid index to move or replace");
-
-					if (idxToReplace != idxToMove)
+					// Update the records for the entry that we moved. This is a slow linear search through an
+					// unordered map, but permanent buffers should be deallocated very infrequently
+					bool didUpdate = false;
+					for (auto& entry : m_handleToTypeAndByteIndex)
 					{
-						committed[idxToReplace] = std::move(committed[idxToMove]);
-
-						// Update the records for the entry that we moved. This is a slow linear search through an
-						// unordered map, but permanent buffers should be deallocated very infrequently
-						bool didUpdate = false;
-						for (auto& entry : m_handleToTypeAndByteIndex)
+						if (entry.second.m_type == bufferType && entry.second.m_startIndex == idxToMove)
 						{
-							if (entry.second.m_type == bufferType && entry.second.m_startIndex == idxToMove)
-							{
-								entry.second.m_startIndex = util::CheckedCast<uint32_t>(idxToReplace);
-								didUpdate = true;
-								break;
-							}
+							entry.second.m_startIndex = util::CheckedCast<uint32_t>(idxToReplace);
+							didUpdate = true;
+							break;
 						}
-						SEAssert(didUpdate, "Failed to find entry to update");
 					}
-					committed.pop_back();
+					SEAssert(didUpdate, "Failed to find entry to update");
 				}
-			};
-		switch (bufferType)
-		{
-		case Buffer::Type::Mutable:
-		{
-			FreePermanentCommit(
-				Buffer::Type::Mutable, m_mutableAllocations.m_mutex, m_mutableAllocations.m_committed);
-		}
-		break;
-		case Buffer::Type::Immutable:
-		{
-#if defined(CLEAR_IMMUTABLE_DATA)
-			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-			SEAssert(m_immutableAllocations.m_committed.empty(),
-				"The immutable allocation data should already have been cleared");
-#else
-			FreePermanentCommit(
-				Buffer::Type::Immutable, m_immutableAllocations.m_mutex, m_immutableAllocations.m_committed);
-#endif
-		}
-		break;
-		case Buffer::Type::SingleFrame:
-		{
-			// Single frame buffer memory is already cleared at the end of every frame
-		}
-		break;
-		default: SEAssertF("Invalid Type");
+				m_mutableAllocations.m_committed.pop_back();
+			}
 		}
 	}
 
@@ -773,6 +742,27 @@ namespace re
 			std::unordered_set<Handle> dirtyMutableBuffers;
 
 			const uint8_t curFrameHeapOffsetFactor = m_currentFrameNum % m_numFramesInFlight; // Only used for mutable buffers
+
+			auto BufferTemporaryData = [&](IAllocation& allocation, Handle currentHandle)
+				{
+					{
+						std::lock_guard<std::recursive_mutex> lock(allocation.m_mutex);
+
+						SEAssert(allocation.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
+						re::Buffer const* currentBuffer = allocation.m_handleToPtr.at(currentHandle).get();
+
+						SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
+							"Trying to buffer a buffer that has not had an initial commit made");
+
+						platform::Buffer::Update(*currentBuffer, curFrameHeapOffsetFactor, 0, 0);
+					}
+
+					// Invalidate the commit metadata:
+					{
+						std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
+						m_handleToTypeAndByteIndex.at(currentHandle).m_startIndex = k_invalidCommitValue;
+					}
+				};
 
 			for (Handle currentHandle : m_dirtyBuffers)
 			{
@@ -830,28 +820,12 @@ namespace re
 				break;
 				case Buffer::Type::Immutable:
 				{
-					std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-					
-					SEAssert(m_immutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-					re::Buffer const* currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
-
-					SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
-						"Trying to buffer a buffer that has not had an initial commit made");
-
-					platform::Buffer::Update(*currentBuffer, curFrameHeapOffsetFactor, 0, 0);
+					BufferTemporaryData(m_immutableAllocations, currentHandle);
 				}
 				break;
 				case Buffer::Type::SingleFrame:
 				{
-					std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-					
-					SEAssert(m_singleFrameAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-					re::Buffer const* currentBuffer = m_singleFrameAllocations.m_handleToPtr.at(currentHandle).get();
-
-					SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
-						"Trying to buffer a buffer that has not had an initial commit made");
-
-					platform::Buffer::Update(*currentBuffer, curFrameHeapOffsetFactor, 0, 0);
+					BufferTemporaryData(m_singleFrameAllocations, currentHandle);
 				}
 				break;
 				default: SEAssertF("Invalid Type");
@@ -884,15 +858,7 @@ namespace re
 
 		// Clear single-frame allocations:
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-
-			// Debug: Track the high-water mark for the max single-frame buffer allocations
-			m_singleFrameAllocations.m_maxSingleFrameAllocations = std::max(
-				m_singleFrameAllocations.m_maxSingleFrameAllocations,
-				util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_handleToPtr.size()));
-			m_singleFrameAllocations.m_maxSingleFrameAllocationByteSize = std::max(
-				m_singleFrameAllocations.m_maxSingleFrameAllocationByteSize,
-				util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_committed.size()));
+			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);		
 
 			// Calling Destroy() on our Buffer recursively calls BufferAllocator::Deallocate, which
 			// erases an entry from m_singleFrameAllocations.m_handleToPtr. Thus, we can't use an iterator as it'll be
@@ -908,15 +874,16 @@ namespace re
 
 			m_singleFrameAllocations.m_handleToPtr.clear();
 			m_singleFrameAllocations.m_committed.clear();
+
+			SEAssert(m_singleFrameAllocations.m_currentAllocationsByteSize == 0,
+				"Single frame temporary deallocations are out of sync");
 		}
 
 		// Clear immutable allocations: We only write this data exactly once, no point keeping it around
-#if defined(CLEAR_IMMUTABLE_DATA)
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
 			m_immutableAllocations.m_committed.clear();
 		}
-#endif
 
 		ClearDeferredDeletions(m_currentFrameNum);
 
