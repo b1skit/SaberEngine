@@ -43,6 +43,7 @@ namespace en::ConfigKeys
 	constexpr char const* k_sceneFilePathKey	= "sceneFilePath";	// ".\Scenes\Scene\Folder\Names\sceneFile.extension"
 	constexpr char const* k_sceneNameKey		= "sceneName";		// "sceneFile"
 	constexpr char const* k_sceneRootPathKey	= "sceneRootPath";	// ".\Scenes\Scene\Folder\Names\"
+	
 	constexpr char const* k_sceneIBLPathKey		= "sceneIBLPath";	// ".\Scenes\SceneFolderName\IBL\ibl.hdr"
 	constexpr char const* k_defaultIBLPathKey	= "defaultIBLPath";
 

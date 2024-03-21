@@ -549,8 +549,9 @@ namespace
 			TryLoadIBL(IBLPath, iblTexture);
 		}
 		SEAssert(iblTexture != nullptr,
-			"Missing IBL texture. Per scene IBLs must be placed at <sceneRoot>\\IBL\\ibl.hdr; A default fallback "
-			"must exist at Assets\\DefaultIBL\\ibl.hdr");
+			std::format("Missing IBL texture. Per scene IBLs must be placed at {}; A default fallback must exist at {}",
+				en::Config::Get()->GetValueAsString(en::ConfigKeys::k_sceneIBLPathKey),
+				en::Config::Get()->GetValueAsString(en::ConfigKeys::k_defaultIBLPathKey)).c_str());
 	}
 
 

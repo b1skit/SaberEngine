@@ -413,7 +413,7 @@ namespace en
 		markDirty |= TrySetValue(en::ConfigKeys::k_sprintSpeedModifier,		2.0f,	SettingType::Common);
 
 		// Scene data:
-		markDirty |= TrySetValue(en::ConfigKeys::k_defaultIBLPathKey,	"Assets\\DefaultIBL\\ibl.hdr",	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_defaultIBLPathKey,	"Assets\\DefaultIBL\\default.hdr",	SettingType::Common);
 
 		// Key bindings:
 		//--------------
@@ -687,7 +687,8 @@ namespace en
 
 	float Config::GetWindowAspectRatio() const
 	{
-		return (float)(GetValue<int>("windowXRes")) / (float)(GetValue<int>("windowYRes"));
+		return static_cast<float>(
+			GetValue<int>(en::ConfigKeys::k_windowWidthKey)) / GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 	}
 
 
