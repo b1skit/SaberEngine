@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
+#include "Context.h"
 #include "BufferAllocator_OpenGL.h"
 #include "Buffer_OpenGL.h"
 #include "Buffer.h"
@@ -102,7 +103,10 @@ namespace opengl
 		break;
 		case re::Buffer::Type::SingleFrame:
 		{
-			opengl::BufferAllocator::GetSubAllocation(
+			opengl::BufferAllocator* bufferAllocator =
+				dynamic_cast<opengl::BufferAllocator*>(re::Context::Get()->GetBufferAllocator());
+
+			bufferAllocator->GetSubAllocation(
 				buffer.GetBufferParams().m_dataType,
 				numBytes,
 				bufferPlatParams->m_bufferName,
@@ -212,9 +216,8 @@ namespace opengl
 		default: SEAssertF("Invalid DataType");
 		}
 
-		void const* data;
-		uint32_t numBytes;
-		buffer.GetDataAndSize(&data, &numBytes);
-		glBindBufferRange(bufferTarget, bindIndex, bufferPlatParams->m_bufferName, bufferPlatParams->m_baseOffset, numBytes);
+		const uint32_t numBytes = buffer.GetSize();
+		glBindBufferRange(
+			bufferTarget, bindIndex, bufferPlatParams->m_bufferName, bufferPlatParams->m_baseOffset, numBytes);
 	}
 }

@@ -7,21 +7,25 @@
 
 namespace opengl
 {
-	class BufferAllocator
+	class BufferAllocator final : public virtual re::BufferAllocator
 	{
 	public:
-		struct PlatformParams final : public re::BufferAllocator::PlatformParams
-		{
-			std::vector<GLuint> m_singleFrameUBOs;
-			std::vector<GLuint> m_singleFrameSSBOs;
-		};
+		BufferAllocator() = default;
+		~BufferAllocator() override = default;
 
-		static void GetSubAllocation(
-			re::Buffer::DataType, uint32_t size, GLuint& bufferNameOut, GLintptr& baseOffsetOut);
+		void Initialize(uint64_t currentFrame) override;
+
+		void Destroy() override;
+
+		void BufferDataPlatform() override;
 
 
-	public:
-		static void Create(re::BufferAllocator&);
-		static void Destroy(re::BufferAllocator&);
+	public: // OpenGL-specific functionality:
+		void GetSubAllocation(re::Buffer::DataType, uint32_t size, GLuint& bufferNameOut, GLintptr& baseOffsetOut);
+
+
+	private:
+		std::vector<GLuint> m_singleFrameUBOs;
+		std::vector<GLuint> m_singleFrameSSBOs;
 	};
 }

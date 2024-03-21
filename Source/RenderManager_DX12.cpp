@@ -34,10 +34,12 @@ using Microsoft::WRL::ComPtr;
 namespace dx12
 {
 	RenderManager::RenderManager()
-		: m_intermediateResourceFenceVal(0)
-		, k_numFrames(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_numBackbuffersKey))
+		: k_numFrames(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_numBackbuffersKey))
 	{
 		SEAssert(k_numFrames >= 2 && k_numFrames <= 3, "Invalid number of frames in flight");
+
+		m_intermediateResources.resize(k_numFrames);
+		m_intermediateResourceFenceVals.resize(k_numFrames, 0);
 	}
 
 
@@ -152,11 +154,13 @@ namespace dx12
 		SEBeginGPUEvent(copyQueue->GetD3DCommandQueue(), perfmarkers::Type::CopyQueue, "Copy Queue: Create API Resources");
 
 		// Ensure any updates using the intermediate resources created during the previous frame are done
-		if (!copyQueue->GetFence().IsFenceComplete(dx12RenderManager.m_intermediateResourceFenceVal))
+		const uint8_t intermediateIdx = GetIntermediateResourceIdx();
+		if (!copyQueue->GetFence().IsFenceComplete(
+			dx12RenderManager.m_intermediateResourceFenceVals[intermediateIdx]))
 		{
-			copyQueue->CPUWait(dx12RenderManager.m_intermediateResourceFenceVal);
+			copyQueue->CPUWait(dx12RenderManager.m_intermediateResourceFenceVals[intermediateIdx]);
 		}
-		dx12RenderManager.m_intermediateResources.clear();	
+		dx12RenderManager.m_intermediateResources[intermediateIdx].clear();
 
 		const bool hasDataToCopy = 
 			renderManager.m_newVertexStreams.HasReadData() ||
@@ -165,7 +169,8 @@ namespace dx12
 		// Handle anything that requires a copy queue:		
 		if (hasDataToCopy)
 		{
-			std::vector<ComPtr<ID3D12Resource>>& intermediateResources = dx12RenderManager.m_intermediateResources;
+			std::vector<ComPtr<ID3D12Resource>>& intermediateResources = 
+				dx12RenderManager.m_intermediateResources[intermediateIdx];
 
 			// TODO: Get multiple command lists, and record on multiple threads:
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
@@ -189,7 +194,7 @@ namespace dx12
 			}
 
 			// Execute the copy before moving on
-			dx12RenderManager.m_intermediateResourceFenceVal = copyQueue->Execute(1, &copyCommandList);
+			dx12RenderManager.m_intermediateResourceFenceVals[intermediateIdx] = copyQueue->Execute(1, &copyCommandList);
 		}
 
 		// Samplers:

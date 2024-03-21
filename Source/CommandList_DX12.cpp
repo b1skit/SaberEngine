@@ -311,6 +311,9 @@ namespace dx12
 		{
 			const uint32_t rootSigIdx = rootSigEntry->m_index;
 
+			bool transitionResource = false;
+			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+
 			switch (buffer->GetBufferParams().m_dataType)
 			{
 			case re::Buffer::DataType::Constant:
@@ -318,22 +321,98 @@ namespace dx12
 				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
 					"Unexpected root signature type");
 
+				SEAssert((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPURead) != 0 &&
+					(buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite) == 0,
+					"Invalid usage flags for a constant buffer");
+
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
 					rootSigIdx,
 					bufferPlatParams->m_resource.Get(),
 					bufferPlatParams->m_heapByteOffset);
+
+				transitionResource = false;
 			}
 			break;
 			case re::Buffer::DataType::Structured:
 			{
-				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
-					rootSigIdx,
-					bufferPlatParams->m_resource.Get(),
-					bufferPlatParams->m_heapByteOffset);
+				switch (rootSigEntry->m_type)
+				{
+				case RootSignature::RootParameter::Type::SRV:
+				{
+					SEAssert((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPURead) != 0, 
+						"Buffer does not have the GPU read flag set");
+
+					m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
+						rootSigIdx,
+						bufferPlatParams->m_resource.Get(),
+						bufferPlatParams->m_heapByteOffset);
+
+					transitionResource = false;
+				}
+				break;
+				case RootSignature::RootParameter::Type::UAV:
+				{
+					SEAssert(buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite, 
+						"UAV buffers must have GPU writes enabled");
+
+					m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
+						rootSigIdx,
+						bufferPlatParams->m_resource.Get(),
+						bufferPlatParams->m_heapByteOffset);
+
+					if ((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite))
+					{
+						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
+						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+						transitionResource = true;
+					}
+					else
+					{
+						transitionResource = false;
+					}
+				}
+				break;
+				case RootSignature::RootParameter::Type::DescriptorTable:
+				{
+					SEAssert(buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite,
+						"UAV buffers must have GPU writes enabled");
+
+					dx12::DescriptorAllocation const& descriptorAllocation = bufferPlatParams->m_uavCPUDescAllocation;
+
+					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
+						rootSigEntry->m_index,
+						descriptorAllocation,
+						rootSigEntry->m_tableEntry.m_offset,
+						1);
+
+					if ((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite))
+					{
+						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
+						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+						transitionResource = true;
+					}
+					else
+					{
+						transitionResource = false;
+					}
+				}
+				break;
+				default: SEAssertF("Invalid or unexpected root signature type");
+				}
 			}
 			break;
 			default:
 				SEAssertF("Invalid DataType");
+			}
+
+			// We only transition GPU-writeable buffers (i.e. immutable with GPU-write flag enabled)
+			if (transitionResource)
+			{
+				TransitionResource(
+					bufferPlatParams->m_resource.Get(),
+					1,
+					toState,
+					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 			}
 		}
 	}
@@ -868,6 +947,33 @@ namespace dx12
 			1,												// Required byte size for the update
 			&subresourceData);
 		SEAssert(bufferSizeResult > 0, "UpdateSubresources returned 0 bytes. This is unexpected");
+	}
+
+
+	void CommandList::UpdateSubresources(
+		re::Buffer const* buffer, uint32_t dstOffset, ID3D12Resource* srcResource, uint32_t srcOffset, uint32_t numBytes)
+	{
+		SEAssert(m_type == dx12::CommandListType::Copy, "Expected a copy command list");
+		SEAssert((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite) != 0, 
+			"GPU writes must be enabled");
+
+		dx12::Buffer::PlatformParams const* bufferPlatformParams =
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+
+		// Note: We only allow Immutable buffers to live on the default heap; They have a single, unshared backing 
+		// resource so this transition is safe
+		TransitionResource(
+			bufferPlatformParams->m_resource.Get(),
+			1,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+
+		m_commandList->CopyBufferRegion(
+			bufferPlatformParams->m_resource.Get(), // pDstBuffer
+			dstOffset,								// DstOffset
+			srcResource,							// pSrcBuffer
+			srcOffset,								// SrcOffset
+			numBytes);								// NumBytes
 	}
 
 

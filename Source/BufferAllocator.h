@@ -17,55 +17,52 @@ namespace re
 
 
 	public:
-		struct PlatformParams : public re::IPlatformParams
-		{
-		public:
-			PlatformParams();
-			virtual ~PlatformParams() = 0;
-
-			void BeginFrame();
-			uint8_t GetWriteIndex() const;
-			uint32_t AdvanceBaseIdx(re::Buffer::DataType, uint32_t alignedSize);
-			
-			const uint8_t m_numBuffers;
-
-
-		protected:
-			// For single-frame resources, to ensure resources are available throughout their lifetime we allocate one
-			// buffer in the upload heap, per each of the maximum number of frames in flight.
-			// 
-			// Single-frame resources are stack-allocated from these heaps, AND maintained for a fixed lifetime of N 
-			// frames. We only write into 1 array of each type at a time, thus only need 1 base index per DataType.
-			//
-			// We maintain the stack base indexes here, and let the API-layer figure out how to interpret/use it.
-			//
-			std::array<std::atomic<uint32_t>, re::Buffer::DataType::DataType_Count> m_bufferBaseIndexes;
-
-		private:
-			uint8_t m_writeIdx;
-		};
+		static std::unique_ptr<re::BufferAllocator> Create();
 
 
 	public:
-		BufferAllocator();
-		void Create(uint64_t currentFrame);
+		virtual void Initialize(uint64_t currentFrame);
 
-		~BufferAllocator();
-		void Destroy();
+		virtual ~BufferAllocator();
+
+		virtual void Destroy();
+
+		virtual void BufferDataPlatform() = 0; // API-specific data buffering
+
+
+	public:
+		void BufferData();
 
 		bool IsValid() const; // Has Destroy() been called?
-
-		void BufferData();
 
 		void BeginFrame(uint64_t renderFrameNum);
 		void EndFrame(); // Clears temporary buffers
 
-		BufferAllocator::PlatformParams* GetPlatformParams() const;
-		void SetPlatformParams(std::unique_ptr<BufferAllocator::PlatformParams> params);
-
 
 	private:
 		void RegisterAndAllocateBuffer(std::shared_ptr<re::Buffer>, uint32_t numBytes);
+
+
+	protected:
+		BufferAllocator();
+
+
+	protected:
+		// For single-frame resources, to ensure resources are available throughout their lifetime we allocate one
+		// buffer in the upload heap, per each of the maximum number of frames in flight.
+		// 
+		// Single-frame resources are stack-allocated from these heaps, AND maintained for a fixed lifetime of N 
+		// frames. We only write into 1 array of each type at a time, thus only need 1 base index per DataType.
+		//
+		// We maintain the stack base indexes here, and let the API-layer figure out how to interpret/use it.
+		//
+		uint32_t AdvanceBaseIdx(re::Buffer::DataType, uint32_t alignedSize);
+		uint8_t GetWriteIndex() const;
+
+
+	private:
+		std::array<std::atomic<uint32_t>, re::Buffer::DataType::DataType_Count> m_bufferBaseIndexes;
+		uint8_t m_writeIdx;
 
 	
 	private:
@@ -122,15 +119,26 @@ namespace re
 		std::unordered_set<Handle> m_dirtyBuffers;
 		std::mutex m_dirtyBuffersMutex;
 
-		std::unique_ptr<PlatformParams> m_platformParams;
+
+	protected:
+		// Data required to perform any API-specific buffering steps
+		struct PlatformCommitMetadata
+		{
+			re::Buffer const* m_buffer;
+		};
+		std::vector<PlatformCommitMetadata> m_dirtyBuffersForPlatformUpdate;
+		std::mutex m_dirtyBuffersForPlatformUpdateMutex;
 
 
 	private:
 		void ClearDeferredDeletions(uint64_t frameNum);
 		void AddToDeferredDeletions(uint64_t frameNum, std::shared_ptr<re::Buffer>);
-		uint8_t m_numFramesInFlight;
 		std::queue<std::pair<uint64_t, std::shared_ptr<re::Buffer>>> m_deferredDeleteQueue;
 		std::mutex m_deferredDeleteQueueMutex;
+
+
+	protected:
+		uint8_t m_numFramesInFlight;
 
 
 	private:
@@ -160,6 +168,12 @@ namespace re
 	};
 
 
+	inline uint8_t BufferAllocator::GetWriteIndex() const
+	{
+		return m_writeIdx;
+	}
+
+
 	inline bool BufferAllocator::IsValid() const
 	{
 		return m_isValid;
@@ -167,6 +181,5 @@ namespace re
 
 
 	// We need to provide a destructor implementation since it's pure virtual
-	inline BufferAllocator::PlatformParams::~PlatformParams() {};
 	inline BufferAllocator::IAllocation::~IAllocation() {};
 }

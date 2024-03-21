@@ -121,7 +121,8 @@ namespace dx12
 		swapChain.Create();
 
 		// Buffer Allocator:
-		m_bufferAllocator.Create(currentFrame);
+		m_bufferAllocator = re::BufferAllocator::Create();
+		m_bufferAllocator->Initialize(currentFrame);
 
 		// Setup our ImGui context
 		{
@@ -199,7 +200,7 @@ namespace dx12
 
 		// NOTE: We must destroy anything that holds a buffer before the BufferAllocator is destroyed, 
 		// as buffers call the BufferAllocator in their destructor
-		dx12Context.GetBufferAllocator().Destroy();
+		dx12Context.GetBufferAllocator()->Destroy();
 
 		// Clear the null descriptor libraries:
 		{

@@ -1,12 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
 #include "CastUtils.h"
+#include "Config.h"
 #include "BufferAllocator.h"
-#include "BufferAllocator_Platform.h"
+#include "BufferAllocator_DX12.h"
+#include "BufferAllocator_OpenGL.h"
 #include "Buffer_Platform.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
-#include "RenderManager_Platform.h"
 
 
 namespace
@@ -17,65 +18,26 @@ namespace
 
 namespace re
 {
-	// Buffer Platform Params:
-	//---------------------------------
-
-	BufferAllocator::PlatformParams::PlatformParams()
-		: m_numBuffers(platform::RenderManager::GetNumFramesInFlight())
-		, m_writeIdx(0)
+	std::unique_ptr<re::BufferAllocator> BufferAllocator::Create()
 	{
-		// We maintain N stack base indexes for each DataType; Initialize them to 0
-		for (uint8_t dataType = 0; dataType < re::Buffer::DataType::DataType_Count; dataType++)
+		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+
+		switch (api)
 		{
-			m_bufferBaseIndexes[dataType].store(0);
-		}
-	}
-
-
-	void BufferAllocator::PlatformParams::BeginFrame()
-	{
-		// Increment the write index
-		m_writeIdx = (m_writeIdx + 1) % m_numBuffers;
-
-		// Reset the stack base index back to 0 for each type of shared buffer:
-		for (uint8_t dataType = 0; dataType < re::Buffer::DataType::DataType_Count; dataType++)
+		case platform::RenderingAPI::OpenGL:
 		{
-			m_bufferBaseIndexes[dataType].store(0);
+			return std::make_unique<opengl::BufferAllocator>();
 		}
-	}
-
-
-	uint32_t BufferAllocator::PlatformParams::AdvanceBaseIdx(
-		re::Buffer::DataType dataType, uint32_t alignedSize)
-	{
-		// Atomically advance the stack base index for the next call, and return the base index for the current one
-		const uint32_t allocationBaseIdx = m_bufferBaseIndexes[dataType].fetch_add(alignedSize);
-
-		SEAssert(allocationBaseIdx + alignedSize <= k_fixedAllocationByteSize,
-			"Allocation is out of bounds. Consider increasing k_fixedAllocationByteSize");
-
-		return allocationBaseIdx;
-	}
-
-
-	uint8_t BufferAllocator::PlatformParams::GetWriteIndex() const
-	{
-		return m_writeIdx;
-	}
-
-
-	// Buffer Allocator:
-	//---------------------------
-
-	BufferAllocator::PlatformParams* BufferAllocator::GetPlatformParams() const
-	{
-		return m_platformParams.get();
-	}
-
-
-	void BufferAllocator::SetPlatformParams(std::unique_ptr<BufferAllocator::PlatformParams> params)
-	{
-		m_platformParams = std::move(params);
+		break;
+		case platform::RenderingAPI::DX12:
+		{
+			return std::make_unique<dx12::BufferAllocator>();
+		}
+		break;
+		default:
+			SEAssertF("Invalid rendering API argument received");
+		}
+		return nullptr;
 	}
 
 
@@ -84,7 +46,13 @@ namespace re
 		, m_currentFrameNum(k_invalidFrameNum)
 		, m_isValid(false)
 	{
-		// Mutable:
+		// We maintain N stack base indexes for each DataType; Initialize them to 0
+		for (uint8_t dataType = 0; dataType < re::Buffer::DataType::DataType_Count; dataType++)
+		{
+			m_bufferBaseIndexes[dataType].store(0);
+		}
+
+		// Mutable allocations:
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
 			m_mutableAllocations.m_committed.reserve(k_permanentReservationCount);
@@ -110,20 +78,16 @@ namespace re
 			};
 		InitializeTemporaryAllocation(m_immutableAllocations);
 		InitializeTemporaryAllocation(m_singleFrameAllocations);
-
-
-		platform::BufferAllocator::CreatePlatformParams(*this);
 	}
 
 
-	void BufferAllocator::Create(uint64_t currentFrame)
+	void BufferAllocator::Initialize(uint64_t currentFrame)
 	{
 		m_currentFrameNum = currentFrame;
-		platform::BufferAllocator::Create(*this);
-
 		m_numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
-
 		m_isValid = true;
+
+		m_writeIdx = 0;
 	}
 
 
@@ -205,8 +169,6 @@ namespace re
 		// immediately cleared
 		constexpr uint64_t k_maxFrameNum = std::numeric_limits<uint64_t>::max();
 		ClearDeferredDeletions(k_maxFrameNum);
-
-		platform::BufferAllocator::Destroy(*this);
 
 		m_isValid = false;
 	}
@@ -735,7 +697,7 @@ namespace re
 	{
 		SEBeginCPUEvent("re::BufferAllocator::BufferData");
 		{
-			std::lock_guard<std::mutex> dirtyLock(m_dirtyBuffersMutex);
+			std::scoped_lock dirtyLock(m_dirtyBuffersMutex, m_dirtyBuffersForPlatformUpdateMutex);
 
 			// We keep mutable buffers committed within m_numFramesInFlight in the dirty list to ensure they're
 			// kept up to date
@@ -820,7 +782,22 @@ namespace re
 				break;
 				case Buffer::Type::Immutable:
 				{
-					BufferTemporaryData(m_immutableAllocations, currentHandle);
+					SEAssert(m_immutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
+					re::Buffer const* currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
+
+					if (currentBuffer->GetBufferParams().m_usageMask & re::Buffer::Usage::CPUWrite)
+					{
+						BufferTemporaryData(m_immutableAllocations, currentHandle);
+					}
+					else
+					{
+						// If CPU writes are disabled, our buffer will need to be updated via a command list. Record
+						// the update metadata, we'll process these cases in a single batch at the end
+						m_dirtyBuffersForPlatformUpdate.emplace_back(PlatformCommitMetadata
+							{
+								.m_buffer = currentBuffer,
+							});
+					}					
 				}
 				break;
 				case Buffer::Type::SingleFrame:
@@ -836,6 +813,14 @@ namespace re
 			m_dirtyBuffers = std::move(dirtyMutableBuffers);
 		}
 
+		// Perform any platform-specific buffering (e.g. update buffers that do not have CPU writes enabled)
+		{
+			std::lock_guard<std::mutex> lock(m_dirtyBuffersForPlatformUpdateMutex);
+			BufferDataPlatform();
+			m_dirtyBuffersForPlatformUpdate.clear();
+		}
+
+
 		SEEndCPUEvent();
 	}
 
@@ -847,7 +832,15 @@ namespace re
 		if (renderFrameNum != m_currentFrameNum)
 		{
 			m_currentFrameNum = renderFrameNum;
-			m_platformParams->BeginFrame();
+			
+			// Increment the write index
+			m_writeIdx = (m_writeIdx + 1) % m_numFramesInFlight;
+
+			// Reset the stack base index back to 0 for each type of shared buffer:
+			for (uint8_t dataType = 0; dataType < re::Buffer::DataType::DataType_Count; dataType++)
+			{
+				m_bufferBaseIndexes[dataType].store(0);
+			}
 		}
 	}
 
@@ -919,5 +912,18 @@ namespace re
 		std::lock_guard<std::mutex> lock(m_deferredDeleteQueueMutex);
 
 		m_deferredDeleteQueue.emplace(std::pair<uint64_t, std::shared_ptr<re::Buffer>>{frameNum, buffer});
+	}
+
+
+	uint32_t BufferAllocator::AdvanceBaseIdx(
+		re::Buffer::DataType dataType, uint32_t alignedSize)
+	{
+		// Atomically advance the stack base index for the next call, and return the base index for the current one
+		const uint32_t allocationBaseIdx = m_bufferBaseIndexes[dataType].fetch_add(alignedSize);
+
+		SEAssert(allocationBaseIdx + alignedSize <= k_fixedAllocationByteSize,
+			"Allocation is out of bounds. Consider increasing k_fixedAllocationByteSize");
+
+		return allocationBaseIdx;
 	}
 }

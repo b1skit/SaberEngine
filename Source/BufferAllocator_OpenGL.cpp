@@ -16,18 +16,14 @@ namespace opengl
 		GLuint& bufferNameOut,
 		GLintptr& baseOffsetOut)
 	{
-		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		opengl::BufferAllocator::PlatformParams* baPlatParams =
-			ba.GetPlatformParams()->As<opengl::BufferAllocator::PlatformParams*>();
-
-		const uint8_t writeIdx = baPlatParams->GetWriteIndex();
+		const uint8_t writeIdx = GetWriteIndex();
 
 		uint32_t alignedSize = 0;
 		switch (dataType)
 		{
 		case re::Buffer::DataType::Constant:
 		{
-			bufferNameOut = baPlatParams->m_singleFrameUBOs[writeIdx];
+			bufferNameOut = m_singleFrameUBOs[writeIdx];
 
 			const GLint uboAlignment = opengl::SysInfo::GetUniformBufferOffsetAlignment(); // e.g. 256
 			SEAssert(re::BufferAllocator::k_fixedAllocationByteSize % uboAlignment == 0,
@@ -38,7 +34,7 @@ namespace opengl
 		break;
 		case re::Buffer::DataType::Structured:
 		{
-			bufferNameOut = baPlatParams->m_singleFrameSSBOs[writeIdx];
+			bufferNameOut = m_singleFrameSSBOs[writeIdx];
 
 			const GLint ssboAlignment = opengl::SysInfo::GetShaderStorageBufferOffsetAlignment(); // e.g. 16
 			SEAssert(re::BufferAllocator::k_fixedAllocationByteSize % ssboAlignment == 0,
@@ -50,32 +46,31 @@ namespace opengl
 		default: SEAssertF("Invalid DataType");
 		}
 
-		baseOffsetOut = baPlatParams->AdvanceBaseIdx(dataType, alignedSize);
+		baseOffsetOut = AdvanceBaseIdx(dataType, alignedSize);
 	}
 
 
-	void BufferAllocator::Create(re::BufferAllocator& ba)
+	void BufferAllocator::Initialize(uint64_t currentFrame)
 	{
+		re::BufferAllocator::Initialize(currentFrame);
+
 		// Note: OpenGL only supports double-buffering via a front and back buffer. Thus we can fill one buffer while
 		// the other is in use, so long as we clear the buffer we're writing to at the beginning of each new frame
-
-		opengl::BufferAllocator::PlatformParams* baPlatformParams = 
-			ba.GetPlatformParams()->As<opengl::BufferAllocator::PlatformParams*>();	
 		
 		// Generate our buffer names
-		baPlatformParams->m_singleFrameUBOs.resize(baPlatformParams->m_numBuffers, 0);
-		glGenBuffers(baPlatformParams->m_numBuffers, baPlatformParams->m_singleFrameUBOs.data());
+		m_singleFrameUBOs.resize(m_numFramesInFlight, 0);
+		glGenBuffers(m_numFramesInFlight, m_singleFrameUBOs.data());
 		
-		baPlatformParams->m_singleFrameSSBOs.resize(baPlatformParams->m_numBuffers, 0);
-		glGenBuffers(baPlatformParams->m_numBuffers, baPlatformParams->m_singleFrameSSBOs.data());
+		m_singleFrameSSBOs.resize(m_numFramesInFlight, 0);
+		glGenBuffers(m_numFramesInFlight, m_singleFrameSSBOs.data());
 		
-		for (uint8_t bufferIdx = 0; bufferIdx < baPlatformParams->m_numBuffers; bufferIdx++)
+		for (uint8_t bufferIdx = 0; bufferIdx < m_numFramesInFlight; bufferIdx++)
 		{
 			// UBO:
 			// Binding associates the buffer object with the buffer object name
-			glBindBuffer(GL_UNIFORM_BUFFER, baPlatformParams->m_singleFrameUBOs[bufferIdx]);
+			glBindBuffer(GL_UNIFORM_BUFFER, m_singleFrameUBOs[bufferIdx]);
 
-			SEAssert(glIsBuffer(baPlatformParams->m_singleFrameUBOs[bufferIdx]), "Buffer name is not valid");
+			SEAssert(glIsBuffer(m_singleFrameUBOs[bufferIdx]), "Buffer name is not valid");
 
 			glBufferData(
 				GL_UNIFORM_BUFFER,
@@ -86,14 +81,14 @@ namespace opengl
 			// RenderDoc label:
 			glObjectLabel(
 				GL_BUFFER, 
-				baPlatformParams->m_singleFrameUBOs[bufferIdx], 
+				m_singleFrameUBOs[bufferIdx], 
 				-1, 
 				std::format("Single-frame shared UBO {}", bufferIdx).c_str());
 
 			// SSBO:
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, baPlatformParams->m_singleFrameSSBOs[bufferIdx]);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_singleFrameSSBOs[bufferIdx]);
 
-			SEAssert(glIsBuffer(baPlatformParams->m_singleFrameSSBOs[bufferIdx]), "Buffer name is not valid");
+			SEAssert(glIsBuffer(m_singleFrameSSBOs[bufferIdx]), "Buffer name is not valid");
 
 			glBufferData(
 				GL_SHADER_STORAGE_BUFFER,
@@ -103,27 +98,39 @@ namespace opengl
 
 			glObjectLabel(
 				GL_BUFFER,
-				baPlatformParams->m_singleFrameSSBOs[bufferIdx],
+				m_singleFrameSSBOs[bufferIdx],
 				-1,
 				std::format("Single-frame shared SSBO {}", bufferIdx).c_str());
 		}
 	}
 
 
-	void BufferAllocator::Destroy(re::BufferAllocator& ba)
+	void BufferAllocator::BufferDataPlatform()
 	{
-		opengl::BufferAllocator::PlatformParams* baPlatformParams =
-			ba.GetPlatformParams()->As<opengl::BufferAllocator::PlatformParams*>();
+		// Note: BufferAllocator::m_dirtyBuffersForPlatformUpdateMutex is already locked by this point
+		
+		for (auto const& entry : m_dirtyBuffersForPlatformUpdate)
+		{
+			// OpenGL allows buffers to be updated via a CPU-side map, regardless of where the actual resource data is
+			// held in memory. So we just forward our buffers on to the standard update function here
+			opengl::Buffer::Update(*entry.m_buffer, 0, 0, 0);
+		}
+	}
 
-		SEAssert(baPlatformParams->m_singleFrameUBOs.size() == baPlatformParams->m_singleFrameSSBOs.size() &&
-			baPlatformParams->m_numBuffers == baPlatformParams->m_singleFrameUBOs.size() &&
-			baPlatformParams->m_numBuffers == opengl::RenderManager::GetNumFramesInFlight(),
+
+	void BufferAllocator::Destroy()
+	{
+		SEAssert(m_singleFrameUBOs.size() == m_singleFrameSSBOs.size() &&
+			m_numFramesInFlight == m_singleFrameUBOs.size() &&
+			m_numFramesInFlight == opengl::RenderManager::GetNumFramesInFlight(),
 			"Mismatched number of single frame buffers");
 		
-		glDeleteBuffers(baPlatformParams->m_numBuffers, baPlatformParams->m_singleFrameUBOs.data());
-		glDeleteBuffers(baPlatformParams->m_numBuffers, baPlatformParams->m_singleFrameSSBOs.data());
+		glDeleteBuffers(m_numFramesInFlight, m_singleFrameUBOs.data());
+		glDeleteBuffers(m_numFramesInFlight, m_singleFrameSSBOs.data());
 
-		baPlatformParams->m_singleFrameUBOs.assign(baPlatformParams->m_numBuffers, 0);
-		baPlatformParams->m_singleFrameSSBOs.assign(baPlatformParams->m_numBuffers, 0);
+		m_singleFrameUBOs.assign(m_numFramesInFlight, 0);
+		m_singleFrameSSBOs.assign(m_numFramesInFlight, 0);
+
+		re::BufferAllocator::Destroy();
 	}
 }

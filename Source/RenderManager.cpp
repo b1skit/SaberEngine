@@ -196,7 +196,7 @@ namespace re
 
 		HandleEvents();
 
-		re::Context::Get()->GetBufferAllocator().BeginFrame(frameNum);
+		re::Context::Get()->GetBufferAllocator()->BeginFrame(frameNum);
 		
 		// Get the RenderDataManager(s) ready for the new frame
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
@@ -218,7 +218,7 @@ namespace re
 		CreateAPIResources();
 
 		// Update/buffer param blocks
-		re::Context::Get()->GetBufferAllocator().BufferData();
+		re::Context::Get()->GetBufferAllocator()->BufferData();
 
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");
@@ -272,7 +272,7 @@ namespace re
 			// Swap the single-frame resource n-buffers:
 			m_singleFrameVertexStreams.Swap();
 
-			re::Context::Get()->GetBufferAllocator().EndFrame();
+			re::Context::Get()->GetBufferAllocator()->EndFrame();
 		}
 		SEEndCPUEvent();
 

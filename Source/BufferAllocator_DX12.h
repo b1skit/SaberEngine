@@ -1,36 +1,43 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "BufferAllocator.h"
+#include "CPUDescriptorHeapManager_DX12.h"
+
 #include <d3d12.h>
 #include <wrl.h>
-
-#include "CPUDescriptorHeapManager_DX12.h"
-#include "BufferAllocator.h"
 
 
 namespace dx12
 {
-	class BufferAllocator
+	class BufferAllocator final : public virtual re::BufferAllocator
 	{
 	public:
-		struct PlatformParams final : public re::BufferAllocator::PlatformParams
-		{
-			// Constant buffer shared committed resources:
-			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_sharedConstantBufferResources;
-			
-			// Structured buffer shared committed resources:
-			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_sharedStructuredBufferResources;
-		};
+		BufferAllocator() = default;
+		~BufferAllocator() override = default;
+
+		void Initialize(uint64_t currentFrame) override;
+
+		void Destroy() override;
+
+		void BufferDataPlatform() override;
 
 
-		static void GetSubAllocation(
+	public: // DX12-specific functionality:
+		void GetSubAllocation(
 			re::Buffer::DataType,
-			uint64_t alignedSize, 
+			uint64_t alignedSize,
 			uint64_t& heapOffsetOut,
 			Microsoft::WRL::ComPtr<ID3D12Resource>& resourcePtrOut);
 
 
-	public:
-		static void Create(re::BufferAllocator&);
-		static void Destroy(re::BufferAllocator&);
+	private:
+		// Constant buffer shared committed resources:
+		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_sharedConstantBufferResources;
+
+		// Structured buffer shared committed resources:
+		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_sharedStructuredBufferResources;
+
+		std::vector<uint64_t> m_intermediateResourceFenceVals;
+		std::vector<std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>> m_intermediateResources;
 	};
 }

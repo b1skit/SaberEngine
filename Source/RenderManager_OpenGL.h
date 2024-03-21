@@ -5,7 +5,7 @@
 
 namespace opengl
 {
-	class RenderManager : public virtual re::RenderManager
+	class RenderManager final : public virtual re::RenderManager
 	{
 	public:
 		~RenderManager() override = default;

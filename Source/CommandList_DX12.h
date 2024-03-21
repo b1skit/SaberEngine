@@ -99,6 +99,8 @@ namespace dx12
 
 		void UpdateSubresources(re::Texture const*, ID3D12Resource* intermediate, size_t intermediateOffset);
 		void UpdateSubresources(re::VertexStream const*, ID3D12Resource* intermediate, size_t intermediateOffset);
+		void UpdateSubresources(
+			re::Buffer const*, uint32_t dstOffset, ID3D12Resource* srcResource, uint32_t srcOffset, uint32_t numBytes);
 
 		void TransitionResource(
 			ID3D12Resource*, uint32_t totalSubresources, D3D12_RESOURCE_STATES to, uint32_t targetSubresource);

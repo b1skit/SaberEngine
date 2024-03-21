@@ -44,8 +44,8 @@ namespace re
 		re::SwapChain& GetSwapChain() { return m_swapChain; }
 		re::SwapChain const& GetSwapChain() const { return m_swapChain; }
 
-		re::BufferAllocator& GetBufferAllocator();
-		re::BufferAllocator const& GetBufferAllocator() const;
+		re::BufferAllocator* GetBufferAllocator();
+		re::BufferAllocator const* GetBufferAllocator() const;
 
 
 	private:
@@ -56,7 +56,7 @@ namespace re
 
 
 	protected:
-		re::BufferAllocator m_bufferAllocator;
+		std::unique_ptr<re::BufferAllocator> m_bufferAllocator;
 
 
 	private:
@@ -72,17 +72,17 @@ namespace re
 	};
 
 
-	inline re::BufferAllocator& Context::GetBufferAllocator()
+	inline re::BufferAllocator* Context::GetBufferAllocator()
 	{
-		SEAssert(m_bufferAllocator.IsValid(), "Buffer allocator has already been destroyed");
-		return m_bufferAllocator;
+		SEAssert(m_bufferAllocator && m_bufferAllocator->IsValid(), "Buffer allocator has already been destroyed");
+		return m_bufferAllocator.get();
 	}
 
 
-	inline re::BufferAllocator const& Context::GetBufferAllocator() const
+	inline re::BufferAllocator const* Context::GetBufferAllocator() const
 	{
-		SEAssert(m_bufferAllocator.IsValid(), "Buffer allocator has already been destroyed");
-		return m_bufferAllocator;
+		SEAssert(m_bufferAllocator && m_bufferAllocator->IsValid(), "Buffer allocator has already been destroyed");
+		return m_bufferAllocator.get();
 	}
 
 

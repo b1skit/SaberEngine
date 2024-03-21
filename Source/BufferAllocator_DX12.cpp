@@ -22,41 +22,40 @@ namespace dx12
 		uint64_t& heapOffsetOut,
 		Microsoft::WRL::ComPtr<ID3D12Resource>& resourcePtrOut)
 	{
-		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		dx12::BufferAllocator::PlatformParams* baPlatParams =
-			ba.GetPlatformParams()->As<dx12::BufferAllocator::PlatformParams*>();
-
-		const uint8_t writeIdx = baPlatParams->GetWriteIndex();
+		const uint8_t writeIdx = GetWriteIndex();
 
 		switch (dataType)
 		{
 		case re::Buffer::DataType::Constant:
 		{
 			SEAssert(alignedSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
-			resourcePtrOut = baPlatParams->m_sharedConstantBufferResources[writeIdx];
+			resourcePtrOut = m_sharedConstantBufferResources[writeIdx];
 		}
 		break;
 		case re::Buffer::DataType::Structured:
 		{
 			SEAssert(alignedSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
-			resourcePtrOut = baPlatParams->m_sharedStructuredBufferResources[writeIdx];
+			resourcePtrOut = m_sharedStructuredBufferResources[writeIdx];
 		}
 		break;
 		default: SEAssertF("Invalid DataType");
 		}
 
 		// Our heap offset is the base index of the stack we've allocated for each DataType
-		heapOffsetOut = baPlatParams->AdvanceBaseIdx(dataType, util::CheckedCast<uint32_t>(alignedSize));
+		heapOffsetOut = AdvanceBaseIdx(dataType, util::CheckedCast<uint32_t>(alignedSize));
 	}
 
 
-	void BufferAllocator::Create(re::BufferAllocator& ba)
+	void BufferAllocator::Initialize(uint64_t currentFrame)
 	{
-		dx12::BufferAllocator::PlatformParams* baPlatformParams =
-			ba.GetPlatformParams()->As<dx12::BufferAllocator::PlatformParams*>();
+		re::BufferAllocator::Initialize(currentFrame);
 
-		baPlatformParams->m_sharedConstantBufferResources.resize(baPlatformParams->m_numBuffers, nullptr);
-		baPlatformParams->m_sharedStructuredBufferResources.resize(baPlatformParams->m_numBuffers, nullptr);
+		const uint8_t numBuffers = re::RenderManager::GetNumFramesInFlight();
+		m_sharedConstantBufferResources.resize(numBuffers, nullptr);
+		m_sharedStructuredBufferResources.resize(numBuffers, nullptr);
+		
+		m_intermediateResourceFenceVals.resize(numBuffers);
+		m_intermediateResources.resize(numBuffers);
 
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
@@ -67,7 +66,7 @@ namespace dx12
 		const CD3DX12_RESOURCE_DESC resourceDesc = 
 			CD3DX12_RESOURCE_DESC::Buffer(re::BufferAllocator::k_fixedAllocationByteSize);
 
-		for (uint8_t bufferIdx = 0; bufferIdx < baPlatformParams->m_numBuffers; bufferIdx++)
+		for (uint8_t bufferIdx = 0; bufferIdx < m_numFramesInFlight; bufferIdx++)
 		{	
 			HRESULT hr = device->CreateCommittedResource(
 				&heapProperties,					// this heap will be used to upload the constant buffer data
@@ -75,10 +74,10 @@ namespace dx12
 				&resourceDesc,						// Size of the resource heap
 				D3D12_RESOURCE_STATE_GENERIC_READ,	// Mandatory for D3D12_HEAP_TYPE_UPLOAD heaps
 				nullptr,							// Optimized clear value: None for constant buffers
-				IID_PPV_ARGS(&baPlatformParams->m_sharedConstantBufferResources[bufferIdx]));
+				IID_PPV_ARGS(&m_sharedConstantBufferResources[bufferIdx]));
 			CheckHResult(hr, "Failed to create committed resource");
 
-			baPlatformParams->m_sharedConstantBufferResources[bufferIdx]->SetName(
+			m_sharedConstantBufferResources[bufferIdx]->SetName(
 				util::ToWideString(std::format("Shared constant buffer committed resource {}", bufferIdx)).c_str());
 
 			hr = device->CreateCommittedResource(
@@ -87,26 +86,67 @@ namespace dx12
 				&resourceDesc,						// Size of the resource heap
 				D3D12_RESOURCE_STATE_GENERIC_READ,	// Mandatory for D3D12_HEAP_TYPE_UPLOAD heaps
 				nullptr,							// Optimized clear value: None for constant buffers
-				IID_PPV_ARGS(&baPlatformParams->m_sharedStructuredBufferResources[bufferIdx]));
+				IID_PPV_ARGS(&m_sharedStructuredBufferResources[bufferIdx]));
 			CheckHResult(hr, "Failed to create committed resource");
 
-			baPlatformParams->m_sharedStructuredBufferResources[bufferIdx]->SetName(
+			m_sharedStructuredBufferResources[bufferIdx]->SetName(
 				util::ToWideString(std::format("Shared structured buffer committed resource {}", bufferIdx)).c_str());
 		}
 	}
 
 
-	void BufferAllocator::Destroy(re::BufferAllocator& ba)
+	void BufferAllocator::BufferDataPlatform()
 	{
-		dx12::BufferAllocator::PlatformParams* baPlatformParams =
-			ba.GetPlatformParams()->As<dx12::BufferAllocator::PlatformParams*>();
+		// Note: BufferAllocator::m_dirtyBuffersForPlatformUpdateMutex is already locked by this point
 
-		SEAssert(baPlatformParams->m_sharedConstantBufferResources.size() == baPlatformParams->m_sharedStructuredBufferResources.size() &&
-			baPlatformParams->m_numBuffers == baPlatformParams->m_sharedConstantBufferResources.size() &&
-			baPlatformParams->m_numBuffers == dx12::RenderManager::GetNumFramesInFlight(),
+		if (!m_dirtyBuffersForPlatformUpdate.empty())
+		{
+			dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+			dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
+
+			SEBeginGPUEvent(
+				copyQueue->GetD3DCommandQueue(),
+				perfmarkers::Type::CopyQueue, 
+				"Copy Queue: Update default heap buffers");
+
+			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
+
+			dx12::RenderManager const* renderMgr = dynamic_cast<dx12::RenderManager const*>(re::RenderManager::Get());
+			const uint8_t intermediateIdx = renderMgr->GetIntermediateResourceIdx();
+
+			// Ensure any updates using the intermediate resources created during the previous frame are done
+			if (!copyQueue->GetFence().IsFenceComplete(m_intermediateResourceFenceVals[intermediateIdx]))
+			{
+				copyQueue->CPUWait(m_intermediateResourceFenceVals[intermediateIdx]);
+			}
+			m_intermediateResources[intermediateIdx].clear();
+
+			// Record our updates:
+			for (auto const& entry : m_dirtyBuffersForPlatformUpdate)
+			{
+				dx12::Buffer::Update(
+					entry.m_buffer,
+					copyCommandList.get(), 
+					m_intermediateResources[intermediateIdx]);
+			}
+
+			m_intermediateResourceFenceVals[intermediateIdx] = copyQueue->Execute(1, &copyCommandList);
+
+			SEEndGPUEvent(copyQueue->GetD3DCommandQueue());
+		}
+	}
+
+
+	void BufferAllocator::Destroy()
+	{
+		SEAssert(m_sharedConstantBufferResources.size() == m_sharedStructuredBufferResources.size() &&
+			m_numFramesInFlight == m_sharedConstantBufferResources.size() &&
+			m_numFramesInFlight == dx12::RenderManager::GetNumFramesInFlight(),
 			"Mismatched number of single frame buffers");
 
-		baPlatformParams->m_sharedConstantBufferResources.assign(baPlatformParams->m_numBuffers, nullptr);
-		baPlatformParams->m_sharedStructuredBufferResources.assign(baPlatformParams->m_numBuffers, nullptr);
+		m_sharedConstantBufferResources.assign(m_numFramesInFlight, nullptr);
+		m_sharedStructuredBufferResources.assign(m_numFramesInFlight, nullptr);
+
+		re::BufferAllocator::Destroy();
 	}
 }

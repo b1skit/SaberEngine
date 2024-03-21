@@ -312,7 +312,8 @@ namespace opengl
 		opengl::SysInfo::GetMaxAnisotropy();
 
 		// Buffer Allocator:
-		m_bufferAllocator.Create(currentFrame);
+		m_bufferAllocator = re::BufferAllocator::Create();
+		m_bufferAllocator->Initialize(currentFrame);
 
 		// Setup our ImGui context
 		{
@@ -354,7 +355,7 @@ namespace opengl
 
 		// NOTE: We must destroy anything that holds a buffer before the BufferAllocator is destroyed, 
 		// as buffers call the BufferAllocator in their destructor
-		context.GetBufferAllocator().Destroy();
+		context.GetBufferAllocator()->Destroy();
 
 		// Destroy VAO library:
 		{

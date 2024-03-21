@@ -16,12 +16,45 @@ namespace re
 		, m_bufferParams(bufferParams)
 		, m_platformParams(nullptr)
 	{
-		SEAssert(m_bufferParams.m_type != Type::Type_Count,
-			"Invalid Type");
+		SEAssert(m_bufferParams.m_type != Type::Type_Count, "Invalid Type");
+
+		SEAssert(m_bufferParams.m_type == Type::Immutable || 
+			(m_bufferParams.m_usageMask & Usage::GPUWrite) == 0,
+			"GPU-writable buffers can (currently) only have immutable allocator backing");
+		
+		SEAssert((m_bufferParams.m_usageMask & Usage::CPUWrite) == 0 || 
+			(m_bufferParams.m_usageMask & Usage::GPUWrite) == 0,
+			"GPU-writable buffers cannot be CPU-mappable as they live on this default heap");		
+
 		SEAssert(m_bufferParams.m_dataType != DataType::DataType_Count, "Invalid DataType");
 		SEAssert((m_bufferParams.m_dataType == DataType::Constant && m_bufferParams.m_numElements == 1) || 
 			(m_bufferParams.m_dataType == DataType::Structured && m_bufferParams.m_numElements >= 1),
 			"Invalid number of elements");
+		SEAssert(m_bufferParams.m_usageMask != 0 && 
+			(m_bufferParams.m_dataType != DataType::Constant || ((m_bufferParams.m_usageMask & Usage::GPUWrite) == 0)),
+			"Invalid usage mask");
+
+		SEAssert((m_bufferParams.m_usageMask & Usage::CPURead) == 0, "TODO: Support CPU readback");
+
+		SEAssert(m_bufferParams.m_dataType != re::Buffer::DataType::Constant ||
+			m_bufferParams.m_numElements == 1,
+			"Constant buffers only support a single element. Arrays are achieved as a member variable within a "
+			"single constant buffer");
+
+		SEAssert(m_bufferParams.m_dataType != re::Buffer::DataType::Constant ||
+			(m_bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite) != 0,
+			"CPU writes must be enabled to map a constant buffer");
+
+		SEAssert(m_dataByteSize % m_bufferParams.m_numElements == 0,
+			"Size must be equally divisible by the number of elements");
+
+		SEAssert((m_bufferParams.m_type == re::Buffer::Type::Immutable &&
+			(m_bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) != 0) ||
+			(m_bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite) != 0,
+			"CPU writes must be enabled for buffers not stored on the default heap");
+			
+		SEAssert(((m_bufferParams.m_usageMask & re::Buffer::Usage::CPURead) == 0),
+			"TODO: Support CPU-side readback");
 		
 		platform::Buffer::CreatePlatformParams(*this);
 	}
@@ -33,8 +66,7 @@ namespace re
 		SEAssert(typeIDHash == newBuffer->m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
 
-		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		ba.RegisterAndAllocateBuffer(newBuffer, numBytes);
+		re::Context::Get()->GetBufferAllocator()->RegisterAndAllocateBuffer(newBuffer, numBytes);
 
 		RenderManager::Get()->RegisterForCreate(newBuffer); // Enroll for deferred platform layer creation
 	}
@@ -45,8 +77,7 @@ namespace re
 	{
 		Register(newBuffer, numBytes, typeIDHash);
 
-		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		ba.Commit(newBuffer->GetUniqueID(), data);
+		re::Context::Get()->GetBufferAllocator()->Commit(newBuffer->GetUniqueID(), data);
 
 		newBuffer->m_platformParams->m_isCommitted = true;
 	}
@@ -58,8 +89,7 @@ namespace re
 			"Invalid type detected. Can only set data of the original type");
 		SEAssert(m_bufferParams.m_type == Type::Mutable, "Cannot set data of an immutable buffer");
 
-		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		ba.Commit(GetUniqueID(), data);
+		re::Context::Get()->GetBufferAllocator()->Commit(GetUniqueID(), data);
 		
 		m_platformParams->m_isCommitted = true;
 	}
@@ -74,8 +104,7 @@ namespace re
 		SEAssert(m_bufferParams.m_dataType == DataType::Structured,
 			"Only structured buffers can be partially updated");
 
-		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		ba.Commit(GetUniqueID(), data, numBytes, dstBaseOffset);
+		re::Context::Get()->GetBufferAllocator()->Commit(GetUniqueID(), data, numBytes, dstBaseOffset);
 
 		m_platformParams->m_isCommitted = true;
 	}
@@ -83,8 +112,7 @@ namespace re
 
 	void Buffer::GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const
 	{
-		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		ba.GetData(GetUniqueID(), out_data);
+		re::Context::Get()->GetBufferAllocator()->GetData(GetUniqueID(), out_data);
 
 		*out_numBytes = m_dataByteSize;
 	}
@@ -104,7 +132,7 @@ namespace re
 		re::Buffer::PlatformParams* params = GetPlatformParams();
 		SEAssert(params->m_isCreated, "Buffer has not been created, or has already been destroyed");
 		
-		re::BufferAllocator& ba = re::Context::Get()->GetBufferAllocator();
-		ba.Deallocate(GetUniqueID()); // Internally makes a (deferred) call to platform::Buffer::Destroy
+		// Internally makes a (deferred) call to platform::Buffer::Destroy
+		re::Context::Get()->GetBufferAllocator()->Deallocate(GetUniqueID());
 	}
 }

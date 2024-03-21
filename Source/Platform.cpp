@@ -17,10 +17,6 @@
 #include "Buffer_OpenGL.h"
 #include "Buffer_Platform.h"
 
-#include "BufferAllocator_DX12.h"
-#include "BufferAllocator_OpenGL.h"
-#include "BufferAllocator_Platform.h"
-
 #include "RenderManager_DX12.h"
 #include "RenderManager_OpenGL.h"
 #include "RenderManager_Platform.h"
@@ -97,10 +93,6 @@ namespace platform
 			platform::Buffer::Update			= &opengl::Buffer::Update;
 			platform::Buffer::Destroy			= &opengl::Buffer::Destroy;
 
-			// Buffer allocator:
-			platform::BufferAllocator::Create		= &opengl::BufferAllocator::Create;
-			platform::BufferAllocator::Destroy		= &opengl::BufferAllocator::Destroy;
-
 			// Render manager:
 			platform::RenderManager::Initialize				= &opengl::RenderManager::Initialize;
 			platform::RenderManager::Shutdown				= &opengl::RenderManager::Shutdown;
@@ -143,10 +135,6 @@ namespace platform
 			platform::Buffer::Create			= &dx12::Buffer::Create;
 			platform::Buffer::Update			= &dx12::Buffer::Update;
 			platform::Buffer::Destroy			= &dx12::Buffer::Destroy;
-
-			// Buffer allocator:
-			platform::BufferAllocator::Create		= &dx12::BufferAllocator::Create;
-			platform::BufferAllocator::Destroy		= &dx12::BufferAllocator::Destroy;
 			
 			// Render manager:
 			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;

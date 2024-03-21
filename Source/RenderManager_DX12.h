@@ -10,7 +10,7 @@ enum D3D_FEATURE_LEVEL;
 
 namespace dx12
 {
-	class RenderManager : public virtual re::RenderManager
+	class RenderManager final : public virtual re::RenderManager
 	{
 	public:
 		RenderManager();
@@ -18,6 +18,7 @@ namespace dx12
 
 	public:
 		static uint8_t GetNumFramesInFlight(); // Number of frames in flight
+		static uint8_t GetIntermediateResourceIdx(); // Get an index in [0, NumFramesInFight)
 
 
 	public: // Platform PIMPL:
@@ -38,10 +39,8 @@ namespace dx12
 
 
 	private:
-		// TODO: We should allow N frames of intermediate resources to be held. This is a potential (albiet unlikely)
-		// bottleneck that will prevent the CPU from ever getting more than a single frame ahead
-		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_intermediateResources; // From resources created in the previous frame
-		uint64_t m_intermediateResourceFenceVal;
+		std::vector<std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>> m_intermediateResources; // From resources created in the previous frame
+		std::vector<uint64_t> m_intermediateResourceFenceVals;
 	};
 
 
@@ -49,5 +48,12 @@ namespace dx12
 	{
 		static const uint8_t k_numFrames = dynamic_cast<dx12::RenderManager*>(re::RenderManager::Get())->k_numFrames;
 		return k_numFrames;
+	}
+
+
+	inline uint8_t RenderManager::GetIntermediateResourceIdx()
+	{
+		re::RenderManager const* renderMgr = re::RenderManager::Get();
+		return renderMgr->GetCurrentRenderFrameNum() % renderMgr->GetNumFramesInFlight();
 	}
 }

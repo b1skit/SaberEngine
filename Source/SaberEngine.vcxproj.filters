@@ -416,9 +416,6 @@
     <ClCompile Include="MeshFactory.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="BufferAllocator_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
     <ClCompile Include="BufferAllocator_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
@@ -852,9 +849,6 @@
     </ClInclude>
     <ClInclude Include="NBufferedVector.h">
       <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="BufferAllocator_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
     </ClInclude>
     <ClInclude Include="BufferAllocator_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>

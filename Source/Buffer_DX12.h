@@ -10,6 +10,9 @@
 
 namespace dx12
 {
+	class CommandList;
+
+
 	class Buffer
 	{
 	public:
@@ -18,8 +21,7 @@ namespace dx12
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_resource = nullptr;
 			uint64_t m_heapByteOffset = 0;
 
-			// TODO: We currently only set Buffers inline in the root signature...
-			DescriptorAllocation m_srvCPUDescAllocation;
+			DescriptorAllocation m_uavCPUDescAllocation; // Used for GPU-writable immutable buffers
 		};
 
 
@@ -27,6 +29,12 @@ namespace dx12
 		static void Create(re::Buffer&);
 		static void Update(re::Buffer const&, uint8_t heapOffsetFactor, uint32_t baseOffset, uint32_t numBytes);
 		static void Destroy(re::Buffer&);
+
+		// DX12-specific functionality:
+		static void Update(
+			re::Buffer const*,
+			dx12::CommandList* copyCmdList,
+			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources);
 	};
 
 
