@@ -5,19 +5,33 @@
 -----------------
 Project Overview:
 -----------------
-Saber Engine is a multi-API, multi-threaded, real-time rendering R&D framework, with the architecture of a game engine.
+Saber Engine is a multi-API, multi-threaded, real-time rendering R&D framework, with the architecture of a game engine. © 2022 Adam Badke. All rights reserved.
 
 
 ---------
 Features:
 ---------
-- Rendering API agnostic. Currently supports:
-	- DirectX 12 (Agility SDK 1.611.2) (Default) 
+Saber Engine is constantly improving. Its current features include:
+- Rendering API agnostic. Supports:
+	- DirectX 12 (Agility SDK 1.611.2) (Default)  
 	- OpenGL 4.6  
+	- Upcoming Vulkan support  
+- Asynchronous copy/graphics/compute pipelines  
+- Multi-threaded architecture programmed in C++ 20  
 - EnTT Entity Component System (ECS)  
-- Intel XeGTAO  
-- Renders GLTF 2.0 scenes/assets  
-- C++ 20  
+- GLTF 2.0 scene format support  
+- HDR physically-based lighting model (As per EA’s Frostbite, Lagarde et al.)  
+- Image-based indirect lighting  
+- Directional and point punctual lights  
+- PCF & PCSS soft shadows  
+- Radiometrically-correct screen-space ambient occlusion (Intel XeGTAO)  
+- ACES filmic response tone mapping  
+- Physically-based camera and exposure settings  
+- Physically-based emissive and bloom  
+- Camera frustum culling  
+- Automatic GPU instancing  
+- ImGui menus and a robust suite of debugging tools  
+- Support for RenderDoc and PIX programmatic capture APIs  
 
 
 -----------------------
@@ -36,7 +50,7 @@ Select the backend rendering API: `-platform API`. If no API is specified, Direc
 * opengl
 
 Enable strict shader binding checks: `-strictshaderbinding`  
-* Enables (helpful, but occasionally annoying) asserts if parameters aren't found when parsion reflected shader metadata  
+* Enables (helpful, but occasionally annoying) asserts if parameters aren't found when parsing reflected shader metadata  
 
 Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log verbosity, and API-specific validation  
 * 0: Default (disabled)  
@@ -60,6 +74,7 @@ Enable CPU-side normalization of vertex streams when requested: `-cpunormalizeve
 Menu and logs:  
 --------------  
 Press the ` (tilde/grave) key to show/hide the ImGui overlay  
+* Logs are also output to the `.\Logs\` directory  
 
 
 ----------------------
