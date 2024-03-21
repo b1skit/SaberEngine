@@ -46,10 +46,17 @@ namespace re
 	Context::Context()
 		: m_renderDocApi(nullptr)
 	{
+		// RenderDoc cannot be enabled when DRED is enabled
+		const bool dredEnabled = en::Config::Get()->KeyExists(en::ConfigKeys::k_enableDredCmdLineArg);
+
 		const bool enableRenderDocProgrammaticCaptures =
 			en::Config::Get()->KeyExists(en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg);
 
-		if(enableRenderDocProgrammaticCaptures)
+		if (enableRenderDocProgrammaticCaptures && dredEnabled)
+		{
+			LOG_ERROR("RenderDoc and DRED cannot be enabled at the same time. RenderDoc will not be enabled");
+		}
+		else if(enableRenderDocProgrammaticCaptures && !dredEnabled)
 		{
 			LOG("Loading renderdoc.dll...");
 

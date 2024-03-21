@@ -56,7 +56,8 @@ Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log ve
 * 0: Default (disabled)  
 * 1: Basic debug output (OpenGL, DX12)  
 * 2: Level 1 + GPU-based validation (DX12 only)  
-* 3: Level 2 + DRED breadcrumbs (DX12 only)  
+
+Enable DRED debugging: `-enabledred` (DX12 only)  
 
 Enable PIX programmatic capture (DX12 only): `-enablepixgpucapture`, `-enablepixcpucapture`  
 * This is only required for programmatic captures. It is not required for PIX markers  

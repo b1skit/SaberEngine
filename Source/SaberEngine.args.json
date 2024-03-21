@@ -43,6 +43,10 @@
       "Command": "-cpunormalizevertexstreams"
     },
     {
+      "Id": "8a08c18d-a6d3-4cbf-b5a3-a3e8dcde4164",
+      "Command": "-enabledred"
+    },
+    {
       "Id": "ee6cfa04-f68a-453d-aa3f-ed525a0218e7",
       "Command": "-debuglevel 1"
     },

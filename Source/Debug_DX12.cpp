@@ -254,7 +254,8 @@ namespace dx12
 			LOG("Debug level %d: Enabled D3D12 GPU-based validation", debugLevel);
 		}
 
-		if (debugLevel >= 3)
+		const bool dredEnabled = en::Config::Get()->KeyExists(en::ConfigKeys::k_enableDredCmdLineArg);
+		if (dredEnabled)
 		{
 			ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
 			HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings));
@@ -264,7 +265,7 @@ namespace dx12
 			dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 			dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 
-			LOG("Debug level %d: Enabled D3D12 DRED", debugLevel);
+			LOG("D3D12 DRED enabled");
 		}
 	}
 
