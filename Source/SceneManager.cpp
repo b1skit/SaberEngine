@@ -259,7 +259,7 @@ namespace fr
 							*fr::EntityManager::Get(),
 							newIBL);
 
-						fr::EntityManager::Get()->SetActiveAmbientLight(newAmbientLight);
+						fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(newAmbientLight);
 					}
 				}
 				break;

@@ -1,7 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
+#include "CommandQueue.h"
 #include "EngineComponent.h"
+#include "EntityCommands.h"
 #include "EventListener.h"
 #include "RelationshipComponent.h"
 
@@ -9,7 +11,6 @@
 namespace fr
 {
 	class BoundsComponent;
-	class PlayerObject;
 
 
 	class EntityManager final : public virtual en::EngineComponent, public virtual en::EventListener
@@ -44,10 +45,26 @@ namespace fr
 		void EnqueueRenderUpdates();
 
 	
+		// Command queue interface:
+	public:
+		template<typename T, typename... Args>
+		void EnqueueEntityCommand(Args&&... args);
+
+	private:
 		void SetMainCamera(entt::entity);
+		friend fr::SetMainCameraCommand;
 
 		void SetActiveAmbientLight(entt::entity);
+		friend fr::SetActiveAmbientLightCommand;
+
 		entt::entity GetActiveAmbientLight() const;
+
+		fr::BoundsComponent const* GetSceneBounds() const;
+		entt::entity GetMainCamera() const;
+		
+	private:
+		void ProcessEntityCommands();
+		en::CommandManager m_entityCommands;
 
 
 	public:
@@ -56,19 +73,12 @@ namespace fr
 		void ShowImGuiEntityComponentDebug(bool* show);
 
 
-	private:
-		fr::BoundsComponent const* GetSceneBounds() const;
-		
-		entt::entity GetMainCamera() const;
-
-
 	private: // EventListener interface:
 		void HandleEvents() override;
 
 
 	private: // Configure event listeners etc
 		void ConfigureRegistry();
-
 		void OnBoundsDirty();
 
 
@@ -159,8 +169,6 @@ namespace fr
 
 		std::vector<entt::entity> m_deferredDeleteQueue;
 		std::mutex m_deferredDeleteQueueMutex;
-
-		//en::CommandManager m_entityCreateCommands;
 
 		bool m_processInput;
 
@@ -461,5 +469,12 @@ namespace fr
 	{
 		entt::entity dummy = entt::null;
 		return GetFirstAndEntityInChildrenInternal<T>(entity, dummy);
+	}
+
+
+	template<typename T, typename... Args>
+	void EntityManager::EnqueueEntityCommand(Args&&... args)
+	{
+		m_entityCommands.Enqueue<T>(std::forward<Args>(args)...);
 	}
 }

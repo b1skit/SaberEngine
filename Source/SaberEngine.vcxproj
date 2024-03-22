@@ -317,6 +317,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="Dependencies\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Device_DX12.cpp" />
     <ClCompile Include="EngineThread.cpp" />
+    <ClCompile Include="EntityCommands.cpp" />
     <ClCompile Include="EventManager_Platform.cpp" />
     <ClCompile Include="EventManager_Win32.cpp" />
     <ClCompile Include="Fence_DX12.cpp" />
@@ -444,6 +445,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="BoundsComponent.h" />
+    <ClInclude Include="EntityCommands.h" />
     <ClInclude Include="FileIOUtils.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystem_XeGTAO.h" />

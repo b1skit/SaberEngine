@@ -19,6 +19,11 @@
 #include "ShadowMapComponent.h"
 
 
+namespace
+{
+	constexpr size_t k_entityCommandBufferSize = 1024;
+}
+
 namespace fr
 {
 	EntityManager* EntityManager::Get()
@@ -30,6 +35,7 @@ namespace fr
 
 	EntityManager::EntityManager(PrivateCTORTag)
 		: m_processInput(false)
+		, m_entityCommands(k_entityCommandBufferSize)
 	{
 		// Handle this during construction before anything can interact with the registry
 		ConfigureRegistry();
@@ -42,6 +48,9 @@ namespace fr
 
 		// Event subscriptions:
 		en::EventManager::Get()->Subscribe(en::EventManager::EventType::InputToggleConsole, this);
+
+		// Process entity commands issued during scene loading:
+		ProcessEntityCommands();
 
 		// Create a scene bounds entity:
 		fr::BoundsComponent::CreateSceneBoundsConcept(*this);
@@ -60,7 +69,6 @@ namespace fr
 		LOG("Created PlayerObject using \"%s\"", mainCameraName.GetName().c_str());
 		m_processInput = true;
 
-
 		// Push render updates to ensure new data is available for the first frame
 		EnqueueRenderUpdates();
 	}
@@ -69,6 +77,9 @@ namespace fr
 	void EntityManager::Shutdown()
 	{
 		LOG("EntityManager shutting down...");
+
+		// Process any remaining entity commands
+		ProcessEntityCommands();
 
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
@@ -95,6 +106,8 @@ namespace fr
 	{
 		HandleEvents();
 
+		ProcessEntityCommands();
+
 		// Handle interaction (player input, physics, animation, etc)
 		if (m_processInput)
 		{
@@ -109,6 +122,16 @@ namespace fr
 		UpdateCameras();
 
 		ExecuteDeferredDeletions();
+	}
+
+
+	void EntityManager::ProcessEntityCommands()
+	{
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+			m_entityCommands.SwapBuffers();
+			m_entityCommands.Execute();
+		}
 	}
 
 

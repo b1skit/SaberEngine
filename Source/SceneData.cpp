@@ -4,6 +4,7 @@
 #include "CameraComponent.h"
 #include "Config.h"
 #include "CoreEngine.h"
+#include "EntityCommands.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MaterialInstanceComponent.h"
@@ -396,6 +397,8 @@ namespace
 
 			SEAssert(sceneNode != entt::null && camera != nullptr, "Must supply a scene node and camera pointer");
 
+			SetTransformValues(current, sceneNode);
+
 			const std::string camName = camera->name ? std::string(camera->name) : "Unnamed camera";
 			LOG("Loading camera \"%s\"", camName.c_str());
 
@@ -427,13 +430,9 @@ namespace
 
 			// Create the camera and set the transform values on the parent object:
 			fr::CameraComponent::CreateCameraConcept(em, sceneNode, camName.c_str(), camConfig);
-
-			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetTransform(em, sceneNode);
-
-			SetTransformValues(current, sceneNode);
 		}
 
-		em.SetMainCamera(sceneNode);
+		em.EnqueueEntityCommand<fr::SetMainCameraCommand>(sceneNode);
 	}
 
 
@@ -514,7 +513,7 @@ namespace
 	}
 
 
-	void LoadIBL(std::string const& sceneRootPath, fr::SceneData& scene)
+	void LoadIBLTexture(std::string const& sceneRootPath, fr::SceneData& scene)
 	{
 		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
 		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
@@ -865,7 +864,7 @@ namespace
 		{
 			for (size_t i = 0; i < current->children_count; i++)
 			{
-				const std::string nodeName = current->name ? current->name : "Unnamed child node";
+				std::string const& nodeName = current->name ? current->name : "Unnamed child node";
 
 				entt::entity childNode = 
 					fr::SceneNode::Create(*fr::EntityManager::Get(), nodeName.c_str(), parentSceneNode);
@@ -1004,7 +1003,7 @@ namespace fr
 		// Load the IBL/skybox HDRI:
 		earlyLoadTasks.emplace_back(
 			en::CoreEngine::GetThreadPool()->EnqueueJob([this, &sceneRootPath]() {
-				LoadIBL(sceneRootPath, *this);
+				LoadIBLTexture(sceneRootPath, *this);
 			}));
 
 		// Start loading the GLTF file data:

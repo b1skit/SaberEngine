@@ -512,6 +512,9 @@
     <ClCompile Include="GraphicsSystem_XeGTAO.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
+    <ClCompile Include="EntityCommands.cpp">
+      <Filter>Source Files\fr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -996,6 +999,9 @@
     </ClInclude>
     <ClInclude Include="FileIOUtils.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityCommands.h">
+      <Filter>Header Files\fr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
