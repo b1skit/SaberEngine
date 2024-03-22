@@ -55,10 +55,6 @@
       "Command": "-debuglevel 2"
     },
     {
-      "Id": "92c7d117-c425-4d8d-b0b3-085e9385337b",
-      "Command": "-debuglevel 3"
-    },
-    {
       "Id": "cc06814b-625d-4a6c-a7b1-7bd961bb16fb",
       "Command": "-width 640 -height 480"
     },

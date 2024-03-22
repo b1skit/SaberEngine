@@ -4,6 +4,7 @@
 #include "Context_DX12.h"
 #include "CoreEngine.h"
 #include "Debug_DX12.h"
+#include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
 #include "Shader.h"
 #include "SwapChain_DX12.h"
@@ -14,8 +15,6 @@
 
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
-
-#include <pix3.h>
 
 using Microsoft::WRL::ComPtr;
 

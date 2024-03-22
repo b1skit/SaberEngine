@@ -299,8 +299,10 @@ namespace dx12
 		auto StageTypeChanged = [](const re::RenderStage::Type prev, const re::RenderStage::Type current) -> bool
 			{
 				// No point flushing command lists if we have a clear stage followed by a graphics stage
-				return prev != current &&
-					!(prev == re::RenderStage::Type::Clear && current == re::RenderStage::Type::Graphics);
+				return prev != re::RenderStage::Type::Invalid && // First iteration
+					prev != current &&
+					!(prev == re::RenderStage::Type::Clear && current == re::RenderStage::Type::Graphics) && // Clear happens on GFX
+					!(prev == re::RenderStage::Type::Graphics && current == re::RenderStage::Type::Clear);
 			};
 
 		re::RenderStage::Type prevRenderStageType = re::RenderStage::Type::Invalid;

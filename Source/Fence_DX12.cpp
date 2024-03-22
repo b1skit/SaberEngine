@@ -1,8 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <pix3.h>
-
 #include "Debug_DX12.h"
 #include "Fence_DX12.h"
+#include "ProfilingMarkers.h"
 #include "TextUtils.h"
 
 using Microsoft::WRL::ComPtr;

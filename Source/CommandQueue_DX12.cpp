@@ -1,6 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-
 #include "Context_DX12.h"
 #include "CommandList_DX12.h"
 #include "CommandQueue_DX12.h"
@@ -8,6 +6,8 @@
 #include "ProfilingMarkers.h"
 #include "SysInfo_DX12.h"
 #include "TextUtils.h"
+
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
 using Microsoft::WRL::ComPtr;
 
@@ -560,7 +560,8 @@ namespace dx12
 				static_cast<uint32_t>(directBarriers.size()),
 				directBarriers.data());
 
-			const uint64_t directBarrierFence = directQueue.ExecuteInternal({ directCmdList });
+			const uint64_t directBarrierFence = 
+				directQueue.ExecuteInternal({ directCmdList }, "Direct queue: Transitions to common");
 
 			GPUWait(directQueue.GetFence(), directBarrierFence);
 		}
@@ -570,7 +571,8 @@ namespace dx12
 				static_cast<uint32_t>(computeBarriers.size()),
 				computeBarriers.data());
 
-			const uint64_t computeBarrierFence = computeQueue.ExecuteInternal({ computeCmdList });
+			const uint64_t computeBarrierFence = 
+				computeQueue.ExecuteInternal({ computeCmdList }, "Compute queue: Transitions to common");
 
 			GPUWait(computeQueue.GetFence(), computeBarrierFence);
 		}
@@ -580,7 +582,8 @@ namespace dx12
 				static_cast<uint32_t>(copyBarriers.size()),
 				copyBarriers.data());
 
-			const uint64_t copyBarrierFence = copyQueue.ExecuteInternal({ copyCmdList });
+			const uint64_t copyBarrierFence = 
+				copyQueue.ExecuteInternal({ copyCmdList }, "Copy queue: Transitions to common");
 
 			GPUWait(copyQueue.GetFence(), copyBarrierFence);
 		}
@@ -822,7 +825,9 @@ namespace dx12
 			PrependBarrierCommandListsAndWaits(numCmdLists, cmdLists);
 
 		// Perform the actual execution, now that all of the fixups have happened:
-		const uint64_t fenceVal = ExecuteInternal(finalCommandLists);
+		const uint64_t fenceVal = ExecuteInternal(
+			finalCommandLists,
+			std::format("{} command queue", dx12::CommandList::GetCommandListTypeName(m_type)).c_str());
 
 		// Don't let the caller retain access to a command list in our pool
 		for (size_t i = 0; i < numCmdLists; i++)
@@ -836,7 +841,8 @@ namespace dx12
 	}
 
 
-	uint64_t CommandQueue::ExecuteInternal(std::vector<std::shared_ptr<dx12::CommandList>> const& finalCommandLists)
+	uint64_t CommandQueue::ExecuteInternal(
+		std::vector<std::shared_ptr<dx12::CommandList>> const& finalCommandLists, char const* markerLabel)
 	{
 		SEBeginCPUEvent("CommandQueue::ExecuteInternal");
 
@@ -863,8 +869,8 @@ namespace dx12
 		
 		// Execute the command lists:
 		SEBeginGPUEvent(m_commandQueue.Get(), 
-			perfmarkers::Type::GraphicsQueue, 
-			std::format("{} command queue", dx12::CommandList::GetCommandListTypeName(m_type)).c_str());
+			perfmarkers::Type::GraphicsQueue,
+			markerLabel);
 
 //#define SUBMIT_COMMANDLISTS_IN_SERIAL
 #if defined(SUBMIT_COMMANDLISTS_IN_SERIAL)

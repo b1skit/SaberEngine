@@ -1,14 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include <pix3.h>
-
-#include "Config.h"
 #include "Assert.h"
+#include "Config.h"
 #include "Platform.h"
 
-
-// TODO:
-// REMOVE ALL #include <pix3.h> !!!!!!!!!!!!!!!!!
+#include <pix3.h>
 
 
 namespace perfmarkers

@@ -58,7 +58,7 @@ namespace dx12
 		void TransitionIncompatibleResourceStatesToCommon(
 			uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists);
 
-		uint64_t ExecuteInternal(std::vector<std::shared_ptr<dx12::CommandList>> const&);
+		uint64_t ExecuteInternal(std::vector<std::shared_ptr<dx12::CommandList>> const&, char const* markerLabel);
 
 
 	private:
