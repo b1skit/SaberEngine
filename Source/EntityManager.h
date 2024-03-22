@@ -46,6 +46,10 @@ namespace fr
 	
 		void SetMainCamera(entt::entity);
 
+		void SetActiveAmbientLight(entt::entity);
+		entt::entity GetActiveAmbientLight() const;
+
+
 	public:
 		void ShowSceneObjectsImGuiWindow(bool* show);
 		void ShowSceneTransformImGuiWindow(bool* show);
@@ -56,9 +60,6 @@ namespace fr
 		fr::BoundsComponent const* GetSceneBounds() const;
 		
 		entt::entity GetMainCamera() const;
-
-		void SetActiveAmbientLight(entt::entity);
-		entt::entity GetActiveAmbientLight() const;
 
 
 	private: // EventListener interface:

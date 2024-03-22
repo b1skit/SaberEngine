@@ -4,9 +4,10 @@
 #include "EntityManager.h"
 #include "InputManager_Platform.h"
 #include "KeyConfiguration.h"
-#include "UIManager.h"
 #include "LogManager.h"
+#include "SceneManager.h"
 #include "RenderManager.h"
+#include "UIManager.h"
 
 
 namespace
@@ -334,6 +335,7 @@ namespace fr
 		enum Show : uint8_t
 		{
 			LogConsole,
+			SceneMgrDbg,
 			EntityMgrDbg,
 			TransformationHierarchyDbg,
 			EntityComponentDbg,
@@ -411,6 +413,12 @@ namespace fr
 					{
 						ImGui::MenuItem("Console log", "", &s_show[Show::LogConsole]); // Console debug log window
 						
+						if (ImGui::BeginMenu("Scene manager"))
+						{
+							ImGui::MenuItem("Spawn scene objects", "", &s_show[Show::SceneMgrDbg]);
+							ImGui::EndMenu();
+						}
+
 						if (ImGui::BeginMenu("Entity manager"))
 						{
 							ImGui::MenuItem("Debug scene objects", "", &s_show[Show::EntityMgrDbg]);
@@ -470,6 +478,17 @@ namespace fr
 		{
 			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowConsoleLog)>>(
 				re::ImGuiRenderCommand<decltype(ShowConsoleLog)>(ShowConsoleLog));
+		}
+
+		// Scene manager debug:
+		auto ShowSceneMgrDebug = [&]()
+			{
+				fr::SceneManager::Get()->ShowImGuiWindow(&s_show[Show::SceneMgrDbg]);
+			};
+		if (s_show[Show::SceneMgrDbg])
+		{
+			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowSceneMgrDebug)>>(
+				re::ImGuiRenderCommand<decltype(ShowSceneMgrDebug)>(ShowSceneMgrDebug));
 		}
 
 		// Entity manager debug:
