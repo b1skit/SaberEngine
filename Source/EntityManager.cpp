@@ -1043,21 +1043,7 @@ namespace fr
 			return;
 		}
 
-		static const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
-		static const int windowHeight = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
-		constexpr float k_windowYOffset = 64.f;
-		constexpr float k_windowWidthPercentage = 0.25f;
-
-		ImGui::SetNextWindowSize(ImVec2(
-			static_cast<float>(windowWidth) * 0.25f,
-			static_cast<float>(windowHeight - k_windowYOffset)),
-			ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
-
-		constexpr char const* k_panelTitle = "Scene Transforms";
-		ImGui::Begin(k_panelTitle, show);
-
-		
+		// Build a list of root nodes to pass to the Transform window to process:
 		static size_t s_numRootNodes = 16;
 		std::vector<fr::Transform*> rootNodes;
 		rootNodes.reserve(s_numRootNodes);
@@ -1074,8 +1060,6 @@ namespace fr
 		s_numRootNodes = std::max(s_numRootNodes, rootNodes.size());
 
 		fr::Transform::ShowImGuiWindow(rootNodes, show);
-
-		ImGui::End();
 	}
 
 

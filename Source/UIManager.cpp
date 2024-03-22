@@ -410,8 +410,6 @@ namespace fr
 					if (ImGui::BeginMenu("Window"))
 					{
 						ImGui::MenuItem("Console log", "", &s_show[Show::LogConsole]); // Console debug log window
-
-						ImGui::TextDisabled("Performance statistics");
 						
 						if (ImGui::BeginMenu("Entity manager"))
 						{
@@ -439,6 +437,8 @@ namespace fr
 
 					if (ImGui::BeginMenu("Capture"))
 					{
+						ImGui::TextDisabled("Performance statistics");
+
 						ImGui::MenuItem("GPU Captures", "", &s_show[Show::GPUCaptures]);
 
 						// TODO...
