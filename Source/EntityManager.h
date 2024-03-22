@@ -58,6 +58,7 @@ namespace fr
 		entt::entity GetMainCamera() const;
 
 		void SetActiveAmbientLight(entt::entity);
+		entt::entity GetActiveAmbientLight() const;
 
 
 	private: // EventListener interface:

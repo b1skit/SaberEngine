@@ -545,13 +545,13 @@ namespace
 		
 		if (!iblTexture)
 		{
-			IBLPath = en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_defaultIBLPathKey);
+			IBLPath = en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_defaultEngineIBLPathKey);
 			TryLoadIBL(IBLPath, iblTexture);
 		}
 		SEAssert(iblTexture != nullptr,
 			std::format("Missing IBL texture. Per scene IBLs must be placed at {}; A default fallback must exist at {}",
 				en::Config::Get()->GetValueAsString(en::ConfigKeys::k_sceneIBLPathKey),
-				en::Config::Get()->GetValueAsString(en::ConfigKeys::k_defaultIBLPathKey)).c_str());
+				en::Config::Get()->GetValueAsString(en::ConfigKeys::k_defaultEngineIBLPathKey)).c_str());
 	}
 
 
@@ -1101,7 +1101,7 @@ namespace fr
 		if (!iblTexture)
 		{
 			std::string const& defaultIBLPath = 
-				en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_defaultIBLPathKey);
+				en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_defaultEngineIBLPathKey);
 			iblTexture = GetTexture(defaultIBLPath); // Guaranteed to exist
 		}
 

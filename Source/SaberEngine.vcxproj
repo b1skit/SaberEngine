@@ -444,6 +444,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="BoundsComponent.h" />
+    <ClInclude Include="FileIOUtils.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystem_XeGTAO.h" />
     <ClInclude Include="GraphicsSystem_Culling.h" />

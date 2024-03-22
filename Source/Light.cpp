@@ -327,25 +327,55 @@ namespace fr
 				ImGui::Indent();
 				ImGui::Text("IBL texture: \"%s\"", m_typeProperties.m_ambient.m_IBLTex->GetName().c_str());
 				
-				if (!m_typeProperties.m_diffuseEnabled)
+				static bool s_unifyScale = true;
+				bool currentUnifyScale = s_unifyScale;
+				ImGui::Checkbox("Combine diffuse/specular scale", &s_unifyScale);
+				if (s_unifyScale)
 				{
-					ImGui::BeginDisabled();
-				}
-				m_isDirty |= ImGui::SliderFloat("Diffuse scale", &m_typeProperties.m_ambient.m_diffuseScale, 0.f, 10.f);
-				if (!m_typeProperties.m_diffuseEnabled)
-				{
-					ImGui::EndDisabled();
-				}
+					static float s_combinedScale = 1.f;
 
-				if (!m_typeProperties.m_specularEnabled)
-				{
-					ImGui::BeginDisabled();
+					// If the checkmark was just toggled, average the 2 values together
+					if (currentUnifyScale != s_unifyScale)
+					{
+						const float avgScale = 
+							(m_typeProperties.m_ambient.m_diffuseScale + m_typeProperties.m_ambient.m_specularScale) * 0.5f;
+						
+						m_typeProperties.m_ambient.m_diffuseScale = avgScale;
+						m_typeProperties.m_ambient.m_specularScale = avgScale;
+						s_combinedScale = avgScale;
+
+						m_isDirty = true;
+					}
+					
+					if (ImGui::SliderFloat("Intensity scale", &s_combinedScale, 0.f, 10.f))
+					{
+						m_typeProperties.m_ambient.m_diffuseScale = s_combinedScale;
+						m_typeProperties.m_ambient.m_specularScale = s_combinedScale;
+						m_isDirty = true;
+					}
 				}
-				m_isDirty |= ImGui::SliderFloat("Specular scale", &m_typeProperties.m_ambient.m_specularScale, 0.f, 10.f);
-				if (!m_typeProperties.m_specularEnabled)
+				else
 				{
-					ImGui::EndDisabled();
-				}
+					if (!m_typeProperties.m_diffuseEnabled)
+					{
+						ImGui::BeginDisabled();
+					}
+					m_isDirty |= ImGui::SliderFloat("Diffuse scale", &m_typeProperties.m_ambient.m_diffuseScale, 0.f, 10.f);
+					if (!m_typeProperties.m_diffuseEnabled)
+					{
+						ImGui::EndDisabled();
+					}
+
+					if (!m_typeProperties.m_specularEnabled)
+					{
+						ImGui::BeginDisabled();
+					}
+					m_isDirty |= ImGui::SliderFloat("Specular scale", &m_typeProperties.m_ambient.m_specularScale, 0.f, 10.f);
+					if (!m_typeProperties.m_specularEnabled)
+					{
+						ImGui::EndDisabled();
+					}
+				}				
 				
 				ImGui::Unindent();
 			}

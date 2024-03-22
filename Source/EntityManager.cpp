@@ -1,16 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
+#include "CameraControlComponent.h"
 #include "Config.h"
 #include "CoreEngine.h"
 #include "EntityManager.h"
+#include "FileIOUtils.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
 #include "MaterialInstanceComponent.h"
 #include "MeshConcept.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
-#include "CameraControlComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "RenderManager.h"
@@ -344,21 +345,10 @@ namespace fr
 
 	void EntityManager::SetActiveAmbientLight(entt::entity ambientLight)
 	{
+		const entt::entity prevActiveAmbient = GetActiveAmbientLight();
+
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
-			// Find the currently active light, and demote it:
-			entt::entity prevActiveAmbient = entt::null;
-			bool foundCurrentActiveAmbient = false;
-			auto currentActiveAmbient = m_registry.view<fr::LightComponent::IsActiveAmbientDeferredMarker>();
-			for (auto entity : currentActiveAmbient)
-			{
-				SEAssert(foundCurrentActiveAmbient == false, 
-					"Already found an active ambient light. This should not be possible");
-				foundCurrentActiveAmbient = true;
-
-				prevActiveAmbient = entity;
-			}
 
 			// We might not have a previously active ambient light, if this is the first ambient light we've added
 			if (prevActiveAmbient != entt::null)
@@ -405,6 +395,30 @@ namespace fr
 			// Mark the new light as the active light:
 			EmplaceComponent<fr::LightComponent::IsActiveAmbientDeferredMarker>(ambientLight);
 		}
+	}
+
+
+	entt::entity EntityManager::GetActiveAmbientLight() const
+	{
+		entt::entity activeAmbient = entt::null;
+		bool foundCurrentActiveAmbient = false;
+
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+			auto currentActiveAmbient = m_registry.view<fr::LightComponent::IsActiveAmbientDeferredMarker>();
+			for (auto entity : currentActiveAmbient)
+			{
+				SEAssert(foundCurrentActiveAmbient == false,
+					"Already found an active ambient light. This should not be possible");
+				foundCurrentActiveAmbient = true;
+
+				activeAmbient = entity;
+			}
+		}
+		// Note: It's possible we won't have an active ambient light (e.g. one hasn't been added yet)
+
+		return activeAmbient;
 	}
 
 
@@ -964,9 +978,35 @@ namespace fr
 			if (ImGui::CollapsingHeader("Ambient Lights", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
-				auto ambientLightView = m_registry.view<fr::LightComponent, fr::LightComponent::AmbientIBLDeferredMarker>();
+
+				const entt::entity currentActiveAmbient = GetActiveAmbientLight();
+
+				auto ambientLightView =
+					m_registry.view<fr::LightComponent, fr::LightComponent::AmbientIBLDeferredMarker>();
+
+				// Find the index of the currently active ambient light:
+				int activeAmbientLightIndex = 0;
 				for (entt::entity entity : ambientLightView)
 				{
+					if (entity == currentActiveAmbient)
+					{
+						break;
+					}
+					activeAmbientLightIndex++;
+				}
+
+				// Display radio buttons next to each ambient light:
+				int buttonIdx = 0;				
+				for (entt::entity entity : ambientLightView)
+				{
+					if (ImGui::RadioButton(
+						std::format("##{}", static_cast<uint32_t>(entity)).c_str(),
+						&activeAmbientLightIndex,
+						buttonIdx++))
+					{
+						SetActiveAmbientLight(entity);
+					}
+					ImGui::SameLine();
 					fr::LightComponent::ShowImGuiWindow(*this, entity);
 				}
 				ImGui::Unindent();
@@ -1252,15 +1292,26 @@ namespace fr
 			{
 			case EntityToSpawn::AmbientLight:
 			{
-				static std::array<char, 256> s_filepathBuffer = { '\0' };
-				if (ImGui::InputText(
-					en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_sceneRootPathKey).c_str(),
-					s_filepathBuffer.data(), 
-					s_filepathBuffer.size()))
+				std::vector<std::string> const& iblHDRFiles = util::GetDirectoryFilenameContents(
+					en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_sceneIBLDirKey).c_str(), ".hdr");
+
+				static size_t selectedFileIdx = 0;
+				if (ImGui::BeginListBox("Selected source IBL HDR File"))
 				{
-					s_spawnParams->m_ambientLightSpawnParams.m_filepath = 
-						en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_sceneRootPathKey) + 
-						std::string(s_filepathBuffer.data());
+					for (size_t i = 0; i < iblHDRFiles.size(); i++)
+					{
+						const bool isSelected = selectedFileIdx == i;
+						if (ImGui::Selectable(iblHDRFiles[i].c_str(), isSelected))
+						{
+							selectedFileIdx = i;
+						}
+						if (isSelected)
+						{
+							ImGui::SetItemDefaultFocus();
+							s_spawnParams->m_ambientLightSpawnParams.m_filepath = iblHDRFiles[selectedFileIdx];
+						}
+					}
+					ImGui::EndListBox();
 				}
 			}
 			break;

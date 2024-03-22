@@ -994,6 +994,9 @@
     <ClInclude Include="Shaders\Common\ShadowRenderParams.h">
       <Filter>Source Files\Shaders\Common</Filter>
     </ClInclude>
+    <ClInclude Include="FileIOUtils.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\GLSL\DeferredAmbientLight.frag">

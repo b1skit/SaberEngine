@@ -38,6 +38,8 @@ namespace en
 		: m_isDirty(false)
 		, m_renderingAPI(platform::RenderingAPI::RenderingAPI_Count)
 	{
+		// Insert engine defaults:
+		SetValue<std::string>(en::ConfigKeys::k_scenesDirNameKey, "Scenes\\", Config::SettingType::Runtime);
 	}
 
 
@@ -130,12 +132,11 @@ namespace en
 		// Post-processing:
 		if (KeyExists(en::ConfigKeys::k_sceneCmdLineArg))
 		{
-			std::string const& sceneNameParam = GetValue<std::string>(en::ConfigKeys::k_sceneCmdLineArg);
-
-			// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
-
-			// sceneFilePath == ".\Scenes\Scene\Folder\Names\sceneFile.extension":
-			const std::string sceneFilePath = en::ConfigKeys::k_scenesDirNameKey + sceneNameParam; // k_scenesDirNameKey = ".\Scenes\"
+			std::string const& sceneDirName = GetValue<std::string>(en::ConfigKeys::k_scenesDirNameKey); // "Scenes\\"
+			std::string const& extractedSceneArg = GetValue<std::string>(en::ConfigKeys::k_sceneCmdLineArg);
+			
+			// Assemble the relative scene file path:
+			const std::string sceneFilePath = sceneDirName + extractedSceneArg; // == "Scenes\Some\Folder\Names\file.ext"
 			SetValue(en::ConfigKeys::k_sceneFilePathKey, sceneFilePath, Config::SettingType::Runtime);
 
 			// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
@@ -149,8 +150,12 @@ namespace en
 			const std::string sceneName = filenameAndExt.substr(0, extensionPeriod);
 			SetValue(en::ConfigKeys::k_sceneNameKey, sceneName, Config::SettingType::Runtime);
 
+			// sceneIBLDir == ".\Scenes\SceneFolderName\IBL\"
+			std::string const& sceneIBLDir = sceneRootPath + "IBL\\";
+			SetValue(en::ConfigKeys::k_sceneIBLDirKey, sceneIBLDir, Config::SettingType::Runtime);
+
 			// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
-			const std::string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
+			const std::string sceneIBLPath = sceneIBLDir + "ibl.hdr";
 			SetValue(en::ConfigKeys::k_sceneIBLPathKey, sceneIBLPath, Config::SettingType::Runtime);
 		}
 
@@ -413,7 +418,7 @@ namespace en
 		markDirty |= TrySetValue(en::ConfigKeys::k_sprintSpeedModifier,		2.0f,	SettingType::Common);
 
 		// Scene data:
-		markDirty |= TrySetValue(en::ConfigKeys::k_defaultIBLPathKey,	"Assets\\DefaultIBL\\default.hdr",	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_defaultEngineIBLPathKey,	"Assets\\DefaultIBL\\default.hdr",	SettingType::Common);
 
 		// Key bindings:
 		//--------------

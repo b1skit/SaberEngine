@@ -39,13 +39,14 @@ namespace en::ConfigKeys
 	constexpr char const* k_strictShaderBindingCmdLineArg			= "strictshaderbinding";
 
 	// Scene
-	constexpr char const* k_scenesDirNameKey	= "Scenes\\";
-	constexpr char const* k_sceneFilePathKey	= "sceneFilePath";	// ".\Scenes\Scene\Folder\Names\sceneFile.extension"
+	constexpr char const* k_scenesDirNameKey	= "ScenesDirname";
+	constexpr char const* k_sceneFilePathKey	= "sceneFilePath";	// "Scenes\Scene\Folder\Names\sceneFile.extension"
 	constexpr char const* k_sceneNameKey		= "sceneName";		// "sceneFile"
 	constexpr char const* k_sceneRootPathKey	= "sceneRootPath";	// ".\Scenes\Scene\Folder\Names\"
 	
-	constexpr char const* k_sceneIBLPathKey		= "sceneIBLPath";	// ".\Scenes\SceneFolderName\IBL\ibl.hdr"
-	constexpr char const* k_defaultIBLPathKey	= "defaultIBLPath";
+	constexpr char const* k_sceneIBLDirKey			= "sceneIBLDir";	// "Scenes\SceneFolderName\IBL\"
+	constexpr char const* k_sceneIBLPathKey			= "sceneIBLPath";	// "Scenes\SceneFolderName\IBL\ibl.hdr"
+	constexpr char const* k_defaultEngineIBLPathKey	= "defaultEngineIBLPath"; // "Assets\\DefaultIBL\\default.hdr"
 
 	constexpr char const* k_shaderDirectoryKey = "shaderDirectory"; // e.g. ".\\Shaders\\HLSL\\"
 
