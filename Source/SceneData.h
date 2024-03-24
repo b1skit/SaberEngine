@@ -24,6 +24,8 @@ namespace fr
 	public:
 		typedef uint64_t DataHash;
 
+		static constexpr char const* k_missingMaterialName = "MissingMaterial";
+
 
 	public:
 		explicit SceneData(std::string const& sceneName);

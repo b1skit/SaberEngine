@@ -44,10 +44,7 @@ namespace util
 
 		LOG("Processing mesh \"%s\" with %d vertices...", meshData->m_name.c_str(), meshData->m_positions->size());
 
-		//SEAssert("Cannot pass null data (except for joints/weights). If an attribute does not exist, a vector of size "
-		//	"0 is expected.",
-		//	meshData->m_meshParams && meshData->m_indices && meshData->m_positions && meshData->m_normals &&
-		//	meshData->m_tangents && meshData->m_UV0 && meshData->m_colors && meshData->m_joints && meshData->m_weights);
+		// If an attribute does not exist but can be built, pass a vector of size 0
 
 		m_canBuildNormals = meshData->m_normals != nullptr;
 		const bool hasNormals = m_canBuildNormals && !meshData->m_normals->empty();
@@ -103,7 +100,7 @@ namespace util
 		}
 		if (!hasColors && m_canBuildColors)
 		{
-			meshData->m_colors->resize(maxElements, glm::vec4(1.f, 1.f, 1.f, 1.f));
+			meshData->m_colors->resize(maxElements, meshData->m_vertexColor);
 		}
 
 		// Expand shared attributes into distinct entries
@@ -473,9 +470,9 @@ namespace util
 			+ (m_canBuildNormals ? sizeof(glm::vec3) : 0)			// normal
 			+ (m_canBuildTangents ? sizeof(glm::vec4) : 0)			// tangent
 			+ (m_canBuildUVs ? sizeof(glm::vec2) : 0)				// uv0
-			+ (m_canBuildColors ? sizeof(glm::vec4) : 0)				// color
-			+ (m_hasJoints ? sizeof(glm::tvec4<uint8_t>) : 0)	// joints
-			+ (m_hasWeights ? sizeof(glm::vec4) : 0)					// weights
+			+ (m_canBuildColors ? sizeof(glm::vec4) : 0)			// color
+			+ (m_hasJoints ? sizeof(glm::tvec4<uint8_t>) : 0)		// joints
+			+ (m_hasWeights ? sizeof(glm::vec4) : 0)				// weights
 				) / sizeof(float);
 		
 		// Make sure we've counted for all non-index members in MeshData

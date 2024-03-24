@@ -5,19 +5,20 @@
 
 namespace gr::meshfactory
 {
-	inline std::shared_ptr<MeshPrimitive> CreateCube()
+	std::shared_ptr<MeshPrimitive> CreateCube(
+		float extentDistance /*= 1.f*/, FactoryOptions const& factoryOptions /*= FactoryOptions{}*/)
 	{
 		// Note: Using a RHCS
 		const std::vector<glm::vec3> positions
 		{
-			glm::vec3(-1.0f, 1.0f, 1.0f),
-			glm::vec3(-1.0f, -1.0f, 1.0f),
-			glm::vec3(1.0f, -1.0f, 1.0f),
-			glm::vec3(1.0f, 1.0f, 1.0f),
-			glm::vec3(-1.0f, 1.0f, -1.0f),
-			glm::vec3(-1.0f, -1.0f, -1.0f),
-			glm::vec3(1.0f, -1.0f, -1.0f),
-			glm::vec3(1.0f, 1.0f, -1.0f)
+			glm::vec3(-extentDistance, extentDistance, extentDistance),
+			glm::vec3(-extentDistance, -extentDistance, extentDistance),
+			glm::vec3(extentDistance, -extentDistance, extentDistance),
+			glm::vec3(extentDistance, extentDistance, extentDistance),
+			glm::vec3(-extentDistance, extentDistance, -extentDistance),
+			glm::vec3(-extentDistance, -extentDistance, -extentDistance),
+			glm::vec3(extentDistance, -extentDistance, -extentDistance),
+			glm::vec3(extentDistance, extentDistance, -extentDistance)
 		};
 
 		// Assemble the vertex data into streams.
@@ -71,39 +72,55 @@ namespace gr::meshfactory
 			21, 22, 23,
 		};
 
-		constexpr char meshName[] = "cube";
+		std::vector<glm::vec3> normals; // Empty: Will be generated if necessary
+		std::vector<glm::vec4> tangents;
+		std::vector<glm::vec4> colors;
+
+		constexpr char const* meshName = "cube";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
 		util::VertexStreamBuilder::MeshData meshData
 		{
-			meshName,
-			&defaultMeshPrimitiveParams,
-			&cubeIndices,
-			&assembledPositions,
-			nullptr,
-			nullptr,
-			&assembledUVs,
-			nullptr,
-			nullptr,
-			nullptr };
+			.m_name = meshName,
+			.m_meshParams = &defaultMeshPrimitiveParams,
+			.m_indices = &cubeIndices,
+			.m_positions = &assembledPositions,
+			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
+			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
+			.m_UV0 = &assembledUVs,
+			.m_colors = factoryOptions.m_generateVertexColors ? &colors : nullptr,
+			.m_joints = nullptr,
+			.m_weights = nullptr,
+			.m_vertexColor = factoryOptions.m_vertexColor,
+		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+
+		// Get pointers for our missing attributes, if necessary:
+		std::vector<float>* normalsPtr = 
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&normals) : nullptr;
+
+		std::vector<float>* tangentsPtr =
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
+
+		std::vector<float>* colorsPtr =
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return MeshPrimitive::Create(
 			meshName,
 			&cubeIndices,
 			*reinterpret_cast<std::vector<float>*>(&assembledPositions),	// Cast our vector<glm::vec3> to vector<float>
-			nullptr,
-			nullptr,
+			normalsPtr,
+			tangentsPtr,
 			reinterpret_cast<std::vector<float>*>(&assembledUVs),
-			nullptr,
+			colorsPtr,
 			nullptr, // No joints
 			nullptr, // No weights
 			defaultMeshPrimitiveParams);
 	}
 
 
-	inline std::shared_ptr<MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation)
+	std::shared_ptr<MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation)
 	{
 		float zDepth;
 		// NOTE: OpenGL & GLM's default clip coordinates have been overridden
@@ -138,15 +155,16 @@ namespace gr::meshfactory
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams; // Use defaults
 		util::VertexStreamBuilder::MeshData meshData
 		{
-			meshName,
-			&defaultMeshPrimitiveParams,
-			&triIndices,
-			&positions,
-			nullptr,
-			nullptr,
-			&uvs,
-			nullptr,
-			nullptr
+			.m_name = meshName,
+			.m_meshParams = &defaultMeshPrimitiveParams,
+			.m_indices = &triIndices,
+			.m_positions = &positions,
+			.m_normals = nullptr,
+			.m_tangents = nullptr,
+			.m_UV0 = &uvs,
+			.m_colors = nullptr,
+			.m_joints = nullptr,
+			.m_weights = nullptr,
 		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
@@ -165,11 +183,12 @@ namespace gr::meshfactory
 
 
 	// TODO: Most of the meshfactory functions are still hard-coded for OpenGL spaces
-	inline std::shared_ptr<MeshPrimitive> CreateQuad(
-		glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
-		glm::vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
-		glm::vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
-		glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/)
+	std::shared_ptr<MeshPrimitive> CreateQuad(
+		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
+		glm::vec3 tl /*= glm::vec3(-0.5f, 0.5f, 0.0f)*/,
+		glm::vec3 tr /*= glm::vec3(0.5f, 0.5f, 0.0f)*/,
+		glm::vec3 bl /*= glm::vec3(-0.5f, -0.5f, 0.0f)*/,
+		glm::vec3 br /*= glm::vec3(0.5f, -0.5f, 0.0f)*/)
 	{
 		std::vector<glm::vec3> positions = { tl, bl, tr, br };
 
@@ -187,44 +206,72 @@ namespace gr::meshfactory
 			2, 1, 3		// BR face
 		}; // Note: CCW winding
 
-		std::vector<glm::vec4> colors(4, glm::vec4(1, 0, 0, 1)); // Assign a bright red color by default...
+		std::vector<glm::vec3> normals; // Empty: Will be generated if necessary
+		std::vector<glm::vec4> tangents;
+		std::vector<glm::vec4> colors;
 
 		constexpr char meshName[] = "quad";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
 		util::VertexStreamBuilder::MeshData meshData
 		{
-			meshName,
-			&defaultMeshPrimitiveParams,
-			&quadIndices,
-			&positions,
-			nullptr,
-			nullptr,
-			&uvs,
-			&colors,
-			nullptr,
-			nullptr };
+			.m_name = meshName,
+			.m_meshParams = &defaultMeshPrimitiveParams,
+			.m_indices = &quadIndices,
+			.m_positions = &positions,
+			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
+			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
+			.m_UV0 = &uvs,
+			.m_colors = factoryOptions.m_generateVertexColors ? &colors : nullptr,
+			.m_joints = nullptr,
+			.m_weights = nullptr,
+			.m_vertexColor = factoryOptions.m_vertexColor,
+		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+
+		// Get pointers for our missing attributes, if necessary:
+		std::vector<float>* normalsPtr =
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&normals) : nullptr;
+
+		std::vector<float>* tangentsPtr =
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
+
+		std::vector<float>* colorsPtr =
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
 
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return MeshPrimitive::Create(
 			meshName,
 			&quadIndices,
 			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			nullptr,
-			nullptr,
+			normalsPtr,
+			tangentsPtr,
 			reinterpret_cast<std::vector<float>*>(&uvs),
-			reinterpret_cast<std::vector<float>*>(&colors),
+			colorsPtr,
 			nullptr, // No joints
 			nullptr, // No weights
 			MeshPrimitive::MeshPrimitiveParams());
 	}
 
 
-	inline std::shared_ptr<MeshPrimitive> CreateSphere(
+	std::shared_ptr<gr::MeshPrimitive> CreateQuad(
+		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
+		float extentDistance /*= 0.5f*/)
+	{
+		return CreateQuad(
+			factoryOptions,
+			glm::vec3(-extentDistance, extentDistance, 0.0f),
+			glm::vec3(extentDistance, extentDistance, 0.0f),
+			glm::vec3(-extentDistance, -extentDistance, 0.0f),
+			glm::vec3(extentDistance, -extentDistance, 0.0f));
+	}
+
+	
+	std::shared_ptr<MeshPrimitive> CreateSphere(
+		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
 		float radius /*= 0.5f*/,
-		size_t numLatSlices /*= 16*/,
-		size_t numLongSlices /*= 16*/)
+		uint32_t numLatSlices /*= 16*/,
+		uint32_t numLongSlices /*= 16*/)
 	{
 		// NOTE: Some UV's are distorted, as we're using merged vertices. TODO: Fix this
 
@@ -272,12 +319,12 @@ namespace gr::meshfactory
 		float uvY = uvYStep;
 
 		// Outer loop: Rotate about Z, tracing the arc of the side silhouette down the Y axis
-		for (int curLongSlices = 0; curLongSlices < numLongSlices; curLongSlices++)
+		for (uint32_t curLongSlices = 0; curLongSlices < numLongSlices; curLongSlices++)
 		{
 			float y = radius * cos(zRadians);
 
 			// Inner loop: Rotate about Y
-			for (int curLatSlices = 0; curLatSlices < numLatSlices; curLatSlices++)
+			for (uint32_t curLatSlices = 0; curLatSlices < numLatSlices; curLatSlices++)
 			{
 				float x = radius * sin(yRadians) * sin(zRadians);
 				float z = radius * cos(yRadians) * sin(zRadians);
@@ -375,49 +422,68 @@ namespace gr::meshfactory
 
 		constexpr char meshName[] = "sphere";
 
+		std::vector<glm::vec4> tangents; // Empty: Will be generated if necessary
+		std::vector<glm::vec4> colors;
+
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
 		util::VertexStreamBuilder::MeshData meshData
 		{
-			meshName,
-			&defaultMeshPrimitiveParams,
-			&indices,
-			&positions,
-			&normals,
-			nullptr,
-			&uvs,
-			nullptr,
-			nullptr };
+			.m_name = meshName,
+			.m_meshParams = &defaultMeshPrimitiveParams,
+			.m_indices = &indices,
+			.m_positions = &positions,
+			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
+			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
+			.m_UV0 = &uvs,
+			.m_colors = factoryOptions.m_generateVertexColors ? &colors : nullptr,
+			.m_joints = nullptr,
+			.m_weights = nullptr,
+			.m_vertexColor = factoryOptions.m_vertexColor
+		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+
+		// Get pointers for our missing attributes, if necessary:
+		std::vector<float>* normalsPtr =
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&normals) : nullptr;
+
+		std::vector<float>* tangentsPtr =
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
+
+		std::vector<float>* colorsPtr =
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return MeshPrimitive::Create(
 			meshName,
 			&indices,
 			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			reinterpret_cast<std::vector<float>*>(&normals),
-			nullptr,
+			normalsPtr,
+			tangentsPtr,
 			reinterpret_cast<std::vector<float>*>(&uvs),
-			nullptr,
+			colorsPtr,
 			nullptr, // No joints
 			nullptr, // No weights
 			defaultMeshPrimitiveParams);
 	}
 
 
-	inline std::shared_ptr<gr::MeshPrimitive> CreateHelloTriangle(float scale /*= 1.f*/, float zDepth /*= 0.5f*/)
+	std::shared_ptr<gr::MeshPrimitive> CreateHelloTriangle(
+		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
+		float scale /*= 1.f*/, 
+		float zDepth /*= 0.5f*/)
 	{
 		std::vector<glm::vec3> positions // In clip space: bl near = [-1,-1, 0] , tr far = [1,1,1]
 		{
 			glm::vec3(0.0f * scale,		0.75f * scale,	zDepth),	// Top center
 			glm::vec3(-0.75f * scale,	-0.75f * scale, zDepth),	// bl
-			glm::vec3(0.75f * scale,		-0.75f * scale, zDepth)		// br
+			glm::vec3(0.75f * scale,	-0.75f * scale, zDepth)		// br
 		};
 
 		std::vector<glm::vec2> uvs // Note: (0,0) = Top left
 		{
 			glm::vec2(0.5f, 0.f),	// Top center
-			glm::vec2(0.f, 1.f),		// bl
-			glm::vec2(1.f, 0.f),		// br
+			glm::vec2(0.f, 1.f),	// bl
+			glm::vec2(1.f, 0.f),	// br
 		};
 
 		std::vector<uint32_t> indices
@@ -432,31 +498,41 @@ namespace gr::meshfactory
 			glm::vec4(0.f, 0.f, 1.f, 1.f), // br: Blue
 		};
 
+		std::vector<glm::vec3> normals; // Empty: Will be generated if necessary
+		std::vector<glm::vec4> tangents;
+
 		constexpr char meshName[] = "helloTriangle";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
 		util::VertexStreamBuilder::MeshData meshData
 		{
-			meshName,
-			&defaultMeshPrimitiveParams,
-			&indices,
-			&positions,
-			nullptr,
-			nullptr,
-			&uvs,
-			&colors,
-			nullptr,
-			nullptr
+			.m_name = meshName,
+			.m_meshParams = &defaultMeshPrimitiveParams,
+			.m_indices = &indices,
+			.m_positions = &positions,
+			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
+			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
+			.m_UV0 = &uvs,
+			.m_colors = nullptr, // Nothing to build: We're defining our own
+			.m_joints = nullptr,
+			.m_weights = nullptr
 		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+
+		// Get pointers for our missing attributes, if necessary:
+		std::vector<float>* normalsPtr =
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&normals) : nullptr;
+
+		std::vector<float>* tangentsPtr =
+			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
 
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return MeshPrimitive::Create(
 			meshName,
 			&indices,
 			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			nullptr,
-			nullptr,
+			normalsPtr,
+			tangentsPtr,
 			reinterpret_cast<std::vector<float>*>(&uvs),
 			reinterpret_cast<std::vector<float>*>(&colors),
 			nullptr, // No joints

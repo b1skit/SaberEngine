@@ -18,15 +18,20 @@ namespace util
 		{
 			std::string const& m_name; // For debug spew...
 			gr::MeshPrimitive::MeshPrimitiveParams const* m_meshParams;
+
+			// If an attribute does not exist but can be built, pass a vector of size 0
 			std::vector<uint32_t>* m_indices;
 			std::vector<glm::vec3>* m_positions;
 			std::vector<glm::vec3>* m_normals;			// Created as face normals if empty
 			std::vector<glm::vec4>* m_tangents;			// Computed from normals and UVs
 			std::vector<glm::vec2>* m_UV0;				// Created as simple triangle UVs if empty
-			std::vector<glm::vec4>* m_colors;			// Filled with (1,1,1,1) if empty
+			std::vector<glm::vec4>* m_colors;			// Filled with m_vertexColor if empty
 
 			std::vector<glm::tvec4<uint8_t>>* m_joints; // OPTIONAL: Ignored if empty
 			std::vector<glm::vec4>* m_weights;			// OPTIONAL: Ignored if empty
+
+			// Default values for missing data:
+			glm::vec4 m_vertexColor = glm::vec4(1.f);
 		};
 
 	public:

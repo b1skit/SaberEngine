@@ -30,9 +30,6 @@
 
 namespace
 {
-	constexpr char k_missingMaterialName[] = "MissingMaterial";
-
-
 	std::shared_ptr<re::Texture> LoadTextureOrColor(
 		fr::SceneData& scene,
 		std::string const& sceneRootPath,
@@ -144,7 +141,7 @@ namespace
 
 	void GenerateErrorMaterial(fr::SceneData& scene)
 	{
-		LOG("Generating an error material \"%s\"...", k_missingMaterialName);
+		LOG("Generating an error material \"%s\"...", fr::SceneData::k_missingMaterialName);
 
 		constexpr char const* k_missingAlbedoTexName			= "MissingAlbedoTexture";
 		constexpr char const* k_missingMetallicRoughnessTexName	= "MissingMetallicRoughnessTexture";
@@ -152,8 +149,9 @@ namespace
 		constexpr char const* k_missingOcclusionTexName			= "MissingOcclusionTexture";
 		constexpr char const* k_missingEmissiveTexName			= "MissingEmissiveTexture";
 
-		std::shared_ptr<gr::Material> errorMat =
-			gr::Material::Create(k_missingMaterialName, gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
+		std::shared_ptr<gr::Material> errorMat = gr::Material::Create(
+			fr::SceneData::k_missingMaterialName, 
+			gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
 
 		// MatAlbedo
 		std::shared_ptr<re::Texture> errorAlbedo = util::LoadTextureFromFilePath(
@@ -834,8 +832,8 @@ namespace
 			else
 			{
 				LOG_WARNING("MeshPrimitive \"%s\" does not have a material. Assigning \"%s\"", 
-					meshName.c_str(), k_missingMaterialName);
-				material = scene.GetMaterial(k_missingMaterialName);
+					meshName.c_str(), fr::SceneData::k_missingMaterialName);
+				material = scene.GetMaterial(fr::SceneData::k_missingMaterialName);
 			}
 			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material);
 		}

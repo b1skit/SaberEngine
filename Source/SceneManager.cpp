@@ -3,7 +3,6 @@
 #include "CastUtils.h"
 #include "Config.h"
 #include "EntityManager.h"
-#include "FileIOUtils.h"
 #include "LightComponent.h"
 #include "PerformanceTimer.h"
 #include "RenderManager.h"
@@ -132,32 +131,31 @@ namespace fr
 		{
 			ImGui::Indent();
 
-			enum EntityToSpawn : uint8_t
+			enum EntityType : uint8_t
 			{
-				AmbientLight,
-				DirectionalLight,
-				PointLight,
+				Light,
+				Mesh,
 
-				EntityToSpawn_Count
+				EntityType_Count
 			};
-			std::array<char const*, EntityToSpawn::EntityToSpawn_Count> arr = {
-				"Ambient Light",
-				"Directional Light",
-				"Point Light",
+			constexpr std::array<char const*, EntityType::EntityType_Count> k_entityTypeNames = {
+				"Light",
+				"Mesh"
 			};
+			static_assert(k_entityTypeNames.size() == EntityType::EntityType_Count);
 
-			const ImGuiComboFlags flags = 0;
+			constexpr ImGuiComboFlags k_comboFlags = 0;
 
-			static uint8_t s_entitySelectionIdx = 0;
-			const uint8_t currentSelectionIdx = s_entitySelectionIdx;
-			if (ImGui::BeginCombo("Entity type", arr[s_entitySelectionIdx], flags))
+			static EntityType s_selectedEntityTypeIdx = static_cast<EntityType>(0);
+			const EntityType currentSelectedEntityTypeIdx = s_selectedEntityTypeIdx;
+			if (ImGui::BeginCombo("Entity type", k_entityTypeNames[s_selectedEntityTypeIdx], k_comboFlags))
 			{
-				for (uint8_t comboIdx = 0; comboIdx < arr.size(); comboIdx++)
+				for (uint8_t comboIdx = 0; comboIdx < k_entityTypeNames.size(); comboIdx++)
 				{
-					const bool isSelected = comboIdx == s_entitySelectionIdx;
-					if (ImGui::Selectable(arr[comboIdx], isSelected))
+					const bool isSelected = comboIdx == s_selectedEntityTypeIdx;
+					if (ImGui::Selectable(k_entityTypeNames[comboIdx], isSelected))
 					{
-						s_entitySelectionIdx = comboIdx;
+						s_selectedEntityTypeIdx = static_cast<EntityType>(comboIdx);
 					}
 
 					// Set the initial focus:
@@ -169,122 +167,23 @@ namespace fr
 				ImGui::EndCombo();
 			}
 
-			union SpawnParams
+
+			ImGui::Separator();
+
+
+			switch (s_selectedEntityTypeIdx)
 			{
-				SpawnParams() { memset(this, 0, sizeof(SpawnParams)); }
-				~SpawnParams() {}
-
-				struct AmbientLightSpawnParams
-				{
-					std::string m_filepath;
-				} m_ambientLightSpawnParams;
-
-				struct PunctualLightSpawnParams
-				{
-					bool m_attachShadow;
-					glm::vec4 m_colorIntensity;
-				} m_punctualLightSpawnParams;
-			};
-			static std::unique_ptr<SpawnParams> s_spawnParams = std::make_unique<SpawnParams>();
-			auto InitializeSpawnParams = [](std::unique_ptr<SpawnParams>& spawnParams)
-				{
-					spawnParams = std::make_unique<SpawnParams>();
-				};
-
-			// If the selection has changed, re-initialize the spawn parameters:
-			if (s_spawnParams == nullptr || s_entitySelectionIdx != currentSelectionIdx)
+			case EntityType::Light:
 			{
-				InitializeSpawnParams(s_spawnParams);
-			}
-
-			// Display type-specific spawn options
-			switch (static_cast<EntityToSpawn>(s_entitySelectionIdx))
-			{
-			case EntityToSpawn::AmbientLight:
-			{
-				std::vector<std::string> const& iblHDRFiles = util::GetDirectoryFilenameContents(
-					en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_sceneIBLDirKey).c_str(), ".hdr");
-
-				static size_t selectedFileIdx = 0;
-				if (ImGui::BeginListBox("Selected source IBL HDR File"))
-				{
-					for (size_t i = 0; i < iblHDRFiles.size(); i++)
-					{
-						const bool isSelected = selectedFileIdx == i;
-						if (ImGui::Selectable(iblHDRFiles[i].c_str(), isSelected))
-						{
-							selectedFileIdx = i;
-						}
-						if (isSelected)
-						{
-							ImGui::SetItemDefaultFocus();
-							s_spawnParams->m_ambientLightSpawnParams.m_filepath = iblHDRFiles[selectedFileIdx];
-						}
-					}
-					ImGui::EndListBox();
-				}
+				fr::LightComponent::ShowImGuiSpawnWindow();
 			}
 			break;
-			case EntityToSpawn::DirectionalLight:
-			case EntityToSpawn::PointLight:
+			case EntityType::Mesh:
 			{
-				ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
-				ImGui::ColorEdit3("Color",
-					&s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.r,
-					ImGuiColorEditFlags_NoInputs);
-				ImGui::SliderFloat("Luminous power", &s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.a, 0.f, 10.f);
+				fr::Mesh::ShowImGuiSpawnWindow();
 			}
 			break;
-			default: SEAssertF("Invalid type");
-			}
-
-			static std::array<char, 64> s_nameInputBuffer = { "Spawned\0" };
-			ImGui::InputText("Name", s_nameInputBuffer.data(), s_nameInputBuffer.size());
-
-			if (ImGui::Button("Spawn"))
-			{
-				entt::entity sceneNode = fr::SceneNode::Create(*fr::EntityManager::Get(), s_nameInputBuffer.data(), entt::null);
-
-				switch (static_cast<EntityToSpawn>(s_entitySelectionIdx))
-				{
-				case EntityToSpawn::AmbientLight:
-				{
-					re::Texture const* newIBL = fr::SceneManager::GetSceneData()->TryLoadUniqueTexture(
-						s_spawnParams->m_ambientLightSpawnParams.m_filepath,
-						re::Texture::ColorSpace::Linear).get();
-
-					if (newIBL)
-					{
-						entt::entity newAmbientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
-							*fr::EntityManager::Get(),
-							newIBL);
-
-						fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(newAmbientLight);
-					}
-				}
-				break;
-				case EntityToSpawn::DirectionalLight:
-				{
-					fr::LightComponent::AttachDeferredDirectionalLightConcept(
-						*fr::EntityManager::Get(),
-						sceneNode,
-						std::format("{}_DirectionalLight", s_nameInputBuffer.data()).c_str(),
-						s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
-						s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
-				}
-				break;
-				case EntityToSpawn::PointLight:
-				{
-					fr::LightComponent::AttachDeferredPointLightConcept(
-						*fr::EntityManager::Get(),
-						sceneNode,
-						std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
-						s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
-						s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
-				}
-				break;
-				default: SEAssertF("Invalid type");
-				}
+			default: SEAssertF("Invalid EntityType");
 			}
 
 			ImGui::Unindent();

@@ -176,10 +176,13 @@ namespace
 		glm::vec3 const& globalScale,
 		glm::vec3 const& normalColor)
 	{
+		if (meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Normal] == nullptr)
+		{
+			return nullptr; // No normals? Nothing to build
+		}
+
 		re::VertexStream const* positionStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
 		re::VertexStream const* normalStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Normal];
-		
-		SEAssert(positionStream && normalStream, "Must have a position and normal stream");
 
 		std::vector<glm::vec3> linePositions;
 
@@ -485,16 +488,21 @@ namespace gr
 						{
 							if (!m_vertexNormalBatches.contains(meshPrimRenderDataID))
 							{
-								m_vertexNormalBatches.emplace(
-									meshPrimRenderDataID,
-									BuildVertexNormalsBatch(
-										re::Batch::Lifetime::Permanent,
-										meshPrimRenderData, 
-										m_vertexNormalsScale, 
-										transformData.m_globalScale, 
-										m_normalsColor));
+								std::unique_ptr<re::Batch> normalsBatch = BuildVertexNormalsBatch(
+									re::Batch::Lifetime::Permanent,
+									meshPrimRenderData,
+									m_vertexNormalsScale,
+									transformData.m_globalScale,
+									m_normalsColor);
 
-								m_vertexNormalBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
+								if (normalsBatch)
+								{
+									m_vertexNormalBatches.emplace(
+										meshPrimRenderDataID,
+										std::move(normalsBatch));
+
+									m_vertexNormalBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
+								}
 							}
 							m_debugStage->AddBatch(*m_vertexNormalBatches.at(meshPrimRenderDataID));
 						}

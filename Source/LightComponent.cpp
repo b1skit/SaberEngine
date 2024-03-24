@@ -1,6 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Camera.h"
+#include "Config.h"
 #include "EntityManager.h"
+#include "FileIOUtils.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
 #include "MeshFactory.h"
@@ -9,6 +11,8 @@
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "RenderSystem.h"
+#include "SceneManager.h"
+#include "SceneNodeConcept.h"
 #include "ShadowMapComponent.h"
 #include "TransformComponent.h"
 
@@ -60,7 +64,8 @@ namespace fr
 			"A LightComponent's owning entity requires a TransformComponent");
 
 		// Create a MeshPrimitive (owned by SceneData):
-		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = gr::meshfactory::CreateSphere(1.f);
+		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = 
+			gr::meshfactory::CreateSphere(gr::meshfactory::FactoryOptions{}, 1.f);
 
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
 
@@ -322,6 +327,161 @@ namespace fr
 			}
 
 			ImGui::Unindent();
+		}
+	}
+
+
+	void LightComponent::ShowImGuiSpawnWindow()
+	{
+		constexpr std::array<char const*, fr::Light::Type::Type_Count> k_lightTypeNames = {
+			"Ambient Light",
+			"Directional Light",
+			"Point Light",
+		};
+		static_assert(k_lightTypeNames.size() == fr::Light::Type::Type_Count);
+
+		union LightSpawnParams
+		{
+			LightSpawnParams() { memset(this, 0, sizeof(LightSpawnParams)); }
+			~LightSpawnParams() {}
+
+			struct AmbientLightSpawnParams
+			{
+				std::string m_filepath;
+			} m_ambientLightSpawnParams;
+
+			struct PunctualLightSpawnParams
+			{
+				bool m_attachShadow;
+				glm::vec4 m_colorIntensity;
+			} m_punctualLightSpawnParams;
+		};
+
+		static std::unique_ptr<LightSpawnParams> s_spawnParams = std::make_unique<LightSpawnParams>();
+
+		auto InitializeSpawnParams = [](std::unique_ptr<LightSpawnParams>& spawnParams)
+			{
+				spawnParams = std::make_unique<LightSpawnParams>();
+			};
+
+		constexpr ImGuiComboFlags k_comboFlags = 0;
+
+		static fr::Light::Type s_selectedLightType = static_cast<fr::Light::Type>(0);
+		const fr::Light::Type currentSelectedLightTypeIdx = s_selectedLightType;
+		if (ImGui::BeginCombo("Light type", k_lightTypeNames[s_selectedLightType], k_comboFlags))
+		{
+			for (uint8_t comboIdx = 0; comboIdx < k_lightTypeNames.size(); comboIdx++)
+			{
+				const bool isSelected = comboIdx == s_selectedLightType;
+				if (ImGui::Selectable(k_lightTypeNames[comboIdx], isSelected))
+				{
+					s_selectedLightType = static_cast<fr::Light::Type>(comboIdx);
+				}
+
+				// Set the initial focus:
+				if (isSelected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		// If the selection has changed, re-initialize the spawn parameters:
+		if (s_spawnParams == nullptr ||
+			s_selectedLightType != currentSelectedLightTypeIdx)
+		{
+			InitializeSpawnParams(s_spawnParams);
+		}
+
+		// Display type-specific spawn options
+		switch (static_cast<fr::Light::Type>(s_selectedLightType))
+		{
+		case fr::Light::Type::AmbientIBL:
+		{
+			std::vector<std::string> const& iblHDRFiles = util::GetDirectoryFilenameContents(
+				en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_sceneIBLDirKey).c_str(), ".hdr");
+
+			static size_t selectedFileIdx = 0;
+			if (ImGui::BeginListBox("Selected source IBL HDR File"))
+			{
+				for (size_t i = 0; i < iblHDRFiles.size(); i++)
+				{
+					const bool isSelected = selectedFileIdx == i;
+					if (ImGui::Selectable(iblHDRFiles[i].c_str(), isSelected))
+					{
+						selectedFileIdx = i;
+					}
+					if (isSelected)
+					{
+						ImGui::SetItemDefaultFocus();
+						s_spawnParams->m_ambientLightSpawnParams.m_filepath = iblHDRFiles[selectedFileIdx];
+					}
+				}
+				ImGui::EndListBox();
+			}
+		}
+		break;
+		case fr::Light::Type::Directional:
+		case fr::Light::Type::Point:
+		{
+			ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+			ImGui::ColorEdit3("Color",
+				&s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.r,
+				ImGuiColorEditFlags_NoInputs);
+			ImGui::SliderFloat("Luminous power", &s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.a, 0.f, 10.f);
+		}
+		break;
+		default: SEAssertF("Invalid type");
+		}
+
+		static std::array<char, 64> s_nameInputBuffer = { "Spawned\0" };
+		ImGui::InputText("Name", s_nameInputBuffer.data(), s_nameInputBuffer.size());
+
+		if (ImGui::Button("Spawn"))
+		{
+			entt::entity sceneNode =
+				fr::SceneNode::Create(*fr::EntityManager::Get(), s_nameInputBuffer.data(), entt::null);
+
+			switch (static_cast<fr::Light::Type>(s_selectedLightType))
+			{
+			case fr::Light::Type::AmbientIBL:
+			{
+				re::Texture const* newIBL = fr::SceneManager::GetSceneData()->TryLoadUniqueTexture(
+					s_spawnParams->m_ambientLightSpawnParams.m_filepath,
+					re::Texture::ColorSpace::Linear).get();
+
+				if (newIBL)
+				{
+					entt::entity newAmbientLight =
+						fr::LightComponent::CreateDeferredAmbientLightConcept(*fr::EntityManager::Get(), newIBL);
+
+					fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(newAmbientLight);
+				}
+			}
+			break;
+			case fr::Light::Type::Directional:
+			{
+				fr::LightComponent::AttachDeferredDirectionalLightConcept(
+					*fr::EntityManager::Get(),
+					sceneNode,
+					std::format("{}_DirectionalLight", s_nameInputBuffer.data()).c_str(),
+					s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
+					s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+			}
+			break;
+			case fr::Light::Type::Point:
+			{
+				fr::LightComponent::AttachDeferredPointLightConcept(
+					*fr::EntityManager::Get(),
+					sceneNode,
+					std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
+					s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
+					s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+			}
+			break;
+			default: SEAssertF("Invalid light type");
+			}
 		}
 	}
 

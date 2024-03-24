@@ -18,5 +18,6 @@ namespace fr
 
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity meshConcept);
+		static void ShowImGuiSpawnWindow();
 	};
 }
