@@ -233,6 +233,8 @@ namespace dx12
 		}
 
 		m_commandAllocatorReuseFenceValue = 0;
+
+		m_seenReadbackResources.clear();
 	}
 
 
@@ -298,7 +300,7 @@ namespace dx12
 		SEAssert(m_type == CommandListType::Direct || m_type == CommandListType::Compute,
 			"Unexpected command list type for setting a buffer on");
 
-		dx12::Buffer::PlatformParams const* bufferPlatParams =
+		dx12::Buffer::PlatformParams* bufferPlatParams =
 			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		RootSignature::RootParameter const* rootSigEntry = 
@@ -413,6 +415,18 @@ namespace dx12
 					1,
 					toState,
 					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+			}
+
+			// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
+			if ((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::CPURead) != 0)
+			{
+				const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
+
+				m_seenReadbackResources.emplace_back(ReadbackResourceMetadata{
+					.m_srcResource = bufferPlatParams->m_resource.Get(),
+					.m_dstResource = bufferPlatParams->m_readbackResources[readbackIdx].m_resource.Get(),
+					.m_dstModificationFence = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFence,
+					.m_dstModificationFenceMutex = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFenceMutex });
 			}
 		}
 	}
@@ -974,6 +988,21 @@ namespace dx12
 			srcResource,							// pSrcBuffer
 			srcOffset,								// SrcOffset
 			numBytes);								// NumBytes
+	}
+
+
+	void CommandList::CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource)
+	{
+		TransitionResource(
+			srcResource,
+			1,
+			D3D12_RESOURCE_STATE_COPY_SOURCE,
+			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+
+		// Note: The destination resource is (currently) assumed to be a dedicated readback buffer that is always in
+		// the D3D12_RESOURCE_STATE_COPY_DEST state. Thus, we don't record a resource transition barrier for it here.
+
+		m_commandList->CopyResource(dstResource, srcResource);
 	}
 
 

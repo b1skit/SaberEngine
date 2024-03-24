@@ -15,6 +15,7 @@ namespace re
 		, m_dataByteSize(dataByteSize)
 		, m_bufferParams(bufferParams)
 		, m_platformParams(nullptr)
+		, m_isCurrentlyMapped(false)
 	{
 		SEAssert(m_bufferParams.m_type != Type::Type_Count, "Invalid Type");
 
@@ -34,8 +35,6 @@ namespace re
 			(m_bufferParams.m_dataType != DataType::Constant || ((m_bufferParams.m_usageMask & Usage::GPUWrite) == 0)),
 			"Invalid usage mask");
 
-		SEAssert((m_bufferParams.m_usageMask & Usage::CPURead) == 0, "TODO: Support CPU readback");
-
 		SEAssert(m_bufferParams.m_dataType != re::Buffer::DataType::Constant ||
 			m_bufferParams.m_numElements == 1,
 			"Constant buffers only support a single element. Arrays are achieved as a member variable within a "
@@ -52,9 +51,6 @@ namespace re
 			(m_bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) != 0) ||
 			(m_bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite) != 0,
 			"CPU writes must be enabled for buffers not stored on the default heap");
-			
-		SEAssert(((m_bufferParams.m_usageMask & re::Buffer::Usage::CPURead) == 0),
-			"TODO: Support CPU-side readback");
 		
 		platform::Buffer::CreatePlatformParams(*this);
 	}
@@ -124,6 +120,7 @@ namespace re
 		SEAssert(!params->m_isCreated,
 			"Buffer destructor called, but buffer is still marked as created. Did a parameter "
 			"block go out of scope without Destroy() being called?");
+		SEAssert(!m_isCurrentlyMapped, "Buffer is currently mapped");
 	}
 
 
@@ -131,8 +128,53 @@ namespace re
 	{
 		re::Buffer::PlatformParams* params = GetPlatformParams();
 		SEAssert(params->m_isCreated, "Buffer has not been created, or has already been destroyed");
-		
+		SEAssert(!m_isCurrentlyMapped, "Buffer is currently mapped");
+
 		// Internally makes a (deferred) call to platform::Buffer::Destroy
 		re::Context::Get()->GetBufferAllocator()->Deallocate(GetUniqueID());
+	}
+
+
+	void const* Buffer::MapCPUReadback(uint8_t frameLatency /*= k_maxFrameLatency*/)
+	{
+		SEAssert((m_bufferParams.m_usageMask & Usage::CPURead) != 0, "CPU reads are not enabled");
+		SEAssert(!m_isCurrentlyMapped, "Buffer is already mapped. Did you forget to unmap it during an earlier frame?");
+
+		re::RenderManager const* renderManager = re::RenderManager::Get();
+
+		// Convert the default frame latency value:
+		if (frameLatency == re::Buffer::k_maxFrameLatency)
+		{
+			const uint8_t numFramesInFlight = renderManager->GetNumFramesInFlight();
+			frameLatency = numFramesInFlight - 1;
+		}
+		SEAssert(frameLatency > 0 && frameLatency < renderManager->GetNumFramesInFlight(),
+			"Invalid frame latency");
+
+		// Ensure we've got results to retrieve:
+		const uint64_t currentRenderFrameNum = renderManager->GetCurrentRenderFrameNum();
+		if (currentRenderFrameNum < frameLatency)
+		{
+			return nullptr; // There is nothing to read back for the first (numFramesInFlight - 1) frames
+		}
+
+		// Get the mapped data:
+		void const* mappedData = platform::Buffer::MapCPUReadback(*this, frameLatency);
+		if (mappedData)
+		{
+			m_isCurrentlyMapped = true;
+		}
+		return mappedData;
+	}
+
+
+	void Buffer::UnmapCPUReadback()
+	{
+		SEAssert((m_bufferParams.m_usageMask & Usage::CPURead) != 0, "CPU reads are not enabled");
+		SEAssert(m_isCurrentlyMapped, "Buffer is not currently mapped");
+
+		platform::Buffer::UnmapCPUReadback(*this);
+
+		m_isCurrentlyMapped = false;
 	}
 }

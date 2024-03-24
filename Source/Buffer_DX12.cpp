@@ -3,6 +3,7 @@
 #include "CastUtils.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
+#include "Fence_DX12.h"
 #include "MathUtils.h"
 #include "Buffer_DX12.h"
 #include "BufferAllocator_DX12.h"
@@ -49,10 +50,6 @@ namespace
 		{
 			return D3D12_HEAP_TYPE_UPLOAD;
 		}
-		else if (usageMask & re::Buffer::Usage::CPURead)
-		{
-			return D3D12_HEAP_TYPE_READBACK;
-		}
 		return D3D12_HEAP_TYPE_DEFAULT;
 	}
 
@@ -61,6 +58,28 @@ namespace
 	{
 		return bufferParams.m_type == re::Buffer::Type::Immutable &&
 			(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite);
+	}
+
+
+	dx12::Buffer::ReadbackResource CreateReadbackResource(uint64_t bufferAlignedSize)
+	{
+		dx12::Buffer::ReadbackResource readbackResource;
+
+		const D3D12_HEAP_PROPERTIES readbackHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK);
+		const D3D12_RESOURCE_DESC readbackBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferAlignedSize);
+
+		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+
+		const HRESULT hr = device->CreateCommittedResource(
+			&readbackHeapProperties,
+			D3D12_HEAP_FLAG_NONE, // Zero our initial readback resource
+			&readbackBufferDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,			// Optimized clear value: Null for buffers
+			IID_PPV_ARGS(&readbackResource.m_resource));
+		dx12::CheckHResult(hr, "Failed to create committed resource for readback buffer");
+
+		return readbackResource;
 	}
 }
 
@@ -72,8 +91,7 @@ namespace dx12
 		SEAssert(buffer.GetBufferParams().m_dataType != re::Buffer::DataType::Structured ||
 			buffer.GetBufferParams().m_numElements <= 1024, "Maximum offset of 1024 allowed into an SRV");
 
-		dx12::Buffer::PlatformParams* params =
-			buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 		SEAssert(!params->m_isCreated, "Buffer is already created");
 		params->m_isCreated = true;
 
@@ -108,11 +126,10 @@ namespace dx12
 				&heapProperties,					// this heap will be used to upload the constant buffer data
 				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
 				&resourceDesc,						// Size of the resource heap
-				//&bufferDesc,
 				initialResourceState,
 				nullptr,							// Optimized clear value: None for constant buffers
 				IID_PPV_ARGS(&params->m_resource));
-			CheckHResult(hr, "Failed to create committed resource");
+			CheckHResult(hr, "Failed to create committed resource for mutable buffer");
 
 			std::wstring const& debugName = buffer.GetWName() + L"_Mutable";
 			params->m_resource->SetName(debugName.c_str());
@@ -136,7 +153,7 @@ namespace dx12
 				initialResourceState,
 				nullptr,							// Optimized clear value: None for constant buffers
 				IID_PPV_ARGS(&params->m_resource));
-			CheckHResult(hr, "Failed to create committed resource");
+			CheckHResult(hr, "Failed to create committed resource for immutable buffer");
 
 			// Debug names:
 			std::wstring const& debugName = buffer.GetWName() + L"_Immutable";;
@@ -169,12 +186,6 @@ namespace dx12
 		// Note: We (currently) exclusively set Buffer CBVs & SRVs inline directly in the root signature
 		if (needsUAV)
 		{
-			// Register the resource with the global resource state tracker:
-			context->GetGlobalResourceStates().RegisterResource(
-				params->m_resource.Get(),
-				initialResourceState,
-				1);
-
 			params->m_uavCPUDescAllocation = std::move(context->GetCPUDescriptorHeapMgr(
 				CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1));
 
@@ -199,6 +210,24 @@ namespace dx12
 				params->m_uavCPUDescAllocation.GetBaseDescriptor());
 		}
 
+		// CPU readback:
+		const bool cpuReadbackEnabled = (buffer.GetBufferParams().m_usageMask & re::Buffer::Usage::CPURead) != 0;
+		if (cpuReadbackEnabled)
+		{
+			for (uint8_t resourceIdx = 0; resourceIdx < numFramesInFlight; resourceIdx++)
+			{
+				params->m_readbackResources.emplace_back(CreateReadbackResource(alignedSize));
+			}
+		}
+
+		// Register the resource with the global resource state tracker:
+		if (needsUAV || cpuReadbackEnabled)
+		{
+			context->GetGlobalResourceStates().RegisterResource(
+				params->m_resource.Get(),
+				initialResourceState,
+				1);
+		}
 
 #if defined(_DEBUG)
 		void const* srcData = nullptr;
@@ -215,8 +244,7 @@ namespace dx12
 		SEAssert((buffer.GetBufferParams().m_usageMask & re::Buffer::Usage::CPUWrite) != 0,
 			"CPU writes must be enabled to allow mapping");
 
-		dx12::Buffer::PlatformParams* params =
-			buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		constexpr uint32_t k_subresourceIdx = 0;
 
@@ -283,8 +311,7 @@ namespace dx12
 		SEAssert((buffer->GetBufferParams().m_usageMask & re::Buffer::CPUWrite) == 0,
 			"Buffers with CPU writes enabled should be updated by a mapped pointer");
 
-		dx12::Buffer::PlatformParams* params =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatformParams* params = buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		void const* data = nullptr;
 		uint32_t totalBytes = 0;
@@ -355,8 +382,7 @@ namespace dx12
 
 	void Buffer::Destroy(re::Buffer& buffer)
 	{
-		dx12::Buffer::PlatformParams* params =
-			buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 		SEAssert(params->m_isCreated, "Attempting to destroy a Buffer that has not been created");
 
 		params->m_isCreated = false;
@@ -371,5 +397,70 @@ namespace dx12
 		params->m_resource = nullptr;
 		params->m_heapByteOffset = 0;
 		params->m_uavCPUDescAllocation.Free(0);
+	}
+
+
+	void const* Buffer::MapCPUReadback(re::Buffer const& buffer, uint8_t frameLatency)
+	{
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		re::RenderManager const* renderManager = re::RenderManager::Get();
+
+		const uint32_t bufferSize = buffer.GetSize();
+
+		// Compute the index of the readback resource we're mapping:
+		SEAssert(renderManager->GetCurrentRenderFrameNum() >= frameLatency, "Frame latency would result in OOB access");
+		const uint8_t readbackResourceIdx =
+			(renderManager->GetCurrentRenderFrameNum() - frameLatency) % renderManager->GetNumFramesInFlight();
+
+		// Ensure the GPU is finished with the buffer:
+		{
+			std::lock_guard<std::mutex> lock(params->m_readbackResources[readbackResourceIdx].m_readbackFenceMutex);
+
+			const dx12::CommandListType resourceCopyCmdListType = dx12::Fence::GetCommandListTypeFromFenceValue(
+				params->m_readbackResources[readbackResourceIdx].m_readbackFence);
+
+			dx12::CommandQueue& resourceCopyQueue =
+				re::Context::GetAs<dx12::Context*>()->GetCommandQueue(resourceCopyCmdListType);
+
+			resourceCopyQueue.CPUWait(params->m_readbackResources[readbackResourceIdx].m_readbackFence);
+		}
+
+		const D3D12_RANGE readbackBufferRange{
+			0,				// Begin
+			bufferSize };	// End
+		
+		void* cpuVisibleData = nullptr;
+
+		HRESULT hr = params->m_readbackResources[readbackResourceIdx].m_resource->Map(
+			0,						// Subresource
+			&readbackBufferRange,	// pReadRange
+			&cpuVisibleData);		// ppData
+		CheckHResult(hr, "Buffer::MapCPUReadback: Failed to map readback resource");
+
+		params->m_currentMapFrameLatency = frameLatency;
+
+		return cpuVisibleData;
+	}
+
+
+	void Buffer::UnmapCPUReadback(re::Buffer const& buffer)
+	{
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		re::RenderManager const* renderManager = re::RenderManager::Get();
+
+		// Compute the index of the readback resource we're unmapping:
+		SEAssert(renderManager->GetCurrentRenderFrameNum() >= params->m_currentMapFrameLatency,
+			"Frame latency would result in OOB access");
+		const uint8_t readbackResourceIdx =
+			(renderManager->GetCurrentRenderFrameNum() - params->m_currentMapFrameLatency) % renderManager->GetNumFramesInFlight();
+
+
+		const D3D12_RANGE writtenRange{
+			0,		// Begin
+			0 };	// End: Signifies CPU did not write any data when End <= Begin
+
+		params->m_readbackResources[readbackResourceIdx].m_resource->Unmap(
+			0,				// Subresource
+			&writtenRange);	// pWrittenRange
 	}
 }

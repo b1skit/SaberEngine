@@ -25,9 +25,9 @@ namespace re
 	public:
 		enum Type : uint8_t
 		{
-			Mutable,		// Permanent, can be updated
-			Immutable,		// Permanent, cannot be updated on the CPU
-			SingleFrame,	// Single frame, immutable once committed
+			Mutable,		// Permanent, can only be modified by the CPU
+			Immutable,		// Permanent, can only be modified by the GPU
+			SingleFrame,	// Single frame, immutable once committed by the CPU
 
 			Type_Count
 		};
@@ -122,6 +122,25 @@ namespace re
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 
+
+		// CPU readback:
+	public:
+		// Mapped data is always read back from the final results written during the previous frame. When there are > 2
+		// frames in flight (which is possible in DX12), the immediately previous frame can be read by specifying a 
+		// frame latency of 1, at the cost of increasing the chance the CPU will be blocked until the GPU to finishes.
+
+		// Sentinel value: Use the default (i.e. max) frame latency when performing GPU readback. This is the most
+		// performant, but the data accessed is (numFramesInFlight - 1) frames old
+		static constexpr uint8_t k_maxFrameLatency = std::numeric_limits<uint8_t>::max();
+		
+		// This function may return nullptr if no mapped data exists (e.g. current frame # < frameLatency). If so, 
+		// unmapping should not be performed.
+		void const* MapCPUReadback(uint8_t frameLatency = k_maxFrameLatency);
+
+		// The resource must be unmapped in the same frame it was mapped in
+		void UnmapCPUReadback();
+
+
 	private:		
 		const uint64_t m_typeIDHash; // Hash of the typeid(T) at Create: Used to verify committed data types don't change
 		const uint32_t m_dataByteSize;
@@ -130,6 +149,8 @@ namespace re
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 		
+		bool m_isCurrentlyMapped;
+
 
 	private:
 		// Use the factory Create() method instead

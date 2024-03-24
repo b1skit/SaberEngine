@@ -190,6 +190,47 @@ namespace
 		DebugPrintBarrier(resource, beforeState, afterState, subresourceIdx);
 #endif
 	};
+
+
+	std::vector<dx12::CommandList::ReadbackResourceMetadata> ConcatenateReadbackResources(
+		std::shared_ptr<dx12::CommandList>* cmdLists, uint32_t numCmdLists)
+	{
+		std::vector<dx12::CommandList::ReadbackResourceMetadata> allReadbackResources;
+
+		for (uint32_t i = 0; i < numCmdLists; i++)
+		{
+			std::vector<dx12::CommandList::ReadbackResourceMetadata> const& curReadbackResources =
+				cmdLists[i]->GetReadbackResources();
+
+			for (size_t curResourceIdx = 0; curResourceIdx < curReadbackResources.size(); curResourceIdx++)
+			{
+				allReadbackResources.emplace_back(curReadbackResources[curResourceIdx]);
+			}
+		}
+
+		return allReadbackResources;
+	}
+
+
+	void RecordReadbackCopies(
+		std::vector<dx12::CommandList::ReadbackResourceMetadata> const& readbackResources,
+		dx12::CommandList* finalCmdList,
+		uint64_t modificationFence)
+	{
+		for (size_t readbackIdx = 0; readbackIdx < readbackResources.size(); readbackIdx++)
+		{
+			finalCmdList->CopyResource(
+				readbackResources[readbackIdx].m_srcResource, 
+				readbackResources[readbackIdx].m_dstResource);
+
+			// Our command lists and queues are submitted single-threaded to ensure correct ordering; Thus the fence
+			// value here will always be the most recent
+			{
+				std::lock_guard<std::mutex> lock(*readbackResources[readbackIdx].m_dstModificationFenceMutex);
+				*readbackResources[readbackIdx].m_dstModificationFence = modificationFence;
+			}
+		}
+	}
 }
 
 
@@ -816,8 +857,16 @@ namespace dx12
 		SEBeginCPUEvent(std::format("CommandQueue::Execute ({})", CommandList::GetCommandListTypeName(m_type)).c_str());
 
 		// Ensure any resources used with states only other queue types can manage are in the common state before we
-		// attempt to use them:
+		// attempt to use them. Builds and submits command lists to the appropriate queue(s), and GPU waits on them
 		TransitionIncompatibleResourceStatesToCommon(numCmdLists, cmdLists);
+
+		// Build a concatenated list of all resources with CPU reads enabled encountered by the incoming command lists.
+		// Do this before we prepend any additional barrier command lists etc
+		std::vector<dx12::CommandList::ReadbackResourceMetadata> const& allReadbackResources =
+			ConcatenateReadbackResources(cmdLists, numCmdLists);
+
+		// Record copies for any readback resources at the end of the final command list:
+		RecordReadbackCopies(allReadbackResources, cmdLists[numCmdLists - 1].get(), GetNextFenceValue());
 
 		// Prepend pending resource barrier command lists to the list of command lists we're executing. This function
 		// also records GPU waits on any incomplete fences encountered while parsing the global resource states

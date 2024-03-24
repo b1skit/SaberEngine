@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Context_DX12.h"
 #include "Assert.h"
+#include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_XeGTAO.h"
@@ -561,72 +561,83 @@ namespace dx12
 				AppendCommandLists();
 
 			} // StagePipeline loop
-		}
+
+			// Handle any GPU readbacks, now that all of the work has been recorded:
 
 
-		// Command lists must be submitted on a single thread, and in the same order as the render stages they're
-		// generated from to ensure modification fences and GPU waits are are handled correctly
-		SEBeginCPUEvent(std::format("Submit command lists ({})", commandLists.size()).c_str());
-		size_t startIdx = 0;
-		while (startIdx < commandLists.size())
-		{
-			const CommandListType cmdListType = commandLists[startIdx]->GetCommandListType();
+			// Submit command lists for the current render system, so work can begin while processing the next render
+			// system. Command lists must be submitted on a single thread, and in the same order as the render stages 
+			// they're generated from to ensure modification fences and GPU waits are are handled correctly
+			SEBeginCPUEvent(std::format("Submit {} command lists ({})", 
+				renderSystem->GetName(), 
+				commandLists.size()).c_str());
 
-			// Find the index of the last command list of the same type:
-			size_t endIdx = startIdx + 1;
-
-//#define SUBMIT_COMMANDLISTS_IN_SERIAL
-#if !defined(SUBMIT_COMMANDLISTS_IN_SERIAL)
-			while (endIdx < commandLists.size() &&
-				commandLists[endIdx]->GetCommandListType() == cmdListType)
+			size_t startIdx = 0;
+			while (startIdx < commandLists.size())
 			{
-				endIdx++;
-			}
+				const CommandListType cmdListType = commandLists[startIdx]->GetCommandListType();
+
+				// Find the index of the last command list of the same type:
+				size_t endIdx = startIdx + 1;
+
+				//#define SUBMIT_COMMANDLISTS_IN_SERIAL
+#if !defined(SUBMIT_COMMANDLISTS_IN_SERIAL)
+				while (endIdx < commandLists.size() &&
+					commandLists[endIdx]->GetCommandListType() == cmdListType)
+				{
+					endIdx++;
+				}
 #endif
 
-			SEBeginCPUEvent(std::format("Submit command lists {}-{}", startIdx, endIdx).c_str());
+				SEBeginCPUEvent(std::format("Submit command lists {}-{}", startIdx, endIdx).c_str());
 
-			const size_t numCmdLists = endIdx - startIdx;
+				const size_t numCmdLists = endIdx - startIdx;
 
-			switch (cmdListType)
-			{
-			case CommandListType::Direct:
-			{
-				directQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
-			}
-			break;
-			case CommandListType::Bundle:
-			{
-				SEAssertF("TODO: Support this type");
-			}
-			break;
-			case CommandListType::Compute:
-			{
-				computeQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
-			}
-			break;
-			case CommandListType::Copy:
-			{
-				SEAssertF("Currently not expecting to find a copy queue genereted from a render stage");
-			}
-			break;
-			case CommandListType::VideoDecode:
-			case CommandListType::VideoProcess:
-			case CommandListType::VideoEncode:
-			{
-				SEAssertF("TODO: Support this type");
-			}
-			break;
-			case CommandListType::CommandListType_Invalid:
-			default:
-				SEAssertF("Invalid command list type");
-			}
+				switch (cmdListType)
+				{
+				case CommandListType::Direct:
+				{
+					directQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
+				}
+				break;
+				case CommandListType::Bundle:
+				{
+					SEAssertF("TODO: Support this type");
+				}
+				break;
+				case CommandListType::Compute:
+				{
+					computeQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
+				}
+				break;
+				case CommandListType::Copy:
+				{
+					SEAssertF("Currently not expecting to find a copy queue genereted from a render stage");
+				}
+				break;
+				case CommandListType::VideoDecode:
+				case CommandListType::VideoProcess:
+				case CommandListType::VideoEncode:
+				{
+					SEAssertF("TODO: Support this type");
+				}
+				break;
+				case CommandListType::CommandListType_Invalid:
+				default:
+					SEAssertF("Invalid command list type");
+				}
 
-			startIdx = endIdx;
+				startIdx = endIdx;
 
-			SEEndCPUEvent();
-		}
-		SEEndCPUEvent();
+				SEEndCPUEvent(); // Submit command list range
+			}
+			SEEndCPUEvent(); // Submit command lists
+
+			// Clear the command lists recorded by the current render system
+			// Note: These will all already be null, as their owning command queue has reclaimed them during submission
+			commandLists.clear();
+
+		} // m_renderSystems loop
 	}
 
 

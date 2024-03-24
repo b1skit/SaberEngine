@@ -429,8 +429,8 @@ namespace opengl
 				}; // ProcessRenderStage
 
 				SEEndOpenGLGPUEvent(); // Graphics system group name
-			}
-		}
+			} // StagePipeline loop
+		} // m_renderSystems loop
 	}
 
 

@@ -16,12 +16,36 @@ namespace dx12
 	class Buffer
 	{
 	public:
+		struct ReadbackResource
+		{
+			ReadbackResource() = default;
+			~ReadbackResource() = default;
+			ReadbackResource(ReadbackResource&& rhs) noexcept
+			{
+				m_resource = std::move(rhs.m_resource);
+
+				{
+					std::lock_guard<std::mutex> lock(m_readbackFenceMutex);
+					m_readbackFence = rhs.m_readbackFence;
+				}
+			}
+
+			Microsoft::WRL::ComPtr<ID3D12Resource> m_resource = nullptr;
+
+			uint64_t m_readbackFence = 0;
+			std::mutex m_readbackFenceMutex;
+		};
+
+
 		struct PlatformParams final : public re::Buffer::PlatformParams
 		{
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_resource = nullptr;
 			uint64_t m_heapByteOffset = 0;
 
 			DescriptorAllocation m_uavCPUDescAllocation; // Used for GPU-writable immutable buffers
+
+			std::vector<ReadbackResource> m_readbackResources; // CPU readback
+			uint8_t m_currentMapFrameLatency; // Used to compute the resource index during unmapping
 		};
 
 
@@ -29,6 +53,9 @@ namespace dx12
 		static void Create(re::Buffer&);
 		static void Update(re::Buffer const&, uint8_t heapOffsetFactor, uint32_t baseOffset, uint32_t numBytes);
 		static void Destroy(re::Buffer&);
+		
+		static void const* MapCPUReadback(re::Buffer const&, uint8_t frameLatency);
+		static void UnmapCPUReadback(re::Buffer const&);
 
 		// DX12-specific functionality:
 		static void Update(

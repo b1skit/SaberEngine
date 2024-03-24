@@ -92,6 +92,8 @@ namespace platform
 			platform::Buffer::Create			= &opengl::Buffer::Create;
 			platform::Buffer::Update			= &opengl::Buffer::Update;
 			platform::Buffer::Destroy			= &opengl::Buffer::Destroy;
+			platform::Buffer::MapCPUReadback	= &opengl::Buffer::MapCPUReadback;
+			platform::Buffer::UnmapCPUReadback	= &opengl::Buffer::UnmapCPUReadback;
 
 			// Render manager:
 			platform::RenderManager::Initialize				= &opengl::RenderManager::Initialize;
@@ -135,6 +137,8 @@ namespace platform
 			platform::Buffer::Create			= &dx12::Buffer::Create;
 			platform::Buffer::Update			= &dx12::Buffer::Update;
 			platform::Buffer::Destroy			= &dx12::Buffer::Destroy;
+			platform::Buffer::MapCPUReadback	= &dx12::Buffer::MapCPUReadback;
+			platform::Buffer::UnmapCPUReadback	= &dx12::Buffer::UnmapCPUReadback;
 			
 			// Render manager:
 			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;

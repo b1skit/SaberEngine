@@ -220,4 +220,28 @@ namespace opengl
 		glBindBufferRange(
 			bufferTarget, bindIndex, bufferPlatParams->m_bufferName, bufferPlatParams->m_baseOffset, numBytes);
 	}
+
+
+	void const* Buffer::MapCPUReadback(re::Buffer const& buffer, uint8_t frameLatency)
+	{
+		const uint32_t bufferSize = buffer.GetSize();
+
+		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
+
+		void* cpuVisibleData = glMapNamedBufferRange(
+			bufferPlatParams->m_bufferName,
+			0,
+			(GLsizeiptr)bufferSize,
+			GL_MAP_READ_BIT);
+
+		return cpuVisibleData;
+	}
+
+
+	void Buffer::UnmapCPUReadback(re::Buffer const& buffer)
+	{
+		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
+
+		glUnmapNamedBuffer(bufferPlatParams->m_bufferName);
+	}
 }

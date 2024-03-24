@@ -102,6 +102,8 @@ namespace dx12
 		void UpdateSubresources(
 			re::Buffer const*, uint32_t dstOffset, ID3D12Resource* srcResource, uint32_t srcOffset, uint32_t numBytes);
 
+		void CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource);
+
 		void TransitionResource(
 			ID3D12Resource*, uint32_t totalSubresources, D3D12_RESOURCE_STATES to, uint32_t targetSubresource);
 
@@ -153,6 +155,21 @@ namespace dx12
 		// once per frame, as changing descriptor heaps can cause pipeline flushes on some hardware
 		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuCbvSrvUavDescriptorHeaps;
 		dx12::LocalResourceStateTracker m_resourceStates;
+
+
+	public:
+		struct ReadbackResourceMetadata
+		{
+			ID3D12Resource* m_srcResource;
+			ID3D12Resource* m_dstResource;
+			uint64_t* m_dstModificationFence;
+			std::mutex* m_dstModificationFenceMutex;
+		};
+		std::vector<ReadbackResourceMetadata> const& GetReadbackResources() const;
+
+	private:
+		// Track any readback resources encountered during recording, so we can schedule copies when we're done
+		std::vector<ReadbackResourceMetadata> m_seenReadbackResources;
 
 
 	private:
@@ -301,5 +318,11 @@ namespace dx12
 	inline void CommandList::CommitGPUDescriptors()
 	{
 		m_gpuCbvSrvUavDescriptorHeaps->Commit();
+	}
+
+
+	inline std::vector<CommandList::ReadbackResourceMetadata> const& CommandList::GetReadbackResources() const
+	{
+		return m_seenReadbackResources;
 	}
 }
