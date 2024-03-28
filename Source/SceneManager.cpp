@@ -127,7 +127,7 @@ namespace fr
 		constexpr char const* k_panelTitle = "Scene Manager";
 		ImGui::Begin(k_panelTitle, show);
 
-		if (ImGui::CollapsingHeader("Spawn Entities"))
+		if (ImGui::CollapsingHeader("Spawn Entities", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImGui::Indent();
 

@@ -57,4 +57,62 @@ namespace util
 			ImGui::EndPopup();
 		}
 	}
+
+
+	template<typename T>
+	void ShowBasicComboBox(char const* title, char const* const* options, size_t numOptions, T& curSelection)
+	{
+		constexpr ImGuiComboFlags k_comboFlags = 0;
+
+		size_t curSelectionIdx = static_cast<size_t>(curSelection);
+
+		if (ImGui::BeginCombo(title, options[curSelectionIdx], k_comboFlags))
+		{
+			for (size_t comboIdx = 0; comboIdx < numOptions; comboIdx++)
+			{
+				const bool isSelected = comboIdx == curSelectionIdx;
+				if (ImGui::Selectable(options[comboIdx], isSelected))
+				{
+					curSelectionIdx = comboIdx;
+				}
+
+				if (isSelected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		curSelection = static_cast<T>(curSelectionIdx);
+	}
+
+
+	template<typename T>
+	void ShowBasicComboBox(char const* title, std::string const* options, size_t numOptions, T& curSelection)
+	{
+		constexpr ImGuiComboFlags k_comboFlags = 0;
+
+		size_t curSelectionIdx = static_cast<size_t>(curSelection);
+
+		if (ImGui::BeginCombo(title, options[curSelectionIdx].c_str(), k_comboFlags))
+		{
+			for (size_t comboIdx = 0; comboIdx < numOptions; comboIdx++)
+			{
+				const bool isSelected = comboIdx == curSelectionIdx;
+				if (ImGui::Selectable(options[comboIdx].c_str(), isSelected))
+				{
+					curSelectionIdx = comboIdx;
+				}
+
+				if (isSelected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		curSelection = static_cast<T>(curSelectionIdx);
+	}
 }

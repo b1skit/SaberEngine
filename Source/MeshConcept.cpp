@@ -107,6 +107,8 @@ namespace fr
 			Quad,
 			Cube,
 			Sphere,
+			Cone,
+			Cylinder,
 			HelloTriangle,
 
 			MeshFactoryType_Count
@@ -116,31 +118,18 @@ namespace fr
 			"Quad",
 			"Cube",					
 			"Sphere",
-			"Hello Triangle"
+			"Cone",
+			"Cylinder",
+			"Hello Triangle",
 		};
 		static_assert(k_meshFactoryTypeNames.size() == MeshFactoryType::MeshFactoryType_Count);
 
 		constexpr ImGuiComboFlags k_comboFlags = 0;
 
 		static SourceType s_selectedSrcType = static_cast<SourceType>(0);
-		if (ImGui::BeginCombo("Mesh source", k_sourceTypeNames[s_selectedSrcType], k_comboFlags))
-		{
-			for (uint8_t comboIdx = 0; comboIdx < k_sourceTypeNames.size(); comboIdx++)
-			{
-				const bool isSelected = comboIdx == s_selectedSrcType;
-				if (ImGui::Selectable(k_sourceTypeNames[comboIdx], isSelected))
-				{
-					s_selectedSrcType = static_cast<SourceType>(comboIdx);
-				}
+		util::ShowBasicComboBox("Mesh source", k_sourceTypeNames.data(), k_sourceTypeNames.size(), s_selectedSrcType);	
 
-				// Set the initial focus:
-				if (isSelected)
-				{
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-		}
+		ImGui::Separator();
 
 		constexpr size_t k_nameInputBufferSize = 128;
 		struct CubeSpawnParams
@@ -160,11 +149,30 @@ namespace fr
 		struct SphereSpawnParams
 		{
 			float m_radius = 0.5f; // Unit diameter
-			uint32_t m_numLatSlices = 16;
-			uint32_t m_numLongSlices = 16;
+			uint32_t m_numLatSlices = 32;
+			uint32_t m_numLongSlices = 32;
 			std::array<char, k_nameInputBufferSize> m_nameInputBuffer = { "Spawned sphere\0" };
 		};
 		static SphereSpawnParams s_sphereSpawnParams;
+
+		struct ConeSpawnParams
+		{
+			float m_height = 1.f;
+			float m_radius = 0.5f; // Unit diameter
+			uint32_t m_numSides = 64;
+			gr::meshfactory::Orientation m_orientation;
+			std::array<char, k_nameInputBufferSize> m_nameInputBuffer = { "Spawned cone\0" };
+		};
+		static ConeSpawnParams s_coneSpawnParams;
+
+		struct CylinderSpawnParams
+		{
+			float m_height = 1.f;
+			float m_radius = 0.5f; // Unit diameter
+			uint32_t m_numSides = 24;
+			std::array<char, k_nameInputBufferSize> m_nameInputBuffer = { "Spawned cylinder\0" };
+		};
+		static CylinderSpawnParams s_cylinderSpawnParams;
 
 		struct HelloTriangleSpawnParams
 		{
@@ -173,30 +181,17 @@ namespace fr
 		};
 		static HelloTriangleSpawnParams s_helloTriangleSpawnParams;
 
-		static char* s_nameInputArr = nullptr;
+
+		static char* s_nameInputBuffer = nullptr;
+		static std::string s_meshFactoryMaterialName;
 
 		static MeshFactoryType s_selectedFactoryType = static_cast<MeshFactoryType>(0);
 		switch (s_selectedSrcType)
 		{
 		case SourceType::MeshFactory:
 		{
-			if (ImGui::BeginCombo("Factory type", k_meshFactoryTypeNames[s_selectedFactoryType], k_comboFlags))
-			{
-				for (uint8_t comboIdx = 0; comboIdx < k_meshFactoryTypeNames.size(); comboIdx++)
-				{
-					const bool isSelected = comboIdx == s_selectedFactoryType;
-					if (ImGui::Selectable(k_meshFactoryTypeNames[comboIdx], isSelected))
-					{
-						s_selectedFactoryType = static_cast<MeshFactoryType>(comboIdx);
-					}
-
-					if (isSelected)
-					{
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-				ImGui::EndCombo();
-			}
+			util::ShowBasicComboBox(
+				"Factory type", k_meshFactoryTypeNames.data(), k_meshFactoryTypeNames.size(), s_selectedFactoryType);
 
 			// Display any additional options needed for mesh factory construction:
 			switch (s_selectedFactoryType)
@@ -208,7 +203,7 @@ namespace fr
 					s_quadSpawnParams.m_extentDistance = std::abs(s_quadSpawnParams.m_extentDistance);
 				}
 
-				s_nameInputArr = s_quadSpawnParams.m_nameInputBuffer.data();
+				s_nameInputBuffer = s_quadSpawnParams.m_nameInputBuffer.data();
 			}
 			break;
 			case MeshFactoryType::Cube:
@@ -218,7 +213,7 @@ namespace fr
 					s_cubeSpawnParams.m_extentDistance = std::abs(s_cubeSpawnParams.m_extentDistance);
 				}
 
-				s_nameInputArr = s_cubeSpawnParams.m_nameInputBuffer.data();
+				s_nameInputBuffer = s_cubeSpawnParams.m_nameInputBuffer.data();
 			}
 			break;
 			case MeshFactoryType::Sphere:
@@ -228,22 +223,72 @@ namespace fr
 					s_sphereSpawnParams.m_radius = std::abs(s_sphereSpawnParams.m_radius);
 				}
 				ImGui::InputScalar(
-					"Latitude slices", ImGuiDataType_::ImGuiDataType_U32, &s_sphereSpawnParams.m_numLatSlices);
+					"Latitude slices#sphere", ImGuiDataType_::ImGuiDataType_U32, &s_sphereSpawnParams.m_numLatSlices);
 				ImGui::InputScalar(
-					"Longitude slices", ImGuiDataType_::ImGuiDataType_U32, &s_sphereSpawnParams.m_numLongSlices);
+					"Longitude slices#sphere", ImGuiDataType_::ImGuiDataType_U32, &s_sphereSpawnParams.m_numLongSlices);
 				
-				s_nameInputArr = s_sphereSpawnParams.m_nameInputBuffer.data();
+				s_nameInputBuffer = s_sphereSpawnParams.m_nameInputBuffer.data();
+			}
+			break;
+			case MeshFactoryType::Cone:
+			{
+				if (ImGui::InputFloat("Height##cone", &s_coneSpawnParams.m_height))
+				{
+					s_coneSpawnParams.m_height = std::abs(s_coneSpawnParams.m_height);
+				}
+				if (ImGui::InputFloat("Radius##cone", &s_coneSpawnParams.m_radius))
+				{
+					s_coneSpawnParams.m_radius = std::abs(s_coneSpawnParams.m_radius);
+				}
+				ImGui::InputScalar(
+					"Number of sides##cone", ImGuiDataType_::ImGuiDataType_U32, &s_coneSpawnParams.m_numSides);
+
+				util::ShowBasicComboBox("Orientation",
+					gr::meshfactory::k_orientationNames.data(), 
+					gr::meshfactory::k_orientationNames.size(),
+					s_coneSpawnParams.m_orientation);
+
+				s_nameInputBuffer = s_coneSpawnParams.m_nameInputBuffer.data();
+			}
+			break;
+			case MeshFactoryType::Cylinder:
+			{
+				if (ImGui::InputFloat("Height##cylinder", &s_cylinderSpawnParams.m_height))
+				{
+					s_cylinderSpawnParams.m_height = std::abs(s_cylinderSpawnParams.m_height);
+				}
+				if (ImGui::InputFloat("Radius##cylinder", &s_cylinderSpawnParams.m_radius))
+				{
+					s_cylinderSpawnParams.m_radius = std::abs(s_cylinderSpawnParams.m_radius);
+				}
+				ImGui::InputScalar(
+					"Number of sides##cylinder", ImGuiDataType_::ImGuiDataType_U32, &s_cylinderSpawnParams.m_numSides);
+
+				s_nameInputBuffer = s_cylinderSpawnParams.m_nameInputBuffer.data();
 			}
 			break;
 			case MeshFactoryType::HelloTriangle:
 			{
 				ImGui::SliderFloat("Scale##hellotriangle", &s_helloTriangleSpawnParams.m_scale, 0.001f, 10.f);
 
-				s_nameInputArr = s_helloTriangleSpawnParams.m_nameInputBuffer.data();
+				s_nameInputBuffer = s_helloTriangleSpawnParams.m_nameInputBuffer.data();
 			}
 			break;
 			default: SEAssertF("Invalid mesh factory type");
 			}
+
+
+			// Material:
+			static uint32_t s_selectedMaterialIdx = 0;
+			std::vector<std::string> materialNames = { fr::SceneData::k_missingMaterialName }; // TODO: Dynamically populate this
+			
+			util::ShowBasicComboBox(
+				"Material##spawnMeshFactory", materialNames.data(), materialNames.size(), s_selectedMaterialIdx);
+
+			s_meshFactoryMaterialName = materialNames[s_selectedMaterialIdx];
+
+			// Name:
+			ImGui::InputText("Object name", s_nameInputBuffer, k_nameInputBufferSize);
 		}
 		break;
 		case SourceType::GLTFFile:
@@ -253,30 +298,27 @@ namespace fr
 		break;
 		default: SEAssertF("Invalid selected source type");
 		}
-		
-		ImGui::InputText("Name", s_nameInputArr, k_nameInputBufferSize);
 
+		ImGui::Separator();
+
+		// Spawn!
 		if (ImGui::Button("Spawn"))
 		{
-			std::shared_ptr<gr::MeshPrimitive> mesh = nullptr;
-
-			entt::entity sceneNode = fr::SceneNode::Create(*fr::EntityManager::Get(), s_nameInputArr, entt::null);
-
-			fr::Mesh::AttachMeshConcept(sceneNode, s_nameInputArr);
-
-			entt::entity meshPrimimitiveEntity = entt::null;
-
-			const gr::meshfactory::FactoryOptions factoryOptions
-			{
-				.m_generateNormalsAndTangents = true,
-				.m_generateVertexColors = true,
-				.m_vertexColor = glm::vec4(1.f)
-			};
-
 			switch (s_selectedSrcType)
 			{
 			case SourceType::MeshFactory:
 			{
+				entt::entity sceneNode = fr::SceneNode::Create(*fr::EntityManager::Get(), s_nameInputBuffer, entt::null);
+				fr::Mesh::AttachMeshConcept(sceneNode, s_nameInputBuffer);
+
+				const gr::meshfactory::FactoryOptions factoryOptions
+				{
+					.m_generateNormalsAndTangents = true,
+					.m_generateVertexColors = true,
+					.m_vertexColor = glm::vec4(1.f)
+				};
+
+				std::shared_ptr<gr::MeshPrimitive> mesh = nullptr;
 				switch (s_selectedFactoryType)
 				{
 				case MeshFactoryType::Quad:
@@ -286,7 +328,7 @@ namespace fr
 				break;
 				case MeshFactoryType::Cube:
 				{
-					mesh = gr::meshfactory::CreateCube(s_cubeSpawnParams.m_extentDistance, factoryOptions);
+					mesh = gr::meshfactory::CreateCube(factoryOptions, s_cubeSpawnParams.m_extentDistance);
 				}
 				break;
 				case MeshFactoryType::Sphere:
@@ -298,13 +340,48 @@ namespace fr
 						s_sphereSpawnParams.m_numLongSlices);
 				}
 				break;
+				case MeshFactoryType::Cone:
+				{
+					gr::meshfactory::FactoryOptions coneFactoryOptions = factoryOptions;
+					coneFactoryOptions.m_orientation = s_coneSpawnParams.m_orientation;
+
+					mesh = gr::meshfactory::CreateCone(
+						coneFactoryOptions,
+						s_coneSpawnParams.m_height,
+						s_coneSpawnParams.m_radius,
+						s_coneSpawnParams.m_numSides);
+				}
+				break;
+				case MeshFactoryType::Cylinder:
+				{
+					mesh = gr::meshfactory::CreateCylinder(
+						factoryOptions,
+						s_cylinderSpawnParams.m_height,
+						s_cylinderSpawnParams.m_radius,
+						s_cylinderSpawnParams.m_numSides);
+				}
+				break;
 				case MeshFactoryType::HelloTriangle:
 				{
-					mesh = gr::meshfactory::CreateHelloTriangle(factoryOptions, s_helloTriangleSpawnParams.m_scale);
+					mesh = gr::meshfactory::CreateHelloTriangle(factoryOptions, s_helloTriangleSpawnParams.m_scale, 0.f);
 				}
 				break;
 				default: SEAssertF("Invalid mesh factory type");
 				}
+
+				entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
+					*fr::EntityManager::Get(),
+					sceneNode,
+					mesh.get(),
+					fr::BoundsComponent::k_invalidMinXYZ,
+					fr::BoundsComponent::k_invalidMaxXYZ);
+
+				// Attach a material:
+				std::shared_ptr<gr::Material> material =
+					fr::SceneManager::GetSceneData()->GetMaterial(s_meshFactoryMaterialName.c_str());
+
+				fr::MaterialInstanceComponent::AttachMaterialComponent(
+					*fr::EntityManager::Get(), meshPrimimitiveEntity, material);
 			}
 			break;
 			case SourceType::GLTFFile:
@@ -314,20 +391,6 @@ namespace fr
 			break;
 			default: SEAssertF("Invalid selected source type");
 			}
-
-			meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
-				*fr::EntityManager::Get(),
-				sceneNode,
-				mesh.get(),
-				fr::BoundsComponent::k_invalidMinXYZ,
-				fr::BoundsComponent::k_invalidMaxXYZ);
-
-			// Attach a material:
-			std::shared_ptr<gr::Material> material = 
-				fr::SceneManager::GetSceneData()->GetMaterial(fr::SceneData::k_missingMaterialName);
-			
-			fr::MaterialInstanceComponent::AttachMaterialComponent(
-				*fr::EntityManager::Get(), meshPrimimitiveEntity, material);
 		}
 	}
 }

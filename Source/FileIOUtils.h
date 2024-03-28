@@ -9,14 +9,17 @@ namespace util
 	{
 		std::vector<std::string> directoryFileContents;
 
-		for (const auto& directoryEntry : std::filesystem::directory_iterator(directoryPath))
+		if (std::filesystem::exists(directoryPath))
 		{
-			std::string const& directoryEntryStr = directoryEntry.path().string();
-
-			if (!fileExtension ||
-				strcmp(std::filesystem::path(directoryEntry.path()).extension().string().c_str(), fileExtension) == 0)
+			for (const auto& directoryEntry : std::filesystem::directory_iterator(directoryPath))
 			{
-				directoryFileContents.emplace_back(directoryEntry.path().string());
+				std::string const& directoryEntryStr = directoryEntry.path().string();
+
+				if (!fileExtension ||
+					strcmp(std::filesystem::path(directoryEntry.path()).extension().string().c_str(), fileExtension) == 0)
+				{
+					directoryFileContents.emplace_back(directoryEntry.path().string());
+				}
 			}
 		}
 
