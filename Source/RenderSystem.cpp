@@ -59,7 +59,8 @@ namespace re
 
 	void RenderSystem::ShowImGuiWindow()
 	{
-		if (ImGui::CollapsingHeader(std::format("Graphics System Manager##", util::PtrToID(this)).c_str()))
+		if (ImGui::CollapsingHeader(std::format("Graphics System Manager##", util::PtrToID(this)).c_str(), 
+			ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImGui::Indent();
 			m_graphicsSystemManager.ShowImGuiWindow();

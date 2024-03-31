@@ -19,6 +19,7 @@ namespace gr
 			AmbientIBL,
 			Directional,
 			Point,
+			Spot,
 
 			Type_Count
 		};
@@ -96,6 +97,36 @@ namespace gr
 
 		private:
 			RenderDataPoint() = delete;
+		};
+
+
+		struct RenderDataSpot
+		{
+			gr::RenderDataID m_renderDataID;
+			gr::TransformID m_transformID;
+
+			char m_lightName[en::NamedObject::k_maxNameLength];
+
+			// Spot type data:
+			glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
+			float m_emitterRadius; // For non-singular attenuation function
+			float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
+
+			float m_innerConeAngle; // Radians: Angle from the center of the light where falloff begins
+			float m_outerConeAngle;
+			float m_coneHeight; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
+
+			bool m_hasShadow = false;
+
+			// Debug params:
+			bool m_diffuseEnabled = false;
+			bool m_specularEnabled = false;
+
+		public:
+			RenderDataSpot(char const* name, gr::RenderDataID, gr::TransformID);
+
+		private:
+			RenderDataSpot() = delete;
 		};
 	};
 }

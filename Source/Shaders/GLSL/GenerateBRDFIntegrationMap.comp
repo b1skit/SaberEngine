@@ -1,6 +1,6 @@
 #version 460 // Suppress IDE warnings; Stripped out at compile time
 #include "MathConstants.glsl"
-#include "SaberLighting.glsl"
+#include "Lighting.glsl"
 #include "UVUtils.glsl"
 
 #include "../Common/IBLGenerationParams.h"

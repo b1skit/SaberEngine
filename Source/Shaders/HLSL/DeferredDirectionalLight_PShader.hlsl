@@ -11,7 +11,7 @@
 
 float4 PShader(VertexOut In) : SV_Target
 {
-	const GBuffer gbuffer = UnpackGBuffer(In.UV0);
+	const GBuffer gbuffer = UnpackGBuffer(In.Position.xy);
 	
 	const float3 worldPos = GetWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
 	

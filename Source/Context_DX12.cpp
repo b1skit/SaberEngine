@@ -238,10 +238,14 @@ namespace dx12
 		// Transition our current backbuffer target set resource to the present state:
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
+		SEBeginGPUEvent(commandList->GetD3DCommandList(), perfmarkers::Type::GraphicsCommandList, "Swapchain transitions");
+
 		commandList->TransitionResource(
 			swapChainTargetSet->GetColorTarget(0).GetTexture().get(),
 			D3D12_RESOURCE_STATE_PRESENT,
 			re::Texture::k_allMips);
+
+		SEEndGPUEvent(commandList->GetD3DCommandList());
 
 		directQueue.Execute(1, &commandList);
 

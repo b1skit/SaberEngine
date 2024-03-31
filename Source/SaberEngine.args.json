@@ -139,6 +139,10 @@
           "Command": "-scene Sponza\\Sponza.gltf"
         },
         {
+          "Id": "2a546477-97dc-4608-ab34-2d81505c63cc",
+          "Command": "-scene Sponza\\Sponza_spotlight.gltf"
+        },
+        {
           "Id": "cb55f864-2acd-4c42-ba1c-7861e297bd99",
           "Command": "-scene Sponza_Intel\\NewSponza_Main_glTF_002.gltf"
         },

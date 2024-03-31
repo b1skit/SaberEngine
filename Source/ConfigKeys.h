@@ -67,15 +67,19 @@ namespace en::ConfigKeys
 	constexpr char const* k_defaultPointLightMinShadowBias			= "defaultPointLightMinShadowBias";
 	constexpr char const* k_defaultPointLightMaxShadowBias			= "defaultPointLightMaxShadowBias";
 	constexpr char const* k_defaultPointLightShadowSoftness			= "defaultPointLightMaxShadowSoftness";
+	constexpr char const* k_defaultSpotLightMinShadowBias			= "defaultSpotLightMinShadowBias";
+	constexpr char const* k_defaultSpotLightMaxShadowBias			= "defaultSpotLightMaxShadowBias";
+	constexpr char const* k_defaultSpotLightShadowSoftness			= "defaultSpotLightMaxShadowSoftness";
 
 	// Quality:
-	constexpr char const* k_brdfLUTWidthHeight				= "brdfLUTWidthHeight";
-	constexpr char const* k_iemTexWidthHeight				= "iemWidthHeight";
-	constexpr char const* k_iemNumSamples					= "iemNumSamples";
-	constexpr char const* k_pmremTexWidthHeight				= "pmremWidthHeight";
-	constexpr char const* k_pmremNumSamples					= "pmremNumSamples";
-	constexpr char const* k_defaultShadowMapResolution		= "defaultShadowMapRes";
-	constexpr char const* k_defaultShadowCubeMapResolution	= "defaultShadowCubeMapRes";
+	constexpr char const* k_brdfLUTWidthHeight						= "brdfLUTWidthHeight";
+	constexpr char const* k_iemTexWidthHeight						= "iemWidthHeight";
+	constexpr char const* k_iemNumSamples							= "iemNumSamples";
+	constexpr char const* k_pmremTexWidthHeight						= "pmremWidthHeight";
+	constexpr char const* k_pmremNumSamples							= "pmremNumSamples";
+	constexpr char const* k_defaultDirectionalShadowMapResolution	= "defaultDirectionalShadowMapRes";
+	constexpr char const* k_defaultShadowCubeMapResolution			= "defaultShadowCubeMapRes";
+	constexpr char const* k_defaultSpotShadowMapResolution			= "defaultSpotShadowMapRes";
 
 	// Data processing:
 	constexpr char const* k_doCPUVertexStreamNormalization = "cpunormalizevertexstreams";
@@ -94,6 +98,7 @@ namespace en::ShaderNames
 	constexpr char const* k_deferredAmbientLightShaderName = "DeferredAmbientLight";
 	constexpr char const* k_deferredDirectionalLightShaderName = "DeferredDirectionalLight";
 	constexpr char const* k_deferredPointLightShaderName = "DeferredPointLight";
+	constexpr char const* k_deferredSpotLightShaderName = "DeferredSpotLight";
 	constexpr char const* k_depthShaderName = "Depth";
 	constexpr char const* k_gaussianBlurShaderName = "GaussianBlur";
 	constexpr char const* k_gbufferShaderName = "GBuffer";

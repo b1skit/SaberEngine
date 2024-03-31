@@ -26,10 +26,10 @@ namespace fr
 		gr::RenderDataComponent::AttachNewRenderDataComponent(em, sceneNode, owningTransform.GetTransformID());
 
 		// CameraComponent:
-		em.EmplaceComponent<fr::CameraComponent>(sceneNode, PrivateCTORTag{}, cameraConfig, owningTransform);
+		fr::CameraComponent* cameraComponent = 
+			em.EmplaceComponent<fr::CameraComponent>(sceneNode, PrivateCTORTag{}, cameraConfig, owningTransform);
 
-		// Mark our new camera as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::CameraComponent>>(sceneNode);
+		cameraComponent->MarkDirty(em, sceneNode);
 	}
 
 
@@ -47,10 +47,10 @@ namespace fr
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
 
 		// CameraComponent:
-		em.EmplaceComponent<fr::CameraComponent>(owningEntity, PrivateCTORTag{}, cameraConfig, owningTransform);
+		fr::CameraComponent* cameraComponent = 
+			em.EmplaceComponent<fr::CameraComponent>(owningEntity, PrivateCTORTag{}, cameraConfig, owningTransform);
 
-		// Mark our new camera as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::CameraComponent>>(owningEntity);
+		cameraComponent->MarkDirty(em, owningEntity);
 	}
 
 
@@ -64,9 +64,6 @@ namespace fr
 	void CameraComponent::MarkDirty(EntityManager& em, entt::entity cameraEntity)
 	{
 		em.TryEmplaceComponent<DirtyMarker<fr::CameraComponent>>(cameraEntity);
-
-		// Note: We don't explicitely set the fr::Camera dirty flag. Having a DirtyMarker is all that's required to 
-		// force an update
 	}
 
 

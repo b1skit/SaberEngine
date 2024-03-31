@@ -14,9 +14,11 @@ namespace fr
 
 		CameraData cameraParams{};
 
-		glm::mat4 const& globalMatrix = transform.GetGlobalMatrix();
-		cameraParams.g_view = glm::inverse(globalMatrix);
-		cameraParams.g_invView = globalMatrix;
+		// Omit any scale components from the camera's view matrix
+		glm::mat4 const& globalTR = transform.GetGlobalTranslationMat() * transform.GetGlobalRotationMat();
+
+		cameraParams.g_view = glm::inverse(globalTR);
+		cameraParams.g_invView = globalTR;
 
 		switch (cameraConfig.m_projectionType)
 		{

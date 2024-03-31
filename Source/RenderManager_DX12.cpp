@@ -657,10 +657,12 @@ namespace dx12
 		// Get our SE rendering objects:
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
-		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
-		// Configure the descriptor heap:
+		// Configure the command list:
+		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 		ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
+
+		SEBeginGPUEvent(d3dCommandList, perfmarkers::Type::GraphicsCommandList, "Render ImGui");
 
 		ID3D12DescriptorHeap* descriptorHeap = context->GetImGuiGPUVisibleDescriptorHeap();
 		d3dCommandList->SetDescriptorHeaps(1, &descriptorHeap);
@@ -672,6 +674,8 @@ namespace dx12
 
 		// Record our ImGui draws:
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3dCommandList);
+
+		SEEndGPUEvent(d3dCommandList);
 
 		// Submit the populated command list:
 		directQueue.Execute(1, &commandList);

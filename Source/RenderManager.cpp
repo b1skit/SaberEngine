@@ -489,7 +489,7 @@ namespace re
 		// Render systems:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			if (ImGui::CollapsingHeader(renderSystem->GetName().c_str(), ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader(renderSystem->GetName().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				ImGui::Indent();
 				renderSystem->ShowImGuiWindow();

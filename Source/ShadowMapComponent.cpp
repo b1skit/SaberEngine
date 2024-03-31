@@ -15,6 +15,9 @@
 
 namespace
 {
+	constexpr float k_defaultShadowCamNear = 0.1f;
+
+
 	gr::Camera::Config SnapTransformAndComputeDirectionalShadowCameraConfigFromSceneBounds(
 		fr::Transform& lightTransform, fr::BoundsComponent const& sceneWorldBounds)
 	{
@@ -104,7 +107,7 @@ namespace fr
 				"A directional ShadowMapComponent must be attached to an entity with a DirectionalDeferredMarker");
 
 			const int defaultDirectionalWidthHeight = 
-				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowMapResolution);
+				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultDirectionalShadowMapResolution);
 			widthHeight = glm::vec2(defaultDirectionalWidthHeight, defaultDirectionalWidthHeight);
 		}
 		break;
@@ -116,6 +119,16 @@ namespace fr
 			const int defaultCubemapWidthHeight =
 				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowCubeMapResolution);
 			widthHeight = glm::vec2(defaultCubemapWidthHeight, defaultCubemapWidthHeight);
+		}
+		break;
+		case fr::Light::Type::Spot:
+		{
+			SEAssert(em.HasComponent<fr::LightComponent::SpotDeferredMarker>(owningEntity),
+				"A spot ShadowMapComponent must be attached to an entity with a SpotDeferredMarker");
+
+			const int defaultSpotWidthHeight = 
+				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultSpotShadowMapResolution);
+			widthHeight = glm::vec2(defaultSpotWidthHeight, defaultSpotWidthHeight);
 		}
 		break;
 		case fr::Light::Type::AmbientIBL:
@@ -170,22 +183,6 @@ namespace fr
 
 		switch (shadowMap.GetShadowMapType())
 		{
-		case fr::ShadowMap::ShadowType::CubeMap:
-		{
-			SEAssert(owningLight.GetType() == fr::Light::Type::Point, "Unexpected light type");
-
-			shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) * 0.5f;
-			shadowCamConfig.m_aspectRatio = 1.0f;
-			shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::PerspectiveCubemap;
-
-			constexpr float k_defaultShadowCamNear = 0.1f;
-			shadowCamConfig.m_near = k_defaultShadowCamNear;
-
-			shadowCamConfig.m_far = owningLight.GetLightTypeProperties(fr::Light::Type::Point).m_point.m_sphericalRadius;
-
-			// We ignore everything else for shadow map cameras
-		}
-		break;
 		case fr::ShadowMap::ShadowType::Orthographic:
 		{
 			// Note: We use a zeroed-out bounds as a fallback if the sceneWorldBounds hasn't been created yet
@@ -199,6 +196,35 @@ namespace fr
 				shadowCamConfig = SnapTransformAndComputeDirectionalShadowCameraConfigFromSceneBounds(
 					lightTransform, fr::BoundsComponent::Zero());
 			}
+		}
+		break;
+		case fr::ShadowMap::ShadowType::Perspective:
+		{
+			SEAssert(owningLight.GetType() == fr::Light::Type::Spot, "Unexpected light type");
+
+			fr::Light::TypeProperties const& lightTypeProperties = 
+				owningLight.GetLightTypeProperties(fr::Light::Type::Spot);
+
+			shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::Perspective;
+
+			shadowCamConfig.m_yFOV = lightTypeProperties.m_spot.m_outerConeAngle * 2.f; // *2 for full light width
+			
+			shadowCamConfig.m_near = k_defaultShadowCamNear;
+			shadowCamConfig.m_far = lightTypeProperties.m_spot.m_coneHeight;
+			shadowCamConfig.m_aspectRatio = 1.f;
+		}
+		break;
+		case fr::ShadowMap::ShadowType::CubeMap:
+		{
+			SEAssert(owningLight.GetType() == fr::Light::Type::Point, "Unexpected light type");
+
+			shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::PerspectiveCubemap;
+
+			shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) * 0.5f;		
+
+			shadowCamConfig.m_near = k_defaultShadowCamNear;
+			shadowCamConfig.m_far = owningLight.GetLightTypeProperties(fr::Light::Type::Point).m_point.m_sphericalRadius;
+			shadowCamConfig.m_aspectRatio = 1.f;
 		}
 		break;
 		default: SEAssertF("Invalid ShadowType");

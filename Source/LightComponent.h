@@ -29,7 +29,7 @@ namespace fr
 		struct IsActiveAmbientDeferredMarker {};
 
 		struct PointDeferredMarker {};
-
+		struct SpotDeferredMarker {};
 		struct DirectionalDeferredMarker {};
 
 
@@ -39,6 +39,11 @@ namespace fr
 		static LightComponent& AttachDeferredPointLightConcept(
 			fr::EntityManager&, entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);
 		static LightComponent& AttachDeferredPointLightConcept(
+			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow);
+
+		static LightComponent& AttachDeferredSpotLightConcept(
+			fr::EntityManager&, entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);
+		static LightComponent& AttachDeferredSpotLightConcept(
 			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 		static LightComponent& AttachDeferredDirectionalLightConcept(
@@ -54,6 +59,9 @@ namespace fr
 			fr::NameComponent const&, fr::LightComponent const&);
 		
 		static gr::Light::RenderDataPoint CreateRenderDataPoint_Deferred(
+			fr::NameComponent const&, fr::LightComponent const&);
+
+		static gr::Light::RenderDataSpot CreateRenderDataSpot_Deferred(
 			fr::NameComponent const&, fr::LightComponent const&);
 
 		static bool Update(fr::LightComponent&, fr::Transform* lightTransform, fr::Camera* shadowCam);
@@ -117,6 +125,7 @@ namespace fr
 			gr::Light::RenderDataAmbientIBL m_ambientData;
 			gr::Light::RenderDataDirectional m_directionalData;
 			gr::Light::RenderDataPoint m_pointData;
+			gr::Light::RenderDataSpot m_spotData;
 		};
 	};
 

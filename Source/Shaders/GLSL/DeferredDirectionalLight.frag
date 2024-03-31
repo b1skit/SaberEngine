@@ -2,16 +2,16 @@
 #define READ_GBUFFER
 
 #include "SaberCommon.glsl"
-#include "SaberLighting.glsl"
+#include "Lighting.glsl"
 #include "Shadows.glsl"
 #include "GBufferCommon.glsl"
 
 
 void main()
 {
-	const vec2 screenUV = vOut.uv0.xy; // Directional light is drawn with a fullscreen quad
+	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
 
-	const GBuffer gbuffer = UnpackGBuffer(screenUV);
+	const vec2 screenUV = vOut.uv0.xy; // Directional light is drawn with a fullscreen quad
 
 	const vec3 worldPos = GetWorldPos(screenUV, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
 

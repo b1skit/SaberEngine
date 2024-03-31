@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "EntityManager.h"
 #include "FileIOUtils.h"
+#include "ImGuiUtils.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
 #include "MeshFactory.h"
@@ -15,6 +16,22 @@
 #include "SceneNodeConcept.h"
 #include "ShadowMapComponent.h"
 #include "TransformComponent.h"
+
+
+namespace
+{
+	glm::vec3 ComputeConeMeshScale(float outerConeAngle, float coneHeight)
+	{
+		SEAssert(coneHeight > 0.f && outerConeAngle <= glm::pi<float>() * 0.5f, "Invalid cone dimensions");
+
+		// Prevent crazy values as outerConeAngle -> pi/2
+		constexpr float k_maxOuterConeAngle = glm::pi<float>() * 0.49f;
+		const float coneRadiusScale = glm::tan(std::min(outerConeAngle, k_maxOuterConeAngle)) * coneHeight;
+
+		// Note: Our cone mesh is pre-rotated during construction to extend from the origin down the Z axis
+		return glm::vec3(coneRadiusScale, coneRadiusScale, coneHeight);
+	}
+}
 
 
 namespace fr
@@ -107,6 +124,69 @@ namespace fr
 		bool hasShadow)
 	{
 		return AttachDeferredPointLightConcept(em, entity, name.c_str(), colorIntensity, hasShadow);
+	}
+
+
+	LightComponent& LightComponent::AttachDeferredSpotLightConcept(
+		fr::EntityManager& em,
+		entt::entity owningEntity,
+		char const* name,
+		glm::vec4 const& colorIntensity,
+		bool hasShadow)
+	{
+		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
+			"A LightComponent's owning entity requires a TransformComponent");
+
+		// Create a MeshPrimitive (owned by SceneData):
+		gr::meshfactory::FactoryOptions coneFactoryOptions{};
+		coneFactoryOptions.m_orientation = gr::meshfactory::Orientation::ZNegative;
+
+		std::shared_ptr<gr::MeshPrimitive> spotLightMesh = gr::meshfactory::CreateCone(
+			coneFactoryOptions,
+			1.f,	// Height
+			1.f,	// Radius
+			16);	// No. sides		
+
+		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
+
+		gr::RenderDataComponent& renderDataComponent =
+			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, owningTransform.GetTransformID());
+
+		// Attach the MeshPrimitive 
+		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh.get());
+
+		// LightComponent:
+		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
+			owningEntity,
+			PrivateCTORTag{},
+			renderDataComponent,
+			fr::Light::Type::Spot,
+			colorIntensity,
+			hasShadow);
+		em.EmplaceComponent<SpotDeferredMarker>(owningEntity);
+
+		// ShadowMapComponent, if required:
+		if (hasShadow)
+		{
+			fr::ShadowMapComponent::AttachShadowMapComponent(
+				em, owningEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::Type::Spot);
+		}
+
+		// Mark our new LightComponent as dirty:
+		em.EmplaceComponent<DirtyMarker<fr::LightComponent>>(owningEntity);
+
+		return lightComponent;
+	}
+
+
+	LightComponent& LightComponent::AttachDeferredSpotLightConcept(
+		fr::EntityManager& em,
+		entt::entity entity,
+		std::string const& name,
+		glm::vec4 const& colorIntensity,
+		bool hasShadow)
+	{
+		return AttachDeferredSpotLightConcept(em, entity, name.c_str(), colorIntensity, hasShadow);
 	}
 
 
@@ -232,14 +312,42 @@ namespace fr
 
 		fr::Light const& light = lightCmpt.m_light;
 
-		fr::Light::TypeProperties const& typeProperties =
-			light.GetLightTypeProperties(fr::Light::Type::Point);
+		fr::Light::TypeProperties const& typeProperties = light.GetLightTypeProperties(fr::Light::Type::Point);
 
 		renderData.m_colorIntensity = typeProperties.m_point.m_colorIntensity;
 		renderData.m_emitterRadius = typeProperties.m_point.m_emitterRadius;
 		renderData.m_intensityCuttoff = typeProperties.m_point.m_intensityCuttoff;
 
 		renderData.m_sphericalRadius = typeProperties.m_point.m_sphericalRadius;
+
+		renderData.m_hasShadow = lightCmpt.m_hasShadow;
+
+		renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
+		renderData.m_specularEnabled = typeProperties.m_specularEnabled;
+
+		return renderData;
+	}
+
+
+	gr::Light::RenderDataSpot LightComponent::CreateRenderDataSpot_Deferred(
+		fr::NameComponent const& nameCmpt, fr::LightComponent const& lightCmpt)
+	{
+		gr::Light::RenderDataSpot renderData(
+			nameCmpt.GetName().c_str(),
+			lightCmpt.GetRenderDataID(),
+			lightCmpt.GetTransformID());
+
+		fr::Light const& light = lightCmpt.m_light;
+
+		fr::Light::TypeProperties const& typeProperties = light.GetLightTypeProperties(fr::Light::Type::Spot);
+
+		renderData.m_colorIntensity = typeProperties.m_spot.m_colorIntensity;
+		renderData.m_emitterRadius = typeProperties.m_spot.m_emitterRadius;
+		renderData.m_intensityCuttoff = typeProperties.m_spot.m_intensityCuttoff;
+
+		renderData.m_innerConeAngle = typeProperties.m_spot.m_innerConeAngle;
+		renderData.m_outerConeAngle = typeProperties.m_spot.m_outerConeAngle;
+		renderData.m_coneHeight = typeProperties.m_spot.m_coneHeight;
 
 		renderData.m_hasShadow = lightCmpt.m_hasShadow;
 
@@ -278,12 +386,23 @@ namespace fr
 			case fr::Light::Type::Point:
 			{
 				SEAssert(lightTransform, "Point lights require a Transform");
-				SEAssert(light.GetType() == fr::Light::Type::Point, "Light is not a point light");
 
 				fr::Light::TypeProperties const& lightProperties = light.GetLightTypeProperties(fr::Light::Type::Point);
 
 				// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
 				lightTransform->SetLocalScale(glm::vec3(lightProperties.m_point.m_sphericalRadius));
+			}
+			break;
+			case fr::Light::Type::Spot:
+			{
+				SEAssert(lightTransform, "Spot lights require a Transform");
+
+				fr::Light::TypeProperties const& lightProperties = light.GetLightTypeProperties(fr::Light::Type::Spot);
+
+				// Scale the owning transform such that a cone created with a height of 1 will be the correct dimensions
+				lightTransform->SetLocalScale(
+					ComputeConeMeshScale(lightProperties.m_spot.m_outerConeAngle, lightProperties.m_spot.m_coneHeight));
+
 			}
 			break;
 			default: SEAssertF("Invalid light type");
@@ -333,13 +452,6 @@ namespace fr
 
 	void LightComponent::ShowImGuiSpawnWindow()
 	{
-		constexpr std::array<char const*, fr::Light::Type::Type_Count> k_lightTypeNames = {
-			"Ambient Light",
-			"Directional Light",
-			"Point Light",
-		};
-		static_assert(k_lightTypeNames.size() == fr::Light::Type::Type_Count);
-
 		union LightSpawnParams
 		{
 			LightSpawnParams() { memset(this, 0, sizeof(LightSpawnParams)); }
@@ -364,32 +476,13 @@ namespace fr
 				spawnParams = std::make_unique<LightSpawnParams>();
 			};
 
-		constexpr ImGuiComboFlags k_comboFlags = 0;
-
 		static fr::Light::Type s_selectedLightType = static_cast<fr::Light::Type>(0);
 		const fr::Light::Type currentSelectedLightTypeIdx = s_selectedLightType;
-		if (ImGui::BeginCombo("Light type", k_lightTypeNames[s_selectedLightType], k_comboFlags))
-		{
-			for (uint8_t comboIdx = 0; comboIdx < k_lightTypeNames.size(); comboIdx++)
-			{
-				const bool isSelected = comboIdx == s_selectedLightType;
-				if (ImGui::Selectable(k_lightTypeNames[comboIdx], isSelected))
-				{
-					s_selectedLightType = static_cast<fr::Light::Type>(comboIdx);
-				}
-
-				// Set the initial focus:
-				if (isSelected)
-				{
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-		}
+		util::ShowBasicComboBox(
+			"Light type", fr::Light::k_lightTypeNames.data(), fr::Light::k_lightTypeNames.size(), s_selectedLightType);
 
 		// If the selection has changed, re-initialize the spawn parameters:
-		if (s_spawnParams == nullptr ||
-			s_selectedLightType != currentSelectedLightTypeIdx)
+		if (s_spawnParams == nullptr || s_selectedLightType != currentSelectedLightTypeIdx)
 		{
 			InitializeSpawnParams(s_spawnParams);
 		}
@@ -424,6 +517,7 @@ namespace fr
 		break;
 		case fr::Light::Type::Directional:
 		case fr::Light::Type::Point:
+		case fr::Light::Type::Spot:
 		{
 			ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
 			ImGui::ColorEdit3("Color",
@@ -476,6 +570,16 @@ namespace fr
 					*fr::EntityManager::Get(),
 					sceneNode,
 					std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
+					s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
+					s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+			}
+			break;
+			case fr::Light::Type::Spot:
+			{
+				fr::LightComponent::AttachDeferredSpotLightConcept(
+					*fr::EntityManager::Get(),
+					sceneNode,
+					std::format("{}_SpotLight", s_nameInputBuffer.data()).c_str(),
 					s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
 					s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
 			}
@@ -543,6 +647,11 @@ namespace fr
 			m_pointData = fr::LightComponent::CreateRenderDataPoint_Deferred(nameComponent, lightComponent);
 		}
 		break;
+		case gr::Light::Type::Spot:
+		{
+			m_spotData = fr::LightComponent::CreateRenderDataSpot_Deferred(nameComponent, lightComponent);
+		}
+		break;
 		default: SEAssertF("Invalid type");
 		}
 	}
@@ -579,6 +688,12 @@ namespace fr
 			{
 				renderDataMgr.SetObjectData<gr::Light::RenderDataPoint>(
 					cmdPtr->m_renderDataID, &cmdPtr->m_pointData);
+			}
+			break;
+			case gr::Light::Type::Spot:
+			{
+				renderDataMgr.SetObjectData<gr::Light::RenderDataSpot>(
+					cmdPtr->m_renderDataID, &cmdPtr->m_spotData);
 			}
 			break;
 			default: SEAssertF("Invalid type");
@@ -632,6 +747,11 @@ namespace fr
 			case fr::Light::Type::Point:
 			{
 				renderDataMgr.DestroyObjectData<gr::Light::RenderDataPoint>(cmdPtr->m_renderDataID);
+			}
+			break;
+			case fr::Light::Type::Spot:
+			{
+				renderDataMgr.DestroyObjectData<gr::Light::RenderDataSpot>(cmdPtr->m_renderDataID);
 			}
 			break;
 			default: SEAssertF("Invalid type");

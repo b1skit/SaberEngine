@@ -450,31 +450,8 @@ namespace
 
 		LOG("Found light \"%s\"", lightName.c_str());
 
-		// GLTF only supports direction, point, and spot light types
-		fr::Light::Type lightType = fr::Light::Type::Type_Count;
-		switch (current->light->type)
-		{
-		case cgltf_light_type::cgltf_light_type_directional:
-		{
-			lightType = fr::Light::Type::Directional;
-		}
-		break;
-		case cgltf_light_type::cgltf_light_type_point:
-		{
-			lightType = fr::Light::Type::Point;
-		}
-		break;
-		case cgltf_light_type::cgltf_light_type_spot:
-		{
-			LOG_WARNING("Found spot light type, but spotlights are not currently implemented. Ignoring!");
-			return;
-		}
-		break;
-		case cgltf_light_type::cgltf_light_type_invalid:
-		case cgltf_light_type::cgltf_light_type_max_enum:
-		default:
-			SEAssertF("Invalid light type");
-		}
+		// For now we always attach a shadow and let light graphics systems decide to render it or not
+		const bool attachShadow = true;
 
 		const glm::vec4 colorIntensity = glm::vec4(
 			current->light->color[0],
@@ -482,31 +459,31 @@ namespace
 			current->light->color[2],
 			current->light->intensity);
 
-		bool attachShadow = true;
-		if (colorIntensity.r + colorIntensity.g + colorIntensity.b == 0.f)
-		{
-			LOG_WARNING("Light \"%s\" has 0 intensity. Disabling its shadow map, as it will not contribute any energy "
-				"to the scene", lightName.c_str());
-			attachShadow = false; // No point rendering shadows for non-contributing lights
-		}
-		
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
-		switch (lightType)
+		// The GLTF 2.0 KHR_lights_punctual extension supports directional, point, and spot light types
+		switch (current->light->type)
 		{
-		case fr::Light::Type::Directional:
+		case cgltf_light_type::cgltf_light_type_directional:
 		{
 			fr::LightComponent::AttachDeferredDirectionalLightConcept(
 				em, sceneNode, lightName, colorIntensity, attachShadow);
 		}
 		break;
-		case fr::Light::Type::Point:
+		case cgltf_light_type::cgltf_light_type_point:
 		{
 			fr::LightComponent::AttachDeferredPointLightConcept(em, sceneNode, lightName, colorIntensity, attachShadow);
 		}
 		break;
+		case cgltf_light_type::cgltf_light_type_spot:
+		{
+			fr::LightComponent::AttachDeferredSpotLightConcept(em, sceneNode, lightName, colorIntensity, attachShadow);
+		}
+		break;
+		case cgltf_light_type::cgltf_light_type_invalid:
+		case cgltf_light_type::cgltf_light_type_max_enum:
 		default:
-			LOG_WARNING("Invalid light type found. Ignoring!");
+			SEAssertF("Invalid light type");
 		}
 	}
 

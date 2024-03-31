@@ -22,34 +22,37 @@ struct GBuffer
 };
 
 
-GBuffer UnpackGBuffer(vec2 screenUV)
+GBuffer UnpackGBuffer(vec2 pixelCoords)
 {
+	const ivec2 gbufferDims = textureSize(GBufferAlbedo, 0);
+	const ivec2 loadCoords = ivec2(pixelCoords.x, gbufferDims.y - pixelCoords.y); // Flip the Y axis
+
 	GBuffer gbuffer;
 
 	// Note: All PBR calculations are performed in linear space
 	// However, we use sRGB-format input textures, the sRGB->Linear transformation happens for free when writing the 
 	// GBuffer, so no need to do the sRGB -> linear conversion here
-	gbuffer.LinearAlbedo = texture(GBufferAlbedo, screenUV).rgb;
+	gbuffer.LinearAlbedo = texelFetch(GBufferAlbedo, loadCoords, 0).rgb;
 
-	gbuffer.WorldNormal = texture(GBufferWNormal, screenUV).xyz;
+	gbuffer.WorldNormal = texelFetch(GBufferWNormal, loadCoords, 0).xyz;
 
-	const vec4 RMAOVn = texture(GBufferRMAO, screenUV);
+	const vec4 RMAOVn = texelFetch(GBufferRMAO, loadCoords, 0);
 	gbuffer.LinearRoughness = RMAOVn.r;
 	gbuffer.LinearMetalness = RMAOVn.g;
 	gbuffer.AO = RMAOVn.b;
 
 #if defined(GBUFFER_EMISSIVE)
-	gbuffer.Emissive = texture(GBufferEmissive, screenUV).rgb;
+	gbuffer.Emissive = texelFetch(GBufferEmissive, loadCoords, 0).rgb;
 #endif
 
-	const vec4 matProp0Vn = texture(GBufferMatProp0, screenUV);
+	const vec4 matProp0Vn = texelFetch(GBufferMatProp0, loadCoords, 0);
 	gbuffer.MatProp0 = matProp0Vn.rgb;
 
 	// Unpack the vertex normal:
 	const vec2 packedVertexNormal = vec2(RMAOVn.w, matProp0Vn.w);
 	gbuffer.VertexNormal = DecodeOctohedralNormal(packedVertexNormal);
 
-	gbuffer.NonLinearDepth = texture(GBufferDepth, screenUV).r;
+	gbuffer.NonLinearDepth = texelFetch(GBufferDepth, loadCoords, 0).r;
 
 	return gbuffer;
 }

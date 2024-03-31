@@ -5,7 +5,7 @@
 
 #include "MathConstants.glsl"
 #include "SaberCommon.glsl"
-#include "SaberLighting.glsl"
+#include "Lighting.glsl"
 #include "UVUtils.glsl"
 
 

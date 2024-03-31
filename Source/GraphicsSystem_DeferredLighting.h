@@ -82,6 +82,7 @@ namespace gr
 
 		std::shared_ptr<re::RenderStage> m_directionalStage;
 		std::shared_ptr<re::RenderStage> m_pointStage;
+		std::shared_ptr<re::RenderStage> m_spotStage;
 
 		gr::ShadowsGraphicsSystem* m_shadowGS;
 

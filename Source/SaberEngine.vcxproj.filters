@@ -1032,7 +1032,7 @@
     <None Include="Shaders\glsl\SaberCommon.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\SaberLighting.glsl">
+    <None Include="Shaders\GLSL\Lighting.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GenerateIEM.frag">
@@ -1174,6 +1174,12 @@
     <None Include="Shaders\GLSL\UVUtils.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
+    <None Include="Shaders\GLSL\DeferredSpotLight.frag">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\DeferredSpotLight.vert">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">
@@ -1283,6 +1289,12 @@
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Ultra_CShader.hlsl">
       <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\DeferredSpotLight_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

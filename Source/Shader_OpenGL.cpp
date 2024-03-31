@@ -57,7 +57,7 @@ namespace
 
 		// ShaderType::Fragment:
 		"#define SE_FRAGMENT_SHADER\n"
-		"layout(origin_upper_left) in vec4 gl_FragCoord;\n", // Make fragment coords ([0,xRes], [0,yRes]) match our UV(0,0) = top-left convention
+		"layout(origin_upper_left) in vec4 gl_FragCoord;\n", // Make fragment coords ([0,xRes), [0,yRes)) match our UV(0,0) = top-left convention
 
 		// ShaderType::Compute:
 		"#define SE_COMPUTE_SHADER\n",

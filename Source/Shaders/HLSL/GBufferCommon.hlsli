@@ -23,34 +23,36 @@ struct GBuffer
 };
 
 
-GBuffer UnpackGBuffer(float2 screenUV)
+GBuffer UnpackGBuffer(float2 pixelCoords)
 {
 	GBuffer gbuffer;
 
+	const uint3 loadCoords = uint3(pixelCoords.xy, 0);
+	
 	// Note: All PBR calculations are performed in linear space
 	// However, we use sRGB-format input textures, the sRGB->Linear transformation happens for free when writing the 
 	// GBuffer, so no need to do the sRGB -> linear conversion here
-	gbuffer.LinearAlbedo = GBufferAlbedo.Sample(WrapMinMagLinearMipPoint, screenUV).rgb;
+	gbuffer.LinearAlbedo = GBufferAlbedo.Load(loadCoords).rgb;
 
-	gbuffer.WorldNormal = GBufferWNormal.Sample(WrapMinMagLinearMipPoint, screenUV).xyz;
+	gbuffer.WorldNormal = GBufferWNormal.Load(loadCoords).xyz;
 
-	const float4 RMAOVn = GBufferRMAO.Sample(WrapMinMagLinearMipPoint, screenUV);
+	const float4 RMAOVn = GBufferRMAO.Load(loadCoords);
 	gbuffer.LinearRoughness = RMAOVn.r;
 	gbuffer.LinearMetalness = RMAOVn.g;
 	gbuffer.AO = RMAOVn.b;
 
 #if defined(GBUFFER_EMISSIVE)
-	gbuffer.Emissive = GBufferEmissive.Sample(WrapMinMagLinearMipPoint, screenUV).rgb;
+	gbuffer.Emissive = GBufferEmissive.Load(loadCoords).rgb;
 #endif
 
-	const float4 matProp0Vn = GBufferMatProp0.Sample(WrapMinMagLinearMipPoint, screenUV);
+	const float4 matProp0Vn = GBufferMatProp0.Load(loadCoords);
 	gbuffer.MatProp0 = matProp0Vn.rgb;
 	
 	// Unpack the vertex normal:
 	const float2 packedVertexNormal = float2(RMAOVn.w, matProp0Vn.w);
 	gbuffer.VertexNormal = DecodeOctohedralNormal(packedVertexNormal);
 
-	gbuffer.NonLinearDepth = GBufferDepth.Sample(WrapMinMagLinearMipPoint, screenUV).r;
+	gbuffer.NonLinearDepth = GBufferDepth.Load(loadCoords).r;
 
 	return gbuffer;
 }

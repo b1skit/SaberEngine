@@ -158,7 +158,7 @@ float3 GetSpecularIBLContribution(
 
 float4 PShader(VertexOut In) : SV_Target
 {
-	const GBuffer gbuffer = UnpackGBuffer(In.UV0);
+	const GBuffer gbuffer = UnpackGBuffer(In.Position.xy);
 
 	// Reconstruct the world position:
 	const float4 worldPos = float4(GetWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection), 1.f);

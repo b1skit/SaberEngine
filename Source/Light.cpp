@@ -8,20 +8,38 @@
 
 namespace
 {
-	float ComputePointLightRadiusFromIntensity(float luminousPower, float emitterRadius, float intensityCutoff)
+	float ConvertLuminousPowerToLuminousIntensity(fr::Light::Type lightType, float luminousPower)
 	{
-		// As per equation 15 (p.29) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al, we can 
-		// convert a point light's luminous power I (lm) (a.k.a luminous flux: The *perceived* power of a light, with 
-		// respect to the sensitivity of the human eye) to luminous intensity (phi) (the quantity of light emitted in
-		// unit time per unit solid angle) using phi = 4pi * I. 
-		// Intuitively, this conversion is taking the perceived intensity of a ray arriving at the eye, and adjusting
-		// it with respect to all of the rays emitted by a spherical emitter.
-		// However, for our point light approximation we're evaluating the luminous power arriving from a single ray
-		// (not integrated over a spherical emitter) so we normalize it over the solid angle by dividing by 4pi. Thus,
-		// the 4pi's cancel and we can ignore them here
-		const float luminousIntensity = luminousPower;
+		switch (lightType)
+		{
+		case fr::Light::Directional:
+		{
+			SEAssertF("Only punctual lights are (currently) supported");
+		}
+		break;
+		case fr::Light::Point:
+		{
+			return luminousPower / (4.f * glm::pi<float>());
+		}
+		break;
+		case fr::Light::Spot:
+		{
+			return luminousPower / glm::pi<float>();
+		}
+		break;
+		case fr::Light::AmbientIBL:
+		default: SEAssertF("Invalid light type")
+		}
+		return 0.f;
+	}
 
-		// In our point light shaders, we use Cem Yuksel's nonsingular point light attenuation function:
+
+	float ComputeLightRadiusFromLuminousPower(
+		fr::Light::Type lightType, float luminousPower, float emitterRadius, float intensityCutoff)
+	{
+		const float luminousIntensity = ConvertLuminousPowerToLuminousIntensity(lightType, luminousPower);
+
+		// In our light shaders, we use Cem Yuksel's nonsingular point light attenuation function:
 		// // http://www.cemyuksel.com/research/pointlightattenuation/
 		// In the limit over the distance d, it converges to 0 as per the standard 1/d^2 attenuation; In practice it
 		// approaches 1/d^2 very quickly. So, we use the simpler 1/d^2 attenuation here to approximate the ideal
@@ -34,7 +52,8 @@ namespace
 
 		const float minIntensityCutoff = std::max(intensityCutoff, 0.001f); // Guard against divide by 0
 
-		const float deferredMeshRadius = glm::sqrt((luminousIntensity / minIntensityCutoff) - equivalentConstantOffset);
+		const float deferredMeshRadius = glm::sqrt(std::max(FLT_MIN,
+			(luminousIntensity / minIntensityCutoff) - equivalentConstantOffset));
 
 		return deferredMeshRadius;
 	}
@@ -69,6 +88,14 @@ namespace fr
 		{
 			m_typeProperties.m_point.m_emitterRadius = 0.1f;
 			m_typeProperties.m_point.m_intensityCuttoff = 0.1f;
+		}
+		break;
+		case Spot:
+		{
+			m_typeProperties.m_spot.m_emitterRadius = 0.1f;
+			m_typeProperties.m_spot.m_intensityCuttoff = 0.1f;
+			m_typeProperties.m_spot.m_innerConeAngle = 0.f;
+			m_typeProperties.m_spot.m_outerConeAngle = glm::pi<float>() * 0.25f; // pi/4
 		}
 		break;
 		case AmbientIBL:
@@ -114,6 +141,11 @@ namespace fr
 			return m_typeProperties.m_point.m_colorIntensity;
 		}
 		break;
+		case Type::Spot:
+		{
+			return m_typeProperties.m_spot.m_colorIntensity;
+		}
+		break;
 		default:
 			SEAssertF("Invalid light type");
 		}
@@ -144,10 +176,20 @@ namespace fr
 		case Type::Point:
 		{
 			// Recompute the spherical radius
-			m_typeProperties.m_point.m_sphericalRadius = ComputePointLightRadiusFromIntensity(
+			m_typeProperties.m_point.m_sphericalRadius = ComputeLightRadiusFromLuminousPower(
+				m_typeProperties.m_type,
 				m_typeProperties.m_point.m_colorIntensity.a,
 				m_typeProperties.m_point.m_emitterRadius,
 				m_typeProperties.m_point.m_intensityCuttoff);
+		}
+		break;
+		case Type::Spot:
+		{
+			m_typeProperties.m_spot.m_coneHeight = ComputeLightRadiusFromLuminousPower(
+				m_typeProperties.m_type,
+				m_typeProperties.m_spot.m_colorIntensity.a,
+				m_typeProperties.m_spot.m_emitterRadius,
+				m_typeProperties.m_spot.m_intensityCuttoff);
 		}
 		break;
 		default:
@@ -177,11 +219,11 @@ namespace fr
 		case Type::Point:
 		{
 			m_typeProperties.m_point.m_colorIntensity = colorIntensity;
-
-			m_typeProperties.m_point.m_sphericalRadius = ComputePointLightRadiusFromIntensity(
-				m_typeProperties.m_point.m_colorIntensity.a,
-				m_typeProperties.m_point.m_emitterRadius,
-				m_typeProperties.m_point.m_intensityCuttoff);
+		}
+		break;
+		case Type::Spot:
+		{
+			m_typeProperties.m_spot.m_colorIntensity = colorIntensity;
 		}
 		break;
 		default:
@@ -227,6 +269,21 @@ namespace fr
 				static_cast<fr::Light::TypeProperties::PointProperties const*>(typeProperties);
 			
 			m_typeProperties.m_point = *properties;
+		}
+		break;
+		case fr::Light::Type::Spot:
+		{
+			fr::Light::TypeProperties::SpotProperties const* properties =
+				static_cast<fr::Light::TypeProperties::SpotProperties const*>(typeProperties);
+
+			SEAssert(properties->m_innerConeAngle >= 0 && properties->m_innerConeAngle < properties->m_outerConeAngle,
+				"Invalid inner cone angle. Must be greater than or equal to 0 and less than m_outerConeAngle");
+
+			SEAssert(properties->m_outerConeAngle > properties->m_innerConeAngle && 
+				properties->m_outerConeAngle <= glm::pi<float>() * 0.5f,
+				"Invalid outer cone angle. Must be greater than m_innerConeAngle and less than or equal to PI / 2");
+
+			m_typeProperties.m_spot = *properties;
 		}
 		break;
 		default: SEAssertF("Invalid type");
@@ -289,32 +346,6 @@ namespace fr
 			ShowDebugOptions();
 		};
 
-		auto ShowShadowMapMenu = [this, &uniqueID](fr::ShadowMap* shadowMap)
-		{
-			if (ImGui::CollapsingHeader(std::format("Shadow map##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				if (shadowMap)
-				{
-					shadowMap->ShowImGuiWindow(uniqueID);
-				}
-				else
-				{
-					ImGui::Text("<No Shadow>");
-				}
-				ImGui::Unindent();
-			}
-		};
-
-		auto ShowTransformMenu = [this, &uniqueID](fr::Transform* transform)
-		{
-			if (ImGui::CollapsingHeader(std::format("Transform##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				transform->ShowImGuiWindow();
-				ImGui::Unindent();
-			}
-		};
 
 		switch (m_typeProperties.m_type)
 		{
@@ -384,9 +415,6 @@ namespace fr
 		case Type::Directional:
 		{
 			ShowCommonOptions(&m_typeProperties.m_directional.m_colorIntensity);
-
-			//ShowShadowMapMenu(shadowMap);
-			//ShowTransformMenu(owningTransform);
 		}
 		break;
 		case Type::Point:
@@ -412,9 +440,50 @@ namespace fr
 
 			ImGui::Text(
 				std::format("Deferred mesh radius: {}##{}", m_typeProperties.m_point.m_sphericalRadius, uniqueID).c_str());
+		}
+		break;
+		case Type::Spot:
+		{
+			ShowCommonOptions(&m_typeProperties.m_spot.m_colorIntensity);
 
-			//ShowShadowMapMenu(shadowMap);
-			//ShowTransformMenu(owningTransform);
+			constexpr ImGuiSliderFlags k_flags =
+				ImGuiSliderFlags_::ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_NoRoundToFormat;
+
+			m_isDirty |= ImGui::SliderFloat(
+				std::format("Inner cone angle##{}", uniqueID).c_str(),
+				&m_typeProperties.m_spot.m_innerConeAngle,
+				0.f,
+				m_typeProperties.m_spot.m_outerConeAngle - FLT_MIN,
+				nullptr,
+				k_flags);
+
+			m_isDirty |= ImGui::SliderFloat(
+				std::format("Outer cone angle##{}", uniqueID).c_str(),
+				&m_typeProperties.m_spot.m_outerConeAngle,
+				m_typeProperties.m_spot.m_innerConeAngle + FLT_MIN,
+				glm::pi<float>() * 0.5f,
+				nullptr,
+				k_flags);
+
+			m_isDirty |= ImGui::SliderFloat(
+				std::format("Intensity cutoff##{}", uniqueID).c_str(),
+				&m_typeProperties.m_spot.m_intensityCuttoff, 0.0f, 1.f, "%.5f", ImGuiSliderFlags_None);
+
+			m_isDirty |= ImGui::SliderFloat(
+				std::format("Emitter Radius##{}", uniqueID).c_str(),
+				&m_typeProperties.m_spot.m_emitterRadius, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_None);
+			ImGui::SameLine();
+			ImGui::TextDisabled("(?)");
+			if (ImGui::BeginItemTooltip())
+			{
+				ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+				ImGui::TextUnformatted("Simulated emitter radius for calculating non-singular spot light attenuation");
+				ImGui::PopTextWrapPos();
+				ImGui::EndTooltip();
+			}
+
+			ImGui::Text(
+				std::format("Deferred mesh height: {}##{}", m_typeProperties.m_spot.m_coneHeight, uniqueID).c_str());
 		}
 		break;
 		default:

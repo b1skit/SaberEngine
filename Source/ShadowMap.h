@@ -14,7 +14,8 @@ namespace fr
 	public:
 		enum class ShadowType : uint8_t
 		{
-			Orthographic, // Single 2D texture
+			Orthographic,
+			Perspective,
 			CubeMap,
 
 			ShadowType_Count
@@ -92,6 +93,7 @@ namespace fr
 		switch (frShadowMapType)
 		{
 		case fr::ShadowMap::ShadowType::Orthographic: return gr::ShadowMap::ShadowType::Orthographic;
+		case fr::ShadowMap::ShadowType::Perspective: return gr::ShadowMap::ShadowType::Perspective;
 		case fr::ShadowMap::ShadowType::CubeMap: return gr::ShadowMap::ShadowType::CubeMap;
 		default: throw std::logic_error("Invalid light type");
 		}

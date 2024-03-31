@@ -6,6 +6,26 @@
 #include "Shadows.hlsli"
 
 
+
+// As per equation 64, section 5.2.2.2 of "Physically Based Rendering in Filament"
+// https://google.github.io/filament/Filament.md.html#lighting/directlighting/punctuallights
+float GetSpotlightAngleAttenuation(
+	float3 toLight, 
+	float3 lightWorldForwardDir, 
+	float innerConeAngle, 
+	float outerConeAngle, 
+	float cosOuterAngle, 
+	float scaleTerm,
+	float offsetTerm)
+{
+	const float cd = dot(-toLight, lightWorldForwardDir);
+	
+	float attenuation = saturate(cd * scaleTerm + offsetTerm);
+	
+	return attenuation * attenuation; // Smooths the resulting transition
+}
+
+
 float4 PShader(VertexOut In) : SV_Target
 {
 	const GBuffer gbuffer = UnpackGBuffer(In.Position.xy);
@@ -18,29 +38,40 @@ float4 PShader(VertexOut In) : SV_Target
 	const float3 lightWorldDir = normalize(lightWorldPos - worldPos);
 	
 	// Convert luminous power (phi) to luminous intensity (I):
-	const float luminousIntensity = LightParams.g_lightColorIntensity.a * M_1_4PI;
+	const float luminousIntensity = LightParams.g_lightColorIntensity.a * M_1_PI;
 	
 	const float emitterRadius = LightParams.g_lightWorldPosRadius.w;
-	const float attenuationFactor = ComputeNonSingularAttenuationFactor(worldPos, lightWorldPos, emitterRadius);
+	const float distanceAttenuation = ComputeNonSingularAttenuationFactor(worldPos, lightWorldPos, emitterRadius);
+	
+	const float angleAttenuation = GetSpotlightAngleAttenuation(
+		lightWorldDir,
+		LightParams.g_globalForwardDir.xyz,
+		LightParams.g_intensityScale.z,
+		LightParams.g_intensityScale.w,
+		LightParams.g_extraParams.x,
+		LightParams.g_extraParams.y,
+		LightParams.g_extraParams.z);
+	
+	const float combinedAttenuation = distanceAttenuation * angleAttenuation;
 	
 	const float2 shadowCamNearFar = LightParams.g_shadowCamNearFarBiasMinMax.xy;
 	const float2 minMaxShadowBias = LightParams.g_shadowCamNearFarBiasMinMax.zw;
-	const float cubeFaceDimension = LightParams.g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
+	const float2 invShadowMapWidthHeight = LightParams.g_shadowMapTexelSize.zw;
 	const float2 lightUVRadiusSize = LightParams.g_shadowParams.zw;
 	const float shadowQualityMode = LightParams.g_shadowParams.y;
 	
 	const bool shadowEnabled = LightParams.g_shadowParams.x > 0.f;
-	const float shadowFactor = shadowEnabled ? 
-		GetCubeShadowFactor(
-			worldPos, 
+	const float shadowFactor = shadowEnabled ?
+		Get2DShadowFactor(
+			worldPos,
 			gbuffer.WorldNormal,
-			lightWorldPos, 
-			lightWorldDir, 
-			shadowCamNearFar, 
+			lightWorldPos,
+			LightParams.g_shadowCam_VP,
+			shadowCamNearFar,
 			minMaxShadowBias,
 			shadowQualityMode,
 			lightUVRadiusSize,
-			cubeFaceDimension) : 1.f;
+			invShadowMapWidthHeight) : 1.f;
 	
 	const float NoL = saturate(dot(gbuffer.WorldNormal, lightWorldDir));
 	
@@ -59,7 +90,7 @@ float4 PShader(VertexOut In) : SV_Target
 	lightingParams.LightWorldDir = lightWorldDir;
 	lightingParams.LightColor = LightParams.g_lightColorIntensity.rgb;
 	lightingParams.LightIntensity = luminousIntensity;
-	lightingParams.LightAttenuationFactor = attenuationFactor;
+	lightingParams.LightAttenuationFactor = combinedAttenuation;
 	
 	lightingParams.ShadowFactor = shadowFactor;
 	

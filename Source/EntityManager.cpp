@@ -208,16 +208,18 @@ namespace fr
 			// ------------------------------------
 
 			// Transforms:
-			// Note: We only send Transforms associated with RenderDataComponents to the render thread
-			auto transformComponentsView = m_registry.view<fr::TransformComponent, gr::RenderDataComponent>();
-			for (auto entity : transformComponentsView)
+			auto transformCmptsView = m_registry.view<fr::TransformComponent>();
+			for (auto entity : transformCmptsView)
 			{
-				fr::TransformComponent& transformComponent = 
-					transformComponentsView.get<fr::TransformComponent>(entity);
+				fr::TransformComponent& transformComponent = transformCmptsView.get<fr::TransformComponent>(entity);
 
 				if (transformComponent.GetTransform().HasChanged())
 				{
-					renderManager->EnqueueRenderCommand<fr::UpdateTransformDataRenderCommand>(transformComponent);
+					// Note: We only send Transforms associated with RenderDataComponents to the render thread
+					if (HasComponent<gr::RenderDataComponent>(entity))
+					{
+						renderManager->EnqueueRenderCommand<fr::UpdateTransformDataRenderCommand>(transformComponent);
+					}
 
 					transformComponent.GetTransform().ClearHasChangedFlag();
 				}
@@ -826,6 +828,11 @@ namespace fr
 				m_registry.view<fr::LightComponent, fr::LightComponent::PointDeferredMarker, fr::TransformComponent>();
 			PunctualLightShadowUpdate(pointView);
 
+			// Spot lights:
+			auto const& spotView =
+				m_registry.view<fr::LightComponent, fr::LightComponent::SpotDeferredMarker, fr::TransformComponent>();
+			PunctualLightShadowUpdate(spotView);
+
 			// Directional lights:
 			auto const& directionalView =
 				m_registry.view<fr::LightComponent, fr::LightComponent::DirectionalDeferredMarker, fr::TransformComponent>();
@@ -871,7 +878,7 @@ namespace fr
 				fr::Camera& camera = cameraComponent.GetCameraForModification();
 				if (camera.IsDirty() || camera.GetTransform()->HasChanged())
 				{
-					m_registry.emplace_or_replace<DirtyMarker<fr::CameraComponent>>(entity);
+					cameraComponent.MarkDirty(*this, entity);
 					camera.MarkClean();
 				}
 			}
@@ -1050,6 +1057,17 @@ namespace fr
 				ImGui::Indent();
 				auto pointLightView = m_registry.view<fr::LightComponent, fr::LightComponent::PointDeferredMarker>();
 				for (entt::entity entity : pointLightView)
+				{
+					fr::LightComponent::ShowImGuiWindow(*this, entity);
+				}
+				ImGui::Unindent();
+			}
+
+			if (ImGui::CollapsingHeader("Spot Lights", ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+				auto spotLightView = m_registry.view<fr::LightComponent, fr::LightComponent::SpotDeferredMarker>();
+				for (entt::entity entity : spotLightView)
 				{
 					fr::LightComponent::ShowImGuiWindow(*this, entity);
 				}

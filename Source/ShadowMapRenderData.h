@@ -12,7 +12,8 @@ namespace gr
 	public:
 		enum class ShadowType : uint8_t
 		{
-			Orthographic, // Single 2D texture
+			Orthographic,
+			Perspective,
 			CubeMap,
 
 			ShadowType_Count

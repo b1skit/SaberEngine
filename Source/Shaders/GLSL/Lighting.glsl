@@ -6,6 +6,20 @@
 #include "SaberCommon.glsl"
 
 
+// As per Cem Yuksel's nonsingular point light attenuation function:
+// http://www.cemyuksel.com/research/pointlightattenuation/
+float ComputeNonSingularAttenuationFactor(vec3 worldPos, vec3 lightPos, float emitterRadius)
+{
+	const float r2 = emitterRadius * emitterRadius;
+
+	const float lightDistance = length(worldPos - lightPos);
+	const float d2 = lightDistance * lightDistance;
+	
+	const float attenuation = 2.f / (d2 + r2 + (lightDistance * sqrt(d2 + r2)));
+	
+	return attenuation;
+}
+
 
 // Map linear roughness to "perceptually linear" roughness. 
 // Perceptually linear roughness results in a linear-appearing transition from smooth to rough surfaces.

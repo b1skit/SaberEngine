@@ -13,11 +13,21 @@ namespace fr
 			AmbientIBL,
 			Directional,
 			Point,
+			Spot,
 
 			Type_Count
 		};
 		static_assert(static_cast<uint8_t>(fr::Light::Type::Type_Count) ==
 			static_cast<uint8_t>(gr::Light::Type::Type_Count));
+
+		static constexpr std::array<char const*, fr::Light::Type::Type_Count> k_lightTypeNames = {
+			"Ambient Light",
+			"Directional Light",
+			"Point Light",
+			"Spot Light",
+		};
+		static_assert(k_lightTypeNames.size() == fr::Light::Type::Type_Count);
+
 
 		static constexpr gr::Light::Type ConvertToGrLightType(fr::Light::Type);
 
@@ -55,18 +65,28 @@ namespace fr
 				float m_diffuseScale;
 				float m_specularScale;
 			};
+
 			struct DirectionalProperties
 			{
-				// Note: Directional lights shine forward (Z+)									
-				glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
+				glm::vec4 m_colorIntensity; // .rgb = hue, .a = luminous power (phi)
 			};
 			struct PointProperties
 			{
-				glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
+				glm::vec4 m_colorIntensity; // .rgb = hue, .a = luminous power (phi)
 				float m_emitterRadius; // For non-singular attenuation function
-				float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
+				float m_intensityCuttoff; // Intensity value at which the light's contribution is considered to be 0
 
 				float m_sphericalRadius; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
+			};
+			struct SpotProperties
+			{
+				glm::vec4 m_colorIntensity; // .rgb = hue, .a = luminous power (phi)
+				float m_emitterRadius; // For non-singular attenuation function
+				float m_intensityCuttoff; // Intensity value at which the light's contribution is considered to be 0
+				
+				float m_innerConeAngle; // Radians: Angle from the center of the light where falloff begins
+				float m_outerConeAngle;
+				float m_coneHeight; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
 			};
 
 			Type m_type;
@@ -75,6 +95,7 @@ namespace fr
 				AmbientProperties m_ambient;
 				DirectionalProperties m_directional;
 				PointProperties m_point;
+				SpotProperties m_spot;
 			};
 
 			// Debug params:
@@ -108,6 +129,7 @@ namespace fr
 		case fr::Light::Type::AmbientIBL: return gr::Light::Type::AmbientIBL;
 		case fr::Light::Type::Directional: return gr::Light::Type::Directional;
 		case fr::Light::Type::Point: return gr::Light::Type::Point;
+		case fr::Light::Type::Spot: return gr::Light::Type::Spot;
 		default: throw std::logic_error("Invalid light type");
 		}
 		return gr::Light::Type::Type_Count;

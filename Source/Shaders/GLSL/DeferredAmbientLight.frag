@@ -4,7 +4,7 @@
 #define READ_GBUFFER
 
 #include "SaberCommon.glsl"
-#include "SaberLighting.glsl"
+#include "Lighting.glsl"
 #include "Transformations.glsl"
 #include "GBufferCommon.glsl"
 #include "UVUtils.glsl"
@@ -138,7 +138,7 @@ vec3 GetSpecularIBLContribution(
 
 void main()
 {	
-	const GBuffer gbuffer = UnpackGBuffer(vOut.uv0.xy);
+	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
 
 	// Reconstruct the world position:
 	const vec4 worldPos = vec4(GetWorldPos(vOut.uv0.xy, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection), 1.f);

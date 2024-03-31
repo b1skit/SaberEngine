@@ -12,6 +12,7 @@ namespace
 		{
 		case fr::Light::Type::Directional: return fr::ShadowMap::ShadowType::Orthographic;
 		case fr::Light::Type::Point: return fr::ShadowMap::ShadowType::CubeMap;
+		case fr::Light::Type::Spot: return fr::ShadowMap::ShadowType::Perspective;
 		case fr::Light::Type::AmbientIBL:
 		default:
 			SEAssertF("Invalid or unsupported light type for shadow map");
@@ -31,20 +32,9 @@ namespace fr
 		, m_isEnabled(true)
 		, m_isDirty(true)
 	{
-		switch (m_shadowType)
+		switch (lightType)
 		{
-		case ShadowType::CubeMap:
-		{
-			m_shadowQuality = ShadowQuality::PCSS_HIGH;
-
-			m_minMaxShadowBias = glm::vec2(
-				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
-				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias));
-
-			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightShadowSoftness);
-		}
-		break;
-		case ShadowType::Orthographic:
+		case fr::Light::Type::Directional:
 		{
 			m_shadowQuality = ShadowQuality::PCSS_HIGH;
 
@@ -55,7 +45,30 @@ namespace fr
 			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightShadowSoftness);
 		}
 		break;
-		default: SEAssertF("Invalid ShadowType");
+		case fr::Light::Type::Spot:
+		{
+			m_shadowQuality = ShadowQuality::PCSS_HIGH;
+
+			m_minMaxShadowBias = glm::vec2(
+				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMinShadowBias),
+				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMaxShadowBias));
+
+			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightShadowSoftness);
+		}
+		break;
+		case fr::Light::Type::Point:
+		{
+			m_shadowQuality = ShadowQuality::PCSS_HIGH;
+
+			m_minMaxShadowBias = glm::vec2(
+				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
+				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias));
+
+			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightShadowSoftness);
+		}
+		break;
+		case fr::Light::Type::AmbientIBL:
+		default: SEAssertF("Invalid light type");
 		}
 	}
 
@@ -110,6 +123,13 @@ namespace fr
 				m_minMaxShadowBias = glm::vec2(
 					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
 					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias));
+			}
+			break;
+			case fr::Light::Type::Spot:
+			{
+				m_minMaxShadowBias = glm::vec2(
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMinShadowBias),
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMaxShadowBias));
 			}
 			break;
 			default: SEAssertF("Invalid/unsupported light type");

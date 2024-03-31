@@ -22,7 +22,7 @@ namespace gr
 
 			GBufferTexIdx_Count
 		};
-		static const std::array<std::string, GBufferTexIdx_Count> GBufferTexNames;
+		static const std::array<char const*, GBufferTexIdx_Count> GBufferTexNames;
 
 
 	public:

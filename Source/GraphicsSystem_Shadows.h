@@ -23,39 +23,43 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::RenderStage> CreateRegisterDirectionalShadowStage(
-			gr::RenderDataID, gr::ShadowMap::RenderData const&, gr::Camera::RenderData const&);
-
-		std::shared_ptr<re::RenderStage> CreateRegisterPointShadowStage(
-			gr::RenderDataID, 
-			gr::ShadowMap::RenderData const&, 
-			gr::Transform::RenderData const&, 
-			gr::Camera::RenderData const&);
-
 		void CreateBatches() override;
 
 
 	private:
-		struct DirectionalShadowStageData
+		struct ShadowStageData
 		{
 			std::shared_ptr<re::RenderStage> m_renderStage;
 			std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
 			std::shared_ptr<re::Buffer> m_shadowCamParamBlock;
 		};
-		std::unordered_map<gr::RenderDataID, DirectionalShadowStageData> m_directionalShadowStageData;
 
-		struct PointShadowStageData
-		{
-			std::shared_ptr<re::RenderStage> m_renderStage;
-			std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
-			std::shared_ptr<re::Buffer> m_cubemapShadowParamBlock;
-		};
-		std::unordered_map<gr::RenderDataID, PointShadowStageData> m_pointShadowStageData;
+		std::unordered_map<gr::RenderDataID, ShadowStageData> m_directionalShadowStageData;
+		std::unordered_map<gr::RenderDataID, ShadowStageData> m_pointShadowStageData;
+		std::unordered_map<gr::RenderDataID, ShadowStageData> m_spotShadowStageData;
 
+
+		void CreateRegister2DShadowStage(
+			std::unordered_map<gr::RenderDataID, ShadowStageData>& dstStageData,
+			gr::RenderDataID,
+			gr::ShadowMap::RenderData const&,
+			gr::Camera::RenderData const&);
+
+
+		void CreateRegisterCubeShadowStage(
+			std::unordered_map<gr::RenderDataID, ShadowStageData>& dstStageData,
+			gr::RenderDataID,
+			gr::ShadowMap::RenderData const&,
+			gr::Transform::RenderData const&,
+			gr::Camera::RenderData const&);
+		
+
+	private:
 		// Pipeline:
 		re::StagePipeline* m_stagePipeline;
 		re::StagePipeline::StagePipelineItr m_directionalParentStageItr;
 		re::StagePipeline::StagePipelineItr m_pointParentStageItr;
+		re::StagePipeline::StagePipelineItr m_spotParentStageItr;
 	};
 
 

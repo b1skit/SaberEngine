@@ -236,7 +236,6 @@ namespace
 	
 	std::unique_ptr<re::Batch> BuildCameraFrustumBatch(
 		re::Batch::Lifetime batchLifetime,
-		gr::Camera::RenderData const* camData,
 		gr::Transform::RenderData const* transformData,
 		glm::vec3 const& frustumColor)
 	{
@@ -739,7 +738,6 @@ namespace gr
 					{
 						m_cameraFrustumBatches.at(camID)[faceIdx] = std::move(BuildCameraFrustumBatch(
 							re::Batch::Lifetime::Permanent,
-							camData.second.first,
 							camData.second.second,
 							m_cameraFrustumColor));
 
@@ -768,8 +766,6 @@ namespace gr
 				const gr::RenderDataID pointID = pointItr.GetRenderDataID();
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointID))
 				{
-					gr::Light::RenderDataPoint const& pointData =
-						pointItr.Get<gr::Light::RenderDataPoint>();
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 					glm::mat4 const& lightTRS = transformData.g_model;
 
@@ -802,6 +798,47 @@ namespace gr
 				}
 
 				++pointItr;
+			}
+
+			auto spotItr = renderData.ObjectBegin<gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>();
+			auto const& spotItrEnd = renderData.ObjectEnd<gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>();
+			while (spotItr != spotItrEnd)
+			{
+				const gr::RenderDataID spotID = spotItr.GetRenderDataID();
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(spotID))
+				{
+					gr::Transform::RenderData const& transformData = spotItr.GetTransformData();
+					glm::mat4 const& lightTRS = transformData.g_model;
+
+					if (!m_deferredLightWireframeTransformBuffers.contains(spotID))
+					{
+						m_deferredLightWireframeTransformBuffers.emplace(
+							spotID,
+							gr::Transform::CreateInstancedTransformBuffer(
+								re::Buffer::Type::Mutable, &lightTRS, nullptr));
+					}
+					else
+					{
+						m_deferredLightWireframeTransformBuffers.at(spotID)->Commit(
+							gr::Transform::CreateInstancedTransformData(&lightTRS, nullptr));
+					}
+
+					if (!m_deferredLightWireframeBatches.contains(spotID))
+					{
+						gr::MeshPrimitive::RenderData const& meshPrimData = spotItr.Get<gr::MeshPrimitive::RenderData>();
+
+						m_deferredLightWireframeBatches.emplace(
+							spotID,
+							BuildWireframeBatch(
+								re::Batch::Lifetime::Permanent, meshPrimData, m_deferredLightwireframeColor));
+
+						m_deferredLightWireframeBatches.at(spotID)->SetBuffer(
+							m_deferredLightWireframeTransformBuffers.at(spotID));
+					}
+					m_debugStage->AddBatch(*m_deferredLightWireframeBatches.at(spotID));
+				}
+
+				++spotItr;
 			}
 		}
 		else
@@ -887,6 +924,25 @@ namespace gr
 				}
 
 				++pointItr;
+			}
+
+			auto spotItr = renderData.ObjectBegin<gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>();
+			auto const& spotItrEnd = renderData.ObjectEnd<gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>();
+			while (spotItr != spotItrEnd)
+			{
+				const gr::RenderDataID lightID = spotItr.GetRenderDataID();
+
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(lightID))
+				{
+					gr::Transform::RenderData const& transformData = spotItr.GetTransformData();
+
+					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
+					BuildLightAxisBatch(lightID, transformData);
+
+					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
+				}
+
+				++spotItr;
 			}
 		}
 		else
