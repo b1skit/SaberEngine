@@ -870,39 +870,42 @@ namespace gr::meshfactory
 		
 		// Soft normals:
 		
-		// Top vertices:
-		for (uint32_t vertIdx = 0; vertIdx < numTopVerts; vertIdx++)
+		if (factoryOptions.m_generateNormalsAndTangents)
 		{
-			const uint32_t topVertIdx = firstTopVertIdx + vertIdx;
-			const uint32_t blVertIdx = firstSideEdgeVertIdx + vertIdx;
-			const uint32_t brVertIdx = blVertIdx + 1;
+			// Top vertices:
+			for (uint32_t vertIdx = 0; vertIdx < numTopVerts; vertIdx++)
+			{
+				const uint32_t topVertIdx = firstTopVertIdx + vertIdx;
+				const uint32_t blVertIdx = firstSideEdgeVertIdx + vertIdx;
+				const uint32_t brVertIdx = blVertIdx + 1;
 
-			const glm::vec3 tangentX = positions[brVertIdx] - positions[blVertIdx];
-			const glm::vec3 bitangentY = positions[topVertIdx] - positions[blVertIdx];
+				const glm::vec3 tangentX = positions[brVertIdx] - positions[blVertIdx];
+				const glm::vec3 bitangentY = positions[topVertIdx] - positions[blVertIdx];
 
-			normals[topVertIdx] = glm::normalize(glm::cross(tangentX, bitangentY));
-		}
+				normals[topVertIdx] = glm::normalize(glm::cross(tangentX, bitangentY));
+			}
 
-		// Side edge normals:
-		uint32_t leftTopVertIdx = lastTopVertIdx;
-		uint32_t rightTopVertIdx = firstTopVertIdx;
-		for (uint32_t vertIdx = 0; vertIdx < numSideEdgeVerts; vertIdx++)
-		{
-			const uint32_t normalIdx = firstSideEdgeVertIdx + vertIdx;
+			// Side edge normals:
+			uint32_t leftTopVertIdx = lastTopVertIdx;
+			uint32_t rightTopVertIdx = firstTopVertIdx;
+			for (uint32_t vertIdx = 0; vertIdx < numSideEdgeVerts; vertIdx++)
+			{
+				const uint32_t normalIdx = firstSideEdgeVertIdx + vertIdx;
 
-			normals[normalIdx] = glm::normalize((normals[leftTopVertIdx] + normals[rightTopVertIdx]) * 0.5f);
+				normals[normalIdx] = glm::normalize((normals[leftTopVertIdx] + normals[rightTopVertIdx]) * 0.5f);
 
-			leftTopVertIdx = (leftTopVertIdx + 1) % numTopVerts;
-			rightTopVertIdx = (rightTopVertIdx + 1) % numTopVerts;
-		}
+				leftTopVertIdx = (leftTopVertIdx + 1) % numTopVerts;
+				rightTopVertIdx = (rightTopVertIdx + 1) % numTopVerts;
+			}
 
-		// Bottom vertex normals:
-		const glm::vec3 bottomNormal = glm::vec3(0.f, -1.f, 0.f);
-		normals[bottomVertIdx] = bottomNormal;
-		for (uint32_t vertIdx = 0; vertIdx < numBottomEdgeVerts; vertIdx++)
-		{
-			const uint32_t botVertIdx = firstBottomEdgeVertIdx + vertIdx;
-			normals[botVertIdx] = bottomNormal;
+			// Bottom vertex normals:
+			const glm::vec3 bottomNormal = glm::vec3(0.f, -1.f, 0.f);
+			normals[bottomVertIdx] = bottomNormal;
+			for (uint32_t vertIdx = 0; vertIdx < numBottomEdgeVerts; vertIdx++)
+			{
+				const uint32_t botVertIdx = firstBottomEdgeVertIdx + vertIdx;
+				normals[botVertIdx] = bottomNormal;
+			}
 		}
 
 		// Apply the orientation before we generate any additional parameters:
@@ -920,7 +923,7 @@ namespace gr::meshfactory
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &indices,
 			.m_positions = &positions,
-			.m_normals = &normals,
+			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
 			.m_colors = factoryOptions.m_generateVertexColors ? &colors : nullptr,
