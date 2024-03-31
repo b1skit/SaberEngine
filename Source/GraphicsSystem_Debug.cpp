@@ -341,7 +341,7 @@ namespace
 		re::Batch::GraphicsParams wireframeBatchGraphicsParams{};
 		wireframeBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
 		wireframeBatchGraphicsParams.m_numInstances = 1;
-		wireframeBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::LineList;
+		wireframeBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::TriangleList;
 
 		wireframeBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = positionStream;
 		wireframeBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
@@ -361,7 +361,8 @@ namespace gr
 		, NamedObject(k_gsName)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_debugStage = re::RenderStage::CreateGraphicsStage("Debug stage", gfxStageParams);
+		m_debugLineStage = re::RenderStage::CreateGraphicsStage("Debug line stage", gfxStageParams);
+		m_debugTriangleStage = re::RenderStage::CreateGraphicsStage("Debug triangle stage", gfxStageParams);
 	}
 
 
@@ -371,18 +372,33 @@ namespace gr
 		debugPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
 		debugPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
-		m_debugStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
-
+		// Line topology stage:
+		m_debugLineStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
+		
 		re::PipelineState debugLinePipelineState;
 		debugLinePipelineState.SetTopologyType(re::PipelineState::TopologyType::Line);
 		debugLinePipelineState.SetFillMode(re::PipelineState::FillMode::Wireframe);
 		debugLinePipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
 		debugLinePipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-		m_debugStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_lineShaderName, debugLinePipelineState));
+		m_debugLineStage->SetStageShader(
+			re::Shader::GetOrCreate(en::ShaderNames::k_lineShaderName, debugLinePipelineState));
 
-		m_debugStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
+		m_debugLineStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
-		stagePipeline.AppendRenderStage(m_debugStage);
+		stagePipeline.AppendRenderStage(m_debugLineStage);
+		
+		// Triangle topology stage:
+		m_debugTriangleStage->SetTextureTargetSet(nullptr);
+
+		re::PipelineState debugTrianglePipelineState = debugLinePipelineState;
+		debugTrianglePipelineState.SetTopologyType(re::PipelineState::TopologyType::Triangle);
+
+		m_debugTriangleStage->SetStageShader(
+			re::Shader::GetOrCreate(en::ShaderNames::k_lineShaderName, debugTrianglePipelineState));
+
+		m_debugTriangleStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
+
+		stagePipeline.AppendRenderStage(m_debugTriangleStage);
 	}
 
 
@@ -414,7 +430,7 @@ namespace gr
 				m_worldCoordinateAxisBatch->SetBuffer(identityTransformBuffer);
 			}
 
-			m_debugStage->AddBatch(*m_worldCoordinateAxisBatch);
+			m_debugLineStage->AddBatch(*m_worldCoordinateAxisBatch);
 		}
 		else
 		{
@@ -480,7 +496,7 @@ namespace gr
 
 								m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 							}
-							m_debugStage->AddBatch(*m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID));
+							m_debugLineStage->AddBatch(*m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID));
 						}
 
 						if (m_showAllVertexNormals)
@@ -503,7 +519,7 @@ namespace gr
 									m_vertexNormalBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 								}
 							}
-							m_debugStage->AddBatch(*m_vertexNormalBatches.at(meshPrimRenderDataID));
+							m_debugLineStage->AddBatch(*m_vertexNormalBatches.at(meshPrimRenderDataID));
 						}
 
 						if (m_showAllWireframe)
@@ -517,7 +533,7 @@ namespace gr
 
 								m_wireframeBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 							}
-							m_debugStage->AddBatch(*m_wireframeBatches.at(meshPrimRenderDataID));
+							m_debugTriangleStage->AddBatch(*m_wireframeBatches.at(meshPrimRenderDataID));
 						}
 					}
 
@@ -538,7 +554,7 @@ namespace gr
 							m_meshCoordinateAxisBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 						}
 
-						m_debugStage->AddBatch(*m_meshCoordinateAxisBatches.at(meshPrimRenderDataID));
+						m_debugLineStage->AddBatch(*m_meshCoordinateAxisBatches.at(meshPrimRenderDataID));
 					}
 				}
 				++meshPrimItr;
@@ -591,7 +607,7 @@ namespace gr
 								m_meshBoundingBoxBuffers.at(meshID));
 						}
 
-						m_debugStage->AddBatch(*m_meshBoundingBoxBatches.at(meshID));
+						m_debugLineStage->AddBatch(*m_meshBoundingBoxBatches.at(meshID));
 					}
 				}
 				++boundsItr;
@@ -627,7 +643,7 @@ namespace gr
 						m_sceneBoundsBatch->SetBuffer(m_sceneBoundsTransformBuffer);
 					}
 					
-					m_debugStage->AddBatch(*m_sceneBoundsBatch);
+					m_debugLineStage->AddBatch(*m_sceneBoundsBatch);
 				}
 				++boundsItr;
 			}
@@ -678,7 +694,7 @@ namespace gr
 
 					m_cameraAxisBatches.at(camID)->SetBuffer(m_cameraAxisTransformBuffers.at(camID));
 				}
-				m_debugStage->AddBatch(*m_cameraAxisBatches.at(camID));
+				m_debugLineStage->AddBatch(*m_cameraAxisBatches.at(camID));
 
 
 				// Camera frustums:
@@ -745,7 +761,7 @@ namespace gr
 							m_cameraFrustumTransformBuffers.at(camID)[faceIdx]);
 					}
 
-					m_debugStage->AddBatch(*m_cameraFrustumBatches.at(camID)[faceIdx]);
+					m_debugLineStage->AddBatch(*m_cameraFrustumBatches.at(camID)[faceIdx]);
 				}
 			}
 		}
@@ -794,7 +810,7 @@ namespace gr
 						m_deferredLightWireframeBatches.at(pointID)->SetBuffer(
 							m_deferredLightWireframeTransformBuffers.at(pointID));
 					}
-					m_debugStage->AddBatch(*m_deferredLightWireframeBatches.at(pointID));
+					m_debugTriangleStage->AddBatch(*m_deferredLightWireframeBatches.at(pointID));
 				}
 
 				++pointItr;
@@ -835,7 +851,7 @@ namespace gr
 						m_deferredLightWireframeBatches.at(spotID)->SetBuffer(
 							m_deferredLightWireframeTransformBuffers.at(spotID));
 					}
-					m_debugStage->AddBatch(*m_deferredLightWireframeBatches.at(spotID));
+					m_debugTriangleStage->AddBatch(*m_deferredLightWireframeBatches.at(spotID));
 				}
 
 				++spotItr;
@@ -901,7 +917,7 @@ namespace gr
 					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
-					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
+					m_debugLineStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
 
 				++directionalItr;
@@ -920,7 +936,7 @@ namespace gr
 					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
-					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
+					m_debugLineStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
 
 				++pointItr;
@@ -939,7 +955,7 @@ namespace gr
 					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
-					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
+					m_debugLineStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
 
 				++spotItr;

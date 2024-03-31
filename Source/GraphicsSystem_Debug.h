@@ -26,7 +26,8 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::RenderStage> m_debugStage;
+		std::shared_ptr<re::RenderStage> m_debugLineStage;
+		std::shared_ptr<re::RenderStage> m_debugTriangleStage;
 
 		// Colors for any/all coordinate axis
 		glm::vec3 m_xAxisColor = glm::vec3(1.f, 0.f, 0.f);
@@ -91,7 +92,7 @@ namespace gr
 
 	inline std::shared_ptr<re::TextureTargetSet const> DebugGraphicsSystem::GetFinalTextureTargetSet() const
 	{
-		return m_debugStage->GetTextureTargetSet();
+		return m_debugLineStage->GetTextureTargetSet();
 	}
 }
 
