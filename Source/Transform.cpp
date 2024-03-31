@@ -43,6 +43,50 @@ namespace fr
 	}
 
 
+	Transform::~Transform()
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+
+		if (m_parent)
+		{
+			m_parent->UnregisterChild(this);
+		}
+		if (!m_children.empty())
+		{
+			for (fr::Transform* child : m_children)
+			{
+				child->SetParent(nullptr);
+			}
+		}
+	}
+
+
+	Transform::Transform(Transform&& rhs)
+		: m_parent(nullptr)
+		, m_transformID(rhs.m_transformID)
+	{
+		std::scoped_lock lock(m_transformMutex, rhs.m_transformMutex);
+
+		Transform* rhsParent = rhs.m_parent;
+		rhs.SetParent(nullptr);
+		SetParent(rhsParent);
+
+		for (Transform* rhsChild : rhs.m_children)
+		{
+			rhsChild->SetParent(this);
+		}
+
+		m_localPosition = rhs.m_localPosition;
+		m_localRotationQuat = rhs.m_localRotationQuat;
+		m_localScale = rhs.m_localScale;
+
+		m_localMat = rhs.m_localMat;
+
+		m_isDirty = true;
+		m_hasChanged = true;
+	}
+
+
 	glm::mat4 Transform::GetGlobalMatrix()
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);

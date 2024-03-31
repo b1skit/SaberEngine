@@ -26,10 +26,8 @@ namespace fr
 	public:
 		explicit Transform(Transform* parent);
 		
-		~Transform() = default;
-		Transform(Transform const&) = default;
-		Transform(Transform&&) = default;
-		Transform& operator=(Transform const&) = default;
+		Transform(Transform&&);
+		~Transform();
 		
 		// Hierarchical relationships:
 		Transform* GetParent() const;
@@ -134,6 +132,10 @@ namespace fr
 
 	private:
 		Transform() = delete;
+		Transform(Transform const&) = delete;
+		Transform& operator=(Transform const&) = delete;
+		Transform& operator=(Transform&&) = delete;
+
 
 	private: // Static TransformID functionality:
 		static std::atomic<gr::TransformID> s_transformIDs;
