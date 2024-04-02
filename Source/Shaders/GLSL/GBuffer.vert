@@ -7,8 +7,8 @@
 
 void main()
 {
-	const uint transformIdx = _InstanceIndexParams[gl_InstanceID].g_transformIdx;
-	const uint materialIdx = _InstanceIndexParams[gl_InstanceID].g_materialIdx;
+	const uint transformIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_transformIdx;
+	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_materialIdx;
 
 	const vec4 worldPos = _InstancedTransformParams[transformIdx].g_model * vec4(in_position.xyz, 1.0);
 	gl_Position = _CameraParams.g_viewProjection * worldPos;

@@ -6,7 +6,7 @@
 
 void main()
 {
-	const uint transformIdx = _InstanceIndexParams[gl_InstanceID].g_transformIdx;
+	const uint transformIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_transformIdx;
 
 	gl_Position = _InstancedTransformParams[transformIdx].g_model * vec4(in_position.xyz, 1.0);
 }

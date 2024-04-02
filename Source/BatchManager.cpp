@@ -18,24 +18,34 @@ namespace
 	constexpr uint32_t k_numBlocksPerAllocation = 64;
 
 
-	InstanceIndexData CreateInstanceIndexData(uint32_t transformIdx, uint32_t materialIdx)
+	InstanceIndices CreateInstanceIndicesEntry(uint32_t transformIdx, uint32_t materialIdx)
 	{
-		return InstanceIndexData
+		return InstanceIndices
 		{
 			.g_transformIdx = transformIdx,
-			.g_materialIdx = materialIdx
+			.g_materialIdx = materialIdx,
+			
+			._padding = glm::uvec2(0)
 		};
 	}
 
 
 	std::shared_ptr<re::Buffer> CreateInstanceIndexBuffer(
 		re::Buffer::Type bufferType,
-		std::vector<InstanceIndexData> const& instanceIndexParams)
+		std::vector<InstanceIndices> const& instanceIndices)
 	{
-		return re::Buffer::CreateArray(
+		SEAssert(instanceIndices.size() < InstanceIndexData::k_maxInstances,
+			"Too many instances, consider increasing INSTANCE_ARRAY_SIZE/k_maxInstances");
+
+		InstanceIndexData instanceIndexBufferData{};
+
+		memcpy(&instanceIndexBufferData.g_instanceIndices,
+			instanceIndices.data(), 
+			sizeof(InstanceIndices) * instanceIndices.size());
+
+		return re::Buffer::Create(
 			InstanceIndexData::s_shaderName,
-			instanceIndexParams.data(),
-			util::CheckedCast<uint32_t>(instanceIndexParams.size()),
+			instanceIndexBufferData,
 			bufferType);
 	}
 
@@ -406,8 +416,8 @@ namespace gr
 				batches.back().SetInstanceCount(numInstances);
 
 				// Gather the data we need to build our instanced buffers:
-				std::vector<InstanceIndexData> instanceIndexParams;
-				instanceIndexParams.reserve(numInstances);
+				std::vector<InstanceIndices> instanceIndices;
+				instanceIndices.reserve(numInstances);
 
 				for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
 				{
@@ -424,14 +434,13 @@ namespace gr
 					const uint32_t materialIdx = 
 						m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx].m_renderDataID).m_index;
 
-					instanceIndexParams.emplace_back(CreateInstanceIndexData(transformIdx, materialIdx));
+					instanceIndices.emplace_back(CreateInstanceIndicesEntry(transformIdx, materialIdx));
 				}
 
 				// Finally, attach our instanced buffers:
 				if (bufferTypeMask != 0)
 				{
-					batches.back().SetBuffer(CreateInstanceIndexBuffer(
-						re::Buffer::Type::SingleFrame, instanceIndexParams));
+					batches.back().SetBuffer(CreateInstanceIndexBuffer(re::Buffer::Type::SingleFrame, instanceIndices));
 
 					if (bufferTypeMask & InstanceType::Transform)
 					{
@@ -442,7 +451,6 @@ namespace gr
 						batches.back().SetBuffer(m_instancedMaterials);
 					}
 				}
-
 
 			} while (unmergedIdx < batchMetadata.size());
 		}

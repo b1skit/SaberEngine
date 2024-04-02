@@ -130,8 +130,9 @@ layout(binding=13) uniform samplerCubeShadow CubeDepth;
 // Note: OpenGL gives very strange, nonsensical compile errors if the members of our uniform blocks are structs, and
 // their names are capitalized (but only with some letters!). Totally puzzling - but the '_' prefix is preferred anyway
 
+layout(std430, binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
+
 // UBOs can't have a dynamic length; We use SSBOs for instancing instead
-layout(std430, binding=0) readonly buffer InstanceIndexParams {	InstanceIndexData _InstanceIndexParams[]; };
 layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformData _InstancedTransformParams[]; };
 layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	InstancedPBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
 

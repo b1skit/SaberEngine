@@ -15,7 +15,7 @@ layout (location = 4) out vec4 MatProp0Vn;
 
 void main()
 {
-	const uint materialIdx = _InstanceIndexParams[InstanceID].g_materialIdx;
+	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[InstanceID].g_materialIdx;
 
 	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
 	// g_baseColorFactor and vOut.Color are factored into the albedo as per the GLTF 2.0 specifications

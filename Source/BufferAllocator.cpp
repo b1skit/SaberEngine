@@ -915,8 +915,7 @@ namespace re
 	}
 
 
-	uint32_t BufferAllocator::AdvanceBaseIdx(
-		re::Buffer::DataType dataType, uint32_t alignedSize)
+	uint32_t BufferAllocator::AdvanceBaseIdx(re::Buffer::DataType dataType, uint32_t alignedSize)
 	{
 		// Atomically advance the stack base index for the next call, and return the base index for the current one
 		const uint32_t allocationBaseIdx = m_bufferBaseIndexes[dataType].fetch_add(alignedSize);

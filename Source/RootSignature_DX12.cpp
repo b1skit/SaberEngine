@@ -417,10 +417,6 @@ namespace dx12
 								.m_type = RootParameter::Type::CBV,
 								.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
 								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space)});
-
-						// TODO: Test this
-						SEAssert(inputBindingDesc.BindCount == 1,
-							"TODO: Is this how we can tell if there is an array of CBVs? Need to test this");
 					}
 					else
 					{

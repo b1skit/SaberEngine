@@ -61,13 +61,15 @@ struct VertexOut
 #endif
 };
 
+
+// If a resource is used in multiple shader stages, we need to explicitely specify the register and space. Otherwise,
+// shader reflection will assign the resource different registers for each stage (while SE expects them to be consistent)
+
+ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space0);
+
 // Note: Aim for StructuredBuffers with sizes divisible by 128 bits = 16 bytes = sizeof(float4)
-
-
-StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space0); // Indexed by instance ID
-StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t1, space0); // Indexed by instance ID
-
-StructuredBuffer<InstancedPBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t2, space0);
+StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t9, space0); // Indexed by instance ID
+StructuredBuffer<InstancedPBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t1, space0);
 
 
 Texture2D<float4> MatAlbedo;

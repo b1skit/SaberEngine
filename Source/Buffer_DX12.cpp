@@ -158,8 +158,6 @@ namespace dx12
 			// Debug names:
 			std::wstring const& debugName = buffer.GetWName() + L"_Immutable";;
 			params->m_resource->SetName(debugName.c_str());
-
-			
 		}
 		break;
 		case re::Buffer::Type::SingleFrame:

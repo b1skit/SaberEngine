@@ -25,7 +25,7 @@ GBufferOut PShader(VertexOut In)
 	const float4 matAlbedo = MatAlbedo.Sample(WrapAnisotropic, In.UV0);
 	clip(matAlbedo.a < ALPHA_CUTOFF ? -1 : 1); // Alpha clipping
 	
-	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_materialIdx;
+	const uint materialIdx = InstanceIndexParams.g_instanceIndices[In.InstanceID].g_materialIdx;
 	
 	const float4 baseColorFactor = 
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_baseColorFactor;
