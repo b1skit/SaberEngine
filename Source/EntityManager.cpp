@@ -776,6 +776,7 @@ namespace fr
 	void EntityManager::UpdateLightsAndShadows()
 	{
 		fr::BoundsComponent const* sceneBounds = GetSceneBounds();
+		fr::CameraComponent const* activeSceneCam = &GetComponent<fr::CameraComponent>(GetMainCamera());
 
 		// Add dirty markers to lights and shadows so the render data will be updated
 		{
@@ -855,7 +856,7 @@ namespace fr
 
 				// Update: Attach a dirty marker if anything changed
 				if (fr::ShadowMapComponent::Update(
-					shadowMapCmpt, transformCmpt, lightCmpt, shadowCamCmpt, sceneBounds, force))
+					shadowMapCmpt, transformCmpt, lightCmpt, shadowCamCmpt, sceneBounds, activeSceneCam, force))
 				{
 					m_registry.emplace_or_replace<DirtyMarker<fr::ShadowMapComponent>>(entity);
 				}

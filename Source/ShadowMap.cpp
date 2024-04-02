@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
 #include "Config.h"
+#include "ImGuiUtils.h"
 #include "ShadowMap.h"
 
 
@@ -24,8 +25,9 @@ namespace
 namespace fr
 {
 	ShadowMap::ShadowMap(glm::uvec2 widthHeight, fr::Light::Type lightType)
-		: m_shadowType(GetShadowTypeFromLightType(lightType))
-		, m_lightType(lightType)
+		: m_typeProperties{ 
+			.m_shadowType = GetShadowTypeFromLightType(lightType), 
+			.m_lightType = lightType }
 		, m_shadowQuality(ShadowQuality::ShadowQuality_Count)
 		, m_widthHeight(widthHeight)
 		, m_minMaxShadowBias(0.f, 0.f)
@@ -43,6 +45,8 @@ namespace fr
 				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias));
 
 			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightShadowSoftness);
+
+			m_typeProperties.m_orthographic.m_frustumSnapMode = TypeProperties::Orthographic::ActiveCamera;
 		}
 		break;
 		case fr::Light::Type::Spot:
@@ -109,7 +113,7 @@ namespace fr
 		std::string const& resetLabel = std::format("Reset biases to defaults##{}", uniqueID);
 		if (ImGui::Button(resetLabel.c_str()))
 		{
-			switch (m_lightType)
+			switch (m_typeProperties.m_lightType)
 			{
 			case fr::Light::Type::Directional:
 			{
@@ -135,6 +139,30 @@ namespace fr
 			default: SEAssertF("Invalid/unsupported light type");
 			}
 			m_isDirty = true;
+		}
+
+		// Type-specific settings:
+		switch (m_typeProperties.m_shadowType)
+		{
+		case ShadowType::Orthographic:
+		{
+			m_isDirty |= util::ShowBasicComboBox("Shadow camera snap mode",
+				ShadowMap::TypeProperties::Orthographic::k_frustumSnapModeNames.data(),
+				ShadowMap::TypeProperties::Orthographic::k_frustumSnapModeNames.size(),
+				m_typeProperties.m_orthographic.m_frustumSnapMode);
+		}
+		break;
+		case ShadowType::Perspective:
+		{
+			//
+		}
+		break;
+		case ShadowType::CubeMap:
+		{
+			//
+		}
+		break;
+		default: SEAssertF("Invalid shadow type");
 		}
 	}
 }

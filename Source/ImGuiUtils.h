@@ -60,11 +60,12 @@ namespace util
 
 
 	template<typename T>
-	void ShowBasicComboBox(char const* title, char const* const* options, size_t numOptions, T& curSelection)
+	bool ShowBasicComboBox(char const* title, char const* const* options, size_t numOptions, T& curSelection)
 	{
 		constexpr ImGuiComboFlags k_comboFlags = 0;
 
 		size_t curSelectionIdx = static_cast<size_t>(curSelection);
+		bool didSelect = false;
 
 		if (ImGui::BeginCombo(title, options[curSelectionIdx], k_comboFlags))
 		{
@@ -74,6 +75,7 @@ namespace util
 				if (ImGui::Selectable(options[comboIdx], isSelected))
 				{
 					curSelectionIdx = comboIdx;
+					didSelect = true;
 				}
 
 				if (isSelected)
@@ -85,15 +87,17 @@ namespace util
 		}
 
 		curSelection = static_cast<T>(curSelectionIdx);
+		return didSelect;
 	}
 
 
 	template<typename T>
-	void ShowBasicComboBox(char const* title, std::string const* options, size_t numOptions, T& curSelection)
+	bool ShowBasicComboBox(char const* title, std::string const* options, size_t numOptions, T& curSelection)
 	{
 		constexpr ImGuiComboFlags k_comboFlags = 0;
 
 		size_t curSelectionIdx = static_cast<size_t>(curSelection);
+		bool didSelect = false;
 
 		if (ImGui::BeginCombo(title, options[curSelectionIdx].c_str(), k_comboFlags))
 		{
@@ -103,6 +107,7 @@ namespace util
 				if (ImGui::Selectable(options[comboIdx].c_str(), isSelected))
 				{
 					curSelectionIdx = comboIdx;
+					didSelect = true;
 				}
 
 				if (isSelected)
@@ -114,5 +119,6 @@ namespace util
 		}
 
 		curSelection = static_cast<T>(curSelectionIdx);
+		return didSelect;
 	}
 }

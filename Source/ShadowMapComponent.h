@@ -2,11 +2,11 @@
 #pragma once
 #include "RenderObjectIDs.h"
 #include "ShadowMap.h"
-#include "ShadowMapRenderData.h"
 
 
 namespace fr
 {
+	class BoundsComponent;
 	class CameraComponent;
 	class EntityManager;
 	class LightComponent;
@@ -23,10 +23,15 @@ namespace fr
 		static ShadowMapComponent& AttachShadowMapComponent(
 			EntityManager&, entt::entity, char const* name, fr::Light::Type);
 
-	public:
+	private:
 		static gr::Camera::Config SnapTransformAndGenerateShadowCameraConfig(
-			ShadowMap const&, fr::Transform&, fr::Light const&, fr::BoundsComponent const*);
+			ShadowMap const&,
+			fr::Transform&,
+			fr::Light const&,
+			fr::BoundsComponent const* sceneWorldBounds,
+			fr::CameraComponent const* activeSceneCam);
 
+	public:
 		static gr::ShadowMap::RenderData CreateRenderData(
 			fr::ShadowMapComponent const&, fr::NameComponent const& nameCmpt);
 
@@ -37,6 +42,7 @@ namespace fr
 			fr::LightComponent const&,
 			fr::CameraComponent&,
 			fr::BoundsComponent const* sceneWorldBounds, // Optional
+			fr::CameraComponent const* activeSceneCam, // Optional
 			bool force);
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity shadowMapEntity);

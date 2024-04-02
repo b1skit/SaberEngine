@@ -18,70 +18,177 @@ namespace
 	constexpr float k_defaultShadowCamNear = 0.1f;
 
 
-	gr::Camera::Config SnapTransformAndComputeDirectionalShadowCameraConfigFromSceneBounds(
-		fr::Transform& lightTransform, fr::BoundsComponent const& sceneWorldBounds)
+	gr::Camera::Config SnapTransformAndComputeDirectionalShadowCameraConfig(
+		fr::ShadowMap const& shadowMap,
+		fr::Transform& lightTransform,
+		fr::BoundsComponent const* sceneWorldBounds,
+		fr::CameraComponent const* activeSceneCam)
 	{
+		SEAssert(shadowMap.GetShadowMapType() == fr::ShadowMap::ShadowType::Orthographic, "Unexpected shadow map type");
+		
 		// TODO: Make the padding around orthographic shadow map edges tuneable
 		constexpr float k_padding = 1.f;
 		constexpr float k_defaultNearDist = 1.f;
-
-		fr::BoundsComponent transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
-			glm::inverse(lightTransform.GetGlobalMatrix()));
-
-		// Set the light's location so that it's oriented directly in the middle of the bounds, looking towards the
-		// bounds region. This ensures the near and far planes are both on the same side of the X-axis, so that we don't
-		// have a view-space Z with a value of zero anywhere between near and far (and also just looks more correct
-		// to have our light oriented towards its shadow camera frustum)
-		if (sceneWorldBounds != fr::BoundsComponent::Zero() && sceneWorldBounds != fr::BoundsComponent::Uninitialized())
-		{
-			glm::vec4 centerPoint = glm::vec4(
-				(transformedBounds.xMin() + transformedBounds.xMax()) * 0.5f,
-				(transformedBounds.yMin() + transformedBounds.yMax()) * 0.5f,
-				transformedBounds.zMax() + k_defaultNearDist,
-				1.f);
-
-			centerPoint = lightTransform.GetGlobalMatrix() * centerPoint; // Light view -> world space
-
-			lightTransform.SetGlobalPosition(centerPoint.xyz);
-
-			transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
-				glm::inverse(lightTransform.GetGlobalMatrix()));
-		}
 
 		gr::Camera::Config shadowCamConfig{};
 		shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::Orthographic;
 		shadowCamConfig.m_yFOV = 0.f; // Not used
 
-		/* As per the GLTF KHR_lights_punctual specs, directional lights emit light in the direction of the local -Z
-		* axis:  
-		* https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md#directional
-		* 
-		* For an orthographic projection, the near (N) and far (F) planes can be at any point along the Z axis. 
-		* Importantly, in our RHCS as we look in the direction of -Z, note that F < N in all cases. 
-		*		 -Z
-		*		  ^
-		*		  |
-		*		o---o F
-		*		|	|
-		*		o---o N
-		*		  |
-		* -X ----------- +X
-		*		  |
-		*		o---o F
-		*		|	|
-		*		o---o N
-		*		  |
-		*		 +Z
-		* Our bounds are computed such that the "minimum" and "maximum" Z terms are oriented in the opposite way. 
-		* Thus, we must both swap the min/max Z terms of our bounds, AND negate them to get the correct near/far values:
-		*/
-		shadowCamConfig.m_near = -transformedBounds.zMax();
-		shadowCamConfig.m_far = -transformedBounds.zMin();
+		fr::ShadowMap::TypeProperties directionalProperties =
+			shadowMap.GetTypeProperties(fr::ShadowMap::ShadowType::Orthographic);
 
-		shadowCamConfig.m_orthoLeftRightBotTop.x = transformedBounds.xMin() - k_padding;
-		shadowCamConfig.m_orthoLeftRightBotTop.y = transformedBounds.xMax() + k_padding;
-		shadowCamConfig.m_orthoLeftRightBotTop.z = transformedBounds.yMin() - k_padding;
-		shadowCamConfig.m_orthoLeftRightBotTop.w = transformedBounds.yMax() + k_padding;
+		switch (directionalProperties.m_orthographic.m_frustumSnapMode)
+		{
+		case fr::ShadowMap::TypeProperties::Orthographic::FrustumSnapMode::SceneBounds:
+		{
+			// Set the light's location so that it's oriented directly in the middle of the bounds, looking towards the
+			// bounds region. This ensures the near and far planes are both on the same side of the X-axis, so that we
+			// don't  have a view-space Z with a value of zero anywhere between near and far (and also just looks more
+			// correct to have our light oriented towards its shadow camera frustum)
+			if (sceneWorldBounds)
+			{
+				fr::BoundsComponent lightSpaceSceneBounds =
+					sceneWorldBounds->GetTransformedAABBBounds(glm::inverse(lightTransform.GetGlobalMatrix()));
+
+				glm::vec4 centerPoint = glm::vec4(
+					(lightSpaceSceneBounds.xMin() + lightSpaceSceneBounds.xMax()) * 0.5f,
+					(lightSpaceSceneBounds.yMin() + lightSpaceSceneBounds.yMax()) * 0.5f,
+					lightSpaceSceneBounds.zMax() + k_defaultNearDist,
+					1.f);
+
+				centerPoint = lightTransform.GetGlobalMatrix() * centerPoint; // Light view -> world space
+
+				lightTransform.SetGlobalPosition(centerPoint.xyz);
+
+				lightSpaceSceneBounds = 
+					sceneWorldBounds->GetTransformedAABBBounds(glm::inverse(lightTransform.GetGlobalMatrix()));
+
+				/* As per the GLTF KHR_lights_punctual specs, directional lights emit light in the direction of the
+				* local -Z axis:  
+				* https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md#directional
+				* 
+				* For an orthographic projection, the near (N) and far (F) planes can be at any point along the Z axis. 
+				* Importantly, in our RHCS as we look in the direction of -Z, note that F < N in all cases. 
+				*		 -Z
+				*		  ^
+				*		  |
+				*		o---o F
+				*		|	|
+				*		o---o N
+				*		  |
+				* -X ----------- +X
+				*		  |
+				*		o---o F
+				*		|	|
+				*		o---o N
+				*		  |
+				*		 +Z
+				* Our bounds are computed such that the "minimum" and "maximum" Z terms are oriented in the opposite
+				* way. Thus, we must swap the min/max Z terms of our bounds, AND negate them to get the correct near/far
+				* values:
+				*/
+				shadowCamConfig.m_near = -lightSpaceSceneBounds.zMax();
+				shadowCamConfig.m_far = -lightSpaceSceneBounds.zMin();
+
+				shadowCamConfig.m_orthoLeftRightBotTop.x = lightSpaceSceneBounds.xMin() - k_padding;
+				shadowCamConfig.m_orthoLeftRightBotTop.y = lightSpaceSceneBounds.xMax() + k_padding;
+				shadowCamConfig.m_orthoLeftRightBotTop.z = lightSpaceSceneBounds.yMin() - k_padding;
+				shadowCamConfig.m_orthoLeftRightBotTop.w = lightSpaceSceneBounds.yMax() + k_padding;
+			}
+		}
+		break;
+		case fr::ShadowMap::TypeProperties::Orthographic::FrustumSnapMode::ActiveCamera:
+		{
+			if (activeSceneCam && sceneWorldBounds)
+			{
+				fr::BoundsComponent const& lightSpaceSceneBounds =
+					sceneWorldBounds->GetTransformedAABBBounds(glm::inverse(lightTransform.GetGlobalMatrix()));
+
+				// Omit any scale components from the camera's view matrix
+				fr::Transform const* sceneCamTransform = activeSceneCam->GetCamera().GetTransform();
+				glm::mat4 const& view = 
+					glm::inverse(sceneCamTransform->GetGlobalTranslationMat() * sceneCamTransform->GetGlobalRotationMat());
+
+				gr::Camera::Config const& sceneCamConfig = activeSceneCam->GetCamera().GetCameraConfig();
+
+				glm::mat4 proj;
+				switch (sceneCamConfig.m_projectionType)
+				{
+				case gr::Camera::Config::ProjectionType::Perspective:
+				{
+					proj = gr::Camera::BuildPerspectiveProjectionMatrix(
+						sceneCamConfig.m_yFOV, 
+						sceneCamConfig.m_aspectRatio, 
+						sceneCamConfig.m_near, 
+						sceneCamConfig.m_far);
+				}
+				break;
+				case gr::Camera::Config::ProjectionType::Orthographic:
+				{
+					proj = gr::Camera::BuildOrthographicProjectionMatrix(
+						sceneCamConfig.m_orthoLeftRightBotTop,
+						sceneCamConfig.m_near,
+						sceneCamConfig.m_far);
+				}
+				break;
+				default: SEAssertF("Invalid projection type");
+				}
+
+				// NDC -> world -> light space:
+				glm::mat4 const& projToLightSpace = 
+					glm::inverse(lightTransform.GetGlobalMatrix()) * glm::inverse(proj * view);
+
+				float xMin = std::numeric_limits<float>::max();
+				float xMax = std::numeric_limits<float>::min();
+				float yMin = std::numeric_limits<float>::max();
+				float yMax = std::numeric_limits<float>::min();
+				float zMin = std::numeric_limits<float>::max();
+				
+				// Construct a cube in NDC space:
+				std::array<glm::vec4, 8> frustumPoints = {
+					glm::vec4(-1.f, 1.f, 1.f, 1.f),		// farTL
+					glm::vec4(-1.f, -1.f, 1.f, 1.f),	// farBL
+					glm::vec4(1.f, 1.f, 1.f, 1.f),		// farTR
+					glm::vec4(1.f, -1.f, 1.f, 1.f),		// farBR
+					glm::vec4(-1.f, 1.f, 0.f, 1.f),		// nearTL
+					glm::vec4(-1.f, -1.f, 0.f, 1.f),	// nearBL
+					glm::vec4(1.f, 1.f, 0.f, 1.f),		// nearTR
+					glm::vec4(1.f, -1.f, 0.f, 1.f)};	// nearBR
+
+				// Transform our camera frustum into light space:
+				for (glm::vec4& point : frustumPoints)
+				{
+					point = projToLightSpace * point;
+					point /= point.w;
+
+					xMin = std::min(xMin, point.x);
+					xMax = std::max(xMax, point.x);
+					yMin = std::min(yMin, point.y);
+					yMax = std::max(yMax, point.y);
+					zMin = std::min(zMin, point.z);
+				}
+
+				// Clamp the frustum dimensions by taking the max(mins)/min(maxs):
+				xMin = std::max(xMin, lightSpaceSceneBounds.xMin());
+				xMax = std::min(xMax, lightSpaceSceneBounds.xMax());
+				yMin = std::max(yMin, lightSpaceSceneBounds.yMin());
+				yMax = std::min(yMax, lightSpaceSceneBounds.yMax());
+
+				zMin = std::max(zMin, lightSpaceSceneBounds.zMin());
+
+				// We start the frustum at the scene bounds to ensure shadows are correctly cast into the visible area
+				shadowCamConfig.m_near = -lightSpaceSceneBounds.zMax();
+				shadowCamConfig.m_far = -zMin;
+
+				shadowCamConfig.m_orthoLeftRightBotTop.x = xMin - k_padding;
+				shadowCamConfig.m_orthoLeftRightBotTop.y = xMax + k_padding;
+				shadowCamConfig.m_orthoLeftRightBotTop.z = yMin - k_padding;
+				shadowCamConfig.m_orthoLeftRightBotTop.w = yMax + k_padding;
+			}
+		}
+		break;
+		default: SEAssertF("Invalid snap mode");
+		}
 
 		return shadowCamConfig;
 	}
@@ -161,6 +268,7 @@ namespace fr
 				shadowMapComponent.GetShadowMap(), 
 				owningTransform->GetTransform(), 
 				owningLightComponent.GetLight(),
+				nullptr,
 				nullptr));
 
 		// Add a shadow marker:
@@ -177,7 +285,8 @@ namespace fr
 		ShadowMap const& shadowMap, 
 		fr::Transform& lightTransform, 
 		fr::Light const& owningLight, 
-		fr::BoundsComponent const* sceneWorldBounds)
+		fr::BoundsComponent const* sceneWorldBounds,
+		fr::CameraComponent const* activeSceneCam)
 	{
 		gr::Camera::Config shadowCamConfig{};
 
@@ -185,17 +294,9 @@ namespace fr
 		{
 		case fr::ShadowMap::ShadowType::Orthographic:
 		{
-			// Note: We use a zeroed-out bounds as a fallback if the sceneWorldBounds hasn't been created yet
-			if (sceneWorldBounds)
-			{
-				shadowCamConfig = SnapTransformAndComputeDirectionalShadowCameraConfigFromSceneBounds(
-					lightTransform, *sceneWorldBounds);
-			}
-			else
-			{
-				shadowCamConfig = SnapTransformAndComputeDirectionalShadowCameraConfigFromSceneBounds(
-					lightTransform, fr::BoundsComponent::Zero());
-			}
+			// Note: It's valid for sceneWorldBounds to be null if it has not been created yet
+			shadowCamConfig = SnapTransformAndComputeDirectionalShadowCameraConfig(
+				shadowMap, lightTransform, sceneWorldBounds, activeSceneCam);
 		}
 		break;
 		case fr::ShadowMap::ShadowType::Perspective:
@@ -268,17 +369,32 @@ namespace fr
 		fr::LightComponent const& lightCmpt,
 		fr::CameraComponent& shadowCamCmpt, 
 		fr::BoundsComponent const* sceneWorldBounds,
+		fr::CameraComponent const* activeSceneCam,
 		bool force)
 	{
-		bool didModify = force;
-		if (shadowMapCmpt.GetShadowMap().IsDirty() || force)
+		bool didModify = false;
+
+		fr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
+		fr::ShadowMap::TypeProperties const& typeProperties = shadowMap.GetTypeProperties(shadowMap.GetShadowMapType());
+
+		const bool mustUpdateFrustumSnap = (shadowMap.GetShadowMapType() == fr::ShadowMap::ShadowType::Orthographic &&
+				typeProperties.m_orthographic.m_frustumSnapMode == 
+			ShadowMap::TypeProperties::Orthographic::FrustumSnapMode::ActiveCamera) &&
+			activeSceneCam->GetCamera().GetTransform()->HasChanged();
+
+		const bool mustUpdate = force ||
+			shadowMap.IsDirty() ||
+			mustUpdateFrustumSnap;
+		
+		if (mustUpdate)
 		{
 			shadowCamCmpt.GetCameraForModification().SetCameraConfig(
 				SnapTransformAndGenerateShadowCameraConfig(
 					shadowMapCmpt.GetShadowMap(), 
 					lightTransformCmpt.GetTransform(),
 					lightCmpt.GetLight(),
-					sceneWorldBounds));
+					sceneWorldBounds,
+					activeSceneCam));
 
 			shadowMapCmpt.GetShadowMap().MarkClean();
 

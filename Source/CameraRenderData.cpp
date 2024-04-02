@@ -142,6 +142,18 @@ namespace gr
 	}
 
 
+	glm::mat4 Camera::BuildOrthographicProjectionMatrix(glm::vec4 orthoLeftRightBotTop, float nearDist, float farDist)
+	{
+		return BuildOrthographicProjectionMatrix(
+			orthoLeftRightBotTop.x, 
+			orthoLeftRightBotTop.y, 
+			orthoLeftRightBotTop.z, 
+			orthoLeftRightBotTop.w, 
+			nearDist, 
+			farDist);
+	}
+
+
 	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(glm::vec3 camWorldPos, glm::mat4 const& invViewProjection)
 	{
 		// Convert cube in NDC space to world space

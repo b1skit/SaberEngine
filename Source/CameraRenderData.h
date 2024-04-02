@@ -193,6 +193,8 @@ namespace gr
 
 		static glm::mat4 BuildOrthographicProjectionMatrix(
 			float left, float right, float bottom, float top, float nearDist, float farDist);
+		static glm::mat4 BuildOrthographicProjectionMatrix(
+			glm::vec4 orthoLeftRightBotTop, float nearDist, float farDist);
 
 		static float ComputeEV100FromExposureSettings(
 			float aperture, float shutterSpeed, float sensitivity, float exposureCompensation);

@@ -67,9 +67,41 @@ namespace fr
 		void ShowImGuiWindow(uint64_t uniqueID);
 
 
+	public:
+		struct TypeProperties
+		{
+			struct Orthographic
+			{
+				enum FrustumSnapMode : uint8_t
+				{
+					SceneBounds,
+					ActiveCamera,
+
+					FrustumSnap_Count,
+				} m_frustumSnapMode;
+
+				static constexpr std::array<char const*, FrustumSnap_Count> k_frustumSnapModeNames =
+				{
+					"SceneBounds",
+					"ActiveCamera"
+				};
+				SEStaticAssert(k_frustumSnapModeNames.size() == FrustumSnap_Count, "");
+			};
+
+			union
+			{
+				Orthographic m_orthographic;
+			};
+
+			const ShadowType m_shadowType;
+			const fr::Light::Type m_lightType;
+		};
+		TypeProperties const& GetTypeProperties(ShadowType) const;
+		
+
 	private:
-		const ShadowType m_shadowType;
-		const fr::Light::Type m_lightType;
+		TypeProperties m_typeProperties;
+
 		ShadowQuality m_shadowQuality;
 
 		glm::uvec2 m_widthHeight;
@@ -78,7 +110,6 @@ namespace fr
 		float m_softness;
 
 		bool m_isEnabled;
-
 		bool m_isDirty;
 
 
@@ -134,13 +165,13 @@ namespace fr
 
 	inline ShadowMap::ShadowType ShadowMap::GetShadowMapType() const
 	{
-		return m_shadowType;
+		return m_typeProperties.m_shadowType;
 	}
 
 
 	inline fr::Light::Type ShadowMap::GetOwningLightType() const
 	{
-		return m_lightType;
+		return m_typeProperties.m_lightType;
 	}
 
 
@@ -164,5 +195,12 @@ namespace fr
 	inline void ShadowMap::MarkClean()
 	{
 		m_isDirty = false;
+	}
+
+
+	inline ShadowMap::TypeProperties const& ShadowMap::GetTypeProperties(ShadowType shadowType) const
+	{
+		SEAssert(shadowType == m_typeProperties.m_shadowType, "Trying to access type properties for the wrong type");
+		return m_typeProperties;
 	}
 }

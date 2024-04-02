@@ -712,6 +712,8 @@ namespace gr
 					camDataIsDirty = true;
 				}
 
+				// We're rendering lines constructed from a cube in NDC; Thus, we set the invViewProj from the camera
+				// we're debugging as the world transform matrix for our cube points
 				std::vector<glm::mat4> invViewProjMats;
 				if (camDataIsDirty)
 				{
