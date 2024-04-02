@@ -1,13 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include <wrl.h>
-#include <d3d12.h>
-
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
 #include "PipelineState_DX12.h"
 #include "ResourceStateTracker_DX12.h"
 
+#include <wrl.h>
+#include <d3d12.h>
 
 namespace re
 {
@@ -30,14 +29,11 @@ namespace dx12
 		Bundle,
 		Compute,
 		Copy,
-		VideoDecode,
-		VideoProcess,
-		VideoEncode,
 
 		CommandListType_Count,
 		CommandListType_Invalid = CommandListType_Count
 	};
-	static_assert(CommandListType_Count == 7); // We pack command list type into the upper bits of fence values
+	static_assert(CommandListType_Count <= 7); // We pack command list type into the upper 3 bits of fence values
 
 
 	class CommandList
@@ -260,9 +256,6 @@ namespace dx12
 		case CommandListType::Bundle: return L"Bundle";
 		case CommandListType::Compute: return L"Compute";
 		case CommandListType::Copy: return L"Copy";
-		case CommandListType::VideoDecode: return L"VideoDecode";
-		case CommandListType::VideoProcess: return L"VideoProcess";
-		case CommandListType::VideoEncode: return L"VideoEncode";
 		default:
 			static_assert("Invalid command list type");
 		}
@@ -278,9 +271,6 @@ namespace dx12
 		case CommandListType::Bundle: return "Bundle";
 		case CommandListType::Compute: return "Compute";
 		case CommandListType::Copy: return "Copy";
-		case CommandListType::VideoDecode: return "VideoDecode";
-		case CommandListType::VideoProcess: return "VideoProcess";
-		case CommandListType::VideoEncode: return "VideoEncode";
 		default:
 			static_assert("Invalid command list type");
 		}
@@ -300,12 +290,6 @@ namespace dx12
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE;
 		case dx12::CommandListType::Copy:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY;
-		case dx12::CommandListType::VideoDecode:
-			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE;
-		case dx12::CommandListType::VideoProcess:
-			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS;
-		case dx12::CommandListType::VideoEncode:
-			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE;
 		case dx12::CommandListType::CommandListType_Count:
 		default:
 			static_assert("Invalid type");

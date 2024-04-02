@@ -96,9 +96,6 @@ namespace
 		}
 		break;
 		case dx12::CommandListType::Bundle:
-		case dx12::CommandListType::VideoDecode:
-		case dx12::CommandListType::VideoProcess:
-		case dx12::CommandListType::VideoEncode:
 		default: SEAssertF("Invalid/currently unsupported command list type");
 		}
 		return false; // This should never happen
@@ -146,9 +143,6 @@ namespace
 		}
 		break;
 		case dx12::CommandListType::Bundle:
-		case dx12::CommandListType::VideoDecode:
-		case dx12::CommandListType::VideoProcess:
-		case dx12::CommandListType::VideoEncode:
 		default: SEAssertF("Invalid/currently unsupported command list type");
 		}
 		return true; // This should never happen
@@ -278,10 +272,7 @@ namespace dx12
 			fenceEventName = "Compute queue fence event";
 		}
 		break;
-		case CommandListType::Bundle: // TODO: Implement more command queue/list types
-		case CommandListType::VideoDecode:
-		case CommandListType::VideoProcess:
-		case CommandListType::VideoEncode:
+		case CommandListType::Bundle: // TODO: Support this
 		default:
 		{
 			SEAssertF("Invalid or (currently) unsupported command list type");

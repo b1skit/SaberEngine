@@ -615,13 +615,6 @@ namespace dx12
 					SEAssertF("Currently not expecting to find a copy queue genereted from a render stage");
 				}
 				break;
-				case CommandListType::VideoDecode:
-				case CommandListType::VideoProcess:
-				case CommandListType::VideoEncode:
-				{
-					SEAssertF("TODO: Support this type");
-				}
-				break;
 				case CommandListType::CommandListType_Invalid:
 				default:
 					SEAssertF("Invalid command list type");

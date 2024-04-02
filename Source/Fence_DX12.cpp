@@ -27,7 +27,8 @@ namespace dx12
 	{
 		const uint64_t isolatedTypeBits = fenceVal & k_commandListTypeBitmask;
 		const uint64_t shiftedBits = isolatedTypeBits >> k_bitShiftWidth;
-		return static_cast<dx12::CommandListType>(shiftedBits);
+		return shiftedBits < dx12::CommandListType_Count ? 
+			static_cast<dx12::CommandListType>(shiftedBits) : dx12::CommandListType_Invalid;
 	}
 
 
