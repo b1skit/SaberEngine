@@ -31,6 +31,16 @@ namespace
 		// Note: Our cone mesh is pre-rotated during construction to extend from the origin down the Z axis
 		return glm::vec3(coneRadiusScale, coneRadiusScale, coneHeight);
 	}
+
+
+	bool CanLightContribute(glm::vec4 const& colorIntensity, bool diffuseEnabled, bool specEnabled)
+	{
+		const bool isNotBlack = (colorIntensity.r > 0.f || colorIntensity.g > 0.f || colorIntensity.b > 0.f);
+		const bool hasNonZeroIntensity = colorIntensity.a > 0.f;
+		const bool diffuseOrSpecEnabled = diffuseEnabled || specEnabled;
+		
+		return isNotBlack && hasNonZeroIntensity && diffuseOrSpecEnabled;
+	}
 }
 
 
@@ -295,6 +305,11 @@ namespace fr
 
 		renderData.m_hasShadow = lightCmpt.m_hasShadow;
 
+		renderData.m_canContribute = CanLightContribute(
+			typeProperties.m_directional.m_colorIntensity, 
+			typeProperties.m_diffuseEnabled, 
+			typeProperties.m_specularEnabled);
+
 		renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
 		renderData.m_specularEnabled = typeProperties.m_specularEnabled;
 
@@ -321,6 +336,11 @@ namespace fr
 		renderData.m_sphericalRadius = typeProperties.m_point.m_sphericalRadius;
 
 		renderData.m_hasShadow = lightCmpt.m_hasShadow;
+
+		renderData.m_canContribute = CanLightContribute(
+			typeProperties.m_point.m_colorIntensity,
+			typeProperties.m_diffuseEnabled,
+			typeProperties.m_specularEnabled);
 
 		renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
 		renderData.m_specularEnabled = typeProperties.m_specularEnabled;
@@ -350,6 +370,11 @@ namespace fr
 		renderData.m_coneHeight = typeProperties.m_spot.m_coneHeight;
 
 		renderData.m_hasShadow = lightCmpt.m_hasShadow;
+
+		renderData.m_canContribute = CanLightContribute(
+			typeProperties.m_spot.m_colorIntensity,
+			typeProperties.m_diffuseEnabled,
+			typeProperties.m_specularEnabled);
 
 		renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
 		renderData.m_specularEnabled = typeProperties.m_specularEnabled;

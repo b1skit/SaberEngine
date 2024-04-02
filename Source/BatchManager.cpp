@@ -91,10 +91,8 @@ namespace
 
 		if (indexMap.at(idToFree).m_refCount == 0)
 		{
-			const uint32_t indexToFree = refCountedIndex.m_index;
-			indexMap.erase(idToFree);
-
 			freeIndexes.emplace_back(refCountedIndex.m_index);
+			indexMap.erase(idToFree);
 		}
 	}
 

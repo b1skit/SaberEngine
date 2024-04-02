@@ -56,6 +56,7 @@ namespace fr
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);
 		std::shared_ptr<gr::Material> GetMaterial(std::string const& materialName) const;
 		bool MaterialExists(std::string const& matName) const;
+		std::vector<std::string> GetAllMaterialNames() const;
 
 		// Shaders:
 		bool AddUniqueShader(std::shared_ptr<re::Shader>& newShader); // Returns true if new object was added

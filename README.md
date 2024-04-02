@@ -22,7 +22,7 @@ Saber Engine is constantly improving. Its current features include:
 - GLTF 2.0 scene format support  
 - HDR physically-based lighting model (As per EA’s Frostbite, Lagarde et al.)  
 - Image-based indirect lighting  
-- Directional and point punctual lights  
+- Directional, point and spot punctual lights  
 - PCF & PCSS soft shadows  
 - Radiometrically-correct screen-space ambient occlusion (Intel XeGTAO)  
 - ACES filmic response tone mapping  
@@ -107,7 +107,7 @@ Conventions:
 Image-based Lighting:
 ---------------------
 A per-scene IBL is loaded from `<project root>\Scenes\SceneFolderName\IBL\ibl.hdr`, if it exists  
-	- A default IBL (`<project root>\Assets\DefaultIBL\ibl.hdr`) is used as a fallback if no scene IBL is found  
+	- A default IBL (`<project root>\Assets\DefaultIBL\default.hdr`) is used as a fallback if no scene IBL is found  
 
 --------
 Shaders:
@@ -203,6 +203,7 @@ Imgui: https://github.com/ocornut/imgui/
 
 
 Intel XeGTAO: https://github.com/GameTechDev/XeGTAO
+---------------------------------------------------
 - Current version: Dec 2021  
 - `<project root>\Source\Dependencies\XeGTAO\`  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\XeGTAO\"  

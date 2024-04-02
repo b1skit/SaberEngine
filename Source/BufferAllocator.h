@@ -9,7 +9,7 @@ namespace re
 	class BufferAllocator
 	{
 	public:
-		static constexpr uint32_t k_fixedAllocationByteSize = 64 * 1024 * 1024; // Arbitrary. Fixed GPU buffer allocation size
+		static constexpr uint32_t k_fixedAllocationByteSize = 512 * 1024 * 1024; // Arbitrary. Fixed GPU buffer allocation size
 		
 		static constexpr uint32_t k_temporaryReservationBytes = 64 * 1024 * 1024; // Reservation size for temporary CPU-side commit buffers
 		static constexpr uint32_t k_permanentReservationCount = 128; // No. of permanent mutable buffers we expect to see

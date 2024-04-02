@@ -20,6 +20,9 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
 		std::vector<gr::RenderDataID> const& GetVisibleRenderDataIDs(gr::Camera::View const&) const;
+		
+		std::vector<gr::RenderDataID> const& GetVisiblePointLights() const; // For the currently active camera
+		std::vector<gr::RenderDataID> const& GetVisibleSpotLights() const;
 
 		void ShowImGuiWindow() override;
 
@@ -39,8 +42,13 @@ namespace gr
 		std::mutex m_cachedFrustumsMutex;
 
 		// Mapping Camera RenderDataIDs to a list of RenderDataIDs visible after culling
-		std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>> m_viewToVisibleIDs;
+		std::map<gr::Camera::View const, std::vector<gr::RenderDataID>> m_viewToVisibleIDs;
 		std::mutex m_viewToVisibleIDsMutex;
+
+		// A list of light RenderDataIDs visible to the main camera
+		std::vector<gr::RenderDataID> m_visiblePointLightIDs;
+		std::vector<gr::RenderDataID> m_visibleSpotLightIDs;
+		std::mutex m_visibleLightsMutex;
 
 		bool m_cullingEnabled;
 	};
@@ -59,5 +67,17 @@ namespace gr
 		SEAssert(m_viewToVisibleIDs.contains(view), "Camera with the given RenderDataID not found");
 
 		return m_viewToVisibleIDs.at(view);
+	}
+
+
+	inline std::vector<gr::RenderDataID> const& CullingGraphicsSystem::GetVisiblePointLights() const
+	{
+		return m_visiblePointLightIDs;
+	}
+
+
+	inline std::vector<gr::RenderDataID> const& CullingGraphicsSystem::GetVisibleSpotLights() const
+	{
+		return m_visibleSpotLightIDs;
 	}
 }

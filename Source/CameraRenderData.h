@@ -37,8 +37,20 @@ namespace gr
 				YPos = 2,
 				YNeg = 3,
 				ZPos = 4,
-				ZNeg = 5
+				ZNeg = 5,
+
+				Face_Count = 6
 			} const m_face;
+			static constexpr std::array<char const*, Face_Count> k_faceNames =
+			{
+				"Default/XPos",
+				"XNeg",
+				"YPos",
+				"YNeg",
+				"ZPos",
+				"ZNeg"
+			};
+			static_assert(k_faceNames.size() == Face_Count);
 
 
 		public:
@@ -66,6 +78,16 @@ namespace gr
 			{
 				return m_cameraRenderDataID == rhs.m_cameraRenderDataID && 
 					m_face == rhs.m_face;
+			}
+
+
+			bool operator<(View const& rhs) const
+			{
+				if (m_cameraRenderDataID == rhs.m_cameraRenderDataID)
+				{
+					return m_face < rhs.m_face;
+				}
+				return m_cameraRenderDataID < rhs.m_cameraRenderDataID;
 			}
 		};
 

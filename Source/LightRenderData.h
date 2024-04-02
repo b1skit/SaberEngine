@@ -60,6 +60,8 @@ namespace gr
 
 			bool m_hasShadow = false;
 
+			bool m_canContribute = true; // True if color != black, intensity > 0, and debug flags are enabled
+
 			// Debug params:
 			bool m_diffuseEnabled = false;
 			bool m_specularEnabled = false;
@@ -87,6 +89,8 @@ namespace gr
 			float m_sphericalRadius; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
 
 			bool m_hasShadow = false;
+
+			bool m_canContribute = true; // True if color != black, intensity > 0, and debug flags are enabled
 
 			// Debug params:
 			bool m_diffuseEnabled = false;
@@ -117,6 +121,8 @@ namespace gr
 			float m_coneHeight; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
 
 			bool m_hasShadow = false;
+
+			bool m_canContribute = true; // True if color != black, intensity > 0, and debug flags are enabled
 
 			// Debug params:
 			bool m_diffuseEnabled = false;

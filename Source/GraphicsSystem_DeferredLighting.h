@@ -77,6 +77,7 @@ namespace gr
 			std::shared_ptr<re::Buffer> m_lightParams;
 			std::shared_ptr<re::Buffer> m_transformParams;
 			re::Batch m_batch;
+			bool m_canContribute = true;
 		};
 		std::unordered_map<gr::RenderDataID, PunctualLightRenderData> m_punctualLightData;
 

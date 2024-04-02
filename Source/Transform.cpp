@@ -580,7 +580,7 @@ namespace fr
 	void Transform::ImGuiHelper_Modify(uint64_t uniqueID)
 	{
 		// Helper: Displays sliders for a 3-component XYZ element of a transform
-		auto Display3ComponentTransform = [&](std::string const& label, glm::vec3& copiedValue) -> bool
+		auto Display3ComponentTransform = [&](std::string const& label, glm::vec3& value) -> bool
 			{
 				constexpr ImGuiSliderFlags flags = ImGuiSliderFlags_None;
 				constexpr float k_buttonWidth = 75.f;
@@ -589,23 +589,23 @@ namespace fr
 				ImGui::BeginGroup();
 				{
 					// Unique imgui IDs for each slider
-					const std::string XimguiID = std::format("##X{}{}", label, uniqueID);
-					const std::string YimguiID = std::format("##Y{}{}", label, uniqueID);
-					const std::string ZimguiID = std::format("##Z{}{}", label, uniqueID);
+					std::string const& XimguiID = std::format("##X{}{}", label, uniqueID);
+					std::string const& YimguiID = std::format("##Y{}{}", label, uniqueID);
+					std::string const& ZimguiID = std::format("##Z{}{}", label, uniqueID);
 
 					ImGui::Text(std::format("{} XYZ:", label).c_str()); // Row label
 
 					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
 					isDirty |= ImGui::DragFloat(
-						XimguiID.c_str(), &copiedValue.x, 0.005f, -FLT_MAX, +FLT_MAX, "X %.3f", flags);
+						XimguiID.c_str(), &value.x, 0.005f, -FLT_MAX, +FLT_MAX, "X %.3f", flags);
 
 					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
 					isDirty |= ImGui::DragFloat(
-						YimguiID.c_str(), &copiedValue.y, 0.005f, -FLT_MAX, +FLT_MAX, "Y %.3f", flags);
+						YimguiID.c_str(), &value.y, 0.005f, -FLT_MAX, +FLT_MAX, "Y %.3f", flags);
 
 					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
 					isDirty |= ImGui::DragFloat(
-						ZimguiID.c_str(), &copiedValue.z, 0.005f, -FLT_MAX, +FLT_MAX, "Z %.3f", flags);
+						ZimguiID.c_str(), &value.z, 0.005f, -FLT_MAX, +FLT_MAX, "Z %.3f", flags);
 
 					ImGui::EndGroup();
 				}
@@ -643,16 +643,12 @@ namespace fr
 			// Local rotation:
 			// Note: quaterion rotations are defined in terms of +/- pi/2, glm will wrap the values. This doesn't play
 			// nicely with ImGui, which gets confused if a slider value is suddenly wrapped. As a solution, we maintain
-			// the value in a local static, and sync it with the "true" value of our Transform once interaction is over
+			// the value in a local static, and rely on the internal setter to wrap the value
 			static glm::vec3 s_localEulerRotation = GetLocalEulerXYZRotationRadians();
 			bool localRotationDirty = Display3ComponentTransform("Local Euler Rotation", s_localEulerRotation);
 			if (localRotationDirty)
 			{
 				SetLocalRotation(s_localEulerRotation);
-			}
-			else
-			{
-				s_localEulerRotation = GetLocalEulerXYZRotationRadians();
 			}
 
 			// Local scale:

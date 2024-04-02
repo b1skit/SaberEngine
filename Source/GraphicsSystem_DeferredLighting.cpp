@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BatchManager.h"
 #include "Config.h"
+#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_Shadows.h"
@@ -1261,10 +1262,29 @@ namespace gr
 
 			m_ambientStage->AddBatch(m_ambientLightData.at(activeAmbientID).m_batch);
 		}
+		
 
+		// Hash culled visible light IDs so we can quickly check if we need to add a point/spot light's batch:
+		CullingGraphicsSystem* cullingGS = m_graphicsSystemManager->GetGraphicsSystem<CullingGraphicsSystem>();
+		std::vector<gr::RenderDataID> const& spotIDs = cullingGS->GetVisibleSpotLights();
+		std::vector<gr::RenderDataID> const& pointIDs = cullingGS->GetVisiblePointLights();
+
+		std::unordered_set<gr::RenderDataID> visibleLightIDs;
+		visibleLightIDs.reserve(spotIDs.size() + pointIDs.size());
+
+		auto UpdateVisibility = [&](std::vector<gr::RenderDataID> const& lightIDs)
+			{
+				for (gr::RenderDataID lightID : lightIDs)
+				{
+					visibleLightIDs.emplace(lightID);
+				}
+			};
+		UpdateVisibility(spotIDs);
+		UpdateVisibility(pointIDs);
+		
 
 		// Update all of the punctual lights we're tracking:
-		for (auto const& light : m_punctualLightData)
+		for (auto& light : m_punctualLightData)
 		{
 			const gr::RenderDataID lightID = light.first;
 
@@ -1302,6 +1322,7 @@ namespace gr
 				{
 					gr::Light::RenderDataDirectional const& directionalData =
 						renderData.GetObjectData<gr::Light::RenderDataDirectional>(lightID);
+					light.second.m_canContribute = directionalData.m_canContribute;
 					lightRenderData = &directionalData;
 					hasShadow = directionalData.m_hasShadow;
 					targetSet = m_directionalStage->GetTextureTargetSet().get();
@@ -1311,6 +1332,7 @@ namespace gr
 				{
 					gr::Light::RenderDataPoint const& pointData = 
 						renderData.GetObjectData<gr::Light::RenderDataPoint>(lightID);
+					light.second.m_canContribute = pointData.m_canContribute;
 					lightRenderData = &pointData;
 					hasShadow = pointData.m_hasShadow;
 					targetSet = m_pointStage->GetTextureTargetSet().get();
@@ -1323,6 +1345,7 @@ namespace gr
 				{
 					gr::Light::RenderDataSpot const& spotData =
 						renderData.GetObjectData<gr::Light::RenderDataSpot>(lightID);
+					light.second.m_canContribute = spotData.m_canContribute;
 					lightRenderData = &spotData;
 					hasShadow = spotData.m_hasShadow;
 					targetSet = m_spotStage->GetTextureTargetSet().get();
@@ -1351,25 +1374,34 @@ namespace gr
 			}
 
 			// Add punctual batches:
-			// TODO: We should cull these, and only add them if the light is active (ie. non-zero intensity etc)
-			switch (light.second.m_type)
+			if (light.second.m_canContribute)
 			{
-			case gr::Light::Type::Directional:
-			{
-				m_directionalStage->AddBatch(light.second.m_batch);
-			}
-			break;
-			case gr::Light::Type::Point:
-			{
-				m_pointStage->AddBatch(light.second.m_batch);
-			}
-			break;
-			case gr::Light::Type::Spot:
-			{
-				m_spotStage->AddBatch(light.second.m_batch);
-			}
-			break;
-			default: SEAssertF("Invalid light type");
+				switch (light.second.m_type)
+				{
+				case gr::Light::Type::Directional:
+				{
+					m_directionalStage->AddBatch(light.second.m_batch);
+				}
+				break;
+				case gr::Light::Type::Point:
+				{
+					if (visibleLightIDs.contains(lightID))
+					{
+						m_pointStage->AddBatch(light.second.m_batch);
+					}
+				}
+				break;
+				case gr::Light::Type::Spot:
+				{
+					if (visibleLightIDs.contains(lightID))
+					{
+						m_spotStage->AddBatch(light.second.m_batch);
+					}
+				}
+				break;
+				case gr::Light::Type::AmbientIBL:
+				default: SEAssertF("Invalid light type");
+				}
 			}
 		}
 	}

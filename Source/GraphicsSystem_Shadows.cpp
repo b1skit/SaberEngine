@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraRenderData.h"
 #include "Config.h"
+#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
@@ -432,6 +433,7 @@ namespace gr
 	void ShadowsGraphicsSystem::CreateBatches()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+		CullingGraphicsSystem* cullingGS = m_graphicsSystemManager->GetGraphicsSystem<CullingGraphicsSystem>();
 
 		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
@@ -444,7 +446,7 @@ namespace gr
 			{
 				gr::Light::RenderDataDirectional const& directionalData = 
 					directionalItr.Get<gr::Light::RenderDataDirectional>();
-				if (directionalData.m_hasShadow && directionalData.m_colorIntensity.w > 0.f)
+				if (directionalData.m_hasShadow && directionalData.m_canContribute)
 				{
 					const gr::RenderDataID lightID = directionalData.m_renderDataID;
 
@@ -461,15 +463,14 @@ namespace gr
 
 		if (renderData.HasObjectData<gr::Light::RenderDataSpot>())
 		{
-			std::vector<gr::RenderDataID> spotIDs =
-				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataSpot>();
+			std::vector<gr::RenderDataID> const& spotIDs = cullingGS->GetVisibleSpotLights();
 
 			auto spotItr = renderData.IDBegin(spotIDs);
 			auto const& spotItrEnd = renderData.IDEnd(spotIDs);
 			while (spotItr != spotItrEnd)
 			{
 				gr::Light::RenderDataSpot const& spotData = spotItr.Get<gr::Light::RenderDataSpot>();
-				if (spotData.m_hasShadow && spotData.m_colorIntensity.w > 0.f)
+				if (spotData.m_hasShadow && spotData.m_canContribute)
 				{
 					const gr::RenderDataID lightID = spotData.m_renderDataID;
 
@@ -485,13 +486,14 @@ namespace gr
 
 		if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
 		{
-			std::vector<gr::RenderDataID> pointIDs = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>();
+			std::vector<gr::RenderDataID> const& pointIDs = cullingGS->GetVisiblePointLights();
+
 			auto pointItr = renderData.IDBegin(pointIDs);
 			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
 			while (pointItr != pointItrEnd)
 			{
 				gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
-				if (pointData.m_hasShadow && pointData.m_colorIntensity.w > 0.f)
+				if (pointData.m_hasShadow && pointData.m_canContribute)
 				{
 					const gr::RenderDataID lightID = pointData.m_renderDataID;
 

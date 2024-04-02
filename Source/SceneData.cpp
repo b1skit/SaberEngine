@@ -812,7 +812,7 @@ namespace
 					meshName.c_str(), fr::SceneData::k_missingMaterialName);
 				material = scene.GetMaterial(fr::SceneData::k_missingMaterialName);
 			}
-			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material);
+			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material.get());
 		}
 	}
 
@@ -1244,7 +1244,7 @@ namespace fr
 			else // Add new
 			{
 				m_materials[newMaterial->GetNameID()] = newMaterial;
-				LOG("Material \"%s\" registered with scene", newMaterial->GetName().c_str());
+				LOG("Material \"%s\" registered to scene data", newMaterial->GetName().c_str());
 			}
 		}
 	}
@@ -1272,6 +1272,21 @@ namespace fr
 
 			return m_materials.find(nameID) != m_materials.end();
 		}
+	}
+
+
+	std::vector<std::string> SceneData::GetAllMaterialNames() const
+	{
+		std::vector<std::string> result;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
+
+			for (auto const& material : m_materials)
+			{
+				result.emplace_back(material.second->GetName());
+			}
+		}
+		return result;
 	}
 
 

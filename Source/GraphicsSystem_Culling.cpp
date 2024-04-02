@@ -4,16 +4,18 @@
 #include "CoreEngine.h"
 #include "GraphicsSystem_Culling.h"
 #include "GraphicsSystemManager.h"
+#include "LightRenderData.h"
 #include "ThreadSafeVector.h"
 
 
 namespace
 {
-	// Returns -1.f if a bounds is not visible, or the distance to the camera's world position otherwise
-	float TestBoundsVisibility(
+	// Returns true if a bounds is visible, or false otherwise
+	bool TestBoundsVisibility(
 		gr::Bounds::RenderData const& bounds,
 		gr::Transform::RenderData const& transform,
-		gr::Camera::Frustum const& frustum)
+		gr::Camera::Frustum const& frustum,
+		float* camToMeshBoundsDistOut = nullptr) // Optional, will be populated if not null
 	{
 		// Transform our Bounds into world space:
 		constexpr uint8_t k_numBoundsPoints = 8;
@@ -50,19 +52,64 @@ namespace
 			}
 			if (isCompletelyOutsideOfPlane)
 			{
-				return -1.f; // Any Bounds totally outside of any plane is not visible
+				return false; // Any Bounds totally outside of any plane is not visible
 			}
 		}
 
 		// If we've made it this far, the object is visible
-		return glm::length(frustum.m_camWorldPos - boundsCenter);
+		if (camToMeshBoundsDistOut)
+		{
+			*camToMeshBoundsDistOut = glm::length(frustum.m_camWorldPos - boundsCenter);
+		}
+		return true;
 	}
 
 
-	void DoCulling(
+	void CullLights(
+		gr::RenderDataManager const& renderData, 
+		gr::Camera::Frustum const& frustum,
+		std::vector<gr::RenderDataID>& pointLightIDs,
+		std::vector<gr::RenderDataID>& spotLightIDs,
+		bool cullingEnabled)
+	{
+		pointLightIDs.clear();
+		spotLightIDs.clear();
+
+		pointLightIDs.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataPoint>());
+		spotLightIDs.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataSpot>());
+
+		auto DoCulling = [&renderData, &frustum, &cullingEnabled]<typename T>(
+			gr::RenderDataManager::LinearIterator<T> lightItr,
+			gr::RenderDataManager::LinearIterator<T> lightItrEnd,
+			std::vector<gr::RenderDataID>& lightIDs)
+		{
+			while (lightItr != lightItrEnd)
+			{
+				gr::Bounds::RenderData const& lightBounds =
+					renderData.GetObjectData<gr::Bounds::RenderData>(lightItr->m_renderDataID);
+				gr::Transform::RenderData const& lightTransform =
+					renderData.GetTransformDataFromTransformID(lightItr->m_transformID);
+
+				const bool lightIsVisible = TestBoundsVisibility(lightBounds, lightTransform, frustum);
+				if (lightIsVisible || !cullingEnabled)
+				{
+					lightIDs.emplace_back(lightItr->m_renderDataID);
+				}
+
+				++lightItr;
+			}
+		};
+		DoCulling(
+			renderData.Begin<gr::Light::RenderDataPoint>(), renderData.End<gr::Light::RenderDataPoint>(), pointLightIDs);
+		DoCulling(
+			renderData.Begin<gr::Light::RenderDataSpot>(), renderData.End<gr::Light::RenderDataSpot>(), spotLightIDs);
+	}
+
+
+	void CullGeometry(
 		gr::RenderDataManager const& renderData, 
 		std::unordered_map<gr::RenderDataID, std::vector<gr::RenderDataID>> const& meshesToMeshPrimitiveBounds,
-		gr::Camera::Frustum const& frustum, 
+		gr::Camera::Frustum const& frustum,
 		std::vector<gr::RenderDataID>& visibleIDsOut,
 		bool cullingEnabled)
 	{
@@ -82,8 +129,9 @@ namespace
 			gr::Bounds::RenderData const& meshBounds = renderData.GetObjectData<gr::Bounds::RenderData>(meshID);
 			gr::Transform::RenderData const& meshTransform = renderData.GetTransformDataFromRenderDataID(meshID);
 
-			const float camToMeshBoundsDist = TestBoundsVisibility(meshBounds, meshTransform, frustum);
-			const bool meshIsVisible = camToMeshBoundsDist > 0.f;
+			float camToMeshBoundsDist = 0.f;
+			const bool meshIsVisible = TestBoundsVisibility(meshBounds, meshTransform, frustum, &camToMeshBoundsDist);
+
 			if (meshIsVisible || !cullingEnabled)
 			{
 				std::vector<gr::RenderDataID> const& meshPrimitiveIDs = encapsulatingBounds.second;
@@ -94,8 +142,10 @@ namespace
 					gr::Transform::RenderData const& primTransform = 
 						renderData.GetTransformDataFromRenderDataID(meshPrimID);
 
-					const float camToMeshPrimBoundsDist = TestBoundsVisibility(primBounds, primTransform, frustum);
-					const bool meshPrimIsVisible = camToMeshPrimBoundsDist > 0.f;
+					float camToMeshPrimBoundsDist = 0.f;
+					const bool meshPrimIsVisible = 
+						TestBoundsVisibility(primBounds, primTransform, frustum, &camToMeshPrimBoundsDist);
+
 					if (meshPrimIsVisible || !cullingEnabled)
 					{
 						idsAndDistances.emplace_back(IDAndDistance{
@@ -258,6 +308,9 @@ namespace gr
 		util::ThreadSafeVector<std::future<void>> cullingFutures;
 		cullingFutures.reserve(renderData.GetNumElementsOfType<gr::Camera::RenderData>());
 
+		// We'll also cull lights against the currently active camera
+		const gr::RenderDataID activeCamRenderDataID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+
 		// Cull every registered camera:
 		std::vector<gr::RenderDataID> const& cameraIDs = renderData.GetRegisteredRenderDataIDs<gr::Camera::RenderData>();
 		auto cameraItr = renderData.IDBegin(cameraIDs);
@@ -274,7 +327,8 @@ namespace gr
 
 			// Enqueue the culling job:
 			cullingFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
-				[this, cameraID, camData, cameraIsDirty, camTransformData, numMeshPrimitives, &renderData]()
+				[cameraID, camData, cameraIsDirty, camTransformData, numMeshPrimitives, activeCamRenderDataID,
+				this, &renderData]()
 			{
 				// Create/update frustum planes for dirty cameras:
 				// A Camera will be dirty if it has just been created, or if it has just been modified
@@ -354,7 +408,7 @@ namespace gr
 					renderIDsOut.reserve(numMeshPrimitives);
 
 					// Cull our views and populate the set of visible IDs:
-					DoCulling(
+					CullGeometry(
 						renderData,
 						m_meshesToMeshPrimitiveBounds,
 						m_cachedFrustums.at(currentView),
@@ -374,6 +428,22 @@ namespace gr
 						{
 							m_viewToVisibleIDs.emplace(currentView, std::move(renderIDsOut)).first;
 						}
+					}
+				}
+
+				// If we're the active camera, also cull the lights:
+				if (cameraID == activeCamRenderDataID)
+				{
+					SEAssert(numViews == 1, "We're only expecting a single view for the main camera");
+					{
+						std::lock_guard<std::mutex> lock(m_visibleLightsMutex);
+
+						CullLights(
+							renderData, 
+							m_cachedFrustums.at(gr::Camera::View(cameraID)),
+							m_visiblePointLightIDs, 
+							m_visibleSpotLightIDs,
+							m_cullingEnabled);
 					}
 				}
 			}));
@@ -414,12 +484,28 @@ namespace gr
 			m_cullingEnabled = !m_cullingEnabled;
 		}
 
+		if (ImGui::CollapsingHeader("Visible Light IDs"))
+		{
+			ImGui::Text(std::format("Active camera RenderDataID: {}",
+				m_graphicsSystemManager->GetActiveCameraRenderDataID()).c_str());
+
+			ImGui::Text("Point lights:");
+			ImGui::Text(FormatIDString(m_visiblePointLightIDs).c_str());
+			
+			ImGui::Separator();
+
+			ImGui::Text("Spot lights:");
+			ImGui::Text(FormatIDString(m_visibleSpotLightIDs).c_str());
+		}
+
 		if (ImGui::CollapsingHeader("Visible IDs"))
 		{
 			for (auto const& cameraResults : m_viewToVisibleIDs)
 			{
-				ImGui::Text(std::format("Camera RenderDataID: {}", cameraResults.first.m_cameraRenderDataID).c_str());
-
+				ImGui::Text(std::format("Camera RenderDataID: {}, Face: {}", 
+					cameraResults.first.m_cameraRenderDataID,
+					gr::Camera::View::k_faceNames[cameraResults.first.m_face]).c_str());
+				
 				ImGui::Text(FormatIDString(cameraResults.second).c_str());
 
 				ImGui::Separator();

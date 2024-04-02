@@ -19,7 +19,7 @@ namespace fr
 	MaterialInstanceComponent& MaterialInstanceComponent::AttachMaterialComponent(
 		fr::EntityManager& em,
 		entt::entity meshPrimitiveConcept,
-		std::shared_ptr<gr::Material const> sceneMaterial)
+		gr::Material const* sceneMaterial)
 	{
 		SEAssert(sceneMaterial != nullptr, "Cannot attach a null material");
 		SEAssert(em.HasComponent<fr::MeshPrimitiveComponent>(meshPrimitiveConcept),

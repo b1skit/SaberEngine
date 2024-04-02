@@ -280,7 +280,7 @@ namespace fr
 
 			// Material:
 			static uint32_t s_selectedMaterialIdx = 0;
-			std::vector<std::string> materialNames = { fr::SceneData::k_missingMaterialName }; // TODO: Dynamically populate this
+			std::vector<std::string> const& materialNames = fr::SceneManager::GetSceneData()->GetAllMaterialNames();			
 			
 			util::ShowBasicComboBox(
 				"Material##spawnMeshFactory", materialNames.data(), materialNames.size(), s_selectedMaterialIdx);
@@ -381,7 +381,7 @@ namespace fr
 					fr::SceneManager::GetSceneData()->GetMaterial(s_meshFactoryMaterialName.c_str());
 
 				fr::MaterialInstanceComponent::AttachMaterialComponent(
-					*fr::EntityManager::Get(), meshPrimimitiveEntity, material);
+					*fr::EntityManager::Get(), meshPrimimitiveEntity, material.get());
 			}
 			break;
 			case SourceType::GLTFFile:
