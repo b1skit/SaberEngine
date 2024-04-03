@@ -1238,4 +1238,11 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets'))" />
   </Target>
+  <Target Name="CleanSEShaders" AfterTargets="Clean">
+    <ItemGroup>
+      <ShaderDir Include="$(SolutionDir)SaberEngine\Shaders\" />
+    </ItemGroup>
+    <Message Text="Deleting shaders" Importance="high" />
+    <RemoveDir Directories="@(ShaderDir)" />
+  </Target>
 </Project>
