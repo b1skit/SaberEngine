@@ -26,7 +26,7 @@ namespace en
 		, m_mouseInputCaptured(false)
 	{
 		InitializeKeyboardStates();
-		InitializeMouseStates();
+		InitializeMouseAxisStates();
 	}
 
 
@@ -76,13 +76,8 @@ namespace en
 	void InputManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		// Prepare for the next around of input events fired by the EventManager
-		m_mouseAxisStates[MouseInputAxis::Input_MouseX] = 0.f;
-		m_mouseAxisStates[MouseInputAxis::Input_MouseY] = 0.f;
-
-		for (size_t mButton = 0; mButton < MouseInputButton_Count; mButton++)
-		{
-			m_mouseButtonStates[mButton] = false;
-		}
+		InitializeMouseAxisStates();
+		InitializeMouseButtonStates();
 
 		HandleEvents();
 	}
@@ -119,7 +114,7 @@ namespace en
 				m_mouseInputCaptured = eventInfo.m_data0.m_dataB;
 				if (m_mouseInputCaptured)
 				{
-					InitializeMouseStates();
+					InitializeMouseAxisStates();
 				}
 				doBroadcastToSE = false;
 			}
@@ -283,8 +278,11 @@ namespace en
 			break;
 			case en::EventManager::WindowFocusChanged:
 			{
-				// If we've lost focus, zero out any currently-pressed keys to prevent them getting stuck				
-				InitializeKeyboardStates();
+				// If we've lost focus, zero out any currently-pressed keys to prevent them getting stuck
+				if (!transformedEvent.m_data0.m_dataB)
+				{
+					InitializeKeyboardStates();
+				}
 				doBroadcastToSE = false;
 			}
 			break;
@@ -334,19 +332,19 @@ namespace en
 
 	void InputManager::InitializeKeyboardStates()
 	{
-		for (size_t i = 0; i < en::KeyboardInputButton_Count; i++)
-		{
-			m_keyboardInputButtonStates[i] = false;
-		}
+		memset(m_keyboardInputButtonStates, 0, sizeof(bool) * en::KeyboardInputButton_Count);
 	}
 
 
-	void InputManager::InitializeMouseStates()
+	void InputManager::InitializeMouseAxisStates()
 	{
-		for (int i = 0; i < en::MouseInputAxis_Count; i++)
-		{
-			m_mouseAxisStates[i] = 0.0f;
-		}
+		memset(m_mouseAxisStates, 0, sizeof(float) * en::MouseInputAxis_Count);
+	}
+
+
+	void InputManager::InitializeMouseButtonStates()
+	{
+		memset(m_mouseButtonStates, 0, sizeof(bool) * en::MouseInputButton_Count);
 	}
 }
 

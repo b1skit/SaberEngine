@@ -41,7 +41,7 @@ namespace en
 
 		en::EventManager::Get()->Notify(en::EventManager::EventInfo{
 				.m_type = en::EventManager::EventType::WindowFocusChanged,
-				.m_data0 = en::EventManager::EventData{.m_dataB = true}
+				.m_data0 = en::EventManager::EventData{.m_dataB = m_hasFocus}
 				//.m_data1 = unused
 			});
 	}

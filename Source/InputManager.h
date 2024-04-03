@@ -36,7 +36,8 @@ namespace en
 		void LoadInputBindings();
 
 		void InitializeKeyboardStates();
-		void InitializeMouseStates();
+		void InitializeMouseAxisStates();
+		void InitializeMouseButtonStates();
 
 
 	private:
