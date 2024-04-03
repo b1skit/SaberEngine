@@ -41,6 +41,7 @@ namespace gr
 {
 	RenderDataManager::RenderDataManager()
 		: m_currentFrame(k_invalidDirtyFrameNum)
+		, m_threadProtector(true)
 	{
 	}
 

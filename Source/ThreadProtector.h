@@ -7,19 +7,25 @@ namespace util
 	class ThreadProtector
 	{
 	public:
-		ThreadProtector();
+		ThreadProtector(bool accessIsValidIfNotCurrentlyOwned);
 		~ThreadProtector() = default;
 
 		void TakeOwnership();
 		void ValidateThreadAccess() const;
 		void ReleaseOwnership();
 
+#if defined(_DEBUG)
 	private:
 		std::thread::id m_owningThreadId;
 		mutable std::mutex m_owningThreadIdMutex;
 
+		// True: You only care about catching accesses while someone else has ownership of the ThreadProtector
+		// False: You must own the ThreadProtector for access to be valid
+		bool m_accessIsValidIfNotCurrentlyOwned;
+#endif
 
 	private: // No copying allowed
+		ThreadProtector() = delete;
 		ThreadProtector(ThreadProtector const&) = delete;
 		ThreadProtector(ThreadProtector&&) = delete;
 		ThreadProtector& operator=(ThreadProtector const&) = delete;
@@ -46,7 +52,10 @@ namespace util
 	};
 
 
-	inline ThreadProtector::ThreadProtector()
+	inline ThreadProtector::ThreadProtector(bool accessIsValidIfNotCurrentlyOwned)
+#if defined(_DEBUG)
+		: m_accessIsValidIfNotCurrentlyOwned(accessIsValidIfNotCurrentlyOwned)
+#endif
 	{
 #if defined(_DEBUG)
 		{
@@ -79,7 +88,7 @@ namespace util
 			std::lock_guard<std::mutex> lock(m_owningThreadIdMutex);
 
 			SEAssert(m_owningThreadId == std::this_thread::get_id() || 
-				m_owningThreadId == std::thread::id(),
+				(m_owningThreadId == std::thread::id() && m_accessIsValidIfNotCurrentlyOwned),
 				"Thread access violation");
 		}
 #endif

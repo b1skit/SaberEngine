@@ -431,7 +431,7 @@ namespace dx12
 
 		
 		{
-			std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
+			globalResourceStates.AquireLock();
 
 #if defined(DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS)
 			LOG_WARNING("\n--------------------- TransitionIncompatibleResourceStatesToCommon() ---------------------\n"
@@ -580,7 +580,9 @@ namespace dx12
 					}
 				}
 			}
-		} // End barrierLock
+
+			globalResourceStates.ReleaseLock();
+		} // End globalResourceStates locked section
 
 		// Execute our transitions to COMMON, and have our main command queue wait on GPU fences to ensure the 
 		// transitions are complete before proceeding
@@ -647,7 +649,7 @@ namespace dx12
 
 		// Manually patch the barriers for each command list:
 		{
-			std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
+			globalResourceStates.AquireLock();
 
 #if defined(DEBUG_STATE_TRACKER_RESOURCE_TRANSITIONS)
 			LOG_WARNING("\n--------------------- PrependBarrierCommandListsAndWaits() ---------------------\n"
@@ -816,7 +818,9 @@ namespace dx12
 			globalResourceStates.DebugPrintResourceStates();
 			LOG_WARNING("-------------- !DONE! PrependBarrierCommandListsAndWaits() !DONE! --------------");
 #endif
-		} // End barrierLock
+			
+			globalResourceStates.ReleaseLock();
+		} // End globalResourceStates locked section
 
 
 		// Insert a GPU wait for any incomplete fences for resources modified on other queues:

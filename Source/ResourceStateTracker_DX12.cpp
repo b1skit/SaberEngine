@@ -195,6 +195,7 @@ namespace dx12
 
 
 	GlobalResourceStateTracker::GlobalResourceStateTracker()
+		: m_threadProtector(false)
 	{
 		SEAssert(dx12::Fence::GetCommandListTypeFromFenceValue(k_invalidLastFence) == dx12::CommandListType::CommandListType_Invalid,
 			"Invalid fence value cannot map to a valid command list type");
@@ -208,9 +209,11 @@ namespace dx12
 		SEAssert(!m_globalStates.contains(newResource), "Resource is already registered");
 		SEAssert(numSubresources > 0, "Invalid number of subresources");
 
-		std::lock_guard<std::mutex> lock(m_globalStatesMutex);
-		m_globalStates.emplace(newResource, 
-			dx12::GlobalResourceState(initialState, numSubresources));
+		{
+			std::lock_guard<std::mutex> lock(m_globalStatesMutex);
+			m_globalStates.emplace(newResource,
+				dx12::GlobalResourceState(initialState, numSubresources));
+		}
 	}
 
 
@@ -219,15 +222,17 @@ namespace dx12
 		SEAssert(existingResource, "Resource cannot be null");
 		SEAssert(m_globalStates.contains(existingResource), "Resource is not registered");
 
-		std::lock_guard<std::mutex> lock(m_globalStatesMutex);
-		m_globalStates.erase(existingResource);
+		{
+			std::lock_guard<std::mutex> lock(m_globalStatesMutex);
+			m_globalStates.erase(existingResource);
+		}
 	}
 
 
 	// Note: Caller must have called GetGlobalStatesMutex() and locked it before using this function
 	GlobalResourceState const& GlobalResourceStateTracker::GetResourceState(ID3D12Resource* resource) const
 	{
-		// TODO: It's risky to return this value by reference: We should assert the calling thread holds the m_globalStatesMutex
+		m_threadProtector.ValidateThreadAccess();
 			
 		SEAssert(m_globalStates.contains(resource), "Resource not found, was it registered?");
 		return m_globalStates.at(resource);
@@ -238,7 +243,7 @@ namespace dx12
 	void GlobalResourceStateTracker::SetResourceState(
 		ID3D12Resource* resource, D3D12_RESOURCE_STATES newState, SubresourceIdx subresourceIdx, uint64_t lastFence)
 	{
-		// TODO: We should assert the calling thread currently holds the m_globalStatesMutex
+		m_threadProtector.ValidateThreadAccess();
 
 		SEAssert(m_globalStates.contains(resource), "Resource not found, was it registered?");
 		m_globalStates.at(resource).SetState(newState, subresourceIdx, lastFence);
@@ -247,6 +252,8 @@ namespace dx12
 
 	void GlobalResourceStateTracker::DebugPrintResourceStates() const
 	{
+		m_threadProtector.ValidateThreadAccess();
+
 		LOG_WARNING("--------------\n"
 			"\tGlobal States:\n"
 			"\t(%s resources)\n"

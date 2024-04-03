@@ -1,5 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "ThreadProtector.h"
+
 #include <d3d12.h>
 
 
@@ -108,18 +110,24 @@ namespace dx12
 	{
 	public:
 		GlobalResourceStateTracker();
+
 		~GlobalResourceStateTracker() = default;
 		GlobalResourceStateTracker(GlobalResourceStateTracker&&) = default;
 		GlobalResourceStateTracker& operator=(GlobalResourceStateTracker&&) = default;
 
+	public:
 		// Registration/deregistration: No external locking/unlocking required
 		void RegisterResource(ID3D12Resource*, D3D12_RESOURCE_STATES initialState, uint32_t numSubresources);
 		void UnregisterResource(ID3D12Resource*);
 
-		// Syncronization functions: Threads are responsible for locking/releasing this mutex before/after calling the
+	public:
+		// Syncronization functions: Threads are responsible for locking/releasing before/after calling the
 		// functions below this point:
-		std::mutex& GetGlobalStatesMutex();
+		void AquireLock() const;
+		void ReleaseLock() const;
 
+	public:
+		// You must have aquired the lock to use these functions, and release it when you're done:
 		GlobalResourceState const& GetResourceState(ID3D12Resource*) const;
 		void SetResourceState(ID3D12Resource*, D3D12_RESOURCE_STATES, SubresourceIdx, uint64_t lastFence);
 
@@ -127,7 +135,9 @@ namespace dx12
 
 	private:
 		std::unordered_map<ID3D12Resource*, GlobalResourceState> m_globalStates;
-		std::mutex m_globalStatesMutex;
+		
+		mutable std::mutex m_globalStatesMutex;
+		mutable util::ThreadProtector m_threadProtector;
 
 
 	private: // No copying allowed
@@ -194,9 +204,17 @@ namespace dx12
 	// GlobalResourceStateTracker
 	/******************************************************************************************************************/
 
-	inline std::mutex& GlobalResourceStateTracker::GetGlobalStatesMutex()
+	inline void GlobalResourceStateTracker::AquireLock() const
 	{
-		return m_globalStatesMutex;
+		m_globalStatesMutex.lock();
+		m_threadProtector.TakeOwnership();
+	}
+
+
+	inline void GlobalResourceStateTracker::ReleaseLock() const
+	{
+		m_threadProtector.ReleaseOwnership();
+		m_globalStatesMutex.unlock();
 	}
 
 
