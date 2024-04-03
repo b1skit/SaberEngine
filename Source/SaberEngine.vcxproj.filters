@@ -1158,7 +1158,6 @@
     <None Include="Shaders\HLSL\CameraCommon.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
-    <None Include="Shaders\HLSL\Samplers.hlsli" />
     <None Include="Shaders\GLSL\Shadows.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
@@ -1179,6 +1178,9 @@
     </None>
     <None Include="Shaders\GLSL\DeferredSpotLight.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\Samplers.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
