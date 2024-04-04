@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+#include <d3dx12.h>
 
 #include "CastUtils.h"
 #include "Config.h"

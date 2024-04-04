@@ -13,7 +13,7 @@
 #include "TextureTarget_DX12.h"
 #include "TextUtils.h"
 
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+#include <d3dx12.h>
 #include <dxcapi.h>
 #include <d3d12shader.h>
 

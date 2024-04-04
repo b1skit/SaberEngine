@@ -1,14 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-#include <d3d12.h>
-#include <wrl.h>
-
 #include "Config.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "Assert.h"
 #include "TextUtils.h"
 
+#include <d3dx12.h>
+#include <d3d12.h>
+#include <wrl.h>
 
 using Microsoft::WRL::ComPtr;
 

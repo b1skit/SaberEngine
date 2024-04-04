@@ -9,7 +9,7 @@
 #include "RenderManager_DX12.h"
 #include "TextUtils.h"
 
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+#include <d3dx12.h>
 
 using Microsoft::WRL::ComPtr;
 

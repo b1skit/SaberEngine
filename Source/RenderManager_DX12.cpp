@@ -23,7 +23,7 @@
 #include "Texture_DX12.h"
 #include "VertexStream_DX12.h"
 
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+#include <d3dx12.h>
 
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
