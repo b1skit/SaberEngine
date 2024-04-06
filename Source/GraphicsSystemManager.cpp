@@ -62,11 +62,11 @@ namespace gr
 
 		SEAssert(!m_scriptNameToIndex.contains(lowercaseScriptName), "Graphics system has already been added");
 
-		std::shared_ptr<gr::GraphicsSystem> newGS = gr::GraphicsSystem::CreateByName(lowercaseScriptName, this);
+		std::unique_ptr<gr::GraphicsSystem> newGS = gr::GraphicsSystem::CreateByName(lowercaseScriptName, this);
 		SEAssert(newGS, "Failed to create a valid graphics system");
 
 		const size_t insertIdx = m_graphicsSystems.size();
-		m_graphicsSystems.emplace_back(newGS);
+		m_graphicsSystems.emplace_back(std::move(newGS));
 		m_scriptNameToIndex.emplace(std::move(lowercaseScriptName), insertIdx);
 	}
 
@@ -248,7 +248,7 @@ namespace gr
 
 	void GraphicsSystemManager::ShowImGuiWindow()
 	{
-		for (std::shared_ptr<gr::GraphicsSystem> const& gs : m_graphicsSystems)
+		for (std::unique_ptr<gr::GraphicsSystem> const& gs : m_graphicsSystems)
 		{
 			if (ImGui::CollapsingHeader(std::format("{}##{}", gs->GetName(), gs->GetUniqueID()).c_str()))
 			{

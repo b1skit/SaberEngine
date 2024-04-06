@@ -31,7 +31,7 @@ namespace gr
 		template <typename T>
 		T* GetGraphicsSystem() const;
 
-		std::vector<std::shared_ptr<gr::GraphicsSystem>> const& GetGraphicsSystems() const;
+		std::vector<std::unique_ptr<gr::GraphicsSystem>> const& GetGraphicsSystems() const;
 
 		void CreateAddGraphicsSystemByScriptName(char const* scriptName);
 		void CreateAddGraphicsSystemByScriptName(std::string const& scriptName);
@@ -83,7 +83,7 @@ namespace gr
 
 
 	private:
-		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
+		std::vector<std::unique_ptr<gr::GraphicsSystem>> m_graphicsSystems;
 		std::map<std::string, size_t> m_scriptNameToIndex;
 
 		gr::RenderDataManager m_renderData;
@@ -108,7 +108,7 @@ namespace gr
 	};
 
 
-	inline std::vector<std::shared_ptr<gr::GraphicsSystem>> const& GraphicsSystemManager::GetGraphicsSystems() const
+	inline std::vector<std::unique_ptr<gr::GraphicsSystem>> const& GraphicsSystemManager::GetGraphicsSystems() const
 	{
 		return m_graphicsSystems;
 	}

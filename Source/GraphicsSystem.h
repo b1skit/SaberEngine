@@ -22,8 +22,8 @@ namespace gr
 	public:
 		// Scriptable pipeline: Create a graphics system by the (case insensitive) name provided in a script.
 		// Returns null if no GS with that name exists
-		static std::shared_ptr<gr::GraphicsSystem> CreateByName(char const* scriptName, gr::GraphicsSystemManager*);
-		static std::shared_ptr<gr::GraphicsSystem> CreateByName(std::string const& scriptName, gr::GraphicsSystemManager*);
+		static std::unique_ptr<gr::GraphicsSystem> CreateByName(char const* scriptName, gr::GraphicsSystemManager*);
+		static std::unique_ptr<gr::GraphicsSystem> CreateByName(std::string const& scriptName, gr::GraphicsSystemManager*);
 
 		// GraphicsSystem interface:
 		// -------------------------
@@ -82,10 +82,10 @@ namespace gr
 	protected:
 		// Automatic factory registration mechanism:
 		template<typename T>
-		static std::shared_ptr<gr::GraphicsSystem> Create(gr::GraphicsSystemManager* gsm);
+		static std::unique_ptr<gr::GraphicsSystem> Create(gr::GraphicsSystemManager* gsm);
 
 		
-		using CreateFn = std::shared_ptr<gr::GraphicsSystem>(*)(gr::GraphicsSystemManager*);
+		using CreateFn = std::unique_ptr<gr::GraphicsSystem>(*)(gr::GraphicsSystemManager*);
 		static bool RegisterGS(char const* scriptName, CreateFn);
 
 
@@ -101,9 +101,9 @@ namespace gr
 
 
 	template<typename T>
-	std::shared_ptr<gr::GraphicsSystem> gr::GraphicsSystem::Create(gr::GraphicsSystemManager* gsm)
+	std::unique_ptr<gr::GraphicsSystem> gr::GraphicsSystem::Create(gr::GraphicsSystemManager* gsm)
 	{
-		std::shared_ptr<gr::GraphicsSystem> newGS;
+		std::unique_ptr<gr::GraphicsSystem> newGS;
 		newGS.reset(new T(gsm));
 		return newGS;
 	}

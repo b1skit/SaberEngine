@@ -57,7 +57,8 @@ namespace gr
 	}
 
 
-	std::shared_ptr<gr::GraphicsSystem> GraphicsSystem::CreateByName(char const* scriptName, gr::GraphicsSystemManager* gsm)
+	std::unique_ptr<gr::GraphicsSystem> GraphicsSystem::CreateByName(
+		char const* scriptName, gr::GraphicsSystemManager* gsm)
 	{
 		std::string const& lowercaseScriptName(util::ToLower(scriptName));
 
@@ -83,7 +84,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<gr::GraphicsSystem> GraphicsSystem::CreateByName(
+	std::unique_ptr<gr::GraphicsSystem> GraphicsSystem::CreateByName(
 		std::string const& scriptName, gr::GraphicsSystemManager* gsm)
 	{
 		return CreateByName(scriptName.c_str(), gsm);
