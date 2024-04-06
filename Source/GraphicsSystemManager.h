@@ -31,7 +31,14 @@ namespace gr
 		template <typename T>
 		T* GetGraphicsSystem() const;
 
-		std::vector<std::shared_ptr<gr::GraphicsSystem>>& GetGraphicsSystems();
+		std::vector<std::shared_ptr<gr::GraphicsSystem>> const& GetGraphicsSystems() const;
+
+		void CreateAddGraphicsSystemByScriptName(char const* scriptName);
+		void CreateAddGraphicsSystemByScriptName(std::string const& scriptName);
+
+		gr::GraphicsSystem* GetGraphicsSystemByScriptName(char const* scriptName);
+		gr::GraphicsSystem* GetGraphicsSystemByScriptName(std::string const& scriptName);
+
 
 		
 	public: // Batch manager:
@@ -77,6 +84,7 @@ namespace gr
 
 	private:
 		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
+		std::map<std::string, size_t> m_scriptNameToIndex;
 
 		gr::RenderDataManager m_renderData;
 		gr::BatchManager m_batchManager;
@@ -100,7 +108,7 @@ namespace gr
 	};
 
 
-	inline std::vector<std::shared_ptr<gr::GraphicsSystem>>& GraphicsSystemManager::GetGraphicsSystems()
+	inline std::vector<std::shared_ptr<gr::GraphicsSystem>> const& GraphicsSystemManager::GetGraphicsSystems() const
 	{
 		return m_graphicsSystems;
 	}

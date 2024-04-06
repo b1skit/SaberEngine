@@ -16,15 +16,34 @@ namespace gr
 	class XeGTAOGraphicsSystem;
 
 
-	class DeferredLightingGraphicsSystem final : public virtual GraphicsSystem
+	class DeferredLightingGraphicsSystem final
+		: public virtual GraphicsSystem
+		, public virtual IScriptableGraphicsSystem<DeferredLightingGraphicsSystem>
 	{
+	public:
+		static constexpr char const* GetScriptName() { return "DeferredLighting"; }
+
+		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
+		{
+			RETURN_RUNTIME_BINDINGS
+			(
+				INIT_PIPELINE
+				(
+					INIT_PIPELINE_FN(DeferredLightingGraphicsSystem, InitializeResourceGenerationStages),
+					INIT_PIPELINE_FN(DeferredLightingGraphicsSystem, InitPipeline)
+				)
+				PRE_RENDER(PRE_RENDER_FN(DeferredLightingGraphicsSystem, PreRender))
+			);
+		}
+
+
 	public:
 		DeferredLightingGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~DeferredLightingGraphicsSystem() override = default;
 
-		void CreateResourceGenerationStages(re::StagePipeline&);
-		void Create(re::RenderSystem&, re::StagePipeline&);
+		void InitializeResourceGenerationStages(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&);
 
 		void PreRender();
 

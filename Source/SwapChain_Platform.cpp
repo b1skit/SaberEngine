@@ -13,12 +13,12 @@ namespace platform
 
 		switch (api)
 		{
-		case RenderingAPI::OpenGL:
+		case platform::RenderingAPI::OpenGL:
 		{
 			swapChain.SetPlatformParams(std::make_unique<opengl::SwapChain::PlatformParams>());
 		}
 		break;
-		case RenderingAPI::DX12:
+		case platform::RenderingAPI::DX12:
 		{
 			swapChain.SetPlatformParams(std::make_unique<dx12::SwapChain::PlatformParams>());
 		}

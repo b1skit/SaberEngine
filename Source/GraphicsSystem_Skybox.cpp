@@ -40,7 +40,7 @@ namespace gr
 	}
 
 
-	void SkyboxGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
+	void SkyboxGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_skyboxStage = re::RenderStage::CreateGraphicsStage("Skybox stage", gfxStageParams);

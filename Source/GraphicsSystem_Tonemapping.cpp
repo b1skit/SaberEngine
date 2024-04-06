@@ -26,10 +26,8 @@ namespace gr
 	}
 
 
-	void TonemappingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
+	void TonemappingGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
 	{
-		m_owningRenderSystem = &renderSystem;
-
 		re::PipelineState tonemappingPipelineState;
 		tonemappingPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		tonemappingPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);

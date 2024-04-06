@@ -146,7 +146,7 @@ namespace gr
 	}
 
 
-	void XeGTAOGraphicsSystem::Create(re::StagePipeline& pipeline)
+	void XeGTAOGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
 	{
 		GBufferGraphicsSystem* gbufferGS = m_graphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
 

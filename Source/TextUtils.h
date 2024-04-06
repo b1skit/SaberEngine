@@ -81,7 +81,7 @@ namespace util
 	}
 
 
-	static std::string ToLower(std::string const& str, size_t numChars)
+	static std::string ToLower(std::string const& str)
 	{
 		return ToLower(str.c_str());
 	}

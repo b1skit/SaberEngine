@@ -6,13 +6,28 @@
 
 namespace gr
 {
-	class DebugGraphicsSystem final : public virtual GraphicsSystem
+	class DebugGraphicsSystem final
+		: public virtual GraphicsSystem
+		, public virtual IScriptableGraphicsSystem<DebugGraphicsSystem>
 	{
+	public:
+		static constexpr char const* GetScriptName() { return "Debug"; }
+
+		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
+		{
+			RETURN_RUNTIME_BINDINGS
+			(
+				INIT_PIPELINE(INIT_PIPELINE_FN(DebugGraphicsSystem, InitPipeline))
+				PRE_RENDER(PRE_RENDER_FN(DebugGraphicsSystem, PreRender))
+			);
+		}
+
+
 	public:
 
 		DebugGraphicsSystem(gr::GraphicsSystemManager*);
 
-		void Create(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&);
 
 		void PreRender();
 

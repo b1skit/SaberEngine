@@ -38,7 +38,7 @@ namespace gr
 	}
 
 
-	void GBufferGraphicsSystem::Create(re::StagePipeline& pipeline)
+	void GBufferGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
 	{
 		m_owningPipeline = &pipeline;
 

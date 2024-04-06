@@ -185,7 +185,7 @@ namespace gr
 	}
 
 
-	void CullingGraphicsSystem::Create()
+	void CullingGraphicsSystem::InitPipeline()
 	{
 		//
 	}

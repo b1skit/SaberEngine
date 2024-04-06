@@ -225,7 +225,7 @@ namespace gr
 	}
 
 
-	void ShadowsGraphicsSystem::Create(re::StagePipeline& pipeline)
+	void ShadowsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
 	{
 		m_stagePipeline = &pipeline;
 

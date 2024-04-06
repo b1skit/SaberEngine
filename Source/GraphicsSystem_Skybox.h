@@ -5,21 +5,36 @@
 
 namespace gr
 {
-	class SkyboxGraphicsSystem final : public virtual GraphicsSystem
+	class SkyboxGraphicsSystem final
+		: public virtual GraphicsSystem 
+		, public virtual IScriptableGraphicsSystem<SkyboxGraphicsSystem>
 	{
 	public:
+		static constexpr char const* GetScriptName() { return "Skybox"; }
+
+		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
+		{
+			RETURN_RUNTIME_BINDINGS
+			(
+				INIT_PIPELINE(INIT_PIPELINE_FN(SkyboxGraphicsSystem, InitPipeline))
+				PRE_RENDER(PRE_RENDER_FN(SkyboxGraphicsSystem, PreRender))
+			);
+		}
+
+	public:
+
 		SkyboxGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~SkyboxGraphicsSystem() override {}
 
-		void Create(re::RenderSystem&, re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&);
 
 		void PreRender();
 
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
-
 		void ShowImGuiWindow() override;
+
 
 	private:
 		void CreateBatches() override;
@@ -41,4 +56,7 @@ namespace gr
 		bool m_showBackgroundColor;
 		bool m_isDirty;
 	};
+
+
+
 }

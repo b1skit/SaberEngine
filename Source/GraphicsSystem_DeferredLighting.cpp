@@ -677,7 +677,7 @@ namespace gr
 	}
 
 
-	void DeferredLightingGraphicsSystem::CreateResourceGenerationStages(re::StagePipeline& pipeline)
+	void DeferredLightingGraphicsSystem::InitializeResourceGenerationStages(re::StagePipeline& pipeline)
 	{
 		m_resourceCreationStagePipeline = &pipeline;
 
@@ -730,7 +730,7 @@ namespace gr
 	}
 
 
-	void DeferredLightingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
+	void DeferredLightingGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_ambientStage = re::RenderStage::CreateGraphicsStage("Ambient light stage", gfxStageParams);

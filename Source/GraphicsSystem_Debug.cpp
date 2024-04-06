@@ -366,7 +366,7 @@ namespace gr
 	}
 
 
-	void DebugGraphicsSystem::Create(re::StagePipeline& stagePipeline)
+	void DebugGraphicsSystem::InitPipeline(re::StagePipeline& stagePipeline)
 	{
 		re::PipelineState debugPipelineState;
 		debugPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);

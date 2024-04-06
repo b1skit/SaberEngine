@@ -1,8 +1,121 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "ImGuiUtils.h"
+#include "GraphicsSystem.h"
+#include "GraphicsSystem_Bloom.h"
+#include "GraphicsSystem_XeGTAO.h"
+#include "GraphicsSystem_ComputeMips.h"
+#include "GraphicsSystem_Culling.h"
+#include "GraphicsSystem_Debug.h"
+#include "GraphicsSystem_DeferredLighting.h"
+#include "GraphicsSystem_GBuffer.h"
+#include "GraphicsSystem_Shadows.h"
+#include "GraphicsSystem_Skybox.h"
+#include "GraphicsSystem_Tonemapping.h"
 #include "ProfilingMarkers.h"
 #include "RenderSystem.h"
 
+
+namespace
+{
+	void LoadPipelineDescription(
+		char const* scriptName,
+		std::vector<std::string>& graphicsSystemsToCreate,
+		std::vector<std::pair<std::string, std::string>>& initSteps,
+		std::vector<std::pair<std::string, std::string>>& updateSteps)
+	{
+		SEAssert(scriptName, "Script name cannot be null");
+
+
+		// TODO: Load/populate these structures from disk. For now, we just hard code them
+		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		switch (api)
+		{
+		case platform::RenderingAPI::OpenGL:
+		{
+			initSteps =
+			{
+				{"DeferredLighting", "InitializeResourceGenerationStages"},
+				{"GBuffer", "InitPipeline"},
+				{"Shadows", "InitPipeline"},
+				{"DeferredLighting", "InitPipeline"},
+				{"Skybox", "InitPipeline"},
+				{"Bloom", "InitPipeline"},
+				{"Tonemapping", "InitPipeline"},
+				{"Debug", "InitPipeline"},
+			};
+
+			updateSteps =
+			{
+				{"Culling", "PreRender"},
+				{"GBuffer", "PreRender"},
+				{"Shadows", "PreRender"},
+				{"DeferredLighting", "PreRender"},
+				{"Skybox", "PreRender"},
+				{"Bloom", "PreRender"},
+				{"Tonemapping", "PreRender"},
+				{"Debug", "PreRender"},
+			};
+		}
+		break;
+		case platform::RenderingAPI::DX12:
+		{
+			initSteps =
+			{
+				{"ComputeMips", "InitPipeline"},
+				{"DeferredLighting", "InitializeResourceGenerationStages"},
+				{"GBuffer", "InitPipeline"},
+				{"XeGTAO", "InitPipeline"},
+				{"Shadows", "InitPipeline"},
+				{"DeferredLighting", "InitPipeline"},
+				{"Skybox", "InitPipeline"},
+				{"Bloom", "InitPipeline"},
+				{"Tonemapping", "InitPipeline"},
+				{"Debug", "InitPipeline"},
+			};
+
+			updateSteps =
+			{
+				{"Culling", "PreRender"},
+				{"ComputeMips", "PreRender"},
+				{"GBuffer", "PreRender"},
+				{"XeGTAO", "PreRender"},
+				{"Shadows", "PreRender"},
+				{"DeferredLighting", "PreRender"},
+				{"Skybox", "PreRender"},
+				{"Bloom", "PreRender"},
+				{"Tonemapping", "PreRender"},
+				{"Debug", "PreRender"},
+			};
+		}
+		break;
+		default:
+			SEAssertF("Invalid rendering API argument received");
+		}
+		
+		
+
+		// Build a list of GraphicsSystems we'll need to instantiate
+		// Note: No step is mandatory, so we need to check all of the instructions we've received
+		std::set<std::string> seenGSNames;
+
+		for (auto const& entry : initSteps)
+		{
+			if (!seenGSNames.contains(entry.first))
+			{
+				seenGSNames.emplace(entry.first);
+				graphicsSystemsToCreate.emplace_back(entry.first);
+			}
+		}
+		for (auto const& entry : updateSteps)
+		{
+			if (!seenGSNames.contains(entry.first))
+			{
+				seenGSNames.emplace(entry.first);
+				graphicsSystemsToCreate.emplace_back(entry.first);
+			}
+		}
+	}
+}
 
 namespace re
 {
@@ -20,8 +133,7 @@ namespace re
 		: NamedObject(name)
 		, m_graphicsSystemManager(this)
 		, m_renderPipeline(name + " render pipeline")
-		, m_createPipeline(nullptr)
-		, m_updatePipeline(nullptr)
+		, m_initPipeline(nullptr)
 	{
 	}
 
@@ -30,20 +142,72 @@ namespace re
 	{
 		m_graphicsSystemManager.Destroy();
 		m_renderPipeline.Destroy();
-		m_createPipeline = nullptr;
-		m_updatePipeline = nullptr;
+		m_initPipeline = nullptr;
+		m_updatePipeline.clear();
+	}
+
+
+	void RenderSystem::BuildPipelineFromScript(char const* scriptName)
+	{
+		std::vector<std::string> graphicsSystemsToCreate;
+		std::vector<std::pair<std::string, std::string>> initSteps;
+		std::vector<std::pair<std::string, std::string>> updateSteps;
+		LoadPipelineDescription(scriptName, graphicsSystemsToCreate, initSteps, updateSteps);
+
+		// Create the GS creation pipeline:
+		m_creationPipeline = [this, graphicsSystemsToCreate, updateSteps](re::RenderSystem* renderSystem)
+		{
+			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
+
+			for (std::string const& gsName : graphicsSystemsToCreate)
+			{
+				gsm.CreateAddGraphicsSystemByScriptName(gsName);
+			}
+
+			for (auto const& entry : updateSteps)
+			{
+				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(entry.first);
+
+				std::string const& lowercaseScriptFnName(util::ToLower(entry.second));
+
+				m_updatePipeline.emplace_back(
+					currentGS->GetRuntimeBindings().m_preRenderFunctions.at(lowercaseScriptFnName));
+			}
+		};
+
+
+		m_initPipeline = [initSteps](re::RenderSystem* renderSystem)
+		{
+			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
+			gsm.Create();
+
+			for (auto const& entry : initSteps)
+			{
+				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(entry.first);
+
+				std::string const& lowercaseScriptFnName(util::ToLower(entry.second));
+				std::string const& stagePipelineName = std::format("{}::{}", currentGS->GetName(), entry.second);
+
+				currentGS->GetRuntimeBindings().m_initPipelineFunctions.at(lowercaseScriptFnName)(
+					renderSystem->GetRenderPipeline().AddNewStagePipeline(stagePipelineName));
+			}
+		};
+
+		// We can only build the update pipeline once the GS's have been created (as we need to access their runtime
+		// bindings)
+		m_updatePipeline.reserve(updateSteps.size());
 	}
 
 
 	void RenderSystem::ExecuteInitializePipeline()
 	{
-		m_initializePipeline(this);
+		m_creationPipeline(this);
 	}
 
 
 	void RenderSystem::ExecuteCreatePipeline()
 	{
-		m_createPipeline(this);
+		m_initPipeline(this);
 	}
 
 
@@ -51,7 +215,12 @@ namespace re
 	{
 		SEBeginCPUEvent(std::format("{} ExecuteUpdatePipeline", GetName()).c_str());
 
-		m_updatePipeline(this);
+		m_graphicsSystemManager.PreRender();
+
+		for (auto executeStep : m_updatePipeline)
+		{
+			executeStep();
+		}
 
 		SEEndCPUEvent();
 	}

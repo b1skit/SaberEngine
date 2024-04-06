@@ -7,13 +7,28 @@
 
 namespace gr
 {
-	class ShadowsGraphicsSystem final : public virtual GraphicsSystem
+	class ShadowsGraphicsSystem final
+		: public virtual GraphicsSystem
+		, public virtual IScriptableGraphicsSystem<ShadowsGraphicsSystem>
 	{
+	public:
+		static constexpr char const* GetScriptName() { return "Shadows"; }
+
+		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
+		{
+			RETURN_RUNTIME_BINDINGS
+			(
+				INIT_PIPELINE(INIT_PIPELINE_FN(ShadowsGraphicsSystem, InitPipeline))
+				PRE_RENDER(PRE_RENDER_FN(ShadowsGraphicsSystem, PreRender))
+			);
+		}
+
+
 	public:
 		ShadowsGraphicsSystem(gr::GraphicsSystemManager*);
 		~ShadowsGraphicsSystem() override = default;
 
-		void Create(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&);
 
 		void PreRender();
 

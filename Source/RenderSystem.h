@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "GraphicsSystemManager.h"
+#include "GraphicsSystem.h"
 #include "NamedObject.h"
 #include "RenderPipeline.h"
 
@@ -19,15 +20,16 @@ namespace re
 		RenderSystem(RenderSystem&&) = default;
 		RenderSystem& operator=(RenderSystem&&) = default;
 
-		void SetInitializePipeline(std::function<void(re::RenderSystem*)>);
+
+	public:
+		// Scriptable rendering pipeline:
+		void BuildPipelineFromScript(char const* scriptName);
 		void ExecuteInitializePipeline();
-
-		void SetCreatePipeline(std::function<void(re::RenderSystem*)>);
 		void ExecuteCreatePipeline();
-
-		void SetUpdatePipeline(std::function<void(re::RenderSystem*)>);
 		void ExecuteUpdatePipeline();
 
+
+	public:
 		gr::GraphicsSystemManager& GetGraphicsSystemManager();
 
 		re::RenderPipeline& GetRenderPipeline();
@@ -39,9 +41,9 @@ namespace re
 		gr::GraphicsSystemManager m_graphicsSystemManager;
 
 		re::RenderPipeline m_renderPipeline;
-		std::function<void(re::RenderSystem*)> m_initializePipeline;
-		std::function<void(re::RenderSystem*)> m_createPipeline;
-		std::function<void(re::RenderSystem*)> m_updatePipeline;
+		std::function<void(re::RenderSystem*)> m_creationPipeline;
+		std::function<void(re::RenderSystem*)> m_initPipeline;
+		std::vector<gr::GraphicsSystem::RuntimeBindings::PreRenderFn> m_updatePipeline;
 
 
 	private: // Use the Create() factory
@@ -53,24 +55,6 @@ namespace re
 		RenderSystem(RenderSystem const&) = delete;
 		RenderSystem& operator=(RenderSystem const&) = delete;
 	};
-
-
-	inline void RenderSystem::SetInitializePipeline(std::function<void(re::RenderSystem*)> initializePipeline)
-	{
-		m_initializePipeline = initializePipeline;
-	}
-
-
-	inline void RenderSystem::SetCreatePipeline(std::function<void(re::RenderSystem*)> createPipeline)
-	{
-		m_createPipeline = createPipeline;
-	}
-
-
-	inline void RenderSystem::SetUpdatePipeline(std::function<void(re::RenderSystem*)> updatePipeline)
-	{
-		m_updatePipeline = updatePipeline;
-	}
 
 
 	inline gr::GraphicsSystemManager& RenderSystem::GetGraphicsSystemManager()

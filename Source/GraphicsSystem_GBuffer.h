@@ -7,8 +7,23 @@
 
 namespace gr
 {
-	class GBufferGraphicsSystem final : public virtual GraphicsSystem
+	class GBufferGraphicsSystem final
+		: public virtual GraphicsSystem
+		, public virtual IScriptableGraphicsSystem<GBufferGraphicsSystem>
 	{
+	public:
+		static constexpr char const* GetScriptName() { return "GBuffer"; }
+
+		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
+		{
+			RETURN_RUNTIME_BINDINGS
+			(
+				INIT_PIPELINE(INIT_PIPELINE_FN(GBufferGraphicsSystem, InitPipeline))
+				PRE_RENDER(PRE_RENDER_FN(GBufferGraphicsSystem, PreRender))
+			);
+		}
+
+
 	public:
 		// These enums are converted to strings, & must align with the layout binding indexes defined in SaberCommon.glsl
 		enum GBufferTexIdx : uint8_t
@@ -30,7 +45,7 @@ namespace gr
 
 		~GBufferGraphicsSystem() override {}
 
-		void Create(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&);
 
 		void PreRender();
 

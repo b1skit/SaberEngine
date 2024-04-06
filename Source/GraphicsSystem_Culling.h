@@ -7,13 +7,28 @@
 
 namespace gr
 {
-	class CullingGraphicsSystem final : public virtual GraphicsSystem
+	class CullingGraphicsSystem final
+		: public virtual GraphicsSystem
+		, public virtual IScriptableGraphicsSystem<CullingGraphicsSystem>
 	{
+	public:
+		static constexpr char const* GetScriptName() { return "Culling"; }
+
+		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
+		{
+			RETURN_RUNTIME_BINDINGS
+			(
+				// Note: No INIT_PIPELINE functionality for Culling
+				PRE_RENDER(PRE_RENDER_FN(CullingGraphicsSystem, PreRender))
+			);
+		}
+
+
 	public:
 		CullingGraphicsSystem(gr::GraphicsSystemManager*);
 		~CullingGraphicsSystem() override = default;
 
-		void Create();
+		void InitPipeline();
 
 		void PreRender();
 

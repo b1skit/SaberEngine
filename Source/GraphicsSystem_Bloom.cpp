@@ -56,7 +56,6 @@ namespace gr
 	BloomGraphicsSystem::BloomGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
-		, m_owningRenderSystem(nullptr)
 	{
 		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Near);
 
@@ -64,10 +63,8 @@ namespace gr
 	}
 
 
-	void BloomGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
+	void BloomGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
 	{
-		m_owningRenderSystem = &renderSystem;
-
 		std::shared_ptr<re::Sampler> const bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
 
 		GBufferGraphicsSystem* gbufferGS = 

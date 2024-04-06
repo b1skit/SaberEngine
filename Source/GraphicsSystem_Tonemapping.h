@@ -6,14 +6,29 @@
 
 namespace gr
 {
-	class TonemappingGraphicsSystem final : public virtual GraphicsSystem
+	class TonemappingGraphicsSystem final
+		: public virtual GraphicsSystem
+		, public virtual IScriptableGraphicsSystem<TonemappingGraphicsSystem>
 	{
+	public:
+		static constexpr char const* GetScriptName() { return "Tonemapping"; }
+
+		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
+		{
+			RETURN_RUNTIME_BINDINGS
+			(
+				INIT_PIPELINE(INIT_PIPELINE_FN(TonemappingGraphicsSystem, InitPipeline))
+				PRE_RENDER(PRE_RENDER_FN(TonemappingGraphicsSystem, PreRender))
+			);
+		}
+
+
 	public:
 		TonemappingGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~TonemappingGraphicsSystem() override {}
 
-		void Create(re::RenderSystem&, re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&);
 
 		void PreRender();
 
@@ -27,8 +42,6 @@ namespace gr
 		std::unique_ptr<re::Batch> m_fullscreenQuadBatch;
 
 		std::shared_ptr<re::RenderStage> m_tonemappingStage;
-
-		re::RenderSystem* m_owningRenderSystem;
 	};
 
 

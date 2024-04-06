@@ -7,14 +7,29 @@
 
 namespace gr
 {
-	class XeGTAOGraphicsSystem final : public virtual GraphicsSystem
+	class XeGTAOGraphicsSystem final
+		: public virtual GraphicsSystem
+		, public virtual IScriptableGraphicsSystem<XeGTAOGraphicsSystem>
 	{
+	public:
+		static constexpr char const* GetScriptName() { return "XeGTAO"; }
+
+		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
+		{
+			RETURN_RUNTIME_BINDINGS
+			(
+				INIT_PIPELINE(INIT_PIPELINE_FN(XeGTAOGraphicsSystem, InitPipeline))
+				PRE_RENDER(PRE_RENDER_FN(XeGTAOGraphicsSystem, PreRender))
+			);
+		}
+
+
 	public:
 		XeGTAOGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~XeGTAOGraphicsSystem() override {}
 
-		void Create(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&);
 
 		void PreRender();
 

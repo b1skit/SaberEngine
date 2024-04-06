@@ -6,14 +6,29 @@
 
 namespace gr
 {
-	class BloomGraphicsSystem final : public virtual GraphicsSystem
+	class BloomGraphicsSystem final
+		: public virtual GraphicsSystem
+		, public virtual IScriptableGraphicsSystem<BloomGraphicsSystem>
 	{
+	public:
+		static constexpr char const* GetScriptName() { return "Bloom"; }
+
+		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
+		{
+			RETURN_RUNTIME_BINDINGS
+			(
+				INIT_PIPELINE(INIT_PIPELINE_FN(BloomGraphicsSystem, InitPipeline))
+				PRE_RENDER(PRE_RENDER_FN(BloomGraphicsSystem, PreRender))
+			);
+		}
+
+
 	public:
 		BloomGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~BloomGraphicsSystem() override {}
 
-		void Create(re::RenderSystem&, re::StagePipeline& pipeline);
+		void InitPipeline(re::StagePipeline& pipeline);
 
 		void PreRender();
 
@@ -25,8 +40,6 @@ namespace gr
 
 
 	private:
-		re::RenderSystem* m_owningRenderSystem;
-
 		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
 		std::unique_ptr<re::Batch> m_fullscreenQuadBatch;
 

@@ -5,14 +5,29 @@
 
 namespace gr
 {
-	class ComputeMipsGraphicsSystem final : public virtual GraphicsSystem
+	class ComputeMipsGraphicsSystem final
+		: public virtual GraphicsSystem
+		, public virtual IScriptableGraphicsSystem<ComputeMipsGraphicsSystem>
 	{
+	public:
+		static constexpr char const* GetScriptName() { return "ComputeMips"; }
+
+		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
+		{
+			RETURN_RUNTIME_BINDINGS
+			(
+				INIT_PIPELINE(INIT_PIPELINE_FN(ComputeMipsGraphicsSystem, InitPipeline))
+				PRE_RENDER(PRE_RENDER_FN(ComputeMipsGraphicsSystem, PreRender))
+			);
+		}
+
+
 	public:
 		ComputeMipsGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~ComputeMipsGraphicsSystem() override {}
 
-		void Create(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&);
 
 		void PreRender();
 

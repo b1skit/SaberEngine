@@ -56,6 +56,42 @@ namespace gr
 	}
 
 
+	void GraphicsSystemManager::CreateAddGraphicsSystemByScriptName(char const* scriptName)
+	{
+		std::string lowercaseScriptName(util::ToLower(scriptName));
+
+		SEAssert(!m_scriptNameToIndex.contains(lowercaseScriptName), "Graphics system has already been added");
+
+		std::shared_ptr<gr::GraphicsSystem> newGS = gr::GraphicsSystem::CreateByName(lowercaseScriptName, this);
+		SEAssert(newGS, "Failed to create a valid graphics system");
+
+		const size_t insertIdx = m_graphicsSystems.size();
+		m_graphicsSystems.emplace_back(newGS);
+		m_scriptNameToIndex.emplace(std::move(lowercaseScriptName), insertIdx);
+	}
+
+
+	void GraphicsSystemManager::CreateAddGraphicsSystemByScriptName(std::string const& scriptName)
+	{
+		return CreateAddGraphicsSystemByScriptName(scriptName.c_str());
+	}
+
+
+	gr::GraphicsSystem* GraphicsSystemManager::GetGraphicsSystemByScriptName(char const* scriptName)
+	{
+		std::string const& lowercaseScriptName(util::ToLower(scriptName));
+		SEAssert(m_scriptNameToIndex.contains(lowercaseScriptName), "No GraphicsSystem with that script name exists");
+
+		return m_graphicsSystems[m_scriptNameToIndex.at(lowercaseScriptName)].get();
+	}
+
+
+	gr::GraphicsSystem* GraphicsSystemManager::GetGraphicsSystemByScriptName(std::string const& scriptName)
+	{
+		return GetGraphicsSystemByScriptName(scriptName.c_str());
+	}
+
+
 	void GraphicsSystemManager::UpdateActiveAmbientLight()
 	{
 		// Reset our active ambient changed flag for the new frame:
