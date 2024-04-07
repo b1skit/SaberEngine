@@ -140,33 +140,35 @@ Initial setup:
 --------------
 * Clone the repository: `git clone https://github.com/b1skit/SaberEngine.git`
 * Run the `.\InitialSetup.bat` script
-  * This will initialize and update the git submodule dependencies, and configure vcpkg 
+  * This will initialize and update the git submodule dependencies, and configure vcpkg  
 * Set your working directory for all build configurations:
   * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory -> $(SolutionDir)SaberEngine  
 * Build the project
   * It's recommended you build the Release configuration first, as this will copy all files required for distribution to the `.\SaberEngine\` output/working directory  
 
-Notes:
-* The remaining dependencies are automatically included via Git Subtrees. Installation/configuration details are included below for posterity.  
+
+-------------
+Dependencies:
+-------------
+* SaberEngine uses vcpkg, NuGet, and Git subtrees to manage dependencies. Source details are included for each dependency below.  
+* Git Subtree dependencies are pre-configured. Installation/configuration details are included below for posterity.  
 
 
 CGLTF: https://github.com/jkuhlmann/cgltf
 -----------------------------------------
-- Current version: cgltf-1.13  
-- `<project root>\Source\Dependencies\cgltf\`  
-- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)..\Dependencies\cgltf\"  
+- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info  
 - Sample GLTF assets compatible with Saber Engine can be found here: https://github.com/KhronosGroup/glTF-Sample-Models  
 
 
 EnTT: https://github.com/skypjack/entt
 --------------------------------------
-- Included as a dependency via `vcpkg`. See the `Dependencies` section for more info  
+- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info  
 
 
 Glew: https://github.com/nigels-com/glew/releases
 -------------------------------------------------
+- Included as a git subtree: `<project root>\Source\Dependencies\glew\`  
 - Current version: glew-2.2.0-win32 (Note: The pre-compiled library is used, the Glew dependency is not added via a Subtree)
-- `<project root>\Source\Dependencies\glew\`
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\glew\include"  
 - "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)Dependencies\glew\lib\x64\"  
 - Ensure the "Project properties -> Build Events -> Post-Build Event" copies glew\bin\Release\x64\glew32.dll to the <Project Root>\SaberEngine\ directory  
@@ -174,16 +176,13 @@ Glew: https://github.com/nigels-com/glew/releases
 
 GLM: https://github.com/g-truc/glm/releases
 -------------------------------------------
-- Current version: GLM 0.9.9.8  
-- `<project root>\Source\Dependencies\glm\`  
-- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\glm\"  
-- "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)..\Dependencies\glm\"  
+- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info  
 
 
 Imgui: https://github.com/ocornut/imgui/
 -----------------------------------------
+- Included as a git subtree: `<project root>\Source\Dependencies\imgui\`  
 - Current version: v1.89.9  
-- `<project root>\Source\Dependencies\imgui\`  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\imgui\"  
 - All of the .h and .cpp files in the .\Source\Dependencies\imgui\ directory are added to the Visual Studio project (under the "imgui" filter)  
 - The dx12, opengl3, and win32 imgui_impl_* .h and .cpp files in the .\Source\Dependencies\imgui\backends\are added to the Visual Studio project (under the "imgui\backends" filter)  
@@ -191,44 +190,53 @@ Imgui: https://github.com/ocornut/imgui/
 
 Intel XeGTAO: https://github.com/GameTechDev/XeGTAO
 ---------------------------------------------------
+- Included as a git subtree: `<project root>\Source\Dependencies\XeGTAO\`  
 - Current version: Dec 2021  
-- `<project root>\Source\Dependencies\XeGTAO\`  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\XeGTAO\"  
+
+
+Microsoft DirectX 12 Agility SDK: https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/  
+-----------------------------------------------------------------------------------------------------  
+- Included via a NuGet package  
+
+
+Microsoft vcpkg: https://github.com/microsoft/vcpkg/tree/master
+---------------------------------------------------------------
+- Included as a git submodule: `<project root>\Source\Dependencies\cpkg\`  
+- See the `Intial setup` section for configuration instructions  
+- Manifest mode is enabled: Add dependencies to the `.\vckpg.json` file  
 
 
 MikkTSpace: https://github.com/mmikk/MikkTSpace
 -----------------------------------------------
+- Included as a git subtree: `<project root>\Source\Dependencies\MikkTSpace\`  
 - Current version: "Mar 25, 2020"  
-- `<project root>\Source\Dependencies\MikkTSpace\`  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\MikkTSpace\"  
 
 
 MikkTSpace Welder: https://github.com/mmikk/Welder
 --------------------------------------------------
+- Included as a git subtree: `<project root>\Source\Dependencies\Welder\`  
 - Current version: "Mar 25, 2020""  
-- `<project root>\Source\Dependencies\Welder\`  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\Welder\"  
 
 
-stb (stb_image.h): https://github.com/nothings/stb/blob/master/
---------------------------------------------------------------------
+JSON for Modern C++: https://github.com/nlohmann/json  
+-----------------------------------------------------  
+- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info  
+
+
+stb (stb_image.h): https://github.com/nothings/stb/blob/master/  
+---------------------------------------------------------------  
+- Included as a git subtree: `<project root>\Source\Dependencies\stb\`  
 - Current version: Jan 29, 2023  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\stb\"  
 
 
-Microsoft vcpkg: https://learn.microsoft.com/en-us/vcpkg/get_started/get-started-msbuild
-----------------------------------------------------------------------------------------
-- Installed as a submodule  
-- Manifest mode is enabled: Add dependencies to the `.\vckpg.json` file  
-
-
----------------
-NuGet Packages:
----------------
-The following packages are automatically included in the SaberEngine solution  
-- WinPixEventRuntime  
-- Microsoft DirectX 12 Agility SDK  
-
+WinPixEventRuntime: https://devblogs.microsoft.com/pix/winpixeventruntime/  
+--------------------------------------------------------------------------  
+- Included via a NuGet package  
+ 
 
 --------------------------------------------------
 Recommended Visual Studio extensions and Software:

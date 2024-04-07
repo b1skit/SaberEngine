@@ -1,5 +1,21 @@
 {
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "dependencies": [
-    "entt"
+    {
+      "name": "cgltf",
+      "version>=": "1.13"
+    },
+    {
+      "name": "entt",
+      "version>=": "3.13.1"
+    },
+    {
+      "name": "nlohmann-json",
+      "version>=": "3.11.3"
+    },
+    {
+      "name": "glm",
+      "version>=": "1.0.0"
+    }
   ]
 }

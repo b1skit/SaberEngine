@@ -116,7 +116,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\cgltf\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\glm\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -126,7 +126,7 @@
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(ProjectDir)Dependencies\glm\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
@@ -164,7 +164,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\cgltf\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\glm\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
@@ -175,7 +175,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(ProjectDir)Dependencies\glm\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
@@ -212,7 +212,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\cgltf\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\glm\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
@@ -223,7 +223,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(ProjectDir)Dependencies\glm\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -259,7 +259,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\cgltf\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\glm\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
@@ -271,7 +271,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(ProjectDir)Dependencies\glm\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
