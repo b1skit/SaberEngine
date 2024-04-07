@@ -135,16 +135,15 @@ Shader PDBs are generated when SaberEngine's Debug build configuration is compil
 * __RenderDoc configuration__: Set the shader PDB path in the "Tools -> Settings -> Core Shader debug search path" menu  
 
 
--------------
-Dependencies:
--------------
-* The majority of dependencies are automatically included via Git Subtrees. Installation/configuration details are included below for posterity.  
+--------------
+Initial setup:
+--------------
+* Clone the repository: `git clone https://github.com/b1skit/SaberEngine.git`
+* Run the `.\InitialSetup.bat` script
+  * This will initialize and update the git submodule dependencies, and configure vcpkg 
 
-* Some dependencies are installed via git submodules. To obtain them, after cloning the SaberEngine respository run the following commands: 
-```
-`git submodule init`  
-`git submodule update`
-```
+Notes:
+* The remaining dependencies are automatically included via Git Subtrees. Installation/configuration details are included below for posterity.  
 
 
 CGLTF: https://github.com/jkuhlmann/cgltf
