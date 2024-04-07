@@ -41,6 +41,9 @@
 /SaberEngine/config/config.cfg
 /SaberEngine/config/imgui.ini
 
+# Microsoft vcpkg
+/vcpkg_installed/
+
 # Force-include glew, as it's currently added as a pre-compiled library
 !Source/Dependencies/glew/**
 

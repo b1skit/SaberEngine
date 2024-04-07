@@ -106,8 +106,10 @@ Conventions:
 ---------------------
 Image-based Lighting:
 ---------------------
-A per-scene IBL is loaded from `<project root>\Scenes\SceneFolderName\IBL\ibl.hdr`, if it exists  
-	- A default IBL (`<project root>\Assets\DefaultIBL\default.hdr`) is used as a fallback if no scene IBL is found  
+* A per-scene IBL is loaded from `<project root>\Scenes\SceneFolderName\IBL\ibl.hdr`, if it exists  
+  * A default IBL (`<project root>\Assets\DefaultIBL\default.hdr`) is used as a fallback if no scene IBL is found  
+  * New IBLs can be loaded at runtime via the ImGui menus  
+
 
 --------
 Shaders:
@@ -133,27 +135,16 @@ Shader PDBs are generated when SaberEngine's Debug build configuration is compil
 * __RenderDoc configuration__: Set the shader PDB path in the "Tools -> Settings -> Core Shader debug search path" menu  
 
 
---------------
-Initial Setup:
---------------
-* SaberEngine uses the EnTT library, which is distributed by the vcpkg and must be installed manually when the SaberEngine .git repository is cloned.  		
-  * To install EnTT, navigate to the `..\SaberEngine\Source\Dependencies\` directory, and run the following commands (as per https://github.com/skypjack/entt#packaging-tools):  
-```  
-git clone https://github.com/Microsoft/vcpkg.git  
-cd vcpkg  
-./bootstrap-vcpkg.sh  
-./vcpkg integrate install  
-vcpkg install entt  
-```  
-
-* User-Specific Visual Studio Setup:
-  * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory" -> "$(SolutionDir)SaberEngine  
-
-
 -------------
 Dependencies:
 -------------
-Most dependencies are automatically included via Git Subtrees. Installation/configuration details are included below for posterity.  
+* The majority of dependencies are automatically included via Git Subtrees. Installation/configuration details are included below for posterity.  
+
+* Some dependencies are installed via git submodules. To obtain them, after cloning the SaberEngine respository run the following commands: 
+```
+`git submodule init`  
+`git submodule update`
+```
 
 
 CGLTF: https://github.com/jkuhlmann/cgltf
@@ -166,7 +157,7 @@ CGLTF: https://github.com/jkuhlmann/cgltf
 
 EnTT: https://github.com/skypjack/entt
 --------------------------------------
-- Installed via `vcpkg`. See the `Initial Setup` section for more info  
+- Included as a dependency via `vcpkg`. See the `Dependencies` section for more info  
 
 
 Glew: https://github.com/nigels-com/glew/releases
@@ -222,6 +213,12 @@ stb (stb_image.h): https://github.com/nothings/stb/blob/master/
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\stb\"  
 
 
+Microsoft vcpkg: https://learn.microsoft.com/en-us/vcpkg/get_started/get-started-msbuild
+----------------------------------------------------------------------------------------
+- Installed as a submodule  
+- Manifest mode is enabled: Add dependencies to the `.\vckpg.json` file  
+
+
 ---------------
 NuGet Packages:
 ---------------
@@ -240,5 +237,13 @@ Recommended Visual Studio extensions and Software:
   - Configuration guide (shadertoolsconfig.json): https://github.com/tgjones/HlslTools#custom-preprocessor-definitions-and-additional-include-directories
 - License Header Manager  
 - Beyond Compare  
+
+
+------------
+Other notes:
+------------
+* Working directory:
+  * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory" -> "$(SolutionDir)SaberEngine  
+
 
 © 2022 Adam Badke. All rights reserved.
