@@ -41,10 +41,10 @@ namespace fr
 			m_shadowQuality = ShadowQuality::PCSS_HIGH;
 
 			m_minMaxShadowBias = glm::vec2(
-				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
-				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias));
+				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBiasKey),
+				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBiasKey));
 
-			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightShadowSoftness);
+			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightShadowSoftnessKey);
 
 			m_typeProperties.m_orthographic.m_frustumSnapMode = TypeProperties::Orthographic::ActiveCamera;
 		}
@@ -54,10 +54,10 @@ namespace fr
 			m_shadowQuality = ShadowQuality::PCSS_HIGH;
 
 			m_minMaxShadowBias = glm::vec2(
-				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMinShadowBias),
-				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMaxShadowBias));
+				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMinShadowBiasKey),
+				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMaxShadowBiasKey));
 
-			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightShadowSoftness);
+			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightShadowSoftnessKey);
 		}
 		break;
 		case fr::Light::Type::Point:
@@ -65,10 +65,10 @@ namespace fr
 			m_shadowQuality = ShadowQuality::PCSS_HIGH;
 
 			m_minMaxShadowBias = glm::vec2(
-				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
-				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias));
+				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBiasKey),
+				en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBiasKey));
 
-			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightShadowSoftness);
+			m_softness = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightShadowSoftnessKey);
 		}
 		break;
 		case fr::Light::Type::AmbientIBL:
@@ -118,22 +118,22 @@ namespace fr
 			case fr::Light::Type::Directional:
 			{
 				m_minMaxShadowBias = glm::vec2(
-					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
-					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias));
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBiasKey),
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBiasKey));
 			}
 			break;
 			case fr::Light::Type::Point:
 			{
 				m_minMaxShadowBias = glm::vec2(
-					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
-					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias));
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBiasKey),
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBiasKey));
 			}
 			break;
 			case fr::Light::Type::Spot:
 			{
 				m_minMaxShadowBias = glm::vec2(
-					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMinShadowBias),
-					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMaxShadowBias));
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMinShadowBiasKey),
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultSpotLightMaxShadowBiasKey));
 			}
 			break;
 			default: SEAssertF("Invalid/unsupported light type");

@@ -404,9 +404,9 @@ namespace en
 		markDirty |= TrySetValue("vsync",	true,	SettingType::Common);
 
 		// Texture dimensions:
-		markDirty |= TrySetValue(en::ConfigKeys::k_defaultDirectionalShadowMapResolution,	2048,	SettingType::Common);
-		markDirty |= TrySetValue(en::ConfigKeys::k_defaultShadowCubeMapResolution,			512,	SettingType::Common);
-		markDirty |= TrySetValue(en::ConfigKeys::k_defaultSpotShadowMapResolution,			1024,	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_defaultDirectionalShadowMapResolutionKey,	2048,	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_defaultShadowCubeMapResolutionKey,			512,	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_defaultSpotShadowMapResolutionKey,			1024,	SettingType::Common);
 
 		// Camera defaults:
 		markDirty |= TrySetValue("defaultyFOV",	1.570796f,	SettingType::Common);
@@ -414,9 +414,9 @@ namespace en
 		markDirty |= TrySetValue("defaultFar",	100.0f,		SettingType::Common);
 
 		// Input parameters:
-		markDirty |= TrySetValue(en::ConfigKeys::k_mousePitchSensitivity,	0.5f,	SettingType::Common);
-		markDirty |= TrySetValue(en::ConfigKeys::k_mouseYawSensitivity,		0.5f,	SettingType::Common);
-		markDirty |= TrySetValue(en::ConfigKeys::k_sprintSpeedModifier,		2.0f,	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_mousePitchSensitivityKey,	0.5f,	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_mouseYawSensitivityKey,		0.5f,	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_sprintSpeedModifierKey,		2.0f,	SettingType::Common);
 
 		// Scene data:
 		markDirty |= TrySetValue(en::ConfigKeys::k_defaultEngineIBLPathKey,	"Assets\\DefaultIBL\\default.hdr",	SettingType::Common);
@@ -490,22 +490,22 @@ namespace en
 		TryInsertRuntimeValue(ConfigKeys::k_debugLevelCmdLineArg, 0);
 
 		// Quality settings:
-		TryInsertRuntimeValue(en::ConfigKeys::k_brdfLUTWidthHeight,		1024);
-		TryInsertRuntimeValue(en::ConfigKeys::k_iemTexWidthHeight,		512);
-		TryInsertRuntimeValue(en::ConfigKeys::k_iemNumSamples,			4096);
-		TryInsertRuntimeValue(en::ConfigKeys::k_pmremTexWidthHeight,	1024);
-		TryInsertRuntimeValue(en::ConfigKeys::k_pmremNumSamples,		4096);
+		TryInsertRuntimeValue(en::ConfigKeys::k_brdfLUTWidthHeightKey,		1024);
+		TryInsertRuntimeValue(en::ConfigKeys::k_iemTexWidthHeightKey,		512);
+		TryInsertRuntimeValue(en::ConfigKeys::k_iemNumSamplesKey,			4096);
+		TryInsertRuntimeValue(en::ConfigKeys::k_pmremTexWidthHeightKey,	1024);
+		TryInsertRuntimeValue(en::ConfigKeys::k_pmremNumSamplesKey,		4096);
 
 		// Shadow map defaults:
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias,	0.012f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias,	0.035f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightShadowSoftness,	0.02f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMinShadowBias,			0.03f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMaxShadowBias,			0.055f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightShadowSoftness,		0.1f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultSpotLightMinShadowBias,			0.03f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultSpotLightMaxShadowBias,			0.055f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultSpotLightShadowSoftness,			0.1f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMinShadowBiasKey,	0.012f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBiasKey,	0.035f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightShadowSoftnessKey,	0.02f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMinShadowBiasKey,			0.03f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMaxShadowBiasKey,			0.055f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightShadowSoftnessKey,		0.1f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultSpotLightMinShadowBiasKey,			0.03f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultSpotLightMaxShadowBiasKey,			0.055f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultSpotLightShadowSoftnessKey,			0.1f);
 	}
 	
 

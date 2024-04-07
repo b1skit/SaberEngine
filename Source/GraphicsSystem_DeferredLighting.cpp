@@ -25,7 +25,7 @@ namespace
 	BRDFIntegrationData GetBRDFIntegrationParamsDataData()
 	{
 		const uint32_t brdfTexWidthHeight =
-			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
+			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeightKey));
 
 		BRDFIntegrationData brdfIntegrationParams{
 			.g_integrationTargetResolution =
@@ -54,8 +54,8 @@ namespace
 			roughness = 0;
 		}
 
-		const int numIEMSamples = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_iemNumSamples);
-		const int numPMREMSamples = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremNumSamples);
+		const int numIEMSamples = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_iemNumSamplesKey);
+		const int numPMREMSamples = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremNumSamplesKey);
 
 		generationParams.g_numSamplesRoughnessFaceIdx = glm::vec4(
 			static_cast<float>(numIEMSamples),
@@ -86,7 +86,7 @@ namespace
 		AmbientLightData ambientLightParamsData{};
 
 		const uint32_t dfgTexWidthHeight = 
-			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
+			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeightKey));
 
 		const uint32_t maxPMREMMipLevel = numPMREMMips - 1;
 
@@ -451,7 +451,7 @@ namespace gr
 			re::Shader::GetOrCreate(en::ShaderNames::k_generateBRDFIntegrationMapShaderName, brdfPipelineState));
 
 		const uint32_t brdfTexWidthHeight =
-			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
+			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeightKey));
 
 		// Create a render target texture:			
 		re::Texture::TextureParams brdfParams;
@@ -515,7 +515,7 @@ namespace gr
 			re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
 
 		const uint32_t iemTexWidthHeight =
-			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_iemTexWidthHeight));
+			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_iemTexWidthHeightKey));
 
 		// IEM-specific texture params:
 		re::Texture::TextureParams iemTexParams;
@@ -594,7 +594,7 @@ namespace gr
 			re::Shader::GetOrCreate(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
 
 		const uint32_t pmremTexWidthHeight =
-			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremTexWidthHeight));
+			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremTexWidthHeightKey));
 
 		// PMREM-specific texture params:
 		re::Texture::TextureParams pmremTexParams;

@@ -3,40 +3,49 @@
 
 namespace en::ConfigKeys
 {
-	// TODO: Key names should have "key" post-fixed, and be pre-computed hash keys instead of C-strings
+	// TODO: Keys should be pre-computed hashes instead of C-strings
 
-	// Configuration constants:									// From: "Scene\Folder\Names\sceneFile.extension"
-	/**************************/
+	/******************************************************************************************************************/
+	// Configuration constants:
+	/******************************************************************************************************************/
 	constexpr char const* k_configDirName	= "Config\\";
 	constexpr char const* k_configFileName	= "config.cfg";
-
-	// OS:
-	constexpr char const* k_documentsFolderPathKey = "documentsFolderPath"; // e.g. "C:\Users\<username>\Documents"
+	constexpr char const* k_pipelineDirName = "Config\\Pipelines\\";
 
 	// Debug:
 	constexpr char const* k_pixCaptureFolderName		= "PIX Captures";
 	constexpr char const* k_renderDocCaptureFolderName	= "RenderDoc Captures";
 	constexpr char const* k_captureTitle				= "SaberEngine";
 
+	// ImGui:
+	constexpr char const* k_imguiIniPath = "config\\imgui.ini";
+
 	// Logging:
 	constexpr char const* k_logFileName		= "SaberEngine.log";
 	constexpr char const* k_logOutputDir	= ".\\Logs\\";
 
+
+	// Command line controls:
+	/******************************************************************************************************************/
+	constexpr char const* k_sceneCmdLineArg = "scene";
+	constexpr char const* k_showSystemConsoleWindowCmdLineArg = "console";
+	constexpr char const* k_platformCmdLineArg = "platform";
+	constexpr char const* k_debugLevelCmdLineArg = "debuglevel";
+	constexpr char const* k_enableDredCmdLineArg = "enabledred";
+	constexpr char const* k_pixGPUProgrammaticCapturesCmdLineArg = "pixgpucapture";
+	constexpr char const* k_pixCPUProgrammaticCapturesCmdLineArg = "pixcpucapture";
+	constexpr char const* k_renderDocProgrammaticCapturesCmdLineArg = "renderdoc";
+	constexpr char const* k_strictShaderBindingCmdLineArg = "strictshaderbinding";
+
+
 	// Config keys:
-	/*************/
+	/******************************************************************************************************************/
+
+	// OS:
+	constexpr char const* k_documentsFolderPathKey = "documentsFolderPath"; // e.g. "C:\Users\<username>\Documents"
 
 	// Command line args:
 	constexpr char const* k_commandLineArgsValueKey = "commandLineArgs"; // Gets the command line arg string
-
-	constexpr char const* k_sceneCmdLineArg							= "scene";
-	constexpr char const* k_showSystemConsoleWindowCmdLineArg		= "console";
-	constexpr char const* k_platformCmdLineArg						= "platform";
-	constexpr char const* k_debugLevelCmdLineArg					= "debuglevel";
-	constexpr char const* k_enableDredCmdLineArg					= "enabledred";
-	constexpr char const* k_pixGPUProgrammaticCapturesCmdLineArg	= "pixgpucapture";
-	constexpr char const* k_pixCPUProgrammaticCapturesCmdLineArg	= "pixcpucapture";
-	constexpr char const* k_renderDocProgrammaticCapturesCmdLineArg = "renderdoc";
-	constexpr char const* k_strictShaderBindingCmdLineArg			= "strictshaderbinding";
 
 	// Scene
 	constexpr char const* k_scenesDirNameKey	= "ScenesDirname";
@@ -56,36 +65,33 @@ namespace en::ConfigKeys
 	constexpr char const* k_numBackbuffersKey	= "numframesinflight"; // DX12 only
 
 	// Control defaults:
-	constexpr char const* k_mousePitchSensitivity	= "mousePitchSensitivity";
-	constexpr char const* k_mouseYawSensitivity		= "mouseYawSensitivity";
-	constexpr char const* k_sprintSpeedModifier		= "sprintSpeedModifier";
+	constexpr char const* k_mousePitchSensitivityKey	= "mousePitchSensitivity";
+	constexpr char const* k_mouseYawSensitivityKey		= "mouseYawSensitivity";
+	constexpr char const* k_sprintSpeedModifierKey		= "sprintSpeedModifier";
 
 	// Lights/shadows:
-	constexpr char const* k_defaultDirectionalLightMinShadowBias	= "defaultDirectionalLightMinShadowBias";
-	constexpr char const* k_defaultDirectionalLightMaxShadowBias	= "defaultDirectionalLightMaxShadowBias";
-	constexpr char const* k_defaultDirectionalLightShadowSoftness	= "defaultDirectionalLightShadowSoftness";
-	constexpr char const* k_defaultPointLightMinShadowBias			= "defaultPointLightMinShadowBias";
-	constexpr char const* k_defaultPointLightMaxShadowBias			= "defaultPointLightMaxShadowBias";
-	constexpr char const* k_defaultPointLightShadowSoftness			= "defaultPointLightMaxShadowSoftness";
-	constexpr char const* k_defaultSpotLightMinShadowBias			= "defaultSpotLightMinShadowBias";
-	constexpr char const* k_defaultSpotLightMaxShadowBias			= "defaultSpotLightMaxShadowBias";
-	constexpr char const* k_defaultSpotLightShadowSoftness			= "defaultSpotLightMaxShadowSoftness";
+	constexpr char const* k_defaultDirectionalLightMinShadowBiasKey		= "defaultDirectionalLightMinShadowBias";
+	constexpr char const* k_defaultDirectionalLightMaxShadowBiasKey		= "defaultDirectionalLightMaxShadowBias";
+	constexpr char const* k_defaultDirectionalLightShadowSoftnessKey	= "defaultDirectionalLightShadowSoftness";
+	constexpr char const* k_defaultPointLightMinShadowBiasKey			= "defaultPointLightMinShadowBias";
+	constexpr char const* k_defaultPointLightMaxShadowBiasKey			= "defaultPointLightMaxShadowBias";
+	constexpr char const* k_defaultPointLightShadowSoftnessKey			= "defaultPointLightMaxShadowSoftness";
+	constexpr char const* k_defaultSpotLightMinShadowBiasKey			= "defaultSpotLightMinShadowBias";
+	constexpr char const* k_defaultSpotLightMaxShadowBiasKey			= "defaultSpotLightMaxShadowBias";
+	constexpr char const* k_defaultSpotLightShadowSoftnessKey			= "defaultSpotLightMaxShadowSoftness";
 
 	// Quality:
-	constexpr char const* k_brdfLUTWidthHeight						= "brdfLUTWidthHeight";
-	constexpr char const* k_iemTexWidthHeight						= "iemWidthHeight";
-	constexpr char const* k_iemNumSamples							= "iemNumSamples";
-	constexpr char const* k_pmremTexWidthHeight						= "pmremWidthHeight";
-	constexpr char const* k_pmremNumSamples							= "pmremNumSamples";
-	constexpr char const* k_defaultDirectionalShadowMapResolution	= "defaultDirectionalShadowMapRes";
-	constexpr char const* k_defaultShadowCubeMapResolution			= "defaultShadowCubeMapRes";
-	constexpr char const* k_defaultSpotShadowMapResolution			= "defaultSpotShadowMapRes";
+	constexpr char const* k_brdfLUTWidthHeightKey						= "brdfLUTWidthHeight";
+	constexpr char const* k_iemTexWidthHeightKey						= "iemWidthHeight";
+	constexpr char const* k_iemNumSamplesKey							= "iemNumSamples";
+	constexpr char const* k_pmremTexWidthHeightKey						= "pmremWidthHeight";
+	constexpr char const* k_pmremNumSamplesKey							= "pmremNumSamples";
+	constexpr char const* k_defaultDirectionalShadowMapResolutionKey	= "defaultDirectionalShadowMapRes";
+	constexpr char const* k_defaultShadowCubeMapResolutionKey			= "defaultShadowCubeMapRes";
+	constexpr char const* k_defaultSpotShadowMapResolutionKey			= "defaultSpotShadowMapRes";
 
 	// Data processing:
-	constexpr char const* k_doCPUVertexStreamNormalization = "cpunormalizevertexstreams";
-
-	// ImGui:
-	constexpr char const* k_imguiIniPath = "config\\imgui.ini";
+	constexpr char const* k_doCPUVertexStreamNormalizationKey = "cpunormalizevertexstreams";
 }
 
 namespace en::ShaderNames

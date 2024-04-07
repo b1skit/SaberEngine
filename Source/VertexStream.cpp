@@ -156,7 +156,7 @@ namespace re
 		if (DoNormalize() && m_dataType == re::VertexStream::DataType::Float)
 		{
 			static const bool s_doNormalize = 
-				en::Config::Get()->KeyExists(en::ConfigKeys::k_doCPUVertexStreamNormalization);
+				en::Config::Get()->KeyExists(en::ConfigKeys::k_doCPUVertexStreamNormalizationKey);
 
 			if (s_doNormalize)
 			{

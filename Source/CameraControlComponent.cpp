@@ -225,9 +225,9 @@ namespace fr
 		, m_savedPosition(glm::vec3(0.0f, 0.0f, 0.0f))
 		, m_savedEulerRotation(glm::vec3(0.0f, 0.0f, 0.0f))
 	{
-		m_sprintSpeedModifier = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_sprintSpeedModifier);
+		m_sprintSpeedModifier = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_sprintSpeedModifierKey);
 
-		m_mousePitchSensitivity = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_mousePitchSensitivity);
-		m_mouseYawSensitivity = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_mouseYawSensitivity);
+		m_mousePitchSensitivity = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_mousePitchSensitivityKey);
+		m_mouseYawSensitivity = en::Config::Get()->GetValue<float>(en::ConfigKeys::k_mouseYawSensitivityKey);
 	}
 }
