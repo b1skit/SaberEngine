@@ -141,6 +141,10 @@ Initial setup:
 * Clone the repository: `git clone https://github.com/b1skit/SaberEngine.git`
 * Run the `.\InitialSetup.bat` script
   * This will initialize and update the git submodule dependencies, and configure vcpkg 
+* Set your working directory for all build configurations:
+  * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory -> $(SolutionDir)SaberEngine  
+* Build the project
+  * It's recommended you build the Release configuration first, as this will copy all files required for distribution to the `.\SaberEngine\` output/working directory  
 
 Notes:
 * The remaining dependencies are automatically included via Git Subtrees. Installation/configuration details are included below for posterity.  
@@ -236,13 +240,6 @@ Recommended Visual Studio extensions and Software:
   - Configuration guide (shadertoolsconfig.json): https://github.com/tgjones/HlslTools#custom-preprocessor-definitions-and-additional-include-directories
 - License Header Manager  
 - Beyond Compare  
-
-
-------------
-Other notes:
-------------
-* Working directory:
-  * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory" -> "$(SolutionDir)SaberEngine  
 
 
 © 2022 Adam Badke. All rights reserved.
