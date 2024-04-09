@@ -71,7 +71,7 @@ namespace gr
 		std::string const& stageName = std::format("{}_Shadow", lightName);
 
 		std::shared_ptr<re::RenderStage> shadowStage =
-			re::RenderStage::CreateGraphicsStage(stageName, re::RenderStage::GraphicsStageParams{});
+			re::RenderStage::CreateGraphicsStage(stageName.c_str(), re::RenderStage::GraphicsStageParams{});
 
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 
@@ -151,7 +151,7 @@ namespace gr
 		std::string const& stageName = std::format("{}_Shadow", lightName);
 
 		std::shared_ptr<re::RenderStage> shadowStage =
-			re::RenderStage::CreateGraphicsStage(stageName, re::RenderStage::GraphicsStageParams{});
+			re::RenderStage::CreateGraphicsStage(stageName.c_str(), re::RenderStage::GraphicsStageParams{});
 
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 

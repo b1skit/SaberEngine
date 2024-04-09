@@ -215,8 +215,9 @@ namespace opengl
 						opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets);
 					}
 					break;
-					case re::RenderStage::Type::Clear:
 					case re::RenderStage::Type::Graphics:
+					case re::RenderStage::Type::FullscreenQuad:
+					case re::RenderStage::Type::Clear:
 					{
 						opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
 						opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
@@ -265,6 +266,7 @@ namespace opengl
 						switch (renderStage->GetStageType())
 						{
 						case re::RenderStage::Type::Graphics:
+						case re::RenderStage::Type::FullscreenQuad:
 						{
 							re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
 

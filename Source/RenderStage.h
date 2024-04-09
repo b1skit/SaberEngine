@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
+#include "MeshFactory.h"
 #include "NamedObject.h"
 #include "TextureTarget.h"
 
@@ -29,10 +30,10 @@ namespace re
 			Graphics,
 			Compute,
 
+			FullscreenQuad, // Graphics queue
 			Clear, // Graphics queue
 
 			Invalid
-			// TODO: Add specialist types: Fullscreen, etc
 		};
 		struct IStageParams
 		{
@@ -46,6 +47,10 @@ namespace re
 		struct ComputeStageParams final : public virtual IStageParams
 		{
 			// TODO: Populate this
+		};
+		struct FullscreenQuadParams final : public virtual IStageParams
+		{
+			gr::meshfactory::ZLocation m_zLocation = gr::meshfactory::ZLocation::Near;
 		};
 		struct ClearStageParams final : public virtual IStageParams
 		{
@@ -69,13 +74,16 @@ namespace re
 
 
 	public:
-		static std::shared_ptr<RenderStage> CreateParentStage(std::string const& name);
+		static std::shared_ptr<RenderStage> CreateParentStage(char const* name);
 
-		static std::shared_ptr<RenderStage> CreateGraphicsStage(std::string const& name, GraphicsStageParams const&);
-		static std::shared_ptr<RenderStage> CreateSingleFrameGraphicsStage(std::string const& name, GraphicsStageParams const&);
+		static std::shared_ptr<RenderStage> CreateGraphicsStage(char const* name, GraphicsStageParams const&);
+		static std::shared_ptr<RenderStage> CreateSingleFrameGraphicsStage(char const* name, GraphicsStageParams const&);
 
-		static std::shared_ptr<RenderStage> CreateComputeStage(std::string const& name, ComputeStageParams const&);
-		static std::shared_ptr<RenderStage> CreateSingleFrameComputeStage(std::string const& name, ComputeStageParams const&);
+		static std::shared_ptr<RenderStage> CreateComputeStage(char const* name, ComputeStageParams const&);
+		static std::shared_ptr<RenderStage> CreateSingleFrameComputeStage(char const* name, ComputeStageParams const&);
+
+		static std::shared_ptr<RenderStage> CreateFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
+		static std::shared_ptr<RenderStage> CreateSingleFrameFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
 
 		static std::shared_ptr<RenderStage> CreateClearStage(
 			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const>);
@@ -130,7 +138,7 @@ namespace re
 
 
 	protected:
-		explicit RenderStage(std::string const& name, std::unique_ptr<IStageParams>&&, Type, Lifetime);
+		explicit RenderStage(char const* name, std::unique_ptr<IStageParams>&&, Type, Lifetime);
 
 
 	private:
@@ -174,7 +182,7 @@ namespace re
 		// 
 
 	private:
-		ParentStage(std::string const& name, Lifetime);
+		ParentStage(char const* name, Lifetime);
 		friend class RenderStage;
 	};
 
@@ -188,7 +196,25 @@ namespace re
 		// 
 
 	private:
-		ComputeStage(std::string const& name, std::unique_ptr<ComputeStageParams>&&, Lifetime);
+		ComputeStage(char const* name, std::unique_ptr<ComputeStageParams>&&, Lifetime);
+		friend class RenderStage;
+	};
+
+
+	//---
+
+
+	class FullscreenQuadStage final : public virtual RenderStage
+	{
+	public:
+		//
+
+	private:
+		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
+		std::unique_ptr<re::Batch> m_fullscreenQuadBatch;
+
+	private:
+		FullscreenQuadStage(char const* name, std::unique_ptr<FullscreenQuadParams>&&, Lifetime);
 		friend class RenderStage;
 	};
 
@@ -202,7 +228,7 @@ namespace re
 		// 
 
 	private:
-		ClearStage(std::string const& name, Lifetime);
+		ClearStage(char const* name, Lifetime);
 		friend class RenderStage;
 	};
 

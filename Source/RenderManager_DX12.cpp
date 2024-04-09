@@ -203,13 +203,27 @@ namespace dx12
 			}
 		};
 
-		auto StageTypeChanged = [](const re::RenderStage::Type prev, const re::RenderStage::Type current) -> bool
+		auto IsGraphicsQueueStageType = [](const re::RenderStage::Type stageType) -> bool
 			{
-				// No point flushing command lists if we have a clear stage followed by a graphics stage
+				switch (stageType)
+				{
+				case re::RenderStage::Type::Graphics:
+				case re::RenderStage::Type::FullscreenQuad:
+				case re::RenderStage::Type::Clear:
+					return true;
+				case re::RenderStage::Type::Parent:
+				case re::RenderStage::Type::Compute:
+					return false;
+				default: SEAssertF("Invalid stage type");
+				}
+			};
+
+		auto StageTypeChanged = [IsGraphicsQueueStageType](
+			const re::RenderStage::Type prev, const re::RenderStage::Type current) -> bool
+			{
 				return prev != re::RenderStage::Type::Invalid && // First iteration
-					prev != current &&
-					!(prev == re::RenderStage::Type::Clear && current == re::RenderStage::Type::Graphics) && // Clear happens on GFX
-					!(prev == re::RenderStage::Type::Graphics && current == re::RenderStage::Type::Clear);
+					(prev != current &&
+					!(IsGraphicsQueueStageType(prev) && IsGraphicsQueueStageType(current)));
 			};
 
 		re::RenderStage::Type prevRenderStageType = re::RenderStage::Type::Invalid;
@@ -251,8 +265,9 @@ namespace dx12
 					dx12::CommandList* currentCommandList = nullptr;
 					switch (curRenderStageType)
 					{
-					case re::RenderStage::Type::Clear:
 					case re::RenderStage::Type::Graphics:
+					case re::RenderStage::Type::FullscreenQuad:
+					case re::RenderStage::Type::Clear:
 					{
 						if (directCommandList == nullptr)
 						{
@@ -296,7 +311,7 @@ namespace dx12
 					std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 					if (stageTargets == nullptr)
 					{
-						SEAssert(curRenderStageType == re::RenderStage::Type::Graphics,
+						SEAssert(IsGraphicsQueueStageType(curRenderStageType),
 							"Only the graphics queue/command lists can render to the backbuffer");
 
 						stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
@@ -315,6 +330,7 @@ namespace dx12
 						switch (renderStage->GetStageType())
 						{
 						case re::RenderStage::Type::Graphics:
+						case re::RenderStage::Type::FullscreenQuad:
 						{
 							commandList->SetGraphicsRootSignature(dx12::Shader::GetRootSignature(*shader));
 						}
@@ -374,8 +390,9 @@ namespace dx12
 						currentCommandList->SetComputeTargets(*stageTargets);
 					}
 					break;
-					case re::RenderStage::Type::Clear:
 					case re::RenderStage::Type::Graphics:
+					case re::RenderStage::Type::FullscreenQuad:
+					case re::RenderStage::Type::Clear:
 					{
 						const bool attachDepthAsReadOnly = renderStage->DepthTargetIsAlsoTextureInput();
 
@@ -432,6 +449,7 @@ namespace dx12
 						switch (curRenderStageType)
 						{
 						case re::RenderStage::Type::Graphics:
+						case re::RenderStage::Type::FullscreenQuad:
 						{
 							currentCommandList->DrawBatchGeometry(batches[batchIdx]);
 						}
@@ -448,8 +466,9 @@ namespace dx12
 
 					switch (curRenderStageType)
 					{
-					case re::RenderStage::Type::Clear:
 					case re::RenderStage::Type::Graphics:
+					case re::RenderStage::Type::FullscreenQuad:
+					case re::RenderStage::Type::Clear:
 					{
 						SEEndGPUEvent(directCommandList->GetD3DCommandList()); // RenderStage
 					}

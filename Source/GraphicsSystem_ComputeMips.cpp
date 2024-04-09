@@ -110,7 +110,7 @@ namespace gr
 
 					re::RenderStage::ComputeStageParams computeStageParams; // Defaults, for now...
 
-					const std::string stageName = std::format("{}: Face {}/{}, MIP {}-{}", 
+					std::string const& stageName = std::format("{}: Face {}/{}, MIP {}-{}", 
 						newTexture->GetName().c_str(),
 						faceIdx + 1,
 						textureParams.m_faces,
@@ -118,7 +118,7 @@ namespace gr
 						firstTargetMipIdx + numMipStages - 1);
 
 					std::shared_ptr<re::RenderStage> mipGenerationStage = re::RenderStage::CreateSingleFrameComputeStage(
-						stageName,
+						stageName.c_str(),
 						computeStageParams);
 
 					mipGenerationStage->SetStageShader(m_mipMapGenerationShader);

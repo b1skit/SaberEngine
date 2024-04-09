@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "MeshPrimitive.h"
 #include "Buffer.h"
 #include "PipelineState.h"
 #include "ProfilingMarkers.h"
@@ -94,7 +93,7 @@ namespace
 
 namespace re
 {
-	std::shared_ptr<RenderStage> RenderStage::CreateParentStage(std::string const& name)
+	std::shared_ptr<RenderStage> RenderStage::CreateParentStage(char const* name)
 	{
 		std::shared_ptr<RenderStage> newParentStage;
 		newParentStage.reset(new RenderStage(
@@ -107,7 +106,7 @@ namespace re
 
 
 	std::shared_ptr<RenderStage> RenderStage::CreateGraphicsStage(
-		std::string const& name, GraphicsStageParams const& stageParams)
+		char const* name, GraphicsStageParams const& stageParams)
 	{
 		std::shared_ptr<RenderStage> newGFXStage;
 		newGFXStage.reset(new RenderStage(
@@ -120,7 +119,7 @@ namespace re
 
 
 	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameGraphicsStage(
-		std::string const& name, GraphicsStageParams const& stageParams)
+		char const* name, GraphicsStageParams const& stageParams)
 	{
 		std::shared_ptr<RenderStage> newGFXStage;
 		newGFXStage.reset(new RenderStage(
@@ -133,7 +132,7 @@ namespace re
 
 
 	std::shared_ptr<RenderStage> RenderStage::CreateComputeStage(
-		std::string const& name, ComputeStageParams const& stageParams)
+		char const* name, ComputeStageParams const& stageParams)
 	{
 		std::shared_ptr<RenderStage> newComputeStage;
 		newComputeStage.reset(new ComputeStage(
@@ -145,7 +144,7 @@ namespace re
 
 
 	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameComputeStage(
-		std::string const& name, ComputeStageParams const& stageParams)
+		char const* name, ComputeStageParams const& stageParams)
 	{
 		std::shared_ptr<RenderStage> newComputeStage;
 		newComputeStage.reset(new ComputeStage(
@@ -156,12 +155,37 @@ namespace re
 	}
 
 
+	std::shared_ptr<RenderStage> RenderStage::CreateFullscreenQuadStage(
+		char const* name, FullscreenQuadParams const& stageParams)
+	{
+		std::shared_ptr<RenderStage> newFSQuadStage;
+		newFSQuadStage.reset(new FullscreenQuadStage(
+			name,
+			std::make_unique<FullscreenQuadParams>(stageParams),
+			Lifetime::Permanent));
+		return newFSQuadStage;
+	}
+
+
+	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameFullscreenQuadStage(
+		char const* name, FullscreenQuadParams const& stageParams)
+	{
+		std::shared_ptr<RenderStage> newFSQuadStage;
+		newFSQuadStage.reset(new FullscreenQuadStage(
+			name,
+			std::make_unique<FullscreenQuadParams>(stageParams),
+			Lifetime::SingleFrame));
+		return newFSQuadStage;
+	}
+
+
 	std::shared_ptr<RenderStage> RenderStage::CreateClearStage(
 		ClearStageParams const& clearStageParams, 
 		std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
 		std::shared_ptr<RenderStage> newClearStage;
-		newClearStage.reset(new ClearStage("Clear: " + targetSet->GetName(), Lifetime::Permanent));
+		newClearStage.reset(
+			new ClearStage(std::format("Clear: {}", targetSet->GetName()).c_str(), Lifetime::Permanent));
 
 		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
 
@@ -174,7 +198,8 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
 		std::shared_ptr<RenderStage> newClearStage;
-		newClearStage.reset(new ClearStage("Clear: " + targetSet->GetName(), Lifetime::SingleFrame));
+		newClearStage.reset(
+			new ClearStage(std::format("Clear: {}", targetSet->GetName()).c_str(), Lifetime::SingleFrame));
 
 		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
 
@@ -183,7 +208,7 @@ namespace re
 
 
 	RenderStage::RenderStage(
-		std::string const& name, std::unique_ptr<IStageParams>&& stageParams, Type stageType, Lifetime lifetime)
+		char const* name, std::unique_ptr<IStageParams>&& stageParams, Type stageType, Lifetime lifetime)
 		: NamedObject(name)
 		, m_type(stageType)
 		, m_lifetime(lifetime)
@@ -199,23 +224,32 @@ namespace re
 	}
 
 
-	ParentStage::ParentStage(std::string const& name, Lifetime lifetime)
+	ParentStage::ParentStage(char const* name, Lifetime lifetime)
 		: NamedObject(name)
 		, RenderStage(name, nullptr, Type::Parent, lifetime)
 	{
 	}
 
 
-	ComputeStage::ComputeStage(
-		std::string const& name, std::unique_ptr<ComputeStageParams>&& stageParams, Lifetime lifetime)
+	ComputeStage::ComputeStage(char const* name, std::unique_ptr<ComputeStageParams>&& stageParams, Lifetime lifetime)
 		: NamedObject(name)
 		, RenderStage(name, std::move(stageParams), Type::Compute, lifetime)
 	{
 	}
 
 
-	ClearStage::ClearStage(
-		std::string const& name, Lifetime lifetime)
+	FullscreenQuadStage::FullscreenQuadStage(
+		char const* name, std::unique_ptr<FullscreenQuadParams>&& stageParams, Lifetime lifetime)
+		: NamedObject(name)
+		, RenderStage(name, nullptr, Type::FullscreenQuad, lifetime)
+	{
+		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(stageParams->m_zLocation);
+		m_fullscreenQuadBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, m_screenAlignedQuad.get());
+		AddBatch(*m_fullscreenQuadBatch);
+	}
+
+
+	ClearStage::ClearStage(char const* name, Lifetime lifetime)
 		: NamedObject(name)
 		, RenderStage(name, nullptr, Type::Clear, lifetime)
 	{
@@ -356,7 +390,11 @@ namespace re
 		SEBeginCPUEvent("StagePipeline::EndOfFrame");
 
 		m_singleFrameBuffers.clear();
-		m_stageBatches.clear();
+
+		if (m_type != RenderStage::Type::FullscreenQuad) // FSQ stages keep the same batch created during construction
+		{
+			m_stageBatches.clear();
+		}
 
 		SEEndCPUEvent();
 	}
@@ -383,9 +421,12 @@ namespace re
 			m_type != re::RenderStage::Type::Clear,
 			"Incompatible stage type");
 
-		SEAssert(m_stageShader || batch.GetShader(), "Either the batch or the stage must have a shader");
+		SEAssert((m_stageShader || batch.GetShader()) ||
+			m_type == RenderStage::Type::FullscreenQuad,
+			"Either the batch or the stage must have a shader");
 
-		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics && m_type == Type::Graphics) ||
+		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics && 
+				(m_type == Type::Graphics || m_type == Type::FullscreenQuad)) ||
 			(batch.GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute),
 			"Incompatible batch type");
 
@@ -397,6 +438,9 @@ namespace re
 				batch.GetGraphicsParams().m_batchTopologyMode,
 				batch.GetShader()->GetPipelineState().GetTopologyType())) ),
 			"Mesh topology mode is incompatible with shader pipeline state topology type");
+
+		SEAssert(m_type != Type::FullscreenQuad || m_stageBatches.empty(), 
+			"Cannot add batches to a fullscreen quad stage (except for the initial batch during construction)");
 
 #if defined(_DEBUG)
 		for (auto const& batchBuffer : batch.GetBuffers())

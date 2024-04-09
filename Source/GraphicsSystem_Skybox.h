@@ -45,8 +45,6 @@ namespace gr
 
 		std::shared_ptr<re::RenderStage> m_skyboxStage;
 		re::Texture const* m_skyTexture;
-		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
-		std::unique_ptr<re::Batch> m_fullscreenQuadBatch;
 		std::shared_ptr<re::Buffer> m_skyboxParams;
 
 		// Fallback if no ambient light/IBL texture is found, but the flat color debug mode is not enabled

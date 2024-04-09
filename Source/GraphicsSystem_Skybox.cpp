@@ -42,13 +42,11 @@ namespace gr
 
 	void SkyboxGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
 	{
-		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_skyboxStage = re::RenderStage::CreateGraphicsStage("Skybox stage", gfxStageParams);
+		re::RenderStage::FullscreenQuadParams fsqParams;
+		fsqParams.m_zLocation = gr::meshfactory::ZLocation::Far;
 
-		if (m_screenAlignedQuad == nullptr)
-		{
-			m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
-		}
+		m_skyboxStage = re::RenderStage::CreateFullscreenQuadStage("Skybox stage", fsqParams);
+
 
 		if (m_fallbackColorTex == nullptr)
 		{
@@ -166,12 +164,7 @@ namespace gr
 
 	void SkyboxGraphicsSystem::CreateBatches()
 	{
-		if (m_fullscreenQuadBatch == nullptr)
-		{
-			m_fullscreenQuadBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, m_screenAlignedQuad.get());
-		}
-
-		m_skyboxStage->AddBatch(*m_fullscreenQuadBatch);
+		//
 	}
 
 

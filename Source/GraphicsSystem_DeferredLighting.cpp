@@ -537,7 +537,7 @@ namespace gr
 		{
 			re::RenderStage::GraphicsStageParams gfxStageParams;
 			std::shared_ptr<re::RenderStage> iemStage = re::RenderStage::CreateSingleFrameGraphicsStage(
-				"IEM generation: Face " + std::to_string(face + 1) + "/6", gfxStageParams);
+				std::format("IEM generation: Face {}/6", face + 1).c_str(), gfxStageParams);
 
 			iemStage->SetStageShader(iemShader);
 			iemStage->AddTextureInput(
@@ -623,7 +623,7 @@ namespace gr
 
 				re::RenderStage::GraphicsStageParams gfxStageParams;
 				std::shared_ptr<re::RenderStage> pmremStage = re::RenderStage::CreateSingleFrameGraphicsStage(
-					stageName, gfxStageParams);
+					stageName.c_str(), gfxStageParams);
 
 				pmremStage->SetStageShader(pmremShader);
 				pmremStage->AddTextureInput(

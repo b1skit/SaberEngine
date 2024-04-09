@@ -69,7 +69,7 @@ namespace re
 				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(entry.first);
 
 				std::string const& lowercaseScriptFnName(util::ToLower(entry.second));
-				std::string const& stagePipelineName = std::format("{}::{}", currentGS->GetName(), entry.second);
+				std::string const& stagePipelineName = std::format("{} stages", currentGS->GetName());
 
 				currentGS->GetRuntimeBindings().m_initPipelineFunctions.at(lowercaseScriptFnName)(
 					renderSystem->GetRenderPipeline().AddNewStagePipeline(stagePipelineName));

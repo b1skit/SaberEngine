@@ -1100,12 +1100,15 @@ namespace fr
 				meshPrimitive = result->second;
 				replacedIncomingPtr = true;
 
-				// Add a marker to simplify debugging of shared meshes
-				constexpr char const* k_sharedMeshTag = " <shared>";
-				if (meshPrimitive->GetName().find(k_sharedMeshTag) == std::string::npos)
-				{
-					meshPrimitive->SetName(meshPrimitive->GetName() + k_sharedMeshTag);
-				}
+				//// Add a marker to simplify debugging of shared meshes
+				//constexpr char const* k_sharedMeshTag = " <shared>";
+				//if (meshPrimitive->GetName().find(k_sharedMeshTag) == std::string::npos)
+				//{
+				//	meshPrimitive->SetName(meshPrimitive->GetName() + k_sharedMeshTag);
+				//}
+				
+				// BUG HERE: We (currently) can't set the name on something that is shared, as another thread might be
+				// using it (e.g. dereferencing .c_str())
 			}
 			else
 			{

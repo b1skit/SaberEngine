@@ -57,8 +57,6 @@ namespace gr
 		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 	{
-		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Near);
-
 		m_firstUpsampleSrcMipLevel = 5; // == # of upsample stages
 	}
 
@@ -77,8 +75,8 @@ namespace gr
 
 
 		// Emissive blit:
-		m_emissiveBlitStage =
-			re::RenderStage::CreateGraphicsStage("Emissive blit stage", re::RenderStage::GraphicsStageParams());
+		m_emissiveBlitStage = 
+			re::RenderStage::CreateFullscreenQuadStage("Emissive blit stage", re::RenderStage::FullscreenQuadParams{});
 
 		// Blit shader:
 		re::PipelineState blitPipelineState;
@@ -139,10 +137,10 @@ namespace gr
 		for (uint32_t level = 0; level < numBloomMips; level++)
 		{
 			// Stage:
-			const std::string stageName = 
+			std::string const& stageName = 
 				std::format("Bloom downsample stage {}/{}: MIP {}", (level + 1), numBloomMips, level);
 			std::shared_ptr<re::RenderStage> downStage = 
-				re::RenderStage::CreateComputeStage(stageName, re::RenderStage::ComputeStageParams());
+				re::RenderStage::CreateComputeStage(stageName.c_str(), re::RenderStage::ComputeStageParams());
 
 			// Shader:
 			downStage->SetStageShader(m_bloomComputeShader);
@@ -205,7 +203,7 @@ namespace gr
 			const std::string stageName = 
 				std::format("Bloom upsample stage {}/{}: MIP {}", upsampleNameLevel++, numUpsampleStages, upsampleDstMip);
 			std::shared_ptr<re::RenderStage> upStage =
-				re::RenderStage::CreateComputeStage(stageName, re::RenderStage::ComputeStageParams());
+				re::RenderStage::CreateComputeStage(stageName.c_str(), re::RenderStage::ComputeStageParams());
 
 			// Shader:
 			upStage->SetStageShader(m_bloomComputeShader);
@@ -333,13 +331,6 @@ namespace gr
 
 	void BloomGraphicsSystem::CreateBatches()
 	{
-		if (m_fullscreenQuadBatch == nullptr)
-		{
-			m_fullscreenQuadBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, m_screenAlignedQuad.get());
-		}
-
-		m_emissiveBlitStage->AddBatch(*m_fullscreenQuadBatch);
-
 		std::shared_ptr<re::Texture> bloomTex = m_bloomDownStages[0]->GetTextureTargetSet()->GetColorTarget(0).GetTexture();
 		const uint32_t numBloomTexMips = bloomTex->GetNumMips();
 

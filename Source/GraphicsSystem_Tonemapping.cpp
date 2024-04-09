@@ -19,10 +19,8 @@ namespace gr
 		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 	{
-		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_tonemappingStage = re::RenderStage::CreateGraphicsStage("Tonemapping stage", gfxStageParams);
-
-		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Near);
+		m_tonemappingStage = 
+			re::RenderStage::CreateFullscreenQuadStage("Tonemapping stage", re::RenderStage::FullscreenQuadParams{});
 	}
 
 
@@ -69,10 +67,6 @@ namespace gr
 
 	void TonemappingGraphicsSystem::CreateBatches()
 	{
-		if (m_fullscreenQuadBatch == nullptr)
-		{
-			m_fullscreenQuadBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, m_screenAlignedQuad.get());
-		}
-		m_tonemappingStage->AddBatch(*m_fullscreenQuadBatch);
+		//
 	}
 }
