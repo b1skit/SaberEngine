@@ -138,7 +138,8 @@ namespace re
 		void Shutdown() override;
 		
 		// Member functions:
-		void Initialize();	
+		void Initialize();
+		void InitializeRenderSystems();
 
 		virtual void Render() = 0;
 

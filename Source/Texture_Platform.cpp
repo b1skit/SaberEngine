@@ -11,7 +11,7 @@ namespace platform
 {
 	void platform::Texture::CreatePlatformParams(re::Texture& texture)
 	{
-		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

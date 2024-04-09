@@ -1,0 +1,96 @@
+{
+	"PipelineName": "Default",
+	"RenderSystems": [
+		{
+			"RenderSystemName": "Primary",
+			"Initialization": [
+				{
+					"GS": "ComputeMips",
+					"Function": "InitPipeline",
+					"ExcludedPlatforms": [ "OpenGL" ]
+				},
+				{
+					"GS": "DeferredLighting",
+					"Function": "InitializeResourceGenerationStages"
+				},
+				{
+					"GS": "GBuffer",
+					"Function": "InitPipeline"
+				},
+				{
+					"GS": "XeGTAO",
+					"Function": "InitPipeline",
+					"ExcludedPlatforms": [ "OpenGL" ]
+				},
+				{
+					"GS": "Shadows",
+					"Function": "InitPipeline"
+				},
+				{
+					"GS": "DeferredLighting",
+					"Function": "InitPipeline"
+				},
+				{
+					"GS": "Skybox",
+					"Function": "InitPipeline"
+				},
+				{
+					"GS": "Bloom",
+					"Function": "InitPipeline"
+				},
+				{
+					"GS": "Tonemapping",
+					"Function": "InitPipeline"
+				},
+				{
+					"GS": "Debug",
+					"Function": "InitPipeline"
+				}
+			],
+			"Update": [
+				{
+					"GS": "Culling",
+					"Function": "PreRender"
+				},
+				{
+					"GS": "ComputeMips",
+					"Function": "PreRender",
+					"ExcludedPlatforms": [ "OpenGL" ]
+				},
+				{
+					"GS": "GBuffer",
+					"Function": "PreRender"
+				},
+				{
+					"GS": "XeGTAO",
+					"Function": "PreRender",
+					"ExcludedPlatforms": [ "OpenGL" ]
+				},
+				{
+					"GS": "Shadows",
+					"Function": "PreRender"
+				},
+				{
+					"GS": "DeferredLighting",
+					"Function": "PreRender"
+				},
+				{
+					"GS": "Skybox",
+					"Function": "PreRender"
+				},
+				{
+					"GS": "Bloom",
+					"Function": "PreRender"
+				},
+				{
+					"GS": "Tonemapping",
+					"Function": "PreRender"
+				},
+				{
+					"GS": "Debug",
+					"Function": "PreRender"
+				}
+			]
+		}
+	]
+}

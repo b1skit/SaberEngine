@@ -15,6 +15,10 @@
       "Command": "-platform opengl"
     },
     {
+      "Id": "84306581-d976-4879-8c44-018b3d4130ac",
+      "Command": "-renderpipeline engineDefault.json"
+    },
+    {
       "Id": "bcab5ca4-fc56-4988-ae94-77438e7e80de",
       "Command": "-console"
     },

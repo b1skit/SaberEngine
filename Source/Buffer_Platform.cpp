@@ -14,7 +14,7 @@ namespace platform
 		SEAssert(buffer.GetPlatformParams() == nullptr,
 			"Attempting to create platform params for a buffer that already exists");
 
-		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

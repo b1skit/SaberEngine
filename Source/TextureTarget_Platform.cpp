@@ -11,7 +11,7 @@ namespace platform
 {
 	void TextureTarget::CreatePlatformParams(re::TextureTarget& texTarget)
 	{
-		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{
@@ -35,7 +35,7 @@ namespace platform
 
 	void TextureTargetSet::CreatePlatformParams(re::TextureTargetSet& texTarget)
 	{
-		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

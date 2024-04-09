@@ -364,6 +364,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="CommandQueue.cpp" />
     <ClCompile Include="RenderDataManager.cpp" />
     <ClCompile Include="RenderDataComponent.cpp" />
+    <ClCompile Include="RenderPipelineDesc.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
     <ClCompile Include="ResourceStateTracker_DX12.cpp" />
     <ClCompile Include="ShadowMapComponent.cpp" />
@@ -512,6 +513,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ResourceStateTracker_DX12.h" />
+    <ClInclude Include="RenderPipelineDesc.h" />
     <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
     <ClInclude Include="Shaders\Common\CameraParams.h" />
     <ClInclude Include="Shaders\Common\IBLGenerationParams.h" />

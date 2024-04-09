@@ -1,121 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "ImGuiUtils.h"
 #include "GraphicsSystem.h"
-#include "GraphicsSystem_Bloom.h"
-#include "GraphicsSystem_XeGTAO.h"
-#include "GraphicsSystem_ComputeMips.h"
-#include "GraphicsSystem_Culling.h"
-#include "GraphicsSystem_Debug.h"
-#include "GraphicsSystem_DeferredLighting.h"
-#include "GraphicsSystem_GBuffer.h"
-#include "GraphicsSystem_Shadows.h"
-#include "GraphicsSystem_Skybox.h"
-#include "GraphicsSystem_Tonemapping.h"
 #include "ProfilingMarkers.h"
 #include "RenderSystem.h"
 
-
-namespace
-{
-	void LoadPipelineDescription(
-		char const* scriptName,
-		std::vector<std::string>& graphicsSystemsToCreate,
-		std::vector<std::pair<std::string, std::string>>& initSteps,
-		std::vector<std::pair<std::string, std::string>>& updateSteps)
-	{
-		SEAssert(scriptName, "Script name cannot be null");
-
-
-		// TODO: Load/populate these structures from disk. For now, we just hard code them
-		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
-		switch (api)
-		{
-		case platform::RenderingAPI::OpenGL:
-		{
-			initSteps =
-			{
-				{"DeferredLighting", "InitializeResourceGenerationStages"},
-				{"GBuffer", "InitPipeline"},
-				{"Shadows", "InitPipeline"},
-				{"DeferredLighting", "InitPipeline"},
-				{"Skybox", "InitPipeline"},
-				{"Bloom", "InitPipeline"},
-				{"Tonemapping", "InitPipeline"},
-				{"Debug", "InitPipeline"},
-			};
-
-			updateSteps =
-			{
-				{"Culling", "PreRender"},
-				{"GBuffer", "PreRender"},
-				{"Shadows", "PreRender"},
-				{"DeferredLighting", "PreRender"},
-				{"Skybox", "PreRender"},
-				{"Bloom", "PreRender"},
-				{"Tonemapping", "PreRender"},
-				{"Debug", "PreRender"},
-			};
-		}
-		break;
-		case platform::RenderingAPI::DX12:
-		{
-			initSteps =
-			{
-				{"ComputeMips", "InitPipeline"},
-				{"DeferredLighting", "InitializeResourceGenerationStages"},
-				{"GBuffer", "InitPipeline"},
-				{"XeGTAO", "InitPipeline"},
-				{"Shadows", "InitPipeline"},
-				{"DeferredLighting", "InitPipeline"},
-				{"Skybox", "InitPipeline"},
-				{"Bloom", "InitPipeline"},
-				{"Tonemapping", "InitPipeline"},
-				{"Debug", "InitPipeline"},
-			};
-
-			updateSteps =
-			{
-				{"Culling", "PreRender"},
-				{"ComputeMips", "PreRender"},
-				{"GBuffer", "PreRender"},
-				{"XeGTAO", "PreRender"},
-				{"Shadows", "PreRender"},
-				{"DeferredLighting", "PreRender"},
-				{"Skybox", "PreRender"},
-				{"Bloom", "PreRender"},
-				{"Tonemapping", "PreRender"},
-				{"Debug", "PreRender"},
-			};
-		}
-		break;
-		default:
-			SEAssertF("Invalid rendering API argument received");
-		}
-		
-		
-
-		// Build a list of GraphicsSystems we'll need to instantiate
-		// Note: No step is mandatory, so we need to check all of the instructions we've received
-		std::set<std::string> seenGSNames;
-
-		for (auto const& entry : initSteps)
-		{
-			if (!seenGSNames.contains(entry.first))
-			{
-				seenGSNames.emplace(entry.first);
-				graphicsSystemsToCreate.emplace_back(entry.first);
-			}
-		}
-		for (auto const& entry : updateSteps)
-		{
-			if (!seenGSNames.contains(entry.first))
-			{
-				seenGSNames.emplace(entry.first);
-				graphicsSystemsToCreate.emplace_back(entry.first);
-			}
-		}
-	}
-}
 
 namespace re
 {
@@ -147,24 +35,20 @@ namespace re
 	}
 
 
-	void RenderSystem::BuildPipelineFromScript(char const* scriptName)
+	void RenderSystem::BuildPipeline(RenderPipelineDesc::RenderSystemDescription const& renderSysDesc)
 	{
-		std::vector<std::string> graphicsSystemsToCreate;
-		std::vector<std::pair<std::string, std::string>> initSteps;
-		std::vector<std::pair<std::string, std::string>> updateSteps;
-		LoadPipelineDescription(scriptName, graphicsSystemsToCreate, initSteps, updateSteps);
-
 		// Create the GS creation pipeline:
-		m_creationPipeline = [this, graphicsSystemsToCreate, updateSteps](re::RenderSystem* renderSystem)
+		m_creationPipeline = [this, renderSysDesc](re::RenderSystem* renderSystem)
 		{
 			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
 
-			for (std::string const& gsName : graphicsSystemsToCreate)
+			for (std::string const& gsName : renderSysDesc.m_graphicsSystemNames)
 			{
 				gsm.CreateAddGraphicsSystemByScriptName(gsName);
 			}
 
-			for (auto const& entry : updateSteps)
+			// The update pipeline caches member function pointers; We can populate it now that our GS objects exist
+			for (auto const& entry : renderSysDesc.m_updateSteps)
 			{
 				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(entry.first);
 
@@ -175,13 +59,12 @@ namespace re
 			}
 		};
 
-
-		m_initPipeline = [initSteps](re::RenderSystem* renderSystem)
+		m_initPipeline = [renderSysDesc](re::RenderSystem* renderSystem)
 		{
 			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
 			gsm.Create();
 
-			for (auto const& entry : initSteps)
+			for (auto const& entry : renderSysDesc.m_initSteps)
 			{
 				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(entry.first);
 
@@ -195,7 +78,7 @@ namespace re
 
 		// We can only build the update pipeline once the GS's have been created (as we need to access their runtime
 		// bindings)
-		m_updatePipeline.reserve(updateSteps.size());
+		m_updatePipeline.reserve(renderSysDesc.m_updateSteps.size());
 	}
 
 

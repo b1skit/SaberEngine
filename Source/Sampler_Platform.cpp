@@ -13,7 +13,7 @@ namespace platform
 {
 	void Sampler::CreatePlatformParams(re::Sampler& sampler)
 	{
-		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

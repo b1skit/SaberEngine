@@ -9,7 +9,7 @@ namespace platform
 {
 	void SwapChain::CreatePlatformParams(re::SwapChain& swapChain)
 	{
-		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

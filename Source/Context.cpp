@@ -20,7 +20,7 @@ namespace re
 	std::unique_ptr<re::Context> Context::CreateSingleton()
 	{
 		std::unique_ptr<re::Context> newContext = nullptr;
-		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
 		switch (api)
 		{
 		case platform::RenderingAPI::OpenGL:

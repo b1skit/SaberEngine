@@ -6,8 +6,8 @@ namespace platform
 {
 	enum RenderingAPI : uint8_t
 	{
-		OpenGL,
 		DX12,
+		OpenGL,
 		RenderingAPI_Count
 	};
 

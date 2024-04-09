@@ -71,11 +71,7 @@ namespace opengl
 {
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
-		renderManager.m_renderSystems.emplace_back(re::RenderSystem::Create("Default OpenGL RenderSystem"));
-		re::RenderSystem* defaultRenderSystem = renderManager.m_renderSystems.back().get();
-
-		char const* pipelineScript = "dummy"; // TODO: Pass a valid script file
-		defaultRenderSystem->BuildPipelineFromScript(pipelineScript);
+		//
 	}
 
 

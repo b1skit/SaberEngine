@@ -1,14 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Batch.h"
-#include "BatchManager.h"
 #include "Config.h"
 #include "Context.h"
-#include "GraphicsSystem_GBuffer.h"
-#include "GraphicsSystem_DeferredLighting.h"
-#include "GraphicsSystem_Shadows.h"
-#include "GraphicsSystem_Skybox.h"
-#include "GraphicsSystem_Bloom.h"
-#include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystemManager.h"
 #include "PerformanceTimer.h"
 #include "ProfilingMarkers.h"
@@ -17,6 +9,7 @@
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
+#include "RenderPipelineDesc.h"
 #include "TextureTarget.h"
 #include "VertexStream.h"
 
@@ -39,7 +32,7 @@ namespace re
 	std::unique_ptr<re::RenderManager> RenderManager::Create()
 	{
 		std::unique_ptr<re::RenderManager> newRenderManager = nullptr;
-		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
 		switch (api)
 		{
 		case platform::RenderingAPI::OpenGL:
@@ -146,17 +139,11 @@ namespace re
 		util::PerformanceTimer timer;
 		timer.Start();
 
-		// Build our platform-specific graphics systems:
 		SEBeginCPUEvent("platform::RenderManager::Initialize");
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
 
-		// Initialize each render system and their graphics systems:
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
-		{
-			renderSystem->GetGraphicsSystemManager().GetRenderDataForModification().BeginFrame(m_renderFrameNum);
-			renderSystem->ExecuteInitializePipeline();
-		}
+		InitializeRenderSystems();
 
 		// Process render commands issued during scene loading now the graphics systems are initialized:
 		m_renderCommandManager.SwapBuffers();
@@ -175,6 +162,41 @@ namespace re
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 
 		SEEndCPUEvent();
+	}
+
+
+	void RenderManager::InitializeRenderSystems()
+	{
+		// Build our rendering pipeline:
+		std::string pipelineFileName;
+		if (en::Config::Get()->TryGetValue(en::ConfigKeys::k_renderPipelineCmdLineArg, pipelineFileName) == false)
+		{
+			pipelineFileName = en::ConfigKeys::k_defaultPipelineFileName;
+		}
+
+		// Prefix folder name to build a relative path
+		std::string const& scriptPath = std::format("{}{}", en::ConfigKeys::k_pipelineDirName, pipelineFileName);
+
+		LOG("Loading render pipeline description from \"%s\"...", scriptPath.c_str());
+
+		RenderPipelineDesc const renderPipelineDesc = LoadRenderPipelineDescription(scriptPath.c_str());
+
+		LOG("Render pipeline description \"%s\" loaded!", renderPipelineDesc.m_pipelineName.c_str());
+
+		for (auto const& systemPipelineDesc : renderPipelineDesc.m_renderSystems)
+		{
+			LOG("Creating render system \"%s\"...", systemPipelineDesc.m_renderSystemName.c_str());
+
+			m_renderSystems.emplace_back(re::RenderSystem::Create(systemPipelineDesc.m_renderSystemName));
+			m_renderSystems.back()->BuildPipeline(systemPipelineDesc);
+		}
+
+		// Initialize each render system and their graphics systems:
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		{
+			renderSystem->GetGraphicsSystemManager().GetRenderDataForModification().BeginFrame(m_renderFrameNum);
+			renderSystem->ExecuteInitializePipeline();
+		}
 	}
 
 

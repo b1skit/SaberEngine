@@ -81,5 +81,15 @@
 #include <entt/entity/registry.hpp>
 
 
+// nlohmann-json:
+#if defined(_DEBUG)
+// Enable extended diagnostics in debug configurations: https://json.nlohmann.me/api/macros/json_diagnostics/
+#define JSON_DIAGNOSTICS 1
+#else
+#define JSON_DIAGNOSTICS 0
+#endif
+#include <nlohmann/json.hpp>
+
+
 // Macros:
 #define ENUM_TO_STR(x) #x

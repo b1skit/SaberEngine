@@ -16,9 +16,10 @@ Saber Engine is constantly improving. Its current features include:
 	- DirectX 12 (Agility SDK 1.611.2) (Default)  
 	- OpenGL 4.6  
 	- Upcoming Vulkan support  
+- Scriptable rendering pipeline  
 - Asynchronous copy/graphics/compute pipelines  
 - Multi-threaded architecture programmed in C++ 20  
-- EnTT Entity Component System (ECS)  
+- Entity Component System (EnTT)  
 - GLTF 2.0 scene format support  
 - HDR physically-based lighting model (As per EA’s Frostbite, Lagarde et al.)  
 - Image-based indirect lighting  
@@ -49,8 +50,12 @@ Select the backend rendering API: `-platform API`. If no API is specified, Direc
 * dx12
 * opengl
 
+Select a rendering pipeline: `-renderpipeline pipelineName.json`
+* Rendering pipelines are described by json files located in the `<project root>\Config\Pipelines\` directory  
+* If no rendering pipeline file is specified, the `engineDefault.json` is used
+
 Enable strict shader binding checks: `-strictshaderbinding`  
-* Enables (helpful, but occasionally annoying) asserts if parameters aren't found when parsing reflected shader metadata  
+* Enables helpful (but occasionally annoying) asserts if parameters aren't found when parsing reflected shader metadata  
 
 Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log verbosity, and API-specific validation  
 * 0: Default (disabled)  

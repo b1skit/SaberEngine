@@ -8,9 +8,10 @@ namespace en::ConfigKeys
 	/******************************************************************************************************************/
 	// Configuration constants:
 	/******************************************************************************************************************/
-	constexpr char const* k_configDirName	= "Config\\";
-	constexpr char const* k_configFileName	= "config.cfg";
-	constexpr char const* k_pipelineDirName = "Config\\Pipelines\\";
+	constexpr char const* k_configDirName			= "Config\\";
+	constexpr char const* k_configFileName			= "config.cfg";
+	constexpr char const* k_pipelineDirName			= "Config\\Pipelines\\";
+	constexpr char const* k_defaultPipelineFileName = "engineDefault.json";
 
 	// Debug:
 	constexpr char const* k_pixCaptureFolderName		= "PIX Captures";
@@ -27,15 +28,16 @@ namespace en::ConfigKeys
 
 	// Command line controls:
 	/******************************************************************************************************************/
-	constexpr char const* k_sceneCmdLineArg = "scene";
-	constexpr char const* k_showSystemConsoleWindowCmdLineArg = "console";
-	constexpr char const* k_platformCmdLineArg = "platform";
-	constexpr char const* k_debugLevelCmdLineArg = "debuglevel";
-	constexpr char const* k_enableDredCmdLineArg = "enabledred";
-	constexpr char const* k_pixGPUProgrammaticCapturesCmdLineArg = "pixgpucapture";
-	constexpr char const* k_pixCPUProgrammaticCapturesCmdLineArg = "pixcpucapture";
+	constexpr char const* k_sceneCmdLineArg							= "scene";
+	constexpr char const* k_showSystemConsoleWindowCmdLineArg		= "console";
+	constexpr char const* k_renderPipelineCmdLineArg				= "renderpipeline";
+	constexpr char const* k_platformCmdLineArg						= "platform";
+	constexpr char const* k_debugLevelCmdLineArg					= "debuglevel";
+	constexpr char const* k_enableDredCmdLineArg					= "enabledred";
+	constexpr char const* k_pixGPUProgrammaticCapturesCmdLineArg	= "pixgpucapture";
+	constexpr char const* k_pixCPUProgrammaticCapturesCmdLineArg	= "pixcpucapture";
 	constexpr char const* k_renderDocProgrammaticCapturesCmdLineArg = "renderdoc";
-	constexpr char const* k_strictShaderBindingCmdLineArg = "strictshaderbinding";
+	constexpr char const* k_strictShaderBindingCmdLineArg			= "strictshaderbinding";
 
 
 	// Config keys:

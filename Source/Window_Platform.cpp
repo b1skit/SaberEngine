@@ -11,7 +11,7 @@ namespace platform
 	{
 		// TODO: We only support windows for now, but eventually the Window interface should be decided by the
 		// OS/platform, not the rendering API.
-		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

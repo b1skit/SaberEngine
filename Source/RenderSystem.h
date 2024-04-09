@@ -4,6 +4,7 @@
 #include "GraphicsSystem.h"
 #include "NamedObject.h"
 #include "RenderPipeline.h"
+#include "RenderPipelineDesc.h"
 
 
 namespace re
@@ -23,7 +24,7 @@ namespace re
 
 	public:
 		// Scriptable rendering pipeline:
-		void BuildPipelineFromScript(char const* scriptName);
+		void BuildPipeline(RenderPipelineDesc::RenderSystemDescription const&);
 		void ExecuteInitializePipeline();
 		void ExecuteCreatePipeline();
 		void ExecuteUpdatePipeline();

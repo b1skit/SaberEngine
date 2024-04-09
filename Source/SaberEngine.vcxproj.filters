@@ -515,6 +515,9 @@
     <ClCompile Include="EntityCommands.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPipelineDesc.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -1002,6 +1005,9 @@
     </ClInclude>
     <ClInclude Include="EntityCommands.h">
       <Filter>Header Files\fr</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPipelineDesc.h">
+      <Filter>Header Files\re</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
