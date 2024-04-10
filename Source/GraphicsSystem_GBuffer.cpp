@@ -9,20 +9,6 @@
 
 namespace gr
 {
-	constexpr std::array<char const*, GBufferGraphicsSystem::GBufferTexIdx_Count> GBufferGraphicsSystem::GBufferTexNames
-	{
-		ENUM_TO_STR(GBufferAlbedo),		// 0
-		ENUM_TO_STR(GBufferWNormal),	// 1
-		ENUM_TO_STR(GBufferRMAO),		// 2
-		ENUM_TO_STR(GBufferEmissive),	// 3
-		ENUM_TO_STR(GBufferMatProp0),	// 4
-		ENUM_TO_STR(GBufferDepth),		// 5
-	};
-	static_assert(GBufferGraphicsSystem::GBufferTexNames.size() == 
-		GBufferGraphicsSystem::GBufferTexIdx::GBufferTexIdx_Count);
-	// TODO: Split this into 2 lists: color target names, and depth names
-	// -> Often need to loop over color, and treat depth differently
-	
 	constexpr char const* k_gsName = "GBuffer Graphics System";
 
 

@@ -25,7 +25,7 @@ namespace gr
 
 
 	public:
-		// These enums are converted to strings, & must align with the layout binding indexes defined in SaberCommon.glsl
+		// These enums must align with the layout binding indexes defined in SaberCommon.glsl
 		enum GBufferTexIdx : uint8_t
 		{
 			GBufferAlbedo	= 0,
@@ -37,7 +37,19 @@ namespace gr
 
 			GBufferTexIdx_Count
 		};
-		static const std::array<char const*, GBufferTexIdx_Count> GBufferTexNames;
+		static constexpr std::array<char const*, GBufferTexIdx_Count> GBufferTexNames =
+		{
+			ENUM_TO_STR(GBufferAlbedo),		// 0
+			ENUM_TO_STR(GBufferWNormal),	// 1
+			ENUM_TO_STR(GBufferRMAO),		// 2
+			ENUM_TO_STR(GBufferEmissive),	// 3
+			ENUM_TO_STR(GBufferMatProp0),	// 4
+			ENUM_TO_STR(GBufferDepth),		// 5
+		};
+		static_assert(GBufferGraphicsSystem::GBufferTexNames.size() ==
+			GBufferGraphicsSystem::GBufferTexIdx::GBufferTexIdx_Count);
+		// TODO: Split this into 2 lists: color target names, and depth names
+		// -> Often need to loop over color, and treat depth differently
 
 
 	public:
