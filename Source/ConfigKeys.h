@@ -10,7 +10,7 @@ namespace en::ConfigKeys
 	/******************************************************************************************************************/
 	constexpr char const* k_configDirName			= "Config\\";
 	constexpr char const* k_configFileName			= "config.cfg";
-	constexpr char const* k_pipelineDirName			= "Config\\Pipelines\\";
+	constexpr char const* k_pipelineDirName			= "Assets\\Pipelines\\";
 	constexpr char const* k_defaultPipelineFileName = "engineDefault.json";
 
 	// Debug:
