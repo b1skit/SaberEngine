@@ -15,7 +15,7 @@ void ExecuteMainPass(ComputeIn In, const lpfloat sliceCount, const lpfloat steps
 	
 	const float2 uvs = PixelCoordsToUV(pixelCoord, SEGTAOConstants.ViewportSize, float2(0.5f, 0.5f));
 	const float srcMipLevel = 0.f;
-	const lpfloat3 worldNormal = (lpfloat3) GBufferWorldNormal.SampleLevel(ClampMinMagMipPoint, uvs, srcMipLevel).xyz;
+	const lpfloat3 worldNormal = (lpfloat3) SceneWNormal.SampleLevel(ClampMinMagMipPoint, uvs, srcMipLevel).xyz;
 	
 	// Convert our normals to view space:
 	lpfloat3 viewNormal = (lpfloat3) mul((float3x3) CameraParams.g_view, worldNormal);

@@ -33,9 +33,11 @@ namespace gr
 			GBufferRMAO		= 2,
 			GBufferEmissive = 3,
 			GBufferMatProp0 = 4,
+
 			GBufferDepth	= 5,
 
-			GBufferTexIdx_Count
+			GBufferTexIdx_Count,
+			GBufferColorTex_Count = 5 // Helper for iterating over color indexes only
 		};
 		static constexpr std::array<char const*, GBufferTexIdx_Count> GBufferTexNames =
 		{
@@ -55,17 +57,18 @@ namespace gr
 	public:
 		GBufferGraphicsSystem(gr::GraphicsSystemManager*);
 
-		~GBufferGraphicsSystem() override {}
+		~GBufferGraphicsSystem() override = default;
 
-		void InitPipeline(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
+		
+		void RegisterTextureInputs() override { /*No inputs*/ }
+		void RegisterTextureOutputs() override;
 
 		void PreRender();
 
-		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
-
 
 	private:
-		void CreateBatches() override;
+		void CreateBatches();
 
 	private:
 		std::shared_ptr<re::RenderStage> m_gBufferStage;

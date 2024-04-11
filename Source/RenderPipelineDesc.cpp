@@ -37,14 +37,17 @@ namespace re
 
 		pipelineDesc.m_pipelineName = jsonDesc[RenderPipelineDesc::key_pipelineName].template get<std::string>().c_str();
 
-		for (auto const& renderSystem : jsonDesc[RenderPipelineDesc::key_renderSystemsBlock])
+		// "RenderSystems":
+		for (auto const& renderSystemEntry : jsonDesc[RenderPipelineDesc::key_renderSystemsBlock])
 		{
-			auto& pipeline = pipelineDesc.m_renderSystems.emplace_back();
+			auto& currentRSDesc = pipelineDesc.m_renderSystems.emplace_back();
 
-			pipeline.m_renderSystemName =
-				renderSystem[RenderPipelineDesc::key_renderSystemName].template get<std::string>().c_str();
+			// "RenderSystemName":
+			currentRSDesc.m_renderSystemName =
+				renderSystemEntry[RenderPipelineDesc::key_renderSystemName].template get<std::string>().c_str();
 
-			auto const& initialization = renderSystem[RenderPipelineDesc::key_initializationSteps];
+			// "Initialization": 
+			auto const& initialization = renderSystemEntry[RenderPipelineDesc::key_initializationStepsBlock];
 			for (size_t i = 0; i < initialization.size(); i++)
 			{
 				if (ExcludesPlatform(initialization.at(i)))
@@ -52,14 +55,15 @@ namespace re
 					continue;
 				}
 
-				auto& newInitStep = pipeline.m_initSteps.emplace_back();
+				auto& newInitStep = currentRSDesc.m_initSteps.emplace_back();
 				auto const& gsName =
 					initialization.at(i)[RenderPipelineDesc::key_GSName].get_to(newInitStep.first);
 				initialization.at(i)[RenderPipelineDesc::key_functionName].get_to(newInitStep.second);
-				pipeline.m_graphicsSystemNames.emplace(gsName);
+				currentRSDesc.m_graphicsSystemNames.emplace(gsName);
 			}
 
-			auto const& update = renderSystem[RenderPipelineDesc::key_updateSteps];
+			// "Update":
+			auto const& update = renderSystemEntry[RenderPipelineDesc::key_updateStepsBlock];
 			for (size_t i = 0; i < update.size(); i++)
 			{
 				if (ExcludesPlatform(update.at(i)))
@@ -67,11 +71,104 @@ namespace re
 					continue;
 				}
 
-				auto& newUpdateStep = pipeline.m_updateSteps.emplace_back();
+				auto& newUpdateStep = currentRSDesc.m_updateSteps.emplace_back();
 
 				auto const& gsName = update.at(i)[RenderPipelineDesc::key_GSName].get_to(newUpdateStep.first);
 				update.at(i)[RenderPipelineDesc::key_functionName].get_to(newUpdateStep.second);
-				pipeline.m_graphicsSystemNames.emplace(gsName);
+				currentRSDesc.m_graphicsSystemNames.emplace(gsName);
+			}
+
+			// "ResourceDependencies":
+			// Note: A resource dependencies block isn't strictly necessary
+			if (renderSystemEntry.contains(RenderPipelineDesc::key_resourceDependenciesBlock))
+			{
+				auto const& resourceDependencies = renderSystemEntry[RenderPipelineDesc::key_resourceDependenciesBlock];
+				for (size_t dependencyIdx = 0; dependencyIdx < resourceDependencies.size(); dependencyIdx++)
+				{
+					auto const& currentGSEntry = resourceDependencies.at(dependencyIdx);
+
+					// "GS":
+					std::string const& currentGSName = 
+						currentGSEntry[RenderPipelineDesc::key_GSName].template get<std::string>();
+
+					// "Inputs":
+					if (currentGSEntry.contains(RenderPipelineDesc::key_inputsList) &&
+						!currentGSEntry[RenderPipelineDesc::key_inputsList].empty())
+					{
+						using GSName = re::RenderPipelineDesc::RenderSystemDescription::GSName;
+						using TexSrcDstNamePairs = re::RenderPipelineDesc::RenderSystemDescription::TexSrcDstNamePairs;
+
+						std::vector<std::pair<GSName, TexSrcDstNamePairs>>& currentGSDependencies = 
+							currentRSDesc.m_textureInputs.emplace(
+								currentGSName, 
+								std::vector<std::pair<GSName, TexSrcDstNamePairs>>()).first->second;
+
+						auto const& inputsList = currentGSEntry[RenderPipelineDesc::key_inputsList];
+						for (auto const& inputEntry : inputsList)
+						{
+							// "GS":
+							std::string const& dependencySourceGS =
+								inputEntry[RenderPipelineDesc::key_GSName].template get<std::string>();
+
+							SEAssert(dependencySourceGS != currentGSName, "A GS has listed itself as an input source");
+
+							// "TextureDependencies":
+							bool haveAddedCurDependencyEntry = false;
+							auto const& texDependenciesList = inputEntry[RenderPipelineDesc::key_textureDependenciesList];
+							for (auto const& texDependencyEntry : texDependenciesList)
+							{
+								if (ExcludesPlatform(texDependencyEntry))
+								{
+									continue;
+								}
+								else if (!haveAddedCurDependencyEntry)
+								{
+									// Ensure we don't record empty GS dependencies for excluded platforms
+									currentGSDependencies.emplace_back(dependencySourceGS, TexSrcDstNamePairs());
+									haveAddedCurDependencyEntry = true;
+								}
+
+								TexSrcDstNamePairs& texSrcDstNames = currentGSDependencies.back().second;
+
+								texSrcDstNames.emplace_back(
+									texDependencyEntry[RenderPipelineDesc::key_srcName],
+									texDependencyEntry[RenderPipelineDesc::key_dstName]
+								);
+							}							
+						}
+					}
+
+					// "Outputs":
+					if (currentGSEntry.contains(RenderPipelineDesc::key_outputsList) &&
+						!currentGSEntry[RenderPipelineDesc::key_outputsList].empty())
+					{
+						auto const& outputsBlock = currentGSEntry[RenderPipelineDesc::key_outputsList];
+
+						std::vector<std::string>& textureOutputs = currentRSDesc.m_textureOutputs.emplace(
+							currentGSName, std::vector<std::string>()).first->second;
+						
+						// "TextureOutputs":
+						auto const& outputsList = outputsBlock[RenderPipelineDesc::key_textureOutputsList];
+						for (auto const& outputEntry : outputsList)
+						{
+							textureOutputs.emplace_back(outputEntry.template get<std::string>());
+						}
+					}
+
+					// "Accesses":
+					if (currentGSEntry.contains(RenderPipelineDesc::key_accessesList) && 
+						!currentGSEntry[RenderPipelineDesc::key_accessesList].empty())
+					{
+						std::unordered_set<std::string>& currentGSAccesses = currentRSDesc.m_accesses[currentGSName];
+
+						auto const& accessesBlock = currentGSEntry[RenderPipelineDesc::key_accessesList];
+						for (auto const& accessEntry : accessesBlock)
+						{
+							auto const& result = currentGSAccesses.emplace(accessEntry.template get<std::string>());
+							SEAssert(*result.first != currentGSName, "A GS has listed itself in the accesses list");
+						}
+					}
+				}
 			}
 		}
 	}

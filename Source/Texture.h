@@ -191,7 +191,7 @@ namespace re
 			TextureParams const& params,
 			std::vector<std::vector<uint8_t>>&& initialData);
 
-		[[nodiscard]] static std::shared_ptr<re::Texture> Create(
+		static std::shared_ptr<re::Texture> Create(
 			std::string const& name,
 			TextureParams const& params,
 			glm::vec4 fillColor);

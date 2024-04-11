@@ -1,11 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Config.h"
+#include "CameraRenderData.h"
+#include "ConfigKeys.h"
+#include "GraphicsSystemManager.h"
 #include "GraphicsSystem_Bloom.h"
-#include "GraphicsSystem_DeferredLighting.h"
-#include "GraphicsSystem_GBuffer.h"
-#include "MeshFactory.h"
-#include "RenderManager.h"
-#include "RenderSystem.h"
 #include "Sampler.h"
 #include "Shader.h"
 
@@ -61,18 +58,9 @@ namespace gr
 	}
 
 
-	void BloomGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
+	void BloomGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
 		std::shared_ptr<re::Sampler> const bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
-
-		GBufferGraphicsSystem* gbufferGS = 
-			m_graphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
-
-		DeferredLightingGraphicsSystem* deferredLightGS =
-			m_graphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
-
-		std::shared_ptr<re::TextureTargetSet const> deferredLightTargets = deferredLightGS->GetFinalTextureTargetSet();
-
 
 		// Emissive blit:
 		m_emissiveBlitStage = 
@@ -89,13 +77,16 @@ namespace gr
 		// Emissive blit texture inputs:
 		m_emissiveBlitStage->AddTextureInput(
 			"Tex0",
-			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(GBufferGraphicsSystem::GBufferEmissive).GetTexture().get(),
+			texDependencies.at(k_emissiveInput),
 			bloomSampler);
 
 		// Additively blit the emissive values to the deferred lighting target:
-		std::shared_ptr<re::TextureTargetSet> emissiveTargetSet = re::TextureTargetSet::Create(
-			*deferredLightGS->GetFinalTextureTargetSet(),
-			"Emissive Blit Target Set");
+		std::shared_ptr<re::Texture> deferredLightTargetTex = texDependencies.at(k_bloomTargetInput);
+
+		std::shared_ptr<re::TextureTargetSet> emissiveTargetSet = 
+			re::TextureTargetSet::Create("Emissive Blit Target Set");
+
+		emissiveTargetSet->SetColorTarget(0, deferredLightTargetTex, re::TextureTarget::TargetParams{});
 
 		emissiveTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
 			re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One });
@@ -112,9 +103,6 @@ namespace gr
 		m_bloomComputeShader = re::Shader::GetOrCreate(en::ShaderNames::k_bloomShaderName, bloomComputePipelineState);
 
 		// Bloom target: We create a single texture, and render into its mips
-		std::shared_ptr<re::Texture> deferredLightTargetTex = deferredLightTargets->GetColorTarget(0).GetTexture();
-
-
 		const glm::uvec2 bloomTargetWidthHeight = 
 			glm::uvec2(deferredLightTargetTex->Width() / 2, deferredLightTargetTex->Height() / 2);
 		
@@ -248,15 +236,30 @@ namespace gr
 	}
 
 
+	void BloomGraphicsSystem::RegisterTextureInputs()
+	{
+		RegisterTextureInput(k_emissiveInput);
+		RegisterTextureInput(k_bloomTargetInput);
+	}
+
+
+	void BloomGraphicsSystem::RegisterTextureOutputs()
+	{
+		RegisterTextureOutput(
+			k_bloomResultOutput, 
+			m_bloomUpStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture());
+	}
+
+
 	void BloomGraphicsSystem::PreRender()
 	{
 		CreateBatches();
-
-		DeferredLightingGraphicsSystem* deferredLightGS =
-			m_graphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+	
 		std::shared_ptr<re::Texture> deferredLightTargetTex = 
-			deferredLightGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture();
-		std::shared_ptr<re::Texture> bloomTargetTex = GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture();
+			m_emissiveBlitStage->GetTextureTargetSet()->GetColorTarget(0).GetTexture();
+		
+		std::shared_ptr<re::Texture> bloomTargetTex = 
+			m_bloomUpStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture();
 
 		gr::Camera::Config const& cameraConfig =
 			m_graphicsSystemManager->GetActiveCameraRenderData().m_cameraConfig;

@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "GraphicsSystem.h"
 
 
@@ -22,28 +21,24 @@ namespace gr
 			);
 		}
 
+		static constexpr char const* k_tonemappingTargetInput = "TonemappingTarget";
+		static constexpr char const* k_bloomResultInput = "BloomResult";
+		void RegisterTextureInputs() override;
+
+		void RegisterTextureOutputs() override;
+
 
 	public:
 		TonemappingGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~TonemappingGraphicsSystem() override {}
 
-		void InitPipeline(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
 
 		void PreRender();
 
-		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
-
-	private:
-		void CreateBatches() override;
 
 	private:
 		std::shared_ptr<re::RenderStage> m_tonemappingStage;
 	};
-
-
-	inline std::shared_ptr<re::TextureTargetSet const> TonemappingGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		return m_tonemappingStage->GetTextureTargetSet();
-	}
 }

@@ -1,12 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Config.h"
+#include "ConfigKeys.h"
 #include "GraphicsSystem_Skybox.h"
-#include "GraphicsSystem_DeferredLighting.h"
-#include "GraphicsSystem_GBuffer.h"
-#include "MeshFactory.h"
-#include "RenderManager.h"
+#include "GraphicsSystemManager.h"
+#include "LightRenderData.h"
 #include "Sampler.h"
-#include "SceneManager.h"
 #include "Shader.h"
 #include "Texture.h"
 #include "TextureTarget.h"
@@ -40,7 +37,7 @@ namespace gr
 	}
 
 
-	void SkyboxGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
+	void SkyboxGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
 		re::RenderStage::FullscreenQuadParams fsqParams;
 		fsqParams.m_zLocation = gr::meshfactory::ZLocation::Far;
@@ -71,21 +68,17 @@ namespace gr
 
 		m_skyboxStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
-		DeferredLightingGraphicsSystem* deferredLightGS = 
-			m_graphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
-
 		// Create a new texture target set so we can write to the deferred lighting color targets, but attach the
 		// GBuffer depth for HW depth testing
-		std::shared_ptr<re::TextureTargetSet> skyboxTargets = 
-			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), "Skybox Targets");
-		skyboxTargets->SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode::Disabled);
+		std::shared_ptr<re::TextureTargetSet> skyboxTargets = re::TextureTargetSet::Create("Skybox Targets");
+
+		skyboxTargets->SetColorTarget(0, texDependencies.at(k_skyboxTargetInput), re::TextureTarget::TargetParams{});
 
 		re::TextureTarget::TargetParams depthTargetParams;
 		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
-
-		GBufferGraphicsSystem* gBufferGS = m_graphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
+		
 		skyboxTargets->SetDepthStencilTarget(
-			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+			texDependencies.at(k_sceneDepthInput),
 			depthTargetParams);
 
 		// Render on top of the frame
@@ -115,6 +108,19 @@ namespace gr
 
 
 		pipeline.AppendRenderStage(m_skyboxStage);
+	}
+
+
+	void SkyboxGraphicsSystem::RegisterTextureInputs()
+	{
+		RegisterTextureInput(k_skyboxTargetInput);
+		RegisterTextureInput(k_sceneDepthInput);
+	}
+
+
+	void SkyboxGraphicsSystem::RegisterTextureOutputs()
+	{
+		//
 	}
 
 
@@ -151,20 +157,6 @@ namespace gr
 			m_skyboxParams->Commit(CreateSkyboxParamsData(m_backgroundColor, m_showBackgroundColor));
 			m_isDirty = false;
 		}
-
-		CreateBatches();
-	}
-
-
-	std::shared_ptr<re::TextureTargetSet const> SkyboxGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		return m_skyboxStage->GetTextureTargetSet();
-	}
-
-
-	void SkyboxGraphicsSystem::CreateBatches()
-	{
-		//
 	}
 
 

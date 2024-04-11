@@ -58,7 +58,7 @@ namespace gr
 	}
 
 
-	void ComputeMipsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
+	void ComputeMipsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
 		m_mipMapGenerationShader = re::Shader::GetOrCreate(en::ShaderNames::k_generateMipMapsShaderName, re::PipelineState());
 
@@ -177,18 +177,5 @@ namespace gr
 				}
 			}			
 		}
-	}
-
-
-	std::shared_ptr<re::TextureTargetSet const> ComputeMipsGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		return nullptr;
-	}
-
-
-	void ComputeMipsGraphicsSystem::CreateBatches()
-	{
-		// TODO: Is this required?
-		// -> Perhaps we should hide this as a no-op behind a "ComputeGraphicsSystem" interface?
 	}
 }

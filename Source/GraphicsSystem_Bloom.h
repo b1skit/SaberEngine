@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "GraphicsSystem.h"
 
 
@@ -22,21 +21,26 @@ namespace gr
 			);
 		}
 
+		static constexpr char const* k_emissiveInput = "EmissiveLight";
+		static constexpr char const* k_bloomTargetInput = "BloomTarget";
+		void RegisterTextureInputs() override;
+
+		static constexpr char const* k_bloomResultOutput = "BloomResult";
+		void RegisterTextureOutputs() override;
+
 
 	public:
 		BloomGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~BloomGraphicsSystem() override {}
 
-		void InitPipeline(re::StagePipeline& pipeline);
+		void InitPipeline(re::StagePipeline& pipeline, TextureDependencies const&);
 
 		void PreRender();
-
-		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 	
 
 	private:
-		void CreateBatches() override;
+		void CreateBatches();
 
 
 	private:
@@ -53,10 +57,4 @@ namespace gr
 
 		uint32_t m_firstUpsampleSrcMipLevel; // == # of upsample stages
 	};
-
-
-	inline std::shared_ptr<re::TextureTargetSet const> BloomGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		return m_bloomUpStages.back()->GetTextureTargetSet();
-	}
 }

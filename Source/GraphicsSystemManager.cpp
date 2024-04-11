@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "GraphicsSystem_Culling.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
@@ -77,16 +78,19 @@ namespace gr
 	}
 
 
-	gr::GraphicsSystem* GraphicsSystemManager::GetGraphicsSystemByScriptName(char const* scriptName)
+	gr::GraphicsSystem* GraphicsSystemManager::GetGraphicsSystemByScriptName(char const* scriptName) const
 	{
 		std::string const& lowercaseScriptName(util::ToLower(scriptName));
-		SEAssert(m_scriptNameToIndex.contains(lowercaseScriptName), "No GraphicsSystem with that script name exists");
 
-		return m_graphicsSystems[m_scriptNameToIndex.at(lowercaseScriptName)].get();
+		if (m_scriptNameToIndex.contains(lowercaseScriptName))
+		{
+			return m_graphicsSystems[m_scriptNameToIndex.at(lowercaseScriptName)].get();
+		}
+		return nullptr;
 	}
 
 
-	gr::GraphicsSystem* GraphicsSystemManager::GetGraphicsSystemByScriptName(std::string const& scriptName)
+	gr::GraphicsSystem* GraphicsSystemManager::GetGraphicsSystemByScriptName(std::string const& scriptName) const
 	{
 		return GetGraphicsSystemByScriptName(scriptName.c_str());
 	}

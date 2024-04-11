@@ -23,22 +23,23 @@ namespace gr
 			);
 		}
 
+		void RegisterTextureInputs() override {};
+		void RegisterTextureOutputs() override {};
+
 
 	public:
 		ShadowsGraphicsSystem(gr::GraphicsSystemManager*);
 		~ShadowsGraphicsSystem() override = default;
 
-		void InitPipeline(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
 
 		void PreRender();
-
-		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
 		re::Texture const* GetShadowMap(gr::Light::Type, gr::RenderDataID) const;
 
 
 	private:
-		void CreateBatches() override;
+		void CreateBatches();
 
 
 	private:
@@ -76,11 +77,4 @@ namespace gr
 		re::StagePipeline::StagePipelineItr m_pointParentStageItr;
 		re::StagePipeline::StagePipelineItr m_spotParentStageItr;
 	};
-
-
-	inline std::shared_ptr<re::TextureTargetSet const> ShadowsGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		SEAssertF("The shadow graphics system has many target set output. Use GetShadowMap() instead");
-		return nullptr;
-	}
 }

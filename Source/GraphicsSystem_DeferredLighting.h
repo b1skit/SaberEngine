@@ -36,19 +36,23 @@ namespace gr
 			);
 		}
 
+		static constexpr char const* k_ssaoInput = "SSAOTex";
+		// Note: The DeferredLightingGraphicsSystem uses the same names as the GBuffer's outputs for its other inputs
+		void RegisterTextureInputs() override;
+
+		static constexpr char const* k_lightOutput = "DeferredLightTarget";
+		void RegisterTextureOutputs() override;
+
 
 	public:
 		DeferredLightingGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~DeferredLightingGraphicsSystem() override = default;
 
-		void InitializeResourceGenerationStages(re::StagePipeline&);
-		void InitPipeline(re::StagePipeline&);
+		void InitializeResourceGenerationStages(re::StagePipeline&, TextureDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
 
 		void PreRender();
-
-		// Note: All light stages write to the same target
-		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
 
 	private:
@@ -78,7 +82,7 @@ namespace gr
 
 		std::shared_ptr<re::RenderStage> m_ambientStage;
 		std::shared_ptr<re::Buffer> m_ambientParams;
-		XeGTAOGraphicsSystem* m_AOGS;
+		std::shared_ptr<re::Texture> m_ssaoTex;
 
 		re::StagePipeline* m_resourceCreationStagePipeline;
 		re::StagePipeline::StagePipelineItr m_resourceCreationStageParentItr;
@@ -106,14 +110,11 @@ namespace gr
 
 		gr::ShadowsGraphicsSystem* m_shadowGS;
 
+	private: // Common:
+		std::shared_ptr<re::TextureTargetSet> m_lightingTargetSet;
+
 
 	private:
-		void CreateBatches() override;
+		void CreateBatches();
 	};
-
-
-	inline std::shared_ptr<re::TextureTargetSet const> DeferredLightingGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		return m_ambientStage->GetTextureTargetSet();
-	}
 }

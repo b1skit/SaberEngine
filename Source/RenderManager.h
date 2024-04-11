@@ -139,7 +139,7 @@ namespace re
 		
 		// Member functions:
 		void Initialize();
-		void InitializeRenderSystems();
+		void CreateRenderSystems();
 
 		virtual void Render() = 0;
 

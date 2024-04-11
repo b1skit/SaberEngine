@@ -43,6 +43,7 @@ namespace gr
 			s_gsCreateFunctions = std::make_unique<std::map<std::string, GraphicsSystem::CreateFn>>();
 		}
 
+		LOG("Static initialization registration: Graphics system \"%s\"", scriptName);
 
 		std::lock_guard<std::mutex> lock(*s_gsCreateFunctionsMutex);
 		
@@ -73,7 +74,8 @@ namespace gr
 			}
 		}
 		
-		SEAssert(gsCreateFunction, "Graphics system name not found. Creation failed");
+		SEAssert(gsCreateFunction, "Graphics system name not found. Creation failed. Ensure the associated GS has "
+			"implemented all pure virtual functions, as the compiler may not catch this");
 
 		if (gsCreateFunction)
 		{

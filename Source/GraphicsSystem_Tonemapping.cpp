@@ -1,11 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Config.h"
-#include "GraphicsSystem_Bloom.h"
-#include "GraphicsSystem_DeferredLighting.h"
+#include "ConfigKeys.h"
 #include "GraphicsSystem_Tonemapping.h"
-#include "MeshFactory.h"
-#include "RenderManager.h"
-#include "RenderSystem.h"
+#include "GraphicsSystemManager.h"
 #include "Sampler.h"
 #include "Shader.h"
 
@@ -24,7 +20,7 @@ namespace gr
 	}
 
 
-	void TonemappingGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
+	void TonemappingGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
 		re::PipelineState tonemappingPipelineState;
 		tonemappingPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
@@ -39,33 +35,34 @@ namespace gr
 		m_tonemappingStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
 		// Texture inputs:
-		std::shared_ptr<re::TextureTargetSet const> deferredLightTextureTargetSet =
-			m_graphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
-
 		m_tonemappingStage->AddTextureInput(
 			"Tex0",
-			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
+			texDependencies.at(k_tonemappingTargetInput),
 			re::Sampler::GetSampler("ClampMinMagMipLinear"));
-		
-		gr::BloomGraphicsSystem* bloomGS = m_graphicsSystemManager->GetGraphicsSystem<BloomGraphicsSystem>();
-		std::shared_ptr<re::TextureTargetSet const> bloomTextureTargetSet = bloomGS->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(
 			"Tex1",
-			bloomTextureTargetSet->GetColorTarget(0).GetTexture(),
+			texDependencies.at(k_bloomResultInput),
 			re::Sampler::GetSampler("ClampMinMagMipLinear"));
 
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}
 
 
-	void TonemappingGraphicsSystem::PreRender()
+	void TonemappingGraphicsSystem::RegisterTextureInputs()
 	{
-		CreateBatches();
+		RegisterTextureInput(k_tonemappingTargetInput);
+		RegisterTextureInput(k_bloomResultInput);
 	}
 
 
-	void TonemappingGraphicsSystem::CreateBatches()
+	void TonemappingGraphicsSystem::RegisterTextureOutputs()
+	{
+		//
+	}
+
+
+	void TonemappingGraphicsSystem::PreRender()
 	{
 		//
 	}

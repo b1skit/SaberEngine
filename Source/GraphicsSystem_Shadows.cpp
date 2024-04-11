@@ -225,7 +225,7 @@ namespace gr
 	}
 
 
-	void ShadowsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
+	void ShadowsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
 		m_stagePipeline = &pipeline;
 

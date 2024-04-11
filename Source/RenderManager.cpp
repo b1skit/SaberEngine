@@ -143,16 +143,16 @@ namespace re
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
 
-		InitializeRenderSystems();
+		CreateRenderSystems(); // Internally, creates each GraphicsSystem
 
-		// Process render commands issued during scene loading now the graphics systems are initialized:
+		// Process render commands issued during scene loading now the render systems have been created:
 		m_renderCommandManager.SwapBuffers();
 		m_renderCommandManager.Execute();
 
-		// Create each of the render system's graphics systems
+		// Initialize each render system (which will in turn initialize each of its graphics systems & stage pipelines)
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			renderSystem->ExecuteCreatePipeline();
+			renderSystem->ExecuteInitializationPipeline();
 		}
 
 		// Create/buffer new resources added by our RenderSystems/GraphicsSystems. During Initialize(), most data has
@@ -165,7 +165,7 @@ namespace re
 	}
 
 
-	void RenderManager::InitializeRenderSystems()
+	void RenderManager::CreateRenderSystems()
 	{
 		// Build our rendering pipeline:
 		std::string pipelineFileName;
@@ -191,11 +191,11 @@ namespace re
 			m_renderSystems.back()->BuildPipeline(systemPipelineDesc);
 		}
 
-		// Initialize each render system and their graphics systems:
+		// Execute the GS creation pipeline:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->GetGraphicsSystemManager().GetRenderDataForModification().BeginFrame(m_renderFrameNum);
-			renderSystem->ExecuteInitializePipeline();
+			renderSystem->ExecuteCreationPipeline();
 		}
 	}
 

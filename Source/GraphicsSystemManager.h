@@ -1,6 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Assert.h"
 #include "BatchManager.h"
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
@@ -15,7 +14,7 @@ namespace re
 namespace gr
 {
 	class GraphicsSystem;
-	class CommandBuffer;
+
 
 	class GraphicsSystemManager
 	{
@@ -28,6 +27,8 @@ namespace gr
 		void Create();
 		void PreRender();
 
+		// Note: This may not be thread safe. A GraphicsSystems that accesses another must list it as a dependency in
+		// the scriptable render pipeline "Accesses" block
 		template <typename T>
 		T* GetGraphicsSystem() const;
 
@@ -36,8 +37,8 @@ namespace gr
 		void CreateAddGraphicsSystemByScriptName(char const* scriptName);
 		void CreateAddGraphicsSystemByScriptName(std::string const& scriptName);
 
-		gr::GraphicsSystem* GetGraphicsSystemByScriptName(char const* scriptName);
-		gr::GraphicsSystem* GetGraphicsSystemByScriptName(std::string const& scriptName);
+		gr::GraphicsSystem* GetGraphicsSystemByScriptName(char const* scriptName) const;
+		gr::GraphicsSystem* GetGraphicsSystemByScriptName(std::string const& scriptName) const;
 
 
 		

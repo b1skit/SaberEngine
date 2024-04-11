@@ -24,7 +24,7 @@ namespace gr
 	}
 
 
-	void GBufferGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
+	void GBufferGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
 		m_owningPipeline = &pipeline;
 
@@ -108,6 +108,20 @@ namespace gr
 	}
 
 
+	void GBufferGraphicsSystem::RegisterTextureOutputs()
+	{
+		// Color textures:
+		for (uint8_t i = 0; i < GBufferColorTex_Count; i++)
+		{
+			RegisterTextureOutput(
+				GBufferTexNames[i], m_gBufferStage->GetTextureTargetSet()->GetColorTarget(i).GetTexture());
+		}
+		// Depth texture:
+		RegisterTextureOutput(
+			GBufferTexNames[GBufferDepth], m_gBufferStage->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture());
+	}
+
+
 	void GBufferGraphicsSystem::PreRender()
 	{
 		CreateBatches();
@@ -133,11 +147,5 @@ namespace gr
 
 		m_gBufferStage->AddBatches(m_graphicsSystemManager->GetVisibleBatches(
 			gr::Camera::View(mainCamID, gr::Camera::View::Face::Default)));
-	}
-
-
-	std::shared_ptr<re::TextureTargetSet const> GBufferGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		return m_gBufferStage->GetTextureTargetSet();
 	}
 }

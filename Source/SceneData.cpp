@@ -139,46 +139,88 @@ namespace
 	}
 
 
-	void GenerateErrorMaterial(fr::SceneData& scene)
+	void GenerateDefaultResources(fr::SceneData& scene)
 	{
-		LOG("Generating an error material \"%s\"...", fr::SceneData::k_missingMaterialName);
+		LOG("Generating default resources...");
 
-		constexpr char const* k_missingAlbedoTexName			= "MissingAlbedoTexture";
-		constexpr char const* k_missingMetallicRoughnessTexName	= "MissingMetallicRoughnessTexture";
-		constexpr char const* k_missingNormalTexName			= "MissingNormalTexture";
-		constexpr char const* k_missingOcclusionTexName			= "MissingOcclusionTexture";
-		constexpr char const* k_missingEmissiveTexName			= "MissingEmissiveTexture";
+		// Default error material:
+		LOG("Generating an error material \"%s\"...", en::DefaultResourceNames::k_missingMaterialName);
 
 		std::shared_ptr<gr::Material> errorMat = gr::Material::Create(
-			fr::SceneData::k_missingMaterialName, 
+			en::DefaultResourceNames::k_missingMaterialName,
 			gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
 
 		// MatAlbedo
 		std::shared_ptr<re::Texture> errorAlbedo = util::LoadTextureFromFilePath(
-			{ k_missingAlbedoTexName }, re::Texture::ColorSpace::sRGB, true, re::Texture::k_errorTextureColor);
+			{ en::DefaultResourceNames::k_missingAlbedoTexName },
+			re::Texture::ColorSpace::sRGB,
+			true,
+			re::Texture::k_errorTextureColor);
 		errorMat->SetTexture(0, errorAlbedo);
 
 		// MatMetallicRoughness
 		std::shared_ptr<re::Texture> errorMetallicRoughness = util::LoadTextureFromFilePath(
-			{ k_missingMetallicRoughnessTexName }, re::Texture::ColorSpace::Linear, true, glm::vec4(0.f, 1.f, 0.f, 0.f));
+			{ en::DefaultResourceNames::k_missingMetallicRoughnessTexName },
+			re::Texture::ColorSpace::Linear,
+			true,
+			glm::vec4(0.f, 1.f, 0.f, 0.f));
 		errorMat->SetTexture(1, errorMetallicRoughness);
 
 		// MatNormal
 		std::shared_ptr<re::Texture> errorNormal = util::LoadTextureFromFilePath(
-			{ k_missingNormalTexName }, re::Texture::ColorSpace::Linear, true, glm::vec4(0.5f, 0.5f, 1.0f, 0.0f));
+			{ en::DefaultResourceNames::k_missingNormalTexName }, 
+			re::Texture::ColorSpace::Linear, 
+			true, 
+			glm::vec4(0.5f, 0.5f, 1.0f, 0.0f));
 		errorMat->SetTexture(2, errorNormal);
 
 		// MatOcclusion
 		std::shared_ptr<re::Texture> errorOcclusion = util::LoadTextureFromFilePath(
-			{ k_missingOcclusionTexName }, re::Texture::ColorSpace::Linear, true, glm::vec4(1.f));
+			{ en::DefaultResourceNames::k_missingOcclusionTexName }, 
+			re::Texture::ColorSpace::Linear, 
+			true, 
+			glm::vec4(1.f));
 		errorMat->SetTexture(3, errorOcclusion);
 
 		// MatEmissive
 		std::shared_ptr<re::Texture> errorEmissive = util::LoadTextureFromFilePath(
-			{ k_missingEmissiveTexName }, re::Texture::ColorSpace::sRGB, true, re::Texture::k_errorTextureColor);
+			{ en::DefaultResourceNames::k_missingEmissiveTexName }, 
+			re::Texture::ColorSpace::sRGB, 
+			true, 
+			re::Texture::k_errorTextureColor);
 		errorMat->SetTexture(4, errorEmissive);
 
 		scene.AddUniqueMaterial(errorMat);
+
+
+		// Default texture fallbacks:
+		const re::Texture::TextureParams defaultTexParams = re::Texture::TextureParams
+		{
+				.m_usage = re::Texture::Usage::Color,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = re::Texture::Format::RGBA8_UNORM,
+				.m_colorSpace = re::Texture::ColorSpace::Linear
+		};
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_opaqueWhiteDefaultTexName,
+			defaultTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 1.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_transparentWhiteDefaultTexName,
+			defaultTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 0.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_opaqueBlackDefaultTexName,
+			defaultTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 1.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_transparentBlackDefaultTexName,
+			defaultTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 0.f));
 	}
 
 
@@ -809,8 +851,8 @@ namespace
 			else
 			{
 				LOG_WARNING("MeshPrimitive \"%s\" does not have a material. Assigning \"%s\"", 
-					meshName.c_str(), fr::SceneData::k_missingMaterialName);
-				material = scene.GetMaterial(fr::SceneData::k_missingMaterialName);
+					meshName.c_str(), en::DefaultResourceNames::k_missingMaterialName);
+				material = scene.GetMaterial(en::DefaultResourceNames::k_missingMaterialName);
 			}
 			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material.get());
 		}
@@ -966,7 +1008,7 @@ namespace fr
 
 		earlyLoadTasks.emplace_back( 
 			en::CoreEngine::GetThreadPool()->EnqueueJob([this]() {
-				GenerateErrorMaterial(*this);
+				GenerateDefaultResources(*this);
 			}));
 
 		// Add a default camera to start:

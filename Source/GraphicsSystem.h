@@ -39,10 +39,13 @@ namespace gr
 		//	b) Implement a "static constexpr char const* GetScriptName()" member function
 		//	c) Provide an implementation of the pure virtual GetRuntimeBindings() function.
 		//		-> Use the macros at the end of this file to reduce boilerplate
+		//	d) Provide an implementation of the pure virtual RegisterTextureInputs/Outputs() functions
+		//		-> These are called before/after InitPipelineFn execution
 	public:
+		using TextureDependencies = std::map<std::string, std::shared_ptr<re::Texture>>;
 		struct RuntimeBindings
 		{
-			using InitPipelineFn = std::function<void(re::StagePipeline&)>;
+			using InitPipelineFn = std::function<void(re::StagePipeline&, TextureDependencies)>;
 			using PreRenderFn = std::function<void()>;
 
 			std::map<std::string, InitPipelineFn> m_initPipelineFunctions;
@@ -52,17 +55,42 @@ namespace gr
 
 
 	public:
+		enum TextureInputDefault : uint8_t // Optional generic fallbacks
+		{
+			OpaqueWhite,		// (1,1,1,1)
+			TransparentWhite,	// (1,1,1,0)
+			OpaqueBlack,		// (0,0,0,1)
+			TransparentBlack,	// (0,0,0,0)
+			
+			None,				// Default
+			TextureInputDefault_Count
+		};
+
+		TextureInputDefault GetTextureInputDefaultType(std::string const& inputScriptName) const;
+
+		std::shared_ptr<re::Texture> GetTextureOutput(std::string const& outputScriptName) const;
+
+		virtual void RegisterTextureInputs() = 0;
+		virtual void RegisterTextureOutputs() = 0;
+
+	protected:
+		void RegisterTextureInput(char const*, TextureInputDefault = TextureInputDefault::None);
+		void RegisterTextureOutput(char const*, std::shared_ptr<re::Texture>);
+		
+
+	private:
+		// These maps must be populated during the call to ConfigureInput/OutputDependencies()
+		std::map<std::string, TextureInputDefault> m_textureInputs;
+		std::map<std::string, std::shared_ptr<re::Texture>> m_textureOutputs;
+
+
+	public:
 		GraphicsSystem(GraphicsSystem&&) = default;
 		GraphicsSystem& operator=(GraphicsSystem&&) = default;
 
-
-		// TODO: We should have inputs and outputs, to allow data flow between GraphicsSystems to be configured externally
-		virtual std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const = 0;
+		virtual ~GraphicsSystem() = default;
 
 		virtual void ShowImGuiWindow(); // Override this
-
-	private:
-		virtual void CreateBatches() = 0;
 
 
 	protected:
@@ -101,11 +129,48 @@ namespace gr
 
 
 	template<typename T>
-	std::unique_ptr<gr::GraphicsSystem> gr::GraphicsSystem::Create(gr::GraphicsSystemManager* gsm)
+	std::unique_ptr<gr::GraphicsSystem> GraphicsSystem::Create(gr::GraphicsSystemManager* gsm)
 	{
 		std::unique_ptr<gr::GraphicsSystem> newGS;
 		newGS.reset(new T(gsm));
 		return newGS;
+	}
+
+
+	inline GraphicsSystem::TextureInputDefault GraphicsSystem::GetTextureInputDefaultType(
+		std::string const& inputScriptName) const
+	{
+		SEAssert(m_textureInputs.contains(inputScriptName), "Texture input with that name has not been registered");
+		return m_textureInputs.at(inputScriptName);
+	}
+
+
+	inline std::shared_ptr<re::Texture> GraphicsSystem::GetTextureOutput(std::string const& scriptName) const
+	{
+		// Note: It's possible for GS's with multiple initialization steps to hit this if its first initialization step
+		// runs before a GS it is dependent on has been initialized (because we (currently) just initialize in the order
+		// the initialization steps are defined in)
+		SEAssert(m_textureOutputs.contains(scriptName),
+			"No texture output with the given script name was registered by the GS");
+		return m_textureOutputs.at(scriptName);
+	}
+
+
+	inline void GraphicsSystem::RegisterTextureInput(
+		char const* scriptName, TextureInputDefault fallbackDefault /*= TextureInputDefault::None*/)
+	{
+		// This function might be called multiple times by the same GS (e.g. if it has multiple initialization steps)
+		SEAssert(!m_textureInputs.contains(scriptName) || m_textureInputs.at(scriptName) == fallbackDefault,
+			"Texture dependency has already been registered and populated");
+		m_textureInputs.emplace(scriptName, fallbackDefault);
+	}
+
+
+	inline void GraphicsSystem::RegisterTextureOutput(char const* scriptName, std::shared_ptr<re::Texture> outputTex)
+	{
+		// Note: It's possible for the texture to be null here (e.g. for GS's with multiple initialization steps). This
+		// is fine long as everything exists the last time a GS calls this function.
+		m_textureOutputs[scriptName] = outputTex;
 	}
 
 
@@ -141,7 +206,7 @@ namespace gr
 	.m_preRenderFunctions = {__VA_ARGS__},
 
 #define INIT_PIPELINE_FN(gsClassName, memberFuncName) \
-	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this, std::placeholders::_1)}
+	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this, std::placeholders::_1, std::placeholders::_2)}
 
 #define PRE_RENDER_FN(gsClassName, memberFuncName) \
 	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this)},

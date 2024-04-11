@@ -23,23 +23,28 @@ namespace gr
 			);
 		}
 
+		static constexpr char const* k_wNormalInput = "SceneWNormal";
+		static constexpr char const* k_depthInput = "SceneDepth";
+		void RegisterTextureInputs() override;
+
+		static constexpr char const* k_aoOutput = "SSAOTex";
+		void RegisterTextureOutputs() override;
+
 
 	public:
 		XeGTAOGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~XeGTAOGraphicsSystem() override {}
 
-		void InitPipeline(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
 
 		void PreRender();
-
-		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
 		void ShowImGuiWindow() override;
 
 
 	private:
-		void CreateBatches() override;
+		void CreateBatches();
 
 
 	public:
@@ -99,11 +104,4 @@ namespace gr
 		int m_xRes;
 		int m_yRes;
 	};
-
-
-
-	inline std::shared_ptr<re::TextureTargetSet const> XeGTAOGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		return m_denoiseStages[m_denoiseFinalOutputIdx]->GetTextureTargetSet();
-	}
 }

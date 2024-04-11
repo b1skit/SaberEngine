@@ -1,6 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Config.h"
-#include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_XeGTAO.h"
 #include "GraphicsSystemManager.h"
 #include "Sampler.h"
@@ -146,10 +145,8 @@ namespace gr
 	}
 
 
-	void XeGTAOGraphicsSystem::InitPipeline(re::StagePipeline& pipeline)
+	void XeGTAOGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
-		GBufferGraphicsSystem* gbufferGS = m_graphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
-
 		m_xRes = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
 		m_yRes = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 
@@ -223,12 +220,10 @@ namespace gr
 
 		m_prefilterDepthsStage->SetTextureTargetSet(m_prefilterDepthsTargets);
 
-		// Attach the depth buffer as an input to the depth prefilter stage:
-		re::TextureTarget const* gbufferDepthTarget = gbufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget();
-
+		// Attach the depth buffer as an input to the depth prefilter stage:	
 		m_prefilterDepthsStage->AddTextureInput(
 			"Depth0", 
-			gbufferDepthTarget->GetTexture(), 
+			texDependencies.at(k_depthInput),
 			re::Sampler::GetSampler("ClampMinMagMipPoint"), 
 			0);
 
@@ -293,13 +288,10 @@ namespace gr
 			"PrefilteredDepth",
 			prefilteredDepthTargetTex,
 			re::Sampler::GetSampler("ClampMinMagMipPoint"));
-
-		re::TextureTarget const& gbufferNormalTarget = 
-			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(GBufferGraphicsSystem::GBufferWNormal);
-
+		
 		m_mainStage->AddTextureInput(
-			"GBufferWorldNormal",
-			gbufferNormalTarget.GetTexture(),
+			k_wNormalInput,
+			texDependencies.at(k_wNormalInput),
 			re::Sampler::GetSampler("ClampMinMagMipPoint"),
 			0);
 
@@ -387,6 +379,21 @@ namespace gr
 
 			pipeline.AppendRenderStage(m_denoiseStages[passIdx]);
 		}
+	}
+
+
+	void XeGTAOGraphicsSystem::RegisterTextureInputs()
+	{
+		RegisterTextureInput(k_wNormalInput);
+		RegisterTextureInput(k_depthInput);
+	}
+
+
+	void XeGTAOGraphicsSystem::RegisterTextureOutputs()
+	{
+		RegisterTextureOutput(
+			k_aoOutput, 
+			m_denoiseStages[m_denoiseFinalOutputIdx]->GetTextureTargetSet()->GetColorTarget(0).GetTexture());
 	}
 
 

@@ -10,11 +10,16 @@
 #include "UVUtils.glsl"
 
 
-// Compute diffuse AO factor
-// fineAO = AO from texture maps
-float ComputeDiffuseAO(float fineAO)
+// Combine AO terms: fineAO = from GBuffer textures, coarseAO = SSAO
+float CombineAO(float fineAO, float coarseAO)
 {
-	return fineAO;
+	return min(fineAO, coarseAO);
+}
+
+
+float GetSSAO(vec2 screenUV, uvec2 screenPxDims)
+{
+	return 1.f; // TODO: Implement this
 }
 
 
@@ -135,7 +140,6 @@ vec3 GetSpecularIBLContribution(
 }
 
 
-
 void main()
 {	
 	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
@@ -152,7 +156,11 @@ void main()
 	const float remappedRoughness = RemapRoughness(linearRoughness);
 		
 	const vec3 diffuseIlluminance = GetDiffuseIBLContribution(N, V, NoV, remappedRoughness);
-	const float diffuseAO = ComputeDiffuseAO(gbuffer.AO);
+
+	const float ssao = GetSSAO(vOut.uv0, uvec2(_AmbientLightParams.g_ssaoTexDims.xy));
+	const float combinedAO = CombineAO(gbuffer.AO, ssao);
+
+	const float diffuseAO = combinedAO;
 	
 	const vec3 dielectricSpecular = gbuffer.MatProp0.rgb;
 	const vec3 blendedF0 = ComputeBlendedF0(dielectricSpecular, gbuffer.LinearAlbedo, gbuffer.LinearMetalness);
@@ -163,6 +171,7 @@ void main()
 	
 	const vec3 specularIlluminance = 
 		GetSpecularIBLContribution(N, R, V, NoV, linearRoughness, remappedRoughness, blendedF0);
+	
 	const float specularAO = ComputeSpecularAO(NoV, remappedRoughness, gbuffer.AO);
 	
 	const vec3 combinedContribution = 

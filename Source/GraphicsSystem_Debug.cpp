@@ -366,7 +366,7 @@ namespace gr
 	}
 
 
-	void DebugGraphicsSystem::InitPipeline(re::StagePipeline& stagePipeline)
+	void DebugGraphicsSystem::InitPipeline(re::StagePipeline& stagePipeline, TextureDependencies const& texDependencies)
 	{
 		re::PipelineState debugPipelineState;
 		debugPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);

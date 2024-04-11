@@ -118,3 +118,20 @@ namespace en::ShaderNames
 	constexpr char const* k_skyboxShaderName = "Skybox";
 	constexpr char const* k_toneMapShaderName = "ToneMap";
 }
+
+namespace en::DefaultResourceNames
+{
+	// Engine default resources:
+	constexpr char const* k_missingAlbedoTexName			= "MissingAlbedoTexture";
+	constexpr char const* k_missingMetallicRoughnessTexName	= "MissingMetallicRoughnessTexture";
+	constexpr char const* k_missingNormalTexName			= "MissingNormalTexture";
+	constexpr char const* k_missingOcclusionTexName			= "MissingOcclusionTexture";
+	constexpr char const* k_missingEmissiveTexName			= "MissingEmissiveTexture";
+
+	constexpr char const* k_missingMaterialName = "MissingMaterial";
+
+	constexpr char const* k_opaqueWhiteDefaultTexName		= "OpaqueWhite";
+	constexpr char const* k_transparentWhiteDefaultTexName	= "TransparentWhite";
+	constexpr char const* k_opaqueBlackDefaultTexName		= "OpaqueBlack";
+	constexpr char const* k_transparentBlackDefaultTexName	= "TransparentBlack";
+}

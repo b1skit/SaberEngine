@@ -22,22 +22,23 @@ namespace gr
 			);
 		}
 
+		void RegisterTextureInputs() override {};
+		void RegisterTextureOutputs() override {};
+
 
 	public:
 
 		DebugGraphicsSystem(gr::GraphicsSystemManager*);
 
-		void InitPipeline(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
 
 		void PreRender();
-
-		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
 		void ShowImGuiWindow() override;
 
 
 	private:
-		void CreateBatches() override;
+		void CreateBatches();
 
 
 	private:
@@ -103,11 +104,5 @@ namespace gr
 
 		std::unordered_set<gr::RenderDataID> m_selectedRenderDataIDs; // If emtpy, render all IDs
 	};
-
-
-	inline std::shared_ptr<re::TextureTargetSet const> DebugGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		return m_debugLineStage->GetTextureTargetSet();
-	}
 }
 

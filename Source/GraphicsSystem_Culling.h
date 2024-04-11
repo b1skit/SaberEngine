@@ -23,6 +23,9 @@ namespace gr
 			);
 		}
 
+		void RegisterTextureInputs() override {};
+		void RegisterTextureOutputs() override {};
+
 
 	public:
 		CullingGraphicsSystem(gr::GraphicsSystemManager*);
@@ -32,18 +35,12 @@ namespace gr
 
 		void PreRender();
 
-		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
-
 		std::vector<gr::RenderDataID> const& GetVisibleRenderDataIDs(gr::Camera::View const&) const;
 		
 		std::vector<gr::RenderDataID> const& GetVisiblePointLights() const; // For the currently active camera
 		std::vector<gr::RenderDataID> const& GetVisibleSpotLights() const;
 
 		void ShowImGuiWindow() override;
-
-
-	private:
-		void CreateBatches() override { /*Do nothing*/ };
 
 
 	private:
@@ -67,13 +64,6 @@ namespace gr
 
 		bool m_cullingEnabled;
 	};
-
-
-	inline std::shared_ptr<re::TextureTargetSet const> CullingGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		SEAssertF("No targets are (currently) emitted during culling");
-		return nullptr;
-	}
 
 
 	inline std::vector<gr::RenderDataID> const& CullingGraphicsSystem::GetVisibleRenderDataIDs(

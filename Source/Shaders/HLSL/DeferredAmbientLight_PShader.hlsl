@@ -29,14 +29,6 @@ float GetSSAO(float2 screenUV, uint2 screenPxDims)
 }
 
 
-// Compute diffuse AO factor
-// fineAO = AO from texture maps
-float ComputeDiffuseAO(float fineAO)
-{
-	return fineAO;
-}
-
-
 // Compute the Frostbite specular AO factor
 // Based on listing 26 (p.77) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
 // fineAO = AO from texture maps

@@ -21,23 +21,24 @@ namespace gr
 			);
 		}
 
-	public:
 
+		static constexpr char const* k_skyboxTargetInput = "SkyboxTarget";
+		static constexpr char const* k_sceneDepthInput = "SceneDepth";
+		void RegisterTextureInputs() override;
+
+		void RegisterTextureOutputs() override;
+
+
+	public:
 		SkyboxGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~SkyboxGraphicsSystem() override {}
 
-		void InitPipeline(re::StagePipeline&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
 
 		void PreRender();
 
-		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
-
 		void ShowImGuiWindow() override;
-
-
-	private:
-		void CreateBatches() override;
 
 
 	private:
@@ -54,7 +55,4 @@ namespace gr
 		bool m_showBackgroundColor;
 		bool m_isDirty;
 	};
-
-
-
 }

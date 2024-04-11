@@ -25,8 +25,8 @@ namespace re
 	public:
 		// Scriptable rendering pipeline:
 		void BuildPipeline(RenderPipelineDesc::RenderSystemDescription const&);
-		void ExecuteInitializePipeline();
-		void ExecuteCreatePipeline();
+		void ExecuteCreationPipeline();
+		void ExecuteInitializationPipeline();
 		void ExecuteUpdatePipeline();
 
 

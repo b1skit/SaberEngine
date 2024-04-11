@@ -40,7 +40,7 @@ Texture2D<uint> g_srcHilbertLUT;
 RWTexture2D<uint> output0 : register(u0);
 RWTexture2D<unorm float> output1 : register(u1);
 
-Texture2D<float4> GBufferWorldNormal;
+Texture2D<float4> SceneWNormal;
 Texture2D<lpfloat> PrefilteredDepth;
 
 #endif // XEGTAO_MAIN_PASS
