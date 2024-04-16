@@ -103,7 +103,10 @@
 							"GBufferMatProp0",
 							"GBufferDepth"
 						]
-					}
+					},
+					"Accesses": [
+						"Culling"
+					]
 				},
 				{
 					"GraphicsSystem": "DeferredLighting",

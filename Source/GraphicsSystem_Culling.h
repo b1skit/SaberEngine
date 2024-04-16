@@ -36,6 +36,7 @@ namespace gr
 		void PreRender();
 
 		std::vector<gr::RenderDataID> const& GetVisibleRenderDataIDs(gr::Camera::View const&) const;
+		std::vector<gr::RenderDataID> GetVisibleRenderDataIDs(std::vector<gr::Camera::View> const&) const;
 		
 		std::vector<gr::RenderDataID> const& GetVisiblePointLights() const; // For the currently active camera
 		std::vector<gr::RenderDataID> const& GetVisibleSpotLights() const;

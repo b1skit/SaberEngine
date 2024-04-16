@@ -145,7 +145,13 @@ namespace gr
 	{
 		const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
-		m_gBufferStage->AddBatches(m_graphicsSystemManager->GetVisibleBatches(
-			gr::Camera::View(mainCamID, gr::Camera::View::Face::Default)));
+		gr::CullingGraphicsSystem const* cullingGS = 
+			m_graphicsSystemManager->GetGraphicsSystem<gr::CullingGraphicsSystem>();
+
+		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
+		
+		m_gBufferStage->AddBatches(batchMgr.BuildSceneBatches(
+			m_graphicsSystemManager->GetRenderData(),
+			cullingGS->GetVisibleRenderDataIDs(gr::Camera::View(mainCamID))));
 	}
 }

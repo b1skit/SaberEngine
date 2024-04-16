@@ -433,6 +433,7 @@ namespace gr
 	void ShadowsGraphicsSystem::CreateBatches()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 		CullingGraphicsSystem* cullingGS = m_graphicsSystemManager->GetGraphicsSystem<CullingGraphicsSystem>();
 
 		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
@@ -453,8 +454,9 @@ namespace gr
 					re::RenderStage& directionalStage = 
 						*m_directionalShadowStageData.at(lightID).m_renderStage;
 
-					directionalStage.AddBatches(m_graphicsSystemManager->GetVisibleBatches(
-						gr::Camera::View(lightID, gr::Camera::View::Face::Default),
+					directionalStage.AddBatches(batchMgr.BuildSceneBatches(
+						renderData,
+						cullingGS->GetVisibleRenderDataIDs(gr::Camera::View(lightID)),
 						gr::BatchManager::InstanceType::Transform));
 				}
 				++directionalItr;
@@ -476,8 +478,9 @@ namespace gr
 
 					re::RenderStage& spotStage = *m_spotShadowStageData.at(lightID).m_renderStage;
 
-					spotStage.AddBatches(m_graphicsSystemManager->GetVisibleBatches(
-						gr::Camera::View(lightID, gr::Camera::View::Face::Default),
+					spotStage.AddBatches(batchMgr.BuildSceneBatches(
+						renderData,
+						cullingGS->GetVisibleRenderDataIDs(gr::Camera::View(lightID)),
 						gr::BatchManager::InstanceType::Transform));
 				}
 				++spotItr;
@@ -508,10 +511,13 @@ namespace gr
 					};
 
 					// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so we need to
-					// add all batches to the same stage. It might be worth benchmarking performance of moving this to 6
-					// individual stages instead
+					// add all batches to the same stage. This is wasteful, as 5/6 of the faces don't need a given
+					// batch. We should draw each face of the cubemap seperately instead
 					m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
-						m_graphicsSystemManager->GetVisibleBatches(views, gr::BatchManager::InstanceType::Transform));
+						batchMgr.BuildSceneBatches(
+							renderData,
+							cullingGS->GetVisibleRenderDataIDs(views),
+							gr::BatchManager::InstanceType::Transform));
 				}
 				++pointItr;
 			}

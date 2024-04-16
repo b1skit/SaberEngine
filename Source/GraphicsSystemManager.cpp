@@ -155,52 +155,6 @@ namespace gr
 	}
 
 
-	std::vector<re::Batch> GraphicsSystemManager::GetVisibleBatches(
-		gr::Camera::View const& cameraView,
-		uint8_t bufferTypeMask/*= (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)*/) const
-	{
-		gr::CullingGraphicsSystem const* cullingGS = GetGraphicsSystem<gr::CullingGraphicsSystem>();
-
-		return m_batchManager.BuildSceneBatches(
-			m_renderData,
-			cullingGS->GetVisibleRenderDataIDs(cameraView),
-			bufferTypeMask);
-	}
-
-
-	std::vector<re::Batch> GraphicsSystemManager::GetVisibleBatches(
-		std::vector<gr::Camera::View> const& views,
-		uint8_t bufferTypeMask/*= (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)*/) const
-	{
-		gr::CullingGraphicsSystem const* cullingGS = GetGraphicsSystem<gr::CullingGraphicsSystem>();
-
-		std::vector<gr::RenderDataID> uniqueRenderDataIDs;
-		uniqueRenderDataIDs.reserve(m_renderData.GetNumElementsOfType<gr::MeshPrimitive::RenderData>());
-
-		// Combine the RenderDataIDs visible in each view into a unique set
-		std::unordered_set<gr::RenderDataID> seenIDs;
-		seenIDs.reserve(m_renderData.GetNumElementsOfType<gr::MeshPrimitive::RenderData>());
-		for (gr::Camera::View const& view : views)
-		{
-			std::vector<gr::RenderDataID> const& visibleIDs = cullingGS->GetVisibleRenderDataIDs(view);
-			for (gr::RenderDataID id : visibleIDs)
-			{
-				if (!seenIDs.contains(id))
-				{
-					seenIDs.emplace(id);
-					uniqueRenderDataIDs.emplace_back(id);
-				}
-			}
-		}
-
-		// Build batches from the final set of ids:
-		return m_batchManager.BuildSceneBatches(
-			m_renderData,
-			uniqueRenderDataIDs,
-			bufferTypeMask);
-	}
-
-
 	gr::Camera::RenderData const& GraphicsSystemManager::GetActiveCameraRenderData() const
 	{
 		SEAssert(m_activeCameraRenderDataID != gr::k_invalidRenderDataID, "No active camera has been set");

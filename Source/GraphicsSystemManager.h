@@ -41,16 +41,8 @@ namespace gr
 		gr::GraphicsSystem* GetGraphicsSystemByScriptName(std::string const& scriptName) const;
 
 
-		
-	public: // Batch manager:
-		std::vector<re::Batch> GetVisibleBatches(
-			gr::Camera::View const&,
-			uint8_t bufferTypeMask = (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)) const;
-
-		std::vector<re::Batch> GetVisibleBatches(
-			std::vector<gr::Camera::View> const&, 
-			uint8_t bufferTypeMask = (gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material)) const;
-
+	public:
+		gr::BatchManager const& GetBatchManager() const;
 		gr::RenderDataManager const& GetRenderData() const;
 
 
@@ -129,6 +121,12 @@ namespace gr
 		}
 
 		return nullptr;
+	}
+
+
+	inline gr::BatchManager const& GraphicsSystemManager::GetBatchManager() const
+	{
+		return m_batchManager;
 	}
 
 
