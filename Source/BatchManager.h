@@ -1,7 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
+#include "CameraRenderData.h"
 #include "RenderObjectIDs.h"
+#include "ThreadProtector.h"
 
 
 namespace gr
@@ -33,11 +35,62 @@ namespace gr
 
 		void UpdateBatchCache(gr::RenderDataManager const&);
 
+
+	public:
+		// Culling interface:
+		void SetCullingResults(gr::Camera::View const&, std::vector<gr::RenderDataID>&&);
+		void SetPointLightCullingResults(std::vector<gr::RenderDataID>&&);
+		void SetSpotLightCullingResults(std::vector<gr::RenderDataID>&&);
+
+
+		std::vector<gr::RenderDataID> const& GetCullingResults(gr::Camera::View const& view) const
+		{
+			// TODO: This is a quick hack to keep ImGui working in the culling GS. Either we should move the ImGui
+			// functionality to the BatchManager, or remove this entirely when we figure out a way to replace the "Get
+			// culling results" getters here
+			return m_viewToVisibleIDs.at(view);
+		}
+		std::vector<gr::RenderDataID> const& GetPointLightCullingResults() const
+		{
+			return m_visiblePointLightIDs;
+		}
+		std::vector<gr::RenderDataID> const& GetSpotLightCullingResults() const
+		{
+			return m_visibleSpotLightIDs;
+		}
+
+
+	private:
+		// Culling results: Mapped Camera RenderDataIDs to a list of RenderDataIDs visible after culling
+		std::map<gr::Camera::View const, std::vector<gr::RenderDataID>> m_viewToVisibleIDs;
+		bool m_hasValidResults; // Have any results been set? Allows us to know when culling isn't enabled
+		mutable std::shared_mutex m_viewToVisibleIDsMutex;
+
+		// A list of light RenderDataIDs visible to the main camera
+		std::vector<gr::RenderDataID> m_visiblePointLightIDs;
+		std::vector<gr::RenderDataID> m_visibleSpotLightIDs;
+		mutable std::shared_mutex m_visibleLightsMutex;
+
+
 	public:
 		// Build a vector of single frame scene batches from the vector of RenderDataIDs, from the interal batch cache
-		std::vector<re::Batch> BuildSceneBatches(
+		std::vector<re::Batch> GetSceneBatches(
 			gr::RenderDataManager const&,
 			std::vector<gr::RenderDataID> const&,
+			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material)) const;
+
+		std::vector<re::Batch> GetSceneBatches(
+			gr::RenderDataManager const&,
+			gr::Camera::View const&,
+			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material)) const;
+
+		std::vector<re::Batch> GetSceneBatches(
+			gr::RenderDataManager const&,
+			std::vector<gr::Camera::View> const&,
+			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material)) const;
+
+	private:
+		std::vector<re::Batch> GetAllSceneBatches(gr::RenderDataManager const&,
 			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material)) const;
 
 

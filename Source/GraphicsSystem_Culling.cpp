@@ -69,19 +69,19 @@ namespace
 	void CullLights(
 		gr::RenderDataManager const& renderData, 
 		gr::Camera::Frustum const& frustum,
-		std::vector<gr::RenderDataID>& pointLightIDs,
-		std::vector<gr::RenderDataID>& spotLightIDs,
+		std::vector<gr::RenderDataID>& pointLightIDsOut,
+		std::vector<gr::RenderDataID>& spotLightIDsOut,
 		bool cullingEnabled)
 	{
-		pointLightIDs.clear();
-		spotLightIDs.clear();
+		pointLightIDsOut.clear();
+		spotLightIDsOut.clear();
 
-		pointLightIDs.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataPoint>());
-		spotLightIDs.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataSpot>());
+		pointLightIDsOut.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataPoint>());
+		spotLightIDsOut.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataSpot>());
 
 		auto DoCulling = [&renderData, &frustum, &cullingEnabled]<typename T>(
 			gr::RenderDataManager::LinearIterator<T> lightItr,
-			gr::RenderDataManager::LinearIterator<T> lightItrEnd,
+			gr::RenderDataManager::LinearIterator<T> const& lightItrEnd,
 			std::vector<gr::RenderDataID>& lightIDs)
 		{
 			while (lightItr != lightItrEnd)
@@ -101,9 +101,9 @@ namespace
 			}
 		};
 		DoCulling(
-			renderData.Begin<gr::Light::RenderDataPoint>(), renderData.End<gr::Light::RenderDataPoint>(), pointLightIDs);
+			renderData.Begin<gr::Light::RenderDataPoint>(), renderData.End<gr::Light::RenderDataPoint>(), pointLightIDsOut);
 		DoCulling(
-			renderData.Begin<gr::Light::RenderDataSpot>(), renderData.End<gr::Light::RenderDataSpot>(), spotLightIDs);
+			renderData.Begin<gr::Light::RenderDataSpot>(), renderData.End<gr::Light::RenderDataSpot>(), spotLightIDsOut);
 	}
 
 
@@ -301,9 +301,6 @@ namespace gr
 		// CPU-side frustum culling:
 		// -------------------------
 
-		// Cull for every camera, every frame: Even if the camera hasn't moved, something in its view might have
-		m_viewToVisibleIDs.clear();
-
 		const size_t numMeshPrimitives = m_meshPrimitivesToEncapsulatingMesh.size();
 
 		util::ThreadSafeVector<std::future<void>> cullingFutures;
@@ -416,20 +413,10 @@ namespace gr
 						renderIDsOut,
 						m_cullingEnabled);
 
-					// Finally, cache the results:
-					{
-						std::lock_guard<std::mutex> lock(m_viewToVisibleIDsMutex);
-
-						auto visibleIDsItr = m_viewToVisibleIDs.find(currentView);
-						if (visibleIDsItr != m_viewToVisibleIDs.end())
-						{
-							visibleIDsItr->second = std::move(renderIDsOut);
-						}
-						else
-						{
-							m_viewToVisibleIDs.emplace(currentView, std::move(renderIDsOut)).first;
-						}
-					}
+					// Finally, pass the results to the BatchManager:
+					m_graphicsSystemManager->GetBatchManagerForModification().SetCullingResults(
+						currentView,
+						std::move(renderIDsOut));
 				}
 
 				// If we're the active camera, also cull the lights:
@@ -437,14 +424,20 @@ namespace gr
 				{
 					SEAssert(numViews == 1, "We're only expecting a single view for the main camera");
 					{
-						std::lock_guard<std::mutex> lock(m_visibleLightsMutex);
+						std::vector<gr::RenderDataID> visiblePointLightIDs;
+						std::vector<gr::RenderDataID> visibleSpotLightIDs;
 
 						CullLights(
 							renderData, 
 							m_cachedFrustums.at(gr::Camera::View(cameraID)),
-							m_visiblePointLightIDs, 
-							m_visibleSpotLightIDs,
+							visiblePointLightIDs,
+							visibleSpotLightIDs,
 							m_cullingEnabled);
+
+						m_graphicsSystemManager->GetBatchManagerForModification().SetPointLightCullingResults(
+							std::move(visiblePointLightIDs));
+						m_graphicsSystemManager->GetBatchManagerForModification().SetSpotLightCullingResults(
+							std::move(visibleSpotLightIDs));
 					}
 				}
 			}));
@@ -457,41 +450,6 @@ namespace gr
 		{
 			cullingFutures[cullingFutureIdx].wait();
 		}
-	}
-
-
-	std::vector<gr::RenderDataID> CullingGraphicsSystem::GetVisibleRenderDataIDs(
-		std::vector<gr::Camera::View> const& views) const
-	{
-		// TODO: This function is a temporary convenience, we concatenate sets of RenderDataIDs together for point light
-		// shadow draws which use a geometry shader to project each batch to every face. This is wasteful!
-		// Instead, we should draw each point light shadow face seperately, using the culling results to send only the
-		// relevant batches to each face.
-
-		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
-
-		const size_t numMeshPrimitives = renderData.GetNumElementsOfType<gr::MeshPrimitive::RenderData>();
-		std::vector<gr::RenderDataID> uniqueRenderDataIDs;
-		uniqueRenderDataIDs.reserve(numMeshPrimitives);
-
-		// Combine the RenderDataIDs visible in each view into a unique set
-		std::unordered_set<gr::RenderDataID> seenIDs;
-		seenIDs.reserve(numMeshPrimitives);
-
-		for (gr::Camera::View const& view : views)
-		{
-			std::vector<gr::RenderDataID> const& visibleIDs = GetVisibleRenderDataIDs(view);
-			for (gr::RenderDataID id : visibleIDs)
-			{
-				if (!seenIDs.contains(id))
-				{
-					seenIDs.emplace(id);
-					uniqueRenderDataIDs.emplace_back(id);
-				}
-			}
-		}
-
-		return uniqueRenderDataIDs;
 	}
 
 
@@ -526,23 +484,25 @@ namespace gr
 				m_graphicsSystemManager->GetActiveCameraRenderDataID()).c_str());
 
 			ImGui::Text("Point lights:");
-			ImGui::Text(FormatIDString(m_visiblePointLightIDs).c_str());
+			ImGui::Text(FormatIDString(m_graphicsSystemManager->GetBatchManager().GetPointLightCullingResults()).c_str());
 			
 			ImGui::Separator();
 
 			ImGui::Text("Spot lights:");
-			ImGui::Text(FormatIDString(m_visibleSpotLightIDs).c_str());
+			ImGui::Text(FormatIDString(m_graphicsSystemManager->GetBatchManager().GetSpotLightCullingResults()).c_str());
 		}
 
+		// Get the visible IDs we sent to the BatchManager:
 		if (ImGui::CollapsingHeader("Visible IDs"))
 		{
-			for (auto const& cameraResults : m_viewToVisibleIDs)
+			for (auto const& frustum : m_cachedFrustums)
 			{
-				ImGui::Text(std::format("Camera RenderDataID: {}, Face: {}", 
-					cameraResults.first.m_cameraRenderDataID,
-					gr::Camera::View::k_faceNames[cameraResults.first.m_face]).c_str());
+				ImGui::Text(std::format("Camera RenderDataID: {}, Face: {}",
+					frustum.first.m_cameraRenderDataID,
+					gr::Camera::View::k_faceNames[frustum.first.m_face]).c_str());
 				
-				ImGui::Text(FormatIDString(cameraResults.second).c_str());
+				ImGui::Text(FormatIDString(
+					m_graphicsSystemManager->GetBatchManager().GetCullingResults(frustum.first)).c_str());
 
 				ImGui::Separator();
 			}

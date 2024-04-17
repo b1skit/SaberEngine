@@ -1,7 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "BatchManager.h"
+#include "BoundsRenderData.h"
 #include "CastUtils.h"
+#include "LightRenderData.h"
 #include "Material_GLTF.h"
 #include "MathUtils.h"
 #include "MeshPrimitive.h"
@@ -134,6 +136,42 @@ namespace gr
 		SEAssert(m_permanentCachedBatches.size() == m_renderDataIDToBatchMetadata.size() &&
 			m_permanentCachedBatches.size() == m_cacheIdxToRenderDataID.size(),
 			"Batch cache and batch maps are out of sync");
+
+		// Clear previous culling results for every camera, every frame: Even if the camera hasn't moved, something in
+		// its view might have
+		if (m_hasValidResults)
+		{
+			std::scoped_lock lock(m_viewToVisibleIDsMutex, m_visibleLightsMutex);
+			m_viewToVisibleIDs.clear();
+			m_visiblePointLightIDs.clear();
+			m_visibleSpotLightIDs.clear();
+			m_hasValidResults = false;
+		}
+		else
+		{
+			// If we haven't received any culling results, ensure the light IDs are fully populated
+			m_visiblePointLightIDs.clear();
+			m_visibleSpotLightIDs.clear();
+
+			std::vector<gr::RenderDataID> const& allBoundsIDs = 
+				renderData.GetRegisteredRenderDataIDs<gr::Bounds::RenderData>();
+
+			auto curIDItr = renderData.IDBegin(allBoundsIDs);
+			auto const& curIDItrEnd = renderData.IDEnd(allBoundsIDs);
+			while (curIDItr != curIDItrEnd)
+			{
+				if (curIDItr.HasObjectData<gr::Light::RenderDataPoint>())
+				{
+					m_visiblePointLightIDs.emplace_back(curIDItr.GetRenderDataID());
+				}
+				else if (curIDItr.HasObjectData<gr::Light::RenderDataSpot>())
+				{
+					m_visibleSpotLightIDs.emplace_back(curIDItr.GetRenderDataID());
+				}
+				
+				++curIDItr;
+			}
+		}
 
 		// Remove deleted batches
 		std::vector<gr::RenderDataID> const& deletedIDs = renderData.GetIDsWithDeletedData<gr::MeshPrimitive::RenderData>();
@@ -367,7 +405,39 @@ namespace gr
 	}
 
 
-	std::vector<re::Batch> BatchManager::BuildSceneBatches(
+	void BatchManager::SetCullingResults(gr::Camera::View const& view, std::vector<gr::RenderDataID>&& visibleIDs)
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_viewToVisibleIDsMutex);
+			SEAssert(!m_viewToVisibleIDs.contains(view),
+				"The current view has already been populated with culling results");
+			m_viewToVisibleIDs.emplace(view, std::move(visibleIDs));
+			m_hasValidResults = true;
+		}
+	}
+
+
+	void BatchManager::SetPointLightCullingResults(std::vector<gr::RenderDataID>&& visblePointLightIDs)
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_visibleLightsMutex);
+			m_visiblePointLightIDs = std::move(visblePointLightIDs);
+			m_hasValidResults = true;
+		}
+	}
+
+
+	void BatchManager::SetSpotLightCullingResults(std::vector<gr::RenderDataID>&& visibleSpotLightIDs)
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_visibleLightsMutex);
+			m_visibleSpotLightIDs = std::move(visibleSpotLightIDs);
+			m_hasValidResults = true;
+		}
+	}
+
+
+	std::vector<re::Batch> BatchManager::GetSceneBatches(
 		gr::RenderDataManager const& renderData, 
 		std::vector<gr::RenderDataID> const& renderDataIDs,
 		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
@@ -377,14 +447,15 @@ namespace gr
 		batchMetadata.reserve(renderDataIDs.size());
 		for (size_t i = 0; i < renderDataIDs.size(); i++)
 		{
-			SEAssert(m_renderDataIDToBatchMetadata.contains(renderDataIDs[i]), "Batch with the given ID does not exist");
+			SEAssert(m_renderDataIDToBatchMetadata.contains(renderDataIDs[i]),
+				"Batch with the given ID does not exist");
 			
 			batchMetadata.emplace_back(m_renderDataIDToBatchMetadata.at(renderDataIDs[i]));
 		}
 
 		// Assemble a list of instanced batches:
 		std::vector<re::Batch> batches;
-		batches.reserve(renderDataIDs.size());
+		batches.reserve(batchMetadata.size());
 
 		if (!batchMetadata.empty())
 		{
@@ -428,10 +499,10 @@ namespace gr
 					SEAssert(m_instancedMaterialIndexes.contains(batchMetadata[unmergedSrcIdx].m_renderDataID),
 						"RenderDataID is not registered for an instanced material index");
 
-					const uint32_t transformIdx = 
+					const uint32_t transformIdx =
 						m_instancedTransformIndexes.at(batchMetadata[unmergedSrcIdx].m_transformID).m_index;
 
-					const uint32_t materialIdx = 
+					const uint32_t materialIdx =
 						m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx].m_renderDataID).m_index;
 
 					instanceIndices.emplace_back(CreateInstanceIndicesEntry(transformIdx, materialIdx));
@@ -456,5 +527,87 @@ namespace gr
 		}
 
 		return batches;
+	}
+
+
+	std::vector<re::Batch> BatchManager::GetSceneBatches(
+		gr::RenderDataManager const& renderData,
+		gr::Camera::View const& view,
+		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
+	{
+		// Copy the batch metadata for the requeted RenderDataIDs:
+		std::vector<BatchMetadata> batchMetadata;
+		{
+			std::shared_lock<std::shared_mutex> lock(m_viewToVisibleIDsMutex);
+
+			SEAssert(m_viewToVisibleIDs.contains(view) || !m_hasValidResults, "View has not been registered");
+
+			if (m_hasValidResults)
+			{
+				std::vector<gr::RenderDataID> const& renderDataIDs = m_viewToVisibleIDs.at(view);
+
+				return GetSceneBatches(renderData, renderDataIDs, bufferTypeMask);
+			}
+		}
+
+		return GetAllSceneBatches(renderData, bufferTypeMask);
+	}
+
+
+	std::vector<re::Batch> BatchManager::GetSceneBatches(
+		gr::RenderDataManager const& renderData,
+		std::vector<gr::Camera::View> const& views,
+		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
+	{
+		// TODO: This function is a temporary convenience, we concatenate sets of RenderDataIDs together for point light
+		// shadow draws which use a geometry shader to project each batch to every face. This is wasteful!
+		// Instead, we should draw each point light shadow face seperately, using the culling results to send only the
+		// relevant batches to each face.
+
+		const size_t numMeshPrimitives = renderData.GetNumElementsOfType<gr::MeshPrimitive::RenderData>();
+
+		// Combine the RenderDataIDs visible in each view into a unique set
+		std::unordered_set<gr::RenderDataID> seenIDs;
+		seenIDs.reserve(numMeshPrimitives);
+
+		if (m_hasValidResults)
+		{
+			{
+				std::shared_lock<std::shared_mutex> lock(m_viewToVisibleIDsMutex);
+
+				for (gr::Camera::View const& view : views)
+				{
+					SEAssert(m_viewToVisibleIDs.contains(view) || !m_hasValidResults, "View has not been registered");
+
+					std::vector<gr::RenderDataID> const& visibleIDs = m_viewToVisibleIDs.at(view);
+					for (gr::RenderDataID id : visibleIDs)
+					{
+						seenIDs.emplace(id);
+					}
+				}
+			}
+
+			return GetSceneBatches(
+				renderData,
+				std::vector<gr::RenderDataID>(seenIDs.begin(), seenIDs.end()),
+				bufferTypeMask);
+		}
+
+		return GetAllSceneBatches(renderData, bufferTypeMask);
+	}
+
+
+	std::vector<re::Batch> BatchManager::GetAllSceneBatches(gr::RenderDataManager const& renderData,
+		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
+	{
+		std::vector<gr::RenderDataID> allRenderDataIDs;
+		allRenderDataIDs.reserve(m_renderDataIDToBatchMetadata.size());
+
+		for (auto const& metadata : m_renderDataIDToBatchMetadata)
+		{
+			allRenderDataIDs.emplace_back(metadata.first);
+		}
+
+		return GetSceneBatches(renderData, allRenderDataIDs, bufferTypeMask);
 	}
 }

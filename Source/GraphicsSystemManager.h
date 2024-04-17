@@ -43,6 +43,8 @@ namespace gr
 
 	public:
 		gr::BatchManager const& GetBatchManager() const;
+		gr::BatchManager& GetBatchManagerForModification();
+
 		gr::RenderDataManager const& GetRenderData() const;
 
 
@@ -125,6 +127,12 @@ namespace gr
 
 
 	inline gr::BatchManager const& GraphicsSystemManager::GetBatchManager() const
+	{
+		return m_batchManager;
+	}
+
+
+	inline gr::BatchManager& GraphicsSystemManager::GetBatchManagerForModification()
 	{
 		return m_batchManager;
 	}

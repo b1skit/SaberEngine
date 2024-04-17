@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer.h"
 #include "Config.h"
-#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_Shadows.h"
@@ -1121,9 +1120,9 @@ namespace gr
 		
 
 		// Hash culled visible light IDs so we can quickly check if we need to add a point/spot light's batch:
-		CullingGraphicsSystem* cullingGS = m_graphicsSystemManager->GetGraphicsSystem<CullingGraphicsSystem>();
-		std::vector<gr::RenderDataID> const& spotIDs = cullingGS->GetVisibleSpotLights();
-		std::vector<gr::RenderDataID> const& pointIDs = cullingGS->GetVisiblePointLights();
+		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
+		std::vector<gr::RenderDataID> const& spotIDs = batchMgr.GetSpotLightCullingResults();
+		std::vector<gr::RenderDataID> const& pointIDs = batchMgr.GetPointLightCullingResults();
 
 		std::unordered_set<gr::RenderDataID> visibleLightIDs;
 		visibleLightIDs.reserve(spotIDs.size() + pointIDs.size());

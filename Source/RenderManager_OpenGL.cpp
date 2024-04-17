@@ -1,20 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <GL/glew.h>
-#include <GL/GL.h> // Must follow glew.h...
-
-#include "backends/imgui_impl_win32.h"
-#include "backends/imgui_impl_opengl3.h"
-
 #include "Context_OpenGL.h"
-#include "GraphicsSystem.h"
-#include "GraphicsSystem_Bloom.h"
-#include "GraphicsSystem_Culling.h"
-#include "GraphicsSystem_Debug.h"
-#include "GraphicsSystem_GBuffer.h"
-#include "GraphicsSystem_DeferredLighting.h"
-#include "GraphicsSystem_Shadows.h"
-#include "GraphicsSystem_Skybox.h"
-#include "GraphicsSystem_Tonemapping.h"
 #include "Buffer_OpenGL.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager_OpenGL.h"
@@ -29,6 +14,12 @@
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
 #include "VertexStream_OpenGL.h"
+
+#include <GL/glew.h>
+#include <GL/GL.h> // Must follow glew.h...
+
+#include "backends/imgui_impl_win32.h"
+#include "backends/imgui_impl_opengl3.h"
 
 
 namespace

@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
-#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "RenderManager.h"
 #include "Shader.h"
@@ -145,13 +144,10 @@ namespace gr
 	{
 		const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
-		gr::CullingGraphicsSystem const* cullingGS = 
-			m_graphicsSystemManager->GetGraphicsSystem<gr::CullingGraphicsSystem>();
-
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 		
-		m_gBufferStage->AddBatches(batchMgr.BuildSceneBatches(
+		m_gBufferStage->AddBatches(batchMgr.GetSceneBatches(
 			m_graphicsSystemManager->GetRenderData(),
-			cullingGS->GetVisibleRenderDataIDs(gr::Camera::View(mainCamID))));
+			gr::Camera::View(mainCamID)));
 	}
 }

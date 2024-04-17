@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraRenderData.h"
 #include "Config.h"
-#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
@@ -434,7 +433,6 @@ namespace gr
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
-		CullingGraphicsSystem* cullingGS = m_graphicsSystemManager->GetGraphicsSystem<CullingGraphicsSystem>();
 
 		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
@@ -454,9 +452,9 @@ namespace gr
 					re::RenderStage& directionalStage = 
 						*m_directionalShadowStageData.at(lightID).m_renderStage;
 
-					directionalStage.AddBatches(batchMgr.BuildSceneBatches(
+					directionalStage.AddBatches(batchMgr.GetSceneBatches(
 						renderData,
-						cullingGS->GetVisibleRenderDataIDs(gr::Camera::View(lightID)),
+						gr::Camera::View(lightID),
 						gr::BatchManager::InstanceType::Transform));
 				}
 				++directionalItr;
@@ -465,7 +463,7 @@ namespace gr
 
 		if (renderData.HasObjectData<gr::Light::RenderDataSpot>())
 		{
-			std::vector<gr::RenderDataID> const& spotIDs = cullingGS->GetVisibleSpotLights();
+			std::vector<gr::RenderDataID> const& spotIDs = batchMgr.GetSpotLightCullingResults();
 
 			auto spotItr = renderData.IDBegin(spotIDs);
 			auto const& spotItrEnd = renderData.IDEnd(spotIDs);
@@ -478,9 +476,9 @@ namespace gr
 
 					re::RenderStage& spotStage = *m_spotShadowStageData.at(lightID).m_renderStage;
 
-					spotStage.AddBatches(batchMgr.BuildSceneBatches(
+					spotStage.AddBatches(batchMgr.GetSceneBatches(
 						renderData,
-						cullingGS->GetVisibleRenderDataIDs(gr::Camera::View(lightID)),
+						gr::Camera::View(lightID),
 						gr::BatchManager::InstanceType::Transform));
 				}
 				++spotItr;
@@ -489,7 +487,7 @@ namespace gr
 
 		if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
 		{
-			std::vector<gr::RenderDataID> const& pointIDs = cullingGS->GetVisiblePointLights();
+			std::vector<gr::RenderDataID> const& pointIDs = batchMgr.GetPointLightCullingResults();
 
 			auto pointItr = renderData.IDBegin(pointIDs);
 			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
@@ -514,9 +512,9 @@ namespace gr
 					// add all batches to the same stage. This is wasteful, as 5/6 of the faces don't need a given
 					// batch. We should draw each face of the cubemap seperately instead
 					m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
-						batchMgr.BuildSceneBatches(
+						batchMgr.GetSceneBatches(
 							renderData,
-							cullingGS->GetVisibleRenderDataIDs(views),
+							views,
 							gr::BatchManager::InstanceType::Transform));
 				}
 				++pointItr;
@@ -527,32 +525,19 @@ namespace gr
 
 	re::Texture const* ShadowsGraphicsSystem::GetShadowMap(gr::Light::Type lightType, gr::RenderDataID lightID) const
 	{
+		auto GetShadowMap = [&](std::unordered_map<gr::RenderDataID, ShadowStageData> const& shadowStageData)
+			{
+				SEAssert(shadowStageData.contains(lightID),
+					"Light has not been registered for a shadow map, or does not have a shadow map");
+
+				return shadowStageData.at(lightID).m_shadowTargetSet->GetDepthStencilTarget()->GetTexture().get();
+			};
+
 		switch (lightType)
 		{
-		case gr::Light::Type::Directional:
-		{
-			SEAssert(m_directionalShadowStageData.contains(lightID), 
-				"Light has not been registered for a shadow map, or does not have a shadow map");
-
-			return m_directionalShadowStageData.at(lightID).m_shadowTargetSet->GetDepthStencilTarget()->GetTexture().get();
-		}
-		break;
-		case gr::Light::Type::Point:
-		{
-			SEAssert(m_pointShadowStageData.contains(lightID),
-				"Light has not been registered for a shadow map, or does not have a shadow map");
-
-			return m_pointShadowStageData.at(lightID).m_shadowTargetSet->GetDepthStencilTarget()->GetTexture().get();
-		}
-		break;
-		case gr::Light::Type::Spot:
-		{
-			SEAssert(m_spotShadowStageData.contains(lightID),
-				"Light has not been registered for a shadow map, or does not have a shadow map");
-
-			return m_spotShadowStageData.at(lightID).m_shadowTargetSet->GetDepthStencilTarget()->GetTexture().get();
-		}
-		break;
+		case gr::Light::Type::Directional: return GetShadowMap(m_directionalShadowStageData);
+		case gr::Light::Type::Point: return GetShadowMap(m_pointShadowStageData);
+		case gr::Light::Type::Spot: return GetShadowMap(m_spotShadowStageData);
 		case gr::Light::Type::AmbientIBL:
 		default: SEAssertF("Invalid light type, or light type does not support shadow maps");
 		}
