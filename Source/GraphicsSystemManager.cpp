@@ -1,6 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
 #include "ImGuiUtils.h"

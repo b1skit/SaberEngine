@@ -527,32 +527,19 @@ namespace gr
 
 	re::Texture const* ShadowsGraphicsSystem::GetShadowMap(gr::Light::Type lightType, gr::RenderDataID lightID) const
 	{
+		auto GetShadowMap = [&](std::unordered_map<gr::RenderDataID, ShadowStageData> const& shadowStageData)
+			{
+				SEAssert(shadowStageData.contains(lightID),
+					"Light has not been registered for a shadow map, or does not have a shadow map");
+
+				return shadowStageData.at(lightID).m_shadowTargetSet->GetDepthStencilTarget()->GetTexture().get();
+			};
+
 		switch (lightType)
 		{
-		case gr::Light::Type::Directional:
-		{
-			SEAssert(m_directionalShadowStageData.contains(lightID), 
-				"Light has not been registered for a shadow map, or does not have a shadow map");
-
-			return m_directionalShadowStageData.at(lightID).m_shadowTargetSet->GetDepthStencilTarget()->GetTexture().get();
-		}
-		break;
-		case gr::Light::Type::Point:
-		{
-			SEAssert(m_pointShadowStageData.contains(lightID),
-				"Light has not been registered for a shadow map, or does not have a shadow map");
-
-			return m_pointShadowStageData.at(lightID).m_shadowTargetSet->GetDepthStencilTarget()->GetTexture().get();
-		}
-		break;
-		case gr::Light::Type::Spot:
-		{
-			SEAssert(m_spotShadowStageData.contains(lightID),
-				"Light has not been registered for a shadow map, or does not have a shadow map");
-
-			return m_spotShadowStageData.at(lightID).m_shadowTargetSet->GetDepthStencilTarget()->GetTexture().get();
-		}
-		break;
+		case gr::Light::Type::Directional: return GetShadowMap(m_directionalShadowStageData);
+		case gr::Light::Type::Point: return GetShadowMap(m_pointShadowStageData);
+		case gr::Light::Type::Spot: return GetShadowMap(m_spotShadowStageData);
 		case gr::Light::Type::AmbientIBL:
 		default: SEAssertF("Invalid light type, or light type does not support shadow maps");
 		}

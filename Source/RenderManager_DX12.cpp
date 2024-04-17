@@ -2,16 +2,6 @@
 #include "Assert.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
-#include "GraphicsSystem_Bloom.h"
-#include "GraphicsSystem_XeGTAO.h"
-#include "GraphicsSystem_ComputeMips.h"
-#include "GraphicsSystem_Culling.h"
-#include "GraphicsSystem_Debug.h"
-#include "GraphicsSystem_DeferredLighting.h"
-#include "GraphicsSystem_GBuffer.h"
-#include "GraphicsSystem_Shadows.h"
-#include "GraphicsSystem_Skybox.h"
-#include "GraphicsSystem_Tonemapping.h"
 #include "Buffer_DX12.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
@@ -216,6 +206,7 @@ namespace dx12
 					return false;
 				default: SEAssertF("Invalid stage type");
 				}
+				return false;
 			};
 
 		auto StageTypeChanged = [IsGraphicsQueueStageType](

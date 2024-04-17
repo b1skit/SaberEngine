@@ -69,19 +69,19 @@ namespace
 	void CullLights(
 		gr::RenderDataManager const& renderData, 
 		gr::Camera::Frustum const& frustum,
-		std::vector<gr::RenderDataID>& pointLightIDs,
-		std::vector<gr::RenderDataID>& spotLightIDs,
+		std::vector<gr::RenderDataID>& pointLightIDsOut,
+		std::vector<gr::RenderDataID>& spotLightIDsOut,
 		bool cullingEnabled)
 	{
-		pointLightIDs.clear();
-		spotLightIDs.clear();
+		pointLightIDsOut.clear();
+		spotLightIDsOut.clear();
 
-		pointLightIDs.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataPoint>());
-		spotLightIDs.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataSpot>());
+		pointLightIDsOut.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataPoint>());
+		spotLightIDsOut.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataSpot>());
 
 		auto DoCulling = [&renderData, &frustum, &cullingEnabled]<typename T>(
 			gr::RenderDataManager::LinearIterator<T> lightItr,
-			gr::RenderDataManager::LinearIterator<T> lightItrEnd,
+			gr::RenderDataManager::LinearIterator<T> const& lightItrEnd,
 			std::vector<gr::RenderDataID>& lightIDs)
 		{
 			while (lightItr != lightItrEnd)
@@ -101,9 +101,9 @@ namespace
 			}
 		};
 		DoCulling(
-			renderData.Begin<gr::Light::RenderDataPoint>(), renderData.End<gr::Light::RenderDataPoint>(), pointLightIDs);
+			renderData.Begin<gr::Light::RenderDataPoint>(), renderData.End<gr::Light::RenderDataPoint>(), pointLightIDsOut);
 		DoCulling(
-			renderData.Begin<gr::Light::RenderDataSpot>(), renderData.End<gr::Light::RenderDataSpot>(), spotLightIDs);
+			renderData.Begin<gr::Light::RenderDataSpot>(), renderData.End<gr::Light::RenderDataSpot>(), spotLightIDsOut);
 	}
 
 

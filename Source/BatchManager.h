@@ -33,6 +33,7 @@ namespace gr
 
 		void UpdateBatchCache(gr::RenderDataManager const&);
 
+
 	public:
 		// Build a vector of single frame scene batches from the vector of RenderDataIDs, from the interal batch cache
 		std::vector<re::Batch> BuildSceneBatches(

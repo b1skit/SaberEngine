@@ -377,14 +377,15 @@ namespace gr
 		batchMetadata.reserve(renderDataIDs.size());
 		for (size_t i = 0; i < renderDataIDs.size(); i++)
 		{
-			SEAssert(m_renderDataIDToBatchMetadata.contains(renderDataIDs[i]), "Batch with the given ID does not exist");
+			SEAssert(m_renderDataIDToBatchMetadata.contains(renderDataIDs[i]),
+				"Batch with the given ID does not exist");
 			
 			batchMetadata.emplace_back(m_renderDataIDToBatchMetadata.at(renderDataIDs[i]));
 		}
 
 		// Assemble a list of instanced batches:
 		std::vector<re::Batch> batches;
-		batches.reserve(renderDataIDs.size());
+		batches.reserve(batchMetadata.size());
 
 		if (!batchMetadata.empty())
 		{
@@ -428,10 +429,10 @@ namespace gr
 					SEAssert(m_instancedMaterialIndexes.contains(batchMetadata[unmergedSrcIdx].m_renderDataID),
 						"RenderDataID is not registered for an instanced material index");
 
-					const uint32_t transformIdx = 
+					const uint32_t transformIdx =
 						m_instancedTransformIndexes.at(batchMetadata[unmergedSrcIdx].m_transformID).m_index;
 
-					const uint32_t materialIdx = 
+					const uint32_t materialIdx =
 						m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx].m_renderDataID).m_index;
 
 					instanceIndices.emplace_back(CreateInstanceIndicesEntry(transformIdx, materialIdx));
