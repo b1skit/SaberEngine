@@ -124,7 +124,7 @@ namespace gr
 
 	private:
 		template<typename T>
-		friend class IScriptableGraphicsSystem;
+		friend class IScriptableGraphicsSystem; // Required to access GraphicsSystem::Create()
 	};
 
 

@@ -138,23 +138,6 @@ namespace re
 						}
 					}
 
-					// "Outputs":
-					if (currentGSEntry.contains(RenderPipelineDesc::key_outputsList) &&
-						!currentGSEntry[RenderPipelineDesc::key_outputsList].empty())
-					{
-						auto const& outputsBlock = currentGSEntry[RenderPipelineDesc::key_outputsList];
-
-						std::vector<std::string>& textureOutputs = currentRSDesc.m_textureOutputs.emplace(
-							currentGSName, std::vector<std::string>()).first->second;
-						
-						// "TextureOutputs":
-						auto const& outputsList = outputsBlock[RenderPipelineDesc::key_textureOutputsList];
-						for (auto const& outputEntry : outputsList)
-						{
-							textureOutputs.emplace_back(outputEntry.template get<std::string>());
-						}
-					}
-
 					// "Accesses":
 					if (currentGSEntry.contains(RenderPipelineDesc::key_accessesList) && 
 						!currentGSEntry[RenderPipelineDesc::key_accessesList].empty())

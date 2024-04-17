@@ -14,10 +14,8 @@ namespace re
 		static constexpr char const* key_updateStepsBlock = "Update";
 		static constexpr char const* key_resourceDependenciesBlock = "ResourceDependencies";
 		static constexpr char const* key_inputsList = "Inputs";
-		static constexpr char const* key_outputsList = "Outputs";
 		static constexpr char const* key_accessesList = "Accesses";
 		static constexpr char const* key_textureDependenciesList = "TextureDependencies";
-		static constexpr char const* key_textureOutputsList = "TextureOutputs";
 		static constexpr char const* key_srcName = "SourceName";
 		static constexpr char const* key_dstName = "DestinationName";
 		static constexpr char const* key_GSName = "GraphicsSystem";
@@ -40,8 +38,6 @@ namespace re
 			using GSName = std::string;
 			using TexSrcDstNamePairs = std::vector<std::pair<std::string, std::string>>;
 			std::unordered_map<GSName, std::vector<std::pair<GSName, TexSrcDstNamePairs>>> m_textureInputs;
-
-			std::unordered_map<std::string, std::vector<std::string>> m_textureOutputs; // {Src GS name, texture names}
 
 			// Names of any GS's accessed during execution (e.g. via GraphicsSystemManager::GetGraphicsSystem<T>())
 			std::unordered_map<std::string, std::unordered_set<std::string>> m_accesses;

@@ -94,16 +94,6 @@
 			"ResourceDependencies": [
 				{
 					"GraphicsSystem": "GBuffer",
-					"Outputs": {
-						"TextureOutputs": [
-							"GBufferAlbedo",
-							"GBufferWNormal",
-							"GBufferRMAO",
-							"GBufferEmissive",
-							"GBufferMatProp0",
-							"GBufferDepth"
-						]
-					},
 					"Accesses": [
 						"Culling"
 					]
@@ -146,11 +136,6 @@
 							]
 						}
 					],
-					"Outputs": {
-						"TextureOutputs": [
-							"DeferredLightTarget"
-						]
-					},
 					"Accesses": [
 						"Culling",
 						"Shadows"
@@ -172,12 +157,7 @@
 								}
 							]
 						}
-					],
-					"Outputs": {
-						"TextureOutputs": [
-							"SSAOTex"
-						]
-					}
+					]
 				},
 				{
 					"GraphicsSystem": "Shadows",
@@ -257,7 +237,6 @@
 				{
 					"GraphicsSystem": "Debug",
 					"Inputs": {},
-					"Outputs": {},
 					"Accesses": []
 				}
 			]

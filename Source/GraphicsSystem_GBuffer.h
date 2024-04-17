@@ -23,6 +23,9 @@ namespace gr
 			);
 		}
 
+		void RegisterTextureInputs() override { /*No inputs*/ }
+		void RegisterTextureOutputs() override;
+
 
 	public:
 		// These enums must align with the layout binding indexes defined in SaberCommon.glsl
@@ -60,9 +63,6 @@ namespace gr
 		~GBufferGraphicsSystem() override = default;
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
-		
-		void RegisterTextureInputs() override { /*No inputs*/ }
-		void RegisterTextureOutputs() override;
 
 		void PreRender();
 
