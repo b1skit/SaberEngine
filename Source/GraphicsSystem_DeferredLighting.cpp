@@ -960,7 +960,7 @@ namespace gr
 				{
 					directionalLightBatch.AddTextureAndSamplerInput(
 						"Depth0",
-						m_shadowGS->GetShadowMap(gr::Light::Type::Directional, directionalData.m_renderDataID),
+						m_shadowGS->GetShadowTextures().at(directionalData.m_renderDataID),
 						re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"));
 				}
 
@@ -1026,7 +1026,7 @@ namespace gr
 				{
 					lightBatch.AddTextureAndSamplerInput(
 						depthInputTexName,
-						m_shadowGS->GetShadowMap(lightType, lightRenderDataID),
+						m_shadowGS->GetShadowTextures().at(lightRenderDataID),
 						re::Sampler::GetSampler(samplerTypeName));
 				}
 			};

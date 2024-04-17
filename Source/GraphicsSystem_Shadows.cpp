@@ -138,6 +138,14 @@ namespace gr
 				.m_renderStage = shadowStage,
 				.m_shadowTargetSet = pointShadowTargetSet,
 				.m_shadowCamParamBlock = cubeShadowBuf });
+
+		m_shadowTextures.emplace(lightID, pointShadowTargetSet->GetDepthStencilTarget()->GetTexture().get());
+
+		SEAssert(m_shadowTextures.size() ==
+			(m_directionalShadowStageData.size() +
+				m_pointShadowStageData.size() +
+				m_spotShadowStageData.size()),
+			"Shadow stage data is out of sync with the aggregate map of all shadow textures");
 	}
 
 
@@ -222,6 +230,14 @@ namespace gr
 				.m_renderStage = shadowStage,
 				.m_shadowTargetSet = shadowTargetSet,
 				.m_shadowCamParamBlock = shadowCamParams });
+
+		m_shadowTextures.emplace(lightID, shadowTargetSet->GetDepthStencilTarget()->GetTexture().get());
+
+		SEAssert(m_shadowTextures.size() ==
+			(m_directionalShadowStageData.size() +
+				m_pointShadowStageData.size() +
+				m_spotShadowStageData.size()),
+			"Shadow stage data is out of sync with the aggregate map of all shadow textures");
 	}
 
 
@@ -246,13 +262,14 @@ namespace gr
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		// Delete removed deleted lights:
-		auto DeleteLights = [](
+		auto DeleteLights = [&](
 			std::vector<gr::RenderDataID> const& deletedIDs,
 			std::unordered_map<gr::RenderDataID, ShadowStageData>& stageData)
 		{
 			for (gr::RenderDataID id : deletedIDs)
 			{
 				stageData.erase(id);
+				m_shadowTextures.erase(id);
 			}
 		};
 		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataDirectional>())
@@ -268,6 +285,12 @@ namespace gr
 		{
 			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataSpot>(), m_spotShadowStageData);
 		}
+
+		SEAssert(m_shadowTextures.size() ==
+			(m_directionalShadowStageData.size() +
+				m_pointShadowStageData.size() +
+				m_spotShadowStageData.size()),
+			"Shadow stage data is out of sync with the aggregate map of all shadow textures");
 
 		// Register new directional and spot lights:
 		auto Register2DShadowLights = [&](std::vector<gr::RenderDataID> const& newLightIDs,
@@ -522,28 +545,5 @@ namespace gr
 				++pointItr;
 			}
 		}
-	}
-
-
-	re::Texture const* ShadowsGraphicsSystem::GetShadowMap(gr::Light::Type lightType, gr::RenderDataID lightID) const
-	{
-		auto GetShadowMap = [&](std::unordered_map<gr::RenderDataID, ShadowStageData> const& shadowStageData)
-			{
-				SEAssert(shadowStageData.contains(lightID),
-					"Light has not been registered for a shadow map, or does not have a shadow map");
-
-				return shadowStageData.at(lightID).m_shadowTargetSet->GetDepthStencilTarget()->GetTexture().get();
-			};
-
-		switch (lightType)
-		{
-		case gr::Light::Type::Directional: return GetShadowMap(m_directionalShadowStageData);
-		case gr::Light::Type::Point: return GetShadowMap(m_pointShadowStageData);
-		case gr::Light::Type::Spot: return GetShadowMap(m_spotShadowStageData);
-		case gr::Light::Type::AmbientIBL:
-		default: SEAssertF("Invalid light type, or light type does not support shadow maps");
-		}
-
-		return nullptr;
 	}
 }

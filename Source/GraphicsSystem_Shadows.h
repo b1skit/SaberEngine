@@ -35,7 +35,7 @@ namespace gr
 
 		void PreRender();
 
-		re::Texture const* GetShadowMap(gr::Light::Type, gr::RenderDataID) const;
+		std::unordered_map<gr::RenderDataID, re::Texture const*> const& GetShadowTextures() const;
 
 
 	private:
@@ -53,6 +53,9 @@ namespace gr
 		std::unordered_map<gr::RenderDataID, ShadowStageData> m_directionalShadowStageData;
 		std::unordered_map<gr::RenderDataID, ShadowStageData> m_pointShadowStageData;
 		std::unordered_map<gr::RenderDataID, ShadowStageData> m_spotShadowStageData;
+
+		// We maintain a parallel map of ALL light IDs -> textures, to simplify interactions with other graphics systems
+		std::unordered_map<gr::RenderDataID, re::Texture const*> m_shadowTextures;
 
 
 		void CreateRegister2DShadowStage(
@@ -77,4 +80,10 @@ namespace gr
 		re::StagePipeline::StagePipelineItr m_pointParentStageItr;
 		re::StagePipeline::StagePipelineItr m_spotParentStageItr;
 	};
+
+
+	inline std::unordered_map<gr::RenderDataID, re::Texture const*> const& ShadowsGraphicsSystem::GetShadowTextures() const
+	{
+		return m_shadowTextures;
+	}
 }
