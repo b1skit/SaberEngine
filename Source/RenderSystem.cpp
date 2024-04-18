@@ -8,6 +8,10 @@
 
 namespace
 {
+	using GSName = re::RenderPipelineDesc::RenderSystemDescription::GSName;
+	using SrcDstNamePairs = re::RenderPipelineDesc::RenderSystemDescription::SrcDstNamePairs;
+
+
 	gr::GraphicsSystem::TextureDependencies ResolveTextureDependencies(
 		std::string const& dstGSScriptName,
 		re::RenderPipelineDesc::RenderSystemDescription const& renderSysDesc,
@@ -100,9 +104,6 @@ namespace
 		re::RenderPipelineDesc::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
-		using GSName = re::RenderPipelineDesc::RenderSystemDescription::GSName;
-		using SrcDstNamePairs = re::RenderPipelineDesc::RenderSystemDescription::SrcDstNamePairs;
-
 		std::unordered_map<std::string, void const*> resolvedDependencies;
 
 		gr::GraphicsSystem const* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
@@ -218,12 +219,11 @@ namespace re
 			for (auto const& entry : renderSysDesc.m_updateSteps)
 			{
 				std::string const& currentGSName = entry.first;
+				std::string const& lowercaseScriptFnName = util::ToLower(entry.second);
 
 				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(currentGSName);
 
-				std::string const& lowercaseScriptFnName = util::ToLower(entry.second);
-
-				UpdateStep& updateStep = m_updatePipeline.emplace_back(UpdateStep{
+				m_updatePipeline.emplace_back(UpdateStep{
 					.m_preRenderFunc = currentGS->GetRuntimeBindings().m_preRenderFunctions.at(lowercaseScriptFnName),
 					.m_resolvedDependencies = ResolveDataDependencies(currentGSName, renderSysDesc, gsm),
 					.m_gs = currentGS,

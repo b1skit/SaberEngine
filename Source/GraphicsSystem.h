@@ -73,7 +73,6 @@ namespace gr
 		};
 
 		TextureInputDefault GetTextureInputDefaultType(std::string const& inputScriptName) const;
-		
 		bool HasTextureInput(std::string const& inputScriptName) const;
 		std::map<std::string, TextureInputDefault> const& GetTextureInputs() const;
 
