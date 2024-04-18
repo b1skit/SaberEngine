@@ -108,13 +108,9 @@ namespace fr
 
 		UpdateTransformDataRenderCommand* cmdPtr = reinterpret_cast<UpdateTransformDataRenderCommand*>(cmdData);
 
-		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
-		{
-			gr::RenderDataManager& renderData =
-				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
+		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
 
-			renderData.SetTransformData(cmdPtr->m_transformID, cmdPtr->m_data);
-		}
+		renderData.SetTransformData(cmdPtr->m_transformID, cmdPtr->m_data);
 	}
 
 

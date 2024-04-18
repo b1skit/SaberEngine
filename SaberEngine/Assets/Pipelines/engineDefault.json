@@ -5,11 +5,6 @@
 			"RenderSystemName": "Primary",
 			"Initialization": [
 				{
-					"GraphicsSystem": "ComputeMips",
-					"Function": "InitPipeline",
-					"ExcludedPlatforms": [ "OpenGL" ]
-				},
-				{
 					"GraphicsSystem": "Culling",
 					"Function": "InitPipeline"
 				},
@@ -55,11 +50,6 @@
 				{
 					"GraphicsSystem": "Culling",
 					"Function": "PreRender"
-				},
-				{
-					"GraphicsSystem": "ComputeMips",
-					"Function": "PreRender",
-					"ExcludedPlatforms": [ "OpenGL" ]
 				},
 				{
 					"GraphicsSystem": "GBuffer",

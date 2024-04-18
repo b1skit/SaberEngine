@@ -136,14 +136,10 @@ namespace gr
 			re::RenderManager::Get()->GetRenderSystems();
 
 		UpdateRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<UpdateRenderDataRenderCommand<T>*>(cmdData);
+		
+		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
 
-		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
-		{
-			gr::RenderDataManager& renderData =
-				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
-
-			renderData.SetObjectData(cmdPtr->m_renderDataID, &cmdPtr->m_data);
-		}
+		renderData.SetObjectData(cmdPtr->m_renderDataID, &cmdPtr->m_data);
 	}
 
 
@@ -187,13 +183,9 @@ namespace gr
 
 		DestroyRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<DestroyRenderDataRenderCommand<T>*>(cmdData);
 
-		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
-		{
-			gr::RenderDataManager& renderData =
-				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
+		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
 
-			renderData.DestroyObjectData<T>(cmdPtr->m_renderDataID);
-		}
+		renderData.DestroyObjectData<T>(cmdPtr->m_renderDataID);
 	}
 
 

@@ -161,6 +161,7 @@ namespace re
 		, m_renderPipeline(name + " render pipeline")
 		, m_initPipeline(nullptr)
 	{
+		m_graphicsSystemManager.Create();
 	}
 
 

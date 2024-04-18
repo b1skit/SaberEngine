@@ -140,14 +140,10 @@ namespace gr
 
 		RegisterRenderObjectCommand* cmdPtr = reinterpret_cast<RegisterRenderObjectCommand*>(cmdData);
 
-		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
-		{
-			gr::RenderDataManager& renderData =
-				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
+		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
 
-			renderData.RegisterObject(cmdPtr->m_renderDataID, cmdPtr->m_transformID);
-			renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
-		}
+		renderData.RegisterObject(cmdPtr->m_renderDataID, cmdPtr->m_transformID);
+		renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
 	}
 
 
@@ -174,13 +170,9 @@ namespace gr
 
 		DestroyRenderObjectCommand* cmdPtr = reinterpret_cast<DestroyRenderObjectCommand*>(cmdData);
 
-		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
-		{
-			gr::RenderDataManager& renderData =
-				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
+		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
 
-			renderData.DestroyObject(cmdPtr->m_renderDataID);
-		}
+		renderData.DestroyObject(cmdPtr->m_renderDataID);
 	}
 
 
@@ -209,13 +201,9 @@ namespace gr
 
 		RenderDataFeatureBitsRenderCommand* cmdPtr = reinterpret_cast<RenderDataFeatureBitsRenderCommand*>(cmdData);
 
-		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
-		{
-			gr::RenderDataManager& renderData =
-				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
+		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
 
-			renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
-		}
+		renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
 	}
 
 

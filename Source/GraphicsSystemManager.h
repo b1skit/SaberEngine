@@ -53,11 +53,6 @@ namespace gr
 		bool HasActiveAmbientLight() const;
 		gr::RenderDataID GetActiveAmbientLightID() const;
 
-
-	public:
-		// Not thread safe: Can only be called when other threads are not accessing the render data
-		gr::RenderDataManager& GetRenderDataForModification();
-
 	
 	public:
 		void ShowImGuiWindow();
@@ -72,7 +67,7 @@ namespace gr
 		std::vector<std::unique_ptr<gr::GraphicsSystem>> m_graphicsSystems;
 		std::map<std::string, size_t> m_scriptNameToIndex;
 
-		gr::RenderDataManager m_renderData;
+		gr::RenderDataManager const* m_renderData;
 		gr::BatchManager m_batchManager;
 
 		gr::RenderDataID m_activeCameraRenderDataID;
@@ -102,19 +97,13 @@ namespace gr
 
 	inline gr::RenderDataManager const& GraphicsSystemManager::GetRenderData() const
 	{
-		return m_renderData;
+		return *m_renderData;
 	}
 
 
 	inline gr::RenderDataID GraphicsSystemManager::GetActiveCameraRenderDataID() const
 	{
 		return m_activeCameraRenderDataID;
-	}
-
-
-	inline gr::RenderDataManager& GraphicsSystemManager::GetRenderDataForModification()
-	{
-		return m_renderData;
 	}
 }
 

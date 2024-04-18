@@ -1,0 +1,22 @@
+{
+	"PipelineName": "PlatformDX12",
+	"RenderSystems": [
+		{
+			"RenderSystemName": "Mip Generation",
+			"Initialization": [
+				{
+					"GraphicsSystem": "ComputeMips",
+					"Function": "InitPipeline",
+					"ExcludedPlatforms": [ "OpenGL" ]
+				}
+			],
+			"Update": [
+				{
+					"GraphicsSystem": "ComputeMips",
+					"Function": "PreRender",
+					"ExcludedPlatforms": [ "OpenGL" ]
+				}
+			]
+		}
+	]
+}

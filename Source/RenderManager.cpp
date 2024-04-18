@@ -139,11 +139,19 @@ namespace re
 		util::PerformanceTimer timer;
 		timer.Start();
 
+		m_renderData.BeginFrame(m_renderFrameNum);
+
 		SEBeginCPUEvent("platform::RenderManager::Initialize");
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
 
-		CreateRenderSystems(); // Internally, creates each GraphicsSystem
+		CreateMainRenderSystem();
+
+		// Execute the render system creation pipeline(s). Internally, creates each GraphicsSystem
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		{
+			renderSystem->ExecuteCreationPipeline();
+		}
 
 		// Process render commands issued during scene loading now the render systems have been created:
 		m_renderCommandManager.SwapBuffers();
@@ -165,21 +173,27 @@ namespace re
 	}
 
 
-	void RenderManager::CreateRenderSystems()
+	void RenderManager::CreateMainRenderSystem()
 	{
-		// Build our rendering pipeline:
+		// Build our primary rendering pipeline:
 		std::string pipelineFileName;
 		if (en::Config::Get()->TryGetValue(en::ConfigKeys::k_renderPipelineCmdLineArg, pipelineFileName) == false)
 		{
 			pipelineFileName = en::ConfigKeys::k_defaultPipelineFileName;
 		}
 
+		LoadRenderSystem(pipelineFileName);
+	}
+
+
+	void RenderManager::LoadRenderSystem(std::string const& pipelineFileName)
+	{
 		// Prefix folder name to build a relative path
 		std::string const& scriptPath = std::format("{}{}", en::ConfigKeys::k_pipelineDirName, pipelineFileName);
 
 		LOG("Loading render pipeline description from \"%s\"...", scriptPath.c_str());
 
-		RenderPipelineDesc const renderPipelineDesc = LoadRenderPipelineDescription(scriptPath.c_str());
+		RenderPipelineDesc const& renderPipelineDesc = LoadRenderPipelineDescription(scriptPath.c_str());
 
 		LOG("Render pipeline description \"%s\" loaded!", renderPipelineDesc.m_pipelineName.c_str());
 
@@ -188,14 +202,7 @@ namespace re
 			LOG("Creating render system \"%s\"...", systemPipelineDesc.m_renderSystemName.c_str());
 
 			m_renderSystems.emplace_back(re::RenderSystem::Create(systemPipelineDesc.m_renderSystemName));
-			m_renderSystems.back()->BuildPipeline(systemPipelineDesc);
-		}
-
-		// Execute the GS creation pipeline:
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
-		{
-			renderSystem->GetGraphicsSystemManager().GetRenderDataForModification().BeginFrame(m_renderFrameNum);
-			renderSystem->ExecuteCreationPipeline();
+			m_renderSystems.back()->BuildPipeline(systemPipelineDesc); // Builds creation/initialization/update functions
 		}
 	}
 
@@ -220,11 +227,8 @@ namespace re
 
 		re::Context::Get()->GetBufferAllocator()->BeginFrame(frameNum);
 		
-		// Get the RenderDataManager(s) ready for the new frame
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
-		{
-			renderSystem->GetGraphicsSystemManager().GetRenderDataForModification().BeginFrame(m_renderFrameNum);
-		}
+		// Get the RenderDataManager ready for the new frame
+		m_renderData.BeginFrame(m_renderFrameNum);
 
 		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
 
@@ -322,6 +326,8 @@ namespace re
 		{
 			renderSystem->Destroy();
 		}
+
+		m_renderData.Destroy();
 
 		m_createdTextures.clear();
 

@@ -689,40 +689,35 @@ namespace fr
 
 		UpdateLightDataRenderCommand* cmdPtr = reinterpret_cast<UpdateLightDataRenderCommand*>(cmdData);
 
-		for (size_t rsIdx = 0; rsIdx < renderSystems.size(); rsIdx++)
-		{
-			gr::GraphicsSystemManager& gsm = renderSystems[rsIdx]->GetGraphicsSystemManager();
+		gr::RenderDataManager& renderDataMgr = re::RenderManager::Get()->GetRenderDataManagerForModification();
 
-			gr::RenderDataManager& renderDataMgr = gsm.GetRenderDataForModification();
-			
-			switch (cmdPtr->m_type)
-			{
-			case gr::Light::Type::AmbientIBL:
-			{
-				renderDataMgr.SetObjectData<gr::Light::RenderDataAmbientIBL>(
-					cmdPtr->m_renderDataID, &cmdPtr->m_ambientData);
-			}
-			break;
-			case gr::Light::Type::Directional:
-			{
-				renderDataMgr.SetObjectData<gr::Light::RenderDataDirectional>(
-					cmdPtr->m_renderDataID, &cmdPtr->m_directionalData);
-			}
-			break;
-			case gr::Light::Type::Point:
-			{
-				renderDataMgr.SetObjectData<gr::Light::RenderDataPoint>(
-					cmdPtr->m_renderDataID, &cmdPtr->m_pointData);
-			}
-			break;
-			case gr::Light::Type::Spot:
-			{
-				renderDataMgr.SetObjectData<gr::Light::RenderDataSpot>(
-					cmdPtr->m_renderDataID, &cmdPtr->m_spotData);
-			}
-			break;
-			default: SEAssertF("Invalid type");
-			}
+		switch (cmdPtr->m_type)
+		{
+		case gr::Light::Type::AmbientIBL:
+		{
+			renderDataMgr.SetObjectData<gr::Light::RenderDataAmbientIBL>(
+				cmdPtr->m_renderDataID, &cmdPtr->m_ambientData);
+		}
+		break;
+		case gr::Light::Type::Directional:
+		{
+			renderDataMgr.SetObjectData<gr::Light::RenderDataDirectional>(
+				cmdPtr->m_renderDataID, &cmdPtr->m_directionalData);
+		}
+		break;
+		case gr::Light::Type::Point:
+		{
+			renderDataMgr.SetObjectData<gr::Light::RenderDataPoint>(
+				cmdPtr->m_renderDataID, &cmdPtr->m_pointData);
+		}
+		break;
+		case gr::Light::Type::Spot:
+		{
+			renderDataMgr.SetObjectData<gr::Light::RenderDataSpot>(
+				cmdPtr->m_renderDataID, &cmdPtr->m_spotData);
+		}
+		break;
+		default: SEAssertF("Invalid type");
 		}
 	}
 
@@ -751,36 +746,31 @@ namespace fr
 
 		DestroyLightDataRenderCommand* cmdPtr = reinterpret_cast<DestroyLightDataRenderCommand*>(cmdData);
 
-		for (size_t rsIdx = 0; rsIdx < renderSystems.size(); rsIdx++)
+		gr::RenderDataManager& renderDataMgr = re::RenderManager::Get()->GetRenderDataManagerForModification();
+
+		switch (cmdPtr->m_type)
 		{
-			gr::GraphicsSystemManager& gsm = renderSystems[rsIdx]->GetGraphicsSystemManager();
-
-			gr::RenderDataManager& renderDataMgr = gsm.GetRenderDataForModification();
-
-			switch (cmdPtr->m_type)
-			{
-			case fr::Light::Type::AmbientIBL:
-			{
-				renderDataMgr.DestroyObjectData<gr::Light::RenderDataAmbientIBL>(cmdPtr->m_renderDataID);
-			}
-			break;
-			case fr::Light::Type::Directional:
-			{
-				renderDataMgr.DestroyObjectData<gr::Light::RenderDataDirectional>(cmdPtr->m_renderDataID);
-			}
-			break;
-			case fr::Light::Type::Point:
-			{
-				renderDataMgr.DestroyObjectData<gr::Light::RenderDataPoint>(cmdPtr->m_renderDataID);
-			}
-			break;
-			case fr::Light::Type::Spot:
-			{
-				renderDataMgr.DestroyObjectData<gr::Light::RenderDataSpot>(cmdPtr->m_renderDataID);
-			}
-			break;
-			default: SEAssertF("Invalid type");
-			}
+		case fr::Light::Type::AmbientIBL:
+		{
+			renderDataMgr.DestroyObjectData<gr::Light::RenderDataAmbientIBL>(cmdPtr->m_renderDataID);
+		}
+		break;
+		case fr::Light::Type::Directional:
+		{
+			renderDataMgr.DestroyObjectData<gr::Light::RenderDataDirectional>(cmdPtr->m_renderDataID);
+		}
+		break;
+		case fr::Light::Type::Point:
+		{
+			renderDataMgr.DestroyObjectData<gr::Light::RenderDataPoint>(cmdPtr->m_renderDataID);
+		}
+		break;
+		case fr::Light::Type::Spot:
+		{
+			renderDataMgr.DestroyObjectData<gr::Light::RenderDataSpot>(cmdPtr->m_renderDataID);
+		}
+		break;
+		default: SEAssertF("Invalid type");
 		}
 	}
 

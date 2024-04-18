@@ -56,6 +56,9 @@ namespace re
 
 		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
 
+		// Not thread safe: Can only be called when other threads are not accessing the render data
+		gr::RenderDataManager& GetRenderDataManagerForModification();
+
 
 	public:
 		std::mutex& GetGlobalImGuiMutex(); // Synchronize ImGui IO accesses across threads
@@ -80,6 +83,7 @@ namespace re
 		// Note: The RenderManager's lifetime is otherwise exclusively controlled by the en::EngineThread interface
 		bool m_quitEventReceived; 
 
+		gr::RenderDataManager m_renderData;
 
 	public: // Render commands:
 		template<typename T, typename... Args>
@@ -139,7 +143,8 @@ namespace re
 		
 		// Member functions:
 		void Initialize();
-		void CreateRenderSystems();
+		void CreateMainRenderSystem();
+		void LoadRenderSystem(std::string const& pipelineFileName);
 
 		virtual void Render() = 0;
 
@@ -182,6 +187,12 @@ namespace re
 	inline std::vector<std::unique_ptr<re::RenderSystem>> const& RenderManager::GetRenderSystems() const
 	{
 		return m_renderSystems;
+	}
+
+
+	inline gr::RenderDataManager& RenderManager::GetRenderDataManagerForModification()
+	{
+		return m_renderData;
 	}
 
 

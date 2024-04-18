@@ -1,10 +1,11 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Assert.h"
+#include "Buffer.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
 #include "ImGuiUtils.h"
 #include "LightRenderData.h"
-#include "Buffer.h"
+#include "RenderManager.h"
 #include "RenderSystem.h"
 
 
@@ -24,12 +25,14 @@ namespace gr
 	void GraphicsSystemManager::Destroy()
 	{
 		m_graphicsSystems.clear();
-		m_renderData.Destroy();
+		m_renderData = nullptr;
 	}
 
 
 	void GraphicsSystemManager::Create()
 	{
+		m_renderData = &re::RenderManager::Get()->GetRenderDataManagerForModification();
+
 		CameraData defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
 
 		m_activeCameraParams = re::Buffer::Create(
@@ -41,14 +44,14 @@ namespace gr
 
 	void GraphicsSystemManager::PreRender()
 	{
-		m_batchManager.UpdateBatchCache(m_renderData);
+		m_batchManager.UpdateBatchCache(*m_renderData);
 
 		SEAssert(m_activeCameraRenderDataID != gr::k_invalidRenderDataID && 
 			m_activeCameraTransformDataID != gr::k_invalidTransformID,
 			"No active camera has been set");
 
 		gr::Camera::RenderData const& cameraData =
-			m_renderData.GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
+			m_renderData->GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
 
 		m_activeCameraParams->Commit(cameraData.m_cameraParams);
 
@@ -102,10 +105,10 @@ namespace gr
 
 		// Update the active ambient light:
 		// First, check if our currently active light has been deleted:
-		if (m_renderData.HasIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>())
+		if (m_renderData->HasIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>())
 		{
 			std::vector<gr::RenderDataID> const& deletedAmbientLights =
-				m_renderData.GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
+				m_renderData->GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
 
 			for (gr::RenderDataID ambientID : deletedAmbientLights)
 			{
@@ -120,10 +123,10 @@ namespace gr
 
 		// If we have an active ambient light, check that it is still actually active:
 		if (m_activeAmbientLightRenderDataID != gr::k_invalidRenderDataID &&
-			m_renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightRenderDataID))
+			m_renderData->IsDirty<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightRenderDataID))
 		{
 			gr::Light::RenderDataAmbientIBL const& activeAmbientData =
-				m_renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightRenderDataID);
+				m_renderData->GetObjectData<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightRenderDataID);
 
 			if (!activeAmbientData.m_isActive)
 			{
@@ -134,10 +137,10 @@ namespace gr
 
 		// If we don't have an active light, see if any exist in the render data:
 		if (m_activeAmbientLightRenderDataID == gr::k_invalidRenderDataID &&
-			m_renderData.HasObjectData<gr::Light::RenderDataAmbientIBL>())
+			m_renderData->HasObjectData<gr::Light::RenderDataAmbientIBL>())
 		{
-			auto ambientItr = m_renderData.Begin<gr::Light::RenderDataAmbientIBL>();
-			auto const& ambientItrEnd = m_renderData.End<gr::Light::RenderDataAmbientIBL>();
+			auto ambientItr = m_renderData->Begin<gr::Light::RenderDataAmbientIBL>();
+			auto const& ambientItrEnd = m_renderData->End<gr::Light::RenderDataAmbientIBL>();
 			while (ambientItr != ambientItrEnd)
 			{
 				if (ambientItr->m_isActive)
@@ -157,14 +160,14 @@ namespace gr
 	gr::Camera::RenderData const& GraphicsSystemManager::GetActiveCameraRenderData() const
 	{
 		SEAssert(m_activeCameraRenderDataID != gr::k_invalidRenderDataID, "No active camera has been set");
-		return m_renderData.GetObjectData< gr::Camera::RenderData>(m_activeCameraRenderDataID);
+		return m_renderData->GetObjectData< gr::Camera::RenderData>(m_activeCameraRenderDataID);
 	}
 
 
 	gr::Transform::RenderData const& GraphicsSystemManager::GetActiveCameraTransformData() const
 	{
 		SEAssert(m_activeCameraTransformDataID != gr::k_invalidTransformID, "No active camera has been set");
-		return m_renderData.GetTransformDataFromTransformID(m_activeCameraTransformDataID);
+		return m_renderData->GetTransformDataFromTransformID(m_activeCameraTransformDataID);
 	}
 
 
@@ -219,6 +222,6 @@ namespace gr
 
 	void GraphicsSystemManager::ShowImGuiRenderDataDebugWindow() const
 	{
-		m_renderData.ShowImGuiWindow();
+		m_renderData->ShowImGuiWindow();
 	}
 }
