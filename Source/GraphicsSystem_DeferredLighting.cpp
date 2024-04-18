@@ -632,6 +632,33 @@ namespace gr
 	void DeferredLightingGraphicsSystem::InitPipeline(
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
+		m_missing2DShadowFallback = re::Texture::Create("Missing 2D shadow fallback",
+			re::Texture::TextureParams
+			{
+				.m_usage = re::Texture::Usage::Color,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = re::Texture::Format::Depth32F,
+				.m_colorSpace = re::Texture::ColorSpace::Linear,
+				.m_mipMode = re::Texture::MipMode::None,
+				.m_addToSceneData = false,
+				.m_clear = re::Texture::TextureParams::ClearValues{},
+			},
+			glm::vec4(1.f, 1.f, 1.f, 1.f));
+
+		m_missingCubeShadowFallback = re::Texture::Create("Missing cubemap shadow fallback", 
+			re::Texture::TextureParams
+			{
+				.m_faces = 6,
+				.m_usage = re::Texture::Usage::Color,
+				.m_dimension = re::Texture::Dimension::TextureCubeMap,
+				.m_format = re::Texture::Format::Depth32F,
+				.m_colorSpace = re::Texture::ColorSpace::Linear,
+				.m_mipMode = re::Texture::MipMode::None,
+				.m_addToSceneData = false,
+				.m_clear = re::Texture::TextureParams::ClearValues{},
+			},
+			glm::vec4(1.f, 1.f, 1.f, 1.f));
+
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_ambientStage = re::RenderStage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
 
@@ -907,8 +934,8 @@ namespace gr
 
 		using ShadowTextureMap = std::unordered_map<gr::RenderDataID, re::Texture const*>;
 		
-		ShadowTextureMap const& shadowTextures = 
-			*static_cast<ShadowTextureMap const*>(dataDependencies.at(k_shadowTexturesInput));
+		ShadowTextureMap const* shadowTextures = 
+			static_cast<ShadowTextureMap const*>(dataDependencies.at(k_shadowTexturesInput));
 		
 		// Register new directional lights:
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataDirectional>())
@@ -962,9 +989,12 @@ namespace gr
 
 				if (directionalData.m_hasShadow) // Add the shadow map texture to the batch
 				{
+					re::Texture const* shadowTex = shadowTextures ? 
+						shadowTextures->at(directionalData.m_renderDataID) : m_missing2DShadowFallback.get();
+
 					directionalLightBatch.AddTextureAndSamplerInput(
 						"Depth0",
-						shadowTextures.at(directionalData.m_renderDataID),
+						shadowTex,
 						re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"));
 				}
 
@@ -1028,9 +1058,32 @@ namespace gr
 
 				if (hasShadow) // Add the shadow map texture to the batch
 				{
+					re::Texture const* shadowTex = nullptr;
+					if (shadowTextures)
+					{
+						shadowTex = shadowTextures->at(lightRenderDataID);
+					}
+					else
+					{
+						switch (lightType)
+						{
+						case gr::Light::Type::Point:
+						{
+							shadowTex = m_missingCubeShadowFallback.get();
+						}
+						break;
+						case gr::Light::Type::Spot:
+						{
+							shadowTex = m_missing2DShadowFallback.get();
+						}
+						break;
+						default: SEAssertF("Invalid/unexpected light type");
+						}
+					}
+
 					lightBatch.AddTextureAndSamplerInput(
 						depthInputTexName,
-						shadowTextures.at(lightRenderDataID),
+						shadowTex,
 						re::Sampler::GetSampler(samplerTypeName));
 				}
 			};

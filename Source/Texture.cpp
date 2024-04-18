@@ -255,6 +255,7 @@ namespace re
 		}
 		break;
 		case re::Texture::Format::R32F:
+		case re::Texture::Format::Depth32F:
 		{
 			*static_cast<float*>(pixelPtr) = *static_cast<float*>(valuePtr);
 		}
@@ -322,7 +323,6 @@ namespace re
 			*(static_cast<uint8_t*>(pixelPtr)) = channelValue;
 		}
 		break;
-		case re::Texture::Format::Depth32F:
 		case re::Texture::Format::Invalid:
 		default:
 		{
@@ -402,6 +402,7 @@ namespace re
 		break;
 		case re::Texture::Format::R32F:
 		case re::Texture::Format::R32_UINT:
+		case re::Texture::Format::Depth32F:
 		case re::Texture::Format::RG16F:
 		case re::Texture::Format::RGBA8_UNORM:
 		{
@@ -420,8 +421,6 @@ namespace re
 			return 1;
 		}
 		break;
-		break;
-		case re::Texture::Format::Depth32F:
 		case re::Texture::Format::Invalid:
 		default:
 		{

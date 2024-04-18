@@ -113,7 +113,9 @@ namespace gr
 
 	private: // Common:
 		std::shared_ptr<re::TextureTargetSet> m_lightingTargetSet;
-
+		
+		std::shared_ptr<re::Texture> m_missing2DShadowFallback;
+		std::shared_ptr<re::Texture> m_missingCubeShadowFallback;
 
 	private:
 		void CreateBatches(DataDependencies const&);

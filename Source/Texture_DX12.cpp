@@ -647,7 +647,14 @@ namespace
 			optimizedClearValue.DepthStencil.Depth = texParams.m_clear.m_depthStencil.m_depth;
 			optimizedClearValue.DepthStencil.Stencil = texParams.m_clear.m_depthStencil.m_stencil;
 
-			initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			if (texture.HasInitialData())
+			{
+				initialState = D3D12_RESOURCE_STATE_COPY_DEST;
+			}
+			else
+			{
+				initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			}
 		}
 
 		D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -855,10 +862,6 @@ namespace dx12
 		// Upload initial data via an intermediate upload heap:
 		if ((texParams.m_usage & re::Texture::Usage::Color) && texture.HasInitialData())
 		{
-			SEAssert(texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1,
-				"TODO: Test/support buffering texture data for textures with multiple faces. Initial data for the "
-				" first mip of textures with multiple faces probably works, but has not been tested ");
-
 			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);
 			const uint32_t numBytesPerFace = static_cast<uint32_t>(texture.GetTotalBytesPerFace());
 			const uint32_t totalBytes = numBytesPerFace * texParams.m_faces;
