@@ -151,15 +151,22 @@ namespace gr
 
 	void GBufferGraphicsSystem::CreateBatches(DataDependencies const& dataDependencies)
 	{
-		const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 
 		ViewCullingResults const* cullingResults = 
 			static_cast<ViewCullingResults const*>(dataDependencies.at(k_cullingInput));
-
-		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 		
-		m_gBufferStage->AddBatches(batchMgr.BuildSceneBatches(
-			m_graphicsSystemManager->GetRenderData(),
-			cullingResults->at(mainCamID)));
+		if (cullingResults)
+		{
+			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+
+			m_gBufferStage->AddBatches(batchMgr.GetSceneBatches(
+				m_graphicsSystemManager->GetRenderData(),
+				cullingResults->at(mainCamID)));
+		}
+		else
+		{
+			m_gBufferStage->AddBatches(batchMgr.GetAllSceneBatches(m_graphicsSystemManager->GetRenderData()));
+		}
 	}
 }

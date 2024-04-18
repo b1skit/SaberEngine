@@ -528,10 +528,20 @@ namespace gr
 					re::RenderStage& directionalStage = 
 						*m_directionalShadowStageData.at(lightID).m_renderStage;
 
-					directionalStage.AddBatches(batchMgr.BuildSceneBatches(
-						renderData,
-						cullingResults->at(lightID),
-						gr::BatchManager::InstanceType::Transform));
+					if (cullingResults)
+					{
+						directionalStage.AddBatches(batchMgr.GetSceneBatches(
+							renderData,
+							cullingResults->at(lightID),
+							gr::BatchManager::InstanceType::Transform));
+					}
+					else
+					{
+						directionalStage.AddBatches(batchMgr.GetAllSceneBatches(
+							m_graphicsSystemManager->GetRenderData(),
+							gr::BatchManager::InstanceType::Transform));
+					}
+					
 				}
 				++directionalItr;
 			}
@@ -539,63 +549,109 @@ namespace gr
 
 		if (renderData.HasObjectData<gr::Light::RenderDataSpot>())
 		{
-			PunctualLightCullingResults const& spotIDs =
-				*static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingInput));
-
-			auto spotItr = renderData.IDBegin(spotIDs);
-			auto const& spotItrEnd = renderData.IDEnd(spotIDs);
-			while (spotItr != spotItrEnd)
-			{
-				gr::Light::RenderDataSpot const& spotData = spotItr.Get<gr::Light::RenderDataSpot>();
-				if (spotData.m_hasShadow && spotData.m_canContribute)
+			auto AddSpotLightBatches = [&](auto& spotItr, auto const& spotItrEnd)
 				{
-					const gr::RenderDataID lightID = spotData.m_renderDataID;
+					while (spotItr != spotItrEnd)
+					{
+						gr::Light::RenderDataSpot const& spotData = spotItr.Get<gr::Light::RenderDataSpot>();
+						if (spotData.m_hasShadow && spotData.m_canContribute)
+						{
+							const gr::RenderDataID lightID = spotData.m_renderDataID;
 
-					re::RenderStage& spotStage = *m_spotShadowStageData.at(lightID).m_renderStage;
+							re::RenderStage& spotStage = *m_spotShadowStageData.at(lightID).m_renderStage;
 
-					spotStage.AddBatches(batchMgr.BuildSceneBatches(
-						renderData,
-						cullingResults->at(lightID),
-						gr::BatchManager::InstanceType::Transform));
-				}
-				++spotItr;
+							if (cullingResults)
+							{
+								spotStage.AddBatches(batchMgr.GetSceneBatches(
+									renderData,
+									cullingResults->at(lightID),
+									gr::BatchManager::InstanceType::Transform));
+							}
+							else
+							{
+								spotStage.AddBatches(batchMgr.GetAllSceneBatches(
+									m_graphicsSystemManager->GetRenderData(),
+									gr::BatchManager::InstanceType::Transform));
+							}
+						}
+						++spotItr;
+					}
+				};
+
+			PunctualLightCullingResults const* spotIDs =
+				static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingInput));
+			if (spotIDs)
+			{
+				auto spotItr = renderData.IDBegin(*spotIDs);
+				auto const& spotItrEnd = renderData.IDEnd(*spotIDs);
+				AddSpotLightBatches(spotItr, spotItrEnd);
+			}
+			else
+			{
+				auto spotItr = renderData.Begin<gr::Light::RenderDataSpot>();
+				auto const& spotItrEnd = renderData.End<gr::Light::RenderDataSpot>();
+				AddSpotLightBatches(spotItr, spotItrEnd);
 			}
 		}
 
 		if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
 		{
-			PunctualLightCullingResults const& pointIDs =
-				*static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingInput));
-
-			auto pointItr = renderData.IDBegin(pointIDs);
-			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
-			while (pointItr != pointItrEnd)
-			{
-				gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
-				if (pointData.m_hasShadow && pointData.m_canContribute)
+			auto AddPointLightBatches = [&](auto& pointItr, auto const& pointItrEnd)
 				{
-					const gr::RenderDataID lightID = pointData.m_renderDataID;
-
-					const std::vector<gr::Camera::View> views =
+					while (pointItr != pointItrEnd)
 					{
-						{pointData.m_renderDataID, gr::Camera::View::Face::XPos},
-						{pointData.m_renderDataID, gr::Camera::View::Face::XNeg},
-						{pointData.m_renderDataID, gr::Camera::View::Face::YPos},
-						{pointData.m_renderDataID, gr::Camera::View::Face::YNeg},
-						{pointData.m_renderDataID, gr::Camera::View::Face::ZPos},
-						{pointData.m_renderDataID, gr::Camera::View::Face::ZNeg},
-					};
+						gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
+						if (pointData.m_hasShadow && pointData.m_canContribute)
+						{
+							const gr::RenderDataID lightID = pointData.m_renderDataID;
 
-					// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so we need to
-					// add all batches to the same stage. This is wasteful, as 5/6 of the faces don't need a given
-					// batch. We should draw each face of the cubemap seperately instead
-					m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
-						batchMgr.BuildSceneBatches(
-							renderData,
-							CombineVisibleRenderDataIDs(renderData, *cullingResults, views),
-							gr::BatchManager::InstanceType::Transform));
-				}
-				++pointItr;
+							const std::vector<gr::Camera::View> views =
+							{
+								{pointData.m_renderDataID, gr::Camera::View::Face::XPos},
+								{pointData.m_renderDataID, gr::Camera::View::Face::XNeg},
+								{pointData.m_renderDataID, gr::Camera::View::Face::YPos},
+								{pointData.m_renderDataID, gr::Camera::View::Face::YNeg},
+								{pointData.m_renderDataID, gr::Camera::View::Face::ZPos},
+								{pointData.m_renderDataID, gr::Camera::View::Face::ZNeg},
+							};
+
+							if (cullingResults)
+							{
+								// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so we need
+								// to add all batches to the same stage. This is wasteful, as 5/6 of the faces don't need a
+								// given batch. We should draw each face of the cubemap seperately instead
+								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
+									batchMgr.GetSceneBatches(
+										renderData,
+										CombineVisibleRenderDataIDs(renderData, *cullingResults, views),
+										gr::BatchManager::InstanceType::Transform));
+							}
+							else
+							{
+								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
+									batchMgr.GetAllSceneBatches(
+										m_graphicsSystemManager->GetRenderData(),
+										gr::BatchManager::InstanceType::Transform));
+							}
+						}
+						++pointItr;
+					}
+				};
+
+			PunctualLightCullingResults const* pointIDs =
+				static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingInput));
+			if (pointIDs)
+			{
+				auto pointItr = renderData.IDBegin(*pointIDs);
+				auto const& pointItrEnd = renderData.IDEnd(*pointIDs);
+				AddPointLightBatches(pointItr, pointItrEnd);
+			}
+			else
+			{
+				auto pointItr = renderData.Begin<gr::Light::RenderDataPoint>();
+				auto const& pointItrEnd = renderData.End<gr::Light::RenderDataPoint>();
+				AddPointLightBatches(pointItr, pointItrEnd);
+
 			}
 		}
 	}

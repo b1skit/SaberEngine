@@ -367,7 +367,7 @@ namespace gr
 	}
 
 
-	std::vector<re::Batch> BatchManager::BuildSceneBatches(
+	std::vector<re::Batch> BatchManager::GetSceneBatches(
 		gr::RenderDataManager const& renderData, 
 		std::vector<gr::RenderDataID> const& renderDataIDs,
 		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
@@ -457,5 +457,20 @@ namespace gr
 		}
 
 		return batches;
+	}
+
+
+	std::vector<re::Batch> BatchManager::GetAllSceneBatches(gr::RenderDataManager const& renderData,
+		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
+	{
+		std::vector<gr::RenderDataID> allRenderDataIDs;
+		allRenderDataIDs.reserve(m_renderDataIDToBatchMetadata.size());
+
+		for (auto const& metadata : m_renderDataIDToBatchMetadata)
+		{
+			allRenderDataIDs.emplace_back(metadata.first);
+		}
+
+		return GetSceneBatches(renderData, allRenderDataIDs, bufferTypeMask);
 	}
 }

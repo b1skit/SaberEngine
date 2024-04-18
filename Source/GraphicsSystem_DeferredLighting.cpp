@@ -1124,25 +1124,51 @@ namespace gr
 		}
 		
 
-		// Hash culled visible light IDs so we can quickly check if we need to add a point/spot light's batch:		
-		PunctualLightCullingResults const& spotIDs = 
-			*static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingInput));
-		PunctualLightCullingResults const& pointIDs = 
-			*static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingInput));
-
+		// Hash culled visible light IDs so we can quickly check if we need to add a point/spot light's batch:
 		std::unordered_set<gr::RenderDataID> visibleLightIDs;
-		visibleLightIDs.reserve(spotIDs.size() + pointIDs.size());
 
-		auto UpdateVisibility = [&](std::vector<gr::RenderDataID> const& lightIDs)
+		auto MarkIDsVisible = [&](std::vector<gr::RenderDataID> const* lightIDs)
 			{
-				for (gr::RenderDataID lightID : lightIDs)
+				for (gr::RenderDataID lightID : *lightIDs)
 				{
 					visibleLightIDs.emplace(lightID);
 				}
 			};
-		UpdateVisibility(spotIDs);
-		UpdateVisibility(pointIDs);
-		
+		auto MarkAllIDsVisible = [&](auto& lightObjectItr, auto const& lightObjectItrEnd)
+			{
+				while (lightObjectItr != lightObjectItrEnd)
+				{
+					visibleLightIDs.emplace(lightObjectItr.GetRenderDataID());
+					++lightObjectItr;
+				}
+			};
+
+		PunctualLightCullingResults const* spotIDs = 
+			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingInput));
+		if (spotIDs)
+		{
+			MarkIDsVisible(spotIDs);
+		}
+		else
+		{
+			auto spotItr = renderData.ObjectBegin<gr::Light::RenderDataSpot>();
+			auto const& spotItrEnd = renderData.ObjectEnd<gr::Light::RenderDataSpot>();
+			MarkAllIDsVisible(spotItr, spotItrEnd);
+		}
+
+		PunctualLightCullingResults const* pointIDs = 
+			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingInput));
+		if (pointIDs)
+		{
+			MarkIDsVisible(pointIDs);
+		}
+		else
+		{
+			auto pointItr = renderData.ObjectBegin<gr::Light::RenderDataPoint>();
+			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint>();
+			MarkAllIDsVisible(pointItr, pointItrEnd);
+		}
+
 
 		// Update all of the punctual lights we're tracking:
 		for (auto& light : m_punctualLightData)

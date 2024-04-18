@@ -50,6 +50,9 @@ namespace re
 		{
 			gr::GraphicsSystem::RuntimeBindings::PreRenderFn m_preRenderFunc;
 			std::unordered_map<std::string, void const*> m_resolvedDependencies;
+			
+			gr::GraphicsSystem const* m_gs; // Convenience for debugging/logging
+			std::string const m_scriptFunctionName;
 		};
 		std::vector<UpdateStep> m_updatePipeline;
 

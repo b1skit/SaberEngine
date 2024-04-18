@@ -73,7 +73,10 @@ namespace gr
 		};
 
 		TextureInputDefault GetTextureInputDefaultType(std::string const& inputScriptName) const;
+		
 		bool HasTextureInput(std::string const& inputScriptName) const;
+		std::map<std::string, TextureInputDefault> const& GetTextureInputs() const;
+
 		std::shared_ptr<re::Texture> GetTextureOutput(std::string const& outputScriptName) const;
 
 	protected:
@@ -90,8 +93,10 @@ namespace gr
 		using ViewCullingResults = std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>>;
 		using PunctualLightCullingResults = std::vector<gr::RenderDataID>;
 
-		void const* GetDataOutput(std::string const& scriptName) const;
 		bool HasDataInput(std::string const& scriptName) const;
+		std::set<std::string> const& GetDataInputs() const;
+
+		void const* GetDataOutput(std::string const& scriptName) const;
 
 	protected:
 		void RegisterDataInput(char const*);
@@ -169,6 +174,12 @@ namespace gr
 	}
 
 
+	inline std::map<std::string, GraphicsSystem::TextureInputDefault> const& GraphicsSystem::GetTextureInputs() const
+	{
+		return m_textureInputs;
+	}
+
+
 	inline std::shared_ptr<re::Texture> GraphicsSystem::GetTextureOutput(std::string const& scriptName) const
 	{
 		// Note: It's possible for GS's with multiple initialization steps to hit this if its first initialization step
@@ -198,16 +209,22 @@ namespace gr
 	}
 
 
+	inline bool GraphicsSystem::HasDataInput(std::string const& scriptName) const
+	{
+		return m_dataInputs.contains(scriptName);
+	}
+
+
+	inline std::set<std::string> const& GraphicsSystem::GetDataInputs() const
+	{
+		return m_dataInputs;
+	}
+
+
 	inline void const* GraphicsSystem::GetDataOutput(std::string const& scriptName) const
 	{
 		SEAssert(m_dataOutputs.contains(scriptName), "No data output with the given name has been registered");
 		return m_dataOutputs.at(scriptName);
-	};
-
-
-	inline bool GraphicsSystem::HasDataInput(std::string const& scriptName) const
-	{
-		return m_dataInputs.contains(scriptName);
 	}
 
 

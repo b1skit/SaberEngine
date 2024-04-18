@@ -15,12 +15,18 @@ namespace
 	{
 		gr::GraphicsSystem::TextureDependencies texDependencies;
 
+		gr::GraphicsSystem* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
+
+		// Initialize everything with a nullptr, incase no input is described
+		for (auto const& input : dstGS->GetTextureInputs())
+		{
+			texDependencies.emplace(input.first, nullptr);
+		}
+
 		// It's possible our GS doesn't have any input dependencies
 		if (renderSysDesc.m_textureInputs.contains(dstGSScriptName))
 		{
 			auto const& gsTexDependencies = renderSysDesc.m_textureInputs.at(dstGSScriptName);
-
-			gr::GraphicsSystem* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
 
 			// Iterate over each GS in our dependency list:
 			for (auto const& srcEntry : gsTexDependencies)
@@ -37,7 +43,7 @@ namespace
 
 					if (srcGS)
 					{
-						texDependencies.emplace(dstName, srcGS->GetTextureOutput(srcName));
+						texDependencies[dstName] = srcGS->GetTextureOutput(srcName);
 					}
 					else
 					{
@@ -51,37 +57,33 @@ namespace
 						{
 						case gr::GraphicsSystem::TextureInputDefault::OpaqueWhite:
 						{
-							texDependencies.emplace(
-								dstName,
-								sceneData->GetTexture(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName));
+							texDependencies[dstName] =
+								sceneData->GetTexture(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::TransparentWhite:
 						{
-							texDependencies.emplace(
-								dstName,
-								sceneData->GetTexture(en::DefaultResourceNames::k_transparentWhiteDefaultTexName));
+							texDependencies[dstName] =
+								sceneData->GetTexture(en::DefaultResourceNames::k_transparentWhiteDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::OpaqueBlack:
 						{
-							texDependencies.emplace(
-								dstName,
-								sceneData->GetTexture(en::DefaultResourceNames::k_opaqueBlackDefaultTexName));
+							texDependencies[dstName] =
+								sceneData->GetTexture(en::DefaultResourceNames::k_opaqueBlackDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::TransparentBlack:
 						{
-							texDependencies.emplace(
-								dstName,
-								sceneData->GetTexture(en::DefaultResourceNames::k_transparentBlackDefaultTexName));
+							texDependencies[dstName] =
+								sceneData->GetTexture(en::DefaultResourceNames::k_transparentBlackDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::None:
 						{
-							SEAssertF("Couldn't find a source GS, and no default input has been specified");
-							continue;
+							continue; // We've already initialized the entry as a nullptr
 						}
+						break;
 						default: SEAssertF("Invalid TextureInputDefault");
 						}
 					}
@@ -103,18 +105,26 @@ namespace
 
 		std::unordered_map<std::string, void const*> resolvedDependencies;
 
+		gr::GraphicsSystem const* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
+
+		// Initialize everything with a nullptr, incase no input is described
+		for (auto const& input : dstGS->GetDataInputs())
+		{
+			resolvedDependencies.emplace(input, nullptr);
+		}
+
+		// Process any data inputs assigned to the current destination GraphicsSystem:
 		if (renderSysDesc.m_dataInputs.contains(dstGSScriptName))
 		{
 			std::vector<std::pair<GSName, SrcDstNamePairs>> const& gsDependencies =
 				renderSysDesc.m_dataInputs.at(dstGSScriptName);
-
-			gr::GraphicsSystem const* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
 
 			for (auto const& curDependency : gsDependencies)
 			{
 				std::string const& srcGSName = curDependency.first;
 
 				gr::GraphicsSystem const* srcGS = gsm.GetGraphicsSystemByScriptName(srcGSName);
+				SEAssert(srcGS, "Source GraphicsSystem could not be found");
 
 				for (auto const& srcDstNames : curDependency.second)
 				{
@@ -122,7 +132,7 @@ namespace
 					SEAssert(dstGS->HasDataInput(dependencyDstName), "No input with the given name has been registered");
 
 					std::string const& dependencySrcName = srcDstNames.first;
-					resolvedDependencies.emplace(dependencyDstName, srcGS->GetDataOutput(dependencySrcName));
+					resolvedDependencies[dependencyDstName] = srcGS->GetDataOutput(dependencySrcName);
 				}
 			}
 		}
@@ -215,7 +225,9 @@ namespace re
 
 				UpdateStep& updateStep = m_updatePipeline.emplace_back(UpdateStep{
 					.m_preRenderFunc = currentGS->GetRuntimeBindings().m_preRenderFunctions.at(lowercaseScriptFnName),
-					.m_resolvedDependencies = ResolveDataDependencies(currentGSName, renderSysDesc, gsm)});
+					.m_resolvedDependencies = ResolveDataDependencies(currentGSName, renderSysDesc, gsm),
+					.m_gs = currentGS,
+					.m_scriptFunctionName = lowercaseScriptFnName });
 			}
 		};
 
@@ -245,7 +257,18 @@ namespace re
 
 		for (auto& updateStep : m_updatePipeline)
 		{
-			updateStep.m_preRenderFunc(updateStep.m_resolvedDependencies);
+			try
+			{
+				updateStep.m_preRenderFunc(updateStep.m_resolvedDependencies);
+			}
+			catch (std::exception e)
+			{
+				SEAssertF(std::format(
+					"RenderSystem::ExecuteUpdatePipeline exception when executing \"{}::{}\"\n{}",
+					updateStep.m_gs->GetName().c_str(),
+					updateStep.m_scriptFunctionName.c_str(),
+					e.what()).c_str());
+			}
 		}
 
 		SEEndCPUEvent();

@@ -179,6 +179,9 @@ namespace gr
 			[[nodiscard]] T const& operator*() const { return *m_ptr; }
 			[[nodiscard]] T const* operator->() { return m_ptr; }
 
+			template<typename T>
+			[[nodiscard]] T const& Get() const { return *m_ptr; }
+
 			LinearIterator& operator++(); // Prefix increment
 			LinearIterator operator++(int); // Postfix increment
 
