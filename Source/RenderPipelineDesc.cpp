@@ -78,6 +78,9 @@ namespace re
 				currentRSDesc.m_graphicsSystemNames.emplace(gsName);
 			}
 
+			using GSName = re::RenderPipelineDesc::RenderSystemDescription::GSName;
+			using SrcDstNamePairs = re::RenderPipelineDesc::RenderSystemDescription::SrcDstNamePairs;
+
 			// "ResourceDependencies":
 			// Note: A resource dependencies block isn't strictly necessary
 			if (renderSystemEntry.contains(RenderPipelineDesc::key_resourceDependenciesBlock))
@@ -91,18 +94,42 @@ namespace re
 					std::string const& currentGSName = 
 						currentGSEntry[RenderPipelineDesc::key_GSName].template get<std::string>();
 
+
+					// Helper: Parses lists of {"SourceName": "...", "DestinationName": "..."} entries
+					auto ParseDependencyList = [&ExcludesPlatform](
+						auto const& dependencyList,
+						std::string const& dependencySourceGS,
+						std::vector<std::pair<GSName, SrcDstNamePairs>>& curDependencies)
+						{
+							bool haveAddedFirstDependencyEntry = false;
+
+							for (auto const& dependencyEntry : dependencyList)
+							{
+								if (ExcludesPlatform(dependencyEntry))
+								{
+									continue;
+								}
+								else if (!haveAddedFirstDependencyEntry)
+								{
+									// We must ensure we don't record empty GS dependencies for excluded platforms;
+									// and we only want to add a single entry for the current source GS
+									curDependencies.emplace_back(dependencySourceGS, SrcDstNamePairs());
+									haveAddedFirstDependencyEntry = true;
+								}
+
+								SrcDstNamePairs& srcDstNames = curDependencies.back().second;
+
+								srcDstNames.emplace_back(
+									dependencyEntry[RenderPipelineDesc::key_srcName],
+									dependencyEntry[RenderPipelineDesc::key_dstName]);
+							}
+						};
+
+
 					// "Inputs":
 					if (currentGSEntry.contains(RenderPipelineDesc::key_inputsList) &&
 						!currentGSEntry[RenderPipelineDesc::key_inputsList].empty())
 					{
-						using GSName = re::RenderPipelineDesc::RenderSystemDescription::GSName;
-						using TexSrcDstNamePairs = re::RenderPipelineDesc::RenderSystemDescription::TexSrcDstNamePairs;
-
-						std::vector<std::pair<GSName, TexSrcDstNamePairs>>& currentGSDependencies = 
-							currentRSDesc.m_textureInputs.emplace(
-								currentGSName, 
-								std::vector<std::pair<GSName, TexSrcDstNamePairs>>()).first->second;
-
 						auto const& inputsList = currentGSEntry[RenderPipelineDesc::key_inputsList];
 						for (auto const& inputEntry : inputsList)
 						{
@@ -113,42 +140,24 @@ namespace re
 							SEAssert(dependencySourceGS != currentGSName, "A GS has listed itself as an input source");
 
 							// "TextureDependencies":
-							bool haveAddedCurDependencyEntry = false;
-							auto const& texDependenciesList = inputEntry[RenderPipelineDesc::key_textureDependenciesList];
-							for (auto const& texDependencyEntry : texDependenciesList)
+							if (inputEntry.contains(RenderPipelineDesc::key_textureDependenciesList) &&
+								!inputEntry[RenderPipelineDesc::key_textureDependenciesList].empty())
 							{
-								if (ExcludesPlatform(texDependencyEntry))
-								{
-									continue;
-								}
-								else if (!haveAddedCurDependencyEntry)
-								{
-									// Ensure we don't record empty GS dependencies for excluded platforms
-									currentGSDependencies.emplace_back(dependencySourceGS, TexSrcDstNamePairs());
-									haveAddedCurDependencyEntry = true;
-								}
+								ParseDependencyList(
+									inputEntry[RenderPipelineDesc::key_textureDependenciesList],
+									dependencySourceGS, 
+									currentRSDesc.m_textureInputs[currentGSName]);
+							}
 
-								TexSrcDstNamePairs& texSrcDstNames = currentGSDependencies.back().second;
-
-								texSrcDstNames.emplace_back(
-									texDependencyEntry[RenderPipelineDesc::key_srcName],
-									texDependencyEntry[RenderPipelineDesc::key_dstName]
-								);
-							}							
-						}
-					}
-
-					// "Accesses":
-					if (currentGSEntry.contains(RenderPipelineDesc::key_accessesList) && 
-						!currentGSEntry[RenderPipelineDesc::key_accessesList].empty())
-					{
-						std::unordered_set<std::string>& currentGSAccesses = currentRSDesc.m_accesses[currentGSName];
-
-						auto const& accessesBlock = currentGSEntry[RenderPipelineDesc::key_accessesList];
-						for (auto const& accessEntry : accessesBlock)
-						{
-							auto const& result = currentGSAccesses.emplace(accessEntry.template get<std::string>());
-							SEAssert(*result.first != currentGSName, "A GS has listed itself in the accesses list");
+							// "DataDependencies":
+							if (inputEntry.contains(RenderPipelineDesc::key_dataDependenciesList) &&
+								!inputEntry[RenderPipelineDesc::key_dataDependenciesList].empty())
+							{
+								ParseDependencyList(
+									inputEntry[RenderPipelineDesc::key_dataDependenciesList],
+									dependencySourceGS,
+									currentRSDesc.m_dataInputs[currentGSName]);
+							}
 						}
 					}
 				}

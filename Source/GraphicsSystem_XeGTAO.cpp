@@ -382,14 +382,14 @@ namespace gr
 	}
 
 
-	void XeGTAOGraphicsSystem::RegisterTextureInputs()
+	void XeGTAOGraphicsSystem::RegisterInputs()
 	{
 		RegisterTextureInput(k_wNormalInput);
 		RegisterTextureInput(k_depthInput);
 	}
 
 
-	void XeGTAOGraphicsSystem::RegisterTextureOutputs()
+	void XeGTAOGraphicsSystem::RegisterOutputs()
 	{
 		RegisterTextureOutput(
 			k_aoOutput, 
@@ -397,7 +397,7 @@ namespace gr
 	}
 
 
-	void XeGTAOGraphicsSystem::PreRender()
+	void XeGTAOGraphicsSystem::PreRender(DataDependencies const&)
 	{	
 		if (m_isDirty)
 		{

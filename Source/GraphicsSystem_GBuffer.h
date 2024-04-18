@@ -1,9 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "GraphicsSystem.h"
-#include "RenderStage.h"
 
+
+namespace re
+{
+	class RenderStage;
+}
 
 namespace gr
 {
@@ -23,8 +26,9 @@ namespace gr
 			);
 		}
 
-		void RegisterTextureInputs() override { /*No inputs*/ }
-		void RegisterTextureOutputs() override;
+		static constexpr char const* k_cullingInput = "ViewCullingResults";
+		void RegisterInputs() override;
+		void RegisterOutputs() override;
 
 
 	public:
@@ -64,11 +68,11 @@ namespace gr
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
 
-		void PreRender();
+		void PreRender(DataDependencies const&);
 
 
 	private:
-		void CreateBatches();
+		void CreateBatches(DataDependencies const&);
 
 	private:
 		std::shared_ptr<re::RenderStage> m_gBufferStage;

@@ -27,13 +27,6 @@ namespace gr
 		void Create();
 		void PreRender();
 
-		// Note: This may not be thread safe. A GraphicsSystems that accesses another must list it as a dependency in
-		// the scriptable render pipeline "Accesses" block
-		template <typename T>
-		T* GetGraphicsSystem() const;
-
-		std::vector<std::unique_ptr<gr::GraphicsSystem>> const& GetGraphicsSystems() const;
-
 		void CreateAddGraphicsSystemByScriptName(char const* scriptName);
 		void CreateAddGraphicsSystemByScriptName(std::string const& scriptName);
 
@@ -99,29 +92,6 @@ namespace gr
 		GraphicsSystemManager& operator=(GraphicsSystemManager&&) = delete;
 
 	};
-
-
-	inline std::vector<std::unique_ptr<gr::GraphicsSystem>> const& GraphicsSystemManager::GetGraphicsSystems() const
-	{
-		return m_graphicsSystems;
-	}
-
-
-	template <typename T>
-	T* GraphicsSystemManager::GetGraphicsSystem() const
-	{
-		// TODO: A linear search isn't optimal here, but there aren't many graphics systems in practice so ok for now
-		for (size_t i = 0; i < m_graphicsSystems.size(); i++)
-		{
-			T* result = dynamic_cast<T*>(m_graphicsSystems[i].get());
-			if (result != nullptr)
-			{
-				return result;
-			}
-		}
-
-		return nullptr;
-	}
 
 
 	inline gr::BatchManager const& GraphicsSystemManager::GetBatchManager() const

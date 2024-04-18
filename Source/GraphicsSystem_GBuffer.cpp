@@ -1,8 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "CameraRenderData.h"
 #include "Config.h"
-#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "RenderManager.h"
+#include "RenderObjectIDs.h"
+#include "RenderStage.h"
 #include "Shader.h"
 #include "Texture.h"
 
@@ -108,7 +110,13 @@ namespace gr
 	}
 
 
-	void GBufferGraphicsSystem::RegisterTextureOutputs()
+	void GBufferGraphicsSystem::RegisterInputs()
+	{
+		RegisterDataInput(k_cullingInput);
+	}
+
+
+	void GBufferGraphicsSystem::RegisterOutputs()
 	{
 		// Color textures:
 		for (uint8_t i = 0; i < GBufferColorTex_Count; i++)
@@ -122,9 +130,9 @@ namespace gr
 	}
 
 
-	void GBufferGraphicsSystem::PreRender()
+	void GBufferGraphicsSystem::PreRender(DataDependencies const& dataDependencies)
 	{
-		CreateBatches();
+		CreateBatches(dataDependencies);
 
 		if (m_gBufferStage->GetStageBatches().empty())
 		{
@@ -141,17 +149,17 @@ namespace gr
 	}
 
 
-	void GBufferGraphicsSystem::CreateBatches()
+	void GBufferGraphicsSystem::CreateBatches(DataDependencies const& dataDependencies)
 	{
 		const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
-		gr::CullingGraphicsSystem const* cullingGS = 
-			m_graphicsSystemManager->GetGraphicsSystem<gr::CullingGraphicsSystem>();
+		ViewCullingResults const* cullingResults = 
+			static_cast<ViewCullingResults const*>(dataDependencies.at(k_cullingInput));
 
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 		
 		m_gBufferStage->AddBatches(batchMgr.BuildSceneBatches(
 			m_graphicsSystemManager->GetRenderData(),
-			cullingGS->GetVisibleRenderDataIDs(gr::Camera::View(mainCamID))));
+			cullingResults->at(mainCamID)));
 	}
 }

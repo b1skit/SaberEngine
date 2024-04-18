@@ -8,7 +8,7 @@
 
 namespace
 {
-	gr::GraphicsSystem::TextureDependencies BuildTextureDependencies(
+	gr::GraphicsSystem::TextureDependencies ResolveTextureDependencies(
 		std::string const& dstGSScriptName,
 		re::RenderPipelineDesc::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
@@ -97,7 +97,46 @@ namespace
 
 		return texDependencies;
 	}
+
+
+	std::unordered_map<std::string, void const*> ResolveDataDependencies(
+		std::string const& dstGSScriptName,
+		re::RenderPipelineDesc::RenderSystemDescription const& renderSysDesc,
+		gr::GraphicsSystemManager const& gsm)
+	{
+		using GSName = re::RenderPipelineDesc::RenderSystemDescription::GSName;
+		using SrcDstNamePairs = re::RenderPipelineDesc::RenderSystemDescription::SrcDstNamePairs;
+
+		std::unordered_map<std::string, void const*> resolvedDependencies;
+
+		if (renderSysDesc.m_dataInputs.contains(dstGSScriptName))
+		{
+			std::vector<std::pair<GSName, SrcDstNamePairs>> const& gsDependencies =
+				renderSysDesc.m_dataInputs.at(dstGSScriptName);
+
+			gr::GraphicsSystem const* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
+
+			for (auto const& curDependency : gsDependencies)
+			{
+				std::string const& srcGSName = curDependency.first;
+
+				gr::GraphicsSystem const* srcGS = gsm.GetGraphicsSystemByScriptName(srcGSName);
+
+				for (auto const& srcDstNames : curDependency.second)
+				{
+					std::string const& dependencyDstName = srcDstNames.second;
+					SEAssert(dstGS->HasDataInput(dependencyDstName), "No input with the given name has been registered");
+
+					std::string const& dependencySrcName = srcDstNames.first;
+					resolvedDependencies.emplace(dependencyDstName, srcGS->GetDataOutput(dependencySrcName));
+				}
+			}
+		}
+
+		return resolvedDependencies;
+	}
 }
+
 
 namespace re
 {
@@ -131,7 +170,7 @@ namespace re
 
 	void RenderSystem::BuildPipeline(RenderPipelineDesc::RenderSystemDescription const& renderSysDesc)
 	{
-		// Create the GS creation pipeline:
+		// Construct the GS creation pipeline:
 		m_creationPipeline = [this, renderSysDesc](re::RenderSystem* renderSystem)
 		{
 			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
@@ -140,20 +179,9 @@ namespace re
 			{
 				gsm.CreateAddGraphicsSystemByScriptName(gsName);
 			}
-
-			// The update pipeline caches member function pointers; We can populate it now that our GS objects exist
-			for (auto const& entry : renderSysDesc.m_updateSteps)
-			{
-				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(entry.first);
-
-				std::string const& lowercaseScriptFnName(util::ToLower(entry.second));
-
-				m_updatePipeline.emplace_back(
-					currentGS->GetRuntimeBindings().m_preRenderFunctions.at(lowercaseScriptFnName));
-			}
 		};
 
-		m_initPipeline = [renderSysDesc](re::RenderSystem* renderSystem)
+		m_initPipeline = [this, renderSysDesc](re::RenderSystem* renderSystem)
 		{
 			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
 			gsm.Create();
@@ -165,20 +193,35 @@ namespace re
 				std::string const& currentGSScriptName = entry.first;
 				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(currentGSScriptName);
 
-				currentGS->RegisterTextureInputs();
+				currentGS->RegisterInputs();
 
 				std::string const& lowercaseScriptFnName(util::ToLower(entry.second));
 				std::string const& stagePipelineName = std::format("{} stages", currentGS->GetName());
 
 				std::map<std::string, std::shared_ptr<re::Texture>> const& textureInputs = 
-					BuildTextureDependencies(currentGSScriptName, renderSysDesc, gsm);
+					ResolveTextureDependencies(currentGSScriptName, renderSysDesc, gsm);
 
 				currentGS->GetRuntimeBindings().m_initPipelineFunctions.at(lowercaseScriptFnName)(
 					renderPipeline.AddNewStagePipeline(stagePipelineName),
 					textureInputs);
 
 				// Now the GS is initialized, it can populate its resource dependencies for other GS's
-				currentGS->RegisterTextureOutputs();
+				currentGS->RegisterOutputs();
+			}
+
+			// The update pipeline caches member function and data pointers; We can only populate it once our GS's are
+			// created & initialized
+			for (auto const& entry : renderSysDesc.m_updateSteps)
+			{
+				std::string const& currentGSName = entry.first;
+
+				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(currentGSName);
+
+				std::string const& lowercaseScriptFnName = util::ToLower(entry.second);
+
+				UpdateStep& updateStep = m_updatePipeline.emplace_back(UpdateStep{
+					.m_preRenderFunc = currentGS->GetRuntimeBindings().m_preRenderFunctions.at(lowercaseScriptFnName),
+					.m_resolvedDependencies = ResolveDataDependencies(currentGSName, renderSysDesc, gsm)});
 			}
 		};
 
@@ -206,9 +249,9 @@ namespace re
 
 		m_graphicsSystemManager.PreRender();
 
-		for (auto executeStep : m_updatePipeline)
+		for (auto& updateStep : m_updatePipeline)
 		{
-			executeStep();
+			updateStep.m_preRenderFunc(updateStep.m_resolvedDependencies);
 		}
 
 		SEEndCPUEvent();

@@ -71,7 +71,7 @@ namespace gr
 	}
 
 
-	void ComputeMipsGraphicsSystem::PreRender()
+	void ComputeMipsGraphicsSystem::PreRender(DataDependencies const&)
 	{
 		std::vector<std::shared_ptr<re::Texture>> const& newTextures = 
 			re::RenderManager::Get()->GetNewlyCreatedTextures();

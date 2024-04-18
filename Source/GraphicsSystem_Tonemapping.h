@@ -23,19 +23,18 @@ namespace gr
 
 		static constexpr char const* k_tonemappingTargetInput = "TonemappingTarget";
 		static constexpr char const* k_bloomResultInput = "BloomResult";
-		void RegisterTextureInputs() override;
+		void RegisterInputs() override;
 
-		void RegisterTextureOutputs() override;
+		void RegisterOutputs() override;
 
 
 	public:
 		TonemappingGraphicsSystem(gr::GraphicsSystemManager*);
 
-		~TonemappingGraphicsSystem() override {}
+		~TonemappingGraphicsSystem() = default;
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
-
-		void PreRender();
+		void PreRender(DataDependencies const&);
 
 
 	private:

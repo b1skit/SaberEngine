@@ -21,8 +21,8 @@ namespace gr
 			);
 		}
 
-		void RegisterTextureInputs() override {};
-		void RegisterTextureOutputs() override {};
+		void RegisterInputs() override {};
+		void RegisterOutputs() override {};
 
 
 	public:
@@ -32,7 +32,7 @@ namespace gr
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
 
-		void PreRender();
+		void PreRender(DataDependencies const&);
 
 
 	private:

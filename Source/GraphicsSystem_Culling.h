@@ -18,28 +18,25 @@ namespace gr
 		{
 			RETURN_RUNTIME_BINDINGS
 			(
-				// Note: No INIT_PIPELINE functionality for Culling
+				INIT_PIPELINE(INIT_PIPELINE_FN(CullingGraphicsSystem, InitPipeline))
 				PRE_RENDER(PRE_RENDER_FN(CullingGraphicsSystem, PreRender))
 			);
 		}
 
-		void RegisterTextureInputs() override {};
-		void RegisterTextureOutputs() override {};
+		void RegisterInputs() override { /*No inputs*/ };
+
+		static constexpr char const* k_cullingOutput = "ViewCullingResults";
+		static constexpr char const* k_pointLightCullingOutput = "PointLightCullingResults";
+		static constexpr char const* k_spotLightCullingOutput = "SpotLightCullingResults";
+		void RegisterOutputs() override;
 
 
 	public:
 		CullingGraphicsSystem(gr::GraphicsSystemManager*);
 		~CullingGraphicsSystem() override = default;
 
-		void InitPipeline();
-
-		void PreRender();
-
-		std::vector<gr::RenderDataID> const& GetVisibleRenderDataIDs(gr::Camera::View const&) const;
-		std::vector<gr::RenderDataID> GetVisibleRenderDataIDs(std::vector<gr::Camera::View> const&) const;
-		
-		std::vector<gr::RenderDataID> const& GetVisiblePointLights() const; // For the currently active camera
-		std::vector<gr::RenderDataID> const& GetVisibleSpotLights() const;
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
+		void PreRender(DataDependencies const&);
 
 		void ShowImGuiWindow() override;
 
@@ -55,7 +52,7 @@ namespace gr
 		std::mutex m_cachedFrustumsMutex;
 
 		// Mapping Camera RenderDataIDs to a list of RenderDataIDs visible after culling
-		std::map<gr::Camera::View const, std::vector<gr::RenderDataID>> m_viewToVisibleIDs;
+		std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>> m_viewToVisibleIDs;
 		std::mutex m_viewToVisibleIDsMutex;
 
 		// A list of light RenderDataIDs visible to the main camera
@@ -65,25 +62,4 @@ namespace gr
 
 		bool m_cullingEnabled;
 	};
-
-
-	inline std::vector<gr::RenderDataID> const& CullingGraphicsSystem::GetVisibleRenderDataIDs(
-		gr::Camera::View const& view) const
-	{
-		SEAssert(m_viewToVisibleIDs.contains(view), "Camera with the given RenderDataID not found");
-
-		return m_viewToVisibleIDs.at(view);
-	}
-
-
-	inline std::vector<gr::RenderDataID> const& CullingGraphicsSystem::GetVisiblePointLights() const
-	{
-		return m_visiblePointLightIDs;
-	}
-
-
-	inline std::vector<gr::RenderDataID> const& CullingGraphicsSystem::GetVisibleSpotLights() const
-	{
-		return m_visibleSpotLightIDs;
-	}
 }

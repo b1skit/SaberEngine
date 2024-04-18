@@ -23,8 +23,13 @@ namespace gr
 			);
 		}
 
-		void RegisterTextureInputs() override {};
-		void RegisterTextureOutputs() override {};
+		static constexpr char const* k_cullingInput = "ViewCullingResults";
+		static constexpr char const* k_pointLightCullingInput = "PointLightCullingResults";
+		static constexpr char const* k_spotLightCullingInput = "SpotLightCullingResults";
+		void RegisterInputs() override;
+
+		static constexpr char const* k_shadowTexturesOutput = "ShadowTextures";
+		void RegisterOutputs() override;
 
 
 	public:
@@ -32,14 +37,13 @@ namespace gr
 		~ShadowsGraphicsSystem() override = default;
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
-
-		void PreRender();
+		void PreRender(DataDependencies const&);
 
 		std::unordered_map<gr::RenderDataID, re::Texture const*> const& GetShadowTextures() const;
 
 
 	private:
-		void CreateBatches();
+		void CreateBatches(DataDependencies const&);
 
 
 	private:

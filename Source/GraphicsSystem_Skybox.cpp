@@ -111,20 +111,20 @@ namespace gr
 	}
 
 
-	void SkyboxGraphicsSystem::RegisterTextureInputs()
+	void SkyboxGraphicsSystem::RegisterInputs()
 	{
 		RegisterTextureInput(k_skyboxTargetInput);
 		RegisterTextureInput(k_sceneDepthInput);
 	}
 
 
-	void SkyboxGraphicsSystem::RegisterTextureOutputs()
+	void SkyboxGraphicsSystem::RegisterOutputs()
 	{
 		//
 	}
 
 
-	void SkyboxGraphicsSystem::PreRender()
+	void SkyboxGraphicsSystem::PreRender(DataDependencies const&)
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 

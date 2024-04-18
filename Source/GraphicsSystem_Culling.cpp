@@ -186,13 +186,21 @@ namespace gr
 	}
 
 
-	void CullingGraphicsSystem::InitPipeline()
+	void CullingGraphicsSystem::RegisterOutputs()
+	{
+		RegisterDataOutput(k_cullingOutput, &m_viewToVisibleIDs);
+		RegisterDataOutput(k_pointLightCullingOutput, &m_visiblePointLightIDs);
+		RegisterDataOutput(k_spotLightCullingOutput, &m_visibleSpotLightIDs);
+	};
+
+
+	void CullingGraphicsSystem::InitPipeline(re::StagePipeline&, TextureDependencies const&)
 	{
 		//
 	}
 
 
-	void CullingGraphicsSystem::PreRender()
+	void CullingGraphicsSystem::PreRender(DataDependencies const&)
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
@@ -457,41 +465,6 @@ namespace gr
 		{
 			cullingFutures[cullingFutureIdx].wait();
 		}
-	}
-
-
-	std::vector<gr::RenderDataID> CullingGraphicsSystem::GetVisibleRenderDataIDs(
-		std::vector<gr::Camera::View> const& views) const
-	{
-		// TODO: This function is a temporary convenience, we concatenate sets of RenderDataIDs together for point light
-		// shadow draws which use a geometry shader to project each batch to every face. This is wasteful!
-		// Instead, we should draw each point light shadow face seperately, using the culling results to send only the
-		// relevant batches to each face.
-
-		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
-
-		const size_t numMeshPrimitives = renderData.GetNumElementsOfType<gr::MeshPrimitive::RenderData>();
-		std::vector<gr::RenderDataID> uniqueRenderDataIDs;
-		uniqueRenderDataIDs.reserve(numMeshPrimitives);
-
-		// Combine the RenderDataIDs visible in each view into a unique set
-		std::unordered_set<gr::RenderDataID> seenIDs;
-		seenIDs.reserve(numMeshPrimitives);
-
-		for (gr::Camera::View const& view : views)
-		{
-			std::vector<gr::RenderDataID> const& visibleIDs = GetVisibleRenderDataIDs(view);
-			for (gr::RenderDataID id : visibleIDs)
-			{
-				if (!seenIDs.contains(id))
-				{
-					seenIDs.emplace(id);
-					uniqueRenderDataIDs.emplace_back(id);
-				}
-			}
-		}
-
-		return uniqueRenderDataIDs;
 	}
 
 

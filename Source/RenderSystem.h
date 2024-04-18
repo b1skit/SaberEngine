@@ -44,7 +44,14 @@ namespace re
 		re::RenderPipeline m_renderPipeline;
 		std::function<void(re::RenderSystem*)> m_creationPipeline;
 		std::function<void(re::RenderSystem*)> m_initPipeline;
-		std::vector<gr::GraphicsSystem::RuntimeBindings::PreRenderFn> m_updatePipeline;
+
+	private:
+		struct UpdateStep
+		{
+			gr::GraphicsSystem::RuntimeBindings::PreRenderFn m_preRenderFunc;
+			std::unordered_map<std::string, void const*> m_resolvedDependencies;
+		};
+		std::vector<UpdateStep> m_updatePipeline;
 
 
 	private: // Use the Create() factory

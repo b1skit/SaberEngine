@@ -10,6 +10,10 @@
 					"ExcludedPlatforms": [ "OpenGL" ]
 				},
 				{
+					"GraphicsSystem": "Culling",
+					"Function": "InitPipeline"
+				},
+				{
 					"GraphicsSystem": "GBuffer",
 					"Function": "InitPipeline"
 				},
@@ -94,13 +98,34 @@
 			"ResourceDependencies": [
 				{
 					"GraphicsSystem": "GBuffer",
-					"Accesses": [
-						"Culling"
+					"Inputs": [
+						{
+							"GraphicsSystem": "Culling",
+							"DataDependencies": [
+								{
+									"SourceName": "ViewCullingResults",
+									"DestinationName": "ViewCullingResults"
+								}
+							]
+						}
 					]
 				},
 				{
 					"GraphicsSystem": "DeferredLighting",
 					"Inputs": [
+						{
+							"GraphicsSystem": "Culling",
+							"DataDependencies": [
+								{
+									"SourceName": "PointLightCullingResults",
+									"DestinationName": "PointLightCullingResults"
+								},
+								{
+									"SourceName": "SpotLightCullingResults",
+									"DestinationName": "SpotLightCullingResults"
+								}
+							]
+						},
 						{
 							"GraphicsSystem": "GBuffer",
 							"TextureDependencies": [
@@ -127,6 +152,15 @@
 							]
 						},
 						{
+							"GraphicsSystem": "Shadows",
+							"DataDependencies": [
+								{
+									"SourceName": "ShadowTextures",
+									"DestinationName": "ShadowTextures"
+								}
+							]
+						},
+						{
 							"GraphicsSystem": "XeGTAO",
 							"TextureDependencies": [
 								{
@@ -135,10 +169,6 @@
 								}
 							]
 						}
-					],
-					"Accesses": [
-						"Culling",
-						"Shadows"
 					]
 				},
 				{
@@ -161,8 +191,24 @@
 				},
 				{
 					"GraphicsSystem": "Shadows",
-					"Accesses": [
-						"Culling"
+					"Inputs": [
+						{
+							"GraphicsSystem": "Culling",
+							"DataDependencies": [
+								{
+									"SourceName": "ViewCullingResults",
+									"DestinationName": "ViewCullingResults"
+								},
+								{
+									"SourceName": "PointLightCullingResults",
+									"DestinationName": "PointLightCullingResults"
+								},
+								{
+									"SourceName": "SpotLightCullingResults",
+									"DestinationName": "SpotLightCullingResults"
+								}
+							]
+						}
 					]
 				},
 				{
@@ -236,8 +282,7 @@
 				},
 				{
 					"GraphicsSystem": "Debug",
-					"Inputs": {},
-					"Accesses": []
+					"Inputs": {}
 				}
 			]
 		}

@@ -37,11 +37,14 @@ namespace gr
 		}
 
 		static constexpr char const* k_ssaoInput = "SSAOTex";
-		// Note: The DeferredLightingGraphicsSystem uses the same names as the GBuffer's outputs for its other inputs
-		void RegisterTextureInputs() override;
+		static constexpr char const* k_pointLightCullingInput = "PointLightCullingResults";
+		static constexpr char const* k_spotLightCullingInput = "SpotLightCullingResults";
+		static constexpr char const* k_shadowTexturesInput = "ShadowTextures";
+		// Note: The DeferredLightingGraphicsSystem uses the same names as the GBuffer's outputs for its remaining inputs
+		void RegisterInputs() override;
 
 		static constexpr char const* k_lightOutput = "DeferredLightTarget";
-		void RegisterTextureOutputs() override;
+		void RegisterOutputs() override;
 
 
 	public:
@@ -52,7 +55,7 @@ namespace gr
 		void InitializeResourceGenerationStages(re::StagePipeline&, TextureDependencies const&);
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
 
-		void PreRender();
+		void PreRender(DataDependencies const&);
 
 
 	private:
@@ -108,13 +111,11 @@ namespace gr
 		std::shared_ptr<re::RenderStage> m_pointStage;
 		std::shared_ptr<re::RenderStage> m_spotStage;
 
-		gr::ShadowsGraphicsSystem* m_shadowGS;
-
 	private: // Common:
 		std::shared_ptr<re::TextureTargetSet> m_lightingTargetSet;
 
 
 	private:
-		void CreateBatches();
+		void CreateBatches(DataDependencies const&);
 	};
 }

@@ -1,15 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer.h"
 #include "Config.h"
-#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
-#include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
 #include "MeshFactory.h"
 #include "Sampler.h"
 #include "Shader.h"
+#include "ShadowMapRenderData.h"
 #include "RenderDataManager.h"
 #include "RenderStage.h"
 
@@ -299,14 +298,13 @@ namespace gr
 	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
-		, m_shadowGS(nullptr)
 		, m_resourceCreationStagePipeline(nullptr)
 	{
 		m_lightingTargetSet = re::TextureTargetSet::Create("Deferred light targets");
 	}
 
 
-	void DeferredLightingGraphicsSystem::RegisterTextureInputs()
+	void DeferredLightingGraphicsSystem::RegisterInputs()
 	{
 		// Deferred lighting GS is (currently) tightly coupled to the GBuffer GS
 		constexpr uint8_t numGBufferColorInputs =
@@ -322,10 +320,14 @@ namespace gr
 		}
 
 		RegisterTextureInput(k_ssaoInput, TextureInputDefault::OpaqueWhite);
+
+		RegisterDataInput(k_pointLightCullingInput);
+		RegisterDataInput(k_spotLightCullingInput);
+		RegisterDataInput(k_shadowTexturesInput);
 	}
 
 
-	void DeferredLightingGraphicsSystem::RegisterTextureOutputs()
+	void DeferredLightingGraphicsSystem::RegisterOutputs()
 	{
 		RegisterTextureOutput(k_lightOutput, m_lightingTargetSet->GetColorTarget(0).GetTexture());
 	}
@@ -636,9 +638,6 @@ namespace gr
 		m_pointStage = re::RenderStage::CreateGraphicsStage("Point light stage", gfxStageParams);
 		m_spotStage = re::RenderStage::CreateGraphicsStage("Spot light stage", gfxStageParams);
 
-		m_shadowGS = m_graphicsSystemManager->GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
-		SEAssert(m_shadowGS != nullptr, "Shadow graphics system not found");	
-
 		// Create a lighting texture target:
 		re::Texture::TextureParams lightTargetTexParams;
 		lightTargetTexParams.m_width = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
@@ -808,7 +807,7 @@ namespace gr
 	}
 
 
-	void DeferredLightingGraphicsSystem::PreRender()
+	void DeferredLightingGraphicsSystem::PreRender(DataDependencies const& dataDependencies)
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
@@ -905,7 +904,11 @@ namespace gr
 			}
 		}
 
-
+		using ShadowTextureMap = std::unordered_map<gr::RenderDataID, re::Texture const*>;
+		
+		ShadowTextureMap const& shadowTextures = 
+			*static_cast<ShadowTextureMap const*>(dataDependencies.at(k_shadowTexturesInput));
+		
 		// Register new directional lights:
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataDirectional>())
 		{
@@ -960,7 +963,7 @@ namespace gr
 				{
 					directionalLightBatch.AddTextureAndSamplerInput(
 						"Depth0",
-						m_shadowGS->GetShadowTextures().at(directionalData.m_renderDataID),
+						shadowTextures.at(directionalData.m_renderDataID),
 						re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"));
 				}
 
@@ -1026,7 +1029,7 @@ namespace gr
 				{
 					lightBatch.AddTextureAndSamplerInput(
 						depthInputTexName,
-						m_shadowGS->GetShadowTextures().at(lightRenderDataID),
+						shadowTextures.at(lightRenderDataID),
 						re::Sampler::GetSampler(samplerTypeName));
 				}
 			};
@@ -1080,11 +1083,11 @@ namespace gr
 			}
 		}
 
-		CreateBatches();
+		CreateBatches(dataDependencies);
 	}
 
 
-	void DeferredLightingGraphicsSystem::CreateBatches()
+	void DeferredLightingGraphicsSystem::CreateBatches(DataDependencies const& dataDependencies)
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
@@ -1120,10 +1123,11 @@ namespace gr
 		}
 		
 
-		// Hash culled visible light IDs so we can quickly check if we need to add a point/spot light's batch:
-		CullingGraphicsSystem* cullingGS = m_graphicsSystemManager->GetGraphicsSystem<CullingGraphicsSystem>();
-		std::vector<gr::RenderDataID> const& spotIDs = cullingGS->GetVisibleSpotLights();
-		std::vector<gr::RenderDataID> const& pointIDs = cullingGS->GetVisiblePointLights();
+		// Hash culled visible light IDs so we can quickly check if we need to add a point/spot light's batch:		
+		PunctualLightCullingResults const& spotIDs = 
+			*static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingInput));
+		PunctualLightCullingResults const& pointIDs = 
+			*static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingInput));
 
 		std::unordered_set<gr::RenderDataID> visibleLightIDs;
 		visibleLightIDs.reserve(spotIDs.size() + pointIDs.size());

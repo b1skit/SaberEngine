@@ -25,20 +25,20 @@ namespace gr
 
 		static constexpr char const* k_wNormalInput = "SceneWNormal";
 		static constexpr char const* k_depthInput = "SceneDepth";
-		void RegisterTextureInputs() override;
+		void RegisterInputs() override;
 
 		static constexpr char const* k_aoOutput = "SSAOTex";
-		void RegisterTextureOutputs() override;
+		void RegisterOutputs() override;
 
 
 	public:
 		XeGTAOGraphicsSystem(gr::GraphicsSystemManager*);
 
-		~XeGTAOGraphicsSystem() override {}
+		~XeGTAOGraphicsSystem() = default;
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
 
-		void PreRender();
+		void PreRender(DataDependencies const&);
 
 		void ShowImGuiWindow() override;
 

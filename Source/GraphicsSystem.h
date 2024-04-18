@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "CameraRenderData.h"
 #include "NamedObject.h"
 #include "RenderStage.h"
 #include "RenderPipeline.h"
@@ -39,19 +40,24 @@ namespace gr
 		//	b) Implement a "static constexpr char const* GetScriptName()" member function
 		//	c) Provide an implementation of the pure virtual GetRuntimeBindings() function.
 		//		-> Use the macros at the end of this file to reduce boilerplate
-		//	d) Provide an implementation of the pure virtual RegisterTextureInputs/Outputs() functions
+		//	d) Provide an implementation of the pure virtual RegisterInputs/Outputs() functions
 		//		-> These are called before/after InitPipelineFn execution
 	public:
 		using TextureDependencies = std::map<std::string, std::shared_ptr<re::Texture>>;
+		using DataDependencies = std::unordered_map<std::string, void const*>;
 		struct RuntimeBindings
 		{
-			using InitPipelineFn = std::function<void(re::StagePipeline&, TextureDependencies)>;
-			using PreRenderFn = std::function<void()>;
+			using InitPipelineFn = std::function<void(re::StagePipeline&, TextureDependencies const&)>;
+			using PreRenderFn = std::function<void(DataDependencies const&)>;
 
 			std::map<std::string, InitPipelineFn> m_initPipelineFunctions;
 			std::map<std::string, PreRenderFn> m_preRenderFunctions;
 		};
 		virtual RuntimeBindings GetRuntimeBindings() = 0;
+
+	public:
+		virtual void RegisterInputs() = 0;
+		virtual void RegisterOutputs() = 0;
 
 
 	public:
@@ -67,21 +73,32 @@ namespace gr
 		};
 
 		TextureInputDefault GetTextureInputDefaultType(std::string const& inputScriptName) const;
-
 		std::shared_ptr<re::Texture> GetTextureOutput(std::string const& outputScriptName) const;
-
-		virtual void RegisterTextureInputs() = 0;
-		virtual void RegisterTextureOutputs() = 0;
 
 	protected:
 		void RegisterTextureInput(char const*, TextureInputDefault = TextureInputDefault::None);
 		void RegisterTextureOutput(char const*, std::shared_ptr<re::Texture>);
-		
 
 	private:
-		// These maps must be populated during the call to ConfigureInput/OutputDependencies()
+		// These must be populated during the call to RegisterInputs/Outputs()
 		std::map<std::string, TextureInputDefault> m_textureInputs;
 		std::map<std::string, std::shared_ptr<re::Texture>> m_textureOutputs;
+
+
+	public:
+		using ViewCullingResults = std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>>;
+		using PunctualLightCullingResults = std::vector<gr::RenderDataID>;
+
+		void const* GetDataOutput(std::string const& scriptName) const;
+		bool HasDataInput(std::string const& scriptName) const;
+
+	protected:
+		void RegisterDataInput(char const*);
+		void RegisterDataOutput(char const*, void const*);
+		
+	private:
+		std::set<std::string> m_dataInputs;
+		std::map<std::string, void const*> m_dataOutputs;
 
 
 	public:
@@ -174,6 +191,35 @@ namespace gr
 	}
 
 
+	inline void const* GraphicsSystem::GetDataOutput(std::string const& scriptName) const
+	{
+		SEAssert(m_dataOutputs.contains(scriptName), "No data output with the given name has been registered");
+		return m_dataOutputs.at(scriptName);
+	};
+
+
+	inline bool GraphicsSystem::HasDataInput(std::string const& scriptName) const
+	{
+		return m_dataInputs.contains(scriptName);
+	}
+
+
+	inline void GraphicsSystem::RegisterDataInput(char const* scriptName)
+	{
+		m_dataInputs.emplace(scriptName);
+	}
+
+
+	inline void GraphicsSystem::RegisterDataOutput(char const* scriptName, void const* data)
+	{
+		m_dataOutputs.emplace(scriptName, data);
+	}
+
+
+	// ---
+
+
+
 	// Scriptable rendering pipeline self-registration interface
 	// By inheriting from this interface, a GraphicsSystem will automatically be able to be created by name
 	template<typename T>
@@ -209,4 +255,4 @@ namespace gr
 	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this, std::placeholders::_1, std::placeholders::_2)}
 
 #define PRE_RENDER_FN(gsClassName, memberFuncName) \
-	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this)},
+	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this, std::placeholders::_1)},

@@ -236,14 +236,14 @@ namespace gr
 	}
 
 
-	void BloomGraphicsSystem::RegisterTextureInputs()
+	void BloomGraphicsSystem::RegisterInputs()
 	{
 		RegisterTextureInput(k_emissiveInput);
 		RegisterTextureInput(k_bloomTargetInput);
 	}
 
 
-	void BloomGraphicsSystem::RegisterTextureOutputs()
+	void BloomGraphicsSystem::RegisterOutputs()
 	{
 		RegisterTextureOutput(
 			k_bloomResultOutput, 
@@ -251,7 +251,7 @@ namespace gr
 	}
 
 
-	void BloomGraphicsSystem::PreRender()
+	void BloomGraphicsSystem::PreRender(DataDependencies const&)
 	{
 		CreateBatches();
 	

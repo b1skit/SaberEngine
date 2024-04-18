@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraRenderData.h"
 #include "Config.h"
-#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
@@ -38,6 +37,41 @@ namespace
 
 		return cubemapShadowParams;
 	}
+
+
+	std::vector<gr::RenderDataID> CombineVisibleRenderDataIDs(
+		gr::RenderDataManager const& renderData,
+		gr::GraphicsSystem::ViewCullingResults const& viewCullingResults,
+		std::vector<gr::Camera::View> const& views)
+	{
+		// TODO: This function is a temporary convenience, we concatenate sets of RenderDataIDs together for point light
+		// shadow draws which use a geometry shader to project each batch to every face. This is wasteful!
+		// Instead, we should draw each point light shadow face seperately, using the culling results to send only the
+		// relevant batches to each face.
+
+		const size_t numMeshPrimitives = renderData.GetNumElementsOfType<gr::MeshPrimitive::RenderData>();
+		std::vector<gr::RenderDataID> uniqueRenderDataIDs;
+		uniqueRenderDataIDs.reserve(numMeshPrimitives);
+
+		// Combine the RenderDataIDs visible in each view into a unique set
+		std::unordered_set<gr::RenderDataID> seenIDs;
+		seenIDs.reserve(numMeshPrimitives);
+
+		for (gr::Camera::View const& view : views)
+		{
+			std::vector<gr::RenderDataID> const& visibleIDs = viewCullingResults.at(view);
+			for (gr::RenderDataID id : visibleIDs)
+			{
+				if (!seenIDs.contains(id))
+				{
+					seenIDs.emplace(id);
+					uniqueRenderDataIDs.emplace_back(id);
+				}
+			}
+		}
+
+		return uniqueRenderDataIDs;
+	}
 }
 
 
@@ -49,7 +83,22 @@ namespace gr
 	ShadowsGraphicsSystem::ShadowsGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
+		, m_stagePipeline(nullptr)
 	{
+	}
+
+
+	void ShadowsGraphicsSystem::RegisterInputs()
+	{
+		RegisterDataInput(k_cullingInput);
+		RegisterDataInput(k_pointLightCullingInput);
+		RegisterDataInput(k_spotLightCullingInput);
+	}
+
+
+	void ShadowsGraphicsSystem::RegisterOutputs()
+	{
+		RegisterDataOutput(k_shadowTexturesOutput, &m_shadowTextures);
 	}
 
 
@@ -257,7 +306,7 @@ namespace gr
 	}
 
 
-	void ShadowsGraphicsSystem::PreRender()
+	void ShadowsGraphicsSystem::PreRender(DataDependencies const& dataDependencies)
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
@@ -449,15 +498,17 @@ namespace gr
 		}
 
 
-		CreateBatches();
+		CreateBatches(dataDependencies);
 	}
 
 
-	void ShadowsGraphicsSystem::CreateBatches()
+	void ShadowsGraphicsSystem::CreateBatches(DataDependencies const& dataDependencies)
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
-		CullingGraphicsSystem* cullingGS = m_graphicsSystemManager->GetGraphicsSystem<CullingGraphicsSystem>();
+		
+		ViewCullingResults const* cullingResults =
+			static_cast<ViewCullingResults const*>(dataDependencies.at(k_cullingInput));
 
 		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
@@ -479,7 +530,7 @@ namespace gr
 
 					directionalStage.AddBatches(batchMgr.BuildSceneBatches(
 						renderData,
-						cullingGS->GetVisibleRenderDataIDs(gr::Camera::View(lightID)),
+						cullingResults->at(lightID),
 						gr::BatchManager::InstanceType::Transform));
 				}
 				++directionalItr;
@@ -488,7 +539,8 @@ namespace gr
 
 		if (renderData.HasObjectData<gr::Light::RenderDataSpot>())
 		{
-			std::vector<gr::RenderDataID> const& spotIDs = cullingGS->GetVisibleSpotLights();
+			PunctualLightCullingResults const& spotIDs =
+				*static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingInput));
 
 			auto spotItr = renderData.IDBegin(spotIDs);
 			auto const& spotItrEnd = renderData.IDEnd(spotIDs);
@@ -503,7 +555,7 @@ namespace gr
 
 					spotStage.AddBatches(batchMgr.BuildSceneBatches(
 						renderData,
-						cullingGS->GetVisibleRenderDataIDs(gr::Camera::View(lightID)),
+						cullingResults->at(lightID),
 						gr::BatchManager::InstanceType::Transform));
 				}
 				++spotItr;
@@ -512,7 +564,8 @@ namespace gr
 
 		if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
 		{
-			std::vector<gr::RenderDataID> const& pointIDs = cullingGS->GetVisiblePointLights();
+			PunctualLightCullingResults const& pointIDs =
+				*static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingInput));
 
 			auto pointItr = renderData.IDBegin(pointIDs);
 			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
@@ -539,7 +592,7 @@ namespace gr
 					m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
 						batchMgr.BuildSceneBatches(
 							renderData,
-							cullingGS->GetVisibleRenderDataIDs(views),
+							CombineVisibleRenderDataIDs(renderData, *cullingResults, views),
 							gr::BatchManager::InstanceType::Transform));
 				}
 				++pointItr;

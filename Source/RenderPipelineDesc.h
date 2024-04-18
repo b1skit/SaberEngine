@@ -14,8 +14,8 @@ namespace re
 		static constexpr char const* key_updateStepsBlock = "Update";
 		static constexpr char const* key_resourceDependenciesBlock = "ResourceDependencies";
 		static constexpr char const* key_inputsList = "Inputs";
-		static constexpr char const* key_accessesList = "Accesses";
 		static constexpr char const* key_textureDependenciesList = "TextureDependencies";
+		static constexpr char const* key_dataDependenciesList = "DataDependencies";
 		static constexpr char const* key_srcName = "SourceName";
 		static constexpr char const* key_dstName = "DestinationName";
 		static constexpr char const* key_GSName = "GraphicsSystem";
@@ -36,11 +36,10 @@ namespace re
 			
 			// Map each GS to a list of {GS, texture name} dependencies:
 			using GSName = std::string;
-			using TexSrcDstNamePairs = std::vector<std::pair<std::string, std::string>>;
-			std::unordered_map<GSName, std::vector<std::pair<GSName, TexSrcDstNamePairs>>> m_textureInputs;
+			using SrcDstNamePairs = std::vector<std::pair<std::string, std::string>>;
+			std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_textureInputs;
 
-			// Names of any GS's accessed during execution (e.g. via GraphicsSystemManager::GetGraphicsSystem<T>())
-			std::unordered_map<std::string, std::unordered_set<std::string>> m_accesses;
+			std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_dataInputs;
 		};
 		std::vector<RenderSystemDescription> m_renderSystems;
 	};

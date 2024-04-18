@@ -23,10 +23,10 @@ namespace gr
 
 		static constexpr char const* k_emissiveInput = "EmissiveLight";
 		static constexpr char const* k_bloomTargetInput = "BloomTarget";
-		void RegisterTextureInputs() override;
+		void RegisterInputs() override;
 
 		static constexpr char const* k_bloomResultOutput = "BloomResult";
-		void RegisterTextureOutputs() override;
+		void RegisterOutputs() override;
 
 
 	public:
@@ -36,7 +36,7 @@ namespace gr
 
 		void InitPipeline(re::StagePipeline& pipeline, TextureDependencies const&);
 
-		void PreRender();
+		void PreRender(DataDependencies const&);
 	
 
 	private:

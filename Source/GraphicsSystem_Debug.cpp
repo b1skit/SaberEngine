@@ -402,7 +402,7 @@ namespace gr
 	}
 
 
-	void DebugGraphicsSystem::PreRender()
+	void DebugGraphicsSystem::PreRender(DataDependencies const&)
 	{
 		CreateBatches();
 	}

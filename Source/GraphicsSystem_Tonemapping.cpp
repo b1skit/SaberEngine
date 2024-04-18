@@ -49,20 +49,20 @@ namespace gr
 	}
 
 
-	void TonemappingGraphicsSystem::RegisterTextureInputs()
+	void TonemappingGraphicsSystem::RegisterInputs()
 	{
 		RegisterTextureInput(k_tonemappingTargetInput);
 		RegisterTextureInput(k_bloomResultInput);
 	}
 
 
-	void TonemappingGraphicsSystem::RegisterTextureOutputs()
+	void TonemappingGraphicsSystem::RegisterOutputs()
 	{
 		//
 	}
 
 
-	void TonemappingGraphicsSystem::PreRender()
+	void TonemappingGraphicsSystem::PreRender(DataDependencies const&)
 	{
 		//
 	}
