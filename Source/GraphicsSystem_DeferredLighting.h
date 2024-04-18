@@ -40,7 +40,7 @@ namespace gr
 		static constexpr char const* k_pointLightCullingInput = "PointLightCullingResults";
 		static constexpr char const* k_spotLightCullingInput = "SpotLightCullingResults";
 		static constexpr char const* k_shadowTexturesInput = "ShadowTextures";
-		// Note: The DeferredLightingGraphicsSystem uses the same names as the GBuffer's outputs for its remaining inputs
+		// Note: The DeferredLightingGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
 		void RegisterInputs() override;
 
 		static constexpr char const* k_lightOutput = "DeferredLightTarget";

@@ -20,37 +20,31 @@ namespace
 		{
 			auto const& gsTexDependencies = renderSysDesc.m_textureInputs.at(dstGSScriptName);
 
+			gr::GraphicsSystem* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
+
 			// Iterate over each GS in our dependency list:
 			for (auto const& srcEntry : gsTexDependencies)
 			{
 				std::string const& srcGSScriptName = srcEntry.first;
 				gr::GraphicsSystem* srcGS = gsm.GetGraphicsSystemByScriptName(srcGSScriptName);
 
-				if (srcGS)
+				for (auto const& dependencySrcDstNameMapping : srcEntry.second)
 				{
-					// Get each of the texture dependencies from the source GS:
-					for (auto const& dependencySrcDstNameMapping : srcEntry.second)
+					std::string const& srcName = dependencySrcDstNameMapping.first;
+					
+					std::string const& dstName = dependencySrcDstNameMapping.second;
+					SEAssert(dstGS->HasTextureInput(dstName), "Destination GS hasn't registered this input name");
+
+					if (srcGS)
 					{
-						std::string const& srcName = dependencySrcDstNameMapping.first;
-						std::string const& dstName = dependencySrcDstNameMapping.second;
-						SEAssert(srcGS->GetTextureOutput(srcName),
-							"Source GS hasn't created the required texture");
 						texDependencies.emplace(dstName, srcGS->GetTextureOutput(srcName));
 					}
-				}
-				else
-				{
-					// Source GS doesn't exist. Attempt to use a default texture as a fallback
-					gr::GraphicsSystem* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
-
-					fr::SceneData* sceneData = fr::SceneManager::GetSceneData();
-					
-					for (auto const& dependencySrcDstNameMapping : srcEntry.second)
+					else
 					{
-						std::string const& srcName = dependencySrcDstNameMapping.first;
-						std::string const& dstName = dependencySrcDstNameMapping.second;
-						
-						gr::GraphicsSystem::TextureInputDefault inputDefault = 
+						// Source GS doesn't exist. Attempt to use a default texture as a fallback
+						fr::SceneData* sceneData = fr::SceneManager::GetSceneData();
+
+						gr::GraphicsSystem::TextureInputDefault inputDefault =
 							dstGS->GetTextureInputDefaultType(dstName);
 
 						switch (inputDefault)
@@ -58,7 +52,7 @@ namespace
 						case gr::GraphicsSystem::TextureInputDefault::OpaqueWhite:
 						{
 							texDependencies.emplace(
-								dstName, 
+								dstName,
 								sceneData->GetTexture(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName));
 						}
 						break;

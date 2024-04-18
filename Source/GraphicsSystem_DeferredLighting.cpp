@@ -318,6 +318,7 @@ namespace gr
 
 			RegisterTextureInput(GBufferGraphicsSystem::GBufferTexNames[slot]);
 		}
+		RegisterTextureInput(GBufferGraphicsSystem::GBufferTexNames[GBufferGraphicsSystem::GBufferTexIdx::GBufferDepth]);
 
 		RegisterTextureInput(k_ssaoInput, TextureInputDefault::OpaqueWhite);
 

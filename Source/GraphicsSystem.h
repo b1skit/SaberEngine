@@ -73,6 +73,7 @@ namespace gr
 		};
 
 		TextureInputDefault GetTextureInputDefaultType(std::string const& inputScriptName) const;
+		bool HasTextureInput(std::string const& inputScriptName) const;
 		std::shared_ptr<re::Texture> GetTextureOutput(std::string const& outputScriptName) const;
 
 	protected:
@@ -157,8 +158,14 @@ namespace gr
 	inline GraphicsSystem::TextureInputDefault GraphicsSystem::GetTextureInputDefaultType(
 		std::string const& inputScriptName) const
 	{
-		SEAssert(m_textureInputs.contains(inputScriptName), "Texture input with that name has not been registered");
+		SEAssert(HasTextureInput(inputScriptName), "Texture input with that name has not been registered");
 		return m_textureInputs.at(inputScriptName);
+	}
+
+
+	inline bool GraphicsSystem::HasTextureInput(std::string const& inputScriptName) const
+	{
+		return m_textureInputs.contains(inputScriptName);
 	}
 
 
