@@ -336,7 +336,7 @@ namespace opengl
 						i, // zoffset: Target face
 						width,
 						height,
-						texParams.m_faces,	// depth
+						1,					// depth (Note: We're updating 1 face at a time)
 						params->m_format,	// format
 						params->m_type,		// type
 						data);				// void* data. Nullptr for render targets
