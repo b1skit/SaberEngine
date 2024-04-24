@@ -3,17 +3,9 @@
 	"RenderSystems": [
 		{
 			"RenderSystemName": "Mip Generation",
-			"Initialization": [
+			"Declarations": [
 				{
 					"GraphicsSystem": "ComputeMips",
-					"Function": "InitPipeline",
-					"ExcludedPlatforms": [ "OpenGL" ]
-				}
-			],
-			"Update": [
-				{
-					"GraphicsSystem": "ComputeMips",
-					"Function": "PreRender",
 					"ExcludedPlatforms": [ "OpenGL" ]
 				}
 			]

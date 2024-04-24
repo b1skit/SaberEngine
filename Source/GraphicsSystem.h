@@ -45,13 +45,14 @@ namespace gr
 	public:
 		using TextureDependencies = std::map<std::string, std::shared_ptr<re::Texture>>;
 		using DataDependencies = std::unordered_map<std::string, void const*>;
+
 		struct RuntimeBindings
 		{
 			using InitPipelineFn = std::function<void(re::StagePipeline&, TextureDependencies const&)>;
 			using PreRenderFn = std::function<void(DataDependencies const&)>;
 
-			std::map<std::string, InitPipelineFn> m_initPipelineFunctions;
-			std::map<std::string, PreRenderFn> m_preRenderFunctions;
+			std::vector<std::pair<std::string, InitPipelineFn>> m_initPipelineFunctions;
+			std::vector<std::pair<std::string, PreRenderFn>> m_preRenderFunctions;
 		};
 		virtual RuntimeBindings GetRuntimeBindings() = 0;
 
@@ -149,12 +150,19 @@ namespace gr
 		friend class IScriptableGraphicsSystem; // Required to access GraphicsSystem::Create()
 	};
 
+	// This is pure virtual, but we want to call this from the base class so we still need to provide an implementation
+	inline void GraphicsSystem::RegisterInputs() {}
+
 
 	template<typename T>
 	std::unique_ptr<gr::GraphicsSystem> GraphicsSystem::Create(gr::GraphicsSystemManager* gsm)
 	{
 		std::unique_ptr<gr::GraphicsSystem> newGS;
 		newGS.reset(new T(gsm));
+
+		// Register our inputs immediately. Outputs are registered once the initialization step(s) have run
+		newGS->RegisterInputs();
+
 		return newGS;
 	}
 

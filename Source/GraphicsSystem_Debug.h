@@ -27,7 +27,6 @@ namespace gr
 
 
 	public:
-
 		DebugGraphicsSystem(gr::GraphicsSystemManager*);
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&);

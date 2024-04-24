@@ -55,7 +55,8 @@ namespace re
 			gr::GraphicsSystem const* m_gs; 
 			std::string const m_scriptFunctionName;
 		};
-		std::vector<UpdateStep> m_updatePipeline;
+
+		std::vector<std::vector<UpdateStep>> m_updatePipeline;
 
 
 	private: // Use the Create() factory

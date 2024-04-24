@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "CoreEngine.h"
 #include "ImGuiUtils.h"
 #include "GraphicsSystem.h"
 #include "ProfilingMarkers.h"
@@ -140,6 +141,124 @@ namespace
 
 		return resolvedDependencies;
 	}
+	
+	
+	void ComputeExecutionGroups(
+		re::RenderPipelineDesc::RenderSystemDescription const& renderSysDesc,
+		std::vector<std::vector<std::string>>& updateExecutionGroups,
+		bool singleThreadGSExecution)
+	{
+		// Note: Creation order doesn't matter, only initialization and updates are order-dependent
+
+		if (singleThreadGSExecution)
+		{
+			// Output the exact ordering received in the pipeline description. It's up to the user to ensure these
+			// orderings are valid
+			for (auto const& pipelineStep : renderSysDesc.m_pipelineOrder)
+			{
+				// Add each step in sequence so we get serial ordering with no overlap:
+				std::vector<std::string>& currentStep = updateExecutionGroups.emplace_back();
+				currentStep.emplace_back(pipelineStep);
+			}
+		}
+		else
+		{
+			// Create a list of GS's and their dependencies
+			struct GSDependencies
+			{
+				std::string const* m_gsName;
+				std::unordered_set<std::string> m_dependencies; // Script names of GS's we're dependent on
+
+				bool operator>(GSDependencies const& rhs) const { return m_dependencies.size() > rhs.m_dependencies.size(); }
+				bool operator<(GSDependencies const& rhs) const { return m_dependencies.size() < rhs.m_dependencies.size(); }
+			};
+			std::vector<GSDependencies> gsDependencies;
+		
+			// Build a list of dependencies for each GS:
+			for (auto const& currentGSName : renderSysDesc.m_pipelineOrder)
+			{
+				GSDependencies curGSDependencies;
+				curGSDependencies.m_gsName = &currentGSName;
+
+				auto PopulateDependencies = [&currentGSName, &curGSDependencies, &renderSysDesc](
+					std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> const& inputs)
+					{
+						if (inputs.contains(currentGSName))
+						{
+							for (auto const& srcGS : inputs.at(currentGSName))
+							{
+								std::string const& srcGSName = srcGS.first;
+
+								// Only add the dependency if it's one of the active graphics systems. It's possible
+								// we'll have an input (e.g. texture dependency) for a GS that doesn't exist/is excluded
+								if (renderSysDesc.m_graphicsSystemNames.contains(srcGSName))
+								{
+									curGSDependencies.m_dependencies.emplace(srcGSName);
+								}
+							}
+						}
+					};
+				// If enabled, this will consider texture inputs as a dependency for computing the GraphicsSystem update
+				// order. This should never be necessary (as textures are updated on the GPU), but is useful for debugging
+//#define CONSIDER_TEX_INPUTS_AS_UPDATE_DEPENDENCIES
+#if defined(CONSIDER_TEX_INPUTS_AS_UPDATE_DEPENDENCIES)
+				PopulateDependencies(renderSysDesc.m_textureInputs);
+#endif
+				PopulateDependencies(renderSysDesc.m_dataInputs);
+
+				gsDependencies.emplace_back(std::move(curGSDependencies));
+			}
+
+			// Compute neighboring groups of GS's that can be executed in parallel:
+			std::vector<std::vector<std::string const*>> executionGroups;
+			size_t startIdx = 0;
+			while (startIdx < gsDependencies.size())
+			{
+				// If enabled, a GraphicsSystem's update functionality can be executed before other GS's in the pipeline
+				// description when their dependencies allow it. This is desireable, but we can toggle it for debugging
+#define ALLOW_UPDATE_EXECUTION_REORDERING
+#if defined ALLOW_UPDATE_EXECUTION_REORDERING
+				std::sort(gsDependencies.begin(), gsDependencies.end(), std::less<GSDependencies>());
+#endif
+				std::vector<std::string const*>& curExecutionGroupGSNames = executionGroups.emplace_back();
+
+				// All sequentially declared GS's with 0 dependencies can be executed in parallel:
+				size_t curIdx = startIdx;
+				while (curIdx < gsDependencies.size() && gsDependencies[curIdx].m_dependencies.size() == 0)
+				{
+					curExecutionGroupGSNames.emplace_back(gsDependencies[curIdx].m_gsName);
+					curIdx++;
+				}
+				SEAssert(curIdx > startIdx,
+					"Failed to find a GS with 0 dependencies. This suggests the declared GS ordering is invalid");
+
+				// Prune the current execution group from the remaining dependencies, and rebuild the priority queue:
+				size_t updateIdx = curIdx;
+				while (updateIdx < gsDependencies.size())
+				{
+					for (auto const& curExecutionGrpGS : curExecutionGroupGSNames)
+					{
+						gsDependencies[updateIdx].m_dependencies.erase(*curExecutionGrpGS); // No-op if key doesn't exist
+					}
+					updateIdx++;
+				}
+
+				// Prepare for the next iteration:
+				startIdx = curIdx;
+			}
+
+			// Finally, populate the output
+			for (auto const& executionGrp : executionGroups)
+			{
+				std::vector<std::string>& updateStepGSNameFnName = updateExecutionGroups.emplace_back();
+
+				for (auto const& gsName : executionGrp) // Add all update steps in the order they're declared
+				{
+					updateStepGSNameFnName.emplace_back(*gsName);
+				}
+			}
+		}
+	}
 }
 
 
@@ -194,47 +313,73 @@ namespace re
 
 			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
 
-			for (auto const& entry : renderSysDesc.m_initSteps)
+			// Build up our log message so it's printed in a single block
+			std::string initOrderLog = std::format("Render system \"{}\" initialization order:", GetName());
+
+			for (auto const& currentGSScriptName : renderSysDesc.m_pipelineOrder)
 			{
-				std::string const& currentGSScriptName = entry.first;
+				initOrderLog = std::format("{}\n\t- {}", initOrderLog, currentGSScriptName);
+
 				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(currentGSScriptName);
-
-				currentGS->RegisterInputs();
-
-				std::string const& lowercaseScriptFnName(util::ToLower(entry.second));
-				std::string const& stagePipelineName = std::format("{} stages", currentGS->GetName());
 
 				std::map<std::string, std::shared_ptr<re::Texture>> const& textureInputs = 
 					ResolveTextureDependencies(currentGSScriptName, renderSysDesc, gsm);
 
-				currentGS->GetRuntimeBindings().m_initPipelineFunctions.at(lowercaseScriptFnName)(
-					renderPipeline.AddNewStagePipeline(stagePipelineName),
-					textureInputs);
+				for (auto const& initFn : currentGS->GetRuntimeBindings().m_initPipelineFunctions)
+				{
+					std::string const& initFnName = initFn.first;
+
+					std::string const& stagePipelineName = std::format("{}::{} stages",
+						currentGS->GetName(),
+						initFnName);
+
+					initFn.second(renderPipeline.AddNewStagePipeline(stagePipelineName), textureInputs);
+				}
 
 				// Now the GS is initialized, it can populate its resource dependencies for other GS's
 				currentGS->RegisterOutputs();
 			}
+			
+			LOG(initOrderLog.c_str());
 
-			// The update pipeline caches member function and data pointers; We can only populate it once our GS's are
-			// created & initialized
-			for (auto const& entry : renderSysDesc.m_updateSteps)
+			// Now our GS's exist and their input dependencies are registered, we can compute their execution ordering.
+			// Note: The update pipeline caches member function and data pointers; We can only populate it once our GS's
+			// are created & initialized
+			const bool singleThreadGSExecution = en::Config::Get()->KeyExists(en::ConfigKeys::k_singleThreadGSExecution);
+
+			std::vector<std::vector<std::string>> updateExecutionGroups;
+			ComputeExecutionGroups(renderSysDesc, updateExecutionGroups, singleThreadGSExecution);
+
+			std::string updateOrderLog = std::format("Render system \"{}\" {} update execution grouping:",
+				GetName().c_str(),
+				singleThreadGSExecution ? "serial" : "threaded");
+
+			for (auto const& executionGrp : updateExecutionGroups)
 			{
-				std::string const& currentGSName = entry.first;
-				std::string const& lowercaseScriptFnName = util::ToLower(entry.second);
+				std::vector<UpdateStep>& currentStep = m_updatePipeline.emplace_back();
 
-				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(currentGSName);
+				for (auto const& currentGSName : executionGrp)
+				{
+					gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(currentGSName);
+					SEAssert(currentGS, "Failed to find GraphicsSystem");
 
-				m_updatePipeline.emplace_back(UpdateStep{
-					.m_preRenderFunc = currentGS->GetRuntimeBindings().m_preRenderFunctions.at(lowercaseScriptFnName),
-					.m_resolvedDependencies = ResolveDataDependencies(currentGSName, renderSysDesc, gsm),
-					.m_gs = currentGS,
-					.m_scriptFunctionName = lowercaseScriptFnName });
+					for (auto const& updateFn : currentGS->GetRuntimeBindings().m_preRenderFunctions)
+					{
+						currentStep.emplace_back(UpdateStep{
+						.m_preRenderFunc = updateFn.second,
+						.m_resolvedDependencies = ResolveDataDependencies(currentGSName, renderSysDesc, gsm),
+						.m_gs = currentGS,
+						.m_scriptFunctionName = updateFn.first });
+
+						updateOrderLog = std::format("{}\n\t- {}::{}", updateOrderLog, currentGSName, updateFn.first);
+					}
+				}
+				
+				updateOrderLog = std::format("{}\n\t\t---", updateOrderLog);
 			}
-		};
 
-		// We can only build the update pipeline once the GS's have been created (as we need to access their runtime
-		// bindings)
-		m_updatePipeline.reserve(renderSysDesc.m_updateSteps.size());
+			LOG(updateOrderLog.c_str());
+		};
 	}
 
 
@@ -254,21 +399,53 @@ namespace re
 	{
 		SEBeginCPUEvent(std::format("{} ExecuteUpdatePipeline", GetName()).c_str());
 
+		static const bool s_singleThreadGSExecution = 
+			en::Config::Get()->KeyExists(en::ConfigKeys::k_singleThreadGSExecution);
+
+
+		auto ExecuteUpdateStep = [](UpdateStep const& currentStep)
+			{
+				try
+				{
+					currentStep.m_preRenderFunc(currentStep.m_resolvedDependencies);
+				}
+				catch (std::exception e)
+				{
+					SEAssertF(std::format(
+						"RenderSystem::ExecuteUpdatePipeline exception when executing \"{}::{}\"\n{}",
+						currentStep.m_gs->GetName().c_str(),
+						currentStep.m_scriptFunctionName.c_str(),
+						e.what()).c_str());
+				}
+			};
+
+
 		m_graphicsSystemManager.PreRender();
 
-		for (auto& updateStep : m_updatePipeline)
+		for (auto& executionGroup : m_updatePipeline)
 		{
-			try
+			std::vector<std::future<void>> updateStepFutures;
+			updateStepFutures.reserve(executionGroup.size());
+
+			for (auto const& currentStep : executionGroup)
 			{
-				updateStep.m_preRenderFunc(updateStep.m_resolvedDependencies);
+				if (s_singleThreadGSExecution)
+				{
+					ExecuteUpdateStep(currentStep);
+				}
+				else
+				{
+					updateStepFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&]()
+						{
+							ExecuteUpdateStep(currentStep);
+						}));
+				}
 			}
-			catch (std::exception e)
+
+			// Wait for all tasks within the current execution group to complete
+			for (auto const& updateFuture : updateStepFutures)
 			{
-				SEAssertF(std::format(
-					"RenderSystem::ExecuteUpdatePipeline exception when executing \"{}::{}\"\n{}",
-					updateStep.m_gs->GetName().c_str(),
-					updateStep.m_scriptFunctionName.c_str(),
-					e.what()).c_str());
+				updateFuture.wait();
 			}
 		}
 

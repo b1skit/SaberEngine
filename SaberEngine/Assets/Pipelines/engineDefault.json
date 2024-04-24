@@ -3,89 +3,10 @@
 	"RenderSystems": [
 		{
 			"RenderSystemName": "Primary",
-			"Initialization": [
+			"Declarations": [
 				{
-					"GraphicsSystem": "Culling",
-					"Function": "InitPipeline"
+					"GraphicsSystem": "Culling"
 				},
-				{
-					"GraphicsSystem": "GBuffer",
-					"Function": "InitPipeline"
-				},
-				{
-					"GraphicsSystem": "XeGTAO",
-					"Function": "InitPipeline",
-					"ExcludedPlatforms": [ "OpenGL" ]
-				},
-				{
-					"GraphicsSystem": "DeferredLighting",
-					"Function": "InitializeResourceGenerationStages"
-				},
-				{
-					"GraphicsSystem": "Shadows",
-					"Function": "InitPipeline"
-				},
-				{
-					"GraphicsSystem": "DeferredLighting",
-					"Function": "InitPipeline"
-				},
-				{
-					"GraphicsSystem": "Skybox",
-					"Function": "InitPipeline"
-				},
-				{
-					"GraphicsSystem": "Bloom",
-					"Function": "InitPipeline"
-				},
-				{
-					"GraphicsSystem": "Tonemapping",
-					"Function": "InitPipeline"
-				},
-				{
-					"GraphicsSystem": "Debug",
-					"Function": "InitPipeline"
-				}
-			],
-			"Update": [
-				{
-					"GraphicsSystem": "Culling",
-					"Function": "PreRender"
-				},
-				{
-					"GraphicsSystem": "GBuffer",
-					"Function": "PreRender"
-				},
-				{
-					"GraphicsSystem": "XeGTAO",
-					"Function": "PreRender",
-					"ExcludedPlatforms": [ "OpenGL" ]
-				},
-				{
-					"GraphicsSystem": "Shadows",
-					"Function": "PreRender"
-				},
-				{
-					"GraphicsSystem": "DeferredLighting",
-					"Function": "PreRender"
-				},
-				{
-					"GraphicsSystem": "Skybox",
-					"Function": "PreRender"
-				},
-				{
-					"GraphicsSystem": "Bloom",
-					"Function": "PreRender"
-				},
-				{
-					"GraphicsSystem": "Tonemapping",
-					"Function": "PreRender"
-				},
-				{
-					"GraphicsSystem": "Debug",
-					"Function": "PreRender"
-				}
-			],
-			"ResourceDependencies": [
 				{
 					"GraphicsSystem": "GBuffer",
 					"Inputs": [
@@ -95,6 +16,47 @@
 								{
 									"SourceName": "ViewCullingResults",
 									"DestinationName": "ViewCullingResults"
+								}
+							]
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "XeGTAO",
+					"ExcludedPlatforms": [ "OpenGL" ],
+					"Inputs": [
+						{
+							"GraphicsSystem": "GBuffer",
+							"TextureDependencies": [
+								{
+									"SourceName": "GBufferDepth",
+									"DestinationName": "SceneDepth"
+								},
+								{
+									"SourceName": "GBufferWNormal",
+									"DestinationName": "SceneWNormal"
+								}
+							]
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "Shadows",
+					"Inputs": [
+						{
+							"GraphicsSystem": "Culling",
+							"DataDependencies": [
+								{
+									"SourceName": "ViewCullingResults",
+									"DestinationName": "ViewCullingResults"
+								},
+								{
+									"SourceName": "PointLightCullingResults",
+									"DestinationName": "PointLightCullingResults"
+								},
+								{
+									"SourceName": "SpotLightCullingResults",
+									"DestinationName": "SpotLightCullingResults"
 								}
 							]
 						}
@@ -156,46 +118,6 @@
 								{
 									"SourceName": "SSAOTex",
 									"DestinationName": "SSAOTex"
-								}
-							]
-						}
-					]
-				},
-				{
-					"GraphicsSystem": "XeGTAO",
-					"Inputs": [
-						{
-							"GraphicsSystem": "GBuffer",
-							"TextureDependencies": [
-								{
-									"SourceName": "GBufferDepth",
-									"DestinationName": "SceneDepth"
-								},
-								{
-									"SourceName": "GBufferWNormal",
-									"DestinationName": "SceneWNormal"
-								}
-							]
-						}
-					]
-				},
-				{
-					"GraphicsSystem": "Shadows",
-					"Inputs": [
-						{
-							"GraphicsSystem": "Culling",
-							"DataDependencies": [
-								{
-									"SourceName": "ViewCullingResults",
-									"DestinationName": "ViewCullingResults"
-								},
-								{
-									"SourceName": "PointLightCullingResults",
-									"DestinationName": "PointLightCullingResults"
-								},
-								{
-									"SourceName": "SpotLightCullingResults",
-									"DestinationName": "SpotLightCullingResults"
 								}
 							]
 						}
@@ -272,7 +194,7 @@
 				},
 				{
 					"GraphicsSystem": "Debug",
-					"Inputs": {}
+					"Inputs": []
 				}
 			]
 		}
