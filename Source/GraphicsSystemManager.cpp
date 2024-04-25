@@ -26,12 +26,16 @@ namespace gr
 	{
 		m_graphicsSystems.clear();
 		m_renderData = nullptr;
+		m_batchManager = nullptr;
 	}
 
 
 	void GraphicsSystemManager::Create()
 	{
-		m_renderData = &re::RenderManager::Get()->GetRenderDataManagerForModification();
+		re::RenderManager* renderManager = re::RenderManager::Get();
+
+		m_renderData = &renderManager->GetRenderDataManager();
+		m_batchManager = &renderManager->GetBatchManager();
 
 		CameraData defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
 
@@ -44,8 +48,6 @@ namespace gr
 
 	void GraphicsSystemManager::PreRender()
 	{
-		m_batchManager.UpdateBatchCache(*m_renderData);
-
 		SEAssert(m_activeCameraRenderDataID != gr::k_invalidRenderDataID && 
 			m_activeCameraTransformDataID != gr::k_invalidTransformID,
 			"No active camera has been set");

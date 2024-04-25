@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "BatchManager.h"
 #include "EngineComponent.h"
 #include "EngineThread.h"
 #include "EventListener.h"
@@ -60,6 +61,9 @@ namespace re
 
 		// Not thread safe: Can only be called when other threads are not accessing the render data
 		gr::RenderDataManager& GetRenderDataManagerForModification();
+		gr::RenderDataManager const& GetRenderDataManager() const;
+
+		gr::BatchManager const& GetBatchManager() const;
 
 
 	public:
@@ -86,6 +90,8 @@ namespace re
 		bool m_quitEventReceived; 
 
 		gr::RenderDataManager m_renderData;
+		gr::BatchManager m_batchManager;
+
 
 	public: // Render commands:
 		template<typename T, typename... Args>
@@ -207,6 +213,18 @@ namespace re
 	inline gr::RenderDataManager& RenderManager::GetRenderDataManagerForModification()
 	{
 		return m_renderData;
+	}
+
+
+	inline gr::RenderDataManager const& RenderManager::GetRenderDataManager() const
+	{
+		return m_renderData;
+	}
+
+
+	inline gr::BatchManager const& RenderManager::GetBatchManager() const
+	{
+		return m_batchManager;
 	}
 
 

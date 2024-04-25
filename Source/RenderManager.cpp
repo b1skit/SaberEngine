@@ -203,6 +203,9 @@ namespace re
 
 		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
 
+		// Update the batch manager now that the RenderData has been populated
+		m_batchManager.UpdateBatchCache(m_renderData);
+
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
 		SEBeginCPUEvent("Execute update pipeline");
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)

@@ -68,7 +68,7 @@ namespace gr
 		std::map<std::string, size_t> m_scriptNameToIndex;
 
 		gr::RenderDataManager const* m_renderData;
-		gr::BatchManager m_batchManager;
+		gr::BatchManager const* m_batchManager;
 
 		gr::RenderDataID m_activeCameraRenderDataID;
 		gr::TransformID m_activeCameraTransformDataID;
@@ -91,7 +91,7 @@ namespace gr
 
 	inline gr::BatchManager const& GraphicsSystemManager::GetBatchManager() const
 	{
-		return m_batchManager;
+		return *m_batchManager;
 	}
 
 
