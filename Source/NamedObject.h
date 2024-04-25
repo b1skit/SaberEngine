@@ -2,6 +2,9 @@
 #pragma once
 #include "Assert.h"
 
+using NameID = uint64_t;
+using UniqueID = uint64_t;
+
 
 namespace en
 {
@@ -22,10 +25,10 @@ namespace en
 		std::wstring const& GetWName() const;
 
 		// Integer identifier computed by hashing m_name. Any object with the same m_name will have the same NameID
-		uint64_t GetNameID() const;
+		NameID GetNameID() const;
 
 		// Unique integer identifier, hashed from m_name concatenated with a monotonically-increasing value
-		uint64_t GetUniqueID() const;
+		UniqueID GetUniqueID() const;
 
 		// Update the name of an object. Does not modify the UniqueID assigned at creation
 		void SetName(std::string const& name);
@@ -33,7 +36,7 @@ namespace en
 
 	public:
 		// Compute an integer identifier from a string equivalent to the GetNameID() of objects with the same name
-		static uint64_t ComputeIDFromName(std::string const& name);
+		static NameID ComputeIDFromName(std::string const& name);
 		
 
 	private:
@@ -42,8 +45,8 @@ namespace en
 	private:
 		std::string m_name;
 		std::wstring m_wName;
-		uint64_t m_nameID;
-		uint64_t m_uniqueID;
+		NameID m_nameID;
+		UniqueID m_uniqueID;
 		
 	private:
 		NamedObject() = delete;
@@ -78,19 +81,19 @@ namespace en
 	}
 
 
-	inline uint64_t NamedObject::GetNameID() const
+	inline NameID NamedObject::GetNameID() const
 	{
 		return m_nameID;
 	}
 
 
-	inline uint64_t NamedObject::GetUniqueID() const
+	inline UniqueID NamedObject::GetUniqueID() const
 	{
 		return m_uniqueID;
 	}
 
 
-	inline uint64_t NamedObject::ComputeIDFromName(std::string const& name)
+	inline NameID NamedObject::ComputeIDFromName(std::string const& name)
 	{
 		return std::hash<std::string>{}(name);
 	}
@@ -108,7 +111,7 @@ namespace en
 	void NamedObject::AssignUniqueID()
 	{
 		// We assign a simple monotonically-increasing value as a unique identifier
-		static std::atomic<uint64_t> s_uniqueIDs = 0;
+		static std::atomic<UniqueID> s_uniqueIDs = 0;
 		m_uniqueID = s_uniqueIDs.fetch_add(1);
 	}
 
