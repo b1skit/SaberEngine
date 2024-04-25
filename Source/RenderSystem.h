@@ -4,15 +4,17 @@
 #include "GraphicsSystem.h"
 #include "NamedObject.h"
 #include "RenderPipeline.h"
-#include "RenderPipelineDesc.h"
 
 
 namespace re
 {
+	struct RenderSystemDescription;
+
+
 	class RenderSystem : public virtual en::NamedObject
 	{
 	public:
-		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(std::string const& name);
+		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(std::string const& pipelineFileName);
 		
 		void Destroy();
 
@@ -24,7 +26,7 @@ namespace re
 
 	public:
 		// Scriptable rendering pipeline:
-		void BuildPipeline(RenderPipelineDesc::RenderSystemDescription const&);
+		void BuildPipeline(RenderSystemDescription const&);
 		void ExecuteCreationPipeline();
 		void ExecuteInitializationPipeline();
 		void ExecuteUpdatePipeline();

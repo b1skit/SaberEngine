@@ -40,17 +40,17 @@ namespace en
 			InputDown,
 			InputSprint,
 
+			// Mouse functions:
+			InputMouseLeft,
+			InputMouseMiddle,
+			InputMouseRight,
+
 			// System:
 			InputToggleConsole,
 			InputToggleVSync,
 			WindowFocusChanged,
 
 			EngineQuit,
-
-			// Mouse functions:
-			InputMouseLeft,
-			InputMouseMiddle,
-			InputMouseRight,
 
 			Uninitialized, // Error
 			EventType_Count = Uninitialized

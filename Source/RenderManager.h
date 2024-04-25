@@ -144,7 +144,7 @@ namespace re
 		// Member functions:
 		void Initialize();
 		void CreateMainRenderSystem();
-		void LoadRenderSystem(std::string const& pipelineFileName);
+		re::RenderSystem const* CreateAddRenderSystem(std::string const& pipelineFileName);
 
 		virtual void Render() = 0;
 

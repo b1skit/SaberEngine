@@ -9,7 +9,6 @@
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
-#include "RenderPipelineDesc.h"
 #include "TextureTarget.h"
 #include "VertexStream.h"
 
@@ -182,28 +181,14 @@ namespace re
 			pipelineFileName = en::ConfigKeys::k_defaultPipelineFileName;
 		}
 
-		LoadRenderSystem(pipelineFileName);
+		CreateAddRenderSystem(pipelineFileName);
 	}
 
 
-	void RenderManager::LoadRenderSystem(std::string const& pipelineFileName)
+	re::RenderSystem const* RenderManager::CreateAddRenderSystem(std::string const& pipelineFileName)
 	{
-		// Prefix folder name to build a relative path
-		std::string const& scriptPath = std::format("{}{}", en::ConfigKeys::k_pipelineDirName, pipelineFileName);
-
-		LOG("Loading render pipeline description from \"%s\"...", scriptPath.c_str());
-
-		RenderPipelineDesc const& renderPipelineDesc = LoadRenderPipelineDescription(scriptPath.c_str());
-
-		LOG("Render pipeline description \"%s\" loaded!", renderPipelineDesc.m_pipelineName.c_str());
-
-		for (auto const& systemPipelineDesc : renderPipelineDesc.m_renderSystems)
-		{
-			LOG("Creating render system \"%s\"...", systemPipelineDesc.m_renderSystemName.c_str());
-
-			m_renderSystems.emplace_back(re::RenderSystem::Create(systemPipelineDesc.m_renderSystemName));
-			m_renderSystems.back()->BuildPipeline(systemPipelineDesc); // Builds creation/initialization/update functions
-		}
+		m_renderSystems.emplace_back(re::RenderSystem::Create(pipelineFileName));
+		return m_renderSystems.back().get();
 	}
 
 

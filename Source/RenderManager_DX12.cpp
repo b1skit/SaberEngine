@@ -5,7 +5,6 @@
 #include "Buffer_DX12.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
-#include "RenderPipelineDesc.h"
 #include "RenderSystem.h"
 #include "Sampler_DX12.h"
 #include "Shader_DX12.h"
@@ -39,7 +38,7 @@ namespace dx12
 		// Prepend DX12-specific render systems:
 		const std::string dx12PlatformPipelineFileName = en::ConfigKeys::k_platformPipelineFileName_DX12;
 
-		renderManager.LoadRenderSystem(dx12PlatformPipelineFileName);
+		renderManager.CreateAddRenderSystem(dx12PlatformPipelineFileName);
 	}
 
 

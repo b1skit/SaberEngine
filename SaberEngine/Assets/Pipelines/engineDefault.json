@@ -1,202 +1,197 @@
 {
-	"PipelineName": "Default",
-	"RenderSystems": [
+	"RenderSystemName": "Default",
+	"Pipeline": [
 		{
-			"RenderSystemName": "Primary",
-			"Declarations": [
+			"GraphicsSystem": "Culling"
+		},
+		{
+			"GraphicsSystem": "GBuffer",
+			"Inputs": [
 				{
-					"GraphicsSystem": "Culling"
-				},
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewCullingResults",
+							"DestinationName": "ViewCullingResults"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "XeGTAO",
+			"ExcludedPlatforms": [ "OpenGL" ],
+			"Inputs": [
 				{
 					"GraphicsSystem": "GBuffer",
-					"Inputs": [
+					"TextureDependencies": [
 						{
-							"GraphicsSystem": "Culling",
-							"DataDependencies": [
-								{
-									"SourceName": "ViewCullingResults",
-									"DestinationName": "ViewCullingResults"
-								}
-							]
+							"SourceName": "GBufferDepth",
+							"DestinationName": "SceneDepth"
+						},
+						{
+							"SourceName": "GBufferWNormal",
+							"DestinationName": "SceneWNormal"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "Shadows",
+			"Inputs": [
+				{
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewCullingResults",
+							"DestinationName": "ViewCullingResults"
+						},
+						{
+							"SourceName": "PointLightCullingResults",
+							"DestinationName": "PointLightCullingResults"
+						},
+						{
+							"SourceName": "SpotLightCullingResults",
+							"DestinationName": "SpotLightCullingResults"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "DeferredLighting",
+			"Inputs": [
+				{
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "PointLightCullingResults",
+							"DestinationName": "PointLightCullingResults"
+						},
+						{
+							"SourceName": "SpotLightCullingResults",
+							"DestinationName": "SpotLightCullingResults"
 						}
 					]
 				},
 				{
-					"GraphicsSystem": "XeGTAO",
-					"ExcludedPlatforms": [ "OpenGL" ],
-					"Inputs": [
+					"GraphicsSystem": "GBuffer",
+					"TextureDependencies": [
 						{
-							"GraphicsSystem": "GBuffer",
-							"TextureDependencies": [
-								{
-									"SourceName": "GBufferDepth",
-									"DestinationName": "SceneDepth"
-								},
-								{
-									"SourceName": "GBufferWNormal",
-									"DestinationName": "SceneWNormal"
-								}
-							]
+							"SourceName": "GBufferAlbedo",
+							"DestinationName": "GBufferAlbedo"
+						},
+						{
+							"SourceName": "GBufferWNormal",
+							"DestinationName": "GBufferWNormal"
+						},
+						{
+							"SourceName": "GBufferRMAO",
+							"DestinationName": "GBufferRMAO"
+						},
+						{
+							"SourceName": "GBufferMatProp0",
+							"DestinationName": "GBufferMatProp0"
+						},
+						{
+							"SourceName": "GBufferDepth",
+							"DestinationName": "GBufferDepth"
 						}
 					]
 				},
 				{
 					"GraphicsSystem": "Shadows",
-					"Inputs": [
+					"DataDependencies": [
 						{
-							"GraphicsSystem": "Culling",
-							"DataDependencies": [
-								{
-									"SourceName": "ViewCullingResults",
-									"DestinationName": "ViewCullingResults"
-								},
-								{
-									"SourceName": "PointLightCullingResults",
-									"DestinationName": "PointLightCullingResults"
-								},
-								{
-									"SourceName": "SpotLightCullingResults",
-									"DestinationName": "SpotLightCullingResults"
-								}
-							]
+							"SourceName": "ShadowTextures",
+							"DestinationName": "ShadowTextures"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "XeGTAO",
+					"TextureDependencies": [
+						{
+							"SourceName": "SSAOTex",
+							"DestinationName": "SSAOTex"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "Skybox",
+			"Inputs": [
+				{
+					"GraphicsSystem": "DeferredLighting",
+					"TextureDependencies": [
+						{
+							"SourceName": "DeferredLightTarget",
+							"DestinationName": "SkyboxTarget"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "GBuffer",
+					"TextureDependencies": [
+						{
+							"SourceName": "GBufferDepth",
+							"DestinationName": "SceneDepth"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "Bloom",
+			"Inputs": [
+				{
+					"GraphicsSystem": "GBuffer",
+					"TextureDependencies": [
+						{
+							"SourceName": "GBufferEmissive",
+							"DestinationName": "EmissiveLight"
 						}
 					]
 				},
 				{
 					"GraphicsSystem": "DeferredLighting",
-					"Inputs": [
+					"TextureDependencies": [
 						{
-							"GraphicsSystem": "Culling",
-							"DataDependencies": [
-								{
-									"SourceName": "PointLightCullingResults",
-									"DestinationName": "PointLightCullingResults"
-								},
-								{
-									"SourceName": "SpotLightCullingResults",
-									"DestinationName": "SpotLightCullingResults"
-								}
-							]
-						},
-						{
-							"GraphicsSystem": "GBuffer",
-							"TextureDependencies": [
-								{
-									"SourceName": "GBufferAlbedo",
-									"DestinationName": "GBufferAlbedo"
-								},
-								{
-									"SourceName": "GBufferWNormal",
-									"DestinationName": "GBufferWNormal"
-								},
-								{
-									"SourceName": "GBufferRMAO",
-									"DestinationName": "GBufferRMAO"
-								},
-								{
-									"SourceName": "GBufferMatProp0",
-									"DestinationName": "GBufferMatProp0"
-								},
-								{
-									"SourceName": "GBufferDepth",
-									"DestinationName": "GBufferDepth"
-								}
-							]
-						},
-						{
-							"GraphicsSystem": "Shadows",
-							"DataDependencies": [
-								{
-									"SourceName": "ShadowTextures",
-									"DestinationName": "ShadowTextures"
-								}
-							]
-						},
-						{
-							"GraphicsSystem": "XeGTAO",
-							"TextureDependencies": [
-								{
-									"SourceName": "SSAOTex",
-									"DestinationName": "SSAOTex"
-								}
-							]
+							"SourceName": "DeferredLightTarget",
+							"DestinationName": "BloomTarget"
 						}
 					]
-				},
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "Tonemapping",
+			"Inputs": [
 				{
-					"GraphicsSystem": "Skybox",
-					"Inputs": [
+					"GraphicsSystem": "DeferredLighting",
+					"TextureDependencies": [
 						{
-							"GraphicsSystem": "DeferredLighting",
-							"TextureDependencies": [
-								{
-									"SourceName": "DeferredLightTarget",
-									"DestinationName": "SkyboxTarget"
-								}
-							]
-						},
-						{
-							"GraphicsSystem": "GBuffer",
-							"TextureDependencies": [
-								{
-									"SourceName": "GBufferDepth",
-									"DestinationName": "SceneDepth"
-								}
-							]
+							"SourceName": "DeferredLightTarget",
+							"DestinationName": "TonemappingTarget"
 						}
 					]
 				},
 				{
 					"GraphicsSystem": "Bloom",
-					"Inputs": [
+					"TextureDependencies": [
 						{
-							"GraphicsSystem": "GBuffer",
-							"TextureDependencies": [
-								{
-									"SourceName": "GBufferEmissive",
-									"DestinationName": "EmissiveLight"
-								}
-							]
-						},
-						{
-							"GraphicsSystem": "DeferredLighting",
-							"TextureDependencies": [
-								{
-									"SourceName": "DeferredLightTarget",
-									"DestinationName": "BloomTarget"
-								}
-							]
+							"SourceName": "BloomResult",
+							"DestinationName": "BloomResult"
 						}
 					]
-				},
-				{
-					"GraphicsSystem": "Tonemapping",
-					"Inputs": [
-						{
-							"GraphicsSystem": "DeferredLighting",
-							"TextureDependencies": [
-								{
-									"SourceName": "DeferredLightTarget",
-									"DestinationName": "TonemappingTarget"
-								}
-							]
-						},
-						{
-							"GraphicsSystem": "Bloom",
-							"TextureDependencies": [
-								{
-									"SourceName": "BloomResult",
-									"DestinationName": "BloomResult"
-								}
-							]
-						}
-					]
-				},
-				{
-					"GraphicsSystem": "Debug",
-					"Inputs": []
 				}
 			]
+		},
+		{
+			"GraphicsSystem": "Debug",
+			"Inputs": []
 		}
 	]
 }

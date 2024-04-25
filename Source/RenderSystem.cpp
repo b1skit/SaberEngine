@@ -4,18 +4,19 @@
 #include "GraphicsSystem.h"
 #include "ProfilingMarkers.h"
 #include "RenderSystem.h"
+#include "RenderSystemDesc.h"
 #include "SceneManager.h"
+
+
+using GSName = re::RenderSystemDescription::GSName;
+using SrcDstNamePairs = re::RenderSystemDescription::SrcDstNamePairs;
 
 
 namespace
 {
-	using GSName = re::RenderPipelineDesc::RenderSystemDescription::GSName;
-	using SrcDstNamePairs = re::RenderPipelineDesc::RenderSystemDescription::SrcDstNamePairs;
-
-
 	gr::GraphicsSystem::TextureDependencies ResolveTextureDependencies(
 		std::string const& dstGSScriptName,
-		re::RenderPipelineDesc::RenderSystemDescription const& renderSysDesc,
+		re::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
 		gr::GraphicsSystem::TextureDependencies texDependencies;
@@ -102,7 +103,7 @@ namespace
 
 	std::unordered_map<std::string, void const*> ResolveDataDependencies(
 		std::string const& dstGSScriptName,
-		re::RenderPipelineDesc::RenderSystemDescription const& renderSysDesc,
+		re::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
 		std::unordered_map<std::string, void const*> resolvedDependencies;
@@ -144,7 +145,7 @@ namespace
 	
 	
 	void ComputeExecutionGroups(
-		re::RenderPipelineDesc::RenderSystemDescription const& renderSysDesc,
+		re::RenderSystemDescription const& renderSysDesc,
 		std::vector<std::vector<std::string>>& updateExecutionGroups,
 		bool singleThreadGSExecution)
 	{
@@ -264,11 +265,21 @@ namespace
 
 namespace re
 {
-	std::unique_ptr<RenderSystem> RenderSystem::Create(std::string const& name)
+	std::unique_ptr<RenderSystem> RenderSystem::Create(std::string const& pipelineFileName)
 	{
+		// Load the render system description:
+		std::string const& scriptPath = std::format("{}{}", en::ConfigKeys::k_pipelineDirName, pipelineFileName);
+
+		RenderSystemDescription const& renderSystemDesc = LoadRenderSystemDescription(scriptPath.c_str());
+
+		LOG("Render pipeline description \"%s\" loaded!", renderSystemDesc.m_renderSystemName.c_str());
+
+		// Create the render system, and build its various pipeline stages:
 		std::unique_ptr<RenderSystem> newRenderSystem = nullptr;
 
-		newRenderSystem.reset(new RenderSystem(name));
+		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_renderSystemName));
+
+		newRenderSystem->BuildPipeline(renderSystemDesc); // Builds creation/initialization/update functions
 
 		return std::move(newRenderSystem);
 	}
@@ -293,7 +304,7 @@ namespace re
 	}
 
 
-	void RenderSystem::BuildPipeline(RenderPipelineDesc::RenderSystemDescription const& renderSysDesc)
+	void RenderSystem::BuildPipeline(RenderSystemDescription const& renderSysDesc)
 	{
 		// Construct the GS creation pipeline:
 		m_creationPipeline = [this, renderSysDesc](re::RenderSystem* renderSystem)
@@ -314,7 +325,8 @@ namespace re
 			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
 
 			// Build up our log message so it's printed in a single block
-			std::string initOrderLog = std::format("Render system \"{}\" initialization order:", GetName());
+			std::string initOrderLog = 
+				std::format("Render system \"{}\" graphics system initialization order:", GetName());
 
 			for (auto const& currentGSScriptName : renderSysDesc.m_pipelineOrder)
 			{
@@ -350,7 +362,7 @@ namespace re
 			std::vector<std::vector<std::string>> updateExecutionGroups;
 			ComputeExecutionGroups(renderSysDesc, updateExecutionGroups, singleThreadGSExecution);
 
-			std::string updateOrderLog = std::format("Render system \"{}\" {} update execution grouping:",
+			std::string updateOrderLog = std::format("Render system \"{}\" {} graphics system update execution grouping:",
 				GetName().c_str(),
 				singleThreadGSExecution ? "serial" : "threaded");
 

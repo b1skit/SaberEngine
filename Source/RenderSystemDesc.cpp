@@ -1,0 +1,161 @@
+#pragma once
+#include "Assert.h"
+#include "Config.h"
+#include "Platform.h"
+#include "RenderSystemDesc.h"
+
+
+using GSName = re::RenderSystemDescription::GSName;
+using SrcDstNamePairs = re::RenderSystemDescription::SrcDstNamePairs;
+
+
+namespace re
+{
+	void from_json(nlohmann::json const& jsonDesc, RenderSystemDescription& renderSysDesc)
+	{
+		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		std::string currentPlatformVal;
+		switch (api)
+		{
+		case platform::RenderingAPI::DX12: currentPlatformVal = RenderSystemDescription::val_platformDX12; break;
+		case platform::RenderingAPI::OpenGL: currentPlatformVal = RenderSystemDescription::val_platformOpenGL; break;
+		default: SEAssertF("Invalid RenderingAPI");
+		}
+
+		auto ExcludesPlatform = [&currentPlatformVal = std::as_const(currentPlatformVal)](auto entry) -> bool
+			{
+				if (entry.contains(RenderSystemDescription::key_excludedPlatform))
+				{
+					for (auto const& excludedPlatform : entry[RenderSystemDescription::key_excludedPlatform])
+					{
+						if (excludedPlatform.template get<std::string>() == currentPlatformVal)
+						{
+							return true;
+						}
+					}
+				}
+				return false;
+			};
+
+		renderSysDesc = {};		
+
+		// "RenderSystemName":
+		renderSysDesc.m_renderSystemName =
+			jsonDesc[RenderSystemDescription::key_renderSystemName].template get<std::string>().c_str();
+
+		// "Declarations": 
+		auto const& declarationsBlock = jsonDesc[RenderSystemDescription::key_pipelineBlock];
+		for (auto const& declaration : declarationsBlock)
+		{
+			if (ExcludesPlatform(declaration))
+			{
+				continue;
+			}
+
+			auto& newPipelineStep = renderSysDesc.m_pipelineOrder.emplace_back();
+			auto const& currentGSName = declaration[RenderSystemDescription::key_GSName].get_to(newPipelineStep);
+			renderSysDesc.m_graphicsSystemNames.emplace(currentGSName);
+
+
+			// Helper: Parses lists of {"SourceName": "...", "DestinationName": "..."} entries
+			auto ParseDependencyList = [&ExcludesPlatform](
+				auto const& dependencyList,
+				std::string const& dependencySourceGS,
+				std::vector<std::pair<GSName, SrcDstNamePairs>>& curDependencies)
+				{
+					bool haveAddedFirstDependencyEntry = false;
+
+					for (auto const& dependencyEntry : dependencyList)
+					{
+						if (ExcludesPlatform(dependencyEntry))
+						{
+							continue;
+						}
+						else if (!haveAddedFirstDependencyEntry)
+						{
+							// We must ensure we don't record empty GS dependencies for excluded platforms;
+							// and we only want to add a single entry for the current source GS
+							curDependencies.emplace_back(dependencySourceGS, SrcDstNamePairs());
+							haveAddedFirstDependencyEntry = true;
+						}
+
+						SrcDstNamePairs& srcDstNames = curDependencies.back().second;
+
+						srcDstNames.emplace_back(
+							dependencyEntry[RenderSystemDescription::key_srcName],
+							dependencyEntry[RenderSystemDescription::key_dstName]);
+					}
+				};
+
+
+			// "Inputs":
+			if (declaration.contains(RenderSystemDescription::key_inputsList) &&
+				!declaration[RenderSystemDescription::key_inputsList].empty())
+			{
+				auto const& inputsList = declaration[RenderSystemDescription::key_inputsList];
+				for (auto const& inputEntry : inputsList)
+				{
+					// "GS":
+					std::string const& dependencySourceGS =
+						inputEntry[RenderSystemDescription::key_GSName].template get<std::string>();
+
+					SEAssert(dependencySourceGS != currentGSName, "A GS has listed itself as an input source");
+
+					// "TextureDependencies":
+					if (inputEntry.contains(RenderSystemDescription::key_textureDependenciesList) &&
+						!inputEntry[RenderSystemDescription::key_textureDependenciesList].empty())
+					{
+						ParseDependencyList(
+							inputEntry[RenderSystemDescription::key_textureDependenciesList],
+							dependencySourceGS,
+							renderSysDesc.m_textureInputs[currentGSName]);
+					}
+
+					// "DataDependencies":
+					if (inputEntry.contains(RenderSystemDescription::key_dataDependenciesList) &&
+						!inputEntry[RenderSystemDescription::key_dataDependenciesList].empty())
+					{
+						ParseDependencyList(
+							inputEntry[RenderSystemDescription::key_dataDependenciesList],
+							dependencySourceGS,
+							renderSysDesc.m_dataInputs[currentGSName]);
+					}
+				}
+			}
+		}
+	}
+
+
+	RenderSystemDescription LoadRenderSystemDescription(char const* scriptPath)
+	{
+		SEAssert(scriptPath, "Script path cannot be null");
+
+		LOG("Loading render pipeline description from \"%s\"...", scriptPath);
+
+		std::ifstream pipelineInputStream(scriptPath);
+		SEAssert(pipelineInputStream.is_open(), "Failed to open render pipeline input stream");
+
+		RenderSystemDescription systemDesc;
+		nlohmann::json pipelineDescJSON;
+		try
+		{
+			const nlohmann::json::parser_callback_t parserCallback = nullptr;
+			constexpr bool  k_allowExceptions = true;
+			constexpr bool k_ignoreComments = true; // Allow C-style comments, which are NOT part of the JSON specs
+			pipelineDescJSON =
+				nlohmann::json::parse(pipelineInputStream, parserCallback, k_allowExceptions, k_ignoreComments);
+
+			systemDesc = pipelineDescJSON.template get<RenderSystemDescription>();
+		}
+		catch (nlohmann::json::parse_error parseException)
+		{
+			std::string const& error = std::format(
+				"LoadRenderSystemDescription failed to parse the render pipeline description file \"{}\"\n{}",
+				scriptPath,
+				parseException.what());
+			SEAssertF(error.c_str());
+		}
+
+		return systemDesc;
+	}
+}
