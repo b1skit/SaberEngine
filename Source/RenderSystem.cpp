@@ -265,19 +265,19 @@ namespace
 
 namespace re
 {
-	std::unique_ptr<RenderSystem> RenderSystem::Create(std::string const& pipelineFileName)
+	std::unique_ptr<RenderSystem> RenderSystem::Create(std::string const& name, std::string const& pipelineFileName)
 	{
 		// Load the render system description:
 		std::string const& scriptPath = std::format("{}{}", en::ConfigKeys::k_pipelineDirName, pipelineFileName);
 
 		RenderSystemDescription const& renderSystemDesc = LoadRenderSystemDescription(scriptPath.c_str());
 
-		LOG("Render pipeline description \"%s\" loaded!", renderSystemDesc.m_renderSystemName.c_str());
+		LOG("Render pipeline description \"%s\" loaded!", pipelineFileName.c_str());
 
 		// Create the render system, and build its various pipeline stages:
 		std::unique_ptr<RenderSystem> newRenderSystem = nullptr;
 
-		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_renderSystemName));
+		newRenderSystem.reset(new RenderSystem(name));
 
 		newRenderSystem->BuildPipeline(renderSystemDesc); // Builds creation/initialization/update functions
 

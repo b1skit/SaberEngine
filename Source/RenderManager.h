@@ -54,8 +54,9 @@ namespace re
 
 		uint64_t GetCurrentRenderFrameNum() const;
 
-		re::RenderSystem const* CreateAddRenderSystem(std::string const& pipelineFileName);
+		re::RenderSystem const* CreateAddRenderSystem(std::string const& name, std::string const& pipelineFileName);
 		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
+		re::RenderSystem* GetRenderSystem(NameID);
 
 		// Not thread safe: Can only be called when other threads are not accessing the render data
 		gr::RenderDataManager& GetRenderDataManagerForModification();
@@ -186,6 +187,20 @@ namespace re
 	inline std::vector<std::unique_ptr<re::RenderSystem>> const& RenderManager::GetRenderSystems() const
 	{
 		return m_renderSystems;
+	}
+
+
+	inline re::RenderSystem* RenderManager::GetRenderSystem(NameID nameID)
+	{
+		for (auto& renderSystem : m_renderSystems)
+		{
+			if (renderSystem->GetNameID() == nameID)
+			{
+				return renderSystem.get();
+			}
+		}
+		SEAssertF("Failed to find render system with the given nameID. This is unexpected");
+		return nullptr;
 	}
 
 

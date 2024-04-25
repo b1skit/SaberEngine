@@ -7,7 +7,6 @@ namespace re
 	struct RenderSystemDescription
 	{
 		// JSON keys/values:
-		static constexpr char const* key_renderSystemName = "RenderSystemName";
 		static constexpr char const* key_pipelineBlock = "Pipeline";
 		static constexpr char const* key_inputsList = "Inputs";
 		static constexpr char const* key_textureDependenciesList = "TextureDependencies";
@@ -24,7 +23,6 @@ namespace re
 		// ---
 
 
-		std::string m_renderSystemName;
 		std::unordered_set<std::string> m_graphicsSystemNames; // Unique set of non-excluded GS names
 		std::vector<std::string> m_pipelineOrder; // GS names: "Pipeline" block declaration order == construction order
 

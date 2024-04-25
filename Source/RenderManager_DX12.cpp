@@ -37,8 +37,8 @@ namespace dx12
 	{
 		// Prepend DX12-specific render systems:
 		const std::string dx12PlatformPipelineFileName = en::ConfigKeys::k_platformPipelineFileName_DX12;
-
-		renderManager.CreateAddRenderSystem(dx12PlatformPipelineFileName);
+		constexpr char const* k_dx12RenderSystemName = "PlatformDX12";
+		renderManager.CreateAddRenderSystem(k_dx12RenderSystemName, dx12PlatformPipelineFileName);
 	}
 
 

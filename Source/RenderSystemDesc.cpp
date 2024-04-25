@@ -37,11 +37,7 @@ namespace re
 				return false;
 			};
 
-		renderSysDesc = {};		
-
-		// "RenderSystemName":
-		renderSysDesc.m_renderSystemName =
-			jsonDesc[RenderSystemDescription::key_renderSystemName].template get<std::string>().c_str();
+		renderSysDesc = {};
 
 		// "Declarations": 
 		auto const& declarationsBlock = jsonDesc[RenderSystemDescription::key_pipelineBlock];

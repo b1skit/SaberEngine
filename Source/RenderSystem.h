@@ -14,7 +14,8 @@ namespace re
 	class RenderSystem : public virtual en::NamedObject
 	{
 	public:
-		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(std::string const& pipelineFileName);
+		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(
+			std::string const& name, std::string const& pipelineFileName);
 		
 		void Destroy();
 

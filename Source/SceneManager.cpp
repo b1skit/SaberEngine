@@ -17,6 +17,9 @@ namespace
 
 namespace fr
 {
+	const NameID SceneManager::k_sceneRenderSystemNameID = en::NamedObject::ComputeIDFromName(k_sceneRenderSystemName);
+
+
 	SceneManager* SceneManager::Get()
 	{
 		static std::unique_ptr<fr::SceneManager> instance = std::make_unique<fr::SceneManager>();
@@ -26,6 +29,7 @@ namespace fr
 
 	SceneManager::SceneManager()
 		: m_sceneData(nullptr)
+		, m_sceneRenderSystemNameID(en::NamedObject::ComputeIDFromName(k_sceneRenderSystemName))
 	{
 	}
 
@@ -79,11 +83,11 @@ namespace fr
 				std::string pipelineFileName;
 				if (en::Config::Get()->TryGetValue(en::ConfigKeys::k_scenePipelineCmdLineArg, pipelineFileName) == false)
 				{
-					pipelineFileName = en::ConfigKeys::k_defaultPipelineFileName;
+					pipelineFileName = en::ConfigKeys::k_defaultScenePipelineFileName;
 				}
 
 				re::RenderSystem const* sceneRenderSystem =
-					re::RenderManager::Get()->CreateAddRenderSystem(pipelineFileName);
+					re::RenderManager::Get()->CreateAddRenderSystem(k_sceneRenderSystemName, pipelineFileName);
 			}
 
 			static void Destroy(void* cmdData)

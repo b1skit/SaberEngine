@@ -170,9 +170,10 @@ namespace re
 	}
 
 
-	re::RenderSystem const* RenderManager::CreateAddRenderSystem(std::string const& pipelineFileName)
+	re::RenderSystem const* RenderManager::CreateAddRenderSystem(
+		std::string const& name, std::string const& pipelineFileName)
 	{
-		m_renderSystems.emplace_back(re::RenderSystem::Create(pipelineFileName));
+		m_renderSystems.emplace_back(re::RenderSystem::Create(name, pipelineFileName));
 		return m_renderSystems.back().get();
 	}
 

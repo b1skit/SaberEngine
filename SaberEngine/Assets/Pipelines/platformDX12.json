@@ -1,5 +1,4 @@
 {
-	"RenderSystemName": "Mip Generation",
 	"Pipeline": [
 		{
 			"GraphicsSystem": "ComputeMips",

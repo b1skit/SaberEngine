@@ -9,6 +9,11 @@ namespace fr
 {
 	class SceneManager final : public virtual en::EngineComponent
 	{
+	public: // Helper for identifying the scene render system
+		static constexpr char const* k_sceneRenderSystemName = "Scene";
+		static const NameID k_sceneRenderSystemNameID;
+
+
 	public:
 		static SceneManager* Get(); // Singleton functionality
 		static fr::SceneData* GetSceneData() { return SceneManager::Get()->m_sceneData.get(); }
@@ -31,7 +36,7 @@ namespace fr
 
 	private:
 		std::shared_ptr<fr::SceneData> m_sceneData = nullptr;
-
+		NameID m_sceneRenderSystemNameID;
 
 	private:
 		SceneManager(SceneManager const&) = delete;

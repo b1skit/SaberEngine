@@ -11,6 +11,9 @@ namespace en
 	class NamedObject
 	{
 	public:
+		static constexpr NameID k_invalidNameID = std::numeric_limits<NameID>::max();
+		static constexpr UniqueID k_invalidUniqueID = std::numeric_limits<UniqueID>::max();
+
 		static constexpr size_t k_maxNameLength = 260; // Windows MAX_PATH = 260 chars, including null terminator
 
 	public: 
