@@ -11,7 +11,7 @@ namespace en::ConfigKeys
 	constexpr char const* k_configDirName					= "Config\\";
 	constexpr char const* k_configFileName					= "config.cfg";
 	constexpr char const* k_pipelineDirName					= "Assets\\Pipelines\\";
-	constexpr char const* k_defaultPipelineFileName			= "engineDefault.json";
+	constexpr char const* k_defaultPipelineFileName			= "scene.json";
 	constexpr char const* k_platformPipelineFileName_DX12	= "platformDX12.json";
 
 	// Debug:
@@ -31,7 +31,7 @@ namespace en::ConfigKeys
 	/******************************************************************************************************************/
 	constexpr char const* k_sceneCmdLineArg							= "scene";
 	constexpr char const* k_showSystemConsoleWindowCmdLineArg		= "console";
-	constexpr char const* k_renderPipelineCmdLineArg				= "renderpipeline";
+	constexpr char const* k_scenePipelineCmdLineArg					= "scenepipeline";
 	constexpr char const* k_singleThreadGSExecution					= "singlethreadgsexecution";
 	constexpr char const* k_platformCmdLineArg						= "platform";
 	constexpr char const* k_debugLevelCmdLineArg					= "debuglevel";

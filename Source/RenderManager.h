@@ -54,6 +54,7 @@ namespace re
 
 		uint64_t GetCurrentRenderFrameNum() const;
 
+		re::RenderSystem const* CreateAddRenderSystem(std::string const& pipelineFileName);
 		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
 
 		// Not thread safe: Can only be called when other threads are not accessing the render data
@@ -143,8 +144,6 @@ namespace re
 		
 		// Member functions:
 		void Initialize();
-		void CreateMainRenderSystem();
-		re::RenderSystem const* CreateAddRenderSystem(std::string const& pipelineFileName);
 
 		virtual void Render() = 0;
 

@@ -1,5 +1,5 @@
 {
-	"RenderSystemName": "Default",
+	"RenderSystemName": "Scene",
 	"Pipeline": [
 		{
 			"GraphicsSystem": "Culling"

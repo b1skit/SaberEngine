@@ -16,7 +16,7 @@
     },
     {
       "Id": "84306581-d976-4879-8c44-018b3d4130ac",
-      "Command": "-renderpipeline engineDefault.json"
+      "Command": "-scenepipeline scene.json"
     },
     {
       "Id": "c3d6eda4-a91d-4fe1-9eb5-cfd47124c191",

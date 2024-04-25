@@ -144,17 +144,15 @@ namespace re
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
 
-		CreateMainRenderSystem();
+		// Process any pending render commands to ensure we've processed any queued render system creations
+		m_renderCommandManager.SwapBuffers();
+		m_renderCommandManager.Execute();
 
 		// Execute the render system creation pipeline(s). Internally, creates each GraphicsSystem
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteCreationPipeline();
 		}
-
-		// Process render commands issued during scene loading now the render systems have been created:
-		m_renderCommandManager.SwapBuffers();
-		m_renderCommandManager.Execute();
 
 		// Initialize each render system (which will in turn initialize each of its graphics systems & stage pipelines)
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
@@ -169,19 +167,6 @@ namespace re
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 
 		SEEndCPUEvent();
-	}
-
-
-	void RenderManager::CreateMainRenderSystem()
-	{
-		// Build our primary rendering pipeline:
-		std::string pipelineFileName;
-		if (en::Config::Get()->TryGetValue(en::ConfigKeys::k_renderPipelineCmdLineArg, pipelineFileName) == false)
-		{
-			pipelineFileName = en::ConfigKeys::k_defaultPipelineFileName;
-		}
-
-		CreateAddRenderSystem(pipelineFileName);
 	}
 
 

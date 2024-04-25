@@ -63,6 +63,39 @@ namespace fr
 			LOG("\nSceneManager successfully loaded scene \"%s\" in %f seconds\n", 
 				sceneFilePath.c_str(), timer.StopSec());
 		}
+
+
+		// Create a scene render system:
+		class CreateSceneRenderSystemCommand
+		{
+		public:
+			CreateSceneRenderSystemCommand() = default;
+			~CreateSceneRenderSystemCommand() = default;
+
+			static void Execute(void* cmdData)
+			{
+				CreateSceneRenderSystemCommand* cmdPtr = reinterpret_cast<CreateSceneRenderSystemCommand*>(cmdData);
+
+				std::string pipelineFileName;
+				if (en::Config::Get()->TryGetValue(en::ConfigKeys::k_scenePipelineCmdLineArg, pipelineFileName) == false)
+				{
+					pipelineFileName = en::ConfigKeys::k_defaultPipelineFileName;
+				}
+
+				re::RenderSystem const* sceneRenderSystem =
+					re::RenderManager::Get()->CreateAddRenderSystem(pipelineFileName);
+			}
+
+			static void Destroy(void* cmdData)
+			{
+				CreateSceneRenderSystemCommand* cmdPtr = reinterpret_cast<CreateSceneRenderSystemCommand*>(cmdData);
+				cmdPtr->~CreateSceneRenderSystemCommand();
+			}
+
+		private:
+
+		};
+		re::RenderManager::Get()->EnqueueRenderCommand<CreateSceneRenderSystemCommand>();
 	}
 
 
