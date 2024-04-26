@@ -228,73 +228,75 @@ namespace fr
 
 		HandleEvents();
 
-		// ImGui visibility state has changed:
-		if (m_imguiMenuVisible != m_prevImguiMenuVisible)
+		if (m_debugUIRenderSystemCreated)
 		{
-			m_prevImguiMenuVisible = m_imguiMenuVisible;
-
-			// If true, hide the mouse and lock it to the window
-			const bool captureMouse = !m_imguiMenuVisible;
-			en::CoreEngine::Get()->GetWindow()->SetRelativeMouseMode(captureMouse);
-
-			// Disable ImGui mouse listening if the console is not active: Prevents UI elements
-			// flashing as the hidden mouse cursor passes by
-			if (m_debugUIRenderSystemCreated)
+			// ImGui visibility state has changed:
+			if (m_imguiMenuVisible != m_prevImguiMenuVisible)
 			{
-				std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
+				m_prevImguiMenuVisible = m_imguiMenuVisible;
 
-				ImGuiIO& io = ImGui::GetIO();
-				if (m_imguiMenuVisible)
-				{
-					io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
-				}
-				else
-				{
-					io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
-				}
-			}
-		}
+				// If true, hide the mouse and lock it to the window
+				const bool captureMouse = !m_imguiMenuVisible;
+				en::CoreEngine::Get()->GetWindow()->SetRelativeMouseMode(captureMouse);
 
-		// Capture input, if necessary:
-		if (m_imguiMenuVisible)
-		{
-			{
-				bool currentImguiWantsToCaptureKeyboard = 0;
-				bool currentImguiWantsToCaptureMouse = 0;
-				
-				if (m_debugUIRenderSystemCreated)
+				// Disable ImGui mouse listening if the console is not active: Prevents UI elements
+				// flashing as the hidden mouse cursor passes by
+
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
+
 					ImGuiIO& io = ImGui::GetIO();
-					currentImguiWantsToCaptureKeyboard = io.WantCaptureKeyboard;
-					currentImguiWantsToCaptureMouse = io.WantCaptureMouse;
-				}
-
-				if (currentImguiWantsToCaptureKeyboard != m_imguiWantsToCaptureKeyboard)
-				{
-					m_imguiWantsToCaptureKeyboard = currentImguiWantsToCaptureKeyboard;
-
-					en::EventManager::Get()->Notify(en::EventManager::EventInfo{
-						.m_type = en::EventManager::EventType::KeyboardInputCaptureChange,
-						.m_data0 = en::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureKeyboard },
-						//.m_data1 = 
-						});
-				}
-
-				if (currentImguiWantsToCaptureMouse != m_imguiWantsToCaptureMouse)
-				{
-					m_imguiWantsToCaptureMouse = currentImguiWantsToCaptureMouse;
-
-					en::EventManager::Get()->Notify(en::EventManager::EventInfo{
-						.m_type = en::EventManager::EventType::MouseInputCaptureChange,
-						.m_data0 = en::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureMouse },
-						//.m_data1 = 
-						});
+					if (m_imguiMenuVisible)
+					{
+						io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+					}
+					else
+					{
+						io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
+					}
 				}
 			}
-		}
 
-		SubmitImGuiRenderCommands(frameNum);
+			// Capture input, if necessary:
+			if (m_imguiMenuVisible)
+			{
+				{
+					bool currentImguiWantsToCaptureKeyboard = 0;
+					bool currentImguiWantsToCaptureMouse = 0;
+
+					{
+						std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
+						ImGuiIO& io = ImGui::GetIO();
+						currentImguiWantsToCaptureKeyboard = io.WantCaptureKeyboard;
+						currentImguiWantsToCaptureMouse = io.WantCaptureMouse;
+					}
+
+					if (currentImguiWantsToCaptureKeyboard != m_imguiWantsToCaptureKeyboard)
+					{
+						m_imguiWantsToCaptureKeyboard = currentImguiWantsToCaptureKeyboard;
+
+						en::EventManager::Get()->Notify(en::EventManager::EventInfo{
+							.m_type = en::EventManager::EventType::KeyboardInputCaptureChange,
+							.m_data0 = en::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureKeyboard },
+							//.m_data1 = 
+							});
+					}
+
+					if (currentImguiWantsToCaptureMouse != m_imguiWantsToCaptureMouse)
+					{
+						m_imguiWantsToCaptureMouse = currentImguiWantsToCaptureMouse;
+
+						en::EventManager::Get()->Notify(en::EventManager::EventInfo{
+							.m_type = en::EventManager::EventType::MouseInputCaptureChange,
+							.m_data0 = en::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureMouse },
+							//.m_data1 = 
+							});
+					}
+				}
+			}
+
+			SubmitImGuiRenderCommands(frameNum);
+		}
 	}
 
 
@@ -307,6 +309,9 @@ namespace fr
 
 	void UIManager::HandleEvents()
 	{
+		// Cache this once to prevent a race where it changes midway through processing
+		const bool debugUISystemCreated = m_debugUIRenderSystemCreated;
+
 		while (HasEvents())
 		{
 			en::EventManager::EventInfo const& eventInfo = GetEvent();
@@ -323,7 +328,7 @@ namespace fr
 			break;
 			case en::EventManager::EventType::TextInputEvent:
 			{
-				if (m_debugUIRenderSystemCreated)
+				if (debugUISystemCreated)
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
@@ -337,7 +342,7 @@ namespace fr
 				const bool keystate = eventInfo.m_data1.m_dataB;
 
 				// We always broadcast to ImGui, even if it doesn't want exclusive capture of input
-				if (m_debugUIRenderSystemCreated)
+				if (debugUISystemCreated)
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
@@ -349,7 +354,7 @@ namespace fr
 			{
 				const bool buttonState = eventInfo.m_data1.m_dataB;
 				
-				if (m_debugUIRenderSystemCreated)
+				if (debugUISystemCreated)
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
@@ -379,7 +384,7 @@ namespace fr
 			break;
 			case en::EventManager::MouseWheelEvent:
 			{
-				if (m_debugUIRenderSystemCreated)
+				if (debugUISystemCreated)
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
