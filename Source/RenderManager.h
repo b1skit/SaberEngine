@@ -67,28 +67,12 @@ namespace re
 
 
 	public:
-		std::mutex& GetGlobalImGuiMutex(); // Synchronize ImGui IO accesses across threads
-
-
-	public:
 		void ShowRenderSystemsImGuiWindow(bool* showRenderMgrDebug);
 		void ShowGPUCapturesImGuiWindow(bool* show);
 		void ShowRenderDataImGuiWindow(bool* showRenderDataDebug) const;
 
 
 	private:
-		void RenderImGui(); // Process ImGui render commands
-
-		static constexpr size_t k_imGuiCommandBufferSize = 8 * 1024 * 1024;
-		en::CommandManager m_imGuiCommandManager;
-
-		std::mutex m_imGuiGlobalMutex;
-
-		// We will ignore ImGui commands if a quit event is received. The render thread is always a frame behind the
-		// front end thread; if it's processing ImGui commands it might try and access something after it is destroyed.
-		// Note: The RenderManager's lifetime is otherwise exclusively controlled by the en::EngineThread interface
-		bool m_quitEventReceived; 
-
 		gr::RenderDataManager m_renderData;
 		gr::BatchManager m_batchManager;
 
@@ -96,9 +80,6 @@ namespace re
 	public: // Render commands:
 		template<typename T, typename... Args>
 		void EnqueueRenderCommand(Args&&... args);
-
-		template<typename T, typename... Args>
-		void EnqueueImGuiCommand(Args&&... args);
 
 
 	private:
@@ -228,12 +209,6 @@ namespace re
 	}
 
 
-	inline std::mutex& RenderManager::GetGlobalImGuiMutex()
-	{
-		return m_imGuiGlobalMutex;
-	}
-
-
 	template<typename T, typename... Args>
 	inline void RenderManager::EnqueueRenderCommand(Args&&... args)
 	{
@@ -241,71 +216,8 @@ namespace re
 	}
 
 
-	template<typename T, typename... Args>
-	void RenderManager::EnqueueImGuiCommand(Args&&... args)
-	{
-		m_imGuiCommandManager.Enqueue<T>(std::forward<Args>(args)...);
-	}
-
-
 	inline std::vector<std::shared_ptr<re::Texture>> const& RenderManager::GetNewlyCreatedTextures() const
 	{
 		return m_createdTextures;
 	}
-
-
-	// ---
-
-
-	/*	A helper to cut down on ImGui render command boiler plate.This is not mandatory for submitting commands to the
-	*	ImGui command queue, but it should cover most common cases. 
-	* 
-	*	Internally, it uses a static unordered_map to link a unique identifier (e.g. a lambda address or some other
-	*	value) with ImGui's ImGuiOnceUponAFrame to ensure commands submitted multiple times per frame are only executed
-	*	once.
-	*	
-	*	Use this class as a wrapper for a lambda that captures any required data by reference:
-	* 
-	*	auto SomeLambda = [&]() { // Do something };
-	* 
-	*	re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(SomeLambda)>>(
-	*		re::ImGuiRenderCommand<decltype(SomeLambda)>(SomeLambda));
-	* 
-	*	In cases where the lamba being wrapped is called multiple times but capturing different data (e.g. from within
-	*	a static function), use the 2nd ctor to supply a unique ID each time
-	*/
-	template<typename T>
-	class ImGuiRenderCommand
-	{
-	public:
-		// When the 
-		ImGuiRenderCommand(T wrapperLambda)
-			: m_imguiWrapperLambda(wrapperLambda), m_uniqueID(util::PtrToID(&wrapperLambda)) {};
-
-		ImGuiRenderCommand(T wrapperLambda, uint64_t uniqueID)
-			: m_imguiWrapperLambda(wrapperLambda), m_uniqueID(uniqueID) {};
-
-		static void Execute(void* cmdData)
-		{
-			ImGuiRenderCommand<T>* cmdPtr = reinterpret_cast<ImGuiRenderCommand<T>*>(cmdData);
-			if (m_uniqueIDToImGuiOnceUponAFrame[cmdPtr->m_uniqueID]) // Insert or access our ImGuiOnceUponAFrame
-			{
-				cmdPtr->m_imguiWrapperLambda();
-			}
-		}
-
-		static void Destroy(void* cmdData)
-		{
-			ImGuiRenderCommand<T>* cmdPtr = reinterpret_cast<ImGuiRenderCommand<T>*>(cmdData);
-			cmdPtr->~ImGuiRenderCommand();
-		}
-
-	private:
-		T m_imguiWrapperLambda;
-		uint64_t m_uniqueID;
-
-		static std::unordered_map<uint64_t, ImGuiOnceUponAFrame> m_uniqueIDToImGuiOnceUponAFrame;
-	};
-	template<typename T>
-	inline std::unordered_map<uint64_t, ImGuiOnceUponAFrame> ImGuiRenderCommand<T>::m_uniqueIDToImGuiOnceUponAFrame;
 }

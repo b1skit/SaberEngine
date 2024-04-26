@@ -27,14 +27,14 @@ namespace re
 
 	public:
 		// Scriptable rendering pipeline:
-		void BuildPipeline(RenderSystemDescription const&);
-		void ExecuteCreationPipeline();
+		void BuildPipeline(RenderSystemDescription const&); // Creates graphics systems + init/update pipelines
 		void ExecuteInitializationPipeline();
 		void ExecuteUpdatePipeline();
 
 
 	public:
 		gr::GraphicsSystemManager& GetGraphicsSystemManager();
+		gr::GraphicsSystemManager const& GetGraphicsSystemManager() const;
 
 		re::RenderPipeline& GetRenderPipeline();
 
@@ -74,6 +74,12 @@ namespace re
 
 
 	inline gr::GraphicsSystemManager& RenderSystem::GetGraphicsSystemManager()
+	{
+		return m_graphicsSystemManager;
+	}
+
+
+	inline gr::GraphicsSystemManager const& RenderSystem::GetGraphicsSystemManager() const
 	{
 		return m_graphicsSystemManager;
 	}

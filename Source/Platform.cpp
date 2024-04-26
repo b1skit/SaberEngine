@@ -16,6 +16,7 @@
 #include "Buffer_DX12.h"
 #include "Buffer_OpenGL.h"
 #include "Buffer_Platform.h"
+#include "RLibrary_Platform.h"
 
 #include "RenderManager_DX12.h"
 #include "RenderManager_OpenGL.h"
@@ -100,8 +101,6 @@ namespace platform
 			platform::RenderManager::Shutdown				= &opengl::RenderManager::Shutdown;
 			platform::RenderManager::CreateAPIResources		= &opengl::RenderManager::CreateAPIResources;
 			platform::RenderManager::GetNumFramesInFlight	= &opengl::RenderManager::GetNumFramesInFlight;
-			platform::RenderManager::StartImGuiFrame		= &opengl::RenderManager::StartImGuiFrame;
-			platform::RenderManager::RenderImGui			= &opengl::RenderManager::RenderImGui;
 
 			// Shader:
 			platform::Shader::Create	= &opengl::Shader::Create;
@@ -145,8 +144,6 @@ namespace platform
 			platform::RenderManager::Shutdown			= &dx12::RenderManager::Shutdown;
 			platform::RenderManager::CreateAPIResources = &dx12::RenderManager::CreateAPIResources;
 			platform::RenderManager::GetNumFramesInFlight		= &dx12::RenderManager::GetNumFramesInFlight;
-			platform::RenderManager::StartImGuiFrame	= &dx12::RenderManager::StartImGuiFrame;
-			platform::RenderManager::RenderImGui		= &dx12::RenderManager::RenderImGui;
 
 			// Shader:
 			platform::Shader::Create	= &dx12::Shader::Create;
@@ -178,6 +175,12 @@ namespace platform
 			SEAssertF("Unsupported rendering API");
 			result = false;
 		}
+		}
+
+		// Handle render layer library bindings:
+		if (result)
+		{
+			result &= platform::RLibrary::RegisterPlatformLibraries();
 		}
 
 		LOG("Done!");

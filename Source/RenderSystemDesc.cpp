@@ -39,17 +39,17 @@ namespace re
 
 		renderSysDesc = {};
 
-		// "Declarations": 
-		auto const& declarationsBlock = jsonDesc[RenderSystemDescription::key_pipelineBlock];
-		for (auto const& declaration : declarationsBlock)
+		// "Pipeline": 
+		auto const& pipelineBlock = jsonDesc[RenderSystemDescription::key_pipelineBlock];
+		for (auto const& pipelineEntry : pipelineBlock)
 		{
-			if (ExcludesPlatform(declaration))
+			if (ExcludesPlatform(pipelineEntry))
 			{
 				continue;
 			}
 
 			auto& newPipelineStep = renderSysDesc.m_pipelineOrder.emplace_back();
-			auto const& currentGSName = declaration[RenderSystemDescription::key_GSName].get_to(newPipelineStep);
+			auto const& currentGSName = pipelineEntry[RenderSystemDescription::key_GSName].get_to(newPipelineStep);
 			renderSysDesc.m_graphicsSystemNames.emplace(currentGSName);
 
 
@@ -85,10 +85,10 @@ namespace re
 
 
 			// "Inputs":
-			if (declaration.contains(RenderSystemDescription::key_inputsList) &&
-				!declaration[RenderSystemDescription::key_inputsList].empty())
+			if (pipelineEntry.contains(RenderSystemDescription::key_inputsList) &&
+				!pipelineEntry[RenderSystemDescription::key_inputsList].empty())
 			{
-				auto const& inputsList = declaration[RenderSystemDescription::key_inputsList];
+				auto const& inputsList = pipelineEntry[RenderSystemDescription::key_inputsList];
 				for (auto const& inputEntry : inputsList)
 				{
 					// "GS":

@@ -16,9 +16,6 @@
 #include <GL/wglew.h> // Windows-specific GL functions and macros
 #include <GL/GL.h> // Must follow glew.h
 
-#include "backends/imgui_impl_win32.h"
-#include "backends/imgui_impl_opengl3.h"
-
 
 namespace opengl
 {
@@ -314,37 +311,13 @@ namespace opengl
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
 		m_bufferAllocator->Initialize(currentFrame);
-
-		// Setup our ImGui context
-		{
-			std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
-
-			IMGUI_CHECKVERSION();
-			ImGui::CreateContext();
-			ImGuiIO& io = ImGui::GetIO();
-			io.IniFilename = en::ConfigKeys::k_imguiIniPath;
-
-			// Setup Dear ImGui style
-			ImGui::StyleColorsDark();
-
-			// Setup Platform/Renderer backends
-			::ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
-
-			const std::string imguiGLSLVersionString = "#version 130";
-			::ImGui_ImplOpenGL3_Init(imguiGLSLVersionString.c_str());
-		}
 	}
 
 
 	void Context::Destroy(re::Context& reContext)
 	{
 		opengl::Context& context = dynamic_cast<opengl::Context&>(reContext);
-
-		// Imgui cleanup
-		::ImGui_ImplOpenGL3_Shutdown();
-		::ImGui_ImplWin32_Shutdown();
-		ImGui::DestroyContext();
-		
+	
 		::wglMakeCurrent(NULL, NULL); // Make the rendering context not current  
 
 		win32::Window::PlatformParams* windowPlatformParams = 

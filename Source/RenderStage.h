@@ -29,6 +29,8 @@ namespace re
 			Parent, // Does not contribute batches
 			Graphics,
 			Compute,
+			
+			Library, // Wrapper for external libraries
 
 			FullscreenQuad, // Graphics queue
 			Clear, // Graphics queue
@@ -47,6 +49,20 @@ namespace re
 		struct ComputeStageParams final : public virtual IStageParams
 		{
 			// TODO: Populate this
+		};
+		struct LibraryStageParams final : public virtual IStageParams
+		{
+			enum class LibraryType
+			{
+				ImGui,
+			} m_type;
+
+			LibraryStageParams(LibraryType type) : m_type(type) {}
+
+			std::shared_ptr<void> m_payload; // Interpreted by the library wrapper
+
+		private:
+			LibraryStageParams() = delete;
 		};
 		struct FullscreenQuadParams final : public virtual IStageParams
 		{
@@ -81,6 +97,8 @@ namespace re
 
 		static std::shared_ptr<RenderStage> CreateComputeStage(char const* name, ComputeStageParams const&);
 		static std::shared_ptr<RenderStage> CreateSingleFrameComputeStage(char const* name, ComputeStageParams const&);
+
+		static std::shared_ptr<RenderStage> CreateLibraryStage(char const* name, LibraryStageParams const&);
 
 		static std::shared_ptr<RenderStage> CreateFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
 		static std::shared_ptr<RenderStage> CreateSingleFrameFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
@@ -236,6 +254,33 @@ namespace re
 	//---
 
 
+	class LibraryStage final : public virtual RenderStage
+	{
+	public:
+		struct IPayload
+		{
+			virtual ~IPayload() = 0;
+		};
+
+	public:
+		void Execute();
+		
+		// The payload is an arbitrary data blob passed by a graphics system every frame for consumption by the backend
+		void SetPayload(std::unique_ptr<IPayload>&&);
+		std::unique_ptr<IPayload> TakePayload();
+
+	private:
+		std::unique_ptr<IPayload> m_payload;
+
+	private:
+		LibraryStage(char const* name, std::unique_ptr<LibraryStageParams>&&, Lifetime);
+		friend class RenderStage;
+	};
+
+
+	//---
+
+
 	inline RenderStage::Type RenderStage::GetStageType() const
 	{
 		return m_type;
@@ -298,4 +343,5 @@ namespace re
 
 	// We need to provide a destructor implementation since it's pure virtual
 	inline RenderStage::IStageParams::~IStageParams() {}
+	inline LibraryStage::IPayload::~IPayload() {};
 }

@@ -15,9 +15,6 @@
 
 #include <d3dx12.h>
 
-#include "backends/imgui_impl_win32.h"
-#include "backends/imgui_impl_dx12.h"
-
 using Microsoft::WRL::ComPtr;
 
 
@@ -237,6 +234,17 @@ namespace dx12
 				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 				for (std::shared_ptr<re::RenderStage> const& renderStage : stagePipeline.GetRenderStages())
 				{
+					// Library stages are executed with their own internal logic:
+					if (renderStage->GetStageType() == re::RenderStage::Type::Library)
+					{
+						// TODO: There is an ordering issue here: LibraryStages (currently) create and submit their own
+						// command lists. If they're part of a RenderSystem with stages before/after, they'll be
+						// rendered in the wrong order. Currently, our Library stages are contained in their own
+						// RenderSystems, but they don't need to be
+						dynamic_cast<re::LibraryStage*>(renderStage.get())->Execute();
+						continue;
+					}
+
 					// Skip empty stages:
 					if (renderStage->IsSkippable())
 					{
@@ -551,47 +559,6 @@ namespace dx12
 			commandLists.clear();
 
 		} // m_renderSystems loop
-	}
-
-
-	void RenderManager::StartImGuiFrame()
-	{
-		ImGui_ImplDX12_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-	}
-
-
-	void RenderManager::RenderImGui()
-	{
-		// ImGui internal rendering
-		ImGui::Render(); // Note: Does not touch the GPU/graphics API
-
-		// Get our SE rendering objects:
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
-
-		// Configure the command list:
-		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
-		ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
-
-		SEBeginGPUEvent(d3dCommandList, perfmarkers::Type::GraphicsCommandList, "Render ImGui");
-
-		ID3D12DescriptorHeap* descriptorHeap = context->GetImGuiGPUVisibleDescriptorHeap();
-		d3dCommandList->SetDescriptorHeaps(1, &descriptorHeap);
-
-		// Draw directly to the swapchain backbuffer
-		re::SwapChain const& swapChain = context->GetSwapChain();
-		const bool attachDepthAsReadOnly = true;
-		commandList->SetRenderTargets(*dx12::SwapChain::GetBackBufferTargetSet(swapChain), attachDepthAsReadOnly);
-
-		// Record our ImGui draws:
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3dCommandList);
-
-		SEEndGPUEvent(d3dCommandList);
-
-		// Submit the populated command list:
-		directQueue.Execute(1, &commandList);
 	}
 
 

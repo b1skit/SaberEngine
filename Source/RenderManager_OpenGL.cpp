@@ -18,9 +18,6 @@
 #include <GL/glew.h>
 #include <GL/GL.h> // Must follow glew.h...
 
-#include "backends/imgui_impl_win32.h"
-#include "backends/imgui_impl_opengl3.h"
-
 
 namespace
 {
@@ -143,6 +140,13 @@ namespace opengl
 				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 				for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
 				{
+					// Library stages are executed with their own internal logic:
+					if (renderStage->GetStageType() == re::RenderStage::Type::Library)
+					{
+						dynamic_cast<re::LibraryStage*>(renderStage.get())->Execute();
+						continue;
+					}
+
 					// Skip empty stages:
 					if (renderStage->IsSkippable())
 					{
@@ -342,24 +346,6 @@ namespace opengl
 				SEEndOpenGLGPUEvent(); // Graphics system group name
 			} // StagePipeline loop
 		} // m_renderSystems loop
-	}
-
-
-	void RenderManager::StartImGuiFrame()
-	{
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-	}
-
-
-	void RenderManager::RenderImGui()
-	{
-		// Composite Imgui rendering on top of the finished frame:
-		SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsCommandList, "ImGui stage");
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		SEEndOpenGLGPUEvent();
 	}
 
 

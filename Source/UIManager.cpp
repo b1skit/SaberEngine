@@ -1,7 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "CommandQueue.h"
 #include "Config.h"
 #include "CoreEngine.h"
 #include "EntityManager.h"
+#include "GraphicsSystem_ImGui.h"
 #include "InputManager_Platform.h"
 #include "KeyConfiguration.h"
 #include "LogManager.h"
@@ -140,7 +142,10 @@ namespace fr
 
 
 	UIManager::UIManager()
-		: m_imguiMenuVisible(false)
+		: m_debugUIRenderSystemCreated(false)
+		, m_debugUICommandMgr(nullptr)
+		, m_imguiGlobalMutex(nullptr)
+		, m_imguiMenuVisible(false)
 		, m_prevImguiMenuVisible(false)
 		, m_imguiWantsToCaptureKeyboard(false)
 		, m_imguiWantsToCaptureMouse(false)
@@ -161,11 +166,66 @@ namespace fr
 		en::EventManager::Get()->Subscribe(en::EventManager::EventType::MouseMotionEvent, this);
 		en::EventManager::Get()->Subscribe(en::EventManager::EventType::MouseButtonEvent, this);
 		en::EventManager::Get()->Subscribe(en::EventManager::EventType::MouseWheelEvent, this);
+
+		// Create UI render systems:
+		class CreateDebugUIRenderSystemCommand
+		{
+		public:
+			CreateDebugUIRenderSystemCommand(
+				std::atomic<bool>* createdFlag,
+				en::FrameIndexedCommandManager** cmdMgrPtr,
+				std::mutex** imguiMutexPtr)
+				: m_uiMgrCreateFlag(createdFlag)
+				, m_cmdMgr(cmdMgrPtr)
+				, m_imguiMutex(imguiMutexPtr)
+			{};
+
+			~CreateDebugUIRenderSystemCommand() = default;
+
+			static void Execute(void* cmdData)
+			{
+				CreateDebugUIRenderSystemCommand* cmdPtr = reinterpret_cast<CreateDebugUIRenderSystemCommand*>(cmdData);
+
+				constexpr char const* k_debugUIRenderSystemName = "DebugImGui";
+				constexpr char const* k_debugUIPipelineFilename = "ui.json";
+
+				re::RenderSystem const* debugUIRenderSystem = re::RenderManager::Get()->CreateAddRenderSystem(
+					k_debugUIRenderSystemName, 
+					k_debugUIPipelineFilename);
+
+				gr::GraphicsSystemManager const& gsm = debugUIRenderSystem->GetGraphicsSystemManager();
+
+				gr::ImGuiGraphicsSystem* debugUIGraphicsSystem = gsm.GetGraphicsSystem<gr::ImGuiGraphicsSystem>();
+
+				*cmdPtr->m_cmdMgr = debugUIGraphicsSystem->GetFrameIndexedCommandManager();
+				*cmdPtr->m_imguiMutex = &debugUIGraphicsSystem->GetGlobalImGuiMutex();
+
+				cmdPtr->m_uiMgrCreateFlag->store(true);
+			}
+
+			static void Destroy(void* cmdData)
+			{
+				CreateDebugUIRenderSystemCommand* cmdPtr = reinterpret_cast<CreateDebugUIRenderSystemCommand*>(cmdData);
+				cmdPtr->~CreateDebugUIRenderSystemCommand();
+			}
+
+		private:
+			std::atomic<bool>* m_uiMgrCreateFlag;
+			en::FrameIndexedCommandManager** m_cmdMgr;
+			std::mutex** m_imguiMutex;
+		};
+		re::RenderManager::Get()->EnqueueRenderCommand<CreateDebugUIRenderSystemCommand>(
+			&m_debugUIRenderSystemCreated, 
+			&m_debugUICommandMgr, 
+			&m_imguiGlobalMutex);
 	}
 
 
 	void UIManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
+		SEAssert(!m_debugUIRenderSystemCreated || (m_debugUICommandMgr && m_imguiGlobalMutex),
+			"One of our GS pointers is null");
+
 		HandleEvents();
 
 		// ImGui visibility state has changed:
@@ -179,8 +239,9 @@ namespace fr
 
 			// Disable ImGui mouse listening if the console is not active: Prevents UI elements
 			// flashing as the hidden mouse cursor passes by
+			if (m_debugUIRenderSystemCreated)
 			{
-				std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
+				std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 
 				ImGuiIO& io = ImGui::GetIO();
 				if (m_imguiMenuVisible)
@@ -200,8 +261,10 @@ namespace fr
 			{
 				bool currentImguiWantsToCaptureKeyboard = 0;
 				bool currentImguiWantsToCaptureMouse = 0;
+				
+				if (m_debugUIRenderSystemCreated)
 				{
-					std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
+					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
 					currentImguiWantsToCaptureKeyboard = io.WantCaptureKeyboard;
 					currentImguiWantsToCaptureMouse = io.WantCaptureMouse;
@@ -213,9 +276,9 @@ namespace fr
 
 					en::EventManager::Get()->Notify(en::EventManager::EventInfo{
 						.m_type = en::EventManager::EventType::KeyboardInputCaptureChange,
-						.m_data0 = en::EventManager::EventData{ .m_dataB = m_imguiWantsToCaptureKeyboard },
+						.m_data0 = en::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureKeyboard },
 						//.m_data1 = 
-					});
+						});
 				}
 
 				if (currentImguiWantsToCaptureMouse != m_imguiWantsToCaptureMouse)
@@ -226,12 +289,12 @@ namespace fr
 						.m_type = en::EventManager::EventType::MouseInputCaptureChange,
 						.m_data0 = en::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureMouse },
 						//.m_data1 = 
-					});
+						});
 				}
 			}
 		}
 
-		SubmitImGuiRenderCommands();
+		SubmitImGuiRenderCommands(frameNum);
 	}
 
 
@@ -260,8 +323,9 @@ namespace fr
 			break;
 			case en::EventManager::EventType::TextInputEvent:
 			{
+				if (m_debugUIRenderSystemCreated)
 				{
-					std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
+					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
 					io.AddInputCharacter(eventInfo.m_data0.m_dataC);
 				}
@@ -273,8 +337,9 @@ namespace fr
 				const bool keystate = eventInfo.m_data1.m_dataB;
 
 				// We always broadcast to ImGui, even if it doesn't want exclusive capture of input
+				if (m_debugUIRenderSystemCreated)
 				{
-					std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
+					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
 					AddKeyEventToImGui(io, keycode, keystate);
 				}
@@ -283,8 +348,10 @@ namespace fr
 			case en::EventManager::MouseButtonEvent:
 			{
 				const bool buttonState = eventInfo.m_data1.m_dataB;
+				
+				if (m_debugUIRenderSystemCreated)
 				{
-					std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
+					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
 
 					switch (eventInfo.m_data0.m_dataUI)
@@ -312,8 +379,9 @@ namespace fr
 			break;
 			case en::EventManager::MouseWheelEvent:
 			{
+				if (m_debugUIRenderSystemCreated)
 				{
-					std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
+					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
 					io.AddMouseWheelEvent(
 						static_cast<float>(eventInfo.m_data0.m_dataI), static_cast<float>(eventInfo.m_data1.m_dataI));
@@ -327,7 +395,7 @@ namespace fr
 	}
 
 
-	void UIManager::SubmitImGuiRenderCommands()
+	void UIManager::SubmitImGuiRenderCommands(uint64_t frameNum)
 	{
 		// Importantly, this function does NOT modify any ImGui state. Instead, it submits commands to the render
 		// manager, which will execute the updates on the render thread
@@ -459,8 +527,8 @@ namespace fr
 			};
 		if (m_imguiMenuVisible)
 		{
-			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowMenuBar)>>(
-				re::ImGuiRenderCommand<decltype(ShowMenuBar)>(ShowMenuBar));
+			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowMenuBar)>>(
+				frameNum, fr::ImGuiRenderCommand<decltype(ShowMenuBar)>(ShowMenuBar));
 		}
 
 		// Console log window:
@@ -476,8 +544,8 @@ namespace fr
 			};
 		if (s_show[Show::LogConsole])
 		{
-			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowConsoleLog)>>(
-				re::ImGuiRenderCommand<decltype(ShowConsoleLog)>(ShowConsoleLog));
+			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowConsoleLog)>>(
+				frameNum, fr::ImGuiRenderCommand<decltype(ShowConsoleLog)>(ShowConsoleLog));
 		}
 
 		// Scene manager debug:
@@ -487,8 +555,8 @@ namespace fr
 			};
 		if (s_show[Show::SceneMgrDbg])
 		{
-			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowSceneMgrDebug)>>(
-				re::ImGuiRenderCommand<decltype(ShowSceneMgrDebug)>(ShowSceneMgrDebug));
+			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowSceneMgrDebug)>>(
+				frameNum, fr::ImGuiRenderCommand<decltype(ShowSceneMgrDebug)>(ShowSceneMgrDebug));
 		}
 
 		// Entity manager debug:
@@ -500,8 +568,8 @@ namespace fr
 			};
 		if (s_show[Show::EntityMgrDbg] || s_show[Show::TransformationHierarchyDbg] || s_show[Show::EntityComponentDbg])
 		{
-			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>>(
-				re::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>(ShowEntityMgrDebug));
+			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>>(
+				frameNum, fr::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>(ShowEntityMgrDebug));
 		}
 
 		// Render manager debug:
@@ -520,8 +588,8 @@ namespace fr
 			};
 		if (s_show[Show::RenderMgrDbg] || s_show[Show::RenderDataDbg] || s_show[Show::GPUCaptures])
 		{
-			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>>(
-				re::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>(ShowRenderMgrDebug));
+			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>>(
+				frameNum, fr::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>(ShowRenderMgrDebug));
 		}
 
 
@@ -535,8 +603,8 @@ namespace fr
 			};
 		if (s_show[Show::ImGuiDemo])
 		{
-			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowImGuiDemo)>>(
-				re::ImGuiRenderCommand<decltype(ShowImGuiDemo)>(ShowImGuiDemo));
+			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowImGuiDemo)>>(
+				frameNum, fr::ImGuiRenderCommand<decltype(ShowImGuiDemo)>(ShowImGuiDemo));
 		}
 #endif
 	}

@@ -103,9 +103,6 @@ namespace fr
 
 	void UpdateTransformDataRenderCommand::Execute(void* cmdData)
 	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
-			re::RenderManager::Get()->GetRenderSystems();
-
 		UpdateTransformDataRenderCommand* cmdPtr = reinterpret_cast<UpdateTransformDataRenderCommand*>(cmdData);
 
 		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();

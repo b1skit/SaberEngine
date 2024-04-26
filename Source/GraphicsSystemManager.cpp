@@ -48,14 +48,14 @@ namespace gr
 
 	void GraphicsSystemManager::PreRender()
 	{
-		SEAssert(m_activeCameraRenderDataID != gr::k_invalidRenderDataID && 
-			m_activeCameraTransformDataID != gr::k_invalidTransformID,
-			"No active camera has been set");
+		if (m_activeCameraRenderDataID != gr::k_invalidRenderDataID &&
+			m_activeCameraTransformDataID != gr::k_invalidTransformID)
+		{
+			gr::Camera::RenderData const& cameraData =
+				m_renderData->GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
 
-		gr::Camera::RenderData const& cameraData =
-			m_renderData->GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
-
-		m_activeCameraParams->Commit(cameraData.m_cameraParams);
+			m_activeCameraParams->Commit(cameraData.m_cameraParams);
+		}
 
 		UpdateActiveAmbientLight();
 	}

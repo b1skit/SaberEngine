@@ -279,7 +279,7 @@ namespace re
 
 		newRenderSystem.reset(new RenderSystem(name));
 
-		newRenderSystem->BuildPipeline(renderSystemDesc); // Builds creation/initialization/update functions
+		newRenderSystem->BuildPipeline(renderSystemDesc); // Builds initialization/update functions
 
 		return std::move(newRenderSystem);
 	}
@@ -306,16 +306,11 @@ namespace re
 
 	void RenderSystem::BuildPipeline(RenderSystemDescription const& renderSysDesc)
 	{
-		// Construct the GS creation pipeline:
-		m_creationPipeline = [this, renderSysDesc](re::RenderSystem* renderSystem)
+		// Create the GrpahicsSystems:
+		for (std::string const& gsName : renderSysDesc.m_graphicsSystemNames)
 		{
-			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
-
-			for (std::string const& gsName : renderSysDesc.m_graphicsSystemNames)
-			{
-				gsm.CreateAddGraphicsSystemByScriptName(gsName);
-			}
-		};
+			m_graphicsSystemManager.CreateAddGraphicsSystemByScriptName(gsName);
+		}
 
 		m_initPipeline = [this, renderSysDesc](re::RenderSystem* renderSystem)
 		{
@@ -351,7 +346,6 @@ namespace re
 				// Now the GS is initialized, it can populate its resource dependencies for other GS's
 				currentGS->RegisterOutputs();
 			}
-			
 			LOG(initOrderLog.c_str());
 
 			// Now our GS's exist and their input dependencies are registered, we can compute their execution ordering.
@@ -389,15 +383,8 @@ namespace re
 				
 				updateOrderLog = std::format("{}\n\t\t---", updateOrderLog);
 			}
-
 			LOG(updateOrderLog.c_str());
 		};
-	}
-
-
-	void RenderSystem::ExecuteCreationPipeline()
-	{
-		m_creationPipeline(this);
 	}
 
 
@@ -467,7 +454,7 @@ namespace re
 
 	void RenderSystem::ShowImGuiWindow()
 	{
-		if (ImGui::CollapsingHeader(std::format("Graphics System Manager##", util::PtrToID(this)).c_str(), 
+		if (ImGui::CollapsingHeader(std::format("Graphics System Manager##{}", GetUniqueID()).c_str(),
 			ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImGui::Indent();

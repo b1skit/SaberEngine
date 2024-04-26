@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "RenderManager.h"
+
 
 namespace opengl
 {
@@ -17,9 +17,6 @@ namespace opengl
 		static void CreateAPIResources(re::RenderManager&);
 
 		static uint8_t GetNumFramesInFlight(); // Number of frames in flight
-
-		static void StartImGuiFrame();
-		static void RenderImGui();
 
 
 	private: // re::RenderManager interface:

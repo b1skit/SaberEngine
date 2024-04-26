@@ -26,9 +26,6 @@ namespace dx12
 		static void Shutdown(re::RenderManager&);
 		static void CreateAPIResources(re::RenderManager&);
 
-		static void StartImGuiFrame();
-		static void RenderImGui();
-
 
 	private: // re::RenderManager interface:
 		void Render() override;

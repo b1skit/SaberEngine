@@ -57,8 +57,6 @@ namespace re
 	RenderManager::RenderManager()
 		: m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
-		, m_imGuiCommandManager(k_imGuiCommandBufferSize)
-		, m_quitEventReceived(false)
 		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<std::shared_ptr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -124,7 +122,6 @@ namespace re
 		LOG("RenderManager starting...");
 		re::Context::Get()->Create(m_renderFrameNum);
 		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleVSync, this);
-		en::EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
 
 		SEEndCPUEvent();
 	}
@@ -148,18 +145,6 @@ namespace re
 		m_renderCommandManager.SwapBuffers();
 		m_renderCommandManager.Execute();
 
-		// Execute the render system creation pipeline(s). Internally, creates each GraphicsSystem
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
-		{
-			renderSystem->ExecuteCreationPipeline();
-		}
-
-		// Initialize each render system (which will in turn initialize each of its graphics systems & stage pipelines)
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
-		{
-			renderSystem->ExecuteInitializationPipeline();
-		}
-
 		// Create/buffer new resources added by our RenderSystems/GraphicsSystems. During Initialize(), most data has
 		// just been loaded so there is typically something of all types to create here
 		CreateAPIResources();
@@ -174,6 +159,10 @@ namespace re
 		std::string const& name, std::string const& pipelineFileName)
 	{
 		m_renderSystems.emplace_back(re::RenderSystem::Create(name, pipelineFileName));
+
+		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
+		m_renderSystems.back()->ExecuteInitializationPipeline();
+
 		return m_renderSystems.back().get();
 	}
 
@@ -184,7 +173,6 @@ namespace re
 		SEBeginCPUEvent("re::RenderManager::PreUpdate");
 		
 		m_renderCommandManager.SwapBuffers();
-		m_imGuiCommandManager.SwapBuffers();
 
 		SEEndCPUEvent();
 	}
@@ -223,10 +211,6 @@ namespace re
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");
 		Render();
-		SEEndCPUEvent();
-
-		SEBeginCPUEvent("platform::RenderManager::RenderImGui");
-		RenderImGui();
 		SEEndCPUEvent();
 
 		// Present the final frame:
@@ -336,11 +320,6 @@ namespace re
 					re::Context::Get()->GetSwapChain().SetVSyncMode(m_vsyncEnabled);
 					LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
 				}				
-			}
-			break;
-			case en::EventManager::EngineQuit:
-			{
-				m_quitEventReceived = true;
 			}
 			break;
 			default:
@@ -862,22 +841,6 @@ namespace re
 		}
 
 		ImGui::End();
-	}
-
-
-	void RenderManager::RenderImGui()
-	{
-		// Don't bother starting an ImGui frame if the current execution frame is empty
-		if (m_imGuiCommandManager.HasCommandsToExecute() && !m_quitEventReceived)
-		{
-			std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
-
-			platform::RenderManager::StartImGuiFrame();
-
-			m_imGuiCommandManager.Execute();
-
-			platform::RenderManager::RenderImGui();
-		}
 	}
 }
 

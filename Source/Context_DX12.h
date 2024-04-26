@@ -43,8 +43,6 @@ namespace dx12
 
 		dx12::Device& GetDevice();
 
-		ID3D12DescriptorHeap* GetImGuiGPUVisibleDescriptorHeap() const;
-
 		dx12::GlobalResourceStateTracker& GetGlobalResourceStates();
 		
 
@@ -80,10 +78,6 @@ namespace dx12
 
 		std::vector<dx12::CPUDescriptorHeapManager> m_cpuDescriptorHeapMgrs; // HeapType_Count
 
-		// Imgui descriptor heap: A single, CPU and GPU-visible SRV descriptor for the internal font texture
-		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_imGuiGPUVisibleSRVDescriptorHeap;
-
-
 		// PIX programmatic capture models
 		HMODULE m_pixGPUCaptureModule;
 		HMODULE m_pixCPUCaptureModule;
@@ -104,12 +98,6 @@ namespace dx12
 	inline dx12::Device& Context::GetDevice()
 	{
 		return m_device;
-	}
-
-
-	inline ID3D12DescriptorHeap* Context::GetImGuiGPUVisibleDescriptorHeap() const
-	{
-		return m_imGuiGPUVisibleSRVDescriptorHeap.Get();
 	}
 
 

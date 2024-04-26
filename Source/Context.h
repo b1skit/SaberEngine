@@ -1,9 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "BufferAllocator.h"
 #include "IPlatformParams.h"
 #include "TextureTarget.h"
-#include "BufferAllocator.h"
 #include "PipelineState.h"
+#include "RLibrary_Platform.h"
 #include "SwapChain.h"
 
 #include "renderdoc_app.h"
@@ -47,6 +48,7 @@ namespace re
 		re::BufferAllocator* GetBufferAllocator();
 		re::BufferAllocator const* GetBufferAllocator() const;
 
+		platform::RLibrary* GetOrCreateRenderLibrary(platform::RLibrary::Type);
 
 	private:
 		static std::unique_ptr<re::Context> CreateSingleton();
@@ -57,7 +59,7 @@ namespace re
 
 	protected:
 		std::unique_ptr<re::BufferAllocator> m_bufferAllocator;
-
+		std::array<std::unique_ptr<platform::RLibrary>, platform::RLibrary::Type_Count> m_renderLibraries;
 
 	private:
 		re::SwapChain m_swapChain;

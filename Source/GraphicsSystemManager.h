@@ -30,8 +30,13 @@ namespace gr
 		void CreateAddGraphicsSystemByScriptName(char const* scriptName);
 		void CreateAddGraphicsSystemByScriptName(std::string const& scriptName);
 
+		// NOTE: Accessing GraphicsSystems is generally NOT thread safe. These "GetGraphicsSystem" functions are
+		// provided as a convenience for initial setup only
 		gr::GraphicsSystem* GetGraphicsSystemByScriptName(char const* scriptName) const;
 		gr::GraphicsSystem* GetGraphicsSystemByScriptName(std::string const& scriptName) const;
+
+		template<typename T>
+		T* GetGraphicsSystem() const;
 
 
 	public:
@@ -87,6 +92,21 @@ namespace gr
 		GraphicsSystemManager& operator=(GraphicsSystemManager&&) = delete;
 
 	};
+
+
+	template<typename T>
+	T* GraphicsSystemManager::GetGraphicsSystem() const
+	{
+		for (size_t i = 0; i < m_graphicsSystems.size(); i++)
+		{
+			T* gs = dynamic_cast<T*>(m_graphicsSystems[i].get());
+			if (gs)
+			{
+				return gs;
+			}
+		}
+		return nullptr;
+	}
 
 
 	inline gr::BatchManager const& GraphicsSystemManager::GetBatchManager() const

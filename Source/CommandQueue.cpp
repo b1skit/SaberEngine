@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "CommandQueue.h"
+#include "RenderManager.h"
 
 
 namespace en
@@ -76,7 +77,7 @@ namespace en
 		, m_readIdx(static_cast<uint8_t>(-1)) // Read index starts OOB
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_commandBuffersMutex);
+			std::unique_lock<std::mutex> lock(m_commandBuffersMutex);
 			
 			for (uint8_t bufferIdx = 0; bufferIdx < k_numBuffers; bufferIdx++)
 			{
@@ -89,7 +90,7 @@ namespace en
 	void CommandManager::SwapBuffers()
 	{
 		{
-			std::unique_lock<std::shared_mutex> writeLock(m_commandBuffersMutex);
+			std::unique_lock<std::mutex> writeLock(m_commandBuffersMutex);
 
 			m_readIdx = m_writeIdx;
 			m_writeIdx = (m_writeIdx + 1) % k_numBuffers;
@@ -116,5 +117,38 @@ namespace en
 	uint8_t CommandManager::GetWriteIdx() const
 	{
 		return m_writeIdx;
+	}
+
+
+	/******************************************************************************************************************/
+
+
+	FrameIndexedCommandManager::FrameIndexedCommandManager(size_t bufferAllocationSize)
+		: m_lastEnqueuedFrameNum(k_invalidFrameNum)
+		, m_lastExecutedFrameNum(k_invalidFrameNum)
+		, m_numBuffers(re::RenderManager::Get()->GetNumFramesInFlight())
+	{
+		{
+			std::unique_lock<std::mutex> lock(m_commandBuffersMutex);
+
+			for (uint8_t bufferIdx = 0; bufferIdx < m_numBuffers; bufferIdx++)
+			{
+				m_commandBuffers.emplace_back(std::make_unique<CommandBuffer>(bufferAllocationSize));
+			}
+		}
+	}
+
+
+	void FrameIndexedCommandManager::Execute(uint64_t frameNum)
+	{
+		SEAssert(frameNum > m_lastExecutedFrameNum || m_lastExecutedFrameNum == k_invalidFrameNum,
+			"Trying to execute a frame that has already been executed");
+
+		// To ensure deterministic execution order, we execute commands single threaded
+		const uint8_t readIdx = GetReadIdx(frameNum);
+		m_commandBuffers[readIdx]->Execute();
+		m_commandBuffers[readIdx]->Reset();
+
+		m_lastExecutedFrameNum = frameNum;
 	}
 }

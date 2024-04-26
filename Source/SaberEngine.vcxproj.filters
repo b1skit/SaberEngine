@@ -114,6 +114,18 @@
     <Filter Include="Source Files\fr\Concepts">
       <UniqueIdentifier>{3d2704dd-39de-409e-aaf3-57aa4f15dd86}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\re\DX12\Libraries">
+      <UniqueIdentifier>{625018d2-8e1c-4f1c-a7a4-6c7b8e409002}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\re\DX12\Libraries">
+      <UniqueIdentifier>{6cff10e1-0de4-482b-a8d7-b38fb98b63da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\re\platform\Libraries">
+      <UniqueIdentifier>{43ce58ed-f646-4503-8f6e-100066959fc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\re\platform\Libraries">
+      <UniqueIdentifier>{9fd5ef7b-8196-4d35-9fb0-db9a61f1f82b}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files\Shaders\HLSL\Libraries">
       <UniqueIdentifier>{9b586b40-1999-428e-b7ce-444f35713bf3}</UniqueIdentifier>
     </Filter>
@@ -122,6 +134,12 @@
     </Filter>
     <Filter Include="Source Files\Shaders\Common">
       <UniqueIdentifier>{f1800b9d-29e6-4c5e-8ecf-b3d01af6a8a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\re\OpenGL\Libraries">
+      <UniqueIdentifier>{ddc72eb0-acf8-4a46-8589-77b9b007f12c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\re\OpenGL\Libraries">
+      <UniqueIdentifier>{e3e4353a-fe4d-4e71-adb5-acd3fa947908}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -512,11 +530,26 @@
     <ClCompile Include="GraphicsSystem_XeGTAO.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
+    <ClCompile Include="RenderLibrary_Platform.cpp">
+      <Filter>Source Files\re\platform\Libraries</Filter>
+    </ClCompile>
     <ClCompile Include="EntityCommands.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
     <ClCompile Include="RenderPipelineDesc.cpp">
       <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSystem_ImGui.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderLibrary_ImGui_Platform.cpp">
+      <Filter>Source Files\re\platform\Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderLibrary_ImGui_DX12.cpp">
+      <Filter>Source Files\re\DX12\Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderLibrary_ImGui_OpenGL.cpp">
+      <Filter>Source Files\re\OpenGL\Libraries</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1006,8 +1039,23 @@
     <ClInclude Include="EntityCommands.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
+    <ClInclude Include="RenderLibrary_Platform.h">
+      <Filter>Header Files\re\platform\Libraries</Filter>
+    </ClInclude>
     <ClInclude Include="RenderPipelineDesc.h">
       <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsSystem_ImGui.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderLibrary_ImGui_Platform.h">
+      <Filter>Header Files\re\platform\Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderLibrary_ImGui_DX12.h">
+      <Filter>Header Files\re\DX12\Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderLibrary_ImGui_OpenGL.h">
+      <Filter>Header Files\re\OpenGL\Libraries</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

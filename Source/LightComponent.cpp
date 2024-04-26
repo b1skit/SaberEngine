@@ -684,9 +684,6 @@ namespace fr
 
 	void UpdateLightDataRenderCommand::Execute(void* cmdData)
 	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
-			re::RenderManager::Get()->GetRenderSystems();
-
 		UpdateLightDataRenderCommand* cmdPtr = reinterpret_cast<UpdateLightDataRenderCommand*>(cmdData);
 
 		gr::RenderDataManager& renderDataMgr = re::RenderManager::Get()->GetRenderDataManagerForModification();
@@ -741,9 +738,6 @@ namespace fr
 
 	void DestroyLightDataRenderCommand::Execute(void* cmdData)
 	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
-			re::RenderManager::Get()->GetRenderSystems();
-
 		DestroyLightDataRenderCommand* cmdPtr = reinterpret_cast<DestroyLightDataRenderCommand*>(cmdData);
 
 		gr::RenderDataManager& renderDataMgr = re::RenderManager::Get()->GetRenderDataManagerForModification();

@@ -13,9 +13,6 @@
 #include "Texture_DX12.h"
 #include "Window_Win32.h"
 
-#include "backends/imgui_impl_win32.h"
-#include "backends/imgui_impl_dx12.h"
-
 using Microsoft::WRL::ComPtr;
 
 
@@ -122,49 +119,6 @@ namespace dx12
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
 		m_bufferAllocator->Initialize(currentFrame);
-
-		// Setup our ImGui context
-		{
-			std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
-
-			IMGUI_CHECKVERSION();
-			ImGui::CreateContext();
-			ImGuiIO& io = ImGui::GetIO();
-			io.IniFilename = en::ConfigKeys::k_imguiIniPath;
-
-			// Setup Dear ImGui style
-			ImGui::StyleColorsDark();
-
-			// Imgui descriptor heap: Holds a single, CPU and GPU-visible SRV descriptor for the internal font texture
-			const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {
-				.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-				.NumDescriptors = 1,
-				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-				.NodeMask = dx12::SysInfo::GetDeviceNodeMask()};
-
-			HRESULT hr = device->CreateDescriptorHeap(
-				&descriptorHeapDesc, IID_PPV_ARGS(&m_imGuiGPUVisibleSRVDescriptorHeap));
-			CheckHResult(hr, "Failed to create single element descriptor heap for ImGui SRV");
-
-			SEAssert(en::CoreEngine::Get()->GetWindow(), "Window pointer cannot be null");
-			win32::Window::PlatformParams* windowPlatParams =
-				en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
-
-			dx12::Texture::PlatformParams const* backbufferColorTarget0PlatParams =
-				dx12::SwapChain::GetBackBufferTargetSet(swapChain)->GetColorTarget(0).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
-			// Setup ImGui platform/Renderer backends:
-			ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
-			ImGui_ImplDX12_Init(
-				m_device.GetD3DDisplayDevice(),
-				numFramesInFlight,
-				backbufferColorTarget0PlatParams->m_format,
-				m_imGuiGPUVisibleSRVDescriptorHeap.Get(),
-				m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-				m_imGuiGPUVisibleSRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
-			m_imGuiGPUVisibleSRVDescriptorHeap->SetName(L"Imgui descriptor heap");
-		}
 	}
 
 
@@ -182,11 +136,6 @@ namespace dx12
 			LOG("Destroying PIX CPU programmatic capture module");
 			FreeLibrary(dx12Context.m_pixCPUCaptureModule);
 		}
-
-		// ImGui Cleanup:
-		ImGui_ImplDX12_Shutdown();
-		ImGui_ImplWin32_Shutdown();
-		ImGui::DestroyContext();		
 
 		// Make sure our command queues have finished all commands before closing.
 		dx12Context.m_commandQueues[dx12::CommandListType::Copy].Flush();

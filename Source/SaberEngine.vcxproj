@@ -327,6 +327,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
     <ClCompile Include="GraphicsSystemManager.cpp" />
+    <ClCompile Include="GraphicsSystem_ImGui.cpp" />
     <ClCompile Include="GraphicsSystem_XeGTAO.cpp" />
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
     <ClCompile Include="GraphicsSystem_Culling.cpp" />
@@ -367,6 +368,10 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="RenderSystemDesc.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
     <ClCompile Include="ResourceStateTracker_DX12.cpp" />
+    <ClCompile Include="RLibrary_ImGui_DX12.cpp" />
+    <ClCompile Include="RLibrary_ImGui_OpenGL.cpp" />
+    <ClCompile Include="RLibrary_ImGui_Platform.cpp" />
+    <ClCompile Include="RLibrary_Platform.cpp" />
     <ClCompile Include="ShadowMapComponent.cpp" />
     <ClCompile Include="SysInfo_DX12.cpp" />
     <ClCompile Include="RenderManager_DX12.cpp" />
@@ -452,6 +457,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="EntityCommands.h" />
     <ClInclude Include="FileIOUtils.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
+    <ClInclude Include="GraphicsSystem_ImGui.h" />
     <ClInclude Include="GraphicsSystem_XeGTAO.h" />
     <ClInclude Include="GraphicsSystem_Culling.h" />
     <ClInclude Include="LightComponent.h" />
@@ -509,11 +515,15 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="ProfilingMarkers.h" />
     <ClInclude Include="RenderDataManager.h" />
     <ClInclude Include="RenderDataComponent.h" />
+    <ClInclude Include="RenderLibrary_ImGui_DX12.h" />
     <ClInclude Include="RenderObjectIDs.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ResourceStateTracker_DX12.h" />
     <ClInclude Include="RenderSystemDesc.h" />
+    <ClInclude Include="RLibrary_ImGui_OpenGL.h" />
+    <ClInclude Include="RLibrary_ImGui_Platform.h" />
+    <ClInclude Include="RLibrary_Platform.h" />
     <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
     <ClInclude Include="Shaders\Common\CameraParams.h" />
     <ClInclude Include="Shaders\Common\IBLGenerationParams.h" />

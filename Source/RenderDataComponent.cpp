@@ -135,9 +135,6 @@ namespace gr
 
 	void RegisterRenderObjectCommand::Execute(void* cmdData)
 	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
-			re::RenderManager::Get()->GetRenderSystems();
-
 		RegisterRenderObjectCommand* cmdPtr = reinterpret_cast<RegisterRenderObjectCommand*>(cmdData);
 
 		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
@@ -165,9 +162,6 @@ namespace gr
 
 	void DestroyRenderObjectCommand::Execute(void* cmdData)
 	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
-			re::RenderManager::Get()->GetRenderSystems();
-
 		DestroyRenderObjectCommand* cmdPtr = reinterpret_cast<DestroyRenderObjectCommand*>(cmdData);
 
 		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
@@ -196,9 +190,6 @@ namespace gr
 
 	void RenderDataFeatureBitsRenderCommand::Execute(void* cmdData)
 	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
-			re::RenderManager::Get()->GetRenderSystems();
-
 		RenderDataFeatureBitsRenderCommand* cmdPtr = reinterpret_cast<RenderDataFeatureBitsRenderCommand*>(cmdData);
 
 		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();

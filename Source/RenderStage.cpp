@@ -3,6 +3,7 @@
 #include "PipelineState.h"
 #include "ProfilingMarkers.h"
 #include "RenderStage.h"
+#include "RLibrary_Platform.h"
 #include "Shader.h"
 #include "Texture.h"
 
@@ -155,6 +156,18 @@ namespace re
 	}
 
 
+	std::shared_ptr<RenderStage> RenderStage::CreateLibraryStage(
+		char const* name, LibraryStageParams const& stageParams)
+	{
+		std::shared_ptr<RenderStage> newLibraryStage;
+		newLibraryStage.reset(new LibraryStage(
+			name,
+			std::make_unique<LibraryStageParams>(stageParams),
+			Lifetime::Permanent));
+		return newLibraryStage;
+	}
+
+
 	std::shared_ptr<RenderStage> RenderStage::CreateFullscreenQuadStage(
 		char const* name, FullscreenQuadParams const& stageParams)
 	{
@@ -252,6 +265,32 @@ namespace re
 	ClearStage::ClearStage(char const* name, Lifetime lifetime)
 		: NamedObject(name)
 		, RenderStage(name, nullptr, Type::Clear, lifetime)
+	{
+	}
+
+
+	void LibraryStage::Execute()
+	{
+		platform::RLibrary::Execute(this);
+	}
+
+
+	void LibraryStage::SetPayload(std::unique_ptr<IPayload>&& newPayload)
+	{
+		m_payload = std::move(newPayload);
+	}
+
+
+	std::unique_ptr<LibraryStage::IPayload> LibraryStage::TakePayload()
+	{
+		return std::move(m_payload);
+	}
+
+
+	LibraryStage::LibraryStage(
+		char const* name, std::unique_ptr<LibraryStageParams>&& stageParams, Lifetime lifetime)
+		: NamedObject(name)
+		, RenderStage(name, std::move(stageParams), Type::Library, lifetime)
 	{
 	}
 

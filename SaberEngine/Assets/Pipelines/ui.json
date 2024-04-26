@@ -1,0 +1,8 @@
+{
+	"RenderSystemName": "Debug UI",
+	"Pipeline": [
+		{
+			"GraphicsSystem": "ImGui"
+		}
+	]
+}

@@ -17,6 +17,7 @@ namespace en
 
 	protected:
 		friend class CommandManager;
+		friend class FrameIndexedCommandManager;
 
 		template<typename T, typename... Args>
 		void Enqueue(Args&&... args);
@@ -132,7 +133,7 @@ namespace en
 		static constexpr uint8_t k_numBuffers = 2; // Double-buffer our CommandBuffers
 
 		std::array<std::unique_ptr<CommandBuffer>, k_numBuffers> m_commandBuffers;
-		mutable std::shared_mutex m_commandBuffersMutex;
+		mutable std::mutex m_commandBuffersMutex;
 	};
 
 
@@ -146,5 +147,74 @@ namespace en
 	inline bool CommandManager::HasCommandsToExecute() const
 	{
 		return m_commandBuffers[GetReadIdx()]->HasCommandsToExecute();
+	}
+
+
+	/******************************************************************************************************************/
+
+
+	class FrameIndexedCommandManager
+	{
+	public:
+		FrameIndexedCommandManager(size_t bufferAllocationSize);
+
+		template<typename T, typename... Args>
+		void Enqueue(uint64_t frameNum, Args&&... args);
+
+		void Execute(uint64_t frameNum); // Single-threaded execution to ensure deterministic command ordering
+
+		bool HasCommandsToExecute(uint64_t frameNum) const;
+
+
+	private:
+		uint8_t GetReadIdx(uint64_t frameNum) const;
+		uint8_t GetWriteIdx(uint64_t frameNum) const;
+
+
+	private:
+		static constexpr uint64_t k_invalidFrameNum = std::numeric_limits<uint64_t>::max();
+		uint64_t m_lastEnqueuedFrameNum;
+		uint64_t m_lastExecutedFrameNum;
+
+		uint8_t m_numBuffers; // Number of frames in flight
+		
+		std::vector<std::unique_ptr<CommandBuffer>> m_commandBuffers;
+		mutable std::mutex m_commandBuffersMutex;
+	};
+
+
+	template<typename T, typename... Args>
+	inline void FrameIndexedCommandManager::Enqueue(uint64_t frameNum, Args&&... args)
+	{
+		SEAssert(frameNum > m_lastExecutedFrameNum || m_lastExecutedFrameNum == k_invalidFrameNum,
+			"Trying to enqueue for a frame that has already been executed");
+
+		SEAssert(frameNum >= m_lastEnqueuedFrameNum || m_lastEnqueuedFrameNum == k_invalidFrameNum,
+			"Trying to enqueue for a non-monotonically-increasing frame number");
+
+		SEAssert(frameNum == m_lastEnqueuedFrameNum || !m_commandBuffers[GetWriteIdx(frameNum)]->HasCommandsToExecute(),
+			"Trying to enqueue work for a new frame, but the buffer still contains old elements");
+
+		m_commandBuffers[GetWriteIdx(frameNum)]->Enqueue<T>(std::forward<Args>(args)...);
+
+		m_lastEnqueuedFrameNum = frameNum;
+	}
+
+
+	inline bool FrameIndexedCommandManager::HasCommandsToExecute(uint64_t frameNum) const
+	{
+		return m_commandBuffers[GetReadIdx(frameNum)]->HasCommandsToExecute();
+	}
+
+
+	inline uint8_t FrameIndexedCommandManager::GetReadIdx(uint64_t frameNum) const
+	{
+		return frameNum % m_numBuffers;
+	}
+
+
+	inline uint8_t FrameIndexedCommandManager::GetWriteIdx(uint64_t frameNum) const
+	{
+		return frameNum % m_numBuffers;
 	}
 }

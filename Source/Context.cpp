@@ -118,7 +118,27 @@ namespace re
 
 	void Context::Destroy()
 	{
+		// Destroy any render libraries
+		for (size_t i = 0; i < m_renderLibraries.size(); i++)
+		{
+			if (m_renderLibraries[i])
+			{
+				m_renderLibraries[i]->Destroy();
+				m_renderLibraries[i] = nullptr;
+			}
+		}
+
 		m_swapChain.Destroy();
 		platform::Context::Destroy(*this);
+	}
+
+
+	platform::RLibrary* Context::GetOrCreateRenderLibrary(platform::RLibrary::Type type)
+	{
+		if (m_renderLibraries[type] == nullptr)
+		{
+			m_renderLibraries[type] = platform::RLibrary::Create(type);
+		}
+		return m_renderLibraries[type].get();
 	}
 }

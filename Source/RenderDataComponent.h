@@ -132,9 +132,6 @@ namespace gr
 	template<typename T>
 	void UpdateRenderDataRenderCommand<T>::Execute(void* cmdData)
 	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
-			re::RenderManager::Get()->GetRenderSystems();
-
 		UpdateRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<UpdateRenderDataRenderCommand<T>*>(cmdData);
 		
 		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
@@ -178,9 +175,6 @@ namespace gr
 	template<typename T>
 	void DestroyRenderDataRenderCommand<T>::Execute(void* cmdData)
 	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
-			re::RenderManager::Get()->GetRenderSystems();
-
 		DestroyRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<DestroyRenderDataRenderCommand<T>*>(cmdData);
 
 		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
