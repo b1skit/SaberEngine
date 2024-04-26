@@ -530,26 +530,26 @@
     <ClCompile Include="GraphicsSystem_XeGTAO.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="RenderLibrary_Platform.cpp">
-      <Filter>Source Files\re\platform\Libraries</Filter>
-    </ClCompile>
     <ClCompile Include="EntityCommands.cpp">
       <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderPipelineDesc.cpp">
-      <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsSystem_ImGui.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="RenderLibrary_ImGui_Platform.cpp">
+    <ClCompile Include="RenderSystemDesc.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="RLibrary_Platform.cpp">
       <Filter>Source Files\re\platform\Libraries</Filter>
     </ClCompile>
-    <ClCompile Include="RenderLibrary_ImGui_DX12.cpp">
-      <Filter>Source Files\re\DX12\Libraries</Filter>
+    <ClCompile Include="RLibrary_ImGui_Platform.cpp">
+      <Filter>Source Files\re\platform\Libraries</Filter>
     </ClCompile>
-    <ClCompile Include="RenderLibrary_ImGui_OpenGL.cpp">
+    <ClCompile Include="RLibrary_ImGui_OpenGL.cpp">
       <Filter>Source Files\re\OpenGL\Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="RLibrary_ImGui_DX12.cpp">
+      <Filter>Source Files\re\DX12\Libraries</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1039,23 +1039,23 @@
     <ClInclude Include="EntityCommands.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
-    <ClInclude Include="RenderLibrary_Platform.h">
-      <Filter>Header Files\re\platform\Libraries</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderPipelineDesc.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsSystem_ImGui.h">
       <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderLibrary_ImGui_Platform.h">
-      <Filter>Header Files\re\platform\Libraries</Filter>
     </ClInclude>
     <ClInclude Include="RenderLibrary_ImGui_DX12.h">
       <Filter>Header Files\re\DX12\Libraries</Filter>
     </ClInclude>
-    <ClInclude Include="RenderLibrary_ImGui_OpenGL.h">
+    <ClInclude Include="RLibrary_Platform.h">
+      <Filter>Header Files\re\platform\Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="RLibrary_ImGui_Platform.h">
+      <Filter>Header Files\re\platform\Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="RLibrary_ImGui_OpenGL.h">
       <Filter>Header Files\re\OpenGL\Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystemDesc.h">
+      <Filter>Header Files\re</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
