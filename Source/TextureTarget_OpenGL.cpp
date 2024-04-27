@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <GL/glew.h>
 
-#include "CastUtils.h"
+#include "Core\Util\CastUtils.h"
 #include "Assert.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"

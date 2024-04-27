@@ -1,11 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
+#include "Config.h"
+#include "VertexStreamBuilder.h"
+
 #include "mikktspace.c" // LNK2019 otherwise...
 #include "weldmesh.h"
 #include "weldmesh.c" // LNK2019 otherwise...
-
-#include "Config.h"
-#include "Assert.h"
-#include "VertexStreamBuilder.h"
 
 
 namespace util

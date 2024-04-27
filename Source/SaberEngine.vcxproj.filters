@@ -141,6 +141,12 @@
     <Filter Include="Source Files\re\OpenGL\Libraries">
       <UniqueIdentifier>{e3e4353a-fe4d-4e71-adb5-acd3fa947908}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\pch">
+      <UniqueIdentifier>{c39047d9-5d0a-4add-8e2c-5c7eec31c6ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pch">
+      <UniqueIdentifier>{02ae7d1a-0360-4bc7-9408-8e81c324a6ed}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -209,9 +215,6 @@
     <ClCompile Include="Platform.cpp">
       <Filter>Source Files\en\platform</Filter>
     </ClCompile>
-    <ClCompile Include="VertexStreamBuilder.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
     <ClCompile Include="SceneData.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
@@ -226,9 +229,6 @@
     </ClCompile>
     <ClCompile Include="BufferAllocator.cpp">
       <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="PerformanceTimer.cpp">
-      <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="ThreadPool.cpp">
       <Filter>Source Files\en</Filter>
@@ -271,9 +271,6 @@
     </ClCompile>
     <ClCompile Include="Shader_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="pch\stdafx.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="EventManager_Win32.cpp">
       <Filter>Source Files\en\win32</Filter>
@@ -440,9 +437,6 @@
     <ClCompile Include="BufferAllocator_OpenGL.cpp">
       <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="AssetLoadUtils.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
     <ClCompile Include="SceneNodeConcept.cpp">
       <Filter>Source Files\fr\Concepts</Filter>
     </ClCompile>
@@ -550,6 +544,18 @@
     </ClCompile>
     <ClCompile Include="RLibrary_ImGui_DX12.cpp">
       <Filter>Source Files\re\DX12\Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="pch\stdafx.cpp">
+      <Filter>Source Files\pch</Filter>
+    </ClCompile>
+    <ClCompile Include="PerformanceTimer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetLoadUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexStreamBuilder.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -694,9 +700,6 @@
     <ClInclude Include="Shader.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
-    <ClInclude Include="pch\stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Platform.h">
       <Filter>Header Files\en\Platform</Filter>
     </ClInclude>
@@ -808,15 +811,6 @@
     <ClInclude Include="ResourceStateTracker_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="MathUtils.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="HashUtils.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="ThreadSafeVector.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsSystem_ComputeMips.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
@@ -825,12 +819,6 @@
     </ClInclude>
     <ClInclude Include="SysInfo_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="TextUtils.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="CastUtils.h">
-      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="ConfigKeys.h">
       <Filter>Header Files\en</Filter>
@@ -862,14 +850,8 @@
     <ClInclude Include="Dependencies\imgui\backends\imgui_impl_win32.h">
       <Filter>Dependencies\imgui\backends</Filter>
     </ClInclude>
-    <ClInclude Include="ImGuiUtils.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="RenderSystem.h">
       <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="DoubleBufferUnorderedMap.h">
-      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Header Files\gr\Materials</Filter>
@@ -885,9 +867,6 @@
     </ClInclude>
     <ClInclude Include="MeshFactory.h">
       <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="NBufferedVector.h">
-      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="BufferAllocator_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
@@ -915,9 +894,6 @@
     </ClInclude>
     <ClInclude Include="RenderDataManager.h">
       <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="ThreadProtector.h">
-      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="MarkerComponents.h">
       <Filter>Header Files\fr\Components</Filter>
@@ -1033,9 +1009,6 @@
     <ClInclude Include="Shaders\Common\ShadowRenderParams.h">
       <Filter>Source Files\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="FileIOUtils.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="EntityCommands.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
@@ -1056,6 +1029,9 @@
     </ClInclude>
     <ClInclude Include="RenderSystemDesc.h">
       <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="pch\stdafx.h">
+      <Filter>Header Files\pch</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

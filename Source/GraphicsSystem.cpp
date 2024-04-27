@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "GraphicsSystem.h"
 #include "LogManager.h"
-#include "TextUtils.h"
+#include "Core\Util\TextUtils.h"
 
 
 namespace gr

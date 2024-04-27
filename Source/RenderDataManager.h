@@ -1,9 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
-#include "CastUtils.h"
+#include "Core\Util\CastUtils.h"
 #include "RenderObjectIDs.h"
-#include "ThreadProtector.h"
+#include "Core\Util\ThreadProtector.h"
 #include "TransformComponent.h"
 
 

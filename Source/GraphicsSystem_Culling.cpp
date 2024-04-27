@@ -6,7 +6,7 @@
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
 #include "RenderDataManager.h"
-#include "ThreadSafeVector.h"
+#include "Core\Util\ThreadSafeVector.h"
 
 
 namespace

@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Camera.h"
-#include "CastUtils.h"
+#include "Core\Util\CastUtils.h"
 #include "Config.h"
 #include "EntityManager.h"
 #include "LightComponent.h"

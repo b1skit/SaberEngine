@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "CastUtils.h"
+#include "Core\Util\CastUtils.h"
 #include "Config.h"
 #include "BufferAllocator.h"
 #include "BufferAllocator_DX12.h"

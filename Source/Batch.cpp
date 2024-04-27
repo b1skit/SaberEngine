@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
-#include "CastUtils.h"
+#include "Core\Util\CastUtils.h"
 #include "Assert.h"
 #include "Material.h"
 #include "Buffer.h"

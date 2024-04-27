@@ -31,7 +31,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -39,7 +39,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="Configuration">
@@ -47,7 +47,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
@@ -55,7 +55,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -118,16 +118,17 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\$(OutDir)Core\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OutDir)Core\Core.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
     </Link>
@@ -168,16 +169,18 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\$(OutDir)Core\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OutDir)Core\Core.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
+      <PerUserRedirection>true</PerUserRedirection>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -208,7 +211,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
@@ -216,17 +219,19 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\$(OutDir)Core\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OutDir)Core\Core.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <PerUserRedirection>true</PerUserRedirection>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -263,17 +268,19 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <PreprocessorDefinitions>PROFILE</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\$(OutDir)Core\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OutDir)Core\Core.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
+      <PerUserRedirection>true</PerUserRedirection>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -449,13 +456,11 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="BoundsRenderData.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CameraRenderData.h" />
-    <ClInclude Include="CastUtils.h" />
     <ClInclude Include="ConfigKeys.h" />
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="BoundsComponent.h" />
     <ClInclude Include="EntityCommands.h" />
-    <ClInclude Include="FileIOUtils.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystem_ImGui.h" />
     <ClInclude Include="GraphicsSystem_XeGTAO.h" />
@@ -481,11 +486,9 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Dependencies\imgui\imstb_textedit.h" />
     <ClInclude Include="Dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="Device_DX12.h" />
-    <ClInclude Include="DoubleBufferUnorderedMap.h" />
     <ClInclude Include="NameComponent.h" />
     <ClInclude Include="BufferAllocator_DX12.h" />
     <ClInclude Include="MeshFactory.h" />
-    <ClInclude Include="NBufferedVector.h" />
     <ClInclude Include="EngineThread.h" />
     <ClInclude Include="EventManager_Platform.h" />
     <ClInclude Include="EventManager_Win32.h" />
@@ -495,13 +498,10 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="GraphicsSystem_ComputeMips.h" />
     <ClInclude Include="GraphicsSystem_Debug.h" />
     <ClInclude Include="HashedDataObject.h" />
-    <ClInclude Include="HashUtils.h" />
-    <ClInclude Include="ImGuiUtils.h" />
     <ClInclude Include="InputManager_Platform.h" />
     <ClInclude Include="InputManager_Win32.h" />
     <ClInclude Include="IPlatformParams.h" />
     <ClInclude Include="Material_GLTF.h" />
-    <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="BufferAllocator.h" />
     <ClInclude Include="BufferAllocator_OpenGL.h" />
@@ -547,12 +547,9 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="SysInfo_OpenGL.h" />
     <ClInclude Include="SysInfo_Platform.h" />
     <ClInclude Include="AssetLoadUtils.h" />
-    <ClInclude Include="TextUtils.h" />
     <ClInclude Include="TextureTarget_DX12.h" />
     <ClInclude Include="Texture_DX12.h" />
     <ClInclude Include="ThreadPool.h" />
-    <ClInclude Include="ThreadProtector.h" />
-    <ClInclude Include="ThreadSafeVector.h" />
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="TransformRenderData.h" />
     <ClInclude Include="UIManager.h" />

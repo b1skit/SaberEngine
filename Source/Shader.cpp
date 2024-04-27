@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "HashUtils.h"
+#include "Core\Util\HashUtils.h"
 #include "Material.h"
 #include "RenderManager.h"
 #include "SceneData.h"

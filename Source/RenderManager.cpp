@@ -669,7 +669,7 @@ namespace re
 					const std::string errorMessage = std::format("HRESULT error \"{}\" starting PIX GPU capture.\n"
 						"Is PIX running in administrator mode, and attached to the process? Is only 1 command line "
 						"argument supplied?",
-						comError.ErrorMessage());
+						util::FromWideCString(comError.ErrorMessage()));
 
 					bool showErrorPopup = true;
 					util::ShowErrorPopup("Failed to start PIX GPU capture", errorMessage.c_str(), showErrorPopup);
@@ -759,7 +759,7 @@ namespace re
 					const std::string errorMessage = std::format("HRESULT error \"{}\" starting PIX timing capture.\n"
 						"Is PIX running in administrator mode, and attached to the process? Is only 1 command line "
 						"argument supplied?",
-						comError.ErrorMessage());
+						util::FromWideCString(comError.ErrorMessage()));
 
 					bool showErrorPopup = true;
 					util::ShowErrorPopup("Failed to start PIX timing capture", errorMessage.c_str(), showErrorPopup);

@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "ConfigKeys.h"
 #include "GraphicsSystem_ComputeMips.h"
-#include "MathUtils.h"
+#include "Core\Util\MathUtils.h"
 #include "RenderManager.h"
 #include "Sampler.h"
 #include "Shader.h"

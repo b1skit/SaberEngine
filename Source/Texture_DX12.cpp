@@ -4,11 +4,11 @@
 #include "CommandList_DX12.h"
 #include "Config.h"
 #include "Context_DX12.h"
-#include "MathUtils.h"
+#include "Core\Util\MathUtils.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
-#include "TextUtils.h"
+#include "Core\Util\TextUtils.h"
 
 #include <d3dx12.h>
 

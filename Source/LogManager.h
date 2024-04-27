@@ -3,7 +3,7 @@
 
 #include "EventListener.h"
 #include "EngineComponent.h"
-#include "TextUtils.h"
+#include "Core\Util\TextUtils.h"
 
 
 namespace

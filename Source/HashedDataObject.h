@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Assert.h"
-#include "HashUtils.h"
+#include "Core\Util\HashUtils.h"
 
 
 namespace en

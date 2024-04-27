@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Buffer_OpenGL.h"
 #include "Context.h"
-#include "MathUtils.h"
+#include "Core\Util\MathUtils.h"
 #include "BufferAllocator.h"
 #include "BufferAllocator_OpenGL.h"
 #include "RenderManager_OpenGL.h"

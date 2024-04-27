@@ -110,7 +110,8 @@ namespace re
 			{
 				const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
 				const _com_error comError(hr);
-				LOG_ERROR(std::format("HRESULT error loading RenderDoc module: \"{}\"", comError.ErrorMessage()).c_str());
+				LOG_ERROR(std::format("HRESULT error loading RenderDoc module: \"{}\"",
+					util::FromWideCString(comError.ErrorMessage())).c_str());
 			}
 		}
 	}

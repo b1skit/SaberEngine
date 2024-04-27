@@ -3,7 +3,7 @@
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "Assert.h"
-#include "TextUtils.h"
+#include "Core\Util\TextUtils.h"
 
 #include <d3dx12.h>
 #include <d3d12.h>

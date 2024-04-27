@@ -1,9 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "CastUtils.h"
+#include "Core\Util\CastUtils.h"
 #include "Context_DX12.h"
 #include "Config.h"
 #include "Debug_DX12.h"
-#include "HashUtils.h"
+#include "Core\Util\HashUtils.h"
 #include "RootSignature_DX12.h"
 #include "Sampler.h"
 #include "Sampler_DX12.h"

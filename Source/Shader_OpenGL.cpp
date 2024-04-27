@@ -9,7 +9,7 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
-#include "TextUtils.h"
+#include "Core\Util\TextUtils.h"
 #include "Texture.h"
 #include "Texture_OpenGL.h"
 

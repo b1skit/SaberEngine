@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
 #include "EntityManager.h"
-#include "ImGuiUtils.h"
+#include "Core\Util\ImGuiUtils.h"
 #include "MaterialInstanceComponent.h"
 #include "MeshConcept.h"
 #include "MeshFactory.h"

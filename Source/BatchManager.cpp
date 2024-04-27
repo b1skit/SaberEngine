@@ -1,9 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "BatchManager.h"
-#include "CastUtils.h"
+#include "Core\Util\CastUtils.h"
 #include "Material_GLTF.h"
-#include "MathUtils.h"
+#include "Core\Util\MathUtils.h"
 #include "MeshPrimitive.h"
 #include "ProfilingMarkers.h"
 #include "RenderDataManager.h"

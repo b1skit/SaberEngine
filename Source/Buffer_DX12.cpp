@@ -1,10 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "CastUtils.h"
+#include "Core\Util\CastUtils.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "Fence_DX12.h"
-#include "MathUtils.h"
+#include "Core\Util\MathUtils.h"
 #include "Buffer_DX12.h"
 #include "BufferAllocator_DX12.h"
 #include "RenderManager.h"

@@ -4,7 +4,7 @@
 #include "NamedObject.h"
 #include "RenderStage.h"
 #include "RenderPipeline.h"
-#include "TextUtils.h"
+#include "Core\Util\TextUtils.h"
 
 
 namespace re

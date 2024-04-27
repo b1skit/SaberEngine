@@ -2,7 +2,7 @@
 #include "Debug_DX12.h"
 #include "Fence_DX12.h"
 #include "ProfilingMarkers.h"
-#include "TextUtils.h"
+#include "Core\Util\TextUtils.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -60,7 +60,7 @@ namespace dx12
 			nullptr,	// Pointer to event SECURITY_ATTRIBUTES. If null, the handle cannot be inherited by child processes
 			false,		// Manual reset: True = Reset event to non-signalled by calling ResetEvent. False = Auto-reset
 			false,		// Initial state: true = signalled, false = unsignalled
-			eventName);	// Event object name: Unnamed if null
+			util::ToWideString(eventName).c_str());	// Event object name: Unnamed if null
 
 		SEAssert(m_fenceEvent, "Failed to create fence event");
 

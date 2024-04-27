@@ -1,13 +1,13 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Buffer_DX12.h"
 #include "BufferAllocator_DX12.h"
-#include "CastUtils.h"
+#include "Core\Util\CastUtils.h"
 #include "CommandList_DX12.h"
 #include "Context_DX12.h"
-#include "MathUtils.h"
+#include "Core\Util\MathUtils.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
-#include "TextUtils.h"
+#include "Core\Util\TextUtils.h"
 
 #include <d3dx12.h>
 

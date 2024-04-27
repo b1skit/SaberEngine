@@ -4,7 +4,7 @@
 #include "Context_OpenGL.h"
 #include "Context.h"
 #include "CoreEngine.h"
-#include "HashUtils.h"
+#include "Core\Util\HashUtils.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "SysInfo_OpenGL.h"

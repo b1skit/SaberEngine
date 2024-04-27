@@ -19,7 +19,7 @@
 #include "ShadowMap.h"
 #include "Texture.h"
 #include "ThreadPool.h"
-#include "ThreadSafeVector.h"
+#include "Core\Util\ThreadSafeVector.h"
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
 

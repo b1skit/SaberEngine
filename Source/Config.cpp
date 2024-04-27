@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
 #include "KeyConfiguration.h"
-#include "TextUtils.h"
+#include "Core\Util\TextUtils.h"
 
 // Default true/false std::strings. We convert config values to lowercase and compare against these
 #define TRUE_STRING		"true"

@@ -11,7 +11,7 @@
 #include "Texture_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_DX12.h"
-#include "TextUtils.h"
+#include "Core\Util\TextUtils.h"
 
 #include <d3dx12.h>
 #include <dxcapi.h>

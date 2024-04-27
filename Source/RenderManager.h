@@ -4,8 +4,8 @@
 #include "EngineComponent.h"
 #include "EngineThread.h"
 #include "EventListener.h"
-#include "ImGuiUtils.h"
-#include "NBufferedVector.h"
+#include "Core\Util\ImGuiUtils.h"
+#include "Core\Util\NBufferedVector.h"
 #include "CommandQueue.h"
 #include "RenderSystem.h"
 

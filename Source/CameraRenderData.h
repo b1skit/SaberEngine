@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "HashUtils.h"
+#include "Core\Util\HashUtils.h"
 #include "NamedObject.h"
 #include "RenderObjectIDs.h"
 #include "TransformRenderData.h"
