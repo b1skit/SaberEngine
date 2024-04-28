@@ -10,7 +10,7 @@
 
 namespace gr
 {
-	class MeshPrimitive final : public virtual en::INamedObject, public virtual en::HashedDataObject
+	class MeshPrimitive final : public virtual core::INamedObject, public virtual en::HashedDataObject
 	{
 	public:
 		struct PlatformParams : public re::IPlatformParams

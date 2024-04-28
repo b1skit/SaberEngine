@@ -13,7 +13,7 @@ namespace re
 
 namespace gr
 {
-	class Material : public virtual en::INamedObject
+	class Material : public virtual core::INamedObject
 	{
 	public:
 		enum class MaterialType

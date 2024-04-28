@@ -7,7 +7,7 @@
 
 namespace re
 {
-	class StagePipeline final : public virtual en::INamedObject
+	class StagePipeline final : public virtual core::INamedObject
 	{
 	public:
 		typedef std::list<std::shared_ptr<re::RenderStage>>::iterator StagePipelineItr;
@@ -50,7 +50,7 @@ namespace re
 	};
 
 
-	class RenderPipeline final : public virtual en::INamedObject
+	class RenderPipeline final : public virtual core::INamedObject
 	{
 	public:	
 		RenderPipeline(std::string const& name);

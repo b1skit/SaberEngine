@@ -20,7 +20,7 @@ namespace re
 	* The union of these gives us Permanent Mutable, Permanent Immutable, & SingleFrame Immutable Buffer types
 	*******************************************************************************************************************/
 
-	class Buffer : public virtual en::INamedObject
+	class Buffer : public virtual core::INamedObject
 	{
 	public:
 		enum Type : uint8_t

@@ -10,7 +10,7 @@ namespace gr
 		: m_renderDataID(renderDataID)
 		, m_transformID(transformID)
 	{
-		strncpy(m_lightName, name, en::INamedObject::k_maxNameLength);
+		strncpy(m_lightName, name, core::INamedObject::k_maxNameLength);
 	}
 
 
@@ -19,7 +19,7 @@ namespace gr
 		: m_renderDataID(renderDataID)
 		, m_transformID(transformID)
 	{
-		strncpy(m_lightName, name, en::INamedObject::k_maxNameLength);
+		strncpy(m_lightName, name, core::INamedObject::k_maxNameLength);
 	}
 
 
@@ -28,7 +28,7 @@ namespace gr
 		: m_renderDataID(renderDataID)
 		, m_transformID(transformID)
 	{
-		strncpy(m_lightName, name, en::INamedObject::k_maxNameLength);
+		strncpy(m_lightName, name, core::INamedObject::k_maxNameLength);
 	}
 
 
@@ -37,6 +37,6 @@ namespace gr
 		: m_renderDataID(renderDataID)
 		, m_transformID(transformID)
 	{
-		strncpy(m_lightName, name, en::INamedObject::k_maxNameLength);
+		strncpy(m_lightName, name, core::INamedObject::k_maxNameLength);
 	}
 }

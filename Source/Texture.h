@@ -7,7 +7,7 @@
 
 namespace re
 {
-	class Texture final : public virtual en::INamedObject
+	class Texture final : public virtual core::INamedObject
 	{
 	public:
 		using ImageDataUniquePtr = std::unique_ptr<void, std::function<void(void*)>>;

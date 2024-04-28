@@ -6,7 +6,7 @@ using NameID = uint64_t;
 using UniqueID = uint64_t;
 
 
-namespace en
+namespace core
 {
 	class INamedObject
 	{

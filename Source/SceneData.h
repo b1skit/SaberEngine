@@ -19,7 +19,7 @@ namespace re
 
 namespace fr
 {
-	class SceneData final : public virtual en::INamedObject
+	class SceneData final : public virtual core::INamedObject
 	{
 	public:
 		typedef uint64_t DataHash;

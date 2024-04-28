@@ -162,7 +162,7 @@ namespace gr
 
 			gr::TransformID m_transformID;
 
-			char m_cameraName[en::INamedObject::k_maxNameLength];
+			char m_cameraName[core::INamedObject::k_maxNameLength];
 		};
 
 		static uint8_t NumViews(gr::Camera::RenderData const& camData);

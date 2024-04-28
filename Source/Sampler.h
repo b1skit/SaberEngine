@@ -7,7 +7,7 @@
 
 namespace re
 {
-	class Sampler final : public virtual en::INamedObject
+	class Sampler final : public virtual core::INamedObject
 	{
 	public:
 		struct PlatformParams : public re::IPlatformParams

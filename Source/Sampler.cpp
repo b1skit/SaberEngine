@@ -246,7 +246,7 @@ namespace re
 
 
 	Sampler::Sampler(std::string const& name, SamplerDesc const& samplerDesc)
-		: en::INamedObject(name)
+		: core::INamedObject(name)
 		, m_samplerDesc{ samplerDesc }
 	{
 		platform::Sampler::CreatePlatformParams(*this);

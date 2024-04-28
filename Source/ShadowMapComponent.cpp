@@ -357,7 +357,7 @@ namespace fr
 			.m_shadowEnabled = shadowMap.IsEnabled(),
 		};
 
-		strncpy(shadowRenderData.m_owningLightName, nameCmpt.GetName().c_str(), en::INamedObject::k_maxNameLength);
+		strncpy(shadowRenderData.m_owningLightName, nameCmpt.GetName().c_str(), core::INamedObject::k_maxNameLength);
 
 		return shadowRenderData;
 	}

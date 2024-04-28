@@ -8,7 +8,7 @@ namespace fr
 	class EntityManager;
 
 
-	class NameComponent final : public virtual en::INamedObject
+	class NameComponent final : public virtual core::INamedObject
 	{
 	public:
 		static NameComponent& AttachNameComponent(EntityManager&, entt::entity, char const* name);
@@ -17,6 +17,6 @@ namespace fr
 	private: // Use the static creation factories
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
 	public:
-		NameComponent(PrivateCTORTag, std::string const& name) : en::INamedObject(name) {}
+		NameComponent(PrivateCTORTag, std::string const& name) : core::INamedObject(name) {}
 	};
 }

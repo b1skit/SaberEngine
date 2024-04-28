@@ -46,7 +46,7 @@ namespace gr
 
 			bool m_shadowEnabled;
 
-			char m_owningLightName[en::INamedObject::k_maxNameLength];
+			char m_owningLightName[core::INamedObject::k_maxNameLength];
 		};
 	};
 }

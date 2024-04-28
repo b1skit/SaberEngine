@@ -14,7 +14,7 @@ namespace re
 	class Texture;
 
 
-	class RenderStage : public virtual en::INamedObject
+	class RenderStage : public virtual core::INamedObject
 	{
 	public:
 		static constexpr int k_noDepthTexAsInputFlag = -1;

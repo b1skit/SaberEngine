@@ -1216,7 +1216,7 @@ namespace fr
 
 	std::shared_ptr<re::Texture> SceneData::GetTexture(std::string const& texName) const
 	{
-		const uint64_t nameID = en::INamedObject::ComputeIDFromName(texName);
+		const uint64_t nameID = core::INamedObject::ComputeIDFromName(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
@@ -1231,7 +1231,7 @@ namespace fr
 
 	std::shared_ptr<re::Texture> SceneData::TryGetTexture(std::string const& texName) const
 	{
-		const uint64_t nameID = en::INamedObject::ComputeIDFromName(texName);
+		const uint64_t nameID = core::INamedObject::ComputeIDFromName(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
@@ -1243,7 +1243,7 @@ namespace fr
 
 	bool SceneData::TextureExists(std::string const& textureName) const
 	{
-		const uint64_t nameID = en::INamedObject::ComputeIDFromName(textureName);
+		const uint64_t nameID = core::INamedObject::ComputeIDFromName(textureName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 			return m_textures.find(nameID) != m_textures.end();

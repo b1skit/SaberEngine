@@ -14,7 +14,7 @@ namespace opengl
 
 namespace re
 {
-	class Shader final : public virtual en::INamedObject
+	class Shader final : public virtual core::INamedObject
 	{
 	public:
 		static uint64_t ComputeShaderIdentifier(std::string const& extensionlessShaderFilename, re::PipelineState const&);

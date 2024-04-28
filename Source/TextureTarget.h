@@ -201,7 +201,7 @@ namespace re
 
 
 	// Collection of render target textures
-	class TextureTargetSet final : public en::INamedObject, public en::HashedDataObject
+	class TextureTargetSet final : public core::INamedObject, public en::HashedDataObject
 	{
 	public:
 		struct PlatformParams : public re::IPlatformParams

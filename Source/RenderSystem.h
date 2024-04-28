@@ -11,7 +11,7 @@ namespace re
 	struct RenderSystemDescription;
 
 
-	class RenderSystem : public virtual en::INamedObject
+	class RenderSystem : public virtual core::INamedObject
 	{
 	public:
 		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(
