@@ -1,6 +1,6 @@
 ﻿// © 2022 Adam Badke. All rights reserved.
 #include "Context_OpenGL.h"
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "MeshPrimitive.h"
 #include "VertexStream_OpenGL.h"
 

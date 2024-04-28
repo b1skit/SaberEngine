@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraRenderData.h"
-#include "ConfigKeys.h"
+#include "Core\ConfigKeys.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem_Bloom.h"
 #include "Sampler.h"

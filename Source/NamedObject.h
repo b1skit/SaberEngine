@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Assert.h"
+#include "Core\Assert.h"
 
 using NameID = uint64_t;
 using UniqueID = uint64_t;

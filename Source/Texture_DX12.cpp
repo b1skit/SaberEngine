@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "CommandList_DX12.h"
 #include "Config.h"
 #include "Context_DX12.h"

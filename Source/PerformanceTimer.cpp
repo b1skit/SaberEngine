@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "PerformanceTimer.h"
-#include "Assert.h"
+#include "Core\Assert.h"
 
 
 namespace util

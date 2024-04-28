@@ -2,7 +2,7 @@
 
 #include "Config.h"
 #include "Debug_DX12.h"
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "Device_DX12.h"
 #include "RenderManager_DX12.h"
 

@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "AssetLoadUtils.h"
 #include "CameraComponent.h"
 #include "Config.h"
@@ -17,7 +17,7 @@
 #include "Shader.h"
 #include "ShadowMap.h"
 #include "Texture.h"
-#include "ThreadPool.h"
+#include "Core\ThreadPool.h"
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
 

@@ -305,7 +305,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Assert.cpp" />
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="BatchManager.cpp" />
     <ClCompile Include="BoundsComponent.cpp" />
@@ -394,7 +393,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="AssetLoadUtils.cpp" />
     <ClCompile Include="TextureTarget_DX12.cpp" />
     <ClCompile Include="Texture_DX12.cpp" />
-    <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="TransformRenderData.cpp" />
     <ClCompile Include="UIManager.cpp" />
@@ -425,7 +423,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="TextureTarget.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="Light.cpp" />
-    <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="MeshPrimitive.cpp" />
@@ -456,7 +453,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="BoundsRenderData.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CameraRenderData.h" />
-    <ClInclude Include="ConfigKeys.h" />
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="BoundsComponent.h" />
@@ -549,7 +545,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="AssetLoadUtils.h" />
     <ClInclude Include="TextureTarget_DX12.h" />
     <ClInclude Include="Texture_DX12.h" />
-    <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="TransformRenderData.h" />
     <ClInclude Include="UIManager.h" />
@@ -583,7 +578,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Texture_OpenGL.h" />
     <ClInclude Include="Texture_Platform.h" />
     <ClInclude Include="NamedObject.h" />
-    <ClInclude Include="Assert.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineApp.h" />
     <ClInclude Include="EngineComponent.h" />
@@ -594,7 +588,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="KeyConfiguration.h" />
     <ClInclude Include="Light.h" />
-    <ClInclude Include="LogManager.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="CameraControlComponent.h" />
     <ClInclude Include="MeshConcept.h" />

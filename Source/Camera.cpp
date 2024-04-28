@@ -1,5 +1,5 @@
 ﻿// © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "Camera.h"
 #include "Core\Util\ImGuiUtils.h"
 #include "Transform.h"

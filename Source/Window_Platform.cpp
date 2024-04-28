@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "RenderManager.h"
 #include "Window_Platform.h"
 #include "Window_Win32.h"

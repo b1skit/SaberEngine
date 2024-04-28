@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "ConfigKeys.h"
+#include "Core\ConfigKeys.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"

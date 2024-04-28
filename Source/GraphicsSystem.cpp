@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "GraphicsSystem.h"
-#include "LogManager.h"
+#include "Core\LogManager.h"
 #include "Core\Util\TextUtils.h"
 
 

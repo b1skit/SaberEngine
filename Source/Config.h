@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "ConfigKeys.h"
-#include "LogManager.h"
+#include "Core\ConfigKeys.h"
+#include "Core\LogManager.h"
 
 
 namespace en

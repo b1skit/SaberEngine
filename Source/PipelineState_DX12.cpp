@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "Debug_DX12.h"
 #include "MeshPrimitive.h"
 #include "PipelineState.h"

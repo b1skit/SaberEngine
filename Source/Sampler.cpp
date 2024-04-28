@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "RenderManager.h"
 #include "Sampler.h"
 #include "Sampler_Platform.h"

@@ -2,7 +2,7 @@
 #include "Config.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "Core\Util\TextUtils.h"
 
 #include <d3dx12.h>

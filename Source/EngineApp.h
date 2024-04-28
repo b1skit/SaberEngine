@@ -2,7 +2,7 @@
 #pragma once
 #include "EngineComponent.h"
 #include "EventListener.h"
-#include "LogManager.h"
+#include "Core\LogManager.h"
 #include "Window.h"
 
 

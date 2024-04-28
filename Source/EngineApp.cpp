@@ -1,17 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "EngineApp.h"
 #include "Config.h"
 #include "EntityManager.h"
 #include "EventManager.h"
 #include "InputManager.h"
-#include "LogManager.h"
+#include "Core\LogManager.h"
 #include "PerformanceTimer.h"
 #include "Platform.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
-#include "ThreadPool.h"
+#include "Core\ThreadPool.h"
 #include "UIManager.h"
 
 

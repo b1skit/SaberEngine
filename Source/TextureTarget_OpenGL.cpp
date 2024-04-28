@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"

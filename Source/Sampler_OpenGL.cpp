@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "Core\Util\CastUtils.h"
 #include "Sampler_OpenGL.h"
 #include "Sampler_Platform.h"

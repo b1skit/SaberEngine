@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "HashedDataObject.h"
 #include "IPlatformParams.h"
 #include "Texture.h"

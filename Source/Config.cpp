@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "Config.h"
 #include "KeyConfiguration.h"
-#include "LogManager.h"
+#include "Core\LogManager.h"
 
 #include "Core\Util\TextUtils.h"
 

@@ -6,7 +6,7 @@
 #include "GraphicsSystem_ImGui.h"
 #include "InputManager_Platform.h"
 #include "KeyConfiguration.h"
-#include "LogManager.h"
+#include "Core\LogManager.h"
 #include "SceneManager.h"
 #include "RenderManager.h"
 #include "UIManager.h"

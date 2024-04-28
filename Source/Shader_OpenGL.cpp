@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "Config.h"
 #include "Material.h"
 #include "Buffer_OpenGL.h"
@@ -8,10 +8,10 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
-#include "ThreadPool.h"
 #include "Texture.h"
 #include "Texture_OpenGL.h"
 
+#include "Core\ThreadPool.h"
 #include "Core\Util\TextUtils.h"
 
 #include <GL/glew.h> 

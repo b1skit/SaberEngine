@@ -5,7 +5,7 @@
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
 #include "RenderDataManager.h"
-#include "ThreadPool.h"
+#include "Core\ThreadPool.h"
 
 #include "Core\Util\ThreadSafeVector.h"
 

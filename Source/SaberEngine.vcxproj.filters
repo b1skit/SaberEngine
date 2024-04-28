@@ -209,9 +209,6 @@
     <ClCompile Include="InputManager.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
-    <ClCompile Include="LogManager.cpp">
-      <Filter>Source Files\en</Filter>
-    </ClCompile>
     <ClCompile Include="Platform.cpp">
       <Filter>Source Files\en\platform</Filter>
     </ClCompile>
@@ -229,9 +226,6 @@
     </ClCompile>
     <ClCompile Include="BufferAllocator.cpp">
       <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="ThreadPool.cpp">
-      <Filter>Source Files\en</Filter>
     </ClCompile>
     <ClCompile Include="EntityManager.cpp">
       <Filter>Source Files\fr</Filter>
@@ -515,9 +509,6 @@
     <ClCompile Include="GraphicsSystem_Culling.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="Assert.cpp">
-      <Filter>Source Files\en</Filter>
-    </ClCompile>
     <ClCompile Include="MaterialInstanceComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
@@ -571,9 +562,6 @@
     <ClInclude Include="Context_Platform.h">
       <Filter>Header Files\re\platform</Filter>
     </ClInclude>
-    <ClInclude Include="Assert.h">
-      <Filter>Header Files\en</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsSystem.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
@@ -622,9 +610,6 @@
     <ClInclude Include="InputManager.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
-    <ClInclude Include="LogManager.h">
-      <Filter>Header Files\en</Filter>
-    </ClInclude>
     <ClInclude Include="KeyConfiguration.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
@@ -654,9 +639,6 @@
     </ClInclude>
     <ClInclude Include="PerformanceTimer.h">
       <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="ThreadPool.h">
-      <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="EntityManager.h">
       <Filter>Header Files\fr</Filter>
@@ -819,9 +801,6 @@
     </ClInclude>
     <ClInclude Include="SysInfo_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="ConfigKeys.h">
-      <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\imgui.h">
       <Filter>Dependencies\imgui</Filter>

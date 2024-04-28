@@ -1,5 +1,5 @@
 #pragma once
-#include "Assert.h"
+#include "Core\Assert.h"
 #include "Platform.h"
 #include "RenderManager.h"
 #include "RenderSystemDesc.h"
