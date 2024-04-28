@@ -1,5 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "CommandQueue.h"
+#include "Core\CommandQueue.h"
 #include "Core\Config.h"
 #include "EngineApp.h"
 #include "EntityManager.h"
@@ -173,7 +173,7 @@ namespace fr
 		public:
 			CreateDebugUIRenderSystemCommand(
 				std::atomic<bool>* createdFlag,
-				en::FrameIndexedCommandManager** cmdMgrPtr,
+				core::FrameIndexedCommandManager** cmdMgrPtr,
 				std::mutex** imguiMutexPtr)
 				: m_uiMgrCreateFlag(createdFlag)
 				, m_cmdMgr(cmdMgrPtr)
@@ -211,7 +211,7 @@ namespace fr
 
 		private:
 			std::atomic<bool>* m_uiMgrCreateFlag;
-			en::FrameIndexedCommandManager** m_cmdMgr;
+			core::FrameIndexedCommandManager** m_cmdMgr;
 			std::mutex** m_imguiMutex;
 		};
 		re::RenderManager::Get()->EnqueueRenderCommand<CreateDebugUIRenderSystemCommand>(

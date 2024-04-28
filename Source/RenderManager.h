@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BatchManager.h"
-#include "CommandQueue.h"
+#include "Core\CommandQueue.h"
 #include "IEventListener.h"
 #include "Platform.h"
 #include "RenderSystem.h"
@@ -88,7 +88,7 @@ namespace re
 
 	private:
 		static constexpr size_t k_renderCommandBufferSize = 16 * 1024 * 1024;
-		en::CommandManager m_renderCommandManager;
+		core::CommandManager m_renderCommandManager;
 
 
 	public:

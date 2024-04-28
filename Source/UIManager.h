@@ -30,7 +30,7 @@ namespace fr
 		void SubmitImGuiRenderCommands(uint64_t frameNum);
 
 		std::atomic<bool> m_debugUIRenderSystemCreated; // True if m_debugUICommandMgr, m_imguiGlobalMutex are safe to use
-		en::FrameIndexedCommandManager* m_debugUICommandMgr;
+		core::FrameIndexedCommandManager* m_debugUICommandMgr;
 		std::mutex* m_imguiGlobalMutex;
 
 

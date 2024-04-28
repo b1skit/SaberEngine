@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Core\Assert.h"
-#include "CommandQueue.h"
+#include "Core\CommandQueue.h"
 #include "Core\Interfaces\IEngineComponent.h"
 #include "EntityCommands.h"
 #include "IEventListener.h"
@@ -64,7 +64,7 @@ namespace fr
 		
 	private:
 		void ProcessEntityCommands();
-		en::CommandManager m_entityCommands;
+		core::CommandManager m_entityCommands;
 
 
 	public:

@@ -491,9 +491,6 @@
     <ClCompile Include="CameraRenderData.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="CommandQueue.cpp">
-      <Filter>Source Files\en</Filter>
-    </ClCompile>
     <ClCompile Include="SceneManager.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
@@ -918,9 +915,6 @@
     </ClInclude>
     <ClInclude Include="CameraControlComponent.h">
       <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandQueue.h">
-      <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="SceneManager.h">
       <Filter>Header Files\fr</Filter>

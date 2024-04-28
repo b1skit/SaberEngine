@@ -26,6 +26,9 @@
 
 // Win32 API:
 #define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <Windows.h>
 #include <shlobj_core.h> // Windows shell
 // TODO: Move these OS-specific out of the PCH and into platform-specific files that require them

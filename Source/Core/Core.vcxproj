@@ -332,6 +332,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Assert.h" />
+    <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="ConfigKeys.h" />
     <ClInclude Include="Definitions\KeyConfiguration.h" />
@@ -355,6 +356,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assert.cpp" />
+    <ClCompile Include="CommandQueue.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="Interfaces\IEngineThread.cpp" />
     <ClCompile Include="LogManager.cpp" />

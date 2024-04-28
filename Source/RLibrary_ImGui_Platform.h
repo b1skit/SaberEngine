@@ -26,7 +26,7 @@ namespace platform
 		struct Payload final : public virtual re::LibraryStage::IPayload
 		{
 			uint64_t m_currentFrameNum;
-			en::FrameIndexedCommandManager* m_perFrameCommands;
+			core::FrameIndexedCommandManager* m_perFrameCommands;
 		};
 
 

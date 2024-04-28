@@ -1,9 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Assert.h"
+#include "Assert.h"
 
 
-namespace en
+namespace core
 {
 	class CommandManager;
 
@@ -156,7 +156,7 @@ namespace en
 	class FrameIndexedCommandManager
 	{
 	public:
-		FrameIndexedCommandManager(size_t bufferAllocationSize);
+		FrameIndexedCommandManager(size_t bufferAllocationSize, uint8_t numFramesInFlight);
 
 		template<typename T, typename... Args>
 		void Enqueue(uint64_t frameNum, Args&&... args);

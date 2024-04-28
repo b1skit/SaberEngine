@@ -1,9 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "CommandQueue.h"
-#include "RenderManager.h"
 
 
-namespace en
+namespace core
 {
 	CommandBuffer::CommandBuffer(size_t allocationByteSize)
 		: m_buffer(nullptr)
@@ -123,10 +122,10 @@ namespace en
 	/******************************************************************************************************************/
 
 
-	FrameIndexedCommandManager::FrameIndexedCommandManager(size_t bufferAllocationSize)
+	FrameIndexedCommandManager::FrameIndexedCommandManager(size_t bufferAllocationSize, uint8_t numFramesInFlight)
 		: m_lastEnqueuedFrameNum(k_invalidFrameNum)
 		, m_lastExecutedFrameNum(k_invalidFrameNum)
-		, m_numBuffers(re::RenderManager::Get()->GetNumFramesInFlight())
+		, m_numBuffers(numFramesInFlight)
 	{
 		{
 			std::unique_lock<std::mutex> lock(m_commandBuffersMutex);

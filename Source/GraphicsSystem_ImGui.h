@@ -1,6 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
-#include "CommandQueue.h"
+#include "Core\CommandQueue.h"
 #include "GraphicsSystem.h"
 #include "RLibrary_ImGui_Platform.h"
 
@@ -38,14 +38,14 @@ namespace gr
 
 	public:
 		// UI Manager setup interface:
-		en::FrameIndexedCommandManager* GetFrameIndexedCommandManager(); // Thread-safe ImGui command submission
+		core::FrameIndexedCommandManager* GetFrameIndexedCommandManager(); // Thread-safe ImGui command submission
 
 		std::mutex& GetGlobalImGuiMutex() const; // Synchronize ImGui IO accesses across threads
 
 
 	private:
 		static constexpr size_t k_imGuiCommandBufferSize = 8 * 1024 * 1024;
-		en::FrameIndexedCommandManager m_perFrameCommands;
+		core::FrameIndexedCommandManager m_perFrameCommands;
 
 		mutable std::mutex m_imGuiGlobalMutex;
 
@@ -55,7 +55,7 @@ namespace gr
 	};
 
 
-	inline en::FrameIndexedCommandManager* ImGuiGraphicsSystem::GetFrameIndexedCommandManager()
+	inline core::FrameIndexedCommandManager* ImGuiGraphicsSystem::GetFrameIndexedCommandManager()
 	{
 		return &m_perFrameCommands;
 	}
