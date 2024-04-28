@@ -6,7 +6,7 @@
 
 namespace en
 {
-	class EventListener;
+	class IEventListener;
 }
 namespace re
 {
@@ -84,13 +84,13 @@ namespace en
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 		// Member functions:
-		void Subscribe(EventType eventType, EventListener* listener); // Subscribe to an event
+		void Subscribe(EventType eventType, IEventListener* listener); // Subscribe to an event
 		void Notify(EventInfo&&); // Post an event
 
 
 	private:
 		std::vector<std::vector<EventInfo>> m_eventQueues;
-		std::vector<std::vector<EventListener*>> m_eventListeners;
+		std::vector<std::vector<IEventListener*>> m_eventListeners;
 		std::mutex m_eventMutex;
 
 	private:

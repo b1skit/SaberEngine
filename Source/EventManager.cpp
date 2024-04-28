@@ -28,7 +28,7 @@ namespace en
 		m_eventListeners.reserve(eventQueueStartSize);
 		for (uint32_t i = 0; i < eventQueueStartSize; i++)
 		{
-			m_eventListeners.push_back(std::vector<EventListener*>());
+			m_eventListeners.push_back(std::vector<IEventListener*>());
 		}
 	}
 
@@ -75,7 +75,7 @@ namespace en
 	}
 
 
-	void EventManager::Subscribe(EventType eventType, EventListener* listener)
+	void EventManager::Subscribe(EventType eventType, IEventListener* listener)
 	{
 		std::lock_guard<std::mutex> lock(m_eventMutex);
 		m_eventListeners[eventType].emplace_back(listener);

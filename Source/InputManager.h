@@ -7,7 +7,7 @@
 
 namespace en
 {
-	class InputManager final : public virtual en::EngineComponent, public virtual en::EventListener
+	class InputManager final : public virtual en::EngineComponent, public virtual en::IEventListener
 	{
 	public:
 		static InputManager* Get(); // Singleton functionality
@@ -29,7 +29,7 @@ namespace en
 		void Shutdown() override;
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
-		// EventListener interface:
+		// IEventListener interface:
 		void HandleEvents() override;
 
 	private:

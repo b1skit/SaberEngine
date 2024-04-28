@@ -13,7 +13,7 @@ namespace fr
 	class BoundsComponent;
 
 
-	class EntityManager final : public virtual en::EngineComponent, public virtual en::EventListener
+	class EntityManager final : public virtual en::EngineComponent, public virtual en::IEventListener
 	{
 	public:
 		static EntityManager* Get(); // Singleton functionality
@@ -73,7 +73,7 @@ namespace fr
 		void ShowImGuiEntityComponentDebug(bool* show);
 
 
-	private: // EventListener interface:
+	private: // IEventListener interface:
 		void HandleEvents() override;
 
 

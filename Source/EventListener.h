@@ -1,21 +1,20 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "EventManager.h"
 
 
 namespace en
 {
-	class EventListener
+	class IEventListener
 	{
-	public: // EventListener interface:
+	public: // IEventListener interface:
 		virtual void HandleEvents() = 0;
 
 
 	public:
-		inline void RegisterEvent(en::EventManager::EventInfo const& eventInfo);
-		inline bool HasEvents() const;
-		inline en::EventManager::EventInfo GetEvent();
+		void RegisterEvent(en::EventManager::EventInfo const& eventInfo);
+		bool HasEvents() const;
+		en::EventManager::EventInfo GetEvent();
 
 
 	private:
@@ -24,7 +23,7 @@ namespace en
 	};
 
 
-	void EventListener::RegisterEvent(en::EventManager::EventInfo const& eventInfo)
+	inline void IEventListener::RegisterEvent(en::EventManager::EventInfo const& eventInfo)
 	{
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_eventsMutex);
@@ -33,7 +32,7 @@ namespace en
 	}
 
 	
-	bool EventListener::HasEvents() const
+	inline bool IEventListener::HasEvents() const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_eventsMutex);
@@ -42,7 +41,7 @@ namespace en
 	}
 
 
-	en::EventManager::EventInfo EventListener::GetEvent()
+	inline en::EventManager::EventInfo IEventListener::GetEvent()
 	{
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_eventsMutex);

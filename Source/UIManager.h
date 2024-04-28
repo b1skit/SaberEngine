@@ -6,7 +6,7 @@
 
 namespace fr
 {
-	class UIManager : public virtual en::EngineComponent, public virtual en::EventListener
+	class UIManager : public virtual en::EngineComponent, public virtual en::IEventListener
 	{
 	public:
 		static UIManager* Get(); // Singleton functionality

@@ -34,7 +34,7 @@ namespace re
 namespace re
 {
 	class RenderManager
-		: public virtual en::EngineComponent, public virtual en::EngineThread, public virtual en::EventListener
+		: public virtual en::EngineComponent, public virtual en::EngineThread, public virtual en::IEventListener
 	{
 	public:
 		static RenderManager* Get(); // Singleton functionality
@@ -50,7 +50,7 @@ namespace re
 		// EngineThread interface:
 		void Lifetime(std::barrier<>* copyBarrier) override;
 
-		// EventListener interface:
+		// IEventListener interface:
 		void HandleEvents() override;
 
 		uint64_t GetCurrentRenderFrameNum() const;

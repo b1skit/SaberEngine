@@ -10,7 +10,7 @@
 
 namespace en
 {
-	class EngineApp final : public virtual en::EngineComponent, public virtual en::EventListener
+	class EngineApp final : public virtual en::EngineComponent, public virtual en::IEventListener
 	{
 	public: // Singleton functionality:	
 		static inline EngineApp* Get() { return m_coreEngine; }
@@ -31,7 +31,7 @@ namespace en
 		// NamedObject interface:
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
-		// EventListener interface:
+		// IEventListener interface:
 		void HandleEvents() override;
 
 		en::Window* GetWindow() const { return m_window.get(); }
