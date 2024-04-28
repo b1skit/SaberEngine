@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Core\Assert.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "ProfilingMarkers.h"
@@ -55,9 +55,9 @@ namespace dx12
 	{
 		// PIX must be loaded before loading any D3D12 APIs
 		const bool enablePIXPGPUrogrammaticCaptures = 
-			en::Config::Get()->KeyExists(core::configkeys::k_pixGPUProgrammaticCapturesCmdLineArg);
+			core::Config::Get()->KeyExists(core::configkeys::k_pixGPUProgrammaticCapturesCmdLineArg);
 		const bool enablePIXPCPUProgrammaticCaptures =
-			en::Config::Get()->KeyExists(core::configkeys::k_pixCPUProgrammaticCapturesCmdLineArg);
+			core::Config::Get()->KeyExists(core::configkeys::k_pixCPUProgrammaticCapturesCmdLineArg);
 
 		if (enablePIXPGPUrogrammaticCaptures && enablePIXPCPUProgrammaticCaptures)
 		{

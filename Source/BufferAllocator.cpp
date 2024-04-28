@@ -1,13 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Util\CastUtils.h"
-#include "Config.h"
 #include "BufferAllocator.h"
 #include "BufferAllocator_DX12.h"
 #include "BufferAllocator_OpenGL.h"
 #include "Buffer_Platform.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
+
+#include "Core\Assert.h"
+#include "Core\Config.h"
+
+#include "Core\Util\CastUtils.h"
 
 
 namespace

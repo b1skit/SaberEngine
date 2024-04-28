@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Core\Assert.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "Debug_DX12.h"
 #include "RootSignature_DX12.h"
 #include "Shader_DX12.h"
@@ -38,7 +38,7 @@ namespace dx12
 
 		// Assemble root shader dir, as a wide string
 		std::wstring const& shaderRootWStr = 
-			en::Config::Get()->GetValueAsWString(core::configkeys::k_shaderDirectoryKey) + shaderBaseName;
+			core::Config::Get()->GetValueAsWString(core::configkeys::k_shaderDirectoryKey) + shaderBaseName;
 
 		// Load the shader blobs:
 		for (size_t i = 0; i < nameSuffix.size(); i++)

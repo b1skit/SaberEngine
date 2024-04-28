@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Config.h"
+#include "Core\Config.h"
 #include "EngineApp.h"
 #include "EntityManager.h"
 #include "EventManager.h"
@@ -48,17 +48,17 @@ namespace en
 
 		// Start the logging thread:
 		core::LogManager::Get()->Startup(
-			en::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
+			core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
 
 		// Create a window:
 		std::string commandLineArgs;
-		en::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
+		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
 
 		std::string const& windowTitle = std::format("{} {}", 
-			en::Config::Get()->GetValue<std::string>("windowTitle"), 
+			core::Config::Get()->GetValue<std::string>("windowTitle"), 
 			commandLineArgs);
-		const int xRes = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		const int yRes = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		const int xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		const int yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 
 		m_window = std::make_unique<en::Window>(); // Ensure Window exists for first callbacks triggered by Create
 		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);

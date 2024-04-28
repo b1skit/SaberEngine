@@ -2,7 +2,7 @@
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
@@ -893,8 +893,8 @@ namespace fr
 			return;
 		}
 
-		static const int windowWidth = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		static const int windowHeight = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
 		constexpr float k_windowWidthPercentage = 0.25f;
 
@@ -1150,8 +1150,8 @@ namespace fr
 			return;
 		}
 
-		static const int windowWidth = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		static const int windowHeight = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
 		constexpr float k_windowWidthPercentage = 0.25f;
 

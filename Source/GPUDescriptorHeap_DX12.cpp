@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Core\Assert.h"
 #include "CommandList_DX12.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "Context_DX12.h"
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "Debug_DX12.h"
@@ -324,7 +324,7 @@ namespace dx12
 	{
 #if defined(_DEBUG)
 		// Debug: Assert all of our root index bitmasks are unique
-		if (en::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
+		if (core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
 		{
 			for (uint8_t i = 0; i < InlineRootType_Count; i++)
 			{

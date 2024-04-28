@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Core\Assert.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "Context_DX12.h"
 #include "EngineApp.h"
 #include "Debug_DX12.h"
@@ -30,12 +30,12 @@ namespace dx12
 		// Ideally, tearing should be enabled and vsync disabled (best for variable refresh displays), but we respect
 		// the config
 		swapChainParams->m_tearingSupported = SysInfo::CheckTearingSupport();
-		swapChainParams->m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
+		swapChainParams->m_vsyncEnabled = core::Config::Get()->GetValue<bool>("vsync");
 
 		UINT createFactoryFlags = 0;
 #if defined(_DEBUG)
 		// Catch errors during device creation. Should not be used in release builds
-		if (en::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
+		if (core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
 		{
 			createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 		}
@@ -45,8 +45,8 @@ namespace dx12
 		HRESULT hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4));
 		CheckHResult(hr, "Failed to create DXGIFactory2");
 
-		const int width = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		const int height = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		const int width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		const int height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 
 		re::Texture::TextureParams colorParams;
 		colorParams.m_width = width;

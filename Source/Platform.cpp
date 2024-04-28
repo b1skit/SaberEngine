@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Core\Assert.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "Platform.h"
 
 #include "Context_DX12.h"

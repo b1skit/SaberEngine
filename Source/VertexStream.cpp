@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Core\Assert.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
@@ -156,7 +156,7 @@ namespace re
 		if (DoNormalize() && m_dataType == re::VertexStream::DataType::Float)
 		{
 			static const bool s_doNormalize = 
-				en::Config::Get()->KeyExists(core::configkeys::k_doCPUVertexStreamNormalizationKey);
+				core::Config::Get()->KeyExists(core::configkeys::k_doCPUVertexStreamNormalizationKey);
 
 			if (s_doNormalize)
 			{

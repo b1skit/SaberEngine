@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Core\Assert.h"
 #include "Context_DX12.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "Debug_DX12.h"
 #include "RootSignature_DX12.h"
 #include "Sampler.h"
@@ -840,7 +840,7 @@ namespace dx12
 		const bool hasResource = result != m_namesToRootParamsIdx.end();
 
 		SEAssert(hasResource || 
-			en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Root signature does not contain a parameter with that name");
 
 		return hasResource ? &m_rootParams[result->second] : nullptr;

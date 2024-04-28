@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "CommandQueue.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "EngineApp.h"
 #include "EntityManager.h"
 #include "GraphicsSystem_ImGui.h"
@@ -447,8 +447,8 @@ namespace fr
 			}
 		}
 		
-		static const int windowWidth = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		static const int windowHeight = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 
 		static ImVec2 menuBarSize = { 0, 0 }; // Record the size of the menu bar so we can align things absolutely underneath it
 

@@ -1,10 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "Config.h"
-#include "Core\Definitions\KeyConfiguration.h"
 
-#include "Core\Assert.h"
-#include "Core\LogManager.h"
-#include "Core\Util\TextUtils.h"
+#include "Definitions\KeyConfiguration.h"
+
+#include "Util\TextUtils.h"
 
 // Default true/false std::strings. We convert config values to lowercase and compare against these
 #define TRUE_STRING		"true"
@@ -28,11 +28,11 @@ namespace
 	}
 }
 
-namespace en
+namespace core
 {
 	Config* Config::Get()
 	{
-		static std::unique_ptr<en::Config> instance = std::make_unique<en::Config>();
+		static std::unique_ptr<core::Config> instance = std::make_unique<core::Config>();
 		return instance.get();
 	}
 
@@ -424,7 +424,7 @@ namespace en
 	}
 
 
-	void en::Config::SetAPIDefaults()
+	void core::Config::SetAPIDefaults()
 	{
 		//// We only set these defaults if they're not specified in the (now already loaded) config file. This allows the
 		//// config to override these values, if required. We also tag these keys as API-specific (but if they're found in

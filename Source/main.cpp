@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Config.h"
+#include "Core\Config.h"
 #include "EngineApp.h"
 #include "Core\Assert.h"
 #include "Platform.h"
@@ -18,10 +18,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	const bool gotCommandLineArgs = argc > 1;
 	if (gotCommandLineArgs)
 	{
-		en::Config::Get()->ProcessCommandLineArgs(argc, argv);
+		core::Config::Get()->ProcessCommandLineArgs(argc, argv);
 	}	
 
-	const bool showConsole = en::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg);
+	const bool showConsole = core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg);
 	if (showConsole)
 	{
 		AllocConsole();
@@ -33,14 +33,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		const int numTokens = argc - 1; // -1, as 1st arg is program name
 		LOG("Received %d command line tokens: %s",
 			numTokens, 
-			en::Config::Get()->GetValueAsString(core::configkeys::k_commandLineArgsValueKey).c_str());
+			core::Config::Get()->GetValueAsString(core::configkeys::k_commandLineArgsValueKey).c_str());
 	}
 	else
 	{
 		LOG("No command line arguments received");
 	}
 
-	en::Config::Get()->LoadConfigFile();
+	core::Config::Get()->LoadConfigFile();
 
 	// Register our API-specific bindings before anything attempts to call them:
 	if (!platform::RegisterPlatformFunctions())

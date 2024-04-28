@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystemManager.h"
@@ -21,7 +21,7 @@ namespace
 	BRDFIntegrationData GetBRDFIntegrationParamsDataData()
 	{
 		const uint32_t brdfTexWidthHeight =
-			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
+			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
 
 		BRDFIntegrationData brdfIntegrationParams{
 			.g_integrationTargetResolution =
@@ -50,8 +50,8 @@ namespace
 			roughness = 0;
 		}
 
-		const int numIEMSamples = en::Config::Get()->GetValue<int>(core::configkeys::k_iemNumSamplesKey);
-		const int numPMREMSamples = en::Config::Get()->GetValue<int>(core::configkeys::k_pmremNumSamplesKey);
+		const int numIEMSamples = core::Config::Get()->GetValue<int>(core::configkeys::k_iemNumSamplesKey);
+		const int numPMREMSamples = core::Config::Get()->GetValue<int>(core::configkeys::k_pmremNumSamplesKey);
 
 		generationParams.g_numSamplesRoughnessFaceIdx = glm::vec4(
 			static_cast<float>(numIEMSamples),
@@ -82,7 +82,7 @@ namespace
 		AmbientLightData ambientLightParamsData{};
 
 		const uint32_t dfgTexWidthHeight = 
-			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
+			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
 
 		const uint32_t maxPMREMMipLevel = numPMREMMips - 1;
 
@@ -349,7 +349,7 @@ namespace gr
 			re::Shader::GetOrCreate(en::ShaderNames::k_generateBRDFIntegrationMapShaderName, brdfPipelineState));
 
 		const uint32_t brdfTexWidthHeight =
-			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
+			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
 
 		// Create a render target texture:			
 		re::Texture::TextureParams brdfParams;
@@ -413,7 +413,7 @@ namespace gr
 			re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
 
 		const uint32_t iemTexWidthHeight =
-			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(core::configkeys::k_iemTexWidthHeightKey));
+			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_iemTexWidthHeightKey));
 
 		// IEM-specific texture params:
 		re::Texture::TextureParams iemTexParams;
@@ -492,7 +492,7 @@ namespace gr
 			re::Shader::GetOrCreate(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
 
 		const uint32_t pmremTexWidthHeight =
-			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(core::configkeys::k_pmremTexWidthHeightKey));
+			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_pmremTexWidthHeightKey));
 
 		// PMREM-specific texture params:
 		re::Texture::TextureParams pmremTexParams;
@@ -668,8 +668,8 @@ namespace gr
 
 		// Create a lighting texture target:
 		re::Texture::TextureParams lightTargetTexParams;
-		lightTargetTexParams.m_width = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		lightTargetTexParams.m_height = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		lightTargetTexParams.m_width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		lightTargetTexParams.m_height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		lightTargetTexParams.m_faces = 1;
 		lightTargetTexParams.m_usage = 
 			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);

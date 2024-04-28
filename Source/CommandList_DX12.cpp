@@ -3,7 +3,7 @@
 #include "Buffer.h"
 #include "Buffer_DX12.h"
 #include "Core\Util\CastUtils.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "Context_DX12.h"
 #include "CommandList_DX12.h"
 #include "Debug_DX12.h"
@@ -303,7 +303,7 @@ namespace dx12
 		RootSignature::RootParameter const* rootSigEntry = 
 			m_currentRootSignature->GetRootSignatureEntry(buffer->GetName());
 		SEAssert(rootSigEntry ||
-			en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Invalid root signature entry");
 
 		if (rootSigEntry)
@@ -792,7 +792,7 @@ namespace dx12
 			RootSignature::RootParameter const* rootSigEntry = 
 				m_currentRootSignature->GetRootSignatureEntry(k_uavTexTargetNames[i]);
 
-			SEAssert(rootSigEntry || en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			SEAssert(rootSigEntry || core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");
 
 			if (rootSigEntry)
@@ -1018,7 +1018,7 @@ namespace dx12
 		RootSignature::RootParameter const* rootSigEntry =
 			m_currentRootSignature->GetRootSignatureEntry(shaderName);
 		SEAssert(rootSigEntry ||
-			en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Invalid root signature entry");
 
 		if (rootSigEntry)

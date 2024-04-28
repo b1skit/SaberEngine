@@ -2,7 +2,7 @@
 #include "Core\Assert.h"
 #include "AssetLoadUtils.h"
 #include "CameraComponent.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "EntityCommands.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
@@ -420,10 +420,10 @@ namespace
 			LOG("Creating a default camera");
 
 			gr::Camera::Config camConfig;
-			camConfig.m_aspectRatio = en::Config::Get()->GetWindowAspectRatio();
-			camConfig.m_yFOV = en::Config::Get()->GetValue<float>("defaultyFOV");
-			camConfig.m_near = en::Config::Get()->GetValue<float>("defaultNear");
-			camConfig.m_far = en::Config::Get()->GetValue<float>("defaultFar");
+			camConfig.m_aspectRatio = core::Config::Get()->GetWindowAspectRatio();
+			camConfig.m_yFOV = core::Config::Get()->GetValue<float>("defaultyFOV");
+			camConfig.m_near = core::Config::Get()->GetValue<float>("defaultNear");
+			camConfig.m_far = core::Config::Get()->GetValue<float>("defaultFar");
 
 			fr::CameraComponent::CreateCameraConcept(
 				em, 
@@ -554,20 +554,20 @@ namespace
 		};
 
 		std::string IBLPath;
-		if (en::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, IBLPath))
+		if (core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, IBLPath))
 		{
 			TryLoadIBL(IBLPath, iblTexture);
 		}		
 		
 		if (!iblTexture)
 		{
-			IBLPath = en::Config::Get()->GetValue<std::string>(core::configkeys::k_defaultEngineIBLPathKey);
+			IBLPath = core::Config::Get()->GetValue<std::string>(core::configkeys::k_defaultEngineIBLPathKey);
 			TryLoadIBL(IBLPath, iblTexture);
 		}
 		SEAssert(iblTexture != nullptr,
 			std::format("Missing IBL texture. Per scene IBLs must be placed at {}; A default fallback must exist at {}",
-				en::Config::Get()->GetValueAsString(core::configkeys::k_sceneIBLPathKey),
-				en::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey)).c_str());
+				core::Config::Get()->GetValueAsString(core::configkeys::k_sceneIBLPathKey),
+				core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey)).c_str());
 	}
 
 
@@ -1002,7 +1002,7 @@ namespace fr
 		m_materials.reserve(std::max(materialsCount, k_minReserveAmt));
 
 		std::string sceneRootPath;
-		en::Config::Get()->TryGetValue<std::string>("sceneRootPath", sceneRootPath);
+		core::Config::Get()->TryGetValue<std::string>("sceneRootPath", sceneRootPath);
 
 		std::vector<std::future<void>> earlyLoadTasks;
 
@@ -1108,7 +1108,7 @@ namespace fr
 		// We search for a scene-specific IBL, and fallback to the engine default IBL if it's not found
 		std::shared_ptr<re::Texture> iblTexture = nullptr;
 		std::string sceneIBLPath;
-		bool result = en::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, sceneIBLPath);
+		bool result = core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, sceneIBLPath);
 		if (result)
 		{
 			iblTexture = TryGetTexture(sceneIBLPath);
@@ -1117,7 +1117,7 @@ namespace fr
 		if (!iblTexture)
 		{
 			std::string const& defaultIBLPath = 
-				en::Config::Get()->GetValue<std::string>(core::configkeys::k_defaultEngineIBLPathKey);
+				core::Config::Get()->GetValue<std::string>(core::configkeys::k_defaultEngineIBLPathKey);
 			iblTexture = GetTexture(defaultIBLPath); // Guaranteed to exist
 		}
 

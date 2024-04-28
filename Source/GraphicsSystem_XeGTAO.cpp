@@ -1,5 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "Config.h"
+#include "Core\Config.h"
 #include "GraphicsSystem_XeGTAO.h"
 #include "GraphicsSystemManager.h"
 #include "Sampler.h"
@@ -147,8 +147,8 @@ namespace gr
 
 	void XeGTAOGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
-		m_xRes = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		m_yRes = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		m_xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		m_yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 
 		m_hilbertLUT = CreateHilbertLUT();
 
@@ -417,8 +417,8 @@ namespace gr
 
 	void XeGTAOGraphicsSystem::CreateBatches()
 	{
-		SEAssert(m_xRes == en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey) && 
-			m_yRes == en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey),
+		SEAssert(m_xRes == core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey) && 
+			m_yRes == core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey),
 			"Resolution has changed, this graphics system needs to be recreated");
 
 		// Depth pre-filter stage:

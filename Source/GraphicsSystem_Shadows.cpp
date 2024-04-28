@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraRenderData.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"

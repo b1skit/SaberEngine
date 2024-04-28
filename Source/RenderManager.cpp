@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Config.h"
+#include "Core\Config.h"
 #include "Context.h"
 #include "GraphicsSystemManager.h"
 #include "Core\PerformanceTimer.h"
@@ -30,7 +30,7 @@ namespace re
 
 	std::unique_ptr<re::RenderManager> RenderManager::Create()
 	{
-		en::Config* config = en::Config::Get();
+		core::Config* config = core::Config::Get();
 
 		platform::RenderingAPI renderingAPI = platform::RenderingAPI::RenderingAPI_Count;
 		if (config->KeyExists(core::configkeys::k_platformCmdLineArg))
@@ -60,12 +60,12 @@ namespace re
 			config->TrySetValue(
 				core::configkeys::k_shaderDirectoryKey,
 				std::string(core::configkeys::k_hlslShaderDirName),
-				en::Config::SettingType::APISpecific);
+				core::Config::SettingType::APISpecific);
 
 			config->TrySetValue(
 				core::configkeys::k_numBackbuffersKey,
 				3,
-				en::Config::SettingType::APISpecific);
+				core::Config::SettingType::APISpecific);
 
 			newRenderManager.reset(new dx12::RenderManager());
 		}
@@ -75,7 +75,7 @@ namespace re
 			config->TrySetValue(
 				core::configkeys::k_shaderDirectoryKey,
 				std::string(core::configkeys::k_glslShaderDirName),
-				en::Config::SettingType::APISpecific);
+				core::Config::SettingType::APISpecific);
 
 			// Note: OpenGL only supports double-buffering, so we don't add a k_numBackbuffersKey entry
 
@@ -101,7 +101,7 @@ namespace re
 		, m_newBuffers(util::NBufferedVector<std::shared_ptr<re::Buffer>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_singleFrameVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Three, k_newObjectReserveAmount)
 	{
-		m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
+		m_vsyncEnabled = core::Config::Get()->GetValue<bool>("vsync");
 	}
 
 
@@ -534,7 +534,7 @@ namespace re
 			re::Context::RenderDocAPI* renderDocApi = re::Context::Get()->GetRenderDocAPI();
 
 			const bool renderDocCmdLineEnabled =
-				en::Config::Get()->KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg) &&
+				core::Config::Get()->KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg) &&
 				renderDocApi != nullptr;
 
 			if (!renderDocCmdLineEnabled)
@@ -658,9 +658,9 @@ namespace re
 
 			const bool isDX12 = m_renderingAPI == platform::RenderingAPI::DX12;
 			const bool pixGPUCaptureCmdLineEnabled = isDX12 &&
-				en::Config::Get()->KeyExists(core::configkeys::k_pixGPUProgrammaticCapturesCmdLineArg);
+				core::Config::Get()->KeyExists(core::configkeys::k_pixGPUProgrammaticCapturesCmdLineArg);
 			const bool pixCPUCaptureCmdLineEnabled = isDX12 &&
-				en::Config::Get()->KeyExists(core::configkeys::k_pixCPUProgrammaticCapturesCmdLineArg);
+				core::Config::Get()->KeyExists(core::configkeys::k_pixCPUProgrammaticCapturesCmdLineArg);
 
 			if (!pixGPUCaptureCmdLineEnabled && !pixCPUCaptureCmdLineEnabled)
 			{
@@ -681,7 +681,7 @@ namespace re
 				{
 					loadedPath = true;
 					std::string const& pixFilePath = std::format("{}\\{}\\",
-						en::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+						core::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
 						core::configkeys::k_pixCaptureFolderName);
 					memcpy(s_pixGPUCapturePath, pixFilePath.c_str(), pixFilePath.length() + 1);
 				}
@@ -735,7 +735,7 @@ namespace re
 				{
 					loadedPath = true;
 					std::string const& pixFilePath = std::format("{}\\{}\\",
-						en::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+						core::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
 						core::configkeys::k_pixCaptureFolderName);
 					memcpy(s_pixCPUCapturePath, pixFilePath.c_str(), pixFilePath.length() + 1);
 				}
@@ -849,8 +849,8 @@ namespace re
 			return;
 		}
 
-		static const int windowWidth = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		static const int windowHeight = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
 		constexpr float k_windowWidthPercentage = 0.25f;
 

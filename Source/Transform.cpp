@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Core\Assert.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "Core\Util\ImGuiUtils.h"
 #include "Transform.h"
 #include "TransformRenderData.h"
@@ -772,8 +772,8 @@ namespace fr
 			return;
 		}
 
-		static const int windowWidth = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		static const int windowHeight = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
 		constexpr float k_windowWidthPercentage = 0.25f;
 

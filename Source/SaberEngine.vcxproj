@@ -399,7 +399,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="VertexStreamBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
     <ClCompile Include="EngineApp.cpp" />
-    <ClCompile Include="Config.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="SceneNodeConcept.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
@@ -579,7 +578,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineApp.h" />
     <ClInclude Include="EngineComponent.h" />
-    <ClInclude Include="Config.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="SceneNodeConcept.h" />

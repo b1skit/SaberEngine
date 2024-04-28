@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Core\Assert.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "Platform.h"
 
 #include <pix3.h>

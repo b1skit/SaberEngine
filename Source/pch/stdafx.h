@@ -11,16 +11,11 @@
 
 
 // std library:
-#include <any>
 #include <array>
 #include <barrier>
-#include <cassert>
-#include <chrono>
 #include <codecvt>
 #include <condition_variable>
 #include <cstdio>
-#include <cstdlib>
-#include <filesystem>
 #include <format>
 #include <fstream>
 #include <functional>
@@ -34,7 +29,6 @@
 #include <mutex>
 #include <numbers>
 #include <queue>
-#include <regex>
 #include <set>
 #include <shared_mutex>
 #include <sstream>
@@ -55,7 +49,6 @@
 #include <Windows.h>
 #include <hidusage.h>
 #include <comdef.h> // HRESULTs to error messages
-#include <shlobj_core.h> // Windows shell
 // TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
 
 

@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Camera.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "EntityManager.h"
 #include "Core\Util\FileIOUtils.h"
 #include "Core\Util\ImGuiUtils.h"
@@ -518,7 +518,7 @@ namespace fr
 		case fr::Light::Type::AmbientIBL:
 		{
 			std::vector<std::string> const& iblHDRFiles = util::GetDirectoryFilenameContents(
-				en::Config::Get()->GetValue<std::string>(core::configkeys::k_sceneIBLDirKey).c_str(), ".hdr");
+				core::Config::Get()->GetValue<std::string>(core::configkeys::k_sceneIBLDirKey).c_str(), ".hdr");
 
 			static size_t selectedFileIdx = 0;
 			if (ImGui::BeginListBox("Selected source IBL HDR File"))

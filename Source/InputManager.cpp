@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Config.h"
+#include "Core\Config.h"
 #include "EventManager.h"
 #include "InputManager.h"
 #include "InputManager_Platform.h"
@@ -307,7 +307,8 @@ namespace en
 		{
 			// Get the key actually assigned to the current named input button
 			// eg. Get "w" from "InputButton_Forward"
-			const std::string keyAssignment = Config::Get()->GetValueAsString(definitions::KeyboardInputButtonNames[i]);
+			const std::string keyAssignment = 
+				core::Config::Get()->GetValueAsString(definitions::KeyboardInputButtonNames[i]);
 
 			SEAssert(!keyAssignment.empty(),
 				std::format("Button not found in {}. Did you forget to set one in Config::InitializeDefaultValues()?",

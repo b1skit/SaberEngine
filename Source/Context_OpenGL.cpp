@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Core\Assert.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "Context_OpenGL.h"
 #include "Context.h"
 #include "EngineApp.h"
@@ -235,7 +235,7 @@ namespace opengl
 
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
-		GetSwapChain().SetVSyncMode(en::Config::Get()->GetValue<bool>("vsync"));
+		GetSwapChain().SetVSyncMode(core::Config::Get()->GetValue<bool>("vsync"));
 
 		// Create the (implied) swap chain
 		GetSwapChain().Create();
@@ -256,7 +256,7 @@ namespace opengl
 			false);			// Enable/disable state
 
 		// Debugging:
-		const int debugLevel = en::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
+		const int debugLevel = core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
 		if (debugLevel >= 1)
 		{
 			// All debug levels get all high severity messages

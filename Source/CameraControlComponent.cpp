@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
-#include "Config.h"
+#include "Core\Config.h"
 #include "EntityManager.h"
 #include "InputManager.h"
 #include "NameComponent.h"
@@ -86,8 +86,8 @@ namespace fr
 		const float mousePxDeltaY = 
 			en::InputManager::GetRelativeMouseInput(definitions::Input_MouseY) * camController.m_mouseYawSensitivity * -1;
 
-		const float xRes = static_cast<float>(en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey));
-		const float yRes = static_cast<float>(en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey));
+		const float xRes = static_cast<float>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey));
+		const float yRes = static_cast<float>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey));
 
 		const float yFOV = camera.GetFieldOfViewYRad();
 		const float xFOV = (xRes * yFOV) / yRes;
@@ -225,9 +225,9 @@ namespace fr
 		, m_savedPosition(glm::vec3(0.0f, 0.0f, 0.0f))
 		, m_savedEulerRotation(glm::vec3(0.0f, 0.0f, 0.0f))
 	{
-		m_sprintSpeedModifier = en::Config::Get()->GetValue<float>(core::configkeys::k_sprintSpeedModifierKey);
+		m_sprintSpeedModifier = core::Config::Get()->GetValue<float>(core::configkeys::k_sprintSpeedModifierKey);
 
-		m_mousePitchSensitivity = en::Config::Get()->GetValue<float>(core::configkeys::k_mousePitchSensitivityKey);
-		m_mouseYawSensitivity = en::Config::Get()->GetValue<float>(core::configkeys::k_mouseYawSensitivityKey);
+		m_mousePitchSensitivity = core::Config::Get()->GetValue<float>(core::configkeys::k_mousePitchSensitivityKey);
+		m_mouseYawSensitivity = core::Config::Get()->GetValue<float>(core::configkeys::k_mouseYawSensitivityKey);
 	}
 }

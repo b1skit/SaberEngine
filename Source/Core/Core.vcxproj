@@ -332,6 +332,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Assert.h" />
+    <ClInclude Include="Config.h" />
     <ClInclude Include="ConfigKeys.h" />
     <ClInclude Include="Definitions\KeyConfiguration.h" />
     <ClInclude Include="LogManager.h" />
@@ -352,6 +353,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assert.cpp" />
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="pch\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

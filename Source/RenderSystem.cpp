@@ -351,7 +351,7 @@ namespace re
 			// Now our GS's exist and their input dependencies are registered, we can compute their execution ordering.
 			// Note: The update pipeline caches member function and data pointers; We can only populate it once our GS's
 			// are created & initialized
-			const bool singleThreadGSExecution = en::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
+			const bool singleThreadGSExecution = core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
 
 			std::vector<std::vector<std::string>> updateExecutionGroups;
 			ComputeExecutionGroups(renderSysDesc, updateExecutionGroups, singleThreadGSExecution);
@@ -399,7 +399,7 @@ namespace re
 		SEBeginCPUEvent(std::format("{} ExecuteUpdatePipeline", GetName()).c_str());
 
 		static const bool s_singleThreadGSExecution = 
-			en::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
+			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
 
 
 		auto ExecuteUpdateStep = [](UpdateStep const& currentStep)

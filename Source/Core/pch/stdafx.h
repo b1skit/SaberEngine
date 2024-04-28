@@ -9,6 +9,7 @@
 #include "imgui.h"
 #undef _CRT_SECURE_NO_WARNINGS
 
+#include <any>
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -18,7 +19,15 @@
 #include <future>
 #include <iostream>
 #include <queue>
+#include <regex>
 
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+
+// Win32 API:
+#define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
 #include <Windows.h>
+#include <shlobj_core.h> // Windows shell
+// TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
 
+
+// Macros:
+#define ENUM_TO_STR(x) #x

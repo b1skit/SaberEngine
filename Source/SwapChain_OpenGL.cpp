@@ -2,7 +2,7 @@
 #include <GL/glew.h>
 #include <GL/wglew.h> // Windows-specific GL functions and macros
 
-#include "Config.h"
+#include "Core\Config.h"
 #include "Core\Assert.h"
 #include "SwapChain_OpenGL.h"
 
@@ -29,8 +29,8 @@ namespace opengl
 		{
 			0,
 			0,
-			(uint32_t)en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey),
-			(uint32_t)en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)
+			(uint32_t)core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey),
+			(uint32_t)core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)
 		});
 		// Note: OpenGL framebuffer has no texture targets
 	}

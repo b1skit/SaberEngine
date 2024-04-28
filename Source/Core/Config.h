@@ -1,10 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Definitions\ConfigKeys.h"
-#include "Core\LogManager.h"
+#include "Definitions\ConfigKeys.h"
+#include "LogManager.h"
 
 
-namespace en
+namespace core
 {
 	class Config
 	{
