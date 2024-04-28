@@ -28,6 +28,9 @@
     <Filter Include="Header Files\Definitions">
       <UniqueIdentifier>{38aa4320-fd25-4505-8b4f-25024228f120}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Interfaces">
+      <UniqueIdentifier>{48a8ab74-bfe7-42f2-b582-347caa70718c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\stdafx.h">
@@ -86,6 +89,9 @@
     </ClInclude>
     <ClInclude Include="Config.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interfaces\IEngineComponent.h">
+      <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

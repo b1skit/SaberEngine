@@ -335,6 +335,7 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="ConfigKeys.h" />
     <ClInclude Include="Definitions\KeyConfiguration.h" />
+    <ClInclude Include="Interfaces\IEngineComponent.h" />
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="pch\stdafx.h" />
     <ClInclude Include="PerformanceTimer.h" />

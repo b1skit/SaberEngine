@@ -1,8 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "IEngineComponent.h"
-#include "EventListener.h"
+#include "IEventListener.h"
 #include "SceneData.h"
+
+#include "Core\Interfaces\IEngineComponent.h"
 
 
 namespace fr

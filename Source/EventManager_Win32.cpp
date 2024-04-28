@@ -1,8 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
 #include "EngineApp.h"
 #include "EventManager_Win32.h"
 #include "EventManager.h"
+
+#include "Core\Assert.h"
 
 
 namespace win32

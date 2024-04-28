@@ -2,11 +2,12 @@
 #pragma once
 #include "BatchManager.h"
 #include "CommandQueue.h"
-#include "IEngineComponent.h"
 #include "EngineThread.h"
-#include "EventListener.h"
+#include "IEventListener.h"
 #include "Platform.h"
 #include "RenderSystem.h"
+
+#include "Core\Interfaces\IEngineComponent.h"
 
 #include "Core\Util\ImGuiUtils.h"
 #include "Core\Util\NBufferedVector.h"

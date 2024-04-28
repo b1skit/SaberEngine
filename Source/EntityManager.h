@@ -2,9 +2,9 @@
 #pragma once
 #include "Core\Assert.h"
 #include "CommandQueue.h"
-#include "IEngineComponent.h"
+#include "Core\Interfaces\IEngineComponent.h"
 #include "EntityCommands.h"
-#include "EventListener.h"
+#include "IEventListener.h"
 #include "RelationshipComponent.h"
 
 

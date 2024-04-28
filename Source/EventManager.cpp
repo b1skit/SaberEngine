@@ -1,8 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
 #include "EventManager.h"
-#include "EventListener.h"
 #include "EventManager_Platform.h"
+#include "IEventListener.h"
+
+#include "Core\Assert.h"
 
 
 namespace en
