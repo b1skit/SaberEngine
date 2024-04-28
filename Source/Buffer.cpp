@@ -10,7 +10,7 @@ namespace re
 	// Private CTOR: Use one of the Create factories instead
 	Buffer::Buffer(
 		size_t typeIDHashCode, std::string const& bufferName, BufferParams const& bufferParams, uint32_t dataByteSize)
-		: NamedObject(bufferName)
+		: INamedObject(bufferName)
 		, m_typeIDHash(typeIDHashCode)
 		, m_dataByteSize(dataByteSize)
 		, m_bufferParams(bufferParams)

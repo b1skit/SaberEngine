@@ -11,7 +11,7 @@ namespace gr
 
 	ImGuiGraphicsSystem::ImGuiGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
-		, NamedObject(k_gsName)
+		, INamedObject(k_gsName)
 		, m_perFrameCommands(k_imGuiCommandBufferSize, re::RenderManager::GetNumFramesInFlight())
 	{
 	}

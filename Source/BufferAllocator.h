@@ -65,7 +65,7 @@ namespace re
 
 	
 	private:
-		typedef uint64_t Handle; // == NamedObject::UniqueID()
+		typedef uint64_t Handle; // == INamedObject::UniqueID()
 
 		struct CommitMetadata
 		{

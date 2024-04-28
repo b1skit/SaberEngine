@@ -2,19 +2,19 @@
 #pragma once
 
 #include "RenderStage.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 
 
 namespace re
 {
-	class StagePipeline final : public virtual en::NamedObject
+	class StagePipeline final : public virtual en::INamedObject
 	{
 	public:
 		typedef std::list<std::shared_ptr<re::RenderStage>>::iterator StagePipelineItr;
 
 
 	public:
-		StagePipeline(std::string name) : NamedObject(name) {};
+		StagePipeline(std::string name) : INamedObject(name) {};
 
 		StagePipeline(StagePipeline&&) = default;
 
@@ -50,7 +50,7 @@ namespace re
 	};
 
 
-	class RenderPipeline final : public virtual en::NamedObject
+	class RenderPipeline final : public virtual en::INamedObject
 	{
 	public:	
 		RenderPipeline(std::string const& name);

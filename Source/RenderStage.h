@@ -2,7 +2,7 @@
 #pragma once
 #include "Batch.h"
 #include "MeshFactory.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 #include "TextureTarget.h"
 
 
@@ -14,7 +14,7 @@ namespace re
 	class Texture;
 
 
-	class RenderStage : public virtual en::NamedObject
+	class RenderStage : public virtual en::INamedObject
 	{
 	public:
 		static constexpr int k_noDepthTexAsInputFlag = -1;

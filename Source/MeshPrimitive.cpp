@@ -86,7 +86,7 @@ namespace gr
 		std::vector<uint8_t>* joints,
 		std::vector<float>* weights,
 		MeshPrimitiveParams const& meshParams)
-		: NamedObject(name)
+		: INamedObject(name)
 		, m_params(meshParams)
 	{
 		m_indexStream = re::VertexStream::Create(

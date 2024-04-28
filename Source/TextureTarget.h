@@ -5,7 +5,7 @@
 #include "HashedDataObject.h"
 #include "IPlatformParams.h"
 #include "Texture.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 #include "Buffer.h"
 
 
@@ -201,7 +201,7 @@ namespace re
 
 
 	// Collection of render target textures
-	class TextureTargetSet final : public en::NamedObject, public en::HashedDataObject
+	class TextureTargetSet final : public en::INamedObject, public en::HashedDataObject
 	{
 	public:
 		struct PlatformParams : public re::IPlatformParams

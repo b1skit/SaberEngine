@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "CameraRenderData.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 #include "RenderStage.h"
 #include "RenderPipeline.h"
 #include "Core\Util\TextUtils.h"
@@ -18,7 +18,7 @@ namespace gr
 	class GraphicsSystemManager;
 
 
-	class GraphicsSystem : public virtual en::NamedObject
+	class GraphicsSystem : public virtual en::INamedObject
 	{
 	public:
 		// Scriptable pipeline: Create a graphics system by the (case insensitive) name provided in a script.

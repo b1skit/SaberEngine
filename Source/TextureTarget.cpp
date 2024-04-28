@@ -214,7 +214,7 @@ namespace re
 
 
 	TextureTargetSet::TextureTargetSet(std::string const& name)
-		: NamedObject(name)
+		: INamedObject(name)
 		, m_numColorTargets(0)
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
@@ -224,7 +224,7 @@ namespace re
 
 
 	TextureTargetSet::TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName)
-		: NamedObject(newName)
+		: INamedObject(newName)
 		, m_numColorTargets(rhs.m_numColorTargets)
 		, m_viewport(rhs.m_viewport)
 		, m_platformParams(nullptr) // Targets are copied, but the target set must be created

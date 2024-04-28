@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Core\Util\HashUtils.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 #include "RenderObjectIDs.h"
 #include "TransformRenderData.h"
 
@@ -162,7 +162,7 @@ namespace gr
 
 			gr::TransformID m_transformID;
 
-			char m_cameraName[en::NamedObject::k_maxNameLength];
+			char m_cameraName[en::INamedObject::k_maxNameLength];
 		};
 
 		static uint8_t NumViews(gr::Camera::RenderData const& camData);

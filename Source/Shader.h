@@ -4,7 +4,7 @@
 #include "IPlatformParams.h"
 #include "Buffer.h"
 #include "PipelineState.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 
 
 namespace opengl
@@ -14,7 +14,7 @@ namespace opengl
 
 namespace re
 {
-	class Shader final : public virtual en::NamedObject
+	class Shader final : public virtual en::INamedObject
 	{
 	public:
 		static uint64_t ComputeShaderIdentifier(std::string const& extensionlessShaderFilename, re::PipelineState const&);

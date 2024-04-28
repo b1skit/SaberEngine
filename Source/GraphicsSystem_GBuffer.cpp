@@ -15,7 +15,7 @@ namespace gr
 
 
 	GBufferGraphicsSystem::GBufferGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: NamedObject(k_gsName)
+		: INamedObject(k_gsName)
 		, GraphicsSystem(k_gsName, owningGSM)
 		, m_owningPipeline(nullptr)
 	{

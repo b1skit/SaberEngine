@@ -149,7 +149,7 @@ namespace re
 	Texture::Texture(
 		std::string const& name,
 		TextureParams const& params)
-		: NamedObject(name)
+		: INamedObject(name)
 		, m_texParams(params)
 		, m_platformParams(nullptr)
 		, m_initialData(nullptr)

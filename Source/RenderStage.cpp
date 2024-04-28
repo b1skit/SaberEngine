@@ -222,7 +222,7 @@ namespace re
 
 	RenderStage::RenderStage(
 		char const* name, std::unique_ptr<IStageParams>&& stageParams, Type stageType, Lifetime lifetime)
-		: NamedObject(name)
+		: INamedObject(name)
 		, m_type(stageType)
 		, m_lifetime(lifetime)
 		, m_stageParams(nullptr)
@@ -238,14 +238,14 @@ namespace re
 
 
 	ParentStage::ParentStage(char const* name, Lifetime lifetime)
-		: NamedObject(name)
+		: INamedObject(name)
 		, RenderStage(name, nullptr, Type::Parent, lifetime)
 	{
 	}
 
 
 	ComputeStage::ComputeStage(char const* name, std::unique_ptr<ComputeStageParams>&& stageParams, Lifetime lifetime)
-		: NamedObject(name)
+		: INamedObject(name)
 		, RenderStage(name, std::move(stageParams), Type::Compute, lifetime)
 	{
 	}
@@ -253,7 +253,7 @@ namespace re
 
 	FullscreenQuadStage::FullscreenQuadStage(
 		char const* name, std::unique_ptr<FullscreenQuadParams>&& stageParams, Lifetime lifetime)
-		: NamedObject(name)
+		: INamedObject(name)
 		, RenderStage(name, nullptr, Type::FullscreenQuad, lifetime)
 	{
 		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(stageParams->m_zLocation);
@@ -263,7 +263,7 @@ namespace re
 
 
 	ClearStage::ClearStage(char const* name, Lifetime lifetime)
-		: NamedObject(name)
+		: INamedObject(name)
 		, RenderStage(name, nullptr, Type::Clear, lifetime)
 	{
 	}
@@ -289,7 +289,7 @@ namespace re
 
 	LibraryStage::LibraryStage(
 		char const* name, std::unique_ptr<LibraryStageParams>&& stageParams, Lifetime lifetime)
-		: NamedObject(name)
+		: INamedObject(name)
 		, RenderStage(name, std::move(stageParams), Type::Library, lifetime)
 	{
 	}

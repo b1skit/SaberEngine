@@ -7,7 +7,7 @@
 namespace gr
 {
 	GraphicsSystem::GraphicsSystem(char const* name, gr::GraphicsSystemManager* owningGSM)
-		: NamedObject(name)
+		: INamedObject(name)
 		, m_graphicsSystemManager(owningGSM)
 	{
 		LOG("Creating %s", name);

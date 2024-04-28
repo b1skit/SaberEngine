@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 #include "Buffer.h"
 
 
@@ -13,7 +13,7 @@ namespace re
 
 namespace gr
 {
-	class Material : public virtual en::NamedObject
+	class Material : public virtual en::INamedObject
 	{
 	public:
 		enum class MaterialType

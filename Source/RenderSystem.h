@@ -2,7 +2,7 @@
 #pragma once
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 #include "RenderPipeline.h"
 
 
@@ -11,7 +11,7 @@ namespace re
 	struct RenderSystemDescription;
 
 
-	class RenderSystem : public virtual en::NamedObject
+	class RenderSystem : public virtual en::INamedObject
 	{
 	public:
 		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(

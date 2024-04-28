@@ -570,7 +570,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="TextureTarget_Platform.h" />
     <ClInclude Include="Texture_OpenGL.h" />
     <ClInclude Include="Texture_Platform.h" />
-    <ClInclude Include="NamedObject.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineApp.h" />
     <ClInclude Include="IEventListener.h" />

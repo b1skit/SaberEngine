@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "MeshConcept.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 #include "Texture.h"
 
 
@@ -19,7 +19,7 @@ namespace re
 
 namespace fr
 {
-	class SceneData final : public virtual en::NamedObject
+	class SceneData final : public virtual en::INamedObject
 	{
 	public:
 		typedef uint64_t DataHash;

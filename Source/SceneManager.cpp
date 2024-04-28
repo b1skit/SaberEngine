@@ -17,7 +17,7 @@ namespace
 
 namespace fr
 {
-	const NameID SceneManager::k_sceneRenderSystemNameID = en::NamedObject::ComputeIDFromName(k_sceneRenderSystemName);
+	const NameID SceneManager::k_sceneRenderSystemNameID = en::INamedObject::ComputeIDFromName(k_sceneRenderSystemName);
 
 
 	SceneManager* SceneManager::Get()
@@ -29,7 +29,7 @@ namespace fr
 
 	SceneManager::SceneManager()
 		: m_sceneData(nullptr)
-		, m_sceneRenderSystemNameID(en::NamedObject::ComputeIDFromName(k_sceneRenderSystemName))
+		, m_sceneRenderSystemNameID(en::INamedObject::ComputeIDFromName(k_sceneRenderSystemName))
 	{
 	}
 

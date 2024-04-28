@@ -286,7 +286,7 @@ namespace re
 
 
 	RenderSystem::RenderSystem(std::string const& name)
-		: NamedObject(name)
+		: INamedObject(name)
 		, m_graphicsSystemManager(this)
 		, m_renderPipeline(name + " render pipeline")
 		, m_initPipeline(nullptr)

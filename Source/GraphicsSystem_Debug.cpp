@@ -358,7 +358,7 @@ namespace gr
 
 	DebugGraphicsSystem::DebugGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
-		, NamedObject(k_gsName)
+		, INamedObject(k_gsName)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_debugLineStage = re::RenderStage::CreateGraphicsStage("Debug line stage", gfxStageParams);

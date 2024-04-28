@@ -13,7 +13,7 @@ namespace gr
 
 	TonemappingGraphicsSystem::TonemappingGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
-		, NamedObject(k_gsName)
+		, INamedObject(k_gsName)
 	{
 		m_tonemappingStage = 
 			re::RenderStage::CreateFullscreenQuadStage("Tonemapping stage", re::RenderStage::FullscreenQuadParams{});

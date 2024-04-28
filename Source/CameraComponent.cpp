@@ -76,7 +76,7 @@ namespace fr
 			.m_transformID = cameraComponent.GetTransformID()
 		};
 
-		strncpy(renderData.m_cameraName, nameCmpt.GetName().c_str(), en::NamedObject::k_maxNameLength);
+		strncpy(renderData.m_cameraName, nameCmpt.GetName().c_str(), en::INamedObject::k_maxNameLength);
 
 		return renderData;
 	}

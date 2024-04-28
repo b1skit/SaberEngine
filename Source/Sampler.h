@@ -2,12 +2,12 @@
 #pragma once
 #include "IPlatformParams.h"
 #include "Sampler_Platform.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 
 
 namespace re
 {
-	class Sampler final : public virtual en::NamedObject
+	class Sampler final : public virtual en::INamedObject
 	{
 	public:
 		struct PlatformParams : public re::IPlatformParams

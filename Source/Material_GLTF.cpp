@@ -27,7 +27,7 @@ namespace gr
 
 	Material_GLTF::Material_GLTF(std::string const& name)
 		: Material(name, gr::Material::MaterialType::GLTF_PBRMetallicRoughness)
-		, NamedObject(name)
+		, INamedObject(name)
 	{
 		// TODO: Texture names should align with those in the GLTF documentation
 

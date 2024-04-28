@@ -8,7 +8,7 @@ using UniqueID = uint64_t;
 
 namespace en
 {
-	class NamedObject
+	class INamedObject
 	{
 	public:
 		static constexpr NameID k_invalidNameID = std::numeric_limits<NameID>::max();
@@ -17,11 +17,11 @@ namespace en
 		static constexpr size_t k_maxNameLength = 260; // Windows MAX_PATH = 260 chars, including null terminator
 
 	public: 
-		virtual ~NamedObject() = 0;
+		virtual ~INamedObject() = 0;
 
 	public:
-		explicit NamedObject(char const* name);
-		explicit NamedObject(std::string const& name);
+		explicit INamedObject(char const* name);
+		explicit INamedObject(std::string const& name);
 
 		// m_name as supplied at construction
 		std::string const& GetName() const;
@@ -52,11 +52,11 @@ namespace en
 		UniqueID m_uniqueID;
 		
 	private:
-		NamedObject() = delete;
+		INamedObject() = delete;
 	};
 
 
-	inline NamedObject::NamedObject(char const* name)
+	inline INamedObject::INamedObject(char const* name)
 	{
 		SEAssert(strnlen_s(name, k_maxNameLength) > 0 && strnlen_s(name, k_maxNameLength) < k_maxNameLength,
 			"Empty, null, or non-terminated name strings are not allowed");
@@ -66,43 +66,43 @@ namespace en
 	}
 
 
-	inline NamedObject::NamedObject(std::string const& name)
-		: NamedObject(name.c_str())
+	inline INamedObject::INamedObject(std::string const& name)
+		: INamedObject(name.c_str())
 	{
 	}
 
 
-	inline std::string const& NamedObject::GetName() const
+	inline std::string const& INamedObject::GetName() const
 	{
 		return m_name;
 	}
 
 
-	inline std::wstring const& NamedObject::GetWName() const
+	inline std::wstring const& INamedObject::GetWName() const
 	{
 		return m_wName;
 	}
 
 
-	inline NameID NamedObject::GetNameID() const
+	inline NameID INamedObject::GetNameID() const
 	{
 		return m_nameID;
 	}
 
 
-	inline UniqueID NamedObject::GetUniqueID() const
+	inline UniqueID INamedObject::GetUniqueID() const
 	{
 		return m_uniqueID;
 	}
 
 
-	inline NameID NamedObject::ComputeIDFromName(std::string const& name)
+	inline NameID INamedObject::ComputeIDFromName(std::string const& name)
 	{
 		return std::hash<std::string>{}(name);
 	}
 
 
-	inline void NamedObject::SetName(std::string const& name)
+	inline void INamedObject::SetName(std::string const& name)
 	{
 		m_name = name;
 		m_nameID = ComputeIDFromName(name);
@@ -111,7 +111,7 @@ namespace en
 	}
 
 
-	void NamedObject::AssignUniqueID()
+	void INamedObject::AssignUniqueID()
 	{
 		// We assign a simple monotonically-increasing value as a unique identifier
 		static std::atomic<UniqueID> s_uniqueIDs = 0;
@@ -120,5 +120,5 @@ namespace en
 
 
 	// We need to provide a destructor implementation since it's pure virtual
-	inline NamedObject::~NamedObject() {}
+	inline INamedObject::~INamedObject() {}
 }

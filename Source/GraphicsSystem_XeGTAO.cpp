@@ -134,7 +134,7 @@ namespace gr
 
 	XeGTAOGraphicsSystem::XeGTAOGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
-		, NamedObject(k_gsName)
+		, INamedObject(k_gsName)
 		, m_xRes(0)
 		, m_yRes(0)
 		, m_XeGTAOQuality(Quality::Ultra)

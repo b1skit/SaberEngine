@@ -143,7 +143,7 @@ namespace re
 
 
 	RenderPipeline::RenderPipeline(std::string const& name)
-		: NamedObject(name)
+		: INamedObject(name)
 	{
 		m_stagePipeline.reserve(k_numReservedStages);
 	}

@@ -28,7 +28,7 @@ namespace gr
 
 	SkyboxGraphicsSystem::SkyboxGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
-		, NamedObject(k_gsName)
+		, INamedObject(k_gsName)
 		, m_skyTexture(nullptr)
 		, m_backgroundColor(135.f / 255.f, 206.f / 255.f, 235.f / 255.f)
 		, m_showBackgroundColor(false)

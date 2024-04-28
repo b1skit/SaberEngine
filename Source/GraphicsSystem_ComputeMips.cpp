@@ -51,7 +51,7 @@ namespace gr
 
 	ComputeMipsGraphicsSystem::ComputeMipsGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
-		, NamedObject(k_gsName)
+		, INamedObject(k_gsName)
 		, m_mipMapGenerationShader(nullptr)
 		, m_stagePipeline(nullptr)
 	{

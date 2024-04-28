@@ -27,7 +27,7 @@ namespace en
 		void Stop();
 		void Shutdown();
 
-		// NamedObject interface:
+		// INamedObject interface:
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 		// IEventListener interface:

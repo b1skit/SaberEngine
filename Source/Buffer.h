@@ -2,7 +2,7 @@
 #pragma once
 
 #include "IPlatformParams.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 
 
 namespace re
@@ -20,7 +20,7 @@ namespace re
 	* The union of these gives us Permanent Mutable, Permanent Immutable, & SingleFrame Immutable Buffer types
 	*******************************************************************************************************************/
 
-	class Buffer : public virtual en::NamedObject
+	class Buffer : public virtual en::INamedObject
 	{
 	public:
 		enum Type : uint8_t

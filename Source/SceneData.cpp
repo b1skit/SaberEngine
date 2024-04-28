@@ -1064,7 +1064,7 @@ namespace fr
 
 
 	SceneData::SceneData(std::string const& sceneName)
-		: NamedObject(sceneName)
+		: INamedObject(sceneName)
 		, m_isCreated(false)
 	{
 	}
@@ -1216,7 +1216,7 @@ namespace fr
 
 	std::shared_ptr<re::Texture> SceneData::GetTexture(std::string const& texName) const
 	{
-		const uint64_t nameID = en::NamedObject::ComputeIDFromName(texName);
+		const uint64_t nameID = en::INamedObject::ComputeIDFromName(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
@@ -1231,7 +1231,7 @@ namespace fr
 
 	std::shared_ptr<re::Texture> SceneData::TryGetTexture(std::string const& texName) const
 	{
-		const uint64_t nameID = en::NamedObject::ComputeIDFromName(texName);
+		const uint64_t nameID = en::INamedObject::ComputeIDFromName(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
@@ -1243,7 +1243,7 @@ namespace fr
 
 	bool SceneData::TextureExists(std::string const& textureName) const
 	{
-		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
+		const uint64_t nameID = en::INamedObject::ComputeIDFromName(textureName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 			return m_textures.find(nameID) != m_textures.end();
@@ -1297,7 +1297,7 @@ namespace fr
 
 	std::shared_ptr<gr::Material> SceneData::GetMaterial(std::string const& materialName) const
 	{
-		const size_t nameID = NamedObject::ComputeIDFromName(materialName);
+		const size_t nameID = INamedObject::ComputeIDFromName(materialName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
 			std::unordered_map<size_t, std::shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);
@@ -1311,7 +1311,7 @@ namespace fr
 
 	bool SceneData::MaterialExists(std::string const& matName) const
 	{
-		const size_t nameID = NamedObject::ComputeIDFromName(matName);
+		const size_t nameID = INamedObject::ComputeIDFromName(matName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
 

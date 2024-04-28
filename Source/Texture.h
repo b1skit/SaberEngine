@@ -2,12 +2,12 @@
 #pragma once
 
 #include "IPlatformParams.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 
 
 namespace re
 {
-	class Texture final : public virtual en::NamedObject
+	class Texture final : public virtual en::INamedObject
 	{
 	public:
 		using ImageDataUniquePtr = std::unique_ptr<void, std::function<void(void*)>>;

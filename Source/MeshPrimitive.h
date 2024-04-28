@@ -4,13 +4,13 @@
 #include "IPlatformParams.h"
 #include "HashedDataObject.h"
 #include "Material.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 #include "VertexStream.h"
 
 
 namespace gr
 {
-	class MeshPrimitive final : public virtual en::NamedObject, public virtual en::HashedDataObject
+	class MeshPrimitive final : public virtual en::INamedObject, public virtual en::HashedDataObject
 	{
 	public:
 		struct PlatformParams : public re::IPlatformParams

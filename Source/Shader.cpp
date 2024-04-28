@@ -54,7 +54,7 @@ namespace re
 
 	Shader::Shader(
 		std::string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState, uint64_t shaderIdentifier)
-		: NamedObject(extensionlessShaderFilename)
+		: INamedObject(extensionlessShaderFilename)
 		, m_shaderIdentifier(shaderIdentifier)
 		, m_pipelineState(rePipelineState)
 	{

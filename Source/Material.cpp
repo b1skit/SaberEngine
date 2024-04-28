@@ -76,7 +76,7 @@ namespace gr
 
 
 	Material::Material(std::string const& name, MaterialType materialType)
-		: NamedObject(name)
+		: INamedObject(name)
 		, m_materialType(materialType)
 	{
 		SEAssert(platform::SysInfo::GetMaxTextureBindPoints() >= k_numTexInputs,

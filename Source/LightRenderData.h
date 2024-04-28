@@ -30,7 +30,7 @@ namespace gr
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
 
-			char m_lightName[en::NamedObject::k_maxNameLength];
+			char m_lightName[en::INamedObject::k_maxNameLength];
 
 			// Ambient type data:
 			re::Texture const* m_iblTex = nullptr;
@@ -53,7 +53,7 @@ namespace gr
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
 
-			char m_lightName[en::NamedObject::k_maxNameLength];
+			char m_lightName[en::INamedObject::k_maxNameLength];
 
 			// Directional type data:
 			glm::vec4 m_colorIntensity = glm::vec4(0.f); // .rgb = hue, .a = intensity
@@ -79,7 +79,7 @@ namespace gr
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
 
-			char m_lightName[en::NamedObject::k_maxNameLength];
+			char m_lightName[en::INamedObject::k_maxNameLength];
 
 			// Point type data:
 			glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
@@ -109,7 +109,7 @@ namespace gr
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
 
-			char m_lightName[en::NamedObject::k_maxNameLength];
+			char m_lightName[en::INamedObject::k_maxNameLength];
 
 			// Spot type data:
 			glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity

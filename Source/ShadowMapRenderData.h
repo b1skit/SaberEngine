@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "LightRenderData.h"
-#include "NamedObject.h"
+#include "Core\Interfaces\INamedObject.h"
 #include "RenderObjectIDs.h"
 
 
@@ -46,7 +46,7 @@ namespace gr
 
 			bool m_shadowEnabled;
 
-			char m_owningLightName[en::NamedObject::k_maxNameLength];
+			char m_owningLightName[en::INamedObject::k_maxNameLength];
 		};
 	};
 }
