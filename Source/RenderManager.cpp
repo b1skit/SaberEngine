@@ -295,7 +295,7 @@ namespace re
 		// Clear single-frame resources:
 		m_singleFrameVertexStreams.Destroy();
 
-		// Need to do this here so the CoreEngine's Window can be destroyed
+		// Need to do this here so the EngineApp's Window can be destroyed
 		re::Context::Get()->Destroy();
 
 		SEEndCPUEvent();

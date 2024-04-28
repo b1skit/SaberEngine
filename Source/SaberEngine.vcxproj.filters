@@ -188,7 +188,7 @@
     <ClCompile Include="GraphicsSystem_Tonemapping.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="CoreEngine.cpp">
+    <ClCompile Include="EngineApp.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
     <ClCompile Include="RenderManager.cpp">
@@ -598,7 +598,7 @@
     <ClInclude Include="GraphicsSystem_Tonemapping.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="CoreEngine.h">
+    <ClInclude Include="EngineApp.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="RenderManager.h">

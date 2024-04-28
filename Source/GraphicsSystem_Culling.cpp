@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "BoundsRenderData.h"
 #include "CameraRenderData.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "GraphicsSystem_Culling.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
@@ -335,7 +335,7 @@ namespace gr
 			const bool cameraIsDirty = cameraItr.IsDirty<gr::Camera::RenderData>();
 
 			// Enqueue the culling job:
-			cullingFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+			cullingFutures.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob(
 				[cameraID, camData, cameraIsDirty, camTransformData, numMeshPrimitives, activeCamRenderDataID,
 				this, &renderData]()
 			{

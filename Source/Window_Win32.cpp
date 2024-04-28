@@ -3,7 +3,7 @@
 #include <GL/GL.h> // Must follow glew.h
 
 #include "Assert.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "Window.h"
 #include "Window_Win32.h"
 
@@ -29,13 +29,13 @@ namespace win32
 		case WM_SETFOCUS:
 		case WM_EXITSIZEMOVE:
 		{
-			en::CoreEngine::Get()->GetWindow()->SetFocusState(true);
+			en::EngineApp::Get()->GetWindow()->SetFocusState(true);
 		}
 		break;
 		case WM_KILLFOCUS:
 		case WM_ENTERSIZEMOVE:
 		{
-			en::CoreEngine::Get()->GetWindow()->SetFocusState(false);
+			en::EngineApp::Get()->GetWindow()->SetFocusState(false);
 		}
 		break;
 		default:

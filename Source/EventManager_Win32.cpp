@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "EventManager_Win32.h"
 #include "EventManager.h"
 
@@ -13,7 +13,7 @@ namespace win32
 		while (::PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			en::EventManager::EventInfo eventInfo;
-			bool doBroadcastSEEvent = en::CoreEngine::Get()->GetWindow()->GetFocusState();
+			bool doBroadcastSEEvent = en::EngineApp::Get()->GetWindow()->GetFocusState();
 			bool doTranslateAndDispatchWin32Msg = true;
 
 			switch (msg.message)

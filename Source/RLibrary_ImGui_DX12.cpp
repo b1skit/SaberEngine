@@ -1,7 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "Context_DX12.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "ProfilingMarkers.h"
 #include "RLibrary_ImGui_DX12.h"
 #include "RenderManager.h"
@@ -46,9 +46,9 @@ namespace dx12
 			&descriptorHeapDesc, IID_PPV_ARGS(&platParams->m_imGuiGPUVisibleSRVDescriptorHeap));
 		CheckHResult(hr, "Failed to create single element descriptor heap for ImGui SRV");
 
-		SEAssert(en::CoreEngine::Get()->GetWindow(), "Window pointer cannot be null");
+		SEAssert(en::EngineApp::Get()->GetWindow(), "Window pointer cannot be null");
 		win32::Window::PlatformParams* windowPlatParams =
-			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+			en::EngineApp::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		dx12::Texture::PlatformParams const* backbufferColorTarget0PlatParams =
 			dx12::SwapChain::GetBackBufferTargetSet(swapChain)->GetColorTarget(0).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();

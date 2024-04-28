@@ -3,7 +3,7 @@
 #include "Config.h"
 #include "Context_OpenGL.h"
 #include "Context.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "Core\Util\HashUtils.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
@@ -168,7 +168,7 @@ namespace opengl
 	{
 		GetOpenGLExtensionProcessAddresses();
 
-		en::Window* window = en::CoreEngine::Get()->GetWindow();
+		en::Window* window = en::EngineApp::Get()->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatformParams* windowPlatParams = 
@@ -321,7 +321,7 @@ namespace opengl
 		::wglMakeCurrent(NULL, NULL); // Make the rendering context not current  
 
 		win32::Window::PlatformParams* windowPlatformParams = 
-			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+			en::EngineApp::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		::ReleaseDC(windowPlatformParams->m_hWindow, context.m_hDeviceContext); // Release device context
 		::wglDeleteContext(context.m_glRenderContext); // Delete the rendering context

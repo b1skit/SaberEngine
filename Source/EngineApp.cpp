@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "Config.h"
 #include "EntityManager.h"
 #include "EventManager.h"
@@ -21,10 +21,10 @@ namespace
 
 namespace en
 {
-	CoreEngine*	CoreEngine::m_coreEngine = nullptr;
+	EngineApp*	EngineApp::m_coreEngine = nullptr;
 
 
-	CoreEngine::CoreEngine()
+	EngineApp::EngineApp()
 		: m_fixedTimeStep(1000.0 / 120.0) // 1000/120 = 8.33ms per update
 		, m_isRunning(false)
 		, m_frameNum(0)
@@ -36,11 +36,11 @@ namespace en
 	}
 
 
-	void CoreEngine::Startup()
+	void EngineApp::Startup()
 	{
-		SEBeginCPUEvent("en::CoreEngine::Startup");
+		SEBeginCPUEvent("en::EngineApp::Startup");
 
-		LOG("CoreEngine starting...");
+		LOG("EngineApp starting...");
 
 		m_threadPool.Startup();
 
@@ -99,7 +99,7 @@ namespace en
 
 
 	// Main game loop
-	void CoreEngine::Run()
+	void EngineApp::Run()
 	{
 		LOG("\nCoreEngine: Starting main game loop\n");
 
@@ -123,12 +123,12 @@ namespace en
 
 		while (m_isRunning)
 		{
-			SEBeginCPUEvent("en::CoreEngine::Run frame outer loop");
+			SEBeginCPUEvent("en::EngineApp::Run frame outer loop");
 
 			outerLoopTimer.Start();
 
-			SEBeginCPUEvent("en::CoreEngine::Update");
-			CoreEngine::Update(m_frameNum, lastOuterFrameTime);
+			SEBeginCPUEvent("en::EngineApp::Update");
+			EngineApp::Update(m_frameNum, lastOuterFrameTime);
 			SEEndCPUEvent();
 
 			SEBeginCPUEvent("en::LogManager::Update");
@@ -140,7 +140,7 @@ namespace en
 			elapsed += lastOuterFrameTime;
 			while (elapsed >= m_fixedTimeStep)
 			{	
-				SEBeginCPUEvent("en::CoreEngine::Run frame inner loop");
+				SEBeginCPUEvent("en::EngineApp::Run frame inner loop");
 
 				elapsed -= m_fixedTimeStep;
 
@@ -175,7 +175,7 @@ namespace en
 			SEEndCPUEvent();
 
 			// Pump the render thread, and wait for it to signal copying is complete:
-			SEBeginCPUEvent("en::CoreEngine::Run Wait on copy step");
+			SEBeginCPUEvent("en::EngineApp::Run Wait on copy step");
 			renderManager->EnqueueUpdate({m_frameNum, lastOuterFrameTime});
 			m_copyBarrier->arrive_and_wait();
 			SEEndCPUEvent();
@@ -189,17 +189,17 @@ namespace en
 	}
 
 
-	void CoreEngine::Stop()
+	void EngineApp::Stop()
 	{
 		m_isRunning = false;
 	}
 
 
-	void CoreEngine::Shutdown()
+	void EngineApp::Shutdown()
 	{
-		SEBeginCPUEvent("en::CoreEngine::Shutdown");
+		SEBeginCPUEvent("en::EngineApp::Shutdown");
 
-		LOG("CoreEngine shutting down...");
+		LOG("EngineApp shutting down...");
 
 		en::Config::Get()->SaveConfigFile();
 
@@ -226,9 +226,9 @@ namespace en
 	}
 
 	
-	void CoreEngine::Update(uint64_t frameNum, double stepTimeMs)
+	void EngineApp::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		SEBeginCPUEvent("en::CoreEngine::Update");
+		SEBeginCPUEvent("en::EngineApp::Update");
 
 		HandleEvents();
 
@@ -236,9 +236,9 @@ namespace en
 	}
 
 
-	void CoreEngine::HandleEvents()
+	void EngineApp::HandleEvents()
 	{
-		SEBeginCPUEvent("en::CoreEngine::HandleEvents");
+		SEBeginCPUEvent("en::EngineApp::HandleEvents");
 
 		while (HasEvents())
 		{

@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "Assert.h"
 #include "Platform.h"
 #include "Window_Win32.h"
@@ -51,7 +51,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LOG("\nWelcome to the Saber Engine!\n");
 
-	en::CoreEngine m_coreEngine;
+	en::EngineApp m_coreEngine;
 
 	m_coreEngine.Startup();
 	m_coreEngine.Run();

@@ -1,6 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "Window.h"
 
 
@@ -8,7 +8,7 @@
 
 void HandleAssertInternal()
 {
-	en::CoreEngine::Get()->GetWindow()->SetRelativeMouseMode(false);
+	en::EngineApp::Get()->GetWindow()->SetRelativeMouseMode(false);
 }
 
 #endif

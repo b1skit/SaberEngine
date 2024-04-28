@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "Assert.h"
 #include "Material.h"
 #include "Buffer_OpenGL.h"
@@ -192,7 +192,7 @@ namespace
 		for (size_t i = 0; i < opengl::Shader::ShaderType_Count; i++)
 		{
 			const std::string assembledName = shader.GetName() + k_shaderFileExtensions[i];
-			taskFutures[i] = en::CoreEngine::GetThreadPool()->EnqueueJob(
+			taskFutures[i] = en::EngineApp::GetThreadPool()->EnqueueJob(
 				[&shaderTexts, assembledName, i]()
 				{
 					shaderTexts[i] = LoadShaderText(assembledName);
@@ -375,7 +375,7 @@ namespace opengl
 				shaderFileNames[i] = shaderFileName + k_shaderFileExtensions[i];
 
 				// Queue a job to parse the #include text:
-				processIncludesTaskFutures[i] = en::CoreEngine::GetThreadPool()->EnqueueJob(
+				processIncludesTaskFutures[i] = en::EngineApp::GetThreadPool()->EnqueueJob(
 					[&shaderFileNames, &shaderFiles, &shaderTextStrings, i]()
 					{
 						const bool result = InsertIncludeText(shaderFiles[i], shaderTextStrings[i]);

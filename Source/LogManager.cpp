@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
 #include "Config.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "EventManager.h"
 #include "LogManager.h"
 #include "ThreadPool.h"
@@ -179,7 +179,7 @@ namespace en
 
 		m_isRunning = true; // Start running *before* we kick off a thread
 
-		en::CoreEngine::Get()->GetThreadPool()->EnqueueJob([&]()
+		en::EngineApp::Get()->GetThreadPool()->EnqueueJob([&]()
 			{
 				en::ThreadPool::NameCurrentThread(L"LogManager Thread");
 				en::LogManager::Get()->Run();

@@ -1,5 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "Core\Util\ImGuiUtils.h"
 #include "GraphicsSystem.h"
 #include "ProfilingMarkers.h"
@@ -434,7 +434,7 @@ namespace re
 				}
 				else
 				{
-					updateStepFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&]()
+					updateStepFutures.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob([&]()
 						{
 							ExecuteUpdateStep(currentStep);
 						}));

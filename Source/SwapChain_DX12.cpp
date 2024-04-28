@@ -4,7 +4,7 @@
 
 #include "Config.h"
 #include "Context_DX12.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "Assert.h"
 #include "Debug_DX12.h"
 #include "RenderManager.h"
@@ -78,9 +78,9 @@ namespace dx12
 		swapChainDesc.Flags = swapChainParams->m_tearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 
-		SEAssert(en::CoreEngine::Get()->GetWindow(), "Window cannot be null");
+		SEAssert(en::EngineApp::Get()->GetWindow(), "Window cannot be null");
 		win32::Window::PlatformParams* windowPlatParams =
-			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+			en::EngineApp::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		// Note: The context (currently) calls this function. This is dicey...
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();

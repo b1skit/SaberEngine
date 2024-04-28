@@ -10,17 +10,17 @@
 
 namespace en
 {
-	class CoreEngine final : public virtual en::EngineComponent, public virtual en::EventListener
+	class EngineApp final : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public: // Singleton functionality:	
-		static inline CoreEngine* Get() { return m_coreEngine; }
+		static inline EngineApp* Get() { return m_coreEngine; }
 		static inline en::ThreadPool* GetThreadPool() { return &m_coreEngine->m_threadPool; }
 
 	public:
-		CoreEngine();
-		CoreEngine(CoreEngine&&) = default;
-		CoreEngine& operator=(CoreEngine&&) = default;
-		~CoreEngine() = default;
+		EngineApp();
+		EngineApp(EngineApp&&) = default;
+		EngineApp& operator=(EngineApp&&) = default;
+		~EngineApp() = default;
 
 		// Lifetime flow:
 		void Startup();
@@ -53,11 +53,11 @@ namespace en
 		
 
 	private: 
-		static CoreEngine* m_coreEngine;
+		static EngineApp* m_coreEngine;
 
 
 	private:
-		CoreEngine(CoreEngine const&) = delete;
-		CoreEngine& operator=(CoreEngine const&) = delete;
+		EngineApp(EngineApp const&) = delete;
+		EngineApp& operator=(EngineApp const&) = delete;
 	};
 }

@@ -2,7 +2,7 @@
 #include "InputManager_Win32.h"
 #include "InputManager.h"
 #include "KeyConfiguration.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "Window_Win32.h"
 
 
@@ -19,7 +19,7 @@ namespace win32
 		rawInputDevice[0].dwFlags = RIDEV_INPUTSINK;
 
 		win32::Window::PlatformParams* windowPlatformParams = 
-			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+			en::EngineApp::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		rawInputDevice[0].hwndTarget = windowPlatformParams->m_hWindow;
 		RegisterRawInputDevices(rawInputDevice, 1, sizeof(rawInputDevice[0]));

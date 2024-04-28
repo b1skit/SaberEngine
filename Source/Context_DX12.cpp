@@ -2,7 +2,7 @@
 #include "Assert.h"
 #include "Config.h"
 #include "Context_DX12.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "Debug_DX12.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"

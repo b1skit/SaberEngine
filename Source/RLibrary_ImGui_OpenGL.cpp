@@ -1,7 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "Context_DX12.h"
-#include "CoreEngine.h"
+#include "EngineApp.h"
 #include "ProfilingMarkers.h"
 #include "RLibrary_ImGui_OpenGL.h"
 #include "RenderStage.h"
@@ -24,7 +24,7 @@ namespace opengl
 		platform::RLibraryImGui::CreateInternal(*imguiLibrary);
 
 		// Setup OpenGL ImGui backend:
-		en::Window* window = en::CoreEngine::Get()->GetWindow();
+		en::Window* window = en::EngineApp::Get()->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatformParams* windowPlatParams =
