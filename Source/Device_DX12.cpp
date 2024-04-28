@@ -35,7 +35,7 @@ namespace
 		ComPtr<IDXGIFactory4> dxgiFactory;
 		uint32_t createFactoryFlags = 0;
 #if defined(_DEBUG)
-		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) > 0)
+		if (en::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
 		{
 			createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 		}
@@ -165,7 +165,7 @@ namespace
 				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE, // Occurs when using capture frame while graphics debugging
 			};
 
-			if (en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false)
+			if (en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false)
 			{
 				// Empty RTVs in final MIP generation stages
 				denyIds.emplace_back(D3D12_MESSAGE_ID_CREATEGRAPHICSPIPELINESTATE_RENDERTARGETVIEW_NOT_SET); 
@@ -201,7 +201,7 @@ namespace dx12
 		m_dxgiAdapter4 = GetBestDisplayAdapter(); // Find the display adapter with the most VRAM
 		m_displayDevice = CreateDevice(m_dxgiAdapter4); // Create a device from the selected adapter
 
-		const uint32_t debugLevel = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg);
+		const uint32_t debugLevel = en::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
 		if (debugLevel > 0)
 		{
 			ConfigureD3DInfoQueue(m_displayDevice, debugLevel);

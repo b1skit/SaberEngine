@@ -22,7 +22,7 @@ namespace dx12
 {
 	RenderManager::RenderManager()
 		: re::RenderManager(platform::RenderingAPI::DX12)
-		, k_numFrames(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_numBackbuffersKey))
+		, k_numFrames(en::Config::Get()->GetValue<int>(core::configkeys::k_numBackbuffersKey))
 	{
 		SEAssert(k_numFrames >= 2 && k_numFrames <= 3, "Invalid number of frames in flight");
 
@@ -34,7 +34,7 @@ namespace dx12
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		// Prepend DX12-specific render systems:
-		const std::string dx12PlatformPipelineFileName = en::ConfigKeys::k_platformPipelineFileName_DX12;
+		const std::string dx12PlatformPipelineFileName = core::configkeys::k_platformPipelineFileName_DX12;
 		constexpr char const* k_dx12RenderSystemName = "PlatformDX12";
 		renderManager.CreateAddRenderSystem(k_dx12RenderSystemName, dx12PlatformPipelineFileName);
 	}

@@ -324,7 +324,7 @@ namespace dx12
 	{
 #if defined(_DEBUG)
 		// Debug: Assert all of our root index bitmasks are unique
-		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) > 0)
+		if (en::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
 		{
 			for (uint8_t i = 0; i < InlineRootType_Count; i++)
 			{

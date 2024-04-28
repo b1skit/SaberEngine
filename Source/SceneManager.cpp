@@ -43,7 +43,7 @@ namespace fr
 
 		// Load the scene:
 		std::string sceneName;
-		if (en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneNameKey, sceneName))
+		if (en::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneNameKey, sceneName))
 		{
 			LOG("Creating scene \"%s\"", sceneName.c_str());
 			m_sceneData = std::make_shared<fr::SceneData>(sceneName);
@@ -55,7 +55,7 @@ namespace fr
 		}
 
 		std::string sceneFilePath;
-		en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneFilePathKey, sceneFilePath);
+		en::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneFilePathKey, sceneFilePath);
 
 		const bool loadResult = m_sceneData->Load(sceneFilePath);
 		if (!loadResult)
@@ -81,9 +81,9 @@ namespace fr
 				CreateSceneRenderSystemCommand* cmdPtr = reinterpret_cast<CreateSceneRenderSystemCommand*>(cmdData);
 
 				std::string pipelineFileName;
-				if (en::Config::Get()->TryGetValue(en::ConfigKeys::k_scenePipelineCmdLineArg, pipelineFileName) == false)
+				if (en::Config::Get()->TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName) == false)
 				{
-					pipelineFileName = en::ConfigKeys::k_defaultScenePipelineFileName;
+					pipelineFileName = core::configkeys::k_defaultScenePipelineFileName;
 				}
 
 				re::RenderSystem const* sceneRenderSystem =
@@ -150,8 +150,8 @@ namespace fr
 			return;
 		}
 
-		static const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
-		static const int windowHeight = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
+		static const int windowWidth = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
 		constexpr float k_windowWidthPercentage = 0.25f;
 

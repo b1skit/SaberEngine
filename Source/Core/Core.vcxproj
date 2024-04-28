@@ -332,6 +332,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Assert.h" />
+    <ClInclude Include="ConfigKeys.h" />
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="pch\stdafx.h" />
     <ClInclude Include="PerformanceTimer.h" />

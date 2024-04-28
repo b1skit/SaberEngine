@@ -33,9 +33,9 @@ namespace re
 		en::Config* config = en::Config::Get();
 
 		platform::RenderingAPI renderingAPI = platform::RenderingAPI::RenderingAPI_Count;
-		if (config->KeyExists(en::ConfigKeys::k_platformCmdLineArg))
+		if (config->KeyExists(core::configkeys::k_platformCmdLineArg))
 		{
-			std::string const& platformParam = config->GetValue<std::string>(en::ConfigKeys::k_platformCmdLineArg);
+			std::string const& platformParam = config->GetValue<std::string>(core::configkeys::k_platformCmdLineArg);
 
 			if (platformParam.find("opengl") != std::string::npos)
 			{
@@ -58,12 +58,12 @@ namespace re
 		case platform::RenderingAPI::DX12:
 		{
 			config->TrySetValue(
-				en::ConfigKeys::k_shaderDirectoryKey,
-				std::string(en::ConfigKeys::k_hlslShaderDirName),
+				core::configkeys::k_shaderDirectoryKey,
+				std::string(core::configkeys::k_hlslShaderDirName),
 				en::Config::SettingType::APISpecific);
 
 			config->TrySetValue(
-				en::ConfigKeys::k_numBackbuffersKey,
+				core::configkeys::k_numBackbuffersKey,
 				3,
 				en::Config::SettingType::APISpecific);
 
@@ -73,8 +73,8 @@ namespace re
 		case platform::RenderingAPI::OpenGL:
 		{
 			config->TrySetValue(
-				en::ConfigKeys::k_shaderDirectoryKey,
-				std::string(en::ConfigKeys::k_glslShaderDirName),
+				core::configkeys::k_shaderDirectoryKey,
+				std::string(core::configkeys::k_glslShaderDirName),
 				en::Config::SettingType::APISpecific);
 
 			// Note: OpenGL only supports double-buffering, so we don't add a k_numBackbuffersKey entry
@@ -534,13 +534,13 @@ namespace re
 			re::Context::RenderDocAPI* renderDocApi = re::Context::Get()->GetRenderDocAPI();
 
 			const bool renderDocCmdLineEnabled =
-				en::Config::Get()->KeyExists(en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg) &&
+				en::Config::Get()->KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg) &&
 				renderDocApi != nullptr;
 
 			if (!renderDocCmdLineEnabled)
 			{
 				ImGui::Text(std::format("Launch with -{} to enable",
-					en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg).c_str());
+					core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg).c_str());
 			}
 			else
 			{
@@ -658,16 +658,16 @@ namespace re
 
 			const bool isDX12 = m_renderingAPI == platform::RenderingAPI::DX12;
 			const bool pixGPUCaptureCmdLineEnabled = isDX12 &&
-				en::Config::Get()->KeyExists(en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg);
+				en::Config::Get()->KeyExists(core::configkeys::k_pixGPUProgrammaticCapturesCmdLineArg);
 			const bool pixCPUCaptureCmdLineEnabled = isDX12 &&
-				en::Config::Get()->KeyExists(en::ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg);
+				en::Config::Get()->KeyExists(core::configkeys::k_pixCPUProgrammaticCapturesCmdLineArg);
 
 			if (!pixGPUCaptureCmdLineEnabled && !pixCPUCaptureCmdLineEnabled)
 			{
 				ImGui::Text(std::format("Launch with -{} or -{} to enable.\n"
 					"Run PIX in administrator mode, and attach to the current process.",
-					en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg,
-					en::ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg).c_str());
+					core::configkeys::k_pixGPUProgrammaticCapturesCmdLineArg,
+					core::configkeys::k_pixCPUProgrammaticCapturesCmdLineArg).c_str());
 			}
 
 			// GPU captures:
@@ -681,8 +681,8 @@ namespace re
 				{
 					loadedPath = true;
 					std::string const& pixFilePath = std::format("{}\\{}\\",
-						en::Config::Get()->GetValueAsString(en::ConfigKeys::k_documentsFolderPathKey),
-						en::ConfigKeys::k_pixCaptureFolderName);
+						en::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+						core::configkeys::k_pixCaptureFolderName);
 					memcpy(s_pixGPUCapturePath, pixFilePath.c_str(), pixFilePath.length() + 1);
 				}
 
@@ -693,7 +693,7 @@ namespace re
 					std::wstring const& filepath = util::ToWideString(
 						std::format("{}\\{}GPUCapture_{}.wpix",
 							s_pixGPUCapturePath,
-							en::ConfigKeys::k_captureTitle,
+							core::configkeys::k_captureTitle,
 							util::GetTimeAndDateAsString()));
 					s_gpuHRESULT = PIXGpuCaptureNextFrames(filepath.c_str(), s_numPixGPUCaptureFrames);
 				}
@@ -735,8 +735,8 @@ namespace re
 				{
 					loadedPath = true;
 					std::string const& pixFilePath = std::format("{}\\{}\\",
-						en::Config::Get()->GetValueAsString(en::ConfigKeys::k_documentsFolderPathKey),
-						en::ConfigKeys::k_pixCaptureFolderName);
+						en::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+						core::configkeys::k_pixCaptureFolderName);
 					memcpy(s_pixCPUCapturePath, pixFilePath.c_str(), pixFilePath.length() + 1);
 				}
 
@@ -761,7 +761,7 @@ namespace re
 					std::wstring const& filepath = util::ToWideString(
 						std::format("{}\\{}TimingCapture_{}.wpix",
 							s_pixCPUCapturePath,
-							en::ConfigKeys::k_captureTitle,
+							core::configkeys::k_captureTitle,
 							util::GetTimeAndDateAsString()));
 
 					PIXCaptureParameters pixCaptureParams = PIXCaptureParameters{
@@ -849,8 +849,8 @@ namespace re
 			return;
 		}
 
-		static const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
-		static const int windowHeight = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
+		static const int windowWidth = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
 		constexpr float k_windowWidthPercentage = 0.25f;
 

@@ -152,7 +152,7 @@ namespace
 	std::string LoadShaderText(std::string const& filename)
 	{
 		// Assemble the default shader file path:
-		std::string const& shaderDir = en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_shaderDirectoryKey);
+		std::string const& shaderDir = en::Config::Get()->GetValue<std::string>(core::configkeys::k_shaderDirectoryKey);
 		std::string filepath = shaderDir + filename;
 
 		// Attempt to load the shader
@@ -590,7 +590,7 @@ namespace opengl
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 			if (bindingUnit == params->m_samplerUnits.end())
 			{
-				SEAssert(en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+				SEAssert(en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 					std::format("Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
 						shader.GetName(), uniformName).c_str());
 				return;
@@ -605,7 +605,7 @@ namespace opengl
 
 			if (bindingUnit == params->m_samplerUnits.end())
 			{
-				SEAssert(en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+				SEAssert(en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 					std::format("Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled", 
 						shader.GetName(), uniformName).c_str());
 				return;
@@ -645,7 +645,7 @@ namespace opengl
 
 			// GL_INVALID_INDEX is returned if the the uniform block name does not identify an active uniform block
 			SEAssert(uniformBlockIdx != GL_INVALID_INDEX ||
-				en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+				en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Failed to find an active uniform block index. This is is not an error, but a useful debugging helper");
 
 			if (uniformBlockIdx != GL_INVALID_INDEX)
@@ -674,7 +674,7 @@ namespace opengl
 
 			// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
 			SEAssert(ssboIdx != GL_INVALID_INDEX ||
-				en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+				en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Failed to find the resource in the shader. This is is not an error, but a useful debugging helper");
 
 			if (ssboIdx != GL_INVALID_INDEX)

@@ -214,7 +214,7 @@ namespace fr
 				"A directional ShadowMapComponent must be attached to an entity with a DirectionalDeferredMarker");
 
 			const int defaultDirectionalWidthHeight = 
-				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultDirectionalShadowMapResolutionKey);
+				en::Config::Get()->GetValue<int>(core::configkeys::k_defaultDirectionalShadowMapResolutionKey);
 			widthHeight = glm::vec2(defaultDirectionalWidthHeight, defaultDirectionalWidthHeight);
 		}
 		break;
@@ -224,7 +224,7 @@ namespace fr
 				"A point ShadowMapComponent must be attached to an entity with a PointDeferredMarker");
 
 			const int defaultCubemapWidthHeight =
-				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowCubeMapResolutionKey);
+				en::Config::Get()->GetValue<int>(core::configkeys::k_defaultShadowCubeMapResolutionKey);
 			widthHeight = glm::vec2(defaultCubemapWidthHeight, defaultCubemapWidthHeight);
 		}
 		break;
@@ -234,7 +234,7 @@ namespace fr
 				"A spot ShadowMapComponent must be attached to an entity with a SpotDeferredMarker");
 
 			const int defaultSpotWidthHeight = 
-				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultSpotShadowMapResolutionKey);
+				en::Config::Get()->GetValue<int>(core::configkeys::k_defaultSpotShadowMapResolutionKey);
 			widthHeight = glm::vec2(defaultSpotWidthHeight, defaultSpotWidthHeight);
 		}
 		break;

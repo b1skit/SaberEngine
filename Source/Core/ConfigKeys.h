@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace en::ConfigKeys
+namespace core::configkeys
 {
 	// TODO: Keys should be pre-computed hashes instead of C-strings
 

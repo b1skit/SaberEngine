@@ -554,20 +554,20 @@ namespace
 		};
 
 		std::string IBLPath;
-		if (en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneIBLPathKey, IBLPath))
+		if (en::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, IBLPath))
 		{
 			TryLoadIBL(IBLPath, iblTexture);
 		}		
 		
 		if (!iblTexture)
 		{
-			IBLPath = en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_defaultEngineIBLPathKey);
+			IBLPath = en::Config::Get()->GetValue<std::string>(core::configkeys::k_defaultEngineIBLPathKey);
 			TryLoadIBL(IBLPath, iblTexture);
 		}
 		SEAssert(iblTexture != nullptr,
 			std::format("Missing IBL texture. Per scene IBLs must be placed at {}; A default fallback must exist at {}",
-				en::Config::Get()->GetValueAsString(en::ConfigKeys::k_sceneIBLPathKey),
-				en::Config::Get()->GetValueAsString(en::ConfigKeys::k_defaultEngineIBLPathKey)).c_str());
+				en::Config::Get()->GetValueAsString(core::configkeys::k_sceneIBLPathKey),
+				en::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey)).c_str());
 	}
 
 
@@ -1108,7 +1108,7 @@ namespace fr
 		// We search for a scene-specific IBL, and fallback to the engine default IBL if it's not found
 		std::shared_ptr<re::Texture> iblTexture = nullptr;
 		std::string sceneIBLPath;
-		bool result = en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneIBLPathKey, sceneIBLPath);
+		bool result = en::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, sceneIBLPath);
 		if (result)
 		{
 			iblTexture = TryGetTexture(sceneIBLPath);
@@ -1117,7 +1117,7 @@ namespace fr
 		if (!iblTexture)
 		{
 			std::string const& defaultIBLPath = 
-				en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_defaultEngineIBLPathKey);
+				en::Config::Get()->GetValue<std::string>(core::configkeys::k_defaultEngineIBLPathKey);
 			iblTexture = GetTexture(defaultIBLPath); // Guaranteed to exist
 		}
 

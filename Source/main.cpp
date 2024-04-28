@@ -21,7 +21,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		en::Config::Get()->ProcessCommandLineArgs(argc, argv);
 	}	
 
-	const bool showConsole = en::Config::Get()->KeyExists(en::ConfigKeys::k_showSystemConsoleWindowCmdLineArg);
+	const bool showConsole = en::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg);
 	if (showConsole)
 	{
 		AllocConsole();
@@ -33,7 +33,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		const int numTokens = argc - 1; // -1, as 1st arg is program name
 		LOG("Received %d command line tokens: %s",
 			numTokens, 
-			en::Config::Get()->GetValueAsString(en::ConfigKeys::k_commandLineArgsValueKey).c_str());
+			en::Config::Get()->GetValueAsString(core::configkeys::k_commandLineArgsValueKey).c_str());
 	}
 	else
 	{

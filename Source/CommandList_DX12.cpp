@@ -303,7 +303,7 @@ namespace dx12
 		RootSignature::RootParameter const* rootSigEntry = 
 			m_currentRootSignature->GetRootSignatureEntry(buffer->GetName());
 		SEAssert(rootSigEntry ||
-			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+			en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Invalid root signature entry");
 
 		if (rootSigEntry)
@@ -792,7 +792,7 @@ namespace dx12
 			RootSignature::RootParameter const* rootSigEntry = 
 				m_currentRootSignature->GetRootSignatureEntry(k_uavTexTargetNames[i]);
 
-			SEAssert(rootSigEntry || en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+			SEAssert(rootSigEntry || en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");
 
 			if (rootSigEntry)
@@ -1018,7 +1018,7 @@ namespace dx12
 		RootSignature::RootParameter const* rootSigEntry =
 			m_currentRootSignature->GetRootSignatureEntry(shaderName);
 		SEAssert(rootSigEntry ||
-			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+			en::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Invalid root signature entry");
 
 		if (rootSigEntry)

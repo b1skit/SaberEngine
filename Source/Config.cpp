@@ -41,7 +41,7 @@ namespace en
 		: m_isDirty(false)
 	{
 		// Insert engine defaults:
-		SetValue<std::string>(en::ConfigKeys::k_scenesDirNameKey, "Scenes\\", Config::SettingType::Runtime);
+		SetValue<std::string>(core::configkeys::k_scenesDirNameKey, "Scenes\\", Config::SettingType::Runtime);
 	}
 
 
@@ -108,7 +108,7 @@ namespace en
 		}
 
 		// Store the received command line std::string
-		SetValue(ConfigKeys::k_commandLineArgsValueKey, argString, Config::SettingType::Runtime);
+		SetValue(core::configkeys::k_commandLineArgsValueKey, argString, Config::SettingType::Runtime);
 
 		// Process the key/value pairs:
 		for (size_t i = 0; i < keysValues.size(); i++)
@@ -138,33 +138,33 @@ namespace en
 		}
 
 		// Post-processing:
-		if (KeyExists(en::ConfigKeys::k_sceneCmdLineArg))
+		if (KeyExists(core::configkeys::k_sceneCmdLineArg))
 		{
-			std::string const& sceneDirName = GetValue<std::string>(en::ConfigKeys::k_scenesDirNameKey); // "Scenes\\"
-			std::string const& extractedSceneArg = GetValue<std::string>(en::ConfigKeys::k_sceneCmdLineArg);
+			std::string const& sceneDirName = GetValue<std::string>(core::configkeys::k_scenesDirNameKey); // "Scenes\\"
+			std::string const& extractedSceneArg = GetValue<std::string>(core::configkeys::k_sceneCmdLineArg);
 			
 			// Assemble the relative scene file path:
 			const std::string sceneFilePath = sceneDirName + extractedSceneArg; // == "Scenes\Some\Folder\Names\file.ext"
-			SetValue(en::ConfigKeys::k_sceneFilePathKey, sceneFilePath, Config::SettingType::Runtime);
+			SetValue(core::configkeys::k_sceneFilePathKey, sceneFilePath, Config::SettingType::Runtime);
 
 			// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
 			const size_t lastSlash = sceneFilePath.find_last_of("\\");
 			const std::string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\";
-			SetValue(en::ConfigKeys::k_sceneRootPathKey, sceneRootPath, Config::SettingType::Runtime);
+			SetValue(core::configkeys::k_sceneRootPathKey, sceneRootPath, Config::SettingType::Runtime);
 
 			// sceneName == "sceneFile"
 			const std::string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
 			const size_t extensionPeriod = filenameAndExt.find_last_of(".");
 			const std::string sceneName = filenameAndExt.substr(0, extensionPeriod);
-			SetValue(en::ConfigKeys::k_sceneNameKey, sceneName, Config::SettingType::Runtime);
+			SetValue(core::configkeys::k_sceneNameKey, sceneName, Config::SettingType::Runtime);
 
 			// sceneIBLDir == ".\Scenes\SceneFolderName\IBL\"
 			std::string const& sceneIBLDir = sceneRootPath + "IBL\\";
-			SetValue(en::ConfigKeys::k_sceneIBLDirKey, sceneIBLDir, Config::SettingType::Runtime);
+			SetValue(core::configkeys::k_sceneIBLDirKey, sceneIBLDir, Config::SettingType::Runtime);
 
 			// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
 			const std::string sceneIBLPath = sceneIBLDir + "ibl.hdr";
-			SetValue(en::ConfigKeys::k_sceneIBLPathKey, sceneIBLPath, Config::SettingType::Runtime);
+			SetValue(core::configkeys::k_sceneIBLPathKey, sceneIBLPath, Config::SettingType::Runtime);
 		}
 
 		// We don't count command line arg entries as dirtying the config
@@ -174,16 +174,16 @@ namespace en
 
 	void Config::LoadConfigFile()
 	{
-		LOG("Loading %s...", en::ConfigKeys::k_configFileName);
+		LOG("Loading %s...", core::configkeys::k_configFileName);
 
 		std::ifstream file;
-		file.open(std::format("{}{}", en::ConfigKeys::k_configDirName, en::ConfigKeys::k_configFileName).c_str());
+		file.open(std::format("{}{}", core::configkeys::k_configDirName, core::configkeys::k_configFileName).c_str());
 
 		// If no config is found, create one:
 		const bool foundExistingConfig = file.is_open();
 		if (!foundExistingConfig)
 		{
-			LOG_WARNING("No %s file found! Attempting to create a default version", en::ConfigKeys::k_configFileName);
+			LOG_WARNING("No %s file found! Attempting to create a default version", core::configkeys::k_configFileName);
 			m_isDirty = true;
 			SaveConfigFile();
 		}
@@ -196,7 +196,7 @@ namespace en
 			// Handle malformed std::strings from previous iteration:
 			if (foundInvalidString == true)
 			{
-				LOG_WARNING("Ignoring invalid command in %s:\n%s", en::ConfigKeys::k_configFileName, line);
+				LOG_WARNING("Ignoring invalid command in %s:\n%s", core::configkeys::k_configFileName, line);
 				foundInvalidString = false;
 			}
 
@@ -342,7 +342,7 @@ namespace en
 		// Handle final malformed std::string:
 		if (foundInvalidString == true)
 		{
-			LOG_WARNING("Ignoring invalid command in %s:\n%s", en::ConfigKeys::k_configFileName, line);
+			LOG_WARNING("Ignoring invalid command in %s:\n%s", core::configkeys::k_configFileName, line);
 		}
 
 		// We don't count existing entries as dirtying the config
@@ -368,7 +368,7 @@ namespace en
 		const std::string documentFolderPath = util::FromWideString(documentsFolderPathPtr);
 		CoTaskMemFree(static_cast<void*>(documentsFolderPathPtr));
 
-		TrySetValue(ConfigKeys::k_documentsFolderPathKey, documentFolderPath, SettingType::Runtime);
+		TrySetValue(core::configkeys::k_documentsFolderPathKey, documentFolderPath, SettingType::Runtime);
 	}
 
 
@@ -378,16 +378,16 @@ namespace en
 		
 		// Window:
 		markDirty |= TrySetValue("windowTitle",					std::string("Saber Engine"),	SettingType::Common);
-		markDirty |= TrySetValue(ConfigKeys::k_windowWidthKey,	1920,							SettingType::Common);
-		markDirty |= TrySetValue(ConfigKeys::k_windowHeightKey,	1080,							SettingType::Common);
+		markDirty |= TrySetValue(core::configkeys::k_windowWidthKey,	1920,							SettingType::Common);
+		markDirty |= TrySetValue(core::configkeys::k_windowHeightKey,	1080,							SettingType::Common);
 
 		// System config:
 		markDirty |= TrySetValue("vsync",	true,	SettingType::Common);
 
 		// Texture dimensions:
-		markDirty |= TrySetValue(en::ConfigKeys::k_defaultDirectionalShadowMapResolutionKey,	2048,	SettingType::Common);
-		markDirty |= TrySetValue(en::ConfigKeys::k_defaultShadowCubeMapResolutionKey,			512,	SettingType::Common);
-		markDirty |= TrySetValue(en::ConfigKeys::k_defaultSpotShadowMapResolutionKey,			1024,	SettingType::Common);
+		markDirty |= TrySetValue(core::configkeys::k_defaultDirectionalShadowMapResolutionKey,	2048,	SettingType::Common);
+		markDirty |= TrySetValue(core::configkeys::k_defaultShadowCubeMapResolutionKey,			512,	SettingType::Common);
+		markDirty |= TrySetValue(core::configkeys::k_defaultSpotShadowMapResolutionKey,			1024,	SettingType::Common);
 
 		// Camera defaults:
 		markDirty |= TrySetValue("defaultyFOV",	1.570796f,	SettingType::Common);
@@ -395,12 +395,12 @@ namespace en
 		markDirty |= TrySetValue("defaultFar",	100.0f,		SettingType::Common);
 
 		// Input parameters:
-		markDirty |= TrySetValue(en::ConfigKeys::k_mousePitchSensitivityKey,	0.5f,	SettingType::Common);
-		markDirty |= TrySetValue(en::ConfigKeys::k_mouseYawSensitivityKey,		0.5f,	SettingType::Common);
-		markDirty |= TrySetValue(en::ConfigKeys::k_sprintSpeedModifierKey,		2.0f,	SettingType::Common);
+		markDirty |= TrySetValue(core::configkeys::k_mousePitchSensitivityKey,	0.5f,	SettingType::Common);
+		markDirty |= TrySetValue(core::configkeys::k_mouseYawSensitivityKey,		0.5f,	SettingType::Common);
+		markDirty |= TrySetValue(core::configkeys::k_sprintSpeedModifierKey,		2.0f,	SettingType::Common);
 
 		// Scene data:
-		markDirty |= TrySetValue(en::ConfigKeys::k_defaultEngineIBLPathKey,	"Assets\\DefaultIBL\\default.hdr",	SettingType::Common);
+		markDirty |= TrySetValue(core::configkeys::k_defaultEngineIBLPathKey,	"Assets\\DefaultIBL\\default.hdr",	SettingType::Common);
 
 		// Key bindings:
 		//--------------
@@ -441,20 +441,20 @@ namespace en
 		//case platform::RenderingAPI::OpenGL:
 		//{
 		//	// Shaders:
-		//	TryInsertDefault(en::ConfigKeys::k_shaderDirectoryKey,	std::string(".\\Shaders\\GLSL\\"));
+		//	TryInsertDefault(core::configkeys::k_shaderDirectoryKey,	std::string(".\\Shaders\\GLSL\\"));
 		//	// Note: OpenGL only supports double-buffering, so we don't add a k_numBackbuffersKey entry
 		//}
 		//break;
 		//case platform::RenderingAPI::DX12:
 		//{
-		//	TryInsertDefault(en::ConfigKeys::k_shaderDirectoryKey, std::string(".\\Shaders\\HLSL\\"));
-		//	TryInsertDefault(en::ConfigKeys::k_numBackbuffersKey, 3);
+		//	TryInsertDefault(core::configkeys::k_shaderDirectoryKey, std::string(".\\Shaders\\HLSL\\"));
+		//	TryInsertDefault(core::configkeys::k_numBackbuffersKey, 3);
 		//}
 		//break;
 		//default:
 		//	LOG_ERROR("Config failed to set API Defaults! "
 		//		"Does the %s file contain a 'set platform \"<API>\" command for a supported API?",
-		//		en::ConfigKeys::k_configFileName);
+		//		core::configkeys::k_configFileName);
 
 		//	throw std::runtime_error("Invalid Rendering API set, cannot set API defaults");
 		//}
@@ -469,25 +469,25 @@ namespace en
 		};
 
 		// Debug:
-		TryInsertRuntimeValue(ConfigKeys::k_debugLevelCmdLineArg, 0);
+		TryInsertRuntimeValue(core::configkeys::k_debugLevelCmdLineArg, 0);
 
 		// Quality settings:
-		TryInsertRuntimeValue(en::ConfigKeys::k_brdfLUTWidthHeightKey,		1024);
-		TryInsertRuntimeValue(en::ConfigKeys::k_iemTexWidthHeightKey,		512);
-		TryInsertRuntimeValue(en::ConfigKeys::k_iemNumSamplesKey,			4096);
-		TryInsertRuntimeValue(en::ConfigKeys::k_pmremTexWidthHeightKey,	1024);
-		TryInsertRuntimeValue(en::ConfigKeys::k_pmremNumSamplesKey,		4096);
+		TryInsertRuntimeValue(core::configkeys::k_brdfLUTWidthHeightKey,		1024);
+		TryInsertRuntimeValue(core::configkeys::k_iemTexWidthHeightKey,		512);
+		TryInsertRuntimeValue(core::configkeys::k_iemNumSamplesKey,			4096);
+		TryInsertRuntimeValue(core::configkeys::k_pmremTexWidthHeightKey,	1024);
+		TryInsertRuntimeValue(core::configkeys::k_pmremNumSamplesKey,		4096);
 
 		// Shadow map defaults:
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMinShadowBiasKey,	0.012f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBiasKey,	0.035f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightShadowSoftnessKey,	0.02f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMinShadowBiasKey,			0.03f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMaxShadowBiasKey,			0.055f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightShadowSoftnessKey,		0.1f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultSpotLightMinShadowBiasKey,			0.03f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultSpotLightMaxShadowBiasKey,			0.055f);
-		TryInsertRuntimeValue(en::ConfigKeys::k_defaultSpotLightShadowSoftnessKey,			0.1f);
+		TryInsertRuntimeValue(core::configkeys::k_defaultDirectionalLightMinShadowBiasKey,	0.012f);
+		TryInsertRuntimeValue(core::configkeys::k_defaultDirectionalLightMaxShadowBiasKey,	0.035f);
+		TryInsertRuntimeValue(core::configkeys::k_defaultDirectionalLightShadowSoftnessKey,	0.02f);
+		TryInsertRuntimeValue(core::configkeys::k_defaultPointLightMinShadowBiasKey,			0.03f);
+		TryInsertRuntimeValue(core::configkeys::k_defaultPointLightMaxShadowBiasKey,			0.055f);
+		TryInsertRuntimeValue(core::configkeys::k_defaultPointLightShadowSoftnessKey,		0.1f);
+		TryInsertRuntimeValue(core::configkeys::k_defaultSpotLightMinShadowBiasKey,			0.03f);
+		TryInsertRuntimeValue(core::configkeys::k_defaultSpotLightMaxShadowBiasKey,			0.055f);
+		TryInsertRuntimeValue(core::configkeys::k_defaultSpotLightShadowSoftnessKey,			0.1f);
 	}
 	
 
@@ -563,10 +563,10 @@ namespace en
 			LOG("SaveConfigFile called, but config has not changed. Returning without modifying file on disk");
 			return;
 		}
-		LOG("Saving %s...", en::ConfigKeys::k_configFileName);
+		LOG("Saving %s...", core::configkeys::k_configFileName);
 
 		// Create the .\config\ directory, if none exists
-		std::filesystem::path configPath = en::ConfigKeys::k_configDirName;
+		std::filesystem::path configPath = core::configkeys::k_configDirName;
 		if (!std::filesystem::exists(configPath))
 		{
 			LOG("Creating .\\config\\ directory");
@@ -669,8 +669,8 @@ namespace en
 
 		// Write our config to disk:
 		std::ofstream config_ofstream(
-			std::format("{}{}", en::ConfigKeys::k_configDirName, en::ConfigKeys::k_configFileName));
-		config_ofstream << std::format("# SaberEngine {} file:\n", en::ConfigKeys::k_configFileName).c_str();
+			std::format("{}{}", core::configkeys::k_configDirName, core::configkeys::k_configFileName));
+		config_ofstream << std::format("# SaberEngine {} file:\n", core::configkeys::k_configFileName).c_str();
 
 		for (ConfigEntry const& currentEntry : configEntries)
 		{
@@ -684,7 +684,7 @@ namespace en
 	float Config::GetWindowAspectRatio() const
 	{
 		return static_cast<float>(
-			GetValue<int>(en::ConfigKeys::k_windowWidthKey)) / GetValue<int>(en::ConfigKeys::k_windowHeightKey);
+			GetValue<int>(core::configkeys::k_windowWidthKey)) / GetValue<int>(core::configkeys::k_windowHeightKey);
 	}
 
 

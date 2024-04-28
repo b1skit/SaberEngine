@@ -309,7 +309,7 @@ namespace en
 
 			SEAssert(!keyAssignment.empty(),
 				std::format("Button not found in {}. Did you forget to set one in Config::InitializeDefaultValues()?",
-				en::ConfigKeys::k_configFileName).c_str());
+				core::configkeys::k_configFileName).c_str());
 
 			SEKeycode keycode = GetSEKeycodeFromName(keyAssignment);
 			if (keycode != SEK_UNKNOWN)

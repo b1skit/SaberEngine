@@ -42,7 +42,7 @@ namespace platform
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
-		io.IniFilename = en::ConfigKeys::k_imguiIniPath;
+		io.IniFilename = core::configkeys::k_imguiIniPath;
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();

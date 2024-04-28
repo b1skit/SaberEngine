@@ -48,17 +48,17 @@ namespace en
 
 		// Start the logging thread:
 		core::LogManager::Get()->Startup(
-			en::Config::Get()->KeyExists(en::ConfigKeys::k_showSystemConsoleWindowCmdLineArg));
+			en::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
 
 		// Create a window:
 		std::string commandLineArgs;
-		en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_commandLineArgsValueKey, commandLineArgs);
+		en::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
 
 		std::string const& windowTitle = std::format("{} {}", 
 			en::Config::Get()->GetValue<std::string>("windowTitle"), 
 			commandLineArgs);
-		const int xRes = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
-		const int yRes = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
+		const int xRes = en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		const int yRes = en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 
 		m_window = std::make_unique<en::Window>(); // Ensure Window exists for first callbacks triggered by Create
 		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);

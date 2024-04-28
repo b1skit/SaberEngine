@@ -518,7 +518,7 @@ namespace fr
 		case fr::Light::Type::AmbientIBL:
 		{
 			std::vector<std::string> const& iblHDRFiles = util::GetDirectoryFilenameContents(
-				en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_sceneIBLDirKey).c_str(), ".hdr");
+				en::Config::Get()->GetValue<std::string>(core::configkeys::k_sceneIBLDirKey).c_str(), ".hdr");
 
 			static size_t selectedFileIdx = 0;
 			if (ImGui::BeginListBox("Selected source IBL HDR File"))

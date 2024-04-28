@@ -211,7 +211,7 @@ namespace dx12
 
 		// DRED reporting:
 		if (hr == DXGI_ERROR_DEVICE_REMOVED && 
-			en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) >= 3)
+			en::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) >= 3)
 		{
 			HandleDRED();
 		}
@@ -230,7 +230,7 @@ namespace dx12
 	{
 		ComPtr<ID3D12Debug> debugInterface;
 
-		const int debugLevel = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg);
+		const int debugLevel = en::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
 
 		// Enable the debug layer for debuglevel 1 and above:
 		if (debugLevel >= 1)
@@ -253,7 +253,7 @@ namespace dx12
 			LOG("Debug level %d: Enabled D3D12 GPU-based validation", debugLevel);
 		}
 
-		const bool dredEnabled = en::Config::Get()->KeyExists(en::ConfigKeys::k_enableDredCmdLineArg);
+		const bool dredEnabled = en::Config::Get()->KeyExists(core::configkeys::k_enableDredCmdLineArg);
 		if (dredEnabled)
 		{
 			ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;

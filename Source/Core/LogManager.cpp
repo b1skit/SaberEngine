@@ -194,10 +194,10 @@ namespace core
 
 	void LogManager::Run(bool isSystemConsoleWindowEnabled)
 	{
-		std::filesystem::create_directory(en::ConfigKeys::k_logOutputDir); // No error if the directory already exists
+		std::filesystem::create_directory(core::configkeys::k_logOutputDir); // No error if the directory already exists
 
 		m_logOutputStream.open(
-			std::format("{}{}", en::ConfigKeys::k_logOutputDir, en::ConfigKeys::k_logFileName).c_str(),
+			std::format("{}{}", core::configkeys::k_logOutputDir, core::configkeys::k_logFileName).c_str(),
 			std::ios::out);
 		SEAssert(m_logOutputStream.good(), "Error creating log output stream");
 

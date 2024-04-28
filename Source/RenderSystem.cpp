@@ -268,7 +268,7 @@ namespace re
 	std::unique_ptr<RenderSystem> RenderSystem::Create(std::string const& name, std::string const& pipelineFileName)
 	{
 		// Load the render system description:
-		std::string const& scriptPath = std::format("{}{}", en::ConfigKeys::k_pipelineDirName, pipelineFileName);
+		std::string const& scriptPath = std::format("{}{}", core::configkeys::k_pipelineDirName, pipelineFileName);
 
 		RenderSystemDescription const& renderSystemDesc = LoadRenderSystemDescription(scriptPath.c_str());
 
@@ -351,7 +351,7 @@ namespace re
 			// Now our GS's exist and their input dependencies are registered, we can compute their execution ordering.
 			// Note: The update pipeline caches member function and data pointers; We can only populate it once our GS's
 			// are created & initialized
-			const bool singleThreadGSExecution = en::Config::Get()->KeyExists(en::ConfigKeys::k_singleThreadGSExecution);
+			const bool singleThreadGSExecution = en::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
 
 			std::vector<std::vector<std::string>> updateExecutionGroups;
 			ComputeExecutionGroups(renderSysDesc, updateExecutionGroups, singleThreadGSExecution);
@@ -399,7 +399,7 @@ namespace re
 		SEBeginCPUEvent(std::format("{} ExecuteUpdatePipeline", GetName()).c_str());
 
 		static const bool s_singleThreadGSExecution = 
-			en::Config::Get()->KeyExists(en::ConfigKeys::k_singleThreadGSExecution);
+			en::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
 
 
 		auto ExecuteUpdateStep = [](UpdateStep const& currentStep)
