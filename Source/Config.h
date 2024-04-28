@@ -1,8 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Assert.h"
 #include "ConfigKeys.h"
-#include "Platform.h"
+#include "LogManager.h"
 
 
 namespace en
@@ -25,12 +24,15 @@ namespace en
 
 	public:
 		Config();
+		~Config();
+
+		Config(Config&&) = default;
+		Config& operator=(Config&&) = default;
 
 		void ProcessCommandLineArgs(int argc, char** argv);
 
-		void LoadConfigFile(); // Load the config.cfg file
-
-		void SaveConfigFile(); // Save config.cfg to disk
+		void LoadConfigFile(); // Load the config file
+		void SaveConfigFile(); // Save config file to disk
 
 		template<typename T>
 		T GetValue(const std::string& key) const;
@@ -46,11 +48,9 @@ namespace en
 		// Specific configuration retrieval:
 		/**********************************/
 		float GetWindowAspectRatio() const; // Compute the aspect ratio: width / height
+	
 
-		const platform::RenderingAPI GetRenderingAPI() const;
-		
-
-	private:
+	public:
 		template<typename T>
 		void SetValue(const std::string& key, T value, SettingType settingType = SettingType::Common);
 
@@ -76,8 +76,6 @@ namespace en
 		std::unordered_map<std::string, std::pair<std::any, SettingType>> m_configValues;	// The config parameter/value map
 		bool m_isDirty; // Marks whether we need to save the config file or not
 
-		platform::RenderingAPI m_renderingAPI;
-
 
 	private: // Helper functions:
 		std::string PropertyToConfigString(std::string property);
@@ -86,6 +84,11 @@ namespace en
 		std::string PropertyToConfigString(int property);
 		std::string PropertyToConfigString(char property);
 		std::string PropertyToConfigString(bool property);
+
+
+	private: // No copying allowed
+		Config(Config const&) = delete;
+		Config& operator=(Config const&) = delete;
 	};
 
 

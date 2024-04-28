@@ -1,7 +1,7 @@
 #pragma once
 #include "Assert.h"
-#include "Config.h"
 #include "Platform.h"
+#include "RenderManager.h"
 #include "RenderSystemDesc.h"
 
 
@@ -13,7 +13,7 @@ namespace re
 {
 	void from_json(nlohmann::json const& jsonDesc, RenderSystemDescription& renderSysDesc)
 	{
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 		std::string currentPlatformVal;
 		switch (api)
 		{

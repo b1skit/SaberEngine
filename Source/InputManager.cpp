@@ -308,7 +308,8 @@ namespace en
 			const std::string keyAssignment = Config::Get()->GetValueAsString(en::KeyboardInputButtonNames[i]);
 
 			SEAssert(!keyAssignment.empty(),
-				"Button not found in config.cfg. Did you forget to set one in Config::InitializeDefaultValues()?");
+				std::format("Button not found in {}. Did you forget to set one in Config::InitializeDefaultValues()?",
+				en::ConfigKeys::k_configFileName).c_str());
 
 			SEKeycode keycode = GetSEKeycodeFromName(keyAssignment);
 			if (keycode != SEK_UNKNOWN)

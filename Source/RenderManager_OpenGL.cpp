@@ -57,6 +57,12 @@ namespace
 
 namespace opengl
 {
+	RenderManager::RenderManager()
+		: re::RenderManager(platform::RenderingAPI::OpenGL)
+	{
+	}
+
+
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		//

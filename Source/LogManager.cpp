@@ -3,7 +3,6 @@
 #include "Config.h"
 #include "ConfigKeys.h"
 #include "EngineApp.h"
-#include "LogManager.h"
 #include "ThreadPool.h"
 
 

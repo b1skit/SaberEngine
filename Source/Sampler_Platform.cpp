@@ -1,8 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include "Config.h"
 #include "Assert.h"
+#include "RenderManager.h"
 #include "Sampler.h"
 #include "Sampler_DX12.h"
 #include "Sampler_OpenGL.h"
@@ -13,7 +12,7 @@ namespace platform
 {
 	void Sampler::CreatePlatformParams(re::Sampler& sampler)
 	{
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

@@ -197,8 +197,6 @@ namespace en
 
 		LOG("EngineApp shutting down...");
 
-		en::Config::Get()->SaveConfigFile();
-
 		fr::UIManager::Get()->Shutdown();
 		
 		fr::EntityManager::Get()->Shutdown();

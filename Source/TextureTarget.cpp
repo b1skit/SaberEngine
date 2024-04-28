@@ -1,10 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Util\CastUtils.h"
+#include "Assert.h"
 #include "Config.h"
 #include "SysInfo_Platform.h"
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
 #include "RenderManager.h"
+
+#include "Core\Util\CastUtils.h"
 
 
 namespace re

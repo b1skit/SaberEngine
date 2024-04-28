@@ -20,7 +20,7 @@ namespace re
 	std::unique_ptr<re::Context> Context::CreateSingleton()
 	{
 		std::unique_ptr<re::Context> newContext = nullptr;
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 		switch (api)
 		{
 		case platform::RenderingAPI::OpenGL:
@@ -102,7 +102,7 @@ namespace re
 					en::Config::Get()->GetValueAsString(en::ConfigKeys::k_documentsFolderPathKey),
 					en::ConfigKeys::k_renderDocCaptureFolderName,
 					en::ConfigKeys::k_captureTitle,
-					platform::RenderingAPIToCStr(en::Config::Get()->GetRenderingAPI()),
+					platform::RenderingAPIToCStr(re::RenderManager::Get()->GetRenderingAPI()),
 					util::GetTimeAndDateAsString());
 				m_renderDocApi->SetCaptureFilePathTemplate(renderDocCapturePath.c_str());
 			}

@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "Core\Util\CastUtils.h"
 #include "Material_GLTF.h"
 #include "Sampler.h"

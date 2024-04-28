@@ -1,13 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BatchManager.h"
+#include "CommandQueue.h"
 #include "EngineComponent.h"
 #include "EngineThread.h"
 #include "EventListener.h"
+#include "Platform.h"
+#include "RenderSystem.h"
+
 #include "Core\Util\ImGuiUtils.h"
 #include "Core\Util\NBufferedVector.h"
-#include "CommandQueue.h"
-#include "RenderSystem.h"
 
 
 namespace opengl
@@ -53,6 +55,7 @@ namespace re
 		// IEventListener interface:
 		void HandleEvents() override;
 
+		platform::RenderingAPI GetRenderingAPI() const;
 		uint64_t GetCurrentRenderFrameNum() const;
 
 		re::RenderSystem const* CreateAddRenderSystem(std::string const& name, std::string const& pipelineFileName);
@@ -139,6 +142,9 @@ namespace re
 		void EndOfFrame();
 
 
+	protected:
+		platform::RenderingAPI m_renderingAPI;
+
 	private:
 		std::vector<std::unique_ptr<re::RenderSystem>> m_renderSystems;
 
@@ -148,7 +154,8 @@ namespace re
 
 
 	private:
-		RenderManager(); // Use the RenderManager::Get() singleton getter instead
+		RenderManager() = delete; // Use the RenderManager::Get() singleton getter instead
+		RenderManager(platform::RenderingAPI);
 		[[nodiscard]] static std::unique_ptr<re::RenderManager> Create();
 
 
@@ -164,6 +171,11 @@ namespace re
 		RenderManager& operator=(RenderManager&&) = delete;
 	};
 
+	
+	inline platform::RenderingAPI RenderManager::GetRenderingAPI() const
+	{
+		return m_renderingAPI;
+	}
 
 	inline uint64_t RenderManager::GetCurrentRenderFrameNum() const
 	{

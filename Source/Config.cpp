@@ -1,6 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "Config.h"
 #include "KeyConfiguration.h"
+#include "LogManager.h"
+
 #include "Core\Util\TextUtils.h"
 
 // Default true/false std::strings. We convert config values to lowercase and compare against these
@@ -36,10 +39,15 @@ namespace en
 
 	Config::Config()
 		: m_isDirty(false)
-		, m_renderingAPI(platform::RenderingAPI::RenderingAPI_Count)
 	{
 		// Insert engine defaults:
 		SetValue<std::string>(en::ConfigKeys::k_scenesDirNameKey, "Scenes\\", Config::SettingType::Runtime);
+	}
+
+
+	Config::~Config()
+	{
+		SaveConfigFile();
 	}
 
 
@@ -159,28 +167,6 @@ namespace en
 			SetValue(en::ConfigKeys::k_sceneIBLPathKey, sceneIBLPath, Config::SettingType::Runtime);
 		}
 
-		if (KeyExists(en::ConfigKeys::k_platformCmdLineArg))
-		{
-			std::string const& platformParam = GetValue<std::string>(en::ConfigKeys::k_platformCmdLineArg);
-
-			bool platformValueIsValid = false;
-			if (platformParam.find("opengl") != std::string::npos)
-			{
-				m_renderingAPI = platform::RenderingAPI::OpenGL;
-				platformValueIsValid = true;
-			}
-			else if (platformParam.find("dx12") != std::string::npos)
-			{
-				m_renderingAPI = platform::RenderingAPI::DX12;
-				platformValueIsValid = true;
-			}
-
-			if (platformValueIsValid)
-			{
-				SetValue(en::ConfigKeys::k_platformCmdLineArg, platformParam, SettingType::APISpecific);
-			}
-		}
-
 		// We don't count command line arg entries as dirtying the config
 		m_isDirty = false;
 	}
@@ -197,7 +183,7 @@ namespace en
 		const bool foundExistingConfig = file.is_open();
 		if (!foundExistingConfig)
 		{
-			LOG_WARNING("No config.cfg file found! Attempting to create a default version");
+			LOG_WARNING("No %s file found! Attempting to create a default version", en::ConfigKeys::k_configFileName);
 			m_isDirty = true;
 			SaveConfigFile();
 		}
@@ -210,7 +196,7 @@ namespace en
 			// Handle malformed std::strings from previous iteration:
 			if (foundInvalidString == true)
 			{
-				LOG_WARNING("Ignoring invalid command in config.cfg:\n%s", line);
+				LOG_WARNING("Ignoring invalid command in %s:\n%s", en::ConfigKeys::k_configFileName, line);
 				foundInvalidString = false;
 			}
 
@@ -356,10 +342,10 @@ namespace en
 		// Handle final malformed std::string:
 		if (foundInvalidString == true)
 		{
-			LOG_WARNING("Ignoring invalid command in config.cfg:\n%s", line);
+			LOG_WARNING("Ignoring invalid command in %s:\n%s", en::ConfigKeys::k_configFileName, line);
 		}
 
-		// We don't count existing config.cfg entries as dirtying the config
+		// We don't count existing entries as dirtying the config
 		m_isDirty = !foundExistingConfig;
 
 		// Now the config has been loaded, populate any remaining entries with default values
@@ -389,11 +375,6 @@ namespace en
 	void Config::InitializeDefaultValues()
 	{
 		bool markDirty = false;
-
-		if (m_renderingAPI == platform::RenderingAPI::RenderingAPI_Count)
-		{
-			m_renderingAPI = platform::RenderingAPI::DX12;
-		}
 		
 		// Window:
 		markDirty |= TrySetValue("windowTitle",					std::string("Saber Engine"),	SettingType::Common);
@@ -445,37 +426,38 @@ namespace en
 
 	void en::Config::SetAPIDefaults()
 	{
-		// We only set these defaults if they're not specified in the (now already loaded) config file. This allows the
-		// config to override these values, if required. We also tag these keys as API-specific (but if they're found in
-		// the config, they're loaded as Common, ensuring they're be saved back out.
-		// Note: std::strings must be passed as std::string objects (not CStrings)
-		auto TryInsertDefault = [&](std::string const& key, auto const& value)
-		{
-			TrySetValue(key, value, SettingType::APISpecific);
-		};		
+		//// We only set these defaults if they're not specified in the (now already loaded) config file. This allows the
+		//// config to override these values, if required. We also tag these keys as API-specific (but if they're found in
+		//// the config, they're loaded as Common, ensuring they're be saved back out.
+		//// Note: std::strings must be passed as std::string objects (not CStrings)
+		//auto TryInsertDefault = [&](std::string const& key, auto const& value)
+		//{
+		//	TrySetValue(key, value, SettingType::APISpecific);
+		//};		
 
-		platform::RenderingAPI const& api = GetRenderingAPI();
-		switch (api)
-		{
-		case platform::RenderingAPI::OpenGL:
-		{
-			// Shaders:
-			TryInsertDefault(en::ConfigKeys::k_shaderDirectoryKey,	std::string(".\\Shaders\\GLSL\\"));
-			// Note: OpenGL only supports double-buffering, so we don't add a k_numBackbuffersKey entry
-		}
-		break;
-		case platform::RenderingAPI::DX12:
-		{
-			TryInsertDefault(en::ConfigKeys::k_shaderDirectoryKey, std::string(".\\Shaders\\HLSL\\"));
-			TryInsertDefault(en::ConfigKeys::k_numBackbuffersKey, 3);
-		}
-		break;
-		default:
-			LOG_ERROR("Config failed to set API Defaults! "
-				"Does the config.cfg file contain a 'set platform \"<API>\" command for a supported API?");
+		//platform::RenderingAPI const& api = GetRenderingAPI();
+		//switch (api)
+		//{
+		//case platform::RenderingAPI::OpenGL:
+		//{
+		//	// Shaders:
+		//	TryInsertDefault(en::ConfigKeys::k_shaderDirectoryKey,	std::string(".\\Shaders\\GLSL\\"));
+		//	// Note: OpenGL only supports double-buffering, so we don't add a k_numBackbuffersKey entry
+		//}
+		//break;
+		//case platform::RenderingAPI::DX12:
+		//{
+		//	TryInsertDefault(en::ConfigKeys::k_shaderDirectoryKey, std::string(".\\Shaders\\HLSL\\"));
+		//	TryInsertDefault(en::ConfigKeys::k_numBackbuffersKey, 3);
+		//}
+		//break;
+		//default:
+		//	LOG_ERROR("Config failed to set API Defaults! "
+		//		"Does the %s file contain a 'set platform \"<API>\" command for a supported API?",
+		//		en::ConfigKeys::k_configFileName);
 
-			throw std::runtime_error("Invalid Rendering API set, cannot set API defaults");
-		}
+		//	throw std::runtime_error("Invalid Rendering API set, cannot set API defaults");
+		//}
 	}
 
 
@@ -581,6 +563,7 @@ namespace en
 			LOG("SaveConfigFile called, but config has not changed. Returning without modifying file on disk");
 			return;
 		}
+		LOG("Saving %s...", en::ConfigKeys::k_configFileName);
 
 		// Create the .\config\ directory, if none exists
 		std::filesystem::path configPath = en::ConfigKeys::k_configDirName;
@@ -609,14 +592,16 @@ namespace en
 				continue;	// Skip API-specific settings
 			}
 
-			if (currentElement.second.first.type() == typeid(std::string) && currentElement.first.find("Input") == std::string::npos)
+			if (currentElement.second.first.type() == typeid(std::string) && 
+				currentElement.first.find("Input") == std::string::npos)
 			{
 				configEntries.emplace_back(ConfigEntry{
 					.m_cmdPrefix = SET_CMD,
 					.m_key = currentElement.first,
 					.m_value = PropertyToConfigString(any_cast<std::string>(currentElement.second.first))});
 			}
-			else if (currentElement.second.first.type() == typeid(char const*) && currentElement.first.find("Input") == std::string::npos)
+			else if (currentElement.second.first.type() == typeid(char const*) && 
+				currentElement.first.find("Input") == std::string::npos)
 			{
 				configEntries.emplace_back(ConfigEntry{
 					.m_cmdPrefix = SET_CMD,
@@ -651,14 +636,16 @@ namespace en
 					.m_key = currentElement.first,
 					.m_value = PropertyToConfigString(any_cast<char>(currentElement.second.first)) });
 			}
-			else if (currentElement.second.first.type() == typeid(std::string) && currentElement.first.find("Input") != std::string::npos)
+			else if (currentElement.second.first.type() == typeid(std::string) && 
+				currentElement.first.find("Input") != std::string::npos)
 			{
 				configEntries.emplace_back(ConfigEntry{
 					.m_cmdPrefix = BIND_CMD,
 					.m_key = currentElement.first,
 					.m_value = PropertyToConfigString(any_cast<std::string>(currentElement.second.first)) });
 			}
-			else if (currentElement.second.first.type() == typeid(char const*) && currentElement.first.find("Input") != std::string::npos)
+			else if (currentElement.second.first.type() == typeid(char const*) && 
+				currentElement.first.find("Input") != std::string::npos)
 			{
 				configEntries.emplace_back(ConfigEntry{
 					.m_cmdPrefix = BIND_CMD,
@@ -683,7 +670,7 @@ namespace en
 		// Write our config to disk:
 		std::ofstream config_ofstream(
 			std::format("{}{}", en::ConfigKeys::k_configDirName, en::ConfigKeys::k_configFileName));
-		config_ofstream << "# SaberEngine config.cfg file:\n";
+		config_ofstream << std::format("# SaberEngine {} file:\n", en::ConfigKeys::k_configFileName).c_str();
 
 		for (ConfigEntry const& currentEntry : configEntries)
 		{
@@ -698,12 +685,6 @@ namespace en
 	{
 		return static_cast<float>(
 			GetValue<int>(en::ConfigKeys::k_windowWidthKey)) / GetValue<int>(en::ConfigKeys::k_windowHeightKey);
-	}
-
-
-	inline const platform::RenderingAPI Config::GetRenderingAPI() const
-	{
-		return m_renderingAPI;
 	}
 
 

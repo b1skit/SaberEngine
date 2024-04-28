@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "Config.h"
+#include "RenderManager.h"
 #include "VertexStreamBuilder.h"
 
 #include "mikktspace.c" // LNK2019 otherwise...
@@ -331,7 +331,7 @@ namespace util
 
 		LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 
-		platform::RenderingAPI const& api = en::Config::Get()->GetRenderingAPI();
+		platform::RenderingAPI const& api = re::RenderManager::Get()->GetRenderingAPI();
 		const bool botLeftZeroZero = api == platform::RenderingAPI::OpenGL ? true : false;
 
 		// Build simple, overlapping UVs, placing the vertices of every triangle in the TL, BL, BR corners of UV space:

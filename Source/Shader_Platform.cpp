@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "Config.h"
+#include "RenderManager.h"
 #include "RootSignature_DX12.h"
 #include "Shader_DX12.h"
 #include "Shader_OpenGL.h"
@@ -11,7 +11,7 @@ namespace platform
 {
 	void platform::Shader::CreatePlatformParams(re::Shader& shader)
 	{
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

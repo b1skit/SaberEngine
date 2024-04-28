@@ -1,10 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "Buffer_Platform.h"
 #include "Buffer.h"
 #include "Buffer_OpenGL.h"
 #include "Buffer_DX12.h"
-#include "Assert.h"
-#include "Config.h"
+#include "RenderManager.h"
 
 
 namespace platform
@@ -14,7 +14,7 @@ namespace platform
 		SEAssert(buffer.GetPlatformParams() == nullptr,
 			"Attempting to create platform params for a buffer that already exists");
 
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

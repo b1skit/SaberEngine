@@ -30,32 +30,68 @@ namespace re
 
 	std::unique_ptr<re::RenderManager> RenderManager::Create()
 	{
-		std::unique_ptr<re::RenderManager> newRenderManager = nullptr;
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
-		switch (api)
+		en::Config* config = en::Config::Get();
+
+		platform::RenderingAPI renderingAPI = platform::RenderingAPI::RenderingAPI_Count;
+		if (config->KeyExists(en::ConfigKeys::k_platformCmdLineArg))
 		{
-		case platform::RenderingAPI::OpenGL:
-		{
-			newRenderManager.reset(new opengl::RenderManager());
+			std::string const& platformParam = config->GetValue<std::string>(en::ConfigKeys::k_platformCmdLineArg);
+
+			if (platformParam.find("opengl") != std::string::npos)
+			{
+				renderingAPI = platform::RenderingAPI::OpenGL;
+			}
+			else if (platformParam.find("dx12") != std::string::npos)
+			{
+				renderingAPI = platform::RenderingAPI::DX12;
+			}
 		}
-		break;
+		else
+		{
+			renderingAPI = platform::RenderingAPI::DX12; // Default when no "-platform <API>" override received
+		}
+
+		std::unique_ptr<re::RenderManager> newRenderManager = nullptr;
+
+		switch (renderingAPI)
+		{
 		case platform::RenderingAPI::DX12:
 		{
+			config->TrySetValue(
+				en::ConfigKeys::k_shaderDirectoryKey,
+				std::string(en::ConfigKeys::k_hlslShaderDirName),
+				en::Config::SettingType::APISpecific);
+
+			config->TrySetValue(
+				en::ConfigKeys::k_numBackbuffersKey,
+				3,
+				en::Config::SettingType::APISpecific);
+
 			newRenderManager.reset(new dx12::RenderManager());
 		}
 		break;
-		default:
+		case platform::RenderingAPI::OpenGL:
 		{
-			SEAssertF("Invalid rendering API argument received");
+			config->TrySetValue(
+				en::ConfigKeys::k_shaderDirectoryKey,
+				std::string(en::ConfigKeys::k_glslShaderDirName),
+				en::Config::SettingType::APISpecific);
+
+			// Note: OpenGL only supports double-buffering, so we don't add a k_numBackbuffersKey entry
+
+			newRenderManager.reset(new opengl::RenderManager());
 		}
+		break;
+		default: SEAssertF("Invalid rendering API value");
 		}
 		
 		return newRenderManager;
 	}
 
 
-	RenderManager::RenderManager()
-		: m_renderFrameNum(0)
+	RenderManager::RenderManager(platform::RenderingAPI renderingAPI)
+		: m_renderingAPI(renderingAPI)
+		, m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -620,7 +656,7 @@ namespace re
 		{
 			ImGui::Indent();
 
-			const bool isDX12 = en::Config::Get()->GetRenderingAPI() == platform::RenderingAPI::DX12;
+			const bool isDX12 = m_renderingAPI == platform::RenderingAPI::DX12;
 			const bool pixGPUCaptureCmdLineEnabled = isDX12 &&
 				en::Config::Get()->KeyExists(en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg);
 			const bool pixCPUCaptureCmdLineEnabled = isDX12 &&

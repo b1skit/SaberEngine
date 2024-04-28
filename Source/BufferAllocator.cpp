@@ -20,7 +20,7 @@ namespace re
 {
 	std::unique_ptr<re::BufferAllocator> BufferAllocator::Create()
 	{
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

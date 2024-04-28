@@ -21,7 +21,8 @@ using Microsoft::WRL::ComPtr;
 namespace dx12
 {
 	RenderManager::RenderManager()
-		: k_numFrames(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_numBackbuffersKey))
+		: re::RenderManager(platform::RenderingAPI::DX12)
+		, k_numFrames(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_numBackbuffersKey))
 	{
 		SEAssert(k_numFrames >= 2 && k_numFrames <= 3, "Invalid number of frames in flight");
 

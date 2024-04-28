@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "Config.h"
+#include "RenderManager.h"
 #include "TextureTarget_Platform.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
@@ -11,7 +11,7 @@ namespace platform
 {
 	void TextureTarget::CreatePlatformParams(re::TextureTarget& texTarget)
 	{
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{
@@ -35,7 +35,7 @@ namespace platform
 
 	void TextureTargetSet::CreatePlatformParams(re::TextureTargetSet& texTarget)
 	{
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

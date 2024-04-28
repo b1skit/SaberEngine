@@ -12,7 +12,7 @@ namespace en
 	// 5) Subscribe to the event anywhere you want to react to the button press
 
 	// Buttons for specific functionality/controls (eg. forward, sprint, quit, etc)
-	// These enums are also converted to strings by a pre-processor macro, and mapped to buttons in the config.cfg
+	// These enums are also converted to strings by a pre-processor macro, and mapped to buttons in the config file
 	enum KeyboardInputButton : uint8_t
 	{
 		InputButton_Forward,
@@ -31,7 +31,7 @@ namespace en
 	};
 
 	// KeyboardInputButton enum names, as strings.
-	// Used to map functionality (eg. forward, sprint, quit, etc) to specific buttons in the config.cfg
+	// Used to map functionality (eg. forward, sprint, quit, etc) to specific buttons in the config file
 	// Note: These MUST be in the same order as the KeyboardInputButton enum
 	const std::string KeyboardInputButtonNames[KeyboardInputButton_Count] =
 	{
@@ -185,7 +185,7 @@ namespace en
 
 	
 
-	// Map strings used in config.cfg files to their SEKeycode enum value
+	// Map strings used in config file to their SEKeycode enum value
 	inline SEKeycode GetSEKeycodeFromName(std::string const& keyname)
 	{
 		static const std::unordered_map<std::string, SEKeycode> SEKeyNamesToKeycodes =

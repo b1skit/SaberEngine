@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "Config.h"
+#include "RenderManager.h"
 #include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
@@ -11,7 +11,7 @@ namespace platform
 {
 	void platform::Texture::CreatePlatformParams(re::Texture& texture)
 	{
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

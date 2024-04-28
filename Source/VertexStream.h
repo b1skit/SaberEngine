@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "HashedDataObject.h"
 #include "IPlatformParams.h"
 

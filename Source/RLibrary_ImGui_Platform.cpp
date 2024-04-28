@@ -1,5 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "Config.h"
+#include "ConfigKeys.h"
+#include "RenderManager.h"
 #include "RLibrary_ImGui_DX12.h"
 #include "RLibrary_ImGui_OpenGL.h"
 #include "RLibrary_ImGui_Platform.h"
@@ -12,7 +13,7 @@ namespace platform
 		SEAssert(imguiLibrary.GetPlatformParams() == nullptr,
 			"Attempting to create platform params for a buffer that already exists");
 
-		const platform::RenderingAPI api = en::Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{
