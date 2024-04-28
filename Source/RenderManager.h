@@ -2,12 +2,12 @@
 #pragma once
 #include "BatchManager.h"
 #include "CommandQueue.h"
-#include "EngineThread.h"
 #include "IEventListener.h"
 #include "Platform.h"
 #include "RenderSystem.h"
 
 #include "Core\Interfaces\IEngineComponent.h"
+#include "Core\Interfaces\IEngineThread.h"
 
 #include "Core\Util\ImGuiUtils.h"
 #include "Core\Util\NBufferedVector.h"
@@ -37,7 +37,7 @@ namespace re
 namespace re
 {
 	class RenderManager
-		: public virtual en::IEngineComponent, public virtual en::EngineThread, public virtual en::IEventListener
+		: public virtual en::IEngineComponent, public virtual en::IEngineThread, public virtual en::IEventListener
 	{
 	public:
 		static RenderManager* Get(); // Singleton functionality
@@ -50,7 +50,7 @@ namespace re
 	public:
 		virtual ~RenderManager() = default;
 
-		// EngineThread interface:
+		// IEngineThread interface:
 		void Lifetime(std::barrier<>* copyBarrier) override;
 
 		// IEventListener interface:

@@ -275,9 +275,6 @@
     <ClCompile Include="InputManager_Win32.cpp">
       <Filter>Source Files\en\win32</Filter>
     </ClCompile>
-    <ClCompile Include="EngineThread.cpp">
-      <Filter>Source Files\en</Filter>
-    </ClCompile>
     <ClCompile Include="Window.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
@@ -678,9 +675,6 @@
     </ClInclude>
     <ClInclude Include="InputManager_Win32.h">
       <Filter>Header Files\en\win32</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineThread.h">
-      <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="Window_Win32.h">
       <Filter>Header Files\en\win32</Filter>

@@ -336,6 +336,7 @@
     <ClInclude Include="ConfigKeys.h" />
     <ClInclude Include="Definitions\KeyConfiguration.h" />
     <ClInclude Include="Interfaces\IEngineComponent.h" />
+    <ClInclude Include="Interfaces\IEngineThread.h" />
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="pch\stdafx.h" />
     <ClInclude Include="PerformanceTimer.h" />
@@ -355,6 +356,7 @@
   <ItemGroup>
     <ClCompile Include="Assert.cpp" />
     <ClCompile Include="Config.cpp" />
+    <ClCompile Include="Interfaces\IEngineThread.cpp" />
     <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="pch\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

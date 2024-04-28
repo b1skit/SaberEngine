@@ -118,14 +118,14 @@ namespace re
 		m_initializeLatch[static_cast<size_t>(SyncType::ReleaseCommander)].arrive_and_wait();
 
 
-		EngineThread::ThreadUpdateParams updateParams{};
+		IEngineThread::ThreadUpdateParams updateParams{};
 
 		m_isRunning = true;
 		while (m_isRunning)
 		{
 			SEBeginCPUEvent("RenderManager frame");
 
-			// Blocks until a new update params is received, or the EngineThread has been signaled to stop
+			// Blocks until a new update params is received, or the IEngineThread has been signaled to stop
 			const bool doUpdate = GetUpdateParams(updateParams);
 			if (!doUpdate)
 			{

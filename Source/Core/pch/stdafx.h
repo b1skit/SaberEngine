@@ -11,6 +11,7 @@
 
 #include <any>
 #include <array>
+#include <barrier>
 #include <cassert>
 #include <chrono>
 #include <cstdlib>
@@ -18,6 +19,7 @@
 #include <fstream>
 #include <future>
 #include <iostream>
+#include <latch>
 #include <queue>
 #include <regex>
 

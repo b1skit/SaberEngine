@@ -4,7 +4,7 @@
 
 namespace en
 {
-	class EngineThread
+	class IEngineThread
 	{
 	public:
 		enum class SyncType
@@ -17,10 +17,10 @@ namespace en
 
 
 	public:
-		EngineThread();
-		EngineThread(EngineThread&&) = default;
-		EngineThread& operator=(EngineThread&&) = default;
-		~EngineThread() = default;
+		IEngineThread();
+		IEngineThread(IEngineThread&&) = default;
+		IEngineThread& operator=(IEngineThread&&) = default;
+		~IEngineThread() = default;
 
 
 	public:
@@ -46,7 +46,7 @@ namespace en
 		std::mutex m_updatesMutex;
 		std::condition_variable m_updatesCV;
 
-		bool GetUpdateParams(EngineThread::ThreadUpdateParams& updateParams);
+		bool GetUpdateParams(IEngineThread::ThreadUpdateParams& updateParams);
 
 
 	protected:
@@ -58,7 +58,7 @@ namespace en
 
 
 	private:
-		EngineThread(EngineThread const&) = delete;
-		EngineThread& operator=(EngineThread const&) = delete;
+		IEngineThread(IEngineThread const&) = delete;
+		IEngineThread& operator=(IEngineThread const&) = delete;
 	};
 }
