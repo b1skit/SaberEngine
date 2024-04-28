@@ -1,14 +1,13 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "EngineApp.h"
-#include "Window.h"
 
 
 #if defined(_DEBUG)
 
 void HandleAssertInternal()
 {
-	en::EngineApp::Get()->GetWindow()->SetRelativeMouseMode(false);
+	::ClipCursor(nullptr);
+	::SetCursor(::LoadCursor(NULL, IDC_ARROW)); // Restore the default arrow icon cursor
 }
 
 #endif
