@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Config.h"
-#include "EngineApp.h"
 #include "Assert.h"
+#include "Config.h"
 #include "Material.h"
 #include "Buffer_OpenGL.h"
 #include "PerformanceTimer.h"
@@ -9,9 +8,11 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
-#include "Core\Util\TextUtils.h"
+#include "ThreadPool.h"
 #include "Texture.h"
 #include "Texture_OpenGL.h"
+
+#include "Core\Util\TextUtils.h"
 
 #include <GL/glew.h> 
 
@@ -192,7 +193,7 @@ namespace
 		for (size_t i = 0; i < opengl::Shader::ShaderType_Count; i++)
 		{
 			const std::string assembledName = shader.GetName() + k_shaderFileExtensions[i];
-			taskFutures[i] = en::EngineApp::GetThreadPool()->EnqueueJob(
+			taskFutures[i] = en::ThreadPool::Get()->EnqueueJob(
 				[&shaderTexts, assembledName, i]()
 				{
 					shaderTexts[i] = LoadShaderText(assembledName);
@@ -375,7 +376,7 @@ namespace opengl
 				shaderFileNames[i] = shaderFileName + k_shaderFileExtensions[i];
 
 				// Queue a job to parse the #include text:
-				processIncludesTaskFutures[i] = en::EngineApp::GetThreadPool()->EnqueueJob(
+				processIncludesTaskFutures[i] = en::ThreadPool::Get()->EnqueueJob(
 					[&shaderFileNames, &shaderFiles, &shaderTextStrings, i]()
 					{
 						const bool result = InsertIncludeText(shaderFiles[i], shaderTextStrings[i]);

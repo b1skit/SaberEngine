@@ -1,7 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <GL/glew.h>
-#include <GL/GL.h> // Must follow glew.h
-
 #include "Assert.h"
 #include "EngineApp.h"
 #include "Window.h"

@@ -3,7 +3,6 @@
 #include "AssetLoadUtils.h"
 #include "CameraComponent.h"
 #include "Config.h"
-#include "EngineApp.h"
 #include "EntityCommands.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
@@ -19,9 +18,10 @@
 #include "ShadowMap.h"
 #include "Texture.h"
 #include "ThreadPool.h"
-#include "Core\Util\ThreadSafeVector.h"
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
+
+#include "Core\Util\ThreadSafeVector.h"
 
 #pragma warning(disable : 4996) // Suppress error C4996 (Caused by use of fopen, strcpy, strncpy in cgltf.h)
 #define CGLTF_IMPLEMENTATION
@@ -236,7 +236,7 @@ namespace
 
 		for (size_t cur = 0; cur < numMaterials; cur++)
 		{
-			matFutures.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob([data, cur, &scene, &sceneRootPath]() 
+			matFutures.emplace_back(en::ThreadPool::Get()->EnqueueJob([data, cur, &scene, &sceneRootPath]() 
 					-> util::ThreadSafeVector<std::future<void>>
 				{
 
@@ -269,7 +269,7 @@ namespace
 					constexpr glm::vec4 missingTextureColor(1.f, 1.f, 1.f, 1.f);
 
 					// MatAlbedo
-					textureFutures.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob(
+					textureFutures.emplace_back(en::ThreadPool::Get()->EnqueueJob(
 						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
 						newMat->SetTexture(0, LoadTextureOrColor(
 							scene,
@@ -281,7 +281,7 @@ namespace
 						}));
 
 					// MatMetallicRoughness
-					textureFutures.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob(
+					textureFutures.emplace_back(en::ThreadPool::Get()->EnqueueJob(
 						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
 						newMat->SetTexture(1, LoadTextureOrColor(
 							scene,
@@ -293,7 +293,7 @@ namespace
 						}));
 
 					// MatNormal
-					textureFutures.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob(
+					textureFutures.emplace_back(en::ThreadPool::Get()->EnqueueJob(
 						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
 						newMat->SetTexture(2, LoadTextureOrColor(
 							scene,
@@ -305,7 +305,7 @@ namespace
 						}));
 
 					// MatOcclusion
-					textureFutures.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob(
+					textureFutures.emplace_back(en::ThreadPool::Get()->EnqueueJob(
 						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
 						newMat->SetTexture(3, LoadTextureOrColor(
 							scene,
@@ -317,7 +317,7 @@ namespace
 						}));
 
 					// MatEmissive
-					textureFutures.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob(
+					textureFutures.emplace_back(en::ThreadPool::Get()->EnqueueJob(
 						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
 						newMat->SetTexture(4, LoadTextureOrColor(
 							scene,
@@ -892,7 +892,7 @@ namespace
 		}
 
 		// Set the SceneNode transform:
-		loadTasks.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob([current, parentSceneNode]()
+		loadTasks.emplace_back(en::ThreadPool::Get()->EnqueueJob([current, parentSceneNode]()
 		{
 			SetTransformValues(current, parentSceneNode);
 		}));
@@ -901,21 +901,21 @@ namespace
 		if (current->mesh)
 		{
 			loadTasks.emplace_back(
-				en::EngineApp::GetThreadPool()->EnqueueJob([&sceneRootPath, &scene, current, parentSceneNode]()
+				en::ThreadPool::Get()->EnqueueJob([&sceneRootPath, &scene, current, parentSceneNode]()
 			{
 				LoadMeshGeometry(sceneRootPath, scene, current, parentSceneNode);
 			}));
 		}
 		if (current->light)
 		{
-			loadTasks.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob([&scene, current, parentSceneNode]()
+			loadTasks.emplace_back(en::ThreadPool::Get()->EnqueueJob([&scene, current, parentSceneNode]()
 			{
 				LoadAddLight(scene, current, parentSceneNode);
 			}));
 		}
 		if (current->camera)
 		{
-			loadTasks.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob([&scene, current, parentSceneNode]()
+			loadTasks.emplace_back(en::ThreadPool::Get()->EnqueueJob([&scene, current, parentSceneNode]()
 			{
 				LoadAddCamera(scene, parentSceneNode, current);
 			}));
@@ -1007,19 +1007,19 @@ namespace fr
 		std::vector<std::future<void>> earlyLoadTasks;
 
 		earlyLoadTasks.emplace_back( 
-			en::EngineApp::GetThreadPool()->EnqueueJob([this]() {
+			en::ThreadPool::Get()->EnqueueJob([this]() {
 				GenerateDefaultResources(*this);
 			}));
 
 		// Add a default camera to start:
 		earlyLoadTasks.emplace_back(
-			en::EngineApp::GetThreadPool()->EnqueueJob([this]() {
+			en::ThreadPool::Get()->EnqueueJob([this]() {
 				LoadAddCamera(*this, entt::null, nullptr);
 			}));
 
 		// Load the IBL/skybox HDRI:
 		earlyLoadTasks.emplace_back(
-			en::EngineApp::GetThreadPool()->EnqueueJob([this, &sceneRootPath]() {
+			en::ThreadPool::Get()->EnqueueJob([this, &sceneRootPath]() {
 				LoadIBLTexture(sceneRootPath, *this);
 			}));
 

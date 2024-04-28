@@ -1,11 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <d3dx12.h>
-#include <dxgi1_6.h>
-
+#include "Assert.h"
 #include "Config.h"
 #include "Context_DX12.h"
 #include "EngineApp.h"
-#include "Assert.h"
 #include "Debug_DX12.h"
 #include "RenderManager.h"
 #include "SwapChain_DX12.h"
@@ -14,6 +11,9 @@
 #include "Texture.h"
 #include "Texture_DX12.h"
 #include "Window_Win32.h"
+
+#include <d3dx12.h>
+#include <dxgi1_6.h>
 
 using Microsoft::WRL::ComPtr;
 

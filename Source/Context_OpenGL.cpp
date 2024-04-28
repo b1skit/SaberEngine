@@ -4,13 +4,14 @@
 #include "Context_OpenGL.h"
 #include "Context.h"
 #include "EngineApp.h"
-#include "Core\Util\HashUtils.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "SysInfo_OpenGL.h"
 #include "VertexStream.h"
 #include "VertexStream_OpenGL.h"
 #include "Window_Win32.h"
+
+#include "Core\Util\HashUtils.h"
 
 #include <GL/glew.h>
 #include <GL/wglew.h> // Windows-specific GL functions and macros

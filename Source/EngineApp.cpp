@@ -11,6 +11,7 @@
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
+#include "ThreadPool.h"
 #include "UIManager.h"
 
 
@@ -42,7 +43,7 @@ namespace en
 
 		LOG("EngineApp starting...");
 
-		m_threadPool.Startup();
+		en::ThreadPool::Get()->Startup();
 
 		// Start the logging thread:
 		en::LogManager::Get()->Startup();
@@ -66,7 +67,7 @@ namespace en
 
 		// Render thread:
 		re::RenderManager* renderManager = re::RenderManager::Get();
-		m_threadPool.EnqueueJob([&]()
+		en::ThreadPool::Get()->EnqueueJob([&]()
 			{
 				en::ThreadPool::NameCurrentThread(L"Render Thread");
 				renderManager->Lifetime(m_copyBarrier.get()); 
@@ -214,7 +215,7 @@ namespace en
 
 		en::LogManager::Get()->Shutdown(); // Destroy last
 
-		m_threadPool.Stop();
+		en::ThreadPool::Get()->Stop();
 
 		SEEndCPUEvent();
 	}

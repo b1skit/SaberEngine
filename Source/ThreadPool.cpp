@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "ThreadPool.h"
 #include "Assert.h"
+#include "ThreadPool.h"
 
 
 namespace en
@@ -9,6 +9,13 @@ namespace en
 	{
 		m_impl = std::move(other.m_impl);
 		return *this;
+	}
+
+
+	ThreadPool* ThreadPool::Get()
+	{
+		static std::unique_ptr<en::ThreadPool> instance = std::make_unique<en::ThreadPool>();
+		return instance.get();
 	}
 
 

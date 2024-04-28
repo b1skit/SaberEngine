@@ -1,12 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "EngineApp.h"
-#include "Core\Util\ImGuiUtils.h"
 #include "GraphicsSystem.h"
 #include "ProfilingMarkers.h"
 #include "RenderSystem.h"
 #include "RenderSystemDesc.h"
 #include "SceneManager.h"
+#include "ThreadPool.h"
 
+#include "Core\Util\ImGuiUtils.h"
 
 using GSName = re::RenderSystemDescription::GSName;
 using SrcDstNamePairs = re::RenderSystemDescription::SrcDstNamePairs;
@@ -434,7 +434,7 @@ namespace re
 				}
 				else
 				{
-					updateStepFutures.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob([&]()
+					updateStepFutures.emplace_back(en::ThreadPool::Get()->EnqueueJob([&]()
 						{
 							ExecuteUpdateStep(currentStep);
 						}));

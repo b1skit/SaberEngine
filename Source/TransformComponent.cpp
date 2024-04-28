@@ -1,9 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "EngineApp.h"
 #include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "RenderDataManager.h"
 #include "RenderManager.h"
+#include "ThreadPool.h"
 #include "TransformComponent.h"
 
 
@@ -69,7 +69,7 @@ namespace fr
 		// DFS walk down our Transform hierarchy, recomputing each Transform in turn. The goal here is to minimize the
 		// (re)computation required when we copy Transforms for the Render thread
 
-		taskFuturesOut.emplace_back(en::EngineApp::GetThreadPool()->EnqueueJob(
+		taskFuturesOut.emplace_back(en::ThreadPool::Get()->EnqueueJob(
 			[rootNode]()
 			{
 				std::stack<fr::Transform*> transforms;

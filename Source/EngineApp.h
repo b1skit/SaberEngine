@@ -1,10 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include "LogManager.h"
 #include "EngineComponent.h"
 #include "EventListener.h"
-#include "ThreadPool.h"
+#include "LogManager.h"
 #include "Window.h"
 
 
@@ -14,7 +12,7 @@ namespace en
 	{
 	public: // Singleton functionality:	
 		static inline EngineApp* Get() { return m_engineApp; }
-		static inline en::ThreadPool* GetThreadPool() { return &m_engineApp->m_threadPool; }
+
 
 	public:
 		EngineApp();
@@ -44,8 +42,6 @@ namespace en
 		bool m_isRunning;
 
 		uint64_t m_frameNum;
-
-		en::ThreadPool m_threadPool;
 
 		std::unique_ptr<en::Window> m_window;
 

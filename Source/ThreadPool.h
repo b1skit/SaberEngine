@@ -47,7 +47,12 @@ namespace en
 	class ThreadPool
 	{
 	public:
+		static ThreadPool* Get(); // Singleton functionality
+
+
+	public:
 		ThreadPool();
+
 		ThreadPool(ThreadPool&&) = default;
 		ThreadPool& operator=(ThreadPool&&) = default;
 		~ThreadPool() = default;
@@ -75,8 +80,7 @@ namespace en
 		std::vector<std::thread> m_workerThreads;
 
 
-	private:
-		// No moving or copying allowed
+	private: // No copying allowed
 		ThreadPool(ThreadPool const&) = delete;
 		ThreadPool& operator=(ThreadPool const&) = delete;		
 	};

@@ -3,7 +3,6 @@
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
 #include "Config.h"
-#include "EngineApp.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
