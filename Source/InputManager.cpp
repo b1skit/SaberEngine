@@ -1,10 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Config.h"
 #include "EventManager.h"
 #include "InputManager.h"
 #include "InputManager_Platform.h"
 
 #include "Core\Assert.h"
+#include "Core\Config.h"
 #include "Core\Definitions\KeyConfiguration.h"
 
 

@@ -2,7 +2,7 @@
 #pragma once
 #include "Core\Assert.h"
 #include "CommandQueue.h"
-#include "EngineComponent.h"
+#include "IEngineComponent.h"
 #include "EntityCommands.h"
 #include "EventListener.h"
 #include "RelationshipComponent.h"
@@ -13,13 +13,13 @@ namespace fr
 	class BoundsComponent;
 
 
-	class EntityManager final : public virtual en::EngineComponent, public virtual en::IEventListener
+	class EntityManager final : public virtual en::IEngineComponent, public virtual en::IEventListener
 	{
 	public:
 		static EntityManager* Get(); // Singleton functionality
 
 
-	public: // EngineComponent interface:
+	public: // IEngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
 

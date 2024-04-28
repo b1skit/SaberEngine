@@ -577,7 +577,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="NamedObject.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineApp.h" />
-    <ClInclude Include="EngineComponent.h" />
+    <ClInclude Include="IEngineComponent.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="SceneNodeConcept.h" />

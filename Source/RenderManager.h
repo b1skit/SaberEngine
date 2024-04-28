@@ -2,7 +2,7 @@
 #pragma once
 #include "BatchManager.h"
 #include "CommandQueue.h"
-#include "EngineComponent.h"
+#include "IEngineComponent.h"
 #include "EngineThread.h"
 #include "EventListener.h"
 #include "Platform.h"
@@ -36,7 +36,7 @@ namespace re
 namespace re
 {
 	class RenderManager
-		: public virtual en::EngineComponent, public virtual en::EngineThread, public virtual en::IEventListener
+		: public virtual en::IEngineComponent, public virtual en::EngineThread, public virtual en::IEventListener
 	{
 	public:
 		static RenderManager* Get(); // Singleton functionality
@@ -128,7 +128,7 @@ namespace re
 
 
 	private:
-		// EngineComponent interface:
+		// IEngineComponent interface:
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 		void Startup() override;
 		void Shutdown() override;

@@ -1,13 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "EngineComponent.h"
+#include "IEngineComponent.h"
 #include "EventListener.h"
+
 #include "Core\Definitions\KeyConfiguration.h"
 
 
 namespace en
 {
-	class InputManager final : public virtual en::EngineComponent, public virtual en::IEventListener
+	class InputManager final : public virtual en::IEngineComponent, public virtual en::IEventListener
 	{
 	public:
 		static InputManager* Get(); // Singleton functionality
@@ -24,7 +25,7 @@ namespace en
 		static bool const& GetMouseInputState(definitions::MouseInputButton button);
 		static float GetRelativeMouseInput(definitions::MouseInputAxis axis);
 
-		// EngineComponent interface:
+		// IEngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
 		void Update(uint64_t frameNum, double stepTimeMs) override;

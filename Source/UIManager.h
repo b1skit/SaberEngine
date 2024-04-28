@@ -1,12 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "EngineComponent.h"
+#include "IEngineComponent.h"
 #include "EventListener.h"
 
 
 namespace fr
 {
-	class UIManager : public virtual en::EngineComponent, public virtual en::IEventListener
+	class UIManager : public virtual en::IEngineComponent, public virtual en::IEventListener
 	{
 	public:
 		static UIManager* Get(); // Singleton functionality
@@ -17,7 +17,7 @@ namespace fr
 		~UIManager() = default;
 
 
-	public: // EngineComponent interface:
+	public: // IEngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
 		void Update(uint64_t frameNum, double stepTimeMs) override;

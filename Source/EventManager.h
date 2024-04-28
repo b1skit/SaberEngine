@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "EngineComponent.h"
+#include "IEngineComponent.h"
 
 
 namespace en
@@ -16,7 +16,7 @@ namespace re
 
 namespace en
 {
-	class EventManager final : public virtual en::EngineComponent
+	class EventManager final : public virtual en::IEngineComponent
 	{
 	public:
 		enum EventType : uint8_t
@@ -78,7 +78,7 @@ namespace en
 		EventManager& operator=(EventManager&&) = default;
 		~EventManager() = default;
 		
-		// EngineComponent interface:
+		// IEngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
 		void Update(uint64_t frameNum, double stepTimeMs) override;

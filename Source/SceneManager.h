@@ -1,13 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "EngineComponent.h"
+#include "IEngineComponent.h"
 #include "EventListener.h"
 #include "SceneData.h"
 
 
 namespace fr
 {
-	class SceneManager final : public virtual en::EngineComponent
+	class SceneManager final : public virtual en::IEngineComponent
 	{
 	public: // Helper for identifying the scene render system
 		static constexpr char const* k_sceneRenderSystemName = "Scene";
@@ -25,7 +25,7 @@ namespace fr
 		SceneManager& operator=(SceneManager&&) = default;
 		~SceneManager() = default;
 
-		// EngineComponent interface:
+		// IEngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
 		void Update(uint64_t frameNum, double stepTimeMs) override;

@@ -589,7 +589,7 @@
     <ClInclude Include="RenderManager_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="EngineComponent.h">
+    <ClInclude Include="IEngineComponent.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="EventListener.h">

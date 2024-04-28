@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "EngineComponent.h"
+#include "IEngineComponent.h"
 #include "EventListener.h"
 #include "Core\LogManager.h"
 #include "Window.h"
@@ -8,7 +8,7 @@
 
 namespace en
 {
-	class EngineApp final : public virtual en::EngineComponent, public virtual en::IEventListener
+	class EngineApp final : public virtual en::IEngineComponent, public virtual en::IEventListener
 	{
 	public: // Singleton functionality:	
 		static inline EngineApp* Get() { return m_engineApp; }
