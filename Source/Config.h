@@ -48,7 +48,7 @@ namespace en
 		float GetWindowAspectRatio() const; // Compute the aspect ratio: width / height
 
 		const platform::RenderingAPI GetRenderingAPI() const;
-		static constexpr char const* RenderingAPIToCStr(platform::RenderingAPI);
+		
 
 	private:
 		template<typename T>
@@ -161,18 +161,6 @@ namespace en
 	inline bool Config::TrySetValue(char const* key, T value, SettingType settingType /*= SettingType::Common*/)
 	{
 		return TrySetValue(std::string(key), value, settingType);
-	}
-
-
-	inline constexpr char const* Config::RenderingAPIToCStr(platform::RenderingAPI renderingAPI)
-	{
-		switch (renderingAPI)
-		{
-		case platform::RenderingAPI::OpenGL: return "OpenGL";
-		case platform::RenderingAPI::DX12: return "DX12";
-		default: SEAssertF("Invalid rendering API");
-			return "INVALID";
-		}
 	}
 }
 

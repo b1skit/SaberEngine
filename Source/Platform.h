@@ -10,8 +10,7 @@ namespace platform
 		OpenGL,
 		RenderingAPI_Count
 	};
+	extern constexpr char const* RenderingAPIToCStr(platform::RenderingAPI);
 
-
-	// Configure API-specific bindings:
-	extern bool RegisterPlatformFunctions();
+	bool RegisterPlatformFunctions(); // Configure API-specific bindings
 }

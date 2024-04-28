@@ -102,7 +102,7 @@ namespace re
 					en::Config::Get()->GetValueAsString(en::ConfigKeys::k_documentsFolderPathKey),
 					en::ConfigKeys::k_renderDocCaptureFolderName,
 					en::ConfigKeys::k_captureTitle,
-					en::Config::RenderingAPIToCStr(en::Config::Get()->GetRenderingAPI()),
+					platform::RenderingAPIToCStr(en::Config::Get()->GetRenderingAPI()),
 					util::GetTimeAndDateAsString());
 				m_renderDocApi->SetCaptureFilePathTemplate(renderDocCapturePath.c_str());
 			}
