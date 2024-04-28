@@ -69,7 +69,7 @@ namespace fr
 		// DFS walk down our Transform hierarchy, recomputing each Transform in turn. The goal here is to minimize the
 		// (re)computation required when we copy Transforms for the Render thread
 
-		taskFuturesOut.emplace_back(en::ThreadPool::Get()->EnqueueJob(
+		taskFuturesOut.emplace_back(core::ThreadPool::Get()->EnqueueJob(
 			[rootNode]()
 			{
 				std::stack<fr::Transform*> transforms;

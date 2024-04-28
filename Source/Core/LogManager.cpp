@@ -154,11 +154,11 @@ namespace
 }
 
 
-namespace en
+namespace core
 {
 	LogManager* LogManager::Get()
 	{
-		static std::unique_ptr<en::LogManager> instance = std::make_unique<en::LogManager>();
+		static std::unique_ptr<core::LogManager> instance = std::make_unique<core::LogManager>();
 		return instance.get();
 	}
 
@@ -176,10 +176,10 @@ namespace en
 
 		m_isRunning = true; // Start running *before* we kick off a thread
 
-		en::ThreadPool::Get()->EnqueueJob([&]()
+		core::ThreadPool::Get()->EnqueueJob([&]()
 			{
-				en::ThreadPool::NameCurrentThread(L"LogManager Thread");
-				en::LogManager::Get()->Run(isSystemConsoleWindowEnabled);
+				core::ThreadPool::NameCurrentThread(L"LogManager Thread");
+				core::LogManager::Get()->Run(isSystemConsoleWindowEnabled);
 			});
 	}
 

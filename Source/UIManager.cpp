@@ -545,7 +545,7 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				en::LogManager::Get()->ShowImGuiWindow(&s_show[Show::LogConsole]);
+				core::LogManager::Get()->ShowImGuiWindow(&s_show[Show::LogConsole]);
 			};
 		if (s_show[Show::LogConsole])
 		{

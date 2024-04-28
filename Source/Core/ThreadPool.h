@@ -2,7 +2,7 @@
 #pragma once
 
 
-namespace en
+namespace core
 {
 	class FunctionWrapper
 	{

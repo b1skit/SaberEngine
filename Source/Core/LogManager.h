@@ -8,7 +8,7 @@ namespace
 	struct ImGuiLogWindow;
 }
 
-namespace en
+namespace core
 {
 	class LogManager final
 	{
@@ -379,6 +379,6 @@ namespace en
 
 // Log macros:
 // ------------------------------------------------
-#define LOG(msg, ...)			en::LogManager::Log(msg, __VA_ARGS__);
-#define LOG_WARNING(msg, ...)	en::LogManager::LogWarning(msg, __VA_ARGS__);
-#define LOG_ERROR(msg, ...)		en::LogManager::LogError(msg, __VA_ARGS__);
+#define LOG(msg, ...)			core::LogManager::Log(msg, __VA_ARGS__);
+#define LOG_WARNING(msg, ...)	core::LogManager::LogWarning(msg, __VA_ARGS__);
+#define LOG_ERROR(msg, ...)		core::LogManager::LogError(msg, __VA_ARGS__);

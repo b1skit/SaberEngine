@@ -193,7 +193,7 @@ namespace
 		for (size_t i = 0; i < opengl::Shader::ShaderType_Count; i++)
 		{
 			const std::string assembledName = shader.GetName() + k_shaderFileExtensions[i];
-			taskFutures[i] = en::ThreadPool::Get()->EnqueueJob(
+			taskFutures[i] = core::ThreadPool::Get()->EnqueueJob(
 				[&shaderTexts, assembledName, i]()
 				{
 					shaderTexts[i] = LoadShaderText(assembledName);
@@ -376,7 +376,7 @@ namespace opengl
 				shaderFileNames[i] = shaderFileName + k_shaderFileExtensions[i];
 
 				// Queue a job to parse the #include text:
-				processIncludesTaskFutures[i] = en::ThreadPool::Get()->EnqueueJob(
+				processIncludesTaskFutures[i] = core::ThreadPool::Get()->EnqueueJob(
 					[&shaderFileNames, &shaderFiles, &shaderTextStrings, i]()
 					{
 						const bool result = InsertIncludeText(shaderFiles[i], shaderTextStrings[i]);

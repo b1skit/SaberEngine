@@ -34,7 +34,7 @@ namespace en
 	{
 		m_engineApp = this;
 		m_copyBarrier = std::make_unique<std::barrier<>>(k_numSystemThreads);
-		en::ThreadPool::NameCurrentThread(L"Main Thread");
+		core::ThreadPool::NameCurrentThread(L"Main Thread");
 	}
 
 
@@ -44,10 +44,10 @@ namespace en
 
 		LOG("EngineApp starting...");
 
-		en::ThreadPool::Get()->Startup();
+		core::ThreadPool::Get()->Startup();
 
 		// Start the logging thread:
-		en::LogManager::Get()->Startup(
+		core::LogManager::Get()->Startup(
 			en::Config::Get()->KeyExists(en::ConfigKeys::k_showSystemConsoleWindowCmdLineArg));
 
 		// Create a window:
@@ -69,9 +69,9 @@ namespace en
 
 		// Render thread:
 		re::RenderManager* renderManager = re::RenderManager::Get();
-		en::ThreadPool::Get()->EnqueueJob([&]()
+		core::ThreadPool::Get()->EnqueueJob([&]()
 			{
-				en::ThreadPool::NameCurrentThread(L"Render Thread");
+				core::ThreadPool::NameCurrentThread(L"Render Thread");
 				renderManager->Lifetime(m_copyBarrier.get()); 
 			});
 		renderManager->ThreadStartup(); // Initializes context
@@ -107,7 +107,7 @@ namespace en
 		LOG("\nEngineApp: Starting main game loop\n");
 
 		en::EventManager* eventManager = en::EventManager::Get();
-		en::LogManager* logManager = en::LogManager::Get();
+		core::LogManager* logManager = core::LogManager::Get();
 		en::InputManager* inputManager = en::InputManager::Get();
 		fr::EntityManager* entityManager = fr::EntityManager::Get();
 		fr::SceneManager* sceneManager = fr::SceneManager::Get();
@@ -215,9 +215,9 @@ namespace en
 
 		m_window->Destroy();
 
-		en::LogManager::Get()->Shutdown(); // Destroy last
+		core::LogManager::Get()->Shutdown(); // Destroy last
 
-		en::ThreadPool::Get()->Stop();
+		core::ThreadPool::Get()->Stop();
 
 		SEEndCPUEvent();
 	}

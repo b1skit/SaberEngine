@@ -3,7 +3,7 @@
 #include "ThreadPool.h"
 
 
-namespace en
+namespace core
 {
 	FunctionWrapper& FunctionWrapper::operator=(FunctionWrapper&& other)
 	{
@@ -14,7 +14,7 @@ namespace en
 
 	ThreadPool* ThreadPool::Get()
 	{
-		static std::unique_ptr<en::ThreadPool> instance = std::make_unique<en::ThreadPool>();
+		static std::unique_ptr<core::ThreadPool> instance = std::make_unique<core::ThreadPool>();
 		return instance.get();
 	}
 

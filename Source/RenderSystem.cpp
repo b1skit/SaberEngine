@@ -434,7 +434,7 @@ namespace re
 				}
 				else
 				{
-					updateStepFutures.emplace_back(en::ThreadPool::Get()->EnqueueJob([&]()
+					updateStepFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob([&]()
 						{
 							ExecuteUpdateStep(currentStep);
 						}));
