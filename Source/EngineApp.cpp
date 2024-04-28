@@ -21,7 +21,7 @@ namespace
 
 namespace en
 {
-	EngineApp*	EngineApp::m_coreEngine = nullptr;
+	EngineApp*	EngineApp::m_engineApp = nullptr;
 
 
 	EngineApp::EngineApp()
@@ -30,7 +30,7 @@ namespace en
 		, m_frameNum(0)
 		, m_window(nullptr)
 	{
-		m_coreEngine = this;
+		m_engineApp = this;
 		m_copyBarrier = std::make_unique<std::barrier<>>(k_numSystemThreads);
 		en::ThreadPool::NameCurrentThread(L"Main Thread");
 	}
@@ -101,7 +101,7 @@ namespace en
 	// Main game loop
 	void EngineApp::Run()
 	{
-		LOG("\nCoreEngine: Starting main game loop\n");
+		LOG("\nEngineApp: Starting main game loop\n");
 
 		en::EventManager* eventManager = en::EventManager::Get();
 		en::LogManager* logManager = en::LogManager::Get();

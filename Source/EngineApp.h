@@ -13,8 +13,8 @@ namespace en
 	class EngineApp final : public virtual en::EngineComponent, public virtual en::IEventListener
 	{
 	public: // Singleton functionality:	
-		static inline EngineApp* Get() { return m_coreEngine; }
-		static inline en::ThreadPool* GetThreadPool() { return &m_coreEngine->m_threadPool; }
+		static inline EngineApp* Get() { return m_engineApp; }
+		static inline en::ThreadPool* GetThreadPool() { return &m_engineApp->m_threadPool; }
 
 	public:
 		EngineApp();
@@ -53,7 +53,7 @@ namespace en
 		
 
 	private: 
-		static EngineApp* m_coreEngine;
+		static EngineApp* m_engineApp;
 
 
 	private:

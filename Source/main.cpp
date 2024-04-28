@@ -51,11 +51,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LOG("\nWelcome to the Saber Engine!\n");
 
-	en::EngineApp m_coreEngine;
+	en::EngineApp m_engineApp;
 
-	m_coreEngine.Startup();
-	m_coreEngine.Run();
-	m_coreEngine.Shutdown();
+	m_engineApp.Startup();
+	m_engineApp.Run();
+	m_engineApp.Shutdown();
 
 	LOG("\nGoodbye!\n");
 
