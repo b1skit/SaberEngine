@@ -1,8 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "IEventListener.h"
-#include "Core\LogManager.h"
 #include "Window.h"
+
+#include "Core\LogManager.h"
 
 #include "Core\Interfaces\IEngineComponent.h"
 

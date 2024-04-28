@@ -1,19 +1,18 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Config.h"
 #include "EngineApp.h"
 #include "EntityManager.h"
 #include "EventManager.h"
 #include "InputManager.h"
-#include "Platform.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
-#include "Core\ThreadPool.h"
 #include "UIManager.h"
 
 #include "Core\Assert.h"
+#include "Core\Config.h"
 #include "Core\LogManager.h"
 #include "Core\PerformanceTimer.h"
+#include "Core\ThreadPool.h"
 
 
 namespace
