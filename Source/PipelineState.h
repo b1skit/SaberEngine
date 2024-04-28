@@ -1,11 +1,11 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "HashedDataObject.h"
+#include "Core\Interfaces\IHashedDataObject.h"
 
 
 namespace re
 {
-	class PipelineState : public en::HashedDataObject
+	class PipelineState : public core::IHashedDataObject
 	{
 	public:
 		PipelineState();
@@ -16,7 +16,7 @@ namespace re
 		~PipelineState() = default;
 		
 
-		uint64_t GetPipelineStateDataHash() const; // Note: Use this instead of HashedDataObject::GetDataHash()
+		uint64_t GetPipelineStateDataHash() const; // Note: Use this instead of IHashedDataObject::GetDataHash()
 
 	private:
 		void ComputeDataHash() override;

@@ -4,15 +4,15 @@
 #include "Core\Util\HashUtils.h"
 
 
-namespace en
+namespace core
 {
-	class HashedDataObject
+	class IHashedDataObject
 	{
 	protected:
 		virtual void ComputeDataHash() = 0; // Should be called once the implementer is fully initialized
 
 	public:
-		HashedDataObject() : m_dataHash(0) {}
+		IHashedDataObject() : m_dataHash(0) {}
 
 	public:
 		uint64_t GetDataHash() const;
@@ -34,13 +34,13 @@ namespace en
 	};
 
 
-	inline uint64_t HashedDataObject::GetDataHash() const
+	inline uint64_t IHashedDataObject::GetDataHash() const
 	{
 		return m_dataHash;
 	}
 
 
-	inline void HashedDataObject::AddDataBytesToHash(void const* const data, size_t numBytes)
+	inline void IHashedDataObject::AddDataBytesToHash(void const* const data, size_t numBytes)
 	{
 		SEAssert(data != nullptr && numBytes > 0, "Invalid data for hash");
 
@@ -64,21 +64,21 @@ namespace en
 	}
 
 
-	inline void HashedDataObject::AddDataBytesToHash(std::string const& str)
+	inline void IHashedDataObject::AddDataBytesToHash(std::string const& str)
 	{
 		AddDataBytesToHash(std::hash<std::string>{}(str));
 	}
 
 
 	template<typename T>
-	inline void HashedDataObject::AddDataBytesToHash(T const& data)
+	inline void IHashedDataObject::AddDataBytesToHash(T const& data)
 	{
 		AddDataBytesToHash(&data, sizeof(T));
 	}
 
 
 	template<typename T>
-	inline void HashedDataObject::AddDataBytesToHash(std::vector<T> const& dataVec)
+	inline void IHashedDataObject::AddDataBytesToHash(std::vector<T> const& dataVec)
 	{
 		for (T const& t : dataVec)
 		{
@@ -87,7 +87,7 @@ namespace en
 	}
 
 
-	inline void HashedDataObject::ResetDataHash()
+	inline void IHashedDataObject::ResetDataHash()
 	{
 		m_dataHash = 0;
 	}

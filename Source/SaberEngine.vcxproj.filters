@@ -610,9 +610,6 @@
     <ClInclude Include="BufferAllocator.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
-    <ClInclude Include="HashedDataObject.h">
-      <Filter>Header Files\en</Filter>
-    </ClInclude>
     <ClInclude Include="EntityManager.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>

@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Core\Assert.h"
-#include "HashedDataObject.h"
+#include "Core\Interfaces\IHashedDataObject.h"
 #include "IPlatformParams.h"
 #include "Texture.h"
 #include "Core\Interfaces\INamedObject.h"
@@ -201,7 +201,7 @@ namespace re
 
 
 	// Collection of render target textures
-	class TextureTargetSet final : public core::INamedObject, public en::HashedDataObject
+	class TextureTargetSet final : public core::INamedObject, public core::IHashedDataObject
 	{
 	public:
 		struct PlatformParams : public re::IPlatformParams
@@ -263,7 +263,7 @@ namespace re
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 		
-		// Commits and make immutable, then computes the data hash. Use this instead of HashedDataObject::GetDataHash
+		// Commits and make immutable, then computes the data hash. Use this instead of IHashedDataObject::GetDataHash
 		uint64_t GetTargetSetSignature(); 
 		uint64_t GetTargetSetSignature() const; // Used 
 
@@ -274,7 +274,7 @@ namespace re
 
 	private:
 		void RecomputeNumColorTargets();
-		void ComputeDataHash() override; // HashedDataObject interface
+		void ComputeDataHash() override; // IHashedDataObject interface
 
 
 	private:

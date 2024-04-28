@@ -2,7 +2,7 @@
 #pragma once
 
 #include "IPlatformParams.h"
-#include "HashedDataObject.h"
+#include "Core\Interfaces\IHashedDataObject.h"
 #include "Material.h"
 #include "Core\Interfaces\INamedObject.h"
 #include "VertexStream.h"
@@ -10,7 +10,7 @@
 
 namespace gr
 {
-	class MeshPrimitive final : public virtual core::INamedObject, public virtual en::HashedDataObject
+	class MeshPrimitive final : public virtual core::INamedObject, public virtual core::IHashedDataObject
 	{
 	public:
 		struct PlatformParams : public re::IPlatformParams

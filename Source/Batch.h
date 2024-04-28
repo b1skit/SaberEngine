@@ -1,10 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "HashedDataObject.h"
 #include "MeshPrimitive.h"
 #include "Shader_Platform.h"
 #include "Texture.h"
 #include "VertexStream.h"
+
+#include "Core\Interfaces\IHashedDataObject.h"
 
 
 namespace gr
@@ -22,7 +23,7 @@ namespace re
 
 namespace re
 {
-	class Batch final : public virtual en::HashedDataObject
+	class Batch final : public virtual core::IHashedDataObject
 	{
 	public:
 		enum class Lifetime : bool

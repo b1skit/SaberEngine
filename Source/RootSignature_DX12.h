@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "HashedDataObject.h"
+#include "Core\Interfaces\IHashedDataObject.h"
 
 #include <wrl.h>
 #include <d3d12.h>

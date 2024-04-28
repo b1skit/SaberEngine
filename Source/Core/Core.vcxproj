@@ -338,6 +338,7 @@
     <ClInclude Include="Definitions\KeyConfiguration.h" />
     <ClInclude Include="Interfaces\IEngineComponent.h" />
     <ClInclude Include="Interfaces\IEngineThread.h" />
+    <ClInclude Include="Interfaces\IHashedDataObject.h" />
     <ClInclude Include="Interfaces\INamedObject.h" />
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="pch\stdafx.h" />

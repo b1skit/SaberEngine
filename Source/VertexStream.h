@@ -1,12 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "HashedDataObject.h"
+#include "Core\Interfaces\IHashedDataObject.h"
 #include "IPlatformParams.h"
 
 
 namespace re
 {
-	class VertexStream : public virtual en::HashedDataObject
+	class VertexStream : public virtual core::IHashedDataObject
 	{
 	public:
 		struct PlatformParams : public re::IPlatformParams
