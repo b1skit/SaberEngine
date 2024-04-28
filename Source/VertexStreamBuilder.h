@@ -1,9 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "MeshPrimitive.h"
 
 #include "mikktspace.h"
-
-#include "MeshPrimitive.h"
 
 
 // Enable this if the UV (0,0) origin is in the top-left of the image. It will negate the sign packed into tangent.w

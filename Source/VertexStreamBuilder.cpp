@@ -1,7 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
 #include "RenderManager.h"
 #include "VertexStreamBuilder.h"
+
+#include "Core\Assert.h"
 
 #include "mikktspace.c" // LNK2019 otherwise...
 #include "weldmesh.h"

@@ -364,7 +364,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">stdafx.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="PerformanceTimer.cpp" />
     <ClCompile Include="PipelineState.cpp" />
     <ClCompile Include="PipelineState_DX12.cpp" />
     <ClCompile Include="RelationshipComponent.cpp" />
@@ -505,7 +504,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Buffer_OpenGL.h" />
     <ClInclude Include="Buffer_Platform.h" />
     <ClInclude Include="pch\stdafx.h" />
-    <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="PipelineState_DX12.h" />
     <ClInclude Include="ProfilingMarkers.h" />

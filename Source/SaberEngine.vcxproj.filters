@@ -542,9 +542,6 @@
     <ClCompile Include="AssetLoadUtils.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
-    <ClCompile Include="PerformanceTimer.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
     <ClCompile Include="VertexStreamBuilder.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
@@ -636,9 +633,6 @@
     </ClInclude>
     <ClInclude Include="HashedDataObject.h">
       <Filter>Header Files\en</Filter>
-    </ClInclude>
-    <ClInclude Include="PerformanceTimer.h">
-      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="EntityManager.h">
       <Filter>Header Files\fr</Filter>

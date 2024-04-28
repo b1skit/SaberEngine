@@ -1,4 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "AssetLoadUtils.h"
+#include "Texture.h"
+
+#include "Core\PerformanceTimer.h"
 
 // Note: We can't include STBI in our pch, as the following define can only be included ONCE in the project
 #define STB_IMAGE_IMPLEMENTATION
@@ -6,10 +10,6 @@
 #include <stb_image.h>
 
 #include "cgltf.h" // We already included this with the CGLTF_IMPLEMENTATION elsewhere
-
-#include "AssetLoadUtils.h"
-#include "PerformanceTimer.h"
-#include "Texture.h"
 
 
 namespace util

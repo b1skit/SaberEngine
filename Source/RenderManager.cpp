@@ -2,7 +2,7 @@
 #include "Config.h"
 #include "Context.h"
 #include "GraphicsSystemManager.h"
-#include "PerformanceTimer.h"
+#include "Core\PerformanceTimer.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"

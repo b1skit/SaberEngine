@@ -3,7 +3,6 @@
 #include "Config.h"
 #include "Material.h"
 #include "Buffer_OpenGL.h"
-#include "PerformanceTimer.h"
 #include "Sampler_OpenGL.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
@@ -11,6 +10,7 @@
 #include "Texture.h"
 #include "Texture_OpenGL.h"
 
+#include "Core\PerformanceTimer.h"
 #include "Core\ThreadPool.h"
 #include "Core\Util\TextUtils.h"
 

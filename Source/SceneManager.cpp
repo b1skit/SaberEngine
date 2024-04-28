@@ -4,7 +4,7 @@
 #include "Config.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
-#include "PerformanceTimer.h"
+#include "Core\PerformanceTimer.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
