@@ -1,35 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "RenderManager.h"
 #include "Window_Platform.h"
 #include "Window_Win32.h"
+
+#include "Core\Assert.h"
 
 
 namespace platform
 {
 	void Window::CreatePlatformParams(en::Window& window)
 	{
-		// TODO: We only support windows for now, but eventually the Window interface should be decided by the
-		// OS/platform, not the rendering API.
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
-
-		switch (api)
-		{
-		case RenderingAPI::OpenGL:
-		{
-			window.SetPlatformParams(std::make_unique<win32::Window::PlatformParams>());
-		}
-		break;
-		case RenderingAPI::DX12:
-		{
-			window.SetPlatformParams(std::make_unique<win32::Window::PlatformParams>());
-		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid rendering API argument received");
-		}
-		}
+		window.SetPlatformParams(std::make_unique<win32::Window::PlatformParams>());
 	}
 
 

@@ -1,8 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
 #include "EventManager.h"
 #include "Window.h"
 #include "Window_Platform.h"
+
+#include "Core\Assert.h"
 
 namespace en
 {
