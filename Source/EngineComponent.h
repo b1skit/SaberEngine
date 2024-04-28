@@ -15,11 +15,11 @@ namespace en
 
 	public:
 		EngineComponent() = default;
-		EngineComponent& operator=(EngineComponent const&) = default;
+		EngineComponent(EngineComponent&&) = default;
 		EngineComponent& operator=(EngineComponent&&) = default;
 
 	private: // No copying allowed
 		EngineComponent(EngineComponent const&) = delete;
-		EngineComponent(EngineComponent&&) = delete;
+		EngineComponent& operator=(EngineComponent const&) = delete;
 	};
 }

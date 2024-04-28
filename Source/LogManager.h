@@ -1,8 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include "EventListener.h"
-#include "EngineComponent.h"
 #include "Core\Util\TextUtils.h"
 
 
@@ -13,7 +10,7 @@ namespace
 
 namespace en
 {
-	class LogManager final : public virtual en::EngineComponent
+	class LogManager final
 	{
 	public:
 		static LogManager* Get(); // Singleton functionality
@@ -43,18 +40,15 @@ namespace en
 
 	public:
 		LogManager();
+
 		LogManager(LogManager&&) = default;
 		LogManager& operator=(LogManager&&) = default;
 		~LogManager() = default;
 
-		// EngineComponent interface:
-		void Startup() override;
-		void Shutdown() override;
-		void Update(uint64_t frameNum, double stepTimeMs) override { /* Do nothing: LogManager is on its own thread*/ };
+		void Startup();
+		void Shutdown();
 
-
-		// LogManager thread:
-		void Run(); 
+		void Run(); // LogManager thread
 
 
 		void ShowImGuiWindow(bool* show);
@@ -122,7 +116,7 @@ namespace en
 			T* destBuffer);
 	
 
-	private: // Disallow copying of our Singleton
+	private: // No copying allowed
 		LogManager(LogManager const&) = delete;
 		void operator=(LogManager const&) = delete;
 	};

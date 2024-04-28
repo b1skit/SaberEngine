@@ -131,10 +131,6 @@ namespace en
 			EngineApp::Update(m_frameNum, lastOuterFrameTime);
 			SEEndCPUEvent();
 
-			SEBeginCPUEvent("en::LogManager::Update");
-			logManager->Update(m_frameNum, lastOuterFrameTime);
-			SEEndCPUEvent();
-
 			// Update components until enough time has passed to trigger a render.
 			// Or, continue rendering frames until it's time to update again
 			elapsed += lastOuterFrameTime;
