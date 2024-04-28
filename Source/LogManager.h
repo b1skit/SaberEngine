@@ -45,14 +45,13 @@ namespace en
 		LogManager& operator=(LogManager&&) = default;
 		~LogManager() = default;
 
-		void Startup();
+		void Startup(bool isSystemConsoleWindowEnabled);
 		void Shutdown();
-
-		void Run(); // LogManager thread
-
 
 		void ShowImGuiWindow(bool* show);
 
+	private:
+		void Run(bool isSystemConsoleWindowEnabled); // LogManager thread
 
 	private:
 		constexpr static uint32_t k_internalStagingBufferSize = 4096;

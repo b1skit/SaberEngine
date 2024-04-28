@@ -46,7 +46,8 @@ namespace en
 		en::ThreadPool::Get()->Startup();
 
 		// Start the logging thread:
-		en::LogManager::Get()->Startup();
+		en::LogManager::Get()->Startup(
+			en::Config::Get()->KeyExists(en::ConfigKeys::k_showSystemConsoleWindowCmdLineArg));
 
 		// Create a window:
 		std::string commandLineArgs;

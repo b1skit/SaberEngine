@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "Config.h"
 #include "ConfigKeys.h"
 #include "ThreadPool.h"
 
@@ -171,7 +170,7 @@ namespace en
 	}
 
 
-	void LogManager::Startup() 
+	void LogManager::Startup(bool isSystemConsoleWindowEnabled)
 	{
 		LOG("Log manager starting...");
 
@@ -180,7 +179,7 @@ namespace en
 		en::ThreadPool::Get()->EnqueueJob([&]()
 			{
 				en::ThreadPool::NameCurrentThread(L"LogManager Thread");
-				en::LogManager::Get()->Run();
+				en::LogManager::Get()->Run(isSystemConsoleWindowEnabled);
 			});
 	}
 
@@ -193,7 +192,7 @@ namespace en
 	}
 
 
-	void LogManager::Run()
+	void LogManager::Run(bool isSystemConsoleWindowEnabled)
 	{
 		std::filesystem::create_directory(en::ConfigKeys::k_logOutputDir); // No error if the directory already exists
 
@@ -206,11 +205,9 @@ namespace en
 			{
 				m_imGuiLogWindow->AddLog(msg);
 
-				// Print the message to the terminal. Note: We might get different ordering since m_imGuiLogWindow internally
-				// locks a mutex before appending the new message
-				static const bool s_consoleEnabled =
-					en::Config::Get()->KeyExists(en::ConfigKeys::k_showSystemConsoleWindowCmdLineArg);
-				if (s_consoleEnabled)
+				// Print the message to the terminal. Note: We might get different ordering since m_imGuiLogWindow
+				// internally locks a mutex before appending the new message
+				if (isSystemConsoleWindowEnabled)
 				{
 					printf(msg);
 				}
