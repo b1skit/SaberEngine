@@ -2,7 +2,7 @@
 #pragma once
 
 
-namespace en
+namespace definitions
 {
 	// Adding new button input functionality to SaberEngine:
 	// 1) Add the new button function to KeyboardInputButton and KeyboardInputButtonNames in this file

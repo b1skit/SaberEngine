@@ -1,5 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Core\ConfigKeys.h"
+#include "Core\Definitions\ConfigKeys.h"
 #include "GraphicsSystem_ComputeMips.h"
 #include "Core\Util\MathUtils.h"
 #include "RenderManager.h"

@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "InputManager_Win32.h"
 #include "InputManager.h"
-#include "KeyConfiguration.h"
+#include "Core\Definitions\KeyConfiguration.h"
 #include "EngineApp.h"
 #include "Window_Win32.h"
 
@@ -26,111 +26,111 @@ namespace win32
 	}
 
 
-	en::SEKeycode InputManager::ConvertToSEKeycode(uint32_t platKeycode)
+	definitions::SEKeycode InputManager::ConvertToSEKeycode(uint32_t platKeycode)
 	{
 		switch (platKeycode)
 		{
-		case VK_F1: return en::SEK_F1;
-		case VK_F2: return en::SEK_F2;
-		case VK_F3: return en::SEK_F3;
-		case VK_F4: return en::SEK_F4;
-		case VK_F5: return en::SEK_F5;
-		case VK_F6: return en::SEK_F6;
-		case VK_F7: return en::SEK_F7;
-		case VK_F8: return en::SEK_F8;
-		case VK_F9: return en::SEK_F9;
-		case VK_F10: return en::SEK_F10;
-		case VK_F11: return en::SEK_F11;
-		case VK_F12: return en::SEK_F12;
+		case VK_F1: return definitions::SEK_F1;
+		case VK_F2: return definitions::SEK_F2;
+		case VK_F3: return definitions::SEK_F3;
+		case VK_F4: return definitions::SEK_F4;
+		case VK_F5: return definitions::SEK_F5;
+		case VK_F6: return definitions::SEK_F6;
+		case VK_F7: return definitions::SEK_F7;
+		case VK_F8: return definitions::SEK_F8;
+		case VK_F9: return definitions::SEK_F9;
+		case VK_F10: return definitions::SEK_F10;
+		case VK_F11: return definitions::SEK_F11;
+		case VK_F12: return definitions::SEK_F12;
 
-		case 0x30: return en::SEK_0;
-		case 0x31: return en::SEK_1;
-		case 0x32: return en::SEK_2;
-		case 0x33: return en::SEK_3;
-		case 0x34: return en::SEK_4;
-		case 0x35: return en::SEK_5;
-		case 0x36: return en::SEK_6;
-		case 0x37: return en::SEK_7;
-		case 0x38: return en::SEK_8;
-		case 0x39: return en::SEK_9;
+		case 0x30: return definitions::SEK_0;
+		case 0x31: return definitions::SEK_1;
+		case 0x32: return definitions::SEK_2;
+		case 0x33: return definitions::SEK_3;
+		case 0x34: return definitions::SEK_4;
+		case 0x35: return definitions::SEK_5;
+		case 0x36: return definitions::SEK_6;
+		case 0x37: return definitions::SEK_7;
+		case 0x38: return definitions::SEK_8;
+		case 0x39: return definitions::SEK_9;
 
-		case 0x41: return en::SEK_A;
-		case 0x42: return en::SEK_B;
-		case 0x43: return en::SEK_C;
-		case 0x44: return en::SEK_D;
-		case 0x45: return en::SEK_E;
-		case 0x46: return en::SEK_F;
-		case 0x47: return en::SEK_G;
-		case 0x48: return en::SEK_H;
-		case 0x49: return en::SEK_I;
-		case 0x4A: return en::SEK_J;
-		case 0x4B: return en::SEK_K;
-		case 0x4C: return en::SEK_L;
-		case 0x4D: return en::SEK_M;
-		case 0x4E: return en::SEK_N;
-		case 0x4F: return en::SEK_O;
-		case 0x50: return en::SEK_P;
-		case 0x51: return en::SEK_Q;
-		case 0x52: return en::SEK_R;
-		case 0x53: return en::SEK_S;
-		case 0x54: return en::SEK_T;
-		case 0x55: return en::SEK_U;
-		case 0x56: return en::SEK_V;
-		case 0x57: return en::SEK_W;
-		case 0x58: return en::SEK_X;
-		case 0x59: return en::SEK_Y;
-		case 0x5A: return en::SEK_Z;
+		case 0x41: return definitions::SEK_A;
+		case 0x42: return definitions::SEK_B;
+		case 0x43: return definitions::SEK_C;
+		case 0x44: return definitions::SEK_D;
+		case 0x45: return definitions::SEK_E;
+		case 0x46: return definitions::SEK_F;
+		case 0x47: return definitions::SEK_G;
+		case 0x48: return definitions::SEK_H;
+		case 0x49: return definitions::SEK_I;
+		case 0x4A: return definitions::SEK_J;
+		case 0x4B: return definitions::SEK_K;
+		case 0x4C: return definitions::SEK_L;
+		case 0x4D: return definitions::SEK_M;
+		case 0x4E: return definitions::SEK_N;
+		case 0x4F: return definitions::SEK_O;
+		case 0x50: return definitions::SEK_P;
+		case 0x51: return definitions::SEK_Q;
+		case 0x52: return definitions::SEK_R;
+		case 0x53: return definitions::SEK_S;
+		case 0x54: return definitions::SEK_T;
+		case 0x55: return definitions::SEK_U;
+		case 0x56: return definitions::SEK_V;
+		case 0x57: return definitions::SEK_W;
+		case 0x58: return definitions::SEK_X;
+		case 0x59: return definitions::SEK_Y;
+		case 0x5A: return definitions::SEK_Z;
 
-		case VK_RETURN: return en::SEK_RETURN;
-		case VK_ESCAPE: return en::SEK_ESCAPE;
-		case VK_BACK: return en::SEK_BACKSPACE;
-		case VK_TAB: return en::SEK_TAB;
-		case VK_SPACE: return en::SEK_SPACE;
+		case VK_RETURN: return definitions::SEK_RETURN;
+		case VK_ESCAPE: return definitions::SEK_ESCAPE;
+		case VK_BACK: return definitions::SEK_BACKSPACE;
+		case VK_TAB: return definitions::SEK_TAB;
+		case VK_SPACE: return definitions::SEK_SPACE;
 
-		case VK_OEM_MINUS: return en::SEK_MINUS;
-		case VK_OEM_PLUS: return en::SEK_EQUALS;
-		case VK_OEM_4: return en::SEK_LEFTBRACKET;
-		case VK_OEM_6: return en::SEK_RIGHTBRACKET;
+		case VK_OEM_MINUS: return definitions::SEK_MINUS;
+		case VK_OEM_PLUS: return definitions::SEK_EQUALS;
+		case VK_OEM_4: return definitions::SEK_LEFTBRACKET;
+		case VK_OEM_6: return definitions::SEK_RIGHTBRACKET;
 
-		case VK_OEM_5: return en::SEK_BACKSLASH;
+		case VK_OEM_5: return definitions::SEK_BACKSLASH;
 
-		case VK_OEM_1: return en::SEK_SEMICOLON;
-		case VK_OEM_7: return en::SEK_APOSTROPHE;
-		case VK_OEM_3: return en::SEK_GRAVE;
-		case VK_OEM_COMMA: return en::SEK_COMMA;
-		case VK_OEM_PERIOD: return en::SEK_PERIOD;
-		case VK_OEM_2: return en::SEK_SLASH;
+		case VK_OEM_1: return definitions::SEK_SEMICOLON;
+		case VK_OEM_7: return definitions::SEK_APOSTROPHE;
+		case VK_OEM_3: return definitions::SEK_GRAVE;
+		case VK_OEM_COMMA: return definitions::SEK_COMMA;
+		case VK_OEM_PERIOD: return definitions::SEK_PERIOD;
+		case VK_OEM_2: return definitions::SEK_SLASH;
 
-		case VK_CAPITAL: return en::SEK_CAPSLOCK;
+		case VK_CAPITAL: return definitions::SEK_CAPSLOCK;
 
-		case VK_SNAPSHOT: return en::SEK_PRINTSCREEN;
-		case VK_SCROLL: return en::SEK_SCROLLLOCK;
-		case VK_PAUSE: return en::SEK_PAUSE;
-		case VK_INSERT: return en::SEK_INSERT;
+		case VK_SNAPSHOT: return definitions::SEK_PRINTSCREEN;
+		case VK_SCROLL: return definitions::SEK_SCROLLLOCK;
+		case VK_PAUSE: return definitions::SEK_PAUSE;
+		case VK_INSERT: return definitions::SEK_INSERT;
 
-		case VK_HOME: return en::SEK_HOME;
-		case VK_PRIOR: return en::SEK_PAGEUP;
-		case VK_DELETE: return en::SEK_DELETE;
-		case VK_END: return en::SEK_END;
-		case VK_NEXT: return en::SEK_PAGEDOWN;
+		case VK_HOME: return definitions::SEK_HOME;
+		case VK_PRIOR: return definitions::SEK_PAGEUP;
+		case VK_DELETE: return definitions::SEK_DELETE;
+		case VK_END: return definitions::SEK_END;
+		case VK_NEXT: return definitions::SEK_PAGEDOWN;
 
-		case VK_RIGHT: return en::SEK_RIGHT;
-		case VK_LEFT: return en::SEK_LEFT;
-		case VK_DOWN: return en::SEK_DOWN;
-		case VK_UP: return en::SEK_UP;
+		case VK_RIGHT: return definitions::SEK_RIGHT;
+		case VK_LEFT: return definitions::SEK_LEFT;
+		case VK_DOWN: return definitions::SEK_DOWN;
+		case VK_UP: return definitions::SEK_UP;
 
-		case VK_NUMLOCK: return en::SEK_NUMLOCK;
+		case VK_NUMLOCK: return definitions::SEK_NUMLOCK;
 
-		case VK_APPS: return en::SEK_APPLICATION;
+		case VK_APPS: return definitions::SEK_APPLICATION;
 
-		case VK_LCONTROL: return en::SEK_LCTRL;
-		case VK_LSHIFT: return en::SEK_LSHIFT;
-		case VK_LMENU: return en::SEK_LALT;
-		case VK_RCONTROL: return en::SEK_RCTRL;
-		case VK_RSHIFT: return en::SEK_RSHIFT;
-		case VK_RMENU: return en::SEK_RALT;
+		case VK_LCONTROL: return definitions::SEK_LCTRL;
+		case VK_LSHIFT: return definitions::SEK_LSHIFT;
+		case VK_LMENU: return definitions::SEK_LALT;
+		case VK_RCONTROL: return definitions::SEK_RCTRL;
+		case VK_RSHIFT: return definitions::SEK_RSHIFT;
+		case VK_RMENU: return definitions::SEK_RALT;
 
-		default: return en::SEK_UNKNOWN;
+		default: return definitions::SEK_UNKNOWN;
 		}
 	}
 }

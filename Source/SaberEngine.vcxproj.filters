@@ -607,9 +607,6 @@
     <ClInclude Include="InputManager.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
-    <ClInclude Include="KeyConfiguration.h">
-      <Filter>Header Files\en</Filter>
-    </ClInclude>
     <ClInclude Include="NamedObject.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>

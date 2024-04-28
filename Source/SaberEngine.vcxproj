@@ -584,7 +584,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="SceneNodeConcept.h" />
     <ClInclude Include="InputManager.h" />
-    <ClInclude Include="KeyConfiguration.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="CameraControlComponent.h" />

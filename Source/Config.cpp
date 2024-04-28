@@ -1,9 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
 #include "Config.h"
-#include "KeyConfiguration.h"
-#include "Core\LogManager.h"
+#include "Core\Definitions\KeyConfiguration.h"
 
+#include "Core\Assert.h"
+#include "Core\LogManager.h"
 #include "Core\Util\TextUtils.h"
 
 // Default true/false std::strings. We convert config values to lowercase and compare against these

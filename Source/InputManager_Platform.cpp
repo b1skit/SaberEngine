@@ -5,5 +5,5 @@
 namespace platform
 {
 	void (*platform::InputManager::Startup)(en::InputManager&) = nullptr;
-	en::SEKeycode(*platform::InputManager::ConvertToSEKeycode)(uint32_t platKeycode) = nullptr;
+	definitions::SEKeycode(*platform::InputManager::ConvertToSEKeycode)(uint32_t platKeycode) = nullptr;
 }

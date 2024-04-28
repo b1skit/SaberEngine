@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\ConfigKeys.h"
+#include "Core\Definitions\ConfigKeys.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystemManager.h"
 #include "Sampler.h"

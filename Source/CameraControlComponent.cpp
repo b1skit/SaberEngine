@@ -70,7 +70,7 @@ namespace fr
 			"Camera transform must be parented to the camera controller's transform");
 
 		// Reset the cam back to the saved position
-		if (en::InputManager::GetMouseInputState(en::InputMouse_Left))
+		if (en::InputManager::GetMouseInputState(definitions::InputMouse_Left))
 		{
 			controllerTransform.SetLocalPosition(camController.m_savedPosition);
 			cameraTransform.SetLocalRotation(glm::vec3(camController.m_savedEulerRotation.x, 0.f, 0.f));
@@ -82,9 +82,9 @@ namespace fr
 		// Map mouse pixel deltas to pitch/yaw rotations in radians. This ensures that we have consistent mouse 
 		// movement regardless of the resolution/aspect ratio/etc
 		const float mousePxDeltaX = 
-			en::InputManager::GetRelativeMouseInput(en::Input_MouseX) * camController.m_mousePitchSensitivity * -1;
+			en::InputManager::GetRelativeMouseInput(definitions::Input_MouseX) * camController.m_mousePitchSensitivity * -1;
 		const float mousePxDeltaY = 
-			en::InputManager::GetRelativeMouseInput(en::Input_MouseY) * camController.m_mouseYawSensitivity * -1;
+			en::InputManager::GetRelativeMouseInput(definitions::Input_MouseY) * camController.m_mouseYawSensitivity * -1;
 
 		const float xRes = static_cast<float>(en::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey));
 		const float yRes = static_cast<float>(en::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey));
@@ -109,27 +109,27 @@ namespace fr
 		// Handle direction:
 		glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
 
-		if (en::InputManager::GetKeyboardInputState(en::InputButton_Forward))
+		if (en::InputManager::GetKeyboardInputState(definitions::InputButton_Forward))
 		{
 			direction -= cameraTransform.GetGlobalForward();
 		}
-		if (en::InputManager::GetKeyboardInputState(en::InputButton_Backward))
+		if (en::InputManager::GetKeyboardInputState(definitions::InputButton_Backward))
 		{
 			direction += cameraTransform.GetGlobalForward();
 		}
-		if (en::InputManager::GetKeyboardInputState(en::InputButton_Left))
+		if (en::InputManager::GetKeyboardInputState(definitions::InputButton_Left))
 		{
 			direction -= cameraTransform.GetGlobalRight();
 		}
-		if (en::InputManager::GetKeyboardInputState(en::InputButton_Right))
+		if (en::InputManager::GetKeyboardInputState(definitions::InputButton_Right))
 		{
 			direction += cameraTransform.GetGlobalRight();
 		}
-		if (en::InputManager::GetKeyboardInputState(en::InputButton_Up))
+		if (en::InputManager::GetKeyboardInputState(definitions::InputButton_Up))
 		{
 			direction += controllerTransform.GetGlobalUp(); // Cam is tilted; use the parent transform instead
 		}
-		if (en::InputManager::GetKeyboardInputState(en::InputButton_Down))
+		if (en::InputManager::GetKeyboardInputState(definitions::InputButton_Down))
 		{
 			direction -= controllerTransform.GetGlobalUp(); // Cam is tilted; use the parent transform instead
 		}
@@ -139,7 +139,7 @@ namespace fr
 			direction = glm::normalize(direction);
 
 			float sprintModifier = 1.0f;
-			if (en::InputManager::GetKeyboardInputState(en::InputButton_Sprint))
+			if (en::InputManager::GetKeyboardInputState(definitions::InputButton_Sprint))
 			{
 				sprintModifier = camController.m_sprintSpeedModifier;
 			}
@@ -152,7 +152,7 @@ namespace fr
 		}
 
 		// Save the current position/rotation:
-		if (en::InputManager::GetMouseInputState(en::InputMouse_Right))
+		if (en::InputManager::GetMouseInputState(definitions::InputMouse_Right))
 		{
 			camController.m_savedPosition = controllerTransform.GetGlobalPosition();
 			camController.m_savedEulerRotation = glm::vec3(

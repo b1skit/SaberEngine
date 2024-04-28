@@ -2,7 +2,7 @@
 #pragma once
 #include "EngineComponent.h"
 #include "EventListener.h"
-#include "KeyConfiguration.h"
+#include "Core\Definitions\KeyConfiguration.h"
 
 
 namespace en
@@ -20,9 +20,9 @@ namespace en
 		~InputManager() = default;
 
 		// Static member functions:
-		static bool const& GetKeyboardInputState(en::KeyboardInputButton key);
-		static bool const& GetMouseInputState(en::MouseInputButton button);
-		static float GetRelativeMouseInput(en::MouseInputAxis axis);
+		static bool const& GetKeyboardInputState(definitions::KeyboardInputButton key);
+		static bool const& GetMouseInputState(definitions::MouseInputButton button);
+		static float GetRelativeMouseInput(definitions::MouseInputAxis axis);
 
 		// EngineComponent interface:
 		void Startup() override;
@@ -41,11 +41,11 @@ namespace en
 
 
 	private:
-		static bool m_keyboardInputButtonStates[en::KeyboardInputButton_Count]; // Stores the state of keyboard keys
-		static bool	m_mouseButtonStates[en::MouseInputButton_Count]; // Stores the state of mouse buttons
-		static float m_mouseAxisStates[en::MouseInputAxis_Count]; // Mouse axis deltas
+		static bool m_keyboardInputButtonStates[definitions::KeyboardInputButton_Count]; // Stores the state of keyboard keys
+		static bool	m_mouseButtonStates[definitions::MouseInputButton_Count]; // Stores the state of mouse buttons
+		static float m_mouseAxisStates[definitions::MouseInputAxis_Count]; // Mouse axis deltas
 
-		std::unordered_map<SEKeycode, en::KeyboardInputButton> m_SEKeycodesToSEEventEnums;
+		std::unordered_map<definitions::SEKeycode, definitions::KeyboardInputButton> m_SEKeycodesToSEEventEnums;
 
 		bool m_keyboardInputCaptured;
 		bool m_mouseInputCaptured;

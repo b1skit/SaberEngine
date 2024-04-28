@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\ConfigKeys.h"
+#include "Core\Definitions\ConfigKeys.h"
 #include "Core\LogManager.h"
 
 

@@ -2,9 +2,12 @@
 #pragma once
 
 
-namespace en
+namespace definitions
 {
 	enum SEKeycode;
+}
+namespace en
+{
 	class InputManager;
 }
 
@@ -14,6 +17,6 @@ namespace win32
 	{
 	public:
 		static void Startup(en::InputManager& inputManager);
-		static en::SEKeycode ConvertToSEKeycode(uint32_t platKeycode);
+		static definitions::SEKeycode ConvertToSEKeycode(uint32_t platKeycode);
 	};
 }

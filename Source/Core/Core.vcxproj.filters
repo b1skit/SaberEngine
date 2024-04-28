@@ -25,6 +25,9 @@
     <Filter Include="Source Files\Util">
       <UniqueIdentifier>{a4d62f5a-2f9b-4900-b2df-3dbc30e66fd1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Definitions">
+      <UniqueIdentifier>{38aa4320-fd25-4505-8b4f-25024228f120}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\stdafx.h">
@@ -75,8 +78,11 @@
     <ClInclude Include="PerformanceTimer.h">
       <Filter>Header Files\Util</Filter>
     </ClInclude>
+    <ClInclude Include="Definitions\KeyConfiguration.h">
+      <Filter>Header Files\Definitions</Filter>
+    </ClInclude>
     <ClInclude Include="ConfigKeys.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Definitions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

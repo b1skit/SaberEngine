@@ -1,17 +1,19 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
 #include "Config.h"
 #include "EventManager.h"
 #include "InputManager.h"
 #include "InputManager_Platform.h"
 
+#include "Core\Assert.h"
+#include "Core\Definitions\KeyConfiguration.h"
+
 
 namespace en
 {
 	// Static members:
-	bool InputManager::m_keyboardInputButtonStates[en::KeyboardInputButton_Count];
-	bool InputManager::m_mouseButtonStates[en::MouseInputButton_Count];
-	float InputManager::m_mouseAxisStates[en::MouseInputAxis_Count];
+	bool InputManager::m_keyboardInputButtonStates[definitions::KeyboardInputButton_Count];
+	bool InputManager::m_mouseButtonStates[definitions::MouseInputButton_Count];
+	float InputManager::m_mouseAxisStates[definitions::MouseInputAxis_Count];
 
 
 	InputManager* InputManager::Get()
@@ -30,19 +32,19 @@ namespace en
 	}
 
 
-	bool const& InputManager::GetKeyboardInputState(en::KeyboardInputButton key)
+	bool const& InputManager::GetKeyboardInputState(definitions::KeyboardInputButton key)
 	{
 		return m_keyboardInputButtonStates[key];
 	}
 
 
-	bool const& InputManager::GetMouseInputState(en::MouseInputButton button)
+	bool const& InputManager::GetMouseInputState(definitions::MouseInputButton button)
 	{
 		return m_mouseButtonStates[button];
 	}
 
 
-	float InputManager::GetRelativeMouseInput(en::MouseInputAxis axis)
+	float InputManager::GetRelativeMouseInput(definitions::MouseInputAxis axis)
 	{
 		return m_mouseAxisStates[axis];
 	}
@@ -121,7 +123,7 @@ namespace en
 			break;
 			case en::EventManager::KeyEvent:
 			{
-				const SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(eventInfo.m_data0.m_dataUI);
+				const definitions::SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(eventInfo.m_data0.m_dataUI);
 				const bool keystate = eventInfo.m_data1.m_dataB;
 
 				doBroadcastToSE = !m_keyboardInputCaptured;
@@ -130,7 +132,7 @@ namespace en
 					auto const& result = m_SEKeycodesToSEEventEnums.find(keycode);
 					if (result != m_SEKeycodesToSEEventEnums.end())
 					{
-						const en::KeyboardInputButton key = result->second;
+						const definitions::KeyboardInputButton key = result->second;
 
 						m_keyboardInputButtonStates[key] = keystate;
 
@@ -141,52 +143,52 @@ namespace en
 
 						switch (key)
 						{
-						case KeyboardInputButton::InputButton_Forward:
+						case definitions::KeyboardInputButton::InputButton_Forward:
 						{
 							transformedEvent.m_type = EventManager::EventType::InputForward;
 						}
 						break;
-						case KeyboardInputButton::InputButton_Backward:
+						case definitions::KeyboardInputButton::InputButton_Backward:
 						{
 							transformedEvent.m_type = EventManager::EventType::InputBackward;
 						}
 						break;
-						case KeyboardInputButton::InputButton_Left:
+						case definitions::KeyboardInputButton::InputButton_Left:
 						{
 							transformedEvent.m_type = EventManager::EventType::InputLeft;
 						}
 						break;
-						case KeyboardInputButton::InputButton_Right:
+						case definitions::KeyboardInputButton::InputButton_Right:
 						{
 							transformedEvent.m_type = EventManager::EventType::InputRight;
 						}
 						break;
-						case KeyboardInputButton::InputButton_Up:
+						case definitions::KeyboardInputButton::InputButton_Up:
 						{
 							transformedEvent.m_type = EventManager::EventType::InputUp;
 						}
 						break;
-						case KeyboardInputButton::InputButton_Down:
+						case definitions::KeyboardInputButton::InputButton_Down:
 						{
 							transformedEvent.m_type = EventManager::EventType::InputDown;
 						}
 						break;
-						case KeyboardInputButton::InputButton_Sprint:
+						case definitions::KeyboardInputButton::InputButton_Sprint:
 						{
 							transformedEvent.m_type = EventManager::EventType::InputSprint;
 						}
 						break;
-						case KeyboardInputButton::InputButton_Console:
+						case definitions::KeyboardInputButton::InputButton_Console:
 						{
 							transformedEvent.m_type = EventManager::EventType::InputToggleConsole;
 						}
 						break;
-						case KeyboardInputButton::InputButton_VSync:
+						case definitions::KeyboardInputButton::InputButton_VSync:
 						{
 							transformedEvent.m_type = EventManager::EventType::InputToggleVSync;							
 						}
 						break;
-						case KeyboardInputButton::InputButton_Quit:
+						case definitions::KeyboardInputButton::InputButton_Quit:
 						{
 							transformedEvent.m_type = EventManager::EventType::EngineQuit;
 						}
@@ -207,8 +209,8 @@ namespace en
 			case en::EventManager::MouseMotionEvent:
 			{
 				// Unpack the mouse data:
-				m_mouseAxisStates[en::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI);
-				m_mouseAxisStates[en::Input_MouseY] += static_cast<float>(eventInfo.m_data1.m_dataI);
+				m_mouseAxisStates[definitions::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI);
+				m_mouseAxisStates[definitions::Input_MouseY] += static_cast<float>(eventInfo.m_data1.m_dataI);
 				doBroadcastToSE = false;
 			}
 			break;
@@ -225,7 +227,7 @@ namespace en
 					}
 					else
 					{
-						m_mouseButtonStates[en::InputMouse_Left] = buttonState;
+						m_mouseButtonStates[definitions::InputMouse_Left] = buttonState;
 						transformedEvent.m_type = EventManager::EventType::InputMouseLeft;
 						transformedEvent.m_data0.m_dataB = buttonState;
 					}
@@ -239,7 +241,7 @@ namespace en
 					}
 					else
 					{
-						m_mouseButtonStates[en::InputMouse_Middle] = buttonState;
+						m_mouseButtonStates[definitions::InputMouse_Middle] = buttonState;
 						transformedEvent.m_type = EventManager::EventType::InputMouseMiddle;
 						transformedEvent.m_data0.m_dataB = buttonState;
 					}
@@ -253,7 +255,7 @@ namespace en
 					}
 					else
 					{
-						m_mouseButtonStates[en::InputMouse_Right] = buttonState;
+						m_mouseButtonStates[definitions::InputMouse_Right] = buttonState;
 						transformedEvent.m_type = EventManager::EventType::InputMouseRight;
 						transformedEvent.m_data0.m_dataB = buttonState;
 					}
@@ -301,21 +303,21 @@ namespace en
 
 	void InputManager::LoadInputBindings()
 	{
-		for (size_t i = 0; i < en::KeyboardInputButton_Count; i++)
+		for (size_t i = 0; i < definitions::KeyboardInputButton_Count; i++)
 		{
 			// Get the key actually assigned to the current named input button
 			// eg. Get "w" from "InputButton_Forward"
-			const std::string keyAssignment = Config::Get()->GetValueAsString(en::KeyboardInputButtonNames[i]);
+			const std::string keyAssignment = Config::Get()->GetValueAsString(definitions::KeyboardInputButtonNames[i]);
 
 			SEAssert(!keyAssignment.empty(),
 				std::format("Button not found in {}. Did you forget to set one in Config::InitializeDefaultValues()?",
 				core::configkeys::k_configFileName).c_str());
 
-			SEKeycode keycode = GetSEKeycodeFromName(keyAssignment);
-			if (keycode != SEK_UNKNOWN)
+			definitions::SEKeycode keycode = definitions::GetSEKeycodeFromName(keyAssignment);
+			if (keycode != definitions::SEK_UNKNOWN)
 			{
 				// Build a map: SEKeycode -> SaberEngine keyboard input function
-				m_SEKeycodesToSEEventEnums.emplace(keycode, static_cast<en::KeyboardInputButton>(i));
+				m_SEKeycodesToSEEventEnums.emplace(keycode, static_cast<definitions::KeyboardInputButton>(i));
 			}
 			else
 			{
@@ -333,19 +335,19 @@ namespace en
 
 	void InputManager::InitializeKeyboardStates()
 	{
-		memset(m_keyboardInputButtonStates, 0, sizeof(bool) * en::KeyboardInputButton_Count);
+		memset(m_keyboardInputButtonStates, 0, sizeof(bool) * definitions::KeyboardInputButton_Count);
 	}
 
 
 	void InputManager::InitializeMouseAxisStates()
 	{
-		memset(m_mouseAxisStates, 0, sizeof(float) * en::MouseInputAxis_Count);
+		memset(m_mouseAxisStates, 0, sizeof(float) * definitions::MouseInputAxis_Count);
 	}
 
 
 	void InputManager::InitializeMouseButtonStates()
 	{
-		memset(m_mouseButtonStates, 0, sizeof(bool) * en::MouseInputButton_Count);
+		memset(m_mouseButtonStates, 0, sizeof(bool) * definitions::MouseInputButton_Count);
 	}
 }
 

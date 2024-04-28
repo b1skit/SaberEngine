@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "BoundsRenderData.h"
-#include "Core\ConfigKeys.h"
+#include "Core\Definitions\ConfigKeys.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystemManager.h"
 #include "Core\Util\ImGuiUtils.h"
