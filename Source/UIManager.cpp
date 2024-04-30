@@ -1,15 +1,17 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Core\CommandQueue.h"
-#include "Core\Config.h"
 #include "EngineApp.h"
 #include "EntityManager.h"
 #include "GraphicsSystem_ImGui.h"
-#include "InputManager_Platform.h"
-#include "Core\Definitions\KeyConfiguration.h"
-#include "Core\LogManager.h"
 #include "SceneManager.h"
 #include "RenderManager.h"
 #include "UIManager.h"
+
+#include "Core\CommandQueue.h"
+#include "Core\Config.h"
+#include "Core\InputManager_Platform.h"
+#include "Core\LogManager.h"
+
+#include "Core\Definitions\KeyConfiguration.h"
 
 
 namespace

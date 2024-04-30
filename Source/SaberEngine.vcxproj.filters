@@ -200,9 +200,6 @@
     <ClCompile Include="CameraControlComponent.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
-    <ClCompile Include="InputManager.cpp">
-      <Filter>Source Files\en</Filter>
-    </ClCompile>
     <ClCompile Include="Platform.cpp">
       <Filter>Source Files\en\platform</Filter>
     </ClCompile>
@@ -259,12 +256,6 @@
     </ClCompile>
     <ClCompile Include="Shader_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="InputManager_Platform.cpp">
-      <Filter>Source Files\en\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="InputManager_Win32.cpp">
-      <Filter>Source Files\en\win32</Filter>
     </ClCompile>
     <ClCompile Include="Window_Platform.cpp">
       <Filter>Source Files\en\platform</Filter>
@@ -574,9 +565,6 @@
     <ClInclude Include="RenderManager_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="InputManager.h">
-      <Filter>Header Files\en</Filter>
-    </ClInclude>
     <ClInclude Include="VertexStreamBuilder.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
@@ -639,12 +627,6 @@
     </ClInclude>
     <ClInclude Include="Platform.h">
       <Filter>Header Files\en\Platform</Filter>
-    </ClInclude>
-    <ClInclude Include="InputManager_Platform.h">
-      <Filter>Header Files\en\Platform</Filter>
-    </ClInclude>
-    <ClInclude Include="InputManager_Win32.h">
-      <Filter>Header Files\en\win32</Filter>
     </ClInclude>
     <ClInclude Include="Window_Win32.h">
       <Filter>Header Files\en\win32</Filter>

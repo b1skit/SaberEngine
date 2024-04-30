@@ -10,8 +10,8 @@
 #include "Core\EventManager_Platform.h"
 #include "Core\EventManager_Win32.h"
 
-#include "InputManager_Platform.h"
-#include "InputManager_Win32.h"
+#include "Core\InputManager_Platform.h"
+#include "Core\InputManager_Win32.h"
 
 #include "Buffer_DX12.h"
 #include "Buffer_OpenGL.h"

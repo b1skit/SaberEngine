@@ -1,8 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EngineApp.h"
 #include "EntityManager.h"
-#include "Core\EventManager.h"
-#include "InputManager.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
@@ -10,6 +8,8 @@
 
 #include "Core\Assert.h"
 #include "Core\Config.h"
+#include "Core\EventManager.h"
+#include "Core\InputManager.h"
 #include "Core\LogManager.h"
 #include "Core\PerformanceTimer.h"
 #include "Core\ThreadPool.h"

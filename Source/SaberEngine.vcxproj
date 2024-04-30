@@ -335,8 +335,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
     <ClCompile Include="GraphicsSystem_Culling.cpp" />
     <ClCompile Include="GraphicsSystem_Debug.cpp" />
-    <ClCompile Include="InputManager_Platform.cpp" />
-    <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="LightComponent.cpp" />
     <ClCompile Include="LightRenderData.cpp" />
     <ClCompile Include="MaterialInstanceComponent.cpp" />
@@ -414,7 +412,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="Shader_Platform.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureTarget.cpp" />
-    <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -482,8 +479,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
     <ClInclude Include="GraphicsSystem_ComputeMips.h" />
     <ClInclude Include="GraphicsSystem_Debug.h" />
-    <ClInclude Include="InputManager_Platform.h" />
-    <ClInclude Include="InputManager_Win32.h" />
     <ClInclude Include="IPlatformParams.h" />
     <ClInclude Include="Material_GLTF.h" />
     <ClInclude Include="Buffer.h" />
@@ -567,7 +562,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineApp.h" />
     <ClInclude Include="SceneNodeConcept.h" />
-    <ClInclude Include="InputManager.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="CameraControlComponent.h" />

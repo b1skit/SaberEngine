@@ -339,6 +339,9 @@
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventManager_Platform.h" />
     <ClInclude Include="EventManager_Win32.h" />
+    <ClInclude Include="InputManager.h" />
+    <ClInclude Include="InputManager_Platform.h" />
+    <ClInclude Include="InputManager_Win32.h" />
     <ClInclude Include="Interfaces\IEngineComponent.h" />
     <ClInclude Include="Interfaces\IEngineThread.h" />
     <ClInclude Include="Interfaces\IEventListener.h" />
@@ -367,6 +370,9 @@
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="EventManager_Platform.cpp" />
     <ClCompile Include="EventManager_Win32.cpp" />
+    <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="InputManager_Platform.cpp" />
+    <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="Interfaces\IEngineThread.cpp" />
     <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="pch\stdafx.cpp">

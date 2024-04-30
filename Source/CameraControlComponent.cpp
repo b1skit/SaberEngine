@@ -3,7 +3,7 @@
 #include "CameraControlComponent.h"
 #include "Core\Config.h"
 #include "EntityManager.h"
-#include "InputManager.h"
+#include "Core\InputManager.h"
 #include "NameComponent.h"
 #include "SceneNodeConcept.h"
 #include "TransformComponent.h"
