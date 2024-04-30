@@ -1,28 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "InputManager_Win32.h"
 #include "InputManager.h"
+
 #include "Core\Definitions\KeyConfiguration.h"
-#include "EngineApp.h"
-#include "Window_Win32.h"
 
 
 namespace win32
 {
 	void InputManager::Startup(en::InputManager& inputManager)
 	{
-		// Register the mouse as a raw input device:
-		// https://learn.microsoft.com/en-us/windows/win32/dxtecharts/taking-advantage-of-high-dpi-mouse-movement?redirectedfrom=MSDN
-
-		RAWINPUTDEVICE rawInputDevice[1];
-		rawInputDevice[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
-		rawInputDevice[0].usUsage = HID_USAGE_GENERIC_MOUSE;
-		rawInputDevice[0].dwFlags = RIDEV_INPUTSINK;
-
-		win32::Window::PlatformParams* windowPlatformParams = 
-			en::EngineApp::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
-
-		rawInputDevice[0].hwndTarget = windowPlatformParams->m_hWindow;
-		RegisterRawInputDevices(rawInputDevice, 1, sizeof(rawInputDevice[0]));
+		//
 	}
 
 

@@ -10,7 +10,7 @@
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	// Store the HINSTANCE for when we initialize our window
-	win32::Window::PlatformState.m_hInstance = hInstance;
+	win32::Window::s_platformState.m_hInstance = hInstance;
 
 	// Initialize Config from our pre-parsed argument vector
 	int argc = __argc;

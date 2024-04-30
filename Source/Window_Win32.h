@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "Window.h"
 
 
@@ -16,7 +15,7 @@ namespace win32
 			// Mouse cursors:
 			HCURSOR m_defaultCursor; // Default class cursor
 		};
-		static Win32PlatformState PlatformState;
+		static Win32PlatformState s_platformState;
 
 
 	public:
