@@ -347,6 +347,7 @@
     <ClInclude Include="Interfaces\IEventListener.h" />
     <ClInclude Include="Interfaces\IHashedDataObject.h" />
     <ClInclude Include="Interfaces\INamedObject.h" />
+    <ClInclude Include="Interfaces\IPlatformParams.h" />
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="pch\stdafx.h" />
     <ClInclude Include="PerformanceTimer.h" />

@@ -479,7 +479,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
     <ClInclude Include="GraphicsSystem_ComputeMips.h" />
     <ClInclude Include="GraphicsSystem_Debug.h" />
-    <ClInclude Include="IPlatformParams.h" />
     <ClInclude Include="Material_GLTF.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="BufferAllocator.h" />

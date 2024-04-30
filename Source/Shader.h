@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "IPlatformParams.h"
+#include "Core\Interfaces\IPlatformParams.h"
 #include "Buffer.h"
 #include "PipelineState.h"
 #include "Core\Interfaces\INamedObject.h"
@@ -21,7 +21,7 @@ namespace re
 
 
 	public:
-		struct PlatformParams : public re::IPlatformParams
+		struct PlatformParams : public core::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 			bool m_isCreated = false;

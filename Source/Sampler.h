@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "IPlatformParams.h"
+#include "Core\Interfaces\IPlatformParams.h"
 #include "Sampler_Platform.h"
 #include "Core\Interfaces\INamedObject.h"
 
@@ -10,7 +10,7 @@ namespace re
 	class Sampler final : public virtual core::INamedObject
 	{
 	public:
-		struct PlatformParams : public re::IPlatformParams
+		struct PlatformParams : public core::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 			bool m_isCreated = false;

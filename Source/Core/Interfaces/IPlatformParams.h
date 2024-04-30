@@ -2,7 +2,7 @@
 #pragma once
 
 
-namespace re
+namespace core
 {
 	struct IPlatformParams
 	{

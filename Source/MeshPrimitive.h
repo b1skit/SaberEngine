@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "IPlatformParams.h"
+#include "Core\Interfaces\IPlatformParams.h"
 #include "Core\Interfaces\IHashedDataObject.h"
 #include "Material.h"
 #include "Core\Interfaces\INamedObject.h"
@@ -13,7 +13,7 @@ namespace gr
 	class MeshPrimitive final : public virtual core::INamedObject, public virtual core::IHashedDataObject
 	{
 	public:
-		struct PlatformParams : public re::IPlatformParams
+		struct PlatformParams : public core::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 		};

@@ -1,8 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include "IPlatformParams.h"
 #include "Core\Interfaces\INamedObject.h"
+#include "Core\Interfaces\IPlatformParams.h"
 
 
 namespace re
@@ -61,7 +60,7 @@ namespace re
 
 
 	public:
-		struct PlatformParams : public re::IPlatformParams
+		struct PlatformParams : public core::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 

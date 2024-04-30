@@ -3,7 +3,7 @@
 
 #include "Core\Assert.h"
 #include "Core\Interfaces\IHashedDataObject.h"
-#include "IPlatformParams.h"
+#include "Core\Interfaces\IPlatformParams.h"
 #include "Texture.h"
 #include "Core\Interfaces\INamedObject.h"
 #include "Buffer.h"
@@ -15,7 +15,7 @@ namespace re
 	class TextureTarget
 	{
 	public:
-		struct PlatformParams : public re::IPlatformParams
+		struct PlatformParams : public core::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 
@@ -204,7 +204,7 @@ namespace re
 	class TextureTargetSet final : public core::INamedObject, public core::IHashedDataObject
 	{
 	public:
-		struct PlatformParams : public re::IPlatformParams
+		struct PlatformParams : public core::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 
