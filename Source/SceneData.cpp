@@ -66,14 +66,14 @@ namespace
 					cgltf_result result = cgltf_load_buffer_base64(&options, size, base64, &data);
 
 					// Data is decoded, now load it as usual:
-					const std::string texNameStr = util::GenerateEmbeddedTextureName(texture->image->name);
+					const std::string texNameStr = grutil::GenerateEmbeddedTextureName(texture->image->name);
 					if (scene.TextureExists(texNameStr))
 					{
 						tex = scene.GetTexture(texNameStr);
 					}
 					else
 					{
-						tex = util::LoadTextureFromMemory(
+						tex = grutil::LoadTextureFromMemory(
 							texNameStr, static_cast<unsigned char const*>(data), static_cast<uint32_t>(size), colorSpace);
 					}
 				}
@@ -87,13 +87,13 @@ namespace
 				}
 				else
 				{
-					tex = util::LoadTextureFromFilePath(
+					tex = grutil::LoadTextureFromFilePath(
 						{ texNameStr }, colorSpace, false, re::Texture::k_errorTextureColor);
 				}
 			}
 			else if (texture->image->buffer_view) // texture data is already loaded in memory
 			{
-				const std::string texNameStr = util::GenerateEmbeddedTextureName(texture->image->name);
+				const std::string texNameStr = grutil::GenerateEmbeddedTextureName(texture->image->name);
 
 				if (scene.TextureExists(texNameStr))
 				{
@@ -105,7 +105,7 @@ namespace
 						texture->image->buffer_view->buffer->data) + texture->image->buffer_view->offset;
 
 					const uint32_t texSrcNumBytes = static_cast<uint32_t>(texture->image->buffer_view->size);
-					tex = util::LoadTextureFromMemory(texNameStr, texSrc, texSrcNumBytes, colorSpace);
+					tex = grutil::LoadTextureFromMemory(texNameStr, texSrc, texSrcNumBytes, colorSpace);
 				}
 			}
 
@@ -123,7 +123,7 @@ namespace
 			};
 
 			const size_t numChannels = re::Texture::GetNumberOfChannels(formatFallback);
-			const std::string fallbackName = util::GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
+			const std::string fallbackName = grutil::GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
 
 			if (scene.TextureExists(fallbackName))
 			{
@@ -151,7 +151,7 @@ namespace
 			gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
 
 		// MatAlbedo
-		std::shared_ptr<re::Texture> errorAlbedo = util::LoadTextureFromFilePath(
+		std::shared_ptr<re::Texture> errorAlbedo = grutil::LoadTextureFromFilePath(
 			{ en::DefaultResourceNames::k_missingAlbedoTexName },
 			re::Texture::ColorSpace::sRGB,
 			true,
@@ -159,7 +159,7 @@ namespace
 		errorMat->SetTexture(0, errorAlbedo);
 
 		// MatMetallicRoughness
-		std::shared_ptr<re::Texture> errorMetallicRoughness = util::LoadTextureFromFilePath(
+		std::shared_ptr<re::Texture> errorMetallicRoughness = grutil::LoadTextureFromFilePath(
 			{ en::DefaultResourceNames::k_missingMetallicRoughnessTexName },
 			re::Texture::ColorSpace::Linear,
 			true,
@@ -167,7 +167,7 @@ namespace
 		errorMat->SetTexture(1, errorMetallicRoughness);
 
 		// MatNormal
-		std::shared_ptr<re::Texture> errorNormal = util::LoadTextureFromFilePath(
+		std::shared_ptr<re::Texture> errorNormal = grutil::LoadTextureFromFilePath(
 			{ en::DefaultResourceNames::k_missingNormalTexName }, 
 			re::Texture::ColorSpace::Linear, 
 			true, 
@@ -175,7 +175,7 @@ namespace
 		errorMat->SetTexture(2, errorNormal);
 
 		// MatOcclusion
-		std::shared_ptr<re::Texture> errorOcclusion = util::LoadTextureFromFilePath(
+		std::shared_ptr<re::Texture> errorOcclusion = grutil::LoadTextureFromFilePath(
 			{ en::DefaultResourceNames::k_missingOcclusionTexName }, 
 			re::Texture::ColorSpace::Linear, 
 			true, 
@@ -183,7 +183,7 @@ namespace
 		errorMat->SetTexture(3, errorOcclusion);
 
 		// MatEmissive
-		std::shared_ptr<re::Texture> errorEmissive = util::LoadTextureFromFilePath(
+		std::shared_ptr<re::Texture> errorEmissive = grutil::LoadTextureFromFilePath(
 			{ en::DefaultResourceNames::k_missingEmissiveTexName }, 
 			re::Texture::ColorSpace::sRGB, 
 			true, 
@@ -246,7 +246,7 @@ namespace
 					cgltf_material const* const material = &data->materials[cur];
 
 					const std::string matName = 
-						material == nullptr ? "MissingMaterial" : util::GenerateMaterialName(*material);
+						material == nullptr ? "MissingMaterial" : grutil::GenerateMaterialName(*material);
 					if (scene.MaterialExists(matName))
 					{
 						LOG_WARNING(
@@ -545,7 +545,7 @@ namespace
 			}
 			else
 			{
-				iblTexture = util::LoadTextureFromFilePath(
+				iblTexture = grutil::LoadTextureFromFilePath(
 					{ IBLPath },
 					re::Texture::ColorSpace::Linear,
 					false, 
@@ -802,7 +802,7 @@ namespace
 			} // End attribute unpacking
 
 			// Construct any missing vertex attributes for the mesh:
-			util::VertexStreamBuilder::MeshData meshData
+			grutil::VertexStreamBuilder::MeshData meshData
 			{
 				meshName,
 				&meshPrimitiveParams,
@@ -815,7 +815,7 @@ namespace
 				reinterpret_cast<std::vector<glm::tvec4<uint8_t>>*>(&jointsAsUints),
 				reinterpret_cast<std::vector<glm::vec4>*>(&weights)
 			};
-			util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+			grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 			// Construct the MeshPrimitive (internally registers itself with the SceneData):
 			std::shared_ptr<gr::MeshPrimitive> meshPrimitiveSceneData = gr::MeshPrimitive::Create(
@@ -845,7 +845,7 @@ namespace
 			if (current->mesh->primitives[primitive].material != nullptr)
 			{
 				const std::string generatedMatName = 
-					util::GenerateMaterialName(*current->mesh->primitives[primitive].material);
+					grutil::GenerateMaterialName(*current->mesh->primitives[primitive].material);
 				material = scene.GetMaterial(generatedMatName);
 			}
 			else
@@ -1261,7 +1261,7 @@ namespace fr
 
 		if (result == nullptr)
 		{
-			result = util::LoadTextureFromFilePath({ filepath }, colorSpace, false);
+			result = grutil::LoadTextureFromFilePath({ filepath }, colorSpace, false);
 			if (result)
 			{
 				AddUniqueTexture(result);

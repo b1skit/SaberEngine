@@ -46,9 +46,9 @@ namespace dx12
 			&descriptorHeapDesc, IID_PPV_ARGS(&platParams->m_imGuiGPUVisibleSRVDescriptorHeap));
 		CheckHResult(hr, "Failed to create single element descriptor heap for ImGui SRV");
 
-		SEAssert(en::EngineApp::Get()->GetWindow(), "Window pointer cannot be null");
+		SEAssert(app::EngineApp::Get()->GetWindow(), "Window pointer cannot be null");
 		win32::Window::PlatformParams* windowPlatParams =
-			en::EngineApp::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+			app::EngineApp::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		dx12::Texture::PlatformParams const* backbufferColorTarget0PlatParams =
 			dx12::SwapChain::GetBackBufferTargetSet(swapChain)->GetColorTarget(0).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();

@@ -7,13 +7,13 @@
 
 namespace platform
 {
-	void Window::CreatePlatformParams(en::Window& window)
+	void Window::CreatePlatformParams(app::Window& window)
 	{
 		window.SetPlatformParams(std::make_unique<win32::Window::PlatformParams>());
 	}
 
 
-	bool (*platform::Window::Create)(en::Window& window, std::string const& title, uint32_t width, uint32_t height) = nullptr;
-	void (*platform::Window::Destroy)(en::Window& window) = nullptr;
-	void (*platform::Window::SetRelativeMouseMode)(en::Window const& window, bool enabled) = nullptr;
+	bool (*platform::Window::Create)(app::Window& window, std::string const& title, uint32_t width, uint32_t height) = nullptr;
+	void (*platform::Window::Destroy)(app::Window& window) = nullptr;
+	void (*platform::Window::SetRelativeMouseMode)(app::Window const& window, bool enabled) = nullptr;
 }

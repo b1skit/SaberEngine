@@ -12,7 +12,7 @@
 #include "cgltf.h" // We already included this with the CGLTF_IMPLEMENTATION elsewhere
 
 
-namespace util
+namespace grutil
 {
 	re::Texture::ImageDataUniquePtr CreateImageDataUniquePtr(void* imageData)
 	{
@@ -35,7 +35,7 @@ namespace util
 
 		LOG("Attempting to load %d texture(s): \"%s\"...", texturePaths.size(), texturePaths[0].c_str());
 
-		PerformanceTimer timer;
+		util::PerformanceTimer timer;
 		timer.Start();
 
 		const uint32_t totalFaces = (uint32_t)texturePaths.size();
@@ -192,7 +192,7 @@ namespace util
 		SEAssert(texSrc != nullptr && texSrcNumBytes > 0, "Invalid texture memory allocation");
 
 		LOG("Attempting to load texture \"%s\" from memory...", texName.c_str());
-		PerformanceTimer timer;
+		util::PerformanceTimer timer;
 		timer.Start();
 
 		// Modify default TextureParams to be suitable for a generic error texture:

@@ -54,14 +54,14 @@ namespace win32
 		case WM_SETFOCUS:
 		case WM_EXITSIZEMOVE:
 		{
-			en::EngineApp::Get()->GetWindow()->SetFocusState(true);
+			app::EngineApp::Get()->GetWindow()->SetFocusState(true);
 			doBroadcastSEEvent = false;
 		}
 		break;
 		case WM_KILLFOCUS:
 		case WM_ENTERSIZEMOVE:
 		{
-			en::EngineApp::Get()->GetWindow()->SetFocusState(false);
+			app::EngineApp::Get()->GetWindow()->SetFocusState(false);
 			doBroadcastSEEvent = false;
 		}
 		break;
@@ -182,7 +182,7 @@ namespace win32
 	}
 
 	
-	bool Window::Create(en::Window& window, std::string const& title, uint32_t width, uint32_t height)
+	bool Window::Create(app::Window& window, std::string const& title, uint32_t width, uint32_t height)
 	{
 		// Since the Windows 10 Creators update, we have per-monitor V2 DPI awareness context. This allows the client
 		// area of the window to achieve 100% scaling while still allowing non-client window content to be rendered in
@@ -276,7 +276,7 @@ namespace win32
 	}
 
 
-	void Window::Destroy(en::Window& window)
+	void Window::Destroy(app::Window& window)
 	{
 		win32::Window::PlatformParams* platformParams = 
 			window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
@@ -285,7 +285,7 @@ namespace win32
 	}
 
 
-	void Window::SetRelativeMouseMode(en::Window const& window, bool relativeModeEnabled)
+	void Window::SetRelativeMouseMode(app::Window const& window, bool relativeModeEnabled)
 	{
 		if (relativeModeEnabled)
 		{

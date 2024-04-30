@@ -30,29 +30,11 @@
     <Filter Include="Source Files\re">
       <UniqueIdentifier>{1b25b4a1-92eb-482c-9ebb-92a8e5433254}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\en">
-      <UniqueIdentifier>{242d67af-2c7c-4691-9ff2-d501d832b66c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\en">
-      <UniqueIdentifier>{1a6a9e41-cdf7-4631-b2fb-5198e12def51}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\re\platform">
       <UniqueIdentifier>{180b02b2-6e6a-486b-b7c0-501814587f64}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\re\platform">
       <UniqueIdentifier>{2a550363-f17a-4d7c-95cf-8f4bbdb3aaed}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\en\platform">
-      <UniqueIdentifier>{a8efc633-e9ef-46eb-990a-2763ba4b6e89}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\util">
-      <UniqueIdentifier>{630f943a-981c-4e35-8b33-cc82cced1776}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\util">
-      <UniqueIdentifier>{d9d7149e-7017-4446-8ea2-4a29d5e8b8a8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\en\Platform">
-      <UniqueIdentifier>{600b373f-06b3-4495-a7f5-42d65e9fed88}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\re\DX12">
       <UniqueIdentifier>{f2a0cff1-b569-4542-b705-06a1dbd039a2}</UniqueIdentifier>
@@ -65,12 +47,6 @@
     </Filter>
     <Filter Include="Source Files\re\OpenGL">
       <UniqueIdentifier>{d850fa90-7f81-4355-895d-5e6dba3351c7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\en\win32">
-      <UniqueIdentifier>{e9148669-8e9a-448c-90d6-3da71ce4166a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\en\win32">
-      <UniqueIdentifier>{d6310138-0ea0-4318-8790-179f829c797c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Shaders\HLSL">
       <UniqueIdentifier>{ca22796c-1011-432d-ac46-e02825116631}</UniqueIdentifier>
@@ -147,6 +123,30 @@
     <Filter Include="Source Files\pch">
       <UniqueIdentifier>{02ae7d1a-0360-4bc7-9408-8e81c324a6ed}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\app">
+      <UniqueIdentifier>{242d67af-2c7c-4691-9ff2-d501d832b66c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\app\Platform">
+      <UniqueIdentifier>{600b373f-06b3-4495-a7f5-42d65e9fed88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\app\win32">
+      <UniqueIdentifier>{d6310138-0ea0-4318-8790-179f829c797c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\app">
+      <UniqueIdentifier>{1a6a9e41-cdf7-4631-b2fb-5198e12def51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\app\platform">
+      <UniqueIdentifier>{a8efc633-e9ef-46eb-990a-2763ba4b6e89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\app\win32">
+      <UniqueIdentifier>{e9148669-8e9a-448c-90d6-3da71ce4166a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gr\grutil">
+      <UniqueIdentifier>{d9d7149e-7017-4446-8ea2-4a29d5e8b8a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gr\grutil">
+      <UniqueIdentifier>{630f943a-981c-4e35-8b33-cc82cced1776}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -186,7 +186,7 @@
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="EngineApp.cpp">
-      <Filter>Source Files\en</Filter>
+      <Filter>Source Files\app</Filter>
     </ClCompile>
     <ClCompile Include="RenderManager.cpp">
       <Filter>Source Files\re</Filter>
@@ -201,7 +201,7 @@
       <Filter>Source Files\fr</Filter>
     </ClCompile>
     <ClCompile Include="Platform.cpp">
-      <Filter>Source Files\en\platform</Filter>
+      <Filter>Source Files\app\platform</Filter>
     </ClCompile>
     <ClCompile Include="SceneData.cpp">
       <Filter>Source Files\fr</Filter>
@@ -258,10 +258,10 @@
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
     <ClCompile Include="Window_Platform.cpp">
-      <Filter>Source Files\en\platform</Filter>
+      <Filter>Source Files\app\platform</Filter>
     </ClCompile>
     <ClCompile Include="Window_Win32.cpp">
-      <Filter>Source Files\en\win32</Filter>
+      <Filter>Source Files\app\win32</Filter>
     </ClCompile>
     <ClCompile Include="Context_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
@@ -510,13 +510,13 @@
       <Filter>Source Files\pch</Filter>
     </ClCompile>
     <ClCompile Include="AssetLoadUtils.cpp">
-      <Filter>Source Files\util</Filter>
+      <Filter>Source Files\gr\grutil</Filter>
     </ClCompile>
     <ClCompile Include="VertexStreamBuilder.cpp">
-      <Filter>Source Files\util</Filter>
+      <Filter>Source Files\gr\grutil</Filter>
     </ClCompile>
     <ClCompile Include="Window.cpp">
-      <Filter>Source Files\re</Filter>
+      <Filter>Source Files\app</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -554,7 +554,7 @@
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="EngineApp.h">
-      <Filter>Header Files\en</Filter>
+      <Filter>Header Files\app</Filter>
     </ClInclude>
     <ClInclude Include="RenderManager.h">
       <Filter>Header Files\re</Filter>
@@ -566,7 +566,7 @@
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="VertexStreamBuilder.h">
-      <Filter>Header Files\util</Filter>
+      <Filter>Header Files\gr\grutil</Filter>
     </ClInclude>
     <ClInclude Include="SceneData.h">
       <Filter>Header Files\fr</Filter>
@@ -626,16 +626,16 @@
       <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="Platform.h">
-      <Filter>Header Files\en\Platform</Filter>
+      <Filter>Header Files\app\Platform</Filter>
     </ClInclude>
     <ClInclude Include="Window_Win32.h">
-      <Filter>Header Files\en\win32</Filter>
+      <Filter>Header Files\app\win32</Filter>
     </ClInclude>
     <ClInclude Include="Window_Platform.h">
-      <Filter>Header Files\en\Platform</Filter>
+      <Filter>Header Files\app\Platform</Filter>
     </ClInclude>
     <ClInclude Include="Window.h">
-      <Filter>Header Files\en</Filter>
+      <Filter>Header Files\app</Filter>
     </ClInclude>
     <ClInclude Include="Context_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
@@ -785,7 +785,7 @@
       <Filter>Dependencies\Resources</Filter>
     </ClInclude>
     <ClInclude Include="AssetLoadUtils.h">
-      <Filter>Header Files\util</Filter>
+      <Filter>Header Files\gr\grutil</Filter>
     </ClInclude>
     <ClInclude Include="SceneNodeConcept.h">
       <Filter>Header Files\fr\Concepts</Filter>

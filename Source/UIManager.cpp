@@ -239,7 +239,7 @@ namespace fr
 
 				// If true, hide the mouse and lock it to the window
 				const bool captureMouse = !m_imguiMenuVisible;
-				en::EngineApp::Get()->GetWindow()->SetRelativeMouseMode(captureMouse);
+				app::EngineApp::Get()->GetWindow()->SetRelativeMouseMode(captureMouse);
 
 				// Disable ImGui mouse listening if the console is not active: Prevents UI elements
 				// flashing as the hidden mouse cursor passes by

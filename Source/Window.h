@@ -3,7 +3,7 @@
 #include "Core\Interfaces\IPlatformParams.h"
 
 
-namespace en
+namespace app
 {
 	class Window
 	{

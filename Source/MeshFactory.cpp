@@ -201,7 +201,7 @@ namespace
 		std::vector<glm::vec4> colors;
 
 		const gr::MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
-		util::VertexStreamBuilder::MeshData meshData
+		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
@@ -215,7 +215,7 @@ namespace
 			.m_weights = nullptr,
 			.m_vertexColor = factoryOptions.m_vertexColor
 		};
-		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
 		std::vector<float>* normalsPtr =
@@ -360,7 +360,7 @@ namespace gr::meshfactory
 		constexpr char const* meshName = "cube";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
-		util::VertexStreamBuilder::MeshData meshData
+		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
@@ -374,7 +374,7 @@ namespace gr::meshfactory
 			.m_weights = nullptr,
 			.m_vertexColor = factoryOptions.m_vertexColor,
 		};
-		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
 		std::vector<float>* normalsPtr = 
@@ -434,7 +434,7 @@ namespace gr::meshfactory
 		constexpr char meshName[] = "optimizedFullscreenQuad";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams; // Use defaults
-		util::VertexStreamBuilder::MeshData meshData
+		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
@@ -447,7 +447,7 @@ namespace gr::meshfactory
 			.m_joints = nullptr,
 			.m_weights = nullptr,
 		};
-		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		return MeshPrimitive::Create(
 			"optimizedFullscreenQuad",
@@ -494,7 +494,7 @@ namespace gr::meshfactory
 		constexpr char meshName[] = "quad";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
-		util::VertexStreamBuilder::MeshData meshData
+		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
@@ -508,7 +508,7 @@ namespace gr::meshfactory
 			.m_weights = nullptr,
 			.m_vertexColor = factoryOptions.m_vertexColor,
 		};
-		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
 		std::vector<float>* normalsPtr =
@@ -713,7 +713,7 @@ namespace gr::meshfactory
 		std::vector<glm::vec4> colors;
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
-		util::VertexStreamBuilder::MeshData meshData
+		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
@@ -727,7 +727,7 @@ namespace gr::meshfactory
 			.m_weights = nullptr,
 			.m_vertexColor = factoryOptions.m_vertexColor
 		};
-		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
 		std::vector<float>* normalsPtr =
@@ -917,7 +917,7 @@ namespace gr::meshfactory
 		std::vector<glm::vec4> colors;
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
-		util::VertexStreamBuilder::MeshData meshData
+		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
@@ -931,7 +931,7 @@ namespace gr::meshfactory
 			.m_weights = nullptr,
 			.m_vertexColor = factoryOptions.m_vertexColor
 		};
-		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
 		std::vector<float>* normalsPtr =
@@ -1005,7 +1005,7 @@ namespace gr::meshfactory
 		constexpr char meshName[] = "helloTriangle";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
-		util::VertexStreamBuilder::MeshData meshData
+		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
@@ -1018,7 +1018,7 @@ namespace gr::meshfactory
 			.m_joints = nullptr,
 			.m_weights = nullptr
 		};
-		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
 		std::vector<float>* normalsPtr =

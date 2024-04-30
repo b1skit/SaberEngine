@@ -51,7 +51,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LOG("\nWelcome to the Saber Engine!\n");
 
-	en::EngineApp m_engineApp;
+	app::EngineApp m_engineApp;
 
 	m_engineApp.Startup();
 	m_engineApp.Run();

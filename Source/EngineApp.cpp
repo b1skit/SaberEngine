@@ -20,7 +20,7 @@ namespace
 	constexpr size_t k_numSystemThreads = 2;
 }
 
-namespace en
+namespace app
 {
 	EngineApp*	EngineApp::m_engineApp = nullptr;
 
@@ -39,7 +39,7 @@ namespace en
 
 	void EngineApp::Startup()
 	{
-		SEBeginCPUEvent("en::EngineApp::Startup");
+		SEBeginCPUEvent("app::EngineApp::Startup");
 
 		LOG("EngineApp starting...");
 
@@ -59,7 +59,7 @@ namespace en
 		const int xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		const int yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 
-		m_window = std::make_unique<en::Window>(); // Ensure Window exists for first callbacks triggered by Create
+		m_window = std::make_unique<app::Window>(); // Ensure Window exists for first callbacks triggered by Create
 		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
 		SEAssert(windowCreated, "Failed to create a window");
 
@@ -125,11 +125,11 @@ namespace en
 
 		while (m_isRunning)
 		{
-			SEBeginCPUEvent("en::EngineApp::Run frame outer loop");
+			SEBeginCPUEvent("app::EngineApp::Run frame outer loop");
 
 			outerLoopTimer.Start();
 
-			SEBeginCPUEvent("en::EngineApp::Update");
+			SEBeginCPUEvent("app::EngineApp::Update");
 			EngineApp::Update(m_frameNum, lastOuterFrameTime);
 			SEEndCPUEvent();
 
@@ -138,7 +138,7 @@ namespace en
 			elapsed += lastOuterFrameTime;
 			while (elapsed >= m_fixedTimeStep)
 			{	
-				SEBeginCPUEvent("en::EngineApp::Run frame inner loop");
+				SEBeginCPUEvent("app::EngineApp::Run frame inner loop");
 
 				elapsed -= m_fixedTimeStep;
 
@@ -173,7 +173,7 @@ namespace en
 			SEEndCPUEvent();
 
 			// Pump the render thread, and wait for it to signal copying is complete:
-			SEBeginCPUEvent("en::EngineApp::Run Wait on copy step");
+			SEBeginCPUEvent("app::EngineApp::Run Wait on copy step");
 			renderManager->EnqueueUpdate({m_frameNum, lastOuterFrameTime});
 			m_copyBarrier->arrive_and_wait();
 			SEEndCPUEvent();
@@ -195,7 +195,7 @@ namespace en
 
 	void EngineApp::Shutdown()
 	{
-		SEBeginCPUEvent("en::EngineApp::Shutdown");
+		SEBeginCPUEvent("app::EngineApp::Shutdown");
 
 		LOG("EngineApp shutting down...");
 
@@ -224,7 +224,7 @@ namespace en
 	
 	void EngineApp::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		SEBeginCPUEvent("en::EngineApp::Update");
+		SEBeginCPUEvent("app::EngineApp::Update");
 
 		HandleEvents();
 
@@ -234,7 +234,7 @@ namespace en
 
 	void EngineApp::HandleEvents()
 	{
-		SEBeginCPUEvent("en::EngineApp::HandleEvents");
+		SEBeginCPUEvent("app::EngineApp::HandleEvents");
 
 		while (HasEvents())
 		{

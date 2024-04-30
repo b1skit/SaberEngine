@@ -1,14 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Interfaces\IEventListener.h"
 #include "Window.h"
 
 #include "Core\LogManager.h"
 
 #include "Core\Interfaces\IEngineComponent.h"
+#include "Core\Interfaces\IEventListener.h"
 
 
-namespace en
+namespace app
 {
 	class EngineApp final : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
@@ -34,7 +34,7 @@ namespace en
 		// IEventListener interface:
 		void HandleEvents() override;
 
-		en::Window* GetWindow() const { return m_window.get(); }
+		app::Window* GetWindow() const { return m_window.get(); }
 
 
 	private:
@@ -45,7 +45,7 @@ namespace en
 
 		uint64_t m_frameNum;
 
-		std::unique_ptr<en::Window> m_window;
+		std::unique_ptr<app::Window> m_window;
 
 		std::unique_ptr<std::barrier<>> m_copyBarrier;
 		

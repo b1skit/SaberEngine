@@ -24,7 +24,7 @@ namespace opengl
 		platform::RLibraryImGui::CreateInternal(*imguiLibrary);
 
 		// Setup OpenGL ImGui backend:
-		en::Window* window = en::EngineApp::Get()->GetWindow();
+		app::Window* window = app::EngineApp::Get()->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatformParams* windowPlatParams =

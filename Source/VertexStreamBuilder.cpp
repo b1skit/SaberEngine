@@ -9,11 +9,11 @@
 #include "weldmesh.c" // LNK2019 otherwise...
 
 
-namespace util
+namespace grutil
 {
 	void VertexStreamBuilder::BuildMissingVertexAttributes(MeshData* meshData)
 	{
-		util::VertexStreamBuilder tangentBuilder;
+		grutil::VertexStreamBuilder tangentBuilder;
 		tangentBuilder.ConstructMissingVertexAttributes(meshData);
 	}
 

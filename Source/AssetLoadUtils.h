@@ -5,7 +5,7 @@
 struct cgltf_material;
 
 
-namespace util
+namespace grutil
 {
 	re::Texture::ImageDataUniquePtr CreateImageDataUniquePtr(void* imageData);
 
