@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 
-namespace en
+namespace core
 {
 	class EventManager;
 }
@@ -10,6 +10,6 @@ namespace win32
 	class EventManager
 	{
 	public:
-		static void ProcessMessages(en::EventManager& eventManager);
+		static void ProcessMessages(core::EventManager& eventManager);
 	};
 }

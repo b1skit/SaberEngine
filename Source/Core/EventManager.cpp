@@ -1,16 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EventManager.h"
 #include "EventManager_Platform.h"
-#include "IEventListener.h"
+#include "Interfaces\IEventListener.h"
 
-#include "Core\Assert.h"
+#include "Assert.h"
 
 
-namespace en
+namespace core
 {
 	EventManager* EventManager::Get()
 	{
-		static std::unique_ptr<en::EventManager> instance = std::make_unique<en::EventManager>();
+		static std::unique_ptr<core::EventManager> instance = std::make_unique<core::EventManager>();
 		return instance.get();
 	}
 

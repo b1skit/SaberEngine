@@ -46,7 +46,7 @@ namespace fr
 		LOG("EntityManager starting...");
 
 		// Event subscriptions:
-		en::EventManager::Get()->Subscribe(en::EventManager::EventType::InputToggleConsole, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::EventType::InputToggleConsole, this);
 
 		// Process entity commands issued during scene loading:
 		ProcessEntityCommands();
@@ -554,11 +554,11 @@ namespace fr
 	{
 		while (HasEvents())
 		{
-			en::EventManager::EventInfo const& eventInfo = GetEvent();
+			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
 			switch (eventInfo.m_type)
 			{
-			case en::EventManager::EventType::InputToggleConsole:
+			case core::EventManager::EventType::InputToggleConsole:
 			{
 				// Only enable/disable input processing when the console button is toggled
 				if (eventInfo.m_data0.m_dataB)

@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "IEventListener.h"
+#include "Core\Interfaces\IEventListener.h"
 
 #include "Core\Definitions\KeyConfiguration.h"
 
@@ -9,7 +9,7 @@
 
 namespace en
 {
-	class InputManager final : public virtual en::IEngineComponent, public virtual en::IEventListener
+	class InputManager final : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
 	public:
 		static InputManager* Get(); // Singleton functionality

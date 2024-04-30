@@ -200,9 +200,6 @@
     <ClCompile Include="CameraControlComponent.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
-    <ClCompile Include="EventManager.cpp">
-      <Filter>Source Files\en</Filter>
-    </ClCompile>
     <ClCompile Include="InputManager.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
@@ -263,20 +260,11 @@
     <ClCompile Include="Shader_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
-    <ClCompile Include="EventManager_Win32.cpp">
-      <Filter>Source Files\en\win32</Filter>
-    </ClCompile>
-    <ClCompile Include="EventManager_Platform.cpp">
-      <Filter>Source Files\en\platform</Filter>
-    </ClCompile>
     <ClCompile Include="InputManager_Platform.cpp">
       <Filter>Source Files\en\platform</Filter>
     </ClCompile>
     <ClCompile Include="InputManager_Win32.cpp">
       <Filter>Source Files\en\win32</Filter>
-    </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Source Files\en</Filter>
     </ClCompile>
     <ClCompile Include="Window_Platform.cpp">
       <Filter>Source Files\en\platform</Filter>
@@ -536,6 +524,9 @@
     <ClCompile Include="VertexStreamBuilder.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Context.h">
@@ -582,12 +573,6 @@
     </ClInclude>
     <ClInclude Include="RenderManager_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="IEventListener.h">
-      <Filter>Header Files\en</Filter>
-    </ClInclude>
-    <ClInclude Include="EventManager.h">
-      <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="InputManager.h">
       <Filter>Header Files\en</Filter>
@@ -653,12 +638,6 @@
       <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="Platform.h">
-      <Filter>Header Files\en\Platform</Filter>
-    </ClInclude>
-    <ClInclude Include="EventManager_Win32.h">
-      <Filter>Header Files\en\win32</Filter>
-    </ClInclude>
-    <ClInclude Include="EventManager_Platform.h">
       <Filter>Header Files\en\Platform</Filter>
     </ClInclude>
     <ClInclude Include="InputManager_Platform.h">

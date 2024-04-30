@@ -15,9 +15,9 @@
 namespace
 {
 	// Helper wrapper to reduce boilerplate
-	void SendEvent(en::EventManager::EventType eventType)
+	void SendEvent(core::EventManager::EventType eventType)
 	{
-		en::EventManager::Get()->Notify(en::EventManager::EventInfo{
+		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 				.m_type = eventType,
 				//.m_data0 = ,
 				//.m_data1 = 
@@ -158,14 +158,14 @@ namespace fr
 		LOG("UI manager starting...");
 
 		// Event subscriptions:
-		en::EventManager::Get()->Subscribe(en::EventManager::EventType::InputToggleConsole, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::EventType::InputToggleConsole, this);
 
 		// Input events:
-		en::EventManager::Get()->Subscribe(en::EventManager::EventType::TextInputEvent, this);
-		en::EventManager::Get()->Subscribe(en::EventManager::EventType::KeyEvent, this);
-		en::EventManager::Get()->Subscribe(en::EventManager::EventType::MouseMotionEvent, this);
-		en::EventManager::Get()->Subscribe(en::EventManager::EventType::MouseButtonEvent, this);
-		en::EventManager::Get()->Subscribe(en::EventManager::EventType::MouseWheelEvent, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::EventType::TextInputEvent, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::EventType::KeyEvent, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::EventType::MouseMotionEvent, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::EventType::MouseButtonEvent, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::EventType::MouseWheelEvent, this);
 
 		// Create UI render systems:
 		class CreateDebugUIRenderSystemCommand
@@ -275,9 +275,9 @@ namespace fr
 					{
 						m_imguiWantsToCaptureKeyboard = currentImguiWantsToCaptureKeyboard;
 
-						en::EventManager::Get()->Notify(en::EventManager::EventInfo{
-							.m_type = en::EventManager::EventType::KeyboardInputCaptureChange,
-							.m_data0 = en::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureKeyboard },
+						core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+							.m_type = core::EventManager::EventType::KeyboardInputCaptureChange,
+							.m_data0 = core::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureKeyboard },
 							//.m_data1 = 
 							});
 					}
@@ -286,9 +286,9 @@ namespace fr
 					{
 						m_imguiWantsToCaptureMouse = currentImguiWantsToCaptureMouse;
 
-						en::EventManager::Get()->Notify(en::EventManager::EventInfo{
-							.m_type = en::EventManager::EventType::MouseInputCaptureChange,
-							.m_data0 = en::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureMouse },
+						core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+							.m_type = core::EventManager::EventType::MouseInputCaptureChange,
+							.m_data0 = core::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureMouse },
 							//.m_data1 = 
 							});
 					}
@@ -314,11 +314,11 @@ namespace fr
 
 		while (HasEvents())
 		{
-			en::EventManager::EventInfo const& eventInfo = GetEvent();
+			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
 			switch (eventInfo.m_type)
 			{
-			case en::EventManager::EventType::InputToggleConsole:
+			case core::EventManager::EventType::InputToggleConsole:
 			{
 				if (eventInfo.m_data0.m_dataB)
 				{
@@ -326,7 +326,7 @@ namespace fr
 				}
 			}
 			break;
-			case en::EventManager::EventType::TextInputEvent:
+			case core::EventManager::EventType::TextInputEvent:
 			{
 				if (debugUISystemCreated)
 				{
@@ -336,7 +336,7 @@ namespace fr
 				}
 			}
 			break;
-			case en::EventManager::KeyEvent:
+			case core::EventManager::KeyEvent:
 			{
 				const definitions::SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(eventInfo.m_data0.m_dataUI);
 				const bool keystate = eventInfo.m_data1.m_dataB;
@@ -350,7 +350,7 @@ namespace fr
 				}
 			}
 			break;
-			case en::EventManager::MouseButtonEvent:
+			case core::EventManager::MouseButtonEvent:
 			{
 				const bool buttonState = eventInfo.m_data1.m_dataB;
 				
@@ -382,7 +382,7 @@ namespace fr
 				}
 			}
 			break;
-			case en::EventManager::MouseWheelEvent:
+			case core::EventManager::MouseWheelEvent:
 			{
 				if (debugUISystemCreated)
 				{
@@ -469,7 +469,7 @@ namespace fr
 
 						if (ImGui::MenuItem("Quit"))
 						{
-							SendEvent(en::EventManager::EngineQuit);
+							SendEvent(core::EventManager::EngineQuit);
 						}
 
 						ImGui::EndMenu();

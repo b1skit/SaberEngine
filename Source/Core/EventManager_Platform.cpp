@@ -4,5 +4,5 @@
 
 namespace platform
 {
-	void (*platform::EventManager::ProcessMessages)(en::EventManager& eventManager) = nullptr;
+	void (*platform::EventManager::ProcessMessages)(core::EventManager& eventManager) = nullptr;
 }

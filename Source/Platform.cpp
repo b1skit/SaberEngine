@@ -7,8 +7,8 @@
 #include "Context_OpenGL.h"
 #include "Context_Platform.h"
 
-#include "EventManager_Platform.h"
-#include "EventManager_Win32.h"
+#include "Core\EventManager_Platform.h"
+#include "Core\EventManager_Win32.h"
 
 #include "InputManager_Platform.h"
 #include "InputManager_Win32.h"

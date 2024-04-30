@@ -1,11 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "EntityCommands.h"
+#include "RelationshipComponent.h"
+
 #include "Core\Assert.h"
 #include "Core\CommandQueue.h"
+
 #include "Core\Interfaces\IEngineComponent.h"
-#include "EntityCommands.h"
-#include "IEventListener.h"
-#include "RelationshipComponent.h"
+#include "Core\Interfaces\IEventListener.h"
 
 
 namespace fr
@@ -13,7 +15,7 @@ namespace fr
 	class BoundsComponent;
 
 
-	class EntityManager final : public virtual en::IEngineComponent, public virtual en::IEventListener
+	class EntityManager final : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
 	public:
 		static EntityManager* Get(); // Singleton functionality

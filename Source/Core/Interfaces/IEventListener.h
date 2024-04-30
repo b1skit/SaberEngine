@@ -1,9 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "EventManager.h"
+#include "..\EventManager.h"
 
 
-namespace en
+namespace core
 {
 	class IEventListener
 	{
@@ -12,18 +12,18 @@ namespace en
 
 
 	public:
-		void RegisterEvent(en::EventManager::EventInfo const& eventInfo);
+		void RegisterEvent(core::EventManager::EventInfo const& eventInfo);
 		bool HasEvents() const;
-		en::EventManager::EventInfo GetEvent();
+		core::EventManager::EventInfo GetEvent();
 
 
 	private:
-		std::queue<en::EventManager::EventInfo> m_events;
+		std::queue<core::EventManager::EventInfo> m_events;
 		mutable std::shared_mutex m_eventsMutex;
 	};
 
 
-	inline void IEventListener::RegisterEvent(en::EventManager::EventInfo const& eventInfo)
+	inline void IEventListener::RegisterEvent(core::EventManager::EventInfo const& eventInfo)
 	{
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_eventsMutex);
@@ -41,11 +41,11 @@ namespace en
 	}
 
 
-	inline en::EventManager::EventInfo IEventListener::GetEvent()
+	inline core::EventManager::EventInfo IEventListener::GetEvent()
 	{
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_eventsMutex);
-			en::EventManager::EventInfo nextEvent = m_events.front();
+			core::EventManager::EventInfo nextEvent = m_events.front();
 			m_events.pop();
 			return nextEvent;
 		}

@@ -14,7 +14,7 @@ namespace win32
 	// Handle messages we've (re)broadcasted (i.e. tranlated & dispatched) from win32::EventManager::ProcessMessages
 	LRESULT CALLBACK Window::WindowEventCallback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
-		en::EventManager::EventInfo eventInfo;
+		core::EventManager::EventInfo eventInfo;
 		bool doBroadcastSEEvent = true;
 
 		LRESULT result = 0;
@@ -25,7 +25,7 @@ namespace win32
 		case WM_DESTROY:
 		case WM_QUIT:
 		{
-			eventInfo.m_type = en::EventManager::EventType::EngineQuit;
+			eventInfo.m_type = core::EventManager::EventType::EngineQuit;
 
 			::PostQuitMessage(0);
 		}
@@ -36,7 +36,7 @@ namespace win32
 			// https://learn.microsoft.com/en-us/windows/win32/menurc/wm-syscommand
 			if (wParam == SC_CLOSE)
 			{
-				eventInfo.m_type = en::EventManager::EventType::EngineQuit;
+				eventInfo.m_type = core::EventManager::EventType::EngineQuit;
 			}
 			else
 			{
@@ -70,7 +70,7 @@ namespace win32
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
 		{
-			eventInfo.m_type = en::EventManager::EventType::KeyEvent;
+			eventInfo.m_type = core::EventManager::EventType::KeyEvent;
 
 			switch (wParam)
 			{
@@ -109,14 +109,14 @@ namespace win32
 		case WM_CHAR:
 		{
 			// Posted when a WM_KEYDOWN message is translated by TranslateMessage
-			eventInfo.m_type = en::EventManager::EventType::TextInputEvent;
+			eventInfo.m_type = core::EventManager::EventType::TextInputEvent;
 			eventInfo.m_data0.m_dataC = static_cast<char>(wParam);
 		}
 		break;
 		case WM_LBUTTONDOWN:
 		case WM_LBUTTONUP:
 		{
-			eventInfo.m_type = en::EventManager::EventType::MouseButtonEvent;
+			eventInfo.m_type = core::EventManager::EventType::MouseButtonEvent;
 			eventInfo.m_data0.m_dataUI = 0;
 			eventInfo.m_data1.m_dataB = (uMsg == WM_LBUTTONDOWN);
 		}
@@ -124,7 +124,7 @@ namespace win32
 		case WM_MBUTTONDOWN:
 		case WM_MBUTTONUP:
 		{
-			eventInfo.m_type = en::EventManager::EventType::MouseButtonEvent;
+			eventInfo.m_type = core::EventManager::EventType::MouseButtonEvent;
 			eventInfo.m_data0.m_dataUI = 1;
 			eventInfo.m_data1.m_dataB = (uMsg == WM_MBUTTONDOWN);
 		}
@@ -132,14 +132,14 @@ namespace win32
 		case WM_RBUTTONDOWN:
 		case WM_RBUTTONUP:
 		{
-			eventInfo.m_type = en::EventManager::EventType::MouseButtonEvent;
+			eventInfo.m_type = core::EventManager::EventType::MouseButtonEvent;
 			eventInfo.m_data0.m_dataUI = 2;
 			eventInfo.m_data1.m_dataB = (uMsg == WM_RBUTTONDOWN);
 		}
 		break;
 		case WM_MOUSEWHEEL:
 		{
-			eventInfo.m_type = en::EventManager::EventType::MouseWheelEvent;
+			eventInfo.m_type = core::EventManager::EventType::MouseWheelEvent;
 			eventInfo.m_data0.m_dataI = 0; // X: Currently not supported
 			eventInfo.m_data1.m_dataI = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA; // Y
 			// Note: Wheel motion is in of +/- units WHEEL_DELTA == 120
@@ -156,7 +156,7 @@ namespace win32
 
 			if (raw->header.dwType == RIM_TYPEMOUSE)
 			{
-				eventInfo.m_type = en::EventManager::EventType::MouseMotionEvent;
+				eventInfo.m_type = core::EventManager::EventType::MouseMotionEvent;
 
 				eventInfo.m_data0.m_dataI = raw->data.mouse.lLastX;
 				eventInfo.m_data1.m_dataI = raw->data.mouse.lLastY;
@@ -175,7 +175,7 @@ namespace win32
 
 		if (doBroadcastSEEvent)
 		{
-			en::EventManager::Get()->Notify(std::move(eventInfo));
+			core::EventManager::Get()->Notify(std::move(eventInfo));
 		}
 
 		return result;

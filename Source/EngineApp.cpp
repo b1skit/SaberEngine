@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EngineApp.h"
 #include "EntityManager.h"
-#include "EventManager.h"
+#include "Core\EventManager.h"
 #include "InputManager.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
@@ -76,9 +76,9 @@ namespace en
 		renderManager->ThreadStartup(); // Initializes context
 
 		// Start managers:
-		en::EventManager* eventManager = en::EventManager::Get();
+		core::EventManager* eventManager = core::EventManager::Get();
 		eventManager->Startup();
-		eventManager->Subscribe(en::EventManager::EngineQuit, this);
+		eventManager->Subscribe(core::EventManager::EngineQuit, this);
 
 		en::InputManager::Get()->Startup(); // Now that the window is created
 
@@ -105,7 +105,7 @@ namespace en
 	{
 		LOG("\nEngineApp: Starting main game loop\n");
 
-		en::EventManager* eventManager = en::EventManager::Get();
+		core::EventManager* eventManager = core::EventManager::Get();
 		core::LogManager* logManager = core::LogManager::Get();
 		en::InputManager* inputManager = en::InputManager::Get();
 		fr::EntityManager* entityManager = fr::EntityManager::Get();
@@ -143,7 +143,7 @@ namespace en
 				elapsed -= m_fixedTimeStep;
 
 				// Pump our events/input:
-				SEBeginCPUEvent("en::EventManager::Update");
+				SEBeginCPUEvent("core::EventManager::Update");
 				eventManager->Update(m_frameNum, lastOuterFrameTime);
 				SEEndCPUEvent();
 
@@ -210,7 +210,7 @@ namespace en
 		re::RenderManager::Get()->ThreadShutdown();
 
 		en::InputManager::Get()->Shutdown();
-		en::EventManager::Get()->Shutdown();
+		core::EventManager::Get()->Shutdown();
 
 		m_window->Destroy();
 
@@ -238,11 +238,11 @@ namespace en
 
 		while (HasEvents())
 		{
-			en::EventManager::EventInfo const& eventInfo = GetEvent();
+			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
 			switch (eventInfo.m_type)
 			{
-			case en::EventManager::EngineQuit:
+			case core::EventManager::EngineQuit:
 			{
 				Stop();
 			}

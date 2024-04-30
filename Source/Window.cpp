@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "EventManager.h"
+#include "Core/EventManager.h"
 #include "Window.h"
 #include "Window_Platform.h"
 
@@ -40,9 +40,9 @@ namespace en
 			platform::Window::SetRelativeMouseMode(*this, m_relativeMouseModeEnabled);
 		}
 
-		en::EventManager::Get()->Notify(en::EventManager::EventInfo{
-				.m_type = en::EventManager::EventType::WindowFocusChanged,
-				.m_data0 = en::EventManager::EventData{.m_dataB = m_hasFocus}
+		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+				.m_type = core::EventManager::EventType::WindowFocusChanged,
+				.m_data0 = core::EventManager::EventData{.m_dataB = m_hasFocus}
 				//.m_data1 = unused
 			});
 	}

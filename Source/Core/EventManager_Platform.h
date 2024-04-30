@@ -2,7 +2,7 @@
 #pragma once
 
 
-namespace en
+namespace core
 {
 	class EventManager;
 }
@@ -12,6 +12,6 @@ namespace platform
 	class EventManager
 	{
 	public:
-		static void (*ProcessMessages)(en::EventManager& eventManager);
+		static void (*ProcessMessages)(core::EventManager& eventManager);
 	};
 }

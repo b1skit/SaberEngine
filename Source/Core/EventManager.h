@@ -1,9 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Interfaces\IEngineComponent.h"
+#include "Interfaces\IEngineComponent.h"
 
 
-namespace en
+namespace core
 {
 	class IEventListener;
 }
@@ -13,7 +13,7 @@ namespace re
 }
 
 
-namespace en
+namespace core
 {
 	class EventManager final : public virtual en::IEngineComponent
 	{

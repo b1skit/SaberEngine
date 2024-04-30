@@ -1,13 +1,13 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "IEventListener.h"
+#include "Core\Interfaces\IEventListener.h"
 
 #include "Core\Interfaces\IEngineComponent.h"
 
 
 namespace fr
 {
-	class UIManager : public virtual en::IEngineComponent, public virtual en::IEventListener
+	class UIManager : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
 	public:
 		static UIManager* Get(); // Singleton functionality

@@ -1,10 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "EventManager.h"
 #include "InputManager.h"
 #include "InputManager_Platform.h"
 
 #include "Core\Assert.h"
 #include "Core\Config.h"
+#include "Core\EventManager.h"
+
 #include "Core\Definitions\KeyConfiguration.h"
 
 
@@ -57,13 +58,13 @@ namespace en
 		LoadInputBindings();
 
 		// Event subscriptions:
-		EventManager::Get()->Subscribe(EventManager::KeyEvent, this);
-		EventManager::Get()->Subscribe(EventManager::MouseMotionEvent, this);
-		EventManager::Get()->Subscribe(EventManager::MouseButtonEvent, this);
-		EventManager::Get()->Subscribe(EventManager::MouseWheelEvent, this);
-		EventManager::Get()->Subscribe(EventManager::WindowFocusChanged, this);
-		EventManager::Get()->Subscribe(EventManager::KeyboardInputCaptureChange, this);
-		EventManager::Get()->Subscribe(EventManager::MouseInputCaptureChange, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::KeyEvent, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::MouseMotionEvent, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::MouseButtonEvent, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::MouseWheelEvent, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::WindowFocusChanged, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::KeyboardInputCaptureChange, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::MouseInputCaptureChange, this);
 
 		platform::InputManager::Startup(*this);
 	}
@@ -89,19 +90,19 @@ namespace en
 	{
 		while (HasEvents())
 		{
-			en::EventManager::EventInfo const& eventInfo = GetEvent();
+			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
 			// Transform key/mouse events into SaberEngine functionality events (eg. "w" -> "move forward")
 			// NOTE: We may receive more than 1 of each type of event between calls to Update() from input with high
 			// polling rates (e.g. mouse motion)
 
-			en::EventManager::EventInfo transformedEvent;
+			core::EventManager::EventInfo transformedEvent;
 
 			bool doBroadcastToSE = true;
 
 			switch (eventInfo.m_type)
 			{
-			case en::EventManager::KeyboardInputCaptureChange:
+			case core::EventManager::KeyboardInputCaptureChange:
 			{
 				m_keyboardInputCaptured = eventInfo.m_data0.m_dataB;
 				if (m_keyboardInputCaptured)
@@ -111,7 +112,7 @@ namespace en
 				doBroadcastToSE = false;
 			}
 			break;
-			case en::EventManager::MouseInputCaptureChange:
+			case core::EventManager::MouseInputCaptureChange:
 			{
 				m_mouseInputCaptured = eventInfo.m_data0.m_dataB;
 				if (m_mouseInputCaptured)
@@ -121,7 +122,7 @@ namespace en
 				doBroadcastToSE = false;
 			}
 			break;
-			case en::EventManager::KeyEvent:
+			case core::EventManager::KeyEvent:
 			{
 				const definitions::SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(eventInfo.m_data0.m_dataUI);
 				const bool keystate = eventInfo.m_data1.m_dataB;
@@ -145,52 +146,52 @@ namespace en
 						{
 						case definitions::KeyboardInputButton::InputButton_Forward:
 						{
-							transformedEvent.m_type = EventManager::EventType::InputForward;
+							transformedEvent.m_type = core::EventManager::EventType::InputForward;
 						}
 						break;
 						case definitions::KeyboardInputButton::InputButton_Backward:
 						{
-							transformedEvent.m_type = EventManager::EventType::InputBackward;
+							transformedEvent.m_type = core::EventManager::EventType::InputBackward;
 						}
 						break;
 						case definitions::KeyboardInputButton::InputButton_Left:
 						{
-							transformedEvent.m_type = EventManager::EventType::InputLeft;
+							transformedEvent.m_type = core::EventManager::EventType::InputLeft;
 						}
 						break;
 						case definitions::KeyboardInputButton::InputButton_Right:
 						{
-							transformedEvent.m_type = EventManager::EventType::InputRight;
+							transformedEvent.m_type = core::EventManager::EventType::InputRight;
 						}
 						break;
 						case definitions::KeyboardInputButton::InputButton_Up:
 						{
-							transformedEvent.m_type = EventManager::EventType::InputUp;
+							transformedEvent.m_type = core::EventManager::EventType::InputUp;
 						}
 						break;
 						case definitions::KeyboardInputButton::InputButton_Down:
 						{
-							transformedEvent.m_type = EventManager::EventType::InputDown;
+							transformedEvent.m_type = core::EventManager::EventType::InputDown;
 						}
 						break;
 						case definitions::KeyboardInputButton::InputButton_Sprint:
 						{
-							transformedEvent.m_type = EventManager::EventType::InputSprint;
+							transformedEvent.m_type = core::EventManager::EventType::InputSprint;
 						}
 						break;
 						case definitions::KeyboardInputButton::InputButton_Console:
 						{
-							transformedEvent.m_type = EventManager::EventType::InputToggleConsole;
+							transformedEvent.m_type = core::EventManager::EventType::InputToggleConsole;
 						}
 						break;
 						case definitions::KeyboardInputButton::InputButton_VSync:
 						{
-							transformedEvent.m_type = EventManager::EventType::InputToggleVSync;							
+							transformedEvent.m_type = core::EventManager::EventType::InputToggleVSync;							
 						}
 						break;
 						case definitions::KeyboardInputButton::InputButton_Quit:
 						{
-							transformedEvent.m_type = EventManager::EventType::EngineQuit;
+							transformedEvent.m_type = core::EventManager::EventType::EngineQuit;
 						}
 						break;
 						default:
@@ -206,7 +207,7 @@ namespace en
 				}
 			} // end KeyEvent
 			break;
-			case en::EventManager::MouseMotionEvent:
+			case core::EventManager::MouseMotionEvent:
 			{
 				// Unpack the mouse data:
 				m_mouseAxisStates[definitions::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI);
@@ -214,7 +215,7 @@ namespace en
 				doBroadcastToSE = false;
 			}
 			break;
-			case en::EventManager::MouseButtonEvent:
+			case core::EventManager::MouseButtonEvent:
 			{
 				const bool buttonState = eventInfo.m_data1.m_dataB;
 				switch (eventInfo.m_data0.m_dataUI)
@@ -228,7 +229,7 @@ namespace en
 					else
 					{
 						m_mouseButtonStates[definitions::InputMouse_Left] = buttonState;
-						transformedEvent.m_type = EventManager::EventType::InputMouseLeft;
+						transformedEvent.m_type = core::EventManager::EventType::InputMouseLeft;
 						transformedEvent.m_data0.m_dataB = buttonState;
 					}
 				}
@@ -242,7 +243,7 @@ namespace en
 					else
 					{
 						m_mouseButtonStates[definitions::InputMouse_Middle] = buttonState;
-						transformedEvent.m_type = EventManager::EventType::InputMouseMiddle;
+						transformedEvent.m_type = core::EventManager::EventType::InputMouseMiddle;
 						transformedEvent.m_data0.m_dataB = buttonState;
 					}
 				}
@@ -256,7 +257,7 @@ namespace en
 					else
 					{
 						m_mouseButtonStates[definitions::InputMouse_Right] = buttonState;
-						transformedEvent.m_type = EventManager::EventType::InputMouseRight;
+						transformedEvent.m_type = core::EventManager::EventType::InputMouseRight;
 						transformedEvent.m_data0.m_dataB = buttonState;
 					}
 				}
@@ -266,19 +267,19 @@ namespace en
 				}
 			}
 			break;
-			case en::EventManager::MouseWheelEvent:
+			case core::EventManager::MouseWheelEvent:
 			{
 				doBroadcastToSE = !m_mouseInputCaptured;
 				if (doBroadcastToSE)
 				{
 					// Pass on the data set in EventManager_Win32.cpp
-					transformedEvent.m_type = EventManager::EventType::MouseWheelEvent;
+					transformedEvent.m_type = core::EventManager::EventType::MouseWheelEvent;
 					transformedEvent.m_data0.m_dataI = eventInfo.m_data0.m_dataI;
 					transformedEvent.m_data1.m_dataI = eventInfo.m_data1.m_dataI;
 				}
 			}
 			break;
-			case en::EventManager::WindowFocusChanged:
+			case core::EventManager::WindowFocusChanged:
 			{
 				// If we've lost focus, zero out any currently-pressed keys to prevent them getting stuck
 				if (!transformedEvent.m_data0.m_dataB)
@@ -295,7 +296,7 @@ namespace en
 
 			if (doBroadcastToSE)
 			{
-				en::EventManager::Get()->Notify(std::move(transformedEvent));
+				core::EventManager::Get()->Notify(std::move(transformedEvent));
 			}
 		}		
 	}

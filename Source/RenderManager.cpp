@@ -157,7 +157,7 @@ namespace re
 
 		LOG("RenderManager starting...");
 		re::Context::Get()->Create(m_renderFrameNum);
-		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleVSync, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::InputToggleVSync, this);
 
 		SEEndCPUEvent();
 	}
@@ -344,11 +344,11 @@ namespace re
 
 		while (HasEvents())
 		{
-			en::EventManager::EventInfo const& eventInfo = GetEvent();
+			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
 			switch (eventInfo.m_type)
 			{
-			case en::EventManager::InputToggleVSync:
+			case core::EventManager::InputToggleVSync:
 			{
 				if (eventInfo.m_data0.m_dataB == true)
 				{

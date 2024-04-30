@@ -2,7 +2,7 @@
 #pragma once
 #include "BatchManager.h"
 #include "Core\CommandQueue.h"
-#include "IEventListener.h"
+#include "Core\Interfaces\IEventListener.h"
 #include "Platform.h"
 #include "RenderSystem.h"
 
@@ -37,7 +37,7 @@ namespace re
 namespace re
 {
 	class RenderManager
-		: public virtual en::IEngineComponent, public virtual en::IEngineThread, public virtual en::IEventListener
+		: public virtual en::IEngineComponent, public virtual en::IEngineThread, public virtual core::IEventListener
 	{
 	public:
 		static RenderManager* Get(); // Singleton functionality

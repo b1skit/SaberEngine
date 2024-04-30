@@ -326,8 +326,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="Dependencies\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Device_DX12.cpp" />
     <ClCompile Include="EntityCommands.cpp" />
-    <ClCompile Include="EventManager_Platform.cpp" />
-    <ClCompile Include="EventManager_Win32.cpp" />
     <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
@@ -397,7 +395,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="VertexStreamBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
     <ClCompile Include="EngineApp.cpp" />
-    <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="SceneNodeConcept.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
     <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
@@ -480,8 +477,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="NameComponent.h" />
     <ClInclude Include="BufferAllocator_DX12.h" />
     <ClInclude Include="MeshFactory.h" />
-    <ClInclude Include="EventManager_Platform.h" />
-    <ClInclude Include="EventManager_Win32.h" />
     <ClInclude Include="Fence_DX12.h" />
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
@@ -571,8 +566,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Texture_Platform.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineApp.h" />
-    <ClInclude Include="IEventListener.h" />
-    <ClInclude Include="EventManager.h" />
     <ClInclude Include="SceneNodeConcept.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Light.h" />

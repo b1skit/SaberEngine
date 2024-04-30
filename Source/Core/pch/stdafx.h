@@ -22,6 +22,7 @@
 #include <latch>
 #include <queue>
 #include <regex>
+#include <shared_mutex>
 
 
 // Win32 API:
