@@ -25,14 +25,14 @@ namespace
 	constexpr uint8_t k_invalidIdx = std::numeric_limits<uint8_t>::max();
 
 
-	constexpr D3D12_SHADER_VISIBILITY GetShaderVisibilityFlagFromShaderType(dx12::Shader::ShaderType shaderType)
+	constexpr D3D12_SHADER_VISIBILITY GetShaderVisibilityFlagFromShaderType(re::Shader::ShaderType shaderType)
 	{
 		switch (shaderType)
 		{
-		case dx12::Shader::ShaderType::Vertex:		return D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_VERTEX;
-		case dx12::Shader::ShaderType::Geometry:	return D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_GEOMETRY;
-		case dx12::Shader::ShaderType::Pixel:		return D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL;
-		case dx12::Shader::ShaderType::Compute:		return D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
+		case re::Shader::ShaderType::Vertex:	return D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_VERTEX;
+		case re::Shader::ShaderType::Geometry:	return D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_GEOMETRY;
+		case re::Shader::ShaderType::Pixel:		return D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL;
+		case re::Shader::ShaderType::Compute:	return D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
 							// Compute queue always uses D3D12_SHADER_VISIBILITY_ALL because it has only 1 active stage
 		default:
 			SEAssertF("Invalid shader type");
@@ -303,8 +303,8 @@ namespace dx12
 
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
-		SEAssert(shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Vertex] != nullptr ||
-			shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Compute] != nullptr,
+		SEAssert(shaderParams->m_shaderBlobs[re::Shader::ShaderType::Vertex] != nullptr ||
+			shaderParams->m_shaderBlobs[re::Shader::ShaderType::Compute] != nullptr,
 			"No valid shader blobs found");
 
 		std::unique_ptr<dx12::RootSignature> newRootSig = nullptr;
@@ -348,7 +348,7 @@ namespace dx12
 
 		// Parse the shader reflection:
 		ComPtr<ID3D12ShaderReflection> shaderReflection;
-		for (uint32_t shaderIdx = 0; shaderIdx < Shader::ShaderType::ShaderType_Count; shaderIdx++)
+		for (uint32_t shaderIdx = 0; shaderIdx < re::Shader::ShaderType_Count; shaderIdx++)
 		{
 			if (shaderParams->m_shaderBlobs[shaderIdx] == nullptr)
 			{
@@ -411,7 +411,7 @@ namespace dx12
 							inputBindingDesc.BindPoint,	// Shader register
 							inputBindingDesc.Space,		// Register space
 							D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
-							GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx)));	// Shader visibility
+							GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx)));	// Shader visibility
 
 						newRootSig->InsertNewRootParamMetadata(inputBindingDesc.Name,
 							RootParameter{
@@ -451,7 +451,7 @@ namespace dx12
 								.m_baseRegister = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
 								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
 								.m_shaderVisibility =
-									GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx)),
+									GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx)),
 								.m_shaderInputType = inputBindingDesc.Type,
 								.m_bindCount = inputBindingDesc.BindCount,
 								.m_returnType = inputBindingDesc.ReturnType,
@@ -494,7 +494,7 @@ namespace dx12
 						staticSamplers.back().ShaderRegister = inputBindingDesc.BindPoint;
 						staticSamplers.back().RegisterSpace = inputBindingDesc.Space;
 						staticSamplers.back().ShaderVisibility =
-							GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx));
+							GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx));
 					}
 					else
 					{
@@ -519,7 +519,7 @@ namespace dx12
 								.m_baseRegister = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
 								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
 								.m_shaderVisibility = GetShaderVisibilityFlagFromShaderType(
-									static_cast<dx12::Shader::ShaderType>(shaderIdx)),
+									static_cast<re::Shader::ShaderType>(shaderIdx)),
 								.m_shaderInputType = inputBindingDesc.Type,
 								.m_bindCount = inputBindingDesc.BindCount,
 								.m_returnType = inputBindingDesc.ReturnType,
@@ -545,7 +545,7 @@ namespace dx12
 							inputBindingDesc.BindPoint,	// Shader register
 							inputBindingDesc.Space,		// Register space
 							D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
-							GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx)));	// Shader visibility
+							GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx)));	// Shader visibility
 
 						newRootSig->InsertNewRootParamMetadata(inputBindingDesc.Name,
 							RootParameter{

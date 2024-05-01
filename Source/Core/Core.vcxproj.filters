@@ -87,9 +87,6 @@
     <ClInclude Include="Definitions\KeyConfiguration.h">
       <Filter>Header Files\Definitions</Filter>
     </ClInclude>
-    <ClInclude Include="ConfigKeys.h">
-      <Filter>Header Files\Definitions</Filter>
-    </ClInclude>
     <ClInclude Include="Config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -131,6 +128,9 @@
     </ClInclude>
     <ClInclude Include="Interfaces\IPlatformParams.h">
       <Filter>Header Files\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Definitions\ConfigKeys.h">
+      <Filter>Header Files\Definitions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

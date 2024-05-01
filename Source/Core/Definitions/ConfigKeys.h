@@ -15,6 +15,7 @@ namespace core::configkeys
 	constexpr char const* k_platformPipelineFileName_DX12	= "platformDX12.json";
 	constexpr char const* k_glslShaderDirName				= ".\\Shaders\\GLSL\\";
 	constexpr char const* k_hlslShaderDirName				= ".\\Shaders\\HLSL\\";
+	constexpr char const* k_commonShaderDirName				= ".\\Shaders\\Common\\";
 
 	// Debug:
 	constexpr char const* k_pixCaptureFolderName		= "PIX Captures";

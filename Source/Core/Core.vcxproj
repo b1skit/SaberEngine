@@ -334,7 +334,7 @@
     <ClInclude Include="Assert.h" />
     <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="Config.h" />
-    <ClInclude Include="ConfigKeys.h" />
+    <ClInclude Include="Definitions\ConfigKeys.h" />
     <ClInclude Include="Definitions\KeyConfiguration.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventManager_Platform.h" />

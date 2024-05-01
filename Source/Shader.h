@@ -17,6 +17,25 @@ namespace re
 	class Shader final : public virtual core::INamedObject
 	{
 	public:
+		enum ShaderType : uint8_t
+		{
+			Vertex,
+			Geometry,
+			Pixel,
+
+			Hull,			// OpenGL: Tesselation Control Shader (.tesc)
+			Domain,			// OpenGL: Tesselation Evaluation Shader (.tese)
+
+			Mesh,			// Not (currently) supported on OpenGL
+			Amplification,  // Not (currently) supported on OpenGL
+
+			Compute,
+
+			ShaderType_Count
+		};
+
+
+	public:
 		static uint64_t ComputeShaderIdentifier(std::string const& extensionlessShaderFilename, re::PipelineState const&);
 
 

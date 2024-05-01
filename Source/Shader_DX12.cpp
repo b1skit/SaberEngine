@@ -24,15 +24,18 @@ namespace dx12
 		// Compiled Shader Objects (CSO) are pre-compiled by Visual Studio, we attempt to load them here
 		const std::wstring shaderBaseName = std::wstring(shader.GetName().begin(), shader.GetName().end());
 
-		constexpr std::array<wchar_t const*, ShaderType_Count> nameSuffix =
+		constexpr std::array<wchar_t const*, re::Shader::ShaderType_Count> nameSuffix =
 		{
 			L"_VShader.cso",
 			L"_GShader.cso",
 			L"_PShader.cso",
+
 			L"_HShader.cso",
 			L"_DShader.cso",
+
 			L"_MShader.cso",
 			L"_AShader.cso",
+
 			L"_CShader.cso"
 		};
 

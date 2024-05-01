@@ -22,24 +22,34 @@ namespace
 	constexpr uint32_t k_shaderTypeFlags[]
 	{
 		GL_VERTEX_SHADER,
-		GL_TESS_CONTROL_SHADER,
-		GL_TESS_EVALUATION_SHADER,
 		GL_GEOMETRY_SHADER,
 		GL_FRAGMENT_SHADER,
+
+		GL_TESS_CONTROL_SHADER,
+		GL_TESS_EVALUATION_SHADER,
+
+		GL_MESH_SHADER_BIT_NV,
+		GL_TASK_SHADER_BIT_NV,
+
 		GL_COMPUTE_SHADER
 	};
-	static_assert(_countof(k_shaderTypeFlags) == opengl::Shader::ShaderType_Count);
+	static_assert(_countof(k_shaderTypeFlags) == re::Shader::ShaderType_Count);
 
 	constexpr char const* k_shaderFileExtensions[]
 	{
 		".vert",
-		".tesc",
-		".tese",
 		".geom",
 		".frag",
+
+		".tesc",
+		".tese",
+
+		".mesh",
+		".task",
+
 		".comp"
 	};
-	static_assert(_countof(k_shaderFileExtensions) == opengl::Shader::ShaderType_Count);
+	static_assert(_countof(k_shaderFileExtensions) == re::Shader::ShaderType_Count);
 
 
 	constexpr char const* k_shaderPreambles[] // Per-shader-type preamble
@@ -47,12 +57,6 @@ namespace
 		// ShaderType::Vertex:
 		"#define SE_VERTEX_SHADER\n",
 		
-		// ShaderType::TesselationControl:
-		"#define SE_TESS_CONTROL_SHADER\n",
-
-		// ShaderType::TesselationEvaluation:
-		"#define SE_TESS_EVALUATION_SHADER\n",
-
 		// ShaderType::Geometry:
 		"#define SE_GEOMETRY_SHADER\n",
 
@@ -60,10 +64,22 @@ namespace
 		"#define SE_FRAGMENT_SHADER\n"
 		"layout(origin_upper_left) in vec4 gl_FragCoord;\n", // Make fragment coords ([0,xRes), [0,yRes)) match our UV(0,0) = top-left convention
 
+		// ShaderType::TesselationControl:
+		"#define SE_TESS_CONTROL_SHADER\n",
+
+		// ShaderType::TesselationEvaluation:
+		"#define SE_TESS_EVALUATION_SHADER\n",
+
+		// ShaderType::Mesh:
+		"#define SE_MESH_SHADER\n",
+
+		// ShaderType::Amplification:
+		"#define SE_TASK_SHADER\n",
+
 		// ShaderType::Compute:
 		"#define SE_COMPUTE_SHADER\n",
 	};
-	static_assert(_countof(k_shaderFileExtensions) == opengl::Shader::ShaderType_Count);
+	static_assert(_countof(k_shaderPreambles) == re::Shader::ShaderType_Count);
 
 
 	constexpr char const* k_globalPreamble = "#version 460 core\n"
@@ -119,7 +135,8 @@ namespace
 	}
 
 
-	void AssertShaderIsValid(std::string const& shaderName, uint32_t const& shaderRef, uint32_t const& flag, bool const& isProgram)
+	void AssertShaderIsValid(
+		std::string const& shaderName, uint32_t const& shaderRef, uint32_t const& flag, bool const& isProgram)
 	{
 		GLint success = 0;
 		GLchar errorMsg[1024] = { 0 }; // Error buffer
@@ -152,18 +169,21 @@ namespace
 	std::string LoadShaderText(std::string const& filename)
 	{
 		// Assemble the default shader file path:
-		std::string const& shaderDir = core::Config::Get()->GetValue<std::string>(core::configkeys::k_shaderDirectoryKey);
+		std::string const& shaderDir = 
+			core::Config::Get()->GetValue<std::string>(core::configkeys::k_shaderDirectoryKey);
 		std::string filepath = shaderDir + filename;
 
 		// Attempt to load the shader
 		std::string shaderText = util::LoadTextAsString(filepath);
 
+		bool foundText = !shaderText.empty();
+
 		// If loading failed, check the additional search locations:
-		if (shaderText.empty())
+		if (!foundText)
 		{
 			constexpr std::array<char const*, 1> k_additionalSearchDirs =
 			{
-				".\\Shaders\\Common\\",
+				core::configkeys::k_commonShaderDirName,
 			};
 
 			for (size_t i = 0; i < k_additionalSearchDirs.size(); i++)
@@ -173,10 +193,23 @@ namespace
 				shaderText = util::LoadTextAsString(filepath);
 				if (!shaderText.empty())
 				{
-					return shaderText;
+					foundText = true;
+					break;
 				}
 			}
 		}
+
+		if (foundText)
+		{
+			return std::format(
+				"//--------------------------------------------------------------------------------------\n"
+				"// {}:\n"
+				"//--------------------------------------------------------------------------------------\n"
+				"{}",
+				filename,
+				shaderText);
+		}
+
 		return shaderText;
 	}
 
@@ -186,11 +219,11 @@ namespace
 		opengl::Shader::PlatformParams* shaderPlatformParams =
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
 
-		std::array<std::string, opengl::Shader::ShaderType_Count>& shaderTexts = shaderPlatformParams->m_shaderTexts;
+		std::array<std::string, re::Shader::ShaderType_Count>& shaderTexts = shaderPlatformParams->m_shaderTexts;
 
 		std::vector<std::future<void>> taskFutures;
-		taskFutures.resize(opengl::Shader::ShaderType_Count);
-		for (size_t i = 0; i < opengl::Shader::ShaderType_Count; i++)
+		taskFutures.resize(re::Shader::ShaderType_Count);
+		for (size_t i = 0; i < re::Shader::ShaderType_Count; i++)
 		{
 			const std::string assembledName = shader.GetName() + k_shaderFileExtensions[i];
 			taskFutures[i] = core::ThreadPool::Get()->EnqueueJob(
@@ -353,18 +386,18 @@ namespace opengl
 		std::vector<std::future<void>> const& loadShaderTextsTaskFutures = LoadShaderTexts(shader);
 
 		// Load the shaders, and assemble params we'll need soon:
-		std::array<std::string, opengl::Shader::ShaderType_Count> shaderFiles;
-		std::array<std::string, opengl::Shader::ShaderType_Count> shaderFileNames; // For RenderDoc markers
+		std::array<std::string, re::Shader::ShaderType_Count> shaderFiles;
+		std::array<std::string, re::Shader::ShaderType_Count> shaderFileNames; // For RenderDoc markers
 
 		// Each shader type (.vert/.frag etc) is loaded as a vector of substrings
-		std::array<std::vector<std::string>, opengl::Shader::ShaderType_Count> shaderTextStrings;
+		std::array<std::vector<std::string>, re::Shader::ShaderType_Count> shaderTextStrings;
 
 		// Figure out what type of shader(s) we're loading:
-		std::array<uint32_t, opengl::Shader::ShaderType_Count> foundShaderTypeFlags{};
+		std::array<uint32_t, re::Shader::ShaderType_Count> foundShaderTypeFlags{};
 
 		// Pre-process the shader text:
-		std::array< std::future<void>, opengl::Shader::ShaderType_Count> processIncludesTaskFutures;
-		for (size_t i = 0; i < opengl::Shader::ShaderType_Count; i++)
+		std::array< std::future<void>, re::Shader::ShaderType_Count> processIncludesTaskFutures;
+		for (size_t i = 0; i < re::Shader::ShaderType_Count; i++)
 		{
 			// Make sure we're done loading the shader texts before we continue:
 			loadShaderTextsTaskFutures[i].wait();
@@ -384,8 +417,12 @@ namespace opengl
 					});
 			}
 		}
-		SEAssert(foundShaderTypeFlags[Vertex] != 0 || foundShaderTypeFlags[Compute] != 0,
+		SEAssert(foundShaderTypeFlags[re::Shader::Vertex] != 0 || foundShaderTypeFlags[re::Shader::Compute] != 0,
 			"No shader found. Must have a vertex or compute shader at minimum");
+
+		SEAssert(foundShaderTypeFlags[re::Shader::Mesh] == 0 && foundShaderTypeFlags[re::Shader::Amplification] == 0,
+			"Mesh and amplification shaders are currently only supported via an NVidia extension (and not on AMD). For"
+			"now, we don't support them.");
 
 		// Static so we only compute this once
 		static const size_t preambleLength = strlen(k_globalPreamble);

@@ -391,7 +391,7 @@ namespace dx12
 		// Generate the PSO:
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 		
-		if (shaderParams->m_shaderBlobs[dx12::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
+		if (shaderParams->m_shaderBlobs[re::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
 		{
 			re::PipelineState const& rePipelineState = shader.GetPipelineState();
 
@@ -402,8 +402,8 @@ namespace dx12
 
 			const DxcBuffer reflectionBuffer
 			{
-				.Ptr = shaderParams->m_shaderBlobs[dx12::Shader::Vertex]->GetBufferPointer(),
-				.Size = shaderParams->m_shaderBlobs[dx12::Shader::Vertex]->GetBufferSize(),
+				.Ptr = shaderParams->m_shaderBlobs[re::Shader::Vertex]->GetBufferPointer(),
+				.Size = shaderParams->m_shaderBlobs[re::Shader::Vertex]->GetBufferSize(),
 				.Encoding = 0,
 			};
 
@@ -425,22 +425,22 @@ namespace dx12
 			pipelineStateStream.rootSignature = shaderParams->m_rootSignature->GetD3DRootSignature();
 			pipelineStateStream.inputLayout = { inputLayout.data(), static_cast<uint32_t>(inputLayout.size())};
 			pipelineStateStream.primitiveTopologyType = GetD3DTopologyType(rePipelineState.GetTopologyType());
-			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Vertex].Get());
+			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[re::Shader::Vertex].Get());
 
-			if (shaderParams->m_shaderBlobs[dx12::Shader::Geometry])
+			if (shaderParams->m_shaderBlobs[re::Shader::Geometry])
 			{
-				pipelineStateStream.gShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Geometry].Get());
+				pipelineStateStream.gShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[re::Shader::Geometry].Get());
 			}
 			
-			if (shaderParams->m_shaderBlobs[dx12::Shader::Pixel])
+			if (shaderParams->m_shaderBlobs[re::Shader::Pixel])
 			{
-				pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Pixel].Get());
+				pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[re::Shader::Pixel].Get());
 			}
 
-			SEAssert(!shaderParams->m_shaderBlobs[dx12::Shader::Hull] && 
-				!shaderParams->m_shaderBlobs[dx12::Shader::Domain] &&
-				!shaderParams->m_shaderBlobs[dx12::Shader::Mesh] &&
-				!shaderParams->m_shaderBlobs[dx12::Shader::Amplification],
+			SEAssert(!shaderParams->m_shaderBlobs[re::Shader::Hull] &&
+				!shaderParams->m_shaderBlobs[re::Shader::Domain] &&
+				!shaderParams->m_shaderBlobs[re::Shader::Mesh] &&
+				!shaderParams->m_shaderBlobs[re::Shader::Amplification],
 				"TODO: Support this shader type");
 
 			// Target formats:
@@ -479,12 +479,12 @@ namespace dx12
 			hr = device->CreatePipelineState(&graphicsPipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
 			CheckHResult(hr, "Failed to create graphics pipeline state");
 		}
-		else if (shaderParams->m_shaderBlobs[dx12::Shader::Compute])
+		else if (shaderParams->m_shaderBlobs[re::Shader::Compute])
 		{
 			// Build compute pipeline description:
 			ComputePipelineStateStream computePipelineStateStream;
 			computePipelineStateStream.rootSignature = shaderParams->m_rootSignature->GetD3DRootSignature();
-			computePipelineStateStream.cShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Compute].Get());
+			computePipelineStateStream.cShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[re::Shader::Compute].Get());
 
 			const D3D12_PIPELINE_STATE_STREAM_DESC computePipelineStateStreamDesc
 			{
