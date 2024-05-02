@@ -597,6 +597,8 @@ namespace gr
 	template<typename T>
 	uint32_t RenderDataManager::GetNumElementsOfType() const
 	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 		if (dataTypeIndex == k_invalidDataTypeIdx)
 		{
@@ -612,8 +614,7 @@ namespace gr
 	template<typename T>
 	std::vector<gr::RenderDataID> const& RenderDataManager::GetRegisteredRenderDataIDs() const
 	{
-		// Catch illegal accesses during RenderData modification
-		util::ScopedThreadProtector threadProjector(m_threadProtector);
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 		SEAssert(dataTypeIndex != k_invalidDataTypeIdx, "No RenderDataIDs are associated with this type");
@@ -624,8 +625,7 @@ namespace gr
 
 	inline std::vector<gr::RenderDataID> const& RenderDataManager::GetRegisteredRenderDataIDs() const
 	{
-		// Catch illegal accesses during RenderData modification
-		util::ScopedThreadProtector threadProjector(m_threadProtector);
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		return m_registeredRenderObjectIDs;
 	}
@@ -633,8 +633,7 @@ namespace gr
 
 	inline std::vector<gr::RenderDataID> const& RenderDataManager::GetRegisteredTransformIDs() const
 	{
-		// Catch illegal accesses during RenderData modification
-		util::ScopedThreadProtector threadProjector(m_threadProtector);
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		return m_registeredTransformIDs;
 	}
