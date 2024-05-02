@@ -125,8 +125,12 @@ namespace gr
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 
 		// Shader:
-		shadowStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_cubeDepthShaderName, shadowPipelineState));
+		shadowStage->SetStageShader(re::Shader::GetOrCreate(
+			{
+				{ "CubeDepth_VShader", re::Shader::Vertex}, 
+				{ "CubeDepth_GShader", re::Shader::Geometry},
+			},
+			shadowPipelineState));
 
 		// Texture target:
 		re::Texture::TextureParams shadowParams;
@@ -228,7 +232,8 @@ namespace gr
 		shadowPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		shadowPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
 
-		shadowStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_depthShaderName, shadowPipelineState));
+		shadowStage->SetStageShader(
+			re::Shader::GetOrCreate({ {"Depth_VShader", re::Shader::Vertex}}, shadowPipelineState));
 
 		// Texture target:
 		re::Texture::TextureParams shadowParams;

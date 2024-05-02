@@ -380,8 +380,13 @@ namespace gr
 		debugLinePipelineState.SetFillMode(re::PipelineState::FillMode::Wireframe);
 		debugLinePipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
 		debugLinePipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-		m_debugLineStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_lineShaderName, debugLinePipelineState));
+
+		m_debugLineStage->SetStageShader(re::Shader::GetOrCreate(
+			{ 
+				{"Line_VShader", re::Shader::Vertex},
+				{"Line_PShader", re::Shader::Pixel}
+			},
+			debugLinePipelineState));
 
 		m_debugLineStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
@@ -393,8 +398,12 @@ namespace gr
 		re::PipelineState debugTrianglePipelineState = debugLinePipelineState;
 		debugTrianglePipelineState.SetTopologyType(re::PipelineState::TopologyType::Triangle);
 
-		m_debugTriangleStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_lineShaderName, debugTrianglePipelineState));
+		m_debugTriangleStage->SetStageShader(re::Shader::GetOrCreate(
+			{
+				{"Line_VShader", re::Shader::Vertex},
+				{"Line_PShader", re::Shader::Pixel}
+			},
+			debugTrianglePipelineState));
 
 		m_debugTriangleStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 

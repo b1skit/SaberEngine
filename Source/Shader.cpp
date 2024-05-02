@@ -9,23 +9,43 @@
 #include "Shader_Platform.h"
 
 
-namespace re
+namespace
 {
-	uint64_t Shader::ComputeShaderIdentifier(
-		std::string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState)
+	// We may reuse the same shader files, but with a different pipeline state. So here, we compute a unique identifier
+	// to represent a particular configuration
+	uint64_t ComputeShaderIdentifier(
+		std::vector<std::pair<std::string, re::Shader::ShaderType>> const& extensionlessSourceFilenames,
+		re::PipelineState const& rePipelineState)
 	{
-		uint64_t hashResult = util::HashString(extensionlessShaderFilename);
+		uint64_t hashResult = 0;
+
+		for (auto const& shaderStage : extensionlessSourceFilenames)
+		{
+			SEAssert(shaderStage.second != re::Shader::ShaderType_Count, "Invalid shader type");
+
+			util::CombineHash(hashResult, util::HashString(shaderStage.first));
+		}
+
 		util::CombineHash(hashResult, rePipelineState.GetDataHash());
+		
 		return hashResult;
 	}
+}
 
-
-	std::shared_ptr<re::Shader> Shader::GetOrCreate(
-		std::string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState)
+namespace re
+{
+	[[nodiscard]] std::shared_ptr<re::Shader> Shader::GetOrCreate(
+		std::vector<std::pair<std::string, ShaderType>> const& extensionlessSourceFilenames,
+		re::PipelineState const& rePipelineState)
 	{
-		// We may reuse the same shader, but with a different pipeline state. So here, we compute a unique identifier
-		// to represent this particular configuration
-		const uint64_t shaderIdentifier = ComputeShaderIdentifier(extensionlessShaderFilename, rePipelineState);
+		const uint64_t shaderIdentifier = ComputeShaderIdentifier(extensionlessSourceFilenames, rePipelineState);
+
+		// Concatenate the various filenames together to build a helpful identifier
+		std::string shaderName;
+		for (auto const& typeFilename : extensionlessSourceFilenames)
+		{
+			shaderName += std::format("{}:{}", k_shaderTypeNames[typeFilename.second], typeFilename.first);
+		}
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
 		fr::SceneData* sceneData = fr::SceneManager::GetSceneData();
@@ -38,7 +58,7 @@ namespace re
 
 		// Our ctor is private; We must manually create the Shader, and then pass the ownership to a shared_ptr
 		std::shared_ptr<re::Shader> sharedShaderPtr;
-		sharedShaderPtr.reset(new re::Shader(extensionlessShaderFilename, rePipelineState, shaderIdentifier));
+		sharedShaderPtr.reset(new re::Shader(shaderName, extensionlessSourceFilenames, rePipelineState, shaderIdentifier));
 
 		// Register the Shader with the SceneData object for lifetime management:
 		const bool addedNewShader = sceneData->AddUniqueShader(sharedShaderPtr);
@@ -53,16 +73,20 @@ namespace re
 
 
 	Shader::Shader(
-		std::string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState, uint64_t shaderIdentifier)
-		: INamedObject(extensionlessShaderFilename)
+		std::string const& shaderName,
+		std::vector<std::pair<std::string, ShaderType>> const& extensionlessSourceFilenames,
+		re::PipelineState const& rePipelineState,
+		uint64_t shaderIdentifier)
+		: INamedObject(shaderName)
 		, m_shaderIdentifier(shaderIdentifier)
+		, m_extensionlessSourceFilenames(extensionlessSourceFilenames)
 		, m_pipelineState(rePipelineState)
 	{
 		platform::Shader::CreatePlatformParams(*this);
 	}
 
 
-	void Shader::Destroy()
+	Shader::~Shader()
 	{
 		platform::Shader::Destroy(*this);
 	}

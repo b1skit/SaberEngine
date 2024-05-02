@@ -64,7 +64,12 @@ namespace gr
 		skyboxPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		skyboxPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::LEqual);
 
-		m_skyboxStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_skyboxShaderName, skyboxPipelineState));
+		m_skyboxStage->SetStageShader(re::Shader::GetOrCreate(
+			{
+				{"Skybox_VShader", re::Shader::Vertex},
+				{"Skybox_PShader", re::Shader::Pixel}
+			},
+			skyboxPipelineState));
 
 		m_skyboxStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 

@@ -346,7 +346,7 @@ namespace gr
 		brdfPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
 		brdfStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_generateBRDFIntegrationMapShaderName, brdfPipelineState));
+			re::Shader::GetOrCreate({ {"GenerateBRDFIntegrationMap_CShader", re::Shader::Compute}}, brdfPipelineState));
 
 		const uint32_t brdfTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
@@ -409,8 +409,12 @@ namespace gr
 		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
 		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
-		std::shared_ptr<re::Shader> iemShader =
-			re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
+		std::shared_ptr<re::Shader> iemShader = re::Shader::GetOrCreate(
+			{
+				{"GenerateIEM_VShader", re::Shader::Vertex},
+				{"GenerateIEM_PShader", re::Shader::Pixel}
+			},
+			iblStageParams);
 
 		const uint32_t iemTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_iemTexWidthHeightKey));
@@ -488,8 +492,12 @@ namespace gr
 		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
 		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
-		std::shared_ptr<re::Shader> pmremShader =
-			re::Shader::GetOrCreate(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
+		std::shared_ptr<re::Shader> pmremShader = re::Shader::GetOrCreate(
+			{
+				{"GeneratePMREM_VShader", re::Shader::Vertex},
+				{"GeneratePMREM_PShader", re::Shader::Pixel}
+			},
+			iblStageParams);
 
 		const uint32_t pmremTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_pmremTexWidthHeightKey));
@@ -725,8 +733,12 @@ namespace gr
 		fullscreenQuadStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Greater);
 		
 		// Ambient light stage:
-		m_ambientStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_deferredAmbientLightShaderName, fullscreenQuadStageParams));
+		m_ambientStage->SetStageShader(re::Shader::GetOrCreate(
+			{
+				{"DeferredAmbientLight_VShader", re::Shader::Vertex},
+				{"DeferredAmbientLight_PShader", re::Shader::Pixel},
+			},
+			fullscreenQuadStageParams));
 
 		m_ambientStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());	
 
@@ -755,8 +767,12 @@ namespace gr
 		//-------------------------
 		m_directionalStage->SetTextureTargetSet(m_lightingTargetSet);
 
-		m_directionalStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_deferredDirectionalLightShaderName, fullscreenQuadStageParams));
+		m_directionalStage->SetStageShader(re::Shader::GetOrCreate(
+			{
+				{"DeferredDirectionalLight_VShader", re::Shader::Vertex},
+				{"DeferredDirectionalLight_PShader", re::Shader::Pixel},
+			},
+			fullscreenQuadStageParams));
 
 		m_directionalStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_directionalStage->AddPermanentBuffer(poissonSampleParams);
@@ -776,8 +792,12 @@ namespace gr
 		deferredMeshStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::GEqual);
 		deferredMeshStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Front); // Cull front faces of light volumes
 
-		m_pointStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_deferredPointLightShaderName, deferredMeshStageParams));
+		m_pointStage->SetStageShader(re::Shader::GetOrCreate(
+			{
+				{"DeferredPointLight_VShader", re::Shader::Vertex},
+				{"DeferredPointLight_PShader", re::Shader::Pixel},
+			},
+			deferredMeshStageParams));
 
 		pipeline.AppendRenderStage(m_pointStage);
 
@@ -789,8 +809,12 @@ namespace gr
 		m_spotStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_spotStage->AddPermanentBuffer(poissonSampleParams);
 
-		m_spotStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_deferredSpotLightShaderName, deferredMeshStageParams));
+		m_spotStage->SetStageShader(re::Shader::GetOrCreate(
+			{
+				{"DeferredSpotLight_VShader", re::Shader::Vertex},
+				{"DeferredSpotLight_PShader", re::Shader::Pixel}
+			},
+			deferredMeshStageParams));
 
 		pipeline.AppendRenderStage(m_spotStage);
 

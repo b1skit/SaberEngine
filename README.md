@@ -119,9 +119,9 @@ Image-based Lighting:
 --------
 Shaders:
 --------
-For simplicity, naming patterns are used to associate Shaders.  
-- OpenGL: Shaders sharing common names (with .vert/.geom/.frag suffixes) will be concatenated and compiled at runtime  
-- DX12: Compiled Shader Objects (.cso) sharing a common name prefix are differentiated by a `<ShaderName>_<?>Shader.hlsl` suffix (e.g. Some_VShader.hlsl, Some_GShader.hlsl, Some_PShader.hlsl), and associated at runtime  
+For simplicity, shader names are expected to be identical between all APIs, with the exception of their file extensions  
+- OpenGL: Shaders have .vert/.geom/.frag/.tesc/.tese/.mesh/.task/.comp extensions. These files are loaded/processed at runtime  
+- DX12: Shaders are compiled with the application from source .hlsli/.hlsl files. The resulting Compiled Shader Objects (.cso) with the same (extensionless) filename are loaded at runtime  
 
 
 ------------------

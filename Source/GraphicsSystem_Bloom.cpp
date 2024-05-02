@@ -71,8 +71,12 @@ namespace gr
 		blitPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		blitPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 		
-		m_emissiveBlitStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_blitShaderName, blitPipelineState));
+		m_emissiveBlitStage->SetStageShader(re::Shader::GetOrCreate(
+			{ 
+				{"Blit_VShader", re::Shader::Vertex},
+				{"Blit_PShader", re::Shader::Pixel}
+			},
+			blitPipelineState));
 
 		// Emissive blit texture inputs:
 		m_emissiveBlitStage->AddTextureInput(
@@ -100,7 +104,8 @@ namespace gr
 
 		// Bloom:
 		re::PipelineState bloomComputePipelineState; // Defaults
-		m_bloomComputeShader = re::Shader::GetOrCreate(en::ShaderNames::k_bloomShaderName, bloomComputePipelineState);
+		m_bloomComputeShader = 
+			re::Shader::GetOrCreate({ {"Bloom_CShader", re::Shader::Compute}}, bloomComputePipelineState);
 
 		// Bloom target: We create a single texture, and render into its mips
 		const glm::uvec2 bloomTargetWidthHeight = 

@@ -19,42 +19,21 @@ namespace dx12
 		SEAssert(!platformParams->m_isCreated, "Shader has already been created");
 		platformParams->m_isCreated = true;
 
-		// Our DX12 Shaders have a naming pattern of <name>_<V/G/P/C>Shader.hlsl
-		// e.g. Some_VShader.hlsl, Some_GShader.hlsl, Some_PShader.hlsl, Some_CShader.hlsl
-		// Compiled Shader Objects (CSO) are pre-compiled by Visual Studio, we attempt to load them here
-		const std::wstring shaderBaseName = std::wstring(shader.GetName().begin(), shader.GetName().end());
+		std::wstring const& shaderDirWStr = 
+			core::Config::Get()->GetValueAsWString(core::configkeys::k_shaderDirectoryKey);
 
-		constexpr std::array<wchar_t const*, re::Shader::ShaderType_Count> nameSuffix =
+		constexpr wchar_t const* k_dx12ShaderExt = L".cso";
+
+		for (auto const& source : shader.m_extensionlessSourceFilenames)
 		{
-			L"_VShader.cso",
-			L"_GShader.cso",
-			L"_PShader.cso",
-
-			L"_HShader.cso",
-			L"_DShader.cso",
-
-			L"_MShader.cso",
-			L"_AShader.cso",
-
-			L"_CShader.cso"
-		};
-
-		// Assemble root shader dir, as a wide string
-		std::wstring const& shaderRootWStr = 
-			core::Config::Get()->GetValueAsWString(core::configkeys::k_shaderDirectoryKey) + shaderBaseName;
-
-		// Load the shader blobs:
-		for (size_t i = 0; i < nameSuffix.size(); i++)
-		{
-			const std::wstring shaderName = shaderRootWStr + nameSuffix[i];
+			std::wstring const& filenameWStr = shaderDirWStr + util::ToWideString(source.first) + k_dx12ShaderExt;
 
 			ComPtr<ID3DBlob> shaderBlob = nullptr;
-			HRESULT hr = ::D3DReadFileToBlob(shaderName.c_str(), &shaderBlob);
+			const HRESULT hr = ::D3DReadFileToBlob(filenameWStr.c_str(), &shaderBlob);
+			CheckHResult(hr, "Failed to read shader file to blob");
 
-			if (SUCCEEDED(hr))
-			{
-				platformParams->m_shaderBlobs[i] = shaderBlob;
-			}
+			const re::Shader::ShaderType shaderType = source.second;
+			platformParams->m_shaderBlobs[shaderType] = shaderBlob;
 		}
 
 		// Now the shader blobs have been loaded, we can create the root signature:

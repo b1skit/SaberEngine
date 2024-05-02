@@ -1,12 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include "Core\Interfaces\IPlatformParams.h"
-#include "Buffer.h"
 #include "PipelineState.h"
+
 #include "Core\Interfaces\INamedObject.h"
+#include "Core\Interfaces\IPlatformParams.h"
 
-
+namespace dx12
+{
+	class Shader;
+}
 namespace opengl
 {
 	class Shader;
@@ -33,11 +35,19 @@ namespace re
 
 			ShaderType_Count
 		};
+		static constexpr std::array<char const*, ShaderType_Count> k_shaderTypeNames = {
+			ENUM_TO_STR(Vertex),
+			ENUM_TO_STR(Geometry),
+			ENUM_TO_STR(Pixel),
 
+			ENUM_TO_STR(Hull),
+			ENUM_TO_STR(Domain),
 
-	public:
-		static uint64_t ComputeShaderIdentifier(std::string const& extensionlessShaderFilename, re::PipelineState const&);
+			ENUM_TO_STR(Mesh),
+			ENUM_TO_STR(Amplification),
 
+			ENUM_TO_STR(Compute),
+		};
 
 	public:
 		struct PlatformParams : public core::IPlatformParams
@@ -47,10 +57,13 @@ namespace re
 		};
 
 
-	public: // Object factory: Gets a Shader if it already exists, or creates it if it doesn't
+	public:
 		[[nodiscard]] static std::shared_ptr<re::Shader> GetOrCreate(
-			std::string const& extensionlessShaderFilename, re::PipelineState const&);
-		~Shader() { Destroy(); }
+			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames,
+			re::PipelineState const&);
+
+
+		~Shader();
 
 		Shader(Shader&&) = default;
 		Shader& operator=(Shader&&) = default;
@@ -66,12 +79,16 @@ namespace re
 
 
 	private:
-		explicit Shader(std::string const& extensionlessShaderFilename, re::PipelineState const&, uint64_t shaderIdentifier);
-		void Destroy();
+		explicit Shader(
+			std::string const& shaderName,
+			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames, 
+			re::PipelineState const&,
+			uint64_t shaderIdentifier);
 
 
 	private:
 		const uint64_t m_shaderIdentifier;
+		std::vector<std::pair<std::string, ShaderType>> m_extensionlessSourceFilenames;
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 
@@ -82,6 +99,10 @@ namespace re
 		Shader() = delete;
 		Shader(Shader const&) = delete;
 		Shader& operator=(Shader&) = delete;
+
+	private:
+		friend class dx12::Shader;
+		friend class opengl::Shader;
 	};
 
 

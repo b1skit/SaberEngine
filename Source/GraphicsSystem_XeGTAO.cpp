@@ -173,7 +173,8 @@ namespace gr
 
 
 		// Depth prefilter stage:
-		m_prefilterDepthsShader = re::Shader::GetOrCreate("XeGTAO_PrefilterDepths", re::PipelineState());
+		m_prefilterDepthsShader = 
+			re::Shader::GetOrCreate({ {"XeGTAO_PrefilterDepths_CShader", re::Shader::Compute} }, re::PipelineState());
 
 		m_prefilterDepthsStage = 
 			re::RenderStage::CreateComputeStage("XeGTAO: Prefilter depths stage", re::RenderStage::ComputeStageParams{});
@@ -305,8 +306,10 @@ namespace gr
 
 
 		// Denoise passes:
-		m_denoiseShader = re::Shader::GetOrCreate("XeGTAO_Denoise", re::PipelineState());
-		m_lastPassDenoiseShader = re::Shader::GetOrCreate("XeGTAO_DenoiseLastPass", re::PipelineState());
+		m_denoiseShader =
+			re::Shader::GetOrCreate({ {"XeGTAO_Denoise_CShader", re::Shader::Compute} }, re::PipelineState());
+		m_lastPassDenoiseShader = 
+			re::Shader::GetOrCreate({ {"XeGTAO_DenoiseLastPass_CShader", re::Shader::Compute} }, re::PipelineState());
 
 		// Always need at least 1 pass to ensure the final target is filled, even if denoising or AO is disabled
 		const uint8_t numDenoisePasses = std::max((uint8_t)1, static_cast<uint8_t>(m_XeGTAOQuality));
@@ -510,22 +513,26 @@ namespace gr
 		case Quality::Disabled:
 		case Quality::Low:
 		{
-			m_mainShaders[Quality::Low] = re::Shader::GetOrCreate("XeGTAO_MainPass_Low", re::PipelineState());
+			m_mainShaders[Quality::Low] = 
+				re::Shader::GetOrCreate({ { "XeGTAO_MainPass_Low_CShader", re::Shader::Compute} }, re::PipelineState());
 		}
 		break;
 		case Quality::Med:
 		{
-			m_mainShaders[Quality::Med] = re::Shader::GetOrCreate("XeGTAO_MainPass_Med", re::PipelineState());
+			m_mainShaders[Quality::Med] = 
+				re::Shader::GetOrCreate({ { "XeGTAO_MainPass_Med_CShader", re::Shader::Compute} }, re::PipelineState());
 		}
 		break;
 		case Quality::High:
 		{
-			m_mainShaders[Quality::High] = re::Shader::GetOrCreate("XeGTAO_MainPass_High", re::PipelineState());
+			m_mainShaders[Quality::High] = 
+				re::Shader::GetOrCreate({ { "XeGTAO_MainPass_High_CShader", re::Shader::Compute} }, re::PipelineState());
 		}
 		break;
 		case Quality::Ultra:
 		{
-			m_mainShaders[Quality::Ultra] = re::Shader::GetOrCreate("XeGTAO_MainPass_Ultra", re::PipelineState());
+			m_mainShaders[Quality::Ultra] = 
+				re::Shader::GetOrCreate({ { "XeGTAO_MainPass_Ultra_CShader", re::Shader::Compute} }, re::PipelineState());
 		}
 		break;
 		default: SEAssertF("Invalid quality");

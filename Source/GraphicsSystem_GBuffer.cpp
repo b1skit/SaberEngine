@@ -34,8 +34,12 @@ namespace gr
 		gBufferPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		gBufferPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
 
-		std::shared_ptr<re::Shader> gBufferShader =
-			re::Shader::GetOrCreate(en::ShaderNames::k_gbufferShaderName, gBufferPipelineState);
+		std::shared_ptr<re::Shader> gBufferShader = re::Shader::GetOrCreate(
+			{
+				{"GBuffer_VShader", re::Shader::Vertex},
+				{"GBuffer_PShader", re::Shader::Pixel}
+			},
+			gBufferPipelineState);
 
 		m_gBufferStage->SetStageShader(gBufferShader);
 

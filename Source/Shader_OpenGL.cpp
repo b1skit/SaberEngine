@@ -64,17 +64,20 @@ namespace
 		"#define SE_FRAGMENT_SHADER\n"
 		"layout(origin_upper_left) in vec4 gl_FragCoord;\n", // Make fragment coords ([0,xRes), [0,yRes)) match our UV(0,0) = top-left convention
 
+
 		// ShaderType::TesselationControl:
 		"#define SE_TESS_CONTROL_SHADER\n",
 
 		// ShaderType::TesselationEvaluation:
 		"#define SE_TESS_EVALUATION_SHADER\n",
 
+
 		// ShaderType::Mesh:
 		"#define SE_MESH_SHADER\n",
 
 		// ShaderType::Amplification:
 		"#define SE_TASK_SHADER\n",
+
 
 		// ShaderType::Compute:
 		"#define SE_COMPUTE_SHADER\n",
@@ -166,12 +169,12 @@ namespace
 	}
 
 
-	std::string LoadShaderText(std::string const& filename)
+	std::string LoadShaderText(std::string const& filenameAndExtension)
 	{
 		// Assemble the default shader file path:
 		std::string const& shaderDir = 
 			core::Config::Get()->GetValue<std::string>(core::configkeys::k_shaderDirectoryKey);
-		std::string filepath = shaderDir + filename;
+		std::string filepath = shaderDir + filenameAndExtension;
 
 		// Attempt to load the shader
 		std::string shaderText = util::LoadTextAsString(filepath);
@@ -188,7 +191,7 @@ namespace
 
 			for (size_t i = 0; i < k_additionalSearchDirs.size(); i++)
 			{
-				filepath = k_additionalSearchDirs[i] + filename;
+				filepath = k_additionalSearchDirs[i] + filenameAndExtension;
 
 				shaderText = util::LoadTextAsString(filepath);
 				if (!shaderText.empty())
@@ -206,7 +209,7 @@ namespace
 				"// {}:\n"
 				"//--------------------------------------------------------------------------------------\n"
 				"{}",
-				filename,
+				filenameAndExtension,
 				shaderText);
 		}
 
@@ -214,23 +217,31 @@ namespace
 	}
 
 
-	std::vector<std::future<void>> LoadShaderTexts(re::Shader& shader)
+	std::string LoadShaderText(std::string const& filename, re::Shader::ShaderType shaderType)
 	{
-		opengl::Shader::PlatformParams* shaderPlatformParams =
-			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
+		std::string const& filenameAndExtension = filename + k_shaderFileExtensions[shaderType];
 
-		std::array<std::string, re::Shader::ShaderType_Count>& shaderTexts = shaderPlatformParams->m_shaderTexts;
+		return LoadShaderText(filenameAndExtension);
+	}
 
+
+	std::vector<std::future<void>> LoadShaderTexts(
+		std::vector<std::pair<std::string, re::Shader::ShaderType>>const& extensionlessSourceFilenames,
+		std::array<std::string, re::Shader::ShaderType_Count>& shaderTextsOut)
+	{
 		std::vector<std::future<void>> taskFutures;
-		taskFutures.resize(re::Shader::ShaderType_Count);
-		for (size_t i = 0; i < re::Shader::ShaderType_Count; i++)
+		taskFutures.reserve(re::Shader::ShaderType_Count);
+
+		for (auto const& source : extensionlessSourceFilenames)
 		{
-			const std::string assembledName = shader.GetName() + k_shaderFileExtensions[i];
-			taskFutures[i] = core::ThreadPool::Get()->EnqueueJob(
-				[&shaderTexts, assembledName, i]()
+			std::string const& filename = source.first;
+			const re::Shader::ShaderType shaderType = source.second;
+
+			taskFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+				[&shaderTextsOut, filename, shaderType]()
 				{
-					shaderTexts[i] = LoadShaderText(assembledName);
-				});
+					shaderTextsOut[shaderType] = LoadShaderText(filename, shaderType);
+				}));
 		}
 
 		return taskFutures;
@@ -258,7 +269,6 @@ namespace
 			}
 		}
 
-		
 		do
 		{
 			includeStartIdx = shaderText.find(k_includeKeyword, blockStartIdx);
@@ -381,9 +391,10 @@ namespace opengl
 
 		std::string const& shaderFileName = shader.GetName();
 		LOG("Creating shader: \"%s\"", shaderFileName.c_str());
-		
+
 		// Load the individual .vert/.frag/etc shader text files:
-		std::vector<std::future<void>> const& loadShaderTextsTaskFutures = LoadShaderTexts(shader);
+		std::vector<std::future<void>> const& loadShaderTextsTaskFutures = 
+			LoadShaderTexts(shader.m_extensionlessSourceFilenames, params->m_shaderTexts);
 
 		// Load the shaders, and assemble params we'll need soon:
 		std::array<std::string, re::Shader::ShaderType_Count> shaderFiles;
@@ -393,15 +404,18 @@ namespace opengl
 		std::array<std::vector<std::string>, re::Shader::ShaderType_Count> shaderTextStrings;
 
 		// Figure out what type of shader(s) we're loading:
-		std::array<uint32_t, re::Shader::ShaderType_Count> foundShaderTypeFlags{};
+		std::array<uint32_t, re::Shader::ShaderType_Count> foundShaderTypeFlags{0};
+
+		// Make sure we're done loading the shader texts before we continue:
+		for (auto const& loadFuture : loadShaderTextsTaskFutures)
+		{
+			loadFuture.wait();
+		}
 
 		// Pre-process the shader text:
 		std::array< std::future<void>, re::Shader::ShaderType_Count> processIncludesTaskFutures;
 		for (size_t i = 0; i < re::Shader::ShaderType_Count; i++)
 		{
-			// Make sure we're done loading the shader texts before we continue:
-			loadShaderTextsTaskFutures[i].wait();
-
 			if (!params->m_shaderTexts[i].empty())
 			{
 				foundShaderTypeFlags[i] = k_shaderTypeFlags[i]; // Mark the shader as seen
@@ -483,7 +497,7 @@ namespace opengl
 			}
 
 			glShaderSource(
-				shaderObject, 
+				shaderObject,
 				static_cast<GLsizei>(shaderSourceStrings.size()),
 				shaderSourceStrings.data(),
 				shaderSourceStringLengths.data());
@@ -541,7 +555,7 @@ namespace opengl
 					"Sampler unit already found! Does the shader have a unique binding layout qualifier?");
 
 				params->m_samplerUnits.emplace(std::move(nameStr), static_cast<int32_t>(val));
-			}			
+			}
 		}
 
 		LOG("Shader \"%s\" created in %f seconds", shaderFileName.c_str(), timer.StopSec());

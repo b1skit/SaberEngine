@@ -101,28 +101,6 @@ namespace core::configkeys
 	constexpr char const* k_doCPUVertexStreamNormalizationKey = "cpunormalizevertexstreams";
 }
 
-namespace en::ShaderNames
-{
-	// Shader filename prefixes. Note: These are not config keys
-	// TODO: Load these from a file at runtime
-	constexpr char const* k_blitShaderName = "Blit";
-	constexpr char const* k_bloomShaderName = "Bloom";
-	constexpr char const* k_cubeDepthShaderName = "CubeDepth";
-	constexpr char const* k_deferredAmbientLightShaderName = "DeferredAmbientLight";
-	constexpr char const* k_deferredDirectionalLightShaderName = "DeferredDirectionalLight";
-	constexpr char const* k_deferredPointLightShaderName = "DeferredPointLight";
-	constexpr char const* k_deferredSpotLightShaderName = "DeferredSpotLight";
-	constexpr char const* k_depthShaderName = "Depth";
-	constexpr char const* k_gaussianBlurShaderName = "GaussianBlur";
-	constexpr char const* k_gbufferShaderName = "GBuffer";
-	constexpr char const* k_generateBRDFIntegrationMapShaderName = "GenerateBRDFIntegrationMap";	
-	constexpr char const* k_generateIEMShaderName = "GenerateIEM";
-	constexpr char const* k_generateMipMapsShaderName = "GenerateMipMaps_BoxFilter";
-	constexpr char const* k_generatePMREMShaderName = "GeneratePMREM";
-	constexpr char const* k_lineShaderName = "Line";
-	constexpr char const* k_skyboxShaderName = "Skybox";
-	constexpr char const* k_toneMapShaderName = "ToneMap";
-}
 
 namespace en::DefaultResourceNames
 {

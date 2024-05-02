@@ -26,8 +26,12 @@ namespace gr
 		tonemappingPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		tonemappingPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
-		m_tonemappingStage->SetStageShader(
-			re::Shader::GetOrCreate(en::ShaderNames::k_toneMapShaderName, tonemappingPipelineState));
+		m_tonemappingStage->SetStageShader(re::Shader::GetOrCreate(
+			{
+				{"ToneMap_VShader", re::Shader::Vertex},
+				{"ToneMap_PShader", re::Shader::Pixel}
+			},
+			tonemappingPipelineState));
 
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 

@@ -60,7 +60,8 @@ namespace gr
 
 	void ComputeMipsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
-		m_mipMapGenerationShader = re::Shader::GetOrCreate(en::ShaderNames::k_generateMipMapsShaderName, re::PipelineState());
+		m_mipMapGenerationShader = 
+			re::Shader::GetOrCreate({ {"GenerateMipMaps_BoxFilter_CShader", re::Shader::Compute} }, re::PipelineState());
 
 		re::RenderStage::ComputeStageParams parentStageParams; // Defaults
 
