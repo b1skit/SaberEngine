@@ -75,7 +75,9 @@ namespace gr
 		void CreateBatches(DataDependencies const&);
 
 	private:
-		std::shared_ptr<re::RenderStage> m_gBufferStage;
+		std::shared_ptr<re::RenderStage> m_gBufferSingleSided;
+		std::shared_ptr<re::RenderStage> m_gBufferDoubleSided;
+		std::shared_ptr<re::TextureTargetSet> m_gBufferTargets;
 		re::StagePipeline* m_owningPipeline;
 	};
 }

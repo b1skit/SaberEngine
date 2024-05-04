@@ -20,11 +20,18 @@ namespace gr
 		, m_owningPipeline(nullptr)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", gfxStageParams);
+		m_gBufferSingleSided = re::RenderStage::CreateGraphicsStage("GBuffer Stage (single-sided)", gfxStageParams);
+		m_gBufferDoubleSided = re::RenderStage::CreateGraphicsStage("GBuffer Stage (double-sided)", gfxStageParams);
 
-		// TODO: Enable this once we have a GraphicsSystem to render alpha blended transparency
-		/*m_gBufferStage->SetBatchFilterMaskBit(
-			re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);*/
+		m_gBufferSingleSided->SetBatchFilterMaskBit(
+			re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
+		m_gBufferSingleSided->SetBatchFilterMaskBit(
+			re::Batch::Filter::DoubleSided, re::RenderStage::FilterMode::Exclude, true);
+		
+		m_gBufferDoubleSided->SetBatchFilterMaskBit(
+			re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
+		m_gBufferDoubleSided->SetBatchFilterMaskBit(
+			re::Batch::Filter::DoubleSided, re::RenderStage::FilterMode::Require, true);
 	}
 
 
@@ -32,18 +39,27 @@ namespace gr
 	{
 		m_owningPipeline = &pipeline;
 
-		re::PipelineState gBufferPipelineState;
-		gBufferPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		gBufferPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
+		re::PipelineState gBufferSingleSidedPipelineState;
+		gBufferSingleSidedPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		gBufferSingleSidedPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
 
-		std::shared_ptr<re::Shader> gBufferShader = re::Shader::GetOrCreate(
+		m_gBufferSingleSided->SetStageShader(re::Shader::GetOrCreate(
 			{
 				{"GBuffer_VShader", re::Shader::Vertex},
 				{"GBuffer_PShader", re::Shader::Pixel}
 			},
-			gBufferPipelineState);
+			gBufferSingleSidedPipelineState));
 
-		m_gBufferStage->SetStageShader(gBufferShader);
+		re::PipelineState gBufferDoubleSidedPipelineState;
+		gBufferDoubleSidedPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
+		gBufferDoubleSidedPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
+
+		m_gBufferDoubleSided->SetStageShader(re::Shader::GetOrCreate(
+			{
+				{"GBuffer_VShader", re::Shader::Vertex},
+				{"GBuffer_PShader", re::Shader::Pixel}
+			},
+			gBufferDoubleSidedPipelineState));
 
 		// Create GBuffer color targets:
 		re::Texture::TextureParams gBufferColorParams;
@@ -64,17 +80,17 @@ namespace gr
 
 		re::TextureTarget::TargetParams defaultTargetParams;
 
-		std::shared_ptr<re::TextureTargetSet> gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
+		m_gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
 		{
 			if (i == GBufferWNormal || i == GBufferEmissive)
 			{
-				gBufferTargets->SetColorTarget(
+				m_gBufferTargets->SetColorTarget(
 					i, re::Texture::Create(GBufferTexNames[i], gbuffer16bitParams), defaultTargetParams);
 			}
 			else
 			{
-				gBufferTargets->SetColorTarget(
+				m_gBufferTargets->SetColorTarget(
 					i, re::Texture::Create(GBufferTexNames[i], gBufferColorParams), defaultTargetParams);
 			}
 		}
@@ -87,7 +103,7 @@ namespace gr
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		depthTexParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane
 
-		gBufferTargets->SetDepthStencilTarget(
+		m_gBufferTargets->SetDepthStencilTarget(
 			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams),
 			defaultTargetParams);
 
@@ -96,23 +112,26 @@ namespace gr
 			re::TextureTarget::TargetParams::BlendMode::Disabled,
 			re::TextureTarget::TargetParams::BlendMode::Disabled
 		};
-		gBufferTargets->SetColorTargetBlendModes(1, &gbufferBlendModes);
+		m_gBufferTargets->SetColorTargetBlendModes(1, &gbufferBlendModes);
 
-		m_gBufferStage->SetTextureTargetSet(gBufferTargets);
+		m_gBufferSingleSided->SetTextureTargetSet(m_gBufferTargets);
+		m_gBufferDoubleSided->SetTextureTargetSet(m_gBufferTargets);
 
 		// Camera:		
-		m_gBufferStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
+		m_gBufferSingleSided->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
+		m_gBufferDoubleSided->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
 
 		// Create a clear stage for the GBuffer targets:
 		re::RenderStage::ClearStageParams gbufferClearParams; // Clear both color and depth
 		gbufferClearParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Enabled };
 		gbufferClearParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
-		pipeline.AppendRenderStage(re::RenderStage::CreateClearStage(gbufferClearParams, gBufferTargets));
+		pipeline.AppendRenderStage(re::RenderStage::CreateClearStage(gbufferClearParams, m_gBufferTargets));
 
 
 		// Finally, append the GBuffer stage to the pipeline:
-		pipeline.AppendRenderStage(m_gBufferStage);
+		pipeline.AppendRenderStage(m_gBufferSingleSided);
+		pipeline.AppendRenderStage(m_gBufferDoubleSided);
 	}
 
 
@@ -128,11 +147,11 @@ namespace gr
 		for (uint8_t i = 0; i < GBufferColorTex_Count; i++)
 		{
 			RegisterTextureOutput(
-				GBufferTexNames[i], m_gBufferStage->GetTextureTargetSet()->GetColorTarget(i).GetTexture());
+				GBufferTexNames[i], m_gBufferTargets->GetColorTarget(i).GetTexture());
 		}
 		// Depth texture:
 		RegisterTextureOutput(
-			GBufferTexNames[GBufferDepth], m_gBufferStage->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture());
+			GBufferTexNames[GBufferDepth], m_gBufferTargets->GetDepthStencilTarget()->GetTexture());
 	}
 
 
@@ -140,7 +159,7 @@ namespace gr
 	{
 		CreateBatches(dataDependencies);
 
-		if (m_gBufferStage->GetStageBatches().empty())
+		if (m_gBufferSingleSided->GetStageBatches().empty() && m_gBufferDoubleSided->GetStageBatches().empty())
 		{
 			// Append a clear stage, to ensure that the depth buffer is cleared when there is no batches (i.e. so the 
 			// skybox will still render in an empty scene)
@@ -150,7 +169,7 @@ namespace gr
 			
 			m_owningPipeline->AppendSingleFrameRenderStage(re::RenderStage::CreateSingleFrameClearStage(
 				depthClearStageParams, 
-				m_gBufferStage->GetTextureTargetSet()));
+				m_gBufferTargets));
 		}
 	}
 
@@ -166,13 +185,18 @@ namespace gr
 		{
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
-			m_gBufferStage->AddBatches(batchMgr.GetSceneBatches(
+			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(
 				m_graphicsSystemManager->GetRenderData(),
-				cullingResults->at(mainCamID)));
+				cullingResults->at(mainCamID));
+			
+			m_gBufferSingleSided->AddBatches(sceneBatches);
+			m_gBufferDoubleSided->AddBatches(sceneBatches);
 		}
 		else
 		{
-			m_gBufferStage->AddBatches(batchMgr.GetAllSceneBatches(m_graphicsSystemManager->GetRenderData()));
+			std::vector<re::Batch> const& allSceneBatches = batchMgr.GetAllSceneBatches(m_graphicsSystemManager->GetRenderData());
+			m_gBufferSingleSided->AddBatches(allSceneBatches);
+			m_gBufferDoubleSided->AddBatches(allSceneBatches);
 		}
 	}
 }
