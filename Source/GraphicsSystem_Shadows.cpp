@@ -122,7 +122,7 @@ namespace gr
 		std::shared_ptr<re::RenderStage> shadowStage =
 			re::RenderStage::CreateGraphicsStage(stageName.c_str(), re::RenderStage::GraphicsStageParams{});
 
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::RenderStage::FilterMode::Require, true);
 
 		// Shader:
 		shadowStage->SetStageShader(re::Shader::GetOrCreate(
@@ -214,7 +214,7 @@ namespace gr
 		std::shared_ptr<re::RenderStage> shadowStage =
 			re::RenderStage::CreateGraphicsStage(stageName.c_str(), re::RenderStage::GraphicsStageParams{});
 
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::RenderStage::FilterMode::Require, true);
 
 		// Spot shadow camera buffer:
 		std::shared_ptr<re::Buffer> shadowCamParams = re::Buffer::Create(

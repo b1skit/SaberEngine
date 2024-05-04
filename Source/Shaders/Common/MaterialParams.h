@@ -11,18 +11,15 @@ struct InstancedPBRMetallicRoughnessData
 {
 	float4 g_baseColorFactor;
 
-	float g_metallicFactor;
-	float g_roughnessFactor;
-	float g_normalScale;
-	float g_occlusionStrength;
+	// .x = metallic factor, .y = roughness factor, .z = normal scale, .w = occlusion strength
+	float4 g_metRoughNmlOccScales;
 
 	// KHR_materials_emissive_strength: Multiplies emissive factor
 	float4 g_emissiveFactorStrength; // .xyz = emissive factor, .w = emissive strength
 
-	// Non-GLTF properties:
 	float4 g_f0; // .xyz = f0, .w = unused. For non-metals only
 
-	//float g_isDoubleSided;
+	float4 g_alphaCutoff; // .x = alpha cutoff, .yzw = unused
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "InstancedPBRMetallicRoughnessParams";

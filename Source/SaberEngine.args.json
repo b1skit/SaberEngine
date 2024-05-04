@@ -197,6 +197,10 @@
         {
           "Id": "32bac8c3-5bfd-43c7-8a83-1db3f3583c56",
           "Command": "-scene Fox\\glTF\\Fox.gltf"
+        },
+        {
+          "Id": "42a5dff5-b2c6-44e2-8462-7ac0ac0dbf0c",
+          "Command": "-scene AlphaBlendModeTest\\glTF\\AlphaBlendModeTest.gltf"
         }
       ]
     }

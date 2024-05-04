@@ -1,8 +1,11 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Util\CastUtils.h"
 #include "Material_GLTF.h"
 #include "Sampler.h"
+
+#include "Core\Assert.h"
+
+#include "Core\Util\CastUtils.h"
+#include "Core\Util\ImGuiUtils.h"
 
 
 namespace gr
@@ -13,15 +16,28 @@ namespace gr
 		{
 			.g_baseColorFactor = m_baseColorFactor,
 
-			.g_metallicFactor = m_metallicFactor,
-			.g_roughnessFactor = m_roughnessFactor,
-			.g_normalScale = m_normalScale,
-			.g_occlusionStrength = m_occlusionStrength,
+			.g_metRoughNmlOccScales = glm::vec4(
+				m_metallicFactor,
+				m_roughnessFactor,
+				m_normalScale,
+				m_occlusionStrength),
 
 			.g_emissiveFactorStrength = glm::vec4(m_emissiveFactor.rgb, m_emissiveStrength),
 
-			.g_f0 = glm::vec4(m_f0.rgb, 0.f)
+			.g_f0 = glm::vec4(m_f0.rgb, 0.f),
+
+			.g_alphaCutoff = glm::vec4(
+				m_alphaMode == Material::AlphaMode::Opaque ? 0.f : m_alphaCutoff, 
+				0.f, 
+				0.f, 
+				0.f),
 		};
+
+
+		SEStaticAssert(sizeof(InstancedPBRMetallicRoughnessData) <= gr::Material::k_paramDataBlockByteSize,
+			"InstancedPBRMetallicRoughnessData is too large to fit in "
+			"gr::Material::MaterialInstanceData::m_materialParamData. Consider increasing "
+			"gr::Material::k_paramDataBlockByteSize");
 	}
 
 
@@ -29,8 +45,14 @@ namespace gr
 		: Material(name, gr::Material::MaterialType::GLTF_PBRMetallicRoughness)
 		, INamedObject(name)
 	{
-		// TODO: Texture names should align with those in the GLTF documentation
+		// GLTF defaults:
+		m_alphaMode = AlphaMode::Opaque;
+		m_alphaCutoff = 0.5f;
+		m_isDoubleSided = false;
 
+		m_isShadowCaster = true;
+
+		// TODO: Texture names should align with those in the GLTF documentation
 		m_texSlots =
 		{
 			{nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "MatAlbedo" },
@@ -48,12 +70,12 @@ namespace gr
 	}
 
 
-	void Material_GLTF::PackMaterialInstanceData(void* dst, size_t maxSize) const
+	void Material_GLTF::PackMaterialParamsData(void* dst, size_t maxSize) const
 	{
 		SEAssert(maxSize <= sizeof(InstancedPBRMetallicRoughnessData), "Not enough space to pack material instance data");
 
-		InstancedPBRMetallicRoughnessData const& materialInstanceData = GetPBRMetallicRoughnessParamsData();
-		memcpy(dst, &materialInstanceData, sizeof(InstancedPBRMetallicRoughnessData));
+		InstancedPBRMetallicRoughnessData const& materialParamData = GetPBRMetallicRoughnessParamsData();
+		memcpy(dst, &materialParamData, sizeof(InstancedPBRMetallicRoughnessData));
 	}
 
 
@@ -98,7 +120,7 @@ namespace gr
 		// but it avoids copying the data into a temporary location and materials are typically updated infrequently
 		buffer->Commit(
 			reinterpret_cast<InstancedPBRMetallicRoughnessData const*>(instanceData->m_materialParamData.data()),
-			baseOffset++,
+			baseOffset,
 			1);
 	}
 
@@ -108,7 +130,7 @@ namespace gr
 		bool isDirty = false;
 
 		if (ImGui::CollapsingHeader(std::format("Material_GLTF: {}##{}", 
-			instanceData.m_materialName, instanceData.m_materialUniqueID).c_str(), ImGuiTreeNodeFlags_None))
+			instanceData.m_materialName, util::PtrToID(&instanceData)).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
@@ -116,29 +138,43 @@ namespace gr
 				reinterpret_cast<InstancedPBRMetallicRoughnessData*>(instanceData.m_materialParamData.data());
 			
 			isDirty |= ImGui::ColorEdit3(
-				std::format("Base color factor##{}", instanceData.m_materialUniqueID).c_str(),
+				std::format("Base color factor##{}", util::PtrToID(&instanceData)).c_str(),
 				&matData->g_baseColorFactor.r, ImGuiColorEditFlags_Float);
 
-			isDirty |= ImGui::SliderFloat(std::format("Metallic factor##{}", instanceData.m_materialUniqueID).c_str(), 
-				&matData->g_metallicFactor, 0.f, 1.f, "%0.3f");
+			isDirty |= ImGui::SliderFloat(std::format("Metallic factor##{}", util::PtrToID(&instanceData)).c_str(), 
+				&matData->g_metRoughNmlOccScales.x, 0.f, 1.f, "%0.3f");
 
-			isDirty |= ImGui::SliderFloat(std::format("Roughness factor##{}", instanceData.m_materialUniqueID).c_str(),
-				&matData->g_roughnessFactor, 0.f, 1.f, "%0.3f");
+			isDirty |= ImGui::SliderFloat(std::format("Roughness factor##{}", util::PtrToID(&instanceData)).c_str(),
+				&matData->g_metRoughNmlOccScales.y, 0.f, 1.f, "%0.3f");
 
-			isDirty |= ImGui::SliderFloat(std::format("Normal scale##{}", instanceData.m_materialUniqueID).c_str(),
-				&matData->g_normalScale, 0.f, 1.f, "%0.3f");
+			isDirty |= ImGui::SliderFloat(std::format("Normal scale##{}", util::PtrToID(&instanceData)).c_str(),
+				&matData->g_metRoughNmlOccScales.z, 0.f, 1.f, "%0.3f");
 
-			isDirty |= ImGui::SliderFloat(std::format("Occlusion strength##{}", instanceData.m_materialUniqueID).c_str(),
-				&matData->g_occlusionStrength, 0.f, 1.f, "%0.3f");
+			isDirty |= ImGui::SliderFloat(std::format("Occlusion strength##{}", util::PtrToID(&instanceData)).c_str(),
+				&matData->g_metRoughNmlOccScales.w, 0.f, 1.f, "%0.3f");
 
-			isDirty |= ImGui::ColorEdit3(std::format("Emissive factor##{}", "", instanceData.m_materialUniqueID).c_str(),
+			isDirty |= ImGui::ColorEdit3(std::format("Emissive factor##{}", "", util::PtrToID(&instanceData)).c_str(),
 				&matData->g_emissiveFactorStrength.r, ImGuiColorEditFlags_Float);
 
-			isDirty |= ImGui::SliderFloat(std::format("Emissive strength##{}", instanceData.m_materialUniqueID).c_str(),
+			isDirty |= ImGui::SliderFloat(std::format("Emissive strength##{}", util::PtrToID(&instanceData)).c_str(),
 				&matData->g_emissiveFactorStrength.w, 0.f, 1000.f, "%0.3f");
 
-			isDirty |= ImGui::ColorEdit3(std::format("F0##{}", instanceData.m_materialUniqueID).c_str(), 
+			isDirty |= ImGui::ColorEdit3(std::format("F0##{}", util::PtrToID(&instanceData)).c_str(), 
 				&matData->g_f0.r, ImGuiColorEditFlags_Float);
+
+			// gr::Material: This is a Material instance, so we're modifying the data that will be sent to our buffers
+			{
+				const bool isOpaque = instanceData.m_alphaMode == Material::AlphaMode::Opaque;
+
+				ImGui::BeginDisabled(isOpaque);
+				isDirty |= ImGui::SliderFloat(
+					std::format("Alpha cutoff##{}", util::PtrToID(&instanceData)).c_str(),
+					&matData->g_alphaCutoff.x,
+					0.f,
+					1.f,
+					"%.4f");
+				ImGui::EndDisabled();
+			}
 
 			ImGui::Unindent();
 		}

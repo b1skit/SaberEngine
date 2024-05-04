@@ -229,7 +229,8 @@ namespace re
 		, m_stageShader(nullptr)
 		, m_textureTargetSet(nullptr)
 		, m_depthTextureInputIdx(k_noDepthTexAsInputFlag)
-		, m_batchFilterBitmask(0)	// Accept all batches by default
+		, m_requiredBatchFilterBitmasks(0)	// Accept all batches by default
+		, m_excludedBatchFilterBitmasks(0)
 	{
 		SEAssert(!GetName().empty(), "Invalid RenderStage name");
 
@@ -497,17 +498,74 @@ namespace re
 		}
 #endif
 		
-		// Filter bits are exclusionary: A RenderStage will not draw a Batch if they have a matching filter bit
-		if ((m_batchFilterBitmask & batch.GetBatchFilterMask()) == 0) // Accept all batches by default
+		if (FilterBitMatch(batch.GetBatchFilterMask()))
 		{
 			m_stageBatches.emplace_back(re::Batch::Duplicate(batch, batch.GetLifetime()));
 		}
 	}
 
 
-	void RenderStage::SetBatchFilterMaskBit(re::Batch::Filter filterBit)
+	bool RenderStage::FilterBitMatch(uint32_t batchFilterBitmask) const
 	{
-		m_batchFilterBitmask |= static_cast<uint32_t>(filterBit);
+		if (m_excludedBatchFilterBitmasks == 0 && m_requiredBatchFilterBitmasks == 0) // Accept all batches by default
+		{
+			return true;
+		}
+
+		// Only a single bit on a Batch must match with the excluded mask for a Batch to be excluded
+		const bool isExcluded = (batchFilterBitmask & m_excludedBatchFilterBitmasks);
+
+		// A Batch must contain all bits in the included mask to be included, but may contain extra bits as well
+		bool isFullyIncluded = false;
+		if (!isExcluded)
+		{
+			const uint32_t invertedRequiredBits = ~m_requiredBatchFilterBitmasks;
+			const uint32_t matchingBatchBits = (batchFilterBitmask & invertedRequiredBits) ^ batchFilterBitmask;
+			isFullyIncluded = (matchingBatchBits == m_requiredBatchFilterBitmasks);
+		}
+
+		return !isExcluded && isFullyIncluded;
+	}
+
+
+	void RenderStage::SetBatchFilterMaskBit(re::Batch::Filter filterBit, FilterMode mode, bool enabled)
+	{
+		switch (mode)
+		{
+		case FilterMode::Require:
+		{
+			if (enabled)
+			{
+				m_requiredBatchFilterBitmasks |= static_cast<uint32_t>(filterBit);
+				if (m_excludedBatchFilterBitmasks & static_cast<uint32_t>(filterBit))
+				{
+					m_excludedBatchFilterBitmasks ^= static_cast<uint32_t>(filterBit);
+				}
+			}
+			else if (m_requiredBatchFilterBitmasks & static_cast<uint32_t>(filterBit))
+			{
+				m_requiredBatchFilterBitmasks ^= (1 << static_cast<uint32_t>(filterBit));
+			}
+		}
+		break;
+		case FilterMode::Exclude:
+		{
+			if (enabled)
+			{
+				m_excludedBatchFilterBitmasks |= static_cast<uint32_t>(filterBit);
+				if (m_requiredBatchFilterBitmasks & static_cast<uint32_t>(filterBit))
+				{
+					m_requiredBatchFilterBitmasks ^= static_cast<uint32_t>(filterBit);
+				}
+			}
+			else if (m_excludedBatchFilterBitmasks & static_cast<uint32_t>(filterBit))
+			{
+				m_excludedBatchFilterBitmasks ^= static_cast<uint32_t>(filterBit);
+			}
+		}
+		break;
+		default: SEAssertF("Invalid filter bit mode");
+		}
 	}
 
 

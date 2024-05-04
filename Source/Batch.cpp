@@ -120,7 +120,12 @@ namespace re
 				}
 			}
 
-			m_graphicsParams.m_materialUniqueID = materialInstanceData->m_materialUniqueID;
+			m_graphicsParams.m_materialUniqueID = materialInstanceData->m_srcMaterialUniqueID;
+
+			// Filter bits:
+			SetFilterMaskBit(Filter::AlphaBlended, materialInstanceData->m_alphaMode == gr::Material::AlphaMode::Blend);
+			SetFilterMaskBit(Filter::DoubleSided, materialInstanceData->m_isDoubleSided);
+			SetFilterMaskBit(Filter::CastsShadow, materialInstanceData->m_isShadowCaster);
 		}
 
 		ComputeDataHash();
@@ -242,9 +247,16 @@ namespace re
 	}
 
 
-	void Batch::SetFilterMaskBit(Filter filterBit)
+	void Batch::SetFilterMaskBit(Filter filterBit, bool enabled)
 	{
-		m_batchFilterBitmask |= (1 << (uint32_t)filterBit);
+		if (enabled)
+		{
+			m_batchFilterBitmask |= static_cast<uint32_t>(filterBit);
+		}
+		else if (m_batchFilterBitmask & static_cast<uint32_t>(filterBit))
+		{
+			m_batchFilterBitmask ^= static_cast<uint32_t>(filterBit);
+		}
 	}
 
 

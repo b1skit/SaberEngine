@@ -22,7 +22,9 @@ namespace gr
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", gfxStageParams);
 
-		m_gBufferStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended);
+		// TODO: Enable this once we have a GraphicsSystem to render alpha blended transparency
+		/*m_gBufferStage->SetBatchFilterMaskBit(
+			re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);*/
 	}
 
 

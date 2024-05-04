@@ -217,6 +217,8 @@ namespace re
 
 	void BufferAllocator::Allocate(Handle uniqueID, uint32_t numBytes, Buffer::Type bufferType)
 	{
+		SEAssert(numBytes % sizeof(glm::vec4) == 0, "Buffers sizes must have 16B alignment");
+
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 

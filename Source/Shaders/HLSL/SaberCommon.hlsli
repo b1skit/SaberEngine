@@ -9,8 +9,6 @@
 #include "../Common/MaterialParams.h"
 
 
-#define ALPHA_CUTOFF 0.1f
-
 struct VertexIn
 {	
 	float3 Position : SV_Position;

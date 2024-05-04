@@ -17,22 +17,26 @@ void main()
 {
 	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[InstanceID].g_materialIdx;
 
-	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
-	// g_baseColorFactor and vOut.Color are factored into the albedo as per the GLTF 2.0 specifications
-	const vec4 baseColorFactor = _InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor;
-	Albedo = texture(MatAlbedo, vOut.uv0.xy) * baseColorFactor * vOut.Color;
+	const vec4 matAlbedo = texture(MatAlbedo, vOut.uv0.xy);
 
-	if (Albedo.a < ALPHA_CUTOFF) // Alpha clipping
+	// Alpha clipping
+	const float alphaCutoff = _InstancedPBRMetallicRoughnessParams[materialIdx].g_alphaCutoff.x;
+	if (matAlbedo.a < alphaCutoff)
 	{
 		discard;
 	}
+
+	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
+	// g_baseColorFactor and vOut.Color are factored into the albedo as per the GLTF 2.0 specifications
+	const vec4 baseColorFactor = _InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor;
+	Albedo = matAlbedo * baseColorFactor * vOut.Color;
 
 	// Vertex normal:
 	const vec3 vertexNormal = vOut.TBN[2];
 	const vec2 encodedVertexNormal = EncodeOctohedralNormal(vertexNormal);
 
 	// World-space normal:
-	const float normalScaleFactor = _InstancedPBRMetallicRoughnessParams[materialIdx].g_normalScale;
+	const float normalScaleFactor = _InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.z;
 	const vec3 normalScale = vec3(normalScaleFactor, normalScaleFactor, 1.f); // Scales the normal's X, Y directions
 	const vec3 texNormal = texture(MatNormal, vOut.uv0.xy).xyz;
 	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, vOut.TBN) * normalScale;
@@ -40,12 +44,12 @@ void main()
 	WorldNormal = vec4(worldNormal, 0.0f);
 	
 	// Unpack/scale metallic/roughness: .G = roughness, .B = metallness
-	const float metallicFactor = _InstancedPBRMetallicRoughnessParams[materialIdx].g_metallicFactor;
-	const float roughnessFactor = _InstancedPBRMetallicRoughnessParams[materialIdx].g_roughnessFactor;
+	const float metallicFactor = _InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.x;
+	const float roughnessFactor = _InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.y;
 	const vec2 roughMetal = texture(MatMetallicRoughness, vOut.uv0.xy).gb * vec2(roughnessFactor, metallicFactor);
 
 	// Unpack/scale AO:
-	const float occlusionStrength = _InstancedPBRMetallicRoughnessParams[materialIdx].g_occlusionStrength;
+	const float occlusionStrength = _InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.w;
 	const float occlusion = texture(MatOcclusion, vOut.uv0.xy).r * occlusionStrength;
 	//const float occlusion = clamp((1.0f + g_occlusionStrength) * (texture(MatOcclusion, vOut.uv0.xy).r - 1.0f), 0.0f, 1.0f);
 	// TODO: GLTF specifies the above occlusion scaling, but CGLTF seems non-compliant & packs occlusion strength into

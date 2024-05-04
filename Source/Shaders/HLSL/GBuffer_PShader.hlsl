@@ -22,10 +22,13 @@ GBufferOut PShader(VertexOut In)
 {
 	GBufferOut output;
 	
-	const float4 matAlbedo = MatAlbedo.Sample(WrapAnisotropic, In.UV0);
-	clip(matAlbedo.a < ALPHA_CUTOFF ? -1 : 1); // Alpha clipping
-	
 	const uint materialIdx = InstanceIndexParams.g_instanceIndices[In.InstanceID].g_materialIdx;
+	
+	const float4 matAlbedo = MatAlbedo.Sample(WrapAnisotropic, In.UV0);
+	
+	// Alpha clipping
+	const float alphaCutoff = InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_alphaCutoff.x;
+	clip(matAlbedo.a < alphaCutoff ? -1 : 1); 
 	
 	const float4 baseColorFactor = 
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_baseColorFactor;
@@ -38,24 +41,24 @@ GBufferOut PShader(VertexOut In)
 	// World-space normal:
 	// Note: We normalize the normal after applying the TBN and writing to the GBuffer, we may need to post-apply this
 	const float normalScaleFactor = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_normalScale;
+		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.z;
 	const float3 normalScale = float3(normalScaleFactor, normalScaleFactor, 1.f);
 	const float3 texNormal = MatNormal.Sample(WrapAnisotropic, In.UV0).xyz;
 	output.WorldNormal = float4(WorldNormalFromTextureNormal(texNormal, normalScale, In.TBN), 0.f);
 	
 	// RMAOVn:
 	const float roughnessFactor = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_roughnessFactor;
+		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.y;
 	
 	const float metallicFactor = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metallicFactor;
+		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.x;
 	
 	// Unpack/scale metallic/roughness: .G = roughness, .B = metallness
 	const float2 roughnessMetalness = 
 		MatMetallicRoughness.Sample(WrapAnisotropic, In.UV0).gb * float2(roughnessFactor, metallicFactor);
 	
 	const float occlusionStrength = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_occlusionStrength;
+		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.w;
 	const float occlusion = MatOcclusion.Sample(WrapAnisotropic, In.UV0).r * occlusionStrength;
 	
 	output.RMAOVn = float4(roughnessMetalness, occlusion, encodedVertexNormal.x);

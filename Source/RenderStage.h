@@ -151,8 +151,15 @@ namespace re
 		void AddBatches(std::vector<re::Batch> const&);
 		void AddBatch(re::Batch const&);
 
-		inline uint32_t GetBatchFilterMask() const { return m_batchFilterBitmask; }
-		void SetBatchFilterMaskBit(re::Batch::Filter filterBit);
+		enum class FilterMode
+		{
+			Require,
+			Exclude
+		};
+		void SetBatchFilterMaskBit(re::Batch::Filter filterBit, FilterMode, bool enabled);
+
+	private:
+		bool FilterBitMatch(uint32_t batchFilterBitmask) const;
 
 
 	protected:
@@ -180,7 +187,9 @@ namespace re
 		std::vector<std::shared_ptr<re::Buffer>> m_permanentBuffers;
 
 		std::vector<re::Batch> m_stageBatches;
-		uint32_t m_batchFilterBitmask;
+
+		uint32_t m_requiredBatchFilterBitmasks;
+		uint32_t m_excludedBatchFilterBitmasks;
 
 		
 	private:

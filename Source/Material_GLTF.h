@@ -58,7 +58,7 @@ namespace gr
 
 
 	private:
-		void PackMaterialInstanceData(void*, size_t maxSize) const;
+		void PackMaterialParamsData(void*, size_t maxSize) const override;
 
 
 	protected: // Use the gr::Material::Create factory

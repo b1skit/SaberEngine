@@ -33,7 +33,7 @@ namespace fr
 			em.GetComponent<fr::MaterialInstanceComponent>(meshPrimitiveConcept);
 
 		// Copy data from the source material to make a material instance:
-		sceneMaterial->PackMaterialInstanceData(matComponent.m_instanceData);
+		sceneMaterial->InitializeMaterialInstanceData(matComponent.m_instanceData);
 
 		// Mark our Material as dirty:
 		em.EmplaceOrReplaceComponent<DirtyMarker<fr::MaterialInstanceComponent>>(meshPrimitiveConcept);
@@ -46,24 +46,24 @@ namespace fr
 	{
 		fr::MaterialInstanceComponent const& matCmpt = em.GetComponent<fr::MaterialInstanceComponent>(owningEntity);
 
-		if (ImGui::CollapsingHeader(std::format("Material \"{}\"##{}", 
-			matCmpt.m_instanceData.m_materialName, matCmpt.m_instanceData.m_materialUniqueID).c_str(), ImGuiTreeNodeFlags_None))
+		if (ImGui::CollapsingHeader(std::format("Material instance \"{}\"##{}", 
+			matCmpt.m_instanceData.m_materialName, util::PtrToID(&matCmpt)).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
 			// RenderDataComponent:
 			gr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
 
-			// Material:
+			// MaterialInstanceData:
 			fr::MaterialInstanceComponent& matComponent = em.GetComponent<fr::MaterialInstanceComponent>(owningEntity);
-			matComponent.m_isDirty = gr::Material::ShowImGuiWindow(matComponent.m_instanceData);
+			matComponent.m_isDirty |= gr::Material::ShowImGuiWindow(matComponent.m_instanceData);
 
 			if (ImGui::Button("Reset"))
 			{
 				gr::Material const* srcMateral = 
 					fr::SceneManager::GetSceneData()->GetMaterial(matComponent.m_instanceData.m_materialName).get();
 
-				srcMateral->PackMaterialInstanceData(matComponent.m_instanceData);
+				srcMateral->InitializeMaterialInstanceData(matComponent.m_instanceData);
 				matComponent.m_isDirty = true;
 			}
 

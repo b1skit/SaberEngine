@@ -863,18 +863,7 @@ namespace re
 		constexpr char const* k_panelTitle = "Render Data Viewer";
 		ImGui::Begin(k_panelTitle, showRenderDataDebug);
 
-		for (std::unique_ptr<re::RenderSystem> const& renderSystem : m_renderSystems)
-		{
-			if (ImGui::CollapsingHeader(renderSystem->GetName().c_str(), ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				gr::GraphicsSystemManager const& gsm = renderSystem->GetGraphicsSystemManager();
-
-				gsm.ShowImGuiRenderDataDebugWindow();
-
-				ImGui::Unindent();
-			}
-		}
+		m_renderData.ShowImGuiWindow();
 
 		ImGui::End();
 	}

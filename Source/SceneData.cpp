@@ -1,25 +1,22 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
 #include "AssetLoadUtils.h"
+#include "Buffer.h"
 #include "CameraComponent.h"
-#include "Core\Config.h"
-#include "EntityCommands.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MaterialInstanceComponent.h"
 #include "Material_GLTF.h"
 #include "MeshConcept.h"
 #include "MeshPrimitiveComponent.h"
-#include "Buffer.h"
-#include "RenderManager.h"
 #include "SceneData.h"
 #include "SceneNodeConcept.h"
 #include "Shader.h"
-#include "ShadowMap.h"
-#include "Texture.h"
-#include "Core\ThreadPool.h"
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
+
+#include "Core\Assert.h"
+#include "Core\Config.h"
+#include "Core\ThreadPool.h"
 
 #include "Core\Util\ThreadSafeVector.h"
 
@@ -339,6 +336,19 @@ namespace
 					newGLTFMat->SetEmissiveFactor(glm::make_vec3(material->emissive_factor));
 					newGLTFMat->SetEmissiveStrength(
 						material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f);
+
+					switch (material->alpha_mode)
+					{
+					case cgltf_alpha_mode::cgltf_alpha_mode_opaque: 
+						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Opaque); break;
+					case cgltf_alpha_mode::cgltf_alpha_mode_mask:
+						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Mask); break;
+					case cgltf_alpha_mode::cgltf_alpha_mode_blend:
+						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Blend); break;
+					}
+					
+					newGLTFMat->SetAlphaCutoff(material->alpha_cutoff);
+					newGLTFMat->SetDoubleSidedMode(material->double_sided);
 
 					scene.AddUniqueMaterial(newMat);
 

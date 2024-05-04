@@ -61,7 +61,6 @@ namespace gr
 	
 	public:
 		void ShowImGuiWindow();
-		void ShowImGuiRenderDataDebugWindow() const;
 
 
 	private:

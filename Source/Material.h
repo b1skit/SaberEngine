@@ -1,14 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Interfaces\INamedObject.h"
 #include "Buffer.h"
+
+#include "Core\Interfaces\INamedObject.h"
 
 
 namespace re
 {
 	class Texture;
 	class Sampler;
-	class Shader;
 }
 
 namespace gr
@@ -16,21 +16,37 @@ namespace gr
 	class Material : public virtual core::INamedObject
 	{
 	public:
-		enum class MaterialType
+		enum MaterialType : uint32_t
 		{
 			GLTF_PBRMetallicRoughness, // GLTF 2.0's PBR metallic-roughness material model
+
+			MaterialType_Count
 		};
-		enum class AlphaMode
+		SEStaticAssert(MaterialType_Count < std::numeric_limits<uint32_t>::max(), "Too many material types");
+
+		static constexpr char const* k_materialTypeNames[] =
+		{
+			ENUM_TO_STR(GLTF_PBRMetallicRoughness)
+		};
+		SEStaticAssert(_countof(k_materialTypeNames) == MaterialType_Count, "Names and enum are out of sync");
+
+
+	public:
+		enum class AlphaMode : uint8_t
 		{
 			Opaque,
-			Clip,
-			AlphaBlended
+			Mask,
+			Blend,
+			AlphaMode_Count
 		};
-		enum class DoubleSidedMode
+		static constexpr char const* k_alphaModeNames[] =
 		{
-			SingleSided,
-			DoubleSided
+			"Opaque",
+			"Mask",
+			"Blend"
 		};
+		SEStaticAssert(_countof(k_alphaModeNames) == static_cast<uint8_t>(gr::Material::AlphaMode::AlphaMode_Count),
+			"Alpha modes and names are out of sync");
 
 
 	public:
@@ -45,7 +61,7 @@ namespace gr
 	public:
 		static constexpr uint8_t k_numTexInputs = 8;
 		static constexpr size_t k_shaderSamplerNameLength = 64; // Arbitrary: Includes null terminator
-		static constexpr size_t k_paramDataBlockByteSize = 64; // Arbitrary: Max current material size
+		static constexpr size_t k_paramDataBlockByteSize = 80; // Arbitrary: Max current material size
 
 		// Material render data:
 		struct MaterialInstanceData
@@ -54,27 +70,30 @@ namespace gr
 			std::array<re::Sampler const*, gr::Material::k_numTexInputs> m_samplers;
 			char m_shaderSamplerNames[gr::Material::k_numTexInputs][gr::Material::k_shaderSamplerNameLength];
 
-			AlphaMode m_alphaMode;
-			float m_alphaCutoff;
-			DoubleSidedMode m_doubleSidedMode;
-
-			// Material implementations pack their specific parameter data into this block of bytes
+			// Material implementations must pack *all* buffer data into this block of bytes (i.e what the GPU consumes)
 			std::array<uint8_t, gr::Material::k_paramDataBlockByteSize> m_materialParamData;
+
+			// Material flags. Note: This data is NOT sent to the GPU
+			AlphaMode m_alphaMode;
+			bool m_isDoubleSided;
+			bool m_isShadowCaster;
 
 			// Material metadata:
 			gr::Material::MaterialType m_type;
 			char m_materialName[k_shaderSamplerNameLength];
-			uint64_t m_materialUniqueID;
+			uint64_t m_srcMaterialUniqueID;
 		};
+		
 
 	public:
 		static std::shared_ptr<re::Buffer> CreateInstancedBuffer(
 			re::Buffer::Type,
 			std::vector<MaterialInstanceData const*> const&);
 
+		static std::shared_ptr<re::Buffer> ReserveInstancedBuffer(MaterialType, uint32_t maxInstances);
+
 		// Convenience helper: Partially update elements of an already committed (mutable) buffer
-		static void CommitMaterialInstanceData(
-			re::Buffer*, MaterialInstanceData const*, uint32_t baseOffset);
+		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceData const*, uint32_t baseOffset);
 
 		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified
 
@@ -97,17 +116,20 @@ namespace gr
 
 		void SetAlphaMode(AlphaMode);
 		void SetAlphaCutoff(float alphaCutoff);
-		void SetDoubleSidedMode(DoubleSidedMode);
+		void SetDoubleSidedMode(bool);
+
+		void SetShadowCastMode(bool);
 
 		MaterialType GetMaterialType() const;
 
-		void PackMaterialInstanceData(MaterialInstanceData&) const;
+		void InitializeMaterialInstanceData(MaterialInstanceData&) const;
 
 
 	private:
-		void PackMaterialInstanceTextureSlotDescs(re::Texture const**, re::Sampler const**, char[][k_shaderSamplerNameLength]) const;
+		void PackMaterialInstanceTextureSlotDescs(
+			re::Texture const**, re::Sampler const**, char[][k_shaderSamplerNameLength]) const;
 		
-		virtual void PackMaterialInstanceData(void*, size_t maxSize) const = 0;
+		virtual void PackMaterialParamsData(void*, size_t maxSize) const = 0;
 
 
 	protected:
@@ -120,9 +142,11 @@ namespace gr
 
 
 	protected:
-		AlphaMode m_alphaMode = AlphaMode::Opaque;
-		float m_alphaCutoff = 0.5f;
-		DoubleSidedMode m_doubleSidedMode = DoubleSidedMode::SingleSided;
+		// Must be initialized with appropriate defaults by the child class:
+		AlphaMode m_alphaMode;
+		float m_alphaCutoff;
+		bool m_isDoubleSided;
+		bool m_isShadowCaster;
 
 
 	protected:
@@ -150,6 +174,12 @@ namespace gr
 	}
 
 
+	inline void Material::SetShadowCastMode(bool castsShadow)
+	{
+		m_isShadowCaster = castsShadow;
+	}
+
+
 	inline re::Texture const* Material::GetTexture(uint32_t slotIndex) const
 	{
 		return m_texSlots[slotIndex].m_texture.get();
@@ -164,8 +194,6 @@ namespace gr
 
 	inline void Material::SetAlphaMode(AlphaMode alphaMode)
 	{
-		SEAssert(alphaMode == AlphaMode::Opaque, "TODO: Support other alpha modes");
-
 		m_alphaMode = alphaMode;
 	}
 
@@ -176,11 +204,9 @@ namespace gr
 	}
 
 
-	inline void Material::SetDoubleSidedMode(DoubleSidedMode doubleSidedMode)
+	inline void Material::SetDoubleSidedMode(bool isDoubleSided)
 	{
-		SEAssert(doubleSidedMode == DoubleSidedMode::SingleSided, "TODO: Support other sided modes");
-
-		m_doubleSidedMode = doubleSidedMode;
+		m_isDoubleSided = isDoubleSided;
 	}
 
 

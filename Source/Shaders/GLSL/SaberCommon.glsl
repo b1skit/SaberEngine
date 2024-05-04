@@ -1,8 +1,6 @@
 #ifndef SABER_COMMON
 #define SABER_COMMON
 
-#define ALPHA_CUTOFF 0.1f
-
 // Buffer definitions:
 #include "../Common/BloomComputeParams.h"
 #include "../Common/CameraParams.h"

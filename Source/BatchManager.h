@@ -60,6 +60,7 @@ namespace gr
 			uint64_t m_batchHash;
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
+			gr::Material::MaterialType m_materialType;
 			size_t m_cacheIndex; // m_permanentCachedBatches
 		};
 		std::vector<re::Batch> m_permanentCachedBatches;
@@ -71,9 +72,13 @@ namespace gr
 		std::vector<uint32_t> m_freeTransformIndexes;
 		std::shared_ptr<re::Buffer> m_instancedTransforms;
 
-		std::unordered_map<gr::RenderDataID, RefCountedIndex> m_instancedMaterialIndexes;
-		std::vector<uint32_t> m_freeInstancedMaterialIndexes;
-		std::shared_ptr<re::Buffer> m_instancedMaterials;
+		struct MaterialInstanceMetadata
+		{
+			std::unordered_map<gr::RenderDataID, RefCountedIndex> m_instancedMaterialIndexes;
+			std::vector<uint32_t> m_freeInstancedMaterialIndexes;
+			std::shared_ptr<re::Buffer> m_instancedMaterials;
+		};
+		std::array<MaterialInstanceMetadata, gr::Material::MaterialType::MaterialType_Count> m_materialInstanceMetadata;
 	};
 }
 

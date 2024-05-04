@@ -220,10 +220,4 @@ namespace gr
 			}
 		}
 	}
-
-
-	void GraphicsSystemManager::ShowImGuiRenderDataDebugWindow() const
-	{
-		m_renderData->ShowImGuiWindow();
-	}
 }

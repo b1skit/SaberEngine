@@ -51,7 +51,8 @@ namespace re
 		enum class Filter : uint32_t
 		{
 			AlphaBlended		= 1 << 0,	// 0001
-			NoShadow			= 1 << 1,	// 0010
+			DoubleSided			= 1 << 1,	// 0010
+			CastsShadow			= 1 << 2,	// ...
 
 			Filter_Count
 		};
@@ -134,8 +135,9 @@ namespace re
 		std::vector<BatchTextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
 
 		Lifetime GetLifetime() const;
+		
 		uint32_t GetBatchFilterMask() const;
-		void SetFilterMaskBit(re::Batch::Filter filterBit);
+		void SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled);
 
 		GraphicsParams const& GetGraphicsParams() const;
 		ComputeParams const& GetComputeParams() const;

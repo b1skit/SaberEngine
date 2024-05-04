@@ -1,11 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
+#include "Buffer.h"
 #include "Material.h"
 #include "Material_GLTF.h"
-#include "Buffer.h"
 #include "Sampler.h"
 #include "SysInfo_Platform.h"
 #include "Texture.h"
+
+#include "Core\Assert.h"
+#include "Core\Util\ImGuiUtils.h"
 
 
 namespace
@@ -19,37 +21,6 @@ namespace
 		{
 			SEAssertF("Invalid material type");
 			return "INVALID MATERIAL TYPE";
-		}
-		}
-	}
-
-
-	constexpr char const* AlphaModeToCStr(gr::Material::AlphaMode alphaMode)
-	{
-		switch (alphaMode)
-		{
-		case gr::Material::AlphaMode::Opaque: return "Opaque";
-		case gr::Material::AlphaMode::Clip: return "Clip";
-		case gr::Material::AlphaMode::AlphaBlended: return "Alpha blended";
-		default:
-		{
-			SEAssertF("Invalid alpha mode type");
-			return "INVALID ALPHA MODE";
-		}
-		}
-	}
-
-
-	constexpr char const* DoubleSidedModeToCStr(gr::Material::DoubleSidedMode doubleSidedMode)
-	{
-		switch (doubleSidedMode)
-		{
-		case gr::Material::DoubleSidedMode::SingleSided: return "Single sided";
-		case gr::Material::DoubleSidedMode::DoubleSided: return "Double sided";
-		default:
-		{
-			SEAssertF("Invalid double sided mode");
-			return "INVALID DOUBLE SIDED MODE";
 		}
 		}
 	}
@@ -118,7 +89,7 @@ namespace gr
 	}
 
 
-	void Material::PackMaterialInstanceData(MaterialInstanceData& instanceData) const
+	void Material::InitializeMaterialInstanceData(MaterialInstanceData& instanceData) const
 	{
 		// Zero out the instance data struct:
 		memset(&instanceData, 0, sizeof(gr::Material::MaterialInstanceData));
@@ -126,16 +97,18 @@ namespace gr
 		PackMaterialInstanceTextureSlotDescs(
 			instanceData.m_textures.data(), instanceData.m_samplers.data(), instanceData.m_shaderSamplerNames);
 
+		// Pipeline configuration flags:
 		instanceData.m_alphaMode = m_alphaMode;
-		instanceData.m_alphaCutoff = m_alphaCutoff;
-		instanceData.m_doubleSidedMode = m_doubleSidedMode;
+		instanceData.m_isDoubleSided = m_isDoubleSided;
+		instanceData.m_isShadowCaster = m_isShadowCaster;
 
-		PackMaterialInstanceData(&instanceData.m_materialParamData, instanceData.m_materialParamData.size());
+		// GPU data:
+		PackMaterialParamsData(instanceData.m_materialParamData.data(), instanceData.m_materialParamData.size());
 
 		// Metadata:
 		instanceData.m_type = m_materialType;
 		strcpy(instanceData.m_materialName, GetName().c_str());
-		instanceData.m_materialUniqueID = GetUniqueID();
+		instanceData.m_srcMaterialUniqueID = GetUniqueID();
 	}
 
 
@@ -155,6 +128,24 @@ namespace gr
 		break;
 		default:
 			SEAssertF("Invalid material type");
+		}
+		return nullptr;
+	}
+
+
+	std::shared_ptr<re::Buffer> Material::ReserveInstancedBuffer(MaterialType matType, uint32_t maxInstances)
+	{
+		switch (matType)
+		{
+		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
+		{
+			return re::Buffer::CreateUncommittedArray<InstancedPBRMetallicRoughnessData>(
+				InstancedPBRMetallicRoughnessData::s_shaderName,
+				maxInstances,
+				re::Buffer::Type::Mutable);
+		}
+		break;
+		default: SEAssertF("Invalid material type");
 		}
 		return nullptr;
 	}
@@ -185,12 +176,13 @@ namespace gr
 	bool Material::ShowImGuiWindow(MaterialInstanceData& instanceData)
 	{
 		bool isDirty = false;
-		
-		ImGui::Text("Name: \"%s\"", instanceData.m_materialName);
-		ImGui::Text("Type: %s", MaterialTypeToCStr(instanceData.m_type));
 
-		if (ImGui::CollapsingHeader(std::format("Textures##{}\"", 
-			instanceData.m_materialUniqueID).c_str(), ImGuiTreeNodeFlags_None))
+		ImGui::Text("Source material name: \"%s\"", instanceData.m_materialName);
+		ImGui::Text("Source material Type: %s", MaterialTypeToCStr(instanceData.m_type));
+		ImGui::Text(std::format("Source material UniqueID: {}", instanceData.m_srcMaterialUniqueID).c_str());
+
+		if (ImGui::CollapsingHeader(std::format("Textures##{}\"",
+			instanceData.m_srcMaterialUniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 			for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(instanceData.m_textures.size()); slotIdx++)
@@ -199,12 +191,12 @@ namespace gr
 				const bool hasTex = instanceData.m_textures[slotIdx] != nullptr;
 
 				ImGui::BeginDisabled(!hasTex);
-				if (ImGui::CollapsingHeader(std::format("Slot {}: {}{}{}##{}", 
+				if (ImGui::CollapsingHeader(std::format("Slot {}: {}{}{}##{}",
 					slotIdx,
 					hasTex ? "\"" : "",
 					hasTex ? instanceData.m_shaderSamplerNames[slotIdx] : k_emptyTexName,
 					hasTex ? "\"" : "",
-					instanceData.m_materialUniqueID).c_str(),
+					instanceData.m_srcMaterialUniqueID).c_str(),
 					ImGuiTreeNodeFlags_None))
 				{
 					instanceData.m_textures[slotIdx]->ShowImGuiWindow();
@@ -214,10 +206,18 @@ namespace gr
 			ImGui::Unindent();
 		}
 
-		ImGui::Text("Alpha mode: %s", AlphaModeToCStr(instanceData.m_alphaMode));
-		isDirty |= ImGui::SliderFloat("Alpha cutoff", &instanceData.m_alphaCutoff, 0.f, 1.f, "%.4f");
-		ImGui::Text("Double sided mode: %s", DoubleSidedModeToCStr(instanceData.m_doubleSidedMode));
+		// Material configuration:
+		isDirty |= util::ShowBasicComboBox(
+			std::format("Alpha mode##{}", util::PtrToID(&instanceData)).c_str(),
+			k_alphaModeNames,
+			_countof(k_alphaModeNames),
+			instanceData.m_alphaMode);
 
+		isDirty |= ImGui::Checkbox(
+			std::format("Double sided?##{}", util::PtrToID(&instanceData)).c_str(), &instanceData.m_isDoubleSided);
+
+		isDirty |= ImGui::Checkbox(
+			std::format("Casts shadows?##{}", util::PtrToID(&instanceData)).c_str(), &instanceData.m_isShadowCaster);
 
 		switch (instanceData.m_type)
 		{

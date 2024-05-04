@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "MeshConcept.h"
-#include "Core\Interfaces\INamedObject.h"
 #include "Texture.h"
+
+#include "Core\Interfaces\INamedObject.h"
 
 
 namespace gr
@@ -14,6 +14,7 @@ namespace gr
 namespace re
 {
 	class Shader;
+	class Texture;
 	class VertexStream;
 }
 
