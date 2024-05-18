@@ -153,24 +153,34 @@ namespace effect
 			using BitmaskToEffectAndMode = std::unordered_map<effect::DrawStyle::Bitmask, std::string>;
 
 			// Build a static reverse lookup map
-			BitmaskToEffectAndMode s_drawstyleBitmaskMappings;
-			static bool s_isInitialized = false;
+			static BitmaskToEffectAndMode s_drawstyleBitmaskMappings;
+
+			static std::atomic<bool> s_isInitialized = false;
 			if (!s_isInitialized)
 			{
-				s_isInitialized = true;
+				static std::mutex s_initializationMutex;
 
-				DrawStyleRuleToModes const& drawstyleBitmaskMappings = GetDrawStyleRuleToModesMap();
-
-				for (auto const& effectEntry : drawstyleBitmaskMappings)
 				{
-					std::string const& effectName = effectEntry.first;
+					std::lock_guard<std::mutex> lock(s_initializationMutex);
 
-					for (auto const& modeBitmaskEntry : effectEntry.second)
+					if (!s_isInitialized)
 					{
-						std::string const& modeName = modeBitmaskEntry.first;
-						const effect::DrawStyle::Bitmask bitmask = modeBitmaskEntry.second;
+						s_isInitialized.store(true);
 
-						s_drawstyleBitmaskMappings.emplace(bitmask, std::format("{}::{}", effectName, modeName));
+						DrawStyleRuleToModes const& drawstyleBitmaskMappings = GetDrawStyleRuleToModesMap();
+
+						for (auto const& effectEntry : drawstyleBitmaskMappings)
+						{
+							std::string const& effectName = effectEntry.first;
+
+							for (auto const& modeBitmaskEntry : effectEntry.second)
+							{
+								std::string const& modeName = modeBitmaskEntry.first;
+								const effect::DrawStyle::Bitmask bitmask = modeBitmaskEntry.second;
+
+								s_drawstyleBitmaskMappings.emplace(bitmask, std::format("{}::{}", effectName, modeName));
+							}
+						}
 					}
 				}
 			}
@@ -246,6 +256,7 @@ namespace effect
 		SEAssert(m_techniques.contains(drawStyleBitmask),
 			std::format("No Technique matches the given Bitmask: {}", 
 				effect::DrawStyle::GetNamesFromDrawStyleBitmask(drawStyleBitmask)).c_str());
+
 		return m_techniques.at(drawStyleBitmask);
 	}
 

@@ -33,7 +33,7 @@ static void HandleAssertInternal();
 		std::abort();
 #else
 #define SEAssert(condition, errorMsg)	\
-	do { static_cast<void>(errorMsg); static_cast<void>(condition); } while (0);
+	do { static_cast<void>(condition); } while (0);
 #define SEAssertF(errorMsg)	\
 		const std::string errorStr((errorMsg)); \
 		LOG_ERROR(errorStr.c_str());
