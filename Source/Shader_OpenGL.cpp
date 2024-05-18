@@ -1,6 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Config.h"
 #include "Material.h"
 #include "Buffer_OpenGL.h"
 #include "Sampler_OpenGL.h"
@@ -10,6 +8,8 @@
 #include "Texture.h"
 #include "Texture_OpenGL.h"
 
+#include "Core\Assert.h"
+#include "Core\Config.h"
 #include "Core\PerformanceTimer.h"
 #include "Core\ThreadPool.h"
 #include "Core\Util\TextUtils.h"

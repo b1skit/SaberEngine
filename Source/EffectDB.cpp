@@ -8,6 +8,8 @@
 
 #include "Core\Definitions\ConfigKeys.h"
 
+#include "Core\ThreadPool.h"
+
 
 namespace
 {
@@ -259,10 +261,35 @@ namespace effect
 			SEAssert(effectManifestJSON.contains(key_effectsBlock) && !effectManifestJSON.at(key_effectsBlock).empty(),
 				"Malformed effects manifest");
 
+			// Enqueue Effect loading as a job (Effects trigger Shader parsing/loading)
+			std::vector<std::future<void>> taskFutures;
+			taskFutures.reserve(effectManifestJSON.at(key_effectsBlock).size());
+
 			for (auto const& effectManifestEntry : effectManifestJSON.at(key_effectsBlock))
 			{
-				std::string const& effectDefinitionFilename = effectManifestEntry.template get<std::string>();
-				LoadEffect(effectDefinitionFilename);
+				taskFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+					[&effectManifestEntry, this]()
+					{
+						std::string const& effectDefinitionFilename = effectManifestEntry.template get<std::string>();
+						try
+						{
+							LoadEffect(effectDefinitionFilename);
+						}
+						catch (nlohmann::json::parse_error parseException)
+						{
+							std::string const& error = std::format(
+								"Failed to parse the Effect definition file \"{}\"\n{}",
+								effectDefinitionFilename,
+								parseException.what());
+							SEAssertF(error.c_str());
+						}
+					}));
+			}
+
+			// Wait for loading to complete:
+			for (auto const& taskFuture : taskFutures)
+			{
+				taskFuture.wait();
 			}
 		}
 		catch (nlohmann::json::parse_error parseException)
@@ -273,6 +300,8 @@ namespace effect
 				parseException.what());
 			SEAssertF(error.c_str());
 		}
+
+		LOG("Effect loading complete!");
 	}
 
 
@@ -422,6 +451,8 @@ namespace effect
 			}
 
 			auto result = m_effects.emplace(newEffect.GetEffectID(), std::move(newEffect));
+
+			LOG("Added Effect \"%s\"", result.first->second.GetName().c_str());
 			
 			return &(result.first->second);
 		}
@@ -451,6 +482,8 @@ namespace effect
 			}
 
 			auto result = m_techniques.emplace(newTechnique.GetTechniqueID(), std::move(newTechnique));
+
+			LOG("Added Technique \"%s\"", result.first->second.GetName().c_str());
 
 			return &(result.first->second);
 		}
