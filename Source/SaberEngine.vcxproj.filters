@@ -952,6 +952,9 @@
     <ClInclude Include="EffectDB.h">
       <Filter>Header Files\effect</Filter>
     </ClInclude>
+    <ClInclude Include="Shaders\Common\MipGenerationParams.h">
+      <Filter>Source Files\Shaders\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\GLSL\DeferredAmbientLight_PShader.frag">

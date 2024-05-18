@@ -511,6 +511,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Shaders\Common\InstancingParams.h" />
     <ClInclude Include="Shaders\Common\LightParams.h" />
     <ClInclude Include="Shaders\Common\MaterialParams.h" />
+    <ClInclude Include="Shaders\Common\MipGenerationParams.h" />
     <ClInclude Include="Shaders\Common\PlatformConversions.h" />
     <ClInclude Include="Shaders\Common\ShadowRenderParams.h" />
     <ClInclude Include="Shaders\Common\SkyboxParams.h" />

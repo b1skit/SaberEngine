@@ -3,6 +3,8 @@
 #include "Color.hlsli"
 #include "UVUtils.hlsli"
 
+#include "../Common/MipGenerationParams.h"
+
 
 // Based on the technique demonstrated in the Microsoft DirectX Graphics Samples:
 // https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/GenerateMipsCS.hlsli
@@ -11,13 +13,8 @@
 #define SRC_WIDTH_ODD_HEIGHT_EVEN 1
 #define SRC_WIDTH_EVEN_HEIGHT_ODD 2
 #define SRC_WIDTH_ODD_HEIGHT_ODD 3
-struct MipGenerationParamsCB
-{
-	float4 g_output0Dimensions; // .xyzw = width, height, 1/width, 1/height of the output0 texture
-	uint4 g_mipParams; // .xyzw = srcMipLevel, numMips, srcDimensionMode, g_mipParams
-	float4 g_isSRGB; // .x = isSRGB, .yzw = unused
-};
-ConstantBuffer<MipGenerationParamsCB> MipGenerationParams;
+
+ConstantBuffer<MipGenerationData> MipGenerationParams;
 
 SamplerState ClampMinMagLinearMipPoint;
 Texture2DArray<float4> SrcTex;

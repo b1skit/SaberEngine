@@ -7,19 +7,12 @@
 
 #include "Core\Util\MathUtils.h"
 
+#include "Shaders\Common\MipGenerationParams.h"
+
 
 namespace
 {
-	struct MipGenerationParams
-	{
-		glm::vec4 g_output0Dimensions; // .xyzw = width, height, 1/width, 1/height of the output0 texture
-		glm::uvec4 g_mipParams; // .xyzw = srcMipLevel, numMips, srcDimensionMode, faceIdx
-		glm::vec4 g_isSRGB; // .x = isSRGB, .yzw = unused
-
-		static constexpr char const* const s_shaderName = "MipGenerationParams";
-	};
-
-	MipGenerationParams CreateMipGenerationParamsData(
+	MipGenerationData CreateMipGenerationParamsData(
 		std::shared_ptr<re::Texture> tex, uint32_t srcMipLevel, uint32_t numMips, uint32_t faceIdx)
 	{
 		const uint32_t output0MipLevel = srcMipLevel + 1;
@@ -35,7 +28,7 @@ namespace
 		uint32_t srcDimensionMode = (static_cast<uint32_t>(srcDimensions.x) % 2); // 1 if x is odd
 		srcDimensionMode |= ((static_cast<uint32_t>(srcDimensions.y) % 2) << 1); // |= (1 << 1) if y is odd (2 or 3)
 		
-		MipGenerationParams mipGenerationParams = MipGenerationParams{
+		MipGenerationData mipGenerationParams = MipGenerationData{
 			.g_output0Dimensions = output0Dimensions,
 			.g_mipParams = glm::uvec4(srcMipLevel, numMips, srcDimensionMode, faceIdx),
 			.g_isSRGB = glm::vec4(tex->IsSRGB(), 0.f, 0.f, 0.f ) };
@@ -117,11 +110,11 @@ namespace gr
 				
 					mipGenerationStage->AddTextureInput("SrcTex", newTexture, mipSampler, sourceMip);
 
-					MipGenerationParams const& mipGenerationParams =
+					MipGenerationData const& mipGenerationParams =
 						CreateMipGenerationParamsData(newTexture, sourceMip, numMipStages, faceIdx);
 
 					mipGenerationStage->AddSingleFrameBuffer(re::Buffer::Create(
-						MipGenerationParams::s_shaderName,
+						MipGenerationData::s_shaderName,
 						mipGenerationParams,
 						re::Buffer::Type::SingleFrame));
 
