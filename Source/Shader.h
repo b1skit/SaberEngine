@@ -14,6 +14,8 @@ namespace opengl
 	class Shader;
 }
 
+using ShaderID = uint64_t;
+
 namespace re
 {
 	class Shader final : public virtual core::INamedObject
@@ -60,7 +62,7 @@ namespace re
 	public:
 		[[nodiscard]] static std::shared_ptr<re::Shader> GetOrCreate(
 			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames,
-			re::PipelineState const&);
+			re::PipelineState const*);
 
 
 		~Shader();
@@ -72,7 +74,7 @@ namespace re
 
 		inline bool IsCreated() const;
 
-		re::PipelineState const& GetPipelineState() const;
+		re::PipelineState const* GetPipelineState() const;
 			
 		inline PlatformParams* GetPlatformParams() const;
 		inline void SetPlatformParams(std::unique_ptr<PlatformParams> params);
@@ -82,7 +84,7 @@ namespace re
 		explicit Shader(
 			std::string const& shaderName,
 			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames, 
-			re::PipelineState const&,
+			re::PipelineState const*,
 			uint64_t shaderIdentifier);
 
 
@@ -92,7 +94,7 @@ namespace re
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 
-		const re::PipelineState m_pipelineState;
+		re::PipelineState const* m_pipelineState;
 		
 
 	private:
@@ -118,7 +120,7 @@ namespace re
 	}
 
 
-	inline re::PipelineState const& Shader::GetPipelineState() const
+	inline re::PipelineState const* Shader::GetPipelineState() const
 	{
 		return m_pipelineState;
 	}

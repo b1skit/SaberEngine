@@ -147,8 +147,8 @@ namespace gr
 
 				const size_t cacheIdxToMove = m_permanentCachedBatches.size() - 1;
 
-				const gr::Material::MaterialType matType = 
-					m_renderDataIDToBatchMetadata.at(renderDataIDToDelete).m_materialType;
+				const gr::Material::MaterialEffect matEffect = 
+					m_renderDataIDToBatchMetadata.at(renderDataIDToDelete).m_matEffect;
 
 				SEAssert(m_cacheIdxToRenderDataID.contains(cacheIdxToMove), "Cache index not found");
 				const gr::RenderDataID renderDataIDToMove = m_cacheIdxToRenderDataID.at(cacheIdxToMove);
@@ -183,8 +183,8 @@ namespace gr
 				FreeInstancingIndex(m_instancedTransformIndexes, m_freeTransformIndexes, deletedTransformID);
 				
 				FreeInstancingIndex(
-					m_materialInstanceMetadata[matType].m_instancedMaterialIndexes, 
-					m_materialInstanceMetadata[matType].m_freeInstancedMaterialIndexes, 
+					m_materialInstanceMetadata[matEffect].m_instancedMaterialIndexes, 
+					m_materialInstanceMetadata[matEffect].m_freeInstancedMaterialIndexes, 
 					renderDataIDToDelete);
 			}
 		}
@@ -217,7 +217,7 @@ namespace gr
 				// Update the metadata:
 				m_cacheIdxToRenderDataID.emplace(newBatchIdx, newMeshPrimID);
 
-				const gr::Material::MaterialType matType = materialRenderData.m_type;
+				const gr::Material::MaterialEffect matEffect = materialRenderData.m_matEffect;
 
 				m_renderDataIDToBatchMetadata.emplace(
 					newMeshPrimID,
@@ -225,7 +225,7 @@ namespace gr
 						.m_batchHash = batchHash,
 						.m_renderDataID = newMeshPrimID,
 						.m_transformID = newBatchTransformID,
-						.m_materialType = matType,
+						.m_matEffect = matEffect,
 						.m_cacheIndex = newBatchIdx
 					});
 
@@ -235,8 +235,8 @@ namespace gr
 					newBatchTransformID);
 
 				AssignInstancingIndex(
-					m_materialInstanceMetadata[matType].m_instancedMaterialIndexes,
-					m_materialInstanceMetadata[matType].m_freeInstancedMaterialIndexes,
+					m_materialInstanceMetadata[matEffect].m_instancedMaterialIndexes,
+					m_materialInstanceMetadata[matEffect].m_freeInstancedMaterialIndexes,
 					newMeshPrimID);
 			}
 
@@ -286,9 +286,9 @@ namespace gr
 		}
 
 		// Create/grow our permanent Material instance buffers:
-		for (uint32_t matTypeIdx = 0; matTypeIdx < gr::Material::MaterialType_Count; matTypeIdx++)
+		for (uint32_t matEffectIdx = 0; matEffectIdx < gr::Material::MaterialEffect_Count; matEffectIdx++)
 		{
-			MaterialInstanceMetadata& matInstMeta = m_materialInstanceMetadata[matTypeIdx];
+			MaterialInstanceMetadata& matInstMeta = m_materialInstanceMetadata[matEffectIdx];
 
 			const bool mustReallocateMaterialBuffer = 
 				matInstMeta.m_instancedMaterials != nullptr &&
@@ -302,12 +302,12 @@ namespace gr
 				requestedMaterialBufferElements > 0)
 			{
 				matInstMeta.m_instancedMaterials = gr::Material::ReserveInstancedBuffer(
-					static_cast<gr::Material::MaterialType>(matTypeIdx), requestedMaterialBufferElements);
+					static_cast<gr::Material::MaterialEffect>(matEffectIdx), requestedMaterialBufferElements);
 
 				if (mustReallocateMaterialBuffer)
 				{
 					LOG_WARNING("gr::BatchManager: Material instance buffer \"%s\"is being reallocated",
-						gr::Material::k_materialTypeNames[matTypeIdx]);
+						gr::Material::k_materialEffectNames[matEffectIdx]);
 
 					for (auto& materialRecord : matInstMeta.m_instancedMaterialIndexes)
 					{
@@ -365,7 +365,7 @@ namespace gr
 				if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, dirtyMaterialItr.GetFeatureBits()))
 				{
 					MaterialInstanceMetadata& matInstMeta = 
-						m_materialInstanceMetadata[m_renderDataIDToBatchMetadata.at(dirtyMaterialID).m_materialType];
+						m_materialInstanceMetadata[m_renderDataIDToBatchMetadata.at(dirtyMaterialID).m_matEffect];
 
 					SEAssert(matInstMeta.m_instancedMaterialIndexes.contains(dirtyMaterialID),
 						"RenderDataID has not been registered for instancing indexes");
@@ -396,7 +396,6 @@ namespace gr
 
 
 	std::vector<re::Batch> BatchManager::GetSceneBatches(
-		gr::RenderDataManager const& renderData, 
 		std::vector<gr::RenderDataID> const& renderDataIDs,
 		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
 	{
@@ -419,7 +418,7 @@ namespace gr
 		{
 			// Sort the batch metadata:
 			std::sort(batchMetadata.begin(), batchMetadata.end(),
-				[](BatchMetadata const& a, BatchMetadata const& b) { return (a.m_batchHash > b.m_batchHash); });
+				[](BatchMetadata const& a, BatchMetadata const& b) { return (a.m_batchHash < b.m_batchHash); });
 
 			size_t unmergedIdx = 0;
 			do
@@ -434,7 +433,7 @@ namespace gr
 
 				// Obtain the Material instance metadata while we still have the current unmergedIdx		
 				MaterialInstanceMetadata const& matInstMeta =
-					m_materialInstanceMetadata[batchMetadata[unmergedIdx].m_materialType];
+					m_materialInstanceMetadata[batchMetadata[unmergedIdx].m_matEffect];
 
 				// Find the index of the last batch with a matching hash in the sequence:
 				const size_t instanceStartIdx = unmergedIdx++;
@@ -492,7 +491,7 @@ namespace gr
 	}
 
 
-	std::vector<re::Batch> BatchManager::GetAllSceneBatches(gr::RenderDataManager const& renderData,
+	std::vector<re::Batch> BatchManager::GetAllSceneBatches(
 		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
 	{
 		std::vector<gr::RenderDataID> allRenderDataIDs;
@@ -503,6 +502,6 @@ namespace gr
 			allRenderDataIDs.emplace_back(metadata.first);
 		}
 
-		return GetSceneBatches(renderData, allRenderDataIDs, bufferTypeMask);
+		return GetSceneBatches(allRenderDataIDs, bufferTypeMask);
 	}
 }

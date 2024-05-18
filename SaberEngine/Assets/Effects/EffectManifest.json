@@ -1,0 +1,14 @@
+{
+	"Effects": [
+		"Bloom",
+		"Common",
+		"Debug",
+		"DeferredLighting",
+		"FullscreenQuad",
+		"GLTF_PBRMetallicRoughness",
+		"MipGeneration",
+		"Skybox",
+		"Tonemapping",
+		"XeGTAO"
+	]
+}

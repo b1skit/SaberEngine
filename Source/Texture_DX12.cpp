@@ -651,10 +651,6 @@ namespace
 			{
 				initialState = D3D12_RESOURCE_STATE_COPY_DEST;
 			}
-			else
-			{
-				initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-			}
 		}
 
 		D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);

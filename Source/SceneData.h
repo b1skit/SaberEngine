@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Shader.h"
 #include "Texture.h"
 
 #include "Core\Interfaces\INamedObject.h"
@@ -13,8 +14,6 @@ namespace gr
 
 namespace re
 {
-	class Shader;
-	class Texture;
 	class VertexStream;
 }
 
@@ -58,8 +57,8 @@ namespace fr
 
 		// Shaders:
 		bool AddUniqueShader(std::shared_ptr<re::Shader>& newShader); // Returns true if new object was added
-		std::shared_ptr<re::Shader> GetShader(uint64_t shaderIdentifier) const;
-		bool ShaderExists(uint64_t shaderIdentifier) const;
+		std::shared_ptr<re::Shader> GetShader(ShaderID) const;
+		bool ShaderExists(ShaderID) const;
 
 		
 	private:

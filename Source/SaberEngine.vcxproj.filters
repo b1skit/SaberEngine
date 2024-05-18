@@ -147,6 +147,12 @@
     <Filter Include="Header Files\gr\grutil">
       <UniqueIdentifier>{630f943a-981c-4e35-8b33-cc82cced1776}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\effect">
+      <UniqueIdentifier>{4ebe6f30-9fb9-47aa-9604-f096c3142206}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\effect">
+      <UniqueIdentifier>{c48c91dd-ecfb-4b6f-83d6-54fcea11b85e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -517,6 +523,12 @@
     </ClCompile>
     <ClCompile Include="Window.cpp">
       <Filter>Source Files\app</Filter>
+    </ClCompile>
+    <ClCompile Include="Effect.cpp">
+      <Filter>Source Files\effect</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectDB.cpp">
+      <Filter>Source Files\effect</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -933,6 +945,12 @@
     </ClInclude>
     <ClInclude Include="pch\stdafx.h">
       <Filter>Header Files\pch</Filter>
+    </ClInclude>
+    <ClInclude Include="Effect.h">
+      <Filter>Header Files\effect</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectDB.h">
+      <Filter>Header Files\effect</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

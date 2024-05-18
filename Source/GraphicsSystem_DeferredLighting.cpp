@@ -1,16 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer.h"
-#include "Core\Config.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
 #include "MeshFactory.h"
 #include "Sampler.h"
-#include "Shader.h"
 #include "ShadowMapRenderData.h"
 #include "RenderDataManager.h"
 #include "RenderStage.h"
+
+#include "Core\Config.h"
 
 #include "Shaders\Common\IBLGenerationParams.h"
 #include "Shaders\Common\LightParams.h"
@@ -334,19 +334,13 @@ namespace gr
 	}
 
 
-	void DeferredLightingGraphicsSystem::CreateSingleFrameBRDFPreIntegrationStage(
-		re::StagePipeline& pipeline)
+	void DeferredLightingGraphicsSystem::CreateSingleFrameBRDFPreIntegrationStage(re::StagePipeline& pipeline)
 	{
 		re::RenderStage::ComputeStageParams computeStageParams;
 		std::shared_ptr<re::RenderStage> brdfStage =
 			re::RenderStage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
 
-		re::PipelineState brdfPipelineState;
-		brdfPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
-		brdfPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-
-		brdfStage->SetStageShader(
-			re::Shader::GetOrCreate({ {"GenerateBRDFIntegrationMap_CShader", re::Shader::Compute}}, brdfPipelineState));
+		brdfStage->SetDrawStyle(effect::DrawStyle::DeferredLighting_BRDFIntegration);
 
 		const uint32_t brdfTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
@@ -392,8 +386,11 @@ namespace gr
 		brdfStage->AddSingleFrameBuffer(brdfIntegrationBuf);
 
 		// Add our dispatch information to a compute batch. Note: We use numthreads = (1,1,1)
-		re::Batch computeBatch = re::Batch(re::Batch::Lifetime::SingleFrame, re::Batch::ComputeParams{
-			.m_threadGroupCount = glm::uvec3(brdfTexWidthHeight, brdfTexWidthHeight, 1u) });
+		re::Batch computeBatch = re::Batch(
+			re::Batch::Lifetime::SingleFrame,
+			re::Batch::ComputeParams{
+				.m_threadGroupCount = glm::uvec3(brdfTexWidthHeight, brdfTexWidthHeight, 1u) },
+			effect::Effect::ComputeEffectID("DeferredLighting"));
 
 		brdfStage->AddBatch(computeBatch);
 
@@ -404,18 +401,6 @@ namespace gr
 	void DeferredLightingGraphicsSystem::PopulateIEMTex(
 		re::StagePipeline* pipeline, re::Texture const* iblTex, std::shared_ptr<re::Texture>& iemTexOut) const
 	{
-		// Common IBL texture generation stage params:
-		re::PipelineState iblStageParams;
-		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
-		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-
-		std::shared_ptr<re::Shader> iemShader = re::Shader::GetOrCreate(
-			{
-				{"GenerateIEM_VShader", re::Shader::Vertex},
-				{"GenerateIEM_PShader", re::Shader::Pixel}
-			},
-			iblStageParams);
-
 		const uint32_t iemTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_iemTexWidthHeightKey));
 
@@ -441,7 +426,7 @@ namespace gr
 			std::shared_ptr<re::RenderStage> iemStage = re::RenderStage::CreateSingleFrameGraphicsStage(
 				std::format("IEM generation: Face {}/6", face + 1).c_str(), gfxStageParams);
 
-			iemStage->SetStageShader(iemShader);
+			iemStage->SetDrawStyle(effect::DrawStyle::DeferredLighting_IEMGeneration);
 			iemStage->AddTextureInput(
 				"Tex0",
 				iblTex,
@@ -487,18 +472,6 @@ namespace gr
 	void DeferredLightingGraphicsSystem::PopulatePMREMTex(
 		re::StagePipeline* pipeline, re::Texture const* iblTex, std::shared_ptr<re::Texture>& pmremTexOut) const
 	{
-		// Common IBL texture generation stage params:
-		re::PipelineState iblStageParams;
-		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
-		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-
-		std::shared_ptr<re::Shader> pmremShader = re::Shader::GetOrCreate(
-			{
-				{"GeneratePMREM_VShader", re::Shader::Vertex},
-				{"GeneratePMREM_PShader", re::Shader::Pixel}
-			},
-			iblStageParams);
-
 		const uint32_t pmremTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_pmremTexWidthHeightKey));
 
@@ -531,7 +504,8 @@ namespace gr
 				std::shared_ptr<re::RenderStage> pmremStage = re::RenderStage::CreateSingleFrameGraphicsStage(
 					stageName.c_str(), gfxStageParams);
 
-				pmremStage->SetStageShader(pmremShader);
+				pmremStage->SetDrawStyle(effect::DrawStyle::DeferredLighting_PMREMGeneration);
+
 				pmremStage->AddTextureInput(
 					"Tex0",
 					iblTex,
@@ -572,7 +546,6 @@ namespace gr
 				};
 				pmremTargetSet->SetColorTargetBlendModes(1, &pmremBlendModes);
 
-
 				pmremStage->SetTextureTargetSet(pmremTargetSet);
 
 				pmremStage->AddBatch(*m_cubeMeshBatch);
@@ -601,7 +574,10 @@ namespace gr
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
 		if (m_cubeMeshBatch == nullptr)
 		{
-			m_cubeMeshBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, m_cubeMeshPrimitive.get());
+			m_cubeMeshBatch = std::make_unique<re::Batch>(
+				re::Batch::Lifetime::Permanent,
+				m_cubeMeshPrimitive.get(),
+				effect::Effect::ComputeEffectID("DeferredLighting"));
 		}
 
 		// Camera render params for 6 cubemap faces; Just need to update g_view for each face/stage
@@ -724,21 +700,7 @@ namespace gr
 		// --------------
 		m_ambientStage->SetTextureTargetSet(m_lightingTargetSet);
 
-		re::PipelineState fullscreenQuadStageParams;
-
-		// Ambient/directional lights use back face culling, as they're fullscreen quads.
-		// Our fullscreen quad is on the far plane; We only want to light something if the quad is behind the geo (i.e.
-		// the quad's depth is greater than what is in the depth buffer)
-		fullscreenQuadStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back); 
-		fullscreenQuadStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Greater);
-		
-		// Ambient light stage:
-		m_ambientStage->SetStageShader(re::Shader::GetOrCreate(
-			{
-				{"DeferredAmbientLight_VShader", re::Shader::Vertex},
-				{"DeferredAmbientLight_PShader", re::Shader::Pixel},
-			},
-			fullscreenQuadStageParams));
+		m_ambientStage->SetDrawStyle(effect::DrawStyle::DeferredLighting_DeferredAmbient);
 
 		m_ambientStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());	
 
@@ -766,13 +728,8 @@ namespace gr
 		// Directional light stage:
 		//-------------------------
 		m_directionalStage->SetTextureTargetSet(m_lightingTargetSet);
-
-		m_directionalStage->SetStageShader(re::Shader::GetOrCreate(
-			{
-				{"DeferredDirectionalLight_VShader", re::Shader::Vertex},
-				{"DeferredDirectionalLight_PShader", re::Shader::Pixel},
-			},
-			fullscreenQuadStageParams));
+		
+		m_directionalStage->SetDrawStyle(effect::DrawStyle::DeferredLighting_DeferredDirectional);
 
 		m_directionalStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_directionalStage->AddPermanentBuffer(poissonSampleParams);
@@ -787,17 +744,7 @@ namespace gr
 		m_pointStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_pointStage->AddPermanentBuffer(poissonSampleParams);
 
-		// Light volumes only illuminate something if the geometry is behind it
-		re::PipelineState deferredMeshStageParams(fullscreenQuadStageParams);
-		deferredMeshStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::GEqual);
-		deferredMeshStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Front); // Cull front faces of light volumes
-
-		m_pointStage->SetStageShader(re::Shader::GetOrCreate(
-			{
-				{"DeferredPointLight_VShader", re::Shader::Vertex},
-				{"DeferredPointLight_PShader", re::Shader::Pixel},
-			},
-			deferredMeshStageParams));
+		m_pointStage->SetDrawStyle(effect::DrawStyle::DeferredLighting_DeferredPoint);
 
 		pipeline.AppendRenderStage(m_pointStage);
 
@@ -809,12 +756,7 @@ namespace gr
 		m_spotStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_spotStage->AddPermanentBuffer(poissonSampleParams);
 
-		m_spotStage->SetStageShader(re::Shader::GetOrCreate(
-			{
-				{"DeferredSpotLight_VShader", re::Shader::Vertex},
-				{"DeferredSpotLight_PShader", re::Shader::Pixel}
-			},
-			deferredMeshStageParams));
+		m_spotStage->SetDrawStyle(effect::DrawStyle::DeferredLighting_DeferredSpot);
 
 		pipeline.AppendRenderStage(m_spotStage);
 
@@ -940,6 +882,8 @@ namespace gr
 				// Set the batch inputs:
 				re::Batch& ambientBatch = m_ambientLightData.at(lightID).m_batch;
 
+				ambientBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
+
 				ambientBatch.AddTextureAndSamplerInput(
 					"CubeMap0",
 					iemTex.get(),
@@ -991,7 +935,7 @@ namespace gr
 					directionalTransformData,
 					shadowData,
 					shadowCamData,
-					m_directionalStage->GetTextureTargetSet().get());
+					m_directionalStage->GetTextureTargetSet());
 
 				std::shared_ptr<re::Buffer> directionalLightParams = re::Buffer::Create(
 					LightData::s_shaderName,
@@ -1008,6 +952,8 @@ namespace gr
 					});
 
 				re::Batch& directionalLightBatch = m_punctualLightData.at(directionalData.m_renderDataID).m_batch;
+
+				directionalLightBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
 
 				directionalLightBatch.SetBuffer(directionalLightParams);
 
@@ -1077,6 +1023,8 @@ namespace gr
 
 				re::Batch& lightBatch = punctualLightData.at(lightRenderDataID).m_batch;
 
+				lightBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
+
 				lightBatch.SetBuffer(lightDataBuffer);
 				lightBatch.SetBuffer(transformBuffer);
 
@@ -1128,7 +1076,7 @@ namespace gr
 					gr::Light::Point, 
 					&pointData, 
 					hasShadow, 
-					m_pointStage->GetTextureTargetSet().get(),
+					m_pointStage->GetTextureTargetSet(),
 					m_punctualLightData,
 					"CubeDepth",
 					"WrapCmpMinMagLinearMipPoint");
@@ -1152,7 +1100,7 @@ namespace gr
 					gr::Light::Spot,
 					&spotData,
 					hasShadow,
-					m_spotStage->GetTextureTargetSet().get(),
+					m_spotStage->GetTextureTargetSet(),
 					m_punctualLightData,
 					"Depth0",
 					"WrapCmpMinMagLinearMipPoint");
@@ -1289,7 +1237,7 @@ namespace gr
 					light.second.m_canContribute = directionalData.m_canContribute;
 					lightRenderData = &directionalData;
 					hasShadow = directionalData.m_hasShadow;
-					targetSet = m_directionalStage->GetTextureTargetSet().get();
+					targetSet = m_directionalStage->GetTextureTargetSet();
 				}
 				break;
 				case gr::Light::Type::Point:
@@ -1299,7 +1247,7 @@ namespace gr
 					light.second.m_canContribute = pointData.m_canContribute;
 					lightRenderData = &pointData;
 					hasShadow = pointData.m_hasShadow;
-					targetSet = m_pointStage->GetTextureTargetSet().get();
+					targetSet = m_pointStage->GetTextureTargetSet();
 
 					light.second.m_transformParams->Commit(gr::Transform::CreateInstancedTransformData(
 							renderData.GetTransformDataFromRenderDataID(lightID)));
@@ -1312,7 +1260,7 @@ namespace gr
 					light.second.m_canContribute = spotData.m_canContribute;
 					lightRenderData = &spotData;
 					hasShadow = spotData.m_hasShadow;
-					targetSet = m_spotStage->GetTextureTargetSet().get();
+					targetSet = m_spotStage->GetTextureTargetSet();
 
 					light.second.m_transformParams->Commit(gr::Transform::CreateInstancedTransformData(
 						renderData.GetTransformDataFromRenderDataID(lightID)));

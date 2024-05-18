@@ -53,8 +53,6 @@ namespace gr
 		std::vector<std::shared_ptr<re::RenderStage>> m_bloomUpStages;
 		std::vector<std::shared_ptr<re::Buffer>> m_bloomUpBuffers;
 
-		std::shared_ptr<re::Shader> m_bloomComputeShader;
-
 		uint32_t m_firstUpsampleSrcMipLevel; // == # of upsample stages
 	};
 }

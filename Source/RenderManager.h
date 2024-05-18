@@ -1,13 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BatchManager.h"
-#include "Core\CommandQueue.h"
-#include "Core\Interfaces\IEventListener.h"
+#include "EffectDB.h"
 #include "Platform.h"
 #include "RenderSystem.h"
 
+#include "Core\CommandQueue.h"
+
 #include "Core\Interfaces\IEngineComponent.h"
 #include "Core\Interfaces\IEngineThread.h"
+#include "Core\Interfaces\IEventListener.h"
 
 #include "Core\Util\ImGuiUtils.h"
 #include "Core\Util\NBufferedVector.h"
@@ -69,6 +71,8 @@ namespace re
 
 		gr::BatchManager const& GetBatchManager() const;
 
+		effect::EffectDB const& GetEffectDB() const;
+
 
 	public:
 		void ShowRenderSystemsImGuiWindow(bool* showRenderMgrDebug);
@@ -79,6 +83,7 @@ namespace re
 	private:
 		gr::RenderDataManager m_renderData;
 		gr::BatchManager m_batchManager;
+		effect::EffectDB m_effectDB;
 
 
 	public: // Render commands:
@@ -219,6 +224,12 @@ namespace re
 	inline gr::BatchManager const& RenderManager::GetBatchManager() const
 	{
 		return m_batchManager;
+	}
+
+
+	inline effect::EffectDB const& RenderManager::GetEffectDB() const
+	{
+		return m_effectDB;
 	}
 
 

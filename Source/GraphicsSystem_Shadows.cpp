@@ -1,12 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraRenderData.h"
-#include "Core\Config.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
 #include "RenderDataManager.h"
-#include "Shader.h"
 #include "ShadowMapRenderData.h"
+
+#include "Core\Config.h"
 
 #include "Shaders/Common/ShadowRenderParams.h"
 
@@ -109,13 +109,6 @@ namespace gr
 		gr::Transform::RenderData const& transformData,
 		gr::Camera::RenderData const& camData)
 	{
-		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
-		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
-		// In future, we need to support tagging assets to not cast shadows
-		re::PipelineState shadowPipelineState;
-		shadowPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		shadowPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
-
 		char const* lightName = shadowData.m_owningLightName;
 		std::string const& stageName = std::format("{}_Shadow", lightName);
 
@@ -123,14 +116,9 @@ namespace gr
 			re::RenderStage::CreateGraphicsStage(stageName.c_str(), re::RenderStage::GraphicsStageParams{});
 
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::RenderStage::FilterMode::Require, true);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
 
-		// Shader:
-		shadowStage->SetStageShader(re::Shader::GetOrCreate(
-			{
-				{ "CubeDepth_VShader", re::Shader::Vertex}, 
-				{ "CubeDepth_GShader", re::Shader::Geometry},
-			},
-			shadowPipelineState));
+		shadowStage->SetDrawStyle(effect::DrawStyle::Shadow_Cube);
 
 		// Texture target:
 		re::Texture::TextureParams shadowParams;
@@ -215,6 +203,7 @@ namespace gr
 			re::RenderStage::CreateGraphicsStage(stageName.c_str(), re::RenderStage::GraphicsStageParams{});
 
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::RenderStage::FilterMode::Require, true);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
 
 		// Spot shadow camera buffer:
 		std::shared_ptr<re::Buffer> shadowCamParams = re::Buffer::Create(
@@ -224,16 +213,7 @@ namespace gr
 
 		shadowStage->AddPermanentBuffer(shadowCamParams);
 
-		// Shader:
-		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
-		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
-		// In future, we need to support tagging assets to not cast shadows
-		re::PipelineState shadowPipelineState;
-		shadowPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		shadowPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
-
-		shadowStage->SetStageShader(
-			re::Shader::GetOrCreate({ {"Depth_VShader", re::Shader::Vertex}}, shadowPipelineState));
+		shadowStage->SetDrawStyle(effect::DrawStyle::Shadow_2D);
 
 		// Texture target:
 		re::Texture::TextureParams shadowParams;
@@ -536,15 +516,13 @@ namespace gr
 					if (cullingResults)
 					{
 						directionalStage.AddBatches(batchMgr.GetSceneBatches(
-							renderData,
 							cullingResults->at(lightID),
 							gr::BatchManager::InstanceType::Transform));
 					}
 					else
 					{
-						directionalStage.AddBatches(batchMgr.GetAllSceneBatches(
-							m_graphicsSystemManager->GetRenderData(),
-							gr::BatchManager::InstanceType::Transform));
+						directionalStage.AddBatches(
+							batchMgr.GetAllSceneBatches(gr::BatchManager::InstanceType::Transform));
 					}
 					
 				}
@@ -568,14 +546,12 @@ namespace gr
 							if (cullingResults)
 							{
 								spotStage.AddBatches(batchMgr.GetSceneBatches(
-									renderData,
 									cullingResults->at(lightID),
 									gr::BatchManager::InstanceType::Transform));
 							}
 							else
 							{
 								spotStage.AddBatches(batchMgr.GetAllSceneBatches(
-									m_graphicsSystemManager->GetRenderData(),
 									gr::BatchManager::InstanceType::Transform));
 							}
 						}
@@ -627,16 +603,13 @@ namespace gr
 								// given batch. We should draw each face of the cubemap seperately instead
 								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
 									batchMgr.GetSceneBatches(
-										renderData,
 										CombineVisibleRenderDataIDs(renderData, *cullingResults, views),
 										gr::BatchManager::InstanceType::Transform));
 							}
 							else
 							{
 								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
-									batchMgr.GetAllSceneBatches(
-										m_graphicsSystemManager->GetRenderData(),
-										gr::BatchManager::InstanceType::Transform));
+									batchMgr.GetAllSceneBatches(gr::BatchManager::InstanceType::Transform));
 							}
 						}
 						++pointItr;

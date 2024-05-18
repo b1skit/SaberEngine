@@ -62,7 +62,7 @@ namespace gr
 
 
 	protected: // Use the gr::Material::Create factory
-		friend std::shared_ptr<gr::Material> gr::Material::Create(std::string const&, MaterialType);
+		friend std::shared_ptr<gr::Material> gr::Material::Create(std::string const&, MaterialEffect);
 		Material_GLTF(std::string const& name);
 
 

@@ -1,9 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Definitions\ConfigKeys.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystemManager.h"
 #include "Sampler.h"
-#include "Shader.h"
+
+#include "Core\Definitions\ConfigKeys.h"
 
 
 namespace gr
@@ -15,23 +15,15 @@ namespace gr
 		: GraphicsSystem(k_gsName, owningGSM)
 		, INamedObject(k_gsName)
 	{
-		m_tonemappingStage = 
-			re::RenderStage::CreateFullscreenQuadStage("Tonemapping stage", re::RenderStage::FullscreenQuadParams{});
 	}
 
 
 	void TonemappingGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
-		re::PipelineState tonemappingPipelineState;
-		tonemappingPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		tonemappingPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
+		re::RenderStage::FullscreenQuadParams tonemappingStageParams{};
+		tonemappingStageParams.m_effectID = effect::Effect::ComputeEffectID("Tonemapping");
 
-		m_tonemappingStage->SetStageShader(re::Shader::GetOrCreate(
-			{
-				{"ToneMap_VShader", re::Shader::Vertex},
-				{"ToneMap_PShader", re::Shader::Pixel}
-			},
-			tonemappingPipelineState));
+		m_tonemappingStage = re::RenderStage::CreateFullscreenQuadStage("Tonemapping stage", tonemappingStageParams);
 
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 

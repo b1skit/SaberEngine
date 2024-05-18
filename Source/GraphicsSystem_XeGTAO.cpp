@@ -1,9 +1,9 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "Core\Config.h"
 #include "GraphicsSystem_XeGTAO.h"
 #include "GraphicsSystemManager.h"
 #include "Sampler.h"
-#include "Shader.h"
+
+#include "Core\Config.h"
 
 
 namespace
@@ -171,14 +171,10 @@ namespace gr
 		m_XeGTAOConstants = 
 			re::Buffer::Create(k_bufferShaderName, gtaoConstants, re::Buffer::Type::Mutable);
 
-
 		// Depth prefilter stage:
-		m_prefilterDepthsShader = 
-			re::Shader::GetOrCreate({ {"XeGTAO_PrefilterDepths_CShader", re::Shader::Compute} }, re::PipelineState());
-
 		m_prefilterDepthsStage = 
 			re::RenderStage::CreateComputeStage("XeGTAO: Prefilter depths stage", re::RenderStage::ComputeStageParams{});
-		m_prefilterDepthsStage->SetStageShader(m_prefilterDepthsShader);
+		m_prefilterDepthsStage->SetDrawStyle(effect::DrawStyle::XeGTAO_PrefilterDepths);
 
 		// Depth prefilter target:
 		m_prefilterDepthsTargets = re::TextureTargetSet::Create("XeGTAO: Prefilter depths targets");
@@ -233,10 +229,9 @@ namespace gr
 
 		
 		// Main pass:
-		CreateMainStageShader(m_XeGTAOQuality); // We lazily create these as they're needed
-
 		m_mainStage = re::RenderStage::CreateComputeStage("XeGTAO: Main stage", re::RenderStage::ComputeStageParams{});
-		m_mainStage->SetStageShader(m_mainShaders[m_XeGTAOQuality]);
+
+		SetQuality(m_XeGTAOQuality);
 
 		// Main stage targets:
 		m_mainTargets = re::TextureTargetSet::Create("XeGTAO: Main targets");
@@ -306,11 +301,6 @@ namespace gr
 
 
 		// Denoise passes:
-		m_denoiseShader =
-			re::Shader::GetOrCreate({ {"XeGTAO_Denoise_CShader", re::Shader::Compute} }, re::PipelineState());
-		m_lastPassDenoiseShader = 
-			re::Shader::GetOrCreate({ {"XeGTAO_DenoiseLastPass_CShader", re::Shader::Compute} }, re::PipelineState());
-
 		// Always need at least 1 pass to ensure the final target is filled, even if denoising or AO is disabled
 		const uint8_t numDenoisePasses = std::max((uint8_t)1, static_cast<uint8_t>(m_XeGTAOQuality));
 		m_denoiseStages.resize(numDenoisePasses, nullptr);
@@ -343,11 +333,11 @@ namespace gr
 			const bool isLastPass = passIdx == lastPassIdx;
 			if (isLastPass)
 			{
-				m_denoiseStages[passIdx]->SetStageShader(m_lastPassDenoiseShader);
+				m_denoiseStages[passIdx]->SetDrawStyle(effect::DrawStyle::XeGTAO_DenoiseLastPass);
 			}
 			else
 			{
-				m_denoiseStages[passIdx]->SetStageShader(m_denoiseShader);
+				m_denoiseStages[passIdx]->SetDrawStyle(effect::DrawStyle::XeGTAO_Denoise);
 			}
 			
 			// Set the appropriate ping/pong target set, and add the working AO target as input 
@@ -440,8 +430,10 @@ namespace gr
 				(m_yRes + k_extra) / k_blockSize,
 				1);
 
-			m_prefilterDepthComputeBatch = 
-				std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, prefilterDepthBatchParams);
+			m_prefilterDepthComputeBatch = std::make_unique<re::Batch>(
+				re::Batch::Lifetime::Permanent, 
+				prefilterDepthBatchParams, 
+				effect::Effect::ComputeEffectID("XeGTAO"));
 
 			m_prefilterDepthComputeBatch->SetBuffer(m_XeGTAOConstants);
 		}
@@ -462,7 +454,10 @@ namespace gr
 				(m_yRes + k_extraY) / XE_GTAO_NUMTHREADS_Y,
 				1);
 
-			m_mainBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, mainBatchParams);
+			m_mainBatch = std::make_unique<re::Batch>(
+				re::Batch::Lifetime::Permanent,
+				mainBatchParams,
+				effect::Effect::ComputeEffectID("XeGTAO"));
 
 			m_mainBatch->SetBuffer(m_XeGTAOConstants);
 			m_mainBatch->SetBuffer(m_graphicsSystemManager->GetActiveCameraParams());
@@ -482,12 +477,19 @@ namespace gr
 				(m_yRes + k_extraY) / (XE_GTAO_NUMTHREADS_Y),
 				1);
 
-			m_denoiseBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, denoiseBatchParams);
-			m_lastPassDenoiseBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, denoiseBatchParams);
-
+			m_denoiseBatch = std::make_unique<re::Batch>(
+				re::Batch::Lifetime::Permanent,
+				denoiseBatchParams,
+				effect::Effect::ComputeEffectID("XeGTAO"));
+			
 			m_denoiseBatch->SetBuffer(m_XeGTAOConstants);
-			m_lastPassDenoiseBatch->SetBuffer(m_XeGTAOConstants);
 
+			m_lastPassDenoiseBatch = std::make_unique<re::Batch>(
+				re::Batch::Lifetime::Permanent,
+				denoiseBatchParams, 
+				effect::Effect::ComputeEffectID("XeGTAO"));
+			
+			m_lastPassDenoiseBatch->SetBuffer(m_XeGTAOConstants);
 			m_lastPassDenoiseBatch->SetBuffer(m_SEXeGTAOSettings); // Needed for final stage ONLY
 		}
 
@@ -506,56 +508,21 @@ namespace gr
 	}
 
 
-	void XeGTAOGraphicsSystem::CreateMainStageShader(Quality quality)
-	{
-		switch (m_XeGTAOQuality)
-		{
-		case Quality::Disabled:
-		case Quality::Low:
-		{
-			m_mainShaders[Quality::Low] = 
-				re::Shader::GetOrCreate({ { "XeGTAO_MainPass_Low_CShader", re::Shader::Compute} }, re::PipelineState());
-		}
-		break;
-		case Quality::Med:
-		{
-			m_mainShaders[Quality::Med] = 
-				re::Shader::GetOrCreate({ { "XeGTAO_MainPass_Med_CShader", re::Shader::Compute} }, re::PipelineState());
-		}
-		break;
-		case Quality::High:
-		{
-			m_mainShaders[Quality::High] = 
-				re::Shader::GetOrCreate({ { "XeGTAO_MainPass_High_CShader", re::Shader::Compute} }, re::PipelineState());
-		}
-		break;
-		case Quality::Ultra:
-		{
-			m_mainShaders[Quality::Ultra] = 
-				re::Shader::GetOrCreate({ { "XeGTAO_MainPass_Ultra_CShader", re::Shader::Compute} }, re::PipelineState());
-		}
-		break;
-		default: SEAssertF("Invalid quality");
-		}
-	}
-
 	void XeGTAOGraphicsSystem::SetQuality(Quality quality)
 	{
-		if (quality == m_XeGTAOQuality)
-		{
-			return;
-		}
 		m_XeGTAOQuality = quality;
 
-		// Ensure the shader has been created:
-		if (m_mainShaders[m_XeGTAOQuality] == nullptr)
-		{
-			CreateMainStageShader(quality);
-		}
+		m_mainStage->ClearDrawStyle();
 
-		// We still need a shader, even if the quality mode is disabled
-		constexpr Quality k_minQuality = Quality::Low;
-		m_mainStage->SetStageShader(m_mainShaders[m_XeGTAOQuality == Quality::Disabled ? k_minQuality : m_XeGTAOQuality]);
+		switch (m_XeGTAOQuality)
+		{
+		case Quality::Disabled: // We still need a shader, even if the quality mode is disabled
+		case Quality::Low: m_mainStage->SetDrawStyle(effect::DrawStyle::XeGTAO_QualityLow); break;
+		case Quality::Med: m_mainStage->SetDrawStyle(effect::DrawStyle::XeGTAO_QualityMed); break;
+		case Quality::High: m_mainStage->SetDrawStyle(effect::DrawStyle::XeGTAO_QualityHigh); break;
+		case Quality::Ultra: m_mainStage->SetDrawStyle(effect::DrawStyle::XeGTAO_QualityUltra); break;
+		default: SEAssertF("Invalid quality");
+		}
 
 		// Something has changed: Mark ourselves as dirty!
 		m_isDirty = true;
@@ -566,8 +533,10 @@ namespace gr
 	{
 		char const* qualitySettings[] = {"Disabled", "Low", "Med", "High", "Ultra"};
 		int currentQuality = static_cast<int>(m_XeGTAOQuality);
-		m_isDirty |= ImGui::Combo("Quality", &currentQuality, qualitySettings, IM_ARRAYSIZE(qualitySettings));
-		SetQuality(static_cast<Quality>(currentQuality));
+		if (ImGui::Combo("Quality", &currentQuality, qualitySettings, IM_ARRAYSIZE(qualitySettings)))
+		{
+			SetQuality(static_cast<Quality>(currentQuality)); // Internally sets m_isDirty = true
+		}
 
 		m_isDirty |= ImGui::SliderFloat("Effect radius", &m_settings.Radius, 0.f, 5.f);
 

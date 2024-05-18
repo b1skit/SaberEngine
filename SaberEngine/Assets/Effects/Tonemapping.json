@@ -1,0 +1,16 @@
+{
+	"Effect": {
+		"Name": "Tonemapping",
+		"Parents": ["FullscreenQuad"],
+		"DefaultTechnique": "Tonemapping_Default"
+	},
+
+	"Techniques": [
+		{
+			"Name": "Tonemapping_Default",
+			"VShader": "ToneMap_VShader",
+			"PShader": "ToneMap_PShader",
+			"PipelineState": "FullscreenQuad_Always"
+		}
+	]
+}

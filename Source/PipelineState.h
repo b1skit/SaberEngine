@@ -32,6 +32,7 @@ namespace re
 		};
 		TopologyType GetTopologyType() const;
 		void SetTopologyType(TopologyType);
+		static TopologyType GetTopologyTypeByName(char const*);
 
 		enum class FillMode : uint8_t
 		{
@@ -41,6 +42,7 @@ namespace re
 		};
 		FillMode GetFillMode() const;
 		void SetFillMode(FillMode);
+		static FillMode GetFillModeByName(char const*);
 
 		enum class FaceCullingMode
 		{
@@ -50,15 +52,16 @@ namespace re
 		};
 		FaceCullingMode GetFaceCullingMode() const;
 		void SetFaceCullingMode(FaceCullingMode);
+		static FaceCullingMode GetFaceCullingModeByName(char const*);
 
 		enum class WindingOrder // To determine a front-facing polygon
 		{
 			CCW,  // Default
 			CW,
-			WindingOrder_Count
 		};
 		WindingOrder GetWindingOrder() const;
 		void SetWindingOrder(WindingOrder);
+		static WindingOrder GetWindingOrderByName(char const*);
 
 		enum class DepthTestMode
 		{
@@ -73,11 +76,13 @@ namespace re
 		};
 		DepthTestMode GetDepthTestMode() const;
 		void SetDepthTestMode(DepthTestMode);
+		static DepthTestMode GetDepthTestModeByName(char const*);
 
 
 	private:
 		bool m_isDirty;
 
+		// Initialized in ctor
 		TopologyType m_topologyType;
 		FillMode m_fillMode;
 		FaceCullingMode m_faceCullingMode;

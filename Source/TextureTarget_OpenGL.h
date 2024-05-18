@@ -46,6 +46,8 @@ namespace opengl
 		static void ClearColorTargets(re::TextureTargetSet const&);
 		static void ClearDepthStencilTarget(re::TextureTargetSet const&);
 
+		static void ClearTargets(re::TextureTargetSet const&);
+
 		static void AttachTargetsAsImageTextures(re::TextureTargetSet const&); // ~Compute target/UAV
 	};
 }

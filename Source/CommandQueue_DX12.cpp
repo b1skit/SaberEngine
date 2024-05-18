@@ -5,6 +5,7 @@
 #include "Debug_DX12.h"
 #include "ProfilingMarkers.h"
 #include "SysInfo_DX12.h"
+
 #include "Core\Util\TextUtils.h"
 
 #include <d3dx12.h>
@@ -160,9 +161,14 @@ namespace
 		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE)
 	{
 #if defined(CHECK_TRANSITION_BARRIER_COMMAND_LIST_COMPATIBILITY)
-		SEAssert("Attempting to record an transition type not supported by the command list type", 
-			CommandListTypeSupportsState(cmdListType, beforeState) &&
-			CommandListTypeSupportsState(cmdListType, afterState));
+		SEAssert(CommandListTypeSupportsState(cmdListType, beforeState) &&
+			CommandListTypeSupportsState(cmdListType, afterState),
+			std::format("Cannot transition \"{}\" subresource {} from {} to {} on a {} command list",
+				dx12::GetDebugName(resource),
+				subresourceIdx,
+				dx12::GetResourceStateAsCStr(beforeState),
+				dx12::GetResourceStateAsCStr(afterState),
+				dx12::CommandList::GetCommandListTypeName(cmdListType)).c_str());
 #endif
 
 		// TODO: This check is duplicated in CommandList::TransitionResource

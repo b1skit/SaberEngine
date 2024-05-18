@@ -145,7 +145,7 @@ namespace
 
 		std::shared_ptr<gr::Material> errorMat = gr::Material::Create(
 			en::DefaultResourceNames::k_missingMaterialName,
-			gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
+			gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness);
 
 		// MatAlbedo
 		std::shared_ptr<re::Texture> errorAlbedo = grutil::LoadTextureFromFilePath(
@@ -259,7 +259,7 @@ namespace
 						"We currently only support the PBR metallic/roughness material model");
 
 					std::shared_ptr<gr::Material> newMat =
-						gr::Material::Create(matName, gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
+						gr::Material::Create(matName, gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness);
 
 					// GLTF specifications: If a texture is not given, all texture components are assumed to be 1.f
 					// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
@@ -1355,7 +1355,6 @@ namespace fr
 
 			const uint64_t shaderIdentifier = newShader->GetShaderIdentifier();
 
-			// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
 			std::unordered_map<size_t, std::shared_ptr<re::Shader>>::const_iterator shaderPosition =
 				m_shaders.find(shaderIdentifier);
 			if (shaderPosition != m_shaders.end()) // Found existing
@@ -1367,18 +1366,20 @@ namespace fr
 			{
 				m_shaders[shaderIdentifier] = newShader;
 				addedNewShader = true;
-				LOG("Shader \"%s\" registered with scene", newShader->GetName().c_str());
+				LOG("Shader \"%s\" (ID %llu) registered with scene",
+					newShader->GetName().c_str(),
+					newShader->GetShaderIdentifier());
 			}
 			return addedNewShader;
 		}
 	}
 
 
-	std::shared_ptr<re::Shader> SceneData::GetShader(uint64_t shaderIdentifier) const
+	std::shared_ptr<re::Shader> SceneData::GetShader(ShaderID shaderID) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_shadersReadWriteMutex);
-			std::unordered_map<size_t, std::shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(shaderIdentifier);
+			std::unordered_map<size_t, std::shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(shaderID);
 
 			SEAssert(shaderPos != m_shaders.end(), "Could not find shader");
 
@@ -1387,12 +1388,12 @@ namespace fr
 	}
 
 
-	bool SceneData::ShaderExists(uint64_t shaderIdentifier) const
+	bool SceneData::ShaderExists(ShaderID shaderID) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_shadersReadWriteMutex);
 
-			return m_materials.find(shaderIdentifier) != m_materials.end();
+			return m_shaders.find(shaderID) != m_shaders.end();
 		}
 	}
 }

@@ -66,25 +66,20 @@ namespace gr
 			Soft		= 3
 		};
 
-		void CreateMainStageShader(Quality);
 		void SetQuality(Quality);
 
 
 	private:
 		std::shared_ptr<re::RenderStage> m_prefilterDepthsStage;
-		std::shared_ptr<re::Shader> m_prefilterDepthsShader;
 		std::shared_ptr<re::TextureTargetSet> m_prefilterDepthsTargets;
 		std::unique_ptr<re::Batch> m_prefilterDepthComputeBatch;
 			
 		std::shared_ptr<re::RenderStage> m_mainStage;
-		std::array<std::shared_ptr<re::Shader>, Quality::Quality_Count> m_mainShaders;
 		std::shared_ptr<re::TextureTargetSet> m_mainTargets;
 		std::unique_ptr<re::Batch> m_mainBatch;
 
 		uint8_t m_denoiseFinalOutputIdx;
 		std::vector<std::shared_ptr<re::RenderStage>> m_denoiseStages;
-		std::shared_ptr<re::Shader> m_denoiseShader;
-		std::shared_ptr<re::Shader> m_lastPassDenoiseShader;
 		std::array<std::shared_ptr<re::TextureTargetSet>, 2> m_denoisePingPongTargets;
 		std::unique_ptr<re::Batch> m_denoiseBatch;
 		std::unique_ptr<re::Batch> m_lastPassDenoiseBatch;

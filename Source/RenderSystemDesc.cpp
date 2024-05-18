@@ -1,9 +1,10 @@
 #pragma once
-#include "Core\Assert.h"
 #include "Platform.h"
 #include "RenderManager.h"
 #include "RenderSystemDesc.h"
 
+#include "Core\Assert.h"
+#include "Core\Config.h"
 
 using GSName = re::RenderSystemDescription::GSName;
 using SrcDstNamePairs = re::RenderSystemDescription::SrcDstNamePairs;
@@ -13,20 +14,12 @@ namespace re
 {
 	void from_json(nlohmann::json const& jsonDesc, RenderSystemDescription& renderSysDesc)
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
-		std::string currentPlatformVal;
-		switch (api)
-		{
-		case platform::RenderingAPI::DX12: currentPlatformVal = RenderSystemDescription::val_platformDX12; break;
-		case platform::RenderingAPI::OpenGL: currentPlatformVal = RenderSystemDescription::val_platformOpenGL; break;
-		default: SEAssertF("Invalid RenderingAPI");
-		}
-
+		std::string const& currentPlatformVal = platform::RenderingAPIToCStr(re::RenderManager::Get()->GetRenderingAPI());
 		auto ExcludesPlatform = [&currentPlatformVal = std::as_const(currentPlatformVal)](auto entry) -> bool
 			{
-				if (entry.contains(RenderSystemDescription::key_excludedPlatform))
+				if (entry.contains(RenderSystemDescription::key_excludedPlatforms))
 				{
-					for (auto const& excludedPlatform : entry[RenderSystemDescription::key_excludedPlatform])
+					for (auto const& excludedPlatform : entry[RenderSystemDescription::key_excludedPlatforms])
 					{
 						if (excludedPlatform.template get<std::string>() == currentPlatformVal)
 						{
@@ -131,15 +124,16 @@ namespace re
 		std::ifstream pipelineInputStream(scriptPath);
 		SEAssert(pipelineInputStream.is_open(), "Failed to open render pipeline input stream");
 
+		const bool allowExceptions = core::Config::Get()->GetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey);
+		const bool ignoreComments = core::Config::Get()->GetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey);
+
 		RenderSystemDescription systemDesc;
 		nlohmann::json pipelineDescJSON;
 		try
 		{
 			const nlohmann::json::parser_callback_t parserCallback = nullptr;
-			constexpr bool  k_allowExceptions = true;
-			constexpr bool k_ignoreComments = true; // Allow C-style comments, which are NOT part of the JSON specs
 			pipelineDescJSON =
-				nlohmann::json::parse(pipelineInputStream, parserCallback, k_allowExceptions, k_ignoreComments);
+				nlohmann::json::parse(pipelineInputStream, parserCallback, allowExceptions, ignoreComments);
 
 			systemDesc = pipelineDescJSON.template get<RenderSystemDescription>();
 		}

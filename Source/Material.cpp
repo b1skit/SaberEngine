@@ -10,31 +10,15 @@
 #include "Core\Util\ImGuiUtils.h"
 
 
-namespace
-{
-	constexpr char const* MaterialTypeToCStr(gr::Material::MaterialType matType)
-	{
-		switch (matType)
-		{
-		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness: return "GLTF_PBRMetallicRoughness";
-		default:
-		{
-			SEAssertF("Invalid material type");
-			return "INVALID MATERIAL TYPE";
-		}
-		}
-	}
-}
-
 namespace gr
 {
-	std::shared_ptr<gr::Material> Material::Create(std::string const& name, MaterialType materialType)
+	std::shared_ptr<gr::Material> Material::Create(std::string const& name, MaterialEffect materialType)
 	{
 		std::shared_ptr<gr::Material> newMat;
 
 		switch (materialType)
 		{
-		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
+		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
 		{
 			newMat.reset(new Material_GLTF(name));
 		}
@@ -46,9 +30,14 @@ namespace gr
 	}
 
 
-	Material::Material(std::string const& name, MaterialType materialType)
+	Material::Material(std::string const& name, MaterialEffect materialEffect)
 		: INamedObject(name)
-		, m_materialType(materialType)
+		, m_materialEffect(materialEffect)
+		, m_effectID(effect::Effect::ComputeEffectID(k_materialEffectNames[materialEffect]))
+		, m_alphaMode(AlphaMode::AlphaMode_Count)
+		, m_alphaCutoff(0.f)
+		, m_isDoubleSided(false)
+		, m_isShadowCaster(true)
 	{
 		SEAssert(platform::SysInfo::GetMaxTextureBindPoints() >= k_numTexInputs,
 			"GPU does not support enough texture binding points");
@@ -106,7 +95,8 @@ namespace gr
 		PackMaterialParamsData(instanceData.m_materialParamData.data(), instanceData.m_materialParamData.size());
 
 		// Metadata:
-		instanceData.m_type = m_materialType;
+		instanceData.m_matEffect = m_materialEffect;
+		instanceData.m_materialEffectID = m_effectID;
 		strcpy(instanceData.m_materialName, GetName().c_str());
 		instanceData.m_srcMaterialUniqueID = GetUniqueID();
 	}
@@ -118,10 +108,10 @@ namespace gr
 	{
 		SEAssert(!instanceData.empty(), "Instance data is empty");
 
-		const gr::Material::MaterialType materialType = instanceData.front()->m_type;
+		const gr::Material::MaterialEffect materialType = instanceData.front()->m_matEffect;
 		switch (materialType)
 		{
-		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
+		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
 		{
 			return gr::Material_GLTF::CreateInstancedBuffer(bufferType, instanceData);
 		}
@@ -133,11 +123,11 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::Buffer> Material::ReserveInstancedBuffer(MaterialType matType, uint32_t maxInstances)
+	std::shared_ptr<re::Buffer> Material::ReserveInstancedBuffer(MaterialEffect matEffect, uint32_t maxInstances)
 	{
-		switch (matType)
+		switch (matEffect)
 		{
-		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
+		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
 		{
 			return re::Buffer::CreateUncommittedArray<InstancedPBRMetallicRoughnessData>(
 				InstancedPBRMetallicRoughnessData::s_shaderName,
@@ -159,10 +149,10 @@ namespace gr
 		SEAssert(buffer->GetType() == re::Buffer::Type::Mutable,
 			"Only mutable buffers can be partially updated");
 
-		const gr::Material::MaterialType materialType = instanceData->m_type;
+		const gr::Material::MaterialEffect materialType = instanceData->m_matEffect;
 		switch (materialType)
 		{
-		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
+		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
 		{
 			gr::Material_GLTF::CommitMaterialInstanceData(buffer, instanceData, baseOffset);
 		}
@@ -178,7 +168,7 @@ namespace gr
 		bool isDirty = false;
 
 		ImGui::Text("Source material name: \"%s\"", instanceData.m_materialName);
-		ImGui::Text("Source material Type: %s", MaterialTypeToCStr(instanceData.m_type));
+		ImGui::Text("Source material Type: %s", gr::Material::k_materialEffectNames[instanceData.m_matEffect]);
 		ImGui::Text(std::format("Source material UniqueID: {}", instanceData.m_srcMaterialUniqueID).c_str());
 
 		if (ImGui::CollapsingHeader(std::format("Textures##{}\"",
@@ -219,9 +209,9 @@ namespace gr
 		isDirty |= ImGui::Checkbox(
 			std::format("Casts shadows?##{}", util::PtrToID(&instanceData)).c_str(), &instanceData.m_isShadowCaster);
 
-		switch (instanceData.m_type)
+		switch (instanceData.m_matEffect)
 		{
-		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
+		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
 		{
 			isDirty |= gr::Material_GLTF::ShowImGuiWindow(instanceData);
 		}

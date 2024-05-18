@@ -4,7 +4,6 @@
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem_Bloom.h"
 #include "Sampler.h"
-#include "Shader.h"
 
 #include "Shaders/Common/BloomComputeParams.h"
 
@@ -63,20 +62,11 @@ namespace gr
 		std::shared_ptr<re::Sampler> const bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
 
 		// Emissive blit:
-		m_emissiveBlitStage = 
-			re::RenderStage::CreateFullscreenQuadStage("Emissive blit stage", re::RenderStage::FullscreenQuadParams{});
+		re::RenderStage::FullscreenQuadParams emissiveBlitParams{};
+		emissiveBlitParams.m_effectID = effect::Effect::ComputeEffectID("Bloom");
+		emissiveBlitParams.m_drawStyleBitmask = effect::DrawStyle::Bloom_EmissiveBlit;
 
-		// Blit shader:
-		re::PipelineState blitPipelineState;
-		blitPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		blitPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-		
-		m_emissiveBlitStage->SetStageShader(re::Shader::GetOrCreate(
-			{ 
-				{"Blit_VShader", re::Shader::Vertex},
-				{"Blit_PShader", re::Shader::Pixel}
-			},
-			blitPipelineState));
+		m_emissiveBlitStage = re::RenderStage::CreateFullscreenQuadStage("Emissive blit stage", emissiveBlitParams);
 
 		// Emissive blit texture inputs:
 		m_emissiveBlitStage->AddTextureInput(
@@ -103,10 +93,7 @@ namespace gr
 
 
 		// Bloom:
-		re::PipelineState bloomComputePipelineState; // Defaults
-		m_bloomComputeShader = 
-			re::Shader::GetOrCreate({ {"Bloom_CShader", re::Shader::Compute}}, bloomComputePipelineState);
-
+		
 		// Bloom target: We create a single texture, and render into its mips
 		const glm::uvec2 bloomTargetWidthHeight = 
 			glm::uvec2(deferredLightTargetTex->Width() / 2, deferredLightTargetTex->Height() / 2);
@@ -134,9 +121,6 @@ namespace gr
 				std::format("Bloom downsample stage {}/{}: MIP {}", (level + 1), numBloomMips, level);
 			std::shared_ptr<re::RenderStage> downStage = 
 				re::RenderStage::CreateComputeStage(stageName.c_str(), re::RenderStage::ComputeStageParams());
-
-			// Shader:
-			downStage->SetStageShader(m_bloomComputeShader);
 
 			const std::string targetName = std::format("Bloom {}/{} Target Set", (level + 1), numBloomMips);
 			std::shared_ptr<re::TextureTargetSet> bloomLevelTargets = re::TextureTargetSet::Create(targetName.c_str());
@@ -173,7 +157,7 @@ namespace gr
 			// Buffers:
 			std::shared_ptr<re::Buffer> bloomDownBuf = re::Buffer::Create(
 				BloomComputeData::s_shaderName,
-				BloomComputeData{},
+				BloomComputeData{}, // Populated during PreUpdate()
 				re::Buffer::Type::Mutable);
 			m_bloomDownBuffers.emplace_back(bloomDownBuf);
 			downStage->AddPermanentBuffer(bloomDownBuf);
@@ -193,13 +177,10 @@ namespace gr
 			const uint32_t upsampleDstMip = upsampleSrcMip - 1;
 
 			// Stage:
-			const std::string stageName = 
+			std::string const& stageName = 
 				std::format("Bloom upsample stage {}/{}: MIP {}", upsampleNameLevel++, numUpsampleStages, upsampleDstMip);
 			std::shared_ptr<re::RenderStage> upStage =
 				re::RenderStage::CreateComputeStage(stageName.c_str(), re::RenderStage::ComputeStageParams());
-
-			// Shader:
-			upStage->SetStageShader(m_bloomComputeShader);
 
 			const std::string targetName = std::format("Bloom {}/{} Target Set", (level + 1), numBloomMips);
 			std::shared_ptr<re::TextureTargetSet> bloomLevelTargets = re::TextureTargetSet::Create(targetName.c_str());
@@ -227,7 +208,7 @@ namespace gr
 			// Buffers:
 			std::shared_ptr<re::Buffer> bloomUpBuf = re::Buffer::Create(
 				BloomComputeData::s_shaderName,
-				BloomComputeData{},
+				BloomComputeData{}, // Populated during PreUpdate()
 				re::Buffer::Type::Mutable);
 			upStage->AddPermanentBuffer(bloomUpBuf);
 			m_bloomUpBuffers.emplace_back(bloomUpBuf);
@@ -347,8 +328,11 @@ namespace gr
 		{
 			glm::vec2 dstMipWidthHeight = bloomTex->GetSubresourceDimensions(downsampleDstMipLevel++).xy;
 
-			re::Batch computeBatch = re::Batch(re::Batch::Lifetime::SingleFrame, re::Batch::ComputeParams{
-						.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) });
+			re::Batch computeBatch = re::Batch(
+				re::Batch::Lifetime::SingleFrame,
+				re::Batch::ComputeParams{
+					.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) },
+				effect::Effect::ComputeEffectID("Bloom"));
 
 			downStage->AddBatch(computeBatch);
 		}
@@ -358,8 +342,11 @@ namespace gr
 		{
 			glm::vec2 dstMipWidthHeight = bloomTex->GetSubresourceDimensions(upsampleDstMipLevel--).xy;
 
-			re::Batch computeBatch = re::Batch(re::Batch::Lifetime::SingleFrame, re::Batch::ComputeParams{
-						.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) });
+			re::Batch computeBatch = re::Batch(
+				re::Batch::Lifetime::SingleFrame,
+				re::Batch::ComputeParams{
+					.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) },
+				effect::Effect::ComputeEffectID("Bloom"));
 
 			upStage->AddBatch(computeBatch);
 		}

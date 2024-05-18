@@ -26,7 +26,7 @@ namespace opengl
 		void Present() override;
 
 		// OpenGL-specific interface:
-		void SetPipelineState(re::PipelineState const& pipelineState);
+		void SetPipelineState(re::PipelineState const* pipelineState);
 
 		static uint64_t ComputeVAOHash(re::VertexStream const* const*, uint8_t count, re::VertexStream const* indexStream);
 
@@ -40,7 +40,7 @@ namespace opengl
 	private:
 		void SetCullingMode(re::PipelineState::FaceCullingMode mode);
 		void SetDepthTestMode(re::PipelineState::DepthTestMode mode);
-		void SetFillMode(re::PipelineState const&);
+		void SetFillMode(re::PipelineState const*);
 
 		void GetOpenGLExtensionProcessAddresses();
 

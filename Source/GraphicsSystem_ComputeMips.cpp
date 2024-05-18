@@ -1,10 +1,11 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Core\Definitions\ConfigKeys.h"
 #include "GraphicsSystem_ComputeMips.h"
-#include "Core\Util\MathUtils.h"
 #include "RenderManager.h"
 #include "Sampler.h"
-#include "Shader.h"
+
+#include "Core\Definitions\ConfigKeys.h"
+
+#include "Core\Util\MathUtils.h"
 
 
 namespace
@@ -52,7 +53,6 @@ namespace gr
 	ComputeMipsGraphicsSystem::ComputeMipsGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
 		, INamedObject(k_gsName)
-		, m_mipMapGenerationShader(nullptr)
 		, m_stagePipeline(nullptr)
 	{
 	}
@@ -60,11 +60,6 @@ namespace gr
 
 	void ComputeMipsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
 	{
-		m_mipMapGenerationShader = 
-			re::Shader::GetOrCreate({ {"GenerateMipMaps_BoxFilter_CShader", re::Shader::Compute} }, re::PipelineState());
-
-		re::RenderStage::ComputeStageParams parentStageParams; // Defaults
-
 		m_stagePipeline = &pipeline;
 
 		m_parentStageItr = m_stagePipeline->AppendRenderStage(
@@ -80,8 +75,6 @@ namespace gr
 		{
 			return;
 		}
-
-		//CreateBatches();
 
 		std::shared_ptr<re::Sampler> const mipSampler = re::Sampler::GetSampler("ClampMinMagLinearMipPoint");
 
@@ -121,9 +114,7 @@ namespace gr
 					std::shared_ptr<re::RenderStage> mipGenerationStage = re::RenderStage::CreateSingleFrameComputeStage(
 						stageName.c_str(),
 						computeStageParams);
-
-					mipGenerationStage->SetStageShader(m_mipMapGenerationShader);
-					
+				
 					mipGenerationStage->AddTextureInput("SrcTex", newTexture, mipSampler, sourceMip);
 
 					MipGenerationParams const& mipGenerationParams =
@@ -169,8 +160,10 @@ namespace gr
 						firstTargetMipDimensions.y / k_numThreadsY, k_numThreadsY), 1u);
 
 					// Add our dispatch information to a compute batch:
-					re::Batch computeBatch = re::Batch(re::Batch::Lifetime::SingleFrame, re::Batch::ComputeParams{
-						.m_threadGroupCount = glm::uvec3(roundedXDim, roundedYDim, 1u) });
+					re::Batch computeBatch = re::Batch(
+						re::Batch::Lifetime::SingleFrame,
+						re::Batch::ComputeParams{.m_threadGroupCount = glm::uvec3(roundedXDim, roundedYDim, 1u) },
+						effect::Effect::ComputeEffectID("MipGeneration"));
 
 					mipGenerationStage->AddBatch(computeBatch);
 

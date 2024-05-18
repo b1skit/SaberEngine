@@ -351,10 +351,10 @@ namespace opengl
 	}
 
 
-	void Context::SetPipelineState(re::PipelineState const& pipelineState)
+	void Context::SetPipelineState(re::PipelineState const* pipelineState)
 	{
-		SetCullingMode(pipelineState.GetFaceCullingMode());
-		SetDepthTestMode(pipelineState.GetDepthTestMode());
+		SetCullingMode(pipelineState->GetFaceCullingMode());
+		SetDepthTestMode(pipelineState->GetDepthTestMode());
 		SetFillMode(pipelineState);
 	}
 
@@ -442,10 +442,10 @@ namespace opengl
 	}
 
 
-	void Context::SetFillMode(re::PipelineState const& pipelineState)
+	void Context::SetFillMode(re::PipelineState const* pipelineState)
 	{
 		GLenum fillMode = GL_FILL;
-		switch (pipelineState.GetFillMode())
+		switch (pipelineState->GetFillMode())
 		{
 		case re::PipelineState::FillMode::Solid:
 		{

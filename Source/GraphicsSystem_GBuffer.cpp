@@ -1,12 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraRenderData.h"
-#include "Core\Config.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "RenderManager.h"
 #include "RenderObjectIDs.h"
 #include "RenderStage.h"
-#include "Shader.h"
 #include "Texture.h"
+
+#include "Core\Config.h"
 
 
 namespace gr
@@ -20,18 +20,11 @@ namespace gr
 		, m_owningPipeline(nullptr)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_gBufferSingleSided = re::RenderStage::CreateGraphicsStage("GBuffer Stage (single-sided)", gfxStageParams);
-		m_gBufferDoubleSided = re::RenderStage::CreateGraphicsStage("GBuffer Stage (double-sided)", gfxStageParams);
-
-		m_gBufferSingleSided->SetBatchFilterMaskBit(
-			re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
-		m_gBufferSingleSided->SetBatchFilterMaskBit(
-			re::Batch::Filter::DoubleSided, re::RenderStage::FilterMode::Exclude, true);
 		
-		m_gBufferDoubleSided->SetBatchFilterMaskBit(
+		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", gfxStageParams);
+
+		m_gBufferStage->SetBatchFilterMaskBit(
 			re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
-		m_gBufferDoubleSided->SetBatchFilterMaskBit(
-			re::Batch::Filter::DoubleSided, re::RenderStage::FilterMode::Require, true);
 	}
 
 
@@ -39,27 +32,7 @@ namespace gr
 	{
 		m_owningPipeline = &pipeline;
 
-		re::PipelineState gBufferSingleSidedPipelineState;
-		gBufferSingleSidedPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		gBufferSingleSidedPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
-
-		m_gBufferSingleSided->SetStageShader(re::Shader::GetOrCreate(
-			{
-				{"GBuffer_VShader", re::Shader::Vertex},
-				{"GBuffer_PShader", re::Shader::Pixel}
-			},
-			gBufferSingleSidedPipelineState));
-
-		re::PipelineState gBufferDoubleSidedPipelineState;
-		gBufferDoubleSidedPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
-		gBufferDoubleSidedPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
-
-		m_gBufferDoubleSided->SetStageShader(re::Shader::GetOrCreate(
-			{
-				{"GBuffer_VShader", re::Shader::Vertex},
-				{"GBuffer_PShader", re::Shader::Pixel}
-			},
-			gBufferDoubleSidedPipelineState));
+		m_gBufferStage->SetDrawStyle(effect::DrawStyle::GBuffer_Fill);
 
 		// Create GBuffer color targets:
 		re::Texture::TextureParams gBufferColorParams;
@@ -114,12 +87,10 @@ namespace gr
 		};
 		m_gBufferTargets->SetColorTargetBlendModes(1, &gbufferBlendModes);
 
-		m_gBufferSingleSided->SetTextureTargetSet(m_gBufferTargets);
-		m_gBufferDoubleSided->SetTextureTargetSet(m_gBufferTargets);
+		m_gBufferStage->SetTextureTargetSet(m_gBufferTargets);
 
 		// Camera:		
-		m_gBufferSingleSided->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
-		m_gBufferDoubleSided->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
+		m_gBufferStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
 
 		// Create a clear stage for the GBuffer targets:
@@ -130,8 +101,7 @@ namespace gr
 
 
 		// Finally, append the GBuffer stage to the pipeline:
-		pipeline.AppendRenderStage(m_gBufferSingleSided);
-		pipeline.AppendRenderStage(m_gBufferDoubleSided);
+		pipeline.AppendRenderStage(m_gBufferStage);
 	}
 
 
@@ -159,7 +129,7 @@ namespace gr
 	{
 		CreateBatches(dataDependencies);
 
-		if (m_gBufferSingleSided->GetStageBatches().empty() && m_gBufferDoubleSided->GetStageBatches().empty())
+		if (m_gBufferStage->GetStageBatches().empty())
 		{
 			// Append a clear stage, to ensure that the depth buffer is cleared when there is no batches (i.e. so the 
 			// skybox will still render in an empty scene)
@@ -185,18 +155,14 @@ namespace gr
 		{
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
-			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(
-				m_graphicsSystemManager->GetRenderData(),
-				cullingResults->at(mainCamID));
+			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(cullingResults->at(mainCamID));
 			
-			m_gBufferSingleSided->AddBatches(sceneBatches);
-			m_gBufferDoubleSided->AddBatches(sceneBatches);
+			m_gBufferStage->AddBatches(sceneBatches);
 		}
 		else
 		{
-			std::vector<re::Batch> const& allSceneBatches = batchMgr.GetAllSceneBatches(m_graphicsSystemManager->GetRenderData());
-			m_gBufferSingleSided->AddBatches(allSceneBatches);
-			m_gBufferDoubleSided->AddBatches(allSceneBatches);
+			std::vector<re::Batch> const& allSceneBatches = batchMgr.GetAllSceneBatches();
+			m_gBufferStage->AddBatches(allSceneBatches);
 		}
 	}
 }

@@ -1,0 +1,96 @@
+{
+	"Effect": {
+		"Name": "XeGTAO",
+		"Parents": ["Common"],
+		"ExcludedPlatforms": [ "OpenGL" ],
+		"DrawStyles": [
+			{
+				"Conditions": [
+					{ "Rule": "XeGTAO", "Mode": "PrefilterDepths" }
+				],
+				"Technique": "PrefilterDepths"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "XeGTAO", "Mode": "LowQuality" }
+				],
+				"Technique": "MainPass_Low"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "XeGTAO", "Mode": "MedQuality" }
+				],
+				"Technique": "MainPass_Med"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "XeGTAO", "Mode": "HighQuality" }
+				],
+				"Technique": "MainPass_High"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "XeGTAO", "Mode": "UltraQuality" }
+				],
+				"Technique": "MainPass_Ultra"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "XeGTAO", "Mode": "Denoise" }
+				],
+				"Technique": "Denoise"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "XeGTAO", "Mode": "DenoiseLastPass" }
+				],
+				"Technique": "DenoiseLastPass"
+			}
+		]
+	},
+
+	"Techniques": [
+		{
+			"Name": "PrefilterDepths",
+			"CShader": "XeGTAO_PrefilterDepths_CShader",
+			"PipelineState": "Compute_Default",
+			"ExcludedPlatforms": [ "OpenGL" ]
+		},
+		{
+			"Name": "MainPass_Low",
+			"CShader": "XeGTAO_MainPass_Low_CShader",
+			"PipelineState": "Compute_Default",
+			"ExcludedPlatforms": [ "OpenGL" ]
+		},
+		{
+			"Name": "MainPass_Med",
+			"CShader": "XeGTAO_MainPass_Med_CShader",
+			"PipelineState": "Compute_Default",
+			"ExcludedPlatforms": [ "OpenGL" ]
+		},
+		{
+			"Name": "MainPass_High",
+			"CShader": "XeGTAO_MainPass_High_CShader",
+			"PipelineState": "Compute_Default",
+			"ExcludedPlatforms": [ "OpenGL" ]
+		},
+		{
+			"Name": "MainPass_Ultra",
+			"CShader": "XeGTAO_MainPass_Ultra_CShader",
+			"PipelineState": "Compute_Default",
+			"ExcludedPlatforms": [ "OpenGL" ]
+		},
+		{
+			"Name": "Denoise",
+			"CShader": "XeGTAO_Denoise_CShader",
+			"PipelineState": "Compute_Default",
+			"ExcludedPlatforms": [ "OpenGL" ]
+		},
+		{
+			"Name": "DenoiseLastPass",
+			"CShader": "XeGTAO_DenoiseLastPass_CShader",
+			"PipelineState": "Compute_Default",
+			"ExcludedPlatforms": [ "OpenGL" ]
+		}
+	]
+}

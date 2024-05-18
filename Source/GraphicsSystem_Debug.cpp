@@ -1,15 +1,26 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "BoundsRenderData.h"
-#include "Core\Definitions\ConfigKeys.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystemManager.h"
-#include "Core\Util\ImGuiUtils.h"
 #include "LightRenderData.h"
-#include "Shader.h"
+
+#include "Core\Definitions\ConfigKeys.h"
+#include "Core\Util\ImGuiUtils.h"
 
 
 namespace
 {
+	static constexpr char const* k_debugEffectName = "Debug";
+
+	static const EffectID k_debugEffectID = effect::Effect::ComputeEffectID(k_debugEffectName);
+	
+	static const effect::DrawStyle::Bitmask k_debugLineBitmask = 
+		effect::DrawStyle::GetDrawStyleBitmaskByName(k_debugEffectName, "Line");
+
+	static const effect::DrawStyle::Bitmask k_debugTriangleBitmask =
+		effect::DrawStyle::GetDrawStyleBitmaskByName(k_debugEffectName, "Triangle");
+
+
 	re::VertexStream::Lifetime GetVertexStreamLifetimeFromBatchLifetime(re::Batch::Lifetime batchLifetime)
 	{
 		switch (batchLifetime)
@@ -68,7 +79,7 @@ namespace
 		axisBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = axisPositionStream.get();
 		axisBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = axisColorStream.get();
 
-		return std::make_unique<re::Batch>(batchLifetime, axisBatchGraphicsParams);
+		return std::make_unique<re::Batch>(batchLifetime, axisBatchGraphicsParams, k_debugEffectID);
 	}
 
 
@@ -165,7 +176,7 @@ namespace
 		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
 		boundingBoxBatchGraphicsParams.m_indexStream = boxIndexStream.get();
 
-		return std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams);
+		return std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID);
 	}
 
 
@@ -230,7 +241,7 @@ namespace
 		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = normalPositionsStream.get();
 		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
 
-		return std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams);
+		return std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID);
 	}
 
 	
@@ -312,7 +323,7 @@ namespace
 		frustumBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = frustumColorStream.get();
 		frustumBatchGraphicsParams.m_indexStream = frustumIndexStream.get();
 
-		return std::make_unique<re::Batch>(batchLifetime, frustumBatchGraphicsParams);
+		return std::make_unique<re::Batch>(batchLifetime, frustumBatchGraphicsParams, k_debugEffectID);
 	}
 	
 
@@ -347,7 +358,7 @@ namespace
 		wireframeBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
 		wireframeBatchGraphicsParams.m_indexStream = indexStream;
 
-		return std::make_unique<re::Batch>(batchLifetime, wireframeBatchGraphicsParams);
+		return std::make_unique<re::Batch>(batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID);
 	}
 }
 
@@ -360,50 +371,28 @@ namespace gr
 		: GraphicsSystem(k_gsName, owningGSM)
 		, INamedObject(k_gsName)
 	{
-		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_debugLineStage = re::RenderStage::CreateGraphicsStage("Debug line stage", gfxStageParams);
-		m_debugTriangleStage = re::RenderStage::CreateGraphicsStage("Debug triangle stage", gfxStageParams);
 	}
 
 
 	void DebugGraphicsSystem::InitPipeline(re::StagePipeline& stagePipeline, TextureDependencies const& texDependencies)
 	{
-		re::PipelineState debugPipelineState;
-		debugPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
-		debugPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-
 		// Line topology stage:
-		m_debugLineStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
+		m_debugLineStage = 
+			re::RenderStage::CreateGraphicsStage("Debug line stage", re::RenderStage::GraphicsStageParams{});
+		m_debugLineStage->SetDrawStyle(effect::DrawStyle::Debug_Line);
 		
-		re::PipelineState debugLinePipelineState;
-		debugLinePipelineState.SetTopologyType(re::PipelineState::TopologyType::Line);
-		debugLinePipelineState.SetFillMode(re::PipelineState::FillMode::Wireframe);
-		debugLinePipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
-		debugLinePipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-
-		m_debugLineStage->SetStageShader(re::Shader::GetOrCreate(
-			{ 
-				{"Line_VShader", re::Shader::Vertex},
-				{"Line_PShader", re::Shader::Pixel}
-			},
-			debugLinePipelineState));
+		m_debugLineStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
 		m_debugLineStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
 		stagePipeline.AppendRenderStage(m_debugLineStage);
 		
 		// Triangle topology stage:
+		m_debugTriangleStage =
+			re::RenderStage::CreateGraphicsStage("Debug triangle stage", re::RenderStage::GraphicsStageParams{});
+		m_debugTriangleStage->SetDrawStyle(effect::DrawStyle::Debug_Triangle);
+
 		m_debugTriangleStage->SetTextureTargetSet(nullptr);
-
-		re::PipelineState debugTrianglePipelineState = debugLinePipelineState;
-		debugTrianglePipelineState.SetTopologyType(re::PipelineState::TopologyType::Triangle);
-
-		m_debugTriangleStage->SetStageShader(re::Shader::GetOrCreate(
-			{
-				{"Line_VShader", re::Shader::Vertex},
-				{"Line_PShader", re::Shader::Pixel}
-			},
-			debugTrianglePipelineState));
 
 		m_debugTriangleStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 

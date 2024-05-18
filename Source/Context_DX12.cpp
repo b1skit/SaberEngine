@@ -29,8 +29,8 @@ namespace
 		re::Shader const& shader,
 		re::TextureTargetSet const* targetSet)
 	{
-		const uint64_t shaderKey = shader.GetNameID();
-		const uint64_t pipelineKey = shader.GetPipelineState().GetPipelineStateDataHash();
+		const uint64_t shaderKey = shader.GetShaderIdentifier();
+		const uint64_t pipelineKey = shader.GetPipelineState()->GetPipelineStateDataHash();
 		const uint64_t targetSetKey = targetSet ? targetSet->GetTargetSetSignature() : 0;
 
 		uint64_t psoKey = 0;
@@ -234,7 +234,7 @@ namespace dx12
 	}
 
 
-	std::shared_ptr<dx12::PipelineState> Context::CreateAddPipelineState(
+	dx12::PipelineState const* Context::CreateAddPipelineState(
 		re::Shader const& shader,
 		re::TextureTargetSet const& targetSet)
 	{
@@ -252,7 +252,7 @@ namespace dx12
 
 			m_PSOLibrary[psoKey] = pso;
 		}
-		return pso;
+		return pso.get();
 	}
 
 
@@ -269,13 +269,13 @@ namespace dx12
 	}
 
 
-	std::shared_ptr<dx12::PipelineState> Context::GetPipelineStateObject(
+	dx12::PipelineState const* Context::GetPipelineStateObject(
 		re::Shader const& shader, re::TextureTargetSet const* targetSet)
 	{
 		const uint64_t psoKey = ComputePSOKey(shader, targetSet);
 		if (m_PSOLibrary.contains(psoKey))
 		{
-			return m_PSOLibrary[psoKey];
+			return m_PSOLibrary[psoKey].get();
 		}
 		else
 		{

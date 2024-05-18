@@ -1,12 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Definitions\ConfigKeys.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
 #include "Sampler.h"
-#include "Shader.h"
 #include "Texture.h"
 #include "TextureTarget.h"
+
+#include "Core\Definitions\ConfigKeys.h"
 
 #include "Shaders/Common/SkyboxParams.h"
 
@@ -41,9 +41,9 @@ namespace gr
 	{
 		re::RenderStage::FullscreenQuadParams fsqParams;
 		fsqParams.m_zLocation = gr::meshfactory::ZLocation::Far;
+		fsqParams.m_effectID = effect::Effect::ComputeEffectID("Skybox");
 
 		m_skyboxStage = re::RenderStage::CreateFullscreenQuadStage("Skybox stage", fsqParams);
-
 
 		if (m_fallbackColorTex == nullptr)
 		{
@@ -59,17 +59,6 @@ namespace gr
 			m_fallbackColorTex = 
 				re::Texture::Create("Skybox flat color fallback", fallbackParams, glm::vec4(m_backgroundColor.rgb, 1.f));
 		}
-
-		re::PipelineState skyboxPipelineState;
-		skyboxPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		skyboxPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::LEqual);
-
-		m_skyboxStage->SetStageShader(re::Shader::GetOrCreate(
-			{
-				{"Skybox_VShader", re::Shader::Vertex},
-				{"Skybox_PShader", re::Shader::Pixel}
-			},
-			skyboxPipelineState));
 
 		m_skyboxStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 

@@ -1,0 +1,7 @@
+{
+	"PipelineStates": [
+		{
+			"Name": "Compute_Default" // Compute doesn't actually use an re::Pipeline state; For now this will create a dummy default one
+		}
+	]
+}

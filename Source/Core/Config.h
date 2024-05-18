@@ -1,7 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Definitions\ConfigKeys.h"
 #include "LogManager.h"
+
+#include "Definitions\ConfigKeys.h"
 
 
 namespace core

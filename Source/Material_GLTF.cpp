@@ -42,7 +42,7 @@ namespace gr
 
 
 	Material_GLTF::Material_GLTF(std::string const& name)
-		: Material(name, gr::Material::MaterialType::GLTF_PBRMetallicRoughness)
+		: Material(name, gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness)
 		, INamedObject(name)
 	{
 		// GLTF defaults:
@@ -90,7 +90,7 @@ namespace gr
 
 		for (size_t matIdx = 0; matIdx < numInstances; matIdx++)
 		{
-			SEAssert(instanceData[matIdx]->m_type == gr::Material::MaterialType::GLTF_PBRMetallicRoughness,
+			SEAssert(instanceData[matIdx]->m_matEffect == gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness,
 				"Incorrect material type found. All instanceData entries must have the same type");
 
 			InstancedPBRMetallicRoughnessData& instancedEntry = instancedMaterialData.emplace_back();
@@ -113,7 +113,7 @@ namespace gr
 	void Material_GLTF::CommitMaterialInstanceData(
 		re::Buffer* buffer, MaterialInstanceData const* instanceData, uint32_t baseOffset)
 	{
-		SEAssert(instanceData->m_type == gr::Material::MaterialType::GLTF_PBRMetallicRoughness,
+		SEAssert(instanceData->m_matEffect == gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness,
 			"Incorrect material type found. All instanceData entries must have the same type");
 
 		// We commit single elements for now as we need to access each element's material param data. This isn't ideal,

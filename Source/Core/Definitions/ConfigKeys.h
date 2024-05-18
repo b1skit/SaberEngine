@@ -13,6 +13,8 @@ namespace core::configkeys
 	constexpr char const* k_pipelineDirName					= "Assets\\Pipelines\\";
 	constexpr char const* k_defaultScenePipelineFileName	= "scene.json";
 	constexpr char const* k_platformPipelineFileName_DX12	= "platformDX12.json";
+	constexpr char const* k_effectDirName					= "Assets\\Effects\\";
+	constexpr char const* k_effectManifestFilename			= "EffectManifest.json";
 	constexpr char const* k_glslShaderDirName				= ".\\Shaders\\GLSL\\";
 	constexpr char const* k_hlslShaderDirName				= ".\\Shaders\\HLSL\\";
 	constexpr char const* k_commonShaderDirName				= ".\\Shaders\\Common\\";
@@ -28,6 +30,10 @@ namespace core::configkeys
 	// Logging:
 	constexpr char const* k_logFileName		= "SaberEngine.log";
 	constexpr char const* k_logOutputDir	= ".\\Logs\\";
+
+	// JSON parsing:
+	constexpr char const* k_jsonAllowExceptionsKey	= "JSONAllowExceptions";
+	constexpr char const* k_jsonIgnoreCommentsKey	= "JSONIgnoreComments"; // Allow C-style comments, not to JSON spec)
 
 
 	// Command line controls:

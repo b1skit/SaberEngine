@@ -1,9 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
+#include "Effect.h"
 #include "MeshFactory.h"
-#include "Core\Interfaces\INamedObject.h"
 #include "TextureTarget.h"
+
+#include "Core\Interfaces\INamedObject.h"
 
 
 namespace re
@@ -67,6 +69,9 @@ namespace re
 		struct FullscreenQuadParams final : public virtual IStageParams
 		{
 			gr::meshfactory::ZLocation m_zLocation = gr::meshfactory::ZLocation::Near;
+
+			EffectID m_effectID = effect::Effect::k_invalidEffectID;
+			effect::DrawStyle::Bitmask m_drawStyleBitmask = effect::DrawStyle::k_defaultTechniqueBitmask;
 		};
 		struct ClearStageParams final : public virtual IStageParams
 		{
@@ -108,6 +113,8 @@ namespace re
 		static std::shared_ptr<RenderStage> CreateSingleFrameClearStage(
 			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const>);
 
+
+	public:
 		~RenderStage() = default;
 
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
@@ -118,11 +125,10 @@ namespace re
 		Lifetime GetStageLifetime() const;
 		IStageParams const* GetStageParams() const;
 
-		// TODO: The stage shader should be a member of the GraphicsStageParams/ComputeStageParams
-		void SetStageShader(std::shared_ptr<re::Shader>);
-		re::Shader* GetStageShader() const;
+		void SetDrawStyle(effect::DrawStyle::Bitmask);
+		void ClearDrawStyle();
 
-		std::shared_ptr<re::TextureTargetSet const> GetTextureTargetSet() const;
+		re::TextureTargetSet const* GetTextureTargetSet() const;
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
 		void AddTextureInput(
@@ -176,8 +182,6 @@ namespace re
 		const Lifetime m_lifetime;
 		std::unique_ptr<IStageParams> m_stageParams;
 
-		std::shared_ptr<re::Shader> m_stageShader;
-
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
 		std::vector<RenderStageTextureAndSamplerInput> m_textureSamplerInputs;
 		int m_depthTextureInputIdx; // k_noDepthTexAsInputFlag: Depth not attached as an input		
@@ -190,6 +194,8 @@ namespace re
 
 		uint32_t m_requiredBatchFilterBitmasks;
 		uint32_t m_excludedBatchFilterBitmasks;
+
+		effect::DrawStyle::Bitmask m_drawStyleBits;
 
 		
 	private:
@@ -308,21 +314,21 @@ namespace re
 	}
 
 
-	inline void RenderStage::SetStageShader(std::shared_ptr<re::Shader> shader)
+	inline void RenderStage::SetDrawStyle(effect::DrawStyle::Bitmask drawStyleBits)
 	{
-		m_stageShader = shader;
+		m_drawStyleBits |= drawStyleBits;
 	}
 
 
-	inline re::Shader* RenderStage::GetStageShader() const
+	inline void RenderStage::ClearDrawStyle()
 	{
-		return m_stageShader.get();
+		m_drawStyleBits = 0;
 	}
 
 
-	inline std::shared_ptr<re::TextureTargetSet const> RenderStage::GetTextureTargetSet() const
+	inline re::TextureTargetSet const* RenderStage::GetTextureTargetSet() const
 	{
-		return m_textureTargetSet;
+		return m_textureTargetSet.get();
 	}
 
 

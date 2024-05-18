@@ -171,6 +171,8 @@ namespace re
 		util::PerformanceTimer timer;
 		timer.Start();
 
+		m_effectDB.LoadEffectManifest();
+
 		m_renderData.BeginFrame(m_renderFrameNum);
 
 		SEBeginCPUEvent("platform::RenderManager::Initialize");
@@ -312,6 +314,8 @@ namespace re
 		// Process any remaining render commands (i.e. delete platform objects)
 		m_renderCommandManager.SwapBuffers();
 		m_renderCommandManager.Execute();
+
+		m_effectDB.Destroy();
 
 		re::Sampler::DestroySamplerLibrary();
 		

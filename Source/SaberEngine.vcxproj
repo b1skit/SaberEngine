@@ -120,11 +120,11 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>..\$(OutDir)Core\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -269,7 +269,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PreprocessorDefinitions>PROFILE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PROFILE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
@@ -325,6 +325,8 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="Dependencies\imgui\imgui_tables.cpp" />
     <ClCompile Include="Dependencies\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Device_DX12.cpp" />
+    <ClCompile Include="Effect.cpp" />
+    <ClCompile Include="EffectDB.cpp" />
     <ClCompile Include="EntityCommands.cpp" />
     <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="EntityManager.cpp" />
@@ -446,6 +448,8 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="BoundsComponent.h" />
+    <ClInclude Include="Effect.h" />
+    <ClInclude Include="EffectDB.h" />
     <ClInclude Include="EntityCommands.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystem_ImGui.h" />

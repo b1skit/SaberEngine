@@ -163,7 +163,7 @@ namespace opengl
 					SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, renderStage->GetName().c_str());
 
 					// Get the stage targets:
-					std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
+					re::TextureTargetSet const* stageTargets = renderStage->GetTextureTargetSet();
 					if (!stageTargets)
 					{
 						opengl::SwapChain::PlatformParams* swapChainParams =
@@ -171,43 +171,41 @@ namespace opengl
 						SEAssert(swapChainParams && swapChainParams->m_backbufferTargetSet,
 							"Swap chain params and backbuffer cannot be null");
 
-						stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
+						stageTargets = swapChainParams->m_backbufferTargetSet.get(); // Draw to the swapchain backbuffer
 					}
 
-					auto SetDrawState = [&renderStage, &context](re::Shader const* shader)
+					auto SetDrawState = [&renderStage, &context](re::Shader const* shader, bool doSetStageInputs)
 					{
 						opengl::Shader::Bind(*shader);
 
-						// Set stage param blocks:
-						for (std::shared_ptr<re::Buffer> permanentBuffer : renderStage->GetPermanentBuffers())
+						if (doSetStageInputs)
 						{
-							opengl::Shader::SetBuffer(*shader, *permanentBuffer.get());
-						}
-						for (std::shared_ptr<re::Buffer> perFrameBuffer : renderStage->GetPerFrameBuffers())
-						{
-							opengl::Shader::SetBuffer(*shader, *perFrameBuffer.get());
-						}
+							// In OpenGL the pipeline state is stateful; We only need to set it once per stage
+							context->SetPipelineState(shader->GetPipelineState());
 
-						// Set stage texture/sampler inputs:
-						for (auto const& texSamplerInput : renderStage->GetTextureInputs())
-						{
-							opengl::Shader::SetTextureAndSampler(
-								*shader,
-								texSamplerInput.m_shaderName, // uniform name
-								texSamplerInput.m_texture,
-								texSamplerInput.m_sampler.get(),
-								texSamplerInput.m_srcMip);
-						}
+							// Set stage param blocks:
+							for (std::shared_ptr<re::Buffer> permanentBuffer : renderStage->GetPermanentBuffers())
+							{
+								opengl::Shader::SetBuffer(*shader, *permanentBuffer.get());
+							}
+							for (std::shared_ptr<re::Buffer> perFrameBuffer : renderStage->GetPerFrameBuffers())
+							{
+								opengl::Shader::SetBuffer(*shader, *perFrameBuffer.get());
+							}
 
-						context->SetPipelineState(shader->GetPipelineState());
+							// Set stage texture/sampler inputs:
+							for (auto const& texSamplerInput : renderStage->GetTextureInputs())
+							{
+								opengl::Shader::SetTextureAndSampler(
+									*shader,
+									texSamplerInput.m_shaderName, // uniform name
+									texSamplerInput.m_texture,
+									texSamplerInput.m_sampler.get(),
+									texSamplerInput.m_srcMip);
+							}
+						}
 					};
 
-					re::Shader* stageShader = renderStage->GetStageShader();
-					const bool hasStageShader = stageShader != nullptr;
-					if (hasStageShader)
-					{
-						SetDrawState(stageShader);
-					}
 
 					switch (renderStage->GetStageType())
 					{
@@ -222,31 +220,41 @@ namespace opengl
 					{
 						opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
 						opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
+
+						opengl::TextureTargetSet::ClearTargets(*stageTargets);
 					}
 					break;
 					default:
 						SEAssertF("Invalid render stage type");
 					}
 
+					// OpenGL is stateful; We only need to set the stage inputs once
+					bool hasSetStageInputs = false;
+
+					re::Shader const* currentShader = nullptr;
 					GLuint currentVAO = 0;
 
-					// Render stage batches:
+					// RenderStage batches:
 					std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 					for (re::Batch const& batch : batches)
 					{
-						// No stage shader: Must set stage buffers for each batch
-						if (!hasStageShader)
-						{
-							re::Shader const* batchShader = batch.GetShader();
+						re::Shader const* batchShader = batch.GetShader();
+						SEAssert(batchShader != nullptr, "Batch must have a shader");
 
-							SetDrawState(batchShader);
+						if (currentShader != batchShader)
+						{
+							currentShader = batchShader;
+
+							SetDrawState(currentShader, !hasSetStageInputs);
+							hasSetStageInputs = true;
 						}
+						SEAssert(currentShader, "Current shader is null");
 
 						// Batch buffers:
 						std::vector<std::shared_ptr<re::Buffer>> const& batchBuffers = batch.GetBuffers();
 						for (std::shared_ptr<re::Buffer> const& batchBuffer : batchBuffers)
 						{
-							opengl::Shader::SetBuffer(*stageShader, *batchBuffer.get());
+							opengl::Shader::SetBuffer(*currentShader, *batchBuffer.get());
 						}
 
 						// Set Batch Texture/Sampler inputs:
@@ -255,7 +263,7 @@ namespace opengl
 							for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
 							{
 								opengl::Shader::SetTextureAndSampler(
-									*stageShader,
+									*currentShader,
 									texSamplerInput.m_shaderName,
 									texSamplerInput.m_texture,
 									texSamplerInput.m_sampler,
@@ -276,7 +284,7 @@ namespace opengl
 
 							// Set the VAO:
 							// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
-							// batch. Fix this once we have a batch allocator
+							// batch
 							const GLuint vertexStreamVAO = context->GetCreateVAO(
 								batchGraphicsParams.m_vertexStreams.data(), 
 								vertexStreamCount,

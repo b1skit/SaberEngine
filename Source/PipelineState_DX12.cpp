@@ -128,12 +128,12 @@ namespace
 	}
 
 
-	D3D12_RASTERIZER_DESC BuildRasterizerDesc(re::PipelineState const& rePipelineState)
+	D3D12_RASTERIZER_DESC BuildRasterizerDesc(re::PipelineState const* rePipelineState)
 	{
 		D3D12_RASTERIZER_DESC rasterizerDesc{};
 
 		// Polygon fill mode:
-		switch (rePipelineState.GetFillMode())
+		switch (rePipelineState->GetFillMode())
 		{
 		case re::PipelineState::FillMode::Wireframe:
 			rasterizerDesc.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_WIREFRAME; break;
@@ -145,7 +145,7 @@ namespace
 		}
 
 		// Face culling mode:
-		switch (rePipelineState.GetFaceCullingMode())
+		switch (rePipelineState->GetFaceCullingMode())
 		{
 		case re::PipelineState::FaceCullingMode::Disabled:
 			rasterizerDesc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_NONE; break;
@@ -159,7 +159,7 @@ namespace
 		}
 
 		// Winding order:
-		switch (rePipelineState.GetWindingOrder())
+		switch (rePipelineState->GetWindingOrder())
 		{
 		case re::PipelineState::WindingOrder::CCW:
 			rasterizerDesc.FrontCounterClockwise = true; break;
@@ -185,7 +185,7 @@ namespace
 
 
 	D3D12_DEPTH_STENCIL_DESC BuildDepthStencilDesc(
-		re::TextureTarget const* depthTarget, re::PipelineState const& rePipelineState)
+		re::TextureTarget const* depthTarget, re::PipelineState const* rePipelineState)
 	{
 		// We make assumptions when recording resource transitions on our command lists that depth targets will 
 		// specifically have depth disabled (not just masked out) when the depth channel write mode is disabled
@@ -202,7 +202,7 @@ namespace
 			D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ZERO;
 
 		// Depth testing:
-		switch (rePipelineState.GetDepthTestMode())
+		switch (rePipelineState->GetDepthTestMode())
 		{
 		case re::PipelineState::DepthTestMode::Never: // Never pass
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_NEVER; break;
@@ -245,7 +245,7 @@ namespace
 	}
 
 
-	D3D12_BLEND_DESC BuildBlendDesc(re::TextureTargetSet const& targetSet, re::PipelineState const& rePipelineState)
+	D3D12_BLEND_DESC BuildBlendDesc(re::TextureTargetSet const& targetSet)
 	{
 		D3D12_BLEND_DESC blendDesc{};
 
@@ -393,7 +393,7 @@ namespace dx12
 		
 		if (shaderParams->m_shaderBlobs[re::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
 		{
-			re::PipelineState const& rePipelineState = shader.GetPipelineState();
+			re::PipelineState const* rePipelineState = shader.GetPipelineState();
 
 			// Get the shader reflection:
 			ComPtr<IDxcUtils> dxcUtils;
@@ -424,7 +424,7 @@ namespace dx12
 			GraphicsPipelineStateStream pipelineStateStream {};
 			pipelineStateStream.rootSignature = shaderParams->m_rootSignature->GetD3DRootSignature();
 			pipelineStateStream.inputLayout = { inputLayout.data(), static_cast<uint32_t>(inputLayout.size())};
-			pipelineStateStream.primitiveTopologyType = GetD3DTopologyType(rePipelineState.GetTopologyType());
+			pipelineStateStream.primitiveTopologyType = GetD3DTopologyType(rePipelineState->GetTopologyType());
 			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[re::Shader::Vertex].Get());
 
 			if (shaderParams->m_shaderBlobs[re::Shader::Geometry])
@@ -466,7 +466,7 @@ namespace dx12
 			pipelineStateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
 
 			// Blend description:
-			const D3D12_BLEND_DESC blendDesc = BuildBlendDesc(targetSet, rePipelineState);
+			const D3D12_BLEND_DESC blendDesc = BuildBlendDesc(targetSet);
 			pipelineStateStream.blend = CD3DX12_BLEND_DESC(blendDesc);
 
 			const D3D12_PIPELINE_STATE_STREAM_DESC graphicsPipelineStateStreamDesc =

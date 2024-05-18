@@ -1,0 +1,29 @@
+{
+	"Effect": {
+		"Name": "Bloom",
+		"Parents": ["Common", "FullscreenQuad"],
+		"DefaultTechnique": "BloomCompute",
+		"DrawStyles": [
+			{
+				"Conditions": [
+					{ "Rule": "Bloom", "Mode": "EmissiveBlit" }
+				],
+				"Technique": "EmissiveBlit"
+			}
+		]
+	},
+
+	"Techniques": [
+		{
+			"Name": "EmissiveBlit",
+			"VShader": "Blit_VShader",
+			"PShader": "Blit_PShader",
+			"PipelineState": "FullscreenQuad_Always"
+		},
+		{
+			"Name": "BloomCompute",
+			"CShader": "Bloom_CShader",
+			"PipelineState": "Compute_Default"
+		}
+	]
+}

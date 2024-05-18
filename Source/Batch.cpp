@@ -1,12 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
-#include "Core\Util\CastUtils.h"
-#include "Core\Assert.h"
-#include "Material.h"
 #include "Buffer.h"
+#include "Material.h"
+#include "RenderManager.h"
 #include "Sampler.h"
 #include "Shader.h"
 #include "Texture.h"
+
+#include "Core\Assert.h"
+
+#include "Core\Util\CastUtils.h"
 
 
 namespace
@@ -24,15 +27,105 @@ namespace
 			"batches can hold any type of buffers (but should not be responsible for the lifetime of a "
 			"permanent buffer as they're expensive to create/destroy)");
 	}
+
+
+	re::Shader const* GetResolvedShader(EffectID effectID, effect::DrawStyle::Bitmask drawStyleBitmask)
+	{
+		SEAssert(effectID != effect::Effect::k_invalidEffectID, "Invalid Effect");
+
+		effect::Effect const* effect = re::RenderManager::Get()->GetEffectDB().GetEffect(effectID);
+		effect::Technique const* technique = effect->GetResolvedTechnique(drawStyleBitmask);
+		return technique->GetShader().get();
+	}
+
+
+	effect::DrawStyle::Bitmask ComputeBatchBitmask(gr::Material::MaterialInstanceData const& materialInstanceData)
+	{
+		effect::DrawStyle::Bitmask bitmask = 0;
+
+		switch (materialInstanceData.m_alphaMode)
+		{
+		case gr::Material::AlphaMode::Opaque:
+		{
+			bitmask |= effect::DrawStyle::AlphaMode_Opaque;
+		}
+		break;
+		case gr::Material::AlphaMode::Mask:
+		{
+			bitmask |= effect::DrawStyle::AlphaMode_Mask;
+		}
+		break;
+		case gr::Material::AlphaMode::Blend:
+		{
+			bitmask |= effect::DrawStyle::AlphaMode_Blend;
+		}
+		break;
+		default:
+			SEAssertF("Invalid Material AlphaMode");
+		}
+
+		bitmask |= materialInstanceData.m_isDoubleSided ? 
+			effect::DrawStyle::MaterialSidedness_Double : effect::DrawStyle::MaterialSidedness_Single;
+
+		return bitmask;
+	}
+
+
+	bool IsBatchAndShaderTopologyCompatible(
+		gr::MeshPrimitive::TopologyMode topologyMode, re::PipelineState::TopologyType topologyType)
+	{
+		// Note: These rules are not complete. If you fail this assert, it's possible you're in a valid state. The goal
+		// is to catch unintended accidents
+		switch (topologyType)
+		{
+		case re::PipelineState::TopologyType::Point:
+		{
+			return topologyMode == gr::MeshPrimitive::TopologyMode::PointList;
+		}
+		break;
+		case re::PipelineState::TopologyType::Line:
+		{
+			return topologyMode == gr::MeshPrimitive::TopologyMode::LineList ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::LineStrip ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::LineListAdjacency ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::LineStripAdjacency ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStrip ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleListAdjacency ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency;
+		}
+		break;
+		case re::PipelineState::TopologyType::Triangle:
+		{
+			return topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStrip ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleListAdjacency ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency;
+		}
+		break;
+		case re::PipelineState::TopologyType::Patch:
+		{
+			SEAssertF("Patch topology is (currently) unsupported");
+		}
+		break;
+		default: SEAssertF("Invalid topology type");
+		}
+		return false;
+	}
 }
 
 namespace re
 {
-	Batch::Batch(Lifetime lifetime, gr::MeshPrimitive const* meshPrimitive)
+	Batch::Batch(
+		Lifetime lifetime,
+		gr::MeshPrimitive const* meshPrimitive,
+		EffectID effectID)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
 		, m_batchShader(nullptr)
+		, m_effectID(effectID)
+		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
@@ -52,7 +145,7 @@ namespace re
 			if (vertexStreams[slotIdx])
 			{
 				SEAssert((m_lifetime == Lifetime::SingleFrame) ||
-					(vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && 
+					(vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent &&
 						m_lifetime == Lifetime::Permanent),
 					"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 
@@ -60,7 +153,7 @@ namespace re
 			}
 		}
 		m_graphicsParams.m_indexStream = meshPrimitive->GetIndexStream();
-		
+
 		ComputeDataHash();
 	}
 
@@ -73,6 +166,8 @@ namespace re
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
 		, m_batchShader(nullptr)
+		, m_effectID(materialInstanceData ? materialInstanceData->m_materialEffectID : effect::Effect::k_invalidEffectID)
+		, m_drawStyleBitmask(materialInstanceData ? ComputeBatchBitmask(*materialInstanceData) : 0)
 		, m_batchFilterBitmask(0)
 	{
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
@@ -132,11 +227,16 @@ namespace re
 	}
 
 
-	Batch::Batch(Lifetime lifetime, GraphicsParams const& graphicsParams)
+	Batch::Batch(
+		Lifetime lifetime,
+		GraphicsParams const& graphicsParams, 
+		EffectID effectID)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
 		, m_batchShader(nullptr)
+		, m_effectID(effectID)
+		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
@@ -158,17 +258,24 @@ namespace re
 	}
 
 
-	Batch::Batch(Lifetime lifetime, ComputeParams const& computeParams)
+	Batch::Batch(
+		Lifetime lifetime, 
+		ComputeParams const& computeParams, 
+		EffectID effectID)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Compute)
 		, m_computeParams(computeParams)
 		, m_batchShader(nullptr)
+		, m_effectID(effectID)
+		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
 	}
 
 
-	Batch Batch::Duplicate(Batch const& rhs, re::Batch::Lifetime newLifetime)
+	Batch Batch::Duplicate(
+		Batch const& rhs,
+		re::Batch::Lifetime newLifetime)
 	{
 		Batch result = rhs;
 		result.m_lifetime = newLifetime;
@@ -179,7 +286,27 @@ namespace re
 			ValidateLifetimeCompatibility(result.m_lifetime, buf->GetType());
 		}
 #endif
+
 		return result;
+	}
+
+
+	void Batch::ResolveShader(effect::DrawStyle::Bitmask stageBitmask)
+	{
+		SEAssert(m_effectID != effect::Effect::k_invalidEffectID, "Invalid EffectID");
+		SEAssert(m_batchShader == nullptr, "Batch already has a shader. This is unexpected");
+
+		// TODO: We don't update the data hash even though we're modifying the m_drawStyleBitmask, as by this point
+		// instancing has (currently) already been handled. This will probably change in future!
+		m_drawStyleBitmask |= stageBitmask;
+		
+		m_batchShader = GetResolvedShader(m_effectID, m_drawStyleBitmask);
+
+		SEAssert(m_type != BatchType::Graphics ||
+			IsBatchAndShaderTopologyCompatible(
+				GetGraphicsParams().m_batchTopologyMode,
+				m_batchShader->GetPipelineState()->GetTopologyType()),
+			"Graphics topology mode is incompatible with shader pipeline state topology type");
 	}
 
 
@@ -193,7 +320,11 @@ namespace re
 
 	void Batch::ComputeDataHash()
 	{		
-		AddDataBytesToHash(m_batchFilterBitmask);
+		ResetDataHash();
+
+		// Note: We don't consider the Batch::Lifetime m_lifetime, as we want single frame/permanent batches to instance
+
+		AddDataBytesToHash(m_type);
 
 		switch (m_type)
 		{
@@ -232,12 +363,17 @@ namespace re
 		// Shader:
 		if (m_batchShader)
 		{
-			AddDataBytesToHash(m_batchShader->GetNameID());
+			AddDataBytesToHash(m_batchShader->GetShaderIdentifier());
 		}
 
+		AddDataBytesToHash(m_effectID);
+		AddDataBytesToHash(m_drawStyleBitmask);
+		AddDataBytesToHash(m_batchFilterBitmask);
+
+
 		// Note: We must consider buffers added before instancing has been calcualted, as they allow us to
-		// differentiate batches that are otherwise identical. We'll use the same, identical buffer on the merged instanced 
-		// batches later
+		// differentiate batches that are otherwise identical. We'll use the same, identical buffer on the merged
+		// instanced batches later
 		for (size_t i = 0; i < m_batchBuffers.size(); i++)
 		{
 			AddDataBytesToHash(m_batchBuffers[i]->GetUniqueID());
@@ -266,6 +402,15 @@ namespace re
 
 		ValidateLifetimeCompatibility(m_lifetime, buffer->GetType());
 
+#if defined(_DEBUG)
+		for (auto const& existingBuffer : m_batchBuffers)
+		{
+			SEAssert(buffer->GetNameID() != existingBuffer->GetNameID(),
+				"Buffer with the same name has already been set. Re-adding it changes the data hash");
+		}
+#endif
+		AddDataBytesToHash(buffer->GetUniqueID());
+
 		m_batchBuffers.emplace_back(buffer);
 	}
 
@@ -279,6 +424,15 @@ namespace re
 		SEAssert(shaderName != nullptr && strlen(shaderName) > 0, "Invalid shader sampler name");
 		SEAssert(texture != nullptr, "Invalid texture");
 		SEAssert(sampler != nullptr, "Invalid sampler");
+
+#if defined(_DEBUG)
+		for (auto const& existingTexAndSamplerInput : m_batchTextureSamplerInputs)
+		{
+			SEAssert(existingTexAndSamplerInput.m_texture != texture || 
+				strcmp(existingTexAndSamplerInput.m_shaderName.c_str(), shaderName) != 0,
+				"This Texture has already been added with the same shader name. Re-adding it changes the data hash");
+		}
+#endif
 
 		m_batchTextureSamplerInputs.emplace_back(
 			BatchTextureAndSamplerInput{ shaderName, texture, sampler, srcMip });

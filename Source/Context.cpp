@@ -1,11 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Config.h"
 #include "Context.h"
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
 #include "Context_Platform.h"
 #include "SysInfo_Platform.h"
+
+#include "Core\Assert.h"
+#include "Core\Config.h"
+
+#include "Core\Util\TextUtils.h"
 
 
 namespace re

@@ -1,6 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "PipelineState.h"
 
+#include "Core\Util\TextUtils.h"
+
 
 namespace re
 {
@@ -53,6 +55,23 @@ namespace re
 	}
 
 
+	PipelineState::TopologyType PipelineState::GetTopologyTypeByName(char const* name)
+	{
+		static const std::map<std::string, PipelineState::TopologyType> s_nameToType =
+		{
+			{"triangle", PipelineState::TopologyType::Triangle},
+			{"point", PipelineState::TopologyType::Point},
+			{"line", PipelineState::TopologyType::Line},
+			{"patch", PipelineState::TopologyType::Patch},
+		};
+		
+		std::string const& lowerCaseName = util::ToLower(name);
+		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
+
+		return s_nameToType.at(lowerCaseName);
+	}
+
+
 	PipelineState::FillMode PipelineState::GetFillMode() const
 	{
 		SEAssert(!m_isDirty, "PipelineState is dirty");
@@ -64,6 +83,21 @@ namespace re
 		m_fillMode = fillMode;
 		m_isDirty = true;
 		ComputeDataHash();
+	}
+
+
+	PipelineState::FillMode PipelineState::GetFillModeByName(char const* name)
+	{
+		static const std::map<std::string, PipelineState::FillMode> s_nameToType =
+		{
+			{"solid", PipelineState::FillMode::Solid},
+			{"wireframe", PipelineState::FillMode::Wireframe},
+		};
+
+		std::string const& lowerCaseName = util::ToLower(name);
+		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
+
+		return s_nameToType.at(lowerCaseName);
 	}
 
 
@@ -82,6 +116,22 @@ namespace re
 	}
 
 
+	PipelineState::FaceCullingMode PipelineState::GetFaceCullingModeByName(char const* name)
+	{
+		static const std::map<std::string, PipelineState::FaceCullingMode> s_nameToType =
+		{
+			{"back", PipelineState::FaceCullingMode::Back},
+			{"front", PipelineState::FaceCullingMode::Front},
+			{"disabled", PipelineState::FaceCullingMode::Disabled},
+		};
+
+		std::string const& lowerCaseName = util::ToLower(name);
+		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
+
+		return s_nameToType.at(lowerCaseName);
+	}
+
+
 	PipelineState::WindingOrder PipelineState::GetWindingOrder() const
 	{
 		SEAssert(!m_isDirty, "PipelineState is dirty");
@@ -97,6 +147,21 @@ namespace re
 	}
 
 
+	PipelineState::WindingOrder PipelineState::GetWindingOrderByName(char const* name)
+	{
+		static const std::map<std::string, PipelineState::WindingOrder> s_nameToType =
+		{
+			{"ccw", PipelineState::WindingOrder::CCW},
+			{"cw", PipelineState::WindingOrder::CW},
+		};
+
+		std::string const& lowerCaseName = util::ToLower(name);
+		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
+
+		return s_nameToType.at(lowerCaseName);
+	}
+
+
 	PipelineState::DepthTestMode PipelineState::GetDepthTestMode() const
 	{
 		SEAssert(!m_isDirty, "PipelineState is dirty");
@@ -109,5 +174,26 @@ namespace re
 		m_depthTestMode = depthTestMode;
 		m_isDirty = true;
 		ComputeDataHash();
+	}
+
+
+	PipelineState::DepthTestMode PipelineState::GetDepthTestModeByName(char const* name)
+	{
+		static const std::map<std::string, PipelineState::DepthTestMode> s_nameToType =
+		{
+			{"less", PipelineState::DepthTestMode::Less},
+			{"never", PipelineState::DepthTestMode::Never},
+			{"equal", PipelineState::DepthTestMode::Equal},
+			{"lequal", PipelineState::DepthTestMode::LEqual},
+			{"greater", PipelineState::DepthTestMode::Greater},
+			{"notequal", PipelineState::DepthTestMode::NotEqual},
+			{"gequal", PipelineState::DepthTestMode::GEqual},
+			{"always", PipelineState::DepthTestMode::Always},
+		};
+
+		std::string const& lowerCaseName = util::ToLower(name);
+		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
+
+		return s_nameToType.at(lowerCaseName);
 	}
 }

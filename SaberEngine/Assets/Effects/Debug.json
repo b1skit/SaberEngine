@@ -1,0 +1,54 @@
+{
+	"Effect": {
+		"Name": "Debug",
+
+		"DrawStyles": [
+			{
+				"Conditions": [
+					{ "Rule": "Debug", "Mode": "Line" }
+				],
+				"Technique": "Debug_Line"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "Debug", "Mode": "Triangle" }
+				],
+				"Technique": "Debug_Triangle"
+			}
+		]
+	},
+
+	"PipelineStates": [
+		{
+			"Name": "Debug_Line",
+			"TopologyType": "Line",
+			"FillMode": "Wireframe",
+			"FaceCullingMode": "Disabled",
+			"WindingOrder": "CCW",
+			"DepthTestMode": "Always"
+		},
+		{
+			"Name": "Debug_Triangle",
+			"TopologyType": "Triangle",
+			"FillMode": "Wireframe",
+			"FaceCullingMode": "Disabled",
+			"WindingOrder": "CCW",
+			"DepthTestMode": "Always"
+		}
+	],
+
+	"Techniques": [
+		{
+			"Name": "Debug_Line",
+			"VShader": "Line_VShader",
+			"PShader": "Line_PShader",
+			"PipelineState": "Debug_Line"
+		},
+		{
+			"Name": "Debug_Triangle",
+			"VShader": "Line_VShader",
+			"PShader": "Line_PShader",
+			"PipelineState": "Debug_Triangle"
+		}
+	]
+}

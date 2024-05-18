@@ -1,0 +1,12 @@
+{
+	"PipelineStates": [
+		{
+			"Name": "FullscreenQuad_Always",
+			"DepthTestMode": "Always"
+		},
+		{
+			"Name": "FullscreenQuad_LEqual",
+			"DepthTestMode": "LEqual"
+		}
+	]
+}

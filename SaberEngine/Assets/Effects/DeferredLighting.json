@@ -1,0 +1,111 @@
+{
+	"Effect": {
+		"Name": "DeferredLighting",
+		"DrawStyles": [
+			{
+				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "BRDFIntegration" }
+				],
+				"Technique": "BRDFIntegration"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "IEMGeneration" }
+				],
+				"Technique": "IEMGeneration"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "PMREMGeneration" }
+				],
+				"Technique": "PMREMGeneration"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "DeferredAmbient" }
+				],
+				"Technique": "DeferredAmbient"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "DeferredDirectional" }
+				],
+				"Technique": "DeferredDirectional"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "DeferredPoint" }
+				],
+				"Technique": "DeferredPoint"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "DeferredSpot" }
+				],
+				"Technique": "DeferredSpot"
+			}
+		]
+	},
+
+	"PipelineStates": [
+		{
+			"Name": "IBLGeneration",
+			"FaceCullingMode": "Disabled",
+			"DepthTestMode":  "Always"
+		},
+		{
+			"Name": "DeferredFullscreenQuad",
+			"FaceCullingMode": "Back",
+			"DepthTestMode":  "Greater"
+		},
+		{
+			"Name": "DeferredMesh",
+			"FaceCullingMode": "Front",
+			"DepthTestMode":  "GEqual"
+		}
+	],
+
+	"Techniques": [
+		{
+			"Name": "BRDFIntegration",
+			"CShader": "GenerateBRDFIntegrationMap_CShader",
+			"PipelineState": "Compute_Default"
+		},
+		{
+			"Name": "IEMGeneration",
+			"VShader": "GenerateIEM_VShader",
+			"PShader": "GenerateIEM_PShader",
+			"PipelineState": "IBLGeneration"
+		},
+		{
+			"Name": "PMREMGeneration",
+			"VShader": "GeneratePMREM_VShader",
+			"PShader": "GeneratePMREM_PShader",
+			"PipelineState": "IBLGeneration"
+		},
+		{
+			"Name": "DeferredAmbient",
+			"VShader": "DeferredAmbientLight_VShader",
+			"PShader": "DeferredAmbientLight_PShader",
+			"PipelineState": "DeferredFullscreenQuad"
+		},
+		{
+			"Name": "DeferredDirectional",
+			"VShader": "DeferredDirectionalLight_VShader",
+			"PShader": "DeferredDirectionalLight_PShader",
+			"PipelineState": "DeferredFullscreenQuad"
+		},
+		{
+			"Name": "DeferredPoint",
+			"VShader": "DeferredPointLight_VShader",
+			"PShader": "DeferredPointLight_PShader",
+			"PipelineState": "DeferredMesh"
+		},
+		{
+			"Name": "DeferredSpot",
+			"VShader": "DeferredSpotLight_VShader",
+			"PShader": "DeferredSpotLight_PShader",
+			"PipelineState": "DeferredMesh"
+		}
+	]
+}

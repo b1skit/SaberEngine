@@ -416,9 +416,6 @@ namespace opengl
 			// Verify the framebuffer (as we actually had color textures to attach)
 			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
 			SEAssert(result == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is not complete");
-
-			// Clear the targets AFTER setting color write modes
-			ClearColorTargets(targetSet);
 		}
 	}
 
@@ -558,9 +555,6 @@ namespace opengl
 				scissorRect.Bottom());	// Height
 
 			SetDepthWriteMode(*targetSet.GetDepthStencilTarget());
-
-			// Clear the targets AFTER setting depth write modes
-			ClearDepthStencilTarget(targetSet);
 		}
 	}
 
@@ -626,6 +620,16 @@ namespace opengl
 					depthTargetParams->m_drawBuffer,		// drawbuffer: Must be 0 for GL_STENCIL
 					&stencilClearValue);
 			}
+		}
+	}
+
+
+	void TextureTargetSet::ClearTargets(re::TextureTargetSet const& targetSet)
+	{
+		ClearColorTargets(targetSet);
+		if (targetSet.HasDepthTarget())
+		{
+			ClearDepthStencilTarget(targetSet);
 		}
 	}
 

@@ -42,6 +42,9 @@ namespace core
 	{
 		// Insert engine defaults:
 		SetValue<std::string>(core::configkeys::k_scenesDirNameKey, "Scenes\\", Config::SettingType::Runtime);
+
+		SetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey, true);
+		SetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey, true);
 	}
 
 

@@ -38,7 +38,5 @@ namespace gr
 	private:
 		re::StagePipeline::StagePipelineItr m_parentStageItr;
 		re::StagePipeline* m_stagePipeline;
-
-		std::shared_ptr<re::Shader> m_mipMapGenerationShader;
 	};
 }

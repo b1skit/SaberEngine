@@ -118,41 +118,7 @@ namespace dx12
 		{
 			for (auto& shader : renderManager.m_newShaders.GetReadData())
 			{
-				// Create the Shader object:
 				dx12::Shader::Create(*shader);
-
-				// Create any necessary PSO's for the Shader:
-				for (std::unique_ptr<re::RenderSystem>& renderSystem : renderManager.m_renderSystems)
-				{
-					re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
-					for (re::StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
-					{
-						std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
-						for (std::shared_ptr<re::RenderStage> const renderStage : renderStages)
-						{
-							if (renderStage->GetStageType() == re::RenderStage::Type::Parent ||
-								renderStage->GetStageType() == re::RenderStage::Type::Clear)
-							{
-								continue;
-							}
-
-							// Pre-create PSOs for stage shaders, as we're guaranteed to need them (Remaining PSOs are
-							// lazily-created on demand)
-							re::Shader* stageShader = renderStage->GetStageShader();
-							if (stageShader && stageShader->GetNameID() == shader->GetNameID())
-							{
-								std::shared_ptr<re::TextureTargetSet const> stageTargets = 
-									renderStage->GetTextureTargetSet();
-								if (!stageTargets)
-								{
-									stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
-								}
-
-								context->CreateAddPipelineState(*shader, *stageTargets);
-							}
-						}
-					}
-				}
 			}
 		}
 		// Buffers:
@@ -311,23 +277,24 @@ namespace dx12
 					}
 
 					// Get the stage targets:
-					std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
+					re::TextureTargetSet const* stageTargets = renderStage->GetTextureTargetSet();
 					if (stageTargets == nullptr)
 					{
 						SEAssert(IsGraphicsQueueStageType(curRenderStageType),
 							"Only the graphics queue/command lists can render to the backbuffer");
 
-						stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
+						stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain()).get();
 					}
 
 
-					auto SetDrawState = [&renderStage, &context](
+					auto SetDrawState = [&renderStage, &context, &curRenderStageType](
 						re::Shader const* shader,
 						re::TextureTargetSet const* targetSet,
-						dx12::CommandList* commandList)
+						dx12::CommandList* commandList,
+						bool doSetStageInputsAndTargets)
 					{
 						// Set the pipeline state and root signature first:
-						std::shared_ptr<dx12::PipelineState> pso = context->GetPipelineStateObject(*shader, targetSet);
+						dx12::PipelineState const* pso = context->GetPipelineStateObject(*shader, targetSet);
 						commandList->SetPipelineState(*pso);
 
 						switch (renderStage->GetStageType())
@@ -357,70 +324,89 @@ namespace dx12
 							commandList->SetBuffer(perFrameBuffer.get());
 						}
 
-						// Set per-frame stage textures/sampler inputs:
-						std::vector<re::RenderStage::RenderStageTextureAndSamplerInput> const& texInputs =
-							renderStage->GetTextureInputs();
-						const int depthTargetTexInputIdx = renderStage->GetDepthTargetTextureInputIdx();
-						for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
+						// Set inputs and targets (once) now that the root signature is set
+						if (doSetStageInputsAndTargets)
 						{
-							// If the depth target is read-only, and we've also used it as an input to the stage, we
-							// skip the resource transition (it's handled when binding the depth target as read only)
-							const bool skipTransition = (texIdx == depthTargetTexInputIdx);
+							// Set stage texture inputs:
+							std::vector<re::RenderStage::RenderStageTextureAndSamplerInput> const& texInputs =
+								renderStage->GetTextureInputs();
+							const int depthTargetTexInputIdx = renderStage->GetDepthTargetTextureInputIdx();
+							for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
+							{
+								// If the depth target is read-only, and we've also used it as an input to the stage, we
+								// skip the resource transition (it's handled when binding the depth target as read only)
+								const bool skipTransition = (texIdx == depthTargetTexInputIdx);
 
-							commandList->SetTexture(
-								texInputs[texIdx].m_shaderName, 
-								texInputs[texIdx].m_texture, 
-								texInputs[texIdx].m_srcMip, 
-								skipTransition);
-							// Note: Static samplers have already been set during root signature creation
+								commandList->SetTexture(
+									texInputs[texIdx].m_shaderName,
+									texInputs[texIdx].m_texture,
+									texInputs[texIdx].m_srcMip,
+									skipTransition);
+								// Note: Static samplers have already been set during root signature creation
+							}
+
+							// Set the targets:
+							switch (curRenderStageType)
+							{
+							case re::RenderStage::Type::Compute:
+							{
+								commandList->SetComputeTargets(*targetSet);
+							}
+							break;
+							case re::RenderStage::Type::Graphics:
+							case re::RenderStage::Type::FullscreenQuad:
+							case re::RenderStage::Type::Clear:
+							{
+								const bool attachDepthAsReadOnly = renderStage->DepthTargetIsAlsoTextureInput();
+
+								commandList->SetRenderTargets(*targetSet, attachDepthAsReadOnly);
+							}
+							break;
+							default:
+								SEAssertF("Invalid stage type");
+							}
 						}
 					};
 
-					re::Shader* stageShader = renderStage->GetStageShader();
-					const bool hasStageShader = stageShader != nullptr;
 
-					// If we have a stage shader, we can set the stage buffers once for all batches
-					if (hasStageShader)
-					{
-						SetDrawState(stageShader, stageTargets.get(), currentCommandList);
-					}
-
-					// Set targets, now that the pipeline is set
+					// Clear the targets
 					switch (curRenderStageType)
 					{
 					case re::RenderStage::Type::Compute:
 					{
-						currentCommandList->SetComputeTargets(*stageTargets);
+						// TODO: Support compute target clearing
 					}
 					break;
 					case re::RenderStage::Type::Graphics:
 					case re::RenderStage::Type::FullscreenQuad:
 					case re::RenderStage::Type::Clear:
 					{
-						const bool attachDepthAsReadOnly = renderStage->DepthTargetIsAlsoTextureInput();
-
-						currentCommandList->SetRenderTargets(*stageTargets, attachDepthAsReadOnly);
-
-						re::PipelineState const& rePipelineState = stageShader->GetPipelineState();
+						// Note: We do not have to have SetRenderTargets() to clear them in DX12
+						currentCommandList->ClearTargets(*stageTargets);
 					}
 					break;
 					default:
 						SEAssertF("Invalid stage type");
 					}
 
-					// Render stage batches:
+					re::Shader const* currentShader = nullptr;
+					bool hasSetStageInputsAndTargets = false;
+
+					// RenderStage batches:
 					std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 					for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
 					{
-						// No stage shader: Must set stage buffers for each batch
-						if (!hasStageShader)
-						{
-							re::Shader const* batchShader = batches[batchIdx].GetShader();
-							SEAssert(batchShader != nullptr,
-								"Batch must have a shader if the stage does not have a shader");
+						re::Shader const* batchShader = batches[batchIdx].GetShader();
+						SEAssert(batchShader != nullptr, "Batch must have a shader");
 
-							SetDrawState(batchShader, stageTargets.get(), currentCommandList);
+						if (currentShader != batchShader)
+						{
+							currentShader = batchShader;
+
+							SetDrawState(currentShader, stageTargets, currentCommandList, !hasSetStageInputsAndTargets);
+							hasSetStageInputsAndTargets = true;
 						}
+						SEAssert(currentShader, "Current shader is null");
 
 						// Batch buffers:
 						std::vector<std::shared_ptr<re::Buffer>> const& batchBuffers =

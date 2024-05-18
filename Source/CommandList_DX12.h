@@ -81,10 +81,12 @@ namespace dx12
 		void SetRenderTargets(re::TextureTargetSet const&, bool readOnlyDepth);
 		void SetComputeTargets(re::TextureTargetSet const&);
 
-		void ClearDepthTarget(re::TextureTarget const*) const;
+		void ClearDepthTarget(re::TextureTarget const*);
 
 		void ClearColorTarget(re::TextureTarget const*) const;
 		void ClearColorTargets(re::TextureTargetSet const&) const;
+
+		void ClearTargets(re::TextureTargetSet const&);
 
 		void SetViewport(re::TextureTargetSet const&) const;
 		void SetScissorRect(re::TextureTargetSet const&) const;

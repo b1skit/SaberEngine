@@ -1,0 +1,17 @@
+{
+	"Effect": {
+		"Name": "MipGeneration",
+		"Parents": ["Common"],
+		"DefaultTechnique": "GenerateMips",
+		"ExcludedPlatforms": [ "OpenGL" ]
+	},
+
+	"Techniques": [
+		{
+			"Name": "GenerateMips",
+			"CShader": "GenerateMipMaps_BoxFilter_CShader",
+			"PipelineState": "Compute_Default",
+			"ExcludedPlatforms": [ "OpenGL" ]
+		}
+	]
+}

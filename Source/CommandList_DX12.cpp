@@ -552,7 +552,7 @@ namespace dx12
 	}
 
 
-	void CommandList::ClearDepthTarget(re::TextureTarget const* depthTarget) const
+	void CommandList::ClearDepthTarget(re::TextureTarget const* depthTarget)
 	{
 		SEAssert(depthTarget, "Target texture cannot be null");
 
@@ -572,6 +572,9 @@ namespace dx12
 
 			dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
 				depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+
+			// Ensure we're in a depth write state:
+			TransitionResource(depthTex.get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 			if (depthTargetParams.m_targetFace == re::TextureTarget::k_allFaces)
 			{
@@ -636,6 +639,16 @@ namespace dx12
 			{
 				ClearColorTarget(&target);
 			}
+		}
+	}
+
+
+	void CommandList::ClearTargets(re::TextureTargetSet const& targetSet)
+	{
+		ClearColorTargets(targetSet);
+		if (targetSet.HasDepthTarget())
+		{
+			ClearDepthTarget(targetSet.GetDepthStencilTarget());
 		}
 	}
 
@@ -745,17 +758,6 @@ namespace dx12
 		// Set the viewport and scissor rectangles:
 		SetViewport(targetSet);
 		SetScissorRect(targetSet);
-
-		// Clear the targets:
-		if (numColorTargets > 0)
-		{
-			ClearColorTargets(targetSet);
-		}
-		
-		if (depthStencilTarget)
-		{
-			ClearDepthTarget(targetSet.GetDepthStencilTarget());
-		}
 	}
 
 
@@ -765,7 +767,7 @@ namespace dx12
 			"It is not possible to attach a depth buffer as a target to a compute shader");
 
 		SEAssert(m_type == CommandListType::Compute, "This function should only be called from compute command lists");
-		SEAssert(m_currentPSO, "Pipeline is not currently set");
+		SEAssert(m_currentRootSignature, "Root signature is not currently set");
 
 		// Track the D3D resources we've seen during this call, to help us decide whether to insert a UAV barrier or not
 		std::unordered_set<ID3D12Resource const*> seenResources;

@@ -10,49 +10,6 @@
 
 namespace
 {
-	constexpr bool IsBatchAndShaderTopologyCompatible(
-		gr::MeshPrimitive::TopologyMode topologyMode, re::PipelineState::TopologyType topologyType)
-	{
-		// Note: These rules are not complete. If you fail this assert, it's possible you're in a valid state. The goal
-		// is to catch unintended accidents
-		switch (topologyType)
-		{
-		case re::PipelineState::TopologyType::Point:
-		{
-			return topologyMode == gr::MeshPrimitive::TopologyMode::PointList;
-		}
-		break;
-		case re::PipelineState::TopologyType::Line:
-		{
-			return topologyMode == gr::MeshPrimitive::TopologyMode::LineList ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::LineStrip ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::LineListAdjacency ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::LineStripAdjacency || 
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStrip ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleListAdjacency ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency;
-		}
-		break;
-		case re::PipelineState::TopologyType::Triangle:
-		{
-			return topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStrip ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleListAdjacency ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency;
-		}
-		break;
-		case re::PipelineState::TopologyType::Patch:
-		{
-			SEAssertF("Patch topology is (currently) unsupported");
-		}
-		break;
-		default: SEAssertF("Invalid topology type");
-		}
-		return false;
-	}
-
-
 	void ConfigureClearStage(
 		std::shared_ptr<re::RenderStage> newClearStage,
 		re::RenderStage::ClearStageParams const& clearStageParams,
@@ -226,7 +183,7 @@ namespace re
 		, m_type(stageType)
 		, m_lifetime(lifetime)
 		, m_stageParams(nullptr)
-		, m_stageShader(nullptr)
+		, m_drawStyleBits(0)
 		, m_textureTargetSet(nullptr)
 		, m_depthTextureInputIdx(k_noDepthTexAsInputFlag)
 		, m_requiredBatchFilterBitmasks(0)	// Accept all batches by default
@@ -257,8 +214,17 @@ namespace re
 		: INamedObject(name)
 		, RenderStage(name, nullptr, Type::FullscreenQuad, lifetime)
 	{
+		SEAssert(stageParams->m_effectID != effect::Effect::k_invalidEffectID, "Invalid EffectID");
+
 		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(stageParams->m_zLocation);
-		m_fullscreenQuadBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, m_screenAlignedQuad.get());
+
+		m_drawStyleBits = stageParams->m_drawStyleBitmask;
+
+		m_fullscreenQuadBatch = std::make_unique<re::Batch>(
+			re::Batch::Lifetime::Permanent,
+			m_screenAlignedQuad.get(),
+			stageParams->m_effectID);
+		
 		AddBatch(*m_fullscreenQuadBatch);
 	}
 
@@ -313,7 +279,6 @@ namespace re
 		std::shared_ptr<re::Sampler> sampler, 
 		uint32_t mipLevel /*= re::Texture::k_allMips*/)
 	{
-		SEAssert(m_stageShader != nullptr, "Stage shader is null. Set the stage shader before this call");
 		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
 		SEAssert(tex != nullptr, "Invalid texture");
 		SEAssert(sampler != nullptr, "Invalid sampler");
@@ -459,28 +424,18 @@ namespace re
 	{
 		SEAssert(m_type != re::RenderStage::Type::Parent && 
 			m_type != re::RenderStage::Type::Clear,
-			"Incompatible stage type");
+			"Incompatible stage type: Cannot add batches");
 
-		SEAssert((m_stageShader || batch.GetShader()) ||
-			m_type == RenderStage::Type::FullscreenQuad,
-			"Either the batch or the stage must have a shader");
+		SEAssert(m_type != Type::FullscreenQuad || m_stageBatches.empty(),
+			"Cannot add batches to a fullscreen quad stage (except for the initial batch during construction)");
+
+		SEAssert(batch.GetEffectID() != effect::Effect::k_invalidEffectID,
+			"Batch has not been assigned an Effect");
 
 		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics && 
 				(m_type == Type::Graphics || m_type == Type::FullscreenQuad)) ||
 			(batch.GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute),
 			"Incompatible batch type");
-
-		SEAssert(m_type == Type::Compute ||
-			((!m_stageShader || IsBatchAndShaderTopologyCompatible(
-				batch.GetGraphicsParams().m_batchTopologyMode,
-				m_stageShader->GetPipelineState().GetTopologyType()) ) &&
-			(!batch.GetShader() || IsBatchAndShaderTopologyCompatible(
-				batch.GetGraphicsParams().m_batchTopologyMode,
-				batch.GetShader()->GetPipelineState().GetTopologyType())) ),
-			"Mesh topology mode is incompatible with shader pipeline state topology type");
-
-		SEAssert(m_type != Type::FullscreenQuad || m_stageBatches.empty(), 
-			"Cannot add batches to a fullscreen quad stage (except for the initial batch during construction)");
 
 #if defined(_DEBUG)
 		for (auto const& batchBuffer : batch.GetBuffers())
@@ -500,7 +455,8 @@ namespace re
 		
 		if (FilterBitMatch(batch.GetBatchFilterMask()))
 		{
-			m_stageBatches.emplace_back(re::Batch::Duplicate(batch, batch.GetLifetime()));
+			re::Batch& duplicatedBatch = m_stageBatches.emplace_back(re::Batch::Duplicate(batch, batch.GetLifetime()));
+			duplicatedBatch.ResolveShader(m_drawStyleBits);
 		}
 	}
 
@@ -515,7 +471,8 @@ namespace re
 		// Only a single bit on a Batch must match with the excluded mask for a Batch to be excluded
 		const bool isExcluded = (batchFilterBitmask & m_excludedBatchFilterBitmasks);
 
-		// A Batch must contain all bits in the included mask to be included, but may contain extra bits as well
+		// A Batch must contain all bits in the included mask to be included
+		// A Batch may contain additional bits to the stage, so long as it matches all stage batches
 		bool isFullyIncluded = false;
 		if (!isExcluded)
 		{

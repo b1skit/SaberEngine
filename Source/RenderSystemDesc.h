@@ -14,7 +14,7 @@ namespace re
 		static constexpr char const* key_srcName = "SourceName";
 		static constexpr char const* key_dstName = "DestinationName";
 		static constexpr char const* key_GSName = "GraphicsSystem";
-		static constexpr char const* key_excludedPlatform = "ExcludedPlatforms";
+		static constexpr char const* key_excludedPlatforms = "ExcludedPlatforms";
 		
 		static constexpr char const* val_platformDX12 = "DX12";
 		static constexpr char const* val_platformOpenGL = "OpenGL";
