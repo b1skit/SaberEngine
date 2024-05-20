@@ -16,6 +16,7 @@ Saber Engine is constantly improving. Its current features include:
 	- DirectX 12 (Agility SDK 1.611.2) (Default)  
 	- OpenGL 4.6  
 	- Upcoming Vulkan support  
+- Dynamic shader selection via an scriptable Effect/Technique/DrawStyle framework  
 - Scriptable rendering pipeline  
 - Asynchronous copy/graphics/compute pipelines  
 - Multi-threaded architecture programmed in C++ 20  
@@ -116,9 +117,11 @@ Image-based Lighting:
   * New IBLs can be loaded at runtime via the ImGui menus  
 
 
---------
-Shaders:
---------
+------------------------------------------
+Shaders, Effects, Techniques, Draw Styles:
+------------------------------------------
+Shaders are dynamically resolved at runtime by matching draw style flags set via materials and render stages to sets of draw style rules defined by Effects that map to Techniques. See the JSON Effect definition files located in the `Assets\Effects` directory for example usage  
+
 For simplicity, shader names are expected to be identical between all APIs, with the exception of their file extensions  
 - OpenGL: Shaders have .vert/.geom/.frag/.tesc/.tese/.mesh/.task/.comp extensions. These files are loaded/processed at runtime  
 - DX12: Shaders are compiled with the application from source .hlsli/.hlsl files. The resulting Compiled Shader Objects (.cso) with the same (extensionless) filename are loaded at runtime  
