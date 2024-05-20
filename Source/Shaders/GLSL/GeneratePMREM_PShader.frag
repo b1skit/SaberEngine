@@ -38,7 +38,7 @@ void main()
 	const float numSrcMips = _IEMPMREMGenerationParams.g_mipLevelSrcWidthSrcHeightSrcNumMips.w;
 	
 	// World-space direction from the center of the cube towards the current cubemap pixel
-	const vec3 N = normalize(vOut.LocalPos);
+	const vec3 N = normalize(In.LocalPos);
 	
 	const vec3 V = N; // We pre-integrate the result for the normal direction N == V
 	

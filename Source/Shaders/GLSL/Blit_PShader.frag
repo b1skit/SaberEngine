@@ -5,5 +5,5 @@
 
 void main()
 {	
-	FragColor = texture(Tex0, vOut.uv0.xy);
+	FragColor = texture(Tex0, In.uv0.xy);
 } 

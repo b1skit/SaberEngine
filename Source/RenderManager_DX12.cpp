@@ -417,22 +417,19 @@ namespace dx12
 						}
 
 						// Batch Texture / Sampler inputs :
-						if (stageTargets->WritesColor())
+						for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 						{
-							for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
-							{
-								SEAssert(!stageTargets->HasDepthTarget() ||
-									texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget()->GetTexture().get(),
+							SEAssert(!stageTargets->HasDepthTarget() ||
+								texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget()->GetTexture().get(),
 								"We don't currently handle batches with the current depth buffer attached as "
 								"a texture input. We need to make sure the transitions are handled correctly");
 
-								currentCommandList->SetTexture(
-									texSamplerInput.m_shaderName,
-									texSamplerInput.m_texture,
-									texSamplerInput.m_srcMip,
-									false);
-								// Note: Static samplers have already been set during root signature creation
-							}
+							currentCommandList->SetTexture(
+								texSamplerInput.m_shaderName,
+								texSamplerInput.m_texture,
+								texSamplerInput.m_srcMip,
+								false);
+							// Note: Static samplers have already been set during root signature creation
 						}
 
 						switch (curRenderStageType)

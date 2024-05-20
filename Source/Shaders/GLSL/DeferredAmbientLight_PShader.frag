@@ -145,7 +145,7 @@ void main()
 	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
 
 	// Reconstruct the world position:
-	const vec4 worldPos = vec4(GetWorldPos(vOut.uv0.xy, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection), 1.f);
+	const vec4 worldPos = vec4(GetWorldPos(In.uv0.xy, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection), 1.f);
 
 	const vec3 V = normalize(_CameraParams.g_cameraWPos.xyz - worldPos.xyz); // point -> camera
 	const vec3 N = normalize(gbuffer.WorldNormal);
@@ -157,7 +157,7 @@ void main()
 		
 	const vec3 diffuseIlluminance = GetDiffuseIBLContribution(N, V, NoV, remappedRoughness);
 
-	const float ssao = GetSSAO(vOut.uv0, uvec2(_AmbientLightParams.g_ssaoTexDims.xy));
+	const float ssao = GetSSAO(In.uv0, uvec2(_AmbientLightParams.g_ssaoTexDims.xy));
 	const float combinedAO = CombineAO(gbuffer.AO, ssao);
 
 	const float diffuseAO = combinedAO;

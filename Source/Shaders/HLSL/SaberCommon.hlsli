@@ -29,12 +29,6 @@ struct VertexIn
 };
 
 
-struct VertexToGeometry
-{
-	float4 Position : SV_Position;
-};
-
-
 struct VertexOut
 {
 	float4 Position : SV_Position;
@@ -61,13 +55,14 @@ struct VertexOut
 
 
 // If a resource is used in multiple shader stages, we need to explicitely specify the register and space. Otherwise,
-// shader reflection will assign the resource different registers for each stage (while SE expects them to be consistent)
+// shader reflection will assign the resource different registers for each stage (while SE expects them to be consistent).
+// We (currently) use space1 for all explicit bindings, preventing conflicts with non-explicit bindings in space0
 
-ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space0);
+ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space1);
 
 // Note: Aim for StructuredBuffers with sizes divisible by 128 bits = 16 bytes = sizeof(float4)
-StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t9, space0); // Indexed by instance ID
-StructuredBuffer<InstancedPBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t1, space0);
+StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
+StructuredBuffer<InstancedPBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t1, space1);
 
 
 Texture2D<float4> MatAlbedo;

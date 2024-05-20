@@ -51,10 +51,10 @@ namespace re
 		{
 			std::string const& filename = extensionlessSourceFilenames.at(i).first;
 			ShaderType shaderType = extensionlessSourceFilenames.at(i).second;
-			shaderName += std::format("{}:{}{}",
+			shaderName += std::format("{}={}{}",
 				k_shaderTypeNames[shaderType],
 				filename,
-				i == extensionlessSourceFilenames.size() - 1 ? "" : "|");
+				i == extensionlessSourceFilenames.size() - 1 ? "" : "__");
 		}
 
 		// If the shader already exists, return it. Otherwise, create the shader. 

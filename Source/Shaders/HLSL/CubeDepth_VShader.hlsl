@@ -1,16 +1,22 @@
 // © 2023 Adam Badke. All rights reserved.
-
 #include "SaberCommon.hlsli"
 
 
-VertexToGeometry VShader(VertexIn In)
+VertexOut VShader(VertexIn In)
 {
-	VertexToGeometry Out;
+	VertexOut Out;
 	
 	const uint transformIdx = InstanceIndexParams.g_instanceIndices[In.InstanceID].g_transformIdx;
 
 	const float4 worldPos = mul(InstancedTransformParams[transformIdx].g_model, float4(In.Position, 1.0f));
 	Out.Position = worldPos;
+	
+#if defined(VIN_UV0) && defined(VOUT_UV0)
+	Out.UV0 = In.UV0;
+#endif
+#if defined(VOUT_INSTANCE_ID)
+	Out.InstanceID = In.InstanceID;
+#endif
 	
 	return Out;
 }

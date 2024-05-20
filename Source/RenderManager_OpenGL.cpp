@@ -178,11 +178,10 @@ namespace opengl
 					{
 						opengl::Shader::Bind(*shader);
 
+						context->SetPipelineState(shader->GetPipelineState());
+
 						if (doSetStageInputs)
 						{
-							// In OpenGL the pipeline state is stateful; We only need to set it once per stage
-							context->SetPipelineState(shader->GetPipelineState());
-
 							// Set stage param blocks:
 							for (std::shared_ptr<re::Buffer> permanentBuffer : renderStage->GetPermanentBuffers())
 							{
@@ -258,17 +257,14 @@ namespace opengl
 						}
 
 						// Set Batch Texture/Sampler inputs:
-						if (stageTargets->WritesColor())
+						for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
 						{
-							for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
-							{
-								opengl::Shader::SetTextureAndSampler(
-									*currentShader,
-									texSamplerInput.m_shaderName,
-									texSamplerInput.m_texture,
-									texSamplerInput.m_sampler,
-									texSamplerInput.m_srcMip);
-							}
+							opengl::Shader::SetTextureAndSampler(
+								*currentShader,
+								texSamplerInput.m_shaderName,
+								texSamplerInput.m_texture,
+								texSamplerInput.m_sampler,
+								texSamplerInput.m_srcMip);
 						}
 
 						// Draw!

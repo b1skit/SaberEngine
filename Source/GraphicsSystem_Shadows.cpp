@@ -516,13 +516,11 @@ namespace gr
 					if (cullingResults)
 					{
 						directionalStage.AddBatches(batchMgr.GetSceneBatches(
-							cullingResults->at(lightID),
-							gr::BatchManager::InstanceType::Transform));
+							cullingResults->at(lightID)));
 					}
 					else
 					{
-						directionalStage.AddBatches(
-							batchMgr.GetAllSceneBatches(gr::BatchManager::InstanceType::Transform));
+						directionalStage.AddBatches(batchMgr.GetAllSceneBatches());
 					}
 					
 				}
@@ -546,13 +544,11 @@ namespace gr
 							if (cullingResults)
 							{
 								spotStage.AddBatches(batchMgr.GetSceneBatches(
-									cullingResults->at(lightID),
-									gr::BatchManager::InstanceType::Transform));
+									cullingResults->at(lightID)));
 							}
 							else
 							{
-								spotStage.AddBatches(batchMgr.GetAllSceneBatches(
-									gr::BatchManager::InstanceType::Transform));
+								spotStage.AddBatches(batchMgr.GetAllSceneBatches());
 							}
 						}
 						++spotItr;
@@ -603,13 +599,12 @@ namespace gr
 								// given batch. We should draw each face of the cubemap seperately instead
 								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
 									batchMgr.GetSceneBatches(
-										CombineVisibleRenderDataIDs(renderData, *cullingResults, views),
-										gr::BatchManager::InstanceType::Transform));
+										CombineVisibleRenderDataIDs(renderData, *cullingResults, views)));
 							}
 							else
 							{
 								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
-									batchMgr.GetAllSceneBatches(gr::BatchManager::InstanceType::Transform));
+									batchMgr.GetAllSceneBatches());
 							}
 						}
 						++pointItr;

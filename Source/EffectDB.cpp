@@ -67,6 +67,25 @@ namespace
 	// ---
 
 
+	bool ExcludesPlatform(auto const& entry)
+	{
+		if (entry.contains(key_excludedPlatforms))
+		{
+			std::string const& currentPlatformVal =
+				platform::RenderingAPIToCStr(re::RenderManager::Get()->GetRenderingAPI());
+
+			for (auto const& excludedPlatform : entry[key_excludedPlatforms])
+			{
+				if (excludedPlatform.template get<std::string>() == currentPlatformVal)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+
 	void ParseDrawStyleConditionEntry(
 		auto const& drawStyleEntry,
 		effect::EffectDB const& effectDB,
@@ -123,6 +142,11 @@ namespace
 		{
 			for (auto const& drawStyleEntry : effectBlock.at(key_drawStyles))
 			{
+				if (ExcludesPlatform(drawStyleEntry))
+				{
+					continue;
+				}
+
 				effect::DrawStyle::Bitmask drawStyleBitmask(0);
 				effect::Technique const* technique(nullptr);
 
@@ -325,22 +349,6 @@ namespace effect
 		const bool allowExceptions = core::Config::Get()->GetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey);
 		const bool ignoreComments = core::Config::Get()->GetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey);
 
-		std::string const& currentPlatformVal = platform::RenderingAPIToCStr(re::RenderManager::Get()->GetRenderingAPI());
-		auto ExcludesPlatform = [&currentPlatformVal = std::as_const(currentPlatformVal)](auto entry) -> bool
-			{
-				if (entry.contains(key_excludedPlatforms))
-				{
-					for (auto const& excludedPlatform : entry[key_excludedPlatforms])
-					{
-						if (excludedPlatform.template get<std::string>() == currentPlatformVal)
-						{
-							return true;
-						}
-					}
-				}
-				return false;
-			};
-
 		nlohmann::json effectJSON;
 		try
 		{
@@ -371,6 +379,11 @@ namespace effect
 				for (auto const& piplineStateEntry : pipelineStateBlock)
 				{
 					SEAssert(piplineStateEntry.contains(key_name), "Incomplete PipelineState definition");
+
+					if (ExcludesPlatform(piplineStateEntry))
+					{
+						continue;
+					}
 					
 					std::string const& pipelineStateName = piplineStateEntry.at(key_name).template get<std::string>();
 					AddPipelineState(pipelineStateName, ParsePipelineStateEntry(piplineStateEntry));
@@ -407,9 +420,8 @@ namespace effect
 				// "ExcludedPlatforms":
 				if (ExcludesPlatform(effectBlock))
 				{
-					LOG("Effect \"%s\" is excluded on the \"%s\" platform. Skipping.",
-						effectFilepath.c_str(),
-						currentPlatformVal.c_str());
+					LOG("Effect \"%s\" is excluded on the current platform. Skipping.",
+						effectFilepath.c_str());
 				}
 				else
 				{

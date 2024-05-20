@@ -71,8 +71,8 @@ vec3 ACESFilm(vec3 x)
 void main()
 {	
 	// NOTE: uv0.y was flipped in toneMapShader.vert to account for SaberEngine's use of a (0,0) top-left uv convention
-	const vec3 color = texture(Tex0, vOut.uv0.xy).rgb;
-	const vec3 bloom = texture(Tex1, vOut.uv0.xy).rgb;
+	const vec3 color = texture(Tex0, In.uv0.xy).rgb;
+	const vec3 bloom = texture(Tex1, In.uv0.xy).rgb;
 
 	// Apply exposure:
 	const float bloomExposure = _CameraParams.g_bloomSettings.w;

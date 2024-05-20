@@ -6,7 +6,7 @@
 
 void main()
 {
-	vOut.LocalPos = in_position; // Untransformed vertex position
+	Out.LocalPos = in_position; // Untransformed vertex position
 
 	mat4 rotView = mat4(mat3(_CameraParams.g_view)); // remove translation from the view matrix
 	vec4 clipPos = _CameraParams.g_projection * rotView * vec4(in_position, 1.0);

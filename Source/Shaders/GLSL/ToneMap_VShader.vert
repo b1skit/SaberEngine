@@ -1,4 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
+#define VIN_UV0
 #include "SaberCommon.glsl"
 
 
@@ -8,5 +9,5 @@ void main()
 
 	// NOTE: SaberEngine uses a (0,0) = top left convention for UVs. In OpenGL, this results in the framebuffer being
 	// rendered upside down. So, we flip the UVs here to get a right-side-up image (as this is currently the final stage)
-	vOut.uv0 = vec2(in_uv0.x, 1.f - in_uv0.y);
+	Out.uv0 = vec2(in_uv0.x, 1.f - in_uv0.y);
 }

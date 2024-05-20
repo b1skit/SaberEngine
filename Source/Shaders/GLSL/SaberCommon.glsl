@@ -12,25 +12,72 @@
 #include "../Common/SkyboxParams.h"
 
 
-// Vertex shader specific properties:
-//-----------------------------------
+// Vertex shader inputs:
+//----------------------
 
 #if defined(SE_VERTEX_SHADER)
 	layout(location = 0) in vec3 in_position;
-
-	#if !defined(SABER_DEPTH)
-		layout(location = 1) in vec3 in_normal;
-		layout(location = 2) in vec4 in_tangent;
-		layout(location = 3) in vec2 in_uv0;
-		layout(location = 4) in vec4 in_color;
-	#endif
+	
+#ifdef VIN_NORMAL
+	layout(location = 1) in vec3 in_normal;
+#endif
+#ifdef VIN_TANGENT
+	layout(location = 2) in vec4 in_tangent;
+#endif
+#ifdef VIN_UV0
+	layout(location = 3) in vec2 in_uv0;
+#endif
+#ifdef VIN_COLOR
+	layout(location = 4) in vec4 in_color;
+#endif
 
 	// TODO: Support joints/weights
 #endif
 
 
-// Fragment shader specific properties:
-//-------------------------------------
+// Common shader properties:
+//--------------------------
+
+struct VertexOut
+{
+#ifdef VOUT_WORLD_NORMAL
+	vec3 WorldNormal;
+#endif
+
+#ifdef VOUT_LOCAL_POS
+	vec3 LocalPos; // Received in_position: Local-space position
+#endif
+
+#ifdef VOUT_WORLD_POS
+	vec3 worldPos; // World-space position
+#endif
+
+#ifdef VOUT_TBN
+	mat3 TBN; // Normal map change-of-basis matrix
+#endif
+
+	// The GLSL compiler gets confused if we define an empty struct; Assume uv0 is always required
+	vec2 uv0;
+
+#ifdef VOUT_COLOR
+	vec4 Color;
+#endif
+	
+};
+
+
+#if defined(SE_VERTEX_SHADER)
+	layout(location = 6) out VertexOut Out;
+#elif defined(SE_GEOMETRY_SHADER)
+	layout(location = 6) in VertexOut In[];
+	layout(location = 6) out VertexOut Out;
+#elif defined(SE_FRAGMENT_SHADER)
+	layout(location = 6) in VertexOut In;
+#endif
+
+
+// Fragment shader outputs:
+//-------------------------
 
 #if defined(SE_FRAGMENT_SHADER)
 	#if defined(SABER_VEC2_OUTPUT)
@@ -43,47 +90,25 @@
 #endif
 
 
-// Common shader properties:
-//--------------------------
-
-#if defined(SE_VERTEX_SHADER)
-	layout(location = 9) out struct VtoF	// Vertex output
-#elif defined(SE_FRAGMENT_SHADER)
-	layout(location = 9) in struct VtoF		// Fragment input
-#else
-	struct VtoF	// Default/geometry in/out. If geometry, in & out must be bound to the same location
-#endif
-	{
-		vec4 Color;
-		vec2 uv0;
-
-#ifdef VOUT_WORLD_NORMAL
-		vec3 WorldNormal;
-#endif
-#ifdef VOUT_LOCAL_POS
-		vec3 LocalPos; // Received in_position: Local-space position
-#endif
-#ifdef VOUT_WORLD_POS
-		vec3 worldPos; // World-space position
-#endif
-#ifdef VOUT_TBN
-		mat3 TBN; // Normal map change-of-basis matrix
-#endif
-
-#if defined(SE_VERTEX_SHADER) || defined(SE_FRAGMENT_SHADER) || defined(SE_GEOMETRY_SHADER)
-	} vOut;
-#else
-	};
-#endif
-
-// Dynamic uniforms for instancing:
+// Instancing:
 #if defined(SABER_INSTANCING)
+struct InstanceParams
+{
+	uint InstanceID;
+};
+
 	#if defined(SE_VERTEX_SHADER)
-		flat out uint InstanceID;
-	#elif defined(SE_FRAGMENT_SHADER)
-		flat in uint InstanceID;
-	#endif
-#endif
+		layout(location = 5) flat out InstanceParams InstanceParamsOut;
+
+	#elif defined(SE_GEOMETRY_SHADER)
+		layout(location = 5) flat in InstanceParams InstanceParamsIn[];
+		layout(location = 5) flat out InstanceParams InstanceParamsOut;
+
+	#elif defined(SE_FRAGMENT_SHADER)		
+		layout(location = 5) flat in InstanceParams InstanceParamsIn;
+
+	#endif 
+#endif // SABER_INSTANCING
 
 
 // Texture samplers:

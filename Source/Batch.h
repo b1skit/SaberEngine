@@ -50,16 +50,14 @@ namespace re
 			ArrayInstanced
 		};
 
-		// Filter bits are exclusionary: A RenderStage will not draw a Batch if they have a matching filter bit
 		enum class Filter : uint32_t
 		{
 			AlphaBlended		= 1 << 0,	// 0001
-			DoubleSided			= 1 << 1,	// 0010
-			CastsShadow			= 1 << 2,	// ...
+			CastsShadow			= 1 << 1,	// ...
 
 			Filter_Count
 		};
-		static_assert((uint32_t)re::Batch::Filter::Filter_Count <= 32);
+		SEStaticAssert(static_cast<uint32_t>(re::Batch::Filter::Filter_Count) <= 32, "Too many filter bits");
 
 		// TODO: Combine with RenderStage::RenderStageTextureAndSamplerInput struct?
 		struct BatchTextureAndSamplerInput

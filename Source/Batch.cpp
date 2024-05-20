@@ -43,6 +43,7 @@ namespace
 	{
 		effect::DrawStyle::Bitmask bitmask = 0;
 
+		// Alpha mode:
 		switch (materialInstanceData.m_alphaMode)
 		{
 		case gr::Material::AlphaMode::Opaque:
@@ -64,6 +65,7 @@ namespace
 			SEAssertF("Invalid Material AlphaMode");
 		}
 
+		// Material sidedness:
 		bitmask |= materialInstanceData.m_isDoubleSided ? 
 			effect::DrawStyle::MaterialSidedness_Double : effect::DrawStyle::MaterialSidedness_Single;
 
@@ -219,7 +221,6 @@ namespace re
 
 			// Filter bits:
 			SetFilterMaskBit(Filter::AlphaBlended, materialInstanceData->m_alphaMode == gr::Material::AlphaMode::Blend);
-			SetFilterMaskBit(Filter::DoubleSided, materialInstanceData->m_isDoubleSided);
 			SetFilterMaskBit(Filter::CastsShadow, materialInstanceData->m_isShadowCaster);
 		}
 

@@ -41,7 +41,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "Shadow_2D_SingleSided"
+				"Technique": "Shadow_2D_SingleSided_Opaque"
 			},
 			{
 				"Conditions": [
@@ -49,7 +49,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "Shadow_2D_SingleSided"
+				"Technique": "Shadow_2D_SingleSided_AlphaMask"
 			},
 			{
 				"Conditions": [
@@ -57,7 +57,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "Shadow_2D_DoubleSided"
+				"Technique": "Shadow_2D_DoubleSided_Opaque"
 			},
 			{
 				"Conditions": [
@@ -65,7 +65,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "Shadow_2D_DoubleSided"
+				"Technique": "Shadow_2D_DoubleSided_AlphaMask"
 			},
 			{
 				"Conditions": [
@@ -73,7 +73,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "Shadow_Cube_SingleSided"
+				"Technique": "Shadow_Cube_SingleSided_Opaque"
 			},
 			{
 				"Conditions": [
@@ -81,7 +81,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "Shadow_Cube_SingleSided"
+				"Technique": "Shadow_Cube_SingleSided_AlphaMask"
 			},
 			{
 				"Conditions": [
@@ -89,7 +89,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "Shadow_Cube_DoubleSided"
+				"Technique": "Shadow_Cube_DoubleSided_Opaque"
 			},
 			{
 				"Conditions": [
@@ -97,7 +97,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "Shadow_Cube_DoubleSided"
+				"Technique": "Shadow_Cube_DoubleSided_AlphaMask"
 			}
 		]
 	},
@@ -128,29 +128,55 @@
 			"PShader": "GBuffer_PShader",
 			"PipelineState": "DoubleSided"
 		},
+		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
+		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
+		// In future, we need to support tagging assets to not cast shadows at load time
 		{
-			"Name": "Shadow_2D_SingleSided",
+			"Name": "Shadow_2D_SingleSided_Opaque",
 			"VShader": "Depth_VShader",
 			"PipelineState": "SingleSided"
-			// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
-			// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
-			// In future, we need to support tagging assets to not cast shadows at load time
 		},
 		{
-			"Name": "Shadow_2D_DoubleSided",
+			"Name": "Shadow_2D_SingleSided_AlphaMask",
+			"VShader": "DepthAlphaMask_VShader",
+			"PShader": "DepthAlphaMask_PShader",
+			"PipelineState": "SingleSided"
+		},
+		{
+			"Name": "Shadow_2D_DoubleSided_Opaque",
 			"VShader": "Depth_VShader",
 			"PipelineState": "DoubleSided"
 		},
 		{
-			"Name": "Shadow_Cube_SingleSided",
+			"Name": "Shadow_2D_DoubleSided_AlphaMask",
+			"VShader": "DepthAlphaMask_VShader",
+			"PShader": "DepthAlphaMask_PShader",
+			"PipelineState": "DoubleSided"
+		},
+		{
+			"Name": "Shadow_Cube_SingleSided_Opaque",
 			"VShader": "CubeDepth_VShader",
 			"GShader": "CubeDepth_GShader",
 			"PipelineState": "SingleSided"
 		},
 		{
-			"Name": "Shadow_Cube_DoubleSided",
+			"Name": "Shadow_Cube_SingleSided_AlphaMask",
+			"VShader": "CubeDepthAlphaMask_VShader",
+			"GShader": "CubeDepthAlphaMask_GShader",
+			"PShader": "DepthAlphaMask_PShader",
+			"PipelineState": "SingleSided"
+		},
+		{
+			"Name": "Shadow_Cube_DoubleSided_Opaque",
 			"VShader": "CubeDepth_VShader",
 			"GShader": "CubeDepth_GShader",
+			"PipelineState": "DoubleSided"
+		},
+		{
+			"Name": "Shadow_Cube_DoubleSided_AlphaMask",
+			"VShader": "CubeDepthAlphaMask_VShader",
+			"GShader": "CubeDepthAlphaMask_GShader",
+			"PShader": "DepthAlphaMask_PShader",
 			"PipelineState": "DoubleSided"
 		}
 	]

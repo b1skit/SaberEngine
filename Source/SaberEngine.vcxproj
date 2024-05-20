@@ -584,6 +584,34 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Window_Platform.h" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Shaders\HLSL\CubeDepthAlphaMask_GShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">GShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">GShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\CubeDepthAlphaMask_VShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
+    </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
@@ -611,6 +639,34 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\DepthAlphaMask_PShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\DepthAlphaMask_VShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_DenoiseLastPass_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
@@ -743,23 +799,41 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <None Include="SaberEngine.licenseheader" />
     <None Include="Shaders\GLSL\Blit_PShader.frag" />
     <None Include="Shaders\GLSL\Blit_VShader.vert" />
-    <None Include="Shaders\GLSL\Bloom_CShader.comp" />
     <None Include="Shaders\GLSL\BloomCommon.glsl" />
+    <None Include="Shaders\GLSL\Bloom_CShader.comp" />
     <None Include="Shaders\GLSL\Color.glsl" />
-    <None Include="Shaders\GLSL\CubeDepth.geom" />
-    <None Include="Shaders\GLSL\CubeDepth.vert" />
+    <None Include="Shaders\GLSL\CubeDepthAlphaMask_GShader.geom" />
+    <None Include="Shaders\GLSL\CubeDepthAlphaMask_VShader.vert" />
+    <None Include="Shaders\GLSL\CubeDepth_GShader.geom" />
+    <None Include="Shaders\GLSL\CubeDepth_VShader.vert" />
+    <None Include="Shaders\GLSL\DeferredAmbientLight_PShader.frag" />
+    <None Include="Shaders\GLSL\DeferredAmbientLight_VShader.vert" />
+    <None Include="Shaders\GLSL\DeferredDirectionalLight_PShader.frag" />
+    <None Include="Shaders\GLSL\DeferredDirectionalLight_VShader.vert" />
+    <None Include="Shaders\GLSL\DeferredPointLight_PShader.frag" />
+    <None Include="Shaders\GLSL\DeferredPointLight_VShader.vert" />
     <None Include="Shaders\GLSL\DeferredSpotLight_PShader.frag" />
     <None Include="Shaders\GLSL\DeferredSpotLight_VShader.vert" />
+    <None Include="Shaders\GLSL\DepthAlphaMask_PShader.frag" />
+    <None Include="Shaders\GLSL\DepthAlphaMask_VShader.vert" />
     <None Include="Shaders\GLSL\Depth_VShader.vert" />
     <None Include="Shaders\GLSL\FullscreenQuadCommon.glsl" />
     <None Include="Shaders\GLSL\GaussianBlur_PShader.frag" />
     <None Include="Shaders\GLSL\GaussianBlur_VShader.vert" />
     <None Include="Shaders\GLSL\GBufferCommon.glsl" />
+    <None Include="Shaders\GLSL\GBuffer_PShader.frag" />
+    <None Include="Shaders\GLSL\GBuffer_VShader.vert" />
     <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap_CShader.comp" />
+    <None Include="Shaders\GLSL\GenerateIEM_PShader.frag" />
+    <None Include="Shaders\GLSL\GenerateIEM_VShader.vert" />
+    <None Include="Shaders\GLSL\GeneratePMREM_PShader.frag" />
+    <None Include="Shaders\GLSL\GeneratePMREM_VShader.vert" />
+    <None Include="Shaders\GLSL\Lighting.glsl" />
     <None Include="Shaders\GLSL\Line_PShader.frag" />
     <None Include="Shaders\GLSL\Line_VShader.vert" />
     <None Include="Shaders\GLSL\MathConstants.glsl" />
     <None Include="Shaders\GLSL\NormalMapUtils.glsl" />
+    <None Include="Shaders\GLSL\SaberCommon.glsl" />
     <None Include="Shaders\GLSL\Shadows.glsl" />
     <None Include="Shaders\GLSL\Skybox_PShader.frag" />
     <None Include="Shaders\GLSL\Skybox_VShader.vert" />
@@ -780,20 +854,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <None Include="Shaders\HLSL\SaberCommon.hlsli">
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\GLSL\GenerateIEM_PShader.frag" />
-    <None Include="Shaders\GLSL\GenerateIEM_VShader.vert" />
-    <None Include="Shaders\GLSL\GeneratePMREM_PShader.frag" />
-    <None Include="Shaders\GLSL\GeneratePMREM_VShader.vert" />
-    <None Include="Shaders\GLSL\DeferredAmbientLight_PShader.frag" />
-    <None Include="Shaders\GLSL\DeferredAmbientLight_VShader.vert" />
-    <None Include="Shaders\GLSL\DeferredDirectionalLight_PShader.frag" />
-    <None Include="Shaders\GLSL\DeferredDirectionalLight_VShader.vert" />
-    <None Include="Shaders\GLSL\DeferredPointLight_PShader.frag" />
-    <None Include="Shaders\GLSL\DeferredPointLight_VShader.vert" />
-    <None Include="Shaders\GLSL\GBuffer_PShader.frag" />
-    <None Include="Shaders\GLSL\GBuffer_VShader.vert" />
-    <None Include="Shaders\GLSL\SaberCommon.glsl" />
-    <None Include="Shaders\GLSL\Lighting.glsl" />
     <None Include="Shaders\HLSL\SaberComputeCommon.hlsli" />
     <FxCompile Include="Shaders\HLSL\Bloom_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>

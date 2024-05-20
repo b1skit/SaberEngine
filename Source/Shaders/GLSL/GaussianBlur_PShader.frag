@@ -59,7 +59,7 @@ void main()
 	const vec2 offset = 
 		g_bloomTargetResolution.zw * directionSelection; // g_bloomTargetResolution .z = 1/xRes, .w = 1/yRes
 
-	vec2 uvs = vOut.uv0.xy;
+	vec2 uvs = In.uv0.xy;
 	uvs -= TEXEL_OFFSET * offset;
 
 	vec3 total = vec3(0,0,0);

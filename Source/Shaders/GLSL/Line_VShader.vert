@@ -1,10 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
+#define VIN_COLOR
+#define VOUT_COLOR
 #include "SaberCommon.glsl"
 
 
 void main()
 {
-	vOut.Color = in_color;
+	Out.Color = in_color;
 
 	vec4 ndcPos = 
 		_CameraParams.g_viewProjection * _InstancedTransformParams[gl_InstanceID].g_model * vec4(in_position.xyz, 1.0);
