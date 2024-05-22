@@ -60,9 +60,6 @@
     <ClInclude Include="Util\NBufferedVector.h">
       <Filter>Header Files\Util</Filter>
     </ClInclude>
-    <ClInclude Include="Test.h">
-      <Filter>Header Files\Util</Filter>
-    </ClInclude>
     <ClInclude Include="Util\TextUtils.h">
       <Filter>Header Files\Util</Filter>
     </ClInclude>

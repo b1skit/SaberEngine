@@ -436,7 +436,7 @@ namespace gr
 						}
 						else
 						{
-							m_viewToVisibleIDs.emplace(currentView, std::move(renderIDsOut)).first;
+							m_viewToVisibleIDs.emplace(currentView, std::move(renderIDsOut));
 						}
 					}
 				}
