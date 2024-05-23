@@ -129,6 +129,9 @@
     <ClInclude Include="Definitions\ConfigKeys.h">
       <Filter>Header Files\Definitions</Filter>
     </ClInclude>
+    <ClInclude Include="Util\HashKey.h">
+      <Filter>Header Files\Util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\stdafx.cpp">
