@@ -307,14 +307,14 @@ namespace en
 		{
 			// Get the key actually assigned to the current named input button
 			// eg. Get "w" from "InputButton_Forward"
-			const std::string keyAssignment = 
+			std::string const& keyAssignment = 
 				core::Config::Get()->GetValueAsString(definitions::KeyboardInputButtonNames[i]);
 
 			SEAssert(!keyAssignment.empty(),
 				std::format("Button not found in {}. Did you forget to set one in Config::InitializeDefaultValues()?",
 				core::configkeys::k_configFileName).c_str());
 
-			definitions::SEKeycode keycode = definitions::GetSEKeycodeFromName(keyAssignment);
+			const definitions::SEKeycode keycode = definitions::GetSEKeycodeFromName(keyAssignment);
 			if (keycode != definitions::SEK_UNKNOWN)
 			{
 				// Build a map: SEKeycode -> SaberEngine keyboard input function
@@ -323,9 +323,8 @@ namespace en
 			else
 			{
 				// We want to assert if we can, but even if we're in Release mode we want to log an error:
-				const std::string errorMessage = "Invalid key name: \"" + keyAssignment + "\", cannot find a matching "
+				std::string const& errorMessage = "Invalid key name: \"" + keyAssignment + "\", cannot find a matching "
 					"SEKeycode. Note: Key names are (currently) case sensitive";
-				LOG_ERROR(errorMessage.c_str());
 				SEAssertF(errorMessage.c_str());
 
 				// TODO: Key names shouldn't be case sensitive

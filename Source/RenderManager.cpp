@@ -1,8 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Config.h"
 #include "Context.h"
 #include "GraphicsSystemManager.h"
-#include "Core\PerformanceTimer.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
@@ -11,6 +9,9 @@
 #include "Sampler.h"
 #include "TextureTarget.h"
 #include "VertexStream.h"
+
+#include "Core\Config.h"
+#include "Core\PerformanceTimer.h"
 
 
 namespace re
@@ -25,6 +26,15 @@ namespace re
 	uint8_t RenderManager::GetNumFramesInFlight()
 	{
 		return platform::RenderManager::GetNumFramesInFlight();
+	}
+
+
+	float RenderManager::GetWindowAspectRatio()
+	{
+		core::Config const* config = core::Config::Get();
+		const int width = config->GetValue<int>(core::configkeys::k_windowWidthKey);
+		const int height = config->GetValue<int>(core::configkeys::k_windowHeightKey);
+		return static_cast<float>(width) / height;
 	}
 
 
@@ -60,12 +70,12 @@ namespace re
 			config->TrySetValue(
 				core::configkeys::k_shaderDirectoryKey,
 				std::string(core::configkeys::k_hlslShaderDirName),
-				core::Config::SettingType::APISpecific);
+				core::Config::SettingType::Runtime);
 
 			config->TrySetValue(
 				core::configkeys::k_numBackbuffersKey,
 				3,
-				core::Config::SettingType::APISpecific);
+				core::Config::SettingType::Runtime);
 
 			newRenderManager.reset(new dx12::RenderManager());
 		}
@@ -75,7 +85,7 @@ namespace re
 			config->TrySetValue(
 				core::configkeys::k_shaderDirectoryKey,
 				std::string(core::configkeys::k_glslShaderDirName),
-				core::Config::SettingType::APISpecific);
+				core::Config::SettingType::Runtime);
 
 			// Note: OpenGL only supports double-buffering, so we don't add a k_numBackbuffersKey entry
 
@@ -101,7 +111,7 @@ namespace re
 		, m_newBuffers(util::NBufferedVector<std::shared_ptr<re::Buffer>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_singleFrameVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Three, k_newObjectReserveAmount)
 	{
-		m_vsyncEnabled = core::Config::Get()->GetValue<bool>("vsync");
+		m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
 	}
 
 

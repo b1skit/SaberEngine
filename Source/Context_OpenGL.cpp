@@ -235,7 +235,7 @@ namespace opengl
 
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
-		GetSwapChain().SetVSyncMode(core::Config::Get()->GetValue<bool>("vsync"));
+		GetSwapChain().SetVSyncMode(core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey));
 
 		// Create the (implied) swap chain
 		GetSwapChain().Create();

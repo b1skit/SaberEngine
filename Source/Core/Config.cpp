@@ -6,10 +6,6 @@
 
 #include "Util\TextUtils.h"
 
-// Default true/false std::strings. We convert config values to lowercase and compare against these
-#define TRUE_STRING		"true"
-#define FALSE_STRING	"false"
-
 #define SET_CMD		"set"		// Set a value
 #define BIND_CMD	"bind"		// Bind a key
 
@@ -43,8 +39,8 @@ namespace core
 		// Insert engine defaults:
 		SetValue<std::string>(core::configkeys::k_scenesDirNameKey, "Scenes\\", Config::SettingType::Runtime);
 
-		SetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey, true);
-		SetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey, true);
+		SetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey, true, Config::SettingType::Runtime);
+		SetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey, true, Config::SettingType::Runtime);
 	}
 
 
@@ -94,8 +90,8 @@ namespace core
 			if (CurrentTokenIsKey())
 			{
 				keysValues.emplace_back(KeyValue{
-				StripKeyDelimiter(argv[i]),
-				""}); // Empty, until we check the next token and see it's a value
+					StripKeyDelimiter(argv[i]),
+					""}); // Empty, until we check the next token and see it's a value
 			}
 			else
 			{
@@ -122,7 +118,7 @@ namespace core
 				try
 				{
 					int numericValue = std::stoi(keysValues[i].m_value);
-					SetValue(keysValues[i].m_key, numericValue, Config::SettingType::Runtime);
+					SetValue(util::HashKey::Create(keysValues[i].m_key.c_str()), numericValue, Config::SettingType::Runtime);
 				}
 				catch (std::invalid_argument)
 				{
@@ -130,18 +126,18 @@ namespace core
 				}
 				if (!isNumericValue)
 				{
-					SetValue(keysValues[i].m_key, keysValues[i].m_value, Config::SettingType::Runtime);
+					SetValue(util::HashKey::Create(keysValues[i].m_key), keysValues[i].m_value, Config::SettingType::Runtime);
 				}
 			}
 			else
 			{
 				// If no value was provided with a key, just set it as a boolean flag
-				SetValue(keysValues[i].m_key, true, Config::SettingType::Runtime);
+				SetValue(util::HashKey::Create(keysValues[i].m_key), true, Config::SettingType::Runtime);
 			}
 		}
 
 		// Post-processing:
-		if (KeyExists(core::configkeys::k_sceneCmdLineArg))
+		if (KeyExists(util::HashKey(core::configkeys::k_sceneCmdLineArg)))
 		{
 			std::string const& sceneDirName = GetValue<std::string>(core::configkeys::k_scenesDirNameKey); // "Scenes\\"
 			std::string const& extractedSceneArg = GetValue<std::string>(core::configkeys::k_sceneCmdLineArg);
@@ -177,6 +173,11 @@ namespace core
 
 	void Config::LoadConfigFile()
 	{
+		// Before we load the config, pre-populate it with default values
+		InitializeOSValues();
+		InitializeDefaultValues();
+		SetRuntimeDefaults();
+
 		LOG("Loading %s...", core::configkeys::k_configFileName);
 
 		std::ifstream file;
@@ -264,7 +265,7 @@ namespace core
 
 			// Extract the variable property name:
 			firstSpace = cleanLine.find_first_of(" \t\n", 1);
-			std::string property = cleanLine.substr(0, firstSpace);
+			std::string const& property = cleanLine.substr(0, firstSpace);
 
 			// Remove the property from the head of the std::string:
 			cleanLine = cleanLine.substr(firstSpace + 1, std::string::npos);
@@ -288,20 +289,20 @@ namespace core
 				// std::strings:
 				if (isString)
 				{
-					TrySetValue(property, std::string(value), SettingType::Common);
+					SetValue(util::HashKey::Create(property), std::string(value), SettingType::Serialized);
 				}
 				else
 				{
 					// Booleans:
-					std::string boolString = ToLowerCase(value);
-					if (boolString == TRUE_STRING)
+					std::string const& boolString = ToLowerCase(value);
+					if (boolString == k_trueString)
 					{
-						TrySetValue(property, true, SettingType::Common);
+						SetValue(util::HashKey::Create(property), true, SettingType::Serialized);
 						continue;
 					}
-					else if (boolString == FALSE_STRING)
+					else if (boolString == k_falseString)
 					{
-						TrySetValue(property, false, SettingType::Common);
+						SetValue(util::HashKey::Create(property), false, SettingType::Serialized);
 						continue;
 					}
 
@@ -314,12 +315,12 @@ namespace core
 					// Ints:
 					if (position == value.length())
 					{
-						TrySetValue(property, intResult, SettingType::Common);
+						SetValue(util::HashKey::Create(property), intResult, SettingType::Serialized);
 					}
 					else // Floats:
 					{
 						float floatResult = std::stof(value);
-						TrySetValue(property, floatResult, SettingType::Common);
+						SetValue(util::HashKey::Create(property), floatResult, SettingType::Serialized);
 					}
 				}
 			}
@@ -327,12 +328,12 @@ namespace core
 			{
 				if (isString)
 				{
-					TrySetValue(property, std::string(value), SettingType::Common);
+					SetValue(util::HashKey::Create(property), std::string(value), SettingType::Serialized);
 				}
 				else
 				{
 					// Assume bound values are single chars, for now. Might need to rework this to bind more complex keys
-					TrySetValue(property, (char)value[0], SettingType::Common);
+					SetValue(util::HashKey::Create(property), (char)value[0], SettingType::Serialized);
 				}
 			}
 			else
@@ -349,13 +350,7 @@ namespace core
 		}
 
 		// We don't count existing entries as dirtying the config
-		m_isDirty = !foundExistingConfig;
-
-		// Now the config has been loaded, populate any remaining entries with default values
-		InitializeOSValues();
-		InitializeDefaultValues();
-		SetAPIDefaults();
-		SetRuntimeDefaults();
+		m_isDirty |= !foundExistingConfig;
 
 		SaveConfigFile(); // Write out the results immediately
 
@@ -371,188 +366,156 @@ namespace core
 		const std::string documentFolderPath = util::FromWideString(documentsFolderPathPtr);
 		CoTaskMemFree(static_cast<void*>(documentsFolderPathPtr));
 
-		TrySetValue(core::configkeys::k_documentsFolderPathKey, documentFolderPath, SettingType::Runtime);
+		SetValue(core::configkeys::k_documentsFolderPathKey, documentFolderPath, SettingType::Runtime);
 	}
 
 
 	void Config::InitializeDefaultValues()
-	{
-		bool markDirty = false;
-		
+	{	
 		// Window:
-		markDirty |= TrySetValue("windowTitle",					std::string("Saber Engine"),	SettingType::Common);
-		markDirty |= TrySetValue(core::configkeys::k_windowWidthKey,	1920,							SettingType::Common);
-		markDirty |= TrySetValue(core::configkeys::k_windowHeightKey,	1080,							SettingType::Common);
+		SetValue(core::configkeys::k_windowTitleKey, std::string("Saber Engine"), SettingType::Serialized);
+		SetValue(core::configkeys::k_windowWidthKey,	1920,	SettingType::Serialized);
+		SetValue(core::configkeys::k_windowHeightKey,	1080,	SettingType::Serialized);
 
 		// System config:
-		markDirty |= TrySetValue("vsync",	true,	SettingType::Common);
+		SetValue(core::configkeys::k_vsyncEnabledKey,	true,	SettingType::Serialized);
 
 		// Texture dimensions:
-		markDirty |= TrySetValue(core::configkeys::k_defaultDirectionalShadowMapResolutionKey,	2048,	SettingType::Common);
-		markDirty |= TrySetValue(core::configkeys::k_defaultShadowCubeMapResolutionKey,			512,	SettingType::Common);
-		markDirty |= TrySetValue(core::configkeys::k_defaultSpotShadowMapResolutionKey,			1024,	SettingType::Common);
+		SetValue(core::configkeys::k_defaultDirectionalShadowMapResolutionKey,	2048,	SettingType::Serialized);
+		SetValue(core::configkeys::k_defaultShadowCubeMapResolutionKey,			512,	SettingType::Serialized);
+		SetValue(core::configkeys::k_defaultSpotShadowMapResolutionKey,			1024,	SettingType::Serialized);
+
+		// Quality settings:
+		SetValue(core::configkeys::k_brdfLUTWidthHeightKey,		1024,	SettingType::Serialized);
+		SetValue(core::configkeys::k_iemTexWidthHeightKey,		512,	SettingType::Serialized);
+		SetValue(core::configkeys::k_iemNumSamplesKey,			4096,	SettingType::Serialized);
+		SetValue(core::configkeys::k_pmremTexWidthHeightKey,	1024,	SettingType::Serialized);
+		SetValue(core::configkeys::k_pmremNumSamplesKey,		4096,	SettingType::Serialized);
 
 		// Camera defaults:
-		markDirty |= TrySetValue("defaultyFOV",	1.570796f,	SettingType::Common);
-		markDirty |= TrySetValue("defaultNear",	1.0f,		SettingType::Common);
-		markDirty |= TrySetValue("defaultFar",	100.0f,		SettingType::Common);
+		SetValue(core::configkeys::k_defaultFOVKey,		1.570796f,	SettingType::Serialized);
+		SetValue(core::configkeys::k_defaultNearKey,	1.0f,		SettingType::Serialized);
+		SetValue(core::configkeys::k_defaultFarKey,		100.0f,		SettingType::Serialized);
 
 		// Input parameters:
-		markDirty |= TrySetValue(core::configkeys::k_mousePitchSensitivityKey,	0.5f,	SettingType::Common);
-		markDirty |= TrySetValue(core::configkeys::k_mouseYawSensitivityKey,		0.5f,	SettingType::Common);
-		markDirty |= TrySetValue(core::configkeys::k_sprintSpeedModifierKey,		2.0f,	SettingType::Common);
+		SetValue(core::configkeys::k_mousePitchSensitivityKey,		0.5f,	SettingType::Serialized);
+		SetValue(core::configkeys::k_mouseYawSensitivityKey,		0.5f,	SettingType::Serialized);
+		SetValue(core::configkeys::k_sprintSpeedModifierKey,		2.0f,	SettingType::Serialized);
 
 		// Scene data:
-		markDirty |= TrySetValue(core::configkeys::k_defaultEngineIBLPathKey,	"Assets\\DefaultIBL\\default.hdr",	SettingType::Common);
+		SetValue(core::configkeys::k_defaultEngineIBLPathKey,	"Assets\\DefaultIBL\\default.hdr",	SettingType::Serialized);
 
 		// Key bindings:
 		//--------------
-		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Forward),	'w',			SettingType::Common);
-		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Backward),	's',			SettingType::Common);
-		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Left),		'a',			SettingType::Common);
-		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Right),	'd',			SettingType::Common);
-		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Up),		"Space",		SettingType::Common);
-		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Down),		"Left Shift",	SettingType::Common);
-		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Sprint),	"Left Ctrl",	SettingType::Common);
+		SetValue(ENUM_TO_STR(InputButton_Forward),	'w',			SettingType::Serialized);
+		SetValue(ENUM_TO_STR(InputButton_Backward),	's',			SettingType::Serialized);
+		SetValue(ENUM_TO_STR(InputButton_Left),		'a',			SettingType::Serialized);
+		SetValue(ENUM_TO_STR(InputButton_Right),	'd',			SettingType::Serialized);
+		SetValue(ENUM_TO_STR(InputButton_Up),		"Space",		SettingType::Serialized);
+		SetValue(ENUM_TO_STR(InputButton_Down),		"Left Shift",	SettingType::Serialized);
+		SetValue(ENUM_TO_STR(InputButton_Sprint),	"Left Ctrl",	SettingType::Serialized);
 
-		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Console),	"Grave",		SettingType::Common); // The "grave accent"/tilde key: `
-		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_VSync),	'v',			SettingType::Common);
-		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Quit),		"Escape",		SettingType::Common);
+		SetValue(ENUM_TO_STR(InputButton_Console),	"Grave",		SettingType::Serialized); // The "grave accent"/tilde key: `
+		SetValue(ENUM_TO_STR(InputButton_VSync),	'v',			SettingType::Serialized);
+		SetValue(ENUM_TO_STR(InputButton_Quit),		"Escape",		SettingType::Serialized);
 
 		// Mouse bindings:
-		markDirty |= TrySetValue(ENUM_TO_STR(InputMouse_Left),	ENUM_TO_STR(InputMouse_Left),	SettingType::Common);
-		markDirty |= TrySetValue(ENUM_TO_STR(InputMouse_Right),	ENUM_TO_STR(InputMouse_Right),	SettingType::Common);
-
-		m_isDirty |= markDirty;
-	}
-
-
-	void core::Config::SetAPIDefaults()
-	{
-		//// We only set these defaults if they're not specified in the (now already loaded) config file. This allows the
-		//// config to override these values, if required. We also tag these keys as API-specific (but if they're found in
-		//// the config, they're loaded as Common, ensuring they're be saved back out.
-		//// Note: std::strings must be passed as std::string objects (not CStrings)
-		//auto TryInsertDefault = [&](std::string const& key, auto const& value)
-		//{
-		//	TrySetValue(key, value, SettingType::APISpecific);
-		//};		
-
-		//platform::RenderingAPI const& api = GetRenderingAPI();
-		//switch (api)
-		//{
-		//case platform::RenderingAPI::OpenGL:
-		//{
-		//	// Shaders:
-		//	TryInsertDefault(core::configkeys::k_shaderDirectoryKey,	std::string(".\\Shaders\\GLSL\\"));
-		//	// Note: OpenGL only supports double-buffering, so we don't add a k_numBackbuffersKey entry
-		//}
-		//break;
-		//case platform::RenderingAPI::DX12:
-		//{
-		//	TryInsertDefault(core::configkeys::k_shaderDirectoryKey, std::string(".\\Shaders\\HLSL\\"));
-		//	TryInsertDefault(core::configkeys::k_numBackbuffersKey, 3);
-		//}
-		//break;
-		//default:
-		//	LOG_ERROR("Config failed to set API Defaults! "
-		//		"Does the %s file contain a 'set platform \"<API>\" command for a supported API?",
-		//		core::configkeys::k_configFileName);
-
-		//	throw std::runtime_error("Invalid Rendering API set, cannot set API defaults");
-		//}
+		SetValue(ENUM_TO_STR(InputMouse_Left),	ENUM_TO_STR(InputMouse_Left),	SettingType::Serialized);
+		SetValue(ENUM_TO_STR(InputMouse_Right),	ENUM_TO_STR(InputMouse_Right),	SettingType::Serialized);
 	}
 
 
 	void Config::SetRuntimeDefaults()
 	{
-		auto TryInsertRuntimeValue = [&](std::string const& key, auto const& value)
+		auto SetRuntimeValue = [&](util::HashKey const& key, auto const& value)
 		{
-			TrySetValue(key, value, SettingType::Runtime);
+			SetValue(key, value, SettingType::Runtime);
 		};
 
 		// Debug:
-		TryInsertRuntimeValue(core::configkeys::k_debugLevelCmdLineArg, 0);
-
-		// Quality settings:
-		TryInsertRuntimeValue(core::configkeys::k_brdfLUTWidthHeightKey,		1024);
-		TryInsertRuntimeValue(core::configkeys::k_iemTexWidthHeightKey,		512);
-		TryInsertRuntimeValue(core::configkeys::k_iemNumSamplesKey,			4096);
-		TryInsertRuntimeValue(core::configkeys::k_pmremTexWidthHeightKey,	1024);
-		TryInsertRuntimeValue(core::configkeys::k_pmremNumSamplesKey,		4096);
+		SetRuntimeValue(core::configkeys::k_debugLevelCmdLineArg, 0);
 
 		// Shadow map defaults:
-		TryInsertRuntimeValue(core::configkeys::k_defaultDirectionalLightMinShadowBiasKey,	0.012f);
-		TryInsertRuntimeValue(core::configkeys::k_defaultDirectionalLightMaxShadowBiasKey,	0.035f);
-		TryInsertRuntimeValue(core::configkeys::k_defaultDirectionalLightShadowSoftnessKey,	0.02f);
-		TryInsertRuntimeValue(core::configkeys::k_defaultPointLightMinShadowBiasKey,			0.03f);
-		TryInsertRuntimeValue(core::configkeys::k_defaultPointLightMaxShadowBiasKey,			0.055f);
-		TryInsertRuntimeValue(core::configkeys::k_defaultPointLightShadowSoftnessKey,		0.1f);
-		TryInsertRuntimeValue(core::configkeys::k_defaultSpotLightMinShadowBiasKey,			0.03f);
-		TryInsertRuntimeValue(core::configkeys::k_defaultSpotLightMaxShadowBiasKey,			0.055f);
-		TryInsertRuntimeValue(core::configkeys::k_defaultSpotLightShadowSoftnessKey,			0.1f);
+		SetRuntimeValue(core::configkeys::k_defaultDirectionalLightMinShadowBiasKey,	0.012f);
+		SetRuntimeValue(core::configkeys::k_defaultDirectionalLightMaxShadowBiasKey,	0.035f);
+		SetRuntimeValue(core::configkeys::k_defaultDirectionalLightShadowSoftnessKey,	0.02f);
+		SetRuntimeValue(core::configkeys::k_defaultPointLightMinShadowBiasKey,			0.03f);
+		SetRuntimeValue(core::configkeys::k_defaultPointLightMaxShadowBiasKey,			0.055f);
+		SetRuntimeValue(core::configkeys::k_defaultPointLightShadowSoftnessKey,			0.1f);
+		SetRuntimeValue(core::configkeys::k_defaultSpotLightMinShadowBiasKey,			0.03f);
+		SetRuntimeValue(core::configkeys::k_defaultSpotLightMaxShadowBiasKey,			0.055f);
+		SetRuntimeValue(core::configkeys::k_defaultSpotLightShadowSoftnessKey,			0.1f);
 	}
 	
 
-	bool Config::KeyExists(std::string const& valueName) const
+	bool Config::KeyExists(util::HashKey const& valueName) const
 	{
-		auto const& result = m_configValues.find(valueName);
-		return result != m_configValues.end();
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_configValuesMutex);
+
+			auto const& result = m_configValues.find(valueName);
+			return result != m_configValues.end();
+		}
 	}
 
 
-	std::string Config::GetValueAsString(const std::string& valueName) const
+	std::string Config::GetValueAsString(util::HashKey const& valueName) const
 	{
-		auto const& result = m_configValues.find(valueName);
-		std::string returnVal = "";
-		if (result != m_configValues.end())
+		std::string returnVal;
 		{
-			try
+			std::shared_lock<std::shared_mutex> readLock(m_configValuesMutex);
+
+			auto const& result = m_configValues.find(valueName);
+
+			if (result != m_configValues.end())
 			{
-				if (result->second.first.type() == typeid(std::string))
+				try
 				{
-					returnVal = any_cast<std::string>(result->second.first);
+					if (result->second.first.type() == typeid(std::string))
+					{
+						returnVal = any_cast<std::string>(result->second.first);
+					}
+					else if (result->second.first.type() == typeid(char const*))
+					{
+						returnVal = std::string(any_cast<char const*>(result->second.first));
+					}
+					else if (result->second.first.type() == typeid(float))
+					{
+						float configValue = any_cast<float>(result->second.first);
+						returnVal = std::to_string(configValue);
+					}
+					else if (result->second.first.type() == typeid(int))
+					{
+						int configValue = any_cast<int>(result->second.first);
+						returnVal = std::to_string(configValue);
+					}
+					else if (result->second.first.type() == typeid(char))
+					{
+						char configValue = any_cast<char>(result->second.first);
+						returnVal = std::string(1, configValue); // Construct a std::string with 1 element
+					}
+					else if (result->second.first.type() == typeid(bool))
+					{
+						bool configValue = any_cast<bool>(result->second.first);
+						returnVal = configValue == true ? "1" : "0";
+					}
 				}
-				else if (result->second.first.type() == typeid(char const*))
+				catch (const std::bad_any_cast& e)
 				{
-					returnVal = std::string(any_cast<char const*>(result->second.first));
-				}
-				else if (result->second.first.type() == typeid(float))
-				{
-					float configValue = any_cast<float>(result->second.first);
-					returnVal = std::to_string(configValue);
-				}
-				else if (result->second.first.type() == typeid(int))
-				{
-					int configValue = any_cast<int>(result->second.first);
-					returnVal = std::to_string(configValue);
-				}
-				else if (result->second.first.type() == typeid(char))
-				{
-					char configValue = any_cast<char>(result->second.first);
-					returnVal = std::string(1, configValue); // Construct a std::string with 1 element
-				}
-				else if (result->second.first.type() == typeid(bool))
-				{
-					bool configValue = any_cast<bool>(result->second.first);
-					returnVal = configValue == true ? "1" : "0";
+					LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
 				}
 			}
-			catch (const std::bad_any_cast& e)
+			else
 			{
-				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
+				LOG_ERROR("Config key \"%s\" does not exist\n", valueName.GetKey());
 			}
-		}
-		else
-		{
-			LOG_ERROR("Config key \"%s\" does not exist\n", valueName.c_str());
 		}
 
 		return returnVal;
 	}
 
 
-	std::wstring Config::GetValueAsWString(const std::string& valueName) const
+	std::wstring Config::GetValueAsWString(util::HashKey const& valueName) const
 	{
 		std::string const& result = GetValueAsString(valueName);
 		return util::ToWideString(result);
@@ -577,152 +540,116 @@ namespace core
 			std::filesystem::create_directory(configPath);
 		}
 
-		// Build a list of the std::strings we plan to write, so we can sort them
-		struct ConfigEntry
 		{
-			std::string m_cmdPrefix; // SET_CMD, BIND_CMD
-			std::string m_key;
-			std::string m_value;
-		};
-		std::vector<ConfigEntry> configEntries;
-		configEntries.reserve(m_configValues.size());
+			std::shared_lock<std::shared_mutex> readLock(m_configValuesMutex);
 
-		for (std::pair<std::string, std::pair<std::any, SettingType>> currentElement : m_configValues)
-		{
-			if (currentElement.second.second == SettingType::APISpecific || 
-				currentElement.second.second == SettingType::Runtime)
+			// Build a list of the std::strings we plan to write, so we can sort them
+			struct ConfigEntry
 			{
-				continue;	// Skip API-specific settings
+				std::string m_cmdPrefix; // SET_CMD, BIND_CMD
+				std::string m_key;
+				std::string m_value;
+			};
+			std::vector<ConfigEntry> configEntries;
+			configEntries.reserve(m_configValues.size());
+
+			for (auto const& currentElement : m_configValues)
+			{
+				if (currentElement.second.second == SettingType::Runtime)
+				{
+					continue;	// Skip API-specific settings
+				}
+
+				SEAssert(currentElement.first.GetKey() != nullptr, "Found a HashKey with a null key string");
+
+				if (currentElement.second.first.type() == typeid(std::string) &&
+					strstr(currentElement.first.GetKey(), "Input") == nullptr)
+				{
+					configEntries.emplace_back(ConfigEntry{
+						.m_cmdPrefix = SET_CMD,
+						.m_key = currentElement.first.GetKey(),
+						.m_value = PropertyToConfigString<std::string const&>(
+							any_cast<std::string const&>(currentElement.second.first)) });
+				}
+				else if (currentElement.second.first.type() == typeid(char const*) &&
+					strstr(currentElement.first.GetKey(), "Input") == nullptr)
+				{
+					configEntries.emplace_back(ConfigEntry{
+						.m_cmdPrefix = SET_CMD,
+						.m_key = currentElement.first.GetKey(),
+						.m_value = PropertyToConfigString(any_cast<char const*>(currentElement.second.first)) });
+				}
+				else if (currentElement.second.first.type() == typeid(float))
+				{
+					configEntries.emplace_back(ConfigEntry{
+						.m_cmdPrefix = SET_CMD,
+						.m_key = currentElement.first.GetKey(),
+						.m_value = PropertyToConfigString(any_cast<float>(currentElement.second.first)) });
+				}
+				else if (currentElement.second.first.type() == typeid(int))
+				{
+					configEntries.emplace_back(ConfigEntry{
+						.m_cmdPrefix = SET_CMD,
+						.m_key = currentElement.first.GetKey(),
+						.m_value = PropertyToConfigString(any_cast<int>(currentElement.second.first)) });
+				}
+				else if (currentElement.second.first.type() == typeid(bool))
+				{
+					configEntries.emplace_back(ConfigEntry{
+						.m_cmdPrefix = SET_CMD,
+						.m_key = currentElement.first.GetKey(),
+						.m_value = PropertyToConfigString(any_cast<bool>(currentElement.second.first)) });
+				}
+				else if (currentElement.second.first.type() == typeid(char))
+				{
+					configEntries.emplace_back(ConfigEntry{
+						.m_cmdPrefix = BIND_CMD,
+						.m_key = currentElement.first.GetKey(),
+						.m_value = PropertyToConfigString(any_cast<char>(currentElement.second.first)) });
+				}
+				else if (currentElement.second.first.type() == typeid(std::string) &&
+					strstr(currentElement.first.GetKey(), "Input") != nullptr)
+				{
+					configEntries.emplace_back(ConfigEntry{
+						.m_cmdPrefix = BIND_CMD,
+						.m_key = currentElement.first.GetKey(),
+						.m_value = PropertyToConfigString<std::string const&>(
+							any_cast<std::string const&>(currentElement.second.first)) });
+				}
+				else if (currentElement.second.first.type() == typeid(char const*) &&
+					strstr(currentElement.first.GetKey(), "Input") != nullptr)
+				{
+					configEntries.emplace_back(ConfigEntry{
+						.m_cmdPrefix = BIND_CMD,
+						.m_key = currentElement.first.GetKey(),
+						.m_value = PropertyToConfigString(any_cast<char const*>(currentElement.second.first)) });
+				}
+				else
+				{
+					LOG_ERROR("Cannot write unsupported type to config");
+				}
 			}
 
-			if (currentElement.second.first.type() == typeid(std::string) && 
-				currentElement.first.find("Input") == std::string::npos)
+			// Sort the results:
+			std::sort(configEntries.begin(), configEntries.end(), [](ConfigEntry const& a, ConfigEntry const& b) {
+				int cmpResult = strcmp(a.m_cmdPrefix.c_str(), b.m_cmdPrefix.c_str()); // Compare command types
+				if (cmpResult == 0)
+				{
+					cmpResult = strcmp(a.m_key.c_str(), b.m_key.c_str()); // Tie breaker: Compare keys
+				}
+				return cmpResult < 0; });
+
+			// Write our config to disk:
+			std::ofstream config_ofstream(
+				std::format("{}{}", core::configkeys::k_configDirName, core::configkeys::k_configFileName));
+			config_ofstream << std::format("# SaberEngine {} file:\n", core::configkeys::k_configFileName).c_str();
+
+			for (ConfigEntry const& currentEntry : configEntries)
 			{
-				configEntries.emplace_back(ConfigEntry{
-					.m_cmdPrefix = SET_CMD,
-					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<std::string>(currentElement.second.first))});
+				config_ofstream << currentEntry.m_cmdPrefix << " " << currentEntry.m_key << currentEntry.m_value;
 			}
-			else if (currentElement.second.first.type() == typeid(char const*) && 
-				currentElement.first.find("Input") == std::string::npos)
-			{
-				configEntries.emplace_back(ConfigEntry{
-					.m_cmdPrefix = SET_CMD,
-					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<char const*>(currentElement.second.first)) });
-			}
-			else if (currentElement.second.first.type() == typeid(float))
-			{
-				configEntries.emplace_back(ConfigEntry{
-					.m_cmdPrefix = SET_CMD,
-					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<float>(currentElement.second.first)) });
-			}
-			else if (currentElement.second.first.type() == typeid(int))
-			{
-				configEntries.emplace_back(ConfigEntry{
-					.m_cmdPrefix = SET_CMD,
-					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<int>(currentElement.second.first)) });
-			}
-			else if (currentElement.second.first.type() == typeid(bool))
-			{
-				configEntries.emplace_back(ConfigEntry{
-					.m_cmdPrefix = SET_CMD,
-					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<bool>(currentElement.second.first)) });
-			}
-			else if (currentElement.second.first.type() == typeid(char))
-			{
-				configEntries.emplace_back(ConfigEntry{
-					.m_cmdPrefix = BIND_CMD,
-					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<char>(currentElement.second.first)) });
-			}
-			else if (currentElement.second.first.type() == typeid(std::string) && 
-				currentElement.first.find("Input") != std::string::npos)
-			{
-				configEntries.emplace_back(ConfigEntry{
-					.m_cmdPrefix = BIND_CMD,
-					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<std::string>(currentElement.second.first)) });
-			}
-			else if (currentElement.second.first.type() == typeid(char const*) && 
-				currentElement.first.find("Input") != std::string::npos)
-			{
-				configEntries.emplace_back(ConfigEntry{
-					.m_cmdPrefix = BIND_CMD,
-					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<char const*>(currentElement.second.first)) });
-			}
-			else
-			{
-				LOG_ERROR("Cannot write unsupported type to config");
-			}
+
+			m_isDirty = false;
 		}
-
-		// Sort the results:
-		std::sort(configEntries.begin(), configEntries.end(), [](ConfigEntry const& a, ConfigEntry const& b) {
-			int cmpResult = strcmp(a.m_cmdPrefix.c_str(), b.m_cmdPrefix.c_str()); // Compare command types
-			if (cmpResult == 0)
-			{
-				cmpResult = strcmp(a.m_key.c_str(), b.m_key.c_str()); // Tie breaker: Compare keys
-			}
-			return cmpResult < 0;});
-
-		// Write our config to disk:
-		std::ofstream config_ofstream(
-			std::format("{}{}", core::configkeys::k_configDirName, core::configkeys::k_configFileName));
-		config_ofstream << std::format("# SaberEngine {} file:\n", core::configkeys::k_configFileName).c_str();
-
-		for (ConfigEntry const& currentEntry : configEntries)
-		{
-			config_ofstream << currentEntry.m_cmdPrefix << " " << currentEntry.m_key << currentEntry.m_value;
-		}
-
-		m_isDirty = false;
-	}
-
-
-	float Config::GetWindowAspectRatio() const
-	{
-		return static_cast<float>(
-			GetValue<int>(core::configkeys::k_windowWidthKey)) / GetValue<int>(core::configkeys::k_windowHeightKey);
-	}
-
-
-	inline std::string Config::PropertyToConfigString(std::string property)
-	{
-		return " \"" + property + "\"\n";
-	}
-
-
-	inline std::string Config::PropertyToConfigString(char const* property)
-	{
-		return " \"" + std::string(property) + "\"\n";
-	}
-
-
-	inline std::string Config::PropertyToConfigString(float property)
-	{
-		return " " + std::to_string(property) + "\n";
-	}
-
-
-	inline std::string Config::PropertyToConfigString(int property)
-	{
-		return " " + std::to_string(property) + "\n";
-	}
-
-
-	inline std::string Config::PropertyToConfigString(char property)
-	{
-		return std::string(" ") + property + std::string("\n");
-	}
-
-
-	inline std::string Config::PropertyToConfigString(bool property)
-	{
-		return std::string(" ") + (property ? TRUE_STRING : FALSE_STRING) + std::string("\n");
 	}
 }

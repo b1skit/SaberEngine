@@ -30,7 +30,7 @@ namespace dx12
 		// Ideally, tearing should be enabled and vsync disabled (best for variable refresh displays), but we respect
 		// the config
 		swapChainParams->m_tearingSupported = SysInfo::CheckTearingSupport();
-		swapChainParams->m_vsyncEnabled = core::Config::Get()->GetValue<bool>("vsync");
+		swapChainParams->m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
 
 		UINT createFactoryFlags = 0;
 #if defined(_DEBUG)

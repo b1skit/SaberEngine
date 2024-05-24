@@ -6,12 +6,26 @@ namespace util
 	class HashKey
 	{
 	public:
-		consteval explicit HashKey(char const* keyStr)
+		consteval HashKey(char const* keyStr)
 			: m_key(keyStr)
 			, m_keyHash(Fnv1A(keyStr))
 		{
 		}
 
+
+	public: // Dynamic creation, for when consteval isn't possible
+		static HashKey Create(char const* keyStr)
+		{
+			return HashKey(keyStr, PrivateCTORAccessor{});
+		}
+
+		static HashKey Create(std::string const& keyStr)
+		{
+			return HashKey(keyStr.c_str(), PrivateCTORAccessor{});
+		}
+
+
+	public:
 		HashKey(HashKey const& rhs) noexcept = default;	
 		HashKey& operator=(HashKey const& rhs) noexcept = default;
 
@@ -36,17 +50,26 @@ namespace util
 	private:
 		// Hash using the FNV-1a alternative algorithm: http://isthe.com/chongo/tech/comp/fnv/#FNV-1a
 
-		consteval uint64_t Fnv1A(uint64_t hash, const char* keyStr)
+		constexpr uint64_t Fnv1A(uint64_t hash, const char* keyStr)
 		{
 			constexpr uint64_t k_fnvPrime = 1099511628211ull;
 			return (*keyStr == 0) ? hash : Fnv1A((hash ^ static_cast<uint64_t>(*keyStr)) * k_fnvPrime, keyStr + 1);
 		}
 
 
-		consteval uint64_t Fnv1A(const char* keyStr)
+		constexpr uint64_t Fnv1A(const char* keyStr)
 		{
 			constexpr uint64_t k_fnvOffsetBasis = 14695981039346656037ull;
 			return Fnv1A(k_fnvOffsetBasis, keyStr);
+		}
+
+
+	private:
+		struct PrivateCTORAccessor {};
+		HashKey(char const* keyStr, PrivateCTORAccessor)
+			: m_key(nullptr) // No dynamic allocations allowed
+			, m_keyHash(Fnv1A(keyStr))
+		{
 		}
 
 

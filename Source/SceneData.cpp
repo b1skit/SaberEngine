@@ -430,10 +430,11 @@ namespace
 			LOG("Creating a default camera");
 
 			gr::Camera::Config camConfig;
-			camConfig.m_aspectRatio = core::Config::Get()->GetWindowAspectRatio();
-			camConfig.m_yFOV = core::Config::Get()->GetValue<float>("defaultyFOV");
-			camConfig.m_near = core::Config::Get()->GetValue<float>("defaultNear");
-			camConfig.m_far = core::Config::Get()->GetValue<float>("defaultFar");
+			
+			camConfig.m_aspectRatio = re::RenderManager::Get()->GetWindowAspectRatio();
+			camConfig.m_yFOV = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultFOVKey);
+			camConfig.m_near = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultNearKey);
+			camConfig.m_far = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultFarKey);
 
 			fr::CameraComponent::CreateCameraConcept(
 				em, 
@@ -571,7 +572,7 @@ namespace
 		
 		if (!iblTexture)
 		{
-			IBLPath = core::Config::Get()->GetValue<std::string>(core::configkeys::k_defaultEngineIBLPathKey);
+			IBLPath = core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey);
 			TryLoadIBL(IBLPath, iblTexture);
 		}
 		SEAssert(iblTexture != nullptr,
@@ -1127,7 +1128,7 @@ namespace fr
 		if (!iblTexture)
 		{
 			std::string const& defaultIBLPath = 
-				core::Config::Get()->GetValue<std::string>(core::configkeys::k_defaultEngineIBLPathKey);
+				core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey);
 			iblTexture = GetTexture(defaultIBLPath); // Guaranteed to exist
 		}
 

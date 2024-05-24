@@ -47,6 +47,7 @@ namespace re
 
 	public: // Platform wrappers:
 		static uint8_t GetNumFramesInFlight();
+		static float GetWindowAspectRatio();
 
 
 	public:

@@ -1,8 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Assert.h"
 #include "LogManager.h"
 
 #include "Definitions\ConfigKeys.h"
+
+#include "Util\HashKey.h"
 
 
 namespace core
@@ -12,9 +15,9 @@ namespace core
 	public: 
 		enum class SettingType
 		{
-			Common,				// Platform-agnostic value. Saved to disk.
-			APISpecific,		// API-specific value: Not saved to disk (unless found in config at load time)
-			Runtime,			// Platform-agnostic value populated at runtime. Not saved to disk.
+			Serialized,			// Saved to disk.
+			Runtime,			// Populated at runtime. Not saved to disk.
+
 			SettingType_Count
 		};
 
@@ -27,106 +30,117 @@ namespace core
 		Config();
 		~Config();
 
-		Config(Config&&) = default;
-		Config& operator=(Config&&) = default;
-
 		void ProcessCommandLineArgs(int argc, char** argv);
 
 		void LoadConfigFile(); // Load the config file
 		void SaveConfigFile(); // Save config file to disk
 
+
+	public:
 		template<typename T>
-		T GetValue(const std::string& key) const;
+		T GetValue(util::HashKey const&) const;
 
 		template<typename T>
-		bool TryGetValue(std::string const& key, T& value) const;
+		bool TryGetValue(util::HashKey const&, T& valueOut) const;
 
-		bool KeyExists(std::string const& key) const;
+		bool KeyExists(util::HashKey const&) const;
 
-		std::string GetValueAsString(const std::string& key) const;
-		std::wstring GetValueAsWString(const std::string& key) const;
-		
-		// Specific configuration retrieval:
-		/**********************************/
-		float GetWindowAspectRatio() const; // Compute the aspect ratio: width / height
+		std::string GetValueAsString(util::HashKey const&) const;
+		std::wstring GetValueAsWString(util::HashKey const&) const;
 	
 
 	public:
 		template<typename T>
-		void SetValue(const std::string& key, T value, SettingType settingType = SettingType::Common);
-
-		template<typename T>
-		void SetValue(char const* key, T value, SettingType settingType = SettingType::Common);
+		void SetValue(util::HashKey const&, T const& value, SettingType = SettingType::Serialized);
 
 		// Set a new config value, IFF it doesn't already exist. Returns true if the value was set
 		template<typename T>
-		bool TrySetValue(const std::string& key, T value, SettingType settingType = SettingType::Common);
-
-		template<typename T>
-		bool TrySetValue(char const* key, T value, SettingType settingType = SettingType::Common);
+		bool TrySetValue(util::HashKey const&, T const& value, SettingType = SettingType::Serialized);
 
 
 	private:
 		void InitializeOSValues(); // Values loaded from the OS. Not saved to disk.
 		void InitializeDefaultValues(); // Initialize any unpopulated configuration values with defaults
-		void SetAPIDefaults();
 		void SetRuntimeDefaults(); // Platform-agnostic defaults not loaded/saved to disk
 		
 
 	private:
-		std::unordered_map<std::string, std::pair<std::any, SettingType>> m_configValues;	// The config parameter/value map
+		std::unordered_map<util::HashKey const, std::pair<std::any, SettingType>> m_configValues;
+		mutable std::shared_mutex m_configValuesMutex;
 		bool m_isDirty; // Marks whether we need to save the config file or not
 
 
 	private: // Helper functions:
-		std::string PropertyToConfigString(std::string property);
-		std::string PropertyToConfigString(char const* property);
-		std::string PropertyToConfigString(float property);
-		std::string PropertyToConfigString(int property);
-		std::string PropertyToConfigString(char property);
-		std::string PropertyToConfigString(bool property);
+		template<typename T>
+		std::string PropertyToConfigString(T property);
+
+		template<>
+		std::string PropertyToConfigString(std::string const&);
+
+		template<>
+		std::string PropertyToConfigString(char const*);
+
+		template<>
+		std::string PropertyToConfigString(char);
+
+		template<>
+		std::string PropertyToConfigString(bool);
+
+		template<>
+		std::string PropertyToConfigString(float);
+
+
+	private:
+		static constexpr char const* k_trueString = "true";
+		static constexpr char const* k_falseString = "false";
 
 
 	private: // No copying allowed
 		Config(Config const&) = delete;
 		Config& operator=(Config const&) = delete;
+		Config(Config&&) = delete;
+		Config& operator=(Config&&) = delete;
 	};
 
 
 	// Get a config value, by type
 	template<typename T>
-	T Config::GetValue(const std::string& key) const
+	T Config::GetValue(util::HashKey const& key) const
 	{
-		auto const& result = m_configValues.find(key);
 		T returnVal{};
-		if (result != m_configValues.end())
 		{
-			try
+			std::shared_lock<std::shared_mutex> readLock(m_configValuesMutex);
+
+			auto const& result = m_configValues.find(key);
+			if (result != m_configValues.end())
 			{
-				returnVal = any_cast<T>(result->second.first);
+				try
+				{
+					returnVal = any_cast<T>(result->second.first);
+				}
+				catch (const std::bad_any_cast& e)
+				{
+					LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
+				}
 			}
-			catch (const std::bad_any_cast& e)
+			else
 			{
-				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
+				LOG_ERROR("Config::GetValue: Key does not exist");
 			}
-		}
-		else
-		{
-			LOG_ERROR("Config::GetValue: Key does not exist");
 		}
 		return returnVal;
 	}
 
 
 	template<typename T>
-	bool Config::TryGetValue(std::string const& key, T& value) const
+	bool Config::TryGetValue(util::HashKey const& key, T& valueOut) const
 	{
 		if (!KeyExists(key))
 		{
 			return false;
 		}
 
-		value = GetValue<T>(key);
+		valueOut = GetValue<T>(key);
 		return true;
 	}
 
@@ -134,23 +148,29 @@ namespace core
 	// Set a config value
 	// Note: Strings must be explicitely defined as a string("value")
 	template<typename T>
-	void Config::SetValue(const std::string& key, T value, SettingType settingType /*= SettingType::Common*/)
+	void Config::SetValue(
+		util::HashKey const& key, T const& value, SettingType settingType /*= SettingType::Serialized*/)
 	{
-		m_configValues[key] = { value, settingType };
-		if (settingType == SettingType::Common)
 		{
-			m_isDirty = true;
+			std::unique_lock<std::shared_mutex> readLock(m_configValuesMutex);
+
+			SEAssert(settingType != SettingType::Serialized ||
+				key.GetKey() != nullptr ||
+				m_configValues.contains(key),
+				"Cannot initialize config entry with a dynamically-allocated key");
+
+			m_configValues[key] = { value, settingType };
+			if (settingType == SettingType::Serialized)
+			{
+				m_isDirty = true;
+			}
 		}
 	}
 
-	template<typename T>
-	inline void Config::SetValue(char const* key, T value, SettingType settingType /*= SettingType::Common*/)
-	{
-		SetValue(std::string(key), value, settingType);
-	}
 
 	template<typename T>
-	bool Config::TrySetValue(const std::string& key, T value, SettingType settingType /*= SettingType::Common*/)
+	bool Config::TrySetValue(
+		util::HashKey const& key, T const&  value, SettingType settingType /*= SettingType::Serialized*/)
 	{
 		if (KeyExists(key))
 		{
@@ -161,10 +181,51 @@ namespace core
 		return true;
 	}
 
+
 	template<typename T>
-	inline bool Config::TrySetValue(char const* key, T value, SettingType settingType /*= SettingType::Common*/)
+	inline std::string Config::PropertyToConfigString(T property)
 	{
-		return TrySetValue(std::string(key), value, settingType);
+		return std::format(" {}\n", property);
+	}
+
+
+	template<>
+	inline std::string Config::PropertyToConfigString(std::string const& property)
+	{
+		return std::format(" \"{}\"\n", property);
+	}
+
+
+	template<>
+	inline std::string Config::PropertyToConfigString(char const* property)
+	{
+		return std::format(" \"{}\"\n", property);
+	}
+
+
+	template<>
+	inline std::string Config::PropertyToConfigString(char property)
+	{
+		return std::format(" \"{}\"\n", property);
+	}
+
+
+	template<>
+	inline std::string Config::PropertyToConfigString(bool property)
+	{
+		return std::format(" {}\n", property ? k_trueString : k_falseString);
+	}
+
+
+	template<>
+	inline std::string Config::PropertyToConfigString(float property)
+	{
+		std::string const& result = std::format(" {}\n", property);
+		if (result.find('.') == std::string::npos)
+		{
+			return std::format(" {}.0\n", property); // Ensure we have a trailing decimal point
+		}
+		return result;
 	}
 }
 

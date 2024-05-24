@@ -1,10 +1,9 @@
 #pragma once
+#include "..\Util\HashKey.h"
 
 
 namespace core::configkeys
 {
-	// TODO: Keys should be pre-computed hashes instead of C-strings
-
 	/******************************************************************************************************************/
 	// Configuration constants:
 	/******************************************************************************************************************/
@@ -32,8 +31,8 @@ namespace core::configkeys
 	constexpr char const* k_logOutputDir	= ".\\Logs\\";
 
 	// JSON parsing:
-	constexpr char const* k_jsonAllowExceptionsKey	= "JSONAllowExceptions";
-	constexpr char const* k_jsonIgnoreCommentsKey	= "JSONIgnoreComments"; // Allow C-style comments, not to JSON spec)
+	constexpr util::HashKey k_jsonAllowExceptionsKey	= "JSONAllowExceptions";
+	constexpr util::HashKey k_jsonIgnoreCommentsKey		= "JSONIgnoreComments"; // Allow C-style comments, not to JSON spec)
 
 
 	// Command line controls:
@@ -47,7 +46,7 @@ namespace core::configkeys
 	constexpr char const* k_enableDredCmdLineArg					= "enabledred";
 	constexpr char const* k_pixGPUProgrammaticCapturesCmdLineArg	= "pixgpucapture";
 	constexpr char const* k_pixCPUProgrammaticCapturesCmdLineArg	= "pixcpucapture";
-	constexpr char const* k_renderDocProgrammaticCapturesCmdLineArg = "renderdoc";
+	constexpr char const* k_renderDocProgrammaticCapturesCmdLineArg	= "renderdoc";
 	constexpr char const* k_strictShaderBindingCmdLineArg			= "strictshaderbinding";
 
 
@@ -55,56 +54,63 @@ namespace core::configkeys
 	/******************************************************************************************************************/
 
 	// OS:
-	constexpr char const* k_documentsFolderPathKey = "documentsFolderPath"; // e.g. "C:\Users\<username>\Documents"
+	constexpr util::HashKey k_documentsFolderPathKey = "documentsFolderPath"; // e.g. "C:\Users\<username>\Documents"
 
 	// Command line args:
-	constexpr char const* k_commandLineArgsValueKey = "commandLineArgs"; // Gets the command line arg string
+	constexpr util::HashKey k_commandLineArgsValueKey = "commandLineArgs"; // Gets the command line arg string
 
 	// Scene
-	constexpr char const* k_scenesDirNameKey	= "ScenesDirname";
-	constexpr char const* k_sceneFilePathKey	= "sceneFilePath";	// "Scenes\Scene\Folder\Names\sceneFile.extension"
-	constexpr char const* k_sceneNameKey		= "sceneName";		// "sceneFile"
-	constexpr char const* k_sceneRootPathKey	= "sceneRootPath";	// ".\Scenes\Scene\Folder\Names\"
+	constexpr util::HashKey k_scenesDirNameKey	= "ScenesDirName";
+	constexpr util::HashKey k_sceneFilePathKey	= "sceneFilePath";	// "Scenes\Scene\Folder\Names\sceneFile.extension"
+	constexpr util::HashKey k_sceneNameKey		= "sceneName";		// "sceneFile"
+	constexpr util::HashKey k_sceneRootPathKey	= "sceneRootPath";	// ".\Scenes\Scene\Folder\Names\"
 	
-	constexpr char const* k_sceneIBLDirKey			= "sceneIBLDir";	// "Scenes\SceneFolderName\IBL\"
-	constexpr char const* k_sceneIBLPathKey			= "sceneIBLPath";	// "Scenes\SceneFolderName\IBL\ibl.hdr"
-	constexpr char const* k_defaultEngineIBLPathKey	= "defaultEngineIBLPath"; // "Assets\\DefaultIBL\\default.hdr"
+	constexpr util::HashKey k_sceneIBLDirKey			= "sceneIBLDir";	// "Scenes\SceneFolderName\IBL\"
+	constexpr util::HashKey k_sceneIBLPathKey			= "sceneIBLPath";	// "Scenes\SceneFolderName\IBL\ibl.hdr"
+	constexpr util::HashKey k_defaultEngineIBLPathKey	= "defaultEngineIBLPath"; // "Assets\\DefaultIBL\\default.hdr"
 
-	constexpr char const* k_shaderDirectoryKey = "shaderDirectory"; // e.g. ".\\Shaders\\HLSL\\"
+	constexpr util::HashKey k_shaderDirectoryKey = "shaderDirectory"; // e.g. ".\\Shaders\\HLSL\\"
 
 	// System:
-	constexpr char const* k_windowWidthKey		= "width";
-	constexpr char const* k_windowHeightKey		= "height";
-	constexpr char const* k_numBackbuffersKey	= "numframesinflight"; // DX12 only
+	constexpr util::HashKey k_windowTitleKey		= "windowTitle";
+	constexpr util::HashKey k_windowWidthKey		= "width";
+	constexpr util::HashKey k_windowHeightKey		= "height";
+	constexpr util::HashKey k_numBackbuffersKey		= "numframesinflight"; // DX12 only
+	constexpr util::HashKey k_vsyncEnabledKey		= "vsync";
 
 	// Control defaults:
-	constexpr char const* k_mousePitchSensitivityKey	= "mousePitchSensitivity";
-	constexpr char const* k_mouseYawSensitivityKey		= "mouseYawSensitivity";
-	constexpr char const* k_sprintSpeedModifierKey		= "sprintSpeedModifier";
+	constexpr util::HashKey k_mousePitchSensitivityKey	= "mousePitchSensitivity";
+	constexpr util::HashKey k_mouseYawSensitivityKey	= "mouseYawSensitivity";
+	constexpr util::HashKey k_sprintSpeedModifierKey	= "sprintSpeedModifier";
 
 	// Lights/shadows:
-	constexpr char const* k_defaultDirectionalLightMinShadowBiasKey		= "defaultDirectionalLightMinShadowBias";
-	constexpr char const* k_defaultDirectionalLightMaxShadowBiasKey		= "defaultDirectionalLightMaxShadowBias";
-	constexpr char const* k_defaultDirectionalLightShadowSoftnessKey	= "defaultDirectionalLightShadowSoftness";
-	constexpr char const* k_defaultPointLightMinShadowBiasKey			= "defaultPointLightMinShadowBias";
-	constexpr char const* k_defaultPointLightMaxShadowBiasKey			= "defaultPointLightMaxShadowBias";
-	constexpr char const* k_defaultPointLightShadowSoftnessKey			= "defaultPointLightMaxShadowSoftness";
-	constexpr char const* k_defaultSpotLightMinShadowBiasKey			= "defaultSpotLightMinShadowBias";
-	constexpr char const* k_defaultSpotLightMaxShadowBiasKey			= "defaultSpotLightMaxShadowBias";
-	constexpr char const* k_defaultSpotLightShadowSoftnessKey			= "defaultSpotLightMaxShadowSoftness";
+	constexpr util::HashKey k_defaultDirectionalLightMinShadowBiasKey	= "defaultDirectionalLightMinShadowBias";
+	constexpr util::HashKey k_defaultDirectionalLightMaxShadowBiasKey	= "defaultDirectionalLightMaxShadowBias";
+	constexpr util::HashKey k_defaultDirectionalLightShadowSoftnessKey	= "defaultDirectionalLightShadowSoftness";
+	constexpr util::HashKey k_defaultPointLightMinShadowBiasKey			= "defaultPointLightMinShadowBias";
+	constexpr util::HashKey k_defaultPointLightMaxShadowBiasKey			= "defaultPointLightMaxShadowBias";
+	constexpr util::HashKey k_defaultPointLightShadowSoftnessKey		= "defaultPointLightMaxShadowSoftness";
+	constexpr util::HashKey k_defaultSpotLightMinShadowBiasKey			= "defaultSpotLightMinShadowBias";
+	constexpr util::HashKey k_defaultSpotLightMaxShadowBiasKey			= "defaultSpotLightMaxShadowBias";
+	constexpr util::HashKey k_defaultSpotLightShadowSoftnessKey			= "defaultSpotLightMaxShadowSoftness";
+
+	// Camera:
+	constexpr util::HashKey k_defaultFOVKey		= "defaultyCameraFOV";
+	constexpr util::HashKey k_defaultNearKey	= "defaultCameraNear";
+	constexpr util::HashKey k_defaultFarKey		= "defaultCameraFar";
 
 	// Quality:
-	constexpr char const* k_brdfLUTWidthHeightKey						= "brdfLUTWidthHeight";
-	constexpr char const* k_iemTexWidthHeightKey						= "iemWidthHeight";
-	constexpr char const* k_iemNumSamplesKey							= "iemNumSamples";
-	constexpr char const* k_pmremTexWidthHeightKey						= "pmremWidthHeight";
-	constexpr char const* k_pmremNumSamplesKey							= "pmremNumSamples";
-	constexpr char const* k_defaultDirectionalShadowMapResolutionKey	= "defaultDirectionalShadowMapRes";
-	constexpr char const* k_defaultShadowCubeMapResolutionKey			= "defaultShadowCubeMapRes";
-	constexpr char const* k_defaultSpotShadowMapResolutionKey			= "defaultSpotShadowMapRes";
+	constexpr util::HashKey k_brdfLUTWidthHeightKey						= "brdfLUTWidthHeight";
+	constexpr util::HashKey k_iemTexWidthHeightKey						= "iemWidthHeight";
+	constexpr util::HashKey k_iemNumSamplesKey							= "iemNumSamples";
+	constexpr util::HashKey k_pmremTexWidthHeightKey					= "pmremWidthHeight";
+	constexpr util::HashKey k_pmremNumSamplesKey						= "pmremNumSamples";
+	constexpr util::HashKey k_defaultDirectionalShadowMapResolutionKey	= "defaultDirectionalShadowMapRes";
+	constexpr util::HashKey k_defaultShadowCubeMapResolutionKey			= "defaultShadowCubeMapRes";
+	constexpr util::HashKey k_defaultSpotShadowMapResolutionKey			= "defaultSpotShadowMapRes";
 
 	// Data processing:
-	constexpr char const* k_doCPUVertexStreamNormalizationKey = "cpunormalizevertexstreams";
+	constexpr util::HashKey k_doCPUVertexStreamNormalizationKey = "cpunormalizevertexstreams";
 }
 
 
@@ -117,7 +123,7 @@ namespace en::DefaultResourceNames
 	constexpr char const* k_missingOcclusionTexName			= "MissingOcclusionTexture";
 	constexpr char const* k_missingEmissiveTexName			= "MissingEmissiveTexture";
 
-	constexpr char const* k_missingMaterialName = "MissingMaterial";
+	constexpr char const* k_missingMaterialName	= "MissingMaterial";
 
 	constexpr char const* k_opaqueWhiteDefaultTexName		= "OpaqueWhite";
 	constexpr char const* k_transparentWhiteDefaultTexName	= "TransparentWhite";

@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "..\Util\HashKey.h"
 
 
 namespace definitions
@@ -33,7 +34,7 @@ namespace definitions
 	// KeyboardInputButton enum names, as strings.
 	// Used to map functionality (eg. forward, sprint, quit, etc) to specific buttons in the config file
 	// Note: These MUST be in the same order as the KeyboardInputButton enum
-	const std::string KeyboardInputButtonNames[KeyboardInputButton_Count] =
+	constexpr util::HashKey KeyboardInputButtonNames[KeyboardInputButton_Count] =
 	{
 		ENUM_TO_STR(InputButton_Forward),
 		ENUM_TO_STR(InputButton_Backward),
@@ -55,15 +56,6 @@ namespace definitions
 		InputMouse_Right,
 
 		MouseInputButton_Count
-	};
-
-	// Array of mouse button name strings: Used to iterate through all possible buttons
-	// Note: These MUST be in the same order as the MouseInputButton enum
-	const std::string MouseInputButtonNames[MouseInputButton_Count] =
-	{
-		ENUM_TO_STR(InputMouse_Left),
-		ENUM_TO_STR(InputMouse_Middle),
-		ENUM_TO_STR(InputMouse_Right),
 	};
 
 	// Analogue controls (eg. mouse movement): Enums index mouseAxisStates array elements
