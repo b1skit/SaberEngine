@@ -59,7 +59,7 @@ namespace effect
 		{
 			std::unique_lock<std::shared_mutex> lock(m_effectsMutex);
 
-			SEAssert(m_effects.contains(effectID), "No Effect with the given ID exists");
+			SEAssert(m_effects.contains(effectID), std::format("No Effect with ID {} exists", effectID).c_str());
 
 			return &m_effects.at(effectID);
 		}

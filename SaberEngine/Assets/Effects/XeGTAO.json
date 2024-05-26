@@ -53,43 +53,36 @@
 		{
 			"Name": "PrefilterDepths",
 			"CShader": "XeGTAO_PrefilterDepths_CShader",
-			"PipelineState": "Compute_Default",
 			"ExcludedPlatforms": [ "OpenGL" ]
 		},
 		{
 			"Name": "MainPass_Low",
 			"CShader": "XeGTAO_MainPass_Low_CShader",
-			"PipelineState": "Compute_Default",
 			"ExcludedPlatforms": [ "OpenGL" ]
 		},
 		{
 			"Name": "MainPass_Med",
 			"CShader": "XeGTAO_MainPass_Med_CShader",
-			"PipelineState": "Compute_Default",
 			"ExcludedPlatforms": [ "OpenGL" ]
 		},
 		{
 			"Name": "MainPass_High",
 			"CShader": "XeGTAO_MainPass_High_CShader",
-			"PipelineState": "Compute_Default",
 			"ExcludedPlatforms": [ "OpenGL" ]
 		},
 		{
 			"Name": "MainPass_Ultra",
 			"CShader": "XeGTAO_MainPass_Ultra_CShader",
-			"PipelineState": "Compute_Default",
 			"ExcludedPlatforms": [ "OpenGL" ]
 		},
 		{
 			"Name": "Denoise",
 			"CShader": "XeGTAO_Denoise_CShader",
-			"PipelineState": "Compute_Default",
 			"ExcludedPlatforms": [ "OpenGL" ]
 		},
 		{
 			"Name": "DenoiseLastPass",
 			"CShader": "XeGTAO_DenoiseLastPass_CShader",
-			"PipelineState": "Compute_Default",
 			"ExcludedPlatforms": [ "OpenGL" ]
 		}
 	]

@@ -29,14 +29,20 @@ namespace
 		re::Shader const& shader,
 		re::TextureTargetSet const* targetSet)
 	{
-		const uint64_t shaderKey = shader.GetShaderIdentifier();
-		const uint64_t pipelineKey = shader.GetPipelineState()->GetPipelineStateDataHash();
-		const uint64_t targetSetKey = targetSet ? targetSet->GetTargetSetSignature() : 0;
-
 		uint64_t psoKey = 0;
-		util::CombineHash(psoKey, shaderKey);
-		util::CombineHash(psoKey, pipelineKey);
-		util::CombineHash(psoKey, targetSetKey);
+		util::CombineHash(psoKey, shader.GetShaderIdentifier());
+
+		re::PipelineState const* pipelineState = shader.GetPipelineState();
+		if (pipelineState)
+		{
+			util::CombineHash(psoKey, pipelineState->GetPipelineStateDataHash());
+		}
+
+		if (targetSet)
+		{
+			util::CombineHash(psoKey, targetSet->GetTargetSetSignature());
+		}		
+		
 		return psoKey;
 	}
 }

@@ -219,23 +219,31 @@ namespace
 		std::string const& techniqueName = techniqueEntry.at(key_name).template get<std::string>();
 
 		// "*Shader" names:
+		const bool isComputeTechnique = techniqueEntry.contains(keys_shaderTypes[re::Shader::Compute]);
+
 		std::vector<std::pair<std::string, re::Shader::ShaderType>> shaderNames;
 		for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
 		{
 			if (techniqueEntry.contains(keys_shaderTypes[shaderTypeIdx]))
 			{
+				SEAssert(!isComputeTechnique || shaderTypeIdx == re::Shader::Compute,
+					"Compute Techniques cannot define another shader type");
+
 				shaderNames.emplace_back(
 					techniqueEntry.at(keys_shaderTypes[shaderTypeIdx]).template get<std::string>(),
 					static_cast<re::Shader::ShaderType>(shaderTypeIdx));
 			}
 		}
 
-		SEAssert(techniqueEntry.contains(key_pipelineState),
-			"Failed to find PipelineState entry. This is (currently) required");
+		SEAssert(isComputeTechnique || techniqueEntry.contains(key_pipelineState),
+			"Failed to find PipelineState entry. This is required except for compute shaders");
 
-		std::string const& pipelineStateName = techniqueEntry.at(key_pipelineState).template get<std::string>();
-
-		re::PipelineState const* pipelineState = effectDB.GetPipelineState(pipelineStateName);
+		re::PipelineState const* pipelineState = nullptr;
+		if (!isComputeTechnique)
+		{
+			std::string const& pipelineStateName = techniqueEntry.at(key_pipelineState).template get<std::string>();
+			pipelineState = effectDB.GetPipelineState(pipelineStateName);
+		}
 
 		return effect::Technique(techniqueName.c_str(), shaderNames, pipelineState);
 	}
@@ -289,31 +297,45 @@ namespace effect
 			std::vector<std::future<void>> taskFutures;
 			taskFutures.reserve(effectManifestJSON.at(key_effectsBlock).size());
 
+			const bool threadedEffectLoading = 
+				core::Config::Get()->KeyExists(core::configkeys::k_singleThreadEffectLoading) == false;
+
 			for (auto const& effectManifestEntry : effectManifestJSON.at(key_effectsBlock))
 			{
-				taskFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-					[&effectManifestEntry, this]()
-					{
-						std::string const& effectDefinitionFilename = effectManifestEntry.template get<std::string>();
-						try
+				if (threadedEffectLoading)
+				{
+					taskFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+						[&effectManifestEntry, this]()
 						{
-							LoadEffect(effectDefinitionFilename);
-						}
-						catch (nlohmann::json::parse_error parseException)
-						{
-							std::string const& error = std::format(
-								"Failed to parse the Effect definition file \"{}\"\n{}",
-								effectDefinitionFilename,
-								parseException.what());
-							SEAssertF(error.c_str());
-						}
-					}));
+							std::string const& effectDefinitionFilename = effectManifestEntry.template get<std::string>();
+							try
+							{
+								LoadEffect(effectDefinitionFilename);
+							}
+							catch (nlohmann::json::parse_error parseException)
+							{
+								std::string const& error = std::format(
+									"Failed to parse the Effect definition file \"{}\"\n{}",
+									effectDefinitionFilename,
+									parseException.what());
+								SEAssertF(error.c_str());
+							}
+						}));
+				}
+				else
+				{
+					std::string const& effectDefinitionFilename = effectManifestEntry.template get<std::string>();
+					LoadEffect(effectDefinitionFilename);
+				}
 			}
 
 			// Wait for loading to complete:
-			for (auto const& taskFuture : taskFutures)
+			if (threadedEffectLoading)
 			{
-				taskFuture.wait();
+				for (auto const& taskFuture : taskFutures)
+				{
+					taskFuture.wait();
+				}
 			}
 		}
 		catch (nlohmann::json::parse_error parseException)

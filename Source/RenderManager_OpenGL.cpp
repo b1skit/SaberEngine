@@ -146,8 +146,10 @@ namespace opengl
 				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 				for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
 				{
+					const re::RenderStage::Type curRenderStageType = renderStage->GetStageType();
+
 					// Library stages are executed with their own internal logic:
-					if (renderStage->GetStageType() == re::RenderStage::Type::Library)
+					if (curRenderStageType == re::RenderStage::Type::Library)
 					{
 						dynamic_cast<re::LibraryStage*>(renderStage.get())->Execute();
 						continue;
@@ -178,6 +180,10 @@ namespace opengl
 					{
 						opengl::Shader::Bind(*shader);
 
+						SEAssert(shader->GetPipelineState() || 
+							renderStage->GetStageType() == re::RenderStage::Type::Compute,
+							"Pipeline state is null. This is unexpected");
+
 						context->SetPipelineState(shader->GetPipelineState());
 
 						if (doSetStageInputs)
@@ -206,7 +212,7 @@ namespace opengl
 					};
 
 
-					switch (renderStage->GetStageType())
+					switch (curRenderStageType)
 					{
 					case re::RenderStage::Type::Compute:
 					{
@@ -268,7 +274,7 @@ namespace opengl
 						}
 
 						// Draw!
-						switch (renderStage->GetStageType())
+						switch (curRenderStageType)
 						{
 						case re::RenderStage::Type::Graphics:
 						case re::RenderStage::Type::FullscreenQuad:

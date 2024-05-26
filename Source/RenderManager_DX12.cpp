@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "Buffer_DX12.h"
@@ -12,6 +11,8 @@
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
 #include "VertexStream_DX12.h"
+
+#include "Core\Assert.h"
 
 #include <d3dx12.h>
 
@@ -201,8 +202,10 @@ namespace dx12
 				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 				for (std::shared_ptr<re::RenderStage> const& renderStage : stagePipeline.GetRenderStages())
 				{
+					const re::RenderStage::Type curRenderStageType = renderStage->GetStageType();
+
 					// Library stages are executed with their own internal logic:
-					if (renderStage->GetStageType() == re::RenderStage::Type::Library)
+					if (curRenderStageType == re::RenderStage::Type::Library)
 					{
 						// TODO: There is an ordering issue here: LibraryStages (currently) create and submit their own
 						// command lists. If they're part of a RenderSystem with stages before/after, they'll be
@@ -220,7 +223,6 @@ namespace dx12
 
 					// If the new RenderStage type is different to the previous one, we need to end recording on it
 					// to ensure the work is correctly ordered between queues:
-					const re::RenderStage::Type curRenderStageType = renderStage->GetStageType();
 					if (StageTypeChanged(prevRenderStageType, curRenderStageType))
 					{
 						AppendCommandLists();
@@ -297,7 +299,7 @@ namespace dx12
 						dx12::PipelineState const* pso = context->GetPipelineStateObject(*shader, targetSet);
 						commandList->SetPipelineState(*pso);
 
-						switch (renderStage->GetStageType())
+						switch (curRenderStageType)
 						{
 						case re::RenderStage::Type::Graphics:
 						case re::RenderStage::Type::FullscreenQuad:

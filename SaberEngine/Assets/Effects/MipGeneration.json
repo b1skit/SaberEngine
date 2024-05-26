@@ -10,7 +10,6 @@
 		{
 			"Name": "GenerateMips",
 			"CShader": "GenerateMipMaps_BoxFilter_CShader",
-			"PipelineState": "Compute_Default",
 			"ExcludedPlatforms": [ "OpenGL" ]
 		}
 	]

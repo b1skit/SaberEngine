@@ -19,10 +19,6 @@
       "Command": "-scenepipeline scene.json"
     },
     {
-      "Id": "c3d6eda4-a91d-4fe1-9eb5-cfd47124c191",
-      "Command": "-singlethreadgsexecution"
-    },
-    {
       "Id": "bcab5ca4-fc56-4988-ae94-77438e7e80de",
       "Command": "-console"
     },
@@ -69,6 +65,20 @@
     {
       "Id": "2cc5f5f4-4b6e-43a7-9ba7-e135e9b6d149",
       "Command": "-numframesinflight 2"
+    },
+    {
+      "Id": "64d10a54-468b-49e2-80aa-ea9b5c0f7464",
+      "Command": "Threading",
+      "Items": [
+        {
+          "Id": "c3d6eda4-a91d-4fe1-9eb5-cfd47124c191",
+          "Command": "-singlethreadgsexecution"
+        },
+        {
+          "Id": "61c70afa-1525-4467-b4f8-790abd0b010c",
+          "Command": "-singlethreadeffectloading"
+        }
+      ]
     },
     {
       "Id": "7f680b5a-83de-4e3e-a8b5-1009b6fe4856",

@@ -68,8 +68,7 @@
 	"Techniques": [
 		{
 			"Name": "BRDFIntegration",
-			"CShader": "GenerateBRDFIntegrationMap_CShader",
-			"PipelineState": "Compute_Default"
+			"CShader": "GenerateBRDFIntegrationMap_CShader"
 		},
 		{
 			"Name": "IEMGeneration",

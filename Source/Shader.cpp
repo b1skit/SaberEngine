@@ -21,15 +21,29 @@ namespace
 	{
 		uint64_t hashResult = 0;
 
+		bool isComputeShader = false;
 		for (auto const& shaderStage : extensionlessSourceFilenames)
 		{
-			SEAssert(shaderStage.second != re::Shader::ShaderType_Count, "Invalid shader type");
+			const re::Shader::ShaderType shaderType = shaderStage.second;
+			SEAssert(shaderType != re::Shader::ShaderType_Count, "Invalid shader type");
+
+			if (shaderType == re::Shader::Compute)
+			{
+				isComputeShader = true;
+			}
 
 			util::CombineHash(hashResult, util::HashString(shaderStage.first));
 			util::CombineHash(hashResult, shaderStage.second);
 		}
+		SEAssert(!isComputeShader || extensionlessSourceFilenames.size() == 1,
+			"A compute shader should only have a single source file entry");
 
-		util::CombineHash(hashResult, rePipelineState->GetDataHash());
+		SEAssert(rePipelineState || isComputeShader, "Pipeline state is null. This is unexpected");
+
+		if (!isComputeShader)
+		{
+			util::CombineHash(hashResult, rePipelineState->GetDataHash());
+		}
 		
 		return hashResult;
 	}
@@ -41,21 +55,30 @@ namespace re
 		std::vector<std::pair<std::string, ShaderType>> const& extensionlessSourceFilenames,
 		re::PipelineState const* rePipelineState)
 	{
-		SEAssert(rePipelineState, "PipelineState is null. This is (currently) unexpected");
-
-		const ShaderID shaderID = ComputeShaderIdentifier(extensionlessSourceFilenames, rePipelineState);
+		bool isComputeShader = false;
 
 		// Concatenate the various filenames together to build a helpful identifier
 		std::string shaderName;
 		for (size_t i = 0; i < extensionlessSourceFilenames.size(); ++i)
 		{
 			std::string const& filename = extensionlessSourceFilenames.at(i).first;
-			ShaderType shaderType = extensionlessSourceFilenames.at(i).second;
+			const ShaderType shaderType = extensionlessSourceFilenames.at(i).second;
+
 			shaderName += std::format("{}={}{}",
 				k_shaderTypeNames[shaderType],
 				filename,
 				i == extensionlessSourceFilenames.size() - 1 ? "" : "__");
+
+			if (shaderType == re::Shader::Compute)
+			{
+				isComputeShader = true;
+			}
 		}
+		SEAssert(!isComputeShader || extensionlessSourceFilenames.size() == 1,
+			"A compute shader should only have a single shader entry. This is unexpected");
+		SEAssert(rePipelineState || isComputeShader, "PipelineState is null. This is unexpected for non-compute shaders");
+
+		const ShaderID shaderID = ComputeShaderIdentifier(extensionlessSourceFilenames, rePipelineState);
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
 		fr::SceneData* sceneData = fr::SceneManager::GetSceneData();
@@ -92,6 +115,10 @@ namespace re
 		, m_extensionlessSourceFilenames(extensionlessSourceFilenames)
 		, m_pipelineState(rePipelineState)
 	{
+		SEAssert(rePipelineState ||
+		(m_extensionlessSourceFilenames.size() == 1 && m_extensionlessSourceFilenames[0].second == re::Shader::Compute),
+			"re PipelineState is null. This is unexpected");
+
 		platform::Shader::CreatePlatformParams(*this);
 	}
 

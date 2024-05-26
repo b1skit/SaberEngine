@@ -353,9 +353,12 @@ namespace opengl
 
 	void Context::SetPipelineState(re::PipelineState const* pipelineState)
 	{
-		SetCullingMode(pipelineState->GetFaceCullingMode());
-		SetDepthTestMode(pipelineState->GetDepthTestMode());
-		SetFillMode(pipelineState);
+		if (pipelineState)
+		{
+			SetCullingMode(pipelineState->GetFaceCullingMode());
+			SetDepthTestMode(pipelineState->GetDepthTestMode());
+			SetFillMode(pipelineState);
+		}
 	}
 
 
