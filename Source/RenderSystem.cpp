@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "GraphicsSystem.h"
 #include "ProfilingMarkers.h"
+#include "RenderManager.h"
 #include "RenderSystem.h"
 #include "RenderSystemDesc.h"
 #include "SceneManager.h"
@@ -260,6 +261,25 @@ namespace
 			}
 		}
 	}
+
+
+	bool DisableThreadedGraphicsSystemUpdates()
+	{
+		// Note: Only a single thread can access an OpenGL context, and we don't (currently) support multiple OpenGL
+		// contexts. Some GraphicsSystems indirectly make platform-level calls (e.g. for Buffer CPU readbacks), thus
+		// we disable threaded GS updates in all cases for this API
+
+		const bool singleThreadGSExecutionCmdReceived = 
+			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
+
+		switch (re::RenderManager::Get()->GetRenderingAPI())
+		{
+		case platform::RenderingAPI::DX12: return singleThreadGSExecutionCmdReceived;
+		case platform::RenderingAPI::OpenGL: return true;
+		default: SEAssertF("Invalid rendering API");
+		}
+		return singleThreadGSExecutionCmdReceived;
+	}
 }
 
 
@@ -351,7 +371,7 @@ namespace re
 			// Now our GS's exist and their input dependencies are registered, we can compute their execution ordering.
 			// Note: The update pipeline caches member function and data pointers; We can only populate it once our GS's
 			// are created & initialized
-			const bool singleThreadGSExecution = core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
+			const bool singleThreadGSExecution = DisableThreadedGraphicsSystemUpdates();
 
 			std::vector<std::vector<std::string>> updateExecutionGroups;
 			ComputeExecutionGroups(renderSysDesc, updateExecutionGroups, singleThreadGSExecution);
@@ -398,8 +418,7 @@ namespace re
 	{
 		SEBeginCPUEvent(std::format("{} ExecuteUpdatePipeline", GetName()).c_str());
 
-		static const bool s_singleThreadGSExecution = 
-			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
+		static const bool s_singleThreadGSExecution = DisableThreadedGraphicsSystemUpdates();
 
 
 		auto ExecuteUpdateStep = [](UpdateStep const& currentStep)

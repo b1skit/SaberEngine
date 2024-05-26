@@ -230,9 +230,9 @@ namespace opengl
 
 		void* cpuVisibleData = glMapNamedBufferRange(
 			bufferPlatParams->m_bufferName,
-			0,
-			(GLsizeiptr)bufferSize,
-			GL_MAP_READ_BIT);
+			0,								// offset
+			(GLsizeiptr)bufferSize,			// length
+			GL_MAP_READ_BIT);				// access
 
 		return cpuVisibleData;
 	}
