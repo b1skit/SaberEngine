@@ -166,7 +166,7 @@ namespace opengl
 
 					// Get the stage targets:
 					re::TextureTargetSet const* stageTargets = renderStage->GetTextureTargetSet();
-					if (!stageTargets)
+					if (!stageTargets && curRenderStageType != re::RenderStage::Type::Compute)
 					{
 						opengl::SwapChain::PlatformParams* swapChainParams =
 							context->GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
@@ -175,6 +175,9 @@ namespace opengl
 
 						stageTargets = swapChainParams->m_backbufferTargetSet.get(); // Draw to the swapchain backbuffer
 					}
+					SEAssert(stageTargets || curRenderStageType == re::RenderStage::Type::Compute,
+						"The current stage does not have targets set. This is unexpected");
+
 
 					auto SetDrawState = [&renderStage, &context](re::Shader const* shader, bool doSetStageInputs)
 					{
@@ -189,13 +192,13 @@ namespace opengl
 						if (doSetStageInputs)
 						{
 							// Set stage param blocks:
-							for (std::shared_ptr<re::Buffer> permanentBuffer : renderStage->GetPermanentBuffers())
+							for (std::shared_ptr<re::Buffer const> const& buffer : renderStage->GetPermanentBuffers())
 							{
-								opengl::Shader::SetBuffer(*shader, *permanentBuffer.get());
+								opengl::Shader::SetBuffer(*shader, *buffer.get());
 							}
-							for (std::shared_ptr<re::Buffer> perFrameBuffer : renderStage->GetPerFrameBuffers())
+							for (std::shared_ptr<re::Buffer const> const& buffer : renderStage->GetPerFrameBuffers())
 							{
-								opengl::Shader::SetBuffer(*shader, *perFrameBuffer.get());
+								opengl::Shader::SetBuffer(*shader, *buffer.get());
 							}
 
 							// Set stage texture/sampler inputs:
@@ -216,7 +219,10 @@ namespace opengl
 					{
 					case re::RenderStage::Type::Compute:
 					{
-						opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets);
+						if (stageTargets)
+						{
+							opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets);
+						}
 					}
 					break;
 					case re::RenderStage::Type::Graphics:

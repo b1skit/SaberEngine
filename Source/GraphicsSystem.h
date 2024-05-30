@@ -44,11 +44,12 @@ namespace gr
 		//		-> These are called before/after InitPipelineFn execution
 	public:
 		using TextureDependencies = std::map<std::string, std::shared_ptr<re::Texture>>;
+		using BufferDependencies = std::map<std::string, std::shared_ptr<re::Buffer const>>;
 		using DataDependencies = std::unordered_map<std::string, void const*>;
 
 		struct RuntimeBindings
 		{
-			using InitPipelineFn = std::function<void(re::StagePipeline&, TextureDependencies const&)>;
+			using InitPipelineFn = std::function<void(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&)>;
 			using PreRenderFn = std::function<void(DataDependencies const&)>;
 
 			std::vector<std::pair<std::string, InitPipelineFn>> m_initPipelineFunctions;
@@ -61,6 +62,7 @@ namespace gr
 		virtual void RegisterOutputs() = 0;
 
 
+		// Texture inputs/outputs:
 	public:
 		enum TextureInputDefault : uint8_t // Optional generic fallbacks
 		{
@@ -74,7 +76,7 @@ namespace gr
 		};
 
 		TextureInputDefault GetTextureInputDefaultType(std::string const& inputScriptName) const;
-		bool HasTextureInput(std::string const& inputScriptName) const;
+		bool HasRegisteredTextureInput(std::string const& inputScriptName) const;
 		std::map<std::string, TextureInputDefault> const& GetTextureInputs() const;
 
 		std::shared_ptr<re::Texture> GetTextureOutput(std::string const& outputScriptName) const;
@@ -89,11 +91,28 @@ namespace gr
 		std::map<std::string, std::shared_ptr<re::Texture>> m_textureOutputs;
 
 
+		// Buffer inputs/outputs:
+	public:
+		bool HasRegisteredBufferInput(std::string const& scriptName) const;
+		std::set<std::string> const& GetBufferInputs() const;
+
+		std::shared_ptr<re::Buffer const> GetBufferOutput(std::string const& scriptName) const;
+
+	protected:
+		void RegisterBufferInput(char const*);
+		void RegisterBufferOutput(char const*, std::shared_ptr<re::Buffer const>);
+
+	private:
+		std::set<std::string> m_bufferInputs;
+		std::map<std::string, std::shared_ptr<re::Buffer const>> m_bufferOutputs;
+
+
+		// Data inputs/outputs:
 	public:
 		using ViewCullingResults = std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>>;
 		using PunctualLightCullingResults = std::vector<gr::RenderDataID>;
 
-		bool HasDataInput(std::string const& scriptName) const;
+		bool HasRegisteredDataInput(std::string const& scriptName) const;
 		std::set<std::string> const& GetDataInputs() const;
 
 		void const* GetDataOutput(std::string const& scriptName) const;
@@ -170,12 +189,12 @@ namespace gr
 	inline GraphicsSystem::TextureInputDefault GraphicsSystem::GetTextureInputDefaultType(
 		std::string const& inputScriptName) const
 	{
-		SEAssert(HasTextureInput(inputScriptName), "Texture input with that name has not been registered");
+		SEAssert(HasRegisteredTextureInput(inputScriptName), "Texture input with that name has not been registered");
 		return m_textureInputs.at(inputScriptName);
 	}
 
 
-	inline bool GraphicsSystem::HasTextureInput(std::string const& inputScriptName) const
+	inline bool GraphicsSystem::HasRegisteredTextureInput(std::string const& inputScriptName) const
 	{
 		return m_textureInputs.contains(inputScriptName);
 	}
@@ -216,7 +235,39 @@ namespace gr
 	}
 
 
-	inline bool GraphicsSystem::HasDataInput(std::string const& scriptName) const
+	inline bool GraphicsSystem::HasRegisteredBufferInput(std::string const& scriptName) const
+	{
+		return m_bufferInputs.contains(scriptName);
+	}
+
+
+	inline std::set<std::string> const& GraphicsSystem::GetBufferInputs() const
+	{
+		return m_bufferInputs;
+	}
+
+
+	inline std::shared_ptr<re::Buffer const> GraphicsSystem::GetBufferOutput(std::string const& scriptName) const
+	{
+		SEAssert(m_bufferOutputs.contains(scriptName),
+			"No Buffer output with the given script name was registered by the GS");
+		return m_bufferOutputs.at(scriptName);
+	}
+
+
+	inline void GraphicsSystem::RegisterBufferInput(char const* scriptName)
+	{
+		m_bufferInputs.emplace(scriptName);
+	}
+
+
+	inline void GraphicsSystem::RegisterBufferOutput(char const* scriptName, std::shared_ptr<re::Buffer const> buffer)
+	{
+		m_bufferOutputs.emplace(scriptName, buffer);
+	}
+
+
+	inline bool GraphicsSystem::HasRegisteredDataInput(std::string const& scriptName) const
 	{
 		return m_dataInputs.contains(scriptName);
 	}
@@ -283,7 +334,7 @@ namespace gr
 	.m_preRenderFunctions = {__VA_ARGS__},
 
 #define INIT_PIPELINE_FN(gsClassName, memberFuncName) \
-	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this, std::placeholders::_1, std::placeholders::_2)}
+	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)}
 
 #define PRE_RENDER_FN(gsClassName, memberFuncName) \
 	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this, std::placeholders::_1)},

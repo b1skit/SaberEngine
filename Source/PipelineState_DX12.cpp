@@ -384,7 +384,7 @@ namespace dx12
 	}
 
 
-	void PipelineState::Create(re::Shader const& shader, re::TextureTargetSet const& targetSet)
+	void PipelineState::Create(re::Shader const& shader, re::TextureTargetSet const* targetSet)
 	{
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
@@ -393,6 +393,8 @@ namespace dx12
 		
 		if (shaderParams->m_shaderBlobs[re::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
 		{
+			SEAssert(targetSet, "Graphics pipelines require a valid target set");
+
 			re::PipelineState const* rePipelineState = shader.GetPipelineState();
 
 			// Get the shader reflection:
@@ -445,15 +447,15 @@ namespace dx12
 
 			// Target formats:
 			dx12::TextureTargetSet::PlatformParams* targetSetPlatParams =
-				targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-			if (targetSet.HasColorTarget())
+				targetSet->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+			if (targetSet->HasColorTarget())
 			{
-				pipelineStateStream.RTVFormats = TextureTargetSet::GetColorTargetFormats(targetSet);
+				pipelineStateStream.RTVFormats = TextureTargetSet::GetColorTargetFormats(*targetSet);
 			}
-			if (targetSet.HasDepthTarget())
+			if (targetSet->HasDepthTarget())
 			{
 				pipelineStateStream.DSVFormat =
-					targetSet.GetDepthStencilTarget()->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
+					targetSet->GetDepthStencilTarget()->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
 			}			
 
 			// Rasterizer description:
@@ -462,11 +464,11 @@ namespace dx12
 
 			// Depth stencil description:
 			const D3D12_DEPTH_STENCIL_DESC depthStencilDesc = 
-				BuildDepthStencilDesc(targetSet.GetDepthStencilTarget(), rePipelineState);
+				BuildDepthStencilDesc(targetSet->GetDepthStencilTarget(), rePipelineState);
 			pipelineStateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
 
 			// Blend description:
-			const D3D12_BLEND_DESC blendDesc = BuildBlendDesc(targetSet);
+			const D3D12_BLEND_DESC blendDesc = BuildBlendDesc(*targetSet);
 			pipelineStateStream.blend = CD3DX12_BLEND_DESC(blendDesc);
 
 			const D3D12_PIPELINE_STATE_STREAM_DESC graphicsPipelineStateStreamDesc =
@@ -502,7 +504,10 @@ namespace dx12
 		}
 
 		// Name our PSO:
-		const std::wstring psoDebugName = shader.GetWName() + L"_" + targetSet.GetWName() + L"_PSO";
+		std::wstring const& psoDebugName = util::ToWideString(
+			std::format("{}_{}_PSO",
+				shader.GetName(), 
+				targetSet ? targetSet->GetName() : "<no targets>"));
 		m_pipelineState->SetName(psoDebugName.c_str());
 	}
 

@@ -6,18 +6,16 @@
 
 namespace gr
 {
-	constexpr char const* k_gsName = "ImGui Graphics System";
-
-
 	ImGuiGraphicsSystem::ImGuiGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: GraphicsSystem(k_gsName, owningGSM)
-		, INamedObject(k_gsName)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 		, m_perFrameCommands(k_imGuiCommandBufferSize, re::RenderManager::GetNumFramesInFlight())
 	{
 	}
 
 
-	void ImGuiGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
+	void ImGuiGraphicsSystem::InitPipeline(
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		// Create a library stage:
 		re::RenderStage::LibraryStageParams imGuiLibraryParams(re::RenderStage::LibraryStageParams::LibraryType::ImGui);

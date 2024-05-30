@@ -37,8 +37,8 @@ namespace gr
 		}
 
 		static constexpr char const* k_ssaoInput = "SSAOTex";
-		static constexpr char const* k_pointLightCullingInput = "PointLightCullingResults";
-		static constexpr char const* k_spotLightCullingInput = "SpotLightCullingResults";
+		static constexpr char const* k_pointLightCullingDataInput = "PointLightCullingResults";
+		static constexpr char const* k_spotLightCullingDataInput = "SpotLightCullingResults";
 		static constexpr char const* k_shadowTexturesInput = "ShadowTextures";
 		// Note: The DeferredLightingGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
 		void RegisterInputs() override;
@@ -52,8 +52,8 @@ namespace gr
 
 		~DeferredLightingGraphicsSystem() override = default;
 
-		void InitializeResourceGenerationStages(re::StagePipeline&, TextureDependencies const&);
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
+		void InitializeResourceGenerationStages(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
 
 		void PreRender(DataDependencies const&);
 

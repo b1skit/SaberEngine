@@ -11,24 +11,20 @@
 
 namespace gr
 {
-	constexpr char const* k_gsName = "GBuffer Graphics System";
-
-
 	GBufferGraphicsSystem::GBufferGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: INamedObject(k_gsName)
-		, GraphicsSystem(k_gsName, owningGSM)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 		, m_owningPipeline(nullptr)
 	{
-		re::RenderStage::GraphicsStageParams gfxStageParams;
-		
-		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", gfxStageParams);
+		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", {});
 
 		m_gBufferStage->SetBatchFilterMaskBit(
 			re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
 	}
 
 
-	void GBufferGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
+	void GBufferGraphicsSystem::InitPipeline(
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		m_owningPipeline = &pipeline;
 

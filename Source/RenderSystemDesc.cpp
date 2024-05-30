@@ -85,10 +85,10 @@ namespace re
 				for (auto const& inputEntry : inputsList)
 				{
 					// "GS":
-					std::string const& dependencySourceGS =
+					std::string const& dependencySourceGSName =
 						inputEntry[RenderSystemDescription::key_GSName].template get<std::string>();
 
-					SEAssert(dependencySourceGS != currentGSName, "A GS has listed itself as an input source");
+					SEAssert(dependencySourceGSName != currentGSName, "A GS has listed itself as an input source");
 
 					// "TextureDependencies":
 					if (inputEntry.contains(RenderSystemDescription::key_textureDependenciesList) &&
@@ -96,8 +96,18 @@ namespace re
 					{
 						ParseDependencyList(
 							inputEntry[RenderSystemDescription::key_textureDependenciesList],
-							dependencySourceGS,
+							dependencySourceGSName,
 							renderSysDesc.m_textureInputs[currentGSName]);
+					}
+
+					// "BufferDependencies":
+					if (inputEntry.contains(RenderSystemDescription::key_bufferDependenciesList) &&
+						!inputEntry[RenderSystemDescription::key_bufferDependenciesList].empty())
+					{
+						ParseDependencyList(
+							inputEntry[RenderSystemDescription::key_bufferDependenciesList],
+							dependencySourceGSName,
+							renderSysDesc.m_bufferInputs[currentGSName]);
 					}
 
 					// "DataDependencies":
@@ -106,7 +116,7 @@ namespace re
 					{
 						ParseDependencyList(
 							inputEntry[RenderSystemDescription::key_dataDependenciesList],
-							dependencySourceGS,
+							dependencySourceGSName,
 							renderSysDesc.m_dataInputs[currentGSName]);
 					}
 				}

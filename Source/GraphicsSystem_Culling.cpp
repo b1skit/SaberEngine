@@ -176,12 +176,9 @@ namespace
 
 namespace gr
 {
-	constexpr char const* k_gsName = "Culling Graphics System";
-
-
 	CullingGraphicsSystem::CullingGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: GraphicsSystem(k_gsName, owningGSM)
-		, INamedObject(k_gsName)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 		, m_cullingEnabled(true)
 	{
 	}
@@ -195,7 +192,7 @@ namespace gr
 	};
 
 
-	void CullingGraphicsSystem::InitPipeline(re::StagePipeline&, TextureDependencies const&)
+	void CullingGraphicsSystem::InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&)
 	{
 		//
 	}

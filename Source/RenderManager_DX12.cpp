@@ -280,13 +280,12 @@ namespace dx12
 
 					// Get the stage targets:
 					re::TextureTargetSet const* stageTargets = renderStage->GetTextureTargetSet();
-					if (stageTargets == nullptr)
+					if (stageTargets == nullptr && curRenderStageType != re::RenderStage::Type::Compute)
 					{
-						SEAssert(IsGraphicsQueueStageType(curRenderStageType),
-							"Only the graphics queue/command lists can render to the backbuffer");
-
 						stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain()).get();
 					}
+					SEAssert(stageTargets || curRenderStageType == re::RenderStage::Type::Compute,
+						"The current stage does not have targets set. This is unexpected");
 
 
 					auto SetDrawState = [&renderStage, &context, &curRenderStageType](
@@ -317,13 +316,13 @@ namespace dx12
 						}
 
 						// Set buffers (Must happen after the root signature is set):
-						for (std::shared_ptr<re::Buffer> permanentBuffer : renderStage->GetPermanentBuffers())
+						for (std::shared_ptr<re::Buffer const> const& buffer : renderStage->GetPermanentBuffers())
 						{
-							commandList->SetBuffer(permanentBuffer.get());
+							commandList->SetBuffer(buffer.get());
 						}
-						for (std::shared_ptr<re::Buffer> perFrameBuffer : renderStage->GetPerFrameBuffers())
+						for (std::shared_ptr<re::Buffer const> const& buffer : renderStage->GetPerFrameBuffers())
 						{
-							commandList->SetBuffer(perFrameBuffer.get());
+							commandList->SetBuffer(buffer.get());
 						}
 
 						// Set inputs and targets (once) now that the root signature is set
@@ -352,7 +351,10 @@ namespace dx12
 							{
 							case re::RenderStage::Type::Compute:
 							{
-								commandList->SetComputeTargets(*targetSet);
+								if (targetSet)
+								{
+									commandList->SetComputeTargets(*targetSet);
+								}
 							}
 							break;
 							case re::RenderStage::Type::Graphics:

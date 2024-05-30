@@ -1,12 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Buffer.h"
+#include "Texture.h"
 
 #include "Core\Assert.h"
+
 #include "Core\Interfaces\IHashedDataObject.h"
 #include "Core\Interfaces\IPlatformParams.h"
-#include "Texture.h"
 #include "Core\Interfaces\INamedObject.h"
-#include "Buffer.h"
 
 
 namespace re

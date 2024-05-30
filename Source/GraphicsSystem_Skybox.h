@@ -23,7 +23,7 @@ namespace gr
 
 
 		static constexpr char const* k_skyboxTargetInput = "SkyboxTarget";
-		static constexpr char const* k_sceneDepthInput = "SceneDepth";
+		static constexpr char const* k_sceneDepthTexInput = "SceneDepth";
 		void RegisterInputs() override;
 
 		void RegisterOutputs() override;
@@ -33,7 +33,7 @@ namespace gr
 		SkyboxGraphicsSystem(gr::GraphicsSystemManager*);
 		~SkyboxGraphicsSystem() = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
 		void PreRender(DataDependencies const&);
 
 		void ShowImGuiWindow() override;

@@ -37,6 +37,21 @@
 			},
 			{
 				"Conditions": [
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "AlphaBlend_SingleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "GBuffer", "Mode": "Fill" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "AlphaBlend_DoubleSided"
+			},
+			{
+				"Conditions": [
 					{ "Rule": "Shadow", "Mode": "2D" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
@@ -128,6 +143,20 @@
 			"PShader": "GBuffer_PShader",
 			"PipelineState": "DoubleSided"
 		},
+
+		{
+			"Name": "AlphaBlend_SingleSided",
+			"VShader": "GBuffer_VShader",
+			"PShader": "GBuffer_PShader",
+			"PipelineState": "SingleSided"
+		},
+		{
+			"Name": "AlphaBlend_DoubleSided",
+			"VShader": "GBuffer_VShader",
+			"PShader": "GBuffer_PShader",
+			"PipelineState": "DoubleSided"
+		},
+		
 		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
 		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
 		// In future, we need to support tagging assets to not cast shadows at load time

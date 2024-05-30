@@ -40,18 +40,15 @@ namespace
 
 namespace gr
 {
-	constexpr char const* k_gsName = "Compute Mips Graphics System";
-
-
 	ComputeMipsGraphicsSystem::ComputeMipsGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: GraphicsSystem(k_gsName, owningGSM)
-		, INamedObject(k_gsName)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 		, m_stagePipeline(nullptr)
 	{
 	}
 
 
-	void ComputeMipsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
+	void ComputeMipsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		m_stagePipeline = &pipeline;
 

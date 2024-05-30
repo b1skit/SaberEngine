@@ -14,11 +14,8 @@ namespace
 
 	static const EffectID k_debugEffectID = effect::Effect::ComputeEffectID(k_debugEffectName);
 	
-	static const effect::DrawStyle::Bitmask k_debugLineBitmask = 
-		effect::DrawStyle::GetDrawStyleBitmaskByName(k_debugEffectName, "Line");
-
-	static const effect::DrawStyle::Bitmask k_debugTriangleBitmask =
-		effect::DrawStyle::GetDrawStyleBitmaskByName(k_debugEffectName, "Triangle");
+	static const effect::DrawStyle::Bitmask k_debugLineBitmask = effect::DrawStyle::Debug_Line;
+	static const effect::DrawStyle::Bitmask k_debugTriangleBitmask = effect::DrawStyle::Debug_Triangle;
 
 
 	re::VertexStream::Lifetime GetVertexStreamLifetimeFromBatchLifetime(re::Batch::Lifetime batchLifetime)
@@ -365,16 +362,14 @@ namespace
 
 namespace gr
 {
-	constexpr char const* k_gsName = "Debug Graphics System";
-
 	DebugGraphicsSystem::DebugGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: GraphicsSystem(k_gsName, owningGSM)
-		, INamedObject(k_gsName)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 	{
 	}
 
 
-	void DebugGraphicsSystem::InitPipeline(re::StagePipeline& stagePipeline, TextureDependencies const& texDependencies)
+	void DebugGraphicsSystem::InitPipeline(re::StagePipeline& stagePipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		// Line topology stage:
 		m_debugLineStage = 

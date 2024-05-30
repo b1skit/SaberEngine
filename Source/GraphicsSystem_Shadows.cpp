@@ -77,12 +77,9 @@ namespace
 
 namespace gr
 {
-	constexpr char const* k_gsName = "Shadows Graphics System";
-
-
 	ShadowsGraphicsSystem::ShadowsGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: GraphicsSystem(k_gsName, owningGSM)
-		, INamedObject(k_gsName)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 		, m_stagePipeline(nullptr)
 	{
 	}
@@ -91,8 +88,8 @@ namespace gr
 	void ShadowsGraphicsSystem::RegisterInputs()
 	{
 		RegisterDataInput(k_cullingInput);
-		RegisterDataInput(k_pointLightCullingInput);
-		RegisterDataInput(k_spotLightCullingInput);
+		RegisterDataInput(k_pointLightCullingDataInput);
+		RegisterDataInput(k_spotLightCullingDataInput);
 	}
 
 
@@ -275,7 +272,8 @@ namespace gr
 	}
 
 
-	void ShadowsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
+	void ShadowsGraphicsSystem::InitPipeline(
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		m_stagePipeline = &pipeline;
 
@@ -556,7 +554,7 @@ namespace gr
 				};
 
 			PunctualLightCullingResults const* spotIDs =
-				static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingInput));
+				static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingDataInput));
 			if (spotIDs)
 			{
 				auto spotItr = renderData.IDBegin(*spotIDs);
@@ -612,7 +610,7 @@ namespace gr
 				};
 
 			PunctualLightCullingResults const* pointIDs =
-				static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingInput));
+				static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingDataInput));
 			if (pointIDs)
 			{
 				auto pointItr = renderData.IDBegin(*pointIDs);

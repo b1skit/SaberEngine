@@ -30,7 +30,7 @@ namespace dx12
 		dx12::CommandQueue& GetCommandQueue(dx12::CommandListType type);
 		dx12::CommandQueue& GetCommandQueue(uint64_t fenceValue); // Get the command queue that produced a fence value
 
-		dx12::PipelineState const* CreateAddPipelineState(re::Shader const&, re::TextureTargetSet const&);
+		dx12::PipelineState const* CreateAddPipelineState(re::Shader const&, re::TextureTargetSet const*);
 			
 		// A null targetSet is valid (it indicates the backbuffer)
 		dx12::PipelineState const* GetPipelineStateObject(re::Shader const&, re::TextureTargetSet const*);

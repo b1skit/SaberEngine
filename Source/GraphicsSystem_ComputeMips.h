@@ -30,7 +30,7 @@ namespace gr
 
 		~ComputeMipsGraphicsSystem() override {}
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
 
 		void PreRender(DataDependencies const&);
 

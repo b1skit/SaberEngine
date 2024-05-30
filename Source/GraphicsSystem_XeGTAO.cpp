@@ -129,12 +129,9 @@ namespace
 
 namespace gr
 {
-	constexpr char const* k_gsName = "XeGTAO Graphics System";
-
-
 	XeGTAOGraphicsSystem::XeGTAOGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: GraphicsSystem(k_gsName, owningGSM)
-		, INamedObject(k_gsName)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 		, m_xRes(0)
 		, m_yRes(0)
 		, m_XeGTAOQuality(Quality::Ultra)
@@ -145,7 +142,8 @@ namespace gr
 	}
 
 
-	void XeGTAOGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
+	void XeGTAOGraphicsSystem::InitPipeline(
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		m_xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		m_yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);

@@ -33,15 +33,22 @@ namespace
 		util::CombineHash(psoKey, shader.GetShaderIdentifier());
 
 		re::PipelineState const* pipelineState = shader.GetPipelineState();
+
+		SEAssert(pipelineState || shader.HasShaderType(re::Shader::Compute),
+			"Shader does not have a pipeline state. This is unexpected");
+
 		if (pipelineState)
 		{
 			util::CombineHash(psoKey, pipelineState->GetPipelineStateDataHash());
-		}
 
-		if (targetSet)
-		{
-			util::CombineHash(psoKey, targetSet->GetTargetSetSignature());
-		}		
+			if (targetSet)
+			{
+				// We currently store some pipeline state in Texture Targets, thus we must consider the target set
+				// signature for graphics shader types. Even if a compute shader has Texture Targets, they're bound as
+				// UAVs and don't affect the pipeline state
+				util::CombineHash(psoKey, targetSet->GetTargetSetSignature());
+			}
+		}	
 		
 		return psoKey;
 	}
@@ -242,11 +249,11 @@ namespace dx12
 
 	dx12::PipelineState const* Context::CreateAddPipelineState(
 		re::Shader const& shader,
-		re::TextureTargetSet const& targetSet)
+		re::TextureTargetSet const* targetSet)
 	{
 		std::shared_ptr<dx12::PipelineState> pso = nullptr;
 
-		const uint64_t psoKey = ComputePSOKey(shader, &targetSet);
+		const uint64_t psoKey = ComputePSOKey(shader, targetSet);
 		if (m_PSOLibrary.contains(psoKey))
 		{
 			pso = m_PSOLibrary[psoKey];
@@ -286,9 +293,10 @@ namespace dx12
 		else
 		{
 			LOG_WARNING("DX12 PSO for Shader \"%s\", TextureTargetSet \"%s\" does not exist and must be created "
-				"immediately", shader.GetName().c_str(), targetSet->GetName().c_str());
+				"immediately", shader.GetName().c_str(), 
+				targetSet ? targetSet->GetName().c_str() : "<null re::TextureTargetSet");
 
-			return CreateAddPipelineState(shader, *targetSet);
+			return CreateAddPipelineState(shader, targetSet);
 		}
 	}
 

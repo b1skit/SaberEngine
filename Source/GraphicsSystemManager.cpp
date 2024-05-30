@@ -162,7 +162,7 @@ namespace gr
 	gr::Camera::RenderData const& GraphicsSystemManager::GetActiveCameraRenderData() const
 	{
 		SEAssert(m_activeCameraRenderDataID != gr::k_invalidRenderDataID, "No active camera has been set");
-		return m_renderData->GetObjectData< gr::Camera::RenderData>(m_activeCameraRenderDataID);
+		return m_renderData->GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
 	}
 
 

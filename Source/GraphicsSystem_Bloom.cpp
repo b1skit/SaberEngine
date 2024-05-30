@@ -46,18 +46,15 @@ namespace
 
 namespace gr
 {
-	constexpr char const* k_gsName = "Bloom Graphics System";
-
-
 	BloomGraphicsSystem::BloomGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: GraphicsSystem(k_gsName, owningGSM)
-		, INamedObject(k_gsName)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 	{
 		m_firstUpsampleSrcMipLevel = 5; // == # of upsample stages
 	}
 
 
-	void BloomGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
+	void BloomGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		std::shared_ptr<re::Sampler> const bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
 

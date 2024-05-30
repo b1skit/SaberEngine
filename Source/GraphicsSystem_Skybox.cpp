@@ -23,12 +23,9 @@ namespace
 
 namespace gr
 {
-	constexpr char const* k_gsName = "Skybox Graphics System";
-
-
 	SkyboxGraphicsSystem::SkyboxGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: GraphicsSystem(k_gsName, owningGSM)
-		, INamedObject(k_gsName)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 		, m_skyTexture(nullptr)
 		, m_backgroundColor(135.f / 255.f, 206.f / 255.f, 235.f / 255.f)
 		, m_showBackgroundColor(false)
@@ -37,7 +34,8 @@ namespace gr
 	}
 
 
-	void SkyboxGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
+	void SkyboxGraphicsSystem::InitPipeline(
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		re::RenderStage::FullscreenQuadParams fsqParams;
 		fsqParams.m_zLocation = gr::meshfactory::ZLocation::Far;
@@ -72,7 +70,7 @@ namespace gr
 		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
 		
 		skyboxTargets->SetDepthStencilTarget(
-			texDependencies.at(k_sceneDepthInput),
+			texDependencies.at(k_sceneDepthTexInput),
 			depthTargetParams);
 
 		// Render on top of the frame
@@ -108,7 +106,7 @@ namespace gr
 	void SkyboxGraphicsSystem::RegisterInputs()
 	{
 		RegisterTextureInput(k_skyboxTargetInput);
-		RegisterTextureInput(k_sceneDepthInput);
+		RegisterTextureInput(k_sceneDepthTexInput);
 	}
 
 

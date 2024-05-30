@@ -2,8 +2,9 @@
 #pragma once
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
-#include "Core\Interfaces\INamedObject.h"
 #include "RenderPipeline.h"
+
+#include "Core\Interfaces\INamedObject.h"
 
 
 namespace re

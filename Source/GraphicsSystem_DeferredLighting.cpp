@@ -292,12 +292,9 @@ namespace
 
 namespace gr
 {
-	constexpr char const* k_gsName = "Deferred Lighting Graphics System";
-
-
 	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: GraphicsSystem(k_gsName, owningGSM)
-		, INamedObject(k_gsName)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 		, m_resourceCreationStagePipeline(nullptr)
 	{
 		m_lightingTargetSet = re::TextureTargetSet::Create("Deferred light targets");
@@ -322,8 +319,8 @@ namespace gr
 
 		RegisterTextureInput(k_ssaoInput, TextureInputDefault::OpaqueWhite);
 
-		RegisterDataInput(k_pointLightCullingInput);
-		RegisterDataInput(k_spotLightCullingInput);
+		RegisterDataInput(k_pointLightCullingDataInput);
+		RegisterDataInput(k_spotLightCullingDataInput);
 		RegisterDataInput(k_shadowTexturesInput);
 	}
 
@@ -557,7 +554,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::InitializeResourceGenerationStages(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		m_resourceCreationStagePipeline = &pipeline;
 
@@ -614,7 +611,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		m_missing2DShadowFallback = re::Texture::Create("Missing 2D shadow fallback",
 			re::Texture::TextureParams
@@ -1169,7 +1166,7 @@ namespace gr
 			};
 
 		PunctualLightCullingResults const* spotIDs = 
-			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingInput));
+			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingDataInput));
 		if (spotIDs)
 		{
 			MarkIDsVisible(spotIDs);
@@ -1182,7 +1179,7 @@ namespace gr
 		}
 
 		PunctualLightCullingResults const* pointIDs = 
-			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingInput));
+			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingDataInput));
 		if (pointIDs)
 		{
 			MarkIDsVisible(pointIDs);

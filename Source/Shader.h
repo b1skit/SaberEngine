@@ -72,7 +72,9 @@ namespace re
 		
 		uint64_t GetShaderIdentifier() const;
 
-		inline bool IsCreated() const;
+		bool IsCreated() const;
+
+		bool HasShaderType(ShaderType) const;
 
 		re::PipelineState const* GetPipelineState() const;
 			
@@ -117,6 +119,19 @@ namespace re
 	inline bool Shader::IsCreated() const
 	{
 		return m_platformParams->m_isCreated;
+	}
+
+
+	inline bool Shader::HasShaderType(ShaderType shaderType) const
+	{
+		for (auto const& source : m_extensionlessSourceFilenames)
+		{
+			if (source.second == shaderType)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 

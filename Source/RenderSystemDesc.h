@@ -10,6 +10,7 @@ namespace re
 		static constexpr char const* key_pipelineBlock = "Pipeline";
 		static constexpr char const* key_inputsList = "Inputs";
 		static constexpr char const* key_textureDependenciesList = "TextureDependencies";
+		static constexpr char const* key_bufferDependenciesList = "BufferDependencies";
 		static constexpr char const* key_dataDependenciesList = "DataDependencies";
 		static constexpr char const* key_srcName = "SourceName";
 		static constexpr char const* key_dstName = "DestinationName";
@@ -31,6 +32,7 @@ namespace re
 
 		// Map each GS to a list of {GS, dependency name}:
 		std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_textureInputs;
+		std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_bufferInputs;		
 		std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_dataInputs;
 	};
 

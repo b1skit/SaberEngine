@@ -46,7 +46,8 @@ namespace
 					std::string const& srcName = dependencySrcDstNameMapping.first;
 					
 					std::string const& dstName = dependencySrcDstNameMapping.second;
-					SEAssert(dstGS->HasTextureInput(dstName), "Destination GS hasn't registered this input name");
+					SEAssert(dstGS->HasRegisteredTextureInput(dstName),
+						"Destination GS hasn't registered this input name");
 
 					if (srcGS)
 					{
@@ -102,6 +103,50 @@ namespace
 	}
 
 
+	gr::GraphicsSystem::BufferDependencies ResolveBufferDependencies(
+		std::string const& dstGSScriptName,
+		re::RenderSystemDescription const& renderSysDesc,
+		gr::GraphicsSystemManager const& gsm)
+	{
+		gr::GraphicsSystem::BufferDependencies bufferDependencies;
+
+		gr::GraphicsSystem const* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
+
+		// Initialize everything with a nullptr, in case no input is described
+		for (auto const& input : dstGS->GetBufferInputs())
+		{
+			bufferDependencies.emplace(input, nullptr);
+		}
+
+		// Process any buffer inputs assigned to the current destination GraphicsSystem:
+		if (renderSysDesc.m_bufferInputs.contains(dstGSScriptName))
+		{
+			std::vector<std::pair<GSName, SrcDstNamePairs>> const& gsDependencies =
+				renderSysDesc.m_bufferInputs.at(dstGSScriptName);
+
+			for (auto const& curDependency : gsDependencies)
+			{
+				std::string const& srcGSName = curDependency.first;
+
+				gr::GraphicsSystem const* srcGS = gsm.GetGraphicsSystemByScriptName(srcGSName);
+				SEAssert(srcGS, "Source GraphicsSystem could not be found");
+
+				for (auto const& srcDstNames : curDependency.second)
+				{
+					std::string const& dependencyDstName = srcDstNames.second;
+					SEAssert(dstGS->HasRegisteredBufferInput(dependencyDstName),
+						"No Buffer input with the given name has been registered");
+
+					std::string const& dependencySrcName = srcDstNames.first;
+					bufferDependencies[dependencyDstName] = srcGS->GetBufferOutput(dependencySrcName);
+				}
+			}
+		}
+
+		return bufferDependencies;
+	}
+
+
 	std::unordered_map<std::string, void const*> ResolveDataDependencies(
 		std::string const& dstGSScriptName,
 		re::RenderSystemDescription const& renderSysDesc,
@@ -111,7 +156,7 @@ namespace
 
 		gr::GraphicsSystem const* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
 
-		// Initialize everything with a nullptr, incase no input is described
+		// Initialize everything with a nullptr, in case no input is described
 		for (auto const& input : dstGS->GetDataInputs())
 		{
 			resolvedDependencies.emplace(input, nullptr);
@@ -133,7 +178,8 @@ namespace
 				for (auto const& srcDstNames : curDependency.second)
 				{
 					std::string const& dependencyDstName = srcDstNames.second;
-					SEAssert(dstGS->HasDataInput(dependencyDstName), "No input with the given name has been registered");
+					SEAssert(dstGS->HasRegisteredDataInput(dependencyDstName),
+						"No data input with the given name has been registered");
 
 					std::string const& dependencySrcName = srcDstNames.first;
 					resolvedDependencies[dependencyDstName] = srcGS->GetDataOutput(dependencySrcName);
@@ -200,11 +246,16 @@ namespace
 							}
 						}
 					};
-				// If enabled, this will consider texture inputs as a dependency for computing the GraphicsSystem update
-				// order. This should never be necessary (as textures are updated on the GPU), but is useful for debugging
+				// If enabled, this will consider texture inputs as a dependency for computing the CPU-side
+				// GraphicsSystem update order. This should never be necessary (as texture data is updated on the GPU),
+				// but is useful for debugging
 //#define CONSIDER_TEX_INPUTS_AS_UPDATE_DEPENDENCIES
 #if defined(CONSIDER_TEX_INPUTS_AS_UPDATE_DEPENDENCIES)
 				PopulateDependencies(renderSysDesc.m_textureInputs);
+#endif
+//#define CONSIDER_BUFFER_INPUTS_AS_UPDATE_DEPENDENCIES
+#if defined(CONSIDER_BUFFER_INPUTS_AS_UPDATE_DEPENDENCIES)
+				PopulateDependencies(renderSysDesc.m_bufferInputs);
 #endif
 				PopulateDependencies(renderSysDesc.m_dataInputs);
 
@@ -349,18 +400,19 @@ namespace re
 
 				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(currentGSScriptName);
 
-				std::map<std::string, std::shared_ptr<re::Texture>> const& textureInputs = 
+				gr::GraphicsSystem::TextureDependencies const& textureInputs =
 					ResolveTextureDependencies(currentGSScriptName, renderSysDesc, gsm);
+
+				gr::GraphicsSystem::BufferDependencies const& bufferInputs = 
+					ResolveBufferDependencies(currentGSScriptName, renderSysDesc, gsm);
 
 				for (auto const& initFn : currentGS->GetRuntimeBindings().m_initPipelineFunctions)
 				{
 					std::string const& initFnName = initFn.first;
 
-					std::string const& stagePipelineName = std::format("{}::{} stages",
-						currentGS->GetName(),
-						initFnName);
+					std::string const& stagePipelineName = std::format("{} stages", currentGS->GetName());
 
-					initFn.second(renderPipeline.AddNewStagePipeline(stagePipelineName), textureInputs);
+					initFn.second(renderPipeline.AddNewStagePipeline(stagePipelineName), textureInputs, bufferInputs);
 				}
 
 				// Now the GS is initialized, it can populate its resource dependencies for other GS's

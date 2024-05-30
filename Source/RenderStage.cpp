@@ -526,7 +526,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddPermanentBuffer(std::shared_ptr<re::Buffer> buffer)
+	void RenderStage::AddPermanentBuffer(std::shared_ptr<re::Buffer const> buffer)
 	{
 		SEAssert(buffer->GetType() == re::Buffer::Type::Mutable || 
 			buffer->GetType() == re::Buffer::Type::Immutable,
@@ -535,7 +535,7 @@ namespace re
 		SEAssert(std::find_if(
 				m_permanentBuffers.begin(),
 				m_permanentBuffers.end(),
-				[&buffer](std::shared_ptr<re::Buffer> const& existingBuffer) {
+				[&buffer](std::shared_ptr<re::Buffer const> const& existingBuffer) {
 					return buffer->GetNameID() == existingBuffer->GetNameID();
 				}) == m_permanentBuffers.end(),
 			"A permanent Buffer with this name has already been added");
@@ -543,7 +543,7 @@ namespace re
 		SEAssert(std::find_if(
 				m_singleFrameBuffers.begin(),
 				m_singleFrameBuffers.end(),
-				[&buffer](std::shared_ptr<re::Buffer> const& existingBuffer) {
+				[&buffer](std::shared_ptr<re::Buffer const> const& existingBuffer) {
 					return buffer->GetNameID() == existingBuffer->GetNameID();
 				}) == m_singleFrameBuffers.end(),
 			"A single frame Buffer with this name has already been added");
@@ -552,7 +552,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddSingleFrameBuffer(std::shared_ptr<re::Buffer> buffer)
+	void RenderStage::AddSingleFrameBuffer(std::shared_ptr<re::Buffer const> buffer)
 	{
 		SEAssert(buffer->GetType() == re::Buffer::Type::SingleFrame,
 			"Buffer must have a single frame lifetime");
@@ -560,7 +560,7 @@ namespace re
 		SEAssert(std::find_if(
 				m_singleFrameBuffers.begin(),
 				m_singleFrameBuffers.end(),
-				[&buffer](std::shared_ptr<re::Buffer> const& existingBuffer) {
+				[&buffer](std::shared_ptr<re::Buffer const> const& existingBuffer) {
 					return buffer->GetNameID() == existingBuffer->GetNameID();
 				}) == m_singleFrameBuffers.end(),
 			"A single frame Buffer with this name has already been added");
@@ -568,7 +568,7 @@ namespace re
 		SEAssert(std::find_if(
 				m_permanentBuffers.begin(),
 				m_permanentBuffers.end(),
-				[&buffer](std::shared_ptr<re::Buffer> const& existingBuffer) {
+				[&buffer](std::shared_ptr<re::Buffer const> const& existingBuffer) {
 					return buffer->GetNameID() == existingBuffer->GetNameID();
 				}) == m_permanentBuffers.end(),
 			"A permanent Buffer with this name has already been added");

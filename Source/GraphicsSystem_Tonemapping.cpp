@@ -8,17 +8,15 @@
 
 namespace gr
 {
-	constexpr char const* k_gsName = "Tone Mapping Graphics System";
-
-
 	TonemappingGraphicsSystem::TonemappingGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
-		: GraphicsSystem(k_gsName, owningGSM)
-		, INamedObject(k_gsName)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 	{
 	}
 
 
-	void TonemappingGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies)
+	void TonemappingGraphicsSystem::InitPipeline(
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		re::RenderStage::FullscreenQuadParams tonemappingStageParams{};
 		tonemappingStageParams.m_effectID = effect::Effect::ComputeEffectID("Tonemapping");

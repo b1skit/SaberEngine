@@ -35,7 +35,7 @@ namespace gr
 		CullingGraphicsSystem(gr::GraphicsSystemManager*);
 		~CullingGraphicsSystem() override = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
 		void PreRender(DataDependencies const&);
 
 		void ShowImGuiWindow() override;
