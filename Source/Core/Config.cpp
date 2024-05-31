@@ -177,6 +177,7 @@ namespace core
 		InitializeOSValues();
 		InitializeDefaultValues();
 		SetRuntimeDefaults();
+		m_isDirty = false; // Don't consider setting defaults as dirtying the config
 
 		LOG("Loading %s...", core::configkeys::k_configFileName);
 

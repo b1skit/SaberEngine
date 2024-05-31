@@ -12,6 +12,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Store the HINSTANCE for when we initialize our window
 	win32::Window::s_platformState.m_hInstance = hInstance;
 
+	core::Config::Get()->LoadConfigFile();
+
 	// Initialize Config from our pre-parsed argument vector
 	int argc = __argc;
 	char** argv = __argv;
@@ -39,8 +41,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		LOG("No command line arguments received");
 	}
-
-	core::Config::Get()->LoadConfigFile();
 
 	// Register our API-specific bindings before anything attempts to call them:
 	if (!platform::RegisterPlatformFunctions())
