@@ -143,6 +143,38 @@
 			]
 		},
 		{
+			"GraphicsSystem": "Transparency",
+			"Inputs": [
+				{
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewCullingResults",
+							"DestinationName": "ViewCullingResults"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "GBuffer",
+					"TextureDependencies": [
+						{
+							"SourceName": "GBufferDepth",
+							"DestinationName": "SceneDepth"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "DeferredLighting",
+					"TextureDependencies": [
+						{
+							"SourceName": "DeferredLightTarget",
+							"DestinationName": "SceneLighting"
+						}
+					]
+				}
+			]
+		},
+		{
 			"GraphicsSystem": "Bloom",
 			"Inputs": [
 				{

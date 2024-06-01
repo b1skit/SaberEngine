@@ -388,12 +388,36 @@ namespace re
 	{
 		if (enabled)
 		{
-			m_batchFilterBitmask |= static_cast<uint32_t>(filterBit);
+			m_batchFilterBitmask |= static_cast<re::Batch::FilterBitmask>(filterBit);
 		}
-		else if (m_batchFilterBitmask & static_cast<uint32_t>(filterBit))
+		else if (m_batchFilterBitmask & static_cast<re::Batch::FilterBitmask>(filterBit))
 		{
-			m_batchFilterBitmask ^= static_cast<uint32_t>(filterBit);
+			m_batchFilterBitmask ^= static_cast<re::Batch::FilterBitmask>(filterBit);
 		}
+	}
+
+
+	bool Batch::MatchesFilterBits(re::Batch::FilterBitmask required, re::Batch::FilterBitmask excluded) const
+	{
+		if (required == 0 && excluded == 0) // Accept all batches by default
+		{
+			return true;
+		}
+
+		// Only a single bit on a Batch must match with the excluded mask for a Batch to be excluded
+		const bool isExcluded = (m_batchFilterBitmask & excluded);
+
+		// A Batch must contain all bits in the included mask to be included
+		// A Batch may contain more bits than what is required, so long as it matches all required bits
+		bool isFullyIncluded = false;
+		if (!isExcluded)
+		{
+			const re::Batch::FilterBitmask invertedRequiredBits = ~required;
+			const re::Batch::FilterBitmask matchingBatchBits = (m_batchFilterBitmask & invertedRequiredBits) ^ m_batchFilterBitmask;
+			isFullyIncluded = (matchingBatchBits == required);
+		}
+
+		return !isExcluded && isFullyIncluded;
 	}
 
 

@@ -5,7 +5,7 @@
 		"DrawStyles": [
 			{
 				"Conditions": [
-					{ "Rule": "GBuffer", "Mode": "Fill" },
+					{ "Rule": "RenderPath", "Mode": "Deferred" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -13,7 +13,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule": "GBuffer", "Mode": "Fill" },
+					{ "Rule": "RenderPath", "Mode": "Deferred" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -21,7 +21,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule": "GBuffer", "Mode": "Fill" },
+					{ "Rule": "RenderPath", "Mode": "Deferred" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -29,7 +29,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule": "GBuffer", "Mode": "Fill" },
+					{ "Rule": "RenderPath", "Mode": "Deferred" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -37,6 +37,7 @@
 			},
 			{
 				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Forward" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -44,7 +45,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule": "GBuffer", "Mode": "Fill" },
+					{ "Rule": "RenderPath", "Mode": "Forward" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -133,27 +134,27 @@
 	"Techniques": [
 		{
 			"Name": "FillGBuffer_SingleSided",
-			"VShader": "GBuffer_VShader",
-			"PShader": "GBuffer_PShader",
+			"VShader": "GLTF_PBRMetallicRoughness_VShader",
+			"PShader": "GLTF_PBRMetallicRoughness_GBufferFill_PShader",
 			"PipelineState": "SingleSided"
 		},
 		{
 			"Name": "FillGBuffer_DoubleSided",
-			"VShader": "GBuffer_VShader",
-			"PShader": "GBuffer_PShader",
+			"VShader": "GLTF_PBRMetallicRoughness_VShader",
+			"PShader": "GLTF_PBRMetallicRoughness_GBufferFill_PShader",
 			"PipelineState": "DoubleSided"
 		},
 
 		{
 			"Name": "AlphaBlend_SingleSided",
-			"VShader": "GBuffer_VShader",
-			"PShader": "GBuffer_PShader",
+			"VShader": "GLTF_PBRMetallicRoughness_VShader",
+			"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 			"PipelineState": "SingleSided"
 		},
 		{
 			"Name": "AlphaBlend_DoubleSided",
-			"VShader": "GBuffer_VShader",
-			"PShader": "GBuffer_PShader",
+			"VShader": "GLTF_PBRMetallicRoughness_VShader",
+			"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 			"PipelineState": "DoubleSided"
 		},
 		

@@ -453,35 +453,11 @@ namespace re
 		}
 #endif
 		
-		if (FilterBitMatch(batch.GetBatchFilterMask()))
+		if (batch.MatchesFilterBits(m_requiredBatchFilterBitmasks, m_excludedBatchFilterBitmasks))
 		{
 			re::Batch& duplicatedBatch = m_stageBatches.emplace_back(re::Batch::Duplicate(batch, batch.GetLifetime()));
 			duplicatedBatch.ResolveShader(m_drawStyleBits);
 		}
-	}
-
-
-	bool RenderStage::FilterBitMatch(uint32_t batchFilterBitmask) const
-	{
-		if (m_excludedBatchFilterBitmasks == 0 && m_requiredBatchFilterBitmasks == 0) // Accept all batches by default
-		{
-			return true;
-		}
-
-		// Only a single bit on a Batch must match with the excluded mask for a Batch to be excluded
-		const bool isExcluded = (batchFilterBitmask & m_excludedBatchFilterBitmasks);
-
-		// A Batch must contain all bits in the included mask to be included
-		// A Batch may contain additional bits to the stage, so long as it matches all stage batches
-		bool isFullyIncluded = false;
-		if (!isExcluded)
-		{
-			const uint32_t invertedRequiredBits = ~m_requiredBatchFilterBitmasks;
-			const uint32_t matchingBatchBits = (batchFilterBitmask & invertedRequiredBits) ^ batchFilterBitmask;
-			isFullyIncluded = (matchingBatchBits == m_requiredBatchFilterBitmasks);
-		}
-
-		return !isExcluded && isFullyIncluded;
 	}
 
 
@@ -493,15 +469,15 @@ namespace re
 		{
 			if (enabled)
 			{
-				m_requiredBatchFilterBitmasks |= static_cast<uint32_t>(filterBit);
-				if (m_excludedBatchFilterBitmasks & static_cast<uint32_t>(filterBit))
+				m_requiredBatchFilterBitmasks |= static_cast<re::Batch::FilterBitmask>(filterBit);
+				if (m_excludedBatchFilterBitmasks & static_cast<re::Batch::FilterBitmask>(filterBit))
 				{
-					m_excludedBatchFilterBitmasks ^= static_cast<uint32_t>(filterBit);
+					m_excludedBatchFilterBitmasks ^= static_cast<re::Batch::FilterBitmask>(filterBit);
 				}
 			}
-			else if (m_requiredBatchFilterBitmasks & static_cast<uint32_t>(filterBit))
+			else if (m_requiredBatchFilterBitmasks & static_cast<re::Batch::FilterBitmask>(filterBit))
 			{
-				m_requiredBatchFilterBitmasks ^= (1 << static_cast<uint32_t>(filterBit));
+				m_requiredBatchFilterBitmasks ^= (1 << static_cast<re::Batch::FilterBitmask>(filterBit));
 			}
 		}
 		break;
@@ -509,15 +485,15 @@ namespace re
 		{
 			if (enabled)
 			{
-				m_excludedBatchFilterBitmasks |= static_cast<uint32_t>(filterBit);
-				if (m_requiredBatchFilterBitmasks & static_cast<uint32_t>(filterBit))
+				m_excludedBatchFilterBitmasks |= static_cast<re::Batch::FilterBitmask>(filterBit);
+				if (m_requiredBatchFilterBitmasks & static_cast<re::Batch::FilterBitmask>(filterBit))
 				{
-					m_requiredBatchFilterBitmasks ^= static_cast<uint32_t>(filterBit);
+					m_requiredBatchFilterBitmasks ^= static_cast<re::Batch::FilterBitmask>(filterBit);
 				}
 			}
-			else if (m_excludedBatchFilterBitmasks & static_cast<uint32_t>(filterBit))
+			else if (m_excludedBatchFilterBitmasks & static_cast<re::Batch::FilterBitmask>(filterBit))
 			{
-				m_excludedBatchFilterBitmasks ^= static_cast<uint32_t>(filterBit);
+				m_excludedBatchFilterBitmasks ^= static_cast<re::Batch::FilterBitmask>(filterBit);
 			}
 		}
 		break;

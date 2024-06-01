@@ -354,6 +354,9 @@ namespace opengl
 							// Barrier to prevent reading before texture writes have finished.
 							// TODO: Is this always necessary?
 							glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+							// TODO: I suspect we'll need this when sharing SSBOs between stages
+							//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 						}
 						break;
 						default:

@@ -22,38 +22,39 @@ namespace effect
 		using Bitmask = uint64_t;
 		static constexpr Bitmask k_defaultTechniqueBitmask = 0;
 
-		static constexpr Bitmask GBuffer_Fill = 1llu << 0;
+		static constexpr Bitmask RenderPath_Deferred = 1llu << 0;
+		static constexpr Bitmask RenderPath_Forward = 1llu << 1;
 
-		static constexpr Bitmask AlphaMode_Opaque = 1llu << 1;
-		static constexpr Bitmask AlphaMode_Mask = 1llu << 2;
-		static constexpr Bitmask AlphaMode_Blend = 1llu << 3;
+		static constexpr Bitmask AlphaMode_Opaque = 1llu << 2;
+		static constexpr Bitmask AlphaMode_Mask = 1llu << 3;
+		static constexpr Bitmask AlphaMode_Blend = 1llu << 4;
 		
-		static constexpr Bitmask MaterialSidedness_Single = 1llu << 4;
-		static constexpr Bitmask MaterialSidedness_Double = 1llu << 5;
+		static constexpr Bitmask MaterialSidedness_Single = 1llu << 5;
+		static constexpr Bitmask MaterialSidedness_Double = 1llu << 6;
 
-		static constexpr Bitmask Debug_Line = 1llu << 6;
-		static constexpr Bitmask Debug_Triangle = 1llu << 7;
+		static constexpr Bitmask Debug_Line = 1llu << 7;
+		static constexpr Bitmask Debug_Triangle = 1llu << 8;
 
-		static constexpr Bitmask Bloom_EmissiveBlit = 1llu << 8;
+		static constexpr Bitmask Bloom_EmissiveBlit = 1llu << 9;
 
-		static constexpr Bitmask DeferredLighting_BRDFIntegration = 1llu << 9;
-		static constexpr Bitmask DeferredLighting_IEMGeneration = 1llu << 10;
-		static constexpr Bitmask DeferredLighting_PMREMGeneration = 1llu << 11;
-		static constexpr Bitmask DeferredLighting_DeferredAmbient = 1llu << 12;
-		static constexpr Bitmask DeferredLighting_DeferredDirectional = 1llu << 13;
-		static constexpr Bitmask DeferredLighting_DeferredPoint = 1llu << 14;
-		static constexpr Bitmask DeferredLighting_DeferredSpot = 1llu << 15;
+		static constexpr Bitmask DeferredLighting_BRDFIntegration = 1llu << 10;
+		static constexpr Bitmask DeferredLighting_IEMGeneration = 1llu << 11;
+		static constexpr Bitmask DeferredLighting_PMREMGeneration = 1llu << 12;
+		static constexpr Bitmask DeferredLighting_DeferredAmbient = 1llu << 13;
+		static constexpr Bitmask DeferredLighting_DeferredDirectional = 1llu << 14;
+		static constexpr Bitmask DeferredLighting_DeferredPoint = 1llu << 15;
+		static constexpr Bitmask DeferredLighting_DeferredSpot = 1llu << 16;
 
-		static constexpr Bitmask XeGTAO_PrefilterDepths = 1llu << 16;
-		static constexpr Bitmask XeGTAO_QualityLow = 1llu << 17;
-		static constexpr Bitmask XeGTAO_QualityMed = 1llu << 18;
-		static constexpr Bitmask XeGTAO_QualityHigh = 1llu << 19;
-		static constexpr Bitmask XeGTAO_QualityUltra = 1llu << 20;
-		static constexpr Bitmask XeGTAO_Denoise = 1llu << 21;
-		static constexpr Bitmask XeGTAO_DenoiseLastPass = 1llu << 22;
+		static constexpr Bitmask XeGTAO_PrefilterDepths = 1llu << 17;
+		static constexpr Bitmask XeGTAO_QualityLow = 1llu << 18;
+		static constexpr Bitmask XeGTAO_QualityMed = 1llu << 19;
+		static constexpr Bitmask XeGTAO_QualityHigh = 1llu << 20;
+		static constexpr Bitmask XeGTAO_QualityUltra = 1llu << 21;
+		static constexpr Bitmask XeGTAO_Denoise = 1llu << 22;
+		static constexpr Bitmask XeGTAO_DenoiseLastPass = 1llu << 23;
 
-		static constexpr Bitmask Shadow_2D = 1llu << 23;
-		static constexpr Bitmask Shadow_Cube = 1llu << 24;
+		static constexpr Bitmask Shadow_2D = 1llu << 24;
+		static constexpr Bitmask Shadow_Cube = 1llu << 25;
 
 
 		using ModeToBitmask = std::unordered_map<std::string, effect::DrawStyle::Bitmask>;
@@ -65,9 +66,10 @@ namespace effect
 			static const DrawStyleRuleToModes s_drawstyleBitmaskMappings(
 				{
 					{
-						"GBuffer",
+						"RenderPath",
 						{
-							{"Fill", effect::DrawStyle::GBuffer_Fill}
+							{"Deferred", effect::DrawStyle::RenderPath_Deferred},
+							{"Forward", effect::DrawStyle::RenderPath_Forward}
 						}
 					},
 					{

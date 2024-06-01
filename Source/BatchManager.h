@@ -39,10 +39,14 @@ namespace gr
 		// Build a vector of single frame scene batches from the vector of RenderDataIDs, from the interal batch cache
 		std::vector<re::Batch> GetSceneBatches(
 			std::vector<gr::RenderDataID> const&,
-			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material)) const;
+			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material),
+			re::Batch::FilterBitmask required = 0,
+			re::Batch::FilterBitmask excluded = 0) const;
 
 		std::vector<re::Batch> GetAllSceneBatches(
-			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material)) const;
+			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material),
+			re::Batch::FilterBitmask required = 0,
+			re::Batch::FilterBitmask excluded = 0) const;
 
 	public:
 		struct RefCountedIndex

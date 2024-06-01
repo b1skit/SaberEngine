@@ -164,9 +164,6 @@ namespace re
 		};
 		void SetBatchFilterMaskBit(re::Batch::Filter filterBit, FilterMode, bool enabled);
 
-	private:
-		bool FilterBitMatch(uint32_t batchFilterBitmask) const;
-
 
 	protected:
 		explicit RenderStage(char const* name, std::unique_ptr<IStageParams>&&, Type, Lifetime);
@@ -192,8 +189,8 @@ namespace re
 
 		std::vector<re::Batch> m_stageBatches;
 
-		uint32_t m_requiredBatchFilterBitmasks;
-		uint32_t m_excludedBatchFilterBitmasks;
+		re::Batch::FilterBitmask m_requiredBatchFilterBitmasks;
+		re::Batch::FilterBitmask m_excludedBatchFilterBitmasks;
 
 		effect::DrawStyle::Bitmask m_drawStyleBits;
 

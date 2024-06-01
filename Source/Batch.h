@@ -50,14 +50,15 @@ namespace re
 			ArrayInstanced
 		};
 
-		enum class Filter : uint32_t
+		using FilterBitmask = uint32_t;
+		enum Filter : FilterBitmask
 		{
 			AlphaBlended		= 1 << 0,	// 0001
 			CastsShadow			= 1 << 1,	// ...
 
 			Filter_Count
 		};
-		SEStaticAssert(static_cast<uint32_t>(re::Batch::Filter::Filter_Count) <= 32, "Too many filter bits");
+		SEStaticAssert(re::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
 
 		// TODO: Combine with RenderStage::RenderStageTextureAndSamplerInput struct?
 		struct BatchTextureAndSamplerInput
@@ -148,8 +149,9 @@ namespace re
 
 		Lifetime GetLifetime() const;
 		
-		uint32_t GetBatchFilterMask() const;
+		FilterBitmask GetBatchFilterMask() const;
 		void SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled);
+		bool MatchesFilterBits(re::Batch::FilterBitmask required, re::Batch::FilterBitmask excluded) const;
 
 		GraphicsParams const& GetGraphicsParams() const;
 		ComputeParams const& GetComputeParams() const;
@@ -172,7 +174,7 @@ namespace re
 
 		EffectID m_effectID;
 		effect::DrawStyle::Bitmask m_drawStyleBitmask;
-		uint32_t m_batchFilterBitmask;
+		FilterBitmask m_batchFilterBitmask;
 
 		// Note: Batches can be responsible for the lifetime of a buffer held by a shared pointer: 
 		// e.g. single-frame resources, or permanent buffers that are to be discarded (e.g. batch manager allocated a larger
@@ -241,7 +243,7 @@ namespace re
 	}
 
 
-	inline uint32_t Batch::GetBatchFilterMask() const
+	inline re::Batch::FilterBitmask Batch::GetBatchFilterMask() const
 	{
 		return m_batchFilterBitmask;
 	}

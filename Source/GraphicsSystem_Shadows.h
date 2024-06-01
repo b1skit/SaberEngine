@@ -23,7 +23,7 @@ namespace gr
 			);
 		}
 
-		static constexpr char const* k_cullingInput = "ViewCullingResults";
+		static constexpr char const* k_cullingDataInput = "ViewCullingResults";
 		static constexpr char const* k_pointLightCullingDataInput = "PointLightCullingResults";
 		static constexpr char const* k_spotLightCullingDataInput = "SpotLightCullingResults";
 		void RegisterInputs() override;

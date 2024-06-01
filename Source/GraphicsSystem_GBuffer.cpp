@@ -20,6 +20,8 @@ namespace gr
 
 		m_gBufferStage->SetBatchFilterMaskBit(
 			re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
+
+		m_gBufferStage->SetDrawStyle(effect::DrawStyle::RenderPath_Deferred);
 	}
 
 
@@ -27,8 +29,6 @@ namespace gr
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		m_owningPipeline = &pipeline;
-
-		m_gBufferStage->SetDrawStyle(effect::DrawStyle::GBuffer_Fill);
 
 		// Create GBuffer color targets:
 		re::Texture::TextureParams gBufferColorParams;
@@ -93,17 +93,17 @@ namespace gr
 		re::RenderStage::ClearStageParams gbufferClearParams; // Clear both color and depth
 		gbufferClearParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Enabled };
 		gbufferClearParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
-		pipeline.AppendRenderStage(re::RenderStage::CreateClearStage(gbufferClearParams, m_gBufferTargets));
+		m_owningPipeline->AppendRenderStage(re::RenderStage::CreateClearStage(gbufferClearParams, m_gBufferTargets));
 
 
 		// Finally, append the GBuffer stage to the pipeline:
-		pipeline.AppendRenderStage(m_gBufferStage);
+		m_owningPipeline->AppendRenderStage(m_gBufferStage);
 	}
 
 
 	void GBufferGraphicsSystem::RegisterInputs()
 	{
-		RegisterDataInput(k_cullingInput);
+		RegisterDataInput(k_cullingDataInput);
 	}
 
 
@@ -145,19 +145,27 @@ namespace gr
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 
 		ViewCullingResults const* cullingResults = 
-			static_cast<ViewCullingResults const*>(dataDependencies.at(k_cullingInput));
+			static_cast<ViewCullingResults const*>(dataDependencies.at(k_cullingDataInput));
 		
 		if (cullingResults)
 		{
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
-			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(cullingResults->at(mainCamID));
+			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(
+				cullingResults->at(mainCamID),
+				(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
+				0,
+				re::Batch::Filter::AlphaBlended);
 			
 			m_gBufferStage->AddBatches(sceneBatches);
 		}
 		else
 		{
-			std::vector<re::Batch> const& allSceneBatches = batchMgr.GetAllSceneBatches();
+			std::vector<re::Batch> const& allSceneBatches = batchMgr.GetAllSceneBatches(
+				(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
+				0,
+				re::Batch::Filter::AlphaBlended);
+
 			m_gBufferStage->AddBatches(allSceneBatches);
 		}
 	}

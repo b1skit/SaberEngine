@@ -66,27 +66,29 @@ namespace
 			{
 				blendFactor = GL_ONE_MINUS_DST_COLOR;
 			}
+			break;
 			case re::TextureTarget::TargetParams::BlendMode::SrcAlpha:
 			{
 				blendFactor = GL_SRC_ALPHA;
 			}
+			break;
 			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcAlpha:
 			{
 				blendFactor = GL_ONE_MINUS_SRC_ALPHA;
 			}
+			break;
 			case re::TextureTarget::TargetParams::BlendMode::DstAlpha:
 			{
 				blendFactor = GL_DST_ALPHA;
 			}
+			break;
 			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstAlpha:
 			{
 				blendFactor = GL_ONE_MINUS_DST_ALPHA;
 			}
 			break;
 			default:
-			{
 				SEAssertF("Invalid blend mode");
-			}
 			}
 		};
 

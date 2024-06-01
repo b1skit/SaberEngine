@@ -863,8 +863,11 @@ namespace re
 			while (!m_singleFrameAllocations.m_handleToPtr.empty())
 			{
 				SEAssert(m_singleFrameAllocations.m_handleToPtr.begin()->second.use_count() == 1,
-					"Trying to deallocate a single frame buffer, but there is still a live shared_ptr. Is "
-					"something holding onto a single frame buffer beyond the frame lifetime?");
+					std::format("Trying to deallocate a single frame buffer \"{}\", but there is still a live "
+						"shared_ptr. Is something holding onto a single frame buffer beyond the frame lifetime? Or, "
+						"has a batch been added to a stage, but the stage is not added to the pipeline (thus has not "
+						"been cleared)?",
+						m_singleFrameAllocations.m_handleToPtr.begin()->second->GetName()).c_str());
 
 				m_singleFrameAllocations.m_handleToPtr.begin()->second->Destroy();
 			}

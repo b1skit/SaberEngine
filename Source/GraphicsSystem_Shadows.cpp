@@ -87,7 +87,7 @@ namespace gr
 
 	void ShadowsGraphicsSystem::RegisterInputs()
 	{
-		RegisterDataInput(k_cullingInput);
+		RegisterDataInput(k_cullingDataInput);
 		RegisterDataInput(k_pointLightCullingDataInput);
 		RegisterDataInput(k_spotLightCullingDataInput);
 	}
@@ -491,7 +491,7 @@ namespace gr
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 		
 		ViewCullingResults const* cullingResults =
-			static_cast<ViewCullingResults const*>(dataDependencies.at(k_cullingInput));
+			static_cast<ViewCullingResults const*>(dataDependencies.at(k_cullingDataInput));
 
 		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
@@ -514,11 +514,17 @@ namespace gr
 					if (cullingResults)
 					{
 						directionalStage.AddBatches(batchMgr.GetSceneBatches(
-							cullingResults->at(lightID)));
+							cullingResults->at(lightID),
+							(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
+							re::Batch::Filter::CastsShadow,
+							re::Batch::Filter::AlphaBlended));
 					}
 					else
 					{
-						directionalStage.AddBatches(batchMgr.GetAllSceneBatches());
+						directionalStage.AddBatches(batchMgr.GetAllSceneBatches(
+							(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
+							re::Batch::Filter::CastsShadow,
+							re::Batch::Filter::AlphaBlended));
 					}
 					
 				}

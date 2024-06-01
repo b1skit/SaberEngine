@@ -397,7 +397,9 @@ namespace gr
 
 	std::vector<re::Batch> BatchManager::GetSceneBatches(
 		std::vector<gr::RenderDataID> const& renderDataIDs,
-		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
+		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/,
+		re::Batch::FilterBitmask required /*=0*/,
+		re::Batch::FilterBitmask excluded /*= 0*/) const
 	{
 		// Copy the batch metadata for the requeted RenderDataIDs:
 		std::vector<BatchMetadata> batchMetadata;
@@ -424,6 +426,14 @@ namespace gr
 			do
 			{
 				re::Batch const& cachedBatch = m_permanentCachedBatches[batchMetadata[unmergedIdx].m_cacheIndex];
+
+				// Pre-filter the batch. RenderStages will also filter batches, but this allows us to minimize
+				// unnecessary copying when we know certain batches aren't required
+				if (!cachedBatch.MatchesFilterBits(required, excluded))
+				{
+					unmergedIdx++; // Skip the batch
+					continue;
+				}
 
 				// Add the first batch in the sequence to our final list. We duplicate the batch, as the cached batches
 				// have a permanent Lifetime
@@ -492,7 +502,9 @@ namespace gr
 
 
 	std::vector<re::Batch> BatchManager::GetAllSceneBatches(
-		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/) const
+		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/,
+		re::Batch::FilterBitmask required /*=0*/,
+		re::Batch::FilterBitmask excluded /*= 0*/) const
 	{
 		std::vector<gr::RenderDataID> allRenderDataIDs;
 		allRenderDataIDs.reserve(m_renderDataIDToBatchMetadata.size());
@@ -502,6 +514,6 @@ namespace gr
 			allRenderDataIDs.emplace_back(metadata.first);
 		}
 
-		return GetSceneBatches(allRenderDataIDs, bufferTypeMask);
+		return GetSceneBatches(allRenderDataIDs, bufferTypeMask, required, excluded);
 	}
 }
