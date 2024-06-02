@@ -1,8 +1,10 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Interfaces\IPlatformParams.h"
 #include "RLibrary_Platform.h"
 #include "RenderStage.h"
+
+#include "Core/CommandQueue.h"
+#include "Core/Interfaces/IPlatformParams.h"
 
 
 namespace en

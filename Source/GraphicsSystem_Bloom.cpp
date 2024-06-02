@@ -1,9 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraRenderData.h"
-#include "Core\Definitions\ConfigKeys.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem_Bloom.h"
 #include "Sampler.h"
+
+#include "Core/Definitions/ConfigKeys.h"
 
 #include "Shaders/Common/BloomComputeParams.h"
 
@@ -54,7 +55,8 @@ namespace gr
 	}
 
 
-	void BloomGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+	void BloomGraphicsSystem::InitPipeline(
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
 		std::shared_ptr<re::Sampler> const bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
 
@@ -230,7 +232,7 @@ namespace gr
 	{
 		RegisterTextureOutput(
 			k_bloomResultOutput, 
-			m_bloomUpStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture());
+			&m_bloomUpStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture());
 	}
 
 

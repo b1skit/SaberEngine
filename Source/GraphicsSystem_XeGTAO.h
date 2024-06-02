@@ -23,11 +23,11 @@ namespace gr
 			);
 		}
 
-		static constexpr char const* k_wNormalInput = "SceneWNormal";
-		static constexpr char const* k_depthInput = "SceneDepth";
+		static constexpr util::HashKey k_wNormalInput = "SceneWNormal";
+		static constexpr util::HashKey k_depthInput = "SceneDepth";
 		void RegisterInputs() override;
 
-		static constexpr char const* k_aoOutput = "SSAOTex";
+		static constexpr util::HashKey k_aoOutput = "SSAOTex";
 		void RegisterOutputs() override;
 
 

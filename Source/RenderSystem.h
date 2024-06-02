@@ -4,7 +4,7 @@
 #include "GraphicsSystem.h"
 #include "RenderPipeline.h"
 
-#include "Core\Interfaces\INamedObject.h"
+#include "Core/Interfaces/INamedObject.h"
 
 
 namespace re
@@ -53,7 +53,7 @@ namespace re
 		struct UpdateStep
 		{
 			gr::GraphicsSystem::RuntimeBindings::PreRenderFn m_preRenderFunc;
-			std::unordered_map<std::string, void const*> m_resolvedDependencies;
+			std::unordered_map<util::HashKey const, void const*> m_resolvedDependencies;
 			
 			// Convenience for debugging/logging:
 			gr::GraphicsSystem const* m_gs; 

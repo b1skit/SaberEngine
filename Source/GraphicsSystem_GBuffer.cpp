@@ -6,7 +6,7 @@
 #include "RenderStage.h"
 #include "Texture.h"
 
-#include "Core\Config.h"
+#include "Core/Config.h"
 
 
 namespace gr
@@ -55,12 +55,12 @@ namespace gr
 			if (i == GBufferWNormal || i == GBufferEmissive)
 			{
 				m_gBufferTargets->SetColorTarget(
-					i, re::Texture::Create(GBufferTexNames[i], gbuffer16bitParams), defaultTargetParams);
+					i, re::Texture::Create(GBufferTexNameHashKeys[i].GetKey(), gbuffer16bitParams), defaultTargetParams);
 			}
 			else
 			{
 				m_gBufferTargets->SetColorTarget(
-					i, re::Texture::Create(GBufferTexNames[i], gBufferColorParams), defaultTargetParams);
+					i, re::Texture::Create(GBufferTexNameHashKeys[i].GetKey(), gBufferColorParams), defaultTargetParams);
 			}
 		}
 		
@@ -73,7 +73,7 @@ namespace gr
 		depthTexParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane
 
 		m_gBufferTargets->SetDepthStencilTarget(
-			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams),
+			re::Texture::Create(GBufferTexNameHashKeys[GBufferTexIdx::GBufferDepth].GetKey(), depthTexParams),
 			defaultTargetParams);
 
 		const re::TextureTarget::TargetParams::BlendModes gbufferBlendModes
@@ -113,11 +113,11 @@ namespace gr
 		for (uint8_t i = 0; i < GBufferColorTex_Count; i++)
 		{
 			RegisterTextureOutput(
-				GBufferTexNames[i], m_gBufferTargets->GetColorTarget(i).GetTexture());
+				GBufferTexNameHashKeys[i], &m_gBufferTargets->GetColorTarget(i).GetTexture());
 		}
 		// Depth texture:
 		RegisterTextureOutput(
-			GBufferTexNames[GBufferDepth], m_gBufferTargets->GetDepthStencilTarget()->GetTexture());
+			GBufferTexNameHashKeys[GBufferDepth], &m_gBufferTargets->GetDepthStencilTarget()->GetTexture());
 	}
 
 

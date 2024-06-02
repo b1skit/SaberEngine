@@ -5,9 +5,10 @@
 #include "RenderSystem.h"
 #include "RenderSystemDesc.h"
 #include "SceneManager.h"
-#include "Core\ThreadPool.h"
 
-#include "Core\Util\ImGuiUtils.h"
+#include "Core/ThreadPool.h"
+
+#include "Core/Util/ImGuiUtils.h"
 
 using GSName = re::RenderSystemDescription::GSName;
 using SrcDstNamePairs = re::RenderSystemDescription::SrcDstNamePairs;
@@ -45,7 +46,7 @@ namespace
 				{
 					std::string const& srcName = dependencySrcDstNameMapping.first;
 					
-					std::string const& dstName = dependencySrcDstNameMapping.second;
+					util::HashKey const& dstName = util::HashKey::Create(dependencySrcDstNameMapping.second);
 					SEAssert(dstGS->HasRegisteredTextureInput(dstName),
 						"Destination GS hasn't registered this input name");
 
@@ -133,7 +134,7 @@ namespace
 
 				for (auto const& srcDstNames : curDependency.second)
 				{
-					std::string const& dependencyDstName = srcDstNames.second;
+					util::HashKey const& dependencyDstName = util::HashKey::Create(srcDstNames.second);
 					SEAssert(dstGS->HasRegisteredBufferInput(dependencyDstName),
 						"No Buffer input with the given name has been registered");
 
@@ -147,12 +148,12 @@ namespace
 	}
 
 
-	std::unordered_map<std::string, void const*> ResolveDataDependencies(
+	std::unordered_map<util::HashKey const, void const*> ResolveDataDependencies(
 		std::string const& dstGSScriptName,
 		re::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
-		std::unordered_map<std::string, void const*> resolvedDependencies;
+		std::unordered_map<util::HashKey const, void const*> resolvedDependencies;
 
 		gr::GraphicsSystem const* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
 
@@ -177,7 +178,7 @@ namespace
 
 				for (auto const& srcDstNames : curDependency.second)
 				{
-					std::string const& dependencyDstName = srcDstNames.second;
+					util::HashKey const& dependencyDstName = util::HashKey::Create(srcDstNames.second);
 					SEAssert(dstGS->HasRegisteredDataInput(dependencyDstName),
 						"No data input with the given name has been registered");
 

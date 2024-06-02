@@ -21,9 +21,9 @@ namespace gr
 			);
 		}
 
-		static constexpr char const* k_sceneDepthTexInput = "SceneDepth";
-		static constexpr char const* k_sceneLightingTexInput = "SceneLighting";
-		static constexpr char const* k_cullingDataInput = "ViewCullingResults";
+		static constexpr util::HashKey k_sceneDepthTexInput = "SceneDepth";
+		static constexpr util::HashKey k_sceneLightingTexInput = "SceneLighting";
+		static constexpr util::HashKey k_cullingDataInput = "ViewCullingResults";
 		void RegisterInputs() override;
 
 		void RegisterOutputs() override;

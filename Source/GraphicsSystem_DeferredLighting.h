@@ -36,14 +36,14 @@ namespace gr
 			);
 		}
 
-		static constexpr char const* k_ssaoInput = "SSAOTex";
-		static constexpr char const* k_pointLightCullingDataInput = "PointLightCullingResults";
-		static constexpr char const* k_spotLightCullingDataInput = "SpotLightCullingResults";
-		static constexpr char const* k_shadowTexturesInput = "ShadowTextures";
+		static constexpr util::HashKey k_ssaoInput = "SSAOTex";
+		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
+		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
+		static constexpr util::HashKey k_shadowTexturesInput = "ShadowTextures";
 		// Note: The DeferredLightingGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
 		void RegisterInputs() override;
 
-		static constexpr char const* k_lightOutput = "DeferredLightTarget";
+		static constexpr util::HashKey k_lightOutput = "DeferredLightTarget";
 		void RegisterOutputs() override;
 
 

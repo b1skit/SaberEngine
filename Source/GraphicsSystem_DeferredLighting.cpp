@@ -10,10 +10,10 @@
 #include "RenderDataManager.h"
 #include "RenderStage.h"
 
-#include "Core\Config.h"
+#include "Core/Config.h"
 
-#include "Shaders\Common\IBLGenerationParams.h"
-#include "Shaders\Common\LightParams.h"
+#include "Shaders/Common/IBLGenerationParams.h"
+#include "Shaders/Common/LightParams.h"
 
 
 namespace
@@ -304,18 +304,16 @@ namespace gr
 	void DeferredLightingGraphicsSystem::RegisterInputs()
 	{
 		// Deferred lighting GS is (currently) tightly coupled to the GBuffer GS
-		constexpr uint8_t numGBufferColorInputs =
-			static_cast<uint8_t>(GBufferGraphicsSystem::GBufferTexIdx::GBufferColorTex_Count);
-		for (uint8_t slot = 0; slot < numGBufferColorInputs; slot++)
+		for (uint8_t slot = 0; slot < GBufferGraphicsSystem::GBufferColorTex_Count; slot++)
 		{
-			if (GBufferGraphicsSystem::GBufferTexNames[slot] == "GBufferEmissive")
+			if (slot == GBufferGraphicsSystem::GBufferEmissive)
 			{
 				continue;
 			}
 
-			RegisterTextureInput(GBufferGraphicsSystem::GBufferTexNames[slot]);
+			RegisterTextureInput(GBufferGraphicsSystem::GBufferTexNameHashKeys[slot]);
 		}
-		RegisterTextureInput(GBufferGraphicsSystem::GBufferTexNames[GBufferGraphicsSystem::GBufferTexIdx::GBufferDepth]);
+		RegisterTextureInput(GBufferGraphicsSystem::GBufferTexNameHashKeys[GBufferGraphicsSystem::GBufferDepth]);
 
 		RegisterTextureInput(k_ssaoInput, TextureInputDefault::OpaqueWhite);
 
@@ -327,7 +325,7 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::RegisterOutputs()
 	{
-		RegisterTextureOutput(k_lightOutput, m_lightingTargetSet->GetColorTarget(0).GetTexture());
+		RegisterTextureOutput(k_lightOutput, &m_lightingTargetSet->GetColorTarget(0).GetTexture());
 	}
 
 
@@ -674,7 +672,7 @@ namespace gr
 		m_lightingTargetSet->SetColorTarget(0, lightTargetTex, deferredTargetParams);
 
 		m_lightingTargetSet->SetDepthStencilTarget(
-			texDependencies.at(GBufferGraphicsSystem::GBufferTexNames[GBufferGraphicsSystem::GBufferDepth]),
+			texDependencies.at(GBufferGraphicsSystem::GBufferTexNameHashKeys[GBufferGraphicsSystem::GBufferDepth]),
 			depthTargetParams);
 
 		// All deferred lighting is additive
@@ -706,7 +704,7 @@ namespace gr
 
 		std::shared_ptr<re::Sampler> clampMinMagMipPoint = re::Sampler::GetSampler("ClampMinMagMipPoint");
 
-		m_ambientStage->AddTextureInput(k_ssaoInput, m_ssaoTex, clampMinMagMipPoint);
+		m_ambientStage->AddTextureInput(k_ssaoInput.GetKey(), m_ssaoTex, clampMinMagMipPoint);
 
 
 		// Append the ambient stage:
@@ -771,28 +769,28 @@ namespace gr
 				continue; // The emissive texture is not used
 			}
 
-			SEAssert(texDependencies.contains(GBufferGraphicsSystem::GBufferTexNames[slot]),
+			SEAssert(texDependencies.contains(GBufferGraphicsSystem::GBufferTexNameHashKeys[slot]),
 				"Texture dependency not found");
 
-			char const* texName = GBufferGraphicsSystem::GBufferTexNames[slot];
+			util::HashKey const& texName = GBufferGraphicsSystem::GBufferTexNameHashKeys[slot];
 			std::shared_ptr<re::Texture> const& gbufferTex = texDependencies.at(texName);
 			
-			m_ambientStage->AddTextureInput(texName, gbufferTex, wrapMinMagLinearMipPoint);
-			m_directionalStage->AddTextureInput(texName, gbufferTex, wrapMinMagLinearMipPoint);
-			m_pointStage->AddTextureInput(texName, gbufferTex, wrapMinMagLinearMipPoint);
-			m_spotStage->AddTextureInput(texName, gbufferTex, wrapMinMagLinearMipPoint);
+			m_ambientStage->AddTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
+			m_directionalStage->AddTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
+			m_pointStage->AddTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
+			m_spotStage->AddTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
 		}
 
 
 		// Attach the GBUffer depth input:
 		constexpr uint8_t depthBufferSlot = gr::GBufferGraphicsSystem::GBufferDepth;
-		char const* depthName = GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot];
+		util::HashKey const& depthName = GBufferGraphicsSystem::GBufferTexNameHashKeys[depthBufferSlot];
 		std::shared_ptr<re::Texture> const& depthTex = texDependencies.at(depthName);
 
-		m_directionalStage->AddTextureInput(depthName, depthTex, wrapMinMagLinearMipPoint);
-		m_pointStage->AddTextureInput(depthName, depthTex, wrapMinMagLinearMipPoint);
-		m_spotStage->AddTextureInput(depthName, depthTex, wrapMinMagLinearMipPoint);
-		m_ambientStage->AddTextureInput(depthName, depthTex, wrapMinMagLinearMipPoint);
+		m_directionalStage->AddTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
+		m_pointStage->AddTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
+		m_spotStage->AddTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
+		m_ambientStage->AddTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
 
 		m_ambientStage->AddTextureInput("Tex7", m_BRDF_integrationMap, clampMinMagMipPoint);
 	}

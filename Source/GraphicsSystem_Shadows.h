@@ -23,12 +23,12 @@ namespace gr
 			);
 		}
 
-		static constexpr char const* k_cullingDataInput = "ViewCullingResults";
-		static constexpr char const* k_pointLightCullingDataInput = "PointLightCullingResults";
-		static constexpr char const* k_spotLightCullingDataInput = "SpotLightCullingResults";
+		static constexpr util::HashKey k_cullingDataInput = "ViewCullingResults";
+		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
+		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
 		void RegisterInputs() override;
 
-		static constexpr char const* k_shadowTexturesOutput = "ShadowTextures";
+		static constexpr util::HashKey k_shadowTexturesOutput = "ShadowTextures";
 		void RegisterOutputs() override;
 
 

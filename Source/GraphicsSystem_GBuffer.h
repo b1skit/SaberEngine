@@ -2,6 +2,8 @@
 #pragma once
 #include "GraphicsSystem.h"
 
+#include "Core/Assert.h"
+
 
 namespace re
 {
@@ -26,7 +28,7 @@ namespace gr
 			);
 		}
 
-		static constexpr char const* k_cullingDataInput = "ViewCullingResults";
+		static constexpr util::HashKey k_cullingDataInput = "ViewCullingResults";
 		void RegisterInputs() override;
 		void RegisterOutputs() override;
 
@@ -46,19 +48,18 @@ namespace gr
 			GBufferTexIdx_Count,
 			GBufferColorTex_Count = 5 // Helper for iterating over color indexes only
 		};
-		static constexpr std::array<char const*, GBufferTexIdx_Count> GBufferTexNames =
+		static constexpr std::array<util::HashKey, GBufferTexIdx_Count> GBufferTexNameHashKeys =
 		{
-			ENUM_TO_STR(GBufferAlbedo),		// 0
-			ENUM_TO_STR(GBufferWNormal),	// 1
-			ENUM_TO_STR(GBufferRMAO),		// 2
-			ENUM_TO_STR(GBufferEmissive),	// 3
-			ENUM_TO_STR(GBufferMatProp0),	// 4
-			ENUM_TO_STR(GBufferDepth),		// 5
+			util::HashKey(ENUM_TO_STR(GBufferAlbedo)),		// 0
+			util::HashKey(ENUM_TO_STR(GBufferWNormal)),		// 1
+			util::HashKey(ENUM_TO_STR(GBufferRMAO)),		// 2
+			util::HashKey(ENUM_TO_STR(GBufferEmissive)),	// 3
+			util::HashKey(ENUM_TO_STR(GBufferMatProp0)),	// 4
+			util::HashKey(ENUM_TO_STR(GBufferDepth)),		// 5
 		};
-		static_assert(GBufferGraphicsSystem::GBufferTexNames.size() ==
-			GBufferGraphicsSystem::GBufferTexIdx::GBufferTexIdx_Count);
-		// TODO: Split this into 2 lists: color target names, and depth names
-		// -> Often need to loop over color, and treat depth differently
+		SEStaticAssert(GBufferGraphicsSystem::GBufferTexNameHashKeys.size() ==
+			GBufferGraphicsSystem::GBufferTexIdx::GBufferTexIdx_Count,
+			"GBuffer hash keys are out of sync with enum");
 
 
 	public:

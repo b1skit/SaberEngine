@@ -3,7 +3,7 @@
 #include "GraphicsSystemManager.h"
 #include "Sampler.h"
 
-#include "Core\Config.h"
+#include "Core/Config.h"
 
 
 namespace
@@ -284,7 +284,7 @@ namespace gr
 			re::Sampler::GetSampler("ClampMinMagMipPoint"));
 		
 		m_mainStage->AddTextureInput(
-			k_wNormalInput,
+			k_wNormalInput.GetKey(),
 			texDependencies.at(k_wNormalInput),
 			re::Sampler::GetSampler("ClampMinMagMipPoint"),
 			0);
@@ -384,7 +384,7 @@ namespace gr
 	{
 		RegisterTextureOutput(
 			k_aoOutput, 
-			m_denoiseStages[m_denoiseFinalOutputIdx]->GetTextureTargetSet()->GetColorTarget(0).GetTexture());
+			&m_denoiseStages[m_denoiseFinalOutputIdx]->GetTextureTargetSet()->GetColorTarget(0).GetTexture());
 	}
 
 
