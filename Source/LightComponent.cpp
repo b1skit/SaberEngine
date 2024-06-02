@@ -1,9 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Camera.h"
-#include "Core\Config.h"
+#include "EntityCommands.h"
 #include "EntityManager.h"
-#include "Core\Util\FileIOUtils.h"
-#include "Core\Util\ImGuiUtils.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
 #include "MeshFactory.h"
@@ -16,6 +14,10 @@
 #include "SceneNodeConcept.h"
 #include "ShadowMapComponent.h"
 #include "TransformComponent.h"
+
+#include "Core/Config.h"
+#include "Core/Util/FileIOUtils.h"
+#include "Core/Util/ImGuiUtils.h"
 
 
 namespace
@@ -566,6 +568,7 @@ namespace fr
 			{
 			case fr::Light::Type::AmbientIBL:
 			{
+				// TODO: THIS SHOULD BE PART OF THE AMBIENT LIGHT LOGIC, NOT IMGUI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 				re::Texture const* newIBL = fr::SceneManager::GetSceneData()->TryLoadUniqueTexture(
 					s_spawnParams->m_ambientLightSpawnParams.m_filepath,
 					re::Texture::ColorSpace::Linear).get();

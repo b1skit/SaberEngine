@@ -118,11 +118,11 @@ namespace gr
 
 	protected:
 		void RegisterBufferInput(util::HashKey const&);
-		void RegisterBufferOutput(util::HashKey const&, std::shared_ptr<re::Buffer const> const*);
+		void RegisterBufferOutput(util::HashKey const&, std::shared_ptr<re::Buffer> const*);
 
 	private:
 		std::set<util::HashKey> m_bufferInputs;
-		std::map<util::HashKey, std::shared_ptr<re::Buffer const> const*> m_bufferOutputs;
+		std::map<util::HashKey, std::shared_ptr<re::Buffer> const*> m_bufferOutputs;
 
 
 		// Data inputs/outputs:
@@ -348,7 +348,7 @@ namespace gr
 
 
 	inline void GraphicsSystem::RegisterBufferOutput(
-		util::HashKey const& scriptName, std::shared_ptr<re::Buffer const> const* buffer)
+		util::HashKey const& scriptName, std::shared_ptr<re::Buffer> const* buffer)
 	{
 		m_bufferOutputs.emplace(scriptName, buffer);
 	}

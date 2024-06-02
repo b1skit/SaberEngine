@@ -325,7 +325,11 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::RegisterOutputs()
 	{
-		RegisterTextureOutput(k_lightOutput, &m_lightingTargetSet->GetColorTarget(0).GetTexture());
+		RegisterTextureOutput(k_lightingTexOutput, &m_lightingTargetSet->GetColorTarget(0).GetTexture());
+		RegisterTextureOutput(k_activeAmbientIEMTexOutput, &m_activeAmbientLightData.m_IEMTex);
+		RegisterTextureOutput(k_activeAmbientPMREMTexOutput, &m_activeAmbientLightData.m_PMREMTex);
+		
+		RegisterBufferOutput(k_activeAmbientParamsBufferOutput, &m_activeAmbientLightData.m_ambientParams);
 	}
 
 
@@ -811,7 +815,20 @@ namespace gr
 		};
 		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>())
 		{
-			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>(), m_ambientLightData);
+			std::vector<gr::RenderDataID> const& deletedAmbientIDs = 
+				renderData.GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
+
+			// Null out the active ambient light tracking if it has been deleted
+			for (auto const& deletedAmbientID : deletedAmbientIDs)
+			{
+				if (deletedAmbientID == m_activeAmbientLightData.m_renderDataID)
+				{
+					m_activeAmbientLightData = {};
+					break;
+				}
+			}
+
+			DeleteLights(deletedAmbientIDs, m_ambientLightData);
 		}
 		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataDirectional>())
 		{
@@ -893,6 +910,44 @@ namespace gr
 
 				++ambientItr;
 			}
+		}
+
+		// Update the params of the ambient lights we're tracking:
+		for (auto const& ambientLight : m_ambientLightData)
+		{
+			const gr::RenderDataID lightID = ambientLight.first;
+
+			if (renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(lightID))
+			{
+				gr::Light::RenderDataAmbientIBL const& ambientRenderData =
+					renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(lightID);
+
+				const uint32_t totalPMREMMipLevels = ambientLight.second.m_PMREMTex->GetNumMips();
+
+				const AmbientLightData ambientLightParamsData = GetAmbientLightParamsData(
+					totalPMREMMipLevels,
+					ambientRenderData.m_diffuseScale,
+					ambientRenderData.m_specularScale,
+					m_ssaoTex.get());
+
+				ambientLight.second.m_ambientParams->Commit(ambientLightParamsData);
+			}
+		}
+
+		// Update the shared active ambient light pointers:
+		if (m_graphicsSystemManager->HasActiveAmbientLight() && 
+			m_graphicsSystemManager->GetActiveAmbientLightID() != m_activeAmbientLightData.m_renderDataID)
+		{
+			const gr::RenderDataID activeAmbientID = m_graphicsSystemManager->GetActiveAmbientLightID();
+
+			SEAssert(m_ambientLightData.contains(activeAmbientID), "Cannot find active ambient light");
+
+			AmbientLightRenderData& activeAmbientLightData = m_ambientLightData.at(activeAmbientID);
+
+			m_activeAmbientLightData.m_renderDataID = activeAmbientID;
+			m_activeAmbientLightData.m_ambientParams = activeAmbientLightData.m_ambientParams;
+			m_activeAmbientLightData.m_IEMTex = activeAmbientLightData.m_IEMTex;
+			m_activeAmbientLightData.m_PMREMTex = activeAmbientLightData.m_PMREMTex;
 		}
 
 		using ShadowTextureMap = std::unordered_map<gr::RenderDataID, re::Texture const*>;
@@ -1112,35 +1167,12 @@ namespace gr
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		// Update the ambient lights we're tracking:
-		for (auto const& ambientLight : m_ambientLightData)
+		if (m_activeAmbientLightData.m_renderDataID != gr::k_invalidRenderDataID)
 		{
-			const gr::RenderDataID lightID = ambientLight.first;
+			SEAssert(m_ambientLightData.contains(m_activeAmbientLightData.m_renderDataID),
+				"Cannot find active ambient light");
 
-			if (renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(lightID))
-			{
-				gr::Light::RenderDataAmbientIBL const& ambientRenderData =
-					renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(lightID);
-
-				const uint32_t totalPMREMMipLevels = ambientLight.second.m_PMREMTex->GetNumMips();
-
-				const AmbientLightData ambientLightParamsData = GetAmbientLightParamsData(
-					totalPMREMMipLevels,
-					ambientRenderData.m_diffuseScale,
-					ambientRenderData.m_specularScale,
-					m_ssaoTex.get());
-
-				ambientLight.second.m_ambientParams->Commit(ambientLightParamsData);
-			}
-		}
-
-		if (m_graphicsSystemManager->HasActiveAmbientLight())
-		{
-			const gr::RenderDataID activeAmbientID = m_graphicsSystemManager->GetActiveAmbientLightID();
-
-			SEAssert(m_ambientLightData.contains(activeAmbientID), "Cannot find active ambient light");
-
-			m_ambientStage->AddBatch(m_ambientLightData.at(activeAmbientID).m_batch);
+			m_ambientStage->AddBatch(m_ambientLightData.at(m_activeAmbientLightData.m_renderDataID).m_batch);
 		}
 		
 

@@ -368,6 +368,12 @@ namespace fr
 
 	void EntityManager::SetActiveAmbientLight(entt::entity ambientLight)
 	{
+		if (ambientLight == entt::null)
+		{
+			return; // Do nothing
+		}
+
+
 		const entt::entity prevActiveAmbient = GetActiveAmbientLight();
 
 		{

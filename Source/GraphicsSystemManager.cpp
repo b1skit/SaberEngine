@@ -153,8 +153,6 @@ namespace gr
 				}
 				++ambientItr;
 			}
-			SEAssert(m_activeAmbientLightRenderDataID != gr::k_invalidRenderDataID,
-				"Failed to find an active ambient light. This should not be possible");
 		}
 	}
 

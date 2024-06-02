@@ -43,7 +43,10 @@ namespace gr
 		// Note: The DeferredLightingGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
 		void RegisterInputs() override;
 
-		static constexpr util::HashKey k_lightOutput = "DeferredLightTarget";
+		static constexpr util::HashKey k_lightingTexOutput = "DeferredLightTarget";
+		static constexpr util::HashKey k_activeAmbientIEMTexOutput = "ActiveAmbientIEMTex";
+		static constexpr util::HashKey k_activeAmbientPMREMTexOutput = "ActiveAmbientPMREMTex";
+		static constexpr util::HashKey k_activeAmbientParamsBufferOutput = "AmbientParamsBuffer";
 		void RegisterOutputs() override;
 
 
@@ -82,6 +85,15 @@ namespace gr
 			re::Batch m_batch;
 		};
 		std::unordered_map<gr::RenderDataID, AmbientLightRenderData> m_ambientLightData;
+
+		// We maintain pointer-stable copies of the active ambient light params so they can be shared with other GS's
+		struct ActiveAmbientRenderData
+		{
+			gr::RenderDataID m_renderDataID = gr::k_invalidRenderDataID;
+			std::shared_ptr<re::Buffer> m_ambientParams;
+			std::shared_ptr<re::Texture> m_IEMTex;
+			std::shared_ptr<re::Texture> m_PMREMTex;
+		} m_activeAmbientLightData;
 
 		std::shared_ptr<re::RenderStage> m_ambientStage;
 		std::shared_ptr<re::Buffer> m_ambientParams;
