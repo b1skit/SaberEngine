@@ -32,7 +32,7 @@ void BloomDown(ComputeIn In)
 	static const float2 halfPxOffset = 0.5f * pxOffset;
 	
 	static const uint2 dstWidthHeight = uint2(BloomComputeParams.g_dstTexDimensions.xy);
-	const float2 uvs = PixelCoordsToUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));
+	const float2 uvs = PixelCoordsToScreenUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));
 	
 	
 	const float2 uvA = uvs + float2(-pxOffset.x, -pxOffset.y);
@@ -123,7 +123,7 @@ void BloomUp(ComputeIn In)
 	
 	const uint srcMipLevel = BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x;
 	
-	const float2 uvs = PixelCoordsToUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));
+	const float2 uvs = PixelCoordsToScreenUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));
 	
 	const float2 bloomRadii = BloomComputeParams.g_bloomRadiusWidthHeightLevelNumLevls.xy;
 	const float2 offset = float2(BloomComputeParams.g_dstTexDimensions.zw) * bloomRadii;
@@ -189,7 +189,7 @@ void BilinearDown(ComputeIn In)
 	const uint2 dstWidthHeight = uint2(BloomComputeParams.g_dstTexDimensions.xy);
 	const uint srcMipLevel = BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x;
 	
-	const float2 uvs = PixelCoordsToUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));
+	const float2 uvs = PixelCoordsToScreenUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));
 	
 	const float4 color = Tex0.SampleLevel(ClampMinMagMipLinear, uvs, srcMipLevel);
 	

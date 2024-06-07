@@ -278,6 +278,11 @@ namespace dx12
 						SEAssertF("Invalid stage type");
 					}
 
+
+#if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
+					currentCommandList->RecordStageName(renderStage->GetName());
+#endif
+
 					// Get the stage targets:
 					re::TextureTargetSet const* stageTargets = renderStage->GetTextureTargetSet();
 					if (stageTargets == nullptr && curRenderStageType != re::RenderStage::Type::Compute)
@@ -328,23 +333,28 @@ namespace dx12
 						// Set inputs and targets (once) now that the root signature is set
 						if (doSetStageInputsAndTargets)
 						{
-							// Set stage texture inputs:
-							std::vector<re::RenderStage::RenderStageTextureAndSamplerInput> const& texInputs =
-								renderStage->GetTextureInputs();
 							const int depthTargetTexInputIdx = renderStage->GetDepthTargetTextureInputIdx();
-							for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
-							{
-								// If the depth target is read-only, and we've also used it as an input to the stage, we
-								// skip the resource transition (it's handled when binding the depth target as read only)
-								const bool skipTransition = (texIdx == depthTargetTexInputIdx);
 
-								commandList->SetTexture(
-									texInputs[texIdx].m_shaderName,
-									texInputs[texIdx].m_texture,
-									texInputs[texIdx].m_srcMip,
-									skipTransition);
-								// Note: Static samplers have already been set during root signature creation
-							}
+							auto SetStageTextureInputs = [&commandList, depthTargetTexInputIdx](
+								std::vector<re::RenderStage::RenderStageTextureAndSamplerInput> const& texInputs)
+								{
+									for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
+									{
+										// If the depth target is read-only, and we've also used it as an input to the stage, we
+										// skip the resource transition (it's handled when binding the depth target as read only)
+										const bool skipTransition = (texIdx == depthTargetTexInputIdx);
+
+										commandList->SetTexture(
+											texInputs[texIdx].m_shaderName,
+											texInputs[texIdx].m_texture,
+											texInputs[texIdx].m_srcMip,
+											skipTransition);
+										// Note: Static samplers have already been set during root signature creation
+									}
+								};
+							SetStageTextureInputs(renderStage->GetPermanentTextureInputs());
+							SetStageTextureInputs(renderStage->GetSingleFrameTextureInputs());
+
 
 							// Set the targets:
 							switch (curRenderStageType)

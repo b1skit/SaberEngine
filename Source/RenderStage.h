@@ -131,17 +131,31 @@ namespace re
 		re::TextureTargetSet const* GetTextureTargetSet() const;
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
-		void AddTextureInput(
+		void AddPermanentTextureInput(
 			std::string const& shaderName,
 			re::Texture const*,
 			std::shared_ptr<re::Sampler>,
 			uint32_t mipLevel = re::Texture::k_allMips);
-		void AddTextureInput(
+		void AddPermanentTextureInput(
 			std::string const& shaderName, 
 			std::shared_ptr<re::Texture>, 
 			std::shared_ptr<re::Sampler>, 
 			uint32_t mipLevel = re::Texture::k_allMips);
-		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetTextureInputs() const;
+
+		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetPermanentTextureInputs() const;
+
+		void AddSingleFrameTextureInput(
+			char const* shaderName,
+			re::Texture const*,
+			std::shared_ptr<re::Sampler>,
+			uint32_t mipLevel = re::Texture::k_allMips);
+		void AddSingleFrameTextureInput(
+			char const* shaderName,
+			std::shared_ptr<re::Texture>,
+			std::shared_ptr<re::Sampler>,
+			uint32_t mipLevel = re::Texture::k_allMips);
+
+		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetSingleFrameTextureInputs() const;
 
 		bool DepthTargetIsAlsoTextureInput() const;
 		int GetDepthTargetTextureInputIdx() const;
@@ -180,7 +194,8 @@ namespace re
 		std::unique_ptr<IStageParams> m_stageParams;
 
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
-		std::vector<RenderStageTextureAndSamplerInput> m_textureSamplerInputs;
+		std::vector<RenderStageTextureAndSamplerInput> m_permanentTextureSamplerInputs;
+		std::vector<RenderStageTextureAndSamplerInput> m_singleFrameTextureSamplerInputs;
 		int m_depthTextureInputIdx; // k_noDepthTexAsInputFlag: Depth not attached as an input		
 
 		std::vector<std::shared_ptr<re::Buffer const>> m_singleFrameBuffers; // Cleared every frame
@@ -329,9 +344,15 @@ namespace re
 	}
 
 
-	inline std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& RenderStage::GetTextureInputs() const
+	inline std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& RenderStage::GetPermanentTextureInputs() const
 	{
-		return m_textureSamplerInputs;
+		return m_permanentTextureSamplerInputs;
+	}
+
+
+	inline std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& RenderStage::GetSingleFrameTextureInputs() const
+	{
+		return m_singleFrameTextureSamplerInputs;
 	}
 
 

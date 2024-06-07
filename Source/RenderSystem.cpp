@@ -67,25 +67,49 @@ namespace
 						case gr::GraphicsSystem::TextureInputDefault::OpaqueWhite:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexture(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName);
+								sceneData->GetTexturePtr(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::TransparentWhite:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexture(en::DefaultResourceNames::k_transparentWhiteDefaultTexName);
+								sceneData->GetTexturePtr(en::DefaultResourceNames::k_transparentWhiteDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::OpaqueBlack:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexture(en::DefaultResourceNames::k_opaqueBlackDefaultTexName);
+								sceneData->GetTexturePtr(en::DefaultResourceNames::k_opaqueBlackDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::TransparentBlack:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexture(en::DefaultResourceNames::k_transparentBlackDefaultTexName);
+								sceneData->GetTexturePtr(en::DefaultResourceNames::k_transparentBlackDefaultTexName);
+						}
+						break;
+						case gr::GraphicsSystem::TextureInputDefault::CubeMap_OpaqueWhite:
+						{
+							texDependencies[dstName] =
+								sceneData->GetTexturePtr(en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName);
+						}
+						break;
+						case gr::GraphicsSystem::TextureInputDefault::CubeMap_TransparentWhite:
+						{
+							texDependencies[dstName] =
+								sceneData->GetTexturePtr(en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName);
+						}
+						break;
+						case gr::GraphicsSystem::TextureInputDefault::CubeMap_OpaqueBlack:
+						{
+							texDependencies[dstName] =
+								sceneData->GetTexturePtr(en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName);
+						}
+						break;
+						case gr::GraphicsSystem::TextureInputDefault::CubeMap_TransparentBlack:
+						{
+							texDependencies[dstName] =
+								sceneData->GetTexturePtr(en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::None:
@@ -247,14 +271,14 @@ namespace
 							}
 						}
 					};
-				// If enabled, this will consider texture inputs as a dependency for computing the CPU-side
-				// GraphicsSystem update order. This should never be necessary (as texture data is updated on the GPU),
-				// but is useful for debugging
-//#define CONSIDER_TEX_INPUTS_AS_UPDATE_DEPENDENCIES
+				// Consider inputs as a dependency for computing the CPU-side GraphicsSystem update order. Even for
+				// resources that are exclusively modified on the GPU, this is necessary in case an owning GS
+				// destroys/modifies a resource used by another GS as a dependency
+#define CONSIDER_TEX_INPUTS_AS_UPDATE_DEPENDENCIES
 #if defined(CONSIDER_TEX_INPUTS_AS_UPDATE_DEPENDENCIES)
 				PopulateDependencies(renderSysDesc.m_textureInputs);
 #endif
-//#define CONSIDER_BUFFER_INPUTS_AS_UPDATE_DEPENDENCIES
+#define CONSIDER_BUFFER_INPUTS_AS_UPDATE_DEPENDENCIES
 #if defined(CONSIDER_BUFFER_INPUTS_AS_UPDATE_DEPENDENCIES)
 				PopulateDependencies(renderSysDesc.m_bufferInputs);
 #endif

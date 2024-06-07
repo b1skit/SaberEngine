@@ -3,15 +3,20 @@
 #include "Buffer.h"
 #include "Texture.h"
 
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 
-#include "Core\Interfaces\IHashedDataObject.h"
-#include "Core\Interfaces\IPlatformParams.h"
-#include "Core\Interfaces\INamedObject.h"
+#include "Core/Interfaces/IHashedDataObject.h"
+#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/INamedObject.h"
+
+struct TargetData;
 
 
 namespace re
 {
+	class Buffer;
+
+
 	// Wrapper for an individual render target texture
 	class TextureTarget
 	{
@@ -266,7 +271,10 @@ namespace re
 		
 		// Commits and make immutable, then computes the data hash. Use this instead of IHashedDataObject::GetDataHash
 		uint64_t GetTargetSetSignature(); 
-		uint64_t GetTargetSetSignature() const; // Used 
+		uint64_t GetTargetSetSignature() const;
+
+		std::shared_ptr<re::Buffer> GetCreateTargetParamsBuffer(re::Buffer::Type = re::Buffer::Type::Mutable);
+
 
 	private: // Use the object Create factories instead
 		explicit TextureTargetSet(std::string const& name);
@@ -277,6 +285,7 @@ namespace re
 		void RecomputeNumColorTargets();
 		void ComputeDataHash() override; // IHashedDataObject interface
 
+		TargetData GetTargetParamsBufferData() const;
 
 	private:
 		std::vector<re::TextureTarget> m_colorTargets; // == SysInfo::GetMaxRenderTargets() elements
@@ -288,6 +297,8 @@ namespace re
 		re::ScissorRect m_scissorRect;
 
 		std::unique_ptr<PlatformParams> m_platformParams;
+
+		std::shared_ptr<re::Buffer> m_targetParamsBuffer; // Only created on demand
 
 
 	private:

@@ -201,16 +201,21 @@ namespace opengl
 								opengl::Shader::SetBuffer(*shader, *buffer.get());
 							}
 
-							// Set stage texture/sampler inputs:
-							for (auto const& texSamplerInput : renderStage->GetTextureInputs())
-							{
-								opengl::Shader::SetTextureAndSampler(
-									*shader,
-									texSamplerInput.m_shaderName, // uniform name
-									texSamplerInput.m_texture,
-									texSamplerInput.m_sampler.get(),
-									texSamplerInput.m_srcMip);
-							}
+							auto SetStageTextureInputs = [shader](
+								std::vector<re::RenderStage::RenderStageTextureAndSamplerInput> const& texInputs)
+								{
+									for (auto const& texSamplerInput : texInputs)
+									{
+										opengl::Shader::SetTextureAndSampler(
+											*shader,
+											texSamplerInput.m_shaderName, // uniform name
+											texSamplerInput.m_texture,
+											texSamplerInput.m_sampler.get(),
+											texSamplerInput.m_srcMip);
+									}
+								};
+							SetStageTextureInputs(renderStage->GetPermanentTextureInputs());
+							SetStageTextureInputs(renderStage->GetSingleFrameTextureInputs());
 						}
 					};
 

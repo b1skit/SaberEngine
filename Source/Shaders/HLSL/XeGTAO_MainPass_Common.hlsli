@@ -13,7 +13,7 @@ void ExecuteMainPass(ComputeIn In, const lpfloat sliceCount, const lpfloat steps
 	const uint temporalIdx = 0; // Always 0 without TAA
 	const lpfloat2 localNoise = SpatioTemporalNoise(pixelCoord, temporalIdx); // No TAA, so no noise required
 	
-	const float2 uvs = PixelCoordsToUV(pixelCoord, SEGTAOConstants.ViewportSize, float2(0.5f, 0.5f));
+	const float2 uvs = PixelCoordsToScreenUV(pixelCoord, SEGTAOConstants.ViewportSize, float2(0.5f, 0.5f));
 	const float srcMipLevel = 0.f;
 	const lpfloat3 worldNormal = (lpfloat3) SceneWNormal.SampleLevel(ClampMinMagMipPoint, uvs, srcMipLevel).xyz;
 	

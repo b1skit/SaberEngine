@@ -66,15 +66,15 @@ void CShader(ComputeIn In)
 	{
 		case SRC_WIDTH_EVEN_HEIGHT_EVEN: // 0
 		{
-			const float2 uvs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.5f));
+			const float2 uvs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.5f));
 			texSample0 = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(uvs.xy, faceIdx), srcMip);
 		}
 		break;
 		case SRC_WIDTH_ODD_HEIGHT_EVEN: // 1
 		{
 			// Width has an odd number of pixels. We blend 2 bilinear samples to prevent undersampling at lower mips
-			const float2 leftUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.5f));
-			const float2 rightUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.5f));
+			const float2 leftUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.5f));
+			const float2 rightUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.5f));
 
 			const float4 leftSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(leftUVs, faceIdx), srcMip);
 			const float4 rightSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(rightUVs, faceIdx), srcMip);
@@ -85,8 +85,8 @@ void CShader(ComputeIn In)
 		case SRC_WIDTH_EVEN_HEIGHT_ODD: // 2
 		{
 			// Height has an odd number of pixels. We blend 2 bilinear samples to prevent undersampling at lower mips
-			const float2 topUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.25));
-			const float2 botUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.75));
+			const float2 topUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.25));
+			const float2 botUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.75));
 			
 			const float4 topSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(topUVs, faceIdx), srcMip);
 			const float4 botSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(botUVs, faceIdx), srcMip);
@@ -97,10 +97,10 @@ void CShader(ComputeIn In)
 		case SRC_WIDTH_ODD_HEIGHT_ODD: // 3
 		{
 			// Both the width and height are odd. We blend 4 samples to prevent undersampling at lower mips
-			const float2 topLeftUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.25f));
-			const float2 topRightUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.25f));
-			const float2 botLeftUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.75f));
-			const float2 botRightUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.75f));
+			const float2 topLeftUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.25f));
+			const float2 topRightUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.25f));
+			const float2 botLeftUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.75f));
+			const float2 botRightUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.75f));
 			
 			const float4 topLeftSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(topLeftUVs, faceIdx), srcMip);
 			const float4 topRightSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(topRightUVs, faceIdx), srcMip);

@@ -118,6 +118,10 @@ namespace dx12
 			std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 			ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
 
+#if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
+			commandList->RecordStageName("<Library: ImGui>");
+#endif
+
 			SEBeginGPUEvent(d3dCommandList, perfmarkers::Type::GraphicsCommandList, "Render ImGui");
 
 			ID3D12DescriptorHeap* descriptorHeap = platParams->m_imGuiGPUVisibleSRVDescriptorHeap.Get();

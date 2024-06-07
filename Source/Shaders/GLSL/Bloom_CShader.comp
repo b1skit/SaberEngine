@@ -28,7 +28,7 @@ void BloomDown(in const uvec3 DTId)
 	const vec2 halfPxOffset = 0.5f * pxOffset;
 	
 	const uvec2 dstWidthHeight = uvec2(_BloomComputeParams.g_dstTexDimensions.xy);
-	const vec2 uvs = PixelCoordsToUV(DTId.xy, dstWidthHeight, vec2(0.5f, 0.5f), false);
+	const vec2 uvs = PixelCoordsToScreenUV(DTId.xy, dstWidthHeight, vec2(0.5f, 0.5f), false);
 	
 	
 	const vec2 uvA = uvs + vec2(-pxOffset.x, -pxOffset.y);
@@ -119,7 +119,7 @@ void BloomUp(in const uvec3 DTId)
 	
 	const uint srcMipLevel = uint(_BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x);
 	
-	const vec2 uvs = PixelCoordsToUV(DTId.xy, dstWidthHeight, vec2(0.5f, 0.5f), false);
+	const vec2 uvs = PixelCoordsToScreenUV(DTId.xy, dstWidthHeight, vec2(0.5f, 0.5f), false);
 	
 	const vec2 bloomRadii = _BloomComputeParams.g_bloomRadiusWidthHeightLevelNumLevls.xy;
 	const vec2 offset = vec2(_BloomComputeParams.g_dstTexDimensions.zw) * bloomRadii;
@@ -185,7 +185,7 @@ void BilinearDown(in const uvec3 DTId)
 	const uvec2 dstWidthHeight = uvec2(_BloomComputeParams.g_dstTexDimensions.xy);
 	const uint srcMipLevel = uint(_BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x);
 	
-	const vec2 uvs = PixelCoordsToUV(DTId.xy, dstWidthHeight, vec2(0.5f, 0.5f), false);
+	const vec2 uvs = PixelCoordsToScreenUV(DTId.xy, dstWidthHeight, vec2(0.5f, 0.5f), false);
 	
 	const vec4 color = textureLod(Tex0, uvs, srcMipLevel);
 

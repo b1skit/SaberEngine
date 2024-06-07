@@ -18,6 +18,10 @@ void main()
 	const vec4 worldPos = _InstancedTransformParams[transformIdx].g_model * vec4(in_position.xyz, 1.0);
 	gl_Position = _CameraParams.g_viewProjection * worldPos;
 	
+#if defined(VOUT_WORLD_POS)
+	Out.WorldPos = worldPos.xyz;
+#endif
+
 	Out.uv0 = in_uv0;
 
 	Out.Color = _InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor * in_color;

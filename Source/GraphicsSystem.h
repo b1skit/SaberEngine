@@ -46,8 +46,8 @@ namespace gr
 		//	d) Provide an implementation of the pure virtual RegisterInputs/Outputs() functions
 		//		-> These are called before/after InitPipelineFn execution
 	public:
-		using TextureDependencies = std::map<util::HashKey const, std::shared_ptr<re::Texture>>;
-		using BufferDependencies = std::map<util::HashKey const, std::shared_ptr<re::Buffer const>>;
+		using TextureDependencies = std::map<util::HashKey const, std::shared_ptr<re::Texture> const*>;
+		using BufferDependencies = std::map<util::HashKey const, std::shared_ptr<re::Buffer> const*>;
 		using DataDependencies = std::unordered_map<util::HashKey const, void const*>;
 
 		struct RuntimeBindings
@@ -75,6 +75,11 @@ namespace gr
 			TransparentWhite,	// (1,1,1,0)
 			OpaqueBlack,		// (0,0,0,1)
 			TransparentBlack,	// (0,0,0,0)
+
+			CubeMap_OpaqueWhite,		// (1,1,1,1)
+			CubeMap_TransparentWhite,	// (1,1,1,0)
+			CubeMap_OpaqueBlack,		// (0,0,0,1)
+			CubeMap_TransparentBlack,	// (0,0,0,0)
 			
 			None,				// Default
 			TextureInputDefault_Count
@@ -90,9 +95,9 @@ namespace gr
 
 		std::map<util::HashKey, TextureInputDefault> const& GetTextureInputs() const;
 
-		std::shared_ptr<re::Texture> GetTextureOutput(util::HashKey const& outputScriptName) const;
-		std::shared_ptr<re::Texture> GetTextureOutput(char const* outputScriptName) const;
-		std::shared_ptr<re::Texture> GetTextureOutput(std::string const& outputScriptName) const;
+		std::shared_ptr<re::Texture> const* GetTextureOutput(util::HashKey const& outputScriptName) const;
+		std::shared_ptr<re::Texture> const* GetTextureOutput(char const* outputScriptName) const;
+		std::shared_ptr<re::Texture> const* GetTextureOutput(std::string const& outputScriptName) const;
 
 	protected:
 		void RegisterTextureInput(util::HashKey const&, TextureInputDefault = TextureInputDefault::None);
@@ -112,9 +117,9 @@ namespace gr
 
 		std::set<util::HashKey> const& GetBufferInputs() const;
 
-		std::shared_ptr<re::Buffer const> GetBufferOutput(util::HashKey const& scriptName) const;
-		std::shared_ptr<re::Buffer const> GetBufferOutput(char const* scriptName) const;
-		std::shared_ptr<re::Buffer const> GetBufferOutput(std::string const& scriptName) const;
+		std::shared_ptr<re::Buffer> const* GetBufferOutput(util::HashKey const& scriptName) const;
+		std::shared_ptr<re::Buffer> const* GetBufferOutput(char const* scriptName) const;
+		std::shared_ptr<re::Buffer> const* GetBufferOutput(std::string const& scriptName) const;
 
 	protected:
 		void RegisterBufferInput(util::HashKey const&);
@@ -255,24 +260,24 @@ namespace gr
 	}
 
 
-	inline std::shared_ptr<re::Texture> GraphicsSystem::GetTextureOutput(util::HashKey const& scriptName) const
+	inline std::shared_ptr<re::Texture> const* GraphicsSystem::GetTextureOutput(util::HashKey const& scriptName) const
 	{
 		// Note: It's possible for GS's with multiple initialization steps to hit this if its first initialization step
 		// runs before a GS it is dependent on has been initialized (because we (currently) just initialize in the order
 		// the initialization steps are defined in)
 		SEAssert(m_textureOutputs.contains(scriptName),
 			"No texture output with the given script name was registered by the GS");
-		return *m_textureOutputs.at(scriptName);
+		return m_textureOutputs.at(scriptName);
 	}
 
 
-	inline std::shared_ptr<re::Texture> GraphicsSystem::GetTextureOutput(char const* scriptName) const
+	inline std::shared_ptr<re::Texture> const* GraphicsSystem::GetTextureOutput(char const* scriptName) const
 	{
 		return GetTextureOutput(util::HashKey::Create(scriptName));
 	}
 
 
-	inline std::shared_ptr<re::Texture> GraphicsSystem::GetTextureOutput(std::string const& scriptName) const
+	inline std::shared_ptr<re::Texture> const* GraphicsSystem::GetTextureOutput(std::string const& scriptName) const
 	{
 		return GetTextureOutput(scriptName.c_str());
 	}
@@ -321,21 +326,21 @@ namespace gr
 	}
 
 
-	inline std::shared_ptr<re::Buffer const> GraphicsSystem::GetBufferOutput(util::HashKey const& scriptName) const
+	inline std::shared_ptr<re::Buffer> const* GraphicsSystem::GetBufferOutput(util::HashKey const& scriptName) const
 	{
 		SEAssert(m_bufferOutputs.contains(scriptName),
 			"No Buffer output with the given script name was registered by the GS");
-		return *m_bufferOutputs.at(scriptName);
+		return m_bufferOutputs.at(scriptName);
 	}
 
 
-	inline std::shared_ptr<re::Buffer const> GraphicsSystem::GetBufferOutput(char const* scriptName) const
+	inline std::shared_ptr<re::Buffer> const* GraphicsSystem::GetBufferOutput(char const* scriptName) const
 	{
 		return GetBufferOutput(util::HashKey::Create(scriptName));
 	}
 
 
-	inline std::shared_ptr<re::Buffer const> GraphicsSystem::GetBufferOutput(std::string const& scriptName) const
+	inline std::shared_ptr<re::Buffer> const* GraphicsSystem::GetBufferOutput(std::string const& scriptName) const
 	{
 		return GetBufferOutput(scriptName.c_str());
 	}

@@ -1,12 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Config.h"
 #include "SysInfo_Platform.h"
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
 #include "RenderManager.h"
 
-#include "Core\Util\CastUtils.h"
+#include "Core/Assert.h"
+#include "Core/Config.h"
+
+#include "Core/Util/CastUtils.h"
+
+#include "Shaders/Common/TargetParams.h"
 
 
 namespace re
@@ -508,6 +511,27 @@ namespace re
 		RecomputeNumColorTargets();
 		ComputeDataHash();
 
+#if defined(_DEBUG)
+		for (uint8_t targetIdx = 1; targetIdx < m_numColorTargets; targetIdx++)
+		{
+			SEAssert(m_colorTargets[targetIdx].GetTexture()->Width() == m_colorTargets[0].GetTexture()->Width() &&
+				m_colorTargets[targetIdx].GetTexture()->Height() == m_colorTargets[0].GetTexture()->Height(),
+				"Found color targets with mismatching dimensions");
+		}
+
+		SEAssert(!HasColorTarget() ||
+			!m_depthStencilTarget.HasTexture() ||
+			(m_depthStencilTarget.GetTexture()->Width() == m_colorTargets[0].GetTexture()->Width() &&
+				m_depthStencilTarget.GetTexture()->Height() == m_colorTargets[0].GetTexture()->Height()),
+			"Found depth target with mismatching dimensions");
+#endif
+
+		// Commit the TargetData Buffer data, if necessary
+		if (m_targetParamsBuffer)
+		{
+			m_targetParamsBuffer->Commit(GetTargetParamsBufferData());
+		}
+
 		m_platformParams->m_isCommitted = true;
 	}
 
@@ -546,5 +570,50 @@ namespace re
 			"Trying to get the signature, but the targets haven't been committed");
 
 		return GetDataHash();
+	}
+
+
+	std::shared_ptr<re::Buffer> TextureTargetSet::GetCreateTargetParamsBuffer(
+		re::Buffer::Type bufferType /*= re::Buffer::Type::Mutable*/)
+	{
+		SEAssert(HasTargets(),
+			"Trying to get or create the TargetParams buffer, but no targets have been added");
+
+		SEAssert(bufferType != re::Buffer::Immutable,
+			"The TextureTargetSet TargetData Buffer cannot be of Immutable type, as we delay committing buffer data");
+
+		if (m_targetParamsBuffer == nullptr)
+		{
+			m_targetParamsBuffer = re::Buffer::CreateUncommitted<TargetData>(TargetData::s_shaderName, bufferType);
+		}
+
+		// NOTE: We'll commit the buffer data when the target set is committed
+
+		return m_targetParamsBuffer;
+	}
+
+
+	TargetData TextureTargetSet::GetTargetParamsBufferData() const
+	{
+		SEAssert(m_targetParamsBuffer,
+			"Trying to get target params buffer data but the target params pointer is null. This is unexpected");
+
+		re::Texture const* srcTex = nullptr;
+		if (HasColorTarget())
+		{
+			srcTex = m_colorTargets[0].GetTexture().get();
+		}
+		else
+		{
+			srcTex = m_depthStencilTarget.GetTexture().get();
+		}
+
+		return TargetData{
+				.g_targetDims = glm::vec4(
+					srcTex->Width(),
+					srcTex->Height(),
+					1.f / srcTex->Width(),
+					1.f / srcTex->Height()), 
+		};
 	}
 }

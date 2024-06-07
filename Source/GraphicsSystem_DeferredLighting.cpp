@@ -76,32 +76,6 @@ namespace
 	}
 
 
-	AmbientLightData GetAmbientLightParamsData(
-		uint32_t numPMREMMips, float diffuseScale, float specularScale, re::Texture const* ssaoTex)
-	{
-		AmbientLightData ambientLightParamsData{};
-
-		const uint32_t dfgTexWidthHeight = 
-			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
-
-		const uint32_t maxPMREMMipLevel = numPMREMMips - 1;
-
-		ambientLightParamsData.g_maxPMREMMipDFGResScaleDiffuseScaleSpec = glm::vec4(
-			maxPMREMMipLevel,
-			dfgTexWidthHeight,
-			diffuseScale,
-			specularScale);
-
-		ambientLightParamsData.g_ssaoTexDims = glm::vec4(0.f);
-		if (ssaoTex)
-		{
-			ambientLightParamsData.g_ssaoTexDims = ssaoTex->GetTextureDimenions();
-		}
-
-		return ambientLightParamsData;
-	}
-
-
 	LightData GetLightParamData(
 		void const* lightRenderData,
 		gr::Light::Type lightType,
@@ -261,8 +235,6 @@ namespace
 			lightParams.g_shadowParams = glm::vec4(0.f);
 		}
 
-		lightParams.g_renderTargetResolution = targetSet->GetTargetDimensions();
-
 		lightParams.g_extraParams = extraParams;
 
 		return lightParams;
@@ -328,6 +300,7 @@ namespace gr
 		RegisterTextureOutput(k_lightingTexOutput, &m_lightingTargetSet->GetColorTarget(0).GetTexture());
 		RegisterTextureOutput(k_activeAmbientIEMTexOutput, &m_activeAmbientLightData.m_IEMTex);
 		RegisterTextureOutput(k_activeAmbientPMREMTexOutput, &m_activeAmbientLightData.m_PMREMTex);
+		RegisterTextureOutput(k_activeAmbientDFGTexOutput, &m_BRDF_integrationMap);
 		
 		RegisterBufferOutput(k_activeAmbientParamsBufferOutput, &m_activeAmbientLightData.m_ambientParams);
 	}
@@ -426,7 +399,7 @@ namespace gr
 				std::format("IEM generation: Face {}/6", face + 1).c_str(), gfxStageParams);
 
 			iemStage->SetDrawStyle(effect::DrawStyle::DeferredLighting_IEMGeneration);
-			iemStage->AddTextureInput(
+			iemStage->AddPermanentTextureInput(
 				"Tex0",
 				iblTex,
 				re::Sampler::GetSampler("ClampMinMagMipLinear"));
@@ -505,7 +478,7 @@ namespace gr
 
 				pmremStage->SetDrawStyle(effect::DrawStyle::DeferredLighting_PMREMGeneration);
 
-				pmremStage->AddTextureInput(
+				pmremStage->AddPermanentTextureInput(
 					"Tex0",
 					iblTex,
 					re::Sampler::GetSampler("ClampMinMagMipLinear"));
@@ -676,7 +649,7 @@ namespace gr
 		m_lightingTargetSet->SetColorTarget(0, lightTargetTex, deferredTargetParams);
 
 		m_lightingTargetSet->SetDepthStencilTarget(
-			texDependencies.at(GBufferGraphicsSystem::GBufferTexNameHashKeys[GBufferGraphicsSystem::GBufferDepth]),
+			*texDependencies.at(GBufferGraphicsSystem::GBufferTexNameHashKeys[GBufferGraphicsSystem::GBufferDepth]),
 			depthTargetParams);
 
 		// All deferred lighting is additive
@@ -704,11 +677,11 @@ namespace gr
 		m_ambientStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());	
 
 		// Get/set the AO texture. If it doesn't exist, we'll get a default opaque white texture
-		m_ssaoTex = texDependencies.at(k_ssaoInput);
+		m_ssaoTex = *texDependencies.at(k_ssaoInput);
 
 		std::shared_ptr<re::Sampler> clampMinMagMipPoint = re::Sampler::GetSampler("ClampMinMagMipPoint");
 
-		m_ambientStage->AddTextureInput(k_ssaoInput.GetKey(), m_ssaoTex, clampMinMagMipPoint);
+		m_ambientStage->AddPermanentTextureInput(k_ssaoInput.GetKey(), m_ssaoTex, clampMinMagMipPoint);
 
 
 		// Append the ambient stage:
@@ -739,6 +712,7 @@ namespace gr
 		// Point light stage:
 		//-------------------
 		m_pointStage->SetTextureTargetSet(m_lightingTargetSet);
+		m_pointStage->AddPermanentBuffer(m_lightingTargetSet->GetCreateTargetParamsBuffer());
 
 		m_pointStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_pointStage->AddPermanentBuffer(poissonSampleParams);
@@ -751,6 +725,7 @@ namespace gr
 		// Spot light stage:
 		//------------------
 		m_spotStage->SetTextureTargetSet(m_lightingTargetSet);
+		m_spotStage->AddPermanentBuffer(m_lightingTargetSet->GetCreateTargetParamsBuffer());
 
 		m_spotStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_spotStage->AddPermanentBuffer(poissonSampleParams);
@@ -777,26 +752,26 @@ namespace gr
 				"Texture dependency not found");
 
 			util::HashKey const& texName = GBufferGraphicsSystem::GBufferTexNameHashKeys[slot];
-			std::shared_ptr<re::Texture> const& gbufferTex = texDependencies.at(texName);
+			std::shared_ptr<re::Texture> const& gbufferTex = *texDependencies.at(texName);
 			
-			m_ambientStage->AddTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
-			m_directionalStage->AddTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
-			m_pointStage->AddTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
-			m_spotStage->AddTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
+			m_ambientStage->AddPermanentTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
+			m_directionalStage->AddPermanentTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
+			m_pointStage->AddPermanentTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
+			m_spotStage->AddPermanentTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
 		}
 
 
 		// Attach the GBUffer depth input:
 		constexpr uint8_t depthBufferSlot = gr::GBufferGraphicsSystem::GBufferDepth;
 		util::HashKey const& depthName = GBufferGraphicsSystem::GBufferTexNameHashKeys[depthBufferSlot];
-		std::shared_ptr<re::Texture> const& depthTex = texDependencies.at(depthName);
+		std::shared_ptr<re::Texture> const& depthTex = *texDependencies.at(depthName);
 
-		m_directionalStage->AddTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
-		m_pointStage->AddTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
-		m_spotStage->AddTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
-		m_ambientStage->AddTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
+		m_directionalStage->AddPermanentTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
+		m_pointStage->AddPermanentTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
+		m_spotStage->AddPermanentTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
+		m_ambientStage->AddPermanentTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
 
-		m_ambientStage->AddTextureInput("Tex7", m_BRDF_integrationMap, clampMinMagMipPoint);
+		m_ambientStage->AddPermanentTextureInput("DFG", m_BRDF_integrationMap, clampMinMagMipPoint);
 	}
 
 
@@ -876,6 +851,7 @@ namespace gr
 					totalPMREMMipLevels,
 					ambientData.m_diffuseScale,
 					ambientData.m_specularScale,
+					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 					m_ssaoTex.get());
 
 				std::shared_ptr<re::Buffer> ambientParams = re::Buffer::Create(
@@ -897,12 +873,12 @@ namespace gr
 				ambientBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
 
 				ambientBatch.AddTextureAndSamplerInput(
-					"CubeMap0",
+					"CubeMapIEM",
 					iemTex.get(),
-					re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
+					re::Sampler::GetSampler("WrapMinMagMipLinear"));
 
 				ambientBatch.AddTextureAndSamplerInput(
-					"CubeMap1",
+					"CubeMapPMREM",
 					pmremTex.get(),
 					re::Sampler::GetSampler("WrapMinMagMipLinear"));
 
@@ -928,6 +904,7 @@ namespace gr
 					totalPMREMMipLevels,
 					ambientRenderData.m_diffuseScale,
 					ambientRenderData.m_specularScale,
+					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 					m_ssaoTex.get());
 
 				ambientLight.second.m_ambientParams->Commit(ambientLightParamsData);

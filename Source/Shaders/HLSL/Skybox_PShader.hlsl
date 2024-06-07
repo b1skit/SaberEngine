@@ -21,7 +21,7 @@ float4 PShader(VertexOut In) : SV_Target
 	}
 	
 	const float sampleDepth = 0.f; // Arbitrary
-	const float3 worldPos = GetWorldPos(In.UV0, sampleDepth, CameraParams.g_invViewProjection);
+	const float3 worldPos = ScreenUVToWorldPos(In.UV0, sampleDepth, CameraParams.g_invViewProjection);
 	
 	const float3 sampleDir = worldPos - CameraParams.g_cameraWPos.xyz; // The skybox is centered about the camera
 

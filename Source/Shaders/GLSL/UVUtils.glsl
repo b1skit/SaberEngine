@@ -11,7 +11,7 @@
 //		Thus if using gl_FragCoord, you'll likely want a vec2(0,0) offset
 //	doFlip: Use true if reading from a flipped FBO (e.g. GBuffer), false if the image being sampled has the correct
 //		orientation
-vec2 PixelCoordsToUV(vec2 pixelXY, vec2 screenWidthHeight, vec2 offset = vec2(0.5f, 0.5f), bool doFlip = true)
+vec2 PixelCoordsToScreenUV(vec2 pixelXY, vec2 screenWidthHeight, vec2 offset = vec2(0.5f, 0.5f), bool doFlip = true)
 {
 	vec2 screenUV = (vec2(pixelXY) + offset) / screenWidthHeight;
 	if (doFlip)
@@ -19,6 +19,22 @@ vec2 PixelCoordsToUV(vec2 pixelXY, vec2 screenWidthHeight, vec2 offset = vec2(0.
 		screenUV.y = 1.f - screenUV.y;
 	}
 	return screenUV;
+}
+
+
+vec3 ScreenUVToWorldPos(vec2 screenUV, float nonLinearDepth, mat4 invViewProjection)
+{
+	vec2 ndcXY = (screenUV * 2.f) - vec2(1.f, 1.f); // [0,1] -> [-1, 1]
+
+	// Flip the Y coordinate so we can get back to the NDC that GLSL expects.
+	// OpenGL uses a RHCS in view space, but LHCS in NDC. Flipping the Y coordinate here effectively reverses the Z axis
+	// to account for this change of handedness.
+	ndcXY.y *= -1;
+
+	const vec4 ndcPos = vec4(ndcXY.xy, nonLinearDepth, 1.f);
+
+	vec4 result = invViewProjection * ndcPos;
+	return result.xyz / result.w; // Apply the perspective division
 }
 
 

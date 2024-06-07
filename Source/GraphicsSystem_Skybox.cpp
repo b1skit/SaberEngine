@@ -6,7 +6,7 @@
 #include "Texture.h"
 #include "TextureTarget.h"
 
-#include "Core\Definitions\ConfigKeys.h"
+#include "Core/Definitions/ConfigKeys.h"
 
 #include "Shaders/Common/SkyboxParams.h"
 
@@ -64,13 +64,13 @@ namespace gr
 		// GBuffer depth for HW depth testing
 		std::shared_ptr<re::TextureTargetSet> skyboxTargets = re::TextureTargetSet::Create("Skybox Targets");
 
-		skyboxTargets->SetColorTarget(0, texDependencies.at(k_skyboxTargetInput), re::TextureTarget::TargetParams{});
+		skyboxTargets->SetColorTarget(0, *texDependencies.at(k_skyboxTargetInput), re::TextureTarget::TargetParams{});
 
 		re::TextureTarget::TargetParams depthTargetParams;
 		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
 		
 		skyboxTargets->SetDepthStencilTarget(
-			texDependencies.at(k_sceneDepthTexInput),
+			*texDependencies.at(k_sceneDepthTexInput),
 			depthTargetParams);
 
 		// Render on top of the frame
@@ -93,7 +93,7 @@ namespace gr
 		// Start with our default texture set, in case there is no IBL
 		m_skyTexture = m_fallbackColorTex.get();
 
-		m_skyboxStage->AddTextureInput(
+		m_skyboxStage->AddPermanentTextureInput(
 			k_skyboxTexShaderName,
 			m_skyTexture,
 			re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
@@ -136,7 +136,7 @@ namespace gr
 				m_skyTexture = m_fallbackColorTex.get();
 			}
 
-			m_skyboxStage->AddTextureInput(
+			m_skyboxStage->AddPermanentTextureInput(
 				k_skyboxTexShaderName,
 				m_skyTexture,
 				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));

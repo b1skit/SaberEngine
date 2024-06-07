@@ -21,12 +21,9 @@ struct LightData
 	float4 g_shadowMapTexelSize;	// .xyzw = width, height, 1/width, 1/height
 	float4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
 	float4 g_shadowParams; // .x = has shadow (1.f), .y = quality mode, .zw = light size UV radius
-	float4 g_renderTargetResolution; // .xy = xRes, yRes, .zw = 1/xRes 1/yRes
-
-	// Type-specific extra values:
-	// Point, directional: Unused
-	// Spot: .xyz = pre-computed attenuation values: .x = cos(outerAngle), .y = scaleTerm, .z = offsetTerm
-	float4 g_extraParams; 
+	float4 g_extraParams; // Type-specific extra values:
+		// - Point/directional: Unused
+		// - Spot: .xyz = pre-computed attenuation values: .x = cos(outerAngle), .y = scaleTerm, .z = offsetTerm
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "LightParams";
@@ -44,6 +41,35 @@ struct AmbientLightData
 	static constexpr char const* const s_shaderName = "AmbientLightParams";
 #endif
 };
+
+
+#if defined(__cplusplus)
+
+inline AmbientLightData GetAmbientLightParamsData(
+	uint32_t numPMREMMips, float diffuseScale, float specularScale, const uint32_t dfgTexWidthHeight, re::Texture const* ssaoTex)
+{
+
+	AmbientLightData ambientLightParamsData{};
+
+	assert(numPMREMMips > 0); // Don't underflow!
+	const uint32_t maxPMREMMipLevel = numPMREMMips - 1;
+
+	ambientLightParamsData.g_maxPMREMMipDFGResScaleDiffuseScaleSpec = glm::vec4(
+		maxPMREMMipLevel,
+		dfgTexWidthHeight,
+		diffuseScale,
+		specularScale);
+
+	ambientLightParamsData.g_ssaoTexDims = glm::vec4(0.f);
+	if (ssaoTex)
+	{
+		ambientLightParamsData.g_ssaoTexDims = ssaoTex->GetTextureDimenions();
+	}
+
+	return ambientLightParamsData;
+}
+
+#endif
 
 
 struct PoissonSampleParamsData

@@ -24,7 +24,7 @@ void main()
 
 	const ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 
-	vec2 screenUV = PixelCoordsToUV(
+	vec2 screenUV = PixelCoordsToScreenUV(
 		gl_GlobalInvocationID.xy, 
 		_BRDFIntegrationParams.g_integrationTargetResolution.xy, 
 		vec2(0.5f, 0.5f), 

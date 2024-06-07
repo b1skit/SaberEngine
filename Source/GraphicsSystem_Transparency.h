@@ -22,8 +22,12 @@ namespace gr
 		}
 
 		static constexpr util::HashKey k_sceneDepthTexInput = "SceneDepth";
-		static constexpr util::HashKey k_sceneLightingTexInput = "SceneLighting";
+		static constexpr util::HashKey k_sceneLightingTexInput = "SceneLightingTarget";
 		static constexpr util::HashKey k_cullingDataInput = "ViewCullingResults";
+		static constexpr util::HashKey k_ambientIEMTexInput = "AmbientIEMTex";
+		static constexpr util::HashKey k_ambientPMREMTexInput = "AmbientPMREMTex";
+		static constexpr util::HashKey k_ambientDFGTexInput = "AmbientDFGTex";
+		static constexpr util::HashKey k_ambientParamsBufferInput = "AmbientParamsBuffer";
 		void RegisterInputs() override;
 
 		void RegisterOutputs() override;
@@ -41,5 +45,9 @@ namespace gr
 
 	private:
 		std::shared_ptr<re::RenderStage> m_transparencyStage;
+
+		std::shared_ptr<re::Texture> const* m_ambientIEMTex;
+		std::shared_ptr<re::Texture> const* m_ambientPMREMTex;
+		std::shared_ptr<re::Buffer> const* m_ambientParams;
 	};
 }

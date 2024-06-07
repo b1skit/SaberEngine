@@ -21,6 +21,10 @@ VertexOut VShader(VertexIn In)
 	const float4 worldPos = mul(InstancedTransformParams[transformIdx].g_model, float4(In.Position, 1.0f));
 	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 	
+#if defined(VOUT_WORLD_POS)
+	Out.WorldPos = worldPos.xyz;
+#endif
+	
 	Out.UV0 = In.UV0;
 
 	Out.Color = InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor * In.Color;

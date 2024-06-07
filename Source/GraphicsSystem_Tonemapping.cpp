@@ -3,7 +3,7 @@
 #include "GraphicsSystemManager.h"
 #include "Sampler.h"
 
-#include "Core\Definitions\ConfigKeys.h"
+#include "Core/Definitions/ConfigKeys.h"
 
 
 namespace gr
@@ -29,14 +29,14 @@ namespace gr
 		m_tonemappingStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
 		// Texture inputs:
-		m_tonemappingStage->AddTextureInput(
+		m_tonemappingStage->AddPermanentTextureInput(
 			"Tex0",
-			texDependencies.at(k_tonemappingTargetInput),
+			*texDependencies.at(k_tonemappingTargetInput),
 			re::Sampler::GetSampler("ClampMinMagMipLinear"));
 
-		m_tonemappingStage->AddTextureInput(
+		m_tonemappingStage->AddPermanentTextureInput(
 			"Tex1",
-			texDependencies.at(k_bloomResultInput),
+			*texDependencies.at(k_bloomResultInput),
 			re::Sampler::GetSampler("ClampMinMagMipLinear"));
 
 		pipeline.AppendRenderStage(m_tonemappingStage);

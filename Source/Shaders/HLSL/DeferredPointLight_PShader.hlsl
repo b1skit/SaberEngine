@@ -10,9 +10,9 @@ float4 PShader(VertexOut In) : SV_Target
 {
 	const GBuffer gbuffer = UnpackGBuffer(In.Position.xy);
 	
-	const float2 screenUV = PixelCoordsToUV(In.Position.xy, LightParams.g_renderTargetResolution.xy, float2(0.f, 0.f));
+	const float2 screenUV = PixelCoordsToScreenUV(In.Position.xy, TargetParams.g_targetDims.xy, float2(0.f, 0.f));
 
-	const float3 worldPos = GetWorldPos(screenUV, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
+	const float3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
 	const float3 lightWorldPos = LightParams.g_lightWorldPosRadius.xyz;
 	
 	const float3 lightWorldDir = normalize(lightWorldPos - worldPos);

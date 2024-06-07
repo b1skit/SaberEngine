@@ -517,6 +517,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Shaders\Common\PlatformConversions.h" />
     <ClInclude Include="Shaders\Common\ShadowRenderParams.h" />
     <ClInclude Include="Shaders\Common\SkyboxParams.h" />
+    <ClInclude Include="Shaders\Common\TargetParams.h" />
     <ClInclude Include="ShadowMapComponent.h" />
     <ClInclude Include="ShadowMapRenderData.h" />
     <ClInclude Include="SysInfo_DX12.h" />
@@ -684,6 +685,20 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
     </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
+    </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_DenoiseLastPass_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
@@ -813,6 +828,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <None Include="Dependencies\XeGTAO\XeGTAO.hlsli" />
     <None Include="packages.config" />
     <None Include="SaberEngine.licenseheader" />
+    <None Include="Shaders\GLSL\AmbientCommon.glsl" />
     <None Include="Shaders\GLSL\Blit_PShader.frag" />
     <None Include="Shaders\GLSL\Blit_VShader.vert" />
     <None Include="Shaders\GLSL\BloomCommon.glsl" />
@@ -838,6 +854,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <None Include="Shaders\GLSL\GaussianBlur_VShader.vert" />
     <None Include="Shaders\GLSL\GBufferCommon.glsl" />
     <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.frag" />
+    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.vert" />
     <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_VShader.vert" />
     <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap_CShader.comp" />
     <None Include="Shaders\GLSL\GenerateIEM_PShader.frag" />
@@ -858,6 +875,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <None Include="Shaders\GLSL\Transformations.glsl" />
     <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.frag" />
     <None Include="Shaders\GLSL\UVUtils.glsl" />
+    <None Include="Shaders\HLSL\AmbientCommon.hlsli" />
     <None Include="Shaders\HLSL\BloomCommon.hlsli" />
     <None Include="Shaders\HLSL\CameraCommon.hlsli" />
     <None Include="Shaders\HLSL\Color.hlsli" />

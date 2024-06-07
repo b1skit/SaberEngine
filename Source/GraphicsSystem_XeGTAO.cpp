@@ -216,9 +216,9 @@ namespace gr
 		m_prefilterDepthsStage->SetTextureTargetSet(m_prefilterDepthsTargets);
 
 		// Attach the depth buffer as an input to the depth prefilter stage:	
-		m_prefilterDepthsStage->AddTextureInput(
+		m_prefilterDepthsStage->AddPermanentTextureInput(
 			"Depth0", 
-			texDependencies.at(k_depthInput),
+			*texDependencies.at(k_depthInput),
 			re::Sampler::GetSampler("ClampMinMagMipPoint"), 
 			0);
 
@@ -278,18 +278,18 @@ namespace gr
 		m_mainStage->SetTextureTargetSet(m_mainTargets);
 
 		// Main stage texture inputs:
-		m_mainStage->AddTextureInput(
+		m_mainStage->AddPermanentTextureInput(
 			"PrefilteredDepth",
 			prefilteredDepthTargetTex,
 			re::Sampler::GetSampler("ClampMinMagMipPoint"));
 		
-		m_mainStage->AddTextureInput(
+		m_mainStage->AddPermanentTextureInput(
 			k_wNormalInput.GetKey(),
-			texDependencies.at(k_wNormalInput),
+			*texDependencies.at(k_wNormalInput),
 			re::Sampler::GetSampler("ClampMinMagMipPoint"),
 			0);
 
-		m_mainStage->AddTextureInput(
+		m_mainStage->AddPermanentTextureInput(
 			k_hilbertLutTexName,
 			m_hilbertLUT,
 			re::Sampler::GetSampler("ClampMinMagMipPoint"));
@@ -343,7 +343,7 @@ namespace gr
 			if (passIdx % 2 == 1) // Odd numbers: 1, 3, ...
 			{
 				// All passes: Sample the previous denoise output:
-				m_denoiseStages[passIdx]->AddTextureInput(
+				m_denoiseStages[passIdx]->AddPermanentTextureInput(
 					"SourceAO",
 					denoiseTarget, // Read from the denoise target texture
 					re::Sampler::GetSampler("ClampMinMagMipPoint"));
@@ -354,7 +354,7 @@ namespace gr
 			{
 				// First pass: Sample the working AO
 				// Subsequent passes: sample the interim denoising results from the same buffer
-				m_denoiseStages[passIdx]->AddTextureInput(
+				m_denoiseStages[passIdx]->AddPermanentTextureInput(
 					"SourceAO",
 					workingAOTex, // Read from the working AO texture
 					re::Sampler::GetSampler("ClampMinMagMipPoint"));
@@ -363,7 +363,7 @@ namespace gr
 			}
 
 			// Add the working edges texture as an input:
-			m_denoiseStages[passIdx]->AddTextureInput(
+			m_denoiseStages[passIdx]->AddPermanentTextureInput(
 				"SourceEdges",
 				m_mainTargets->GetColorTarget(k_workingEdgesIdx).GetTexture(),
 				re::Sampler::GetSampler("ClampMinMagMipPoint"));

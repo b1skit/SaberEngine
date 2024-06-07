@@ -12,9 +12,9 @@ void main()
 {	
 	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
 
-	const vec2 screenUV = PixelCoordsToUV(gl_FragCoord.xy, _LightParams.g_renderTargetResolution.xy, vec2(0, 0), true);
+	const vec2 screenUV = PixelCoordsToScreenUV(gl_FragCoord.xy, _TargetParams.g_targetDims.xy, vec2(0, 0), true);
 
-	const vec3 worldPos = GetWorldPos(screenUV, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
+	const vec3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
 	const vec3 lightWorldPos = _LightParams.g_lightWorldPosRadius.xyz;
 
 	const vec3 lightWorldDir = normalize(lightWorldPos - worldPos.xyz);

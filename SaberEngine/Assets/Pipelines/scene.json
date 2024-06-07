@@ -168,7 +168,25 @@
 					"TextureDependencies": [
 						{
 							"SourceName": "DeferredLightTarget",
-							"DestinationName": "SceneLighting"
+							"DestinationName": "SceneLightingTarget"
+						},
+						{
+							"SourceName": "ActiveAmbientIEMTex",
+							"DestinationName": "AmbientIEMTex"
+						},
+						{
+							"SourceName": "ActiveAmbientPMREMTex",
+							"DestinationName": "AmbientPMREMTex"
+						},
+						{
+							"SourceName": "ActiveAmbientDFGTex",
+							"DestinationName": "AmbientDFGTex"
+						}
+					],
+					"BufferDependencies": [
+						{
+							"SourceName": "ActiveAmbientParamsBuffer",
+							"DestinationName": "AmbientParamsBuffer"
 						}
 					]
 				}

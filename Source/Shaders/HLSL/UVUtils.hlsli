@@ -8,9 +8,25 @@
 // Note: In DX12, SV_POSITION is automatically offset by 0.5 (e.g. the top-left pixel will have an SV_POSITION of
 // (0.5, 0.5) by default). More info here: https://www.asawicki.info/news_1516_half-pixel_offset_in_directx_11
 // Supply an offset of (0.5, 0.5) here when you have non-offset coordinates (i.e. top-left = (0, 0))
-float2 PixelCoordsToUV(uint2 pixelCoords, uint2 texWidthHeight, float2 offset)
+float2 PixelCoordsToScreenUV(uint2 pixelCoords, uint2 texWidthHeight, float2 offset)
 {
 	return (float2(pixelCoords) + offset) / texWidthHeight;
+}
+
+
+float3 ScreenUVToWorldPos(float2 screenUV, float nonLinearDepth, float4x4 invViewProjection)
+{
+	float2 ndcXY = (screenUV * 2.f) - float2(1.f, 1.f); // [0,1] -> [-1, 1]
+
+	// In SaberEngine, the (0, 0) UV origin is in the top-left, which means +Y is down in UV space.
+	// In NDC, +Y is up and point (-1, -1) is in the bottom left.
+	// Thus we must flip the Y coordinate here to compensate.
+	ndcXY.y *= -1;
+
+	const float4 ndcPos = float4(ndcXY.xy, nonLinearDepth, 1.f);
+
+	float4 result = mul(invViewProjection, ndcPos);
+	return result.xyz / result.w; // Apply the perspective division
 }
 
 

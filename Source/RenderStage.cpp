@@ -273,7 +273,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddTextureInput(
+	void RenderStage::AddPermanentTextureInput(
 		std::string const& shaderName, 
 		re::Texture const* tex, 
 		std::shared_ptr<re::Sampler> sampler, 
@@ -286,15 +286,23 @@ namespace re
 		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::Color) != 0,
 			"Attempting to add a Texture input that does not have an appropriate usage flag");
 
-		bool foundExistingEntry = false;
-		if (!m_textureSamplerInputs.empty())
+#if defined(_DEBUG)
+		for (auto const& singleFrameTexInput : m_singleFrameTextureSamplerInputs)
 		{
-			for (size_t i = 0; i < m_textureSamplerInputs.size(); i++)
+			SEAssert(singleFrameTexInput.m_shaderName != shaderName,
+				"A texture input with the same name has already been added a single frame input");
+		}
+#endif
+
+		bool foundExistingEntry = false;
+		if (!m_permanentTextureSamplerInputs.empty())
+		{
+			for (size_t i = 0; i < m_permanentTextureSamplerInputs.size(); i++)
 			{
 				// If we find an input with the same name, replace it:
-				if (strcmp(m_textureSamplerInputs[i].m_shaderName.c_str(), shaderName.c_str()) == 0)
+				if (strcmp(m_permanentTextureSamplerInputs[i].m_shaderName.c_str(), shaderName.c_str()) == 0)
 				{
-					m_textureSamplerInputs[i] = RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel };
+					m_permanentTextureSamplerInputs[i] = RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel };
 					foundExistingEntry = true;
 					break;
 				}
@@ -302,22 +310,64 @@ namespace re
 		}
 		if (!foundExistingEntry)
 		{
-			m_textureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel });
+			m_permanentTextureSamplerInputs.emplace_back(shaderName, tex, sampler, mipLevel);
 		}
 
 		UpdateDepthTextureInputIndex();
-
 		ValidateTexturesAndTargets();
 	}
 
 
-	void RenderStage::AddTextureInput(
+	void RenderStage::AddPermanentTextureInput(
 		std::string const& shaderName,
 		std::shared_ptr<re::Texture> tex,
 		std::shared_ptr<re::Sampler> sampler,
 		uint32_t mipLevel /*= re::Texture::k_allMips*/)
 	{
-		AddTextureInput(shaderName, tex.get(), sampler, mipLevel);
+		AddPermanentTextureInput(shaderName, tex.get(), sampler, mipLevel);
+	}
+
+
+	void RenderStage::AddSingleFrameTextureInput(
+		char const* shaderName,
+		re::Texture const* tex,
+		std::shared_ptr<re::Sampler> sampler,
+		uint32_t mipLevel /*= re::Texture::k_allMips*/)
+	{
+		SEAssert(shaderName, "Shader name cannot be null");
+		SEAssert(tex != nullptr, "Invalid texture");
+		SEAssert(sampler != nullptr, "Invalid sampler");
+
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::Color) != 0,
+			"Attempting to add a Texture input that does not have an appropriate usage flag");
+
+#if defined(_DEBUG)
+		for (auto const& permanentTexInput : m_permanentTextureSamplerInputs)
+		{
+			SEAssert(strcmp(permanentTexInput.m_shaderName.c_str(), shaderName) != 0,
+				"A texture input with the same name has already been added a permanent input");
+		}
+		for (auto const& singleFrameTexInput : m_singleFrameTextureSamplerInputs)
+		{
+			SEAssert(strcmp(singleFrameTexInput.m_shaderName.c_str(), shaderName) != 0,
+				"A texture input with the same name has already been added a single frame input. Re-adding the same "
+				"single frame texture is not allowed");
+		}
+#endif
+		m_singleFrameTextureSamplerInputs.emplace_back(shaderName, tex, sampler, mipLevel);
+
+		UpdateDepthTextureInputIndex();
+		ValidateTexturesAndTargets();
+	}
+
+
+	void RenderStage::AddSingleFrameTextureInput(
+		char const* shaderName,
+		std::shared_ptr<re::Texture> tex,
+		std::shared_ptr<re::Sampler> sampler,
+		uint32_t mipLevel /*= re::Texture::k_allMips*/)
+	{
+		AddSingleFrameTextureInput(shaderName, tex.get(), sampler, mipLevel);
 	}
 
 
@@ -332,10 +382,11 @@ namespace re
 		if (depthTarget && depthTarget->HasTexture())
 		{
 			// Check each of our texture inputs against the depth texture:		
-			std::shared_ptr<re::Texture> depthTex = depthTarget->GetTexture();
-			for (uint32_t i = 0; i < m_textureSamplerInputs.size(); i++)
+			re::Texture const* depthTex = depthTarget->GetTexture().get();
+
+			for (uint32_t i = 0; i < m_permanentTextureSamplerInputs.size(); i++)
 			{
-				if (m_textureSamplerInputs[i].m_texture == depthTex.get())
+				if (m_permanentTextureSamplerInputs[i].m_texture == depthTex)
 				{
 					m_depthTextureInputIdx = i;
 
@@ -346,6 +397,14 @@ namespace re
 					break;
 				}
 			}
+
+#if defined(_DEBUG)
+			for (auto const& singleFrameInput : m_singleFrameTextureSamplerInputs)
+			{
+				SEAssert(singleFrameInput.m_texture != depthTex,
+					"Setting the depth texture as a single frame input is not (currently) supported");
+			}
+#endif
 		}
 	}
 
@@ -356,28 +415,34 @@ namespace re
 #if defined _DEBUG
 		if (m_textureTargetSet)
 		{
-			for (auto const& texInput : m_textureSamplerInputs)
-			{
-				for (uint8_t i = 0; i < m_textureTargetSet->GetNumColorTargets(); i++)
+			auto ValidateInput = [this](std::vector<RenderStageTextureAndSamplerInput>const& texSamplerInputs)
 				{
-					SEAssert(m_textureTargetSet->GetColorTarget(i).GetTexture().get() != texInput.m_texture ||
-						((m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != TextureTarget::k_allFaces &&
-							texInput.m_srcMip != TextureTarget::k_allFaces) &&
-						m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != texInput.m_srcMip),
-						"Detected a texture simultaneously used as both a color target and input");
-				}
+					for (auto const& texInput : texSamplerInputs)
+					{
+						for (uint8_t i = 0; i < m_textureTargetSet->GetNumColorTargets(); i++)
+						{
+							SEAssert(m_textureTargetSet->GetColorTarget(i).GetTexture().get() != texInput.m_texture ||
+								((m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != TextureTarget::k_allFaces &&
+									texInput.m_srcMip != TextureTarget::k_allFaces) &&
+									m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != texInput.m_srcMip),
+								"Detected a texture simultaneously used as both a color target and input");
+						}
 
-				if (m_textureTargetSet->HasDepthTarget())
-				{
-					std::shared_ptr<re::Texture const> depthTargetTex = 
-						m_textureTargetSet->GetDepthStencilTarget()->GetTexture();
+						if (m_textureTargetSet->HasDepthTarget())
+						{
+							std::shared_ptr<re::Texture const> depthTargetTex =
+								m_textureTargetSet->GetDepthStencilTarget()->GetTexture();
 
-					SEAssert(depthTargetTex.get() != texInput.m_texture ||
-						m_textureTargetSet->GetDepthStencilTarget()->GetTargetParams().m_channelWriteMode.R ==
-						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-						"A depth target with depth writes enabled cannot also be bound as an input");
-				}
-			}
+							SEAssert(depthTargetTex.get() != texInput.m_texture ||
+								m_textureTargetSet->GetDepthStencilTarget()->GetTargetParams().m_channelWriteMode.R ==
+								re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+								"A depth target with depth writes enabled cannot also be bound as an input");
+						}
+					}
+				};
+
+			ValidateInput(m_permanentTextureSamplerInputs);
+			ValidateInput(m_singleFrameTextureSamplerInputs);
 		}
 #endif
 	}
@@ -395,6 +460,7 @@ namespace re
 		SEBeginCPUEvent("StagePipeline::EndOfFrame");
 
 		m_singleFrameBuffers.clear();
+		m_singleFrameTextureSamplerInputs.clear();
 
 		if (m_type != RenderStage::Type::FullscreenQuad) // FSQ stages keep the same batch created during construction
 		{
@@ -530,9 +596,6 @@ namespace re
 
 	void RenderStage::AddSingleFrameBuffer(std::shared_ptr<re::Buffer const> buffer)
 	{
-		SEAssert(buffer->GetType() == re::Buffer::Type::SingleFrame,
-			"Buffer must have a single frame lifetime");
-
 		SEAssert(std::find_if(
 				m_singleFrameBuffers.begin(),
 				m_singleFrameBuffers.end(),

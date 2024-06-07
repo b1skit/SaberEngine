@@ -13,7 +13,7 @@ void main()
 
 	const vec2 screenUV = In.uv0.xy; // Directional light is drawn with a fullscreen quad
 
-	const vec3 worldPos = GetWorldPos(screenUV, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
+	const vec3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
 
 	const vec2 shadowCamNearFar = _LightParams.g_shadowCamNearFarBiasMinMax.xy;
 	const vec2 minMaxShadowBias = _LightParams.g_shadowCamNearFarBiasMinMax.zw;

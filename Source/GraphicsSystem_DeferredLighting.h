@@ -46,7 +46,8 @@ namespace gr
 		static constexpr util::HashKey k_lightingTexOutput = "DeferredLightTarget";
 		static constexpr util::HashKey k_activeAmbientIEMTexOutput = "ActiveAmbientIEMTex";
 		static constexpr util::HashKey k_activeAmbientPMREMTexOutput = "ActiveAmbientPMREMTex";
-		static constexpr util::HashKey k_activeAmbientParamsBufferOutput = "AmbientParamsBuffer";
+		static constexpr util::HashKey k_activeAmbientDFGTexOutput = "ActiveAmbientDFGTex";
+		static constexpr util::HashKey k_activeAmbientParamsBufferOutput = "ActiveAmbientParamsBuffer";
 		void RegisterOutputs() override;
 
 

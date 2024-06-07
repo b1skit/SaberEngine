@@ -28,7 +28,7 @@ void CShader(ComputeIn In)
 	
 	const uint2 texelCoord = In.DTId.xy;
 	
-	float2 screenUV = PixelCoordsToUV(texelCoord, targetResolution.xy, float2(0.5f, 0.5f));
+	float2 screenUV = PixelCoordsToScreenUV(texelCoord, targetResolution.xy, float2(0.5f, 0.5f));
 	
 	const float NoV = screenUV.x;
 	const float NoV2 = NoV * NoV;

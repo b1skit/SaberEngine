@@ -147,13 +147,13 @@
 
 		{
 			"Name": "AlphaBlend_SingleSided",
-			"VShader": "GLTF_PBRMetallicRoughness_VShader",
+			"VShader": "GLTF_PBRMetallicRoughness_Transparency_VShader",
 			"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 			"PipelineState": "SingleSided"
 		},
 		{
 			"Name": "AlphaBlend_DoubleSided",
-			"VShader": "GLTF_PBRMetallicRoughness_VShader",
+			"VShader": "GLTF_PBRMetallicRoughness_Transparency_VShader",
 			"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 			"PipelineState": "DoubleSided"
 		},

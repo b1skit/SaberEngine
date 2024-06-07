@@ -7,6 +7,7 @@
 
 #include "../Common/InstancingParams.h"
 #include "../Common/MaterialParams.h"
+#include "../Common/TargetParams.h"
 
 
 struct VertexIn
@@ -64,6 +65,7 @@ ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space1);
 StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
 StructuredBuffer<InstancedPBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t1, space1);
 
+ConstantBuffer<TargetData> TargetParams;
 
 Texture2D<float4> MatAlbedo;
 Texture2D<float4> MatNormal;

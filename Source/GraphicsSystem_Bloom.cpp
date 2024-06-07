@@ -68,13 +68,13 @@ namespace gr
 		m_emissiveBlitStage = re::RenderStage::CreateFullscreenQuadStage("Emissive blit stage", emissiveBlitParams);
 
 		// Emissive blit texture inputs:
-		m_emissiveBlitStage->AddTextureInput(
+		m_emissiveBlitStage->AddPermanentTextureInput(
 			"Tex0",
-			texDependencies.at(k_emissiveInput),
+			*texDependencies.at(k_emissiveInput),
 			bloomSampler);
 
 		// Additively blit the emissive values to the deferred lighting target:
-		std::shared_ptr<re::Texture> deferredLightTargetTex = texDependencies.at(k_bloomTargetInput);
+		std::shared_ptr<re::Texture> deferredLightTargetTex = *texDependencies.at(k_bloomTargetInput);
 
 		std::shared_ptr<re::TextureTargetSet> emissiveTargetSet = 
 			re::TextureTargetSet::Create("Emissive Blit Target Set");
@@ -133,13 +133,13 @@ namespace gr
 			// Input:
 			if (level == 0)
 			{
-				downStage->AddTextureInput("Tex0", deferredLightTargetTex, bloomSampler);
+				downStage->AddPermanentTextureInput("Tex0", deferredLightTargetTex, bloomSampler);
 			}
 			else
 			{
 				const uint32_t srcMipLevel = level - 1;
 
-				downStage->AddTextureInput("Tex0", bloomTargetTex, bloomSampler, srcMipLevel);	
+				downStage->AddPermanentTextureInput("Tex0", bloomTargetTex, bloomSampler, srcMipLevel);	
 			}
 			
 			// Target:
@@ -191,7 +191,7 @@ namespace gr
 				0, 0, static_cast<long>(targetMipDimensions.x), static_cast<long>(targetMipDimensions.y)));
 
 			// Input:
-			upStage->AddTextureInput("Tex0", bloomTargetTex, bloomSampler, upsampleSrcMip);
+			upStage->AddPermanentTextureInput("Tex0", bloomTargetTex, bloomSampler, upsampleSrcMip);
 
 			// Targets:
 			re::TextureTarget::TargetParams bloomLevelTargetParams;

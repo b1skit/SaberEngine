@@ -190,13 +190,13 @@ namespace
 		scene.AddUniqueMaterial(errorMat);
 
 
-		// Default texture fallbacks:
+		// Default 2D texture fallbacks:
 		const re::Texture::TextureParams defaultTexParams = re::Texture::TextureParams
 		{
-				.m_usage = re::Texture::Usage::Color,
-				.m_dimension = re::Texture::Dimension::Texture2D,
-				.m_format = re::Texture::Format::RGBA8_UNORM,
-				.m_colorSpace = re::Texture::ColorSpace::Linear
+			.m_usage = re::Texture::Usage::Color,
+			.m_dimension = re::Texture::Dimension::Texture2D,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
+			.m_colorSpace = re::Texture::ColorSpace::Linear
 		};
 
 		re::Texture::Create(
@@ -217,6 +217,37 @@ namespace
 		re::Texture::Create(
 			en::DefaultResourceNames::k_transparentBlackDefaultTexName,
 			defaultTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 0.f));
+
+
+		// Default cube map texture fallbacks:
+		const re::Texture::TextureParams defaultCubeMapTexParams = re::Texture::TextureParams
+		{
+			.m_faces = 6,
+			.m_usage = re::Texture::Usage::Color,
+			.m_dimension = re::Texture::Dimension::TextureCubeMap,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
+			.m_colorSpace = re::Texture::ColorSpace::Linear
+		};
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 1.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 0.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 1.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName,
+			defaultCubeMapTexParams,
 			glm::vec4(0.f, 0.f, 0.f, 0.f));
 	}
 
@@ -1236,6 +1267,19 @@ namespace fr
 			SEAssert(result != m_textures.end(), "Texture with that name does not exist");
 
 			return result->second;
+		}
+	}
+
+
+	std::shared_ptr<re::Texture> const* SceneData::GetTexturePtr(std::string const& texName) const
+	{
+		const uint64_t nameID = core::INamedObject::ComputeIDFromName(texName);
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
+
+			SEAssert(m_textures.contains(nameID), "Texture with that name does not exist");
+
+			return &m_textures.at(nameID);
 		}
 	}
 

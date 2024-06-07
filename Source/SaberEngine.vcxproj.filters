@@ -961,6 +961,9 @@
     <ClInclude Include="GraphicsSystem_Transparency.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
+    <ClInclude Include="Shaders\Common\TargetParams.h">
+      <Filter>Source Files\Shaders\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\HLSL\SaberCommon.hlsli">
@@ -1155,6 +1158,15 @@
     <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\AmbientCommon.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.vert">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\AmbientCommon.glsl">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.hlsl">
@@ -1284,6 +1296,9 @@
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>

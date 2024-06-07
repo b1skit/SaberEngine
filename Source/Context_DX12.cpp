@@ -199,6 +199,10 @@ namespace dx12
 		// Transition our current backbuffer target set resource to the present state:
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
+#if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
+		commandList->RecordStageName("<Present>");
+#endif
+
 		SEBeginGPUEvent(commandList->GetD3DCommandList(), perfmarkers::Type::GraphicsCommandList, "Swapchain transitions");
 
 		commandList->TransitionResource(

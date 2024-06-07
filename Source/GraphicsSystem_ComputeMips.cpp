@@ -105,7 +105,7 @@ namespace gr
 						stageName.c_str(),
 						computeStageParams);
 				
-					mipGenerationStage->AddTextureInput("SrcTex", newTexture, mipSampler, sourceMip);
+					mipGenerationStage->AddPermanentTextureInput("SrcTex", newTexture, mipSampler, sourceMip);
 
 					MipGenerationData const& mipGenerationParams =
 						CreateMipGenerationParamsData(newTexture, sourceMip, numMipStages, faceIdx);

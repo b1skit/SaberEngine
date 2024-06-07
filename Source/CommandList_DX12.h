@@ -83,8 +83,8 @@ namespace dx12
 
 		void ClearDepthTarget(re::TextureTarget const*);
 
-		void ClearColorTarget(re::TextureTarget const*) const;
-		void ClearColorTargets(re::TextureTargetSet const&) const;
+		void ClearColorTarget(re::TextureTarget const*);
+		void ClearColorTargets(re::TextureTargetSet const&);
 
 		void ClearTargets(re::TextureTargetSet const&);
 
@@ -176,6 +176,16 @@ namespace dx12
 		dx12::PipelineState const* m_currentPSO;
 
 
+		// DEBUG:
+#if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
+	public:
+		void RecordStageName(std::string const& name) { m_debugRecordedStages.emplace_back(name); }
+
+	private:
+		std::vector<std::string> m_debugRecordedStages; // The stages this command list was used on for the frame
+#endif
+
+
 	private: // No copying allowed
 		CommandList() = delete;
 		CommandList(CommandList const&) = delete;
@@ -199,6 +209,18 @@ namespace dx12
 	{
 		HRESULT hr = m_commandList->Close();
 		CheckHResult(hr, "Failed to close command list");
+
+#if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
+		std::string stagesNames;
+		for (auto const& stage : m_debugRecordedStages)
+		{
+			stagesNames += stage + ", ";
+		}
+
+		LOG_WARNING(std::format("{} recorded stages: {}", 
+			dx12::GetDebugName(m_commandList.Get()),
+			stagesNames).c_str());
+#endif
 	}
 
 

@@ -594,39 +594,30 @@ namespace dx12
 		// transitions are complete before proceeding
 		// Note: We're going to submit our COMMON resource transitions on new discrete command lists executed on the
 		// same queue a resource was last used on. Thus, we don't need to fence on any previous work in these queues
-		if (!directBarriers.empty())
-		{
-			directCmdList->ResourceBarrier(
-				static_cast<uint32_t>(directBarriers.size()),
-				directBarriers.data());
+		auto ExecuteTransitionsToCommon = [this](
+			dx12::CommandQueue& cmdQueue,
+			std::shared_ptr<dx12::CommandList>& cmdList,
+			std::vector<D3D12_RESOURCE_BARRIER> const& barriers,
+			char const* markerLabel)
+			{
+				if (!barriers.empty())
+				{
+#if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
+					cmdList->RecordStageName("<Transitions to common>");
+#endif
+					cmdList->ResourceBarrier(
+						static_cast<uint32_t>(barriers.size()),
+						barriers.data());
 
-			const uint64_t directBarrierFence = 
-				directQueue.ExecuteInternal({ directCmdList }, "Direct queue: Transitions to common");
+					const uint64_t directBarrierFence =
+						cmdQueue.ExecuteInternal({ cmdList }, markerLabel);
 
-			GPUWait(directQueue.GetFence(), directBarrierFence);
-		}
-		if (!computeBarriers.empty())
-		{
-			computeCmdList->ResourceBarrier(
-				static_cast<uint32_t>(computeBarriers.size()),
-				computeBarriers.data());
-
-			const uint64_t computeBarrierFence = 
-				computeQueue.ExecuteInternal({ computeCmdList }, "Compute queue: Transitions to common");
-
-			GPUWait(computeQueue.GetFence(), computeBarrierFence);
-		}
-		if (!copyBarriers.empty())
-		{
-			copyCmdList->ResourceBarrier(
-				static_cast<uint32_t>(copyBarriers.size()),
-				copyBarriers.data());
-
-			const uint64_t copyBarrierFence = 
-				copyQueue.ExecuteInternal({ copyCmdList }, "Copy queue: Transitions to common");
-
-			GPUWait(copyQueue.GetFence(), copyBarrierFence);
-		}
+					GPUWait(cmdQueue.GetFence(), directBarrierFence);
+				}
+			};
+		ExecuteTransitionsToCommon(directQueue, directCmdList, directBarriers, "Direct queue: Transitions to common");
+		ExecuteTransitionsToCommon(computeQueue, computeCmdList, computeBarriers, "Compute queue: Transitions to common");
+		ExecuteTransitionsToCommon(copyQueue, copyCmdList, copyBarriers, "Copy queue: Transitions to common");
 
 
 #if defined(DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS)
@@ -802,6 +793,10 @@ namespace dx12
 				if (!barriers.empty())
 				{
 					std::shared_ptr<dx12::CommandList> barrierCommandList = GetCreateCommandList();
+
+#if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
+					barrierCommandList->RecordStageName("<Fixup barriers>");
+#endif
 
 					barrierCommandList->ResourceBarrier(
 						static_cast<uint32_t>(barriers.size()),

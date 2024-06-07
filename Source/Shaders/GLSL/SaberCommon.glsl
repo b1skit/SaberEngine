@@ -10,6 +10,7 @@
 #include "../Common/MaterialParams.h"
 #include "../Common/ShadowRenderParams.h"
 #include "../Common/SkyboxParams.h"
+#include "../Common/TargetParams.h"
 
 
 // Vertex shader inputs:
@@ -49,7 +50,7 @@ struct VertexOut
 #endif
 
 #ifdef VOUT_WORLD_POS
-	vec3 worldPos; // World-space position
+	vec3 WorldPos; // World-space position
 #endif
 
 #ifdef VOUT_TBN
@@ -167,5 +168,6 @@ layout(std430, binding=7) uniform CubemapShadowRenderParams { CubemapShadowRende
 layout(std430, binding=8) uniform IEMPMREMGenerationParams { IEMPMREMGenerationData _IEMPMREMGenerationParams; };
 layout(std430, binding=9) uniform BloomComputeParams { BloomComputeData _BloomComputeParams; };
 layout(std430, binding=10) uniform SkyboxParams { SkyboxData _SkyboxParams; };
+layout(std430, binding=11) uniform TargetParams { TargetData _TargetParams; };
 
 #endif

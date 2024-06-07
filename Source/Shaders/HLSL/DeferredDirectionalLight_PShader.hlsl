@@ -13,7 +13,7 @@ float4 PShader(VertexOut In) : SV_Target
 {
 	const GBuffer gbuffer = UnpackGBuffer(In.Position.xy);
 	
-	const float3 worldPos = GetWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
+	const float3 worldPos = ScreenUVToWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
 	
 	const float2 shadowCamNearFar = LightParams.g_shadowCamNearFarBiasMinMax.xy;
 	const float2 minMaxShadowBias = LightParams.g_shadowCamNearFarBiasMinMax.zw;

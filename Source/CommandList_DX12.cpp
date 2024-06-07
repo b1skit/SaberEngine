@@ -232,6 +232,10 @@ namespace dx12
 		m_commandAllocatorReuseFenceValue = 0;
 
 		m_seenReadbackResources.clear();
+
+#if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
+		m_debugRecordedStages.clear();
+#endif
 	}
 
 
@@ -609,7 +613,7 @@ namespace dx12
 	}
 
 
-	void CommandList::ClearColorTarget(re::TextureTarget const* colorTarget) const
+	void CommandList::ClearColorTarget(re::TextureTarget const* colorTarget)
 	{
 		SEAssert(colorTarget, "Target texture cannot be null");
 
@@ -619,6 +623,11 @@ namespace dx12
 
 		if (colorTarget->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
 		{
+			TransitionResource(
+				colorTarget->GetTexture().get(), 
+				D3D12_RESOURCE_STATE_RENDER_TARGET, 
+				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+
 			dx12::TextureTarget::PlatformParams* targetPlatParams =
 				colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
@@ -631,7 +640,7 @@ namespace dx12
 	}
 
 
-	void CommandList::ClearColorTargets(re::TextureTargetSet const& targetSet) const
+	void CommandList::ClearColorTargets(re::TextureTargetSet const& targetSet)
 	{
 		for (re::TextureTarget const& target : targetSet.GetColorTargets())
 		{

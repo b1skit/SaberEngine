@@ -130,4 +130,9 @@ namespace en::DefaultResourceNames
 	constexpr char const* k_transparentWhiteDefaultTexName	= "TransparentWhite";
 	constexpr char const* k_opaqueBlackDefaultTexName		= "OpaqueBlack";
 	constexpr char const* k_transparentBlackDefaultTexName	= "TransparentBlack";
+	
+	constexpr char const* k_cubeMapOpaqueWhiteDefaultTexName		= "CubeMap_OpaqueWhite";
+	constexpr char const* k_cubeMapTransparentWhiteDefaultTexName	= "CubeMap_TransparentWhite";
+	constexpr char const* k_cubeMapOpaqueBlackDefaultTexName		= "CubeMap_OpaqueBlack";
+	constexpr char const* k_cubeMapTransparentBlackDefaultTexName	= "CubeMap_TransparentBlack";
 }
