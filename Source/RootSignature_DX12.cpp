@@ -467,7 +467,8 @@ namespace dx12
 				break;
 				case D3D_SHADER_INPUT_TYPE::D3D10_SIT_SAMPLER:
 				{
-					std::shared_ptr<re::Sampler> sampler = re::Sampler::GetSampler(inputBindingDesc.Name);
+					std::shared_ptr<re::Sampler> sampler = 
+						re::Sampler::GetSampler(util::HashKey::Create(inputBindingDesc.Name));
 
 					dx12::Sampler::PlatformParams* samplerPlatParams =
 						sampler->GetPlatformParams()->As<dx12::Sampler::PlatformParams*>();

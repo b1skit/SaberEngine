@@ -1083,7 +1083,7 @@ namespace gr
 					lightBatch.AddTextureAndSamplerInput(
 						depthInputTexName,
 						shadowTex,
-						re::Sampler::GetSampler(samplerTypeName));
+						re::Sampler::GetSampler(util::HashKey::Create(samplerTypeName)));
 				}
 			};
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataPoint>())

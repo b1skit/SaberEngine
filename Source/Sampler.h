@@ -1,8 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Interfaces\IPlatformParams.h"
 #include "Sampler_Platform.h"
-#include "Core\Interfaces\INamedObject.h"
+
+#include "Core/Util/HashKey.h"
+#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/INamedObject.h"
 
 
 namespace re
@@ -116,16 +118,16 @@ namespace re
 	
 		// Sampler library:
 	public:
-		static std::shared_ptr<re::Sampler> const GetSampler(std::string const& samplerName);
+		static std::shared_ptr<re::Sampler> const GetSampler(util::HashKey const& samplerName);
 		static void DestroySamplerLibrary();
 
 	private:
-		static std::unique_ptr<std::unordered_map<std::string, std::shared_ptr<re::Sampler>>> m_samplerLibrary;
+		static std::unique_ptr<std::unordered_map<util::HashKey const, std::shared_ptr<re::Sampler>>> m_samplerLibrary;
 		static std::recursive_mutex m_samplerLibraryMutex;
 
 
 	public:
-		[[nodiscard]] static std::shared_ptr<re::Sampler> Create(std::string const& name, SamplerDesc const&);
+		[[nodiscard]] static std::shared_ptr<re::Sampler> Create(util::HashKey const& name, SamplerDesc const&);
 
 		~Sampler();
 
@@ -139,7 +141,7 @@ namespace re
 
 
 	private:
-		Sampler(std::string const&, SamplerDesc const&);
+		Sampler(char const* name, SamplerDesc const&);
 
 
 	private:

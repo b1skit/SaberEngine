@@ -1,15 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Assert.h"
 #include "RenderManager.h"
 #include "Sampler.h"
 #include "Sampler_Platform.h"
+
+#include "Core/Assert.h"
 
 
 namespace re
 {
 	// Static members:
-	std::unique_ptr<std::unordered_map<std::string, std::shared_ptr<re::Sampler>>> Sampler::m_samplerLibrary = nullptr;
+	std::unique_ptr<std::unordered_map<util::HashKey const, std::shared_ptr<re::Sampler>>> Sampler::m_samplerLibrary = nullptr;
 	std::recursive_mutex Sampler::m_samplerLibraryMutex;
 
 
@@ -28,14 +29,15 @@ namespace re
 	}
 
 
-	std::shared_ptr<re::Sampler> const Sampler::GetSampler(std::string const& samplerName)
+	std::shared_ptr<re::Sampler> const Sampler::GetSampler(util::HashKey const& samplerName)
 	{
 		{
 			std::unique_lock<std::recursive_mutex> samplerLock(m_samplerLibraryMutex);
 
 			if (Sampler::m_samplerLibrary == nullptr)
 			{
-				Sampler::m_samplerLibrary = std::make_unique<std::unordered_map<std::string, std::shared_ptr<Sampler>>>();
+				Sampler::m_samplerLibrary = 
+					std::make_unique<std::unordered_map<util::HashKey const, std::shared_ptr<Sampler>>>();
 
 				// Pre-add some samplers we know we need:
 
@@ -52,7 +54,7 @@ namespace re
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
-				const std::string wrapMinMagLinearMipPointName = "WrapMinMagLinearMipPoint";
+				constexpr util::HashKey wrapMinMagLinearMipPointName = "WrapMinMagLinearMipPoint";
 				Sampler::m_samplerLibrary->emplace(wrapMinMagLinearMipPointName,
 					re::Sampler::Create(wrapMinMagLinearMipPointName, k_wrapMinMagLinearMipPoint));
 
@@ -69,7 +71,7 @@ namespace re
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
-				const std::string clampMinMagLinearMipPointName = "ClampMinMagLinearMipPoint";
+				constexpr util::HashKey clampMinMagLinearMipPointName = "ClampMinMagLinearMipPoint";
 				Sampler::m_samplerLibrary->emplace(clampMinMagLinearMipPointName,
 					re::Sampler::Create(clampMinMagLinearMipPointName, k_clampMinMagLinearMipPoint));
 
@@ -86,7 +88,7 @@ namespace re
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
-				const std::string clampMinMagMipPointName = "ClampMinMagMipPoint";
+				constexpr util::HashKey clampMinMagMipPointName = "ClampMinMagMipPoint";
 				Sampler::m_samplerLibrary->emplace(clampMinMagMipPointName,
 					re::Sampler::Create(clampMinMagMipPointName, k_clampMinMagMipPoint));
 
@@ -103,7 +105,7 @@ namespace re
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
-				const std::string borderMinMagMipPointName = "WhiteBorderMinMagMipPoint";
+				constexpr util::HashKey borderMinMagMipPointName = "WhiteBorderMinMagMipPoint";
 				Sampler::m_samplerLibrary->emplace(borderMinMagMipPointName,
 					re::Sampler::Create(borderMinMagMipPointName, k_borderMinMagMipPoint));
 
@@ -120,7 +122,7 @@ namespace re
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
-				const std::string clampMinMagMipLinearName = "ClampMinMagMipLinear";
+				constexpr util::HashKey clampMinMagMipLinearName = "ClampMinMagMipLinear";
 				Sampler::m_samplerLibrary->emplace(clampMinMagMipLinearName,
 					re::Sampler::Create(clampMinMagMipLinearName, k_clampMinMagMipLinear));
 
@@ -137,7 +139,7 @@ namespace re
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
-				const std::string wrapMinMagMipLinearName = "WrapMinMagMipLinear";
+				constexpr util::HashKey wrapMinMagMipLinearName = "WrapMinMagMipLinear";
 				Sampler::m_samplerLibrary->emplace(wrapMinMagMipLinearName,
 					re::Sampler::Create(wrapMinMagMipLinearName, k_wrapMinMagMipLinear));
 
@@ -154,7 +156,7 @@ namespace re
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
-				const std::string wrapAnisotropicName = "WrapAnisotropic";
+				constexpr util::HashKey wrapAnisotropicName = "WrapAnisotropic";
 				Sampler::m_samplerLibrary->emplace(wrapAnisotropicName,
 					re::Sampler::Create(wrapAnisotropicName, k_wrapAnisotropic));
 
@@ -174,7 +176,7 @@ namespace re
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
-				const std::string borderCmpMinMagLinearMipPointName = "BorderCmpMinMagLinearMipPoint";
+				constexpr util::HashKey borderCmpMinMagLinearMipPointName = "BorderCmpMinMagLinearMipPoint";
 				Sampler::m_samplerLibrary->emplace(borderCmpMinMagLinearMipPointName,
 					re::Sampler::Create(borderCmpMinMagLinearMipPointName, k_borderCmpMinMagLinearMipPoint));
 
@@ -191,7 +193,7 @@ namespace re
 					.m_minLOD = 0,
 					.m_maxLOD = std::numeric_limits<float>::max() // No limit
 				};
-				const std::string wrapCmpMinMagLinearMipPointName = "WrapCmpMinMagLinearMipPoint";
+				constexpr util::HashKey wrapCmpMinMagLinearMipPointName = "WrapCmpMinMagLinearMipPoint";
 				Sampler::m_samplerLibrary->emplace(wrapCmpMinMagLinearMipPointName,
 					re::Sampler::Create(wrapCmpMinMagLinearMipPointName, k_wrapCmpMinMagLinearMipPoint));
 			}
@@ -216,7 +218,7 @@ namespace re
 	// -----------------------------------------------------------------------------------------------------------------
 
 
-	std::shared_ptr<re::Sampler> Sampler::Create(std::string const& name, SamplerDesc const& samplerDesc)
+	std::shared_ptr<re::Sampler> Sampler::Create(util::HashKey const& name, SamplerDesc const& samplerDesc)
 	{
 		std::shared_ptr<re::Sampler> newSampler = nullptr;
 		{
@@ -224,10 +226,10 @@ namespace re
 
 			if (!Sampler::m_samplerLibrary->contains(name))
 			{
-				newSampler.reset(new re::Sampler(name, samplerDesc));
+				newSampler.reset(new re::Sampler(name.GetKey(), samplerDesc));
 				Sampler::m_samplerLibrary->emplace(name, newSampler);
 
-				LOG("Creating sampler \"%s\"", name.c_str());
+				LOG("Creating sampler \"%s\"", name.GetKey());
 
 				// Register new Samplers with the RenderManager, so their API-level objects are created before use
 				re::RenderManager::Get()->RegisterForCreate(newSampler);
@@ -245,7 +247,7 @@ namespace re
 	}
 
 
-	Sampler::Sampler(std::string const& name, SamplerDesc const& samplerDesc)
+	Sampler::Sampler(char const* name, SamplerDesc const& samplerDesc)
 		: core::INamedObject(name)
 		, m_samplerDesc{ samplerDesc }
 	{
