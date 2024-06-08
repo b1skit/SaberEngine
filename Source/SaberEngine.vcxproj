@@ -338,6 +338,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
     <ClCompile Include="GraphicsSystem_Culling.cpp" />
     <ClCompile Include="GraphicsSystem_Debug.cpp" />
+    <ClCompile Include="LightParamsHelpers.cpp" />
     <ClCompile Include="LightComponent.cpp" />
     <ClCompile Include="LightRenderData.cpp" />
     <ClCompile Include="MaterialInstanceComponent.cpp" />
@@ -457,6 +458,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="GraphicsSystem_Transparency.h" />
     <ClInclude Include="GraphicsSystem_XeGTAO.h" />
     <ClInclude Include="GraphicsSystem_Culling.h" />
+    <ClInclude Include="LightParamsHelpers.h" />
     <ClInclude Include="LightComponent.h" />
     <ClInclude Include="LightRenderData.h" />
     <ClInclude Include="MarkerComponents.h" />

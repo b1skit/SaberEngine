@@ -14,26 +14,26 @@ float4 PShader(VertexOut In) : SV_Target
 {
 	const uint materialIdx = InstanceIndexParams.g_instanceIndices[In.InstanceID].g_materialIdx;
 	
-	AmbientLightingParams lightingParams;
+	AmbientLightingParams ambientLightParams;
 	
 	const float3 worldPos = In.WorldPos;
-	lightingParams.WorldPosition = worldPos;
+	ambientLightParams.WorldPosition = worldPos;
 	
-	lightingParams.V = normalize(CameraParams.g_cameraWPos.xyz - worldPos); // point -> camera
+	ambientLightParams.V = normalize(CameraParams.g_cameraWPos.xyz - worldPos); // point -> camera
 	
 	const float normalScaleFactor =
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.z;
 	const float3 normalScale = float3(normalScaleFactor, normalScaleFactor, 1.f);
 	const float3 texNormal = MatNormal.Sample(WrapAnisotropic, In.UV0).xyz;
 	const float3 worldNormal = WorldNormalFromTextureNormal(texNormal, normalScale, In.TBN);
-	lightingParams.WorldNormal = worldNormal;
+	ambientLightParams.WorldNormal = worldNormal;
 	
 	const float4 matAlbedo = MatAlbedo.Sample(WrapAnisotropic, In.UV0);
 	const float4 baseColorFactor =
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_baseColorFactor;
-	lightingParams.LinearAlbedo = (matAlbedo * baseColorFactor * In.Color).rgb;
+	ambientLightParams.LinearAlbedo = (matAlbedo * baseColorFactor * In.Color).rgb;
 	
-	lightingParams.DielectricSpecular = 
+	ambientLightParams.DielectricSpecular = 
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0.rgb;
 	
 	const float linearRoughnessFactor =
@@ -45,17 +45,17 @@ float4 PShader(VertexOut In) : SV_Target
 	const float2 roughnessMetalness =
 		MatMetallicRoughness.Sample(WrapAnisotropic, In.UV0).gb * float2(linearRoughnessFactor, metallicFactor);
 	
-	lightingParams.LinearMetalness = roughnessMetalness.y;
+	ambientLightParams.LinearMetalness = roughnessMetalness.y;
 	
-	lightingParams.LinearRoughness = roughnessMetalness.x;
-	lightingParams.RemappedRoughness = RemapRoughness(roughnessMetalness.x);
+	ambientLightParams.LinearRoughness = roughnessMetalness.x;
+	ambientLightParams.RemappedRoughness = RemapRoughness(roughnessMetalness.x);
 
 	const float occlusionStrength =
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.w;
 	const float occlusion = MatOcclusion.Sample(WrapAnisotropic, In.UV0).r * occlusionStrength;
 	
-	lightingParams.FineAO = occlusion;
-	lightingParams.CoarseAO = 1.f; // No SSAO for transparents
+	ambientLightParams.FineAO = occlusion;
+	ambientLightParams.CoarseAO = 1.f; // No SSAO for transparents
 	
-	return float4(ComputeAmbientLighting(lightingParams), matAlbedo.a);
+	return float4(ComputeAmbientLighting(ambientLightParams), matAlbedo.a);
 }

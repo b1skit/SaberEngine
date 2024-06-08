@@ -43,35 +43,6 @@ struct AmbientLightData
 };
 
 
-#if defined(__cplusplus)
-
-inline AmbientLightData GetAmbientLightParamsData(
-	uint32_t numPMREMMips, float diffuseScale, float specularScale, const uint32_t dfgTexWidthHeight, re::Texture const* ssaoTex)
-{
-
-	AmbientLightData ambientLightParamsData{};
-
-	assert(numPMREMMips > 0); // Don't underflow!
-	const uint32_t maxPMREMMipLevel = numPMREMMips - 1;
-
-	ambientLightParamsData.g_maxPMREMMipDFGResScaleDiffuseScaleSpec = glm::vec4(
-		maxPMREMMipLevel,
-		dfgTexWidthHeight,
-		diffuseScale,
-		specularScale);
-
-	ambientLightParamsData.g_ssaoTexDims = glm::vec4(0.f);
-	if (ssaoTex)
-	{
-		ambientLightParamsData.g_ssaoTexDims = ssaoTex->GetTextureDimenions();
-	}
-
-	return ambientLightParamsData;
-}
-
-#endif
-
-
 struct PoissonSampleParamsData
 {
 	float4 g_poissonSamples64[32]; // 64x float2
