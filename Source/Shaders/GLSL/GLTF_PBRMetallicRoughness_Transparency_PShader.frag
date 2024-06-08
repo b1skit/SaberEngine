@@ -15,26 +15,26 @@ void main()
 {
 	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[InstanceParamsIn.InstanceID].g_materialIdx;
 
-	AmbientLightingParams lightingParams;
+	AmbientLightingParams ambientLightParams;
 	
 	const vec3 worldPos = In.WorldPos;
-	lightingParams.WorldPosition = worldPos;
+	ambientLightParams.WorldPosition = worldPos;
 	
-	lightingParams.V = normalize(_CameraParams.g_cameraWPos.xyz - worldPos); // point -> camera
+	ambientLightParams.V = normalize(_CameraParams.g_cameraWPos.xyz - worldPos); // point -> camera
 	
 	const float normalScaleFactor =
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.z;
 	const vec3 normalScale = vec3(normalScaleFactor, normalScaleFactor, 1.f);
 	const vec3 texNormal = texture(MatNormal, In.uv0.xy).xyz;
 	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, In.TBN) * normalScale;
-	lightingParams.WorldNormal = worldNormal;
+	ambientLightParams.WorldNormal = worldNormal;
 	
 	const float4 matAlbedo = texture(MatAlbedo, In.uv0.xy);
 	const float4 baseColorFactor =
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor;
-	lightingParams.LinearAlbedo = (matAlbedo * baseColorFactor * In.Color).rgb;
+	ambientLightParams.LinearAlbedo = (matAlbedo * baseColorFactor * In.Color).rgb;
 	
-	lightingParams.DielectricSpecular = 
+	ambientLightParams.DielectricSpecular = 
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_f0.rgb;
 	
 	const float linearRoughnessFactor =
@@ -45,17 +45,17 @@ void main()
 	
 	const vec2 roughnessMetalness =
 		texture(MatMetallicRoughness, In.uv0.xy).gb * vec2(linearRoughnessFactor, metallicFactor);
-	lightingParams.LinearMetalness = roughnessMetalness.y;
+	ambientLightParams.LinearMetalness = roughnessMetalness.y;
 	
-	lightingParams.LinearRoughness = roughnessMetalness.x;
-	lightingParams.RemappedRoughness = RemapRoughness(roughnessMetalness.x);
+	ambientLightParams.LinearRoughness = roughnessMetalness.x;
+	ambientLightParams.RemappedRoughness = RemapRoughness(roughnessMetalness.x);
 
 	const float occlusionStrength =
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.w;
 	const float occlusion = texture(MatOcclusion, In.uv0.xy).r * occlusionStrength;
 	
-	lightingParams.FineAO = occlusion;
-	lightingParams.CoarseAO = 1.f; // No SSAO for transparents
+	ambientLightParams.FineAO = occlusion;
+	ambientLightParams.CoarseAO = 1.f; // No SSAO for transparents
 	
-	FragColor = vec4(ComputeAmbientLighting(lightingParams), matAlbedo.a);
+	FragColor = vec4(ComputeAmbientLighting(ambientLightParams), matAlbedo.a);
 }

@@ -38,8 +38,7 @@ namespace gr
 		gr::Light::Type lightType,
 		gr::Transform::RenderData const& transformData,
 		gr::ShadowMap::RenderData const* shadowData,
-		gr::Camera::RenderData const* shadowCamData,
-		re::TextureTargetSet const* targetSet)
+		gr::Camera::RenderData const* shadowCamData)
 	{
 		SEAssert(lightType != gr::Light::Type::AmbientIBL,
 			"Ambient lights do not use the LightData structure");

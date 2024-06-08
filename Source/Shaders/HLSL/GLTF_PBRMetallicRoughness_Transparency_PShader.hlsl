@@ -9,6 +9,8 @@
 #include "NormalMapUtils.hlsli"
 #include "SaberCommon.hlsli"
 
+#include "../Common/LightParams.h"
+
 
 float4 PShader(VertexOut In) : SV_Target
 {

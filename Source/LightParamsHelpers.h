@@ -31,8 +31,7 @@ namespace gr
 		gr::Light::Type lightType,
 		gr::Transform::RenderData const& transformData,
 		gr::ShadowMap::RenderData const* shadowData,
-		gr::Camera::RenderData const* shadowCamData,
-		re::TextureTargetSet const* targetSet);
+		gr::Camera::RenderData const* shadowCamData);
 
 
 	PoissonSampleParamsData GetPoissonSampleParamsData();

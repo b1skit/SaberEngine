@@ -777,8 +777,7 @@ namespace gr
 					gr::Light::Type::Directional,
 					directionalTransformData,
 					shadowData,
-					shadowCamData,
-					m_directionalStage->GetTextureTargetSet());
+					shadowCamData);
 
 				std::shared_ptr<re::Buffer> directionalLightParams = re::Buffer::Create(
 					LightData::s_shaderName,
@@ -821,7 +820,6 @@ namespace gr
 			gr::Light::Type lightType,
 			void const* lightRenderData,
 			bool hasShadow,
-			re::TextureTargetSet const* stageTargetSet,
 			std::unordered_map<gr::RenderDataID, PunctualLightRenderData>& punctualLightData,
 			char const* depthInputTexName,
 			char const* samplerTypeName)
@@ -842,8 +840,7 @@ namespace gr
 					lightType,
 					transformData,
 					shadowData,
-					shadowCamData,
-					stageTargetSet);
+					shadowCamData);
 
 				std::shared_ptr<re::Buffer> lightDataBuffer = re::Buffer::Create(
 					LightData::s_shaderName,
@@ -919,7 +916,6 @@ namespace gr
 					gr::Light::Point, 
 					&pointData, 
 					hasShadow, 
-					m_pointStage->GetTextureTargetSet(),
 					m_punctualLightData,
 					"CubeDepth",
 					"WrapCmpMinMagLinearMipPoint");
@@ -943,7 +939,6 @@ namespace gr
 					gr::Light::Spot,
 					&spotData,
 					hasShadow,
-					m_spotStage->GetTextureTargetSet(),
 					m_punctualLightData,
 					"Depth0",
 					"WrapCmpMinMagLinearMipPoint");
@@ -1045,7 +1040,6 @@ namespace gr
 				void const* lightRenderData = nullptr;
 				gr::ShadowMap::RenderData const* shadowData = nullptr;
 				gr::Camera::RenderData const* shadowCamData = nullptr;
-				re::TextureTargetSet const* targetSet = nullptr;
 				bool hasShadow = false;
 
 				switch (light.second.m_type)
@@ -1057,7 +1051,6 @@ namespace gr
 					light.second.m_canContribute = directionalData.m_canContribute;
 					lightRenderData = &directionalData;
 					hasShadow = directionalData.m_hasShadow;
-					targetSet = m_directionalStage->GetTextureTargetSet();
 				}
 				break;
 				case gr::Light::Type::Point:
@@ -1067,7 +1060,6 @@ namespace gr
 					light.second.m_canContribute = pointData.m_canContribute;
 					lightRenderData = &pointData;
 					hasShadow = pointData.m_hasShadow;
-					targetSet = m_pointStage->GetTextureTargetSet();
 
 					light.second.m_transformParams->Commit(gr::Transform::CreateInstancedTransformData(
 							renderData.GetTransformDataFromRenderDataID(lightID)));
@@ -1080,7 +1072,6 @@ namespace gr
 					light.second.m_canContribute = spotData.m_canContribute;
 					lightRenderData = &spotData;
 					hasShadow = spotData.m_hasShadow;
-					targetSet = m_spotStage->GetTextureTargetSet();
 
 					light.second.m_transformParams->Commit(gr::Transform::CreateInstancedTransformData(
 						renderData.GetTransformDataFromRenderDataID(lightID)));
@@ -1100,8 +1091,7 @@ namespace gr
 					light.second.m_type,
 					lightTransformData,
 					shadowData,
-					shadowCamData,
-					targetSet);
+					shadowCamData);
 				light.second.m_lightParams->Commit(lightParams);
 			}
 
