@@ -31,7 +31,11 @@ namespace gr
 		BatchManager();
 		~BatchManager() = default;
 
+		BatchManager(BatchManager&&) = default;
+		BatchManager& operator=(BatchManager&&) = default;
 
+
+	public:
 		void UpdateBatchCache(gr::RenderDataManager const&);
 
 
@@ -84,6 +88,11 @@ namespace gr
 			std::shared_ptr<re::Buffer> m_instancedMaterials;
 		};
 		std::array<MaterialInstanceMetadata, gr::Material::MaterialEffect_Count> m_materialInstanceMetadata;
+
+
+	private: // No copying allowed
+		BatchManager(BatchManager const&) = delete;
+		BatchManager& operator=(BatchManager const&) = delete;
 	};
 }
 
