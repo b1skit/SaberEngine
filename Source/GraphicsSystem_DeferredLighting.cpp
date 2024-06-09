@@ -220,7 +220,7 @@ namespace gr
 			iemStage->AddPermanentTextureInput(
 				"Tex0",
 				iblTex,
-				re::Sampler::GetSampler("ClampMinMagMipLinear"));
+				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
 
 			// Buffers:
 			IEMPMREMGenerationData const& iemGenerationParams =
