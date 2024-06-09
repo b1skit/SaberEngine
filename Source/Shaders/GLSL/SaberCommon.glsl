@@ -112,10 +112,8 @@ struct InstanceParams
 #endif // SABER_INSTANCING
 
 
-// Texture samplers:
-// Note: The layout bindings must correspond with the Material's TextureSlotDesc index
-
 // GLTF PBR material input textures:
+// Note: The layout bindings must correspond with the Material's TextureSlotDesc index
 layout(binding=0) uniform sampler2D MatAlbedo;
 layout(binding=1) uniform sampler2D MatMetallicRoughness;
 layout(binding=2) uniform sampler2D MatNormal;
@@ -151,6 +149,8 @@ layout(binding=12) uniform samplerCube CubeMap1;
 
 layout(binding=13) uniform samplerCubeShadow CubeDepth;
 
+// Buffer bindings:
+// Note: The binding locations are required here because we don't set them on the CPU side
 // Note: OpenGL gives very strange, nonsensical compile errors if the members of our uniform blocks are structs, and
 // their names are capitalized (but only with some letters!). Totally puzzling - but the '_' prefix is preferred anyway
 
