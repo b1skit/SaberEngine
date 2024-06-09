@@ -536,6 +536,9 @@
     <ClCompile Include="LightParamsHelpers.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
+    <ClCompile Include="LightManager.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Context.h">
@@ -968,6 +971,9 @@
       <Filter>Source Files\Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="LightParamsHelpers.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="LightManager.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>

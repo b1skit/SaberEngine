@@ -129,118 +129,124 @@ namespace gr
 			"Batch cache and batch maps are out of sync");
 
 		// Remove deleted batches
-		std::vector<gr::RenderDataID> const& deletedMeshPrimIDs = 
+		std::vector<gr::RenderDataID> const* deletedMeshPrimIDs = 
 			renderData.GetIDsWithDeletedData<gr::MeshPrimitive::RenderData>();
-		for (gr::RenderDataID renderDataIDToDelete : deletedMeshPrimIDs)
+		if (deletedMeshPrimIDs)
 		{
-			if (m_renderDataIDToBatchMetadata.contains(renderDataIDToDelete))
+			for (gr::RenderDataID renderDataIDToDelete : *deletedMeshPrimIDs)
 			{
-				auto deletedIDMetadataItr = m_renderDataIDToBatchMetadata.find(renderDataIDToDelete);
-
-				const gr::TransformID deletedTransformID = deletedIDMetadataItr->second.m_transformID;
-
-				// Move the last batch to replace the one being deleted:
-				const size_t cacheIdxToReplace = deletedIDMetadataItr->second.m_cacheIndex;
-
-				SEAssert(!m_permanentCachedBatches.empty() && cacheIdxToReplace < m_permanentCachedBatches.size(),
-					"Permanent cached batches cannot be empty, and the index being replaced must be in bounds");
-
-				const size_t cacheIdxToMove = m_permanentCachedBatches.size() - 1;
-
-				const gr::Material::MaterialEffect matEffect = 
-					m_renderDataIDToBatchMetadata.at(renderDataIDToDelete).m_matEffect;
-
-				SEAssert(m_cacheIdxToRenderDataID.contains(cacheIdxToMove), "Cache index not found");
-				const gr::RenderDataID renderDataIDToMove = m_cacheIdxToRenderDataID.at(cacheIdxToMove);
-
-				SEAssert(m_cacheIdxToRenderDataID.at(cacheIdxToReplace) == renderDataIDToDelete,
-					"Cache index to ID map references a different ID");
-
-				m_cacheIdxToRenderDataID.erase(cacheIdxToMove);
-				m_renderDataIDToBatchMetadata.erase(renderDataIDToDelete);
-
-				if (cacheIdxToReplace != cacheIdxToMove)
+				if (m_renderDataIDToBatchMetadata.contains(renderDataIDToDelete))
 				{
-					m_permanentCachedBatches[cacheIdxToReplace] = re::Batch::Duplicate(
-						m_permanentCachedBatches[cacheIdxToMove], 
-						m_permanentCachedBatches[cacheIdxToMove].GetLifetime());
+					auto deletedIDMetadataItr = m_renderDataIDToBatchMetadata.find(renderDataIDToDelete);
 
-					SEAssert(m_cacheIdxToRenderDataID.contains(cacheIdxToReplace), "Cache index not found");
-					
-					SEAssert(m_renderDataIDToBatchMetadata.contains(renderDataIDToMove),
-						"Cannot find the render data ID to move");
+					const gr::TransformID deletedTransformID = deletedIDMetadataItr->second.m_transformID;
 
-					SEAssert(m_renderDataIDToBatchMetadata.at(renderDataIDToMove).m_renderDataID == renderDataIDToMove,
-						"IDs are out of sync");
+					// Move the last batch to replace the one being deleted:
+					const size_t cacheIdxToReplace = deletedIDMetadataItr->second.m_cacheIndex;
 
-					m_cacheIdxToRenderDataID.at(cacheIdxToReplace) = renderDataIDToMove;
-					m_renderDataIDToBatchMetadata.at(renderDataIDToMove).m_cacheIndex = cacheIdxToReplace;
+					SEAssert(!m_permanentCachedBatches.empty() && cacheIdxToReplace < m_permanentCachedBatches.size(),
+						"Permanent cached batches cannot be empty, and the index being replaced must be in bounds");
+
+					const size_t cacheIdxToMove = m_permanentCachedBatches.size() - 1;
+
+					const gr::Material::MaterialEffect matEffect =
+						m_renderDataIDToBatchMetadata.at(renderDataIDToDelete).m_matEffect;
+
+					SEAssert(m_cacheIdxToRenderDataID.contains(cacheIdxToMove), "Cache index not found");
+					const gr::RenderDataID renderDataIDToMove = m_cacheIdxToRenderDataID.at(cacheIdxToMove);
+
+					SEAssert(m_cacheIdxToRenderDataID.at(cacheIdxToReplace) == renderDataIDToDelete,
+						"Cache index to ID map references a different ID");
+
+					m_cacheIdxToRenderDataID.erase(cacheIdxToMove);
+					m_renderDataIDToBatchMetadata.erase(renderDataIDToDelete);
+
+					if (cacheIdxToReplace != cacheIdxToMove)
+					{
+						m_permanentCachedBatches[cacheIdxToReplace] = re::Batch::Duplicate(
+							m_permanentCachedBatches[cacheIdxToMove],
+							m_permanentCachedBatches[cacheIdxToMove].GetLifetime());
+
+						SEAssert(m_cacheIdxToRenderDataID.contains(cacheIdxToReplace), "Cache index not found");
+
+						SEAssert(m_renderDataIDToBatchMetadata.contains(renderDataIDToMove),
+							"Cannot find the render data ID to move");
+
+						SEAssert(m_renderDataIDToBatchMetadata.at(renderDataIDToMove).m_renderDataID == renderDataIDToMove,
+							"IDs are out of sync");
+
+						m_cacheIdxToRenderDataID.at(cacheIdxToReplace) = renderDataIDToMove;
+						m_renderDataIDToBatchMetadata.at(renderDataIDToMove).m_cacheIndex = cacheIdxToReplace;
+					}
+					m_permanentCachedBatches.pop_back();
+
+
+					// Update the metadata:
+					FreeInstancingIndex(m_instancedTransformIndexes, m_freeTransformIndexes, deletedTransformID);
+
+					FreeInstancingIndex(
+						m_materialInstanceMetadata[matEffect].m_instancedMaterialIndexes,
+						m_materialInstanceMetadata[matEffect].m_freeInstancedMaterialIndexes,
+						renderDataIDToDelete);
 				}
-				m_permanentCachedBatches.pop_back();
-
-
-				// Update the metadata:
-				FreeInstancingIndex(m_instancedTransformIndexes, m_freeTransformIndexes, deletedTransformID);
-				
-				FreeInstancingIndex(
-					m_materialInstanceMetadata[matEffect].m_instancedMaterialIndexes, 
-					m_materialInstanceMetadata[matEffect].m_freeInstancedMaterialIndexes, 
-					renderDataIDToDelete);
 			}
 		}
 
 
 		// Create batches for newly added IDs
-		std::vector<gr::RenderDataID> const& newMeshPrimIDs = 
+		std::vector<gr::RenderDataID> const* newMeshPrimIDs = 
 			renderData.GetIDsWithNewData<gr::MeshPrimitive::RenderData>();
-		auto newMeshPrimDataItr = renderData.IDBegin(newMeshPrimIDs);
-		auto const& newMeshPrimDataItrEnd = renderData.IDEnd(newMeshPrimIDs);
-		while (newMeshPrimDataItr != newMeshPrimDataItrEnd)
+		if (newMeshPrimIDs)
 		{
-			const gr::RenderDataID newMeshPrimID = newMeshPrimDataItr.GetRenderDataID();
-			
-			if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, newMeshPrimDataItr.GetFeatureBits()))
+			auto newMeshPrimDataItr = renderData.IDBegin(*newMeshPrimIDs);
+			auto const& newMeshPrimDataItrEnd = renderData.IDEnd(*newMeshPrimIDs);
+			while (newMeshPrimDataItr != newMeshPrimDataItrEnd)
 			{
-				gr::MeshPrimitive::RenderData const& meshPrimRenderData = 
-					newMeshPrimDataItr.Get<gr::MeshPrimitive::RenderData>();
-				gr::Material::MaterialInstanceData const& materialRenderData = 
-					newMeshPrimDataItr.Get<gr::Material::MaterialInstanceData>();
+				const gr::RenderDataID newMeshPrimID = newMeshPrimDataItr.GetRenderDataID();
 
-				const gr::TransformID newBatchTransformID = newMeshPrimDataItr.GetTransformID();
-				const size_t newBatchIdx = m_permanentCachedBatches.size();
+				if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, newMeshPrimDataItr.GetFeatureBits()))
+				{
+					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
+						newMeshPrimDataItr.Get<gr::MeshPrimitive::RenderData>();
+					gr::Material::MaterialInstanceData const& materialRenderData =
+						newMeshPrimDataItr.Get<gr::Material::MaterialInstanceData>();
 
-				m_permanentCachedBatches.emplace_back(
-					re::Batch(re::Batch::Lifetime::Permanent, meshPrimRenderData, &materialRenderData));
+					const gr::TransformID newBatchTransformID = newMeshPrimDataItr.GetTransformID();
+					const size_t newBatchIdx = m_permanentCachedBatches.size();
 
-				const uint64_t batchHash = m_permanentCachedBatches.back().GetDataHash();
+					m_permanentCachedBatches.emplace_back(
+						re::Batch(re::Batch::Lifetime::Permanent, meshPrimRenderData, &materialRenderData));
 
-				// Update the metadata:
-				m_cacheIdxToRenderDataID.emplace(newBatchIdx, newMeshPrimID);
+					const uint64_t batchHash = m_permanentCachedBatches.back().GetDataHash();
 
-				const gr::Material::MaterialEffect matEffect = materialRenderData.m_matEffect;
+					// Update the metadata:
+					m_cacheIdxToRenderDataID.emplace(newBatchIdx, newMeshPrimID);
 
-				m_renderDataIDToBatchMetadata.emplace(
-					newMeshPrimID,
-					BatchMetadata{
-						.m_batchHash = batchHash,
-						.m_renderDataID = newMeshPrimID,
-						.m_transformID = newBatchTransformID,
-						.m_matEffect = matEffect,
-						.m_cacheIndex = newBatchIdx
-					});
+					const gr::Material::MaterialEffect matEffect = materialRenderData.m_matEffect;
 
-				AssignInstancingIndex(
-					m_instancedTransformIndexes,
-					m_freeTransformIndexes,
-					newBatchTransformID);
+					m_renderDataIDToBatchMetadata.emplace(
+						newMeshPrimID,
+						BatchMetadata{
+							.m_batchHash = batchHash,
+							.m_renderDataID = newMeshPrimID,
+							.m_transformID = newBatchTransformID,
+							.m_matEffect = matEffect,
+							.m_cacheIndex = newBatchIdx
+						});
 
-				AssignInstancingIndex(
-					m_materialInstanceMetadata[matEffect].m_instancedMaterialIndexes,
-					m_materialInstanceMetadata[matEffect].m_freeInstancedMaterialIndexes,
-					newMeshPrimID);
+					AssignInstancingIndex(
+						m_instancedTransformIndexes,
+						m_freeTransformIndexes,
+						newBatchTransformID);
+
+					AssignInstancingIndex(
+						m_materialInstanceMetadata[matEffect].m_instancedMaterialIndexes,
+						m_materialInstanceMetadata[matEffect].m_freeInstancedMaterialIndexes,
+						newMeshPrimID);
+				}
+
+				++newMeshPrimDataItr;
 			}
-
-			++newMeshPrimDataItr;
 		}
 
 		

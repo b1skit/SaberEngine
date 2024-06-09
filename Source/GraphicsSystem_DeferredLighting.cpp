@@ -3,12 +3,14 @@
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystemManager.h"
+#include "LightManager.h"
 #include "LightParamsHelpers.h"
 #include "LightRenderData.h"
 #include "MeshFactory.h"
 #include "Sampler.h"
 #include "ShadowMapRenderData.h"
 #include "RenderDataManager.h"
+#include "RenderManager.h"
 #include "RenderStage.h"
 
 #include "Core/Config.h"
@@ -597,110 +599,105 @@ namespace gr
 
 		// Removed any deleted directional/point/spot lights:
 		auto DeleteLights = []<typename T>(
-			std::vector<gr::RenderDataID> const& deletedIDs, std::unordered_map<gr::RenderDataID, T>&stageData)
+			std::vector<gr::RenderDataID> const* deletedIDs, std::unordered_map<gr::RenderDataID, T>&stageData)
 		{
-			for (gr::RenderDataID id : deletedIDs)
+			if (!deletedIDs)
+			{
+				return;
+			}
+			for (gr::RenderDataID id : *deletedIDs)
 			{
 				stageData.erase(id);
 			}
 		};
-		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>())
-		{
-			std::vector<gr::RenderDataID> const& deletedAmbientIDs = 
-				renderData.GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
 
-			// Null out the active ambient light tracking if it has been deleted
-			for (auto const& deletedAmbientID : deletedAmbientIDs)
+		// Null out the active ambient light tracking if it has been deleted
+		std::vector<gr::RenderDataID> const* deletedAmbientIDs =
+			renderData.GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
+		for (auto const& deletedAmbientID : *deletedAmbientIDs)
+		{
+			if (deletedAmbientID == m_activeAmbientLightData.m_renderDataID)
 			{
-				if (deletedAmbientID == m_activeAmbientLightData.m_renderDataID)
-				{
-					m_activeAmbientLightData = {};
-					break;
-				}
+				m_activeAmbientLightData = {};
+				break;
 			}
-
-			DeleteLights(deletedAmbientIDs, m_ambientLightData);
 		}
-		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataDirectional>())
-		{
-			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_punctualLightData);
-		}
-		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataPoint>())
-		{
-			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_punctualLightData);
-		}
-		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataSpot>())
-		{
-			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataSpot>(), m_punctualLightData);
-		}
-
+		DeleteLights(deletedAmbientIDs, m_ambientLightData);
+		
+		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_punctualLightData);
+		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_punctualLightData);
+		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataSpot>(), m_punctualLightData);
+		
 
 		// Register new ambient lights:
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataAmbientIBL>())
 		{
-			std::vector<gr::RenderDataID> const& newAmbientIDs =
+			std::vector<gr::RenderDataID> const* newAmbientIDs =
 				renderData.GetIDsWithNewData<gr::Light::RenderDataAmbientIBL>();
 
-			auto ambientItr = renderData.IDBegin(newAmbientIDs);
-			auto const& ambientItrEnd = renderData.IDEnd(newAmbientIDs);
-			while (ambientItr != ambientItrEnd)
+			if (newAmbientIDs)
 			{
-				gr::Light::RenderDataAmbientIBL const& ambientData = ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
-				
-				const gr::RenderDataID lightID = ambientData.m_renderDataID;
+				auto ambientItr = renderData.IDBegin(*newAmbientIDs);
+				auto const& ambientItrEnd = renderData.IDEnd(*newAmbientIDs);
+				while (ambientItr != ambientItrEnd)
+				{
+					gr::Light::RenderDataAmbientIBL const& ambientData = ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
 
-				gr::MeshPrimitive::RenderData const& ambientMeshPrimData = 
-					ambientItr.Get<gr::MeshPrimitive::RenderData>();
+					const gr::RenderDataID lightID = ambientData.m_renderDataID;
 
-				re::Texture const* iblTex = ambientData.m_iblTex;
-				SEAssert(iblTex, "IBL texture cannot be null");
+					gr::MeshPrimitive::RenderData const& ambientMeshPrimData =
+						ambientItr.Get<gr::MeshPrimitive::RenderData>();
 
-				std::shared_ptr<re::Texture> iemTex = nullptr;
-				PopulateIEMTex(m_resourceCreationStagePipeline, iblTex, iemTex);
+					re::Texture const* iblTex = ambientData.m_iblTex;
+					SEAssert(iblTex, "IBL texture cannot be null");
 
-				std::shared_ptr<re::Texture> pmremTex = nullptr;
-				PopulatePMREMTex(m_resourceCreationStagePipeline, iblTex, pmremTex);
+					std::shared_ptr<re::Texture> iemTex = nullptr;
+					PopulateIEMTex(m_resourceCreationStagePipeline, iblTex, iemTex);
 
-				const uint32_t totalPMREMMipLevels = pmremTex->GetNumMips();
+					std::shared_ptr<re::Texture> pmremTex = nullptr;
+					PopulatePMREMTex(m_resourceCreationStagePipeline, iblTex, pmremTex);
 
-				const AmbientLightData ambientLightParamsData = GetAmbientLightParamsData(
-					totalPMREMMipLevels,
-					ambientData.m_diffuseScale,
-					ambientData.m_specularScale,
-					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
-					m_ssaoTex.get());
+					const uint32_t totalPMREMMipLevels = pmremTex->GetNumMips();
 
-				std::shared_ptr<re::Buffer> ambientParams = re::Buffer::Create(
-					AmbientLightData::s_shaderName,
-					ambientLightParamsData,
-					re::Buffer::Type::Mutable);
+					const AmbientLightData ambientLightParamsData = GetAmbientLightParamsData(
+						totalPMREMMipLevels,
+						ambientData.m_diffuseScale,
+						ambientData.m_specularScale,
+						static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
+						m_ssaoTex.get());
 
-				m_ambientLightData.emplace(ambientData.m_renderDataID,
-					AmbientLightRenderData{
-						.m_ambientParams = ambientParams,
-						.m_IEMTex = iemTex,
-						.m_PMREMTex = pmremTex,
-						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, ambientMeshPrimData, nullptr)
-					});
+					std::shared_ptr<re::Buffer> ambientParams = re::Buffer::Create(
+						AmbientLightData::s_shaderName,
+						ambientLightParamsData,
+						re::Buffer::Type::Mutable);
 
-				// Set the batch inputs:
-				re::Batch& ambientBatch = m_ambientLightData.at(lightID).m_batch;
+					m_ambientLightData.emplace(ambientData.m_renderDataID,
+						AmbientLightRenderData{
+							.m_ambientParams = ambientParams,
+							.m_IEMTex = iemTex,
+							.m_PMREMTex = pmremTex,
+							.m_batch = re::Batch(re::Batch::Lifetime::Permanent, ambientMeshPrimData, nullptr)
+						});
 
-				ambientBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
+					// Set the batch inputs:
+					re::Batch& ambientBatch = m_ambientLightData.at(lightID).m_batch;
 
-				ambientBatch.AddTextureAndSamplerInput(
-					"CubeMapIEM",
-					iemTex.get(),
-					re::Sampler::GetSampler("WrapMinMagMipLinear"));
+					ambientBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
 
-				ambientBatch.AddTextureAndSamplerInput(
-					"CubeMapPMREM",
-					pmremTex.get(),
-					re::Sampler::GetSampler("WrapMinMagMipLinear"));
+					ambientBatch.AddTextureAndSamplerInput(
+						"CubeMapIEM",
+						iemTex.get(),
+						re::Sampler::GetSampler("WrapMinMagMipLinear"));
 
-				ambientBatch.SetBuffer(ambientParams);
+					ambientBatch.AddTextureAndSamplerInput(
+						"CubeMapPMREM",
+						pmremTex.get(),
+						re::Sampler::GetSampler("WrapMinMagMipLinear"));
 
-				++ambientItr;
+					ambientBatch.SetBuffer(ambientParams);
+
+					++ambientItr;
+				}
 			}
 		}
 
@@ -751,66 +748,53 @@ namespace gr
 		// Register new directional lights:
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataDirectional>())
 		{
-			std::vector<gr::RenderDataID> const& newDirectionalIDs =
+			std::vector<gr::RenderDataID> const* newDirectionalIDs =
 				renderData.GetIDsWithNewData<gr::Light::RenderDataDirectional>();
-
-			auto directionalItr = renderData.IDBegin(newDirectionalIDs);
-			auto const& directionalItrEnd = renderData.IDEnd(newDirectionalIDs);
-			while (directionalItr != directionalItrEnd)
+			if (newDirectionalIDs)
 			{
-				gr::Light::RenderDataDirectional const& directionalData =
-					directionalItr.Get<gr::Light::RenderDataDirectional>();
-
-				gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformData();
-				gr::MeshPrimitive::RenderData const& meshData = directionalItr.Get<gr::MeshPrimitive::RenderData>();
-
-				gr::ShadowMap::RenderData const* shadowData = nullptr;
-				gr::Camera::RenderData const* shadowCamData = nullptr;
-				if (directionalData.m_hasShadow)
+				auto directionalItr = renderData.IDBegin(*newDirectionalIDs);
+				auto const& directionalItrEnd = renderData.IDEnd(*newDirectionalIDs);
+				while (directionalItr != directionalItrEnd)
 				{
-					shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(directionalData.m_renderDataID);
-					shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(directionalData.m_renderDataID);
+					gr::Light::RenderDataDirectional const& directionalData =
+						directionalItr.Get<gr::Light::RenderDataDirectional>();
+
+					gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformData();
+					gr::MeshPrimitive::RenderData const& meshData = directionalItr.Get<gr::MeshPrimitive::RenderData>();
+
+					gr::ShadowMap::RenderData const* shadowData = nullptr;
+					gr::Camera::RenderData const* shadowCamData = nullptr;
+					if (directionalData.m_hasShadow)
+					{
+						shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(directionalData.m_renderDataID);
+						shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(directionalData.m_renderDataID);
+					}
+
+					m_punctualLightData.emplace(
+						directionalItr.GetRenderDataID(),
+						PunctualLightRenderData{
+							.m_type = gr::Light::Directional,
+							.m_transformParams = nullptr,
+							.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)
+						});
+
+					re::Batch& directionalLightBatch = m_punctualLightData.at(directionalData.m_renderDataID).m_batch;
+
+					directionalLightBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
+
+					if (directionalData.m_hasShadow) // Add the shadow map texture to the batch
+					{
+						re::Texture const* shadowTex = shadowTextures ?
+							shadowTextures->at(directionalData.m_renderDataID) : m_missing2DShadowFallback.get();
+
+						directionalLightBatch.AddTextureAndSamplerInput(
+							"Depth0",
+							shadowTex,
+							re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"));
+					}
+
+					++directionalItr;
 				}
-
-				LightData const& directionalLightParamData = GetLightParamData(
-					&directionalData,
-					gr::Light::Type::Directional,
-					directionalTransformData,
-					shadowData,
-					shadowCamData);
-
-				std::shared_ptr<re::Buffer> directionalLightParams = re::Buffer::Create(
-					LightData::s_shaderName,
-					directionalLightParamData,
-					re::Buffer::Type::Mutable);
-
-				m_punctualLightData.emplace(
-					directionalItr.GetRenderDataID(),
-					PunctualLightRenderData{
-						.m_type = gr::Light::Directional,
-						.m_lightParams = directionalLightParams,
-						.m_transformParams = nullptr,
-						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)
-					});
-
-				re::Batch& directionalLightBatch = m_punctualLightData.at(directionalData.m_renderDataID).m_batch;
-
-				directionalLightBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
-
-				directionalLightBatch.SetBuffer(directionalLightParams);
-
-				if (directionalData.m_hasShadow) // Add the shadow map texture to the batch
-				{
-					re::Texture const* shadowTex = shadowTextures ? 
-						shadowTextures->at(directionalData.m_renderDataID) : m_missing2DShadowFallback.get();
-
-					directionalLightBatch.AddTextureAndSamplerInput(
-						"Depth0",
-						shadowTex,
-						re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"));
-				}
-
-				++directionalItr;
 			}
 		}
 
@@ -835,18 +819,6 @@ namespace gr
 					shadowCamData = &lightItr.Get<gr::Camera::RenderData>();
 				}
 
-				LightData const& lightData = GetLightParamData(
-					lightRenderData,
-					lightType,
-					transformData,
-					shadowData,
-					shadowCamData);
-
-				std::shared_ptr<re::Buffer> lightDataBuffer = re::Buffer::Create(
-					LightData::s_shaderName,
-					lightData,
-					re::Buffer::Type::Mutable);
-
 				std::shared_ptr<re::Buffer> transformBuffer = gr::Transform::CreateInstancedTransformBuffer(
 					re::Buffer::Type::Mutable, transformData);
 
@@ -854,7 +826,6 @@ namespace gr
 					lightItr.GetRenderDataID(),
 					PunctualLightRenderData{
 						.m_type = lightType,
-						.m_lightParams = lightDataBuffer,
 						.m_transformParams = transformBuffer,
 						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)
 					});
@@ -865,7 +836,6 @@ namespace gr
 
 				lightBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
 
-				lightBatch.SetBuffer(lightDataBuffer);
 				lightBatch.SetBuffer(transformBuffer);
 
 				if (hasShadow) // Add the shadow map texture to the batch
@@ -901,51 +871,62 @@ namespace gr
 			};
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataPoint>())
 		{
-			std::vector<gr::RenderDataID> const& newPointIDs =
-				renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
-
-			auto pointItr = renderData.IDBegin(newPointIDs);
-			auto const& pointItrEnd = renderData.IDEnd(newPointIDs);
-			while (pointItr != pointItrEnd)
+			std::vector<gr::RenderDataID> const* newPointIDs = renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
+			if (newPointIDs)
 			{
-				gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
-				const bool hasShadow = pointData.m_hasShadow;
+				auto pointItr = renderData.IDBegin(*newPointIDs);
+				auto const& pointItrEnd = renderData.IDEnd(*newPointIDs);
+				while (pointItr != pointItrEnd)
+				{
+					gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
+					const bool hasShadow = pointData.m_hasShadow;
 
-				RegisterNewDeferredMeshLight(
-					pointItr,
-					gr::Light::Point, 
-					&pointData, 
-					hasShadow, 
-					m_punctualLightData,
-					"CubeDepth",
-					"WrapCmpMinMagLinearMipPoint");
+					RegisterNewDeferredMeshLight(
+						pointItr,
+						gr::Light::Point,
+						&pointData,
+						hasShadow,
+						m_punctualLightData,
+						"CubeDepth",
+						"WrapCmpMinMagLinearMipPoint");
 
-				++pointItr;
+					++pointItr;
+				}
 			}
 		}
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataSpot>())
 		{
-			std::vector<gr::RenderDataID> const& newSpotIDs = renderData.GetIDsWithNewData<gr::Light::RenderDataSpot>();
+			std::vector<gr::RenderDataID> const* newSpotIDs = renderData.GetIDsWithNewData<gr::Light::RenderDataSpot>();
 
-			auto spotItr = renderData.IDBegin(newSpotIDs);
-			auto const& spotItrEnd = renderData.IDEnd(newSpotIDs);
-			while (spotItr != spotItrEnd)
+			if (newSpotIDs)
 			{
-				gr::Light::RenderDataSpot const& spotData = spotItr.Get<gr::Light::RenderDataSpot>();
-				const bool hasShadow = spotData.m_hasShadow;
+				auto spotItr = renderData.IDBegin(*newSpotIDs);
+				auto const& spotItrEnd = renderData.IDEnd(*newSpotIDs);
+				while (spotItr != spotItrEnd)
+				{
+					gr::Light::RenderDataSpot const& spotData = spotItr.Get<gr::Light::RenderDataSpot>();
+					const bool hasShadow = spotData.m_hasShadow;
 
-				RegisterNewDeferredMeshLight(
-					spotItr,
-					gr::Light::Spot,
-					&spotData,
-					hasShadow,
-					m_punctualLightData,
-					"Depth0",
-					"WrapCmpMinMagLinearMipPoint");
+					RegisterNewDeferredMeshLight(
+						spotItr,
+						gr::Light::Spot,
+						&spotData,
+						hasShadow,
+						m_punctualLightData,
+						"Depth0",
+						"WrapCmpMinMagLinearMipPoint");
 
-				++spotItr;
+					++spotItr;
+				}
 			}
 		}
+
+		// Attach the single-frame monolithic light data buffers:
+		gr::LightManager const& lightMgr = re::RenderManager::Get()->GetLightManager();
+		
+		m_directionalStage->AddSingleFrameBuffer(lightMgr.GetLightDataBuffer(gr::Light::Directional));
+		m_pointStage->AddSingleFrameBuffer(lightMgr.GetLightDataBuffer(gr::Light::Point));
+		m_spotStage->AddSingleFrameBuffer(lightMgr.GetLightDataBuffer(gr::Light::Spot));
 
 		CreateBatches(dataDependencies);
 	}
@@ -1008,6 +989,9 @@ namespace gr
 			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint>();
 			MarkAllIDsVisible(pointItr, pointItrEnd);
 		}
+
+
+		gr::LightManager const& lightMgr = re::RenderManager::Get()->GetLightManager();
 
 
 		// Update all of the punctual lights we're tracking:
@@ -1079,46 +1063,38 @@ namespace gr
 				break;
 				default: SEAssertF("Invalid light type");
 				}
-
-				// Commit the light buffer data:
-				if (hasShadow)
-				{
-					shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(lightID);
-					shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(lightID);
-				}
-				LightData const& lightParams = GetLightParamData(
-					lightRenderData,
-					light.second.m_type,
-					lightTransformData,
-					shadowData,
-					shadowCamData);
-				light.second.m_lightParams->Commit(lightParams);
 			}
 
+
 			// Add punctual batches:
-			if (light.second.m_canContribute)
+			if (light.second.m_canContribute &&
+				(light.second.m_type == gr::Light::Type::Directional || 
+					visibleLightIDs.contains(lightID)))
 			{
+				auto AddBatchAndLightIndexDataBuffer = [&light, &lightID, &lightMgr](re::RenderStage* stage)
+					{
+						re::Batch* duplicatedBatch =
+							stage->AddBatchWithLifetime(light.second.m_batch, re::Batch::Lifetime::SingleFrame);
+
+						duplicatedBatch->SetBuffer(
+							lightMgr.GetLightIndexDataBuffer(light.second.m_type, lightID, LightIndexData::s_shaderName));
+					};
+
 				switch (light.second.m_type)
 				{
 				case gr::Light::Type::Directional:
-				{
-					m_directionalStage->AddBatch(light.second.m_batch);
+				{					
+					AddBatchAndLightIndexDataBuffer(m_directionalStage.get());
 				}
 				break;
 				case gr::Light::Type::Point:
 				{
-					if (visibleLightIDs.contains(lightID))
-					{
-						m_pointStage->AddBatch(light.second.m_batch);
-					}
+					AddBatchAndLightIndexDataBuffer(m_pointStage.get());
 				}
 				break;
 				case gr::Light::Type::Spot:
 				{
-					if (visibleLightIDs.contains(lightID))
-					{
-						m_spotStage->AddBatch(light.second.m_batch);
-					}
+					AddBatchAndLightIndexDataBuffer(m_spotStage.get());
 				}
 				break;
 				case gr::Light::Type::AmbientIBL:

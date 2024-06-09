@@ -107,12 +107,11 @@ namespace gr
 
 		// Update the active ambient light:
 		// First, check if our currently active light has been deleted:
-		if (m_renderData->HasIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>())
+		std::vector<gr::RenderDataID> const* deletedAmbientLights =
+			m_renderData->GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
+		if (deletedAmbientLights)
 		{
-			std::vector<gr::RenderDataID> const& deletedAmbientLights =
-				m_renderData->GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
-
-			for (gr::RenderDataID ambientID : deletedAmbientLights)
+			for (gr::RenderDataID ambientID : *deletedAmbientLights)
 			{
 				if (ambientID == m_activeAmbientLightRenderDataID)
 				{

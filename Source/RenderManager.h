@@ -2,17 +2,18 @@
 #pragma once
 #include "BatchManager.h"
 #include "EffectDB.h"
+#include "LightManager.h"
 #include "Platform.h"
 #include "RenderSystem.h"
 
-#include "Core\CommandQueue.h"
+#include "Core/CommandQueue.h"
 
-#include "Core\Interfaces\IEngineComponent.h"
-#include "Core\Interfaces\IEngineThread.h"
-#include "Core\Interfaces\IEventListener.h"
+#include "Core/Interfaces/IEngineComponent.h"
+#include "Core/Interfaces/IEngineThread.h"
+#include "Core/Interfaces/IEventListener.h"
 
-#include "Core\Util\ImGuiUtils.h"
-#include "Core\Util\NBufferedVector.h"
+#include "Core/Util/ImGuiUtils.h"
+#include "Core/Util/NBufferedVector.h"
 
 
 namespace opengl
@@ -70,6 +71,7 @@ namespace re
 		gr::RenderDataManager& GetRenderDataManagerForModification();
 		gr::RenderDataManager const& GetRenderDataManager() const;
 
+		gr::LightManager const& GetLightManager() const;
 		gr::BatchManager const& GetBatchManager() const;
 
 		effect::EffectDB const& GetEffectDB() const;
@@ -83,6 +85,7 @@ namespace re
 
 	private:
 		gr::RenderDataManager m_renderData;
+		gr::LightManager m_lightManager;
 		gr::BatchManager m_batchManager;
 		effect::EffectDB m_effectDB;
 
@@ -219,6 +222,12 @@ namespace re
 	inline gr::RenderDataManager const& RenderManager::GetRenderDataManager() const
 	{
 		return m_renderData;
+	}
+
+
+	inline gr::LightManager const& RenderManager::GetLightManager() const
+	{
+		return m_lightManager;
 	}
 
 

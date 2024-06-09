@@ -295,28 +295,22 @@ namespace gr
 
 		// Delete removed deleted lights:
 		auto DeleteLights = [&](
-			std::vector<gr::RenderDataID> const& deletedIDs,
+			std::vector<gr::RenderDataID> const* deletedIDs,
 			std::unordered_map<gr::RenderDataID, ShadowStageData>& stageData)
 		{
-			for (gr::RenderDataID id : deletedIDs)
+			if (!deletedIDs)
+			{
+				return;
+			}
+			for (gr::RenderDataID id : *deletedIDs)
 			{
 				stageData.erase(id);
 				m_shadowTextures.erase(id);
 			}
 		};
-		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataDirectional>())
-		{
-			DeleteLights(
-				renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_directionalShadowStageData);
-		}
-		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataPoint>())
-		{
-			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_pointShadowStageData);
-		}
-		if (renderData.HasIDsWithDeletedData<gr::Light::RenderDataSpot>())
-		{
-			DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataSpot>(), m_spotShadowStageData);
-		}
+		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_directionalShadowStageData);
+		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_pointShadowStageData);
+		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataSpot>(), m_spotShadowStageData);
 
 		SEAssert(m_shadowTextures.size() ==
 			(m_directionalShadowStageData.size() +
@@ -325,11 +319,16 @@ namespace gr
 			"Shadow stage data is out of sync with the aggregate map of all shadow textures");
 
 		// Register new directional and spot lights:
-		auto Register2DShadowLights = [&](std::vector<gr::RenderDataID> const& newLightIDs,
+		auto Register2DShadowLights = [&](std::vector<gr::RenderDataID> const* newLightIDs,
 			std::unordered_map<gr::RenderDataID, ShadowStageData>& dstStageData)
 		{
-			auto lightItr = renderData.IDBegin(newLightIDs);
-			auto const& lightItrEnd = renderData.IDEnd(newLightIDs);
+			if (!newLightIDs)
+			{
+				return;
+			}
+
+			auto lightItr = renderData.IDBegin(*newLightIDs);
+			auto const& lightItrEnd = renderData.IDEnd(*newLightIDs);
 			while (lightItr != lightItrEnd)
 			{
 				if (lightItr.HasObjectData<gr::ShadowMap::RenderData>())
@@ -359,26 +358,28 @@ namespace gr
 		// Register new point lights:
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataPoint>())
 		{
-			std::vector<gr::RenderDataID> const& newPointIDs = 
+			std::vector<gr::RenderDataID> const* newPointIDs = 
 				renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
-
-			auto pointItr = renderData.IDBegin(newPointIDs);
-			auto const& pointItrEnd = renderData.IDEnd(newPointIDs);
-			while (pointItr != pointItrEnd)
+			if (newPointIDs)
 			{
-				if (pointItr.HasObjectData<gr::ShadowMap::RenderData>())
+				auto pointItr = renderData.IDBegin(*newPointIDs);
+				auto const& pointItrEnd = renderData.IDEnd(*newPointIDs);
+				while (pointItr != pointItrEnd)
 				{
-					SEAssert(pointItr.HasObjectData<gr::Camera::RenderData>(),
-						"Shadow map and shadow camera render data are both required for shadows");
+					if (pointItr.HasObjectData<gr::ShadowMap::RenderData>())
+					{
+						SEAssert(pointItr.HasObjectData<gr::Camera::RenderData>(),
+							"Shadow map and shadow camera render data are both required for shadows");
 
-					CreateRegisterCubeShadowStage(
-						m_pointShadowStageData,
-						pointItr.GetRenderDataID(),
-						pointItr.Get<gr::ShadowMap::RenderData>(),
-						pointItr.GetTransformData(),
-						pointItr.Get<gr::Camera::RenderData>());
+						CreateRegisterCubeShadowStage(
+							m_pointShadowStageData,
+							pointItr.GetRenderDataID(),
+							pointItr.Get<gr::ShadowMap::RenderData>(),
+							pointItr.GetTransformData(),
+							pointItr.Get<gr::Camera::RenderData>());
+					}
+					++pointItr;
 				}
-				++pointItr;
 			}
 		}
 

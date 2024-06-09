@@ -5,9 +5,9 @@
 #include "ShadowMapRenderData.h"
 #include "TransformRenderData.h"
 
-
 struct AmbientLightData;
 struct LightData;
+struct LightIndexData;
 struct PoissonSampleParamsData;
 
 namespace re
@@ -32,6 +32,9 @@ namespace gr
 		gr::Transform::RenderData const& transformData,
 		gr::ShadowMap::RenderData const* shadowData,
 		gr::Camera::RenderData const* shadowCamData);
+
+
+	LightIndexData GetLightIndexData(uint32_t lightIndex);
 
 
 	PoissonSampleParamsData GetPoissonSampleParamsData();

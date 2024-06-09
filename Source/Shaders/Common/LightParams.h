@@ -38,7 +38,19 @@ struct LightData
 		// - Spot: .xyz = pre-computed attenuation values: .x = cos(outerAngle), .y = scaleTerm, .z = offsetTerm
 
 #if defined(__cplusplus)
-	static constexpr char const* const s_shaderName = "LightParams";
+	static constexpr char const* k_directionalLightDataShaderName = "DirectionalLightParams";
+	static constexpr char const* k_pointLightDataShaderName = "PointLightParams";
+	static constexpr char const* k_spotLightDataShaderName = "SpotLightParams";
+#endif
+};
+
+
+struct LightIndexData
+{
+	uint4 g_lightIndex; // .x = index into respective light buffer. .yzw = unused
+
+#if defined(__cplusplus)
+	static constexpr char const* const s_shaderName = "LightIndexParams";
 #endif
 };
 

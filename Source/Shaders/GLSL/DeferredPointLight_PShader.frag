@@ -14,24 +14,27 @@ void main()
 
 	const vec2 screenUV = PixelCoordsToScreenUV(gl_FragCoord.xy, _TargetParams.g_targetDims.xy, vec2(0, 0), true);
 
+	const uint lightParamsIdx = _LightIndexParams.g_lightIndex.x;
+	const LightData lightData = _PointLightParams[lightParamsIdx];
+
 	const vec3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
-	const vec3 lightWorldPos = _LightParams.g_lightWorldPosRadius.xyz;
+	const vec3 lightWorldPos = lightData.g_lightWorldPosRadius.xyz;
 
 	const vec3 lightWorldDir = normalize(lightWorldPos - worldPos.xyz);
 
 	// Convert luminous power (phi) to luminous intensity (I):
-	const float luminousIntensity = _LightParams.g_lightColorIntensity.a * M_1_4PI;
+	const float luminousIntensity = lightData.g_lightColorIntensity.a * M_1_4PI;
 
-	const float emitterRadius = _LightParams.g_lightWorldPosRadius.w;
+	const float emitterRadius = lightData.g_lightWorldPosRadius.w;
 	const float attenuationFactor = ComputeNonSingularAttenuationFactor(worldPos, lightWorldPos, emitterRadius);
 
-	const vec2 shadowCamNearFar = _LightParams.g_shadowCamNearFarBiasMinMax.xy;
-	const vec2 minMaxShadowBias = _LightParams.g_shadowCamNearFarBiasMinMax.zw;
-	const float cubeFaceDimension = _LightParams.g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
-	const vec2 lightUVRadiusSize = _LightParams.g_shadowParams.zw;
-	const float shadowQualityMode = _LightParams.g_shadowParams.y;
+	const vec2 shadowCamNearFar = lightData.g_shadowCamNearFarBiasMinMax.xy;
+	const vec2 minMaxShadowBias = lightData.g_shadowCamNearFarBiasMinMax.zw;
+	const float cubeFaceDimension = lightData.g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
+	const vec2 lightUVRadiusSize = lightData.g_shadowParams.zw;
+	const float shadowQualityMode = lightData.g_shadowParams.y;
 
-	const bool shadowEnabled = _LightParams.g_shadowParams.x > 0.f;
+	const bool shadowEnabled = lightData.g_shadowParams.x > 0.f;
 	const float shadowFactor = shadowEnabled ? 
 		GetCubeShadowFactor(
 			worldPos, 
@@ -56,7 +59,7 @@ void main()
 	lightingParams.F0 = gbuffer.MatProp0;
 	lightingParams.LightWorldPos = lightWorldPos;
 	lightingParams.LightWorldDir = lightWorldDir;
-	lightingParams.LightColor = _LightParams.g_lightColorIntensity.rgb;
+	lightingParams.LightColor = lightData.g_lightColorIntensity.rgb;
 	lightingParams.LightIntensity = luminousIntensity;
 	lightingParams.LightAttenuationFactor = attenuationFactor;
 	lightingParams.ShadowFactor = shadowFactor;
@@ -64,8 +67,8 @@ void main()
 	lightingParams.CameraWorldPos = _CameraParams.g_cameraWPos.xyz;
 	lightingParams.Exposure = _CameraParams.g_exposureProperties.x;
 
-	lightingParams.DiffuseScale = _LightParams.g_intensityScale.x;
-	lightingParams.SpecularScale = _LightParams.g_intensityScale.y;
+	lightingParams.DiffuseScale = lightData.g_intensityScale.x;
+	lightingParams.SpecularScale = lightData.g_intensityScale.y;
 
 	FragColor = vec4(ComputeLighting(lightingParams), 0.f);
 } 

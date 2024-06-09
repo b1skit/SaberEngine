@@ -6,7 +6,12 @@
 #include "../Common/LightParams.h"
 
 
-ConstantBuffer<LightData> LightParams;
+// Arrays of LightParams:
+StructuredBuffer<LightData> DirectionalLightParams;
+StructuredBuffer<LightData> PointLightParams;
+StructuredBuffer<LightData> SpotLightParams;
+
+ConstantBuffer<LightIndexData> LightIndexParams; // Light volumes: Single-frame buffer containing the index of a single light
 
 
 // As per Cem Yuksel's nonsingular point light attenuation function:

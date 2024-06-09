@@ -160,14 +160,19 @@ layout(std430, binding=0) uniform InstanceIndexParams {	InstanceIndexData _Insta
 layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformData _InstancedTransformParams[]; };
 layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	InstancedPBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
 
-layout(std430, binding=3) uniform CameraParams { CameraData _CameraParams; };
-layout(std430, binding=4) uniform LightParams { LightData _LightParams; };
-layout(std430, binding=5) uniform PoissonSampleParams { PoissonSampleParamsData _PoissonSampleParams; };
-layout(std430, binding=6) uniform AmbientLightParams { AmbientLightData _AmbientLightParams; };
-layout(std430, binding=7) uniform CubemapShadowRenderParams { CubemapShadowRenderData _CubemapShadowRenderParams; };
-layout(std430, binding=8) uniform IEMPMREMGenerationParams { IEMPMREMGenerationData _IEMPMREMGenerationParams; };
-layout(std430, binding=9) uniform BloomComputeParams { BloomComputeData _BloomComputeParams; };
-layout(std430, binding=10) uniform SkyboxParams { SkyboxData _SkyboxParams; };
-layout(std430, binding=11) uniform TargetParams { TargetData _TargetParams; };
+layout(std430, binding=3) readonly buffer DirectionalLightParams { LightData _DirectionalLightParams[]; };
+layout(std430, binding=4) readonly buffer PointLightParams { LightData _PointLightParams[]; };
+layout(std430, binding=5) readonly buffer SpotLightParams { LightData _SpotLightParams[]; };
+
+layout(std430, binding=6) uniform LightIndexParams { LightIndexData _LightIndexParams; };
+
+layout(std430, binding=7) uniform CameraParams { CameraData _CameraParams; };
+layout(std430, binding=8) uniform PoissonSampleParams { PoissonSampleParamsData _PoissonSampleParams; };
+layout(std430, binding=9) uniform AmbientLightParams { AmbientLightData _AmbientLightParams; };
+layout(std430, binding=10) uniform CubemapShadowRenderParams { CubemapShadowRenderData _CubemapShadowRenderParams; };
+layout(std430, binding=11) uniform IEMPMREMGenerationParams { IEMPMREMGenerationData _IEMPMREMGenerationParams; };
+layout(std430, binding=12) uniform BloomComputeParams { BloomComputeData _BloomComputeParams; };
+layout(std430, binding=13) uniform SkyboxParams { SkyboxData _SkyboxParams; };
+layout(std430, binding=14) uniform TargetParams { TargetData _TargetParams; };
 
 #endif

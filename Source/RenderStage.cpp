@@ -486,9 +486,15 @@ namespace re
 	}
 
 
-	void RenderStage::AddBatch(re::Batch const& batch)
+	re::Batch* RenderStage::AddBatch(re::Batch const& batch)
 	{
-		SEAssert(m_type != re::RenderStage::Type::Parent && 
+		return AddBatchWithLifetime(batch, batch.GetLifetime());
+	}
+
+
+	re::Batch* RenderStage::AddBatchWithLifetime(re::Batch const& batch, re::Batch::Lifetime lifetime)
+	{
+		SEAssert(m_type != re::RenderStage::Type::Parent &&
 			m_type != re::RenderStage::Type::Clear,
 			"Incompatible stage type: Cannot add batches");
 
@@ -498,8 +504,8 @@ namespace re
 		SEAssert(batch.GetEffectID() != effect::Effect::k_invalidEffectID,
 			"Batch has not been assigned an Effect");
 
-		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics && 
-				(m_type == Type::Graphics || m_type == Type::FullscreenQuad)) ||
+		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics &&
+			(m_type == Type::Graphics || m_type == Type::FullscreenQuad)) ||
 			(batch.GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute),
 			"Incompatible batch type");
 
@@ -518,12 +524,15 @@ namespace re
 			}
 		}
 #endif
-		
+
 		if (batch.MatchesFilterBits(m_requiredBatchFilterBitmasks, m_excludedBatchFilterBitmasks))
 		{
-			re::Batch& duplicatedBatch = m_stageBatches.emplace_back(re::Batch::Duplicate(batch, batch.GetLifetime()));
-			duplicatedBatch.ResolveShader(m_drawStyleBits);
+			re::Batch* duplicatedBatch = &m_stageBatches.emplace_back(re::Batch::Duplicate(batch, lifetime));
+			duplicatedBatch->ResolveShader(m_drawStyleBits);
+
+			return duplicatedBatch;
 		}
+		return nullptr;
 	}
 
 
@@ -570,6 +579,8 @@ namespace re
 
 	void RenderStage::AddPermanentBuffer(std::shared_ptr<re::Buffer const> buffer)
 	{
+		SEAssert(buffer, "Buffer cannot be null");
+
 		SEAssert(buffer->GetType() == re::Buffer::Type::Mutable || 
 			buffer->GetType() == re::Buffer::Type::Immutable,
 			"Buffer must have a permanent lifetime");
@@ -596,6 +607,8 @@ namespace re
 
 	void RenderStage::AddSingleFrameBuffer(std::shared_ptr<re::Buffer const> buffer)
 	{
+		SEAssert(buffer, "Buffer cannot be null");
+
 		SEAssert(std::find_if(
 				m_singleFrameBuffers.begin(),
 				m_singleFrameBuffers.end(),

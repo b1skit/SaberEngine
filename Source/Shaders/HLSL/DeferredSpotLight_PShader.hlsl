@@ -32,46 +32,48 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	const float2 screenUV = PixelCoordsToScreenUV(In.Position.xy, TargetParams.g_targetDims.xy, float2(0.f, 0.f));
 
+	const uint lightParamsIdx = LightIndexParams.g_lightIndex.x;
+	const LightData lightData = SpotLightParams[lightParamsIdx];
+	
 	const float3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
-	const float3 lightWorldPos = LightParams.g_lightWorldPosRadius.xyz;
+	const float3 lightWorldPos = lightData.g_lightWorldPosRadius.xyz;
 	
 	const float3 lightWorldDir = normalize(lightWorldPos - worldPos);
 	
 	// Convert luminous power (phi) to luminous intensity (I):
-	const float luminousIntensity = LightParams.g_lightColorIntensity.a * M_1_PI;
+	const float luminousIntensity = lightData.g_lightColorIntensity.a * M_1_PI;
 	
-	const float emitterRadius = LightParams.g_lightWorldPosRadius.w;
+	const float emitterRadius = lightData.g_lightWorldPosRadius.w;
 	const float distanceAttenuation = ComputeNonSingularAttenuationFactor(worldPos, lightWorldPos, emitterRadius);
 	
 	const float angleAttenuation = GetSpotlightAngleAttenuation(
 		lightWorldDir,
-		LightParams.g_globalForwardDir.xyz,
-		LightParams.g_intensityScale.z,
-		LightParams.g_intensityScale.w,
-		LightParams.g_extraParams.x,
-		LightParams.g_extraParams.y,
-		LightParams.g_extraParams.z);
+		lightData.g_globalForwardDir.xyz,
+		lightData.g_intensityScale.z,
+		lightData.g_intensityScale.w,
+		lightData.g_extraParams.x,
+		lightData.g_extraParams.y,
+		lightData.g_extraParams.z);
 	
 	const float combinedAttenuation = distanceAttenuation * angleAttenuation;
 	
-	const float2 shadowCamNearFar = LightParams.g_shadowCamNearFarBiasMinMax.xy;
-	const float2 minMaxShadowBias = LightParams.g_shadowCamNearFarBiasMinMax.zw;
-	const float2 invShadowMapWidthHeight = LightParams.g_shadowMapTexelSize.zw;
-	const float2 lightUVRadiusSize = LightParams.g_shadowParams.zw;
-	const float shadowQualityMode = LightParams.g_shadowParams.y;
+	const float2 shadowCamNearFar = lightData.g_shadowCamNearFarBiasMinMax.xy;
+	const float2 minMaxShadowBias = lightData.g_shadowCamNearFarBiasMinMax.zw;
+	const float2 lightUVRadiusSize = lightData.g_shadowParams.zw;
+	const float shadowQualityMode = lightData.g_shadowParams.y;
 	
-	const bool shadowEnabled = LightParams.g_shadowParams.x > 0.f;
+	const bool shadowEnabled = lightData.g_shadowParams.x > 0.f;
 	const float shadowFactor = shadowEnabled ?
 		Get2DShadowFactor(
 			worldPos,
 			gbuffer.WorldNormal,
 			lightWorldPos,
-			LightParams.g_shadowCam_VP,
+			lightData.g_shadowCam_VP,
 			shadowCamNearFar,
 			minMaxShadowBias,
 			shadowQualityMode,
 			lightUVRadiusSize,
-			invShadowMapWidthHeight) : 1.f;
+			lightData.g_shadowMapTexelSize) : 1.f;
 	
 	const float NoL = saturate(dot(gbuffer.WorldNormal, lightWorldDir));
 	
@@ -88,7 +90,7 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	lightingParams.LightWorldPos = lightWorldPos;
 	lightingParams.LightWorldDir = lightWorldDir;
-	lightingParams.LightColor = LightParams.g_lightColorIntensity.rgb;
+	lightingParams.LightColor = lightData.g_lightColorIntensity.rgb;
 	lightingParams.LightIntensity = luminousIntensity;
 	lightingParams.LightAttenuationFactor = combinedAttenuation;
 	
@@ -98,8 +100,8 @@ float4 PShader(VertexOut In) : SV_Target
 	lightingParams.Exposure = CameraParams.g_exposureProperties.x;
 	
 	
-	lightingParams.DiffuseScale = LightParams.g_intensityScale.x;
-	lightingParams.SpecularScale = LightParams.g_intensityScale.y;
+	lightingParams.DiffuseScale = lightData.g_intensityScale.x;
+	lightingParams.SpecularScale = lightData.g_intensityScale.y;
 	
 	return float4(ComputeLighting(lightingParams), 0.f);
 }

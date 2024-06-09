@@ -44,13 +44,13 @@ namespace gr
 
 		// Get a list of IDs that had data of a specific type added for the very first time this frame
 		template<typename T>
-		[[nodiscard]] std::vector<gr::RenderDataID> const& GetIDsWithNewData() const;
+		[[nodiscard]] std::vector<gr::RenderDataID> const* GetIDsWithNewData() const;
 
 		template<typename T>
 		[[nodiscard]] bool HasIDsWithDeletedData() const;
 
 		template<typename T>
-		std::vector<gr::RenderDataID> const& GetIDsWithDeletedData() const;
+		std::vector<gr::RenderDataID> const* GetIDsWithDeletedData() const;
 
 		// Get a list of IDs that had data of a specific type modified this frame
 		template<typename T>
@@ -504,15 +504,17 @@ namespace gr
 
 
 	template<typename T>
-	std::vector<gr::RenderDataID> const& RenderDataManager::GetIDsWithNewData() const
+	std::vector<gr::RenderDataID> const* RenderDataManager::GetIDsWithNewData() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
-
-		SEAssert(dataTypeIndex < m_perFramePerTypeNewDataIDs.size(), "Data type index is OOB");
-
-		return m_perFramePerTypeNewDataIDs[dataTypeIndex];
+		if (dataTypeIndex != k_invalidDataTypeIdx)
+		{
+			SEAssert(dataTypeIndex < m_perFramePerTypeNewDataIDs.size(), "Data type index is OOB");
+			return &m_perFramePerTypeNewDataIDs[dataTypeIndex];
+		}
+		return nullptr;
 	}
 
 
@@ -529,14 +531,17 @@ namespace gr
 
 
 	template<typename T>
-	std::vector<gr::RenderDataID> const& RenderDataManager::GetIDsWithDeletedData() const
+	std::vector<gr::RenderDataID> const* RenderDataManager::GetIDsWithDeletedData() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
-		SEAssert(dataTypeIndex < m_perFramePerTypeDeletedDataIDs.size(), "Data type index is OOB");
-
-		return m_perFramePerTypeDeletedDataIDs[dataTypeIndex];
+		if (dataTypeIndex != k_invalidDataTypeIdx)
+		{
+			SEAssert(dataTypeIndex < m_perFramePerTypeDeletedDataIDs.size(), "Data type index is OOB");
+			return &m_perFramePerTypeDeletedDataIDs[dataTypeIndex];
+		}
+		return nullptr;			
 	}
 
 
@@ -1024,10 +1029,10 @@ namespace gr
 	{
 		const DataTypeIndex dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
 
-		SEAssert("Invalid dirty frame value",
-			m_renderObjectMetadataItr->second.m_dirtyFrameMap.contains(dataTypeIndex) &&
+		SEAssert(m_renderObjectMetadataItr->second.m_dirtyFrameMap.contains(dataTypeIndex) &&
 			m_renderObjectMetadataItr->second.m_dirtyFrameMap.at(dataTypeIndex) <= m_currentFrame &&
-			m_currentFrame != k_invalidDirtyFrameNum);
+			m_currentFrame != k_invalidDirtyFrameNum,
+			"Invalid dirty frame value");
 
 		return m_renderObjectMetadataItr->second.m_dirtyFrameMap.at(dataTypeIndex) == m_currentFrame;
 	}

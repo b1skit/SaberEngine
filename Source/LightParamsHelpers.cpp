@@ -197,6 +197,15 @@ namespace gr
 	}
 
 
+	LightIndexData GetLightIndexData(uint32_t lightIndex)
+	{
+		return LightIndexData
+		{
+			.g_lightIndex = glm::uvec4(lightIndex, 0, 0, 0),
+		};
+	}
+
+
 	PoissonSampleParamsData GetPoissonSampleParamsData()
 	{
 		PoissonSampleParamsData shadowSampleParams{};

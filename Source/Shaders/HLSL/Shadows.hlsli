@@ -187,7 +187,8 @@ float GetPCSSShadowFactor(
 }
 
 
-float GetPCFShadowFactor(float2 shadowmapUVs, float2 invShadowMapWidthHeight, float nonLinearDepth)
+float GetPCFShadowFactor(
+	float2 shadowmapUVs, float nonLinearDepth, float4 shadowMapTexelSize)
 {
 	// Compute a block of samples around our fragment, starting at the top-left. Note: MUST be a power of two.
 	// TODO: Compute this on C++ side and allow for uploading of arbitrary samples (eg. odd, even)
@@ -195,8 +196,8 @@ float GetPCFShadowFactor(float2 shadowmapUVs, float2 invShadowMapWidthHeight, fl
 
 	const float offsetMultiplier = (float(gridSize) / 2.f) - 0.5f;
 
-	shadowmapUVs.x -= offsetMultiplier * invShadowMapWidthHeight.x;
-	shadowmapUVs.y += offsetMultiplier * invShadowMapWidthHeight.y;
+	shadowmapUVs.x -= offsetMultiplier * shadowMapTexelSize.z;
+	shadowmapUVs.y += offsetMultiplier * shadowMapTexelSize.w;
 
 	float depthSum = 0;
 	for (uint row = 0; row < gridSize; row++)
@@ -205,11 +206,11 @@ float GetPCFShadowFactor(float2 shadowmapUVs, float2 invShadowMapWidthHeight, fl
 		{
 			depthSum += Depth0.SampleCmpLevelZero(BorderCmpMinMagLinearMipPoint, shadowmapUVs, nonLinearDepth);
 			
-			shadowmapUVs.x += LightParams.g_shadowMapTexelSize.z;
+			shadowmapUVs.x += shadowMapTexelSize.z;
 		}
 
-		shadowmapUVs.x -= gridSize * LightParams.g_shadowMapTexelSize.z;
-		shadowmapUVs.y -= LightParams.g_shadowMapTexelSize.w;
+		shadowmapUVs.x -= gridSize * shadowMapTexelSize.z;
+		shadowmapUVs.y -= shadowMapTexelSize.w;
 	}
 
 	depthSum /= (gridSize * gridSize);
@@ -236,7 +237,7 @@ float Get2DShadowFactor(
 	float2 minMaxShadowBias,
 	float shadowQualityMode,
 	float2 lightUVRadiusSize,
-	float2 invShadowMapWidthHeight)
+	float4 shadowMapTexelSize)
 {
 	float3 biasedShadowWPos;
 	GetBiasedShadowWorldPos(worldPos, worldNormal, lightWorldDir, minMaxShadowBias, biasedShadowWPos);
@@ -291,7 +292,7 @@ float Get2DShadowFactor(
 		case 0: // PCF (lowest quality)
 		default:
 		{
-			return GetPCFShadowFactor(shadowmapUVs, invShadowMapWidthHeight, nonLinearDepth);
+			return GetPCFShadowFactor(shadowmapUVs, nonLinearDepth, shadowMapTexelSize);
 		}
 	}
 }

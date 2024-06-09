@@ -169,7 +169,8 @@ namespace re
 		// Stage Batches:
 		std::vector<re::Batch> const& GetStageBatches() const;
 		void AddBatches(std::vector<re::Batch> const&);
-		void AddBatch(re::Batch const&);
+		re::Batch* AddBatch(re::Batch const&); // Returns Batch ptr (IFF it was successfully added)
+		re::Batch* AddBatchWithLifetime(re::Batch const&, re::Batch::Lifetime);
 
 		enum class FilterMode
 		{

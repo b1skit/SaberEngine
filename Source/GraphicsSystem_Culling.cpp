@@ -206,59 +206,60 @@ namespace gr
 		// Add any new bounds to our tracking tables:
 		if (renderData.HasIDsWithNewData<gr::Bounds::RenderData>())
 		{
-			std::vector<gr::RenderDataID> newBoundsIDS = renderData.GetIDsWithNewData<gr::Bounds::RenderData>();
-
-			auto newBoundsItr = renderData.IDBegin(newBoundsIDS);
-			auto const& newBoundsItrEnd = renderData.IDEnd(newBoundsIDS);
-			while (newBoundsItr != newBoundsItrEnd)
+			std::vector<gr::RenderDataID> const* newBoundsIDS = renderData.GetIDsWithNewData<gr::Bounds::RenderData>();
+			if (newBoundsIDS)
 			{
-				gr::Bounds::RenderData const& boundsData = newBoundsItr.Get<gr::Bounds::RenderData>();
-
-				const gr::RenderDataID newBoundsID = newBoundsItr.GetRenderDataID();
-
-				const gr::RenderDataID encapsulatingBounds = boundsData.m_encapsulatingBounds;
-
-				// If we've never seen the encapsulating bounds before, add a new (empty) vector of IDs
-				if (encapsulatingBounds != k_invalidRenderDataID &&
-					!m_meshesToMeshPrimitiveBounds.contains(encapsulatingBounds))
+				auto newBoundsItr = renderData.IDBegin(*newBoundsIDS);
+				auto const& newBoundsItrEnd = renderData.IDEnd(*newBoundsIDS);
+				while (newBoundsItr != newBoundsItrEnd)
 				{
-					m_meshesToMeshPrimitiveBounds.emplace(encapsulatingBounds, std::vector<gr::RenderDataID>());
-				}
-				else if (gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, renderData.GetFeatureBits(newBoundsID)) &&
-					!m_meshesToMeshPrimitiveBounds.contains(newBoundsID))
-				{
-					SEAssert(encapsulatingBounds == gr::k_invalidRenderDataID,
-						"Mesh Bounds should not have an encapsulating bounds");
+					gr::Bounds::RenderData const& boundsData = newBoundsItr.Get<gr::Bounds::RenderData>();
 
-					m_meshesToMeshPrimitiveBounds.emplace(newBoundsID, std::vector<gr::RenderDataID>());
-				}
-				
-				if (gr::HasFeature(
-					gr::RenderObjectFeature::IsMeshPrimitiveBounds, renderData.GetFeatureBits(newBoundsID)))
-				{
-					SEAssert(encapsulatingBounds != gr::k_invalidRenderDataID,
-						"MeshPrimitive Bounds must have an encapsulating bounds");
-					SEAssert(m_meshesToMeshPrimitiveBounds.contains(encapsulatingBounds),
-						"Encapsulating bounds should have already been recorded");
+					const gr::RenderDataID newBoundsID = newBoundsItr.GetRenderDataID();
 
-					// Store the MeshPrimitive's ID under its encapsulating Mesh:
-					m_meshesToMeshPrimitiveBounds.at(encapsulatingBounds).emplace_back(newBoundsID);
-					
-					// Map the MeshPrimitive back to its encapsulating Mesh:
-					m_meshPrimitivesToEncapsulatingMesh.emplace(newBoundsID, boundsData.m_encapsulatingBounds);
-				}
+					const gr::RenderDataID encapsulatingBounds = boundsData.m_encapsulatingBounds;
 
-				++newBoundsItr;
+					// If we've never seen the encapsulating bounds before, add a new (empty) vector of IDs
+					if (encapsulatingBounds != k_invalidRenderDataID &&
+						!m_meshesToMeshPrimitiveBounds.contains(encapsulatingBounds))
+					{
+						m_meshesToMeshPrimitiveBounds.emplace(encapsulatingBounds, std::vector<gr::RenderDataID>());
+					}
+					else if (gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, renderData.GetFeatureBits(newBoundsID)) &&
+						!m_meshesToMeshPrimitiveBounds.contains(newBoundsID))
+					{
+						SEAssert(encapsulatingBounds == gr::k_invalidRenderDataID,
+							"Mesh Bounds should not have an encapsulating bounds");
+
+						m_meshesToMeshPrimitiveBounds.emplace(newBoundsID, std::vector<gr::RenderDataID>());
+					}
+
+					if (gr::HasFeature(
+						gr::RenderObjectFeature::IsMeshPrimitiveBounds, renderData.GetFeatureBits(newBoundsID)))
+					{
+						SEAssert(encapsulatingBounds != gr::k_invalidRenderDataID,
+							"MeshPrimitive Bounds must have an encapsulating bounds");
+						SEAssert(m_meshesToMeshPrimitiveBounds.contains(encapsulatingBounds),
+							"Encapsulating bounds should have already been recorded");
+
+						// Store the MeshPrimitive's ID under its encapsulating Mesh:
+						m_meshesToMeshPrimitiveBounds.at(encapsulatingBounds).emplace_back(newBoundsID);
+
+						// Map the MeshPrimitive back to its encapsulating Mesh:
+						m_meshPrimitivesToEncapsulatingMesh.emplace(newBoundsID, boundsData.m_encapsulatingBounds);
+					}
+
+					++newBoundsItr;
+				}
 			}
 		}
 		
 		// Remove any deleted bounds from our tracking tables:
-		if (renderData.HasIDsWithDeletedData<gr::Bounds::RenderData>())
-		{
-			std::vector<gr::RenderDataID> deletedBoundsIDS = renderData.GetIDsWithDeletedData<gr::Bounds::RenderData>();
-
-			auto deletedBoundsItr = renderData.IDBegin(deletedBoundsIDS);
-			auto const& deletedBoundsItrEnd = renderData.IDEnd(deletedBoundsIDS);
+		std::vector<gr::RenderDataID> const* deletedBoundsIDs = renderData.GetIDsWithDeletedData<gr::Bounds::RenderData>();
+		if (deletedBoundsIDs)
+		{			
+			auto deletedBoundsItr = renderData.IDBegin(*deletedBoundsIDs);
+			auto const& deletedBoundsItrEnd = renderData.IDEnd(*deletedBoundsIDs);
 			while (deletedBoundsItr != deletedBoundsItrEnd)
 			{
 				// Note: We don't have access to the filterbits of the deleted IDs anymore; It's possible the bounds
@@ -290,18 +291,21 @@ namespace gr
 		}
 
 		// Erase any cached frustums for deleted cameras:
-		std::vector<gr::RenderDataID> const& deletedCamIDs = renderData.GetIDsWithDeletedData<gr::Camera::RenderData>();
-		for (gr::RenderDataID camID : deletedCamIDs)
+		std::vector<gr::RenderDataID> const* deletedCamIDs = renderData.GetIDsWithDeletedData<gr::Camera::RenderData>();
+		if (deletedCamIDs)
 		{
-			for (uint8_t faceIdx = 0; faceIdx < 6; faceIdx++)
+			for (gr::RenderDataID camID : *deletedCamIDs)
 			{
-				gr::Camera::View const& deletedView = gr::Camera::View(camID, faceIdx);
-				if (!m_cachedFrustums.contains(deletedView))
+				for (uint8_t faceIdx = 0; faceIdx < 6; faceIdx++)
 				{
-					SEAssert(faceIdx > 0, "Failed to find face 0. All cameras should have face 0");
-					break;
+					gr::Camera::View const& deletedView = gr::Camera::View(camID, faceIdx);
+					if (!m_cachedFrustums.contains(deletedView))
+					{
+						SEAssert(faceIdx > 0, "Failed to find face 0. All cameras should have face 0");
+						break;
+					}
+					m_cachedFrustums.erase(deletedView);
 				}
-				m_cachedFrustums.erase(deletedView);
 			}
 		}
 
