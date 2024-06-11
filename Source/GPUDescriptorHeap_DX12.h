@@ -54,7 +54,7 @@ namespace dx12
 		// Each descriptor table/range entry = 1 DWORD each.
 		// Note: offset & count can be used to set individual descriptors within a table located at a given rootParamIdx
 		void SetDescriptorTable(
-			uint32_t rootParamIdx, dx12::DescriptorAllocation const& src, uint32_t offset, uint32_t count);
+			uint32_t rootParamIdx, D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count);
 
 		// Set resource views directly in the GPU-visible descriptor heap:
 		void SetInlineCBV(uint32_t rootParamIdx, ID3D12Resource*, uint64_t alignedByteOffset); // = 1 DWORD each

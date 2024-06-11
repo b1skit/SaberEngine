@@ -24,8 +24,8 @@ namespace dx12
 			DXGI_FORMAT m_format;
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
 
-			std::array<dx12::DescriptorAllocation, re::Texture::Dimension::Dimension_Count> m_srvCpuDescAllocations;
-			std::vector<dx12::DescriptorAllocation> m_uavCpuDescAllocations;
+			dx12::DescriptorAllocation m_srvCpuDescAllocations; // Indexed by texture dimension (1 per dimension)
+			dx12::DescriptorAllocation m_uavCpuDescAllocations; // Indexed by array/face/mip
 		};
 
 

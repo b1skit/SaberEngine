@@ -161,8 +161,18 @@ namespace re
 		SEAssert(m_texParams.m_format != Texture::Format::Invalid, "Invalid format");
 		SEAssert(m_texParams.m_colorSpace != Texture::ColorSpace::Invalid, "Invalid color space");
 		SEAssert(m_texParams.m_width > 0 && m_texParams.m_height > 0, "Invalid dimensions");
-		SEAssert(m_texParams.m_dimension != Texture::Dimension::TextureCubeMap || m_texParams.m_faces == 6,
-			"Cubemap textures must have exactly 6 faces");
+		SEAssert((m_texParams.m_faces == 1 && 
+			(m_texParams.m_dimension != Texture::Dimension::TextureCubeMap ||
+				m_texParams.m_dimension != Texture::Dimension::TextureCubeMapArray)) ||
+			(m_texParams.m_faces == 6 && 
+				(m_texParams.m_dimension == Texture::Dimension::TextureCubeMap ||
+					m_texParams.m_dimension == Texture::Dimension::TextureCubeMapArray)),
+			"Dimension and number of faces mismatch");
+		SEAssert(m_texParams.m_arraySize == 1 || 
+			m_texParams.m_dimension == Dimension::Texture1DArray ||
+			m_texParams.m_dimension == Dimension::Texture2DArray ||
+			m_texParams.m_dimension == Dimension::TextureCubeMapArray,
+			"Dimension and array size mismatch");
 
 		platform::Texture::CreatePlatformParams(*this);
 	}

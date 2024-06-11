@@ -2,7 +2,9 @@
 #include "AssetLoadUtils.h"
 #include "Texture.h"
 
-#include "Core\PerformanceTimer.h"
+#include "Core/PerformanceTimer.h"
+
+#include "Core/Util/CastUtils.h"
 
 // Note: We can't include STBI in our pch, as the following define can only be included ONCE in the project
 #define STB_IMAGE_IMPLEMENTATION
@@ -38,7 +40,7 @@ namespace grutil
 		util::PerformanceTimer timer;
 		timer.Start();
 
-		const uint32_t totalFaces = (uint32_t)texturePaths.size();
+		const uint8_t totalFaces = util::CheckedCast<uint8_t>(texturePaths.size());
 
 		// Modify default TextureParams to be suitable for a generic error texture:
 		re::Texture::TextureParams texParams

@@ -406,7 +406,7 @@ namespace
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		SEAssert(texPlatParams->m_textureResource != nullptr, "The texture resource has not been created yet");
-		SEAssert(texPlatParams->m_uavCpuDescAllocations.empty(),
+		SEAssert(texPlatParams->m_uavCpuDescAllocations.IsValid() == false,
 			"A UAV has already been created. This is unexpected");
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
@@ -419,59 +419,103 @@ namespace
 		const uint32_t numSubresources = texture.GetTotalNumSubresources();
 		SEAssert(numSubresources == numMips * texParams.m_faces, "Unexpected number of subresources");
 
-		texPlatParams->m_uavCpuDescAllocations.reserve(numSubresources);
+
+		const uint32_t numDescriptors = texParams.m_faces * numMips * texParams.m_arraySize;
+
+		texPlatParams->m_uavCpuDescAllocations = std::move(context->GetCPUDescriptorHeapMgr(
+			dx12::CPUDescriptorHeapManager::CBV_SRV_UAV).Allocate(numDescriptors));
 
 		// We create a UAV for every MIP, for each face:
-		for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+		uint32_t descriptorIdx = 0;
+		for (uint32_t arrayIdx = 0; arrayIdx < texParams.m_arraySize; arrayIdx++)
 		{
-			for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
+			for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
 			{
-				texPlatParams->m_uavCpuDescAllocations.emplace_back(std::move(
-					context->GetCPUDescriptorHeapMgr(dx12::CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1)));
-
-				dx12::DescriptorAllocation const& uavDescriptorAllocation =
-					texPlatParams->m_uavCpuDescAllocations.back();
-
-				const DXGI_FORMAT uavCompatibleFormat = GetEquivalentUAVCompatibleFormat(texPlatParams->m_format);
-				SEAssert(uavCompatibleFormat != DXGI_FORMAT_UNKNOWN, "Failed to find equivalent UAV-compatible format");
-
-				D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
-				uavDesc.Format = uavCompatibleFormat;
-
-				switch (texParams.m_dimension)
+				for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
 				{
-				case re::Texture::Dimension::Texture2D:
-				{
-					SEAssert(texParams.m_faces == 1, "Unexpected number of faces");
+					const DXGI_FORMAT uavCompatibleFormat = GetEquivalentUAVCompatibleFormat(texPlatParams->m_format);
+					SEAssert(uavCompatibleFormat != DXGI_FORMAT_UNKNOWN, "Failed to find equivalent UAV-compatible format");
 
-					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-					
-					uavDesc.Texture2D = D3D12_TEX2D_UAV{
+					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
+					uavDesc.Format = uavCompatibleFormat;
+
+					switch (texParams.m_dimension)
+					{
+					case re::Texture::Dimension::Texture1D:
+					{
+						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
+						uavDesc.Texture1D = D3D12_TEX1D_UAV{ .MipSlice = mipIdx };
+					}
+					break;
+					case re::Texture::Dimension::Texture1DArray:
+					{
+						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+						uavDesc.Texture1DArray = D3D12_TEX1D_ARRAY_UAV{
 							.MipSlice = mipIdx,
+							.FirstArraySlice = faceIdx,
+							.ArraySize = texParams.m_arraySize,
+						};
+					}
+					break;
+					case re::Texture::Dimension::Texture2D:
+					{
+						SEAssert(texParams.m_multisampleMode == re::Texture::MultisampleMode::Disabled,
+							"TODO: Support multi-sampling");
+
+						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+						uavDesc.Texture2D = D3D12_TEX2D_UAV{
+								.MipSlice = mipIdx,
+								.PlaneSlice = 0 };
+					}
+					break;
+					case re::Texture::Dimension::Texture2DArray:
+					{
+						SEAssert(texParams.m_multisampleMode == re::Texture::MultisampleMode::Disabled,
+							"TODO: Support multi-sampling");
+
+						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+						uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{
+							.MipSlice = mipIdx,
+							.FirstArraySlice = 0,
+							.ArraySize = texParams.m_arraySize,
 							.PlaneSlice = 0 };
-				}
-				break;
-				case re::Texture::Dimension::TextureCubeMap:
-				{
-					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+					}
+					break;
+					case re::Texture::Dimension::Texture3D:
+					{
+						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
+						uavDesc.Texture3D = D3D12_TEX3D_UAV{
+							.MipSlice = mipIdx,
+							.FirstWSlice = 0,
+							.WSize = texParams.m_arraySize };  // The number of depth slices
+					}
+					break;
+					case re::Texture::Dimension::TextureCubeMap:
+					case re::Texture::Dimension::TextureCubeMapArray:
+					{
+						SEAssert(texParams.m_arraySize == 1 ||
+							texParams.m_dimension == re::Texture::Dimension::TextureCubeMapArray,
+							"Array size and dimension mismatch");
 
-					uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{
-						.MipSlice = mipIdx,
-						.FirstArraySlice = faceIdx,
-						.ArraySize = 1, // Only view one element of our array
-						.PlaneSlice = 0 // "Only Plane Slice 0 is valid when creating a view on a non-planar format"
-					};
-				}
-				break;
-				default:
-					SEAssertF("Invalid texture dimension");
-				}
+						// Cube maps are a special case of an array
+						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+						uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{
+							.MipSlice = mipIdx,
+							.FirstArraySlice = faceIdx,
+							.ArraySize = texParams.m_arraySize, // Only view one element of our array
+							.PlaneSlice = 0 }; // "Only Plane Slice 0 is valid when creating a view on a non-planar format"
+					}
+					break;
+					default:
+						SEAssertF("Invalid texture dimension");
+					}
 
-				device->CreateUnorderedAccessView(
-					texPlatParams->m_textureResource.Get(),
-					nullptr,		// Counter resource
-					&uavDesc,
-					uavDescriptorAllocation.GetBaseDescriptor());
+					device->CreateUnorderedAccessView(
+						texPlatParams->m_textureResource.Get(),
+						nullptr,		// Counter resource
+						&uavDesc,
+						texPlatParams->m_uavCpuDescAllocations[descriptorIdx++]);
+				}
 			}
 		}
 	}
@@ -498,9 +542,7 @@ namespace
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
 		SEAssert(texPlatParams->m_textureResource != nullptr, "The texture resource has not been created yet");
-		SEAssert(!texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2D].IsValid() &&
-			!texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2DArray].IsValid() &&
-			!texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::TextureCubeMap].IsValid(),
+		SEAssert(texPlatParams->m_srvCpuDescAllocations.IsValid() == false,
 			"An SRV has already been created. This is unexpected");
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
@@ -508,9 +550,26 @@ namespace
 
 		const uint32_t numMips = texture.GetNumMips();
 
+		const uint32_t numDescriptors = re::Texture::Dimension_Count; // 1 descriptor per dimensional interpretation
+
+		texPlatParams->m_srvCpuDescAllocations = std::move(context->GetCPUDescriptorHeapMgr(
+			dx12::CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(numDescriptors));
+
 		const DXGI_FORMAT srvFormat = GetSRVFormat(texture);
 
-		if (texParams.m_faces == 1)
+		switch (texParams.m_dimension)
+		{
+		case re::Texture::Texture1D:
+		{
+			SEAssertF("TODO: Support this dimension");
+		}
+		break;
+		case re::Texture::Texture1DArray:
+		{
+			SEAssertF("TODO: Support this dimension");
+		}
+		break;
+		case re::Texture::Texture2D:
 		{
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 			srvDesc.Format = srvFormat;
@@ -526,25 +585,32 @@ namespace
 				.ResourceMinLODClamp = 0.0f // Allow access to all MIP levels
 			};
 
-			texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2D] = std::move(
-				context->GetCPUDescriptorHeapMgr(dx12::CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1));
-
 			device->CreateShaderResourceView(
 				texPlatParams->m_textureResource.Get(),
 				&srvDesc,
-				texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2D].GetBaseDescriptor());
+				texPlatParams->m_srvCpuDescAllocations[texParams.m_dimension]);
 		}
-		else
+		break;
+		case re::Texture::Texture2DArray:
 		{
-			SEAssert(texParams.m_faces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap,
-				"We're currently expecting this to be a cubemap");
+			SEAssertF("TODO: Support this dimension");
+		}
+		break;
+		case re::Texture::Texture3D:
+		{
+			SEAssertF("TODO: Support this dimension");
+		}
+		break;
+		case re::Texture::TextureCubeMap:
+		{
+			SEAssert(texParams.m_faces == 6, "Invalid number of faces for a cube map");
 
 			D3D12_SHADER_RESOURCE_VIEW_DESC cubemapSrvDesc{};
 			cubemapSrvDesc.Format = srvFormat;
 			cubemapSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		
+
 			cubemapSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-			
+
 			cubemapSrvDesc.TextureCube = D3D12_TEXCUBE_SRV
 			{
 				.MostDetailedMip = 0,
@@ -552,15 +618,12 @@ namespace
 				.ResourceMinLODClamp = 0.0f // Allow access to all MIP levels
 			};
 
-			texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::TextureCubeMap] = std::move(
-				context->GetCPUDescriptorHeapMgr(dx12::CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1));
-
 			device->CreateShaderResourceView(
 				texPlatParams->m_textureResource.Get(),
 				&cubemapSrvDesc,
-				texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::TextureCubeMap].GetBaseDescriptor());
+				texPlatParams->m_srvCpuDescAllocations[re::Texture::TextureCubeMap]);
 
-			// Cubemaps are a special case of a texture array:
+			// Cubemaps are a special case of a texture array - We also create views to support this usage
 			D3D12_SHADER_RESOURCE_VIEW_DESC cubeTexArraySrvDesc{};
 			cubeTexArraySrvDesc.Format = srvFormat;
 			cubeTexArraySrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -577,14 +640,21 @@ namespace
 				.ResourceMinLODClamp = 0.f,
 			};
 
-			texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2DArray] = std::move(
-				context->GetCPUDescriptorHeapMgr(dx12::CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1));
-
 			device->CreateShaderResourceView(
 				texPlatParams->m_textureResource.Get(),
 				&cubeTexArraySrvDesc,
-				texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2DArray].GetBaseDescriptor());
-		}		
+				texPlatParams->m_srvCpuDescAllocations[re::Texture::Texture2DArray]);
+		}
+		break;
+		case re::Texture::TextureCubeMapArray:
+		{
+			SEAssert(texParams.m_faces == 6, "Invalid number of faces for a cube map");
+
+			SEAssertF("TODO: Support this dimension");
+		}
+		break;
+		default: SEAssertF("Invalid dimension");
+		}
 	}
 
 
@@ -653,17 +723,76 @@ namespace
 			}
 		}
 
-		D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+		const uint32_t numMips = texture.GetNumMips();
 
-		D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-			texPlatParams->m_format,
-			texParams.m_width,
-			texParams.m_height,
-			texParams.m_faces,		// arraySize
-			texture.GetNumMips(),	// mipLevels
-			1,						// sampleCount
-			0,						// sampleQuality
-			flags);
+		D3D12_RESOURCE_DESC resourceDesc{};
+		switch (texParams.m_dimension)
+		{
+		case re::Texture::Dimension::Texture1D:
+		case re::Texture::Dimension::Texture1DArray:
+		{
+			SEAssert(texParams.m_height == 1, "Invalid height for a 1D texture");
+
+			resourceDesc = CD3DX12_RESOURCE_DESC::Tex1D(
+				texPlatParams->m_format,
+				texParams.m_width,
+				texParams.m_arraySize,
+				numMips,
+				flags,
+				D3D12_TEXTURE_LAYOUT_UNKNOWN,	// layout
+				0);								// alignment
+		}
+		break;
+		case re::Texture::Dimension::Texture2D:
+		case re::Texture::Dimension::Texture2DArray:
+		{
+			resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+				texPlatParams->m_format,
+				texParams.m_width,
+				texParams.m_height,
+				texParams.m_arraySize,
+				numMips,
+				1,								// sampleCount
+				0,								// sampleQuality
+				flags,
+				D3D12_TEXTURE_LAYOUT_UNKNOWN,	// layout
+				0);								// alignment
+		}
+		break;
+		case re::Texture::Dimension::Texture3D:
+		{
+			resourceDesc = CD3DX12_RESOURCE_DESC::Tex3D(
+				texPlatParams->m_format,
+				texParams.m_width,
+				texParams.m_height,
+				texParams.m_arraySize,	// Number of depth slices
+				numMips,
+				flags,
+				D3D12_TEXTURE_LAYOUT_UNKNOWN,	// layout
+				0);								// alignment
+		}
+		break;
+		case re::Texture::Dimension::TextureCubeMap:
+		case re::Texture::Dimension::TextureCubeMapArray:
+		{
+			resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+				texPlatParams->m_format,
+				texParams.m_width,
+				texParams.m_height,
+				texParams.m_faces * texParams.m_arraySize,
+				numMips,
+				1,								// sampleCount
+				0,								// sampleQuality
+				flags,
+				D3D12_TEXTURE_LAYOUT_UNKNOWN,	// layout
+				0);								// alignment
+		}
+		break;
+		default:
+			SEAssertF("Invalid texture dimension");
+		}
+
+		D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
 		HRESULT hr = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CreateCommittedResource(
 			&heapProperties,
@@ -771,15 +900,6 @@ namespace dx12
 
 		const uint32_t numMips = texture.GetNumMips();
 		const uint32_t numSubresources = texParams.m_faces * numMips;
-
-		if (texParams.m_mipMode == re::Texture::MipMode::None)
-		{
-			m_uavCpuDescAllocations.reserve(1);
-		}
-		else
-		{
-			m_uavCpuDescAllocations.reserve(numSubresources);
-		}
 	}
 
 
@@ -788,11 +908,8 @@ namespace dx12
 		m_format = DXGI_FORMAT_UNKNOWN;
 		m_textureResource = nullptr;
 
-		for (uint8_t texDimension = 0; texDimension < re::Texture::Dimension::Dimension_Count; texDimension++)
-		{
-			m_srvCpuDescAllocations[texDimension].Free(0);
-		}
-		m_uavCpuDescAllocations.clear();
+		m_srvCpuDescAllocations.Free(0);
+		m_uavCpuDescAllocations.Free(0);
 	}
 
 

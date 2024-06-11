@@ -456,4 +456,12 @@ namespace dx12
 	{
 		return m_numDescriptors;
 	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorAllocation::operator[](size_t idx) const
+	{
+		SEAssert(idx < m_numDescriptors, "Index is OOB");
+
+		return D3D12_CPU_DESCRIPTOR_HANDLE(m_baseDescriptor.ptr + (m_descriptorSize * idx));
+	}
 }

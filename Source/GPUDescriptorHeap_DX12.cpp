@@ -151,7 +151,7 @@ namespace dx12
 							descriptorTable.m_index, 
 							context->GetNullSRVDescriptor(
 								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_viewDimension,
-								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_format),
+								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_format).GetBaseDescriptor(),
 							static_cast<uint32_t>(rangeEntry),
 							1);						
 					}
@@ -162,7 +162,7 @@ namespace dx12
 							descriptorTable.m_index,
 							context->GetNullUAVDescriptor(
 								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_viewDimension,
-								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_format),
+								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_format).GetBaseDescriptor(),
 							static_cast<uint32_t>(rangeEntry),
 						1);
 					}
@@ -226,10 +226,10 @@ namespace dx12
 
 
 	void GPUDescriptorHeap::SetDescriptorTable(
-		uint32_t rootParamIdx, dx12::DescriptorAllocation const& src, uint32_t offset, uint32_t count)
+		uint32_t rootParamIdx, D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count)
 	{
 		SEAssert(rootParamIdx < k_totalRootSigDescriptorTableIndices, "Invalid root parameter index");
-		SEAssert(src.GetBaseDescriptor().ptr != 0, "Source cannot be null");
+		SEAssert(src.ptr != 0, "Source cannot be null");
 		SEAssert(offset < k_totalDescriptors, "Invalid offset");
 		SEAssert(count < k_totalDescriptors, "Too many descriptors");
 
@@ -245,8 +245,7 @@ namespace dx12
 		for (uint32_t currentDescriptor = 0; currentDescriptor < count; currentDescriptor++)
 		{
 			const size_t srcBaseOffset = currentDescriptor * m_elementSize;
-			destDescriptorHandle[currentDescriptor] = 
-				D3D12_CPU_DESCRIPTOR_HANDLE(src.GetBaseDescriptor().ptr + srcBaseOffset);
+			destDescriptorHandle[currentDescriptor] = D3D12_CPU_DESCRIPTOR_HANDLE(src.ptr + srcBaseOffset);
 		}
 
 		// Mark our root parameter index as dirty:

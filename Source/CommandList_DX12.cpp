@@ -380,11 +380,9 @@ namespace dx12
 					SEAssert(buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite,
 						"UAV buffers must have GPU writes enabled");
 
-					dx12::DescriptorAllocation const& descriptorAllocation = bufferPlatParams->m_uavCPUDescAllocation;
-
 					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 						rootSigEntry->m_index,
-						descriptorAllocation,
+						bufferPlatParams->m_uavCPUDescAllocation[0],
 						rootSigEntry->m_tableEntry.m_offset,
 						1);
 
@@ -599,7 +597,7 @@ namespace dx12
 			else
 			{
 				D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
-					depthTargetPlatParams->m_rtvDsvDescriptors[depthTarget->GetTargetParams().m_targetFace].GetBaseDescriptor();
+					depthTargetPlatParams->m_rtvDsvDescriptors[depthTarget->GetTargetParams().m_targetFace];
 
 				m_commandList->ClearDepthStencilView(
 					dsvDescriptor,
@@ -632,7 +630,7 @@ namespace dx12
 				colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 			m_commandList->ClearRenderTargetView(
-				targetPlatParams->m_rtvDsvDescriptors[colorTarget->GetTargetParams().m_targetFace].GetBaseDescriptor(),
+				targetPlatParams->m_rtvDsvDescriptors[colorTarget->GetTargetParams().m_targetFace],
 				&colorTarget->GetTexture()->GetTextureParams().m_clear.m_color.r,
 				0,			// Number of rectangles in the proceeding D3D12_RECT ptr
 				nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
@@ -697,7 +695,7 @@ namespace dx12
 
 			// Attach the RTV for the target face:
 			colorTargetDescriptors.emplace_back(
-				targetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor());
+				targetPlatParams->m_rtvDsvDescriptors[subresourceIdx]);
 		}
 
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor{};
@@ -743,12 +741,12 @@ namespace dx12
 
 				if (depthWriteEnabled)
 				{
-					dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
+					dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx];
 				}
 				else
 				{
 					// TODO: Select a DSV that is created with depth writes disabled
-					dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
+					dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx];
 				}
 			}
 		}
@@ -820,15 +818,13 @@ namespace dx12
 					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 				const uint32_t targetMip = targetParams.m_targetMip;
-
-				SEAssert(targetMip < texPlatParams->m_uavCpuDescAllocations.size(), "Not enough UAV descriptors");
-
-				dx12::DescriptorAllocation const& descriptorAllocation =
-					texPlatParams->m_uavCpuDescAllocations[targetMip];
-
+				
+				SEAssert(targetMip < texPlatParams->m_uavCpuDescAllocations.GetNumDescriptors(),
+					"Not enough UAV descriptors");
+			
 				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 					rootSigEntry->m_index,
-					descriptorAllocation,
+					texPlatParams->m_uavCpuDescAllocations[targetMip],
 					rootSigEntry->m_tableEntry.m_offset,
 					1);
 
@@ -1038,7 +1034,9 @@ namespace dx12
 				"We currently assume all textures belong to descriptor tables");
 
 			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
-			dx12::DescriptorAllocation const* descriptorAllocation = nullptr;
+			
+			uint32_t descriptorIdx = 0;
+
 			switch (rootSigEntry->m_tableEntry.m_type)
 			{
 			case dx12::RootSignature::DescriptorType::SRV:
@@ -1052,18 +1050,22 @@ namespace dx12
 					toState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 				}			
 
-				// Get the appropriate cpu-visible SRV:
+				// Get the appropriate cpu-visible SRV index::
 				switch (rootSigEntry->m_tableEntry.m_srvViewDimension)
 				{
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1D:
+				{
+					descriptorIdx = re::Texture::Texture1D;
+				}
+				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
 				{
-					SEAssertF("TODO: Support this dimension");
+					descriptorIdx = re::Texture::Texture1DArray;
 				}
 				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2D:
 				{
-					descriptorAllocation = &texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2D];
+					descriptorIdx = re::Texture::Texture2D;
 				}
 				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
@@ -1072,12 +1074,12 @@ namespace dx12
 					{
 					case re::Texture::Dimension::Texture2D:
 					{
-						descriptorAllocation = &texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2D];
+						descriptorIdx = re::Texture::Texture2D;
 					}
 					break;
 					case re::Texture::Dimension::TextureCubeMap:
 					{
-						descriptorAllocation = &texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2DArray];
+						descriptorIdx = re::Texture::Texture2DArray;
 					}
 					break;
 					default: SEAssertF("Unexpected texture dimension");
@@ -1093,7 +1095,7 @@ namespace dx12
 				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBE:
 				{
-					descriptorAllocation = &texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::TextureCubeMap];
+					descriptorIdx = re::Texture::TextureCubeMap;
 				}
 				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
@@ -1117,15 +1119,14 @@ namespace dx12
 
 				// Note: We don't (shouldn't?) need to record a modification fence value to the texture resource here, 
 				// since it's being used as an input
-
-				//descriptorAllocation = &texPlatParams->m_uavCpuDescAllocations;
 			}
 			break;
 			default:
 				SEAssertF("Invalid range type");
 			}
 
-			SEAssert(descriptorAllocation->IsValid(), "Descriptor is not valid");
+			SEAssert(descriptorIdx < texPlatParams->m_srvCpuDescAllocations.GetNumDescriptors(),
+				"Descriptor index is OOB");
 
 
 			// If a depth resource is used as both an input and target, we've already recorded the transitions
@@ -1136,7 +1137,7 @@ namespace dx12
 
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 				rootSigEntry->m_index,
-				*descriptorAllocation,
+				texPlatParams->m_srvCpuDescAllocations[descriptorIdx],
 				rootSigEntry->m_tableEntry.m_offset,
 				1);
 		}

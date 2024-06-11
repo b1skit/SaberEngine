@@ -87,21 +87,22 @@ namespace dx12
 
 				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
 
-				SEAssert(targetPlatParams->m_rtvDsvDescriptors.empty(),
+				SEAssert(targetPlatParams->m_rtvDsvDescriptors.IsValid() == false,
 					"RTVs have already been allocated. This is unexpected");
 
 				// Allocate descriptors for our RTVs:
 				const uint32_t numFaces = texParams.m_faces;
 				const uint32_t numMips = colorTarget.GetTexture()->GetNumMips();
 
+				const uint32_t numDescriptors = numFaces * numMips;
+				targetPlatParams->m_rtvDsvDescriptors = std::move(
+					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(numDescriptors));
+				SEAssert(targetPlatParams->m_rtvDsvDescriptors.IsValid(), "RTV descriptor is not valid");
+
 				for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 				{
 					for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
 					{
-						targetPlatParams->m_rtvDsvDescriptors.emplace_back(std::move(
-							context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1)));
-						SEAssert(targetPlatParams->m_rtvDsvDescriptors.back().IsValid(), "RTV descriptor is not valid");
-
 						// Create the RTV:
 						D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
 						renderTargetViewDesc.Format = texPlatParams->m_format;
@@ -116,11 +117,6 @@ namespace dx12
 								.MipSlice = targetParams.m_targetMip,
 								.PlaneSlice = targetParams.m_targetFace
 							};
-
-							device->CreateRenderTargetView(
-								texPlatParams->m_textureResource.Get(), // Pointer to the resource containing the render target texture
-								&renderTargetViewDesc,
-								targetPlatParams->m_rtvDsvDescriptors.back().GetBaseDescriptor()); // Descriptor destination
 						}
 						break;
 						case 6:
@@ -137,15 +133,17 @@ namespace dx12
 								.ArraySize = 1,		// Only view one element of our array
 								.PlaneSlice = 0		// "Only Plane Slice 0 is valid when creating a view on a non-planar format"
 							};
-
-							device->CreateRenderTargetView(
-								texPlatParams->m_textureResource.Get(),
-								&renderTargetViewDesc,
-								targetPlatParams->m_rtvDsvDescriptors.back().GetBaseDescriptor());
 						}
 						break;
 						default: SEAssertF("Unexpected number of faces");
 						}
+
+						const uint32_t descriptorIdx = (faceIdx * numMips) + mipIdx;
+
+						device->CreateRenderTargetView(
+							texPlatParams->m_textureResource.Get(),
+							&renderTargetViewDesc,
+							targetPlatParams->m_rtvDsvDescriptors[descriptorIdx]);
 					}					
 				}			
 			}
@@ -190,7 +188,7 @@ namespace dx12
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
-		SEAssert(depthTargetPlatParams->m_rtvDsvDescriptors.empty(),
+		SEAssert(depthTargetPlatParams->m_rtvDsvDescriptors.IsValid() == false,
 			"DSVs have already been allocated. This is unexpected");
 
 		const uint32_t numFaces = depthTexParams.m_faces;
@@ -198,15 +196,16 @@ namespace dx12
 
 		SEAssert(numMips == 1, "Depth texture has mips. This is unexpected");
 
+		const uint32_t numDescriptors = numFaces * numMips;
+		depthTargetPlatParams->m_rtvDsvDescriptors = std::move(
+			context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(numDescriptors));
+		SEAssert(depthTargetPlatParams->m_rtvDsvDescriptors.IsValid(), "DSV descriptor is not valid");
+
 		// Create the depth-stencil descriptor and view:
 		for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 		{
 			for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
 			{
-				depthTargetPlatParams->m_rtvDsvDescriptors.emplace_back(std::move(
-					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1)));
-				SEAssert(depthTargetPlatParams->m_rtvDsvDescriptors.back().IsValid(), "DSV descriptor is not valid");
-
 				D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
 				dsv.Format = depthTexPlatParams->m_format;
 				dsv.Flags = D3D12_DSV_FLAG_NONE;
@@ -233,10 +232,12 @@ namespace dx12
 				default: SEAssertF("Unexpected number of faces");
 				}
 
+				const uint32_t descriptorIdx = (faceIdx * numMips) + mipIdx;
+
 				device->CreateDepthStencilView(
 					depthTexPlatParams->m_textureResource.Get(),
 					&dsv,
-					depthTargetPlatParams->m_rtvDsvDescriptors.back().GetBaseDescriptor());
+					depthTargetPlatParams->m_rtvDsvDescriptors[descriptorIdx]);
 			}
 		}
 

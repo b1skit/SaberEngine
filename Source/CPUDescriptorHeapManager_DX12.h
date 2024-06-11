@@ -85,6 +85,8 @@ namespace dx12
 		D3D12_CPU_DESCRIPTOR_HANDLE GetBaseDescriptor() const;
 		uint32_t GetNumDescriptors() const;
 		uint32_t GetDescriptorSize() const;
+
+		D3D12_CPU_DESCRIPTOR_HANDLE operator[](size_t) const;
 		
 
 	private:
