@@ -231,7 +231,7 @@ namespace opengl
 
 				// Validate the texture dimensions:
 				const uint32_t targetMip = colorTarget.GetTargetParams().m_targetMip;
-				glm::vec4 const& subresourceDimensions = texture->GetSubresourceDimensions(targetMip);
+				glm::vec4 const& subresourceDimensions = texture->GetMipLevelDimensions(targetMip);
 				const uint32_t mipWidth = static_cast<uint32_t>(subresourceDimensions.x);
 				const uint32_t mipHeight = static_cast<uint32_t>(subresourceDimensions.y);
 				if (!foundTarget)
@@ -385,7 +385,7 @@ namespace opengl
 			SEAssert(firstTarget != nullptr, "First target cannot be null");
 			if (firstTarget->GetNumMips() > 1 && firstTargetMipLevel > 0)
 			{
-				const glm::vec4 mipDimensions = firstTarget->GetSubresourceDimensions(firstTargetMipLevel);
+				const glm::vec4 mipDimensions = firstTarget->GetMipLevelDimensions(firstTargetMipLevel);
 				glViewport(
 					0,
 					0,

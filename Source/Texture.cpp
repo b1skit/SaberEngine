@@ -1,10 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
 #include "RenderManager.h"
 #include "SceneData.h"
 #include "SceneManager.h"
 #include "Texture.h"
 #include "Texture_Platform.h"
+
+#include "Core/Assert.h"
+
+#include "Core/Util/CastUtils.h"
 
 
 namespace
@@ -17,6 +20,40 @@ namespace
 		}
 
 		return re::Texture::ComputeMaxMips(params.m_width, params.m_height);
+	}
+
+
+	uint32_t ComputeNumSubresources(re::Texture::TextureParams const& texParams)
+	{
+		const uint32_t numMips = ComputeNumMips(texParams);
+
+		uint32_t numSubresources = 0;
+		if (texParams.m_dimension == re::Texture::Dimension::Texture3D)
+		{
+			// A 3D texture subresource is a single mipmap level, regardless of the number of depth slices etc
+			// https://learn.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-textures-intro?redirectedfrom=MSDN
+			numSubresources = numMips;
+		}
+		else
+		{
+			numSubresources = texParams.m_arraySize * texParams.m_faces * numMips;
+		}
+		return numSubresources;
+	}
+
+
+	glm::uvec2 GetMipWidthHeight(uint32_t width, uint32_t height, uint32_t mipLevel)
+	{
+		return glm::uvec2(
+			static_cast<uint32_t>(width / static_cast<float>(glm::pow(2.0f, mipLevel))),
+			static_cast<uint32_t>(height / static_cast<float>(glm::pow(2.0f, mipLevel))));
+	}
+
+
+	uint32_t ComputeTotalBytesPerFace(re::Texture::TextureParams const& texParams, uint32_t mipLevel = 0)
+	{
+		glm::uvec2 const& widthHeight = GetMipWidthHeight(texParams.m_width, texParams.m_height, mipLevel);
+		return widthHeight.x * widthHeight.y * re::Texture::GetNumBytesPerTexel(texParams.m_format);
 	}
 }
 
@@ -53,8 +90,20 @@ namespace re
 		std::vector<ImageDataUniquePtr>&& initialData)
 	{
 		SEAssert(initialData.size() == params.m_faces, "Number of initial data entries must match the number of faces");
+		
+		SEAssert(params.m_dimension == Texture1D || 
+			params.m_dimension == Texture1DArray ||
+			params.m_dimension == Texture2D ||
+			params.m_dimension == Texture2DArray ||
+			params.m_dimension == TextureCubeMap ||
+			params.m_dimension == TextureCubeMapArray,
+			"Only Textures with initial data that can be non-contiguous in memory at buffer time are supported here");
 
-		std::unique_ptr<IInitialData> initialDataPtr = std::make_unique<InitialDataSTBIImage>(std::move(initialData));
+		std::unique_ptr<IInitialData> initialDataPtr = std::make_unique<InitialDataSTBIImage>(
+			params.m_arraySize,
+			params.m_faces,
+			ComputeTotalBytesPerFace(params),
+			std::move(initialData));
 
 		std::shared_ptr<re::Texture> newTex = CreateInternal(name, params, std::move(initialDataPtr));
 
@@ -65,11 +114,16 @@ namespace re
 	std::shared_ptr<re::Texture> Texture::Create(
 		std::string const& name,
 		TextureParams const& params,
-		std::vector<std::vector<uint8_t>>&& initialData)
+		std::vector<uint8_t>&& initialData)
 	{
-		SEAssert(initialData.size() == params.m_faces, "Number of initial data entries must match the number of faces");
+		SEAssert(initialData.size() == params.m_arraySize * params.m_faces * ComputeTotalBytesPerFace(params),
+			"Invalid data size");
 
-		std::unique_ptr<IInitialData> initialDataPtr = std::make_unique<InitialDataVec>(std::move(initialData));
+		std::unique_ptr<IInitialData> initialDataPtr = std::make_unique<InitialDataVec>(
+			params.m_arraySize,
+			params.m_faces,
+			ComputeTotalBytesPerFace(params),
+			std::move(initialData));
 
 		std::shared_ptr<re::Texture> newTex = CreateInternal(name, params, std::move(initialDataPtr));
 
@@ -84,13 +138,11 @@ namespace re
 	{
 		SEAssert((params.m_usage & Usage::Color), "Trying to fill a non-color texture");
 
-		std::unique_ptr<IInitialData> initialData = 
-			std::make_unique<InitialDataVec>(std::vector<std::vector<uint8_t>>());
-
-		const uint8_t bytesPerPixel = GetNumBytesPerTexel(params.m_format);
-		const uint32_t totalBytesPerFace = params.m_width * params.m_height * bytesPerPixel;
-
-		initialData->Resize(params.m_faces, totalBytesPerFace);
+		std::unique_ptr<IInitialData> initialData = std::make_unique<InitialDataVec>(
+			params.m_arraySize,
+			params.m_faces,
+			ComputeTotalBytesPerFace(params),
+			std::vector<uint8_t>());
 
 		std::shared_ptr<re::Texture> newTex = CreateInternal(name, params, std::move(initialData));
 
@@ -102,7 +154,7 @@ namespace re
 
 	std::shared_ptr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params)
 	{
-		SEAssert((params.m_usage ^ Usage::Color), "Textures that are Usage::Color only must have initial data");
+		SEAssert((params.m_usage ^ Usage::Color), "Textures with Usage::Color only must have initial data");
 		return CreateInternal(name, params, nullptr);
 	}
 
@@ -154,7 +206,7 @@ namespace re
 		, m_platformParams(nullptr)
 		, m_initialData(nullptr)
 		, m_numMips(ComputeNumMips(params))
-		, m_numSubresources(m_numMips* params.m_faces)
+		, m_numSubresources(ComputeNumSubresources(params))
 	{
 		SEAssert(m_texParams.m_usage != Texture::Usage::Invalid, "Invalid usage");
 		SEAssert(m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid, "Invalid dimension");
@@ -171,8 +223,13 @@ namespace re
 		SEAssert(m_texParams.m_arraySize == 1 || 
 			m_texParams.m_dimension == Dimension::Texture1DArray ||
 			m_texParams.m_dimension == Dimension::Texture2DArray ||
+			m_texParams.m_dimension == Dimension::Texture3D ||
 			m_texParams.m_dimension == Dimension::TextureCubeMapArray,
 			"Dimension and array size mismatch");
+
+		SEAssert(m_texParams.m_dimension != re::Texture::Texture3D || 
+			m_texParams.m_mipMode != re::Texture::MipMode::AllocateGenerate,
+			"Texture3D mip generation is not (currently) supported");
 
 		platform::Texture::CreatePlatformParams(*this);
 	}
@@ -194,9 +251,9 @@ namespace re
 	}
 
 
-	size_t Texture::GetTotalBytesPerFace() const
+	uint32_t Texture::GetTotalBytesPerFace(uint32_t mipLevel /*= 0*/) const
 	{
-		return m_texParams.m_width * m_texParams.m_height * GetNumBytesPerTexel(m_texParams.m_format);
+		return ComputeTotalBytesPerFace(m_texParams);
 	}
 
 
@@ -206,13 +263,13 @@ namespace re
 	}
 
 
-	void* Texture::GetTexelData(uint8_t faceIdx) const
+	void* Texture::GetTexelData(uint8_t arrayIdx, uint8_t faceIdx) const
 	{
 		if (!m_initialData->HasData())
 		{
 			return nullptr;
 		}
-		return m_initialData->GetDataBytes(faceIdx);
+		return m_initialData->GetDataBytes(arrayIdx, faceIdx);
 	}
 
 
@@ -226,11 +283,13 @@ namespace re
 	}
 
 
-	void Texture::SetTexel(uint32_t faceIdx, uint32_t u, uint32_t v, glm::vec4 value)
+	void Texture::SetTexel(uint8_t arrayIdx, uint32_t faceIdx, uint32_t u, uint32_t v, glm::vec4 value)
 	{
 		// Note: If texture has < 4 channels, the corresponding channels in value are ignored
 
-		SEAssert(m_initialData->HasData() && faceIdx < m_initialData->NumFaces(),
+		SEAssert(m_initialData->HasData() && 
+			arrayIdx < m_initialData->ArrayDepth() && 
+			faceIdx < m_initialData->NumFaces(),
 			"There are no texels. Texels are only allocated for non-target textures");
 
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
@@ -247,7 +306,7 @@ namespace re
 			value.w >= 0.f && value.w <= 1.f,
 			"Pixel value is not normalized");
 
-		uint8_t* dataPtr = static_cast<uint8_t*>(GetTexelData(faceIdx));
+		uint8_t* dataPtr = static_cast<uint8_t*>(GetTexelData(arrayIdx, faceIdx));
 
 		// Reinterpret the value:
 		void* const valuePtr = &value.x;
@@ -348,13 +407,16 @@ namespace re
 	{
 		SEAssert(m_initialData->HasData(), "There are no texels. Texels are only allocated for non-target textures");
 
-		for (uint32_t face = 0; face < m_texParams.m_faces; face++)
+		for (uint32_t arrayIdx = 0; arrayIdx < m_texParams.m_arraySize; arrayIdx++)
 		{
-			for (uint32_t row = 0; row < m_texParams.m_height; row++)
+			for (uint32_t face = 0; face < m_texParams.m_faces; face++)
 			{
-				for (uint32_t col = 0; col < m_texParams.m_width; col++)
+				for (uint32_t row = 0; row < m_texParams.m_height; row++)
 				{
-					SetTexel(face, col, row, solidColor);
+					for (uint32_t col = 0; col < m_texParams.m_width; col++)
+					{
+						SetTexel(arrayIdx, face, col, row, solidColor);
+					}
 				}
 			}
 		}
@@ -369,11 +431,27 @@ namespace re
 	}
 
 
-	glm::vec4 Texture::GetSubresourceDimensions(uint32_t mipLevel) const
+	glm::vec4 Texture::GetMipLevelDimensions(uint32_t mipLevel) const
 	{
-		const uint32_t widthDims = static_cast<uint32_t>(Width() / static_cast<float>(glm::pow(2.0f, mipLevel)));
-		const uint32_t heightDims = static_cast<uint32_t>(Height() / static_cast<float>(glm::pow(2.0f, mipLevel)));
-		return glm::vec4(widthDims, heightDims, 1.f / widthDims, 1.f / heightDims);
+		glm::uvec2 const& widthHeight = GetMipWidthHeight(Width(), Height(), mipLevel);
+		return glm::vec4(widthHeight.x, widthHeight.y, 1.f / widthHeight.x, 1.f / widthHeight.y);
+	}
+
+
+	uint32_t Texture::GetSubresourceIndex(uint32_t arrayIdx, uint32_t faceIdx, uint32_t mipIdx) const
+	{
+		SEAssert(arrayIdx < m_texParams.m_arraySize && faceIdx < m_texParams.m_faces && mipIdx < m_numMips, "OOB index");
+
+		switch (m_texParams.m_dimension)
+		{
+		case re::Texture::Texture3D:
+		{
+			return mipIdx; // A Texture3D has 1 subresource per mip level
+		}
+		break;
+		default:
+			return (arrayIdx * m_texParams.m_faces * m_numMips) + (faceIdx * m_numMips) + mipIdx;
+		}
 	}
 
 
@@ -480,15 +558,17 @@ namespace re
 
 	// ---
 
-	Texture::InitialDataSTBIImage::InitialDataSTBIImage(std::vector<ImageDataUniquePtr>&& initialData)
+
+	Texture::InitialDataSTBIImage::InitialDataSTBIImage(
+		uint32_t arrayDepth, uint8_t numFaces, uint32_t bytesPerFace, std::vector<ImageDataUniquePtr>&& initialData)
+		: IInitialData(arrayDepth, numFaces, bytesPerFace)
 	{
+		SEAssert(arrayDepth * numFaces == initialData.size(),
+			"Array depth and number of faces don't match the number of elements in the inital data vector");
+
+		SEAssert(!initialData.empty(), "Initial data is empty. This is unexpected for STBI image data");
+
 		m_data = std::move(initialData);
-	}
-
-
-	void Texture::InitialDataSTBIImage::Resize(uint8_t numFaces, uint32_t bytesPerFace)
-	{
-		SEAssertF("Cannot resize initial data loaded from STBIImage");
 	}
 
 
@@ -498,16 +578,16 @@ namespace re
 	}
 
 
-	uint8_t Texture::InitialDataSTBIImage::NumFaces() const
+	void* Texture::InitialDataSTBIImage::GetDataBytes(uint8_t arrayIdx, uint8_t faceIdx)
 	{
-		return static_cast<uint8_t>(m_data.size());
-	}
+		const size_t dataIdx = (static_cast<size_t>(arrayIdx) * m_numFaces) + faceIdx;
 
+		SEAssert(arrayIdx < m_arrayDepth && 
+			faceIdx < m_numFaces &&
+			dataIdx < m_data.size(),
+			"Face index OOB");
 
-	void* Texture::InitialDataSTBIImage::GetDataBytes(uint8_t faceIdx)
-	{
-		SEAssert(faceIdx < m_data.size(), "Face index OOB");
-		return m_data[faceIdx].get();
+		return m_data[dataIdx].get();
 	}
 	
 
@@ -520,12 +600,20 @@ namespace re
 	// ---
 
 
-	Texture::InitialDataVec::InitialDataVec(std::vector<std::vector<uint8_t>> initialData) { m_data = std::move(initialData); }
-
-	void Texture::InitialDataVec::Resize(uint8_t numFaces, uint32_t bytesPerFace)
+	Texture::InitialDataVec::InitialDataVec(
+		uint32_t arrayDepth, uint8_t numFaces, uint32_t bytesPerFace, std::vector<uint8_t>&& initialData)
+		: IInitialData(arrayDepth, numFaces, bytesPerFace)
 	{
-		SEAssert(numFaces == 1 || numFaces == 6, "Invalid face count");
-		m_data.resize(numFaces, std::vector<uint8_t>(bytesPerFace));
+		SEAssert((initialData.size() % (static_cast<uint32_t>(numFaces) * bytesPerFace)) == 0,
+			"Received parameters and data size mismatch");
+
+		m_data = std::move(initialData);
+
+		if (m_data.empty())
+		{
+			const uint32_t totalBytes = m_arrayDepth * m_numFaces * m_bytesPerFace;
+			m_data.resize(totalBytes);
+		}
 	}
 
 
@@ -535,16 +623,11 @@ namespace re
 	}
 
 
-	uint8_t Texture::InitialDataVec::NumFaces() const
+	void* Texture::InitialDataVec::GetDataBytes(uint8_t arrayIdx, uint8_t faceIdx)
 	{
-		return static_cast<uint8_t>(m_data.size());
-	}
+		SEAssert(arrayIdx < m_arrayDepth && faceIdx < m_numFaces, "An index is OOB");
 
-
-	void* Texture::InitialDataVec::GetDataBytes(uint8_t faceIdx)
-	{
-		SEAssert(faceIdx < m_data.size(), "Face index OOB");
-		return m_data[faceIdx].data();
+		return &m_data[(arrayIdx * m_numFaces * m_bytesPerFace) + (faceIdx * m_bytesPerFace)];
 	}
 
 

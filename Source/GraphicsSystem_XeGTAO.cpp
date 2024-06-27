@@ -90,11 +90,11 @@ namespace
 	{
 		constexpr uint32_t k_texWidthHeight = 64;
 		constexpr uint32_t k_bytesPerTexel = sizeof(uint16_t);
-		std::vector<std::vector<uint8_t>> texData;
+		std::vector<uint8_t> texData;
 
-		texData.resize(1, std::vector<uint8_t>(k_texWidthHeight * k_texWidthHeight * k_bytesPerTexel));
+		texData.resize(k_texWidthHeight * k_texWidthHeight * k_bytesPerTexel); // 1 face
 		
-		uint16_t* dataPtr = reinterpret_cast<uint16_t*>(texData[0].data());
+		uint16_t* dataPtr = reinterpret_cast<uint16_t*>(texData.data()); // Array element 0, face 0 data
 
 		for (uint32_t x = 0; x < 64; x++)
 		{

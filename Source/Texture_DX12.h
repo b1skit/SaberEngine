@@ -1,10 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include <d3d12.h>
-#include <wrl.h>
-
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "Texture.h"
+
+#include <d3d12.h>
+#include <wrl.h>
 
 
 namespace dx12

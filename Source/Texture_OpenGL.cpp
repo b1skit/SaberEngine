@@ -1,10 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <GL/glew.h>
-
-#include "Core\Assert.h"
 #include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
+
+#include "Core/Assert.h"
+
+#include <GL/glew.h>
 
 
 namespace
@@ -284,19 +285,99 @@ namespace opengl
 		SEAssert(texParams.m_dimension != re::Texture::Dimension::TextureCubeMap || texParams.m_faces == 6,
 			"Texture has a bad configuration");
 
-		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
-		// a texture. It will not have the correct dimensionality until this is done
-		glGenTextures(1, &params->m_textureID);
+		const uint32_t width = texture.Width();
+		const uint32_t height = texture.Height();
+		const uint32_t numMips = texture.GetNumMips();
+
+		// Create texture handles and initialize them:
 		switch (texParams.m_dimension)
 		{
+		case re::Texture::Dimension::Texture1D:
+		{
+			glCreateTextures(GL_TEXTURE_1D, 1, &params->m_textureID);
+
+			glTextureStorage1D(
+				params->m_textureID,
+				numMips,
+				params->m_internalFormat,
+				width);
+		}
+		break;
+		case re::Texture::Dimension::Texture1DArray:
+		{
+			glCreateTextures(GL_TEXTURE_1D_ARRAY, 1, &params->m_textureID);
+
+			glTextureStorage2D(
+				params->m_textureID,
+				numMips,
+				params->m_internalFormat,
+				width,
+				texParams.m_arraySize); // Height == no. of array layers
+		}
+		break;
 		case re::Texture::Dimension::Texture2D:
 		{
-			glBindTexture(GL_TEXTURE_2D, params->m_textureID);
+			glCreateTextures(GL_TEXTURE_2D, 1, &params->m_textureID);
+
+			glTextureStorage2D(
+				params->m_textureID,
+				numMips,
+				params->m_internalFormat,
+				width,
+				height);
+		}
+		break;
+		case re::Texture::Dimension::Texture2DArray:
+		{
+			glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &params->m_textureID);
+
+			glTextureStorage3D(
+				params->m_textureID,
+				numMips,
+				params->m_internalFormat,
+				width,
+				height,
+				texParams.m_arraySize);
+		}
+		break;
+		case re::Texture::Dimension::Texture3D:
+		{
+			glCreateTextures(GL_TEXTURE_3D, 1, &params->m_textureID);
+
+			glTextureStorage3D(
+				params->m_textureID,
+				numMips,
+				params->m_internalFormat,
+				width,
+				height,
+				texParams.m_arraySize);
 		}
 		break;
 		case re::Texture::Dimension::TextureCubeMap:
 		{
-			glBindTexture(GL_TEXTURE_CUBE_MAP, params->m_textureID);
+			glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &params->m_textureID);
+
+			glTextureStorage2D(
+				params->m_textureID,
+				numMips,
+				params->m_internalFormat,
+				width,
+				height);
+		}
+		break;
+		case re::Texture::Dimension::TextureCubeMapArray:
+		{
+			glCreateTextures(GL_TEXTURE_CUBE_MAP_ARRAY, 1, &params->m_textureID);
+
+			SEAssert(texParams.m_faces == 6, "Invalid face count");
+
+			glTextureStorage3D(
+				params->m_textureID,
+				numMips,
+				params->m_internalFormat,
+				width,
+				height,
+				texParams.m_arraySize * texParams.m_faces); // depth: No. of layer-faces (must be divisible by 6)
 		}
 		break;
 		default:
@@ -304,55 +385,131 @@ namespace opengl
 		}
 		SEAssert(glIsTexture(params->m_textureID) == GL_TRUE, "OpenGL failed to generate new texture name");
 
+
 		// RenderDoc object name:
 		glObjectLabel(GL_TEXTURE, params->m_textureID, -1, texture.GetName().c_str());
 
-		// Specify the texture storage:
-		const uint32_t width = texture.Width();
-		const uint32_t height = texture.Height();
-
-		glTextureStorage2D(
-			params->m_textureID,
-			texture.GetNumMips(),
-			params->m_internalFormat,
-			width,
-			height);
 
 		// Upload data (if any) to the GPU:
 		if ((texParams.m_usage & re::Texture::Usage::Color) && texture.HasInitialData())
 		{
-			for (uint32_t i = 0; i < texParams.m_faces; i++)
+			for (uint32_t arrayIdx = 0; arrayIdx < texParams.m_arraySize; arrayIdx++)
 			{
-				void* data = texture.GetTexelData(i);
-				SEAssert(data, "Color target must have data to buffer");				
+				for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+				{
+					void* data = texture.GetTexelData(arrayIdx, faceIdx);
+					SEAssert(data, "Color target must have data to buffer");
 
-				if (texParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
-				{
-					glTextureSubImage3D(
-						params->m_textureID,
-						0, // Level: Mip level
-						0, // xoffset
-						0, // yoffset
-						i, // zoffset: Target face
-						width,
-						height,
-						1,					// depth (Note: We're updating 1 face at a time)
-						params->m_format,	// format
-						params->m_type,		// type
-						data);				// void* data. Nullptr for render targets
-				}
-				else
-				{
-					glTextureSubImage2D(
-						params->m_textureID,
-						0, // Level: Mip level
-						0, // xoffset
-						0, // yoffset
-						width,
-						height,
-						params->m_format,	// format
-						params->m_type,		// type
-						data);				// void* data. Nullptr for render targets
+					switch (texParams.m_dimension)
+					{
+					case re::Texture::Texture1D:
+					{
+						glTextureSubImage1D(
+							params->m_textureID,
+							0,					// level
+							0,					// xoffset
+							width,				// width
+							params->m_format,	// format
+							params->m_type,		// type
+							data);				// pixels
+					}
+					break;
+					case re::Texture::Texture1DArray:
+					{
+						SEAssert(height == 1, "Invalid height");
+
+						glTextureSubImage2D(
+							params->m_textureID,
+							0,					// Level: Mip level
+							0,					// xoffset
+							arrayIdx,			// yoffset
+							width,
+							height,				// height
+							params->m_format,	// format
+							params->m_type,		// type
+							data);				// void* data. Nullptr for render targets
+					}
+					break;
+					case re::Texture::Texture2D:
+					{
+						glTextureSubImage2D(
+							params->m_textureID,
+							0,					// Level: Mip level
+							0,					// xoffset
+							0,					// yoffset
+							width,
+							height,
+							params->m_format,	// format
+							params->m_type,		// type
+							data);				// void* data. Nullptr for render targets
+					}
+					break;
+					case re::Texture::Texture2DArray:
+					{
+						glTextureSubImage3D(
+							params->m_textureID,
+							0,						// Level: Mip level
+							0,						// xoffset
+							0,						// yoffset
+							arrayIdx,				// zoffset
+							width,
+							height,
+							1,						// depth: No. of subresources we're updating in this call
+							params->m_format,		// format
+							params->m_type,			// type
+							data);					// void* data. Nullptr for render targets
+					}
+					break;
+					case re::Texture::Texture3D:
+					{
+						glTextureSubImage3D(
+							params->m_textureID,
+							0,						// Level: Mip level
+							0,						// xoffset
+							0,						// yoffset
+							arrayIdx,				// zoffset
+							width,
+							height,
+							1,						// depth: No. of subresources we're updating in this call
+							params->m_format,		// format
+							params->m_type,			// type
+							data);					// void* data. Nullptr for render targets
+					}
+					break;
+					case re::Texture::TextureCubeMap:
+					{
+						glTextureSubImage3D(
+							params->m_textureID,
+							0,					// Level: Mip level
+							0,					// xoffset
+							0,					// yoffset
+							faceIdx,			// zoffset: Target face
+							width,
+							height,
+							1,					// depth: No. of subresources we're updating in this call
+							params->m_format,	// format
+							params->m_type,		// type
+							data);				// void* data. Nullptr for render targets
+					}
+					break;
+					case re::Texture::TextureCubeMapArray:
+					{
+						glTextureSubImage3D(
+							params->m_textureID,
+							0,						// Level: Mip level
+							0,						// xoffset
+							0,						// yoffset
+							arrayIdx * 6 + faceIdx,	// zoffset
+							width,
+							height,
+							1,						// depth: No. of subresources we're updating in this call
+							params->m_format,		// format
+							params->m_type,			// type
+							data);					// void* data. Nullptr for render targets
+					}
+					break;
+					default: SEAssertF("Invalid dimension");
+					}
 				}
 			}
 		}

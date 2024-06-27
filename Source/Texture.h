@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Interfaces\INamedObject.h"
-#include "Core\Interfaces\IPlatformParams.h"
+#include "Core/Interfaces/INamedObject.h"
+#include "Core/Interfaces/IPlatformParams.h"
 
 
 namespace re
@@ -13,37 +13,45 @@ namespace re
 
 		struct IInitialData
 		{
+			IInitialData(uint32_t arrayDepth, uint8_t numFaces, uint32_t bytesPerFace)
+				: m_arrayDepth(arrayDepth), m_numFaces(numFaces), m_bytesPerFace(bytesPerFace)
+			{}
+
 			virtual ~IInitialData() = default;
 
-			virtual void Resize(uint8_t numFaces, uint32_t bytesPerFace) = 0;
 			virtual bool HasData() const = 0;
-			virtual uint8_t NumFaces() const = 0;
-			virtual void* GetDataBytes(uint8_t faceIdx) = 0;
+			virtual uint32_t ArrayDepth() const { return m_arrayDepth; }
+			virtual uint8_t NumFaces() const { return m_numFaces; }
+			virtual void* GetDataBytes(uint8_t arrayIdx, uint8_t faceIdx) = 0;
 			virtual void Clear() = 0;
+
+			uint32_t m_arrayDepth;
+			uint8_t m_numFaces;
+			uint32_t m_bytesPerFace;
+
+		private:
+			IInitialData() = delete;
 		};
 
 		struct InitialDataSTBIImage final : public virtual IInitialData
 		{
-			InitialDataSTBIImage(std::vector<ImageDataUniquePtr>&& initialData);
-			void Resize(uint8_t numFaces, uint32_t bytesPerFace) override;
+			InitialDataSTBIImage(
+				uint32_t arrayDepth, uint8_t numFaces, uint32_t bytesPerFace, std::vector<ImageDataUniquePtr>&& initialData);
 			bool HasData() const override;
-			uint8_t NumFaces() const override;
-			void* GetDataBytes(uint8_t faceIdx) override;
+			void* GetDataBytes(uint8_t arrayIdx, uint8_t faceIdx) override;
 			void Clear() override;
 
-			std::vector<ImageDataUniquePtr> m_data;
+			std::vector<ImageDataUniquePtr> m_data; // array elements and faces are packed consecutively
 		};
 
 		struct InitialDataVec final : public virtual IInitialData
 		{
-			InitialDataVec(std::vector<std::vector<uint8_t>> initialData);
-			void Resize(uint8_t numFaces, uint32_t bytesPerFace) override;
+			InitialDataVec(uint32_t arrayDepth, uint8_t numFaces, uint32_t bytesPerFace, std::vector<uint8_t>&& initialData);
 			bool HasData() const override;
-			uint8_t NumFaces() const override;
-			void* GetDataBytes(uint8_t faceIdx) override;
+			void* GetDataBytes(uint8_t arrayIdx, uint8_t faceIdx) override;
 			void Clear() override;
 
-			std::vector<std::vector<uint8_t>> m_data; // Byte array [1, 6] faces
+			std::vector<uint8_t> m_data; // Bytes: array [0,N][1, 6] faces
 		};
 
 
@@ -154,7 +162,7 @@ namespace re
 		{
 			uint32_t m_width = 4; // Must be a minimum of 4x4 for block compressed formats
 			uint32_t m_height = 4;
-			uint32_t m_faces = 1;
+			uint32_t m_faces = 1; // TODO: This shouldn't be necessary: It's always 1 or 6, and we know the m_dimension
 			uint32_t m_arraySize = 1; // # textures in an array texture, or depth slices in a 3D texture
 
 			Usage m_usage = Usage::Invalid;
@@ -191,7 +199,7 @@ namespace re
 		[[nodiscard]] static std::shared_ptr<re::Texture> Create(
 			std::string const& name,
 			TextureParams const& params,
-			std::vector<std::vector<uint8_t>>&& initialData);
+			std::vector<uint8_t>&& initialData);
 
 		static std::shared_ptr<re::Texture> Create(
 			std::string const& name,
@@ -211,15 +219,16 @@ namespace re
 		inline uint32_t const& Width() const { return m_texParams.m_width; }
 		inline uint32_t const& Height() const { return m_texParams.m_height; }		
 
-		size_t GetTotalBytesPerFace() const;
+		uint32_t GetTotalBytesPerFace(uint32_t mipLevel = 0) const;
 
 		bool HasInitialData() const;
-		void* GetTexelData(uint8_t faceIdx) const; // Can be null
+		void* GetTexelData(uint8_t arrayIdx, uint8_t faceIdx) const; // Can be null
 		void ClearTexelData(); // Clear CPU-side texel data
 
 		uint32_t GetNumMips() const;
-		uint32_t GetTotalNumSubresources() const;
-		glm::vec4 GetSubresourceDimensions(uint32_t mipLevel) const; // .xyzw = subresource width, height, 1/width, 1/height
+		glm::vec4 GetMipLevelDimensions(uint32_t mipLevel) const; // .xyzw = subresource width, height, 1/width, 1/height
+		uint32_t GetTotalNumSubresources() const; // No. array elements * no. faces * no. of mips
+		uint32_t GetSubresourceIndex(uint32_t arrayIdx, uint32_t faceIdx, uint32_t mipIdx) const;
 		bool IsPowerOfTwo() const;
 		bool IsSRGB() const;
 
@@ -239,16 +248,14 @@ namespace re
 
 
 	private:
-		explicit Texture(
-			std::string const& name, 
-			TextureParams const& params);
+		explicit Texture(std::string const& name, TextureParams const& params);
 
 		static std::shared_ptr<re::Texture> CreateInternal(
 			std::string const& name, TextureParams const&, std::unique_ptr<IInitialData>&&);
 
 		void Fill(glm::vec4 solidColor);	// Fill texture with a solid color
 
-		void SetTexel(uint32_t face, uint32_t u, uint32_t v, glm::vec4 value); // u == x == col, v == y == row
+		void SetTexel(uint8_t arrayIdx, uint32_t face, uint32_t u, uint32_t v, glm::vec4 value); // u == x == col, v == y == row
 
 
 	private:
@@ -258,7 +265,7 @@ namespace re
 		std::unique_ptr<IInitialData> m_initialData; // Owns a vector with [1,6] faces of data
 
 		const uint32_t m_numMips;
-		const uint32_t m_numSubresources; // no. of mips * no. of faces
+		const uint32_t m_numSubresources; // No. array elements * no. faces * no. of mips
 
 
 	private:

@@ -56,6 +56,10 @@ namespace effect
 		static constexpr Bitmask Shadow_2D = 1llu << 24;
 		static constexpr Bitmask Shadow_Cube = 1llu << 25;
 
+		static constexpr Bitmask TextureDimension_1D = 1llu << 26;
+		static constexpr Bitmask TextureDimension_2D = 1llu << 27;
+		static constexpr Bitmask TextureDimension_3D = 1llu << 28;
+
 
 		using ModeToBitmask = std::unordered_map<std::string, effect::DrawStyle::Bitmask>;
 		using DrawStyleRuleToModes = std::unordered_map<std::string, ModeToBitmask>;
@@ -129,6 +133,14 @@ namespace effect
 						{
 							{"2D", effect::DrawStyle::Shadow_2D},
 							{"Cube", effect::DrawStyle::Shadow_Cube},
+						}
+					},
+					{
+						"TextureDimension",
+						{
+							{"1D", effect::DrawStyle::TextureDimension_1D},
+							{"2D", effect::DrawStyle::TextureDimension_2D},
+							{"3D", effect::DrawStyle::TextureDimension_3D},
 						}
 					},
 				});

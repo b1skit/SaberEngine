@@ -1,11 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "RootSignature_DX12.h"
+
 #include <d3d12.h>
 #include <wrl.h>
 
-#include "RootSignature_DX12.h"
-
-// TODO: Figure out how (if?) we're handling sampler descriptors
+// TODO: Handle sampler descriptors
 
 
 namespace dx12

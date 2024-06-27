@@ -1,11 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include <d3d12.h>
-#include <wrl.h>
-
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
+
+#include <d3d12.h>
+#include <wrl.h>
 
 
 namespace dx12
@@ -18,7 +18,7 @@ namespace dx12
 			// Subresource index = (targetFace * number of mips) + target mip
 			dx12::DescriptorAllocation m_rtvDsvDescriptors;
 
-			// Single descriptor for an array of cubemap faces. Used if m_targetFace == re::TextureTarget::k_allFaces
+			// Single descriptor for an array of cubemap faces. Used for TextureCubeMap, TextureCubeMapArray
 			dx12::DescriptorAllocation m_cubemapDescriptor; 
 		};
 	};

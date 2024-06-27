@@ -37,6 +37,7 @@ namespace re
 		struct TargetParams
 		{
 			// Subresource info:
+			uint32_t m_targetArrayIdx = 0;
 			uint32_t m_targetFace = 0;
 			uint32_t m_targetMip = 0;
 

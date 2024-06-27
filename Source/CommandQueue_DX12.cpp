@@ -605,9 +605,7 @@ namespace dx12
 #if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
 					cmdList->RecordStageName("<Transitions to common>");
 #endif
-					cmdList->ResourceBarrier(
-						static_cast<uint32_t>(barriers.size()),
-						barriers.data());
+					cmdList->ResourceBarrier(util::CheckedCast<uint32_t>(barriers.size()), barriers.data());
 
 					const uint64_t directBarrierFence =
 						cmdQueue.ExecuteInternal({ cmdList }, markerLabel);
@@ -721,7 +719,9 @@ namespace dx12
 					// and then add an "ALL" transition which would be (incorrectly) added to the pending list. So, we
 					// handle that here (as it makes the bookkeeping much simpler)
 					const bool alreadyTransitionedAllSubresources = numSubresourcesTransitioned == numSubresources;
-					SEAssert(numSubresourcesTransitioned <= numSubresources, "Transitioned too many subresources");
+					SEAssert(numSubresourcesTransitioned <= numSubresources,
+						std::format("Transitioned too many subresources for \"{}\"",
+							dx12::GetDebugName(resource)).c_str());
 
 					if (!alreadyTransitionedAllSubresources &&
 						pendingStates.HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES))

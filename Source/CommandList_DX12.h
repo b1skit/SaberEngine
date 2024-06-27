@@ -95,16 +95,21 @@ namespace dx12
 
 		void Dispatch(glm::uvec3 const& numThreads);
 
-		void UpdateSubresources(re::Texture const*, ID3D12Resource* intermediate, size_t intermediateOffset);
+		void UpdateSubresource(
+			re::Texture const*,
+			uint32_t arrayIdx,
+			uint32_t faceIdx,
+			uint32_t mipLevel,
+			ID3D12Resource* intermediate,
+			size_t intermediateOffset);
+
 		void UpdateSubresources(re::VertexStream const*, ID3D12Resource* intermediate, size_t intermediateOffset);
 		void UpdateSubresources(
 			re::Buffer const*, uint32_t dstOffset, ID3D12Resource* srcResource, uint32_t srcOffset, uint32_t numBytes);
 
 		void CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource);
 
-		void TransitionResource(
-			ID3D12Resource*, uint32_t totalSubresources, D3D12_RESOURCE_STATES to, uint32_t targetSubresource);
-
+		void TransitionResource(ID3D12Resource*, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 		void TransitionResource(re::Texture const*, D3D12_RESOURCE_STATES to, uint32_t mipLevel);
 
 		void ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers);
@@ -129,12 +134,9 @@ namespace dx12
 		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
 
 		void TransitionResourceInternal(
-			ID3D12Resource*, 
-			uint32_t totalSubresources, 
-			D3D12_RESOURCE_STATES to, 
-			uint32_t targetSubresource, 
-			uint32_t numFaces, 
-			uint32_t numMips);
+			ID3D12Resource*,
+			D3D12_RESOURCE_STATES to,
+			std::vector<uint32_t> subresourceIndexes);
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> m_commandList;

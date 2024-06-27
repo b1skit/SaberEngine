@@ -30,7 +30,6 @@ namespace re
 	{
 		m_texture = nullptr;
 		m_platformParams = nullptr;
-		m_targetParams = {};
 	}
 
 

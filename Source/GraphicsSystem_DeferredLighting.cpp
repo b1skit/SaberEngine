@@ -322,7 +322,7 @@ namespace gr
 				pmremTargetSet->SetColorTarget(0, pmremTexOut, targetParams);
 
 				const glm::vec4 mipDimensions =
-					pmremTexOut->GetSubresourceDimensions(currentMipLevel);
+					pmremTexOut->GetMipLevelDimensions(currentMipLevel);
 				const uint32_t mipWidth = static_cast<uint32_t>(mipDimensions.x);
 				const uint32_t mipHeight = static_cast<uint32_t>(mipDimensions.y);
 

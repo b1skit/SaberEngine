@@ -1,5 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
+#define SPECIFY_OWN_COMPUTE_OUTPUTS
 #include "SaberComputeCommon.hlsli"
+
 #include "Color.hlsli"
 #include "UVUtils.hlsli"
 
@@ -17,7 +19,23 @@
 ConstantBuffer<MipGenerationData> MipGenerationParams;
 
 SamplerState ClampMinMagLinearMipPoint;
-Texture2DArray<float4> SrcTex;
+
+#if defined(GENERATE_1D_MIPS)
+	Texture1DArray<float4> SrcTex;
+
+	RWTexture1D<float4> output0 : register(u0);
+	RWTexture1D<float4> output1 : register(u1);
+	RWTexture1D<float4> output2 : register(u2);
+	RWTexture1D<float4> output3 : register(u3);
+#else
+	Texture2DArray<float4> SrcTex;
+
+	RWTexture2D<float4> output0 : register(u0);
+	RWTexture2D<float4> output1 : register(u1);
+	RWTexture2D<float4> output2 : register(u2);
+	RWTexture2D<float4> output3 : register(u3);
+#endif
+
 
 // It's recommended we use a maximum of 16KB of group shared memory to maximize occupancy on D3D10 hardware, 32KB on
 // D3D11 hardware, or unlimited on D3D12 hardware. The actual group shared memory available is hardware-dependant. For
@@ -37,6 +55,7 @@ void WriteToGroupSharedMemory(uint groupIdx, float4 sample)
 	groupSharedChannel_A[groupIdx] = sample.a;
 }
 
+
 float4 ReadGroupSharedMemory(uint groupIdx)
 {
 	return float4(
@@ -47,19 +66,44 @@ float4 ReadGroupSharedMemory(uint groupIdx)
 }
 
 
+float4 SampleSrcTex(float2 uvs, uint faceIdx, uint srcMip)
+{
+#if defined(GENERATE_1D_MIPS)
+	return SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float2(uvs.x, faceIdx), srcMip);
+#else
+	return SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(uvs, faceIdx), srcMip);
+#endif
+}
+
+
+#if defined(GENERATE_1D_MIPS)
+void WriteOutput(RWTexture1D<float4> output, uint2 outputCoords, bool isSRGB, float4 texSample)
+#else
+void WriteOutput(RWTexture2D<float4> output, uint2 outputCoords, bool isSRGB, float4 texSample)
+#endif
+{	
+#if defined(GENERATE_1D_MIPS)
+	output[outputCoords.x] = isSRGB ? LinearToSRGB(texSample) : texSample;	
+#else
+	output[outputCoords] = isSRGB ? LinearToSRGB(texSample) : texSample;	
+#endif
+}
+
+
 // NOTE: Our numthreads choice here is directly related to our group shared memory usage, and thread bitmasking logic
 [numthreads(8, 8, 1)]
 void CShader(ComputeIn In)
 {
-	const uint srcMip = MipGenerationParams.g_mipParams.x;
-	const uint numMips = MipGenerationParams.g_mipParams.y;
-	const uint srcDimensionMode = MipGenerationParams.g_mipParams.z;
-	const uint faceIdx = MipGenerationParams.g_mipParams.w;
-	
 	const float2 output0WidthHeight = MipGenerationParams.g_output0Dimensions.xy;
 	const float2 output0TexelWidthHeight = MipGenerationParams.g_output0Dimensions.zw;
 	
-	const bool isSRGB = MipGenerationParams.g_isSRGB.x > 0.5f;
+	const uint srcMip = MipGenerationParams.g_mipParams.x;
+	const uint numMips = MipGenerationParams.g_mipParams.y;
+	
+	const bool isSRGB = MipGenerationParams.g_resourceParams.x > 0.5f;
+	const uint srcDimensionMode = MipGenerationParams.g_resourceParams.y;
+	const uint faceIdx = MipGenerationParams.g_resourceParams.z;	
+	
 	
 	float4 texSample0 = float4(1.f, 0.f, 1.f, 1.f); // Error: Hot pink
 	switch (srcDimensionMode)
@@ -67,7 +111,7 @@ void CShader(ComputeIn In)
 		case SRC_WIDTH_EVEN_HEIGHT_EVEN: // 0
 		{
 			const float2 uvs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.5f));
-			texSample0 = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(uvs.xy, faceIdx), srcMip);
+			texSample0 = SampleSrcTex(uvs.xy, faceIdx, srcMip);
 		}
 		break;
 		case SRC_WIDTH_ODD_HEIGHT_EVEN: // 1
@@ -76,9 +120,8 @@ void CShader(ComputeIn In)
 			const float2 leftUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.5f));
 			const float2 rightUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.5f));
 
-			const float4 leftSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(leftUVs, faceIdx), srcMip);
-			const float4 rightSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(rightUVs, faceIdx), srcMip);
-			
+			const float4 leftSample = SampleSrcTex(leftUVs, faceIdx, srcMip);
+			const float4 rightSample = SampleSrcTex(rightUVs, faceIdx, srcMip);
 			texSample0 = (leftSample + rightSample) * 0.5f;
 		}
 		break;
@@ -88,8 +131,8 @@ void CShader(ComputeIn In)
 			const float2 topUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.25));
 			const float2 botUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.75));
 			
-			const float4 topSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(topUVs, faceIdx), srcMip);
-			const float4 botSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(botUVs, faceIdx), srcMip);
+			const float4 topSample = SampleSrcTex(topUVs, faceIdx, srcMip);
+			const float4 botSample = SampleSrcTex(botUVs, faceIdx, srcMip);
 			
 			texSample0 = (topSample + botSample) * 0.5f;
 		}
@@ -102,17 +145,17 @@ void CShader(ComputeIn In)
 			const float2 botLeftUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.75f));
 			const float2 botRightUVs = PixelCoordsToScreenUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.75f));
 			
-			const float4 topLeftSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(topLeftUVs, faceIdx), srcMip);
-			const float4 topRightSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(topRightUVs, faceIdx), srcMip);
-			const float4 botLeftSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(botLeftUVs, faceIdx), srcMip);
-			const float4 botRightSample = SrcTex.SampleLevel(ClampMinMagLinearMipPoint, float3(botRightUVs, faceIdx), srcMip);
+			const float4 topLeftSample = SampleSrcTex(topLeftUVs, faceIdx, srcMip);
+			const float4 topRightSample = SampleSrcTex(topRightUVs, faceIdx, srcMip);
+			const float4 botLeftSample = SampleSrcTex(botLeftUVs, faceIdx, srcMip);
+			const float4 botRightSample = SampleSrcTex(botRightUVs, faceIdx, srcMip);
 			
 			texSample0 = (topLeftSample + topRightSample + botLeftSample + botRightSample) * 0.25f;
 		}
 		break;
 	}
 	
-	output0[In.DTId.xy] = isSRGB ? LinearToSRGB(texSample0) : texSample0;
+	WriteOutput(output0, In.DTId.xy, isSRGB, texSample0);
 	
 	if (numMips == 1)
 	{
@@ -140,7 +183,7 @@ void CShader(ComputeIn In)
 		texSample0 *= 0.25f;
 		
 		const uint2 output1Coords = In.DTId.xy / 2;
-		output1[output1Coords] = isSRGB ? LinearToSRGB(texSample0) : texSample0;
+		WriteOutput(output1, output1Coords, isSRGB, texSample0);
 		
 		WriteToGroupSharedMemory(In.GIdx, texSample0);
 	}
@@ -166,7 +209,7 @@ void CShader(ComputeIn In)
 		texSample0 *= 0.25f;
 
 		const uint2 output2Coords = In.DTId.xy / 4;
-		output2[output2Coords] = isSRGB ? LinearToSRGB(texSample0) : texSample0;
+		WriteOutput(output2, output2Coords, isSRGB, texSample0);
 		
 		WriteToGroupSharedMemory(In.GIdx, texSample0);
 	}
@@ -187,7 +230,7 @@ void CShader(ComputeIn In)
 		texSample0 += rightSample + bottomSample + bottomRightSample;
 		texSample0 *= 0.25f;
 		
-		const uint2 output3Coords = In.DTId.xy / 8;
-		output3[output3Coords] = isSRGB ? LinearToSRGB(texSample0) : texSample0;
+		const uint2 output3Coords = In.DTId.xy / 8;		
+		WriteOutput(output3, output3Coords, isSRGB, texSample0);
 	}	
 }

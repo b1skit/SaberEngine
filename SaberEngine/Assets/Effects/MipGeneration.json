@@ -1,15 +1,44 @@
 {
 	"Effect": {
 		"Name": "MipGeneration",
-		"Parents": ["Common"],
-		"DefaultTechnique": "GenerateMips",
-		"ExcludedPlatforms": [ "OpenGL" ]
+		"DefaultTechnique": "Generate2DMips",
+		"ExcludedPlatforms": [ "OpenGL" ],
+		"DrawStyles": [
+			{
+				"Conditions": [
+					{ "Rule": "TextureDimension", "Mode": "1D" }
+				],
+				"Technique": "Generate1DMips"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "TextureDimension", "Mode": "2D" }
+				],
+				"Technique": "Generate2DMips"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "TextureDimension", "Mode": "3D" }
+				],
+				"Technique": "Generate3DMips"
+			}
+		]
 	},
 
 	"Techniques": [
 		{
-			"Name": "GenerateMips",
-			"CShader": "GenerateMipMaps_BoxFilter_CShader",
+			"Name": "Generate1DMips",
+			"CShader": "GenerateMips_1D_CShader",
+			"ExcludedPlatforms": [ "OpenGL" ]
+		},
+		{
+			"Name": "Generate2DMips",
+			"CShader": "GenerateMips_CShader",
+			"ExcludedPlatforms": [ "OpenGL" ]
+		},
+		{
+			"Name": "Generate3DMips",
+			"CShader": "GenerateMips_3D_CShader",
 			"ExcludedPlatforms": [ "OpenGL" ]
 		}
 	]

@@ -1220,7 +1220,7 @@
     <FxCompile Include="Shaders\HLSL\DeferredPointLight_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GenerateMipMaps_BoxFilter_CShader.hlsl">
+    <FxCompile Include="Shaders\HLSL\GenerateMips_CShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Skybox_PShader.hlsl">
@@ -1311,6 +1311,12 @@
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GenerateMips_1D_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GenerateMips_3D_CShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>

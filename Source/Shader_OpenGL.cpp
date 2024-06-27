@@ -93,42 +93,53 @@ namespace
 
 	bool UniformIsSamplerType(GLenum type)
 	{
-		return type == GL_SAMPLER_1D ||
+		return 
+			// GL_VERSION_2_0:
+			type == GL_SAMPLER_1D ||
 			type == GL_SAMPLER_2D ||
 			type == GL_SAMPLER_3D ||
 			type == GL_SAMPLER_CUBE ||
 			type == GL_SAMPLER_1D_SHADOW ||
 			type == GL_SAMPLER_2D_SHADOW ||
+			// GL_VERSION_3_0:
 			type == GL_SAMPLER_1D_ARRAY ||
 			type == GL_SAMPLER_2D_ARRAY ||
 			type == GL_SAMPLER_1D_ARRAY_SHADOW ||
 			type == GL_SAMPLER_2D_ARRAY_SHADOW ||
-			type == GL_SAMPLER_2D_MULTISAMPLE ||
-			type == GL_SAMPLER_2D_MULTISAMPLE_ARRAY ||
 			type == GL_SAMPLER_CUBE_SHADOW ||
-			type == GL_SAMPLER_BUFFER ||
-			type == GL_SAMPLER_2D_RECT ||
-			type == GL_SAMPLER_2D_RECT_SHADOW ||
 			type == GL_INT_SAMPLER_1D ||
 			type == GL_INT_SAMPLER_2D ||
 			type == GL_INT_SAMPLER_3D ||
 			type == GL_INT_SAMPLER_CUBE ||
 			type == GL_INT_SAMPLER_1D_ARRAY ||
 			type == GL_INT_SAMPLER_2D_ARRAY ||
-			type == GL_INT_SAMPLER_2D_MULTISAMPLE ||
-			type == GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
-			type == GL_INT_SAMPLER_BUFFER ||
-			type == GL_INT_SAMPLER_2D_RECT ||
 			type == GL_UNSIGNED_INT_SAMPLER_1D ||
 			type == GL_UNSIGNED_INT_SAMPLER_2D ||
 			type == GL_UNSIGNED_INT_SAMPLER_3D ||
 			type == GL_UNSIGNED_INT_SAMPLER_CUBE ||
 			type == GL_UNSIGNED_INT_SAMPLER_1D_ARRAY ||
 			type == GL_UNSIGNED_INT_SAMPLER_2D_ARRAY ||
-			type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE ||
-			type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
-			type == GL_UNSIGNED_INT_SAMPLER_BUFFER ||
+			// GL_VERSION_3_1:
+			type == GL_SAMPLER_2D_RECT ||
+			type == GL_SAMPLER_2D_RECT_SHADOW ||
+			type == GL_SAMPLER_BUFFER ||
+			type == GL_INT_SAMPLER_2D_RECT ||
+			type == GL_INT_SAMPLER_BUFFER ||
 			type == GL_UNSIGNED_INT_SAMPLER_2D_RECT ||
+			type == GL_UNSIGNED_INT_SAMPLER_BUFFER ||
+			// GL_VERSION_4_0:
+			type == GL_SAMPLER_CUBE_MAP_ARRAY ||
+			type == GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW ||
+			type == GL_INT_SAMPLER_CUBE_MAP_ARRAY ||
+			type == GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY ||
+			// GL_ARB_texture_multisample
+			type == GL_SAMPLER_2D_MULTISAMPLE ||
+			type == GL_INT_SAMPLER_2D_MULTISAMPLE ||
+			type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE ||
+			type == GL_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+			type == GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+			type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+			// GL_ARB_shader_image_load_store (NOTE: Not all types are included here (yet?))
 			type == GL_IMAGE_2D_MULTISAMPLE ||
 			type == GL_IMAGE_2D_MULTISAMPLE_ARRAY ||
 			type == GL_INT_IMAGE_2D_MULTISAMPLE ||
