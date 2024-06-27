@@ -263,8 +263,7 @@ namespace opengl
 		{
 			if (!glIsFramebuffer(targetSetParams->m_frameBufferObject))
 			{
-				glGenFramebuffers(1, &targetSetParams->m_frameBufferObject);
-				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
+				glCreateFramebuffers(1, &targetSetParams->m_frameBufferObject);
 
 				// RenderDoc object name:
 				glObjectLabel(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject, -1, targetSet.GetName().c_str());
@@ -569,8 +568,12 @@ namespace opengl
 		std::vector<re::TextureTarget> const& colorTargets = targetSet.GetColorTargets();
 		for (size_t i = 0; i < colorTargets.size(); i++)
 		{
-			if (colorTargets[i].GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled && 
-				colorTargets[i].HasTexture())
+			if (!colorTargets[i].HasTexture())
+			{
+				break;  // Targets must be bound in monotonically-increasing order from slot 0
+			}
+
+			if (colorTargets[i].GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
 			{
 				opengl::TextureTarget::PlatformParams* targetParams =
 					colorTargets[i].GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();

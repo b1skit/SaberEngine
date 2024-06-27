@@ -28,7 +28,7 @@ namespace opengl
 			// sub-allocating from within a larger buffer each frame
 
 			// Generate the buffer name:
-			glGenBuffers(1, &bufferPlatParams->m_bufferName);
+			glCreateBuffers(1, &bufferPlatParams->m_bufferName);
 
 			bufferPlatParams->m_baseOffset = 0; // Permanent buffers have their own dedicated buffers
 
@@ -66,7 +66,7 @@ namespace opengl
 		case re::Buffer::Type::Immutable:
 		{
 			// Generate the buffer name:
-			glGenBuffers(1, &bufferPlatParams->m_bufferName);
+			glCreateBuffers(1, &bufferPlatParams->m_bufferName);
 
 			bufferPlatParams->m_baseOffset = 0; // Permanent buffers have their own dedicated buffers
 

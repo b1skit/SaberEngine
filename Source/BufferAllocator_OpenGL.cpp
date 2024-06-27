@@ -59,10 +59,10 @@ namespace opengl
 		
 		// Generate our buffer names
 		m_singleFrameUBOs.resize(m_numFramesInFlight, 0);
-		glGenBuffers(m_numFramesInFlight, m_singleFrameUBOs.data());
+		glCreateBuffers(m_numFramesInFlight, m_singleFrameUBOs.data());
 		
 		m_singleFrameSSBOs.resize(m_numFramesInFlight, 0);
-		glGenBuffers(m_numFramesInFlight, m_singleFrameSSBOs.data());
+		glCreateBuffers(m_numFramesInFlight, m_singleFrameSSBOs.data());
 		
 		for (uint8_t bufferIdx = 0; bufferIdx < m_numFramesInFlight; bufferIdx++)
 		{
