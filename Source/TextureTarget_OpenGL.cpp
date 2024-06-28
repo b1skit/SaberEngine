@@ -263,7 +263,8 @@ namespace opengl
 		{
 			if (!glIsFramebuffer(targetSetParams->m_frameBufferObject))
 			{
-				glCreateFramebuffers(1, &targetSetParams->m_frameBufferObject);
+				glGenFramebuffers(1, &targetSetParams->m_frameBufferObject);
+				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
 				// RenderDoc object name:
 				glObjectLabel(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject, -1, targetSet.GetName().c_str());
