@@ -1,11 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
 #include "Texture_Platform.h"
 
-#include "Core\Util\CastUtils.h"
+#include "Core/Util/CastUtils.h"
 
 #include <GL/glew.h>
 

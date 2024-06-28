@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Interfaces\INamedObject.h"
+#include "Core/Interfaces/INamedObject.h"
 
 
 namespace fr

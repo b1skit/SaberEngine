@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Util\CastUtils.h"
+#include "Core/Assert.h"
+#include "Core/Util/CastUtils.h"
 #include "SysInfo_OpenGL.h"
 
 

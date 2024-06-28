@@ -1,5 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "Core\Config.h"
+#include "Core/Config.h"
 #include "GraphicsSystem_ImGui.h"
 #include "RenderManager.h"
 

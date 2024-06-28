@@ -4,8 +4,8 @@
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
 
-#include "Core\Definitions\ConfigKeys.h"
-#include "Core\Util\ImGuiUtils.h"
+#include "Core/Definitions/ConfigKeys.h"
+#include "Core/Util/ImGuiUtils.h"
 
 
 namespace

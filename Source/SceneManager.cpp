@@ -7,10 +7,10 @@
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
 
-#include "Core\Config.h"
-#include "Core\PerformanceTimer.h"
+#include "Core/Config.h"
+#include "Core/PerformanceTimer.h"
 
-#include "Core\Util\CastUtils.h"
+#include "Core/Util/CastUtils.h"
 
 
 namespace

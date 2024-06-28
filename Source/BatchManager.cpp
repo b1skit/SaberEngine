@@ -5,8 +5,8 @@
 #include "ProfilingMarkers.h"
 #include "RenderDataManager.h"
 
-#include "Core\Util\CastUtils.h"
-#include "Core\Util\MathUtils.h"
+#include "Core/Util/CastUtils.h"
+#include "Core/Util/MathUtils.h"
 
 #include "Shaders/Common/InstancingParams.h"
 #include "Shaders/Common/MaterialParams.h"

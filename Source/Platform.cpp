@@ -1,17 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Config.h"
 #include "Platform.h"
 
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
 #include "Context_Platform.h"
-
-#include "Core\EventManager_Platform.h"
-#include "Core\EventManager_Win32.h"
-
-#include "Core\InputManager_Platform.h"
-#include "Core\InputManager_Win32.h"
 
 #include "Buffer_DX12.h"
 #include "Buffer_OpenGL.h"
@@ -52,6 +44,13 @@
 
 #include "Window_Platform.h"
 #include "Window_Win32.h"
+
+#include "Core/Assert.h"
+#include "Core/Config.h"
+#include "Core/EventManager_Platform.h"
+#include "Core/EventManager_Win32.h"
+#include "Core/InputManager_Platform.h"
+#include "Core/InputManager_Win32.h"
 
 
 namespace platform

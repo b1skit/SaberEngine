@@ -7,9 +7,9 @@
 #include "Shader.h"
 #include "Texture.h"
 
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 
-#include "Core\Util\CastUtils.h"
+#include "Core/Util/CastUtils.h"
 
 
 namespace

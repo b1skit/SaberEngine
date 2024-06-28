@@ -3,8 +3,8 @@
 #include "RenderManager.h"
 #include "RenderSystemDesc.h"
 
-#include "Core\Assert.h"
-#include "Core\Config.h"
+#include "Core/Assert.h"
+#include "Core/Config.h"
 
 using GSName = re::RenderSystemDescription::GSName;
 using SrcDstNamePairs = re::RenderSystemDescription::SrcDstNamePairs;

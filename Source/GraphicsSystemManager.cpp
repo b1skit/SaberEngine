@@ -1,9 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 #include "Buffer.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
-#include "Core\Util\ImGuiUtils.h"
+#include "Core/Util/ImGuiUtils.h"
 #include "LightRenderData.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"

@@ -1,13 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Config.h"
+#include "Core/Assert.h"
+#include "Core/Config.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "SysInfo_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
 
-#include "Core\Util\CastUtils.h"
+#include "Core/Util/CastUtils.h"
 
 #include <d3dx12.h>
 

@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Config.h"
+#include "Core/Config.h"
 #include "EngineApp.h"
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 #include "Platform.h"
 #include "Window_Win32.h"
 

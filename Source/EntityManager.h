@@ -3,11 +3,11 @@
 #include "EntityCommands.h"
 #include "RelationshipComponent.h"
 
-#include "Core\Assert.h"
-#include "Core\CommandQueue.h"
+#include "Core/Assert.h"
+#include "Core/CommandQueue.h"
 
-#include "Core\Interfaces\IEngineComponent.h"
-#include "Core\Interfaces\IEventListener.h"
+#include "Core/Interfaces/IEngineComponent.h"
+#include "Core/Interfaces/IEventListener.h"
 
 
 namespace fr

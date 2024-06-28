@@ -1,12 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
-#include "Core\Config.h"
 #include "EntityManager.h"
-#include "Core\InputManager.h"
 #include "NameComponent.h"
 #include "SceneNodeConcept.h"
 #include "TransformComponent.h"
+
+#include "Core/Config.h"
+#include "Core/InputManager.h"
 
 
 namespace

@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 #include "RenderManager.h"
 #include "Texture.h"
 #include "Texture_Platform.h"

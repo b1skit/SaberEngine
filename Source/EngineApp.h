@@ -2,10 +2,10 @@
 #pragma once
 #include "Window.h"
 
-#include "Core\LogManager.h"
+#include "Core/LogManager.h"
 
-#include "Core\Interfaces\IEngineComponent.h"
-#include "Core\Interfaces\IEventListener.h"
+#include "Core/Interfaces/IEngineComponent.h"
+#include "Core/Interfaces/IEventListener.h"
 
 
 namespace app

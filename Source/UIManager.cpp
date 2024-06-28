@@ -6,12 +6,12 @@
 #include "RenderManager.h"
 #include "UIManager.h"
 
-#include "Core\CommandQueue.h"
-#include "Core\Config.h"
-#include "Core\InputManager_Platform.h"
-#include "Core\LogManager.h"
+#include "Core/CommandQueue.h"
+#include "Core/Config.h"
+#include "Core/InputManager_Platform.h"
+#include "Core/LogManager.h"
 
-#include "Core\Definitions\KeyConfiguration.h"
+#include "Core/Definitions/KeyConfiguration.h"
 
 
 namespace

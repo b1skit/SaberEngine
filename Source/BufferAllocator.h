@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Interfaces\IPlatformParams.h"
+#include "Core/Interfaces/IPlatformParams.h"
 #include "Buffer.h"
 
 

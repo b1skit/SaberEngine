@@ -2,10 +2,10 @@
 #include "Material_GLTF.h"
 #include "Sampler.h"
 
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 
-#include "Core\Util\CastUtils.h"
-#include "Core\Util\ImGuiUtils.h"
+#include "Core/Util/CastUtils.h"
+#include "Core/Util/ImGuiUtils.h"
 
 
 namespace gr

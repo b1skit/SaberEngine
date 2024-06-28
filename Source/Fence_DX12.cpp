@@ -2,7 +2,7 @@
 #include "Debug_DX12.h"
 #include "Fence_DX12.h"
 #include "ProfilingMarkers.h"
-#include "Core\Util\TextUtils.h"
+#include "Core/Util/TextUtils.h"
 
 using Microsoft::WRL::ComPtr;
 

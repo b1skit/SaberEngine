@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Config.h"
+#include "Core/Config.h"
 #include "SwapChain_DX12.h"
 #include "SwapChain_OpenGL.h"
 #include "SwapChain_Platform.h"

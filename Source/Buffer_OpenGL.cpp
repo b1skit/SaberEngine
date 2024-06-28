@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 #include "Context.h"
 #include "BufferAllocator_OpenGL.h"
 #include "Buffer_OpenGL.h"

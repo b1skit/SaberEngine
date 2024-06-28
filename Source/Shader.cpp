@@ -6,9 +6,9 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
 
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 
-#include "Core\Util\HashUtils.h"
+#include "Core/Util/HashUtils.h"
 
 
 namespace

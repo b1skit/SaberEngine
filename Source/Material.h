@@ -3,7 +3,7 @@
 #include "Buffer.h"
 #include "Effect.h"
 
-#include "Core\Interfaces\INamedObject.h"
+#include "Core/Interfaces/INamedObject.h"
 
 
 namespace re

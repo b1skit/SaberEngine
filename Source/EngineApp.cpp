@@ -6,13 +6,13 @@
 #include "SceneManager.h"
 #include "UIManager.h"
 
-#include "Core\Assert.h"
-#include "Core\Config.h"
-#include "Core\EventManager.h"
-#include "Core\InputManager.h"
-#include "Core\LogManager.h"
-#include "Core\PerformanceTimer.h"
-#include "Core\ThreadPool.h"
+#include "Core/Assert.h"
+#include "Core/Config.h"
+#include "Core/EventManager.h"
+#include "Core/InputManager.h"
+#include "Core/LogManager.h"
+#include "Core/PerformanceTimer.h"
+#include "Core/ThreadPool.h"
 
 
 namespace

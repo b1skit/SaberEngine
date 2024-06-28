@@ -2,7 +2,7 @@
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
-#include "Core\Config.h"
+#include "Core/Config.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"

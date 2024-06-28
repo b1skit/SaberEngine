@@ -6,8 +6,8 @@
 #include "SysInfo_Platform.h"
 #include "Texture.h"
 
-#include "Core\Assert.h"
-#include "Core\Util\ImGuiUtils.h"
+#include "Core/Assert.h"
+#include "Core/Util/ImGuiUtils.h"
 
 
 namespace gr

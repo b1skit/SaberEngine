@@ -2,8 +2,8 @@
 #pragma once
 #include "PipelineState.h"
 
-#include "Core\Interfaces\INamedObject.h"
-#include "Core\Interfaces\IPlatformParams.h"
+#include "Core/Interfaces/INamedObject.h"
+#include "Core/Interfaces/IPlatformParams.h"
 
 namespace dx12
 {

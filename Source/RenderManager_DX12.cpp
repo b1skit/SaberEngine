@@ -12,7 +12,7 @@
 #include "Texture_DX12.h"
 #include "VertexStream_DX12.h"
 
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 
 #include <d3dx12.h>
 

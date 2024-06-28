@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "CommandList_DX12.h"
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 #include "Debug_DX12.h"
 #include "Fence_DX12.h"
 #include "ResourceStateTracker_DX12.h"

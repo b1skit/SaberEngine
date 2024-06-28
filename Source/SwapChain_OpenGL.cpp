@@ -2,8 +2,8 @@
 #include <GL/glew.h>
 #include <GL/wglew.h> // Windows-specific GL functions and macros
 
-#include "Core\Config.h"
-#include "Core\Assert.h"
+#include "Core/Config.h"
+#include "Core/Assert.h"
 #include "SwapChain_OpenGL.h"
 
 

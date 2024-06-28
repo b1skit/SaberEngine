@@ -6,7 +6,7 @@
 #include "RenderDataManager.h"
 #include "ShadowMapRenderData.h"
 
-#include "Core\Config.h"
+#include "Core/Config.h"
 
 #include "Shaders/Common/ShadowRenderParams.h"
 

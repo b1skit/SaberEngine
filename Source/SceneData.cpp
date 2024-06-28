@@ -14,11 +14,11 @@
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
 
-#include "Core\Assert.h"
-#include "Core\Config.h"
-#include "Core\ThreadPool.h"
+#include "Core/Assert.h"
+#include "Core/Config.h"
+#include "Core/ThreadPool.h"
 
-#include "Core\Util\ThreadSafeVector.h"
+#include "Core/Util/ThreadSafeVector.h"
 
 #pragma warning(disable : 4996) // Suppress error C4996 (Caused by use of fopen, strcpy, strncpy in cgltf.h)
 #define CGLTF_IMPLEMENTATION

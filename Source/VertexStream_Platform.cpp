@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Config.h"
+#include "Core/Config.h"
 #include "VertexStream_DX12.h"
 #include "VertexStream_OpenGL.h"
 #include "VertexStream_Platform.h"

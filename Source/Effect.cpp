@@ -1,8 +1,8 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Effect.h"
 
-#include "Core\Assert.h"
-#include "Core\Definitions\ConfigKeys.h"
+#include "Core/Assert.h"
+#include "Core/Definitions/ConfigKeys.h"
 
 
 namespace effect

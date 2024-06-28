@@ -3,7 +3,7 @@
 #include "PipelineState.h"
 #include "Shader.h"
 
-#include "Core\Interfaces\INamedObject.h"
+#include "Core/Interfaces/INamedObject.h"
 
 using EffectID = NameID;
 using TechniqueID = NameID;

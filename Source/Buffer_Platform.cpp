@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 #include "Buffer_Platform.h"
 #include "Buffer.h"
 #include "Buffer_OpenGL.h"

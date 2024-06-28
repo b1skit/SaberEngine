@@ -1,5 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 #include "Context.h"
 #include "RenderManager.h"
 #include "RLibrary_Platform.h"

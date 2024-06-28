@@ -3,12 +3,11 @@
 #include "Platform.h"
 #include "RenderManager.h"
 
-#include "Core\Assert.h"
-#include "Core\Config.h"
+#include "Core/Assert.h"
+#include "Core/Config.h"
+#include "Core/ThreadPool.h"
 
-#include "Core\Definitions\ConfigKeys.h"
-
-#include "Core\ThreadPool.h"
+#include "Core/Definitions/ConfigKeys.h"
 
 
 namespace

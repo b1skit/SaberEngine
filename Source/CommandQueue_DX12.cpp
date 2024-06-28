@@ -6,7 +6,7 @@
 #include "ProfilingMarkers.h"
 #include "SysInfo_DX12.h"
 
-#include "Core\Util\TextUtils.h"
+#include "Core/Util/TextUtils.h"
 
 #include <d3dx12.h>
 

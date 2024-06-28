@@ -1,5 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "Core\Definitions\ConfigKeys.h"
+#include "Core/Definitions/ConfigKeys.h"
 #include "RenderManager.h"
 #include "RLibrary_ImGui_DX12.h"
 #include "RLibrary_ImGui_OpenGL.h"

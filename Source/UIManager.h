@@ -1,8 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Interfaces\IEventListener.h"
+#include "Core/Interfaces/IEventListener.h"
 
-#include "Core\Interfaces\IEngineComponent.h"
+#include "Core/Interfaces/IEngineComponent.h"
 
 
 namespace fr

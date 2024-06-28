@@ -1,9 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Util\HashUtils.h"
-#include "Core\Interfaces\INamedObject.h"
 #include "RenderObjectIDs.h"
 #include "TransformRenderData.h"
+
+#include "Core/Util/HashUtils.h"
+#include "Core/Interfaces/INamedObject.h"
 
 #include "Shaders/Common/CameraParams.h"
 

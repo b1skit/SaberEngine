@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
+#include "Core/Assert.h"
 #include "CommandList_DX12.h"
-#include "Core\Config.h"
+#include "Core/Config.h"
 #include "Context_DX12.h"
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "Debug_DX12.h"

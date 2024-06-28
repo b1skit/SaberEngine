@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BufferAllocator.h"
-#include "Core\Interfaces\IPlatformParams.h"
+#include "Core/Interfaces/IPlatformParams.h"
 #include "TextureTarget.h"
 #include "PipelineState.h"
 #include "RLibrary_Platform.h"

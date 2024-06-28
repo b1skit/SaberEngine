@@ -6,7 +6,7 @@
 #include "Texture.h"
 #include "VertexStream.h"
 
-#include "Core\Interfaces\IHashedDataObject.h"
+#include "Core/Interfaces/IHashedDataObject.h"
 
 
 namespace gr

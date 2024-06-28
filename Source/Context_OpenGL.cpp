@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Config.h"
+#include "Core/Assert.h"
+#include "Core/Config.h"
 #include "Context_OpenGL.h"
 #include "Context.h"
 #include "EngineApp.h"
@@ -11,7 +11,7 @@
 #include "VertexStream_OpenGL.h"
 #include "Window_Win32.h"
 
-#include "Core\Util\HashUtils.h"
+#include "Core/Util/HashUtils.h"
 
 #include <GL/glew.h>
 #include <GL/wglew.h> // Windows-specific GL functions and macros

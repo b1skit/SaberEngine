@@ -5,7 +5,7 @@
 #include "MeshFactory.h"
 #include "TextureTarget.h"
 
-#include "Core\Interfaces\INamedObject.h"
+#include "Core/Interfaces/INamedObject.h"
 
 
 namespace re

@@ -3,9 +3,9 @@
 #include "RenderManager.h"
 #include "Sampler.h"
 
-#include "Core\Definitions\ConfigKeys.h"
+#include "Core/Definitions/ConfigKeys.h"
 
-#include "Core\Util\MathUtils.h"
+#include "Core/Util/MathUtils.h"
 
 #include "Shaders\Common\MipGenerationParams.h"
 

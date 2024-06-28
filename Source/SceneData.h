@@ -3,7 +3,7 @@
 #include "Shader.h"
 #include "Texture.h"
 
-#include "Core\Interfaces\INamedObject.h"
+#include "Core/Interfaces/INamedObject.h"
 
 
 namespace gr

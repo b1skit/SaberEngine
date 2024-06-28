@@ -8,11 +8,11 @@
 #include "Texture.h"
 #include "Texture_OpenGL.h"
 
-#include "Core\Assert.h"
-#include "Core\Config.h"
-#include "Core\PerformanceTimer.h"
-#include "Core\ThreadPool.h"
-#include "Core\Util\TextUtils.h"
+#include "Core/Assert.h"
+#include "Core/Config.h"
+#include "Core/PerformanceTimer.h"
+#include "Core/ThreadPool.h"
+#include "Core/Util/TextUtils.h"
 
 #include <GL/glew.h> 
 

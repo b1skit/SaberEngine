@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Core\Util\ThreadProtector.h"
+#include "Core/Util/ThreadProtector.h"
 
 #include <d3d12.h>
 

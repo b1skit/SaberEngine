@@ -10,8 +10,8 @@
 #include "TextureTarget.h"
 #include "VertexStream.h"
 
-#include "Core\Config.h"
-#include "Core\PerformanceTimer.h"
+#include "Core/Config.h"
+#include "Core/PerformanceTimer.h"
 
 
 namespace re

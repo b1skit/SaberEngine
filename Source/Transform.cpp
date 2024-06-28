@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Config.h"
-#include "Core\Util\ImGuiUtils.h"
+#include "Core/Assert.h"
+#include "Core/Config.h"
+#include "Core/Util/ImGuiUtils.h"
 #include "Transform.h"
 #include "TransformRenderData.h"
 

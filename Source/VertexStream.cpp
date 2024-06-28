@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core\Assert.h"
-#include "Core\Config.h"
+#include "Core/Assert.h"
+#include "Core/Config.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
