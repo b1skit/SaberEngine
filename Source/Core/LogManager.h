@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Util\TextUtils.h"
+#include "Util/TextUtils.h"
 
 
 namespace

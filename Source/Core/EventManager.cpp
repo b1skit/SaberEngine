@@ -1,7 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EventManager.h"
 #include "EventManager_Platform.h"
-#include "Interfaces\IEventListener.h"
+
+#include "Interfaces/IEventListener.h"
 
 #include "Assert.h"
 

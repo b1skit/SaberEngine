@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Interfaces\IEngineComponent.h"
+#include "Interfaces/IEngineComponent.h"
 
 
 namespace core

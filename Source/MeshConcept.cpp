@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
 #include "EntityManager.h"
-#include "Core/Util/ImGuiUtils.h"
 #include "MaterialInstanceComponent.h"
 #include "MeshConcept.h"
 #include "MeshFactory.h"
@@ -12,6 +11,8 @@
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
 #include "TransformComponent.h"
+
+#include "Core/Util/ImGuiUtils.h"
 
 
 namespace fr

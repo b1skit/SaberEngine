@@ -1,11 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Material.h"
+#include "VertexStream.h"
 
 #include "Core/Interfaces/IPlatformParams.h"
 #include "Core/Interfaces/IHashedDataObject.h"
-#include "Material.h"
 #include "Core/Interfaces/INamedObject.h"
-#include "VertexStream.h"
 
 
 namespace gr

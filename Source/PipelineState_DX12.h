@@ -1,10 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include <wrl.h>
-#include <d3d12.h>
+#include "RootSignature_DX12.h"
 
 #include "Core/Interfaces/IHashedDataObject.h"
-#include "RootSignature_DX12.h"
+
+#include <wrl.h>
+#include <d3d12.h>
 
 
 namespace re

@@ -1,7 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
 #include "Context_DX12.h"
-#include "Core/Config.h"
 #include "Debug_DX12.h"
 #include "RootSignature_DX12.h"
 #include "Sampler.h"
@@ -9,6 +7,9 @@
 #include "Shader.h"
 #include "Shader_DX12.h"
 #include "SysInfo_DX12.h"
+
+#include "Core/Assert.h"
+#include "Core/Config.h"
 
 #include "Core/Util/CastUtils.h"
 #include "Core/Util/HashUtils.h"

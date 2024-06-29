@@ -2,9 +2,9 @@
 #include "Assert.h"
 #include "Config.h"
 
-#include "Definitions\KeyConfiguration.h"
+#include "Definitions/KeyConfiguration.h"
 
-#include "Util\TextUtils.h"
+#include "Util/TextUtils.h"
 
 #define SET_CMD		"set"		// Set a value
 #define BIND_CMD	"bind"		// Bind a key

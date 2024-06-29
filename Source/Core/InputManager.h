@@ -1,9 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Definitions\KeyConfiguration.h"
+#include "Definitions/KeyConfiguration.h"
 
-#include "Interfaces\IEngineComponent.h"
-#include "Interfaces\IEventListener.h"
+#include "Interfaces/IEngineComponent.h"
+#include "Interfaces/IEventListener.h"
 
 
 namespace en

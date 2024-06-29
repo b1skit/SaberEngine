@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "..\EventManager.h"
+#include "../EventManager.h"
 
 
 namespace core

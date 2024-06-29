@@ -1,10 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core/Config.h"
 #include "EngineApp.h"
-#include "Core/Assert.h"
 #include "Platform.h"
 #include "Window_Win32.h"
 
+#include "Core/Assert.h"
+#include "Core/Config.h"
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)

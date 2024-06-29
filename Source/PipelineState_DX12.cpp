@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
-#include "Core/Assert.h"
 #include "Debug_DX12.h"
 #include "MeshPrimitive.h"
 #include "PipelineState.h"
@@ -11,6 +10,8 @@
 #include "Texture_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_DX12.h"
+
+#include "Core/Assert.h"
 #include "Core/Util/TextUtils.h"
 
 #include <d3dx12.h>

@@ -2,7 +2,7 @@
 #include "InputManager_Win32.h"
 #include "InputManager.h"
 
-#include "Definitions\KeyConfiguration.h"
+#include "Definitions/KeyConfiguration.h"
 
 
 namespace win32
