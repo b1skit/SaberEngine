@@ -208,6 +208,8 @@ namespace dx12
 		commandList->TransitionResource(
 			swapChainTargetSet->GetColorTarget(0).GetTexture().get(),
 			D3D12_RESOURCE_STATE_PRESENT,
+			re::Texture::k_allArrayElements,
+			re::Texture::k_allFaces,
 			re::Texture::k_allMips);
 
 		SEEndGPUEvent(commandList->GetD3DCommandList());

@@ -96,7 +96,7 @@ namespace gr
 		m_skyboxStage->AddPermanentTextureInput(
 			k_skyboxTexShaderName,
 			m_skyTexture,
-			re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
+			re::Sampler::GetSampler("WrapMinMagLinearMipPoint").get());
 
 
 		pipeline.AppendRenderStage(m_skyboxStage);
@@ -139,7 +139,7 @@ namespace gr
 			m_skyboxStage->AddPermanentTextureInput(
 				k_skyboxTexShaderName,
 				m_skyTexture,
-				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
+				re::Sampler::GetSampler("WrapMinMagLinearMipPoint").get());
 
 		}
 		SEAssert(m_skyTexture != nullptr, "Failed to set a valid sky texture");

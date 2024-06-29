@@ -8,7 +8,7 @@ RWTexture2D<lpfloat> output2 : register(u2);
 RWTexture2D<lpfloat> output3 : register(u3);
 RWTexture2D<lpfloat> output4 : register(u4);
 
-Texture2D<float> Depth0;
+Texture2D<float> SceneDepth;
 
 
 [numthreads(8, 8, 1)]
@@ -18,7 +18,7 @@ void CShader(ComputeIn In)
 		In.DTId.xy /*: SV_DispatchThreadID*/,
 		In.GTId.xy /*: SV_GroupThreadID*/,
 		SEGTAOConstants,
-		Depth0,
+		SceneDepth,
 		ClampMinMagMipPoint,
 		output0,
 		output1,

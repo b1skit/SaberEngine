@@ -24,6 +24,18 @@ namespace re
 
 namespace re
 {
+	struct TextureAndSamplerInput
+	{
+		std::string m_shaderName;
+		re::Texture const* m_texture;
+		re::Sampler const* m_sampler;
+
+		uint32_t m_srcArrayElement = re::Texture::k_allArrayElements;
+		uint32_t m_srcFace = re::Texture::k_allFaces;
+		uint32_t m_srcMip = re::Texture::k_allMips;
+	};
+
+
 	class Batch final : public virtual core::IHashedDataObject
 	{
 	public:
@@ -59,16 +71,6 @@ namespace re
 			Filter_Count
 		};
 		SEStaticAssert(re::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
-
-		// TODO: Combine with RenderStage::RenderStageTextureAndSamplerInput struct?
-		struct BatchTextureAndSamplerInput
-		{
-			std::string m_shaderName;
-			re::Texture const* m_texture;
-			re::Sampler const* m_sampler;
-
-			uint32_t m_srcMip = re::Texture::k_allMips;
-		};
 
 
 		struct GraphicsParams
@@ -137,15 +139,19 @@ namespace re
 			char const* shaderName,
 			re::Texture const*,
 			re::Sampler const*,
-			uint32_t srcMip = re::Texture::k_allMips);
+			uint32_t arrayElement = re::Texture::k_allArrayElements,
+			uint32_t faceIdx = re::Texture::k_allFaces,
+			uint32_t mipLevel = re::Texture::k_allMips);
 
 		void AddTextureAndSamplerInput(
 			char const* shaderName, 
-			re::Texture const*, 
-			std::shared_ptr<re::Sampler const>, 
-			uint32_t srcMip = re::Texture::k_allMips);
+			std::shared_ptr<re::Texture const>,
+			std::shared_ptr<re::Sampler const>,
+			uint32_t arrayElement = re::Texture::k_allArrayElements,
+			uint32_t faceIdx = re::Texture::k_allFaces,
+			uint32_t mipLevel = re::Texture::k_allMips);
 		
-		std::vector<BatchTextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
+		std::vector<TextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
 
 		Lifetime GetLifetime() const;
 		
@@ -181,7 +187,7 @@ namespace re
 		// one)
 		std::vector<std::shared_ptr<re::Buffer>> m_batchBuffers;
 
-		std::vector<BatchTextureAndSamplerInput> m_batchTextureSamplerInputs;
+		std::vector<TextureAndSamplerInput> m_batchTextureSamplerInputs;
 
 
 	private:
@@ -231,7 +237,7 @@ namespace re
 	}
 
 
-	inline std::vector<re::Batch::BatchTextureAndSamplerInput> const& Batch::GetTextureAndSamplerInputs() const
+	inline std::vector<re::TextureAndSamplerInput> const& Batch::GetTextureAndSamplerInputs() const
 	{
 		return m_batchTextureSamplerInputs;
 	}

@@ -133,13 +133,13 @@ namespace gr
 			// Input:
 			if (level == 0)
 			{
-				downStage->AddPermanentTextureInput("Tex0", deferredLightTargetTex, bloomSampler);
+				downStage->AddPermanentTextureInput("Tex0", deferredLightTargetTex, bloomSampler, 0, 0, 0);
 			}
 			else
 			{
 				const uint32_t srcMipLevel = level - 1;
 
-				downStage->AddPermanentTextureInput("Tex0", bloomTargetTex, bloomSampler, srcMipLevel);	
+				downStage->AddPermanentTextureInput("Tex0", bloomTargetTex, bloomSampler, 0, 0, srcMipLevel);	
 			}
 			
 			// Target:
@@ -191,7 +191,7 @@ namespace gr
 				0, 0, static_cast<long>(targetMipDimensions.x), static_cast<long>(targetMipDimensions.y)));
 
 			// Input:
-			upStage->AddPermanentTextureInput("Tex0", bloomTargetTex, bloomSampler, upsampleSrcMip);
+			upStage->AddPermanentTextureInput("Tex0", bloomTargetTex, bloomSampler, 0, 0, upsampleSrcMip);
 
 			// Targets:
 			re::TextureTarget::TargetParams bloomLevelTargetParams;

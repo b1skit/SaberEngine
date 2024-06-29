@@ -84,15 +84,6 @@ namespace re
 			float m_clearDepth = 1.f; // Far plane
 		};
 
-		struct RenderStageTextureAndSamplerInput
-		{
-			std::string m_shaderName;
-			re::Texture const* m_texture;
-			std::shared_ptr<Sampler> m_sampler;
-
-			uint32_t m_srcMip = re::Texture::k_allMips;
-		};
-
 
 	public:
 		static std::shared_ptr<RenderStage> CreateParentStage(char const* name);
@@ -134,28 +125,38 @@ namespace re
 		void AddPermanentTextureInput(
 			std::string const& shaderName,
 			re::Texture const*,
-			std::shared_ptr<re::Sampler>,
+			re::Sampler const*,
+			uint32_t arrayElement = re::Texture::k_allArrayElements,
+			uint32_t faceIdx = re::Texture::k_allFaces,
 			uint32_t mipLevel = re::Texture::k_allMips);
+		
 		void AddPermanentTextureInput(
 			std::string const& shaderName, 
 			std::shared_ptr<re::Texture>, 
 			std::shared_ptr<re::Sampler>, 
+			uint32_t arrayElement = re::Texture::k_allArrayElements,
+			uint32_t faceIdx = re::Texture::k_allFaces,
 			uint32_t mipLevel = re::Texture::k_allMips);
 
-		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetPermanentTextureInputs() const;
+		std::vector<re::TextureAndSamplerInput> const& GetPermanentTextureInputs() const;
 
 		void AddSingleFrameTextureInput(
 			char const* shaderName,
 			re::Texture const*,
 			std::shared_ptr<re::Sampler>,
+			uint32_t arrayElement = re::Texture::k_allArrayElements,
+			uint32_t faceIdx = re::Texture::k_allFaces,
 			uint32_t mipLevel = re::Texture::k_allMips);
+		
 		void AddSingleFrameTextureInput(
 			char const* shaderName,
 			std::shared_ptr<re::Texture>,
 			std::shared_ptr<re::Sampler>,
+			uint32_t arrayElement = re::Texture::k_allArrayElements,
+			uint32_t faceIdx = re::Texture::k_allFaces,
 			uint32_t mipLevel = re::Texture::k_allMips);
 
-		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetSingleFrameTextureInputs() const;
+		std::vector<re::TextureAndSamplerInput> const& GetSingleFrameTextureInputs() const;
 
 		bool DepthTargetIsAlsoTextureInput() const;
 		int GetDepthTargetTextureInputIdx() const;
@@ -195,8 +196,8 @@ namespace re
 		std::unique_ptr<IStageParams> m_stageParams;
 
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
-		std::vector<RenderStageTextureAndSamplerInput> m_permanentTextureSamplerInputs;
-		std::vector<RenderStageTextureAndSamplerInput> m_singleFrameTextureSamplerInputs;
+		std::vector<re::TextureAndSamplerInput> m_permanentTextureSamplerInputs;
+		std::vector<re::TextureAndSamplerInput> m_singleFrameTextureSamplerInputs;
 		int m_depthTextureInputIdx; // k_noDepthTexAsInputFlag: Depth not attached as an input		
 
 		std::vector<std::shared_ptr<re::Buffer const>> m_singleFrameBuffers; // Cleared every frame
@@ -345,13 +346,13 @@ namespace re
 	}
 
 
-	inline std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& RenderStage::GetPermanentTextureInputs() const
+	inline std::vector<re::TextureAndSamplerInput> const& RenderStage::GetPermanentTextureInputs() const
 	{
 		return m_permanentTextureSamplerInputs;
 	}
 
 
-	inline std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& RenderStage::GetSingleFrameTextureInputs() const
+	inline std::vector<re::TextureAndSamplerInput> const& RenderStage::GetSingleFrameTextureInputs() const
 	{
 		return m_singleFrameTextureSamplerInputs;
 	}

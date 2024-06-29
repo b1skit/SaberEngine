@@ -91,7 +91,7 @@ namespace gr
 		m_transparencyStage->AddPermanentTextureInput(
 			"DFG",
 			texDependencies.at(k_ambientDFGTexInput)->get(),
-			re::Sampler::GetSampler("ClampMinMagMipPoint"));
+			re::Sampler::GetSampler("ClampMinMagMipPoint").get());
 
 		// Cache the pointers in case the light changes change
 		m_ambientIEMTex = texDependencies.at(k_ambientIEMTexInput);

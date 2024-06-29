@@ -220,7 +220,7 @@ namespace gr
 			iemStage->AddPermanentTextureInput(
 				"Tex0",
 				iblTex,
-				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"));
+				re::Sampler::GetSampler("WrapMinMagLinearMipPoint").get());
 
 			// Buffers:
 			IEMPMREMGenerationData const& iemGenerationParams =
@@ -299,7 +299,7 @@ namespace gr
 				pmremStage->AddPermanentTextureInput(
 					"Tex0",
 					iblTex,
-					re::Sampler::GetSampler("ClampMinMagMipLinear"));
+					re::Sampler::GetSampler("ClampMinMagMipLinear").get());
 
 				// Buffers:
 				IEMPMREMGenerationData const& pmremGenerationParams = GetIEMPMREMGenerationParamsDataData(
@@ -686,12 +686,12 @@ namespace gr
 
 					ambientBatch.AddTextureAndSamplerInput(
 						"CubeMapIEM",
-						iemTex.get(),
+						iemTex,
 						re::Sampler::GetSampler("WrapMinMagMipLinear"));
 
 					ambientBatch.AddTextureAndSamplerInput(
 						"CubeMapPMREM",
-						pmremTex.get(),
+						pmremTex,
 						re::Sampler::GetSampler("WrapMinMagMipLinear"));
 
 					ambientBatch.SetBuffer(ambientParams);
@@ -790,7 +790,7 @@ namespace gr
 						directionalLightBatch.AddTextureAndSamplerInput(
 							"Depth0",
 							shadowTex,
-							re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"));
+							re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint").get());
 					}
 
 					++directionalItr;
@@ -866,7 +866,7 @@ namespace gr
 					lightBatch.AddTextureAndSamplerInput(
 						depthInputTexName,
 						shadowTex,
-						re::Sampler::GetSampler(util::HashKey::Create(samplerTypeName)));
+						re::Sampler::GetSampler(util::HashKey::Create(samplerTypeName)).get());
 				}
 			};
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataPoint>())

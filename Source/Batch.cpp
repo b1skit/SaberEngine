@@ -444,7 +444,9 @@ namespace re
 		char const* shaderName,
 		re::Texture const* texture,
 		re::Sampler const* sampler,
-		uint32_t srcMip /*= re::Texture::k_allMips*/)
+		uint32_t arrayElement /*= re::Texture::k_allArrayElements*/,
+		uint32_t faceIdx /*= re::Texture::k_allFaces*/,
+		uint32_t mipLevel /*= re::Texture::k_allMips*/)
 	{
 		SEAssert(shaderName != nullptr && strlen(shaderName) > 0, "Invalid shader sampler name");
 		SEAssert(texture != nullptr, "Invalid texture");
@@ -460,7 +462,7 @@ namespace re
 #endif
 
 		m_batchTextureSamplerInputs.emplace_back(
-			BatchTextureAndSamplerInput{ shaderName, texture, sampler, srcMip });
+			TextureAndSamplerInput{ shaderName, texture, sampler, arrayElement, faceIdx, mipLevel });
 
 		// Include textures/samplers in the batch hash:
 		AddDataBytesToHash(texture->GetUniqueID());
@@ -470,10 +472,12 @@ namespace re
 
 	void Batch::AddTextureAndSamplerInput(
 		char const* shaderName,
-		re::Texture const* texture,
+		std::shared_ptr<re::Texture const> texture,
 		std::shared_ptr<re::Sampler const> sampler, 
-		uint32_t srcMip /*= re::Texture::k_allMips*/)
+		uint32_t arrayElement /*= re::Texture::k_allArrayElements*/,
+		uint32_t faceIdx /*= re::Texture::k_allFaces*/,
+		uint32_t mipLevel /*= re::Texture::k_allMips*/)
 	{
-		AddTextureAndSamplerInput(shaderName, texture, sampler.get(), srcMip);
+		AddTextureAndSamplerInput(shaderName, texture.get(), sampler.get(), arrayElement, faceIdx, mipLevel);
 	}
 }

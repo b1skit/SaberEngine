@@ -202,16 +202,11 @@ namespace opengl
 							}
 
 							auto SetStageTextureInputs = [shader](
-								std::vector<re::RenderStage::RenderStageTextureAndSamplerInput> const& texInputs)
+								std::vector<re::TextureAndSamplerInput> const& texInputs)
 								{
 									for (auto const& texSamplerInput : texInputs)
 									{
-										opengl::Shader::SetTextureAndSampler(
-											*shader,
-											texSamplerInput.m_shaderName, // uniform name
-											texSamplerInput.m_texture,
-											texSamplerInput.m_sampler.get(),
-											texSamplerInput.m_srcMip);
+										opengl::Shader::SetTextureAndSampler(*shader, texSamplerInput);
 									}
 								};
 							SetStageTextureInputs(renderStage->GetPermanentTextureInputs());
@@ -276,12 +271,7 @@ namespace opengl
 						// Set Batch Texture/Sampler inputs:
 						for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
 						{
-							opengl::Shader::SetTextureAndSampler(
-								*currentShader,
-								texSamplerInput.m_shaderName,
-								texSamplerInput.m_texture,
-								texSamplerInput.m_sampler,
-								texSamplerInput.m_srcMip);
+							opengl::Shader::SetTextureAndSampler(*currentShader, texSamplerInput);
 						}
 
 						// Draw!

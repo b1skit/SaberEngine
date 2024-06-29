@@ -16,6 +16,8 @@ namespace re
 	class Texture;
 	class TextureTarget;
 	class TextureTargetSet;
+
+	struct TextureAndSamplerInput;
 }
 
 namespace dx12
@@ -75,8 +77,7 @@ namespace dx12
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
-		void SetTexture(
-			std::string const& shaderName, re::Texture const*, uint32_t srcMip, bool skipTransition);
+		void SetTexture(re::TextureAndSamplerInput const&, bool skipTransition); // Note: Sampler is not used here
 
 		void SetRenderTargets(re::TextureTargetSet const&, bool readOnlyDepth);
 		void SetComputeTargets(re::TextureTargetSet const&);
@@ -109,8 +110,8 @@ namespace dx12
 
 		void CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource);
 
-		void TransitionResource(ID3D12Resource*, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
-		void TransitionResource(re::Texture const*, D3D12_RESOURCE_STATES to, uint32_t mipLevel);
+		void TransitionResource(
+			re::Texture const*, D3D12_RESOURCE_STATES to, uint32_t arrayIdx, uint32_t faceIdx, uint32_t mipLevel);
 
 		void ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers);
 
@@ -124,7 +125,7 @@ namespace dx12
 
 	private:
 		void InsertUAVBarrier(ID3D12Resource*);
-		void InsertUAVBarrier(std::shared_ptr<re::Texture>);
+		void InsertUAVBarrier(re::Texture const*);
 
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
 
@@ -132,6 +133,8 @@ namespace dx12
 		void SetVertexBuffers(re::VertexStream const* const* streams, uint8_t count);
 
 		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
+
+		void TransitionResource(ID3D12Resource*, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 
 		void TransitionResourceInternal(
 			ID3D12Resource*,

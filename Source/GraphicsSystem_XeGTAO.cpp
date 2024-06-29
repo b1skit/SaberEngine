@@ -217,9 +217,11 @@ namespace gr
 
 		// Attach the depth buffer as an input to the depth prefilter stage:	
 		m_prefilterDepthsStage->AddPermanentTextureInput(
-			"Depth0", 
+			"SceneDepth", 
 			*texDependencies.at(k_depthInput),
 			re::Sampler::GetSampler("ClampMinMagMipPoint"), 
+			0,
+			0,
 			0);
 
 		// Append the depth prefilter stage:
@@ -287,6 +289,8 @@ namespace gr
 			k_wNormalInput.GetKey(),
 			*texDependencies.at(k_wNormalInput),
 			re::Sampler::GetSampler("ClampMinMagMipPoint"),
+			0,
+			0,
 			0);
 
 		m_mainStage->AddPermanentTextureInput(

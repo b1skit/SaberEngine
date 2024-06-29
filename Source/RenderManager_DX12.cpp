@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Batch.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "Buffer_DX12.h"
@@ -336,7 +337,7 @@ namespace dx12
 							const int depthTargetTexInputIdx = renderStage->GetDepthTargetTextureInputIdx();
 
 							auto SetStageTextureInputs = [&commandList, depthTargetTexInputIdx](
-								std::vector<re::RenderStage::RenderStageTextureAndSamplerInput> const& texInputs)
+								std::vector<re::TextureAndSamplerInput> const& texInputs)
 								{
 									for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
 									{
@@ -344,11 +345,7 @@ namespace dx12
 										// skip the resource transition (it's handled when binding the depth target as read only)
 										const bool skipTransition = (texIdx == depthTargetTexInputIdx);
 
-										commandList->SetTexture(
-											texInputs[texIdx].m_shaderName,
-											texInputs[texIdx].m_texture,
-											texInputs[texIdx].m_srcMip,
-											skipTransition);
+										commandList->SetTexture(texInputs[texIdx], skipTransition);
 										// Note: Static samplers have already been set during root signature creation
 									}
 								};
@@ -438,11 +435,7 @@ namespace dx12
 								"We don't currently handle batches with the current depth buffer attached as "
 								"a texture input. We need to make sure the transitions are handled correctly");
 
-							currentCommandList->SetTexture(
-								texSamplerInput.m_shaderName,
-								texSamplerInput.m_texture,
-								texSamplerInput.m_srcMip,
-								false);
+							currentCommandList->SetTexture(texSamplerInput, false);
 							// Note: Static samplers have already been set during root signature creation
 						}
 

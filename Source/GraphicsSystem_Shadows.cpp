@@ -138,7 +138,7 @@ namespace gr
 			re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
 
 		re::TextureTarget::TargetParams depthTargetParams;
-		depthTargetParams.m_targetFace = re::TextureTarget::k_allFaces;
+		depthTargetParams.m_targetFace = re::Texture::k_allFaces;
 
 		pointShadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
 		pointShadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));

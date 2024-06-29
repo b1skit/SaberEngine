@@ -2,12 +2,9 @@
 #include "Batch.h"
 #include "Buffer.h"
 #include "Buffer_DX12.h"
-#include "Core/Util/CastUtils.h"
-#include "Core/Config.h"
 #include "Context_DX12.h"
 #include "CommandList_DX12.h"
 #include "Debug_DX12.h"
-#include "Core/Util/MathUtils.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "RootSignature_DX12.h"
@@ -19,6 +16,11 @@
 #include "TextureTarget_DX12.h"
 #include "VertexStream.h"
 #include "VertexStream_DX12.h"
+
+#include "Core/Config.h"
+
+#include "Core/Util/CastUtils.h"
+#include "Core/Util/MathUtils.h"
 
 #include <d3dx12.h>
 
@@ -487,7 +489,7 @@ namespace dx12
 		TransitionResource(
 			streamPlatParams->m_bufferResource.Get(),
 			D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-			0);
+			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 		m_commandList->IASetVertexBuffers(
 			slot, 
@@ -532,7 +534,7 @@ namespace dx12
 			TransitionResource(
 				streamPlatParams->m_bufferResource.Get(),
 				D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-				0);
+				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 			streamViews.emplace_back(
 				streams[streamIdx]->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>()->m_vertexBufferView);
@@ -554,7 +556,7 @@ namespace dx12
 
 		if (depthTarget->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
 		{
-			std::shared_ptr<re::Texture> depthTex = depthTarget->GetTexture();
+			re::Texture const* depthTex = depthTarget->GetTexture().get();
 
 			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
 
@@ -570,12 +572,17 @@ namespace dx12
 				depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 			// Ensure we're in a depth write state:
-			TransitionResource(depthTex.get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+			TransitionResource(
+				depthTex, 
+				D3D12_RESOURCE_STATE_DEPTH_WRITE, 
+				depthTargetParams.m_targetArrayIdx, 
+				depthTargetParams.m_targetFace, 
+				depthTargetParams.m_targetMip);
 
 			if (depthTexParams.m_dimension == re::Texture::TextureCubeMap || 
 				depthTexParams.m_dimension == re::Texture::TextureCubeMapArray)
 			{
-				SEAssert(depthTargetParams.m_targetFace == re::TextureTarget::k_allFaces,
+				SEAssert(depthTargetParams.m_targetFace == re::Texture::k_allFaces,
 					"We're currently expecting to be clearing all faces. This isn't mandatory, just unexpected for now");
 
 				D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
@@ -616,17 +623,26 @@ namespace dx12
 
 		if (colorTarget->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
 		{
+			re::Texture const* colorTargetTex = colorTarget->GetTexture().get();
+
+			re::TextureTarget::TargetParams const& colorTargetParams = colorTarget->GetTargetParams();
+
+			const uint32_t subresourceIdx = colorTargetTex->GetSubresourceIndex(
+				colorTargetParams.m_targetArrayIdx,
+				colorTargetParams.m_targetFace,
+				colorTargetParams.m_targetMip);
+
 			TransitionResource(
-				colorTarget->GetTexture().get(), 
+				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_textureResource.Get(),
 				D3D12_RESOURCE_STATE_RENDER_TARGET, 
-				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				subresourceIdx);
 
 			dx12::TextureTarget::PlatformParams* targetPlatParams =
 				colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 			m_commandList->ClearRenderTargetView(
-				targetPlatParams->m_rtvDsvDescriptors[colorTarget->GetTargetParams().m_targetFace],
-				&colorTarget->GetTexture()->GetTextureParams().m_clear.m_color.r,
+				targetPlatParams->m_rtvDsvDescriptors[subresourceIdx],
+				&colorTargetTex->GetTextureParams().m_clear.m_color.r,
 				0,			// Number of rectangles in the proceeding D3D12_RECT ptr
 				nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
 		}
@@ -637,10 +653,11 @@ namespace dx12
 	{
 		for (re::TextureTarget const& target : targetSet.GetColorTargets())
 		{
-			if (target.HasTexture())
+			if (!target.HasTexture())
 			{
-				ClearColorTarget(&target);
+				break;
 			}
+			ClearColorTarget(&target);
 		}
 	}
 
@@ -717,12 +734,20 @@ namespace dx12
 			dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
 				depthStencilTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
-			if (depthTargetParams.m_targetFace == re::TextureTarget::k_allFaces)
-			{
-				SEAssert(depthTex->GetTextureParams().m_dimension == re::Texture::Dimension::TextureCubeMap,
-					"We're (currently) expecting a cubemap");
+			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
 
-				TransitionResource(depthTex, depthState, depthTargetParams.m_targetMip);
+			if (depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap ||
+				depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMapArray)
+			{
+				SEAssert(depthTargetParams.m_targetFace == re::Texture::k_allFaces,
+					"We're (currently) expecting a cubemap will target all faces (and thus transition all mip faces)");
+
+				TransitionResource(
+					depthTex, 
+					depthState, 
+					depthTargetParams.m_targetArrayIdx, 
+					depthTargetParams.m_targetFace, 
+					depthTargetParams.m_targetMip);
 
 				if (depthWriteEnabled)
 				{
@@ -799,7 +824,7 @@ namespace dx12
 			{
 				break; // Targets must be bound in monotonically-increasing order from slot 0
 			}			
-			std::shared_ptr<re::Texture> colorTex = colorTarget.GetTexture();
+			re::Texture const* colorTex = colorTarget.GetTexture().get();
 
 			SEAssert((colorTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0,
 				"It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader");
@@ -821,8 +846,8 @@ namespace dx12
 
 				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
 				re::Texture::TextureParams const& texParams = colorTex->GetTextureParams();
-				dx12::Texture::PlatformParams* texPlatParams =
-					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+				dx12::Texture::PlatformParams const* texPlatParams =
+					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 				const uint32_t numMips = colorTex->GetNumMips();
 				
@@ -854,8 +879,10 @@ namespace dx12
 
 				// Insert our resource transition:
 				TransitionResource(
-					colorTex.get(),
+					colorTex,
 					D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+					targetParams.m_targetArrayIdx,
+					targetParams.m_targetFace,
 					targetParams.m_targetMip);
 			}
 		}
@@ -1021,18 +1048,26 @@ namespace dx12
 	}
 
 
-	void CommandList::SetTexture(
-		std::string const& shaderName, re::Texture const* texture, uint32_t srcMip, bool skipTransition)
+	void CommandList::SetTexture(re::TextureAndSamplerInput const& texSamplerInput, bool skipTransition)
 	{
 		SEAssert(m_currentPSO, "Pipeline is not currently set");
 
-		SEAssert(srcMip < texture->GetNumMips() || srcMip == re::Texture::k_allMips, "Unexpected mip level");
+		re::Texture const* texture = texSamplerInput.m_texture;
 
-		dx12::Texture::PlatformParams const* texPlatParams = 
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+
+		SEAssert(
+			(texSamplerInput.m_srcArrayElement < texParams.m_arraySize || 
+				texSamplerInput.m_srcArrayElement == re::Texture::k_allArrayElements) &&
+			(texSamplerInput.m_srcFace < texParams.m_faces || texSamplerInput.m_srcFace == re::Texture::k_allFaces) &&
+			(texSamplerInput.m_srcMip < texture->GetNumMips() || texSamplerInput.m_srcMip == re::Texture::k_allMips),
+			"Unexpected input configuration");
+
+		dx12::Texture::PlatformParams const* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		RootSignature::RootParameter const* rootSigEntry =
-			m_currentRootSignature->GetRootSignatureEntry(shaderName);
+			m_currentRootSignature->GetRootSignatureEntry(texSamplerInput.m_shaderName);
 		SEAssert(rootSigEntry ||
 			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Invalid root signature entry");
@@ -1043,7 +1078,7 @@ namespace dx12
 				"We currently assume all textures belong to descriptor tables");
 
 			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
-			
+
 			uint32_t descriptorIdx = 0;
 
 			switch (rootSigEntry->m_tableEntry.m_type)
@@ -1057,14 +1092,14 @@ namespace dx12
 				if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE)
 				{
 					toState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-				}			
+				}
 
 				// Get the appropriate cpu-visible SRV index::
 				switch (rootSigEntry->m_tableEntry.m_srvViewDimension)
 				{
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1D:
 				{
-					SEAssert(texture->GetTextureParams().m_dimension == re::Texture::Texture1D,
+					SEAssert(texParams.m_dimension == re::Texture::Texture1D,
 						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
 
 					descriptorIdx = re::Texture::Texture1D;
@@ -1072,8 +1107,8 @@ namespace dx12
 				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
 				{
-					SEAssert(texture->GetTextureParams().m_dimension == re::Texture::Texture1D ||
-						texture->GetTextureParams().m_dimension == re::Texture::Texture1DArray,
+					SEAssert(texParams.m_dimension == re::Texture::Texture1D ||
+						texParams.m_dimension == re::Texture::Texture1DArray,
 						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
 
 					descriptorIdx = re::Texture::Texture1DArray;
@@ -1081,7 +1116,7 @@ namespace dx12
 				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2D:
 				{
-					SEAssert(texture->GetTextureParams().m_dimension == re::Texture::Texture2D,
+					SEAssert(texParams.m_dimension == re::Texture::Texture2D,
 						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
 
 					descriptorIdx = re::Texture::Texture2D;
@@ -1089,10 +1124,10 @@ namespace dx12
 				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
 				{
-					SEAssert(texture->GetTextureParams().m_dimension == re::Texture::Texture2D || 
-						texture->GetTextureParams().m_dimension == re::Texture::Texture2DArray ||
-						texture->GetTextureParams().m_dimension == re::Texture::TextureCubeMap ||
-						texture->GetTextureParams().m_dimension == re::Texture::TextureCubeMapArray,
+					SEAssert(texParams.m_dimension == re::Texture::Texture2D ||
+						texParams.m_dimension == re::Texture::Texture2DArray ||
+						texParams.m_dimension == re::Texture::TextureCubeMap ||
+						texParams.m_dimension == re::Texture::TextureCubeMapArray,
 						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
 
 					descriptorIdx = re::Texture::Texture2DArray;
@@ -1101,7 +1136,7 @@ namespace dx12
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DMS:
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
 				{
-					SEAssert(texture->GetTextureParams().m_dimension == re::Texture::Texture2D,
+					SEAssert(texParams.m_dimension == re::Texture::Texture2D,
 						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
 
 					SEAssertF("TODO: Support this dimension");
@@ -1109,7 +1144,7 @@ namespace dx12
 				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE3D:
 				{
-					SEAssert(texture->GetTextureParams().m_dimension == re::Texture::Texture3D,
+					SEAssert(texParams.m_dimension == re::Texture::Texture3D,
 						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
 
 					descriptorIdx = re::Texture::Texture3D;
@@ -1117,7 +1152,7 @@ namespace dx12
 				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBE:
 				{
-					SEAssert(texture->GetTextureParams().m_dimension == re::Texture::TextureCubeMap,
+					SEAssert(texParams.m_dimension == re::Texture::TextureCubeMap,
 						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
 
 					descriptorIdx = re::Texture::TextureCubeMap;
@@ -1125,8 +1160,8 @@ namespace dx12
 				break;
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
 				{
-					SEAssert(texture->GetTextureParams().m_dimension == re::Texture::TextureCubeMap||
-						texture->GetTextureParams().m_dimension == re::Texture::TextureCubeMapArray,
+					SEAssert(texParams.m_dimension == re::Texture::TextureCubeMap ||
+						texParams.m_dimension == re::Texture::TextureCubeMapArray,
 						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
 
 					descriptorIdx = re::Texture::TextureCubeMapArray;
@@ -1136,7 +1171,7 @@ namespace dx12
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER:
 				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE:
 				default: SEAssertF("Invalid/unexpected table entry type");
-				}				
+				}
 			}
 			break;
 			case dx12::RootSignature::DescriptorType::UAV:
@@ -1160,7 +1195,11 @@ namespace dx12
 			// If a depth resource is used as both an input and target, we've already recorded the transitions
 			if (!skipTransition)
 			{
-				TransitionResource(texture, toState, srcMip);
+				TransitionResource(texture,
+					toState,
+					texSamplerInput.m_srcArrayElement,
+					texSamplerInput.m_srcFace,
+					texSamplerInput.m_srcMip);
 			}
 
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
@@ -1266,7 +1305,6 @@ namespace dx12
 								continue;
 							}
 
-
 							const uint32_t pendingSubresourceIdx = pendingState.first;
 
 							AddBarrier(pendingSubresourceIdx, toState);
@@ -1301,37 +1339,164 @@ namespace dx12
 	}
 
 
-	void CommandList::TransitionResource(re::Texture const* texture, D3D12_RESOURCE_STATES toState, uint32_t mipLevel)
+	void CommandList::TransitionResource(
+		re::Texture const* texture,
+		D3D12_RESOURCE_STATES toState, 
+		uint32_t targetArrayIdx, 
+		uint32_t targetFaceIdx, 
+		uint32_t targetMipLevel)
 	{
-		auto BuildSubresourceIndexList = [](re::Texture const* texture, uint32_t mipLevel) 
-				-> std::vector<uint32_t>
+		auto BuildSubresourceIndexList = [](
+			re::Texture const* texture, 
+			uint32_t targetArrayIdx,
+			uint32_t targetFaceIdx,
+			uint32_t targetMipIdx) -> std::vector<uint32_t>
 			{
-				if (mipLevel == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+				re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+
+				// Transition all subresources: (ALL / ALL / ALL)
+				if ((targetArrayIdx == re::Texture::k_allArrayElements &&
+					targetFaceIdx == re::Texture::k_allFaces &&
+					targetMipIdx == re::Texture::k_allMips) ||
+					(texParams.m_arraySize == 1 &&
+						targetFaceIdx == re::Texture::k_allFaces &&
+						targetMipIdx == re::Texture::k_allMips) ||
+					(texParams.m_arraySize == 1 &&
+						texParams.m_faces == 1 &&
+						targetMipIdx == re::Texture::k_allMips))
 				{
 					return { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES };
 				}
+				
+				const uint32_t numArrayElements = 
+					targetArrayIdx == re::Texture::k_allArrayElements ? texParams.m_arraySize : 1;
+				
+				const uint32_t numFaces = targetFaceIdx == re::Texture::k_allFaces ? texParams.m_faces : 1;
+				const uint32_t numMips = targetMipIdx == re::Texture::k_allMips ? texture->GetNumMips() : 1;
 
-				re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+				// Update the target indexes so they're valid/in bounds for any GetSubresourceIndex calls:
+				if (numArrayElements == 1 && targetArrayIdx == re::Texture::k_allArrayElements)
+				{
+					targetArrayIdx = 0;
+				}
+				if (numFaces == 1 && targetFaceIdx == re::Texture::k_allFaces)
+				{
+					targetFaceIdx = 0;
+				}
+				if (numMips == 1 && targetMipIdx == re::Texture::k_allMips)
+				{
+					targetMipIdx = 0;
+				}
+
+				// Transition a single subresource: (1 / 1 / 1)
+				if (numArrayElements == 1 && numFaces == 1 && numMips == 1)
+				{
+					return { texture->GetSubresourceIndex(targetArrayIdx, targetFaceIdx, targetMipIdx) };
+				}
+
+				// Transition a subset of subresources:
+				const uint32_t numSubresourcesToTransition = numArrayElements * numFaces * numMips;
 
 				std::vector<uint32_t> subresourceIndexes;
-				subresourceIndexes.reserve(texture->GetTotalNumSubresources()); // Over-estimation
+				subresourceIndexes.reserve(numSubresourcesToTransition);
 
-				for (uint32_t arrayIdx = 0; arrayIdx < texParams.m_arraySize; arrayIdx++)
+				// Transition all array elements:
+				if (numArrayElements > 1)
 				{
-					for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+					if (numFaces == 1)
 					{
-						subresourceIndexes.emplace_back(texture->GetSubresourceIndex(arrayIdx, faceIdx, mipLevel));
+						if (numMips == 1)
+						{
+							// Transition a single face and mip for all array elements: (all / 1 / 1)
+							for (uint32_t arrayIdx = 0; arrayIdx < numArrayElements; ++arrayIdx)
+							{
+								subresourceIndexes.emplace_back(
+									texture->GetSubresourceIndex(arrayIdx, targetFaceIdx, targetMipIdx));
+							}
+						}
+						else // numMips > 1:
+						{
+							// Transition all mips for a single face, for all array elements: (all / 1 / all)
+							for (uint32_t arrayIdx = 0; arrayIdx < numArrayElements; ++arrayIdx)
+							{
+								for (uint32_t mipIdx = 0; mipIdx < numMips; ++mipIdx)
+								{
+									subresourceIndexes.emplace_back(
+										texture->GetSubresourceIndex(arrayIdx, targetFaceIdx, mipIdx));
+								}								
+							}
+						}
+					}
+					else // numFaces > 1: (all / all / 1)
+					{
+						SEAssert(numMips == 1,
+							"This should not be possible as we've already handled the ALL/ALL/ALL and 1/1/1 cases");
+
+						// Transition a single mip level for all faces and all array elements:
+						for (uint32_t arrayIdx = 0; arrayIdx < numArrayElements; ++arrayIdx)
+						{
+							for (uint32_t faceIdx = 0; faceIdx < numFaces; ++faceIdx)
+							{
+								subresourceIndexes.emplace_back(
+									texture->GetSubresourceIndex(arrayIdx, faceIdx, targetMipIdx));
+							}
+						}
+					}
+				}
+				else // numArrayElements == 1
+				{
+					if (numFaces == 1)
+					{
+						SEAssert(numMips > 1,
+							"This should not be possible as we've already handled the ALL/ALL/ALL and 1/1/1 cases");
+
+						// Transition all mips for the given array element and face: (1 / 1 / all)
+						for (uint32_t mipIdx = 0; mipIdx < numMips; ++mipIdx)
+						{
+							subresourceIndexes.emplace_back(
+								texture->GetSubresourceIndex(targetArrayIdx, targetFaceIdx, mipIdx));
+						}
+					}
+					else // numFaces > 1
+					{
+						if (numMips == 1)
+						{
+							// Transition a single mip for all faces, and single array element: (1 / all / 1)
+							for (uint32_t faceIdx = 0; faceIdx < numFaces; ++faceIdx)
+							{
+								subresourceIndexes.emplace_back(
+									texture->GetSubresourceIndex(targetArrayIdx, faceIdx, targetMipIdx));
+							}
+						}
+						else // numMips > 1
+						{
+							// Transition all faces and mips for a single array element: (1 / all / all)
+							for (uint32_t faceIdx = 0; faceIdx < numFaces; ++faceIdx)
+							{
+								for (uint32_t mipIdx = 0; mipIdx < numMips; ++mipIdx)
+								{
+									subresourceIndexes.emplace_back(
+										texture->GetSubresourceIndex(targetArrayIdx, faceIdx, mipIdx));
+								}
+							}
+						}
 					}
 				}
 
-				return subresourceIndexes;
+				SEAssert(!subresourceIndexes.empty() && 
+					subresourceIndexes.size() == numSubresourcesToTransition,
+					"Miscalculated the number of resources to transition");
+
+				return subresourceIndexes;				
 			};
 
 		dx12::Texture::PlatformParams const* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		TransitionResourceInternal(
-			texPlatParams->m_textureResource.Get(), toState, BuildSubresourceIndexList(texture, mipLevel));
+			texPlatParams->m_textureResource.Get(), 
+			toState, 
+			BuildSubresourceIndexList(texture, targetArrayIdx, targetFaceIdx, targetMipLevel));
 	}
 
 
@@ -1360,9 +1525,9 @@ namespace dx12
 	}
 
 
-	void CommandList::InsertUAVBarrier(std::shared_ptr<re::Texture> texture)
+	void CommandList::InsertUAVBarrier(re::Texture const* texture)
 	{
-		InsertUAVBarrier(texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_textureResource.Get());
+		InsertUAVBarrier(texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_textureResource.Get());
 	}
 
 

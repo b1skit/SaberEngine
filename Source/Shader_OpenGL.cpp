@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Material.h"
+#include "Batch.h"
 #include "Buffer_OpenGL.h"
+#include "Material.h"
 #include "Sampler_OpenGL.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
@@ -761,16 +762,13 @@ namespace opengl
 	}
 
 
-	void Shader::SetTextureAndSampler(
-		re::Shader const& shader,
-		std::string const& uniformName, 
-		re::Texture const* texture,
-		re::Sampler const* sampler,
-		uint32_t subresource)
+	void Shader::SetTextureAndSampler(re::Shader const& shader, re::TextureAndSamplerInput const& texSamplerInput)
 	{
-		// Note: We don't currently use the subresource index here; OpenGL doesn't allow us to be so specific
+		// Note: We don't use the TextureAndSamplerInput array/face/mip indexes here; OpenGL doesn't allow us to be so specific
 
-		opengl::Shader::SetUniform(shader, uniformName, texture, opengl::Shader::UniformType::Texture, 1);
-		opengl::Shader::SetUniform(shader, uniformName, sampler, opengl::Shader::UniformType::Sampler, 1);
+		opengl::Shader::SetUniform(
+			shader, texSamplerInput.m_shaderName, texSamplerInput.m_texture, opengl::Shader::UniformType::Texture, 1);
+		opengl::Shader::SetUniform(
+			shader, texSamplerInput.m_shaderName, texSamplerInput.m_sampler, opengl::Shader::UniformType::Sampler, 1);
 	}
 }

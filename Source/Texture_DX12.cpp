@@ -1,13 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
-
-#include "Core/Assert.h"
 #include "CommandList_DX12.h"
-#include "Core/Config.h"
 #include "Context_DX12.h"
-#include "Core/Util/MathUtils.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
+
+#include "Core/Assert.h"
+#include "Core/Config.h"
+
+#include "Core/Util/MathUtils.h"
 #include "Core/Util/TextUtils.h"
 
 #include <d3dx12.h>
@@ -426,7 +427,6 @@ namespace
 			dx12::CPUDescriptorHeapManager::CBV_SRV_UAV).Allocate(numDescriptors));
 
 		// We create a UAV per MIP, per face, per array entry:
-		uint32_t descriptorIdx = 0;
 		for (uint32_t arrayIdx = 0; arrayIdx < arraySize; arrayIdx++)
 		{
 			for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
@@ -453,7 +453,7 @@ namespace
 						uavDesc.Texture1DArray = D3D12_TEX1D_ARRAY_UAV{
 							.MipSlice = mipIdx,
 							.FirstArraySlice = arrayIdx,
-							.ArraySize = texParams.m_arraySize - arrayIdx,
+							.ArraySize = arraySize - arrayIdx,
 						};
 					}
 					break;
@@ -477,7 +477,7 @@ namespace
 						uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{
 							.MipSlice = mipIdx,
 							.FirstArraySlice = arrayIdx,
-							.ArraySize = texParams.m_arraySize - arrayIdx,
+							.ArraySize = arraySize - arrayIdx,
 							.PlaneSlice = 0 };
 					}
 					break;
@@ -485,7 +485,7 @@ namespace
 					{
 						SEAssert(texParams.m_faces == 1, "Invalid number of faces for a 3D texture");
 
-						const uint32_t firstWSlice = 0;
+						const uint32_t firstWSlice = 0; // TODO: Compute this properly
 
 						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
 
@@ -525,11 +525,13 @@ namespace
 						SEAssertF("Invalid texture dimension");
 					}
 
+					const uint32_t descriptorIdx = texture.GetSubresourceIndex(arrayIdx, faceIdx, mipIdx);
+
 					device->CreateUnorderedAccessView(
 						texPlatParams->m_textureResource.Get(),
 						nullptr,		// Counter resource
 						&uavDesc,
-						texPlatParams->m_uavCpuDescAllocations[descriptorIdx++]);
+						texPlatParams->m_uavCpuDescAllocations[descriptorIdx]);
 				}
 			}
 		}

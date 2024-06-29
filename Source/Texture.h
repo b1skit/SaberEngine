@@ -58,7 +58,11 @@ namespace re
 	public:
 		static constexpr glm::vec4 k_errorTextureColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
 
-		static constexpr uint32_t k_allMips = std::numeric_limits<uint32_t>::max(); // Mip sentinel value
+
+	public: // Subresource sentinel values:
+		static constexpr uint32_t k_allArrayElements	= std::numeric_limits<uint32_t>::max();
+		static constexpr uint32_t k_allFaces			= std::numeric_limits<uint32_t>::max();
+		static constexpr uint32_t k_allMips				= std::numeric_limits<uint32_t>::max(); 
 
 
 	public:
@@ -227,8 +231,10 @@ namespace re
 
 		uint32_t GetNumMips() const;
 		glm::vec4 GetMipLevelDimensions(uint32_t mipLevel) const; // .xyzw = subresource width, height, 1/width, 1/height
+
 		uint32_t GetTotalNumSubresources() const; // No. array elements * no. faces * no. of mips
 		uint32_t GetSubresourceIndex(uint32_t arrayIdx, uint32_t faceIdx, uint32_t mipIdx) const;
+
 		bool IsPowerOfTwo() const;
 		bool IsSRGB() const;
 

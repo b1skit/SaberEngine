@@ -209,56 +209,59 @@ namespace opengl
 		uint32_t targetWidth = 0;
 		uint32_t targetHeight = 0;
 		std::vector<GLenum> drawBuffers(targetSet.GetColorTargets().size());
-		uint32_t insertIdx = 0;
+		uint32_t numDrawBuffers = 0;
 		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
 			re::TextureTarget const& colorTarget = targetSet.GetColorTarget(i);
-			if (colorTarget.HasTexture())
+
+			if (!colorTarget.HasTexture())
 			{
-				opengl::TextureTarget::PlatformParams* targetPlatParams =
-					colorTarget.GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
-
-				SEAssert(!targetPlatParams->m_isCreated, "Target has already been created");
-				targetPlatParams->m_isCreated = true;
-
-				std::shared_ptr<re::Texture> const& texture = colorTarget.GetTexture();
-
-				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
-				SEAssert((textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
-					(textureParams.m_usage & re::Texture::Usage::ComputeTarget) ||
-					(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy), // Not currently used
-					"Attempting to bind a color target with a different texture use parameter"); 
-
-				// Validate the texture dimensions:
-				const uint32_t targetMip = colorTarget.GetTargetParams().m_targetMip;
-				glm::vec4 const& subresourceDimensions = texture->GetMipLevelDimensions(targetMip);
-				const uint32_t mipWidth = static_cast<uint32_t>(subresourceDimensions.x);
-				const uint32_t mipHeight = static_cast<uint32_t>(subresourceDimensions.y);
-				if (!foundTarget)
-				{
-					foundTarget = true;
-					
-					targetWidth = mipWidth;
-					targetHeight = mipHeight;
-				}
-				else
-				{
-					SEAssert(targetWidth == mipWidth && targetHeight == mipHeight,
-						"All framebuffer textures must have the same dimensions");
-				}
-				 
-				// Configure the target parameters:
-				// Note: We attach to the same slot/binding index as the texuture has in the target set
-				targetPlatParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + i;
-				targetPlatParams->m_drawBuffer		= GL_COLOR_ATTACHMENT0 + i;
-				//targetPlatformParams->m_readBuffer		= GL_COLOR_ATTACHMENT0 + i; // Not needed...
-
-				// Record the texture in our drawbuffers array:
-				drawBuffers[insertIdx++] = targetPlatParams->m_attachmentPoint;
+				break;
 			}
+
+			opengl::TextureTarget::PlatformParams* targetPlatParams =
+				colorTarget.GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
+
+			SEAssert(!targetPlatParams->m_isCreated, "Target has already been created");
+			targetPlatParams->m_isCreated = true;
+
+			std::shared_ptr<re::Texture> const& texture = colorTarget.GetTexture();
+
+			re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
+			SEAssert((textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
+				(textureParams.m_usage & re::Texture::Usage::ComputeTarget) ||
+				(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy), // Not currently used
+				"Attempting to bind a color target with a different texture use parameter");
+
+			// Validate the texture dimensions:
+			const uint32_t targetMip = colorTarget.GetTargetParams().m_targetMip;
+			glm::vec4 const& subresourceDimensions = texture->GetMipLevelDimensions(targetMip);
+			const uint32_t mipWidth = static_cast<uint32_t>(subresourceDimensions.x);
+			const uint32_t mipHeight = static_cast<uint32_t>(subresourceDimensions.y);
+			if (!foundTarget)
+			{
+				foundTarget = true;
+
+				targetWidth = mipWidth;
+				targetHeight = mipHeight;
+			}
+			else
+			{
+				SEAssert(targetWidth == mipWidth && targetHeight == mipHeight,
+					"All framebuffer textures must have the same dimensions");
+			}
+
+			// Configure the target parameters:
+			// Note: We attach to the same slot/binding index as the texuture has in the target set
+			targetPlatParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + i;
+			targetPlatParams->m_drawBuffer = GL_COLOR_ATTACHMENT0 + i;
+			//targetPlatformParams->m_readBuffer		= GL_COLOR_ATTACHMENT0 + i; // Not needed...
+
+			// Record the texture in our drawbuffers array:
+			drawBuffers[numDrawBuffers++] = targetPlatParams->m_attachmentPoint;
 		}
 
-		// Create framebuffer (not required if this targetset represents the default framebuffer):
+		// Create framebuffer (not required if this target set represents the default framebuffer):
 		if (foundTarget)
 		{
 			if (!glIsFramebuffer(targetSetParams->m_frameBufferObject))
@@ -278,7 +281,7 @@ namespace opengl
 			}
 			
 			// Attach the textures now that we know the framebuffer is created:
-			glDrawBuffers((uint32_t)insertIdx, &drawBuffers[0]);
+			glDrawBuffers(numDrawBuffers, &drawBuffers[0]);
 
 			// For now, ensure the viewport dimensions are within the target dimensions
 			SEAssert(targetSet.GetViewport().Width() <= targetWidth  &&
@@ -310,61 +313,135 @@ namespace opengl
 		glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
 		std::vector<GLenum> buffers;
-		buffers.reserve(targetSet.GetColorTargets().size());
+		buffers.reserve(targetSet.GetNumColorTargets());
 
 		std::shared_ptr<re::Texture> firstTarget = nullptr;
 		uint32_t firstTargetMipLevel = 0;
 		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
-			if (targetSet.GetColorTarget(i).HasTexture())
+			if (!targetSet.GetColorTarget(i).HasTexture())
 			{
-				std::shared_ptr<re::Texture> texture = targetSet.GetColorTarget(i).GetTexture();
-				SEAssert(texture->GetPlatformParams()->m_isCreated, "Texture is not created");
+				break;
+			}
+			
+			std::shared_ptr<re::Texture> texture = targetSet.GetColorTarget(i).GetTexture();
+			SEAssert(texture->GetPlatformParams()->m_isCreated, "Texture is not created");
 
-				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
-				opengl::Texture::PlatformParams const* texPlatformParams =
-					texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
-				opengl::TextureTarget::PlatformParams const* targetPlatformParams =
-					targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
+			re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
+			opengl::Texture::PlatformParams const* texPlatformParams =
+				texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
-				SEAssert((textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
-					(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy),
-					"Attempting to bind a color target with a different texture use parameter");
+			opengl::TextureTarget::PlatformParams const* targetPlatformParams =
+				targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
-				re::TextureTarget::TargetParams const& targetParams = targetSet.GetColorTarget(i).GetTargetParams();
+			SEAssert((textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
+				(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy),
+				"Attempting to bind a color target with a different texture use parameter");
 
-				// Attach a texture object to the bound framebuffer:
-				if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
-				{
-					glFramebufferTexture2D(
-						GL_FRAMEBUFFER,
-						targetPlatformParams->m_attachmentPoint,
-						GL_TEXTURE_CUBE_MAP_POSITIVE_X + targetParams.m_targetFace,
-						texPlatformParams->m_textureID,
-						targetParams.m_targetMip);
-				}
-				else
-				{
-					glNamedFramebufferTexture(
-						targetSetParams->m_frameBufferObject,
-						targetPlatformParams->m_attachmentPoint,
-						texPlatformParams->m_textureID,
-						targetParams.m_targetMip);
-				}
+			re::TextureTarget::TargetParams const& targetParams = targetSet.GetColorTarget(i).GetTargetParams();
 
-				// Record the attachment point so we can set the draw buffers later on:
-				buffers.emplace_back(targetPlatformParams->m_attachmentPoint);
+			switch (textureParams.m_dimension)
+			{
+			case re::Texture::Texture1D:
+			{
+				SEAssert(textureParams.m_faces == 1 && targetParams.m_targetArrayIdx == 0,
+					"Unexpected configuration");
 
-				SEAssert(firstTarget == nullptr ||
-					(texture->Width() == firstTarget->Width() &&
-						texture->Height() == firstTarget->Height()),
-					"All framebuffer textures must have the same dimension");
+				glNamedFramebufferTexture(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					targetPlatformParams->m_attachmentPoint,	// attachment
+					texPlatformParams->m_textureID,				// texture
+					targetParams.m_targetMip);					// level
+			}
+			break;
+			case re::Texture::Texture1DArray:
+			{
+				SEAssert(textureParams.m_faces == 1, "Unexpected face configuration");
 
-				if (firstTarget == nullptr)
-				{
-					firstTarget = texture;
-					firstTargetMipLevel = targetParams.m_targetMip;
-				}
+				glNamedFramebufferTextureLayer(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					targetPlatformParams->m_attachmentPoint,	// attachment
+					texPlatformParams->m_textureID,				// texture
+					targetParams.m_targetMip,					// level
+					targetParams.m_targetArrayIdx);				// layer
+			}
+			break;
+			case re::Texture::Texture2D:
+			{
+				SEAssert(textureParams.m_faces == 1 && targetParams.m_targetArrayIdx == 0,
+					"Unexpected configuration");
+
+				glNamedFramebufferTexture(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					targetPlatformParams->m_attachmentPoint,	// attachment
+					texPlatformParams->m_textureID,				// texture
+					targetParams.m_targetMip);					// level
+			}
+			break;
+			case re::Texture::Texture2DArray:
+			{
+				SEAssert(textureParams.m_faces == 1, "Unexpected face configuration");
+
+				glNamedFramebufferTextureLayer(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					targetPlatformParams->m_attachmentPoint,	// attachment
+					texPlatformParams->m_textureID,				// texture
+					targetParams.m_targetMip,					// level
+					targetParams.m_targetArrayIdx);				// layer
+			}
+			break;
+			case re::Texture::Texture3D:
+			{
+				SEAssert(textureParams.m_faces == 1 && targetParams.m_targetArrayIdx == 0,
+					"Unexpected configuration");
+
+				glNamedFramebufferTextureLayer(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					targetPlatformParams->m_attachmentPoint,	// attachment
+					texPlatformParams->m_textureID,				// texture
+					targetParams.m_targetMip,					// level
+					targetParams.m_targetArrayIdx);				// layer
+			}
+			break;
+			case re::Texture::TextureCubeMap:
+			{
+				SEAssert(textureParams.m_faces == 6 && targetParams.m_targetArrayIdx == 0,
+					"Unexpected configuration");
+
+				glFramebufferTexture2D(
+					GL_FRAMEBUFFER,												// target
+					targetPlatformParams->m_attachmentPoint,					// attachment
+					GL_TEXTURE_CUBE_MAP_POSITIVE_X + targetParams.m_targetFace,	// texTarget
+					texPlatformParams->m_textureID,								// texture
+					targetParams.m_targetMip);									// level
+			}
+			break;
+			case re::Texture::TextureCubeMapArray:
+			{
+				SEAssert(textureParams.m_faces == 6, "Unexpected face configuration");
+
+				glNamedFramebufferTextureLayer(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					targetPlatformParams->m_attachmentPoint,	// attachment
+					texPlatformParams->m_textureID,				// texture
+					targetParams.m_targetMip,					// level
+					targetParams.m_targetArrayIdx);				// layer
+			}
+			break;
+			default: SEAssertF("Invalid dimension");
+			}
+
+			// Record the attachment point so we can set the draw buffers later on:
+			buffers.emplace_back(targetPlatformParams->m_attachmentPoint);
+
+			SEAssert(firstTarget == nullptr ||
+				(texture->Width() == firstTarget->Width() && texture->Height() == firstTarget->Height()),
+				"All framebuffer textures must have the same dimension");
+
+			if (firstTarget == nullptr)
+			{
+				firstTarget = texture;
+				firstTargetMipLevel = targetParams.m_targetMip;
 			}
 		}
 
@@ -497,45 +574,109 @@ namespace opengl
 		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
 			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 
-		glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
-
 		if (targetSet.GetDepthStencilTarget())
 		{
-			std::shared_ptr<re::Texture> const& depthStencilTex = targetSet.GetDepthStencilTarget()->GetTexture();
-			SEAssert(depthStencilTex->GetPlatformParams()->m_isCreated, "Texture is not created");
+			re::TextureTarget const* depthTarget = targetSet.GetDepthStencilTarget();
 
-			re::Texture::TextureParams const& textureParams = depthStencilTex->GetTextureParams();
-			SEAssert((textureParams.m_usage & re::Texture::Usage::DepthTarget),
+			re::Texture const* depthTex = depthTarget->GetTexture().get();
+			SEAssert(depthTex->GetPlatformParams()->m_isCreated, "Texture is not created");
+
+			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
+			SEAssert((depthTexParams.m_usage & re::Texture::Usage::DepthTarget),
 				"Attempting to bind a depth target with a different texture use parameter");
 
-			opengl::Texture::PlatformParams const* depthPlatformParams =
-				depthStencilTex->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+			opengl::Texture::PlatformParams const* depthTexPlatParams =
+				depthTex->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
-			opengl::TextureTarget::PlatformParams const* depthTargetParams =
-				targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
+			re::TextureTarget::TargetParams const& depthTargetParams = depthTarget->GetTargetParams();
 
-			SEAssert(targetSet.GetDepthStencilTarget()->GetTexture()->GetNumMips() == 1 && 
-				targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetMip == 0,
+			opengl::TextureTarget::PlatformParams const* depthTargetPlatParams =
+				depthTarget->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
+
+			SEAssert(depthTarget->GetTexture()->GetNumMips() == 1 && depthTargetParams.m_targetMip == 0,
 				"It is unexpected that a depth target has mipmaps");
 
-			// Attach a texture object to the bound framebuffer:
-			if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
+			// Note: We're using the "Named" DSA functions, so no need to explicitely bind the framebuffer first
+			switch (depthTexParams.m_dimension)
 			{
-				// Attach a level of a texture as a logical buffer of a framebuffer object
-				glFramebufferTexture(
-					GL_FRAMEBUFFER,							// target
-					depthTargetParams->m_attachmentPoint,	// attachment
-					depthPlatformParams->m_textureID,		// texure
-					targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetMip); // level
-			}
-			else
+			case re::Texture::Texture1D:
 			{
-				// Attach a texture to a framebuffer object:
 				glNamedFramebufferTexture(
-					targetSetParams->m_frameBufferObject,
-					depthTargetParams->m_attachmentPoint,
-					depthPlatformParams->m_textureID,
-					targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetMip);
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					depthTargetPlatParams->m_attachmentPoint,	// attachment
+					depthTexPlatParams->m_textureID,			// texture
+					depthTargetParams.m_targetMip);				// level
+			}
+			break;
+			case re::Texture::Texture1DArray:
+			{
+				glNamedFramebufferTextureLayer(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					depthTargetPlatParams->m_attachmentPoint,	// attachment
+					depthTexPlatParams->m_textureID,			// texture
+					depthTargetParams.m_targetMip,				// level
+					depthTargetParams.m_targetArrayIdx);		// layer
+			}
+			break;
+			case re::Texture::Texture2D:
+			{
+				SEAssert(depthTexParams.m_faces == 1 && depthTargetParams.m_targetArrayIdx == 0,
+					"Unexpected configuration");
+
+				glNamedFramebufferTexture(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					depthTargetPlatParams->m_attachmentPoint,	// attachment
+					depthTexPlatParams->m_textureID,			// texture
+					depthTargetParams.m_targetMip);				// level
+			}
+			break;
+			case re::Texture::Texture2DArray:
+			{
+				SEAssert(depthTexParams.m_faces == 1, "Unexpected face configuration");
+
+				glNamedFramebufferTextureLayer(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					depthTargetPlatParams->m_attachmentPoint,	// attachment
+					depthTexPlatParams->m_textureID,			// texture
+					depthTargetParams.m_targetMip,				// level
+					depthTargetParams.m_targetArrayIdx);		// layer
+			}
+			break;
+			case re::Texture::Texture3D:
+			{
+				glNamedFramebufferTextureLayer(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					depthTargetPlatParams->m_attachmentPoint,	// attachment
+					depthTexPlatParams->m_textureID,			// texture
+					depthTargetParams.m_targetMip,				// level
+					depthTargetParams.m_targetArrayIdx);		// layer
+			}
+			break;
+			case re::Texture::TextureCubeMap:
+			{
+				SEAssert(depthTexParams.m_faces == 6, "Unexpected face configuration");
+
+				glNamedFramebufferTexture(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					depthTargetPlatParams->m_attachmentPoint,	// attachment
+					depthTexPlatParams->m_textureID,			// texture
+					depthTargetParams.m_targetMip);				// level
+			}
+			break;
+			case re::Texture::TextureCubeMapArray:
+			{
+				SEAssert(depthTexParams.m_faces == 6, "Unexpected face configuration");
+
+				const uint32_t level = depthTargetParams.m_targetArrayIdx * depthTexParams.m_faces;
+
+				glNamedFramebufferTexture(
+					targetSetParams->m_frameBufferObject,		// framebuffer
+					depthTargetPlatParams->m_attachmentPoint,	// attachment
+					depthTexPlatParams->m_textureID,			// texture
+					level);										// level
+			}
+			break;
+			default: SEAssertF("Invalid dimension");
 			}
 
 			// Verify the framebuffer (as we actually had color textures to attach)

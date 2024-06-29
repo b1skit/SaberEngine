@@ -113,7 +113,13 @@ namespace gr
 								stageName.c_str(),
 								re::RenderStage::ComputeStageParams{});
 
-						mipGenerationStage->AddPermanentTextureInput("SrcTex", newTexture, mipSampler, sourceMip);
+						mipGenerationStage->AddPermanentTextureInput(
+							"SrcTex",
+							newTexture, 
+							mipSampler, 
+							arrayIdx, 
+							faceIdx, 
+							sourceMip);
 
 						// Parameter buffer:
 						MipGenerationData const& mipGenerationParams =

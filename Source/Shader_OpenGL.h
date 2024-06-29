@@ -11,6 +11,8 @@ namespace re
 	class Shader;
 	class Texture;
 	class Sampler;
+
+	struct TextureAndSamplerInput;
 }
 
 namespace opengl
@@ -55,11 +57,9 @@ namespace opengl
 			opengl::Shader::UniformType const type, 
 			int const count);
 		static void SetTextureAndSampler(
-			re::Shader const&, 
-			std::string const& uniformName, 
-			re::Texture const*, 
-			re::Sampler const*, 
-			uint32_t subresource);
+			re::Shader const&,
+			re::TextureAndSamplerInput const&);
+
 		static void SetBuffer(re::Shader const&, re::Buffer const&);
 	};
 }

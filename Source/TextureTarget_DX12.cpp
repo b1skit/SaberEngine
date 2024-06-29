@@ -1,11 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
-#include "Core/Config.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "SysInfo_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
+
+#include "Core/Assert.h"
+#include "Core/Config.h"
 
 #include "Core/Util/CastUtils.h"
 
@@ -66,7 +67,7 @@ namespace dx12
 		{
 			if (!colorTarget.HasTexture())
 			{
-				continue;
+				break;
 			}
 
 			dx12::TextureTarget::PlatformParams* targetPlatParams =
@@ -74,14 +75,16 @@ namespace dx12
 			SEAssert(!targetPlatParams->m_isCreated, "Target has already been created");
 			targetPlatParams->m_isCreated = true;
 
-			re::Texture::TextureParams const& texParams = colorTarget.GetTexture()->GetTextureParams();
+			re::Texture* colorTex = colorTarget.GetTexture().get();
+
+			re::Texture::TextureParams const& texParams = colorTex->GetTextureParams();
 
 			// Create RTVs:
 			if ((texParams.m_usage & re::Texture::Usage::ColorTarget) || 
 				(texParams.m_usage & re::Texture::Usage::SwapchainColorProxy))
 			{				
 				dx12::Texture::PlatformParams* texPlatParams =
-					colorTarget.GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 				
 				SEAssert(texPlatParams->m_isCreated && texPlatParams->m_textureResource, "Texture is not created");
 
@@ -91,61 +94,181 @@ namespace dx12
 					"RTVs have already been allocated. This is unexpected");
 
 				// Allocate descriptors for our RTVs:
+				const uint32_t arraySize = texParams.m_arraySize;
 				const uint32_t numFaces = texParams.m_faces;
-				const uint32_t numMips = colorTarget.GetTexture()->GetNumMips();
+				const uint32_t numMips = colorTex->GetNumMips();
 
-				const uint32_t numDescriptors = numFaces * numMips;
+				const uint32_t numDescriptors = colorTex->GetTotalNumSubresources();
+
+				SEAssert(targetParams.m_targetFace < numFaces && (numFaces == 1 || numFaces == 6),
+					"Invalid face configuration");
+
+				SEAssert(numFaces == 1 ||
+					(numFaces == 6 &&
+						(texParams.m_dimension == re::Texture::Dimension::TextureCubeMap ||
+							texParams.m_dimension == re::Texture::Dimension::TextureCubeMapArray)),
+					"Invalid face/dimension configuration");
+
 				targetPlatParams->m_rtvDsvDescriptors = std::move(
 					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(numDescriptors));
 				SEAssert(targetPlatParams->m_rtvDsvDescriptors.IsValid(), "RTV descriptor is not valid");
 
-				for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
+				for (uint32_t arrayIdx = 0; arrayIdx < arraySize; arrayIdx++)
 				{
-					for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
+					for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 					{
-						// Create the RTV:
-						D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
-						renderTargetViewDesc.Format = texPlatParams->m_format;
+						for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
+						{
+							// Create the RTV:
+							D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
+							renderTargetViewDesc.Format = texPlatParams->m_format;
 
-						switch (numFaces)
-						{
-						case 1:
-						{
-							renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D;
-							renderTargetViewDesc.Texture2D = D3D12_TEX2D_RTV
+							switch (texParams.m_dimension)
 							{
-								.MipSlice = targetParams.m_targetMip,
-								.PlaneSlice = targetParams.m_targetFace
-							};
-						}
-						break;
-						case 6:
-						{
-							SEAssert(numFaces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap,
-								"We're currently expecting this to be a cubemap, but it doesn't need to be");
-
-							renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-
-							renderTargetViewDesc.Texture2DArray = D3D12_TEX2D_ARRAY_RTV
+							case re::Texture::Texture1D:
 							{
-								.MipSlice = mipIdx,	// Mip slices include 1 mip level for every texture in an array
-								.FirstArraySlice = faceIdx,
-								.ArraySize = 1,		// Only view one element of our array
-								.PlaneSlice = 0		// "Only Plane Slice 0 is valid when creating a view on a non-planar format"
-							};
-						}
-						break;
-						default: SEAssertF("Unexpected number of faces");
-						}
+								SEAssert(texParams.m_arraySize == 1, "Unexpected array size");
 
-						const uint32_t descriptorIdx = (faceIdx * numMips) + mipIdx;
+								renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1D;
 
-						device->CreateRenderTargetView(
-							texPlatParams->m_textureResource.Get(),
-							&renderTargetViewDesc,
-							targetPlatParams->m_rtvDsvDescriptors[descriptorIdx]);
-					}					
-				}			
+								renderTargetViewDesc.Texture1D = D3D12_TEX1D_RTV
+								{
+									.MipSlice = mipIdx,
+								};
+							}
+							break;
+							case re::Texture::Texture1DArray:
+							{
+								renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
+
+								renderTargetViewDesc.Texture1DArray = D3D12_TEX1D_ARRAY_RTV
+								{
+									.MipSlice = mipIdx,
+									.FirstArraySlice = arrayIdx,
+									.ArraySize = arraySize - arrayIdx,
+								};
+							}
+							break;
+							case re::Texture::Texture2D:
+							{
+								SEAssert(texParams.m_arraySize == 1, "Unexpected array size");
+
+								switch (texParams.m_multisampleMode)
+								{
+								case re::Texture::MultisampleMode::Disabled:
+								{
+									const uint32_t planeSlice = (arrayIdx * numFaces) + faceIdx;
+
+									renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+									renderTargetViewDesc.Texture2D = D3D12_TEX2D_RTV
+									{
+										.MipSlice = targetParams.m_targetMip,
+										.PlaneSlice = planeSlice
+									};
+								}
+								break;
+								case re::Texture::MultisampleMode::Enabled:
+								{
+									SEAssertF("TODO: Support multisampling");
+								}
+								break;
+								default: SEAssertF("Invalid multisample mode");
+								}
+							}
+							break;
+							case re::Texture::Texture2DArray:
+							{
+								SEAssert(texParams.m_faces == 1, "Unexpected configuration");
+
+								switch (texParams.m_multisampleMode)
+								{
+								case re::Texture::MultisampleMode::Disabled:
+								{
+									renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+									
+									const uint32_t planeSlice = (arrayIdx * numFaces) + faceIdx;
+
+									renderTargetViewDesc.Texture2DArray = D3D12_TEX2D_ARRAY_RTV
+									{
+										.MipSlice = targetParams.m_targetMip,
+										.FirstArraySlice = arrayIdx,
+										.ArraySize = arraySize - arrayIdx,
+										.PlaneSlice = planeSlice,
+									};
+								}
+								break;
+								case re::Texture::MultisampleMode::Enabled:
+								{
+									SEAssertF("TODO: Support multisampling");
+								}
+								break;
+								default: SEAssertF("Invalid multisample mode");
+								}
+							}
+							break;
+							case re::Texture::Texture3D:
+							{
+								SEAssert(texParams.m_faces == 1, "Unexpected configuration");
+
+								const uint32_t firstWSlice = arraySize - arrayIdx;
+
+								renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
+
+								renderTargetViewDesc.Texture3D = D3D12_TEX3D_RTV
+								{
+									.MipSlice = targetParams.m_targetMip,
+									.FirstWSlice = firstWSlice,
+									.WSize = static_cast<uint32_t>(-1),  // -1 = all slices from FirstWSlice to the last slice
+								};
+							}
+							break;
+							case re::Texture::TextureCubeMap:
+							{
+								SEAssert(arraySize == 1 && numFaces == 6, "Unexpected array size or number of faces");
+
+								const uint32_t firstArraySlice = (arrayIdx * numFaces) + faceIdx;
+
+								renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+
+								renderTargetViewDesc.Texture2DArray = D3D12_TEX2D_ARRAY_RTV
+								{
+									.MipSlice = mipIdx,	// Mip slices include 1 mip level for every texture in an array
+									.FirstArraySlice = firstArraySlice,
+									.ArraySize = 1,	// Only view one element of our array
+									.PlaneSlice = 0	// "Only Plane Slice 0 is valid when creating a view on a non-planar format"
+								};
+							}
+							break;
+							case re::Texture::TextureCubeMapArray:
+							{
+								SEAssert(numFaces == 6, "Unexpected number of faces");
+
+								const uint32_t firstArraySlice = (arrayIdx * numFaces) + faceIdx;
+
+								renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+
+								renderTargetViewDesc.Texture2DArray = D3D12_TEX2D_ARRAY_RTV
+								{
+									.MipSlice = mipIdx,	// Mip slices include 1 mip level for every texture in an array
+									.FirstArraySlice = firstArraySlice,
+									.ArraySize = 1,	// Only view one element of our array
+									.PlaneSlice = 0	// "Only Plane Slice 0 is valid when creating a view on a non-planar format"
+								};
+							}
+							break;
+							default: SEAssertF("Invalid texture dimension for a depth target");
+							}
+
+							const uint32_t descriptorIdx = colorTex->GetSubresourceIndex(arrayIdx, faceIdx, mipIdx);
+
+							device->CreateRenderTargetView(
+								texPlatParams->m_textureResource.Get(),
+								&renderTargetViewDesc,
+								targetPlatParams->m_rtvDsvDescriptors[descriptorIdx]);
+						}
+					}
+				}
 			}
 		}
 
@@ -160,22 +283,21 @@ namespace dx12
 			return;
 		}
 
-		dx12::TextureTargetSet::PlatformParams* targetSetParams = 
-			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-		SEAssert(targetSetParams->m_isCommitted, "Target set has not been committed");
+		SEAssert(targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>()->m_isCommitted,
+			"Target set has not been committed");
 
 		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
 			targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 		SEAssert(!depthTargetPlatParams->m_isCreated, "Target has already been created");
 		depthTargetPlatParams->m_isCreated = true;
 
-		std::shared_ptr<re::Texture> depthTargetTex = targetSet.GetDepthStencilTarget()->GetTexture();
-		re::Texture::TextureParams const& depthTexParams = depthTargetTex->GetTextureParams();
+		re::Texture const* depthTex = targetSet.GetDepthStencilTarget()->GetTexture().get();
+		re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
 		SEAssert(depthTexParams.m_usage & re::Texture::Usage::DepthTarget,
 			"Target does not have the depth target usage type");
 
-		dx12::Texture::PlatformParams* depthTexPlatParams =
-			depthTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::Texture::PlatformParams const* depthTexPlatParams =
+			depthTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 		SEAssert(depthTexPlatParams->m_isCreated && depthTexPlatParams->m_textureResource,
 			"Depth texture has not been created");
 
@@ -191,53 +313,136 @@ namespace dx12
 		SEAssert(depthTargetPlatParams->m_rtvDsvDescriptors.IsValid() == false,
 			"DSVs have already been allocated. This is unexpected");
 
+		const uint32_t arraySize = depthTexParams.m_arraySize;
 		const uint32_t numFaces = depthTexParams.m_faces;
-		const uint32_t numMips = depthTargetTex->GetNumMips();
+		const uint32_t numMips = depthTex->GetNumMips();
 
 		SEAssert(numMips == 1, "Depth texture has mips. This is unexpected");
 
-		const uint32_t numDescriptors = numFaces * numMips;
+		const uint32_t numDescriptors = depthTex->GetTotalNumSubresources();
+
 		depthTargetPlatParams->m_rtvDsvDescriptors = std::move(
 			context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(numDescriptors));
 		SEAssert(depthTargetPlatParams->m_rtvDsvDescriptors.IsValid(), "DSV descriptor is not valid");
 
+		re::TextureTarget::TargetParams const& targetParams = targetSet.GetDepthStencilTarget()->GetTargetParams();
+
 		// Create the depth-stencil descriptor and view:
-		for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
+		for (uint32_t arrayIdx = 0; arrayIdx < arraySize; arrayIdx++)
 		{
-			for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
+			for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 			{
-				D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-				dsv.Format = depthTexPlatParams->m_format;
-				dsv.Flags = D3D12_DSV_FLAG_NONE;
-
-				switch (numFaces)
+				for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
 				{
-				case 1:
-				{
-					dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-					dsv.Texture2D.MipSlice = 0;
-				}
-				break;
-				case 6:
-				{
-					SEAssert(numFaces == 6 && depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap,
-						"We're currently expecting this to be a cubemap");
+					D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
+					dsv.Format = depthTexPlatParams->m_format;
+					dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-					dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-					dsv.Texture2DArray.MipSlice = mipIdx; // Mip slices include 1 mip level for every texture in an array
-					dsv.Texture2DArray.FirstArraySlice = faceIdx;	// Only view one element of our array
-					dsv.Texture2DArray.ArraySize = 1; // Only view one element of our array
-				}
-				break;
-				default: SEAssertF("Unexpected number of faces");
-				}
+					switch (depthTexParams.m_dimension)
+					{
+					case re::Texture::Texture1D:
+					{
+						SEAssert(depthTexParams.m_arraySize == 1 && depthTexParams.m_faces == 1, "Unexpected configuration");
 
-				const uint32_t descriptorIdx = (faceIdx * numMips) + mipIdx;
+						dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
 
-				device->CreateDepthStencilView(
-					depthTexPlatParams->m_textureResource.Get(),
-					&dsv,
-					depthTargetPlatParams->m_rtvDsvDescriptors[descriptorIdx]);
+						dsv.Texture1D.MipSlice = mipIdx;
+					}
+					break;
+					case re::Texture::Texture1DArray:
+					{
+						SEAssert(depthTexParams.m_faces == 1, "Unexpected configuration");
+
+						dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
+
+						dsv.Texture1DArray.MipSlice = mipIdx;
+						dsv.Texture1DArray.FirstArraySlice = arrayIdx;
+						dsv.Texture1DArray.ArraySize = arraySize - arrayIdx;
+					}
+					break;
+					case re::Texture::Texture2D:
+					{
+						SEAssert(depthTexParams.m_arraySize == 1, "Unexpected array size");
+
+						switch (depthTexParams.m_multisampleMode)
+						{
+						case re::Texture::MultisampleMode::Disabled:
+						{
+							dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+
+							dsv.Texture2D.MipSlice = targetParams.m_targetMip;
+						}
+						break;
+						case re::Texture::MultisampleMode::Enabled:
+						{
+							SEAssertF("TODO: Support multisampling");
+						}
+						break;
+						default: SEAssertF("Invalid multisample mode");
+						}						
+					}
+					break;
+					case re::Texture::Texture2DArray:
+					{
+						SEAssert(depthTexParams.m_faces == 1, "Unexpected configuration");
+
+						switch (depthTexParams.m_multisampleMode)
+						{
+						case re::Texture::MultisampleMode::Disabled:
+						{
+							dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+
+							dsv.Texture2DArray.MipSlice = mipIdx;
+							dsv.Texture2DArray.FirstArraySlice = arrayIdx;
+							dsv.Texture2DArray.ArraySize = arraySize - arrayIdx;
+						}
+						break;
+						case re::Texture::MultisampleMode::Enabled:
+						{
+							SEAssertF("TODO: Support multisampling");
+						}
+						break;
+						default: SEAssertF("Invalid multisample mode");
+						}
+					}
+					break;
+					case re::Texture::TextureCubeMap:
+					{
+						SEAssert(arraySize == 1 && numFaces == 6, "Unexpected array size or number of faces");
+
+						const uint32_t firstArraySlice = (arrayIdx * numFaces) + faceIdx;
+
+						dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+
+						dsv.Texture2DArray.MipSlice = mipIdx; // Mip slices include 1 mip level for every texture in an array
+						dsv.Texture2DArray.FirstArraySlice = firstArraySlice;	// Only view one element of our array
+						dsv.Texture2DArray.ArraySize = 1; // Target: Only view one element of our array
+					}
+					break;
+					case re::Texture::TextureCubeMapArray:
+					{
+						SEAssert(numFaces == 6, "Unexpected number of faces");
+
+						const uint32_t firstArraySlice = (arrayIdx * numFaces) + faceIdx;
+
+						dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+
+						dsv.Texture2DArray.MipSlice = mipIdx; // Mip slices include 1 mip level for every texture in an array
+						dsv.Texture2DArray.FirstArraySlice = firstArraySlice;	// Only view one element of our array
+						dsv.Texture2DArray.ArraySize = arraySize - arrayIdx;;
+					}
+					break;
+					case re::Texture::Texture3D:
+					default: SEAssertF("Invalid texture dimension for a depth target");
+					}
+
+					const uint32_t descriptorIdx = depthTex->GetSubresourceIndex(arrayIdx, faceIdx, mipIdx);
+
+					device->CreateDepthStencilView(
+						depthTexPlatParams->m_textureResource.Get(),
+						&dsv,
+						depthTargetPlatParams->m_rtvDsvDescriptors[descriptorIdx]);
+				}
 			}
 		}
 
