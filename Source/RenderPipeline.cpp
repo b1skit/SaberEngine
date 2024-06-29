@@ -110,11 +110,24 @@ namespace re
 	}
 
 
+	void StagePipeline::PostUpdatePreRender()
+	{
+		SEBeginCPUEvent("StagePipeline::PostUpdatePreRender");
+
+		for (std::shared_ptr<re::RenderStage>& renderStage : m_renderStages)
+		{
+			renderStage->PostUpdatePreRender();
+		}
+
+		SEEndCPUEvent();
+	}
+
+
 	void StagePipeline::EndOfFrame()
 	{
 		SEBeginCPUEvent("StagePipeline::EndOfFrame");
 
-		for (std::shared_ptr<re::RenderStage> renderStage : m_renderStages)
+		for (std::shared_ptr<re::RenderStage>& renderStage : m_renderStages)
 		{
 			renderStage->EndOfFrame();
 		}
@@ -163,5 +176,31 @@ namespace re
 	void RenderPipeline::Destroy()
 	{
 		m_stagePipeline.clear();
+	}
+
+
+	void RenderPipeline::PostUpdatePreRender()
+	{
+		SEBeginCPUEvent(std::format("{} RenderPipeline::PostUpdatePreRender", GetName().c_str()).c_str());
+
+		for (StagePipeline& stagePipeline : m_stagePipeline)
+		{
+			stagePipeline.PostUpdatePreRender();
+		}
+
+		SEEndCPUEvent();
+	}
+
+
+	void RenderPipeline::EndOfFrame()
+	{
+		SEBeginCPUEvent(std::format("{} RenderPipeline::EndOfFrame", GetName().c_str()).c_str());
+
+		for (StagePipeline& stagePipeline : m_stagePipeline)
+		{
+			stagePipeline.EndOfFrame();
+		}
+
+		SEEndCPUEvent();
 	}
 }

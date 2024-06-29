@@ -76,7 +76,7 @@ namespace core::configkeys
 	constexpr util::HashKey k_windowTitleKey		= "windowTitle";
 	constexpr util::HashKey k_windowWidthKey		= "width";
 	constexpr util::HashKey k_windowHeightKey		= "height";
-	constexpr util::HashKey k_numBackbuffersKey		= "numframesinflight"; // DX12 only
+	constexpr util::HashKey k_numBackbuffersKey		= "numframesinflight";
 	constexpr util::HashKey k_vsyncEnabledKey		= "vsync";
 
 	// Control defaults:

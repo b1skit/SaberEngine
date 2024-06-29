@@ -87,7 +87,10 @@ namespace re
 				std::string(core::configkeys::k_glslShaderDirName),
 				core::Config::SettingType::Runtime);
 
-			// Note: OpenGL only supports double-buffering, so we don't add a k_numBackbuffersKey entry
+			config->TrySetValue(
+				core::configkeys::k_numBackbuffersKey,
+				2, // Note: OpenGL only supports double-buffering
+				core::Config::SettingType::Runtime);
 
 			newRenderManager.reset(new opengl::RenderManager());
 		}
@@ -248,6 +251,7 @@ namespace re
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteUpdatePipeline();
+			renderSystem->PostUpdatePreRender();
 		}
 		SEEndCPUEvent();
 
@@ -288,14 +292,7 @@ namespace re
 		{
 			for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 			{
-				re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
-
-				SEBeginCPUEvent(renderSystem->GetName().c_str());
-				for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
-				{
-					stagePipeline.EndOfFrame();
-				}
-				SEEndCPUEvent();
+				renderSystem->EndOfFrame();
 			}
 		}
 		SEEndCPUEvent();

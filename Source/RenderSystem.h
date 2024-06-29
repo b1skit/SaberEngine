@@ -34,6 +34,11 @@ namespace re
 
 
 	public:
+		void PostUpdatePreRender(); // Called after ExecuteUpdatePipeline()
+		void EndOfFrame();
+
+
+	public:
 		gr::GraphicsSystemManager& GetGraphicsSystemManager();
 		gr::GraphicsSystemManager const& GetGraphicsSystemManager() const;
 

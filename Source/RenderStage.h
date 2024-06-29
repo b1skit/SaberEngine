@@ -108,6 +108,7 @@ namespace re
 	public:
 		~RenderStage() = default;
 
+		void PostUpdatePreRender();
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
 
 		bool IsSkippable() const;

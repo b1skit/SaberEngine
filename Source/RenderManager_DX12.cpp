@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
+#include "Buffer_DX12.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
-#include "Buffer_DX12.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
 #include "RenderSystem.h"
@@ -36,7 +36,7 @@ namespace dx12
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		// Prepend DX12-specific render systems:
-		const std::string dx12PlatformPipelineFileName = core::configkeys::k_platformPipelineFileName_DX12;
+		std::string const& dx12PlatformPipelineFileName = core::configkeys::k_platformPipelineFileName_DX12;
 		constexpr char const* k_dx12RenderSystemName = "PlatformDX12";
 		renderManager.CreateAddRenderSystem(k_dx12RenderSystemName, dx12PlatformPipelineFileName);
 	}

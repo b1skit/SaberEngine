@@ -267,9 +267,6 @@ namespace re
 		m_textureTargetSet = targetSet;
 		
 		m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Depth target may have changed
-		UpdateDepthTextureInputIndex();
-
-		ValidateTexturesAndTargets();
 	}
 
 
@@ -326,9 +323,6 @@ namespace re
 				faceIdx,
 				mipLevel });
 		}
-
-		UpdateDepthTextureInputIndex();
-		ValidateTexturesAndTargets();
 	}
 
 
@@ -379,9 +373,6 @@ namespace re
 		}
 #endif
 		m_singleFrameTextureSamplerInputs.emplace_back(shaderName, tex, sampler.get(), arrayElement, faceIdx, mipLevel);
-
-		UpdateDepthTextureInputIndex();
-		ValidateTexturesAndTargets();
 	}
 
 
@@ -423,14 +414,6 @@ namespace re
 					break;
 				}
 			}
-
-#if defined(_DEBUG)
-			for (auto const& singleFrameInput : m_singleFrameTextureSamplerInputs)
-			{
-				SEAssert(singleFrameInput.m_texture != depthTex,
-					"Setting the depth texture as a single frame input is not (currently) supported");
-			}
-#endif
 		}
 	}
 
@@ -481,7 +464,19 @@ namespace re
 			{
 				ValidateInput(batch.GetTextureAndSamplerInputs());
 			}
-			
+
+			// Validate depth texture usage
+			re::TextureTarget const* depthTarget = m_textureTargetSet->GetDepthStencilTarget();
+			if (depthTarget && depthTarget->HasTexture())
+			{
+				re::Texture const* depthTex = depthTarget->GetTexture().get();
+
+				for (auto const& singleFrameInput : m_singleFrameTextureSamplerInputs)
+				{
+					SEAssert(singleFrameInput.m_texture != depthTex,
+						"Setting the depth texture as a single frame input is not (currently) supported");
+				}
+			}
 		}
 #endif
 	}
@@ -493,6 +488,13 @@ namespace re
 			m_type == Type::Parent;
 	}
 	
+
+	void RenderStage::PostUpdatePreRender()
+	{
+		UpdateDepthTextureInputIndex();
+		ValidateTexturesAndTargets(); // _DEBUG only
+	}
+
 
 	void RenderStage::EndOfFrame()
 	{

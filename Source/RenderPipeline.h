@@ -34,6 +34,9 @@ namespace re
 
 		std::list<std::shared_ptr<re::RenderStage>> const& GetRenderStages() const;
 
+
+	public:
+		void PostUpdatePreRender();
 		void EndOfFrame(); // Calls RenderStage::EndOfFrame, clears single frame data etc
 
 
@@ -62,6 +65,13 @@ namespace re
 
 		void Destroy();
 
+
+	public:
+		void PostUpdatePreRender();
+		void EndOfFrame();
+
+
+	public:
 		StagePipeline& AddNewStagePipeline(std::string const& stagePipelineName);
 
 		std::vector<StagePipeline>& GetStagePipeline();

@@ -400,6 +400,18 @@ namespace re
 	}
 
 
+	void RenderSystem::PostUpdatePreRender()
+	{
+		m_renderPipeline.PostUpdatePreRender();
+	}
+
+
+	void RenderSystem::EndOfFrame()
+	{
+		m_renderPipeline.EndOfFrame();
+	}
+
+
 	void RenderSystem::BuildPipeline(RenderSystemDescription const& renderSysDesc)
 	{
 		// Create the GrpahicsSystems:

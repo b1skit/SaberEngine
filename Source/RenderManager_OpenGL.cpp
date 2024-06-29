@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Context_OpenGL.h"
 #include "Buffer_OpenGL.h"
+#include "Context_OpenGL.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"
