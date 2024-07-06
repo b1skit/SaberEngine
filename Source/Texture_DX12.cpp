@@ -453,7 +453,7 @@ namespace
 						uavDesc.Texture1DArray = D3D12_TEX1D_ARRAY_UAV{
 							.MipSlice = mipIdx,
 							.FirstArraySlice = arrayIdx,
-							.ArraySize = arraySize - arrayIdx,
+							.ArraySize = 1,
 						};
 					}
 					break;
@@ -477,7 +477,7 @@ namespace
 						uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{
 							.MipSlice = mipIdx,
 							.FirstArraySlice = arrayIdx,
-							.ArraySize = arraySize - arrayIdx,
+							.ArraySize = 1,
 							.PlaneSlice = 0 };
 					}
 					break;
@@ -503,7 +503,7 @@ namespace
 						uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{
 							.MipSlice = mipIdx,
 							.FirstArraySlice = faceIdx,
-							.ArraySize = texParams.m_faces - faceIdx, // Only view one element of our array
+							.ArraySize = 1, // Only view one element of our array
 							.PlaneSlice = 0 }; // "Only Plane Slice 0 is valid when creating a view on a non-planar format"
 					}
 					break;
@@ -517,7 +517,7 @@ namespace
 						uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{
 							.MipSlice = mipIdx,
 							.FirstArraySlice = firstArraySlice,
-							.ArraySize = (texParams.m_arraySize * texParams.m_faces) - firstArraySlice, // Only view one element of our array
+							.ArraySize = 1, // Only view one element of our array
 							.PlaneSlice = 0 }; // "Only Plane Slice 0 is valid when creating a view on a non-planar format"
 					}
 					break;
@@ -1215,6 +1215,129 @@ namespace dx12
 		texPlatParams->m_textureResource->SetName(wideName.c_str());
 
 		return newTexture;
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetSRV(
+		D3D12_SRV_DIMENSION srvDimension,
+		re::Texture const* texture, 
+		uint32_t arrayIdx, 
+		uint32_t faceIdx, 
+		uint32_t mipIdx)
+	{
+		SEAssert(texture, "Trying to get an SRV for a null texture");
+
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+		dx12::Texture::PlatformParams const* texPlatParams =
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+		uint32_t descriptorIdx = 0;
+
+		// Get the appropriate cpu-visible SRV index::
+		switch (srvDimension)
+		{
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1D:
+		{
+			SEAssert(texParams.m_dimension == re::Texture::Texture1D,
+				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
+
+			descriptorIdx = re::Texture::Texture1D;
+		}
+		break;
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
+		{
+			SEAssert(texParams.m_dimension == re::Texture::Texture1D ||
+				texParams.m_dimension == re::Texture::Texture1DArray,
+				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
+
+			descriptorIdx = re::Texture::Texture1DArray;
+		}
+		break;
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2D:
+		{
+			SEAssert(texParams.m_dimension == re::Texture::Texture2D,
+				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
+
+			descriptorIdx = re::Texture::Texture2D;
+		}
+		break;
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+		{
+			SEAssert(texParams.m_dimension == re::Texture::Texture2D ||
+				texParams.m_dimension == re::Texture::Texture2DArray ||
+				texParams.m_dimension == re::Texture::TextureCubeMap ||
+				texParams.m_dimension == re::Texture::TextureCubeMapArray,
+				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
+
+			descriptorIdx = re::Texture::Texture2DArray;
+		}
+		break;
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DMS:
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
+		{
+			SEAssert(texParams.m_dimension == re::Texture::Texture2D,
+				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
+
+			SEAssertF("TODO: Support this dimension");
+		}
+		break;
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE3D:
+		{
+			SEAssert(texParams.m_dimension == re::Texture::Texture3D,
+				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
+
+			descriptorIdx = re::Texture::Texture3D;
+		}
+		break;
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBE:
+		{
+			SEAssert(texParams.m_dimension == re::Texture::TextureCubeMap,
+				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
+
+			descriptorIdx = re::Texture::TextureCubeMap;
+		}
+		break;
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
+		{
+			SEAssert(texParams.m_dimension == re::Texture::TextureCubeMap ||
+				texParams.m_dimension == re::Texture::TextureCubeMapArray,
+				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
+
+			descriptorIdx = re::Texture::TextureCubeMapArray;
+		}
+		break;
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_UNKNOWN:
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER:
+		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE:
+		default: SEAssertF("Invalid/unexpected table entry type");
+		}
+
+		SEAssert(descriptorIdx < texPlatParams->m_srvCpuDescAllocations.GetNumDescriptors(),
+			"Descriptor index is OOB");
+
+		return texPlatParams->m_srvCpuDescAllocations[descriptorIdx];
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetUAV(
+		D3D12_UAV_DIMENSION uavDimension,
+		re::Texture const* texture, 
+		uint32_t arrayIdx, 
+		uint32_t faceIdx, 
+		uint32_t mipIdx)
+	{
+		SEAssert(texture, "Trying to get an SRV for a null texture");
+
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+		dx12::Texture::PlatformParams const* texPlatParams =
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+		const uint32_t descriptorIdx = texture->GetSubresourceIndex(arrayIdx, faceIdx, mipIdx);
+
+		SEAssert(descriptorIdx < texPlatParams->m_uavCpuDescAllocations.GetNumDescriptors(),
+			"UAV descriptor index is OOB");
+
+		return texPlatParams->m_uavCpuDescAllocations[descriptorIdx];
 	}
 
 

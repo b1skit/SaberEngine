@@ -70,12 +70,12 @@ namespace dx12
 		void SetGraphicsRootSignature(dx12::RootSignature const* rootSig); // Makes all descriptors stale
 		void SetComputeRootSignature(dx12::RootSignature const* rootSig); // Makes all descriptors stale
 
-		// GPU descriptors:
-		void CommitGPUDescriptors(); // Must be called before issuing draw commands
-		void SetBuffer(re::Buffer const*);
+		void CommitGPUDescriptors(); // GPU descriptors: Must be called before issuing draw commands
 
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
+
+		void SetBuffer(re::Buffer const*);
 
 		void SetTexture(re::TextureAndSamplerInput const&, bool skipTransition); // Note: Sampler is not used here
 

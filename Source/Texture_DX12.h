@@ -40,6 +40,11 @@ namespace dx12
 
 		static DXGI_FORMAT GetTextureFormat(re::Texture::TextureParams const&);
 
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRV(
+			D3D12_SRV_DIMENSION, re::Texture const*, uint32_t arrayIdx, uint32_t faceIdx, uint32_t mipIdx);
+
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(
+			D3D12_UAV_DIMENSION, re::Texture const*, uint32_t arrayIdx, uint32_t faceIdx, uint32_t mipIdx);
 
 		// Platform functionality:
 		static void Destroy(re::Texture&);

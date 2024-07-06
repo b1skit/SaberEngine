@@ -37,6 +37,8 @@ namespace re
 			uint32_t m_targetFace = 0;
 			uint32_t m_targetMip = 0;
 
+			// TODO: Support binding compute targets by name
+
 			// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
 			// TODO: We should support alpha blend modes, in addition to the color blend modes here
 			// TODO: Support logical operations (AND/OR/XOR etc)

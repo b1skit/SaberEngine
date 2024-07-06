@@ -56,6 +56,7 @@ namespace dx12
 		{
 			return;
 		}
+
 		dx12::TextureTargetSet::PlatformParams* texTargetSetPlatParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 		SEAssert(texTargetSetPlatParams->m_isCommitted, "Target set has not been committed");
@@ -90,15 +91,15 @@ namespace dx12
 
 				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
 
-				SEAssert(targetPlatParams->m_rtvDsvDescriptors.IsValid() == false,
+				SEAssert(targetPlatParams->m_subresourceDescriptors.IsValid() == false,
 					"RTVs have already been allocated. This is unexpected");
 
-				// Allocate descriptors for our RTVs:
+				// Create per-subresource RTVs:
 				const uint32_t arraySize = texParams.m_arraySize;
 				const uint32_t numFaces = texParams.m_faces;
 				const uint32_t numMips = colorTex->GetNumMips();
 
-				const uint32_t numDescriptors = colorTex->GetTotalNumSubresources();
+				const uint32_t numSubresourceDescriptors = colorTex->GetTotalNumSubresources();
 
 				SEAssert(targetParams.m_targetFace < numFaces && (numFaces == 1 || numFaces == 6),
 					"Invalid face configuration");
@@ -109,9 +110,9 @@ namespace dx12
 							texParams.m_dimension == re::Texture::Dimension::TextureCubeMapArray)),
 					"Invalid face/dimension configuration");
 
-				targetPlatParams->m_rtvDsvDescriptors = std::move(
-					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(numDescriptors));
-				SEAssert(targetPlatParams->m_rtvDsvDescriptors.IsValid(), "RTV descriptor is not valid");
+				targetPlatParams->m_subresourceDescriptors = std::move(context->GetCPUDescriptorHeapMgr(
+					CPUDescriptorHeapManager::HeapType::RTV).Allocate(numSubresourceDescriptors));
+				SEAssert(targetPlatParams->m_subresourceDescriptors.IsValid(), "RTV descriptor is not valid");
 
 				for (uint32_t arrayIdx = 0; arrayIdx < arraySize; arrayIdx++)
 				{
@@ -145,26 +146,24 @@ namespace dx12
 								{
 									.MipSlice = mipIdx,
 									.FirstArraySlice = arrayIdx,
-									.ArraySize = arraySize - arrayIdx,
+									.ArraySize = 1,
 								};
 							}
 							break;
 							case re::Texture::Texture2D:
 							{
-								SEAssert(texParams.m_arraySize == 1, "Unexpected array size");
+								SEAssert(texParams.m_arraySize == 1 && texParams.m_faces == 1, "Unexpected size params");
 
 								switch (texParams.m_multisampleMode)
 								{
 								case re::Texture::MultisampleMode::Disabled:
 								{
-									const uint32_t planeSlice = (arrayIdx * numFaces) + faceIdx;
-
 									renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
 									renderTargetViewDesc.Texture2D = D3D12_TEX2D_RTV
 									{
 										.MipSlice = targetParams.m_targetMip,
-										.PlaneSlice = planeSlice
+										.PlaneSlice = 0
 									};
 								}
 								break;
@@ -187,14 +186,12 @@ namespace dx12
 								{
 									renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 									
-									const uint32_t planeSlice = (arrayIdx * numFaces) + faceIdx;
-
 									renderTargetViewDesc.Texture2DArray = D3D12_TEX2D_ARRAY_RTV
 									{
 										.MipSlice = targetParams.m_targetMip,
 										.FirstArraySlice = arrayIdx,
-										.ArraySize = arraySize - arrayIdx,
-										.PlaneSlice = planeSlice,
+										.ArraySize = 1,
+										.PlaneSlice = arrayIdx,
 									};
 								}
 								break;
@@ -260,12 +257,59 @@ namespace dx12
 							default: SEAssertF("Invalid texture dimension for a depth target");
 							}
 
-							const uint32_t descriptorIdx = colorTex->GetSubresourceIndex(arrayIdx, faceIdx, mipIdx);
+							const uint32_t descriptorIdx = 
+								dx12::TextureTarget::GetTargetDescriptorIndex(colorTex, arrayIdx, faceIdx, mipIdx);
 
 							device->CreateRenderTargetView(
 								texPlatParams->m_textureResource.Get(),
 								&renderTargetViewDesc,
-								targetPlatParams->m_rtvDsvDescriptors[descriptorIdx]);
+								targetPlatParams->m_subresourceDescriptors[descriptorIdx]);
+						}
+					}
+				}
+
+				// Cubemap descriptors:
+				if (texParams.m_dimension == re::Texture::Dimension::TextureCubeMap ||
+					texParams.m_dimension == re::Texture::Dimension::TextureCubeMapArray)
+				{
+					SEAssert(targetPlatParams->m_cubemapDescriptors.IsValid() == false,
+						"Cubemap RTVs have already been allocated. This is unexpected");
+
+					SEAssert(numFaces == 6, "Unexpected number of faces");
+
+					const uint32_t numCubemapDescriptors = 
+						dx12::TextureTarget::GetNumRequiredCubemapTargetDescriptors(colorTex);
+
+					targetPlatParams->m_cubemapDescriptors = std::move(context->GetCPUDescriptorHeapMgr(
+						CPUDescriptorHeapManager::HeapType::RTV).Allocate(numCubemapDescriptors));
+					SEAssert(targetPlatParams->m_cubemapDescriptors.IsValid(), "Cubemap RTV descriptors are not valid");
+
+					// Create a descriptor to view the whole cubemap for each mip level of each array element
+					for (uint32_t arrayIdx = 0; arrayIdx < arraySize; arrayIdx++)
+					{
+						for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
+						{
+							D3D12_RENDER_TARGET_VIEW_DESC cubemapViewDesc{};
+							cubemapViewDesc.Format = texPlatParams->m_format;
+							cubemapViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+
+							const uint32_t firstArraySlice = (arrayIdx * numFaces);
+
+							cubemapViewDesc.Texture2DArray = D3D12_TEX2D_ARRAY_RTV
+							{
+								.MipSlice = mipIdx,	// Mip slices include 1 mip level for every texture in an array
+								.FirstArraySlice = firstArraySlice,
+								.ArraySize = numFaces,
+								.PlaneSlice = 0	// "Only Plane Slice 0 is valid when creating a view on a non-planar format"
+							};
+
+							const uint32_t descriptorIdx = dx12::TextureTarget::GetTargetDescriptorIndex(
+								colorTex, arrayIdx, re::Texture::k_allFaces, mipIdx);
+
+							device->CreateRenderTargetView(
+								texPlatParams->m_textureResource.Get(),
+								&cubemapViewDesc,
+								targetPlatParams->m_cubemapDescriptors[descriptorIdx]);
 						}
 					}
 				}
@@ -286,12 +330,14 @@ namespace dx12
 		SEAssert(targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>()->m_isCommitted,
 			"Target set has not been committed");
 
+		re::TextureTarget const* depthTarget = targetSet.GetDepthStencilTarget();
+
 		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
-			targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+			depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 		SEAssert(!depthTargetPlatParams->m_isCreated, "Target has already been created");
 		depthTargetPlatParams->m_isCreated = true;
 
-		re::Texture const* depthTex = targetSet.GetDepthStencilTarget()->GetTexture().get();
+		re::Texture const* depthTex = depthTarget->GetTexture().get();
 		re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
 		SEAssert(depthTexParams.m_usage & re::Texture::Usage::DepthTarget,
 			"Target does not have the depth target usage type");
@@ -310,7 +356,7 @@ namespace dx12
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
-		SEAssert(depthTargetPlatParams->m_rtvDsvDescriptors.IsValid() == false,
+		SEAssert(depthTargetPlatParams->m_subresourceDescriptors.IsValid() == false,
 			"DSVs have already been allocated. This is unexpected");
 
 		const uint32_t arraySize = depthTexParams.m_arraySize;
@@ -319,15 +365,15 @@ namespace dx12
 
 		SEAssert(numMips == 1, "Depth texture has mips. This is unexpected");
 
-		const uint32_t numDescriptors = depthTex->GetTotalNumSubresources();
+		const uint32_t numSubresourceDescriptors = depthTex->GetTotalNumSubresources();
 
-		depthTargetPlatParams->m_rtvDsvDescriptors = std::move(
-			context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(numDescriptors));
-		SEAssert(depthTargetPlatParams->m_rtvDsvDescriptors.IsValid(), "DSV descriptor is not valid");
+		depthTargetPlatParams->m_subresourceDescriptors = std::move(context->GetCPUDescriptorHeapMgr(
+			CPUDescriptorHeapManager::HeapType::DSV).Allocate(numSubresourceDescriptors));
+		SEAssert(depthTargetPlatParams->m_subresourceDescriptors.IsValid(), "DSV descriptor is not valid");
 
-		re::TextureTarget::TargetParams const& targetParams = targetSet.GetDepthStencilTarget()->GetTargetParams();
+		re::TextureTarget::TargetParams const& targetParams = depthTarget->GetTargetParams();
 
-		// Create the depth-stencil descriptor and view:
+		// Create per-subresource DSVs:
 		for (uint32_t arrayIdx = 0; arrayIdx < arraySize; arrayIdx++)
 		{
 			for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
@@ -342,7 +388,9 @@ namespace dx12
 					{
 					case re::Texture::Texture1D:
 					{
-						SEAssert(depthTexParams.m_arraySize == 1 && depthTexParams.m_faces == 1, "Unexpected configuration");
+						SEAssert(depthTexParams.m_arraySize == 1 &&
+							depthTexParams.m_faces == 1,
+							"Unexpected configuration");
 
 						dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
 
@@ -357,12 +405,14 @@ namespace dx12
 
 						dsv.Texture1DArray.MipSlice = mipIdx;
 						dsv.Texture1DArray.FirstArraySlice = arrayIdx;
-						dsv.Texture1DArray.ArraySize = arraySize - arrayIdx;
+						dsv.Texture1DArray.ArraySize = 1;
 					}
 					break;
 					case re::Texture::Texture2D:
 					{
-						SEAssert(depthTexParams.m_arraySize == 1, "Unexpected array size");
+						SEAssert(depthTexParams.m_arraySize == 1 &&
+							depthTexParams.m_faces == 1,
+							"Unexpected size params");
 
 						switch (depthTexParams.m_multisampleMode)
 						{
@@ -394,7 +444,7 @@ namespace dx12
 
 							dsv.Texture2DArray.MipSlice = mipIdx;
 							dsv.Texture2DArray.FirstArraySlice = arrayIdx;
-							dsv.Texture2DArray.ArraySize = arraySize - arrayIdx;
+							dsv.Texture2DArray.ArraySize = 1;
 						}
 						break;
 						case re::Texture::MultisampleMode::Enabled:
@@ -429,19 +479,20 @@ namespace dx12
 
 						dsv.Texture2DArray.MipSlice = mipIdx; // Mip slices include 1 mip level for every texture in an array
 						dsv.Texture2DArray.FirstArraySlice = firstArraySlice;	// Only view one element of our array
-						dsv.Texture2DArray.ArraySize = arraySize - arrayIdx;;
+						dsv.Texture2DArray.ArraySize = 1;
 					}
 					break;
 					case re::Texture::Texture3D:
 					default: SEAssertF("Invalid texture dimension for a depth target");
 					}
 
-					const uint32_t descriptorIdx = depthTex->GetSubresourceIndex(arrayIdx, faceIdx, mipIdx);
+					const uint32_t descriptorIdx = 
+						dx12::TextureTarget::GetTargetDescriptorIndex(depthTex, arrayIdx, faceIdx, mipIdx);
 
 					device->CreateDepthStencilView(
 						depthTexPlatParams->m_textureResource.Get(),
 						&dsv,
-						depthTargetPlatParams->m_rtvDsvDescriptors[descriptorIdx]);
+						depthTargetPlatParams->m_subresourceDescriptors[descriptorIdx]);
 				}
 			}
 		}
@@ -450,24 +501,46 @@ namespace dx12
 		if (depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap ||
 			depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMapArray)
 		{
-			depthTargetPlatParams->m_cubemapDescriptor = 
-				std::move(context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1));
-			SEAssert(depthTargetPlatParams->m_cubemapDescriptor.IsValid(), "Cube DSV descriptor is not valid");
+			SEAssert(depthTargetPlatParams->m_cubemapDescriptors.IsValid() == false,
+				"Cubemap DSVs have already been allocated. This is unexpected");
 
-			const uint32_t numSlices = depthTexParams.m_arraySize * depthTexParams.m_faces;
+			SEAssert(numFaces == 6, "Unexpected number of faces");
 
-			D3D12_DEPTH_STENCIL_VIEW_DESC cubeDsv = {};
-			cubeDsv.Format = depthTexPlatParams->m_format;
-			cubeDsv.Flags = D3D12_DSV_FLAG_NONE;
-			cubeDsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-			cubeDsv.Texture2DArray.MipSlice = 0; // Mip slices include 1 mip level for every texture in an array
-			cubeDsv.Texture2DArray.FirstArraySlice = 0;	// Only view one element of our array
-			cubeDsv.Texture2DArray.ArraySize = numSlices;
+			const uint32_t numCubemapDescriptors = 
+				dx12::TextureTarget::GetNumRequiredCubemapTargetDescriptors(depthTex);
 
-			device->CreateDepthStencilView(
-				depthTexPlatParams->m_textureResource.Get(),
-				&cubeDsv,
-				depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor());
+			depthTargetPlatParams->m_cubemapDescriptors = std::move(context->GetCPUDescriptorHeapMgr(
+				CPUDescriptorHeapManager::HeapType::DSV).Allocate(numCubemapDescriptors));
+			SEAssert(depthTargetPlatParams->m_cubemapDescriptors.IsValid(), "Cube DSV descriptors are not valid");
+
+			// Create a descriptor to view the whole cubemap for each mip level of each array element
+			for (uint32_t arrayIdx = 0; arrayIdx < arraySize; arrayIdx++)
+			{
+				for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
+				{
+					D3D12_DEPTH_STENCIL_VIEW_DESC cubeDsv = {};
+					cubeDsv.Format = depthTexPlatParams->m_format;
+					cubeDsv.Flags = D3D12_DSV_FLAG_NONE;
+					cubeDsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+
+					const uint32_t firstArraySlice = (arrayIdx * numFaces);
+
+					cubeDsv.Texture2DArray = D3D12_TEX2D_ARRAY_DSV
+					{
+						.MipSlice = mipIdx,
+						.FirstArraySlice = firstArraySlice,
+						.ArraySize = numFaces,
+					};
+
+					const uint32_t descriptorIdx = dx12::TextureTarget::GetTargetDescriptorIndex(
+						depthTex, arrayIdx, re::Texture::k_allFaces, mipIdx);
+
+					device->CreateDepthStencilView(
+						depthTexPlatParams->m_textureResource.Get(),
+						&cubeDsv,
+						depthTargetPlatParams->m_cubemapDescriptors[descriptorIdx]);
+				}
+			}			
 		}
 	}
 
@@ -495,5 +568,82 @@ namespace dx12
 		colorTargetFormats.NumRenderTargets = numTargets;
 
 		return colorTargetFormats;
+	}
+
+
+	uint32_t TextureTarget::GetTargetDescriptorIndex(
+		re::Texture const* texture, uint32_t arrayIdx, uint32_t faceIdx, uint32_t mipIdx)
+	{
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+
+		const uint32_t numMips = texture->GetNumMips();
+
+		if ((texParams.m_dimension == re::Texture::TextureCubeMap ||
+			texParams.m_dimension == re::Texture::TextureCubeMapArray) &&
+			faceIdx == re::Texture::k_allFaces)
+		{
+			SEAssert(arrayIdx < texParams.m_arraySize && mipIdx < numMips,
+				"OOB cubemap descriptor index");
+
+			return (arrayIdx * numMips) + mipIdx;
+		}
+		else
+		{
+			SEAssert(arrayIdx < texParams.m_arraySize && faceIdx < texParams.m_faces && mipIdx < numMips,
+				"OOB target descriptor index");
+
+			return texture->GetSubresourceIndex(arrayIdx, faceIdx, mipIdx);
+		}
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE TextureTarget::GetTargetDescriptor(re::TextureTarget const& texTarget)
+	{
+		SEAssert(texTarget.HasTexture(), "Trying to get a descriptor for a target with no texture");
+
+		re::TextureTarget::TargetParams const& targetParams = texTarget.GetTargetParams();
+
+		dx12::TextureTarget::PlatformParams* targetPlatParams =
+			texTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+
+		re::Texture const* texture = texTarget.GetTexture().get();
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+
+		dx12::DescriptorAllocation const* descriptors = nullptr;
+
+		// TODO: Allow selection of DSVs created with depth writes disabled
+		if ((texParams.m_dimension == re::Texture::TextureCubeMap ||
+			texParams.m_dimension == re::Texture::TextureCubeMapArray) &&
+			targetParams.m_targetFace == re::Texture::k_allFaces)
+		{
+			descriptors = &targetPlatParams->m_cubemapDescriptors;
+		}
+		else
+		{
+			descriptors = &targetPlatParams->m_subresourceDescriptors;
+		}
+
+		const uint32_t descriptorIdx = dx12::TextureTarget::GetTargetDescriptorIndex(
+			texture,
+			targetParams.m_targetArrayIdx,
+			targetParams.m_targetFace,
+			targetParams.m_targetMip);
+
+		return (*descriptors)[descriptorIdx];
+	}
+
+
+	uint32_t TextureTarget::GetNumRequiredCubemapTargetDescriptors(re::Texture const* texture)
+	{
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+
+		if (texParams.m_dimension == re::Texture::TextureCubeMap ||
+			texParams.m_dimension == re::Texture::TextureCubeMapArray)
+		{
+			SEAssert(texParams.m_faces == 6, "Unexpected number of faces");
+
+			return texParams.m_arraySize * texture->GetNumMips();
+		}
+		return 0;
 	}
 }

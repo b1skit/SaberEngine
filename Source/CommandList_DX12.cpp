@@ -563,13 +563,9 @@ namespace dx12
 			SEAssert((depthTexParams.m_usage & re::Texture::Usage::DepthTarget) != 0,
 				"Target texture must be a depth target");
 
-			const uint32_t numDepthMips = depthTex->GetNumMips();
-			SEAssert(numDepthMips == 1, "Depth target has mips. This is unexpected");
+			SEAssert(depthTex->GetNumMips() == 1, "Depth target has mips. This is (currently) unexpected");
 
 			re::TextureTarget::TargetParams const& depthTargetParams = depthTarget->GetTargetParams();
-
-			dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
-				depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 			// Ensure we're in a depth write state:
 			TransitionResource(
@@ -579,36 +575,15 @@ namespace dx12
 				depthTargetParams.m_targetFace, 
 				depthTargetParams.m_targetMip);
 
-			if (depthTexParams.m_dimension == re::Texture::TextureCubeMap || 
-				depthTexParams.m_dimension == re::Texture::TextureCubeMapArray)
-			{
-				SEAssert(depthTargetParams.m_targetFace == re::Texture::k_allFaces,
-					"We're currently expecting to be clearing all faces. This isn't mandatory, just unexpected for now");
+			const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = dx12::TextureTarget::GetTargetDescriptor(*depthTarget);
 
-				D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
-					depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor();
-
-				m_commandList->ClearDepthStencilView(
-					dsvDescriptor,
-					D3D12_CLEAR_FLAG_DEPTH,
-					depthTexParams.m_clear.m_depthStencil.m_depth,
-					depthTexParams.m_clear.m_depthStencil.m_stencil,
-					0,
-					nullptr);
-			}
-			else
-			{
-				D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
-					depthTargetPlatParams->m_rtvDsvDescriptors[depthTarget->GetTargetParams().m_targetFace];
-
-				m_commandList->ClearDepthStencilView(
-					dsvDescriptor,
-					D3D12_CLEAR_FLAG_DEPTH,
-					depthTexParams.m_clear.m_depthStencil.m_depth,
-					depthTexParams.m_clear.m_depthStencil.m_stencil,
-					0,
-					nullptr);
-			}
+			m_commandList->ClearDepthStencilView(
+				targetDescriptor,
+				D3D12_CLEAR_FLAG_DEPTH,
+				depthTexParams.m_clear.m_depthStencil.m_depth,
+				depthTexParams.m_clear.m_depthStencil.m_stencil,
+				0,
+				nullptr);
 		}
 	}
 
@@ -637,11 +612,10 @@ namespace dx12
 				D3D12_RESOURCE_STATE_RENDER_TARGET, 
 				subresourceIdx);
 
-			dx12::TextureTarget::PlatformParams* targetPlatParams =
-				colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+			const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = dx12::TextureTarget::GetTargetDescriptor(*colorTarget);
 
 			m_commandList->ClearRenderTargetView(
-				targetPlatParams->m_rtvDsvDescriptors[subresourceIdx],
+				targetDescriptor,
 				&colorTargetTex->GetTextureParams().m_clear.m_color.r,
 				0,			// Number of rectangles in the proceeding D3D12_RECT ptr
 				nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
@@ -702,20 +676,12 @@ namespace dx12
 					targetParams.m_targetFace, 
 					targetParams.m_targetMip));
 
-			const uint32_t subresourceIdx = targetTexture->GetSubresourceIndex(
-				targetParams.m_targetArrayIdx,
-				targetParams.m_targetFace,
-				targetParams.m_targetMip);
-
-			dx12::TextureTarget::PlatformParams* targetPlatParams =
-				target.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+			const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = dx12::TextureTarget::GetTargetDescriptor(target);
 
 			// Attach the RTV for the target face:
-			colorTargetDescriptors.emplace_back(
-				targetPlatParams->m_rtvDsvDescriptors[subresourceIdx]);
+			colorTargetDescriptors.emplace_back(targetDescriptor);
 		}
 
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor{};
 		re::TextureTarget const* depthStencilTarget = targetSet.GetDepthStencilTarget();
 		if (depthStencilTarget)
 		{
@@ -731,33 +697,18 @@ namespace dx12
 				D3D12_RESOURCE_STATE_DEPTH_WRITE :
 				(D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-			dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
-				depthStencilTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-
 			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
 
-			if (depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap ||
-				depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMapArray)
+			if ((depthTexParams.m_dimension == re::Texture::TextureCubeMap ||
+				depthTexParams.m_dimension == re::Texture::TextureCubeMapArray) &&
+				depthTargetParams.m_targetFace == re::Texture::k_allFaces)
 			{
-				SEAssert(depthTargetParams.m_targetFace == re::Texture::k_allFaces,
-					"We're (currently) expecting a cubemap will target all faces (and thus transition all mip faces)");
-
 				TransitionResource(
-					depthTex, 
-					depthState, 
-					depthTargetParams.m_targetArrayIdx, 
-					depthTargetParams.m_targetFace, 
+					depthTex,
+					depthState,
+					depthTargetParams.m_targetArrayIdx,
+					depthTargetParams.m_targetFace,
 					depthTargetParams.m_targetMip);
-
-				if (depthWriteEnabled)
-				{
-					dsvDescriptor = depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor();
-				}
-				else
-				{
-					// TODO: Select a cube DSV that is created with depth writes disabled
-					dsvDescriptor = depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor();
-				}
 			}
 			else
 			{
@@ -770,20 +721,16 @@ namespace dx12
 					depthTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 				TransitionResource(texPlatParams->m_textureResource.Get(), depthState, subresourceIdx);
-
-				if (depthWriteEnabled)
-				{
-					dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx];
-				}
-				else
-				{
-					// TODO: Select a DSV that is created with depth writes disabled
-					dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx];
-				}
 			}
 		}
 
 		const uint32_t numColorTargets = targetSet.GetNumColorTargets();
+
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor{};
+		if (depthStencilTarget)
+		{
+			dsvDescriptor = dx12::TextureTarget::GetTargetDescriptor(*depthStencilTarget);
+		}
 
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
 		// descriptors will be found by offsetting from rtvs[0]. Otherwise, it is assumed rtvs is an array of descriptor
@@ -792,7 +739,7 @@ namespace dx12
 			numColorTargets,
 			colorTargetDescriptors.data(),
 			false,			// Our render target descriptors (currently) aren't guaranteed to be in a contiguous range
-			dsvDescriptor.ptr == 0 ? nullptr : &dsvDescriptor);
+			depthStencilTarget ? &dsvDescriptor : nullptr);
 
 		// Set the viewport and scissor rectangles:
 		SetViewport(targetSet);
@@ -824,16 +771,13 @@ namespace dx12
 			{
 				break; // Targets must be bound in monotonically-increasing order from slot 0
 			}			
-			re::Texture const* colorTex = colorTarget.GetTexture().get();
-
-			SEAssert((colorTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0,
-				"It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader");
 
 			// We bind by name, but effectively UAVs targets are (currently) bound to slots[0, 7]
 			RootSignature::RootParameter const* rootSigEntry = 
 				m_currentRootSignature->GetRootSignatureEntry(k_uavTexTargetNames[i]);
 
-			SEAssert(rootSigEntry || core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			SEAssert(rootSigEntry || 
+				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");
 
 			if (rootSigEntry)
@@ -844,24 +788,28 @@ namespace dx12
 				SEAssert(rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV,
 					"Compute shaders can only write to UAVs");
 
-				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
-				re::Texture::TextureParams const& texParams = colorTex->GetTextureParams();
-				dx12::Texture::PlatformParams const* texPlatParams =
-					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+				re::Texture const* colorTex = colorTarget.GetTexture().get();
 
-				const uint32_t numMips = colorTex->GetNumMips();
-				
-				const uint32_t descriptorIdx = colorTex->GetSubresourceIndex(
-					targetParams.m_targetArrayIdx, targetParams.m_targetFace, targetParams.m_targetMip);
+				SEAssert((colorTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0,
+					"It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader");
 
-				SEAssert(descriptorIdx < texPlatParams->m_uavCpuDescAllocations.GetNumDescriptors(),
-					"UAV descriptor index is OOB");
+				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();			
+
+				const D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptor = dx12::Texture::GetUAV(
+					rootSigEntry->m_tableEntry.m_uavViewDimension,
+					colorTex,
+					targetParams.m_targetArrayIdx,
+					targetParams.m_targetFace, 
+					targetParams.m_targetMip);
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 					rootSigEntry->m_index,
-					texPlatParams->m_uavCpuDescAllocations[descriptorIdx],
+					uavDescriptor,
 					rootSigEntry->m_tableEntry.m_offset,
 					1);
+
+				dx12::Texture::PlatformParams const* texPlatParams =
+					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 				// We're writing to a UAV, we may need a UAV barrier:
 				ID3D12Resource* resource = texPlatParams->m_textureResource.Get();
@@ -1077,9 +1025,9 @@ namespace dx12
 			SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable,
 				"We currently assume all textures belong to descriptor tables");
 
-			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
+			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
-			uint32_t descriptorIdx = 0;
+			D3D12_CPU_DESCRIPTOR_HANDLE descriptor{};
 
 			switch (rootSigEntry->m_tableEntry.m_type)
 			{
@@ -1088,109 +1036,32 @@ namespace dx12
 				SEAssert(m_d3dType == D3D12_COMMAND_LIST_TYPE_COMPUTE || m_d3dType == D3D12_COMMAND_LIST_TYPE_DIRECT,
 					"Unexpected command list type");
 
-				toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 				if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE)
 				{
 					toState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 				}
 
-				// Get the appropriate cpu-visible SRV index::
-				switch (rootSigEntry->m_tableEntry.m_srvViewDimension)
-				{
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1D:
-				{
-					SEAssert(texParams.m_dimension == re::Texture::Texture1D,
-						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-					descriptorIdx = re::Texture::Texture1D;
-				}
-				break;
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
-				{
-					SEAssert(texParams.m_dimension == re::Texture::Texture1D ||
-						texParams.m_dimension == re::Texture::Texture1DArray,
-						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-					descriptorIdx = re::Texture::Texture1DArray;
-				}
-				break;
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2D:
-				{
-					SEAssert(texParams.m_dimension == re::Texture::Texture2D,
-						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-					descriptorIdx = re::Texture::Texture2D;
-				}
-				break;
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
-				{
-					SEAssert(texParams.m_dimension == re::Texture::Texture2D ||
-						texParams.m_dimension == re::Texture::Texture2DArray ||
-						texParams.m_dimension == re::Texture::TextureCubeMap ||
-						texParams.m_dimension == re::Texture::TextureCubeMapArray,
-						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-					descriptorIdx = re::Texture::Texture2DArray;
-				}
-				break;
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DMS:
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
-				{
-					SEAssert(texParams.m_dimension == re::Texture::Texture2D,
-						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-					SEAssertF("TODO: Support this dimension");
-				}
-				break;
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE3D:
-				{
-					SEAssert(texParams.m_dimension == re::Texture::Texture3D,
-						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-					descriptorIdx = re::Texture::Texture3D;
-				}
-				break;
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBE:
-				{
-					SEAssert(texParams.m_dimension == re::Texture::TextureCubeMap,
-						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-					descriptorIdx = re::Texture::TextureCubeMap;
-				}
-				break;
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
-				{
-					SEAssert(texParams.m_dimension == re::Texture::TextureCubeMap ||
-						texParams.m_dimension == re::Texture::TextureCubeMapArray,
-						"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-					descriptorIdx = re::Texture::TextureCubeMapArray;
-				}
-				break;
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_UNKNOWN:
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER:
-				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE:
-				default: SEAssertF("Invalid/unexpected table entry type");
-				}
+				descriptor = dx12::Texture::GetSRV(
+					rootSigEntry->m_tableEntry.m_srvViewDimension,
+					texture,
+					texSamplerInput.m_srcArrayElement,
+					texSamplerInput.m_srcFace,
+					texSamplerInput.m_srcMip);
 			}
 			break;
 			case dx12::RootSignature::DescriptorType::UAV:
 			{
-				// This is for UAV *inputs*
-				SEAssertF("TODO: Implement this. Need to figure out how to specify the appropriate mip level/subresource index");
-
-				//toState = ???;
-
-				// Note: We don't (shouldn't?) need to record a modification fence value to the texture resource here, 
-				// since it's being used as an input
+				descriptor = dx12::Texture::GetUAV(
+					rootSigEntry->m_tableEntry.m_uavViewDimension,
+					texture,
+					texSamplerInput.m_srcArrayElement,
+					texSamplerInput.m_srcFace,
+					texSamplerInput.m_srcMip);
 			}
 			break;
 			default:
 				SEAssertF("Invalid range type");
 			}
-
-			SEAssert(descriptorIdx < texPlatParams->m_srvCpuDescAllocations.GetNumDescriptors(),
-				"Descriptor index is OOB");
 
 			// If a depth resource is used as both an input and target, we've already recorded the transitions
 			if (!skipTransition)
@@ -1204,7 +1075,7 @@ namespace dx12
 
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 				rootSigEntry->m_index,
-				texPlatParams->m_srvCpuDescAllocations[descriptorIdx],
+				descriptor,
 				rootSigEntry->m_tableEntry.m_offset,
 				1);
 		}
