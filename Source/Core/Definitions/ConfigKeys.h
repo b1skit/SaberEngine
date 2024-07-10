@@ -126,13 +126,13 @@ namespace en::DefaultResourceNames
 
 	constexpr char const* k_missingMaterialName	= "MissingMaterial";
 
-	constexpr char const* k_opaqueWhiteDefaultTexName		= "OpaqueWhite";
-	constexpr char const* k_transparentWhiteDefaultTexName	= "TransparentWhite";
-	constexpr char const* k_opaqueBlackDefaultTexName		= "OpaqueBlack";
-	constexpr char const* k_transparentBlackDefaultTexName	= "TransparentBlack";
+	constexpr char const* k_opaqueWhiteDefaultTexName		= "Default2D_OpaqueWhite";
+	constexpr char const* k_transparentWhiteDefaultTexName	= "Default2D_TransparentWhite";
+	constexpr char const* k_opaqueBlackDefaultTexName		= "Default2D_OpaqueBlack";
+	constexpr char const* k_transparentBlackDefaultTexName	= "Default2D_TransparentBlack";
 	
-	constexpr char const* k_cubeMapOpaqueWhiteDefaultTexName		= "CubeMap_OpaqueWhite";
-	constexpr char const* k_cubeMapTransparentWhiteDefaultTexName	= "CubeMap_TransparentWhite";
-	constexpr char const* k_cubeMapOpaqueBlackDefaultTexName		= "CubeMap_OpaqueBlack";
-	constexpr char const* k_cubeMapTransparentBlackDefaultTexName	= "CubeMap_TransparentBlack";
+	constexpr char const* k_cubeMapOpaqueWhiteDefaultTexName		= "DefaultCube_OpaqueWhite";
+	constexpr char const* k_cubeMapTransparentWhiteDefaultTexName	= "DefaultCube_TransparentWhite";
+	constexpr char const* k_cubeMapOpaqueBlackDefaultTexName		= "DefaultCube_OpaqueBlack";
+	constexpr char const* k_cubeMapTransparentBlackDefaultTexName	= "DefaultCube_TransparentBlack";
 }

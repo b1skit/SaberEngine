@@ -210,10 +210,11 @@ namespace re
 			{
 				if (materialInstanceData->m_textures[i] && materialInstanceData->m_samplers[i])
 				{
-					AddTextureAndSamplerInput(
+					AddTextureInput(
 						materialInstanceData->m_shaderSamplerNames[i],
 						materialInstanceData->m_textures[i],
-						materialInstanceData->m_samplers[i]);
+						materialInstanceData->m_samplers[i],
+						re::TextureView(materialInstanceData->m_textures[i]));
 				}
 			}
 
@@ -440,29 +441,28 @@ namespace re
 	}
 
 
-	void Batch::AddTextureAndSamplerInput(
+	void Batch::AddTextureInput(
 		char const* shaderName,
 		re::Texture const* texture,
 		re::Sampler const* sampler,
-		uint32_t arrayElement /*= re::Texture::k_allArrayElements*/,
-		uint32_t faceIdx /*= re::Texture::k_allFaces*/,
-		uint32_t mipLevel /*= re::Texture::k_allMips*/)
+		re::TextureView const& texView)
 	{
 		SEAssert(shaderName != nullptr && strlen(shaderName) > 0, "Invalid shader sampler name");
 		SEAssert(texture != nullptr, "Invalid texture");
 		SEAssert(sampler != nullptr, "Invalid sampler");
+		SEAssert(texView.m_viewDimension != re::Texture::Dimension_Invalid, "Invalid view dimension");
 
 #if defined(_DEBUG)
 		for (auto const& existingTexAndSamplerInput : m_batchTextureSamplerInputs)
 		{
-			SEAssert(existingTexAndSamplerInput.m_texture != texture || 
+			SEAssert(existingTexAndSamplerInput.m_texture != texture ||
 				strcmp(existingTexAndSamplerInput.m_shaderName.c_str(), shaderName) != 0,
 				"This Texture has already been added with the same shader name. Re-adding it changes the data hash");
 		}
 #endif
 
 		m_batchTextureSamplerInputs.emplace_back(
-			TextureAndSamplerInput{ shaderName, texture, sampler, arrayElement, faceIdx, mipLevel });
+			TextureAndSamplerInput{ shaderName, texture, sampler, texView });
 
 		// Include textures/samplers in the batch hash:
 		AddDataBytesToHash(texture->GetUniqueID());
@@ -470,14 +470,12 @@ namespace re
 	}
 
 
-	void Batch::AddTextureAndSamplerInput(
+	void Batch::AddTextureInput(
 		char const* shaderName,
 		std::shared_ptr<re::Texture const> texture,
-		std::shared_ptr<re::Sampler const> sampler, 
-		uint32_t arrayElement /*= re::Texture::k_allArrayElements*/,
-		uint32_t faceIdx /*= re::Texture::k_allFaces*/,
-		uint32_t mipLevel /*= re::Texture::k_allMips*/)
+		std::shared_ptr<re::Sampler const> sampler,
+		re::TextureView const& texView)
 	{
-		AddTextureAndSamplerInput(shaderName, texture.get(), sampler.get(), arrayElement, faceIdx, mipLevel);
+		AddTextureInput(shaderName, texture.get(), sampler.get(), texView);
 	}
 }

@@ -3,6 +3,8 @@
 #include "Core/Assert.h"
 
 
+using DataHash = uint64_t;
+
 namespace util
 {
 	inline void CombineHash(uint64_t& currentHash, const uint64_t newHash)

@@ -6,6 +6,7 @@
 #include "CommandList_DX12.h"
 #include "Debug_DX12.h"
 #include "MeshPrimitive.h"
+#include "PipelineState_DX12.h"
 #include "RenderManager.h"
 #include "RootSignature_DX12.h"
 #include "SwapChain_DX12.h"
@@ -14,6 +15,7 @@
 #include "Texture_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_DX12.h"
+#include "TextureView.h"
 #include "VertexStream.h"
 #include "VertexStream_DX12.h"
 
@@ -567,15 +569,13 @@ namespace dx12
 
 			re::TextureTarget::TargetParams const& depthTargetParams = depthTarget->GetTargetParams();
 
-			// Ensure we're in a depth write state:
-			TransitionResource(
-				depthTex, 
-				D3D12_RESOURCE_STATE_DEPTH_WRITE, 
-				depthTargetParams.m_targetArrayIdx, 
-				depthTargetParams.m_targetFace, 
-				depthTargetParams.m_targetMip);
+			SEAssert(depthTargetParams.m_textureView.DepthWritesEnabled(), "Texture view has depth writes disabled");
 
-			const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = dx12::TextureTarget::GetTargetDescriptor(*depthTarget);
+			// Ensure we're in a depth write state:
+			TransitionResource(depthTex, D3D12_RESOURCE_STATE_DEPTH_WRITE, depthTargetParams.m_textureView);
+
+			const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = 
+				dx12::Texture::GetDSV(depthTex, depthTargetParams.m_textureView);
 
 			m_commandList->ClearDepthStencilView(
 				targetDescriptor,
@@ -602,17 +602,16 @@ namespace dx12
 
 			re::TextureTarget::TargetParams const& colorTargetParams = colorTarget->GetTargetParams();
 
-			const uint32_t subresourceIdx = colorTargetTex->GetSubresourceIndex(
-				colorTargetParams.m_targetArrayIdx,
-				colorTargetParams.m_targetFace,
-				colorTargetParams.m_targetMip);
+			const uint32_t subresourceIdx = 
+				re::TextureView::GetSubresourceIndex(colorTargetTex, colorTargetParams.m_textureView);
 
 			TransitionResource(
 				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_textureResource.Get(),
 				D3D12_RESOURCE_STATE_RENDER_TARGET, 
 				subresourceIdx);
 
-			const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = dx12::TextureTarget::GetTargetDescriptor(*colorTarget);
+			const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = 
+				dx12::Texture::GetRTV(colorTargetTex, colorTargetParams.m_textureView);
 
 			m_commandList->ClearRenderTargetView(
 				targetDescriptor,
@@ -646,7 +645,7 @@ namespace dx12
 	}
 
 
-	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet, bool readOnlyDepth)
+	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet)
 	{
 		SEAssert(m_type != CommandListType::Compute && m_type != CommandListType::Copy,
 			"This method is not valid for compute or copy command lists");
@@ -668,19 +667,14 @@ namespace dx12
 
 			re::TextureTarget::TargetParams const& targetParams = target.GetTargetParams();
 
-			TransitionResource(
-				texPlatParams->m_textureResource.Get(),
-				D3D12_RESOURCE_STATE_RENDER_TARGET,
-				targetTexture->GetSubresourceIndex(
-					targetParams.m_targetArrayIdx, 
-					targetParams.m_targetFace, 
-					targetParams.m_targetMip));
-
-			const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = dx12::TextureTarget::GetTargetDescriptor(target);
+			TransitionResource(targetTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, targetParams.m_textureView);
 
 			// Attach the RTV for the target face:
-			colorTargetDescriptors.emplace_back(targetDescriptor);
+			colorTargetDescriptors.emplace_back(dx12::Texture::GetRTV(targetTexture, targetParams.m_textureView));
 		}
+
+
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor{};
 
 		re::TextureTarget const* depthStencilTarget = targetSet.GetDepthStencilTarget();
 		if (depthStencilTarget)
@@ -689,48 +683,19 @@ namespace dx12
 
 			re::TextureTarget::TargetParams const& depthTargetParams = depthStencilTarget->GetTargetParams();
 
-			const bool depthWriteEnabled =
-				depthTargetParams.m_channelWriteMode.R == re::TextureTarget::TargetParams::ChannelWrite::Enabled &&
-				!readOnlyDepth;
-
-			const D3D12_RESOURCE_STATES depthState = depthWriteEnabled ?
+			const D3D12_RESOURCE_STATES depthState = depthTargetParams.m_textureView.DepthWritesEnabled() ?
 				D3D12_RESOURCE_STATE_DEPTH_WRITE :
 				(D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
+			dx12::Texture::PlatformParams const* texPlatParams =
+				depthTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
-			if ((depthTexParams.m_dimension == re::Texture::TextureCubeMap ||
-				depthTexParams.m_dimension == re::Texture::TextureCubeMapArray) &&
-				depthTargetParams.m_targetFace == re::Texture::k_allFaces)
-			{
-				TransitionResource(
-					depthTex,
-					depthState,
-					depthTargetParams.m_targetArrayIdx,
-					depthTargetParams.m_targetFace,
-					depthTargetParams.m_targetMip);
-			}
-			else
-			{
-				const uint32_t subresourceIdx = depthTex->GetSubresourceIndex(
-					depthTargetParams.m_targetArrayIdx,
-					depthTargetParams.m_targetFace,
-					depthTargetParams.m_targetMip);
+			TransitionResource(depthTex, depthState, depthTargetParams.m_textureView);
 
-				dx12::Texture::PlatformParams const* texPlatParams =
-					depthTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
-
-				TransitionResource(texPlatParams->m_textureResource.Get(), depthState, subresourceIdx);
-			}
+			dsvDescriptor = dx12::Texture::GetDSV(depthTex, depthTargetParams.m_textureView);
 		}
 
 		const uint32_t numColorTargets = targetSet.GetNumColorTargets();
-
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor{};
-		if (depthStencilTarget)
-		{
-			dsvDescriptor = dx12::TextureTarget::GetTargetDescriptor(*depthStencilTarget);
-		}
 
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
 		// descriptors will be found by offsetting from rtvs[0]. Otherwise, it is assumed rtvs is an array of descriptor
@@ -795,13 +760,9 @@ namespace dx12
 
 				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();			
 
-				const D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptor = dx12::Texture::GetUAV(
-					rootSigEntry->m_tableEntry.m_uavViewDimension,
-					colorTex,
-					targetParams.m_targetArrayIdx,
-					targetParams.m_targetFace, 
-					targetParams.m_targetMip);
-
+				const D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptor = 
+					dx12::Texture::GetUAV(colorTex, targetParams.m_textureView);
+				
 				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 					rootSigEntry->m_index,
 					uavDescriptor,
@@ -829,9 +790,7 @@ namespace dx12
 				TransitionResource(
 					colorTex,
 					D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-					targetParams.m_targetArrayIdx,
-					targetParams.m_targetFace,
-					targetParams.m_targetMip);
+					targetParams.m_textureView);
 			}
 		}
 
@@ -996,20 +955,13 @@ namespace dx12
 	}
 
 
-	void CommandList::SetTexture(re::TextureAndSamplerInput const& texSamplerInput, bool skipTransition)
+	void CommandList::SetTexture(re::TextureAndSamplerInput const& texSamplerInput)
 	{
 		SEAssert(m_currentPSO, "Pipeline is not currently set");
 
 		re::Texture const* texture = texSamplerInput.m_texture;
 
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
-
-		SEAssert(
-			(texSamplerInput.m_srcArrayElement < texParams.m_arraySize || 
-				texSamplerInput.m_srcArrayElement == re::Texture::k_allArrayElements) &&
-			(texSamplerInput.m_srcFace < texParams.m_faces || texSamplerInput.m_srcFace == re::Texture::k_allFaces) &&
-			(texSamplerInput.m_srcMip < texture->GetNumMips() || texSamplerInput.m_srcMip == re::Texture::k_allMips),
-			"Unexpected input configuration");
 
 		dx12::Texture::PlatformParams const* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
@@ -1041,37 +993,21 @@ namespace dx12
 					toState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 				}
 
-				descriptor = dx12::Texture::GetSRV(
-					rootSigEntry->m_tableEntry.m_srvViewDimension,
-					texture,
-					texSamplerInput.m_srcArrayElement,
-					texSamplerInput.m_srcFace,
-					texSamplerInput.m_srcMip);
+				descriptor = dx12::Texture::GetSRV(texture, texSamplerInput.m_textureView);				
 			}
 			break;
 			case dx12::RootSignature::DescriptorType::UAV:
 			{
-				descriptor = dx12::Texture::GetUAV(
-					rootSigEntry->m_tableEntry.m_uavViewDimension,
-					texture,
-					texSamplerInput.m_srcArrayElement,
-					texSamplerInput.m_srcFace,
-					texSamplerInput.m_srcMip);
+				descriptor = dx12::Texture::GetUAV(texture, texSamplerInput.m_textureView);
+
+				SEAssertF("TODO: Support/test setting UAVs as a texture input (need to handle UAV barriers?)");
 			}
 			break;
 			default:
 				SEAssertF("Invalid range type");
 			}
 
-			// If a depth resource is used as both an input and target, we've already recorded the transitions
-			if (!skipTransition)
-			{
-				TransitionResource(texture,
-					toState,
-					texSamplerInput.m_srcArrayElement,
-					texSamplerInput.m_srcFace,
-					texSamplerInput.m_srcMip);
-			}
+			TransitionResource(texture, toState, texSamplerInput.m_textureView);
 
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 				rootSigEntry->m_index,
@@ -1211,163 +1147,15 @@ namespace dx12
 
 
 	void CommandList::TransitionResource(
-		re::Texture const* texture,
-		D3D12_RESOURCE_STATES toState, 
-		uint32_t targetArrayIdx, 
-		uint32_t targetFaceIdx, 
-		uint32_t targetMipLevel)
+		re::Texture const* texture, D3D12_RESOURCE_STATES toState, re::TextureView const& texView)
 	{
-		auto BuildSubresourceIndexList = [](
-			re::Texture const* texture, 
-			uint32_t targetArrayIdx,
-			uint32_t targetFaceIdx,
-			uint32_t targetMipIdx) -> std::vector<uint32_t>
-			{
-				re::Texture::TextureParams const& texParams = texture->GetTextureParams();
-
-				// Transition all subresources: (ALL / ALL / ALL)
-				if ((targetArrayIdx == re::Texture::k_allArrayElements &&
-					targetFaceIdx == re::Texture::k_allFaces &&
-					targetMipIdx == re::Texture::k_allMips) ||
-					(texParams.m_arraySize == 1 &&
-						targetFaceIdx == re::Texture::k_allFaces &&
-						targetMipIdx == re::Texture::k_allMips) ||
-					(texParams.m_arraySize == 1 &&
-						texParams.m_faces == 1 &&
-						targetMipIdx == re::Texture::k_allMips))
-				{
-					return { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES };
-				}
-				
-				const uint32_t numArrayElements = 
-					targetArrayIdx == re::Texture::k_allArrayElements ? texParams.m_arraySize : 1;
-				
-				const uint32_t numFaces = targetFaceIdx == re::Texture::k_allFaces ? texParams.m_faces : 1;
-				const uint32_t numMips = targetMipIdx == re::Texture::k_allMips ? texture->GetNumMips() : 1;
-
-				// Update the target indexes so they're valid/in bounds for any GetSubresourceIndex calls:
-				if (numArrayElements == 1 && targetArrayIdx == re::Texture::k_allArrayElements)
-				{
-					targetArrayIdx = 0;
-				}
-				if (numFaces == 1 && targetFaceIdx == re::Texture::k_allFaces)
-				{
-					targetFaceIdx = 0;
-				}
-				if (numMips == 1 && targetMipIdx == re::Texture::k_allMips)
-				{
-					targetMipIdx = 0;
-				}
-
-				// Transition a single subresource: (1 / 1 / 1)
-				if (numArrayElements == 1 && numFaces == 1 && numMips == 1)
-				{
-					return { texture->GetSubresourceIndex(targetArrayIdx, targetFaceIdx, targetMipIdx) };
-				}
-
-				// Transition a subset of subresources:
-				const uint32_t numSubresourcesToTransition = numArrayElements * numFaces * numMips;
-
-				std::vector<uint32_t> subresourceIndexes;
-				subresourceIndexes.reserve(numSubresourcesToTransition);
-
-				// Transition all array elements:
-				if (numArrayElements > 1)
-				{
-					if (numFaces == 1)
-					{
-						if (numMips == 1)
-						{
-							// Transition a single face and mip for all array elements: (all / 1 / 1)
-							for (uint32_t arrayIdx = 0; arrayIdx < numArrayElements; ++arrayIdx)
-							{
-								subresourceIndexes.emplace_back(
-									texture->GetSubresourceIndex(arrayIdx, targetFaceIdx, targetMipIdx));
-							}
-						}
-						else // numMips > 1:
-						{
-							// Transition all mips for a single face, for all array elements: (all / 1 / all)
-							for (uint32_t arrayIdx = 0; arrayIdx < numArrayElements; ++arrayIdx)
-							{
-								for (uint32_t mipIdx = 0; mipIdx < numMips; ++mipIdx)
-								{
-									subresourceIndexes.emplace_back(
-										texture->GetSubresourceIndex(arrayIdx, targetFaceIdx, mipIdx));
-								}								
-							}
-						}
-					}
-					else // numFaces > 1: (all / all / 1)
-					{
-						SEAssert(numMips == 1,
-							"This should not be possible as we've already handled the ALL/ALL/ALL and 1/1/1 cases");
-
-						// Transition a single mip level for all faces and all array elements:
-						for (uint32_t arrayIdx = 0; arrayIdx < numArrayElements; ++arrayIdx)
-						{
-							for (uint32_t faceIdx = 0; faceIdx < numFaces; ++faceIdx)
-							{
-								subresourceIndexes.emplace_back(
-									texture->GetSubresourceIndex(arrayIdx, faceIdx, targetMipIdx));
-							}
-						}
-					}
-				}
-				else // numArrayElements == 1
-				{
-					if (numFaces == 1)
-					{
-						SEAssert(numMips > 1,
-							"This should not be possible as we've already handled the ALL/ALL/ALL and 1/1/1 cases");
-
-						// Transition all mips for the given array element and face: (1 / 1 / all)
-						for (uint32_t mipIdx = 0; mipIdx < numMips; ++mipIdx)
-						{
-							subresourceIndexes.emplace_back(
-								texture->GetSubresourceIndex(targetArrayIdx, targetFaceIdx, mipIdx));
-						}
-					}
-					else // numFaces > 1
-					{
-						if (numMips == 1)
-						{
-							// Transition a single mip for all faces, and single array element: (1 / all / 1)
-							for (uint32_t faceIdx = 0; faceIdx < numFaces; ++faceIdx)
-							{
-								subresourceIndexes.emplace_back(
-									texture->GetSubresourceIndex(targetArrayIdx, faceIdx, targetMipIdx));
-							}
-						}
-						else // numMips > 1
-						{
-							// Transition all faces and mips for a single array element: (1 / all / all)
-							for (uint32_t faceIdx = 0; faceIdx < numFaces; ++faceIdx)
-							{
-								for (uint32_t mipIdx = 0; mipIdx < numMips; ++mipIdx)
-								{
-									subresourceIndexes.emplace_back(
-										texture->GetSubresourceIndex(targetArrayIdx, faceIdx, mipIdx));
-								}
-							}
-						}
-					}
-				}
-
-				SEAssert(!subresourceIndexes.empty() && 
-					subresourceIndexes.size() == numSubresourcesToTransition,
-					"Miscalculated the number of resources to transition");
-
-				return subresourceIndexes;				
-			};
-
 		dx12::Texture::PlatformParams const* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		TransitionResourceInternal(
-			texPlatParams->m_textureResource.Get(), 
-			toState, 
-			BuildSubresourceIndexList(texture, targetArrayIdx, targetFaceIdx, targetMipLevel));
+			texPlatParams->m_textureResource.Get(),
+			toState,
+			re::TextureView::GetSubresourceIndexes(texture, texView));
 	}
 
 

@@ -56,10 +56,6 @@ namespace re
 
 	void TextureTarget::SetTargetParams(TargetParams const& targetParams)
 	{
-		SEAssert(targetParams.m_targetFace < 6, "There are more than 6 faces specified. This is unexpected");
-		SEAssert(targetParams.m_targetMip != re::Texture::k_allMips,
-			"It is invalid to target all mips, only a single mip level can be specified");
-
 		m_targetParams = targetParams;
 	}
 
@@ -95,23 +91,6 @@ namespace re
 				m_targetParams.m_channelWriteMode.G ||
 				m_targetParams.m_channelWriteMode.B ||
 				m_targetParams.m_channelWriteMode.A);
-	}
-
-
-	void TextureTarget::SetDepthWriteMode(TextureTarget::TargetParams::ChannelWrite::Mode depthWriteMode)
-	{
-		m_targetParams.m_channelWriteMode.R = depthWriteMode;
-
-		// Disable the other channels for this target:
-		m_targetParams.m_channelWriteMode.G = TextureTarget::TargetParams::ChannelWrite::Mode::Disabled;
-		m_targetParams.m_channelWriteMode.B = TextureTarget::TargetParams::ChannelWrite::Mode::Disabled;
-		m_targetParams.m_channelWriteMode.A = TextureTarget::TargetParams::ChannelWrite::Mode::Disabled;
-	}
-
-
-	TextureTarget::TargetParams::ChannelWrite::Mode TextureTarget::GetDepthWriteMode() const
-	{
-		return m_targetParams.m_channelWriteMode.R;
 	}
 
 
@@ -265,6 +244,8 @@ namespace re
 		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been committed");
 		SEAssert(slot == 0 || m_colorTargets[slot - 1].HasTexture(), 
 			"Targets must be set in monotonically-increasing order");
+		SEAssert(texTarget.GetTargetParams().m_textureView.m_viewDimension != re::Texture::Dimension::Dimension_Invalid,
+			"Invalid view configuration");
 		
 		m_colorTargets[slot] = texTarget;
 
@@ -273,15 +254,9 @@ namespace re
 
 
 	void TextureTargetSet::SetColorTarget(
-		uint8_t slot, std::shared_ptr<re::Texture> texture, TextureTarget::TargetParams const& targetParams)
+		uint8_t slot, std::shared_ptr<re::Texture> const& texture, TextureTarget::TargetParams const& targetParams)
 	{
-		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been committed");
-		SEAssert(slot == 0 || m_colorTargets[slot - 1].HasTexture(),
-			"Targets must be set in monotonically-increasing order");
-		
-		m_colorTargets[slot] = re::TextureTarget(texture, targetParams);
-
-		RecomputeNumColorTargets();
+		SetColorTarget(slot, re::TextureTarget(texture, targetParams));
 	}
 
 
@@ -295,25 +270,20 @@ namespace re
 	}
 
 
-	void TextureTargetSet::SetDepthStencilTarget(re::TextureTarget const* depthStencilTarget)
+	void TextureTargetSet::SetDepthStencilTarget(re::TextureTarget const& depthStencilTarget)
 	{
-		SEAssert(depthStencilTarget, "Cannot set a null target");
 		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been created");
-		m_depthStencilTarget = re::TextureTarget(*depthStencilTarget);
+		SEAssert(depthStencilTarget.GetTargetParams().m_textureView.m_viewDimension != re::Texture::Dimension_Invalid,
+			"Invalid view configuration");
+
+		m_depthStencilTarget = re::TextureTarget(depthStencilTarget);
 	}
 
 
 	void TextureTargetSet::SetDepthStencilTarget(
-		std::shared_ptr<re::Texture> depthStencilTarget, re::TextureTarget::TargetParams const& targetParams)
+		std::shared_ptr<re::Texture> const& depthStencilTargetTex, re::TextureTarget::TargetParams const& targetParams)
 	{
-		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been created");
-		m_depthStencilTarget = re::TextureTarget(depthStencilTarget, targetParams);
-	}
-
-
-	void TextureTargetSet::SetDepthWriteMode(TextureTarget::TargetParams::ChannelWrite::Mode depthWriteMode)
-	{
-		m_depthStencilTarget.SetDepthWriteMode(depthWriteMode);
+		SetDepthStencilTarget(re::TextureTarget(depthStencilTargetTex, targetParams));
 	}
 
 
@@ -385,6 +355,7 @@ namespace re
 					std::shared_ptr<re::Texture> colorTargetTex = m_colorTargets[slot].GetTexture();
 					targetDimensions = colorTargetTex->GetTextureDimenions();
 					foundDimensions = true;
+
 					break;
 				}
 			}
@@ -546,12 +517,13 @@ namespace re
 				AddDataBytesToHash(m_colorTargets[slot].GetTexture()->GetTextureParams().m_format);
 				AddDataBytesToHash(m_colorTargets[slot].GetBlendMode());
 				AddDataBytesToHash(m_colorTargets[slot].GetColorWriteMode());
+				AddDataBytesToHash(m_colorTargets[slot].GetTargetParams().m_textureView.GetDataHash());
 			}
 		}
 		if (HasDepthTarget())
 		{
 			AddDataBytesToHash(m_depthStencilTarget.GetTexture()->GetTextureParams().m_format);
-			AddDataBytesToHash(m_depthStencilTarget.GetDepthWriteMode());
+			AddDataBytesToHash(m_depthStencilTarget.GetTargetParams().m_textureView.GetDataHash());
 		}		
 	}
 

@@ -324,6 +324,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="Dependencies\imgui\imgui_draw.cpp" />
     <ClCompile Include="Dependencies\imgui\imgui_tables.cpp" />
     <ClCompile Include="Dependencies\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="DescriptorCache_DX12.cpp" />
     <ClCompile Include="Device_DX12.cpp" />
     <ClCompile Include="Effect.cpp" />
     <ClCompile Include="EffectDB.cpp" />
@@ -389,6 +390,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="SysInfo_OpenGL.cpp" />
     <ClCompile Include="SysInfo_Platform.cpp" />
     <ClCompile Include="AssetLoadUtils.cpp" />
+    <ClCompile Include="TextureView.cpp" />
     <ClCompile Include="TextureTarget_DX12.cpp" />
     <ClCompile Include="Texture_DX12.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
@@ -451,6 +453,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="BoundsComponent.h" />
+    <ClInclude Include="DescriptorCache_DX12.h" />
     <ClInclude Include="Effect.h" />
     <ClInclude Include="EffectDB.h" />
     <ClInclude Include="EntityCommands.h" />
@@ -536,6 +539,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="SysInfo_OpenGL.h" />
     <ClInclude Include="SysInfo_Platform.h" />
     <ClInclude Include="AssetLoadUtils.h" />
+    <ClInclude Include="TextureView.h" />
     <ClInclude Include="TextureTarget_DX12.h" />
     <ClInclude Include="Texture_DX12.h" />
     <ClInclude Include="TransformComponent.h" />

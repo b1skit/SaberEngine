@@ -45,7 +45,7 @@ namespace
 		std::vector<gr::Camera::View> const& views)
 	{
 		// TODO: This function is a temporary convenience, we concatenate sets of RenderDataIDs together for point light
-		// shadow draws which use a geometry shader to project each batch to every face. This is wasteful!
+		// shadow draws which use a geometry shader to project each batch to every face. This is (potentially?) wasteful!
 		// Instead, we should draw each point light shadow face seperately, using the culling results to send only the
 		// relevant batches to each face.
 
@@ -107,7 +107,7 @@ namespace gr
 		gr::Camera::RenderData const& camData)
 	{
 		char const* lightName = shadowData.m_owningLightName;
-		std::string const& stageName = std::format("{}_Shadow", lightName);
+		std::string const& stageName = std::format("{}_CubeShadow", lightName);
 
 		std::shared_ptr<re::RenderStage> shadowStage =
 			re::RenderStage::CreateGraphicsStage(stageName.c_str(), re::RenderStage::GraphicsStageParams{});
@@ -128,17 +128,17 @@ namespace gr
 		shadowParams.m_mipMode = re::Texture::MipMode::None;
 		shadowParams.m_addToSceneData = false;
 		shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
-		shadowParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
-		shadowParams.m_faces = 6;
+		shadowParams.m_dimension = re::Texture::Dimension::TextureCube;
 
-		std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(lightName, shadowParams);
+		std::shared_ptr<re::Texture> depthTexture = 
+			re::Texture::Create(std::format("{}_CubeShadow", lightName), shadowParams);
 
 		// Texture target set:
 		std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet =
-			re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
+			re::TextureTargetSet::Create(std::format("{}_CubeShadowTargetSet", lightName));
 
-		re::TextureTarget::TargetParams depthTargetParams;
-		depthTargetParams.m_targetFace = re::Texture::k_allFaces;
+		re::TextureTarget::TargetParams depthTargetParams{
+			.m_textureView = re::TextureView::Texture2DArrayView(0, 1, 0, 6)};
 
 		pointShadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
 		pointShadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
@@ -155,7 +155,6 @@ namespace gr
 			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
 			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
 
-		pointShadowTargetSet->SetDepthWriteMode(re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
 		pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
 
 		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
@@ -194,7 +193,7 @@ namespace gr
 		gr::Camera::RenderData const& shadowCamData)
 	{
 		char const* lightName = shadowData.m_owningLightName;
-		std::string const& stageName = std::format("{}_Shadow", lightName);
+		std::string const& stageName = std::format("{}_2DShadow", lightName);
 
 		std::shared_ptr<re::RenderStage> shadowStage =
 			re::RenderStage::CreateGraphicsStage(stageName.c_str(), re::RenderStage::GraphicsStageParams{});
@@ -224,17 +223,15 @@ namespace gr
 		shadowParams.m_addToSceneData = false;
 		shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
 		shadowParams.m_dimension = re::Texture::Dimension::Texture2D;
-		shadowParams.m_faces = 1;
 
-		std::string const& texName = std::format("{}_Shadow", lightName);
-
-		std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(texName, shadowParams);
+		std::shared_ptr<re::Texture> depthTexture =
+			re::Texture::Create(std::format("{}_2DShadow", lightName), shadowParams);
 
 		// Texture target set:
 		std::shared_ptr<re::TextureTargetSet> shadowTargetSet =
-			re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
+			re::TextureTargetSet::Create(std::format("{}_2DShadowTargetSet", lightName));
 
-		re::TextureTarget::TargetParams depthTargetParams;
+		re::TextureTarget::TargetParams depthTargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1)};
 		shadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
 		shadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
 		shadowTargetSet->SetScissorRect(
@@ -250,7 +247,6 @@ namespace gr
 			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
 			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
 
-		shadowTargetSet->SetDepthWriteMode(re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
 		shadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
 
 		shadowStage->SetTextureTargetSet(shadowTargetSet);

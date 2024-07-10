@@ -45,11 +45,9 @@ namespace grutil
 		// Modify default TextureParams to be suitable for a generic error texture:
 		re::Texture::TextureParams texParams
 		{
-			.m_faces = totalFaces,
-
 			.m_usage = re::Texture::Usage::Color,
 			.m_dimension = (totalFaces == 1 ?
-				re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap),
+				re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCube),
 			.m_format = re::Texture::Format::RGBA8_UNORM,
 			.m_colorSpace = colorSpace
 		};
@@ -152,7 +150,7 @@ namespace grutil
 					texParams.m_width = 2;
 					texParams.m_height = 2;
 					texParams.m_dimension = totalFaces == 1 ?
-						re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
+						re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCube;
 					texParams.m_format = re::Texture::Format::RGBA8_UNORM;
 					texParams.m_colorSpace = re::Texture::ColorSpace::sRGB;
 					texParams.m_mipMode = re::Texture::MipMode::AllocateGenerate;

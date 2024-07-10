@@ -32,12 +32,14 @@ namespace gr
 		m_tonemappingStage->AddPermanentTextureInput(
 			"Tex0",
 			*texDependencies.at(k_tonemappingTargetInput),
-			re::Sampler::GetSampler("ClampMinMagMipLinear"));
+			re::Sampler::GetSampler("ClampMinMagMipLinear"),
+			re::TextureView(*texDependencies.at(k_tonemappingTargetInput)));
 
 		m_tonemappingStage->AddPermanentTextureInput(
 			"Tex1",
 			*texDependencies.at(k_bloomResultInput),
-			re::Sampler::GetSampler("ClampMinMagMipLinear"));
+			re::Sampler::GetSampler("ClampMinMagMipLinear"),
+			re::TextureView(*texDependencies.at(k_bloomResultInput)));
 
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}

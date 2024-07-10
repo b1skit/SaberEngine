@@ -64,14 +64,16 @@ namespace gr
 		// GBuffer depth for HW depth testing
 		std::shared_ptr<re::TextureTargetSet> skyboxTargets = re::TextureTargetSet::Create("Skybox Targets");
 
-		skyboxTargets->SetColorTarget(0, *texDependencies.at(k_skyboxTargetInput), re::TextureTarget::TargetParams{});
+		skyboxTargets->SetColorTarget(
+			0, 
+			*texDependencies.at(k_skyboxTargetInput), 
+			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1) });
 
-		re::TextureTarget::TargetParams depthTargetParams;
-		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
+		re::TextureTarget::TargetParams depthTargetParams{ .m_textureView = {
+				re::TextureView::Texture2DView(0, 1), 
+				re::TextureView::ViewFlags{re::TextureView::ViewFlags::ReadOnlyDepth}} };
 		
-		skyboxTargets->SetDepthStencilTarget(
-			*texDependencies.at(k_sceneDepthTexInput),
-			depthTargetParams);
+		skyboxTargets->SetDepthStencilTarget(*texDependencies.at(k_sceneDepthTexInput), depthTargetParams);
 
 		// Render on top of the frame
 		const re::TextureTarget::TargetParams::BlendModes skyboxBlendModes
@@ -96,7 +98,8 @@ namespace gr
 		m_skyboxStage->AddPermanentTextureInput(
 			k_skyboxTexShaderName,
 			m_skyTexture,
-			re::Sampler::GetSampler("WrapMinMagLinearMipPoint").get());
+			re::Sampler::GetSampler("WrapMinMagLinearMipPoint").get(),
+			re::TextureView(m_skyTexture));
 
 
 		pipeline.AppendRenderStage(m_skyboxStage);
@@ -139,7 +142,8 @@ namespace gr
 			m_skyboxStage->AddPermanentTextureInput(
 				k_skyboxTexShaderName,
 				m_skyTexture,
-				re::Sampler::GetSampler("WrapMinMagLinearMipPoint").get());
+				re::Sampler::GetSampler("WrapMinMagLinearMipPoint").get(),
+				re::TextureView(m_skyTexture));
 
 		}
 		SEAssert(m_skyTexture != nullptr, "Failed to set a valid sky texture");

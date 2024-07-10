@@ -51,7 +51,6 @@ namespace dx12
 		re::Texture::TextureParams colorParams;
 		colorParams.m_width = width;
 		colorParams.m_height = height;
-		colorParams.m_faces = 1;
 		colorParams.m_usage = re::Texture::Usage::SwapchainColorProxy;
 		colorParams.m_dimension = re::Texture::Dimension::Texture2D;
 		colorParams.m_format = re::Texture::Format::RGBA8_UNORM;
@@ -105,24 +104,6 @@ namespace dx12
  
 		swapChainParams->m_backBufferIdx = swapChainParams->m_swapChain->GetCurrentBackBufferIndex();
 
-
-		// Create the depth target texture:
-		re::Texture::TextureParams depthParams;
-		depthParams.m_width = width;
-		depthParams.m_height = height;
-		depthParams.m_faces = 1;
-		depthParams.m_usage = re::Texture::Usage::DepthTarget;
-		depthParams.m_dimension = re::Texture::Dimension::Texture2D;
-		depthParams.m_format = re::Texture::Format::Depth32F;
-		depthParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		depthParams.m_mipMode = re::Texture::MipMode::None;
-		depthParams.m_addToSceneData = false;
-		depthParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane
-
-		std::shared_ptr<re::Texture> depthTargetTex = re::Texture::Create("SwapChainDepthTarget", depthParams);
-
-		re::TextureTarget::TargetParams depthTargetParams;
-
 		// Create color target textures, attach them to our target set, & copy the backbuffer resource into their
 		// platform params:
 		for (uint8_t backbufferIdx = 0; backbufferIdx < dx12::RenderManager::GetNumFramesInFlight(); backbufferIdx++)
@@ -130,9 +111,6 @@ namespace dx12
 			// Create a target set to hold our backbuffer targets:
 			swapChainParams->m_backbufferTargetSets[backbufferIdx] = 
 				re::TextureTargetSet::Create("BackbufferTargetSet_" + std::to_string(backbufferIdx));
-
-			// Set the shared depth buffer texture:
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetDepthStencilTarget(depthTargetTex, depthTargetParams);
 
 			// Get the pre-existing backbuffer resource from the swapchain:
 			ComPtr<ID3D12Resource> backbufferResource;
@@ -145,7 +123,7 @@ namespace dx12
 				colorParams, 
 				backbufferResource);
 
-			re::TextureTarget::TargetParams targetParams;
+			re::TextureTarget::TargetParams targetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1) };;
 
 			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetColorTarget(0, colorTargetTex, targetParams);
 

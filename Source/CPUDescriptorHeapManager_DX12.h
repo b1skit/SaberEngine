@@ -101,9 +101,8 @@ namespace dx12
 		AllocationPage* m_allocationPage;
 
 
-	private: // Move only:
+	private: // No copying allowed:
 		DescriptorAllocation(DescriptorAllocation const&) = delete;
-		
 		DescriptorAllocation& operator=(DescriptorAllocation const&) = delete;		
 	};
 

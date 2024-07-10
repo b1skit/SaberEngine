@@ -334,18 +334,12 @@ namespace dx12
 						// Set inputs and targets (once) now that the root signature is set
 						if (doSetStageInputsAndTargets)
 						{
-							const int depthTargetTexInputIdx = renderStage->GetDepthTargetTextureInputIdx();
-
-							auto SetStageTextureInputs = [&commandList, depthTargetTexInputIdx](
-								std::vector<re::TextureAndSamplerInput> const& texInputs)
+							auto SetStageTextureInputs = [&commandList]
+								(std::vector<re::TextureAndSamplerInput> const& texInputs)
 								{
 									for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
 									{
-										// If the depth target is read-only, and we've also used it as an input to the stage, we
-										// skip the resource transition (it's handled when binding the depth target as read only)
-										const bool skipTransition = (texIdx == depthTargetTexInputIdx);
-
-										commandList->SetTexture(texInputs[texIdx], skipTransition);
+										commandList->SetTexture(texInputs[texIdx]);
 										// Note: Static samplers have already been set during root signature creation
 									}
 								};
@@ -368,9 +362,7 @@ namespace dx12
 							case re::RenderStage::Type::FullscreenQuad:
 							case re::RenderStage::Type::Clear:
 							{
-								const bool attachDepthAsReadOnly = renderStage->DepthTargetIsAlsoTextureInput();
-
-								commandList->SetRenderTargets(*targetSet, attachDepthAsReadOnly);
+								commandList->SetRenderTargets(*targetSet);
 							}
 							break;
 							default:
@@ -435,7 +427,7 @@ namespace dx12
 								"We don't currently handle batches with the current depth buffer attached as "
 								"a texture input. We need to make sure the transitions are handled correctly");
 
-							currentCommandList->SetTexture(texSamplerInput, false);
+							currentCommandList->SetTexture(texSamplerInput);
 							// Note: Static samplers have already been set during root signature creation
 						}
 

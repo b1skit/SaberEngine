@@ -2,6 +2,7 @@
 #pragma once
 #include "Buffer.h"
 #include "Texture.h"
+#include "TextureView.h"
 
 #include "Core/Assert.h"
 
@@ -32,10 +33,8 @@ namespace re
 	public:
 		struct TargetParams
 		{
-			// Subresource info:
-			uint32_t m_targetArrayIdx = 0;
-			uint32_t m_targetFace = 0;
-			uint32_t m_targetMip = 0;
+			re::TextureView m_textureView;
+
 
 			// TODO: Support binding compute targets by name
 
@@ -64,6 +63,7 @@ namespace re
 				TargetParams::BlendMode m_dstBlendMode = BlendMode::Zero;
 			} m_blendModes;
 
+			
 			struct ChannelWrite
 			{
 				enum Mode : bool
@@ -71,7 +71,7 @@ namespace re
 					Disabled = 0,
 					Enabled = 1
 				};
-				Mode R = Mode::Enabled; // R = Color & Depth
+				Mode R = Mode::Enabled;
 				Mode G = Mode::Enabled;
 				Mode B = Mode::Enabled;
 				Mode A = Mode::Enabled;
@@ -123,9 +123,6 @@ namespace re
 		void SetColorWriteMode(TargetParams::ChannelWrite const&);
 		TargetParams::ChannelWrite const& GetColorWriteMode() const;
 		bool WritesColor() const;
-
-		void SetDepthWriteMode(TargetParams::ChannelWrite::Mode);
-		TargetParams::ChannelWrite::Mode GetDepthWriteMode() const; // m_channelWriteMode.R
 
 		void SetClearMode(re::TextureTarget::TargetParams::ClearMode);
 		re::TextureTarget::TargetParams::ClearMode GetClearMode() const;
@@ -234,12 +231,11 @@ namespace re
 
 		// Color targets must be set in monotonically-increasing order from 0
 		void SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget);
-		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture>, TextureTarget::TargetParams const&);
+		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> const&, TextureTarget::TargetParams const&);
 
 		re::TextureTarget const* GetDepthStencilTarget() const; // Returns nullptr if m_depthStencilTarget has no texture
-		void SetDepthStencilTarget(re::TextureTarget const*);
-		void SetDepthStencilTarget(std::shared_ptr<re::Texture>, re::TextureTarget::TargetParams const&);
-		void SetDepthWriteMode(TextureTarget::TargetParams::ChannelWrite::Mode);
+		void SetDepthStencilTarget(re::TextureTarget const&);
+		void SetDepthStencilTarget(std::shared_ptr<re::Texture> const&, re::TextureTarget::TargetParams const&);
 
 		bool HasTargets() const;
 		bool HasColorTarget() const;

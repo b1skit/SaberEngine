@@ -568,7 +568,7 @@ namespace fr
 			{
 			case fr::Light::Type::AmbientIBL:
 			{
-				// TODO: THIS SHOULD BE PART OF THE AMBIENT LIGHT LOGIC, NOT IMGUI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				// TODO: This should be part of the ambient light logic, not the ImGui panel
 				re::Texture const* newIBL = fr::SceneManager::GetSceneData()->TryLoadUniqueTexture(
 					s_spawnParams->m_ambientLightSpawnParams.m_filepath,
 					re::Texture::ColorSpace::Linear).get();

@@ -223,9 +223,8 @@ namespace
 		// Default cube map texture fallbacks:
 		const re::Texture::TextureParams defaultCubeMapTexParams = re::Texture::TextureParams
 		{
-			.m_faces = 6,
 			.m_usage = re::Texture::Usage::Color,
-			.m_dimension = re::Texture::Dimension::TextureCubeMap,
+			.m_dimension = re::Texture::Dimension::TextureCube,
 			.m_format = re::Texture::Format::RGBA8_UNORM,
 			.m_colorSpace = re::Texture::ColorSpace::Linear
 		};

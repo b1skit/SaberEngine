@@ -115,25 +115,13 @@ namespace
 
 	void SetDepthWriteMode(re::TextureTarget const& textureTarget)
 	{
-		re::TextureTarget::TargetParams::ChannelWrite::Mode const& depthWriteMode =
-			textureTarget.GetTargetParams().m_channelWriteMode.R;
-
-		switch (depthWriteMode)
-		{
-		case re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled:
+		if (textureTarget.GetTargetParams().m_textureView.DepthStencilWritesEnabled())
 		{
 			glDepthMask(GL_TRUE);
 		}
-		break;
-		case re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled:
+		else
 		{
 			glDepthMask(GL_FALSE);
-		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid depth write mode");
-		}
 		}
 	}
 }
@@ -234,7 +222,61 @@ namespace opengl
 				"Attempting to bind a color target with a different texture use parameter");
 
 			// Validate the texture dimensions:
-			const uint32_t targetMip = colorTarget.GetTargetParams().m_targetMip;
+			uint32_t targetMip = re::Texture::k_allMips; // Invalid
+			re::TextureView const& targetTexView = colorTarget.GetTargetParams().m_textureView;
+			switch (targetTexView.m_viewDimension)
+			{
+			case re::Texture::Texture1D:
+			{
+				SEAssert(targetTexView.Texture1D.m_mipLevels == 1, "Target view describes multiple subresources");
+				targetMip = targetTexView.Texture1D.m_firstMip;
+			}
+			break;
+			case re::Texture::Texture1DArray:
+			{
+				SEAssert(targetTexView.Texture1DArray.m_mipLevels == 1 && targetTexView.Texture1DArray.m_arraySize == 1,
+					"Target view describes multiple subresources");
+				targetMip = targetTexView.Texture1DArray.m_firstMip;
+			}
+			break;
+			case re::Texture::Texture2D:
+			{
+				SEAssert(targetTexView.Texture2D.m_mipLevels == 1, "Target view describes multiple subresources");
+				targetMip = targetTexView.Texture2D.m_firstMip;
+			}
+			break;
+			case re::Texture::Texture2DArray:
+			{
+				SEAssert(targetTexView.Texture2DArray.m_mipLevels == 1 && targetTexView.Texture2DArray.m_arraySize == 1,
+					"Target view describes multiple subresources");
+				targetMip = targetTexView.Texture2DArray.m_firstMip;
+			}
+			break;
+			case re::Texture::Texture3D:
+			{
+				SEAssert(targetTexView.Texture3D.m_mipLevels == 1,
+					"Target view describes multiple subresources");
+				targetMip = targetTexView.Texture3D.m_firstMip;
+			}
+			break;
+			case re::Texture::TextureCube:
+			{
+				SEAssert(targetTexView.TextureCube.m_mipLevels == 1,
+					"Target view describes multiple subresources");
+				targetMip = targetTexView.TextureCube.m_firstMip;
+			}
+			break;
+			case re::Texture::TextureCubeArray:
+			{
+				SEAssert(targetTexView.TextureCubeArray.m_mipLevels == 1 && 
+					targetTexView.TextureCubeArray.m_numCubes == 1,
+					"Target view describes multiple subresources");
+				targetMip = targetTexView.TextureCubeArray.m_firstMip;
+			}
+			break;
+			default: SEAssertF("Invalid dimension");
+			}
+
 			glm::vec4 const& subresourceDimensions = texture->GetMipLevelDimensions(targetMip);
 			const uint32_t mipWidth = static_cast<uint32_t>(subresourceDimensions.x);
 			const uint32_t mipHeight = static_cast<uint32_t>(subresourceDimensions.y);
@@ -340,92 +382,101 @@ namespace opengl
 
 			re::TextureTarget::TargetParams const& targetParams = targetSet.GetColorTarget(i).GetTargetParams();
 
-			switch (textureParams.m_dimension)
+			re::TextureView const& texView = targetParams.m_textureView;
+
+			uint32_t firstMip = re::Texture::k_allMips; // Invalid
+			switch (texView.m_viewDimension)
 			{
 			case re::Texture::Texture1D:
 			{
-				SEAssert(textureParams.m_faces == 1 && targetParams.m_targetArrayIdx == 0,
-					"Unexpected configuration");
-
 				glNamedFramebufferTexture(
 					targetSetParams->m_frameBufferObject,		// framebuffer
 					targetPlatformParams->m_attachmentPoint,	// attachment
 					texPlatformParams->m_textureID,				// texture
-					targetParams.m_targetMip);					// level
+					texView.Texture1D.m_firstMip);				// level
+
+				firstMip = texView.Texture1D.m_firstMip;
 			}
 			break;
 			case re::Texture::Texture1DArray:
 			{
-				SEAssert(textureParams.m_faces == 1, "Unexpected face configuration");
-
 				glNamedFramebufferTextureLayer(
 					targetSetParams->m_frameBufferObject,		// framebuffer
 					targetPlatformParams->m_attachmentPoint,	// attachment
 					texPlatformParams->m_textureID,				// texture
-					targetParams.m_targetMip,					// level
-					targetParams.m_targetArrayIdx);				// layer
+					texView.Texture1DArray.m_firstMip,			// level
+					texView.Texture1DArray.m_firstArraySlice);	// layer
+
+				firstMip = texView.Texture1DArray.m_firstMip;
 			}
 			break;
 			case re::Texture::Texture2D:
 			{
-				SEAssert(textureParams.m_faces == 1 && targetParams.m_targetArrayIdx == 0,
-					"Unexpected configuration");
-
 				glNamedFramebufferTexture(
 					targetSetParams->m_frameBufferObject,		// framebuffer
 					targetPlatformParams->m_attachmentPoint,	// attachment
 					texPlatformParams->m_textureID,				// texture
-					targetParams.m_targetMip);					// level
+					texView.Texture2D.m_firstMip);				// level
+
+				firstMip = texView.Texture2D.m_firstMip;
 			}
 			break;
 			case re::Texture::Texture2DArray:
 			{
-				SEAssert(textureParams.m_faces == 1, "Unexpected face configuration");
+				switch (textureParams.m_dimension)
+				{
+				case re::Texture::Texture2D:
+				{
+					glNamedFramebufferTexture(
+						targetSetParams->m_frameBufferObject,		// framebuffer
+						targetPlatformParams->m_attachmentPoint,	// attachment
+						texPlatformParams->m_textureID,				// texture
+						texView.Texture2D.m_firstMip);				// level
+				}
+				break;
+				case re::Texture::Texture2DArray:
+				{
+					glNamedFramebufferTextureLayer(
+						targetSetParams->m_frameBufferObject,		// framebuffer
+						targetPlatformParams->m_attachmentPoint,	// attachment
+						texPlatformParams->m_textureID,				// texture
+						texView.Texture2DArray.m_firstMip,			// level
+						texView.Texture2DArray.m_firstArraySlice);	// layer
+				}
+				break;
+				case re::Texture::TextureCube:
+				case re::Texture::TextureCubeArray:
+				{
+					glNamedFramebufferTextureLayer(
+						targetSetParams->m_frameBufferObject,		// framebuffer
+						targetPlatformParams->m_attachmentPoint,	// attachment
+						texPlatformParams->m_textureID,				// texture
+						texView.Texture2DArray.m_firstMip,			// level
+						texView.Texture2DArray.m_firstArraySlice);	// layer
+				}
+				break;
+				default: SEAssertF("Invalid dimension");
+				}
 
-				glNamedFramebufferTextureLayer(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					targetPlatformParams->m_attachmentPoint,	// attachment
-					texPlatformParams->m_textureID,				// texture
-					targetParams.m_targetMip,					// level
-					targetParams.m_targetArrayIdx);				// layer
+				firstMip = texView.Texture2DArray.m_firstMip;
 			}
 			break;
 			case re::Texture::Texture3D:
 			{
-				SEAssert(textureParams.m_faces == 1 && targetParams.m_targetArrayIdx == 0,
-					"Unexpected configuration");
-
 				glNamedFramebufferTextureLayer(
 					targetSetParams->m_frameBufferObject,		// framebuffer
 					targetPlatformParams->m_attachmentPoint,	// attachment
 					texPlatformParams->m_textureID,				// texture
-					targetParams.m_targetMip,					// level
-					targetParams.m_targetArrayIdx);				// layer
+					texView.Texture3D.m_firstMip,				// level
+					texView.Texture3D.m_firstWSlice);			// layer
+
+				firstMip = texView.Texture3D.m_firstMip;
 			}
 			break;
-			case re::Texture::TextureCubeMap:
+			case re::Texture::TextureCube:
+			case re::Texture::TextureCubeArray:
 			{
-				SEAssert(textureParams.m_faces == 6 && targetParams.m_targetArrayIdx == 0,
-					"Unexpected configuration");
-
-				glFramebufferTexture2D(
-					GL_FRAMEBUFFER,												// target
-					targetPlatformParams->m_attachmentPoint,					// attachment
-					GL_TEXTURE_CUBE_MAP_POSITIVE_X + targetParams.m_targetFace,	// texTarget
-					texPlatformParams->m_textureID,								// texture
-					targetParams.m_targetMip);									// level
-			}
-			break;
-			case re::Texture::TextureCubeMapArray:
-			{
-				SEAssert(textureParams.m_faces == 6, "Unexpected face configuration");
-
-				glNamedFramebufferTextureLayer(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					targetPlatformParams->m_attachmentPoint,	// attachment
-					texPlatformParams->m_textureID,				// texture
-					targetParams.m_targetMip,					// level
-					targetParams.m_targetArrayIdx);				// layer
+				SEAssertF("Invalid dimension for a color target");
 			}
 			break;
 			default: SEAssertF("Invalid dimension");
@@ -441,7 +492,7 @@ namespace opengl
 			if (firstTarget == nullptr)
 			{
 				firstTarget = texture;
-				firstTargetMipLevel = targetParams.m_targetMip;
+				firstTargetMipLevel = firstMip;
 			}
 		}
 
@@ -593,11 +644,12 @@ namespace opengl
 			opengl::TextureTarget::PlatformParams const* depthTargetPlatParams =
 				depthTarget->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
-			SEAssert(depthTarget->GetTexture()->GetNumMips() == 1 && depthTargetParams.m_targetMip == 0,
-				"It is unexpected that a depth target has mipmaps");
+			SEAssert(depthTarget->GetTexture()->GetNumMips() == 1, "It is unexpected that a depth target has mips");
+
+			re::TextureView const& texView = depthTargetParams.m_textureView;
 
 			// Note: We're using the "Named" DSA functions, so no need to explicitely bind the framebuffer first
-			switch (depthTexParams.m_dimension)
+			switch (texView.m_viewDimension)
 			{
 			case re::Texture::Texture1D:
 			{
@@ -605,7 +657,7 @@ namespace opengl
 					targetSetParams->m_frameBufferObject,		// framebuffer
 					depthTargetPlatParams->m_attachmentPoint,	// attachment
 					depthTexPlatParams->m_textureID,			// texture
-					depthTargetParams.m_targetMip);				// level
+					texView.Texture1D.m_firstMip);				// level
 			}
 			break;
 			case re::Texture::Texture1DArray:
@@ -614,32 +666,54 @@ namespace opengl
 					targetSetParams->m_frameBufferObject,		// framebuffer
 					depthTargetPlatParams->m_attachmentPoint,	// attachment
 					depthTexPlatParams->m_textureID,			// texture
-					depthTargetParams.m_targetMip,				// level
-					depthTargetParams.m_targetArrayIdx);		// layer
+					texView.Texture1DArray.m_firstMip,			// level
+					texView.Texture1DArray.m_firstArraySlice);	// layer
 			}
 			break;
 			case re::Texture::Texture2D:
 			{
-				SEAssert(depthTexParams.m_faces == 1 && depthTargetParams.m_targetArrayIdx == 0,
-					"Unexpected configuration");
-
 				glNamedFramebufferTexture(
 					targetSetParams->m_frameBufferObject,		// framebuffer
 					depthTargetPlatParams->m_attachmentPoint,	// attachment
 					depthTexPlatParams->m_textureID,			// texture
-					depthTargetParams.m_targetMip);				// level
+					texView.Texture2D.m_firstMip);				// level
 			}
 			break;
 			case re::Texture::Texture2DArray:
 			{
-				SEAssert(depthTexParams.m_faces == 1, "Unexpected face configuration");
-
-				glNamedFramebufferTextureLayer(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					depthTargetPlatParams->m_attachmentPoint,	// attachment
-					depthTexPlatParams->m_textureID,			// texture
-					depthTargetParams.m_targetMip,				// level
-					depthTargetParams.m_targetArrayIdx);		// layer
+				switch (depthTexParams.m_dimension)
+				{
+				case re::Texture::Texture2D:
+				{
+					glNamedFramebufferTexture(
+						targetSetParams->m_frameBufferObject,		// framebuffer
+						depthTargetPlatParams->m_attachmentPoint,	// attachment
+						depthTexPlatParams->m_textureID,			// texture
+						texView.Texture2D.m_firstMip);				// level
+				}
+				break;
+				case re::Texture::Texture2DArray:
+				{
+					glNamedFramebufferTextureLayer(
+						targetSetParams->m_frameBufferObject,		// framebuffer
+						depthTargetPlatParams->m_attachmentPoint,	// attachment
+						depthTexPlatParams->m_textureID,			// texture
+						texView.Texture2DArray.m_firstMip,			// level
+						texView.Texture2DArray.m_firstArraySlice);	// layer
+				}
+				break;
+				case re::Texture::TextureCube:
+				case re::Texture::TextureCubeArray:
+				{
+					glNamedFramebufferTexture(
+						targetSetParams->m_frameBufferObject,		// framebuffer
+						depthTargetPlatParams->m_attachmentPoint,	// attachment
+						depthTexPlatParams->m_textureID,			// texture
+						texView.Texture2DArray.m_firstMip);			// level
+				}
+				break;
+				default: SEAssertF("Invalid dimension");
+				}
 			}
 			break;
 			case re::Texture::Texture3D:
@@ -648,32 +722,14 @@ namespace opengl
 					targetSetParams->m_frameBufferObject,		// framebuffer
 					depthTargetPlatParams->m_attachmentPoint,	// attachment
 					depthTexPlatParams->m_textureID,			// texture
-					depthTargetParams.m_targetMip,				// level
-					depthTargetParams.m_targetArrayIdx);		// layer
+					texView.Texture3D.m_firstMip,				// level
+					texView.Texture3D.m_firstWSlice);			// layer
 			}
 			break;
-			case re::Texture::TextureCubeMap:
+			case re::Texture::TextureCube:
+			case re::Texture::TextureCubeArray:
 			{
-				SEAssert(depthTexParams.m_faces == 6, "Unexpected face configuration");
-
-				glNamedFramebufferTexture(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					depthTargetPlatParams->m_attachmentPoint,	// attachment
-					depthTexPlatParams->m_textureID,			// texture
-					depthTargetParams.m_targetMip);				// level
-			}
-			break;
-			case re::Texture::TextureCubeMapArray:
-			{
-				SEAssert(depthTexParams.m_faces == 6, "Unexpected face configuration");
-
-				const uint32_t level = depthTargetParams.m_targetArrayIdx * depthTexParams.m_faces;
-
-				glNamedFramebufferTexture(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					depthTargetPlatParams->m_attachmentPoint,	// attachment
-					depthTexPlatParams->m_textureID,			// texture
-					level);										// level
+				SEAssertF("Invalid dimension for a depth target");
 			}
 			break;
 			default: SEAssertF("Invalid dimension");
@@ -791,15 +847,17 @@ namespace opengl
 		{
 			if (!texTargets[slot].HasTexture())
 			{
-				continue;
+				break;;
 			}
 
-			std::shared_ptr<re::Texture> texture = texTargets[slot].GetTexture();
+			re::Texture const* texture = texTargets[slot].GetTexture().get();
 			re::TextureTarget::TargetParams const& targetParams = texTargets[slot].GetTargetParams();
 			
+			const uint32_t subresourceIdx = re::TextureView::GetSubresourceIndex(texture, targetParams.m_textureView);
+
 			constexpr uint32_t k_accessMode = GL_READ_WRITE;
 
-			opengl::Texture::BindAsImageTexture(*texture, slot, targetParams.m_targetMip, k_accessMode);
+			opengl::Texture::BindAsImageTexture(*texture, slot, subresourceIdx, k_accessMode);
 		}
 
 		// TODO: Support compute target clearing

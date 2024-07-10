@@ -208,86 +208,6 @@ namespace
 	}
 
 
-	// Returns DXGI_FORMAT_UNKNOWN if no equivalent UAV-compatible format is known
-	DXGI_FORMAT GetEquivalentUAVCompatibleFormat(DXGI_FORMAT format)
-	{
-		switch (format)
-		{
-		case DXGI_FORMAT_R32G32B32A32_TYPELESS:
-		case DXGI_FORMAT_R32G32B32A32_FLOAT: return DXGI_FORMAT_R32G32B32A32_FLOAT;
-		case DXGI_FORMAT_R32G32B32A32_UINT: return DXGI_FORMAT_R32G32B32A32_UINT;
-		case DXGI_FORMAT_R32G32B32A32_SINT: return DXGI_FORMAT_R32G32B32A32_SINT;
-		
-		case DXGI_FORMAT_R16G16B16A16_TYPELESS:
-		case DXGI_FORMAT_R16G16B16A16_FLOAT: return DXGI_FORMAT_R16G16B16A16_FLOAT;
-		case DXGI_FORMAT_R16G16B16A16_UNORM: return DXGI_FORMAT_R16G16B16A16_UNORM;
-		case DXGI_FORMAT_R16G16B16A16_UINT: return DXGI_FORMAT_R16G16B16A16_UINT;
-		case DXGI_FORMAT_R16G16B16A16_SNORM: return DXGI_FORMAT_R16G16B16A16_SNORM;
-		case DXGI_FORMAT_R16G16B16A16_SINT: return DXGI_FORMAT_R16G16B16A16_SINT;
-
-		case DXGI_FORMAT_R32G32_TYPELESS:
-		case DXGI_FORMAT_R32G32_FLOAT: return DXGI_FORMAT_R32G32_FLOAT;
-		case DXGI_FORMAT_R32G32_UINT: return DXGI_FORMAT_R32G32_UINT;
-		case DXGI_FORMAT_R32G32_SINT: return DXGI_FORMAT_R32G32_SINT;
-
-		case DXGI_FORMAT_R10G10B10A2_TYPELESS:
-		case DXGI_FORMAT_R10G10B10A2_UNORM: return DXGI_FORMAT_R10G10B10A2_UNORM;
-		case DXGI_FORMAT_R10G10B10A2_UINT: return DXGI_FORMAT_R10G10B10A2_UINT;
-		case DXGI_FORMAT_R11G11B10_FLOAT: return DXGI_FORMAT_R11G11B10_FLOAT;
-
-		case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-		case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-		case DXGI_FORMAT_R8G8B8A8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM;
-		
-		case DXGI_FORMAT_R8G8B8A8_UINT: return DXGI_FORMAT_R8G8B8A8_UINT;
-		case DXGI_FORMAT_R8G8B8A8_SNORM: return DXGI_FORMAT_R8G8B8A8_SNORM;
-		case DXGI_FORMAT_R8G8B8A8_SINT: return DXGI_FORMAT_R8G8B8A8_SINT;
-
-		case DXGI_FORMAT_R16G16_TYPELESS:
-		case DXGI_FORMAT_R16G16_FLOAT: return DXGI_FORMAT_R16G16_FLOAT;
-		case DXGI_FORMAT_R16G16_UNORM: return DXGI_FORMAT_R16G16_UNORM;
-		case DXGI_FORMAT_R16G16_UINT: return DXGI_FORMAT_R16G16_UINT;
-		case DXGI_FORMAT_R16G16_SNORM: return DXGI_FORMAT_R16G16_SNORM;
-		case DXGI_FORMAT_R16G16_SINT: return DXGI_FORMAT_R16G16_SINT;
-
-		case DXGI_FORMAT_R32_TYPELESS:
-		case DXGI_FORMAT_R32_FLOAT: return DXGI_FORMAT_R32_FLOAT;
-		case DXGI_FORMAT_R32_UINT: return DXGI_FORMAT_R32_UINT;
-		case DXGI_FORMAT_R32_SINT: return DXGI_FORMAT_R32_SINT;
-
-		case DXGI_FORMAT_R8G8_TYPELESS:
-		case DXGI_FORMAT_R8G8_UNORM: return DXGI_FORMAT_R8G8_UNORM;
-		case DXGI_FORMAT_R8G8_UINT: return DXGI_FORMAT_R8G8_UINT;
-		case DXGI_FORMAT_R8G8_SNORM: return DXGI_FORMAT_R8G8_SNORM;
-		case DXGI_FORMAT_R8G8_SINT: return DXGI_FORMAT_R8G8_SINT;
-
-		case DXGI_FORMAT_R16_TYPELESS:
-		case DXGI_FORMAT_R16_FLOAT: return DXGI_FORMAT_R16_FLOAT;
-		
-		case DXGI_FORMAT_R16_UNORM: return DXGI_FORMAT_R16_UNORM;
-		case DXGI_FORMAT_R16_UINT: return DXGI_FORMAT_R16_UINT;
-		case DXGI_FORMAT_R16_SNORM: return DXGI_FORMAT_R16_SNORM;
-		case DXGI_FORMAT_R16_SINT: return DXGI_FORMAT_R16_SINT;
-		
-		case DXGI_FORMAT_R8_TYPELESS:
-		case DXGI_FORMAT_R8_UNORM: return DXGI_FORMAT_R8_UNORM;
-		case DXGI_FORMAT_R8_UINT: return DXGI_FORMAT_R8_UINT;
-		case DXGI_FORMAT_R8_SNORM: return DXGI_FORMAT_R8_SNORM;
-		case DXGI_FORMAT_R8_SINT: return DXGI_FORMAT_R8_SINT;
-		case DXGI_FORMAT_A8_UNORM: return DXGI_FORMAT_A8_UNORM;
-		
-		case DXGI_FORMAT_B5G6R5_UNORM: return DXGI_FORMAT_B5G6R5_UNORM;
-		case DXGI_FORMAT_B5G5R5A1_UNORM: return DXGI_FORMAT_B5G5R5A1_UNORM;
-
-		case DXGI_FORMAT_B4G4R4A4_UNORM: return DXGI_FORMAT_B4G4R4A4_UNORM;
-		default:
-			return DXGI_FORMAT_UNKNOWN;
-		}
-
-		return DXGI_FORMAT_UNKNOWN;
-	}
-
-
 	bool FormatIsUAVCompatible(DXGI_FORMAT format)
 	{
 		// Guaranteed UAV support: 
@@ -310,12 +230,6 @@ namespace
 		dx12::CheckHResult(hr, "Failed to query format support");
 
 		return formatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD;
-	}
-
-
-	bool SRVIsNeeded(re::Texture::TextureParams const& texParams)
-	{
-		return (texParams.m_usage & re::Texture::Usage::Color);
 	}
 
 
@@ -375,7 +289,8 @@ namespace
 		const bool compatibleFormat = FormatIsUAVCompatible(dxgiFormat);
 		if (!compatibleFormat)
 		{
-			const bool alternativeFormatExists = GetEquivalentUAVCompatibleFormat(dxgiFormat) != DXGI_FORMAT_UNKNOWN;
+			const bool alternativeFormatExists = 
+				dx12::Texture::GetEquivalentUAVCompatibleFormat(dxgiFormat) != DXGI_FORMAT_UNKNOWN;
 			if (!alternativeFormatExists)
 			{
 				return false;
@@ -400,363 +315,6 @@ namespace
 
 		// We didn't hit a case where a UAV is explicitely needed
 		return false;
-	}
-
-
-	void CreateUAV(re::Texture& texture)
-	{
-		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
-		SEAssert(texPlatParams->m_textureResource != nullptr, "The texture resource has not been created yet");
-		SEAssert(texPlatParams->m_uavCpuDescAllocations.IsValid() == false,
-			"A UAV has already been created. This is unexpected");
-
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
-
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-
-		// A Texture3D only has 1 subresource per mip level, regardless of its depth (i.e. array size)
-		const uint32_t arraySize = texParams.m_dimension == re::Texture::Texture3D ? 1 : texParams.m_arraySize;
-
-		const uint32_t numMips = texture.GetNumMips();
-
-		const uint32_t numDescriptors = texture.GetTotalNumSubresources();
-
-		texPlatParams->m_uavCpuDescAllocations = std::move(context->GetCPUDescriptorHeapMgr(
-			dx12::CPUDescriptorHeapManager::CBV_SRV_UAV).Allocate(numDescriptors));
-
-		// We create a UAV per MIP, per face, per array entry:
-		for (uint32_t arrayIdx = 0; arrayIdx < arraySize; arrayIdx++)
-		{
-			for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
-			{
-				for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
-				{
-					const DXGI_FORMAT uavCompatibleFormat = GetEquivalentUAVCompatibleFormat(texPlatParams->m_format);
-					SEAssert(uavCompatibleFormat != DXGI_FORMAT_UNKNOWN, "Failed to find equivalent UAV-compatible format");
-
-					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
-					uavDesc.Format = uavCompatibleFormat;
-
-					switch (texParams.m_dimension)
-					{
-					case re::Texture::Dimension::Texture1D:
-					{
-						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
-						uavDesc.Texture1D = D3D12_TEX1D_UAV{ .MipSlice = mipIdx };
-					}
-					break;
-					case re::Texture::Dimension::Texture1DArray:
-					{
-						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-						uavDesc.Texture1DArray = D3D12_TEX1D_ARRAY_UAV{
-							.MipSlice = mipIdx,
-							.FirstArraySlice = arrayIdx,
-							.ArraySize = 1,
-						};
-					}
-					break;
-					case re::Texture::Dimension::Texture2D:
-					{
-						SEAssert(texParams.m_multisampleMode == re::Texture::MultisampleMode::Disabled,
-							"TODO: Support multi-sampling");
-
-						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-						uavDesc.Texture2D = D3D12_TEX2D_UAV{
-								.MipSlice = mipIdx,
-								.PlaneSlice = 0 };
-					}
-					break;
-					case re::Texture::Dimension::Texture2DArray:
-					{
-						SEAssert(texParams.m_multisampleMode == re::Texture::MultisampleMode::Disabled,
-							"TODO: Support multi-sampling");
-
-						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-						uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{
-							.MipSlice = mipIdx,
-							.FirstArraySlice = arrayIdx,
-							.ArraySize = 1,
-							.PlaneSlice = 0 };
-					}
-					break;
-					case re::Texture::Dimension::Texture3D:
-					{
-						SEAssert(texParams.m_faces == 1, "Invalid number of faces for a 3D texture");
-
-						const uint32_t firstWSlice = 0; // TODO: Compute this properly
-
-						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
-
-						uavDesc.Texture3D = D3D12_TEX3D_UAV{
-							.MipSlice = mipIdx,
-							.FirstWSlice = firstWSlice,
-							.WSize = static_cast<uint32_t>(-1)};  // No. of depth slices: -1 = all slices from FirstWSlice to the last slice
-					}
-					break;
-					case re::Texture::Dimension::TextureCubeMap:
-					{
-						// Cube maps are a special case of an array
-						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-
-						uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{
-							.MipSlice = mipIdx,
-							.FirstArraySlice = faceIdx,
-							.ArraySize = 1, // Only view one element of our array
-							.PlaneSlice = 0 }; // "Only Plane Slice 0 is valid when creating a view on a non-planar format"
-					}
-					break;
-					case re::Texture::Dimension::TextureCubeMapArray:
-					{
-						// Cube maps are a special case of an array
-						uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-
-						const uint32_t firstArraySlice = arrayIdx * texParams.m_faces + faceIdx;
-
-						uavDesc.Texture2DArray = D3D12_TEX2D_ARRAY_UAV{
-							.MipSlice = mipIdx,
-							.FirstArraySlice = firstArraySlice,
-							.ArraySize = 1, // Only view one element of our array
-							.PlaneSlice = 0 }; // "Only Plane Slice 0 is valid when creating a view on a non-planar format"
-					}
-					break;
-					default:
-						SEAssertF("Invalid texture dimension");
-					}
-
-					const uint32_t descriptorIdx = texture.GetSubresourceIndex(arrayIdx, faceIdx, mipIdx);
-
-					device->CreateUnorderedAccessView(
-						texPlatParams->m_textureResource.Get(),
-						nullptr,		// Counter resource
-						&uavDesc,
-						texPlatParams->m_uavCpuDescAllocations[descriptorIdx]);
-				}
-			}
-		}
-	}
-
-
-	DXGI_FORMAT GetSRVFormat(re::Texture const& texture)
-	{
-		dx12::Texture::PlatformParams const* texPlatParams =
-			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
-
-		switch (texPlatParams->m_format)
-		{
-		case DXGI_FORMAT_D32_FLOAT: return DXGI_FORMAT_R32_FLOAT;
-		default: return texPlatParams->m_format;
-		}
-	}
-
-
-	void CreateSRV(re::Texture& texture)
-	{
-		dx12::Texture::PlatformParams* texPlatParams = 
-			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-
-		SEAssert(texPlatParams->m_textureResource != nullptr, "The texture resource has not been created yet");
-		SEAssert(texPlatParams->m_srvCpuDescAllocations.IsValid() == false,
-			"An SRV has already been created. This is unexpected");
-
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
-
-		const uint32_t numMips = texture.GetNumMips();
-
-		// Allocate 1 SRV per dimensional interpretation:
-		texPlatParams->m_srvCpuDescAllocations = std::move(context->GetCPUDescriptorHeapMgr(
-			dx12::CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(re::Texture::Dimension_Count));
-
-		const DXGI_FORMAT srvFormat = GetSRVFormat(texture);
-
-		auto Create1DTextureSRV = [&srvFormat, &numMips, &texParams, &device, &texPlatParams]()
-			{
-				const D3D12_SHADER_RESOURCE_VIEW_DESC tex1DSRVDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
-					.Format = srvFormat,
-					.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D,
-					.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-					.Texture1D = D3D12_TEX1D_SRV{
-						.MostDetailedMip = 0,
-						.MipLevels = numMips,
-						.ResourceMinLODClamp = 0.f },
-					};
-
-				device->CreateShaderResourceView(
-					texPlatParams->m_textureResource.Get(),
-					&tex1DSRVDesc,
-					texPlatParams->m_srvCpuDescAllocations[re::Texture::Texture1D]);
-			};
-
-		auto Create1DTextureArraySRV = [&srvFormat, &numMips, &texParams, &device, &texPlatParams]()
-			{
-				const D3D12_SHADER_RESOURCE_VIEW_DESC tex1DArraySRVDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
-					.Format = srvFormat,
-					.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY,
-					.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-					.Texture1DArray = D3D12_TEX1D_ARRAY_SRV{
-						.MostDetailedMip = 0,
-						.MipLevels = numMips,
-						.FirstArraySlice = 0,
-						.ArraySize = texParams.m_arraySize,
-						.ResourceMinLODClamp = 0.f },
-					};
-
-				device->CreateShaderResourceView(
-					texPlatParams->m_textureResource.Get(),
-					&tex1DArraySRVDesc,
-					texPlatParams->m_srvCpuDescAllocations[re::Texture::Texture1DArray]);
-			};
-
-		auto Create2DTextureSRV = [&srvFormat, &numMips, &texParams, &device, &texPlatParams]()
-			{
-				const D3D12_SHADER_RESOURCE_VIEW_DESC tex2DSRVDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
-					.Format = srvFormat,
-					.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
-					.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-					.Texture2D = D3D12_TEX2D_SRV{		// Allow access to all MIP levels
-						.MostDetailedMip = 0,
-						.MipLevels = numMips,
-						.PlaneSlice = 0,				// Index in a multi-plane format
-						.ResourceMinLODClamp = 0.f },
-					};
-
-				device->CreateShaderResourceView(
-					texPlatParams->m_textureResource.Get(),
-					&tex2DSRVDesc,
-					texPlatParams->m_srvCpuDescAllocations[re::Texture::Texture2D]);
-			};
-
-		auto Create2DTextureArraySRV = [&srvFormat, &numMips, &texParams, &device, &texPlatParams]()
-			{
-				const D3D12_SHADER_RESOURCE_VIEW_DESC tex2DArraySRVDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
-				.Format = srvFormat,
-				.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY,
-				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-				.Texture2DArray = D3D12_TEX2D_ARRAY_SRV{
-					.MostDetailedMip = 0,
-					.MipLevels = numMips,
-					.FirstArraySlice = 0,
-					.ArraySize = texParams.m_arraySize * texParams.m_faces,
-					.PlaneSlice = 0,
-					.ResourceMinLODClamp = 0.f },
-				};
-
-				device->CreateShaderResourceView(
-					texPlatParams->m_textureResource.Get(),
-					&tex2DArraySRVDesc,
-					texPlatParams->m_srvCpuDescAllocations[re::Texture::Texture2DArray]);
-			};
-
-		auto Create3DTextureSRV = [&srvFormat, &numMips, &texParams, &device, &texPlatParams]()
-			{
-				const D3D12_SHADER_RESOURCE_VIEW_DESC tex3DSRVDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
-					.Format = srvFormat,
-					.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D,
-					.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-					.Texture3D = D3D12_TEX3D_SRV{
-					.MostDetailedMip = 0,
-					.MipLevels = numMips,
-					.ResourceMinLODClamp = 0.f },
-				};
-
-				device->CreateShaderResourceView(
-					texPlatParams->m_textureResource.Get(),
-					&tex3DSRVDesc,
-					texPlatParams->m_srvCpuDescAllocations[re::Texture::Texture3D]);
-			};
-
-		auto CreateCubeMapTextureSRV = [&srvFormat, &numMips, &texParams, &device, &texPlatParams]()
-			{
-				SEAssert(texParams.m_faces == 6, "Invalid number of faces for a cube map");
-
-				const D3D12_SHADER_RESOURCE_VIEW_DESC cubeSRVDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
-					.Format = srvFormat,
-					.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE,
-					.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-					.TextureCube = D3D12_TEXCUBE_SRV{ // Allow access to all MIP levels
-						.MostDetailedMip = 0,
-						.MipLevels = numMips,
-						.ResourceMinLODClamp = 0.0f },
-				};
-
-				device->CreateShaderResourceView(
-					texPlatParams->m_textureResource.Get(),
-					&cubeSRVDesc,
-					texPlatParams->m_srvCpuDescAllocations[re::Texture::TextureCubeMap]);
-			};
-
-		auto CreateCubeMapTextureArraySRV = [&srvFormat, &numMips, &texParams, &device, &texPlatParams]()
-			{
-				SEAssert(texParams.m_faces == 6, "Invalid number of faces for a cube map");
-
-				const D3D12_SHADER_RESOURCE_VIEW_DESC cubeArraySRVDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
-					.Format = srvFormat,
-					.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY,
-					.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-					.TextureCubeArray = D3D12_TEXCUBE_ARRAY_SRV{
-						.MostDetailedMip = 0,
-						.MipLevels = numMips,
-						.First2DArrayFace = 0,
-						.NumCubes = texParams.m_arraySize,
-						.ResourceMinLODClamp = 0.f },
-				};
-
-				device->CreateShaderResourceView(
-					texPlatParams->m_textureResource.Get(),
-					&cubeArraySRVDesc,
-					texPlatParams->m_srvCpuDescAllocations[re::Texture::TextureCubeMapArray]);
-			};
-
-
-		// Create the required SRV types:
-		switch (texParams.m_dimension)
-		{
-		case re::Texture::Texture1D:
-		{
-			Create1DTextureSRV();
-			Create1DTextureArraySRV();
-		}
-		break;
-		case re::Texture::Texture1DArray:
-		{
-			Create1DTextureArraySRV();
-		}
-		break;
-		case re::Texture::Texture2D:
-		{
-			Create2DTextureSRV();
-			Create2DTextureArraySRV();
-		}
-		break;
-		case re::Texture::Texture2DArray:
-		{
-			Create2DTextureArraySRV();
-		}
-		break;
-		case re::Texture::Texture3D:
-		{
-			Create3DTextureSRV();
-		}
-		break;
-		case re::Texture::TextureCubeMap:
-		{
-			CreateCubeMapTextureSRV();
-			CreateCubeMapTextureArraySRV();
-			Create2DTextureArraySRV(); // Cubemaps are a special case of a texture array
-		}
-		break;
-		case re::Texture::TextureCubeMapArray:
-		{
-			CreateCubeMapTextureArraySRV();
-			Create2DTextureArraySRV(); // Cubemaps are a special case of a texture array
-		}
-		break;
-		default: SEAssertF("Invalid dimension");
-		}
 	}
 
 
@@ -874,14 +432,14 @@ namespace
 				0);								// alignment
 		}
 		break;
-		case re::Texture::Dimension::TextureCubeMap:
-		case re::Texture::Dimension::TextureCubeMapArray:
+		case re::Texture::Dimension::TextureCube:
+		case re::Texture::Dimension::TextureCubeArray:
 		{
 			resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 				texPlatParams->m_format,
 				texParams.m_width,
 				texParams.m_height,
-				texParams.m_arraySize * texParams.m_faces,
+				texParams.m_arraySize * 6,
 				numMips,
 				1,								// sampleCount
 				0,								// sampleQuality
@@ -924,14 +482,15 @@ namespace
 
 		// Texture3Ds have a single subresource per mip level, regardless of their depth
 		const uint32_t arraySize = texParams.m_dimension == re::Texture::Texture3D ? 1 : texParams.m_arraySize;
+		const uint8_t numFaces = re::Texture::GetNumFaces(texture);
 
 		for (uint32_t arrayIdx = 0; arrayIdx < arraySize; arrayIdx++)
 		{
-			for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+			for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 			{
 				// Note: We currently assume we only have data for the first mip of each face
 				const uint32_t mipIdx = 0;
-				const uint32_t intermediateByteOffset = ((arrayIdx * texParams.m_faces) + faceIdx) * numBytesPerFace;
+				const uint32_t intermediateByteOffset = ((arrayIdx * numFaces) + faceIdx) * numBytesPerFace;
 
 				copyCmdList->UpdateSubresource(
 					texture, 
@@ -1027,21 +586,95 @@ namespace dx12
 	}
 
 
+	// Returns DXGI_FORMAT_UNKNOWN if no equivalent UAV-compatible format is known
+	DXGI_FORMAT Texture::GetEquivalentUAVCompatibleFormat(DXGI_FORMAT format)
+	{
+		switch (format)
+		{
+		case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+		case DXGI_FORMAT_R32G32B32A32_FLOAT: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+		case DXGI_FORMAT_R32G32B32A32_UINT: return DXGI_FORMAT_R32G32B32A32_UINT;
+		case DXGI_FORMAT_R32G32B32A32_SINT: return DXGI_FORMAT_R32G32B32A32_SINT;
+
+		case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+		case DXGI_FORMAT_R16G16B16A16_FLOAT: return DXGI_FORMAT_R16G16B16A16_FLOAT;
+		case DXGI_FORMAT_R16G16B16A16_UNORM: return DXGI_FORMAT_R16G16B16A16_UNORM;
+		case DXGI_FORMAT_R16G16B16A16_UINT: return DXGI_FORMAT_R16G16B16A16_UINT;
+		case DXGI_FORMAT_R16G16B16A16_SNORM: return DXGI_FORMAT_R16G16B16A16_SNORM;
+		case DXGI_FORMAT_R16G16B16A16_SINT: return DXGI_FORMAT_R16G16B16A16_SINT;
+
+		case DXGI_FORMAT_R32G32_TYPELESS:
+		case DXGI_FORMAT_R32G32_FLOAT: return DXGI_FORMAT_R32G32_FLOAT;
+		case DXGI_FORMAT_R32G32_UINT: return DXGI_FORMAT_R32G32_UINT;
+		case DXGI_FORMAT_R32G32_SINT: return DXGI_FORMAT_R32G32_SINT;
+
+		case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+		case DXGI_FORMAT_R10G10B10A2_UNORM: return DXGI_FORMAT_R10G10B10A2_UNORM;
+		case DXGI_FORMAT_R10G10B10A2_UINT: return DXGI_FORMAT_R10G10B10A2_UINT;
+		case DXGI_FORMAT_R11G11B10_FLOAT: return DXGI_FORMAT_R11G11B10_FLOAT;
+
+		case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+		case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+		case DXGI_FORMAT_R8G8B8A8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM;
+
+		case DXGI_FORMAT_R8G8B8A8_UINT: return DXGI_FORMAT_R8G8B8A8_UINT;
+		case DXGI_FORMAT_R8G8B8A8_SNORM: return DXGI_FORMAT_R8G8B8A8_SNORM;
+		case DXGI_FORMAT_R8G8B8A8_SINT: return DXGI_FORMAT_R8G8B8A8_SINT;
+
+		case DXGI_FORMAT_R16G16_TYPELESS:
+		case DXGI_FORMAT_R16G16_FLOAT: return DXGI_FORMAT_R16G16_FLOAT;
+		case DXGI_FORMAT_R16G16_UNORM: return DXGI_FORMAT_R16G16_UNORM;
+		case DXGI_FORMAT_R16G16_UINT: return DXGI_FORMAT_R16G16_UINT;
+		case DXGI_FORMAT_R16G16_SNORM: return DXGI_FORMAT_R16G16_SNORM;
+		case DXGI_FORMAT_R16G16_SINT: return DXGI_FORMAT_R16G16_SINT;
+
+		case DXGI_FORMAT_R32_TYPELESS:
+		case DXGI_FORMAT_R32_FLOAT: return DXGI_FORMAT_R32_FLOAT;
+		case DXGI_FORMAT_R32_UINT: return DXGI_FORMAT_R32_UINT;
+		case DXGI_FORMAT_R32_SINT: return DXGI_FORMAT_R32_SINT;
+
+		case DXGI_FORMAT_R8G8_TYPELESS:
+		case DXGI_FORMAT_R8G8_UNORM: return DXGI_FORMAT_R8G8_UNORM;
+		case DXGI_FORMAT_R8G8_UINT: return DXGI_FORMAT_R8G8_UINT;
+		case DXGI_FORMAT_R8G8_SNORM: return DXGI_FORMAT_R8G8_SNORM;
+		case DXGI_FORMAT_R8G8_SINT: return DXGI_FORMAT_R8G8_SINT;
+
+		case DXGI_FORMAT_R16_TYPELESS:
+		case DXGI_FORMAT_R16_FLOAT: return DXGI_FORMAT_R16_FLOAT;
+
+		case DXGI_FORMAT_R16_UNORM: return DXGI_FORMAT_R16_UNORM;
+		case DXGI_FORMAT_R16_UINT: return DXGI_FORMAT_R16_UINT;
+		case DXGI_FORMAT_R16_SNORM: return DXGI_FORMAT_R16_SNORM;
+		case DXGI_FORMAT_R16_SINT: return DXGI_FORMAT_R16_SINT;
+
+		case DXGI_FORMAT_R8_TYPELESS:
+		case DXGI_FORMAT_R8_UNORM: return DXGI_FORMAT_R8_UNORM;
+		case DXGI_FORMAT_R8_UINT: return DXGI_FORMAT_R8_UINT;
+		case DXGI_FORMAT_R8_SNORM: return DXGI_FORMAT_R8_SNORM;
+		case DXGI_FORMAT_R8_SINT: return DXGI_FORMAT_R8_SINT;
+		case DXGI_FORMAT_A8_UNORM: return DXGI_FORMAT_A8_UNORM;
+
+		case DXGI_FORMAT_B5G6R5_UNORM: return DXGI_FORMAT_B5G6R5_UNORM;
+		case DXGI_FORMAT_B5G5R5A1_UNORM: return DXGI_FORMAT_B5G5R5A1_UNORM;
+
+		case DXGI_FORMAT_B4G4R4A4_UNORM: return DXGI_FORMAT_B4G4R4A4_UNORM;
+		default:
+			return DXGI_FORMAT_UNKNOWN;
+		}
+
+		return DXGI_FORMAT_UNKNOWN;
+	}
+
+
 	Texture::PlatformParams::PlatformParams(re::Texture const& texture)
+		: m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
+		, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
+		, m_rtvDescriptors(dx12::DescriptorCache::DescriptorType::RTV)
+		, m_dsvDescriptors(dx12::DescriptorCache::DescriptorType::DSV)
 	{
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
 		m_format = GetTextureFormat(texParams);
-	}
-
-
-	Texture::PlatformParams::~PlatformParams()
-	{
-		m_format = DXGI_FORMAT_UNKNOWN;
-		m_textureResource = nullptr;
-
-		m_srvCpuDescAllocations.Free(0);
-		m_uavCpuDescAllocations.Free(0);
 	}
 
 
@@ -1078,7 +711,6 @@ namespace dx12
 		SEAssert((texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0, "TODO: Support depth stencil targets");
 		SEAssert((texParams.m_usage & re::Texture::Usage::StencilTarget) == 0, "TODO: Support stencil targets");
 		
-		const bool needsSRV = SRVIsNeeded(texParams);
 		const bool needsSimultaneousAccess = SimultaneousAccessIsNeeded(texParams);
 
 		// Figure out our resource needs:
@@ -1107,11 +739,12 @@ namespace dx12
 		// Upload initial data via an intermediate upload heap:
 		if ((texParams.m_usage & re::Texture::Usage::Color) && texture.HasInitialData())
 		{
+			const uint8_t numFaces = re::Texture::GetNumFaces(&texture);
 			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);
 			const uint32_t numBytesPerFace = static_cast<uint32_t>(texture.GetTotalBytesPerFace());
-			const uint32_t totalBytes = texParams.m_arraySize * texParams.m_faces * numBytesPerFace;
+			const uint32_t totalBytes = texParams.m_arraySize * numFaces * numBytesPerFace;
 			SEAssert(totalBytes > 0 &&
-				totalBytes == texParams.m_arraySize * texParams.m_faces * texParams.m_width * texParams.m_height * bytesPerTexel,
+				totalBytes == texParams.m_arraySize * numFaces * texParams.m_width * texParams.m_height * bytesPerTexel,
 				"Texture sizes don't make sense");
 			
 			// Note: If we don't request an intermediate buffer large enough, the UpdateSubresources call will return 0
@@ -1167,18 +800,6 @@ namespace dx12
 			intermediateResources.emplace_back(itermediateBufferResource);
 		}
 
-		// Create a SRV if it's needed:
-		if (needsSRV)
-		{
-			CreateSRV(texture);
-		}
-
-		// Create a UAV if it's needed:
-		if (needsUAV)
-		{
-			CreateUAV(texture);
-		}
-
 		texPlatParams->m_isDirty = false;
 
 		// Register the resource with the global resource state tracker:
@@ -1218,126 +839,47 @@ namespace dx12
 	}
 
 
-	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetSRV(
-		D3D12_SRV_DIMENSION srvDimension,
-		re::Texture const* texture, 
-		uint32_t arrayIdx, 
-		uint32_t faceIdx, 
-		uint32_t mipIdx)
+	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetSRV(re::Texture const* tex, re::TextureView const& texView)
 	{
-		SEAssert(texture, "Trying to get an SRV for a null texture");
+		SEAssert(tex, "Texture cannot be null");
 
-		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
-		dx12::Texture::PlatformParams const* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatformParams const* texPlatParams = 
+			tex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
-		uint32_t descriptorIdx = 0;
-
-		// Get the appropriate cpu-visible SRV index::
-		switch (srvDimension)
-		{
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1D:
-		{
-			SEAssert(texParams.m_dimension == re::Texture::Texture1D,
-				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-			descriptorIdx = re::Texture::Texture1D;
-		}
-		break;
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
-		{
-			SEAssert(texParams.m_dimension == re::Texture::Texture1D ||
-				texParams.m_dimension == re::Texture::Texture1DArray,
-				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-			descriptorIdx = re::Texture::Texture1DArray;
-		}
-		break;
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2D:
-		{
-			SEAssert(texParams.m_dimension == re::Texture::Texture2D,
-				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-			descriptorIdx = re::Texture::Texture2D;
-		}
-		break;
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
-		{
-			SEAssert(texParams.m_dimension == re::Texture::Texture2D ||
-				texParams.m_dimension == re::Texture::Texture2DArray ||
-				texParams.m_dimension == re::Texture::TextureCubeMap ||
-				texParams.m_dimension == re::Texture::TextureCubeMapArray,
-				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-			descriptorIdx = re::Texture::Texture2DArray;
-		}
-		break;
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DMS:
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
-		{
-			SEAssert(texParams.m_dimension == re::Texture::Texture2D,
-				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-			SEAssertF("TODO: Support this dimension");
-		}
-		break;
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE3D:
-		{
-			SEAssert(texParams.m_dimension == re::Texture::Texture3D,
-				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-			descriptorIdx = re::Texture::Texture3D;
-		}
-		break;
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBE:
-		{
-			SEAssert(texParams.m_dimension == re::Texture::TextureCubeMap,
-				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-			descriptorIdx = re::Texture::TextureCubeMap;
-		}
-		break;
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
-		{
-			SEAssert(texParams.m_dimension == re::Texture::TextureCubeMap ||
-				texParams.m_dimension == re::Texture::TextureCubeMapArray,
-				"Unexpected texture dimension: Does the Texture dimension match the type used by the shader?");
-
-			descriptorIdx = re::Texture::TextureCubeMapArray;
-		}
-		break;
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_UNKNOWN:
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER:
-		case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE:
-		default: SEAssertF("Invalid/unexpected table entry type");
-		}
-
-		SEAssert(descriptorIdx < texPlatParams->m_srvCpuDescAllocations.GetNumDescriptors(),
-			"Descriptor index is OOB");
-
-		return texPlatParams->m_srvCpuDescAllocations[descriptorIdx];
+		return texPlatParams->m_srvDescriptors.GetCreateDescriptor(tex, texView);
 	}
 
 
-	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetUAV(
-		D3D12_UAV_DIMENSION uavDimension,
-		re::Texture const* texture, 
-		uint32_t arrayIdx, 
-		uint32_t faceIdx, 
-		uint32_t mipIdx)
+	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetUAV(re::Texture const* tex, re::TextureView const& texView)
 	{
-		SEAssert(texture, "Trying to get an SRV for a null texture");
+		SEAssert(tex, "Texture cannot be null");
 
-		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 		dx12::Texture::PlatformParams const* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			tex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
-		const uint32_t descriptorIdx = texture->GetSubresourceIndex(arrayIdx, faceIdx, mipIdx);
+		return texPlatParams->m_uavDescriptors.GetCreateDescriptor(tex, texView);
+	}
 
-		SEAssert(descriptorIdx < texPlatParams->m_uavCpuDescAllocations.GetNumDescriptors(),
-			"UAV descriptor index is OOB");
 
-		return texPlatParams->m_uavCpuDescAllocations[descriptorIdx];
+	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetRTV(re::Texture const* tex, re::TextureView const& texView)
+	{
+		SEAssert(tex, "Texture cannot be null");
+
+		dx12::Texture::PlatformParams const* texPlatParams =
+			tex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+		return texPlatParams->m_rtvDescriptors.GetCreateDescriptor(tex, texView);
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetDSV(re::Texture const* tex, re::TextureView const& texView)
+	{
+		SEAssert(tex, "Texture cannot be null");
+
+		dx12::Texture::PlatformParams const* texPlatParams =
+			tex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+		return texPlatParams->m_dsvDescriptors.GetCreateDescriptor(tex, texView);
 	}
 
 

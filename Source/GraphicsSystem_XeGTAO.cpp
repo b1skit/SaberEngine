@@ -110,7 +110,6 @@ namespace
 		re::Texture::TextureParams hilbertLUTParams{};
 		hilbertLUTParams.m_width = k_texWidthHeight;
 		hilbertLUTParams.m_height = k_texWidthHeight;
-		hilbertLUTParams.m_faces = 1;
 
 		hilbertLUTParams.m_usage = re::Texture::Usage::Color;
 		hilbertLUTParams.m_dimension = re::Texture::Dimension::Texture2D;
@@ -191,38 +190,46 @@ namespace gr
 		std::shared_ptr<re::Texture> prefilteredDepthTargetTex = 
 			re::Texture::Create("XeGTAO: Prefiltered depths", prefilterDepthTargetParams);
 
-		re::TextureTarget::TargetParams prefilteredDepthTargetParams{};
+		uint32_t targetMip = 0;
 
 		// Mip 0:
-		prefilteredDepthTargetParams.m_targetMip = 0;
-		m_prefilterDepthsTargets->SetColorTarget(0, prefilteredDepthTargetTex, prefilteredDepthTargetParams);
+		m_prefilterDepthsTargets->SetColorTarget(
+			0,
+			prefilteredDepthTargetTex,
+			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(targetMip++, 1) });
 
 		// Mip 1:
-		prefilteredDepthTargetParams.m_targetMip = 1;
-		m_prefilterDepthsTargets->SetColorTarget(1, prefilteredDepthTargetTex, prefilteredDepthTargetParams);
+		m_prefilterDepthsTargets->SetColorTarget(
+			1, 
+			prefilteredDepthTargetTex, 
+			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(targetMip++, 1) });
 
 		// Mip 2:
-		prefilteredDepthTargetParams.m_targetMip = 2;
-		m_prefilterDepthsTargets->SetColorTarget(2, prefilteredDepthTargetTex, prefilteredDepthTargetParams);
+		m_prefilterDepthsTargets->SetColorTarget(
+			2, 
+			prefilteredDepthTargetTex,
+			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(targetMip++, 1) });
 
 		// Mip 3:
-		prefilteredDepthTargetParams.m_targetMip = 3;
-		m_prefilterDepthsTargets->SetColorTarget(3, prefilteredDepthTargetTex, prefilteredDepthTargetParams);
+		m_prefilterDepthsTargets->SetColorTarget(
+			3, 
+			prefilteredDepthTargetTex,
+			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(targetMip++, 1) });
 
 		// Mip 4:
-		prefilteredDepthTargetParams.m_targetMip = 4;
-		m_prefilterDepthsTargets->SetColorTarget(4, prefilteredDepthTargetTex, prefilteredDepthTargetParams);
+		m_prefilterDepthsTargets->SetColorTarget(
+			4, 
+			prefilteredDepthTargetTex, 
+			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(targetMip++, 1) });
 
 		m_prefilterDepthsStage->SetTextureTargetSet(m_prefilterDepthsTargets);
 
 		// Attach the depth buffer as an input to the depth prefilter stage:	
 		m_prefilterDepthsStage->AddPermanentTextureInput(
-			"SceneDepth", 
+			"SceneDepth",
 			*texDependencies.at(k_depthInput),
-			re::Sampler::GetSampler("ClampMinMagMipPoint"), 
-			0,
-			0,
-			0);
+			re::Sampler::GetSampler("ClampMinMagMipPoint"),
+			{ re::TextureView::Texture2DView(0, 1), re::TextureView::ViewFlags{re::TextureView::ViewFlags::ReadOnlyDepth} });
 
 		// Append the depth prefilter stage:
 		pipeline.AppendRenderStage(m_prefilterDepthsStage);
@@ -255,7 +262,7 @@ namespace gr
 
 		std::shared_ptr<re::Texture> workingAOTex = re::Texture::Create("XeGTAO: Working AO", workingAOTexParams);
 
-		re::TextureTarget::TargetParams defaultTargetParams{};
+		const re::TextureTarget::TargetParams defaultTargetParams{.m_textureView = re::TextureView::Texture2DView(0, 1)};
 
 		m_mainTargets->SetColorTarget(0, workingAOTex, defaultTargetParams);
 
@@ -283,20 +290,20 @@ namespace gr
 		m_mainStage->AddPermanentTextureInput(
 			"PrefilteredDepth",
 			prefilteredDepthTargetTex,
-			re::Sampler::GetSampler("ClampMinMagMipPoint"));
+			re::Sampler::GetSampler("ClampMinMagMipPoint"),
+			re::TextureView(prefilteredDepthTargetTex));
 		
 		m_mainStage->AddPermanentTextureInput(
 			k_wNormalInput.GetKey(),
 			*texDependencies.at(k_wNormalInput),
 			re::Sampler::GetSampler("ClampMinMagMipPoint"),
-			0,
-			0,
-			0);
+			re::TextureView::Texture2DView(0, 1));
 
 		m_mainStage->AddPermanentTextureInput(
 			k_hilbertLutTexName,
 			m_hilbertLUT,
-			re::Sampler::GetSampler("ClampMinMagMipPoint"));
+			re::Sampler::GetSampler("ClampMinMagMipPoint"),
+			re::TextureView(m_hilbertLUT));
 
 		// Append the main stage:
 		pipeline.AppendRenderStage(m_mainStage);
@@ -350,7 +357,8 @@ namespace gr
 				m_denoiseStages[passIdx]->AddPermanentTextureInput(
 					"SourceAO",
 					denoiseTarget, // Read from the denoise target texture
-					re::Sampler::GetSampler("ClampMinMagMipPoint"));
+					re::Sampler::GetSampler("ClampMinMagMipPoint"),
+					re::TextureView(denoiseTarget));
 
 				m_denoiseStages[passIdx]->SetTextureTargetSet(m_denoisePingPongTargets[1]);
 			}
@@ -361,7 +369,8 @@ namespace gr
 				m_denoiseStages[passIdx]->AddPermanentTextureInput(
 					"SourceAO",
 					workingAOTex, // Read from the working AO texture
-					re::Sampler::GetSampler("ClampMinMagMipPoint"));
+					re::Sampler::GetSampler("ClampMinMagMipPoint"),
+					re::TextureView(workingAOTex));
 
 				m_denoiseStages[passIdx]->SetTextureTargetSet(m_denoisePingPongTargets[0]);
 			}
@@ -370,7 +379,8 @@ namespace gr
 			m_denoiseStages[passIdx]->AddPermanentTextureInput(
 				"SourceEdges",
 				m_mainTargets->GetColorTarget(k_workingEdgesIdx).GetTexture(),
-				re::Sampler::GetSampler("ClampMinMagMipPoint"));
+				re::Sampler::GetSampler("ClampMinMagMipPoint"),
+				re::TextureView(m_mainTargets->GetColorTarget(k_workingEdgesIdx).GetTexture()));
 
 			pipeline.AppendRenderStage(m_denoiseStages[passIdx]);
 		}

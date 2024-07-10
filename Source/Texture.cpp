@@ -26,6 +26,7 @@ namespace
 	uint32_t ComputeNumSubresources(re::Texture::TextureParams const& texParams)
 	{
 		const uint32_t numMips = ComputeNumMips(texParams);
+		const uint8_t numFaces = re::Texture::GetNumFaces(texParams.m_dimension);
 
 		uint32_t numSubresources = 0;
 		if (texParams.m_dimension == re::Texture::Dimension::Texture3D)
@@ -36,7 +37,7 @@ namespace
 		}
 		else
 		{
-			numSubresources = texParams.m_arraySize * texParams.m_faces * numMips;
+			numSubresources = texParams.m_arraySize * numFaces * numMips;
 		}
 		return numSubresources;
 	}
@@ -89,19 +90,21 @@ namespace re
 		TextureParams const& params, 
 		std::vector<ImageDataUniquePtr>&& initialData)
 	{
-		SEAssert(initialData.size() == params.m_faces, "Number of initial data entries must match the number of faces");
+		const uint8_t numFaces = re::Texture::GetNumFaces(params.m_dimension);
+		SEAssert(initialData.size() == numFaces,
+			"Number of initial data entries must match the number of faces");
 		
 		SEAssert(params.m_dimension == Texture1D || 
 			params.m_dimension == Texture1DArray ||
 			params.m_dimension == Texture2D ||
 			params.m_dimension == Texture2DArray ||
-			params.m_dimension == TextureCubeMap ||
-			params.m_dimension == TextureCubeMapArray,
+			params.m_dimension == TextureCube ||
+			params.m_dimension == TextureCubeArray,
 			"Only Textures with initial data that can be non-contiguous in memory at buffer time are supported here");
 
 		std::unique_ptr<IInitialData> initialDataPtr = std::make_unique<InitialDataSTBIImage>(
 			params.m_arraySize,
-			params.m_faces,
+			numFaces,
 			ComputeTotalBytesPerFace(params),
 			std::move(initialData));
 
@@ -116,12 +119,13 @@ namespace re
 		TextureParams const& params,
 		std::vector<uint8_t>&& initialData)
 	{
-		SEAssert(initialData.size() == params.m_arraySize * params.m_faces * ComputeTotalBytesPerFace(params),
+		const uint8_t numFaces = re::Texture::GetNumFaces(params.m_dimension);
+		SEAssert(initialData.size() == params.m_arraySize * numFaces * ComputeTotalBytesPerFace(params),
 			"Invalid data size");
 
 		std::unique_ptr<IInitialData> initialDataPtr = std::make_unique<InitialDataVec>(
 			params.m_arraySize,
-			params.m_faces,
+			numFaces,
 			ComputeTotalBytesPerFace(params),
 			std::move(initialData));
 
@@ -138,9 +142,11 @@ namespace re
 	{
 		SEAssert((params.m_usage & Usage::Color), "Trying to fill a non-color texture");
 
+		const uint8_t numFaces = re::Texture::GetNumFaces(params.m_dimension);
+
 		std::unique_ptr<IInitialData> initialData = std::make_unique<InitialDataVec>(
 			params.m_arraySize,
-			params.m_faces,
+			numFaces,
 			ComputeTotalBytesPerFace(params),
 			std::vector<uint8_t>());
 
@@ -213,18 +219,11 @@ namespace re
 		SEAssert(m_texParams.m_format != Texture::Format::Invalid, "Invalid format");
 		SEAssert(m_texParams.m_colorSpace != Texture::ColorSpace::Invalid, "Invalid color space");
 		SEAssert(m_texParams.m_width > 0 && m_texParams.m_height > 0, "Invalid dimensions");
-		SEAssert((m_texParams.m_faces == 1 && 
-			(m_texParams.m_dimension != Texture::Dimension::TextureCubeMap ||
-				m_texParams.m_dimension != Texture::Dimension::TextureCubeMapArray)) ||
-			(m_texParams.m_faces == 6 && 
-				(m_texParams.m_dimension == Texture::Dimension::TextureCubeMap ||
-					m_texParams.m_dimension == Texture::Dimension::TextureCubeMapArray)),
-			"Dimension and number of faces mismatch");
 		SEAssert(m_texParams.m_arraySize == 1 || 
 			m_texParams.m_dimension == Dimension::Texture1DArray ||
 			m_texParams.m_dimension == Dimension::Texture2DArray ||
 			m_texParams.m_dimension == Dimension::Texture3D ||
-			m_texParams.m_dimension == Dimension::TextureCubeMapArray,
+			m_texParams.m_dimension == Dimension::TextureCubeArray,
 			"Dimension and array size mismatch");
 
 		SEAssert(m_texParams.m_dimension != re::Texture::Texture3D || 
@@ -407,9 +406,11 @@ namespace re
 	{
 		SEAssert(m_initialData->HasData(), "There are no texels. Texels are only allocated for non-target textures");
 
+		const uint8_t numFaces = re::Texture::GetNumFaces(this);
+
 		for (uint32_t arrayIdx = 0; arrayIdx < m_texParams.m_arraySize; arrayIdx++)
 		{
-			for (uint32_t face = 0; face < m_texParams.m_faces; face++)
+			for (uint32_t face = 0; face < numFaces; face++)
 			{
 				for (uint32_t row = 0; row < m_texParams.m_height; row++)
 				{
@@ -440,7 +441,9 @@ namespace re
 
 	uint32_t Texture::GetSubresourceIndex(uint32_t arrayIdx, uint32_t faceIdx, uint32_t mipIdx) const
 	{
-		SEAssert(arrayIdx < m_texParams.m_arraySize && faceIdx < m_texParams.m_faces && mipIdx < m_numMips, "OOB index");
+		const uint8_t numFaces = re::Texture::GetNumFaces(this);
+
+		SEAssert(arrayIdx < m_texParams.m_arraySize && faceIdx < numFaces && mipIdx < m_numMips, "OOB index");
 
 		switch (m_texParams.m_dimension)
 		{
@@ -450,7 +453,7 @@ namespace re
 		}
 		break;
 		default:
-			return (arrayIdx * m_texParams.m_faces * m_numMips) + (faceIdx * m_numMips) + mipIdx;
+			return (arrayIdx * numFaces * m_numMips) + (faceIdx * m_numMips) + mipIdx;
 		}
 	}
 
@@ -518,6 +521,24 @@ namespace re
 
 		return 1;
 	}
+
+
+	uint8_t Texture::GetNumFaces(re::Texture const* tex)
+	{
+		return GetNumFaces(tex->m_texParams.m_dimension);
+	}
+
+
+	uint8_t Texture::GetNumFaces(re::Texture::Dimension dimension)
+	{
+		switch (dimension)
+		{
+		case re::Texture::TextureCube:
+		case re::Texture::TextureCubeArray: return 6;
+		default: return 1;
+		}
+	}
+
 
 	uint8_t Texture::GetNumberOfChannels(const Format texFormat)
 	{

@@ -539,6 +539,12 @@
     <ClCompile Include="LightManager.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
+    <ClCompile Include="DescriptorCache_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureView.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Context.h">
@@ -975,6 +981,12 @@
     </ClInclude>
     <ClInclude Include="LightManager.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorCache_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureView.h">
+      <Filter>Header Files\re</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

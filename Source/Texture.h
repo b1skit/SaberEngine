@@ -61,7 +61,6 @@ namespace re
 
 	public: // Subresource sentinel values:
 		static constexpr uint32_t k_allArrayElements	= std::numeric_limits<uint32_t>::max();
-		static constexpr uint32_t k_allFaces			= std::numeric_limits<uint32_t>::max();
 		static constexpr uint32_t k_allMips				= std::numeric_limits<uint32_t>::max(); 
 
 
@@ -108,8 +107,8 @@ namespace re
 			Texture2D,
 			Texture2DArray,
 			Texture3D,
-			TextureCubeMap,
-			TextureCubeMapArray,
+			TextureCube,
+			TextureCubeArray,
 
 			Dimension_Count,
 			Dimension_Invalid = Dimension_Count
@@ -166,7 +165,6 @@ namespace re
 		{
 			uint32_t m_width = 4; // Must be a minimum of 4x4 for block compressed formats
 			uint32_t m_height = 4;
-			uint32_t m_faces = 1; // TODO: This shouldn't be necessary: It's always 1 or 6, and we know the m_dimension
 			uint32_t m_arraySize = 1; // # textures in an array texture, or depth slices in a 3D texture
 
 			Usage m_usage = Usage::Invalid;
@@ -250,7 +248,11 @@ namespace re
 	public:
 		// Static helpers:
 		static uint8_t GetNumberOfChannels(const Format texFormat);
+		
 		static uint8_t GetNumBytesPerTexel(const Format texFormat);
+		
+		static uint8_t GetNumFaces(re::Texture const*);
+		static uint8_t GetNumFaces(re::Texture::Dimension);
 
 
 	private:

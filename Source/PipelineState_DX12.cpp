@@ -190,14 +190,14 @@ namespace
 	{
 		// We make assumptions when recording resource transitions on our command lists that depth targets will 
 		// specifically have depth disabled (not just masked out) when the depth channel write mode is disabled
-		const bool depthEnabled = depthTarget && depthTarget->HasTexture();
+		const bool hasValidDepthBuffer = depthTarget && depthTarget->HasTexture();
 		
-		const bool depthWritesEnabled = depthEnabled &&
-			depthTarget->GetDepthWriteMode() == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled;
+		const bool depthWritesEnabled = hasValidDepthBuffer &&
+			depthTarget->GetTargetParams().m_textureView.DepthWritesEnabled();
 
 		D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
 
-		depthStencilDesc.DepthEnable = depthEnabled;
+		depthStencilDesc.DepthEnable = hasValidDepthBuffer;
 
 		depthStencilDesc.DepthWriteMask = depthWritesEnabled ?
 			D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ZERO;
@@ -229,10 +229,16 @@ namespace
 		// TODO: Support these
 		SEAssert(!depthTarget ||
 			!depthTarget->GetTexture() ||
-			!((depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::StencilTarget) ||
-				(depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget)),
+			(!((depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::StencilTarget) ||
+				(depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget)) &&
+				depthTarget->GetTargetParams().m_textureView.StencilWritesEnabled()),
 			"TODO: Support StencilTarget and DepthStencilTarget usages");
-		depthStencilDesc.StencilEnable = false;
+
+		//const bool stencilEnabled = hasValidDepthBuffer && 
+		//	depthTarget->GetTargetParams().m_textureView.StencilWritesEnabled();
+		const bool stencilEnabled = false;
+
+		depthStencilDesc.StencilEnable = stencilEnabled;
 		depthStencilDesc.StencilReadMask = 0;
 		depthStencilDesc.StencilWriteMask = 0;
 

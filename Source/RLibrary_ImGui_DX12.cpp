@@ -129,8 +129,7 @@ namespace dx12
 
 			// Draw directly to the swapchain backbuffer
 			re::SwapChain const& swapChain = context->GetSwapChain();
-			const bool attachDepthAsReadOnly = true;
-			commandList->SetRenderTargets(*dx12::SwapChain::GetBackBufferTargetSet(swapChain), attachDepthAsReadOnly);
+			commandList->SetRenderTargets(*dx12::SwapChain::GetBackBufferTargetSet(swapChain));
 
 			// Record our ImGui draws:
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3dCommandList);

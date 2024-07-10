@@ -54,15 +54,17 @@ namespace gr
 
 		m_transparencyStage->SetDrawStyle(effect::DrawStyle::RenderPath_Forward);
 
-
 		// Targets:
 		std::shared_ptr<re::TextureTargetSet> transparencyTarget = re::TextureTargetSet::Create("Transparency Targets");
 
 		SEAssert(texDependencies.at(k_sceneLightingTexInput), "Mandatory scene lighting texture input not recieved");
-		transparencyTarget->SetColorTarget(0, *texDependencies.at(k_sceneLightingTexInput), re::TextureTarget::TargetParams{});
+		transparencyTarget->SetColorTarget(0,
+			*texDependencies.at(k_sceneLightingTexInput),
+			re::TextureTarget::TargetParams{ .m_textureView = {re::TextureView::Texture2DView(0, 1) } });
 
-		re::TextureTarget::TargetParams depthTargetParams;
-		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
+		re::TextureTarget::TargetParams depthTargetParams{ .m_textureView = {
+			re::TextureView::Texture2DView(0, 1),
+			{re::TextureView::ViewFlags::ReadOnlyDepth} }};
 
 		transparencyTarget->SetDepthStencilTarget(
 			*texDependencies.at(k_sceneDepthTexInput),
@@ -91,7 +93,8 @@ namespace gr
 		m_transparencyStage->AddPermanentTextureInput(
 			"DFG",
 			texDependencies.at(k_ambientDFGTexInput)->get(),
-			re::Sampler::GetSampler("ClampMinMagMipPoint").get());
+			re::Sampler::GetSampler("ClampMinMagMipPoint").get(),
+			re::TextureView(texDependencies.at(k_ambientDFGTexInput)->get()));
 
 		// Cache the pointers in case the light changes change
 		m_ambientIEMTex = texDependencies.at(k_ambientIEMTexInput);
@@ -113,12 +116,14 @@ namespace gr
 			m_transparencyStage->AddSingleFrameTextureInput(
 				"CubeMapIEM",
 				*m_ambientIEMTex,
-				re::Sampler::GetSampler("WrapMinMagMipLinear"));
+				re::Sampler::GetSampler("WrapMinMagMipLinear"),
+				re::TextureView(*m_ambientIEMTex));
 
 			m_transparencyStage->AddSingleFrameTextureInput(
 				"CubeMapPMREM",
 				*m_ambientPMREMTex,
-				re::Sampler::GetSampler("WrapMinMagMipLinear"));
+				re::Sampler::GetSampler("WrapMinMagMipLinear"),
+				re::TextureView(*m_ambientPMREMTex));
 
 			m_transparencyStage->AddSingleFrameBuffer(*m_ambientParams);
 		}

@@ -34,7 +34,6 @@ namespace gr
 		re::Texture::TextureParams gBufferColorParams;
 		gBufferColorParams.m_width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		gBufferColorParams.m_height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
-		gBufferColorParams.m_faces = 1;
 		gBufferColorParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
 		gBufferColorParams.m_dimension = re::Texture::Dimension::Texture2D;
 		gBufferColorParams.m_format = re::Texture::Format::RGBA8_UNORM;
@@ -47,7 +46,7 @@ namespace gr
 		gbuffer16bitParams.m_format = re::Texture::Format::RGBA16F; 
 		gbuffer16bitParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		re::TextureTarget::TargetParams defaultTargetParams;
+		re::TextureTarget::TargetParams defaultTargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1)};
 
 		m_gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
@@ -74,7 +73,7 @@ namespace gr
 
 		m_gBufferTargets->SetDepthStencilTarget(
 			re::Texture::Create(GBufferTexNameHashKeys[GBufferTexIdx::GBufferDepth].GetKey(), depthTexParams),
-			defaultTargetParams);
+			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1) });
 
 		const re::TextureTarget::TargetParams::BlendModes gbufferBlendModes
 		{

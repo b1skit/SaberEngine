@@ -71,7 +71,8 @@ namespace gr
 		m_emissiveBlitStage->AddPermanentTextureInput(
 			"Tex0",
 			*texDependencies.at(k_emissiveInput),
-			bloomSampler);
+			bloomSampler,
+			re::TextureView(*texDependencies.at(k_emissiveInput)));
 
 		// Additively blit the emissive values to the deferred lighting target:
 		std::shared_ptr<re::Texture> deferredLightTargetTex = *texDependencies.at(k_bloomTargetInput);
@@ -79,7 +80,10 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet> emissiveTargetSet = 
 			re::TextureTargetSet::Create("Emissive Blit Target Set");
 
-		emissiveTargetSet->SetColorTarget(0, deferredLightTargetTex, re::TextureTarget::TargetParams{});
+		emissiveTargetSet->SetColorTarget(
+			0,
+			deferredLightTargetTex,
+			re::TextureTarget::TargetParams{.m_textureView = re::TextureView::Texture2DView(0, 1)});
 
 		emissiveTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
 			re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One });
@@ -133,18 +137,20 @@ namespace gr
 			// Input:
 			if (level == 0)
 			{
-				downStage->AddPermanentTextureInput("Tex0", deferredLightTargetTex, bloomSampler, 0, 0, 0);
+				downStage->AddPermanentTextureInput(
+					"Tex0", deferredLightTargetTex, bloomSampler, re::TextureView::Texture2DView(0, 1));
 			}
 			else
 			{
-				const uint32_t srcMipLevel = level - 1;
+				const uint32_t srcMipLvl = level - 1;
 
-				downStage->AddPermanentTextureInput("Tex0", bloomTargetTex, bloomSampler, 0, 0, srcMipLevel);	
+				downStage->AddPermanentTextureInput(
+					"Tex0", bloomTargetTex, bloomSampler, re::TextureView::Texture2DView(srcMipLvl, 1));
 			}
 			
 			// Target:
-			re::TextureTarget::TargetParams bloomLevelTargetParams;
-			bloomLevelTargetParams.m_targetMip = level;
+			re::TextureTarget::TargetParams bloomLevelTargetParams{ 
+				.m_textureView = re::TextureView::Texture2DView(level, 1)};
 			
 			bloomLevelTargets->SetColorTarget(
 				0, 
@@ -191,11 +197,12 @@ namespace gr
 				0, 0, static_cast<long>(targetMipDimensions.x), static_cast<long>(targetMipDimensions.y)));
 
 			// Input:
-			upStage->AddPermanentTextureInput("Tex0", bloomTargetTex, bloomSampler, 0, 0, upsampleSrcMip);
+			upStage->AddPermanentTextureInput(
+				"Tex0", bloomTargetTex, bloomSampler, re::TextureView::Texture2DView(upsampleSrcMip, 1));
 
 			// Targets:
-			re::TextureTarget::TargetParams bloomLevelTargetParams;
-			bloomLevelTargetParams.m_targetMip = upsampleDstMip;
+			re::TextureTarget::TargetParams bloomLevelTargetParams{ 
+				.m_textureView = re::TextureView::Texture2DView(upsampleDstMip, 1)};
 
 			bloomLevelTargets->SetColorTarget(
 				0,

@@ -1,8 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
-#include "Core/Config.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
+#include "PipelineState_DX12.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
 #include "Shader.h"
@@ -11,6 +10,9 @@
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
 #include "Window_Win32.h"
+
+#include "Core/Assert.h"
+#include "Core/Config.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -208,9 +210,7 @@ namespace dx12
 		commandList->TransitionResource(
 			swapChainTargetSet->GetColorTarget(0).GetTexture().get(),
 			D3D12_RESOURCE_STATE_PRESENT,
-			re::Texture::k_allArrayElements,
-			re::Texture::k_allFaces,
-			re::Texture::k_allMips);
+			swapChainTargetSet->GetColorTarget(0).GetTargetParams().m_textureView);
 
 		SEEndGPUEvent(commandList->GetD3DCommandList());
 

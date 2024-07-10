@@ -15,7 +15,7 @@ namespace core
 		IHashedDataObject() : m_dataHash(0) {}
 
 	public:
-		uint64_t GetDataHash() const;
+		DataHash GetDataHash() const;
 
 		void AddDataBytesToHash(void const* const data, size_t numBytes);
 
@@ -30,11 +30,11 @@ namespace core
 		void ResetDataHash();
 
 	private:
-		uint64_t m_dataHash;
+		DataHash m_dataHash;
 	};
 
 
-	inline uint64_t IHashedDataObject::GetDataHash() const
+	inline DataHash IHashedDataObject::GetDataHash() const
 	{
 		return m_dataHash;
 	}
@@ -45,8 +45,8 @@ namespace core
 		SEAssert(data != nullptr && numBytes > 0, "Invalid data for hash");
 
 		constexpr uint8_t k_wordSize = sizeof(uint64_t); // 8 bytes in a word on 64-bit architecture
-		const size_t numWords = numBytes / k_wordSize;
-		const size_t remainingNumBytes = numBytes - (numWords * k_wordSize);
+		const uint64_t numWords = numBytes / k_wordSize;
+		const uint64_t remainingNumBytes = numBytes - (numWords * k_wordSize);
 
 		uint64_t const* wordPtr = static_cast<uint64_t const*>(data);
 		for (size_t curWord = 0; curWord < numWords; curWord++)

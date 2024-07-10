@@ -72,7 +72,7 @@ namespace gr
 
 		re::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
 
-		for (std::shared_ptr<re::Texture> newTexture : newTextures)
+		for (std::shared_ptr<re::Texture> const& newTexture : newTextures)
 		{
 			re::Texture::TextureParams const& texParams = newTexture->GetTextureParams();
 			if (texParams.m_mipMode != re::Texture::MipMode::AllocateGenerate)
@@ -85,9 +85,11 @@ namespace gr
 
 			const uint32_t totalMipLevels = newTexture->GetNumMips(); // Includes mip 0
 
+			const uint32_t numFaces = re::Texture::GetNumFaces(newTexture.get());
+
 			for (uint32_t arrayIdx = 0; arrayIdx < texParams.m_arraySize; arrayIdx++)
 			{
-				for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+				for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 				{
 					constexpr uint32_t k_maxTargetsPerStage = 4;
 					uint32_t targetMip = 1;
@@ -99,12 +101,12 @@ namespace gr
 						const uint32_t numMipStages = targetMip + k_maxTargetsPerStage < totalMipLevels ? 
 							k_maxTargetsPerStage : (totalMipLevels - targetMip);
 
-						std::string const& stageName = std::format("{}: Array {}/{}, Face {}/{}, MIP {}-{}",
+						std::string const& stageName = std::format("Mip Gen: \"{}\" Array {}/{}, Face {}/{}, MIP {}-{}",
 							newTexture->GetName().c_str(),
 							arrayIdx + 1,
 							texParams.m_arraySize,
 							faceIdx + 1,
-							texParams.m_faces,
+							numFaces,
 							firstTargetMipIdx,
 							firstTargetMipIdx + numMipStages - 1);
 
@@ -113,13 +115,48 @@ namespace gr
 								stageName.c_str(),
 								re::RenderStage::ComputeStageParams{});
 
-						mipGenerationStage->AddPermanentTextureInput(
-							"SrcTex",
-							newTexture, 
-							mipSampler, 
-							arrayIdx, 
-							faceIdx, 
-							sourceMip);
+						re::TextureView inputView;
+
+						switch (texParams.m_dimension)
+						{
+						case re::Texture::Dimension::Texture1D:
+						{
+							inputView = re::TextureView::Texture1DView(sourceMip, 1);
+						}
+						break;
+						case re::Texture::Dimension::Texture1DArray:
+						{
+							inputView = re::TextureView::Texture1DArrayView(sourceMip, 1, arrayIdx, 1);
+						}
+						break;
+						case re::Texture::Dimension::Texture2D:
+						{
+							inputView = re::TextureView::Texture2DView(sourceMip, 1);
+						}
+						break;
+						case re::Texture::Dimension::Texture2DArray:
+						{
+							inputView = re::TextureView::Texture2DArrayView(sourceMip, 1, arrayIdx, 1);
+						}
+						break;
+						case re::Texture::Dimension::Texture3D:
+						{
+							inputView = re::TextureView::Texture3DView(sourceMip, 1, 0.f, arrayIdx, 1);
+						}
+						break;
+						case re::Texture::Dimension::TextureCube:
+						case re::Texture::Dimension::TextureCubeArray:
+						{
+							const uint32_t firstArraySlice = (arrayIdx * 6) + faceIdx;
+							inputView = re::TextureView::Texture2DArrayView(sourceMip, 1, firstArraySlice, 1);
+						}
+						break;
+						default: SEAssertF("Invalid dimension");
+						}
+
+						mipGenerationStage->AddPermanentTextureInput("SrcTex", newTexture, mipSampler, inputView);
+
+						SEAssert(sourceMip != re::Texture::k_allMips, "Invalid source mip level");
 
 						// Parameter buffer:
 						MipGenerationData const& mipGenerationParams =
@@ -141,8 +178,8 @@ namespace gr
 						break;
 						case re::Texture::Dimension::Texture2D:
 						case re::Texture::Dimension::Texture2DArray:
-						case re::Texture::Dimension::TextureCubeMap:
-						case re::Texture::Dimension::TextureCubeMapArray:
+						case re::Texture::Dimension::TextureCube:
+						case re::Texture::Dimension::TextureCubeArray:
 						{
 							mipGenerationStage->SetDrawStyle(effect::DrawStyle::TextureDimension_2D);
 						}
@@ -168,9 +205,49 @@ namespace gr
 						for (uint32_t currentTargetIdx = 0; currentTargetIdx < numMipStages; currentTargetIdx++)
 						{
 							re::TextureTarget::TargetParams mipTargetParams;
-							mipTargetParams.m_targetArrayIdx = arrayIdx;
-							mipTargetParams.m_targetFace = faceIdx;
-							mipTargetParams.m_targetMip = targetMip++;
+
+							switch (texParams.m_dimension)
+							{
+							case re::Texture::Dimension::Texture1D:
+							{
+								mipTargetParams.m_textureView = re::TextureView(
+									re::TextureView::Texture1DView{ targetMip++, 1 });
+							}
+							break;
+							case re::Texture::Dimension::Texture1DArray:
+							{
+								mipTargetParams.m_textureView = re::TextureView(
+									re::TextureView::Texture1DArrayView{ targetMip++, 1, arrayIdx, 1 });
+							}
+							break;
+							case re::Texture::Dimension::Texture2D:
+							{
+								mipTargetParams.m_textureView = re::TextureView(
+									re::TextureView::Texture2DView{ targetMip++, 1, 0, 0.f });
+							}
+							break;
+							case re::Texture::Dimension::Texture2DArray:
+							{
+								mipTargetParams.m_textureView = re::TextureView(
+									re::TextureView::Texture2DArrayView{ targetMip++, 1, arrayIdx, 1, 0 });
+							}
+							break;
+							case re::Texture::Dimension::Texture3D:
+							{
+								mipTargetParams.m_textureView = re::TextureView(
+									re::TextureView::Texture3DView{ targetMip++, 1, 0.f, arrayIdx, 1 });
+							}
+							break;
+							case re::Texture::Dimension::TextureCube:
+							case re::Texture::Dimension::TextureCubeArray:
+							{
+								const uint32_t firstArraySlice = (arrayIdx * 6) + faceIdx;
+								mipTargetParams.m_textureView = re::TextureView(
+									re::TextureView::Texture2DArrayView{ targetMip++, 1, firstArraySlice, 1, 0 });
+							}
+							break;
+							default: SEAssertF("Invalid dimension");
+							}
 
 							mipGenTargets->SetColorTarget(currentTargetIdx, newTexture, mipTargetParams);
 						}

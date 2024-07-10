@@ -3,7 +3,7 @@
 #include "Effect.h"
 #include "MeshPrimitive.h"
 #include "Shader_Platform.h"
-#include "Texture.h"
+#include "TextureView.h"
 #include "VertexStream.h"
 
 #include "Core/Interfaces/IHashedDataObject.h"
@@ -19,23 +19,12 @@ namespace re
 	class Buffer;
 	class Shader;
 	class Sampler;
+	class Texture;
 }
 
 
 namespace re
 {
-	struct TextureAndSamplerInput
-	{
-		std::string m_shaderName;
-		re::Texture const* m_texture;
-		re::Sampler const* m_sampler;
-
-		uint32_t m_srcArrayElement = re::Texture::k_allArrayElements;
-		uint32_t m_srcFace = re::Texture::k_allFaces;
-		uint32_t m_srcMip = re::Texture::k_allMips;
-	};
-
-
 	class Batch final : public virtual core::IHashedDataObject
 	{
 	public:
@@ -135,21 +124,17 @@ namespace re
 		std::vector<std::shared_ptr<re::Buffer>> const& GetBuffers() const;
 		void SetBuffer(std::shared_ptr<re::Buffer>);
 
-		void AddTextureAndSamplerInput(
+		void AddTextureInput(
 			char const* shaderName,
 			re::Texture const*,
 			re::Sampler const*,
-			uint32_t arrayElement = re::Texture::k_allArrayElements,
-			uint32_t faceIdx = re::Texture::k_allFaces,
-			uint32_t mipLevel = re::Texture::k_allMips);
+			re::TextureView const&);
 
-		void AddTextureAndSamplerInput(
+		void AddTextureInput(
 			char const* shaderName, 
 			std::shared_ptr<re::Texture const>,
 			std::shared_ptr<re::Sampler const>,
-			uint32_t arrayElement = re::Texture::k_allArrayElements,
-			uint32_t faceIdx = re::Texture::k_allFaces,
-			uint32_t mipLevel = re::Texture::k_allMips);
+			re::TextureView const&);
 		
 		std::vector<TextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
 

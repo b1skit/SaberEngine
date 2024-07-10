@@ -2,11 +2,11 @@
 #pragma once
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
-#include "PipelineState_DX12.h"
 #include "ResourceStateTracker_DX12.h"
 
 #include <wrl.h>
 #include <d3d12.h>
+
 
 namespace re
 {
@@ -16,8 +16,9 @@ namespace re
 	class Texture;
 	class TextureTarget;
 	class TextureTargetSet;
-
+	
 	struct TextureAndSamplerInput;
+	struct TextureView;
 }
 
 namespace dx12
@@ -77,9 +78,9 @@ namespace dx12
 
 		void SetBuffer(re::Buffer const*);
 
-		void SetTexture(re::TextureAndSamplerInput const&, bool skipTransition); // Note: Sampler is not used here
+		void SetTexture(re::TextureAndSamplerInput const&); // Note: Sampler is not used here
 
-		void SetRenderTargets(re::TextureTargetSet const&, bool readOnlyDepth);
+		void SetRenderTargets(re::TextureTargetSet const&);
 		void SetComputeTargets(re::TextureTargetSet const&);
 
 		void ClearDepthTarget(re::TextureTarget const*);
@@ -110,8 +111,7 @@ namespace dx12
 
 		void CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource);
 
-		void TransitionResource(
-			re::Texture const*, D3D12_RESOURCE_STATES to, uint32_t arrayIdx, uint32_t faceIdx, uint32_t mipLevel);
+		void TransitionResource(re::Texture const*, D3D12_RESOURCE_STATES to, re::TextureView const&);
 
 		void ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers);
 

@@ -139,7 +139,6 @@ namespace gr
 		re::Texture::TextureParams brdfParams;
 		brdfParams.m_width = brdfTexWidthHeight;
 		brdfParams.m_height = brdfTexWidthHeight;
-		brdfParams.m_faces = 1;
 		brdfParams.m_usage =
 			static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
 		brdfParams.m_dimension = re::Texture::Dimension::Texture2D;
@@ -153,7 +152,7 @@ namespace gr
 
 		std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
 
-		re::TextureTarget::TargetParams colorTargetParams;
+		re::TextureTarget::TargetParams colorTargetParams{.m_textureView = re::TextureView::Texture2DView(0, 1)};
 
 		brdfStageTargets->SetColorTarget(0, m_BRDF_integrationMap, colorTargetParams);
 		brdfStageTargets->SetViewport(re::Viewport(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
@@ -198,10 +197,9 @@ namespace gr
 		re::Texture::TextureParams iemTexParams;
 		iemTexParams.m_width = iemTexWidthHeight;
 		iemTexParams.m_height = iemTexWidthHeight;
-		iemTexParams.m_faces = 6;
 		iemTexParams.m_usage = 
 			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
-		iemTexParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
+		iemTexParams.m_dimension = re::Texture::Dimension::TextureCube;
 		iemTexParams.m_format = re::Texture::Format::RGBA16F;
 		iemTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		iemTexParams.m_addToSceneData = false;
@@ -220,7 +218,8 @@ namespace gr
 			iemStage->AddPermanentTextureInput(
 				"Tex0",
 				iblTex,
-				re::Sampler::GetSampler("WrapMinMagLinearMipPoint").get());
+				re::Sampler::GetSampler("WrapMinMagLinearMipPoint").get(),
+				re::TextureView(iblTex));
 
 			// Buffers:
 			IEMPMREMGenerationData const& iemGenerationParams =
@@ -242,9 +241,8 @@ namespace gr
 			};
 			iemTargets->SetColorTargetBlendModes(1, &iemBlendModes);
 
-			re::TextureTarget::TargetParams targetParams;
-			targetParams.m_targetFace = face;
-			targetParams.m_targetMip = 0;
+			re::TextureTarget::TargetParams targetParams{
+				.m_textureView = re::TextureView::Texture2DArrayView(0, 1, face, 1)};
 
 			iemTargets->SetColorTarget(0, iemTexOut, targetParams);
 			iemTargets->SetViewport(re::Viewport(0, 0, iemTexWidthHeight, iemTexWidthHeight));
@@ -269,10 +267,9 @@ namespace gr
 		re::Texture::TextureParams pmremTexParams;
 		pmremTexParams.m_width = pmremTexWidthHeight;
 		pmremTexParams.m_height = pmremTexWidthHeight;
-		pmremTexParams.m_faces = 6;
 		pmremTexParams.m_usage = 
 			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
-		pmremTexParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
+		pmremTexParams.m_dimension = re::Texture::Dimension::TextureCube;
 		pmremTexParams.m_format = re::Texture::Format::RGBA16F;
 		pmremTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		pmremTexParams.m_addToSceneData = false;
@@ -299,7 +296,8 @@ namespace gr
 				pmremStage->AddPermanentTextureInput(
 					"Tex0",
 					iblTex,
-					re::Sampler::GetSampler("ClampMinMagMipLinear").get());
+					re::Sampler::GetSampler("ClampMinMagMipLinear").get(),
+					re::TextureView(iblTex));
 
 				// Buffers:
 				IEMPMREMGenerationData const& pmremGenerationParams = GetIEMPMREMGenerationParamsDataData(
@@ -312,9 +310,8 @@ namespace gr
 
 				pmremStage->AddPermanentBuffer(m_cubemapRenderCamParams[face]);
 
-				re::TextureTarget::TargetParams targetParams;
-				targetParams.m_targetFace = face;
-				targetParams.m_targetMip = currentMipLevel;
+				re::TextureTarget::TargetParams targetParams{ 
+					.m_textureView = re::TextureView::Texture2DArrayView(currentMipLevel, 1, face, 1)};
 
 				std::shared_ptr<re::TextureTargetSet> pmremTargetSet =
 					re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);
@@ -422,9 +419,8 @@ namespace gr
 		m_missingCubeShadowFallback = re::Texture::Create("Missing cubemap shadow fallback", 
 			re::Texture::TextureParams
 			{
-				.m_faces = 6,
 				.m_usage = re::Texture::Usage::Color,
-				.m_dimension = re::Texture::Dimension::TextureCubeMap,
+				.m_dimension = re::Texture::Dimension::TextureCube,
 				.m_format = re::Texture::Format::Depth32F,
 				.m_colorSpace = re::Texture::ColorSpace::Linear,
 				.m_mipMode = re::Texture::MipMode::None,
@@ -444,7 +440,6 @@ namespace gr
 		re::Texture::TextureParams lightTargetTexParams;
 		lightTargetTexParams.m_width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		lightTargetTexParams.m_height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
-		lightTargetTexParams.m_faces = 1;
 		lightTargetTexParams.m_usage = 
 			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
 		lightTargetTexParams.m_dimension = re::Texture::Dimension::Texture2D;
@@ -457,14 +452,15 @@ namespace gr
 		std::shared_ptr<re::Texture> lightTargetTex = re::Texture::Create("DeferredLightTarget", lightTargetTexParams);
 
 		// Create the lighting target set (shared by all lights/stages):
-		re::TextureTarget::TargetParams deferredTargetParams{};
+		re::TextureTarget::TargetParams deferredTargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1)};
 		deferredTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
 
-		// We need the depth buffer attached, but with depth writes disabled:
-		re::TextureTarget::TargetParams depthTargetParams;
-		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
-
 		m_lightingTargetSet->SetColorTarget(0, lightTargetTex, deferredTargetParams);
+
+		// We need the depth buffer attached, but with depth writes disabled:
+		re::TextureTarget::TargetParams depthTargetParams{ .m_textureView = {
+				re::TextureView::Texture2DView(0, 1),
+				{re::TextureView::ViewFlags::ReadOnlyDepth} } };
 
 		m_lightingTargetSet->SetDepthStencilTarget(
 			*texDependencies.at(GBufferGraphicsSystem::GBufferTexNameHashKeys[GBufferGraphicsSystem::GBufferDepth]),
@@ -499,8 +495,8 @@ namespace gr
 
 		std::shared_ptr<re::Sampler> clampMinMagMipPoint = re::Sampler::GetSampler("ClampMinMagMipPoint");
 
-		m_ambientStage->AddPermanentTextureInput(k_ssaoInput.GetKey(), m_ssaoTex, clampMinMagMipPoint);
-
+		m_ambientStage->AddPermanentTextureInput(
+			k_ssaoInput.GetKey(), m_ssaoTex, clampMinMagMipPoint, re::TextureView(m_ssaoTex));
 
 		// Append the ambient stage:
 		pipeline.AppendRenderStage(m_ambientStage);
@@ -572,10 +568,16 @@ namespace gr
 			util::HashKey const& texName = GBufferGraphicsSystem::GBufferTexNameHashKeys[slot];
 			std::shared_ptr<re::Texture> const& gbufferTex = *texDependencies.at(texName);
 			
-			m_ambientStage->AddPermanentTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
-			m_directionalStage->AddPermanentTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
-			m_pointStage->AddPermanentTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
-			m_spotStage->AddPermanentTextureInput(texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint);
+			re::TextureView gbufferTexView = re::TextureView(gbufferTex);
+
+			m_ambientStage->AddPermanentTextureInput(
+				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, gbufferTexView);
+			m_directionalStage->AddPermanentTextureInput(
+				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, gbufferTexView);
+			m_pointStage->AddPermanentTextureInput(
+				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, gbufferTexView);
+			m_spotStage->AddPermanentTextureInput(
+				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, gbufferTexView);
 		}
 
 
@@ -584,12 +586,19 @@ namespace gr
 		util::HashKey const& depthName = GBufferGraphicsSystem::GBufferTexNameHashKeys[depthBufferSlot];
 		std::shared_ptr<re::Texture> const& depthTex = *texDependencies.at(depthName);
 
-		m_directionalStage->AddPermanentTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
-		m_pointStage->AddPermanentTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
-		m_spotStage->AddPermanentTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
-		m_ambientStage->AddPermanentTextureInput(depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint);
+		re::TextureView gbufferDepthTexView = re::TextureView(depthTex);
 
-		m_ambientStage->AddPermanentTextureInput("DFG", m_BRDF_integrationMap, clampMinMagMipPoint);
+		m_directionalStage->AddPermanentTextureInput(
+			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, gbufferDepthTexView);
+		m_pointStage->AddPermanentTextureInput(
+			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, gbufferDepthTexView);
+		m_spotStage->AddPermanentTextureInput(
+			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, gbufferDepthTexView);
+		m_ambientStage->AddPermanentTextureInput(
+			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, gbufferDepthTexView);
+
+		m_ambientStage->AddPermanentTextureInput(
+			"DFG", m_BRDF_integrationMap, clampMinMagMipPoint, re::TextureView(m_BRDF_integrationMap));
 	}
 
 
@@ -684,15 +693,17 @@ namespace gr
 
 					ambientBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
 
-					ambientBatch.AddTextureAndSamplerInput(
+					ambientBatch.AddTextureInput(
 						"CubeMapIEM",
 						iemTex,
-						re::Sampler::GetSampler("WrapMinMagMipLinear"));
+						re::Sampler::GetSampler("WrapMinMagMipLinear"),
+						re::TextureView(iemTex));
 
-					ambientBatch.AddTextureAndSamplerInput(
+					ambientBatch.AddTextureInput(
 						"CubeMapPMREM",
 						pmremTex,
-						re::Sampler::GetSampler("WrapMinMagMipLinear"));
+						re::Sampler::GetSampler("WrapMinMagMipLinear"),
+						re::TextureView(pmremTex));
 
 					ambientBatch.SetBuffer(ambientParams);
 
@@ -787,10 +798,11 @@ namespace gr
 						re::Texture const* shadowTex = shadowTextures ?
 							shadowTextures->at(directionalData.m_renderDataID) : m_missing2DShadowFallback.get();
 
-						directionalLightBatch.AddTextureAndSamplerInput(
+						directionalLightBatch.AddTextureInput(
 							"Depth0",
 							shadowTex,
-							re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint").get());
+							re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint").get(),
+							re::TextureView(shadowTex));
 					}
 
 					++directionalItr;
@@ -863,10 +875,11 @@ namespace gr
 						}
 					}
 
-					lightBatch.AddTextureAndSamplerInput(
+					lightBatch.AddTextureInput(
 						depthInputTexName,
 						shadowTex,
-						re::Sampler::GetSampler(util::HashKey::Create(samplerTypeName)).get());
+						re::Sampler::GetSampler(util::HashKey::Create(samplerTypeName)).get(),
+						re::TextureView(shadowTex));
 				}
 			};
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataPoint>())

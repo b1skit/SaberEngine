@@ -185,7 +185,6 @@ namespace re
 		, m_stageParams(nullptr)
 		, m_drawStyleBits(0)
 		, m_textureTargetSet(nullptr)
-		, m_depthTextureInputIdx(k_noDepthTexAsInputFlag)
 		, m_requiredBatchFilterBitmasks(0)	// Accept all batches by default
 		, m_excludedBatchFilterBitmasks(0)
 	{
@@ -265,18 +264,14 @@ namespace re
 	void RenderStage::SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet)
 	{
 		m_textureTargetSet = targetSet;
-		
-		m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Depth target may have changed
 	}
 
 
 	void RenderStage::AddPermanentTextureInput(
-		std::string const& shaderName, 
-		re::Texture const* tex, 
-		re::Sampler const* sampler, 
-		uint32_t arrayElement /*= re::Texture::k_allArrayElements*/,
-		uint32_t faceIdx /*= re::Texture::k_allFaces*/,
-		uint32_t mipLevel /*= re::Texture::k_allMips*/)
+		std::string const& shaderName,
+		re::Texture const* tex,
+		re::Sampler const* sampler,
+		re::TextureView const& texView)
 	{
 		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
 		SEAssert(tex != nullptr, "Invalid texture");
@@ -301,13 +296,7 @@ namespace re
 				// If we find an input with the same name, replace it:
 				if (strcmp(m_permanentTextureSamplerInputs[i].m_shaderName.c_str(), shaderName.c_str()) == 0)
 				{
-					m_permanentTextureSamplerInputs[i] = re::TextureAndSamplerInput{
-						shaderName, 
-						tex, 
-						sampler, 
-						arrayElement,
-						faceIdx,
-						mipLevel};
+					m_permanentTextureSamplerInputs[i] = re::TextureAndSamplerInput{shaderName, tex, sampler, texView};
 					foundExistingEntry = true;
 					break;
 				}
@@ -315,13 +304,7 @@ namespace re
 		}
 		if (!foundExistingEntry)
 		{
-			m_permanentTextureSamplerInputs.emplace_back(TextureAndSamplerInput{ 
-				shaderName,
-				tex,
-				sampler,
-				arrayElement,
-				faceIdx,
-				mipLevel });
+			m_permanentTextureSamplerInputs.emplace_back(TextureAndSamplerInput{shaderName, tex, sampler, texView});
 		}
 	}
 
@@ -330,17 +313,9 @@ namespace re
 		std::string const& shaderName,
 		std::shared_ptr<re::Texture> tex,
 		std::shared_ptr<re::Sampler> sampler,
-		uint32_t arrayElement /*= re::Texture::k_allArrayElements*/,
-		uint32_t faceIdx /*= re::Texture::k_allFaces*/,
-		uint32_t mipLevel /*= re::Texture::k_allMips*/)
+		re::TextureView const& texView)
 	{
-		AddPermanentTextureInput(
-			shaderName, 
-			tex.get(), 
-			sampler.get(), 
-			arrayElement,
-			faceIdx,
-			mipLevel);
+		AddPermanentTextureInput(shaderName, tex.get(), sampler.get(), texView);
 	}
 
 
@@ -348,9 +323,7 @@ namespace re
 		char const* shaderName,
 		re::Texture const* tex,
 		std::shared_ptr<re::Sampler> sampler,
-		uint32_t arrayElement /*= re::Texture::k_allArrayElements*/,
-		uint32_t faceIdx /*= re::Texture::k_allFaces*/,
-		uint32_t mipLevel /*= re::Texture::k_allMips*/)
+		re::TextureView const& texView)
 	{
 		SEAssert(shaderName, "Shader name cannot be null");
 		SEAssert(tex != nullptr, "Invalid texture");
@@ -372,7 +345,7 @@ namespace re
 				"single frame texture is not allowed");
 		}
 #endif
-		m_singleFrameTextureSamplerInputs.emplace_back(shaderName, tex, sampler.get(), arrayElement, faceIdx, mipLevel);
+		m_singleFrameTextureSamplerInputs.emplace_back(shaderName, tex, sampler.get(), texView);
 	}
 
 
@@ -380,41 +353,9 @@ namespace re
 		char const* shaderName,
 		std::shared_ptr<re::Texture> tex,
 		std::shared_ptr<re::Sampler> sampler,
-		uint32_t arrayElement /*= re::Texture::k_allArrayElements*/,
-		uint32_t faceIdx /*= re::Texture::k_allFaces*/,
-		uint32_t mipLevel /*= re::Texture::k_allMips*/)
+		re::TextureView const& texView)
 	{
-		AddSingleFrameTextureInput(shaderName, tex.get(), sampler, arrayElement, faceIdx, mipLevel);
-	}
-
-
-	void RenderStage::UpdateDepthTextureInputIndex()
-	{
-		if (m_textureTargetSet == nullptr || m_depthTextureInputIdx != k_noDepthTexAsInputFlag)
-		{
-			return;
-		}
-
-		re::TextureTarget const* depthTarget = m_textureTargetSet->GetDepthStencilTarget();
-		if (depthTarget && depthTarget->HasTexture())
-		{
-			// Check each of our texture inputs against the depth texture:		
-			re::Texture const* depthTex = depthTarget->GetTexture().get();
-
-			for (uint32_t i = 0; i < m_permanentTextureSamplerInputs.size(); i++)
-			{
-				if (m_permanentTextureSamplerInputs[i].m_texture == depthTex)
-				{
-					m_depthTextureInputIdx = i;
-
-					SEAssert(depthTarget->GetTargetParams().m_channelWriteMode.R == 
-							re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-						"Depth target has depth writes enabled. It cannot be bound as an input");
-
-					break;
-				}
-			}
-		}
+		AddSingleFrameTextureInput(shaderName, tex.get(), sampler, texView);
 	}
 
 
@@ -430,27 +371,165 @@ namespace re
 					{
 						for (uint8_t i = 0; i < m_textureTargetSet->GetNumColorTargets(); i++)
 						{
-							SEAssert(m_textureTargetSet->GetColorTarget(i).GetTexture().get() != texInput.m_texture ||
-								((m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != re::Texture::k_allFaces &&
-									texInput.m_srcMip != re::Texture::k_allFaces) &&
-									m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != texInput.m_srcMip),
-								std::format("The underlying texture input \"{}\" is simultaneously used as both a "
-									"color target & input for the RenderStage \"{}\"",
-									texInput.m_shaderName,
-									GetName()).c_str());
+							re::Texture const* targetTex = m_textureTargetSet->GetColorTarget(i).GetTexture().get();
+							re::TextureView const& targetTexView = 
+								m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_textureView;
+
+							re::Texture const* inputTex = texInput.m_texture;
+							re::TextureView const& inputTexView = texInput.m_textureView;
+
+							if (targetTex != inputTex)
+							{
+								continue;
+							}
+
+							SEAssert(inputTexView.m_viewDimension == targetTexView.m_viewDimension,
+								"Using the same texture as an input and target, but with different dimensions. This is "
+								"not (currently) supported (it would require updating this validator)");
+
+							uint32_t inputFirstMip = std::numeric_limits<uint32_t>::max();
+							uint32_t inputMipLevels = std::numeric_limits<uint32_t>::max();
+							uint32_t inputFirstArraySlice = std::numeric_limits<uint32_t>::max();
+							uint32_t inputArraySize = std::numeric_limits<uint32_t>::max();
+
+							uint32_t targetFirstMip = std::numeric_limits<uint32_t>::max();
+							uint32_t targetMipLevels = std::numeric_limits<uint32_t>::max();
+							uint32_t targetFirstArraySlice = std::numeric_limits<uint32_t>::max();
+							uint32_t targetArraySize = std::numeric_limits<uint32_t>::max();							
+
+							bool isArrayType = false;
+
+							switch (targetTexView.m_viewDimension)
+							{
+							case re::Texture::Dimension::Texture1D:
+							{
+								inputFirstMip = inputTexView.Texture1D.m_firstMip;
+								inputMipLevels = inputTexView.Texture1D.m_mipLevels;
+
+								targetFirstMip = targetTexView.Texture1D.m_firstMip;
+								targetMipLevels = targetTexView.Texture1D.m_mipLevels;
+							}
+							break;
+							case re::Texture::Dimension::Texture1DArray:
+							{
+								inputFirstMip = inputTexView.Texture1DArray.m_firstMip;
+								inputMipLevels = inputTexView.Texture1DArray.m_mipLevels;
+								inputFirstArraySlice = inputTexView.Texture1DArray.m_firstArraySlice;
+								inputArraySize = inputTexView.Texture1DArray.m_arraySize;
+
+								targetFirstMip = targetTexView.Texture1DArray.m_firstMip;
+								targetMipLevels = targetTexView.Texture1DArray.m_mipLevels;
+								targetFirstArraySlice = targetTexView.Texture1DArray.m_firstArraySlice;
+								targetArraySize = inputTexView.Texture1DArray.m_arraySize;
+
+								isArrayType = true;
+							}
+							break;
+							case re::Texture::Dimension::Texture2D:
+							{
+								inputFirstMip = inputTexView.Texture2D.m_firstMip;
+								inputMipLevels = inputTexView.Texture2D.m_mipLevels;
+
+								targetFirstMip = targetTexView.Texture2D.m_firstMip;
+								targetMipLevels = targetTexView.Texture2D.m_mipLevels;
+							}
+							break;
+							case re::Texture::Dimension::Texture2DArray:
+							{
+								inputFirstMip = inputTexView.Texture2DArray.m_firstMip;
+								inputMipLevels = inputTexView.Texture2DArray.m_mipLevels;
+								inputFirstArraySlice = inputTexView.Texture2DArray.m_firstArraySlice;
+								inputArraySize = inputTexView.Texture2DArray.m_arraySize;
+
+								targetFirstMip = targetTexView.Texture2DArray.m_firstMip;
+								targetMipLevels = targetTexView.Texture2DArray.m_mipLevels;
+								targetFirstArraySlice = targetTexView.Texture2DArray.m_firstArraySlice;
+								targetArraySize = inputTexView.Texture2DArray.m_arraySize;
+
+								isArrayType = true;
+							}
+							break;
+							case re::Texture::Dimension::Texture3D:
+							{
+								inputFirstMip = inputTexView.Texture3D.m_firstMip;
+								inputMipLevels = inputTexView.Texture3D.m_mipLevels;
+
+								targetFirstMip = targetTexView.Texture3D.m_firstMip;
+								targetMipLevels = targetTexView.Texture3D.m_mipLevels;
+							}
+							break;
+							case re::Texture::Dimension::TextureCube:
+							{
+								inputFirstMip = inputTexView.TextureCube.m_firstMip;
+								inputMipLevels = inputTexView.TextureCube.m_mipLevels;
+
+								targetFirstMip = targetTexView.TextureCube.m_firstMip;
+								targetMipLevels = targetTexView.TextureCube.m_mipLevels;
+							}
+							break;
+							case re::Texture::Dimension::TextureCubeArray:
+							{
+								inputFirstMip = inputTexView.TextureCubeArray.m_firstMip;
+								inputMipLevels = inputTexView.TextureCubeArray.m_mipLevels;
+								inputFirstArraySlice = inputTexView.TextureCubeArray.m_first2DArrayFace;
+								inputArraySize = inputTexView.TextureCubeArray.m_numCubes * 6;
+
+								targetFirstMip = targetTexView.TextureCubeArray.m_firstMip;
+								targetMipLevels = targetTexView.TextureCubeArray.m_mipLevels;
+								targetFirstArraySlice = targetTexView.TextureCubeArray.m_first2DArrayFace;
+								targetArraySize = targetTexView.TextureCubeArray.m_numCubes * 6;
+
+								isArrayType = true;
+							}
+							break;
+							default: SEAssertF("Invalid dimension");
+							}
+
+							SEAssert(inputMipLevels != re::Texture::k_allMips &&
+								targetTexView.Texture1D.m_mipLevels != re::Texture::k_allMips,
+								"Cannot view all mips on a texture used as both an input and target");
+
+							if (isArrayType)
+							{
+								const uint32_t numInputMips = inputTex->GetNumMips();
+								const uint32_t numTargetMips = targetTex->GetNumMips();
+
+								const uint32_t firstInputSubresouce =
+									(inputFirstArraySlice + inputArraySize) * numInputMips + inputFirstMip;
+
+								const uint32_t lastInputSubresource = 
+									(inputFirstArraySlice + inputArraySize) * numInputMips + inputFirstMip + inputMipLevels;
+
+								const uint32_t firstTargetSubresouce = 
+									(targetFirstArraySlice + targetArraySize) * numTargetMips + targetFirstMip;
+
+								const uint32_t lastTargetSubresource =
+									(targetFirstArraySlice + targetArraySize) * numTargetMips + targetFirstMip + targetMipLevels;
+
+
+								SEAssert(lastInputSubresource <= firstTargetSubresouce ||
+									lastTargetSubresource <= firstInputSubresouce,
+									"View is overlapping subresources");
+							}
+							else
+							{
+								SEAssert(inputFirstMip + inputMipLevels <= targetFirstMip ||
+									targetFirstMip + targetMipLevels <= inputFirstMip,
+									"View is overlapping subresources");
+							}
 						}
 
 						if (m_textureTargetSet->HasDepthTarget())
 						{
-							std::shared_ptr<re::Texture const> depthTargetTex =
-								m_textureTargetSet->GetDepthStencilTarget()->GetTexture();
-
-							SEAssert(depthTargetTex.get() != texInput.m_texture ||
-								m_textureTargetSet->GetDepthStencilTarget()->GetTargetParams().m_channelWriteMode.R ==
-								re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+							re::TextureTarget const* depthTarget = m_textureTargetSet->GetDepthStencilTarget();
+							re::Texture const* depthTargetTex = depthTarget->GetTexture().get();
+							
+							SEAssert(depthTargetTex != texInput.m_texture ||
+								!depthTarget->GetTargetParams().m_textureView.DepthWritesEnabled(),
 								std::format("The RenderStage \"{}\" is trying to use the depth target \"{} \" as both "
 									"an input, and a target. Depth targets with depth writes enabled cannot also be "
-									"bound as an input",
+									"bound as an input. "
+									"NOTE: This assert doesn't consider non-overlapping mip indexes, but it should!",
 									GetName(),
 									depthTargetTex->GetName()).c_str());
 						}
@@ -474,7 +553,7 @@ namespace re
 				for (auto const& singleFrameInput : m_singleFrameTextureSamplerInputs)
 				{
 					SEAssert(singleFrameInput.m_texture != depthTex,
-						"Setting the depth texture as a single frame input is not (currently) supported");
+						"Setting the depth texture as a single frame input is not (currently) supported (DEPRECATED?)");
 				}
 			}
 		}
@@ -491,7 +570,6 @@ namespace re
 
 	void RenderStage::PostUpdatePreRender()
 	{
-		UpdateDepthTextureInputIndex();
 		ValidateTexturesAndTargets(); // _DEBUG only
 	}
 

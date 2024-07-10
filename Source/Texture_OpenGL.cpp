@@ -280,10 +280,7 @@ namespace opengl
 
 		LOG("Creating & buffering texture: \"%s\"", texture.GetName().c_str());
 
-		// Ensure our texture is correctly configured:
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-		SEAssert(texParams.m_dimension != re::Texture::Dimension::TextureCubeMap || texParams.m_faces == 6,
-			"Texture has a bad configuration");
 
 		const uint32_t width = texture.Width();
 		const uint32_t height = texture.Height();
@@ -353,7 +350,7 @@ namespace opengl
 				texParams.m_arraySize);
 		}
 		break;
-		case re::Texture::Dimension::TextureCubeMap:
+		case re::Texture::Dimension::TextureCube:
 		{
 			glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &params->m_textureID);
 
@@ -365,11 +362,9 @@ namespace opengl
 				height);
 		}
 		break;
-		case re::Texture::Dimension::TextureCubeMapArray:
+		case re::Texture::Dimension::TextureCubeArray:
 		{
 			glCreateTextures(GL_TEXTURE_CUBE_MAP_ARRAY, 1, &params->m_textureID);
-
-			SEAssert(texParams.m_faces == 6, "Invalid face count");
 
 			glTextureStorage3D(
 				params->m_textureID,
@@ -377,7 +372,7 @@ namespace opengl
 				params->m_internalFormat,
 				width,
 				height,
-				texParams.m_arraySize * texParams.m_faces); // depth: No. of layer-faces (must be divisible by 6)
+				texParams.m_arraySize * 6); // depth: No. of layer-faces (must be divisible by 6)
 		}
 		break;
 		default:
@@ -389,13 +384,14 @@ namespace opengl
 		// RenderDoc object name:
 		glObjectLabel(GL_TEXTURE, params->m_textureID, -1, texture.GetName().c_str());
 
+		const uint8_t numFaces = re::Texture::GetNumFaces(&texture);
 
 		// Upload data (if any) to the GPU:
 		if ((texParams.m_usage & re::Texture::Usage::Color) && texture.HasInitialData())
 		{
 			for (uint32_t arrayIdx = 0; arrayIdx < texParams.m_arraySize; arrayIdx++)
 			{
-				for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+				for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 				{
 					void* data = texture.GetTexelData(arrayIdx, faceIdx);
 					SEAssert(data, "Color target must have data to buffer");
@@ -476,7 +472,7 @@ namespace opengl
 							data);					// void* data. Nullptr for render targets
 					}
 					break;
-					case re::Texture::TextureCubeMap:
+					case re::Texture::TextureCube:
 					{
 						glTextureSubImage3D(
 							params->m_textureID,
@@ -492,7 +488,7 @@ namespace opengl
 							data);				// void* data. Nullptr for render targets
 					}
 					break;
-					case re::Texture::TextureCubeMapArray:
+					case re::Texture::TextureCubeArray:
 					{
 						glTextureSubImage3D(
 							params->m_textureID,
