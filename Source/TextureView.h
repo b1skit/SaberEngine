@@ -133,9 +133,16 @@ namespace re
 
 
 	public:
-		static uint32_t GetSubresourceIndex(re::Texture const*, TextureView const&); // For views describing 1 subresource
-		static uint32_t GetSubresourceIndex(re::Texture const*, TextureView const&, uint32_t arrayIdx, uint32_t mipIdx);
+		// For views describing exactly 1 subresource only
+		static uint32_t GetSubresourceIndex(re::Texture const*, TextureView const&);
+
+		// Get a subresource index from array/mip indexes RELATIVE to the TextureView's 1st array/mip index
+		static uint32_t GetSubresourceIndexFromRelativeOffsets( 
+			re::Texture const*, TextureView const&, uint32_t relativeArrayIdx, uint32_t relativeMipIdx);
+
+		// Get a vector of all of the subresources described by a view
 		static std::vector<uint32_t> GetSubresourceIndexes(re::Texture const*, re::TextureView const&);
+
 
 	public:
 		void ComputeDataHash() override { /* Do nothing: Computed in the ctor*/ }

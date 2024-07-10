@@ -202,9 +202,11 @@ namespace re
 	}
 
 
-	uint32_t TextureView::GetSubresourceIndex(
-		re::Texture const* tex, TextureView const& texView, uint32_t arrayIdx, uint32_t mipIdx)
+	uint32_t TextureView::GetSubresourceIndexFromRelativeOffsets(
+		re::Texture const* tex, TextureView const& texView, uint32_t relativeArrayIdx, uint32_t relativeMipIdx)
 	{
+		// NOTE: Array/mip indexes are RELATIVE to the 1st array/mip index in the view
+
 		re::Texture::TextureParams const& texParams = tex->GetTextureParams();
 
 		const uint32_t numMips = tex->GetNumMips();
@@ -215,31 +217,31 @@ namespace re
 		{
 		case re::Texture::Dimension::Texture1D:
 		{
-			SEAssert(arrayIdx == 0, "Invalid array index");
-			SEAssert(texView.Texture1D.m_firstMip + mipIdx < numMips, "Result is OOB");
+			SEAssert(relativeArrayIdx == 0, "Invalid array index");
+			SEAssert(texView.Texture1D.m_firstMip + relativeMipIdx < numMips, "Result is OOB");
 
-			subresourceIdx =  texView.Texture1D.m_firstMip + mipIdx;
+			subresourceIdx =  texView.Texture1D.m_firstMip + relativeMipIdx;
 		}
 		break;
 		case re::Texture::Dimension::Texture1DArray:
 		{
-			SEAssert(texView.Texture1DArray.m_firstArraySlice + arrayIdx < texParams.m_arraySize &&
-				texView.Texture1DArray.m_firstMip + mipIdx < numMips,
+			SEAssert(texView.Texture1DArray.m_firstArraySlice + relativeArrayIdx < texParams.m_arraySize &&
+				texView.Texture1DArray.m_firstMip + relativeMipIdx < numMips,
 				"Result is OOB");
 
-			const uint32_t arrayOffset = texView.Texture1DArray.m_firstArraySlice + arrayIdx;
-			const uint32_t mipOffset = texView.Texture1DArray.m_firstMip + mipIdx;
+			const uint32_t arrayOffset = texView.Texture1DArray.m_firstArraySlice + relativeArrayIdx;
+			const uint32_t mipOffset = texView.Texture1DArray.m_firstMip + relativeMipIdx;
 
 			subresourceIdx = (arrayOffset * numMips) + mipOffset;
 		}
 		break;
 		case re::Texture::Dimension::Texture2D:
 		{
-			SEAssert(arrayIdx == 0, "Invalid array index");
+			SEAssert(relativeArrayIdx == 0, "Invalid array index");
 			SEAssert(texView.Texture2D.m_planeSlice == 0, "TODO: Support multi-plane formats");
-			SEAssert(texView.Texture2D.m_firstMip + mipIdx < numMips, "Result is OOB");
+			SEAssert(texView.Texture2D.m_firstMip + relativeMipIdx < numMips, "Result is OOB");
 
-			subresourceIdx = texView.Texture2D.m_firstMip + mipIdx;
+			subresourceIdx = texView.Texture2D.m_firstMip + relativeMipIdx;
 		}
 		break;
 		case re::Texture::Dimension::Texture2DArray:
@@ -251,18 +253,18 @@ namespace re
 			case re::Texture::Texture2DArray:
 			{
 				subresourceIdx = tex->GetSubresourceIndex(
-					texView.Texture2DArray.m_firstArraySlice + arrayIdx,
+					texView.Texture2DArray.m_firstArraySlice + relativeArrayIdx,
 					0,
-					texView.Texture2DArray.m_firstMip + mipIdx);
+					texView.Texture2DArray.m_firstMip + relativeMipIdx);
 			}
 			break;
 			case re::Texture::TextureCube:
 			case re::Texture::TextureCubeArray:
 			{
 				const uint32_t firstArraySliceIdx = texView.Texture2DArray.m_firstArraySlice * numMips;
-				const uint32_t firstSubresourceIdx = firstArraySliceIdx + (arrayIdx * numMips);
+				const uint32_t firstSubresourceIdx = firstArraySliceIdx + (relativeArrayIdx * numMips);
 
-				subresourceIdx = firstSubresourceIdx + texView.Texture2DArray.m_firstMip + mipIdx;
+				subresourceIdx = firstSubresourceIdx + texView.Texture2DArray.m_firstMip + relativeMipIdx;
 			}
 			break;
 			default: SEAssertF("Invalid dimension");
@@ -271,9 +273,9 @@ namespace re
 		break;
 		case re::Texture::Dimension::Texture3D:
 		{
-			SEAssert(texView.Texture3D.m_firstMip + mipIdx < numMips, "Result is OOB");
+			SEAssert(texView.Texture3D.m_firstMip + relativeMipIdx < numMips, "Result is OOB");
 
-			subresourceIdx = texView.Texture3D.m_firstMip + mipIdx;
+			subresourceIdx = texView.Texture3D.m_firstMip + relativeMipIdx;
 		}
 		break;
 		case re::Texture::Dimension::TextureCube:
@@ -316,10 +318,13 @@ namespace re
 			}
 			subresourceIndexes.reserve(totalSubresources);
 
-			for (uint32_t mipIdx = 0; mipIdx < totalSubresources; ++mipIdx)
+			for (uint32_t relMipIdx = 0; relMipIdx < totalSubresources; ++relMipIdx)
 			{
-				subresourceIndexes.emplace_back(
-					re::TextureView::GetSubresourceIndex(texture, texView, 0, mipIdx));
+				subresourceIndexes.emplace_back(re::TextureView::GetSubresourceIndexFromRelativeOffsets(
+					texture, 
+					texView, 
+					0, 
+					relMipIdx));
 			}
 		}
 		break;
@@ -328,6 +333,7 @@ namespace re
 			SEAssert(texView.Texture1DArray.m_firstMip < numMips &&
 				(texView.Texture1DArray.m_mipLevels == re::Texture::k_allMips ||
 					texView.Texture1DArray.m_firstMip + texView.Texture1DArray.m_mipLevels <= numMips) &&
+				texView.Texture1DArray.m_arraySize > 0 &&
 				texView.Texture1DArray.m_firstArraySlice < texParams.m_arraySize &&
 				texView.Texture1DArray.m_firstArraySlice + texView.Texture1DArray.m_arraySize <= texParams.m_arraySize,
 				"Indexes are out of bounds");
@@ -337,19 +343,20 @@ namespace re
 			{
 				totalMips = numMips - texView.Texture1DArray.m_firstMip;
 			}
-			const uint32_t totalArraySlices =
-				texView.Texture1DArray.m_arraySize - texView.Texture1DArray.m_firstArraySlice;
 
-			totalSubresources = totalArraySlices * totalMips;
+			totalSubresources = texView.Texture1DArray.m_arraySize * totalMips;
 
 			subresourceIndexes.reserve(totalSubresources);
 
-			for (uint32_t arrayIdx = 0; arrayIdx < totalArraySlices; ++arrayIdx)
+			for (uint32_t relArrayIdx = 0; relArrayIdx < texView.Texture1DArray.m_arraySize; ++relArrayIdx)
 			{
-				for (uint32_t mipIdx = 0; mipIdx < totalMips; ++mipIdx)
+				for (uint32_t relMipIdx = 0; relMipIdx < totalMips; ++relMipIdx)
 				{
-					subresourceIndexes.emplace_back(
-						re::TextureView::GetSubresourceIndex(texture, texView, arrayIdx, mipIdx));
+					subresourceIndexes.emplace_back(re::TextureView::GetSubresourceIndexFromRelativeOffsets(
+						texture, 
+						texView, 
+						relArrayIdx,
+						relMipIdx));
 				}
 			}
 		}
@@ -370,10 +377,10 @@ namespace re
 			}
 			subresourceIndexes.reserve(totalSubresources);
 
-			for (uint32_t mipIdx = 0; mipIdx < totalSubresources; ++mipIdx)
+			for (uint32_t relMipIdx = 0; relMipIdx < totalSubresources; ++relMipIdx)
 			{
 				subresourceIndexes.emplace_back(
-					re::TextureView::GetSubresourceIndex(texture, texView, 0, mipIdx));
+					re::TextureView::GetSubresourceIndexFromRelativeOffsets(texture, texView, 0, relMipIdx));
 			}
 		}
 		break;
@@ -384,6 +391,7 @@ namespace re
 			SEAssert(texView.Texture2DArray.m_firstMip < numMips &&
 				(texView.Texture2DArray.m_mipLevels == re::Texture::k_allMips ||
 					texView.Texture2DArray.m_firstMip + texView.Texture2DArray.m_mipLevels <= numMips) &&
+				texView.Texture2DArray.m_arraySize > 0 &&
 				((texView.Texture2DArray.m_firstArraySlice < texParams.m_arraySize &&
 					texView.Texture2DArray.m_firstArraySlice + texView.Texture2DArray.m_arraySize <= texParams.m_arraySize) ||
 					(texParams.m_dimension == re::Texture::TextureCube ||
@@ -402,12 +410,12 @@ namespace re
 
 			subresourceIndexes.reserve(totalSubresources);
 
-			for (uint32_t arrayIdx = 0; arrayIdx < texView.Texture2DArray.m_arraySize; ++arrayIdx)
+			for (uint32_t relArrayIdx = 0; relArrayIdx < texView.Texture2DArray.m_arraySize; ++relArrayIdx)
 			{
-				for (uint32_t mipIdx = 0; mipIdx < totalMips; ++mipIdx)
+				for (uint32_t relMipIdx = 0; relMipIdx < totalMips; ++relMipIdx)
 				{
 					subresourceIndexes.emplace_back(
-						re::TextureView::GetSubresourceIndex(texture, texView, arrayIdx, mipIdx));
+						re::TextureView::GetSubresourceIndexFromRelativeOffsets(texture, texView, relArrayIdx, relMipIdx));
 				}
 			}
 		}
@@ -429,10 +437,10 @@ namespace re
 			}
 			subresourceIndexes.reserve(totalSubresources);
 
-			for (uint32_t mipIdx = 0; mipIdx < totalSubresources; ++mipIdx)
+			for (uint32_t relMipIdx = 0; relMipIdx < totalSubresources; ++relMipIdx)
 			{
 				subresourceIndexes.emplace_back(
-					re::TextureView::GetSubresourceIndex(texture, texView, 0, mipIdx));
+					re::TextureView::GetSubresourceIndexFromRelativeOffsets(texture, texView, 0, relMipIdx));
 			}
 		}
 		break;
@@ -457,7 +465,7 @@ namespace re
 				for (uint32_t mipIdx = 0; mipIdx < mipLevels; ++mipIdx)
 				{
 					subresourceIndexes.emplace_back(
-						(faceIdx * numMips) + texView.TextureCube.m_firstMip + mipIdx);
+						(faceIdx * numMips) + (texView.TextureCube.m_firstMip + mipIdx));
 				}
 			}
 		}
