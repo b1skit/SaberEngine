@@ -416,6 +416,7 @@ namespace fr
 			EntityComponentDbg,
 			RenderMgrDbg,
 			RenderDataDbg,
+			LightMgrDbg,
 			GPUCaptures,
 			
 			ImGuiDemo,
@@ -506,6 +507,7 @@ namespace fr
 						{
 							ImGui::MenuItem("Render Systems", "", &s_show[Show::RenderMgrDbg]);
 							ImGui::MenuItem("Render data debug", "", &s_show[Show::RenderDataDbg]);
+							ImGui::MenuItem("Light manager debug", "", &s_show[Show::LightMgrDbg]);
 							ImGui::EndMenu();
 						}
 						
@@ -590,10 +592,14 @@ namespace fr
 
 				re::RenderManager::Get()->ShowRenderSystemsImGuiWindow(&s_show[Show::RenderMgrDbg]);
 				re::RenderManager::Get()->ShowRenderDataImGuiWindow(&s_show[Show::RenderDataDbg]);
+				re::RenderManager::Get()->ShowLightManagerImGuiWindow(&s_show[Show::LightMgrDbg]);
 				re::RenderManager::Get()->ShowGPUCapturesImGuiWindow(&s_show[Show::GPUCaptures]);
 				
 			};
-		if (s_show[Show::RenderMgrDbg] || s_show[Show::RenderDataDbg] || s_show[Show::GPUCaptures])
+		if (s_show[Show::RenderMgrDbg] ||
+			s_show[Show::RenderDataDbg] ||
+			s_show[Show::LightMgrDbg] ||
+			s_show[Show::GPUCaptures])
 		{
 			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>>(
 				frameNum, fr::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>(ShowRenderMgrDebug));

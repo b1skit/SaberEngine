@@ -9,10 +9,13 @@ void main()
 {
 	for (int currentCubeFace = 0; currentCubeFace < 6; currentCubeFace++)
 	{
-		gl_Layer = currentCubeFace; // Set the cube map face we're rendering to
-
 		for (int currentVert = 0; currentVert < 3; currentVert++)
 		{
+			// Set the index of the cube map array & face we're rendering to
+			// Note: gl_Layer becomes undefined after every EmitVertex() call; We must re-set it each iteration
+			// https://www.khronos.org/opengl/wiki/Geometry_Shader#Layered_rendering
+			gl_Layer = currentCubeFace;
+
 			gl_Position = 
 				_CubemapShadowRenderParams.g_cubemapShadowCam_VP[currentCubeFace] * gl_in[currentVert].gl_Position;
 

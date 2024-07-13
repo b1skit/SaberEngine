@@ -204,44 +204,6 @@ namespace fr
 		SEAssert(em.HasComponent<gr::RenderDataComponent>(owningEntity),
 			"A ShadowMapComponent must be attached to an entity with a RenderDataComponent");
 
-		// ShadowMap component:
-		glm::uvec2 widthHeight{0, 0};
-		switch (lightType)
-		{
-		case fr::Light::Type::Directional:
-		{
-			SEAssert(em.HasComponent<fr::LightComponent::DirectionalDeferredMarker>(owningEntity),
-				"A directional ShadowMapComponent must be attached to an entity with a DirectionalDeferredMarker");
-
-			const int defaultDirectionalWidthHeight = 
-				core::Config::Get()->GetValue<int>(core::configkeys::k_defaultDirectionalShadowMapResolutionKey);
-			widthHeight = glm::vec2(defaultDirectionalWidthHeight, defaultDirectionalWidthHeight);
-		}
-		break;
-		case fr::Light::Type::Point:
-		{
-			SEAssert(em.HasComponent<fr::LightComponent::PointDeferredMarker>(owningEntity),
-				"A point ShadowMapComponent must be attached to an entity with a PointDeferredMarker");
-
-			const int defaultCubemapWidthHeight =
-				core::Config::Get()->GetValue<int>(core::configkeys::k_defaultShadowCubeMapResolutionKey);
-			widthHeight = glm::vec2(defaultCubemapWidthHeight, defaultCubemapWidthHeight);
-		}
-		break;
-		case fr::Light::Type::Spot:
-		{
-			SEAssert(em.HasComponent<fr::LightComponent::SpotDeferredMarker>(owningEntity),
-				"A spot ShadowMapComponent must be attached to an entity with a SpotDeferredMarker");
-
-			const int defaultSpotWidthHeight = 
-				core::Config::Get()->GetValue<int>(core::configkeys::k_defaultSpotShadowMapResolutionKey);
-			widthHeight = glm::vec2(defaultSpotWidthHeight, defaultSpotWidthHeight);
-		}
-		break;
-		case fr::Light::Type::AmbientIBL:
-		default: SEAssertF("Invalid light type");
-		}
-
 		fr::LightComponent const& owningLightComponent = em.GetComponent<fr::LightComponent>(owningEntity);
 		gr::RenderDataComponent const& sharedRenderDataCmpt = em.GetComponent<gr::RenderDataComponent>(owningEntity);
 
@@ -250,8 +212,7 @@ namespace fr
 			PrivateCTORTag{},
 			lightType,
 			sharedRenderDataCmpt.GetRenderDataID(),
-			sharedRenderDataCmpt.GetTransformID(),
-			widthHeight);
+			sharedRenderDataCmpt.GetTransformID());
 
 		fr::TransformComponent* owningTransform = em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
 		SEAssert(owningTransform != nullptr, "A shadow map requires a TransformComponent");
@@ -349,8 +310,6 @@ namespace fr
 			.m_shadowType = fr::ShadowMap::GetGrShadowMapType(shadowMap.GetShadowMapType()),
 			.m_shadowQuality = fr::ShadowMap::GetGrShadowQuality(shadowMap.GetShadowQuality()),
 
-			.m_textureDims = re::Texture::ComputeTextureDimenions(shadowMap.GetWidthHeight()),
-
 			.m_minMaxShadowBias = shadowMap.GetMinMaxShadowBias(),
 			.m_softness = shadowMap.GetSoftness(),
 
@@ -435,12 +394,10 @@ namespace fr
 		PrivateCTORTag,
 		fr::Light::Type lightType, 
 		gr::RenderDataID renderDataID, 
-		gr::TransformID transformID,
-		glm::uvec2 widthHeight)
+		gr::TransformID transformID)
 		: m_renderDataID(renderDataID)
 		, m_transformID(transformID)
-		, m_shadowMap(widthHeight, lightType)
+		, m_shadowMap(lightType)
 	{
-		SEAssert(widthHeight.x > 0 && widthHeight.y > 0, "Invalid resolution");
 	}
 }

@@ -334,6 +334,7 @@ namespace re
 		}
 
 		m_renderData.Destroy();
+		m_lightManager.Destroy();
 
 		m_createdTextures.clear();
 
@@ -876,6 +877,34 @@ namespace re
 		ImGui::Begin(k_panelTitle, showRenderDataDebug);
 
 		m_renderData.ShowImGuiWindow();
+
+		ImGui::End();
+	}
+
+
+	void RenderManager::ShowLightManagerImGuiWindow(bool* showLightMgrDebug) const
+	{
+		if (!*showLightMgrDebug)
+		{
+			return;
+		}
+
+
+		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		constexpr float k_windowYOffset = 64.f;
+		constexpr float k_windowWidthPercentage = 0.25f;
+
+		ImGui::SetNextWindowSize(ImVec2(
+			windowWidth * k_windowWidthPercentage,
+			static_cast<float>(windowHeight) - k_windowYOffset),
+			ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
+
+		constexpr char const* k_panelTitle = "Light manager debug";
+		ImGui::Begin(k_panelTitle, showLightMgrDebug);
+
+		m_lightManager.ShowImGuiWindow();
 
 		ImGui::End();
 	}

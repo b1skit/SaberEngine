@@ -31,10 +31,11 @@ namespace gr
 		gr::Light::Type lightType,
 		gr::Transform::RenderData const& transformData,
 		gr::ShadowMap::RenderData const* shadowData,
-		gr::Camera::RenderData const* shadowCamData);
+		gr::Camera::RenderData const* shadowCamData,
+		re::Texture const* shadowTex);
 
 
-	LightIndexData GetLightIndexData(uint32_t lightIndex);
+	LightIndexData GetLightIndexData(uint32_t lightIndex, uint32_t shadowIndex);
 
 
 	PoissonSampleParamsData GetPoissonSampleParamsData();

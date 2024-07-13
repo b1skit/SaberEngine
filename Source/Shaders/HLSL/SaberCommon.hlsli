@@ -80,8 +80,6 @@ Texture2D<float4> GBufferEmissive;
 Texture2D<float4> GBufferMatProp0;
 Texture2D<float4> GBufferDepth;
 
-Texture2D<float> Depth0;
-
 Texture2D<float4> Tex0;
 Texture2D<float4> Tex1;
 Texture2D<float4> Tex2;
@@ -95,6 +93,5 @@ Texture2D<float4> Tex8;
 TextureCube<float4> CubeMap0;
 TextureCube<float4> CubeMap1;
 
-TextureCube<float> CubeDepth;
 
 #endif // SABER_COMMON_HLSL

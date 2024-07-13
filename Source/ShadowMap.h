@@ -40,14 +40,12 @@ namespace fr
 
 
 	public:
-		ShadowMap(glm::uvec2 widthHeight, fr::Light::Type lightType);
+		ShadowMap(fr::Light::Type lightType);
 
 		~ShadowMap() = default;
 		ShadowMap(ShadowMap const&) = default;
 		ShadowMap(ShadowMap&&) = default;
 		ShadowMap& operator=(ShadowMap const&) = default;
-
-		glm::uvec2 const& GetWidthHeight() const;
 
 		void SetMinMaxShadowBias(glm::vec2 const&);
 		glm::vec2 const& GetMinMaxShadowBias() const;
@@ -104,8 +102,6 @@ namespace fr
 
 		ShadowQuality m_shadowQuality;
 
-		glm::uvec2 m_widthHeight;
-
 		glm::vec2 m_minMaxShadowBias;
 		float m_softness;
 
@@ -142,12 +138,6 @@ namespace fr
 		default: SEAssertF("Invalid quality");
 		}
 		return gr::ShadowMap::ShadowQuality::PCF;
-	}
-
-
-	inline glm::uvec2 const& ShadowMap::GetWidthHeight() const
-	{
-		return m_widthHeight;
 	}
 
 

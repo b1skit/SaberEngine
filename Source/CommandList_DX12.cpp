@@ -713,7 +713,7 @@ namespace dx12
 
 	void CommandList::SetComputeTargets(re::TextureTargetSet const& textureTargetSet)
 	{
-		SEAssert(!textureTargetSet.GetDepthStencilTarget().HasTexture(),
+		SEAssert(!textureTargetSet.HasDepthTarget(),
 			"It is not possible to attach a depth buffer as a target to a compute shader");
 
 		SEAssert(m_type == CommandListType::Compute, "This function should only be called from compute command lists");

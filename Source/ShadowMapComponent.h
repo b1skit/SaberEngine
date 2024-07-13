@@ -55,8 +55,7 @@ namespace fr
 			PrivateCTORTag,
 			fr::Light::Type, 
 			gr::RenderDataID, 
-			gr::TransformID, 
-			glm::uvec2 widthHeight);
+			gr::TransformID);
 
 		gr::RenderDataID GetRenderDataID() const;
 		gr::TransformID GetTransformID() const;

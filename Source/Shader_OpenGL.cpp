@@ -553,7 +553,7 @@ namespace opengl
 				nullptr,					// length
 				&size,						// size
 				&type,						// type
-				&name[0]);					// name
+				name.data());				// name
 
 			if (UniformIsSamplerType(type))
 			{
@@ -605,7 +605,8 @@ namespace opengl
 		opengl::Shader::UniformType const type, 
 		int const count)
 	{
-		PlatformParams const* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
+		opengl::Shader::PlatformParams const* params = 
+			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 		SEAssert(params->m_isCreated == true, "Shader has not been created yet");
 
 		GLuint uniformID = glGetUniformLocation(params->m_shaderReference, uniformName.c_str());

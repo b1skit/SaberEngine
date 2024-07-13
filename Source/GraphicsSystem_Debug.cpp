@@ -649,6 +649,7 @@ namespace gr
 
 		if (m_showCameraFrustums)
 		{
+			// TODO: BUG HERE: m_camerasToDebug may contain stale data if an object is deleted while it references it
 			for (auto const& camData : m_camerasToDebug)
 			{
 				const gr::RenderDataID camID = camData.first;

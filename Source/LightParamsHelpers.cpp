@@ -38,7 +38,8 @@ namespace gr
 		gr::Light::Type lightType,
 		gr::Transform::RenderData const& transformData,
 		gr::ShadowMap::RenderData const* shadowData,
-		gr::Camera::RenderData const* shadowCamData)
+		gr::Camera::RenderData const* shadowCamData,
+		re::Texture const* shadowTex)
 	{
 		SEAssert(lightType != gr::Light::Type::AmbientIBL,
 			"Ambient lights do not use the LightData structure");
@@ -149,6 +150,8 @@ namespace gr
 		// Shadow params:
 		if (hasShadow)
 		{
+			SEAssert(shadowTex, "Light has a shadow, but the shadow texture is null");
+
 			switch (lightType)
 			{
 			case gr::Light::Type::Directional:
@@ -170,7 +173,7 @@ namespace gr
 				SEAssertF("Light shadow type does not use this buffer");
 			}
 
-			lightParams.g_shadowMapTexelSize = shadowData->m_textureDims;
+			lightParams.g_shadowMapTexelSize = shadowTex->GetTextureDimenions();
 
 			lightParams.g_shadowCamNearFarBiasMinMax = glm::vec4(
 				shadowCamData->m_cameraConfig.m_near,
@@ -197,11 +200,11 @@ namespace gr
 	}
 
 
-	LightIndexData GetLightIndexData(uint32_t lightIndex)
+	LightIndexData GetLightIndexData(uint32_t lightIndex, uint32_t shadowIndex)
 	{
 		return LightIndexData
 		{
-			.g_lightIndex = glm::uvec4(lightIndex, 0, 0, 0),
+			.g_lightIndex = glm::uvec4(lightIndex, shadowIndex, 0, 0),
 		};
 	}
 

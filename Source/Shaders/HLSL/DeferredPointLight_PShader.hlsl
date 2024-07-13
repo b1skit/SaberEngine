@@ -1,5 +1,4 @@
 // © 2023 Adam Badke. All rights reserved.
-
 #include "GBufferCommon.hlsli"
 #include "Lighting.hlsli"
 #include "SaberCommon.hlsli"

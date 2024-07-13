@@ -24,12 +24,11 @@ namespace
 
 namespace fr
 {
-	ShadowMap::ShadowMap(glm::uvec2 widthHeight, fr::Light::Type lightType)
+	ShadowMap::ShadowMap(fr::Light::Type lightType)
 		: m_typeProperties{ 
 			.m_shadowType = GetShadowTypeFromLightType(lightType), 
 			.m_lightType = lightType }
 		, m_shadowQuality(ShadowQuality::ShadowQuality_Count)
-		, m_widthHeight(widthHeight)
 		, m_minMaxShadowBias(0.f, 0.f)
 		, m_isEnabled(true)
 		, m_isDirty(true)

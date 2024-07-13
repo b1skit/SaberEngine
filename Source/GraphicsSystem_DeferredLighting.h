@@ -39,7 +39,6 @@ namespace gr
 		static constexpr util::HashKey k_ssaoInput = "SSAOTex";
 		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
 		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
-		static constexpr util::HashKey k_shadowTexturesInput = "ShadowTextures";
 		// Note: The DeferredLightingGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
 		void RegisterInputs() override;
 

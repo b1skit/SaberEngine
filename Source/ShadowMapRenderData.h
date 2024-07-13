@@ -39,8 +39,6 @@ namespace gr
 			ShadowType m_shadowType;
 			ShadowQuality m_shadowQuality;
 
-			glm::vec4 m_textureDims;
-
 			glm::vec2 m_minMaxShadowBias;
 			float m_softness; // PCSS light size [0,1]
 

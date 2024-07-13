@@ -2,6 +2,7 @@
 #ifndef SHADOWS_COMMON
 #define SHADOWS_COMMON
 
+#include "SaberCommon.glsl"
 #include "Transformations.glsl"
 #include "UVUtils.glsl"
 
@@ -26,12 +27,14 @@ float GetPCFShadowFactor(vec2 shadowmapUVs, float nonLinearDepth, vec4 shadowMap
 	shadowmapUVs.x -= offsetMultiplier * shadowMapTexelSize.z;
 	shadowmapUVs.y += offsetMultiplier * shadowMapTexelSize.w;
 
+	const uint shadowIdx = _LightIndexParams.g_lightIndex.y;
+
 	float depthSum = 0;
 	for (uint row = 0; row < gridSize; row++)
 	{
 		for (uint col = 0; col < gridSize; col++)
 		{
-			depthSum += texture(Depth0, vec3(shadowmapUVs, nonLinearDepth)).r;
+			depthSum += texture(Shadows2D, vec4(shadowmapUVs, shadowIdx, nonLinearDepth)).r;
 
 			shadowmapUVs.x += shadowMapTexelSize.z;
 		}
@@ -105,23 +108,25 @@ float GetCubePCFShadowFactor(
 	limit.xy -= oxy * bias;
 	limit.yz -= oyz * bias;
 
+	const uint shadowIdx = _LightIndexParams.g_lightIndex.y;
+
 	// Get the center sample:
-	float light = texture(CubeDepth, vec4(cubeSampleDir.xyz, nonLinearDepth)).r;
+	float light = texture(PointShadows, vec4(cubeSampleDir.xyz, shadowIdx), nonLinearDepth).r;
 	
 	// Get 4 extra samples at diagonal offsets:
 	cubeSampleDir.xy -= oxy;
 	cubeSampleDir.yz -= oyz;
 
-	light += texture(CubeDepth, vec4(clamp(cubeSampleDir, -limit, limit), nonLinearDepth)).r;
+	light += texture(PointShadows, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
 	cubeSampleDir.xy += oxy * 2.f;
 
-	light += texture(CubeDepth, vec4(clamp(cubeSampleDir, -limit, limit), nonLinearDepth)).r;
+	light += texture(PointShadows, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
 	cubeSampleDir.yz += oyz * 2.f;
 
-	light += texture(CubeDepth, vec4(clamp(cubeSampleDir, -limit, limit), nonLinearDepth)).r;
+	light += texture(PointShadows, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
 	cubeSampleDir.xy -= oxy * 2.f;
 
-	light += texture(CubeDepth, vec4(clamp(cubeSampleDir, -limit, limit), nonLinearDepth)).r;
+	light += texture(PointShadows, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
 
 	return (light * 0.2);	// Return the average of our 5 samples
 }

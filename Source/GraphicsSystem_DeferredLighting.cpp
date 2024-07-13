@@ -109,7 +109,6 @@ namespace gr
 
 		RegisterDataInput(k_pointLightCullingDataInput);
 		RegisterDataInput(k_spotLightCullingDataInput);
-		RegisterDataInput(k_shadowTexturesInput);
 	}
 
 
@@ -605,6 +604,7 @@ namespace gr
 	void DeferredLightingGraphicsSystem::PreRender(DataDependencies const& dataDependencies)
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
 
 		// Removed any deleted directional/point/spot lights:
 		auto DeleteLights = []<typename T>(
@@ -750,11 +750,6 @@ namespace gr
 			m_activeAmbientLightData.m_IEMTex = activeAmbientLightData.m_IEMTex;
 			m_activeAmbientLightData.m_PMREMTex = activeAmbientLightData.m_PMREMTex;
 		}
-
-		using ShadowTextureMap = std::unordered_map<gr::RenderDataID, re::Texture const*>;
-		
-		ShadowTextureMap const* shadowTextures = 
-			static_cast<ShadowTextureMap const*>(dataDependencies.at(k_shadowTexturesInput));
 		
 		// Register new directional lights:
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataDirectional>())
@@ -781,8 +776,10 @@ namespace gr
 						shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(directionalData.m_renderDataID);
 					}
 
+					const gr::RenderDataID lightID = directionalItr.GetRenderDataID();
+
 					m_punctualLightData.emplace(
-						directionalItr.GetRenderDataID(),
+						lightID,
 						PunctualLightRenderData{
 							.m_type = gr::Light::Directional,
 							.m_transformParams = nullptr,
@@ -795,14 +792,11 @@ namespace gr
 
 					if (directionalData.m_hasShadow) // Add the shadow map texture to the batch
 					{
-						re::Texture const* shadowTex = shadowTextures ?
-							shadowTextures->at(directionalData.m_renderDataID) : m_missing2DShadowFallback.get();
-
 						directionalLightBatch.AddTextureInput(
-							"Depth0",
-							shadowTex,
+							"Shadows2D",
+							lightManager.GetShadowArrayTexture(gr::Light::Directional).get(),
 							re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint").get(),
-							re::TextureView(shadowTex));
+							lightManager.GetShadowArrayReadView(gr::Light::Directional, lightID));
 					}
 
 					++directionalItr;
@@ -842,9 +836,9 @@ namespace gr
 						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)
 					});
 
-				const gr::RenderDataID lightRenderDataID = lightItr.GetRenderDataID();
+				const gr::RenderDataID lightID = lightItr.GetRenderDataID();
 
-				re::Batch& lightBatch = punctualLightData.at(lightRenderDataID).m_batch;
+				re::Batch& lightBatch = punctualLightData.at(lightID).m_batch;
 
 				lightBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
 
@@ -852,34 +846,13 @@ namespace gr
 
 				if (hasShadow) // Add the shadow map texture to the batch
 				{
-					re::Texture const* shadowTex = nullptr;
-					if (shadowTextures)
-					{
-						shadowTex = shadowTextures->at(lightRenderDataID);
-					}
-					else
-					{
-						switch (lightType)
-						{
-						case gr::Light::Type::Point:
-						{
-							shadowTex = m_missingCubeShadowFallback.get();
-						}
-						break;
-						case gr::Light::Type::Spot:
-						{
-							shadowTex = m_missing2DShadowFallback.get();
-						}
-						break;
-						default: SEAssertF("Invalid/unexpected light type");
-						}
-					}
+					re::Texture const* shadowArrayTex = lightManager.GetShadowArrayTexture(lightType).get();
 
 					lightBatch.AddTextureInput(
 						depthInputTexName,
-						shadowTex,
+						shadowArrayTex,
 						re::Sampler::GetSampler(util::HashKey::Create(samplerTypeName)).get(),
-						re::TextureView(shadowTex));
+						lightManager.GetShadowArrayReadView(lightType, lightID));
 				}
 			};
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataPoint>())
@@ -900,7 +873,7 @@ namespace gr
 						&pointData,
 						hasShadow,
 						m_punctualLightData,
-						"CubeDepth",
+						"PointShadows",
 						"WrapCmpMinMagLinearMipPoint");
 
 					++pointItr;
@@ -926,7 +899,7 @@ namespace gr
 						&spotData,
 						hasShadow,
 						m_punctualLightData,
-						"Depth0",
+						"Shadows2D",
 						"WrapCmpMinMagLinearMipPoint");
 
 					++spotItr;

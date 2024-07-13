@@ -2,6 +2,7 @@
 #ifndef SHADOWS_COMMON
 #define SHADOWS_COMMON
 
+#include "Lighting.hlsli"
 #include "Transformations.hlsli"
 #include "UVUtils.hlsli"
 
@@ -9,6 +10,10 @@
 
 
 ConstantBuffer<PoissonSampleParamsData> PoissonSampleParams;
+
+Texture2DArray<float> Shadows2D; // Directional/Spot
+TextureCubeArray<float> PointShadows;
+
 
 void Float2ToFloat4SampleIndex(uint sampleIdx, out uint baseIdxOut, out uint offsetOut)
 {
@@ -110,10 +115,11 @@ void FindBlocker(
 	out float numBlockers,
 	uint qualityMode,
 	uint numBlockerSamples,
-	Texture2D<float> shadowDepth,
+	Texture2DArray<float> shadowDepth,
 	float2 uv,
 	float nonLinearDepth,
-	float2 searchRegionRadiusUV)
+	float2 searchRegionRadiusUV,
+	const uint shadowIdx)
 {
 	float blockerSum = 0;
 	numBlockers = 0;
@@ -121,7 +127,7 @@ void FindBlocker(
 	for (uint i = 0; i < numBlockerSamples; ++i)
 	{
 		const float2 offset = GetPoissonBlockerSample(i, qualityMode) * searchRegionRadiusUV;
-		const float depthSample = shadowDepth.SampleLevel(WhiteBorderMinMagMipPoint, uv + offset, 0);
+		const float depthSample = shadowDepth.SampleLevel(WhiteBorderMinMagMipPoint, float3(uv + offset, shadowIdx), 0);
 		if (depthSample < nonLinearDepth)
 		{
 			blockerSum += depthSample;
@@ -134,14 +140,20 @@ void FindBlocker(
 
 
 // Performs PCF filtering on the shadow map using multiple taps in the penumbra filter region
-float PCFPenumbra(uint qualityMode, uint numPenumbraSamples, float2 uv, float nonLinearDepth, float2 filterRadiusUV)
+float PCFPenumbra(
+	uint qualityMode,
+	uint numPenumbraSamples, 
+	float2 uv, 
+	float nonLinearDepth, 
+	float2 filterRadiusUV,
+	const uint shadowIdx)
 {
 	float sum = 0;
 	
 	for (uint i = 0; i < numPenumbraSamples; ++i)
 	{
 		const float2 offset = GetPoissonPenumbraSample(i, qualityMode) * filterRadiusUV;
-		sum += Depth0.SampleCmpLevelZero(BorderCmpMinMagLinearMipPoint, uv + offset, nonLinearDepth);
+		sum += Shadows2D.SampleCmpLevelZero(BorderCmpMinMagLinearMipPoint, float3(uv + offset, shadowIdx), nonLinearDepth);
 	}
 	return sum / numPenumbraSamples;
 }
@@ -155,7 +167,8 @@ float GetPCSSShadowFactor(
 	float nonLinearDepth, 
 	float eyeDepth, 
 	float2 shadowCamNearFar, 
-	float2 lightUVRadiusSize)
+	float2 lightUVRadiusSize,
+	const uint shadowIdx)
 {
 	// Blocker search:
 	float numBlockers = 0.f;
@@ -166,10 +179,11 @@ float GetPCSSShadowFactor(
 		numBlockers, // out
 		qualityMode, 
 		numBlockerSamples, 
-		Depth0, 
+		Shadows2D, 
 		shadowmapUVs, 
 		nonLinearDepth, 
-		searchRegionRadiusUV);
+		searchRegionRadiusUV,
+		shadowIdx);
 
 	if (numBlockers == 0.f)
 	{
@@ -183,12 +197,12 @@ float GetPCSSShadowFactor(
 	const float2 filterRadiusUV = ProjectToLightUV(shadowCamNearFar.x, penumbraRadiusUV, eyeDepth);
 	
 	// Filter the result:
-	return PCFPenumbra(qualityMode, numPenumbraSamples, shadowmapUVs, nonLinearDepth, filterRadiusUV);
+	return PCFPenumbra(qualityMode, numPenumbraSamples, shadowmapUVs, nonLinearDepth, filterRadiusUV, shadowIdx);
 }
 
 
 float GetPCFShadowFactor(
-	float2 shadowmapUVs, float nonLinearDepth, float4 shadowMapTexelSize)
+	float2 shadowmapUVs, float nonLinearDepth, float4 shadowMapTexelSize, const uint shadowIdx)
 {
 	// Compute a block of samples around our fragment, starting at the top-left. Note: MUST be a power of two.
 	// TODO: Compute this on C++ side and allow for uploading of arbitrary samples (eg. odd, even)
@@ -204,7 +218,8 @@ float GetPCFShadowFactor(
 	{
 		for (uint col = 0; col < gridSize; col++)
 		{
-			depthSum += Depth0.SampleCmpLevelZero(BorderCmpMinMagLinearMipPoint, shadowmapUVs, nonLinearDepth);
+			depthSum += Shadows2D.SampleCmpLevelZero(
+				BorderCmpMinMagLinearMipPoint, float3(shadowmapUVs, shadowIdx), nonLinearDepth);
 			
 			shadowmapUVs.x += shadowMapTexelSize.z;
 		}
@@ -239,6 +254,8 @@ float Get2DShadowFactor(
 	float2 lightUVRadiusSize,
 	float4 shadowMapTexelSize)
 {
+	const uint shadowIdx = LightIndexParams.g_lightIndex.y;
+	
 	float3 biasedShadowWPos;
 	GetBiasedShadowWorldPos(worldPos, worldNormal, lightWorldDir, minMaxShadowBias, biasedShadowWPos);
 	
@@ -270,7 +287,8 @@ float Get2DShadowFactor(
 				nonLinearDepth, 
 				eyeDepth, 
 				shadowCamNearFar, 
-				lightUVRadiusSize);
+				lightUVRadiusSize,
+				shadowIdx);
 			}
 		break;
 		case 2: // PCSS high
@@ -286,13 +304,14 @@ float Get2DShadowFactor(
 				nonLinearDepth, 
 				eyeDepth, 
 				shadowCamNearFar, 
-				lightUVRadiusSize);
-		}
+				lightUVRadiusSize,
+				shadowIdx);
+			}
 		break;
 		case 0: // PCF (lowest quality)
 		default:
 		{
-			return GetPCFShadowFactor(shadowmapUVs, nonLinearDepth, shadowMapTexelSize);
+			return GetPCFShadowFactor(shadowmapUVs, nonLinearDepth, shadowMapTexelSize, shadowIdx);
 		}
 	}
 }
@@ -331,7 +350,8 @@ void FindCubeBlocker(
 	float cubeSampleDirLength,
 	float3x3 lookAtMatrix,
 	float nonLinearDepth,
-	float2 searchRegionRadiusUV)
+	float2 searchRegionRadiusUV,
+	const uint shadowIdx)
 {
 	float blockerSum = 0;
 	numBlockers = 0;
@@ -340,8 +360,7 @@ void FindCubeBlocker(
 	{
 		const float2 uvOffset = GetPoissonBlockerSample(i, qualityMode) * searchRegionRadiusUV;
 		const float3 offsetDir = GetOffsetCubeSampleDir(cubeSampleDir, cubeSampleDirLength, uvOffset, lookAtMatrix);
-		
-		const float depthSample = CubeDepth.SampleLevel(ClampMinMagMipPoint, offsetDir, 0);
+		const float depthSample = PointShadows.SampleLevel(ClampMinMagMipPoint, float4(offsetDir, shadowIdx), 0);
 		if (depthSample < nonLinearDepth)
 		{
 			blockerSum += depthSample;
@@ -361,7 +380,8 @@ float PCFCubePenumbra(
 	float cubeSampleDirLength,
 	float3x3 lookAtMatrix,
 	float nonLinearDepth,
-	float2 filterRadiusUV)
+	float2 filterRadiusUV,
+	const uint shadowIdx)
 {
 	float sum = 0;	
 	
@@ -370,9 +390,9 @@ float PCFCubePenumbra(
 		const float2 uvOffset = GetPoissonPenumbraSample(i, qualityMode) * filterRadiusUV;
 		const float3 offsetDir = GetOffsetCubeSampleDir(cubeSampleDir, cubeSampleDirLength, uvOffset, lookAtMatrix);
 		
-		sum += CubeDepth.SampleCmpLevelZero(
+		sum += PointShadows.SampleCmpLevelZero(
 			WrapCmpMinMagLinearMipPoint,
-			offsetDir,
+			float4(offsetDir, shadowIdx),
 			nonLinearDepth);
 	}
 	return sum / numPenumbraSamples;
@@ -387,7 +407,8 @@ float GetCubePCSSShadowFactor(
 	float nonLinearDepth,
 	float eyeDepth,
 	float2 shadowCamNearFar,
-	float2 lightUVRadiusSize)
+	float2 lightUVRadiusSize,
+	const uint shadowIdx)
 {	
 	// Blocker search:
 	float numBlockers = 0.f;
@@ -408,7 +429,8 @@ float GetCubePCSSShadowFactor(
 		cubeSampleDirLength,
 		lookAtMatrix,
 		nonLinearDepth,
-		searchRegionRadiusUV);
+		searchRegionRadiusUV,
+		shadowIdx);
 
 	if (numBlockers == 0.f)
 	{
@@ -430,7 +452,8 @@ float GetCubePCSSShadowFactor(
 		cubeSampleDirLength, 
 		lookAtMatrix, 
 		nonLinearDepth, 
-		filterRadiusUV);
+		filterRadiusUV,
+		shadowIdx);
 }
 
 
@@ -443,7 +466,8 @@ float GetCubePCFShadowFactor(
 	float nonLinearDepth, 
 	float eyeDepth, 
 	float2 shadowCamNearFar, 
-	float cubeFaceDim)
+	float cubeFaceDim,
+	const uint shadowIdx)
 {
 	// Compute a sample offset for PCF shadow samples:
 	const float sampleOffset = 2.f / cubeFaceDim;
@@ -460,38 +484,38 @@ float GetCubePCFShadowFactor(
 
 	limit.xy -= oxy * bias;
 	limit.yz -= oyz * bias;
-
+	
 	// Get the center sample:
-	float light = CubeDepth.SampleCmpLevelZero(
+	float light = PointShadows.SampleCmpLevelZero(
 		WrapCmpMinMagLinearMipPoint,
-		cubeSampleDir,
+		float4(cubeSampleDir, shadowIdx),
 		nonLinearDepth);
 	
 	// Get 4 extra samples at diagonal offsets:
 	cubeSampleDir.xy -= oxy;
 	cubeSampleDir.yz -= oyz;
 
-	light += CubeDepth.SampleCmpLevelZero(
+	light += PointShadows.SampleCmpLevelZero(
 		WrapCmpMinMagLinearMipPoint,
-		clamp(cubeSampleDir, -limit, limit),
+		float4(clamp(cubeSampleDir, -limit, limit), shadowIdx),
 		nonLinearDepth);
 	cubeSampleDir.xy += oxy * 2.f;
 
-	light += CubeDepth.SampleCmpLevelZero(
+	light += PointShadows.SampleCmpLevelZero(
 		WrapCmpMinMagLinearMipPoint,
-		clamp(cubeSampleDir, -limit, limit),
+		float4(clamp(cubeSampleDir, -limit, limit), shadowIdx),
 		nonLinearDepth);
 	cubeSampleDir.yz += oyz * 2.f;
 
-	light += CubeDepth.SampleCmpLevelZero(
+	light += PointShadows.SampleCmpLevelZero(
 		WrapCmpMinMagLinearMipPoint,
-		clamp(cubeSampleDir, -limit, limit),
+		float4(clamp(cubeSampleDir, -limit, limit), shadowIdx),
 		nonLinearDepth);
 	cubeSampleDir.xy -= oxy * 2.f;
 
-	light += CubeDepth.SampleCmpLevelZero(
+	light += PointShadows.SampleCmpLevelZero(
 		WrapCmpMinMagLinearMipPoint,
-		clamp(cubeSampleDir, -limit, limit),
+		float4(clamp(cubeSampleDir, -limit, limit), shadowIdx),
 		nonLinearDepth);
 
 	return (light * 0.2); // Return the average of our 5 samples
@@ -508,7 +532,9 @@ float GetCubeShadowFactor(
 	float shadowQualityMode,
 	float2 lightUVRadiusSize,
 	float cubeFaceDim)
-{	
+{
+	const uint shadowIdx = LightIndexParams.g_lightIndex.y;
+	
 	float3 biasedShadowWPos;
 	GetBiasedShadowWorldPos(worldPos, worldNormal, lightWorldDir, minMaxShadowBias, biasedShadowWPos);
 	
@@ -541,7 +567,8 @@ float GetCubeShadowFactor(
 				nonLinearDepth,
 				eyeDepth,
 				shadowCamNearFar,
-				lightUVRadiusSize);
+				lightUVRadiusSize,
+				shadowIdx);
 			}
 		break;
 		case 2: // PCSS high
@@ -557,7 +584,8 @@ float GetCubeShadowFactor(
 				nonLinearDepth,
 				eyeDepth,
 				shadowCamNearFar,
-				lightUVRadiusSize);
+				lightUVRadiusSize,
+				shadowIdx);
 			}
 		break;
 		case 0: // PCF (lowest quality)
@@ -570,7 +598,8 @@ float GetCubeShadowFactor(
 				nonLinearDepth, 
 				eyeDepth, 
 				shadowCamNearFar, 
-				cubeFaceDim);
+				cubeFaceDim,
+				shadowIdx);
 		}
 	}
 }
