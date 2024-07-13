@@ -83,7 +83,7 @@ namespace dx12
 		void SetRenderTargets(re::TextureTargetSet const&);
 		void SetComputeTargets(re::TextureTargetSet const&);
 
-		void ClearDepthTarget(re::TextureTarget const*);
+		void ClearDepthTarget(re::TextureTarget const&);
 
 		void ClearColorTarget(re::TextureTarget const*);
 		void ClearColorTargets(re::TextureTargetSet const&);

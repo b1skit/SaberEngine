@@ -213,7 +213,7 @@ namespace opengl
 			SEAssert(!targetPlatParams->m_isCreated, "Target has already been created");
 			targetPlatParams->m_isCreated = true;
 
-			std::shared_ptr<re::Texture> const& texture = colorTarget.GetTexture();
+			re::Texture const* texture = colorTarget.GetTexture().get();
 
 			re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 			SEAssert((textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
@@ -323,14 +323,14 @@ namespace opengl
 			}
 			
 			// Attach the textures now that we know the framebuffer is created:
-			glDrawBuffers(numDrawBuffers, &drawBuffers[0]);
+			glDrawBuffers(numDrawBuffers, drawBuffers.data());
 
 			// For now, ensure the viewport dimensions are within the target dimensions
 			SEAssert(targetSet.GetViewport().Width() <= targetWidth  &&
 				targetSet.GetViewport().Height() <= targetHeight,
 				"Viewport is larger than the color targets");
 		}
-		else if (!targetSet.GetDepthStencilTarget())
+		else if (!targetSet.GetDepthStencilTarget().HasTexture())
 		{
 			LOG_WARNING("Texture target set \"%s\" has no color/depth targets. Assuming it is the default COLOR framebuffer", 
 				targetSet.GetName().c_str());
@@ -357,7 +357,7 @@ namespace opengl
 		std::vector<GLenum> buffers;
 		buffers.reserve(targetSet.GetNumColorTargets());
 
-		std::shared_ptr<re::Texture> firstTarget = nullptr;
+		re::Texture const* firstTarget = nullptr;
 		uint32_t firstTargetMipLevel = 0;
 		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
@@ -366,7 +366,7 @@ namespace opengl
 				break;
 			}
 			
-			std::shared_ptr<re::Texture> texture = targetSet.GetColorTarget(i).GetTexture();
+			re::Texture const* texture = targetSet.GetColorTarget(i).GetTexture().get();
 			SEAssert(texture->GetPlatformParams()->m_isCreated, "Texture is not created");
 
 			re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
@@ -384,92 +384,39 @@ namespace opengl
 
 			re::TextureView const& texView = targetParams.m_textureView;
 
+			const GLuint textureID = opengl::Texture::GetOrCreateTextureView(*texture, texView);
+
+			glNamedFramebufferTexture( // Note: "Named" DSA function: no need to explicitely bind the framebuffer first
+				targetSetParams->m_frameBufferObject,		// framebuffer
+				targetPlatformParams->m_attachmentPoint,	// attachment
+				textureID,									// texture
+				0);											// level: 0 as it's relative to the texView
+
 			uint32_t firstMip = re::Texture::k_allMips; // Invalid
 			switch (texView.m_viewDimension)
 			{
 			case re::Texture::Texture1D:
 			{
-				glNamedFramebufferTexture(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					targetPlatformParams->m_attachmentPoint,	// attachment
-					texPlatformParams->m_textureID,				// texture
-					texView.Texture1D.m_firstMip);				// level
-
 				firstMip = texView.Texture1D.m_firstMip;
 			}
 			break;
 			case re::Texture::Texture1DArray:
 			{
-				glNamedFramebufferTextureLayer(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					targetPlatformParams->m_attachmentPoint,	// attachment
-					texPlatformParams->m_textureID,				// texture
-					texView.Texture1DArray.m_firstMip,			// level
-					texView.Texture1DArray.m_firstArraySlice);	// layer
-
 				firstMip = texView.Texture1DArray.m_firstMip;
 			}
 			break;
 			case re::Texture::Texture2D:
 			{
-				glNamedFramebufferTexture(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					targetPlatformParams->m_attachmentPoint,	// attachment
-					texPlatformParams->m_textureID,				// texture
-					texView.Texture2D.m_firstMip);				// level
-
 				firstMip = texView.Texture2D.m_firstMip;
 			}
 			break;
 			case re::Texture::Texture2DArray:
 			{
-				switch (textureParams.m_dimension)
-				{
-				case re::Texture::Texture2D:
-				{
-					glNamedFramebufferTexture(
-						targetSetParams->m_frameBufferObject,		// framebuffer
-						targetPlatformParams->m_attachmentPoint,	// attachment
-						texPlatformParams->m_textureID,				// texture
-						texView.Texture2D.m_firstMip);				// level
-				}
-				break;
-				case re::Texture::Texture2DArray:
-				{
-					glNamedFramebufferTextureLayer(
-						targetSetParams->m_frameBufferObject,		// framebuffer
-						targetPlatformParams->m_attachmentPoint,	// attachment
-						texPlatformParams->m_textureID,				// texture
-						texView.Texture2DArray.m_firstMip,			// level
-						texView.Texture2DArray.m_firstArraySlice);	// layer
-				}
-				break;
-				case re::Texture::TextureCube:
-				case re::Texture::TextureCubeArray:
-				{
-					glNamedFramebufferTextureLayer(
-						targetSetParams->m_frameBufferObject,		// framebuffer
-						targetPlatformParams->m_attachmentPoint,	// attachment
-						texPlatformParams->m_textureID,				// texture
-						texView.Texture2DArray.m_firstMip,			// level
-						texView.Texture2DArray.m_firstArraySlice);	// layer
-				}
-				break;
-				default: SEAssertF("Invalid dimension");
-				}
-
 				firstMip = texView.Texture2DArray.m_firstMip;
 			}
 			break;
 			case re::Texture::Texture3D:
 			{
-				glNamedFramebufferTextureLayer(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					targetPlatformParams->m_attachmentPoint,	// attachment
-					texPlatformParams->m_textureID,				// texture
-					texView.Texture3D.m_firstMip,				// level
-					texView.Texture3D.m_firstWSlice);			// layer
-
 				firstMip = texView.Texture3D.m_firstMip;
 			}
 			break;
@@ -486,7 +433,10 @@ namespace opengl
 			buffers.emplace_back(targetPlatformParams->m_attachmentPoint);
 
 			SEAssert(firstTarget == nullptr ||
-				(texture->Width() == firstTarget->Width() && texture->Height() == firstTarget->Height()),
+				(texture->GetMipLevelDimensions(firstMip).x ==
+						firstTarget->GetMipLevelDimensions(firstTargetMipLevel).x &&
+					texture->GetMipLevelDimensions(firstMip).y ==
+						firstTarget->GetMipLevelDimensions(firstTargetMipLevel).y),
 				"All framebuffer textures must have the same dimension");
 
 			if (firstTarget == nullptr)
@@ -510,38 +460,18 @@ namespace opengl
 				static_cast<GLsizei>(buffers.size()),
 				buffers.data());
 
-			SEAssert(firstTarget != nullptr, "First target cannot be null");
-			if (firstTarget->GetNumMips() > 1 && firstTargetMipLevel > 0)
-			{
-				const glm::vec4 mipDimensions = firstTarget->GetMipLevelDimensions(firstTargetMipLevel);
-				glViewport(
-					0,
-					0,
-					static_cast<GLsizei>(mipDimensions.x),
-					static_cast<GLsizei>(mipDimensions.y));
+			glm::vec4 const& mipDimensions = firstTarget->GetMipLevelDimensions(firstTargetMipLevel);
+			glViewport(
+				0,
+				0,
+				static_cast<GLsizei>(mipDimensions.x),
+				static_cast<GLsizei>(mipDimensions.y));
 
-				glScissor(
-					0,										// Upper-left corner coordinates: X
-					0,										// Upper-left corner coordinates: Y
-					static_cast<GLsizei>(mipDimensions.x),	// Width
-					static_cast<GLsizei>(mipDimensions.y));	// Height
-			}
-			else
-			{
-				re::Viewport const& viewport = targetSet.GetViewport();
-				glViewport(
-					viewport.xMin(),
-					viewport.yMin(),
-					viewport.Width(),
-					viewport.Height());
-
-				re::ScissorRect const& scissorRect = targetSet.GetScissorRect();
-				glScissor(
-					scissorRect.Left(),		// Upper-left corner coordinates: X
-					scissorRect.Top(),		// Upper-left corner coordinates: Y
-					scissorRect.Right(),	// Width
-					scissorRect.Bottom());	// Height
-			}
+			glScissor(
+				0,										// Upper-left corner coordinates: X
+				0,										// Upper-left corner coordinates: Y
+				static_cast<GLsizei>(mipDimensions.x),	// Width
+				static_cast<GLsizei>(mipDimensions.y));	// Height
 
 			// Verify the framebuffer (as we actually had color textures to attach)
 			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
@@ -566,15 +496,16 @@ namespace opengl
 
 		SEAssert(targetSetParams->m_isCommitted, "Target set has not been committed");
 
-		if (targetSet.GetDepthStencilTarget())
+		if (targetSet.GetDepthStencilTarget().HasTexture())
 		{
+			re::TextureTarget const* depthStencilTarget = &targetSet.GetDepthStencilTarget();
 			opengl::TextureTarget::PlatformParams* depthTargetPlatParams =
-				targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
+				depthStencilTarget->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
 			
 			SEAssert(!depthTargetPlatParams->m_isCreated, "Target has already been created");
 			depthTargetPlatParams->m_isCreated = true;
 
-			std::shared_ptr<re::Texture const> depthStencilTex = targetSet.GetDepthStencilTarget()->GetTexture();
+			re::Texture const* depthStencilTex = depthStencilTarget->GetTexture().get();
 
 			// Create framebuffer:
 			re::Texture::TextureParams const& depthTextureParams = depthStencilTex->GetTextureParams();
@@ -600,7 +531,7 @@ namespace opengl
 			// Configure the target parameters:
 			depthTargetPlatParams->m_attachmentPoint = GL_DEPTH_ATTACHMENT;
 			depthTargetPlatParams->m_drawBuffer = GL_NONE;
-			//depthTargetPlatParams->m_readBuffer		 = GL_NONE; // Not needed...
+			depthTargetPlatParams->m_readBuffer	= GL_NONE;
 
 			// For now, ensure the viewport dimensions are within the target dimensions
 			SEAssert(targetSet.GetViewport().Width() <= depthStencilTex->Width() &&
@@ -622,119 +553,38 @@ namespace opengl
 
 	void TextureTargetSet::AttachDepthStencilTarget(re::TextureTargetSet const& targetSet)
 	{
-		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
-			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
-
-		if (targetSet.GetDepthStencilTarget())
+		if (targetSet.GetDepthStencilTarget().HasTexture())
 		{
-			re::TextureTarget const* depthTarget = targetSet.GetDepthStencilTarget();
+			re::TextureTarget const& depthTarget = targetSet.GetDepthStencilTarget();
 
-			re::Texture const* depthTex = depthTarget->GetTexture().get();
+			SEAssert(depthTarget.GetTexture()->GetNumMips() == 1,
+				"It is (currently) unexpected that a depth target has mips");
+
+			re::Texture const* depthTex = depthTarget.GetTexture().get();
 			SEAssert(depthTex->GetPlatformParams()->m_isCreated, "Texture is not created");
 
-			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
-			SEAssert((depthTexParams.m_usage & re::Texture::Usage::DepthTarget),
+			SEAssert((depthTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget),
 				"Attempting to bind a depth target with a different texture use parameter");
 
-			opengl::Texture::PlatformParams const* depthTexPlatParams =
-				depthTex->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
-
-			re::TextureTarget::TargetParams const& depthTargetParams = depthTarget->GetTargetParams();
+			opengl::TextureTargetSet::PlatformParams const* targetSetParams =
+				targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 
 			opengl::TextureTarget::PlatformParams const* depthTargetPlatParams =
-				depthTarget->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
+				depthTarget.GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
-			SEAssert(depthTarget->GetTexture()->GetNumMips() == 1, "It is unexpected that a depth target has mips");
+			SEAssert(depthTargetPlatParams->m_attachmentPoint == GL_DEPTH_ATTACHMENT,
+				"Currently expecting a depth attachment. TODO: Support GL_STENCIL_ATTACHMENT");
 
-			re::TextureView const& texView = depthTargetParams.m_textureView;
+			re::TextureView const& texView = depthTarget.GetTargetParams().m_textureView;
 
-			// Note: We're using the "Named" DSA functions, so no need to explicitely bind the framebuffer first
-			switch (texView.m_viewDimension)
-			{
-			case re::Texture::Texture1D:
-			{
-				glNamedFramebufferTexture(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					depthTargetPlatParams->m_attachmentPoint,	// attachment
-					depthTexPlatParams->m_textureID,			// texture
-					texView.Texture1D.m_firstMip);				// level
-			}
-			break;
-			case re::Texture::Texture1DArray:
-			{
-				glNamedFramebufferTextureLayer(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					depthTargetPlatParams->m_attachmentPoint,	// attachment
-					depthTexPlatParams->m_textureID,			// texture
-					texView.Texture1DArray.m_firstMip,			// level
-					texView.Texture1DArray.m_firstArraySlice);	// layer
-			}
-			break;
-			case re::Texture::Texture2D:
-			{
-				glNamedFramebufferTexture(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					depthTargetPlatParams->m_attachmentPoint,	// attachment
-					depthTexPlatParams->m_textureID,			// texture
-					texView.Texture2D.m_firstMip);				// level
-			}
-			break;
-			case re::Texture::Texture2DArray:
-			{
-				switch (depthTexParams.m_dimension)
-				{
-				case re::Texture::Texture2D:
-				{
-					glNamedFramebufferTexture(
-						targetSetParams->m_frameBufferObject,		// framebuffer
-						depthTargetPlatParams->m_attachmentPoint,	// attachment
-						depthTexPlatParams->m_textureID,			// texture
-						texView.Texture2D.m_firstMip);				// level
-				}
-				break;
-				case re::Texture::Texture2DArray:
-				{
-					glNamedFramebufferTextureLayer(
-						targetSetParams->m_frameBufferObject,		// framebuffer
-						depthTargetPlatParams->m_attachmentPoint,	// attachment
-						depthTexPlatParams->m_textureID,			// texture
-						texView.Texture2DArray.m_firstMip,			// level
-						texView.Texture2DArray.m_firstArraySlice);	// layer
-				}
-				break;
-				case re::Texture::TextureCube:
-				case re::Texture::TextureCubeArray:
-				{
-					glNamedFramebufferTexture(
-						targetSetParams->m_frameBufferObject,		// framebuffer
-						depthTargetPlatParams->m_attachmentPoint,	// attachment
-						depthTexPlatParams->m_textureID,			// texture
-						texView.Texture2DArray.m_firstMip);			// level
-				}
-				break;
-				default: SEAssertF("Invalid dimension");
-				}
-			}
-			break;
-			case re::Texture::Texture3D:
-			{
-				glNamedFramebufferTextureLayer(
-					targetSetParams->m_frameBufferObject,		// framebuffer
-					depthTargetPlatParams->m_attachmentPoint,	// attachment
-					depthTexPlatParams->m_textureID,			// texture
-					texView.Texture3D.m_firstMip,				// level
-					texView.Texture3D.m_firstWSlice);			// layer
-			}
-			break;
-			case re::Texture::TextureCube:
-			case re::Texture::TextureCubeArray:
-			{
-				SEAssertF("Invalid dimension for a depth target");
-			}
-			break;
-			default: SEAssertF("Invalid dimension");
-			}
+			const GLuint textureID = opengl::Texture::GetOrCreateTextureView(*depthTex, texView);
 
+			glNamedFramebufferTexture( // Note: "Named" DSA function: no need to explicitely bind the framebuffer first
+				targetSetParams->m_frameBufferObject,		// framebuffer
+				depthTargetPlatParams->m_attachmentPoint,	// attachment
+				textureID,									// texture
+				0);											// level: 0 as it's relative to the texView
+			
 			// Verify the framebuffer (as we actually had color textures to attach)
 			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
 			SEAssert(result == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is not complete");
@@ -753,7 +603,7 @@ namespace opengl
 				scissorRect.Right(),	// Width
 				scissorRect.Bottom());	// Height
 
-			SetDepthWriteMode(*targetSet.GetDepthStencilTarget());
+			SetDepthWriteMode(targetSet.GetDepthStencilTarget());
 		}
 	}
 
@@ -788,41 +638,45 @@ namespace opengl
 
 	void TextureTargetSet::ClearDepthStencilTarget(re::TextureTargetSet const& targetSet)
 	{
-		if (targetSet.GetDepthStencilTarget()->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled &&
+		if (targetSet.GetDepthStencilTarget().GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled &&
 			targetSet.HasDepthTarget())
 		{
-			opengl::TextureTargetSet::PlatformParams const* targetSetParams =
+			opengl::TextureTargetSet::PlatformParams const* targetSetPlatParams =
 				targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 
-			std::shared_ptr<re::Texture> depthStencilTex = targetSet.GetDepthStencilTarget()->GetTexture();
+			re::Texture const* depthStencilTex = targetSet.GetDepthStencilTarget().GetTexture().get();
+			re::Texture::TextureParams const& texParams = depthStencilTex->GetTextureParams();
 
-			opengl::TextureTarget::PlatformParams* depthTargetParams =
-				targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
+			opengl::TextureTarget::PlatformParams const* targetPlatParams =
+				targetSet.GetDepthStencilTarget().GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
-			SEAssert(depthTargetParams->m_drawBuffer == 0, "Drawbuffer must be 0 for depth/stencil targets");
+			SEAssert(targetPlatParams->m_drawBuffer == 0, "Drawbuffer must be 0 for depth/stencil targets");
 
-			if ((depthStencilTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) != 0 ||
-				(depthStencilTex->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget) != 0)
+			// Clear depth:
+			if ((texParams.m_usage & re::Texture::Usage::DepthTarget) != 0 ||
+				(texParams.m_usage & re::Texture::Usage::DepthStencilTarget) != 0)
 			{
 				glClearNamedFramebufferfv(
-					targetSetParams->m_frameBufferObject,	// framebuffer
-					GL_DEPTH,								// buffer
-					depthTargetParams->m_drawBuffer,		// drawbuffer: Must be 0 for GL_DEPTH
-					&targetSet.GetDepthStencilTarget()->GetTexture()->GetTextureParams().m_clear.m_depthStencil.m_depth);	// value
+					targetSetPlatParams->m_frameBufferObject,	// framebuffer
+					GL_DEPTH,									// buffer
+					targetPlatParams->m_drawBuffer,				// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
+					&texParams.m_clear.m_depthStencil.m_depth);	// value
 			}
 
-			if ((depthStencilTex->GetTextureParams().m_usage & re::Texture::Usage::StencilTarget) != 0 ||
-				(depthStencilTex->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget) != 0)
+			// Clear stencil:
+			if ((texParams.m_usage & re::Texture::Usage::StencilTarget) != 0 ||
+				(texParams.m_usage & re::Texture::Usage::DepthStencilTarget) != 0)
 			{
-				const GLint stencilClearValue =
-					targetSet.GetDepthStencilTarget()->GetTexture()->GetTextureParams().m_clear.m_depthStencil.m_stencil;
+				const GLint stencilClearValue = texParams.m_clear.m_depthStencil.m_stencil;
 
 				glClearNamedFramebufferiv(
-					targetSetParams->m_frameBufferObject,	// framebuffer
-					GL_STENCIL,								// buffer
-					depthTargetParams->m_drawBuffer,		// drawbuffer: Must be 0 for GL_STENCIL
+					targetSetPlatParams->m_frameBufferObject,	// framebuffer
+					GL_STENCIL,									// buffer
+					targetPlatParams->m_drawBuffer,				// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
 					&stencilClearValue);
 			}
+
+			// TODO: Use glClearNamedFramebufferfi to clear depth and stencil simultaneously
 		}
 	}
 
@@ -839,25 +693,24 @@ namespace opengl
 
 	void TextureTargetSet::AttachTargetsAsImageTextures(re::TextureTargetSet const& targetSet)
 	{
-		SEAssert(targetSet.GetDepthStencilTarget() == nullptr,
+		SEAssert(!targetSet.GetDepthStencilTarget().HasTexture(),
 			"It is not possible to attach a depth buffer as a target to a compute shader");
 
 		std::vector<re::TextureTarget> const& texTargets = targetSet.GetColorTargets();
 		for (uint32_t slot = 0; slot < texTargets.size(); slot++)
 		{
-			if (!texTargets[slot].HasTexture())
+			re::TextureTarget const& texTarget = texTargets[slot];
+			if (!texTarget.HasTexture())
 			{
 				break;;
 			}
-
-			re::Texture const* texture = texTargets[slot].GetTexture().get();
-			re::TextureTarget::TargetParams const& targetParams = texTargets[slot].GetTargetParams();
 			
-			const uint32_t subresourceIdx = re::TextureView::GetSubresourceIndex(texture, targetParams.m_textureView);
-
+			re::Texture const* texture = texTarget.GetTexture().get();
+			re::TextureTarget::TargetParams const& targetParams = texTarget.GetTargetParams();
+			
 			constexpr uint32_t k_accessMode = GL_READ_WRITE;
 
-			opengl::Texture::BindAsImageTexture(*texture, slot, subresourceIdx, k_accessMode);
+			opengl::Texture::BindAsImageTexture(*texture, slot, targetParams.m_textureView, k_accessMode);
 		}
 
 		// TODO: Support compute target clearing

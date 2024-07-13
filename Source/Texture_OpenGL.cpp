@@ -1,7 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
+#include "Texture.h"
+#include "TextureView.h"
 
 #include "Core/Assert.h"
 
@@ -203,10 +204,14 @@ namespace opengl
 	}
 
 
-
 	Texture::PlatformParams::~PlatformParams()
 	{
 		glDeleteTextures(1, &m_textureID);
+
+		for (auto const& view : m_textureViews)
+		{
+			glDeleteTextures(1, &view.second);
+		}
 	}
 
 
@@ -240,8 +245,22 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::BindAsImageTexture(
-		re::Texture const& texture, uint32_t textureUnit, uint32_t subresourceIdx, uint32_t accessMode)
+	void Texture::Bind(re::Texture const& texture, uint32_t textureUnit, re::TextureView const& texView)
+	{
+		opengl::Texture::PlatformParams const* params =
+			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+
+		// TODO: Support texture updates after modification
+		SEAssert(params->m_isDirty == false, "Texture has been modified, and needs to be rebuffered");
+
+		const GLuint textureID = opengl::Texture::GetOrCreateTextureView(texture, texView);
+
+		glBindTextureUnit(textureUnit, textureID);
+	}
+
+
+	void Texture::BindAsImageTexture(
+		re::Texture const& texture, uint32_t textureUnit, re::TextureView const& texView, uint32_t accessMode)
 	{
 		SEAssert(accessMode == GL_READ_ONLY ||
 			accessMode == GL_WRITE_ONLY ||
@@ -260,10 +279,12 @@ namespace opengl
 			"Format is not compatible. Note: We currently don't check for non-exact but compatible formats, "
 			"but should. See Texture_OpenGL.cpp::GetFormatIsImageTextureCompatible");
 
+		const GLuint textureID = opengl::Texture::GetOrCreateTextureView(texture, texView);
+
 		glBindImageTexture(
 			textureUnit,						// unit: Index to bind to
-			texPlatParams->m_textureID,			// texture: Name of the texture being bound
-			subresourceIdx,						// level: Subresource index being bound
+			textureID,							// texture: Name of the texture being bound
+			0,									// level: 0, as this is relative to the view
 			GL_TRUE,							// layered: Use layered binding? Binds the entire 1/2/3D array if true
 			0,									// layer: Layer to bind. Ignored if layered == GL_TRUE
 			accessMode,							// access: Type of access that will be performed
@@ -364,6 +385,9 @@ namespace opengl
 		break;
 		case re::Texture::Dimension::TextureCubeArray:
 		{
+			SEAssert(texture.GetTotalNumSubresources() == texParams.m_arraySize * 6 * texture.GetNumMips(),
+				"Unexpected number of subresources");
+
 			glCreateTextures(GL_TEXTURE_CUBE_MAP_ARRAY, 1, &params->m_textureID);
 
 			glTextureStorage3D(
@@ -372,7 +396,7 @@ namespace opengl
 				params->m_internalFormat,
 				width,
 				height,
-				texParams.m_arraySize * 6); // depth: No. of layer-faces (must be divisible by 6)
+				texture.GetTotalNumSubresources()); // depth: No. of layer-faces (must be divisible by 6)
 		}
 		break;
 		default:
@@ -519,7 +543,7 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::GenerateMipMaps(re::Texture const& texture)
+	void Texture::GenerateMipMaps(re::Texture const& texture)
 	{
 		opengl::Texture::PlatformParams const* params =
 			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
@@ -533,5 +557,141 @@ namespace opengl
 			const GLint maxLevel = GL_TEXTURE_MAX_LEVEL;
 			glTextureParameteriv(params->m_textureID, GL_TEXTURE_MAX_LEVEL, &maxLevel);
 		}
+	}
+
+
+	GLuint Texture::GetOrCreateTextureView(re::Texture const& tex, re::TextureView const& texView)
+	{
+		re::Texture::TextureParams const& texParams = tex.GetTextureParams();
+		opengl::Texture::PlatformParams const* platParams =
+			tex.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+
+		const DataHash viewDataHash = texView.GetDataHash();
+
+		if (!platParams->m_textureViews.contains(viewDataHash))
+		{
+			GLuint newTex = 0;
+
+			glGenTextures(1, &newTex); // We need a completely texture name that is otherwise uninitialized
+
+			GLenum target = 0;
+
+			uint32_t firstMip = 0;
+			uint32_t mipLevels = 1;
+			uint32_t firstArraySlice = 0;
+			uint32_t arraySize = 1;
+
+			switch (texView.m_viewDimension)
+			{
+			case re::Texture::Texture1D:
+			{
+				target = GL_TEXTURE_1D;
+
+				firstMip = texView.Texture1D.m_firstMip;
+				mipLevels = texView.Texture1D.m_mipLevels;
+			}
+			break;
+			case re::Texture::Texture1DArray:
+			{
+				target = GL_TEXTURE_1D_ARRAY;
+
+				firstMip = texView.Texture1DArray.m_firstMip;
+				mipLevels = texView.Texture1DArray.m_mipLevels;
+				firstArraySlice = texView.Texture1DArray.m_firstArraySlice;
+				arraySize = texView.Texture1DArray.m_arraySize;
+			}
+			break;
+			case re::Texture::Texture2D:
+			{
+				switch (texParams.m_multisampleMode)
+				{
+				case re::Texture::MultisampleMode::Disabled:
+				{
+					target = GL_TEXTURE_2D;
+
+					firstMip = texView.Texture2D.m_firstMip;
+					mipLevels = texView.Texture2D.m_mipLevels;
+				}
+				break;
+				case re::Texture::MultisampleMode::Enabled:
+				{
+					SEAssertF("TODO: Handle mutlisampling");
+				}
+				break;
+				default: SEAssertF("Invalid multisample mode");
+				}
+			}
+			break;
+			case re::Texture::Texture2DArray:
+			{
+				switch (texParams.m_multisampleMode)
+				{
+				case re::Texture::MultisampleMode::Disabled:
+				{
+					target = GL_TEXTURE_2D_ARRAY;
+
+					firstMip = texView.Texture2DArray.m_firstMip;
+					mipLevels = texView.Texture2DArray.m_mipLevels;
+					firstArraySlice = texView.Texture2DArray.m_firstArraySlice;
+					arraySize = texView.Texture2DArray.m_arraySize;
+				}
+				break;
+				case re::Texture::MultisampleMode::Enabled:
+				{
+					SEAssertF("TODO: Handle mutlisampling");
+				}
+				break;
+				default: SEAssertF("Invalid multisample mode");
+				}
+			}
+			break;
+			case re::Texture::Texture3D:
+			{
+				target = GL_TEXTURE_3D;
+
+				firstMip = texView.Texture3D.m_firstMip;
+				mipLevels = texView.Texture3D.m_mipLevels;
+				firstArraySlice = texView.Texture3D.m_firstWSlice;
+				arraySize = texView.Texture3D.m_wSize;
+			}
+			break;
+			case re::Texture::TextureCube:
+			{
+				target = GL_TEXTURE_CUBE_MAP;
+
+				firstMip = texView.TextureCube.m_firstMip;
+				mipLevels = texView.TextureCube.m_mipLevels;
+				arraySize = 6;
+			}
+			break;
+			case re::Texture::TextureCubeArray:
+			{
+				target = GL_TEXTURE_CUBE_MAP_ARRAY;
+
+				firstMip = texView.TextureCubeArray.m_firstMip;
+				mipLevels = texView.TextureCubeArray.m_mipLevels;
+				firstArraySlice = texView.TextureCubeArray.m_first2DArrayFace;
+				arraySize = texView.TextureCubeArray.m_numCubes * 6;
+			}
+			break;
+			default: SEAssertF("Invalid dimension");
+			}
+
+			glTextureView(
+				newTex,							// texture (to be initialized as the view)
+				target,							// target
+				platParams->m_textureID,		// origTexture
+				platParams->m_internalFormat,	// internalFormat
+				firstMip,						// minLevel
+				mipLevels,						// numLevels
+				firstArraySlice,				// minLayer
+				arraySize);						// numLayers
+
+			platParams->m_textureViews.emplace(texView.GetDataHash(), newTex);
+			
+			return newTex;
+		}
+
+		return platParams->m_textureViews.at(viewDataHash);
 	}
 }

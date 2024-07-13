@@ -423,7 +423,7 @@ namespace dx12
 						for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 						{
 							SEAssert(!stageTargets->HasDepthTarget() ||
-								texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget()->GetTexture().get(),
+								texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget().GetTexture().get(),
 								"We don't currently handle batches with the current depth buffer attached as "
 								"a texture input. We need to make sure the transitions are handled correctly");
 

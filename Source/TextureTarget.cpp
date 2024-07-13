@@ -185,7 +185,7 @@ namespace re
 		}
 		if (rhs.HasDepthTarget())
 		{
-			newTextureTargetSet->SetDepthStencilTarget(rhs.GetDepthStencilTarget()->GetTexture(), overrideParams);
+			newTextureTargetSet->SetDepthStencilTarget(rhs.GetDepthStencilTarget().GetTexture(), overrideParams);
 		}
 
 		re::RenderManager::Get()->RegisterForCreate(newTextureTargetSet);
@@ -259,14 +259,9 @@ namespace re
 		SetColorTarget(slot, re::TextureTarget(texture, targetParams));
 	}
 
-
-	re::TextureTarget const* TextureTargetSet::GetDepthStencilTarget() const
+	re::TextureTarget const& TextureTargetSet::GetDepthStencilTarget() const
 	{
-		if (m_depthStencilTarget.HasTexture())
-		{
-			return &m_depthStencilTarget;
-		}
-		return nullptr;
+		return m_depthStencilTarget;
 	}
 
 
@@ -301,7 +296,7 @@ namespace re
 
 	bool TextureTargetSet::HasDepthTarget() const
 	{
-		return GetDepthStencilTarget() != nullptr;
+		return GetDepthStencilTarget().HasTexture();
 	}
 	
 
@@ -473,13 +468,14 @@ namespace re
 	}
 
 
-	void TextureTargetSet::Commit()
+	void TextureTargetSet::ValidateConfiguration() const
 	{
-		SEAssert(!m_platformParams->m_isCommitted,
-			"Target sets are immutable after they've been committed");
-
-		RecomputeNumColorTargets();
-		ComputeDataHash();
+		// Note: It is valid in some cases (e.g. compute UAV targets) that the target texture dimensions don't match, so
+		// we don't (currently) check for that here.
+		//
+		// Ideally, this validation would be performed at a later point with knowledge of how the targets will actually
+		// be used. The below checks will fail in some perfectly valid cases (e.g. compute stages with targets of 
+		// different dimensions)
 
 #if defined(_DEBUG)
 		for (uint8_t targetIdx = 1; targetIdx < m_numColorTargets; targetIdx++)
@@ -495,6 +491,18 @@ namespace re
 				m_depthStencilTarget.GetTexture()->Height() == m_colorTargets[0].GetTexture()->Height()),
 			"Found depth target with mismatching dimensions");
 #endif
+	}
+
+
+	void TextureTargetSet::Commit()
+	{
+		SEAssert(!m_platformParams->m_isCommitted,
+			"Target sets are immutable after they've been committed");
+
+		RecomputeNumColorTargets();
+		ComputeDataHash();
+
+		ValidateConfiguration(); // _DEBUG only
 
 		// Commit the TargetData Buffer data, if necessary
 		if (m_targetParamsBuffer)

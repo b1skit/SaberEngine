@@ -617,37 +617,31 @@ namespace opengl
 			glUniformMatrix4fv(uniformID, count, GL_FALSE, static_cast<GLfloat const*>(value));
 		}
 		break;
-
 		case opengl::Shader::UniformType::Matrix3x3f:
 		{
 			glUniformMatrix3fv(uniformID, count, GL_FALSE, static_cast<GLfloat const*>(value));
 		}
 		break;
-
 		case opengl::Shader::UniformType::Vec3f:
 		{
 			glUniform3fv(uniformID, count, static_cast<GLfloat const*>(value));
 		}
 		break;
-
 		case opengl::Shader::UniformType::Vec4f:
 		{
 			glUniform4fv(uniformID, count, static_cast<GLfloat const*>(value));
 		}
 		break;
-
 		case opengl::Shader::UniformType::Float:
 		{
 			glUniform1f(uniformID, *static_cast<GLfloat const*>(value));
 		}
 		break;
-
 		case opengl::Shader::UniformType::Int:
 		{
 			glUniform1i(uniformID, *(GLint const*)value);
 		}
 		break;
-		
 		case opengl::Shader::UniformType::Texture:
 		{
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
@@ -764,11 +758,31 @@ namespace opengl
 
 	void Shader::SetTextureAndSampler(re::Shader const& shader, re::TextureAndSamplerInput const& texSamplerInput)
 	{
-		// Note: We don't use the TextureAndSamplerInput array/face/mip indexes here; OpenGL doesn't allow us to be so specific
+		PlatformParams const* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
+		SEAssert(params->m_isCreated == true, "Shader has not been created yet");
 
-		opengl::Shader::SetUniform(
-			shader, texSamplerInput.m_shaderName, texSamplerInput.m_texture, opengl::Shader::UniformType::Texture, 1);
-		opengl::Shader::SetUniform(
-			shader, texSamplerInput.m_shaderName, texSamplerInput.m_sampler, opengl::Shader::UniformType::Sampler, 1);
+		// Bind the texture:
+		auto const& textureBindingUnit = params->m_samplerUnits.find(texSamplerInput.m_shaderName);
+		if (textureBindingUnit == params->m_samplerUnits.end())
+		{
+			
+			SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+				std::format("Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled",
+					shader.GetName(), texSamplerInput.m_shaderName).c_str());
+			return;
+		}
+		opengl::Texture::Bind(*texSamplerInput.m_texture, textureBindingUnit->second, texSamplerInput.m_textureView);
+
+
+		// Bind the sampler:
+		auto const& samplerBindingUnit = params->m_samplerUnits.find(texSamplerInput.m_shaderName);
+		if (samplerBindingUnit == params->m_samplerUnits.end())
+		{
+			SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+				std::format("Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled",
+					shader.GetName(), texSamplerInput.m_shaderName).c_str());
+			return;
+		}
+		opengl::Sampler::Bind(*texSamplerInput.m_sampler, samplerBindingUnit->second);
 	}
 }

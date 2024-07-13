@@ -233,7 +233,8 @@ namespace re
 		void SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget);
 		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> const&, TextureTarget::TargetParams const&);
 
-		re::TextureTarget const* GetDepthStencilTarget() const; // Returns nullptr if m_depthStencilTarget has no texture
+		re::TextureTarget const& GetDepthStencilTarget() const;
+
 		void SetDepthStencilTarget(re::TextureTarget const&);
 		void SetDepthStencilTarget(std::shared_ptr<re::Texture> const&, re::TextureTarget::TargetParams const&);
 
@@ -281,6 +282,8 @@ namespace re
 		void ComputeDataHash() override; // IHashedDataObject interface
 
 		TargetData GetTargetParamsBufferData() const;
+
+		void ValidateConfiguration() const; // _DEBUG only
 
 	private:
 		std::vector<re::TextureTarget> m_colorTargets; // == SysInfo::GetMaxRenderTargets() elements

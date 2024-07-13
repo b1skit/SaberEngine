@@ -552,13 +552,11 @@ namespace dx12
 	}
 
 
-	void CommandList::ClearDepthTarget(re::TextureTarget const* depthTarget)
+	void CommandList::ClearDepthTarget(re::TextureTarget const& depthTarget)
 	{
-		SEAssert(depthTarget, "Target texture cannot be null");
-
-		if (depthTarget->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
+		if (depthTarget.GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
 		{
-			re::Texture const* depthTex = depthTarget->GetTexture().get();
+			re::Texture const* depthTex = depthTarget.GetTexture().get();
 
 			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
 
@@ -567,7 +565,7 @@ namespace dx12
 
 			SEAssert(depthTex->GetNumMips() == 1, "Depth target has mips. This is (currently) unexpected");
 
-			re::TextureTarget::TargetParams const& depthTargetParams = depthTarget->GetTargetParams();
+			re::TextureTarget::TargetParams const& depthTargetParams = depthTarget.GetTargetParams();
 
 			SEAssert(depthTargetParams.m_textureView.DepthWritesEnabled(), "Texture view has depth writes disabled");
 
@@ -676,12 +674,13 @@ namespace dx12
 
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor{};
 
-		re::TextureTarget const* depthStencilTarget = targetSet.GetDepthStencilTarget();
-		if (depthStencilTarget)
+		re::TextureTarget const& depthStencilTarget = targetSet.GetDepthStencilTarget();
+		const bool hasDepthTargetTex = depthStencilTarget.HasTexture();
+		if (hasDepthTargetTex)
 		{
-			re::Texture const* depthTex = depthStencilTarget->GetTexture().get();
+			re::Texture const* depthTex = depthStencilTarget.GetTexture().get();
 
-			re::TextureTarget::TargetParams const& depthTargetParams = depthStencilTarget->GetTargetParams();
+			re::TextureTarget::TargetParams const& depthTargetParams = depthStencilTarget.GetTargetParams();
 
 			const D3D12_RESOURCE_STATES depthState = depthTargetParams.m_textureView.DepthWritesEnabled() ?
 				D3D12_RESOURCE_STATE_DEPTH_WRITE :
@@ -704,7 +703,7 @@ namespace dx12
 			numColorTargets,
 			colorTargetDescriptors.data(),
 			false,			// Our render target descriptors (currently) aren't guaranteed to be in a contiguous range
-			depthStencilTarget ? &dsvDescriptor : nullptr);
+			hasDepthTargetTex ? &dsvDescriptor : nullptr);
 
 		// Set the viewport and scissor rectangles:
 		SetViewport(targetSet);
@@ -714,7 +713,7 @@ namespace dx12
 
 	void CommandList::SetComputeTargets(re::TextureTargetSet const& textureTargetSet)
 	{
-		SEAssert(textureTargetSet.GetDepthStencilTarget() == nullptr,
+		SEAssert(!textureTargetSet.GetDepthStencilTarget().HasTexture(),
 			"It is not possible to attach a depth buffer as a target to a compute shader");
 
 		SEAssert(m_type == CommandListType::Compute, "This function should only be called from compute command lists");

@@ -165,7 +165,7 @@ namespace re
 		{
 			uint32_t m_width = 4; // Must be a minimum of 4x4 for block compressed formats
 			uint32_t m_height = 4;
-			uint32_t m_arraySize = 1; // # textures in an array texture, or depth slices in a 3D texture
+			uint32_t m_arraySize = 1; // No. textures in an array texture, or depth slices in a 3D texture
 
 			Usage m_usage = Usage::Invalid;
 			Dimension m_dimension = Dimension::Dimension_Invalid;

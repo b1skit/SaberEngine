@@ -462,7 +462,7 @@ namespace dx12
 			if (targetSet->HasDepthTarget())
 			{
 				pipelineStateStream.DSVFormat =
-					targetSet->GetDepthStencilTarget()->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
+					targetSet->GetDepthStencilTarget().GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
 			}			
 
 			// Rasterizer description:
@@ -471,7 +471,7 @@ namespace dx12
 
 			// Depth stencil description:
 			const D3D12_DEPTH_STENCIL_DESC depthStencilDesc = 
-				BuildDepthStencilDesc(targetSet->GetDepthStencilTarget(), rePipelineState);
+				BuildDepthStencilDesc(&targetSet->GetDepthStencilTarget(), rePipelineState);
 			pipelineStateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
 
 			// Blend description:

@@ -1,11 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include <GL/glew.h>
-
 #include "Texture_Platform.h"
 #include "Texture.h"
 
+#include "core/Util/HashUtils.h"
+
+#include <GL/glew.h>
+
+
+namespace re
+{
+	struct TextureView;
+}
 
 namespace opengl
 {
@@ -26,14 +32,23 @@ namespace opengl
 			GLenum m_type;
 
 			bool m_formatIsImageTextureCompatible;
+
+			mutable std::map<DataHash, GLuint> m_textureViews; // OpenGL-equivalent of a descriptor cache
 		};
 
 
 	public:
 		static void Create(re::Texture& texture);
 		static void Destroy(re::Texture& texture);
+		
 		static void Bind(re::Texture const&, uint32_t textureUnit);
-		static void BindAsImageTexture(re::Texture const&, uint32_t textureUnit, uint32_t subresourceIdx, uint32_t accessMode);
+		static void Bind(re::Texture const&, uint32_t textureUnit, re::TextureView const&);
+
+		static void BindAsImageTexture(
+			re::Texture const&, uint32_t textureUnit, re::TextureView const&, uint32_t accessMode);
+
 		static void GenerateMipMaps(re::Texture const&);
+
+		static GLuint GetOrCreateTextureView(re::Texture const&, re::TextureView const&);
 	};	
 }

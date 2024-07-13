@@ -116,7 +116,7 @@ namespace gr
 		}
 		// Depth texture:
 		RegisterTextureOutput(
-			GBufferTexNameHashKeys[GBufferDepth], &m_gBufferTargets->GetDepthStencilTarget()->GetTexture());
+			GBufferTexNameHashKeys[GBufferDepth], &m_gBufferTargets->GetDepthStencilTarget().GetTexture());
 	}
 
 

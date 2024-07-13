@@ -91,7 +91,7 @@ namespace dx12
 		SEAssert(targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>()->m_isCommitted,
 			"Target set has not been committed");
 
-		re::TextureTarget const* depthTarget = targetSet.GetDepthStencilTarget();
+		re::TextureTarget const* depthTarget = &targetSet.GetDepthStencilTarget();
 
 		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
 			depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();

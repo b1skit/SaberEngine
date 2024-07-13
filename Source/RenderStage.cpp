@@ -521,11 +521,11 @@ namespace re
 
 						if (m_textureTargetSet->HasDepthTarget())
 						{
-							re::TextureTarget const* depthTarget = m_textureTargetSet->GetDepthStencilTarget();
-							re::Texture const* depthTargetTex = depthTarget->GetTexture().get();
+							re::TextureTarget const& depthTarget = m_textureTargetSet->GetDepthStencilTarget();
+							re::Texture const* depthTargetTex = depthTarget.GetTexture().get();
 							
 							SEAssert(depthTargetTex != texInput.m_texture ||
-								!depthTarget->GetTargetParams().m_textureView.DepthWritesEnabled(),
+								!depthTarget.GetTargetParams().m_textureView.DepthWritesEnabled(),
 								std::format("The RenderStage \"{}\" is trying to use the depth target \"{} \" as both "
 									"an input, and a target. Depth targets with depth writes enabled cannot also be "
 									"bound as an input. "
@@ -545,7 +545,7 @@ namespace re
 			}
 
 			// Validate depth texture usage
-			re::TextureTarget const* depthTarget = m_textureTargetSet->GetDepthStencilTarget();
+			re::TextureTarget const* depthTarget = &m_textureTargetSet->GetDepthStencilTarget();
 			if (depthTarget && depthTarget->HasTexture())
 			{
 				re::Texture const* depthTex = depthTarget->GetTexture().get();

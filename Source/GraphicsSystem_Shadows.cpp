@@ -176,7 +176,7 @@ namespace gr
 				.m_shadowTargetSet = pointShadowTargetSet,
 				.m_shadowCamParamBlock = cubeShadowBuf });
 
-		m_shadowTextures.emplace(lightID, pointShadowTargetSet->GetDepthStencilTarget()->GetTexture().get());
+		m_shadowTextures.emplace(lightID, pointShadowTargetSet->GetDepthStencilTarget().GetTexture().get());
 
 		SEAssert(m_shadowTextures.size() ==
 			(m_directionalShadowStageData.size() +
@@ -258,7 +258,7 @@ namespace gr
 				.m_shadowTargetSet = shadowTargetSet,
 				.m_shadowCamParamBlock = shadowCamParams });
 
-		m_shadowTextures.emplace(lightID, shadowTargetSet->GetDepthStencilTarget()->GetTexture().get());
+		m_shadowTextures.emplace(lightID, shadowTargetSet->GetDepthStencilTarget().GetTexture().get());
 
 		SEAssert(m_shadowTextures.size() ==
 			(m_directionalShadowStageData.size() +
