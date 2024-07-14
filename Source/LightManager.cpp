@@ -324,7 +324,7 @@ namespace gr
 					default: SEAssertF("Invalid light type");
 					}
 
-					shadowArrayParams.m_arraySize = shadowMetadata.m_numShadows;
+					shadowArrayParams.m_arraySize = std::max(1u, shadowMetadata.m_numShadows);
 
 					shadowArrayParams.m_usage =
 						static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
