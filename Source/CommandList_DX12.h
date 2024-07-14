@@ -78,7 +78,7 @@ namespace dx12
 
 		void SetBuffer(re::Buffer const*);
 
-		void SetTexture(re::TextureAndSamplerInput const&); // Note: Sampler is not used here
+		void SetTexture(re::TextureAndSamplerInput const&, bool skipTransition); // Note: Sampler is not used here
 
 		void SetRenderTargets(re::TextureTargetSet const&);
 		void SetComputeTargets(re::TextureTargetSet const&);

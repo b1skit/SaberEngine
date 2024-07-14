@@ -954,7 +954,7 @@ namespace dx12
 	}
 
 
-	void CommandList::SetTexture(re::TextureAndSamplerInput const& texSamplerInput)
+	void CommandList::SetTexture(re::TextureAndSamplerInput const& texSamplerInput, bool skipTransition)
 	{
 		SEAssert(m_currentPSO, "Pipeline is not currently set");
 
@@ -1006,7 +1006,12 @@ namespace dx12
 				SEAssertF("Invalid range type");
 			}
 
-			TransitionResource(texture, toState, texSamplerInput.m_textureView);
+			// If a depth resource is used as both an input and target, we'll record the (read only) transition when
+			// setting the target
+			if (!skipTransition)
+			{
+				TransitionResource(texture, toState, texSamplerInput.m_textureView);
+			}
 
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 				rootSigEntry->m_index,

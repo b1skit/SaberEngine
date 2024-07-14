@@ -20,6 +20,8 @@ namespace re
 	class RenderStage : public virtual core::INamedObject
 	{
 	public:
+		static constexpr int k_noDepthTexAsInputFlag = -1;
+
 		enum class Lifetime
 		{
 			SingleFrame,
@@ -150,6 +152,9 @@ namespace re
 
 		std::vector<re::TextureAndSamplerInput> const& GetSingleFrameTextureInputs() const;
 
+		bool DepthTargetIsAlsoTextureInput() const;
+		int GetDepthTargetTextureInputIdx() const;
+
 		void AddPermanentBuffer(std::shared_ptr<re::Buffer const>);
 		inline std::vector<std::shared_ptr<re::Buffer const>> const& GetPermanentBuffers() const;
 		
@@ -175,6 +180,7 @@ namespace re
 
 
 	private:
+		void UpdateDepthTextureInputIndex();
 		void ValidateTexturesAndTargets();
 		
 
@@ -186,6 +192,7 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
 		std::vector<re::TextureAndSamplerInput> m_permanentTextureSamplerInputs;
 		std::vector<re::TextureAndSamplerInput> m_singleFrameTextureSamplerInputs;
+		int m_depthTextureInputIdx; // k_noDepthTexAsInputFlag: Depth not attached as an input		
 
 		std::vector<std::shared_ptr<re::Buffer const>> m_singleFrameBuffers; // Cleared every frame
 
@@ -342,6 +349,18 @@ namespace re
 	inline std::vector<re::TextureAndSamplerInput> const& RenderStage::GetSingleFrameTextureInputs() const
 	{
 		return m_singleFrameTextureSamplerInputs;
+	}
+
+
+	inline bool RenderStage::DepthTargetIsAlsoTextureInput() const
+	{
+		return m_depthTextureInputIdx != k_noDepthTexAsInputFlag;
+	}
+
+
+	inline int RenderStage::GetDepthTargetTextureInputIdx() const
+	{
+		return m_depthTextureInputIdx;
 	}
 
 

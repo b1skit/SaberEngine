@@ -185,6 +185,7 @@ namespace re
 		, m_stageParams(nullptr)
 		, m_drawStyleBits(0)
 		, m_textureTargetSet(nullptr)
+		, m_depthTextureInputIdx(k_noDepthTexAsInputFlag)
 		, m_requiredBatchFilterBitmasks(0)	// Accept all batches by default
 		, m_excludedBatchFilterBitmasks(0)
 	{
@@ -264,6 +265,8 @@ namespace re
 	void RenderStage::SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet)
 	{
 		m_textureTargetSet = targetSet;
+
+		m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Depth target may have changed
 	}
 
 
@@ -306,6 +309,13 @@ namespace re
 		{
 			m_permanentTextureSamplerInputs.emplace_back(TextureAndSamplerInput{shaderName, tex, sampler, texView});
 		}
+
+		if (m_textureTargetSet && 
+			m_textureTargetSet->HasDepthTarget() &&
+			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture().get())
+		{
+			m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Need to revalidate
+		}
 	}
 
 
@@ -346,6 +356,14 @@ namespace re
 		}
 #endif
 		m_singleFrameTextureSamplerInputs.emplace_back(shaderName, tex, sampler.get(), texView);
+
+
+		if (m_textureTargetSet &&
+			m_textureTargetSet->HasDepthTarget() &&
+			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture().get())
+		{
+			m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Need to revalidate
+		}
 	}
 
 
@@ -356,6 +374,37 @@ namespace re
 		re::TextureView const& texView)
 	{
 		AddSingleFrameTextureInput(shaderName, tex.get(), sampler, texView);
+	}
+
+
+	void RenderStage::UpdateDepthTextureInputIndex()
+	{
+		if (m_textureTargetSet == nullptr || m_depthTextureInputIdx != k_noDepthTexAsInputFlag)
+		{
+			return;
+		}
+
+		re::TextureTarget const& depthTarget = m_textureTargetSet->GetDepthStencilTarget();
+		if (depthTarget.HasTexture())
+		{
+			const bool depthTargetWritesEnabled = depthTarget.GetTargetParams().m_textureView.DepthWritesEnabled();
+
+			// Check each of our texture inputs against the depth texture:		
+			re::Texture const* depthTex = depthTarget.GetTexture().get();
+
+			for (uint32_t i = 0; i < m_permanentTextureSamplerInputs.size(); i++)
+			{
+				if (m_permanentTextureSamplerInputs[i].m_texture == depthTex)
+				{
+					m_depthTextureInputIdx = i;
+
+					SEAssert(!depthTargetWritesEnabled,
+						"Depth target has depth writes enabled. It cannot be bound as an input");
+
+					break;
+				}
+			}
+		}
 	}
 
 
@@ -570,6 +619,7 @@ namespace re
 
 	void RenderStage::PostUpdatePreRender()
 	{
+		UpdateDepthTextureInputIndex();
 		ValidateTexturesAndTargets(); // _DEBUG only
 	}
 

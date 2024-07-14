@@ -334,12 +334,18 @@ namespace dx12
 						// Set inputs and targets (once) now that the root signature is set
 						if (doSetStageInputsAndTargets)
 						{
-							auto SetStageTextureInputs = [&commandList]
+							const int depthTargetTexInputIdx = renderStage->GetDepthTargetTextureInputIdx();
+
+							auto SetStageTextureInputs = [&commandList, depthTargetTexInputIdx]
 								(std::vector<re::TextureAndSamplerInput> const& texInputs)
 								{
 									for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
 									{
-										commandList->SetTexture(texInputs[texIdx]);
+										// If the depth target is read-only, and we've also used it as an input to the stage, we
+										// skip the resource transition (it's handled when binding the depth target as read only)
+										const bool skipTransition = (texIdx == depthTargetTexInputIdx);
+
+										commandList->SetTexture(texInputs[texIdx], skipTransition);
 										// Note: Static samplers have already been set during root signature creation
 									}
 								};
@@ -425,9 +431,9 @@ namespace dx12
 							SEAssert(!stageTargets->HasDepthTarget() ||
 								texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget().GetTexture().get(),
 								"We don't currently handle batches with the current depth buffer attached as "
-								"a texture input. We need to make sure the transitions are handled correctly");
+								"a texture input. We need to make sure skipping transitions is handled correctly here");
 
-							currentCommandList->SetTexture(texSamplerInput);
+							currentCommandList->SetTexture(texSamplerInput, false);
 							// Note: Static samplers have already been set during root signature creation
 						}
 
