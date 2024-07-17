@@ -175,4 +175,4 @@ layout(std430, binding=12) uniform BloomComputeParams { BloomComputeData _BloomC
 layout(std430, binding=13) uniform SkyboxParams { SkyboxData _SkyboxParams; };
 layout(std430, binding=14) uniform TargetParams { TargetData _TargetParams; };
 
-#endif
+#endif // SABER_COMMON

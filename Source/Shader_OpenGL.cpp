@@ -260,7 +260,10 @@ namespace
 	}
 
 
-	bool InsertIncludeText(std::string const& shaderText, std::vector<std::string>& shaderTextStrings)
+	bool InsertIncludeText(
+		std::string const& shaderText,
+		std::vector<std::string>& shaderTextStrings,
+		std::unordered_set<std::string>& seenIncludes)
 	{
 		constexpr char const* k_includeKeyword = "#include";
 		constexpr char const* k_versionKeyword = "#version";
@@ -324,31 +327,37 @@ namespace
 							lastQuoteIndex < includeEndIndex)
 						{
 							firstQuoteIndex++; // Move ahead 1 element from the first quotation mark
+							
+							// Insert the first block
+							const size_t blockLength = includeStartIdx - blockStartIdx;
+							if (blockLength > 0) // 0 if we have several consecutive #defines
+							{
+								shaderTextStrings.emplace_back(shaderText.substr(blockStartIdx, blockLength));
+							}
 
+							// Extract the filename from the #include directive:
 							const size_t includeFileNameStrLength = lastQuoteIndex - firstQuoteIndex;
 							std::string const& includeFileName = 
 								shaderText.substr(firstQuoteIndex, includeFileNameStrLength);
 
-							std:: string const& includeFile = LoadShaderText(includeFileName);
-							if (includeFile != "")
+							// Parse the include, but only if we've not seen it before:
+							const bool newInclude = seenIncludes.emplace(includeFileName).second;
+							if (newInclude)
 							{
-								const size_t blockLength = includeStartIdx - blockStartIdx;
-								// Insert the first block
-								if (blockLength > 0) // 0 if we have several consecutive #defines
+								std::string const& includeFile = LoadShaderText(includeFileName);
+								if (includeFile != "")
 								{
-									shaderTextStrings.emplace_back(shaderText.substr(blockStartIdx, blockLength));
+									// Recursively parse the included file for nested #includes:
+									const bool result = InsertIncludeText(includeFile, shaderTextStrings, seenIncludes);
+									if (!result)
+									{
+										return false;
+									}
 								}
-								
-								// Recursively parse the included file for nested #includes:
-								const bool result = InsertIncludeText(includeFile, shaderTextStrings);
-								if (!result)
+								else
 								{
 									return false;
 								}
-							}
-							else
-							{
-								return false;
 							}
 						}
 					}
@@ -438,7 +447,8 @@ namespace opengl
 				processIncludesTaskFutures[i] = core::ThreadPool::Get()->EnqueueJob(
 					[&shaderFileNames, &shaderFiles, &shaderTextStrings, i]()
 					{
-						const bool result = InsertIncludeText(shaderFiles[i], shaderTextStrings[i]);
+						std::unordered_set<std::string> seenIncludes;
+						const bool result = InsertIncludeText(shaderFiles[i], shaderTextStrings[i], seenIncludes);
 						SEAssert(result, "Failed to parse shader #includes");
 					});
 			}
