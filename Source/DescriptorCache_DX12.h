@@ -29,10 +29,12 @@ namespace dx12
 
 	public:
 		DescriptorCache(DescriptorType);
-		~DescriptorCache() = default;
+		~DescriptorCache();
 
 		DescriptorCache(DescriptorCache&&) = default;
 		DescriptorCache& operator=(DescriptorCache&&) = default;
+
+		void Destroy();
 
 
 	public:

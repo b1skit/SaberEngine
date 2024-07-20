@@ -484,6 +484,33 @@ namespace dx12
 	}
 
 
+	DescriptorCache::~DescriptorCache()
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_descriptorCacheMutex);
+
+			SEAssert(m_descriptorCache.empty() && m_descriptorType == DescriptorType::DescriptorType_Count,
+				"~DescriptorCache() called before Destroy()");
+		}
+	}
+
+
+	void DescriptorCache::Destroy()
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_descriptorCacheMutex);
+
+			for (auto& cacheEntry : m_descriptorCache)
+			{
+				// Descriptor cache is destroyed via deferred texture deletion; It's safe to immediately free here
+				cacheEntry.second.Free(0); 
+			}
+			m_descriptorCache.clear();
+			m_descriptorType = DescriptorType::DescriptorType_Count;
+		}
+	}
+
+
 	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorCache::GetCreateDescriptor(
 		re::Texture const& texture, re::TextureView const& texView)
 	{

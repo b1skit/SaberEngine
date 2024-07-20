@@ -2,6 +2,8 @@
 #include "SwapChain.h"
 #include "SwapChain_Platform.h"
 
+#include "Core/Assert.h"
+
 
 namespace re
 {
@@ -9,6 +11,12 @@ namespace re
 		: m_platformParams(nullptr)
 	{
 		platform::SwapChain::CreatePlatformParams(*this);
+	}
+
+
+	SwapChain::~SwapChain()
+	{
+		SEAssert(m_platformParams == nullptr, "~SwapChain() called before Destroy()");
 	}
 
 

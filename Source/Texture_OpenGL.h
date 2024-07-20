@@ -24,6 +24,8 @@ namespace opengl
 
 			~PlatformParams() override;
 
+			void Destroy() override;
+
 			// OpenGL-specific parameters:
 			GLuint m_textureID;
 

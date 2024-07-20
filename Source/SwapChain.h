@@ -17,7 +17,7 @@ namespace re
 
 	public:
 		SwapChain();
-		~SwapChain() { Destroy(); };
+		~SwapChain();
 
 		void Create();
 		void Destroy();

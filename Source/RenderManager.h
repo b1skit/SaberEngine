@@ -153,6 +153,23 @@ namespace re
 		void EndOfFrame();
 
 
+	public:
+		void RegisterTextureForDeferredDelete(std::unique_ptr<re::Texture::PlatformParams>&&);
+
+	private:
+		static constexpr uint64_t k_forceDeferredDeletionsFlag = std::numeric_limits<uint64_t>::max();
+
+		void ProcessDeferredDeletions(uint64_t frameNum);
+		
+		struct TextureDeferredDelete
+		{
+			std::unique_ptr<re::Texture::PlatformParams> m_platformParams;
+			uint64_t m_frameNum; // When the delete was recorded: Delete will happen after GetNumFramesInFlight() frames
+		};
+		std::queue<TextureDeferredDelete> m_deletedTextures;
+		std::mutex m_deletedTexturesMutex;
+
+
 	protected:
 		platform::RenderingAPI m_renderingAPI;
 

@@ -74,9 +74,7 @@ namespace re
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			PlatformParams() = default;
-
-			virtual ~PlatformParams() = 0; // API-specific GPU bindings should be destroyed here
+			virtual void Destroy() = 0; // API-specific GPU bindings should be destroyed here
 
 			bool m_isCreated = false;
 			bool m_isDirty = true; // Signal the platform layer that the texture data has been modified
@@ -281,10 +279,6 @@ namespace re
 		Texture(Texture const&) = delete;
 		Texture& operator=(Texture const&) = delete;
 	};
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline re::Texture::PlatformParams::~PlatformParams() {};
 
 
 	inline uint32_t Texture::GetNumMips() const

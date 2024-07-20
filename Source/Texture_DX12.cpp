@@ -507,80 +507,80 @@ namespace
 namespace dx12
 {
 	DXGI_FORMAT Texture::GetTextureFormat(re::Texture::TextureParams const& texParams)
-	{	
+	{
 		switch (texParams.m_format)
 		{
-			case re::Texture::Format::RGBA32F: // 32 bits per channel x N channels
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT;
-			}
-			break;
-			case re::Texture::Format::RG32F:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT;
-			}
-			break;
-			case re::Texture::Format::R32F:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT;
-			}
-			break;
-			case re::Texture::Format::R32_UINT:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R32_UINT;
-			}
-			break;
-			case re::Texture::Format::RGBA16F: // 16 bits per channel x N channels
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R16G16B16A16_FLOAT;
-			}
-			break;
-			case re::Texture::Format::RG16F:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R16G16_FLOAT;
-			}
-			break;
-			case re::Texture::Format::R16F:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R16_FLOAT;
-			}
-			break;
-			case re::Texture::Format::R16_UNORM:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R16_UNORM;
-			}
-			break;
-			case re::Texture::Format::RGBA8_UNORM: // 8 bits per channel x N channels
-			{
-				return texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ?
-					DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM;
-			}
-			break;
-			case re::Texture::Format::RG8_UNORM:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R8G8_UNORM;
-			}
-			break;
-			case re::Texture::Format::R8_UNORM:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R8_UNORM;
-			}
-			break;
-			case re::Texture::Format::R8_UINT:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R8_UINT;
-			}
-			break;
-			case re::Texture::Format::Depth32F:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
-			}
-			break;
-			case re::Texture::Format::Invalid:
-			default:
-			{
-				SEAssertF("Invalid format");
-			}
+		case re::Texture::Format::RGBA32F: // 32 bits per channel x N channels
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT;
+		}
+		break;
+		case re::Texture::Format::RG32F:
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT;
+		}
+		break;
+		case re::Texture::Format::R32F:
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT;
+		}
+		break;
+		case re::Texture::Format::R32_UINT:
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R32_UINT;
+		}
+		break;
+		case re::Texture::Format::RGBA16F: // 16 bits per channel x N channels
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R16G16B16A16_FLOAT;
+		}
+		break;
+		case re::Texture::Format::RG16F:
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R16G16_FLOAT;
+		}
+		break;
+		case re::Texture::Format::R16F:
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R16_FLOAT;
+		}
+		break;
+		case re::Texture::Format::R16_UNORM:
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R16_UNORM;
+		}
+		break;
+		case re::Texture::Format::RGBA8_UNORM: // 8 bits per channel x N channels
+		{
+			return texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ?
+				DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM;
+		}
+		break;
+		case re::Texture::Format::RG8_UNORM:
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R8G8_UNORM;
+		}
+		break;
+		case re::Texture::Format::R8_UNORM:
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R8_UNORM;
+		}
+		break;
+		case re::Texture::Format::R8_UINT:
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_R8_UINT;
+		}
+		break;
+		case re::Texture::Format::Depth32F:
+		{
+			return DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
+		}
+		break;
+		case re::Texture::Format::Invalid:
+		default:
+		{
+			SEAssertF("Invalid format");
+		}
 		}
 		return DXGI_FORMAT_R32G32B32A32_FLOAT;
 	}
@@ -676,6 +676,29 @@ namespace dx12
 
 		m_format = GetTextureFormat(texParams);
 	}
+
+
+	Texture::PlatformParams::~PlatformParams()
+	{
+		SEAssert(m_textureResource == nullptr && m_format == DXGI_FORMAT_UNKNOWN,
+			"dx12::Texture::PlatformParams::~PlatformParams() called before Destroy()");
+	}
+
+
+	void Texture::PlatformParams::Destroy()
+	{
+		m_format = DXGI_FORMAT_UNKNOWN;
+		m_textureResource = nullptr;
+		
+		m_srvDescriptors.Destroy();
+		m_uavDescriptors.Destroy();
+
+		m_rtvDescriptors.Destroy();
+		m_dsvDescriptors.Destroy();
+	}
+
+
+	// -----------------------------------------------------------------------------------------------------------------
 
 
 	void Texture::Create(
@@ -894,8 +917,5 @@ namespace dx12
 			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(
 				texPlatParams->m_textureResource.Get());
 		}
-
-		// Null out the platform params, and let its destructor clean everything up
-		texture.SetPlatformParams(nullptr);
 	}
 }

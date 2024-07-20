@@ -19,6 +19,10 @@ namespace dx12
 		struct PlatformParams final : public re::Texture::PlatformParams
 		{
 			PlatformParams(re::Texture const&);
+			~PlatformParams();
+
+			void Destroy() override;
+
 
 			DXGI_FORMAT m_format;
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;

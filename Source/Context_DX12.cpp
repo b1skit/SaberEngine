@@ -158,8 +158,6 @@ namespace dx12
 		dx12Context.m_commandQueues[dx12::CommandListType::Direct].Flush();
 		dx12Context.m_commandQueues[dx12::CommandListType::Direct].Destroy();
 
-		dx12Context.GetSwapChain().Destroy();
-
 		// NOTE: We must destroy anything that holds a buffer before the BufferAllocator is destroyed, 
 		// as buffers call the BufferAllocator in their destructor
 		dx12Context.GetBufferAllocator()->Destroy();

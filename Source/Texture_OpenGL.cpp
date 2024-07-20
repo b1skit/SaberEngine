@@ -206,28 +206,31 @@ namespace opengl
 
 	Texture::PlatformParams::~PlatformParams()
 	{
-		glDeleteTextures(1, &m_textureID);
+		SEAssert(glIsTexture(m_textureID) == false && m_textureViews.empty(),
+			"opengl::Texture::PlatformParams::~PlatformParams() called before Destroy()");
+	}
+
+
+	void Texture::PlatformParams::Destroy()
+	{
+		if (glIsTexture(m_textureID))
+		{
+			glDeleteTextures(1, &m_textureID);
+		}
 
 		for (auto const& view : m_textureViews)
 		{
+			SEAssert(glIsTexture(view.second), "View has an invalid texture handle. This should not be possible");
+
 			glDeleteTextures(1, &view.second);
 		}
+		m_textureViews.clear();
 	}
 
 
 	void opengl::Texture::Destroy(re::Texture& texture)
 	{
-		PlatformParams* params = texture.GetPlatformParams()->As<opengl::Texture::PlatformParams*>();
-		if (!params)
-		{
-			return;
-		}
-
-		if (glIsTexture(params->m_textureID))
-		{
-			glDeleteTextures(1, &params->m_textureID);
-			params->m_textureID = 0;
-		}
+		//
 	}
 
 

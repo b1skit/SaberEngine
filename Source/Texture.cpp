@@ -180,6 +180,7 @@ namespace re
 				return fr::SceneManager::GetSceneData()->GetTexture(name);
 			}
 
+			LOG(std::format("Creating texture \"{}\"", name).c_str());
 
 			newTexture.reset(new re::Texture(name, params));
 
@@ -236,11 +237,11 @@ namespace re
 
 	Texture::~Texture()
 	{
-		m_initialData = nullptr;
+		LOG(std::format("Destroying texture \"{}\"", GetName()).c_str());
 
 		platform::Texture::Destroy(*this);
 
-		m_platformParams = nullptr;
+		re::RenderManager::Get()->RegisterTextureForDeferredDelete(std::move(m_platformParams));
 	}
 
 

@@ -306,7 +306,37 @@ namespace re
 		}
 		SEEndCPUEvent();
 
+		ProcessDeferredDeletions(GetCurrentRenderFrameNum());
+
 		SEEndCPUEvent();
+	}
+
+
+	void RenderManager::RegisterTextureForDeferredDelete(std::unique_ptr<re::Texture::PlatformParams>&& platParams)
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_deletedTexturesMutex);
+
+			m_deletedTextures.emplace(TextureDeferredDelete{
+				.m_platformParams = std::move(platParams),
+				.m_frameNum = GetCurrentRenderFrameNum() });
+		}
+	}
+
+
+	void RenderManager::ProcessDeferredDeletions(uint64_t frameNum)
+	{
+		const uint8_t numFramesInFlight = GetNumFramesInFlight();
+		{
+			std::lock_guard<std::mutex> lock(m_deletedTexturesMutex);
+
+			while (!m_deletedTextures.empty() &&
+				m_deletedTextures.front().m_frameNum + numFramesInFlight < frameNum)
+			{
+				m_deletedTextures.front().m_platformParams->Destroy();
+				m_deletedTextures.pop();
+			}
+		}
 	}
 
 
@@ -343,6 +373,12 @@ namespace re
 
 		// Clear single-frame resources:
 		m_singleFrameVertexStreams.Destroy();
+
+		// Destroy the swap chain before forcing deferred deletions. This is safe, as we've already flushed any
+		// remaining outstanding work
+		re::Context::Get()->GetSwapChain().Destroy();
+
+		ProcessDeferredDeletions(k_forceDeferredDeletionsFlag); // Force-delete everything
 
 		// Need to do this here so the EngineApp's Window can be destroyed
 		re::Context::Get()->Destroy();
