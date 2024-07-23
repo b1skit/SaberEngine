@@ -42,6 +42,8 @@ namespace re
 			// TODO: We should support alpha blend modes, in addition to the color blend modes here
 			// TODO: Support logical operations (AND/OR/XOR etc)
 
+			// TODO: Wrap these in a union for graphics/depth/compute targets
+
 			enum class BlendMode // Graphics stages only
 			{
 				Disabled,
@@ -88,14 +90,6 @@ namespace re
 				Enabled,
 				Disabled
 			} m_clearMode = ClearMode::Disabled;
-
-
-			// TODO: Support additional target/sub-resource parameters:
-			// - Array index (or first index, and offset from that)
-			// - Array size
-			// - Texture view mode: linear, sRGB
-
-			// - Read/write flags: depth, stencil, RGBA ?
 		};
 
 	public:
@@ -113,6 +107,8 @@ namespace re
 
 		std::shared_ptr<re::Texture>& GetTexture() { return m_texture; }
 		std::shared_ptr<re::Texture> const& GetTexture() const { return m_texture; }
+
+		void ReplaceTexture(std::shared_ptr<re::Texture>, re::TextureView const&);
 
 		void SetTargetParams(TargetParams const& targetParams);
 		TargetParams const& GetTargetParams() const { return m_targetParams; }
@@ -238,6 +234,10 @@ namespace re
 		void SetDepthStencilTarget(re::TextureTarget const&);
 		void SetDepthStencilTarget(std::shared_ptr<re::Texture> const&, re::TextureTarget::TargetParams const&);
 
+		// Replace a TargetTexture with a pipeline-compatible alternative
+		void ReplaceColorTargetTexture(uint8_t slot, std::shared_ptr<re::Texture>&, re::TextureView const& texView);
+		void ReplaceDepthStencilTargetTexture(std::shared_ptr<re::Texture>, re::TextureView const&);
+
 		bool HasTargets() const;
 		bool HasColorTarget() const;
 		bool HasDepthTarget() const;
@@ -284,6 +284,7 @@ namespace re
 		TargetData GetTargetParamsBufferData() const;
 
 		void ValidateConfiguration() const; // _DEBUG only
+
 
 	private:
 		std::vector<re::TextureTarget> m_colorTargets; // == SysInfo::GetMaxRenderTargets() elements

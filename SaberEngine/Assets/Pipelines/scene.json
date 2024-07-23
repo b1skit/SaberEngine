@@ -142,6 +142,14 @@
 						{
 							"SourceName": "ViewCullingResults",
 							"DestinationName": "ViewCullingResults"
+						},
+						{
+							"SourceName": "PointLightCullingResults",
+							"DestinationName": "PointLightCullingResults"
+						},
+						{
+							"SourceName": "SpotLightCullingResults",
+							"DestinationName": "SpotLightCullingResults"
 						}
 					]
 				},

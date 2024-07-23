@@ -122,6 +122,7 @@ namespace re
 		void ClearDrawStyle();
 
 		re::TextureTargetSet const* GetTextureTargetSet() const;
+		re::TextureTargetSet* GetTextureTargetSet();
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
 		void AddPermanentTextureInput(
@@ -335,6 +336,12 @@ namespace re
 
 
 	inline re::TextureTargetSet const* RenderStage::GetTextureTargetSet() const
+	{
+		return m_textureTargetSet.get();
+	}
+
+
+	inline re::TextureTargetSet* RenderStage::GetTextureTargetSet()
 	{
 		return m_textureTargetSet.get();
 	}

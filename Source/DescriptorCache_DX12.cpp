@@ -514,6 +514,8 @@ namespace dx12
 	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorCache::GetCreateDescriptor(
 		re::Texture const& texture, re::TextureView const& texView)
 	{
+		re::TextureView::ValidateView(&texture, texView); // _DEBUG only
+
 		SEAssert(texView.m_viewDimension != re::Texture::Dimension::Dimension_Invalid, "Invalid view dimension");
 
 		{

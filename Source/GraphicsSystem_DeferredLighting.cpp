@@ -240,10 +240,10 @@ namespace gr
 			};
 			iemTargets->SetColorTargetBlendModes(1, &iemBlendModes);
 
-			re::TextureTarget::TargetParams targetParams{
-				.m_textureView = re::TextureView::Texture2DArrayView(0, 1, face, 1)};
-
-			iemTargets->SetColorTarget(0, iemTexOut, targetParams);
+			iemTargets->SetColorTarget(
+				0,
+				iemTexOut, 
+				re::TextureTarget::TargetParams{.m_textureView = re::TextureView::Texture2DArrayView(0, 1, face, 1) });
 			iemTargets->SetViewport(re::Viewport(0, 0, iemTexWidthHeight, iemTexWidthHeight));
 			iemTargets->SetScissorRect(re::ScissorRect(0, 0, iemTexWidthHeight, iemTexWidthHeight));
 
@@ -309,13 +309,14 @@ namespace gr
 
 				pmremStage->AddPermanentBuffer(m_cubemapRenderCamParams[face]);
 
-				re::TextureTarget::TargetParams targetParams{ 
-					.m_textureView = re::TextureView::Texture2DArrayView(currentMipLevel, 1, face, 1)};
-
 				std::shared_ptr<re::TextureTargetSet> pmremTargetSet =
 					re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);
 
-				pmremTargetSet->SetColorTarget(0, pmremTexOut, targetParams);
+				pmremTargetSet->SetColorTarget(
+					0,
+					pmremTexOut, 
+					re::TextureTarget::TargetParams{
+						.m_textureView = re::TextureView::Texture2DArrayView(currentMipLevel, 1, face, 1) });
 
 				const glm::vec4 mipDimensions =
 					pmremTexOut->GetMipLevelDimensions(currentMipLevel);
@@ -501,13 +502,8 @@ namespace gr
 		pipeline.AppendRenderStage(m_ambientStage);
 		
 
-		// Common PCSS sampling params:
-		PoissonSampleParamsData const& poissonSampleParamsData = GetPoissonSampleParamsData();
-
-		std::shared_ptr<re::Buffer> poissonSampleParams = re::Buffer::Create(
-			PoissonSampleParamsData::s_shaderName,
-			poissonSampleParamsData,
-			re::Buffer::Type::Immutable);
+		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
+		std::shared_ptr<re::Buffer> poissonSampleParams = lightManager.GetPCSSPoissonSampleParamsBuffer();
 
 
 		// Directional light stage:
@@ -585,7 +581,7 @@ namespace gr
 		util::HashKey const& depthName = GBufferGraphicsSystem::GBufferTexNameHashKeys[depthBufferSlot];
 		std::shared_ptr<re::Texture> const& depthTex = *texDependencies.at(depthName);
 
-		re::TextureView gbufferDepthTexView = re::TextureView(depthTex);
+		const re::TextureView gbufferDepthTexView = re::TextureView(depthTex);
 
 		m_directionalStage->AddPermanentTextureInput(
 			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, gbufferDepthTexView);
@@ -768,14 +764,6 @@ namespace gr
 					gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformData();
 					gr::MeshPrimitive::RenderData const& meshData = directionalItr.Get<gr::MeshPrimitive::RenderData>();
 
-					gr::ShadowMap::RenderData const* shadowData = nullptr;
-					gr::Camera::RenderData const* shadowCamData = nullptr;
-					if (directionalData.m_hasShadow)
-					{
-						shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(directionalData.m_renderDataID);
-						shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(directionalData.m_renderDataID);
-					}
-
 					const gr::RenderDataID lightID = directionalItr.GetRenderDataID();
 
 					m_punctualLightData.emplace(
@@ -783,21 +771,15 @@ namespace gr
 						PunctualLightRenderData{
 							.m_type = gr::Light::Directional,
 							.m_transformParams = nullptr,
-							.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)
+							.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr),
+							.m_hasShadow = directionalData.m_hasShadow
 						});
 
 					re::Batch& directionalLightBatch = m_punctualLightData.at(directionalData.m_renderDataID).m_batch;
 
 					directionalLightBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
-
-					if (directionalData.m_hasShadow) // Add the shadow map texture to the batch
-					{
-						directionalLightBatch.AddTextureInput(
-							"Shadows2D",
-							lightManager.GetShadowArrayTexture(gr::Light::Directional).get(),
-							re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint").get(),
-							lightManager.GetShadowArrayReadView(gr::Light::Directional, lightID));
-					}
+					
+					// Note: We set the shadow texture inputs per frame/batch if/as required
 
 					++directionalItr;
 				}
@@ -810,20 +792,10 @@ namespace gr
 			gr::Light::Type lightType,
 			void const* lightRenderData,
 			bool hasShadow,
-			std::unordered_map<gr::RenderDataID, PunctualLightRenderData>& punctualLightData,
-			char const* depthInputTexName,
-			char const* samplerTypeName)
+			std::unordered_map<gr::RenderDataID, PunctualLightRenderData>& punctualLightData)
 			{
 				gr::MeshPrimitive::RenderData const& meshData = lightItr.Get<gr::MeshPrimitive::RenderData>();
 				gr::Transform::RenderData const& transformData = lightItr.GetTransformData();
-
-				gr::ShadowMap::RenderData const* shadowData = nullptr;
-				gr::Camera::RenderData const* shadowCamData = nullptr;
-				if (hasShadow)
-				{
-					shadowData = &lightItr.Get<gr::ShadowMap::RenderData>();
-					shadowCamData = &lightItr.Get<gr::Camera::RenderData>();
-				}
 
 				std::shared_ptr<re::Buffer> transformBuffer = gr::Transform::CreateInstancedTransformBuffer(
 					re::Buffer::Type::Mutable, transformData);
@@ -833,7 +805,8 @@ namespace gr
 					PunctualLightRenderData{
 						.m_type = lightType,
 						.m_transformParams = transformBuffer,
-						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr)
+						.m_batch = re::Batch(re::Batch::Lifetime::Permanent, meshData, nullptr),
+						.m_hasShadow = hasShadow
 					});
 
 				const gr::RenderDataID lightID = lightItr.GetRenderDataID();
@@ -843,17 +816,8 @@ namespace gr
 				lightBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
 
 				lightBatch.SetBuffer(transformBuffer);
-
-				if (hasShadow) // Add the shadow map texture to the batch
-				{
-					re::Texture const* shadowArrayTex = lightManager.GetShadowArrayTexture(lightType).get();
-
-					lightBatch.AddTextureInput(
-						depthInputTexName,
-						shadowArrayTex,
-						re::Sampler::GetSampler(util::HashKey::Create(samplerTypeName)).get(),
-						lightManager.GetShadowArrayReadView(lightType, lightID));
-				}
+				
+				// Note: We set the shadow texture inputs per frame/batch if/as required
 			};
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataPoint>())
 		{
@@ -867,14 +831,7 @@ namespace gr
 					gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
 					const bool hasShadow = pointData.m_hasShadow;
 
-					RegisterNewDeferredMeshLight(
-						pointItr,
-						gr::Light::Point,
-						&pointData,
-						hasShadow,
-						m_punctualLightData,
-						"PointShadows",
-						"WrapCmpMinMagLinearMipPoint");
+					RegisterNewDeferredMeshLight(pointItr, gr::Light::Point, &pointData, hasShadow, m_punctualLightData);
 
 					++pointItr;
 				}
@@ -893,14 +850,7 @@ namespace gr
 					gr::Light::RenderDataSpot const& spotData = spotItr.Get<gr::Light::RenderDataSpot>();
 					const bool hasShadow = spotData.m_hasShadow;
 
-					RegisterNewDeferredMeshLight(
-						spotItr,
-						gr::Light::Spot,
-						&spotData,
-						hasShadow,
-						m_punctualLightData,
-						"Shadows2D",
-						"WrapCmpMinMagLinearMipPoint");
+					RegisterNewDeferredMeshLight(spotItr, gr::Light::Spot, &spotData, hasShadow, m_punctualLightData);
 
 					++spotItr;
 				}
@@ -1008,8 +958,6 @@ namespace gr
 					renderData.GetTransformDataFromRenderDataID(lightID);
 
 				void const* lightRenderData = nullptr;
-				gr::ShadowMap::RenderData const* shadowData = nullptr;
-				gr::Camera::RenderData const* shadowCamData = nullptr;
 				bool hasShadow = false;
 
 				switch (light.second.m_type)
@@ -1057,30 +1005,44 @@ namespace gr
 				(light.second.m_type == gr::Light::Type::Directional || 
 					visibleLightIDs.contains(lightID)))
 			{
-				auto AddBatchAndLightIndexDataBuffer = [&light, &lightID, &lightMgr](re::RenderStage* stage)
+				auto AddDuplicatedBatch = [&light, &lightID, &lightMgr](
+					re::RenderStage* stage,
+					char const* depthInputTexName,
+					util::HashKey const& samplerTypeName)
 					{
 						re::Batch* duplicatedBatch =
 							stage->AddBatchWithLifetime(light.second.m_batch, re::Batch::Lifetime::SingleFrame);
 
 						duplicatedBatch->SetBuffer(
 							lightMgr.GetLightIndexDataBuffer(light.second.m_type, lightID, LightIndexData::s_shaderName));
+
+						if (light.second.m_hasShadow)
+						{					
+							duplicatedBatch->AddTextureInput(
+								depthInputTexName,
+								lightMgr.GetShadowArrayTexture(light.second.m_type).get(),
+								re::Sampler::GetSampler(samplerTypeName).get(),
+								lightMgr.GetShadowArrayReadView(light.second.m_type));
+						}
 					};
 
+				constexpr util::HashKey sampler2DShadowName("BorderCmpMinMagLinearMipPoint");
+				constexpr util::HashKey samplerCubeShadowName("WrapCmpMinMagLinearMipPoint");
 				switch (light.second.m_type)
 				{
 				case gr::Light::Type::Directional:
-				{					
-					AddBatchAndLightIndexDataBuffer(m_directionalStage.get());
+				{
+					AddDuplicatedBatch(m_directionalStage.get(), "DirectionalShadows", sampler2DShadowName);
 				}
 				break;
 				case gr::Light::Type::Point:
 				{
-					AddBatchAndLightIndexDataBuffer(m_pointStage.get());
+					AddDuplicatedBatch(m_pointStage.get(), "PointShadows", samplerCubeShadowName);
 				}
 				break;
 				case gr::Light::Type::Spot:
 				{
-					AddBatchAndLightIndexDataBuffer(m_spotStage.get());
+					AddDuplicatedBatch(m_spotStage.get(), "SpotShadows", sampler2DShadowName);
 				}
 				break;
 				case gr::Light::Type::AmbientIBL:

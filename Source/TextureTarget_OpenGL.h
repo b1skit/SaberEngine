@@ -12,15 +12,10 @@ namespace opengl
 	{
 	public:
 		struct PlatformParams final : public re::TextureTarget::PlatformParams
-		{
-			PlatformParams();
-			~PlatformParams();
-			
-			GLuint m_attachmentPoint;	// E.g. GL_COLOR_ATTACHMENT0 + i, GL_DEPTH_ATTACHMENT, etc
-			GLuint m_drawBuffer;		// Which of the 4 color buffers should be drawn into for the DEFAULT framebuffer
-			GLuint m_readBuffer;		// Which color buffer to use for subsequent reads
-
-			GLuint m_renderBufferObject;	// Handle for non-sampleable targets (eg. depth/stencil)
+		{		
+			GLuint m_attachmentPoint = GL_NONE;	// E.g. GL_COLOR_ATTACHMENT0 + i, GL_DEPTH_ATTACHMENT, etc
+			GLuint m_drawBuffer = GL_NONE;		// Which of the 4 color buffers should be drawn into for the DEFAULT framebuffer
+			GLuint m_readBuffer = GL_NONE;		// Which color buffer to use for subsequent reads
 		};
 	};
 

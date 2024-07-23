@@ -3,6 +3,7 @@
 #define SABER_LIGHTING
 
 #include "MathConstants.hlsli"
+
 #include "../Common/LightParams.h"
 
 
@@ -10,6 +11,8 @@
 StructuredBuffer<LightData> DirectionalLightParams;
 StructuredBuffer<LightData> PointLightParams;
 StructuredBuffer<LightData> SpotLightParams;
+
+ConstantBuffer<AllLightIndexesData> AllLightIndexesParams; // Forward/transparency: Index mappings for all lights
 
 ConstantBuffer<LightIndexData> LightIndexParams; // Light volumes: Single-frame buffer containing the index of a single light
 
@@ -26,6 +29,25 @@ float ComputeNonSingularAttenuationFactor(float3 worldPos, float3 lightPos, floa
 	const float attenuation = 2.f / (d2 + r2 + (lightDistance * sqrt(d2 + r2)));
 	
 	return attenuation;
+}
+
+
+// As per equation 64, section 5.2.2.2 of "Physically Based Rendering in Filament"
+// https://google.github.io/filament/Filament.md.html#lighting/directlighting/punctuallights
+float GetSpotlightAngleAttenuation(
+	float3 toLight,
+	float3 lightWorldForwardDir,
+	float innerConeAngle,
+	float outerConeAngle,
+	float cosOuterAngle,
+	float scaleTerm,
+	float offsetTerm)
+{
+	const float cd = dot(-toLight, lightWorldForwardDir);
+	
+	float attenuation = saturate(cd * scaleTerm + offsetTerm);
+	
+	return attenuation * attenuation; // Smooths the resulting transition
 }
 
 

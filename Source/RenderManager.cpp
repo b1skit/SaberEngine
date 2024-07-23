@@ -187,12 +187,13 @@ namespace re
 		m_effectDB.LoadEffectManifest();
 
 		m_renderData.BeginFrame(m_renderFrameNum);
+		m_lightManager.Initialize();
 
 		SEBeginCPUEvent("platform::RenderManager::Initialize");
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
 
-		// Process any pending render commands to ensure we've processed any queued render system creations
+		// Process any pending render commands to ensure we've processed anything queued during creation
 		m_renderCommandManager.SwapBuffers();
 		m_renderCommandManager.Execute();
 

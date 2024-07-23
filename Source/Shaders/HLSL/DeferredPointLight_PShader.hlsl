@@ -12,11 +12,12 @@ float4 PShader(VertexOut In) : SV_Target
 	const float2 screenUV = PixelCoordsToScreenUV(In.Position.xy, TargetParams.g_targetDims.xy, float2(0.f, 0.f));
 
 	const uint lightParamsIdx = LightIndexParams.g_lightIndex.x;
+	const uint shadowIdx = LightIndexParams.g_lightIndex.y;
 	const LightData lightData = PointLightParams[lightParamsIdx];
 	
 	const float3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
-	const float3 lightWorldPos = lightData.g_lightWorldPosRadius.xyz;
 	
+	const float3 lightWorldPos = lightData.g_lightWorldPosRadius.xyz;	
 	const float3 lightWorldDir = normalize(lightWorldPos - worldPos);
 	
 	// Convert luminous power (phi) to luminous intensity (I):
@@ -42,9 +43,9 @@ float4 PShader(VertexOut In) : SV_Target
 			minMaxShadowBias,
 			shadowQualityMode,
 			lightUVRadiusSize,
-			cubeFaceDimension) : 1.f;
-	
-	const float NoL = saturate(dot(gbuffer.WorldNormal, lightWorldDir));
+			cubeFaceDimension,
+			PointShadows,
+			shadowIdx) : 1.f;
 	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -55,6 +56,7 @@ float4 PShader(VertexOut In) : SV_Target
 	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0.rgb;
 	
+	const float NoL = saturate(dot(gbuffer.WorldNormal, lightWorldDir));
 	lightingParams.NoL = NoL;
 	
 	lightingParams.LightWorldPos = lightWorldPos;
@@ -67,7 +69,6 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	lightingParams.CameraWorldPos = CameraParams.g_cameraWPos.xyz;
 	lightingParams.Exposure = CameraParams.g_exposureProperties.x;
-	
 	
 	lightingParams.DiffuseScale = lightData.g_intensityScale.x;
 	lightingParams.SpecularScale = lightData.g_intensityScale.y;

@@ -15,11 +15,13 @@ void main()
 	const vec2 screenUV = PixelCoordsToScreenUV(gl_FragCoord.xy, _TargetParams.g_targetDims.xy, vec2(0, 0), true);
 
 	const uint lightParamsIdx = _LightIndexParams.g_lightIndex.x;
+	const uint shadowIdx = _LightIndexParams.g_lightIndex.y;
+
 	const LightData lightData = _PointLightParams[lightParamsIdx];
 
 	const vec3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
+	
 	const vec3 lightWorldPos = lightData.g_lightWorldPosRadius.xyz;
-
 	const vec3 lightWorldDir = normalize(lightWorldPos - worldPos.xyz);
 
 	// Convert luminous power (phi) to luminous intensity (I):
@@ -45,9 +47,9 @@ void main()
 			minMaxShadowBias,
 			shadowQualityMode,
 			lightUVRadiusSize,
-			cubeFaceDimension) : 1.f;
-
-	const float NoL = clamp(dot(gbuffer.WorldNormal, lightWorldDir), 0.f, 1.f);
+			cubeFaceDimension,
+			PointShadows,
+			shadowIdx) : 1.f;
 
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -57,6 +59,10 @@ void main()
 	lightingParams.LinearMetalness = gbuffer.LinearMetalness;
 	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0;
+
+	const float NoL = clamp(dot(gbuffer.WorldNormal, lightWorldDir), 0.f, 1.f);
+	lightingParams.NoL = NoL;
+
 	lightingParams.LightWorldPos = lightWorldPos;
 	lightingParams.LightWorldDir = lightWorldDir;
 	lightingParams.LightColor = lightData.g_lightColorIntensity.rgb;

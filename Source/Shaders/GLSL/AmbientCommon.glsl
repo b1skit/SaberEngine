@@ -8,9 +8,9 @@
 #include "UVUtils.glsl"
 
 
-layout(binding=7) uniform sampler2D DFG;
-layout(binding=11) uniform samplerCube CubeMapIEM;
-layout(binding=12) uniform samplerCube CubeMapPMREM;
+layout(binding=29) uniform sampler2D DFG;
+layout(binding=30) uniform samplerCube CubeMapIEM;
+layout(binding=31) uniform samplerCube CubeMapPMREM;
 
 
 // Combine AO terms: fineAO = from GBuffer textures, coarseAO = SSAO

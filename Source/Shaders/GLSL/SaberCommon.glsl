@@ -120,7 +120,6 @@ layout(binding=2) uniform sampler2D MatNormal;
 layout(binding=3) uniform sampler2D MatOcclusion;
 layout(binding=4) uniform sampler2D MatEmissive;
 
-
 // Lighting stage GBuffer textures:
 layout(binding=0) uniform sampler2D GBufferAlbedo;
 layout(binding=1) uniform sampler2D GBufferWNormal;
@@ -130,12 +129,9 @@ layout(binding=4) uniform sampler2D GBufferMatProp0;
 layout(binding=5) uniform sampler2D GBufferDepth;
 
 // Deferred light shadow maps:
-layout(binding=10) uniform sampler2DArrayShadow Shadows2D;
-layout(binding=11) uniform samplerCubeArrayShadow PointShadows;
-
-// Cube map samplers:
-layout(binding=12) uniform samplerCube CubeMap0;
-layout(binding=13) uniform samplerCube CubeMap1;
+layout(binding=10) uniform sampler2DArrayShadow DirectionalShadows;
+layout(binding=11) uniform sampler2DArrayShadow SpotShadows;
+layout(binding=12) uniform samplerCubeArrayShadow PointShadows;
 
 // Generic texture samplers:
 layout(binding=0) uniform sampler2D Tex0;
@@ -169,10 +165,11 @@ layout(std430, binding=6) uniform LightIndexParams { LightIndexData _LightIndexP
 layout(std430, binding=7) uniform CameraParams { CameraData _CameraParams; };
 layout(std430, binding=8) uniform PoissonSampleParams { PoissonSampleParamsData _PoissonSampleParams; };
 layout(std430, binding=9) uniform AmbientLightParams { AmbientLightData _AmbientLightParams; };
-layout(std430, binding=10) uniform CubemapShadowRenderParams { CubemapShadowRenderData _CubemapShadowRenderParams; };
-layout(std430, binding=11) uniform IEMPMREMGenerationParams { IEMPMREMGenerationData _IEMPMREMGenerationParams; };
-layout(std430, binding=12) uniform BloomComputeParams { BloomComputeData _BloomComputeParams; };
-layout(std430, binding=13) uniform SkyboxParams { SkyboxData _SkyboxParams; };
-layout(std430, binding=14) uniform TargetParams { TargetData _TargetParams; };
+layout(std430, binding=10) uniform AllLightIndexesParams { AllLightIndexesData _AllLightIndexesParams; };
+layout(std430, binding=11) uniform CubemapShadowRenderParams { CubemapShadowRenderData _CubemapShadowRenderParams; };
+layout(std430, binding=12) uniform IEMPMREMGenerationParams { IEMPMREMGenerationData _IEMPMREMGenerationParams; };
+layout(std430, binding=13) uniform BloomComputeParams { BloomComputeData _BloomComputeParams; };
+layout(std430, binding=14) uniform SkyboxParams { SkyboxData _SkyboxParams; };
+layout(std430, binding=15) uniform TargetParams { TargetData _TargetParams; };
 
 #endif // SABER_COMMON

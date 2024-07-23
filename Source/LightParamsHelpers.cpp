@@ -39,7 +39,8 @@ namespace gr
 		gr::Transform::RenderData const& transformData,
 		gr::ShadowMap::RenderData const* shadowData,
 		gr::Camera::RenderData const* shadowCamData,
-		re::Texture const* shadowTex)
+		re::Texture const* shadowTex,
+		uint32_t shadowArrayIdx)
 	{
 		SEAssert(lightType != gr::Light::Type::AmbientIBL,
 			"Ambient lights do not use the LightData structure");
@@ -47,8 +48,7 @@ namespace gr
 		SEAssert((shadowData != nullptr) == (shadowCamData != nullptr),
 			"Shadow data and shadow camera data depend on each other");
 
-		LightData lightParams;
-		memset(&lightParams, 0, sizeof(LightData)); // Ensure unused elements are zeroed
+		LightData lightParams{};
 
 		// Direction the light is emitting from the light source. SE uses a RHCS, so this is the local -Z direction
 		lightParams.g_globalForwardDir = glm::vec4(transformData.m_globalForward * -1.f, 0.f);
@@ -59,7 +59,7 @@ namespace gr
 		bool diffuseEnabled = false;
 		bool specEnabled = false;
 		glm::vec4 intensityScale(0.f); // Packed below as we go
-		glm::vec4 extraParams(0.f);
+		glm::vec4 extraParams(0.f, 0.f, 0.f, shadowArrayIdx);
 		switch (lightType)
 		{
 		case gr::Light::Type::Directional:
@@ -206,6 +206,33 @@ namespace gr
 		{
 			.g_lightIndex = glm::uvec4(lightIndex, shadowIndex, 0, 0),
 		};
+	}
+
+
+	void PackAllLightIndexesDataValue(
+		AllLightIndexesData& allLightIndexesData, gr::Light::Type lightType, uint32_t lightIdx, uint32_t value)
+	{
+		const uint32_t arrayIdx = lightIdx / 4;
+		const uint32_t elementIdx = lightIdx % 4;
+
+		SEAssert(arrayIdx < AllLightIndexesData::k_maxLights && elementIdx <= 4, "OOB lightIdx");
+
+		switch (lightType)
+		{
+		case gr::Light::Point:
+		{
+			glm::uvec4& entryAsVec4 = static_cast<glm::uvec4&>(allLightIndexesData.g_pointIndexes[arrayIdx]);
+			entryAsVec4[elementIdx] = value;
+		}
+		break;
+		case gr::Light::Spot:
+		{
+			glm::uvec4& entryAsVec4 = static_cast<glm::uvec4&>(allLightIndexesData.g_spotIndexes[arrayIdx]);
+			entryAsVec4[elementIdx] = value;
+		}
+		break;
+		default: SEAssertF("Invalid light type");
+		}
 	}
 
 

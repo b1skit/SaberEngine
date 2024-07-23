@@ -5,6 +5,7 @@
 #include "LightRenderData.h"
 #include "RenderDataManager.h"
 #include "Texture.h"
+#include "TextureTarget.h"
 #include "TextureView.h"
 
 #include "Core/Assert.h"
@@ -24,7 +25,8 @@ namespace
 		gr::Transform::RenderData const& transformData,
 		gr::RenderDataID lightID,
 		gr::Light::Type lightType,
-		re::Texture const* shadowTex)
+		re::Texture const* shadowTex,
+		uint32_t shadowArrayIdx)
 	{
 		gr::ShadowMap::RenderData const* shadowData = nullptr;
 		gr::Camera::RenderData const* shadowCamData = nullptr;
@@ -40,7 +42,8 @@ namespace
 			transformData,
 			shadowData,
 			shadowCamData,
-			shadowTex);
+			shadowTex,
+			shadowArrayIdx);
 	}
 }
 
@@ -51,6 +54,17 @@ namespace gr
 		RemoveDeletedLights(renderData);
 		RegisterNewLights(renderData);
 		UpdateLightBufferData(renderData);
+	}
+
+
+	void LightManager::Initialize()
+	{
+		PoissonSampleParamsData const& poissonSampleParamsData = GetPoissonSampleParamsData();
+
+		m_poissonSampleParamsBuffer = re::Buffer::Create(
+			PoissonSampleParamsData::s_shaderName,
+			poissonSampleParamsData,
+			re::Buffer::Type::Immutable);
 	}
 
 
@@ -338,6 +352,11 @@ namespace gr
 					shadowArrayParams.m_clear.m_depthStencil.m_depth = 1.f;
 
 					shadowMetadata.m_shadowArray = re::Texture::Create(shadowTexName, shadowArrayParams);
+
+					// Cache our read view off to minimize recomputation
+					shadowMetadata.m_readView = re::TextureView(
+						shadowMetadata.m_shadowArray,
+						{ re::TextureView::ViewFlags::ReadOnlyDepth });
 				}
 			};
 		UpdateShadowTexture(gr::Light::Directional, m_directionalShadowMetadata, "Directional shadows");
@@ -345,7 +364,7 @@ namespace gr
 		UpdateShadowTexture(gr::Light::Spot, m_spotShadowMetadata, "Spot shadows");
 
 
-		auto UpdateLightBuffer = [&renderData]<typename T>(
+		auto UpdateLightBuffer = [&renderData, this]<typename T>(
 			gr::Light::Type lightType,
 			LightMetadata& lightMetadata,
 			ShadowMetadata const& shadowMetadata,
@@ -381,6 +400,8 @@ namespace gr
 
 						const uint32_t lightIdx = lightMetadata.m_renderDataIDToBufferIdx.at(lightID);
 
+						const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, lightID);
+
 						SEAssert(lightMetadata.m_bufferIdxToRenderDataID.contains(lightIdx),
 							"Light index has not been registered");
 
@@ -395,7 +416,8 @@ namespace gr
 							transformData, 
 							lightID, 
 							lightType,
-							shadowMetadata.m_shadowArray.get());
+							shadowMetadata.m_shadowArray.get(),
+							shadowArrayIdx);
 
 						++lightItr;
 					}
@@ -408,7 +430,6 @@ namespace gr
 					{
 						lightData.emplace_back(LightData{});
 					}
-
 
 					lightMetadata.m_lightData = re::Buffer::CreateArray<LightData>(
 						bufferName,
@@ -432,13 +453,16 @@ namespace gr
 						gr::Transform::RenderData const& transformData =
 							renderData.GetTransformDataFromRenderDataID(movedLightID);
 
+						const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, movedLightID);
+
 						LightData const& lightData = GetLightParamDataHelper(
 							renderData,
 							lightRenderData,
 							transformData,
 							movedLightID,
 							lightType,
-							shadowMetadata.m_shadowArray.get());
+							shadowMetadata.m_shadowArray.get(),
+							shadowArrayIdx);
 
 						lightMetadata.m_lightData->Commit(&lightData, movedLightIdx, 1);
 
@@ -473,13 +497,16 @@ namespace gr
 								gr::Transform::RenderData const& transformData =
 									renderData.GetTransformDataFromRenderDataID(lightID);
 
+								const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, lightID);
+
 								LightData const& lightData = GetLightParamDataHelper(
 									renderData,
 									lightRenderData,
 									transformData,
 									lightID,
 									lightType,
-									shadowMetadata.m_shadowArray.get());
+									shadowMetadata.m_shadowArray.get(),
+									shadowArrayIdx);
 
 								SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
 									"Light ID has not been registered");
@@ -504,19 +531,19 @@ namespace gr
 			gr::Light::Directional,
 			m_directionalLightMetadata,
 			m_directionalShadowMetadata,
-			LightData::k_directionalLightDataShaderName);
+			LightData::s_directionalLightDataShaderName);
 
 		UpdateLightBuffer.template operator()<gr::Light::RenderDataPoint>(
 			gr::Light::Point,
 			m_pointLightMetadata,
 			m_pointShadowMetadata,
-			LightData::k_pointLightDataShaderName);
+			LightData::s_pointLightDataShaderName);
 
 		UpdateLightBuffer.template operator()<gr::Light::RenderDataSpot>(
 			gr::Light::Spot,
 			m_spotLightMetadata,
 			m_spotShadowMetadata,
-			LightData::k_spotLightDataShaderName);
+			LightData::s_spotLightDataShaderName);
 	}
 
 
@@ -579,10 +606,12 @@ namespace gr
 
 	uint32_t LightManager::GetShadowArrayIndex(ShadowMetadata const& shadowMetadata, gr::RenderDataID lightID) const
 	{
-		SEAssert(shadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID),
-			"Light ID has not been registered for a shadow");
-
-		return shadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
+		uint32_t shadowArrayIdx = INVALID_SHADOW_IDX;
+		if (shadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
+		{
+			shadowArrayIdx = shadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
+		}
+		return shadowArrayIdx;
 	};
 
 
@@ -611,29 +640,23 @@ namespace gr
 	}
 
 
-	re::TextureView LightManager::GetShadowArrayReadView(gr::Light::Type lightType, gr::RenderDataID lightID) const
+	re::TextureView const& LightManager::GetShadowArrayReadView(gr::Light::Type lightType) const
 	{
 		switch (lightType)
 		{
 		case gr::Light::Directional:
 		{
-			return re::TextureView(re::TextureView::Texture2DArrayView(
-				0, 1, GetShadowArrayIndex(m_directionalShadowMetadata, lightID), 1),
-				{ re::TextureView::ViewFlags::ReadOnlyDepth });
+			return m_directionalShadowMetadata.m_readView;
 		}
 		break;
 		case gr::Light::Point:
 		{
-			return re::TextureView(re::TextureView::TextureCubeArrayView(
-				0, 1, GetShadowArrayIndex(m_pointShadowMetadata, lightID) * 6, 1), // Convert to 2DArray layer-face index
-				{ re::TextureView::ViewFlags::ReadOnlyDepth });
+			return m_pointShadowMetadata.m_readView;
 		}
 		break;
 		case gr::Light::Spot:
 		{
-			return re::TextureView(re::TextureView::Texture2DArrayView(
-				0, 1, GetShadowArrayIndex(m_spotShadowMetadata, lightID), 1),
-				{ re::TextureView::ViewFlags::ReadOnlyDepth });
+			return m_spotShadowMetadata.m_readView;
 		}
 		break;
 		case gr::Light::AmbientIBL:
@@ -643,32 +666,87 @@ namespace gr
 	}
 
 
-	re::TextureView LightManager::GetShadowArrayWriteView(gr::Light::Type lightType, gr::RenderDataID lightID) const
+	re::TextureView LightManager::GetShadowWriteView(gr::Light::Type lightType, gr::RenderDataID lightID) const
 	{
 		switch (lightType)
 		{
 		case gr::Light::Directional:
 		{
-			return re::TextureView::Texture2DArrayView(
-				0, 1, GetShadowArrayIndex(m_directionalShadowMetadata, lightID), 1);
+			return re::TextureView(re::TextureView::Texture2DArrayView{
+				0, 1, GetShadowArrayIndex(m_directionalShadowMetadata, lightID), 1});
 		}
 		break;
 		case gr::Light::Point:
 		{
-			return re::TextureView::Texture2DArrayView(
-				0, 1, GetShadowArrayIndex(m_pointShadowMetadata, lightID) * 6, 6);
+			return re::TextureView(re::TextureView::Texture2DArrayView{
+				0, 1, GetShadowArrayIndex(m_pointShadowMetadata, lightID) * 6, 6 });
 		}
 		break;
 		case gr::Light::Spot:
 		{
-			return re::TextureView::Texture2DArrayView(
-				0, 1, GetShadowArrayIndex(m_spotShadowMetadata, lightID), 1);
+			return re::TextureView(re::TextureView::Texture2DArrayView{
+				0, 1, GetShadowArrayIndex(m_spotShadowMetadata, lightID), 1});
 		}
 		break;
 		case gr::Light::AmbientIBL:
 		default: SEAssertF("Invalid light type");
 		}
-		return re::TextureView(); // This should never happen
+	}
+
+
+	re::Viewport LightManager::GetShadowArrayWriteViewport(gr::Light::Type lightType) const
+	{
+		re::Texture const* shadowArray = nullptr;
+		switch (lightType)
+		{
+		case gr::Light::Directional:
+		{
+			shadowArray = m_directionalShadowMetadata.m_shadowArray.get();
+		}
+		break;
+		case gr::Light::Point:
+		{
+			shadowArray = m_pointShadowMetadata.m_shadowArray.get();
+		}
+		break;
+		case gr::Light::Spot:
+		{
+			shadowArray = m_spotShadowMetadata.m_shadowArray.get();
+		}
+		break;
+		case gr::Light::AmbientIBL:
+		default: SEAssertF("Invalid light type");
+		}
+
+		return re::Viewport(0, 0, shadowArray->Width(), shadowArray->Height());
+	}
+
+
+	re::ScissorRect LightManager::GetShadowArrayWriteScissorRect(gr::Light::Type lightType) const
+	{
+		re::Texture const* shadowArray = nullptr;
+		switch (lightType)
+		{
+		case gr::Light::Directional:
+		{
+			shadowArray = m_directionalShadowMetadata.m_shadowArray.get();
+		}
+		break;
+		case gr::Light::Point:
+		{
+			shadowArray = m_pointShadowMetadata.m_shadowArray.get();
+		}
+		break;
+		case gr::Light::Spot:
+		{
+			shadowArray = m_spotShadowMetadata.m_shadowArray.get();
+		}
+		break;
+		case gr::Light::AmbientIBL:
+		default: SEAssertF("Invalid light type");
+		}
+
+		return re::ScissorRect(0, 0, static_cast<long>(shadowArray->Width()), static_cast<long>(shadowArray->Height()));
 	}
 
 

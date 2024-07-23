@@ -16,7 +16,12 @@ void GetBiasedShadowWorldPos(
 }
 
 
-float GetPCFShadowFactor(vec2 shadowmapUVs, float nonLinearDepth, vec4 shadowMapTexelSize)
+float GetPCFShadowFactor(
+	vec2 shadowmapUVs, 
+	float nonLinearDepth, 
+	vec4 shadowMapTexelSize, 
+	sampler2DArrayShadow shadowArray,
+	const uint shadowIdx)
 {
 	// Compute a block of samples around our fragment, starting at the top-left. Note: MUST be a power of two.
 	// TODO: Compute this on C++ side and allow for uploading of arbitrary samples (eg. odd, even)
@@ -27,14 +32,12 @@ float GetPCFShadowFactor(vec2 shadowmapUVs, float nonLinearDepth, vec4 shadowMap
 	shadowmapUVs.x -= offsetMultiplier * shadowMapTexelSize.z;
 	shadowmapUVs.y += offsetMultiplier * shadowMapTexelSize.w;
 
-	const uint shadowIdx = _LightIndexParams.g_lightIndex.y;
-
 	float depthSum = 0;
 	for (uint row = 0; row < gridSize; row++)
 	{
 		for (uint col = 0; col < gridSize; col++)
 		{
-			depthSum += texture(Shadows2D, vec4(shadowmapUVs, shadowIdx, nonLinearDepth)).r;
+			depthSum += texture(shadowArray, vec4(shadowmapUVs, shadowIdx, nonLinearDepth)).r;
 
 			shadowmapUVs.x += shadowMapTexelSize.z;
 		}
@@ -58,8 +61,15 @@ float Get2DShadowFactor(
 	vec2 minMaxShadowBias,
 	float shadowQualityMode,
 	vec2 lightUVRadiusSize,
-	vec4 shadowMapTexelSize)
+	vec4 shadowMapTexelSize,
+	sampler2DArrayShadow shadowArray,
+	const uint shadowIdx)
 {
+	if (shadowIdx == INVALID_SHADOW_IDX)
+	{
+		return 1.f;
+	}
+
 	vec3 biasedShadowWPos;
 	GetBiasedShadowWorldPos(worldPos, worldNormal, lightWorldDir, minMaxShadowBias, biasedShadowWPos);
 	
@@ -74,7 +84,7 @@ float Get2DShadowFactor(
 	const float nonLinearDepth = shadowProjPos.z;
 	
 	// We only support PCF shadows for OpenGL, as PCSS requires textures to be accessed with multiple sampler states
-	return GetPCFShadowFactor(shadowmapUVs, nonLinearDepth, shadowMapTexelSize);
+	return GetPCFShadowFactor(shadowmapUVs, nonLinearDepth, shadowMapTexelSize, shadowArray, shadowIdx);
 }
 
 
@@ -90,7 +100,9 @@ float GetCubePCFShadowFactor(
 	float nonLinearDepth, 
 	float eyeDepth, 
 	vec2 shadowCamNearFar, 
-	float cubeFaceDim)
+	float cubeFaceDim,
+	samplerCubeArrayShadow shadowArray,
+	const uint shadowIdx)
 {
 	// Compute a sample offset for PCF shadow samples:
 	const float sampleOffset = 2.f / cubeFaceDim;
@@ -108,25 +120,23 @@ float GetCubePCFShadowFactor(
 	limit.xy -= oxy * bias;
 	limit.yz -= oyz * bias;
 
-	const uint shadowIdx = _LightIndexParams.g_lightIndex.y;
-
 	// Get the center sample:
-	float light = texture(PointShadows, vec4(cubeSampleDir.xyz, shadowIdx), nonLinearDepth).r;
+	float light = texture(shadowArray, vec4(cubeSampleDir.xyz, shadowIdx), nonLinearDepth).r;
 	
 	// Get 4 extra samples at diagonal offsets:
 	cubeSampleDir.xy -= oxy;
 	cubeSampleDir.yz -= oyz;
 
-	light += texture(PointShadows, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
+	light += texture(shadowArray, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
 	cubeSampleDir.xy += oxy * 2.f;
 
-	light += texture(PointShadows, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
+	light += texture(shadowArray, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
 	cubeSampleDir.yz += oyz * 2.f;
 
-	light += texture(PointShadows, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
+	light += texture(shadowArray, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
 	cubeSampleDir.xy -= oxy * 2.f;
 
-	light += texture(PointShadows, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
+	light += texture(shadowArray, vec4(clamp(cubeSampleDir, -limit, limit), shadowIdx), nonLinearDepth).r;
 
 	return (light * 0.2);	// Return the average of our 5 samples
 }
@@ -141,8 +151,15 @@ float GetCubeShadowFactor(
 	vec2 minMaxShadowBias,
 	float shadowQualityMode,
 	vec2 lightUVRadiusSize,
-	float cubeFaceDim)
-{	
+	float cubeFaceDim,
+	samplerCubeArrayShadow shadowArray,
+	uint shadowIdx)
+{
+	if (shadowIdx == INVALID_SHADOW_IDX)
+	{
+		return 1.f;
+	}
+
 	vec3 biasedShadowWPos;
 	GetBiasedShadowWorldPos(worldPos, worldNormal, lightWorldDir, minMaxShadowBias, biasedShadowWPos);
 	
@@ -166,7 +183,9 @@ float GetCubeShadowFactor(
 			nonLinearDepth, 
 			eyeDepth, 
 			shadowCamNearFar, 
-			cubeFaceDim);
+			cubeFaceDim,
+			shadowArray,
+			shadowIdx);
 }
 
 #endif

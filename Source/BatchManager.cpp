@@ -359,43 +359,45 @@ namespace gr
 		// Update dirty instanced Material data:
 		if (renderData.HasObjectData<gr::Material::MaterialInstanceData>())
 		{
-			std::vector<gr::RenderDataID> const& dirtyMaterials =
+			std::vector<gr::RenderDataID> const* dirtyMaterials =
 				renderData.GetIDsWithDirtyData<gr::Material::MaterialInstanceData>();
-
-			auto dirtyMaterialItr = renderData.IDBegin(dirtyMaterials);
-			auto const& dirtyMaterialItrEnd = renderData.IDEnd(dirtyMaterials);
-			while (dirtyMaterialItr != dirtyMaterialItrEnd)
+			if (dirtyMaterials)
 			{
-				const gr::RenderDataID dirtyMaterialID = dirtyMaterialItr.GetRenderDataID();
-
-				if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, dirtyMaterialItr.GetFeatureBits()))
+				auto dirtyMaterialItr = renderData.IDBegin(*dirtyMaterials);
+				auto const& dirtyMaterialItrEnd = renderData.IDEnd(*dirtyMaterials);
+				while (dirtyMaterialItr != dirtyMaterialItrEnd)
 				{
-					MaterialInstanceMetadata& matInstMeta = 
-						m_materialInstanceMetadata[m_renderDataIDToBatchMetadata.at(dirtyMaterialID).m_matEffect];
+					const gr::RenderDataID dirtyMaterialID = dirtyMaterialItr.GetRenderDataID();
 
-					SEAssert(matInstMeta.m_instancedMaterialIndexes.contains(dirtyMaterialID),
-						"RenderDataID has not been registered for instancing indexes");
+					if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, dirtyMaterialItr.GetFeatureBits()))
+					{
+						MaterialInstanceMetadata& matInstMeta =
+							m_materialInstanceMetadata[m_renderDataIDToBatchMetadata.at(dirtyMaterialID).m_matEffect];
 
-					const uint32_t materialIdx = matInstMeta.m_instancedMaterialIndexes.at(dirtyMaterialID).m_index;
+						SEAssert(matInstMeta.m_instancedMaterialIndexes.contains(dirtyMaterialID),
+							"RenderDataID has not been registered for instancing indexes");
 
-					gr::Material::MaterialInstanceData const& materialData =
-						renderData.GetObjectData<gr::Material::MaterialInstanceData>(dirtyMaterialID);
+						const uint32_t materialIdx = matInstMeta.m_instancedMaterialIndexes.at(dirtyMaterialID).m_index;
 
-					gr::Material::CommitMaterialInstanceData(
-						matInstMeta.m_instancedMaterials.get(),
-						&materialData,
-						materialIdx);
+						gr::Material::MaterialInstanceData const& materialData =
+							renderData.GetObjectData<gr::Material::MaterialInstanceData>(dirtyMaterialID);
 
-					// Recreate the associated Batch in case something on the Material that modifies the Batch behavior
-					// has changed (e.g. filter bits: shadow casting enabled/disabled)
-					re::Batch& permanentBatch = 
-						m_permanentCachedBatches.at(m_renderDataIDToBatchMetadata.at(dirtyMaterialID).m_cacheIndex);
-					permanentBatch = re::Batch(
-						re::Batch::Lifetime::Permanent, 
-						renderData.GetObjectData<gr::MeshPrimitive::RenderData>(dirtyMaterialID),
-						&materialData);
+						gr::Material::CommitMaterialInstanceData(
+							matInstMeta.m_instancedMaterials.get(),
+							&materialData,
+							materialIdx);
+
+						// Recreate the associated Batch in case something on the Material that modifies the Batch
+						// behavior has changed (e.g. filter bits: shadow casting enabled/disabled)
+						re::Batch& permanentBatch =
+							m_permanentCachedBatches.at(m_renderDataIDToBatchMetadata.at(dirtyMaterialID).m_cacheIndex);
+						permanentBatch = re::Batch(
+							re::Batch::Lifetime::Permanent,
+							renderData.GetObjectData<gr::MeshPrimitive::RenderData>(dirtyMaterialID),
+							&materialData);
+					}
+					++dirtyMaterialItr;
 				}
-				++dirtyMaterialItr;
 			}
 		}
 	}

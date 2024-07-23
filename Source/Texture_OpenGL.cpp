@@ -409,7 +409,8 @@ namespace opengl
 
 
 		// RenderDoc object name:
-		glObjectLabel(GL_TEXTURE, params->m_textureID, -1, texture.GetName().c_str());
+		glObjectLabel(
+			GL_TEXTURE, params->m_textureID, -1, std::format("{} ({})", texture.GetName(), params->m_textureID).c_str());
 
 		const uint8_t numFaces = re::Texture::GetNumFaces(&texture);
 
@@ -565,17 +566,21 @@ namespace opengl
 
 	GLuint Texture::GetOrCreateTextureView(re::Texture const& tex, re::TextureView const& texView)
 	{
+		re::TextureView::ValidateView(&tex, texView); // _DEBUG only
+
 		re::Texture::TextureParams const& texParams = tex.GetTextureParams();
 		opengl::Texture::PlatformParams const* platParams =
 			tex.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
 		const DataHash viewDataHash = texView.GetDataHash();
 
+		std::string dimensionName;
+
 		if (!platParams->m_textureViews.contains(viewDataHash))
 		{
-			GLuint newTex = 0;
+			GLuint newTexID = 0;
 
-			glGenTextures(1, &newTex); // We need a completely texture name that is otherwise uninitialized
+			glGenTextures(1, &newTexID); // We need a completely texture name that is otherwise uninitialized
 
 			GLenum target = 0;
 
@@ -592,6 +597,8 @@ namespace opengl
 
 				firstMip = texView.Texture1D.m_firstMip;
 				mipLevels = texView.Texture1D.m_mipLevels;
+
+				dimensionName = "Texture1D";
 			}
 			break;
 			case re::Texture::Texture1DArray:
@@ -602,6 +609,8 @@ namespace opengl
 				mipLevels = texView.Texture1DArray.m_mipLevels;
 				firstArraySlice = texView.Texture1DArray.m_firstArraySlice;
 				arraySize = texView.Texture1DArray.m_arraySize;
+
+				dimensionName = "Texture1DArray";
 			}
 			break;
 			case re::Texture::Texture2D:
@@ -614,11 +623,15 @@ namespace opengl
 
 					firstMip = texView.Texture2D.m_firstMip;
 					mipLevels = texView.Texture2D.m_mipLevels;
+
+					dimensionName = "Texture2D";
 				}
 				break;
 				case re::Texture::MultisampleMode::Enabled:
 				{
 					SEAssertF("TODO: Handle mutlisampling");
+
+					dimensionName = "Texture2D_MS";
 				}
 				break;
 				default: SEAssertF("Invalid multisample mode");
@@ -637,11 +650,15 @@ namespace opengl
 					mipLevels = texView.Texture2DArray.m_mipLevels;
 					firstArraySlice = texView.Texture2DArray.m_firstArraySlice;
 					arraySize = texView.Texture2DArray.m_arraySize;
+
+					dimensionName = "Texture2DArray";
 				}
 				break;
 				case re::Texture::MultisampleMode::Enabled:
 				{
 					SEAssertF("TODO: Handle mutlisampling");
+
+					dimensionName = "Texture2DArray_MS";
 				}
 				break;
 				default: SEAssertF("Invalid multisample mode");
@@ -656,6 +673,8 @@ namespace opengl
 				mipLevels = texView.Texture3D.m_mipLevels;
 				firstArraySlice = texView.Texture3D.m_firstWSlice;
 				arraySize = texView.Texture3D.m_wSize;
+
+				dimensionName = "Texture3D";
 			}
 			break;
 			case re::Texture::TextureCube:
@@ -665,6 +684,8 @@ namespace opengl
 				firstMip = texView.TextureCube.m_firstMip;
 				mipLevels = texView.TextureCube.m_mipLevels;
 				arraySize = 6;
+
+				dimensionName = "TextureCube";
 			}
 			break;
 			case re::Texture::TextureCubeArray:
@@ -675,13 +696,15 @@ namespace opengl
 				mipLevels = texView.TextureCubeArray.m_mipLevels;
 				firstArraySlice = texView.TextureCubeArray.m_first2DArrayFace;
 				arraySize = texView.TextureCubeArray.m_numCubes * 6;
+
+				dimensionName = "TextureCubeArray";
 			}
 			break;
 			default: SEAssertF("Invalid dimension");
 			}
 
 			glTextureView(
-				newTex,							// texture (to be initialized as the view)
+				newTexID,						// texture (to be initialized as the view)
 				target,							// target
 				platParams->m_textureID,		// origTexture
 				platParams->m_internalFormat,	// internalFormat
@@ -690,9 +713,19 @@ namespace opengl
 				firstArraySlice,				// minLayer
 				arraySize);						// numLayers
 
-			platParams->m_textureViews.emplace(texView.GetDataHash(), newTex);
+			platParams->m_textureViews.emplace(texView.GetDataHash(), newTexID);
 			
-			return newTex;
+			// RenderDoc label:
+			std::string const& debugName = std::format("{} {} view: 1stMip {}, mipLvls {}, 1stArrIdx {}, arrSize {}",
+				platParams->m_textureID,
+				dimensionName,
+				firstMip,
+				mipLevels,
+				firstArraySlice,
+				arraySize);
+			glObjectLabel(GL_TEXTURE, newTexID, -1, debugName.c_str());
+
+			return newTexID;
 		}
 
 		return platParams->m_textureViews.at(viewDataHash);

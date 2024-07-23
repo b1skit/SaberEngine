@@ -3,12 +3,81 @@
 #include "GraphicsSystem_Transparency.h"
 #include "GraphicsSystemManager.h"
 #include "LightParamsHelpers.h"
+#include "RenderManager.h"
 #include "Sampler.h"
 
 #include "Core/Config.h"
 
 #include "Shaders/Common/LightParams.h"
 
+
+namespace
+{
+	std::shared_ptr<re::Buffer> CreateAllLightIndexesBuffer(
+		gr::RenderDataManager const& renderData,
+		gr::LightManager const& lightManager,
+		gr::GraphicsSystem::PunctualLightCullingResults const* pointCullingIDs,
+		gr::GraphicsSystem::PunctualLightCullingResults const* spotCullingIDs,
+		char const* bufferName)
+	{
+		const uint32_t numDirectional = renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>();
+		const uint32_t numPoint = pointCullingIDs ? util::CheckedCast<uint32_t>(pointCullingIDs->size()) : 0;
+		const uint32_t numSpot = spotCullingIDs ? util::CheckedCast<uint32_t>(spotCullingIDs->size()) : 0;
+
+		SEAssert(numDirectional < AllLightIndexesData::k_maxLights && 
+			numPoint < AllLightIndexesData::k_maxLights &&
+			numSpot < AllLightIndexesData::k_maxLights,
+			"Too many lights to pack into fixed size array");
+
+		// Note: We (currently) assume that all directional lights will contribute all the time
+
+		AllLightIndexesData allLightIndexesData{};
+
+		uint32_t contributingPoint = 0;
+		for (uint32_t lightIdx = 0; lightIdx < numPoint; ++lightIdx)
+		{
+			const gr::RenderDataID pointID = pointCullingIDs->at(lightIdx);
+
+			gr::Light::RenderDataPoint const& pointData =
+				renderData.GetObjectData<gr::Light::RenderDataPoint>(pointID);
+
+			if (pointData.m_canContribute)
+			{
+				PackAllLightIndexesDataValue(
+					allLightIndexesData,
+					gr::Light::Point,
+					contributingPoint++,
+					lightManager.GetLightDataBufferIdx(gr::Light::Point, pointID));
+			}
+		}
+
+		uint32_t contributingSpot = 0;
+		for (uint32_t lightIdx = 0; lightIdx < numSpot; ++lightIdx)
+		{
+			const gr::RenderDataID spotID = spotCullingIDs->at(lightIdx);
+
+			gr::Light::RenderDataSpot const& spotData =
+				renderData.GetObjectData<gr::Light::RenderDataSpot>(spotID);
+
+			if (spotData.m_canContribute)
+			{
+				PackAllLightIndexesDataValue(
+					allLightIndexesData,
+					gr::Light::Spot,
+					contributingSpot++,
+					lightManager.GetLightDataBufferIdx(gr::Light::Spot, spotID));
+			}
+		}
+
+		allLightIndexesData.g_numLights = glm::uvec4(
+			numDirectional,
+			contributingPoint,
+			contributingSpot,
+			0);
+
+		return re::Buffer::Create(bufferName, allLightIndexesData, re::Buffer::Type::SingleFrame);
+	}
+}
 
 namespace gr
 {
@@ -32,7 +101,9 @@ namespace gr
 
 		RegisterBufferInput(k_ambientParamsBufferInput);
 
-		RegisterDataInput(k_cullingDataInput);
+		RegisterDataInput(k_viewCullingDataInput);
+		RegisterDataInput(k_pointLightCullingDataInput);
+		RegisterDataInput(k_spotLightCullingDataInput);
 	}
 
 
@@ -47,6 +118,18 @@ namespace gr
 		TextureDependencies const& texDependencies,
 		BufferDependencies const& bufferDependencies)
 	{
+		SEAssert(texDependencies.contains(k_ambientIEMTexInput) &&
+			texDependencies.at(k_ambientIEMTexInput) != nullptr &&
+			texDependencies.contains(k_ambientPMREMTexInput) &&
+			texDependencies.at(k_ambientPMREMTexInput) != nullptr &&
+			texDependencies.contains(k_sceneLightingTexInput) &&
+			texDependencies.at(k_sceneLightingTexInput) != nullptr &&
+			texDependencies.contains(k_ambientDFGTexInput) &&
+			texDependencies.at(k_ambientDFGTexInput) != nullptr &&
+			bufferDependencies.contains(k_ambientParamsBufferInput) &&
+			bufferDependencies.at(k_ambientParamsBufferInput) != nullptr,
+			"Missing a required input: We should at least receive some defaults");
+
 		m_transparencyStage = re::RenderStage::CreateGraphicsStage("Transparency Stage", {});
 
 		m_transparencyStage->SetBatchFilterMaskBit(
@@ -57,21 +140,19 @@ namespace gr
 		// Targets:
 		std::shared_ptr<re::TextureTargetSet> transparencyTarget = re::TextureTargetSet::Create("Transparency Targets");
 
-		SEAssert(texDependencies.at(k_sceneLightingTexInput), "Mandatory scene lighting texture input not recieved");
 		transparencyTarget->SetColorTarget(0,
 			*texDependencies.at(k_sceneLightingTexInput),
 			re::TextureTarget::TargetParams{ .m_textureView = {re::TextureView::Texture2DView(0, 1) } });
 
-		re::TextureTarget::TargetParams depthTargetParams{ .m_textureView = {
-			re::TextureView::Texture2DView(0, 1),
-			{re::TextureView::ViewFlags::ReadOnlyDepth} }};
-
 		transparencyTarget->SetDepthStencilTarget(
 			*texDependencies.at(k_sceneDepthTexInput),
-			depthTargetParams);
+			re::TextureTarget::TargetParams{ .m_textureView = {
+				re::TextureView::Texture2DView(0, 1),
+				{re::TextureView::ViewFlags::ReadOnlyDepth} } });
 
 		transparencyTarget->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-			re::TextureTarget::TargetParams::BlendMode::SrcAlpha, re::TextureTarget::TargetParams::BlendMode::OneMinusSrcAlpha });
+			re::TextureTarget::TargetParams::BlendMode::SrcAlpha,
+			re::TextureTarget::TargetParams::BlendMode::OneMinusSrcAlpha });
 
 		m_transparencyStage->SetTextureTargetSet(transparencyTarget);
 
@@ -79,24 +160,17 @@ namespace gr
 		m_transparencyStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_transparencyStage->AddPermanentBuffer(transparencyTarget->GetCreateTargetParamsBuffer());
 
-		// Inputs:
-		SEAssert(texDependencies.contains(k_ambientIEMTexInput) &&
-			texDependencies.at(k_ambientIEMTexInput) != nullptr &&
-			texDependencies.contains(k_ambientPMREMTexInput) &&
-			texDependencies.at(k_ambientPMREMTexInput) != nullptr &&
-			bufferDependencies.contains(k_ambientParamsBufferInput) &&
-			bufferDependencies.at(k_ambientParamsBufferInput) != nullptr,
-			"Missing a required input: We should at least receive some defaults");
+		m_transparencyStage->AddPermanentBuffer(
+			re::RenderManager::Get()->GetLightManager().GetPCSSPoissonSampleParamsBuffer());
 
 		// Texture inputs:
-		SEAssert(texDependencies.at(k_ambientDFGTexInput), "Ambient DFG texture not received");
 		m_transparencyStage->AddPermanentTextureInput(
 			"DFG",
 			texDependencies.at(k_ambientDFGTexInput)->get(),
 			re::Sampler::GetSampler("ClampMinMagMipPoint").get(),
 			re::TextureView(texDependencies.at(k_ambientDFGTexInput)->get()));
 
-		// Cache the pointers in case the light changes change
+		// Cache the pointers
 		m_ambientIEMTex = texDependencies.at(k_ambientIEMTexInput);
 		m_ambientPMREMTex = texDependencies.at(k_ambientPMREMTexInput);
 		m_ambientParams = bufferDependencies.at(k_ambientParamsBufferInput);
@@ -140,17 +214,54 @@ namespace gr
 				re::Buffer::Type::SingleFrame));
 		}
 
+		// Punctual light buffers:
+		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
+
+		m_transparencyStage->AddSingleFrameBuffer(lightManager.GetLightDataBuffer(gr::Light::Directional));
+		m_transparencyStage->AddSingleFrameBuffer(lightManager.GetLightDataBuffer(gr::Light::Point));
+		m_transparencyStage->AddSingleFrameBuffer(lightManager.GetLightDataBuffer(gr::Light::Spot));
+		
+		m_transparencyStage->AddSingleFrameBuffer(CreateAllLightIndexesBuffer(
+			m_graphicsSystemManager->GetRenderData(),
+			lightManager,
+			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingDataInput)),
+			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingDataInput)),
+			"AllLightIndexesParams"));
+
+		// Shadow texture arrays:
+		std::shared_ptr<re::Texture> directionalShadowArray = lightManager.GetShadowArrayTexture(gr::Light::Directional);
+		m_transparencyStage->AddSingleFrameTextureInput(
+			"DirectionalShadows",
+			directionalShadowArray,
+			re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"),
+			re::TextureView(directionalShadowArray, {re::TextureView::ViewFlags::ReadOnlyDepth}));
+
+		std::shared_ptr<re::Texture> pointShadowArray = lightManager.GetShadowArrayTexture(gr::Light::Point);
+		m_transparencyStage->AddSingleFrameTextureInput(
+			"PointShadows",
+			pointShadowArray,
+			re::Sampler::GetSampler("WrapCmpMinMagLinearMipPoint"),
+			re::TextureView(pointShadowArray, { re::TextureView::ViewFlags::ReadOnlyDepth }));
+
+		std::shared_ptr<re::Texture> spotShadowArray = lightManager.GetShadowArrayTexture(gr::Light::Spot);
+		m_transparencyStage->AddSingleFrameTextureInput(
+			"SpotShadows",
+			spotShadowArray,
+			re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"),
+			re::TextureView(spotShadowArray, { re::TextureView::ViewFlags::ReadOnlyDepth }));
+
+
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 
-		ViewCullingResults const* cullingResults =
-			static_cast<ViewCullingResults const*>(dataDependencies.at(k_cullingDataInput));
+		ViewCullingResults const* viewCullingResults =
+			static_cast<ViewCullingResults const*>(dataDependencies.at(k_viewCullingDataInput));
 
-		if (cullingResults)
+		if (viewCullingResults)
 		{
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
 			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(
-				cullingResults->at(mainCamID),
+				viewCullingResults->at(mainCamID),
 				(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
 				re::Batch::Filter::AlphaBlended);
 

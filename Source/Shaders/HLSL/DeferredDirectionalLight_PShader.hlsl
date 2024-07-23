@@ -16,6 +16,8 @@ float4 PShader(VertexOut In) : SV_Target
 	const float3 worldPos = ScreenUVToWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
 	
 	const uint lightParamsIdx = LightIndexParams.g_lightIndex.x;
+	const uint shadowIdx = LightIndexParams.g_lightIndex.y;
+	
 	const LightData lightData = DirectionalLightParams[lightParamsIdx];
 	
 	const float2 shadowCamNearFar = lightData.g_shadowCamNearFarBiasMinMax.xy;
@@ -34,9 +36,9 @@ float4 PShader(VertexOut In) : SV_Target
 			minMaxShadowBias,
 			shadowQualityMode,
 			lightUVRadiusSize,
-			lightData.g_shadowMapTexelSize) : 1.f;
-	
-	const float NoL = saturate(dot(gbuffer.WorldNormal, lightData.g_lightWorldPosRadius.xyz));
+			lightData.g_shadowMapTexelSize,
+			DirectionalShadows,
+			shadowIdx) : 1.f;
 	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -44,9 +46,10 @@ float4 PShader(VertexOut In) : SV_Target
 	lightingParams.LinearRoughness = gbuffer.LinearRoughness;
 	lightingParams.RemappedRoughness = RemapRoughness(gbuffer.LinearRoughness);
 	lightingParams.LinearMetalness = gbuffer.LinearMetalness;
-	lightingParams.WorldPosition = float3(0.f, 0.f, 0.f); // Directional lights are at infinity
+	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0.rgb;
 	
+	const float NoL = saturate(dot(gbuffer.WorldNormal, lightData.g_lightWorldPosRadius.xyz));
 	lightingParams.NoL = NoL;
 	
 	lightingParams.LightWorldPos = worldPos; // Ensure attenuation = 0

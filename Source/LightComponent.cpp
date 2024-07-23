@@ -481,7 +481,28 @@ namespace fr
 	{
 		union LightSpawnParams
 		{
-			LightSpawnParams() { memset(this, 0, sizeof(LightSpawnParams)); }
+			LightSpawnParams(fr::Light::Type lightType)
+			{
+				switch (lightType)
+				{
+				case fr::Light::Type::AmbientIBL:
+				{
+					//
+				}
+				break;
+				case fr::Light::Type::Directional:
+				case fr::Light::Type::Point:
+				case fr::Light::Type::Spot:
+				{
+					m_punctualLightSpawnParams.m_attachShadow = true;
+					m_punctualLightSpawnParams.m_colorIntensity = glm::vec4(1.f, 1.f, 1.f, 100.f);
+				}
+				break;
+				default: SEAssertF("Invalid type");
+				}
+				
+			}
+			LightSpawnParams() = delete;
 			~LightSpawnParams() {}
 
 			struct AmbientLightSpawnParams
@@ -496,14 +517,14 @@ namespace fr
 			} m_punctualLightSpawnParams;
 		};
 
-		static std::unique_ptr<LightSpawnParams> s_spawnParams = std::make_unique<LightSpawnParams>();
-
-		auto InitializeSpawnParams = [](std::unique_ptr<LightSpawnParams>& spawnParams)
+		auto InitializeSpawnParams = [](fr::Light::Type lightType, std::unique_ptr<LightSpawnParams>& spawnParams)
 			{
-				spawnParams = std::make_unique<LightSpawnParams>();
+				spawnParams = std::make_unique<LightSpawnParams>(lightType);
 			};
 
 		static fr::Light::Type s_selectedLightType = static_cast<fr::Light::Type>(0);
+		static std::unique_ptr<LightSpawnParams> s_spawnParams = std::make_unique<LightSpawnParams>(s_selectedLightType);
+
 		const fr::Light::Type currentSelectedLightTypeIdx = s_selectedLightType;
 		util::ShowBasicComboBox(
 			"Light type", fr::Light::k_lightTypeNames.data(), fr::Light::k_lightTypeNames.size(), s_selectedLightType);
@@ -511,11 +532,11 @@ namespace fr
 		// If the selection has changed, re-initialize the spawn parameters:
 		if (s_spawnParams == nullptr || s_selectedLightType != currentSelectedLightTypeIdx)
 		{
-			InitializeSpawnParams(s_spawnParams);
+			InitializeSpawnParams(s_selectedLightType, s_spawnParams);
 		}
 
 		// Display type-specific spawn options
-		switch (static_cast<fr::Light::Type>(s_selectedLightType))
+		switch (s_selectedLightType)
 		{
 		case fr::Light::Type::AmbientIBL:
 		{
@@ -550,7 +571,7 @@ namespace fr
 			ImGui::ColorEdit3("Color",
 				&s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.r,
 				ImGuiColorEditFlags_NoInputs);
-			ImGui::SliderFloat("Luminous power", &s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.a, 0.f, 10.f);
+			ImGui::SliderFloat("Luminous power", &s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.a, 0.f, 1000.f);
 		}
 		break;
 		default: SEAssertF("Invalid type");

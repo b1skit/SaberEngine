@@ -16,6 +16,8 @@ void main()
 	const vec3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
 
 	const uint lightParamsIdx = _LightIndexParams.g_lightIndex.x;
+	const uint shadowIdx = _LightIndexParams.g_lightIndex.y;
+
 	const LightData lightData = _DirectionalLightParams[lightParamsIdx];
 
 	const vec2 shadowCamNearFar = lightData.g_shadowCamNearFarBiasMinMax.xy;
@@ -34,9 +36,9 @@ void main()
 			minMaxShadowBias,
 			shadowQualityMode,
 			lightUVRadiusSize,
-			lightData.g_shadowMapTexelSize) : 1.f;
-
-	const float NoL = max(0.0, dot(gbuffer.WorldNormal, lightData.g_lightWorldPosRadius.xyz));
+			lightData.g_shadowMapTexelSize,
+			DirectionalShadows,
+			shadowIdx) : 1.f;
 
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -47,6 +49,7 @@ void main()
 	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0;
 
+	const float NoL = max(0.0, dot(gbuffer.WorldNormal, lightData.g_lightWorldPosRadius.xyz));
 	lightingParams.NoL = NoL;
 
 	lightingParams.LightWorldPos = worldPos; // Ensure attenuation = 0

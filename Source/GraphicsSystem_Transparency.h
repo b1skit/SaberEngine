@@ -23,7 +23,9 @@ namespace gr
 
 		static constexpr util::HashKey k_sceneDepthTexInput = "SceneDepth";
 		static constexpr util::HashKey k_sceneLightingTexInput = "SceneLightingTarget";
-		static constexpr util::HashKey k_cullingDataInput = "ViewCullingResults";
+		static constexpr util::HashKey k_viewCullingDataInput = "ViewCullingResults";
+		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
+		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
 		static constexpr util::HashKey k_ambientIEMTexInput = "AmbientIEMTex";
 		static constexpr util::HashKey k_ambientPMREMTexInput = "AmbientPMREMTex";
 		static constexpr util::HashKey k_ambientDFGTexInput = "AmbientDFGTex";

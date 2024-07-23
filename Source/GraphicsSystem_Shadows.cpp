@@ -118,32 +118,25 @@ namespace gr
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
 
 		shadowStage->SetDrawStyle(effect::DrawStyle::Shadow_Cube);
+		
+		SEAssert(shadowData.m_lightType == gr::Light::Point, "Unexpected light type for a cube stage");
 
 		// Shadow map array target texture:
 		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
-		std::shared_ptr<re::Texture> cubeShadowArrayTex = lightManager.GetShadowArrayTexture(gr::Light::Point);
+		std::shared_ptr<re::Texture> cubeShadowArrayTex = lightManager.GetShadowArrayTexture(shadowData.m_lightType);
 
 		// Texture target set:
 		std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet =
 			re::TextureTargetSet::Create(std::format("{}_CubeShadowTargetSet", lightName));
 
-		re::TextureTarget::TargetParams depthTargetParams{ 
-			.m_textureView = lightManager.GetShadowArrayWriteView(shadowData.m_lightType, lightID) };
-		
-		pointShadowTargetSet->SetDepthStencilTarget(cubeShadowArrayTex, depthTargetParams);
-		pointShadowTargetSet->SetViewport(re::Viewport(0, 0, cubeShadowArrayTex->Width(), cubeShadowArrayTex->Height()));
-		pointShadowTargetSet->SetScissorRect(
-			{ 0, 0, static_cast<long>(cubeShadowArrayTex->Width()), static_cast<long>(cubeShadowArrayTex->Height()) });
+		pointShadowTargetSet->SetDepthStencilTarget(
+			cubeShadowArrayTex, 
+			re::TextureTarget::TargetParams{
+				.m_textureView = lightManager.GetShadowWriteView(shadowData.m_lightType, lightID) });
 
-		pointShadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-			re::TextureTarget::TargetParams::BlendMode::Disabled,
-			re::TextureTarget::TargetParams::BlendMode::Disabled });
+		pointShadowTargetSet->SetViewport(lightManager.GetShadowArrayWriteViewport(shadowData.m_lightType));
+		pointShadowTargetSet->SetScissorRect(lightManager.GetShadowArrayWriteScissorRect(shadowData.m_lightType));
 
-		pointShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
 
 		pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
 
@@ -183,7 +176,7 @@ namespace gr
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::RenderStage::FilterMode::Require, true);
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
 
-		// Spot shadow camera buffer:
+		// Shadow camera buffer:
 		std::shared_ptr<re::Buffer> shadowCamParams = re::Buffer::Create(
 			CameraData::s_shaderName,
 			shadowCamData.m_cameraParams,
@@ -201,23 +194,13 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet> shadowTargetSet =
 			re::TextureTargetSet::Create(std::format("{}_2DShadowTargetSet", lightName));
 
-		re::TextureTarget::TargetParams depthTargetParams{ 
-			.m_textureView = lightManager.GetShadowArrayWriteView(shadowData.m_lightType, lightID) };
+		shadowTargetSet->SetDepthStencilTarget(
+			shadowArrayTex, 
+			re::TextureTarget::TargetParams{
+				.m_textureView = lightManager.GetShadowWriteView(shadowData.m_lightType, lightID) });
 
-		shadowTargetSet->SetDepthStencilTarget(shadowArrayTex, depthTargetParams);
-		shadowTargetSet->SetViewport(re::Viewport(0, 0, shadowArrayTex->Width(), shadowArrayTex->Height()));
-		shadowTargetSet->SetScissorRect(
-			{ 0, 0, static_cast<long>(shadowArrayTex->Width()), static_cast<long>(shadowArrayTex->Height()) });
-
-		shadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-			re::TextureTarget::TargetParams::BlendMode::Disabled,
-			re::TextureTarget::TargetParams::BlendMode::Disabled });
-
-		shadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-			re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
+		shadowTargetSet->SetViewport(lightManager.GetShadowArrayWriteViewport(shadowData.m_lightType));
+		shadowTargetSet->SetScissorRect(lightManager.GetShadowArrayWriteScissorRect(shadowData.m_lightType));
 
 		shadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
 
@@ -421,23 +404,41 @@ namespace gr
 			}
 		}
 
-		// Append permanent render stages each frame, to allow dynamic light creation/destruction
+		// Update the stage depth target and append permanent render stages each frame to allow dynamic light
+		// creation/destruction, and in case the shadow texture buffer was reallocated
 		for (auto& directionalStageItr : m_directionalShadowStageData)
 		{
+			const gr::RenderDataID lightID = directionalStageItr.first;
+
+			directionalStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+				lightManager.GetShadowArrayTexture(gr::Light::Directional),
+				lightManager.GetShadowWriteView(gr::Light::Directional, lightID));
+
 			m_stagePipeline->AppendRenderStageForSingleFrame(
 				m_directionalParentStageItr, directionalStageItr.second.m_renderStage);
 		}
 		for (auto& pointStageItr : m_pointShadowStageData)
 		{
+			const gr::RenderDataID lightID = pointStageItr.first;
+
+			pointStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+				lightManager.GetShadowArrayTexture(gr::Light::Point),
+				lightManager.GetShadowWriteView(gr::Light::Point, lightID));
+
 			m_stagePipeline->AppendRenderStageForSingleFrame(
 				m_pointParentStageItr, pointStageItr.second.m_renderStage);
 		}
 		for (auto& spotStageItr : m_spotShadowStageData)
 		{
+			const gr::RenderDataID lightID = spotStageItr.first;
+
+			spotStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+				lightManager.GetShadowArrayTexture(gr::Light::Spot),
+				lightManager.GetShadowWriteView(gr::Light::Spot, lightID));
+
 			m_stagePipeline->AppendRenderStageForSingleFrame(
 				m_spotParentStageItr, spotStageItr.second.m_renderStage);
 		}
-
 
 		CreateBatches(dataDependencies);
 	}

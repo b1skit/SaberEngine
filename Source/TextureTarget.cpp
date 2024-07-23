@@ -12,6 +12,32 @@
 #include "Shaders/Common/TargetParams.h"
 
 
+namespace
+{
+	bool TextureCanBeSwapped(
+		re::Texture const* existing, 
+		re::TextureView const& existingView, 
+		re::Texture const* replacement,
+		re::TextureView const& replacementView)
+	{
+		re::Texture::TextureParams const& existingParams = existing->GetTextureParams();
+		re::Texture::TextureParams const& replacementParams = existing->GetTextureParams();
+
+		// The dimensions/no. of mips doesn't really matter, but would probably be a surprise if they changed
+		bool result = existing->GetTextureDimenions() == replacement->GetTextureDimenions();
+		result &= existing->GetNumMips() == replacement->GetNumMips();
+
+		// The view dimension doesn't technically need to be the same, but would probably be a suprise if it did
+		result &= existingView.m_viewDimension == replacementView.m_viewDimension;
+
+		// Ensure the data hash would be the same:
+		result &= existingParams.m_format == replacementParams.m_format;
+		result &= (memcmp(&existingView.Flags, &replacementView.Flags, sizeof(re::TextureView::ViewFlags)) == 0);
+
+		return result;
+	}
+}
+
 namespace re
 {
 	/**************/
@@ -51,6 +77,16 @@ namespace re
 		m_targetParams = rhs.m_targetParams;
 
 		return *this;
+	}
+
+
+	void TextureTarget::ReplaceTexture(std::shared_ptr<re::Texture> newTex, re::TextureView const& texView)
+	{
+		SEAssert(TextureCanBeSwapped(newTex.get(), texView, m_texture.get(), m_targetParams.m_textureView),
+			"Replacement texture is incompatible with the existing texture");
+
+		m_texture = newTex;
+		m_targetParams.m_textureView = texView;
 	}
 
 
@@ -244,9 +280,11 @@ namespace re
 		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been committed");
 		SEAssert(slot == 0 || m_colorTargets[slot - 1].HasTexture(), 
 			"Targets must be set in monotonically-increasing order");
-		SEAssert(texTarget.GetTargetParams().m_textureView.m_viewDimension != re::Texture::Dimension::Dimension_Invalid,
-			"Invalid view configuration");
 		
+		re::TextureView::ValidateView( // _DEBUG only
+			texTarget.GetTexture().get(),
+			texTarget.GetTargetParams().m_textureView);
+
 		m_colorTargets[slot] = texTarget;
 
 		RecomputeNumColorTargets();
@@ -268,8 +306,10 @@ namespace re
 	void TextureTargetSet::SetDepthStencilTarget(re::TextureTarget const& depthStencilTarget)
 	{
 		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been created");
-		SEAssert(depthStencilTarget.GetTargetParams().m_textureView.m_viewDimension != re::Texture::Dimension_Invalid,
-			"Invalid view configuration");
+
+		re::TextureView::ValidateView( // _DEBUG only
+			depthStencilTarget.GetTexture().get(), 
+			depthStencilTarget.GetTargetParams().m_textureView);
 
 		m_depthStencilTarget = re::TextureTarget(depthStencilTarget);
 	}
@@ -279,6 +319,28 @@ namespace re
 		std::shared_ptr<re::Texture> const& depthStencilTargetTex, re::TextureTarget::TargetParams const& targetParams)
 	{
 		SetDepthStencilTarget(re::TextureTarget(depthStencilTargetTex, targetParams));
+	}
+
+
+	void TextureTargetSet::ReplaceColorTargetTexture(
+		uint8_t slot, 
+		std::shared_ptr<re::Texture>& newTex, 
+		re::TextureView const& texView)
+	{
+		SEAssert(newTex, "Cannot replace a Target's texture with a null texture");
+		SEAssert(m_colorTargets[slot].HasTexture(), "Target does not have a texture to replace");
+
+		m_colorTargets[slot].ReplaceTexture(newTex, texView);
+	}
+
+
+	void TextureTargetSet::ReplaceDepthStencilTargetTexture(
+		std::shared_ptr<re::Texture> newTex, re::TextureView const& texView)
+	{
+		SEAssert(newTex, "Cannot replace a Target's texture with a null texture");
+		SEAssert(m_depthStencilTarget.HasTexture(), "Target does not have a texture to replace");
+
+		m_depthStencilTarget.ReplaceTexture(newTex, texView);
 	}
 
 
@@ -475,7 +537,7 @@ namespace re
 		//
 		// Ideally, this validation would be performed at a later point with knowledge of how the targets will actually
 		// be used. The below checks will fail in some perfectly valid cases (e.g. compute stages with targets of 
-		// different dimensions)
+		// different dimensions, or graphics stages with targets that have TextureViews of different sized subresources)
 
 #if defined(_DEBUG)
 		for (uint8_t targetIdx = 1; targetIdx < m_numColorTargets; targetIdx++)
@@ -516,8 +578,11 @@ namespace re
 
 	void TextureTargetSet::ComputeDataHash()
 	{
+		// Don't forget to update TextureCanBeSwapped() if this changes
+
 		ResetDataHash();
 		
+		// Note: We only hash the properties used for pipeline configuration
 		for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
 		{
 			if (m_colorTargets[slot].HasTexture())
@@ -525,14 +590,17 @@ namespace re
 				AddDataBytesToHash(m_colorTargets[slot].GetTexture()->GetTextureParams().m_format);
 				AddDataBytesToHash(m_colorTargets[slot].GetBlendMode());
 				AddDataBytesToHash(m_colorTargets[slot].GetColorWriteMode());
-				AddDataBytesToHash(m_colorTargets[slot].GetTargetParams().m_textureView.GetDataHash());
+				AddDataBytesToHash(m_colorTargets[slot].GetTargetParams().m_textureView.Flags);
 			}
 		}
 		if (HasDepthTarget())
 		{
 			AddDataBytesToHash(m_depthStencilTarget.GetTexture()->GetTextureParams().m_format);
-			AddDataBytesToHash(m_depthStencilTarget.GetTargetParams().m_textureView.GetDataHash());
-		}		
+			AddDataBytesToHash(m_depthStencilTarget.GetTargetParams().m_textureView.Flags);
+		}
+
+		SEStaticAssert(sizeof(re::TextureView) == 64u,
+			"Texture view size has changed, make sure anything used for pipeline configuration is hashed here");
 	}
 
 

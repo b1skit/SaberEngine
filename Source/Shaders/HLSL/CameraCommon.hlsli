@@ -4,6 +4,6 @@
 
 #include "../Common/CameraParams.h"
 
-ConstantBuffer<CameraData> CameraParams;
+ConstantBuffer<CameraData> CameraParams : register(space1);
 
 #endif

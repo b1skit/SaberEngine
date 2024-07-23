@@ -53,7 +53,7 @@ GBufferOut PShader(VertexOut In)
 	const float metallicFactor = 
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.x;
 	
-	// Unpack/scale metallic/roughness: .G = roughness, .B = metallness
+	// Unpack/scale metallic/roughness: .G = roughness, .B = metalness
 	const float2 roughnessMetalness = 
 		MatMetallicRoughness.Sample(WrapAnisotropic, In.UV0).gb * float2(roughnessFactor, metallicFactor);
 	

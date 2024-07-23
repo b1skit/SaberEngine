@@ -4,6 +4,8 @@
 
 #include "PlatformConversions.h"
 
+#define INVALID_SHADOW_IDX 0xFFFFFFFF
+
 
 struct AmbientLightData
 {
@@ -34,13 +36,14 @@ struct LightData
 	float4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
 	float4 g_shadowParams; // .x = has shadow (1.f), .y = quality mode, .zw = light size UV radius
 	float4 g_extraParams; // Type-specific extra values:
-		// - Point/directional: Unused
-		// - Spot: .xyz = pre-computed attenuation values: .x = cos(outerAngle), .y = scaleTerm, .z = offsetTerm
+		// - Point/directional: .xyz = unused, .w = shadow array index
+		// - Spot: .xyz = pre-computed attenuation values: 
+		//			.x = cos(outerAngle), .y = scaleTerm, .z = offsetTerm, .w = shadow array index
 
 #if defined(__cplusplus)
-	static constexpr char const* k_directionalLightDataShaderName = "DirectionalLightParams";
-	static constexpr char const* k_pointLightDataShaderName = "PointLightParams";
-	static constexpr char const* k_spotLightDataShaderName = "SpotLightParams";
+	static constexpr char const* s_directionalLightDataShaderName = "DirectionalLightParams";
+	static constexpr char const* s_pointLightDataShaderName = "PointLightParams";
+	static constexpr char const* s_spotLightDataShaderName = "SpotLightParams";
 #endif
 };
 
@@ -55,11 +58,33 @@ struct LightIndexData
 };
 
 
+struct AllLightIndexesData
+{
+	uint4 g_numLights; // .x = No. directional, .y = No. point lights, .z = No. spot lights, .w = unused
+
+	// Indexes into the monolithic per-light-type LightData buffer array
+#define MAX_LIGHT_COUNT 1024
+
+	// uint elemements packed into uint4's due to buffer alignment rules
+	uint4 g_pointIndexes[MAX_LIGHT_COUNT / 4];
+	uint4 g_spotIndexes[MAX_LIGHT_COUNT / 4];
+
+#if defined(__cplusplus)
+	static constexpr char const* s_shaderName = "AllLightIndexesParams";
+	static constexpr uint32_t k_maxLights = MAX_LIGHT_COUNT;
+#endif
+};
+
+
 struct PoissonSampleParamsData
 {
 	float4 g_poissonSamples64[32]; // 64x float2
 	float4 g_poissonSamples32[16]; // 32x float2
 	float4 g_poissonSamples25[13]; // 25x float2
+
+	// Note: We pack the values into float4's here, but access them as float2's on the shader side due to buffer 
+	// alignment rules
+	// https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-packing-rules#more-aggressive-packing
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "PoissonSampleParams";

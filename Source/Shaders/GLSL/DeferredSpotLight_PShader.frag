@@ -8,25 +8,6 @@
 #include "GBufferCommon.glsl"
 
 
-// As per equation 64, section 5.2.2.2 of "Physically Based Rendering in Filament"
-// https://google.github.io/filament/Filament.md.html#lighting/directlighting/punctuallights
-float GetSpotlightAngleAttenuation(
-	vec3 toLight, 
-	vec3 lightWorldForwardDir, 
-	float innerConeAngle, 
-	float outerConeAngle, 
-	float cosOuterAngle, 
-	float scaleTerm,
-	float offsetTerm)
-{
-	const float cd = dot(normalize(-toLight), lightWorldForwardDir);
-	
-	float attenuation = clamp(cd * scaleTerm + offsetTerm, 0.f, 1.f);
-	
-	return attenuation * attenuation; // Smooths the resulting transition
-}
-
-
 void main()
 {	
 	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
@@ -34,6 +15,8 @@ void main()
 	const vec2 screenUV = PixelCoordsToScreenUV(gl_FragCoord.xy, _TargetParams.g_targetDims.xy, vec2(0, 0), true);
 
 	const uint lightParamsIdx = _LightIndexParams.g_lightIndex.x;
+	const uint shadowIdx = _LightIndexParams.g_lightIndex.y;
+
 	const LightData lightData = _SpotLightParams[lightParamsIdx];
 
 	const vec3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
@@ -64,7 +47,7 @@ void main()
 	const float shadowQualityMode = lightData.g_shadowParams.y;
 
 	const bool shadowEnabled = lightData.g_shadowParams.x > 0.f;
-		const float shadowFactor = shadowEnabled ?
+	const float shadowFactor = shadowEnabled ?
 		Get2DShadowFactor(
 			worldPos,
 			gbuffer.WorldNormal,
@@ -74,9 +57,9 @@ void main()
 			minMaxShadowBias,
 			shadowQualityMode,
 			lightUVRadiusSize,
-			lightData.g_shadowMapTexelSize) : 1.f;
-
-	const float NoL = clamp(dot(gbuffer.WorldNormal, lightWorldDir), 0.f, 1.f);
+			lightData.g_shadowMapTexelSize,
+			SpotShadows,
+			shadowIdx) : 1.f;
 
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -86,6 +69,10 @@ void main()
 	lightingParams.LinearMetalness = gbuffer.LinearMetalness;
 	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0;
+
+	const float NoL = clamp(dot(gbuffer.WorldNormal, lightWorldDir), 0.f, 1.f);
+	lightingParams.NoL = NoL;
+
 	lightingParams.LightWorldPos = lightWorldPos;
 	lightingParams.LightWorldDir = lightWorldDir;
 	lightingParams.LightColor = lightData.g_lightColorIntensity.rgb;

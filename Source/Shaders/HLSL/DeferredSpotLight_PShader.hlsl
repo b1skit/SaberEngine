@@ -1,29 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
-
 #include "GBufferCommon.hlsli"
 #include "Lighting.hlsli"
 #include "SaberCommon.hlsli"
 #include "Shadows.hlsli"
-
-
-
-// As per equation 64, section 5.2.2.2 of "Physically Based Rendering in Filament"
-// https://google.github.io/filament/Filament.md.html#lighting/directlighting/punctuallights
-float GetSpotlightAngleAttenuation(
-	float3 toLight, 
-	float3 lightWorldForwardDir, 
-	float innerConeAngle, 
-	float outerConeAngle, 
-	float cosOuterAngle, 
-	float scaleTerm,
-	float offsetTerm)
-{
-	const float cd = dot(-toLight, lightWorldForwardDir);
-	
-	float attenuation = saturate(cd * scaleTerm + offsetTerm);
-	
-	return attenuation * attenuation; // Smooths the resulting transition
-}
 
 
 float4 PShader(VertexOut In) : SV_Target
@@ -33,6 +12,8 @@ float4 PShader(VertexOut In) : SV_Target
 	const float2 screenUV = PixelCoordsToScreenUV(In.Position.xy, TargetParams.g_targetDims.xy, float2(0.f, 0.f));
 
 	const uint lightParamsIdx = LightIndexParams.g_lightIndex.x;
+	const uint shadowIdx = LightIndexParams.g_lightIndex.y;
+	
 	const LightData lightData = SpotLightParams[lightParamsIdx];
 	
 	const float3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
@@ -73,9 +54,9 @@ float4 PShader(VertexOut In) : SV_Target
 			minMaxShadowBias,
 			shadowQualityMode,
 			lightUVRadiusSize,
-			lightData.g_shadowMapTexelSize) : 1.f;
-	
-	const float NoL = saturate(dot(gbuffer.WorldNormal, lightWorldDir));
+			lightData.g_shadowMapTexelSize,
+			SpotShadows,
+			shadowIdx) : 1.f;
 	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
@@ -86,6 +67,7 @@ float4 PShader(VertexOut In) : SV_Target
 	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0.rgb;
 	
+	const float NoL = saturate(dot(gbuffer.WorldNormal, lightWorldDir));	
 	lightingParams.NoL = NoL;
 	
 	lightingParams.LightWorldPos = lightWorldPos;
@@ -98,7 +80,6 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	lightingParams.CameraWorldPos = CameraParams.g_cameraWPos.xyz;
 	lightingParams.Exposure = CameraParams.g_exposureProperties.x;
-	
 	
 	lightingParams.DiffuseScale = lightData.g_intensityScale.x;
 	lightingParams.SpecularScale = lightData.g_intensityScale.y;

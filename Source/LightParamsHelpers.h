@@ -5,6 +5,7 @@
 #include "ShadowMapRenderData.h"
 #include "TransformRenderData.h"
 
+struct AllLightIndexesData;
 struct AmbientLightData;
 struct LightData;
 struct LightIndexData;
@@ -32,11 +33,13 @@ namespace gr
 		gr::Transform::RenderData const& transformData,
 		gr::ShadowMap::RenderData const* shadowData,
 		gr::Camera::RenderData const* shadowCamData,
-		re::Texture const* shadowTex);
+		re::Texture const* shadowTex,
+		uint32_t shadowArrayIdx);
 
 
 	LightIndexData GetLightIndexData(uint32_t lightIndex, uint32_t shadowIndex);
 
+	void PackAllLightIndexesDataValue(AllLightIndexesData&, gr::Light::Type, uint32_t lightIdx, uint32_t value);
 
 	PoissonSampleParamsData GetPoissonSampleParamsData();
 }

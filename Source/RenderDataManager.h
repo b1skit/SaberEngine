@@ -53,9 +53,9 @@ namespace gr
 		template<typename T>
 		std::vector<gr::RenderDataID> const* GetIDsWithDeletedData() const;
 
-		// Get a list of IDs that had data of a specific type modified this frame
+		// Get a list of IDs that had data of a specific type modified (i.e. SetObjectData() was called) this frame
 		template<typename T>
-		std::vector<gr::RenderDataID> const& GetIDsWithDirtyData() const;
+		std::vector<gr::RenderDataID> const* GetIDsWithDirtyData() const;
 
 		template<typename T>
 		[[nodiscard]] bool IsDirty(gr::RenderDataID) const;
@@ -547,14 +547,17 @@ namespace gr
 
 
 	template<typename T>
-	std::vector<gr::RenderDataID> const& RenderDataManager::GetIDsWithDirtyData() const
+	std::vector<gr::RenderDataID> const* RenderDataManager::GetIDsWithDirtyData() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
-		SEAssert(dataTypeIndex < m_perFramePerTypeDeletedDataIDs.size(), "Data type index is OOB");
-
-		return m_perFramePerTypeDirtyDataIDs[dataTypeIndex];
+		if (dataTypeIndex != k_invalidDataTypeIdx)
+		{
+			SEAssert(dataTypeIndex < m_perFramePerTypeDirtyDataIDs.size(), "Data type index is OOB");
+			return &m_perFramePerTypeDirtyDataIDs[dataTypeIndex];
+		}
+		return nullptr;
 	}
 
 

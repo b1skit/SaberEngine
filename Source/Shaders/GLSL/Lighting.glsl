@@ -21,6 +21,25 @@ float ComputeNonSingularAttenuationFactor(vec3 worldPos, vec3 lightPos, float em
 }
 
 
+// As per equation 64, section 5.2.2.2 of "Physically Based Rendering in Filament"
+// https://google.github.io/filament/Filament.md.html#lighting/directlighting/punctuallights
+float GetSpotlightAngleAttenuation(
+	vec3 toLight, 
+	vec3 lightWorldForwardDir, 
+	float innerConeAngle, 
+	float outerConeAngle, 
+	float cosOuterAngle, 
+	float scaleTerm,
+	float offsetTerm)
+{
+	const float cd = dot(normalize(-toLight), lightWorldForwardDir);
+	
+	float attenuation = clamp(cd * scaleTerm + offsetTerm, 0.f, 1.f);
+	
+	return attenuation * attenuation; // Smooths the resulting transition
+}
+
+
 // Map linear roughness to "perceptually linear" roughness. 
 // Perceptually linear roughness results in a linear-appearing transition from smooth to rough surfaces.
 // As per p.13 of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al., we use the squared roughness
@@ -186,7 +205,7 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 	const float NoV = clamp(max(dot(N, V), FLT_EPSILON), 0.f, 1.f); // Prevent NaNs at glancing angles
 
 	const vec3 L = normalize(lightingParams.LightWorldDir);
-	const float NoL = clamp(max(dot(N, L), FLT_EPSILON), 0.f, 1.f); // Prevent NaNs at glancing angles
+	const float NoL = clamp(max(lightingParams.NoL, FLT_EPSILON), 0.f, 1.f); // Prevent NaNs at glancing angles
 	
 	const vec3 H = ComputeNormalizedH(L, V);
 	const float LoH = clamp(dot(L, H), 0.f, 1.f);

@@ -131,26 +131,8 @@ namespace opengl
 	/***************/
 	// TextureTarget
 	/***************/
-	TextureTarget::PlatformParams::PlatformParams() :
-		m_attachmentPoint(GL_NONE),
-		m_drawBuffer(GL_NONE),
-		m_readBuffer(GL_NONE),
-		m_renderBufferObject(0)
-	{
-	}
 
-	TextureTarget::PlatformParams::~PlatformParams()
-	{
-		if (m_renderBufferObject > 0)
-		{
-			glDeleteRenderbuffers(1, &m_renderBufferObject);
-			m_renderBufferObject = 0;
-		}		
-
-		m_attachmentPoint = GL_NONE;
-		m_drawBuffer = GL_NONE;
-		m_readBuffer = GL_NONE;
-	}
+	//
 
 
 	/************/

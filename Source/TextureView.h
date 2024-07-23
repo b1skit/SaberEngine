@@ -113,9 +113,9 @@ namespace re
 		TextureView(TextureView::TextureCubeView const& view, ViewFlags const& = ViewFlags{});
 		TextureView(TextureView::TextureCubeArrayView const& view, ViewFlags const& = ViewFlags{});
 
-		TextureView(re::Texture const* tex); // Create a default view that includes all subresources
-		TextureView(re::Texture const& tex);
-		TextureView(std::shared_ptr<re::Texture const> const& tex);
+		TextureView(re::Texture const* tex, ViewFlags const& = ViewFlags{}); // Create a default view that includes all subresources
+		TextureView(re::Texture const& tex, ViewFlags const& = ViewFlags{});
+		TextureView(std::shared_ptr<re::Texture const> const& tex, ViewFlags const& = ViewFlags{});
 
 		TextureView(/* Don't use this directly */);
 
@@ -143,13 +143,15 @@ namespace re
 		// Get a vector of all of the subresources described by a view
 		static std::vector<uint32_t> GetSubresourceIndexes(re::Texture const*, re::TextureView const&);
 
+		static void ValidateView(re::Texture const*, re::TextureView const&); // _DEBUG only
+
 
 	public:
 		void ComputeDataHash() override { /* Do nothing: Computed in the ctor*/ }
 
 
 	private:
-		TextureView CreateDefaultView(re::Texture const& tex);
+		TextureView CreateDefaultView(re::Texture const& tex, ViewFlags const& = ViewFlags{});
 	};
 
 

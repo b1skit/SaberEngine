@@ -81,24 +81,24 @@ namespace re
 	};
 
 
-	TextureView::TextureView(re::Texture const* tex) // Create a default view including all subresources
+	TextureView::TextureView(re::Texture const* tex, ViewFlags const& viewFlags/*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::Dimension_Invalid)
 	{
-		*this = CreateDefaultView(*tex);
+		*this = CreateDefaultView(*tex, viewFlags);
 	};
 
 
-	TextureView::TextureView(re::Texture const& tex) // Create a default view including all subresources
+	TextureView::TextureView(re::Texture const& tex, ViewFlags const& viewFlags/*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::Dimension_Invalid)
 	{
-		*this = CreateDefaultView(tex);
+		*this = CreateDefaultView(tex, viewFlags);
 	};
 
 
-	TextureView::TextureView(std::shared_ptr<re::Texture const> const& tex) // Create a default view including all subresources
+	TextureView::TextureView(std::shared_ptr<re::Texture const> const& tex, ViewFlags const& viewFlags/*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::Dimension_Invalid)
 	{
-		*this = CreateDefaultView(*tex.get());
+		*this = CreateDefaultView(*tex.get(), viewFlags);
 	};
 
 
@@ -519,29 +519,138 @@ namespace re
 	}
 
 
-	TextureView TextureView::CreateDefaultView(re::Texture const& tex)
+	TextureView TextureView::CreateDefaultView(re::Texture const& tex, ViewFlags const& viewFlags/*= ViewFlags{}*/)
 	{
 		re::Texture::TextureParams const& texParams = tex.GetTextureParams();
 
 		switch (texParams.m_dimension)
 		{
 		case re::Texture::Dimension::Texture1D: return TextureView(
-			TextureView::Texture1DView(0, re::Texture::k_allMips, 0.f));
+			TextureView::Texture1DView(0, re::Texture::k_allMips, 0.f), viewFlags);
 		case re::Texture::Dimension::Texture1DArray: return TextureView(
-			TextureView::Texture1DArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0.f));
+			TextureView::Texture1DArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0.f), viewFlags);
 		case re::Texture::Dimension::Texture2D: return TextureView(
-			TextureView::Texture2DView(0, re::Texture::k_allMips, 0, 0.f));
+			TextureView::Texture2DView(0, re::Texture::k_allMips, 0, 0.f), viewFlags);
 		case re::Texture::Dimension::Texture2DArray: return TextureView(
-			TextureView::Texture2DArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0, 0.f));
+			TextureView::Texture2DArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0, 0.f), viewFlags);
 		case re::Texture::Dimension::Texture3D: return TextureView(
-			TextureView::Texture3DView(0, re::Texture::k_allMips, 0.f, 0, texParams.m_arraySize));
+			TextureView::Texture3DView(0, re::Texture::k_allMips, 0.f, 0, texParams.m_arraySize), viewFlags);
 		case re::Texture::Dimension::TextureCube: return TextureView(
-			TextureView::TextureCubeView(0, re::Texture::k_allMips, 0.f));
+			TextureView::TextureCubeView(0, re::Texture::k_allMips, 0.f), viewFlags);
 		case re::Texture::Dimension::TextureCubeArray: return TextureView(
-			TextureView::TextureCubeArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0.f));
+			TextureView::TextureCubeArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0.f), viewFlags);
 		default: SEAssertF("Invalid dimension");
 		}
 		return TextureView(TextureView::Texture2DView()); // This should never happen
+	}
+
+
+	void TextureView::ValidateView(re::Texture const* tex, re::TextureView const& view)
+	{
+#if defined(_DEBUG)
+		SEAssert(view.m_viewDimension != re::Texture::Dimension::Dimension_Invalid,
+			"Invalid view dimension");
+
+		re::Texture::TextureParams const& texParams = tex->GetTextureParams();
+		const uint32_t numMips = tex->GetNumMips();
+
+		switch (view.m_viewDimension)
+		{
+		case re::Texture::Texture1D:
+		{
+			SEAssert(((view.Texture1D.m_mipLevels == re::Texture::k_allMips && view.Texture1D.m_firstMip < numMips) ||
+				view.Texture1D.m_firstMip + view.Texture1D.m_mipLevels <= numMips) &&
+				view.Texture1D.m_resoureceMinLODClamp < numMips,
+				"View is invalid for this texture");
+		}
+		break;
+		case re::Texture::Texture1DArray:
+		{
+			SEAssert(((view.Texture1DArray.m_mipLevels == re::Texture::k_allMips && 
+					view.Texture1DArray.m_firstMip < numMips) ||
+				view.Texture1DArray.m_firstMip + view.Texture1DArray.m_mipLevels <= numMips) &&
+				view.Texture1DArray.m_firstArraySlice + view.Texture1DArray.m_arraySize <= texParams.m_arraySize &&
+				view.Texture1DArray.m_resoureceMinLODClamp < numMips,
+				"View is invalid for this texture");
+		}
+		break;
+		case re::Texture::Texture2D:
+		{
+			SEAssert(((view.Texture2D.m_mipLevels == re::Texture::k_allMips && view.Texture2D.m_firstMip < numMips) ||
+				view.Texture2D.m_firstMip + view.Texture2D.m_mipLevels <= numMips) &&
+				view.Texture2D.m_resoureceMinLODClamp < numMips,
+				"View is invalid for this texture");
+
+			SEAssert(view.Texture2D.m_planeSlice == 0,
+				"TODO: Update this validation to handle multi-plane formats");
+		}
+		break;
+		case re::Texture::Texture2DArray:
+		{
+			SEAssert(view.Texture2DArray.m_planeSlice == 0,
+				"TODO: Update this validation to handle multi-plane formats");
+
+			// Texture2DArray is also used by cubemaps
+			switch (texParams.m_dimension)
+			{
+			case re::Texture::Texture2D:
+			case re::Texture::Texture2DArray:
+			{
+				SEAssert(((view.Texture2DArray.m_mipLevels == re::Texture::k_allMips &&
+					view.Texture2DArray.m_firstMip < numMips) ||
+					view.Texture2DArray.m_firstMip + view.Texture2DArray.m_mipLevels <= numMips) &&
+					view.Texture2DArray.m_firstArraySlice + view.Texture2DArray.m_arraySize <= texParams.m_arraySize &&
+					view.Texture2DArray.m_resoureceMinLODClamp < numMips,
+					"View is invalid for this texture");
+			}
+			break;
+			case re::Texture::TextureCube:
+			case re::Texture::TextureCubeArray:
+			{
+				SEAssert(((view.Texture2DArray.m_mipLevels == re::Texture::k_allMips &&
+					view.Texture2DArray.m_firstMip < numMips) ||
+					view.Texture2DArray.m_firstMip + view.Texture2DArray.m_mipLevels <= numMips) &&
+					view.Texture2DArray.m_firstArraySlice + view.Texture2DArray.m_arraySize <= texParams.m_arraySize * 6 &&
+					view.Texture2DArray.m_resoureceMinLODClamp < numMips,
+					"View is invalid for this texture");
+			}
+			break;
+			default: SEAssertF("Invalid dimension");
+			}
+		}
+		break;
+		case re::Texture::Texture3D:
+		{
+			SEAssert(((view.Texture3D.m_mipLevels == re::Texture::k_allMips && view.Texture3D.m_firstMip < numMips) ||
+				view.Texture3D.m_firstMip + view.Texture3D.m_mipLevels <= numMips) &&
+				view.Texture3D.m_resoureceMinLODClamp < numMips &&
+				view.Texture3D.m_firstWSlice + view.Texture3D.m_wSize < texParams.m_arraySize,
+				"View is invalid for this texture");
+		}
+		break;
+		case re::Texture::TextureCube:
+		{
+			SEAssert(((view.TextureCube.m_mipLevels == re::Texture::k_allMips && 
+					view.TextureCube.m_firstMip < numMips) ||
+				view.TextureCube.m_firstMip + view.TextureCube.m_mipLevels <= numMips) &&
+				view.TextureCube.m_resoureceMinLODClamp < numMips,
+				"View is invalid for this texture");
+		}
+		break;
+		case re::Texture::TextureCubeArray:
+		{
+			SEAssert(((view.TextureCubeArray.m_mipLevels == re::Texture::k_allMips && 
+					view.TextureCubeArray.m_firstMip < numMips) ||
+				view.TextureCubeArray.m_firstMip + view.TextureCubeArray.m_mipLevels <= numMips) &&
+				view.TextureCubeArray.m_first2DArrayFace + (view.TextureCubeArray.m_numCubes * 6) <= 
+					(texParams.m_arraySize * 6) &&
+				view.TextureCubeArray.m_resoureceMinLODClamp < numMips,
+				"View is invalid for this texture");
+		}
+		break;
+		default: SEAssertF("Invalid dimension");
+		}
+#endif
 	}
 
 

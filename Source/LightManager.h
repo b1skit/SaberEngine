@@ -2,13 +2,14 @@
 #pragma once
 #include "LightParamsHelpers.h"
 #include "RenderObjectIDs.h"
+#include "TextureView.h"
 
 
 namespace re
 {
 	class Buffer;
-	
-	struct TextureView;
+	class ScissorRect;
+	class Viewport;
 }
 
 namespace gr
@@ -29,6 +30,7 @@ namespace gr
 		LightManager(LightManager&&) = default;
 		LightManager& operator=(LightManager&&) = default;
 
+		void Initialize();
 		void Destroy();
 
 
@@ -37,7 +39,11 @@ namespace gr
 
 
 	public:
-		std::shared_ptr<re::Buffer> GetLightDataBuffer(gr::Light::Type) const; // Get the monolithic light data buffer
+		// Get the monolithic light data buffer
+		// NOTE: This buffer may be reallocated; It must be attached every frame as a single frame input ONLY
+		std::shared_ptr<re::Buffer> GetLightDataBuffer(gr::Light::Type) const; 
+
+		uint32_t GetLightDataBufferIdx(gr::Light::Type, gr::RenderDataID lightID) const;
 
 
 	public:
@@ -48,11 +54,16 @@ namespace gr
 
 	public:
 		std::shared_ptr<re::Texture> GetShadowArrayTexture(gr::Light::Type) const;
-		re::TextureView GetShadowArrayReadView(gr::Light::Type, gr::RenderDataID lightID) const;
-		re::TextureView GetShadowArrayWriteView(gr::Light::Type, gr::RenderDataID lightID) const;
 
-		// Get the logical array index (i.e. i * 6 = index of 2DArray face for a cubemap)
-		uint32_t GetShadowArrayIndex(gr::Light::Type, gr::RenderDataID lightID) const;
+		// Shadow arrays may be reallocated at the beginning of any frame; Texture inputs should be reset each frame
+		re::TextureView const& GetShadowArrayReadView(gr::Light::Type) const;
+		re::TextureView GetShadowWriteView(gr::Light::Type, gr::RenderDataID lightID) const;
+
+		// Shadow target set helpers:
+		re::Viewport GetShadowArrayWriteViewport(gr::Light::Type) const;
+		re::ScissorRect GetShadowArrayWriteScissorRect(gr::Light::Type) const;
+		
+		std::shared_ptr<re::Buffer> GetPCSSPoissonSampleParamsBuffer() const;
 
 	
 	public:
@@ -89,12 +100,20 @@ namespace gr
 
 			std::shared_ptr<re::Texture> m_shadowArray;
 			uint32_t m_numShadows;
+
+			re::TextureView m_readView;
 		};
 		ShadowMetadata m_directionalShadowMetadata;
 		ShadowMetadata m_pointShadowMetadata;
 		ShadowMetadata m_spotShadowMetadata;
 
+		std::shared_ptr<re::Buffer> m_poissonSampleParamsBuffer;
+
+
+	private:
+		// Get the logical array index (i.e. i * 6 = index of 2DArray face for a cubemap)
 		uint32_t GetShadowArrayIndex(ShadowMetadata const&, gr::RenderDataID) const;
+		uint32_t GetShadowArrayIndex(gr::Light::Type, gr::RenderDataID lightID) const;
 
 
 	private:
@@ -109,6 +128,38 @@ namespace gr
 	};
 
 
+	inline uint32_t LightManager::GetLightDataBufferIdx(gr::Light::Type lightType, gr::RenderDataID lightID) const
+	{
+		switch (lightType)
+		{
+		case gr::Light::Directional:
+		{
+			SEAssert(m_directionalLightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
+				"Light has not been registered");
+			return m_directionalLightMetadata.m_renderDataIDToBufferIdx.at(lightID);
+		}
+		break;
+		case gr::Light::Point:
+		{
+			SEAssert(m_pointLightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
+				"Light has not been registered");
+			return m_pointLightMetadata.m_renderDataIDToBufferIdx.at(lightID);
+		}
+		break;
+		case gr::Light::Spot:
+		{
+			SEAssert(m_spotLightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
+				"Light has not been registered");
+			return m_spotLightMetadata.m_renderDataIDToBufferIdx.at(lightID);
+		}
+		break;
+		case gr::Light::AmbientIBL:
+		default: SEAssertF("Invalid light type");
+		}
+		return std::numeric_limits<uint32_t>::max(); // This should never happen
+	}
+
+
 	inline std::shared_ptr<re::Texture> LightManager::GetShadowArrayTexture(gr::Light::Type lightType) const
 	{
 		switch (lightType)
@@ -120,5 +171,11 @@ namespace gr
 			default: SEAssertF("Invalid light type");
 		}
 		return nullptr; // This should never happen
+	}
+
+
+	inline std::shared_ptr<re::Buffer> LightManager::GetPCSSPoissonSampleParamsBuffer() const
+	{
+		return m_poissonSampleParamsBuffer;
 	}
 }
