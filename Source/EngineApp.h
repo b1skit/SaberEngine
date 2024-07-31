@@ -1,7 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Window.h"
-
 #include "Core/LogManager.h"
 
 #include "Core/Interfaces/IEngineComponent.h"
@@ -34,8 +32,6 @@ namespace app
 		// IEventListener interface:
 		void HandleEvents() override;
 
-		app::Window* GetWindow() const { return m_window.get(); }
-
 
 	private:
 		// How much time we want to spend updating the game state (in ms) before we render a new frame
@@ -44,8 +40,6 @@ namespace app
 		bool m_isRunning;
 
 		uint64_t m_frameNum;
-
-		std::unique_ptr<app::Window> m_window;
 
 		std::unique_ptr<std::barrier<>> m_copyBarrier;
 		

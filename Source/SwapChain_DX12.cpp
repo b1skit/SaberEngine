@@ -1,8 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
-#include "Core/Config.h"
 #include "Context_DX12.h"
-#include "EngineApp.h"
 #include "Debug_DX12.h"
 #include "RenderManager.h"
 #include "SwapChain_DX12.h"
@@ -11,6 +8,9 @@
 #include "Texture.h"
 #include "Texture_DX12.h"
 #include "Window_Win32.h"
+
+#include "Core/Assert.h"
+#include "Core/Config.h"
 
 #include <d3dx12.h>
 #include <dxgi1_6.h>
@@ -76,13 +76,12 @@ namespace dx12
 		swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // Back-buffer transparency behavior
 		swapChainDesc.Flags = swapChainParams->m_tearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
-
-		SEAssert(app::EngineApp::Get()->GetWindow(), "Window cannot be null");
-		win32::Window::PlatformParams* windowPlatParams =
-			app::EngineApp::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
-
 		// Note: The context (currently) calls this function. This is dicey...
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+
+		SEAssert(context->GetWindow(), "Window cannot be null");
+		win32::Window::PlatformParams* windowPlatParams =
+			context->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		// Create the swap chain:
 		ComPtr<IDXGISwapChain1> swapChain1;

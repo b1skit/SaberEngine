@@ -3,7 +3,6 @@
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
 #include "Context_Platform.h"
-#include "SysInfo_Platform.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -46,8 +45,30 @@ namespace re
 	}
 
 
+	void Context::Create(uint64_t currentFrame)
+	{
+		// Create a window:
+		std::string commandLineArgs;
+		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
+
+		std::string const& windowTitle = std::format("{} {}",
+			core::Config::Get()->GetValue<std::string>("windowTitle"),
+			commandLineArgs);
+		const int xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		const int yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+
+		m_window = std::make_unique<app::Window>(); // Ensure Window exists for first callbacks triggered by Create
+		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
+		SEAssert(windowCreated, "Failed to create a window");
+
+		// Platform-specific setup:
+		CreateInternal(currentFrame);
+	}
+
+
 	Context::Context()
-		: m_renderDocApi(nullptr)
+		: m_window(nullptr)
+		, m_renderDocApi(nullptr)
 	{
 		// RenderDoc cannot be enabled when DRED is enabled
 		const bool dredEnabled = core::Config::Get()->KeyExists(core::configkeys::k_enableDredCmdLineArg);
@@ -133,6 +154,8 @@ namespace re
 		}
 
 		platform::Context::Destroy(*this);
+
+		m_window->Destroy();
 	}
 
 

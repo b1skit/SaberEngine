@@ -1,15 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
-#include "Core/Config.h"
 #include "Context_OpenGL.h"
 #include "Context.h"
-#include "EngineApp.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "SysInfo_OpenGL.h"
 #include "VertexStream.h"
 #include "VertexStream_OpenGL.h"
 #include "Window_Win32.h"
+
+#include "Core/Assert.h"
+#include "Core/Config.h"
 
 #include "Core/Util/HashUtils.h"
 
@@ -165,11 +165,11 @@ namespace opengl
 	}
 
 
-	void Context::Create(uint64_t currentFrame)
-	{
+	void Context::CreateInternal(uint64_t currentFrame)
+	{		
 		GetOpenGLExtensionProcessAddresses();
 
-		app::Window* window = app::EngineApp::Get()->GetWindow();
+		app::Window* window = GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatformParams* windowPlatParams = 
@@ -322,7 +322,7 @@ namespace opengl
 		::wglMakeCurrent(NULL, NULL); // Make the rendering context not current  
 
 		win32::Window::PlatformParams* windowPlatformParams = 
-			app::EngineApp::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+			reContext.GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		::ReleaseDC(windowPlatformParams->m_hWindow, context.m_hDeviceContext); // Release device context
 		::wglDeleteContext(context.m_glRenderContext); // Delete the rendering context

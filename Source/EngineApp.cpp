@@ -1,10 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Context.h"
 #include "EngineApp.h"
 #include "EntityManager.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "UIManager.h"
+#include "Window.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -29,7 +31,6 @@ namespace app
 		: m_fixedTimeStep(1000.0 / 120.0) // 1000/120 = 8.33ms per update
 		, m_isRunning(false)
 		, m_frameNum(0)
-		, m_window(nullptr)
 	{
 		m_engineApp = this;
 		m_copyBarrier = std::make_unique<std::barrier<>>(k_numSystemThreads);
@@ -49,23 +50,6 @@ namespace app
 		core::LogManager::Get()->Startup(
 			core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
 
-		// Create a window:
-		std::string commandLineArgs;
-		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
-
-		std::string const& windowTitle = std::format("{} {}", 
-			core::Config::Get()->GetValue<std::string>("windowTitle"), 
-			commandLineArgs);
-		const int xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		const int yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
-
-		m_window = std::make_unique<app::Window>(); // Ensure Window exists for first callbacks triggered by Create
-		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
-		SEAssert(windowCreated, "Failed to create a window");
-
-		// Don't capture the mouse while we're loading
-		m_window->SetRelativeMouseMode(false);
-
 		// Render thread:
 		re::RenderManager* renderManager = re::RenderManager::Get();
 		core::ThreadPool::Get()->EnqueueJob([&]()
@@ -74,6 +58,12 @@ namespace app
 				renderManager->Lifetime(m_copyBarrier.get()); 
 			});
 		renderManager->ThreadStartup(); // Initializes context
+
+		// Now the Context has been created, we can get the window
+		app::Window* window = re::Context::Get()->GetWindow();
+		
+		// Don't capture the mouse while we're loading
+		window->SetRelativeMouseMode(false);
 
 		// Start managers:
 		core::EventManager* eventManager = core::EventManager::Get();
@@ -94,7 +84,7 @@ namespace app
 		m_isRunning = true;
 
 		// We're done loading: Capture the mouse
-		m_window->SetRelativeMouseMode(true);
+		window->SetRelativeMouseMode(true);
 
 		SEEndCPUEvent();
 	}
@@ -211,8 +201,6 @@ namespace app
 
 		en::InputManager::Get()->Shutdown();
 		core::EventManager::Get()->Shutdown();
-
-		m_window->Destroy();
 
 		core::LogManager::Get()->Shutdown(); // Destroy last
 

@@ -1,5 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "EngineApp.h"
+#include "Context.h"
 #include "EntityManager.h"
 #include "GraphicsSystem_ImGui.h"
 #include "SceneManager.h"
@@ -239,7 +239,7 @@ namespace fr
 
 				// If true, hide the mouse and lock it to the window
 				const bool captureMouse = !m_imguiMenuVisible;
-				app::EngineApp::Get()->GetWindow()->SetRelativeMouseMode(captureMouse);
+				re::Context::Get()->GetWindow()->SetRelativeMouseMode(captureMouse);
 
 				// Disable ImGui mouse listening if the console is not active: Prevents UI elements
 				// flashing as the hidden mouse cursor passes by

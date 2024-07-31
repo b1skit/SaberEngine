@@ -1,11 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BufferAllocator.h"
-#include "Core/Interfaces/IPlatformParams.h"
-#include "TextureTarget.h"
-#include "PipelineState.h"
 #include "RLibrary_Platform.h"
 #include "SwapChain.h"
+#include "Window.h"
+
+#include "Core/Interfaces/IPlatformParams.h"
 
 #include "renderdoc_app.h"
 
@@ -35,15 +35,17 @@ namespace re
 		virtual ~Context() = 0;
 
 		// Context interface:
-		[[nodiscard]] virtual void Create(uint64_t currentFrame) = 0;
+		void Create(uint64_t currentFrame);
+		
 		virtual void Present() = 0;
 
 		// Platform wrappers:
 		void Destroy();
 
+		app::Window* GetWindow() const;
 
-		re::SwapChain& GetSwapChain() { return m_swapChain; }
-		re::SwapChain const& GetSwapChain() const { return m_swapChain; }
+		re::SwapChain& GetSwapChain();
+		re::SwapChain const& GetSwapChain() const;
 
 		re::BufferAllocator* GetBufferAllocator();
 		re::BufferAllocator const* GetBufferAllocator() const;
@@ -56,12 +58,15 @@ namespace re
 	protected:
 		Context();
 
+		virtual void CreateInternal(uint64_t currentFrame) = 0;
+
 
 	protected:
 		std::unique_ptr<re::BufferAllocator> m_bufferAllocator;
 		std::array<std::unique_ptr<platform::RLibrary>, platform::RLibrary::Type_Count> m_renderLibraries;
 
 	private:
+		std::unique_ptr<app::Window> m_window;
 		re::SwapChain m_swapChain;
 
 		
@@ -72,6 +77,24 @@ namespace re
 	private:
 		RenderDocAPI* m_renderDocApi;
 	};
+
+
+	inline app::Window* Context::GetWindow() const
+	{
+		return m_window.get();
+	}
+
+
+	inline re::SwapChain& Context::GetSwapChain()
+	{
+		return m_swapChain;
+	}
+
+
+	inline re::SwapChain const& Context::GetSwapChain() const
+	{
+		return m_swapChain;
+	}
 
 
 	inline re::BufferAllocator* Context::GetBufferAllocator()

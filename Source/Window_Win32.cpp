@@ -1,9 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "EngineApp.h"
+#include "Context.h"
 #include "Window.h"
 #include "Window_Win32.h"
 
 #include "Core/Assert.h"
+#include "Core/EventManager.h"
 
 
 namespace win32
@@ -54,14 +55,14 @@ namespace win32
 		case WM_SETFOCUS:
 		case WM_EXITSIZEMOVE:
 		{
-			app::EngineApp::Get()->GetWindow()->SetFocusState(true);
+			re::Context::Get()->GetWindow()->SetFocusState(true);
 			doBroadcastSEEvent = false;
 		}
 		break;
 		case WM_KILLFOCUS:
 		case WM_ENTERSIZEMOVE:
 		{
-			app::EngineApp::Get()->GetWindow()->SetFocusState(false);
+			re::Context::Get()->GetWindow()->SetFocusState(false);
 			doBroadcastSEEvent = false;
 		}
 		break;
