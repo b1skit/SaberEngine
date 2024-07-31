@@ -662,7 +662,7 @@ namespace gr
 		case gr::Light::AmbientIBL:
 		default: SEAssertF("Invalid light type");
 		}
-		return re::TextureView(); // This should never happen
+		return m_directionalShadowMetadata.m_readView; // This should never happen
 	}
 
 
