@@ -57,7 +57,7 @@ namespace
 					else
 					{
 						// Source GS doesn't exist. Attempt to use a default texture as a fallback
-						fr::SceneData* sceneData = fr::SceneManager::GetSceneData();
+						re::SceneData* sceneData = re::RenderManager::GetSceneData();
 
 						gr::GraphicsSystem::TextureInputDefault inputDefault =
 							dstGS->GetTextureInputDefaultType(dstName);

@@ -81,7 +81,7 @@ namespace re
 		const ShaderID shaderID = ComputeShaderIdentifier(extensionlessSourceFilenames, rePipelineState);
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
-		fr::SceneData* sceneData = fr::SceneManager::GetSceneData();
+		re::SceneData* sceneData = re::RenderManager::GetSceneData();
 		if (sceneData->ShaderExists(shaderID))
 		{
 			return sceneData->GetShader(shaderID);

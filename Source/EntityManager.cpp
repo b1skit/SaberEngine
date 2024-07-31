@@ -57,7 +57,7 @@ namespace fr
 		// Create an Ambient light, and make it active:
 		entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
 			*this, 
-			fr::SceneManager::GetSceneData()->GetIBLTexture());
+			re::RenderManager::GetSceneData()->GetIBLTexture());
 		SetActiveAmbientLight(ambientLight);
 
 		// Add a player object to the scene:

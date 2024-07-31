@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "MeshPrimitive.h"
-#include "SceneManager.h"
+#include "RenderManager.h"
 
 
 namespace
@@ -69,7 +69,7 @@ namespace gr
 			meshParams));
 
 		// This call will replace the newMeshPrimitive pointer if a duplicate MeshPrimitive already exists
-		fr::SceneManager::GetSceneData()->AddUniqueMeshPrimitive(newMeshPrimitive);
+		re::RenderManager::GetSceneData()->AddUniqueMeshPrimitive(newMeshPrimitive);
 
 		return newMeshPrimitive;
 	}

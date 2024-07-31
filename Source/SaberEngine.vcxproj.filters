@@ -209,9 +209,6 @@
     <ClCompile Include="Platform.cpp">
       <Filter>Source Files\app\platform</Filter>
     </ClCompile>
-    <ClCompile Include="SceneData.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
     <ClCompile Include="Buffer.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
@@ -545,6 +542,9 @@
     <ClCompile Include="TextureView.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
+    <ClCompile Include="SceneData.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Context.h">
@@ -594,9 +594,6 @@
     </ClInclude>
     <ClInclude Include="VertexStreamBuilder.h">
       <Filter>Header Files\gr\grutil</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneData.h">
-      <Filter>Header Files\fr</Filter>
     </ClInclude>
     <ClInclude Include="Buffer.h">
       <Filter>Header Files\re</Filter>
@@ -986,6 +983,9 @@
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
     <ClInclude Include="TextureView.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneData.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
   </ItemGroup>

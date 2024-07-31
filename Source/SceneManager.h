@@ -1,8 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Interfaces/IEventListener.h"
-#include "SceneData.h"
-
 #include "Core/Interfaces/IEngineComponent.h"
 
 
@@ -17,7 +15,6 @@ namespace fr
 
 	public:
 		static SceneManager* Get(); // Singleton functionality
-		static fr::SceneData* GetSceneData() { return SceneManager::Get()->m_sceneData.get(); }
 
 
 	public:
@@ -32,11 +29,15 @@ namespace fr
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 
+	public:
 		void ShowImGuiWindow(bool*) const;
 
 
 	private:
-		std::shared_ptr<fr::SceneData> m_sceneData = nullptr;
+		bool Load(std::string const& relativeFilePath); // Filename and path, relative to the ..\Scenes\ dir
+
+
+	private:
 		NameID m_sceneRenderSystemNameID;
 
 	private:

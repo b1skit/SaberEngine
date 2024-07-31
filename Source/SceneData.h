@@ -1,9 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Shader.h"
 #include "Texture.h"
 
-#include "Core/Interfaces/INamedObject.h"
+#include "Core/Util/HashUtils.h"
 
 
 namespace gr
@@ -14,25 +13,21 @@ namespace gr
 
 namespace re
 {
+	class Shader;
 	class VertexStream;
 }
 
-namespace fr
+namespace re
 {
-	class SceneData final : public virtual core::INamedObject
+	class SceneData final
 	{
 	public:
-		typedef uint64_t DataHash;
-
-	public:
-		explicit SceneData(std::string const& sceneName);
+		explicit SceneData();
 		SceneData(SceneData&&) = default;
 		SceneData& operator=(SceneData&&) = default;
 		
 		~SceneData();
 		void Destroy();
-
-		bool Load(std::string const& relativeFilePath); // Filename and path, relative to the ..\Scenes\ dir
 
 
 	public:		
@@ -61,6 +56,8 @@ namespace fr
 		std::shared_ptr<re::Shader> GetShader(ShaderID) const;
 		bool ShaderExists(ShaderID) const;
 
+		void EndLoading();
+
 		
 	private:
 		std::unordered_map<DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
@@ -82,8 +79,13 @@ namespace fr
 
 
 	private:
-		SceneData() = delete;
 		SceneData(SceneData const&) = delete;
 		SceneData& operator=(SceneData const&) = delete;
 	};
+
+
+	inline void SceneData::EndLoading()
+	{
+		m_isCreated = true;
+	}
 }

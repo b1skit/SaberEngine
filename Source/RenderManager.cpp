@@ -97,6 +97,8 @@ namespace re
 		break;
 		default: SEAssertF("Invalid rendering API value");
 		}
+
+		newRenderManager->m_sceneData = std::make_unique<re::SceneData>();
 		
 		return newRenderManager;
 	}
@@ -104,6 +106,7 @@ namespace re
 
 	RenderManager::RenderManager(platform::RenderingAPI renderingAPI)
 		: m_renderingAPI(renderingAPI)
+		, m_sceneData(nullptr)
 		, m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -353,6 +356,8 @@ namespace re
 		// Process any remaining render commands (i.e. delete platform objects)
 		m_renderCommandManager.SwapBuffers();
 		m_renderCommandManager.Execute();
+
+		m_sceneData->Destroy();
 
 		m_effectDB.Destroy();
 

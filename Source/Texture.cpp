@@ -174,10 +174,10 @@ namespace re
 			std::lock_guard<std::mutex> lock(s_createInternalMutex);
 
 			// If the Texture already exists, return it. Otherwise, create the Texture 
-			if (params.m_addToSceneData && fr::SceneManager::GetSceneData()->TextureExists(name))
+			if (params.m_addToSceneData && re::RenderManager::GetSceneData()->TextureExists(name))
 			{
 				// Note: In this case, we're assuming the texture is identical and ignoring the initial data
-				return fr::SceneManager::GetSceneData()->GetTexture(name);
+				return re::RenderManager::GetSceneData()->GetTexture(name);
 			}
 
 			LOG(std::format("Creating texture \"{}\"", name).c_str());
@@ -188,7 +188,7 @@ namespace re
 			bool foundExistingTexture = false;
 			if (params.m_addToSceneData)
 			{
-				foundExistingTexture = fr::SceneManager::GetSceneData()->AddUniqueTexture(newTexture);
+				foundExistingTexture = re::RenderManager::GetSceneData()->AddUniqueTexture(newTexture);
 			}
 			SEAssert(!foundExistingTexture, "Found an existing texture, this should not be possible due to the local mutex");
 

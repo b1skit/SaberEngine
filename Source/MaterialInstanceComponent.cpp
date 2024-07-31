@@ -61,7 +61,7 @@ namespace fr
 			if (ImGui::Button("Reset"))
 			{
 				gr::Material const* srcMateral = 
-					fr::SceneManager::GetSceneData()->GetMaterial(matComponent.m_instanceData.m_materialName).get();
+					re::RenderManager::GetSceneData()->GetMaterial(matComponent.m_instanceData.m_materialName).get();
 
 				srcMateral->InitializeMaterialInstanceData(matComponent.m_instanceData);
 				matComponent.m_isDirty = true;

@@ -281,7 +281,7 @@ namespace fr
 
 			// Material:
 			static uint32_t s_selectedMaterialIdx = 0;
-			std::vector<std::string> const& materialNames = fr::SceneManager::GetSceneData()->GetAllMaterialNames();			
+			std::vector<std::string> const& materialNames = re::RenderManager::GetSceneData()->GetAllMaterialNames();			
 			
 			util::ShowBasicComboBox(
 				"Material##spawnMeshFactory", materialNames.data(), materialNames.size(), s_selectedMaterialIdx);
@@ -379,7 +379,7 @@ namespace fr
 
 				// Attach a material:
 				std::shared_ptr<gr::Material> material =
-					fr::SceneManager::GetSceneData()->GetMaterial(s_meshFactoryMaterialName.c_str());
+					re::RenderManager::GetSceneData()->GetMaterial(s_meshFactoryMaterialName.c_str());
 
 				fr::MaterialInstanceComponent::AttachMaterialComponent(
 					*fr::EntityManager::Get(), meshPrimimitiveEntity, material.get());
