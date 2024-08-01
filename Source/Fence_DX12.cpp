@@ -1,7 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Debug_DX12.h"
 #include "Fence_DX12.h"
-#include "ProfilingMarkers.h"
+
+#include "Core/ProfilingMarkers.h"
+
 #include "Core/Util/TextUtils.h"
 
 using Microsoft::WRL::ComPtr;

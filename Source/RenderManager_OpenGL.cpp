@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer_OpenGL.h"
 #include "Context_OpenGL.h"
-#include "ProfilingMarkers.h"
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"
 #include "RenderStage.h"
@@ -14,6 +13,8 @@
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
 #include "VertexStream_OpenGL.h"
+
+#include "Core/ProfilingMarkers.h"
 
 #include <GL/glew.h>
 #include <GL/GL.h> // Must follow glew.h...

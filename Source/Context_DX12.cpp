@@ -2,7 +2,6 @@
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "PipelineState_DX12.h"
-#include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
 #include "Shader.h"
 #include "SwapChain_DX12.h"
@@ -13,6 +12,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/ProfilingMarkers.h"
 
 using Microsoft::WRL::ComPtr;
 

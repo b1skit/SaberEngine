@@ -3,7 +3,6 @@
 #include "Buffer_DX12.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
-#include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
 #include "RenderSystem.h"
 #include "Sampler_DX12.h"
@@ -14,6 +13,7 @@
 #include "VertexStream_DX12.h"
 
 #include "Core/Assert.h"
+#include "Core/ProfilingMarkers.h"
 
 #include <d3dx12.h>
 

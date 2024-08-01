@@ -1,7 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "Context_DX12.h"
-#include "ProfilingMarkers.h"
 #include "RLibrary_ImGui_DX12.h"
 #include "RenderManager.h"
 #include "RenderStage.h"
@@ -9,6 +8,8 @@
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
 #include "Window_Win32.h"
+
+#include "Core/ProfilingMarkers.h"
 
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"

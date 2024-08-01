@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "GraphicsSystemManager.h"
-#include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
@@ -12,6 +11,7 @@
 
 #include "Core/Config.h"
 #include "Core/PerformanceTimer.h"
+#include "Core/ProfilingMarkers.h"
 
 
 namespace re

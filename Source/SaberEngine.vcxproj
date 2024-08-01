@@ -502,7 +502,6 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="pch\stdafx.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="PipelineState_DX12.h" />
-    <ClInclude Include="ProfilingMarkers.h" />
     <ClInclude Include="RenderDataManager.h" />
     <ClInclude Include="RenderDataComponent.h" />
     <ClInclude Include="RenderLibrary_ImGui_DX12.h" />

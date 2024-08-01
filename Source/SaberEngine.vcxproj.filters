@@ -802,9 +802,6 @@
     <ClInclude Include="BufferAllocator_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="ProfilingMarkers.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Dependencies\Resources</Filter>
     </ClInclude>

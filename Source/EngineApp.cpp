@@ -2,7 +2,6 @@
 #include "Context.h"
 #include "EngineApp.h"
 #include "EntityManager.h"
-#include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "UIManager.h"
@@ -14,6 +13,7 @@
 #include "Core/InputManager.h"
 #include "Core/LogManager.h"
 #include "Core/PerformanceTimer.h"
+#include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
 
 

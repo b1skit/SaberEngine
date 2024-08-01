@@ -132,6 +132,9 @@
     <ClInclude Include="Util\HashKey.h">
       <Filter>Header Files\Util</Filter>
     </ClInclude>
+    <ClInclude Include="ProfilingMarkers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\stdafx.cpp">
