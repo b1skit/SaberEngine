@@ -16,8 +16,15 @@ namespace app
 	}
 
 
-	bool Window::Create(std::string const& title, uint32_t width, uint32_t height)
+	Window::~Window()
 	{
+		SEAssert(!m_platformParams, "Window is being destructed with valid platform params. Was Destroy() called?");
+	}
+
+
+	bool Window::InitializeFromEventQueueThread(std::string const& title, uint32_t width, uint32_t height)
+	{
+		// Must be called from the thread that owns the OS event queue
 		return platform::Window::Create(*this, title, width, height);
 	}
 
@@ -25,6 +32,7 @@ namespace app
 	void Window::Destroy()
 	{
 		platform::Window::Destroy(*this);
+		m_platformParams = nullptr;
 	}
 
 

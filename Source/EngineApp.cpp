@@ -21,6 +21,29 @@
 namespace
 {
 	constexpr size_t k_numSystemThreads = 2;
+
+
+	// Create the main window on the engine thread to associate it with the correct Win32 event queue
+	app::Window* InitializeAppWindowHelper()
+	{
+		std::string commandLineArgs;
+		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
+
+		std::string const& windowTitle = std::format("{} {}",
+			core::Config::Get()->GetValue<std::string>("windowTitle"),
+			commandLineArgs);
+		const int xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		const int yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+
+		// The re::Context constructs an uninitialized app::Window; We must call app::Window::Create from the thread
+		// that owns the Win32 event queue
+		app::Window* appWindow = re::Context::Get()->GetWindow();
+
+		const bool windowCreated = appWindow->InitializeFromEventQueueThread(windowTitle, xRes, yRes);
+		SEAssert(windowCreated, "Failed to create a window");
+
+		return appWindow;
+	}
 }
 
 namespace app
@@ -51,6 +74,9 @@ namespace app
 		core::LogManager::Get()->Startup(
 			core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
 
+		// Create a window (and interally pass it to the re::Context)
+		app::Window* mainWindow = InitializeAppWindowHelper();
+
 		// Render thread:
 		re::RenderManager* renderManager = re::RenderManager::Get();
 		core::ThreadPool::Get()->EnqueueJob([&]()
@@ -59,12 +85,9 @@ namespace app
 				renderManager->Lifetime(m_copyBarrier.get()); 
 			});
 		renderManager->ThreadStartup(); // Initializes context
-
-		// Now the Context has been created, we can get the window
-		app::Window* window = re::Context::Get()->GetWindow();
 		
 		// Don't capture the mouse while we're loading
-		window->SetRelativeMouseMode(false);
+		mainWindow->SetRelativeMouseMode(false);
 
 		// Start managers:
 		core::EventManager* eventManager = core::EventManager::Get();
@@ -85,7 +108,7 @@ namespace app
 		m_isRunning = true;
 
 		// We're done loading: Capture the mouse
-		window->SetRelativeMouseMode(true);
+		mainWindow->SetRelativeMouseMode(true);
 
 		SEEndCPUEvent();
 	}

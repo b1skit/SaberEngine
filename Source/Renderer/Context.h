@@ -35,7 +35,7 @@ namespace re
 		virtual ~Context() = 0;
 
 		// Context interface:
-		void Create(uint64_t currentFrame);
+		virtual void Create(uint64_t currentFrame) = 0;
 		
 		virtual void Present() = 0;
 
@@ -57,8 +57,6 @@ namespace re
 
 	protected:
 		Context();
-
-		virtual void CreateInternal(uint64_t currentFrame) = 0;
 
 
 	protected:

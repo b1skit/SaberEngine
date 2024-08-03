@@ -17,7 +17,7 @@ namespace dx12
 	public:
 		~Context() override = default;
 
-		void CreateInternal(uint64_t currentFrame) override;
+		void Create(uint64_t currentFrame) override;
 
 		// Platform implementations:
 		static void Destroy(re::Context& context);

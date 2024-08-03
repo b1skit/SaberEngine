@@ -45,29 +45,8 @@ namespace re
 	}
 
 
-	void Context::Create(uint64_t currentFrame)
-	{
-		// Create a window:
-		std::string commandLineArgs;
-		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
-
-		std::string const& windowTitle = std::format("{} {}",
-			core::Config::Get()->GetValue<std::string>("windowTitle"),
-			commandLineArgs);
-		const int xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		const int yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
-
-		m_window = std::make_unique<app::Window>(); // Ensure Window exists for first callbacks triggered by Create
-		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
-		SEAssert(windowCreated, "Failed to create a window");
-
-		// Platform-specific setup:
-		CreateInternal(currentFrame);
-	}
-
-
 	Context::Context()
-		: m_window(nullptr)
+		: m_window(std::make_unique<app::Window>()) // Must call app::Window::Create() from the thread owning the OS event queue
 		, m_renderDocApi(nullptr)
 	{
 		// RenderDoc cannot be enabled when DRED is enabled

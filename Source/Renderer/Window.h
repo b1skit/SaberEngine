@@ -18,13 +18,13 @@ namespace app
 		Window();
 		Window(Window&&) = default;
 		Window& operator=(Window&&) = default;
-		~Window() { Destroy(); };
+		~Window();
 
 		Window::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<Window::PlatformParams> params) { m_platformParams = std::move(params); }
 
 		// Platform wrappers:
-		bool Create(std::string const& title, uint32_t width, uint32_t height);
+		bool InitializeFromEventQueueThread(std::string const& title, uint32_t width, uint32_t height);
 		void Destroy();
 
 		void SetFocusState(bool hasFocus); // To be called by event handlers only

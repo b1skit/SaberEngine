@@ -165,7 +165,7 @@ namespace opengl
 	}
 
 
-	void Context::CreateInternal(uint64_t currentFrame)
+	void Context::Create(uint64_t currentFrame)
 	{		
 		GetOpenGLExtensionProcessAddresses();
 

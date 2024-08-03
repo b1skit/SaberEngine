@@ -66,7 +66,7 @@ namespace dx12
 	}
 
 
-	void Context::CreateInternal(uint64_t currentFrame)
+	void Context::Create(uint64_t currentFrame)
 	{
 		// PIX must be loaded before loading any D3D12 APIs
 		const bool enablePIXPGPUrogrammaticCaptures = 
