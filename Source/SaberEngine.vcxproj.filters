@@ -186,7 +186,7 @@
       <Filter>Source Files\pch</Filter>
     </ClCompile>
     <ClCompile Include="RenderDataComponent.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -326,7 +326,7 @@
       <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="RenderDataComponent.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
