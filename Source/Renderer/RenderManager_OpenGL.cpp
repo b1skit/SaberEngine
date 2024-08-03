@@ -180,7 +180,8 @@ namespace opengl
 						"The current stage does not have targets set. This is unexpected");
 
 
-					auto SetDrawState = [&renderStage, &context](re::Shader const* shader, bool doSetStageInputs)
+					auto SetDrawState = [&renderStage, &context, &stageTargets](
+						re::Shader const* shader, bool doSetStageInputs)
 					{
 						opengl::Shader::Bind(*shader);
 
@@ -212,6 +213,12 @@ namespace opengl
 								};
 							SetStageTextureInputs(renderStage->GetPermanentTextureInputs());
 							SetStageTextureInputs(renderStage->GetSingleFrameTextureInputs());
+
+							// Set compute inputs
+							if (renderStage->GetStageType() == re::RenderStage::Type::Compute)
+							{
+								opengl::Shader::SetImageTextureTargets(*shader, *stageTargets);
+							}
 						}
 					};
 
@@ -220,10 +227,7 @@ namespace opengl
 					{
 					case re::RenderStage::Type::Compute:
 					{
-						if (stageTargets)
-						{
-							opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets);
-						}
+						//
 					}
 					break;
 					case re::RenderStage::Type::Graphics:

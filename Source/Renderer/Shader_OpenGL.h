@@ -10,7 +10,7 @@ namespace re
 	class Buffer;
 	class Shader;
 	class Texture;
-	class Sampler;
+	class TextureTargetSet;
 
 	struct TextureAndSamplerInput;
 }
@@ -50,15 +50,17 @@ namespace opengl
 
 		// OpenGL-specific functions:
 		static void Bind(re::Shader const& shader);
+
 		static void SetUniform(
 			re::Shader const& shader,
 			std::string const& uniformName, 
 			void const* value, 
 			opengl::Shader::UniformType const type, 
 			int const count);
-		static void SetTextureAndSampler(
-			re::Shader const&,
-			re::TextureAndSamplerInput const&);
+
+		static void SetTextureAndSampler(re::Shader const&, re::TextureAndSamplerInput const&);
+		
+		static void SetImageTextureTargets(re::Shader const&, re::TextureTargetSet const&);
 
 		static void SetBuffer(re::Shader const&, re::Buffer const&);
 	};

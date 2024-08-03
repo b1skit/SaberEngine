@@ -20,8 +20,8 @@ namespace opengl
 
 		const re::TextureTarget::TargetParams::BlendModes backbufferBlendModes
 		{
-			re::TextureTarget::TargetParams::BlendMode::One,
-			re::TextureTarget::TargetParams::BlendMode::Zero
+			re::TextureTarget::BlendMode::One,
+			re::TextureTarget::BlendMode::Zero
 		};
 		swapChainParams->m_backbufferTargetSet->SetColorTargetBlendModes(1, &backbufferBlendModes);
 

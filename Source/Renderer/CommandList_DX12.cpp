@@ -111,19 +111,6 @@ namespace
 			return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		}
 	}
-
-	// As per the RWTexture2D<float4> outputs defined in SaberComputeCommon.hlsli
-	constexpr char const* k_uavTexTargetNames[] =
-	{
-		"output0",
-		"output1",
-		"output2",
-		"output3",
-		"output4",
-		"output5",
-		"output6",
-		"output7",
-	};
 }
 
 
@@ -554,7 +541,7 @@ namespace dx12
 
 	void CommandList::ClearDepthTarget(re::TextureTarget const& depthTarget)
 	{
-		if (depthTarget.GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
+		if (depthTarget.GetClearMode() == re::TextureTarget::ClearMode::Enabled)
 		{
 			re::Texture const* depthTex = depthTarget.GetTexture().get();
 
@@ -594,7 +581,7 @@ namespace dx12
 			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy),
 			"Target texture must be a color target");
 
-		if (colorTarget->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
+		if (colorTarget->GetClearMode() == re::TextureTarget::ClearMode::Enabled)
 		{
 			re::Texture const* colorTargetTex = colorTarget->GetTexture().get();
 
@@ -736,9 +723,10 @@ namespace dx12
 				break; // Targets must be bound in monotonically-increasing order from slot 0
 			}			
 
-			// We bind by name, but effectively UAVs targets are (currently) bound to slots[0, 7]
+			re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
+
 			RootSignature::RootParameter const* rootSigEntry = 
-				m_currentRootSignature->GetRootSignatureEntry(k_uavTexTargetNames[i]);
+				m_currentRootSignature->GetRootSignatureEntry(targetParams.m_shaderName);
 
 			SEAssert(rootSigEntry || 
 				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
@@ -755,9 +743,7 @@ namespace dx12
 				re::Texture const* colorTex = colorTarget.GetTexture().get();
 
 				SEAssert((colorTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0,
-					"It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader");
-
-				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();			
+					"It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader");		
 
 				const D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptor = 
 					dx12::Texture::GetUAV(colorTex, targetParams.m_textureView);

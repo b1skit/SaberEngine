@@ -5,7 +5,7 @@
 #include "SaberCommon.glsl"
 #include "UVUtils.glsl"
 
-layout(location=0, rgba32f) coherent uniform image2D outColor;
+layout(location=0, rgba32f) coherent uniform image2D output0;
 
 
 void BloomDown(in const uvec3 DTId)
@@ -101,7 +101,7 @@ void BloomDown(in const uvec3 DTId)
 		center *= ComputeKarisAverageWeight(center);
 	}
 
-	imageStore(outColor, texelCoord, vec4(TL + TR + BL + BR + center, 0.f));
+	imageStore(output0, texelCoord, vec4(TL + TR + BL + BR + center, 0.f));
 }
 
 
@@ -163,7 +163,7 @@ void BloomUp(in const uvec3 DTId)
 	if (level == numLevels) // First pass (smallest mip)
 	{
 		// First pass has no previous (correctly downsampled) mip to sample from
-		imageStore(outColor, texelCoord, vec4(color, 0.f));
+		imageStore(output0, texelCoord, vec4(color, 0.f));
 	}
 	else
 	{
@@ -173,7 +173,7 @@ void BloomUp(in const uvec3 DTId)
 
 		const float avgFactor = 0.5f;
 		
-		imageStore(outColor, texelCoord, vec4(color + prevBlurredMip, 0.f) * avgFactor);
+		imageStore(output0, texelCoord, vec4(color + prevBlurredMip, 0.f) * avgFactor);
 	}
 }
 
@@ -189,7 +189,7 @@ void BilinearDown(in const uvec3 DTId)
 	
 	const vec4 color = textureLod(Tex0, uvs, srcMipLevel);
 
-	imageStore(outColor, texelCoord, color);
+	imageStore(output0, texelCoord, color);
 }
 
 

@@ -77,11 +77,11 @@ namespace re
 		struct ClearStageParams final : public virtual IStageParams
 		{
 			// 1 entry: applied to all targets, or per-target if m_colorClearMode.size() == targetSet.GetNumColorTargets()
-			std::vector<re::TextureTarget::TargetParams::ClearMode> m_colorClearModes;
+			std::vector<re::TextureTarget::ClearMode> m_colorClearModes;
 			glm::vec4 m_clearColor = glm::vec4(0.f, 0.f, 0.f, 0.f);
 
-			re::TextureTarget::TargetParams::ClearMode m_depthClearMode = 
-				re::TextureTarget::TargetParams::ClearMode::Disabled;
+			re::TextureTarget::ClearMode m_depthClearMode = 
+				re::TextureTarget::ClearMode::Disabled;
 			float m_clearDepth = 1.f; // Far plane
 		};
 

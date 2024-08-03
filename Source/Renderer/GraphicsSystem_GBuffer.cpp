@@ -77,8 +77,8 @@ namespace gr
 
 		const re::TextureTarget::TargetParams::BlendModes gbufferBlendModes
 		{
-			re::TextureTarget::TargetParams::BlendMode::Disabled,
-			re::TextureTarget::TargetParams::BlendMode::Disabled
+			re::TextureTarget::BlendMode::Disabled,
+			re::TextureTarget::BlendMode::Disabled
 		};
 		m_gBufferTargets->SetColorTargetBlendModes(1, &gbufferBlendModes);
 
@@ -90,8 +90,8 @@ namespace gr
 
 		// Create a clear stage for the GBuffer targets:
 		re::RenderStage::ClearStageParams gbufferClearParams; // Clear both color and depth
-		gbufferClearParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Enabled };
-		gbufferClearParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
+		gbufferClearParams.m_colorClearModes = { re::TextureTarget::ClearMode::Enabled };
+		gbufferClearParams.m_depthClearMode = re::TextureTarget::ClearMode::Enabled;
 		m_owningPipeline->AppendRenderStage(re::RenderStage::CreateClearStage(gbufferClearParams, m_gBufferTargets));
 
 
@@ -129,8 +129,8 @@ namespace gr
 			// Append a clear stage, to ensure that the depth buffer is cleared when there is no batches (i.e. so the 
 			// skybox will still render in an empty scene)
 			re::RenderStage::ClearStageParams depthClearStageParams;
-			depthClearStageParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Disabled };
-			depthClearStageParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
+			depthClearStageParams.m_colorClearModes = { re::TextureTarget::ClearMode::Disabled };
+			depthClearStageParams.m_depthClearMode = re::TextureTarget::ClearMode::Enabled;
 			
 			m_owningPipeline->AppendSingleFrameRenderStage(re::RenderStage::CreateSingleFrameClearStage(
 				depthClearStageParams, 

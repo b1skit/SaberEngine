@@ -11,6 +11,9 @@
 
 namespace
 {
+	constexpr char const* k_bloomTargetName = "output0";
+
+
 	BloomComputeData CreateBloomComputeParamsData(
 		std::shared_ptr<re::Texture> bloomSrcTex,
 		std::shared_ptr<re::Texture> bloomDstTex,
@@ -86,8 +89,8 @@ namespace gr
 			re::TextureTarget::TargetParams{.m_textureView = re::TextureView::Texture2DView(0, 1)});
 
 		emissiveTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-			re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One });
-		emissiveTargetSet->SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode::Disabled);
+			re::TextureTarget::BlendMode::One, re::TextureTarget::BlendMode::One });
+		emissiveTargetSet->SetAllTargetClearModes(re::TextureTarget::ClearMode::Disabled);
 
 		m_emissiveBlitStage->SetTextureTargetSet(emissiveTargetSet);
 
@@ -149,8 +152,9 @@ namespace gr
 			}
 			
 			// Target:
-			re::TextureTarget::TargetParams bloomLevelTargetParams{ 
-				.m_textureView = re::TextureView::Texture2DView(level, 1)};
+			const re::TextureTarget::TargetParams bloomLevelTargetParams{ 
+				.m_textureView = re::TextureView::Texture2DView(level, 1),
+				.m_shaderName = k_bloomTargetName };
 			
 			bloomLevelTargets->SetColorTarget(
 				0, 
@@ -201,8 +205,9 @@ namespace gr
 				"Tex0", bloomTargetTex, bloomSampler, re::TextureView::Texture2DView(upsampleSrcMip, 1));
 
 			// Targets:
-			re::TextureTarget::TargetParams bloomLevelTargetParams{ 
-				.m_textureView = re::TextureView::Texture2DView(upsampleDstMip, 1)};
+			const re::TextureTarget::TargetParams bloomLevelTargetParams{ 
+				.m_textureView = re::TextureView::Texture2DView(upsampleDstMip, 1),
+				.m_shaderName = k_bloomTargetName };
 
 			bloomLevelTargets->SetColorTarget(
 				0,

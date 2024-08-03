@@ -151,8 +151,8 @@ namespace gr
 				{re::TextureView::ViewFlags::ReadOnlyDepth} } });
 
 		transparencyTarget->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-			re::TextureTarget::TargetParams::BlendMode::SrcAlpha,
-			re::TextureTarget::TargetParams::BlendMode::OneMinusSrcAlpha });
+			re::TextureTarget::BlendMode::SrcAlpha,
+			re::TextureTarget::BlendMode::OneMinusSrcAlpha });
 
 		m_transparencyStage->SetTextureTargetSet(transparencyTarget);
 

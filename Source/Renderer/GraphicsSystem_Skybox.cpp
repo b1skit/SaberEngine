@@ -78,8 +78,8 @@ namespace gr
 		// Render on top of the frame
 		const re::TextureTarget::TargetParams::BlendModes skyboxBlendModes
 		{
-			re::TextureTarget::TargetParams::BlendMode::One,
-			re::TextureTarget::TargetParams::BlendMode::Zero
+			re::TextureTarget::BlendMode::One,
+			re::TextureTarget::BlendMode::Zero
 		};
 		skyboxTargets->SetColorTargetBlendModes(1, &skyboxBlendModes);
 

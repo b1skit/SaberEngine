@@ -266,12 +266,14 @@ namespace
 			D3D12_RENDER_TARGET_BLEND_DESC rtBlendDesc{};
 			rtBlendDesc.BlendEnable = true;
 
-			re::TextureTarget::TargetParams::BlendModes const& blendModes = targetSet.GetColorTarget(i).GetBlendMode();
+			re::TextureTarget const& colorTarget = targetSet.GetColorTarget(i);
+
+			re::TextureTarget::TargetParams::BlendModes const& blendModes = colorTarget.GetBlendMode();
 
 			// Source blending:
 			switch (blendModes.m_srcBlendMode)
 			{
-			case re::TextureTarget::TargetParams::BlendMode::Disabled:
+			case re::TextureTarget::BlendMode::Disabled:
 			{
 				SEAssert(blendModes.m_srcBlendMode == blendModes.m_dstBlendMode,
 					"Must disable blending for both source and destination");
@@ -280,25 +282,25 @@ namespace
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::Zero:
+			case re::TextureTarget::BlendMode::Zero:
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ZERO; break;
-			case re::TextureTarget::TargetParams::BlendMode::One:
+			case re::TextureTarget::BlendMode::One:
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ONE; break;
-			case re::TextureTarget::TargetParams::BlendMode::SrcColor:
+			case re::TextureTarget::BlendMode::SrcColor:
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_SRC_COLOR; break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcColor:
+			case re::TextureTarget::BlendMode::OneMinusSrcColor:
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_COLOR; break;
-			case re::TextureTarget::TargetParams::BlendMode::DstColor:
+			case re::TextureTarget::BlendMode::DstColor:
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_DEST_COLOR; break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstColor:
+			case re::TextureTarget::BlendMode::OneMinusDstColor:
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_COLOR; break;
-			case re::TextureTarget::TargetParams::BlendMode::SrcAlpha:
+			case re::TextureTarget::BlendMode::SrcAlpha:
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_SRC_ALPHA; break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcAlpha:
+			case re::TextureTarget::BlendMode::OneMinusSrcAlpha:
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_ALPHA; break;
-			case re::TextureTarget::TargetParams::BlendMode::DstAlpha:
+			case re::TextureTarget::BlendMode::DstAlpha:
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_DEST_ALPHA; break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstAlpha:
+			case re::TextureTarget::BlendMode::OneMinusDstAlpha:
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_ALPHA; break;
 			default:
 				SEAssertF("Invalid source blend mode");
@@ -308,7 +310,7 @@ namespace
 			// Destination blending:
 			switch (blendModes.m_dstBlendMode)
 			{
-			case re::TextureTarget::TargetParams::BlendMode::Disabled:
+			case re::TextureTarget::BlendMode::Disabled:
 			{
 				SEAssert(blendModes.m_srcBlendMode == blendModes.m_dstBlendMode,
 					"Must disable blending for both source and destination");
@@ -317,25 +319,25 @@ namespace
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::Zero:
+			case re::TextureTarget::BlendMode::Zero:
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO; break;
-			case re::TextureTarget::TargetParams::BlendMode::One:
+			case re::TextureTarget::BlendMode::One:
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ONE; break;
-			case re::TextureTarget::TargetParams::BlendMode::SrcColor:
+			case re::TextureTarget::BlendMode::SrcColor:
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_SRC_COLOR; break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcColor:
+			case re::TextureTarget::BlendMode::OneMinusSrcColor:
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_COLOR; break;
-			case re::TextureTarget::TargetParams::BlendMode::DstColor:
+			case re::TextureTarget::BlendMode::DstColor:
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_DEST_COLOR; break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstColor:
+			case re::TextureTarget::BlendMode::OneMinusDstColor:
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_COLOR; break;
-			case re::TextureTarget::TargetParams::BlendMode::SrcAlpha:
+			case re::TextureTarget::BlendMode::SrcAlpha:
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_SRC_ALPHA; break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcAlpha:
+			case re::TextureTarget::BlendMode::OneMinusSrcAlpha:
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_ALPHA; break;
-			case re::TextureTarget::TargetParams::BlendMode::DstAlpha:
+			case re::TextureTarget::BlendMode::DstAlpha:
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_DEST_ALPHA; break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstAlpha:
+			case re::TextureTarget::BlendMode::OneMinusDstAlpha:
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_ALPHA; break;
 			default:
 				SEAssertF("Invalid dest blend mode");
@@ -349,16 +351,9 @@ namespace
 			rtBlendDesc.DestBlendAlpha = D3D12_BLEND::D3D12_BLEND_ZERO;
 			rtBlendDesc.BlendOpAlpha = D3D12_BLEND_OP::D3D12_BLEND_OP_ADD;
 			rtBlendDesc.LogicOp = D3D12_LOGIC_OP::D3D12_LOGIC_OP_NOOP;
-
+			
 			// Build a bitmask for our color write modes:
-			re::TextureTarget::TargetParams::ChannelWrite const& colorWriteMode =
-				targetSet.GetColorTarget(i).GetColorWriteMode();
-
-			rtBlendDesc.RenderTargetWriteMask =
-				(colorWriteMode.R == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled ? D3D12_COLOR_WRITE_ENABLE_RED : 0) |
-				(colorWriteMode.G == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled ? D3D12_COLOR_WRITE_ENABLE_GREEN : 0) |
-				(colorWriteMode.B == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled ? D3D12_COLOR_WRITE_ENABLE_BLUE : 0) |
-				(colorWriteMode.A == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0);
+			rtBlendDesc.RenderTargetWriteMask = static_cast<uint8_t>(colorTarget.GetColorWriteMask());
 
 			blendDesc.RenderTarget[i] = rtBlendDesc;
 		}

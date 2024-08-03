@@ -691,6 +691,9 @@ namespace gr
 		case gr::Light::AmbientIBL:
 		default: SEAssertF("Invalid light type");
 		}
+
+		return re::TextureView(re::TextureView::Texture2DArrayView{
+				0, 1, GetShadowArrayIndex(m_directionalShadowMetadata, lightID), 1 }); // This should never happen
 	}
 
 

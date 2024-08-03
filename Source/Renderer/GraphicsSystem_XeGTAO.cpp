@@ -176,19 +176,19 @@ namespace gr
 		// Depth prefilter target:
 		m_prefilterDepthsTargets = re::TextureTargetSet::Create("XeGTAO: Prefilter depths targets");
 		
-		re::Texture::TextureParams prefilterDepthTargetParams{};
-		prefilterDepthTargetParams.m_width = m_xRes;
-		prefilterDepthTargetParams.m_height = m_yRes;
-		prefilterDepthTargetParams.m_usage = 
+		re::Texture::TextureParams prefilterDepthTexParams{};
+		prefilterDepthTexParams.m_width = m_xRes;
+		prefilterDepthTexParams.m_height = m_yRes;
+		prefilterDepthTexParams.m_usage = 
 			static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
-		prefilterDepthTargetParams.m_dimension = re::Texture::Dimension::Texture2D;
-		prefilterDepthTargetParams.m_format = re::Texture::Format::R16F;
-		prefilterDepthTargetParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		prefilterDepthTargetParams.m_mipMode = re::Texture::MipMode::Allocate;
-		prefilterDepthTargetParams.m_addToSceneData = false;
+		prefilterDepthTexParams.m_dimension = re::Texture::Dimension::Texture2D;
+		prefilterDepthTexParams.m_format = re::Texture::Format::R16F;
+		prefilterDepthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		prefilterDepthTexParams.m_mipMode = re::Texture::MipMode::Allocate;
+		prefilterDepthTexParams.m_addToSceneData = false;
 
 		std::shared_ptr<re::Texture> prefilteredDepthTargetTex = 
-			re::Texture::Create("XeGTAO: Prefiltered depths", prefilterDepthTargetParams);
+			re::Texture::Create("XeGTAO: Prefiltered depths", prefilterDepthTexParams);
 
 		uint32_t targetMip = 0;
 
@@ -196,31 +196,41 @@ namespace gr
 		m_prefilterDepthsTargets->SetColorTarget(
 			0,
 			prefilteredDepthTargetTex,
-			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(targetMip++, 1) });
+			re::TextureTarget::TargetParams{ 
+				.m_textureView = re::TextureView::Texture2DView(targetMip++, 1),
+				.m_shaderName = "output0" });
 
 		// Mip 1:
 		m_prefilterDepthsTargets->SetColorTarget(
 			1, 
 			prefilteredDepthTargetTex, 
-			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(targetMip++, 1) });
+			re::TextureTarget::TargetParams{ 
+				.m_textureView = re::TextureView::Texture2DView(targetMip++, 1),
+				.m_shaderName = "output1" });
 
 		// Mip 2:
 		m_prefilterDepthsTargets->SetColorTarget(
 			2, 
 			prefilteredDepthTargetTex,
-			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(targetMip++, 1) });
+			re::TextureTarget::TargetParams{ 
+				.m_textureView = re::TextureView::Texture2DView(targetMip++, 1),
+				.m_shaderName = "output2" });
 
 		// Mip 3:
 		m_prefilterDepthsTargets->SetColorTarget(
 			3, 
 			prefilteredDepthTargetTex,
-			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(targetMip++, 1) });
+			re::TextureTarget::TargetParams{ 
+				.m_textureView = re::TextureView::Texture2DView(targetMip++, 1),
+				.m_shaderName = "output3" });
 
 		// Mip 4:
 		m_prefilterDepthsTargets->SetColorTarget(
 			4, 
 			prefilteredDepthTargetTex, 
-			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(targetMip++, 1) });
+			re::TextureTarget::TargetParams{ 
+				.m_textureView = re::TextureView::Texture2DView(targetMip++, 1),
+				.m_shaderName = "output4" });
 
 		m_prefilterDepthsStage->SetTextureTargetSet(m_prefilterDepthsTargets);
 
@@ -262,9 +272,11 @@ namespace gr
 
 		std::shared_ptr<re::Texture> workingAOTex = re::Texture::Create("XeGTAO: Working AO", workingAOTexParams);
 
-		const re::TextureTarget::TargetParams defaultTargetParams{.m_textureView = re::TextureView::Texture2DView(0, 1)};
+		re::TextureTarget::TargetParams targetParams{
+			.m_textureView = re::TextureView::Texture2DView(0, 1),
+			.m_shaderName = "output0" };
 
-		m_mainTargets->SetColorTarget(0, workingAOTex, defaultTargetParams);
+		m_mainTargets->SetColorTarget(0, workingAOTex, targetParams);
 
 
 		re::Texture::TextureParams workingEdgesTexParams{};
@@ -282,7 +294,9 @@ namespace gr
 			re::Texture::Create("XeGTAO: Working Edges", workingEdgesTexParams);
 
 		constexpr uint8_t k_workingEdgesIdx = 1;
-		m_mainTargets->SetColorTarget(k_workingEdgesIdx, workingEdgesTex, defaultTargetParams);
+		targetParams.m_shaderName = "output1";
+
+		m_mainTargets->SetColorTarget(k_workingEdgesIdx, workingEdgesTex, targetParams);
 
 		m_mainStage->SetTextureTargetSet(m_mainTargets);
 
@@ -328,10 +342,13 @@ namespace gr
 
 		// Create our first ping-pong target:
 		std::shared_ptr<re::Texture> denoiseTarget = re::Texture::Create("XeGTAO: Denoise target", workingAOTexParams);
-		m_denoisePingPongTargets[0]->SetColorTarget(0, denoiseTarget, defaultTargetParams);
+
+		targetParams.m_shaderName = "output0";
+
+		m_denoisePingPongTargets[0]->SetColorTarget(0, denoiseTarget, targetParams);
 
 		// We reuse the working AO buffer as our 2nd target
-		m_denoisePingPongTargets[1]->SetColorTarget(0, workingAOTex, defaultTargetParams);
+		m_denoisePingPongTargets[1]->SetColorTarget(0, workingAOTex, targetParams);
 		
 		for (uint8_t passIdx = 0; passIdx < numDenoisePasses; passIdx++)
 		{

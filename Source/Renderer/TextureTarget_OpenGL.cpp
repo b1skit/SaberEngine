@@ -15,7 +15,7 @@ namespace
 	void SetBlendMode(re::TextureTarget const& textureTarget, uint32_t drawBufferIndex)
 	{
 		const re::TextureTarget::TargetParams::BlendModes blendModes = textureTarget.GetBlendMode();
-		if (blendModes.m_srcBlendMode == re::TextureTarget::TargetParams::BlendMode::Disabled)
+		if (blendModes.m_srcBlendMode == re::TextureTarget::BlendMode::Disabled)
 		{
 			SEAssert(blendModes.m_srcBlendMode == blendModes.m_dstBlendMode,
 				"Must disable blending for both source and destination");
@@ -30,59 +30,59 @@ namespace
 		GLenum dFactor = GL_ZERO;
 
 		auto SetGLBlendFactor = [](
-			re::TextureTarget::TargetParams::BlendMode const& platformBlendMode,
+			re::TextureTarget::BlendMode const& platformBlendMode,
 			GLenum& blendFactor,
 			bool isSrc
 			)
 		{
 			switch (platformBlendMode)
 			{
-			case re::TextureTarget::TargetParams::BlendMode::Zero:
+			case re::TextureTarget::BlendMode::Zero:
 			{
 				blendFactor = GL_ZERO;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::One:
+			case re::TextureTarget::BlendMode::One:
 			{
 				blendFactor = GL_ONE;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::SrcColor:
+			case re::TextureTarget::BlendMode::SrcColor:
 			{
 				blendFactor = GL_SRC_COLOR;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcColor:
+			case re::TextureTarget::BlendMode::OneMinusSrcColor:
 			{
 				blendFactor = GL_ONE_MINUS_SRC_COLOR;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::DstColor:
+			case re::TextureTarget::BlendMode::DstColor:
 			{
 				blendFactor = GL_DST_COLOR;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstColor:
+			case re::TextureTarget::BlendMode::OneMinusDstColor:
 			{
 				blendFactor = GL_ONE_MINUS_DST_COLOR;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::SrcAlpha:
+			case re::TextureTarget::BlendMode::SrcAlpha:
 			{
 				blendFactor = GL_SRC_ALPHA;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcAlpha:
+			case re::TextureTarget::BlendMode::OneMinusSrcAlpha:
 			{
 				blendFactor = GL_ONE_MINUS_SRC_ALPHA;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::DstAlpha:
+			case re::TextureTarget::BlendMode::DstAlpha:
 			{
 				blendFactor = GL_DST_ALPHA;
 			}
 			break;
-			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstAlpha:
+			case re::TextureTarget::BlendMode::OneMinusDstAlpha:
 			{
 				blendFactor = GL_ONE_MINUS_DST_ALPHA;
 			}
@@ -101,15 +101,12 @@ namespace
 
 	void SetColorWriteMode(re::TextureTarget const& textureTarget, uint32_t drawBufferIndex)
 	{
-		re::TextureTarget::TargetParams::ChannelWrite const& channelModes = 
-			textureTarget.GetTargetParams().m_channelWriteMode;
-
 		glColorMaski(
 			drawBufferIndex,
-			channelModes.R == re::TextureTarget::TargetParams::ChannelWrite::Enabled ? GL_TRUE : GL_FALSE,
-			channelModes.G == re::TextureTarget::TargetParams::ChannelWrite::Enabled ? GL_TRUE : GL_FALSE,
-			channelModes.B == re::TextureTarget::TargetParams::ChannelWrite::Enabled ? GL_TRUE : GL_FALSE,
-			channelModes.A == re::TextureTarget::TargetParams::ChannelWrite::Enabled ? GL_TRUE : GL_FALSE);
+			textureTarget.WritesColor(re::TextureTarget::Channel::R) ? GL_TRUE : GL_FALSE,
+			textureTarget.WritesColor(re::TextureTarget::Channel::G) ? GL_TRUE : GL_FALSE,
+			textureTarget.WritesColor(re::TextureTarget::Channel::B) ? GL_TRUE : GL_FALSE,
+			textureTarget.WritesColor(re::TextureTarget::Channel::A) ? GL_TRUE : GL_FALSE);
 	}
 
 
@@ -603,7 +600,7 @@ namespace opengl
 				break;  // Targets must be bound in monotonically-increasing order from slot 0
 			}
 
-			if (colorTargets[i].GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
+			if (colorTargets[i].GetClearMode() == re::TextureTarget::ClearMode::Enabled)
 			{
 				opengl::TextureTarget::PlatformParams* targetParams =
 					colorTargets[i].GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
@@ -620,7 +617,7 @@ namespace opengl
 
 	void TextureTargetSet::ClearDepthStencilTarget(re::TextureTargetSet const& targetSet)
 	{
-		if (targetSet.GetDepthStencilTarget().GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled &&
+		if (targetSet.GetDepthStencilTarget().GetClearMode() == re::TextureTarget::ClearMode::Enabled &&
 			targetSet.HasDepthTarget())
 		{
 			opengl::TextureTargetSet::PlatformParams const* targetSetPlatParams =

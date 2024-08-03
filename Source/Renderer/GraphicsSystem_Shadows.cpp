@@ -138,7 +138,7 @@ namespace gr
 		pointShadowTargetSet->SetScissorRect(lightManager.GetShadowArrayWriteScissorRect(shadowData.m_lightType));
 
 
-		pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
+		pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::ClearMode::Enabled);
 
 		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
 
@@ -202,7 +202,7 @@ namespace gr
 		shadowTargetSet->SetViewport(lightManager.GetShadowArrayWriteViewport(shadowData.m_lightType));
 		shadowTargetSet->SetScissorRect(lightManager.GetShadowArrayWriteScissorRect(shadowData.m_lightType));
 
-		shadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
+		shadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::ClearMode::Enabled);
 
 		shadowStage->SetTextureTargetSet(shadowTargetSet);
 

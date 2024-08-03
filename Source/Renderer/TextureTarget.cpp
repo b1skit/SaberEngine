@@ -108,35 +108,45 @@ namespace re
 	}
 
 
-	void TextureTarget::SetColorWriteMode(TargetParams::ChannelWrite const& colorWriteMode)
+	void TextureTarget::SetColorWriteBit(Channel channels)
 	{
-		m_targetParams.m_channelWriteMode = colorWriteMode;
+		SEAssert(channels != 0 &&
+			channels <= Channel::All,
+			"Invalid channels mask");
+
+		m_targetParams.m_colorWriteMask |= channels;
 	}
 
 
-	TextureTarget::TargetParams::ChannelWrite const& TextureTarget::GetColorWriteMode() const
+	TextureTarget::ColorWriteMask TextureTarget::GetColorWriteMask() const
 	{
-		return m_targetParams.m_channelWriteMode;
-	};
+		return m_targetParams.m_colorWriteMask;
+	}
+
+
+	bool TextureTarget::WritesColor(Channel channel) const
+	{
+		SEAssert(channel != 0 &&
+			channel <= Channel::All,
+			"Invalid channels mask");
+
+		return (m_targetParams.m_colorWriteMask & channel);
+	}
 
 
 	bool TextureTarget::WritesColor() const
 	{
-		return m_texture != nullptr &&
-			(m_targetParams.m_channelWriteMode.R ||
-				m_targetParams.m_channelWriteMode.G ||
-				m_targetParams.m_channelWriteMode.B ||
-				m_targetParams.m_channelWriteMode.A);
+		return m_targetParams.m_colorWriteMask != 0;
 	}
 
 
-	void TextureTarget::SetClearMode(re::TextureTarget::TargetParams::ClearMode clearMode)
+	void TextureTarget::SetClearMode(re::TextureTarget::ClearMode clearMode)
 	{
 		m_targetParams.m_clearMode = clearMode;
 	}
 
 
-	re::TextureTarget::TargetParams::ClearMode TextureTarget::GetClearMode() const
+	re::TextureTarget::ClearMode TextureTarget::GetClearMode() const
 	{
 		return m_targetParams.m_clearMode;
 	}
@@ -362,11 +372,11 @@ namespace re
 	}
 	
 
-	void TextureTargetSet::SetAllColorWriteModes(TextureTarget::TargetParams::ChannelWrite const& colorWriteMode)
+	void TextureTargetSet::SetAllColorWriteModes(TextureTarget::Channel channelMask)
 	{
 		for (size_t i = 0; i < m_colorTargets.size(); i++)
 		{
-			m_colorTargets[i].SetColorWriteMode(colorWriteMode);
+			m_colorTargets[i].SetColorWriteBit(channelMask);
 		}
 	}
 
@@ -463,13 +473,13 @@ namespace re
 	}
 
 
-	void TextureTargetSet::SetColorTargetClearMode(size_t targetIdx, re::TextureTarget::TargetParams::ClearMode clearMode)
+	void TextureTargetSet::SetColorTargetClearMode(size_t targetIdx, re::TextureTarget::ClearMode clearMode)
 	{
 		m_colorTargets[targetIdx].SetClearMode(clearMode);
 	}
 
 
-	void TextureTargetSet::SetAllColorTargetClearModes(re::TextureTarget::TargetParams::ClearMode clearMode)
+	void TextureTargetSet::SetAllColorTargetClearModes(re::TextureTarget::ClearMode clearMode)
 	{
 		for (size_t i = 0; i < m_colorTargets.size(); i++)
 		{
@@ -479,13 +489,13 @@ namespace re
 	}
 
 
-	void TextureTargetSet::SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode clearMode)
+	void TextureTargetSet::SetDepthTargetClearMode(re::TextureTarget::ClearMode clearMode)
 	{
 		m_depthStencilTarget.SetClearMode(clearMode);
 	}
 
 
-	void TextureTargetSet::SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode clearMode)
+	void TextureTargetSet::SetAllTargetClearModes(re::TextureTarget::ClearMode clearMode)
 	{
 		SetAllColorTargetClearModes(clearMode);
 		SetDepthTargetClearMode(clearMode);
@@ -589,7 +599,7 @@ namespace re
 			{
 				AddDataBytesToHash(m_colorTargets[slot].GetTexture()->GetTextureParams().m_format);
 				AddDataBytesToHash(m_colorTargets[slot].GetBlendMode());
-				AddDataBytesToHash(m_colorTargets[slot].GetColorWriteMode());
+				AddDataBytesToHash(m_colorTargets[slot].GetColorWriteMask());
 				AddDataBytesToHash(m_colorTargets[slot].GetTargetParams().m_textureView.Flags);
 			}
 		}

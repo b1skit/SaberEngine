@@ -31,65 +31,64 @@ namespace re
 
 
 	public:
+		enum class BlendMode : uint8_t // Graphics stages only
+		{
+			Disabled,
+			Zero,
+			One,
+			SrcColor,
+			OneMinusSrcColor,
+			DstColor,
+			OneMinusDstColor,
+			SrcAlpha,
+			OneMinusSrcAlpha,
+			DstAlpha,
+			OneMinusDstAlpha,
+			BlendMode_Count
+		};
+
+
+		enum Channel : uint8_t
+		{
+			R = 1 << 0,
+			G = 1 << 1,
+			B = 1 << 2,
+			A = 1 << 3,
+
+			RGB = (R | G | B),
+			All = (R | G | B | A),
+		};
+		using ColorWriteMask = uint8_t;
+
+
+		enum class ClearMode : bool
+		{
+			Enabled,
+			Disabled
+		};
+
+
+	public:
 		struct TargetParams
 		{
 			re::TextureView m_textureView;
 
+			std::string m_shaderName; // For UAV targets
+			
+			struct BlendModes
+			{
+				BlendMode m_srcBlendMode = BlendMode::One;
+				BlendMode m_dstBlendMode = BlendMode::Zero;
+			} m_blendModes;
 
-			// TODO: Support binding compute targets by name
+			ColorWriteMask m_colorWriteMask = Channel::All;
+
+			// TODO: Update PipelineState_DX12.cpp::BuildBlendDesc to have D3D12_BLEND_DESC::IndependentBlendEnable = true
+			ClearMode m_clearMode = ClearMode::Disabled;
 
 			// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
 			// TODO: We should support alpha blend modes, in addition to the color blend modes here
 			// TODO: Support logical operations (AND/OR/XOR etc)
-
-			// TODO: Wrap these in a union for graphics/depth/compute targets
-
-			enum class BlendMode // Graphics stages only
-			{
-				Disabled,
-				Zero,
-				One,
-				SrcColor,
-				OneMinusSrcColor,
-				DstColor,
-				OneMinusDstColor,
-				SrcAlpha,
-				OneMinusSrcAlpha,
-				DstAlpha,
-				OneMinusDstAlpha,
-				BlendMode_Count
-			};
-			struct BlendModes
-			{
-				TargetParams::BlendMode m_srcBlendMode = BlendMode::One;
-				TargetParams::BlendMode m_dstBlendMode = BlendMode::Zero;
-			} m_blendModes;
-
-			
-			struct ChannelWrite
-			{
-				enum Mode : bool
-				{
-					Disabled = 0,
-					Enabled = 1
-				};
-				Mode R = Mode::Enabled;
-				Mode G = Mode::Enabled;
-				Mode B = Mode::Enabled;
-				Mode A = Mode::Enabled;
-			} m_channelWriteMode = {
-				ChannelWrite::Mode::Enabled, // R
-				ChannelWrite::Mode::Enabled, // G
-				ChannelWrite::Mode::Enabled, // B
-				ChannelWrite::Mode::Enabled  // A
-			}; 
-
-			// TODO: Update PipelineState_DX12.cpp::BuildBlendDesc to have D3D12_BLEND_DESC::IndependentBlendEnable = true
-			enum class ClearMode
-			{
-				Enabled,
-				Disabled
-			} m_clearMode = ClearMode::Disabled;
 		};
 
 	public:
@@ -116,12 +115,13 @@ namespace re
 		void SetBlendMode(TargetParams::BlendModes const&);
 		TargetParams::BlendModes const& GetBlendMode() const;
 
-		void SetColorWriteMode(TargetParams::ChannelWrite const&);
-		TargetParams::ChannelWrite const& GetColorWriteMode() const;
+		void SetColorWriteBit(Channel channels);
+		ColorWriteMask GetColorWriteMask() const;
+		bool WritesColor(Channel channel) const;
 		bool WritesColor() const;
 
-		void SetClearMode(re::TextureTarget::TargetParams::ClearMode);
-		re::TextureTarget::TargetParams::ClearMode GetClearMode() const;
+		void SetClearMode(re::TextureTarget::ClearMode);
+		re::TextureTarget::ClearMode GetClearMode() const;
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
@@ -242,7 +242,7 @@ namespace re
 		bool HasColorTarget() const;
 		bool HasDepthTarget() const;
 
-		void SetAllColorWriteModes(TextureTarget::TargetParams::ChannelWrite const&);
+		void SetAllColorWriteModes(TextureTarget::Channel channelMask);
 		bool WritesColor() const;
 
 		uint8_t GetNumColorTargets() const;
@@ -251,10 +251,10 @@ namespace re
 		void SetColorTargetBlendModes(size_t numTargets, re::TextureTarget::TargetParams::BlendModes const* blendModesArray);
 		void SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes const&);
 
-		void SetColorTargetClearMode(size_t targetIdx, re::TextureTarget::TargetParams::ClearMode);
-		void SetAllColorTargetClearModes(re::TextureTarget::TargetParams::ClearMode);
-		void SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode);
-		void SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode);
+		void SetColorTargetClearMode(size_t targetIdx, re::TextureTarget::ClearMode);
+		void SetAllColorTargetClearModes(re::TextureTarget::ClearMode);
+		void SetDepthTargetClearMode(re::TextureTarget::ClearMode);
+		void SetAllTargetClearModes(re::TextureTarget::ClearMode);
 
 		void SetViewport(re::Viewport const&);
 		inline re::Viewport const& GetViewport() const { return m_viewport; }

@@ -151,16 +151,18 @@ namespace gr
 
 		std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
 
-		re::TextureTarget::TargetParams colorTargetParams{.m_textureView = re::TextureView::Texture2DView(0, 1)};
+		const re::TextureTarget::TargetParams colorTargetParams{
+			.m_textureView = re::TextureView::Texture2DView(0, 1),
+			.m_shaderName = "output0"};
 
 		brdfStageTargets->SetColorTarget(0, m_BRDF_integrationMap, colorTargetParams);
 		brdfStageTargets->SetViewport(re::Viewport(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
 		brdfStageTargets->SetScissorRect(re::ScissorRect(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
 
-		re::TextureTarget::TargetParams::BlendModes brdfBlendModes
+		const re::TextureTarget::TargetParams::BlendModes brdfBlendModes
 		{
-			re::TextureTarget::TargetParams::BlendMode::One,
-			re::TextureTarget::TargetParams::BlendMode::Zero,
+			re::TextureTarget::BlendMode::One,
+			re::TextureTarget::BlendMode::Zero,
 		};
 		brdfStageTargets->SetColorTargetBlendModes(1, &brdfBlendModes);
 
@@ -235,8 +237,8 @@ namespace gr
 
 			re::TextureTarget::TargetParams::BlendModes iemBlendModes
 			{
-				re::TextureTarget::TargetParams::BlendMode::One,
-				re::TextureTarget::TargetParams::BlendMode::Zero,
+				re::TextureTarget::BlendMode::One,
+				re::TextureTarget::BlendMode::Zero,
 			};
 			iemTargets->SetColorTargetBlendModes(1, &iemBlendModes);
 
@@ -328,8 +330,8 @@ namespace gr
 
 				re::TextureTarget::TargetParams::BlendModes pmremBlendModes
 				{
-					re::TextureTarget::TargetParams::BlendMode::One,
-					re::TextureTarget::TargetParams::BlendMode::Zero,
+					re::TextureTarget::BlendMode::One,
+					re::TextureTarget::BlendMode::Zero,
 				};
 				pmremTargetSet->SetColorTargetBlendModes(1, &pmremBlendModes);
 
@@ -453,7 +455,7 @@ namespace gr
 
 		// Create the lighting target set (shared by all lights/stages):
 		re::TextureTarget::TargetParams deferredTargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1)};
-		deferredTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
+		deferredTargetParams.m_clearMode = re::TextureTarget::ClearMode::Disabled;
 
 		m_lightingTargetSet->SetColorTarget(0, lightTargetTex, deferredTargetParams);
 
@@ -469,16 +471,16 @@ namespace gr
 		// All deferred lighting is additive
 		re::TextureTarget::TargetParams::BlendModes deferredBlendModes
 		{
-			re::TextureTarget::TargetParams::BlendMode::One,
-			re::TextureTarget::TargetParams::BlendMode::One,
+			re::TextureTarget::BlendMode::One,
+			re::TextureTarget::BlendMode::One,
 		};
 		m_lightingTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
 
 
 		// Append a color-only clear stage to clear the lighting target:
 		re::RenderStage::ClearStageParams colorClearParams;
-		colorClearParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Enabled };
-		colorClearParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
+		colorClearParams.m_colorClearModes = { re::TextureTarget::ClearMode::Enabled };
+		colorClearParams.m_depthClearMode = re::TextureTarget::ClearMode::Disabled;
 		pipeline.AppendRenderStage(re::RenderStage::CreateClearStage(colorClearParams, m_lightingTargetSet));
 
 

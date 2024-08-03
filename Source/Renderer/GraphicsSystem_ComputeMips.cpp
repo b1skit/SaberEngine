@@ -249,6 +249,8 @@ namespace gr
 							default: SEAssertF("Invalid dimension");
 							}
 
+							mipTargetParams.m_shaderName = std::format("output{}", currentTargetIdx);
+
 							mipGenTargets->SetColorTarget(currentTargetIdx, newTexture, mipTargetParams);
 						}
 						mipGenerationStage->SetTextureTargetSet(mipGenTargets);

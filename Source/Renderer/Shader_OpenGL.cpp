@@ -8,6 +8,7 @@
 #include "Shader_OpenGL.h"
 #include "Texture.h"
 #include "Texture_OpenGL.h"
+#include "TextureTarget.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -140,18 +141,45 @@ namespace
 			type == GL_SAMPLER_2D_MULTISAMPLE_ARRAY ||
 			type == GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
 			type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
-			// GL_ARB_shader_image_load_store (NOTE: Not all types are included here (yet?))
+			// GL_ARB_shader_image_load_store
+			type == GL_IMAGE_1D ||
+			type == GL_IMAGE_2D ||
+			type == GL_IMAGE_3D ||
+			type == GL_IMAGE_2D_RECT ||
+			type == GL_IMAGE_CUBE ||
+			type == GL_IMAGE_BUFFER ||
+			type == GL_IMAGE_1D_ARRAY ||
+			type == GL_IMAGE_2D_ARRAY ||
+			type == GL_IMAGE_CUBE_MAP_ARRAY ||
 			type == GL_IMAGE_2D_MULTISAMPLE ||
 			type == GL_IMAGE_2D_MULTISAMPLE_ARRAY ||
+			type == GL_INT_IMAGE_1D ||
+			type == GL_INT_IMAGE_2D ||
+			type == GL_INT_IMAGE_3D ||
+			type == GL_INT_IMAGE_2D_RECT ||
+			type == GL_INT_IMAGE_CUBE ||
+			type == GL_INT_IMAGE_BUFFER ||
+			type == GL_INT_IMAGE_1D_ARRAY ||
+			type == GL_INT_IMAGE_2D_ARRAY ||
+			type == GL_INT_IMAGE_CUBE_MAP_ARRAY ||
 			type == GL_INT_IMAGE_2D_MULTISAMPLE ||
 			type == GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY ||
+			type == GL_UNSIGNED_INT_IMAGE_1D ||
+			type == GL_UNSIGNED_INT_IMAGE_2D ||
+			type == GL_UNSIGNED_INT_IMAGE_3D ||
+			type == GL_UNSIGNED_INT_IMAGE_2D_RECT ||
+			type == GL_UNSIGNED_INT_IMAGE_CUBE ||
+			type == GL_UNSIGNED_INT_IMAGE_BUFFER ||
+			type == GL_UNSIGNED_INT_IMAGE_1D_ARRAY ||
+			type == GL_UNSIGNED_INT_IMAGE_2D_ARRAY ||
+			type == GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY ||
 			type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE ||
 			type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
 	}
 
 
 	void AssertShaderIsValid(
-		std::string const& shaderName, uint32_t const& shaderRef, uint32_t const& flag, bool const& isProgram)
+		std::string const& shaderName, uint32_t shaderRef, uint32_t flag, bool isProgram)
 	{
 		GLint success = 0;
 		GLchar errorMsg[1024] = { 0 }; // Error buffer
@@ -405,17 +433,17 @@ namespace opengl
 		util::PerformanceTimer timer;
 		timer.Start();
 
-		opengl::Shader::PlatformParams* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
+		opengl::Shader::PlatformParams* platParams = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
 
-		SEAssert(!params->m_isCreated, "Shader has already been created");
-		params->m_isCreated = true;
+		SEAssert(!platParams->m_isCreated, "Shader has already been created");
+		platParams->m_isCreated = true;
 
 		std::string const& shaderFileName = shader.GetName();
 		LOG("Creating shader: \"%s\"", shaderFileName.c_str());
 
 		// Load the individual .vert/.frag/etc shader text files:
 		std::vector<std::future<void>> const& loadShaderTextsTaskFutures = 
-			LoadShaderTexts(shader.m_extensionlessSourceFilenames, params->m_shaderTexts);
+			LoadShaderTexts(shader.m_extensionlessSourceFilenames, platParams->m_shaderTexts);
 
 		// Load the shaders, and assemble params we'll need soon:
 		std::array<std::string, re::Shader::ShaderType_Count> shaderFiles;
@@ -437,10 +465,10 @@ namespace opengl
 		std::array< std::future<void>, re::Shader::ShaderType_Count> processIncludesTaskFutures;
 		for (size_t i = 0; i < re::Shader::ShaderType_Count; i++)
 		{
-			if (!params->m_shaderTexts[i].empty())
+			if (!platParams->m_shaderTexts[i].empty())
 			{
 				foundShaderTypeFlags[i] = k_shaderTypeFlags[i]; // Mark the shader as seen
-				shaderFiles[i] = std::move(params->m_shaderTexts[i]); // Move the shader texts, they're no longer needed
+				shaderFiles[i] = std::move(platParams->m_shaderTexts[i]); // Move the shader texts, they're no longer needed
 				shaderFileNames[i] = shaderFileName + k_shaderFileExtensions[i];
 
 				// Queue a job to parse the #include text:
@@ -464,7 +492,7 @@ namespace opengl
 		static const size_t preambleLength = strlen(k_globalPreamble);
 
 		// Create an empty shader program object:
-		params->m_shaderReference = glCreateProgram();
+		platParams->m_shaderReference = glCreateProgram();
 
 		const bool debugShaderResult = core::Config::Get()->KeyExists("debugopenglshaderpreprocessing");
 
@@ -525,58 +553,64 @@ namespace opengl
 				shaderSourceStringLengths.data());
 			glCompileShader(shaderObject);
 
-			AssertShaderIsValid(shader.GetName(), shaderObject, GL_COMPILE_STATUS, false);
+			AssertShaderIsValid(shader.GetName(), shaderObject, GL_COMPILE_STATUS, false/*= isProgram*/);
 
-			glAttachShader(params->m_shaderReference, shaderObject); // Attach our shaders to the shader program
+			glAttachShader(platParams->m_shaderReference, shaderObject); // Attach our shaders to the shader program
 
 			// Delete the shader stage now that we've attached it
 			glDeleteShader(shaderObject);
 		}
 
 		// Link our program object:
-		glLinkProgram(params->m_shaderReference);
-		AssertShaderIsValid(shader.GetName(), params->m_shaderReference, GL_LINK_STATUS, true);
+		glLinkProgram(platParams->m_shaderReference);
+		AssertShaderIsValid(shader.GetName(), platParams->m_shaderReference, GL_LINK_STATUS, true/*= isProgram*/);
 
 		// Validate our program objects can execute with our current OpenGL state:
-		glValidateProgram(params->m_shaderReference);
-		AssertShaderIsValid(shader.GetName(), params->m_shaderReference, GL_VALIDATE_STATUS, true);
+		glValidateProgram(platParams->m_shaderReference);
+		AssertShaderIsValid(shader.GetName(), platParams->m_shaderReference, GL_VALIDATE_STATUS, true/*= isProgram*/);
 
 		// Populate the uniform locations
 		// Get the number of active uniforms found in the shader:
 		int numUniforms = 0;
-		glGetProgramiv(params->m_shaderReference, GL_ACTIVE_UNIFORMS, &numUniforms);
+		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_UNIFORMS, &numUniforms);
 
 		// Get the max length of the active uniform names found in the shader:
 		int maxUniformNameLength = 0;
-		glGetProgramiv(params->m_shaderReference, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
+		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
-		// Store sampler uniform locations. Later, we map these locations to map samplers to texture units (ie. w/glUniform1i)
+		// Populate uniform metadata:
 		int size = 0; // Size of the uniform variable; currently we just ignore this
 		GLenum type; // Data type of the uniform
 		std::vector<GLchar> name(maxUniformNameLength, '\0'); // Uniform name, as described in the shader text
-		for (size_t i = 0; i < numUniforms; i++)
+		for (size_t uniformIdx = 0; uniformIdx < numUniforms; uniformIdx++)
 		{
+			// Get the size, type, and name of the uniform at the current index
 			glGetActiveUniform(
-				params->m_shaderReference,	// program
-				(GLuint)i,					// index
-				maxUniformNameLength,		// buffer size
-				nullptr,					// length
-				&size,						// size
-				&type,						// type
-				name.data());				// name
+				platParams->m_shaderReference,		// program
+				static_cast<GLuint>(uniformIdx),	// index
+				maxUniformNameLength,				// buffer size
+				nullptr,							// length
+				&size,								// size
+				&type,								// type
+				name.data());						// name
 
 			if (UniformIsSamplerType(type))
 			{
+				const GLuint uniformLocation = glGetUniformLocation(platParams->m_shaderReference, name.data());
+
 				// Get the texture unit binding value:
-				GLint val;
-				glGetUniformiv(params->m_shaderReference, (GLuint)i, &val);
+				GLint params = 0;
+				glGetUniformiv(
+					platParams->m_shaderReference,	// program
+					uniformLocation,				// location
+					&params);						// params
 
 				// Populate the shader sampler unit map with unique entries:
 				std::string nameStr(name.data());
-				SEAssert(params->m_samplerUnits.find(nameStr) == params->m_samplerUnits.end(),
+				SEAssert(platParams->m_samplerUnits.find(nameStr) == platParams->m_samplerUnits.end(),
 					"Sampler unit already found! Does the shader have a unique binding layout qualifier?");
 
-				params->m_samplerUnits.emplace(std::move(nameStr), static_cast<int32_t>(val));
+				platParams->m_samplerUnits.emplace(std::move(nameStr), static_cast<int32_t>(params));
 			}
 		}
 
@@ -795,5 +829,34 @@ namespace opengl
 			return;
 		}
 		opengl::Sampler::Bind(*texSamplerInput.m_sampler, samplerBindingUnit->second);
+	}
+
+
+	void Shader::SetImageTextureTargets(re::Shader const& shader, re::TextureTargetSet const& targetSet)
+	{
+		SEAssert(!targetSet.GetDepthStencilTarget().HasTexture(),
+			"It is not possible to attach a depth buffer as a target to a compute shader");
+
+		opengl::Shader::PlatformParams const* params = 
+			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
+
+		std::vector<re::TextureTarget> const& texTargets = targetSet.GetColorTargets();
+		for (uint32_t slot = 0; slot < texTargets.size(); slot++)
+		{
+			re::TextureTarget const& texTarget = texTargets[slot];
+			if (!texTarget.HasTexture())
+			{
+				break;;
+			}
+
+			re::TextureTarget::TargetParams const& targetParams = texTarget.GetTargetParams();
+
+			auto const& bindingUnit = params->m_samplerUnits.find(targetParams.m_shaderName);
+
+			re::Texture const* texture = texTarget.GetTexture().get();
+
+			constexpr uint32_t k_accessMode = GL_READ_WRITE;
+			opengl::Texture::BindAsImageTexture(*texture, bindingUnit->second, targetParams.m_textureView, k_accessMode);
+		}
 	}
 }
