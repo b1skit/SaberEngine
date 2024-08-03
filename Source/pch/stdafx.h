@@ -35,8 +35,6 @@
 // Win32 API:
 #define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
 #include <Windows.h>
-#include <hidusage.h>
-#include <comdef.h> // HRESULTs to error messages
 // TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
 
 
