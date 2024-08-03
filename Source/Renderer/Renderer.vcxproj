@@ -111,7 +111,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
@@ -133,7 +133,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <Optimization>Disabled</Optimization>
@@ -159,7 +159,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <PreprocessorDefinitions>PROFILE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>

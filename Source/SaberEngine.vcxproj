@@ -126,8 +126,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\$(OutDir)Core\;..\$(OutDir)Renderer\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(OutDir)Core\Core.lib;$(OutDir)Renderer\Renderer.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
     </Link>
@@ -179,8 +179,8 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\$(OutDir)Core\;..\$(OutDir)Renderer\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(OutDir)Core\Core.lib;$(OutDir)Renderer\Renderer.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <PerUserRedirection>true</PerUserRedirection>
@@ -232,8 +232,8 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\$(OutDir)Core\;..\$(OutDir)Renderer\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(OutDir)Core\Core.lib;$(OutDir)Renderer\Renderer.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
     </Link>
@@ -282,8 +282,8 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\$(OutDir)Core\;..\$(OutDir)Renderer\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(OutDir)Core\Core.lib;$(OutDir)Renderer\Renderer.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
     </Link>
