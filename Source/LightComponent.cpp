@@ -4,12 +4,10 @@
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
-#include "MeshFactory.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
-#include "RenderSystem.h"
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
 #include "ShadowMapComponent.h"
@@ -18,6 +16,9 @@
 #include "Core/Config.h"
 #include "Core/Util/FileIOUtils.h"
 #include "Core/Util/ImGuiUtils.h"
+
+#include "Renderer/MeshFactory.h"
+#include "Renderer/RenderSystem.h"
 
 
 namespace

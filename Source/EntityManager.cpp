@@ -2,7 +2,6 @@
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
-#include "Core/Config.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
@@ -12,10 +11,13 @@
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
-#include "RenderManager.h"
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
 #include "ShadowMapComponent.h"
+
+#include "Core/Config.h"
+
+#include "Renderer/RenderManager.h"
 
 
 namespace

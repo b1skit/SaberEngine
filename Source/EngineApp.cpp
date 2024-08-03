@@ -1,11 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Context.h"
 #include "EngineApp.h"
 #include "EntityManager.h"
-#include "RenderManager.h"
 #include "SceneManager.h"
 #include "UIManager.h"
-#include "Window.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -15,6 +12,10 @@
 #include "Core/PerformanceTimer.h"
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
+
+#include "Renderer/Context.h"
+#include "Renderer/RenderManager.h"
+#include "Renderer/Window.h"
 
 
 namespace

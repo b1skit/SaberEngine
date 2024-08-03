@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "CameraRenderData.h"
+#include "Renderer/CameraRenderData.h"
 
 #include "Shaders/Common/CameraParams.h"
 

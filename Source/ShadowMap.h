@@ -1,7 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Light.h"
-#include "ShadowMapRenderData.h"
+
+#include "Renderer/ShadowMapRenderData.h"
 
 
 namespace fr

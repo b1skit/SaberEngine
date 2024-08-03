@@ -2,6 +2,7 @@
 #pragma once
 #include "Core/Interfaces/IEventListener.h"
 #include "Core/Interfaces/IEngineComponent.h"
+#include "Core/Interfaces/INamedObject.h"
 
 
 namespace fr

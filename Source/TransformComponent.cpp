@@ -1,10 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "MarkerComponents.h"
-#include "RenderDataManager.h"
-#include "RenderManager.h"
-#include "Core/ThreadPool.h"
 #include "TransformComponent.h"
+
+#include "Core/ThreadPool.h"
+
+#include "Renderer/RenderDataManager.h"
+#include "Renderer/RenderManager.h"
 
 
 namespace fr

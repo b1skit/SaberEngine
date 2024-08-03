@@ -1,8 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "BoundsComponent.h"
-#include "MeshPrimitive.h"
 #include "RenderDataComponent.h"
+
+#include "Renderer/MeshPrimitive.h"
 
 
 namespace fr

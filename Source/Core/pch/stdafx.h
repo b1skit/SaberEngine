@@ -14,7 +14,6 @@
 #include <barrier>
 #include <cassert>
 #include <chrono>
-#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <future>

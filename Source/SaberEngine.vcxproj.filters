@@ -9,50 +9,11 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Source Files\Shaders">
-      <UniqueIdentifier>{fba4b42a-a194-41c3-858e-1acac86e27c9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\fr">
       <UniqueIdentifier>{8d683ba4-1aee-4552-9235-efdf36761b20}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\gr">
-      <UniqueIdentifier>{b6fedb3b-db6f-44f4-bbc5-6061241361f4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\re">
-      <UniqueIdentifier>{1af28ce0-86e8-4838-b787-ea0215cad937}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\fr">
       <UniqueIdentifier>{c39175b2-25dc-47b7-a5b5-d86d8cc9eb68}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\gr">
-      <UniqueIdentifier>{23947377-6921-40d3-b919-4d5484db3147}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\re">
-      <UniqueIdentifier>{1b25b4a1-92eb-482c-9ebb-92a8e5433254}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\re\platform">
-      <UniqueIdentifier>{180b02b2-6e6a-486b-b7c0-501814587f64}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\re\platform">
-      <UniqueIdentifier>{2a550363-f17a-4d7c-95cf-8f4bbdb3aaed}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\re\DX12">
-      <UniqueIdentifier>{f2a0cff1-b569-4542-b705-06a1dbd039a2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\re\OpenGL">
-      <UniqueIdentifier>{7bcdd248-abcf-4294-8d59-f6a63c54554b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\re\DX12">
-      <UniqueIdentifier>{39354178-16a6-456b-955d-b06161823123}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\re\OpenGL">
-      <UniqueIdentifier>{d850fa90-7f81-4355-895d-5e6dba3351c7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders\HLSL">
-      <UniqueIdentifier>{ca22796c-1011-432d-ac46-e02825116631}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders\GLSL">
-      <UniqueIdentifier>{02f62867-9e8f-497d-86ca-be1b7ddfa9bb}</UniqueIdentifier>
     </Filter>
     <Filter Include="Dependencies">
       <UniqueIdentifier>{3cea7139-d8f4-49c9-b1aa-0090f4e6ea8c}</UniqueIdentifier>
@@ -63,12 +24,6 @@
     <Filter Include="Dependencies\imgui\backends">
       <UniqueIdentifier>{80a77a0d-b510-4d99-bab9-8b5f54e0eec7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\gr\Materials">
-      <UniqueIdentifier>{84b46aee-503c-4de5-b809-db7c71d5df82}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\gr\Materials">
-      <UniqueIdentifier>{c9ce5ea3-8892-44d3-81cb-16c7dc44a505}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Dependencies\Resources">
       <UniqueIdentifier>{854894b8-5bdb-4614-9788-54a45736458b}</UniqueIdentifier>
     </Filter>
@@ -78,44 +33,11 @@
     <Filter Include="Source Files\fr\Components">
       <UniqueIdentifier>{cb14f09f-7493-4238-88bf-3674944c379b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\gr\Components">
-      <UniqueIdentifier>{5a8dfb55-e460-4adb-b4c7-f3882aa2b667}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\gr\Components">
-      <UniqueIdentifier>{b8296793-b174-4011-ad33-8f4b527804d5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\fr\Concepts">
       <UniqueIdentifier>{d252219c-5f90-4567-a478-04ea0cf70532}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\fr\Concepts">
       <UniqueIdentifier>{3d2704dd-39de-409e-aaf3-57aa4f15dd86}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\re\DX12\Libraries">
-      <UniqueIdentifier>{625018d2-8e1c-4f1c-a7a4-6c7b8e409002}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\re\DX12\Libraries">
-      <UniqueIdentifier>{6cff10e1-0de4-482b-a8d7-b38fb98b63da}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\re\platform\Libraries">
-      <UniqueIdentifier>{43ce58ed-f646-4503-8f6e-100066959fc7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\re\platform\Libraries">
-      <UniqueIdentifier>{9fd5ef7b-8196-4d35-9fb0-db9a61f1f82b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders\HLSL\Libraries">
-      <UniqueIdentifier>{9b586b40-1999-428e-b7ce-444f35713bf3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders\HLSL\Libraries\XeGTAO">
-      <UniqueIdentifier>{bf3c5b42-9f10-4cc4-a2cf-63169416dfde}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders\Common">
-      <UniqueIdentifier>{f1800b9d-29e6-4c5e-8ecf-b3d01af6a8a1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\re\OpenGL\Libraries">
-      <UniqueIdentifier>{ddc72eb0-acf8-4a46-8589-77b9b007f12c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\re\OpenGL\Libraries">
-      <UniqueIdentifier>{e3e4353a-fe4d-4e71-adb5-acd3fa947908}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\pch">
       <UniqueIdentifier>{c39047d9-5d0a-4add-8e2c-5c7eec31c6ac}</UniqueIdentifier>
@@ -141,67 +63,37 @@
     <Filter Include="Source Files\app\win32">
       <UniqueIdentifier>{e9148669-8e9a-448c-90d6-3da71ce4166a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\gr\grutil">
-      <UniqueIdentifier>{d9d7149e-7017-4446-8ea2-4a29d5e8b8a8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\gr\grutil">
-      <UniqueIdentifier>{630f943a-981c-4e35-8b33-cc82cced1776}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\effect">
       <UniqueIdentifier>{4ebe6f30-9fb9-47aa-9604-f096c3142206}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\effect">
       <UniqueIdentifier>{c48c91dd-ecfb-4b6f-83d6-54fcea11b85e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{fba4b42a-a194-41c3-858e-1acac86e27c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\HLSL">
+      <UniqueIdentifier>{ca22796c-1011-432d-ac46-e02825116631}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\HLSL\Libraries">
+      <UniqueIdentifier>{9b586b40-1999-428e-b7ce-444f35713bf3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\HLSL\Libraries\XeGTAO">
+      <UniqueIdentifier>{bf3c5b42-9f10-4cc4-a2cf-63169416dfde}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\GLSL">
+      <UniqueIdentifier>{02f62867-9e8f-497d-86ca-be1b7ddfa9bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Common">
+      <UniqueIdentifier>{f1800b9d-29e6-4c5e-8ecf-b3d01af6a8a1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Context.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="Context_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="Context_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem_GBuffer.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem_DeferredLighting.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem_Shadows.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem_Skybox.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem_Bloom.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem_Tonemapping.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
     <ClCompile Include="EngineApp.cpp">
       <Filter>Source Files\app</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderManager.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderManager_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderManager_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="CameraControlComponent.cpp">
       <Filter>Source Files\fr</Filter>
@@ -209,155 +101,8 @@
     <ClCompile Include="Platform.cpp">
       <Filter>Source Files\app\platform</Filter>
     </ClCompile>
-    <ClCompile Include="Buffer.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="Buffer_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Buffer_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="BufferAllocator.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
     <ClCompile Include="EntityManager.cpp">
       <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureTarget.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureTarget_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureTarget_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderStage.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="Sampler.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="Sampler_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Sampler_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Window_Platform.cpp">
-      <Filter>Source Files\app\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Window_Win32.cpp">
-      <Filter>Source Files\app\win32</Filter>
-    </ClCompile>
-    <ClCompile Include="Context_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderManager_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderPipeline.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureTarget_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="SwapChain.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="SwapChain_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="SwapChain_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="SwapChain_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Debug_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Buffer_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Fence_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Device_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="CommandQueue_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="VertexStream.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="VertexStream_Platform.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="VertexStream_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="VertexStream_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="PipelineState_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="Sampler_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="CommandList_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="CPUDescriptorHeapManager_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="GPUDescriptorHeap_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="SysInfo_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="PipelineState.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="ResourceStateTracker_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem_ComputeMips.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="SysInfo_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="SysInfo_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="RootSignature_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
     <ClCompile Include="Dependencies\imgui\imgui.cpp">
       <Filter>Dependencies\imgui</Filter>
@@ -383,41 +128,8 @@
     <ClCompile Include="Dependencies\imgui\imgui_demo.cpp">
       <Filter>Dependencies\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="RenderSystem.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>Source Files\gr\Materials</Filter>
-    </ClCompile>
-    <ClCompile Include="Material_GLTF.cpp">
-      <Filter>Source Files\gr\Materials</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem_Debug.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshPrimitive.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshFactory.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="BufferAllocator_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="BufferAllocator_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="SceneNodeConcept.cpp">
       <Filter>Source Files\fr\Concepts</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystemManager.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderDataManager.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderDataComponent.cpp">
-      <Filter>Source Files\gr\Components</Filter>
     </ClCompile>
     <ClCompile Include="CameraComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
@@ -434,9 +146,6 @@
     <ClCompile Include="Transform.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
-    <ClCompile Include="TransformRenderData.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
     <ClCompile Include="MeshPrimitiveComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
@@ -449,12 +158,6 @@
     <ClCompile Include="MeshConcept.cpp">
       <Filter>Source Files\fr\Concepts</Filter>
     </ClCompile>
-    <ClCompile Include="Batch.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="BatchManager.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
     <ClCompile Include="NameComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
@@ -464,14 +167,8 @@
     <ClCompile Include="ShadowMap.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
-    <ClCompile Include="LightRenderData.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="CameraRenderData.cpp">
-      <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="SceneManager.cpp">
       <Filter>Source Files\fr</Filter>
@@ -479,277 +176,28 @@
     <ClCompile Include="UIManager.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_Culling.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
     <ClCompile Include="MaterialInstanceComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem_XeGTAO.cpp">
-      <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="EntityCommands.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_ImGui.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderSystemDesc.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="RLibrary_Platform.cpp">
-      <Filter>Source Files\re\platform\Libraries</Filter>
-    </ClCompile>
-    <ClCompile Include="RLibrary_ImGui_Platform.cpp">
-      <Filter>Source Files\re\platform\Libraries</Filter>
-    </ClCompile>
-    <ClCompile Include="RLibrary_ImGui_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL\Libraries</Filter>
-    </ClCompile>
-    <ClCompile Include="RLibrary_ImGui_DX12.cpp">
-      <Filter>Source Files\re\DX12\Libraries</Filter>
-    </ClCompile>
     <ClCompile Include="pch\stdafx.cpp">
       <Filter>Source Files\pch</Filter>
     </ClCompile>
-    <ClCompile Include="AssetLoadUtils.cpp">
-      <Filter>Source Files\gr\grutil</Filter>
-    </ClCompile>
-    <ClCompile Include="VertexStreamBuilder.cpp">
-      <Filter>Source Files\gr\grutil</Filter>
-    </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Source Files\app</Filter>
-    </ClCompile>
-    <ClCompile Include="Effect.cpp">
-      <Filter>Source Files\effect</Filter>
-    </ClCompile>
-    <ClCompile Include="EffectDB.cpp">
-      <Filter>Source Files\effect</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsSystem_Transparency.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="LightParamsHelpers.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="LightManager.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="DescriptorCache_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureView.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneData.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="RenderDataComponent.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Context.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="Context_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Context_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsSystem.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsSystem_GBuffer.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsSystem_DeferredLighting.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderPipeline.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsSystem_Shadows.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsSystem_Skybox.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsSystem_Bloom.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsSystem_Tonemapping.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
     <ClInclude Include="EngineApp.h">
       <Filter>Header Files\app</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderManager.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderManager_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderManager_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="VertexStreamBuilder.h">
-      <Filter>Header Files\gr\grutil</Filter>
-    </ClInclude>
-    <ClInclude Include="Buffer.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="Buffer_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Buffer_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="BufferAllocator.h">
-      <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="EntityManager.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
-    <ClInclude Include="TextureTarget.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureTarget_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureTarget_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderStage.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="Sampler.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="Sampler_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Sampler_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
     <ClInclude Include="Platform.h">
       <Filter>Header Files\app\Platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Window_Win32.h">
-      <Filter>Header Files\app\win32</Filter>
-    </ClInclude>
-    <ClInclude Include="Window_Platform.h">
-      <Filter>Header Files\app\Platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>Header Files\app</Filter>
-    </ClInclude>
-    <ClInclude Include="Context_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderManager_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineState.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureTarget_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="SwapChain.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="SwapChain_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="SwapChain_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="SwapChain_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Debug_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Buffer_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Fence_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Device_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandQueue_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="VertexStream.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="VertexStream_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="VertexStream_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="VertexStream_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineState_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="Sampler_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandList_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="CPUDescriptorHeapManager_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="GPUDescriptorHeap_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="SysInfo_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="RootSignature_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceStateTracker_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsSystem_ComputeMips.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="SysInfo_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="SysInfo_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\imgui.h">
       <Filter>Dependencies\imgui</Filter>
@@ -778,35 +226,8 @@
     <ClInclude Include="Dependencies\imgui\backends\imgui_impl_win32.h">
       <Filter>Dependencies\imgui\backends</Filter>
     </ClInclude>
-    <ClInclude Include="RenderSystem.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>Header Files\gr\Materials</Filter>
-    </ClInclude>
-    <ClInclude Include="Material_GLTF.h">
-      <Filter>Header Files\gr\Materials</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsSystem_Debug.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshPrimitive.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshFactory.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="BufferAllocator_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="BufferAllocator_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Dependencies\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="AssetLoadUtils.h">
-      <Filter>Header Files\gr\grutil</Filter>
     </ClInclude>
     <ClInclude Include="SceneNodeConcept.h">
       <Filter>Header Files\fr\Concepts</Filter>
@@ -814,26 +235,14 @@
     <ClInclude Include="NameComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystemManager.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderDataManager.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
     <ClInclude Include="MarkerComponents.h">
       <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderDataComponent.h">
-      <Filter>Header Files\gr\Components</Filter>
     </ClInclude>
     <ClInclude Include="TransformComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
     <ClInclude Include="CameraComponent.h">
       <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderObjectIDs.h">
-      <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="BoundsComponent.h">
       <Filter>Header Files\fr\Components</Filter>
@@ -844,14 +253,8 @@
     <ClInclude Include="Transform.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
-    <ClInclude Include="TransformRenderData.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
     <ClInclude Include="MeshPrimitiveComponent.h">
       <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="BoundsRenderData.h">
-      <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMapComponent.h">
       <Filter>Header Files\fr\Components</Filter>
@@ -862,26 +265,11 @@
     <ClInclude Include="MeshConcept.h">
       <Filter>Header Files\fr\Concepts</Filter>
     </ClInclude>
-    <ClInclude Include="CameraRenderData.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="BatchManager.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="Batch.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="LightRenderData.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
     <ClInclude Include="Light.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMap.h">
       <Filter>Header Files\fr</Filter>
-    </ClInclude>
-    <ClInclude Include="ShadowMapRenderData.h">
-      <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Header Files\fr</Filter>
@@ -895,438 +283,391 @@
     <ClInclude Include="UIManager.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_Culling.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
     <ClInclude Include="MaterialInstanceComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_XeGTAO.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
     <ClInclude Include="Shaders\Common\PlatformConversions.h">
-      <Filter>Source Files\Shaders\Common</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\LightParams.h">
-      <Filter>Source Files\Shaders\Common</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\SkyboxParams.h">
-      <Filter>Source Files\Shaders\Common</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\BloomComputeParams.h">
-      <Filter>Source Files\Shaders\Common</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\IBLGenerationParams.h">
-      <Filter>Source Files\Shaders\Common</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\CameraParams.h">
-      <Filter>Source Files\Shaders\Common</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\InstancingParams.h">
-      <Filter>Source Files\Shaders\Common</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\MaterialParams.h">
-      <Filter>Source Files\Shaders\Common</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\ShadowRenderParams.h">
-      <Filter>Source Files\Shaders\Common</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="EntityCommands.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_ImGui.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderLibrary_ImGui_DX12.h">
-      <Filter>Header Files\re\DX12\Libraries</Filter>
-    </ClInclude>
-    <ClInclude Include="RLibrary_Platform.h">
-      <Filter>Header Files\re\platform\Libraries</Filter>
-    </ClInclude>
-    <ClInclude Include="RLibrary_ImGui_Platform.h">
-      <Filter>Header Files\re\platform\Libraries</Filter>
-    </ClInclude>
-    <ClInclude Include="RLibrary_ImGui_OpenGL.h">
-      <Filter>Header Files\re\OpenGL\Libraries</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderSystemDesc.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
     <ClInclude Include="pch\stdafx.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
-    <ClInclude Include="Effect.h">
-      <Filter>Header Files\effect</Filter>
-    </ClInclude>
-    <ClInclude Include="EffectDB.h">
-      <Filter>Header Files\effect</Filter>
-    </ClInclude>
     <ClInclude Include="Shaders\Common\MipGenerationParams.h">
-      <Filter>Source Files\Shaders\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsSystem_Transparency.h">
-      <Filter>Header Files\gr</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\TargetParams.h">
-      <Filter>Source Files\Shaders\Common</Filter>
+      <Filter>Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="LightParamsHelpers.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="LightManager.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="DescriptorCache_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureView.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneData.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="RenderDataComponent.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\HLSL\SaberCommon.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\NormalMapUtils.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\SaberComputeCommon.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\UVUtils.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\GBufferCommon.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\Lighting.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\Transformations.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\FullscreenQuadCommon.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\MathConstants.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\Shadows.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\BloomCommon.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\Color.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="SaberEngine.licenseheader">
       <Filter>Dependencies\Resources</Filter>
     </None>
-    <None Include="packages.config">
-      <Filter>Dependencies\Resources</Filter>
-    </None>
     <None Include="Dependencies\XeGTAO\XeGTAO.hlsli">
-      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
     </None>
     <None Include="Shaders\HLSL\XeGTAOCommon.hlsli">
-      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
     </None>
     <None Include="Shaders\HLSL\XeGTAO_MainPass_Common.hlsli">
-      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
     </None>
     <None Include="Shaders\HLSL\CameraCommon.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\Samplers.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Blit_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Blit_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Bloom_CShader.comp">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\BloomCommon.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Color.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\CubeDepth_GShader.geom">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\CubeDepth_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DeferredAmbientLight_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DeferredAmbientLight_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DeferredDirectionalLight_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DeferredDirectionalLight_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DeferredPointLight_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DeferredPointLight_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DeferredSpotLight_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DeferredSpotLight_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Depth_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\FullscreenQuadCommon.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GaussianBlur_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GaussianBlur_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GBufferCommon.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap_CShader.comp">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GenerateIEM_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GenerateIEM_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GeneratePMREM_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GeneratePMREM_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Lighting.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Line_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Line_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\MathConstants.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\NormalMapUtils.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\SaberCommon.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Shadows.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Skybox_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Skybox_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\ToneMap_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\ToneMap_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Transformations.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\UVUtils.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DepthAlphaMask_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DepthAlphaMask_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\CubeDepthAlphaMask_GShader.geom">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\CubeDepthAlphaMask_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\AmbientCommon.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\AmbientCommon.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
+      <Filter>Shaders\GLSL</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GenerateBRDFIntegrationMap_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredAmbientLight_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredAmbientLight_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredDirectionalLight_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredDirectionalLight_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GenerateIEM_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GenerateIEM_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GeneratePMREM_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GeneratePMREM_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredPointLight_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredPointLight_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GenerateMips_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Skybox_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Skybox_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Blit_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Blit_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GaussianBlur_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GaussianBlur_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\ToneMap_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\ToneMap_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Sampling.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\CubeDepth_GShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\CubeDepth_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Depth_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Bloom_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Line_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Line_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_Denoise_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_PrefilterDepths_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_DenoiseLastPass_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_High_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Low_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Med_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Ultra_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL\Libraries\XeGTAO</Filter>
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredSpotLight_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DepthAlphaMask_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DepthAlphaMask_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\CubeDepthAlphaMask_GShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\CubeDepthAlphaMask_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GenerateMips_1D_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GenerateMips_3D_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
+      <Filter>Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

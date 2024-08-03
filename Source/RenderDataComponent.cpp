@@ -1,8 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "RenderDataComponent.h"
-#include "RenderManager.h"
-#include "RenderSystem.h"
+
+#include "Renderer/RenderManager.h"
+#include "Renderer/RenderSystem.h"
 
 
 namespace gr

@@ -1,9 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Context.h"
 #include "EntityManager.h"
-#include "GraphicsSystem_ImGui.h"
 #include "SceneManager.h"
-#include "RenderManager.h"
 #include "UIManager.h"
 
 #include "Core/CommandQueue.h"
@@ -12,6 +9,10 @@
 #include "Core/LogManager.h"
 
 #include "Core/Definitions/KeyConfiguration.h"
+
+#include "Renderer/Context.h"
+#include "Renderer/GraphicsSystem_ImGui.h"
+#include "Renderer/RenderManager.h"
 
 
 namespace

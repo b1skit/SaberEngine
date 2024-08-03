@@ -8,9 +8,10 @@
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
-#include "RenderManager.h"
 #include "ShadowMapComponent.h"
 #include "TransformComponent.h"
+
+#include "Renderer/RenderManager.h"
 
 
 namespace

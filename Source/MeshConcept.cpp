@@ -3,7 +3,6 @@
 #include "EntityManager.h"
 #include "MaterialInstanceComponent.h"
 #include "MeshConcept.h"
-#include "MeshFactory.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
@@ -13,6 +12,8 @@
 #include "TransformComponent.h"
 
 #include "Core/Util/ImGuiUtils.h"
+
+#include "Renderer/MeshFactory.h"
 
 
 namespace fr

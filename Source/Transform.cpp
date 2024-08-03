@@ -1,9 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Transform.h"
+
 #include "Core/Assert.h"
 #include "Core/Config.h"
 #include "Core/Util/ImGuiUtils.h"
-#include "Transform.h"
-#include "TransformRenderData.h"
+
+#include "Renderer/TransformRenderData.h"
 
 
 namespace

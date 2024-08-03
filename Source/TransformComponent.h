@@ -1,8 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Transform.h"
-#include "TransformRenderData.h"
-#include "RenderObjectIDs.h"
+
+#include "Renderer/TransformRenderData.h"
+#include "Renderer/RenderObjectIDs.h"
 
 
 namespace fr

@@ -1,7 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Camera.h"
-#include "RenderObjectIDs.h"
+
+#include "Renderer/RenderObjectIDs.h"
 
 
 namespace gr

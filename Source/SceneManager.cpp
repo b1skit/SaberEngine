@@ -1,18 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "AssetLoadUtils.h"
 #include "BoundsComponent.h"
 #include "Camera.h"
 #include "CameraComponent.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MaterialInstanceComponent.h"
-#include "Material_GLTF.h"
 #include "MeshConcept.h"
 #include "MeshPrimitiveComponent.h"
-#include "RenderManager.h"
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
-#include "VertexStreamBuilder.h"
 
 #include "Core/Config.h"
 #include "Core/PerformanceTimer.h"
@@ -20,6 +16,11 @@
 
 #include "Core/Util/CastUtils.h"
 #include "Core/Util/ThreadSafeVector.h"
+
+#include "Renderer/AssetLoadUtils.h"
+#include "Renderer/Material_GLTF.h"
+#include "Renderer/RenderManager.h"
+#include "Renderer/VertexStreamBuilder.h"
 
 #pragma warning(disable : 4996) // Suppress error C4996 (Caused by use of fopen, strcpy, strncpy in cgltf.h)
 #define CGLTF_IMPLEMENTATION

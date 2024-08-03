@@ -2,13 +2,14 @@
 #include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "MaterialInstanceComponent.h"
-#include "MeshPrimitive.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "TransformComponent.h"
-#include "VertexStream.h"
+
+#include "Renderer/MeshPrimitive.h"
+#include "Renderer/VertexStream.h"
 
 
 namespace

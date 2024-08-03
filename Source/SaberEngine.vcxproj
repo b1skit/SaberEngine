@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props')" />
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="DebugRelease|x64">
-      <Configuration>DebugRelease</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DebugRelease|x64">
+      <Configuration>DebugRelease</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Profile|x64">
@@ -34,14 +33,6 @@
     <CharacterSet>Unicode</CharacterSet>
     <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
-    <EnableUnitySupport>false</EnableUnitySupport>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -58,6 +49,14 @@
     <CharacterSet>Unicode</CharacterSet>
     <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <EnableUnitySupport>false</EnableUnitySupport>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -66,13 +65,13 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -80,12 +79,6 @@
     <PreBuildEventUseInBuild>
     </PreBuildEventUseInBuild>
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
-    <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
-    <MultiProcFXC>false</MultiProcFXC>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <PreBuildEventUseInBuild />
     <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
     <MultiProcFXC>false</MultiProcFXC>
@@ -98,6 +91,12 @@
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <PreBuildEventUseInBuild />
+    <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
+    <MultiProcFXC>false</MultiProcFXC>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PreBuildEventUseInBuild />
     <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
@@ -116,7 +115,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -127,8 +126,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\$(OutDir)Core\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(OutDir)Core\Core.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\$(OutDir)Core\;..\$(OutDir)Renderer\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OutDir)Core\Core.lib;$(OutDir)Renderer\Renderer.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
     </Link>
@@ -156,6 +155,112 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
       <AdditionalOptions>/Zss /Fd $(OutDir)</AdditionalOptions>
     </FxCompile>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>..\$(OutDir)Core\;..\$(OutDir)Renderer\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OutDir)Core\Core.lib;$(OutDir)Renderer\Renderer.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <PerUserRedirection>true</PerUserRedirection>
+    </Link>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
+xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
+xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
+xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
+xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
+      <Message>Copy dependencies to project directory</Message>
+    </PostBuildEvent>
+    <FxCompile>
+      <ShaderModel>5.1</ShaderModel>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\Shaders\HLSL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
+      <AdditionalOptions>/Zss /Fd $(OutDir) %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PreprocessorDefinitions>PROFILE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>..\$(OutDir)Core\;..\$(OutDir)Renderer\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OutDir)Core\Core.lib;$(OutDir)Renderer\Renderer.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <PerUserRedirection>true</PerUserRedirection>
+    </Link>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
+xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
+xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
+xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
+xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
+      <Message>Copy dependencies to project directory</Message>
+    </PostBuildEvent>
+    <FxCompile>
+      <ShaderModel>5.1</ShaderModel>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\Shaders\HLSL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
+    </FxCompile>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -165,7 +270,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
@@ -177,8 +282,8 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\$(OutDir)Core\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(OutDir)Core\Core.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\$(OutDir)Core\;..\$(OutDir)Renderer\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OutDir)Core\Core.lib;$(OutDir)Renderer\Renderer.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
     </Link>
@@ -206,116 +311,14 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <TreatWarningAsError>false</TreatWarningAsError>
       <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
     </FxCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <DebugInformationFormat>OldStyle</DebugInformationFormat>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
-    </ClCompile>
-    <Link>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\$(OutDir)Core\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(OutDir)Core\Core.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <PerUserRedirection>true</PerUserRedirection>
-    </Link>
-    <PreBuildEvent>
-      <Command>
-      </Command>
-      <Message>
-      </Message>
-    </PreBuildEvent>
-    <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
-xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
-xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
-xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
-xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
-      <Message>Copy dependencies to project directory</Message>
-    </PostBuildEvent>
-    <FxCompile>
-      <ShaderModel>5.1</ShaderModel>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\Shaders\HLSL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWarningAsError>false</TreatWarningAsError>
-      <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
-      <AdditionalOptions>/Zss /Fd $(OutDir) %(AdditionalOptions)</AdditionalOptions>
-    </FxCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PreprocessorDefinitions>PROFILE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
-    </ClCompile>
-    <Link>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\$(OutDir)Core\;$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(OutDir)Core\Core.lib;glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
-      <PerUserRedirection>true</PerUserRedirection>
-    </Link>
-    <PreBuildEvent>
-      <Command>
-      </Command>
-      <Message>
-      </Message>
-    </PreBuildEvent>
-    <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
-xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
-xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
-xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
-xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
-      <Message>Copy dependencies to project directory</Message>
-    </PostBuildEvent>
-    <FxCompile>
-      <ShaderModel>5.1</ShaderModel>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\Shaders\HLSL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWarningAsError>false</TreatWarningAsError>
-      <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
-    </FxCompile>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Batch.cpp" />
-    <ClCompile Include="BatchManager.cpp" />
     <ClCompile Include="BoundsComponent.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraComponent.cpp" />
-    <ClCompile Include="CameraRenderData.cpp" />
-    <ClCompile Include="CommandList_DX12.cpp" />
-    <ClCompile Include="CommandQueue_DX12.cpp" />
-    <ClCompile Include="Context_DX12.cpp" />
-    <ClCompile Include="CPUDescriptorHeapManager_DX12.cpp" />
-    <ClCompile Include="Debug_DX12.cpp" />
     <ClCompile Include="Dependencies\imgui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="Dependencies\imgui\backends\imgui_impl_opengl3.cpp" />
     <ClCompile Include="Dependencies\imgui\backends\imgui_impl_win32.cpp" />
@@ -324,37 +327,12 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClCompile Include="Dependencies\imgui\imgui_draw.cpp" />
     <ClCompile Include="Dependencies\imgui\imgui_tables.cpp" />
     <ClCompile Include="Dependencies\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="DescriptorCache_DX12.cpp" />
-    <ClCompile Include="Device_DX12.cpp" />
-    <ClCompile Include="Effect.cpp" />
-    <ClCompile Include="EffectDB.cpp" />
     <ClCompile Include="EntityCommands.cpp" />
-    <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="EntityManager.cpp" />
-    <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
-    <ClCompile Include="GraphicsSystemManager.cpp" />
-    <ClCompile Include="GraphicsSystem_ImGui.cpp" />
-    <ClCompile Include="GraphicsSystem_Transparency.cpp" />
-    <ClCompile Include="GraphicsSystem_XeGTAO.cpp" />
-    <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
-    <ClCompile Include="GraphicsSystem_Culling.cpp" />
-    <ClCompile Include="GraphicsSystem_Debug.cpp" />
-    <ClCompile Include="LightManager.cpp" />
-    <ClCompile Include="LightParamsHelpers.cpp" />
     <ClCompile Include="LightComponent.cpp" />
-    <ClCompile Include="LightRenderData.cpp" />
     <ClCompile Include="MaterialInstanceComponent.cpp" />
-    <ClCompile Include="Material_GLTF.cpp" />
-    <ClCompile Include="MeshFactory.cpp" />
     <ClCompile Include="MeshPrimitiveComponent.cpp" />
     <ClCompile Include="NameComponent.cpp" />
-    <ClCompile Include="Buffer.cpp" />
-    <ClCompile Include="BufferAllocator.cpp" />
-    <ClCompile Include="BufferAllocator_DX12.cpp" />
-    <ClCompile Include="BufferAllocator_OpenGL.cpp" />
-    <ClCompile Include="Buffer_DX12.cpp" />
-    <ClCompile Include="Buffer_OpenGL.cpp" />
-    <ClCompile Include="Buffer_Platform.cpp" />
     <ClCompile Include="pch\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -365,115 +343,31 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">stdafx.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="PipelineState.cpp" />
-    <ClCompile Include="PipelineState_DX12.cpp" />
     <ClCompile Include="RelationshipComponent.cpp" />
-    <ClCompile Include="RenderDataManager.cpp" />
     <ClCompile Include="RenderDataComponent.cpp" />
-    <ClCompile Include="RenderSystemDesc.cpp" />
-    <ClCompile Include="RenderSystem.cpp" />
-    <ClCompile Include="ResourceStateTracker_DX12.cpp" />
-    <ClCompile Include="RLibrary_ImGui_DX12.cpp" />
-    <ClCompile Include="RLibrary_ImGui_OpenGL.cpp" />
-    <ClCompile Include="RLibrary_ImGui_Platform.cpp" />
-    <ClCompile Include="RLibrary_Platform.cpp" />
     <ClCompile Include="ShadowMapComponent.cpp" />
-    <ClCompile Include="SysInfo_DX12.cpp" />
-    <ClCompile Include="RenderManager_DX12.cpp" />
-    <ClCompile Include="RootSignature_DX12.cpp" />
-    <ClCompile Include="Sampler_DX12.cpp" />
-    <ClCompile Include="Shader_DX12.cpp" />
-    <ClCompile Include="SwapChain.cpp" />
-    <ClCompile Include="SwapChain_DX12.cpp" />
-    <ClCompile Include="SwapChain_OpenGL.cpp" />
-    <ClCompile Include="SwapChain_Platform.cpp" />
-    <ClCompile Include="SysInfo_OpenGL.cpp" />
-    <ClCompile Include="SysInfo_Platform.cpp" />
-    <ClCompile Include="AssetLoadUtils.cpp" />
-    <ClCompile Include="TextureView.cpp" />
-    <ClCompile Include="TextureTarget_DX12.cpp" />
-    <ClCompile Include="Texture_DX12.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
-    <ClCompile Include="TransformRenderData.cpp" />
     <ClCompile Include="UIManager.cpp" />
-    <ClCompile Include="VertexStream.cpp" />
-    <ClCompile Include="VertexStreamBuilder.cpp" />
-    <ClCompile Include="Context_Platform.cpp" />
     <ClCompile Include="EngineApp.cpp" />
     <ClCompile Include="SceneNodeConcept.cpp" />
-    <ClCompile Include="GraphicsSystem_Bloom.cpp" />
-    <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
-    <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
-    <ClCompile Include="GraphicsSystem.cpp" />
-    <ClCompile Include="GraphicsSystem_Shadows.cpp" />
-    <ClCompile Include="GraphicsSystem_Skybox.cpp" />
-    <ClCompile Include="GraphicsSystem_Tonemapping.cpp" />
-    <ClCompile Include="RenderManager_OpenGL.cpp" />
-    <ClCompile Include="RenderManager_Platform.cpp" />
-    <ClCompile Include="RenderPipeline.cpp" />
-    <ClCompile Include="RenderStage.cpp" />
-    <ClCompile Include="Sampler.cpp" />
-    <ClCompile Include="Sampler_OpenGL.cpp" />
-    <ClCompile Include="Sampler_Platform.cpp" />
-    <ClCompile Include="Shader_OpenGL.cpp" />
-    <ClCompile Include="Shader_Platform.cpp" />
-    <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="TextureTarget.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Material.cpp" />
-    <ClCompile Include="MeshPrimitive.cpp" />
-    <ClCompile Include="Context_OpenGL.cpp" />
     <ClCompile Include="CameraControlComponent.cpp" />
-    <ClCompile Include="Context.cpp" />
     <ClCompile Include="MeshConcept.cpp" />
-    <ClCompile Include="RenderManager.cpp" />
     <ClCompile Include="Platform.cpp" />
-    <ClCompile Include="Texture_OpenGL.cpp" />
-    <ClCompile Include="TextureTarget_OpenGL.cpp" />
-    <ClCompile Include="TextureTarget_Platform.cpp" />
-    <ClCompile Include="Texture_Platform.cpp" />
-    <ClCompile Include="SceneData.cpp" />
     <ClCompile Include="SceneManager.cpp" />
-    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Transform.cpp" />
-    <ClCompile Include="VertexStream_DX12.cpp" />
-    <ClCompile Include="VertexStream_OpenGL.cpp" />
-    <ClCompile Include="VertexStream_Platform.cpp" />
-    <ClCompile Include="Window.cpp" />
-    <ClCompile Include="Window_Win32.cpp" />
-    <ClCompile Include="Window_Platform.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BatchManager.h" />
-    <ClInclude Include="BoundsRenderData.h" />
     <ClInclude Include="CameraComponent.h" />
-    <ClInclude Include="CameraRenderData.h" />
-    <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
-    <ClInclude Include="Batch.h" />
     <ClInclude Include="BoundsComponent.h" />
-    <ClInclude Include="DescriptorCache_DX12.h" />
-    <ClInclude Include="Effect.h" />
-    <ClInclude Include="EffectDB.h" />
     <ClInclude Include="EntityCommands.h" />
-    <ClInclude Include="GraphicsSystemManager.h" />
-    <ClInclude Include="GraphicsSystem_ImGui.h" />
-    <ClInclude Include="GraphicsSystem_Transparency.h" />
-    <ClInclude Include="GraphicsSystem_XeGTAO.h" />
-    <ClInclude Include="GraphicsSystem_Culling.h" />
-    <ClInclude Include="LightManager.h" />
-    <ClInclude Include="LightParamsHelpers.h" />
     <ClInclude Include="LightComponent.h" />
-    <ClInclude Include="LightRenderData.h" />
     <ClInclude Include="MarkerComponents.h" />
     <ClInclude Include="MaterialInstanceComponent.h" />
     <ClInclude Include="MeshPrimitiveComponent.h" />
     <ClInclude Include="RelationshipComponent.h" />
-    <ClInclude Include="CommandList_DX12.h" />
-    <ClInclude Include="CommandQueue_DX12.h" />
-    <ClInclude Include="Context_DX12.h" />
-    <ClInclude Include="Debug_DX12.h" />
     <ClInclude Include="Dependencies\imgui\backends\imgui_impl_dx12.h" />
     <ClInclude Include="Dependencies\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="Dependencies\imgui\backends\imgui_impl_win32.h" />
@@ -483,36 +377,11 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Dependencies\imgui\imstb_rectpack.h" />
     <ClInclude Include="Dependencies\imgui\imstb_textedit.h" />
     <ClInclude Include="Dependencies\imgui\imstb_truetype.h" />
-    <ClInclude Include="Device_DX12.h" />
     <ClInclude Include="NameComponent.h" />
-    <ClInclude Include="BufferAllocator_DX12.h" />
-    <ClInclude Include="MeshFactory.h" />
-    <ClInclude Include="Fence_DX12.h" />
     <ClInclude Include="EntityManager.h" />
-    <ClInclude Include="GPUDescriptorHeap_DX12.h" />
-    <ClInclude Include="GraphicsSystem_ComputeMips.h" />
-    <ClInclude Include="GraphicsSystem_Debug.h" />
-    <ClInclude Include="Material_GLTF.h" />
-    <ClInclude Include="Buffer.h" />
-    <ClInclude Include="BufferAllocator.h" />
-    <ClInclude Include="BufferAllocator_OpenGL.h" />
-    <ClInclude Include="Buffer_DX12.h" />
-    <ClInclude Include="Buffer_OpenGL.h" />
-    <ClInclude Include="Buffer_Platform.h" />
     <ClInclude Include="pch\stdafx.h" />
-    <ClInclude Include="PipelineState.h" />
-    <ClInclude Include="PipelineState_DX12.h" />
-    <ClInclude Include="RenderDataManager.h" />
     <ClInclude Include="RenderDataComponent.h" />
-    <ClInclude Include="RenderLibrary_ImGui_DX12.h" />
-    <ClInclude Include="RenderObjectIDs.h" />
-    <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="ResourceStateTracker_DX12.h" />
-    <ClInclude Include="RenderSystemDesc.h" />
-    <ClInclude Include="RLibrary_ImGui_OpenGL.h" />
-    <ClInclude Include="RLibrary_ImGui_Platform.h" />
-    <ClInclude Include="RLibrary_Platform.h" />
     <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
     <ClInclude Include="Shaders\Common\CameraParams.h" />
     <ClInclude Include="Shaders\Common\IBLGenerationParams.h" />
@@ -525,73 +394,18 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <ClInclude Include="Shaders\Common\SkyboxParams.h" />
     <ClInclude Include="Shaders\Common\TargetParams.h" />
     <ClInclude Include="ShadowMapComponent.h" />
-    <ClInclude Include="ShadowMapRenderData.h" />
-    <ClInclude Include="SysInfo_DX12.h" />
-    <ClInclude Include="RenderManager_DX12.h" />
-    <ClInclude Include="RootSignature_DX12.h" />
-    <ClInclude Include="Sampler_DX12.h" />
-    <ClInclude Include="Shader_DX12.h" />
-    <ClInclude Include="SwapChain.h" />
-    <ClInclude Include="SwapChain_DX12.h" />
-    <ClInclude Include="SwapChain_OpenGL.h" />
-    <ClInclude Include="SwapChain_Platform.h" />
-    <ClInclude Include="SysInfo_OpenGL.h" />
-    <ClInclude Include="SysInfo_Platform.h" />
-    <ClInclude Include="AssetLoadUtils.h" />
-    <ClInclude Include="TextureView.h" />
-    <ClInclude Include="TextureTarget_DX12.h" />
-    <ClInclude Include="Texture_DX12.h" />
     <ClInclude Include="TransformComponent.h" />
-    <ClInclude Include="TransformRenderData.h" />
     <ClInclude Include="UIManager.h" />
-    <ClInclude Include="VertexStream.h" />
-    <ClInclude Include="VertexStreamBuilder.h" />
-    <ClInclude Include="Context_Platform.h" />
-    <ClInclude Include="GraphicsSystem_Bloom.h" />
-    <ClInclude Include="GraphicsSystem_DeferredLighting.h" />
-    <ClInclude Include="GraphicsSystem_GBuffer.h" />
-    <ClInclude Include="GraphicsSystem.h" />
-    <ClInclude Include="GraphicsSystem_Shadows.h" />
-    <ClInclude Include="GraphicsSystem_Skybox.h" />
-    <ClInclude Include="GraphicsSystem_Tonemapping.h" />
-    <ClInclude Include="MeshPrimitive.h" />
-    <ClInclude Include="RenderManager_OpenGL.h" />
-    <ClInclude Include="RenderManager_Platform.h" />
-    <ClInclude Include="RenderPipeline.h" />
-    <ClInclude Include="RenderStage.h" />
-    <ClInclude Include="Sampler.h" />
-    <ClInclude Include="Sampler_OpenGL.h" />
-    <ClInclude Include="Sampler_Platform.h" />
-    <ClInclude Include="Shader_OpenGL.h" />
-    <ClInclude Include="Shader_Platform.h" />
-    <ClInclude Include="Texture.h" />
-    <ClInclude Include="TextureTarget.h" />
     <ClInclude Include="Platform.h" />
-    <ClInclude Include="Context_OpenGL.h" />
-    <ClInclude Include="Context.h" />
-    <ClInclude Include="TextureTarget_OpenGL.h" />
-    <ClInclude Include="TextureTarget_Platform.h" />
-    <ClInclude Include="Texture_OpenGL.h" />
-    <ClInclude Include="Texture_Platform.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineApp.h" />
     <ClInclude Include="SceneNodeConcept.h" />
     <ClInclude Include="Light.h" />
-    <ClInclude Include="Material.h" />
     <ClInclude Include="CameraControlComponent.h" />
     <ClInclude Include="MeshConcept.h" />
-    <ClInclude Include="RenderManager.h" />
-    <ClInclude Include="SceneData.h" />
     <ClInclude Include="SceneManager.h" />
-    <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Transform.h" />
-    <ClInclude Include="VertexStream_DX12.h" />
-    <ClInclude Include="VertexStream_OpenGL.h" />
-    <ClInclude Include="VertexStream_Platform.h" />
-    <ClInclude Include="Window.h" />
-    <ClInclude Include="Window_Win32.h" />
-    <ClInclude Include="Window_Platform.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\CubeDepthAlphaMask_GShader.hlsl">
@@ -748,9 +562,9 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Compute</ShaderType>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_Denoise_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
@@ -802,9 +616,9 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Compute</ShaderType>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Med_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
@@ -820,9 +634,9 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Compute</ShaderType>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Ultra_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
@@ -838,9 +652,9 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Compute</ShaderType>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\XeGTAO_PrefilterDepths_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
@@ -856,9 +670,9 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Compute</ShaderType>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
     <None Include="Dependencies\XeGTAO\XeGTAO.hlsli" />
     <None Include="packages.config" />
@@ -927,94 +741,94 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <None Include="Shaders\HLSL\SaberComputeCommon.hlsli" />
     <FxCompile Include="Shaders\HLSL\Bloom_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">CShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">CShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\CubeDepth_GShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">GShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">GShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Geometry</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Geometry</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Geometry</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Geometry</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\CubeDepth_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Depth_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Line_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Line_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Sampling.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <None Include="Shaders\HLSL\Samplers.hlsli" />
     <None Include="Shaders\HLSL\Shadows.hlsli" />
@@ -1026,129 +840,129 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\Blit_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Blit_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredAmbientLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredAmbientLight_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredDirectionalLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredDirectionalLight_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredPointLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredPointLight_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GaussianBlur_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GaussianBlur_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
@@ -1339,24 +1153,29 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
   <ItemGroup>
     <Image Include="Dependencies\Icon\SaberEngineApplicationIcon.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Core\Core.vcxproj">
+      <Project>{b2f1db2f-9dd3-446e-918a-41254ac4e342}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Renderer\Renderer.vcxproj">
+      <Project>{f49fca5a-2f00-4a69-b17c-3491b1a39400}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\WinPixEventRuntime.1.0.231030001\build\WinPixEventRuntime.targets" Condition="Exists('..\packages\WinPixEventRuntime.1.0.231030001\build\WinPixEventRuntime.targets')" />
-    <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets')" />
+    <Import Project="..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets" Condition="Exists('..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" />
   </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\WinPixEventRuntime.1.0.231030001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\WinPixEventRuntime.1.0.231030001\build\WinPixEventRuntime.targets'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets'))" />
-  </Target>
   <Target Name="CleanSEShaders" AfterTargets="Clean">
     <ItemGroup>
       <ShaderDir Include="$(SolutionDir)SaberEngine\Shaders\" />
     </ItemGroup>
     <Message Text="Deleting shaders" Importance="high" />
     <RemoveDir Directories="@(ShaderDir)" />
+  </Target>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets'))" />
   </Target>
 </Project>

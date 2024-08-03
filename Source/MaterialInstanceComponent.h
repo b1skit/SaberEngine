@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Material.h"
+#include "Renderer/Material.h"
 
 
 namespace fr

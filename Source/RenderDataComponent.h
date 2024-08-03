@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "RenderObjectIDs.h"
-#include "RenderManager.h"
+#include "Renderer/RenderObjectIDs.h"
+#include "Renderer/RenderManager.h"
 
 
 namespace fr

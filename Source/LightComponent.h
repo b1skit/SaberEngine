@@ -1,8 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Light.h"
-#include "LightRenderData.h"
-#include "RenderObjectIDs.h"
+
+#include "Renderer/LightRenderData.h"
+#include "Renderer/RenderObjectIDs.h"
 
 
 namespace gr

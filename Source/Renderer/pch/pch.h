@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// © 2024 Adam Badke. All rights reserved.
 #pragma once
 
 // ImGui
@@ -11,21 +11,15 @@
 
 
 // std library:
-#include <any>
-#include <array>
 #include <barrier>
-#include <filesystem>
 #include <fstream>
 #include <future>
 #include <iostream>
 #include <latch>
-#include <map>
-#include <mutex>
 #include <numbers>
 #include <queue>
 #include <set>
 #include <shared_mutex>
-#include <stack>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -60,6 +54,16 @@
 // EnTT:
 #define ENTT_USE_ATOMIC
 #include <entt/entity/registry.hpp>
+
+
+// nlohmann-json:
+#if defined(_DEBUG)
+// Enable extended diagnostics in debug configurations: https://json.nlohmann.me/api/macros/json_diagnostics/
+#define JSON_DIAGNOSTICS 1
+#else
+#define JSON_DIAGNOSTICS 0
+#endif
+#include <nlohmann/json.hpp>
 
 
 // Macros:
