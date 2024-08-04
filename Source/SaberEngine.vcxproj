@@ -1,23 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="DebugRelease|x64">
-      <Configuration>DebugRelease</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Profile|x64">
-      <Configuration>Profile</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{80C62E80-7437-4BB9-B7E0-693FA4C402A1}</ProjectGuid>
@@ -28,34 +10,23 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -64,15 +35,19 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="SaberEngineSolutionProperties.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="SaberEngineSolutionProperties.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="SaberEngineSolutionProperties.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="SaberEngineSolutionProperties.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -81,55 +56,33 @@
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
     <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
-    <MultiProcFXC>false</MultiProcFXC>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <PreBuildEventUseInBuild />
     <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
-    <MultiProcFXC>false</MultiProcFXC>
-    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <PreBuildEventUseInBuild />
     <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
-    <MultiProcFXC>false</MultiProcFXC>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PreBuildEventUseInBuild />
     <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
-    <MultiProcFXC>false</MultiProcFXC>
   </PropertyGroup>
   <PropertyGroup>
     <RunPostBuildEvent>Always</RunPostBuildEvent>
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
-  <PropertyGroup Label="Vcpkg">
-    <VcpkgEnableManifest>true</VcpkgEnableManifest>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
-      <PerUserRedirection>true</PerUserRedirection>
     </Link>
     <PreBuildEvent>
       <Message>
@@ -148,42 +101,17 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <PostBuildEvent>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
-    <FxCompile>
-      <ShaderModel>5.1</ShaderModel>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\Shaders\HLSL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWarningAsError>true</TreatWarningAsError>
-      <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
-      <AdditionalOptions>/Zss /Fd $(OutDir)</AdditionalOptions>
-    </FxCompile>
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <DebugInformationFormat>OldStyle</DebugInformationFormat>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <PerUserRedirection>true</PerUserRedirection>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -200,42 +128,17 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
 xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
-    <FxCompile>
-      <ShaderModel>5.1</ShaderModel>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\Shaders\HLSL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWarningAsError>false</TreatWarningAsError>
-      <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
-      <AdditionalOptions>/Zss /Fd $(OutDir) %(AdditionalOptions)</AdditionalOptions>
-    </FxCompile>
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PreprocessorDefinitions>PROFILE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
-      <PerUserRedirection>true</PerUserRedirection>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -252,40 +155,17 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
 xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
-    <FxCompile>
-      <ShaderModel>5.1</ShaderModel>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\Shaders\HLSL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWarningAsError>false</TreatWarningAsError>
-      <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
-    </FxCompile>
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)Dependencies\stb\;$(ProjectDir)Dependencies\RenderDoc\;$(ProjectDir)Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
-      <PerUserRedirection>true</PerUserRedirection>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -305,12 +185,6 @@ xcopy "$(OutDirFullPath)*.exe" "$(SolutionDir)SaberEngine\*.exe" /y /s
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
-    <FxCompile>
-      <ShaderModel>5.1</ShaderModel>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\Shaders\HLSL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWarningAsError>false</TreatWarningAsError>
-      <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
-    </FxCompile>
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
     </ProjectReference>
@@ -325,15 +199,15 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClCompile Include="MaterialInstanceComponent.cpp" />
     <ClCompile Include="MeshPrimitiveComponent.cpp" />
     <ClCompile Include="NameComponent.cpp" />
-    <ClCompile Include="pch\stdafx.cpp">
+    <ClCompile Include="pch\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="RelationshipComponent.cpp" />
     <ClCompile Include="RenderDataComponent.cpp" />
@@ -362,7 +236,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClInclude Include="RelationshipComponent.h" />
     <ClInclude Include="NameComponent.h" />
     <ClInclude Include="EntityManager.h" />
-    <ClInclude Include="pch\stdafx.h" />
+    <ClInclude Include="pch\pch.h" />
     <ClInclude Include="RenderDataComponent.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
@@ -658,7 +532,6 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(MSBuildProjectDirectory)\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
     <None Include="Dependencies\XeGTAO\XeGTAO.hlsli" />
-    <None Include="packages.config" />
     <None Include="SaberEngine.licenseheader" />
     <None Include="Shaders\GLSL\AmbientCommon.glsl" />
     <None Include="Shaders\GLSL\Blit_PShader.frag" />
@@ -715,13 +588,9 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <None Include="Shaders\HLSL\GBufferCommon.hlsli" />
     <None Include="Shaders\HLSL\Lighting.hlsli" />
     <None Include="Shaders\HLSL\MathConstants.hlsli" />
-    <None Include="Shaders\HLSL\NormalMapUtils.hlsli">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="Shaders\HLSL\SaberCommon.hlsli">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="Shaders\HLSL\SaberComputeCommon.hlsli" />
+    <None Include="Shaders\HLSL\NormalMapUtils.hlsli" />
+	<None Include="Shaders\HLSL\SaberCommon.hlsli" />
+	<None Include="Shaders\HLSL\SaberComputeCommon.hlsli" />
     <FxCompile Include="Shaders\HLSL\Bloom_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">CShader</EntryPointName>
