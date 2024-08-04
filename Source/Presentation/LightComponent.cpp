@@ -488,7 +488,7 @@ namespace fr
 				{
 				case fr::Light::Type::AmbientIBL:
 				{
-					//
+					m_ambientLightSpawnParams.m_filepath = nullptr;
 				}
 				break;
 				case fr::Light::Type::Directional:
@@ -508,7 +508,7 @@ namespace fr
 
 			struct AmbientLightSpawnParams
 			{
-				std::string m_filepath;
+				char const* m_filepath;
 			} m_ambientLightSpawnParams;
 
 			struct PunctualLightSpawnParams
@@ -537,11 +537,12 @@ namespace fr
 		}
 
 		// Display type-specific spawn options
+		std::vector<std::string> iblHDRFiles;
 		switch (s_selectedLightType)
 		{
 		case fr::Light::Type::AmbientIBL:
 		{
-			std::vector<std::string> const& iblHDRFiles = util::GetDirectoryFilenameContents(
+			iblHDRFiles = util::GetDirectoryFilenameContents(
 				core::Config::Get()->GetValue<std::string>(core::configkeys::k_sceneIBLDirKey).c_str(), ".hdr");
 
 			static size_t selectedFileIdx = 0;
@@ -557,7 +558,7 @@ namespace fr
 					if (isSelected)
 					{
 						ImGui::SetItemDefaultFocus();
-						s_spawnParams->m_ambientLightSpawnParams.m_filepath = iblHDRFiles[selectedFileIdx];
+						s_spawnParams->m_ambientLightSpawnParams.m_filepath = iblHDRFiles[selectedFileIdx].c_str();
 					}
 				}
 				ImGui::EndListBox();
