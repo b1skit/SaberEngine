@@ -5,7 +5,7 @@
 
 #include "../Common/IBLGenerationParams.h"
 
-layout(std430, binding=0) uniform BRDFIntegrationParams { BRDFIntegrationData _BRDFIntegrationParams; };
+layout(binding=0) uniform BRDFIntegrationParams { BRDFIntegrationData _BRDFIntegrationParams; };
 
 layout(location=0) writeonly uniform image2D output0;
 

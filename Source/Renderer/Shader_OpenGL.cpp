@@ -87,8 +87,8 @@ namespace
 	static_assert(_countof(k_shaderPreambles) == re::Shader::ShaderType_Count);
 
 
-	constexpr char const* k_globalPreamble = "#version 460 core\n"
-		"#extension GL_NV_uniform_buffer_std430_layout : require\n" // Required for UBO std430 layouts
+	constexpr char const* k_globalPreamble =
+		"#version 460 core\n"
 		"#define SE_OPENGL\n"
 		"\n"; // Note: MUST be terminated with "\n"
 

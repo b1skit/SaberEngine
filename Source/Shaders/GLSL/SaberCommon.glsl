@@ -150,7 +150,7 @@ layout(binding=8) uniform sampler2D Tex8;
 // Note: OpenGL gives very strange, nonsensical compile errors if the members of our uniform blocks are structs, and
 // their names are capitalized (but only with some letters!). Totally puzzling - but the '_' prefix is preferred anyway
 
-layout(std430, binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
+layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
 
 // UBOs can't have a dynamic length; We use SSBOs for instancing instead
 layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformData _InstancedTransformParams[]; };
@@ -160,16 +160,16 @@ layout(std430, binding=3) readonly buffer DirectionalLightParams { LightData _Di
 layout(std430, binding=4) readonly buffer PointLightParams { LightData _PointLightParams[]; };
 layout(std430, binding=5) readonly buffer SpotLightParams { LightData _SpotLightParams[]; };
 
-layout(std430, binding=6) uniform LightIndexParams { LightIndexData _LightIndexParams; };
+layout(binding=6) uniform LightIndexParams { LightIndexData _LightIndexParams; };
 
-layout(std430, binding=7) uniform CameraParams { CameraData _CameraParams; };
-layout(std430, binding=8) uniform PoissonSampleParams { PoissonSampleParamsData _PoissonSampleParams; };
-layout(std430, binding=9) uniform AmbientLightParams { AmbientLightData _AmbientLightParams; };
-layout(std430, binding=10) uniform AllLightIndexesParams { AllLightIndexesData _AllLightIndexesParams; };
-layout(std430, binding=11) uniform CubemapShadowRenderParams { CubemapShadowRenderData _CubemapShadowRenderParams; };
-layout(std430, binding=12) uniform IEMPMREMGenerationParams { IEMPMREMGenerationData _IEMPMREMGenerationParams; };
-layout(std430, binding=13) uniform BloomComputeParams { BloomComputeData _BloomComputeParams; };
-layout(std430, binding=14) uniform SkyboxParams { SkyboxData _SkyboxParams; };
-layout(std430, binding=15) uniform TargetParams { TargetData _TargetParams; };
+layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+layout(binding=8) uniform PoissonSampleParams { PoissonSampleParamsData _PoissonSampleParams; };
+layout(binding=9) uniform AmbientLightParams { AmbientLightData _AmbientLightParams; };
+layout(binding=10) uniform AllLightIndexesParams { AllLightIndexesData _AllLightIndexesParams; };
+layout(binding=11) uniform CubemapShadowRenderParams { CubemapShadowRenderData _CubemapShadowRenderParams; };
+layout(binding=12) uniform IEMPMREMGenerationParams { IEMPMREMGenerationData _IEMPMREMGenerationParams; };
+layout(binding=13) uniform BloomComputeParams { BloomComputeData _BloomComputeParams; };
+layout(binding=14) uniform SkyboxParams { SkyboxData _SkyboxParams; };
+layout(binding=15) uniform TargetParams { TargetData _TargetParams; };
 
 #endif // SABER_COMMON
