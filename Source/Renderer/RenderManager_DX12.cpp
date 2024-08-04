@@ -352,16 +352,15 @@ namespace dx12
 							SetStageTextureInputs(renderStage->GetPermanentTextureInputs());
 							SetStageTextureInputs(renderStage->GetSingleFrameTextureInputs());
 
+							commandList->SetRWTextures(renderStage->GetPermanentRWTextureInputs());
+							commandList->SetRWTextures(renderStage->GetSingleFrameRWTextureInputs());
 
 							// Set the targets:
 							switch (curRenderStageType)
 							{
 							case re::RenderStage::Type::Compute:
 							{
-								if (targetSet)
-								{
-									commandList->SetComputeTargets(*targetSet);
-								}
+								//
 							}
 							break;
 							case re::RenderStage::Type::Graphics:
@@ -436,6 +435,9 @@ namespace dx12
 							currentCommandList->SetTexture(texSamplerInput, false);
 							// Note: Static samplers have already been set during root signature creation
 						}
+
+						// Batch compute inputs:
+						currentCommandList->SetRWTextures(batches[batchIdx].GetRWTextureInputs());
 
 						switch (curRenderStageType)
 						{

@@ -236,12 +236,12 @@ namespace
 	bool SimultaneousAccessIsNeeded(re::Texture::TextureParams const& texParams)
 	{
 		// Assume that if a resource is used as a target and anything else, it could be used simultaneously
-		const bool usedAsInputAndTArget = 
+		const bool usedAsInputAndTarget = 
 			((texParams.m_usage & re::Texture::Usage::ColorTarget) &&
 			(texParams.m_usage ^ re::Texture::Usage::ColorTarget)) ||
 			((texParams.m_usage & re::Texture::Usage::ComputeTarget) &&
 				(texParams.m_usage ^ re::Texture::Usage::ComputeTarget));
-		if (!usedAsInputAndTArget)
+		if (!usedAsInputAndTarget)
 		{
 			return false;
 		}

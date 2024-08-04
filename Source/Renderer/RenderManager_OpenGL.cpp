@@ -215,10 +215,8 @@ namespace opengl
 							SetStageTextureInputs(renderStage->GetSingleFrameTextureInputs());
 
 							// Set compute inputs
-							if (renderStage->GetStageType() == re::RenderStage::Type::Compute)
-							{
-								opengl::Shader::SetImageTextureTargets(*shader, *stageTargets);
-							}
+							opengl::Shader::SetImageTextureTargets(*shader, renderStage->GetPermanentRWTextureInputs());
+							opengl::Shader::SetImageTextureTargets(*shader, renderStage->GetSingleFrameRWTextureInputs());
 						}
 					};
 
@@ -278,6 +276,9 @@ namespace opengl
 						{
 							opengl::Shader::SetTextureAndSampler(*currentShader, texSamplerInput);
 						}
+
+						// Batch compute inputs:
+						opengl::Shader::SetImageTextureTargets(*currentShader, batch.GetRWTextureInputs());
 
 						// Draw!
 						switch (curRenderStageType)

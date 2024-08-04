@@ -196,4 +196,24 @@ namespace re
 
 		TextureView m_textureView;
 	};
+
+
+	struct RWTextureInput
+	{
+		RWTextureInput(char const* shaderName, re::Texture const*, TextureView const&);
+		RWTextureInput(std::string const& shaderName, re::Texture const*, TextureView const&);
+
+		RWTextureInput(RWTextureInput const& rhs) noexcept;
+		RWTextureInput(RWTextureInput&& rhs) noexcept;
+
+		RWTextureInput& operator=(RWTextureInput const& rhs) noexcept;
+		RWTextureInput& operator=(RWTextureInput&& rhs) noexcept;
+
+		~RWTextureInput() = default;
+
+		std::string m_shaderName;
+		re::Texture const* m_texture;
+
+		TextureView m_textureView;
+	};
 }

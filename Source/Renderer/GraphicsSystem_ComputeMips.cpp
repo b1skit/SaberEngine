@@ -192,49 +192,40 @@ namespace gr
 						default: SEAssertF("Invalid dimension");
 						}
 
-						// Targets:
-						const std::string targetSetName = std::format(
-							"{}[{}], MIP {} - {} generation stage targets",
-							newTexture->GetName(), 
-							arrayIdx,
-							targetMip, 
-							targetMip + numMipStages - 1);
-
-						std::shared_ptr<re::TextureTargetSet> mipGenTargets = re::TextureTargetSet::Create(targetSetName);
-
+						// Attach our textures as UAVs:
 						for (uint32_t currentTargetIdx = 0; currentTargetIdx < numMipStages; currentTargetIdx++)
 						{
-							re::TextureTarget::TargetParams mipTargetParams;
+							re::TextureView textureView;
 
 							switch (texParams.m_dimension)
 							{
 							case re::Texture::Dimension::Texture1D:
 							{
-								mipTargetParams.m_textureView = re::TextureView(
+								textureView = re::TextureView(
 									re::TextureView::Texture1DView{ targetMip++, 1 });
 							}
 							break;
 							case re::Texture::Dimension::Texture1DArray:
 							{
-								mipTargetParams.m_textureView = re::TextureView(
+								textureView = re::TextureView(
 									re::TextureView::Texture1DArrayView{ targetMip++, 1, arrayIdx, 1 });
 							}
 							break;
 							case re::Texture::Dimension::Texture2D:
 							{
-								mipTargetParams.m_textureView = re::TextureView(
+								textureView = re::TextureView(
 									re::TextureView::Texture2DView{ targetMip++, 1, 0, 0.f });
 							}
 							break;
 							case re::Texture::Dimension::Texture2DArray:
 							{
-								mipTargetParams.m_textureView = re::TextureView(
+								textureView = re::TextureView(
 									re::TextureView::Texture2DArrayView{ targetMip++, 1, arrayIdx, 1, 0 });
 							}
 							break;
 							case re::Texture::Dimension::Texture3D:
 							{
-								mipTargetParams.m_textureView = re::TextureView(
+								textureView = re::TextureView(
 									re::TextureView::Texture3DView{ targetMip++, 1, 0.f, arrayIdx, 1 });
 							}
 							break;
@@ -242,18 +233,18 @@ namespace gr
 							case re::Texture::Dimension::TextureCubeArray:
 							{
 								const uint32_t firstArraySlice = (arrayIdx * 6) + faceIdx;
-								mipTargetParams.m_textureView = re::TextureView(
+								textureView = re::TextureView(
 									re::TextureView::Texture2DArrayView{ targetMip++, 1, firstArraySlice, 1, 0 });
 							}
 							break;
 							default: SEAssertF("Invalid dimension");
 							}
 
-							mipTargetParams.m_shaderName = std::format("output{}", currentTargetIdx);
+							std::string const& shaderName = std::format("output{}", currentTargetIdx);
 
-							mipGenTargets->SetColorTarget(currentTargetIdx, newTexture, mipTargetParams);
+							mipGenerationStage->AddSingleFrameRWTextureInput(shaderName.c_str(), newTexture, textureView);
 						}
-						mipGenerationStage->SetTextureTargetSet(mipGenTargets);
+					
 
 						// We (currently) use 8x8 thread group dimensions
 						constexpr uint32_t k_numThreadsX = 8;

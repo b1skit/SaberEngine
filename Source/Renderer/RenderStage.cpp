@@ -409,13 +409,114 @@ namespace re
 	}
 
 
+	void RenderStage::AddPermanentRWTextureInput(
+		std::string const& shaderName,
+		re::Texture const* tex,
+		re::TextureView const& texView)
+	{
+		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
+		SEAssert(tex != nullptr, "Invalid texture");
+
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ComputeTarget) != 0,
+			"Attempting to add a RWTexture input that does not have an appropriate usage flag");
+
+#if defined(_DEBUG)
+		for (auto const& singleFrameRWTexInput : m_singleFrameRWTextureInputs)
+		{
+			SEAssert(singleFrameRWTexInput.m_shaderName != shaderName,
+				"A texture input with the same name has already been added a single frame RW input");
+		}
+#endif
+
+		bool foundExistingEntry = false;
+		if (!m_permanentRWTextureInputs.empty())
+		{
+			for (size_t i = 0; i < m_permanentRWTextureInputs.size(); i++)
+			{
+				// If we find an input with the same name, replace it:
+				if (strcmp(m_permanentRWTextureInputs[i].m_shaderName.c_str(), shaderName.c_str()) == 0)
+				{
+					m_permanentRWTextureInputs[i] = re::RWTextureInput{ shaderName, tex, texView };
+					foundExistingEntry = true;
+					break;
+				}
+			}
+		}
+		if (!foundExistingEntry)
+		{
+			m_permanentRWTextureInputs.emplace_back(re::RWTextureInput{ shaderName, tex, texView });
+		}
+
+		if (m_textureTargetSet &&
+			m_textureTargetSet->HasDepthTarget() &&
+			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture().get())
+		{
+			m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Need to revalidate
+		}
+	}
+
+
+	void RenderStage::AddPermanentRWTextureInput(
+		std::string const& shaderName,
+		std::shared_ptr<re::Texture> tex,
+		re::TextureView const& texView)
+	{
+		AddPermanentRWTextureInput(shaderName, tex.get(), texView);
+	}
+
+
+	void RenderStage::AddSingleFrameRWTextureInput(
+		char const* shaderName,
+		re::Texture const* tex,
+		re::TextureView const& texView)
+	{
+		SEAssert(shaderName, "Shader name cannot be null");
+		SEAssert(tex != nullptr, "Invalid texture");
+
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ComputeTarget) != 0,
+			"Attempting to add a RW Texture input that does not have an appropriate usage flag");
+
+#if defined(_DEBUG)
+		for (auto const& permanentRWTexInput : m_permanentRWTextureInputs)
+		{
+			SEAssert(strcmp(permanentRWTexInput.m_shaderName.c_str(), shaderName) != 0,
+				"A texture input with the same name has already been added a permanent input");
+		}
+		for (auto const& singleFrameRWTexInput : m_singleFrameRWTextureInputs)
+		{
+			SEAssert(strcmp(singleFrameRWTexInput.m_shaderName.c_str(), shaderName) != 0,
+				"A RW texture input with the same name has already been added a single frame input. Re-adding the same "
+				"single frame texture is not allowed");
+		}
+#endif
+		m_singleFrameRWTextureInputs.emplace_back(shaderName, tex, texView);
+
+
+		if (m_textureTargetSet &&
+			m_textureTargetSet->HasDepthTarget() &&
+			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture().get())
+		{
+			m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Need to revalidate
+		}
+	}
+
+
+	void RenderStage::AddSingleFrameRWTextureInput(
+		char const* shaderName,
+		std::shared_ptr<re::Texture> tex,
+		re::TextureView const& texView)
+	{
+		AddSingleFrameRWTextureInput(shaderName, tex.get(), texView);
+	}
+
+
 	void RenderStage::ValidateTexturesAndTargets()
 	{
 		// This is a debug sanity check to make sure we're not trying to bind the same subresources in different ways
 #if defined _DEBUG
 		if (m_textureTargetSet)
 		{
-			auto ValidateInput = [this](std::vector<re::TextureAndSamplerInput>const& texSamplerInputs)
+			auto ValidateInput = [this](auto const& texSamplerInputs)
 				{
 					for (auto const& texInput : texSamplerInputs)
 					{
@@ -589,9 +690,13 @@ namespace re
 			ValidateInput(m_permanentTextureSamplerInputs);
 			ValidateInput(m_singleFrameTextureSamplerInputs);
 
+			ValidateInput(m_permanentRWTextureInputs);
+			ValidateInput(m_singleFrameRWTextureInputs);
+
 			for (auto const& batch : m_stageBatches)
 			{
 				ValidateInput(batch.GetTextureAndSamplerInputs());
+				ValidateInput(batch.GetRWTextureInputs());
 			}
 
 			// Validate depth texture usage
@@ -604,6 +709,12 @@ namespace re
 				{
 					SEAssert(singleFrameInput.m_texture != depthTex,
 						"Setting the depth texture as a single frame input is not (currently) supported (DEPRECATED?)");
+				}
+
+				for (auto const& singleFrameRWInput : m_singleFrameRWTextureInputs)
+				{
+					SEAssert(singleFrameRWInput.m_texture != depthTex,
+						"Setting the depth texture as a single frame RW input is not (currently) supported (DEPRECATED?)");
 				}
 			}
 		}
@@ -631,6 +742,7 @@ namespace re
 
 		m_singleFrameBuffers.clear();
 		m_singleFrameTextureSamplerInputs.clear();
+		m_singleFrameRWTextureInputs.clear();
 
 		if (m_type != RenderStage::Type::FullscreenQuad) // FSQ stages keep the same batch created during construction
 		{

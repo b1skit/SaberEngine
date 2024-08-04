@@ -713,7 +713,66 @@ namespace re
 			m_texture = rhs.m_texture;
 			m_sampler = rhs.m_sampler;
 			m_textureView = rhs.m_textureView;
+		}
+		return *this;
+	}
 
+
+	// -----------------------------------------------------------------------------------------------------------------
+
+
+	RWTextureInput::RWTextureInput(
+		char const* shaderName,
+		re::Texture const* texture,
+		TextureView const& texView)
+		: m_shaderName(shaderName)
+		, m_texture(texture)
+		, m_textureView(texView)
+	{
+		SEAssert(shaderName && texture, "Cannot initialize an RW Texture Input with nullptrs");
+	}
+
+
+	RWTextureInput::RWTextureInput(
+		std::string const& shaderName,
+		re::Texture const* texture,
+		TextureView const& texView)
+		: RWTextureInput(shaderName.c_str(), texture, texView)
+	{
+	}
+
+
+	RWTextureInput::RWTextureInput(RWTextureInput const& rhs) noexcept
+	{
+		*this = rhs;
+	}
+
+
+	RWTextureInput::RWTextureInput(RWTextureInput&& rhs) noexcept
+	{
+		*this = std::move(rhs);
+	}
+
+
+	RWTextureInput& RWTextureInput::operator=(RWTextureInput const& rhs) noexcept
+	{
+		if (&rhs != this)
+		{
+			m_shaderName = rhs.m_shaderName;
+			m_texture = rhs.m_texture;
+			m_textureView = rhs.m_textureView;
+		}
+		return *this;
+	}
+
+
+	RWTextureInput& RWTextureInput::operator=(RWTextureInput&& rhs) noexcept
+	{
+		if (&rhs != this)
+		{
+			m_shaderName = std::move(rhs.m_shaderName);
+			m_texture = rhs.m_texture;
+			m_textureView = rhs.m_textureView;
 		}
 		return *this;
 	}

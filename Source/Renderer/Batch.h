@@ -138,6 +138,18 @@ namespace re
 		
 		std::vector<TextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
 
+		void AddRWTextureInput(
+			char const* shaderName,
+			re::Texture const*,
+			re::TextureView const&);
+
+		void AddRWTextureInput(
+			char const* shaderName,
+			std::shared_ptr<re::Texture const>,
+			re::TextureView const&);
+
+		std::vector<RWTextureInput> const& GetRWTextureInputs() const;
+
 		Lifetime GetLifetime() const;
 		
 		FilterBitmask GetBatchFilterMask() const;
@@ -173,6 +185,7 @@ namespace re
 		std::vector<std::shared_ptr<re::Buffer>> m_batchBuffers;
 
 		std::vector<TextureAndSamplerInput> m_batchTextureSamplerInputs;
+		std::vector<RWTextureInput> m_batchRWTextureInputs;
 
 
 	private:
@@ -225,6 +238,12 @@ namespace re
 	inline std::vector<re::TextureAndSamplerInput> const& Batch::GetTextureAndSamplerInputs() const
 	{
 		return m_batchTextureSamplerInputs;
+	}
+
+
+	inline std::vector<RWTextureInput> const& Batch::GetRWTextureInputs() const
+	{
+		return m_batchRWTextureInputs;
 	}
 
 

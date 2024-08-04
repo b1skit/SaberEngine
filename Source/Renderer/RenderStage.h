@@ -153,6 +153,30 @@ namespace re
 
 		std::vector<re::TextureAndSamplerInput> const& GetSingleFrameTextureInputs() const;
 
+		void AddPermanentRWTextureInput(
+			std::string const& shaderName,
+			re::Texture const*,
+			re::TextureView const&);
+
+		void AddPermanentRWTextureInput(
+			std::string const& shaderName,
+			std::shared_ptr<re::Texture>,
+			re::TextureView const&);
+
+		std::vector<re::RWTextureInput> const& GetPermanentRWTextureInputs() const;
+
+		void AddSingleFrameRWTextureInput(
+			char const* shaderName,
+			re::Texture const*,
+			re::TextureView const&);
+
+		void AddSingleFrameRWTextureInput(
+			char const* shaderName,
+			std::shared_ptr<re::Texture>,
+			re::TextureView const&);
+
+		std::vector<re::RWTextureInput> const& GetSingleFrameRWTextureInputs() const;
+
 		bool DepthTargetIsAlsoTextureInput() const;
 		int GetDepthTargetTextureInputIdx() const;
 
@@ -194,6 +218,9 @@ namespace re
 		std::vector<re::TextureAndSamplerInput> m_permanentTextureSamplerInputs;
 		std::vector<re::TextureAndSamplerInput> m_singleFrameTextureSamplerInputs;
 		int m_depthTextureInputIdx; // k_noDepthTexAsInputFlag: Depth not attached as an input		
+
+		std::vector<re::RWTextureInput> m_permanentRWTextureInputs;
+		std::vector<re::RWTextureInput> m_singleFrameRWTextureInputs;
 
 		std::vector<std::shared_ptr<re::Buffer const>> m_singleFrameBuffers; // Cleared every frame
 
@@ -356,6 +383,18 @@ namespace re
 	inline std::vector<re::TextureAndSamplerInput> const& RenderStage::GetSingleFrameTextureInputs() const
 	{
 		return m_singleFrameTextureSamplerInputs;
+	}
+
+
+	inline std::vector<re::RWTextureInput> const& RenderStage::GetPermanentRWTextureInputs() const
+	{
+		return m_permanentRWTextureInputs;
+	}
+
+
+	inline std::vector<re::RWTextureInput> const& RenderStage::GetSingleFrameRWTextureInputs() const
+	{
+		return m_singleFrameRWTextureInputs;
 	}
 
 

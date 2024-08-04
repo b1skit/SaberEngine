@@ -832,31 +832,21 @@ namespace opengl
 	}
 
 
-	void Shader::SetImageTextureTargets(re::Shader const& shader, re::TextureTargetSet const& targetSet)
+	void Shader::SetImageTextureTargets(re::Shader const& shader, std::vector<re::RWTextureInput> const& rwTexInputs)
 	{
-		SEAssert(!targetSet.GetDepthStencilTarget().HasTexture(),
-			"It is not possible to attach a depth buffer as a target to a compute shader");
-
-		opengl::Shader::PlatformParams const* params = 
+		opengl::Shader::PlatformParams const* params =
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 
-		std::vector<re::TextureTarget> const& texTargets = targetSet.GetColorTargets();
-		for (uint32_t slot = 0; slot < texTargets.size(); slot++)
+		for (uint32_t slot = 0; slot < rwTexInputs.size(); slot++)
 		{
-			re::TextureTarget const& texTarget = texTargets[slot];
-			if (!texTarget.HasTexture())
-			{
-				break;;
-			}
+			re::RWTextureInput const& rwTexInput = rwTexInputs[slot];
 
-			re::TextureTarget::TargetParams const& targetParams = texTarget.GetTargetParams();
+			auto const& bindingUnit = params->m_samplerUnits.find(rwTexInput.m_shaderName);
 
-			auto const& bindingUnit = params->m_samplerUnits.find(targetParams.m_shaderName);
-
-			re::Texture const* texture = texTarget.GetTexture().get();
+			re::Texture const* texture = rwTexInput.m_texture;
 
 			constexpr uint32_t k_accessMode = GL_READ_WRITE;
-			opengl::Texture::BindAsImageTexture(*texture, bindingUnit->second, targetParams.m_textureView, k_accessMode);
+			opengl::Texture::BindAsImageTexture(*texture, bindingUnit->second, rwTexInput.m_textureView, k_accessMode);
 		}
 	}
 }

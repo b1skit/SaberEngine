@@ -17,6 +17,7 @@ namespace re
 	class TextureTarget;
 	class TextureTargetSet;
 	
+	struct RWTextureInput;
 	struct TextureAndSamplerInput;
 	struct TextureView;
 }
@@ -81,7 +82,8 @@ namespace dx12
 		void SetTexture(re::TextureAndSamplerInput const&, bool skipTransition); // Note: Sampler is not used here
 
 		void SetRenderTargets(re::TextureTargetSet const&);
-		void SetComputeTargets(re::TextureTargetSet const&);
+
+		void SetRWTextures(std::vector<re::RWTextureInput> const&);
 
 		void ClearDepthTarget(re::TextureTarget const&);
 

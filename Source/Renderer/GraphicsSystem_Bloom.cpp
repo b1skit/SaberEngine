@@ -115,9 +115,9 @@ namespace gr
 		bloomTargetTexParams.m_mipMode = re::Texture::MipMode::Allocate;
 		bloomTargetTexParams.m_addToSceneData = false;
 
-		std::shared_ptr<re::Texture> bloomTargetTex = re::Texture::Create("Bloom Target", bloomTargetTexParams);
+		m_bloomTargetTex = re::Texture::Create("Bloom Target", bloomTargetTexParams);
 
-		const uint32_t numBloomMips = bloomTargetTex->GetNumMips();
+		const uint32_t numBloomMips = m_bloomTargetTex->GetNumMips();
 
 		// Downsample stages:
 		for (uint32_t level = 0; level < numBloomMips; level++)
@@ -127,15 +127,6 @@ namespace gr
 				std::format("Bloom downsample stage {}/{}: MIP {}", (level + 1), numBloomMips, level);
 			std::shared_ptr<re::RenderStage> downStage = 
 				re::RenderStage::CreateComputeStage(stageName.c_str(), re::RenderStage::ComputeStageParams());
-
-			const std::string targetName = std::format("Bloom {}/{} Target Set", (level + 1), numBloomMips);
-			std::shared_ptr<re::TextureTargetSet> bloomLevelTargets = re::TextureTargetSet::Create(targetName.c_str());
-
-			glm::vec4 const& targetMipDimensions = bloomTargetTex->GetMipLevelDimensions(level);
-			bloomLevelTargets->SetViewport(re::Viewport(
-				0, 0, static_cast<uint32_t>(targetMipDimensions.x), static_cast<uint32_t>(targetMipDimensions.y)));
-			bloomLevelTargets->SetScissorRect(re::ScissorRect(
-				0, 0, static_cast<long>(targetMipDimensions.x), static_cast<long>(targetMipDimensions.y)));
 
 			// Input:
 			if (level == 0)
@@ -148,20 +139,12 @@ namespace gr
 				const uint32_t srcMipLvl = level - 1;
 
 				downStage->AddPermanentTextureInput(
-					"Tex0", bloomTargetTex, bloomSampler, re::TextureView::Texture2DView(srcMipLvl, 1));
+					"Tex0", m_bloomTargetTex, bloomSampler, re::TextureView::Texture2DView(srcMipLvl, 1));
 			}
-			
-			// Target:
-			const re::TextureTarget::TargetParams bloomLevelTargetParams{ 
-				.m_textureView = re::TextureView::Texture2DView(level, 1),
-				.m_shaderName = k_bloomTargetName };
-			
-			bloomLevelTargets->SetColorTarget(
-				0, 
-				bloomTargetTex,
-				bloomLevelTargetParams);
 
-			downStage->SetTextureTargetSet(bloomLevelTargets);
+			// Target:
+			downStage->AddPermanentRWTextureInput(
+				k_bloomTargetName, m_bloomTargetTex, re::TextureView::Texture2DView(level, 1));
 
 			// Buffers:
 			std::shared_ptr<re::Buffer> bloomDownBuf = re::Buffer::Create(
@@ -191,30 +174,13 @@ namespace gr
 			std::shared_ptr<re::RenderStage> upStage =
 				re::RenderStage::CreateComputeStage(stageName.c_str(), re::RenderStage::ComputeStageParams());
 
-			const std::string targetName = std::format("Bloom {}/{} Target Set", (level + 1), numBloomMips);
-			std::shared_ptr<re::TextureTargetSet> bloomLevelTargets = re::TextureTargetSet::Create(targetName.c_str());
-
-			glm::vec4 const& targetMipDimensions = bloomTargetTex->GetMipLevelDimensions(upsampleDstMip);
-			bloomLevelTargets->SetViewport(re::Viewport(
-				0, 0, static_cast<uint32_t>(targetMipDimensions.x), static_cast<uint32_t>(targetMipDimensions.y)));
-			bloomLevelTargets->SetScissorRect(re::ScissorRect(
-				0, 0, static_cast<long>(targetMipDimensions.x), static_cast<long>(targetMipDimensions.y)));
-
 			// Input:
 			upStage->AddPermanentTextureInput(
-				"Tex0", bloomTargetTex, bloomSampler, re::TextureView::Texture2DView(upsampleSrcMip, 1));
+				"Tex0", m_bloomTargetTex, bloomSampler, re::TextureView::Texture2DView(upsampleSrcMip, 1));
 
 			// Targets:
-			const re::TextureTarget::TargetParams bloomLevelTargetParams{ 
-				.m_textureView = re::TextureView::Texture2DView(upsampleDstMip, 1),
-				.m_shaderName = k_bloomTargetName };
-
-			bloomLevelTargets->SetColorTarget(
-				0,
-				bloomTargetTex,
-				bloomLevelTargetParams);
-
-			upStage->SetTextureTargetSet(bloomLevelTargets);
+			upStage->AddPermanentRWTextureInput(
+				k_bloomTargetName, m_bloomTargetTex, re::TextureView::Texture2DView(upsampleDstMip, 1));
 
 			// Buffers:
 			std::shared_ptr<re::Buffer> bloomUpBuf = re::Buffer::Create(
@@ -243,8 +209,8 @@ namespace gr
 	void BloomGraphicsSystem::RegisterOutputs()
 	{
 		RegisterTextureOutput(
-			k_bloomResultOutput, 
-			&m_bloomUpStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture());
+			k_bloomResultOutput,
+			&m_bloomTargetTex);
 	}
 
 
@@ -254,15 +220,12 @@ namespace gr
 	
 		std::shared_ptr<re::Texture> deferredLightTargetTex = 
 			m_emissiveBlitStage->GetTextureTargetSet()->GetColorTarget(0).GetTexture();
-		
-		std::shared_ptr<re::Texture> bloomTargetTex = 
-			m_bloomUpStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture();
 
 		gr::Camera::Config const& cameraConfig =
 			m_graphicsSystemManager->GetActiveCameraRenderData().m_cameraConfig;
 
 		// Buffers:
-		const uint32_t numBloomMips = bloomTargetTex->GetNumMips();
+		const uint32_t numBloomMips = m_bloomTargetTex->GetNumMips();
 		for (uint32_t level = 0; level < numBloomMips; level++)
 		{
 			BloomComputeData bloomComputeParams{};
@@ -274,7 +237,7 @@ namespace gr
 
 				bloomComputeParams = CreateBloomComputeParamsData(
 					deferredLightTargetTex,
-					bloomTargetTex,
+					m_bloomTargetTex,
 					srcMipLevel,
 					dstMipLevel,
 					true,
@@ -289,8 +252,8 @@ namespace gr
 				const uint32_t dstMipLevel = srcMipLevel + 1;
 
 				bloomComputeParams = CreateBloomComputeParamsData(
-					bloomTargetTex,
-					bloomTargetTex,
+					m_bloomTargetTex,
+					m_bloomTargetTex,
 					srcMipLevel,
 					dstMipLevel,
 					true,
@@ -312,8 +275,8 @@ namespace gr
 			const uint32_t upsampleDstMip = upsampleSrcMip - 1;
 			
 			BloomComputeData const& bloomComputeParams = CreateBloomComputeParamsData(
-				bloomTargetTex,
-				bloomTargetTex,
+				m_bloomTargetTex,
+				m_bloomTargetTex,
 				upsampleSrcMip,
 				upsampleDstMip,
 				false,
@@ -331,13 +294,12 @@ namespace gr
 
 	void BloomGraphicsSystem::CreateBatches()
 	{
-		std::shared_ptr<re::Texture> bloomTex = m_bloomDownStages[0]->GetTextureTargetSet()->GetColorTarget(0).GetTexture();
-		const uint32_t numBloomTexMips = bloomTex->GetNumMips();
+		const uint32_t numBloomTexMips = m_bloomTargetTex->GetNumMips();
 
 		uint32_t downsampleDstMipLevel = 0;
 		for (std::shared_ptr<re::RenderStage> downStage : m_bloomDownStages)
 		{
-			glm::vec2 dstMipWidthHeight = bloomTex->GetMipLevelDimensions(downsampleDstMipLevel++).xy;
+			glm::vec2 dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(downsampleDstMipLevel++).xy;
 
 			re::Batch computeBatch = re::Batch(
 				re::Batch::Lifetime::SingleFrame,
@@ -351,7 +313,7 @@ namespace gr
 		uint32_t upsampleDstMipLevel = m_firstUpsampleSrcMipLevel - 1;
 		for (std::shared_ptr<re::RenderStage> upStage : m_bloomUpStages)
 		{
-			glm::vec2 dstMipWidthHeight = bloomTex->GetMipLevelDimensions(upsampleDstMipLevel--).xy;
+			glm::vec2 dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(upsampleDstMipLevel--).xy;
 
 			re::Batch computeBatch = re::Batch(
 				re::Batch::Lifetime::SingleFrame,

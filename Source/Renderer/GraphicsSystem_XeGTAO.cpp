@@ -173,9 +173,7 @@ namespace gr
 			re::RenderStage::CreateComputeStage("XeGTAO: Prefilter depths stage", re::RenderStage::ComputeStageParams{});
 		m_prefilterDepthsStage->SetDrawStyle(effect::DrawStyle::XeGTAO_PrefilterDepths);
 
-		// Depth prefilter target:
-		m_prefilterDepthsTargets = re::TextureTargetSet::Create("XeGTAO: Prefilter depths targets");
-		
+		// Depth prefilter texture:	
 		re::Texture::TextureParams prefilterDepthTexParams{};
 		prefilterDepthTexParams.m_width = m_xRes;
 		prefilterDepthTexParams.m_height = m_yRes;
@@ -187,52 +185,39 @@ namespace gr
 		prefilterDepthTexParams.m_mipMode = re::Texture::MipMode::Allocate;
 		prefilterDepthTexParams.m_addToSceneData = false;
 
-		std::shared_ptr<re::Texture> prefilteredDepthTargetTex = 
-			re::Texture::Create("XeGTAO: Prefiltered depths", prefilterDepthTexParams);
+		m_prefilterDepthsTex = re::Texture::Create("XeGTAO: Prefiltered depths", prefilterDepthTexParams);
 
 		uint32_t targetMip = 0;
 
 		// Mip 0:
-		m_prefilterDepthsTargets->SetColorTarget(
-			0,
-			prefilteredDepthTargetTex,
-			re::TextureTarget::TargetParams{ 
-				.m_textureView = re::TextureView::Texture2DView(targetMip++, 1),
-				.m_shaderName = "output0" });
+		m_prefilterDepthsStage->AddPermanentRWTextureInput(
+			"output0",
+			m_prefilterDepthsTex,
+			re::TextureView::Texture2DView(targetMip++, 1));
 
 		// Mip 1:
-		m_prefilterDepthsTargets->SetColorTarget(
-			1, 
-			prefilteredDepthTargetTex, 
-			re::TextureTarget::TargetParams{ 
-				.m_textureView = re::TextureView::Texture2DView(targetMip++, 1),
-				.m_shaderName = "output1" });
+		m_prefilterDepthsStage->AddPermanentRWTextureInput(
+			"output1",
+			m_prefilterDepthsTex,
+			re::TextureView::Texture2DView(targetMip++, 1));
 
 		// Mip 2:
-		m_prefilterDepthsTargets->SetColorTarget(
-			2, 
-			prefilteredDepthTargetTex,
-			re::TextureTarget::TargetParams{ 
-				.m_textureView = re::TextureView::Texture2DView(targetMip++, 1),
-				.m_shaderName = "output2" });
+		m_prefilterDepthsStage->AddPermanentRWTextureInput(
+			"output2",
+			m_prefilterDepthsTex,
+			re::TextureView::Texture2DView(targetMip++, 1));
 
 		// Mip 3:
-		m_prefilterDepthsTargets->SetColorTarget(
-			3, 
-			prefilteredDepthTargetTex,
-			re::TextureTarget::TargetParams{ 
-				.m_textureView = re::TextureView::Texture2DView(targetMip++, 1),
-				.m_shaderName = "output3" });
+		m_prefilterDepthsStage->AddPermanentRWTextureInput(
+			"output3",
+			m_prefilterDepthsTex,
+			re::TextureView::Texture2DView(targetMip++, 1));
 
 		// Mip 4:
-		m_prefilterDepthsTargets->SetColorTarget(
-			4, 
-			prefilteredDepthTargetTex, 
-			re::TextureTarget::TargetParams{ 
-				.m_textureView = re::TextureView::Texture2DView(targetMip++, 1),
-				.m_shaderName = "output4" });
-
-		m_prefilterDepthsStage->SetTextureTargetSet(m_prefilterDepthsTargets);
+		m_prefilterDepthsStage->AddPermanentRWTextureInput(
+			"output4",
+			m_prefilterDepthsTex,
+			re::TextureView::Texture2DView(targetMip++, 1));
 
 		// Attach the depth buffer as an input to the depth prefilter stage:	
 		m_prefilterDepthsStage->AddPermanentTextureInput(
@@ -250,9 +235,7 @@ namespace gr
 
 		SetQuality(m_XeGTAOQuality);
 
-		// Main stage targets:
-		m_mainTargets = re::TextureTargetSet::Create("XeGTAO: Main targets");
-
+		// Main stage target texture:
 		re::Texture::Format workingAOTermFormat = re::Texture::Format::R8_UINT;
 		if (outputBentNormals)
 		{
@@ -270,13 +253,9 @@ namespace gr
 		workingAOTexParams.m_mipMode = re::Texture::MipMode::None;
 		workingAOTexParams.m_addToSceneData = false;
 
-		std::shared_ptr<re::Texture> workingAOTex = re::Texture::Create("XeGTAO: Working AO", workingAOTexParams);
+		m_workingAOTex = re::Texture::Create("XeGTAO: Working AO", workingAOTexParams);
 
-		re::TextureTarget::TargetParams targetParams{
-			.m_textureView = re::TextureView::Texture2DView(0, 1),
-			.m_shaderName = "output0" };
-
-		m_mainTargets->SetColorTarget(0, workingAOTex, targetParams);
+		m_mainStage->AddPermanentRWTextureInput("output0", m_workingAOTex, re::TextureView::Texture2DView(0, 1));
 
 
 		re::Texture::TextureParams workingEdgesTexParams{};
@@ -290,22 +269,16 @@ namespace gr
 		workingEdgesTexParams.m_mipMode = re::Texture::MipMode::None;
 		workingEdgesTexParams.m_addToSceneData = false;
 
-		std::shared_ptr<re::Texture> workingEdgesTex = 
-			re::Texture::Create("XeGTAO: Working Edges", workingEdgesTexParams);
+		m_workingEdgesTargetTex = re::Texture::Create("XeGTAO: Working Edges", workingEdgesTexParams);
 
-		constexpr uint8_t k_workingEdgesIdx = 1;
-		targetParams.m_shaderName = "output1";
-
-		m_mainTargets->SetColorTarget(k_workingEdgesIdx, workingEdgesTex, targetParams);
-
-		m_mainStage->SetTextureTargetSet(m_mainTargets);
+		m_mainStage->AddPermanentRWTextureInput("output1", m_workingEdgesTargetTex, re::TextureView::Texture2DView(0, 1));
 
 		// Main stage texture inputs:
 		m_mainStage->AddPermanentTextureInput(
 			"PrefilteredDepth",
-			prefilteredDepthTargetTex,
+			m_prefilterDepthsTex,
 			re::Sampler::GetSampler("ClampMinMagMipPoint"),
-			re::TextureView(prefilteredDepthTargetTex));
+			re::TextureView(m_prefilterDepthsTex));
 		
 		m_mainStage->AddPermanentTextureInput(
 			k_wNormalInput.GetKey(),
@@ -332,23 +305,9 @@ namespace gr
 		m_denoiseFinalOutputIdx = lastPassIdx % 2;
 
 		// Denoise ping-poing target sets:
-		re::Texture::TextureParams denoiseTargetParams{};
-
-		for (uint8_t targetIdx = 0; targetIdx < 2; targetIdx++)
-		{
-			m_denoisePingPongTargets[targetIdx] = re::TextureTargetSet::Create(
-				std::format("XeGTAO: Denoise targets {}/2", (targetIdx + 1)).c_str());
-		}
-
+	
 		// Create our first ping-pong target:
-		std::shared_ptr<re::Texture> denoiseTarget = re::Texture::Create("XeGTAO: Denoise target", workingAOTexParams);
-
-		targetParams.m_shaderName = "output0";
-
-		m_denoisePingPongTargets[0]->SetColorTarget(0, denoiseTarget, targetParams);
-
-		// We reuse the working AO buffer as our 2nd target
-		m_denoisePingPongTargets[1]->SetColorTarget(0, workingAOTex, targetParams);
+		m_denoisePingTargetTex = re::Texture::Create("XeGTAO: Denoise target", workingAOTexParams);
 		
 		for (uint8_t passIdx = 0; passIdx < numDenoisePasses; passIdx++)
 		{
@@ -373,31 +332,34 @@ namespace gr
 				// All passes: Sample the previous denoise output:
 				m_denoiseStages[passIdx]->AddPermanentTextureInput(
 					"SourceAO",
-					denoiseTarget, // Read from the denoise target texture
+					m_denoisePingTargetTex, // Read from the denoise target texture
 					re::Sampler::GetSampler("ClampMinMagMipPoint"),
-					re::TextureView(denoiseTarget));
+					re::TextureView(m_denoisePingTargetTex));
 
-				m_denoiseStages[passIdx]->SetTextureTargetSet(m_denoisePingPongTargets[1]);
+				// We reuse the working AO buffer as our 2nd target
+				m_denoiseStages[passIdx]->AddPermanentRWTextureInput(
+					"output0", m_workingAOTex, re::TextureView::Texture2DView(0, 1));
 			}
 			else // Even numbers: 0, 2, ...
 			{
-				// First pass: Sample the working AO
+				// First pass: Sample the working AO (We reuse the working AO buffer as our 2nd target)
 				// Subsequent passes: sample the interim denoising results from the same buffer
 				m_denoiseStages[passIdx]->AddPermanentTextureInput(
 					"SourceAO",
-					workingAOTex, // Read from the working AO texture
+					m_workingAOTex, // Read from the working AO texture
 					re::Sampler::GetSampler("ClampMinMagMipPoint"),
-					re::TextureView(workingAOTex));
+					re::TextureView(m_workingAOTex));
 
-				m_denoiseStages[passIdx]->SetTextureTargetSet(m_denoisePingPongTargets[0]);
+				m_denoiseStages[passIdx]->AddPermanentRWTextureInput(
+					"output0", m_denoisePingTargetTex, re::TextureView::Texture2DView(0, 1));
 			}
 
 			// Add the working edges texture as an input:
 			m_denoiseStages[passIdx]->AddPermanentTextureInput(
 				"SourceEdges",
-				m_mainTargets->GetColorTarget(k_workingEdgesIdx).GetTexture(),
+				m_workingEdgesTargetTex,
 				re::Sampler::GetSampler("ClampMinMagMipPoint"),
-				re::TextureView(m_mainTargets->GetColorTarget(k_workingEdgesIdx).GetTexture()));
+				re::TextureView(m_workingEdgesTargetTex));
 
 			pipeline.AppendRenderStage(m_denoiseStages[passIdx]);
 		}
@@ -413,9 +375,21 @@ namespace gr
 
 	void XeGTAOGraphicsSystem::RegisterOutputs()
 	{
-		RegisterTextureOutput(
-			k_aoOutput, 
-			&m_denoiseStages[m_denoiseFinalOutputIdx]->GetTextureTargetSet()->GetColorTarget(0).GetTexture());
+		SEAssert(m_denoiseFinalOutputIdx <= 1, "Expecting a 0 or 1 index");
+
+		// We reuse the working AO buffer as our 2nd target
+		if (m_denoiseFinalOutputIdx == 0)
+		{
+			RegisterTextureOutput(
+				k_aoOutput,
+				&m_denoisePingTargetTex);
+		}
+		else
+		{
+			RegisterTextureOutput(
+				k_aoOutput,
+				&m_workingAOTex);
+		}
 	}
 
 
@@ -581,8 +555,8 @@ namespace gr
 			m_isDirty |= ImGui::SliderFloat(
 				"Depth MIP sampling offset", 
 				&m_settings.DepthMIPSamplingOffset, 
-				0.f, 
-				m_prefilterDepthsTargets->GetNumColorTargets());
+				0.f,
+				static_cast<float>(m_prefilterDepthsStage->GetPermanentRWTextureInputs().size()));
 
 			if (ImGui::Button("Reset to defaults"))
 			{

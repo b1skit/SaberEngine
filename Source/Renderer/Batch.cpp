@@ -478,4 +478,39 @@ namespace re
 	{
 		AddTextureInput(shaderName, texture.get(), sampler.get(), texView);
 	}
+
+
+	void Batch::AddRWTextureInput(
+		char const* shaderName,
+		re::Texture const* texture,
+		re::TextureView const& texView)
+	{
+		SEAssert(shaderName != nullptr && strlen(shaderName) > 0, "Invalid shader sampler name");
+		SEAssert(texture != nullptr, "Invalid texture");
+		SEAssert(texView.m_viewDimension != re::Texture::Dimension_Invalid, "Invalid view dimension");
+
+#if defined(_DEBUG)
+		for (auto const& existingTexAndSamplerInput : m_batchRWTextureInputs)
+		{
+			SEAssert(existingTexAndSamplerInput.m_texture != texture ||
+				strcmp(existingTexAndSamplerInput.m_shaderName.c_str(), shaderName) != 0,
+				"This Texture has already been added with the same shader name. Re-adding it changes the data hash");
+		}
+#endif
+
+		m_batchRWTextureInputs.emplace_back(
+			RWTextureInput{ shaderName, texture, texView });
+
+		// Include RW textures in the batch hash:
+		AddDataBytesToHash(texture->GetUniqueID());
+	}
+
+
+	void Batch::AddRWTextureInput(
+		char const* shaderName,
+		std::shared_ptr<re::Texture const> texture,
+		re::TextureView const& texView)
+	{
+		AddRWTextureInput(shaderName, texture.get(),  texView);
+	}
 }

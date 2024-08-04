@@ -698,37 +698,28 @@ namespace dx12
 	}
 
 
-	void CommandList::SetComputeTargets(re::TextureTargetSet const& textureTargetSet)
+	void CommandList::SetRWTextures(std::vector<re::RWTextureInput> const& rwTexInputs)
 	{
-		SEAssert(!textureTargetSet.HasDepthTarget(),
-			"It is not possible to attach a depth buffer as a target to a compute shader");
-
-		SEAssert(m_type == CommandListType::Compute, "This function should only be called from compute command lists");
+		SEAssert(m_type == CommandListType::Direct || m_type == CommandListType::Compute,
+			"This function should only be called from direct or compute command lists");
 		SEAssert(m_currentRootSignature, "Root signature is not currently set");
 
 		// Track the D3D resources we've seen during this call, to help us decide whether to insert a UAV barrier or not
 		std::unordered_set<ID3D12Resource const*> seenResources;
-		seenResources.reserve(textureTargetSet.GetNumColorTargets());
+		seenResources.reserve(rwTexInputs.size());
 		auto ResourceWasTransitionedInThisCall = [&seenResources](ID3D12Resource const* newResource) -> bool
-		{
-			return seenResources.contains(newResource);
-		};
-
-		std::vector<re::TextureTarget> const& colorTargets = textureTargetSet.GetColorTargets();
-		for (size_t i = 0; i < colorTargets.size(); i++)
-		{
-			re::TextureTarget const& colorTarget = colorTargets[i];
-			if (!colorTarget.HasTexture())
 			{
-				break; // Targets must be bound in monotonically-increasing order from slot 0
-			}			
+				return seenResources.contains(newResource);
+			};
 
-			re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
+		for (size_t i = 0; i < rwTexInputs.size(); i++)
+		{
+			re::RWTextureInput const& rwTexInput = rwTexInputs[i];
 
-			RootSignature::RootParameter const* rootSigEntry = 
-				m_currentRootSignature->GetRootSignatureEntry(targetParams.m_shaderName);
+			RootSignature::RootParameter const* rootSigEntry =
+				m_currentRootSignature->GetRootSignatureEntry(rwTexInput.m_shaderName);
 
-			SEAssert(rootSigEntry || 
+			SEAssert(rootSigEntry ||
 				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");
 
@@ -738,16 +729,16 @@ namespace dx12
 					"We currently assume all textures belong to descriptor tables");
 
 				SEAssert(rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV,
-					"Compute shaders can only write to UAVs");
+					"RW textures must be UAVs");
 
-				re::Texture const* colorTex = colorTarget.GetTexture().get();
+				re::Texture const* rwTex = rwTexInput.m_texture;
 
-				SEAssert((colorTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0,
-					"It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader");		
+				SEAssert(((rwTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0) &&
+					((rwTex->GetTextureParams().m_usage & re::Texture::Usage::ComputeTarget) != 0),
+					"Unexpected texture usage for a RW texture");
 
-				const D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptor = 
-					dx12::Texture::GetUAV(colorTex, targetParams.m_textureView);
-				
+				const D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptor = dx12::Texture::GetUAV(rwTex, rwTexInput.m_textureView);
+
 				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 					rootSigEntry->m_index,
 					uavDescriptor,
@@ -755,7 +746,7 @@ namespace dx12
 					1);
 
 				dx12::Texture::PlatformParams const* texPlatParams =
-					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+					rwTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 				// We're writing to a UAV, we may need a UAV barrier:
 				ID3D12Resource* resource = texPlatParams->m_textureResource.Get();
@@ -763,19 +754,19 @@ namespace dx12
 					!ResourceWasTransitionedInThisCall(resource))
 				{
 					// We've accessed this resource before on this command list, and it was transitioned to a UAV
-					// state at some point before this call to SetComputeTargets. We must ensure any previous work was
+					// state at some point before this call to SetRWTextures. We must ensure any previous work was
 					// done before we access it again
 					// TODO: This could/should be handled on a per-subresource level. Currently, this results in UAV
 					// barriers even when it's a different subresource that was used in a UAV operation
-					InsertUAVBarrier(colorTex);
+					InsertUAVBarrier(rwTex);
 				}
 				seenResources.emplace(resource);
 
 				// Insert our resource transition:
 				TransitionResource(
-					colorTex,
+					rwTex,
 					D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-					targetParams.m_textureView);
+					rwTexInput.m_textureView);
 			}
 		}
 

@@ -149,24 +149,7 @@ namespace gr
 
 		m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams);
 
-		std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
-
-		const re::TextureTarget::TargetParams colorTargetParams{
-			.m_textureView = re::TextureView::Texture2DView(0, 1),
-			.m_shaderName = "output0"};
-
-		brdfStageTargets->SetColorTarget(0, m_BRDF_integrationMap, colorTargetParams);
-		brdfStageTargets->SetViewport(re::Viewport(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
-		brdfStageTargets->SetScissorRect(re::ScissorRect(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
-
-		const re::TextureTarget::TargetParams::BlendModes brdfBlendModes
-		{
-			re::TextureTarget::BlendMode::One,
-			re::TextureTarget::BlendMode::Zero,
-		};
-		brdfStageTargets->SetColorTargetBlendModes(1, &brdfBlendModes);
-
-		brdfStage->SetTextureTargetSet(brdfStageTargets);
+		brdfStage->AddSingleFrameRWTextureInput("output0", m_BRDF_integrationMap, re::TextureView::Texture2DView(0, 1));
 
 		BRDFIntegrationData const& brdfIntegrationParams = GetBRDFIntegrationParamsDataData();
 		std::shared_ptr<re::Buffer> brdfIntegrationBuf = re::Buffer::Create(
