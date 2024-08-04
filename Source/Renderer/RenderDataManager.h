@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
-#include "TransformComponent.h"
+#include "TransformRenderData.h"
 
 #include "Core/Assert.h"
 #include "Core/Util/CastUtils.h"

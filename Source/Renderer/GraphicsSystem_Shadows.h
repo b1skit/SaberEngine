@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Camera.h"
+#include "CameraRenderData.h"
 #include "GraphicsSystem.h"
-#include "ShadowMap.h"
+#include "ShadowMapRenderData.h"
 
 
 namespace gr

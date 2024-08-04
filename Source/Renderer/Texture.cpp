@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "RenderManager.h"
 #include "SceneData.h"
-#include "SceneManager.h"
 #include "Texture.h"
 #include "Texture_Platform.h"
 

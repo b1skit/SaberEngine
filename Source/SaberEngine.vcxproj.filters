@@ -9,29 +9,11 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Header Files\fr">
-      <UniqueIdentifier>{8d683ba4-1aee-4552-9235-efdf36761b20}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\fr">
-      <UniqueIdentifier>{c39175b2-25dc-47b7-a5b5-d86d8cc9eb68}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Dependencies">
       <UniqueIdentifier>{3cea7139-d8f4-49c9-b1aa-0090f4e6ea8c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Dependencies\Resources">
       <UniqueIdentifier>{854894b8-5bdb-4614-9788-54a45736458b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\fr\Components">
-      <UniqueIdentifier>{37f681ca-383f-4eda-89d8-4ed6df8bd535}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\fr\Components">
-      <UniqueIdentifier>{cb14f09f-7493-4238-88bf-3674944c379b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\fr\Concepts">
-      <UniqueIdentifier>{d252219c-5f90-4567-a478-04ea0cf70532}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\fr\Concepts">
-      <UniqueIdentifier>{3d2704dd-39de-409e-aaf3-57aa4f15dd86}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\pch">
       <UniqueIdentifier>{c39047d9-5d0a-4add-8e2c-5c7eec31c6ac}</UniqueIdentifier>
@@ -60,9 +42,6 @@
     <Filter Include="Header Files\effect">
       <UniqueIdentifier>{4ebe6f30-9fb9-47aa-9604-f096c3142206}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\effect">
-      <UniqueIdentifier>{c48c91dd-ecfb-4b6f-83d6-54fcea11b85e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{fba4b42a-a194-41c3-858e-1acac86e27c9}</UniqueIdentifier>
     </Filter>
@@ -89,145 +68,22 @@
     <ClCompile Include="EngineApp.cpp">
       <Filter>Source Files\app</Filter>
     </ClCompile>
-    <ClCompile Include="CameraControlComponent.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
     <ClCompile Include="Platform.cpp">
       <Filter>Source Files\app\platform</Filter>
     </ClCompile>
-    <ClCompile Include="EntityManager.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneNodeConcept.cpp">
-      <Filter>Source Files\fr\Concepts</Filter>
-    </ClCompile>
-    <ClCompile Include="CameraComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="BoundsComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="RelationshipComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="TransformComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="Transform.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshPrimitiveComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="ShadowMapComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="LightComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshConcept.cpp">
-      <Filter>Source Files\fr\Concepts</Filter>
-    </ClCompile>
-    <ClCompile Include="NameComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="Light.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="ShadowMap.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneManager.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="UIManager.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="MaterialInstanceComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="EntityCommands.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
     <ClCompile Include="pch\pch.cpp">
       <Filter>Source Files\pch</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderDataComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineApp.h">
       <Filter>Header Files\app</Filter>
     </ClInclude>
-    <ClInclude Include="EntityManager.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
     <ClInclude Include="Platform.h">
       <Filter>Header Files\app\Platform</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Dependencies\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneNodeConcept.h">
-      <Filter>Header Files\fr\Concepts</Filter>
-    </ClInclude>
-    <ClInclude Include="NameComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="MarkerComponents.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="TransformComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="CameraComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="BoundsComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="RelationshipComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshPrimitiveComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="ShadowMapComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="LightComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshConcept.h">
-      <Filter>Header Files\fr\Concepts</Filter>
-    </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
-    <ClInclude Include="ShadowMap.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
-    <ClInclude Include="CameraControlComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneManager.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
-    <ClInclude Include="UIManager.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
-    <ClInclude Include="MaterialInstanceComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\PlatformConversions.h">
       <Filter>Shaders\Common</Filter>
@@ -256,9 +112,6 @@
     <ClInclude Include="Shaders\Common\ShadowRenderParams.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="EntityCommands.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
@@ -267,9 +120,6 @@
     </ClInclude>
     <ClInclude Include="Shaders\Common\TargetParams.h">
       <Filter>Shaders\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderDataComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

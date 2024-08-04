@@ -190,15 +190,6 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BoundsComponent.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="CameraComponent.cpp" />
-    <ClCompile Include="EntityCommands.cpp" />
-    <ClCompile Include="EntityManager.cpp" />
-    <ClCompile Include="LightComponent.cpp" />
-    <ClCompile Include="MaterialInstanceComponent.cpp" />
-    <ClCompile Include="MeshPrimitiveComponent.cpp" />
-    <ClCompile Include="NameComponent.cpp" />
     <ClCompile Include="pch\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -209,35 +200,12 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="RelationshipComponent.cpp" />
-    <ClCompile Include="RenderDataComponent.cpp" />
-    <ClCompile Include="ShadowMapComponent.cpp" />
-    <ClCompile Include="TransformComponent.cpp" />
-    <ClCompile Include="UIManager.cpp" />
     <ClCompile Include="EngineApp.cpp" />
-    <ClCompile Include="SceneNodeConcept.cpp" />
-    <ClCompile Include="Light.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="CameraControlComponent.cpp" />
-    <ClCompile Include="MeshConcept.cpp" />
     <ClCompile Include="Platform.cpp" />
-    <ClCompile Include="SceneManager.cpp" />
-    <ClCompile Include="ShadowMap.cpp" />
-    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CameraComponent.h" />
-    <ClInclude Include="BoundsComponent.h" />
-    <ClInclude Include="EntityCommands.h" />
-    <ClInclude Include="LightComponent.h" />
-    <ClInclude Include="MarkerComponents.h" />
-    <ClInclude Include="MaterialInstanceComponent.h" />
-    <ClInclude Include="MeshPrimitiveComponent.h" />
-    <ClInclude Include="RelationshipComponent.h" />
-    <ClInclude Include="NameComponent.h" />
-    <ClInclude Include="EntityManager.h" />
     <ClInclude Include="pch\pch.h" />
-    <ClInclude Include="RenderDataComponent.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
     <ClInclude Include="Shaders\Common\CameraParams.h" />
@@ -250,19 +218,8 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClInclude Include="Shaders\Common\ShadowRenderParams.h" />
     <ClInclude Include="Shaders\Common\SkyboxParams.h" />
     <ClInclude Include="Shaders\Common\TargetParams.h" />
-    <ClInclude Include="ShadowMapComponent.h" />
-    <ClInclude Include="TransformComponent.h" />
-    <ClInclude Include="UIManager.h" />
     <ClInclude Include="Platform.h" />
-    <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineApp.h" />
-    <ClInclude Include="SceneNodeConcept.h" />
-    <ClInclude Include="Light.h" />
-    <ClInclude Include="CameraControlComponent.h" />
-    <ClInclude Include="MeshConcept.h" />
-    <ClInclude Include="SceneManager.h" />
-    <ClInclude Include="ShadowMap.h" />
-    <ClInclude Include="Transform.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\CubeDepthAlphaMask_GShader.hlsl">
@@ -589,8 +546,8 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <None Include="Shaders\HLSL\Lighting.hlsli" />
     <None Include="Shaders\HLSL\MathConstants.hlsli" />
     <None Include="Shaders\HLSL\NormalMapUtils.hlsli" />
-	<None Include="Shaders\HLSL\SaberCommon.hlsli" />
-	<None Include="Shaders\HLSL\SaberComputeCommon.hlsli" />
+    <None Include="Shaders\HLSL\SaberCommon.hlsli" />
+    <None Include="Shaders\HLSL\SaberComputeCommon.hlsli" />
     <FxCompile Include="Shaders\HLSL\Bloom_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">CShader</EntryPointName>
@@ -1008,6 +965,9 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
   <ItemGroup>
     <ProjectReference Include="Core\Core.vcxproj">
       <Project>{b2f1db2f-9dd3-446e-918a-41254ac4e342}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Presentation\Presentation.vcxproj">
+      <Project>{ec510afe-61f2-4fc9-ae17-c16f366954a1}</Project>
     </ProjectReference>
     <ProjectReference Include="Renderer\Renderer.vcxproj">
       <Project>{f49fca5a-2f00-4a69-b17c-3491b1a39400}</Project>

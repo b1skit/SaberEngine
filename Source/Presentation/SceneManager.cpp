@@ -9,6 +9,7 @@
 #include "MeshPrimitiveComponent.h"
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
+#include "TransformComponent.h"
 
 #include "Core/Config.h"
 #include "Core/PerformanceTimer.h"

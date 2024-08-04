@@ -1,6 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Buffer.h"
-#include "Light.h"
+#include "LightRenderData.h"
 #include "LightManager.h"
 #include "LightRenderData.h"
 #include "RenderDataManager.h"
@@ -637,6 +637,7 @@ namespace gr
 		case gr::Light::AmbientIBL:
 		default: SEAssertF("Invalid light type");
 		}
+		return 0; // This should never happen
 	}
 
 

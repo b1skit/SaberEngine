@@ -3,7 +3,6 @@
 #include "RenderManager.h"
 #include "RenderSystem.h"
 #include "RenderSystemDesc.h"
-#include "SceneManager.h"
 
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"

@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "BoundsRenderData.h"
-#include "Camera.h"
+#include "CameraRenderData.h"
 #include "LightRenderData.h"
 #include "Material_GLTF.h"
 #include "MeshPrimitive.h"

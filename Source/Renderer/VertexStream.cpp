@@ -3,7 +3,6 @@
 #include "Core/Config.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
-#include "SceneManager.h"
 #include "VertexStream.h"
 #include "VertexStream_Platform.h"
 

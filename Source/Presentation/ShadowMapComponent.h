@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "ShadowMap.h"
+#include "TransformComponent.h"
 
 #include "Renderer/RenderObjectIDs.h"
 

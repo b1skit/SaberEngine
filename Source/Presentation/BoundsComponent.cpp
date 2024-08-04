@@ -5,7 +5,7 @@
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
-#include "Transform.h"
+#include "TransformComponent.h"
 
 
 namespace

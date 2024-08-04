@@ -2,7 +2,6 @@
 #include "Material.h"
 #include "RenderManager.h"
 #include "SceneData.h"
-#include "SceneManager.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
 

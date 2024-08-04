@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Light.h"
+#include "NameComponent.h"
 
 #include "Renderer/LightRenderData.h"
 #include "Renderer/RenderObjectIDs.h"
