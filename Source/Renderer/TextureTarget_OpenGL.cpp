@@ -196,7 +196,6 @@ namespace opengl
 
 			re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 			SEAssert((textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
-				(textureParams.m_usage & re::Texture::Usage::ComputeTarget) ||
 				(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy), // Not currently used
 				"Attempting to bind a color target with a different texture use parameter");
 

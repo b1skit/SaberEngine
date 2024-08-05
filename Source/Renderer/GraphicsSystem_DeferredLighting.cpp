@@ -139,7 +139,7 @@ namespace gr
 		brdfParams.m_width = brdfTexWidthHeight;
 		brdfParams.m_height = brdfTexWidthHeight;
 		brdfParams.m_usage =
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
 		brdfParams.m_dimension = re::Texture::Dimension::Texture2D;
 		brdfParams.m_format = re::Texture::Format::RGBA16F;
 		brdfParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -182,7 +182,7 @@ namespace gr
 		iemTexParams.m_width = iemTexWidthHeight;
 		iemTexParams.m_height = iemTexWidthHeight;
 		iemTexParams.m_usage = 
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
 		iemTexParams.m_dimension = re::Texture::Dimension::TextureCube;
 		iemTexParams.m_format = re::Texture::Format::RGBA16F;
 		iemTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -252,7 +252,7 @@ namespace gr
 		pmremTexParams.m_width = pmremTexWidthHeight;
 		pmremTexParams.m_height = pmremTexWidthHeight;
 		pmremTexParams.m_usage = 
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
 		pmremTexParams.m_dimension = re::Texture::Dimension::TextureCube;
 		pmremTexParams.m_format = re::Texture::Format::RGBA16F;
 		pmremTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -391,7 +391,7 @@ namespace gr
 		m_missing2DShadowFallback = re::Texture::Create("Missing 2D shadow fallback",
 			re::Texture::TextureParams
 			{
-				.m_usage = re::Texture::Usage::Color,
+				.m_usage = re::Texture::Usage::ColorSrc,
 				.m_dimension = re::Texture::Dimension::Texture2D,
 				.m_format = re::Texture::Format::Depth32F,
 				.m_colorSpace = re::Texture::ColorSpace::Linear,
@@ -404,7 +404,7 @@ namespace gr
 		m_missingCubeShadowFallback = re::Texture::Create("Missing cubemap shadow fallback", 
 			re::Texture::TextureParams
 			{
-				.m_usage = re::Texture::Usage::Color,
+				.m_usage = re::Texture::Usage::ColorSrc,
 				.m_dimension = re::Texture::Dimension::TextureCube,
 				.m_format = re::Texture::Format::Depth32F,
 				.m_colorSpace = re::Texture::ColorSpace::Linear,
@@ -426,7 +426,7 @@ namespace gr
 		lightTargetTexParams.m_width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		lightTargetTexParams.m_height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		lightTargetTexParams.m_usage = 
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
 		lightTargetTexParams.m_dimension = re::Texture::Dimension::Texture2D;
 		lightTargetTexParams.m_format = re::Texture::Format::RGBA16F;
 		lightTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;

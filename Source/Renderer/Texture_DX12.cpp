@@ -236,12 +236,10 @@ namespace
 	bool SimultaneousAccessIsNeeded(re::Texture::TextureParams const& texParams)
 	{
 		// Assume that if a resource is used as a target and anything else, it could be used simultaneously
-		const bool usedAsInputAndTarget = 
+		const bool usedAsMoreThanTarget = 
 			((texParams.m_usage & re::Texture::Usage::ColorTarget) &&
-			(texParams.m_usage ^ re::Texture::Usage::ColorTarget)) ||
-			((texParams.m_usage & re::Texture::Usage::ComputeTarget) &&
-				(texParams.m_usage ^ re::Texture::Usage::ComputeTarget));
-		if (!usedAsInputAndTarget)
+			(texParams.m_usage ^ re::Texture::Usage::ColorTarget));
+		if (!usedAsMoreThanTarget)
 		{
 			return false;
 		}
@@ -299,8 +297,8 @@ namespace
 
 		// By now, we know a UAV is possible. Return true for any case where it's actually needed
 		
-		const bool isComputeTarget = (texParams.m_usage & re::Texture::Usage::ComputeTarget) != 0;
-		if (isComputeTarget)
+		const bool isTarget = (texParams.m_usage & re::Texture::Usage::ColorTarget) != 0;
+		if (isTarget)
 		{
 			return true;
 		}
@@ -720,7 +718,7 @@ namespace dx12
 		
 		SEAssert((texParams.m_usage & re::Texture::Usage::DepthTarget) == 0 ||
 			(texParams.m_usage ^ re::Texture::Usage::DepthTarget) == 0 ||
-			(texParams.m_usage ^ (re::Texture::Usage::DepthTarget | re::Texture::Usage::Color)) == 0,
+			(texParams.m_usage ^ (re::Texture::Usage::DepthTarget | re::Texture::Usage::ColorSrc)) == 0,
 			"Invalid depth target usage pattern. A depth target can only be a depth target or source texture");
 
 		SEAssert((texParams.m_usage & re::Texture::Usage::StencilTarget) == 0 ||
@@ -760,7 +758,7 @@ namespace dx12
 		}
 
 		// Upload initial data via an intermediate upload heap:
-		if ((texParams.m_usage & re::Texture::Usage::Color) && texture.HasInitialData())
+		if ((texParams.m_usage & re::Texture::Usage::ColorSrc) && texture.HasInitialData())
 		{
 			const uint8_t numFaces = re::Texture::GetNumFaces(&texture);
 			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);

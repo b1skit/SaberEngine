@@ -734,7 +734,7 @@ namespace dx12
 				re::Texture const* rwTex = rwTexInput.m_texture;
 
 				SEAssert(((rwTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0) &&
-					((rwTex->GetTextureParams().m_usage & re::Texture::Usage::ComputeTarget) != 0),
+					((rwTex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0),
 					"Unexpected texture usage for a RW texture");
 
 				const D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptor = dx12::Texture::GetUAV(rwTex, rwTexInput.m_textureView);

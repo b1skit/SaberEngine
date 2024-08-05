@@ -84,16 +84,15 @@ namespace re
 	public:
 		enum Usage : uint8_t
 		{
-			Color				= 1 << 0, // TODO: Rename this "Source" or "Input" or similar
+			ColorSrc			= 1 << 0,
 			ColorTarget			= 1 << 1,
-			ComputeTarget		= 1 << 2,
-			DepthTarget			= 1 << 3,
+			DepthTarget			= 1 << 2,
 
 			// TODO: Implement support for these:
-			StencilTarget		= 1 << 4,
-			DepthStencilTarget	= 1 << 5,	
+			StencilTarget		= 1 << 3,
+			DepthStencilTarget	= 1 << 4,	
 
-			SwapchainColorProxy	= 1 << 6, // Pre-existing API-provided resource (i.e. backbuffer color target)
+			SwapchainColorProxy	= 1 << 5, // Pre-existing API-provided resource (i.e. backbuffer color target)
 
 			Invalid
 		};

@@ -281,7 +281,7 @@ namespace re
 		SEAssert(tex != nullptr, "Invalid texture");
 		SEAssert(sampler != nullptr, "Invalid sampler");
 
-		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::Color) != 0,
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0,
 			"Attempting to add a Texture input that does not have an appropriate usage flag");
 
 #if defined(_DEBUG)
@@ -340,7 +340,7 @@ namespace re
 		SEAssert(tex != nullptr, "Invalid texture");
 		SEAssert(sampler != nullptr, "Invalid sampler");
 
-		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::Color) != 0,
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0,
 			"Attempting to add a Texture input that does not have an appropriate usage flag");
 
 #if defined(_DEBUG)
@@ -416,9 +416,9 @@ namespace re
 	{
 		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
 		SEAssert(tex != nullptr, "Invalid texture");
-
-		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ComputeTarget) != 0,
-			"Attempting to add a RWTexture input that does not have an appropriate usage flag");
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::ColorSrc) != 0 &&
+			(tex->GetTextureParams().m_usage & re::Texture::ColorTarget) != 0,
+			"Invalid usage");
 
 #if defined(_DEBUG)
 		for (auto const& singleFrameRWTexInput : m_singleFrameRWTextureInputs)
@@ -472,9 +472,9 @@ namespace re
 	{
 		SEAssert(shaderName, "Shader name cannot be null");
 		SEAssert(tex != nullptr, "Invalid texture");
-
-		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ComputeTarget) != 0,
-			"Attempting to add a RW Texture input that does not have an appropriate usage flag");
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::ColorSrc) != 0 &&
+			(tex->GetTextureParams().m_usage & re::Texture::ColorTarget) != 0,
+			"Invalid usage");
 
 #if defined(_DEBUG)
 		for (auto const& permanentRWTexInput : m_permanentRWTextureInputs)

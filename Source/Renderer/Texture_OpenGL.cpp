@@ -275,8 +275,8 @@ namespace opengl
 
 		SEAssert(texPlatParams->m_isCreated, "Texture is not created");
 
-		SEAssert((texture.GetTextureParams().m_usage & re::Texture::Usage::ComputeTarget),
-			"Texture is not marked for compute usage");
+		SEAssert((texture.GetTextureParams().m_usage & re::Texture::Usage::ColorTarget),
+			"Texture is not marked for target usage");
 
 		SEAssert(texPlatParams->m_formatIsImageTextureCompatible,
 			"Format is not compatible. Note: We currently don't check for non-exact but compatible formats, "
@@ -415,7 +415,7 @@ namespace opengl
 		const uint8_t numFaces = re::Texture::GetNumFaces(&texture);
 
 		// Upload data (if any) to the GPU:
-		if ((texParams.m_usage & re::Texture::Usage::Color) && texture.HasInitialData())
+		if ((texParams.m_usage & re::Texture::Usage::ColorSrc) && texture.HasInitialData())
 		{
 			for (uint32_t arrayIdx = 0; arrayIdx < texParams.m_arraySize; arrayIdx++)
 			{

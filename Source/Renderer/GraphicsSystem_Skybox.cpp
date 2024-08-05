@@ -47,7 +47,7 @@ namespace gr
 		{
 			re::Texture::TextureParams fallbackParams{};
 			fallbackParams.m_usage = 
-				static_cast<re::Texture::Usage>(re::Texture::Usage::Color | re::Texture::Usage::ComputeTarget),
+				static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
 			fallbackParams.m_dimension = re::Texture::Dimension::Texture2D;
 			fallbackParams.m_format = re::Texture::Format::RGBA32F; // Same as an IBl, for consistency
 			fallbackParams.m_colorSpace = re::Texture::ColorSpace::Linear;

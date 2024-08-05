@@ -34,7 +34,7 @@ namespace gr
 		re::Texture::TextureParams gBufferColorParams;
 		gBufferColorParams.m_width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		gBufferColorParams.m_height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
-		gBufferColorParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
+		gBufferColorParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
 		gBufferColorParams.m_dimension = re::Texture::Dimension::Texture2D;
 		gBufferColorParams.m_format = re::Texture::Format::RGBA8_UNORM;
 		gBufferColorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -66,7 +66,7 @@ namespace gr
 		// Create GBuffer depth target:
 		re::Texture::TextureParams depthTexParams(gBufferColorParams);
 		depthTexParams.m_usage = static_cast<re::Texture::Usage>(
-			re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
+			re::Texture::Usage::DepthTarget | re::Texture::Usage::ColorSrc);
 		depthTexParams.m_format = re::Texture::Format::Depth32F;
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		depthTexParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane

@@ -111,7 +111,7 @@ namespace
 		hilbertLUTParams.m_width = k_texWidthHeight;
 		hilbertLUTParams.m_height = k_texWidthHeight;
 
-		hilbertLUTParams.m_usage = re::Texture::Usage::Color;
+		hilbertLUTParams.m_usage = re::Texture::Usage::ColorSrc;
 		hilbertLUTParams.m_dimension = re::Texture::Dimension::Texture2D;
 		hilbertLUTParams.m_format = re::Texture::Format::R16_UNORM;
 		hilbertLUTParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -178,7 +178,7 @@ namespace gr
 		prefilterDepthTexParams.m_width = m_xRes;
 		prefilterDepthTexParams.m_height = m_yRes;
 		prefilterDepthTexParams.m_usage = 
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
 		prefilterDepthTexParams.m_dimension = re::Texture::Dimension::Texture2D;
 		prefilterDepthTexParams.m_format = re::Texture::Format::R16F;
 		prefilterDepthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -246,7 +246,7 @@ namespace gr
 		workingAOTexParams.m_width = m_xRes;
 		workingAOTexParams.m_height = m_yRes;
 		workingAOTexParams.m_usage =
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
 		workingAOTexParams.m_dimension = re::Texture::Dimension::Texture2D;
 		workingAOTexParams.m_format = workingAOTermFormat;
 		workingAOTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -262,7 +262,7 @@ namespace gr
 		workingEdgesTexParams.m_width = m_xRes;
 		workingEdgesTexParams.m_height = m_yRes;
 		workingEdgesTexParams.m_usage =
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
 		workingEdgesTexParams.m_dimension = re::Texture::Dimension::Texture2D;
 		workingEdgesTexParams.m_format = re::Texture::Format::R8_UNORM;
 		workingEdgesTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;

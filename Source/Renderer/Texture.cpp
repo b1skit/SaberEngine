@@ -139,7 +139,7 @@ namespace re
 		TextureParams const& params,
 		glm::vec4 fillColor)
 	{
-		SEAssert((params.m_usage & Usage::Color), "Trying to fill a non-color texture");
+		SEAssert((params.m_usage & Usage::ColorSrc), "Trying to fill a non-color texture");
 
 		const uint8_t numFaces = re::Texture::GetNumFaces(params.m_dimension);
 
@@ -159,7 +159,7 @@ namespace re
 
 	std::shared_ptr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params)
 	{
-		SEAssert((params.m_usage ^ Usage::Color), "Textures with Usage::Color only must have initial data");
+		SEAssert((params.m_usage ^ Usage::ColorSrc), "Textures with Usage::ColorSrc only must have initial data");
 		return CreateInternal(name, params, nullptr);
 	}
 

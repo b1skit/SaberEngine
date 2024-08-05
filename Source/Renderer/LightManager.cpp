@@ -341,7 +341,7 @@ namespace gr
 					shadowArrayParams.m_arraySize = std::max(1u, shadowMetadata.m_numShadows);
 
 					shadowArrayParams.m_usage =
-						static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
+						static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::ColorSrc);
 
 					shadowArrayParams.m_format = re::Texture::Format::Depth32F;
 					shadowArrayParams.m_colorSpace = re::Texture::ColorSpace::Linear;
