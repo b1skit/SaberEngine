@@ -116,6 +116,7 @@ namespace re
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newBuffers(util::NBufferedVector<std::shared_ptr<re::Buffer>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_singleFrameVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Three, k_newObjectReserveAmount)
+		, m_quitEventRecieved(false)
 	{
 		m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
 	}
@@ -174,6 +175,7 @@ namespace re
 		LOG("RenderManager starting...");
 		re::Context::Get()->Create(m_renderFrameNum);
 		core::EventManager::Get()->Subscribe(core::EventManager::InputToggleVSync, this);
+		core::EventManager::Get()->Subscribe(core::EventManager::EngineQuit, this);
 
 		SEEndCPUEvent();
 	}
@@ -238,6 +240,10 @@ namespace re
 		SEBeginCPUEvent("re::RenderManager::Update");
 
 		HandleEvents();
+		if (m_quitEventRecieved)
+		{
+			return; // Early-out: Prevents issues related to queued ImGui commands referring to now-destroyed data
+		}
 
 		re::Context::Get()->GetBufferAllocator()->BeginFrame(frameNum);
 		
@@ -270,7 +276,7 @@ namespace re
 		Render();
 		SEEndCPUEvent();
 
-		// Present the final frame:
+		// Present the finished frame:
 		SEBeginCPUEvent("re::Context::Present");
 		re::Context::Get()->Present();
 		SEEndCPUEvent();
@@ -411,6 +417,11 @@ namespace re
 					re::Context::Get()->GetSwapChain().SetVSyncMode(m_vsyncEnabled);
 					LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
 				}				
+			}
+			break;
+			case core::EventManager::EngineQuit:
+			{
+				m_quitEventRecieved = true;
 			}
 			break;
 			default:

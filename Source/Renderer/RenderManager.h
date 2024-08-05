@@ -184,6 +184,8 @@ namespace re
 		
 		uint64_t m_renderFrameNum;
 
+		bool m_quitEventRecieved; // Early-out on final frame(s)
+
 
 	private:
 		RenderManager() = delete; // Use the RenderManager::Get() singleton getter instead
