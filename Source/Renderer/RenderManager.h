@@ -173,14 +173,20 @@ namespace re
 		std::mutex m_deletedTexturesMutex;
 
 
+	public:
+		bool IsVSyncEnabled() const;
+		void ToggleVSync();
+	private:
+		bool m_vsyncEnabled;
+		mutable std::shared_mutex m_vsyncEnabledMutex;
+
+
 	protected:
 		platform::RenderingAPI m_renderingAPI;
 
 	private:
 		std::unique_ptr<re::SceneData> m_sceneData;
 		std::vector<std::unique_ptr<re::RenderSystem>> m_renderSystems;
-
-		bool m_vsyncEnabled;
 		
 		uint64_t m_renderFrameNum;
 
@@ -283,5 +289,24 @@ namespace re
 	inline std::vector<std::shared_ptr<re::Texture>> const& RenderManager::GetNewlyCreatedTextures() const
 	{
 		return m_createdTextures;
+	}
+
+
+	inline bool RenderManager::IsVSyncEnabled() const
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_vsyncEnabledMutex);
+			return m_vsyncEnabled;
+		}
+	}
+
+
+	inline void RenderManager::ToggleVSync()
+	{
+		{
+			std::unique_lock<std::shared_mutex> writeLock(m_vsyncEnabledMutex);
+			m_vsyncEnabled = !m_vsyncEnabled;
+		}
+		LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
 	}
 }

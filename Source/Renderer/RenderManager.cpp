@@ -413,9 +413,8 @@ namespace re
 			{
 				if (eventInfo.m_data0.m_dataB == true)
 				{
-					m_vsyncEnabled = !m_vsyncEnabled;
+					ToggleVSync();
 					re::Context::Get()->GetSwapChain().SetVSyncMode(m_vsyncEnabled);
-					LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
 				}				
 			}
 			break;

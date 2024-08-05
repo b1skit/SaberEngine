@@ -481,8 +481,13 @@ namespace fr
 
 					if (ImGui::BeginMenu("Config"))
 					{
-						ImGui::TextDisabled("Adjust input settings"); // TODO...
-
+						const bool currentVSyncEnabled = re::RenderManager::Get()->IsVSyncEnabled();
+						bool vsyncEnabled = currentVSyncEnabled;
+						ImGui::Checkbox("V-Sync", &vsyncEnabled);
+						if (currentVSyncEnabled != vsyncEnabled)
+						{
+							re::RenderManager::Get()->ToggleVSync();
+						}
 						ImGui::EndMenu();
 					}
 
