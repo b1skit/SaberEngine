@@ -38,7 +38,7 @@ namespace gr
 		static InstancedTransformData CreateInstancedTransformData(gr::Transform::RenderData const&);
 
 		static InstancedTransformData CreateInstancedTransformData(
-			glm::mat4 const* model, glm::mat4* transposeInvModel);
+			glm::mat4 const* model, glm::mat4 const* transposeInvModel);
 
 		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
 			re::Buffer::Type, glm::mat4 const* model, glm::mat4* transposeInvModel);

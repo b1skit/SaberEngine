@@ -80,13 +80,6 @@ namespace gr
 		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredTransformIDs() const;
 
 
-	public:
-		void ShowImGuiWindow() const;
-	private:
-		template<typename T>
-		void PopulateTypesImGuiHelper(std::vector<std::string>&, char const*) const;
-
-
 	private:
 		// Transform interface.
 		// We treat Transforms as a special case because all render objects require a Transform, and we expect
@@ -107,6 +100,13 @@ namespace gr
 		[[nodiscard]] bool TransformIsDirtyFromRenderDataID(gr::RenderDataID) const; // Slower than using TransformID
 
 		[[nodiscard]] std::vector<gr::TransformID> const& GetIDsWithDirtyTransformData() const;
+
+
+	public:
+		void ShowImGuiWindow() const;
+	private:
+		template<typename T>
+		void PopulateTypesImGuiHelper(std::vector<std::string>&, char const*) const;
 
 
 	private:

@@ -24,7 +24,7 @@ namespace gr
 
 
 	InstancedTransformData Transform::CreateInstancedTransformData(
-		glm::mat4 const* model, glm::mat4* transposeInvModel)
+		glm::mat4 const* model, glm::mat4 const* transposeInvModel)
 	{
 		InstancedTransformData instancedMeshData{};
 

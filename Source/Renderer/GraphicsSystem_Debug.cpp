@@ -35,13 +35,12 @@ namespace
 		float axisScale, 
 		glm::vec3 const& xAxisColor, 
 		glm::vec3 const& yAxisColor, 
-		glm::vec3 const& zAxisColor, 
-		glm::vec3 transformGlobalScale = glm::vec3(1.f)) // Used to prevent scale affecting axis size
+		glm::vec3 const& zAxisColor)
 	{
 		std::vector<glm::vec3> axisPositions = { 
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisX * axisScale / transformGlobalScale,
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisY * axisScale / transformGlobalScale,
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisZ * axisScale / transformGlobalScale,
+			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisX * axisScale,
+			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisY * axisScale,
+			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisZ * axisScale,
 		};
 
 		std::vector<glm::vec4> axisColors = { 
@@ -357,6 +356,17 @@ namespace
 
 		return std::make_unique<re::Batch>(batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID);
 	}
+
+
+	glm::mat4 AdjustMat4Scale(glm::mat4 const& mat, glm::vec3 const& matScale, float newUniformScale = 1.f)
+	{
+		// Remove the scale from the basis vectors, and factor in the (optional) new uniform scale factor
+		glm::mat4 result = mat;
+		result[0] *= newUniformScale / matScale.x;
+		result[1] *= newUniformScale / matScale.y;
+		result[2] *= newUniformScale / matScale.z;
+		return result;
+	}
 }
 
 
@@ -457,6 +467,10 @@ namespace gr
 
 					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformData();
 
+					// Adjust the scale of the mesh's global TRS matrix basis vectors:
+					glm::mat4 const& meshTR = 
+						AdjustMat4Scale(transformData.g_model, transformData.m_globalScale, m_meshCoordinateAxisScale);
+
 					// Create/update a cached buffer:
 					if (!m_meshPrimTransformBuffers.contains(meshPrimRenderDataID))
 					{
@@ -469,7 +483,7 @@ namespace gr
 					else
 					{
 						m_meshPrimTransformBuffers.at(meshPrimRenderDataID)->Commit(
-							gr::Transform::CreateInstancedTransformData(transformData));
+							gr::Transform::CreateInstancedTransformData(&meshTR, &transformData.g_transposeInvModel));
 					}
 					std::shared_ptr<re::Buffer> meshTransformBuffer = 
 						m_meshPrimTransformBuffers.at(meshPrimRenderDataID);
@@ -541,8 +555,7 @@ namespace gr
 									m_meshCoordinateAxisScale,
 									m_xAxisColor,
 									m_yAxisColor,
-									m_zAxisColor,
-									transformData.m_globalScale)));
+									m_zAxisColor)));
 
 							m_meshCoordinateAxisBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 						}
@@ -864,19 +877,21 @@ namespace gr
 			auto CreateUpdateLightCSAxisTransformBuffer = [&](
 				gr::RenderDataID lightID, gr::Transform::RenderData const& transformData)
 				{
-					glm::mat4 const& lightTRS = transformData.g_model;
+					// Adjust the scale of the light's global TRS matrix basis vectors:
+					glm::mat4 const& lightTR =
+						AdjustMat4Scale(transformData.g_model, transformData.m_globalScale, m_lightCoordinateAxisScale);
 
 					if (!m_lightCoordinateAxisTransformBuffers.contains(lightID))
 					{
 						m_lightCoordinateAxisTransformBuffers.emplace(
 							lightID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Type::Mutable, &lightTRS, nullptr));
+								re::Buffer::Type::Mutable, &lightTR, nullptr));
 					}
 					else
 					{
 						m_lightCoordinateAxisTransformBuffers.at(lightID)->Commit(
-							gr::Transform::CreateInstancedTransformData(&lightTRS, nullptr));
+							gr::Transform::CreateInstancedTransformData(&lightTR, nullptr));
 					}
 				};
 
@@ -892,8 +907,7 @@ namespace gr
 								m_lightCoordinateAxisScale,
 								m_xAxisColor,
 								m_yAxisColor,
-								m_zAxisColor,
-								transformData.m_globalScale));
+								m_zAxisColor));
 
 						m_lightCoordinateAxisBatches.at(lightID)->SetBuffer(
 							m_lightCoordinateAxisTransformBuffers.at(lightID));
@@ -905,7 +919,6 @@ namespace gr
 			while (directionalItr != directionalItrEnd)
 			{
 				const gr::RenderDataID lightID = directionalItr.GetRenderDataID();
-
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(lightID))
 				{
 					gr::Transform::RenderData const& transformData = directionalItr.GetTransformData();
@@ -924,7 +937,6 @@ namespace gr
 			while (pointItr != pointItrEnd)
 			{
 				const gr::RenderDataID lightID = pointItr.GetRenderDataID();
-
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(lightID))
 				{
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
@@ -1021,7 +1033,7 @@ namespace gr
 		ImGui::Checkbox(std::format("Show light coordinate axis").c_str(), &m_showLightCoordinateAxis);
 		if (m_showLightCoordinateAxis)
 		{
-			ImGui::SliderFloat("Mesh coordinate axis scale", &m_lightCoordinateAxisScale, 0.f, 20.f);
+			ImGui::SliderFloat("Light coordinate axis scale", &m_lightCoordinateAxisScale, 0.f, 20.f);
 		}
 
 		ImGui::Checkbox(std::format("Show scene bounding box").c_str(), &m_showSceneBoundingBox);
