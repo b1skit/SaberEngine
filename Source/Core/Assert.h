@@ -2,6 +2,9 @@
 #pragma once
 #include "LogManager.h"
 
+// Enable this to print failed asserts as messages when _DEBUG is not enabled. Warning: Do not leave this enabled
+//#define RELEASE_ASSERTS_AS_LOG_ERRORS
+
 
 // Static asserts are defined for all build configurations:
 #define SEStaticAssert(condition, msg) \
@@ -25,16 +28,33 @@ static void HandleAssertInternal();
 		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
 		std::abort(); \
 	}
+
 #define SEAssertF(errorMsg) \
+	{ \
 		void HandleAssertInternal(); \
 		const std::string errorStr((errorMsg)); \
 		LOG_ERROR(errorStr.c_str()); \
 		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
-		std::abort();
+		std::abort(); \
+	}
+
 #else
-#define SEAssert(condition, errorMsg)	\
-	do { static_cast<void>(condition); } while (0);
+
+#if defined(RELEASE_ASSERTS_AS_LOG_ERRORS)
+
+	#define SEAssert(condition, errorMsg)	\
+		if (!(condition)) LOG_ERROR(std::string(errorMsg).c_str());
+
+#else
+
+	#define SEAssert(condition, errorMsg)	\
+		do { static_cast<void>(condition); } while (0);
+
+#endif // RELEASE_ASSERTS_AS_LOG_ERRORS
+
 #define SEAssertF(errorMsg)	\
-		const std::string errorStr((errorMsg)); \
-		LOG_ERROR(errorStr.c_str());
-#endif
+	{ \
+		LOG_ERROR(std::string(errorMsg).c_str()); \
+	}
+
+#endif // _DEBUG
