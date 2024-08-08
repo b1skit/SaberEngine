@@ -3,11 +3,11 @@
   "dependencies": [
     {
       "name": "cgltf",
-      "version>=": "1.13"
+      "version>=": "1.14"
     },
     {
       "name": "entt",
-      "version>=": "3.13.1"
+      "version>=": "3.13.2"
     },
     {
       "name": "nlohmann-json",
@@ -15,7 +15,7 @@
     },
     {
       "name": "glm",
-      "version>=": "1.0.0"
+      "version>=": "1.0.1"
     }
   ]
 }
