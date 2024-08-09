@@ -222,7 +222,7 @@
         },
         {
           "Id": "bd9ca670-8a0b-47d1-8613-a23d4d16aec7",
-          "Command": "-scene BoxAnimated\\glTF\\BoxAnimated.gltf"
+          "Command": "-scene BoxAnimated\\glTF-Binary\\BoxAnimated.glb"
         },
         {
           "Id": "cda5fb05-55eb-4c76-b0cd-f8f3cb249d3e",

@@ -84,7 +84,7 @@ namespace core
 
 			auto CurrentTokenIsKey = [&]()
 				{
-					return currentToken.find_first_of(k_keyDelimiter) != std::string::npos;
+					return currentToken[0] == k_keyDelimiter; // e.g. "-scene" == true
 				};
 
 			if (CurrentTokenIsKey())
