@@ -264,6 +264,8 @@ namespace fr
 		// Returns null if node is not animated by the given keyframe times index
 		AnimationData const* GetAnimationData(size_t animationIdx) const; 
 
+		AnimationState GetAnimationState() const;
+		bool IsPlaying() const;
 
 	private:
 		AnimationController const* m_animationController;
@@ -286,4 +288,16 @@ namespace fr
 			}
 		};
 	};
+
+
+	inline AnimationState AnimationComponent::GetAnimationState() const
+	{
+		return m_animationController->GetAnimationState();
+	}
+
+
+	inline bool AnimationComponent::IsPlaying() const
+	{
+		return GetAnimationState() == fr::AnimationState::Playing;
+	}
 }

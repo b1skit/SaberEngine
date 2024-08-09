@@ -116,6 +116,7 @@ namespace
 				switch (sceneCamConfig.m_projectionType)
 				{
 				case gr::Camera::Config::ProjectionType::Perspective:
+				case gr::Camera::Config::ProjectionType::PerspectiveCubemap:
 				{
 					proj = gr::Camera::BuildPerspectiveProjectionMatrix(
 						sceneCamConfig.m_yFOV, 

@@ -628,6 +628,7 @@ namespace fr
 			fr::CameraComponent* cameraComponent = nullptr;
 			fr::TransformComponent* cameraTransform = nullptr;
 			bool foundMainCamera = false;
+			bool isBeingAnimated = false;
 			auto mainCameraView = m_registry.view<
 				fr::CameraComponent, fr::CameraComponent::MainCameraMarker, fr::TransformComponent>();
 			for (entt::entity mainCamEntity : mainCameraView)
@@ -637,12 +638,18 @@ namespace fr
 
 				cameraComponent = &mainCameraView.get<fr::CameraComponent>(mainCamEntity);
 				cameraTransform = &mainCameraView.get<fr::TransformComponent>(mainCamEntity);
+
+				fr::AnimationComponent const* camAnimation =
+					GetFirstInHierarchyAboveInternal<fr::AnimationComponent>(mainCamEntity);
+
+				isBeingAnimated = camAnimation && camAnimation->IsPlaying();
 			}
 			SEAssert(cameraComponent && cameraTransform, "Failed to find main CameraComponent or TransformComponent");
 
 			fr::CameraControlComponent* cameraController = nullptr;
 			fr::TransformComponent* camControllerTransform = nullptr;
 			bool foundCamController = false;
+			
 			auto camControllerView = m_registry.view<fr::CameraControlComponent, fr::TransformComponent>();
 			for (entt::entity entity : camControllerView)
 			{
@@ -654,12 +661,15 @@ namespace fr
 			}
 			SEAssert(cameraController && camControllerTransform, "Failed to find a camera controller and/or transform");
 
-			fr::CameraControlComponent::Update(
-				*cameraController,
-				camControllerTransform->GetTransform(),
-				cameraComponent->GetCamera(), 
-				cameraTransform->GetTransform(),
-				stepTimeMs);
+			if (!isBeingAnimated) // Disable camera controls if an animation is acting on the camera
+			{
+				fr::CameraControlComponent::Update(
+					*cameraController,
+					camControllerTransform->GetTransform(),
+					cameraComponent->GetCamera(),
+					cameraTransform->GetTransform(),
+					stepTimeMs);
+			}
 		}
 	}
 

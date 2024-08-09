@@ -446,7 +446,6 @@ namespace gr
 				// If we're the active camera, also cull the lights:
 				if (cameraID == activeCamRenderDataID)
 				{
-					SEAssert(numViews == 1, "We're only expecting a single view for the main camera");
 					{
 						std::lock_guard<std::mutex> lock(m_visibleLightsMutex);
 
