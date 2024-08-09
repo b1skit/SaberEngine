@@ -150,9 +150,7 @@ namespace app
 			
 
 			// Update components until enough time has passed to trigger a render.
-			// Or, continue rendering frames until it's time to update again.
-			// Note: We clamp the maximum outer frame time to prevent stalls when debugging
-			constexpr double k_maxOuterFrameTime = 1000.0;
+			// Or, continue rendering frames until it's time to update again.			
 			elapsed += std::min(lastOuterFrameTime, k_maxOuterFrameTime);
 			while (elapsed >= k_fixedTimeStep)
 			{	

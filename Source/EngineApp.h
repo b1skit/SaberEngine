@@ -37,6 +37,9 @@ namespace app
 		// How much time we want to spend updating the game state (in ms) before we render a new frame
 		static constexpr double k_fixedTimeStep = 1000.0 / 120.0; // 1000/120 = 8.33ms per update;
 
+		//We clamp the maximum outer frame time to prevent stalls when debugging
+		static constexpr double k_maxOuterFrameTime = 1000.0;
+
 		bool m_isRunning;
 
 		uint64_t m_frameNum;
