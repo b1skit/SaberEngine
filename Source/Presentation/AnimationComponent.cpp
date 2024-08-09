@@ -11,11 +11,8 @@ namespace
 {
 	float ComputeSegmentNormalizedInterpolationFactor(float prevSec, float nextSec, float requestedSec)
 	{
-		SEAssert(nextSec >= prevSec, "Invalid time values");
-		SEAssert(prevSec <= requestedSec && requestedSec <= nextSec, "Requested time step is OOB");
-
-		const float stepDuration = nextSec - prevSec; // td
-		return (requestedSec - prevSec) / stepDuration;
+		const float stepDuration = glm::abs(nextSec - prevSec); // td
+		return glm::abs(requestedSec - prevSec) / stepDuration;
 	}
 
 
@@ -373,15 +370,6 @@ namespace fr
 				{
 					nextKeyframeIdx = minAbsDeltaIdx;
 					prevKeyframeIdx = nextKeyframeIdx == 0 ? keyframeTimes.size() - 1 : nextKeyframeIdx - 1;
-				}
-
-				// Wrap the indexes if necessary:
-				if (prevKeyframeIdx > nextKeyframeIdx)
-				{
-					prevKeyframeIdx = (prevKeyframeIdx + 1) % keyframeTimes.size();
-					nextKeyframeIdx = (nextKeyframeIdx + 1) % keyframeTimes.size();
-
-					SEAssert(currentTimeSec >= keyframeTimes[prevKeyframeIdx], "Indexes have been wrapped incorrectly");
 				}
 			}
 
