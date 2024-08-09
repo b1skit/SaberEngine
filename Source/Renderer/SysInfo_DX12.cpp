@@ -16,10 +16,17 @@ namespace dx12
 
 	uint8_t SysInfo::GetMaxTextureBindPoints()
 	{
-		// The DX12 resource binding model allows arbitrary numbers of binding points via descriptor tables. We maintain
-		// this function to ensure parity with OpenGL, and just return an arbitrary large, sane value here
+		// The DX12 resource binding model allows arbitrary numbers of binding points via descriptor tables. We
+		// (currently) maintain this function to ensure parity with OpenGL, and just return an arbitrary large but sane
+		// value here
 		constexpr uint8_t k_maxTexBindPoints = 32;
 		return k_maxTexBindPoints;
+	}
+
+
+	uint8_t SysInfo::GetMaxVertexAttributes()
+	{
+		return D3D12_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT;
 	}
 	
 

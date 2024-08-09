@@ -120,6 +120,7 @@ namespace platform
 			// SysInfo:
 			platform::SysInfo::GetMaxRenderTargets		= &opengl::SysInfo::GetMaxRenderTargets;
 			platform::SysInfo::GetMaxTextureBindPoints	= &opengl::SysInfo::GetMaxTextureBindPoints;
+			platform::SysInfo::GetMaxVertexAttributes	= &opengl::SysInfo::GetMaxVertexAttributes;
 
 			// Swap chain:
 			platform::SwapChain::Create			= &opengl::SwapChain::Create;
@@ -163,6 +164,7 @@ namespace platform
 			// SysInfo:
 			platform::SysInfo::GetMaxRenderTargets		= &dx12::SysInfo::GetMaxRenderTargets;
 			platform::SysInfo::GetMaxTextureBindPoints	= &dx12::SysInfo::GetMaxTextureBindPoints;
+			platform::SysInfo::GetMaxVertexAttributes	= &dx12::SysInfo::GetMaxVertexAttributes;
 
 			// Swap chain:
 			platform::SwapChain::Create			= &dx12::SwapChain::Create;

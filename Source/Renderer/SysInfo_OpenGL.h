@@ -10,10 +10,12 @@ namespace opengl
 	public:
 		// Note: If you're adding a value here, make sure to call it in the opengl::Context::Create to cache it
 		static uint8_t GetMaxRenderTargets();
+		static uint8_t GetMaxTextureBindPoints();
 		static uint8_t GetMaxVertexAttributes();
+
+		// OpenGL-specific:
 		static GLint GetUniformBufferOffsetAlignment();
 		static GLint GetShaderStorageBufferOffsetAlignment();
-		static uint8_t GetMaxTextureBindPoints();
 		static GLint GetMaxAnisotropy();
 	};
 }

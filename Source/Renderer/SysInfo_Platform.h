@@ -9,5 +9,6 @@ namespace platform
 	public:
 		static uint8_t(*GetMaxRenderTargets)();
 		static uint8_t(*GetMaxTextureBindPoints)();
+		static uint8_t(*GetMaxVertexAttributes)();
 	};
 }
