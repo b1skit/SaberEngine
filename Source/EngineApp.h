@@ -35,7 +35,7 @@ namespace app
 
 	private:
 		// How much time we want to spend updating the game state (in ms) before we render a new frame
-		const double m_fixedTimeStep;
+		static constexpr double k_fixedTimeStep = 1000.0 / 120.0; // 1000/120 = 8.33ms per update;
 
 		bool m_isRunning;
 

@@ -53,8 +53,7 @@ namespace app
 
 
 	EngineApp::EngineApp()
-		: m_fixedTimeStep(1000.0 / 120.0) // 1000/120 = 8.33ms per update
-		, m_isRunning(false)
+		: m_isRunning(false)
 		, m_frameNum(0)
 	{
 		m_engineApp = this;
@@ -132,7 +131,7 @@ namespace app
 		eventManager->Update(m_frameNum, 0.0);
 
 		// Initialize game loop timing:
-		double elapsed = (double)m_fixedTimeStep; // Ensure we pump Updates once before the 1st render
+		double elapsed = k_fixedTimeStep; // Ensure we pump Updates once before the 1st render
 
 		util::PerformanceTimer outerLoopTimer;
 		util::PerformanceTimer innerLoopTimer;
@@ -148,14 +147,18 @@ namespace app
 			EngineApp::Update(m_frameNum, lastOuterFrameTime);
 			SEEndCPUEvent();
 
+			
+
 			// Update components until enough time has passed to trigger a render.
-			// Or, continue rendering frames until it's time to update again
-			elapsed += lastOuterFrameTime;
-			while (elapsed >= m_fixedTimeStep)
+			// Or, continue rendering frames until it's time to update again.
+			// Note: We clamp the maximum outer frame time to prevent stalls when debugging
+			constexpr double k_maxOuterFrameTime = 1000.0;
+			elapsed += std::min(lastOuterFrameTime, k_maxOuterFrameTime);
+			while (elapsed >= k_fixedTimeStep)
 			{	
 				SEBeginCPUEvent("app::EngineApp::Run frame inner loop");
 
-				elapsed -= m_fixedTimeStep;
+				elapsed -= k_fixedTimeStep;
 
 				// Pump our events/input:
 				SEBeginCPUEvent("core::EventManager::Update");
@@ -167,11 +170,11 @@ namespace app
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("en::EntityManager::Update");
-				entityManager->Update(m_frameNum, m_fixedTimeStep);
+				entityManager->Update(m_frameNum, k_fixedTimeStep);
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("fr::SceneManager::Update");
-				sceneManager->Update(m_frameNum, m_fixedTimeStep); // Updates all of the scene objects
+				sceneManager->Update(m_frameNum, k_fixedTimeStep); // Updates all of the scene objects
 				SEEndCPUEvent();
 
 				// AI, physics, etc should also be pumped here (eventually)
@@ -180,7 +183,7 @@ namespace app
 			}
 
 			SEBeginCPUEvent("fr::UIManager::Update");
-			uiManager->Update(m_frameNum, m_fixedTimeStep);
+			uiManager->Update(m_frameNum, k_fixedTimeStep);
 			SEEndCPUEvent();
 
 			SEBeginCPUEvent("fr::EntityManager::EnqueueRenderUpdates");
