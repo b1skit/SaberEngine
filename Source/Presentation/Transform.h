@@ -53,6 +53,8 @@ namespace fr
 		void SetLocalRotation(glm::quat const& newRotation);
 		glm::quat GetLocalRotation() const;
 		glm::mat4 GetLocalRotationMat() const;
+
+		void SetGlobalRotation(glm::quat const&);
 		glm::quat GetGlobalRotation() const;
 		glm::mat4 GetGlobalRotationMat() const;
 		glm::vec3 GetLocalEulerXYZRotationRadians() const;
@@ -62,6 +64,8 @@ namespace fr
 		void SetLocalScale(glm::vec3 const& scale);
 		glm::vec3 GetLocalScale() const;
 		glm::mat4 GetLocalScaleMat() const;
+
+		void SetGlobalScale(glm::vec3 const& scale);
 		glm::vec3 GetGlobalScale() const;
 		glm::mat4 GetGlobalScaleMat() const;
 		

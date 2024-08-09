@@ -405,7 +405,7 @@ namespace fr
 					keyframeTimes[nextKeyframeIdx],
 					currentTimeSec);
 
-				transform.SetLocalPosition(interpolatedValue);
+				transform.SetGlobalPosition(interpolatedValue);
 			}
 			break;
 			case AnimationPath::Rotation:
@@ -423,7 +423,7 @@ namespace fr
 					keyframeTimes[nextKeyframeIdx],
 					currentTimeSec);
 
-				transform.SetLocalRotation(interpolatedValue);
+				transform.SetGlobalRotation(interpolatedValue);
 			}
 			break;
 			case AnimationPath::Scale:
@@ -441,7 +441,7 @@ namespace fr
 					keyframeTimes[nextKeyframeIdx],
 					currentTimeSec);
 
-				transform.SetLocalScale(interpolatedValue);
+				transform.SetGlobalScale(interpolatedValue);
 			}
 			break;
 			case AnimationPath::Weights:

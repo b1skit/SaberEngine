@@ -393,6 +393,24 @@ namespace fr
 	}
 
 
+	void Transform::SetGlobalRotation(glm::quat const& rotation)
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+
+		if (m_parent)
+		{
+			glm::quat const& parentGlobalRotation = m_parent->GetGlobalRotation();
+			SetLocalRotation(glm::inverse(parentGlobalRotation) * rotation);
+		}
+		else
+		{
+			SetLocalRotation(rotation);
+		}
+
+		Recompute(); // Note: Already marked dirty when we called SetLocalPosition
+	}
+
+
 	glm::quat Transform::GetGlobalRotation() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
@@ -450,6 +468,26 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 		return glm::scale(glm::mat4(1.f), m_localScale);
+	}
+
+
+	void Transform::SetGlobalScale(glm::vec3 const& scale)
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+
+		SEAssertF("TODO: Test this. If you hit this assert, it's the first time this function has been used");
+
+		if (m_parent)
+		{
+			glm::vec3 const& parentGlobalScale = m_parent->GetGlobalScale();
+			SetLocalScale(scale / parentGlobalScale);
+		}
+		else
+		{
+			SetLocalScale(scale);
+		}
+
+		Recompute(); // Note: Already marked dirty when we called SetLocalPosition
 	}
 
 
