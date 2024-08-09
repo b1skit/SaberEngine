@@ -11,7 +11,6 @@ namespace fr
 	{
 	public: // Helper for identifying the scene render system
 		static constexpr char const* k_sceneRenderSystemName = "Scene";
-		static const NameID k_sceneRenderSystemNameID;
 
 
 	public:

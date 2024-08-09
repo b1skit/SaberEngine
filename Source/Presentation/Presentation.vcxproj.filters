@@ -95,6 +95,9 @@
     <ClCompile Include="Transform.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
+    <ClCompile Include="AnimationComponent.cpp">
+      <Filter>Source Files\fr\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoundsComponent.h">
@@ -165,6 +168,9 @@
     </ClInclude>
     <ClInclude Include="Transform.h">
       <Filter>Header Files\fr</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

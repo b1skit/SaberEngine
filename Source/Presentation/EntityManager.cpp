@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AnimationComponent.h"
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
@@ -116,6 +117,7 @@ namespace fr
 		}
 		
 		// Update the scene state:
+		UpdateAnimations(stepTimeMs);
 		UpdateTransforms();
 		UpdateSceneBounds();
 		UpdateMaterials();
@@ -725,6 +727,32 @@ namespace fr
 	}
 
 
+	void EntityManager::UpdateAnimations(double stepTimeMs)
+	{
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+			// Update the animation controllers:
+			auto animationControllersView = m_registry.view<fr::AnimationController>();
+			for (auto entity : animationControllersView)
+			{
+				fr::AnimationController& animationController = animationControllersView.get<fr::AnimationController>(entity);
+				fr::AnimationController::UpdateAnimationController(animationController, stepTimeMs);
+			}
+
+			// Update the individual animation components:
+			auto animatedsView = m_registry.view<fr::AnimationComponent, fr::TransformComponent>();
+			for (auto entity : animatedsView)
+			{
+				fr::AnimationComponent& animationComponent = animatedsView.get<fr::AnimationComponent>(entity);
+				fr::TransformComponent& transformComponent = animatedsView.get<fr::TransformComponent>(entity);
+
+				fr::AnimationComponent::ApplyAnimation(animationComponent, transformComponent);
+			}
+		}
+	}
+
+
 	void EntityManager::UpdateTransforms()
 	{
 		// Use the number of root transforms during the last update 
@@ -739,8 +767,7 @@ namespace fr
 			auto transformComponentsView = m_registry.view<fr::TransformComponent>();
 			for (auto entity : transformComponentsView)
 			{
-				fr::TransformComponent& transformComponent =
-					transformComponentsView.get<fr::TransformComponent>(entity);
+				fr::TransformComponent& transformComponent = transformComponentsView.get<fr::TransformComponent>(entity);
 
 				// Find root nodes:
 				fr::Transform& node = transformComponent.GetTransform();
@@ -973,6 +1000,22 @@ namespace fr
 			}
 			ImGui::Unindent();
 		} // "Camera controller"
+
+		ImGui::Separator();
+
+		if (ImGui::CollapsingHeader("Animation", ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+
+			auto animControllerView = m_registry.view<fr::AnimationController>();
+			for (entt::entity entity : animControllerView)
+			{
+				fr::AnimationController::ShowImGuiWindow(*this, entity);
+				ImGui::Separator();
+			}
+
+			ImGui::Unindent();
+		}
 
 		ImGui::Separator();
 

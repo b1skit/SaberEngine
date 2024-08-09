@@ -30,6 +30,7 @@ namespace fr
 
 	private: // Systems:
 		void UpdateCameraController(double stepTimeMs);
+		void UpdateAnimations(double stepTimeMs);
 		void UpdateTransforms();
 		void UpdateSceneBounds();
 		void UpdateMaterials();

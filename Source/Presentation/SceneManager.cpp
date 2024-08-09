@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AnimationComponent.h"
 #include "BoundsComponent.h"
 #include "Camera.h"
 #include "CameraComponent.h"
@@ -31,6 +32,9 @@
 namespace
 {
 	constexpr size_t k_initialBatchReservations = 100;
+
+	// Each element/index corresponds to an animation
+	using NodeToAnimationDataMap = std::vector<std::unordered_map<cgltf_node const*, fr::AnimationData>>;
 
 
 	std::shared_ptr<re::Texture> LoadTextureOrColor(
@@ -408,7 +412,7 @@ namespace
 	}
 
 
-	void SetTransformValues(cgltf_node* current, entt::entity sceneNode)
+	void SetTransformValues(cgltf_node const* current, entt::entity sceneNode)
 	{
 		SEAssert((current->has_matrix != (current->has_rotation || current->has_scale || current->has_translation)) ||
 			(current->has_matrix == 0 && current->has_rotation == 0 &&
@@ -453,7 +457,7 @@ namespace
 
 
 	// Creates a default camera if current == nullptr
-	void LoadAddCamera(re::SceneData& scene, entt::entity sceneNode, cgltf_node* current)
+	void LoadAddCamera(re::SceneData& scene, entt::entity sceneNode, cgltf_node const* current)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
@@ -526,7 +530,7 @@ namespace
 	}
 
 
-	void LoadAddLight(re::SceneData& scene, cgltf_node* current, entt::entity sceneNode)
+	void LoadAddLight(re::SceneData& scene, cgltf_node const* current, entt::entity sceneNode)
 	{
 		std::string lightName;
 		if (current->light->name)
@@ -622,7 +626,7 @@ namespace
 
 
 	void LoadMeshGeometry(
-		std::string const& sceneRootPath, re::SceneData& scene, cgltf_node* current, entt::entity sceneNode)
+		std::string const& sceneRootPath, re::SceneData& scene, cgltf_node const* current, entt::entity sceneNode)
 	{
 		std::string meshName;
 		if (current->mesh->name)
@@ -909,12 +913,79 @@ namespace
 	}
 
 
+	inline fr::InterpolationMode CGLTFInterpolationTypeToFrInterpolationType(
+		cgltf_interpolation_type interpolationType,
+		cgltf_animation_path_type animationPathType)
+	{
+		switch (interpolationType)
+		{
+		case cgltf_interpolation_type::cgltf_interpolation_type_linear:
+		{
+			if (animationPathType == cgltf_animation_path_type_rotation)
+			{
+				return fr::InterpolationMode::SphericalLinearInterpolation;
+			}
+			return fr::InterpolationMode::Linear;
+		}
+		case cgltf_interpolation_type::cgltf_interpolation_type_step: return fr::InterpolationMode::Step;
+		case cgltf_interpolation_type::cgltf_interpolation_type_cubic_spline: return fr::InterpolationMode::CubicSpline;
+		default: SEAssertF("Invalid interpolation type");
+		}
+		return fr::InterpolationMode::Linear; // This should never happen
+	}
+
+
+	inline fr::AnimationPath CGLTFAnimationPathToFrAnimationPath(cgltf_animation_path_type pathType)
+	{
+		switch (pathType)
+		{
+		case cgltf_animation_path_type::cgltf_animation_path_type_translation: return fr::AnimationPath::Translation;
+		case cgltf_animation_path_type::cgltf_animation_path_type_rotation: return fr::AnimationPath::Rotation;
+		case cgltf_animation_path_type::cgltf_animation_path_type_scale: return fr::AnimationPath::Scale;
+		case cgltf_animation_path_type::cgltf_animation_path_type_weights: return fr::AnimationPath::Weights;
+		case cgltf_animation_path_type::cgltf_animation_path_type_invalid:
+		case cgltf_animation_path_type::cgltf_animation_path_type_max_enum:
+		default: SEAssertF("Invalid animation path type");
+		}
+		return fr::AnimationPath::Translation; // This should never happen
+	}
+
+
+	void AttachAnimationComponents(
+		cgltf_data const* data,
+		cgltf_node const* current,
+		entt::entity curSceneNodeEntity,
+		fr::AnimationController const* animationController,
+		NodeToAnimationDataMap const& nodeToAnimationDataMap)
+	{
+		SEAssert(animationController, "animationController cannot be null");
+
+		fr::EntityManager& em = *fr::EntityManager::Get();
+		SEAssert(!em.HasComponent<fr::AnimationComponent>(curSceneNodeEntity), "Node already has an animation component");
+
+		fr::AnimationComponent* animationCmpt = 
+			fr::AnimationComponent::AttachAnimationComponent(em, curSceneNodeEntity, animationController);
+
+		for (auto const& animation : nodeToAnimationDataMap)
+		{
+			if (!animation.contains(current))
+			{
+				continue;
+			}
+			
+			animationCmpt->SetAnimationData(animation.at(current));
+		}
+	}
+
+
 	void LoadObjectHierarchyRecursiveHelper(
 		std::string const& sceneRootPath,
 		re::SceneData& scene,
-		cgltf_data* data,
-		cgltf_node* current,
-		entt::entity parentSceneNode,
+		cgltf_data const* data,
+		cgltf_node const* current,
+		entt::entity curSceneNodeEntity,
+		fr::AnimationController const* animationController,
+		NodeToAnimationDataMap const& nodeToAnimationDataMap,
 		std::vector<std::future<void>>& loadTasks)
 	{
 		if (current == nullptr)
@@ -934,53 +1005,158 @@ namespace
 				std::string const& nodeName = current->name ? current->name : "Unnamed child node";
 
 				entt::entity childNode =
-					fr::SceneNode::Create(*fr::EntityManager::Get(), nodeName.c_str(), parentSceneNode);
+					fr::SceneNode::Create(*fr::EntityManager::Get(), nodeName.c_str(), curSceneNodeEntity);
 
 				LoadObjectHierarchyRecursiveHelper(
-					sceneRootPath, scene, data, current->children[i], childNode, loadTasks);
+					sceneRootPath,
+					scene,
+					data,
+					current->children[i],
+					childNode,
+					animationController,
+					nodeToAnimationDataMap,
+					loadTasks);
 			}
 		}
 
 		// Set the SceneNode transform:
-		loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob([current, parentSceneNode]()
+		loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob([current, curSceneNodeEntity]()
 			{
-				SetTransformValues(current, parentSceneNode);
+				SetTransformValues(current, curSceneNodeEntity);
 			}));
 
 		// Process node attachments:
 		if (current->mesh)
 		{
 			loadTasks.emplace_back(
-				core::ThreadPool::Get()->EnqueueJob([&sceneRootPath, &scene, current, parentSceneNode]()
+				core::ThreadPool::Get()->EnqueueJob([&sceneRootPath, &scene, current, curSceneNodeEntity]()
 					{
-						LoadMeshGeometry(sceneRootPath, scene, current, parentSceneNode);
+						LoadMeshGeometry(sceneRootPath, scene, current, curSceneNodeEntity);
 					}));
 		}
 		if (current->light)
 		{
-			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob([&scene, current, parentSceneNode]()
+			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob([&scene, current, curSceneNodeEntity]()
 				{
-					LoadAddLight(scene, current, parentSceneNode);
+					LoadAddLight(scene, current, curSceneNodeEntity);
 				}));
 		}
 		if (current->camera)
 		{
-			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob([&scene, current, parentSceneNode]()
+			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob([&scene, current, curSceneNodeEntity]()
 				{
-					LoadAddCamera(scene, parentSceneNode, current);
+					LoadAddCamera(scene, curSceneNodeEntity, current);
 				}));
+		}
+		// Node animations: If we find a single animation for a node, kick off a job to attach an animation component
+		for (auto const& entry : nodeToAnimationDataMap)
+		{
+			if (entry.contains(current))
+			{
+				loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+					[data, animationController, &nodeToAnimationDataMap, current, curSceneNodeEntity]()
+					{
+						AttachAnimationComponents(data, current, curSceneNodeEntity, animationController, nodeToAnimationDataMap);
+					}));
+				break;
+			}
 		}
 	}
 
 
+	NodeToAnimationDataMap LoadAnimationData(
+		std::string const& sceneFilePath, cgltf_data const* data, fr::AnimationController*& animationControllerOut)
+	{
+		fr::EntityManager& em = *fr::EntityManager::Get();
+
+		animationControllerOut = fr::AnimationController::CreateAnimationController(em, sceneFilePath.c_str());
+
+		NodeToAnimationDataMap nodeToAnimationData; // Each element/index corresponds to an animation
+
+		for (uint64_t animIdx = 0; animIdx < data->animations_count; ++animIdx)
+		{
+			char const* animationName = data->animations[animIdx].name;
+			LOG("Loading animation \"%s\"...", animationName);
+
+			std::unordered_map<cgltf_node const*, fr::AnimationData>& nodeToData = nodeToAnimationData.emplace_back();
+			animationControllerOut->AddNewAnimation(animationName);
+
+			// Pack the Channels of an AnimationData struct:
+			for (uint64_t channelIdx = 0; channelIdx < data->animations->channels_count; ++channelIdx)
+			{
+				// GLTF animation samplers define an "input/output pair":
+				// - A set of floating-point scalar values representing linear time in seconds
+				// - A set of vectors or scalars representing the animated property
+				// 
+				// Note: The GLTF specifications also mandate that within 1 animation, each target (i.e. target node and
+				// animation path) MUST NOT be used more than once
+				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#animations
+
+				cgltf_animation_sampler const* animSampler = data->animations[animIdx].channels[channelIdx].sampler;
+
+				// Get/create a new AnimationData structure:
+				cgltf_node const* targetNode = data->animations[animIdx].channels[channelIdx].target_node;
+				fr::AnimationData* animationData = nullptr;
+				if (nodeToData.contains(targetNode))
+				{
+					animationData = &nodeToData.at(targetNode);
+				}
+				else
+				{
+					animationData = &nodeToData.emplace(targetNode, fr::AnimationData{}).first->second;
+				}
+
+				// Create a new animation channel entry:
+				fr::AnimationData::Channel& animChannel = animationData->m_channels.emplace_back();
+
+				// Channel interpolation mode:
+				animChannel.m_interpolationMode = CGLTFInterpolationTypeToFrInterpolationType(
+						animSampler->interpolation,
+						data->animations[animIdx].channels[channelIdx].target_path);
+
+				// Channel target path:
+				animChannel.m_targetPath = 
+					CGLTFAnimationPathToFrAnimationPath(data->animations[animIdx].channels[channelIdx].target_path);
+
+				// Channel input data: (Linear keyframe times, in seconds)
+				const cgltf_size numKeyframeTimeEntries = cgltf_accessor_unpack_floats(animSampler->input, nullptr, 0);
+
+				std::vector<float> keyframeTimesSec;
+				keyframeTimesSec.resize(numKeyframeTimeEntries);
+
+				cgltf_accessor_unpack_floats(animSampler->input, keyframeTimesSec.data(), numKeyframeTimeEntries);
+
+				animChannel.m_keyframeTimesIdx = animationControllerOut->AddKeyframeTimes(std::move(keyframeTimesSec));
+
+
+				// Channel output data:
+				const cgltf_size numOutputFloats = cgltf_accessor_unpack_floats(animSampler->output, nullptr, 0);
+
+				std::vector<float> outputFloatData;
+				outputFloatData.resize(numOutputFloats);
+
+				cgltf_accessor_unpack_floats(animSampler->output, outputFloatData.data(), numOutputFloats);
+
+				animChannel.m_dataIdx = animationControllerOut->AddChannelData(std::move(outputFloatData));
+			}
+		}
+		return nodeToAnimationData;
+	}
+
+
 	// Note: data must already be populated by calling cgltf_load_buffers
-	void LoadSceneHierarchy(std::string const& sceneRootPath, re::SceneData& scene, cgltf_data* data)
+	void LoadSceneHierarchy(
+		std::string const& sceneFilePath, std::string const& sceneRootPath, re::SceneData& scene, cgltf_data* data)
 	{
 		LOG("Scene has %d object nodes", data->nodes_count);
 
 		SEAssert(data->scenes_count == 1, "Loading > 1 scene is currently unsupported");
 
 		std::vector<std::future<void>> loadTasks; // Task enqueuing is single-threaded
+
+		// Create an animation controller for the scene, and pre-process the animation data:
+		fr::AnimationController* animationController = nullptr;
+		NodeToAnimationDataMap const& nodeToAnimationData = LoadAnimationData(sceneFilePath, data, animationController);
 
 		// Each node is the root in a transformation hierarchy:
 		for (size_t node = 0; node < data->scenes->nodes_count; node++)
@@ -996,7 +1172,14 @@ namespace
 				fr::SceneNode::Create(*fr::EntityManager::Get(), nodeName.c_str(), entt::null); // Root has no parent
 
 			LoadObjectHierarchyRecursiveHelper(
-				sceneRootPath, scene, data, data->scenes->nodes[node], rootSceneNode, loadTasks);
+				sceneRootPath,
+				scene,
+				data,
+				data->scenes->nodes[node],
+				rootSceneNode,
+				animationController,
+				nodeToAnimationData,
+				loadTasks);
 		}
 
 		// Wait for all of the tasks to be done:
@@ -1010,9 +1193,6 @@ namespace
 
 namespace fr
 {
-	const NameID SceneManager::k_sceneRenderSystemNameID = core::INamedObject::ComputeIDFromName(k_sceneRenderSystemName);
-
-
 	SceneManager* SceneManager::Get()
 	{
 		static std::unique_ptr<fr::SceneManager> instance = std::make_unique<fr::SceneManager>();
@@ -1234,19 +1414,20 @@ namespace fr
 				return false;
 			}
 
-			// TODO: Add a cmd line flag to validated GLTF files, for efficiency?
+#if defined(_DEBUG)
 			cgltf_result validationResult = cgltf_validate(data);
 			if (validationResult != cgltf_result::cgltf_result_success)
 			{
 				SEAssert(validationResult == cgltf_result_success, "GLTF file failed validation!");
 				return false;
 			}
+#endif
 
 			// Load the materials first:
 			PreLoadMaterials(sceneRootPath, *sceneData, data);
 
 			// Load the scene hierarchy:
-			LoadSceneHierarchy(sceneRootPath, *sceneData, data);
+			LoadSceneHierarchy(sceneFilePath, sceneRootPath, *sceneData, data);
 
 			// Cleanup:
 			cgltf_free(data);

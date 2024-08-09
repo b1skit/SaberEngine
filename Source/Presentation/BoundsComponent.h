@@ -75,7 +75,8 @@ namespace fr
 	public:
 		BoundsComponent(PrivateCTORTag);
 		explicit BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ);
-		explicit BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions);
+		explicit BoundsComponent(
+			PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions);
 
 		BoundsComponent(BoundsComponent const& rhs) = default;
 		BoundsComponent(BoundsComponent&&) = default;
