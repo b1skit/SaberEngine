@@ -176,80 +176,87 @@ namespace fr
 
 			fr::AnimationController& animController = em.GetComponent<fr::AnimationController>(animControllerEntity);
 
-			const size_t numAnimations = animController.GetAnimationCount();
-			size_t currentAnimationIdx = animController.GetActiveAnimationIdx();
-
-			std::vector<std::string> indexDropdownStrings;
-			indexDropdownStrings.reserve(numAnimations);
-			for (size_t i = 0; i < numAnimations; ++i)
+			if (animController.HasAnimations())
 			{
-				indexDropdownStrings.emplace_back(std::format("{}: {}", i, animController.m_animationNames[i]));
-			}
+				const size_t numAnimations = animController.GetAnimationCount();
+				size_t currentAnimationIdx = animController.GetActiveAnimationIdx();
 
-			ImGui::PushItemWidth(-ImGui::GetContentRegionAvail().x * 0.4f);
-			if (util::ShowBasicComboBox(
-				std::format("Active animation##{}", nameComponent.GetUniqueID()).c_str(),
-				indexDropdownStrings.data(),
-				indexDropdownStrings.size(),
-				currentAnimationIdx))
-			{
-				animController.SetActiveAnimationIdx(currentAnimationIdx);
-			}
-			ImGui::PopItemWidth();
-
-			constexpr ImVec2 k_buttonDims = ImVec2(50.f, 0.f);
-			if (ImGui::Button(std::format("Stop##{}", nameComponent.GetUniqueID()).c_str(),
-				k_buttonDims))
-			{
-				animController.SetAnimationState(fr::AnimationState::Stopped);
-			}
-
-			ImGui::SameLine();
-
-			const fr::AnimationState currentAnimationState = animController.GetAnimationState();
-			if (ImGui::Button(
-				std::format("{}##{}", currentAnimationState != fr::AnimationState::Playing ? "Play" : "Pause", 
-					nameComponent.GetUniqueID()).c_str(),
-				k_buttonDims))
-			{
-				if (currentAnimationState != fr::AnimationState::Playing)
+				std::vector<std::string> indexDropdownStrings;
+				indexDropdownStrings.reserve(numAnimations);
+				for (size_t i = 0; i < numAnimations; ++i)
 				{
-					animController.SetAnimationState(fr::AnimationState::Playing);
+					indexDropdownStrings.emplace_back(std::format("{}: {}", i, animController.m_animationNames[i]));
 				}
-				else
+
+				ImGui::PushItemWidth(-ImGui::GetContentRegionAvail().x * 0.4f);
+				if (util::ShowBasicComboBox(
+					std::format("Active animation##{}", nameComponent.GetUniqueID()).c_str(),
+					indexDropdownStrings.data(),
+					indexDropdownStrings.size(),
+					currentAnimationIdx))
 				{
-					animController.SetAnimationState(fr::AnimationState::Paused);
-				}				
+					animController.SetActiveAnimationIdx(currentAnimationIdx);
+				}
+				ImGui::PopItemWidth();
+
+				constexpr ImVec2 k_buttonDims = ImVec2(50.f, 0.f);
+				if (ImGui::Button(std::format("Stop##{}", nameComponent.GetUniqueID()).c_str(),
+					k_buttonDims))
+				{
+					animController.SetAnimationState(fr::AnimationState::Stopped);
+				}
+
+				ImGui::SameLine();
+
+				const fr::AnimationState currentAnimationState = animController.GetAnimationState();
+				if (ImGui::Button(
+					std::format("{}##{}", currentAnimationState != fr::AnimationState::Playing ? "Play" : "Pause",
+						nameComponent.GetUniqueID()).c_str(),
+					k_buttonDims))
+				{
+					if (currentAnimationState != fr::AnimationState::Playing)
+					{
+						animController.SetAnimationState(fr::AnimationState::Playing);
+					}
+					else
+					{
+						animController.SetAnimationState(fr::AnimationState::Paused);
+					}
+				}
+
+				ImGui::SameLine();
+
+				float animationSpeed = animController.GetAnimationSpeed();
+				ImGui::PushItemWidth(-ImGui::GetContentRegionAvail().x * 0.5f);
+				if (ImGui::SliderFloat(
+					std::format("Animation speed##{}", nameComponent.GetUniqueID()).c_str(),
+					&animationSpeed,
+					-4.f,
+					4.f))
+				{
+					animController.SetAnimationSpeed(animationSpeed);
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::PushItemWidth(-ImGui::GetContentRegionAvail().x * 0.4f);
+				const float progress =
+					animController.GetActiveClampedAnimationTimeSec() / animController.GetLongestAnimationTimeSec();
+				ImGui::ProgressBar(
+					progress,
+					ImVec2(0.f, 0.f),
+					std::format("{:0.2f}%", progress * 100.f).c_str());
+				ImGui::PopItemWidth();
+
+				ImGui::SameLine();
+
+				ImGui::Text(std::format("Time: {:0.2f} / {:0.2f} seconds", // Round to 2 decimal places
+					animController.GetActiveClampedAnimationTimeSec(),
+					animController.GetLongestAnimationTimeSec()).c_str());
 			}
-
-			ImGui::SameLine();
-
-			float animationSpeed = animController.GetAnimationSpeed();
-			ImGui::PushItemWidth(-ImGui::GetContentRegionAvail().x * 0.5f);
-			if (ImGui::SliderFloat(
-				std::format("Animation speed##{}", nameComponent.GetUniqueID()).c_str(),
-				&animationSpeed,
-				-4.f,
-				4.f))
+			else
 			{
-				animController.SetAnimationSpeed(animationSpeed);
+				ImGui::Text("<No animations found>");
 			}
-			ImGui::PopItemWidth();
-
-			ImGui::PushItemWidth(-ImGui::GetContentRegionAvail().x * 0.4f);
-			const float progress =
-				animController.GetActiveClampedAnimationTimeSec() / animController.GetLongestAnimationTimeSec();
-			ImGui::ProgressBar(
-				progress,
-				ImVec2(0.f, 0.f),
-				std::format("{:0.2f}%", progress * 100.f).c_str());
-			ImGui::PopItemWidth();
-
-			ImGui::SameLine();
-
-			ImGui::Text(std::format("Time: {:0.2f} / {:0.2f} seconds", // Round to 2 decimal places
-				animController.GetActiveClampedAnimationTimeSec(),
-				animController.GetLongestAnimationTimeSec()).c_str());
 
 			if (ImGui::CollapsingHeader(std::format("Metadata##{}", nameComponent.GetUniqueID()).c_str()))
 			{
