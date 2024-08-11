@@ -62,6 +62,13 @@ namespace re
 		SEStaticAssert(re::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
 
 
+		struct VertexStreamInput
+		{
+			static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
+
+			re::VertexStream const* m_vertexStream = nullptr;
+			uint8_t m_slot = k_invalidSlotIdx; // NOTE: Automatically resolved by the batch
+		};
 		struct GraphicsParams
 		{
 			// Note: Don't forget to update ComputeDataHash() if modifying this
@@ -70,7 +77,7 @@ namespace re
 			uint32_t m_numInstances;
 			gr::MeshPrimitive::TopologyMode m_batchTopologyMode;
 
-			std::array<re::VertexStream const*, gr::MeshPrimitive::Slot_Count> m_vertexStreams;
+			std::array<VertexStreamInput, re::VertexStream::k_maxVertexStreams> m_vertexStreams;
 			re::VertexStream const* m_indexStream;
 
 			// If a batch is created via the CTOR that takes a gr::Material::MaterialInstanceData, we store the 

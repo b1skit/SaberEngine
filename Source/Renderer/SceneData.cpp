@@ -304,7 +304,7 @@ namespace re
 
 			bool addedNewShader = false;
 
-			const uint64_t shaderIdentifier = newShader->GetShaderIdentifier();
+			const ShaderID shaderIdentifier = newShader->GetShaderIdentifier();
 
 			std::unordered_map<size_t, std::shared_ptr<re::Shader>>::const_iterator shaderPosition =
 				m_shaders.find(shaderIdentifier);

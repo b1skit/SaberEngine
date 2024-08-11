@@ -1,10 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include <GL/glew.h>
-
+#include "Batch.h"
 #include "Context.h"
 #include "Context_Platform.h"
 
+
+#include <GL/glew.h>
 
 namespace re
 {
@@ -28,9 +29,10 @@ namespace opengl
 		// OpenGL-specific interface:
 		void SetPipelineState(re::PipelineState const* pipelineState);
 
-		static uint64_t ComputeVAOHash(re::VertexStream const* const*, uint8_t count, re::VertexStream const* indexStream);
+		static uint64_t ComputeVAOHash(re::Batch::VertexStreamInput const*, uint8_t count, re::VertexStream const* indexStream);
 
-		GLuint GetCreateVAO(re::VertexStream const* const*, uint8_t count, re::VertexStream const* indexStream);
+		GLuint GetCreateVAO(re::Batch::VertexStreamInput const*, uint8_t count, re::VertexStream const* indexStream);
+		GLuint GetCreateTempVAO(re::VertexStream const*);
 		
 
 	protected:

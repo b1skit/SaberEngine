@@ -440,6 +440,9 @@
     <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_win32.h">
       <Filter>Dependencies\imgui\backends</Filter>
     </ClInclude>
+    <ClInclude Include="VertexStreamMap.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">

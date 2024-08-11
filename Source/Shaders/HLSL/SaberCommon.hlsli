@@ -10,6 +10,8 @@
 #include "../Common/TargetParams.h"
 
 
+// TODO: Generate vertex inputs automatically from Effect definitions. For now, these must match the layout defined in
+// the VertexStreams block defined in .\SaberEngine\Assets\Effects\Common.json exactly
 struct VertexIn
 {	
 	float3 Position : SV_Position;

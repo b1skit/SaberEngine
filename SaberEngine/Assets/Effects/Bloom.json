@@ -18,7 +18,8 @@
 			"Name": "EmissiveBlit",
 			"VShader": "Blit_VShader",
 			"PShader": "Blit_PShader",
-			"PipelineState": "FullscreenQuad_Always"
+			"PipelineState": "FullscreenQuad_Always",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "BloomCompute",

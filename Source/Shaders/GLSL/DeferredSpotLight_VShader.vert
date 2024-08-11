@@ -4,6 +4,6 @@
 
 void main()
 {
-	const vec4 worldPos = _InstancedTransformParams[gl_InstanceID].g_model * vec4(in_position, 1.0);
+	const vec4 worldPos = _InstancedTransformParams[gl_InstanceID].g_model * vec4(Position, 1.0);
 	gl_Position = _CameraParams.g_viewProjection * worldPos;
 }

@@ -101,10 +101,6 @@
           "Command": "-scene Corset\\glTF\\Corset.gltf"
         },
         {
-          "Id": "98ea750c-14cb-49ec-a6fe-f66d284f3cf5",
-          "Command": "-scene SimpleSkin\\SimpleSkin.gltf"
-        },
-        {
           "Id": "1bfead22-6f3e-43ec-b679-439e0a804f73",
           "Command": "-scene VertexColor\\VertexColorTest.gltf"
         },
@@ -170,7 +166,7 @@
         },
         {
           "Id": "241aa5df-00ed-4aef-b8a7-04d0f9ab5100",
-          "Command": "-scene box\\Box.gltf"
+          "Command": "-scene Box\\glTF-Embedded\\Box.gltf"
         },
         {
           "Id": "32b7f201-6bda-4d56-91b3-276709892e17",
@@ -231,6 +227,22 @@
         {
           "Id": "208224d3-766f-4d77-91c4-140c3e5ca5ef",
           "Command": "-scene InterpolationTest\\glTF\\InterpolationTest.gltf"
+        },
+        {
+          "Id": "328eb56c-fe81-4413-8019-164545186f07",
+          "Command": "-scene SimpleMorph\\glTF-Embedded\\SimpleMorph.gltf"
+        },
+        {
+          "Id": "9a9254c3-354f-4b73-8452-37b8811b44b5",
+          "Command": "-scene SimpleSkin\\glTF-Embedded\\SimpleSkin.gltf"
+        },
+        {
+          "Id": "5c33b5c5-68f4-4728-b41a-373fd6a98ac1",
+          "Command": "-scene RiggedSimple\\glTF-Binary\\RiggedSimple.glb"
+        },
+        {
+          "Id": "d5dec2bd-cd8a-4e56-86be-c43ecdccc751",
+          "Command": "-scene MultiUVTest\\glTF\\MultiUVTest.gltf"
         }
       ]
     }

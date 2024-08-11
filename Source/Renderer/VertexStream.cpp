@@ -30,11 +30,16 @@ namespace
 		}
 	}
 
-	void NormalizeData(std::vector<uint8_t>& data, uint32_t numComponents, re::VertexStream::DataType dataType)
+	void NormalizeData(std::vector<uint8_t>& data, re::VertexStream::DataType dataType)
 	{
+		const uint8_t numComponents = re::VertexStream::DataTypeToNumComponents(dataType);
+
 		switch (dataType)
 		{
 		case re::VertexStream::DataType::Float:
+		case re::VertexStream::DataType::Float2:
+		case re::VertexStream::DataType::Float3:
+		case re::VertexStream::DataType::Float4:
 		{
 			switch (numComponents)
 			{
@@ -66,42 +71,87 @@ namespace
 			}
 		}
 		break;
-		case re::VertexStream::DataType::UInt:
-		case re::VertexStream::DataType::UShort:
-		case re::VertexStream::DataType::UByte:
-		{
-			SEAssertF("Only floating point types can (currently) be normalized");
+		default: SEAssertF("Unexpected data type for normalization");
 		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid data type");
-		}
-		}
-	}
-
-
-	constexpr char const* DataTypeToCStr(re::VertexStream::DataType dataType)
-	{
-		switch (dataType)
-		{
-		case re::VertexStream::DataType::Float: return "Float";
-		case re::VertexStream::DataType::UInt: return "UInt";
-		case re::VertexStream::DataType::UShort: return "UShort";
-		case re::VertexStream::DataType::UByte: return "UByte";
-		default: SEAssertF("Invalid data type");
-		}
-		return "INVALID DATA TYPE";
 	}
 }
 
 
 namespace re
 {
+	constexpr uint8_t VertexStream::DataTypeToNumComponents(DataType dataType)
+	{
+		switch (dataType)
+		{
+		case VertexStream::DataType::Float:
+		case VertexStream::DataType::UInt:
+		case VertexStream::DataType::UShort:
+		case VertexStream::DataType::UByte:
+			return 1;
+		case VertexStream::DataType::Float2:
+		case VertexStream::DataType::UInt2:
+		case VertexStream::DataType::UShort2:
+		case VertexStream::DataType::UByte2:
+			return 2;
+		case VertexStream::DataType::Float3:
+		case VertexStream::DataType::UInt3:
+			return 3;
+		case VertexStream::DataType::Float4:
+		case VertexStream::DataType::UInt4:
+		case VertexStream::DataType::UShort4:
+		case VertexStream::DataType::UByte4:
+			return 4;		
+		default: return std::numeric_limits<uint8_t>::max(); // Error
+		}
+	}
+
+
+	constexpr uint8_t VertexStream::DataTypeToComponentByteSize(DataType dataType)
+	{
+		switch (dataType)
+		{
+		case VertexStream::DataType::Float:		// 32-bit
+		case VertexStream::DataType::Float2:
+		case VertexStream::DataType::Float3:
+		case VertexStream::DataType::Float4:
+
+		case VertexStream::DataType::Int:		// 32-bit
+		case VertexStream::DataType::Int2:
+		case VertexStream::DataType::Int3:
+		case VertexStream::DataType::Int4:
+
+		case VertexStream::DataType::UInt:		// 32-bit
+		case VertexStream::DataType::UInt2:
+		case VertexStream::DataType::UInt3:
+		case VertexStream::DataType::UInt4:
+			return 4;
+
+		case VertexStream::DataType::Short:	// 16-bit
+		case VertexStream::DataType::Short2:
+		case VertexStream::DataType::Short4:
+
+		case VertexStream::DataType::UShort:	// 16-bit
+		case VertexStream::DataType::UShort2:
+		case VertexStream::DataType::UShort4:
+			return 2;
+
+		case VertexStream::DataType::Byte:		// 8-bit
+		case VertexStream::DataType::Byte2:
+		case VertexStream::DataType::Byte4:
+
+		case VertexStream::DataType::UByte:		// 8-bit
+		case VertexStream::DataType::UByte2:
+		case VertexStream::DataType::UByte4:
+			return 1;
+		default: return 0; // Error
+		}
+	}
+
+
 	std::shared_ptr<re::VertexStream> VertexStream::CreateInternal(
 		Lifetime lifetime, 
-		StreamType type, 
-		uint32_t numComponents, 
+		Type type,
+		uint8_t srcIdx,
 		DataType dataType, 
 		Normalize doNormalize, 
 		std::vector<uint8_t>&& data)
@@ -110,7 +160,7 @@ namespace re
 		newVertexStream.reset(new VertexStream(
 			lifetime,
 			type,
-			numComponents,
+			srcIdx,
 			dataType,
 			doNormalize,
 			std::move(data)));
@@ -135,24 +185,26 @@ namespace re
 
 	VertexStream::VertexStream(
 		Lifetime lifetime, 
-		StreamType type, 
-		uint32_t numComponents, 
+		Type type, 
+		uint8_t srcIdx,
 		DataType dataType, 
 		Normalize doNormalize, 
 		std::vector<uint8_t>&& data)
 		: m_lifetime(lifetime)
 		, m_streamType(type)
-		, m_numComponents(numComponents)
+		, m_sourceChannelSemanticIdx(srcIdx)
 		, m_dataType(dataType)
 		, m_doNormalize(doNormalize)
 		, m_platformParams(nullptr)
 	{
-		SEAssert(numComponents >= 1 && numComponents <= 4, "Only 1, 2, 3, or 4 components are valid");
-
 		m_data = std::move(data);
 
 		// D3D12 does not support GPU-normalization of 32-bit types. As a hail-mary, we attempt to pre-normalize here
-		if (DoNormalize() && m_dataType == re::VertexStream::DataType::Float)
+		if (DoNormalize() && 
+			m_dataType == re::VertexStream::DataType::Float ||
+			m_dataType == re::VertexStream::DataType::Float2 ||
+			m_dataType == re::VertexStream::DataType::Float3 ||
+			m_dataType == re::VertexStream::DataType::Float4)
 		{
 			static const bool s_doNormalize = 
 				core::Config::Get()->KeyExists(core::configkeys::k_doCPUVertexStreamNormalizationKey);
@@ -161,7 +213,7 @@ namespace re
 			{
 				LOG_WARNING("Pre-normalizing vertex stream data as its format is incompatible with GPU-normalization");
 
-				NormalizeData(m_data, m_numComponents, m_dataType);
+				NormalizeData(m_data, m_dataType);
 			}
 			else
 			{
@@ -171,35 +223,6 @@ namespace re
 
 			m_doNormalize = Normalize::False;
 		}
-		
-		switch (dataType)
-		{
-		case DataType::Float:
-		{
-			m_componentByteSize = sizeof(float);
-		}
-		break;
-		case DataType::UInt:
-		{
-			m_componentByteSize = sizeof(uint32_t); // TODO: Support variably-sized indices
-		}
-		break;
-		case DataType::UShort:
-		{
-			m_componentByteSize = sizeof(unsigned short);
-		}
-		break;
-		case DataType::UByte:
-		{
-			m_componentByteSize = sizeof(uint8_t);
-		}
-		break;
-		default:
-			SEAssertF("Invalid data type");
-		}
-		SEAssert(m_data.size() % ((static_cast<size_t>(m_numComponents) * m_componentByteSize)) == 0,
-			"Data and description don't match");
-
 
 		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(*this, type));
 
@@ -209,9 +232,10 @@ namespace re
 
 	void VertexStream::ComputeDataHash()
 	{
+		AddDataBytesToHash(m_lifetime);
 		AddDataBytesToHash(m_streamType);
-		AddDataBytesToHash(m_numComponents);
-		AddDataBytesToHash(m_componentByteSize);
+		AddDataBytesToHash(m_sourceChannelSemanticIdx);
+
 		AddDataBytesToHash(m_doNormalize);
 		AddDataBytesToHash(m_dataType);
 
@@ -225,23 +249,13 @@ namespace re
 	}
 
 
-	void* VertexStream::GetData()
-	{
-		if (m_data.empty())
-		{
-			return nullptr;
-		}
-		return &m_data[0];
-	}
-
-
 	void const* VertexStream::GetData() const
 	{
 		if (m_data.empty())
 		{
 			return nullptr;
 		}
-		return &m_data[0];
+		return m_data.data();
 	}
 
 
@@ -253,27 +267,30 @@ namespace re
 
 	uint32_t VertexStream::GetTotalDataByteSize() const
 	{
-		return static_cast<uint32_t>(m_data.size());
+		return util::CheckedCast<uint32_t>(m_data.size());
 	}
 
 
 	uint32_t VertexStream::GetNumElements() const
 	{
 		// i.e. Get the number of vertices
-		SEAssert(m_numComponents > 0 && m_componentByteSize > 0, "Invalid denominator");
-		return static_cast<uint32_t>(m_data.size() / (m_numComponents * m_componentByteSize));
+		const uint8_t numComponents = DataTypeToNumComponents(m_dataType);
+		const uint8_t componentByteSize = DataTypeToComponentByteSize(m_dataType);
+		return util::CheckedCast<uint32_t>(m_data.size()) / (numComponents * componentByteSize);
 	}
 
 
-	uint32_t VertexStream::GetElementByteSize() const
+	uint8_t VertexStream::GetElementByteSize() const
 	{
-		return m_numComponents * m_componentByteSize;
+		const uint8_t numComponents = DataTypeToNumComponents(m_dataType);
+		const uint8_t componentByteSize = DataTypeToComponentByteSize(m_dataType);
+		return numComponents * componentByteSize;
 	}
 
 
-	uint32_t VertexStream::GetNumComponents() const
+	uint8_t VertexStream::GetNumComponents() const
 	{
-		return m_numComponents;
+		return DataTypeToNumComponents(m_dataType);
 	}
 
 
@@ -291,8 +308,8 @@ namespace re
 
 	void VertexStream::ShowImGuiWindow() const
 	{
-		ImGui::Text(std::format("Number of components: {}", m_numComponents).c_str());
-		ImGui::Text(std::format("Component byte size: {}", m_componentByteSize).c_str());
+		ImGui::Text(std::format("Number of components: {}", DataTypeToNumComponents(m_dataType)).c_str());
+		ImGui::Text(std::format("Component byte size: {}", DataTypeToComponentByteSize(m_dataType)).c_str());
 		ImGui::Text(std::format("Total data byte size: {}", GetTotalDataByteSize()).c_str());
 		ImGui::Text(std::format("Number of elements: {}", GetNumElements()).c_str());
 		ImGui::Text(std::format("Element byte size: {}", GetElementByteSize()).c_str());

@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Batch.h"
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
 #include "ResourceStateTracker_DX12.h"
@@ -10,7 +11,6 @@
 
 namespace re
 {
-	class Batch;
 	class Buffer;
 	class VertexStream;
 	class Texture;
@@ -132,7 +132,7 @@ namespace dx12
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
 
 		void SetVertexBuffer(uint32_t slot, re::VertexStream const*);
-		void SetVertexBuffers(re::VertexStream const* const* streams, uint8_t count);
+		void SetVertexBuffers(std::array<re::Batch::VertexStreamInput, re::VertexStream::k_maxVertexStreams> const&);
 
 		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
 

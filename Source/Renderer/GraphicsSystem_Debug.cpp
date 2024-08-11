@@ -1,8 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "Batch.h"
 #include "BoundsRenderData.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
+#include "TransformRenderData.h"
 
 #include "Core/Definitions/ConfigKeys.h"
 #include "Core/Util/ImGuiUtils.h"
@@ -32,18 +34,18 @@ namespace
 
 	std::unique_ptr<re::Batch> BuildAxisBatch(
 		re::Batch::Lifetime batchLifetime,
-		float axisScale, 
-		glm::vec3 const& xAxisColor, 
-		glm::vec3 const& yAxisColor, 
+		float axisScale,
+		glm::vec3 const& xAxisColor,
+		glm::vec3 const& yAxisColor,
 		glm::vec3 const& zAxisColor)
 	{
-		std::vector<glm::vec3> axisPositions = { 
+		std::vector<glm::vec3> axisPositions = {
 			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisX * axisScale,
 			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisY * axisScale,
 			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisZ * axisScale,
 		};
 
-		std::vector<glm::vec4> axisColors = { 
+		std::vector<glm::vec4> axisColors = {
 			glm::vec4(xAxisColor, 1.f), glm::vec4(xAxisColor, 1.f),
 			glm::vec4(yAxisColor, 1.f), glm::vec4(yAxisColor, 1.f),
 			glm::vec4(zAxisColor, 1.f), glm::vec4(zAxisColor, 1.f),
@@ -53,17 +55,17 @@ namespace
 
 		std::shared_ptr<re::VertexStream> axisPositionStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Vertex,
-			3, // numComponents per element
-			re::VertexStream::DataType::Float,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
 			re::VertexStream::Normalize::False,
 			std::move(axisPositions));
 
 		std::shared_ptr<re::VertexStream> axisColorStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Vertex,
-			4, // numComponents per element
-			re::VertexStream::DataType::Float,
+			re::VertexStream::Type::Color,
+			0,
+			re::VertexStream::DataType::Float4,
 			re::VertexStream::Normalize::False,
 			std::move(axisColors));
 
@@ -71,9 +73,11 @@ namespace
 		axisBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
 		axisBatchGraphicsParams.m_numInstances = 1;
 		axisBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::LineList;
-		
-		axisBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = axisPositionStream.get();
-		axisBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = axisColorStream.get();
+
+		axisBatchGraphicsParams.m_vertexStreams[0] = 
+			re::Batch::VertexStreamInput{ .m_vertexStream = axisPositionStream.get() };
+		axisBatchGraphicsParams.m_vertexStreams[1] =
+			re::Batch::VertexStreamInput{ .m_vertexStream = axisColorStream.get() };
 
 		return std::make_unique<re::Batch>(batchLifetime, axisBatchGraphicsParams, k_debugEffectID);
 	}
@@ -141,24 +145,24 @@ namespace
 
 		std::shared_ptr<re::VertexStream> boxPositionsStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Vertex,
-			3, // numComponents per element
-			re::VertexStream::DataType::Float,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
 			re::VertexStream::Normalize::False,
 			std::move(boxPositions));
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Vertex,
-			4, // numComponents per element
-			re::VertexStream::DataType::Float,
+			re::VertexStream::Type::Color,
+			0,
+			re::VertexStream::DataType::Float4,
 			re::VertexStream::Normalize::False,
 			std::move(boxColors));
 
 		std::shared_ptr<re::VertexStream> boxIndexStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Index,
-			1, // numComponents per element
+			re::VertexStream::Type::Index,
+			0,
 			re::VertexStream::DataType::UInt,
 			re::VertexStream::Normalize::False,
 			std::move(boxIndexes));
@@ -168,8 +172,10 @@ namespace
 		boundingBoxBatchGraphicsParams.m_numInstances = 1;
 		boundingBoxBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::LineList;
 
-		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = boxPositionsStream.get();
-		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
+		boundingBoxBatchGraphicsParams.m_vertexStreams[0] = 
+			re::Batch::VertexStreamInput{ .m_vertexStream = boxPositionsStream.get() };
+		boundingBoxBatchGraphicsParams.m_vertexStreams[1] = 
+			re::Batch::VertexStreamInput{ .m_vertexStream = boxColorStream.get() };
 		boundingBoxBatchGraphicsParams.m_indexStream = boxIndexStream.get();
 
 		return std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID);
@@ -183,20 +189,21 @@ namespace
 		glm::vec3 const& globalScale,
 		glm::vec3 const& normalColor)
 	{
-		if (meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Normal] == nullptr)
+		re::VertexStream const* normalStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+				meshPrimRenderData, re::VertexStream::Type::Normal);
+		if (normalStream == nullptr)
 		{
 			return nullptr; // No normals? Nothing to build
 		}
 
-		re::VertexStream const* positionStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
-		re::VertexStream const* normalStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Normal];
+		re::VertexStream const* positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+			meshPrimRenderData, re::VertexStream::Type::Position);
+		SEAssert(positionStream, "Cannot find position stream");
 
 		std::vector<glm::vec3> linePositions;
 
-		SEAssert(positionStream->GetDataType() == re::VertexStream::DataType::Float && 
-			positionStream->GetNumComponents() == 3 &&
-			normalStream->GetDataType() == re::VertexStream::DataType::Float &&
-			normalStream->GetNumComponents() == 3,
+		SEAssert(positionStream->GetDataType() == re::VertexStream::DataType::Float3 && 
+			normalStream->GetDataType() == re::VertexStream::DataType::Float3,
 			"Unexpected position or normal data");
 		
 		// Build lines between the position and position + normal offset:
@@ -215,17 +222,17 @@ namespace
 
 		std::shared_ptr<re::VertexStream> normalPositionsStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Vertex,
-			3, // numComponents per element
-			re::VertexStream::DataType::Float,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
 			re::VertexStream::Normalize::False,
 			std::move(linePositions));
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Vertex,
-			4, // numComponents per element
-			re::VertexStream::DataType::Float,
+			re::VertexStream::Type::Color,
+			0,
+			re::VertexStream::DataType::Float4,
 			re::VertexStream::Normalize::False,
 			std::move(normalColors));
 
@@ -234,8 +241,10 @@ namespace
 		boundingBoxBatchGraphicsParams.m_numInstances = 1;
 		boundingBoxBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::LineList;
 
-		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = normalPositionsStream.get();
-		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
+		boundingBoxBatchGraphicsParams.m_vertexStreams[0] = 
+			re::Batch::VertexStreamInput{ .m_vertexStream = normalPositionsStream.get() };
+		boundingBoxBatchGraphicsParams.m_vertexStreams[1] = 
+			re::Batch::VertexStreamInput{ .m_vertexStream = boxColorStream.get() };
 
 		return std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID);
 	}
@@ -288,24 +297,24 @@ namespace
 
 		std::shared_ptr<re::VertexStream> frustumPositionsStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Vertex,
-			3, // numComponents per element
-			re::VertexStream::DataType::Float,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
 			re::VertexStream::Normalize::False,
 			std::move(frustumPositions));
 
 		std::shared_ptr<re::VertexStream> frustumColorStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Vertex,
-			4, // numComponents per element
-			re::VertexStream::DataType::Float,
+			re::VertexStream::Type::Color,
+			0,
+			re::VertexStream::DataType::Float4,
 			re::VertexStream::Normalize::False,
 			std::move(frustumColors));
 
 		std::shared_ptr<re::VertexStream> frustumIndexStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Index,
-			1, // numComponents per element
+			re::VertexStream::Type::Index,
+			0,
 			re::VertexStream::DataType::UInt,
 			re::VertexStream::Normalize::False,
 			std::move(frustumIndexes));
@@ -315,8 +324,10 @@ namespace
 		frustumBatchGraphicsParams.m_numInstances = 1;
 		frustumBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::LineList;
 
-		frustumBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = frustumPositionsStream.get();
-		frustumBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = frustumColorStream.get();
+		frustumBatchGraphicsParams.m_vertexStreams[0] = 
+			re::Batch::VertexStreamInput{ .m_vertexStream = frustumPositionsStream.get() };
+		frustumBatchGraphicsParams.m_vertexStreams[1] = 
+			re::Batch::VertexStreamInput{.m_vertexStream = frustumColorStream.get()};
 		frustumBatchGraphicsParams.m_indexStream = frustumIndexStream.get();
 
 		return std::make_unique<re::Batch>(batchLifetime, frustumBatchGraphicsParams, k_debugEffectID);
@@ -328,7 +339,9 @@ namespace
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
 		glm::vec3 const& meshColor)
 	{
-		re::VertexStream const* positionStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
+		re::VertexStream const* positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+			meshPrimRenderData, re::VertexStream::Type::Position);
+
 		re::VertexStream const* indexStream = meshPrimRenderData.m_indexStream;
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
@@ -339,9 +352,9 @@ namespace
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
 			streamLifetime,
-			re::VertexStream::StreamType::Vertex,
-			4, // numComponents per element
-			re::VertexStream::DataType::Float,
+			re::VertexStream::Type::Color,
+			0,
+			re::VertexStream::DataType::Float4,
 			re::VertexStream::Normalize::False,
 			std::move(meshColors));
 
@@ -350,8 +363,10 @@ namespace
 		wireframeBatchGraphicsParams.m_numInstances = 1;
 		wireframeBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::TriangleList;
 
-		wireframeBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = positionStream;
-		wireframeBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
+		wireframeBatchGraphicsParams.m_vertexStreams[0] = 
+			re::Batch::VertexStreamInput{ .m_vertexStream = positionStream };
+		wireframeBatchGraphicsParams.m_vertexStreams[1] = 
+			re::Batch::VertexStreamInput{ .m_vertexStream = boxColorStream.get() };
 		wireframeBatchGraphicsParams.m_indexStream = indexStream;
 
 		return std::make_unique<re::Batch>(batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID);

@@ -1,7 +1,7 @@
 {
 	"Effect": {
 		"Name": "GLTF_PBRMetallicRoughness",
-
+		"Parents": ["Common"],
 		"DrawStyles": [
 			{
 				"Conditions": [
@@ -136,26 +136,30 @@
 			"Name": "FillGBuffer_SingleSided",
 			"VShader": "GLTF_PBRMetallicRoughness_VShader",
 			"PShader": "GLTF_PBRMetallicRoughness_GBufferFill_PShader",
-			"PipelineState": "SingleSided"
+			"PipelineState": "SingleSided",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "FillGBuffer_DoubleSided",
 			"VShader": "GLTF_PBRMetallicRoughness_VShader",
 			"PShader": "GLTF_PBRMetallicRoughness_GBufferFill_PShader",
-			"PipelineState": "DoubleSided"
+			"PipelineState": "DoubleSided",
+			"VertexStream": "Default"
 		},
 
 		{
 			"Name": "AlphaBlend_SingleSided",
 			"VShader": "GLTF_PBRMetallicRoughness_Transparency_VShader",
 			"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
-			"PipelineState": "SingleSided"
+			"PipelineState": "SingleSided",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "AlphaBlend_DoubleSided",
 			"VShader": "GLTF_PBRMetallicRoughness_Transparency_VShader",
 			"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
-			"PipelineState": "DoubleSided"
+			"PipelineState": "DoubleSided",
+			"VertexStream": "Default"
 		},
 		
 		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
@@ -164,50 +168,58 @@
 		{
 			"Name": "Shadow_2D_SingleSided_Opaque",
 			"VShader": "Depth_VShader",
-			"PipelineState": "SingleSided"
+			"PipelineState": "SingleSided",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "Shadow_2D_SingleSided_AlphaMask",
 			"VShader": "DepthAlphaMask_VShader",
 			"PShader": "DepthAlphaMask_PShader",
-			"PipelineState": "SingleSided"
+			"PipelineState": "SingleSided",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "Shadow_2D_DoubleSided_Opaque",
 			"VShader": "Depth_VShader",
-			"PipelineState": "DoubleSided"
+			"PipelineState": "DoubleSided",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "Shadow_2D_DoubleSided_AlphaMask",
 			"VShader": "DepthAlphaMask_VShader",
 			"PShader": "DepthAlphaMask_PShader",
-			"PipelineState": "DoubleSided"
+			"PipelineState": "DoubleSided",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "Shadow_Cube_SingleSided_Opaque",
 			"VShader": "CubeDepth_VShader",
 			"GShader": "CubeDepth_GShader",
-			"PipelineState": "SingleSided"
+			"PipelineState": "SingleSided",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "Shadow_Cube_SingleSided_AlphaMask",
 			"VShader": "CubeDepthAlphaMask_VShader",
 			"GShader": "CubeDepthAlphaMask_GShader",
 			"PShader": "DepthAlphaMask_PShader",
-			"PipelineState": "SingleSided"
+			"PipelineState": "SingleSided",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "Shadow_Cube_DoubleSided_Opaque",
 			"VShader": "CubeDepth_VShader",
 			"GShader": "CubeDepth_GShader",
-			"PipelineState": "DoubleSided"
+			"PipelineState": "DoubleSided",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "Shadow_Cube_DoubleSided_AlphaMask",
 			"VShader": "CubeDepthAlphaMask_VShader",
 			"GShader": "CubeDepthAlphaMask_GShader",
 			"PShader": "DepthAlphaMask_PShader",
-			"PipelineState": "DoubleSided"
+			"PipelineState": "DoubleSided",
+			"VertexStream": "Default"
 		}
 	]
 }

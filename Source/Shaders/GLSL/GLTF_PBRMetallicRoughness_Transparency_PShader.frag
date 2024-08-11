@@ -37,7 +37,7 @@ void main()
 
 	const vec3 worldPos = In.WorldPos;
 
-	const vec4 matAlbedo = texture(MatAlbedo, In.uv0.xy);
+	const vec4 matAlbedo = texture(MatAlbedo, In.UV0.xy);
 	const vec4 baseColorFactor =
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor;
 	const vec3 linearAlbedo = (matAlbedo * baseColorFactor * In.Color).rgb;
@@ -45,7 +45,7 @@ void main()
 	const float normalScaleFactor =
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.z;
 	const vec3 normalScale = vec3(normalScaleFactor, normalScaleFactor, 1.f);
-	const vec3 texNormal = texture(MatNormal, In.uv0.xy).xyz;
+	const vec3 texNormal = texture(MatNormal, In.UV0.xy).xyz;
 	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, In.TBN) * normalScale;
 
 	const float linearRoughnessFactor =
@@ -55,7 +55,7 @@ void main()
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.x;
 	
 	const vec2 roughnessMetalness =
-		texture(MatMetallicRoughness, In.uv0.xy).gb * vec2(linearRoughnessFactor, metallicFactor);
+		texture(MatMetallicRoughness, In.UV0.xy).gb * vec2(linearRoughnessFactor, metallicFactor);
 
 	const float remappedRoughness = RemapRoughness(roughnessMetalness.x);
 
@@ -80,7 +80,7 @@ void main()
 
 		const float occlusionStrength =
 			_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.w;
-		const float occlusion = texture(MatOcclusion, In.uv0.xy).r * occlusionStrength;
+		const float occlusion = texture(MatOcclusion, In.UV0.xy).r * occlusionStrength;
 	
 		ambientLightParams.FineAO = occlusion;
 		ambientLightParams.CoarseAO = 1.f; // No SSAO for transparents

@@ -16,20 +16,23 @@
 // Vertex shader inputs:
 //----------------------
 
+// TODO: Generate vertex inputs automatically from Effect definitions. For now, these must match the layout defined in
+// the VertexStreams block defined in .\SaberEngine\Assets\Effects\Common.json exactly
+
 #if defined(SE_VERTEX_SHADER)
-	layout(location = 0) in vec3 in_position;
+	layout(location = 0) in vec3 Position;
 	
 #ifdef VIN_NORMAL
-	layout(location = 1) in vec3 in_normal;
+	layout(location = 1) in vec3 Normal;
 #endif
 #ifdef VIN_TANGENT
-	layout(location = 2) in vec4 in_tangent;
+	layout(location = 2) in vec4 Tangent;
 #endif
 #ifdef VIN_UV0
-	layout(location = 3) in vec2 in_uv0;
+	layout(location = 3) in vec2 UV0;
 #endif
 #ifdef VIN_COLOR
-	layout(location = 4) in vec4 in_color;
+	layout(location = 4) in vec4 Color;
 #endif
 
 	// TODO: Support joints/weights
@@ -41,12 +44,15 @@
 
 struct VertexOut
 {
-#ifdef VOUT_WORLD_NORMAL
-	vec3 WorldNormal;
+// The GLSL compiler gets confused if we define an empty struct; Assume UV0 is always required
+	vec2 UV0;
+
+#ifdef VOUT_COLOR
+	vec4 Color;
 #endif
 
 #ifdef VOUT_LOCAL_POS
-	vec3 LocalPos; // Received in_position: Local-space position
+	vec3 LocalPos; // Received Position: Local-space position
 #endif
 
 #ifdef VOUT_WORLD_POS
@@ -56,14 +62,6 @@ struct VertexOut
 #ifdef VOUT_TBN
 	mat3 TBN; // Normal map change-of-basis matrix
 #endif
-
-	// The GLSL compiler gets confused if we define an empty struct; Assume uv0 is always required
-	vec2 uv0;
-
-#ifdef VOUT_COLOR
-	vec4 Color;
-#endif
-	
 };
 
 

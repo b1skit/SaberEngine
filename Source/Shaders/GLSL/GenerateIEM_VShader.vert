@@ -5,10 +5,10 @@
 
 void main()
 {
-	Out.LocalPos = in_position; // Untransformed vertex position
+	Out.LocalPos = Position; // Untransformed vertex position
 
 	const mat4 rotView = mat4(mat3(_CameraParams.g_view)); // remove translation from the view matrix
-	const vec4 clipPos = _CameraParams.g_projection * rotView * vec4(in_position, 1.0);
+	const vec4 clipPos = _CameraParams.g_projection * rotView * vec4(Position, 1.0);
 
 	gl_Position = clipPos.xyww;
 }

@@ -16,7 +16,7 @@ void main()
 	}
 
 	const float sampleDepth = 0.f; // Arbitrary
-	const vec3 worldPos = ScreenUVToWorldPos(In.uv0, sampleDepth, _CameraParams.g_invViewProjection);
+	const vec3 worldPos = ScreenUVToWorldPos(In.UV0, sampleDepth, _CameraParams.g_invViewProjection);
 	
 	const vec3 sampleDir = worldPos - _CameraParams.g_cameraWPos.xyz; // The skybox is centered about the camera
 

@@ -11,152 +11,67 @@
 using Microsoft::WRL::ComPtr;
 
 
-namespace
-{
-	DXGI_FORMAT GetStreamFormat(re::VertexStream const& stream)
-	{
-		switch (stream.GetNumComponents())
-		{
-		case 1:
-		{
-			switch (stream.GetDataType())
-			{
-			case re::VertexStream::DataType::Float:
-			{
-				SEAssert(!stream.DoNormalize(), "Normalized 32 bit float types are not supported");
-				return DXGI_FORMAT_R32_FLOAT;
-			}
-			break;
-			case re::VertexStream::DataType::UInt:
-			{
-				SEAssert(!stream.DoNormalize(), "Normalized 32 bit uint types are not supported");
-				return DXGI_FORMAT_R32_UINT;
-			}
-			break;
-			case re::VertexStream::DataType::UShort:
-			{
-				return stream.DoNormalize() ? DXGI_FORMAT_R16_UNORM : DXGI_FORMAT_R16_UINT;
-			}
-			break;
-			case re::VertexStream::DataType::UByte:
-			{
-				return stream.DoNormalize() ? DXGI_FORMAT_R8_UNORM : DXGI_FORMAT_R8_UINT;
-			}
-			break;
-			default:
-				SEAssertF("Invalid data type");
-			}
-		}
-		break;
-		case 2:
-		{
-			switch (stream.GetDataType())
-			{
-			case re::VertexStream::DataType::Float:
-			{
-				SEAssert(!stream.DoNormalize(), "Normalized 32 bit float types are not supported");
-				return DXGI_FORMAT_R32G32_FLOAT;
-			}
-			break;
-			case re::VertexStream::DataType::UInt:
-			{
-				SEAssert(!stream.DoNormalize(), "Normalized 32 bit uint types are not supported");
-				return DXGI_FORMAT_R32G32_UINT;
-			}
-			break;
-			case re::VertexStream::DataType::UShort:
-			{
-				return stream.DoNormalize() ? DXGI_FORMAT_R16G16_UNORM : DXGI_FORMAT_R16G16_UINT;
-			}
-			break;
-			case re::VertexStream::DataType::UByte:
-			{
-				return stream.DoNormalize() ? DXGI_FORMAT_R8G8_UNORM : DXGI_FORMAT_R8G8_UINT;
-			}
-			break;
-			default:
-				SEAssertF("Invalid data type");
-			}
-		}
-		case 3:
-		{
-			switch (stream.GetDataType())
-			{
-			case re::VertexStream::DataType::Float:
-			{
-				SEAssert(!stream.DoNormalize(), "Normalized 32 bit float types are not supported");
-				return DXGI_FORMAT_R32G32B32_FLOAT;
-			}
-			break;
-			case re::VertexStream::DataType::UInt:
-			{
-				SEAssert(!stream.DoNormalize(), "Normalized 32 bit uint types are not supported");
-				return DXGI_FORMAT_R32G32B32_UINT;
-			}
-			break;
-			case re::VertexStream::DataType::UShort:
-			{
-				SEAssertF("16-bit, 3-channel unsigned short types are not supported");
-			}
-			break;
-			case re::VertexStream::DataType::UByte:
-			{
-				SEAssertF("8-bit, 3-channel unsigned byte types are not supported");
-			}
-			break;
-			default:
-				SEAssertF("Invalid data type");
-			}
-		}
-		break;
-		case 4:
-		{
-			switch (stream.GetDataType())
-			{
-			case re::VertexStream::DataType::Float:
-			{
-				SEAssert(!stream.DoNormalize(), "Normalized 32 bit float types are not supported");
-				return DXGI_FORMAT_R32G32B32A32_FLOAT;
-			}
-			break;
-			case re::VertexStream::DataType::UInt:
-			{
-				SEAssert(!stream.DoNormalize(), "Normalized 32 bit uint types are not supported");
-				return DXGI_FORMAT_R32G32B32A32_UINT;
-			}
-			break;
-			case re::VertexStream::DataType::UShort:
-			{
-				return stream.DoNormalize() ? DXGI_FORMAT_R16G16B16A16_UNORM : DXGI_FORMAT_R16G16B16A16_UINT;
-			}
-			break;
-			case re::VertexStream::DataType::UByte:
-			{
-				return stream.DoNormalize() ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R8G8B8A8_UINT;
-			}
-			break;
-			default:
-				SEAssertF("Invalid data type");
-			}
-		}
-		break;
-		default:
-			SEAssertF("Invalid number of stream components");
-		}
-
-		SEAssertF("Cannot compute stream format");
-		return DXGI_FORMAT_FORCE_UINT;
-	}
-}
-
 namespace dx12
 {
+	DXGI_FORMAT VertexStream::GetDXGIStreamFormat(re::VertexStream const& stream)
+	{
+		switch (stream.GetDataType())
+		{
+		case re::VertexStream::DataType::Float: return DXGI_FORMAT_R32_FLOAT;			
+		case re::VertexStream::DataType::Float2: return DXGI_FORMAT_R32G32_FLOAT;
+		case re::VertexStream::DataType::Float3: return DXGI_FORMAT_R32G32B32_FLOAT;
+		case re::VertexStream::DataType::Float4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+		case re::VertexStream::DataType::Int: return DXGI_FORMAT_R32_SINT;
+		case re::VertexStream::DataType::Int2: return DXGI_FORMAT_R32G32_SINT;
+		case re::VertexStream::DataType::Int3: return DXGI_FORMAT_R32G32B32_SINT;
+		case re::VertexStream::DataType::Int4: return DXGI_FORMAT_R32G32B32A32_SINT;
+
+		case re::VertexStream::DataType::UInt: return DXGI_FORMAT_R32_UINT;
+		case re::VertexStream::DataType::UInt2: return DXGI_FORMAT_R32G32_UINT;
+		case re::VertexStream::DataType::UInt3: return DXGI_FORMAT_R32G32B32_UINT;
+		case re::VertexStream::DataType::UInt4: return DXGI_FORMAT_R32G32B32A32_UINT;
+
+		case re::VertexStream::DataType::Short:
+			return stream.DoNormalize() ? DXGI_FORMAT_R16_SNORM : DXGI_FORMAT_R16_SINT;
+		case re::VertexStream::DataType::Short2:
+			return stream.DoNormalize() ? DXGI_FORMAT_R16G16_SNORM : DXGI_FORMAT_R16G16_SINT;
+		case re::VertexStream::DataType::Short4:
+			return stream.DoNormalize() ? DXGI_FORMAT_R16G16B16A16_SNORM : DXGI_FORMAT_R16G16B16A16_SINT;
+
+		case re::VertexStream::DataType::UShort: 
+			return stream.DoNormalize() ? DXGI_FORMAT_R16_UNORM : DXGI_FORMAT_R16_UINT;
+		case re::VertexStream::DataType::UShort2: 
+			return stream.DoNormalize() ? DXGI_FORMAT_R16G16_UNORM : DXGI_FORMAT_R16G16_UINT;
+		case re::VertexStream::DataType::UShort4:
+			return stream.DoNormalize() ? DXGI_FORMAT_R16G16B16A16_UNORM : DXGI_FORMAT_R16G16B16A16_UINT;
+
+		case re::VertexStream::DataType::Byte:
+			return stream.DoNormalize() ? DXGI_FORMAT_R8_SNORM : DXGI_FORMAT_R8_SINT;
+		case re::VertexStream::DataType::Byte2:
+			return stream.DoNormalize() ? DXGI_FORMAT_R8G8_SNORM : DXGI_FORMAT_R8G8_SINT;
+		case re::VertexStream::DataType::Byte4:
+			return stream.DoNormalize() ? DXGI_FORMAT_R8G8B8A8_SNORM : DXGI_FORMAT_R8G8B8A8_SINT;
+
+		case re::VertexStream::DataType::UByte:
+			return stream.DoNormalize() ? DXGI_FORMAT_R8_UNORM : DXGI_FORMAT_R8_UINT;
+		case re::VertexStream::DataType::UByte2: 
+			return stream.DoNormalize() ? DXGI_FORMAT_R8G8_UNORM : DXGI_FORMAT_R8G8_UINT;
+		case re::VertexStream::DataType::UByte4: 
+			return stream.DoNormalize() ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R8G8B8A8_UINT;
+		default: SEAssertF("Invalid stream data type");
+		}
+
+		return DXGI_FORMAT_UNKNOWN; // This should never hapen
+	}
+
+
 	std::unique_ptr<re::VertexStream::PlatformParams> VertexStream::CreatePlatformParams(
-		re::VertexStream const& stream, re::VertexStream::StreamType type)
+		re::VertexStream const& stream, re::VertexStream::Type type)
 	{
 		switch (type)
 		{
-		case re::VertexStream::StreamType::Index:
+		case re::VertexStream::Type::Index:
 		{
 			return std::make_unique<dx12::VertexStream::PlatformParams_Index>(stream);
 		}
@@ -168,23 +83,22 @@ namespace dx12
 		}
 	}
 
-	VertexStream::PlatformParams::PlatformParams(re::VertexStream const& stream, re::VertexStream::StreamType type)
-		: m_type(type)
-		, m_bufferResource(nullptr)
+	VertexStream::PlatformParams::PlatformParams(re::VertexStream const& stream)
+		: m_bufferResource(nullptr)
 	{
-		m_format = GetStreamFormat(stream);
+		m_format = GetDXGIStreamFormat(stream);
 	}
 
 
 	dx12::VertexStream::PlatformParams_Vertex::PlatformParams_Vertex(re::VertexStream const& stream)
-		: dx12::VertexStream::PlatformParams::PlatformParams(stream, re::VertexStream::StreamType::Vertex)
+		: dx12::VertexStream::PlatformParams::PlatformParams(stream)
 		, m_vertexBufferView{}
 	{
 	}
 
 
 	dx12::VertexStream::PlatformParams_Index::PlatformParams_Index(re::VertexStream const& stream)
-		: dx12::VertexStream::PlatformParams::PlatformParams(stream, re::VertexStream::StreamType::Index)
+		: dx12::VertexStream::PlatformParams::PlatformParams(stream)
 		, m_indexBufferView{}
 	{
 	}
@@ -242,9 +156,9 @@ namespace dx12
 		copyCmdList->UpdateSubresources(&stream, itermediateBufferResource.Get(), 0);
 
 		// Create the resource view:
-		switch (streamPlatformParams->m_type)
+		switch (stream.GetType())
 		{
-		case re::VertexStream::StreamType::Index:
+		case re::VertexStream::Type::Index:
 		{
 			dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
 				streamPlatformParams->As<dx12::VertexStream::PlatformParams_Index*>();
@@ -290,9 +204,9 @@ namespace dx12
 		dx12::VertexStream::PlatformParams* streamPlatformParams =
 			stream.GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
 
-		switch (streamPlatformParams->m_type)
+		switch (stream.GetType())
 		{
-		case re::VertexStream::StreamType::Index:
+		case re::VertexStream::Type::Index:
 		{
 			dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
 				streamPlatformParams->As<dx12::VertexStream::PlatformParams_Index*>();

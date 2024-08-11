@@ -44,11 +44,12 @@ namespace effect
 	Technique::Technique(
 		char const* name,
 		std::vector<std::pair<std::string, re::Shader::ShaderType>> const& shaderNames,
-		re::PipelineState const* pipelineState)
+		re::PipelineState const* pipelineState,
+		re::VertexStreamMap const* vertexStreamMap)
 		: INamedObject(name)
 		, m_resolvedShader(nullptr)
 	{
-		m_resolvedShader = re::Shader::GetOrCreate(shaderNames, pipelineState);
+		m_resolvedShader = re::Shader::GetOrCreate(shaderNames, pipelineState, vertexStreamMap);
 	}
 
 

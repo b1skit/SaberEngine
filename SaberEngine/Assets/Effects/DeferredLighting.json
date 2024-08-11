@@ -1,6 +1,7 @@
 {
 	"Effect": {
 		"Name": "DeferredLighting",
+		"Parents": ["Common"],
 		"DrawStyles": [
 			{
 				"Conditions": [
@@ -74,37 +75,43 @@
 			"Name": "IEMGeneration",
 			"VShader": "GenerateIEM_VShader",
 			"PShader": "GenerateIEM_PShader",
-			"PipelineState": "IBLGeneration"
+			"PipelineState": "IBLGeneration",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "PMREMGeneration",
 			"VShader": "GeneratePMREM_VShader",
 			"PShader": "GeneratePMREM_PShader",
-			"PipelineState": "IBLGeneration"
+			"PipelineState": "IBLGeneration",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "DeferredAmbient",
 			"VShader": "DeferredAmbientLight_VShader",
 			"PShader": "DeferredAmbientLight_PShader",
-			"PipelineState": "DeferredFullscreenQuad"
+			"PipelineState": "DeferredFullscreenQuad",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "DeferredDirectional",
 			"VShader": "DeferredDirectionalLight_VShader",
 			"PShader": "DeferredDirectionalLight_PShader",
-			"PipelineState": "DeferredFullscreenQuad"
+			"PipelineState": "DeferredFullscreenQuad",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "DeferredPoint",
 			"VShader": "DeferredPointLight_VShader",
 			"PShader": "DeferredPointLight_PShader",
-			"PipelineState": "DeferredMesh"
+			"PipelineState": "DeferredMesh",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "DeferredSpot",
 			"VShader": "DeferredSpotLight_VShader",
 			"PShader": "DeferredSpotLight_PShader",
-			"PipelineState": "DeferredMesh"
+			"PipelineState": "DeferredMesh",
+			"VertexStream": "Default"
 		}
 	]
 }

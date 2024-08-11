@@ -328,7 +328,7 @@ namespace grutil
 		SEAssert(m_canBuildUVs && 
 			meshData->m_indices->size() % 3 == 0 && 
 			meshData->m_UV0->size() == meshData->m_indices->size(),
-			"Expected a triangle list and pre-allocated UV0 vector");
+			"Expected a triangle list and pre-allocated TexCoord0 vector");
 
 		LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 
@@ -539,7 +539,7 @@ namespace grutil
 				byteOffset,
 				vertexStrideBytes,
 				numElements,
-				sizeof(glm::vec2));	// UV0 = glm::vec2
+				sizeof(glm::vec2));	// TexCoord0 = glm::vec2
 			byteOffset += sizeof(glm::vec2);
 		}
 

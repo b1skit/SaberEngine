@@ -23,7 +23,7 @@ void main()
 			InstanceParamsOut.InstanceID = InstanceParamsIn[currentVert].InstanceID;
 
 			// Not technically part of SABER_INSTANCING, but we only need this if we're executing a PShader
-			Out.uv0 = In[currentVert].uv0;
+			Out.UV0 = In[currentVert].UV0;
 #endif
 
 			EmitVertex();

@@ -1,11 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
+#include "SysInfo_Platform.h"
 
 
 namespace
 {
-	constexpr char const* DrawModeToCStr(gr::MeshPrimitive::TopologyMode drawMode)
+	constexpr char const* TopologyModeToCStr(gr::MeshPrimitive::TopologyMode drawMode)
 	{
 		switch (drawMode)
 		{
@@ -18,54 +19,73 @@ namespace
 		case gr::MeshPrimitive::TopologyMode::LineStripAdjacency: return "LineStripAdjacency";
 		case gr::MeshPrimitive::TopologyMode::TriangleListAdjacency: return "TriangleListAdjacency";
 		case gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency: return "TriangleStripAdjacency";
-		default: SEAssertF("Invalid draw mode");
+		default: return "INVALID TOPOLOGY MODE";
 		}
-		return "INVALID DRAW MODE";
 	}
 
 
-	constexpr char const* SlotToCStr(gr::MeshPrimitive::Slot slot)
+	void ValidateVertexStreams(std::vector<re::VertexStream const*> const& vertexStreams)
 	{
-		switch (slot)
+#if defined(_DEBUG)
+
+		SEAssert(!vertexStreams.empty(), "Must have at least 1 vertex stream");
+
+		std::array<std::unordered_set<uint8_t>, static_cast<uint8_t>(re::VertexStream::Type::Type_Count)> seenSlots;
+		for (size_t i = 0; i < vertexStreams.size(); ++i)
 		{
-		case gr::MeshPrimitive::Slot::Position: return "Position";
-		case gr::MeshPrimitive::Slot::Normal: return "Normal";
-		case gr::MeshPrimitive::Slot::Tangent: return "Tangent";
-		case gr::MeshPrimitive::Slot::UV0: return "UV0";
-		case gr::MeshPrimitive::Slot::Color: return "Color";
-		case gr::MeshPrimitive::Slot::Joints: return "Joints";
-		case gr::MeshPrimitive::Slot::Weights: return "Weights";
-		default:SEAssertF("Invalid slot index");
+			SEAssert(vertexStreams[i] != nullptr, "Found a null vertex stream in the input");
+
+			SEAssert(i + 1 == vertexStreams.size() ||
+				vertexStreams[i]->GetType() != vertexStreams[i + 1]->GetType() ||
+				vertexStreams[i]->GetSourceSemanticIdx() + 1 == vertexStreams[i + 1]->GetSourceSemanticIdx(),
+				"Vertex streams of the same type must be stored in monotoically-increasing source slot order");
+
+			SEAssert(seenSlots[static_cast<uint8_t>(vertexStreams[i]->GetType())].contains(
+					vertexStreams[i]->GetSourceSemanticIdx()) == false,
+				"Duplicate slot index detected");
+			
+			seenSlots[static_cast<uint8_t>(vertexStreams[i]->GetType())].emplace(
+				vertexStreams[i]->GetSourceSemanticIdx());
 		}
-		return "INVALID SLOT INDEX";
+
+#endif
 	}
 }
 
 namespace gr
 {
+	re::VertexStream const* MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+		gr::MeshPrimitive::RenderData const& meshPrimRenderData,
+		re::VertexStream::Type streamType,
+		int8_t semanticIdx /*= -1*/)
+	{
+		re::VertexStream const* result = nullptr;
+
+		for (auto const& stream : meshPrimRenderData.m_vertexStreams)
+		{
+			if (stream->GetType() == streamType &&
+				(semanticIdx < 0 || stream->GetSourceSemanticIdx() == semanticIdx))
+			{
+				result = stream;
+				break;
+			}
+		}
+
+		return result;
+	}
+
+
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
 		std::string const& name,
-		std::vector<uint32_t>* indices,
-		std::vector<float>& positions,
-		std::vector<float>* normals,
-		std::vector<float>* tangents,
-		std::vector<float>* uv0,
-		std::vector<float>* colors,
-		std::vector<uint8_t>* joints,
-		std::vector<float>* weights,
+		std::vector<re::VertexStream const*>&& vertexStreams,
+		re::VertexStream const* indexStream,
 		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
 		std::shared_ptr<MeshPrimitive> newMeshPrimitive;
 		newMeshPrimitive.reset(new MeshPrimitive(
 			name.c_str(),
-			indices,
-			positions,
-			normals,
-			tangents,
-			uv0,
-			colors,
-			joints,
-			weights,
+			std::move(vertexStreams),
+			indexStream,
 			meshParams));
 
 		// This call will replace the newMeshPrimitive pointer if a duplicate MeshPrimitive already exists
@@ -77,101 +97,38 @@ namespace gr
 
 	MeshPrimitive::MeshPrimitive(
 		char const* name,
-		std::vector<uint32_t>* indices,
-		std::vector<float>& positions,
-		std::vector<float>* normals,
-		std::vector<float>* tangents,
-		std::vector<float>* uv0,
-		std::vector<float>* colors,
-		std::vector<uint8_t>* joints,
-		std::vector<float>* weights,
+		std::vector<re::VertexStream const*>&& vertexStreams,
+		re::VertexStream const* indexStream,
 		MeshPrimitiveParams const& meshParams)
 		: INamedObject(name)
 		, m_params(meshParams)
+		, m_indexStream(indexStream)
 	{
-		m_indexStream = re::VertexStream::Create(
-			re::VertexStream::Lifetime::Permanent,
-			re::VertexStream::StreamType::Index,
-			1, 
-			re::VertexStream::DataType::UInt,
-			re::VertexStream::Normalize::False,
-			std::move(*indices)).get();
+		m_vertexStreams = std::move(vertexStreams);
 
-		m_vertexStreams[Slot::Position] = re::VertexStream::Create(
-			re::VertexStream::Lifetime::Permanent,
-			re::VertexStream::StreamType::Vertex,
-			3,
-			re::VertexStream::DataType::Float,
-			re::VertexStream::Normalize::False,
-			std::move(positions)).get();
-
-		if (normals && !normals->empty())
-		{
-			m_vertexStreams[Slot::Normal] = re::VertexStream::Create(
-				re::VertexStream::Lifetime::Permanent,
-				re::VertexStream::StreamType::Vertex,
-				3,
-				re::VertexStream::DataType::Float,
-				re::VertexStream::Normalize::True,
-				std::move(*normals)).get();
-		}
-
-		if (colors && !colors->empty())
-		{
-			m_vertexStreams[Slot::Color] = re::VertexStream::Create(
-				re::VertexStream::Lifetime::Permanent,
-				re::VertexStream::StreamType::Vertex,
-				4,
-				re::VertexStream::DataType::Float,
-				re::VertexStream::Normalize::False,
-				std::move(*colors)).get();
-		}
-
-		if (uv0 && !uv0->empty())
-		{
-			m_vertexStreams[Slot::UV0] = re::VertexStream::Create(
-				re::VertexStream::Lifetime::Permanent,
-				re::VertexStream::StreamType::Vertex,
-				2,
-				re::VertexStream::DataType::Float,
-				re::VertexStream::Normalize::False,
-				std::move(*uv0)).get();
-		}
-
-		if (tangents && !tangents->empty())
-		{
-			m_vertexStreams[Slot::Tangent] = re::VertexStream::Create(
-				re::VertexStream::Lifetime::Permanent,
-				re::VertexStream::StreamType::Vertex,
-				4,
-				re::VertexStream::DataType::Float,
-				re::VertexStream::Normalize::True,
-				std::move(*tangents)).get();
-		}
-		
-		if (joints && !joints->empty())
-		{
-			m_vertexStreams[Slot::Joints] = re::VertexStream::Create(
-				re::VertexStream::Lifetime::Permanent,
-				re::VertexStream::StreamType::Vertex,
-				1,
-				re::VertexStream::DataType::UByte,
-				re::VertexStream::Normalize::False,
-				std::move(*joints)).get();
-		}
-
-		if (weights && !weights->empty())
-		{
-			m_vertexStreams[Slot::Weights] = re::VertexStream::Create(
-				re::VertexStream::Lifetime::Permanent,
-				re::VertexStream::StreamType::Vertex,
-				1,
-				re::VertexStream::DataType::Float,
-				re::VertexStream::Normalize::False,
-				std::move(*weights)).get();
-		}
+		ValidateVertexStreams(m_vertexStreams); // _DEBUG only
 
 		ComputeDataHash();
+	}
+
+
+	re::VertexStream const* MeshPrimitive::GetVertexStream(re::VertexStream::Type streamType, uint8_t semanticIdx) const
+	{
+		re::VertexStream const* result = nullptr;
+		for (size_t streamIdx = 0; streamIdx < m_vertexStreams.size(); ++streamIdx)
+		{
+			if (m_vertexStreams[streamIdx]->GetType() == streamType &&
+				m_vertexStreams[streamIdx]->GetSourceSemanticIdx() == semanticIdx)
+			{
+				result = m_vertexStreams[streamIdx];
+				break;
+			}
+		}
+
+		SEAssert(result != nullptr,
+			"Failed to find a vertex stream of the given type and sematic index. This is probably a surprise");
+
+		return result;
 	}
 
 
@@ -182,10 +139,7 @@ namespace gr
 		// Vertex data streams:
 		for (size_t i = 0; i < m_vertexStreams.size(); i++)
 		{
-			if (m_vertexStreams[i])
-			{
-				AddDataBytesToHash(m_vertexStreams[i]->GetDataHash());
-			}
+			AddDataBytesToHash(m_vertexStreams[i]->GetDataHash());
 		}
 		if (m_indexStream)
 		{
@@ -194,60 +148,26 @@ namespace gr
 	}
 
 
-	std::vector<re::VertexStream const*> MeshPrimitive::GetVertexStreams() const
-	{
-		std::vector<re::VertexStream const*> vertexStreamPtrs;
-		vertexStreamPtrs.resize(Slot_Count, nullptr);
-
-		for (uint8_t i = 0; i < Slot_Count; i++)
-		{
-			vertexStreamPtrs[i] = m_vertexStreams[i];
-		}
-
-		return vertexStreamPtrs;
-	}
-
-
-	char const* MeshPrimitive::SlotDebugNameToCStr(Slot slot)
-	{
-		switch (slot)
-		{
-		case Position: return ENUM_TO_STR(Position);
-		case Normal: return ENUM_TO_STR(Normal);
-		case Tangent: return ENUM_TO_STR(Tangent);
-		case UV0: return ENUM_TO_STR(UV0);
-		case Color: return ENUM_TO_STR(Color);
-		case Joints: return ENUM_TO_STR(Joints);
-		case Weights: return ENUM_TO_STR(Weights);
-		default:
-			SEAssertF("Invalid slot");
-		}
-		return "Invalid slot";
-	}
-
-
 	void MeshPrimitive::ShowImGuiWindow() const
 	{
-		if (ImGui::CollapsingHeader(std::format("MeshPrimitive \"{}\"##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		if (ImGui::CollapsingHeader(
+			std::format("MeshPrimitive \"{}\"##{}", GetName(), GetUniqueID()).c_str(),ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
-			ImGui::Text(std::format("Draw mode: {}", DrawModeToCStr(m_params.m_topologyMode)).c_str());
+			ImGui::Text(std::format("Draw mode: {}", TopologyModeToCStr(m_params.m_topologyMode)).c_str());
 
-			if (ImGui::CollapsingHeader(std::format("Vertex streams ({})##{}", m_vertexStreams.size(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader(
+				std::format("Vertex streams ({})##{}", m_vertexStreams.size(), GetUniqueID()).c_str(), 
+				ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 				for (size_t i = 0; i < m_vertexStreams.size(); i++)
 				{
-					ImGui::Text(std::format("{}: {}", i, SlotToCStr(static_cast<gr::MeshPrimitive::Slot>(i))).c_str());
-					if (m_vertexStreams[i])
-					{
-						m_vertexStreams[i]->ShowImGuiWindow();
-					}
-					else
-					{
-						ImGui::Text("<Empty>");
-					}
+					ImGui::Text(std::format("{}: {}",
+						i, 
+						re::VertexStream::DataTypeToCStr(m_vertexStreams[i]->GetDataType())).c_str());
+					m_vertexStreams[i]->ShowImGuiWindow();
 					ImGui::Separator();
 				}
 				ImGui::Unindent();
@@ -255,6 +175,5 @@ namespace gr
 
 			ImGui::Unindent();
 		}
-	}
-	
+	}	
 }

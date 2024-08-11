@@ -1,7 +1,7 @@
 {
 	"Effect": {
 		"Name": "Debug",
-
+		"Parents": ["Common"],
 		"DrawStyles": [
 			{
 				"Conditions": [
@@ -42,13 +42,15 @@
 			"Name": "Debug_Line",
 			"VShader": "Line_VShader",
 			"PShader": "Line_PShader",
-			"PipelineState": "Debug_Line"
+			"PipelineState": "Debug_Line",
+			"VertexStream": "Default"
 		},
 		{
 			"Name": "Debug_Triangle",
 			"VShader": "Line_VShader",
 			"PShader": "Line_PShader",
-			"PipelineState": "Debug_Triangle"
+			"PipelineState": "Debug_Triangle",
+			"VertexStream": "Default"
 		}
 	]
 }

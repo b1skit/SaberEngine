@@ -46,12 +46,44 @@ namespace
 	{
 		switch (dataType)
 		{
-		case re::VertexStream::DataType::Float: return GL_FLOAT;
-		case re::VertexStream::DataType::UInt: return GL_UNSIGNED_INT;
-		case re::VertexStream::DataType::UShort: return GL_SHORT;
-		case re::VertexStream::DataType::UByte: return GL_UNSIGNED_BYTE;
-		default: SEAssertF("Unsupported data type");
+		case re::VertexStream::DataType::Float:		// 32-bit
+		case re::VertexStream::DataType::Float2:
+		case re::VertexStream::DataType::Float3:
+		case re::VertexStream::DataType::Float4:
 			return GL_FLOAT;
+
+		case re::VertexStream::DataType::Int:		// 32-bit
+		case re::VertexStream::DataType::Int2:
+		case re::VertexStream::DataType::Int3:
+		case re::VertexStream::DataType::Int4:
+			return GL_INT;
+
+		case re::VertexStream::DataType::UInt:		// 32-bit
+		case re::VertexStream::DataType::UInt2:
+		case re::VertexStream::DataType::UInt3:
+		case re::VertexStream::DataType::UInt4:
+			return GL_UNSIGNED_INT;
+
+		case re::VertexStream::DataType::Short:		// 16-bit
+		case re::VertexStream::DataType::Short2:
+		case re::VertexStream::DataType::Short4:
+			return GL_SHORT;
+
+		case re::VertexStream::DataType::UShort:	// 16-bit
+		case re::VertexStream::DataType::UShort2:
+		case re::VertexStream::DataType::UShort4:
+			return GL_UNSIGNED_SHORT;
+
+		case re::VertexStream::DataType::Byte:		// 8-bit
+		case re::VertexStream::DataType::Byte2:
+		case re::VertexStream::DataType::Byte4:
+			return GL_BYTE;
+
+		case re::VertexStream::DataType::UByte:		// 8-bit
+		case re::VertexStream::DataType::UByte2:
+		case re::VertexStream::DataType::UByte4:
+			return GL_UNSIGNED_BYTE;
+		default: return GL_INVALID_ENUM; // Error
 		}
 	}
 }
@@ -288,8 +320,8 @@ namespace opengl
 						{
 							re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
 
-							 const uint8_t vertexStreamCount = 
-								static_cast<uint8_t>(batchGraphicsParams.m_vertexStreams.size());
+							const uint8_t vertexStreamCount = 
+								util::CheckedCast<uint8_t>(batchGraphicsParams.m_vertexStreams.size());
 
 							// Set the VAO:
 							// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
@@ -307,18 +339,20 @@ namespace opengl
 							// Bind the vertex streams:
 							for (uint8_t slotIdx = 0; slotIdx < vertexStreamCount; slotIdx++)
 							{
-								if (batchGraphicsParams.m_vertexStreams[slotIdx])
+								if (batchGraphicsParams.m_vertexStreams[slotIdx].m_vertexStream == nullptr)
 								{
-									opengl::VertexStream::Bind(
-										*batchGraphicsParams.m_vertexStreams[slotIdx],
-										static_cast<gr::MeshPrimitive::Slot>(slotIdx));
+									break;
 								}
+
+								opengl::VertexStream::Bind(
+									*batchGraphicsParams.m_vertexStreams[slotIdx].m_vertexStream,
+									batchGraphicsParams.m_vertexStreams[slotIdx].m_slot);
 							}
 							if (batchGraphicsParams.m_indexStream)
 							{
 								opengl::VertexStream::Bind(
 									*batchGraphicsParams.m_indexStream,
-									static_cast<gr::MeshPrimitive::Slot>(0)); // Arbitrary slot, not used for indexes
+									0); // Arbitrary: Slot is not used for indexes
 							}
 
 							// Draw!
@@ -336,10 +370,13 @@ namespace opengl
 							break;
 							case re::Batch::GeometryMode::ArrayInstanced:
 							{
+								const GLsizei numElements = static_cast<GLsizei>(
+									batchGraphicsParams.m_vertexStreams[0].m_vertexStream->GetNumElements());
+
 								glDrawArraysInstanced(
 									TranslateToOpenGLPrimitiveType(batchGraphicsParams.m_batchTopologyMode),
 									0,
-									(GLsizei)batchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position]->GetNumElements(),
+									numElements,
 									(GLsizei)batch.GetInstanceCount());
 							}
 							break;

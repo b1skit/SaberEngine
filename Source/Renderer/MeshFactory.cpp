@@ -227,16 +227,63 @@ namespace
 		std::vector<float>* colorsPtr =
 			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
 
+		std::vector<re::VertexStream const*> vertexStreams;
+		vertexStreams.reserve(4);
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
+			re::VertexStream::Normalize::False,
+			std::move(positions)).get());
+		
+		if (normalsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Normal,
+				0,
+				re::VertexStream::DataType::Float3,
+				re::VertexStream::Normalize::True,
+				std::move(*normalsPtr)).get());
+		}
+
+		if (tangentsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Tangent,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::True,
+				std::move(*tangentsPtr)).get());
+		}
+
+		if (colorsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Color,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::False,
+				std::move(*colorsPtr)).get());
+		}
+
+		re::VertexStream const* indexStream = re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Index,
+			0,
+			re::VertexStream::DataType::UInt,
+			re::VertexStream::Normalize::False,
+			std::move(indices)).get();
+		
+
 		return gr::MeshPrimitive::Create(
 			meshName,
-			&indices,
-			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			normalsPtr,
-			tangentsPtr,
-			reinterpret_cast<std::vector<float>*>(&uvs),
-			colorsPtr,
-			nullptr,	// No joints
-			nullptr,	// No weights
+			std::move(vertexStreams),
+			indexStream,
 			defaultMeshPrimitiveParams);
 	}
 
@@ -386,17 +433,71 @@ namespace gr::meshfactory
 		std::vector<float>* colorsPtr =
 			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
 
-		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
-		return MeshPrimitive::Create(
+		std::vector<re::VertexStream const*> vertexStreams;
+		vertexStreams.reserve(5);
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
+			re::VertexStream::Normalize::False,
+			std::move(assembledPositions)).get());
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::TexCoord,
+			0,
+			re::VertexStream::DataType::Float2,
+			re::VertexStream::Normalize::False,
+			std::move(assembledUVs)).get());
+
+		if (normalsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Normal,
+				0,
+				re::VertexStream::DataType::Float3,
+				re::VertexStream::Normalize::True,
+				std::move(*normalsPtr)).get());
+		}
+
+		if (tangentsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Tangent,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::True,
+				std::move(*tangentsPtr)).get());
+		}
+
+		if (colorsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Color,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::False,
+				std::move(*colorsPtr)).get());
+		}
+
+		re::VertexStream const* indexStream = re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Index,
+			0,
+			re::VertexStream::DataType::UInt,
+			re::VertexStream::Normalize::False,
+			std::move(cubeIndices)).get();
+
+
+		return gr::MeshPrimitive::Create(
 			meshName,
-			&cubeIndices,
-			*reinterpret_cast<std::vector<float>*>(&assembledPositions),	// Cast our vector<glm::vec3> to vector<float>
-			normalsPtr,
-			tangentsPtr,
-			reinterpret_cast<std::vector<float>*>(&assembledUVs),
-			colorsPtr,
-			nullptr, // No joints
-			nullptr, // No weights
+			std::move(vertexStreams),
+			indexStream,
 			defaultMeshPrimitiveParams);
 	}
 
@@ -449,16 +550,37 @@ namespace gr::meshfactory
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
-		return MeshPrimitive::Create(
+		std::vector<re::VertexStream const*> vertexStreams;
+		vertexStreams.reserve(2);
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
+			re::VertexStream::Normalize::False,
+			std::move(positions)).get());
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::TexCoord,
+			0,
+			re::VertexStream::DataType::Float2,
+			re::VertexStream::Normalize::False,
+			std::move(uvs)).get());
+
+		re::VertexStream const* indexStream = re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Index,
+			0,
+			re::VertexStream::DataType::UInt,
+			re::VertexStream::Normalize::False,
+			std::move(triIndices)).get();
+
+		return gr::MeshPrimitive::Create(
 			"optimizedFullscreenQuad",
-			&triIndices,
-			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			nullptr,
-			nullptr,
-			reinterpret_cast<std::vector<float>*>(&uvs),
-			nullptr,
-			nullptr, // No joints
-			nullptr, // No weights
+			std::move(vertexStreams),
+			indexStream,
 			defaultMeshPrimitiveParams);
 	}
 
@@ -520,18 +642,71 @@ namespace gr::meshfactory
 		std::vector<float>* colorsPtr =
 			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
 
-		// It's easier to reason about geometry in vecN types; cast to float now we're done
-		return MeshPrimitive::Create(
+		std::vector<re::VertexStream const*> vertexStreams;
+		vertexStreams.reserve(5);
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
+			re::VertexStream::Normalize::False,
+			std::move(positions)).get());
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::TexCoord,
+			0,
+			re::VertexStream::DataType::Float2,
+			re::VertexStream::Normalize::False,
+			std::move(uvs)).get());
+
+		if (normalsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Normal,
+				0,
+				re::VertexStream::DataType::Float3,
+				re::VertexStream::Normalize::True,
+				std::move(*normalsPtr)).get());
+		}
+
+		if (tangentsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Tangent,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::True,
+				std::move(*tangentsPtr)).get());
+		}
+
+		if (colorsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Color,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::False,
+				std::move(*colorsPtr)).get());
+		}
+
+		re::VertexStream const* indexStream = re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Index,
+			0,
+			re::VertexStream::DataType::UInt,
+			re::VertexStream::Normalize::False,
+			std::move(quadIndices)).get();
+
+		return gr::MeshPrimitive::Create(
 			meshName,
-			&quadIndices,
-			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			normalsPtr,
-			tangentsPtr,
-			reinterpret_cast<std::vector<float>*>(&uvs),
-			colorsPtr,
-			nullptr, // No joints
-			nullptr, // No weights
-			MeshPrimitive::MeshPrimitiveParams());
+			std::move(vertexStreams),
+			indexStream,
+			MeshPrimitive::MeshPrimitiveParams{});
 	}
 
 
@@ -739,17 +914,70 @@ namespace gr::meshfactory
 		std::vector<float>* colorsPtr =
 			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
 
-		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
-		return MeshPrimitive::Create(
+		std::vector<re::VertexStream const*> vertexStreams;
+		vertexStreams.reserve(4);
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
+			re::VertexStream::Normalize::False,
+			std::move(positions)).get());
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::TexCoord,
+			0,
+			re::VertexStream::DataType::Float2,
+			re::VertexStream::Normalize::False,
+			std::move(uvs)).get());
+
+		if (normalsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Normal,
+				0,
+				re::VertexStream::DataType::Float3,
+				re::VertexStream::Normalize::True,
+				std::move(*normalsPtr)).get());
+		}
+
+		if (tangentsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Tangent,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::True,
+				std::move(*tangentsPtr)).get());
+		}
+
+		if (colorsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Color,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::False,
+				std::move(*colorsPtr)).get());
+		}
+
+		re::VertexStream const* indexStream = re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Index,
+			0,
+			re::VertexStream::DataType::UInt,
+			re::VertexStream::Normalize::False,
+			std::move(indices)).get();
+
+		return gr::MeshPrimitive::Create(
 			meshName,
-			&indices,
-			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			normalsPtr,
-			tangentsPtr,
-			reinterpret_cast<std::vector<float>*>(&uvs),
-			colorsPtr,
-			nullptr, // No joints
-			nullptr, // No weights
+			std::move(vertexStreams),
+			indexStream,
 			defaultMeshPrimitiveParams);
 	}
 
@@ -943,16 +1171,70 @@ namespace gr::meshfactory
 		std::vector<float>* colorsPtr =
 			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
 
-		return MeshPrimitive::Create(
+		std::vector<re::VertexStream const*> vertexStreams;
+		vertexStreams.reserve(5);
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
+			re::VertexStream::Normalize::False,
+			std::move(positions)).get());
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::TexCoord,
+			0,
+			re::VertexStream::DataType::Float2,
+			re::VertexStream::Normalize::False,
+			std::move(uvs)).get());
+
+		if (normalsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Normal,
+				0,
+				re::VertexStream::DataType::Float3,
+				re::VertexStream::Normalize::True,
+				std::move(*normalsPtr)).get());
+		}
+
+		if (tangentsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Tangent,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::True,
+				std::move(*tangentsPtr)).get());
+		}
+
+		if (colorsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Color,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::False,
+				std::move(*colorsPtr)).get());
+		}
+
+		re::VertexStream const* indexStream = re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Index,
+			0,
+			re::VertexStream::DataType::UInt,
+			re::VertexStream::Normalize::False,
+			std::move(indices)).get();
+
+		return gr::MeshPrimitive::Create(
 			meshName,
-			&indices,
-			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			normalsPtr,
-			tangentsPtr,
-			reinterpret_cast<std::vector<float>*>(&uvs),
-			colorsPtr,
-			nullptr,	// No joints
-			nullptr,	// No weights
+			std::move(vertexStreams),
+			indexStream,
 			defaultMeshPrimitiveParams);
 	}
 
@@ -1027,17 +1309,67 @@ namespace gr::meshfactory
 		std::vector<float>* tangentsPtr =
 			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
 
-		// It's easier to reason about geometry in vecN types; cast to float now we're done
-		return MeshPrimitive::Create(
+		std::vector<re::VertexStream const*> vertexStreams;
+		vertexStreams.reserve(5);
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Position,
+			0,
+			re::VertexStream::DataType::Float3,
+			re::VertexStream::Normalize::False,
+			std::move(positions)).get());
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::TexCoord,
+			0,
+			re::VertexStream::DataType::Float2,
+			re::VertexStream::Normalize::False,
+			std::move(uvs)).get());
+
+		if (normalsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Normal,
+				0,
+				re::VertexStream::DataType::Float3,
+				re::VertexStream::Normalize::True,
+				std::move(*normalsPtr)).get());
+		}
+
+		if (tangentsPtr)
+		{
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Tangent,
+				0,
+				re::VertexStream::DataType::Float4,
+				re::VertexStream::Normalize::True,
+				std::move(*tangentsPtr)).get());
+		}
+
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Color,
+			0,
+			re::VertexStream::DataType::Float4,
+			re::VertexStream::Normalize::False,
+			std::move(colors)).get());
+
+		re::VertexStream const* indexStream = re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
+			re::VertexStream::Type::Index,
+			0,
+			re::VertexStream::DataType::UInt,
+			re::VertexStream::Normalize::False,
+			std::move(indices)).get();
+
+		return gr::MeshPrimitive::Create(
 			meshName,
-			&indices,
-			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			normalsPtr,
-			tangentsPtr,
-			reinterpret_cast<std::vector<float>*>(&uvs),
-			reinterpret_cast<std::vector<float>*>(&colors),
-			nullptr, // No joints
-			nullptr, // No weights
-			MeshPrimitive::MeshPrimitiveParams());
+			std::move(vertexStreams),
+			indexStream,
+			defaultMeshPrimitiveParams);
 	}
 }

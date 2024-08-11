@@ -192,6 +192,7 @@
     <ClInclude Include="TransformRenderData.h" />
     <ClInclude Include="VertexStream.h" />
     <ClInclude Include="VertexStreamBuilder.h" />
+    <ClInclude Include="VertexStreamMap.h" />
     <ClInclude Include="VertexStream_DX12.h" />
     <ClInclude Include="VertexStream_OpenGL.h" />
     <ClInclude Include="VertexStream_Platform.h" />

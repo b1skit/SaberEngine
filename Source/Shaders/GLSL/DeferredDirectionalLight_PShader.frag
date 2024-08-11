@@ -11,7 +11,7 @@ void main()
 {
 	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
 
-	const vec2 screenUV = In.uv0.xy; // Directional light is drawn with a fullscreen quad
+	const vec2 screenUV = In.UV0.xy; // Directional light is drawn with a fullscreen quad
 
 	const vec3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
 

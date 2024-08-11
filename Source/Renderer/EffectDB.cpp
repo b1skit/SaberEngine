@@ -7,6 +7,9 @@
 #include "Core/Config.h"
 #include "Core/ThreadPool.h"
 
+#include "Core/Util/HashKey.h"
+#include "Core/Util/TextUtils.h"
+
 #include "Core/Definitions/ConfigKeys.h"
 
 
@@ -43,10 +46,17 @@ namespace
 	constexpr char const* key_faceCullingMode = "FaceCullingMode";
 	constexpr char const* key_windingOrder = "WindingOrder";
 	constexpr char const* key_depthTestMode = "DepthTestMode";
+
+	// "VertexStreams"
+	constexpr char const* key_vertexStreams = "VertexStreams";
+	constexpr char const* key_slots = "Slots";
+	constexpr char const* key_dataType = "DataType";
+	constexpr char const* key_semantic = "Semantic";
 	
 	// "Techniques":
 	constexpr char const* key_techniques = "Techniques";
 	constexpr char const* key_pipelineState = "PipelineState";
+	constexpr char const* key_vertexStream = "VertexStream";
 
 	constexpr char const* keys_shaderTypes[] =
 	{
@@ -237,14 +247,125 @@ namespace
 		SEAssert(isComputeTechnique || techniqueEntry.contains(key_pipelineState),
 			"Failed to find PipelineState entry. This is required except for compute shaders");
 
+		SEAssert(isComputeTechnique || techniqueEntry.contains(key_vertexStream),
+			"Failed to find VertexStream entry. This is required except for compute shaders");
+
 		re::PipelineState const* pipelineState = nullptr;
+		re::VertexStreamMap const* vertexStreamMap = nullptr;
 		if (!isComputeTechnique)
 		{
 			std::string const& pipelineStateName = techniqueEntry.at(key_pipelineState).template get<std::string>();
 			pipelineState = effectDB.GetPipelineState(pipelineStateName);
+
+			std::string const& vertexStreamName = techniqueEntry.at(key_vertexStream).template get<std::string>();
+			vertexStreamMap = effectDB.GetVertexStreamMap(vertexStreamName);
 		}
 
-		return effect::Technique(techniqueName.c_str(), shaderNames, pipelineState);
+		return effect::Technique(techniqueName.c_str(), shaderNames, pipelineState, vertexStreamMap);
+	}
+
+
+	inline re::VertexStream::Type SemanticNameToStreamType(std::string const& semanticName)
+	{
+		static const std::unordered_map<util::HashKey const, re::VertexStream::Type> s_semanticLowerToStreamType =
+		{
+			{ util::HashKey("position"),		re::VertexStream::Type::Position },
+			{ util::HashKey("sv_position"),		re::VertexStream::Type::Position },
+			{ util::HashKey("normal"),			re::VertexStream::Type::Normal },
+			{ util::HashKey("binormal"),		re::VertexStream::Type::Binormal },
+			{ util::HashKey("tangent"),			re::VertexStream::Type::Tangent },
+			{ util::HashKey("texcoord"),		re::VertexStream::Type::TexCoord },
+			{ util::HashKey("color"),			re::VertexStream::Type::Color },
+			{ util::HashKey("blendindices"),	re::VertexStream::Type::BlendIndices },
+			{ util::HashKey("blendweight"),		re::VertexStream::Type::BlendWeight },
+			/*{ util::HashKey("pointsize"),		re::VertexStream::Type::PointSize },*/
+			{ util::HashKey("index"),			re::VertexStream::Type::Index },
+		};
+
+		const util::HashKey semanticNameLowerHashkey = util::HashKey::Create(util::ToLower(semanticName));
+
+		SEAssert(s_semanticLowerToStreamType.contains(semanticNameLowerHashkey), "Invalid semantic name");
+
+		return s_semanticLowerToStreamType.at(semanticNameLowerHashkey);
+	}
+
+
+	inline re::VertexStream::DataType StrToVertexStreamDataType(std::string const& dataTypeStr)
+	{
+		static const std::unordered_map<util::HashKey const, re::VertexStream::DataType> s_strLowerToDataType =
+		{
+			{ util::HashKey("float"),	re::VertexStream::DataType::Float },
+			{ util::HashKey("float2"),	re::VertexStream::DataType::Float2 },
+			{ util::HashKey("float3"),	re::VertexStream::DataType::Float3 },
+			{ util::HashKey("float4"),	re::VertexStream::DataType::Float4 },
+
+			{ util::HashKey("int"),		re::VertexStream::DataType::Int },
+			{ util::HashKey("int2"),	re::VertexStream::DataType::Int2 },
+			{ util::HashKey("int3"),	re::VertexStream::DataType::Int3 },
+			{ util::HashKey("int4"),	re::VertexStream::DataType::Int4 },
+
+			{ util::HashKey("uint"),	re::VertexStream::DataType::UInt },
+			{ util::HashKey("uint2"),	re::VertexStream::DataType::UInt2 },
+			{ util::HashKey("uint3"),	re::VertexStream::DataType::UInt3 },
+			{ util::HashKey("uint4"),	re::VertexStream::DataType::UInt4 },
+
+			{ util::HashKey("short"),	re::VertexStream::DataType::Short },
+			{ util::HashKey("short2"),	re::VertexStream::DataType::Short2 },
+			{ util::HashKey("short4"),	re::VertexStream::DataType::Short4 },
+
+			{ util::HashKey("ushort"),	re::VertexStream::DataType::UShort },
+			{ util::HashKey("ushort2"),	re::VertexStream::DataType::UShort2 },
+			{ util::HashKey("ushort4"),	re::VertexStream::DataType::UShort4 },
+
+			{ util::HashKey("byte"),	re::VertexStream::DataType::Byte },
+			{ util::HashKey("byte2"),	re::VertexStream::DataType::Byte2 },
+			{ util::HashKey("byte4"),	re::VertexStream::DataType::Byte4 },
+
+			{ util::HashKey("ubyte"),	re::VertexStream::DataType::UByte },
+			{ util::HashKey("ubyte2"),	re::VertexStream::DataType::UByte2 },
+			{ util::HashKey("ubyte4"),	re::VertexStream::DataType::UByte4 },
+		};
+		SEAssert(s_strLowerToDataType.size() == static_cast<size_t>(re::VertexStream::DataType::DataType_Count),
+			"Data types are out of sync");
+
+		const util::HashKey dataTypeStrLowerHashkey = util::HashKey::Create(util::ToLower(dataTypeStr));
+
+		SEAssert(s_strLowerToDataType.contains(dataTypeStrLowerHashkey), "Invalid data type name");
+
+		return s_strLowerToDataType.at(dataTypeStrLowerHashkey);
+	}
+
+
+	re::VertexStreamMap ParseVertexStreamDesc(auto const& vertexStreamsEntry)
+	{
+		re::VertexStreamMap vertexStreamMap;
+
+		uint8_t slotIndex = 0; // Monotonically-increasing
+
+		for (auto const& slotDesc : vertexStreamsEntry.at(key_slots))
+		{
+			std::string const& dataType = slotDesc.at(key_dataType).template get<std::string>();
+			std::string const& name = slotDesc.at(key_name).template get<std::string>();
+			std::string const& semantic = slotDesc.at(key_semantic).template get<std::string>();
+
+			constexpr char const* k_digits = "0123456789";
+			const size_t semanticNumberIdx = semantic.find_first_of(k_digits);
+
+			std::string semanticName = semantic;
+			uint8_t semanticIdx = 0; // Assume 0 if no semantic index is specified (e.g. NORMAL, SV_Position, etc)
+			if (semanticNumberIdx != std::string::npos)
+			{
+				semanticName = semantic.substr(0, semanticNumberIdx);
+				semanticIdx = std::stoi(semantic.substr(semanticNumberIdx, semantic.size()));
+			}
+
+			const re::VertexStream::Type streamType = SemanticNameToStreamType(semanticName);
+			const re::VertexStream::DataType streamDataType = StrToVertexStreamDataType(dataType);
+
+			vertexStreamMap.SetSlotIdx(streamType, semanticIdx, streamDataType, slotIndex++);
+		}
+
+		return vertexStreamMap;
 	}
 }
 
@@ -411,6 +532,20 @@ namespace effect
 				}
 			}
 
+			//"VertexStreams":
+			if (effectJSON.contains(key_vertexStreams) && !effectJSON.at(key_vertexStreams).empty())
+			{
+				for (auto const& vertexStreamEntry : effectJSON.at(key_vertexStreams))
+				{
+					std::string const& vertexStreamDescName = vertexStreamEntry.at(key_name).template get<std::string>();
+
+					if (!HasVertexStreamMap(vertexStreamDescName))
+					{
+						AddVertexStreamMap(vertexStreamDescName, ParseVertexStreamDesc(vertexStreamEntry));
+					}
+				}
+			}
+
 			// "Techniques":
 			std::unordered_set<TechniqueID> excludedTechniques;
 			if (effectJSON.contains(key_techniques) && !effectJSON.at(key_techniques).empty())
@@ -548,6 +683,37 @@ namespace effect
 			auto result = m_pipelineStates.emplace(name, std::move(newPipelineState));
 
 			return &(result.first->second);
+		}
+	}
+
+
+	bool EffectDB::HasVertexStreamMap(std::string const& name) const
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_vertexStreamMapsMutex);
+			return m_vertexStreamMaps.contains(name);
+		}
+	}
+
+
+	re::VertexStreamMap* EffectDB::AddVertexStreamMap(
+		std::string const& name, re::VertexStreamMap const& vertexStreamMap)
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_vertexStreamMapsMutex);
+
+			if (m_vertexStreamMaps.contains(name))
+			{
+				SEAssert(m_vertexStreamMaps.at(name) == vertexStreamMap,
+					"A VertexStreamMap with the given name but different configuration exists. VertexStreamMap names "
+					"must be unique");
+
+				return &m_vertexStreamMaps.at(name);
+			}
+
+			LOG("Added VertexStreamMap \"%s\"", name.c_str());
+
+			return &m_vertexStreamMaps.emplace(name, vertexStreamMap).first->second;
 		}
 	}
 }

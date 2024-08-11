@@ -290,7 +290,8 @@ namespace effect
 		Technique(
 			char const* name, 
 			std::vector<std::pair<std::string, re::Shader::ShaderType>> const&,
-			re::PipelineState const*);
+			re::PipelineState const*,
+			re::VertexStreamMap const*);
 		
 		Technique(Technique&&) = default;
 		Technique& operator=(Technique&&) = default;

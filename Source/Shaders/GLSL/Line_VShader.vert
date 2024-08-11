@@ -6,10 +6,10 @@
 
 void main()
 {
-	Out.Color = in_color;
+	Out.Color = Color;
 
 	vec4 ndcPos = 
-		_CameraParams.g_viewProjection * _InstancedTransformParams[gl_InstanceID].g_model * vec4(in_position.xyz, 1.0);
+		_CameraParams.g_viewProjection * _InstancedTransformParams[gl_InstanceID].g_model * vec4(Position.xyz, 1.0);
 	
 	ndcPos.y *= -1.f; // Flip the Y axis in NDC space, as we're writing directly to the backbuffer
 

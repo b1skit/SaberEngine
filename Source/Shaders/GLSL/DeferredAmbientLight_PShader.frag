@@ -18,7 +18,7 @@ void main()
 	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
 
 	// Reconstruct the world position:
-	const vec3 worldPos = ScreenUVToWorldPos(In.uv0.xy, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
+	const vec3 worldPos = ScreenUVToWorldPos(In.UV0.xy, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);
 
 	AmbientLightingParams lightingParams;
 
@@ -36,7 +36,7 @@ void main()
 	lightingParams.RemappedRoughness = RemapRoughness(gbuffer.LinearRoughness);
 
 	lightingParams.FineAO = gbuffer.AO;
-	lightingParams.CoarseAO = GetSSAO(In.uv0, uvec2(_AmbientLightParams.g_ssaoTexDims.xy));
+	lightingParams.CoarseAO = GetSSAO(In.UV0, uvec2(_AmbientLightParams.g_ssaoTexDims.xy));
 	
 	FragColor = vec4(ComputeAmbientLighting(lightingParams), 1.f);
 }

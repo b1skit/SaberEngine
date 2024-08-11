@@ -303,10 +303,12 @@ namespace opengl
 		// Call our opengl::SysInfo members while we're on the main thread to cache their values, before any systems
 		// that might use them
 		opengl::SysInfo::GetMaxRenderTargets();
+		opengl::SysInfo::GetMaxTextureBindPoints();
 		opengl::SysInfo::GetMaxVertexAttributes();
+
+		// OpenGL-specific:
 		opengl::SysInfo::GetUniformBufferOffsetAlignment();
 		opengl::SysInfo::GetShaderStorageBufferOffsetAlignment();
-		opengl::SysInfo::GetMaxTextureBindPoints();
 		opengl::SysInfo::GetMaxAnisotropy();
 
 		// Buffer Allocator:
@@ -468,36 +470,39 @@ namespace opengl
 
 
 	uint64_t Context::ComputeVAOHash(
-		re::VertexStream const* const* vertexStreams, uint8_t count, re::VertexStream const* indexStream)
+		re::Batch::VertexStreamInput const* vertexStreams, uint8_t count, re::VertexStream const* indexStream)
 	{
 		SEAssert(vertexStreams && count > 0, "Invalid vertex streams");
-		SEAssert(count <= gr::MeshPrimitive::Slot_Count,
-			"Received more vertex streams that defined slots. This is unexpected");
+		SEAssert(count <= re::VertexStream::k_maxVertexStreams, "Received more vertex streams that allowed slots");
 
 		uint64_t vertexStreamHash = 0;
 
 		uint32_t bitmask = 0; // Likely only needs to be 16 bits wide, max
-		for (size_t slot = 0; slot < count; slot++)
+		for (uint8_t streamIdx = 0; streamIdx < count; streamIdx++)
 		{
-			if (vertexStreams[slot])
+			if (vertexStreams[streamIdx].m_vertexStream == nullptr)
 			{
-				bitmask |= (1 << slot);
-
-				util::AddDataToHash(vertexStreamHash, vertexStreams[slot]->GetNumComponents()); // 1/2/3/4
-				util::AddDataToHash(
-					vertexStreamHash, opengl::VertexStream::GetGLDataType(vertexStreams[slot]->GetDataType()));
-				util::AddDataToHash(vertexStreamHash, vertexStreams[slot]->DoNormalize());
-				
-				// Note: We assume all vertex streams have a relative offset of 0, so we don't (currently) include it in
-				// the hash here
+				SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
+				break;
 			}
+
+			bitmask |= (1 << vertexStreams[streamIdx].m_slot);
+
+			util::AddDataToHash(vertexStreamHash, vertexStreams[streamIdx].m_vertexStream->GetNumComponents()); // 1/2/3/4
+			util::AddDataToHash(
+				vertexStreamHash,
+				opengl::VertexStream::GetComponentGLDataType(vertexStreams[streamIdx].m_vertexStream->GetDataType()));
+			util::AddDataToHash(vertexStreamHash, vertexStreams[streamIdx].m_vertexStream->DoNormalize());
+
+			// Note: We assume all vertex streams have a relative offset of 0, so we don't (currently) include it in
+			// the hash here
 		}
 
 		if (indexStream)
 		{
 			util::AddDataToHash(vertexStreamHash, indexStream->GetNumComponents()); // 1/2/3/4
 			util::AddDataToHash(
-				vertexStreamHash, opengl::VertexStream::GetGLDataType(indexStream->GetDataType()));
+				vertexStreamHash, opengl::VertexStream::GetComponentGLDataType(indexStream->GetDataType()));
 			util::AddDataToHash(vertexStreamHash, indexStream->DoNormalize());
 		}
 
@@ -508,7 +513,7 @@ namespace opengl
 
 
 	GLuint Context::GetCreateVAO(
-		re::VertexStream const* const* vertexStreams, uint8_t count, re::VertexStream const* indexStream)
+		re::Batch::VertexStreamInput const* vertexStreams, uint8_t count, re::VertexStream const* indexStream)
 	{
 		const uint64_t vaoHash = ComputeVAOHash(vertexStreams, count, indexStream);
 
@@ -526,47 +531,57 @@ namespace opengl
 				glBindVertexArray(newVAO);
 
 				// We use a bitmask as a debug name to visually identify our VAOs
-				char bitmaskCStr[gr::MeshPrimitive::Slot_Count + 1];
-				bitmaskCStr[gr::MeshPrimitive::Slot_Count] = '\0';
+				std::string bitmaskStr;
 
-				for (uint32_t slotIdx = 0; slotIdx < count; slotIdx++)
+				for (uint8_t streamIdx = 0; streamIdx < count; streamIdx++)
 				{
-					const gr::MeshPrimitive::Slot slot = static_cast<gr::MeshPrimitive::Slot>(slotIdx);
-
-					if (vertexStreams[slot] != nullptr)
+					re::VertexStream const* vertexStream = vertexStreams[streamIdx].m_vertexStream;
+					if (vertexStream == nullptr)
 					{
-						glEnableVertexArrayAttrib(newVAO, slotIdx);
-
-						// Associate the vertex attribute and binding indexes for the VAO
-						glVertexArrayAttribBinding(
-							newVAO,
-							slotIdx, // Attribute index: The vertex attribute index = [0, GL_MAX_VERTEX_ATTRIBS - 1]
-							slotIdx); // Binding index (Not a vertex attribute) = [0, GL_MAX_VERTEX_ATTRIB_BINDINGS - 1]
-
-						// Note: If this is ever != 0, update opengl::Context::ComputeVAOHash to include the offset
-						constexpr uint32_t relativeOffset = 0;
-
-						// Define our vertex layout:
-						glVertexAttribFormat(
-							slotIdx,									// Attribute index
-							vertexStreams[slot]->GetNumComponents(),	// size: 1/2/3/4 
-							opengl::VertexStream::GetGLDataType(vertexStreams[slot]->GetDataType()),	// Data type
-							vertexStreams[slot]->DoNormalize(),			// Should the data be normalized?
-							relativeOffset);							// relativeOffset: Distance between buffer elements
-
-						bitmaskCStr[gr::MeshPrimitive::Slot_Count - 1 - slotIdx] = '1';
+						break;
 					}
-					else
-					{
-						bitmaskCStr[gr::MeshPrimitive::Slot_Count - 1 - slotIdx] = '0';
-					}
+
+					const uint8_t slotIdx = vertexStreams[streamIdx].m_slot;
+
+					glEnableVertexArrayAttrib(newVAO, slotIdx);
+
+					// Associate the vertex attribute and binding indexes for the VAO
+					glVertexArrayAttribBinding(
+						newVAO,
+						slotIdx,	// Attribute index: The vertex attribute index = [0, GL_MAX_VERTEX_ATTRIBS - 1]
+						slotIdx);	// Binding index (Not a vertex attribute) = [0, GL_MAX_VERTEX_ATTRIB_BINDINGS - 1]
+
+					// Relative offset specifies the distance btween elements within the buffer.
+					// Note: If this is ever != 0, update opengl::Context::ComputeVAOHash to include the offset
+					constexpr uint32_t relativeOffset = 0;
+
+					// Define our vertex layout:
+					glVertexAttribFormat(
+						slotIdx,																	// Attribute index
+						vertexStream->GetNumComponents(),											// size: 1/2/3/4 
+						opengl::VertexStream::GetComponentGLDataType(vertexStream->GetDataType()),	// Data type
+						vertexStream->DoNormalize(),												// Normalize data?
+						relativeOffset);							// relativeOffset: Distance between buffer elements
+
+					bitmaskStr = std::format("{} {}", bitmaskStr, slotIdx);
 				}
 
 				// Renderdoc name for the VAO
-				glObjectLabel(GL_VERTEX_ARRAY, newVAO, -1, std::format("VAO bitmask {}", bitmaskCStr).c_str());
+				glObjectLabel(GL_VERTEX_ARRAY, newVAO, -1, std::format("VAO slot indexes: {}", bitmaskStr).c_str());
 				glBindVertexArray(0); // Cleanup
 			}
 		}
 		return m_VAOLibrary.at(vaoHash);
+	}
+
+
+	GLuint Context::GetCreateTempVAO(re::VertexStream const* vertexStream)
+	{
+		const re::Batch::VertexStreamInput tempVertexInput
+		{
+			.m_vertexStream = vertexStream,
+			.m_slot = 0,
+		};
+		return GetCreateVAO(&tempVertexInput, 1, nullptr);
 	}
 }

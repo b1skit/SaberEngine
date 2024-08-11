@@ -22,6 +22,7 @@ namespace effect
 		effect::Effect const* GetEffect(EffectID) const;
 		effect::Technique const* GetTechnique(TechniqueID) const;
 		re::PipelineState const* GetPipelineState(std::string const&) const;
+		re::VertexStreamMap const* GetVertexStreamMap(std::string const&) const;
 
 
 	private:
@@ -36,6 +37,9 @@ namespace effect
 		bool HasPipelineState(std::string const& name) const;
 		re::PipelineState* AddPipelineState(std::string const& name, re::PipelineState&&);
 
+		bool HasVertexStreamMap(std::string const& name) const;
+		re::VertexStreamMap* AddVertexStreamMap(std::string const& name, re::VertexStreamMap const&);
+
 
 	private:
 		std::unordered_map<EffectID, effect::Effect> m_effects;
@@ -46,6 +50,9 @@ namespace effect
 
 		std::unordered_map<std::string, re::PipelineState> m_pipelineStates;
 		mutable std::shared_mutex m_pipelineStatesMutex;
+
+		std::unordered_map<std::string, re::VertexStreamMap> m_vertexStreamMaps;
+		mutable std::shared_mutex m_vertexStreamMapsMutex;
 
 
 	private: // No copying allowed
@@ -88,6 +95,19 @@ namespace effect
 				"No PipelineState with the given name exists");
 
 			return &m_pipelineStates.at(pipelineStateName);
+		}
+	}
+
+
+	inline re::VertexStreamMap const* EffectDB::GetVertexStreamMap(std::string const& name) const
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_vertexStreamMapsMutex);
+
+			SEAssert(m_vertexStreamMaps.contains(name),
+				"No VertexStreamMap is associated with the given name");
+
+			return &m_vertexStreamMaps.at(name);
 		}
 	}
 }

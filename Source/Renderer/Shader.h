@@ -1,9 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "PipelineState.h"
+#include "VertexStream.h"
+#include "VertexStreamMap.h"
 
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
+
 
 namespace dx12
 {
@@ -18,6 +21,9 @@ using ShaderID = uint64_t;
 
 namespace re
 {
+	class VertexStreamMap;
+
+
 	class Shader final : public virtual core::INamedObject
 	{
 	public:
@@ -37,19 +43,7 @@ namespace re
 
 			ShaderType_Count
 		};
-		static constexpr std::array<char const*, ShaderType_Count> k_shaderTypeNames = {
-			ENUM_TO_STR(Vertex),
-			ENUM_TO_STR(Geometry),
-			ENUM_TO_STR(Pixel),
 
-			ENUM_TO_STR(Hull),
-			ENUM_TO_STR(Domain),
-
-			ENUM_TO_STR(Mesh),
-			ENUM_TO_STR(Amplification),
-
-			ENUM_TO_STR(Compute),
-		};
 
 	public:
 		struct PlatformParams : public core::IPlatformParams
@@ -62,7 +56,8 @@ namespace re
 	public:
 		[[nodiscard]] static std::shared_ptr<re::Shader> GetOrCreate(
 			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames,
-			re::PipelineState const*);
+			re::PipelineState const*,
+			re::VertexStreamMap const*);
 
 
 		~Shader();
@@ -70,9 +65,7 @@ namespace re
 		Shader(Shader&&) = default;
 		Shader& operator=(Shader&&) = default;
 		
-		uint64_t GetShaderIdentifier() const;
-
-		bool IsCreated() const;
+		ShaderID GetShaderIdentifier() const;
 
 		bool HasShaderType(ShaderType) const;
 
@@ -80,6 +73,9 @@ namespace re
 			
 		inline PlatformParams* GetPlatformParams() const;
 		inline void SetPlatformParams(std::unique_ptr<PlatformParams> params);
+
+		uint8_t GetVertexAttributeSlot(re::VertexStream::Type, uint8_t semanticIdx) const;
+		re::VertexStreamMap const* GetVertexStreamMap() const;
 
 
 	private:
@@ -97,7 +93,8 @@ namespace re
 		std::unique_ptr<PlatformParams> m_platformParams;
 
 		re::PipelineState const* m_pipelineState;
-		
+		re::VertexStreamMap const* m_vertexStreamMap;
+
 
 	private:
 		Shader() = delete;
@@ -110,15 +107,9 @@ namespace re
 	};
 
 
-	inline uint64_t Shader::GetShaderIdentifier() const
+	inline ShaderID Shader::GetShaderIdentifier() const
 	{
 		return m_shaderIdentifier;
-	}
-
-
-	inline bool Shader::IsCreated() const
-	{
-		return m_platformParams->m_isCreated;
 	}
 
 
@@ -153,8 +144,18 @@ namespace re
 	}
 
 
+	inline 	uint8_t Shader::GetVertexAttributeSlot(re::VertexStream::Type streamType, uint8_t semanticIdx) const
+	{
+		return m_vertexStreamMap->GetSlotIdx(streamType, semanticIdx);
+	}
+
+
+	inline re::VertexStreamMap const* Shader::GetVertexStreamMap() const
+	{
+		return m_vertexStreamMap;
+	}
+
+
 	// We need to provide a destructor implementation since it's pure virtual
 	inline Shader::PlatformParams::~PlatformParams() {};
 }
-
-

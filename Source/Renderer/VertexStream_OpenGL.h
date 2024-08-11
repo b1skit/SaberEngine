@@ -16,15 +16,15 @@ namespace opengl
 		{
 			GLuint m_VBO = 0;
 		};
-		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(re::VertexStream const&, re::VertexStream::StreamType);
+		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(re::VertexStream const&, re::VertexStream::Type);
 		
-		static uint32_t GetGLDataType(re::VertexStream::DataType dataType);
+		static uint32_t GetComponentGLDataType(re::VertexStream::DataType);
 
 
 	public:
 		static void Create(re::VertexStream const& vertexStream);
 		static void Destroy(re::VertexStream const&);
 
-		static void Bind(re::VertexStream const&, gr::MeshPrimitive::Slot);
+		static void Bind(re::VertexStream const&, uint8_t slotIdx);
 	};
 }

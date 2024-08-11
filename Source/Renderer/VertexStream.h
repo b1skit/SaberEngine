@@ -15,6 +15,9 @@ namespace re
 		};
 
 
+		static constexpr uint8_t k_maxVertexStreams = 16;
+
+
 	public:
 		enum Normalize : bool
 		{
@@ -22,21 +25,62 @@ namespace re
 			True = 1
 		};
 
-		enum class DataType // Of each component in a vertex stream element. Eg. Color/Float4 == Float
+		enum class DataType : uint8_t // Of each component in a vertex stream element. Eg. Color/Float4 == Float
 		{
 			Float,	// 32-bit
-			UInt,	// 32-bit
-			UShort, // 16-bit
-			UByte,	// 8-bit
+			Float2,
+			Float3,
+			Float4,
 
-			// NOTE: If adding more data types, check re::VertexStream::VertexStream() to see if we need to handle
-			// additional normalization cases
+			Int,	// 32-bit
+			Int2,
+			Int3,
+			Int4,
+
+			UInt,	// 32-bit
+			UInt2,
+			UInt3,
+			UInt4,
+
+			Short,	// 16-bit
+			Short2,
+			Short4,
+
+			UShort,	// 16-bit
+			UShort2,
+			UShort4,
+
+			Byte,	// 8-bit
+			Byte2,
+			Byte4,
+
+			UByte,	// 8-bit
+			UByte2,
+			UByte4,
+
+			DataType_Count
 		};
 
-		enum class StreamType
+		static constexpr char const* DataTypeToCStr(DataType);
+		static constexpr uint8_t DataTypeToNumComponents(DataType);
+		static constexpr uint8_t DataTypeToComponentByteSize(DataType);
+		
+
+		enum class Type : uint8_t
 		{
+			Position,
+			Normal,
+			Binormal,
+			Tangent,
+			TexCoord,
+			Color,
+			BlendIndices,
+			BlendWeight,
+			//PointSize, // Note: Point size is not (currently) supported as OpenGL has no equivalent
+
 			Index,
-			Vertex
+
+			Type_Count
 		};
 
 		enum class Lifetime : bool
@@ -45,29 +89,30 @@ namespace re
 			Permanent
 		};
 
+
 	public:
 		template<typename T>
 		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(
-			Lifetime, StreamType, uint32_t numComponents, DataType, Normalize, std::vector<T>&& data);
+			Lifetime, Type, uint8_t srcIdx, DataType, Normalize, std::vector<T>&& data);
 
 		VertexStream(VertexStream&&) = default;
 		VertexStream& operator=(VertexStream&&) = default;
 
 		~VertexStream() { Destroy(); };
 
-		StreamType GetStreamType() const;
+		Type GetType() const;
+		uint8_t GetSourceSemanticIdx() const; // Index/channel of the stream in the source asset (e.g. uv0 = 0, uv1 = 1)
 
-		void* GetData();
 		void const* GetData() const;
 
 		std::vector<uint8_t> const& GetDataAsVector() const;
 
 		uint32_t GetTotalDataByteSize() const;
 		
-		uint32_t GetNumComponents() const; // Number of individual components per element. i.e. 1/2/3/4 (only)
+		uint8_t GetNumComponents() const; // Number of individual components per element. i.e. 1/2/3/4 (only)
 		
 		uint32_t GetNumElements() const; // How many vertices-worth of attributes do we have?
-		uint32_t GetElementByteSize() const; // Total number of bytes for a single element (ie. all components)
+		uint8_t GetElementByteSize() const; // Total number of bytes for a single element (ie. all components)
 
 		DataType GetDataType() const; // What data type does each individual component have?
 		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
@@ -89,9 +134,8 @@ namespace re
 
 	private:
 		const Lifetime m_lifetime;
-		const StreamType m_streamType;
-		uint8_t m_numComponents; 
-		uint8_t m_componentByteSize; // Size in bytes of a single component. eg. Float = 4 bytes, Float2 = 8 bytes, etc
+		const Type m_streamType;
+		uint8_t m_sourceChannelSemanticIdx; // Index/channel of the stream in the source asset
 
 		Normalize m_doNormalize;
 		DataType m_dataType;
@@ -102,9 +146,10 @@ namespace re
 
 
 	private: // Use the Create() factory instead
-		VertexStream(Lifetime, StreamType, uint32_t numComponents, DataType, Normalize, std::vector<uint8_t>&& data);
+		VertexStream(Lifetime, Type, uint8_t srcIdx, DataType, Normalize, std::vector<uint8_t>&& data);
+
 		static std::shared_ptr<re::VertexStream> CreateInternal(
-			Lifetime, StreamType, uint32_t numComponents, DataType, Normalize, std::vector<uint8_t>&& data);
+			Lifetime, Type, uint8_t srcIdx, DataType, Normalize, std::vector<uint8_t>&& data);
 
 
 	private:
@@ -114,9 +159,15 @@ namespace re
 	};
 
 
-	inline VertexStream::StreamType VertexStream::GetStreamType() const
+	inline VertexStream::Type VertexStream::GetType() const
 	{
 		return m_streamType;
+	}
+
+
+	inline uint8_t VertexStream::GetSourceSemanticIdx() const
+	{
+		return m_sourceChannelSemanticIdx;
 	}
 
 
@@ -129,8 +180,8 @@ namespace re
 	template<typename T>
 	std::shared_ptr<re::VertexStream> VertexStream::Create(
 		Lifetime lifetime,
-		StreamType type,
-		uint32_t numComponents,
+		Type type,
+		uint8_t srcIdx,
 		DataType dataType,
 		Normalize doNormalize,
 		std::vector<T>&& data)
@@ -138,10 +189,49 @@ namespace re
 		return CreateInternal(
 			lifetime,
 			type,
-			numComponents,
+			srcIdx,
 			dataType,
 			doNormalize,
 			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&data)) );
+	}
+
+
+	constexpr char const* VertexStream::DataTypeToCStr(DataType dataType)
+	{
+		switch (dataType)
+		{
+		case re::VertexStream::DataType::Float: return "Float";
+		case re::VertexStream::DataType::Float2: return "Float2";
+		case re::VertexStream::DataType::Float3: return "Float3";
+		case re::VertexStream::DataType::Float4: return "Float4";
+
+		case re::VertexStream::DataType::Int: return "Int";
+		case re::VertexStream::DataType::Int2: return "Int2";
+		case re::VertexStream::DataType::Int3: return "Int3";
+		case re::VertexStream::DataType::Int4: return "Int4";
+
+		case re::VertexStream::DataType::UInt: return "UInt";
+		case re::VertexStream::DataType::UInt2: return "UInt2";
+		case re::VertexStream::DataType::UInt3: return "UInt3";
+		case re::VertexStream::DataType::UInt4: return "UInt4";
+
+		case re::VertexStream::DataType::Short: return "Short";
+		case re::VertexStream::DataType::Short2: return "Short2";
+		case re::VertexStream::DataType::Short4: return "Short4";
+
+		case re::VertexStream::DataType::UShort: return "UShort";
+		case re::VertexStream::DataType::UShort2: return "UShort2";
+		case re::VertexStream::DataType::UShort4: return "UShort4";
+
+		case re::VertexStream::DataType::Byte: return "Byte";
+		case re::VertexStream::DataType::Byte2: return "Byte2";
+		case re::VertexStream::DataType::Byte4: return "Byte4";
+
+		case re::VertexStream::DataType::UByte: return "UByte";
+		case re::VertexStream::DataType::UByte2: return "UByte2";
+		case re::VertexStream::DataType::UByte4: return "UByte4";
+		default: return "INVALID_DATA_TYPE";
+		}
 	}
 
 

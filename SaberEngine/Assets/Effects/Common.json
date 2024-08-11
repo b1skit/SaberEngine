@@ -1,4 +1,36 @@
 {
-	"PipelineStates": [
+	"VertexStreams": [
+		{
+			// TODO: Generate vertex attribute definition shader code based on the layouts defined here.
+			// For now, we define these manually and ensure they match
+			"Name" : "Default",
+			"Slots" : [
+				{
+					"DataType" : "float3",
+					"Name" : "Position",
+					"Semantic" : "SV_Position"
+				},
+				{
+					"DataType" : "float3",
+					"Name" : "Normal",
+					"Semantic" : "NORMAL0"
+				},
+				{
+					"DataType" : "float4",
+					"Name" : "Tangent",
+					"Semantic" : "TANGENT0"
+				},
+				{
+					"DataType" : "float2",
+					"Name" : "UV0",
+					"Semantic" : "TEXCOORD0"
+				},
+				{
+					"DataType" : "float4",
+					"Name" : "Color",
+					"Semantic" : "COLOR0"
+				}
+			]
+		}
 	]
 }

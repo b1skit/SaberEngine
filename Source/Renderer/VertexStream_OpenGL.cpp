@@ -1,40 +1,61 @@
 ﻿// © 2022 Adam Badke. All rights reserved.
 #include "Context_OpenGL.h"
-#include "Core/Assert.h"
 #include "MeshPrimitive.h"
 #include "VertexStream_OpenGL.h"
+
+#include "Core/Assert.h"
 
 
 namespace opengl
 {
-	uint32_t VertexStream::GetGLDataType(re::VertexStream::DataType dataType)
+	uint32_t VertexStream::GetComponentGLDataType(re::VertexStream::DataType dataType)
 	{
 		switch (dataType)
 		{
-		case re::VertexStream::DataType::Float:
-		{
+		case re::VertexStream::DataType::Float:		// 32-bit
+		case re::VertexStream::DataType::Float2:
+		case re::VertexStream::DataType::Float3:
+		case re::VertexStream::DataType::Float4:
 			return GL_FLOAT;
-		}
-		break;
-		case re::VertexStream::DataType::UInt:
-		{
+
+		case re::VertexStream::DataType::Int:		// 32-bit
+		case re::VertexStream::DataType::Int2:
+		case re::VertexStream::DataType::Int3:
+		case re::VertexStream::DataType::Int4:
+			return GL_INT;
+
+		case re::VertexStream::DataType::UInt:		// 32-bit
+		case re::VertexStream::DataType::UInt2:
+		case re::VertexStream::DataType::UInt3:
+		case re::VertexStream::DataType::UInt4:
 			return GL_UNSIGNED_INT;
-		}
-		break;
-		case re::VertexStream::DataType::UByte:
-		{
+
+		case re::VertexStream::DataType::Short:	// 16-bit
+		case re::VertexStream::DataType::Short2:
+		case re::VertexStream::DataType::Short4:
+			return GL_SHORT;
+
+		case re::VertexStream::DataType::UShort:	// 16-bit
+		case re::VertexStream::DataType::UShort2:
+		case re::VertexStream::DataType::UShort4:
+			return GL_UNSIGNED_SHORT;
+
+		case re::VertexStream::DataType::Byte:		// 8-bit
+		case re::VertexStream::DataType::Byte2:
+		case re::VertexStream::DataType::Byte4:
+			return GL_BYTE;
+
+		case re::VertexStream::DataType::UByte:		// 8-bit
+		case re::VertexStream::DataType::UByte2:
+		case re::VertexStream::DataType::UByte4:
 			return GL_UNSIGNED_BYTE;
+		default: return std::numeric_limits<uint32_t>::max(); // Error
 		}
-		break;
-		default:
-			SEAssertF("Invalid data type");
-		}
-		return GL_FLOAT;
 	}
 
 
 	std::unique_ptr<re::VertexStream::PlatformParams> VertexStream::CreatePlatformParams(
-		re::VertexStream const&, re::VertexStream::StreamType)
+		re::VertexStream const&, re::VertexStream::Type)
 	{
 		return std::make_unique<opengl::VertexStream::PlatformParams>();
 	}
@@ -58,14 +79,14 @@ namespace opengl
 		// all VBOs that match the configuration of the current vertex stream
 		opengl::Context* oglContext = re::Context::GetAs<opengl::Context*>();
 		re::VertexStream const* vertexStreamPtr = &vertexStream;
-		const GLuint tempVAO = oglContext->GetCreateVAO(&vertexStreamPtr, 1, nullptr);
+		const GLuint tempVAO = oglContext->GetCreateTempVAO(vertexStreamPtr);
 
 		glBindVertexArray(tempVAO);
 		
 		// Generate our buffer name, and bind it
 		glGenBuffers(1, &platformParams->m_VBO);
 
-		opengl::VertexStream::Bind(vertexStream, gr::MeshPrimitive::Slot::Position); // Use any arbitrary slot
+		opengl::VertexStream::Bind(vertexStream, 0); // Use any arbitrary slot
 
 		// Buffer and label the data:
 		glNamedBufferData(
@@ -100,19 +121,21 @@ namespace opengl
 	}
 
 
-	void VertexStream::Bind(re::VertexStream const& vertexStream, gr::MeshPrimitive::Slot slot)
+	void VertexStream::Bind(re::VertexStream const& vertexStream, uint8_t slotIdx)
 	{
+		SEAssert(slotIdx < re::VertexStream::k_maxVertexStreams, "OOB slot index");
+
 		opengl::VertexStream::PlatformParams* platformParams =
 			vertexStream.GetPlatformParams()->As<opengl::VertexStream::PlatformParams*>();
 
-		if (vertexStream.GetStreamType() == re::VertexStream::StreamType::Index)
+		if (vertexStream.GetType() == re::VertexStream::Type::Index)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, platformParams->m_VBO);
 		}
 		else
 		{
 			glBindVertexBuffer(
-				slot,								// Binding index
+				slotIdx,							// Binding index
 				platformParams->m_VBO,				// Buffer
 				0,									// Offset
 				vertexStream.GetElementByteSize()); // Stride

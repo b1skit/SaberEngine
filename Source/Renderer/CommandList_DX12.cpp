@@ -425,9 +425,7 @@ namespace dx12
 
 		SetPrimitiveType(TranslateToD3DPrimitiveTopology(batchGraphicsParams.m_batchTopologyMode));
 
-		SetVertexBuffers(
-			batchGraphicsParams.m_vertexStreams.data(),
-			static_cast<uint8_t>(batchGraphicsParams.m_vertexStreams.size()));
+		SetVertexBuffers(batchGraphicsParams.m_vertexStreams);
 
 		// Record the draw:
 		switch (batchGraphicsParams.m_batchGeometryMode)
@@ -453,13 +451,16 @@ namespace dx12
 		break;
 		case re::Batch::GeometryMode::ArrayInstanced:
 		{
-			re::VertexStream const* positionStream = batchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
-			SEAssert(positionStream, "Position stream cannot be null");
+			re::VertexStream const* firstStream = batchGraphicsParams.m_vertexStreams[0].m_vertexStream;
+
+			SEAssert(firstStream->GetType() == re::VertexStream::Type::Position,
+				"We're currently assuming the first stream contains the correct number of elements for the entire draw."
+				" If you hit this, validate this logic and delete this assert");
 
 			CommitGPUDescriptors();
 
 			m_commandList->DrawInstanced(
-				positionStream->GetNumElements(),	// VertexCountPerInstance
+				firstStream->GetNumElements(),		// VertexCountPerInstance
 				batchGraphicsParams.m_numInstances, // InstanceCount
 				0,									// StartVertexLocation
 				0);									// StartInstanceLocation
@@ -487,55 +488,69 @@ namespace dx12
 	}
 
 
-	void CommandList::SetVertexBuffers(re::VertexStream const* const* streams, uint8_t count)
+	void CommandList::SetVertexBuffers(
+		std::array<re::Batch::VertexStreamInput, re::VertexStream::k_maxVertexStreams> const& streams)
 	{
-		SEAssert(streams && count > 0, "Invalid vertex streams received");
-
-		uint32_t currentStartSlot = 0;
-
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
-		streamViews.reserve(count);
+		streamViews.reserve(re::VertexStream::k_maxVertexStreams);
 
-		for (uint32_t streamIdx = 0; streamIdx < count; streamIdx++)
+		uint8_t startSlotIdx = streams[0].m_slot;
+		uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;
+		for (uint32_t streamIdx = 0; streamIdx < re::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
-			if (streams[streamIdx] == nullptr)
+			if (streams[streamIdx].m_vertexStream == nullptr)
 			{
-				// Submit the list we've built so far
-				if (!streamViews.empty())
-				{
-					m_commandList->IASetVertexBuffers(
-						currentStartSlot, 
-						static_cast<uint32_t>(streamViews.size()), 
-						&streamViews[0]);
-
-					streamViews.clear();
-				}
-
-				// Prepare for the next iteration:
-				currentStartSlot = streamIdx + 1;
-
-				continue;
+				break;
 			}
+			SEAssert(streams[streamIdx].m_slot < re::VertexStream::k_maxVertexStreams, "OOB slot index");
+
+			dx12::VertexStream::PlatformParams_Vertex* vertexPlatParams =
+				streams[streamIdx].m_vertexStream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
+
+			streamViews.emplace_back(vertexPlatParams->m_vertexBufferView);
 
 			dx12::VertexStream::PlatformParams* streamPlatParams =
-				streams[streamIdx]->GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
+				streams[streamIdx].m_vertexStream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
 
 			TransitionResource(
 				streamPlatParams->m_bufferResource.Get(),
 				D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
 				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
-			streamViews.emplace_back(
-				streams[streamIdx]->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>()->m_vertexBufferView);
+			// Peek ahead: If there are no more contiguous slots, flush the stream views
+			const uint32_t nextStreamIdx = streamIdx + 1;
+			if (nextStreamIdx >= re::VertexStream::k_maxVertexStreams ||
+				streams[nextStreamIdx].m_slot != nextConsecutiveSlotIdx)
+			{
+				SEAssert(nextStreamIdx >= re::VertexStream::k_maxVertexStreams ||
+					streams[nextStreamIdx].m_slot > nextConsecutiveSlotIdx, 
+					"Out of order vertex streams detected");
+
+				// Flush the list we've built so far
+				if (!streamViews.empty())
+				{
+					m_commandList->IASetVertexBuffers(
+						startSlotIdx,
+						static_cast<uint32_t>(streamViews.size()), 
+						streamViews.data());
+
+					streamViews.clear();
+				}
+
+				// Prepare for the next iteration:
+				if (nextStreamIdx < re::VertexStream::k_maxVertexStreams)
+				{
+					startSlotIdx = streams[nextStreamIdx].m_slot;
+					uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;
+				}
+			}
+			else
+			{
+				++nextConsecutiveSlotIdx;
+			}
 		}
 
-		if (!streamViews.empty())
-		{
-			m_commandList->IASetVertexBuffers(
-				currentStartSlot, 
-				static_cast<uint32_t>(streamViews.size()), 
-				&streamViews[0]);
-		}
+		SEAssert(streamViews.empty(), "Unflushed vertex streams");
 	}
 
 

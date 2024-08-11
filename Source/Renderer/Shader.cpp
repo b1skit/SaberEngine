@@ -46,14 +46,44 @@ namespace
 		
 		return hashResult;
 	}
+
+
+	constexpr char const* ShaderTypeToCStr(re::Shader::ShaderType shaderType)
+	{
+		switch(shaderType)
+		{
+		case re::Shader::ShaderType::Vertex: return "Vertex";
+		case re::Shader::ShaderType::Geometry: return "Geometry";
+		case re::Shader::ShaderType::Pixel: return "Pixel";
+		case re::Shader::ShaderType::Hull: return "Hull";
+		case re::Shader::ShaderType::Domain: return "Domain";
+		case re::Shader::ShaderType::Mesh: return "Mesh";
+		case re::Shader::ShaderType::Amplification: return "Amplification";
+		case re::Shader::ShaderType::Compute: return "Compute";
+		default: SEAssertF("Invalid shader type");
+		}
+		return "INVALID_SHADER_TYPE"; // This should never happen
+	}
 }
 
 namespace re
 {
 	[[nodiscard]] std::shared_ptr<re::Shader> Shader::GetOrCreate(
 		std::vector<std::pair<std::string, ShaderType>> const& extensionlessSourceFilenames,
-		re::PipelineState const* rePipelineState)
+		re::PipelineState const* rePipelineState,
+		re::VertexStreamMap const* vertexStreamMap)
 	{
+		const ShaderID shaderID = ComputeShaderIdentifier(extensionlessSourceFilenames, rePipelineState);
+
+		// If the shader already exists, return it. Otherwise, create the shader. 
+		re::SceneData* sceneData = re::RenderManager::GetSceneData();
+		if (sceneData->ShaderExists(shaderID))
+		{
+			return sceneData->GetShader(shaderID);
+		}
+		// Note: It's possible that 2 threads might simultaneously fail to find a Shader in the SceneData, and create
+		// it. But that's OK, the SceneData will tell us if this shader was actually added
+
 		bool isComputeShader = false;
 
 		// Concatenate the various filenames together to build a helpful identifier
@@ -64,7 +94,7 @@ namespace re
 			const ShaderType shaderType = extensionlessSourceFilenames.at(i).second;
 
 			shaderName += std::format("{}={}{}",
-				k_shaderTypeNames[shaderType],
+				ShaderTypeToCStr(shaderType),
 				filename,
 				i == extensionlessSourceFilenames.size() - 1 ? "" : "__");
 
@@ -77,17 +107,6 @@ namespace re
 			"A compute shader should only have a single shader entry. This is unexpected");
 		SEAssert(rePipelineState || isComputeShader, "PipelineState is null. This is unexpected for non-compute shaders");
 
-		const ShaderID shaderID = ComputeShaderIdentifier(extensionlessSourceFilenames, rePipelineState);
-
-		// If the shader already exists, return it. Otherwise, create the shader. 
-		re::SceneData* sceneData = re::RenderManager::GetSceneData();
-		if (sceneData->ShaderExists(shaderID))
-		{
-			return sceneData->GetShader(shaderID);
-		}
-		// Note: It's possible that 2 threads might simultaneously fail to find a Shader in the SceneData, and create
-		// it. But that's OK, the SceneData will tell us if this shader was actually added
-
 		// Our ctor is private; We must manually create the Shader, and then pass the ownership to a shared_ptr
 		std::shared_ptr<re::Shader> sharedShaderPtr;
 		sharedShaderPtr.reset(new re::Shader(shaderName, extensionlessSourceFilenames, rePipelineState, shaderID));
@@ -99,6 +118,10 @@ namespace re
 			// Register the Shader with the RenderManager (once only), so its API-level object can be created before use
 			re::RenderManager::Get()->RegisterForCreate(sharedShaderPtr);
 		}
+
+		SEAssert(vertexStreamMap != nullptr || isComputeShader,
+			"Invalid attempt to set a VertexStreamMap");
+		sharedShaderPtr->m_vertexStreamMap = vertexStreamMap;
 
 		return sharedShaderPtr;
 	}

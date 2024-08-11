@@ -14,11 +14,6 @@ namespace dx12
 	class Shader
 	{
 	public:
-		// Arbitrary: Limits the number of indexes we search for semantics (POSITION, NORMAL[n], COLOR[n], etc)
-		static const uint8_t k_maxVShaderVertexInputs = 32;
-
-
-	public:
 		struct PlatformParams final : public re::Shader::PlatformParams
 		{
 			std::array<Microsoft::WRL::ComPtr<ID3DBlob>, re::Shader::ShaderType_Count> m_shaderBlobs = {0};

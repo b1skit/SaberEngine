@@ -10,7 +10,7 @@ namespace platform
 	{
 	public:
 		static std::unique_ptr<re::VertexStream::PlatformParams> (*CreatePlatformParams)(
-			re::VertexStream const&, re::VertexStream::StreamType type);
+			re::VertexStream const&, re::VertexStream::Type type);
 
 
 	public:

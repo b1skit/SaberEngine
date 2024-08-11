@@ -19,10 +19,8 @@ namespace dx12
 	public:
 		struct PlatformParams : public re::VertexStream::PlatformParams
 		{
-			PlatformParams(re::VertexStream const&, re::VertexStream::StreamType);
+			PlatformParams(re::VertexStream const&);
 			virtual ~PlatformParams() override = 0;
-
-			re::VertexStream::StreamType m_type;
 
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_bufferResource;
 
@@ -47,7 +45,7 @@ namespace dx12
 		
 		
 		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(
-			re::VertexStream const&, re::VertexStream::StreamType);
+			re::VertexStream const&, re::VertexStream::Type);
 
 	public:
 		static void Destroy(re::VertexStream const&);
@@ -57,6 +55,8 @@ namespace dx12
 			re::VertexStream const&, 
 			dx12::CommandList* copyCmdList,
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&);
+
+		static DXGI_FORMAT GetDXGIStreamFormat(re::VertexStream const&);
 	};
 
 

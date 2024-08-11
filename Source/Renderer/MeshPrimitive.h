@@ -38,50 +38,29 @@ namespace gr
 			TopologyMode m_topologyMode = TopologyMode::TriangleList;
 		};
 
-		// TODO: We'd prefer to have the Tangent and Bitangent/Binormal and reconstruct the Normal
-		enum Slot : uint8_t // Binding index
-		{
-			Position	= 0, // vec3
-			Normal		= 1, // vec3
-			Tangent		= 2, // vec4
-			UV0			= 3, // vec2
-			// TODO: Support UV1
-			Color		= 4, // vec4
-
-			Joints		= 5, // tvec4<uint8_t>
-			Weights		= 6, // vec4
-
-			Slot_Count,
-		};
-		static_assert(Slot::Position == 0); // Position MUST be first
-		// Note: The order/indexing of this enum MUST match the vertex layout locations in SaberCommon.glsl, and be
-		// correctly mapped in PipelineState_DX12.cpp
-		
-	
-		static char const* SlotDebugNameToCStr(Slot slot);
 
 	public:
 		struct RenderData
 		{
 			MeshPrimitiveParams m_meshPrimitiveParams;
-			std::array<re::VertexStream const*, Slot_Count> m_vertexStreams;
+			std::array<re::VertexStream const*, re::VertexStream::k_maxVertexStreams> m_vertexStreams;
 			re::VertexStream const* m_indexStream;
 			
 			uint64_t m_dataHash;
-		};
+
+
+			// Helper: Get a specific vertex stream packed into a MeshPrimitive::RenderData.
+			// If the semantic index < 0, the first matching type is returned
+			static re::VertexStream const* GetVertexStreamFromRenderData(
+				gr::MeshPrimitive::RenderData const&, re::VertexStream::Type, int8_t semanticIdx = -1);
+		};	
 
 
 	public:
 		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
 			std::string const& name,
-			std::vector<uint32_t>* indices,
-			std::vector<float>& positions,
-			std::vector<float>* normals,
-			std::vector<float>* tangents,
-			std::vector<float>* uv0,
-			std::vector<float>* colors,
-			std::vector<uint8_t>* joints,
-			std::vector<float>* weights,
+			std::vector<re::VertexStream const*>&& vertexStreams,
+			re::VertexStream const* indexStream,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
@@ -89,10 +68,10 @@ namespace gr
 		~MeshPrimitive() = default;
 		
 		MeshPrimitiveParams const& GetMeshParams() const;
-	
+
 		re::VertexStream const* GetIndexStream() const;
-		re::VertexStream const* GetVertexStream(Slot slot) const;
-		std::vector<re::VertexStream const*> GetVertexStreams() const;
+		re::VertexStream const* GetVertexStream(re::VertexStream::Type, uint8_t idx) const;
+		std::vector<re::VertexStream const*> const& GetVertexStreams() const;
 
 		void ShowImGuiWindow() const;
 
@@ -100,7 +79,7 @@ namespace gr
 	private:		
 		MeshPrimitiveParams m_params;
 
-		std::array<re::VertexStream const*, Slot_Count> m_vertexStreams;
+		std::vector<re::VertexStream const*> m_vertexStreams;
 		re::VertexStream const* m_indexStream;
 
 
@@ -109,14 +88,8 @@ namespace gr
 
 	private: // Private ctor: Use the Create factory instead
 		MeshPrimitive(char const* name,
-			std::vector<uint32_t>* indices,
-			std::vector<float>& positions,
-			std::vector<float>* normals,
-			std::vector<float>* tangents,
-			std::vector<float>* uv0,
-			std::vector<float>* colors,
-			std::vector<uint8_t>* joints,
-			std::vector<float>* weights,
+			std::vector<re::VertexStream const*>&& vertexStreams,
+			re::VertexStream const* indexStream,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 
@@ -139,9 +112,9 @@ namespace gr
 	}
 
 
-	inline re::VertexStream const* MeshPrimitive::GetVertexStream(Slot slot) const
+	inline std::vector<re::VertexStream const*> const& MeshPrimitive::GetVertexStreams() const
 	{
-		return m_vertexStreams[slot];
+		return m_vertexStreams;
 	}
 
 

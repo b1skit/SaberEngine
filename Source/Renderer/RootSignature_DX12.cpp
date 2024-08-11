@@ -300,12 +300,11 @@ namespace dx12
 
 	std::unique_ptr<dx12::RootSignature> RootSignature::Create(re::Shader const& shader)
 	{
-		SEAssert(shader.IsCreated(), "Shader must be created");
+		dx12::Shader::PlatformParams* shaderPlatParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
+		SEAssert(shaderPlatParams->m_isCreated, "Shader must be created");
 
-		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
-
-		SEAssert(shaderParams->m_shaderBlobs[re::Shader::ShaderType::Vertex] != nullptr ||
-			shaderParams->m_shaderBlobs[re::Shader::ShaderType::Compute] != nullptr,
+		SEAssert(shaderPlatParams->m_shaderBlobs[re::Shader::ShaderType::Vertex] != nullptr ||
+			shaderPlatParams->m_shaderBlobs[re::Shader::ShaderType::Compute] != nullptr,
 			"No valid shader blobs found");
 
 		std::unique_ptr<dx12::RootSignature> newRootSig = nullptr;
@@ -351,7 +350,7 @@ namespace dx12
 		ComPtr<ID3D12ShaderReflection> shaderReflection;
 		for (uint32_t shaderIdx = 0; shaderIdx < re::Shader::ShaderType_Count; shaderIdx++)
 		{
-			if (shaderParams->m_shaderBlobs[shaderIdx] == nullptr)
+			if (shaderPlatParams->m_shaderBlobs[shaderIdx] == nullptr)
 			{
 				continue;
 			}
@@ -359,8 +358,8 @@ namespace dx12
 			// Get the reflection for the current shader stage:
 			const DxcBuffer reflectionBuffer
 			{
-				.Ptr = shaderParams->m_shaderBlobs[shaderIdx]->GetBufferPointer(),
-				.Size = shaderParams->m_shaderBlobs[shaderIdx]->GetBufferSize(),
+				.Ptr = shaderPlatParams->m_shaderBlobs[shaderIdx]->GetBufferPointer(),
+				.Size = shaderPlatParams->m_shaderBlobs[shaderIdx]->GetBufferSize(),
 				.Encoding = 0,
 			};
 

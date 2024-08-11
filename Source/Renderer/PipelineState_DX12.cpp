@@ -47,85 +47,91 @@ namespace
 	};
 
 
-	DXGI_FORMAT GetDefaultInputParameterFormat(char const* semantic)
+	inline constexpr char const* VertexStreamTypeToSemanticName(re::VertexStream::Type streamType)
 	{
-		static const std::unordered_map<std::string, DXGI_FORMAT> k_semanticToFormat =
+		switch (streamType)
 		{
-			{"sv_position",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
-			{"normal",			DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
-			//{"binormal",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
-			{"tangent",			DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT},
-			{"texcoord",		DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT},
-			{"color",			DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT},
-
-			{"blendindices",	DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UINT},
-			{"blendweight",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
-		};
-		SEAssert(k_semanticToFormat.size() == gr::MeshPrimitive::Slot_Count, 
-			"Expecting 1 entry per vertex binding slot. Did the number of vertex binging slots change?");
-
-		auto const& result = k_semanticToFormat.find(util::ToLower(semantic));
-		SEAssert(result != k_semanticToFormat.end(), "Semantic name not found");
-
-		return result->second;
+		case re::VertexStream::Type::Position: return "SV_Position";
+		case re::VertexStream::Type::Normal: return "NORMAL";
+		case re::VertexStream::Type::Binormal: return "BINORMAL";
+		case re::VertexStream::Type::Tangent: return "TANGENT";
+		case re::VertexStream::Type::TexCoord: return "TEXCOORD";
+		case re::VertexStream::Type::Color: return "COLOR";
+		case re::VertexStream::Type::BlendIndices: return "BLENDINDICES";
+		case re::VertexStream::Type::BlendWeight: return "BLENDWEIGHT";
+		//case re::VertexStream::Type::PointSize: return "PSIZE";
+		default: return "INVALID_RE_VERTEX_STREAM_TYPE";
+		}
 	}
 
 
-	uint32_t GetDefaultInputSlot(char const* semantic, uint32_t semanticIndex)
+	inline constexpr DXGI_FORMAT GetDXGIFormtFromVertexStreamDataType(re::VertexStream::DataType dataType)
 	{
-		static const std::unordered_map<std::string, uint32_t> k_sematicToSlot =
+		// NOTE: We don't consider whether the stream is normalized or not here
+		switch (dataType)
 		{
-			{"sv_position0",	gr::MeshPrimitive::Position}, // We append "0" to simplify comparisons below
-			{"normal0",			gr::MeshPrimitive::Normal},
-			//{"binormal0",		gr::MeshPrimitive::}, //
-			{"tangent0",		gr::MeshPrimitive::Tangent},
-			{"texcoord0",		gr::MeshPrimitive::UV0},
-			{"color0",			gr::MeshPrimitive::Color},
+		case re::VertexStream::DataType::Float: return DXGI_FORMAT_R32_FLOAT;
+		case re::VertexStream::DataType::Float2: return DXGI_FORMAT_R32G32_FLOAT;
+		case re::VertexStream::DataType::Float3: return DXGI_FORMAT_R32G32B32_FLOAT;
+		case re::VertexStream::DataType::Float4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
 
-			{"blendindices0",	gr::MeshPrimitive::Joints},
-			{"blendweight0",	gr::MeshPrimitive::Weights},
-		};
-		SEAssert(k_sematicToSlot.size() == gr::MeshPrimitive::Slot_Count, 
-			"Expecting 1 entry per vertex binding slot. Did the number of vertex binging slots change?");
+		case re::VertexStream::DataType::Int: return DXGI_FORMAT_R32_SINT;
+		case re::VertexStream::DataType::Int2: return DXGI_FORMAT_R32G32_SINT;
+		case re::VertexStream::DataType::Int3: return DXGI_FORMAT_R32G32B32_SINT;
+		case re::VertexStream::DataType::Int4: return DXGI_FORMAT_R32G32B32A32_SINT;
 
-		std::string const& semanticAndIndex = util::ToLower(semantic) + std::to_string(semanticIndex);
+		case re::VertexStream::DataType::UInt: return DXGI_FORMAT_R32_UINT;
+		case re::VertexStream::DataType::UInt2: return DXGI_FORMAT_R32G32_UINT;
+		case re::VertexStream::DataType::UInt3: return DXGI_FORMAT_R32G32B32_UINT;
+		case re::VertexStream::DataType::UInt4: return DXGI_FORMAT_R32G32B32A32_UINT;
 
-		auto const& result = k_sematicToSlot.find(semanticAndIndex);
-		SEAssert(result != k_sematicToSlot.end(), "Combined semantic and index name not found");
+		case re::VertexStream::DataType::Short: return DXGI_FORMAT_R16_SINT;
+		case re::VertexStream::DataType::Short2: return DXGI_FORMAT_R16G16_SINT;
+		case re::VertexStream::DataType::Short4: return DXGI_FORMAT_R16G16B16A16_SINT;
 
-		return result->second;
+		case re::VertexStream::DataType::UShort: return DXGI_FORMAT_R16_UINT;
+		case re::VertexStream::DataType::UShort2: return DXGI_FORMAT_R16G16_UINT;
+		case re::VertexStream::DataType::UShort4: return DXGI_FORMAT_R16G16B16A16_UINT;
+
+		case re::VertexStream::DataType::Byte: return DXGI_FORMAT_R8_SINT;
+		case re::VertexStream::DataType::Byte2: return DXGI_FORMAT_R8G8_SINT;
+		case re::VertexStream::DataType::Byte4: return DXGI_FORMAT_R8G8B8A8_SINT;
+
+		case re::VertexStream::DataType::UByte: return DXGI_FORMAT_R8_UINT;
+		case re::VertexStream::DataType::UByte2: return DXGI_FORMAT_R8G8_UINT;
+		case re::VertexStream::DataType::UByte4: return DXGI_FORMAT_R8G8B8A8_UINT;
+		default: return DXGI_FORMAT_UNKNOWN; // Error
+		}
 	}
 
 
-	void BuildInputLayout(
+	std::vector<D3D12_INPUT_ELEMENT_DESC> BuildInputLayout(
+		re::Shader const& shader,
 		ID3D12ShaderReflection* shaderReflection,
-		dx12::Shader::PlatformParams* shaderParams, 
-		std::vector<D3D12_INPUT_ELEMENT_DESC>& inputLayout)
+		dx12::Shader::PlatformParams* shaderParams)
 	{
-		for (uint32_t paramIndex = 0; paramIndex < dx12::Shader::k_maxVShaderVertexInputs; paramIndex++)
-		{
-			D3D12_SIGNATURE_PARAMETER_DESC paramDesc;
-			HRESULT hr = shaderReflection->GetInputParameterDesc(paramIndex, &paramDesc);
-			if (hr != S_OK)
-			{
-				break;
-			}
+		uint8_t numVertexAttributes = 0;
+		re::VertexStreamMap::VertexStreamMetadata const* vertexStreamMetadata = 
+			shader.GetVertexStreamMap()->GetStreamMetadata(numVertexAttributes);
 
-			if (strcmp(util::ToLower(paramDesc.SemanticName).c_str(), "sv_instanceid") == 0)
-			{
-				continue;
-			}
+		std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
+		inputLayout.reserve(numVertexAttributes);
+
+		for (uint8_t i = 0; i < numVertexAttributes; ++i)
+		{
+			re::VertexStreamMap::VertexStreamMetadata const& entry = vertexStreamMetadata[i];
 
 			inputLayout.emplace_back(D3D12_INPUT_ELEMENT_DESC(
-				paramDesc.SemanticName,									// Semantic name
-				paramDesc.SemanticIndex,								// Semantic idx: Only needed when >1 element of same semantic
-				GetDefaultInputParameterFormat(paramDesc.SemanticName),	// Format
-				GetDefaultInputSlot(paramDesc.SemanticName, paramDesc.SemanticIndex),	// Input slot [0, 15]
-				D3D12_APPEND_ALIGNED_ELEMENT,							// Aligned byte offset
-				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,				// Input slot class
-				0														// Input data step rate
-			));
+				VertexStreamTypeToSemanticName(entry.m_streamKey.m_streamType),	// Semantic name
+				entry.m_streamKey.m_semanticIdx,								// Semantic idx
+				GetDXGIFormtFromVertexStreamDataType(entry.m_streamDataType),	// Format
+				entry.m_shaderSlotIdx,											// Input slot [0, 15]
+				D3D12_APPEND_ALIGNED_ELEMENT,									// Aligned byte offset
+				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,						// Input slot class
+				0));															// Input data step rate
 		}
+
+		return inputLayout;
 	}
 
 
@@ -421,8 +427,8 @@ namespace dx12
 
 
 			// Build the vertex stream input layout using the shader reflection:
-			std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
-			BuildInputLayout(shaderReflection.Get(), shaderParams, inputLayout);
+			std::vector<D3D12_INPUT_ELEMENT_DESC> const& inputLayout = 
+				BuildInputLayout(shader, shaderReflection.Get(), shaderParams);
 
 			// Build graphics pipeline description:
 			GraphicsPipelineStateStream pipelineStateStream {};

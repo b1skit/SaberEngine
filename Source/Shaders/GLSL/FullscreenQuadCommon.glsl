@@ -8,8 +8,8 @@
 
 void main()
 {
-	gl_Position	= vec4(in_position, 1);	// Our screen aligned quad is already in clip space
-	Out.uv0 = in_uv0;
+	gl_Position	= vec4(Position, 1);	// Our screen aligned quad is already in clip space
+	Out.UV0 = UV0;
 }
 
 #endif // FULLSCREEN_QUAD_COMMON
