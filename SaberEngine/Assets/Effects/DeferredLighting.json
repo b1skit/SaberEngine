@@ -90,14 +90,14 @@
 			"VShader": "DeferredAmbientLight_VShader",
 			"PShader": "DeferredAmbientLight_PShader",
 			"PipelineState": "DeferredFullscreenQuad",
-			"VertexStream": "Default"
+			"VertexStream": "FullscreenQuad"
 		},
 		{
 			"Name": "DeferredDirectional",
 			"VShader": "DeferredDirectionalLight_VShader",
 			"PShader": "DeferredDirectionalLight_PShader",
 			"PipelineState": "DeferredFullscreenQuad",
-			"VertexStream": "Default"
+			"VertexStream": "FullscreenQuad"
 		},
 		{
 			"Name": "DeferredPoint",

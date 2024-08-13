@@ -480,7 +480,8 @@ namespace opengl
 		uint32_t bitmask = 0; // Likely only needs to be 16 bits wide, max
 		for (uint8_t streamIdx = 0; streamIdx < count; streamIdx++)
 		{
-			if (vertexStreams[streamIdx].m_vertexStream == nullptr)
+			re::VertexStream const* vertexStream = vertexStreams[streamIdx].m_vertexStream;
+			if (vertexStream == nullptr)
 			{
 				SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
 				break;
@@ -488,10 +489,10 @@ namespace opengl
 
 			bitmask |= (1 << vertexStreams[streamIdx].m_slot);
 
-			util::AddDataToHash(vertexStreamHash, vertexStreams[streamIdx].m_vertexStream->GetNumComponents()); // 1/2/3/4
+			util::AddDataToHash(vertexStreamHash, vertexStream->GetNumComponents()); // 1/2/3/4
 			util::AddDataToHash(
 				vertexStreamHash,
-				opengl::VertexStream::GetComponentGLDataType(vertexStreams[streamIdx].m_vertexStream->GetDataType()));
+				opengl::VertexStream::GetComponentGLDataType(vertexStream->GetDataType()));
 			util::AddDataToHash(vertexStreamHash, vertexStreams[streamIdx].m_vertexStream->DoNormalize());
 
 			// Note: We assume all vertex streams have a relative offset of 0, so we don't (currently) include it in
@@ -530,8 +531,7 @@ namespace opengl
 
 				glBindVertexArray(newVAO);
 
-				// We use a bitmask as a debug name to visually identify our VAOs
-				std::string bitmaskStr;
+				std::string objectLabel; // Debug name to visually identify our VAOs
 
 				for (uint8_t streamIdx = 0; streamIdx < count; streamIdx++)
 				{
@@ -548,8 +548,8 @@ namespace opengl
 					// Associate the vertex attribute and binding indexes for the VAO
 					glVertexArrayAttribBinding(
 						newVAO,
-						slotIdx,	// Attribute index: The vertex attribute index = [0, GL_MAX_VERTEX_ATTRIBS - 1]
-						slotIdx);	// Binding index (Not a vertex attribute) = [0, GL_MAX_VERTEX_ATTRIB_BINDINGS - 1]
+						slotIdx,	// Attribute index [0, GL_MAX_VERTEX_ATTRIBS - 1] to associated w/a vertex buffer binding
+						slotIdx);	// Binding index [0, GL_MAX_VERTEX_ATTRIB_BINDINGS - 1] to associate w/a vertex attribute
 
 					// Relative offset specifies the distance btween elements within the buffer.
 					// Note: If this is ever != 0, update opengl::Context::ComputeVAOHash to include the offset
@@ -563,11 +563,16 @@ namespace opengl
 						vertexStream->DoNormalize(),												// Normalize data?
 						relativeOffset);							// relativeOffset: Distance between buffer elements
 
-					bitmaskStr = std::format("{} {}", bitmaskStr, slotIdx);
+					objectLabel = std::format("{} {}", objectLabel, slotIdx);
 				}
 
 				// Renderdoc name for the VAO
-				glObjectLabel(GL_VERTEX_ARRAY, newVAO, -1, std::format("VAO slot indexes: {}", bitmaskStr).c_str());
+				glObjectLabel(
+					GL_VERTEX_ARRAY,
+					newVAO,
+					-1,
+					std::format("VAO {}, Slots: {}, hash: {}", newVAO, objectLabel, vaoHash).c_str());
+
 				glBindVertexArray(0); // Cleanup
 			}
 		}

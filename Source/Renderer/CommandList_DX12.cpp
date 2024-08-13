@@ -425,7 +425,7 @@ namespace dx12
 
 		SetPrimitiveType(TranslateToD3DPrimitiveTopology(batchGraphicsParams.m_batchTopologyMode));
 
-		SetVertexBuffers(batchGraphicsParams.m_vertexStreams);
+		SetVertexBuffers(batchGraphicsParams.m_vertexStreams, batchGraphicsParams.m_numVertexStreams);
 
 		// Record the draw:
 		switch (batchGraphicsParams.m_batchGeometryMode)
@@ -488,22 +488,15 @@ namespace dx12
 	}
 
 
-	void CommandList::SetVertexBuffers(
-		std::array<re::Batch::VertexStreamInput, re::VertexStream::k_maxVertexStreams> const& streams)
+	void CommandList::SetVertexBuffers(re::Batch::VertexStreamInput const* streams, uint8_t numVertexStreamInputs)
 	{
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
 		streamViews.reserve(re::VertexStream::k_maxVertexStreams);
 
 		uint8_t startSlotIdx = streams[0].m_slot;
 		uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;
-		for (uint32_t streamIdx = 0; streamIdx < re::VertexStream::k_maxVertexStreams; streamIdx++)
+		for (uint32_t streamIdx = 0; streamIdx < numVertexStreamInputs; streamIdx++)
 		{
-			if (streams[streamIdx].m_vertexStream == nullptr)
-			{
-				break;
-			}
-			SEAssert(streams[streamIdx].m_slot < re::VertexStream::k_maxVertexStreams, "OOB slot index");
-
 			dx12::VertexStream::PlatformParams_Vertex* vertexPlatParams =
 				streams[streamIdx].m_vertexStream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 

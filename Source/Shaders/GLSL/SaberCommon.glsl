@@ -18,7 +18,7 @@
 
 // TODO: Generate vertex inputs automatically from Effect definitions. For now, these must match the layout defined in
 // the VertexStreams block defined in .\SaberEngine\Assets\Effects\Common.json exactly
-
+#if !defined(HAS_EFFECT_VERTEX_STREAM_DEFINITION)
 #if defined(SE_VERTEX_SHADER)
 	layout(location = 0) in vec3 Position;
 	
@@ -37,6 +37,7 @@
 
 	// TODO: Support joints/weights
 #endif
+#endif // HAS_EFFECT_VERTEX_STREAM_DEFINITION
 
 
 // Common shader properties:

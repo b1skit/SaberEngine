@@ -320,15 +320,12 @@ namespace opengl
 						{
 							re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
 
-							const uint8_t vertexStreamCount = 
-								util::CheckedCast<uint8_t>(batchGraphicsParams.m_vertexStreams.size());
-
 							// Set the VAO:
 							// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
 							// batch
 							const GLuint vertexStreamVAO = context->GetCreateVAO(
-								batchGraphicsParams.m_vertexStreams.data(), 
-								vertexStreamCount,
+								batchGraphicsParams.m_vertexStreams, 
+								batchGraphicsParams.m_numVertexStreams,
 								batchGraphicsParams.m_indexStream);
 							if (vertexStreamVAO != currentVAO)
 							{
@@ -337,7 +334,7 @@ namespace opengl
 							}
 
 							// Bind the vertex streams:
-							for (uint8_t slotIdx = 0; slotIdx < vertexStreamCount; slotIdx++)
+							for (uint8_t slotIdx = 0; slotIdx < batchGraphicsParams.m_numVertexStreams; slotIdx++)
 							{
 								if (batchGraphicsParams.m_vertexStreams[slotIdx].m_vertexStream == nullptr)
 								{

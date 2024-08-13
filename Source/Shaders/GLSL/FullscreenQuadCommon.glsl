@@ -2,14 +2,24 @@
 #ifndef FULLSCREEN_QUAD_COMMON
 #define FULLSCREEN_QUAD_COMMON
 
-#define VIN_UV0
+#define HAS_EFFECT_VERTEX_STREAM_DEFINITION
 #include "SaberCommon.glsl"
 
+layout(location = 0) in vec3 Position;
+layout(location = 1) in vec2 UV0;
 
 void main()
 {
 	gl_Position	= vec4(Position, 1);	// Our screen aligned quad is already in clip space
+
+#if defined(FLIP_FULLSCREEN_QUAD_UVS)
+	// SaberEngine uses a (0,0) = top left convention for UVs, which is non-default in OpenGL and results in the 
+	// framebuffer being rendered upside down. We can flip the UVs here to get a correct image (e.g. for final stages)
+	Out.UV0 = vec2(UV0.x, 1.f - UV0.y);
+#else
 	Out.UV0 = UV0;
+#endif
+	
 }
 
 #endif // FULLSCREEN_QUAD_COMMON

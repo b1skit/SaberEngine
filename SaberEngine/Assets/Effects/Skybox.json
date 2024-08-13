@@ -1,7 +1,7 @@
 {
 	"Effect": {
 		"Name": "Skybox",
-		"Parents": ["FullscreenQuad", "Common"],
+		"Parents": ["FullscreenQuad"],
 		"DefaultTechnique": "Skybox_Default"
 	},
 
@@ -11,7 +11,7 @@
 			"VShader": "Skybox_VShader",
 			"PShader": "Skybox_PShader",
 			"PipelineState": "FullscreenQuad_LEqual",
-			"VertexStream": "Default"
+			"VertexStream": "FullscreenQuad"
 		}
 	]
 }

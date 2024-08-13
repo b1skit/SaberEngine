@@ -132,7 +132,7 @@ namespace dx12
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
 
 		void SetVertexBuffer(uint32_t slot, re::VertexStream const*);
-		void SetVertexBuffers(std::array<re::Batch::VertexStreamInput, re::VertexStream::k_maxVertexStreams> const&);
+		void SetVertexBuffers(re::Batch::VertexStreamInput const*, uint8_t numVertexStreamInputs);
 
 		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
 

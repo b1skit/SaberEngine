@@ -43,7 +43,10 @@ namespace gr
 		struct RenderData
 		{
 			MeshPrimitiveParams m_meshPrimitiveParams;
+
 			std::array<re::VertexStream const*, re::VertexStream::k_maxVertexStreams> m_vertexStreams;
+			uint8_t m_numVertexStreams;
+
 			re::VertexStream const* m_indexStream;
 			
 			uint64_t m_dataHash;

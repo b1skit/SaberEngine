@@ -77,7 +77,9 @@ namespace re
 			uint32_t m_numInstances;
 			gr::MeshPrimitive::TopologyMode m_batchTopologyMode;
 
-			std::array<VertexStreamInput, re::VertexStream::k_maxVertexStreams> m_vertexStreams;
+			VertexStreamInput m_vertexStreams[re::VertexStream::k_maxVertexStreams];
+			uint8_t m_numVertexStreams;
+
 			re::VertexStream const* m_indexStream;
 
 			// If a batch is created via the CTOR that takes a gr::Material::MaterialInstanceData, we store the 

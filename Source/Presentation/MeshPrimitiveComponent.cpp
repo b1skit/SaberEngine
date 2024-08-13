@@ -144,18 +144,25 @@ namespace fr
 	gr::MeshPrimitive::RenderData MeshPrimitiveComponent::CreateRenderData(
 		MeshPrimitiveComponent const& meshPrimitiveComponent, fr::NameComponent const&)
 	{
-		gr::MeshPrimitive::RenderData renderData = gr::MeshPrimitive::RenderData{
+		gr::MeshPrimitive::RenderData renderData{
 			.m_meshPrimitiveParams = meshPrimitiveComponent.m_meshPrimitive->GetMeshParams(),
 			// Vertex streams copied below...
+			.m_numVertexStreams = 0,
 			.m_indexStream = meshPrimitiveComponent.m_meshPrimitive->GetIndexStream(),
-			.m_dataHash = meshPrimitiveComponent.m_meshPrimitive->GetDataHash()
+			.m_dataHash = meshPrimitiveComponent.m_meshPrimitive->GetDataHash(),
+			
 		};
 
 		std::vector<re::VertexStream const*> const& vertexStreams =
 			meshPrimitiveComponent.m_meshPrimitive->GetVertexStreams();
 		for (size_t slotIdx = 0; slotIdx < vertexStreams.size(); slotIdx++)
 		{
+			if (vertexStreams[slotIdx] == nullptr) // We assume vertex streams are tightly packed
+			{
+				break;
+			}
 			renderData.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
+			renderData.m_numVertexStreams++;
 		}
 
 		return renderData;
