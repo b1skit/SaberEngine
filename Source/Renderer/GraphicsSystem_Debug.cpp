@@ -7,6 +7,8 @@
 #include "TransformRenderData.h"
 
 #include "Core/Definitions/ConfigKeys.h"
+
+#include "Core/Util/ByteVector.h"
 #include "Core/Util/ImGuiUtils.h"
 
 
@@ -39,17 +41,17 @@ namespace
 		glm::vec3 const& yAxisColor,
 		glm::vec3 const& zAxisColor)
 	{
-		std::vector<glm::vec3> axisPositions = {
+		util::ByteVector axisPositions = util::ByteVector::Create<glm::vec3>({
 			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisX * axisScale,
 			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisY * axisScale,
 			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisZ * axisScale,
-		};
+		});
 
-		std::vector<glm::vec4> axisColors = {
+		util::ByteVector axisColors = util::ByteVector::Create<glm::vec4>({
 			glm::vec4(xAxisColor, 1.f), glm::vec4(xAxisColor, 1.f),
 			glm::vec4(yAxisColor, 1.f), glm::vec4(yAxisColor, 1.f),
 			glm::vec4(zAxisColor, 1.f), glm::vec4(zAxisColor, 1.f),
-		};
+		});
 
 		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
@@ -78,6 +80,7 @@ namespace
 			re::Batch::VertexStreamInput{ .m_vertexStream = axisPositionStream.get() };
 		axisBatchGraphicsParams.m_vertexStreams[1] =
 			re::Batch::VertexStreamInput{ .m_vertexStream = axisColorStream.get() };
+		axisBatchGraphicsParams.m_numVertexStreams = 2;
 
 		return std::make_unique<re::Batch>(batchLifetime, axisBatchGraphicsParams, k_debugEffectID);
 	}
@@ -113,13 +116,13 @@ namespace
 		const glm::vec3 g = glm::vec3(xMin, yMin, zMin);
 		const glm::vec3 h = glm::vec3(xMax, yMin, zMin);
 
-		//									   0, 1, 2, 3, 4, 5, 6, 7
-		std::vector<glm::vec3> boxPositions = {a, b, c, d, e, f, g, h};
+		//																	 0, 1, 2, 3, 4, 5, 6, 7
+		util::ByteVector boxPositions = util::ByteVector::Create<glm::vec3>({a, b, c, d, e, f, g, h});
 
 		const glm::vec4 boxColorVec4 = glm::vec4(boxColor, 1.f);
-		std::vector<glm::vec4> boxColors = std::vector<glm::vec4>(boxPositions.size(), boxColorVec4);
+		util::ByteVector boxColors = util::ByteVector::Create<glm::vec4>(boxPositions.size(), boxColorVec4);
 
-		std::vector<uint32_t> boxIndexes = {
+		util::ByteVector boxIndexes = util::ByteVector::Create<uint32_t>({
 			// Front face:
 			0, 2,
 			2, 3,
@@ -139,7 +142,7 @@ namespace
 			// Right side: Connect edges between front/back faces
 			5, 1,
 			7, 3
-		};
+		});
 
 		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
@@ -176,6 +179,8 @@ namespace
 			re::Batch::VertexStreamInput{ .m_vertexStream = boxPositionsStream.get() };
 		boundingBoxBatchGraphicsParams.m_vertexStreams[1] = 
 			re::Batch::VertexStreamInput{ .m_vertexStream = boxColorStream.get() };
+		boundingBoxBatchGraphicsParams.m_numVertexStreams = 2;
+
 		boundingBoxBatchGraphicsParams.m_indexStream = boxIndexStream.get();
 
 		return std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID);
@@ -200,7 +205,7 @@ namespace
 			meshPrimRenderData, re::VertexStream::Type::Position);
 		SEAssert(positionStream, "Cannot find position stream");
 
-		std::vector<glm::vec3> linePositions;
+		util::ByteVector linePositions = util::ByteVector::Create<glm::vec3>();
 
 		SEAssert(positionStream->GetDataType() == re::VertexStream::DataType::Float3 && 
 			normalStream->GetDataType() == re::VertexStream::DataType::Float3,
@@ -211,12 +216,12 @@ namespace
 		glm::vec3 const* normalData = static_cast<glm::vec3 const*>(normalStream->GetData());
 		for (uint32_t elementIdx = 0; elementIdx < positionStream->GetNumElements(); elementIdx++)
 		{
-			linePositions.emplace_back(positionData[elementIdx]);
-			linePositions.emplace_back(positionData[elementIdx] + normalData[elementIdx] * scale / globalScale);
+			linePositions.emplace_back<glm::vec3>(positionData[elementIdx]);
+			linePositions.emplace_back<glm::vec3>(positionData[elementIdx] + normalData[elementIdx] * scale / globalScale);
 		}
 		
 		const glm::vec4 normalColorVec4 = glm::vec4(normalColor, 1.f);
-		std::vector<glm::vec4> normalColors = std::vector<glm::vec4>(linePositions.size(), normalColorVec4);
+		util::ByteVector normalColors = util::ByteVector::Create<glm::vec4>(linePositions.size(), normalColorVec4);
 		
 		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
@@ -245,6 +250,7 @@ namespace
 			re::Batch::VertexStreamInput{ .m_vertexStream = normalPositionsStream.get() };
 		boundingBoxBatchGraphicsParams.m_vertexStreams[1] = 
 			re::Batch::VertexStreamInput{ .m_vertexStream = boxColorStream.get() };
+		boundingBoxBatchGraphicsParams.m_numVertexStreams = 2;
 
 		return std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID);
 	}
@@ -265,13 +271,14 @@ namespace
 		glm::vec4 nearTR = glm::vec4(1.f, 1.f, 0.f, 1.f);
 		glm::vec4 nearBR = glm::vec4(1.f, -1.f, 0.f, 1.f);
 
-		//											  0		1		2	   3	  4		  5		  6		  7
-		std::vector<glm::vec3> frustumPositions = { farTL, farBL, farTR, farBR, nearTL, nearBL, nearTR, nearBR };
+		util::ByteVector frustumPositions = util::ByteVector::Create<glm::vec3>(
+			{ farTL, farBL, farTR, farBR, nearTL, nearBL, nearTR, nearBR });
+		//	  0		1		2	   3	  4		  5		  6		  7
 
 		const glm::vec4 fustumColorVec4 = glm::vec4(frustumColor, 1.f);
-		std::vector<glm::vec4> frustumColors = { frustumPositions.size(), fustumColorVec4 };
+		util::ByteVector frustumColors = util::ByteVector::Create( frustumPositions.size(), fustumColorVec4 );
 
-		std::vector<uint32_t> frustumIndexes = {
+		util::ByteVector frustumIndexes = util::ByteVector::Create<uint32_t>({
 			// Back face:
 			0, 1,
 			1, 3,
@@ -291,7 +298,7 @@ namespace
 			// Right face: Connecting edges from the front/back faces
 			2, 6,
 			3, 7
-		};
+		});
 
 		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
@@ -328,6 +335,8 @@ namespace
 			re::Batch::VertexStreamInput{ .m_vertexStream = frustumPositionsStream.get() };
 		frustumBatchGraphicsParams.m_vertexStreams[1] = 
 			re::Batch::VertexStreamInput{.m_vertexStream = frustumColorStream.get()};
+		frustumBatchGraphicsParams.m_numVertexStreams = 2;
+
 		frustumBatchGraphicsParams.m_indexStream = frustumIndexStream.get();
 
 		return std::make_unique<re::Batch>(batchLifetime, frustumBatchGraphicsParams, k_debugEffectID);
@@ -346,7 +355,7 @@ namespace
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
 		const glm::vec4 meshColorVec4 = glm::vec4(meshColor, 1.f);
-		std::vector<glm::vec4> meshColors = std::vector<glm::vec4>(positionStream->GetNumElements(), meshColorVec4);
+		util::ByteVector meshColors = util::ByteVector::Create<glm::vec4>(positionStream->GetNumElements(), meshColorVec4);
 
 		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
@@ -367,6 +376,8 @@ namespace
 			re::Batch::VertexStreamInput{ .m_vertexStream = positionStream };
 		wireframeBatchGraphicsParams.m_vertexStreams[1] = 
 			re::Batch::VertexStreamInput{ .m_vertexStream = boxColorStream.get() };
+		wireframeBatchGraphicsParams.m_numVertexStreams = 2;
+
 		wireframeBatchGraphicsParams.m_indexStream = indexStream;
 
 		return std::make_unique<re::Batch>(batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID);

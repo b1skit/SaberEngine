@@ -16,6 +16,7 @@
 #include "Core/PerformanceTimer.h"
 #include "Core/ThreadPool.h"
 
+#include "Core/Util/ByteVector.h"
 #include "Core/Util/CastUtils.h"
 #include "Core/Util/ThreadSafeVector.h"
 
@@ -674,45 +675,46 @@ namespace
 				CGLTFPrimitiveTypeToGrTopologyMode(curPrimitive.type);
 
 			SEAssert(curPrimitive.indices != nullptr, "Mesh is missing indices");
-			std::vector<uint32_t> indices;
-			indices.resize(curPrimitive.indices->count, 0);
+			util::ByteVector indices = util::ByteVector::Create<uint32_t>();
+			indices.resize<uint32_t>(curPrimitive.indices->count, 0u);
 			for (size_t index = 0; index < curPrimitive.indices->count; index++)
 			{
 				// Note: We use 32-bit indexes, but cgltf uses size_t's
-				indices[index] = static_cast<uint32_t>(cgltf_accessor_read_index(curPrimitive.indices, (uint64_t)index));
+				indices.at<uint32_t>(index) = static_cast<uint32_t>(cgltf_accessor_read_index(
+					curPrimitive.indices, 
+					static_cast<uint64_t>(index)));
 			}
 
 			// Unpack each of the primitive's vertex attrbutes:
-			std::vector<float> positions;
+			util::ByteVector positions = util::ByteVector::Create<glm::vec3>();
 			glm::vec3 positionsMinXYZ(fr::BoundsComponent::k_invalidMinXYZ);
 			glm::vec3 positionsMaxXYZ(fr::BoundsComponent::k_invalidMaxXYZ);
-			std::vector<float> normals;
-			std::vector<float> tangents;
-			std::vector<float> uv0;
+			util::ByteVector normals = util::ByteVector::Create<glm::vec3>();
+			util::ByteVector tangents = util::ByteVector::Create<glm::vec4>();
+			util::ByteVector uv0 = util::ByteVector::Create<glm::vec2>();
 			bool foundUV0 = false; // TODO: Support minimum of 2 UV sets. For now, just use the 1st
-			std::vector<float> colors;
+			util::ByteVector colors = util::ByteVector::Create<glm::vec4>();
 			std::vector<float> jointsAsFloats; // We unpack the joints as floats...
-			std::vector<uint8_t> jointsAsUints; // ...but eventually convert and store them as uint8_t
-			std::vector<float> weights;
+			util::ByteVector jointsAsUints = util::ByteVector::Create<uint8_t>(); // ...but eventually convert and store them as uint8_t
+			util::ByteVector weights = util::ByteVector::Create<glm::vec4>();
 			for (size_t attrib = 0; attrib < curPrimitive.attributes_count; attrib++)
 			{
-				const size_t elementsPerComponent = cgltf_num_components(curPrimitive.attributes[attrib].data->type);
+				const size_t numComponents = cgltf_num_components(curPrimitive.attributes[attrib].data->type);
 
 				// GLTF mesh vertex attributes are stored as vecN's only:
 				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
-				SEAssert(elementsPerComponent <= 4, "Invalid vertex attribute data type");
+				SEAssert(numComponents <= 4, "Invalid vertex attribute data type");
 
-				const size_t numComponents = curPrimitive.attributes[attrib].data->count;
-				const size_t totalFloatElements = numComponents * elementsPerComponent;
-
-				float* dataTarget = nullptr;
+				const size_t numElements = curPrimitive.attributes[attrib].data->count;
+				const size_t totalFloatElements = numComponents * numElements;
+				void* dataTarget = nullptr;
 				const cgltf_attribute_type attributeType = curPrimitive.attributes[attrib].type;
 				switch (attributeType)
 				{
 				case cgltf_attribute_type::cgltf_attribute_type_position:
 				{
-					positions.resize(totalFloatElements, 0);
-					dataTarget = positions.data();;
+					positions.resize(curPrimitive.attributes[attrib].data->count, glm::vec3(0.f));
+					dataTarget = positions.data<glm::vec3>();
 
 					if (curPrimitive.attributes[attrib].data->has_min)
 					{
@@ -738,14 +740,14 @@ namespace
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_normal:
 				{
-					normals.resize(totalFloatElements, 0);
-					dataTarget = normals.data();
+					normals.resize(curPrimitive.attributes[attrib].data->count, glm::vec3(0.f));
+					dataTarget = normals.data<glm::vec3>();
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_tangent:
 				{
-					tangents.resize(totalFloatElements, 0);
-					dataTarget = tangents.data();
+					tangents.resize(curPrimitive.attributes[attrib].data->count, glm::vec4(0.f));
+					dataTarget = tangents.data<glm::vec4>();
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_texcoord:
@@ -758,23 +760,23 @@ namespace
 						continue;
 					}
 					foundUV0 = true;
-					uv0.resize(totalFloatElements, 0);
-					dataTarget = uv0.data();
+					uv0.resize(curPrimitive.attributes[attrib].data->count, glm::vec2(0.f));
+					dataTarget = uv0.data<glm::vec2>();
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_color:
 				{
-					SEAssert(elementsPerComponent == 4, "Only 4-channel colors (RGBA) are currently supported");
-					colors.resize(totalFloatElements, 0);
-					dataTarget = colors.data();
+					SEAssert(numComponents == 4, "Only 4-channel colors (RGBA) are (currently) supported");
+					colors.resize(curPrimitive.attributes[attrib].data->count, glm::vec4(0.f));
+					dataTarget = colors.data<glm::vec4>();
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_joints: // joints_n == indexes from skin.joints array
 				{
 					LOG_WARNING("Found vertex joint attributes: Data will be loaded but has not been tested. "
 						"Skinning is not currently supported");
-					jointsAsFloats.resize(totalFloatElements, 0);
-					jointsAsUints.resize(totalFloatElements, 0);
+					jointsAsFloats.resize(curPrimitive.attributes[attrib].data->count, 0.f);
+					jointsAsUints.resize(curPrimitive.attributes[attrib].data->count, 0u);
 					dataTarget = jointsAsFloats.data();
 				}
 				break;
@@ -782,8 +784,8 @@ namespace
 				{
 					LOG_WARNING("Found vertex weight attributes: Data will be loaded but has not been tested. "
 						"Skinning is not currently supported");
-					weights.resize(totalFloatElements, 0);
-					dataTarget = weights.data();
+					weights.resize(curPrimitive.attributes[attrib].data->count, 0);
+					dataTarget = weights.data<glm::vec4>();
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_custom:
@@ -793,8 +795,10 @@ namespace
 					SEAssertF("Invalid attribute type");
 				}
 
-				const bool unpackResult = 
-					cgltf_accessor_unpack_floats(curPrimitive.attributes[attrib].data, dataTarget, totalFloatElements);
+				const bool unpackResult = cgltf_accessor_unpack_floats(
+					curPrimitive.attributes[attrib].data,
+					static_cast<float*>(dataTarget),
+					totalFloatElements);
 				SEAssert(unpackResult, "Failed to unpack data");
 
 				// Post-process the data:
@@ -804,7 +808,7 @@ namespace
 					SEAssert(jointsAsFloats.size() == jointsAsUints.size(), "Source/destination size mismatch");
 					for (size_t jointIdx = 0; jointIdx < jointsAsFloats.size(); jointIdx++)
 					{
-						jointsAsUints[jointIdx] = static_cast<uint8_t>(jointsAsFloats[jointIdx]);
+						jointsAsUints.at<uint8_t>(jointIdx) = static_cast<uint8_t>(jointsAsFloats[jointIdx]);
 					}
 				}
 
@@ -824,19 +828,34 @@ namespace
 				}
 			} // End attribute unpacking
 
+			// Apply GLTF 2.0 default values:
+			if (colors.empty())
+			{
+				colors.resize(positions.size(), glm::vec4(1.f));
+			}
+
 			// Construct any missing vertex attributes for the mesh:
+			std::vector<util::ByteVector*> extraChannels = { &colors };
+			if (!jointsAsUints.empty())
+			{
+				extraChannels.emplace_back(&jointsAsUints);
+			}
+			if (!weights.empty())
+			{
+				extraChannels.emplace_back(&weights);
+			}
+
 			grutil::VertexStreamBuilder::MeshData meshData
 			{
 				meshName,
 				&meshPrimitiveParams,
 				&indices,
-				reinterpret_cast<std::vector<glm::vec3>*>(&positions),
-				reinterpret_cast<std::vector<glm::vec3>*>(&normals),
-				reinterpret_cast<std::vector<glm::vec4>*>(&tangents),
-				reinterpret_cast<std::vector<glm::vec2>*>(&uv0),
-				reinterpret_cast<std::vector<glm::vec4>*>(&colors),
-				reinterpret_cast<std::vector<glm::tvec4<uint8_t>>*>(&jointsAsUints),
-				reinterpret_cast<std::vector<glm::vec4>*>(&weights)
+				&positions,
+				&normals,
+				&tangents,
+				&uv0,
+				extraChannels.data(),
+				extraChannels.size(),
 			};
 			grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 

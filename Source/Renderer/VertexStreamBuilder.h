@@ -2,6 +2,8 @@
 #pragma once
 #include "MeshPrimitive.h"
 
+#include "Core/Util/ByteVector.h"
+
 #include "mikktspace.h"
 
 
@@ -16,45 +18,39 @@ namespace grutil
 		struct MeshData
 		{
 			std::string const& m_name; // For debug spew...
-			gr::MeshPrimitive::MeshPrimitiveParams const* m_meshParams;
+			gr::MeshPrimitive::MeshPrimitiveParams const* m_meshParams = nullptr;
 
 			// If an attribute does not exist but can be built, pass a vector of size 0
-			std::vector<uint32_t>* m_indices;
-			std::vector<glm::vec3>* m_positions;
-			std::vector<glm::vec3>* m_normals;			// Created as face normals if empty
-			std::vector<glm::vec4>* m_tangents;			// Computed from normals and UVs
-			std::vector<glm::vec2>* m_UV0;				// Created as simple triangle UVs if empty
-			std::vector<glm::vec4>* m_colors;			// Filled with m_vertexColor if empty
+			util::ByteVector* m_indices = nullptr;		// uint32_t
+			util::ByteVector* m_positions = nullptr;	// glm::vec3
 
-			std::vector<glm::tvec4<uint8_t>>* m_joints; // OPTIONAL: Ignored if empty
-			std::vector<glm::vec4>* m_weights;			// OPTIONAL: Ignored if empty
+			util::ByteVector* m_normals = nullptr;		// glm::vec3: Created as face normals if empty
+			util::ByteVector* m_tangents = nullptr;		// glm::vec4: Computed from normals and UVs
+			util::ByteVector* m_UV0 = nullptr;			// glm::vec2: Created as simple triangle UVs if empty
 
-			// Default values for missing data:
-			glm::vec4 m_vertexColor = glm::vec4(1.f);
+			util::ByteVector** m_extraChannels = nullptr;
+			size_t m_numExtraChannels = 0;
 		};
 
 	public:
-		static void BuildMissingVertexAttributes(MeshData* meshData);
+		static void BuildMissingVertexAttributes(MeshData*);
 
 
 	private:
 		VertexStreamBuilder();
-		void ConstructMissingVertexAttributes(MeshData* meshData);
+		void ConstructMissingVertexAttributes(MeshData*);
 	
-		void RemoveDegenerateTriangles(MeshData* meshData);
-		void BuildSimpleTriangleUVs(MeshData* meshData);
-		void BuildFlatNormals(MeshData* meshData);
-		void SplitSharedAttributes(MeshData* meshData);
-		void WeldTriangles(MeshData* meshData);
+		void RemoveDegenerateTriangles(MeshData*);
+		void BuildSimpleTriangleUVs(MeshData*);
+		void BuildFlatNormals(MeshData*);
+		void SplitSharedAttributes(MeshData*);
+		std::vector<size_t> WeldTriangles(MeshData*);
+		void RearrangeExtraChannels(MeshData*, std::vector<size_t> const& indexMap);
 
 		// Optional vertex attributes:
 		bool m_canBuildNormals;
 		bool m_canBuildTangents;
 		bool m_canBuildUVs;
-		bool m_canBuildColors;
-
-		bool m_hasJoints;
-		bool m_hasWeights;
 
 		// Helpers for MikkTSpace:
 		static int GetVertexIndex(const SMikkTSpaceContext* m_context, int faceIdx, int vertIdx);

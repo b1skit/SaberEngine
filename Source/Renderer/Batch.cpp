@@ -293,6 +293,8 @@ namespace re
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
+		SEAssert(graphicsParams.m_numVertexStreams > 0, "Can't have a graphics batch with 0 vertex streams");
+
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
 		m_graphicsParams = graphicsParams;

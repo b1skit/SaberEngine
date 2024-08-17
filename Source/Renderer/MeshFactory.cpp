@@ -2,6 +2,8 @@
 #include "MeshFactory.h"
 #include "VertexStreamBuilder.h"
 
+#include "Core/Util/ByteVector.h"
+
 
 namespace
 {
@@ -30,16 +32,16 @@ namespace
 		const uint32_t numBodyVerts = 6 * numSides;
 		const uint32_t numVerts = numTopVerts + numBotVerts + numBodyVerts;
 
-		std::vector<glm::vec3> positions(numVerts);
-		std::vector<glm::vec3> normals(numVerts);
-		std::vector<glm::vec2> uvs(numVerts);
+		util::ByteVector positions = util::ByteVector::Create<glm::vec3>(numVerts);
+		util::ByteVector normals = util::ByteVector::Create<glm::vec3>(numVerts);
+		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>(numVerts);
 
 		const uint32_t numTopIndices = (3 * numSides) * addTopCap;
 		const uint32_t numBotIndices = (3 * numSides);
 		const uint32_t numBodyIndices = 6 * numSides;
 		const uint32_t numIndices = numTopIndices + numBotIndices + numBodyIndices;
 		
-		std::vector<uint32_t> indices(numIndices);
+		util::ByteVector indices = util::ByteVector::Create<uint32_t>(numIndices);
 
 		const float topYCoord = 0.f;
 		const float botYCoord = -height;
@@ -60,9 +62,9 @@ namespace
 				const uint32_t centerVertIndex = vertInsertIdx;
 
 				// Center vertex:
-				positions[vertInsertIdx] = centerVert;
-				normals[vertInsertIdx] = capNormal;
-				uvs[vertInsertIdx] = centerVertUV;
+				positions.at<glm::vec3>(vertInsertIdx) = centerVert;
+				normals.at<glm::vec3>(vertInsertIdx) = capNormal;
+				uvs.at<glm::vec2>(vertInsertIdx) = centerVertUV;
 				
 				vertInsertIdx++;
 
@@ -74,30 +76,30 @@ namespace
 				for (uint32_t edgeVertIdx = 0; edgeVertIdx <= numSides; edgeVertIdx++) // <= for the duplicate seam verts
 				{
 					const float curEdgeRadians = edgeRadianStep * edgeVertIdx;
-					positions[vertInsertIdx] = glm::vec3(
+					positions.at<glm::vec3>(vertInsertIdx) = glm::vec3(
 						glm::cos(curEdgeRadians) * radius,
 						capHeight,
 						glm::sin(curEdgeRadians) * radius * -1.f);
 
-					normals[vertInsertIdx] = capNormal;
+					normals.at<glm::vec3>(vertInsertIdx) = capNormal;
 
-					uvs[vertInsertIdx] = centerVertUV + glm::vec2(
+					uvs.at<glm::vec2>(vertInsertIdx) = centerVertUV + glm::vec2(
 						glm::cos(edgeRadianStep) * k_capUVRadius,
 						glm::sin(edgeRadianStep) * k_capUVRadius);					
 
 					// Indices:
 					if (edgeVertIdx < numSides)
 					{
-						indices[indicesInsertIdx++] = centerVertIndex;
+						indices.at<uint32_t>(indicesInsertIdx++) = centerVertIndex;
 						if (isTopCap)
 						{
-							indices[indicesInsertIdx++] = vertInsertIdx;
-							indices[indicesInsertIdx++] = vertInsertIdx + 1;
+							indices.at<uint32_t>(indicesInsertIdx++) = vertInsertIdx;
+							indices.at<uint32_t>(indicesInsertIdx++) = vertInsertIdx + 1;
 						}
 						else
 						{
-							indices[indicesInsertIdx++] = vertInsertIdx + 1;
-							indices[indicesInsertIdx++] = vertInsertIdx;
+							indices.at<uint32_t>(indicesInsertIdx++) = vertInsertIdx + 1;
+							indices.at<uint32_t>(indicesInsertIdx++) = vertInsertIdx;
 						}
 					}
 
@@ -125,13 +127,13 @@ namespace
 			// Indices:
 			if (edgeIdx < numSides)
 			{
-				indices[curIndicesIdx++] = curVertIdx;
-				indices[curIndicesIdx++] = curVertIdx + 1;
-				indices[curIndicesIdx++] = curVertIdx + 2; // Triangle: |/
+				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx;
+				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx + 1;
+				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx + 2; // Triangle: |/
 
-				indices[curIndicesIdx++] = curVertIdx + 2;
-				indices[curIndicesIdx++] = curVertIdx + 1;
-				indices[curIndicesIdx++] = curVertIdx + 3; // Triangle: /|
+				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx + 2;
+				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx + 1;
+				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx + 3; // Triangle: /|
 			}
 
 			const float curEdgeRadians = edgeRadianStep * edgeIdx;
@@ -139,30 +141,34 @@ namespace
 			// Top edge vertex:
 			if (edgeIdx < numSides)
 			{
-				positions[curVertIdx] =
-					glm::vec3(glm::cos(curEdgeRadians) * topRadius, topYCoord, glm::sin(curEdgeRadians) * topRadius * -1.f);
+				positions.at<glm::vec3>(curVertIdx) = glm::vec3(
+					glm::cos(curEdgeRadians) * topRadius,
+					topYCoord,
+					glm::sin(curEdgeRadians) * topRadius * -1.f);
 			}
 			else
 			{
-				positions[curVertIdx] = positions[firstCylinderBodyVertIdx];
+				positions.at<glm::vec3>(curVertIdx) = positions.at<glm::vec3>(firstCylinderBodyVertIdx);
 			}
 			
-			uvs[curVertIdx] = glm::vec2(curUVX, 0.f);
+			uvs.at<glm::vec2>(curVertIdx) = glm::vec2(curUVX, 0.f);
 			
 			curVertIdx++;
 
 			// Bottom edge vertex:
 			if (edgeIdx < numSides)
 			{
-				positions[curVertIdx] =
-					glm::vec3(glm::cos(curEdgeRadians) * botRadius, botYCoord, glm::sin(curEdgeRadians) * botRadius * -1.f);
+				positions.at<glm::vec3>(curVertIdx) = glm::vec3(
+					glm::cos(curEdgeRadians) * botRadius,
+					botYCoord,
+					glm::sin(curEdgeRadians) * botRadius * -1.f);
 			}
 			else
 			{
-				positions[curVertIdx] = positions[firstCylinderBodyVertIdx + 1];
+				positions.at<glm::vec3>(curVertIdx) = positions.at<glm::vec3>(firstCylinderBodyVertIdx + 1);
 			}
 
-			uvs[curVertIdx] = glm::vec2(curUVX, 1.f);
+			uvs.at<glm::vec2>(curVertIdx) = glm::vec2(curUVX, 1.f);
 
 			curVertIdx++;
 
@@ -178,29 +184,30 @@ namespace
 			if (edgeIdx < numSides)
 			{
 				// Direction pointing towards top edge:
-				const glm::vec3 edgeDir = glm::normalize(positions[normalIdx] - positions[normalIdx + 1]);
+				const glm::vec3 edgeDir = 
+					glm::normalize(positions.at<glm::vec3>(normalIdx) - positions.at<glm::vec3>(normalIdx + 1));
 
 				// Direction pointing in towards the center:
-				const glm::vec3 arbitraryDir = glm::normalize(topCenterVert - positions[normalIdx]);
+				const glm::vec3 arbitraryDir = glm::normalize(topCenterVert - positions.at<glm::vec3>(normalIdx));
 
 				const glm::vec3 tangent = glm::cross(edgeDir, arbitraryDir);
 
 				// Walk both the top and bottom vertex in a single step
-				normals[normalIdx] = glm::normalize(glm::cross(edgeDir, tangent));
-				normals[normalIdx + 1] = normals[normalIdx];
+				normals.at<glm::vec3>(normalIdx) = glm::normalize(glm::cross(edgeDir, tangent));
+				normals.at<glm::vec3>(normalIdx + 1) = normals.at<glm::vec3>(normalIdx);
 			}
 			else
 			{
-				normals[normalIdx] = normals[firstCylinderBodyVertIdx];
-				normals[normalIdx + 1] = normals[firstCylinderBodyVertIdx + 1];
+				normals.at<glm::vec3>(normalIdx) = normals.at<glm::vec3>(firstCylinderBodyVertIdx);
+				normals.at<glm::vec3>(normalIdx + 1) = normals.at<glm::vec3>(firstCylinderBodyVertIdx + 1);
 			}
 		}
 
-
-		std::vector<glm::vec4> tangents; // Empty: Will be generated if necessary
-		std::vector<glm::vec4> colors;
+		util::ByteVector tangents = util::ByteVector::Create<glm::vec4>(); // Empty: Will be generated if necessary
+		util::ByteVector colors = util::ByteVector::Create<glm::vec4>(positions.size(), factoryOptions.m_vertexColor);
 
 		const gr::MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
+		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
@@ -210,22 +217,15 @@ namespace
 			.m_normals = &normals,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
-			.m_colors = factoryOptions.m_generateVertexColors ? &colors : nullptr,
-			.m_joints = nullptr,
-			.m_weights = nullptr,
-			.m_vertexColor = factoryOptions.m_vertexColor
+			.m_extraChannels = extraChannels.data(),
+			.m_numExtraChannels = extraChannels.size(),
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
-		std::vector<float>* normalsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&normals) : nullptr;
-
-		std::vector<float>* tangentsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
-
-		std::vector<float>* colorsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
+		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
+		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
+		util::ByteVector* colorsPtr = factoryOptions.m_generateNormalsAndTangents ? &colors : nullptr;
 
 		std::vector<re::VertexStream const*> vertexStreams;
 		vertexStreams.reserve(4);
@@ -236,7 +236,7 @@ namespace
 			0,
 			re::VertexStream::DataType::Float3,
 			re::VertexStream::Normalize::False,
-			std::move(positions)).get());
+			std::move(positions) ).get());
 		
 		if (normalsPtr)
 		{
@@ -289,8 +289,8 @@ namespace
 
 
 	void ApplyOrientation(
-		std::vector<glm::vec3>& positions, 
-		std::vector<glm::vec3>& normals, 
+		util::ByteVector& positions,
+		util::ByteVector& normals,
 		gr::meshfactory::Orientation orientation)
 	{
 		if (orientation == gr::meshfactory::Orientation::Default)
@@ -319,13 +319,14 @@ namespace
 			lookAtPos,		// center
 			upDir);			// up
 
-		for (auto& pos : positions)
+		for (size_t i = 0; i < positions.size(); ++i)
 		{
-			pos = lookatMatrix * pos;
+			positions.at<glm::vec3>(i) = lookatMatrix * positions.at<glm::vec3>(i);
 		}
-		for (auto& nml : normals)
+
+		for (size_t i = 0; i < normals.size(); ++i)
 		{
-			nml = lookatMatrix * nml;
+			normals.at<glm::vec3>(i) = lookatMatrix * normals.at<glm::vec3>(i);
 		}
 	}
 }
@@ -339,7 +340,7 @@ namespace gr::meshfactory
 		extentDistance = std::abs(extentDistance);
 
 		// Note: Using a RHCS
-		const std::array<glm::vec3, 8> positions
+		const std::array<glm::vec3, 8> positionsData
 		{
 			glm::vec3(-extentDistance, extentDistance, extentDistance),
 			glm::vec3(-extentDistance, -extentDistance, extentDistance),
@@ -351,15 +352,15 @@ namespace gr::meshfactory
 			glm::vec3(extentDistance, extentDistance, -extentDistance)
 		};
 
-		std::vector<glm::vec3> assembledPositions
+		util::ByteVector assembledPositions = util::ByteVector::Create<glm::vec3>(
 		{
-			positions[0], positions[1], positions[2], positions[3], // Front face
-			positions[4], positions[5],	positions[1], positions[0], // Left face
-			positions[3], positions[2], positions[6], positions[7], // Right face
-			positions[4], positions[0], positions[3], positions[7], // Top face
-			positions[1], positions[5],	positions[6], positions[2], // Bottom face
-			positions[7], positions[6], positions[5], positions[4]  // Back face
-		};
+			positionsData[0], positionsData[1], positionsData[2], positionsData[3], // Front face
+			positionsData[4], positionsData[5],	positionsData[1], positionsData[0], // Left face
+			positionsData[3], positionsData[2], positionsData[6], positionsData[7], // Right face
+			positionsData[4], positionsData[0], positionsData[3], positionsData[7], // Top face
+			positionsData[1], positionsData[5],	positionsData[6], positionsData[2], // Bottom face
+			positionsData[7], positionsData[6], positionsData[5], positionsData[4]  // Back face
+		});
 
 		const std::vector<glm::vec2> uvs // NOTE: (0,0) = Top left
 		{
@@ -369,7 +370,7 @@ namespace gr::meshfactory
 			glm::vec2(1.0f, 0.0f), // 3
 		};
 
-		std::vector<glm::vec2> assembledUVs
+		util::ByteVector assembledUVs = util::ByteVector::Create<glm::vec2>(
 		{
 			uvs[1], uvs[0], uvs[2],	uvs[3], // Front face
 			uvs[1], uvs[0],	uvs[2],	uvs[3], // Left face
@@ -377,9 +378,9 @@ namespace gr::meshfactory
 			uvs[1], uvs[0],	uvs[2],	uvs[3], // Top face
 			uvs[1], uvs[0],	uvs[2],	uvs[3], // Bottom face
 			uvs[1], uvs[0],	uvs[2],	uvs[3]  // Back face
-		};
+		});
 
-		std::vector<uint32_t> cubeIndices // 6 faces * 2 tris * 3 indices 
+		util::ByteVector cubeIndices = util::ByteVector::Create<uint32_t>( // 6 faces * 2 tris * 3 indices 
 		{
 			0, 1, 3, // Front face
 			1, 2, 3,
@@ -398,15 +399,17 @@ namespace gr::meshfactory
 
 			20, 21, 23, // Back face:
 			21, 22, 23,
-		};
+		});
 
-		std::vector<glm::vec3> normals; // Empty: Will be generated if necessary
-		std::vector<glm::vec4> tangents;
-		std::vector<glm::vec4> colors;
+		util::ByteVector normals = util::ByteVector::Create<glm::vec3>(); // Empty: Will be generated if necessary
+		util::ByteVector tangents = util::ByteVector::Create<glm::vec4>();
+		util::ByteVector colors = 
+			util::ByteVector::Create<glm::vec4>(assembledPositions.size(), factoryOptions.m_vertexColor);
 
 		constexpr char const* meshName = "cube";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
+		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
@@ -416,22 +419,15 @@ namespace gr::meshfactory
 			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &assembledUVs,
-			.m_colors = factoryOptions.m_generateVertexColors ? &colors : nullptr,
-			.m_joints = nullptr,
-			.m_weights = nullptr,
-			.m_vertexColor = factoryOptions.m_vertexColor,
+			.m_extraChannels = extraChannels.data(),
+			.m_numExtraChannels = extraChannels.size(),
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
-		std::vector<float>* normalsPtr = 
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&normals) : nullptr;
-
-		std::vector<float>* tangentsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
-
-		std::vector<float>* colorsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
+		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
+		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
+		util::ByteVector* colorsPtr = factoryOptions.m_generateNormalsAndTangents ? &colors : nullptr;
 
 		std::vector<re::VertexStream const*> vertexStreams;
 		vertexStreams.reserve(5);
@@ -517,24 +513,25 @@ namespace gr::meshfactory
 		}
 
 		// Create a triangle twice the size of clip space, and let the clipping hardware trim it to size:
-		std::vector<glm::vec2> uvs // NOTE: (0,0) = Top left of UV space
+		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>(// NOTE: (0,0) = Top left of UV space
 		{
 			glm::vec2(0.f, -1.f), // tl
 			glm::vec2(0.f, 1.f), // bl
 			glm::vec2(2.f, 1.f)  // br
-		};
+		});
 
 		const glm::vec3 tl = glm::vec3(-1.f, 3.f, zDepth);
 		const glm::vec3 bl = glm::vec3(-1.f, -1.f, zDepth);
 		const glm::vec3 br = glm::vec3(3.0f, -1.0f, zDepth);
 
 		// Assemble geometry:
-		std::vector<glm::vec3> positions = { tl, bl, br };
-		std::vector<uint32_t> triIndices{ 0, 1, 2 }; // Note: CCW winding
+		util::ByteVector positions = util::ByteVector::Create<glm::vec3>({ tl, bl, br });
+		util::ByteVector triIndices = util::ByteVector::Create<uint32_t>({ 0, 1, 2 }); // Note: CCW winding
 
 		constexpr char meshName[] = "optimizedFullscreenQuad";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams; // Use defaults
+
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
@@ -544,9 +541,6 @@ namespace gr::meshfactory
 			.m_normals = nullptr,
 			.m_tangents = nullptr,
 			.m_UV0 = &uvs,
-			.m_colors = nullptr,
-			.m_joints = nullptr,
-			.m_weights = nullptr,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
@@ -593,29 +587,30 @@ namespace gr::meshfactory
 		glm::vec3 bl /*= glm::vec3(-0.5f, -0.5f, 0.0f)*/,
 		glm::vec3 br /*= glm::vec3(0.5f, -0.5f, 0.0f)*/)
 	{
-		std::vector<glm::vec3> positions = { tl, bl, tr, br };
+		util::ByteVector positions = util::ByteVector::Create<glm::vec3>({ tl, bl, tr, br });
 
-		std::vector<glm::vec2> uvs // Note: (0,0) = Top left
+		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>( // Note: (0,0) = Top left
 		{
 			glm::vec2(0.f, 0.f), // tl
 			glm::vec2(0.f, 1.f), // bl
 			glm::vec2(1.f, 0.f), // tr
 			glm::vec2(1.f, 1.f)  // br
-		};
+		});
 
-		std::vector<uint32_t> quadIndices
+		util::ByteVector quadIndices = util::ByteVector::Create<uint32_t>(
 		{
 			0, 1, 2,	// TL face
 			2, 1, 3		// BR face
-		}; // Note: CCW winding
+		}); // Note: CCW winding
 
-		std::vector<glm::vec3> normals; // Empty: Will be generated if necessary
-		std::vector<glm::vec4> tangents;
-		std::vector<glm::vec4> colors;
+		util::ByteVector normals = util::ByteVector::Create<glm::vec3>(); // Empty: Will be generated if necessary
+		util::ByteVector tangents = util::ByteVector::Create<glm::vec4>();
+		util::ByteVector colors = util::ByteVector::Create<glm::vec4>(positions.size(), factoryOptions.m_vertexColor);
 
 		constexpr char meshName[] = "quad";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
+		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
@@ -625,22 +620,15 @@ namespace gr::meshfactory
 			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
-			.m_colors = factoryOptions.m_generateVertexColors ? &colors : nullptr,
-			.m_joints = nullptr,
-			.m_weights = nullptr,
-			.m_vertexColor = factoryOptions.m_vertexColor,
+			.m_extraChannels = extraChannels.data(),
+			.m_numExtraChannels = extraChannels.size(),
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
-		std::vector<float>* normalsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&normals) : nullptr;
-
-		std::vector<float>* tangentsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
-
-		std::vector<float>* colorsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
+		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
+		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
+		util::ByteVector* colorsPtr = factoryOptions.m_generateNormalsAndTangents ? &colors : nullptr;
 
 		std::vector<re::VertexStream const*> vertexStreams;
 		vertexStreams.reserve(5);
@@ -743,12 +731,12 @@ namespace gr::meshfactory
 		//		numLongSlices = vertical segments
 
 		const uint32_t numVerts = numLatSlices * numLongSlices + 2; // + 2 for end caps
-		std::vector<glm::vec3> positions(numVerts);
-		std::vector<glm::vec3> normals(numVerts);
-		std::vector<glm::vec2> uvs(numVerts);
+		util::ByteVector positions = util::ByteVector::Create<glm::vec3>(numVerts);
+		util::ByteVector normals = util::ByteVector::Create<glm::vec3>(numVerts);
+		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>(numVerts);
 
 		const uint32_t numIndices = 3 * numLatSlices * numLongSlices * 2;
-		std::vector<uint32_t> indices(numIndices);
+		util::ByteVector indices = util::ByteVector::Create<uint32_t>(numIndices);
 
 		// Generate a sphere about the Y axis:
 		glm::vec3 firstPosition = glm::vec3(0.0f, radius, 0.0f);
@@ -758,9 +746,9 @@ namespace gr::meshfactory
 
 		uint32_t currentIndex = 0;
 
-		positions[currentIndex] = firstPosition;
-		normals[currentIndex] = firstNormal;
-		uvs[currentIndex] = firstUv0;
+		positions.at<glm::vec3>(currentIndex) = firstPosition;
+		normals.at<glm::vec3>(currentIndex) = firstNormal;
+		uvs.at<glm::vec2>(currentIndex) = firstUv0;
 		currentIndex++;
 
 		// Rotate about Z: Arc down the side profile of our sphere
@@ -796,9 +784,9 @@ namespace gr::meshfactory
 				glm::vec3 normal = glm::normalize(position);
 				glm::vec2 uv0 = glm::vec2(uvX, uvY);
 
-				positions[currentIndex] = position;
-				normals[currentIndex] = normal;
-				uvs[currentIndex] = uv0;
+				positions.at<glm::vec3>(currentIndex) = position;
+				normals.at<glm::vec3>(currentIndex) = normal;
+				uvs.at<glm::vec2>(currentIndex) = uv0;
 				currentIndex++;
 
 				uvX += uvXStep;
@@ -815,9 +803,9 @@ namespace gr::meshfactory
 		const glm::vec3 finalNormal = glm::vec3(0, -1, 0);
 		const glm::vec2 finalUv0 = glm::vec2(0.5f, 1.0f);
 
-		positions[currentIndex] = finalPosition;
-		normals[currentIndex] = finalNormal;
-		uvs[currentIndex] = finalUv0;
+		positions.at<glm::vec3>(currentIndex) = finalPosition;
+		normals.at<glm::vec3>(currentIndex) = finalNormal;
+		uvs.at<glm::vec2>(currentIndex) = finalUv0;
 
 		// Indices: (Note: We use counter-clockwise vertex winding)
 		currentIndex = 0;
@@ -825,11 +813,11 @@ namespace gr::meshfactory
 		// Top cap:
 		for (uint32_t i = 1; i <= numLatSlices; i++)
 		{
-			indices[currentIndex++] = 0;
-			indices[currentIndex++] = i;
-			indices[currentIndex++] = i + 1;
+			indices.at<uint32_t>(currentIndex++) = 0;
+			indices.at<uint32_t>(currentIndex++) = i;
+			indices.at<uint32_t>(currentIndex++) = i + 1;
 		}
-		indices[currentIndex - 1] = 1; // Wrap the last edge back to the start
+		indices.at<uint32_t>(currentIndex - 1) = 1; // Wrap the last edge back to the start
 
 		// Mid section:
 		uint32_t topLeft = 1;
@@ -841,14 +829,14 @@ namespace gr::meshfactory
 			for (uint32_t j = 0; j < numLatSlices - 1; j++)
 			{
 				// Top left triangle:
-				indices[currentIndex++] = topLeft;
-				indices[currentIndex++] = botLeft;
-				indices[currentIndex++] = topRight;
+				indices.at<uint32_t>(currentIndex++) = topLeft;
+				indices.at<uint32_t>(currentIndex++) = botLeft;
+				indices.at<uint32_t>(currentIndex++) = topRight;
 
 				// Bot right triangle
-				indices[currentIndex++] = topRight;
-				indices[currentIndex++] = botLeft;
-				indices[currentIndex++] = botRight;
+				indices.at<uint32_t>(currentIndex++) = topRight;
+				indices.at<uint32_t>(currentIndex++) = botLeft;
+				indices.at<uint32_t>(currentIndex++) = botRight;
 
 				topLeft++;
 				topRight++;
@@ -857,14 +845,14 @@ namespace gr::meshfactory
 			}
 			// Wrap the edge around:
 			// Top left triangle:
-			indices[currentIndex++] = topLeft;
-			indices[currentIndex++] = botLeft;
-			indices[currentIndex++] = topRight - numLatSlices;
+			indices.at<uint32_t>(currentIndex++) = topLeft;
+			indices.at<uint32_t>(currentIndex++) = botLeft;
+			indices.at<uint32_t>(currentIndex++) = topRight - numLatSlices;
 
 			// Bot right triangle
-			indices[currentIndex++] = topRight - numLatSlices;
-			indices[currentIndex++] = botLeft;
-			indices[currentIndex++] = botRight - numLatSlices;
+			indices.at<uint32_t>(currentIndex++) = topRight - numLatSlices;
+			indices.at<uint32_t>(currentIndex++) = botLeft;
+			indices.at<uint32_t>(currentIndex++) = botRight - numLatSlices;
 
 			// Advance to the next row:
 			topLeft++;
@@ -876,18 +864,19 @@ namespace gr::meshfactory
 		// Bottom cap:
 		for (uint32_t i = numVerts - numLatSlices - 1; i < numVerts - 1; i++)
 		{
-			indices[currentIndex++] = i;
-			indices[currentIndex++] = numVerts - 1;
-			indices[currentIndex++] = i + 1;
+			indices.at<uint32_t>(currentIndex++) = i;
+			indices.at<uint32_t>(currentIndex++) = numVerts - 1;
+			indices.at<uint32_t>(currentIndex++) = i + 1;
 		}
-		indices[currentIndex - 1] = numVerts - numLatSlices - 1; // Wrap the last edge back to the start
+		indices.at<uint32_t>(currentIndex - 1) = numVerts - numLatSlices - 1; // Wrap the last edge back to the start
 
 		constexpr char meshName[] = "sphere";
 
-		std::vector<glm::vec4> tangents; // Empty: Will be generated if necessary
-		std::vector<glm::vec4> colors;
+		util::ByteVector tangents = util::ByteVector::Create<glm::vec4>(); // Empty: Will be generated if necessary
+		util::ByteVector colors = util::ByteVector::Create<glm::vec4>(positions.size(), factoryOptions.m_vertexColor);
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
+		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
@@ -897,22 +886,15 @@ namespace gr::meshfactory
 			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
-			.m_colors = factoryOptions.m_generateVertexColors ? &colors : nullptr,
-			.m_joints = nullptr,
-			.m_weights = nullptr,
-			.m_vertexColor = factoryOptions.m_vertexColor
+			.m_extraChannels = extraChannels.data(),
+			.m_numExtraChannels = extraChannels.size(),
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
-		std::vector<float>* normalsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&normals) : nullptr;
-
-		std::vector<float>* tangentsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
-
-		std::vector<float>* colorsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
+		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
+		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
+		util::ByteVector* colorsPtr = factoryOptions.m_generateNormalsAndTangents ? &colors : nullptr;
 
 		std::vector<re::VertexStream const*> vertexStreams;
 		vertexStreams.reserve(4);
@@ -996,12 +978,12 @@ namespace gr::meshfactory
 		// bottom face, shared bottom center point
 		const uint32_t numVerts = numSides + ((numSides + 1) * 2) + 1; // + 1 for shared bottom center point
 
-		std::vector<glm::vec3> positions(numVerts);
-		std::vector<glm::vec3> normals(numVerts);
-		std::vector<glm::vec2> uvs(numVerts);
+		util::ByteVector positions = util::ByteVector::Create<glm::vec3>(numVerts);
+		util::ByteVector normals = util::ByteVector::Create<glm::vec3>(numVerts);
+		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>(numVerts);
 
 		const uint32_t numIndices = 3 * 2 * numSides; // 3 indices per triangle, with 2 triangles per side/base step
-		std::vector<uint32_t> indices(numIndices);
+		util::ByteVector indices = util::ByteVector::Create<uint32_t>(numIndices);
 
 		const float yCoord = -height;
 		const glm::vec3 topPosition = glm::vec3(0.f); // We need a unique top vert per side face
@@ -1044,13 +1026,13 @@ namespace gr::meshfactory
 			if (edgeIdx == numSides)
 			{
 				// No extra top vert is necessary
-				positions[sideEdgeVertIdx] = positions[firstSideEdgeVertIdx];
-				positions[bottomEdgeVertIdx] = positions[firstBottomEdgeVertIdx];
+				positions.at<glm::vec3>(sideEdgeVertIdx) = positions.at<glm::vec3>(firstSideEdgeVertIdx);
+				positions.at<glm::vec3>(bottomEdgeVertIdx) = positions.at<glm::vec3>(firstBottomEdgeVertIdx);
 			}
 			else
 			{
 				// Top point:
-				positions[topVertIdx] = topPosition;
+				positions.at<glm::vec3>(topVertIdx) = topPosition;
 
 				// Cone edge vertex:
 				const float curRadians = edgeIdx * edgeRadianStep;
@@ -1058,17 +1040,17 @@ namespace gr::meshfactory
 				const float zCoord = radius * sin(curRadians) * -1.f;
 				const glm::vec3 edgePosition = glm::vec3(xCoord, yCoord, zCoord);
 
-				positions[sideEdgeVertIdx] = edgePosition; // Side face edge
-				positions[bottomEdgeVertIdx] = edgePosition; // Bottom face edge
+				positions.at<glm::vec3>(sideEdgeVertIdx) = edgePosition; // Side face edge
+				positions.at<glm::vec3>(bottomEdgeVertIdx) = edgePosition; // Bottom face edge
 
 				// UVs:
 				const float curFaceUVRadians = glm::pi<float>() + (edgeIdx * faceUVRadianStep);
-				uvs[topVertIdx] = topVertUV;
-				uvs[sideEdgeVertIdx] = 
+				uvs.at<glm::vec2>(topVertIdx) = topVertUV;
+				uvs.at<glm::vec2>(sideEdgeVertIdx) = 
 					topVertUV + glm::vec2(glm::cos(curFaceUVRadians), glm::sin(curFaceUVRadians)) * faceEdgeUVLength;
 				
 				const float curBotUVRadians = edgeIdx * bottomUVRadianStep;
-				uvs[bottomEdgeVertIdx] = 
+				uvs.at<glm::vec2>(bottomEdgeVertIdx) = 
 					bottomCenterVertUV + glm::vec2(glm::cos(curBotUVRadians), glm::sin(curBotUVRadians)) * bottomEdgeUVLength;
 
 				// Indices:
@@ -1076,14 +1058,14 @@ namespace gr::meshfactory
 				const uint32_t nextBotEdgeVertIdx = bottomEdgeVertIdx + 1;
 
 				// Side face:
-				indices[indicesIdx++] = topVertIdx;
-				indices[indicesIdx++] = sideEdgeVertIdx;
-				indices[indicesIdx++] = nextSideEdgeVertIdx;
+				indices.at<uint32_t>(indicesIdx++) = topVertIdx;
+				indices.at<uint32_t>(indicesIdx++) = sideEdgeVertIdx;
+				indices.at<uint32_t>(indicesIdx++) = nextSideEdgeVertIdx;
 
 				// Bottom face:
-				indices[indicesIdx++] = nextBotEdgeVertIdx;
-				indices[indicesIdx++] = bottomEdgeVertIdx;
-				indices[indicesIdx++] = bottomVertIdx;
+				indices.at<uint32_t>(indicesIdx++) = nextBotEdgeVertIdx;
+				indices.at<uint32_t>(indicesIdx++) = bottomEdgeVertIdx;
+				indices.at<uint32_t>(indicesIdx++) = bottomVertIdx;
 			}
 
 			// Prepare for the next iteration:
@@ -1093,8 +1075,8 @@ namespace gr::meshfactory
 		}
 
 		// Shared bottom center vertex:
-		positions[bottomVertIdx] = glm::vec3(0.f, yCoord, 0.f);
-		uvs[bottomVertIdx] = bottomCenterVertUV;
+		positions.at<glm::vec3>(bottomVertIdx) = glm::vec3(0.f, yCoord, 0.f);
+		uvs.at<glm::vec2>(bottomVertIdx) = bottomCenterVertUV;
 		
 		// Soft normals:
 		
@@ -1107,10 +1089,10 @@ namespace gr::meshfactory
 				const uint32_t blVertIdx = firstSideEdgeVertIdx + vertIdx;
 				const uint32_t brVertIdx = blVertIdx + 1;
 
-				const glm::vec3 tangentX = positions[brVertIdx] - positions[blVertIdx];
-				const glm::vec3 bitangentY = positions[topVertIdx] - positions[blVertIdx];
+				const glm::vec3 tangentX = positions.at<glm::vec3>(brVertIdx) - positions.at<glm::vec3>(blVertIdx);
+				const glm::vec3 bitangentY = positions.at<glm::vec3>(topVertIdx) - positions.at<glm::vec3>(blVertIdx);
 
-				normals[topVertIdx] = glm::normalize(glm::cross(tangentX, bitangentY));
+				normals.at<glm::vec3>(topVertIdx) = glm::normalize(glm::cross(tangentX, bitangentY));
 			}
 
 			// Side edge normals:
@@ -1120,7 +1102,8 @@ namespace gr::meshfactory
 			{
 				const uint32_t normalIdx = firstSideEdgeVertIdx + vertIdx;
 
-				normals[normalIdx] = glm::normalize((normals[leftTopVertIdx] + normals[rightTopVertIdx]) * 0.5f);
+				normals.at<glm::vec3>(normalIdx) = 
+					glm::normalize((normals.at<glm::vec3>(leftTopVertIdx) + normals.at<glm::vec3>(rightTopVertIdx)) * 0.5f);
 
 				leftTopVertIdx = (leftTopVertIdx + 1) % numTopVerts;
 				rightTopVertIdx = (rightTopVertIdx + 1) % numTopVerts;
@@ -1128,11 +1111,11 @@ namespace gr::meshfactory
 
 			// Bottom vertex normals:
 			const glm::vec3 bottomNormal = glm::vec3(0.f, -1.f, 0.f);
-			normals[bottomVertIdx] = bottomNormal;
+			normals.at<glm::vec3>(bottomVertIdx) = bottomNormal;
 			for (uint32_t vertIdx = 0; vertIdx < numBottomEdgeVerts; vertIdx++)
 			{
 				const uint32_t botVertIdx = firstBottomEdgeVertIdx + vertIdx;
-				normals[botVertIdx] = bottomNormal;
+				normals.at<glm::vec3>(botVertIdx) = bottomNormal;
 			}
 		}
 
@@ -1141,10 +1124,11 @@ namespace gr::meshfactory
 
 		constexpr char const* meshName = "cone";
 
-		std::vector<glm::vec4> tangents; // Empty: Will be generated if necessary
-		std::vector<glm::vec4> colors;
+		util::ByteVector tangents = util::ByteVector::Create<glm::vec4>(); // Empty: Will be generated if necessary
+		util::ByteVector colors = util::ByteVector::Create<glm::vec4>(positions.size(), factoryOptions.m_vertexColor);
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
+		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
 			.m_name = meshName,
@@ -1154,22 +1138,15 @@ namespace gr::meshfactory
 			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
-			.m_colors = factoryOptions.m_generateVertexColors ? &colors : nullptr,
-			.m_joints = nullptr,
-			.m_weights = nullptr,
-			.m_vertexColor = factoryOptions.m_vertexColor
+			.m_extraChannels = extraChannels.data(),
+			.m_numExtraChannels = extraChannels.size(),
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
-		std::vector<float>* normalsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&normals) : nullptr;
-
-		std::vector<float>* tangentsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
-
-		std::vector<float>* colorsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&colors) : nullptr;
+		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
+		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
+		util::ByteVector* colorsPtr = factoryOptions.m_generateNormalsAndTangents ? &colors : nullptr;
 
 		std::vector<re::VertexStream const*> vertexStreams;
 		vertexStreams.reserve(5);
@@ -1255,35 +1232,34 @@ namespace gr::meshfactory
 	{
 		zDepth = std::clamp(zDepth, 0.f, 1.f);
 
-		std::vector<glm::vec3> positions // In clip space: bl near = [-1,-1, 0] , tr far = [1,1,1]
+		util::ByteVector positions = util::ByteVector::Create<glm::vec3>( // In clip space: bl near = [-1,-1, 0] , tr far = [1,1,1]
 		{
 			glm::vec3(0.0f * scale,		0.75f * scale,	zDepth),	// Top center
 			glm::vec3(-0.75f * scale,	-0.75f * scale, zDepth),	// bl
 			glm::vec3(0.75f * scale,	-0.75f * scale, zDepth)		// br
-		};
+		});
 
-		std::vector<glm::vec2> uvs // Note: (0,0) = Top left
+		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>( // Note: (0,0) = Top left
 		{
 			glm::vec2(0.5f, 0.f),	// Top center
 			glm::vec2(0.f, 1.f),	// bl
 			glm::vec2(1.f, 0.f),	// br
-		};
+		});
 
-		std::vector<uint32_t> indices
+		util::ByteVector indices = util::ByteVector::Create<uint32_t>(
 		{
 			0, 1, 2
-		}; // Note: CCW winding
+		}); // Note: CCW winding
 
-		std::vector<glm::vec4> colors
-		{
+		util::ByteVector colors = util::ByteVector::Create<glm::vec4>({
 			glm::vec4(1.f, 0.f, 0.f, 1.f), // Top center: Red
 			glm::vec4(0.f, 1.f, 0.f, 1.f), // bl: Green
 			glm::vec4(0.f, 0.f, 1.f, 1.f), // br: Blue
-		};
+		});
 
-		std::vector<glm::vec3> normals; // Empty: Will be generated if necessary
-		std::vector<glm::vec4> tangents;
-
+		util::ByteVector normals = util::ByteVector::Create<glm::vec3>(); // Empty: Will be generated if necessary
+		util::ByteVector tangents = util::ByteVector::Create<glm::vec4>();
+		std::vector<util::ByteVector*> extraChannels = { &colors };
 		constexpr char meshName[] = "helloTriangle";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
@@ -1296,18 +1272,14 @@ namespace gr::meshfactory
 			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
-			.m_colors = nullptr, // Nothing to build: We're defining our own
-			.m_joints = nullptr,
-			.m_weights = nullptr
+			.m_extraChannels = extraChannels.data(),
+			.m_numExtraChannels = extraChannels.size(),
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Get pointers for our missing attributes, if necessary:
-		std::vector<float>* normalsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&normals) : nullptr;
-
-		std::vector<float>* tangentsPtr =
-			factoryOptions.m_generateNormalsAndTangents ? reinterpret_cast<std::vector<float>*>(&tangents) : nullptr;
+		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
+		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
 
 		std::vector<re::VertexStream const*> vertexStreams;
 		vertexStreams.reserve(5);

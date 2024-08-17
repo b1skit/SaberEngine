@@ -48,7 +48,9 @@ namespace re
 		{
 			// Note: All draws are instanced, even if an API supports non-instanced drawing
 			IndexedInstanced,
-			ArrayInstanced
+			ArrayInstanced,
+
+			Invalid
 		};
 
 		using FilterBitmask = uint32_t;
@@ -73,14 +75,14 @@ namespace re
 		{
 			// Note: Don't forget to update ComputeDataHash() if modifying this
 			
-			GeometryMode m_batchGeometryMode;
-			uint32_t m_numInstances;
-			gr::MeshPrimitive::TopologyMode m_batchTopologyMode;
+			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
+			uint32_t m_numInstances = 0;
+			gr::MeshPrimitive::TopologyMode m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::TriangleList;
 
-			VertexStreamInput m_vertexStreams[re::VertexStream::k_maxVertexStreams];
-			uint8_t m_numVertexStreams;
+			VertexStreamInput m_vertexStreams[re::VertexStream::k_maxVertexStreams] = {0};
+			uint8_t m_numVertexStreams = 0;
 
-			re::VertexStream const* m_indexStream;
+			re::VertexStream const* m_indexStream = nullptr;
 
 			// If a batch is created via the CTOR that takes a gr::Material::MaterialInstanceData, we store the 
 			// material's unique ID so we can include it in the data hash to ensure batches with identical geometry and

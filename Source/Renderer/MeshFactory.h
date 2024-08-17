@@ -26,8 +26,7 @@ namespace gr::meshfactory
 	{
 		bool m_generateNormalsAndTangents = false;
 		
-		bool m_generateVertexColors = false;
-		glm::vec4 m_vertexColor = glm::vec4(1.f);
+		glm::vec4 m_vertexColor = glm::vec4(1.f); // GLTF default = (1,1,1,1)
 
 		Orientation m_orientation = Orientation::Default;
 	};

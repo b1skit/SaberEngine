@@ -316,8 +316,7 @@ namespace fr
 				const gr::meshfactory::FactoryOptions factoryOptions
 				{
 					.m_generateNormalsAndTangents = true,
-					.m_generateVertexColors = true,
-					.m_vertexColor = glm::vec4(1.f)
+					.m_vertexColor = glm::vec4(1.f) // GLTF default
 				};
 
 				std::shared_ptr<gr::MeshPrimitive> mesh = nullptr;

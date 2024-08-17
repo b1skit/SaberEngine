@@ -3,6 +3,8 @@
 #include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
 
+#include "Core/Util/ByteVector.h"
+
 
 namespace re
 {
@@ -91,9 +93,8 @@ namespace re
 
 
 	public:
-		template<typename T>
 		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(
-			Lifetime, Type, uint8_t srcIdx, DataType, Normalize, std::vector<T>&& data);
+			Lifetime, Type, uint8_t srcIdx, DataType, Normalize, util::ByteVector&&);
 
 		VertexStream(VertexStream&&) = default;
 		VertexStream& operator=(VertexStream&&) = default;
@@ -177,14 +178,13 @@ namespace re
 	}
 
 
-	template<typename T>
-	std::shared_ptr<re::VertexStream> VertexStream::Create(
+	inline std::shared_ptr<re::VertexStream> VertexStream::Create(
 		Lifetime lifetime,
 		Type type,
 		uint8_t srcIdx,
 		DataType dataType,
 		Normalize doNormalize,
-		std::vector<T>&& data)
+		util::ByteVector&& byteData)
 	{
 		return CreateInternal(
 			lifetime,
@@ -192,7 +192,7 @@ namespace re
 			srcIdx,
 			dataType,
 			doNormalize,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&data)) );
+			std::move(byteData.data()));
 	}
 
 

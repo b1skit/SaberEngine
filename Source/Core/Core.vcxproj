@@ -121,6 +121,7 @@
     <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="ProfilingMarkers.h" />
     <ClInclude Include="ThreadPool.h" />
+    <ClInclude Include="Util\ByteVector.h" />
     <ClInclude Include="Util\CastUtils.h" />
     <ClInclude Include="Util\DoubleBufferUnorderedMap.h" />
     <ClInclude Include="Util\FileIOUtils.h" />
