@@ -7,6 +7,8 @@
 #include "RenderDataComponent.h"
 #include "TransformComponent.h"
 
+#include "Core/Util/ByteVector.h"
+
 
 namespace
 {
@@ -99,7 +101,7 @@ namespace fr
 		entt::entity entity,
 		glm::vec3 const& minXYZ,
 		glm::vec3 const& maxXYZ,
-		std::vector<glm::vec3> const& positions)
+		util::ByteVector const& positions)
 	{
 		// Attach the BoundsComponent (which will trigger event listeners)
 		fr::BoundsComponent* boundsCmpt = 
@@ -152,7 +154,7 @@ namespace fr
 
 
 	BoundsComponent::BoundsComponent(
-		PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions)
+		PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, util::ByteVector const& positions)
 		: m_minXYZ(minXYZ)
 		, m_maxXYZ(maxXYZ)
 		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
@@ -222,18 +224,18 @@ namespace fr
 	}
 
 
-	void BoundsComponent::ComputeBounds(std::vector<glm::vec3> const& positions)
+	void BoundsComponent::ComputeBounds(util::ByteVector const& positions)
 	{
 		for (size_t i = 0; i < positions.size(); i++)
 		{
-			m_minXYZ.x = std::min(positions[i].x, m_minXYZ.x);
-			m_maxXYZ.x = std::max(positions[i].x, m_maxXYZ.x);
+			m_minXYZ.x = std::min(positions.at<glm::vec3>(i).x, m_minXYZ.x);
+			m_maxXYZ.x = std::max(positions.at<glm::vec3>(i).x, m_maxXYZ.x);
 
-			m_minXYZ.y = std::min(positions[i].y, m_minXYZ.y);
-			m_maxXYZ.y = std::max(positions[i].y, m_maxXYZ.y);
+			m_minXYZ.y = std::min(positions.at<glm::vec3>(i).y, m_minXYZ.y);
+			m_maxXYZ.y = std::max(positions.at<glm::vec3>(i).y, m_maxXYZ.y);
 
-			m_minXYZ.z = std::min(positions[i].z, m_minXYZ.z);
-			m_maxXYZ.z = std::max(positions[i].z, m_maxXYZ.z);
+			m_minXYZ.z = std::min(positions.at<glm::vec3>(i).z, m_minXYZ.z);
+			m_maxXYZ.z = std::max(positions.at<glm::vec3>(i).z, m_maxXYZ.z);
 		}
 		SEAssert(glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
 			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false,

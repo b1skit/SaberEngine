@@ -30,7 +30,7 @@ namespace
 		}
 	}
 
-	void NormalizeData(std::vector<uint8_t>& data, re::VertexStream::DataType dataType)
+	void NormalizeData(util::ByteVector& data, re::VertexStream::DataType dataType)
 	{
 		const uint8_t numComponents = re::VertexStream::DataTypeToNumComponents(dataType);
 
@@ -154,7 +154,7 @@ namespace re
 		uint8_t srcIdx,
 		DataType dataType, 
 		Normalize doNormalize, 
-		std::vector<uint8_t>&& data)
+		util::ByteVector&& data)
 	{
 		std::shared_ptr<re::VertexStream> newVertexStream;
 		newVertexStream.reset(new VertexStream(
@@ -189,16 +189,15 @@ namespace re
 		uint8_t srcIdx,
 		DataType dataType, 
 		Normalize doNormalize, 
-		std::vector<uint8_t>&& data)
+		util::ByteVector&& data)
 		: m_lifetime(lifetime)
 		, m_streamType(type)
 		, m_sourceChannelSemanticIdx(srcIdx)
 		, m_dataType(dataType)
+		, m_data(std::move(data))
 		, m_doNormalize(doNormalize)
 		, m_platformParams(nullptr)
 	{
-		m_data = std::move(data);
-
 		// D3D12 does not support GPU-normalization of 32-bit types. As a hail-mary, we attempt to pre-normalize here
 		if (DoNormalize() && 
 			m_dataType == re::VertexStream::DataType::Float ||
@@ -255,11 +254,11 @@ namespace re
 		{
 			return nullptr;
 		}
-		return m_data.data();
+		return m_data.data().data();
 	}
 
 
-	std::vector<uint8_t> const& VertexStream::GetDataAsVector() const
+	util::ByteVector const& VertexStream::GetDataByteVector() const
 	{
 		return m_data;
 	}
@@ -267,7 +266,7 @@ namespace re
 
 	uint32_t VertexStream::GetTotalDataByteSize() const
 	{
-		return util::CheckedCast<uint32_t>(m_data.size());
+		return util::CheckedCast<uint32_t>(m_data.NumBytes());
 	}
 
 
@@ -276,7 +275,7 @@ namespace re
 		// i.e. Get the number of vertices
 		const uint8_t numComponents = DataTypeToNumComponents(m_dataType);
 		const uint8_t componentByteSize = DataTypeToComponentByteSize(m_dataType);
-		return util::CheckedCast<uint32_t>(m_data.size()) / (numComponents * componentByteSize);
+		return util::CheckedCast<uint32_t>(m_data.NumBytes()) / (numComponents * componentByteSize);
 	}
 
 

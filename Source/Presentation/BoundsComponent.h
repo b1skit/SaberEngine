@@ -3,6 +3,11 @@
 #include "Renderer/BoundsRenderData.h"
 
 
+namespace util
+{
+	class ByteVector;
+}
+
 namespace fr
 {
 	class EntityManager;
@@ -37,7 +42,7 @@ namespace fr
 			entt::entity, 
 			glm::vec3 const& minXYZ, 
 			glm::vec3 const& maxXYZ, 
-			std::vector<glm::vec3> const& positions);
+			util::ByteVector const& positions);
 
 	public:
 		static gr::Bounds::RenderData CreateRenderData(fr::BoundsComponent const&, fr::NameComponent const&);
@@ -76,7 +81,7 @@ namespace fr
 		BoundsComponent(PrivateCTORTag);
 		explicit BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ);
 		explicit BoundsComponent(
-			PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions);
+			PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, util::ByteVector const& positions);
 
 		BoundsComponent(BoundsComponent const& rhs) = default;
 		BoundsComponent(BoundsComponent&&) = default;
@@ -88,7 +93,7 @@ namespace fr
 
 
 	private:
-		void ComputeBounds(std::vector<glm::vec3> const& positions);
+		void ComputeBounds(util::ByteVector const&);
 		void Make3Dimensional();
 
 

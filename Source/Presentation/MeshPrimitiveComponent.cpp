@@ -35,8 +35,8 @@ namespace
 			owningEntity,
 			positionMinXYZ,
 			positionMaxXYZ,
-			reinterpret_cast<std::vector<glm::vec3> const&>(
-				meshPrimitive->GetVertexStream(re::VertexStream::Type::Position, 0)->GetDataAsVector()));
+			meshPrimitive->GetVertexStream(re::VertexStream::Type::Position, 0)->GetDataByteVector() );
+
 		fr::BoundsComponent const& meshPrimitiveBounds = em.GetComponent<fr::BoundsComponent>(owningEntity);
 
 		fr::Relationship& owningEntityRelationship = em.GetComponent<fr::Relationship>(owningEntity);

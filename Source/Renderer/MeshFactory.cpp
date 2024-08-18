@@ -236,7 +236,7 @@ namespace
 			0,
 			re::VertexStream::DataType::Float3,
 			re::VertexStream::Normalize::False,
-			std::move(positions) ).get());
+			std::move(positions)).get());
 		
 		if (normalsPtr)
 		{

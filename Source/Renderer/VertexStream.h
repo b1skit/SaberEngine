@@ -105,8 +105,7 @@ namespace re
 		uint8_t GetSourceSemanticIdx() const; // Index/channel of the stream in the source asset (e.g. uv0 = 0, uv1 = 1)
 
 		void const* GetData() const;
-
-		std::vector<uint8_t> const& GetDataAsVector() const;
+		util::ByteVector const& GetDataByteVector() const;
 
 		uint32_t GetTotalDataByteSize() const;
 		
@@ -141,16 +140,16 @@ namespace re
 		Normalize m_doNormalize;
 		DataType m_dataType;
 
-		std::vector<uint8_t> m_data;
+		util::ByteVector m_data;
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 
 
 	private: // Use the Create() factory instead
-		VertexStream(Lifetime, Type, uint8_t srcIdx, DataType, Normalize, std::vector<uint8_t>&& data);
+		VertexStream(Lifetime, Type, uint8_t srcIdx, DataType, Normalize, util::ByteVector&& data);
 
 		static std::shared_ptr<re::VertexStream> CreateInternal(
-			Lifetime, Type, uint8_t srcIdx, DataType, Normalize, std::vector<uint8_t>&& data);
+			Lifetime, Type, uint8_t srcIdx, DataType, Normalize, util::ByteVector&& data);
 
 
 	private:
@@ -192,7 +191,7 @@ namespace re
 			srcIdx,
 			dataType,
 			doNormalize,
-			std::move(byteData.data()));
+			std::move(byteData));
 	}
 
 

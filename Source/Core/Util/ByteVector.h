@@ -59,6 +59,9 @@ namespace util
 		size_t size() const;
 		bool empty() const;
 
+	public:
+		size_t NumBytes() const;
+
 		std::vector<uint8_t>& data();
 		std::vector<uint8_t> const& data() const;
 
@@ -248,6 +251,12 @@ namespace util
 	inline bool ByteVector::empty() const
 	{
 		return m_data.empty();
+	}
+
+
+	inline size_t ByteVector::NumBytes() const
+	{
+		return m_data.size();
 	}
 
 
