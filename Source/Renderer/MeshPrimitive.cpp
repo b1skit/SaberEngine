@@ -50,6 +50,20 @@ namespace
 
 #endif
 	}
+
+
+	inline void SortVertexStreams(std::vector<re::VertexStream const*>& vertexStreams)
+	{
+		std::sort(vertexStreams.begin(), vertexStreams.end(),
+			[](re::VertexStream const* a, re::VertexStream const* b)
+			{
+				if (a->GetType() == b->GetType())
+				{
+					return a->GetSourceSemanticIdx() < b->GetSourceSemanticIdx();
+				}
+				return a->GetType() < b->GetType();
+			});
+	}
 }
 
 namespace gr
@@ -105,6 +119,7 @@ namespace gr
 		, m_indexStream(indexStream)
 	{
 		m_vertexStreams = std::move(vertexStreams);
+		SortVertexStreams(m_vertexStreams);
 
 		ValidateVertexStreams(m_vertexStreams); // _DEBUG only
 

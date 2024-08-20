@@ -148,10 +148,10 @@ namespace re
 	}
 
 
-	std::shared_ptr<re::VertexStream> VertexStream::CreateInternal(
+	std::shared_ptr<re::VertexStream> VertexStream::Create(
 		Lifetime lifetime, 
 		Type type,
-		uint8_t srcIdx,
+		uint8_t srcSemanticIdx,
 		DataType dataType, 
 		Normalize doNormalize, 
 		util::ByteVector&& data)
@@ -160,7 +160,7 @@ namespace re
 		newVertexStream.reset(new VertexStream(
 			lifetime,
 			type,
-			srcIdx,
+			srcSemanticIdx,
 			dataType,
 			doNormalize,
 			std::move(data)));
@@ -186,13 +186,13 @@ namespace re
 	VertexStream::VertexStream(
 		Lifetime lifetime, 
 		Type type, 
-		uint8_t srcIdx,
+		uint8_t srcSemanticIdx,
 		DataType dataType, 
 		Normalize doNormalize, 
 		util::ByteVector&& data)
 		: m_lifetime(lifetime)
 		, m_streamType(type)
-		, m_sourceChannelSemanticIdx(srcIdx)
+		, m_sourceSemanticIdx(srcSemanticIdx)
 		, m_dataType(dataType)
 		, m_data(std::move(data))
 		, m_doNormalize(doNormalize)
@@ -233,7 +233,7 @@ namespace re
 	{
 		AddDataBytesToHash(m_lifetime);
 		AddDataBytesToHash(m_streamType);
-		AddDataBytesToHash(m_sourceChannelSemanticIdx);
+		AddDataBytesToHash(m_sourceSemanticIdx);
 
 		AddDataBytesToHash(m_doNormalize);
 		AddDataBytesToHash(m_dataType);
@@ -258,12 +258,6 @@ namespace re
 	}
 
 
-	util::ByteVector const& VertexStream::GetDataByteVector() const
-	{
-		return m_data;
-	}
-
-
 	uint32_t VertexStream::GetTotalDataByteSize() const
 	{
 		return util::CheckedCast<uint32_t>(m_data.NumBytes());
@@ -272,10 +266,7 @@ namespace re
 
 	uint32_t VertexStream::GetNumElements() const
 	{
-		// i.e. Get the number of vertices
-		const uint8_t numComponents = DataTypeToNumComponents(m_dataType);
-		const uint8_t componentByteSize = DataTypeToComponentByteSize(m_dataType);
-		return util::CheckedCast<uint32_t>(m_data.NumBytes()) / (numComponents * componentByteSize);
+		return  util::CheckedCast<uint32_t>(m_data.size()); // i.e. Get the number of vertices
 	}
 
 

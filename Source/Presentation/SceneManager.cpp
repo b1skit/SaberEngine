@@ -674,6 +674,7 @@ namespace
 			meshPrimitiveParams.m_topologyMode = 
 				CGLTFPrimitiveTypeToGrTopologyMode(curPrimitive.type);
 
+			// Index stream:
 			SEAssert(curPrimitive.indices != nullptr, "Mesh is missing indices");
 			util::ByteVector indices = util::ByteVector::Create<uint32_t>();
 			indices.resize<uint32_t>(curPrimitive.indices->count, 0u);
@@ -685,18 +686,37 @@ namespace
 					static_cast<uint64_t>(index)));
 			}
 
-			// Unpack each of the primitive's vertex attrbutes:
-			util::ByteVector positions = util::ByteVector::Create<glm::vec3>();
+			re::VertexStream* indexStream = re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::Type::Index,
+				0,
+				re::VertexStream::DataType::UInt,
+				re::VertexStream::Normalize::False,
+				std::move(indices)).get();
+
+			
+			// Vertex streams:
+			re::VertexStream* position0Stream = nullptr;
+			re::VertexStream* normal0Stream = nullptr;
+			re::VertexStream* tangent0Stream = nullptr;
+			re::VertexStream* uv0Stream = nullptr;
+			re::VertexStream* color0Stream = nullptr;
+			
+			uint8_t positionSemanticIdx = 0;
+			uint8_t normalSemanticIdx = 0;
+			uint8_t tangentSemanticIdx = 0;
+			uint8_t uvSemanticIdx = 0;
+			uint8_t colorSemanticIdx = 0;
+			uint8_t jointSemanticIdx = 0;
+			uint8_t weightSemanticIdx = 0;
+			
+			std::vector<re::VertexStream const*> meshPrimitiveVertexStreams;
+			std::vector<util::ByteVector*> extraChannelsData;
+
 			glm::vec3 positionsMinXYZ(fr::BoundsComponent::k_invalidMinXYZ);
 			glm::vec3 positionsMaxXYZ(fr::BoundsComponent::k_invalidMaxXYZ);
-			util::ByteVector normals = util::ByteVector::Create<glm::vec3>();
-			util::ByteVector tangents = util::ByteVector::Create<glm::vec4>();
-			util::ByteVector uv0 = util::ByteVector::Create<glm::vec2>();
-			bool foundUV0 = false; // TODO: Support minimum of 2 UV sets. For now, just use the 1st
-			util::ByteVector colors = util::ByteVector::Create<glm::vec4>();
-			std::vector<float> jointsAsFloats; // We unpack the joints as floats...
-			util::ByteVector jointsAsUints = util::ByteVector::Create<uint8_t>(); // ...but eventually convert and store them as uint8_t
-			util::ByteVector weights = util::ByteVector::Create<glm::vec4>();
+		
+			// Unpack each of the primitive's vertex attrbutes:
 			for (size_t attrib = 0; attrib < curPrimitive.attributes_count; attrib++)
 			{
 				const size_t numComponents = cgltf_num_components(curPrimitive.attributes[attrib].data->type);
@@ -707,109 +727,225 @@ namespace
 
 				const size_t numElements = curPrimitive.attributes[attrib].data->count;
 				const size_t totalFloatElements = numComponents * numElements;
-				void* dataTarget = nullptr;
+
 				const cgltf_attribute_type attributeType = curPrimitive.attributes[attrib].type;
 				switch (attributeType)
 				{
 				case cgltf_attribute_type::cgltf_attribute_type_position:
 				{
-					positions.resize(curPrimitive.attributes[attrib].data->count, glm::vec3(0.f));
-					dataTarget = positions.data<glm::vec3>();
+					SEAssert(position0Stream == nullptr, "Already found a position stream. This is unexpected");
 
-					if (curPrimitive.attributes[attrib].data->has_min)
+					util::ByteVector positions = 
+						util::ByteVector::Create<glm::vec3>(curPrimitive.attributes[attrib].data->count);
+					
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curPrimitive.attributes[attrib].data,
+						static_cast<float*>(positions.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					re::VertexStream* positionStream = re::VertexStream::Create(
+						re::VertexStream::Lifetime::Permanent,
+						re::VertexStream::Type::Position,
+						positionSemanticIdx++,
+						re::VertexStream::DataType::Float3,
+						re::VertexStream::Normalize::False,
+						std::move(positions)).get();
+
+					if (position0Stream == nullptr)
 					{
-						SEAssert(sizeof(curPrimitive.attributes[attrib].data->min) == 64,
-							"Unexpected number of bytes in min value array data");
+						position0Stream = positionStream;
 
-						float* xyzComponent = curPrimitive.attributes[attrib].data->min;
-						positionsMinXYZ.x = *xyzComponent++;
-						positionsMinXYZ.y = *xyzComponent++;
-						positionsMinXYZ.z = *xyzComponent;
-					}
-					if (curPrimitive.attributes[attrib].data->has_max)
-					{
-						SEAssert(sizeof(curPrimitive.attributes[attrib].data->max) == 64,
-							"Unexpected number of bytes in max value array data");
+						// Store our min/max
+						if (curPrimitive.attributes[attrib].data->has_min)
+						{
+							SEAssert(sizeof(curPrimitive.attributes[attrib].data->min) == 64,
+								"Unexpected number of bytes in min value array data");
 
-						float* xyzComponent = curPrimitive.attributes[attrib].data->max;
-						positionsMaxXYZ.x = *xyzComponent++;
-						positionsMaxXYZ.y = *xyzComponent++;
-						positionsMaxXYZ.z = *xyzComponent;
+							memcpy(&positionsMinXYZ.x, curPrimitive.attributes[attrib].data->min, sizeof(glm::vec3));
+						}
+						if (curPrimitive.attributes[attrib].data->has_max)
+						{
+							SEAssert(sizeof(curPrimitive.attributes[attrib].data->max) == 64,
+								"Unexpected number of bytes in max value array data");
+
+							memcpy(&positionsMaxXYZ.x, curPrimitive.attributes[attrib].data->max, sizeof(glm::vec3));
+						}
 					}
+					meshPrimitiveVertexStreams.emplace_back(positionStream);
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_normal:
 				{
-					normals.resize(curPrimitive.attributes[attrib].data->count, glm::vec3(0.f));
-					dataTarget = normals.data<glm::vec3>();
+					util::ByteVector normals = 
+						util::ByteVector::Create<glm::vec3>(curPrimitive.attributes[attrib].data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curPrimitive.attributes[attrib].data,
+						static_cast<float*>(normals.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					re::VertexStream* normalStream = re::VertexStream::Create(
+						re::VertexStream::Lifetime::Permanent,
+						re::VertexStream::Type::Normal,
+						normalSemanticIdx++,
+						re::VertexStream::DataType::Float3,
+						re::VertexStream::Normalize::True,
+						std::move(normals)).get();
+
+					if (normal0Stream == nullptr)
+					{
+						normal0Stream = normalStream;
+					}
+					meshPrimitiveVertexStreams.emplace_back(normalStream);
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_tangent:
 				{
-					tangents.resize(curPrimitive.attributes[attrib].data->count, glm::vec4(0.f));
-					dataTarget = tangents.data<glm::vec4>();
+					util::ByteVector tangents =
+						util::ByteVector::Create<glm::vec4>(curPrimitive.attributes[attrib].data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curPrimitive.attributes[attrib].data,
+						static_cast<float*>(tangents.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					re::VertexStream* tangentStream = re::VertexStream::Create(
+						re::VertexStream::Lifetime::Permanent,
+						re::VertexStream::Type::Tangent,
+						tangentSemanticIdx++,
+						re::VertexStream::DataType::Float4,
+						re::VertexStream::Normalize::True,
+						std::move(tangents)).get();
+
+					if (tangent0Stream == nullptr)
+					{
+						tangent0Stream = tangentStream;
+					}
+					meshPrimitiveVertexStreams.emplace_back(tangentStream);
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_texcoord:
 				{
-					// TODO: Support minimum of 2 UV sets. For now, just use the 1st set encountered
-					if (foundUV0)
+					util::ByteVector uvs = 
+						util::ByteVector::Create<glm::vec2>(curPrimitive.attributes[attrib].data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curPrimitive.attributes[attrib].data,
+						static_cast<float*>(uvs.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					re::VertexStream* uvStream = re::VertexStream::Create(
+						re::VertexStream::Lifetime::Permanent,
+						re::VertexStream::Type::TexCoord,
+						uvSemanticIdx++,
+						re::VertexStream::DataType::Float2,
+						re::VertexStream::Normalize::False,
+						std::move(uvs)).get();
+
+					if (uv0Stream == nullptr)
 					{
-						LOG_WARNING("MeshPrimitive \"%s\" contains >1 UV set. Currently, only a single UV channel is "
-							"supported, subsequent sets are ignored", meshName.c_str());
-						continue;
-					}
-					foundUV0 = true;
-					uv0.resize(curPrimitive.attributes[attrib].data->count, glm::vec2(0.f));
-					dataTarget = uv0.data<glm::vec2>();
+						uv0Stream = uvStream;
+					}					
+					meshPrimitiveVertexStreams.emplace_back(uvStream);
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_color:
 				{
 					SEAssert(numComponents == 4, "Only 4-channel colors (RGBA) are (currently) supported");
-					colors.resize(curPrimitive.attributes[attrib].data->count, glm::vec4(0.f));
-					dataTarget = colors.data<glm::vec4>();
+
+					util::ByteVector colors =
+						util::ByteVector::Create<glm::vec4>(curPrimitive.attributes[attrib].data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curPrimitive.attributes[attrib].data,
+						static_cast<float*>(colors.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					re::VertexStream* colorStream = re::VertexStream::Create(
+						re::VertexStream::Lifetime::Permanent,
+						re::VertexStream::Type::Color,
+						colorSemanticIdx++,
+						re::VertexStream::DataType::Float4,
+						re::VertexStream::Normalize::False,
+						std::move(colors)).get();
+
+					if (color0Stream == nullptr)
+					{
+						color0Stream = colorStream;
+					}
+					meshPrimitiveVertexStreams.emplace_back(colorStream);
+					extraChannelsData.emplace_back(&colorStream->GetDataByteVector());
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_joints: // joints_n == indexes from skin.joints array
 				{
-					LOG_WARNING("Found vertex joint attributes: Data will be loaded but has not been tested. "
-						"Skinning is not currently supported");
-					jointsAsFloats.resize(curPrimitive.attributes[attrib].data->count, 0.f);
-					jointsAsUints.resize(curPrimitive.attributes[attrib].data->count, 0u);
-					dataTarget = jointsAsFloats.data();
+					std::vector<float> jointsAsFloats; // We unpack joints as floats...
+					jointsAsFloats.resize(totalFloatElements);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curPrimitive.attributes[attrib].data,
+						static_cast<float*>(jointsAsFloats.data()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					util::ByteVector jointsAsUints = 
+						util::ByteVector::Create<uint8_t>(totalFloatElements); // ...and convert to uint8_t
+
+					for (size_t jointIdx = 0; jointIdx < jointsAsFloats.size(); jointIdx++)
+					{
+						// Cast our joint indexes from floats to uint8_t's:
+						jointsAsUints.at<uint8_t>(jointIdx) = util::CheckedCast<uint8_t>(jointsAsFloats[jointIdx]);
+					}
+					
+					re::VertexStream* jointStream = re::VertexStream::Create(
+						re::VertexStream::Lifetime::Permanent,
+						re::VertexStream::Type::BlendIndices,
+						jointSemanticIdx++,
+						re::VertexStream::DataType::UByte,
+						re::VertexStream::Normalize::False,
+						std::move(jointsAsUints)).get();
+
+					meshPrimitiveVertexStreams.emplace_back(jointStream);
+					extraChannelsData.emplace_back(&jointStream->GetDataByteVector());
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_weights: // How stronly a joint influences a vertex
 				{
-					LOG_WARNING("Found vertex weight attributes: Data will be loaded but has not been tested. "
-						"Skinning is not currently supported");
-					weights.resize(curPrimitive.attributes[attrib].data->count, 0);
-					dataTarget = weights.data<glm::vec4>();
+					util::ByteVector weights = 
+						util::ByteVector::Create<glm::vec4>(curPrimitive.attributes[attrib].data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curPrimitive.attributes[attrib].data,
+						static_cast<float*>(weights.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					 re::VertexStream* weightStream = re::VertexStream::Create(
+						re::VertexStream::Lifetime::Permanent,
+						re::VertexStream::Type::BlendWeight,
+						weightSemanticIdx++,
+						re::VertexStream::DataType::Float,
+						re::VertexStream::Normalize::False,
+						std::move(weights)).get();
+
+					meshPrimitiveVertexStreams.emplace_back(weightStream);
+					extraChannelsData.emplace_back(&weightStream->GetDataByteVector());
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_custom:
+				{
+					SEAssertF("Custom vertex attributes are not (currently) supported");
+				}
+				break;
 				case cgltf_attribute_type::cgltf_attribute_type_max_enum:
 				case cgltf_attribute_type::cgltf_attribute_type_invalid:
 				default:
 					SEAssertF("Invalid attribute type");
-				}
-
-				const bool unpackResult = cgltf_accessor_unpack_floats(
-					curPrimitive.attributes[attrib].data,
-					static_cast<float*>(dataTarget),
-					totalFloatElements);
-				SEAssert(unpackResult, "Failed to unpack data");
-
-				// Post-process the data:
-				if (attributeType == cgltf_attribute_type_joints)
-				{
-					// Cast our joint indexes from floats to uint8_t's:
-					SEAssert(jointsAsFloats.size() == jointsAsUints.size(), "Source/destination size mismatch");
-					for (size_t jointIdx = 0; jointIdx < jointsAsFloats.size(); jointIdx++)
-					{
-						jointsAsUints.at<uint8_t>(jointIdx) = static_cast<uint8_t>(jointsAsFloats[jointIdx]);
-					}
 				}
 
 				// Morph targets:
@@ -822,144 +958,183 @@ namespace
 
 						const size_t numTargetFloats = cgltf_accessor_unpack_floats(curAttribute.data, nullptr, 0);
 
-						LOG_WARNING("Found morph target data: Data will be ignored as morph targets are not currently "
-							"supported");
+						switch (attributeType)
+						{
+							case cgltf_attribute_type::cgltf_attribute_type_position:
+							{
+								LOG_WARNING("Found position morph target data: Data will be ignored as morph targets "
+									"are not (currently) supported");
+							}
+							break;
+							case cgltf_attribute_type::cgltf_attribute_type_normal:
+							{
+								LOG_WARNING("Found normal morph target data: Data will be ignored as morph targets "
+									"are not (currently) supported");
+							}
+							break;
+							case cgltf_attribute_type::cgltf_attribute_type_tangent:
+							{
+								LOG_WARNING("Found tangent morph target data: Data will be ignored as morph targets "
+									"are not (currently) supported");
+							}
+							break;
+							case cgltf_attribute_type::cgltf_attribute_type_texcoord:
+							{
+								LOG_WARNING("Found texcoord morph target data: Data will be ignored as morph targets "
+									"are not (currently) supported");
+							}
+							break;
+							case cgltf_attribute_type::cgltf_attribute_type_color:
+							{
+								LOG_WARNING("Found color morph target data: Data will be ignored as morph targets "
+									"are not (currently) supported");
+							}
+							break;
+							case cgltf_attribute_type::cgltf_attribute_type_joints:
+							{
+								LOG_WARNING("Found joint morph target data: Data will be ignored as morph targets "
+									"are not (currently) supported");
+							}
+							break;
+							case cgltf_attribute_type::cgltf_attribute_type_weights:
+							{
+								LOG_WARNING("Found weight morph target data: Data will be ignored as morph targets "
+									"are not (currently) supported");
+							}
+							break;
+							case cgltf_attribute_type::cgltf_attribute_type_custom:
+							{
+								SEAssertF("Custom vertex attributes are not (currently) supported");
+							}
+							break;
+							case cgltf_attribute_type::cgltf_attribute_type_max_enum:
+							case cgltf_attribute_type::cgltf_attribute_type_invalid:
+							default: SEAssertF("Invalid attribute type");
+						}
 					}					
 				}
 			} // End attribute unpacking
 
-			// Apply GLTF 2.0 default values:
-			if (colors.empty())
+
+			// Create empty objects for anything the VertexStreamBuilder can create:
+			std::vector<util::ByteVector> missingStreamData;
+			missingStreamData.reserve(re::VertexStream::k_maxVertexStreams); // Referenced by ptr: Ensure we don't re-allocate
+
+			util::ByteVector* normal0Data = nullptr;
+			if (normal0Stream == nullptr)
 			{
-				colors.resize(positions.size(), glm::vec4(1.f));
+				normal0Data = &missingStreamData.emplace_back(util::ByteVector::Create<glm::vec3>());
+			}
+			else
+			{
+				normal0Data = &normal0Stream->GetDataByteVector();
+			}
+
+			util::ByteVector* tangent0Data = nullptr;
+			if (tangent0Stream == nullptr)
+			{
+				tangent0Data = &missingStreamData.emplace_back(util::ByteVector::Create<glm::vec4>());
+			}
+			else
+			{
+				tangent0Data = &tangent0Stream->GetDataByteVector();
+			}
+
+			util::ByteVector* uv0Data = nullptr;
+			if (uv0Stream == nullptr)
+			{
+				uv0Data = &missingStreamData.emplace_back(util::ByteVector::Create<glm::vec2>());
+			}
+			else
+			{
+				uv0Data = &uv0Stream->GetDataByteVector();
 			}
 
 			// Construct any missing vertex attributes for the mesh:
-			std::vector<util::ByteVector*> extraChannels = { &colors };
-			if (!jointsAsUints.empty())
-			{
-				extraChannels.emplace_back(&jointsAsUints);
-			}
-			if (!weights.empty())
-			{
-				extraChannels.emplace_back(&weights);
-			}
-
 			grutil::VertexStreamBuilder::MeshData meshData
 			{
 				meshName,
 				&meshPrimitiveParams,
-				&indices,
-				&positions,
-				&normals,
-				&tangents,
-				&uv0,
-				extraChannels.data(),
-				extraChannels.size(),
+				&indexStream->GetDataByteVector(),
+				&position0Stream->GetDataByteVector(),
+				normal0Data,
+				tangent0Data,
+				uv0Data,
+				extraChannelsData.data(),
+				extraChannelsData.size(),
 			};
-			grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+			grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);		
 
-			// Assemble the vertex streams:
-			std::vector<re::VertexStream const*> vertexStreams;
 
-			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::Lifetime::Permanent,
-				re::VertexStream::Type::Position,
-				0,
-				re::VertexStream::DataType::Float3,
-				re::VertexStream::Normalize::False,
-				std::move(positions)).get());
-
-			if (!normals.empty())
+			// Finally, create any missing vertex streams using generated data:
+			if (normal0Stream == nullptr)
 			{
-				vertexStreams.emplace_back(re::VertexStream::Create(
+				normal0Stream = re::VertexStream::Create(
 					re::VertexStream::Lifetime::Permanent,
 					re::VertexStream::Type::Normal,
 					0,
 					re::VertexStream::DataType::Float3,
 					re::VertexStream::Normalize::True,
-					std::move(normals)).get());
-			}
+					std::move(*normal0Data)).get();
 
-			if (!colors.empty())
-			{
-				vertexStreams.emplace_back(re::VertexStream::Create(
-					re::VertexStream::Lifetime::Permanent,
-					re::VertexStream::Type::Color,
-					0,
-					re::VertexStream::DataType::Float4,
-					re::VertexStream::Normalize::False,
-					std::move(colors)).get());
+				meshPrimitiveVertexStreams.emplace_back(normal0Stream);
 			}
-
-			if (!uv0.empty())
+			if (tangent0Stream == nullptr)
 			{
-				vertexStreams.emplace_back(re::VertexStream::Create(
-					re::VertexStream::Lifetime::Permanent,
-					re::VertexStream::Type::TexCoord,
-					0,
-					re::VertexStream::DataType::Float2,
-					re::VertexStream::Normalize::False,
-					std::move(uv0)).get());
-			}
-
-			if (!tangents.empty())
-			{
-				vertexStreams.emplace_back(re::VertexStream::Create(
+				tangent0Stream = re::VertexStream::Create(
 					re::VertexStream::Lifetime::Permanent,
 					re::VertexStream::Type::Tangent,
 					0,
 					re::VertexStream::DataType::Float4,
 					re::VertexStream::Normalize::True,
-					std::move(tangents)).get());
-			}
+					std::move(*tangent0Data)).get();
 
-			if (!jointsAsUints.empty())
+				meshPrimitiveVertexStreams.emplace_back(tangent0Stream);
+			}
+			if (uv0Stream == nullptr)
 			{
-				vertexStreams.emplace_back(re::VertexStream::Create(
+				uv0Stream = re::VertexStream::Create(
 					re::VertexStream::Lifetime::Permanent,
-					re::VertexStream::Type::BlendIndices,
+					re::VertexStream::Type::TexCoord,
 					0,
-					re::VertexStream::DataType::UByte,
+					re::VertexStream::DataType::Float2,
 					re::VertexStream::Normalize::False,
-					std::move(jointsAsUints)).get());
-			}
+					std::move(*uv0Data)).get();
 
-			if (!weights.empty())
+				meshPrimitiveVertexStreams.emplace_back(uv0Stream);
+			}
+			if (color0Stream == nullptr)
 			{
-				vertexStreams.emplace_back(re::VertexStream::Create(
+				// Note: We create the color byte vector and fill it with defaults now, no need to pass it through the
+				// vertex stream builder
+				color0Stream = re::VertexStream::Create(
 					re::VertexStream::Lifetime::Permanent,
-					re::VertexStream::Type::BlendWeight,
+					re::VertexStream::Type::Color,
 					0,
-					re::VertexStream::DataType::Float,
+					re::VertexStream::DataType::Float4,
 					re::VertexStream::Normalize::False,
-					std::move(weights)).get());
-			}
+					util::ByteVector::Create<glm::vec4>(
+						position0Stream->GetNumElements(), glm::vec4(1.f) /*= GLTF default*/)).get();
 
-			re::VertexStream const* indexStream = re::VertexStream::Create(
-				re::VertexStream::Lifetime::Permanent,
-				re::VertexStream::Type::Index,
-				0,
-				re::VertexStream::DataType::UInt,
-				re::VertexStream::Normalize::False,
-				std::move(indices)).get();
+				meshPrimitiveVertexStreams.emplace_back(color0Stream);
+			}
 
 
 			// Construct the MeshPrimitive (internally registers itself with the SceneData):
-			std::shared_ptr<gr::MeshPrimitive> meshPrimitiveSceneData = gr::MeshPrimitive::Create(
+			std::shared_ptr<gr::MeshPrimitive> newMeshPrimitive = gr::MeshPrimitive::Create(
 				meshName.c_str(),
-				std::move(vertexStreams),
+				std::move(meshPrimitiveVertexStreams),
 				indexStream,
 				meshPrimitiveParams);
 
 
+			// Attach the MeshPrimitive to the Mesh:
 			fr::EntityManager& em = *fr::EntityManager::Get();
 
-			// Attach the MeshPrimitive to the Mesh:
 			entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
 				em,
 				sceneNode,
-				meshPrimitiveSceneData.get(),
+				newMeshPrimitive.get(),
 				positionsMinXYZ,
 				positionsMaxXYZ);
 

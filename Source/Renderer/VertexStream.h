@@ -94,7 +94,7 @@ namespace re
 
 	public:
 		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(
-			Lifetime, Type, uint8_t srcIdx, DataType, Normalize, util::ByteVector&&);
+			Lifetime, Type, uint8_t srcSemanticIdx, DataType, Normalize, util::ByteVector&&);
 
 		VertexStream(VertexStream&&) = default;
 		VertexStream& operator=(VertexStream&&) = default;
@@ -105,6 +105,7 @@ namespace re
 		uint8_t GetSourceSemanticIdx() const; // Index/channel of the stream in the source asset (e.g. uv0 = 0, uv1 = 1)
 
 		void const* GetData() const;
+		util::ByteVector& GetDataByteVector();
 		util::ByteVector const& GetDataByteVector() const;
 
 		uint32_t GetTotalDataByteSize() const;
@@ -135,7 +136,7 @@ namespace re
 	private:
 		const Lifetime m_lifetime;
 		const Type m_streamType;
-		uint8_t m_sourceChannelSemanticIdx; // Index/channel of the stream in the source asset
+		uint8_t m_sourceSemanticIdx; // Index/channel of the stream in the source asset
 
 		Normalize m_doNormalize;
 		DataType m_dataType;
@@ -148,12 +149,8 @@ namespace re
 	private: // Use the Create() factory instead
 		VertexStream(Lifetime, Type, uint8_t srcIdx, DataType, Normalize, util::ByteVector&& data);
 
-		static std::shared_ptr<re::VertexStream> CreateInternal(
-			Lifetime, Type, uint8_t srcIdx, DataType, Normalize, util::ByteVector&& data);
 
-
-	private:
-		// Share via pointers; no copying allowed
+	private: // No copying allowed
 		VertexStream(VertexStream const&) = delete;
 		VertexStream& operator=(VertexStream const&) = delete;
 	};
@@ -167,31 +164,25 @@ namespace re
 
 	inline uint8_t VertexStream::GetSourceSemanticIdx() const
 	{
-		return m_sourceChannelSemanticIdx;
+		return m_sourceSemanticIdx;
+	}
+
+
+	inline util::ByteVector& VertexStream::GetDataByteVector()
+	{
+		return m_data;
+	}
+
+
+	inline util::ByteVector const& VertexStream::GetDataByteVector() const
+	{
+		return m_data;
 	}
 
 
 	inline VertexStream::Lifetime VertexStream::GetLifetime() const
 	{
 		return m_lifetime;
-	}
-
-
-	inline std::shared_ptr<re::VertexStream> VertexStream::Create(
-		Lifetime lifetime,
-		Type type,
-		uint8_t srcIdx,
-		DataType dataType,
-		Normalize doNormalize,
-		util::ByteVector&& byteData)
-	{
-		return CreateInternal(
-			lifetime,
-			type,
-			srcIdx,
-			dataType,
-			doNormalize,
-			std::move(byteData));
 	}
 
 

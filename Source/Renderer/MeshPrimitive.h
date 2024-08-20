@@ -73,7 +73,7 @@ namespace gr
 		MeshPrimitiveParams const& GetMeshParams() const;
 
 		re::VertexStream const* GetIndexStream() const;
-		re::VertexStream const* GetVertexStream(re::VertexStream::Type, uint8_t idx) const;
+		re::VertexStream const* GetVertexStream(re::VertexStream::Type, uint8_t semanticIdx) const;
 		std::vector<re::VertexStream const*> const& GetVertexStreams() const;
 
 		void ShowImGuiWindow() const;
