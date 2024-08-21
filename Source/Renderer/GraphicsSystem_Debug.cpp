@@ -56,19 +56,19 @@ namespace
 		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> axisPositionStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Position,
-			0,
-			re::VertexStream::DataType::Float3,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Position,
+				.m_dataType = re::VertexStream::DataType::Float3,
+			},
 			std::move(axisPositions));
 
 		std::shared_ptr<re::VertexStream> axisColorStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Color,
-			0,
-			re::VertexStream::DataType::Float4,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Color,
+				.m_dataType = re::VertexStream::DataType::Float4
+			},
 			std::move(axisColors));
 
 		re::Batch::GraphicsParams axisBatchGraphicsParams{};
@@ -147,27 +147,27 @@ namespace
 		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> boxPositionsStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Position,
-			0,
-			re::VertexStream::DataType::Float3,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Position,
+				.m_dataType = re::VertexStream::DataType::Float3,
+			},
 			std::move(boxPositions));
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Color,
-			0,
-			re::VertexStream::DataType::Float4,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Color,
+				.m_dataType = re::VertexStream::DataType::Float4
+			},
 			std::move(boxColors));
 
 		std::shared_ptr<re::VertexStream> boxIndexStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Index,
-			0,
-			re::VertexStream::DataType::UInt,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Index,
+				.m_dataType = re::VertexStream::DataType::UInt,
+			},
 			std::move(boxIndexes));
 
 		re::Batch::GraphicsParams boundingBoxBatchGraphicsParams{};
@@ -226,19 +226,19 @@ namespace
 		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> normalPositionsStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Position,
-			0,
-			re::VertexStream::DataType::Float3,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Position,
+				.m_dataType = re::VertexStream::DataType::Float3,
+			},
 			std::move(linePositions));
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Color,
-			0,
-			re::VertexStream::DataType::Float4,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Color,
+				.m_dataType = re::VertexStream::DataType::Float4
+			},
 			std::move(normalColors));
 
 		re::Batch::GraphicsParams boundingBoxBatchGraphicsParams{};
@@ -303,27 +303,27 @@ namespace
 		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> frustumPositionsStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Position,
-			0,
-			re::VertexStream::DataType::Float3,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Position,
+				.m_dataType = re::VertexStream::DataType::Float3,
+			},
 			std::move(frustumPositions));
 
 		std::shared_ptr<re::VertexStream> frustumColorStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Color,
-			0,
-			re::VertexStream::DataType::Float4,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Color,
+				.m_dataType = re::VertexStream::DataType::Float4
+			},
 			std::move(frustumColors));
 
 		std::shared_ptr<re::VertexStream> frustumIndexStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Index,
-			0,
-			re::VertexStream::DataType::UInt,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Index,
+				.m_dataType = re::VertexStream::DataType::UInt,
+			},
 			std::move(frustumIndexes));
 
 		re::Batch::GraphicsParams frustumBatchGraphicsParams{};
@@ -360,11 +360,11 @@ namespace
 		const re::VertexStream::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
-			streamLifetime,
-			re::VertexStream::Type::Color,
-			0,
-			re::VertexStream::DataType::Float4,
-			re::VertexStream::Normalize::False,
+			re::VertexStream::CreateParams{
+				.m_lifetime = streamLifetime,
+				.m_type = re::VertexStream::Type::Color,
+				.m_dataType = re::VertexStream::DataType::Float4
+			},
 			std::move(meshColors));
 
 		re::Batch::GraphicsParams wireframeBatchGraphicsParams{};

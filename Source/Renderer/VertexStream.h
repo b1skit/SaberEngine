@@ -85,24 +85,71 @@ namespace re
 			Type_Count
 		};
 
+		enum class IsMorphData : bool
+		{
+			False,
+			True
+		};
+
 		enum class Lifetime : bool
 		{
 			SingleFrame,
-			Permanent
+			Permanent,
+		};
+
+		struct CreateParams
+		{
+			Lifetime m_lifetime = Lifetime::Permanent;
+
+			Type m_type = Type::Type_Count;
+			uint8_t m_srcTypeIdx = 0; // Index in the source asset. Must be unique & monotonically increasing. Used for sorting
+
+			IsMorphData m_isMorphData = IsMorphData::False;
+			uint8_t m_morphTargetIdx = 0;
+
+			DataType m_dataType = DataType::DataType_Count;
+			Normalize m_doNormalize = Normalize::False;
 		};
 
 
 	public:
-		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(
-			Lifetime, Type, uint8_t srcSemanticIdx, DataType, Normalize, util::ByteVector&&);
+		struct VertexComparisonData
+		{
+			Type m_streamType;
+			uint8_t m_srcTypeIdx;
+		};
+		struct MorphComparisonData
+		{
+			Type m_streamType;
+			uint8_t m_srcTypeIdx;
+			uint8_t m_morphTargetIdx;
+		};
+		struct Comparator
+		{
+			bool operator()(VertexStream const*, VertexStream const*);
+			bool operator()(VertexStream const*, VertexComparisonData const&);
+			bool operator()(VertexStream const*, MorphComparisonData const&);
+		};
+
+
+	public:
+		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(CreateParams const&, util::ByteVector&&);
 
 		VertexStream(VertexStream&&) = default;
 		VertexStream& operator=(VertexStream&&) = default;
 
 		~VertexStream() { Destroy(); };
 
+		Lifetime GetLifetime() const;
+
 		Type GetType() const;
-		uint8_t GetSourceSemanticIdx() const; // Index/channel of the stream in the source asset (e.g. uv0 = 0, uv1 = 1)
+		uint8_t GetSourceTypeIdx() const; // Index/channel of the stream in the source asset (e.g. uv0 = 0, uv1 = 1)
+
+		bool IsMorphData() const;
+		uint8_t GetMorphTargetIdx() const;
+
+		DataType GetDataType() const; // What data type does each individual component have?
+		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
 
 		void const* GetData() const;
 		util::ByteVector& GetDataByteVector();
@@ -115,13 +162,10 @@ namespace re
 		uint32_t GetNumElements() const; // How many vertices-worth of attributes do we have?
 		uint8_t GetElementByteSize() const; // Total number of bytes for a single element (ie. all components)
 
-		DataType GetDataType() const; // What data type does each individual component have?
-		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
-		
-		Lifetime GetLifetime() const;
-
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 
+
+	public:
 		void ShowImGuiWindow() const;
 
 
@@ -134,12 +178,7 @@ namespace re
 		
 
 	private:
-		const Lifetime m_lifetime;
-		const Type m_streamType;
-		uint8_t m_sourceSemanticIdx; // Index/channel of the stream in the source asset
-
-		Normalize m_doNormalize;
-		DataType m_dataType;
+		CreateParams m_createParams;
 
 		util::ByteVector m_data;
 
@@ -147,7 +186,7 @@ namespace re
 
 
 	private: // Use the Create() factory instead
-		VertexStream(Lifetime, Type, uint8_t srcIdx, DataType, Normalize, util::ByteVector&& data);
+		VertexStream(CreateParams const&, util::ByteVector&& data);
 
 
 	private: // No copying allowed
@@ -156,15 +195,86 @@ namespace re
 	};
 
 
-	inline VertexStream::Type VertexStream::GetType() const
+	inline bool VertexStream::Comparator::operator()(VertexStream const* a, VertexStream const* b)
 	{
-		return m_streamType;
+		if (a->GetType() == b->GetType())
+		{
+			SEAssert(a->IsMorphData() == b->IsMorphData(),
+				"Trying to sort morph data with non-morph data. This is unexpected");
+			const bool isMorphData = a->IsMorphData();
+
+			if (isMorphData &&
+				a->GetSourceTypeIdx() == b->GetSourceTypeIdx())
+			{
+				return a->GetMorphTargetIdx() < b->GetMorphTargetIdx();
+			}
+			else
+			{
+				return a->GetSourceTypeIdx() < b->GetSourceTypeIdx();
+			}
+		}
+		return a->GetType() < b->GetType();
 	}
 
 
-	inline uint8_t VertexStream::GetSourceSemanticIdx() const
+	inline bool VertexStream::Comparator::operator()(VertexStream const* a, VertexComparisonData const& b)
 	{
-		return m_sourceSemanticIdx;
+		SEAssert(!a->IsMorphData(), "Trying to sort morph data with a non-morph data comparator. This is unexpected");
+
+		if (a->GetType() == b.m_streamType)
+		{
+			return a->GetSourceTypeIdx() < b.m_srcTypeIdx;
+		}
+		return a->GetType() < b.m_streamType;
+	}
+
+
+	inline bool VertexStream::Comparator::operator()(VertexStream const* a, MorphComparisonData const& b)
+	{
+		SEAssert(a->IsMorphData(), "Trying to sort non-morph data with a morph data comparator. This is unexpected");
+
+		if (a->GetType() == b.m_streamType)
+		{
+			if (a->GetSourceTypeIdx() == b.m_srcTypeIdx)
+			{
+				return a->GetMorphTargetIdx() < b.m_morphTargetIdx;
+			}
+			else
+			{
+				return a->GetSourceTypeIdx() < b.m_srcTypeIdx;
+			}
+		}
+		return a->GetType() < b.m_streamType;
+	}
+
+
+	inline VertexStream::Lifetime VertexStream::GetLifetime() const
+	{
+		return m_createParams.m_lifetime;
+	}
+
+
+	inline VertexStream::Type VertexStream::GetType() const
+	{
+		return m_createParams.m_type;
+	}
+
+
+	inline uint8_t VertexStream::GetSourceTypeIdx() const
+	{
+		return m_createParams.m_srcTypeIdx;
+	}
+
+
+	inline bool VertexStream::IsMorphData() const
+	{
+		return m_createParams.m_isMorphData == IsMorphData::True;
+	}
+
+
+	inline uint8_t VertexStream::GetMorphTargetIdx() const
+	{
+		return m_createParams.m_morphTargetIdx;
 	}
 
 
@@ -177,12 +287,6 @@ namespace re
 	inline util::ByteVector const& VertexStream::GetDataByteVector() const
 	{
 		return m_data;
-	}
-
-
-	inline VertexStream::Lifetime VertexStream::GetLifetime() const
-	{
-		return m_lifetime;
 	}
 
 

@@ -71,6 +71,10 @@ namespace re
 			re::VertexStream const* m_vertexStream = nullptr;
 			uint8_t m_slot = k_invalidSlotIdx; // NOTE: Automatically resolved by the batch
 		};
+		struct VertexStreamInputComparator
+		{
+			bool operator()(VertexStreamInput const&, VertexStreamInput const&);
+		};
 		struct GraphicsParams
 		{
 			// Note: Don't forget to update ComputeDataHash() if modifying this
@@ -206,6 +210,12 @@ namespace re
 	private:
 		Batch() = delete;
 	};
+
+
+	inline bool Batch::VertexStreamInputComparator::operator()(VertexStreamInput const& a, VertexStreamInput const& b)
+	{
+		return re::VertexStream::Comparator()(a.m_vertexStream, b.m_vertexStream);
+	}
 
 
 	inline re::Batch::BatchType Batch::GetType() const

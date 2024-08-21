@@ -396,18 +396,9 @@ namespace re
 			// is an optimization for the DX12 backend, which sets vertex buffers in contiguous slot ranges (e.g. 
 			// [0,1], [4,7], ...)
 			std::sort(
-				std::begin(m_graphicsParams.m_vertexStreams), 
+				std::begin(m_graphicsParams.m_vertexStreams),
 				std::begin(m_graphicsParams.m_vertexStreams) + m_graphicsParams.m_numVertexStreams,
-				[](re::Batch::VertexStreamInput const& a, re::Batch::VertexStreamInput const& b)
-				{
-					const re::VertexStream::Type aType = a.m_vertexStream->GetType();
-					const re::VertexStream::Type bType = b.m_vertexStream->GetType();
-					if (aType == bType)
-					{
-						return a.m_slot < b.m_slot;
-					}
-					return aType < bType;
-				});
+				re::Batch::VertexStreamInputComparator());
 		}
 	}
 

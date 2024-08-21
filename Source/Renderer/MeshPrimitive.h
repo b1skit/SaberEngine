@@ -53,17 +53,24 @@ namespace gr
 
 
 			// Helper: Get a specific vertex stream packed into a MeshPrimitive::RenderData.
-			// If the semantic index < 0, the first matching type is returned
+			// If the srcTypeIdx index < 0, the first matching type is returned
 			static re::VertexStream const* GetVertexStreamFromRenderData(
-				gr::MeshPrimitive::RenderData const&, re::VertexStream::Type, int8_t semanticIdx = -1);
+				gr::MeshPrimitive::RenderData const&, re::VertexStream::Type, int8_t srcTypeIdx = -1);
 		};	
 
 
 	public:
 		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
 			std::string const& name,
-			std::vector<re::VertexStream const*>&& vertexStreams,
 			re::VertexStream const* indexStream,
+			std::vector<re::VertexStream const*>&& vertexStreams,			
+			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
+
+		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
+			std::string const& name,
+			re::VertexStream const* indexStream,
+			std::vector<re::VertexStream const*>&& vertexStreams,
+			std::vector<re::VertexStream const*>&& morphTargets,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
@@ -73,8 +80,13 @@ namespace gr
 		MeshPrimitiveParams const& GetMeshParams() const;
 
 		re::VertexStream const* GetIndexStream() const;
-		re::VertexStream const* GetVertexStream(re::VertexStream::Type, uint8_t semanticIdx) const;
+		
+		re::VertexStream const* GetVertexStream(re::VertexStream::Type, uint8_t srcTypeIdx) const;
 		std::vector<re::VertexStream const*> const& GetVertexStreams() const;
+
+		re::VertexStream const* GetMorphTargetStream(
+			re::VertexStream::Type, uint8_t srcTypeIdx, uint8_t morphTargetIdx) const;
+		std::vector<re::VertexStream const*> const& GetMorphTargetStreams() const;
 
 		void ShowImGuiWindow() const;
 
@@ -82,8 +94,9 @@ namespace gr
 	private:		
 		MeshPrimitiveParams m_params;
 
-		std::vector<re::VertexStream const*> m_vertexStreams;
 		re::VertexStream const* m_indexStream;
+		std::vector<re::VertexStream const*> m_vertexStreams;
+		std::vector<re::VertexStream const*> m_morphTargets;
 
 
 		void ComputeDataHash() override;
@@ -91,8 +104,9 @@ namespace gr
 
 	private: // Private ctor: Use the Create factory instead
 		MeshPrimitive(char const* name,
-			std::vector<re::VertexStream const*>&& vertexStreams,
 			re::VertexStream const* indexStream,
+			std::vector<re::VertexStream const*>&& vertexStreams,
+			std::vector<re::VertexStream const*>&& morphTargets,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 
@@ -118,6 +132,12 @@ namespace gr
 	inline std::vector<re::VertexStream const*> const& MeshPrimitive::GetVertexStreams() const
 	{
 		return m_vertexStreams;
+	}
+
+
+	inline std::vector<re::VertexStream const*> const& MeshPrimitive::GetMorphTargetStreams() const
+	{
+		return m_morphTargets;
 	}
 
 
