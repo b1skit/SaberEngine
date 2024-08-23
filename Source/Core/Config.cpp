@@ -650,6 +650,8 @@ namespace core
 				config_ofstream << currentEntry.m_cmdPrefix << " " << currentEntry.m_key << currentEntry.m_value;
 			}
 
+			config_ofstream.close();
+
 			m_isDirty = false;
 		}
 	}
