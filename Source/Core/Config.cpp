@@ -643,13 +643,13 @@ namespace core
 			// Write our config to disk:
 			std::ofstream config_ofstream(
 				std::format("{}{}", core::configkeys::k_configDirName, core::configkeys::k_configFileName));
-			config_ofstream << std::format("# SaberEngine {} file:\n", core::configkeys::k_configFileName).c_str();
+			SEAssert(config_ofstream.is_open(), "Failed to open config.cfg output stream for writing");
 
+			config_ofstream << std::format("# SaberEngine {} file:\n", core::configkeys::k_configFileName).c_str();
 			for (ConfigEntry const& currentEntry : configEntries)
 			{
 				config_ofstream << currentEntry.m_cmdPrefix << " " << currentEntry.m_key << currentEntry.m_value;
 			}
-
 			config_ofstream.close();
 
 			m_isDirty = false;
