@@ -66,7 +66,7 @@ namespace gr
 		// Emissive blit:
 		re::RenderStage::FullscreenQuadParams emissiveBlitParams{};
 		emissiveBlitParams.m_effectID = effect::Effect::ComputeEffectID("Bloom");
-		emissiveBlitParams.m_drawStyleBitmask = effect::DrawStyle::Bloom_EmissiveBlit;
+		emissiveBlitParams.m_drawStyleBitmask = effect::drawstyle::Bloom_EmissiveBlit;
 
 		m_emissiveBlitStage = re::RenderStage::CreateFullscreenQuadStage("Emissive blit stage", emissiveBlitParams);
 

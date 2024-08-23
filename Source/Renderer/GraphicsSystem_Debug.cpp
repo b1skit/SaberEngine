@@ -18,8 +18,8 @@ namespace
 
 	static const EffectID k_debugEffectID = effect::Effect::ComputeEffectID(k_debugEffectName);
 	
-	static const effect::DrawStyle::Bitmask k_debugLineBitmask = effect::DrawStyle::Debug_Line;
-	static const effect::DrawStyle::Bitmask k_debugTriangleBitmask = effect::DrawStyle::Debug_Triangle;
+	static const effect::drawstyle::Bitmask k_debugLineBitmask = effect::drawstyle::Debug_Line;
+	static const effect::drawstyle::Bitmask k_debugTriangleBitmask = effect::drawstyle::Debug_Triangle;
 
 
 	re::VertexStream::Lifetime GetVertexStreamLifetimeFromBatchLifetime(re::Batch::Lifetime batchLifetime)
@@ -410,7 +410,7 @@ namespace gr
 		// Line topology stage:
 		m_debugLineStage = 
 			re::RenderStage::CreateGraphicsStage("Debug line stage", re::RenderStage::GraphicsStageParams{});
-		m_debugLineStage->SetDrawStyle(effect::DrawStyle::Debug_Line);
+		m_debugLineStage->SetDrawStyle(effect::drawstyle::Debug_Line);
 		
 		m_debugLineStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
@@ -421,7 +421,7 @@ namespace gr
 		// Triangle topology stage:
 		m_debugTriangleStage =
 			re::RenderStage::CreateGraphicsStage("Debug triangle stage", re::RenderStage::GraphicsStageParams{});
-		m_debugTriangleStage->SetDrawStyle(effect::DrawStyle::Debug_Triangle);
+		m_debugTriangleStage->SetDrawStyle(effect::drawstyle::Debug_Triangle);
 
 		m_debugTriangleStage->SetTextureTargetSet(nullptr);
 

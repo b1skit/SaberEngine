@@ -129,7 +129,7 @@ namespace re
 		void SetEffectID(EffectID);
 		EffectID GetEffectID() const;
 
-		void ResolveShader(effect::DrawStyle::Bitmask stageBitmask);
+		void ResolveShader(effect::drawstyle::Bitmask stageBitmask);
 
 		re::Shader const* GetShader() const;
 
@@ -191,7 +191,7 @@ namespace re
 		re::Shader const* m_batchShader;
 
 		EffectID m_effectID;
-		effect::DrawStyle::Bitmask m_drawStyleBitmask;
+		effect::drawstyle::Bitmask m_drawStyleBitmask;
 		FilterBitmask m_batchFilterBitmask;
 
 		// Note: Batches can be responsible for the lifetime of a buffer held by a shared pointer: 

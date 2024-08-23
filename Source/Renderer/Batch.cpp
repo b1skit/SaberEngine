@@ -70,7 +70,7 @@ namespace
 	}
 
 
-	re::Shader const* GetResolvedShader(EffectID effectID, effect::DrawStyle::Bitmask drawStyleBitmask)
+	re::Shader const* GetResolvedShader(EffectID effectID, effect::drawstyle::Bitmask drawStyleBitmask)
 	{
 		SEAssert(effectID != effect::Effect::k_invalidEffectID, "Invalid Effect");
 
@@ -80,26 +80,26 @@ namespace
 	}
 
 
-	effect::DrawStyle::Bitmask ComputeBatchBitmask(gr::Material::MaterialInstanceData const& materialInstanceData)
+	effect::drawstyle::Bitmask ComputeBatchBitmask(gr::Material::MaterialInstanceData const& materialInstanceData)
 	{
-		effect::DrawStyle::Bitmask bitmask = 0;
+		effect::drawstyle::Bitmask bitmask = 0;
 
 		// Alpha mode:
 		switch (materialInstanceData.m_alphaMode)
 		{
 		case gr::Material::AlphaMode::Opaque:
 		{
-			bitmask |= effect::DrawStyle::AlphaMode_Opaque;
+			bitmask |= effect::drawstyle::MaterialAlphaMode_Opaque;
 		}
 		break;
 		case gr::Material::AlphaMode::Mask:
 		{
-			bitmask |= effect::DrawStyle::AlphaMode_Mask;
+			bitmask |= effect::drawstyle::MaterialAlphaMode_Mask;
 		}
 		break;
 		case gr::Material::AlphaMode::Blend:
 		{
-			bitmask |= effect::DrawStyle::AlphaMode_Blend;
+			bitmask |= effect::drawstyle::MaterialAlphaMode_Blend;
 		}
 		break;
 		default:
@@ -108,7 +108,7 @@ namespace
 
 		// Material sidedness:
 		bitmask |= materialInstanceData.m_isDoubleSided ? 
-			effect::DrawStyle::MaterialSidedness_Double : effect::DrawStyle::MaterialSidedness_Single;
+			effect::drawstyle::MaterialSidedness_Double : effect::drawstyle::MaterialSidedness_Single;
 
 		return bitmask;
 	}
@@ -353,7 +353,7 @@ namespace re
 	}
 
 
-	void Batch::ResolveShader(effect::DrawStyle::Bitmask stageBitmask)
+	void Batch::ResolveShader(effect::drawstyle::Bitmask stageBitmask)
 	{
 		SEAssert(m_effectID != effect::Effect::k_invalidEffectID, "Invalid EffectID");
 		SEAssert(m_batchShader == nullptr, "Batch already has a shader. This is unexpected");

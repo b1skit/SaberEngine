@@ -29,7 +29,7 @@ namespace effect
 	}
 
 
-	void Effect::AddTechnique(effect::DrawStyle::Bitmask drawStyleBitmask, effect::Technique const* technique)
+	void Effect::AddTechnique(effect::drawstyle::Bitmask drawStyleBitmask, effect::Technique const* technique)
 	{
 		SEAssert(!m_techniques.contains(drawStyleBitmask),
 			"A Technique has already been added for the given draw style bitmask");

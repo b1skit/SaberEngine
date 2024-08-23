@@ -1,0 +1,208 @@
+// © 2024 Adam Badke. All rights reserved.
+#include "FileWriter.h"
+#include "ParseDB.h"
+#include "ParseEffect.h"
+#include "TextStrings.h"
+
+#include "Core/Definitions/EffectKeys.h"
+
+
+namespace droid
+{
+	ParseDB::ParseDB(ParseParams const& parseParams)
+		: m_parseParams(parseParams)
+	{		
+	}
+
+
+	droid::ErrorCode ParseDB::Parse()
+	{
+		std::cout << "\nLoading effect manifest \"" << m_parseParams.m_effectManifestPath.c_str() << "\"...\n";
+
+		std::ifstream effectManifestInputStream(m_parseParams.m_effectManifestPath);
+		if (!effectManifestInputStream.is_open())
+		{
+			std::cout << "Error: Failed to open effect manifest input stream\n";
+			return droid::ErrorCode::FileError;
+		}
+		std::cout << "Successfully opened effect manifest \"" << m_parseParams.m_effectManifestPath.c_str() << "\"!\n\n";
+
+		droid::ErrorCode result = droid::ErrorCode::Success;
+
+		std::vector<std::string> effectNames;
+		nlohmann::json effectManifestJSON;
+		try
+		{
+			const nlohmann::json::parser_callback_t parserCallback = nullptr;
+			effectManifestJSON = nlohmann::json::parse(
+				effectManifestInputStream,
+				parserCallback,
+				m_parseParams.m_allowJSONExceptions,
+				m_parseParams.m_ignoreJSONComments);
+
+			// Build the list of effect names:
+			for (auto const& effectManifestEntry : effectManifestJSON.at(key_effectsBlock))
+			{
+				std::string const& effectName = effectManifestEntry.template get<std::string>();
+				effectNames.emplace_back(effectName);
+			}
+
+			std::cout << "Effect manifest successfully parsed!\n\n";
+			effectManifestInputStream.close();
+		}
+		catch (nlohmann::json::exception parseException)
+		{
+			std::cout << std::format(
+				"Failed to parse the Effect manifest file \"{}\"\n{}",
+				m_parseParams.m_effectManifestPath,
+				parseException.what()).c_str();
+
+			effectManifestInputStream.close();
+
+			result = ErrorCode::JSONError;
+		}
+
+		// Parse the effect files listed in the manifest:
+		for (auto const& effectName : effectNames)
+		{
+			result = ParseEffectFile(effectName, m_parseParams);
+			if (result != droid::ErrorCode::Success)
+			{
+				break;
+			}
+		}
+
+		return result;
+	}
+
+
+	droid::ErrorCode ParseDB::ParseEffectFile(std::string const& effectName, ParseParams const& parseParams)
+	{
+		std::string const& effectFileName = effectName + ".json";
+		std::string const& effectFilePath = "SaberEngine\\Assets\\Effects\\" + effectFileName;
+
+		std::cout << "Parsing Effect \"" << effectName.c_str() << "\":\n";
+
+		std::ifstream effectInputStream(effectFilePath);
+		if (!effectInputStream.is_open())
+		{
+			std::cout << "Error: Failed to open effect input stream\n";
+			return droid::ErrorCode::FileError;
+		}
+		std::cout << "Successfully opened effect file \"" << effectFilePath.c_str() << "\"!\n\n";
+
+		droid::ErrorCode result = droid::ErrorCode::Success;
+
+		nlohmann::json effectJSON;
+		try
+		{
+			const nlohmann::json::parser_callback_t parserCallback = nullptr;
+			effectJSON = nlohmann::json::parse(
+				effectInputStream,
+				parserCallback,
+				parseParams.m_allowJSONExceptions,
+				parseParams.m_ignoreJSONComments);
+
+			// "Effect":
+			if (effectJSON.contains(key_effectBlock))
+			{
+				auto const& effectBlock = effectJSON.at(key_effectBlock);
+
+				// "DrawStyles":
+				if (effectBlock.contains(key_drawStyles))
+				{
+					for (auto const& drawstyleBlock : effectBlock.at(key_drawStyles))
+					{
+						// "Conditions":"
+						if (drawstyleBlock.contains(key_conditions))
+						{
+							for (auto const& condition : drawstyleBlock.at(key_conditions))
+							{
+								std::string rule;
+								if (condition.contains(key_rule))
+								{
+									rule = condition.at(key_rule);
+								}
+								
+								std::string mode;
+								if (condition.contains(key_mode))
+								{
+									mode = condition.at(key_mode);
+								}
+
+								if (!rule.empty() && !mode.empty())
+								{
+									AddDrawstyle(rule, mode);
+								}
+							}
+						}
+					}
+				}
+			}
+
+			std::cout << "Effect file successfully parsed!\n\n";
+		}
+		catch (nlohmann::json::exception parseException)
+		{
+			std::cout << std::format(
+				"Failed to parse the Effect file \"{}\"\n{}",
+				effectName,
+				parseException.what()).c_str();
+
+			result = ErrorCode::JSONError;
+		}
+
+		effectInputStream.close();
+		return result;
+	}
+
+
+	droid::ErrorCode ParseDB::GenerateCPPCode() const
+	{
+		droid::ErrorCode result = GenerateDrawstyleCPPCode();
+		if (result != droid::ErrorCode::Success)
+		{
+			return result;
+		}
+
+		return result;
+	}
+
+
+	droid::ErrorCode ParseDB::GenerateDrawstyleCPPCode() const
+	{
+		FileWriter filewriter(m_parseParams.m_codeGenPath, m_drawstyleHeaderName);
+
+		droid::ErrorCode result = filewriter.GetStatus();
+		if (result != droid::ErrorCode::Success)
+		{
+			return filewriter.GetStatus();
+		}
+
+		filewriter.OpenNamespace("effect::drawstyle");
+
+		filewriter.WriteLine("using Bitmask = uint64_t;\n");
+
+		filewriter.WriteLine("constexpr Bitmask DefaultTechnique = 0;");
+		
+		uint8_t bitIdx = 0;
+		for (auto const& drawstyle : m_drawstyles)
+		{
+			for (auto const& rule : drawstyle.second)
+			{
+
+				filewriter.WriteLine(std::format("constexpr Bitmask {}_{} = 1llu << {};", 
+					drawstyle.first, rule, bitIdx++));
+			}
+		}
+		if (bitIdx >= 64)
+		{
+			std::cout << "Error: " << " is too many drawstyle rules to fit in a 64-bit bitmask\n";
+			result = droid::ErrorCode::DataError;
+		}
+
+		filewriter.CloseNamespace();
+
+		return result;
+	}
+}

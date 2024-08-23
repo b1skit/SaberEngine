@@ -117,7 +117,7 @@ namespace gr
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::RenderStage::FilterMode::Require, true);
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
 
-		shadowStage->SetDrawStyle(effect::DrawStyle::Shadow_Cube);
+		shadowStage->SetDrawStyle(effect::drawstyle::Shadow_Cube);
 		
 		SEAssert(shadowData.m_lightType == gr::Light::Point, "Unexpected light type for a cube stage");
 
@@ -184,7 +184,7 @@ namespace gr
 
 		shadowStage->AddPermanentBuffer(shadowCamParams);
 
-		shadowStage->SetDrawStyle(effect::DrawStyle::Shadow_2D);
+		shadowStage->SetDrawStyle(effect::drawstyle::Shadow_2D);
 
 		// Shadow map array target texture:
 		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();

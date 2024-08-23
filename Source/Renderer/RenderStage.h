@@ -72,7 +72,7 @@ namespace re
 			gr::meshfactory::ZLocation m_zLocation = gr::meshfactory::ZLocation::Near;
 
 			EffectID m_effectID = effect::Effect::k_invalidEffectID;
-			effect::DrawStyle::Bitmask m_drawStyleBitmask = effect::DrawStyle::k_defaultTechniqueBitmask;
+			effect::drawstyle::Bitmask m_drawStyleBitmask = effect::drawstyle::DefaultTechnique;
 		};
 		struct ClearStageParams final : public virtual IStageParams
 		{
@@ -118,7 +118,7 @@ namespace re
 		Lifetime GetStageLifetime() const;
 		IStageParams const* GetStageParams() const;
 
-		void SetDrawStyle(effect::DrawStyle::Bitmask);
+		void SetDrawStyle(effect::drawstyle::Bitmask);
 		void ClearDrawStyle();
 
 		re::TextureTargetSet const* GetTextureTargetSet() const;
@@ -231,7 +231,7 @@ namespace re
 		re::Batch::FilterBitmask m_requiredBatchFilterBitmasks;
 		re::Batch::FilterBitmask m_excludedBatchFilterBitmasks;
 
-		effect::DrawStyle::Bitmask m_drawStyleBits;
+		effect::drawstyle::Bitmask m_drawStyleBits;
 
 		
 	private:
@@ -350,7 +350,7 @@ namespace re
 	}
 
 
-	inline void RenderStage::SetDrawStyle(effect::DrawStyle::Bitmask drawStyleBits)
+	inline void RenderStage::SetDrawStyle(effect::drawstyle::Bitmask drawStyleBits)
 	{
 		m_drawStyleBits |= drawStyleBits;
 	}

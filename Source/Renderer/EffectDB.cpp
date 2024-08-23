@@ -11,71 +11,11 @@
 #include "Core/Util/TextUtils.h"
 
 #include "Core/Definitions/ConfigKeys.h"
+#include "Core/Definitions/EffectKeys.h"
 
 
 namespace
 {
-	// Effect Manifest:
-	//-----------------
-	constexpr char const* key_effectsBlock = "Effects";
-
-
-	// Effect definitions:
-	//--------------------
-
-	// Common:
-	constexpr char const* key_name = "Name";
-	constexpr char const* key_excludedPlatforms = "ExcludedPlatforms";
-
-	// "Effect":
-	constexpr char const* key_effectBlock = "Effect";
-	constexpr char const* key_parents = "Parents";	
-	constexpr char const* key_defaultTechnique = "DefaultTechnique";
-	constexpr char const* key_drawStyles = "DrawStyles";
-
-	// "DrawStyles":
-	constexpr char const* key_conditions = "Conditions";
-	constexpr char const* key_rule = "Rule";
-	constexpr char const* key_mode = "Mode";
-	constexpr char const* key_technique = "Technique";
-
-	// "PipelineStates":
-	constexpr char const* key_pipelineStatesBlock = "PipelineStates";
-	constexpr char const* key_topologyType = "TopologyType";
-	constexpr char const* key_fillMode = "FillMode";
-	constexpr char const* key_faceCullingMode = "FaceCullingMode";
-	constexpr char const* key_windingOrder = "WindingOrder";
-	constexpr char const* key_depthTestMode = "DepthTestMode";
-
-	// "VertexStreams"
-	constexpr char const* key_vertexStreams = "VertexStreams";
-	constexpr char const* key_slots = "Slots";
-	constexpr char const* key_dataType = "DataType";
-	constexpr char const* key_semantic = "Semantic";
-	
-	// "Techniques":
-	constexpr char const* key_techniques = "Techniques";
-	constexpr char const* key_pipelineState = "PipelineState";
-	constexpr char const* key_vertexStream = "VertexStream";
-
-	constexpr char const* keys_shaderTypes[] =
-	{
-		"VShader",
-		"GShader",
-		"PShader",
-		"HShader",
-		"DShader",
-		"MShader",
-		"AShader",
-		"CShader",
-	};
-	SEStaticAssert(_countof(keys_shaderTypes) == re::Shader::ShaderType_Count,
-		"Shader types and technique names are out of sync");
-
-
-	// ---
-
-
 	bool ExcludesPlatform(auto const& entry)
 	{
 		if (entry.contains(key_excludedPlatforms))
@@ -98,7 +38,7 @@ namespace
 	void ParseDrawStyleConditionEntry(
 		auto const& drawStyleEntry,
 		effect::EffectDB const& effectDB,
-		effect::DrawStyle::Bitmask& drawStyleBitmaskOut,
+		effect::drawstyle::Bitmask& drawStyleBitmaskOut,
 		effect::Technique const*& resolvedTechniqueOut)
 	{
 		SEAssert(drawStyleEntry.contains(key_conditions) &&
@@ -142,7 +82,7 @@ namespace
 			if (!excludedTechniques.contains(defaultTechniqueID))
 			{
 				newEffect.AddTechnique(
-					effect::DrawStyle::k_defaultTechniqueBitmask, effectDB.GetTechnique(defaultTechniqueID));
+					effect::drawstyle::DefaultTechnique, effectDB.GetTechnique(defaultTechniqueID));
 			}
 		}
 
@@ -156,7 +96,7 @@ namespace
 					continue;
 				}
 
-				effect::DrawStyle::Bitmask drawStyleBitmask(0);
+				effect::drawstyle::Bitmask drawStyleBitmask(0);
 				effect::Technique const* technique(nullptr);
 
 				ParseDrawStyleConditionEntry(drawStyleEntry, effectDB, drawStyleBitmask, technique);
