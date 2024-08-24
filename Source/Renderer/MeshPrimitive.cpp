@@ -160,7 +160,9 @@ namespace gr
 				.m_srcTypeIdx = srcTypeIdx },
 			re::VertexStream::Comparator());
 
-		SEAssert(*result != nullptr,
+		SEAssert(*result != nullptr && 
+			(*result)->GetType() == streamType && 
+			(*result)->GetSourceTypeIdx() == srcTypeIdx,
 			"Failed to find a vertex stream of the given type and source type index. This is probably a surprise");
 
 		return *result;
@@ -179,7 +181,10 @@ namespace gr
 				.m_morphTargetIdx = morphTargetIdx },
 			re::VertexStream::Comparator());
 
-		SEAssert(*result != nullptr,
+		SEAssert(*result != nullptr &&
+			(*result)->GetType() == streamType &&
+			(*result)->GetSourceTypeIdx() == srcTypeIdx &&
+			(*result)->GetMorphTargetIdx() == morphTargetIdx,
 			"Failed to find a vertex stream of the given type and source type index. This is probably a surprise");
 
 		return *result;
