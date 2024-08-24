@@ -41,7 +41,7 @@ namespace
 		const uint32_t numBodyIndices = 6 * numSides;
 		const uint32_t numIndices = numTopIndices + numBotIndices + numBodyIndices;
 		
-		util::ByteVector indices = util::ByteVector::Create<uint32_t>(numIndices);
+		util::ByteVector indices = util::ByteVector::Create<uint16_t>(numIndices);
 
 		const float topYCoord = 0.f;
 		const float botYCoord = -height;
@@ -90,16 +90,16 @@ namespace
 					// Indices:
 					if (edgeVertIdx < numSides)
 					{
-						indices.at<uint32_t>(indicesInsertIdx++) = centerVertIndex;
+						indices.at<uint16_t>(indicesInsertIdx++) = centerVertIndex;
 						if (isTopCap)
 						{
-							indices.at<uint32_t>(indicesInsertIdx++) = vertInsertIdx;
-							indices.at<uint32_t>(indicesInsertIdx++) = vertInsertIdx + 1;
+							indices.at<uint16_t>(indicesInsertIdx++) = vertInsertIdx;
+							indices.at<uint16_t>(indicesInsertIdx++) = vertInsertIdx + 1;
 						}
 						else
 						{
-							indices.at<uint32_t>(indicesInsertIdx++) = vertInsertIdx + 1;
-							indices.at<uint32_t>(indicesInsertIdx++) = vertInsertIdx;
+							indices.at<uint16_t>(indicesInsertIdx++) = vertInsertIdx + 1;
+							indices.at<uint16_t>(indicesInsertIdx++) = vertInsertIdx;
 						}
 					}
 
@@ -127,13 +127,13 @@ namespace
 			// Indices:
 			if (edgeIdx < numSides)
 			{
-				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx;
-				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx + 1;
-				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx + 2; // Triangle: |/
+				indices.at<uint16_t>(curIndicesIdx++) = curVertIdx;
+				indices.at<uint16_t>(curIndicesIdx++) = curVertIdx + 1;
+				indices.at<uint16_t>(curIndicesIdx++) = curVertIdx + 2; // Triangle: |/
 
-				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx + 2;
-				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx + 1;
-				indices.at<uint32_t>(curIndicesIdx++) = curVertIdx + 3; // Triangle: /|
+				indices.at<uint16_t>(curIndicesIdx++) = curVertIdx + 2;
+				indices.at<uint16_t>(curIndicesIdx++) = curVertIdx + 1;
+				indices.at<uint16_t>(curIndicesIdx++) = curVertIdx + 3; // Triangle: /|
 			}
 
 			const float curEdgeRadians = edgeRadianStep * edgeIdx;
@@ -272,7 +272,7 @@ namespace
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UInt,
+				.m_dataType = re::VertexStream::DataType::UShort,
 			},
 			std::move(indices)).get();
 		
@@ -377,7 +377,7 @@ namespace gr::meshfactory
 			uvs[1], uvs[0],	uvs[2],	uvs[3]  // Back face
 		});
 
-		util::ByteVector cubeIndices = util::ByteVector::Create<uint32_t>( // 6 faces * 2 tris * 3 indices 
+		util::ByteVector cubeIndices = util::ByteVector::Create<uint16_t>( // 6 faces * 2 tris * 3 indices 
 		{
 			0, 1, 3, // Front face
 			1, 2, 3,
@@ -478,7 +478,7 @@ namespace gr::meshfactory
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UInt,
+				.m_dataType = re::VertexStream::DataType::UShort,
 			},
 			std::move(cubeIndices)).get();
 
@@ -519,7 +519,7 @@ namespace gr::meshfactory
 
 		// Assemble geometry:
 		util::ByteVector positions = util::ByteVector::Create<glm::vec3>({ tl, bl, br });
-		util::ByteVector triIndices = util::ByteVector::Create<uint32_t>({ 0, 1, 2 }); // Note: CCW winding
+		util::ByteVector triIndices = util::ByteVector::Create<uint16_t>({ 0, 1, 2 }); // Note: CCW winding
 
 		constexpr char meshName[] = "optimizedFullscreenQuad";
 
@@ -557,7 +557,7 @@ namespace gr::meshfactory
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UInt,
+				.m_dataType = re::VertexStream::DataType::UShort,
 			},
 			std::move(triIndices)).get();
 
@@ -587,7 +587,7 @@ namespace gr::meshfactory
 			glm::vec2(1.f, 1.f)  // br
 		});
 
-		util::ByteVector quadIndices = util::ByteVector::Create<uint32_t>(
+		util::ByteVector quadIndices = util::ByteVector::Create<uint16_t>(
 		{
 			0, 1, 2,	// TL face
 			2, 1, 3		// BR face
@@ -672,7 +672,7 @@ namespace gr::meshfactory
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UInt,
+				.m_dataType = re::VertexStream::DataType::UShort,
 			},
 			std::move(quadIndices)).get();
 
@@ -722,7 +722,7 @@ namespace gr::meshfactory
 		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>(numVerts);
 
 		const uint32_t numIndices = 3 * numLatSlices * numLongSlices * 2;
-		util::ByteVector indices = util::ByteVector::Create<uint32_t>(numIndices);
+		util::ByteVector indices = util::ByteVector::Create<uint16_t>(numIndices);
 
 		// Generate a sphere about the Y axis:
 		glm::vec3 firstPosition = glm::vec3(0.0f, radius, 0.0f);
@@ -799,11 +799,11 @@ namespace gr::meshfactory
 		// Top cap:
 		for (uint32_t i = 1; i <= numLatSlices; i++)
 		{
-			indices.at<uint32_t>(currentIndex++) = 0;
-			indices.at<uint32_t>(currentIndex++) = i;
-			indices.at<uint32_t>(currentIndex++) = i + 1;
+			indices.at<uint16_t>(currentIndex++) = 0;
+			indices.at<uint16_t>(currentIndex++) = i;
+			indices.at<uint16_t>(currentIndex++) = i + 1;
 		}
-		indices.at<uint32_t>(currentIndex - 1) = 1; // Wrap the last edge back to the start
+		indices.at<uint16_t>(currentIndex - 1) = 1; // Wrap the last edge back to the start
 
 		// Mid section:
 		uint32_t topLeft = 1;
@@ -815,14 +815,14 @@ namespace gr::meshfactory
 			for (uint32_t j = 0; j < numLatSlices - 1; j++)
 			{
 				// Top left triangle:
-				indices.at<uint32_t>(currentIndex++) = topLeft;
-				indices.at<uint32_t>(currentIndex++) = botLeft;
-				indices.at<uint32_t>(currentIndex++) = topRight;
+				indices.at<uint16_t>(currentIndex++) = topLeft;
+				indices.at<uint16_t>(currentIndex++) = botLeft;
+				indices.at<uint16_t>(currentIndex++) = topRight;
 
 				// Bot right triangle
-				indices.at<uint32_t>(currentIndex++) = topRight;
-				indices.at<uint32_t>(currentIndex++) = botLeft;
-				indices.at<uint32_t>(currentIndex++) = botRight;
+				indices.at<uint16_t>(currentIndex++) = topRight;
+				indices.at<uint16_t>(currentIndex++) = botLeft;
+				indices.at<uint16_t>(currentIndex++) = botRight;
 
 				topLeft++;
 				topRight++;
@@ -831,14 +831,14 @@ namespace gr::meshfactory
 			}
 			// Wrap the edge around:
 			// Top left triangle:
-			indices.at<uint32_t>(currentIndex++) = topLeft;
-			indices.at<uint32_t>(currentIndex++) = botLeft;
-			indices.at<uint32_t>(currentIndex++) = topRight - numLatSlices;
+			indices.at<uint16_t>(currentIndex++) = topLeft;
+			indices.at<uint16_t>(currentIndex++) = botLeft;
+			indices.at<uint16_t>(currentIndex++) = topRight - numLatSlices;
 
 			// Bot right triangle
-			indices.at<uint32_t>(currentIndex++) = topRight - numLatSlices;
-			indices.at<uint32_t>(currentIndex++) = botLeft;
-			indices.at<uint32_t>(currentIndex++) = botRight - numLatSlices;
+			indices.at<uint16_t>(currentIndex++) = topRight - numLatSlices;
+			indices.at<uint16_t>(currentIndex++) = botLeft;
+			indices.at<uint16_t>(currentIndex++) = botRight - numLatSlices;
 
 			// Advance to the next row:
 			topLeft++;
@@ -850,11 +850,11 @@ namespace gr::meshfactory
 		// Bottom cap:
 		for (uint32_t i = numVerts - numLatSlices - 1; i < numVerts - 1; i++)
 		{
-			indices.at<uint32_t>(currentIndex++) = i;
-			indices.at<uint32_t>(currentIndex++) = numVerts - 1;
-			indices.at<uint32_t>(currentIndex++) = i + 1;
+			indices.at<uint16_t>(currentIndex++) = i;
+			indices.at<uint16_t>(currentIndex++) = numVerts - 1;
+			indices.at<uint16_t>(currentIndex++) = i + 1;
 		}
-		indices.at<uint32_t>(currentIndex - 1) = numVerts - numLatSlices - 1; // Wrap the last edge back to the start
+		indices.at<uint16_t>(currentIndex - 1) = numVerts - numLatSlices - 1; // Wrap the last edge back to the start
 
 		constexpr char meshName[] = "sphere";
 
@@ -934,7 +934,7 @@ namespace gr::meshfactory
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UInt,
+				.m_dataType = re::VertexStream::DataType::UShort,
 			},
 			std::move(indices)).get();
 
@@ -965,7 +965,7 @@ namespace gr::meshfactory
 		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>(numVerts);
 
 		const uint32_t numIndices = 3 * 2 * numSides; // 3 indices per triangle, with 2 triangles per side/base step
-		util::ByteVector indices = util::ByteVector::Create<uint32_t>(numIndices);
+		util::ByteVector indices = util::ByteVector::Create<uint16_t>(numIndices);
 
 		const float yCoord = -height;
 		const glm::vec3 topPosition = glm::vec3(0.f); // We need a unique top vert per side face
@@ -1040,14 +1040,14 @@ namespace gr::meshfactory
 				const uint32_t nextBotEdgeVertIdx = bottomEdgeVertIdx + 1;
 
 				// Side face:
-				indices.at<uint32_t>(indicesIdx++) = topVertIdx;
-				indices.at<uint32_t>(indicesIdx++) = sideEdgeVertIdx;
-				indices.at<uint32_t>(indicesIdx++) = nextSideEdgeVertIdx;
+				indices.at<uint16_t>(indicesIdx++) = topVertIdx;
+				indices.at<uint16_t>(indicesIdx++) = sideEdgeVertIdx;
+				indices.at<uint16_t>(indicesIdx++) = nextSideEdgeVertIdx;
 
 				// Bottom face:
-				indices.at<uint32_t>(indicesIdx++) = nextBotEdgeVertIdx;
-				indices.at<uint32_t>(indicesIdx++) = bottomEdgeVertIdx;
-				indices.at<uint32_t>(indicesIdx++) = bottomVertIdx;
+				indices.at<uint16_t>(indicesIdx++) = nextBotEdgeVertIdx;
+				indices.at<uint16_t>(indicesIdx++) = bottomEdgeVertIdx;
+				indices.at<uint16_t>(indicesIdx++) = bottomVertIdx;
 			}
 
 			// Prepare for the next iteration:
@@ -1182,7 +1182,7 @@ namespace gr::meshfactory
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UInt,
+				.m_dataType = re::VertexStream::DataType::UShort,
 			},
 			std::move(indices)).get();
 
@@ -1224,7 +1224,7 @@ namespace gr::meshfactory
 			glm::vec2(1.f, 0.f),	// br
 		});
 
-		util::ByteVector indices = util::ByteVector::Create<uint32_t>(
+		util::ByteVector indices = util::ByteVector::Create<uint16_t>(
 		{
 			0, 1, 2
 		}); // Note: CCW winding
@@ -1308,7 +1308,7 @@ namespace gr::meshfactory
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UInt,
+				.m_dataType = re::VertexStream::DataType::UShort,
 			},
 			std::move(indices)).get();
 

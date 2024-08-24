@@ -122,7 +122,7 @@ namespace
 		const glm::vec4 boxColorVec4 = glm::vec4(boxColor, 1.f);
 		util::ByteVector boxColors = util::ByteVector::Create<glm::vec4>(boxPositions.size(), boxColorVec4);
 
-		util::ByteVector boxIndexes = util::ByteVector::Create<uint32_t>({
+		util::ByteVector boxIndexes = util::ByteVector::Create<uint16_t>({
 			// Front face:
 			0, 2,
 			2, 3,
@@ -166,7 +166,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UInt,
+				.m_dataType = re::VertexStream::DataType::UShort,
 			},
 			std::move(boxIndexes));
 
@@ -278,7 +278,7 @@ namespace
 		const glm::vec4 fustumColorVec4 = glm::vec4(frustumColor, 1.f);
 		util::ByteVector frustumColors = util::ByteVector::Create( frustumPositions.size(), fustumColorVec4 );
 
-		util::ByteVector frustumIndexes = util::ByteVector::Create<uint32_t>({
+		util::ByteVector frustumIndexes = util::ByteVector::Create<uint16_t>({
 			// Back face:
 			0, 1,
 			1, 3,
@@ -322,7 +322,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UInt,
+				.m_dataType = re::VertexStream::DataType::UShort,
 			},
 			std::move(frustumIndexes));
 

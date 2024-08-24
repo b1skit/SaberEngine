@@ -132,7 +132,13 @@ namespace grutil
 	{
 		const size_t numIndices = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
 
-		util::ByteVector newIndices = util::ByteVector::Create<uint32_t>(numIndices);
+		SEAssert(meshData->m_indices->IsScalarType<uint16_t>() || meshData->m_indices->IsScalarType<uint32_t>(),
+			"Unexpected index format");
+
+		util::ByteVector newIndices = meshData->m_indices->IsScalarType<uint16_t>() ? 
+			util::ByteVector::Create<uint16_t>(numIndices) :
+			util::ByteVector::Create<uint32_t>(numIndices);
+
 		util::ByteVector newPositions = util::ByteVector::Create<glm::vec3>(numIndices);
 
 		util::ByteVector newNormals = util::ByteVector::Create<glm::vec3>();
@@ -165,9 +171,9 @@ namespace grutil
 		// Use our indices to unpack duplicated vertex attributes:
 		for (size_t dstIdx = 0; dstIdx < numIndices; dstIdx++)
 		{
-			const uint32_t srcIdx = meshData->m_indices->at<uint32_t>(dstIdx);
+			const uint32_t srcIdx = meshData->m_indices->ScalarGetAs<uint32_t>(dstIdx);
 
-			newIndices.at<uint32_t>(dstIdx) = static_cast<uint32_t>(dstIdx);
+			newIndices.ScalarSetFrom<uint32_t>(dstIdx, static_cast<uint32_t>(dstIdx));
 
 			newPositions.at<glm::vec3>(dstIdx) = meshData->m_positions->at<glm::vec3>(srcIdx);
 
@@ -224,9 +230,9 @@ namespace grutil
 		auto ValidateVertex = [](util::ByteVector const* indices, util::ByteVector const* positions, size_t firstIdx)
 			-> bool
 			{
-				glm::vec3 const& p0 = positions->at<glm::vec3>(indices->at<uint32_t>(firstIdx));
-				glm::vec3 const& p1 = positions->at<glm::vec3>(indices->at<uint32_t>(firstIdx + 1));
-				glm::vec3 const& p2 = positions->at<glm::vec3>(indices->at<uint32_t>(firstIdx + 2));
+				glm::vec3 const& p0 = positions->at<glm::vec3>(indices->ScalarGetAs<uint32_t>(firstIdx));
+				glm::vec3 const& p1 = positions->at<glm::vec3>(indices->ScalarGetAs<uint32_t>(firstIdx + 1));
+				glm::vec3 const& p2 = positions->at<glm::vec3>(indices->ScalarGetAs<uint32_t>(firstIdx + 2));
 
 				glm::vec3 const& v0 = p0 - p2;
 				glm::vec3 const& v1 = p1 - p2;
@@ -264,7 +270,12 @@ namespace grutil
 		// We might remove verts, so reserve rather than resize...
 		const size_t maxNumVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
 
-		util::ByteVector newIndices = util::ByteVector::Create<uint32_t>();
+		SEAssert(meshData->m_indices->IsScalarType<uint16_t>() || meshData->m_indices->IsScalarType<uint32_t>(),
+			"Unexpected index format");
+
+		util::ByteVector newIndices = meshData->m_indices->IsScalarType<uint16_t>() ?
+			util::ByteVector::Create<uint16_t>() :
+			util::ByteVector::Create<uint32_t>();
 		newIndices.reserve(maxNumVerts);
 		util::ByteVector newPositions = util::ByteVector::Create<glm::vec3>();
 		newPositions.reserve(maxNumVerts);
@@ -307,9 +318,9 @@ namespace grutil
 				newIndices.emplace_back(insertIdx++);
 				newIndices.emplace_back(insertIdx++);
 
-				const uint32_t curIndices_i = meshData->m_indices->at<uint32_t>(i);
-				const uint32_t curIndices_i1 = meshData->m_indices->at<uint32_t>(i + 1);
-				const uint32_t curIndices_i2 = meshData->m_indices->at<uint32_t>(i + 2);
+				const uint32_t curIndices_i = meshData->m_indices->ScalarGetAs<uint32_t>(i);
+				const uint32_t curIndices_i1 = meshData->m_indices->ScalarGetAs<uint32_t>(i + 1);
+				const uint32_t curIndices_i2 = meshData->m_indices->ScalarGetAs<uint32_t>(i + 2);
 
 				newPositions.emplace_back(meshData->m_positions->at<glm::vec3>(curIndices_i));
 				newPositions.emplace_back(meshData->m_positions->at<glm::vec3>(curIndices_i1));
@@ -391,18 +402,22 @@ namespace grutil
 
 		for (size_t i = 0; i < meshData->m_indices->size(); i += 3)
 		{
-			glm::vec3 const& p0 = meshData->m_positions->at<glm::vec3>(meshData->m_indices->at<uint32_t>(i));
-			glm::vec3 const& p1 = meshData->m_positions->at<glm::vec3>(meshData->m_indices->at<uint32_t>(i + 1));
-			glm::vec3 const& p2 = meshData->m_positions->at<glm::vec3>(meshData->m_indices->at<uint32_t>(i + 2));
+			const uint32_t i0 = meshData->m_indices->ScalarGetAs<uint32_t>(i);
+			const uint32_t i1 = meshData->m_indices->ScalarGetAs<uint32_t>(i + 1);
+			const uint32_t i2 = meshData->m_indices->ScalarGetAs<uint32_t>(i + 2);
+
+			glm::vec3 const& p0 = meshData->m_positions->at<glm::vec3>(i0);
+			glm::vec3 const& p1 = meshData->m_positions->at<glm::vec3>(i1);
+			glm::vec3 const& p2 = meshData->m_positions->at<glm::vec3>(i2);
 
 			glm::vec3 const& v0 = p0 - p2;
 			glm::vec3 const& v1 = p1 - p2;
 
 			glm::vec3 const& faceNormal = glm::normalize(glm::cross(v0, v1));
 			
-			meshData->m_normals->at<glm::vec3>(meshData->m_indices->at<uint32_t>(i)) = faceNormal;
-			meshData->m_normals->at<glm::vec3>(meshData->m_indices->at<uint32_t>(i + 1)) = faceNormal;
-			meshData->m_normals->at<glm::vec3>(meshData->m_indices->at<uint32_t>(i + 2)) = faceNormal;
+			meshData->m_normals->at<glm::vec3>(i0) = faceNormal;
+			meshData->m_normals->at<glm::vec3>(i1) = faceNormal;
+			meshData->m_normals->at<glm::vec3>(i2) = faceNormal;
 		}
 	}
 
@@ -439,9 +454,9 @@ namespace grutil
 
 		for (size_t i = 0; i < meshData->m_indices->size(); i += 3)
 		{
-			meshData->m_UV0->at<glm::vec2>(meshData->m_indices->at<uint32_t>(i)) = TL;
-			meshData->m_UV0->at<glm::vec2>(meshData->m_indices->at<uint32_t>(i + 1)) = BL;
-			meshData->m_UV0->at<glm::vec2>(meshData->m_indices->at<uint32_t>(i + 2)) = BR;
+			meshData->m_UV0->at<glm::vec2>(meshData->m_indices->ScalarGetAs<uint32_t>(i)) = TL;
+			meshData->m_UV0->at<glm::vec2>(meshData->m_indices->ScalarGetAs<uint32_t>(i + 1)) = BL;
+			meshData->m_UV0->at<glm::vec2>(meshData->m_indices->ScalarGetAs<uint32_t>(i + 2)) = BR;
 		}
 	}
 
@@ -581,10 +596,10 @@ namespace grutil
 
 		for (size_t i = 0; i < remapTable.size(); i++)
 		{
-			const uint32_t srcIdx = meshData->m_indices->at<uint32_t>(i);
+			const uint32_t srcIdx = meshData->m_indices->ScalarGetAs<uint32_t>(i);
 
 			const int vertIdx = remapTable[i];
-			meshData->m_indices->at<uint32_t>(i) = static_cast<uint32_t>(vertIdx);
+			meshData->m_indices->ScalarSetFrom<uint32_t>(i, static_cast<uint32_t>(vertIdx));
 
 			// Pointer to the first byte in our blob of interleaved vertex data:
 			uint8_t const* currentVertStart = (uint8_t*)vertexDataOut.data() + ((size_t)vertIdx * vertexStrideBytes);
@@ -718,7 +733,7 @@ namespace grutil
 
 		int faceSize = GetNumFaceVerts(m_context, faceIdx); // Currently only 3 supported...
 		int indicesIdx = (faceIdx * faceSize) + vertIdx;
-		int index = meshData->m_indices->at<uint32_t>(indicesIdx);
+		int index = meshData->m_indices->ScalarGetAs<uint32_t>(indicesIdx);
 
 		return index;
 	}

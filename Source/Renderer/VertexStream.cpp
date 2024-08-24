@@ -197,6 +197,11 @@ namespace re
 		SEAssert(m_createParams.m_type != Type::Type_Count && m_createParams.m_dataType != DataType::DataType_Count,
 			"Invalid create params");
 
+		SEAssert(m_createParams.m_type != Type::Index || 
+			(m_createParams.m_dataType == DataType::UShort && m_data.IsScalarType<uint16_t>()) ||
+			(m_createParams.m_dataType == DataType::UInt && m_data.IsScalarType<uint32_t>()),
+			"Invalid index data");
+
 		// D3D12 does not support GPU-normalization of 32-bit types. As a hail-mary, we attempt to pre-normalize here
 		if (DoNormalize() && 
 			createParams.m_dataType == re::VertexStream::DataType::Float ||

@@ -675,21 +675,42 @@ namespace
 
 			// Index stream:
 			SEAssert(curPrimitive.indices != nullptr, "Mesh is missing indices");
-			util::ByteVector indices = util::ByteVector::Create<uint32_t>();
-			indices.resize(curPrimitive.indices->count);
-			for (size_t index = 0; index < curPrimitive.indices->count; index++)
+			
+			const size_t indicesComponentNumBytes = cgltf_component_size(curPrimitive.indices->component_type);
+			SEAssert(indicesComponentNumBytes == 2 || indicesComponentNumBytes == 4,
+				"Unexpected index component byte size");
+
+			const size_t numIndices = cgltf_accessor_unpack_indices(
+				curPrimitive.indices, nullptr, indicesComponentNumBytes, curPrimitive.indices->count);
+
+			util::ByteVector indices = indicesComponentNumBytes == 2 ? 
+				util::ByteVector::Create<uint16_t>(numIndices) : 
+				util::ByteVector::Create<uint32_t>(numIndices);
+
+			re::VertexStream::DataType indexDataType = re::VertexStream::DataType::DataType_Count;
+			switch (indicesComponentNumBytes)
 			{
-				// Note: We use 32-bit indexes, but cgltf uses size_t's
-				indices.at<uint32_t>(index) = static_cast<uint32_t>(cgltf_accessor_read_index(
-					curPrimitive.indices, 
-					static_cast<uint64_t>(index)));
+			case 2: // uint16_t
+			{
+				indexDataType = re::VertexStream::DataType::UShort;
+				cgltf_accessor_unpack_indices(
+					curPrimitive.indices, indices.data<uint16_t>(), indicesComponentNumBytes, numIndices);
 			}
-			// TODO: Use cgltf_accessor_unpack_indices and unpack/store/use indices in their received format
+			break;
+			case 4: // uint32_t
+			{
+				indexDataType = re::VertexStream::DataType::UInt;
+				cgltf_accessor_unpack_indices(
+					curPrimitive.indices, indices.data<uint32_t>(), indicesComponentNumBytes, numIndices);
+			}
+			break;
+			default: SEAssertF("Unexpected number of bytes in indices component");
+			}
 
 			re::VertexStream* indexStream = re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Index,
-					.m_dataType = re::VertexStream::DataType::UInt,
+					.m_dataType = indexDataType,
 				},
 				std::move(indices)).get();
 			

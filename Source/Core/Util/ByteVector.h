@@ -2,6 +2,8 @@
 #pragma once
 #include "../Assert.h"
 
+#include "CastUtils.h"
+
 
 namespace util
 {
@@ -59,6 +61,7 @@ namespace util
 		size_t size() const;
 		bool empty() const;
 
+
 	public:
 		size_t NumBytes() const;
 
@@ -67,6 +70,17 @@ namespace util
 
 		template<typename T>
 		T* data();
+
+
+	public:
+		template<typename T>
+		bool IsScalarType() const;
+
+		template<typename T>
+		T ScalarGetAs(size_t elementIdx) const;
+
+		template<typename T>
+		void ScalarSetFrom(size_t elementIdx, T);
 
 
 	public: // Helpers:
@@ -276,6 +290,71 @@ namespace util
 	T* ByteVector::data()
 	{
 		return reinterpret_cast<T*>(m_data.data());
+	}
+
+
+	template<typename T>
+	bool ByteVector::IsScalarType() const
+	{
+		SEAssert((std::is_same<T, std::uint16_t>::value || std::is_same<T, std::uint32_t>::value),
+			"Only uint16_t or uint32_t types are currently supported");
+
+		if constexpr (std::is_same<T, std::uint16_t>::value)
+		{
+			return m_typeInfoHash == typeid(uint16_t).hash_code();
+		}
+		else if constexpr (std::is_same<T, std::uint32_t>::value)
+		{
+			return m_typeInfoHash == typeid(uint32_t).hash_code();
+		}
+		return false;
+	}
+
+
+	template<typename T>
+	T ByteVector::ScalarGetAs(size_t elementIdx) const
+	{
+		SEAssert((std::is_same<T, std::uint16_t>::value || std::is_same<T, std::uint32_t>::value) &&
+			(m_typeInfoHash == typeid(uint16_t).hash_code() ||
+				m_typeInfoHash == typeid(uint32_t).hash_code()),
+			"Only uint16_t or uint32_t types are currently supported");
+
+		if (m_typeInfoHash == typeid(uint16_t).hash_code())
+		{
+			return util::CheckedCast<T>(at<uint16_t>(elementIdx));
+		}
+		else if (m_typeInfoHash == typeid(uint32_t).hash_code())
+		{
+			return util::CheckedCast<T>(at<uint32_t>(elementIdx));
+		}
+		else
+		{
+			SEAssertF("Invalid type");
+		}
+		return T(0); // This should never happen
+	}
+
+
+	template<typename T>
+	void ByteVector::ScalarSetFrom(size_t elementIdx, T val)
+	{
+		SEAssert((std::is_same<T, std::uint16_t>::value || std::is_same<T, std::uint32_t>::value) &&
+			(m_typeInfoHash == typeid(uint16_t).hash_code() ||
+				m_typeInfoHash == typeid(uint32_t).hash_code()),
+			"Only uint16_t or uint32_t types are currently supported");
+
+		if (m_typeInfoHash == typeid(uint16_t).hash_code())
+		{
+			at<uint16_t>(elementIdx) = util::CheckedCast<uint16_t>(val);
+		}
+		else if (m_typeInfoHash == typeid(uint32_t).hash_code())
+		{
+			at<uint32_t>(elementIdx) = util::CheckedCast<uint32_t>(val);
+		}
+		else
+		{
+			SEAssertF("Invalid type");
+		}
 	}
 
 

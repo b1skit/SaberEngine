@@ -67,6 +67,22 @@
       "Command": "-numframesinflight 2"
     },
     {
+      "Id": "47b64b81-9812-4e8c-888e-ffeff7c0e5a7",
+      "Command": "API-specific",
+      "Items": [
+        {
+          "Id": "2952950c-6459-4f16-b409-7aa428831afc",
+          "Command": "OpenGL",
+          "Items": [
+            {
+              "Id": "c49f7d47-4167-4920-82e3-6e1bb5b0ca7b",
+              "Command": "-debuglevel 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "Id": "64d10a54-468b-49e2-80aa-ea9b5c0f7464",
       "Command": "Threading",
       "Items": [

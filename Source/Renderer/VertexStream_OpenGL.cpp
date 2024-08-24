@@ -30,7 +30,7 @@ namespace opengl
 		case re::VertexStream::DataType::UInt4:
 			return GL_UNSIGNED_INT;
 
-		case re::VertexStream::DataType::Short:	// 16-bit
+		case re::VertexStream::DataType::Short:		// 16-bit
 		case re::VertexStream::DataType::Short2:
 		case re::VertexStream::DataType::Short4:
 			return GL_SHORT;
