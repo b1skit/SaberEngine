@@ -16,10 +16,11 @@ int main(int argc, char* argv[])
 	std::cout << droid::k_logHeader;
 	std::cout << "Launching...\n";
 
-	std::filesystem::path cwd = std::filesystem::current_path();
-	std::cout << "Current working directory: \"" << cwd.string().c_str() << "\"\n";
+	droid::ErrorCode result = droid::ErrorCode::Success;
 
 	droid::ParseParams parseParams{
+		.m_workingDirectory = std::filesystem::current_path().string() + "\\",
+		.m_effectsDir = std::format("SaberEngine\\{}", core::configkeys::k_effectDirName),
 		.m_effectManifestPath = std::format(
 			"SaberEngine\\{}{}", core::configkeys::k_effectDirName, core::configkeys::k_effectManifestFilename),
 		.m_codeGenPath = "Source\\Generated\\",
@@ -32,11 +33,21 @@ int main(int argc, char* argv[])
 		std::string commandLineArgs;
 		for (int i = 1; i < argc; ++i)
 		{
+			auto AppendArg = [&commandLineArgs, i, argc](char const* currentArg)
+				{
+					commandLineArgs += currentArg;
+					if (i + 1 < argc)
+					{
+						commandLineArgs += " ";
+					}
+				};
+			AppendArg(argv[i]);
+
 			std::string currentArg = argv[i];
 			std::transform(
-				currentArg.begin(), 
-				currentArg.end(), 
-				currentArg.begin(), 
+				currentArg.begin(),
+				currentArg.end(),
+				currentArg.begin(),
 				[](unsigned char c) {return std::tolower(c); });
 
 			if (currentArg == "-disallowjsonexceptions")
@@ -51,30 +62,62 @@ int main(int argc, char* argv[])
 			{
 				doClean = true;
 			}
-
-			commandLineArgs += argv[i];
-			if (i + 1 < argc)
+			else if (currentArg == "-workingdir")
 			{
-				commandLineArgs += " ";
+				if (i + 1 < argc)
+				{
+					parseParams.m_workingDirectory = argv[i + 1];
+					AppendArg(argv[i + 1]);
+					++i;
+				}
+				else
+				{
+					result = droid::ErrorCode::ConfigurationError;
+					break;
+				}
+			}
+			else
+			{
+				std::cout << "Invalid command line argument: " << currentArg.c_str();
+				result = droid::ErrorCode::ConfigurationError;
+				break;
 			}
 		}
-		std::cout << "Recieved command line args: " << commandLineArgs.c_str() << "\n";
+
+		if (!commandLineArgs.empty())
+		{
+			std::cout << "Recieved command line args: " << commandLineArgs.c_str() << "\n";
+		}
 	}
 
-	droid::ErrorCode result = droid::ErrorCode::Success;
-
-	if (doClean)
+	if (result == droid::ErrorCode::Success)
 	{
-		std::cout << "Cleaning generated code...\n";
+		// Convert paths from relative to absolute:
+		parseParams.m_effectsDir = parseParams.m_workingDirectory + parseParams.m_effectsDir;
+		parseParams.m_effectManifestPath = parseParams.m_workingDirectory + parseParams.m_effectManifestPath;
+		parseParams.m_codeGenPath = parseParams.m_workingDirectory + parseParams.m_codeGenPath;
 
-		std::filesystem::remove_all(parseParams.m_codeGenPath.c_str());
-	}
-	else
-	{
-		result = droid::DoParsingAndCodeGen(parseParams);
 
-		std::cout << std::format(
-			"\nDroid shader burning complete!\nResult: \"{}\"\n", droid::ErrorCodeToCStr(result)).c_str();
+		std::cout << "---\n";
+		std::cout << "Current working directory:\t\"" << parseParams.m_workingDirectory.c_str() << "\"\n";
+		std::cout << "Effect file directory:\t\t\"" << parseParams.m_effectsDir.c_str() << "\"\n";
+		std::cout << "Effect manifest file path:\t\"" << parseParams.m_effectManifestPath.c_str() << "\"\n";
+		std::cout << "Code generation output path:\t\"" << parseParams.m_codeGenPath.c_str() << "\"\n";
+		std::cout << "---\n";
+
+		if (doClean)
+		{
+			std::cout << "Cleaning generated code...\n";
+
+			std::filesystem::remove_all(parseParams.m_codeGenPath.c_str());
+		}
+		else
+		{
+			result = droid::DoParsingAndCodeGen(parseParams);
+
+			std::cout << std::format(
+				"\nDroid shader burning complete!\nResult: \"{}\"\n", droid::ErrorCodeToCStr(result)).c_str();
+		}
 	}
 
 	return result;

@@ -233,10 +233,6 @@
           "Command": "-scene SimpleMorph\\glTF-Embedded\\SimpleMorph.gltf"
         },
         {
-          "Id": "9a9254c3-354f-4b73-8452-37b8811b44b5",
-          "Command": "-scene SimpleSkin\\glTF-Embedded\\SimpleSkin.gltf"
-        },
-        {
           "Id": "5c33b5c5-68f4-4728-b41a-373fd6a98ac1",
           "Command": "-scene RiggedSimple\\glTF-Binary\\RiggedSimple.glb"
         },

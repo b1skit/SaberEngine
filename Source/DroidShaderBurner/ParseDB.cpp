@@ -78,15 +78,15 @@ namespace droid
 
 	droid::ErrorCode ParseDB::ParseEffectFile(std::string const& effectName, ParseParams const& parseParams)
 	{
-		std::string const& effectFileName = effectName + ".json";
-		std::string const& effectFilePath = "SaberEngine\\Assets\\Effects\\" + effectFileName;
-
 		std::cout << "Parsing Effect \"" << effectName.c_str() << "\":\n";
+		
+		std::string const& effectFileName = effectName + ".json";
+		std::string const& effectFilePath = parseParams.m_effectsDir + effectFileName;
 
 		std::ifstream effectInputStream(effectFilePath);
 		if (!effectInputStream.is_open())
 		{
-			std::cout << "Error: Failed to open effect input stream\n";
+			std::cout << "Error: Failed to open effect input stream" << effectFilePath << "\n";
 			return droid::ErrorCode::FileError;
 		}
 		std::cout << "Successfully opened effect file \"" << effectFilePath.c_str() << "\"!\n\n";

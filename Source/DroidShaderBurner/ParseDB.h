@@ -12,6 +12,8 @@ namespace droid
 		bool m_allowJSONExceptions = false;
 		bool m_ignoreJSONComments = true;
 
+		std::string m_workingDirectory;
+		std::string m_effectsDir;
 		std::string m_effectManifestPath;
 		std::string m_codeGenPath;
 	};

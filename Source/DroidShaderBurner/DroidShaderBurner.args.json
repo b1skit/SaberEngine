@@ -3,6 +3,10 @@
   "Id": "76c4f899-eb8c-45b8-a0c7-fc74d466c133",
   "Items": [
     {
+      "Id": "2dee2cdf-64d4-41ed-9b56-6f1dd5a78800",
+      "Command": "-workingDir D:\\Projects\\Development\\SaberEngine\\"
+    },
+    {
       "Id": "5bc8c109-b8d4-4e8b-b193-4fdc1f62ed86",
       "Command": "-clean"
     },
