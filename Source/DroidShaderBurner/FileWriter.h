@@ -1,6 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
-#include "ParseEffect.h"
+#include "EffectParsing.h"
 
 
 namespace droid

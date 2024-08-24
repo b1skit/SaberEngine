@@ -1,9 +1,10 @@
 // © 2024 Adam Badke. All rights reserved.
+#include "EffectParsing.h"
 #include "FileWriter.h"
 #include "ParseDB.h"
-#include "ParseEffect.h"
 #include "TextStrings.h"
 
+#include "Core/Definitions/ConfigKeys.h"
 #include "Core/Definitions/EffectKeys.h"
 
 
@@ -17,15 +18,27 @@ namespace droid
 
 	droid::ErrorCode ParseDB::Parse()
 	{
-		std::cout << "\nLoading effect manifest \"" << m_parseParams.m_effectManifestPath.c_str() << "\"...\n";
+		// Skip parsing if the generated code was modified more recently than the effect files:
+		const time_t effectsDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_effectsDir);
+		const time_t codeGenDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_codeGenOutputDir);
+		if (codeGenDirModificationTime > effectsDirModificationTime)
+		{
+			return droid::ErrorCode::NoModification;
+		}
 
-		std::ifstream effectManifestInputStream(m_parseParams.m_effectManifestPath);
+		std::string const& effectManifestPath = std::format("{}{}",
+			m_parseParams.m_effectsDir,
+			m_parseParams.m_effectManifestFileName);
+			
+		std::cout << "\nLoading effect manifest \"" << effectManifestPath.c_str() << "\"...\n";
+
+		std::ifstream effectManifestInputStream(effectManifestPath);
 		if (!effectManifestInputStream.is_open())
 		{
 			std::cout << "Error: Failed to open effect manifest input stream\n";
 			return droid::ErrorCode::FileError;
 		}
-		std::cout << "Successfully opened effect manifest \"" << m_parseParams.m_effectManifestPath.c_str() << "\"!\n\n";
+		std::cout << "Successfully opened effect manifest \"" << effectManifestPath.c_str() << "\"!\n\n";
 
 		droid::ErrorCode result = droid::ErrorCode::Success;
 
@@ -54,7 +67,7 @@ namespace droid
 		{
 			std::cout << std::format(
 				"Failed to parse the Effect manifest file \"{}\"\n{}",
-				m_parseParams.m_effectManifestPath,
+				effectManifestPath,
 				parseException.what()).c_str();
 
 			effectManifestInputStream.close();
@@ -73,6 +86,39 @@ namespace droid
 		}
 
 		return result;
+	}
+
+
+	time_t ParseDB::GetMostRecentlyModifiedFileTime(std::string const& filesystemTarget)
+	{
+		std::filesystem::path targetPath = filesystemTarget;
+
+		// If the target doesn't exist, it hasn't ever been modified
+		if (std::filesystem::exists(targetPath) == false)
+		{
+			return 0;
+		}
+
+		time_t oldestTime = 0;
+
+		if (std::filesystem::is_directory(targetPath))
+		{
+			for (auto const& dirEntry : std::filesystem::recursive_directory_iterator(targetPath))
+			{
+				std::filesystem::file_time_type fileTime = std::filesystem::last_write_time(dirEntry);
+				std::chrono::system_clock::time_point systemTime = std::chrono::clock_cast<std::chrono::system_clock>(fileTime);
+				const time_t dirEntryWriteTime = std::chrono::system_clock::to_time_t(systemTime);
+				oldestTime = std::max(oldestTime, dirEntryWriteTime);
+			}
+		}
+		else
+		{
+			std::filesystem::file_time_type fileTime = std::filesystem::last_write_time(targetPath);
+			std::chrono::system_clock::time_point systemTime = std::chrono::clock_cast<std::chrono::system_clock>(fileTime);
+			const time_t targetWriteTime = std::chrono::system_clock::to_time_t(systemTime);
+			oldestTime = std::max(oldestTime, targetWriteTime);
+		}
+		return oldestTime;
 	}
 
 
@@ -171,7 +217,7 @@ namespace droid
 
 	droid::ErrorCode ParseDB::GenerateDrawstyleCPPCode() const
 	{
-		FileWriter filewriter(m_parseParams.m_codeGenPath, m_drawstyleHeaderName);
+		FileWriter filewriter(m_parseParams.m_codeGenOutputDir, m_drawstyleHeaderName);
 
 		droid::ErrorCode result = filewriter.GetStatus();
 		if (result != droid::ErrorCode::Success)

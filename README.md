@@ -17,6 +17,7 @@ Saber Engine is constantly improving. Its current features include:
 	- OpenGL 4.6  
 	- Upcoming Vulkan support  
 - Dynamic shader selection via an scriptable Effect/Technique/DrawStyle framework  
+- Droid: An offline shader compiler & code generator  
 - Scriptable rendering pipeline  
 - Asynchronous copy/graphics/compute pipelines  
 - Multi-threaded architecture programmed in C++ 20  
@@ -24,21 +25,33 @@ Saber Engine is constantly improving. Its current features include:
 - GLTF 2.0 scene format support  
 - HDR physically-based lighting model (As per EA’s Frostbite, Lagarde et al.)  
 - Image-based indirect lighting  
-- Directional, point and spot punctual lights  
+- Directional, point & spot punctual lights  
 - PCF & PCSS soft shadows  
 - Radiometrically-correct screen-space ambient occlusion (Intel XeGTAO)  
 - ACES filmic response tone mapping  
-- Physically-based camera and exposure settings  
-- Physically-based emissive and bloom  
+- Physically-based camera & exposure settings  
+- Physically-based emissive & bloom  
 - Camera frustum culling  
 - Automatic GPU instancing  
-- ImGui menus and a robust suite of debugging tools  
-- Support for RenderDoc and PIX programmatic capture APIs  
+- ImGui menus & a robust suite of debugging tools  
+- Support for RenderDoc & PIX programmatic capture APIs  
 
 
------------------------
-Command line arguments:
------------------------
+--------------
+Initial setup:
+--------------
+* Clone the repository: `git clone https://github.com/b1skit/SaberEngine.git`
+* Run the `.\InitialSetup.bat` script
+  * This will initialize & update the git submodule dependencies, & configure vcpkg  
+* Set your working directory for all build configurations:
+  * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory -> $(SolutionDir)SaberEngine  
+* Build the project
+  * It's recommended you build the Release configuration first, as this will copy all files required for distribution to the `.\SaberEngine\` output/working directory  
+
+
+------------------------------------
+SaberEngine: Command line arguments:
+------------------------------------
 Most of the keys described in `ConfigKeys.h` can be set/overridden via key/value command line arguments using a `-keyname value` pattern.  If `value` is omitted, it will be stored as a boolean true value.  The most important command line arguments are described here:
 
 Scene loading: `-scene Folder\Name\filename.extension`  
@@ -58,7 +71,7 @@ Select a rendering pipeline: `-renderpipeline pipelineName.json`
 Enable strict shader binding checks: `-strictshaderbinding`  
 * Enables helpful (but occasionally annoying) asserts if parameters aren't found when parsing reflected shader metadata  
 
-Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log verbosity, and API-specific validation  
+Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log verbosity, & API-specific validation  
 * 0: Default (disabled)  
 * 1: Basic debug output (OpenGL, DX12)  
 * 2: Level 1 + GPU-based validation (DX12 only)  
@@ -77,13 +90,6 @@ Enable CPU-side normalization of vertex streams when requested: `-cpunormalizeve
 * This is provided for strict GLTF 2.0 compatibility but only rarely required if a vertex stream requires normalization, but is not received in a format compatible with GPU normalization  
 
 
---------------  
-Menu and logs:  
---------------  
-Press the ` (tilde/grave) key to show/hide the ImGui overlay  
-* Logs are also output to the `.\Logs\` directory  
-
-
 ----------------------
 Runtime Configuration:
 ----------------------
@@ -98,15 +104,11 @@ Default controls:
 * Toggle VSync: v  
 
 
-------------
-Conventions:
-------------
-- Right-handed coordinate system  
-- UV (0,0) = Top-left  
-- Depth near/far = [0,1]  
-- CPU-side matrices are stored in column-major order (GLM default)  
-- GLSL matrices constructed/consumed in column-major order (GLSL default)  
-- HLSL uniform matrices arrive in column-major order. Matrices declared in shader body are constructed in row-major order (HLSL defaults)  
+------------  
+Menu & logs:  
+------------  
+Press the ` (tilde/grave) key to show/hide the ImGui overlay  
+* Logs are also output to the `.\Logs\` directory  
 
 
 ---------------------
@@ -120,11 +122,22 @@ Image-based Lighting:
 ------------------------------------------
 Shaders, Effects, Techniques, Draw Styles:
 ------------------------------------------
-Shaders are dynamically resolved at runtime by matching draw style flags set via materials and render stages to sets of draw style rules defined by Effects that map to Techniques. See the JSON Effect definition files located in the `Assets\Effects` directory for example usage  
+Shaders are dynamically resolved at runtime by matching draw style flags set via materials & render stages to sets of draw style rules defined by Effects that map to Techniques. See the JSON Effect definition files located in the `Assets\Effects` directory for example usage  
 
 For simplicity, shader names are expected to be identical between all APIs, with the exception of their file extensions  
 - OpenGL: Shaders have .vert/.geom/.frag/.tesc/.tese/.mesh/.task/.comp extensions. These files are loaded/processed at runtime  
 - DX12: Shaders are compiled with the application from source .hlsli/.hlsl files. The resulting Compiled Shader Objects (.cso) with the same (extensionless) filename are loaded at runtime  
+
+
+-------------------------------------------
+Droid Shader compilation & code generation:
+------------------------------------------- 
+Droid is automatically compiled & executed as part of the SaberEngine solution build process. By default, it parses the contents of the `<project root>\SaberEngine\Assets\Effects\` directory, & converts Effect definitions into compilable C++/HLSL/GLSL code.  
+
+Its execution can be optionally modified via command line arguments:  
+
+Clean output directories: `-clean`  
+* Erases all generated C++ & shader code, & shader compilation artifacts.  
 
 
 ------------------
@@ -143,34 +156,33 @@ Shader PDBs are generated when SaberEngine's Debug build configuration is compil
 * __RenderDoc configuration__: Set the shader PDB path in the "Tools -> Settings -> Core Shader debug search path" menu  
 
 
---------------
-Initial setup:
---------------
-* Clone the repository: `git clone https://github.com/b1skit/SaberEngine.git`
-* Run the `.\InitialSetup.bat` script
-  * This will initialize and update the git submodule dependencies, and configure vcpkg  
-* Set your working directory for all build configurations:
-  * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory -> $(SolutionDir)SaberEngine  
-* Build the project
-  * It's recommended you build the Release configuration first, as this will copy all files required for distribution to the `.\SaberEngine\` output/working directory  
+------------
+Conventions:
+------------
+- Right-handed coordinate system  
+- UV (0,0) = Top-left  
+- Depth near/far = [0,1]  
+- CPU-side matrices are stored in column-major order (GLM default)  
+- GLSL matrices constructed/consumed in column-major order (GLSL default)  
+- HLSL uniform matrices arrive in column-major order. Matrices declared in shader body are constructed in row-major order (HLSL defaults)  
 
 
 -------------
 Dependencies:
 -------------
-* SaberEngine uses vcpkg, NuGet, and Git subtrees to manage dependencies. Source details are included for each dependency below.  
+* SaberEngine uses vcpkg, NuGet, & Git subtrees to manage dependencies. Source details are included for each dependency below.  
 * Git Subtree dependencies are pre-configured. Installation/configuration details are included below for posterity.  
 
 
 CGLTF: https://github.com/jkuhlmann/cgltf
 -----------------------------------------
-- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info  
+- Included as a dependency via `vcpkg`. See the `Initial setup` section & `.\vcpkg.json` for more info  
 - Sample GLTF assets compatible with Saber Engine can be found here: https://github.com/KhronosGroup/glTF-Sample-Models  
 
 
 EnTT: https://github.com/skypjack/entt
 --------------------------------------
-- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info  
+- Included as a dependency via `vcpkg`. See the `Initial setup` section & `.\vcpkg.json` for more info  
 
 
 Glew: https://github.com/nigels-com/glew/releases
@@ -184,7 +196,7 @@ Glew: https://github.com/nigels-com/glew/releases
 
 GLM: https://github.com/g-truc/glm/releases
 -------------------------------------------
-- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info  
+- Included as a dependency via `vcpkg`. See the `Initial setup` section & `.\vcpkg.json` for more info  
 
 
 Imgui: https://github.com/ocornut/imgui/
@@ -192,8 +204,8 @@ Imgui: https://github.com/ocornut/imgui/
 - Included as a git subtree: `<project root>\Source\Dependencies\imgui\`  
 - Current version: v1.89.9  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\imgui\"  
-- All of the .h and .cpp files in the .\Source\Dependencies\imgui\ directory are added to the Visual Studio project (under the "imgui" filter)  
-- The dx12, opengl3, and win32 imgui_impl_* .h and .cpp files in the .\Source\Dependencies\imgui\backends\are added to the Visual Studio project (under the "imgui\backends" filter)  
+- All of the .h & .cpp files in the .\Source\Dependencies\imgui\ directory are added to the Visual Studio project (under the "imgui" filter)  
+- The dx12, opengl3, & win32 imgui_impl_* .h & .cpp files in the .\Source\Dependencies\imgui\backends\are added to the Visual Studio project (under the "imgui\backends" filter)  
 
 
 Intel XeGTAO: https://github.com/GameTechDev/XeGTAO
@@ -231,7 +243,7 @@ MikkTSpace Welder: https://github.com/mmikk/Welder
 
 JSON for Modern C++: https://github.com/nlohmann/json  
 -----------------------------------------------------  
-- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info  
+- Included as a dependency via `vcpkg`. See the `Initial setup` section & `.\vcpkg.json` for more info  
 
 
 stb (stb_image.h): https://github.com/nothings/stb/blob/master/  
@@ -246,9 +258,9 @@ WinPixEventRuntime: https://devblogs.microsoft.com/pix/winpixeventruntime/
 - Included via a NuGet package  
  
 
---------------------------------------------------
-Recommended Visual Studio extensions and Software:
---------------------------------------------------
+------------------------------------------------
+Recommended Visual Studio extensions & Software:
+------------------------------------------------
 - Smart Command Line Arguments  
 - Editor Guidelines  
 - GLSL Language Integration: https://github.com/danielscherzer/GLSL  

@@ -23,7 +23,7 @@
     <ClCompile Include="pch\pch.cpp">
       <Filter>Source Files\pch</Filter>
     </ClCompile>
-    <ClCompile Include="ParseEffect.cpp">
+    <ClCompile Include="EffectParsing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ParseDB.cpp">
@@ -37,7 +37,7 @@
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
-    <ClInclude Include="ParseEffect.h">
+    <ClInclude Include="EffectParsing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ParseDB.h">

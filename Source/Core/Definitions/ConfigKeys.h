@@ -7,6 +7,7 @@ namespace core::configkeys
 	/******************************************************************************************************************/
 	// Configuration constants:
 	/******************************************************************************************************************/
+	constexpr char const* k_appDirName						= "SaberEngine\\";
 	constexpr char const* k_configDirName					= "Config\\";
 	constexpr char const* k_configFileName					= "config.cfg";
 	constexpr char const* k_pipelineDirName					= "Assets\\Pipelines\\";

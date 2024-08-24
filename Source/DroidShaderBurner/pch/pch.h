@@ -2,6 +2,7 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <filesystem>
 #include <fstream>

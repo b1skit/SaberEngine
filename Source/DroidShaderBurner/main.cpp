@@ -1,6 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
+#include "EffectParsing.h"
 #include "ParseDB.h"
-#include "ParseEffect.h"
 #include "TextStrings.h"
 
 #include "Core/Definitions/ConfigKeys.h"
@@ -20,10 +20,11 @@ int main(int argc, char* argv[])
 
 	droid::ParseParams parseParams{
 		.m_workingDirectory = std::filesystem::current_path().string() + "\\",
-		.m_effectsDir = std::format("SaberEngine\\{}", core::configkeys::k_effectDirName),
-		.m_effectManifestPath = std::format(
-			"SaberEngine\\{}{}", core::configkeys::k_effectDirName, core::configkeys::k_effectManifestFilename),
-		.m_codeGenPath = "Source\\Generated\\",
+		.m_appDirectory = core::configkeys::k_appDirName,
+		.m_effectsDir = std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_effectDirName),
+		.m_codeGenOutputDir = "Source\\Generated\\",
+
+		.m_effectManifestFileName = core::configkeys::k_effectManifestFilename,
 	};
 
 	// Handle command line args:
@@ -94,32 +95,31 @@ int main(int argc, char* argv[])
 	{
 		// Convert paths from relative to absolute:
 		parseParams.m_effectsDir = parseParams.m_workingDirectory + parseParams.m_effectsDir;
-		parseParams.m_effectManifestPath = parseParams.m_workingDirectory + parseParams.m_effectManifestPath;
-		parseParams.m_codeGenPath = parseParams.m_workingDirectory + parseParams.m_codeGenPath;
-
+		parseParams.m_codeGenOutputDir = parseParams.m_workingDirectory + parseParams.m_codeGenOutputDir;
 
 		std::cout << "---\n";
 		std::cout << "Current working directory:\t\"" << parseParams.m_workingDirectory.c_str() << "\"\n";
-		std::cout << "Effect file directory:\t\t\"" << parseParams.m_effectsDir.c_str() << "\"\n";
-		std::cout << "Effect manifest file path:\t\"" << parseParams.m_effectManifestPath.c_str() << "\"\n";
-		std::cout << "Code generation output path:\t\"" << parseParams.m_codeGenPath.c_str() << "\"\n";
+		std::cout << "Effect directory:\t\t\"" << parseParams.m_effectsDir.c_str() << "\"\n";
+		std::cout << "Code generation output path:\t\"" << parseParams.m_codeGenOutputDir.c_str() << "\"\n";
 		std::cout << "---\n";
 
 		if (doClean)
 		{
 			std::cout << "Cleaning generated code...\n";
 
-			std::filesystem::remove_all(parseParams.m_codeGenPath.c_str());
+			std::filesystem::remove_all(parseParams.m_codeGenOutputDir.c_str());
 		}
 		else
 		{
 			result = droid::DoParsingAndCodeGen(parseParams);
 
 			std::cout << std::format(
-				"\nDroid shader burning complete!\nResult: \"{}\"\n", droid::ErrorCodeToCStr(result)).c_str();
+				"\nDroid resource burning {}\nResult: \"{}\"\n",
+				result >= 0 ? "complete!" : "failed!",
+				droid::ErrorCodeToCStr(result)).c_str();
 		}
 	}
 
-	return result;
+	return result >= 0 ? droid::ErrorCode::Success : result;
 }
 

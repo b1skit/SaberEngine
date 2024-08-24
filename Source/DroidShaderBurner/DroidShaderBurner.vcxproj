@@ -76,6 +76,8 @@
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
     <CustomBuildAfterTargets>
     </CustomBuildAfterTargets>
+    <PreBuildEventUseInBuild />
+    <CustomBuildBeforeTargets>Clean</CustomBuildBeforeTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\Build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
@@ -83,6 +85,8 @@
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
     <CustomBuildAfterTargets>
     </CustomBuildAfterTargets>
+    <PreBuildEventUseInBuild />
+    <CustomBuildBeforeTargets>Clean</CustomBuildBeforeTargets>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
@@ -140,12 +144,10 @@
       <Message>Shader compilation &amp; code generation</Message>
     </PostBuildEvent>
     <CustomBuildStep>
-      <Command>
-      </Command>
+      <Command>$(TargetPath) -clean</Command>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Message>
-      </Message>
+      <Message>Clean generated code</Message>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -177,19 +179,17 @@
       <Message>Shader compilation &amp; code generation</Message>
     </PostBuildEvent>
     <CustomBuildStep>
-      <Command>
-      </Command>
+      <Command>$(TargetPath) -clean</Command>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Message>
-      </Message>
+      <Message>Clean generated code</Message>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FileWriter.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ParseDB.cpp" />
-    <ClCompile Include="ParseEffect.cpp" />
+    <ClCompile Include="EffectParsing.cpp" />
     <ClCompile Include="pch\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -198,7 +198,7 @@
   <ItemGroup>
     <ClInclude Include="FileWriter.h" />
     <ClInclude Include="ParseDB.h" />
-    <ClInclude Include="ParseEffect.h" />
+    <ClInclude Include="EffectParsing.h" />
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="TextStrings.h" />
   </ItemGroup>

@@ -12,10 +12,14 @@ namespace droid
 		bool m_allowJSONExceptions = false;
 		bool m_ignoreJSONComments = true;
 
+		// Paths:
 		std::string m_workingDirectory;
+		std::string m_appDirectory;
 		std::string m_effectsDir;
-		std::string m_effectManifestPath;
-		std::string m_codeGenPath;
+		std::string m_codeGenOutputDir;
+
+		// File names:
+		std::string m_effectManifestFileName;
 	};
 
 
@@ -37,8 +41,11 @@ namespace droid
 		droid::ErrorCode GenerateCPPCode() const;
 
 
-	private:
+	private: // Parsing:
 		ParseParams m_parseParams;
+
+		time_t GetMostRecentlyModifiedFileTime(std::string const& filesystemTarget);
+
 
 
 		droid::ErrorCode ParseEffectFile(std::string const& effectName, ParseParams const&);
@@ -47,7 +54,7 @@ namespace droid
 		std::map<std::string, std::set<std::string>> m_drawstyles;
 
 
-	private:
+	private: // Code gen:
 		static constexpr char const* m_drawstyleHeaderName = "DrawStyles.h";
 		droid::ErrorCode GenerateDrawstyleCPPCode() const;
 
