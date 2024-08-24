@@ -385,6 +385,11 @@ namespace re
 					m_graphicsParams.m_vertexStreams[i + semanticIdx].m_vertexStream &&
 					m_graphicsParams.m_vertexStreams[i + semanticIdx].m_vertexStream->GetType() == curStreamType)
 				{
+					SEAssert(m_batchShader->GetVertexAttributeSlot(
+						curStreamType, semanticIdx) != re::VertexStreamMap::k_invalidSlotIdx,
+						"Batch shader does not have an entry for the current vertex stream. If you hit this, consider "
+						"implementing support for removing this stream from the batch");
+
 					m_graphicsParams.m_vertexStreams[i + semanticIdx].m_slot =
 						m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
 

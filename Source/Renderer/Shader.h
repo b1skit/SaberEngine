@@ -144,7 +144,7 @@ namespace re
 	}
 
 
-	inline 	uint8_t Shader::GetVertexAttributeSlot(re::VertexStream::Type streamType, uint8_t semanticIdx) const
+	inline uint8_t Shader::GetVertexAttributeSlot(re::VertexStream::Type streamType, uint8_t semanticIdx) const
 	{
 		return m_vertexStreamMap->GetSlotIdx(streamType, semanticIdx);
 	}
