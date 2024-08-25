@@ -205,7 +205,7 @@ namespace droid
 
 	droid::ErrorCode ParseDB::GenerateCPPCode() const
 	{
-		droid::ErrorCode result = GenerateDrawstyleCPPCode();
+		droid::ErrorCode result = GenerateCPPCode_Drawstyle();
 		if (result != droid::ErrorCode::Success)
 		{
 			return result;
@@ -215,9 +215,9 @@ namespace droid
 	}
 
 
-	droid::ErrorCode ParseDB::GenerateDrawstyleCPPCode() const
+	droid::ErrorCode ParseDB::GenerateCPPCode_Drawstyle() const
 	{
-		FileWriter filewriter(m_parseParams.m_codeGenOutputDir, m_drawstyleHeaderName);
+		FileWriter filewriter(m_parseParams.m_codeGenOutputDir, m_drawstyleHeaderFilename);
 
 		droid::ErrorCode result = filewriter.GetStatus();
 		if (result != droid::ErrorCode::Success)
@@ -227,24 +227,74 @@ namespace droid
 
 		filewriter.OpenNamespace("effect::drawstyle");
 
-		filewriter.WriteLine("using Bitmask = uint64_t;\n");
-
-		filewriter.WriteLine("constexpr Bitmask DefaultTechnique = 0;");
-		
-		uint8_t bitIdx = 0;
-		for (auto const& drawstyle : m_drawstyles)
+		// Bitmasks:
 		{
-			for (auto const& rule : drawstyle.second)
-			{
+			filewriter.WriteLine("using Bitmask = uint64_t;");
+			filewriter.EmptyLine();
 
-				filewriter.WriteLine(std::format("constexpr Bitmask {}_{} = 1llu << {};", 
-					drawstyle.first, rule, bitIdx++));
+			filewriter.WriteLine("constexpr Bitmask DefaultTechnique = 0;");
+
+			uint8_t bitIdx = 0;
+			for (auto const& drawstyle : m_drawstyles)
+			{
+				std::string const& rule = drawstyle.first;
+				for (auto const& mode : drawstyle.second)
+				{
+					filewriter.WriteLine(std::format("constexpr Bitmask {}_{} = 1llu << {};",
+						rule, mode, bitIdx++));
+				}
+			}
+			if (bitIdx >= 64)
+			{
+				std::cout << "Error: " << " is too many drawstyle rules to fit in a 64-bit bitmask\n";
+				result = droid::ErrorCode::DataError;
 			}
 		}
-		if (bitIdx >= 64)
+
+		// Static functions:
 		{
-			std::cout << "Error: " << " is too many drawstyle rules to fit in a 64-bit bitmask\n";
-			result = droid::ErrorCode::DataError;
+
+			filewriter.EmptyLine();
+			filewriter.WriteLine("using ModeToBitmask = std::unordered_map<util::HashKey const, effect::drawstyle::Bitmask>;");
+			filewriter.WriteLine("using DrawStyleRuleToModes = std::unordered_map<util::HashKey const, ModeToBitmask>;");
+
+			filewriter.EmptyLine();
+
+			// GetDrawStyleRuleToModesMap():
+			filewriter.WriteLine("static DrawStyleRuleToModes const& GetDrawStyleRuleToModesMap()");
+			filewriter.OpenBrace();
+
+			filewriter.WriteLine("static const DrawStyleRuleToModes s_drawstyleBitmaskMappings({");
+			filewriter.Indent();
+
+			for (auto const& drawstyle : m_drawstyles)
+			{
+				std::string const& rule = drawstyle.first;
+
+				filewriter.WriteLine("{");
+				filewriter.Indent();
+
+				filewriter.WriteLine(std::format("util::HashKey(\"{}\"),", rule));
+				filewriter.OpenBrace();
+				for (auto const& mode : drawstyle.second)
+				{
+					filewriter.WriteLine(std::format("{{util::HashKey(\"{}\"), effect::drawstyle::{}_{}}},",
+						mode,
+						rule,
+						mode));
+				}
+				filewriter.CloseBrace();
+
+				filewriter.Unindent();
+				filewriter.WriteLine("},");
+			}
+
+			filewriter.Unindent();
+			filewriter.WriteLine("});");
+		
+			filewriter.WriteLine("return s_drawstyleBitmaskMappings;");			
+
+			filewriter.CloseBrace();
 		}
 
 		filewriter.CloseNamespace();

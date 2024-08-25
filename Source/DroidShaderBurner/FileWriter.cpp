@@ -61,6 +61,12 @@ namespace droid
 	}
 
 
+	void FileWriter::EmptyLine()
+	{
+		m_outputStream << std::endl;
+	}
+
+
 	void FileWriter::WriteLine(char const* line)
 	{
 		for (uint8_t i = 0; i < m_curIndentLevel; ++i)

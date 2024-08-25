@@ -11,6 +11,10 @@
       "Command": "-clean"
     },
     {
+      "Id": "503afd44-9530-437a-9922-bfeb9c320981",
+      "Command": "-cleanAndRebuild"
+    },
+    {
       "Id": "de56026b-7c88-45a9-85e0-4fe6e80dce4e",
       "Command": "-disallowJSONExceptions"
     },

@@ -17,6 +17,8 @@ namespace droid
 		void OpenNamespace(std::string const&);
 		void CloseNamespace();
 
+		void EmptyLine();
+
 		void WriteLine(char const*);
 		void WriteLine(std::string const&);
 

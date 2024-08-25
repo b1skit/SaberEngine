@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
 
 	// Handle command line args:
 	bool doClean = false;
+	bool doBuild = true;
 	if (argc > 0)
 	{
 		std::string commandLineArgs;
@@ -62,6 +63,12 @@ int main(int argc, char* argv[])
 			else if (currentArg == "-clean")
 			{
 				doClean = true;
+				doBuild = false;
+			}
+			else if (currentArg == "-cleanandrebuild")
+			{
+				doClean = true;
+				doBuild = true;
 			}
 			else if (currentArg == "-workingdir")
 			{
@@ -109,7 +116,7 @@ int main(int argc, char* argv[])
 
 			std::filesystem::remove_all(parseParams.m_codeGenOutputDir.c_str());
 		}
-		else
+		if (doBuild)
 		{
 			result = droid::DoParsingAndCodeGen(parseParams);
 

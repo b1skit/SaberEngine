@@ -55,8 +55,8 @@ namespace droid
 
 
 	private: // Code gen:
-		static constexpr char const* m_drawstyleHeaderName = "DrawStyles.h";
-		droid::ErrorCode GenerateDrawstyleCPPCode() const;
+		static constexpr char const* m_drawstyleHeaderFilename = "DrawStyles.h";
+		droid::ErrorCode GenerateCPPCode_Drawstyle() const;
 
 	};
 

@@ -55,7 +55,7 @@ namespace
 			std::string const& ruleName = condition.at(key_rule).template get<std::string>();
 			std::string const& modeName = condition.at(key_mode).template get<std::string>();
 
-			drawStyleBitmaskOut |= effect::DrawStyle::GetDrawStyleBitmaskByName(ruleName, modeName);
+			drawStyleBitmaskOut |= effect::drawstyle::GetDrawStyleBitmaskByName(ruleName, modeName);
 		}
 
 		std::string const& techniqueName = drawStyleEntry.at(key_technique).template get<std::string>();

@@ -5,6 +5,8 @@
 
 #include "Core/Interfaces/INamedObject.h"
 
+#include "Core/Util/HashKey.h"
+
 #include "Generated/DrawStyles.h"
 
 
@@ -12,167 +14,17 @@ using EffectID = NameID;
 using TechniqueID = NameID;
 
 
+namespace effect::drawstyle
+{
+	// Helpers for "Generated/DrawStyles.h":
+	drawstyle::Bitmask GetDrawStyleBitmaskByName(std::string const& drawstyleName, std::string const& mode);
+	std::string GetNamesFromDrawStyleBitmask(drawstyle::Bitmask bitmask); // Debug helper: Convert a bitmask back to a list of names
+}
+
+
 namespace effect
 {
 	class Technique;
-	class Effect;
-
-
-	class DrawStyle
-	{
-	public:
-		using ModeToBitmask = std::unordered_map<std::string, effect::drawstyle::Bitmask>;
-		using DrawStyleRuleToModes = std::unordered_map<std::string, ModeToBitmask>;
-
-	private:
-		static DrawStyleRuleToModes const& GetDrawStyleRuleToModesMap()
-		{
-			static const DrawStyleRuleToModes s_drawstyleBitmaskMappings(
-				{
-					{
-						"RenderPath",
-						{
-							{"Deferred", effect::drawstyle::RenderPath_Deferred},
-							{"Forward", effect::drawstyle::RenderPath_Forward}
-						}
-					},
-					{
-						"MaterialAlphaMode",
-						{
-							{"Opaque", effect::drawstyle::MaterialAlphaMode_Opaque},
-							{"Mask", effect::drawstyle::MaterialAlphaMode_Mask},
-							{"Blend", effect::drawstyle::MaterialAlphaMode_Blend},
-						}
-					},
-					{
-						"MaterialSidedness",
-						{
-							{"Single", effect::drawstyle::MaterialSidedness_Single},
-							{"Double", effect::drawstyle::MaterialSidedness_Double},
-						}
-					},
-					{
-						"Debug",
-						{
-							{"Line", effect::drawstyle::Debug_Line},
-							{"Triangle", effect::drawstyle::Debug_Triangle},
-						}
-					},
-					{
-						"Bloom",
-						{
-							{"EmissiveBlit", effect::drawstyle::Bloom_EmissiveBlit},
-						}
-					},
-					{
-						"DeferredLighting",
-						{
-							{"BRDFIntegration", effect::drawstyle::DeferredLighting_BRDFIntegration},
-							{"IEMGeneration", effect::drawstyle::DeferredLighting_IEMGeneration},
-							{"PMREMGeneration", effect::drawstyle::DeferredLighting_PMREMGeneration},
-							{"DeferredAmbient", effect::drawstyle::DeferredLighting_DeferredAmbient},
-							{"DeferredDirectional", effect::drawstyle::DeferredLighting_DeferredDirectional},
-							{"DeferredPoint", effect::drawstyle::DeferredLighting_DeferredPoint},
-							{"DeferredSpot", effect::drawstyle::DeferredLighting_DeferredSpot},
-						}
-					},
-					{
-						"XeGTAO",
-						{
-							{"PrefilterDepths", effect::drawstyle::XeGTAO_PrefilterDepths},
-							{"LowQuality", effect::drawstyle::XeGTAO_LowQuality},
-							{"MedQuality", effect::drawstyle::XeGTAO_MedQuality},
-							{"HighQuality", effect::drawstyle::XeGTAO_HighQuality},
-							{"UltraQuality", effect::drawstyle::XeGTAO_UltraQuality},
-							{"Denoise", effect::drawstyle::XeGTAO_Denoise},
-							{"DenoiseLastPass", effect::drawstyle::XeGTAO_DenoiseLastPass},
-						}
-					},
-					{
-						"Shadow",
-						{
-							{"2D", effect::drawstyle::Shadow_2D},
-							{"Cube", effect::drawstyle::Shadow_Cube},
-						}
-					},
-					{
-						"TextureDimension",
-						{
-							{"1D", effect::drawstyle::TextureDimension_1D},
-							{"2D", effect::drawstyle::TextureDimension_2D},
-							{"3D", effect::drawstyle::TextureDimension_3D},
-						}
-					},
-				});
-			return s_drawstyleBitmaskMappings;
-		}
-
-
-	public:
-		static drawstyle::Bitmask GetDrawStyleBitmaskByName(std::string const& drawstyleName, std::string const& mode)
-		{
-			DrawStyleRuleToModes const& drawstyleBitmaskMappings = GetDrawStyleRuleToModesMap();
-
-			SEAssert(drawstyleBitmaskMappings.contains(drawstyleName) && 
-				drawstyleBitmaskMappings.at(drawstyleName).contains(mode),
-				"Draw style name or mode name not found");
-
-			return drawstyleBitmaskMappings.at(drawstyleName).at(mode);
-		}
-
-
-		// Debug helper: Convert a bitmask back to a list of names
-		static std::string GetNamesFromDrawStyleBitmask(drawstyle::Bitmask bitmask)
-		{
-			using BitmaskToEffectAndMode = std::unordered_map<effect::drawstyle::Bitmask, std::string>;
-
-			// Build a static reverse lookup map
-			static BitmaskToEffectAndMode s_drawstyleBitmaskMappings;
-
-			static std::atomic<bool> s_isInitialized = false;
-			if (!s_isInitialized)
-			{
-				static std::mutex s_initializationMutex;
-
-				{
-					std::lock_guard<std::mutex> lock(s_initializationMutex);
-
-					if (!s_isInitialized)
-					{
-						s_isInitialized.store(true);
-
-						DrawStyleRuleToModes const& drawstyleBitmaskMappings = GetDrawStyleRuleToModesMap();
-
-						for (auto const& effectEntry : drawstyleBitmaskMappings)
-						{
-							std::string const& effectName = effectEntry.first;
-
-							for (auto const& modeBitmaskEntry : effectEntry.second)
-							{
-								std::string const& modeName = modeBitmaskEntry.first;
-								const effect::drawstyle::Bitmask bitmask = modeBitmaskEntry.second;
-
-								s_drawstyleBitmaskMappings.emplace(bitmask, std::format("{}::{}", effectName, modeName));
-							}
-						}
-					}
-				}
-			}
-
-			// Concatenate the results:
-			std::string names;
-			constexpr uint8_t k_numBits = sizeof(drawstyle::Bitmask) * 8;
-			for (uint8_t bitIdx = 0; bitIdx < k_numBits; ++bitIdx)
-			{
-				const drawstyle::Bitmask curBit = drawstyle::Bitmask(1) << bitIdx;
-				if (bitmask & curBit)
-				{
-					names += s_drawstyleBitmaskMappings.at(curBit) + "|";
-				}
-			}
-			return names;
-		}
-	};
 
 
 	class Effect : public virtual core::INamedObject
@@ -229,7 +81,7 @@ namespace effect
 	{
 		SEAssert(m_techniques.contains(drawStyleBitmask),
 			std::format("No Technique matches the given Bitmask: {}", 
-				effect::DrawStyle::GetNamesFromDrawStyleBitmask(drawStyleBitmask)).c_str());
+				effect::drawstyle::GetNamesFromDrawStyleBitmask(drawStyleBitmask)).c_str());
 
 		return m_techniques.at(drawStyleBitmask);
 	}

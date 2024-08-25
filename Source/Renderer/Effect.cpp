@@ -5,6 +5,75 @@
 #include "Core/Definitions/ConfigKeys.h"
 
 
+namespace effect::drawstyle
+{
+	drawstyle::Bitmask GetDrawStyleBitmaskByName(std::string const& drawstyleName, std::string const& mode)
+	{
+		effect::drawstyle::DrawStyleRuleToModes const& drawstyleBitmaskMappings =
+			effect::drawstyle::GetDrawStyleRuleToModesMap();
+
+		SEAssert(drawstyleBitmaskMappings.contains(util::HashKey::Create(drawstyleName)) &&
+			drawstyleBitmaskMappings.at(util::HashKey::Create(drawstyleName)).contains(util::HashKey::Create(mode)),
+			"Draw style name or mode name not found");
+
+		return drawstyleBitmaskMappings.at(util::HashKey::Create(drawstyleName)).at(util::HashKey::Create(mode));
+	}
+
+
+	std::string GetNamesFromDrawStyleBitmask(drawstyle::Bitmask bitmask)
+	{
+		using BitmaskToEffectAndMode = std::unordered_map<effect::drawstyle::Bitmask, std::string>;
+
+		// Build a static reverse lookup map
+		static BitmaskToEffectAndMode s_drawstyleBitmaskMappings;
+
+		static std::atomic<bool> s_isInitialized = false;
+		if (!s_isInitialized)
+		{
+			static std::mutex s_initializationMutex;
+
+			{
+				std::lock_guard<std::mutex> lock(s_initializationMutex);
+
+				if (!s_isInitialized)
+				{
+					s_isInitialized.store(true);
+
+					effect::drawstyle::DrawStyleRuleToModes const& drawstyleBitmaskMappings =
+						effect::drawstyle::GetDrawStyleRuleToModesMap();
+
+					for (auto const& effectEntry : drawstyleBitmaskMappings)
+					{
+						char const* effectName = effectEntry.first.GetKey();
+
+						for (auto const& modeBitmaskEntry : effectEntry.second)
+						{
+							char const* modeName = modeBitmaskEntry.first.GetKey();
+							const effect::drawstyle::Bitmask bitmask = modeBitmaskEntry.second;
+
+							s_drawstyleBitmaskMappings.emplace(bitmask, std::format("{}::{}", effectName, modeName));
+						}
+					}
+				}
+			}
+		}
+
+		// Concatenate the results:
+		std::string names;
+		constexpr uint8_t k_numBits = sizeof(drawstyle::Bitmask) * 8;
+		for (uint8_t bitIdx = 0; bitIdx < k_numBits; ++bitIdx)
+		{
+			const drawstyle::Bitmask curBit = drawstyle::Bitmask(1) << bitIdx;
+			if (bitmask & curBit)
+			{
+				names += s_drawstyleBitmaskMappings.at(curBit) + "|";
+			}
+		}
+		return names;
+	}
+}
+
+
 namespace effect
 {
 	Effect::Effect(char const* name)
