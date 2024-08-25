@@ -43,14 +43,14 @@
 			"VShader": "Line_VShader",
 			"PShader": "Line_PShader",
 			"PipelineState": "Debug_Line",
-			"VertexStream": "Default"
+			"VertexStream": "PositionColor"
 		},
 		{
 			"Name": "Debug_Triangle",
 			"VShader": "Line_VShader",
 			"PShader": "Line_PShader",
 			"PipelineState": "Debug_Triangle",
-			"VertexStream": "Default"
+			"VertexStream": "PositionColor"
 		}
 	]
 }

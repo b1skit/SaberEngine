@@ -93,6 +93,7 @@
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
+xcopy "$(ProjectDir)Shaders\Generated\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\Generated\GLSL\" /y
 xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
 xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
@@ -122,6 +123,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
+xcopy "$(ProjectDir)Shaders\Generated\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\Generated\GLSL\" /y
 xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
 xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
@@ -149,6 +151,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
+xcopy "$(ProjectDir)Shaders\Generated\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\Generated\GLSL\" /y
 xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
 xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
@@ -177,6 +180,7 @@ xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEn
       <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
+xcopy "$(ProjectDir)Shaders\Generated\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\Generated\GLSL\" /y
 xcopy "$(ProjectDir)Shaders\Common\*.*" "$(SolutionDir)SaberEngine\Shaders\Common\" /y
 xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
 xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y

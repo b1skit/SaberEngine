@@ -19,11 +19,15 @@ int main(int argc, char* argv[])
 	droid::ErrorCode result = droid::ErrorCode::Success;
 
 	droid::ParseParams parseParams{
+		// Paths:
 		.m_workingDirectory = std::filesystem::current_path().string() + "\\",
 		.m_appDirectory = core::configkeys::k_appDirName,
 		.m_effectsDir = std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_effectDirName),
-		.m_codeGenOutputDir = "Source\\Generated\\",
+		.m_cppCodeGenOutputDir = "Source\\Generated\\",
+		.m_hlslCodeGenOutputDir = "Source\\Shaders\\Generated\\HLSL\\",
+		.m_glslCodeGenOutputDir = "Source\\Shaders\\Generated\\GLSL\\",
 
+		// File names:
 		.m_effectManifestFileName = core::configkeys::k_effectManifestFilename,
 	};
 
@@ -102,19 +106,26 @@ int main(int argc, char* argv[])
 	{
 		// Convert paths from relative to absolute:
 		parseParams.m_effectsDir = parseParams.m_workingDirectory + parseParams.m_effectsDir;
-		parseParams.m_codeGenOutputDir = parseParams.m_workingDirectory + parseParams.m_codeGenOutputDir;
+		parseParams.m_cppCodeGenOutputDir = parseParams.m_workingDirectory + parseParams.m_cppCodeGenOutputDir;
+		parseParams.m_hlslCodeGenOutputDir = parseParams.m_workingDirectory + parseParams.m_hlslCodeGenOutputDir;
+		parseParams.m_glslCodeGenOutputDir = parseParams.m_workingDirectory + parseParams.m_glslCodeGenOutputDir;
+
 
 		std::cout << "---\n";
 		std::cout << "Current working directory:\t\"" << parseParams.m_workingDirectory.c_str() << "\"\n";
 		std::cout << "Effect directory:\t\t\"" << parseParams.m_effectsDir.c_str() << "\"\n";
-		std::cout << "Code generation output path:\t\"" << parseParams.m_codeGenOutputDir.c_str() << "\"\n";
+		std::cout << "C++ code generation output path:\t\"" << parseParams.m_cppCodeGenOutputDir.c_str() << "\"\n";
+		std::cout << "HLSL code generation output path:\t\"" << parseParams.m_hlslCodeGenOutputDir.c_str() << "\"\n";
+		std::cout << "GLSL code generation output path:\t\"" << parseParams.m_glslCodeGenOutputDir.c_str() << "\"\n";
 		std::cout << "---\n";
 
 		if (doClean)
 		{
 			std::cout << "Cleaning generated code...\n";
 
-			std::filesystem::remove_all(parseParams.m_codeGenOutputDir.c_str());
+			std::filesystem::remove_all(parseParams.m_cppCodeGenOutputDir.c_str());
+			std::filesystem::remove_all(parseParams.m_hlslCodeGenOutputDir.c_str());
+			std::filesystem::remove_all(parseParams.m_glslCodeGenOutputDir.c_str());
 		}
 		if (doBuild)
 		{

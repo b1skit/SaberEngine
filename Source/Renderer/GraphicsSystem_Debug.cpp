@@ -18,9 +18,6 @@ namespace
 
 	static const EffectID k_debugEffectID = effect::Effect::ComputeEffectID(k_debugEffectName);
 	
-	static const effect::drawstyle::Bitmask k_debugLineBitmask = effect::drawstyle::Debug_Line;
-	static const effect::drawstyle::Bitmask k_debugTriangleBitmask = effect::drawstyle::Debug_Triangle;
-
 
 	re::VertexStream::Lifetime GetVertexStreamLifetimeFromBatchLifetime(re::Batch::Lifetime batchLifetime)
 	{

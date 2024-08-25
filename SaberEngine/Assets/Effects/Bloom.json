@@ -19,7 +19,7 @@
 			"VShader": "Blit_VShader",
 			"PShader": "Blit_PShader",
 			"PipelineState": "FullscreenQuad_Always",
-			"VertexStream": "Default"
+			"VertexStream": "PositionUV"
 		},
 		{
 			"Name": "BloomCompute",

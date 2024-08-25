@@ -1,13 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
-#define VIN_NORMAL
-#define VIN_TANGENT
-#define VIN_COLOR
-#define VIN_UV0
 #define VOUT_TBN
 #define VOUT_COLOR
 #define SABER_INSTANCING
 #include "NormalMapUtils.glsl"
 #include "SaberCommon.glsl"
+#include "VertexStreams_PosNmlTanUvCol.glsl"
 
 
 void main()

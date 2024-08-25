@@ -11,7 +11,7 @@
 			"VShader": "ToneMap_VShader",
 			"PShader": "ToneMap_PShader",
 			"PipelineState": "FullscreenQuad_Always",
-			"VertexStream": "FullscreenQuad"
+			"VertexStream": "PositionUV"
 		}
 	]
 }

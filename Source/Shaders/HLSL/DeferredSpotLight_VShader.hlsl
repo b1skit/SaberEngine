@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "SaberCommon.hlsli"
+#include "../Generated/HLSL/VertexStreams_PositionOnly.hlsli"
 
 
 VertexOut VShader(VertexIn In)

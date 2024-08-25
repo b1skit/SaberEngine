@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
-#define VIN_UV0
 #include "SaberCommon.glsl"
+#include "VertexStreams_PositionUV.glsl"
 
 
 void main()

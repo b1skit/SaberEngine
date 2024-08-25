@@ -2,9 +2,9 @@
 #ifndef FULLSCREEN_QUAD_COMMON
 #define FULLSCREEN_QUAD_COMMON
 
-#define VIN_UV0
 #define VOUT_UV0
 #include "SaberCommon.hlsli"
+#include "../Generated/HLSL/VertexStreams_PositionUV.hlsli"
 
 
 VertexOut VShader(VertexIn In)

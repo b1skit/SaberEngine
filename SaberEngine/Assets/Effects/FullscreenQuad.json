@@ -1,4 +1,9 @@
 {
+	"Effect": {
+		"Name": "FullscreenQuad",
+		"Parents": ["Common"]
+	},
+
 	"PipelineStates": [
 		{
 			"Name": "FullscreenQuad_Always",
@@ -7,25 +12,6 @@
 		{
 			"Name": "FullscreenQuad_LEqual",
 			"DepthTestMode": "LEqual"
-		}
-	],
-	"VertexStreams": [
-		{
-			// TODO: Generate vertex attribute definition shader code based on the layouts defined here.
-			// For now, we define these manually and ensure they match
-			"Name" : "FullscreenQuad",
-			"Slots" : [
-				{
-					"DataType" : "float3",
-					"Name" : "Position",
-					"Semantic" : "SV_Position"
-				},
-				{
-					"DataType" : "float2",
-					"Name" : "UV0",
-					"Semantic" : "TEXCOORD0"
-				}
-			]
 		}
 	]
 }

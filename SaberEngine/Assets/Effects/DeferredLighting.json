@@ -76,42 +76,42 @@
 			"VShader": "GenerateIEM_VShader",
 			"PShader": "GenerateIEM_PShader",
 			"PipelineState": "IBLGeneration",
-			"VertexStream": "Default"
+			"VertexStream": "PositionOnly"
 		},
 		{
 			"Name": "PMREMGeneration",
 			"VShader": "GeneratePMREM_VShader",
 			"PShader": "GeneratePMREM_PShader",
 			"PipelineState": "IBLGeneration",
-			"VertexStream": "Default"
+			"VertexStream": "PositionOnly"
 		},
 		{
 			"Name": "DeferredAmbient",
 			"VShader": "DeferredAmbientLight_VShader",
 			"PShader": "DeferredAmbientLight_PShader",
 			"PipelineState": "DeferredFullscreenQuad",
-			"VertexStream": "FullscreenQuad"
+			"VertexStream": "PositionUV"
 		},
 		{
 			"Name": "DeferredDirectional",
 			"VShader": "DeferredDirectionalLight_VShader",
 			"PShader": "DeferredDirectionalLight_PShader",
 			"PipelineState": "DeferredFullscreenQuad",
-			"VertexStream": "FullscreenQuad"
+			"VertexStream": "PositionUV"
 		},
 		{
 			"Name": "DeferredPoint",
 			"VShader": "DeferredPointLight_VShader",
 			"PShader": "DeferredPointLight_PShader",
 			"PipelineState": "DeferredMesh",
-			"VertexStream": "Default"
+			"VertexStream": "PositionOnly"
 		},
 		{
 			"Name": "DeferredSpot",
 			"VShader": "DeferredSpotLight_VShader",
 			"PShader": "DeferredSpotLight_PShader",
 			"PipelineState": "DeferredMesh",
-			"VertexStream": "Default"
+			"VertexStream": "PositionOnly"
 		}
 	]
 }

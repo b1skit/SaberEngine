@@ -33,7 +33,7 @@ void GShader(triangle VertexOut In[3], inout TriangleStream<GeometryOut> StreamO
 		{
 			Out.Position = mul(CubemapShadowRenderParams.g_cubemapShadowCam_VP[faceIdx], In[vertIdx].Position);
 			
-#if defined(VIN_UV0) && defined(VOUT_UV0)
+#if defined(VOUT_UV0)
 			Out.UV0 = In[vertIdx].UV0;
 #endif
 #if defined(VOUT_INSTANCE_ID)

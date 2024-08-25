@@ -2,11 +2,9 @@
 #ifndef FULLSCREEN_QUAD_COMMON
 #define FULLSCREEN_QUAD_COMMON
 
-#define HAS_EFFECT_VERTEX_STREAM_DEFINITION
 #include "SaberCommon.glsl"
+#include "VertexStreams_PositionUV.glsl"
 
-layout(location = 0) in vec3 Position;
-layout(location = 1) in vec2 UV0;
 
 void main()
 {

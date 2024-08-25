@@ -25,8 +25,11 @@ namespace droid
 		void Indent();
 		void Unindent();
 
-		void OpenBrace();
-		void CloseBrace();
+		void OpenBrace();	// {
+		void CloseBrace();	// }
+
+		void OpenStructBrace();		// {
+		void CloseStructBrace();	// };
 
 
 	private:

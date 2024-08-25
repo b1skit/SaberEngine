@@ -18,6 +18,7 @@ namespace core::configkeys
 	constexpr char const* k_glslShaderDirName				= ".\\Shaders\\GLSL\\";
 	constexpr char const* k_hlslShaderDirName				= ".\\Shaders\\HLSL\\";
 	constexpr char const* k_commonShaderDirName				= ".\\Shaders\\Common\\";
+	constexpr char const* k_generatedGLSLShaderDirName		= ".\\Shaders\\Generated\\GLSL\\";
 
 	// Debug:
 	constexpr char const* k_pixCaptureFolderName		= "PIX Captures";

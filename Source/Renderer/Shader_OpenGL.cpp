@@ -229,9 +229,10 @@ namespace
 		// If loading failed, check the additional search locations:
 		if (!foundText)
 		{
-			constexpr std::array<char const*, 1> k_additionalSearchDirs =
+			constexpr std::array<char const*, 2> k_additionalSearchDirs =
 			{
 				core::configkeys::k_commonShaderDirName,
+				core::configkeys::k_generatedGLSLShaderDirName,
 			};
 
 			for (size_t i = 0; i < k_additionalSearchDirs.size(); i++)

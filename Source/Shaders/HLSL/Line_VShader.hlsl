@@ -1,8 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
-
-#define VIN_COLOR
 #define VOUT_COLOR
 #include "SaberCommon.hlsli"
+#include "../Generated/HLSL/VertexStreams_PositionColor.hlsli"
 
 
 VertexOut VShader(VertexIn In)

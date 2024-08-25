@@ -11,7 +11,7 @@ namespace droid
 	{
 		if (!std::filesystem::exists(outputFilepath))
 		{
-			std::filesystem::create_directory(outputFilepath);
+			std::filesystem::create_directories(outputFilepath);
 		}
 
 		std::string const& combinedFilePath = std::format("{}{}", outputFilepath, outputFileName);
@@ -106,5 +106,17 @@ namespace droid
 	{
 		Unindent();
 		WriteLine("}");
+	}
+
+	void FileWriter::OpenStructBrace()
+	{
+		OpenBrace();
+	}
+
+
+	void FileWriter::CloseStructBrace()
+	{
+		Unindent();
+		WriteLine("};");
 	}
 }

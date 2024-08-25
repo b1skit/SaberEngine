@@ -13,33 +13,6 @@
 #include "../Common/TargetParams.h"
 
 
-// Vertex shader inputs:
-//----------------------
-
-// TODO: Generate vertex inputs automatically from Effect definitions. For now, these must match the layout defined in
-// the VertexStreams block defined in .\SaberEngine\Assets\Effects\Common.json exactly
-#if !defined(HAS_EFFECT_VERTEX_STREAM_DEFINITION)
-#if defined(SE_VERTEX_SHADER)
-	layout(location = 0) in vec3 Position;
-	
-#ifdef VIN_NORMAL
-	layout(location = 1) in vec3 Normal;
-#endif
-#ifdef VIN_TANGENT
-	layout(location = 2) in vec4 Tangent;
-#endif
-#ifdef VIN_UV0
-	layout(location = 3) in vec2 UV0;
-#endif
-#ifdef VIN_COLOR
-	layout(location = 4) in vec4 Color;
-#endif
-
-	// TODO: Support joints/weights
-#endif
-#endif // HAS_EFFECT_VERTEX_STREAM_DEFINITION
-
-
 // Common shader properties:
 //--------------------------
 

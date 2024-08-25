@@ -1,9 +1,17 @@
 {
 	"VertexStreams": [
 		{
-			// TODO: Generate vertex attribute definition shader code based on the layouts defined here.
-			// For now, we define these manually and ensure they match
-			"Name" : "Default",
+			"Name" : "PositionOnly",
+			"Slots" : [
+				{
+					"DataType" : "float3",
+					"Name" : "Position",
+					"Semantic" : "SV_Position"
+				}
+			]
+		},
+		{
+			"Name" : "PositionUV",
 			"Slots" : [
 				{
 					"DataType" : "float3",
@@ -11,19 +19,19 @@
 					"Semantic" : "SV_Position"
 				},
 				{
-					"DataType" : "float3",
-					"Name" : "Normal",
-					"Semantic" : "NORMAL0"
-				},
-				{
-					"DataType" : "float4",
-					"Name" : "Tangent",
-					"Semantic" : "TANGENT0"
-				},
-				{
 					"DataType" : "float2",
 					"Name" : "UV0",
 					"Semantic" : "TEXCOORD0"
+				}
+			]
+		},
+		{
+			"Name" : "PositionColor",
+			"Slots" : [
+				{
+					"DataType" : "float3",
+					"Name" : "Position",
+					"Semantic" : "SV_Position"
 				},
 				{
 					"DataType" : "float4",

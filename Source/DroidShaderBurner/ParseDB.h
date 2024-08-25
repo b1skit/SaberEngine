@@ -16,7 +16,9 @@ namespace droid
 		std::string m_workingDirectory;
 		std::string m_appDirectory;
 		std::string m_effectsDir;
-		std::string m_codeGenOutputDir;
+		std::string m_cppCodeGenOutputDir;
+		std::string m_hlslCodeGenOutputDir;
+		std::string m_glslCodeGenOutputDir;
 
 		// File names:
 		std::string m_effectManifestFileName;
@@ -41,23 +43,37 @@ namespace droid
 		droid::ErrorCode GenerateCPPCode() const;
 
 
+	public:
+		void AddDrawstyle(std::string const& ruleName, std::string const& mode);
+
+		struct VertexStreamSlotDesc
+		{
+			std::string m_dataType;
+			std::string m_name;
+			std::string m_semantic;
+		};
+		void AddVertexStreamSlot(std::string const& streamBlockName, VertexStreamSlotDesc&&);
+
+
 	private: // Parsing:
-		ParseParams m_parseParams;
-
 		time_t GetMostRecentlyModifiedFileTime(std::string const& filesystemTarget);
-
-
 
 		droid::ErrorCode ParseEffectFile(std::string const& effectName, ParseParams const&);
 
-		void AddDrawstyle(std::string const& ruleName, std::string const& mode);
+
+	private:
+		ParseParams m_parseParams;
+		
 		std::map<std::string, std::set<std::string>> m_drawstyles;
+		std::map<std::string, std::vector<VertexStreamSlotDesc>> m_vertexStreamDescs;
 
 
 	private: // Code gen:
 		static constexpr char const* m_drawstyleHeaderFilename = "DrawStyles.h";
 		droid::ErrorCode GenerateCPPCode_Drawstyle() const;
 
+		static constexpr char const* m_vertexStreamsFilenamePrefex = "VertexStreams_"; // e.g. VertexStreams_Default.hlsli
+		droid::ErrorCode GenerateShaderCode_VertexStreams() const;
 	};
 
 

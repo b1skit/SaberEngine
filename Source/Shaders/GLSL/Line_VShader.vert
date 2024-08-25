@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
-#define VIN_COLOR
 #define VOUT_COLOR
 #include "SaberCommon.glsl"
+#include "VertexStreams_PositionColor.glsl"
 
 
 void main()

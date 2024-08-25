@@ -23,9 +23,10 @@ namespace re
 		uint8_t GetSlotIdx(re::VertexStream::Type, uint8_t semanticIdx) const;
 		void SetSlotIdx(re::VertexStream::Type, uint8_t semanticIdx, re::VertexStream::DataType, uint8_t slotIdx);
 
+		uint8_t GetNumSlots() const;
 
 		struct VertexStreamMetadata;
-		VertexStreamMetadata const* GetStreamMetadata(uint8_t& numAttributesOut) const;
+		VertexStreamMetadata const* GetStreamMetadata(uint8_t& arraySizeOut) const;
 
 
 	public:
@@ -184,6 +185,12 @@ namespace re
 	}
 
 
+	inline uint8_t VertexStreamMap::GetNumSlots() const
+	{
+		return m_numAttributes;
+	}
+
+
 	inline void VertexStreamMap::ValidateSlotIndexes()
 	{
 #if defined(_DEBUG)
@@ -199,9 +206,9 @@ namespace re
 	}
 
 
-	inline VertexStreamMap::VertexStreamMetadata const* VertexStreamMap::GetStreamMetadata(uint8_t& numAttributesOut) const
+	inline VertexStreamMap::VertexStreamMetadata const* VertexStreamMap::GetStreamMetadata(uint8_t& arrSizeOut) const
 	{
-		numAttributesOut = m_numAttributes;
+		arrSizeOut = m_numAttributes;
 		return m_slotLayout.data();
 	}
 }

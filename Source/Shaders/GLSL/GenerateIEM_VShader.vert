@@ -1,7 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #define VOUT_LOCAL_POS
 #include "SaberCommon.glsl"
-
+#include "VertexStreams_PositionOnly.glsl"
 
 void main()
 {

@@ -7,6 +7,92 @@
 #include "Core/Definitions/ConfigKeys.h"
 #include "Core/Definitions/EffectKeys.h"
 
+#include "Core/Util/HashKey.h"
+
+
+namespace
+{
+	void ParseDrawStyleConditionEntry(droid::ParseDB& parseDB, auto const& drawStylesEntry)
+	{
+		// Parse the contents of a "DrawStyles" []:
+		for (auto const& drawstyleBlock : drawStylesEntry)
+		{
+			// "Conditions":"
+			if (drawstyleBlock.contains(key_conditions))
+			{
+				for (auto const& condition : drawstyleBlock.at(key_conditions))
+				{
+					// "Rule":
+					std::string rule;
+					if (condition.contains(key_rule))
+					{
+						rule = condition.at(key_rule);
+					}
+
+					// "Mode":
+					std::string mode;
+					if (condition.contains(key_mode))
+					{
+						mode = condition.at(key_mode);
+					}
+
+					if (!rule.empty() && !mode.empty())
+					{
+						parseDB.AddDrawstyle(rule, mode);
+					}
+				}
+			}
+		}
+	}
+
+
+	void ParseVertexStreamsEntry(droid::ParseDB& parseDB, auto const& vertexStreamsEntry)
+	{
+		std::string const& streamsBlockName = vertexStreamsEntry.at(key_name);
+
+		for (auto const& slotDesc : vertexStreamsEntry.at(key_slots))
+		{
+			std::string const& dataType = slotDesc.at(key_dataType).template get<std::string>();
+			std::string const& name = slotDesc.at(key_name).template get<std::string>();
+			std::string const& semantic = slotDesc.at(key_semantic).template get<std::string>();
+
+			parseDB.AddVertexStreamSlot(streamsBlockName,
+				droid::ParseDB::VertexStreamSlotDesc{
+					.m_dataType = dataType,
+					.m_name = name,
+					.m_semantic = semantic,
+				});
+		}
+	}
+
+
+	char const* DataTypeNameToGLSLDataTypeName(std::string const& dataTypeName)
+	{
+		util::HashKey dataTypeNameHash = util::HashKey::Create(dataTypeName);
+
+		static const std::unordered_map<util::HashKey const, char const*> s_dataTypeNameToGLSLTypeName =
+		{
+			{util::HashKey("uint2"), "uvec2"},
+			{util::HashKey("uint3"), "uvec3"},
+			{util::HashKey("uint4"), "uvec4"},
+
+			{util::HashKey("int2"), "ivec2"},
+			{util::HashKey("int3"), "ivec3"},
+			{util::HashKey("int4"), "ivec4"},
+
+			{util::HashKey("float2"), "vec2"},
+			{util::HashKey("float3"), "vec3"},
+			{util::HashKey("float4"), "vec4"},
+
+			{util::HashKey("float2x2"), "mat2"},
+			{util::HashKey("float3x3"), "mat3"},
+			{util::HashKey("float4x4"), "mat4"},
+		};
+
+		return s_dataTypeNameToGLSLTypeName.at(dataTypeNameHash);
+	}
+}
+
 
 namespace droid
 {
@@ -20,8 +106,12 @@ namespace droid
 	{
 		// Skip parsing if the generated code was modified more recently than the effect files:
 		const time_t effectsDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_effectsDir);
-		const time_t codeGenDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_codeGenOutputDir);
-		if (codeGenDirModificationTime > effectsDirModificationTime)
+		const time_t cppGenDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_cppCodeGenOutputDir);
+		const time_t hlslGenDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_hlslCodeGenOutputDir);
+		const time_t glslGenDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_glslCodeGenOutputDir);
+		if (cppGenDirModificationTime > effectsDirModificationTime &&
+			hlslGenDirModificationTime > effectsDirModificationTime &&
+			glslGenDirModificationTime > effectsDirModificationTime)
 		{
 			return droid::ErrorCode::NoModification;
 		}
@@ -157,32 +247,16 @@ namespace droid
 				// "DrawStyles":
 				if (effectBlock.contains(key_drawStyles))
 				{
-					for (auto const& drawstyleBlock : effectBlock.at(key_drawStyles))
-					{
-						// "Conditions":"
-						if (drawstyleBlock.contains(key_conditions))
-						{
-							for (auto const& condition : drawstyleBlock.at(key_conditions))
-							{
-								std::string rule;
-								if (condition.contains(key_rule))
-								{
-									rule = condition.at(key_rule);
-								}
-								
-								std::string mode;
-								if (condition.contains(key_mode))
-								{
-									mode = condition.at(key_mode);
-								}
+					ParseDrawStyleConditionEntry(*this, effectBlock.at(key_drawStyles));
+				}
+			}
 
-								if (!rule.empty() && !mode.empty())
-								{
-									AddDrawstyle(rule, mode);
-								}
-							}
-						}
-					}
+			// "VertexStreams":
+			if (effectJSON.contains(key_vertexStreams))
+			{
+				for (auto const& vertexStreamEntry : effectJSON.at(key_vertexStreams))
+				{
+					ParseVertexStreamsEntry(*this, vertexStreamEntry);
 				}
 			}
 
@@ -203,12 +277,29 @@ namespace droid
 	}
 
 
+	void ParseDB::AddVertexStreamSlot(std::string const& streamBlockName, VertexStreamSlotDesc&& newSlotDesc)
+	{
+		if (!m_vertexStreamDescs.contains(streamBlockName))
+		{
+			m_vertexStreamDescs.emplace(streamBlockName, std::vector<VertexStreamSlotDesc>());
+		}
+
+		std::vector<VertexStreamSlotDesc>& vertexStreamSlots = m_vertexStreamDescs.at(streamBlockName);
+		vertexStreamSlots.emplace_back(std::move(newSlotDesc));
+	}
+
+
 	droid::ErrorCode ParseDB::GenerateCPPCode() const
 	{
-		droid::ErrorCode result = GenerateCPPCode_Drawstyle();
-		if (result != droid::ErrorCode::Success)
+		droid::ErrorCode result = droid::ErrorCode::Success;
+			
+		if (result == droid::ErrorCode::Success)
 		{
-			return result;
+			result = GenerateCPPCode_Drawstyle();
+		}
+		if (result == droid::ErrorCode::Success)
+		{
+			result = GenerateShaderCode_VertexStreams();
 		}
 
 		return result;
@@ -217,7 +308,7 @@ namespace droid
 
 	droid::ErrorCode ParseDB::GenerateCPPCode_Drawstyle() const
 	{
-		FileWriter filewriter(m_parseParams.m_codeGenOutputDir, m_drawstyleHeaderFilename);
+		FileWriter filewriter(m_parseParams.m_cppCodeGenOutputDir, m_drawstyleHeaderFilename);
 
 		droid::ErrorCode result = filewriter.GetStatus();
 		if (result != droid::ErrorCode::Success)
@@ -298,6 +389,81 @@ namespace droid
 		}
 
 		filewriter.CloseNamespace();
+
+		return result;
+	}
+
+
+	droid::ErrorCode ParseDB::GenerateShaderCode_VertexStreams() const
+	{
+		droid::ErrorCode result = droid::ErrorCode::Success;
+		
+		for (auto const& vertexStreamDesc : m_vertexStreamDescs)
+		{
+			std::string const& hlslFilename = std::format("{}{}.hlsli", 
+				m_vertexStreamsFilenamePrefex,
+				vertexStreamDesc.first);
+
+			std::string const& glslFilename = std::format("{}{}.glsl",
+				m_vertexStreamsFilenamePrefex,
+				vertexStreamDesc.first);
+
+			FileWriter hlslWriter(m_parseParams.m_hlslCodeGenOutputDir, hlslFilename);
+			FileWriter glslWriter(m_parseParams.m_glslCodeGenOutputDir, glslFilename);
+
+			std::string vertexStreamNameUpperCase = vertexStreamDesc.first;
+			std::transform(
+				vertexStreamNameUpperCase.begin(),
+				vertexStreamNameUpperCase.end(),
+				vertexStreamNameUpperCase.begin(), ::toupper);
+
+			std::string const& hlslIncludeGuard = std::format("{}_VERTEXSTREAM_HLSL", vertexStreamNameUpperCase);
+			std::string const& glslIncludeGuard = std::format("{}_VERTEXSTREAM_GLSL", vertexStreamNameUpperCase);
+
+			hlslWriter.WriteLine(std::format("#ifndef {}", hlslIncludeGuard));
+			hlslWriter.WriteLine(std::format("#define {}", hlslIncludeGuard));
+
+			glslWriter.WriteLine(std::format("#ifndef {}", glslIncludeGuard));
+			glslWriter.WriteLine(std::format("#define {}", glslIncludeGuard));
+
+			hlslWriter.EmptyLine();
+			glslWriter.EmptyLine();
+
+			hlslWriter.WriteLine("struct VertexIn");
+			hlslWriter.OpenStructBrace();
+
+			uint8_t slotIdx = 0;
+			for (auto const& slotDesc : vertexStreamDesc.second)
+			{
+				// HLSL:
+				{
+					hlslWriter.WriteLine(std::format("{} {} : {};",
+						slotDesc.m_dataType,
+						slotDesc.m_name,
+						slotDesc.m_semantic));
+				}
+
+				//GLSL:
+				{
+					glslWriter.WriteLine(std::format("layout(location = {}) in {} {};",
+						slotIdx,
+						DataTypeNameToGLSLDataTypeName(slotDesc.m_dataType),
+						slotDesc.m_name));
+				}
+
+				++slotIdx;
+			}
+
+			// TODO: Only add this when instancing is explicitely specified in the Effect definition
+			hlslWriter.EmptyLine();
+			hlslWriter.WriteLine("uint InstanceID : SV_InstanceID;");
+			
+			hlslWriter.CloseStructBrace();
+			glslWriter.EmptyLine();
+
+			hlslWriter.WriteLine(std::format("#endif // {}", hlslIncludeGuard));
+			glslWriter.WriteLine(std::format("#endif // {}", glslIncludeGuard));
+		}
 
 		return result;
 	}
