@@ -410,6 +410,10 @@ namespace re
 					}
 					++semanticIdx;
 				}
+				if (semanticIdx > 1) // Skip ahead: We've already handled all consecutive streams of the same type
+				{
+					i = i + (semanticIdx - 1); // -1 b/c of the last ++semanticIdx;
+				}
 			}
 
 			if (needsRepacking)
