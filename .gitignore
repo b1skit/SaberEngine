@@ -42,7 +42,8 @@
 /SaberEngine/config/imgui.ini
 
 # Auto-generated code:
-/Source/*
+/Source/Generated/*
+/Source/Shaders/Generated/*
 
 # Microsoft vcpkg
 /vcpkg_installed/
