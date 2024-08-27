@@ -11,10 +11,6 @@
       "Command": "-platform dx12"
     },
     {
-      "Id": "8b6142f0-756c-4279-a323-091c03d7e495",
-      "Command": "-platform opengl"
-    },
-    {
       "Id": "84306581-d976-4879-8c44-018b3d4130ac",
       "Command": "-scenepipeline scene.json"
     },

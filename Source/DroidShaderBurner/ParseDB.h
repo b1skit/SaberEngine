@@ -13,8 +13,8 @@ namespace droid
 		bool m_ignoreJSONComments = true;
 
 		// Paths:
-		std::string m_workingDirectory;
-		std::string m_appDirectory;
+		std::string m_projectRootDir;
+		std::string m_appDir;
 		std::string m_effectsDir;
 		std::string m_cppCodeGenOutputDir;
 		std::string m_hlslCodeGenOutputDir;
