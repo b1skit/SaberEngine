@@ -291,12 +291,28 @@ namespace droid
 
 	droid::ErrorCode ParseDB::GenerateCPPCode() const
 	{
+		// Start by clearing out any previously generated code:
+		droid::CleanDirectory(m_parseParams.m_cppCodeGenOutputDir.c_str());
+
 		droid::ErrorCode result = droid::ErrorCode::Success;
 			
 		if (result == droid::ErrorCode::Success)
 		{
 			result = GenerateCPPCode_Drawstyle();
 		}
+		
+		return result;
+	}
+
+
+	droid::ErrorCode ParseDB::GenerateShaderCode() const
+	{
+		// Start by clearing out any previously generated code:
+		droid::CleanDirectory(m_parseParams.m_hlslCodeGenOutputDir.c_str());
+		droid::CleanDirectory(m_parseParams.m_glslCodeGenOutputDir.c_str());
+
+		droid::ErrorCode result = droid::ErrorCode::Success;
+
 		if (result == droid::ErrorCode::Success)
 		{
 			result = GenerateShaderCode_VertexStreams();

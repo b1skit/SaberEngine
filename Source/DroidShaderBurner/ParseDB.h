@@ -41,6 +41,7 @@ namespace droid
 
 
 		droid::ErrorCode GenerateCPPCode() const;
+		droid::ErrorCode GenerateShaderCode() const;
 
 
 	public:

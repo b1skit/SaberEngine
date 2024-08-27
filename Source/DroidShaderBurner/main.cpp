@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
 		parseParams.m_hlslCodeGenOutputDir = parseParams.m_projectRootDir + parseParams.m_hlslCodeGenOutputDir;
 		parseParams.m_glslCodeGenOutputDir = parseParams.m_projectRootDir + parseParams.m_glslCodeGenOutputDir;
 
-
+		// Print the final paths we've assembled:
 		std::cout << "---\n";
 		std::cout << "Current working directory:\t\t\"" << parseParams.m_projectRootDir.c_str() << "\"\n";
 		std::cout << "Effect directory:\t\t\t\"" << parseParams.m_effectsDir.c_str() << "\"\n";
@@ -134,9 +134,9 @@ int main(int argc, char* argv[])
 		{
 			std::cout << "Cleaning generated code...\n";
 
-			std::filesystem::remove_all(parseParams.m_cppCodeGenOutputDir.c_str());
-			std::filesystem::remove_all(parseParams.m_hlslCodeGenOutputDir.c_str());
-			std::filesystem::remove_all(parseParams.m_glslCodeGenOutputDir.c_str());
+			droid::CleanDirectory(parseParams.m_cppCodeGenOutputDir.c_str());
+			droid::CleanDirectory(parseParams.m_hlslCodeGenOutputDir.c_str());
+			droid::CleanDirectory(parseParams.m_glslCodeGenOutputDir.c_str());
 		}
 		if (doBuild)
 		{
