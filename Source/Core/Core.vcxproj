@@ -155,6 +155,7 @@
     </ClCompile>
     <ClCompile Include="PerformanceTimer.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
+    <ClCompile Include="Util\TextUtils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
