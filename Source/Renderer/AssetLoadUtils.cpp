@@ -2,6 +2,7 @@
 #include "AssetLoadUtils.h"
 #include "Texture.h"
 
+#include "Core/LogManager.h"
 #include "Core/PerformanceTimer.h"
 
 #include "Core/Util/CastUtils.h"

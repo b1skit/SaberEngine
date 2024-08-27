@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
+#include "LogManager.h"
 #include "ThreadPool.h"
 
 #include "Definitions/ConfigKeys.h"

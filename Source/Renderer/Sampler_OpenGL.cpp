@@ -5,6 +5,7 @@
 #include "SysInfo_OpenGL.h"
 
 #include "Core/Assert.h"
+#include "Core/LogManager.h"
 
 #include "Core/Util/CastUtils.h"
 
