@@ -1,0 +1,284 @@
+// © 2024 Adam Badke. All rights reserved.
+#include "EffectParsing.h"
+#include "ShaderPreprocessor_OpenGL.h"
+
+#include "Core/Util/TextUtils.h"
+
+
+namespace droid
+{
+	constexpr char const* k_shaderFileExtensions[]
+	{
+		".vert",
+		".geom",
+		".frag",
+
+		".tesc",
+		".tese",
+
+		".mesh",
+		".task",
+
+		".comp"
+	};
+	static_assert(_countof(k_shaderFileExtensions) == re::Shader::ShaderType_Count);
+
+
+	constexpr char const* k_shaderPreambles[] // Per-shader-type preamble
+	{
+		// ShaderType::Vertex:
+		"#define SE_VERTEX_SHADER\n",
+
+		// ShaderType::Geometry:
+		"#define SE_GEOMETRY_SHADER\n",
+
+		// ShaderType::Fragment:
+		"#define SE_FRAGMENT_SHADER\n"
+		"layout(origin_upper_left) in vec4 gl_FragCoord;\n", // Make fragment coords ([0,xRes), [0,yRes)) match our UV(0,0) = top-left convention
+
+
+		// ShaderType::TesselationControl:
+		"#define SE_TESS_CONTROL_SHADER\n",
+
+		// ShaderType::TesselationEvaluation:
+		"#define SE_TESS_EVALUATION_SHADER\n",
+
+
+		// ShaderType::Mesh:
+		"#define SE_MESH_SHADER\n",
+
+		// ShaderType::Amplification:
+		"#define SE_TASK_SHADER\n",
+
+
+		// ShaderType::Compute:
+		"#define SE_COMPUTE_SHADER\n",
+	};
+	static_assert(_countof(k_shaderPreambles) == re::Shader::ShaderType_Count);
+
+
+	constexpr char const* k_globalPreamble =
+		"#version 460 core\n"
+		"#define SE_OPENGL\n"
+		"\n"; // Note: MUST be terminated with "\n"
+
+
+	std::string LoadIndividualShaderTextFile(
+		std::vector<std::string> const& shaderSrcDirs, std::string const& filenameAndExtension)
+	{
+		std::string shaderText;
+		for (auto const& shaderDir : shaderSrcDirs)
+		{
+			std::string filepath = shaderDir + filenameAndExtension;
+
+			// Attempt to load the shader
+			shaderText = util::LoadTextAsString(filepath);
+
+			if (!shaderText.empty())
+			{
+				break;
+			}
+		}
+
+		if (!shaderText.empty())
+		{
+			return std::format(
+				"//--------------------------------------------------------------------------------------\n"
+				"// {}:\n"
+				"//--------------------------------------------------------------------------------------\n"
+				"{}",
+				filenameAndExtension,
+				shaderText);
+		}
+
+		return shaderText;
+	}
+
+
+	std::string LoadShaderTextByExtension(
+		std::vector<std::string> const& shaderSrcDirs, std::string const& filename, re::Shader::ShaderType shaderType)
+	{
+		std::string const& filenameAndExtension = filename + k_shaderFileExtensions[shaderType];
+
+		return LoadIndividualShaderTextFile(shaderSrcDirs, filenameAndExtension);
+	}
+
+
+	bool InsertIncludeText(
+		std::vector<std::string> const& shaderSrcDirs,
+		std::string const& shaderText,
+		std::vector<std::string>& shaderTextStrings,
+		std::unordered_set<std::string>& seenIncludes)
+	{
+		constexpr char const* k_includeKeyword = "#include";
+		constexpr char const* k_versionKeyword = "#version";
+
+		size_t blockStartIdx = 0;
+		size_t includeStartIdx = 0;
+
+		// Strip out any #version strings, we prepend our own. This allows us to suppress IDE warnings. 
+		// The version string must be the first statement, and may not be repeated
+		size_t versionIdx = shaderText.find(k_versionKeyword, 0);
+		if (versionIdx != std::string::npos)
+		{
+			const size_t versionEndOfLineIdx = shaderText.find("\n", versionIdx + 1);
+			if (versionEndOfLineIdx != std::string::npos)
+			{
+				blockStartIdx = versionEndOfLineIdx + 1;
+				includeStartIdx = versionEndOfLineIdx + 1;
+			}
+		}
+
+		do
+		{
+			includeStartIdx = shaderText.find(k_includeKeyword, blockStartIdx);
+			if (includeStartIdx != std::string::npos)
+			{
+				// Check we're not on a commented line:
+				size_t checkIndex = includeStartIdx;
+				bool foundComment = false;
+				while (checkIndex > blockStartIdx && shaderText[checkIndex] != '\n')
+				{
+					// -> If we hit a "#include" substring first, we've got an include
+					// -> Seach until the end of the line, to strip out any trailing //comments
+					if (shaderText[checkIndex] == '/' && shaderText[checkIndex - 1] == '/')
+					{
+						foundComment = true;
+						break;
+					}
+					checkIndex--;
+				}
+				if (foundComment)
+				{
+					const size_t commentedIncludeEndIndex = shaderText.find("\n", includeStartIdx + 1);
+
+					blockStartIdx = commentedIncludeEndIndex;
+					continue;
+				}
+
+				size_t includeEndIndex = shaderText.find("\n", includeStartIdx + 1);
+				if (includeEndIndex != std::string::npos)
+				{
+					size_t firstQuoteIndex, lastQuoteIndex;
+
+					firstQuoteIndex = shaderText.find("\"", includeStartIdx + 1);
+					if (firstQuoteIndex != std::string::npos &&
+						firstQuoteIndex > 0 &&
+						firstQuoteIndex < includeEndIndex)
+					{
+						lastQuoteIndex = shaderText.find("\"", firstQuoteIndex + 1);
+						if (lastQuoteIndex != std::string::npos &&
+							lastQuoteIndex > firstQuoteIndex &&
+							lastQuoteIndex < includeEndIndex)
+						{
+							firstQuoteIndex++; // Move ahead 1 element from the first quotation mark
+
+							// Insert the first block
+							const size_t blockLength = includeStartIdx - blockStartIdx;
+							if (blockLength > 0) // 0 if we have several consecutive #defines
+							{
+								shaderTextStrings.emplace_back(shaderText.substr(blockStartIdx, blockLength));
+							}
+
+							// Extract the filename from the #include directive:
+							const size_t includeFileNameStrLength = lastQuoteIndex - firstQuoteIndex;
+							std::string const& includeFileName =
+								shaderText.substr(firstQuoteIndex, includeFileNameStrLength);
+
+							// Parse the include, but only if we've not seen it before:
+							const bool newInclude = seenIncludes.emplace(includeFileName).second;
+							if (newInclude)
+							{
+								std::string const& includeFile = 
+									LoadIndividualShaderTextFile(shaderSrcDirs, includeFileName);
+								if (includeFile != "")
+								{
+									// Recursively parse the included file for nested #includes:
+									const bool result = 
+										InsertIncludeText(shaderSrcDirs, includeFile, shaderTextStrings, seenIncludes);
+									if (!result)
+									{
+										return false;
+									}
+								}
+								else
+								{
+									return false;
+								}
+							}
+						}
+					}
+
+					blockStartIdx = includeEndIndex + 1; // Next char that ISN'T part of the include directive substring
+				}
+			}
+		} while (includeStartIdx != std::string::npos && includeStartIdx < shaderText.length());
+
+		// Insert the last block
+		if (blockStartIdx < shaderText.size())
+		{
+			shaderTextStrings.emplace_back(shaderText.substr(blockStartIdx, std::string::npos));
+		}
+		return true;
+	}
+
+
+	droid::ErrorCode BuildShaderFile(
+		std::vector<std::string> const& shaderSrcDirs,
+		std::string const& extensionlessSrcFilename,
+		re::Shader::ShaderType shaderType,
+		std::string const& outputDir)
+	{
+		// Load the base shader file:
+		std::string shaderTex = LoadShaderTextByExtension(shaderSrcDirs, extensionlessSrcFilename, shaderType);
+
+		// Add our preambles:
+		std::vector<std::string> shaderTextStrings;
+		shaderTextStrings.emplace_back(k_globalPreamble);
+		shaderTextStrings.emplace_back(k_shaderPreambles[shaderType]);
+
+		// Process the shader text, splitting it and inserting include files as they're encountered:
+		std::unordered_set<std::string> seenIncludes;
+		const bool result = InsertIncludeText(shaderSrcDirs, shaderTex, shaderTextStrings, seenIncludes);
+
+		// Get the total reservation size we'll need:
+		size_t requiredSize = 0;
+		for (auto const& include : shaderTextStrings)
+		{
+			requiredSize += include.size();
+		}
+		shaderTex.clear();
+		shaderTex.reserve(requiredSize);
+
+		// Combine all of the include entries back into a single file:
+		for (auto const& include : shaderTextStrings)
+		{
+			shaderTex += include;
+		}
+
+		// Finally, save each file:
+		if (!std::filesystem::exists(outputDir))
+		{
+			std::filesystem::create_directories(outputDir);
+		}
+
+		std::string const& outputFileName = extensionlessSrcFilename + k_shaderFileExtensions[shaderType];
+
+		std::string const& combinedFilePath = std::format("{}{}", outputDir, outputFileName);
+
+		std::ofstream outputStream;
+		outputStream.open(combinedFilePath);
+		if (!outputStream.is_open())
+		{
+			return droid::ErrorCode::FileError;
+		}
+
+		outputStream << shaderTex.c_str();
+
+		outputStream.close();
+
+		std::cout << "Built GLSL shader \"" << outputFileName.c_str() << "\"\n";
+
+		return droid::ErrorCode::Success;
+	}
+}

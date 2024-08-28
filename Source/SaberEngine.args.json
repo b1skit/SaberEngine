@@ -7,8 +7,12 @@
       "Command": "-brdfLUTWidthHeight 16 -iemWidthHeight 128 -pmremWidthHeight 128 -iemNumSamples 2 -pmremNumSamples 2"
     },
     {
-      "Id": "807d7fbe-0c73-45d1-a81d-2ea78d049415",
+      "Id": "7593e994-8bdc-41cc-b149-9132a8dfd929",
       "Command": "-platform dx12"
+    },
+    {
+      "Id": "807d7fbe-0c73-45d1-a81d-2ea78d049415",
+      "Command": "-platform opengl"
     },
     {
       "Id": "84306581-d976-4879-8c44-018b3d4130ac",
@@ -33,10 +37,6 @@
     {
       "Id": "35be5c82-80fa-421b-ad5d-05df0d9477bd",
       "Command": "-strictshaderbinding"
-    },
-    {
-      "Id": "262a942f-fbe6-4439-8dfb-239931c14c35",
-      "Command": "-debugopenglshaderpreprocessing"
     },
     {
       "Id": "9e16609b-5425-4046-a533-7bddf6eba224",

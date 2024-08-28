@@ -12,7 +12,7 @@ namespace core
 	
 		FunctionWrapper(FunctionWrapper&& other) noexcept : m_impl(std::move(other.m_impl)) {}
 
-		FunctionWrapper& operator=(FunctionWrapper&& other);
+		FunctionWrapper& operator=(FunctionWrapper&& other) noexcept;
 
 		void operator()() { m_impl->Call(); }
 

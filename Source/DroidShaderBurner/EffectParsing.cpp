@@ -1,6 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "ParseDB.h"
 #include "EffectParsing.h"
+#include "ParseDB.h"
 
 #include "Core/Definitions/EffectKeys.h"
 
@@ -33,13 +33,19 @@ namespace droid
 		}
 
 		result = parseDB.GenerateCPPCode();
-		if (result != droid::ErrorCode::Success)
+		if (result < 0)
 		{
 			return result;
 		}
 
 		result = parseDB.GenerateShaderCode();
-		if (result != droid::ErrorCode::Success)
+		if (result < 0)
+		{
+			return result;
+		}
+
+		result = parseDB.CompileShaders();
+		if (result < 0)
 		{
 			return result;
 		}

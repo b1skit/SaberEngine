@@ -1,5 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
+#include "Renderer/Shader.h"
 
 
 namespace droid
@@ -16,9 +17,16 @@ namespace droid
 		std::string m_projectRootDir;
 		std::string m_appDir;
 		std::string m_effectsDir;
+
+		// Shader input paths:
+		std::string m_glslShaderSourceDir;
+		std::string m_commonShaderSourceDir;
+
+		// Output paths:
 		std::string m_cppCodeGenOutputDir;
 		std::string m_hlslCodeGenOutputDir;
-		std::string m_glslCodeGenOutputDir;
+		std::string m_glslCodeGenOutputDir; // For code generated from Effect definitions
+		std::string m_glslShaderOutputDir; // For results of concatenating shader includes with shader text
 
 		// File names:
 		std::string m_effectManifestFileName;
@@ -42,6 +50,7 @@ namespace droid
 
 		droid::ErrorCode GenerateCPPCode() const;
 		droid::ErrorCode GenerateShaderCode() const;
+		droid::ErrorCode CompileShaders() const;
 
 
 	public:
@@ -56,6 +65,15 @@ namespace droid
 		void AddVertexStreamSlot(std::string const& streamBlockName, VertexStreamSlotDesc&&);
 
 
+		struct TechniqueDesc
+		{
+			std::unordered_set<std::string> m_excludedPlatforms;
+			std::array<std::string, re::Shader::ShaderType_Count> m_shaderNames;
+
+		};
+		void AddTechnique(std::string const& techniqueName, TechniqueDesc&&);
+
+
 	private: // Parsing:
 		time_t GetMostRecentlyModifiedFileTime(std::string const& filesystemTarget);
 
@@ -67,6 +85,7 @@ namespace droid
 		
 		std::map<std::string, std::set<std::string>> m_drawstyles;
 		std::map<std::string, std::vector<VertexStreamSlotDesc>> m_vertexStreamDescs;
+		std::map<std::string, TechniqueDesc> m_techniqueDescs;
 
 
 	private: // Code gen:
@@ -94,5 +113,37 @@ namespace droid
 
 			m_drawstyles.at(ruleName).emplace(modeName);
 		}
+	}
+
+
+	inline 	void ParseDB::AddVertexStreamSlot(std::string const& streamBlockName, VertexStreamSlotDesc&& newSlotDesc)
+	{
+		if (!m_vertexStreamDescs.contains(streamBlockName))
+		{
+			std::cout << "Found new vertex stream block: \"" << streamBlockName.c_str() << "\"\n";
+
+			m_vertexStreamDescs.emplace(streamBlockName, std::vector<VertexStreamSlotDesc>());
+		}
+
+		std::cout << "Adding slot to vertex stream block \"" << streamBlockName.c_str() << "\": \"Name\": \"" << 
+			newSlotDesc.m_name.c_str() << "\"\n";
+
+		std::vector<VertexStreamSlotDesc>& vertexStreamSlots = m_vertexStreamDescs.at(streamBlockName);
+		vertexStreamSlots.emplace_back(std::move(newSlotDesc));
+	}
+
+
+	inline void ParseDB::AddTechnique(std::string const& techniqueName, TechniqueDesc&& techniqueDesc)
+	{
+		if (m_techniqueDescs.contains(techniqueName))
+		{
+			std::cout << "Warning: Adding Technique " << techniqueName.c_str() << ", and a Technique with that name "
+				"already exists\n";
+		}
+		else
+		{
+			std::cout << "Adding Technique \"" << techniqueName.c_str() << "\"\n";
+		}
+		m_techniqueDescs.emplace(techniqueName, std::move(techniqueDesc));
 	}
 }

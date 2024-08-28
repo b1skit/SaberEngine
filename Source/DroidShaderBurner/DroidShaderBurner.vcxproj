@@ -194,13 +194,20 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ShaderPreprocessor_OpenGL.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileWriter.h" />
     <ClInclude Include="ParseDB.h" />
     <ClInclude Include="EffectParsing.h" />
     <ClInclude Include="pch\pch.h" />
+    <ClInclude Include="ShaderPreprocessor_OpenGL.h" />
     <ClInclude Include="TextStrings.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Core.vcxproj">
+      <Project>{b2f1db2f-9dd3-446e-918a-41254ac4e342}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -6,7 +6,7 @@
 
 namespace core
 {
-	FunctionWrapper& FunctionWrapper::operator=(FunctionWrapper&& other)
+	FunctionWrapper& FunctionWrapper::operator=(FunctionWrapper&& other) noexcept
 	{
 		m_impl = std::move(other.m_impl);
 		return *this;

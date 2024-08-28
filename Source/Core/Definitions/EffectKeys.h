@@ -58,4 +58,5 @@ namespace
 		"AShader",
 		"CShader",
 	};
+	SEStaticAssert(_countof(keys_shaderTypes) == re::Shader::ShaderType_Count, "keys_shaderTypes is out of sync");
 }

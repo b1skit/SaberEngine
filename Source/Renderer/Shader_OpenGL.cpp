@@ -55,45 +55,6 @@ namespace
 	static_assert(_countof(k_shaderFileExtensions) == re::Shader::ShaderType_Count);
 
 
-	constexpr char const* k_shaderPreambles[] // Per-shader-type preamble
-	{
-		// ShaderType::Vertex:
-		"#define SE_VERTEX_SHADER\n",
-		
-		// ShaderType::Geometry:
-		"#define SE_GEOMETRY_SHADER\n",
-
-		// ShaderType::Fragment:
-		"#define SE_FRAGMENT_SHADER\n"
-		"layout(origin_upper_left) in vec4 gl_FragCoord;\n", // Make fragment coords ([0,xRes), [0,yRes)) match our UV(0,0) = top-left convention
-
-
-		// ShaderType::TesselationControl:
-		"#define SE_TESS_CONTROL_SHADER\n",
-
-		// ShaderType::TesselationEvaluation:
-		"#define SE_TESS_EVALUATION_SHADER\n",
-
-
-		// ShaderType::Mesh:
-		"#define SE_MESH_SHADER\n",
-
-		// ShaderType::Amplification:
-		"#define SE_TASK_SHADER\n",
-
-
-		// ShaderType::Compute:
-		"#define SE_COMPUTE_SHADER\n",
-	};
-	static_assert(_countof(k_shaderPreambles) == re::Shader::ShaderType_Count);
-
-
-	constexpr char const* k_globalPreamble =
-		"#version 460 core\n"
-		"#define SE_OPENGL\n"
-		"\n"; // Note: MUST be terminated with "\n"
-
-
 	bool UniformIsSamplerType(GLenum type)
 	{
 		switch(type)
@@ -221,6 +182,7 @@ namespace
 			core::Config::Get()->GetValue<std::string>(core::configkeys::k_shaderDirectoryKey);
 		std::string filepath = shaderDir + filenameAndExtension;
 
+
 		// Attempt to load the shader
 		std::string shaderText = util::LoadTextAsString(filepath);
 
@@ -248,26 +210,7 @@ namespace
 			}
 		}
 
-		if (foundText)
-		{
-			return std::format(
-				"//--------------------------------------------------------------------------------------\n"
-				"// {}:\n"
-				"//--------------------------------------------------------------------------------------\n"
-				"{}",
-				filenameAndExtension,
-				shaderText);
-		}
-
 		return shaderText;
-	}
-
-
-	std::string LoadShaderText(std::string const& filename, re::Shader::ShaderType shaderType)
-	{
-		std::string const& filenameAndExtension = filename + k_shaderFileExtensions[shaderType];
-
-		return LoadShaderText(filenameAndExtension);
 	}
 
 
@@ -286,148 +229,13 @@ namespace
 			taskFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
 				[&shaderTextsOut, filename, shaderType]()
 				{
-					shaderTextsOut[shaderType] = LoadShaderText(filename, shaderType);
+					std::string const& filenameAndExtension = filename + k_shaderFileExtensions[shaderType];
+
+					shaderTextsOut[shaderType] = LoadShaderText(filenameAndExtension);
 				}));
 		}
 
 		return taskFutures;
-	}
-
-
-	bool InsertIncludeText(
-		std::string const& shaderText,
-		std::vector<std::string>& shaderTextStrings,
-		std::unordered_set<std::string>& seenIncludes)
-	{
-		constexpr char const* k_includeKeyword = "#include";
-		constexpr char const* k_versionKeyword = "#version";
-
-		size_t blockStartIdx = 0;
-		size_t includeStartIdx = 0;
-
-		// Strip out any #version strings, we prepend our own. This allows us to suppress IDE warnings. 
-		// The version string must be the first statement, and may not be repeated
-		size_t versionIdx = shaderText.find(k_versionKeyword, 0);
-		if (versionIdx != std::string::npos)
-		{
-			const size_t versionEndOfLineIdx = shaderText.find("\n", versionIdx + 1);
-			if (versionEndOfLineIdx != std::string::npos)
-			{
-				blockStartIdx = versionEndOfLineIdx + 1;
-				includeStartIdx = versionEndOfLineIdx + 1;
-			}
-		}
-
-		do
-		{
-			includeStartIdx = shaderText.find(k_includeKeyword, blockStartIdx);
-			if (includeStartIdx != std::string::npos)
-			{
-				// Check we're not on a commented line:
-				size_t checkIndex = includeStartIdx;
-				bool foundComment = false;
-				while (checkIndex > blockStartIdx && shaderText[checkIndex] != '\n')
-				{
-					// -> If we hit a "#include" substring first, we've got an include
-					// -> Seach until the end of the line, to strip out any trailing //comments
-					if (shaderText[checkIndex] == '/' && shaderText[checkIndex - 1] == '/')
-					{
-						foundComment = true;
-						break;
-					}
-					checkIndex--;
-				}
-				if (foundComment)
-				{
-					const size_t commentedIncludeEndIndex = shaderText.find("\n", includeStartIdx + 1);
-
-					blockStartIdx = commentedIncludeEndIndex;
-					continue;
-				}
-
-				size_t includeEndIndex = shaderText.find("\n", includeStartIdx + 1);
-				if (includeEndIndex != std::string::npos)
-				{
-					size_t firstQuoteIndex, lastQuoteIndex;
-
-					firstQuoteIndex = shaderText.find("\"", includeStartIdx + 1);
-					if (firstQuoteIndex != std::string::npos && 
-						firstQuoteIndex > 0 && 
-						firstQuoteIndex < includeEndIndex)
-					{
-						lastQuoteIndex = shaderText.find("\"", firstQuoteIndex + 1);
-						if (lastQuoteIndex != std::string::npos && 
-							lastQuoteIndex > firstQuoteIndex && 
-							lastQuoteIndex < includeEndIndex)
-						{
-							firstQuoteIndex++; // Move ahead 1 element from the first quotation mark
-							
-							// Insert the first block
-							const size_t blockLength = includeStartIdx - blockStartIdx;
-							if (blockLength > 0) // 0 if we have several consecutive #defines
-							{
-								shaderTextStrings.emplace_back(shaderText.substr(blockStartIdx, blockLength));
-							}
-
-							// Extract the filename from the #include directive:
-							const size_t includeFileNameStrLength = lastQuoteIndex - firstQuoteIndex;
-							std::string const& includeFileName = 
-								shaderText.substr(firstQuoteIndex, includeFileNameStrLength);
-
-							// Parse the include, but only if we've not seen it before:
-							const bool newInclude = seenIncludes.emplace(includeFileName).second;
-							if (newInclude)
-							{
-								std::string const& includeFile = LoadShaderText(includeFileName);
-								if (includeFile != "")
-								{
-									// Recursively parse the included file for nested #includes:
-									const bool result = InsertIncludeText(includeFile, shaderTextStrings, seenIncludes);
-									if (!result)
-									{
-										return false;
-									}
-								}
-								else
-								{
-									return false;
-								}
-							}
-						}
-					}
-
-					blockStartIdx = includeEndIndex + 1; // Next char that ISN'T part of the include directive substring
-				}
-			}
-		} while (includeStartIdx != std::string::npos && includeStartIdx < shaderText.length());
-
-		// Insert the last block
-		if (blockStartIdx < shaderText.size())
-		{
-			shaderTextStrings.emplace_back(shaderText.substr(blockStartIdx, std::string::npos));
-		}
-		return true;
-	}
-
-
-	void DebugOutputShaderText(std::string const& shaderTextFilename, std::vector<GLchar const*> const& shaderTextStrings)
-	{
-		constexpr char const* k_outputDir = ".\\Shaders\\GLSL\\Debug\\";
-		std::filesystem::create_directory(k_outputDir); // No error if the directory already exists
-
-		std::ofstream shaderTextOutStream;
-
-		std::string const& outputFilepath = k_outputDir + shaderTextFilename;
-		shaderTextOutStream.open(outputFilepath.c_str(), std::ios::out);
-		SEAssert(shaderTextOutStream.good(), "Error creating shader debug output stream");
-
-		for (auto const& shaderTextStr : shaderTextStrings)
-		{
-			shaderTextOutStream << shaderTextStr;
-			shaderTextOutStream << "\n";
-		}
-
-		shaderTextOutStream.close();
 	}
 }
 
@@ -455,9 +263,6 @@ namespace opengl
 		std::array<std::string, re::Shader::ShaderType_Count> shaderFiles;
 		std::array<std::string, re::Shader::ShaderType_Count> shaderFileNames; // For RenderDoc markers
 
-		// Each shader type (.vert/.frag etc) is loaded as a vector of substrings
-		std::array<std::vector<std::string>, re::Shader::ShaderType_Count> shaderTextStrings;
-
 		// Figure out what type of shader(s) we're loading:
 		std::array<uint32_t, re::Shader::ShaderType_Count> foundShaderTypeFlags{0};
 
@@ -467,8 +272,7 @@ namespace opengl
 			loadFuture.wait();
 		}
 
-		// Pre-process the shader text:
-		std::array< std::future<void>, re::Shader::ShaderType_Count> processIncludesTaskFutures;
+		// Determine which shaders we've loaded:
 		for (size_t i = 0; i < re::Shader::ShaderType_Count; i++)
 		{
 			if (!platParams->m_shaderTexts[i].empty())
@@ -476,15 +280,6 @@ namespace opengl
 				foundShaderTypeFlags[i] = k_shaderTypeFlags[i]; // Mark the shader as seen
 				shaderFiles[i] = std::move(platParams->m_shaderTexts[i]); // Move the shader texts, they're no longer needed
 				shaderFileNames[i] = shaderFileName + k_shaderFileExtensions[i];
-
-				// Queue a job to parse the #include text:
-				processIncludesTaskFutures[i] = core::ThreadPool::Get()->EnqueueJob(
-					[&shaderFileNames, &shaderFiles, &shaderTextStrings, i]()
-					{
-						std::unordered_set<std::string> seenIncludes;
-						const bool result = InsertIncludeText(shaderFiles[i], shaderTextStrings[i], seenIncludes);
-						SEAssert(result, "Failed to parse shader #includes");
-					});
 			}
 		}
 		SEAssert(foundShaderTypeFlags[re::Shader::Vertex] != 0 || foundShaderTypeFlags[re::Shader::Compute] != 0,
@@ -494,13 +289,8 @@ namespace opengl
 			"Mesh and amplification shaders are currently only supported via an NVidia extension (and not on AMD). For"
 			"now, we don't support them.");
 
-		// Static so we only compute this once
-		static const size_t preambleLength = strlen(k_globalPreamble);
-
 		// Create an empty shader program object:
 		platParams->m_shaderReference = glCreateProgram();
-
-		const bool debugShaderResult = core::Config::Get()->KeyExists("debugopenglshaderpreprocessing");
 
 		// Create and attach the shader stages:
 		for (size_t i = 0; i < shaderFiles.size(); i++)
@@ -517,46 +307,20 @@ namespace opengl
 			// RenderDoc object name:
 			glObjectLabel(GL_SHADER, shaderObject, -1, shaderFileNames[i].c_str());
 
-			// Ensure the inclusion pre-processing task for this particular shader type is done:
-			processIncludesTaskFutures[i].wait();
-
 			// Build our list of shader string pointers for compilation:
-			const size_t numShaderStrings = shaderTextStrings[i].size() + 2; // +2 for global & per-shader-type preamble
-
 			std::vector<GLchar const*> shaderSourceStrings;
-			shaderSourceStrings.resize(numShaderStrings, nullptr);
+			shaderSourceStrings.emplace_back(shaderFiles[i].c_str());
+
 			std::vector<GLint> shaderSourceStringLengths;
-			shaderSourceStringLengths.resize(numShaderStrings, 0);
+			shaderSourceStringLengths.emplace_back(static_cast<GLint>(shaderFiles[i].length()));
 
-			// Attach the global preamble:
-			size_t insertIdx = 0;
-			shaderSourceStrings[insertIdx] = k_globalPreamble;
-			shaderSourceStringLengths[insertIdx] = static_cast<GLint>(preambleLength);
-			insertIdx++;
-
-			// Attach the specific shader preamble:
-			shaderSourceStrings[insertIdx] = k_shaderPreambles[i];
-			shaderSourceStringLengths[insertIdx] = static_cast<GLint>(strlen(k_shaderPreambles[i]));
-			insertIdx++;
-
-			// Attach the shader text substrings:			
-			for (size_t shaderTextIdx = 0; shaderTextIdx < shaderTextStrings[i].size(); shaderTextIdx++)
-			{
-				shaderSourceStrings[insertIdx] = shaderTextStrings[i][shaderTextIdx].c_str();
-				shaderSourceStringLengths[insertIdx] = static_cast<GLint>(shaderTextStrings[i][shaderTextIdx].length());
-				insertIdx++;
-			}
-
-			if (debugShaderResult)
-			{
-				DebugOutputShaderText(shaderFileNames[i], shaderSourceStrings);
-			}
-
+			// Attach the shader text:			
 			glShaderSource(
 				shaderObject,
 				static_cast<GLsizei>(shaderSourceStrings.size()),
 				shaderSourceStrings.data(),
 				shaderSourceStringLengths.data());
+
 			glCompileShader(shaderObject);
 
 			AssertShaderIsValid(shader.GetName(), shaderObject, GL_COMPILE_STATUS, false/*= isProgram*/);

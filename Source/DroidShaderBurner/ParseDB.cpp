@@ -2,6 +2,7 @@
 #include "EffectParsing.h"
 #include "FileWriter.h"
 #include "ParseDB.h"
+#include "ShaderPreprocessor_OpenGL.h"
 #include "TextStrings.h"
 
 #include "Core/Definitions/ConfigKeys.h"
@@ -66,6 +67,36 @@ namespace
 	}
 
 
+	void ParseTechniquesBlock(droid::ParseDB& parseDB, auto const& techniquesBlock)
+	{
+		for (auto const& techniqueEntry : techniquesBlock)
+		{
+			droid::ParseDB::TechniqueDesc techniqueDesc{};
+
+			std::string const& techniqueName = techniqueEntry.at(key_name).template get<std::string>();
+
+			// "ExcludedPlatforms":
+			if (techniqueEntry.contains(key_excludedPlatforms))
+			{
+				for (auto const& excludedPlatform : techniqueEntry[key_excludedPlatforms])
+				{
+					techniqueDesc.m_excludedPlatforms.emplace(excludedPlatform.template get<std::string>());
+				}
+			}
+
+			for (uint8_t i = 0; i < re::Shader::ShaderType_Count; ++i)
+			{
+				if (techniqueEntry.contains(keys_shaderTypes[i]))
+				{
+					techniqueDesc.m_shaderNames[i] = techniqueEntry.at(keys_shaderTypes[i]).template get<std::string>();
+				}
+			}
+
+			parseDB.AddTechnique(techniqueName, std::move(techniqueDesc));
+		}
+	}
+
+
 	char const* DataTypeNameToGLSLDataTypeName(std::string const& dataTypeName)
 	{
 		util::HashKey dataTypeNameHash = util::HashKey::Create(dataTypeName);
@@ -109,12 +140,15 @@ namespace droid
 		const time_t cppGenDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_cppCodeGenOutputDir);
 		const time_t hlslGenDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_hlslCodeGenOutputDir);
 		const time_t glslGenDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_glslCodeGenOutputDir);
+		const time_t glslShaderOutputDirModificationTime = GetMostRecentlyModifiedFileTime(m_parseParams.m_glslShaderOutputDir);
 		if (cppGenDirModificationTime > effectsDirModificationTime &&
 			hlslGenDirModificationTime > effectsDirModificationTime &&
-			glslGenDirModificationTime > effectsDirModificationTime)
+			glslGenDirModificationTime > effectsDirModificationTime &&
+			glslShaderOutputDirModificationTime > effectsDirModificationTime)
 		{
 			return droid::ErrorCode::NoModification;
 		}
+
 
 		std::string const& effectManifestPath = std::format("{}{}",
 			m_parseParams.m_effectsDir,
@@ -251,6 +285,12 @@ namespace droid
 				}
 			}
 
+			// "Techniques":
+			if (effectJSON.contains(key_techniques))
+			{
+				ParseTechniquesBlock(*this, effectJSON.at(key_techniques));
+			}
+
 			// "VertexStreams":
 			if (effectJSON.contains(key_vertexStreams))
 			{
@@ -260,7 +300,7 @@ namespace droid
 				}
 			}
 
-			std::cout << "Effect file successfully parsed!\n\n";
+			std::cout << "Effect \"" << effectName.c_str() << "\" successfully parsed!\n\n";
 		}
 		catch (nlohmann::json::exception parseException)
 		{
@@ -277,20 +317,10 @@ namespace droid
 	}
 
 
-	void ParseDB::AddVertexStreamSlot(std::string const& streamBlockName, VertexStreamSlotDesc&& newSlotDesc)
-	{
-		if (!m_vertexStreamDescs.contains(streamBlockName))
-		{
-			m_vertexStreamDescs.emplace(streamBlockName, std::vector<VertexStreamSlotDesc>());
-		}
-
-		std::vector<VertexStreamSlotDesc>& vertexStreamSlots = m_vertexStreamDescs.at(streamBlockName);
-		vertexStreamSlots.emplace_back(std::move(newSlotDesc));
-	}
-
-
 	droid::ErrorCode ParseDB::GenerateCPPCode() const
 	{
+		std::cout << "Generating C++ code...\n";
+
 		// Start by clearing out any previously generated code:
 		droid::CleanDirectory(m_parseParams.m_cppCodeGenOutputDir.c_str());
 
@@ -307,6 +337,8 @@ namespace droid
 
 	droid::ErrorCode ParseDB::GenerateShaderCode() const
 	{
+		std::cout << "Generating shader code...\n";
+
 		// Start by clearing out any previously generated code:
 		droid::CleanDirectory(m_parseParams.m_hlslCodeGenOutputDir.c_str());
 		droid::CleanDirectory(m_parseParams.m_glslCodeGenOutputDir.c_str());
@@ -316,6 +348,51 @@ namespace droid
 		if (result == droid::ErrorCode::Success)
 		{
 			result = GenerateShaderCode_VertexStreams();
+		}
+
+		return result;
+	}
+
+
+	droid::ErrorCode ParseDB::CompileShaders() const
+	{
+		droid::ErrorCode result = droid::ErrorCode::Success;
+
+		// Start by clearing out any previously generated code:
+		droid::CleanDirectory(m_parseParams.m_glslShaderOutputDir.c_str());
+
+		// GLSL:
+		{
+			std::cout << "Building GLSL shaders...\n";
+
+			// Assemble a list of directories to search for shaders and #includes
+			const std::vector<std::string> glslShaderDirs = {
+				m_parseParams.m_glslShaderSourceDir,
+				m_parseParams.m_glslCodeGenOutputDir,
+				m_parseParams.m_commonShaderSourceDir,
+			};
+
+			for (auto const& technique : m_techniqueDescs)
+			{
+				for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
+				{
+					if (technique.second.m_shaderNames[shaderTypeIdx].empty())
+					{
+						continue;
+					}
+				
+					result = BuildShaderFile(
+						glslShaderDirs, 
+						technique.second.m_shaderNames[shaderTypeIdx], 
+						static_cast<re::Shader::ShaderType>(shaderTypeIdx), 
+						m_parseParams.m_glslShaderOutputDir);
+
+					if (result != droid::ErrorCode::Success)
+					{
+						return result;
+					}
+				}				
+			}
 		}
 
 		return result;
