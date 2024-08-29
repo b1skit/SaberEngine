@@ -59,4 +59,17 @@ namespace
 		"CShader",
 	};
 	SEStaticAssert(_countof(keys_shaderTypes) == re::Shader::ShaderType_Count, "keys_shaderTypes is out of sync");
+
+	constexpr char const* keys_entryPointNames[] =
+	{
+		"VShaderEntryPoint",
+		"GShaderEntryPoint",
+		"PShaderEntryPoint",
+		"HShaderEntryPoint",
+		"DShaderEntryPoint",
+		"MShaderEntryPoint",
+		"AShaderEntryPoint",
+		"CShaderEntryPoint",
+	};
+	SEStaticAssert(_countof(keys_entryPointNames) == re::Shader::ShaderType_Count, "keys_entryPointNames is out of sync");
 }

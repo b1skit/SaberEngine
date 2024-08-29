@@ -2,11 +2,12 @@
 #pragma once
 #include "Renderer/Shader.h"
 
+#include "Core/Util/FileIOUtils.h"
+
 
 namespace droid
 {
 	enum ErrorCode;
-
 
 	struct ParseParams
 	{
@@ -18,18 +19,28 @@ namespace droid
 		std::string m_appDir;
 		std::string m_effectsDir;
 
+		// Dependencies:
+		std::string m_directXCompilerExePath;
+
 		// Shader input paths:
+		std::string m_hlslShaderSourceDir;
 		std::string m_glslShaderSourceDir;
 		std::string m_commonShaderSourceDir;
+		std::string m_dependenciesDir;
 
 		// Output paths:
 		std::string m_cppCodeGenOutputDir;
+
 		std::string m_hlslCodeGenOutputDir;
+		std::string m_hlslShaderOutputDir; // For compiled .cso files
+
 		std::string m_glslCodeGenOutputDir; // For code generated from Effect definitions
 		std::string m_glslShaderOutputDir; // For results of concatenating shader includes with shader text
 
 		// File names:
 		std::string m_effectManifestFileName;
+
+		util::BuildConfiguration m_buildConfiguration;
 	};
 
 
@@ -69,7 +80,7 @@ namespace droid
 		{
 			std::unordered_set<std::string> m_excludedPlatforms;
 			std::array<std::string, re::Shader::ShaderType_Count> m_shaderNames;
-
+			std::array<std::string, re::Shader::ShaderType_Count> m_entryPointNames;
 		};
 		droid::ErrorCode AddTechnique(std::string const& techniqueName, TechniqueDesc&&);
 

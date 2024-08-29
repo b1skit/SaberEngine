@@ -2,6 +2,7 @@
 #include "EffectParsing.h"
 #include "FileWriter.h"
 #include "ParseDB.h"
+#include "ShaderCompile_DX12.h"
 #include "ShaderPreprocessor_OpenGL.h"
 #include "TextStrings.h"
 
@@ -9,6 +10,7 @@
 #include "Core/Definitions/EffectKeys.h"
 
 #include "Core/Util/HashKey.h"
+#include "Core/Util/TextUtils.h"
 
 
 namespace
@@ -78,17 +80,36 @@ namespace
 			// "ExcludedPlatforms":
 			if (techniqueEntry.contains(key_excludedPlatforms))
 			{
+				// Record excluded platform names in lower case, later we'll check them against lowercase names
 				for (auto const& excludedPlatform : techniqueEntry[key_excludedPlatforms])
 				{
-					techniqueDesc.m_excludedPlatforms.emplace(excludedPlatform.template get<std::string>());
+					techniqueDesc.m_excludedPlatforms.emplace(
+						util::ToLower(excludedPlatform.template get<std::string>()));
 				}
 			}
 
 			for (uint8_t i = 0; i < re::Shader::ShaderType_Count; ++i)
 			{
+				bool foundShaderName = false;
 				if (techniqueEntry.contains(keys_shaderTypes[i]))
 				{
 					techniqueDesc.m_shaderNames[i] = techniqueEntry.at(keys_shaderTypes[i]).template get<std::string>();
+					foundShaderName = true;
+				}
+
+				bool foundEntryPoint = false;
+				if (techniqueEntry.contains(keys_entryPointNames[i]))
+				{
+					techniqueDesc.m_entryPointNames[i] = 
+						techniqueEntry.at(keys_entryPointNames[i]).template get<std::string>();
+					foundEntryPoint = true;
+				}
+
+				if (foundShaderName != foundEntryPoint)
+				{
+					std::cout << "Technique \"" << techniqueName.c_str() << "\" does not have corresponding shader "
+						"name and entry point name entries\n";
+					return droid::ErrorCode::JSONError;
 				}
 			}
 
@@ -98,6 +119,8 @@ namespace
 				return result;
 			}
 		}
+		
+		return droid::ErrorCode::Success;
 	}
 
 
@@ -318,33 +341,41 @@ namespace droid
 	{
 		droid::ErrorCode result = droid::ErrorCode::Success;
 
-		// Start by clearing out any previously generated code:
-		droid::CleanDirectory(m_parseParams.m_glslShaderOutputDir.c_str());
-
 		// GLSL:
 		{
-			std::cout << "Building GLSL shaders...\n";
+			std::cout << "Building GLSL shader texts...\n";
+
+			// Start by clearing out any previously generated code:
+			droid::CleanDirectory(m_parseParams.m_glslShaderOutputDir.c_str());
 
 			// Assemble a list of directories to search for shaders and #includes
-			const std::vector<std::string> glslShaderDirs = {
+			const std::vector<std::string> glslIncludeDirectories = {
 				m_parseParams.m_glslShaderSourceDir,
 				m_parseParams.m_glslCodeGenOutputDir,
 				m_parseParams.m_commonShaderSourceDir,
+				m_parseParams.m_dependenciesDir,				
 			};
 
 			for (auto const& technique : m_techniqueDescs)
 			{
 				for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
 				{
-					if (technique.second.m_shaderNames[shaderTypeIdx].empty())
+					if (technique.second.m_shaderNames[shaderTypeIdx].empty() || 
+						technique.second.m_excludedPlatforms.contains("opengl"))
 					{
 						continue;
 					}
+
+					const std::vector<std::string> defines = {
+						// TODO
+					};
 				
-					result = BuildShaderFile(
-						glslShaderDirs, 
-						technique.second.m_shaderNames[shaderTypeIdx], 
-						static_cast<re::Shader::ShaderType>(shaderTypeIdx), 
+					result = BuildShaderFile_GLSL(
+						glslIncludeDirectories,
+						technique.second.m_shaderNames[shaderTypeIdx],
+						technique.second.m_entryPointNames[shaderTypeIdx],
+						static_cast<re::Shader::ShaderType>(shaderTypeIdx),
+						defines,
 						m_parseParams.m_glslShaderOutputDir);
 
 					if (result != droid::ErrorCode::Success)
@@ -354,6 +385,168 @@ namespace droid
 				}				
 			}
 		}
+
+		// HLSL:
+		{
+			std::cout << "Compiling HLSL shaders...\n";
+
+			result = PrintHLSLCompilerVersion(m_parseParams.m_directXCompilerExePath);
+			if (result != droid::ErrorCode::Success)
+			{
+				return result;
+			}
+
+			// Start by clearing out any previously generated code:
+			droid::CleanDirectory(m_parseParams.m_hlslShaderOutputDir.c_str());
+
+			// Populate the compile options based on the build configuration:
+			HLSLCompileOptions compileOptions;
+			switch (m_parseParams.m_buildConfiguration)
+			{
+			case util::BuildConfiguration::Debug:
+			{
+				compileOptions = HLSLCompileOptions {
+					.m_disableOptimizations = true,
+					.m_enableDebuggingInfo = true,
+					.m_allResourcesBound = false, // Default
+					.m_treatWarningsAsErrors = false, // Default
+					.m_enable16BitTypes = false, // Default
+					.m_targetProfile = "6_6", // Default
+					.m_optimizationLevel = 0,
+				};
+			}
+			break;
+			case util::BuildConfiguration::DebugRelease:
+			{
+				compileOptions = HLSLCompileOptions{
+					.m_disableOptimizations = true,
+					.m_enableDebuggingInfo = true,
+					.m_allResourcesBound = false, // Default
+					.m_treatWarningsAsErrors = false, // Default
+					.m_enable16BitTypes = false, // Default
+					.m_targetProfile = "6_6", // Default
+					.m_optimizationLevel = 0,
+				};
+			}
+			break;
+			case util::BuildConfiguration::Profile:
+			{
+				compileOptions = HLSLCompileOptions{
+					.m_disableOptimizations = false,
+					.m_enableDebuggingInfo = false,
+					.m_allResourcesBound = false, // Default
+					.m_treatWarningsAsErrors = false, // Default
+					.m_enable16BitTypes = false, // Default
+					.m_targetProfile = "6_6",
+					.m_optimizationLevel = 3,
+				};
+			}
+			break;
+			case util::BuildConfiguration::Release:
+			{
+				compileOptions = HLSLCompileOptions{
+					.m_disableOptimizations = false,
+					.m_enableDebuggingInfo = false,
+					.m_allResourcesBound = false, // Default
+					.m_treatWarningsAsErrors = false, // Default
+					.m_enable16BitTypes = false, // Default
+					.m_targetProfile = "6_6",
+					.m_optimizationLevel = 3,
+				};
+			}
+			break;
+			default: result = droid::ErrorCode::ConfigurationError;
+			}
+			if (result != droid::ErrorCode::Success)
+			{
+				return result;
+			}
+
+			const std::vector<std::string> hlslIncludeDirectories = {
+				m_parseParams.m_hlslShaderSourceDir,
+				m_parseParams.m_hlslCodeGenOutputDir,
+				m_parseParams.m_commonShaderSourceDir,
+				m_parseParams.m_dependenciesDir,
+			};
+
+			auto CloseProcess = [](PROCESS_INFORMATION const& processInfo) -> droid::ErrorCode
+				{
+					droid::ErrorCode result = droid::ErrorCode::Success;
+
+					WaitForSingleObject(processInfo.hProcess, INFINITE); // Wait until the process is done
+
+					DWORD exitCode = 0;
+					GetExitCodeProcess(processInfo.hProcess, &exitCode);
+					if (exitCode != 0)
+					{
+						std::cout << "HLSL compiler returned " << exitCode << "\n";
+						result = droid::ErrorCode::ShaderError;
+					}
+
+					// Close process and thread handles
+					CloseHandle(processInfo.hProcess);
+					CloseHandle(processInfo.hThread);
+
+					return result;
+				};
+
+			std::vector<PROCESS_INFORMATION> processInfos; // The HLSL shader is invoked as a seperate process
+
+			for (auto const& technique : m_techniqueDescs)
+			{
+				for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
+				{
+					if (technique.second.m_shaderNames[shaderTypeIdx].empty() ||
+						technique.second.m_excludedPlatforms.contains("dx12"))
+					{
+						continue;
+					}
+
+					const std::vector<std::string> defines = {
+						// TODO
+					};
+
+					PROCESS_INFORMATION& processInfo = processInfos.emplace_back();
+
+					result = CompileShader_HLSL(
+						m_parseParams.m_directXCompilerExePath,
+						processInfo,
+						compileOptions,
+						hlslIncludeDirectories,
+						technique.second.m_shaderNames[shaderTypeIdx],
+						technique.second.m_entryPointNames[shaderTypeIdx],
+						static_cast<re::Shader::ShaderType>(shaderTypeIdx),
+						defines,
+						m_parseParams.m_hlslShaderOutputDir);
+
+					if (compileOptions.m_multithreadedCompilation == false)
+					{
+						result = CloseProcess(processInfo);
+						processInfos.pop_back();
+					}
+
+					if (result != droid::ErrorCode::Success)
+					{
+						break;
+					}
+				}
+
+				if (result != droid::ErrorCode::Success)
+				{
+					break;
+				}
+			}
+
+			// Check our exit codes:
+			for (auto const& processInfo : processInfos) // Will be empty if threading is disabled
+			{
+				const droid::ErrorCode processCloseResult = CloseProcess(processInfo);
+				if (processCloseResult != droid::ErrorCode::Success && result == droid::ErrorCode::Success)
+				{
+					result = processCloseResult;
+				}
+			}
+		}		
 
 		return result;
 	}
@@ -391,7 +584,7 @@ namespace droid
 			if (bitIdx >= 64)
 			{
 				std::cout << "Error: " << " is too many drawstyle rules to fit in a 64-bit bitmask\n";
-				result = droid::ErrorCode::DataError;
+				result = droid::ErrorCode::GenerationError;
 			}
 		}
 

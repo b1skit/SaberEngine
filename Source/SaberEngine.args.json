@@ -39,12 +39,12 @@
       "Command": "-strictshaderbinding"
     },
     {
-      "Id": "9e16609b-5425-4046-a533-7bddf6eba224",
-      "Command": "-cpunormalizevertexstreams"
-    },
-    {
       "Id": "8a08c18d-a6d3-4cbf-b5a3-a3e8dcde4164",
       "Command": "-enabledred"
+    },
+    {
+      "Id": "9e16609b-5425-4046-a533-7bddf6eba224",
+      "Command": "-cpunormalizevertexstreams"
     },
     {
       "Id": "ee6cfa04-f68a-453d-aa3f-ed525a0218e7",

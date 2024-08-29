@@ -13,7 +13,7 @@ float GetSSAO(vec2 screenUV, uvec2 screenPxDims)
 }
 
 
-void main()
+void PShader()
 {
 	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
 

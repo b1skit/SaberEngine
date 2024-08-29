@@ -5,7 +5,7 @@
 #include "SaberCommon.glsl"
 
 
-void main()
+void PShader()
 {
 	FragColor = In.Color;
 }

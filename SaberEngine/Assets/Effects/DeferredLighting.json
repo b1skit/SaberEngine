@@ -69,47 +69,60 @@
 	"Techniques": [
 		{
 			"Name": "BRDFIntegration",
-			"CShader": "GenerateBRDFIntegrationMap_CShader"
+			"CShader": "GenerateBRDFIntegrationMap_CShader",
+			"CShaderEntryPoint" :  "CShader"
 		},
 		{
 			"Name": "IEMGeneration",
 			"VShader": "GenerateIEM_VShader",
+			"VShaderEntryPoint": "VShader",
 			"PShader": "GenerateIEM_PShader",
+			"PShaderEntryPoint": "PShader",
 			"PipelineState": "IBLGeneration",
 			"VertexStream": "PositionOnly"
 		},
 		{
 			"Name": "PMREMGeneration",
 			"VShader": "GeneratePMREM_VShader",
+			"VShaderEntryPoint": "VShader",
 			"PShader": "GeneratePMREM_PShader",
+			"PShaderEntryPoint": "PShader",
 			"PipelineState": "IBLGeneration",
 			"VertexStream": "PositionOnly"
 		},
 		{
 			"Name": "DeferredAmbient",
 			"VShader": "DeferredAmbientLight_VShader",
+			"VShaderEntryPoint": "VShader",
 			"PShader": "DeferredAmbientLight_PShader",
+			"PShaderEntryPoint": "PShader",
 			"PipelineState": "DeferredFullscreenQuad",
 			"VertexStream": "PositionUV"
 		},
 		{
 			"Name": "DeferredDirectional",
 			"VShader": "DeferredDirectionalLight_VShader",
+			"VShaderEntryPoint": "VShader",
 			"PShader": "DeferredDirectionalLight_PShader",
+			"PShaderEntryPoint": "PShader",
 			"PipelineState": "DeferredFullscreenQuad",
 			"VertexStream": "PositionUV"
 		},
 		{
 			"Name": "DeferredPoint",
 			"VShader": "DeferredPointLight_VShader",
+			"VShaderEntryPoint": "VShader",
 			"PShader": "DeferredPointLight_PShader",
+			"PShaderEntryPoint": "PShader",
 			"PipelineState": "DeferredMesh",
 			"VertexStream": "PositionOnly"
 		},
 		{
 			"Name": "DeferredSpot",
 			"VShader": "DeferredSpotLight_VShader",
+			"VShaderEntryPoint": "VShader",
 			"PShader": "DeferredSpotLight_PShader",
+			"PShaderEntryPoint": "PShader",
 			"PipelineState": "DeferredMesh",
 			"VertexStream": "PositionOnly"
 		}

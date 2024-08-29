@@ -9,7 +9,9 @@
 		{
 			"Name": "Tonemapping_Default",
 			"VShader": "ToneMap_VShader",
+			"VShaderEntryPoint": "VShader",
 			"PShader": "ToneMap_PShader",
+			"PShaderEntryPoint": "PShader",
 			"PipelineState": "FullscreenQuad_Always",
 			"VertexStream": "PositionUV"
 		}

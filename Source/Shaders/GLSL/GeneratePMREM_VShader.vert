@@ -5,7 +5,7 @@
 #include "VertexStreams_PositionOnly.glsl"
 
 
-void main()
+void VShader()
 {
 	Out.LocalPos = Position; // Untransformed vertex position
 

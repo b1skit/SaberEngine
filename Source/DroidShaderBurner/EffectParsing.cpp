@@ -3,6 +3,8 @@
 #include "ParseDB.h"
 
 #include "Core/Definitions/EffectKeys.h"
+#include "Core/Util/FileIOUtils.h"
+#include "Core/Util/TextUtils.h"
 
 
 namespace droid
@@ -15,8 +17,10 @@ namespace droid
 		case ErrorCode::NoModification: return "NoModification";
 		case ErrorCode::FileError: return "FileError";
 		case ErrorCode::JSONError: return "JSONError";
-		case ErrorCode::DataError: return "DataError";
+		case ErrorCode::ShaderError: return "ShaderError";
+		case ErrorCode::GenerationError: return "GenerationError";
 		case ErrorCode::ConfigurationError: return "ConfigurationError";
+		case ErrorCode::DependencyError: return "DependencyError";
 		default: return "INVALID_ERROR_CODE";
 		}
 	}
@@ -24,14 +28,21 @@ namespace droid
 
 	ErrorCode DoParsingAndCodeGen(ParseParams const& parseParams)
 	{
+		const bool isSameBuildConfig =
+			(util::GetBuildConfigurationMarker(parseParams.m_hlslShaderOutputDir) == parseParams.m_buildConfiguration) &&
+			(util::GetBuildConfigurationMarker(parseParams.m_glslShaderOutputDir) == parseParams.m_buildConfiguration);
+
 		// Skip parsing if the generated code was modified more recently than the effect files:
 		const time_t effectsDirModificationTime = GetMostRecentlyModifiedFileTime(parseParams.m_effectsDir);
 		const time_t cppGenDirModificationTime = GetMostRecentlyModifiedFileTime(parseParams.m_cppCodeGenOutputDir);
 		const time_t hlslGenDirModificationTime = GetMostRecentlyModifiedFileTime(parseParams.m_hlslCodeGenOutputDir);
+		const time_t hlslShaderOutputDirModificationTime = GetMostRecentlyModifiedFileTime(parseParams.m_hlslShaderOutputDir);		
 		const time_t glslGenDirModificationTime = GetMostRecentlyModifiedFileTime(parseParams.m_glslCodeGenOutputDir);
 		const time_t glslShaderOutputDirModificationTime = GetMostRecentlyModifiedFileTime(parseParams.m_glslShaderOutputDir);
-		if (cppGenDirModificationTime > effectsDirModificationTime &&
+		if (isSameBuildConfig &&
+			cppGenDirModificationTime > effectsDirModificationTime &&
 			hlslGenDirModificationTime > effectsDirModificationTime &&
+			hlslShaderOutputDirModificationTime > effectsDirModificationTime &&
 			glslGenDirModificationTime > effectsDirModificationTime &&
 			glslShaderOutputDirModificationTime > effectsDirModificationTime)
 		{
@@ -63,6 +74,10 @@ namespace droid
 		{
 			return result;
 		}
+
+		// Write the build configuration marker files:
+		util::SetBuildConfigurationMarker(parseParams.m_hlslShaderOutputDir, parseParams.m_buildConfiguration);
+		util::SetBuildConfigurationMarker(parseParams.m_glslShaderOutputDir, parseParams.m_buildConfiguration);
 
 		return result;
 	}
@@ -101,8 +116,12 @@ namespace droid
 	}
 
 
-	void CleanDirectory(std::string const& dirPath)
+	void CleanDirectory(std::string const& dirPath, bool recreateDir /*= true*/)
 	{
 		std::filesystem::remove_all(dirPath);
+		if (recreateDir)
+		{
+			std::filesystem::create_directories(dirPath);
+		}
 	}
 }

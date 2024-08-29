@@ -8,7 +8,7 @@
 #include "GBufferCommon.glsl"
 
 
-void main()
+void PShader()
 {	
 	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
 

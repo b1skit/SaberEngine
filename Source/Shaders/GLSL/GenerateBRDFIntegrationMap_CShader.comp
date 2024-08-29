@@ -18,7 +18,7 @@ layout(location=0) writeonly uniform image2D output0;
 // uv.x == NoV, uv.y == roughness
 // Return: vec2(BRDF Fresnel response scale, BRDF Fresnel response bias)
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-void main()
+void CShader()
 {
 	const uvec2 targetResolution = _BRDFIntegrationParams.g_integrationTargetResolution.xy;
 

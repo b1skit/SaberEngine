@@ -5,7 +5,7 @@ layout (triangles) in;
 layout (triangle_strip, max_vertices = 18) out;
 
 
-void main()
+void GShader()
 {
 	for (int currentCubeFace = 0; currentCubeFace < 6; currentCubeFace++)
 	{

@@ -5,9 +5,11 @@
 
 namespace droid
 {
-	droid::ErrorCode BuildShaderFile(
+	droid::ErrorCode BuildShaderFile_GLSL(
 		std::vector<std::string> const& shaderSrcDirs,
 		std::string const& extensionlessSrcFilename,
+		std::string const& entryPointName,
 		re::Shader::ShaderType,
+		std::vector<std::string> const& defines,
 		std::string const& outputDir);
 }

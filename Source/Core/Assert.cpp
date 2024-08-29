@@ -3,6 +3,12 @@
 #include "LogManager.h"
 
 
+void HandleLogError(char const* msg)
+{
+	LOG_ERROR(msg);
+}
+
+
 #if defined(_DEBUG)
 
 void HandleAssertInternal()
@@ -11,9 +17,4 @@ void HandleAssertInternal()
 	::SetCursor(::LoadCursor(NULL, IDC_ARROW)); // Restore the default arrow icon cursor
 }
 
-
-void HandleLogError(char const* msg)
-{
-	LOG_ERROR(msg);
-}
 #endif

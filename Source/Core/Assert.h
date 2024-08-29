@@ -11,13 +11,15 @@
 	static_assert(condition, msg);
 
 
+void HandleLogError(char const*); // Wrapper for the LOG_ERROR macro, as we can't include LogManager.h here
+
+
 #if defined(_DEBUG)
 
 // TODO: Move the Win32-specific stuff to a platform wrapper (ClipCursor, ShowCursor)
 // TODO: Reverse the argument order, so we can support variadic arguments in the message: condition, msg, args
 
 void HandleAssertInternal();
-void HandleLogError(char const*); // Wrapper for the LOG_ERROR macro, as we can't include LogManager.h here
 
 
 #define SEAssert(condition, errorMsg) \
@@ -40,6 +42,8 @@ void HandleLogError(char const*); // Wrapper for the LOG_ERROR macro, as we can'
 		std::abort(); \
 	}
 
+#define SEFatalAssert(condition, errorMsg) SEAssert(condition, errorMsg)
+
 #else
 
 #if defined(RELEASE_ASSERTS_AS_LOG_ERRORS)
@@ -49,8 +53,19 @@ void HandleLogError(char const*); // Wrapper for the LOG_ERROR macro, as we can'
 
 #else
 
-	#define SEAssert(condition, errorMsg)	\
-		do { static_cast<void>(condition); } while (0);
+#define SEAssert(condition, errorMsg)	\
+	do { static_cast<void>(condition); } while (0);
+
+
+#define SEFatalAssert(condition, errorMsg)	\
+	if(!(condition)) \
+	{ \
+		void HandleAssertInternal(); \
+		const std::string errorStr((errorMsg)); \
+		HandleLogError(errorStr.c_str()); \
+		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
+		std::abort(); \
+	}
 
 #endif // RELEASE_ASSERTS_AS_LOG_ERRORS
 

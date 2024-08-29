@@ -6,7 +6,7 @@
 #include "UVUtils.glsl"
 
 
-void main()
+void PShader()
 {	
 	// Debug: Override the skybox with a flat color
 	if (_SkyboxParams.g_backgroundColorIsEnabled.a == 1.f)

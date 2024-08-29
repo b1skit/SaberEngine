@@ -8,7 +8,7 @@
 
 // XeGTAO.hlsli defines:
 #define VA_SATURATE saturate
-#include "XeGTAO.hlsli"
+#include "XeGTAO/XeGTAO.hlsli"
 
 
 // As per the GTAO docs, these can be changed. In SE, we need to make sure to keep these shader-side defines in sync

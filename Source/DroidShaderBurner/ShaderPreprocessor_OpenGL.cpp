@@ -64,10 +64,10 @@ namespace droid
 
 
 	std::string LoadIndividualShaderTextFile(
-		std::vector<std::string> const& shaderSrcDirs, std::string const& filenameAndExtension)
+		std::vector<std::string> const& includeDirectories, std::string const& filenameAndExtension)
 	{
 		std::string shaderText;
-		for (auto const& shaderDir : shaderSrcDirs)
+		for (auto const& shaderDir : includeDirectories)
 		{
 			std::string filepath = shaderDir + filenameAndExtension;
 
@@ -96,16 +96,16 @@ namespace droid
 
 
 	std::string LoadShaderTextByExtension(
-		std::vector<std::string> const& shaderSrcDirs, std::string const& filename, re::Shader::ShaderType shaderType)
+		std::vector<std::string> const& includeDirectories, std::string const& filename, re::Shader::ShaderType shaderType)
 	{
 		std::string const& filenameAndExtension = filename + k_shaderFileExtensions[shaderType];
 
-		return LoadIndividualShaderTextFile(shaderSrcDirs, filenameAndExtension);
+		return LoadIndividualShaderTextFile(includeDirectories, filenameAndExtension);
 	}
 
 
 	bool InsertIncludeText(
-		std::vector<std::string> const& shaderSrcDirs,
+		std::vector<std::string> const& includeDirectories,
 		std::string const& shaderText,
 		std::vector<std::string>& shaderTextStrings,
 		std::unordered_set<std::string>& seenIncludes)
@@ -190,12 +190,12 @@ namespace droid
 							if (newInclude)
 							{
 								std::string const& includeFile = 
-									LoadIndividualShaderTextFile(shaderSrcDirs, includeFileName);
+									LoadIndividualShaderTextFile(includeDirectories, includeFileName);
 								if (includeFile != "")
 								{
 									// Recursively parse the included file for nested #includes:
 									const bool result = 
-										InsertIncludeText(shaderSrcDirs, includeFile, shaderTextStrings, seenIncludes);
+										InsertIncludeText(includeDirectories, includeFile, shaderTextStrings, seenIncludes);
 									if (!result)
 									{
 										return false;
@@ -224,31 +224,34 @@ namespace droid
 
 
 	bool InsertIncludeText(
-		std::vector<std::string> const& shaderSrcDirs,
+		std::vector<std::string> const& includeDirectories,
 		std::string const& shaderText,
 		std::vector<std::string>& shaderTextStrings)
 	{
 		std::unordered_set<std::string> seenIncludes;
-		return InsertIncludeText(shaderSrcDirs, shaderText, shaderTextStrings, seenIncludes);
+		return InsertIncludeText(includeDirectories, shaderText, shaderTextStrings, seenIncludes);
 	}
 
 
-	droid::ErrorCode BuildShaderFile(
-		std::vector<std::string> const& shaderSrcDirs,
+	droid::ErrorCode BuildShaderFile_GLSL(
+		std::vector<std::string> const& includeDirectories,
 		std::string const& extensionlessSrcFilename,
+		std::string const& entryPointName,
 		re::Shader::ShaderType shaderType,
+		std::vector<std::string> const& defines,
 		std::string const& outputDir)
 	{
 		// Load the base shader file:
-		std::string shaderTex = LoadShaderTextByExtension(shaderSrcDirs, extensionlessSrcFilename, shaderType);
+		std::string shaderTex = LoadShaderTextByExtension(includeDirectories, extensionlessSrcFilename, shaderType);
 
 		// Add our preambles:
 		std::vector<std::string> shaderTextStrings;
 		shaderTextStrings.emplace_back(k_globalPreamble);
 		shaderTextStrings.emplace_back(k_shaderPreambles[shaderType]);
+		shaderTextStrings.emplace_back(std::format("#define {} main\n", entryPointName));
 
 		// Process the shader text, splitting it and inserting include files as they're encountered:
-		const bool result = InsertIncludeText(shaderSrcDirs, shaderTex, shaderTextStrings);
+		const bool result = InsertIncludeText(includeDirectories, shaderTex, shaderTextStrings);
 
 		// Get the total reservation size we'll need:
 		size_t requiredSize = 0;
@@ -263,12 +266,6 @@ namespace droid
 		for (auto const& include : shaderTextStrings)
 		{
 			shaderTex += include;
-		}
-
-		// Finally, save each file:
-		if (!std::filesystem::exists(outputDir))
-		{
-			std::filesystem::create_directories(outputDir);
 		}
 
 		std::string const& outputFileName = extensionlessSrcFilename + k_shaderFileExtensions[shaderType];

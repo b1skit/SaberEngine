@@ -50,7 +50,7 @@ uniform float weights[NUM_TAPS] = float[] (
 #define TEXEL_OFFSET (NUM_TAPS/2)
 
 
-void main()
+void PShader()
 {
 	const uvec2 directionSelection = uvec2(
 		g_blurSettings.x < 0.5f ? 1 : 0, // g_blurSettings.x: 0 = horizontal, 1 = vertical

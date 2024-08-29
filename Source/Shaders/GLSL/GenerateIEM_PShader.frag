@@ -13,7 +13,7 @@
 // decomposed approximate microfacet BRDF.
 // Based on listing 20 (p. 67) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
 // https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
-void main()
+void PShader()
 {
 	// We need to build a referential coordinate system with respect to the current world-space sample direction in
 	// order to importance sample the hemisphere about it. Here, we choose up vectors for each face that guarantee we 

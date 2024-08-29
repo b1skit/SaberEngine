@@ -7,7 +7,7 @@
 #include "VertexStreams_PosNmlTanUvCol.glsl"
 
 
-void main()
+void VShader()
 {
 	const uint transformIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_transformIdx;
 	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_materialIdx;

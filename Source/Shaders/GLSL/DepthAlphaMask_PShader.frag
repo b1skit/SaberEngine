@@ -3,7 +3,7 @@
 #include "SaberCommon.glsl"
 
 
-void main()
+void PShader()
 {
 	const uint instanceID = InstanceParamsIn.InstanceID;
 	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[instanceID].g_materialIdx;

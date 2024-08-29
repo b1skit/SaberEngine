@@ -17,13 +17,16 @@
 		{
 			"Name": "EmissiveBlit",
 			"VShader": "Blit_VShader",
+			"VShaderEntryPoint": "VShader",
 			"PShader": "Blit_PShader",
+			"PShaderEntryPoint": "PShader",
 			"PipelineState": "FullscreenQuad_Always",
 			"VertexStream": "PositionUV"
 		},
 		{
 			"Name": "BloomCompute",
-			"CShader": "Bloom_CShader"
+			"CShader": "Bloom_CShader",
+			"CShaderEntryPoint" :  "CShader"
 		}
 	]
 }

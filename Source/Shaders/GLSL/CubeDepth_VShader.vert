@@ -3,7 +3,7 @@
 #include "VertexStreams_PositionUV.glsl"
 
 
-void main()
+void VShader()
 {
 	const uint transformIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_transformIdx;
 

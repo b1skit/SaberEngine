@@ -3,8 +3,40 @@
   "Id": "76c4f899-eb8c-45b8-a0c7-fc74d466c133",
   "Items": [
     {
-      "Id": "2dee2cdf-64d4-41ed-9b56-6f1dd5a78800",
-      "Command": "-projectRoot D:\\Projects\\Development\\SaberEngine\\"
+      "Id": "088a41c5-b5e2-44bf-9378-8410fb6c19ac",
+      "Command": "Mandatory",
+      "Items": [
+        {
+          "Id": "98d7462a-555b-4850-9438-564a0d9ef6fe",
+          "Command": "Build configuration",
+          "Items": [
+            {
+              "Id": "1e021d6b-8fde-490c-b75e-f79960fb236e",
+              "Command": "-buildconfig Debug"
+            },
+            {
+              "Id": "1ea1f1fb-d60d-4dda-977e-3e88517a73d0",
+              "Command": "-buildconfig DebugRelease"
+            },
+            {
+              "Id": "e7e1f00b-b004-4d04-9dc5-19f36b5dcfff",
+              "Command": "-buildconfig Profile"
+            },
+            {
+              "Id": "3f3f73d3-20de-48af-b6cd-0650aacd98fb",
+              "Command": "-buildconfig Release"
+            }
+          ]
+        },
+        {
+          "Id": "2dee2cdf-64d4-41ed-9b56-6f1dd5a78800",
+          "Command": "-projectRoot D:\\Projects\\Development\\SaberEngine\\"
+        },
+        {
+          "Id": "d47caeda-ca2c-4520-9c10-ec33a837dee0",
+          "Command": "-DX12ShaderCompiler \"C:\\Program Files (x86)\\Windows Kits\\10\\Redist\\D3D\\x64\\dxc.exe\""
+        }
+      ]
     },
     {
       "Id": "5bc8c109-b8d4-4e8b-b193-4fdc1f62ed86",

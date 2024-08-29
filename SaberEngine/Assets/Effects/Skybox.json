@@ -9,7 +9,9 @@
 		{
 			"Name": "Skybox_Default",
 			"VShader": "Skybox_VShader",
+			"VShaderEntryPoint": "VShader",
 			"PShader": "Skybox_PShader",
+			"PShaderEntryPoint": "PShader",
 			"PipelineState": "FullscreenQuad_LEqual",
 			"VertexStream": "PositionUV"
 		}

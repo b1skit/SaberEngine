@@ -5,24 +5,21 @@
 namespace util
 {
 	// Note: fileExtension includes the period (e.g. ".exampleExt"), or nullptr for all files regardless of extension
-	std::vector<std::string> GetDirectoryFilenameContents(char const* directoryPath, char const* fileExtension = nullptr)
+	std::vector<std::string> GetDirectoryFilenameContents(
+		char const* directoryPath, char const* fileExtension = nullptr);
+
+
+	enum class BuildConfiguration
 	{
-		std::vector<std::string> directoryFileContents;
+		Debug,
+		DebugRelease,
+		Profile,
+		Release,
 
-		if (std::filesystem::exists(directoryPath))
-		{
-			for (const auto& directoryEntry : std::filesystem::directory_iterator(directoryPath))
-			{
-				std::string const& directoryEntryStr = directoryEntry.path().string();
+		Invalid,
+	};
+	BuildConfiguration CStrToBuildConfiguration(char const* buildConfigCStr);
 
-				if (!fileExtension ||
-					strcmp(std::filesystem::path(directoryEntry.path()).extension().string().c_str(), fileExtension) == 0)
-				{
-					directoryFileContents.emplace_back(directoryEntry.path().string());
-				}
-			}
-		}
-
-		return directoryFileContents;
-	}
+	BuildConfiguration GetBuildConfigurationMarker(std::string const& path);
+	void SetBuildConfigurationMarker(std::string const& path, BuildConfiguration);
 }

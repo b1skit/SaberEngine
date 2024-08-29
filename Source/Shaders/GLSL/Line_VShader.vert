@@ -4,7 +4,7 @@
 #include "VertexStreams_PositionColor.glsl"
 
 
-void main()
+void VShader()
 {
 	Out.Color = Color;
 

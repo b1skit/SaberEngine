@@ -13,6 +13,8 @@
 #include "Core/PerformanceTimer.h"
 #include "Core/ProfilingMarkers.h"
 
+#include "Core/Util/FileIOUtils.h"
+
 
 namespace re
 {
@@ -97,6 +99,20 @@ namespace re
 		break;
 		default: SEAssertF("Invalid rendering API value");
 		}
+
+		// Validate the shader directory build configuration file matches the current compiled build configuration:
+		const util::BuildConfiguration buildConfig = util::GetBuildConfigurationMarker(
+			config->GetValueAsString(core::configkeys::k_shaderDirectoryKey));
+		
+#if defined(SE_DEBUG)
+		SEFatalAssert(buildConfig == util::BuildConfiguration::Debug, "Shader directory build configuration marker mismatch");
+#elif defined(SE_DEBUGRELEASE)
+		SEFatalAssert(buildConfig == util::BuildConfiguration::DebugRelease, "Shader directory build configuration marker mismatch");
+#elif defined(SE_PROFILE)
+		SEFatalAssert(buildConfig == util::BuildConfiguration::Profile, "Shader directory build configuration marker mismatch");
+#elif defined(SE_RELEASE)
+		SEFatalAssert(buildConfig == util::BuildConfiguration::Release, "Shader directory build configuration marker mismatch");
+#endif
 
 		newRenderManager->m_sceneData = std::make_unique<re::SceneData>();
 		

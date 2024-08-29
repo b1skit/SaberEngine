@@ -5,13 +5,16 @@
 
 #include "Core/Definitions/ConfigKeys.h"
 
+#include "Core/Util/FileIOUtils.h"
 
-// TODO: Make these controllable via command line args
-constexpr bool k_jsonAllowExceptions = false;
-constexpr bool k_jsonIgnoreComments = true;
 
-constexpr char const* k_delimiterChar = "-";
-constexpr char const* k_projectRootCommandLineArg = "-projectroot";
+namespace
+{
+	constexpr char const* k_delimiterChar = "-";
+	constexpr char const* k_projectRootCmdLineArg = "-projectroot";
+	constexpr char const* k_dx12ShaderCompilerCmdLineArg = "-dx12shadercompiler";
+	constexpr char const* k_buildConfigCmdLineArg = "-buildconfig";
+}
 
 
 int main(int argc, char* argv[])
@@ -27,22 +30,36 @@ int main(int argc, char* argv[])
 		.m_appDir = core::configkeys::k_appDirName,
 		.m_effectsDir = std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_effectDirName),
 
+		// Dependencies:
+		.m_directXCompilerExePath = "DXC_COMPILER_EXE_PATH_NOT_SET", // Mandatory command line arg
+
+		// Shader input paths:
+		.m_hlslShaderSourceDir = "Source\\Shaders\\HLSL\\",
 		.m_glslShaderSourceDir = "Source\\Shaders\\GLSL\\",
 		.m_commonShaderSourceDir = "Source\\Shaders\\Common\\",
+		.m_dependenciesDir = "Source\\Dependencies\\",
 
+		// Output paths:
 		.m_cppCodeGenOutputDir = "Source\\Generated\\",
+
 		.m_hlslCodeGenOutputDir = "Source\\Shaders\\Generated\\HLSL\\",
+		.m_hlslShaderOutputDir = "SaberEngine\\Shaders\\HLSL\\",
+
 		.m_glslCodeGenOutputDir = "Source\\Shaders\\Generated\\GLSL\\",
 		.m_glslShaderOutputDir = "SaberEngine\\Shaders\\GLSL\\",
 
 		// File names:
 		.m_effectManifestFileName = core::configkeys::k_effectManifestFilename,
+
+		.m_buildConfiguration = util::BuildConfiguration::Invalid, // Mandatory command line arg
 	};
 
 	// Handle command line args:
 	bool doClean = false;
 	bool doBuild = true;
 	bool projectRootDirReceived = false;
+	bool dx12ShaderCompilerArgReceived = false;
+	bool buildConfigArgReceived = false;
 	if (argc > 0)
 	{
 		std::string commandLineArgs;
@@ -83,12 +100,42 @@ int main(int argc, char* argv[])
 				doClean = true;
 				doBuild = true;
 			}
-			else if (currentArg == k_projectRootCommandLineArg)
+			else if (currentArg == k_projectRootCmdLineArg)
 			{
 				if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
 				{
 					projectRootDirReceived = true;
 					parseParams.m_projectRootDir = argv[i + 1];
+					AppendArg(argv[i + 1]);
+					++i;
+				}
+				else
+				{
+					result = droid::ErrorCode::ConfigurationError;
+					break;
+				}
+			}
+			else if (currentArg == k_dx12ShaderCompilerCmdLineArg)
+			{
+				if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
+				{
+					dx12ShaderCompilerArgReceived = true;
+					parseParams.m_directXCompilerExePath = argv[i + 1];
+					AppendArg(argv[i + 1]);
+					++i;
+				}
+				else
+				{
+					result = droid::ErrorCode::ConfigurationError;
+					break;
+				}
+			}
+			else if (currentArg == k_buildConfigCmdLineArg)
+			{
+				if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
+				{
+					buildConfigArgReceived = true;
+					parseParams.m_buildConfiguration = util::CStrToBuildConfiguration(argv[i + 1]);
 					AppendArg(argv[i + 1]);
 					++i;
 				}
@@ -111,8 +158,20 @@ int main(int argc, char* argv[])
 		}
 		if (!projectRootDirReceived)
 		{
-			std::cout << "Project root command not received. Supply \"" << k_projectRootCommandLineArg << 
+			std::cout << "Project root path not received. Supply \"" << k_projectRootCmdLineArg << 
 				" X:\\Path\\To\\SaberEngine\\\" and relaunch.\n";
+			result = droid::ErrorCode::ConfigurationError;
+		}
+		if (!dx12ShaderCompilerArgReceived)
+		{
+			std::cout << "DX12 shader compiler path not received. Supply \"" << k_dx12ShaderCompilerCmdLineArg <<
+				" X:\\Path\\To\\dxc.exe\" and relaunch.\n";
+			result = droid::ErrorCode::ConfigurationError;
+		}
+		if (!buildConfigArgReceived || parseParams.m_buildConfiguration == util::BuildConfiguration::Invalid)
+		{
+			std::cout << "Build configuration argument not received. Supply \"" << k_buildConfigCmdLineArg <<
+				" <config>, with <config> = Debug/DebugRelease/Profile/Release and relaunch.\n";
 			result = droid::ErrorCode::ConfigurationError;
 		}
 	}
@@ -122,10 +181,17 @@ int main(int argc, char* argv[])
 	{
 		// Convert paths from relative to absolute:
 		parseParams.m_effectsDir = parseParams.m_projectRootDir + parseParams.m_effectsDir;
+
+		parseParams.m_hlslShaderSourceDir = parseParams.m_projectRootDir + parseParams.m_hlslShaderSourceDir;
 		parseParams.m_glslShaderSourceDir = parseParams.m_projectRootDir + parseParams.m_glslShaderSourceDir;
 		parseParams.m_commonShaderSourceDir = parseParams.m_projectRootDir + parseParams.m_commonShaderSourceDir;
+		parseParams.m_dependenciesDir = parseParams.m_projectRootDir + parseParams.m_dependenciesDir;
+
 		parseParams.m_cppCodeGenOutputDir = parseParams.m_projectRootDir + parseParams.m_cppCodeGenOutputDir;
+
 		parseParams.m_hlslCodeGenOutputDir = parseParams.m_projectRootDir + parseParams.m_hlslCodeGenOutputDir;
+		parseParams.m_hlslShaderOutputDir = parseParams.m_projectRootDir + parseParams.m_hlslShaderOutputDir;
+
 		parseParams.m_glslCodeGenOutputDir = parseParams.m_projectRootDir + parseParams.m_glslCodeGenOutputDir;
 		parseParams.m_glslShaderOutputDir = parseParams.m_projectRootDir + parseParams.m_glslShaderOutputDir;
 
@@ -134,12 +200,21 @@ int main(int argc, char* argv[])
 		std::cout << "---\n";
 		std::cout << "Current working directory:\t\t\"" << parseParams.m_projectRootDir.c_str() << "\"\n";
 		std::cout << "Effect directory:\t\t\t\"" << parseParams.m_effectsDir.c_str() << "\"\n";
+		
+		std::cout << "DirectX shader compiler:\t\t\"" << parseParams.m_directXCompilerExePath.c_str() << "\"\n";
+		
+		std::cout << "HLSL shader source dir:\t\t\t\"" << parseParams.m_hlslShaderSourceDir.c_str() << "\"\n";
 		std::cout << "GLSL shader source dir:\t\t\t\"" << parseParams.m_glslShaderSourceDir.c_str() << "\"\n";
 		std::cout << "Common shader source dir:\t\t\"" << parseParams.m_commonShaderSourceDir.c_str() << "\"\n";
+		std::cout << "Dependencies shader source dir:\t\t\"" << parseParams.m_dependenciesDir.c_str() << "\"\n";
+		
 		std::cout << "C++ code generation output path:\t\"" << parseParams.m_cppCodeGenOutputDir.c_str() << "\"\n";
+		
 		std::cout << "HLSL code generation output path:\t\"" << parseParams.m_hlslCodeGenOutputDir.c_str() << "\"\n";
+		std::cout << "HLSL shader compilation output path:\t\"" << parseParams.m_hlslShaderOutputDir.c_str() << "\"\n";
+		
 		std::cout << "GLSL code generation output path:\t\"" << parseParams.m_glslCodeGenOutputDir.c_str() << "\"\n";
-		std::cout << "GLSL shader output path:\t\t\"" << parseParams.m_glslShaderOutputDir.c_str() << "\"\n";
+		std::cout << "GLSL shader text output path:\t\t\"" << parseParams.m_glslShaderOutputDir.c_str() << "\"\n";
 		std::cout << "---\n";
 
 		if (doClean)
@@ -147,7 +222,10 @@ int main(int argc, char* argv[])
 			std::cout << "Cleaning generated code...\n";
 
 			droid::CleanDirectory(parseParams.m_cppCodeGenOutputDir.c_str());
+
 			droid::CleanDirectory(parseParams.m_hlslCodeGenOutputDir.c_str());
+			droid::CleanDirectory(parseParams.m_hlslShaderOutputDir.c_str());
+
 			droid::CleanDirectory(parseParams.m_glslCodeGenOutputDir.c_str());
 			droid::CleanDirectory(parseParams.m_glslShaderOutputDir.c_str());
 		}

@@ -31,7 +31,7 @@ uint UnpackSpotLightIndex(uint arrayIdx)
 }
 
 
-void main()
+void PShader()
 {
 	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[InstanceParamsIn.InstanceID].g_materialIdx;
 

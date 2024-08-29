@@ -3,7 +3,7 @@
 #include "SaberCommon.glsl"
 
 
-void main()
+void PShader()
 {	
 	FragColor = texture(Tex0, In.UV0.xy);
 } 

@@ -68,7 +68,7 @@ vec3 ACESFilm(vec3 x)
 
 //#define FAST_ACES
 
-void main()
+void PShader()
 {	
 	// NOTE: UV0.y was flipped in toneMapShader.vert to account for SaberEngine's use of a (0,0) top-left uv convention
 	const vec3 color = texture(Tex0, In.UV0.xy).rgb;

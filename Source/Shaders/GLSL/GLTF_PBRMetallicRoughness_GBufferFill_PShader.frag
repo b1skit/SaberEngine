@@ -14,7 +14,7 @@ layout (location = 3) out vec4 Emissive;
 layout (location = 4) out vec4 MatProp0Vn;
 
 
-void main()
+void PShader()
 {
 	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[InstanceParamsIn.InstanceID].g_materialIdx;
 
