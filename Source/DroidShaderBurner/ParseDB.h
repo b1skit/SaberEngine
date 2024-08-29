@@ -71,12 +71,10 @@ namespace droid
 			std::array<std::string, re::Shader::ShaderType_Count> m_shaderNames;
 
 		};
-		void AddTechnique(std::string const& techniqueName, TechniqueDesc&&);
+		droid::ErrorCode AddTechnique(std::string const& techniqueName, TechniqueDesc&&);
 
 
 	private: // Parsing:
-		time_t GetMostRecentlyModifiedFileTime(std::string const& filesystemTarget);
-
 		droid::ErrorCode ParseEffectFile(std::string const& effectName, ParseParams const&);
 
 
@@ -133,17 +131,20 @@ namespace droid
 	}
 
 
-	inline void ParseDB::AddTechnique(std::string const& techniqueName, TechniqueDesc&& techniqueDesc)
+	inline droid::ErrorCode ParseDB::AddTechnique(std::string const& techniqueName, TechniqueDesc&& techniqueDesc)
 	{
 		if (m_techniqueDescs.contains(techniqueName))
 		{
-			std::cout << "Warning: Adding Technique " << techniqueName.c_str() << ", and a Technique with that name "
-				"already exists\n";
+			std::cout << "Error: Adding Technique " << techniqueName.c_str() << ", and a Technique with that name "
+				"already exists. Technique names must be unique.\n";
+			return droid::ErrorCode::JSONError;
 		}
 		else
 		{
 			std::cout << "Adding Technique \"" << techniqueName.c_str() << "\"\n";
 		}
 		m_techniqueDescs.emplace(techniqueName, std::move(techniqueDesc));
+
+		return droid::ErrorCode::Success;
 	}
 }

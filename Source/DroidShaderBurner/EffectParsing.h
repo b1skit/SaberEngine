@@ -19,5 +19,7 @@ namespace droid
 	struct ParseParams;
 	ErrorCode DoParsingAndCodeGen(ParseParams const&);
 
+	time_t GetMostRecentlyModifiedFileTime(std::string const& filesystemTarget);
+
 	void CleanDirectory(std::string const& dirPath);
 }

@@ -223,6 +223,16 @@ namespace droid
 	}
 
 
+	bool InsertIncludeText(
+		std::vector<std::string> const& shaderSrcDirs,
+		std::string const& shaderText,
+		std::vector<std::string>& shaderTextStrings)
+	{
+		std::unordered_set<std::string> seenIncludes;
+		return InsertIncludeText(shaderSrcDirs, shaderText, shaderTextStrings, seenIncludes);
+	}
+
+
 	droid::ErrorCode BuildShaderFile(
 		std::vector<std::string> const& shaderSrcDirs,
 		std::string const& extensionlessSrcFilename,
@@ -238,8 +248,7 @@ namespace droid
 		shaderTextStrings.emplace_back(k_shaderPreambles[shaderType]);
 
 		// Process the shader text, splitting it and inserting include files as they're encountered:
-		std::unordered_set<std::string> seenIncludes;
-		const bool result = InsertIncludeText(shaderSrcDirs, shaderTex, shaderTextStrings, seenIncludes);
+		const bool result = InsertIncludeText(shaderSrcDirs, shaderTex, shaderTextStrings);
 
 		// Get the total reservation size we'll need:
 		size_t requiredSize = 0;
