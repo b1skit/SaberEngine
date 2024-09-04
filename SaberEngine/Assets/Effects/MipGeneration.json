@@ -22,27 +22,27 @@
 				],
 				"Technique": "Generate3DMips"
 			}
-		]
-	},
+		],
 
-	"Techniques": [
-		{
-			"Name": "Generate1DMips",
-			"CShader": "GenerateMips_1D_CShader",
-			"CShaderEntryPoint" :  "CShader",
-			"ExcludedPlatforms": [ "OpenGL" ]
-		},
-		{
-			"Name": "Generate2DMips",
-			"CShader": "GenerateMips_CShader",
-			"CShaderEntryPoint" :  "CShader",
-			"ExcludedPlatforms": [ "OpenGL" ]
-		},
-		{
-			"Name": "Generate3DMips",
-			"CShader": "GenerateMips_3D_CShader",
-			"CShaderEntryPoint" :  "CShader",
-			"ExcludedPlatforms": [ "OpenGL" ]
-		}
-	]
+		"Techniques": [
+			{
+				"Name": "Generate1DMips",
+				"CShader": "GenerateMips_1D_CShader",
+				"CShaderEntryPoint" :  "CShader",
+				"ExcludedPlatforms": [ "OpenGL" ]
+			},
+			{
+				"Name": "Generate2DMips",
+				"CShader": "GenerateMips_CShader",
+				"CShaderEntryPoint" :  "CShader",
+				"ExcludedPlatforms": [ "OpenGL" ]
+			},
+			{
+				"Name": "Generate3DMips",
+				"CShader": "GenerateMips_3D_CShader",
+				"CShaderEntryPoint" :  "CShader",
+				"ExcludedPlatforms": [ "OpenGL" ]
+			}
+		]
+	}
 }

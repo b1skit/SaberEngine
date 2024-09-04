@@ -116,7 +116,7 @@ namespace effect
 	public:
 		TechniqueID GetTechniqueID() const;
 
-		std::shared_ptr<re::Shader> GetShader() const;
+		re::Shader const* GetShader() const;
 
 
 	private:	
@@ -135,8 +135,8 @@ namespace effect
 	}
 
 
-	inline std::shared_ptr<re::Shader> Technique::GetShader() const
+	inline re::Shader const* Technique::GetShader() const
 	{
-		return m_resolvedShader;
+		return m_resolvedShader.get();
 	}
 }

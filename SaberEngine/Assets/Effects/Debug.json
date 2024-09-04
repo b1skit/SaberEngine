@@ -15,6 +15,27 @@
 				],
 				"Technique": "Debug_Triangle"
 			}
+		],
+
+		"Techniques": [
+			{
+				"Name": "Debug_Line",
+				"VShader": "Line_VShader",
+				"VShaderEntryPoint": "VShader",
+				"PShader": "Line_PShader",
+				"PShaderEntryPoint": "PShader",
+				"PipelineState": "Debug_Line",
+				"VertexStream": "PositionColor"
+			},
+			{
+				"Name": "Debug_Triangle",
+				"VShader": "Line_VShader",
+				"VShaderEntryPoint": "VShader",
+				"PShader": "Line_PShader",
+				"PShaderEntryPoint": "PShader",
+				"PipelineState": "Debug_Triangle",
+				"VertexStream": "PositionColor"
+			}
 		]
 	},
 
@@ -34,27 +55,6 @@
 			"FaceCullingMode": "Disabled",
 			"WindingOrder": "CCW",
 			"DepthTestMode": "Always"
-		}
-	],
-
-	"Techniques": [
-		{
-			"Name": "Debug_Line",
-			"VShader": "Line_VShader",
-			"VShaderEntryPoint": "VShader",
-			"PShader": "Line_PShader",
-			"PShaderEntryPoint": "PShader",
-			"PipelineState": "Debug_Line",
-			"VertexStream": "PositionColor"
-		},
-		{
-			"Name": "Debug_Triangle",
-			"VShader": "Line_VShader",
-			"VShaderEntryPoint": "VShader",
-			"PShader": "Line_PShader",
-			"PShaderEntryPoint": "PShader",
-			"PipelineState": "Debug_Triangle",
-			"VertexStream": "PositionColor"
 		}
 	]
 }

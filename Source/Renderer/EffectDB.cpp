@@ -70,20 +70,22 @@ namespace
 		effect::EffectDB const& effectDB,
 		std::unordered_set<TechniqueID> const& excludedTechniques)
 	{
+		std::string const& effectName = effectBlock.at(key_name).template get<std::string>();
+
 		// "Name": Create an Effect
-		effect::Effect newEffect(effectBlock.at(key_name).template get<std::string>().c_str());
+		effect::Effect newEffect(effectName.c_str());
 
 		// "DefaultTechnique":
 		if (effectBlock.contains(key_defaultTechnique))
 		{
 			std::string const& defaultTechniqueName = effectBlock.at(key_defaultTechnique).template get<std::string>();
+			
 			const TechniqueID defaultTechniqueID = effect::Technique::ComputeTechniqueID(defaultTechniqueName);
 
-			if (!excludedTechniques.contains(defaultTechniqueID))
-			{
-				newEffect.AddTechnique(
-					effect::drawstyle::DefaultTechnique, effectDB.GetTechnique(defaultTechniqueID));
-			}
+			SEAssert(!excludedTechniques.contains(defaultTechniqueID), "Default Technique cannot be excluded");
+
+			newEffect.AddTechnique(
+				effect::drawstyle::DefaultTechnique, effectDB.GetTechnique(defaultTechniqueID));
 		}
 
 		// "DrawStyles":
@@ -96,8 +98,8 @@ namespace
 					continue;
 				}
 
-				effect::drawstyle::Bitmask drawStyleBitmask(0);
-				effect::Technique const* technique(nullptr);
+				effect::drawstyle::Bitmask drawStyleBitmask = 0;
+				effect::Technique const* technique = nullptr;
 
 				ParseDrawStyleConditionEntry(drawStyleEntry, effectDB, drawStyleBitmask, technique);
 				SEAssert(drawStyleBitmask != 0, "DrawStyle bitmask is zero. This is unexpected");
@@ -164,7 +166,7 @@ namespace
 	{
 		SEAssert(techniqueEntry.contains(key_name), "Incomplete Technique definition");
 
-		// "Name": Create a new Technique called "OwningEffectName::TechniqueName":
+		// "Name":
 		std::string const& techniqueName = techniqueEntry.at(key_name).template get<std::string>();
 
 		// "*Shader" names:
@@ -437,22 +439,7 @@ namespace effect
 			const nlohmann::json::parser_callback_t parserCallback = nullptr;
 			effectJSON = nlohmann::json::parse(effectInputStream, parserCallback, allowExceptions, ignoreComments);
 
-			// Peek ahead at critical Effect properties, we'll load the rest of the Effect block later
-			if (effectJSON.contains(key_effectBlock))
-			{
-				auto const& effectBlock = effectJSON.at(key_effectBlock);
-
-				// "Parents": Parsed first to ensure dependencies exist
-				if (effectBlock.contains(key_parents) &&
-					!effectBlock.at(key_parents).empty())
-				{
-					for (auto const& parent : effectBlock.at(key_parents))
-					{
-						std::string const& parentName = parent.template get<std::string>();
-						LoadEffect(parentName);
-					}
-				}
-			}
+			std::unordered_set<TechniqueID> excludedTechniques;
 
 			// "PipelineStates":
 			if (effectJSON.contains(key_pipelineStatesBlock) && !effectJSON.at(key_pipelineStatesBlock).empty())
@@ -466,7 +453,7 @@ namespace effect
 					{
 						continue;
 					}
-					
+
 					std::string const& pipelineStateName = piplineStateEntry.at(key_name).template get<std::string>();
 					AddPipelineState(pipelineStateName, ParsePipelineStateEntry(piplineStateEntry));
 				}
@@ -486,30 +473,11 @@ namespace effect
 				}
 			}
 
-			// "Techniques":
-			std::unordered_set<TechniqueID> excludedTechniques;
-			if (effectJSON.contains(key_techniques) && !effectJSON.at(key_techniques).empty())
-			{
-				// "Techniques":
-				for (auto const& techniqueEntry : effectJSON.at(key_techniques))
-				{
-					std::string const& techniqueName = techniqueEntry.at(key_name).template get<std::string>();
-
-					// "ExcludedPlatforms": Skip this technique if it is excluded
-					if (ExcludesPlatform(techniqueEntry))
-					{
-						continue;
-					}
-					AddTechnique(ParseJSONTechniqueEntry(techniqueEntry, *this));
-				}				
-			}
-
-			// "Effect":
 			if (effectJSON.contains(key_effectBlock))
 			{
 				auto const& effectBlock = effectJSON.at(key_effectBlock);
 
-				SEAssert(effectBlock.contains(key_name) && 
+				SEAssert(effectBlock.contains(key_name) &&
 					effectName == effectBlock.at(key_name).template get<std::string>(),
 					"Effect name and effect definition filename do not match. This is unexpected");
 
@@ -521,6 +489,35 @@ namespace effect
 				}
 				else
 				{
+					// "Parents": Parsed first to ensure dependencies exist
+					if (effectBlock.contains(key_parents) &&
+						!effectBlock.at(key_parents).empty())
+					{
+						for (auto const& parent : effectBlock.at(key_parents))
+						{
+							std::string const& parentName = parent.template get<std::string>();
+							LoadEffect(parentName);
+						}
+					}
+
+					// "Techniques":
+					if (effectBlock.contains(key_techniques) && !effectBlock.at(key_techniques).empty())
+					{
+						for (auto const& techniqueEntry : effectBlock.at(key_techniques))
+						{
+							std::string const& techniqueName = techniqueEntry.at(key_name).template get<std::string>();
+
+							// "ExcludedPlatforms": Skip this technique if it is excluded
+							if (ExcludesPlatform(techniqueEntry))
+							{
+								excludedTechniques.emplace(effect::Technique::ComputeTechniqueID(techniqueName));
+								continue;
+							}
+							AddTechnique(ParseJSONTechniqueEntry(techniqueEntry, *this));
+						}
+					}
+
+					// "Effect":
 					AddEffect(ParseJSONEffectBlock(effectBlock, *this, excludedTechniques));
 				}
 			}

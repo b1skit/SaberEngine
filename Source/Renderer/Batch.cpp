@@ -95,7 +95,7 @@ namespace
 
 		effect::Effect const* effect = re::RenderManager::Get()->GetEffectDB().GetEffect(effectID);
 		effect::Technique const* technique = effect->GetResolvedTechnique(drawStyleBitmask);
-		return technique->GetShader().get();
+		return technique->GetShader();
 	}
 
 

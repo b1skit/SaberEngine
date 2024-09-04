@@ -46,51 +46,51 @@
 				],
 				"Technique": "DenoiseLastPass"
 			}
-		]
-	},
+		],
 
-	"Techniques": [
-		{
-			"Name": "PrefilterDepths",
-			"CShader": "XeGTAO_PrefilterDepths_CShader",
-			"CShaderEntryPoint" :  "CShader",
-			"ExcludedPlatforms": [ "OpenGL" ]
-		},
-		{
-			"Name": "MainPass_Low",
-			"CShader": "XeGTAO_MainPass_Low_CShader",
-			"CShaderEntryPoint" :  "CShader",
-			"ExcludedPlatforms": [ "OpenGL" ]
-		},
-		{
-			"Name": "MainPass_Med",
-			"CShader": "XeGTAO_MainPass_Med_CShader",
-			"CShaderEntryPoint" :  "CShader",
-			"ExcludedPlatforms": [ "OpenGL" ]
-		},
-		{
-			"Name": "MainPass_High",
-			"CShader": "XeGTAO_MainPass_High_CShader",
-			"CShaderEntryPoint" :  "CShader",
-			"ExcludedPlatforms": [ "OpenGL" ]
-		},
-		{
-			"Name": "MainPass_Ultra",
-			"CShader": "XeGTAO_MainPass_Ultra_CShader",
-			"CShaderEntryPoint" :  "CShader",
-			"ExcludedPlatforms": [ "OpenGL" ]
-		},
-		{
-			"Name": "Denoise",
-			"CShader": "XeGTAO_Denoise_CShader",
-			"CShaderEntryPoint" :  "CShader",
-			"ExcludedPlatforms": [ "OpenGL" ]
-		},
-		{
-			"Name": "DenoiseLastPass",
-			"CShader": "XeGTAO_DenoiseLastPass_CShader",
-			"CShaderEntryPoint" :  "CShader",
-			"ExcludedPlatforms": [ "OpenGL" ]
-		}
-	]
+		"Techniques": [
+			{
+				"Name": "PrefilterDepths",
+				"CShader": "XeGTAO_PrefilterDepths_CShader",
+				"CShaderEntryPoint" :  "CShader",
+				"ExcludedPlatforms": [ "OpenGL" ]
+			},
+			{
+				"Name": "MainPass_Low",
+				"CShader": "XeGTAO_MainPass_Low_CShader",
+				"CShaderEntryPoint" :  "CShader",
+				"ExcludedPlatforms": [ "OpenGL" ]
+			},
+			{
+				"Name": "MainPass_Med",
+				"CShader": "XeGTAO_MainPass_Med_CShader",
+				"CShaderEntryPoint" :  "CShader",
+				"ExcludedPlatforms": [ "OpenGL" ]
+			},
+			{
+				"Name": "MainPass_High",
+				"CShader": "XeGTAO_MainPass_High_CShader",
+				"CShaderEntryPoint" :  "CShader",
+				"ExcludedPlatforms": [ "OpenGL" ]
+			},
+			{
+				"Name": "MainPass_Ultra",
+				"CShader": "XeGTAO_MainPass_Ultra_CShader",
+				"CShaderEntryPoint" :  "CShader",
+				"ExcludedPlatforms": [ "OpenGL" ]
+			},
+			{
+				"Name": "Denoise",
+				"CShader": "XeGTAO_Denoise_CShader",
+				"CShaderEntryPoint" :  "CShader",
+				"ExcludedPlatforms": [ "OpenGL" ]
+			},
+			{
+				"Name": "DenoiseLastPass",
+				"CShader": "XeGTAO_DenoiseLastPass_CShader",
+				"CShaderEntryPoint" :  "CShader",
+				"ExcludedPlatforms": [ "OpenGL" ]
+			}
+		]
+	}
 }

@@ -65,8 +65,14 @@ namespace droid
 
 
 	public:
-		void AddDrawstyle(std::string const& ruleName, std::string const& mode);
+		struct DrawStyleTechnique
+		{
+			std::vector<std::pair<std::string, std::string>> m_drawStyleConditions; // <Rule, Mode>
+			std::string m_techniqueName;
+		};
+		void AddEffectDrawStyleTechnique(std::string const& effectName, DrawStyleTechnique&&);
 
+		
 		struct VertexStreamSlotDesc
 		{
 			std::string m_dataType;
@@ -88,11 +94,17 @@ namespace droid
 	private: // Parsing:
 		droid::ErrorCode ParseEffectFile(std::string const& effectName, ParseParams const&);
 
+		// Helper: Add an entry to the unique rule -> mode mapping (m_drawStyleRuleToModes)
+		void AddDrawStyleRuleMode(std::string const& ruleName, std::string const& mode);
+
 
 	private:
 		ParseParams m_parseParams;
 		
-		std::map<std::string, std::set<std::string>> m_drawstyles;
+		std::map<std::string, std::set<std::string>> m_drawStyleRuleToModes; // All seen rules/modes
+		std::map<std::string, std::vector<DrawStyleTechnique>> m_effectToDrawStyleTechnique; // For resolving shader permutations
+		// TODO: Use this. For now, we just record the data without using it
+
 		std::map<std::string, std::vector<VertexStreamSlotDesc>> m_vertexStreamDescs;
 		std::map<std::string, TechniqueDesc> m_techniqueDescs;
 
@@ -106,26 +118,44 @@ namespace droid
 	};
 
 
-	inline void ParseDB::AddDrawstyle(std::string const& ruleName, std::string const& modeName)
+	inline void ParseDB::AddDrawStyleRuleMode(std::string const& ruleName, std::string const& modeName)
 	{
-		if (!m_drawstyles.contains(ruleName)) // If this is the first drawstyle rule we've seen, add a new set of modes
+		if (!m_drawStyleRuleToModes.contains(ruleName)) // If this is the first drawstyle rule we've seen, add a new set of modes
 		{
 			std::cout << "Found new drawstyle:\t\t{\"Rule:\" : \"" << ruleName.c_str() 
 				<< "\", \"Mode:\": \"" << modeName.c_str() << "\"}\n";
 
-			m_drawstyles.emplace(ruleName, std::set<std::string>{modeName});
+			m_drawStyleRuleToModes.emplace(ruleName, std::set<std::string>{modeName});
 		}
-		else if (!m_drawstyles.at(ruleName).contains(modeName))
+		else if (!m_drawStyleRuleToModes.at(ruleName).contains(modeName))
 		{
 			std::cout << "Added new drawstyle mode:\t{\"Rule:\" : \"" << ruleName.c_str()
 				<< "\", \"Mode:\": \"" << modeName.c_str() << "\"}\n";
 
-			m_drawstyles.at(ruleName).emplace(modeName);
+			m_drawStyleRuleToModes.at(ruleName).emplace(modeName);
 		}
 	}
 
 
-	inline 	void ParseDB::AddVertexStreamSlot(std::string const& streamBlockName, VertexStreamSlotDesc&& newSlotDesc)
+	inline void ParseDB::AddEffectDrawStyleTechnique(
+		std::string const& effectName, DrawStyleTechnique&& drawStyleTechnique)
+	{
+		// Record the rule/mode in our unique set of rules and modes:
+		for (auto const& ruleMode : drawStyleTechnique.m_drawStyleConditions)
+		{
+			AddDrawStyleRuleMode(ruleMode.first, ruleMode.second);
+		}
+
+		// Record the resolved Technique:
+		if (!m_effectToDrawStyleTechnique.contains(effectName))
+		{
+			m_effectToDrawStyleTechnique.emplace(effectName, std::vector<DrawStyleTechnique>());
+		}
+		m_effectToDrawStyleTechnique.at(effectName).emplace_back(std::move(drawStyleTechnique));
+	}
+
+
+	inline void ParseDB::AddVertexStreamSlot(std::string const& streamBlockName, VertexStreamSlotDesc&& newSlotDesc)
 	{
 		if (!m_vertexStreamDescs.contains(streamBlockName))
 		{

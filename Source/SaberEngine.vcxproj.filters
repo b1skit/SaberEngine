@@ -322,146 +322,144 @@
       <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.hlsl">
+    <None Include="Shaders\HLSL\Blit_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\Blit_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GenerateBRDFIntegrationMap_CShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\Bloom_CShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\DeferredAmbientLight_PShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\CubeDepth_GShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\DeferredAmbientLight_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\CubeDepth_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\DeferredDirectionalLight_PShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\CubeDepthAlphaMask_GShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\DeferredDirectionalLight_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\CubeDepthAlphaMask_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GenerateIEM_PShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\DeferredAmbientLight_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GenerateIEM_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\DeferredAmbientLight_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GeneratePMREM_PShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\DeferredDirectionalLight_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GeneratePMREM_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\DeferredDirectionalLight_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\DeferredPointLight_PShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\DeferredPointLight_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\DeferredPointLight_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\DeferredPointLight_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GenerateMips_CShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\Skybox_PShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\DeferredSpotLight_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\Skybox_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\Depth_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\Blit_PShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\DepthAlphaMask_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\Blit_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\DepthAlphaMask_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GaussianBlur_PShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GaussianBlur_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GaussianBlur_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GaussianBlur_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\ToneMap_PShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GenerateBRDFIntegrationMap_CShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\ToneMap_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GenerateIEM_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\Sampling.hlsli">
+    </None>
+    <None Include="Shaders\HLSL\GenerateIEM_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\CubeDepth_GShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GenerateMips_1D_CShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\CubeDepth_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GenerateMips_3D_CShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\Depth_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GenerateMips_CShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\Bloom_CShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GeneratePMREM_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\Line_PShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GeneratePMREM_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\Line_VShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\XeGTAO_Denoise_CShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_VShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\Line_PShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\Line_VShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\Sampling.hlsli">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\Skybox_PShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\Skybox_VShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\ToneMap_PShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\ToneMap_VShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\XeGTAO_Denoise_CShader.hlsl">
       <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\XeGTAO_PrefilterDepths_CShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\XeGTAO_DenoiseLastPass_CShader.hlsl">
       <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\XeGTAO_DenoiseLastPass_CShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\XeGTAO_MainPass_High_CShader.hlsl">
       <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_High_CShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\XeGTAO_MainPass_Low_CShader.hlsl">
       <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Low_CShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\XeGTAO_MainPass_Med_CShader.hlsl">
       <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Med_CShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\XeGTAO_MainPass_Ultra_CShader.hlsl">
       <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\XeGTAO_MainPass_Ultra_CShader.hlsl">
+    </None>
+    <None Include="Shaders\HLSL\XeGTAO_PrefilterDepths_CShader.hlsl">
       <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\DeferredSpotLight_VShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\DepthAlphaMask_PShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\DepthAlphaMask_VShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\CubeDepthAlphaMask_GShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\CubeDepthAlphaMask_VShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GenerateMips_1D_CShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GenerateMips_3D_CShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </FxCompile>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Dependencies\Icon\SaberEngineApplicationIcon.ico">

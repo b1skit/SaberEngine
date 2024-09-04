@@ -15,37 +15,47 @@
 
 namespace
 {
-	void ParseDrawStyleConditionEntry(droid::ParseDB& parseDB, auto const& drawStylesEntry)
+	droid::ErrorCode ParseDrawStylesBlock(
+		droid::ParseDB& parseDB, std::string const& effectName, auto const& drawStylesBlock)
 	{
 		// Parse the contents of a "DrawStyles" []:
-		for (auto const& drawstyleBlock : drawStylesEntry)
+		for (auto const& drawstyleEntry : drawStylesBlock)
 		{
-			// "Conditions":"
-			if (drawstyleBlock.contains(key_conditions))
+			if (!drawstyleEntry.contains(key_conditions) ||
+				!drawstyleEntry.contains(key_technique))
 			{
-				for (auto const& condition : drawstyleBlock.at(key_conditions))
-				{
-					// "Rule":
-					std::string rule;
-					if (condition.contains(key_rule))
-					{
-						rule = condition.at(key_rule);
-					}
-
-					// "Mode":
-					std::string mode;
-					if (condition.contains(key_mode))
-					{
-						mode = condition.at(key_mode);
-					}
-
-					if (!rule.empty() && !mode.empty())
-					{
-						parseDB.AddDrawstyle(rule, mode);
-					}
-				}
+				return droid::ErrorCode::JSONError;
 			}
+
+			droid::ParseDB::DrawStyleTechnique drawStyleTechnique{};
+			
+			// "Conditions":
+			for (auto const& condition : drawstyleEntry.at(key_conditions))
+			{
+				if (!condition.contains(key_rule) ||
+					condition.at(key_rule).empty() ||
+					!condition.contains(key_mode) ||
+					condition.at(key_mode).empty())
+				{
+					return droid::ErrorCode::JSONError;
+				}
+
+				// "Rule":
+				std::string rule = condition.at(key_rule);
+
+				// "Mode":
+				std::string mode = condition.at(key_mode);
+
+				drawStyleTechnique.m_drawStyleConditions.emplace_back( rule, mode );
+			}
+
+			// "Technique":
+			drawStyleTechnique.m_techniqueName = drawstyleEntry.at(key_technique).template get<std::string>();
+
+			parseDB.AddEffectDrawStyleTechnique(effectName, std::move(drawStyleTechnique));
 		}
+
+		return droid::ErrorCode::Success;
 	}
 
 
@@ -257,20 +267,43 @@ namespace droid
 			{
 				auto const& effectBlock = effectJSON.at(key_effectBlock);
 
-				// "DrawStyles":
-				if (effectBlock.contains(key_drawStyles))
+				if (!effectBlock.contains(key_name))
 				{
-					ParseDrawStyleConditionEntry(*this, effectBlock.at(key_drawStyles));
+					result = droid::ErrorCode::JSONError;
 				}
-			}
-
-			// "Techniques":
-			if (effectJSON.contains(key_techniques))
-			{
-				result = ParseTechniquesBlock(*this, effectJSON.at(key_techniques));
 				if (result != droid::ErrorCode::Success)
 				{
 					return result;
+				}
+
+				std::string const& effectBlockName = effectBlock.at(key_name).template get<std::string>();
+				if (effectBlockName != effectName)
+				{
+					result = droid::ErrorCode::JSONError;
+				}
+				if (result != droid::ErrorCode::Success)
+				{
+					return result;
+				}
+
+				// "DrawStyles":
+				if (effectBlock.contains(key_drawStyles))
+				{
+					result = ParseDrawStylesBlock(*this, effectBlockName, effectBlock.at(key_drawStyles));
+				}
+				if (result != droid::ErrorCode::Success)
+				{
+					return result;
+				}
+
+				// "Techniques":
+				if (effectBlock.contains(key_techniques))
+				{
+					result = ParseTechniquesBlock(*this, effectBlock.at(key_techniques));
+					if (result != droid::ErrorCode::Success)
+					{
+						return result;
+					}
 				}
 			}
 
@@ -572,7 +605,7 @@ namespace droid
 			filewriter.WriteLine("constexpr Bitmask DefaultTechnique = 0;");
 
 			uint8_t bitIdx = 0;
-			for (auto const& drawstyle : m_drawstyles)
+			for (auto const& drawstyle : m_drawStyleRuleToModes)
 			{
 				std::string const& rule = drawstyle.first;
 				for (auto const& mode : drawstyle.second)
@@ -590,7 +623,6 @@ namespace droid
 
 		// Static functions:
 		{
-
 			filewriter.EmptyLine();
 			filewriter.WriteLine("using ModeToBitmask = std::unordered_map<util::HashKey const, effect::drawstyle::Bitmask>;");
 			filewriter.WriteLine("using DrawStyleRuleToModes = std::unordered_map<util::HashKey const, ModeToBitmask>;");
@@ -604,7 +636,7 @@ namespace droid
 			filewriter.WriteLine("static const DrawStyleRuleToModes s_drawstyleBitmaskMappings({");
 			filewriter.Indent();
 
-			for (auto const& drawstyle : m_drawstyles)
+			for (auto const& drawstyle : m_drawStyleRuleToModes)
 			{
 				std::string const& rule = drawstyle.first;
 

@@ -2,18 +2,18 @@
 	"Effect": {
 		"Name": "Skybox",
 		"Parents": ["FullscreenQuad"],
-		"DefaultTechnique": "Skybox_Default"
-	},
+		"DefaultTechnique": "Skybox_Default",
 
-	"Techniques": [
-		{
-			"Name": "Skybox_Default",
-			"VShader": "Skybox_VShader",
-			"VShaderEntryPoint": "VShader",
-			"PShader": "Skybox_PShader",
-			"PShaderEntryPoint": "PShader",
-			"PipelineState": "FullscreenQuad_LEqual",
-			"VertexStream": "PositionUV"
-		}
-	]
+		"Techniques": [
+			{
+				"Name": "Skybox_Default",
+				"VShader": "Skybox_VShader",
+				"VShaderEntryPoint": "VShader",
+				"PShader": "Skybox_PShader",
+				"PShaderEntryPoint": "PShader",
+				"PipelineState": "FullscreenQuad_LEqual",
+				"VertexStream": "PositionUV"
+			}
+		]
+	}
 }
