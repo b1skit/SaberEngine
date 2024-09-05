@@ -27,8 +27,8 @@ int main(int argc, char* argv[])
 	droid::ParseParams parseParams{
 		// Paths:
 		.m_projectRootDir = "PROJECT_ROOT_DIRECTORY_NOT_SET", // Mandatory command line arg
-		.m_appDir = core::configkeys::k_appDirName,
-		.m_effectsDir = std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_effectDirName),
+		.m_runtimeAppDir = core::configkeys::k_appDirName,
+		.m_effectSourceDir = "Source\\Effects\\",
 
 		// Dependencies:
 		.m_directXCompilerExePath = "DXC_COMPILER_EXE_PATH_NOT_SET", // Mandatory command line arg
@@ -43,10 +43,16 @@ int main(int argc, char* argv[])
 		.m_cppCodeGenOutputDir = "Source\\Generated\\",
 
 		.m_hlslCodeGenOutputDir = "Source\\Shaders\\Generated\\HLSL\\",
-		.m_hlslShaderOutputDir = "SaberEngine\\Shaders\\HLSL\\",
+		.m_hlslShaderOutputDir = 
+			std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_hlslShaderDirName),
+		
 
 		.m_glslCodeGenOutputDir = "Source\\Shaders\\Generated\\GLSL\\",
-		.m_glslShaderOutputDir = "SaberEngine\\Shaders\\GLSL\\",
+		.m_glslShaderOutputDir =
+			std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_glslShaderDirName),
+
+		.m_runtimeEffectsDir = 
+			std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_effectDirName),
 
 		// File names:
 		.m_effectManifestFileName = core::configkeys::k_effectManifestFilename,
@@ -180,7 +186,7 @@ int main(int argc, char* argv[])
 	if (result == droid::ErrorCode::Success)
 	{
 		// Convert paths from relative to absolute:
-		parseParams.m_effectsDir = parseParams.m_projectRootDir + parseParams.m_effectsDir;
+		parseParams.m_effectSourceDir = parseParams.m_projectRootDir + parseParams.m_effectSourceDir;
 
 		parseParams.m_hlslShaderSourceDir = parseParams.m_projectRootDir + parseParams.m_hlslShaderSourceDir;
 		parseParams.m_glslShaderSourceDir = parseParams.m_projectRootDir + parseParams.m_glslShaderSourceDir;
@@ -195,11 +201,12 @@ int main(int argc, char* argv[])
 		parseParams.m_glslCodeGenOutputDir = parseParams.m_projectRootDir + parseParams.m_glslCodeGenOutputDir;
 		parseParams.m_glslShaderOutputDir = parseParams.m_projectRootDir + parseParams.m_glslShaderOutputDir;
 
+		parseParams.m_runtimeEffectsDir = parseParams.m_projectRootDir + parseParams.m_runtimeEffectsDir;
 
 		// Print the final paths we've assembled:
 		std::cout << "---\n";
-		std::cout << "Current working directory:\t\t\"" << parseParams.m_projectRootDir.c_str() << "\"\n";
-		std::cout << "Effect directory:\t\t\t\"" << parseParams.m_effectsDir.c_str() << "\"\n";
+		std::cout << "Current working dir:\t\t\t\"" << parseParams.m_projectRootDir.c_str() << "\"\n";
+		std::cout << "Effect source dir:\t\t\t\"" << parseParams.m_effectSourceDir.c_str() << "\"\n";
 		
 		std::cout << "DirectX shader compiler:\t\t\"" << parseParams.m_directXCompilerExePath.c_str() << "\"\n";
 		
@@ -215,6 +222,8 @@ int main(int argc, char* argv[])
 		
 		std::cout << "GLSL code generation output path:\t\"" << parseParams.m_glslCodeGenOutputDir.c_str() << "\"\n";
 		std::cout << "GLSL shader text output path:\t\t\"" << parseParams.m_glslShaderOutputDir.c_str() << "\"\n";
+
+		std::cout << "Runtime Effect output path:\t\t\"" << parseParams.m_runtimeEffectsDir.c_str() << "\"\n";
 		std::cout << "---\n";
 
 		if (doClean)
@@ -228,6 +237,8 @@ int main(int argc, char* argv[])
 
 			droid::CleanDirectory(parseParams.m_glslCodeGenOutputDir.c_str());
 			droid::CleanDirectory(parseParams.m_glslShaderOutputDir.c_str());
+
+			droid::CleanDirectory(parseParams.m_runtimeEffectsDir.c_str());
 		}
 		if (doBuild)
 		{

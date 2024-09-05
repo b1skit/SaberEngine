@@ -9,6 +9,7 @@
 #include "Core/Definitions/ConfigKeys.h"
 #include "Core/Definitions/EffectKeys.h"
 
+#include "Core/Util/FileIOUtils.h"
 #include "Core/Util/HashKey.h"
 #include "Core/Util/TextUtils.h"
 
@@ -173,7 +174,7 @@ namespace droid
 	droid::ErrorCode ParseDB::Parse()
 	{
 		std::string const& effectManifestPath = std::format("{}{}",
-			m_parseParams.m_effectsDir,
+			m_parseParams.m_effectSourceDir,
 			m_parseParams.m_effectManifestFileName);
 			
 		std::cout << "\nLoading effect manifest \"" << effectManifestPath.c_str() << "\"...\n";
@@ -240,7 +241,7 @@ namespace droid
 		std::cout << "Parsing Effect \"" << effectName.c_str() << "\":\n";
 		
 		std::string const& effectFileName = effectName + ".json";
-		std::string const& effectFilePath = parseParams.m_effectsDir + effectFileName;
+		std::string const& effectFilePath = parseParams.m_effectSourceDir + effectFileName;
 
 		std::ifstream effectInputStream(effectFilePath);
 		if (!effectInputStream.is_open())
@@ -582,6 +583,43 @@ namespace droid
 		}		
 
 		return result;
+	}
+
+
+	droid::ErrorCode ParseDB::CopyEffects() const
+	{
+		// Ensure the output path is created
+		if (!std::filesystem::exists(m_parseParams.m_runtimeEffectsDir))
+		{
+			std::filesystem::create_directories(m_parseParams.m_runtimeEffectsDir);
+		}
+
+		// Copy each .json file in the source directory:
+		std::vector<std::string> const& effectFiles =
+			util::GetDirectoryFilenameContents(m_parseParams.m_effectSourceDir.c_str(), ".json");
+
+		for (auto const& effectSrcFilePath : effectFiles)
+		{
+			std::ifstream srcStream(effectSrcFilePath);
+		
+			std::string const& filename = std::filesystem::path(effectSrcFilePath).filename().string();
+			std::ofstream dstStream(m_parseParams.m_runtimeEffectsDir + filename);
+
+			if (!srcStream.is_open())
+			{
+				std::cout << "Failed to open source Effect file\n";
+				return droid::ErrorCode::FileError;
+			}
+			if (!dstStream.is_open())
+			{
+				std::cout << "Failed to open destination Effects file\n";
+				return droid::ErrorCode::FileError;
+			}
+
+			dstStream << srcStream.rdbuf();
+		}
+
+		return droid::ErrorCode::Success;
 	}
 
 

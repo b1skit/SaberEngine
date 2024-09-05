@@ -15,10 +15,10 @@ namespace core::configkeys
 	constexpr char const* k_platformPipelineFileName_DX12	= "platformDX12.json";
 	constexpr char const* k_effectDirName					= "Assets\\Effects\\";
 	constexpr char const* k_effectManifestFilename			= "EffectManifest.json";
-	constexpr char const* k_glslShaderDirName				= ".\\Shaders\\GLSL\\";
-	constexpr char const* k_hlslShaderDirName				= ".\\Shaders\\HLSL\\";
-	constexpr char const* k_commonShaderDirName				= ".\\Shaders\\Common\\";
-	constexpr char const* k_generatedGLSLShaderDirName		= ".\\Shaders\\Generated\\GLSL\\";
+	constexpr char const* k_glslShaderDirName				= "Assets\\Shaders\\GLSL\\";
+	constexpr char const* k_hlslShaderDirName				= "Assets\\Shaders\\HLSL\\";
+	constexpr char const* k_commonShaderDirName				= "Assets\\Shaders\\Common\\";
+	constexpr char const* k_generatedGLSLShaderDirName		= "Assets\\Shaders\\Generated\\GLSL\\"; // Droid only
 
 	// Debug:
 	constexpr char const* k_pixCaptureFolderName		= "PIX Captures";
@@ -34,7 +34,7 @@ namespace core::configkeys
 
 	// JSON parsing:
 	constexpr util::HashKey k_jsonAllowExceptionsKey	= "JSONAllowExceptions";
-	constexpr util::HashKey k_jsonIgnoreCommentsKey		= "JSONIgnoreComments"; // Allow C-style comments, not to JSON spec)
+	constexpr util::HashKey k_jsonIgnoreCommentsKey		= "JSONIgnoreComments"; // Allow C-style comments (not to JSON spec)
 
 
 	// Command line controls:

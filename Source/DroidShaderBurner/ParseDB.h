@@ -16,13 +16,13 @@ namespace droid
 
 		// Paths:
 		std::string m_projectRootDir;
-		std::string m_appDir;
-		std::string m_effectsDir;
+		std::string m_runtimeAppDir;
+		std::string m_effectSourceDir;
 
 		// Dependencies:
 		std::string m_directXCompilerExePath;
 
-		// Shader input paths:
+		// Input paths:
 		std::string m_hlslShaderSourceDir;
 		std::string m_glslShaderSourceDir;
 		std::string m_commonShaderSourceDir;
@@ -36,6 +36,8 @@ namespace droid
 
 		std::string m_glslCodeGenOutputDir; // For code generated from Effect definitions
 		std::string m_glslShaderOutputDir; // For results of concatenating shader includes with shader text
+
+		std::string m_runtimeEffectsDir; // Runtime version of Effect jsons
 
 		// File names:
 		std::string m_effectManifestFileName;
@@ -58,10 +60,10 @@ namespace droid
 	public:
 		droid::ErrorCode Parse();
 
-
 		droid::ErrorCode GenerateCPPCode() const;
 		droid::ErrorCode GenerateShaderCode() const;
 		droid::ErrorCode CompileShaders() const;
+		droid::ErrorCode CopyEffects() const;
 
 
 	public:

@@ -36,10 +36,12 @@
 
 # Project assets
 /SaberEngine/glew32.dll
-/SaberEngine/D3D12/*
-/SaberEngine/Shaders/*
+
+/SaberEngine/Assets/Effects/*
+/SaberEngine/Assets/Shaders/*
 /SaberEngine/config/config.cfg
 /SaberEngine/config/imgui.ini
+/SaberEngine/D3D12/*
 
 # Auto-generated code:
 /Source/Generated/*
