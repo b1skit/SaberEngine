@@ -2,9 +2,10 @@
 #include "EffectParsing.h"
 #include "ParseDB.h"
 
-#include "Core/Definitions/EffectKeys.h"
 #include "Core/Util/FileIOUtils.h"
 #include "Core/Util/TextUtils.h"
+
+#include "Renderer/EffectKeys.h"
 
 
 namespace droid

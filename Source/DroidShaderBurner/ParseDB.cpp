@@ -7,11 +7,12 @@
 #include "TextStrings.h"
 
 #include "Core/Definitions/ConfigKeys.h"
-#include "Core/Definitions/EffectKeys.h"
 
 #include "Core/Util/FileIOUtils.h"
 #include "Core/Util/HashKey.h"
 #include "Core/Util/TextUtils.h"
+
+#include "Renderer/EffectKeys.h"
 
 
 namespace

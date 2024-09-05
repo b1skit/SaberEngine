@@ -443,6 +443,9 @@
     <ClInclude Include="VertexStreamMap.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
+    <ClInclude Include="EffectKeys.h">
+      <Filter>Header Files\effect</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
