@@ -28,6 +28,7 @@ namespace droid
 		HLSLCompileOptions const&,
 		std::vector<std::string> const& includeDirectories,
 		std::string const& extensionlessSrcFilename,
+		uint64_t variantID,
 		std::string const& entryPointName,
 		re::Shader::ShaderType,
 		std::vector<std::string> const& defines,

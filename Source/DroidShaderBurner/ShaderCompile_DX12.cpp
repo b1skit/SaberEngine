@@ -1,4 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
+#include "EffectParsing.h"
 #include "ShaderCompile_DX12.h"
 
 #include "Core/Util/TextUtils.h"
@@ -34,12 +35,6 @@ namespace
 	{
 		return AppendCmdLineArg(cmdLineArgs, flag, util::ToWideString(arg));
 	}
-
-
-	//void AppendCmdLineArg(std::wstring& cmdLineArgs, wchar_t const* flag, char const* arg)
-	//{
-	//	return AppendCmdLineArg(cmdLineArgs, flag, util::ToWideString(arg));
-	//}
 
 
 	std::string BuildTargetProfileArg(re::Shader::ShaderType shaderType, std::string const& targetProfileVersion)
@@ -95,6 +90,7 @@ namespace droid
 		HLSLCompileOptions const& compileOptions,
 		std::vector<std::string> const& includeDirectories,
 		std::string const& extensionlessSrcFilename,
+		uint64_t variantID,
 		std::string const& entryPointName,
 		re::Shader::ShaderType shaderType,
 		std::vector<std::string> const& defines,
@@ -139,6 +135,21 @@ namespace droid
 			AppendCmdLineArg(dxcCommandLineArgsW, L"-enable-16bit-types", nullptr);
 		}
 
+		// Defines:
+		for (auto const& define : defines)
+		{
+			// DXC expects define arguments in the form of "-D defineName=value". If no value is specified, the define
+			// will be set as 1 by default.
+			// Here, we assume the first space delimits the value, and replace it with the '=' character
+			std::string formattedDefine = define;
+			const size_t spaceCharIdx = formattedDefine.find_first_of(' ');
+			if (spaceCharIdx != std::string::npos)
+			{
+				formattedDefine[spaceCharIdx] = '=';
+			}
+			AppendCmdLineArg(dxcCommandLineArgsW, L"-D", formattedDefine);
+		}
+
 		// Include directories:
 		for (auto const& include : includeDirectories)
 		{
@@ -150,7 +161,12 @@ namespace droid
 
 		// Shader configuration:		
 		AppendCmdLineArg(dxcCommandLineArgsW, L"-E", entryPointName);
-		AppendCmdLineArg(dxcCommandLineArgsW, L"-Fo", outputDir + extensionlessSrcFilename + ".cso");
+
+		std::string const& outputName = std::format("{}{}.cso", 
+			outputDir, 
+			BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID));
+
+		AppendCmdLineArg(dxcCommandLineArgsW, L"-Fo", outputName);
 
 		AppendCmdLineArg(dxcCommandLineArgsW, nullptr, BuildInputPath(includeDirectories, extensionlessSrcFilename));
 

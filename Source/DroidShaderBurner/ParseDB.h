@@ -1,5 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
+#include "ParseTypes.h"
+
 #include "Renderer/Shader.h"
 
 #include "Core/Util/FileIOUtils.h"
@@ -63,7 +65,6 @@ namespace droid
 		droid::ErrorCode GenerateCPPCode() const;
 		droid::ErrorCode GenerateShaderCode() const;
 		droid::ErrorCode CompileShaders() const;
-		droid::ErrorCode CopyEffects() const;
 
 
 	public:
@@ -83,18 +84,16 @@ namespace droid
 		};
 		void AddVertexStreamSlot(std::string const& streamBlockName, VertexStreamSlotDesc&&);
 
-
-		struct TechniqueDesc
-		{
-			std::unordered_set<std::string> m_excludedPlatforms;
-			std::array<std::string, re::Shader::ShaderType_Count> m_shaderNames;
-			std::array<std::string, re::Shader::ShaderType_Count> m_entryPointNames;
-		};
-		droid::ErrorCode AddTechnique(std::string const& techniqueName, TechniqueDesc&&);
+		droid::ErrorCode AddTechnique(std::string const& owningEffectName, TechniqueDesc&&);
 
 
 	private: // Parsing:
 		droid::ErrorCode ParseEffectFile(std::string const& effectName, ParseParams const&);
+
+		droid::ErrorCode PostProcessEffectTechniques(nlohmann::json& effectJSON, std::string const& effectName);
+
+		droid::ErrorCode WriteRuntimeEffectFile(auto const& effectJSON, std::string const& effectFileName);
+
 
 		// Helper: Add an entry to the unique rule -> mode mapping (m_drawStyleRuleToModes)
 		void AddDrawStyleRuleMode(std::string const& ruleName, std::string const& mode);
@@ -108,7 +107,7 @@ namespace droid
 		// TODO: Use this. For now, we just record the data without using it
 
 		std::map<std::string, std::vector<VertexStreamSlotDesc>> m_vertexStreamDescs;
-		std::map<std::string, TechniqueDesc> m_techniqueDescs;
+		std::map<std::string, std::map<std::string, TechniqueDesc>> m_effectTechniqueDescs;
 
 
 	private: // Code gen:
@@ -174,19 +173,22 @@ namespace droid
 	}
 
 
-	inline droid::ErrorCode ParseDB::AddTechnique(std::string const& techniqueName, TechniqueDesc&& techniqueDesc)
+	inline droid::ErrorCode ParseDB::AddTechnique(std::string const& owningEffectName, TechniqueDesc&& techniqueDesc)
 	{
-		if (m_techniqueDescs.contains(techniqueName))
+		if (!m_effectTechniqueDescs.contains(owningEffectName))
 		{
-			std::cout << "Error: Adding Technique " << techniqueName.c_str() << ", and a Technique with that name "
-				"already exists. Technique names must be unique.\n";
+			m_effectTechniqueDescs.emplace(owningEffectName, std::map<std::string, TechniqueDesc>());
+		}
+		else if (m_effectTechniqueDescs.at(owningEffectName).contains(techniqueDesc.Name))
+		{
+			std::cout << "Error: Adding Technique " << techniqueDesc.Name.c_str() << ", and a Technique with that name "
+				"already exists. Technique names must be unique per Effect.\n";
 			return droid::ErrorCode::JSONError;
 		}
-		else
-		{
-			std::cout << "Adding Technique \"" << techniqueName.c_str() << "\"\n";
-		}
-		m_techniqueDescs.emplace(techniqueName, std::move(techniqueDesc));
+
+		std::cout << "Adding Technique \"" << techniqueDesc.Name.c_str() << "\"\n";
+
+		m_effectTechniqueDescs.at(owningEffectName).emplace(techniqueDesc.Name, std::move(techniqueDesc));
 
 		return droid::ErrorCode::Success;
 	}

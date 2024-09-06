@@ -236,6 +236,7 @@ namespace droid
 	droid::ErrorCode BuildShaderFile_GLSL(
 		std::vector<std::string> const& includeDirectories,
 		std::string const& extensionlessSrcFilename,
+		uint64_t variantID,
 		std::string const& entryPointName,
 		re::Shader::ShaderType shaderType,
 		std::vector<std::string> const& defines,
@@ -249,6 +250,11 @@ namespace droid
 		shaderTextStrings.emplace_back(k_globalPreamble);
 		shaderTextStrings.emplace_back(k_shaderPreambles[shaderType]);
 		shaderTextStrings.emplace_back(std::format("#define {} main\n", entryPointName));
+
+		for (auto const& define : defines)
+		{
+			shaderTextStrings.emplace_back(std::format("#define {}\n", define));
+		}
 
 		// Process the shader text, splitting it and inserting include files as they're encountered:
 		const bool result = InsertIncludeText(includeDirectories, shaderTex, shaderTextStrings);
@@ -268,7 +274,9 @@ namespace droid
 			shaderTex += include;
 		}
 
-		std::string const& outputFileName = extensionlessSrcFilename + k_shaderFileExtensions[shaderType];
+		std::string const& outputFileName = std::format("{}{}", 
+			BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID),
+			k_shaderFileExtensions[shaderType]);
 
 		std::string const& combinedFilePath = std::format("{}{}", outputDir, outputFileName);
 

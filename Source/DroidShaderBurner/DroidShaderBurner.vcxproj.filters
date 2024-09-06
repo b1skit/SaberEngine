@@ -61,5 +61,8 @@
     <ClInclude Include="ShaderCompile_DX12.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ParseTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

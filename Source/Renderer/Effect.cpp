@@ -105,42 +105,4 @@ namespace effect
 
 		m_techniques.emplace(drawStyleBitmask, technique);
 	}
-
-
-	// -----------------------------------------------------------------------------------------------------------------
-
-
-	Technique::Technique(
-		char const* name,
-		std::vector<std::pair<std::string, re::Shader::ShaderType>> const& shaderNames,
-		re::PipelineState const* pipelineState,
-		re::VertexStreamMap const* vertexStreamMap)
-		: INamedObject(name)
-		, m_resolvedShader(nullptr)
-	{
-		m_resolvedShader = re::Shader::GetOrCreate(shaderNames, pipelineState, vertexStreamMap);
-	}
-
-
-	bool Technique::operator==(Technique const& rhs) const
-	{
-		if (this == &rhs)
-		{
-			return true;
-		}
-		const bool isSame = GetNameID() == rhs.GetNameID();
-		
-		SEAssert(!isSame || 
-			((m_resolvedShader.get() == rhs.m_resolvedShader.get()) &&
-				GetUniqueID() == rhs.GetUniqueID()),
-			"Multiple Techniques with the same name detected");
-
-		return isSame;
-	}
-
-
-	TechniqueID Technique::GetTechniqueID() const
-	{
-		return GetNameID();
-	}
 }

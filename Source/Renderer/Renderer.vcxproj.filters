@@ -446,6 +446,9 @@
     <ClInclude Include="EffectKeys.h">
       <Filter>Header Files\effect</Filter>
     </ClInclude>
+    <ClInclude Include="Technique.h">
+      <Filter>Header Files\effect</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -765,6 +768,9 @@
     </ClCompile>
     <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_win32.cpp">
       <Filter>Dependencies\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="Technique.cpp">
+      <Filter>Source Files\effect</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

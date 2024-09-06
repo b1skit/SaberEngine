@@ -1,6 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Core/Assert.h"
 
 
 using DataHash = uint64_t;
@@ -24,7 +23,6 @@ namespace util
 
 	inline uint64_t HashString(std::string const& str)
 	{
-		SEAssert(!str.empty(), "Cannot hash an empty string");
 		return std::hash<std::string>{}(str);
 	}
 }

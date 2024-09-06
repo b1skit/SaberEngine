@@ -110,13 +110,6 @@ namespace droid
 			util::SetBuildConfigurationMarker(parseParams.m_glslShaderOutputDir, parseParams.m_buildConfiguration);
 		}
 
-		// If we made it this far, copy the Effect files:
-		result = parseDB.CopyEffects();
-		if (result < 0)
-		{
-			return result;
-		}
-
 		return result;
 	}
 
@@ -161,5 +154,29 @@ namespace droid
 		{
 			std::filesystem::create_directories(dirPath);
 		}
+	}
+
+
+	uint64_t ComputeShaderVariantID(std::vector<std::string> const& techniqueDefines)
+	{
+		uint64_t variantID = 0;
+
+		for (auto const& define : techniqueDefines)
+		{
+			util::CombineHash(variantID, util::HashString(define));
+		}
+
+		return variantID;
+	}
+
+
+	std::string BuildExtensionlessShaderVariantName(std::string const& extensionlessShaderName, uint64_t variantID)
+	{
+		if (variantID == 0)
+		{
+			return extensionlessShaderName;
+		}
+
+		return std::format("{}_{}", extensionlessShaderName, variantID);
 	}
 }

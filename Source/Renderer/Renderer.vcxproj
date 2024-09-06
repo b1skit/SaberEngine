@@ -185,6 +185,7 @@
     <ClInclude Include="SysInfo_DX12.h" />
     <ClInclude Include="SysInfo_OpenGL.h" />
     <ClInclude Include="SysInfo_Platform.h" />
+    <ClInclude Include="Technique.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureTarget.h" />
     <ClInclude Include="TextureTarget_DX12.h" />
@@ -299,6 +300,7 @@
     <ClCompile Include="SysInfo_DX12.cpp" />
     <ClCompile Include="SysInfo_OpenGL.cpp" />
     <ClCompile Include="SysInfo_Platform.cpp" />
+    <ClCompile Include="Technique.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureTarget.cpp" />
     <ClCompile Include="TextureTarget_DX12.cpp" />

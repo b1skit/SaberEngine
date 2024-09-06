@@ -21,9 +21,6 @@ using ShaderID = uint64_t;
 
 namespace re
 {
-	class VertexStreamMap;
-
-
 	class Shader final : public virtual core::INamedObject
 	{
 	public:

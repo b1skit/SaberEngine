@@ -25,4 +25,8 @@ namespace droid
 	time_t GetMostRecentlyModifiedFileTime(std::string const& filesystemTarget);
 
 	void CleanDirectory(std::string const& dirPath, bool recreateDir = true);
+
+	uint64_t ComputeShaderVariantID(std::vector<std::string> const& techniqueDefines);
+
+	std::string BuildExtensionlessShaderVariantName(std::string const& extensionlessShaderName, uint64_t variantID);
 }

@@ -200,6 +200,7 @@
     <ClCompile Include="ShaderPreprocessor_OpenGL.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ParseTypes.h" />
     <ClInclude Include="FileWriter.h" />
     <ClInclude Include="ParseDB.h" />
     <ClInclude Include="EffectParsing.h" />

@@ -2,6 +2,7 @@
 #include "EffectParsing.h"
 #include "FileWriter.h"
 #include "ParseDB.h"
+#include "ParseTypes.h"
 #include "ShaderCompile_DX12.h"
 #include "ShaderPreprocessor_OpenGL.h"
 #include "TextStrings.h"
@@ -81,51 +82,12 @@ namespace
 	}
 
 
-	droid::ErrorCode ParseTechniquesBlock(droid::ParseDB& parseDB, auto const& techniquesBlock)
+	droid::ErrorCode ParseTechniquesBlock(
+		droid::ParseDB& parseDB, std::string const& owningEffectName, auto const& techniquesBlock)
 	{
 		for (auto const& techniqueEntry : techniquesBlock)
 		{
-			droid::ParseDB::TechniqueDesc techniqueDesc{};
-
-			std::string const& techniqueName = techniqueEntry.at(key_name).template get<std::string>();
-
-			// "ExcludedPlatforms":
-			if (techniqueEntry.contains(key_excludedPlatforms))
-			{
-				// Record excluded platform names in lower case, later we'll check them against lowercase names
-				for (auto const& excludedPlatform : techniqueEntry[key_excludedPlatforms])
-				{
-					techniqueDesc.m_excludedPlatforms.emplace(
-						util::ToLower(excludedPlatform.template get<std::string>()));
-				}
-			}
-
-			for (uint8_t i = 0; i < re::Shader::ShaderType_Count; ++i)
-			{
-				bool foundShaderName = false;
-				if (techniqueEntry.contains(keys_shaderTypes[i]))
-				{
-					techniqueDesc.m_shaderNames[i] = techniqueEntry.at(keys_shaderTypes[i]).template get<std::string>();
-					foundShaderName = true;
-				}
-
-				bool foundEntryPoint = false;
-				if (techniqueEntry.contains(keys_entryPointNames[i]))
-				{
-					techniqueDesc.m_entryPointNames[i] = 
-						techniqueEntry.at(keys_entryPointNames[i]).template get<std::string>();
-					foundEntryPoint = true;
-				}
-
-				if (foundShaderName != foundEntryPoint)
-				{
-					std::cout << "Technique \"" << techniqueName.c_str() << "\" does not have corresponding shader "
-						"name and entry point name entries\n";
-					return droid::ErrorCode::JSONError;
-				}
-			}
-
-			const droid::ErrorCode result = parseDB.AddTechnique(techniqueName, std::move(techniqueDesc));
+			const droid::ErrorCode result = parseDB.AddTechnique(owningEffectName, techniqueEntry);
 			if (result != droid::ErrorCode::Success)
 			{
 				return result;
@@ -210,6 +172,13 @@ namespace droid
 
 			std::cout << "Effect manifest successfully parsed!\n\n";
 			effectManifestInputStream.close();
+
+			// Finally, write the runtime version of the manifest file out:
+			result = WriteRuntimeEffectFile(effectManifestJSON, m_parseParams.m_effectManifestFileName);
+			if (result != droid::ErrorCode::Success)
+			{
+				return result;
+			}
 		}
 		catch (nlohmann::json::exception parseException)
 		{
@@ -301,7 +270,7 @@ namespace droid
 				// "Techniques":
 				if (effectBlock.contains(key_techniques))
 				{
-					result = ParseTechniquesBlock(*this, effectBlock.at(key_techniques));
+					result = ParseTechniquesBlock(*this, effectBlockName, effectBlock.at(key_techniques));
 					if (result != droid::ErrorCode::Success)
 					{
 						return result;
@@ -319,6 +288,16 @@ namespace droid
 			}
 
 			std::cout << "Effect \"" << effectName.c_str() << "\" successfully parsed!\n\n";
+
+			// Post-process Effects for runtime:
+			PostProcessEffectTechniques(effectJSON, effectName);
+
+			// Finally, write the runtime version of the file out:
+			result = WriteRuntimeEffectFile(effectJSON, effectFileName);
+			if (result != droid::ErrorCode::Success)
+			{
+				return result;
+			}
 		}
 		catch (nlohmann::json::exception parseException)
 		{
@@ -332,6 +311,66 @@ namespace droid
 
 		effectInputStream.close();
 		return result;
+	}
+
+
+	droid::ErrorCode ParseDB::PostProcessEffectTechniques(nlohmann::json& effectJSON, std::string const& effectName)
+	{
+		if (!m_effectTechniqueDescs.contains(effectName) || 
+			!effectJSON.contains(key_effectBlock))
+		{
+			return droid::ErrorCode::Success; // Nothing to do
+		}
+
+		// "Effect":
+		auto& effectBlock = effectJSON.at(key_effectBlock);
+
+		// "Techniques":
+		if (effectBlock.contains(key_techniques))
+		{
+			// Remove the existing Technique entries:
+			effectBlock.at(key_techniques).clear();
+
+			// Rebuild them as a vector:
+			std::vector<TechniqueDesc> resolvedTechniques;
+			resolvedTechniques.reserve(m_effectTechniqueDescs.at(effectName).size());
+
+			for (auto const& entry : m_effectTechniqueDescs.at(effectName))
+			{
+				std::string const& techniqueName = entry.first;
+				TechniqueDesc const& techniqueDesc = entry.second;
+
+				resolvedTechniques.emplace_back(techniqueDesc);
+			}
+
+			// Our ParseTypes.h::to_json function will automatically resolve Techniques for runtime use
+			effectBlock[key_techniques] = resolvedTechniques;
+		}
+
+		return droid::ErrorCode::Success;
+	}
+
+
+	droid::ErrorCode ParseDB::WriteRuntimeEffectFile(auto const& effectJSON, std::string const& effectFileName)
+	{
+		if (!std::filesystem::exists(m_parseParams.m_runtimeEffectsDir))
+		{
+			std::filesystem::create_directory(m_parseParams.m_runtimeEffectsDir);
+		}
+
+		std::string const& runtimeEffectFilePath = m_parseParams.m_runtimeEffectsDir + effectFileName;
+		std::ofstream runtimeEffectOut(runtimeEffectFilePath);
+		if (!runtimeEffectOut.is_open())
+		{
+			std::cout << "Error: Failed to open runtime Effect directory\n";
+			return droid::ErrorCode::FileError;
+		}
+
+		runtimeEffectOut << std::setw(4) << effectJSON << std::endl;
+
+		runtimeEffectOut.close();
+
+		return droid::ErrorCode::Success;
 	}
 
 
@@ -391,33 +430,47 @@ namespace droid
 				m_parseParams.m_dependenciesDir,				
 			};
 
-			for (auto const& technique : m_techniqueDescs)
+			std::map<std::string, std::set<uint64_t>> seenShaderNamesAndVariants;
+
+			for (auto const& effect : m_effectTechniqueDescs)
 			{
-				for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
+				for (auto const& technique : effect.second)
 				{
-					if (technique.second.m_shaderNames[shaderTypeIdx].empty() || 
-						technique.second.m_excludedPlatforms.contains("opengl"))
+					for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
 					{
-						continue;
-					}
+						if (technique.second._Shader[shaderTypeIdx].empty() ||
+							technique.second.ExcludedPlatforms.contains("opengl"))
+						{
+							continue;
+						}
 
-					const std::vector<std::string> defines = {
-						// TODO
-					};
-				
-					result = BuildShaderFile_GLSL(
-						glslIncludeDirectories,
-						technique.second.m_shaderNames[shaderTypeIdx],
-						technique.second.m_entryPointNames[shaderTypeIdx],
-						static_cast<re::Shader::ShaderType>(shaderTypeIdx),
-						defines,
-						m_parseParams.m_glslShaderOutputDir);
+						if (!seenShaderNamesAndVariants.contains(technique.second._Shader[shaderTypeIdx]))
+						{
+							seenShaderNamesAndVariants.emplace(technique.second._Shader[shaderTypeIdx], std::set<uint64_t>());
+						}
 
-					if (result != droid::ErrorCode::Success)
-					{
-						return result;
+						std::set<uint64_t>& variants = seenShaderNamesAndVariants.at(technique.second._Shader[shaderTypeIdx]);
+
+						if (!variants.contains(technique.second.m_shaderVariantID))
+						{
+							result = BuildShaderFile_GLSL(
+								glslIncludeDirectories,
+								technique.second._Shader[shaderTypeIdx],
+								technique.second.m_shaderVariantID,
+								technique.second._ShaderEntryPoint[shaderTypeIdx],
+								static_cast<re::Shader::ShaderType>(shaderTypeIdx),
+								technique.second.Defines,
+								m_parseParams.m_glslShaderOutputDir);
+
+							if (result != droid::ErrorCode::Success)
+							{
+								return result;
+							}
+
+							variants.emplace(technique.second.m_shaderVariantID);
+						}
 					}
-				}				
+				}
 			}
 		}
 
@@ -527,48 +580,62 @@ namespace droid
 
 			std::vector<PROCESS_INFORMATION> processInfos; // The HLSL shader is invoked as a seperate process
 
-			for (auto const& technique : m_techniqueDescs)
+			std::map<std::string, std::set<uint64_t>> seenShaderNamesAndVariants;
+
+			for (auto const& effect : m_effectTechniqueDescs)
 			{
-				for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
+				for (auto const& technique : effect.second)
 				{
-					if (technique.second.m_shaderNames[shaderTypeIdx].empty() ||
-						technique.second.m_excludedPlatforms.contains("dx12"))
+					for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
 					{
-						continue;
-					}
+						if (technique.second._Shader[shaderTypeIdx].empty() ||
+							technique.second.ExcludedPlatforms.contains("dx12"))
+						{
+							continue;
+						}
 
-					const std::vector<std::string> defines = {
-						// TODO
-					};
+						if (!seenShaderNamesAndVariants.contains(technique.second._Shader[shaderTypeIdx]))
+						{
+							seenShaderNamesAndVariants.emplace(technique.second._Shader[shaderTypeIdx], std::set<uint64_t>());
+						}
 
-					PROCESS_INFORMATION& processInfo = processInfos.emplace_back();
+						std::set<uint64_t>& variants = seenShaderNamesAndVariants.at(technique.second._Shader[shaderTypeIdx]);
 
-					result = CompileShader_HLSL(
-						m_parseParams.m_directXCompilerExePath,
-						processInfo,
-						compileOptions,
-						hlslIncludeDirectories,
-						technique.second.m_shaderNames[shaderTypeIdx],
-						technique.second.m_entryPointNames[shaderTypeIdx],
-						static_cast<re::Shader::ShaderType>(shaderTypeIdx),
-						defines,
-						m_parseParams.m_hlslShaderOutputDir);
+						if (!variants.contains(technique.second.m_shaderVariantID))
+						{
+							PROCESS_INFORMATION& processInfo = processInfos.emplace_back();
 
-					if (compileOptions.m_multithreadedCompilation == false)
-					{
-						result = CloseProcess(processInfo);
-						processInfos.pop_back();
+							result = CompileShader_HLSL(
+								m_parseParams.m_directXCompilerExePath,
+								processInfo,
+								compileOptions,
+								hlslIncludeDirectories,
+								technique.second._Shader[shaderTypeIdx],
+								technique.second.m_shaderVariantID,
+								technique.second._ShaderEntryPoint[shaderTypeIdx],
+								static_cast<re::Shader::ShaderType>(shaderTypeIdx),
+								technique.second.Defines,
+								m_parseParams.m_hlslShaderOutputDir);
+
+							if (compileOptions.m_multithreadedCompilation == false)
+							{
+								result = CloseProcess(processInfo);
+								processInfos.pop_back();
+							}
+
+							if (result != droid::ErrorCode::Success)
+							{
+								break;
+							}
+
+							variants.emplace(technique.second.m_shaderVariantID);
+						}
 					}
 
 					if (result != droid::ErrorCode::Success)
 					{
 						break;
 					}
-				}
-
-				if (result != droid::ErrorCode::Success)
-				{
-					break;
 				}
 			}
 
@@ -587,43 +654,6 @@ namespace droid
 	}
 
 
-	droid::ErrorCode ParseDB::CopyEffects() const
-	{
-		// Ensure the output path is created
-		if (!std::filesystem::exists(m_parseParams.m_runtimeEffectsDir))
-		{
-			std::filesystem::create_directories(m_parseParams.m_runtimeEffectsDir);
-		}
-
-		// Copy each .json file in the source directory:
-		std::vector<std::string> const& effectFiles =
-			util::GetDirectoryFilenameContents(m_parseParams.m_effectSourceDir.c_str(), ".json");
-
-		for (auto const& effectSrcFilePath : effectFiles)
-		{
-			std::ifstream srcStream(effectSrcFilePath);
-		
-			std::string const& filename = std::filesystem::path(effectSrcFilePath).filename().string();
-			std::ofstream dstStream(m_parseParams.m_runtimeEffectsDir + filename);
-
-			if (!srcStream.is_open())
-			{
-				std::cout << "Failed to open source Effect file\n";
-				return droid::ErrorCode::FileError;
-			}
-			if (!dstStream.is_open())
-			{
-				std::cout << "Failed to open destination Effects file\n";
-				return droid::ErrorCode::FileError;
-			}
-
-			dstStream << srcStream.rdbuf();
-		}
-
-		return droid::ErrorCode::Success;
-	}
-
-
 	droid::ErrorCode ParseDB::GenerateCPPCode_Drawstyle() const
 	{
 		FileWriter filewriter(m_parseParams.m_cppCodeGenOutputDir, m_drawstyleHeaderFilename);
@@ -633,6 +663,9 @@ namespace droid
 		{
 			return filewriter.GetStatus();
 		}
+
+		filewriter.WriteLine("#pragma once");
+		filewriter.EmptyLine();
 
 		filewriter.OpenNamespace("effect::drawstyle");
 
