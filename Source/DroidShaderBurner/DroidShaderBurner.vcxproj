@@ -192,6 +192,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ParseDB.cpp" />
     <ClCompile Include="EffectParsing.cpp" />
+    <ClCompile Include="ParseHelpers.cpp" />
     <ClCompile Include="pch\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -200,7 +201,7 @@
     <ClCompile Include="ShaderPreprocessor_OpenGL.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ParseTypes.h" />
+    <ClInclude Include="ParseHelpers.h" />
     <ClInclude Include="FileWriter.h" />
     <ClInclude Include="ParseDB.h" />
     <ClInclude Include="EffectParsing.h" />

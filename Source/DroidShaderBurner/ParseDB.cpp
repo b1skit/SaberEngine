@@ -2,7 +2,7 @@
 #include "EffectParsing.h"
 #include "FileWriter.h"
 #include "ParseDB.h"
-#include "ParseTypes.h"
+#include "ParseHelpers.h"
 #include "ShaderCompile_DX12.h"
 #include "ShaderPreprocessor_OpenGL.h"
 #include "TextStrings.h"
@@ -451,12 +451,12 @@ namespace droid
 
 						std::set<uint64_t>& variants = seenShaderNamesAndVariants.at(technique.second._Shader[shaderTypeIdx]);
 
-						if (!variants.contains(technique.second.m_shaderVariantID))
+						if (!variants.contains(technique.second.m_shaderVariantIDs[shaderTypeIdx]))
 						{
 							result = BuildShaderFile_GLSL(
 								glslIncludeDirectories,
 								technique.second._Shader[shaderTypeIdx],
-								technique.second.m_shaderVariantID,
+								technique.second.m_shaderVariantIDs[shaderTypeIdx],
 								technique.second._ShaderEntryPoint[shaderTypeIdx],
 								static_cast<re::Shader::ShaderType>(shaderTypeIdx),
 								technique.second.Defines,
@@ -467,7 +467,7 @@ namespace droid
 								return result;
 							}
 
-							variants.emplace(technique.second.m_shaderVariantID);
+							variants.emplace(technique.second.m_shaderVariantIDs[shaderTypeIdx]);
 						}
 					}
 				}
@@ -601,7 +601,7 @@ namespace droid
 
 						std::set<uint64_t>& variants = seenShaderNamesAndVariants.at(technique.second._Shader[shaderTypeIdx]);
 
-						if (!variants.contains(technique.second.m_shaderVariantID))
+						if (!variants.contains(technique.second.m_shaderVariantIDs[shaderTypeIdx]))
 						{
 							PROCESS_INFORMATION& processInfo = processInfos.emplace_back();
 
@@ -611,7 +611,7 @@ namespace droid
 								compileOptions,
 								hlslIncludeDirectories,
 								technique.second._Shader[shaderTypeIdx],
-								technique.second.m_shaderVariantID,
+								technique.second.m_shaderVariantIDs[shaderTypeIdx],
 								technique.second._ShaderEntryPoint[shaderTypeIdx],
 								static_cast<re::Shader::ShaderType>(shaderTypeIdx),
 								technique.second.Defines,
@@ -628,7 +628,7 @@ namespace droid
 								break;
 							}
 
-							variants.emplace(technique.second.m_shaderVariantID);
+							variants.emplace(technique.second.m_shaderVariantIDs[shaderTypeIdx]);
 						}
 					}
 

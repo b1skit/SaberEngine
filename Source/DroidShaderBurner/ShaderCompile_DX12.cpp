@@ -1,5 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "EffectParsing.h"
+#include "ParseHelpers.h"
 #include "ShaderCompile_DX12.h"
 
 #include "Core/Util/TextUtils.h"

@@ -1,6 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
-#include "ParseTypes.h"
+#include "ParseHelpers.h"
 
 #include "Renderer/Shader.h"
 

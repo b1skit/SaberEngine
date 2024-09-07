@@ -38,6 +38,9 @@
     <ClCompile Include="ShaderCompile_DX12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ParseHelpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h">
@@ -61,7 +64,7 @@
     <ClInclude Include="ShaderCompile_DX12.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ParseTypes.h">
+    <ClInclude Include="ParseHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
