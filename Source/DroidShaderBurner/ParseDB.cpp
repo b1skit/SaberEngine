@@ -754,7 +754,7 @@ namespace droid
 				m_vertexStreamsFilenamePrefex,
 				vertexStreamDesc.first);
 
-			std::string const& glslFilename = std::format("{}{}.glsl",
+			std::string const& glslFilename = std::format("{}{}.glsli",
 				m_vertexStreamsFilenamePrefex,
 				vertexStreamDesc.first);
 

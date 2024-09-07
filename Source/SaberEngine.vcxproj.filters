@@ -177,148 +177,148 @@
     <None Include="Shaders\HLSL\Samplers.hlsli">
       <Filter>Shaders\HLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Blit_PShader.frag">
+    <None Include="Shaders\GLSL\Blit_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Blit_VShader.vert">
+    <None Include="Shaders\GLSL\Blit_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Bloom_CShader.comp">
+    <None Include="Shaders\GLSL\Bloom_CShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\BloomCommon.glsl">
+    <None Include="Shaders\GLSL\BloomCommon.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Color.glsl">
+    <None Include="Shaders\GLSL\Color.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\CubeDepth_GShader.geom">
+    <None Include="Shaders\GLSL\CubeDepth_GShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\CubeDepth_VShader.vert">
+    <None Include="Shaders\GLSL\CubeDepth_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\DeferredAmbientLight_PShader.frag">
+    <None Include="Shaders\GLSL\DeferredAmbientLight_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\DeferredAmbientLight_VShader.vert">
+    <None Include="Shaders\GLSL\DeferredAmbientLight_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\DeferredDirectionalLight_PShader.frag">
+    <None Include="Shaders\GLSL\DeferredDirectionalLight_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\DeferredDirectionalLight_VShader.vert">
+    <None Include="Shaders\GLSL\DeferredDirectionalLight_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\DeferredPointLight_PShader.frag">
+    <None Include="Shaders\GLSL\DeferredPointLight_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\DeferredPointLight_VShader.vert">
+    <None Include="Shaders\GLSL\DeferredPointLight_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\DeferredSpotLight_PShader.frag">
+    <None Include="Shaders\GLSL\DeferredSpotLight_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\DeferredSpotLight_VShader.vert">
+    <None Include="Shaders\GLSL\DeferredSpotLight_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Depth_VShader.vert">
+    <None Include="Shaders\GLSL\Depth_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\FullscreenQuadCommon.glsl">
+    <None Include="Shaders\GLSL\FullscreenQuadCommon.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GaussianBlur_PShader.frag">
+    <None Include="Shaders\GLSL\GaussianBlur_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GaussianBlur_VShader.vert">
+    <None Include="Shaders\GLSL\GaussianBlur_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.frag">
+    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_VShader.vert">
+    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GBufferCommon.glsl">
+    <None Include="Shaders\GLSL\GBufferCommon.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap_CShader.comp">
+    <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap_CShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GenerateIEM_PShader.frag">
+    <None Include="Shaders\GLSL\GenerateIEM_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GenerateIEM_VShader.vert">
+    <None Include="Shaders\GLSL\GenerateIEM_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GeneratePMREM_PShader.frag">
+    <None Include="Shaders\GLSL\GeneratePMREM_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GeneratePMREM_VShader.vert">
+    <None Include="Shaders\GLSL\GeneratePMREM_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Lighting.glsl">
+    <None Include="Shaders\GLSL\Lighting.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Line_PShader.frag">
+    <None Include="Shaders\GLSL\Line_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Line_VShader.vert">
+    <None Include="Shaders\GLSL\Line_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\MathConstants.glsl">
+    <None Include="Shaders\GLSL\MathConstants.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\NormalMapUtils.glsl">
+    <None Include="Shaders\GLSL\NormalMapUtils.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\SaberCommon.glsl">
+    <None Include="Shaders\GLSL\SaberCommon.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Shadows.glsl">
+    <None Include="Shaders\GLSL\Shadows.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Skybox_PShader.frag">
+    <None Include="Shaders\GLSL\Skybox_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Skybox_VShader.vert">
+    <None Include="Shaders\GLSL\Skybox_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\ToneMap_PShader.frag">
+    <None Include="Shaders\GLSL\ToneMap_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\ToneMap_VShader.vert">
+    <None Include="Shaders\GLSL\ToneMap_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\Transformations.glsl">
+    <None Include="Shaders\GLSL\Transformations.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\UVUtils.glsl">
+    <None Include="Shaders\GLSL\UVUtils.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\DepthAlphaMask_VShader.vert">
+    <None Include="Shaders\GLSL\DepthAlphaMask_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\DepthAlphaMask_PShader.frag">
+    <None Include="Shaders\GLSL\DepthAlphaMask_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\CubeDepthAlphaMask_GShader.geom">
+    <None Include="Shaders\GLSL\CubeDepthAlphaMask_GShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\CubeDepthAlphaMask_VShader.vert">
+    <None Include="Shaders\GLSL\CubeDepthAlphaMask_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.frag">
+    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\AmbientCommon.hlsli">
       <Filter>Shaders\HLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.vert">
+    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_VShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\AmbientCommon.glsl">
+    <None Include="Shaders\GLSL\AmbientCommon.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
     <None Include="packages.config" />

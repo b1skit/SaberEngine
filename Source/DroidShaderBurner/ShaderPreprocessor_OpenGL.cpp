@@ -7,23 +7,6 @@
 
 namespace droid
 {
-	constexpr char const* k_shaderFileExtensions[]
-	{
-		".vert",
-		".geom",
-		".frag",
-
-		".tesc",
-		".tese",
-
-		".mesh",
-		".task",
-
-		".comp"
-	};
-	static_assert(_countof(k_shaderFileExtensions) == re::Shader::ShaderType_Count);
-
-
 	constexpr char const* k_shaderPreambles[] // Per-shader-type preamble
 	{
 		// ShaderType::Vertex:
@@ -98,7 +81,7 @@ namespace droid
 	std::string LoadShaderTextByExtension(
 		std::vector<std::string> const& includeDirectories, std::string const& filename, re::Shader::ShaderType shaderType)
 	{
-		std::string const& filenameAndExtension = filename + k_shaderFileExtensions[shaderType];
+		std::string const& filenameAndExtension = filename + ".glsl";
 
 		return LoadIndividualShaderTextFile(includeDirectories, filenameAndExtension);
 	}
@@ -274,9 +257,8 @@ namespace droid
 			shaderTex += include;
 		}
 
-		std::string const& outputFileName = std::format("{}{}", 
-			BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID),
-			k_shaderFileExtensions[shaderType]);
+		std::string const& outputFileName = std::format("{}.glsl", 
+			BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID));
 
 		std::string const& combinedFilePath = std::format("{}{}", outputDir, outputFileName);
 

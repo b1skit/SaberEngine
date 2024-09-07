@@ -38,23 +38,6 @@ namespace
 	};
 	static_assert(_countof(k_shaderTypeFlags) == re::Shader::ShaderType_Count);
 
-	constexpr char const* k_shaderFileExtensions[]
-	{
-		".vert",
-		".geom",
-		".frag",
-
-		".tesc",
-		".tese",
-
-		".mesh",
-		".task",
-
-		".comp"
-	};
-	static_assert(_countof(k_shaderFileExtensions) == re::Shader::ShaderType_Count);
-
-
 	bool UniformIsSamplerType(GLenum type)
 	{
 		switch(type)
@@ -229,7 +212,7 @@ namespace
 			taskFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
 				[&shaderTextsOut, filename, shaderType]()
 				{
-					std::string const& filenameAndExtension = filename + k_shaderFileExtensions[shaderType];
+					std::string const& filenameAndExtension = filename + ".glsl";
 
 					shaderTextsOut[shaderType] = LoadShaderText(filenameAndExtension);
 				}));
@@ -255,7 +238,7 @@ namespace opengl
 		std::string const& shaderFileName = shader.GetName();
 		LOG("Creating shader: \"%s\"", shaderFileName.c_str());
 
-		// Load the individual .vert/.frag/etc shader text files:
+		// Load the individual shader text files:
 		std::vector<std::future<void>> const& loadShaderTextsTaskFutures = 
 			LoadShaderTexts(shader.m_extensionlessSourceFilenames, platParams->m_shaderTexts);
 
@@ -279,7 +262,7 @@ namespace opengl
 			{
 				foundShaderTypeFlags[i] = k_shaderTypeFlags[i]; // Mark the shader as seen
 				shaderFiles[i] = std::move(platParams->m_shaderTexts[i]); // Move the shader texts, they're no longer needed
-				shaderFileNames[i] = shaderFileName + k_shaderFileExtensions[i];
+				shaderFileNames[i] = shaderFileName + ".glsl";
 			}
 		}
 		SEAssert(foundShaderTypeFlags[re::Shader::Vertex] != 0 || foundShaderTypeFlags[re::Shader::Compute] != 0,
