@@ -15,7 +15,7 @@ VertexOut VShader(VertexIn In)
 #if defined(VOUT_UV0)
 	Out.UV0 = In.UV0;
 #endif
-#if defined(VOUT_INSTANCE_ID)
+#if defined(SABER_INSTANCING)
 	Out.InstanceID = In.InstanceID;
 #endif
 	

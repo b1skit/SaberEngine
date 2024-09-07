@@ -55,7 +55,7 @@
 			},
 			{
 				"Name": "IEMGeneration",
-				"VShader": "GenerateIEM_VShader",
+				"VShader": "GenerateIBL_VShader",
 				"VShaderEntryPoint": "VShader",
 				"PShader": "GenerateIEM_PShader",
 				"PShaderEntryPoint": "PShader",
@@ -64,7 +64,7 @@
 			},
 			{
 				"Name": "PMREMGeneration",
-				"VShader": "GeneratePMREM_VShader",
+				"VShader": "GenerateIBL_VShader",
 				"VShaderEntryPoint": "VShader",
 				"PShader": "GeneratePMREM_PShader",
 				"PShaderEntryPoint": "PShader",
@@ -73,7 +73,7 @@
 			},
 			{
 				"Name": "DeferredAmbient",
-				"VShader": "DeferredAmbientLight_VShader",
+				"VShader": "FullscreenQuad_VShader",
 				"VShaderEntryPoint": "VShader",
 				"PShader": "DeferredAmbientLight_PShader",
 				"PShaderEntryPoint": "PShader",
@@ -82,7 +82,7 @@
 			},
 			{
 				"Name": "DeferredDirectional",
-				"VShader": "DeferredDirectionalLight_VShader",
+				"VShader": "FullscreenQuad_VShader",
 				"VShaderEntryPoint": "VShader",
 				"PShader": "DeferredDirectionalLight_PShader",
 				"PShaderEntryPoint": "PShader",
@@ -91,7 +91,7 @@
 			},
 			{
 				"Name": "DeferredPoint",
-				"VShader": "DeferredPointLight_VShader",
+				"VShader": "DeferredPointSpot_VShader",
 				"VShaderEntryPoint": "VShader",
 				"PShader": "DeferredPointLight_PShader",
 				"PShaderEntryPoint": "PShader",
@@ -100,7 +100,7 @@
 			},
 			{
 				"Name": "DeferredSpot",
-				"VShader": "DeferredSpotLight_VShader",
+				"VShader": "DeferredPointSpot_VShader",
 				"VShaderEntryPoint": "VShader",
 				"PShader": "DeferredSpotLight_PShader",
 				"PShaderEntryPoint": "PShader",

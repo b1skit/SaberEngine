@@ -15,3 +15,9 @@ VertexOut VShader(VertexIn In)
 	
 	return Out;
 }
+
+
+float4 PShader(VertexOut In) : SV_Target
+{
+	return In.Color;
+}

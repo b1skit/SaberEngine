@@ -47,7 +47,18 @@ namespace
 	constexpr char const* key_techniques = "Techniques";
 	constexpr char const* key_pipelineState = "PipelineState";
 	constexpr char const* key_vertexStream = "VertexStream";
-	constexpr char const* key_defines = "Defines";
+
+	constexpr char const* keys_shaderDefines[] =
+	{
+		"VShaderDefines",
+		"GShaderDefines",
+		"PShaderDefines",
+		"HShaderDefines",
+		"DShaderDefines",
+		"MShaderDefines",
+		"AShaderDefines",
+		"CShaderDefines",
+	};
 
 	constexpr char const* keys_shaderTypes[] =
 	{

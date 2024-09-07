@@ -459,7 +459,7 @@ namespace droid
 								technique.second.m_shaderVariantIDs[shaderTypeIdx],
 								technique.second._ShaderEntryPoint[shaderTypeIdx],
 								static_cast<re::Shader::ShaderType>(shaderTypeIdx),
-								technique.second.Defines,
+								technique.second._Defines[shaderTypeIdx],
 								m_parseParams.m_glslShaderOutputDir);
 
 							if (result != droid::ErrorCode::Success)
@@ -614,7 +614,7 @@ namespace droid
 								technique.second.m_shaderVariantIDs[shaderTypeIdx],
 								technique.second._ShaderEntryPoint[shaderTypeIdx],
 								static_cast<re::Shader::ShaderType>(shaderTypeIdx),
-								technique.second.Defines,
+								technique.second._Defines[shaderTypeIdx],
 								m_parseParams.m_hlslShaderOutputDir);
 
 							if (compileOptions.m_multithreadedCompilation == false)

@@ -139,19 +139,23 @@
 
 			{
 				"Name": "AlphaBlend_SingleSided",
-				"VShader": "GLTF_PBRMetallicRoughness_Transparency_VShader",
+				"VShader": "GLTF_PBRMetallicRoughness_VShader",
 				"VShaderEntryPoint": "VShader",
+				"VShaderDefines":  ["VOUT_WORLD_POS"],
 				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
+				"PShaderDefines":  ["VOUT_WORLD_POS"],
 				"PShaderEntryPoint": "PShader",
 				"PipelineState": "SingleSided",
-				"VertexStream": "PosNmlTanUvCol"
+				"VertexStream": "PosNmlTanUvCol"				
 			},
 			{
 				"Name": "AlphaBlend_DoubleSided",
-				"VShader": "GLTF_PBRMetallicRoughness_Transparency_VShader",
+				"VShader": "GLTF_PBRMetallicRoughness_VShader",
 				"VShaderEntryPoint": "VShader",
+				"VShaderDefines":  ["VOUT_WORLD_POS"],
 				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 				"PShaderEntryPoint": "PShader",
+				"PShaderDefines":  ["VOUT_WORLD_POS"],
 				"PipelineState": "DoubleSided",
 				"VertexStream": "PosNmlTanUvCol"
 			},
@@ -168,10 +172,12 @@
 			},
 			{
 				"Name": "Shadow_2D_SingleSided_AlphaMask",
-				"VShader": "DepthAlphaMask_VShader",
+				"VShader": "Depth_VShader",
 				"VShaderEntryPoint": "VShader",
+				"VShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
 				"PShader": "DepthAlphaMask_PShader",
 				"PShaderEntryPoint": "PShader",
+				"PShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
 				"PipelineState": "SingleSided",
 				"VertexStream": "PositionUV"
 			},
@@ -184,10 +190,12 @@
 			},
 			{
 				"Name": "Shadow_2D_DoubleSided_AlphaMask",
-				"VShader": "DepthAlphaMask_VShader",
+				"VShader": "Depth_VShader",
 				"VShaderEntryPoint": "VShader",
+				"VShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
 				"PShader": "DepthAlphaMask_PShader",
 				"PShaderEntryPoint": "PShader",
+				"PShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
 				"PipelineState": "DoubleSided",
 				"VertexStream": "PositionUV"
 			},
@@ -202,11 +210,14 @@
 			},
 			{
 				"Name": "Shadow_Cube_SingleSided_AlphaMask",
-				"VShader": "CubeDepthAlphaMask_VShader",
+				"VShader": "CubeDepth_VShader",
 				"VShaderEntryPoint": "VShader",
-				"GShader": "CubeDepthAlphaMask_GShader",
+				"VShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
+				"GShader": "CubeDepth_GShader",
 				"GShaderEntryPoint": "GShader",
+				"GShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
 				"PShader": "DepthAlphaMask_PShader",
+				"PShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
 				"PShaderEntryPoint": "PShader",
 				"PipelineState": "SingleSided",
 				"VertexStream": "PositionUV"
@@ -222,14 +233,18 @@
 			},
 			{
 				"Name": "Shadow_Cube_DoubleSided_AlphaMask",
-				"VShader": "CubeDepthAlphaMask_VShader",
+				"VShader": "CubeDepth_VShader",
 				"VShaderEntryPoint": "VShader",
-				"GShader": "CubeDepthAlphaMask_GShader",
+				"VShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
+				"GShader": "CubeDepth_GShader",
 				"GShaderEntryPoint": "GShader",
+				"GShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
 				"PShader": "DepthAlphaMask_PShader",
 				"PShaderEntryPoint": "PShader",
+				"PShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
 				"PipelineState": "DoubleSided",
-				"VertexStream": "PositionUV"
+				"VertexStream": "PositionUV",
+				"Defines": ["SABER_INSTANCING", "VOUT_UV0"]
 			}
 		]
 	},

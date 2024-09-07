@@ -7,8 +7,9 @@
 		"Techniques": [
 			{
 				"Name": "Tonemapping_Default",
-				"VShader": "ToneMap_VShader",
+				"VShader": "FullscreenQuad_VShader",
 				"VShaderEntryPoint": "VShader",
+				"VShaderDefines": ["FLIP_FULLSCREEN_QUAD_UVS"], // OpenGL only
 				"PShader": "ToneMap_PShader",
 				"PShaderEntryPoint": "PShader",
 				"PipelineState": "FullscreenQuad_Always",

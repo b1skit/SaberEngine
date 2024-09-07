@@ -119,7 +119,7 @@ namespace droid
 
 		json[key_excludedPlatforms] = technique.ExcludedPlatforms;
 
-		// Note: We exclude the "Defines" block in the runtime version of the effect definition
+		// Note: We exclude the "_Defines" block in the runtime version of the Effect definition
 	}
 
 
@@ -136,6 +136,10 @@ namespace droid
 			if (json.contains(keys_entryPointNames[shaderIdx]))
 			{
 				json.at(keys_entryPointNames[shaderIdx]).get_to(technique._ShaderEntryPoint[shaderIdx]);
+			}
+			if (json.contains(keys_shaderDefines[shaderIdx]))
+			{
+				json.at(keys_shaderDefines[shaderIdx]).get_to(technique._Defines[shaderIdx]);
 			}
 		}
 
@@ -159,10 +163,6 @@ namespace droid
 				technique.ExcludedPlatforms.emplace(existingToLower);
 			}
 		}
-		if (json.contains(key_defines))
-		{
-			json.at(key_defines).get_to(technique.Defines);
-		}
 
 		// Metadata:
 		for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
@@ -170,7 +170,7 @@ namespace droid
 			technique.m_shaderVariantIDs[shaderTypeIdx] = ComputeShaderVariantID(
 				static_cast<re::Shader::ShaderType>(shaderTypeIdx),
 				technique._ShaderEntryPoint[shaderTypeIdx],
-				technique.Defines);
+				technique._Defines[shaderTypeIdx]);
 		}
 	}
 }

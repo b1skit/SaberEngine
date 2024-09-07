@@ -39,20 +39,22 @@ struct VertexOut
 };
 
 
-#if defined(SE_VERTEX_SHADER)
-	layout(location = 6) out VertexOut Out;
-#elif defined(SE_GEOMETRY_SHADER)
-	layout(location = 6) in VertexOut In[];
-	layout(location = 6) out VertexOut Out;
-#elif defined(SE_FRAGMENT_SHADER)
-	layout(location = 6) in VertexOut In;
-#endif
+#if !defined(HAS_OWN_VERTEX_OUTPUT_DECLARATION)
+	#if defined(SE_VERTEX_SHADER)
+		layout(location = 6) out VertexOut Out;
+	#elif defined(SE_GEOMETRY_SHADER)
+		layout(location = 6) in VertexOut In[];
+		layout(location = 6) out VertexOut Out;
+	#elif defined(SE_FRAGMENT_SHADER)
+		layout(location = 6) in VertexOut In;
+	#endif
+#endif // !defined(HAS_OWN_VERTEX_OUTPUT_DECLARATION)
 
 
 // Fragment shader outputs:
 //-------------------------
 
-#if defined(SE_FRAGMENT_SHADER)
+#if defined(SE_FRAGMENT_SHADER) && !defined(HAS_OWN_FRAGMENT_OUTPUT_DECLARATION)
 	#if defined(SABER_VEC2_OUTPUT)
 		layout (location = 0) out vec2 FragColor;
 	#elif defined(SABER_VEC3_OUTPUT)
@@ -61,6 +63,7 @@ struct VertexOut
 		layout (location = 0) out vec4 FragColor;
 	#endif
 #endif
+// TODO: These should all be defined locally in each shader
 
 
 // Instancing:

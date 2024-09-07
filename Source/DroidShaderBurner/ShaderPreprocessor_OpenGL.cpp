@@ -226,7 +226,13 @@ namespace droid
 		std::string const& outputDir)
 	{
 		// Load the base shader file:
-		std::string shaderTex = LoadShaderTextByExtension(includeDirectories, extensionlessSrcFilename, shaderType);
+		std::string shaderText = LoadShaderTextByExtension(includeDirectories, extensionlessSrcFilename, shaderType);
+
+		if (shaderText.empty())
+		{
+			std::cout << "Error: Failed to load GLSL shader text \"" << extensionlessSrcFilename.c_str() << "\"\n";
+			return droid::ErrorCode::FileError;
+		}
 
 		// Add our preambles:
 		std::vector<std::string> shaderTextStrings;
@@ -240,7 +246,7 @@ namespace droid
 		}
 
 		// Process the shader text, splitting it and inserting include files as they're encountered:
-		const bool result = InsertIncludeText(includeDirectories, shaderTex, shaderTextStrings);
+		const bool result = InsertIncludeText(includeDirectories, shaderText, shaderTextStrings);
 
 		// Get the total reservation size we'll need:
 		size_t requiredSize = 0;
@@ -248,13 +254,13 @@ namespace droid
 		{
 			requiredSize += include.size();
 		}
-		shaderTex.clear();
-		shaderTex.reserve(requiredSize);
+		shaderText.clear();
+		shaderText.reserve(requiredSize);
 
 		// Combine all of the include entries back into a single file:
 		for (auto const& include : shaderTextStrings)
 		{
-			shaderTex += include;
+			shaderText += include;
 		}
 
 		std::string const& outputFileName = std::format("{}.glsl", 
@@ -269,7 +275,7 @@ namespace droid
 			return droid::ErrorCode::FileError;
 		}
 
-		outputStream << shaderTex.c_str();
+		outputStream << shaderText.c_str();
 
 		outputStream.close();
 

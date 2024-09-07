@@ -3,7 +3,6 @@
 #define SABER_VEC4_OUTPUT
 #define VOUT_COLOR
 #define VOUT_TBN
-#define VOUT_WORLD_POS
 #define SABER_INSTANCING
 
 #include "SaberCommon.glsli"

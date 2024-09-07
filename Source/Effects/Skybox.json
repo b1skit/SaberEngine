@@ -7,7 +7,7 @@
 		"Techniques": [
 			{
 				"Name": "Skybox_Default",
-				"VShader": "Skybox_VShader",
+				"VShader": "FullscreenQuad_VShader",
 				"VShaderEntryPoint": "VShader",
 				"PShader": "Skybox_PShader",
 				"PShaderEntryPoint": "PShader",

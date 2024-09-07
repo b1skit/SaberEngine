@@ -15,7 +15,7 @@
 		"Techniques": [
 			{
 				"Name": "EmissiveBlit",
-				"VShader": "Blit_VShader",
+				"VShader": "FullscreenQuad_VShader",
 				"VShaderEntryPoint": "VShader",
 				"PShader": "Blit_PShader",
 				"PShaderEntryPoint": "PShader",

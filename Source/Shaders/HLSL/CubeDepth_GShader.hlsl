@@ -11,7 +11,7 @@ struct GeometryOut
 #ifdef VOUT_UV0
 	float2 UV0		: TEXCOORD0;
 #endif
-#ifdef VOUT_INSTANCE_ID
+#ifdef SABER_INSTANCING
 	nointerpolation uint InstanceID : SV_InstanceID;
 #endif
 	
@@ -36,7 +36,7 @@ void GShader(triangle VertexOut In[3], inout TriangleStream<GeometryOut> StreamO
 #if defined(VOUT_UV0)
 			Out.UV0 = In[vertIdx].UV0;
 #endif
-#if defined(VOUT_INSTANCE_ID)
+#if defined(SABER_INSTANCING)
 			Out.InstanceID = In[vertIdx].InstanceID;
 #endif
 			

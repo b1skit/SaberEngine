@@ -20,18 +20,18 @@
 		"Techniques": [
 			{
 				"Name": "Debug_Line",
-				"VShader": "Line_VShader",
+				"VShader": "Line",
 				"VShaderEntryPoint": "VShader",
-				"PShader": "Line_PShader",
+				"PShader": "Line",
 				"PShaderEntryPoint": "PShader",
 				"PipelineState": "Debug_Line",
 				"VertexStream": "PositionColor"
 			},
 			{
 				"Name": "Debug_Triangle",
-				"VShader": "Line_VShader",
+				"VShader": "Line",
 				"VShaderEntryPoint": "VShader",
-				"PShader": "Line_PShader",
+				"PShader": "Line",
 				"PShaderEntryPoint": "PShader",
 				"PipelineState": "Debug_Triangle",
 				"VertexStream": "PositionColor"

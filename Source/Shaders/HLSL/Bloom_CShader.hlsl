@@ -1,5 +1,4 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "BloomCommon.hlsli"
 #include "SaberComputeCommon.hlsli"
 #include "Color.hlsli"
 #include "UVUtils.hlsli"
@@ -10,6 +9,15 @@
 SamplerState ClampMinMagMipLinear;
 Texture2D<float4> Tex0;
 ConstantBuffer<BloomComputeData> BloomComputeParams;
+
+
+float ComputeKarisAverageWeight(float3 linearColor)
+{
+	const float3 sRGBColor = LinearToSRGB(linearColor);
+	const float luminance = sRGBToLuminance(sRGBColor);
+	const float weight = 1.f / (1.f + luminance);
+	return weight;
+}
 
 
 void BloomDown(ComputeIn In)

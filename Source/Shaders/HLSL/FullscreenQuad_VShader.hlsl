@@ -17,5 +17,4 @@ VertexOut VShader(VertexIn In)
 	return Out;
 }
 
-
 #endif // FULLSCREEN_QUAD_COMMON

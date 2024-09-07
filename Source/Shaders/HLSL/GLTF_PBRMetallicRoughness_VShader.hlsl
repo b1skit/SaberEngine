@@ -2,7 +2,7 @@
 #define VOUT_UV0
 #define VOUT_TBN
 #define VOUT_COLOR
-#define VOUT_INSTANCE_ID
+#define SABER_INSTANCING
 #include "NormalMapUtils.hlsli"
 #include "SaberCommon.hlsli"
 #include "../Generated/HLSL/VertexStreams_PosNmlTanUvCol.hlsli"

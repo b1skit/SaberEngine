@@ -33,3 +33,47 @@ void ExecuteMainPass(ComputeIn In, const lpfloat sliceCount, const lpfloat steps
 		output0,
 		output1);
 }
+
+
+[numthreads(XE_GTAO_NUMTHREADS_X, XE_GTAO_NUMTHREADS_Y, 1)]
+void MainPass_Low(ComputeIn In)
+{
+	// Low quality:
+	const lpfloat sliceCount = 1;
+	const lpfloat stepsPerSlice = 2;
+	
+	ExecuteMainPass(In, sliceCount, stepsPerSlice);
+}
+
+
+[numthreads(XE_GTAO_NUMTHREADS_X, XE_GTAO_NUMTHREADS_Y, 1)]
+void MainPass_Med(ComputeIn In)
+{
+	// Med quality:
+	const lpfloat sliceCount = 2;
+	const lpfloat stepsPerSlice = 2;
+	
+	ExecuteMainPass(In, sliceCount, stepsPerSlice);
+}
+
+
+[numthreads(XE_GTAO_NUMTHREADS_X, XE_GTAO_NUMTHREADS_Y, 1)]
+void MainPass_High(ComputeIn In)
+{
+	// High quality:
+	const lpfloat sliceCount = 3;
+	const lpfloat stepsPerSlice = 3;
+	
+	ExecuteMainPass(In, sliceCount, stepsPerSlice);
+}
+
+
+[numthreads(XE_GTAO_NUMTHREADS_X, XE_GTAO_NUMTHREADS_Y, 1)]
+void MainPass_Ultra(ComputeIn In)
+{
+	// Ultra quality:
+	const lpfloat sliceCount = 9;
+	const lpfloat stepsPerSlice = 3;
+	
+	ExecuteMainPass(In, sliceCount, stepsPerSlice);
+}

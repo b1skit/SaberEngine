@@ -6,7 +6,7 @@
 #include "VertexStreams_PositionUV.glsli"
 
 
-void main()
+void VShader()
 {
 	gl_Position	= vec4(Position, 1);	// Our screen aligned quad is already in clip space
 

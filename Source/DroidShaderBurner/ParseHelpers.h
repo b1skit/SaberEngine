@@ -24,10 +24,10 @@ namespace droid
 		std::string Name;
 		std::array<std::string, re::Shader::ShaderType_Count> _Shader;
 		std::array<std::string, re::Shader::ShaderType_Count> _ShaderEntryPoint;
+		std::array<std::vector<std::string>, re::Shader::ShaderType_Count> _Defines;
 		std::string PipelineState;
 		std::string VertexStream;
 		std::set<std::string> ExcludedPlatforms;
-		std::vector<std::string> Defines;
 
 		// Metadata: Used during Droid processing, not read to/from JSON
 		std::array<uint64_t, re::Shader::ShaderType_Count> m_shaderVariantIDs;

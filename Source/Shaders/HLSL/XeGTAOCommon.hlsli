@@ -59,8 +59,6 @@ RWTexture2D<uint> output0 : register(u0);
 
 
 
-
-
 // Get screen or temporal noise for the Hilbert LUT
 lpfloat2 SpatioTemporalNoise(uint2 pixCoord, uint temporalIndex)    // without TAA, temporalIndex is always 0
 {

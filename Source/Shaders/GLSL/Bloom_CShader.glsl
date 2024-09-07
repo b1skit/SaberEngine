@@ -1,11 +1,19 @@
 // © 2023 Adam Badke. All rights reserved.
 #version 460
-#include "BloomCommon.glsli"
 #include "Color.glsli"
 #include "SaberCommon.glsli"
 #include "UVUtils.glsli"
 
 layout(location=0, rgba32f) coherent uniform image2D output0;
+
+
+float ComputeKarisAverageWeight(vec3 linearColor)
+{
+	const vec3 sRGBColor = LinearToSRGB(linearColor);
+	const float luminance = sRGBToLuminance(sRGBColor);
+	const float weight = 1.f / (1.f + luminance);
+	return weight;
+}
 
 
 void BloomDown(in const uvec3 DTId)

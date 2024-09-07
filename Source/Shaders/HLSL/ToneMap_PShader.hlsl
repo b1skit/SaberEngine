@@ -1,6 +1,4 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "BloomCommon.hlsli"
-
 #define VOUT_UV0
 #include "SaberCommon.hlsli"
 

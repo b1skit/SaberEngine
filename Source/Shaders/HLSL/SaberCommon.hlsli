@@ -29,7 +29,7 @@ struct VertexOut
 #ifdef VOUT_TBN
 	float3x3 TBN	: TEXCOORD3;
 #endif
-#ifdef VOUT_INSTANCE_ID
+#ifdef SABER_INSTANCING
 	nointerpolation uint InstanceID : SV_InstanceID;
 #endif
 };
