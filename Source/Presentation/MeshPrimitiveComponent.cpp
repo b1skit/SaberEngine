@@ -153,15 +153,15 @@ namespace fr
 			
 		};
 
-		std::vector<re::VertexStream const*> const& vertexStreams =
+		std::vector<gr::MeshPrimitive::MeshVertexStream> const& vertexStreams =
 			meshPrimitiveComponent.m_meshPrimitive->GetVertexStreams();
 		for (size_t slotIdx = 0; slotIdx < vertexStreams.size(); slotIdx++)
 		{
-			if (vertexStreams[slotIdx] == nullptr) // We assume vertex streams are tightly packed
+			if (vertexStreams[slotIdx].m_vertexStream == nullptr) // We assume vertex streams are tightly packed
 			{
 				break;
 			}
-			renderData.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
+			renderData.m_vertexStreams[slotIdx] = vertexStreams[slotIdx].m_vertexStream;
 			renderData.m_numVertexStreams++;
 		}
 

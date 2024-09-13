@@ -102,33 +102,11 @@ namespace re
 			Lifetime m_lifetime = Lifetime::Permanent;
 
 			Type m_type = Type::Type_Count;
-			uint8_t m_typeIdx = 0; // Index in the source asset. Must be unique & monotonically increasing. Used for sorting
 
 			IsMorphData m_isMorphData = IsMorphData::False;
-			uint8_t m_morphTargetIdx = 0;
 
 			DataType m_dataType = DataType::DataType_Count;
 			Normalize m_doNormalize = Normalize::False;
-		};
-
-
-	public:
-		struct VertexComparisonData
-		{
-			Type m_streamType;
-			uint8_t m_typeIdx;
-		};
-		struct MorphComparisonData
-		{
-			Type m_streamType;
-			uint8_t m_typeIdx;
-			uint8_t m_morphTargetIdx;
-		};
-		struct Comparator
-		{
-			bool operator()(VertexStream const*, VertexStream const*);
-			bool operator()(VertexStream const*, VertexComparisonData const&);
-			bool operator()(VertexStream const*, MorphComparisonData const&);
 		};
 
 
@@ -143,10 +121,8 @@ namespace re
 		Lifetime GetLifetime() const;
 
 		Type GetType() const;
-		uint8_t GetSourceTypeIdx() const; // Index/channel of the stream in the source asset (e.g. uv0 = 0, uv1 = 1)
 
 		bool IsMorphData() const;
-		uint8_t GetMorphTargetIdx() const;
 
 		DataType GetDataType() const; // What data type does each individual component have?
 		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
@@ -195,59 +171,6 @@ namespace re
 	};
 
 
-	inline bool VertexStream::Comparator::operator()(VertexStream const* a, VertexStream const* b)
-	{
-		if (a->GetType() == b->GetType())
-		{
-			SEAssert(a->IsMorphData() == b->IsMorphData(),
-				"Trying to sort morph data with non-morph data. This is unexpected");
-			const bool isMorphData = a->IsMorphData();
-
-			if (isMorphData &&
-				a->GetSourceTypeIdx() == b->GetSourceTypeIdx())
-			{
-				return a->GetMorphTargetIdx() < b->GetMorphTargetIdx();
-			}
-			else
-			{
-				return a->GetSourceTypeIdx() < b->GetSourceTypeIdx();
-			}
-		}
-		return a->GetType() < b->GetType();
-	}
-
-
-	inline bool VertexStream::Comparator::operator()(VertexStream const* a, VertexComparisonData const& b)
-	{
-		SEAssert(!a->IsMorphData(), "Trying to sort morph data with a non-morph data comparator. This is unexpected");
-
-		if (a->GetType() == b.m_streamType)
-		{
-			return a->GetSourceTypeIdx() < b.m_typeIdx;
-		}
-		return a->GetType() < b.m_streamType;
-	}
-
-
-	inline bool VertexStream::Comparator::operator()(VertexStream const* a, MorphComparisonData const& b)
-	{
-		SEAssert(a->IsMorphData(), "Trying to sort non-morph data with a morph data comparator. This is unexpected");
-
-		if (a->GetType() == b.m_streamType)
-		{
-			if (a->GetSourceTypeIdx() == b.m_typeIdx)
-			{
-				return a->GetMorphTargetIdx() < b.m_morphTargetIdx;
-			}
-			else
-			{
-				return a->GetSourceTypeIdx() < b.m_typeIdx;
-			}
-		}
-		return a->GetType() < b.m_streamType;
-	}
-
-
 	inline VertexStream::Lifetime VertexStream::GetLifetime() const
 	{
 		return m_createParams.m_lifetime;
@@ -260,21 +183,9 @@ namespace re
 	}
 
 
-	inline uint8_t VertexStream::GetSourceTypeIdx() const
-	{
-		return m_createParams.m_typeIdx;
-	}
-
-
 	inline bool VertexStream::IsMorphData() const
 	{
 		return m_createParams.m_isMorphData == IsMorphData::True;
-	}
-
-
-	inline uint8_t VertexStream::GetMorphTargetIdx() const
-	{
-		return m_createParams.m_morphTargetIdx;
 	}
 
 

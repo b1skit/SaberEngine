@@ -343,7 +343,7 @@ namespace opengl
 
 								opengl::VertexStream::Bind(
 									*batchGraphicsParams.m_vertexStreams[slotIdx].m_vertexStream,
-									batchGraphicsParams.m_vertexStreams[slotIdx].m_slot);
+									batchGraphicsParams.m_vertexStreams[slotIdx].m_bindSlot);
 							}
 							if (batchGraphicsParams.m_indexStream)
 							{

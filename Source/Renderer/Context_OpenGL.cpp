@@ -487,7 +487,7 @@ namespace opengl
 				break;
 			}
 
-			bitmask |= (1 << vertexStreams[streamIdx].m_slot);
+			bitmask |= (1 << vertexStreams[streamIdx].m_bindSlot);
 
 			util::AddDataToHash(vertexStreamHash, vertexStream->GetNumComponents()); // 1/2/3/4
 			util::AddDataToHash(
@@ -541,7 +541,7 @@ namespace opengl
 						break;
 					}
 
-					const uint8_t slotIdx = vertexStreams[streamIdx].m_slot;
+					const uint8_t slotIdx = vertexStreams[streamIdx].m_bindSlot;
 
 					glEnableVertexArrayAttrib(newVAO, slotIdx);
 
@@ -585,7 +585,7 @@ namespace opengl
 		const re::Batch::VertexStreamInput tempVertexInput
 		{
 			.m_vertexStream = vertexStream,
-			.m_slot = 0,
+			.m_bindSlot = 0,
 		};
 		return GetCreateVAO(&tempVertexInput, 1, nullptr);
 	}

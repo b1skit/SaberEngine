@@ -67,21 +67,21 @@ namespace
 				ValidateVertexStreamLifetime(batchLifetime, vertexStreams[i].m_vertexStream);
 			}
 
+			SEAssert(vertexStreams[i].m_vertexStream == nullptr || 
+				vertexStreams[i].m_bindSlot != re::Batch::VertexStreamInput::k_invalidSlotIdx,
+				"Invalid bind slot detected");
+
 			SEAssert(vertexStreams[i].m_vertexStream == nullptr ||
 				i + 1 == numVertexStreams ||
 				vertexStreams[i + 1].m_vertexStream == nullptr ||
-				vertexStreams[i].m_vertexStream->GetType() != vertexStreams[i + 1].m_vertexStream->GetType() ||
-				vertexStreams[i].m_slot + 1 == vertexStreams[i + 1].m_slot ||
-				(vertexStreams[i].m_slot == re::Batch::VertexStreamInput::k_invalidSlotIdx && // Manually created batches
-					vertexStreams[i + 1].m_slot == re::Batch::VertexStreamInput::k_invalidSlotIdx),
-
+				vertexStreams[i].m_vertexStream->GetType() < vertexStreams[i + 1].m_vertexStream->GetType() ||
+				vertexStreams[i].m_bindSlot + 1 == vertexStreams[i + 1].m_bindSlot,
 				"Vertex streams of the same type must be stored in monotoically-increasing slot order");
 
-			if (vertexStreams[i].m_vertexStream != nullptr &&
-				vertexStreams[i].m_slot != re::Batch::VertexStreamInput::k_invalidSlotIdx)
+			if (vertexStreams[i].m_vertexStream != nullptr)
 			{
-				SEAssert(!seenSlots.contains(vertexStreams[i].m_slot), "Duplicate slot index detected");
-				seenSlots.emplace(vertexStreams[i].m_slot);
+				SEAssert(!seenSlots.contains(vertexStreams[i].m_bindSlot), "Duplicate slot index detected");
+				seenSlots.emplace(vertexStreams[i].m_bindSlot);
 			}
 		}
 
@@ -200,28 +200,26 @@ namespace re
 
 		// We assume the meshPrimitive's vertex streams are ordered such that identical stream types are tightly
 		// packed, and in the correct channel order corresponding to the final shader slots (e.g. uv0, uv1, etc)
-		std::vector<re::VertexStream const*> const& vertexStreams = meshPrimitive->GetVertexStreams();
+		std::vector<gr::MeshPrimitive::MeshVertexStream> const& vertexStreams = meshPrimitive->GetVertexStreams();
 		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(vertexStreams.size()); slotIdx++)
 		{
-			if (vertexStreams[slotIdx] == nullptr)
+			if (vertexStreams[slotIdx].m_vertexStream == nullptr)
 			{
 				break;
 			}
 
 			SEAssert((m_lifetime == Lifetime::SingleFrame) ||
-				(vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent &&
+				(vertexStreams[slotIdx].m_vertexStream->GetLifetime() == re::VertexStream::Lifetime::Permanent &&
 					m_lifetime == Lifetime::Permanent),
 				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 
 			m_graphicsParams.m_vertexStreams[slotIdx] = VertexStreamInput{
-				.m_vertexStream = vertexStreams[slotIdx],
-				.m_slot = VertexStreamInput::k_invalidSlotIdx, // Populated during shader resolve
+				.m_vertexStream = vertexStreams[slotIdx].m_vertexStream,
+				.m_bindSlot = VertexStreamInput::k_invalidSlotIdx, // Populated during shader resolve
 			};
 			m_graphicsParams.m_numVertexStreams++;
 		}
 		m_graphicsParams.m_indexStream = meshPrimitive->GetIndexStream();
-
-		ValidateVertexStreams(m_lifetime, m_graphicsParams.m_vertexStreams, m_graphicsParams.m_numVertexStreams); // _DEBUG only
 
 		ComputeDataHash();
 	}
@@ -264,7 +262,7 @@ namespace re
 
 			m_graphicsParams.m_vertexStreams[slotIdx] = VertexStreamInput{
 				.m_vertexStream = meshPrimRenderData.m_vertexStreams[slotIdx],
-				.m_slot = VertexStreamInput::k_invalidSlotIdx, // Populated during shader resolve
+				.m_bindSlot = VertexStreamInput::k_invalidSlotIdx, // Populated during shader resolve
 			};
 			m_graphicsParams.m_numVertexStreams++;
 		}
@@ -295,8 +293,6 @@ namespace re
 			SetFilterMaskBit(Filter::CastsShadow, materialInstanceData->m_isShadowCaster);
 		}
 
-		ValidateVertexStreams(m_lifetime, m_graphicsParams.m_vertexStreams, m_graphicsParams.m_numVertexStreams); // _DEBUG only
-
 		ComputeDataHash();
 	}
 
@@ -317,8 +313,6 @@ namespace re
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
 		m_graphicsParams = graphicsParams;
-
-		ValidateVertexStreams(m_lifetime, m_graphicsParams.m_vertexStreams, m_graphicsParams.m_numVertexStreams); // _DEBUG only
 
 		ComputeDataHash();
 	}
@@ -348,12 +342,6 @@ namespace re
 		for (auto const& buf : result.m_batchBuffers)
 		{
 			ValidateBufferLifetimeCompatibility(result.m_lifetime, buf->GetType());
-		}
-
-		if (result.m_type == re::Batch::BatchType::Graphics)
-		{
-			ValidateVertexStreams(
-				newLifetime, result.m_graphicsParams.m_vertexStreams, result.m_graphicsParams.m_numVertexStreams); // _DEBUG only
 		}
 #endif
 
@@ -400,7 +388,7 @@ namespace re
 					const uint8_t vertexAttribSlot = m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
 					if (vertexAttribSlot != re::VertexStreamMap::k_invalidSlotIdx)
 					{
-						m_graphicsParams.m_vertexStreams[i + semanticIdx].m_slot =
+						m_graphicsParams.m_vertexStreams[i + semanticIdx].m_bindSlot =
 							m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
 					}
 					else
@@ -452,13 +440,7 @@ namespace re
 			SEAssert(m_graphicsParams.m_numVertexStreams == m_batchShader->GetVertexStreamMap()->GetNumSlots(),
 				"Batch doesn't have enough vertex streams to meet shader vertex slot count");
 
-			// Finally, sort our streams to ensure the shader vertex slot indexes are monotonically increasing. This
-			// is an optimization for the DX12 backend, which sets vertex buffers in contiguous slot ranges (e.g. 
-			// [0,1], [4,7], ...)
-			std::sort(
-				std::begin(m_graphicsParams.m_vertexStreams),
-				std::begin(m_graphicsParams.m_vertexStreams) + m_graphicsParams.m_numVertexStreams,
-				re::Batch::VertexStreamInputComparator());
+			ValidateVertexStreams(m_lifetime, m_graphicsParams.m_vertexStreams, m_graphicsParams.m_numVertexStreams); // _DEBUG only
 		}
 	}
 

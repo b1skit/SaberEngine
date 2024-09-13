@@ -493,7 +493,7 @@ namespace dx12
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
 		streamViews.reserve(re::VertexStream::k_maxVertexStreams);
 
-		uint8_t startSlotIdx = streams[0].m_slot;
+		uint8_t startSlotIdx = streams[0].m_bindSlot;
 		uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;
 		for (uint32_t streamIdx = 0; streamIdx < numVertexStreamInputs; streamIdx++)
 		{
@@ -513,10 +513,10 @@ namespace dx12
 			// Peek ahead: If there are no more contiguous slots, flush the stream views
 			const uint32_t nextStreamIdx = streamIdx + 1;
 			if (nextStreamIdx >= re::VertexStream::k_maxVertexStreams ||
-				streams[nextStreamIdx].m_slot != nextConsecutiveSlotIdx)
+				streams[nextStreamIdx].m_bindSlot != nextConsecutiveSlotIdx)
 			{
 				SEAssert(nextStreamIdx >= re::VertexStream::k_maxVertexStreams ||
-					streams[nextStreamIdx].m_slot > nextConsecutiveSlotIdx, 
+					streams[nextStreamIdx].m_bindSlot > nextConsecutiveSlotIdx, 
 					"Out of order vertex streams detected");
 
 				// Flush the list we've built so far
@@ -533,7 +533,7 @@ namespace dx12
 				// Prepare for the next iteration:
 				if (nextStreamIdx < re::VertexStream::k_maxVertexStreams)
 				{
-					startSlotIdx = streams[nextStreamIdx].m_slot;
+					startSlotIdx = streams[nextStreamIdx].m_bindSlot;
 					uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;
 				}
 			}

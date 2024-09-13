@@ -227,7 +227,7 @@ namespace
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
 		util::ByteVector* colorsPtr = factoryOptions.m_generateNormalsAndTangents ? &colors : nullptr;
 
-		std::vector<re::VertexStream const*> vertexStreams;
+		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(4);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
@@ -426,7 +426,7 @@ namespace gr::meshfactory
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
 		util::ByteVector* colorsPtr = factoryOptions.m_generateNormalsAndTangents ? &colors : nullptr;
 
-		std::vector<re::VertexStream const*> vertexStreams;
+		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(5);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
@@ -537,7 +537,7 @@ namespace gr::meshfactory
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
-		std::vector<re::VertexStream const*> vertexStreams;
+		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(2);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
@@ -620,7 +620,7 @@ namespace gr::meshfactory
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
 		util::ByteVector* colorsPtr = factoryOptions.m_generateNormalsAndTangents ? &colors : nullptr;
 
-		std::vector<re::VertexStream const*> vertexStreams;
+		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(5);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
@@ -882,7 +882,7 @@ namespace gr::meshfactory
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
 		util::ByteVector* colorsPtr = factoryOptions.m_generateNormalsAndTangents ? &colors : nullptr;
 
-		std::vector<re::VertexStream const*> vertexStreams;
+		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(4);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
@@ -1130,7 +1130,7 @@ namespace gr::meshfactory
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
 		util::ByteVector* colorsPtr = factoryOptions.m_generateNormalsAndTangents ? &colors : nullptr;
 
-		std::vector<re::VertexStream const*> vertexStreams;
+		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(5);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
@@ -1259,7 +1259,7 @@ namespace gr::meshfactory
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
 
-		std::vector<re::VertexStream const*> vertexStreams;
+		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(5);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(

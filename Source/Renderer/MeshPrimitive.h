@@ -38,6 +38,25 @@ namespace gr
 			TopologyMode m_topologyMode = TopologyMode::TriangleList;
 		};
 
+		struct MeshVertexStream
+		{
+			re::VertexStream const* m_vertexStream = nullptr;
+			uint8_t m_typeIdx = 0; // Index of m_vertexStream, w.r.t other streams of the same type. Used for sorting
+
+			std::vector<re::VertexStream const*> m_morphTargets;
+		};
+
+		struct MeshVertexStreamComparisonData
+		{
+			re::VertexStream::Type m_streamType;
+			uint8_t m_typeIdx;
+		};
+		struct MeshVertexStreamComparator
+		{
+			bool operator()(MeshVertexStream const&, MeshVertexStream const&);
+			bool operator()(MeshVertexStream const&, MeshVertexStreamComparisonData const&);
+		};
+
 
 	public:
 		struct RenderData
@@ -63,14 +82,7 @@ namespace gr
 		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
 			std::string const& name,
 			re::VertexStream const* indexStream,
-			std::vector<re::VertexStream const*>&& vertexStreams,			
-			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
-
-		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
-			std::string const& name,
-			re::VertexStream const* indexStream,
-			std::vector<re::VertexStream const*>&& vertexStreams,
-			std::vector<re::VertexStream const*>&& morphTargets,
+			std::vector<MeshVertexStream>&& vertexStreams,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
@@ -82,11 +94,7 @@ namespace gr
 		re::VertexStream const* GetIndexStream() const;
 		
 		re::VertexStream const* GetVertexStream(re::VertexStream::Type, uint8_t srcTypeIdx) const;
-		std::vector<re::VertexStream const*> const& GetVertexStreams() const;
-
-		re::VertexStream const* GetMorphTargetStream(
-			re::VertexStream::Type, uint8_t srcTypeIdx, uint8_t morphTargetIdx) const;
-		std::vector<re::VertexStream const*> const& GetMorphTargetStreams() const;
+		std::vector<MeshVertexStream> const& GetVertexStreams() const;
 
 		void ShowImGuiWindow() const;
 
@@ -95,8 +103,7 @@ namespace gr
 		MeshPrimitiveParams m_params;
 
 		re::VertexStream const* m_indexStream;
-		std::vector<re::VertexStream const*> m_vertexStreams;
-		std::vector<re::VertexStream const*> m_morphTargets;
+		std::vector<MeshVertexStream> m_vertexStreams;
 
 
 		void ComputeDataHash() override;
@@ -105,8 +112,7 @@ namespace gr
 	private: // Private ctor: Use the Create factory instead
 		MeshPrimitive(char const* name,
 			re::VertexStream const* indexStream,
-			std::vector<re::VertexStream const*>&& vertexStreams,
-			std::vector<re::VertexStream const*>&& morphTargets,
+			std::vector<MeshVertexStream>&& vertexStreams,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 
@@ -129,15 +135,31 @@ namespace gr
 	}
 
 
-	inline std::vector<re::VertexStream const*> const& MeshPrimitive::GetVertexStreams() const
+	inline std::vector<MeshPrimitive::MeshVertexStream> const& MeshPrimitive::GetVertexStreams() const
 	{
 		return m_vertexStreams;
 	}
 
 
-	inline std::vector<re::VertexStream const*> const& MeshPrimitive::GetMorphTargetStreams() const
+	inline bool MeshPrimitive::MeshVertexStreamComparator::operator()(
+		gr::MeshPrimitive::MeshVertexStream const& a, gr::MeshPrimitive::MeshVertexStream const& b)
 	{
-		return m_morphTargets;
+		if (a.m_vertexStream->GetType() == b.m_vertexStream->GetType())
+		{
+			return a.m_typeIdx < b.m_typeIdx;
+		}
+		return a.m_vertexStream->GetType() < b.m_vertexStream->GetType();
+	}
+
+
+	inline bool MeshPrimitive::MeshVertexStreamComparator::operator()(
+		MeshPrimitive::MeshVertexStream const& a, MeshPrimitive::MeshVertexStreamComparisonData const& b)
+	{
+		if (a.m_vertexStream->GetType() == b.m_streamType)
+		{
+			return a.m_typeIdx < b.m_typeIdx;
+		}
+		return a.m_vertexStream->GetType() < b.m_streamType;
 	}
 
 

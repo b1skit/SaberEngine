@@ -297,13 +297,9 @@ namespace re
 	void VertexStream::ShowImGuiWindow() const
 	{
 		ImGui::Text(std::format("Type: {}", TypeToCStr(m_createParams.m_type)).c_str());
-		ImGui::Text(std::format("Source type index: {}", m_createParams.m_typeIdx).c_str());
 
 		const bool isMorphTarget = m_createParams.m_isMorphData == VertexStream::IsMorphData::True;
-		if (isMorphTarget)
-		{
-			ImGui::Text(std::format("Morph target index: {}", m_createParams.m_morphTargetIdx).c_str());
-		}
+		ImGui::Text(std::format("Is morph target data? {}", isMorphTarget ? "true" : "false").c_str());
 
 		ImGui::Text(std::format("Data type: {}", DataTypeToCStr(m_createParams.m_dataType)).c_str());
 		ImGui::Text(std::format("Normalized? {}", (m_createParams.m_doNormalize ? "true" : "false")).c_str());

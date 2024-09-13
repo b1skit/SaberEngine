@@ -24,51 +24,37 @@ namespace
 	}
 
 
-	void ValidateVertexStreams(std::vector<re::VertexStream const*> const& vertexStreams, bool allowEmpty)
+	void ValidateVertexStreams(std::vector<gr::MeshPrimitive::MeshVertexStream> const& vertexStreams)
 	{
 #if defined(_DEBUG)
 
-		SEAssert(!vertexStreams.empty() || allowEmpty, "Must have at least 1 vertex stream");
+		SEAssert(!vertexStreams.empty(), "Must have at least 1 vertex stream");
 
 		std::array<std::unordered_set<uint8_t>, static_cast<uint8_t>(re::VertexStream::Type::Type_Count)> seenSlots;
-		std::array<std::unordered_set<uint8_t>, static_cast<uint8_t>(re::VertexStream::Type::Type_Count)> seenMorphSlots;
 		for (size_t i = 0; i < vertexStreams.size(); ++i)
 		{
-			SEAssert(vertexStreams[i] != nullptr, "Found a null vertex stream in the input");
+			SEAssert(vertexStreams[i].m_vertexStream != nullptr, "Found a null vertex stream in the input");
 
 			SEAssert(i + 1 == vertexStreams.size() ||
-				vertexStreams[i]->GetType() != vertexStreams[i + 1]->GetType() ||
-				vertexStreams[i]->GetSourceTypeIdx() < vertexStreams[i + 1]->GetSourceTypeIdx() ||
-				(vertexStreams[i]->GetSourceTypeIdx() == vertexStreams[i + 1]->GetSourceTypeIdx() && 
-					vertexStreams[i]->IsMorphData() && 
-					vertexStreams[i + 1]->IsMorphData() &&
-					vertexStreams[i]->GetMorphTargetIdx() < vertexStreams[i + 1]->GetMorphTargetIdx()),
+				vertexStreams[i].m_vertexStream->GetType() != vertexStreams[i + 1].m_vertexStream->GetType() ||
+				vertexStreams[i].m_typeIdx < vertexStreams[i + 1].m_typeIdx,
 				"Vertex streams of the same type must be stored in monotoically-increasing source slot order");
 
-			SEAssert(!seenSlots[static_cast<uint8_t>(vertexStreams[i]->GetType())].contains(
-					vertexStreams[i]->GetSourceTypeIdx()) ||
-				(vertexStreams[i]->IsMorphData() && 
-					!seenMorphSlots[static_cast<uint8_t>(vertexStreams[i]->GetType())].contains(
-						vertexStreams[i]->GetMorphTargetIdx())),
+			SEAssert(!seenSlots[static_cast<uint8_t>(vertexStreams[i].m_vertexStream->GetType())].contains(
+				vertexStreams[i].m_typeIdx),
 				"Duplicate slot index detected");
 			
-			seenSlots[static_cast<uint8_t>(vertexStreams[i]->GetType())].emplace(
-				vertexStreams[i]->GetSourceTypeIdx());
-
-			if (vertexStreams[i]->IsMorphData())
-			{
-				seenMorphSlots[static_cast<uint8_t>(vertexStreams[i]->GetType())].emplace(
-					vertexStreams[i]->GetMorphTargetIdx());
-			}
+			seenSlots[static_cast<uint8_t>(vertexStreams[i].m_vertexStream->GetType())].emplace(
+				vertexStreams[i].m_typeIdx);
 		}
 
 #endif
 	}
 
 
-	inline void SortVertexStreams(std::vector<re::VertexStream const*>& vertexStreams)
+	inline void SortVertexStreams(std::vector<gr::MeshPrimitive::MeshVertexStream>& vertexStreams)
 	{
-		std::sort(vertexStreams.begin(), vertexStreams.end(), re::VertexStream::Comparator());
+		std::sort(vertexStreams.begin(), vertexStreams.end(), gr::MeshPrimitive::MeshVertexStreamComparator());
 	}
 }
 
@@ -77,16 +63,28 @@ namespace gr
 	re::VertexStream const* MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData,
 		re::VertexStream::Type streamType,
-		int8_t srcTypeIdx /*= -1*/)
+		int8_t typeIdx /*= -1*/)
 	{
 		re::VertexStream const* result = nullptr;
 
-		for (auto const& stream : meshPrimRenderData.m_vertexStreams)
+		for (uint8_t streamIdx = 0; streamIdx < meshPrimRenderData.m_vertexStreams.size(); ++streamIdx)
 		{
-			if (stream->GetType() == streamType &&
-				(srcTypeIdx < 0 || stream->GetSourceTypeIdx() == srcTypeIdx))
+			if (meshPrimRenderData.m_vertexStreams[streamIdx]->GetType() == streamType)
 			{
-				result = stream;
+				if (typeIdx < 0)
+				{
+					result = meshPrimRenderData.m_vertexStreams[streamIdx];
+				}
+				else 
+				{
+					const uint8_t offsetIdx = streamIdx + typeIdx;
+
+					if (offsetIdx < meshPrimRenderData.m_vertexStreams.size() &&
+						meshPrimRenderData.m_vertexStreams[offsetIdx]->GetType() == streamType)
+					{
+						result = meshPrimRenderData.m_vertexStreams[offsetIdx];
+					}
+				}
 				break;
 			}
 		}
@@ -98,19 +96,7 @@ namespace gr
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
 		std::string const& name,
 		re::VertexStream const* indexStream,
-		std::vector<re::VertexStream const*>&& vertexStreams,
-		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
-	{
-		std::vector<re::VertexStream const*> emptyMorphTargets;
-		return Create(name, indexStream, std::move(vertexStreams), std::move(emptyMorphTargets), meshParams);
-	}
-
-
-	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
-		std::string const& name,
-		re::VertexStream const* indexStream,
-		std::vector<re::VertexStream const*>&& vertexStreams,
-		std::vector<re::VertexStream const*>&& morphTargets,
+		std::vector<MeshVertexStream>&& vertexStreams,
 		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
 		std::shared_ptr<MeshPrimitive> newMeshPrimitive;
@@ -118,7 +104,6 @@ namespace gr
 			name.c_str(),
 			indexStream,
 			std::move(vertexStreams),
-			std::move(morphTargets),
 			meshParams));
 
 		// This call will replace the newMeshPrimitive pointer if a duplicate MeshPrimitive already exists
@@ -131,63 +116,37 @@ namespace gr
 	MeshPrimitive::MeshPrimitive(
 		char const* name,
 		re::VertexStream const* indexStream,
-		std::vector<re::VertexStream const*>&& vertexStreams,
-		std::vector<re::VertexStream const*>&& morphTargets,
+		std::vector<MeshVertexStream>&& vertexStreams,
 		MeshPrimitiveParams const& meshParams)
 		: INamedObject(name)
 		, m_params(meshParams)
 		, m_indexStream(indexStream)
 		, m_vertexStreams(std::move(vertexStreams))
-		, m_morphTargets(std::move(morphTargets))
 	{
 		SortVertexStreams(m_vertexStreams);
-		SortVertexStreams(m_morphTargets);
 
-		ValidateVertexStreams(m_vertexStreams, false); // _DEBUG only
-		ValidateVertexStreams(m_morphTargets, true); // _DEBUG only
+		ValidateVertexStreams(m_vertexStreams); // _DEBUG only
 
 		ComputeDataHash();
 	}
 
 
-	re::VertexStream const* MeshPrimitive::GetVertexStream(re::VertexStream::Type streamType, uint8_t srcTypeIdx) const
+	re::VertexStream const* MeshPrimitive::GetVertexStream(re::VertexStream::Type streamType, uint8_t typeIdx) const
 	{
 		auto result = std::lower_bound(
 			m_vertexStreams.begin(),
 			m_vertexStreams.end(),
-			re::VertexStream::VertexComparisonData{
+			MeshPrimitive::MeshVertexStreamComparisonData{
 				.m_streamType = streamType,
-				.m_typeIdx = srcTypeIdx },
-			re::VertexStream::Comparator());
+				.m_typeIdx = typeIdx },
+				MeshPrimitive::MeshVertexStreamComparator());
 
-		SEAssert(*result != nullptr && 
-			(*result)->GetType() == streamType && 
-			(*result)->GetSourceTypeIdx() == srcTypeIdx,
+		SEAssert(result != m_vertexStreams.end() &&
+			result->m_vertexStream->GetType() == streamType &&
+			result->m_typeIdx == typeIdx,
 			"Failed to find a vertex stream of the given type and source type index. This is probably a surprise");
 
-		return *result;
-	}
-
-
-	re::VertexStream const* MeshPrimitive::GetMorphTargetStream(
-		re::VertexStream::Type streamType, uint8_t srcTypeIdx, uint8_t morphTargetIdx) const
-	{
-		auto result = std::lower_bound(
-			m_morphTargets.begin(),
-			m_morphTargets.end(),
-			re::VertexStream::MorphComparisonData{
-				.m_streamType = streamType,
-				.m_typeIdx = srcTypeIdx,
-				.m_morphTargetIdx = morphTargetIdx },
-			re::VertexStream::Comparator());
-
-		SEAssert(*result != nullptr &&
-			(*result)->GetType() == streamType &&
-			(*result)->GetSourceTypeIdx() == srcTypeIdx &&
-			(*result)->GetMorphTargetIdx() == morphTargetIdx,
-			"Failed to find a vertex stream of the given type and source type index. This is probably a surprise");
-
-		return *result;
+		return result->m_vertexStream;
 	}
 
 
@@ -201,11 +160,12 @@ namespace gr
 		}
 		for (size_t i = 0; i < m_vertexStreams.size(); i++)
 		{
-			AddDataBytesToHash(m_vertexStreams[i]->GetDataHash());
-		}
-		for (size_t i = 0; i < m_morphTargets.size(); i++)
-		{
-			AddDataBytesToHash(m_morphTargets[i]->GetDataHash());
+			AddDataBytesToHash(m_vertexStreams[i].m_vertexStream->GetDataHash());
+
+			for (size_t i = 0; i < m_vertexStreams[i].m_morphTargets.size(); i++)
+			{
+				AddDataBytesToHash(m_vertexStreams[i].m_morphTargets[i]->GetDataHash());
+			}
 		}
 	}
 
@@ -227,27 +187,30 @@ namespace gr
 				for (size_t i = 0; i < m_vertexStreams.size(); i++)
 				{
 					ImGui::Text(std::format("{}:", i).c_str());
-					m_vertexStreams[i]->ShowImGuiWindow();
-					ImGui::Separator();
-				}
-				ImGui::Unindent();
-			}
+					m_vertexStreams[i].m_vertexStream->ShowImGuiWindow();
 
-			ImGui::BeginDisabled(m_morphTargets.empty());
-			if (ImGui::CollapsingHeader(
-					std::format("Morph targets ({})##{}", m_morphTargets.size(), GetUniqueID()).c_str(),
-					ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				for (size_t i = 0; i < m_morphTargets.size(); i++)
-				{
-					ImGui::Text(std::format("{}:", i).c_str());
-					m_morphTargets[i]->ShowImGuiWindow();
+
+					ImGui::BeginDisabled(m_vertexStreams[i].m_morphTargets.empty());
+					if (ImGui::CollapsingHeader(
+						std::format("Morph targets ({})##{}", m_vertexStreams[i].m_morphTargets.size(), GetUniqueID()).c_str(),
+						ImGuiTreeNodeFlags_None))
+					{
+						ImGui::Indent();
+						for (size_t i = 0; i < m_vertexStreams[i].m_morphTargets.size(); i++)
+						{
+							ImGui::Text(std::format("{}:", i).c_str());
+							m_vertexStreams[i].m_morphTargets[i]->ShowImGuiWindow();
+							ImGui::Separator();
+						}
+						ImGui::Unindent();
+					}
+					ImGui::EndDisabled();
+
+
 					ImGui::Separator();
 				}
 				ImGui::Unindent();
 			}
-			ImGui::EndDisabled();
 
 			ImGui::Unindent();
 		}

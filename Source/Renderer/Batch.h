@@ -69,11 +69,7 @@ namespace re
 			static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
 
 			re::VertexStream const* m_vertexStream = nullptr;
-			uint8_t m_slot = k_invalidSlotIdx; // NOTE: Automatically resolved by the batch
-		};
-		struct VertexStreamInputComparator
-		{
-			bool operator()(VertexStreamInput const&, VertexStreamInput const&);
+			uint8_t m_bindSlot = k_invalidSlotIdx; // NOTE: Automatically resolved by the batch
 		};
 		struct GraphicsParams
 		{
@@ -210,12 +206,6 @@ namespace re
 	private:
 		Batch() = delete;
 	};
-
-
-	inline bool Batch::VertexStreamInputComparator::operator()(VertexStreamInput const& a, VertexStreamInput const& b)
-	{
-		return re::VertexStream::Comparator()(a.m_vertexStream, b.m_vertexStream);
-	}
 
 
 	inline re::Batch::BatchType Batch::GetType() const

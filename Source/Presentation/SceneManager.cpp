@@ -722,9 +722,18 @@ namespace
 			re::VertexStream* color0Stream = nullptr;
 			// TODO: Caclulate unspecified normals/tangents/uvs for all semantic indexes, morph targets, etc
 					
-			std::vector<re::VertexStream const*> meshPrimitiveVertexStreams;
-			std::vector<re::VertexStream const*> meshPrimitiveMorphTargets;
+			std::vector<gr::MeshPrimitive::MeshVertexStream> meshPrimitiveVertexStreams;
+
 			std::vector<util::ByteVector*> extraChannelsData;
+			std::set<util::ByteVector const*> seenExtraChannelsData; // Only add 1 copy of (potentially reused) data
+			auto AddExtraChannelsData = [&seenExtraChannelsData, &extraChannelsData](util::ByteVector* extraChannelData)
+				{
+					if (!seenExtraChannelsData.contains(extraChannelData))
+					{
+						extraChannelsData.emplace_back(extraChannelData);
+						seenExtraChannelsData.emplace(extraChannelData);
+					}
+				};
 
 			glm::vec3 positionsMinXYZ(fr::BoundsComponent::k_invalidMinXYZ);
 			glm::vec3 positionsMaxXYZ(fr::BoundsComponent::k_invalidMaxXYZ);
@@ -743,6 +752,8 @@ namespace
 				const size_t numElements = curAttribute.data->count;
 				const size_t totalFloatElements = numComponents * numElements;
 
+				const uint8_t streamIdx = util::CheckedCast<uint8_t>(curAttribute.index);
+
 				const cgltf_attribute_type vertexAttributeType = curAttribute.type;
 				switch (vertexAttributeType)
 				{
@@ -760,7 +771,6 @@ namespace
 					re::VertexStream* positionStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Position,
-							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::Float3,
 						},
 						std::move(positions)).get();
@@ -785,7 +795,7 @@ namespace
 							memcpy(&positionsMaxXYZ.x, curAttribute.data->max, sizeof(glm::vec3));
 						}
 					}
-					meshPrimitiveVertexStreams.emplace_back(positionStream);
+					meshPrimitiveVertexStreams.emplace_back(positionStream, streamIdx);
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_normal:
@@ -801,7 +811,6 @@ namespace
 					re::VertexStream* normalStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Normal,
-							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::Float3,
 							.m_doNormalize = re::VertexStream::Normalize::True,
 						},
@@ -811,7 +820,7 @@ namespace
 					{
 						normal0Stream = normalStream;
 					}
-					meshPrimitiveVertexStreams.emplace_back(normalStream);
+					meshPrimitiveVertexStreams.emplace_back(normalStream, streamIdx);
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_tangent:
@@ -827,7 +836,6 @@ namespace
 					re::VertexStream* tangentStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Tangent,
-							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::Float4,
 							.m_doNormalize = re::VertexStream::Normalize::True,
 						},
@@ -837,7 +845,7 @@ namespace
 					{
 						tangent0Stream = tangentStream;
 					}
-					meshPrimitiveVertexStreams.emplace_back(tangentStream);
+					meshPrimitiveVertexStreams.emplace_back(tangentStream, streamIdx);
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_texcoord:
@@ -853,7 +861,6 @@ namespace
 					re::VertexStream* uvStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::TexCoord,
-							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::Float2,
 						},
 						std::move(uvs)).get();
@@ -862,7 +869,7 @@ namespace
 					{
 						uv0Stream = uvStream;
 					}					
-					meshPrimitiveVertexStreams.emplace_back(uvStream);
+					meshPrimitiveVertexStreams.emplace_back(uvStream, streamIdx);
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_color:
@@ -881,7 +888,6 @@ namespace
 					re::VertexStream* colorStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Color,
-							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::Float4,
 						},
 						std::move(colors)).get();
@@ -890,8 +896,8 @@ namespace
 					{
 						color0Stream = colorStream;
 					}
-					meshPrimitiveVertexStreams.emplace_back(colorStream);
-					extraChannelsData.emplace_back(&colorStream->GetDataByteVector());
+					meshPrimitiveVertexStreams.emplace_back(colorStream, streamIdx);
+					AddExtraChannelsData(&colorStream->GetDataByteVector());
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_joints: // joints_n == indexes from skin.joints array
@@ -919,13 +925,12 @@ namespace
 					re::VertexStream* jointStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::BlendIndices,
-							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::UByte,
 						},
 						std::move(jointsAsUints)).get();
 
-					meshPrimitiveVertexStreams.emplace_back(jointStream);
-					extraChannelsData.emplace_back(&jointStream->GetDataByteVector());
+					meshPrimitiveVertexStreams.emplace_back(jointStream, streamIdx);
+					AddExtraChannelsData(&jointStream->GetDataByteVector());
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_weights: // How stronly a joint influences a vertex
@@ -944,13 +949,12 @@ namespace
 					re::VertexStream* weightStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							 .m_type = re::VertexStream::Type::BlendWeight,
-							 .m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							 .m_dataType = re::VertexStream::DataType::Float,
 						},
 						std::move(weights)).get();
 
-					meshPrimitiveVertexStreams.emplace_back(weightStream);
-					extraChannelsData.emplace_back(&weightStream->GetDataByteVector());
+					meshPrimitiveVertexStreams.emplace_back(weightStream, streamIdx);
+					AddExtraChannelsData(&weightStream->GetDataByteVector());
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_custom:
@@ -967,15 +971,24 @@ namespace
 
 
 			// Morph targets:
-			uint8_t positionTargetIdx = 0;
-			uint8_t normalTargetIdx = 0;
-			uint8_t tangentTargetIdx = 0;
-			uint8_t uvTargetIdx = 0;
-			uint8_t colorTargetIdx = 0;
-			uint8_t jointTargetIdx = 0;
-			uint8_t weightTargetIdx = 0;
-
 			// TODO: Use the VertexStreamBuilder to generate any missing morph target data
+
+			auto AddMorphTarget = [&meshPrimitiveVertexStreams](
+				re::VertexStream::Type streamType, uint8_t streamTypeIdx, re::VertexStream const* morphTarget)
+				{
+					bool foundStreamType = false;
+					for (auto& meshPrimVertStream : meshPrimitiveVertexStreams)
+					{
+						if (meshPrimVertStream.m_vertexStream->GetType() == streamType &&
+							meshPrimVertStream.m_typeIdx == streamTypeIdx)
+						{
+							meshPrimVertStream.m_morphTargets.emplace_back(morphTarget);
+							foundStreamType = true;
+							break;
+						}
+					}
+					SEAssert(foundStreamType, "Failed to find stream type to add morph target to")
+				};
 
 			for (size_t targetIdx = 0; targetIdx < curPrimitive.targets_count; ++targetIdx)
 			{
@@ -996,6 +1009,8 @@ namespace
 						numTargetFloats);
 					SEAssert(unpackResult, "Failed to unpack data");
 
+					const uint8_t targetStreamIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index);
+
 					switch (targetAttributeType)
 					{
 					case cgltf_attribute_type::cgltf_attribute_type_position:
@@ -1005,15 +1020,13 @@ namespace
 						re::VertexStream* positionMorphTarget = re::VertexStream::Create(
 							re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Position,
-								 .m_typeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
-								 .m_morphTargetIdx = positionTargetIdx++,
 								 .m_dataType = re::VertexStream::DataType::Float3,
 							},
 							std::move(morphData)).get();
-
-						meshPrimitiveMorphTargets.emplace_back(positionMorphTarget);
-						extraChannelsData.emplace_back(&positionMorphTarget->GetDataByteVector());
+						
+						AddMorphTarget(re::VertexStream::Type::Position, targetStreamIdx, positionMorphTarget);
+						AddExtraChannelsData(&positionMorphTarget->GetDataByteVector());
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_normal:
@@ -1023,15 +1036,13 @@ namespace
 						re::VertexStream* normalMorphTarget = re::VertexStream::Create(
 							re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Normal,
-								 .m_typeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
-								 .m_morphTargetIdx = normalTargetIdx++,
 								 .m_dataType = re::VertexStream::DataType::Float3,
 							},
 							std::move(morphData)).get();
 
-						meshPrimitiveMorphTargets.emplace_back(normalMorphTarget);
-						extraChannelsData.emplace_back(&normalMorphTarget->GetDataByteVector());
+						AddMorphTarget(re::VertexStream::Type::Normal, targetStreamIdx, normalMorphTarget);
+						AddExtraChannelsData(&normalMorphTarget->GetDataByteVector());
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_tangent:
@@ -1042,15 +1053,13 @@ namespace
 						re::VertexStream* tangentMorphTarget = re::VertexStream::Create(
 							re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Tangent,
-								 .m_typeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
-								 .m_morphTargetIdx = tangentTargetIdx++,
 								 .m_dataType = re::VertexStream::DataType::Float3,
 							},
 							std::move(morphData)).get();
 
-						meshPrimitiveMorphTargets.emplace_back(tangentMorphTarget);
-						extraChannelsData.emplace_back(&tangentMorphTarget->GetDataByteVector());
+						AddMorphTarget(re::VertexStream::Type::Tangent, targetStreamIdx, tangentMorphTarget);
+						AddExtraChannelsData(&tangentMorphTarget->GetDataByteVector());
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_texcoord:
@@ -1060,15 +1069,13 @@ namespace
 						re::VertexStream* uvMorphTarget = re::VertexStream::Create(
 							re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::TexCoord,
-								 .m_typeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
-								 .m_morphTargetIdx = uvTargetIdx++,
 								 .m_dataType = re::VertexStream::DataType::Float2,
 							},
 							std::move(morphData)).get();
 
-						meshPrimitiveMorphTargets.emplace_back(uvMorphTarget);
-						extraChannelsData.emplace_back(&uvMorphTarget->GetDataByteVector());
+						AddMorphTarget(re::VertexStream::Type::TexCoord, targetStreamIdx, uvMorphTarget);
+						AddExtraChannelsData(&uvMorphTarget->GetDataByteVector());
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_color:
@@ -1080,15 +1087,13 @@ namespace
 						re::VertexStream* colorMorphTarget = re::VertexStream::Create(
 							re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Color,
-								 .m_typeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
-								 .m_morphTargetIdx = colorTargetIdx++,
 								 .m_dataType = re::VertexStream::DataType::Float4,
 							},
 							std::move(morphData)).get();
 
-						meshPrimitiveMorphTargets.emplace_back(colorMorphTarget);
-						extraChannelsData.emplace_back(&colorMorphTarget->GetDataByteVector());
+						AddMorphTarget(re::VertexStream::Type::Color, targetStreamIdx, colorMorphTarget);
+						AddExtraChannelsData(&colorMorphTarget->GetDataByteVector());
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_joints:
@@ -1166,7 +1171,6 @@ namespace
 				normal0Stream = re::VertexStream::Create(
 					re::VertexStream::CreateParams{
 						.m_type = re::VertexStream::Type::Normal,
-						.m_typeIdx = 0,
 						.m_dataType = re::VertexStream::DataType::Float3,
 						.m_doNormalize = re::VertexStream::Normalize::True,
 					},
@@ -1179,7 +1183,6 @@ namespace
 				tangent0Stream = re::VertexStream::Create(
 					re::VertexStream::CreateParams{
 						.m_type = re::VertexStream::Type::Tangent,
-						.m_typeIdx = 0,
 						.m_dataType = re::VertexStream::DataType::Float4,
 						.m_doNormalize = re::VertexStream::Normalize::True,
 					},
@@ -1192,7 +1195,6 @@ namespace
 				uv0Stream = re::VertexStream::Create(
 					re::VertexStream::CreateParams{
 						.m_type = re::VertexStream::Type::TexCoord,
-						.m_typeIdx = 0,
 						.m_dataType = re::VertexStream::DataType::Float2,
 					},
 					std::move(*uv0Data)).get();
@@ -1206,7 +1208,6 @@ namespace
 				color0Stream = re::VertexStream::Create(
 					re::VertexStream::CreateParams{
 						.m_type = re::VertexStream::Type::Color,
-						.m_typeIdx = 0,
 						.m_dataType = re::VertexStream::DataType::Float4
 					},
 					util::ByteVector::Create<glm::vec4>(
@@ -1221,7 +1222,6 @@ namespace
 				meshName.c_str(),
 				indexStream,
 				std::move(meshPrimitiveVertexStreams),
-				std::move(meshPrimitiveMorphTargets),
 				meshPrimitiveParams);
 
 
