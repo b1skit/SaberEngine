@@ -1,6 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "AnimationComponent.h"
 #include "EntityManager.h"
+#include "MeshConcept.h"
 #include "NameComponent.h"
 #include "TransformComponent.h"
 
@@ -299,6 +300,75 @@ namespace fr
 	}
 
 
+	void AnimationComponent::GetPrevNextKeyframeIdx(
+		fr::AnimationController const* animController, 
+		fr::AnimationData::Channel const& channel, 
+		size_t& prevKeyframeIdxOut,
+		size_t& nextKeyframeIdxOut)
+	{
+		// Find the next smallest/next largest keyframe time value about our current animation time:
+		const float currentTimeSec = animController->GetActiveClampedAnimationTimeSec();
+
+		std::vector<float> const& keyframeTimes = animController->GetKeyframeTimes(channel.m_keyframeTimesIdx);
+
+		// Find the closest keyframe time to the current time:
+		float minAbsDelta = std::numeric_limits<float>::max();
+		size_t minAbsDeltaIdx = 0;
+		float minKeyframeTimeSec = std::numeric_limits<float>::max();
+		size_t minKeyframeTimeIdx = 0;
+		float maxKeyframeTimeSec = std::numeric_limits<float>::min();
+		size_t maxKeyframeTimeIdx = 0;
+		for (size_t i = 0; i < keyframeTimes.size(); ++i)
+		{
+			const float curAbsDelta = glm::abs(currentTimeSec - keyframeTimes[i]);
+			if (curAbsDelta < minAbsDelta)
+			{
+				minAbsDelta = curAbsDelta;
+				minAbsDeltaIdx = i;
+			}
+
+			// Cache the min/max values we encounter:
+			if (keyframeTimes[i] < minKeyframeTimeSec)
+			{
+				minKeyframeTimeSec = keyframeTimes[i];
+				minKeyframeTimeIdx = i;
+			}
+			if (keyframeTimes[i] > maxKeyframeTimeSec)
+			{
+				maxKeyframeTimeSec = keyframeTimes[i];
+				maxKeyframeTimeIdx = i;
+			}
+		}
+
+		prevKeyframeIdxOut = 0;
+		nextKeyframeIdxOut = 0;
+
+		if (currentTimeSec < minKeyframeTimeSec) // Clamp to the min
+		{
+			prevKeyframeIdxOut = minKeyframeTimeIdx;
+			nextKeyframeIdxOut = minKeyframeTimeIdx;
+		}
+		else if (currentTimeSec > maxKeyframeTimeSec) // Clamp to the max
+		{
+			prevKeyframeIdxOut = maxKeyframeTimeIdx;
+			nextKeyframeIdxOut = maxKeyframeTimeIdx;
+		}
+		else
+		{
+			if (keyframeTimes[minAbsDeltaIdx] < currentTimeSec)
+			{
+				prevKeyframeIdxOut = minAbsDeltaIdx;
+				nextKeyframeIdxOut = (prevKeyframeIdxOut + 1) % keyframeTimes.size();
+			}
+			else // closest keyframe time >= currentTime
+			{
+				nextKeyframeIdxOut = minAbsDeltaIdx;
+				prevKeyframeIdxOut = nextKeyframeIdxOut == 0 ? keyframeTimes.size() - 1 : nextKeyframeIdxOut - 1;
+			}
+		}
+	}
+
+
 	void AnimationComponent::ApplyAnimation(
 		fr::AnimationComponent const& animCmpt, fr::TransformComponent& transformCmpt)
 	{
@@ -311,7 +381,7 @@ namespace fr
 			animCmpt.GetAnimationData(animCmpt.m_animationController->GetActiveAnimationIdx());
 		if (!animationData)
 		{
-			return;
+			return; // Node is not animated by the given keyframe times index
 		}
 
 		fr::Transform& transform = transformCmpt.GetTransform();
@@ -319,78 +389,26 @@ namespace fr
 		for (auto const& channel : animationData->m_channels)
 		{
 			// Find the next smallest/next largest keyframe time value about our current animation time:
+			size_t prevKeyframeIdx = 0;
+			size_t nextKeyframeIdx = 0;
+			GetPrevNextKeyframeIdx(animCmpt.m_animationController, channel, prevKeyframeIdx, nextKeyframeIdx);
+
+			// Select the appropriate channelData values:
 			const float currentTimeSec = animCmpt.m_animationController->GetActiveClampedAnimationTimeSec();
 
 			std::vector<float> const& keyframeTimes =
 				animCmpt.m_animationController->GetKeyframeTimes(channel.m_keyframeTimesIdx);
 
-			// Find the closest keyframe time to the current time:
-			float minAbsDelta = std::numeric_limits<float>::max();
-			size_t minAbsDeltaIdx = 0;
-			float minKeyframeTimeSec = std::numeric_limits<float>::max();
-			size_t minKeyframeTimeIdx = 0;
-			float maxKeyframeTimeSec = std::numeric_limits<float>::min();
-			size_t maxKeyframeTimeIdx = 0;
-			for (size_t i = 0; i < keyframeTimes.size(); ++i)
-			{
-				const float curAbsDelta = glm::abs(currentTimeSec - keyframeTimes[i]);
-				if (curAbsDelta < minAbsDelta)
-				{
-					minAbsDelta = curAbsDelta;
-					minAbsDeltaIdx = i;
-				}
-
-				// Cache the min/max values we encounter:
-				if (keyframeTimes[i] < minKeyframeTimeSec)
-				{
-					minKeyframeTimeSec = keyframeTimes[i];
-					minKeyframeTimeIdx = i;
-				}
-				if (keyframeTimes[i] > maxKeyframeTimeSec)
-				{
-					maxKeyframeTimeSec = keyframeTimes[i];
-					maxKeyframeTimeIdx = i;
-				}
-			}
-
-			size_t prevKeyframeIdx = 0;
-			size_t nextKeyframeIdx = 0;
-
-			if (currentTimeSec < minKeyframeTimeSec) // Clamp to the min
-			{
-				prevKeyframeIdx = minKeyframeTimeIdx;
-				nextKeyframeIdx = minKeyframeTimeIdx;
-			}
-			else if (currentTimeSec > maxKeyframeTimeSec) // Clamp to the max
-			{
-				prevKeyframeIdx = maxKeyframeTimeIdx;
-				nextKeyframeIdx = maxKeyframeTimeIdx;
-			}
-			else
-			{
-				if (keyframeTimes[minAbsDeltaIdx] < currentTimeSec)
-				{
-					prevKeyframeIdx = minAbsDeltaIdx;
-					nextKeyframeIdx = (prevKeyframeIdx + 1) % keyframeTimes.size();
-				}
-				else // closest keyframe time >= currentTime
-				{
-					nextKeyframeIdx = minAbsDeltaIdx;
-					prevKeyframeIdx = nextKeyframeIdx == 0 ? keyframeTimes.size() - 1 : nextKeyframeIdx - 1;
-				}
-			}
-
-			// Select the appropriate data values:
-			std::vector<float> const& data = animCmpt.m_animationController->GetChannelData(channel.m_dataIdx);
+			std::vector<float> const& channelData = animCmpt.m_animationController->GetChannelData(channel.m_dataIdx);
 
 			switch (channel.m_targetPath)
 			{
 			case AnimationPath::Translation:
 			{
-				SEAssert(keyframeTimes.size() == (data.size() / 3), "Keyframe/data size mismatch");
+				SEAssert(channel.m_dataFloatsPerKeyframe == 3, "Translation data must be vec3s");
 
-				glm::vec3 const& prevValue = reinterpret_cast<std::vector<glm::vec3> const&>(data)[prevKeyframeIdx];
-				glm::vec3 const& nextValue = reinterpret_cast<std::vector<glm::vec3> const&>(data)[nextKeyframeIdx];
+				glm::vec3 const& prevValue = reinterpret_cast<std::vector<glm::vec3> const&>(channelData)[prevKeyframeIdx];
+				glm::vec3 const& nextValue = reinterpret_cast<std::vector<glm::vec3> const&>(channelData)[nextKeyframeIdx];
 
 				glm::vec3 const& interpolatedValue = GetInterpolatedValue(
 					channel.m_interpolationMode,
@@ -405,10 +423,10 @@ namespace fr
 			break;
 			case AnimationPath::Rotation:
 			{
-				SEAssert(keyframeTimes.size() == (data.size() / 4), "Keyframe/data size mismatch");
+				SEAssert(channel.m_dataFloatsPerKeyframe == 4, "Rotation data must be vec4s");
 
-				glm::quat const& prevValue = reinterpret_cast<std::vector<glm::quat> const&>(data)[prevKeyframeIdx];
-				glm::quat const& nextValue = reinterpret_cast<std::vector<glm::quat> const&>(data)[nextKeyframeIdx];
+				glm::quat const& prevValue = reinterpret_cast<std::vector<glm::quat> const&>(channelData)[prevKeyframeIdx];
+				glm::quat const& nextValue = reinterpret_cast<std::vector<glm::quat> const&>(channelData)[nextKeyframeIdx];
 
 				glm::quat const& interpolatedValue = GetInterpolatedValue(
 					channel.m_interpolationMode,
@@ -423,10 +441,10 @@ namespace fr
 			break;
 			case AnimationPath::Scale:
 			{
-				SEAssert(keyframeTimes.size() == (data.size() / 3), "Keyframe/data size mismatch");
+				SEAssert(channel.m_dataFloatsPerKeyframe == 3, "Scale data must be vec3s");
 
-				glm::vec3 const& prevValue = reinterpret_cast<std::vector<glm::vec3> const&>(data)[prevKeyframeIdx];
-				glm::vec3 const& nextValue = reinterpret_cast<std::vector<glm::vec3> const&>(data)[nextKeyframeIdx];
+				glm::vec3 const& prevValue = reinterpret_cast<std::vector<glm::vec3> const&>(channelData)[prevKeyframeIdx];
+				glm::vec3 const& nextValue = reinterpret_cast<std::vector<glm::vec3> const&>(channelData)[nextKeyframeIdx];
 
 				glm::vec3 const& interpolatedValue = GetInterpolatedValue(
 					channel.m_interpolationMode,
@@ -441,21 +459,7 @@ namespace fr
 			break;
 			case AnimationPath::Weights:
 			{
-				SEAssertF("TODO: Implement this");
-				SEAssert(keyframeTimes.size() == data.size(), "Keyframe/data size mismatch");
-
-				const float prevValue = data[prevKeyframeIdx];
-				const float nextValue = data[nextKeyframeIdx];
-
-				float interpolatedValue = GetInterpolatedValue(
-					channel.m_interpolationMode,
-					prevValue,
-					nextValue,
-					keyframeTimes[prevKeyframeIdx],
-					keyframeTimes[nextKeyframeIdx],
-					currentTimeSec);
-
-				SEAssertF("TODO: Apply this interpolatedValue");
+				// MeshAnimationComponent handles AnimationPath::Weights
 			}
 			break;
 			default: SEAssertF("Invalid animation target");
@@ -487,6 +491,106 @@ namespace fr
 			animationIdx,
 			AnimationsDataComparator());
 
+		// Return null if node is not animated by the given keyframe times index
 		return animDataItr == m_animationsData.end() ? nullptr : &(*animDataItr);
+	}
+
+
+	// -----------------------------------------------------------------------------------------------------------------
+
+
+	MeshAnimationComponent::MeshAnimationComponent(PrivateCTORTag)
+		: m_morphWeights{ 0.f } // GLTF specs: Default weights are 0
+	{
+	}
+
+
+	MeshAnimationComponent* MeshAnimationComponent::AttachMeshAnimationComponent(
+		fr::EntityManager& em, entt::entity entity)
+	{
+		SEAssert(em.HasComponent<fr::Mesh::MeshConceptMarker>(entity),
+			"An MeshAnimationComponent can only be attached to nodes that have a Mesh::MeshConceptMarker");
+
+		fr::MeshAnimationComponent* meshAnimCmpt =
+			em.EmplaceComponent<fr::MeshAnimationComponent>(entity, PrivateCTORTag{});
+
+		return meshAnimCmpt;
+	}
+
+
+	bool MeshAnimationComponent::ApplyAnimation(
+		fr::AnimationComponent const& animCmpt,
+		fr::MeshAnimationComponent& meshAnimCmpt,
+		entt::entity meshConcept)
+	{
+		if (animCmpt.GetAnimationController()->GetAnimationState() != AnimationState::Playing)
+		{
+			return false;
+		}
+
+		AnimationData const* animationData =
+			animCmpt.GetAnimationData(animCmpt.GetAnimationController()->GetActiveAnimationIdx());
+		if (!animationData)
+		{
+			return false; // Node is not animated by the given keyframe times index
+		}
+
+		bool didAnimate = false;
+		for (auto const& channel : animationData->m_channels)
+		{
+			if (channel.m_targetPath != AnimationPath::Weights)
+			{
+				continue;
+			}
+
+			// Find the next smallest/next largest keyframe time value about our current animation time:
+			size_t prevKeyframeIdx = 0;
+			size_t nextKeyframeIdx = 0;
+			AnimationComponent::GetPrevNextKeyframeIdx(
+				animCmpt.GetAnimationController(), channel, prevKeyframeIdx, nextKeyframeIdx);
+
+			// Select the appropriate channelData values:
+			const float currentTimeSec = animCmpt.GetAnimationController()->GetActiveClampedAnimationTimeSec();
+
+			std::vector<float> const& keyframeTimes =
+				animCmpt.GetAnimationController()->GetKeyframeTimes(channel.m_keyframeTimesIdx);
+
+			std::vector<float> const& channelData = animCmpt.GetAnimationController()->GetChannelData(channel.m_dataIdx);
+
+			SEAssert(channel.m_dataFloatsPerKeyframe > 0 &&
+				channel.m_dataFloatsPerKeyframe != AnimationData::k_invalidFloatsPerKeyframe,
+				"Weight data must be 1 or more floats");
+
+			for (uint8_t weightIdx = 0; weightIdx < channel.m_dataFloatsPerKeyframe; ++weightIdx)
+			{
+				const float prevValue = channelData[prevKeyframeIdx * channel.m_dataFloatsPerKeyframe + weightIdx];
+				const float nextValue = channelData[nextKeyframeIdx * channel.m_dataFloatsPerKeyframe + weightIdx];
+
+				const float interpolatedValue = GetInterpolatedValue(
+					channel.m_interpolationMode,
+					prevValue,
+					nextValue,
+					keyframeTimes[prevKeyframeIdx],
+					keyframeTimes[nextKeyframeIdx],
+					currentTimeSec);
+
+				meshAnimCmpt.SetMorphWeight(weightIdx, interpolatedValue);
+			}
+			
+			didAnimate = true;
+		}
+
+		return didAnimate;
+	}
+
+
+	gr::MeshPrimitive::MeshRenderData MeshAnimationComponent::CreateRenderData(
+		entt::entity entity, MeshAnimationComponent const& meshAnimCmpt)
+	{
+		gr::MeshPrimitive::MeshRenderData meshPrimAnimRenderData{};
+		
+		memcpy(&meshPrimAnimRenderData.m_morphWeights, &meshAnimCmpt.m_morphWeights, sizeof(meshAnimCmpt.m_morphWeights));
+
+		return meshPrimAnimRenderData;
 	}
 }

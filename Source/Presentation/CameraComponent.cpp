@@ -67,9 +67,11 @@ namespace fr
 	}
 
 
-	gr::Camera::RenderData CameraComponent::CreateRenderData(
-		CameraComponent const& cameraComponent, fr::NameComponent const& nameCmpt)
+	gr::Camera::RenderData CameraComponent::CreateRenderData(entt::entity entity, CameraComponent const& cameraComponent)
 	{
+		fr::EntityManager const* em = fr::EntityManager::Get();
+		fr::NameComponent const& nameCmpt = em->GetComponent<fr::NameComponent>(entity);
+
 		gr::Camera::RenderData renderData = gr::Camera::RenderData{
 			.m_cameraConfig = cameraComponent.GetCamera().GetCameraConfig(),
 			.m_cameraParams = fr::Camera::BuildCameraData(cameraComponent.GetCamera()),

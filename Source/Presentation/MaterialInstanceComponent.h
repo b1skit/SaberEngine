@@ -15,8 +15,7 @@ namespace fr
 			fr::EntityManager&, entt::entity meshPrimitiveConcept, gr::Material const*);
 
 	public:
-		static gr::Material::MaterialInstanceData CreateRenderData(
-			MaterialInstanceComponent const&, fr::NameComponent const&);
+		static gr::Material::MaterialInstanceData CreateRenderData(entt::entity, MaterialInstanceComponent const&);
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
 

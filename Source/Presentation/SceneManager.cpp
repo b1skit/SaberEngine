@@ -34,8 +34,8 @@ namespace
 {
 	constexpr size_t k_initialBatchReservations = 100;
 
-	// Each element/index corresponds to an animation
-	using NodeToAnimationDataMap = std::vector<std::unordered_map<cgltf_node const*, fr::AnimationData>>;
+	// Each element/index corresponds to an animation: Multiple animations may target the same node
+	using AnimationNodeToDataMaps = std::vector<std::unordered_map<cgltf_node const*, fr::AnimationData>>;
 
 
 	std::shared_ptr<re::Texture> LoadTextureOrColor(
@@ -645,33 +645,57 @@ namespace
 
 
 	void LoadMeshGeometry(
-		std::string const& sceneRootPath, re::SceneData& scene, cgltf_node const* current, entt::entity sceneNode)
+		std::string const& sceneRootPath,
+		re::SceneData& scene,
+		cgltf_node const* current,
+		entt::entity sceneNode,
+		AnimationNodeToDataMaps const& animationNodeToData)
 	{
+		fr::EntityManager& em = *fr::EntityManager::Get();
+
 		std::string meshName;
 		if (current->mesh->name)
 		{
-			meshName = std::string(current->mesh->name);
+			meshName = current->mesh->name;
 		}
 		else
 		{
 			static std::atomic<uint32_t> unnamedMeshIdx = 0;
 			const uint32_t thisMeshIdx = unnamedMeshIdx.fetch_add(1);
-			meshName = "UnnamedMesh_" + std::to_string(thisMeshIdx);
+			meshName = std::format("UnnamedMesh_{}", thisMeshIdx);
 		}
-
-		const uint32_t numMeshPrimitives = util::CheckedCast<uint32_t>(current->mesh->primitives_count);
 
 		fr::Mesh::AttachMeshConcept(sceneNode, meshName.c_str());
 
+		// Morph target weights: We'll store these on the associated morph target vertex streams
+		std::vector<float> morphWeights; 
+		if (current->weights != nullptr) // GLTF specs: Node weights take priority
+		{
+			SEAssert(current->weights_count > 0, "Node weight count is 0. This is unexpected");
+
+			morphWeights.resize(current->weights_count, 0.f); // GLTF spec: Default target weights are 0
+			memcpy(morphWeights.data(), current->weights, sizeof(float) * current->weights_count);
+		}
+		else if (current->mesh->weights != nullptr) // GLTF specs: Mesh weights used when node weights are undefined
+		{
+			SEAssert(current->mesh->weights_count > 0, "Mesh weight count is 0. This is unexpected");
+
+			morphWeights.resize(current->mesh->weights_count, 0.f); // GLTF spec: Default target weights are 0
+			memcpy(morphWeights.data(), current->mesh->weights, sizeof(float) * current->mesh->weights_count);
+		}
+
+		bool meshHasMorphTargets = false;
+
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
+		const uint32_t numMeshPrimitives = util::CheckedCast<uint32_t>(current->mesh->primitives_count);
 		for (size_t primitive = 0; primitive < numMeshPrimitives; primitive++)
 		{
 			cgltf_primitive const& curPrimitive = current->mesh->primitives[primitive];
 
 			// Populate the mesh params:
-			gr::MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams;
-
-			meshPrimitiveParams.m_topologyMode = CGLTFPrimitiveTypeToGrTopologyMode(curPrimitive.type);
+			const gr::MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams{
+				.m_topologyMode = CGLTFPrimitiveTypeToGrTopologyMode(curPrimitive.type),
+			};
 
 			// Index stream:
 			SEAssert(curPrimitive.indices != nullptr, "Mesh is missing indices");
@@ -1224,10 +1248,7 @@ namespace
 				std::move(meshPrimitiveVertexStreams),
 				meshPrimitiveParams);
 
-
 			// Attach the MeshPrimitive to the Mesh:
-			fr::EntityManager& em = *fr::EntityManager::Get();
-
 			entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
 				em,
 				sceneNode,
@@ -1249,6 +1270,31 @@ namespace
 				material = scene.GetMaterial(en::DefaultResourceNames::k_missingMaterialName);
 			}
 			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material.get());
+		} // primitives loop
+
+
+		// Attach a MeshAnimationComponent, if necessary:
+		if (meshHasMorphTargets)
+		{
+			bool hasWeightsAnimation = false;
+			for (auto const& animation : animationNodeToData)
+			{
+				if (animation.contains(current))
+				{
+					for (auto const& channel : animation.at(current).m_channels)
+					{
+						if (channel.m_targetPath == fr::AnimationPath::Weights)
+						{
+							hasWeightsAnimation = true;
+							break;
+						}
+					}
+				}
+			}
+			SEAssert(hasWeightsAnimation, 
+				"Current node contains morph targets, but does not have any animation that targets its morph weights");
+
+			fr::MeshAnimationComponent::AttachMeshAnimationComponent(em, sceneNode);
 		}
 	}
 
@@ -1291,12 +1337,11 @@ namespace
 	}
 
 
-	void AttachAnimationComponent(
-		cgltf_data const* data,
+	void AttachAnimationComponents(
 		cgltf_node const* current,
 		entt::entity curSceneNodeEntity,
 		fr::AnimationController const* animationController,
-		NodeToAnimationDataMap const& nodeToAnimationDataMap)
+		AnimationNodeToDataMaps const& nodeToAnimationDataMap)
 	{
 		SEAssert(animationController, "animationController cannot be null");
 
@@ -1306,6 +1351,7 @@ namespace
 		fr::AnimationComponent* animationCmpt = 
 			fr::AnimationComponent::AttachAnimationComponent(em, curSceneNodeEntity, animationController);
 
+		// Attach each/all animations that target the current node to its animation component:
 		for (auto const& animation : nodeToAnimationDataMap)
 		{
 			if (!animation.contains(current))
@@ -1325,14 +1371,10 @@ namespace
 		cgltf_node const* current,
 		entt::entity curSceneNodeEntity,
 		fr::AnimationController const* animationController,
-		NodeToAnimationDataMap const& nodeToAnimationDataMap,
+		AnimationNodeToDataMaps const& animationNodeToData,
 		std::vector<std::future<void>>& loadTasks)
 	{
-		if (current == nullptr)
-		{
-			SEAssertF("We should not be traversing into null nodes");
-			return;
-		}
+		SEAssert(current != nullptr, "We should not be traversing into null nodes");
 
 		SEAssert(current->light == nullptr || current->mesh == nullptr,
 			"TODO: Handle nodes with multiple things (eg. Light & Mesh) that depend on a transform");
@@ -1354,7 +1396,7 @@ namespace
 					current->children[i],
 					childNode,
 					animationController,
-					nodeToAnimationDataMap,
+					animationNodeToData,
 					loadTasks);
 			}
 		}
@@ -1369,9 +1411,9 @@ namespace
 		if (current->mesh)
 		{
 			loadTasks.emplace_back(
-				core::ThreadPool::Get()->EnqueueJob([&sceneRootPath, &scene, current, curSceneNodeEntity]()
+				core::ThreadPool::Get()->EnqueueJob([&sceneRootPath, &scene, current, curSceneNodeEntity, &animationNodeToData]()
 					{
-						LoadMeshGeometry(sceneRootPath, scene, current, curSceneNodeEntity);
+						LoadMeshGeometry(sceneRootPath, scene, current, curSceneNodeEntity, animationNodeToData);
 					}));
 		}
 		if (current->light)
@@ -1388,15 +1430,16 @@ namespace
 					LoadAddCamera(scene, curSceneNodeEntity, current);
 				}));
 		}
-		// Node animations: If we find a single animation for a node, kick off a job to attach an animation component
-		for (auto const& entry : nodeToAnimationDataMap)
+		// Node animations: Check each of our animations, if we find a single animation that targets a node we know we
+		// must attach an animation component to it
+		for (auto const& entry : animationNodeToData)
 		{
 			if (entry.contains(current))
 			{
 				loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-					[data, animationController, &nodeToAnimationDataMap, current, curSceneNodeEntity]()
+					[data, animationController, &animationNodeToData, current, curSceneNodeEntity]()
 					{
-						AttachAnimationComponent(data, current, curSceneNodeEntity, animationController, nodeToAnimationDataMap);
+						AttachAnimationComponents(current, curSceneNodeEntity, animationController, animationNodeToData);
 					}));
 				break;
 			}
@@ -1404,24 +1447,34 @@ namespace
 	}
 
 
-	NodeToAnimationDataMap LoadAnimationData(
+	AnimationNodeToDataMaps LoadAnimationData(
 		std::string const& sceneFilePath, cgltf_data const* data, fr::AnimationController*& animationControllerOut)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
 		animationControllerOut = fr::AnimationController::CreateAnimationController(em, sceneFilePath.c_str());
 
-		NodeToAnimationDataMap nodeToAnimationData; // Each element/index corresponds to an animation
+		// Each element/index corresponds to an animation: Multiple animations may target the same node
+		AnimationNodeToDataMaps animationNodeToData;
 
 		for (uint64_t animIdx = 0; animIdx < data->animations_count; ++animIdx)
 		{
-			char const* animationName = data->animations[animIdx].name;
-			LOG("Loading animation \"%s\"...", animationName);
+			std::string animationName;
+			if (data->animations[animIdx].name)
+			{
+				animationName = data->animations[animIdx].name;
+			}
+			else
+			{
+				static std::atomic<uint32_t> unnamedAnimationIdx = 0;
+				animationName = std::format("UnnamedAnimation_{}", unnamedAnimationIdx.fetch_add(1));
+			}
+			LOG("Loading animation \"%s\"...", animationName.c_str());
 
-			std::unordered_map<cgltf_node const*, fr::AnimationData>& nodeToData = nodeToAnimationData.emplace_back();
-			animationControllerOut->AddNewAnimation(animationName);
+			animationControllerOut->AddNewAnimation(animationName.c_str());
 
 			// Pack the Channels of an AnimationData struct:
+			std::unordered_map<cgltf_node const*, fr::AnimationData>& nodeToData = animationNodeToData.emplace_back();
 			for (uint64_t channelIdx = 0; channelIdx < data->animations->channels_count; ++channelIdx)
 			{
 				// GLTF animation samplers define an "input/output pair":
@@ -1461,26 +1514,26 @@ namespace
 				// Channel input data: (Linear keyframe times, in seconds)
 				const cgltf_size numKeyframeTimeEntries = cgltf_accessor_unpack_floats(animSampler->input, nullptr, 0);
 
-				std::vector<float> keyframeTimesSec;
-				keyframeTimesSec.resize(numKeyframeTimeEntries);
-
+				std::vector<float> keyframeTimesSec(numKeyframeTimeEntries);
 				cgltf_accessor_unpack_floats(animSampler->input, keyframeTimesSec.data(), numKeyframeTimeEntries);
 
 				animChannel.m_keyframeTimesIdx = animationControllerOut->AddKeyframeTimes(std::move(keyframeTimesSec));
 
-
 				// Channel output data:
 				const cgltf_size numOutputFloats = cgltf_accessor_unpack_floats(animSampler->output, nullptr, 0);
 
-				std::vector<float> outputFloatData;
-				outputFloatData.resize(numOutputFloats);
-
+				std::vector<float> outputFloatData(numOutputFloats);
 				cgltf_accessor_unpack_floats(animSampler->output, outputFloatData.data(), numOutputFloats);
 
 				animChannel.m_dataIdx = animationControllerOut->AddChannelData(std::move(outputFloatData));
+
+				SEAssert(numOutputFloats % numKeyframeTimeEntries == 0,
+					"The number of keyframe entries must be an exact multiple of the number of output floats");
+
+				animChannel.m_dataFloatsPerKeyframe = util::CheckedCast<uint8_t>(numOutputFloats / numKeyframeTimeEntries);
 			}
 		}
-		return nodeToAnimationData;
+		return animationNodeToData;
 	}
 
 
@@ -1496,7 +1549,7 @@ namespace
 
 		// Create an animation controller for the scene, and pre-process the animation data:
 		fr::AnimationController* animationController = nullptr;
-		NodeToAnimationDataMap const& nodeToAnimationData = LoadAnimationData(sceneFilePath, data, animationController);
+		AnimationNodeToDataMaps const& nodeToAnimationData = LoadAnimationData(sceneFilePath, data, animationController);
 
 		// Each node is the root in a transformation hierarchy:
 		for (size_t node = 0; node < data->scenes->nodes_count; node++)

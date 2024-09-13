@@ -195,6 +195,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
   <ItemGroup>
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Shaders\Common\AnimationParams.h" />
     <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
     <ClInclude Include="Shaders\Common\CameraParams.h" />
     <ClInclude Include="Shaders\Common\IBLGenerationParams.h" />

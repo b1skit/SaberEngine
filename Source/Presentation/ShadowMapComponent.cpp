@@ -299,8 +299,11 @@ namespace fr
 
 
 	gr::ShadowMap::RenderData ShadowMapComponent::CreateRenderData(
-		fr::ShadowMapComponent const& shadowMapCmpt, fr::NameComponent const& nameCmpt)
+		entt::entity entity, fr::ShadowMapComponent const& shadowMapCmpt)
 	{
+		fr::EntityManager const* em = fr::EntityManager::Get();
+		fr::NameComponent const& nameCmpt = em->GetComponent<fr::NameComponent>(entity);
+
 		fr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
 
 		gr::ShadowMap::RenderData shadowRenderData = gr::ShadowMap::RenderData

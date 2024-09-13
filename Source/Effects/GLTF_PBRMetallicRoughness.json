@@ -3,6 +3,7 @@
 		"Name": "GLTF_PBRMetallicRoughness",
 		"Parents": ["Common"],
 		"DrawStyles": [
+			// Fill GBuffer:
 			{
 				"Conditions": [
 					{ "Rule": "RenderPath", "Mode": "Deferred" },
@@ -35,6 +36,7 @@
 				],
 				"Technique": "FillGBuffer_DoubleSided"
 			},
+			// Transparency:
 			{
 				"Conditions": [
 					{ "Rule": "RenderPath", "Mode": "Forward" },
@@ -51,6 +53,7 @@
 				],
 				"Technique": "AlphaBlend_DoubleSided"
 			},
+			// Shadows:
 			{
 				"Conditions": [
 					{ "Rule": "Shadow", "Mode": "2D" },

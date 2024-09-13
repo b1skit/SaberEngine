@@ -35,7 +35,7 @@ namespace fr
 
 
 	public:
-		static gr::MeshPrimitive::RenderData CreateRenderData(MeshPrimitiveComponent const&, fr::NameComponent const&);
+		static gr::MeshPrimitive::RenderData CreateRenderData(entt::entity, MeshPrimitiveComponent const&);
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity lightEntity);
 

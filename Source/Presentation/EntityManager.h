@@ -41,7 +41,7 @@ namespace fr
 
 
 	private:
-		template<typename T, typename R>
+		template<typename RenderDataType, typename CmptType, typename... OtherCmpts>
 		void EnqueueRenderUpdateHelper();
 
 	public: // Public interface:
@@ -90,9 +90,6 @@ namespace fr
 		entt::entity CreateEntity(char const* name);
 
 		void RegisterEntityForDelete(entt::entity);
-
-		template<typename T>
-		entt::entity GetEntityFromComponent(T const&) const;
 
 		template<typename T>
 		void EmplaceComponent(entt::entity);
@@ -182,21 +179,6 @@ namespace fr
 	public:
 		EntityManager(PrivateCTORTag);
 	};
-
-
-	template<typename T>
-	entt::entity EntityManager::GetEntityFromComponent(T const& component) const
-	{
-		entt::entity entity = entt::null;
-		{
-			std::shared_lock<std::shared_mutex> lock(m_registeryMutex);
-
-			entity = entt::to_entity(m_registry, component);
-		}
-		SEAssert(entity != entt::null, "Entity not found");
-
-		return entity;
-	}
 
 
 	template<typename T>

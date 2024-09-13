@@ -45,7 +45,7 @@ namespace fr
 			util::ByteVector const& positions);
 
 	public:
-		static gr::Bounds::RenderData CreateRenderData(fr::BoundsComponent const&, fr::NameComponent const&);
+		static gr::Bounds::RenderData CreateRenderData(entt::entity, fr::BoundsComponent const&);
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
 

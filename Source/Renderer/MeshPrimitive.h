@@ -1,11 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Material.h"
+#include "RenderObjectIDs.h"
 #include "VertexStream.h"
 
 #include "Core/Interfaces/IPlatformParams.h"
 #include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/INamedObject.h"
+
+#include "Shaders/Common/AnimationParams.h"
 
 
 namespace gr
@@ -70,12 +73,21 @@ namespace gr
 			
 			uint64_t m_dataHash;
 
+			gr::RenderDataID m_owningMeshRenderDataID; // To access MeshRenderData
+
 
 			// Helper: Get a specific vertex stream packed into a MeshPrimitive::RenderData.
-			// If the srcTypeIdx index < 0, the first matching type is returned
+			// If the typeIdx index < 0, the first matching type is returned
 			static re::VertexStream const* GetVertexStreamFromRenderData(
-				gr::MeshPrimitive::RenderData const&, re::VertexStream::Type, int8_t srcTypeIdx = -1);
-		};	
+				gr::MeshPrimitive::RenderData const&, re::VertexStream::Type, int8_t typeIdx = -1);
+		};
+		static constexpr size_t test = sizeof(RenderData);
+
+
+		struct MeshRenderData
+		{
+			std::array<float, AnimationData::k_numMorphTargets> m_morphWeights;
+		};
 
 
 	public:

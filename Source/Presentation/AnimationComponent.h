@@ -2,19 +2,24 @@
 #pragma once
 #include "Core/Assert.h"
 
+#include "Renderer/MeshPrimitive.h"
+#include "Renderer/VertexStream.h"
+
 
 namespace fr
 {
 	class EntityManager;
+	class MeshPrimitiveComponent;
+	class NameComponent;
 	class TransformComponent;
 
 
-	enum AnimationPath
+	enum AnimationPath : uint8_t
 	{
 		Translation,
 		Rotation,
 		Scale,
-		Weights,
+		Weights, // For morph targets
 		
 		AnimationPath_Invalid
 	};
@@ -171,8 +176,9 @@ namespace fr
 
 	inline void AnimationController::AddNewAnimation(char const* animName)
 	{
+		SEAssert(animName, "Animation name cannot be null");
 		m_currentTimeSec.emplace_back(0.0);
-		m_animationNames.emplace_back(animName ? animName : std::format("UnnamedAnimation_{}", m_animationNames.size()));
+		m_animationNames.emplace_back(animName);
 		SEAssert(m_currentTimeSec.size() == m_animationNames.size(), "Animation names and timers are out of sync");
 	}
 
@@ -215,6 +221,7 @@ namespace fr
 	struct AnimationData
 	{
 		static constexpr size_t k_invalidIdx = std::numeric_limits<size_t>::max();
+		static constexpr size_t k_invalidFloatsPerKeyframe = std::numeric_limits<uint8_t>::max();
 
 		size_t m_animationIdx;
 
@@ -224,6 +231,7 @@ namespace fr
 			AnimationPath m_targetPath				= AnimationPath::AnimationPath_Invalid;
 			size_t m_keyframeTimesIdx				= k_invalidIdx;
 			size_t m_dataIdx						= k_invalidIdx;
+			uint8_t m_dataFloatsPerKeyframe			= k_invalidFloatsPerKeyframe;
 		};
 
 		std::vector<Channel> m_channels;
@@ -236,13 +244,18 @@ namespace fr
 	class AnimationComponent
 	{
 	public:
-		static AnimationComponent* AttachAnimationComponent(
-			fr::EntityManager&, entt::entity, AnimationController const*);
+		static AnimationComponent* AttachAnimationComponent(fr::EntityManager&, entt::entity, AnimationController const*);
 
 		static void ApplyAnimation(fr::AnimationComponent const&, fr::TransformComponent&);
 
 
+	public: // Helpers:
+		static void GetPrevNextKeyframeIdx(
+			fr::AnimationController const*, fr::AnimationData::Channel const&, size_t& prevIdxOut, size_t& nextIdxOut);
+
+
 	private: // Use the static creation factories
+		AnimationComponent() = delete;
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
 
 
@@ -260,6 +273,8 @@ namespace fr
 
 	public:
 		void SetAnimationData(AnimationData const&);
+
+		AnimationController const* GetAnimationController() const;
 		
 		// Returns null if node is not animated by the given keyframe times index
 		AnimationData const* GetAnimationData(size_t animationIdx) const; 
@@ -290,6 +305,12 @@ namespace fr
 	};
 
 
+	inline AnimationController const* AnimationComponent::GetAnimationController() const
+	{
+		return m_animationController;
+	}
+
+
 	inline AnimationState AnimationComponent::GetAnimationState() const
 	{
 		return m_animationController->GetAnimationState();
@@ -299,5 +320,45 @@ namespace fr
 	inline bool AnimationComponent::IsPlaying() const
 	{
 		return GetAnimationState() == fr::AnimationState::Playing;
+	}
+
+
+	// ---
+
+
+	class MeshAnimationComponent
+	{
+	public:
+		static MeshAnimationComponent* AttachMeshAnimationComponent(fr::EntityManager&, entt::entity);
+
+		// Returns true if any animation was applied
+		static bool ApplyAnimation(fr::AnimationComponent const&, fr::MeshAnimationComponent&, entt::entity meshConcept);
+
+
+		static gr::MeshPrimitive::MeshRenderData CreateRenderData(entt::entity, MeshAnimationComponent const&);
+
+
+	private: // Use the static creation factories
+		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
+		MeshAnimationComponent() = delete;
+
+
+	public:
+		MeshAnimationComponent(PrivateCTORTag);
+
+		void SetMorphWeight(uint8_t weightIdx, float weight);
+
+
+	private:
+		std::array<float, re::VertexStream::k_maxVertexStreams> m_morphWeights;
+	};
+
+
+	inline void MeshAnimationComponent::SetMorphWeight(uint8_t weightIdx, float weight)
+	{
+		SEAssert(weightIdx < m_morphWeights.size(), "OOB index");
+		SEAssert(weight >= 0.f && weight <= 1.f, "OOB weight");
+
+		m_morphWeights[weightIdx] = weight;
 	}
 }

@@ -138,24 +138,24 @@ namespace fr
 	}
 
 
-	template<typename T, typename RenderDataType>
+	template<typename RenderDataType, typename CmptType, typename... OtherCmpts>
 	void EntityManager::EnqueueRenderUpdateHelper()
 	{
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
-		auto componentsView = m_registry.view<T, DirtyMarker<T>, gr::RenderDataComponent, fr::NameComponent>();
+		auto componentsView = m_registry.view<
+			gr::RenderDataComponent, fr::NameComponent, DirtyMarker<CmptType>, CmptType, OtherCmpts...>();
 		for (auto entity : componentsView)
 		{
 			gr::RenderDataComponent const& renderDataComponent = componentsView.get<gr::RenderDataComponent>(entity);
-			fr::NameComponent const& nameComponent = componentsView.get<fr::NameComponent>(entity);
 
-			T const& component = componentsView.get<T>(entity);
+			CmptType const& component = componentsView.get<CmptType>(entity);
 
 			renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<RenderDataType>>(
 				renderDataComponent.GetRenderDataID(),
-				T::CreateRenderData(component, nameComponent));
+				CmptType::CreateRenderData(entity, component));
 
-			m_registry.erase<DirtyMarker<T>>(entity);
+			m_registry.erase<DirtyMarker<CmptType>>(entity);
 		}
 	}
 
@@ -245,14 +245,16 @@ namespace fr
 				m_registry.erase<fr::CameraComponent::NewMainCameraMarker>(entity);
 			}
 
-			EnqueueRenderUpdateHelper<fr::BoundsComponent, gr::Bounds::RenderData>();
-			EnqueueRenderUpdateHelper<fr::MeshPrimitiveComponent, gr::MeshPrimitive::RenderData>();
-			EnqueueRenderUpdateHelper<fr::MaterialInstanceComponent, gr::Material::MaterialInstanceData>();
-			EnqueueRenderUpdateHelper<fr::CameraComponent, gr::Camera::RenderData>();
+			EnqueueRenderUpdateHelper<gr::Bounds::RenderData, fr::BoundsComponent>();
+			EnqueueRenderUpdateHelper<gr::MeshPrimitive::RenderData, fr::MeshPrimitiveComponent>();
+			EnqueueRenderUpdateHelper<gr::Material::MaterialInstanceData, fr::MaterialInstanceComponent>();
+			EnqueueRenderUpdateHelper<gr::Camera::RenderData, fr::CameraComponent>();
+			EnqueueRenderUpdateHelper<gr::MeshPrimitive::MeshRenderData, 
+				fr::MeshAnimationComponent, fr::Mesh::MeshConceptMarker, fr::AnimationComponent>();
 
 			// Lights:
 			auto lightComponentsView = m_registry.view<
-				fr::LightComponent, DirtyMarker<fr::LightComponent>, gr::RenderDataComponent, fr::NameComponent>();
+				gr::RenderDataComponent, fr::NameComponent, DirtyMarker<fr::LightComponent>, fr::LightComponent>();
 			for (auto entity : lightComponentsView)
 			{
 				fr::NameComponent const& nameComponent = lightComponentsView.get<fr::NameComponent>(entity);
@@ -263,7 +265,7 @@ namespace fr
 			}
 
 			// Shadows:
-			EnqueueRenderUpdateHelper<fr::ShadowMapComponent, gr::ShadowMap::RenderData>();
+			EnqueueRenderUpdateHelper<gr::ShadowMap::RenderData, fr::ShadowMapComponent>();
 		}
 	}
 
@@ -514,6 +516,13 @@ namespace fr
 							renderDataComponent.GetRenderDataID());
 					}
 
+					// MeshAnimations:
+					if (m_registry.all_of<fr::MeshAnimationComponent>(entity))
+					{
+						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::MeshRenderData>>(
+							renderDataComponent.GetRenderDataID());
+					}
+
 					// Materials:
 					if (m_registry.all_of<fr::MaterialInstanceComponent>(entity))
 					{
@@ -758,6 +767,21 @@ namespace fr
 				fr::TransformComponent& transformComponent = animatedsView.get<fr::TransformComponent>(entity);
 
 				fr::AnimationComponent::ApplyAnimation(animationComponent, transformComponent);
+			}
+
+			// Mesh animations:
+			auto animatedMeshesView = 
+				m_registry.view<fr::AnimationComponent, fr::MeshAnimationComponent, fr::Mesh::MeshConceptMarker>();
+			for (auto entity : animatedMeshesView)
+			{
+				fr::AnimationComponent const& animCmpt = animatedMeshesView.get<fr::AnimationComponent>(entity);
+				fr::MeshAnimationComponent& meshAnimCmpt = animatedMeshesView.get<fr::MeshAnimationComponent>(entity);
+
+				const bool didAnimate = fr::MeshAnimationComponent::ApplyAnimation(animCmpt, meshAnimCmpt, entity);
+				if (didAnimate) // Attach a dirty marker if anything changed
+				{
+					m_registry.emplace_or_replace<DirtyMarker<fr::MeshAnimationComponent>>(entity);
+				}
 			}
 		}
 	}

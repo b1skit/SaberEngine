@@ -142,15 +142,30 @@ namespace fr
 
 
 	gr::MeshPrimitive::RenderData MeshPrimitiveComponent::CreateRenderData(
-		MeshPrimitiveComponent const& meshPrimitiveComponent, fr::NameComponent const&)
+		entt::entity entity, MeshPrimitiveComponent const& meshPrimitiveComponent)
 	{
+		// Get the RenderDataID of the MeshConcept that owns the MeshPrimitive
+		gr::RenderDataID owningMeshRenderDataID = gr::k_invalidRenderDataID;
+
+		fr::EntityManager const* em = fr::EntityManager::Get();
+		fr::Relationship const& meshPrimRelationship = em->GetComponent<fr::Relationship>(entity);
+		entt::entity meshConceptEntity = meshPrimRelationship.GetParent();
+		if (meshConceptEntity != entt::null) // null if the MeshPrimitive isn't owned by a MeshConcept
+		{
+			gr::RenderDataComponent const& meshConceptRenderComponent =
+				em->GetComponent<gr::RenderDataComponent>(meshConceptEntity);
+
+			owningMeshRenderDataID = meshConceptRenderComponent.GetRenderDataID();
+			SEAssert(owningMeshRenderDataID != gr::k_invalidRenderDataID, "Invalid render data ID received from Mesh");
+		}
+
 		gr::MeshPrimitive::RenderData renderData{
 			.m_meshPrimitiveParams = meshPrimitiveComponent.m_meshPrimitive->GetMeshParams(),
-			// Vertex streams copied below...
+			.m_vertexStreams = {nullptr}, // Vertex streams copied below...
 			.m_numVertexStreams = 0,
 			.m_indexStream = meshPrimitiveComponent.m_meshPrimitive->GetIndexStream(),
 			.m_dataHash = meshPrimitiveComponent.m_meshPrimitive->GetDataHash(),
-			
+			.m_owningMeshRenderDataID = owningMeshRenderDataID,
 		};
 
 		std::vector<gr::MeshPrimitive::MeshVertexStream> const& vertexStreams =

@@ -34,8 +34,7 @@ namespace fr
 			fr::CameraComponent const* activeSceneCam);
 
 	public:
-		static gr::ShadowMap::RenderData CreateRenderData(
-			fr::ShadowMapComponent const&, fr::NameComponent const& nameCmpt);
+		static gr::ShadowMap::RenderData CreateRenderData(entt::entity, fr::ShadowMapComponent const&);
 
 
 		static bool Update( // Returns true if modified (or forced to modify)
