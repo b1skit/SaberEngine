@@ -1276,6 +1276,7 @@ namespace
 		// Attach a MeshAnimationComponent, if necessary:
 		if (meshHasMorphTargets)
 		{
+#if defined(_DEBUG)
 			bool hasWeightsAnimation = false;
 			for (auto const& animation : animationNodeToData)
 			{
@@ -1293,6 +1294,7 @@ namespace
 			}
 			SEAssert(hasWeightsAnimation, 
 				"Current node contains morph targets, but does not have any animation that targets its morph weights");
+#endif
 
 			fr::MeshAnimationComponent::AttachMeshAnimationComponent(em, sceneNode);
 		}

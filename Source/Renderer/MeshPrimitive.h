@@ -73,7 +73,7 @@ namespace gr
 			
 			uint64_t m_dataHash;
 
-			gr::RenderDataID m_owningMeshRenderDataID; // To access MeshRenderData
+			gr::RenderDataID m_owningMeshRenderDataID; // To access owning MeshRenderData
 
 
 			// Helper: Get a specific vertex stream packed into a MeshPrimitive::RenderData.
@@ -81,7 +81,6 @@ namespace gr
 			static re::VertexStream const* GetVertexStreamFromRenderData(
 				gr::MeshPrimitive::RenderData const&, re::VertexStream::Type, int8_t typeIdx = -1);
 		};
-		static constexpr size_t test = sizeof(RenderData);
 
 
 		struct MeshRenderData

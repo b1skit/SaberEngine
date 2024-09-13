@@ -249,8 +249,8 @@ namespace fr
 			EnqueueRenderUpdateHelper<gr::MeshPrimitive::RenderData, fr::MeshPrimitiveComponent>();
 			EnqueueRenderUpdateHelper<gr::Material::MaterialInstanceData, fr::MaterialInstanceComponent>();
 			EnqueueRenderUpdateHelper<gr::Camera::RenderData, fr::CameraComponent>();
-			EnqueueRenderUpdateHelper<gr::MeshPrimitive::MeshRenderData, 
-				fr::MeshAnimationComponent, fr::Mesh::MeshConceptMarker, fr::AnimationComponent>();
+			EnqueueRenderUpdateHelper<gr::MeshPrimitive::MeshRenderData, fr::MeshAnimationComponent, 
+				fr::Mesh::MeshConceptMarker, fr::AnimationComponent>();
 
 			// Lights:
 			auto lightComponentsView = m_registry.view<

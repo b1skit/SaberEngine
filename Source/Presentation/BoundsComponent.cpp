@@ -113,7 +113,7 @@ namespace fr
 	}
 
 
-	gr::Bounds::RenderData BoundsComponent::CreateRenderData(entt::entity entity, fr::BoundsComponent const& bounds)
+	gr::Bounds::RenderData BoundsComponent::CreateRenderData(entt::entity, fr::BoundsComponent const& bounds)
 	{
 		return gr::Bounds::RenderData
 		{

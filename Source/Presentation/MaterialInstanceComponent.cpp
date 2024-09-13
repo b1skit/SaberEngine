@@ -10,7 +10,7 @@
 namespace fr
 {
 	gr::Material::MaterialInstanceData MaterialInstanceComponent::CreateRenderData(
-		entt::entity entity, MaterialInstanceComponent const& matComponent)
+		entt::entity, MaterialInstanceComponent const& matComponent)
 	{
 		return matComponent.m_instanceData;
 	}
