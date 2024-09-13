@@ -102,7 +102,7 @@ namespace re
 			Lifetime m_lifetime = Lifetime::Permanent;
 
 			Type m_type = Type::Type_Count;
-			uint8_t m_srcTypeIdx = 0; // Index in the source asset. Must be unique & monotonically increasing. Used for sorting
+			uint8_t m_typeIdx = 0; // Index in the source asset. Must be unique & monotonically increasing. Used for sorting
 
 			IsMorphData m_isMorphData = IsMorphData::False;
 			uint8_t m_morphTargetIdx = 0;
@@ -116,12 +116,12 @@ namespace re
 		struct VertexComparisonData
 		{
 			Type m_streamType;
-			uint8_t m_srcTypeIdx;
+			uint8_t m_typeIdx;
 		};
 		struct MorphComparisonData
 		{
 			Type m_streamType;
-			uint8_t m_srcTypeIdx;
+			uint8_t m_typeIdx;
 			uint8_t m_morphTargetIdx;
 		};
 		struct Comparator
@@ -223,7 +223,7 @@ namespace re
 
 		if (a->GetType() == b.m_streamType)
 		{
-			return a->GetSourceTypeIdx() < b.m_srcTypeIdx;
+			return a->GetSourceTypeIdx() < b.m_typeIdx;
 		}
 		return a->GetType() < b.m_streamType;
 	}
@@ -235,13 +235,13 @@ namespace re
 
 		if (a->GetType() == b.m_streamType)
 		{
-			if (a->GetSourceTypeIdx() == b.m_srcTypeIdx)
+			if (a->GetSourceTypeIdx() == b.m_typeIdx)
 			{
 				return a->GetMorphTargetIdx() < b.m_morphTargetIdx;
 			}
 			else
 			{
-				return a->GetSourceTypeIdx() < b.m_srcTypeIdx;
+				return a->GetSourceTypeIdx() < b.m_typeIdx;
 			}
 		}
 		return a->GetType() < b.m_streamType;
@@ -262,7 +262,7 @@ namespace re
 
 	inline uint8_t VertexStream::GetSourceTypeIdx() const
 	{
-		return m_createParams.m_srcTypeIdx;
+		return m_createParams.m_typeIdx;
 	}
 
 

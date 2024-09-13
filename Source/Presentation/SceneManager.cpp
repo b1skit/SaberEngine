@@ -760,7 +760,7 @@ namespace
 					re::VertexStream* positionStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Position,
-							.m_srcTypeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
+							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::Float3,
 						},
 						std::move(positions)).get();
@@ -801,7 +801,7 @@ namespace
 					re::VertexStream* normalStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Normal,
-							.m_srcTypeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
+							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::Float3,
 							.m_doNormalize = re::VertexStream::Normalize::True,
 						},
@@ -827,7 +827,7 @@ namespace
 					re::VertexStream* tangentStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Tangent,
-							.m_srcTypeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
+							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::Float4,
 							.m_doNormalize = re::VertexStream::Normalize::True,
 						},
@@ -853,7 +853,7 @@ namespace
 					re::VertexStream* uvStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::TexCoord,
-							.m_srcTypeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
+							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::Float2,
 						},
 						std::move(uvs)).get();
@@ -881,7 +881,7 @@ namespace
 					re::VertexStream* colorStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Color,
-							.m_srcTypeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
+							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::Float4,
 						},
 						std::move(colors)).get();
@@ -919,7 +919,7 @@ namespace
 					re::VertexStream* jointStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::BlendIndices,
-							.m_srcTypeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
+							.m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							.m_dataType = re::VertexStream::DataType::UByte,
 						},
 						std::move(jointsAsUints)).get();
@@ -944,7 +944,7 @@ namespace
 					re::VertexStream* weightStream = re::VertexStream::Create(
 						re::VertexStream::CreateParams{
 							 .m_type = re::VertexStream::Type::BlendWeight,
-							 .m_srcTypeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
+							 .m_typeIdx = util::CheckedCast<uint8_t>(curAttribute.index),
 							 .m_dataType = re::VertexStream::DataType::Float,
 						},
 						std::move(weights)).get();
@@ -1005,7 +1005,7 @@ namespace
 						re::VertexStream* positionMorphTarget = re::VertexStream::Create(
 							re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Position,
-								 .m_srcTypeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
+								 .m_typeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
 								 .m_morphTargetIdx = positionTargetIdx++,
 								 .m_dataType = re::VertexStream::DataType::Float3,
@@ -1023,7 +1023,7 @@ namespace
 						re::VertexStream* normalMorphTarget = re::VertexStream::Create(
 							re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Normal,
-								 .m_srcTypeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
+								 .m_typeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
 								 .m_morphTargetIdx = normalTargetIdx++,
 								 .m_dataType = re::VertexStream::DataType::Float3,
@@ -1042,7 +1042,7 @@ namespace
 						re::VertexStream* tangentMorphTarget = re::VertexStream::Create(
 							re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Tangent,
-								 .m_srcTypeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
+								 .m_typeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
 								 .m_morphTargetIdx = tangentTargetIdx++,
 								 .m_dataType = re::VertexStream::DataType::Float3,
@@ -1060,7 +1060,7 @@ namespace
 						re::VertexStream* uvMorphTarget = re::VertexStream::Create(
 							re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::TexCoord,
-								 .m_srcTypeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
+								 .m_typeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
 								 .m_morphTargetIdx = uvTargetIdx++,
 								 .m_dataType = re::VertexStream::DataType::Float2,
@@ -1080,7 +1080,7 @@ namespace
 						re::VertexStream* colorMorphTarget = re::VertexStream::Create(
 							re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Color,
-								 .m_srcTypeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
+								 .m_typeIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index),
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
 								 .m_morphTargetIdx = colorTargetIdx++,
 								 .m_dataType = re::VertexStream::DataType::Float4,
@@ -1166,7 +1166,7 @@ namespace
 				normal0Stream = re::VertexStream::Create(
 					re::VertexStream::CreateParams{
 						.m_type = re::VertexStream::Type::Normal,
-						.m_srcTypeIdx = 0,
+						.m_typeIdx = 0,
 						.m_dataType = re::VertexStream::DataType::Float3,
 						.m_doNormalize = re::VertexStream::Normalize::True,
 					},
@@ -1179,7 +1179,7 @@ namespace
 				tangent0Stream = re::VertexStream::Create(
 					re::VertexStream::CreateParams{
 						.m_type = re::VertexStream::Type::Tangent,
-						.m_srcTypeIdx = 0,
+						.m_typeIdx = 0,
 						.m_dataType = re::VertexStream::DataType::Float4,
 						.m_doNormalize = re::VertexStream::Normalize::True,
 					},
@@ -1192,7 +1192,7 @@ namespace
 				uv0Stream = re::VertexStream::Create(
 					re::VertexStream::CreateParams{
 						.m_type = re::VertexStream::Type::TexCoord,
-						.m_srcTypeIdx = 0,
+						.m_typeIdx = 0,
 						.m_dataType = re::VertexStream::DataType::Float2,
 					},
 					std::move(*uv0Data)).get();
@@ -1206,7 +1206,7 @@ namespace
 				color0Stream = re::VertexStream::Create(
 					re::VertexStream::CreateParams{
 						.m_type = re::VertexStream::Type::Color,
-						.m_srcTypeIdx = 0,
+						.m_typeIdx = 0,
 						.m_dataType = re::VertexStream::DataType::Float4
 					},
 					util::ByteVector::Create<glm::vec4>(

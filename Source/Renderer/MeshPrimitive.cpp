@@ -157,7 +157,7 @@ namespace gr
 			m_vertexStreams.end(),
 			re::VertexStream::VertexComparisonData{
 				.m_streamType = streamType,
-				.m_srcTypeIdx = srcTypeIdx },
+				.m_typeIdx = srcTypeIdx },
 			re::VertexStream::Comparator());
 
 		SEAssert(*result != nullptr && 
@@ -177,7 +177,7 @@ namespace gr
 			m_morphTargets.end(),
 			re::VertexStream::MorphComparisonData{
 				.m_streamType = streamType,
-				.m_srcTypeIdx = srcTypeIdx,
+				.m_typeIdx = srcTypeIdx,
 				.m_morphTargetIdx = morphTargetIdx },
 			re::VertexStream::Comparator());
 
