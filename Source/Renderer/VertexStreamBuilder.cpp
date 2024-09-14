@@ -314,9 +314,18 @@ namespace grutil
 			{
 				SEAssert(insertIdx == newPositions.size(), "Insertions are out of sync");
 
-				newIndices.emplace_back(insertIdx++);
-				newIndices.emplace_back(insertIdx++);
-				newIndices.emplace_back(insertIdx++);
+				if (meshData->m_indices->IsScalarType<uint16_t>())
+				{
+					newIndices.emplace_back<uint16_t>(insertIdx++);
+					newIndices.emplace_back<uint16_t>(insertIdx++);
+					newIndices.emplace_back<uint16_t>(insertIdx++);
+				}
+				else
+				{
+					newIndices.emplace_back<uint32_t>(insertIdx++);
+					newIndices.emplace_back<uint32_t>(insertIdx++);
+					newIndices.emplace_back<uint32_t>(insertIdx++);
+				}
 
 				const uint32_t curIndices_i = meshData->m_indices->ScalarGetAs<uint32_t>(i);
 				const uint32_t curIndices_i1 = meshData->m_indices->ScalarGetAs<uint32_t>(i + 1);
