@@ -742,19 +742,36 @@ namespace
 			if (curPrimitive.indices != nullptr)
 			{
 				const size_t indicesComponentNumBytes = cgltf_component_size(curPrimitive.indices->component_type);
-				SEAssert(indicesComponentNumBytes == 2 || indicesComponentNumBytes == 4,
+				SEAssert(indicesComponentNumBytes == 1 ||
+					indicesComponentNumBytes == 2 || 
+					indicesComponentNumBytes == 4,
 					"Unexpected index component byte size");
 
 				const size_t numIndices = cgltf_accessor_unpack_indices(
 					curPrimitive.indices, nullptr, indicesComponentNumBytes, curPrimitive.indices->count);
 
-				util::ByteVector indices = indicesComponentNumBytes == 2 ?
-					util::ByteVector::Create<uint16_t>(numIndices) :
+				util::ByteVector indices = (indicesComponentNumBytes == 1 || indicesComponentNumBytes == 2) ?
+					util::ByteVector::Create<uint16_t>(numIndices) : // We'll expand 8 -> 16 bits
 					util::ByteVector::Create<uint32_t>(numIndices);
 
 				re::VertexStream::DataType indexDataType = re::VertexStream::DataType::DataType_Count;
 				switch (indicesComponentNumBytes)
 				{
+				case 1:
+				{
+					// DX12 does not support 8 bit indices; Here we expand 8 -> 16 bits
+					indexDataType = re::VertexStream::DataType::UShort;
+
+					std::vector<uint8_t> tempIndices(numIndices);
+					cgltf_accessor_unpack_indices(
+						curPrimitive.indices, tempIndices.data(), indicesComponentNumBytes, numIndices);
+
+					for (size_t i = 0; i < tempIndices.size(); ++i)
+					{
+						indices.at<uint16_t>(i) = static_cast<uint16_t>(tempIndices[i]);
+					}
+				}
+				break;
 				case 2: // uint16_t
 				{
 					indexDataType = re::VertexStream::DataType::UShort;
