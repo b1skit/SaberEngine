@@ -213,6 +213,10 @@
           "Command": "-scene Fox\\glTF\\Fox.gltf"
         },
         {
+          "Id": "e71cae4e-1903-46e0-8510-c5d9f95e2410",
+          "Command": "-scene TriangleWithoutIndices\\glTF-Embedded\\TriangleWithoutIndices.gltf"
+        },
+        {
           "Id": "42a5dff5-b2c6-44e2-8462-7ac0ac0dbf0c",
           "Command": "-scene AlphaBlendModeTest\\glTF\\AlphaBlendModeTest.gltf"
         },

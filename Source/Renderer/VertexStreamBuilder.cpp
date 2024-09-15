@@ -38,11 +38,14 @@ namespace grutil
 	{
 		const bool isTriangleList = meshData->m_meshParams->m_topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList;
 		SEAssert(meshData->m_indices && meshData->m_positions && isTriangleList,
-			"Only indexed triangle lists are (currently) supported");
+			"Only triangle lists are (currently) supported");
 
 		LOG("Processing mesh \"%s\" with %d vertices...", meshData->m_name.c_str(), meshData->m_positions->size());
 
-		// If an attribute does not exist but can be built, pass a vector of size 0
+		if (meshData->m_indices->empty())
+		{
+			BuildIndexList(meshData);
+		}
 
 		m_canBuildNormals = meshData->m_normals != nullptr;
 		const bool hasNormals = m_canBuildNormals && !meshData->m_normals->empty();
@@ -427,6 +430,19 @@ namespace grutil
 			meshData->m_normals->at<glm::vec3>(i0) = faceNormal;
 			meshData->m_normals->at<glm::vec3>(i1) = faceNormal;
 			meshData->m_normals->at<glm::vec3>(i2) = faceNormal;
+		}
+	}
+
+
+	void VertexStreamBuilder::BuildIndexList(MeshData* meshData)
+	{
+		SEAssert(meshData->m_indices && meshData->m_indices->empty(), "Invalid configuration for building an index list");
+
+		// Create a simple index list
+		meshData->m_indices->resize(meshData->m_positions->size());
+		for (uint32_t i = 0; i < meshData->m_positions->size(); ++i)
+		{
+			meshData->m_indices->ScalarSetFrom(i, i);
 		}
 	}
 

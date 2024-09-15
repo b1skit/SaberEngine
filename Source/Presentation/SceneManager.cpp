@@ -713,49 +713,6 @@ namespace
 				.m_topologyMode = CGLTFPrimitiveTypeToGrTopologyMode(curPrimitive.type),
 			};
 
-			// Index stream:
-			SEAssert(curPrimitive.indices != nullptr, "Mesh is missing indices");
-			
-			const size_t indicesComponentNumBytes = cgltf_component_size(curPrimitive.indices->component_type);
-			SEAssert(indicesComponentNumBytes == 2 || indicesComponentNumBytes == 4,
-				"Unexpected index component byte size");
-
-			const size_t numIndices = cgltf_accessor_unpack_indices(
-				curPrimitive.indices, nullptr, indicesComponentNumBytes, curPrimitive.indices->count);
-
-			util::ByteVector indices = indicesComponentNumBytes == 2 ? 
-				util::ByteVector::Create<uint16_t>(numIndices) : 
-				util::ByteVector::Create<uint32_t>(numIndices);
-
-			re::VertexStream::DataType indexDataType = re::VertexStream::DataType::DataType_Count;
-			switch (indicesComponentNumBytes)
-			{
-			case 2: // uint16_t
-			{
-				indexDataType = re::VertexStream::DataType::UShort;
-				cgltf_accessor_unpack_indices(
-					curPrimitive.indices, indices.data<uint16_t>(), indicesComponentNumBytes, numIndices);
-			}
-			break;
-			case 4: // uint32_t
-			{
-				indexDataType = re::VertexStream::DataType::UInt;
-				cgltf_accessor_unpack_indices(
-					curPrimitive.indices, indices.data<uint32_t>(), indicesComponentNumBytes, numIndices);
-			}
-			break;
-			default: SEAssertF("Unexpected number of bytes in indices component");
-			}
-
-			VertexStreamDeferredCreateParams indexStreamDeferredCreateParams = VertexStreamDeferredCreateParams{
-				.m_streamData = std::make_unique<util::ByteVector>(std::move(indices)),
-				.m_createParams = re::VertexStream::CreateParams{
-					.m_type = re::VertexStream::Type::Index,
-					.m_dataType = indexDataType,
-				},
-			};
-
-			
 			// Vertex streams:
 			// Each vector element corresponds to the m_streamIdx of the entries in the array elements
 			std::vector<std::array<VertexStreamDeferredCreateParams,
@@ -773,14 +730,58 @@ namespace
 					const size_t streamTypeIdx = static_cast<size_t>(streamCreateParams.m_createParams.m_type);
 
 					SEAssert(vertexStreamDeferredCreateParams.at(
-							streamCreateParams.m_streamIdx)[streamTypeIdx].m_streamData == nullptr, 
+						streamCreateParams.m_streamIdx)[streamTypeIdx].m_streamData == nullptr,
 						"Stream data is not null, this suggests we've already populated this slot");
 
-					vertexStreamDeferredCreateParams.at(streamCreateParams.m_streamIdx)[streamTypeIdx] = 
+					vertexStreamDeferredCreateParams.at(streamCreateParams.m_streamIdx)[streamTypeIdx] =
 						std::move(streamCreateParams);
 				};
-			
 
+
+			// Index stream:
+			if (curPrimitive.indices != nullptr)
+			{
+				const size_t indicesComponentNumBytes = cgltf_component_size(curPrimitive.indices->component_type);
+				SEAssert(indicesComponentNumBytes == 2 || indicesComponentNumBytes == 4,
+					"Unexpected index component byte size");
+
+				const size_t numIndices = cgltf_accessor_unpack_indices(
+					curPrimitive.indices, nullptr, indicesComponentNumBytes, curPrimitive.indices->count);
+
+				util::ByteVector indices = indicesComponentNumBytes == 2 ?
+					util::ByteVector::Create<uint16_t>(numIndices) :
+					util::ByteVector::Create<uint32_t>(numIndices);
+
+				re::VertexStream::DataType indexDataType = re::VertexStream::DataType::DataType_Count;
+				switch (indicesComponentNumBytes)
+				{
+				case 2: // uint16_t
+				{
+					indexDataType = re::VertexStream::DataType::UShort;
+					cgltf_accessor_unpack_indices(
+						curPrimitive.indices, indices.data<uint16_t>(), indicesComponentNumBytes, numIndices);
+				}
+				break;
+				case 4: // uint32_t
+				{
+					indexDataType = re::VertexStream::DataType::UInt;
+					cgltf_accessor_unpack_indices(
+						curPrimitive.indices, indices.data<uint32_t>(), indicesComponentNumBytes, numIndices);
+				}
+				break;
+				default: SEAssertF("Unexpected number of bytes in indices component");
+				}
+
+				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+					.m_streamData = std::make_unique<util::ByteVector>(std::move(indices)),
+					.m_createParams = re::VertexStream::CreateParams{
+						.m_type = re::VertexStream::Type::Index,
+						.m_dataType = indexDataType,
+					},
+					.m_streamIdx = 0 // Index stream always 0
+					});
+			}
+		
 			glm::vec3 positionsMinXYZ(fr::BoundsComponent::k_invalidMinXYZ);
 			glm::vec3 positionsMaxXYZ(fr::BoundsComponent::k_invalidMaxXYZ);
 		
@@ -1124,15 +1125,44 @@ namespace
 
 			// Create empty containers for anything the VertexStreamBuilder can create.
 			// Note: GLTF only supports a single position/normal/tangent (but multiple UV channels etc)
-			const bool hasNormal =
+			const bool hasIndices = 
+				vertexStreamDeferredCreateParams[0][re::VertexStream::Index].m_streamData != nullptr;
+			const bool hasNormal0 =
 				vertexStreamDeferredCreateParams[0][re::VertexStream::Normal].m_streamData != nullptr;
-			const bool hasTangent =
+			const bool hasTangent0 =
 				vertexStreamDeferredCreateParams[0][re::VertexStream::Tangent].m_streamData != nullptr;
-			const bool hasUV =
+			const bool hasUV0 =
 				vertexStreamDeferredCreateParams[0][re::VertexStream::TexCoord].m_streamData != nullptr;
 			const bool hasColor = vertexStreamDeferredCreateParams[0][re::VertexStream::Color].m_streamData != nullptr;
 
-			if (!hasNormal && hasTangent)
+			if (!hasIndices)
+			{
+				const size_t numPositions = 
+					vertexStreamDeferredCreateParams[0][re::VertexStream::Position].m_streamData->size();
+
+				std::unique_ptr<util::ByteVector> indexData;
+				re::VertexStream::DataType indexDataType = re::VertexStream::DataType::DataType_Count;
+				if (numPositions < std::numeric_limits<uint16_t>::max())
+				{
+					indexData = std::make_unique<util::ByteVector>(util::ByteVector::Create<uint16_t>());
+					indexDataType = re::VertexStream::DataType::UShort;
+				}
+				else
+				{
+					indexData = std::make_unique<util::ByteVector>(util::ByteVector::Create<uint32_t>());
+					indexDataType = re::VertexStream::DataType::UInt;
+				}			
+
+				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+					.m_streamData = std::move(indexData),
+					.m_createParams = re::VertexStream::CreateParams{
+						.m_type = re::VertexStream::Type::Index,
+						.m_dataType = indexDataType,
+					},
+					.m_streamIdx = 0,
+				});
+			}
+			if (!hasNormal0)
 			{
 				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
 						.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec3>()),
@@ -1144,7 +1174,7 @@ namespace
 						.m_streamIdx = 0,
 					});
 			}
-			if (!hasTangent && hasNormal)
+			if (!hasTangent0)
 			{
 				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
 					.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec4>()),
@@ -1156,7 +1186,7 @@ namespace
 					.m_streamIdx = 0,
 					});
 			}
-			if (!hasUV && (hasNormal || hasTangent))
+			if (!hasUV0)
 			{
 				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
 					.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec2>()),
@@ -1234,27 +1264,32 @@ namespace
 			{
 				.m_name = meshName,
 				.m_meshParams = &meshPrimitiveParams,
-				.m_indices = indexStreamDeferredCreateParams.m_streamData.get(),
+				.m_indices = vertexStreamDeferredCreateParams[0][re::VertexStream::Index].m_streamData.get(),
 				.m_positions = vertexStreamDeferredCreateParams[0][re::VertexStream::Position].m_streamData.get(),
 				.m_normals = vertexStreamDeferredCreateParams[0][re::VertexStream::Normal].m_streamData.get(),
 				.m_tangents = vertexStreamDeferredCreateParams[0][re::VertexStream::Tangent].m_streamData.get(),
 				.m_UV0 = vertexStreamDeferredCreateParams[0][re::VertexStream::TexCoord].m_streamData.get(),
 				.m_extraChannels = &extraChannelsData,
 			};
-			grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);		
+			grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+
+			re::VertexStream* indexStream = re::VertexStream::Create(
+				vertexStreamDeferredCreateParams[0][re::VertexStream::Index].m_createParams,
+				std::move(*vertexStreamDeferredCreateParams[0][re::VertexStream::Index].m_streamData)).get();
 
 			std::vector<gr::MeshPrimitive::MeshVertexStream> meshPrimitiveVertexStreams;
 			meshPrimitiveVertexStreams.reserve(vertexStreamDeferredCreateParams.size() * re::VertexStream::Type_Count);
 
-			// Finally, create our VertexStreams with the modified data:
-			re::VertexStream* indexStream = re::VertexStream::Create(
-				indexStreamDeferredCreateParams.m_createParams,
-				std::move(*indexStreamDeferredCreateParams.m_streamData)).get();
-
+			// Finally, create our VertexStreams with the (potentially) modified data:
 			for (uint8_t typeIdx = 0; typeIdx < vertexStreamDeferredCreateParams.size(); ++typeIdx)
 			{
 				for (uint8_t streamTypeIdx = 0; streamTypeIdx < re::VertexStream::Type_Count; ++streamTypeIdx)
 				{
+					if (streamTypeIdx == re::VertexStream::Index)
+					{
+						continue; // Our single index stream is handled externally
+					}
+
 					if (vertexStreamDeferredCreateParams[typeIdx][streamTypeIdx].m_streamData)
 					{
 						// Create the morph targets:

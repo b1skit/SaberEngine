@@ -22,7 +22,7 @@ namespace grutil
 
 			// If an attribute does not exist but can be built, pass a vector of size 0
 			util::ByteVector* m_indices = nullptr;		// uint32_t
-			util::ByteVector* m_positions = nullptr;	// glm::vec3
+			util::ByteVector* m_positions = nullptr;	// glm::vec3 (Note: Cannot be built)
 
 			util::ByteVector* m_normals = nullptr;		// glm::vec3: Created as face normals if empty
 			util::ByteVector* m_tangents = nullptr;		// glm::vec4: Computed from normals and UVs
@@ -41,6 +41,7 @@ namespace grutil
 		void ConstructMissingVertexAttributes(MeshData*);
 	
 		void RemoveDegenerateTriangles(MeshData*);
+		void BuildIndexList(MeshData*);
 		void BuildSimpleTriangleUVs(MeshData*);
 		void BuildFlatNormals(MeshData*);
 		void SplitSharedAttributes(MeshData*);
