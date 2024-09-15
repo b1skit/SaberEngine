@@ -757,7 +757,7 @@ namespace
 				re::VertexStream::DataType indexDataType = re::VertexStream::DataType::DataType_Count;
 				switch (indicesComponentNumBytes)
 				{
-				case 1:
+				case 1: // uint8_t -> uint16_t
 				{
 					// DX12 does not support 8 bit indices; Here we expand 8 -> 16 bits
 					indexDataType = re::VertexStream::DataType::UShort;
