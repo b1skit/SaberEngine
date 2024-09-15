@@ -185,10 +185,6 @@
           "Command": "-scene SunTemple\\suntemple.gltf"
         },
         {
-          "Id": "09ab3e01-2a8d-45c5-ba53-adc68afa5d56",
-          "Command": "-scene debug\\Duck.gltf"
-        },
-        {
           "Id": "5a59ebe8-2088-49eb-9fa5-a25bd960b6fc",
           "Command": "-scene abandoned_warehouse\\scene.gltf"
         },

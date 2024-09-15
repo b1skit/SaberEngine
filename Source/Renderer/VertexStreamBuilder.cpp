@@ -160,11 +160,11 @@ namespace grutil
 		}
 
 		std::vector<util::ByteVector> newExtraChannels;
-		newExtraChannels.reserve(meshData->m_numExtraChannels);
-		for (size_t i = 0; i < meshData->m_numExtraChannels; ++i)
+		newExtraChannels.reserve(meshData->m_extraChannels->size());
+		for (size_t i = 0; i < meshData->m_extraChannels->size(); ++i)
 		{
 			newExtraChannels.emplace_back(
-				util::ByteVector::Clone(*meshData->m_extraChannels[i], util::ByteVector::CloneMode::Empty));
+				util::ByteVector::Clone(*meshData->m_extraChannels->at(i), util::ByteVector::CloneMode::Empty));
 			newExtraChannels.back().resize(numIndices);
 		}
 
@@ -190,9 +190,9 @@ namespace grutil
 				newUVs.at<glm::vec2>(dstIdx) = meshData->m_UV0->at<glm::vec2>(srcIdx);
 			}
 
-			for (size_t i = 0; i < meshData->m_numExtraChannels; ++i)
+			for (size_t i = 0; i < meshData->m_extraChannels->size(); ++i)
 			{
-				util::ByteVector::CopyElement(newExtraChannels[i], dstIdx, *meshData->m_extraChannels[i], srcIdx);
+				util::ByteVector::CopyElement(newExtraChannels[i], dstIdx, *meshData->m_extraChannels->at(i), srcIdx);
 			}
 		}
 
@@ -212,9 +212,9 @@ namespace grutil
 			*meshData->m_UV0 = std::move(newUVs);
 		}
 
-		for (size_t i = 0; i < meshData->m_numExtraChannels; ++i)
+		for (size_t i = 0; i < meshData->m_extraChannels->size(); ++i)
 		{
-			*meshData->m_extraChannels[i] = std::move(newExtraChannels[i]);
+			*meshData->m_extraChannels->at(i) = std::move(newExtraChannels[i]);
 		}
 	}
 
@@ -296,11 +296,11 @@ namespace grutil
 		}
 
 		std::vector<util::ByteVector> newExtraChannels;
-		newExtraChannels.reserve(meshData->m_numExtraChannels);
-		for (size_t i = 0; i < meshData->m_numExtraChannels; ++i)
+		newExtraChannels.reserve(meshData->m_extraChannels->size());
+		for (size_t i = 0; i < meshData->m_extraChannels->size(); ++i)
 		{
 			newExtraChannels.emplace_back(
-				util::ByteVector::Clone(*meshData->m_extraChannels[i], util::ByteVector::CloneMode::Empty));
+				util::ByteVector::Clone(*meshData->m_extraChannels->at(i), util::ByteVector::CloneMode::Empty));
 			newExtraChannels.back().reserve(maxNumVerts);
 		}
 
@@ -356,14 +356,14 @@ namespace grutil
 					newUVs.emplace_back(meshData->m_UV0->at<glm::vec2>(curIndices_i2));
 				}
 
-				for (size_t chanIdx = 0; chanIdx < meshData->m_numExtraChannels; ++chanIdx)
+				for (size_t chanIdx = 0; chanIdx < meshData->m_extraChannels->size(); ++chanIdx)
 				{
 					util::ByteVector::EmplaceBackElement(
-						newExtraChannels[chanIdx], *meshData->m_extraChannels[chanIdx], curIndices_i);
+						newExtraChannels[chanIdx], *meshData->m_extraChannels->at(chanIdx), curIndices_i);
 					util::ByteVector::EmplaceBackElement(
-						newExtraChannels[chanIdx], *meshData->m_extraChannels[chanIdx], curIndices_i1);
+						newExtraChannels[chanIdx], *meshData->m_extraChannels->at(chanIdx), curIndices_i1);
 					util::ByteVector::EmplaceBackElement(
-						newExtraChannels[chanIdx], *meshData->m_extraChannels[chanIdx], curIndices_i2);
+						newExtraChannels[chanIdx], *meshData->m_extraChannels->at(chanIdx), curIndices_i2);
 				}
 			}
 			else
@@ -388,9 +388,9 @@ namespace grutil
 			*meshData->m_UV0 = std::move(newUVs);
 		}
 
-		for (size_t i = 0; i < meshData->m_numExtraChannels; ++i)
+		for (size_t i = 0; i < meshData->m_extraChannels->size(); ++i)
 		{
-			*meshData->m_extraChannels[i] = std::move(newExtraChannels[i]);
+			*meshData->m_extraChannels->at(i) = std::move(newExtraChannels[i]);
 		}
 
 		if (numDegeneratesFound > 0)
@@ -643,13 +643,13 @@ namespace grutil
 
 	void VertexStreamBuilder::RearrangeExtraChannels(MeshData* meshData, std::vector<size_t> const& indexMap)
 	{
-		SEAssert(!meshData->m_extraChannels && meshData->m_numExtraChannels == 0 || 
-			meshData->m_extraChannels && meshData->m_numExtraChannels > 0,
+		SEAssert(!meshData->m_extraChannels && meshData->m_extraChannels->size() == 0 || 
+			meshData->m_extraChannels && meshData->m_extraChannels->size() > 0,
 			"Invalid extra channels");
 
-		for (size_t i = 0; i < meshData->m_numExtraChannels; ++i)
+		for (size_t i = 0; i < meshData->m_extraChannels->size(); ++i)
 		{
-			meshData->m_extraChannels[i]->Rearrange(indexMap);
+			meshData->m_extraChannels->at(i)->Rearrange(indexMap);
 		}
 	}
 

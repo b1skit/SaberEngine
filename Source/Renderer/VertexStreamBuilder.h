@@ -28,8 +28,8 @@ namespace grutil
 			util::ByteVector* m_tangents = nullptr;		// glm::vec4: Computed from normals and UVs
 			util::ByteVector* m_UV0 = nullptr;			// glm::vec2: Created as simple triangle UVs if empty
 
-			util::ByteVector** m_extraChannels = nullptr;
-			size_t m_numExtraChannels = 0;
+			// Streams that just need to be reordered: Morph displacements/colors/weights/uv1+ etc
+			std::vector<util::ByteVector*>* m_extraChannels;
 		};
 
 	public:

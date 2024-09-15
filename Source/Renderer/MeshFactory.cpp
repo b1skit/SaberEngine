@@ -217,8 +217,7 @@ namespace
 			.m_normals = &normals,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
-			.m_extraChannels = extraChannels.data(),
-			.m_numExtraChannels = extraChannels.size(),
+			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
@@ -416,8 +415,7 @@ namespace gr::meshfactory
 			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &assembledUVs,
-			.m_extraChannels = extraChannels.data(),
-			.m_numExtraChannels = extraChannels.size(),
+			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
@@ -610,8 +608,7 @@ namespace gr::meshfactory
 			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
-			.m_extraChannels = extraChannels.data(),
-			.m_numExtraChannels = extraChannels.size(),
+			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
@@ -872,8 +869,7 @@ namespace gr::meshfactory
 			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
-			.m_extraChannels = extraChannels.data(),
-			.m_numExtraChannels = extraChannels.size(),
+			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
@@ -1120,8 +1116,7 @@ namespace gr::meshfactory
 			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
-			.m_extraChannels = extraChannels.data(),
-			.m_numExtraChannels = extraChannels.size(),
+			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
@@ -1250,8 +1245,7 @@ namespace gr::meshfactory
 			.m_normals = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr,
 			.m_tangents = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr,
 			.m_UV0 = &uvs,
-			.m_extraChannels = extraChannels.data(),
-			.m_numExtraChannels = extraChannels.size(),
+			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 

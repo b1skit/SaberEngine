@@ -68,7 +68,7 @@ namespace re
 		static constexpr uint8_t DataTypeToComponentByteSize(DataType);
 		
 
-		enum class Type : uint8_t
+		enum Type : uint8_t
 		{
 			Position,
 			Normal,
@@ -128,7 +128,6 @@ namespace re
 		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
 
 		void const* GetData() const;
-		util::ByteVector& GetDataByteVector();
 		util::ByteVector const& GetDataByteVector() const;
 
 		uint32_t GetTotalDataByteSize() const;
@@ -186,12 +185,6 @@ namespace re
 	inline bool VertexStream::IsMorphData() const
 	{
 		return m_createParams.m_isMorphData == IsMorphData::True;
-	}
-
-
-	inline util::ByteVector& VertexStream::GetDataByteVector()
-	{
-		return m_data;
 	}
 
 
