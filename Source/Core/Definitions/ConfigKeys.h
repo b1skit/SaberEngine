@@ -120,13 +120,13 @@ namespace core::configkeys
 namespace en::DefaultResourceNames
 {
 	// Engine default resources:
-	constexpr char const* k_missingAlbedoTexName			= "MissingAlbedoTexture";
-	constexpr char const* k_missingMetallicRoughnessTexName	= "MissingMetallicRoughnessTexture";
-	constexpr char const* k_missingNormalTexName			= "MissingNormalTexture";
-	constexpr char const* k_missingOcclusionTexName			= "MissingOcclusionTexture";
-	constexpr char const* k_missingEmissiveTexName			= "MissingEmissiveTexture";
+	constexpr char const* k_defaultAlbedoTexName			= "DefaultAlbedoTexture";
+	constexpr char const* k_defaultMetallicRoughnessTexName	= "DefaultMetallicRoughnessTexture";
+	constexpr char const* k_defaultNormalTexName			= "DefaultNormalTexture";
+	constexpr char const* k_defaultOcclusionTexName			= "DefaultOcclusionTexture";
+	constexpr char const* k_defaultEmissiveTexName			= "DefaultEmissiveTexture";
 
-	constexpr char const* k_missingMaterialName	= "MissingMaterial";
+	constexpr char const* k_defaultGLTFMaterialName	= "DefaultGLTFMaterial";
 
 	constexpr char const* k_opaqueWhiteDefaultTexName		= "Default2D_OpaqueWhite";
 	constexpr char const* k_transparentWhiteDefaultTexName	= "Default2D_TransparentWhite";

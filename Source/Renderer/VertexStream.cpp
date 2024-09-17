@@ -258,7 +258,7 @@ namespace re
 
 	uint32_t VertexStream::GetTotalDataByteSize() const
 	{
-		return util::CheckedCast<uint32_t>(m_data.NumBytes());
+		return util::CheckedCast<uint32_t>(m_data.GetTotalNumBytes());
 	}
 
 

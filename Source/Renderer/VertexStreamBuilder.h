@@ -45,8 +45,7 @@ namespace grutil
 		void BuildSimpleTriangleUVs(MeshData*);
 		void BuildFlatNormals(MeshData*);
 		void SplitSharedAttributes(MeshData*);
-		std::vector<size_t> WeldTriangles(MeshData*);
-		void RearrangeExtraChannels(MeshData*, std::vector<size_t> const& indexMap);
+		void WeldTriangles(MeshData*);
 
 		// Optional vertex attributes:
 		bool m_canBuildNormals;

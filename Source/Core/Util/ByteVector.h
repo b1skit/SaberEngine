@@ -63,13 +63,16 @@ namespace util
 
 
 	public:
-		size_t NumBytes() const;
+		size_t GetTotalNumBytes() const;
+		uint8_t GetElementByteSize() const;
 
 		std::vector<uint8_t>& data();
 		std::vector<uint8_t> const& data() const;
 
 		template<typename T>
 		T* data();
+
+		void* GetElementPtr(size_t elementIdx); // Risky: Get a raw pointer to the ith element without any type checking
 
 
 	public:
@@ -268,9 +271,15 @@ namespace util
 	}
 
 
-	inline size_t ByteVector::NumBytes() const
+	inline size_t ByteVector::GetTotalNumBytes() const
 	{
 		return m_data.size();
+	}
+
+
+	inline uint8_t ByteVector::GetElementByteSize() const
+	{
+		return m_elementByteSize;
 	}
 
 
@@ -290,6 +299,16 @@ namespace util
 	T* ByteVector::data()
 	{
 		return reinterpret_cast<T*>(m_data.data());
+	}
+
+
+	inline void* ByteVector::GetElementPtr(size_t elementIdx)
+	{
+		SEAssert(elementIdx * m_elementByteSize < m_data.size(), "elementIdx is OOB");
+
+		uint8_t* dataPtr = m_data.data();
+		dataPtr += elementIdx * m_elementByteSize;
+		return dataPtr;
 	}
 
 

@@ -122,8 +122,7 @@ namespace grutil
 		// Reuse duplicate attributes, if required:
 		if (hasSharedAttributes)
 		{
-			std::vector<size_t> const& indexMap = WeldTriangles(meshData);
-			RearrangeExtraChannels(meshData, indexMap);
+			WeldTriangles(meshData);
 		}
 
 		LOG("Processed MeshPrimitive \"%s\" now has %d unique vertices",
@@ -486,9 +485,9 @@ namespace grutil
 	}
 
 
-	std::vector<size_t> VertexStreamBuilder::WeldTriangles(MeshData* meshData)
+	void VertexStreamBuilder::WeldTriangles(MeshData* meshData)
 	{
-		SEAssert(sizeof(int) == sizeof(uint32_t),
+		SEStaticAssert(sizeof(int) == sizeof(uint32_t),
 			"Mikktspace operates on system's int, SaberEngine operates on explicit 32-bit uints");
 
 		SEAssert(meshData->m_positions->size() == meshData->m_indices->size() &&
@@ -519,29 +518,27 @@ namespace grutil
 
 		// We'll pack our vertex attributes together into blocks of floats.
 		// Compute the total number of floats for all attributes per vertex:
-		const size_t floatsPerVertex = (
+		size_t bytesPerVertex = (
 			sizeof(glm::vec3)										// position
 			+ (m_canBuildNormals ? sizeof(glm::vec3) : 0)			// normal
 			+ (m_canBuildTangents ? sizeof(glm::vec4) : 0)			// tangent
-			+ (m_canBuildUVs ? sizeof(glm::vec2) : 0)				// uv0
-				) / sizeof(float);
-		
-		// Make sure we've counted for all non-index members in MeshData
-		SEAssert(floatsPerVertex == (3 + 
-				m_canBuildNormals * 3 +
-				m_canBuildTangents * 4 +
-				m_canBuildUVs * 2),
-			"Data size mismatch/miscalulation");
+			+ (m_canBuildUVs ? sizeof(glm::vec2) : 0) );			// UV0
+
+		for (auto const& extraChannel : *meshData->m_extraChannels)
+		{
+			bytesPerVertex += extraChannel->GetElementByteSize();
+		}
 
 		// pfVertexDataOut: iNrVerticesIn * iFloatsPerVert * sizeof(float)
 		const size_t numElements = meshData->m_indices->size();
 
-		const size_t vertexStrideBytes = floatsPerVertex * sizeof(float);
+		const size_t vertexStrideBytes = bytesPerVertex;
 		const size_t numVertexBytesOut = numElements * vertexStrideBytes;
 		std::vector<float> vertexDataOut(numVertexBytesOut, 0); // Will contain only unique vertices after welding
 
 		// pfVertexDataIn: Our tightly-packed vertex data:
-		std::vector<float> packedVertexData(meshData->m_indices->size() * floatsPerVertex, 0);
+		const size_t floatsPerVertex = (bytesPerVertex / sizeof(float));
+		std::vector<float> packedVertexData(numElements * floatsPerVertex, 0);
 
 		size_t byteOffset = 0;
 		PackAttribute(
@@ -564,7 +561,6 @@ namespace grutil
 				sizeof(glm::vec3));	// Normals = glm::vec3
 			byteOffset += sizeof(glm::vec3);
 		}
-
 		if (m_canBuildTangents)
 		{
 			PackAttribute(
@@ -576,7 +572,6 @@ namespace grutil
 				sizeof(glm::vec4));	// tangents = glm::vec4
 			byteOffset += sizeof(glm::vec4);
 		}
-
 		if (m_canBuildUVs)
 		{
 			PackAttribute(
@@ -587,6 +582,19 @@ namespace grutil
 				numElements,
 				sizeof(glm::vec2));	// TexCoord0 = glm::vec2
 			byteOffset += sizeof(glm::vec2);
+		}
+		for (auto const& extraChannel : *meshData->m_extraChannels)
+		{
+			const uint8_t elementByteSize = extraChannel->GetElementByteSize();
+			
+			PackAttribute(
+				extraChannel->data().data(),
+				packedVertexData.data(),
+				byteOffset,
+				vertexStrideBytes,
+				numElements,
+				elementByteSize);
+			byteOffset += elementByteSize;
 		}
 
 
@@ -615,9 +623,10 @@ namespace grutil
 		{
 			meshData->m_UV0->resize(numUniqueVertsFound);
 		}
-
-		// Build a map to rearrange any extra channels not packed into our welding input
-		std::vector<size_t> indexMap(numUniqueVertsFound, std::numeric_limits<size_t>::max());
+		for (auto& extraChannel : *meshData->m_extraChannels)
+		{
+			extraChannel->resize(numUniqueVertsFound);
+		}
 
 		for (size_t i = 0; i < remapTable.size(); i++)
 		{
@@ -634,8 +643,6 @@ namespace grutil
 			memcpy(&meshData->m_positions->at<glm::vec3>(vertIdx).x, currentVertStart + packedVertByteOffset, sizeof(glm::vec3));
 			packedVertByteOffset += sizeof(glm::vec3);
 
-			indexMap[vertIdx] = srcIdx;
-
 			if (m_canBuildNormals)
 			{
 				memcpy(&meshData->m_normals->at<glm::vec3>(vertIdx).x, currentVertStart + packedVertByteOffset, sizeof(glm::vec3));
@@ -651,21 +658,15 @@ namespace grutil
 				memcpy(&meshData->m_UV0->at<glm::vec2>(vertIdx).x, currentVertStart + packedVertByteOffset, sizeof(glm::vec2));
 				packedVertByteOffset += sizeof(glm::vec2);
 			}
-		}
+			for (auto& extraChannel : *meshData->m_extraChannels)
+			{
+				void* bytePtr = extraChannel->GetElementPtr(vertIdx);
 
-		return indexMap;
-	}
+				const uint8_t elementByteSize = extraChannel->GetElementByteSize();
 
-
-	void VertexStreamBuilder::RearrangeExtraChannels(MeshData* meshData, std::vector<size_t> const& indexMap)
-	{
-		SEAssert(!meshData->m_extraChannels && meshData->m_extraChannels->size() == 0 || 
-			meshData->m_extraChannels && meshData->m_extraChannels->size() > 0,
-			"Invalid extra channels");
-
-		for (size_t i = 0; i < meshData->m_extraChannels->size(); ++i)
-		{
-			meshData->m_extraChannels->at(i)->Rearrange(indexMap);
+				memcpy(bytePtr, currentVertStart + packedVertByteOffset, elementByteSize);
+				packedVertByteOffset += elementByteSize;
+			}
 		}
 	}
 

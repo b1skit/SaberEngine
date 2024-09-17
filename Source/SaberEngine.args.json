@@ -181,6 +181,10 @@
           "Command": "-scene Box\\glTF-Embedded\\Box.gltf"
         },
         {
+          "Id": "1f68c100-0068-4d3a-9f61-fc7b810d0bb6",
+          "Command": "-scene BoxVertexColors\\glTF-Embedded\\BoxVertexColors.gltf"
+        },
+        {
           "Id": "32b7f201-6bda-4d56-91b3-276709892e17",
           "Command": "-scene SunTemple\\suntemple.gltf"
         },

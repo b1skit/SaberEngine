@@ -154,53 +154,54 @@ namespace
 		LOG("Generating default resources...");
 
 		// Default error material:
-		LOG("Generating an error material \"%s\"...", en::DefaultResourceNames::k_missingMaterialName);
+		LOG("Generating a default GLTF pbrMetallicRoughness material \"%s\"...",
+			en::DefaultResourceNames::k_defaultGLTFMaterialName);
 
-		std::shared_ptr<gr::Material> errorMat = gr::Material::Create(
-			en::DefaultResourceNames::k_missingMaterialName,
+		std::shared_ptr<gr::Material> defaultMaterialGLTF = gr::Material::Create(
+			en::DefaultResourceNames::k_defaultGLTFMaterialName,
 			gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness);
 
 		// MatAlbedo
-		std::shared_ptr<re::Texture> errorAlbedo = grutil::LoadTextureFromFilePath(
-			{ en::DefaultResourceNames::k_missingAlbedoTexName },
+		std::shared_ptr<re::Texture> defaultAlbedo = grutil::LoadTextureFromFilePath(
+			{ en::DefaultResourceNames::k_defaultAlbedoTexName },
 			re::Texture::ColorSpace::sRGB,
 			true,
-			re::Texture::k_errorTextureColor);
-		errorMat->SetTexture(0, errorAlbedo);
+			glm::vec4(1.f)); // White
+		defaultMaterialGLTF->SetTexture(0, defaultAlbedo);
 
 		// MatMetallicRoughness
-		std::shared_ptr<re::Texture> errorMetallicRoughness = grutil::LoadTextureFromFilePath(
-			{ en::DefaultResourceNames::k_missingMetallicRoughnessTexName },
+		std::shared_ptr<re::Texture> defaultMetallicRoughness = grutil::LoadTextureFromFilePath(
+			{ en::DefaultResourceNames::k_defaultMetallicRoughnessTexName },
 			re::Texture::ColorSpace::Linear,
 			true,
-			glm::vec4(0.f, 1.f, 0.f, 0.f));
-		errorMat->SetTexture(1, errorMetallicRoughness);
+			glm::vec4(0.f, 1.f, 1.f, 0.f)); // GLTF specs: .BG = metalness, roughness, Default: .BG = 1, 1
+		defaultMaterialGLTF->SetTexture(1, defaultMetallicRoughness);
 
 		// MatNormal
-		std::shared_ptr<re::Texture> errorNormal = grutil::LoadTextureFromFilePath(
-			{ en::DefaultResourceNames::k_missingNormalTexName },
+		std::shared_ptr<re::Texture> defaultNormal = grutil::LoadTextureFromFilePath(
+			{ en::DefaultResourceNames::k_defaultNormalTexName },
 			re::Texture::ColorSpace::Linear,
 			true,
-			glm::vec4(0.5f, 0.5f, 1.0f, 0.0f));
-		errorMat->SetTexture(2, errorNormal);
+			glm::vec4(0.5f, 0.5f, 1.f, 0.f));
+		defaultMaterialGLTF->SetTexture(2, defaultNormal);
 
 		// MatOcclusion
-		std::shared_ptr<re::Texture> errorOcclusion = grutil::LoadTextureFromFilePath(
-			{ en::DefaultResourceNames::k_missingOcclusionTexName },
+		std::shared_ptr<re::Texture> defaultOcclusion = grutil::LoadTextureFromFilePath(
+			{ en::DefaultResourceNames::k_defaultOcclusionTexName },
 			re::Texture::ColorSpace::Linear,
 			true,
 			glm::vec4(1.f));
-		errorMat->SetTexture(3, errorOcclusion);
+		defaultMaterialGLTF->SetTexture(3, defaultOcclusion);
 
 		// MatEmissive
-		std::shared_ptr<re::Texture> errorEmissive = grutil::LoadTextureFromFilePath(
-			{ en::DefaultResourceNames::k_missingEmissiveTexName },
+		std::shared_ptr<re::Texture> defaultEmissive = grutil::LoadTextureFromFilePath(
+			{ en::DefaultResourceNames::k_defaultEmissiveTexName },
 			re::Texture::ColorSpace::sRGB,
 			true,
-			re::Texture::k_errorTextureColor);
-		errorMat->SetTexture(4, errorEmissive);
+			glm::vec4(0.f));
+		defaultMaterialGLTF->SetTexture(4, defaultEmissive);
 
-		scene.AddUniqueMaterial(errorMat);
+		scene.AddUniqueMaterial(defaultMaterialGLTF);
 
 
 		// Default 2D texture fallbacks:
@@ -929,25 +930,47 @@ namespace
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_color:
 				{
-					SEAssert(numComponents == 4, "Only 4-channel colors (RGBA) are (currently) supported");
+					util::ByteVector colors = util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
 
-					util::ByteVector colors =
-						util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
+					switch (numComponents)
+					{
+					case 3:
+					{
+						std::vector<glm::vec3> tempColors(curAttribute.data->count);
 
-					const bool unpackResult = cgltf_accessor_unpack_floats(
-						curAttribute.data,
-						static_cast<float*>(colors.data<float>()),
-						totalFloatElements);
-					SEAssert(unpackResult, "Failed to unpack data");
+						const bool unpackResult = cgltf_accessor_unpack_floats(
+							curAttribute.data,
+							&tempColors[0].r,
+							totalFloatElements);
+						SEAssert(unpackResult, "Failed to unpack data");
+
+						for (size_t colIdx = 0; colIdx < tempColors.size(); ++colIdx)
+						{
+							// GLTF specs: Color attributes of vec3 type are assumed to have an alpha of 1
+							colors.at<glm::vec4>(colIdx) = glm::vec4(tempColors[colIdx], 1.f);
+						}
+					}
+					break;
+					case 4:
+					{
+						const bool unpackResult = cgltf_accessor_unpack_floats(
+							curAttribute.data,
+							static_cast<float*>(colors.data<float>()),
+							totalFloatElements);
+						SEAssert(unpackResult, "Failed to unpack data");
+					}
+					break;
+					default: SEAssertF("Invalid number of color components");
+					}
 
 					AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
-						.m_streamData = std::make_unique<util::ByteVector>(std::move(colors)),
-						.m_createParams = re::VertexStream::CreateParams{
-							.m_type = re::VertexStream::Type::Color,
-							.m_dataType = re::VertexStream::DataType::Float4,
-						},
-						.m_streamIdx = streamIdx
-					});
+							.m_streamData = std::make_unique<util::ByteVector>(std::move(colors)),
+							.m_createParams = re::VertexStream::CreateParams{
+								.m_type = re::VertexStream::Type::Color,
+								.m_dataType = re::VertexStream::DataType::Float4,
+							},
+							.m_streamIdx = streamIdx
+						});
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_joints: // joints_n == indexes from skin.joints array
@@ -1358,8 +1381,8 @@ namespace
 			else
 			{
 				LOG_WARNING("MeshPrimitive \"%s\" does not have a material. Assigning \"%s\"",
-					meshName.c_str(), en::DefaultResourceNames::k_missingMaterialName);
-				material = scene.GetMaterial(en::DefaultResourceNames::k_missingMaterialName);
+					meshName.c_str(), en::DefaultResourceNames::k_defaultGLTFMaterialName);
+				material = scene.GetMaterial(en::DefaultResourceNames::k_defaultGLTFMaterialName);
 			}
 			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material.get());
 		} // primitives loop
