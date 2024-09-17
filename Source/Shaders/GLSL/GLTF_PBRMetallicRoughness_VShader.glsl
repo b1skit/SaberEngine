@@ -21,6 +21,10 @@ void VShader()
 
 	Out.UV0 = UV0;
 
+#if MAX_UV_CHANNEL_IDX >= 1
+	Out.UV1 = UV1;
+#endif
+
 	Out.Color = _InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor * Color;
 
 	Out.TBN = BuildTBN(Normal, Tangent, _InstancedTransformParams[transformIdx].g_transposeInvModel);

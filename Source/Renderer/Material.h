@@ -56,16 +56,17 @@ namespace gr
 			std::shared_ptr<re::Texture> m_texture = nullptr;
 			std::shared_ptr<re::Sampler> m_samplerObject = nullptr; // eg. Sampler object from the sampler library
 			std::string m_shaderSamplerName;
+			uint8_t m_uvChannelIdx = 0;
 		};
 
 
 	public:
 		static constexpr uint8_t k_numTexInputs = 8;
 		static constexpr size_t k_shaderSamplerNameLength = 64; // Arbitrary: Includes null terminator
-		static constexpr size_t k_paramDataBlockByteSize = 80; // Arbitrary: Max current material size
+		static constexpr size_t k_paramDataBlockByteSize = 96; // Arbitrary: Max current material size
 
 		// Material render data:
-		struct MaterialInstanceData
+		struct MaterialInstanceRenderData
 		{
 			std::array<re::Texture const*, gr::Material::k_numTexInputs> m_textures;
 			std::array<re::Sampler const*, gr::Material::k_numTexInputs> m_samplers;
@@ -90,14 +91,14 @@ namespace gr
 	public:
 		static std::shared_ptr<re::Buffer> CreateInstancedBuffer(
 			re::Buffer::Type,
-			std::vector<MaterialInstanceData const*> const&);
+			std::vector<MaterialInstanceRenderData const*> const&);
 
 		static std::shared_ptr<re::Buffer> ReserveInstancedBuffer(MaterialEffect, uint32_t maxInstances);
 
 		// Convenience helper: Partially update elements of an already committed (mutable) buffer
-		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceData const*, uint32_t baseOffset);
+		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);
 
-		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified
+		static bool ShowImGuiWindow(MaterialInstanceRenderData&); // Returns true if data was modified
 
 
 	public:
@@ -111,7 +112,7 @@ namespace gr
 
 		virtual ~Material() = 0;
 
-		void SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture>);
+		void SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture>, uint8_t uvChannelIdx);
 		re::Texture const* GetTexture(uint32_t slotIndex) const;
 		re::Texture const* GetTexture(std::string const& samplerName) const;
 		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() const;
@@ -126,7 +127,7 @@ namespace gr
 		EffectID GetMaterialEffectID() const;
 
 
-		void InitializeMaterialInstanceData(MaterialInstanceData&) const;
+		void InitializeMaterialInstanceData(MaterialInstanceRenderData&) const;
 
 
 	private:
@@ -172,10 +173,11 @@ namespace gr
 	}
 
 
-	inline void Material::SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture> texture)
+	inline void Material::SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture> texture, uint8_t uvChannelIdx)
 	{
 		SEAssert(slotIndex < m_texSlots.size(), "Out of bounds slot index");
 		m_texSlots[slotIndex].m_texture = texture;
+		m_texSlots[slotIndex].m_uvChannelIdx = uvChannelIdx;
 	}
 
 

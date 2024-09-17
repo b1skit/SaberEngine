@@ -82,4 +82,30 @@ vec3 WorldToCubeSampleDir(vec3 worldDir)
 	return vec3(worldDir.x, worldDir.y, -worldDir.z);
 }
 
+
+#if defined(MAX_UV_CHANNEL_IDX)
+
+vec2 GetUV(VertexOut In, uint channelIdx)
+{	
+#if MAX_UV_CHANNEL_IDX == 0
+	return In.UV0;
+	
+#else
+	const uint finalChannelIdx = min(channelIdx, MAX_UV_CHANNEL_IDX);
+	
+	switch (finalChannelIdx)
+	{
+		case 0: return In.UV0;
+#if MAX_UV_CHANNEL_IDX >= 1
+		case 1: return In.UV1;
+#endif
+		default: return vec2(0.f, 0.f); // Error!
+	}
+
+#endif // End of else block
+
+} //GetUV()
+
+#endif // UV_CHANNEL_SELECTION
+
 #endif // SABER_UVUTILS

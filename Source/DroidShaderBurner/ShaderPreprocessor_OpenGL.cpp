@@ -225,6 +225,21 @@ namespace droid
 		std::vector<std::string> const& defines,
 		std::string const& outputDir)
 	{
+		std::string const& outputFileName = std::format("{}.glsl",
+			BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID));
+
+		std::string concatenatedDefines;
+		for (auto const& define : defines)
+		{
+			concatenatedDefines = std::format("{} ", define);
+		}
+
+		std::string const& outputMsg = std::format("Building GLSL shader \"{}\"{}{}\n",
+			outputFileName,
+			concatenatedDefines.empty() ? "" : ", Defines = ",
+			concatenatedDefines);
+		std::cout << outputMsg.c_str();
+
 		// Load the base shader file:
 		std::string shaderText = LoadShaderTextByExtension(includeDirectories, extensionlessSrcFilename, shaderType);
 
@@ -263,8 +278,7 @@ namespace droid
 			shaderText += include;
 		}
 
-		std::string const& outputFileName = std::format("{}.glsl", 
-			BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID));
+		
 
 		std::string const& combinedFilePath = std::format("{}{}", outputDir, outputFileName);
 
@@ -278,8 +292,6 @@ namespace droid
 		outputStream << shaderText.c_str();
 
 		outputStream.close();
-
-		std::cout << "Built GLSL shader \"" << outputFileName.c_str() << "\"\n";
 
 		return droid::ErrorCode::Success;
 	}

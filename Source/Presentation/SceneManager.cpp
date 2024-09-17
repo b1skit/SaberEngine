@@ -161,45 +161,52 @@ namespace
 			en::DefaultResourceNames::k_defaultGLTFMaterialName,
 			gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness);
 
-		// MatAlbedo
-		std::shared_ptr<re::Texture> defaultAlbedo = grutil::LoadTextureFromFilePath(
-			{ en::DefaultResourceNames::k_defaultAlbedoTexName },
-			re::Texture::ColorSpace::sRGB,
-			true,
-			glm::vec4(1.f)); // White
-		defaultMaterialGLTF->SetTexture(0, defaultAlbedo);
+		constexpr uint8_t k_defaultUVChannelIdx = 0;
 
-		// MatMetallicRoughness
-		std::shared_ptr<re::Texture> defaultMetallicRoughness = grutil::LoadTextureFromFilePath(
-			{ en::DefaultResourceNames::k_defaultMetallicRoughnessTexName },
-			re::Texture::ColorSpace::Linear,
-			true,
-			glm::vec4(0.f, 1.f, 1.f, 0.f)); // GLTF specs: .BG = metalness, roughness, Default: .BG = 1, 1
-		defaultMaterialGLTF->SetTexture(1, defaultMetallicRoughness);
+		// BaseColorTex
+		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::BaseColor, 
+			grutil::LoadTextureFromFilePath(
+				{ en::DefaultResourceNames::k_defaultAlbedoTexName },
+				re::Texture::ColorSpace::sRGB,
+				true,
+				glm::vec4(1.f)), // White
+			k_defaultUVChannelIdx);
 
-		// MatNormal
-		std::shared_ptr<re::Texture> defaultNormal = grutil::LoadTextureFromFilePath(
-			{ en::DefaultResourceNames::k_defaultNormalTexName },
-			re::Texture::ColorSpace::Linear,
-			true,
-			glm::vec4(0.5f, 0.5f, 1.f, 0.f));
-		defaultMaterialGLTF->SetTexture(2, defaultNormal);
+		// MetallicRoughnessTex
+		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::MetallicRoughness, 
+			grutil::LoadTextureFromFilePath(
+				{ en::DefaultResourceNames::k_defaultMetallicRoughnessTexName },
+				re::Texture::ColorSpace::Linear,
+				true,
+				glm::vec4(0.f, 1.f, 1.f, 0.f)), // GLTF specs: .BG = metalness, roughness, Default: .BG = 1, 1
+			k_defaultUVChannelIdx);
 
-		// MatOcclusion
-		std::shared_ptr<re::Texture> defaultOcclusion = grutil::LoadTextureFromFilePath(
-			{ en::DefaultResourceNames::k_defaultOcclusionTexName },
-			re::Texture::ColorSpace::Linear,
-			true,
-			glm::vec4(1.f));
-		defaultMaterialGLTF->SetTexture(3, defaultOcclusion);
+		// NormalTex
+		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Normal, 
+			grutil::LoadTextureFromFilePath(
+				{ en::DefaultResourceNames::k_defaultNormalTexName },
+				re::Texture::ColorSpace::Linear,
+				true,
+				glm::vec4(0.5f, 0.5f, 1.f, 0.f)),
+			k_defaultUVChannelIdx);
 
-		// MatEmissive
-		std::shared_ptr<re::Texture> defaultEmissive = grutil::LoadTextureFromFilePath(
-			{ en::DefaultResourceNames::k_defaultEmissiveTexName },
-			re::Texture::ColorSpace::sRGB,
-			true,
-			glm::vec4(0.f));
-		defaultMaterialGLTF->SetTexture(4, defaultEmissive);
+		// OcclusionTex
+		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Occlusion,
+			grutil::LoadTextureFromFilePath(
+				{ en::DefaultResourceNames::k_defaultOcclusionTexName },
+				re::Texture::ColorSpace::Linear,
+				true,
+				glm::vec4(1.f)),
+			k_defaultUVChannelIdx);
+
+		// EmissiveTex
+		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Emissive,
+			grutil::LoadTextureFromFilePath(
+				{ en::DefaultResourceNames::k_defaultEmissiveTexName },
+				re::Texture::ColorSpace::sRGB,
+				true,
+				glm::vec4(0.f)),
+			k_defaultUVChannelIdx);
 
 		scene.AddUniqueMaterial(defaultMaterialGLTF);
 
@@ -283,7 +290,7 @@ namespace
 				{
 
 					util::ThreadSafeVector<std::future<void>> textureFutures;
-					textureFutures.reserve(5); // Albedo, met/rough, normal, occlusion, emissive
+					textureFutures.reserve(5); // BaseColor, met/rough, normal, occlusion, emissive
 
 					cgltf_material const* const material = &data->materials[matIdx];
 					SEAssert(material, "Found a null material, this is unexpected");
@@ -308,66 +315,76 @@ namespace
 
 					// GLTF specifications: If a texture is not given, all texture components are assumed to be 1.f
 					// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
-					constexpr glm::vec4 missingTextureColor(1.f, 1.f, 1.f, 1.f);
+					constexpr glm::vec4 k_defaultTextureColor(1.f, 1.f, 1.f, 1.f);
 
-					// MatAlbedo
+					// BaseColorTex
 					textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
-							newMat->SetTexture(0, LoadTextureOrColor(
-								scene,
-								sceneRootPath,
-								material->pbr_metallic_roughness.base_color_texture.texture,
-								missingTextureColor,
-								re::Texture::Format::RGBA8_UNORM,
-								re::Texture::ColorSpace::sRGB));
+						[newMat, &k_defaultTextureColor, &scene, &sceneRootPath, material]() {
+							newMat->SetTexture(gr::Material_GLTF::TextureSlotIdx::BaseColor,
+								LoadTextureOrColor(
+									scene,
+									sceneRootPath,
+									material->pbr_metallic_roughness.base_color_texture.texture,
+									k_defaultTextureColor,
+									re::Texture::Format::RGBA8_UNORM,
+									re::Texture::ColorSpace::sRGB),
+								material->pbr_metallic_roughness.base_color_texture.texcoord);
 						}));
 
-					// MatMetallicRoughness
+					// MetallicRoughnessTex
 					textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
-							newMat->SetTexture(1, LoadTextureOrColor(
-								scene,
-								sceneRootPath,
-								material->pbr_metallic_roughness.metallic_roughness_texture.texture,
-								missingTextureColor,
-								re::Texture::Format::RGBA8_UNORM,
-								re::Texture::ColorSpace::Linear));
+						[newMat, &k_defaultTextureColor, &scene, &sceneRootPath, material]() {
+							newMat->SetTexture(gr::Material_GLTF::TextureSlotIdx::MetallicRoughness,
+								LoadTextureOrColor(
+									scene,
+									sceneRootPath,
+									material->pbr_metallic_roughness.metallic_roughness_texture.texture,
+									k_defaultTextureColor,
+									re::Texture::Format::RGBA8_UNORM,
+									re::Texture::ColorSpace::Linear),
+								material->pbr_metallic_roughness.metallic_roughness_texture.texcoord);
 						}));
 
-					// MatNormal
+					// NormalTex
 					textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
-							newMat->SetTexture(2, LoadTextureOrColor(
-								scene,
-								sceneRootPath,
-								material->normal_texture.texture,
-								glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-								re::Texture::Format::RGBA8_UNORM,
-								re::Texture::ColorSpace::Linear));
+						[newMat, &k_defaultTextureColor, &scene, &sceneRootPath, material]() {
+							newMat->SetTexture(gr::Material_GLTF::TextureSlotIdx::Normal,
+								LoadTextureOrColor(
+									scene,
+									sceneRootPath,
+									material->normal_texture.texture,
+									glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
+									re::Texture::Format::RGBA8_UNORM,
+									re::Texture::ColorSpace::Linear),
+								material->normal_texture.texcoord);
 						}));
 
-					// MatOcclusion
+					// OcclusionTex
 					textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
-							newMat->SetTexture(3, LoadTextureOrColor(
-								scene,
-								sceneRootPath,
-								material->occlusion_texture.texture,
-								missingTextureColor,	// Completely unoccluded
-								re::Texture::Format::RGBA8_UNORM,
-								re::Texture::ColorSpace::Linear));
+						[newMat, &k_defaultTextureColor, &scene, &sceneRootPath, material]() {
+							newMat->SetTexture(gr::Material_GLTF::TextureSlotIdx::Occlusion, 
+								LoadTextureOrColor(
+									scene,
+									sceneRootPath,
+									material->occlusion_texture.texture,
+									k_defaultTextureColor,	// Completely unoccluded
+									re::Texture::Format::RGBA8_UNORM,
+									re::Texture::ColorSpace::Linear),
+								material->occlusion_texture.texcoord);
 						}));
 
-					// MatEmissive
+					// EmissiveTex
 					textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
-							newMat->SetTexture(4, LoadTextureOrColor(
-								scene,
-								sceneRootPath,
-								material->emissive_texture.texture,
-								missingTextureColor,
-								re::Texture::Format::RGBA8_UNORM,
-								re::Texture::ColorSpace::sRGB)); // GLTF convention: Must be converted to linear before use
+						[newMat, &k_defaultTextureColor, &scene, &sceneRootPath, material]() {
+							newMat->SetTexture(gr::Material_GLTF::TextureSlotIdx::Emissive,
+								LoadTextureOrColor(
+									scene,
+									sceneRootPath,
+									material->emissive_texture.texture,
+									k_defaultTextureColor,
+									re::Texture::Format::RGBA8_UNORM,
+									re::Texture::ColorSpace::sRGB), // GLTF spec: Must be converted to linear before use
+								material->emissive_texture.texcoord); 
 						}));
 
 					gr::Material_GLTF* newGLTFMat = newMat->GetAs<gr::Material_GLTF*>();

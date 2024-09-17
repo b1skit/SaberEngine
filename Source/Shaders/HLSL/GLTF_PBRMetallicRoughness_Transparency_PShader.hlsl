@@ -4,10 +4,11 @@
 #define VOUT_TBN
 #define SABER_INSTANCING
 
+#include "SaberCommon.hlsli"
+
 #include "AmbientCommon.hlsli"
 #include "Lighting.hlsli"
 #include "NormalMapUtils.hlsli"
-#include "SaberCommon.hlsli"
 #include "Shadows.hlsli"
 
 #include "../Common/LightParams.h"
@@ -29,9 +30,24 @@ float4 PShader(VertexOut In) : SV_Target
 {
 	const uint materialIdx = InstanceIndexParams.g_instanceIndices[In.InstanceID].g_materialIdx;
 	
+	const float2 albedoUV = GetUV(In,
+		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.x);
+	
+	const float2 metallicRoughnessUV = GetUV(In,
+		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.y);
+	
+	const float2 normalUV = GetUV(In,
+		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.z);
+	
+	const float2 occlusionUV = GetUV(In,
+		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.w);
+	
+	//const float2 emissiveUV = GetUV(In,
+	//	InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes1.x);
+	
 	const float3 worldPos = In.WorldPos;
 	
-	const float4 matAlbedo = MatAlbedo.Sample(WrapAnisotropic, In.UV0);
+	const float4 matAlbedo = BaseColorTex.Sample(WrapAnisotropic, albedoUV);
 	const float4 baseColorFactor =
 			InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_baseColorFactor;
 	const float3 linearAlbedo = (matAlbedo * baseColorFactor * In.Color).rgb;
@@ -39,7 +55,7 @@ float4 PShader(VertexOut In) : SV_Target
 	const float normalScaleFactor =
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.z;
 	const float3 normalScale = float3(normalScaleFactor, normalScaleFactor, 1.f);
-	const float3 texNormal = MatNormal.Sample(WrapAnisotropic, In.UV0).xyz;
+	const float3 texNormal = NormalTex.Sample(WrapAnisotropic, normalUV).xyz;
 	const float3 worldNormal = WorldNormalFromTextureNormal(texNormal, normalScale, In.TBN);
 	
 	const float linearRoughnessFactor =
@@ -49,11 +65,11 @@ float4 PShader(VertexOut In) : SV_Target
 			InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.x;
 	
 	const float2 roughnessMetalness =
-			MatMetallicRoughness.Sample(WrapAnisotropic, In.UV0).gb * float2(linearRoughnessFactor, metallicFactor);
+			MetallicRoughnessTex.Sample(WrapAnisotropic, metallicRoughnessUV).gb * float2(linearRoughnessFactor, metallicFactor);
 	
 	const float remappedRoughness = RemapRoughness(roughnessMetalness.x);
 	
-	const float3 f0 = InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0.xyz;
+	const float3 f0 = InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0AlphaCutoff.xyz;
 	
 	float3 totalContribution = 0.f;
 	
@@ -74,7 +90,7 @@ float4 PShader(VertexOut In) : SV_Target
 
 		const float occlusionStrength =
 			InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.w;
-		const float occlusion = MatOcclusion.Sample(WrapAnisotropic, In.UV0).r * occlusionStrength;
+		const float occlusion = OcclusionTex.Sample(WrapAnisotropic, occlusionUV).r * occlusionStrength;
 	
 		ambientLightParams.FineAO = occlusion;
 		ambientLightParams.CoarseAO = 1.f; // No SSAO for transparents

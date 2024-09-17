@@ -52,4 +52,32 @@ float3 WorldToCubeSampleDir(float3 worldDir)
 	return float3(worldDir.x, worldDir.y, -worldDir.z);
 }
 
+
+#if defined(MAX_UV_CHANNEL_IDX)
+
+float2 GetUV(VertexOut In, uint channelIdx)
+{	
+#if MAX_UV_CHANNEL_IDX == 0
+	return In.UV0;
+	
+#else
+	const uint finalChannelIdx = min(channelIdx, MAX_UV_CHANNEL_IDX);
+	
+	// https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-switch?redirectedfrom=MSDN
+	[call]
+	switch (finalChannelIdx)
+	{
+		case 0: return In.UV0;
+#if MAX_UV_CHANNEL_IDX >= 1
+		case 1: return In.UV1;
+#endif
+		default: return float2(0.f, 0.f); // Error!
+	}
+
+#endif // End of else block
+
+} //GetUV()
+
+#endif // UV_CHANNEL_SELECTION
+
 #endif // SABER_UVUTILS

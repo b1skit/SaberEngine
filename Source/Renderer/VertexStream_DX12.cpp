@@ -4,6 +4,8 @@
 #include "RenderManager.h"
 #include "VertexStream_DX12.h"
 
+#include "Core/Util/TextUtils.h"
+
 #include <d3dx12.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -134,7 +136,11 @@ namespace dx12
 			IID_PPV_ARGS(&streamPlatformParams->m_bufferResource));	// RefIID and interface pointer
 		CheckHResult(hr, "Failed to create vertex buffer resource");
 
-		streamPlatformParams->m_bufferResource->SetName(L"Vertex stream destination buffer");
+		std::wstring const& bufferName = util::ToWideString(std::format("{} stream hash {}",
+			re::VertexStream::TypeToCStr(stream.GetType()),
+			stream.GetDataHash()));
+
+		streamPlatformParams->m_bufferResource->SetName(bufferName.c_str());
 
 		// Create an intermediate upload heap:
 		const CD3DX12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);

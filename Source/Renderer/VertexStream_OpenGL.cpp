@@ -99,7 +99,9 @@ namespace opengl
 			GL_BUFFER,
 			platformParams->m_VBO,
 			-1,
-			std::format("Vertex stream hash {}", vertexStream.GetDataHash()).c_str());
+			std::format("{} stream hash {}",
+				re::VertexStream::TypeToCStr(vertexStream.GetType()), 
+				vertexStream.GetDataHash()).c_str());
 
 		// Cleanup: Unbind our dummy VAO
 		glBindVertexArray(0);

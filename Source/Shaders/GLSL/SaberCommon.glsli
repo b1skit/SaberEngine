@@ -21,6 +21,10 @@ struct VertexOut
 // The GLSL compiler gets confused if we define an empty struct; Assume UV0 is always required
 	vec2 UV0;
 
+#if MAX_UV_CHANNEL_IDX >= 1
+	vec2 UV1;
+#endif
+
 #ifdef VOUT_COLOR
 	vec4 Color;
 #endif
@@ -89,11 +93,11 @@ struct InstanceParams
 
 // GLTF PBR material input textures:
 // Note: The layout bindings must correspond with the Material's TextureSlotDesc index
-layout(binding=0) uniform sampler2D MatAlbedo;
-layout(binding=1) uniform sampler2D MatMetallicRoughness;
-layout(binding=2) uniform sampler2D MatNormal;
-layout(binding=3) uniform sampler2D MatOcclusion;
-layout(binding=4) uniform sampler2D MatEmissive;
+layout(binding=0) uniform sampler2D BaseColorTex;
+layout(binding=1) uniform sampler2D MetallicRoughnessTex;
+layout(binding=2) uniform sampler2D NormalTex;
+layout(binding=3) uniform sampler2D OcclusionTex;
+layout(binding=4) uniform sampler2D EmissiveTex;
 
 // Lighting stage GBuffer textures:
 layout(binding=0) uniform sampler2D GBufferAlbedo;

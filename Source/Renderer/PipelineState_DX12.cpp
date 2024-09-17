@@ -105,11 +105,9 @@ namespace
 	}
 
 
-	std::vector<D3D12_INPUT_ELEMENT_DESC> BuildInputLayout(
-		re::Shader const& shader,
-		ID3D12ShaderReflection* shaderReflection,
-		dx12::Shader::PlatformParams* shaderParams)
+	std::vector<D3D12_INPUT_ELEMENT_DESC> BuildInputLayout(re::Shader const& shader)
 	{
+		// Get the vertex stream metadata, and the number of attributes it points to:
 		uint8_t numVertexAttributes = 0;
 		re::VertexStreamMap::VertexStreamMetadata const* vertexStreamMetadata = 
 			shader.GetVertexStreamMap()->GetStreamMetadata(numVertexAttributes);
@@ -427,8 +425,7 @@ namespace dx12
 
 
 			// Build the vertex stream input layout using the shader reflection:
-			std::vector<D3D12_INPUT_ELEMENT_DESC> const& inputLayout = 
-				BuildInputLayout(shader, shaderReflection.Get(), shaderParams);
+			std::vector<D3D12_INPUT_ELEMENT_DESC> const& inputLayout = BuildInputLayout(shader);
 
 			// Build graphics pipeline description:
 			GraphicsPipelineStateStream pipelineStateStream {};

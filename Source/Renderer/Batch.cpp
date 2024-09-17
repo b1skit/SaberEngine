@@ -99,7 +99,7 @@ namespace
 	}
 
 
-	effect::drawstyle::Bitmask ComputeBatchBitmask(gr::Material::MaterialInstanceData const& materialInstanceData)
+	effect::drawstyle::Bitmask ComputeBatchBitmask(gr::Material::MaterialInstanceRenderData const& materialInstanceData)
 	{
 		effect::drawstyle::Bitmask bitmask = 0;
 
@@ -228,7 +228,7 @@ namespace re
 	Batch::Batch(
 		Lifetime lifetime, 
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
-		gr::Material::MaterialInstanceData const* materialInstanceData)
+		gr::Material::MaterialInstanceRenderData const* materialInstanceData)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_batchShader(nullptr)
@@ -369,9 +369,6 @@ namespace re
 		// Resolve vertex input slots now that we've decided which shader will be used:
 		if (m_type == BatchType::Graphics)
 		{
-			SEAssert(m_graphicsParams.m_numVertexStreams >= m_batchShader->GetVertexStreamMap()->GetNumSlots(),
-				"Batch doesn't have enough vertex streams to meet shader vertex slot count");
-
 			bool needsRepacking = false;
 			for (uint8_t i = 0; i < m_graphicsParams.m_numVertexStreams; ++i)
 			{
@@ -437,8 +434,6 @@ namespace re
 				}
 				m_graphicsParams.m_numVertexStreams = numValidStreams;
 			}
-			SEAssert(m_graphicsParams.m_numVertexStreams == m_batchShader->GetVertexStreamMap()->GetNumSlots(),
-				"Batch doesn't have enough vertex streams to meet shader vertex slot count");
 
 			ValidateVertexStreams(m_lifetime, m_graphicsParams.m_vertexStreams, m_graphicsParams.m_numVertexStreams); // _DEBUG only
 		}

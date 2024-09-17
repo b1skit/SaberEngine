@@ -124,8 +124,10 @@
 			{
 				"Name": "FillGBuffer_SingleSided",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
+				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
 				"VShaderEntryPoint": "VShader",
 				"PShader": "GLTF_PBRMetallicRoughness_GBufferFill_PShader",
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
 				"PShaderEntryPoint": "PShader",
 				"PipelineState": "SingleSided",
 				"VertexStream": "PosNmlTanUvCol"
@@ -133,8 +135,10 @@
 			{
 				"Name": "FillGBuffer_DoubleSided",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
+				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
 				"VShaderEntryPoint": "VShader",
 				"PShader": "GLTF_PBRMetallicRoughness_GBufferFill_PShader",
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
 				"PShaderEntryPoint": "PShader",
 				"PipelineState": "DoubleSided",
 				"VertexStream": "PosNmlTanUvCol"
@@ -144,9 +148,9 @@
 				"Name": "AlphaBlend_SingleSided",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
 				"VShaderEntryPoint": "VShader",
-				"VShaderDefines":  ["VOUT_WORLD_POS"],
+				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
 				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
-				"PShaderDefines":  ["VOUT_WORLD_POS"],
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
 				"PShaderEntryPoint": "PShader",
 				"PipelineState": "SingleSided",
 				"VertexStream": "PosNmlTanUvCol"				
@@ -154,11 +158,11 @@
 			{
 				"Name": "AlphaBlend_DoubleSided",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
+				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
 				"VShaderEntryPoint": "VShader",
-				"VShaderDefines":  ["VOUT_WORLD_POS"],
 				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 				"PShaderEntryPoint": "PShader",
-				"PShaderDefines":  ["VOUT_WORLD_POS"],
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
 				"PipelineState": "DoubleSided",
 				"VertexStream": "PosNmlTanUvCol"
 			},
@@ -275,6 +279,11 @@
 					"DataType" : "float2",
 					"Name" : "UV0",
 					"Semantic" : "TEXCOORD0"
+				},
+				{
+					"DataType" : "float2",
+					"Name" : "UV1",
+					"Semantic" : "TEXCOORD1"
 				},
 				{
 					"DataType" : "float4",

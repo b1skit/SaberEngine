@@ -84,7 +84,7 @@ namespace re
 
 			re::VertexStream const* m_indexStream = nullptr;
 
-			// If a batch is created via the CTOR that takes a gr::Material::MaterialInstanceData, we store the 
+			// If a batch is created via the CTOR that takes a gr::Material::MaterialInstanceRenderData, we store the 
 			// material's unique ID so we can include it in the data hash to ensure batches with identical geometry and
 			// materials will sort together
 			uint64_t m_materialUniqueID = core::INamedObject::k_invalidUniqueID;
@@ -100,7 +100,7 @@ namespace re
 		// Graphics batches:
 		Batch(Lifetime, gr::MeshPrimitive const*, EffectID); // No material; e.g. fullscreen quads, cubemap geo etc
 
-		Batch(Lifetime, gr::MeshPrimitive::RenderData const&, gr::Material::MaterialInstanceData const*);
+		Batch(Lifetime, gr::MeshPrimitive::RenderData const&, gr::Material::MaterialInstanceRenderData const*);
 
 		Batch(Lifetime, GraphicsParams const&, EffectID); // e.g. debug topology
 

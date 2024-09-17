@@ -247,7 +247,7 @@ namespace fr
 
 			EnqueueRenderUpdateHelper<gr::Bounds::RenderData, fr::BoundsComponent>();
 			EnqueueRenderUpdateHelper<gr::MeshPrimitive::RenderData, fr::MeshPrimitiveComponent>();
-			EnqueueRenderUpdateHelper<gr::Material::MaterialInstanceData, fr::MaterialInstanceComponent>();
+			EnqueueRenderUpdateHelper<gr::Material::MaterialInstanceRenderData, fr::MaterialInstanceComponent>();
 			EnqueueRenderUpdateHelper<gr::Camera::RenderData, fr::CameraComponent>();
 			EnqueueRenderUpdateHelper<gr::MeshPrimitive::MeshRenderData, fr::MeshAnimationComponent, 
 				fr::Mesh::MeshConceptMarker, fr::AnimationComponent>();
@@ -526,7 +526,7 @@ namespace fr
 					// Materials:
 					if (m_registry.all_of<fr::MaterialInstanceComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::MaterialInstanceData>>(
+						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::MaterialInstanceRenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 

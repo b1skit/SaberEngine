@@ -17,9 +17,10 @@ struct InstancedPBRMetallicRoughnessData
 	// KHR_materials_emissive_strength: Multiplies emissive factor
 	float4 g_emissiveFactorStrength; // .xyz = emissive factor, .w = emissive strength
 
-	float4 g_f0; // .xyz = f0, .w = unused. For non-metals only
+	float4 g_f0AlphaCutoff; // .xyz = f0 (non-metals only), .w = alpha cutoff
 
-	float4 g_alphaCutoff; // .x = alpha cutoff, .yzw = unused
+	uint4 g_uvChannelIndexes0;	// UV channel semantic index:  .xyzw = albedo, metallicRoughness, normal, occlusion
+	uint4 g_uvChannelIndexes1;	// UV channel semantic index: .x = emissive, .yzw = unused
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "InstancedPBRMetallicRoughnessParams";

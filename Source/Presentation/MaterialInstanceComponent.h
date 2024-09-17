@@ -15,7 +15,7 @@ namespace fr
 			fr::EntityManager&, entt::entity meshPrimitiveConcept, gr::Material const*);
 
 	public:
-		static gr::Material::MaterialInstanceData CreateRenderData(entt::entity, MaterialInstanceComponent const&);
+		static gr::Material::MaterialInstanceRenderData CreateRenderData(entt::entity, MaterialInstanceComponent const&);
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
 
@@ -26,7 +26,7 @@ namespace fr
 
 
 	private:
-		gr::Material::MaterialInstanceData m_instanceData;
+		gr::Material::MaterialInstanceRenderData m_instanceData;
 		bool m_isDirty;
 	};
 

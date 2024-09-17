@@ -84,6 +84,8 @@ namespace re
 
 			Type_Count
 		};
+		static constexpr char const* TypeToCStr(Type);
+
 
 		enum class IsMorphData : bool
 		{
@@ -229,6 +231,24 @@ namespace re
 		case re::VertexStream::DataType::UByte2: return "UByte2";
 		case re::VertexStream::DataType::UByte4: return "UByte4";
 		default: return "INVALID_DATA_TYPE";
+		}
+	}
+
+
+	constexpr char const* VertexStream::TypeToCStr(Type streamType)
+	{
+		switch (streamType)
+		{
+		case Type::Position: return "Position";
+		case Type::Normal: return "Normal";
+		case Type::Binormal: return "Binormal";
+		case Type::Tangent: return "Tangent";
+		case Type::TexCoord: return "TexCoord";
+		case Type::Color: return "Color";
+		case Type::BlendIndices: return "BlendIndices";
+		case Type::BlendWeight: return "BlendWeight";
+		case Type::Index: return "Index";
+		default: return "INVALID_VERTEX_STREAM_TYPE_ENUM_RECEIVED";
 		}
 	}
 

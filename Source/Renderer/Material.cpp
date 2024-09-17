@@ -78,10 +78,10 @@ namespace gr
 	}
 
 
-	void Material::InitializeMaterialInstanceData(MaterialInstanceData& instanceData) const
+	void Material::InitializeMaterialInstanceData(MaterialInstanceRenderData& instanceData) const
 	{
 		// Zero out the instance data struct:
-		memset(&instanceData, 0, sizeof(gr::Material::MaterialInstanceData));
+		memset(&instanceData, 0, sizeof(gr::Material::MaterialInstanceRenderData));
 
 		PackMaterialInstanceTextureSlotDescs(
 			instanceData.m_textures.data(), instanceData.m_samplers.data(), instanceData.m_shaderSamplerNames);
@@ -104,7 +104,7 @@ namespace gr
 
 	std::shared_ptr<re::Buffer> Material::CreateInstancedBuffer(
 		re::Buffer::Type bufferType, 
-		std::vector<MaterialInstanceData const*> const& instanceData)
+		std::vector<MaterialInstanceRenderData const*> const& instanceData)
 	{
 		SEAssert(!instanceData.empty(), "Instance data is empty");
 
@@ -142,7 +142,7 @@ namespace gr
 
 
 	void Material::CommitMaterialInstanceData(
-		re::Buffer* buffer, MaterialInstanceData const* instanceData, uint32_t baseOffset)
+		re::Buffer* buffer, MaterialInstanceRenderData const* instanceData, uint32_t baseOffset)
 	{
 		SEAssert(instanceData, "Instance data is null");
 		SEAssert(baseOffset < buffer->GetNumElements(), "Base offset is OOB");
@@ -163,7 +163,7 @@ namespace gr
 	}
 
 
-	bool Material::ShowImGuiWindow(MaterialInstanceData& instanceData)
+	bool Material::ShowImGuiWindow(MaterialInstanceRenderData& instanceData)
 	{
 		bool isDirty = false;
 

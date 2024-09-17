@@ -24,19 +24,26 @@ namespace gr
 
 			.g_emissiveFactorStrength = glm::vec4(m_emissiveFactor.rgb, m_emissiveStrength),
 
-			.g_f0 = glm::vec4(m_f0.rgb, 0.f),
+			.g_f0AlphaCutoff = glm::vec4(
+				m_f0.rgb,
+				m_alphaMode == Material::AlphaMode::Opaque ? 0.f : m_alphaCutoff),
 
-			.g_alphaCutoff = glm::vec4(
-				m_alphaMode == Material::AlphaMode::Opaque ? 0.f : m_alphaCutoff, 
-				0.f, 
-				0.f, 
-				0.f),
+			.g_uvChannelIndexes0 = glm::uvec4(
+				m_texSlots[TextureSlotIdx::BaseColor].m_uvChannelIdx,
+				m_texSlots[TextureSlotIdx::MetallicRoughness].m_uvChannelIdx,
+				m_texSlots[TextureSlotIdx::Normal].m_uvChannelIdx,
+				m_texSlots[TextureSlotIdx::Occlusion].m_uvChannelIdx),
+
+			.g_uvChannelIndexes1 = glm::uvec4(
+				m_texSlots[TextureSlotIdx::Emissive].m_uvChannelIdx,
+				0,
+				0,
+				0),
 		};
-
 
 		SEStaticAssert(sizeof(InstancedPBRMetallicRoughnessData) <= gr::Material::k_paramDataBlockByteSize,
 			"InstancedPBRMetallicRoughnessData is too large to fit in "
-			"gr::Material::MaterialInstanceData::m_materialParamData. Consider increasing "
+			"gr::Material::MaterialInstanceRenderData::m_materialParamData. Consider increasing "
 			"gr::Material::k_paramDataBlockByteSize");
 	}
 
@@ -52,15 +59,13 @@ namespace gr
 
 		m_isShadowCaster = true;
 
-		// TODO: Texture names should align with those in the GLTF documentation
-		m_texSlots =
-		{
-			{nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "MatAlbedo" },
-			{nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "MatMetallicRoughness" }, // G = roughness, B = metalness. R & A are unused.
-			{nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "MatNormal" },
-			{nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "MatOcclusion" },
-			{nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "MatEmissive" },
-		};
+		m_texSlots.resize(TextureSlotIdx::TextureSlotIdx_Count);
+
+		m_texSlots[TextureSlotIdx::BaseColor] = { nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "BaseColorTex", 0 };
+		m_texSlots[TextureSlotIdx::MetallicRoughness] = { nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "MetallicRoughnessTex", 0 }; // G = roughness, B = metalness. R & A are unused.
+		m_texSlots[TextureSlotIdx::Normal] = { nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "NormalTex", 0 };
+		m_texSlots[TextureSlotIdx::Occlusion] = { nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "OcclusionTex", 0 };
+		m_texSlots[TextureSlotIdx::Emissive] = { nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "EmissiveTex", 0 };
 
 		// Build a map from shader sampler name, to texture slot index:
 		for (size_t i = 0; i < m_texSlots.size(); i++)
@@ -81,7 +86,7 @@ namespace gr
 
 	std::shared_ptr<re::Buffer> Material_GLTF::CreateInstancedBuffer(
 		re::Buffer::Type bufferType,
-		std::vector<MaterialInstanceData const*> const& instanceData)
+		std::vector<MaterialInstanceRenderData const*> const& instanceData)
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(instanceData.size());
 
@@ -111,7 +116,7 @@ namespace gr
 
 
 	void Material_GLTF::CommitMaterialInstanceData(
-		re::Buffer* buffer, MaterialInstanceData const* instanceData, uint32_t baseOffset)
+		re::Buffer* buffer, MaterialInstanceRenderData const* instanceData, uint32_t baseOffset)
 	{
 		SEAssert(instanceData->m_matEffect == gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness,
 			"Incorrect material type found. All instanceData entries must have the same type");
@@ -125,7 +130,7 @@ namespace gr
 	}
 
 
-	bool Material_GLTF::ShowImGuiWindow(MaterialInstanceData& instanceData)
+	bool Material_GLTF::ShowImGuiWindow(MaterialInstanceRenderData& instanceData)
 	{
 		bool isDirty = false;
 
@@ -160,7 +165,7 @@ namespace gr
 				&matData->g_emissiveFactorStrength.w, 0.f, 1000.f, "%0.3f");
 
 			isDirty |= ImGui::ColorEdit3(std::format("F0##{}", util::PtrToID(&instanceData)).c_str(), 
-				&matData->g_f0.r, ImGuiColorEditFlags_Float);
+				&matData->g_f0AlphaCutoff.r, ImGuiColorEditFlags_Float);
 
 			// gr::Material: This is a Material instance, so we're modifying the data that will be sent to our buffers
 			{
@@ -169,7 +174,7 @@ namespace gr
 				ImGui::BeginDisabled(isOpaque);
 				isDirty |= ImGui::SliderFloat(
 					std::format("Alpha cutoff##{}", util::PtrToID(&instanceData)).c_str(),
-					&matData->g_alphaCutoff.x,
+					&matData->g_f0AlphaCutoff.w,
 					0.f,
 					1.f,
 					"%.4f");

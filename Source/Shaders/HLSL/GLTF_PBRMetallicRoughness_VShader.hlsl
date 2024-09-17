@@ -23,6 +23,10 @@ VertexOut VShader(VertexIn In)
 #endif
 	
 	Out.UV0 = In.UV0;
+	
+#if MAX_UV_CHANNEL_IDX >= 1
+	Out.UV1 = In.UV1;
+#endif
 
 	Out.Color = InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor * In.Color;
 	

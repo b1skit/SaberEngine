@@ -383,7 +383,7 @@ namespace gr
 			PopulateTypesImGuiHelper<gr::Light::RenderDataAmbientIBL>(names, "Light::RenderDataAmbientIBL");
 			PopulateTypesImGuiHelper<gr::Light::RenderDataDirectional>(names, "Light::RenderDataDirectional");
 			PopulateTypesImGuiHelper<gr::Light::RenderDataPoint>(names, "Light::RenderDataPoint");
-			PopulateTypesImGuiHelper<gr::Material::MaterialInstanceData>(names, "Material::MaterialInstanceData");
+			PopulateTypesImGuiHelper<gr::Material::MaterialInstanceRenderData>(names, "Material::MaterialInstanceRenderData");
 			PopulateTypesImGuiHelper<gr::MeshPrimitive::RenderData>(names, "MeshPrimitive::RenderData");
 			PopulateTypesImGuiHelper<gr::MeshPrimitive::MeshRenderData>(names, "MeshPrimitive::MeshRenderData");
 			PopulateTypesImGuiHelper<gr::ShadowMap::RenderData>(names, "ShadowMap::RenderData");

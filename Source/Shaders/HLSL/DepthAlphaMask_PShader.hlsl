@@ -6,10 +6,10 @@ float4 PShader(VertexOut In) : SV_Target
 {
 	const uint materialIdx = InstanceIndexParams.g_instanceIndices[In.InstanceID].g_materialIdx;
 	
-	const float4 matAlbedo = MatAlbedo.Sample(WrapAnisotropic, In.UV0);
+	const float4 matAlbedo = BaseColorTex.Sample(WrapAnisotropic, In.UV0);
 	
 	// Alpha clipping:
-	const float alphaCutoff = InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_alphaCutoff.x;
+	const float alphaCutoff = InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0AlphaCutoff.w;
 	clip(matAlbedo.a < alphaCutoff ? -1 : 1);
 	
 	return float4(In.Position.z, In.Position.z, In.Position.z, 1.f);

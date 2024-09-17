@@ -17,17 +17,22 @@ struct VertexOut
 #ifdef VOUT_UV0
 	float2 UV0		: TEXCOORD0;
 #endif
+	
+#if MAX_UV_CHANNEL_IDX >= 1
+	float2 UV1		: TEXCOORD1;
+#endif
+	
 #ifdef VOUT_COLOR
 	float4 Color	: COLOR0;
 #endif	
 #ifdef VOUT_LOCAL_POS
-	float3 LocalPos : TEXCOORD1;
+	float3 LocalPos : TEXCOORD5;
 #endif
 #ifdef VOUT_WORLD_POS
-	float3 WorldPos : TEXCOORD2;
+	float3 WorldPos : TEXCOORD6;
 #endif
 #ifdef VOUT_TBN
-	float3x3 TBN	: TEXCOORD3;
+	float3x3 TBN	: TEXCOORD7;
 #endif
 #ifdef SABER_INSTANCING
 	nointerpolation uint InstanceID : SV_InstanceID;
@@ -47,11 +52,11 @@ StructuredBuffer<InstancedPBRMetallicRoughnessData> InstancedPBRMetallicRoughnes
 
 ConstantBuffer<TargetData> TargetParams;
 
-Texture2D<float4> MatAlbedo;
-Texture2D<float4> MatNormal;
-Texture2D<float4> MatMetallicRoughness;
-Texture2D<float4> MatOcclusion;
-Texture2D<float4> MatEmissive;
+Texture2D<float4> BaseColorTex;
+Texture2D<float4> NormalTex;
+Texture2D<float4> MetallicRoughnessTex;
+Texture2D<float4> OcclusionTex;
+Texture2D<float4> EmissiveTex;
 
 Texture2D<float4> GBufferAlbedo;
 Texture2D<float4> GBufferWNormal;

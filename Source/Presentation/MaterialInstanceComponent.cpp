@@ -9,7 +9,7 @@
 
 namespace fr
 {
-	gr::Material::MaterialInstanceData MaterialInstanceComponent::CreateRenderData(
+	gr::Material::MaterialInstanceRenderData MaterialInstanceComponent::CreateRenderData(
 		entt::entity, MaterialInstanceComponent const& matComponent)
 	{
 		return matComponent.m_instanceData;
@@ -54,7 +54,7 @@ namespace fr
 			// RenderDataComponent:
 			gr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
 
-			// MaterialInstanceData:
+			// MaterialInstanceRenderData:
 			fr::MaterialInstanceComponent& matComponent = em.GetComponent<fr::MaterialInstanceComponent>(owningEntity);
 			matComponent.m_isDirty |= gr::Material::ShowImGuiWindow(matComponent.m_instanceData);
 

@@ -208,8 +208,8 @@ namespace gr
 				{
 					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 						newMeshPrimDataItr.Get<gr::MeshPrimitive::RenderData>();
-					gr::Material::MaterialInstanceData const& materialRenderData =
-						newMeshPrimDataItr.Get<gr::Material::MaterialInstanceData>();
+					gr::Material::MaterialInstanceRenderData const& materialRenderData =
+						newMeshPrimDataItr.Get<gr::Material::MaterialInstanceRenderData>();
 
 					const gr::TransformID newBatchTransformID = newMeshPrimDataItr.GetTransformID();
 					const size_t newBatchIdx = m_permanentCachedBatches.size();
@@ -322,8 +322,8 @@ namespace gr
 						const gr::RenderDataID materialID = materialRecord.first;
 						const uint32_t materialIdx = materialRecord.second.m_index;
 
-						gr::Material::MaterialInstanceData const& materialData =
-							renderData.GetObjectData<gr::Material::MaterialInstanceData>(materialID);
+						gr::Material::MaterialInstanceRenderData const& materialData =
+							renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(materialID);
 
 						gr::Material::CommitMaterialInstanceData(
 							matInstMeta.m_instancedMaterials.get(),
@@ -357,10 +357,10 @@ namespace gr
 		}
 		
 		// Update dirty instanced Material data:
-		if (renderData.HasObjectData<gr::Material::MaterialInstanceData>())
+		if (renderData.HasObjectData<gr::Material::MaterialInstanceRenderData>())
 		{
 			std::vector<gr::RenderDataID> const* dirtyMaterials =
-				renderData.GetIDsWithDirtyData<gr::Material::MaterialInstanceData>();
+				renderData.GetIDsWithDirtyData<gr::Material::MaterialInstanceRenderData>();
 			if (dirtyMaterials)
 			{
 				auto dirtyMaterialItr = renderData.IDBegin(*dirtyMaterials);
@@ -379,8 +379,8 @@ namespace gr
 
 						const uint32_t materialIdx = matInstMeta.m_instancedMaterialIndexes.at(dirtyMaterialID).m_index;
 
-						gr::Material::MaterialInstanceData const& materialData =
-							renderData.GetObjectData<gr::Material::MaterialInstanceData>(dirtyMaterialID);
+						gr::Material::MaterialInstanceRenderData const& materialData =
+							renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(dirtyMaterialID);
 
 						gr::Material::CommitMaterialInstanceData(
 							matInstMeta.m_instancedMaterials.get(),

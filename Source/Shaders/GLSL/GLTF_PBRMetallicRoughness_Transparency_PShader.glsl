@@ -34,9 +34,24 @@ void PShader()
 {
 	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[InstanceParamsIn.InstanceID].g_materialIdx;
 
+	const vec2 albedoUV = GetUV(In, 
+		_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.x);
+	
+	const vec2 metallicRoughnessUV = GetUV(In,
+		_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.y);
+	
+	const vec2 normalUV = GetUV(In,
+		_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.z);
+	
+	const vec2 occlusionUV = GetUV(In,
+		_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.w);
+	
+	//const vec2 emissiveUV = GetUV(In,
+	//	_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes1.x);
+
 	const vec3 worldPos = In.WorldPos;
 
-	const vec4 matAlbedo = texture(MatAlbedo, In.UV0.xy);
+	const vec4 matAlbedo = texture(BaseColorTex, albedoUV);
 	const vec4 baseColorFactor =
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor;
 	const vec3 linearAlbedo = (matAlbedo * baseColorFactor * In.Color).rgb;
@@ -44,7 +59,7 @@ void PShader()
 	const float normalScaleFactor =
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.z;
 	const vec3 normalScale = vec3(normalScaleFactor, normalScaleFactor, 1.f);
-	const vec3 texNormal = texture(MatNormal, In.UV0.xy).xyz;
+	const vec3 texNormal = texture(NormalTex, normalUV).xyz;
 	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, In.TBN) * normalScale;
 
 	const float linearRoughnessFactor =
@@ -54,11 +69,11 @@ void PShader()
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.x;
 	
 	const vec2 roughnessMetalness =
-		texture(MatMetallicRoughness, In.UV0.xy).gb * vec2(linearRoughnessFactor, metallicFactor);
+		texture(MetallicRoughnessTex, metallicRoughnessUV).gb * vec2(linearRoughnessFactor, metallicFactor);
 
 	const float remappedRoughness = RemapRoughness(roughnessMetalness.x);
 
-	const vec3 f0 = _InstancedPBRMetallicRoughnessParams[materialIdx].g_f0.rgb;
+	const vec3 f0 = _InstancedPBRMetallicRoughnessParams[materialIdx].g_f0AlphaCutoff.rgb;
 
 	vec3 totalContribution = vec3(0.f);
 
@@ -79,7 +94,7 @@ void PShader()
 
 		const float occlusionStrength =
 			_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.w;
-		const float occlusion = texture(MatOcclusion, In.UV0.xy).r * occlusionStrength;
+		const float occlusion = texture(OcclusionTex, occlusionUV).r * occlusionStrength;
 	
 		ambientLightParams.FineAO = occlusion;
 		ambientLightParams.CoarseAO = 1.f; // No SSAO for transparents

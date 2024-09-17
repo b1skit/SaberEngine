@@ -96,7 +96,17 @@ namespace droid
 		std::vector<std::string> const& defines,
 		std::string const& outputDir)
 	{
-		std::cout << "Compiling HSLS shader \"" << extensionlessSrcFilename.c_str() <<  "\"\n";
+		std::string concatenatedDefines;
+		for (auto const& define : defines)
+		{
+			concatenatedDefines = std::format("{} ", define);
+		}
+
+		std::string const& outputMsg = std::format("Compiling HSLS shader \"{}\"{}{}\n",
+			extensionlessSrcFilename,
+			concatenatedDefines.empty() ? "" : ", Defines = ",
+			concatenatedDefines);
+		std::cout << outputMsg.c_str();
 
 		droid::ErrorCode result = droid::ErrorCode::Success;
 

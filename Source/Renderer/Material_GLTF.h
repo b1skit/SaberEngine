@@ -11,13 +11,26 @@ namespace gr
 	class Material_GLTF : public virtual Material
 	{
 	public:
+		enum TextureSlotIdx : uint8_t
+		{
+			BaseColor			= 0,
+			MetallicRoughness	= 1,
+			Normal				= 2,
+			Occlusion			= 3,
+			Emissive			= 4,
+
+			TextureSlotIdx_Count
+		};
+
+
+	public:
 		static std::shared_ptr<re::Buffer> CreateInstancedBuffer(
 			re::Buffer::Type,
-			std::vector<MaterialInstanceData const*> const&);
+			std::vector<MaterialInstanceRenderData const*> const&);
 		
-		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceData const*, uint32_t baseOffset);
+		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);
 
-		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified
+		static bool ShowImGuiWindow(MaterialInstanceRenderData&); // Returns true if data was modified
 
 
 	public:
