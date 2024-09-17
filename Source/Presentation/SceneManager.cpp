@@ -132,7 +132,8 @@ namespace
 			};
 
 			const size_t numChannels = re::Texture::GetNumberOfChannels(formatFallback);
-			const std::string fallbackName = grutil::GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
+			std::string const& fallbackName =
+				grutil::GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
 
 			if (scene.TextureExists(fallbackName))
 			{
@@ -274,19 +275,19 @@ namespace
 		std::vector<std::future<util::ThreadSafeVector<std::future<void>>>> matFutures;
 		matFutures.reserve(numMaterials);
 
-		for (size_t cur = 0; cur < numMaterials; cur++)
+		for (size_t matIdx = 0; matIdx < numMaterials; matIdx++)
 		{
-			matFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob([data, cur, &scene, &sceneRootPath]()
+			matFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob([data, matIdx, &scene, &sceneRootPath]()
 				-> util::ThreadSafeVector<std::future<void>>
 				{
 
 					util::ThreadSafeVector<std::future<void>> textureFutures;
 					textureFutures.reserve(5); // Albedo, met/rough, normal, occlusion, emissive
 
-					cgltf_material const* const material = &data->materials[cur];
+					cgltf_material const* const material = &data->materials[matIdx];
+					SEAssert(material, "Found a null material, this is unexpected");
 
-					const std::string matName =
-						material == nullptr ? "MissingMaterial" : grutil::GenerateMaterialName(*material);
+					std::string const& matName = grutil::GenerateMaterialName(*material);
 					if (scene.MaterialExists(matName))
 					{
 						LOG_WARNING(
