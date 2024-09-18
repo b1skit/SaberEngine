@@ -62,8 +62,10 @@ namespace
 	}
 
 
-	void ParseVertexStreamsEntry(droid::ParseDB& parseDB, auto const& vertexStreamsEntry)
+	droid::ErrorCode ParseVertexStreamsEntry(droid::ParseDB& parseDB, auto const& vertexStreamsEntry)
 	{
+		uint8_t numStreams = 0;
+
 		std::string const& streamsBlockName = vertexStreamsEntry.at(key_name);
 
 		for (auto const& slotDesc : vertexStreamsEntry.at(key_slots))
@@ -78,7 +80,34 @@ namespace
 					.m_name = name,
 					.m_semantic = semantic,
 				});
+			numStreams++;
+
+			if (slotDesc.contains(key_morphTargets))
+			{
+				for (auto const& morphSlotDesc : slotDesc.at(key_morphTargets))
+				{
+					std::string const& morphTargetDataType = morphSlotDesc.at(key_dataType).template get<std::string>();
+					std::string const& morphTargetname = morphSlotDesc.at(key_name).template get<std::string>();
+					std::string const& morphTargetsemantic = morphSlotDesc.at(key_semantic).template get<std::string>();
+
+					parseDB.AddVertexStreamSlot(streamsBlockName,
+						droid::ParseDB::VertexStreamSlotDesc{
+							.m_dataType = morphTargetDataType,
+							.m_name = morphTargetname,
+							.m_semantic = morphTargetsemantic,
+						});
+					numStreams++;
+				}
+			}
+
+			if (numStreams > re::VertexStream::k_maxVertexStreams)
+			{
+				std::cout << "Error: Trying to add too many vertex streams\n";
+				return droid::ErrorCode::JSONError;
+			}
 		}
+
+		return droid::ErrorCode::Success;
 	}
 
 
@@ -283,7 +312,11 @@ namespace droid
 			{
 				for (auto const& vertexStreamEntry : effectJSON.at(key_vertexStreams))
 				{
-					ParseVertexStreamsEntry(*this, vertexStreamEntry);
+					result = ParseVertexStreamsEntry(*this, vertexStreamEntry);
+					if (result != droid::ErrorCode::Success)
+					{
+						return result;
+					}
 				}
 			}
 

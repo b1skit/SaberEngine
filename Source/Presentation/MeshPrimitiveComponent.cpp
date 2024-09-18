@@ -170,15 +170,24 @@ namespace fr
 
 		std::vector<gr::MeshPrimitive::MeshVertexStream> const& vertexStreams =
 			meshPrimitiveComponent.m_meshPrimitive->GetVertexStreams();
-		for (size_t slotIdx = 0; slotIdx < vertexStreams.size(); slotIdx++)
+		uint8_t slotIdx = 0;
+		for (gr::MeshPrimitive::MeshVertexStream const& stream : vertexStreams)
 		{
-			if (vertexStreams[slotIdx].m_vertexStream == nullptr) // We assume vertex streams are tightly packed
+			if (stream.m_vertexStream == nullptr) // We assume vertex streams are tightly packed
 			{
 				break;
 			}
-			renderData.m_vertexStreams[slotIdx] = vertexStreams[slotIdx].m_vertexStream;
-			renderData.m_numVertexStreams++;
+
+			renderData.m_vertexStreams[slotIdx++] = stream.m_vertexStream;
+
+			for (re::VertexStream const* morphTarget : stream.m_morphTargets)
+			{
+				SEAssert(morphTarget, "Found a null morph target, this is unexpected");
+
+				renderData.m_vertexStreams[slotIdx++] = morphTarget;
+			}
 		}
+		renderData.m_numVertexStreams = slotIdx;
 
 		return renderData;
 	}

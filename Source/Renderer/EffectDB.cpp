@@ -292,21 +292,47 @@ namespace
 			std::string const& name = slotDesc.at(key_name).template get<std::string>();
 			std::string const& semantic = slotDesc.at(key_semantic).template get<std::string>();
 
-			constexpr char const* k_digits = "0123456789";
-			const size_t semanticNumberIdx = semantic.find_first_of(k_digits);
+			auto ExtractSemanticNameAndIndex = [](std::string& semanticName, uint8_t& semanticIdx)
+				{
+					constexpr char const* k_digits = "0123456789";
+					const size_t semanticNumberIdx = semanticName.find_first_of(k_digits);
+
+					// If the semantic contains an index, seperate them. Otherwise, do nothing.
+					if (semanticNumberIdx != std::string::npos)
+					{
+						semanticIdx = std::stoi(semanticName.substr(semanticNumberIdx, semanticName.size()));
+						semanticName = semanticName.substr(0, semanticNumberIdx);
+					}
+				};
 
 			std::string semanticName = semantic;
 			uint8_t semanticIdx = 0; // Assume 0 if no semantic index is specified (e.g. NORMAL, SV_Position, etc)
-			if (semanticNumberIdx != std::string::npos)
-			{
-				semanticName = semantic.substr(0, semanticNumberIdx);
-				semanticIdx = std::stoi(semantic.substr(semanticNumberIdx, semantic.size()));
-			}
+			ExtractSemanticNameAndIndex(semanticName, semanticIdx);
 
 			const re::VertexStream::Type streamType = SemanticNameToStreamType(semanticName);
 			const re::VertexStream::DataType streamDataType = StrToVertexStreamDataType(dataType);
 
 			vertexStreamMap.SetSlotIdx(streamType, semanticIdx, streamDataType, slotIndex++);
+
+			// Morph targets occupy the slots immediately following their base attribute:
+			if (slotDesc.contains(key_morphTargets))
+			{
+				for (auto const& morphSlotDesc : slotDesc.at(key_morphTargets))
+				{
+					std::string const& morphDataType = morphSlotDesc.at(key_dataType).template get<std::string>();
+					std::string const& morphName = morphSlotDesc.at(key_name).template get<std::string>();
+					std::string const& morphSemantic = morphSlotDesc.at(key_semantic).template get<std::string>();
+
+
+					std::string morphSemanticName = morphSemantic;
+					uint8_t morphSemanticIdx = 0; // Assume 0 if no semantic index is specified (e.g. NORMAL, SV_Position, etc)
+					ExtractSemanticNameAndIndex(morphSemanticName, morphSemanticIdx);
+
+					const re::VertexStream::DataType morphStreamDataType = StrToVertexStreamDataType(morphDataType);
+
+					vertexStreamMap.SetSlotIdx(streamType, morphSemanticIdx, morphStreamDataType, slotIndex++);
+				}
+			}
 		}
 
 		return vertexStreamMap;

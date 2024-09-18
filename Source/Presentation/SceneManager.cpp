@@ -1285,12 +1285,10 @@ namespace
 
 					switch (stream.m_createParams.m_type)
 					{
-					case re::VertexStream::TexCoord:
+					case re::VertexStream::Index:
 					{
-						if (stream.m_streamIdx > 0)
-						{
-							extraChannelsData.emplace_back(stream.m_streamData.get());
-						}
+						SEAssert(stream.m_streamIdx == 0, "Found an index stream beyond index 0. This is unexpected");
+						continue;
 					}
 					break;
 					case re::VertexStream::Color:
@@ -1300,19 +1298,33 @@ namespace
 						extraChannelsData.emplace_back(stream.m_streamData.get());
 					}
 					break;
-					case re::VertexStream::Index:
+					case re::VertexStream::TexCoord:
 					case re::VertexStream::Position:
 					case re::VertexStream::Normal:
 					case re::VertexStream::Tangent:
 					{
-						continue; // Handled elsewhere
+						// Position0/Normal0/Tangent0/UV0 are handled elsewhere; But we do add their morph data below
+						if (stream.m_streamIdx > 0)
+						{
+							extraChannelsData.emplace_back(stream.m_streamData.get());
+						}
 					}
+					break;
 					case re::VertexStream::Binormal:
 					{
 						SEAssertF("Binormal streams are nto supported by GLTF, this is unexpected");
 					}
 					break;
 					default: SEAssertF("Invalid stream type");
+					}
+
+					// Add any morph target data
+					if (!stream.m_morphTargetData.empty())
+					{
+						for (auto const& morphData : stream.m_morphTargetData)
+						{
+							extraChannelsData.emplace_back(morphData.m_streamData.get());							
+						}
 					}
 				}
 			}

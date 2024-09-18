@@ -176,6 +176,9 @@ namespace gr
 	inline void Material::SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture> texture, uint8_t uvChannelIdx)
 	{
 		SEAssert(slotIndex < m_texSlots.size(), "Out of bounds slot index");
+		SEAssert(uvChannelIdx <= 1, 
+			"Only 2 UV channels are currently supported - Hitting this means shaders/effects must be updated");
+
 		m_texSlots[slotIndex].m_texture = texture;
 		m_texSlots[slotIndex].m_uvChannelIdx = uvChannelIdx;
 	}

@@ -66,7 +66,11 @@ namespace effect::drawstyle
 			const drawstyle::Bitmask curBit = drawstyle::Bitmask(1) << bitIdx;
 			if (bitmask & curBit)
 			{
-				names += s_drawstyleBitmaskMappings.at(curBit) + "|";
+				if (!names.empty())
+				{
+					names += "|";
+				}
+				names += s_drawstyleBitmaskMappings.at(curBit);
 			}
 		}
 		return names;

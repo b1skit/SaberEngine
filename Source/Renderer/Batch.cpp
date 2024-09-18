@@ -99,35 +99,46 @@ namespace
 	}
 
 
-	effect::drawstyle::Bitmask ComputeBatchBitmask(gr::Material::MaterialInstanceRenderData const& materialInstanceData)
+	effect::drawstyle::Bitmask ComputeBatchBitmask(
+		gr::Material::MaterialInstanceRenderData const* materialInstanceData,
+		bool hasMorphTargets)
 	{
 		effect::drawstyle::Bitmask bitmask = 0;
 
-		// Alpha mode:
-		switch (materialInstanceData.m_alphaMode)
+		if (materialInstanceData)
 		{
-		case gr::Material::AlphaMode::Opaque:
-		{
-			bitmask |= effect::drawstyle::MaterialAlphaMode_Opaque;
-		}
-		break;
-		case gr::Material::AlphaMode::Mask:
-		{
-			bitmask |= effect::drawstyle::MaterialAlphaMode_Mask;
-		}
-		break;
-		case gr::Material::AlphaMode::Blend:
-		{
-			bitmask |= effect::drawstyle::MaterialAlphaMode_Blend;
-		}
-		break;
-		default:
-			SEAssertF("Invalid Material AlphaMode");
+			// Alpha mode:
+			switch (materialInstanceData->m_alphaMode)
+			{
+			case gr::Material::AlphaMode::Opaque:
+			{
+				bitmask |= effect::drawstyle::MaterialAlphaMode_Opaque;
+			}
+			break;
+			case gr::Material::AlphaMode::Mask:
+			{
+				bitmask |= effect::drawstyle::MaterialAlphaMode_Mask;
+			}
+			break;
+			case gr::Material::AlphaMode::Blend:
+			{
+				bitmask |= effect::drawstyle::MaterialAlphaMode_Blend;
+			}
+			break;
+			default:
+				SEAssertF("Invalid Material AlphaMode");
+			}
+
+			// Material sidedness:
+			bitmask |= materialInstanceData->m_isDoubleSided ?
+				effect::drawstyle::MaterialSidedness_Double : effect::drawstyle::MaterialSidedness_Single;
 		}
 
-		// Material sidedness:
-		bitmask |= materialInstanceData.m_isDoubleSided ? 
-			effect::drawstyle::MaterialSidedness_Double : effect::drawstyle::MaterialSidedness_Single;
+		if (hasMorphTargets)
+		{
+			// TODO: Implement this correctly. For now, we just use a single morph target drawstyle
+			bitmask |= effect::drawstyle::MorphTargets_Pos8;
+		}
 
 		return bitmask;
 	}
@@ -233,7 +244,7 @@ namespace re
 		, m_type(BatchType::Graphics)
 		, m_batchShader(nullptr)
 		, m_effectID(materialInstanceData ? materialInstanceData->m_materialEffectID : effect::Effect::k_invalidEffectID)
-		, m_drawStyleBitmask(materialInstanceData ? ComputeBatchBitmask(*materialInstanceData) : 0)
+		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
@@ -247,6 +258,7 @@ namespace re
 
 		// We assume the MeshPrimitive's vertex streams are ordered such that identical stream types are tightly
 		// packed, and in the correct channel order corresponding to the final shader slots (e.g. uv0, uv1, etc)
+		bool hasMorphTargets = false;
 		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(meshPrimRenderData.m_numVertexStreams); slotIdx++)
 		{
 			if (meshPrimRenderData.m_vertexStreams[slotIdx] == nullptr)
@@ -259,6 +271,11 @@ namespace re
 					re::VertexStream::Lifetime::Permanent && 
 					m_lifetime == Lifetime::Permanent),
 				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
+
+			if (meshPrimRenderData.m_vertexStreams[slotIdx]->IsMorphData())
+			{
+				hasMorphTargets = true;
+			}
 
 			m_graphicsParams.m_vertexStreams[slotIdx] = VertexStreamInput{
 				.m_vertexStream = meshPrimRenderData.m_vertexStreams[slotIdx],
@@ -292,6 +309,8 @@ namespace re
 			SetFilterMaskBit(Filter::AlphaBlended, materialInstanceData->m_alphaMode == gr::Material::AlphaMode::Blend);
 			SetFilterMaskBit(Filter::CastsShadow, materialInstanceData->m_isShadowCaster);
 		}
+
+		m_drawStyleBitmask = ComputeBatchBitmask(materialInstanceData, hasMorphTargets);
 
 		ComputeDataHash();
 	}

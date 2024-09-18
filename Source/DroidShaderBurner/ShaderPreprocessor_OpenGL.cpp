@@ -231,12 +231,12 @@ namespace droid
 		std::string concatenatedDefines;
 		for (auto const& define : defines)
 		{
-			concatenatedDefines = std::format("{} ", define);
+			concatenatedDefines = std::format("{} {}", concatenatedDefines, define);
 		}
 
 		std::string const& outputMsg = std::format("Building GLSL shader \"{}\"{}{}\n",
 			outputFileName,
-			concatenatedDefines.empty() ? "" : ", Defines = ",
+			concatenatedDefines.empty() ? "" : ", Defines =",
 			concatenatedDefines);
 		std::cout << outputMsg.c_str();
 
@@ -262,6 +262,12 @@ namespace droid
 
 		// Process the shader text, splitting it and inserting include files as they're encountered:
 		const bool result = InsertIncludeText(includeDirectories, shaderText, shaderTextStrings);
+		if (!result)
+		{
+			std::cout << "Error: Failed while attempting to insert include text\n";
+			return droid::ErrorCode::ShaderError;
+		}
+
 
 		// Get the total reservation size we'll need:
 		size_t requiredSize = 0;

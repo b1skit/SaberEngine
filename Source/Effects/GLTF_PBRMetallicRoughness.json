@@ -24,6 +24,24 @@
 				"Conditions": [
 					{ "Rule": "RenderPath", "Mode": "Deferred" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" },
+					{ "Rule": "MorphTargets", "Mode": "Pos8" }
+				],
+				"Technique": "FillGBuffer_SingleSided_Morph_Pos8"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Deferred" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" },
+					{ "Rule": "MorphTargets", "Mode": "Pos8" }
+				],
+				"Technique": "FillGBuffer_SingleSided_Morph_Pos8"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Deferred" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
 				"Technique": "FillGBuffer_DoubleSided"
@@ -143,6 +161,18 @@
 				"PipelineState": "DoubleSided",
 				"VertexStream": "PosNmlTanUvCol"
 			},
+			{
+				"Name": "FillGBuffer_SingleSided_Morph_Pos8",
+				"VShader": "GLTF_PBRMetallicRoughness_VShader",
+				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "MORPH_POS8"],
+				"VShaderEntryPoint": "VShader",
+				"PShader": "GLTF_PBRMetallicRoughness_GBufferFill_PShader",
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
+				"PShaderEntryPoint": "PShader",
+				"PipelineState": "SingleSided",
+				"VertexStream": "PosNmlTanUvCol_Morph_Pos8"
+			},
+			// TODO: More permutations...
 
 			{
 				"Name": "AlphaBlend_SingleSided",
@@ -264,6 +294,83 @@
 					"DataType" : "float3",
 					"Name" : "Position",
 					"Semantic" : "SV_Position"
+				},
+				{
+					"DataType" : "float3",
+					"Name" : "Normal",
+					"Semantic" : "NORMAL0"
+				},
+				{
+					"DataType" : "float4",
+					"Name" : "Tangent",
+					"Semantic" : "TANGENT0"
+				},
+				{
+					"DataType" : "float2",
+					"Name" : "UV0",
+					"Semantic" : "TEXCOORD0"
+				},
+				{
+					"DataType" : "float2",
+					"Name" : "UV1",
+					"Semantic" : "TEXCOORD1"
+				},
+				{
+					"DataType" : "float4",
+					"Name" : "Color",
+					"Semantic" : "COLOR0"
+				}
+			]
+		},
+		{
+			"Name" : "PosNmlTanUvCol_Morph_Pos8",
+			"Slots" : [
+				{
+					"DataType" : "float3",
+					"Name" : "Position",
+					"Semantic" : "SV_Position",
+					"MorphTargets" : [
+						{
+							"DataType" : "float3",
+							"Name" : "PositionMorph1",
+							"Semantic" : "POSITION1"
+						},
+						{
+							"DataType" : "float3",
+							"Name" : "PositionMorph2",
+							"Semantic" : "POSITION2"
+						},
+						{
+							"DataType" : "float3",
+							"Name" : "PositionMorph3",
+							"Semantic" : "POSITION3"
+						},
+						{
+							"DataType" : "float3",
+							"Name" : "PositionMorph4",
+							"Semantic" : "POSITION4"
+						},
+						{
+							"DataType" : "float3",
+							"Name" : "PositionMorph5",
+							"Semantic" : "POSITION5"
+						},
+						{
+							"DataType" : "float3",
+							"Name" : "PositionMorph6",
+							"Semantic" : "POSITION6"
+						},
+						{
+							"DataType" : "float3",
+							"Name" : "PositionMorph7",
+							"Semantic" : "POSITION7"
+						},
+						{
+							"DataType" : "float3",
+							"Name" : "PositionMorph8",
+							"Semantic" : "POSITION8"
+						}
+					]
 				},
 				{
 					"DataType" : "float3",

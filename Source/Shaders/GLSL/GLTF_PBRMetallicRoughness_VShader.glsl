@@ -4,7 +4,13 @@
 #define SABER_INSTANCING
 #include "NormalMapUtils.glsli"
 #include "SaberCommon.glsli"
-#include "VertexStreams_PosNmlTanUvCol.glsli"
+
+#if defined(MORPH_POS8)
+#include "../Generated/GLSL/VertexStreams_PosNmlTanUvCol_Morph_Pos8.glsli"
+#else
+#include "../Generated/GLSL/VertexStreams_PosNmlTanUvCol.glsli"
+#endif
+
 
 
 void VShader()
@@ -12,7 +18,14 @@ void VShader()
 	const uint transformIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_transformIdx;
 	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_materialIdx;
 
-	const vec4 worldPos = _InstancedTransformParams[transformIdx].g_model * vec4(Position.xyz, 1.0);
+	vec3 position = Position;
+	
+	// TODO: Implement this correctly. For now, just prove we're getting the data we need
+#if defined(MORPH_POS8)
+	position += PositionMorph1;
+#endif
+
+	const vec4 worldPos = _InstancedTransformParams[transformIdx].g_model * vec4(position, 1.0f);
 	gl_Position = _CameraParams.g_viewProjection * worldPos;
 	
 #if defined(VOUT_WORLD_POS)

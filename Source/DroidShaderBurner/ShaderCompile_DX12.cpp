@@ -99,12 +99,12 @@ namespace droid
 		std::string concatenatedDefines;
 		for (auto const& define : defines)
 		{
-			concatenatedDefines = std::format("{} ", define);
+			concatenatedDefines = std::format("{} {}", concatenatedDefines, define);
 		}
 
 		std::string const& outputMsg = std::format("Compiling HSLS shader \"{}\"{}{}\n",
 			extensionlessSrcFilename,
-			concatenatedDefines.empty() ? "" : ", Defines = ",
+			concatenatedDefines.empty() ? "" : ", Defines =",
 			concatenatedDefines);
 		std::cout << outputMsg.c_str();
 

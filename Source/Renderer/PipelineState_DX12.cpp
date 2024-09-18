@@ -47,11 +47,19 @@ namespace
 	};
 
 
-	inline constexpr char const* VertexStreamTypeToSemanticName(re::VertexStream::Type streamType)
+	inline constexpr char const* VertexStreamTypeToSemanticName(re::VertexStream::Type streamType, uint8_t semanticIdx)
 	{
 		switch (streamType)
 		{
-		case re::VertexStream::Type::Position: return "SV_Position";
+		case re::VertexStream::Type::Position:
+		{
+			if (semanticIdx == 0)
+			{
+				return "SV_Position";
+			}
+			return "POSITION";
+		}
+		break;
 		case re::VertexStream::Type::Normal: return "NORMAL";
 		case re::VertexStream::Type::Binormal: return "BINORMAL";
 		case re::VertexStream::Type::Tangent: return "TANGENT";
@@ -120,13 +128,14 @@ namespace
 			re::VertexStreamMap::VertexStreamMetadata const& entry = vertexStreamMetadata[i];
 
 			inputLayout.emplace_back(D3D12_INPUT_ELEMENT_DESC(
-				VertexStreamTypeToSemanticName(entry.m_streamKey.m_streamType),	// Semantic name
-				entry.m_streamKey.m_semanticIdx,								// Semantic idx
-				GetDXGIFormtFromVertexStreamDataType(entry.m_streamDataType),	// Format
-				entry.m_shaderSlotIdx,											// Input slot [0, 15]
-				D3D12_APPEND_ALIGNED_ELEMENT,									// Aligned byte offset
-				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,						// Input slot class
-				0));															// Input data step rate
+				VertexStreamTypeToSemanticName(
+					entry.m_streamKey.m_streamType, entry.m_streamKey.m_semanticIdx),	// Semantic name
+				entry.m_streamKey.m_semanticIdx,										// Semantic idx
+				GetDXGIFormtFromVertexStreamDataType(entry.m_streamDataType),			// Format
+				entry.m_shaderSlotIdx,													// Input slot [0, 15]
+				D3D12_APPEND_ALIGNED_ELEMENT,											// Aligned byte offset
+				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,								// Input slot class
+				0));																	// Input data step rate
 		}
 
 		return inputLayout;
