@@ -17,11 +17,11 @@ namespace
 	constexpr size_t k_batchBufferIDsReserveAmount = 10;
 
 
-	void ValidateBufferLifetimeCompatibility(re::Batch::Lifetime liftime, re::Buffer::Type bufferType)
+	void ValidateBufferLifetimeCompatibility(se::Lifetime liftime, re::Buffer::Type bufferType)
 	{
 #if defined(_DEBUG)
-		SEAssert(liftime == re::Batch::Lifetime::SingleFrame ||
-			(liftime == re::Batch::Lifetime::Permanent &&
+		SEAssert(liftime == se::Lifetime::SingleFrame ||
+			(liftime == se::Lifetime::Permanent &&
 			(bufferType == re::Buffer::Type::Mutable || bufferType == re::Buffer::Type::Immutable)),
 			"Trying to set a buffer with a mismatching lifetime. Permanent batches cannot (currently) hold "
 			"single frame buffers, as they'd incorrectly maintain their life beyond the frame. Single frame "
@@ -31,19 +31,19 @@ namespace
 	}
 
 
-	void ValidateVertexStreamLifetime(re::Batch::Lifetime batchLifetime, re::VertexStream const* vertexStream)
+	void ValidateVertexStreamLifetime(se::Lifetime batchLifetime, re::VertexStream const* vertexStream)
 	{
 #if defined(_DEBUG)
-		SEAssert(batchLifetime == re::Batch::Lifetime::SingleFrame ||
-				(batchLifetime == re::Batch::Lifetime::Permanent &&
-					vertexStream->GetLifetime() == re::VertexStream::Lifetime::Permanent),
+		SEAssert(batchLifetime == se::Lifetime::SingleFrame ||
+				(batchLifetime == se::Lifetime::Permanent &&
+					vertexStream->GetLifetime() == se::Lifetime::Permanent),
 			"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 #endif
 	}
 
 
 	void ValidateVertexStreams(
-		re::Batch::Lifetime batchLifetime, re::Batch::VertexStreamInput* vertexStreams, uint8_t numVertexStreams)
+		se::Lifetime batchLifetime, re::Batch::VertexStreamInput* vertexStreams, uint8_t numVertexStreams)
 	{
 #if defined(_DEBUG)
 
@@ -190,7 +190,7 @@ namespace
 namespace re
 {
 	Batch::Batch(
-		Lifetime lifetime,
+		se::Lifetime lifetime,
 		gr::MeshPrimitive const* meshPrimitive,
 		EffectID effectID)
 		: m_lifetime(lifetime)
@@ -219,9 +219,9 @@ namespace re
 				break;
 			}
 
-			SEAssert((m_lifetime == Lifetime::SingleFrame) ||
-				(vertexStreams[slotIdx].m_vertexStream->GetLifetime() == re::VertexStream::Lifetime::Permanent &&
-					m_lifetime == Lifetime::Permanent),
+			SEAssert((m_lifetime == se::Lifetime::SingleFrame) ||
+				(vertexStreams[slotIdx].m_vertexStream->GetLifetime() == se::Lifetime::Permanent &&
+					m_lifetime == se::Lifetime::Permanent),
 				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 
 			m_graphicsParams.m_vertexStreams[slotIdx] = VertexStreamInput{
@@ -237,7 +237,7 @@ namespace re
 
 
 	Batch::Batch(
-		Lifetime lifetime, 
+		se::Lifetime lifetime,
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
 		gr::Material::MaterialInstanceRenderData const* materialInstanceData)
 		: m_lifetime(lifetime)
@@ -266,10 +266,10 @@ namespace re
 				break;
 			}
 
-			SEAssert((m_lifetime == Lifetime::SingleFrame) ||
+			SEAssert((m_lifetime == se::Lifetime::SingleFrame) ||
 				(meshPrimRenderData.m_vertexStreams[slotIdx]->GetLifetime() == 
-					re::VertexStream::Lifetime::Permanent && 
-					m_lifetime == Lifetime::Permanent),
+					se::Lifetime::Permanent && 
+					m_lifetime == se::Lifetime::Permanent),
 				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 
 			if (meshPrimRenderData.m_vertexStreams[slotIdx]->IsMorphData())
@@ -317,7 +317,7 @@ namespace re
 
 
 	Batch::Batch(
-		Lifetime lifetime,
+		se::Lifetime lifetime,
 		GraphicsParams const& graphicsParams, 
 		EffectID effectID)
 		: m_lifetime(lifetime)
@@ -338,7 +338,7 @@ namespace re
 
 
 	Batch::Batch(
-		Lifetime lifetime, 
+		se::Lifetime lifetime,
 		ComputeParams const& computeParams, 
 		EffectID effectID)
 		: m_lifetime(lifetime)
@@ -352,7 +352,7 @@ namespace re
 	}
 
 
-	Batch Batch::Duplicate(Batch const& rhs, re::Batch::Lifetime newLifetime)
+	Batch Batch::Duplicate(Batch const& rhs, se::Lifetime newLifetime)
 	{
 		Batch result = rhs;
 		result.m_lifetime = newLifetime;
@@ -471,7 +471,7 @@ namespace re
 	{		
 		ResetDataHash();
 
-		// Note: We don't consider the Batch::Lifetime m_lifetime, as we want single frame/permanent batches to instance
+		// Note: We don't consider the se::Lifetime m_lifetime, as we want single frame/permanent batches to instance
 
 		AddDataBytesToHash(m_type);
 

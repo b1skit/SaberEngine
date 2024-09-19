@@ -171,7 +171,7 @@ namespace re
 		std::shared_ptr<re::VertexStream> newVertexStream;
 		newVertexStream.reset(new VertexStream(createParams, std::move(data)));
 
-		if (createParams.m_lifetime == Lifetime::SingleFrame)
+		if (createParams.m_lifetime == se::Lifetime::SingleFrame)
 		{
 			re::RenderManager::Get()->RegisterSingleFrameResource(newVertexStream);
 			re::RenderManager::Get()->RegisterForCreate(newVertexStream);

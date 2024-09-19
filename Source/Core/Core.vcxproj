@@ -111,6 +111,7 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="InputManager_Platform.h" />
     <ClInclude Include="InputManager_Win32.h" />
+    <ClInclude Include="Interfaces\EnumTypes.h" />
     <ClInclude Include="Interfaces\IEngineComponent.h" />
     <ClInclude Include="Interfaces\IEngineThread.h" />
     <ClInclude Include="Interfaces\IEventListener.h" />

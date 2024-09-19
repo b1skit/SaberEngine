@@ -6,6 +6,8 @@
 #include "TextureView.h"
 #include "VertexStream.h"
 
+#include "Core/Definitions/EnumTypes.h"
+
 #include "Core/Interfaces/IHashedDataObject.h"
 
 
@@ -28,16 +30,6 @@ namespace re
 	class Batch final : public virtual core::IHashedDataObject
 	{
 	public:
-		enum class Lifetime : bool
-		{
-			SingleFrame,
-			Permanent			
-		};
-		SEStaticAssert(
-			static_cast<bool>(Lifetime::SingleFrame) == static_cast<bool>(re::VertexStream::Lifetime::SingleFrame) &&
-			static_cast<bool>(Lifetime::Permanent) == static_cast<bool>(re::VertexStream::Lifetime::Permanent),
-			"Batch and VertexStream Lifetime enums are out of sync");
-
 		enum class BatchType
 		{
 			Graphics,
@@ -98,14 +90,14 @@ namespace re
 
 	public:
 		// Graphics batches:
-		Batch(Lifetime, gr::MeshPrimitive const*, EffectID); // No material; e.g. fullscreen quads, cubemap geo etc
+		Batch(se::Lifetime, gr::MeshPrimitive const*, EffectID); // No material; e.g. fullscreen quads, cubemap geo etc
 
-		Batch(Lifetime, gr::MeshPrimitive::RenderData const&, gr::Material::MaterialInstanceRenderData const*);
+		Batch(se::Lifetime, gr::MeshPrimitive::RenderData const&, gr::Material::MaterialInstanceRenderData const*);
 
-		Batch(Lifetime, GraphicsParams const&, EffectID); // e.g. debug topology
+		Batch(se::Lifetime, GraphicsParams const&, EffectID); // e.g. debug topology
 
 		// Compute batches:
-		Batch(Lifetime, ComputeParams const&, EffectID);
+		Batch(se::Lifetime, ComputeParams const&, EffectID);
 
 
 	public:
@@ -116,7 +108,7 @@ namespace re
 
 
 	public:		
-		static Batch Duplicate(Batch const&, re::Batch::Lifetime);
+		static Batch Duplicate(Batch const&, se::Lifetime);
 
 
 	public:
@@ -161,7 +153,7 @@ namespace re
 
 		std::vector<RWTextureInput> const& GetRWTextureInputs() const;
 
-		Lifetime GetLifetime() const;
+		se::Lifetime GetLifetime() const;
 		
 		FilterBitmask GetBatchFilterMask() const;
 		void SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled);
@@ -176,7 +168,7 @@ namespace re
 
 
 	private:
-		Lifetime m_lifetime;
+		se::Lifetime m_lifetime;
 		BatchType m_type;
 		union
 		{
@@ -258,7 +250,7 @@ namespace re
 	}
 
 
-	inline Batch::Lifetime Batch::GetLifetime() const
+	inline se::Lifetime Batch::GetLifetime() const
 	{
 		return m_lifetime;
 	}

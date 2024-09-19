@@ -3,6 +3,8 @@
 #include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
 
+#include "Core/Definitions/EnumTypes.h"
+
 #include "Core/Util/ByteVector.h"
 
 
@@ -62,7 +64,6 @@ namespace re
 
 			DataType_Count
 		};
-
 		static constexpr char const* DataTypeToCStr(DataType);
 		static constexpr uint8_t DataTypeToNumComponents(DataType);
 		static constexpr uint8_t DataTypeToComponentByteSize(DataType);
@@ -93,15 +94,9 @@ namespace re
 			True
 		};
 
-		enum class Lifetime : bool
-		{
-			SingleFrame,
-			Permanent,
-		};
-
 		struct CreateParams
 		{
-			Lifetime m_lifetime = Lifetime::Permanent;
+			se::Lifetime m_lifetime = se::Lifetime::Permanent;
 
 			Type m_type = Type::Type_Count;
 
@@ -120,7 +115,7 @@ namespace re
 
 		~VertexStream() { Destroy(); };
 
-		Lifetime GetLifetime() const;
+		se::Lifetime GetLifetime() const;
 
 		Type GetType() const;
 
@@ -172,7 +167,7 @@ namespace re
 	};
 
 
-	inline VertexStream::Lifetime VertexStream::GetLifetime() const
+	inline se::Lifetime VertexStream::GetLifetime() const
 	{
 		return m_createParams.m_lifetime;
 	}

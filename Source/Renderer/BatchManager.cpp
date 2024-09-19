@@ -215,7 +215,7 @@ namespace gr
 					const size_t newBatchIdx = m_permanentCachedBatches.size();
 
 					m_permanentCachedBatches.emplace_back(
-						re::Batch(re::Batch::Lifetime::Permanent, meshPrimRenderData, &materialRenderData));
+						re::Batch(se::Lifetime::Permanent, meshPrimRenderData, &materialRenderData));
 
 					const uint64_t batchHash = m_permanentCachedBatches.back().GetDataHash();
 
@@ -392,7 +392,7 @@ namespace gr
 						re::Batch& permanentBatch =
 							m_permanentCachedBatches.at(m_renderDataIDToBatchMetadata.at(dirtyMaterialID).m_cacheIndex);
 						permanentBatch = re::Batch(
-							re::Batch::Lifetime::Permanent,
+							se::Lifetime::Permanent,
 							renderData.GetObjectData<gr::MeshPrimitive::RenderData>(dirtyMaterialID),
 							&materialData);
 					}
@@ -445,7 +445,7 @@ namespace gr
 
 				// Add the first batch in the sequence to our final list. We duplicate the batch, as the cached batches
 				// have a permanent Lifetime
-				batches.emplace_back(re::Batch::Duplicate(cachedBatch, re::Batch::Lifetime::SingleFrame));
+				batches.emplace_back(re::Batch::Duplicate(cachedBatch, se::Lifetime::SingleFrame));
 
 				const uint64_t curBatchHash = batchMetadata[unmergedIdx].m_batchHash;
 
