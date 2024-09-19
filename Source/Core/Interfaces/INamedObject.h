@@ -2,27 +2,42 @@
 #pragma once
 #include "Core/Assert.h"
 
+#include "Core/Interfaces/IUniqueID.h"
+
+#include "Core/Util/TextUtils.h"
+
 using NameID = uint64_t;
-using UniqueID = uint64_t;
 
 
 namespace core
 {
-	class INamedObject
+	class INamedObject : public virtual IUniqueID
 	{
 	public:
 		static constexpr NameID k_invalidNameID = std::numeric_limits<NameID>::max();
-		static constexpr UniqueID k_invalidUniqueID = std::numeric_limits<UniqueID>::max();
-
 		static constexpr size_t k_maxNameLength = 260; // Windows MAX_PATH = 260 chars, including null terminator
+
+
+	public:
+		// Compute an integer identifier from a string equivalent to the GetNameID() of objects with the same name
+		static NameID ComputeIDFromName(std::string const& name);
+
 
 	public: 
 		virtual ~INamedObject() = 0;
+
 
 	public:
 		explicit INamedObject(char const* name);
 		explicit INamedObject(std::string const& name);
 
+		INamedObject(INamedObject const&) = default;
+		INamedObject(INamedObject&&) = default;
+		INamedObject& operator=(INamedObject const&) = default;
+		INamedObject& operator=(INamedObject&&) = default;
+
+
+	public:
 		// m_name as supplied at construction
 		std::string const& GetName() const;
 		std::wstring const& GetWName() const;
@@ -30,27 +45,16 @@ namespace core
 		// Integer identifier computed by hashing m_name. Any object with the same m_name will have the same NameID
 		NameID GetNameID() const;
 
-		// Unique integer identifier, hashed from m_name concatenated with a monotonically-increasing value
-		UniqueID GetUniqueID() const;
-
 		// Update the name of an object. Does not modify the UniqueID assigned at creation
 		void SetName(std::string const& name);
 
-
-	public:
-		// Compute an integer identifier from a string equivalent to the GetNameID() of objects with the same name
-		static NameID ComputeIDFromName(std::string const& name);
-		
-
-	private:
-		inline void AssignUniqueID();
 
 	private:
 		std::string m_name;
 		std::wstring m_wName;
 		NameID m_nameID;
-		UniqueID m_uniqueID;
 		
+
 	private:
 		INamedObject() = delete;
 	};
@@ -62,7 +66,6 @@ namespace core
 			"Empty, null, or non-terminated name strings are not allowed");
 
 		SetName(name);
-		AssignUniqueID();
 	}
 
 
@@ -90,12 +93,6 @@ namespace core
 	}
 
 
-	inline UniqueID INamedObject::GetUniqueID() const
-	{
-		return m_uniqueID;
-	}
-
-
 	inline NameID INamedObject::ComputeIDFromName(std::string const& name)
 	{
 		return std::hash<std::string>{}(name);
@@ -106,16 +103,8 @@ namespace core
 	{
 		m_name = name;
 		m_nameID = ComputeIDFromName(name);
-
-		m_wName = std::wstring(m_name.begin(), m_name.end()).c_str();
-	}
-
-
-	void INamedObject::AssignUniqueID()
-	{
-		// We assign a simple monotonically-increasing value as a unique identifier
-		static std::atomic<UniqueID> s_uniqueIDs = 0;
-		m_uniqueID = s_uniqueIDs.fetch_add(1);
+		
+		m_wName = util::ToWideString(m_name);
 	}
 
 

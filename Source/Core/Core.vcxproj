@@ -103,6 +103,7 @@
     <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Definitions\ConfigKeys.h" />
+    <ClInclude Include="Definitions\EnumTypes.h" />
     <ClInclude Include="Definitions\KeyConfiguration.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventManager_Platform.h" />
@@ -116,6 +117,7 @@
     <ClInclude Include="Interfaces\IHashedDataObject.h" />
     <ClInclude Include="Interfaces\INamedObject.h" />
     <ClInclude Include="Interfaces\IPlatformParams.h" />
+    <ClInclude Include="Interfaces\IUniqueID.h" />
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="PerformanceTimer.h" />
