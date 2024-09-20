@@ -5,6 +5,63 @@
 #include "RenderManager.h"
 
 
+namespace
+{
+	void ValidateBufferParams(re::Buffer::BufferParams const& bufferParams)
+	{
+#if defined(_DEBUG)
+		SEAssert(bufferParams.m_type != re::Buffer::Type::Type_Count, "Invalid Type");
+
+		SEAssert(bufferParams.m_memPoolPreference != re::Buffer::MemoryPoolPreference::Default ||
+			((bufferParams.m_usageMask & re::Buffer::Usage::CPURead) == 0 &&
+				(bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite) == 0),
+			"CPU reads/writes cannot be enabled for buffers in the default heap (i.e. L1/VRAM)");
+
+		SEAssert(bufferParams.m_memPoolPreference != re::Buffer::MemoryPoolPreference::Upload ||
+			((bufferParams.m_usageMask & re::Buffer::Usage::GPURead) &&
+				(bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite)),
+			"Buffers in the upload heap must be GPU-readable and CPU-writeable");
+
+		SEAssert(bufferParams.m_memPoolPreference != re::Buffer::MemoryPoolPreference::Readback ||
+			((bufferParams.m_usageMask & re::Buffer::Usage::CPURead) &&
+				(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite)),
+			"Buffers in the readback heap must be CPU-readable and GPU-writeable");
+
+		SEAssert(bufferParams.m_type != re::Buffer::Type::SingleFrame ||
+			bufferParams.m_memPoolPreference == re::Buffer::MemoryPoolPreference::Upload,
+			"We currently expect single frame resources to be on the upload heap. This is NOT mandatory, we just need "
+			"to implement support at the API level (i.e. BufferAllocator_DX12.h/.cpp)");
+
+		SEAssert(bufferParams.m_type == re::Buffer::Type::Immutable ||
+			(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) == 0,
+			"Only GPU-writable buffers can use the immutable allocator staging memory");
+
+		SEAssert((bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite) == 0 ||
+			(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) == 0,
+			"GPU-writable buffers cannot be CPU-mappable as they live on this default heap");
+
+		SEAssert(bufferParams.m_dataType != re::Buffer::DataType::DataType_Count, "Invalid DataType");
+
+		SEAssert((bufferParams.m_dataType == re::Buffer::DataType::Constant && bufferParams.m_numElements == 1) ||
+			(bufferParams.m_dataType == re::Buffer::DataType::Structured && bufferParams.m_numElements >= 1),
+			"Invalid number of elements");
+		SEAssert(bufferParams.m_usageMask != 0 &&
+			(bufferParams.m_dataType != re::Buffer::DataType::Constant || 
+				((bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) == 0)),
+			"Invalid usage mask");
+
+		SEAssert(bufferParams.m_dataType != re::Buffer::DataType::Constant ||
+			bufferParams.m_numElements == 1,
+			"Constant buffers only support a single element. Arrays are achieved as a member variable within a "
+			"single constant buffer");
+
+		SEAssert((bufferParams.m_type != re::Buffer::Type::Immutable ||
+			(bufferParams.m_usageMask & re::Buffer::Usage::GPURead) != 0),
+			"GPU reads must be enabled for immutable buffers");
+#endif
+	}
+}
+
 namespace re
 {
 	// Private CTOR: Use one of the Create factories instead
@@ -17,41 +74,11 @@ namespace re
 		, m_platformParams(nullptr)
 		, m_isCurrentlyMapped(false)
 	{
-		SEAssert(m_bufferParams.m_type != Type::Type_Count, "Invalid Type");
-
-		SEAssert(m_bufferParams.m_type == Type::Immutable || 
-			(m_bufferParams.m_usageMask & Usage::GPUWrite) == 0,
-			"GPU-writable buffers can (currently) only have immutable allocator backing");
-		
-		SEAssert((m_bufferParams.m_usageMask & Usage::CPUWrite) == 0 || 
-			(m_bufferParams.m_usageMask & Usage::GPUWrite) == 0,
-			"GPU-writable buffers cannot be CPU-mappable as they live on this default heap");		
-
-		SEAssert(m_bufferParams.m_dataType != DataType::DataType_Count, "Invalid DataType");
-		SEAssert((m_bufferParams.m_dataType == DataType::Constant && m_bufferParams.m_numElements == 1) || 
-			(m_bufferParams.m_dataType == DataType::Structured && m_bufferParams.m_numElements >= 1),
-			"Invalid number of elements");
-		SEAssert(m_bufferParams.m_usageMask != 0 && 
-			(m_bufferParams.m_dataType != DataType::Constant || ((m_bufferParams.m_usageMask & Usage::GPUWrite) == 0)),
-			"Invalid usage mask");
-
-		SEAssert(m_bufferParams.m_dataType != re::Buffer::DataType::Constant ||
-			m_bufferParams.m_numElements == 1,
-			"Constant buffers only support a single element. Arrays are achieved as a member variable within a "
-			"single constant buffer");
-
-		SEAssert(m_bufferParams.m_dataType != re::Buffer::DataType::Constant ||
-			(m_bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite) != 0,
-			"CPU writes must be enabled to map a constant buffer");
-
-		SEAssert(m_dataByteSize % m_bufferParams.m_numElements == 0,
+		SEAssert(m_dataByteSize % bufferParams.m_numElements == 0,
 			"Size must be equally divisible by the number of elements");
-
-		SEAssert((m_bufferParams.m_type == re::Buffer::Type::Immutable &&
-			(m_bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) != 0) ||
-			(m_bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite) != 0,
-			"CPU writes must be enabled for buffers not stored on the default heap");
 		
+		ValidateBufferParams(m_bufferParams); // _DEBUG only
+
 		platform::Buffer::CreatePlatformParams(*this);
 	}
 
@@ -103,6 +130,14 @@ namespace re
 		re::Context::Get()->GetBufferAllocator()->Commit(GetUniqueID(), data, numBytes, dstBaseOffset);
 
 		m_platformParams->m_isCommitted = true;
+	}
+
+
+	void const* Buffer::GetData() const
+	{
+		void const* dataOut = nullptr;
+		re::Context::Get()->GetBufferAllocator()->GetData(GetUniqueID(), &dataOut);
+		return dataOut;
 	}
 
 

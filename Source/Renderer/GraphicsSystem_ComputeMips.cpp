@@ -165,7 +165,12 @@ namespace gr
 						mipGenerationStage->AddSingleFrameBuffer(re::Buffer::Create(
 							MipGenerationData::s_shaderName,
 							mipGenerationParams,
-							re::Buffer::Type::SingleFrame));
+							re::Buffer::BufferParams{
+								.m_type = re::Buffer::Type::SingleFrame,
+								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+								.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+								.m_dataType = re::Buffer::DataType::Constant,
+							}));
 
 						// Set the drawstyle:
 						switch (texParams.m_dimension)

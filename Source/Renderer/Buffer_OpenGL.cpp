@@ -22,6 +22,7 @@ namespace opengl
 		switch (bufferType)
 		{
 		case re::Buffer::Type::Mutable:
+		case re::Buffer::Type::Immutable:
 		{
 			// Note: Unlike DX12, OpenGL handles buffer synchronization for us (so long as they're not persistently 
 			// mapped). So we can just create a single mutable buffer and write to it as needed, instead of 
@@ -37,29 +38,11 @@ namespace opengl
 				bufferPlatParams->m_bufferName,
 				static_cast<GLsizeiptr>(numBytes),
 				nullptr,
-				GL_DYNAMIC_DRAW); // Modified and used repeatedly
+				bufferType == re::Buffer::Type::Mutable ? GL_DYNAMIC_DRAW  : GL_STATIC_DRAW);
 
 			// RenderDoc label:
-			std::string const& bufferName = buffer.GetName() + "_Mutable";
-			glObjectLabel(GL_BUFFER, bufferPlatParams->m_bufferName, -1, bufferName.c_str());
-		}
-		break;
-		case re::Buffer::Type::Immutable:
-		{
-			// Generate the buffer name:
-			glCreateBuffers(1, &bufferPlatParams->m_bufferName);
-
-			bufferPlatParams->m_baseOffset = 0; // Permanent buffers have their own dedicated buffers
-
-			// Create the data store (contents remain uninitialized/undefined):
-			glNamedBufferData(
-				bufferPlatParams->m_bufferName,
-				static_cast<GLsizeiptr>(numBytes),
-				nullptr,
-				GL_STATIC_DRAW); // Modified once, used repeatedly
-
-			// RenderDoc label:
-			std::string const& bufferName = buffer.GetName() + "_Immutable";
+			std::string const& bufferName = 
+				buffer.GetName() + (bufferType == re::Buffer::Type::Mutable ? "_Mutable" : "_Immutable");
 			glObjectLabel(GL_BUFFER, bufferPlatParams->m_bufferName, -1, bufferName.c_str());
 		}
 		break;
@@ -92,41 +75,52 @@ namespace opengl
 		uint32_t totalBytes;
 		buffer.GetDataAndSize(&data, &totalBytes);
 
-		//glNamedBufferSubData(
-		//	bufferPlatParams->m_bufferName,	// Target
-		//	bufferPlatParams->m_baseOffset,	// Offset
-		//	(GLsizeiptr)totalBytes,		// Size
-		//	data);						// Data
-
-		const GLbitfield access = GL_MAP_WRITE_BIT;
-
-		const bool updateAllBytes = baseOffset == 0 && (numBytes == 0 || numBytes == totalBytes);
-
-		SEAssert(updateAllBytes ||
-			(baseOffset + numBytes <= totalBytes),
-			"Base offset and number of bytes are out of bounds");
-
-		// Adjust our source pointer if we're doing a partial update:
-		if (!updateAllBytes)
+		switch (buffer.GetBufferParams().m_memPoolPreference)
 		{
-			SEAssert(buffer.GetType() == re::Buffer::Type::Mutable,
-				"Only mutable buffers can be partially updated");
-
-			// Update the source data pointer:
-			data = static_cast<uint8_t const*>(data) + baseOffset;
-			totalBytes = numBytes;
+		case re::Buffer::MemoryPoolPreference::Default:
+		{
+			glNamedBufferSubData(
+				bufferPlatParams->m_bufferName,			// Target
+				bufferPlatParams->m_baseOffset,			// Offset
+				static_cast<GLsizeiptr>(totalBytes),	// Size
+				data);									// Data
 		}
+		break;
+		case re::Buffer::MemoryPoolPreference::Upload:
+		case re::Buffer::MemoryPoolPreference::Readback:
+		{
+			const GLbitfield access = GL_MAP_WRITE_BIT;
 
-		// Map and copy the data:
-		void* cpuVisibleData = glMapNamedBufferRange(
-			bufferPlatParams->m_bufferName,
-			bufferPlatParams->m_baseOffset + baseOffset,
-			(GLsizeiptr)totalBytes,
-			access);
+			const bool updateAllBytes = baseOffset == 0 && (numBytes == 0 || numBytes == totalBytes);
 
-		memcpy(cpuVisibleData, data, totalBytes);
+			SEAssert(updateAllBytes ||
+				(baseOffset + numBytes <= totalBytes),
+				"Base offset and number of bytes are out of bounds");
 
-		glUnmapNamedBuffer(bufferPlatParams->m_bufferName);
+			// Adjust our source pointer if we're doing a partial update:
+			if (!updateAllBytes)
+			{
+				SEAssert(buffer.GetType() == re::Buffer::Type::Mutable,
+					"Only mutable buffers can be partially updated");
+
+				// Update the source data pointer:
+				data = static_cast<uint8_t const*>(data) + baseOffset;
+				totalBytes = numBytes;
+			}
+
+			// Map and copy the data:
+			void* cpuVisibleData = glMapNamedBufferRange(
+				bufferPlatParams->m_bufferName,
+				bufferPlatParams->m_baseOffset + baseOffset,
+				(GLsizeiptr)totalBytes,
+				access);
+
+			memcpy(cpuVisibleData, data, totalBytes);
+
+			glUnmapNamedBuffer(bufferPlatParams->m_bufferName);
+		}
+		break;
+		}
 	}
 
 

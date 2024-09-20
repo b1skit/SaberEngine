@@ -641,7 +641,13 @@ namespace re
 
 		if (m_targetParamsBuffer == nullptr)
 		{
-			m_targetParamsBuffer = re::Buffer::CreateUncommitted<TargetData>(TargetData::s_shaderName, bufferType);
+			m_targetParamsBuffer = re::Buffer::CreateUncommitted<TargetData>(TargetData::s_shaderName, 
+				re::Buffer::BufferParams{
+					.m_type = bufferType,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_dataType = re::Buffer::DataType::Constant,
+				});
 		}
 
 		// NOTE: We'll commit the buffer data when the target set is committed

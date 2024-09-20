@@ -67,37 +67,30 @@ namespace opengl
 		for (uint8_t bufferIdx = 0; bufferIdx < m_numFramesInFlight; bufferIdx++)
 		{
 			// UBO:
-			// Binding associates the buffer object with the buffer object name
-			glBindBuffer(GL_UNIFORM_BUFFER, m_singleFrameUBOs[bufferIdx]);
-
 			SEAssert(glIsBuffer(m_singleFrameUBOs[bufferIdx]), "Buffer name is not valid");
 
-			glBufferData(
-				GL_UNIFORM_BUFFER,
-				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
-				nullptr, // NULL: Data store of the specified size is created, but remains uninitialized and thus undefined
-				GL_DYNAMIC_DRAW);
-
-			// RenderDoc label:
-			glObjectLabel(
-				GL_BUFFER, 
-				m_singleFrameUBOs[bufferIdx], 
-				-1, 
-				std::format("Single-frame shared UBO {}", bufferIdx).c_str());
-
-			// SSBO:
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_singleFrameSSBOs[bufferIdx]);
-
-			SEAssert(glIsBuffer(m_singleFrameSSBOs[bufferIdx]), "Buffer name is not valid");
-
-			glBufferData(
-				GL_SHADER_STORAGE_BUFFER,
+			glNamedBufferData(
+				m_singleFrameUBOs[bufferIdx],
 				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
 				nullptr,
 				GL_DYNAMIC_DRAW);
 
-			glObjectLabel(
-				GL_BUFFER,
+			glObjectLabel(GL_BUFFER, 
+				m_singleFrameUBOs[bufferIdx], 
+				-1, 
+				std::format("Single-frame shared UBO {}", bufferIdx).c_str());
+
+
+			// SSBO:
+			SEAssert(glIsBuffer(m_singleFrameSSBOs[bufferIdx]), "Buffer name is not valid");
+
+			glNamedBufferData(
+				m_singleFrameSSBOs[bufferIdx],
+				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
+				nullptr,
+				GL_DYNAMIC_DRAW);
+
+			glObjectLabel(GL_BUFFER,
 				m_singleFrameSSBOs[bufferIdx],
 				-1,
 				std::format("Single-frame shared SSBO {}", bufferIdx).c_str());
@@ -113,7 +106,7 @@ namespace opengl
 		{
 			// OpenGL allows buffers to be updated via a CPU-side map, regardless of where the actual resource data is
 			// held in memory. So we just forward our buffers on to the standard update function here
-			opengl::Buffer::Update(*entry.m_buffer, 0, 0, 0);
+			opengl::Buffer::Update(*entry.m_buffer, 0, entry.m_baseOffset, entry.m_numBytes);
 		}
 	}
 

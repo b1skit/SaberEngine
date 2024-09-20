@@ -89,7 +89,12 @@ namespace gr
 		m_skyboxParams = re::Buffer::Create(
 			SkyboxData::s_shaderName,
 			CreateSkyboxParamsData(m_backgroundColor, m_showBackgroundColor),
-			re::Buffer::Type::Mutable);
+			re::Buffer::BufferParams{
+				.m_type = re::Buffer::Type::Mutable,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Constant,
+			});
 
 		m_skyboxStage->AddPermanentBuffer(m_skyboxParams);
 

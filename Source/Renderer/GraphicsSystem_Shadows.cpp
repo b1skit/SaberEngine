@@ -148,7 +148,12 @@ namespace gr
 		std::shared_ptr<re::Buffer> cubeShadowBuf = re::Buffer::Create(
 			CubemapShadowRenderData::s_shaderName,
 			cubemapShadowParams,
-			re::Buffer::Type::Mutable);
+			re::Buffer::BufferParams{
+				.m_type = re::Buffer::Type::Mutable,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Constant,
+			});
 
 		shadowStage->AddPermanentBuffer(cubeShadowBuf);
 
@@ -180,7 +185,12 @@ namespace gr
 		std::shared_ptr<re::Buffer> shadowCamParams = re::Buffer::Create(
 			CameraData::s_shaderName,
 			shadowCamData.m_cameraParams,
-			re::Buffer::Type::Mutable);
+			re::Buffer::BufferParams{
+				.m_type = re::Buffer::Type::Mutable,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Constant,
+			});
 
 		shadowStage->AddPermanentBuffer(shadowCamParams);
 

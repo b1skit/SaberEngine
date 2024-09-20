@@ -64,7 +64,12 @@ namespace gr
 		m_poissonSampleParamsBuffer = re::Buffer::Create(
 			PoissonSampleParamsData::s_shaderName,
 			poissonSampleParamsData,
-			re::Buffer::Type::Immutable);
+			re::Buffer::BufferParams{
+				.m_type = re::Buffer::Type::Immutable,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Constant,
+			});
 	}
 
 
@@ -434,8 +439,13 @@ namespace gr
 					lightMetadata.m_lightData = re::Buffer::CreateArray<LightData>(
 						bufferName,
 						lightData.data(),
-						util::CheckedCast<uint32_t>(lightData.size()),
-						re::Buffer::Mutable);
+						re::Buffer::BufferParams{
+							.m_type = re::Buffer::Type::Mutable,
+							.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+							.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+							.m_dataType = re::Buffer::DataType::Structured,
+							.m_numElements = util::CheckedCast<uint32_t>(lightData.size()),
+						});
 				}
 				else
 				{
@@ -589,7 +599,12 @@ namespace gr
 				return re::Buffer::Create(
 					shaderName,
 					GetLightIndexData(lightIdx, shadowIdx),
-					re::Buffer::SingleFrame);
+					re::Buffer::BufferParams{
+						.m_type = re::Buffer::Type::SingleFrame,
+						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_dataType = re::Buffer::DataType::Constant,
+					});
 			};
 
 		switch (lightType)

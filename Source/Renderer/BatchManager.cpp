@@ -46,7 +46,12 @@ namespace
 		return re::Buffer::Create(
 			InstanceIndexData::s_shaderName,
 			instanceIndexBufferData,
-			bufferType);
+			re::Buffer::BufferParams{
+				.m_type = bufferType,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Constant,
+			});
 	}
 
 
@@ -262,8 +267,13 @@ namespace gr
 		{
 			m_instancedTransforms = re::Buffer::CreateUncommittedArray<InstancedTransformData>(
 				InstancedTransformData::s_shaderName,
-				requestedTransformBufferElements,
-				re::Buffer::Type::Mutable);
+				re::Buffer::BufferParams{
+					.m_type = re::Buffer::Type::Mutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_dataType = re::Buffer::DataType::Structured,
+					.m_numElements = requestedTransformBufferElements,
+				});
 
 			// If we reallocated, re-copy all of the data to the new buffer
 			if (mustReallocateTransformBuffer)

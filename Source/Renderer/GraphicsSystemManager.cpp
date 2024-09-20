@@ -42,7 +42,12 @@ namespace gr
 		m_activeCameraParams = re::Buffer::Create(
 			CameraData::s_shaderName,
 			defaultCameraParams,
-			re::Buffer::Type::Mutable);
+			re::Buffer::BufferParams{
+				.m_type = re::Buffer::Type::Mutable,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
+				.m_usageMask = re::Buffer::Usage::GPURead,
+				.m_dataType = re::Buffer::DataType::Constant,
+			});
 	}
 
 

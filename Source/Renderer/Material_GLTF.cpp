@@ -108,8 +108,13 @@ namespace gr
 		std::shared_ptr<re::Buffer> instancedMaterialParams = re::Buffer::CreateArray(
 			InstancedPBRMetallicRoughnessData::s_shaderName,
 			instancedMaterialData.data(),
-			numInstances,
-			bufferType);
+			re::Buffer::BufferParams{
+				.m_type = bufferType,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Structured,
+				.m_numElements = numInstances,
+			});
 
 		return instancedMaterialParams;
 	}

@@ -39,23 +39,31 @@ namespace re
 			DataType_Count
 		};
 
+		enum class MemoryPoolPreference : uint8_t
+		{
+			Default,	// Prefer L1/VRAM. No CPU access
+			Upload,		// Prefor L0/SysMem. Intended for CPU -> GPU communication
+			Readback,	// Prefer L0/VRAM (with WRITE_BACK CPU access). Intended for GPU -> CPU communication
+		};
 
 		enum Usage : uint8_t
 		{
 			GPURead		= 1 << 0,	// Default
 			GPUWrite	= 1 << 1,	// Buffer::Type::Immutable only (DX12: UAV, OpenGL: SSBO)
-			CPURead		= 1 << 2,	// TODO: Support this
-			CPUWrite	= 1 << 3,	// Data mappable for writing (i.e. in the upload heap). GPUWrites cannot be enabled
+			CPURead		= 1 << 2,	// CPU readback from the GPU
+			CPUWrite	= 1 << 3,	// CPU-mappable for writing (i.e. to the upload heap). GPUWrites cannot be enabled
 		};
 
 		struct BufferParams
 		{
 			Type m_type = Type::Type_Count;
 
-			DataType m_dataType = DataType::DataType_Count;
-			uint32_t m_numElements = 1; // Must be 1 for Constant buffers
+			MemoryPoolPreference m_memPoolPreference = MemoryPoolPreference::Default;
 
 			uint8_t m_usageMask = Usage::GPURead | Usage::CPUWrite; // Constant data mapped by CPU, consumed by the GPU
+
+			DataType m_dataType = DataType::DataType_Count;
+			uint32_t m_numElements = 1; // Must be 1 for Constant buffers
 		};
 
 
@@ -78,20 +86,21 @@ namespace re
 
 		// Create a read-only buffer for a single data object (eg. stage buffer)
 		template<typename T>
-		[[nodiscard]] static std::shared_ptr<re::Buffer> Create(std::string const& bufferName, T const& data, Type);
+		[[nodiscard]] static std::shared_ptr<re::Buffer> Create(
+			std::string const& bufferName, T const& data, BufferParams const&);
 
 		template<typename T>
-		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUncommitted(std::string const& bufferName, Type);
+		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUncommitted(std::string const& bufferName, BufferParams const&);
 
 		// Create a read-only buffer for an array of several objects of the same type (eg. instanced mesh matrices)
 		template<typename T>
 		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateArray(
-			std::string const& bufferName, T const* dataArray, uint32_t numElements, Type);
+			std::string const& bufferName, T const* dataArray, BufferParams const&);
 
 		// Create a read-only buffer, but defer the initial commit
 		template<typename T>
 		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUncommittedArray(
-			std::string const& bufferName, uint32_t numElements, Type);
+			std::string const& bufferName, BufferParams const&);
 
 
 	public:
@@ -109,6 +118,7 @@ namespace re
 		template <typename T>
 		void Commit(T const* data, uint32_t baseIdx, uint32_t numElements); // Recommit mutable array data (only)
 	
+		void const* GetData() const;
 		void GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const;
 		uint32_t GetSize() const;
 		uint32_t GetStride() const;
@@ -191,14 +201,9 @@ namespace re
 
 	// Create a buffer for a single data object (eg. stage buffer)
 	template<typename T>
-	std::shared_ptr<re::Buffer> Buffer::Create(std::string const& bufferName, T const& data, Type bufferType)
+	std::shared_ptr<re::Buffer> Buffer::Create(
+		std::string const& bufferName, T const& data, BufferParams const& bufferParams)
 	{
-		BufferParams bufferParams;
-		bufferParams.m_type = bufferType;
-		bufferParams.m_dataType = DataType::Constant;
-		bufferParams.m_numElements = 1;
-		bufferParams.m_usageMask = Usage::GPURead | Usage::CPUWrite;
-
 		const uint32_t dataByteSize = sizeof(T);
 
 		std::shared_ptr<re::Buffer> newBuffer;
@@ -211,14 +216,9 @@ namespace re
 
 
 	template<typename T>
-	std::shared_ptr<re::Buffer> Buffer::CreateUncommitted(std::string const& bufferName, Type bufferType)
+	std::shared_ptr<re::Buffer> Buffer::CreateUncommitted(
+		std::string const& bufferName, BufferParams const& bufferParams)
 	{
-		BufferParams bufferParams;
-		bufferParams.m_type = bufferType;
-		bufferParams.m_dataType = DataType::Constant;
-		bufferParams.m_numElements = 1;
-		bufferParams.m_usageMask = Usage::GPURead | Usage::CPUWrite;
-
 		const uint32_t dataByteSize = sizeof(T);
 
 		std::shared_ptr<re::Buffer> newBuffer;
@@ -233,15 +233,11 @@ namespace re
 	// Create a buffer for an array of several objects of the same type (eg. instanced mesh matrices)
 	template<typename T>
 	std::shared_ptr<re::Buffer> Buffer::CreateArray(
-		std::string const& bufferName, T const* dataArray, uint32_t numElements, Type bufferType)
+		std::string const& bufferName, T const* dataArray, BufferParams const& bufferParams)
 	{
-		BufferParams bufferParams;
-		bufferParams.m_type = bufferType;
-		bufferParams.m_dataType = DataType::Structured;
-		bufferParams.m_numElements = numElements;
-		bufferParams.m_usageMask = Usage::GPURead | Usage::CPUWrite;
+		SEAssert(bufferParams.m_dataType == re::Buffer::DataType::Structured, "Unexpected data type for a buffer array");
 
-		const uint32_t dataByteSize = sizeof(T) * numElements;
+		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_numElements;
 
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
@@ -254,15 +250,9 @@ namespace re
 
 	template<typename T>
 	std::shared_ptr<re::Buffer> Buffer::CreateUncommittedArray(
-		std::string const& bufferName, uint32_t numElements, Type bufferType)
+		std::string const& bufferName, BufferParams const& bufferParams)
 	{
-		BufferParams bufferParams;
-		bufferParams.m_type = bufferType;
-		bufferParams.m_dataType = DataType::Structured;
-		bufferParams.m_numElements = numElements;
-		bufferParams.m_usageMask = Usage::GPURead | Usage::CPUWrite;
-
-		const uint32_t dataByteSize = sizeof(T) * numElements;
+		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_numElements;
 
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));

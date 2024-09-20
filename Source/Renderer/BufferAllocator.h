@@ -124,6 +124,8 @@ namespace re
 		struct PlatformCommitMetadata
 		{
 			re::Buffer const* m_buffer;
+			uint32_t m_baseOffset;
+			uint32_t m_numBytes;
 		};
 		std::vector<PlatformCommitMetadata> m_dirtyBuffersForPlatformUpdate;
 		std::mutex m_dirtyBuffersForPlatformUpdateMutex;

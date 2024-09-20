@@ -60,6 +60,8 @@ namespace dx12
 		// DX12-specific functionality:
 		static void Update(
 			re::Buffer const*,
+			uint32_t baseOffset,
+			uint32_t numBytes,
 			dx12::CommandList* copyCmdList,
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources);
 	};

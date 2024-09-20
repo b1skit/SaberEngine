@@ -128,6 +128,8 @@ namespace dx12
 			{
 				dx12::Buffer::Update(
 					entry.m_buffer,
+					entry.m_baseOffset,
+					entry.m_numBytes,
 					copyCommandList.get(), 
 					m_intermediateResources[intermediateIdx]);
 			}

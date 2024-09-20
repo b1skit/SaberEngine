@@ -761,11 +761,33 @@ namespace re
 					auto partialCommit = commitRecords.begin();
 					while (partialCommit != commitRecords.end())
 					{
-						platform::Buffer::Update(
-							*currentBuffer,
-							curFrameHeapOffsetFactor,
-							partialCommit->m_baseOffset,
-							partialCommit->m_numBytes);
+						switch (currentBuffer->GetBufferParams().m_memPoolPreference)
+						{
+						case re::Buffer::MemoryPoolPreference::Default:
+						{
+							m_dirtyBuffersForPlatformUpdate.emplace_back(PlatformCommitMetadata
+								{
+									.m_buffer = currentBuffer,
+									.m_baseOffset = partialCommit->m_baseOffset,
+									.m_numBytes = partialCommit->m_numBytes,
+								});
+						}
+						break;
+						case re::Buffer::MemoryPoolPreference::Upload:
+						{
+							platform::Buffer::Update(
+								*currentBuffer,
+								curFrameHeapOffsetFactor,
+								partialCommit->m_baseOffset,
+								partialCommit->m_numBytes);
+						}
+						break;
+						case re::Buffer::MemoryPoolPreference::Readback:
+						{
+							SEAssertF("TODO: Handle this case");
+						}
+						break;
+						}
 
 						// Decrement the remaining updates counter: If 0, the commit has been fully propogated to 
 						// all  buffers and we can remove it
@@ -789,19 +811,31 @@ namespace re
 					SEAssert(m_immutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
 					re::Buffer const* currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
 
-					if (currentBuffer->GetBufferParams().m_usageMask & re::Buffer::Usage::CPUWrite)
+					switch (currentBuffer->GetBufferParams().m_memPoolPreference)
 					{
-						BufferTemporaryData(m_immutableAllocations, currentHandle);
-					}
-					else
+					case re::Buffer::MemoryPoolPreference::Default:
 					{
 						// If CPU writes are disabled, our buffer will need to be updated via a command list. Record
 						// the update metadata, we'll process these cases in a single batch at the end
 						m_dirtyBuffersForPlatformUpdate.emplace_back(PlatformCommitMetadata
 							{
 								.m_buffer = currentBuffer,
+								.m_baseOffset = 0,
+								.m_numBytes = currentBuffer->GetSize(),
 							});
-					}					
+					}
+					break;
+					case re::Buffer::MemoryPoolPreference::Upload:
+					{
+						BufferTemporaryData(m_immutableAllocations, currentHandle);
+					}
+					break;
+					case re::Buffer::MemoryPoolPreference::Readback:
+					{
+						SEAssertF("TODO: Handle this case");
+					}
+					break;
+					}
 				}
 				break;
 				case Buffer::Type::SingleFrame:

@@ -44,13 +44,15 @@ namespace
 	}
 
 
-	D3D12_HEAP_TYPE GetHeapTypeFromBufferUsage(uint8_t usageMask)
+	D3D12_HEAP_TYPE MemoryPoolPreferenceToD3DHeapType(re::Buffer::MemoryPoolPreference memPoolPreference)
 	{
-		if (usageMask & re::Buffer::Usage::CPUWrite)
+		switch (memPoolPreference)
 		{
-			return D3D12_HEAP_TYPE_UPLOAD;
+		case::re::Buffer::MemoryPoolPreference::Default: return D3D12_HEAP_TYPE_DEFAULT;
+		case::re::Buffer::MemoryPoolPreference::Upload: return D3D12_HEAP_TYPE_UPLOAD;
+		case::re::Buffer::MemoryPoolPreference::Readback: return D3D12_HEAP_TYPE_READBACK;
+		default: SEAssertF("Invalid MemoryPoolPreference");
 		}
-		return D3D12_HEAP_TYPE_DEFAULT;
 	}
 
 
@@ -108,7 +110,7 @@ namespace dx12
 		// No point copying them to VRAM, for now
 
 		const D3D12_RESOURCE_STATES initialResourceState = D3D12_RESOURCE_STATE_COMMON;
-		const D3D12_HEAP_TYPE heapType = GetHeapTypeFromBufferUsage(buffer.GetBufferParams().m_usageMask);
+		const D3D12_HEAP_TYPE heapType = MemoryPoolPreferenceToD3DHeapType(buffer.GetBufferParams().m_memPoolPreference);
 
 		const bool needsUAV = NeedsUAV(buffer.GetBufferParams());
 
@@ -218,14 +220,26 @@ namespace dx12
 			}
 		}
 
-		// Register the resource with the global resource state tracker:
-		if (needsUAV || cpuReadbackEnabled)
+		// Register non-shared resources with the global resource state tracker:
+		switch (buffer.GetType())
+		{
+		case re::Buffer::Type::Mutable:
+		case re::Buffer::Type::Immutable:
 		{
 			context->GetGlobalResourceStates().RegisterResource(
 				params->m_resource.Get(),
 				initialResourceState,
 				1);
 		}
+		break;
+		case re::Buffer::Type::SingleFrame:
+		{
+			//
+		}
+		break;
+		default: SEAssertF("Invalid Type");
+		}
+
 
 #if defined(_DEBUG)
 		void const* srcData = nullptr;
@@ -239,7 +253,8 @@ namespace dx12
 	void Buffer::Update(
 		re::Buffer const& buffer, uint8_t curFrameHeapOffsetFactor, uint32_t baseOffset, uint32_t numBytes)
 	{
-		SEAssert((buffer.GetBufferParams().m_usageMask & re::Buffer::Usage::CPUWrite) != 0,
+		SEAssert((buffer.GetBufferParams().m_usageMask & re::Buffer::Usage::CPUWrite) != 0 &&
+			buffer.GetBufferParams().m_memPoolPreference == re::Buffer::MemoryPoolPreference::Upload,
 			"CPU writes must be enabled to allow mapping");
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
@@ -303,23 +318,24 @@ namespace dx12
 
 	void Buffer::Update(
 		re::Buffer const* buffer,
+		uint32_t baseOffset,
+		uint32_t numBytes,
 		dx12::CommandList* copyCmdList,
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources)
 	{
-		SEAssert((buffer->GetBufferParams().m_usageMask & re::Buffer::CPUWrite) == 0,
+		SEAssert((buffer->GetBufferParams().m_usageMask & re::Buffer::CPUWrite) == 0 &&
+			buffer->GetBufferParams().m_memPoolPreference == re::Buffer::MemoryPoolPreference::Default,
 			"Buffers with CPU writes enabled should be updated by a mapped pointer");
 
 		dx12::Buffer::PlatformParams* params = buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-		void const* data = nullptr;
-		uint32_t totalBytes = 0;
-		buffer->GetDataAndSize(&data, &totalBytes);
+		void const* data = buffer->GetData();
 
-		const uint64_t alignedSize = GetAlignedSize(buffer->GetBufferParams().m_dataType, totalBytes);
+		data = static_cast<uint8_t const*>(data) + baseOffset;
 
 		// We might require a smaller intermediate buffer if we're only doing a partial update
 		const uint64_t totalAlignedIntermediateBufferSize = 
-			GetAlignedSize(buffer->GetBufferParams().m_dataType, totalBytes);
+			GetAlignedSize(buffer->GetBufferParams().m_dataType, numBytes);
 
 		// Create an intermediate buffer staging buffer:
 		const uint32_t intermediateBufferWidth = util::RoundUpToNearestMultiple(
@@ -356,12 +372,12 @@ namespace dx12
 		CheckHResult(hr, "Buffer::Update: Failed to map intermediate committed resource");
 
 		// Copy our data to the appropriate offset in the cpu-visible heap:
-		memcpy(cpuVisibleData, data, totalBytes);
+		memcpy(cpuVisibleData, data, numBytes);
 
 		// Release the map:
 		D3D12_RANGE writtenRange{
 			0,
-			totalBytes };
+			numBytes };
 
 		itermediateBufferResource->Unmap(
 			k_intermediateSubresourceIdx,
@@ -371,7 +387,7 @@ namespace dx12
 		const uint32_t dstOffset = util::CheckedCast<uint32_t>(params->m_heapByteOffset);
 		SEAssert(dstOffset == 0, "Immutable buffers always have m_heapByteOffset = 0, this is unexpected");
 
-		copyCmdList->UpdateSubresources(buffer, dstOffset, itermediateBufferResource.Get(), 0, totalBytes);
+		copyCmdList->UpdateSubresources(buffer, dstOffset, itermediateBufferResource.Get(), 0, numBytes);
 
 		// Released once the copy is done
 		intermediateResources.emplace_back(itermediateBufferResource);

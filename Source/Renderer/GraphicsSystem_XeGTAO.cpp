@@ -153,7 +153,12 @@ namespace gr
 		m_SEXeGTAOSettings = re::Buffer::Create(
 			"SEXeGTAOSettings", 
 			CreateXeGTAOSettingsParamsData(m_XeGTAOQuality),
-			re::Buffer::Mutable);
+			re::Buffer::BufferParams{
+				.m_type = re::Buffer::Type::Mutable,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Constant,
+			});
 		
 		// TODO: Output bent normals
 		// NOTE: This will require recreating the pipeline if we change this value (as targets depend on it)
@@ -164,9 +169,15 @@ namespace gr
 		ConfigureGTAOSettings(m_XeGTAOQuality, m_XeGTAODenoiseMode, m_settings);
 		const XeGTAO::GTAOConstants gtaoConstants = GetGTAOConstantsData(m_xRes, m_yRes, m_settings, glm::mat4(1.f));
 
-		constexpr char const* k_bufferShaderName = "SEGTAOConstants"; // "GTAOConstants" is already defined for us
-		m_XeGTAOConstants = 
-			re::Buffer::Create(k_bufferShaderName, gtaoConstants, re::Buffer::Type::Mutable);
+		m_XeGTAOConstants = re::Buffer::Create(
+			"SEGTAOConstants", // "GTAOConstants" is already defined for us
+			gtaoConstants, 
+			re::Buffer::BufferParams{
+				.m_type = re::Buffer::Type::Mutable,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Constant,
+			});
 
 		// Depth prefilter stage:
 		m_prefilterDepthsStage = 

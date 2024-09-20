@@ -44,8 +44,13 @@ namespace gr
 		return re::Buffer::CreateArray(
 			InstancedTransformData::s_shaderName,
 			&transformData,
-			1,
-			bufferType);
+			re::Buffer::BufferParams{
+				.m_type = bufferType,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Structured,
+				.m_numElements = 1,
+			});
 	}
 
 
@@ -58,8 +63,13 @@ namespace gr
 		return re::Buffer::CreateArray(
 			InstancedTransformData::s_shaderName,
 			&instancedMeshData,
-			1,
-			bufferType);
+			re::Buffer::BufferParams{
+				.m_type = bufferType,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Structured,
+				.m_numElements = 1,
+			});
 	}
 
 
@@ -79,8 +89,13 @@ namespace gr
 		std::shared_ptr<re::Buffer> instancedMeshBuffer = re::Buffer::CreateArray(
 			InstancedTransformData::s_shaderName,
 			&instancedMeshData[0],
-			numInstances,
-			bufferType);
+			re::Buffer::BufferParams{
+				.m_type = bufferType,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Structured,
+				.m_numElements = numInstances,
+			});
 
 		return instancedMeshBuffer;
 	}

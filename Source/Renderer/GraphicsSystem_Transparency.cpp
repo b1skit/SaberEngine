@@ -75,7 +75,14 @@ namespace
 			contributingSpot,
 			0);
 
-		return re::Buffer::Create(bufferName, allLightIndexesData, re::Buffer::Type::SingleFrame);
+		return re::Buffer::Create(bufferName,
+			allLightIndexesData, 
+			re::Buffer::BufferParams{
+				.m_type = re::Buffer::Type::SingleFrame,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Constant,
+			});
 	}
 }
 
@@ -211,7 +218,12 @@ namespace gr
 					0.f,
 					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 					nullptr),
-				re::Buffer::Type::SingleFrame));
+				re::Buffer::BufferParams{
+					.m_type = re::Buffer::Type::SingleFrame,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_dataType = re::Buffer::DataType::Constant,
+				}));
 		}
 
 		// Punctual light buffers:

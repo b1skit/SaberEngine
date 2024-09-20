@@ -906,8 +906,8 @@ namespace dx12
 		re::Buffer const* buffer, uint32_t dstOffset, ID3D12Resource* srcResource, uint32_t srcOffset, uint32_t numBytes)
 	{
 		SEAssert(m_type == dx12::CommandListType::Copy, "Expected a copy command list");
-		SEAssert((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite) != 0, 
-			"GPU writes must be enabled");
+		SEAssert((buffer->GetBufferParams().m_memPoolPreference == re::Buffer::MemoryPoolPreference::Default),
+			"Only expecting resources on the default heap to be updated via a copy queue");
 
 		dx12::Buffer::PlatformParams const* bufferPlatformParams =
 			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();

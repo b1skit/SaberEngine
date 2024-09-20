@@ -155,7 +155,12 @@ namespace gr
 		std::shared_ptr<re::Buffer> brdfIntegrationBuf = re::Buffer::Create(
 			BRDFIntegrationData::s_shaderName,
 			brdfIntegrationParams,
-			re::Buffer::Type::SingleFrame);
+			re::Buffer::BufferParams{
+				.m_type = re::Buffer::Type::SingleFrame,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_dataType = re::Buffer::DataType::Constant,
+			});
 		brdfStage->AddSingleFrameBuffer(brdfIntegrationBuf);
 
 		// Add our dispatch information to a compute batch. Note: We use numthreads = (1,1,1)
@@ -211,7 +216,12 @@ namespace gr
 			std::shared_ptr<re::Buffer> iemGenerationBuffer = re::Buffer::Create(
 				IEMPMREMGenerationData::s_shaderName,
 				iemGenerationParams,
-				re::Buffer::Type::SingleFrame);
+				re::Buffer::BufferParams{
+					.m_type = re::Buffer::Type::SingleFrame,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_dataType = re::Buffer::DataType::Constant,
+				});
 			iemStage->AddSingleFrameBuffer(iemGenerationBuffer);
 
 			iemStage->AddPermanentBuffer(m_cubemapRenderCamParams[face]);
@@ -289,7 +299,12 @@ namespace gr
 				std::shared_ptr<re::Buffer> pmremGenerationBuffer = re::Buffer::Create(
 					IEMPMREMGenerationData::s_shaderName,
 					pmremGenerationParams,
-					re::Buffer::Type::SingleFrame);
+					re::Buffer::BufferParams{
+						.m_type = re::Buffer::Type::SingleFrame,
+						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_dataType = re::Buffer::DataType::Constant,
+					});
 				pmremStage->AddSingleFrameBuffer(pmremGenerationBuffer);
 
 				pmremStage->AddPermanentBuffer(m_cubemapRenderCamParams[face]);
@@ -376,7 +391,12 @@ namespace gr
 				m_cubemapRenderCamParams[face] = re::Buffer::Create(
 					CameraData::s_shaderName,
 					cubemapCamParams,
-					re::Buffer::Type::Immutable);
+					re::Buffer::BufferParams{
+						.m_type = re::Buffer::Type::Immutable,
+						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_dataType = re::Buffer::DataType::Constant,
+					});
 			}
 		}
 
@@ -659,7 +679,12 @@ namespace gr
 					std::shared_ptr<re::Buffer> ambientParams = re::Buffer::Create(
 						AmbientLightData::s_shaderName,
 						ambientLightParamsData,
-						re::Buffer::Type::Mutable);
+						re::Buffer::BufferParams{
+							.m_type = re::Buffer::Type::Mutable,
+							.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+							.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+							.m_dataType = re::Buffer::DataType::Constant,
+						});
 
 					m_ambientLightData.emplace(ambientData.m_renderDataID,
 						AmbientLightRenderData{

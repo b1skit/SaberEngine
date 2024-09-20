@@ -150,7 +150,12 @@ namespace gr
 			std::shared_ptr<re::Buffer> bloomDownBuf = re::Buffer::Create(
 				BloomComputeData::s_shaderName,
 				BloomComputeData{}, // Populated during PreUpdate()
-				re::Buffer::Type::Mutable);
+				re::Buffer::BufferParams{
+					.m_type = re::Buffer::Type::Mutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_dataType = re::Buffer::DataType::Constant,
+				});
 			m_bloomDownBuffers.emplace_back(bloomDownBuf);
 			downStage->AddPermanentBuffer(bloomDownBuf);
 
@@ -186,7 +191,12 @@ namespace gr
 			std::shared_ptr<re::Buffer> bloomUpBuf = re::Buffer::Create(
 				BloomComputeData::s_shaderName,
 				BloomComputeData{}, // Populated during PreUpdate()
-				re::Buffer::Type::Mutable);
+				re::Buffer::BufferParams{
+					.m_type = re::Buffer::Type::Mutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_dataType = re::Buffer::DataType::Constant,
+				});
 			upStage->AddPermanentBuffer(bloomUpBuf);
 			m_bloomUpBuffers.emplace_back(bloomUpBuf);
 
