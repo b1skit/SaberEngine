@@ -74,20 +74,8 @@ namespace opengl
 			return;
 		}
 
-		// We're creating a single vertex stream, but we don't have knowledge of how it might be used at this point. We
-		// still need a VAO bound in order to create our VBOs, so we create a dummy VAO that will be used when creating
-		// all VBOs that match the configuration of the current vertex stream
-		opengl::Context* oglContext = re::Context::GetAs<opengl::Context*>();
-		re::VertexStream const* vertexStreamPtr = &vertexStream;
-		const GLuint tempVAO = oglContext->GetCreateTempVAO(vertexStreamPtr);
-
-		glBindVertexArray(tempVAO);
+		glCreateBuffers(1, &platformParams->m_VBO); // No need to bind VAO first, or bind VBO after glCreateBuffers
 		
-		// Generate our buffer name, and bind it
-		glGenBuffers(1, &platformParams->m_VBO);
-
-		opengl::VertexStream::Bind(vertexStream, 0); // Use any arbitrary slot
-
 		// Buffer and label the data:
 		glNamedBufferData(
 			platformParams->m_VBO,				// Buffer "name"
@@ -102,9 +90,6 @@ namespace opengl
 			std::format("{} stream hash {}",
 				re::VertexStream::TypeToCStr(vertexStream.GetType()), 
 				vertexStream.GetDataHash()).c_str());
-
-		// Cleanup: Unbind our dummy VAO
-		glBindVertexArray(0);
 	}
 
 

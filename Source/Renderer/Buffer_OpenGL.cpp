@@ -32,30 +32,11 @@ namespace opengl
 
 			bufferPlatParams->m_baseOffset = 0; // Permanent buffers have their own dedicated buffers
 
-			GLenum bufferTarget = 0;
-			switch (buffer.GetBufferParams().m_dataType)
-			{
-			case re::Buffer::DataType::Constant:
-			{
-				bufferTarget = GL_UNIFORM_BUFFER;
-			}
-			break;
-			case re::Buffer::DataType::Structured:
-			{
-				bufferTarget = GL_SHADER_STORAGE_BUFFER;
-			}
-			break;
-			default: SEAssertF("Invalid DataType");
-			}
-
-			// Binding associates the buffer object with the buffer object name
-			glBindBuffer(bufferTarget, bufferPlatParams->m_bufferName);
-			SEAssert(glIsBuffer(bufferPlatParams->m_bufferName) == GL_TRUE, "Failed to generate buffer object");
-
-			glBufferData(
-				bufferTarget,
-				(GLsizeiptr)numBytes,
-				nullptr, // NULL: Data store of the specified size is created, but remains uninitialized/undefined
+			// Create the data store (contents remain uninitialized/undefined):
+			glNamedBufferData(
+				bufferPlatParams->m_bufferName,
+				static_cast<GLsizeiptr>(numBytes),
+				nullptr,
 				GL_DYNAMIC_DRAW); // Modified and used repeatedly
 
 			// RenderDoc label:
@@ -70,30 +51,11 @@ namespace opengl
 
 			bufferPlatParams->m_baseOffset = 0; // Permanent buffers have their own dedicated buffers
 
-			GLenum bufferTarget = 0;
-			switch (buffer.GetBufferParams().m_dataType)
-			{
-			case re::Buffer::DataType::Constant:
-			{
-				bufferTarget = GL_UNIFORM_BUFFER;
-			}
-			break;
-			case re::Buffer::DataType::Structured:
-			{
-				bufferTarget = GL_SHADER_STORAGE_BUFFER;
-			}
-			break;
-			default: SEAssertF("Invalid DataType");
-			}
-
-			// Binding associates the buffer object with the buffer object name
-			glBindBuffer(bufferTarget, bufferPlatParams->m_bufferName);
-			SEAssert(glIsBuffer(bufferPlatParams->m_bufferName) == GL_TRUE, "Failed to generate buffer object");
-
-			glBufferData(
-				bufferTarget,
-				(GLsizeiptr)numBytes,
-				nullptr, // NULL: Data store of the specified size is created, but remains uninitialized/undefined
+			// Create the data store (contents remain uninitialized/undefined):
+			glNamedBufferData(
+				bufferPlatParams->m_bufferName,
+				static_cast<GLsizeiptr>(numBytes),
+				nullptr,
 				GL_STATIC_DRAW); // Modified once, used repeatedly
 
 			// RenderDoc label:

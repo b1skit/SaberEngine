@@ -22,10 +22,10 @@ namespace dx12
 			~ReadbackResource() = default;
 			ReadbackResource(ReadbackResource&& rhs) noexcept
 			{
-				m_resource = std::move(rhs.m_resource);
-
 				{
-					std::lock_guard<std::mutex> lock(m_readbackFenceMutex);
+					std::scoped_lock lock(m_readbackFenceMutex, rhs.m_readbackFenceMutex);
+
+					m_resource = std::move(rhs.m_resource);
 					m_readbackFence = rhs.m_readbackFence;
 				}
 			}

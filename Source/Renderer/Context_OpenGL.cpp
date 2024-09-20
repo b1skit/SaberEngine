@@ -578,15 +578,4 @@ namespace opengl
 		}
 		return m_VAOLibrary.at(vaoHash);
 	}
-
-
-	GLuint Context::GetCreateTempVAO(re::VertexStream const* vertexStream)
-	{
-		const re::Batch::VertexStreamInput tempVertexInput
-		{
-			.m_vertexStream = vertexStream,
-			.m_bindSlot = 0,
-		};
-		return GetCreateVAO(&tempVertexInput, 1, nullptr);
-	}
 }

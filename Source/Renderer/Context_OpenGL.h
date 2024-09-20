@@ -32,7 +32,6 @@ namespace opengl
 		static uint64_t ComputeVAOHash(re::Batch::VertexStreamInput const*, uint8_t count, re::VertexStream const* indexStream);
 
 		GLuint GetCreateVAO(re::Batch::VertexStreamInput const*, uint8_t count, re::VertexStream const* indexStream);
-		GLuint GetCreateTempVAO(re::VertexStream const*);
 		
 
 	protected:
