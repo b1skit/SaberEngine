@@ -59,7 +59,7 @@ namespace re
 			name,
 			nullptr,
 			RenderStage::Type::Parent,
-			se::Lifetime::Permanent));
+			re::Lifetime::Permanent));
 		return newParentStage;
 	}
 
@@ -72,7 +72,7 @@ namespace re
 			name, 
 			std::make_unique<GraphicsStageParams>(stageParams), 
 			RenderStage::Type::Graphics,
-			se::Lifetime::Permanent));
+			re::Lifetime::Permanent));
 		return newGFXStage;
 	}
 
@@ -85,7 +85,7 @@ namespace re
 			name,
 			std::make_unique<GraphicsStageParams>(stageParams),
 			RenderStage::Type::Graphics,
-			se::Lifetime::SingleFrame));
+			re::Lifetime::SingleFrame));
 		return newGFXStage;
 	}
 
@@ -97,7 +97,7 @@ namespace re
 		newComputeStage.reset(new ComputeStage(
 			name, 
 			std::make_unique<ComputeStageParams>(stageParams),
-			se::Lifetime::Permanent));
+			re::Lifetime::Permanent));
 		return newComputeStage;
 	}
 
@@ -109,7 +109,7 @@ namespace re
 		newComputeStage.reset(new ComputeStage(
 			name,
 			std::make_unique<ComputeStageParams>(stageParams),
-			se::Lifetime::SingleFrame));
+			re::Lifetime::SingleFrame));
 		return newComputeStage;
 	}
 
@@ -121,7 +121,7 @@ namespace re
 		newLibraryStage.reset(new LibraryStage(
 			name,
 			std::make_unique<LibraryStageParams>(stageParams),
-			se::Lifetime::Permanent));
+			re::Lifetime::Permanent));
 		return newLibraryStage;
 	}
 
@@ -133,7 +133,7 @@ namespace re
 		newFSQuadStage.reset(new FullscreenQuadStage(
 			name,
 			std::make_unique<FullscreenQuadParams>(stageParams),
-			se::Lifetime::Permanent));
+			re::Lifetime::Permanent));
 		return newFSQuadStage;
 	}
 
@@ -145,7 +145,7 @@ namespace re
 		newFSQuadStage.reset(new FullscreenQuadStage(
 			name,
 			std::make_unique<FullscreenQuadParams>(stageParams),
-			se::Lifetime::SingleFrame));
+			re::Lifetime::SingleFrame));
 		return newFSQuadStage;
 	}
 
@@ -156,7 +156,7 @@ namespace re
 	{
 		std::shared_ptr<RenderStage> newClearStage;
 		newClearStage.reset(
-			new ClearStage(std::format("Clear: {}", targetSet->GetName()).c_str(), se::Lifetime::Permanent));
+			new ClearStage(std::format("Clear: {}", targetSet->GetName()).c_str(), re::Lifetime::Permanent));
 
 		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
 
@@ -170,7 +170,7 @@ namespace re
 	{
 		std::shared_ptr<RenderStage> newClearStage;
 		newClearStage.reset(
-			new ClearStage(std::format("Clear: {}", targetSet->GetName()).c_str(), se::Lifetime::SingleFrame));
+			new ClearStage(std::format("Clear: {}", targetSet->GetName()).c_str(), re::Lifetime::SingleFrame));
 
 		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
 
@@ -179,7 +179,7 @@ namespace re
 
 
 	RenderStage::RenderStage(
-		char const* name, std::unique_ptr<IStageParams>&& stageParams, Type stageType, se::Lifetime lifetime)
+		char const* name, std::unique_ptr<IStageParams>&& stageParams, Type stageType, re::Lifetime lifetime)
 		: INamedObject(name)
 		, m_type(stageType)
 		, m_lifetime(lifetime)
@@ -196,14 +196,14 @@ namespace re
 	}
 
 
-	ParentStage::ParentStage(char const* name, se::Lifetime lifetime)
+	ParentStage::ParentStage(char const* name, re::Lifetime lifetime)
 		: INamedObject(name)
 		, RenderStage(name, nullptr, Type::Parent, lifetime)
 	{
 	}
 
 
-	ComputeStage::ComputeStage(char const* name, std::unique_ptr<ComputeStageParams>&& stageParams, se::Lifetime lifetime)
+	ComputeStage::ComputeStage(char const* name, std::unique_ptr<ComputeStageParams>&& stageParams, re::Lifetime lifetime)
 		: INamedObject(name)
 		, RenderStage(name, std::move(stageParams), Type::Compute, lifetime)
 	{
@@ -211,7 +211,7 @@ namespace re
 
 
 	FullscreenQuadStage::FullscreenQuadStage(
-		char const* name, std::unique_ptr<FullscreenQuadParams>&& stageParams, se::Lifetime lifetime)
+		char const* name, std::unique_ptr<FullscreenQuadParams>&& stageParams, re::Lifetime lifetime)
 		: INamedObject(name)
 		, RenderStage(name, nullptr, Type::FullscreenQuad, lifetime)
 	{
@@ -222,7 +222,7 @@ namespace re
 		m_drawStyleBits = stageParams->m_drawStyleBitmask;
 
 		m_fullscreenQuadBatch = std::make_unique<re::Batch>(
-			se::Lifetime::Permanent,
+			re::Lifetime::Permanent,
 			m_screenAlignedQuad.get(),
 			stageParams->m_effectID);
 		
@@ -230,7 +230,7 @@ namespace re
 	}
 
 
-	ClearStage::ClearStage(char const* name, se::Lifetime lifetime)
+	ClearStage::ClearStage(char const* name, re::Lifetime lifetime)
 		: INamedObject(name)
 		, RenderStage(name, nullptr, Type::Clear, lifetime)
 	{
@@ -256,7 +256,7 @@ namespace re
 
 
 	LibraryStage::LibraryStage(
-		char const* name, std::unique_ptr<LibraryStageParams>&& stageParams, se::Lifetime lifetime)
+		char const* name, std::unique_ptr<LibraryStageParams>&& stageParams, re::Lifetime lifetime)
 		: INamedObject(name)
 		, RenderStage(name, std::move(stageParams), Type::Library, lifetime)
 	{
@@ -774,7 +774,7 @@ namespace re
 	}
 
 
-	re::Batch* RenderStage::AddBatchWithLifetime(re::Batch const& batch, se::Lifetime lifetime)
+	re::Batch* RenderStage::AddBatchWithLifetime(re::Batch const& batch, re::Lifetime lifetime)
 	{
 		SEAssert(m_type != re::RenderStage::Type::Parent &&
 			m_type != re::RenderStage::Type::Clear,

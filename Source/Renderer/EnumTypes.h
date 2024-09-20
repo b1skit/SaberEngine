@@ -2,7 +2,7 @@
 #pragma once
 
 
-namespace se
+namespace re
 {
 	enum class Lifetime : bool
 	{

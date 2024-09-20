@@ -267,7 +267,7 @@ namespace gr
 
 						// Add our dispatch information to a compute batch:
 						re::Batch computeBatch = re::Batch(
-							se::Lifetime::SingleFrame,
+							re::Lifetime::SingleFrame,
 							re::Batch::ComputeParams{ .m_threadGroupCount = glm::uvec3(roundedXDim, roundedYDim, 1u) },
 							effect::Effect::ComputeEffectID("MipGeneration"));
 

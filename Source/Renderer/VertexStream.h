@@ -1,9 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "EnumTypes.h"
+
 #include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
-
-#include "Core/Definitions/EnumTypes.h"
 
 #include "Core/Util/ByteVector.h"
 
@@ -96,7 +96,7 @@ namespace re
 
 		struct CreateParams
 		{
-			se::Lifetime m_lifetime = se::Lifetime::Permanent;
+			re::Lifetime m_lifetime = re::Lifetime::Permanent;
 
 			Type m_type = Type::Type_Count;
 
@@ -115,7 +115,7 @@ namespace re
 
 		~VertexStream() { Destroy(); };
 
-		se::Lifetime GetLifetime() const;
+		re::Lifetime GetLifetime() const;
 
 		Type GetType() const;
 
@@ -167,7 +167,7 @@ namespace re
 	};
 
 
-	inline se::Lifetime VertexStream::GetLifetime() const
+	inline re::Lifetime VertexStream::GetLifetime() const
 	{
 		return m_createParams.m_lifetime;
 	}

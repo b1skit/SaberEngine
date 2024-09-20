@@ -19,20 +19,20 @@ namespace
 	static const EffectID k_debugEffectID = effect::Effect::ComputeEffectID(k_debugEffectName);
 	
 
-	se::Lifetime GetVertexStreamLifetimeFromBatchLifetime(se::Lifetime batchLifetime)
+	re::Lifetime GetVertexStreamLifetimeFromBatchLifetime(re::Lifetime batchLifetime)
 	{
 		switch (batchLifetime)
 		{
-		case se::Lifetime::SingleFrame: return se::Lifetime::SingleFrame;
-		case se::Lifetime::Permanent: return se::Lifetime::Permanent;
+		case re::Lifetime::SingleFrame: return re::Lifetime::SingleFrame;
+		case re::Lifetime::Permanent: return re::Lifetime::Permanent;
 		default: SEAssertF("Invalid batch lifetime");
 		}
-		return se::Lifetime::SingleFrame;
+		return re::Lifetime::SingleFrame;
 	}
 
 
 	std::unique_ptr<re::Batch> BuildAxisBatch(
-		se::Lifetime batchLifetime,
+		re::Lifetime batchLifetime,
 		float axisScale,
 		glm::vec3 const& xAxisColor,
 		glm::vec3 const& yAxisColor,
@@ -50,7 +50,7 @@ namespace
 			glm::vec4(zAxisColor, 1.f), glm::vec4(zAxisColor, 1.f),
 		});
 
-		const se::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
+		const re::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> axisPositionStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
@@ -84,7 +84,7 @@ namespace
 
 
 	std::unique_ptr<re::Batch> BuildBoundingBoxBatch(
-		se::Lifetime batchLifetime, gr::Bounds::RenderData const& bounds, glm::vec3 const& boxColor)
+		re::Lifetime batchLifetime, gr::Bounds::RenderData const& bounds, glm::vec3 const& boxColor)
 	{
 		/* Construct a cube from 8 points:
 		*     e----f
@@ -141,7 +141,7 @@ namespace
 			7, 3
 		});
 
-		const se::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
+		const re::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> boxPositionsStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
@@ -185,7 +185,7 @@ namespace
 
 
 	std::unique_ptr<re::Batch> BuildVertexNormalsBatch(
-		se::Lifetime batchLifetime,
+		re::Lifetime batchLifetime,
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
 		float scale,
 		glm::vec3 const& globalScale,
@@ -220,7 +220,7 @@ namespace
 		const glm::vec4 normalColorVec4 = glm::vec4(normalColor, 1.f);
 		util::ByteVector normalColors = util::ByteVector::Create<glm::vec4>(linePositions.size(), normalColorVec4);
 		
-		const se::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
+		const re::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> normalPositionsStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
@@ -254,7 +254,7 @@ namespace
 
 	
 	std::unique_ptr<re::Batch> BuildCameraFrustumBatch(
-		se::Lifetime batchLifetime,
+		re::Lifetime batchLifetime,
 		gr::Transform::RenderData const* transformData,
 		glm::vec3 const& frustumColor)
 	{
@@ -297,7 +297,7 @@ namespace
 			3, 7
 		});
 
-		const se::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
+		const re::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> frustumPositionsStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
@@ -341,7 +341,7 @@ namespace
 	
 
 	std::unique_ptr<re::Batch> BuildWireframeBatch(
-		se::Lifetime batchLifetime, 
+		re::Lifetime batchLifetime, 
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
 		glm::vec3 const& meshColor)
 	{
@@ -354,7 +354,7 @@ namespace
 		const glm::vec4 meshColorVec4 = glm::vec4(meshColor, 1.f);
 		util::ByteVector meshColors = util::ByteVector::Create<glm::vec4>(positionStream->GetNumElements(), meshColorVec4);
 
-		const se::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
+		const re::Lifetime streamLifetime = GetVertexStreamLifetimeFromBatchLifetime(batchLifetime);
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
@@ -444,7 +444,7 @@ namespace gr
 		{
 			if (m_worldCoordinateAxisBatch == nullptr)
 			{
-				m_worldCoordinateAxisBatch = std::move(BuildAxisBatch(se::Lifetime::Permanent, 
+				m_worldCoordinateAxisBatch = std::move(BuildAxisBatch(re::Lifetime::Permanent, 
 						m_worldCoordinateAxisScale, 
 						m_xAxisColor, 
 						m_yAxisColor, 
@@ -522,7 +522,7 @@ namespace gr
 								m_meshPrimBoundingBoxBatches.emplace(
 									meshPrimRenderDataID,
 									BuildBoundingBoxBatch(
-										se::Lifetime::Permanent, boundsRenderData, m_meshPrimitiveBoundsColor));
+										re::Lifetime::Permanent, boundsRenderData, m_meshPrimitiveBoundsColor));
 
 								m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 							}
@@ -534,7 +534,7 @@ namespace gr
 							if (!m_vertexNormalBatches.contains(meshPrimRenderDataID))
 							{
 								std::unique_ptr<re::Batch> normalsBatch = BuildVertexNormalsBatch(
-									se::Lifetime::Permanent,
+									re::Lifetime::Permanent,
 									meshPrimRenderData,
 									m_vertexNormalsScale,
 									transformData.m_globalScale,
@@ -559,7 +559,7 @@ namespace gr
 								m_wireframeBatches.emplace(
 									meshPrimRenderDataID,
 									BuildWireframeBatch(
-										se::Lifetime::Permanent, meshPrimRenderData, m_wireframeColor));
+										re::Lifetime::Permanent, meshPrimRenderData, m_wireframeColor));
 
 								m_wireframeBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 							}
@@ -574,7 +574,7 @@ namespace gr
 							m_meshCoordinateAxisBatches.emplace(
 								meshPrimRenderDataID, 
 								std::move(BuildAxisBatch(
-									se::Lifetime::Permanent,
+									re::Lifetime::Permanent,
 									m_meshCoordinateAxisScale,
 									m_xAxisColor,
 									m_yAxisColor,
@@ -630,7 +630,7 @@ namespace gr
 						if (!m_meshBoundingBoxBatches.contains(meshID))
 						{
 							m_meshBoundingBoxBatches.emplace(meshID,
-								BuildBoundingBoxBatch(se::Lifetime::Permanent,boundsRenderData, m_meshBoundsColor));
+								BuildBoundingBoxBatch(re::Lifetime::Permanent,boundsRenderData, m_meshBoundsColor));
 
 							m_meshBoundingBoxBatches.at(meshID)->SetBuffer(
 								m_meshBoundingBoxBuffers.at(meshID));
@@ -667,7 +667,7 @@ namespace gr
 					if (m_sceneBoundsBatch == nullptr)
 					{
 						m_sceneBoundsBatch =
-							BuildBoundingBoxBatch(se::Lifetime::Permanent, boundsRenderData, m_sceneBoundsColor);
+							BuildBoundingBoxBatch(re::Lifetime::Permanent, boundsRenderData, m_sceneBoundsColor);
 
 						m_sceneBoundsBatch->SetBuffer(m_sceneBoundsTransformBuffer);
 					}
@@ -716,7 +716,7 @@ namespace gr
 					m_cameraAxisBatches.emplace(
 						camID, 
 						BuildAxisBatch(
-							se::Lifetime::Permanent, 
+							re::Lifetime::Permanent, 
 							m_cameraCoordinateAxisScale, 
 							m_xAxisColor, 
 							m_yAxisColor, 
@@ -785,7 +785,7 @@ namespace gr
 					if (m_cameraFrustumBatches.at(camID)[faceIdx] == nullptr)
 					{
 						m_cameraFrustumBatches.at(camID)[faceIdx] = std::move(BuildCameraFrustumBatch(
-							se::Lifetime::Permanent,
+							re::Lifetime::Permanent,
 							camData.second.second,
 							m_cameraFrustumColor));
 
@@ -837,7 +837,7 @@ namespace gr
 						m_deferredLightWireframeBatches.emplace(
 							pointID,
 							BuildWireframeBatch(
-								se::Lifetime::Permanent, meshPrimData, m_deferredLightwireframeColor));
+								re::Lifetime::Permanent, meshPrimData, m_deferredLightwireframeColor));
 
 						m_deferredLightWireframeBatches.at(pointID)->SetBuffer(
 							m_deferredLightWireframeTransformBuffers.at(pointID));
@@ -878,7 +878,7 @@ namespace gr
 						m_deferredLightWireframeBatches.emplace(
 							spotID,
 							BuildWireframeBatch(
-								se::Lifetime::Permanent, meshPrimData, m_deferredLightwireframeColor));
+								re::Lifetime::Permanent, meshPrimData, m_deferredLightwireframeColor));
 
 						m_deferredLightWireframeBatches.at(spotID)->SetBuffer(
 							m_deferredLightWireframeTransformBuffers.at(spotID));
@@ -926,7 +926,7 @@ namespace gr
 						m_lightCoordinateAxisBatches.emplace(
 							lightID,
 							BuildAxisBatch(
-								se::Lifetime::Permanent,
+								re::Lifetime::Permanent,
 								m_lightCoordinateAxisScale,
 								m_xAxisColor,
 								m_yAxisColor,

@@ -160,7 +160,7 @@ namespace gr
 
 		// Add our dispatch information to a compute batch. Note: We use numthreads = (1,1,1)
 		re::Batch computeBatch = re::Batch(
-			se::Lifetime::SingleFrame,
+			re::Lifetime::SingleFrame,
 			re::Batch::ComputeParams{
 				.m_threadGroupCount = glm::uvec3(brdfTexWidthHeight, brdfTexWidthHeight, 1u) },
 			effect::Effect::ComputeEffectID("DeferredLighting"));
@@ -347,7 +347,7 @@ namespace gr
 		if (m_cubeMeshBatch == nullptr)
 		{
 			m_cubeMeshBatch = std::make_unique<re::Batch>(
-				se::Lifetime::Permanent,
+				re::Lifetime::Permanent,
 				m_cubeMeshPrimitive.get(),
 				effect::Effect::ComputeEffectID("DeferredLighting"));
 		}
@@ -666,7 +666,7 @@ namespace gr
 							.m_ambientParams = ambientParams,
 							.m_IEMTex = iemTex,
 							.m_PMREMTex = pmremTex,
-							.m_batch = re::Batch(se::Lifetime::Permanent, ambientMeshPrimData, nullptr)
+							.m_batch = re::Batch(re::Lifetime::Permanent, ambientMeshPrimData, nullptr)
 						});
 
 					// Set the batch inputs:
@@ -756,7 +756,7 @@ namespace gr
 						PunctualLightRenderData{
 							.m_type = gr::Light::Directional,
 							.m_transformParams = nullptr,
-							.m_batch = re::Batch(se::Lifetime::Permanent, meshData, nullptr),
+							.m_batch = re::Batch(re::Lifetime::Permanent, meshData, nullptr),
 							.m_hasShadow = directionalData.m_hasShadow
 						});
 
@@ -790,7 +790,7 @@ namespace gr
 					PunctualLightRenderData{
 						.m_type = lightType,
 						.m_transformParams = transformBuffer,
-						.m_batch = re::Batch(se::Lifetime::Permanent, meshData, nullptr),
+						.m_batch = re::Batch(re::Lifetime::Permanent, meshData, nullptr),
 						.m_hasShadow = hasShadow
 					});
 
@@ -996,7 +996,7 @@ namespace gr
 					util::HashKey const& samplerTypeName)
 					{
 						re::Batch* duplicatedBatch =
-							stage->AddBatchWithLifetime(light.second.m_batch, se::Lifetime::SingleFrame);
+							stage->AddBatchWithLifetime(light.second.m_batch, re::Lifetime::SingleFrame);
 
 						duplicatedBatch->SetBuffer(
 							lightMgr.GetLightIndexDataBuffer(light.second.m_type, lightID, LightIndexData::s_shaderName));

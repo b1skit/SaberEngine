@@ -103,7 +103,6 @@
     <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Definitions\ConfigKeys.h" />
-    <ClInclude Include="Definitions\EnumTypes.h" />
     <ClInclude Include="Definitions\KeyConfiguration.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventManager_Platform.h" />
@@ -111,7 +110,6 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="InputManager_Platform.h" />
     <ClInclude Include="InputManager_Win32.h" />
-    <ClInclude Include="Interfaces\EnumTypes.h" />
     <ClInclude Include="Interfaces\IEngineComponent.h" />
     <ClInclude Include="Interfaces\IEngineThread.h" />
     <ClInclude Include="Interfaces\IEventListener.h" />

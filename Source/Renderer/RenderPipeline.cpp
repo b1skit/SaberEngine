@@ -13,7 +13,7 @@ namespace re
 		std::shared_ptr<re::RenderStage> renderStage)
 	{
 		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
-		SEAssert(renderStage->GetStageLifetime() == se::Lifetime::Permanent,
+		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
 			"Incorrect stage lifetime");
 		
 		m_renderStages.emplace_back(renderStage);
@@ -26,7 +26,7 @@ namespace re
 		std::shared_ptr<re::RenderStage> renderStage)
 	{
 		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
-		SEAssert(renderStage->GetStageLifetime() == se::Lifetime::Permanent,
+		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
 			"Incorrect stage lifetime");
 
 		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 
@@ -42,7 +42,7 @@ namespace re
 		std::shared_ptr<re::RenderStage>&& renderStage)
 	{
 		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
-		SEAssert(renderStage->GetStageLifetime() == se::Lifetime::SingleFrame,
+		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::SingleFrame,
 			"Incorrect stage lifetime");
 
 		m_renderStages.emplace_back(std::move(renderStage));
@@ -60,7 +60,7 @@ namespace re
 		std::shared_ptr<re::RenderStage>&& renderStage)
 	{
 		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
-		SEAssert(renderStage->GetStageLifetime() == se::Lifetime::SingleFrame,
+		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::SingleFrame,
 			"Incorrect stage lifetime");
 		
 		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 
@@ -88,7 +88,7 @@ namespace re
 		std::shared_ptr<re::RenderStage> renderStage)
 	{
 		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
-		SEAssert(renderStage->GetStageLifetime() == se::Lifetime::Permanent,
+		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
 			"Incorrect stage lifetime");
 
 		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 

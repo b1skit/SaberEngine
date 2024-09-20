@@ -127,6 +127,7 @@
     <ClInclude Include="Effect.h" />
     <ClInclude Include="EffectDB.h" />
     <ClInclude Include="EffectKeys.h" />
+    <ClInclude Include="EnumTypes.h" />
     <ClInclude Include="Fence_DX12.h" />
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
     <ClInclude Include="GraphicsSystem.h" />

@@ -434,7 +434,7 @@ namespace gr
 				1);
 
 			m_prefilterDepthComputeBatch = std::make_unique<re::Batch>(
-				se::Lifetime::Permanent, 
+				re::Lifetime::Permanent, 
 				prefilterDepthBatchParams, 
 				effect::Effect::ComputeEffectID("XeGTAO"));
 
@@ -458,7 +458,7 @@ namespace gr
 				1);
 
 			m_mainBatch = std::make_unique<re::Batch>(
-				se::Lifetime::Permanent,
+				re::Lifetime::Permanent,
 				mainBatchParams,
 				effect::Effect::ComputeEffectID("XeGTAO"));
 
@@ -481,14 +481,14 @@ namespace gr
 				1);
 
 			m_denoiseBatch = std::make_unique<re::Batch>(
-				se::Lifetime::Permanent,
+				re::Lifetime::Permanent,
 				denoiseBatchParams,
 				effect::Effect::ComputeEffectID("XeGTAO"));
 			
 			m_denoiseBatch->SetBuffer(m_XeGTAOConstants);
 
 			m_lastPassDenoiseBatch = std::make_unique<re::Batch>(
-				se::Lifetime::Permanent,
+				re::Lifetime::Permanent,
 				denoiseBatchParams, 
 				effect::Effect::ComputeEffectID("XeGTAO"));
 			

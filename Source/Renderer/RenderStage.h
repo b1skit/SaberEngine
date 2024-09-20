@@ -110,7 +110,7 @@ namespace re
 		bool IsSkippable() const;
 
 		Type GetStageType() const;
-		se::Lifetime GetStageLifetime() const;
+		re::Lifetime GetStageLifetime() const;
 		IStageParams const* GetStageParams() const;
 
 		void SetDrawStyle(effect::drawstyle::Bitmask);
@@ -185,7 +185,7 @@ namespace re
 		std::vector<re::Batch> const& GetStageBatches() const;
 		void AddBatches(std::vector<re::Batch> const&);
 		re::Batch* AddBatch(re::Batch const&); // Returns Batch ptr (IFF it was successfully added)
-		re::Batch* AddBatchWithLifetime(re::Batch const&, se::Lifetime);
+		re::Batch* AddBatchWithLifetime(re::Batch const&, re::Lifetime);
 
 		enum class FilterMode
 		{
@@ -196,7 +196,7 @@ namespace re
 
 
 	protected:
-		explicit RenderStage(char const* name, std::unique_ptr<IStageParams>&&, Type, se::Lifetime);
+		explicit RenderStage(char const* name, std::unique_ptr<IStageParams>&&, Type, re::Lifetime);
 
 
 	private:
@@ -206,7 +206,7 @@ namespace re
 
 	protected:
 		const Type m_type;
-		const se::Lifetime m_lifetime;
+		const re::Lifetime m_lifetime;
 		std::unique_ptr<IStageParams> m_stageParams;
 
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
@@ -246,7 +246,7 @@ namespace re
 		// 
 
 	private:
-		ParentStage(char const* name, se::Lifetime);
+		ParentStage(char const* name, re::Lifetime);
 		friend class RenderStage;
 	};
 
@@ -260,7 +260,7 @@ namespace re
 		// 
 
 	private:
-		ComputeStage(char const* name, std::unique_ptr<ComputeStageParams>&&, se::Lifetime);
+		ComputeStage(char const* name, std::unique_ptr<ComputeStageParams>&&, re::Lifetime);
 		friend class RenderStage;
 	};
 
@@ -278,7 +278,7 @@ namespace re
 		std::unique_ptr<re::Batch> m_fullscreenQuadBatch;
 
 	private:
-		FullscreenQuadStage(char const* name, std::unique_ptr<FullscreenQuadParams>&&, se::Lifetime);
+		FullscreenQuadStage(char const* name, std::unique_ptr<FullscreenQuadParams>&&, re::Lifetime);
 		friend class RenderStage;
 	};
 
@@ -292,7 +292,7 @@ namespace re
 		// 
 
 	private:
-		ClearStage(char const* name, se::Lifetime);
+		ClearStage(char const* name, re::Lifetime);
 		friend class RenderStage;
 	};
 
@@ -319,7 +319,7 @@ namespace re
 		std::unique_ptr<IPayload> m_payload;
 
 	private:
-		LibraryStage(char const* name, std::unique_ptr<LibraryStageParams>&&, se::Lifetime);
+		LibraryStage(char const* name, std::unique_ptr<LibraryStageParams>&&, re::Lifetime);
 		friend class RenderStage;
 	};
 
@@ -333,7 +333,7 @@ namespace re
 	}
 
 
-	inline se::Lifetime RenderStage::GetStageLifetime() const
+	inline re::Lifetime RenderStage::GetStageLifetime() const
 	{
 		return m_lifetime;
 	}

@@ -1,12 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Effect.h"
+#include "EnumTypes.h"
 #include "MeshPrimitive.h"
 #include "Shader_Platform.h"
 #include "TextureView.h"
 #include "VertexStream.h"
-
-#include "Core/Definitions/EnumTypes.h"
 
 #include "Core/Interfaces/IHashedDataObject.h"
 
@@ -90,14 +89,14 @@ namespace re
 
 	public:
 		// Graphics batches:
-		Batch(se::Lifetime, gr::MeshPrimitive const*, EffectID); // No material; e.g. fullscreen quads, cubemap geo etc
+		Batch(re::Lifetime, gr::MeshPrimitive const*, EffectID); // No material; e.g. fullscreen quads, cubemap geo etc
 
-		Batch(se::Lifetime, gr::MeshPrimitive::RenderData const&, gr::Material::MaterialInstanceRenderData const*);
+		Batch(re::Lifetime, gr::MeshPrimitive::RenderData const&, gr::Material::MaterialInstanceRenderData const*);
 
-		Batch(se::Lifetime, GraphicsParams const&, EffectID); // e.g. debug topology
+		Batch(re::Lifetime, GraphicsParams const&, EffectID); // e.g. debug topology
 
 		// Compute batches:
-		Batch(se::Lifetime, ComputeParams const&, EffectID);
+		Batch(re::Lifetime, ComputeParams const&, EffectID);
 
 
 	public:
@@ -108,7 +107,7 @@ namespace re
 
 
 	public:		
-		static Batch Duplicate(Batch const&, se::Lifetime);
+		static Batch Duplicate(Batch const&, re::Lifetime);
 
 
 	public:
@@ -153,7 +152,7 @@ namespace re
 
 		std::vector<RWTextureInput> const& GetRWTextureInputs() const;
 
-		se::Lifetime GetLifetime() const;
+		re::Lifetime GetLifetime() const;
 		
 		FilterBitmask GetBatchFilterMask() const;
 		void SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled);
@@ -168,7 +167,7 @@ namespace re
 
 
 	private:
-		se::Lifetime m_lifetime;
+		re::Lifetime m_lifetime;
 		BatchType m_type;
 		union
 		{
@@ -250,7 +249,7 @@ namespace re
 	}
 
 
-	inline se::Lifetime Batch::GetLifetime() const
+	inline re::Lifetime Batch::GetLifetime() const
 	{
 		return m_lifetime;
 	}

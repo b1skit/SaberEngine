@@ -302,7 +302,7 @@ namespace gr
 			glm::vec2 dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(downsampleDstMipLevel++).xy;
 
 			re::Batch computeBatch = re::Batch(
-				se::Lifetime::SingleFrame,
+				re::Lifetime::SingleFrame,
 				re::Batch::ComputeParams{
 					.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) },
 				effect::Effect::ComputeEffectID("Bloom"));
@@ -316,7 +316,7 @@ namespace gr
 			glm::vec2 dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(upsampleDstMipLevel--).xy;
 
 			re::Batch computeBatch = re::Batch(
-				se::Lifetime::SingleFrame,
+				re::Lifetime::SingleFrame,
 				re::Batch::ComputeParams{
 					.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) },
 				effect::Effect::ComputeEffectID("Bloom"));

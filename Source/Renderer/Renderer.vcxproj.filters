@@ -452,6 +452,9 @@
     <ClInclude Include="AnimationParamsHelpers.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
+    <ClInclude Include="EnumTypes.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">

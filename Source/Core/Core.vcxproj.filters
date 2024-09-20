@@ -141,12 +141,6 @@
     <ClInclude Include="Interfaces\IUniqueID.h">
       <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="Interfaces\EnumTypes.h">
-      <Filter>Header Files\Definitions</Filter>
-    </ClInclude>
-    <ClInclude Include="Definitions\EnumTypes.h">
-      <Filter>Header Files\Definitions</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
