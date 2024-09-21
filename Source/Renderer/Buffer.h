@@ -43,7 +43,6 @@ namespace re
 		{
 			Default,	// Prefer L1/VRAM. No CPU access
 			Upload,		// Prefor L0/SysMem. Intended for CPU -> GPU communication
-			Readback,	// Prefer L0/VRAM (with WRITE_BACK CPU access). Intended for GPU -> CPU communication
 		};
 
 		enum Usage : uint8_t

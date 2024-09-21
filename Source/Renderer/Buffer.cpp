@@ -12,20 +12,10 @@ namespace
 #if defined(_DEBUG)
 		SEAssert(bufferParams.m_type != re::Buffer::Type::Type_Count, "Invalid Type");
 
-		SEAssert(bufferParams.m_memPoolPreference != re::Buffer::MemoryPoolPreference::Default ||
-			((bufferParams.m_usageMask & re::Buffer::Usage::CPURead) == 0 &&
-				(bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite) == 0),
-			"CPU reads/writes cannot be enabled for buffers in the default heap (i.e. L1/VRAM)");
-
 		SEAssert(bufferParams.m_memPoolPreference != re::Buffer::MemoryPoolPreference::Upload ||
 			((bufferParams.m_usageMask & re::Buffer::Usage::GPURead) &&
 				(bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite)),
 			"Buffers in the upload heap must be GPU-readable and CPU-writeable");
-
-		SEAssert(bufferParams.m_memPoolPreference != re::Buffer::MemoryPoolPreference::Readback ||
-			((bufferParams.m_usageMask & re::Buffer::Usage::CPURead) &&
-				(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite)),
-			"Buffers in the readback heap must be CPU-readable and GPU-writeable");
 
 		SEAssert(bufferParams.m_type != re::Buffer::Type::SingleFrame ||
 			bufferParams.m_memPoolPreference == re::Buffer::MemoryPoolPreference::Upload,
@@ -35,10 +25,6 @@ namespace
 		SEAssert(bufferParams.m_type == re::Buffer::Type::Immutable ||
 			(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) == 0,
 			"Only GPU-writable buffers can use the immutable allocator staging memory");
-
-		SEAssert((bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite) == 0 ||
-			(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) == 0,
-			"GPU-writable buffers cannot be CPU-mappable as they live on this default heap");
 
 		SEAssert(bufferParams.m_dataType != re::Buffer::DataType::DataType_Count, "Invalid DataType");
 

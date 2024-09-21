@@ -50,7 +50,6 @@ namespace
 		{
 		case::re::Buffer::MemoryPoolPreference::Default: return D3D12_HEAP_TYPE_DEFAULT;
 		case::re::Buffer::MemoryPoolPreference::Upload: return D3D12_HEAP_TYPE_UPLOAD;
-		case::re::Buffer::MemoryPoolPreference::Readback: return D3D12_HEAP_TYPE_READBACK;
 		default: SEAssertF("Invalid MemoryPoolPreference");
 		}
 	}
@@ -63,7 +62,7 @@ namespace
 	}
 
 
-	dx12::Buffer::ReadbackResource CreateReadbackResource(uint64_t bufferAlignedSize)
+	dx12::Buffer::ReadbackResource CreateReadbackResource(uint64_t bufferAlignedSize, wchar_t const* debugName)
 	{
 		dx12::Buffer::ReadbackResource readbackResource;
 
@@ -72,14 +71,24 @@ namespace
 
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
+		constexpr D3D12_RESOURCE_STATES k_initialReadbackState = D3D12_RESOURCE_STATE_COPY_DEST;
+
 		const HRESULT hr = device->CreateCommittedResource(
 			&readbackHeapProperties,
 			D3D12_HEAP_FLAG_NONE, // Zero our initial readback resource
 			&readbackBufferDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST,
+			k_initialReadbackState,
 			nullptr,			// Optimized clear value: Null for buffers
 			IID_PPV_ARGS(&readbackResource.m_resource));
 		dx12::CheckHResult(hr, "Failed to create committed resource for readback buffer");
+
+		readbackResource.m_resource->SetName(debugName);
+
+		// Register the resource with the global resource state tracker:
+		re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().RegisterResource(
+			readbackResource.m_resource.Get(),
+			k_initialReadbackState,
+			1);
 
 		return readbackResource;
 	}
@@ -90,15 +99,17 @@ namespace dx12
 {
 	void Buffer::Create(re::Buffer& buffer)
 	{
-		SEAssert(buffer.GetBufferParams().m_dataType != re::Buffer::DataType::Structured ||
-			buffer.GetBufferParams().m_numElements <= 1024, "Maximum offset of 1024 allowed into an SRV");
+		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
+
+		SEAssert(bufferParams.m_dataType != re::Buffer::DataType::Structured ||
+			bufferParams.m_numElements <= 1024, "Maximum offset of 1024 allowed into an SRV");
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 		SEAssert(!params->m_isCreated, "Buffer is already created");
 		params->m_isCreated = true;
 
 		const uint32_t bufferSize = buffer.GetSize();
-		const uint64_t alignedSize = GetAlignedSize(buffer.GetBufferParams().m_dataType, bufferSize);
+		const uint64_t alignedSize = GetAlignedSize(bufferParams.m_dataType, bufferSize);
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
@@ -106,13 +117,11 @@ namespace dx12
 
 		const uint8_t numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
 
-		// Note: Our buffers live in the upload heap, as they're typically small and updated frequently. 
-		// No point copying them to VRAM, for now
-
 		const D3D12_RESOURCE_STATES initialResourceState = D3D12_RESOURCE_STATE_COMMON;
-		const D3D12_HEAP_TYPE heapType = MemoryPoolPreferenceToD3DHeapType(buffer.GetBufferParams().m_memPoolPreference);
 
-		const bool needsUAV = NeedsUAV(buffer.GetBufferParams());
+		const bool needsUAV = NeedsUAV(bufferParams);
+
+		const D3D12_HEAP_TYPE outputBufferHeapType = MemoryPoolPreferenceToD3DHeapType(bufferParams.m_memPoolPreference);
 
 		switch (buffer.GetType())
 		{
@@ -121,7 +130,7 @@ namespace dx12
 			// We allocate N frames-worth of buffer space, and then set the m_heapByteOffset each frame
 			const uint64_t allFramesAlignedSize = numFramesInFlight * alignedSize;
 
-			const CD3DX12_HEAP_PROPERTIES heapProperties(heapType);
+			const CD3DX12_HEAP_PROPERTIES heapProperties(outputBufferHeapType);
 			const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(allFramesAlignedSize);
 			
 			HRESULT hr = device->CreateCommittedResource(
@@ -140,7 +149,7 @@ namespace dx12
 		case re::Buffer::Type::Immutable:
 		{
 			// Immutable buffers cannot change frame-to-frame, thus only need a single buffer's worth of space
-			const CD3DX12_HEAP_PROPERTIES heapProperties(heapType);
+			const CD3DX12_HEAP_PROPERTIES heapProperties(outputBufferHeapType);
 			CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedSize);
 
 			if (needsUAV)
@@ -158,7 +167,7 @@ namespace dx12
 			CheckHResult(hr, "Failed to create committed resource for immutable buffer");
 
 			// Debug names:
-			std::wstring const& debugName = buffer.GetWName() + L"_Immutable";;
+			std::wstring const& debugName = buffer.GetWName() + L"_Immutable";
 			params->m_resource->SetName(debugName.c_str());
 		}
 		break;
@@ -168,7 +177,7 @@ namespace dx12
 				dynamic_cast<dx12::BufferAllocator*>(re::Context::Get()->GetBufferAllocator());
 			
 			bufferAllocator->GetSubAllocation(
-				buffer.GetBufferParams().m_dataType,
+				bufferParams.m_dataType,
 				alignedSize,
 				params->m_heapByteOffset,
 				params->m_resource);
@@ -177,7 +186,7 @@ namespace dx12
 		default: SEAssertF("Invalid Type");
 		}
 
-		const uint32_t alignment = GetAlignment(buffer.GetBufferParams().m_dataType);
+		const uint32_t alignment = GetAlignment(bufferParams.m_dataType);
 
 		SEAssert(params->m_heapByteOffset % alignment == 0,
 			"Heap byte offset does not have the correct buffer alignment");
@@ -197,7 +206,7 @@ namespace dx12
 					{
 					// Offset the view within the entire N-frames of resource data
 					.FirstElement = 0,
-					.NumElements = buffer.GetBufferParams().m_numElements,
+					.NumElements = bufferParams.m_numElements,
 					.StructureByteStride = buffer.GetStride(), // Size of the struct in the shader
 					.CounterOffsetInBytes = 0,
 					.Flags = D3D12_BUFFER_UAV_FLAG_NONE,
@@ -211,12 +220,15 @@ namespace dx12
 		}
 
 		// CPU readback:
-		const bool cpuReadbackEnabled = (buffer.GetBufferParams().m_usageMask & re::Buffer::Usage::CPURead) != 0;
+		const bool cpuReadbackEnabled = (bufferParams.m_usageMask & re::Buffer::Usage::CPURead) != 0;
 		if (cpuReadbackEnabled)
 		{
 			for (uint8_t resourceIdx = 0; resourceIdx < numFramesInFlight; resourceIdx++)
 			{
-				params->m_readbackResources.emplace_back(CreateReadbackResource(alignedSize));
+				std::wstring const& readbackDebugName = 
+					buffer.GetWName() + L"_ReadbackBuffer" + std::to_wstring(resourceIdx);
+
+				params->m_readbackResources.emplace_back(CreateReadbackResource(alignedSize, readbackDebugName.c_str()));
 			}
 		}
 
@@ -323,10 +335,6 @@ namespace dx12
 		dx12::CommandList* copyCmdList,
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources)
 	{
-		SEAssert((buffer->GetBufferParams().m_usageMask & re::Buffer::CPUWrite) == 0 &&
-			buffer->GetBufferParams().m_memPoolPreference == re::Buffer::MemoryPoolPreference::Default,
-			"Buffers with CPU writes enabled should be updated by a mapped pointer");
-
 		dx12::Buffer::PlatformParams* params = buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		void const* data = buffer->GetData();

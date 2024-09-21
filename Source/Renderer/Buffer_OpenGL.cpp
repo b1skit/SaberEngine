@@ -87,7 +87,6 @@ namespace opengl
 		}
 		break;
 		case re::Buffer::MemoryPoolPreference::Upload:
-		case re::Buffer::MemoryPoolPreference::Readback:
 		{
 			const GLbitfield access = GL_MAP_WRITE_BIT;
 
@@ -120,6 +119,7 @@ namespace opengl
 			glUnmapNamedBuffer(bufferPlatParams->m_bufferName);
 		}
 		break;
+		default: SEAssertF("Invalid MemoryPoolPreference");
 		}
 	}
 

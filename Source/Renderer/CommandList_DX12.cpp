@@ -931,9 +931,7 @@ namespace dx12
 	void CommandList::CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource)
 	{
 		TransitionResource(srcResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-
-		// Note: The destination resource is (currently) assumed to be a dedicated readback buffer that is always in
-		// the D3D12_RESOURCE_STATE_COPY_DEST state. Thus, we don't record a resource transition barrier for it here.
+		TransitionResource(dstResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 		m_commandList->CopyResource(dstResource, srcResource);
 	}
