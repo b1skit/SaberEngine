@@ -113,7 +113,7 @@ namespace gr
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 				.m_type = re::Buffer::Type::Structured,
-				.m_numElements = numInstances,
+				.m_arraySize = numInstances,
 			});
 
 		return instancedMaterialParams;

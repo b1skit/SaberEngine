@@ -136,7 +136,7 @@ namespace gr
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 					.m_type = re::Buffer::Type::Structured,
-					.m_numElements = maxInstances,
+					.m_arraySize = maxInstances,
 				});
 		}
 		break;
@@ -150,7 +150,7 @@ namespace gr
 		re::Buffer* buffer, MaterialInstanceRenderData const* instanceData, uint32_t baseOffset)
 	{
 		SEAssert(instanceData, "Instance data is null");
-		SEAssert(baseOffset < buffer->GetNumElements(), "Base offset is OOB");
+		SEAssert(baseOffset < buffer->GetArraySize(), "Base offset is OOB");
 		SEAssert(buffer->GetCPUAllocationType() == re::Buffer::CPUAllocation::Mutable,
 			"Only mutable buffers can be partially updated");
 

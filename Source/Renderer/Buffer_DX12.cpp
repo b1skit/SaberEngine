@@ -102,7 +102,7 @@ namespace dx12
 		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
 
 		SEAssert(bufferParams.m_type != re::Buffer::Type::Structured ||
-			bufferParams.m_numElements <= 1024, "Maximum offset of 1024 allowed into an SRV");
+			bufferParams.m_arraySize <= 1024, "Maximum offset of 1024 allowed into an SRV");
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 		SEAssert(!params->m_isCreated, "Buffer is already created");
@@ -206,7 +206,7 @@ namespace dx12
 					{
 					// Offset the view within the entire N-frames of resource data
 					.FirstElement = 0,
-					.NumElements = bufferParams.m_numElements,
+					.NumElements = bufferParams.m_arraySize,
 					.StructureByteStride = buffer.GetStride(), // Size of the struct in the shader
 					.CounterOffsetInBytes = 0,
 					.Flags = D3D12_BUFFER_UAV_FLAG_NONE,

@@ -257,7 +257,7 @@ namespace gr
 		
 		// Create/grow our permanent Transform instance buffers:
 		const bool mustReallocateTransformBuffer = m_instancedTransforms != nullptr && 
-			m_instancedTransforms->GetNumElements() < m_instancedTransformIndexes.size();
+			m_instancedTransforms->GetArraySize() < m_instancedTransformIndexes.size();
 
 		const uint32_t requestedTransformBufferElements = util::RoundUpToNearestMultiple(
 			util::CheckedCast<uint32_t>(m_instancedTransformIndexes.size()),
@@ -272,7 +272,7 @@ namespace gr
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 					.m_type = re::Buffer::Type::Structured,
-					.m_numElements = requestedTransformBufferElements,
+					.m_arraySize = requestedTransformBufferElements,
 				});
 
 			// If we reallocated, re-copy all of the data to the new buffer
@@ -308,7 +308,7 @@ namespace gr
 
 			const bool mustReallocateMaterialBuffer = 
 				matInstMeta.m_instancedMaterials != nullptr &&
-				matInstMeta.m_instancedMaterials->GetNumElements() < matInstMeta.m_instancedMaterialIndexes.size();
+				matInstMeta.m_instancedMaterials->GetArraySize() < matInstMeta.m_instancedMaterialIndexes.size();
 
 			const uint32_t requestedMaterialBufferElements = util::RoundUpToNearestMultiple(
 				util::CheckedCast<uint32_t>(matInstMeta.m_instancedMaterialIndexes.size()),

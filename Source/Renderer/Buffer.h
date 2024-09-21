@@ -62,7 +62,7 @@ namespace re
 			uint8_t m_usageMask = Usage::GPURead | Usage::CPUWrite; // Constant data mapped by CPU, consumed by the GPU
 
 			Type m_type = Type::Type_Invalid;
-			uint32_t m_numElements = 1; // Must be 1 for Constant buffers
+			uint32_t m_arraySize = 1; // Must be 1 for Constant buffers
 		};
 
 
@@ -123,7 +123,7 @@ namespace re
 		uint32_t GetStride() const;
 		CPUAllocation GetCPUAllocationType() const;
 
-		uint32_t GetNumElements() const; // Instanced buffers: How many instances of data does the buffer hold?
+		uint32_t GetArraySize() const; // Instanced buffers: How many instances of data does the buffer hold?
 
 		BufferParams const& GetBufferParams() const;
 
@@ -187,7 +187,7 @@ namespace re
 	std::shared_ptr<re::Buffer> Buffer::Create(
 		std::string const& bufferName, T const* dataArray, BufferParams const& bufferParams)
 	{
-		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_numElements;
+		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
 
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
@@ -236,7 +236,7 @@ namespace re
 	{
 		SEAssert(bufferParams.m_type == re::Buffer::Type::Structured, "Unexpected data type for a buffer array");
 
-		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_numElements;
+		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
 
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
@@ -251,7 +251,7 @@ namespace re
 	std::shared_ptr<re::Buffer> Buffer::CreateUncommittedArray(
 		std::string const& bufferName, BufferParams const& bufferParams)
 	{
-		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_numElements;
+		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
 
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
@@ -287,7 +287,7 @@ namespace re
 
 	inline uint32_t Buffer::GetStride() const
 	{
-		return m_dataByteSize / m_bufferParams.m_numElements;
+		return m_dataByteSize / m_bufferParams.m_arraySize;
 	}
 
 
@@ -297,9 +297,9 @@ namespace re
 	}
 
 
-	inline uint32_t Buffer::GetNumElements() const
+	inline uint32_t Buffer::GetArraySize() const
 	{
-		return m_bufferParams.m_numElements;
+		return m_bufferParams.m_arraySize;
 	}
 
 

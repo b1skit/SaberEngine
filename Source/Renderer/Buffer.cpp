@@ -28,8 +28,8 @@ namespace
 
 		SEAssert(bufferParams.m_type != re::Buffer::Type::Type_Invalid, "Invalid Type");
 
-		SEAssert((bufferParams.m_type == re::Buffer::Type::Constant && bufferParams.m_numElements == 1) ||
-			(bufferParams.m_type == re::Buffer::Type::Structured && bufferParams.m_numElements >= 1),
+		SEAssert((bufferParams.m_type == re::Buffer::Type::Constant && bufferParams.m_arraySize == 1) ||
+			(bufferParams.m_type == re::Buffer::Type::Structured && bufferParams.m_arraySize >= 1),
 			"Invalid number of elements");
 		SEAssert(bufferParams.m_usageMask != 0 &&
 			(bufferParams.m_type != re::Buffer::Type::Constant || 
@@ -37,7 +37,7 @@ namespace
 			"Invalid usage mask");
 
 		SEAssert(bufferParams.m_type != re::Buffer::Type::Constant ||
-			bufferParams.m_numElements == 1,
+			bufferParams.m_arraySize == 1,
 			"Constant buffers only support a single element. Arrays are achieved as a member variable within a "
 			"single constant buffer");
 
@@ -60,7 +60,7 @@ namespace re
 		, m_platformParams(nullptr)
 		, m_isCurrentlyMapped(false)
 	{
-		SEAssert(m_dataByteSize % bufferParams.m_numElements == 0,
+		SEAssert(m_dataByteSize % bufferParams.m_arraySize == 0,
 			"Size must be equally divisible by the number of elements");
 		
 		ValidateBufferParams(m_bufferParams); // _DEBUG only

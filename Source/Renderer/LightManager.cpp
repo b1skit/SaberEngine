@@ -380,7 +380,7 @@ namespace gr
 
 				if (!mustReallocate)
 				{
-					const uint32_t curNumBufferElements = lightMetadata.m_lightData->GetNumElements();
+					const uint32_t curNumBufferElements = lightMetadata.m_lightData->GetArraySize();
 
 					// If the buffer is too small, or if the no. of lights has shrunk by too much, we must reallocate:
 					mustReallocate = lightMetadata.m_numLights > 0 &&
@@ -444,7 +444,7 @@ namespace gr
 							.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 							.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 							.m_type = re::Buffer::Type::Structured,
-							.m_numElements = util::CheckedCast<uint32_t>(lightData.size()),
+							.m_arraySize = util::CheckedCast<uint32_t>(lightData.size()),
 						});
 				}
 				else
@@ -585,7 +585,7 @@ namespace gr
 					"Light ID not registered for the given type");
 
 				const uint32_t lightIdx = lightMetadata.m_renderDataIDToBufferIdx.at(lightID);
-				SEAssert(lightIdx < lightMetadata.m_lightData->GetNumElements(), "Light index is OOB");
+				SEAssert(lightIdx < lightMetadata.m_lightData->GetArraySize(), "Light index is OOB");
 
 				uint32_t shadowIdx = k_invalidShadowIndex;
 				if (shadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
@@ -780,7 +780,7 @@ namespace gr
 				ImGui::Text(std::format("No. of lights: {}", lightMetadata.m_numLights).c_str());
 				ImGui::Text(std::format("LightData Buffer size{}: {}", 
 					lightMetadata.m_numLights == 0 ? " (including dummy)" : "", 
-					lightMetadata.m_lightData->GetNumElements()).c_str());
+					lightMetadata.m_lightData->GetArraySize()).c_str());
 				ImGui::Unindent();
 			};
 
