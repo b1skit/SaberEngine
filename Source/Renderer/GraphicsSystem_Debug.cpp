@@ -451,7 +451,7 @@ namespace gr
 						m_zAxisColor));
 
 				std::shared_ptr<re::Buffer> identityTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-					re::Buffer::Type::Immutable, &k_identity, nullptr);
+					re::Buffer::CPUAllocation::Immutable, &k_identity, nullptr);
 
 				m_worldCoordinateAxisBatch->SetBuffer(identityTransformBuffer);
 			}
@@ -500,7 +500,7 @@ namespace gr
 						m_meshPrimTransformBuffers.emplace(
 							meshPrimRenderDataID, 
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Type::Mutable, 
+								re::Buffer::CPUAllocation::Mutable, 
 								transformData));
 					}
 					else
@@ -619,7 +619,7 @@ namespace gr
 							m_meshBoundingBoxBuffers.emplace(
 								meshID,
 								gr::Transform::CreateInstancedTransformBuffer(
-									re::Buffer::Type::Mutable, boundsItr.GetTransformData()));
+									re::Buffer::CPUAllocation::Mutable, boundsItr.GetTransformData()));
 						}
 						else
 						{
@@ -661,7 +661,7 @@ namespace gr
 					if (m_sceneBoundsTransformBuffer == nullptr)
 					{
 						m_sceneBoundsTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-							re::Buffer::Type::Mutable, boundsItr.GetTransformData());
+							re::Buffer::CPUAllocation::Mutable, boundsItr.GetTransformData());
 					}
 
 					if (m_sceneBoundsBatch == nullptr)
@@ -702,7 +702,7 @@ namespace gr
 					m_cameraAxisTransformBuffers.emplace(
 						camID,
 						gr::Transform::CreateInstancedTransformBuffer(
-						re::Buffer::Type::Mutable, &camWorldMatrix, nullptr));
+						re::Buffer::CPUAllocation::Mutable, &camWorldMatrix, nullptr));
 				}
 				else if (camDataIsDirty)
 				{
@@ -772,7 +772,7 @@ namespace gr
 					{
 						m_cameraFrustumTransformBuffers.at(camID)[faceIdx] =
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Type::Mutable,
+								re::Buffer::CPUAllocation::Mutable,
 								&invViewProjMats.at(faceIdx),
 								nullptr);
 					}
@@ -822,7 +822,7 @@ namespace gr
 						m_deferredLightWireframeTransformBuffers.emplace(
 							pointID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Type::Mutable, &lightTRS, nullptr));
+								re::Buffer::CPUAllocation::Mutable, &lightTRS, nullptr));
 					}
 					else
 					{
@@ -863,7 +863,7 @@ namespace gr
 						m_deferredLightWireframeTransformBuffers.emplace(
 							spotID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Type::Mutable, &lightTRS, nullptr));
+								re::Buffer::CPUAllocation::Mutable, &lightTRS, nullptr));
 					}
 					else
 					{
@@ -909,7 +909,7 @@ namespace gr
 						m_lightCoordinateAxisTransformBuffers.emplace(
 							lightID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Type::Mutable, &lightTR, nullptr));
+								re::Buffer::CPUAllocation::Mutable, &lightTR, nullptr));
 					}
 					else
 					{

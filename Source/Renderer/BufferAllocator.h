@@ -51,16 +51,16 @@ namespace re
 		// buffer in the upload heap, per each of the maximum number of frames in flight.
 		// 
 		// Single-frame resources are stack-allocated from these heaps, AND maintained for a fixed lifetime of N 
-		// frames. We only write into 1 array of each type at a time, thus only need 1 base index per DataType.
+		// frames. We only write into 1 array of each type at a time, thus only need 1 base index per Type.
 		//
 		// We maintain the stack base indexes here, and let the API-layer figure out how to interpret/use it.
 		//
-		uint32_t AdvanceBaseIdx(re::Buffer::DataType, uint32_t alignedSize);
+		uint32_t AdvanceBaseIdx(re::Buffer::Type, uint32_t alignedSize);
 		uint8_t GetWriteIndex() const;
 
 
 	private:
-		std::array<std::atomic<uint32_t>, re::Buffer::DataType::DataType_Count> m_bufferBaseIndexes;
+		std::array<std::atomic<uint32_t>, re::Buffer::Type::Type_Invalid> m_bufferBaseIndexes;
 		uint8_t m_writeIdx;
 
 	
@@ -69,7 +69,7 @@ namespace re
 
 		struct CommitMetadata
 		{
-			Buffer::Type m_type;
+			Buffer::CPUAllocation m_cpuAllocationType;
 			uint32_t m_startIndex;	// Singleframe: Index of 1st byte. Permanent: Commit array index
 			uint32_t m_numBytes;	// Total number of allocated bytes
 		};
@@ -152,7 +152,7 @@ namespace re
 	protected: // Interfaces for the Buffer friend class:
 		friend class re::Buffer;
 
-		void Allocate(Handle uniqueID, uint32_t numBytes, Buffer::Type bufferType); // Called once at creation
+		void Allocate(Handle uniqueID, uint32_t numBytes, Buffer::CPUAllocation); // Called once at creation
 		void Commit(Handle uniqueID, void const* data);	// Update the buffer data
 		void Commit(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
 		

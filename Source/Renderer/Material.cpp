@@ -103,7 +103,7 @@ namespace gr
 
 
 	std::shared_ptr<re::Buffer> Material::CreateInstancedBuffer(
-		re::Buffer::Type bufferType, 
+		re::Buffer::CPUAllocation bufferAlloc, 
 		std::vector<MaterialInstanceRenderData const*> const& instanceData)
 	{
 		SEAssert(!instanceData.empty(), "Instance data is empty");
@@ -113,7 +113,7 @@ namespace gr
 		{
 		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
 		{
-			return gr::Material_GLTF::CreateInstancedBuffer(bufferType, instanceData);
+			return gr::Material_GLTF::CreateInstancedBuffer(bufferAlloc, instanceData);
 		}
 		break;
 		default:
@@ -132,10 +132,10 @@ namespace gr
 			return re::Buffer::CreateUncommittedArray<InstancedPBRMetallicRoughnessData>(
 				InstancedPBRMetallicRoughnessData::s_shaderName,
 				re::Buffer::BufferParams{
-					.m_type = re::Buffer::Type::Mutable,
+					.m_cpuAllocationType = re::Buffer::CPUAllocation::Mutable,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-					.m_dataType = re::Buffer::DataType::Structured,
+					.m_type = re::Buffer::Type::Structured,
 					.m_numElements = maxInstances,
 				});
 		}
@@ -151,7 +151,7 @@ namespace gr
 	{
 		SEAssert(instanceData, "Instance data is null");
 		SEAssert(baseOffset < buffer->GetNumElements(), "Base offset is OOB");
-		SEAssert(buffer->GetType() == re::Buffer::Type::Mutable,
+		SEAssert(buffer->GetCPUAllocationType() == re::Buffer::CPUAllocation::Mutable,
 			"Only mutable buffers can be partially updated");
 
 		const gr::Material::MaterialEffect materialType = instanceData->m_matEffect;

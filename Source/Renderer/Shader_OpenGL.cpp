@@ -486,9 +486,9 @@ namespace opengl
 		const GLenum properties = GL_BUFFER_BINDING;
 
 		re::Buffer::PlatformParams const* bufferPlatformParams = buffer.GetPlatformParams();
-		switch (buffer.GetBufferParams().m_dataType)
+		switch (buffer.GetBufferParams().m_type)
 		{
-		case re::Buffer::DataType::Constant: // Bind our single-element buffers as UBOs
+		case re::Buffer::Type::Constant: // Bind our single-element buffers as UBOs
 		{
 			// Find the buffer binding index via introspection
 			const GLint uniformBlockIdx = glGetProgramResourceIndex(
@@ -517,7 +517,7 @@ namespace opengl
 			}
 		}
 		break;
-		case re::Buffer::DataType::Structured: // Bind our array buffers as SSBOs, as they support dynamic indexing
+		case re::Buffer::Type::Structured: // Bind our array buffers as SSBOs, as they support dynamic indexing
 		{
 			// Find the buffer binding index via introspection
 			const GLint ssboIdx = glGetProgramResourceIndex(

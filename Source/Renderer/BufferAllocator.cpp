@@ -48,8 +48,8 @@ namespace re
 		, m_currentFrameNum(k_invalidFrameNum)
 		, m_isValid(false)
 	{
-		// We maintain N stack base indexes for each DataType; Initialize them to 0
-		for (uint8_t dataType = 0; dataType < re::Buffer::DataType::DataType_Count; dataType++)
+		// We maintain N stack base indexes for each Type; Initialize them to 0
+		for (uint8_t dataType = 0; dataType < re::Buffer::Type::Type_Invalid; dataType++)
 		{
 			m_bufferBaseIndexes[dataType].store(0);
 		}
@@ -178,8 +178,8 @@ namespace re
 
 	void BufferAllocator::RegisterAndAllocateBuffer(std::shared_ptr<re::Buffer> buffer, uint32_t numBytes)
 	{
-		const Buffer::Type bufferType = buffer->GetType();
-		SEAssert(bufferType != re::Buffer::Type::Type_Count, "Invalid Type");
+		const Buffer::CPUAllocation bufferAlloc = buffer->GetCPUAllocationType();
+		SEAssert(bufferAlloc != re::Buffer::CPUAllocation::CPUAllocation_Invalid, "Invalid CPUAllocation");
 
 		const Handle uniqueID = buffer->GetUniqueID();
 
@@ -190,32 +190,32 @@ namespace re
 				allocation.m_handleToPtr[uniqueID] = buffer;
 			};
 
-		switch (bufferType)
+		switch (bufferAlloc)
 		{
-		case Buffer::Type::Mutable:
+		case Buffer::CPUAllocation::Mutable:
 		{
 			RecordHandleToPointer(m_mutableAllocations);
 		}
 		break;
-		case Buffer::Type::Immutable:
+		case Buffer::CPUAllocation::Immutable:
 		{
 			RecordHandleToPointer(m_immutableAllocations);
 		}
 		break;
-		case Buffer::Type::SingleFrame:
+		case Buffer::CPUAllocation::SingleFrame:
 		{
 			RecordHandleToPointer(m_singleFrameAllocations);
 		}
 		break;
-		default: SEAssertF("Invalid Type");
+		default: SEAssertF("Invalid CPUAllocation");
 		}
 
 		// Pre-allocate our buffer so it's ready to commit to:
-		Allocate(uniqueID, numBytes, bufferType);
+		Allocate(uniqueID, numBytes, bufferAlloc);
 	}
 
 
-	void BufferAllocator::Allocate(Handle uniqueID, uint32_t numBytes, Buffer::Type bufferType)
+	void BufferAllocator::Allocate(Handle uniqueID, uint32_t numBytes, Buffer::CPUAllocation bufferAlloc)
 	{
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
@@ -242,9 +242,9 @@ namespace re
 					allocation.m_currentAllocationsByteSize);
 			};
 
-		switch (bufferType)
+		switch (bufferAlloc)
 		{
-		case Buffer::Type::Mutable:
+		case Buffer::CPUAllocation::Mutable:
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
@@ -255,7 +255,7 @@ namespace re
 			}
 		}
 		break;
-		case Buffer::Type::Immutable:
+		case Buffer::CPUAllocation::Immutable:
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
@@ -270,7 +270,7 @@ namespace re
 			}
 		}
 		break;
-		case Buffer::Type::SingleFrame:
+		case Buffer::CPUAllocation::SingleFrame:
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
@@ -285,13 +285,13 @@ namespace re
 			}
 		}
 		break;
-		default: SEAssertF("Invalid Type");
+		default: SEAssertF("Invalid CPUAllocation");
 		}
 
 		// Update our ID -> data tracking table:
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
-			m_handleToTypeAndByteIndex.insert({ uniqueID, CommitMetadata{bufferType, dataIndex, numBytes} });
+			m_handleToTypeAndByteIndex.insert({ uniqueID, CommitMetadata{bufferAlloc, dataIndex, numBytes} });
 		}
 	}
 
@@ -300,7 +300,7 @@ namespace re
 	{
 		uint32_t startIdx;
 		uint32_t numBytes;
-		Buffer::Type bufferType;
+		Buffer::CPUAllocation bufferAlloc;
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
@@ -311,18 +311,18 @@ namespace re
 
 			startIdx = result->second.m_startIndex;
 			numBytes = result->second.m_numBytes;
-			bufferType = result->second.m_type;
+			bufferAlloc = result->second.m_cpuAllocationType;
 		}
 
 		// Copy the data to our pre-allocated region.
-		switch (bufferType)
+		switch (bufferAlloc)
 		{
-		case Buffer::Type::Mutable:
+		case Buffer::CPUAllocation::Mutable:
 		{
 			Commit(uniqueID, data, numBytes, 0);
 		}
 		break;
-		case Buffer::Type::Immutable:
+		case Buffer::CPUAllocation::Immutable:
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
@@ -331,7 +331,7 @@ namespace re
 			}
 		}
 		break;
-		case Buffer::Type::SingleFrame:
+		case Buffer::CPUAllocation::SingleFrame:
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
@@ -340,11 +340,11 @@ namespace re
 			}
 		}
 		break;
-		default: SEAssertF("Invalid Type");
+		default: SEAssertF("Invalid CPUAllocation");
 		}
 
 		// Add the committed buffer to our dirty list, so we can buffer the data when required
-		if (bufferType != Buffer::Type::Mutable) // Mutables have their own commit path: They add themselves there
+		if (bufferAlloc != Buffer::CPUAllocation::Mutable) // Mutables have their own commit path: They add themselves there
 		{
 			std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
 			m_dirtyBuffers.emplace(uniqueID);
@@ -364,7 +364,7 @@ namespace re
 			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
 
 			SEAssert(result != m_handleToTypeAndByteIndex.end(), "Buffer with this ID has not been allocated");
-			SEAssert(result->second.m_type == re::Buffer::Type::Mutable, "Can only partially commit to mutable buffers");
+			SEAssert(result->second.m_cpuAllocationType == re::Buffer::CPUAllocation::Mutable, "Can only partially commit to mutable buffers");
 			
 			startIdx = result->second.m_startIndex;
 			totalBytes = result->second.m_numBytes;
@@ -547,7 +547,7 @@ namespace re
 
 	void BufferAllocator::GetData(Handle uniqueID, void const** out_data) const
 	{
-		Buffer::Type bufferType;
+		Buffer::CPUAllocation bufferAlloc;
 		uint32_t startIdx = -1;
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
@@ -555,16 +555,16 @@ namespace re
 			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
 			SEAssert(result != m_handleToTypeAndByteIndex.end(), "Buffer with this ID has not been allocated");
 
-			bufferType = result->second.m_type;
+			bufferAlloc = result->second.m_cpuAllocationType;
 			startIdx = result->second.m_startIndex;
 		}
 
 		// Note: This is not thread safe, as the pointer will become stale if m_committed is resized. This should be
 		// fine though, as the BufferAllocator is simply a temporary staging ground for data about to be copied
 		// to GPU heaps. Copies in/resizing should all be done before this function is ever called
-		switch (bufferType)
+		switch (bufferAlloc)
 		{
-		case Buffer::Type::Mutable:
+		case Buffer::CPUAllocation::Mutable:
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
@@ -573,7 +573,7 @@ namespace re
 			}
 		}
 		break;
-		case Buffer::Type::Immutable:
+		case Buffer::CPUAllocation::Immutable:
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
@@ -582,7 +582,7 @@ namespace re
 			}
 		}
 		break;
-		case Buffer::Type::SingleFrame:
+		case Buffer::CPUAllocation::SingleFrame:
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
@@ -591,14 +591,14 @@ namespace re
 			}
 		}
 		break;
-		default: SEAssertF("Invalid Type");
+		default: SEAssertF("Invalid CPUAllocation");
 		}
 	}
 
 
 	void BufferAllocator::Deallocate(Handle uniqueID)
 	{
-		Buffer::Type bufferType = re::Buffer::Type::Type_Count;
+		Buffer::CPUAllocation bufferAlloc = re::Buffer::CPUAllocation::CPUAllocation_Invalid;
 		uint32_t startIdx = -1;
 		uint32_t numBytes = -1;
 		{
@@ -607,7 +607,7 @@ namespace re
 			auto const& buffer = m_handleToTypeAndByteIndex.find(uniqueID);
 			SEAssert(buffer != m_handleToTypeAndByteIndex.end(), "Cannot deallocate a buffer that does not exist");
 
-			bufferType = buffer->second.m_type;
+			bufferAlloc = buffer->second.m_cpuAllocationType;
 			startIdx = buffer->second.m_startIndex;
 			numBytes = buffer->second.m_numBytes;
 		}
@@ -625,9 +625,9 @@ namespace re
 
 				allocation.m_currentAllocationsByteSize -= numBytes;
 			};
-		switch (bufferType)
+		switch (bufferAlloc)
 		{
-		case Buffer::Type::Mutable:
+		case Buffer::CPUAllocation::Mutable:
 		{
 			ProcessErasure(m_mutableAllocations);			
 			{
@@ -636,17 +636,17 @@ namespace re
 			}
 		}
 		break;
-		case Buffer::Type::Immutable:
+		case Buffer::CPUAllocation::Immutable:
 		{
 			ProcessErasure(m_immutableAllocations);
 		}
 		break;
-		case Buffer::Type::SingleFrame:
+		case Buffer::CPUAllocation::SingleFrame:
 		{
 			ProcessErasure(m_singleFrameAllocations);
 		}
 		break;
-		default: SEAssertF("Invalid Type");
+		default: SEAssertF("Invalid CPUAllocation");
 		}
 
 		// Remove the handle from our map:
@@ -658,7 +658,7 @@ namespace re
 		}
 
 		// Finally, free any permanently committed memory:
-		if (bufferType == Buffer::Type::Mutable)
+		if (bufferAlloc == Buffer::CPUAllocation::Mutable)
 		{
 			{
 				std::scoped_lock lock(m_mutableAllocations.m_mutex, m_handleToTypeAndByteIndexMutex);
@@ -679,7 +679,7 @@ namespace re
 					bool didUpdate = false;
 					for (auto& entry : m_handleToTypeAndByteIndex)
 					{
-						if (entry.second.m_type == bufferType && entry.second.m_startIndex == idxToMove)
+						if (entry.second.m_cpuAllocationType == bufferAlloc && entry.second.m_startIndex == idxToMove)
 						{
 							entry.second.m_startIndex = util::CheckedCast<uint32_t>(idxToReplace);
 							didUpdate = true;
@@ -730,17 +730,17 @@ namespace re
 
 			for (Handle currentHandle : m_dirtyBuffers)
 			{
-				Buffer::Type bufferType = Buffer::Type::Type_Count;
+				Buffer::CPUAllocation bufferAlloc = Buffer::CPUAllocation::CPUAllocation_Invalid;
 				{
 					std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
-					bufferType = m_handleToTypeAndByteIndex.find(currentHandle)->second.m_type;
+					bufferAlloc = m_handleToTypeAndByteIndex.find(currentHandle)->second.m_cpuAllocationType;
 				}
 
 				// NOTE: Getting the mutexes in this block below is a potential deadlock risk as we already hold the
 				// m_dirtyBuffersMutex. It's safe for now, but leaving this comment here in case things change...
-				switch (bufferType)
+				switch (bufferAlloc)
 				{
-				case Buffer::Type::Mutable:
+				case Buffer::CPUAllocation::Mutable:
 				{
 					std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
 
@@ -800,7 +800,7 @@ namespace re
 					}
 				}
 				break;
-				case Buffer::Type::Immutable:
+				case Buffer::CPUAllocation::Immutable:
 				{
 					SEAssert(m_immutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
 					re::Buffer const* currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
@@ -828,12 +828,12 @@ namespace re
 					}
 				}
 				break;
-				case Buffer::Type::SingleFrame:
+				case Buffer::CPUAllocation::SingleFrame:
 				{
 					BufferTemporaryData(m_singleFrameAllocations, currentHandle);
 				}
 				break;
-				default: SEAssertF("Invalid Type");
+				default: SEAssertF("Invalid CPUAllocation");
 				}
 			}
 
@@ -865,7 +865,7 @@ namespace re
 			m_writeIdx = (m_writeIdx + 1) % m_numFramesInFlight;
 
 			// Reset the stack base index back to 0 for each type of shared buffer:
-			for (uint8_t dataType = 0; dataType < re::Buffer::DataType::DataType_Count; dataType++)
+			for (uint8_t dataType = 0; dataType < re::Buffer::Type::Type_Invalid; dataType++)
 			{
 				m_bufferBaseIndexes[dataType].store(0);
 			}
@@ -946,7 +946,7 @@ namespace re
 	}
 
 
-	uint32_t BufferAllocator::AdvanceBaseIdx(re::Buffer::DataType dataType, uint32_t alignedSize)
+	uint32_t BufferAllocator::AdvanceBaseIdx(re::Buffer::Type dataType, uint32_t alignedSize)
 	{
 		// Atomically advance the stack base index for the next call, and return the base index for the current one
 		const uint32_t allocationBaseIdx = m_bufferBaseIndexes[dataType].fetch_add(alignedSize);

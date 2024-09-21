@@ -17,12 +17,12 @@ namespace
 	constexpr size_t k_batchBufferIDsReserveAmount = 10;
 
 
-	void ValidateBufferLifetimeCompatibility(re::Lifetime liftime, re::Buffer::Type bufferType)
+	void ValidateBufferLifetimeCompatibility(re::Lifetime liftime, re::Buffer::CPUAllocation bufferAlloc)
 	{
 #if defined(_DEBUG)
 		SEAssert(liftime == re::Lifetime::SingleFrame ||
 			(liftime == re::Lifetime::Permanent &&
-			(bufferType == re::Buffer::Type::Mutable || bufferType == re::Buffer::Type::Immutable)),
+			(bufferAlloc == re::Buffer::CPUAllocation::Mutable || bufferAlloc == re::Buffer::CPUAllocation::Immutable)),
 			"Trying to set a buffer with a mismatching lifetime. Permanent batches cannot (currently) hold "
 			"single frame buffers, as they'd incorrectly maintain their life beyond the frame. Single frame "
 			"batches can hold any type of buffers (but should not be responsible for the lifetime of a "
@@ -360,7 +360,7 @@ namespace re
 #if defined(_DEBUG)
 		for (auto const& buf : result.m_batchBuffers)
 		{
-			ValidateBufferLifetimeCompatibility(result.m_lifetime, buf->GetType());
+			ValidateBufferLifetimeCompatibility(result.m_lifetime, buf->GetCPUAllocationType());
 		}
 #endif
 
@@ -574,7 +574,7 @@ namespace re
 	{
 		SEAssert(buffer != nullptr, "Cannot set a null buffer");
 
-		ValidateBufferLifetimeCompatibility(m_lifetime, buffer->GetType());
+		ValidateBufferLifetimeCompatibility(m_lifetime, buffer->GetCPUAllocationType());
 
 #if defined(_DEBUG)
 		for (auto const& existingBuffer : m_batchBuffers)

@@ -631,22 +631,22 @@ namespace re
 
 
 	std::shared_ptr<re::Buffer> TextureTargetSet::GetCreateTargetParamsBuffer(
-		re::Buffer::Type bufferType /*= re::Buffer::Type::Mutable*/)
+		re::Buffer::CPUAllocation bufferAlloc /*= re::Buffer::CPUAllocation::Mutable*/)
 	{
 		SEAssert(HasTargets(),
 			"Trying to get or create the TargetParams buffer, but no targets have been added");
 
-		SEAssert(bufferType != re::Buffer::Immutable,
+		SEAssert(bufferAlloc != re::Buffer::Immutable,
 			"The TextureTargetSet TargetData Buffer cannot be of Immutable type, as we delay committing buffer data");
 
 		if (m_targetParamsBuffer == nullptr)
 		{
 			m_targetParamsBuffer = re::Buffer::CreateUncommitted<TargetData>(TargetData::s_shaderName, 
 				re::Buffer::BufferParams{
-					.m_type = bufferType,
+					.m_cpuAllocationType = bufferAlloc,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-					.m_dataType = re::Buffer::DataType::Constant,
+					.m_type = re::Buffer::Type::Constant,
 				});
 		}
 

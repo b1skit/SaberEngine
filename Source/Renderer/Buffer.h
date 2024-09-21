@@ -22,21 +22,21 @@ namespace re
 	class Buffer : public virtual core::INamedObject
 	{
 	public:
-		enum Type : uint8_t
+		enum CPUAllocation : uint8_t
 		{
 			Mutable,		// Permanent, can only be modified by the CPU
 			Immutable,		// Permanent, can only be modified by the GPU
 			SingleFrame,	// Single frame, immutable once committed by the CPU
 
-			Type_Count
+			CPUAllocation_Invalid
 		};
 
-		enum DataType : uint8_t
+		enum Type : uint8_t
 		{
 			Constant,
 			Structured,
 
-			DataType_Count
+			Type_Invalid
 		};
 
 		enum class MemoryPoolPreference : uint8_t
@@ -48,20 +48,20 @@ namespace re
 		enum Usage : uint8_t
 		{
 			GPURead		= 1 << 0,	// Default
-			GPUWrite	= 1 << 1,	// Buffer::Type::Immutable only (DX12: UAV, OpenGL: SSBO)
+			GPUWrite	= 1 << 1,	// Buffer::CPUAllocation::Immutable only (DX12: UAV, OpenGL: SSBO)
 			CPURead		= 1 << 2,	// CPU readback from the GPU
 			CPUWrite	= 1 << 3,	// CPU-mappable for writing (i.e. to the upload heap). GPUWrites cannot be enabled
 		};
 
 		struct BufferParams
 		{
-			Type m_type = Type::Type_Count;
+			CPUAllocation m_cpuAllocationType = CPUAllocation::CPUAllocation_Invalid;
 
 			MemoryPoolPreference m_memPoolPreference = MemoryPoolPreference::Default;
 
 			uint8_t m_usageMask = Usage::GPURead | Usage::CPUWrite; // Constant data mapped by CPU, consumed by the GPU
 
-			DataType m_dataType = DataType::DataType_Count;
+			Type m_type = Type::Type_Invalid;
 			uint32_t m_numElements = 1; // Must be 1 for Constant buffers
 		};
 
@@ -121,7 +121,7 @@ namespace re
 		void GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const;
 		uint32_t GetSize() const;
 		uint32_t GetStride() const;
-		Type GetType() const;
+		CPUAllocation GetCPUAllocationType() const;
 
 		uint32_t GetNumElements() const; // Instanced buffers: How many instances of data does the buffer hold?
 
@@ -234,7 +234,7 @@ namespace re
 	std::shared_ptr<re::Buffer> Buffer::CreateArray(
 		std::string const& bufferName, T const* dataArray, BufferParams const& bufferParams)
 	{
-		SEAssert(bufferParams.m_dataType == re::Buffer::DataType::Structured, "Unexpected data type for a buffer array");
+		SEAssert(bufferParams.m_type == re::Buffer::Type::Structured, "Unexpected data type for a buffer array");
 
 		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_numElements;
 
@@ -291,9 +291,9 @@ namespace re
 	}
 
 
-	inline Buffer::Type Buffer::GetType() const
+	inline Buffer::CPUAllocation Buffer::GetCPUAllocationType() const
 	{
-		return m_bufferParams.m_type;
+		return m_bufferParams.m_cpuAllocationType;
 	}
 
 

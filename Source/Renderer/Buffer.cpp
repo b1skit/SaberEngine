@@ -10,38 +10,38 @@ namespace
 	void ValidateBufferParams(re::Buffer::BufferParams const& bufferParams)
 	{
 #if defined(_DEBUG)
-		SEAssert(bufferParams.m_type != re::Buffer::Type::Type_Count, "Invalid Type");
+		SEAssert(bufferParams.m_cpuAllocationType != re::Buffer::CPUAllocation::CPUAllocation_Invalid, "Invalid CPUAllocation");
 
 		SEAssert(bufferParams.m_memPoolPreference != re::Buffer::MemoryPoolPreference::Upload ||
 			((bufferParams.m_usageMask & re::Buffer::Usage::GPURead) &&
 				(bufferParams.m_usageMask & re::Buffer::Usage::CPUWrite)),
 			"Buffers in the upload heap must be GPU-readable and CPU-writeable");
 
-		SEAssert(bufferParams.m_type != re::Buffer::Type::SingleFrame ||
+		SEAssert(bufferParams.m_cpuAllocationType != re::Buffer::CPUAllocation::SingleFrame ||
 			bufferParams.m_memPoolPreference == re::Buffer::MemoryPoolPreference::Upload,
 			"We currently expect single frame resources to be on the upload heap. This is NOT mandatory, we just need "
 			"to implement support at the API level (i.e. BufferAllocator_DX12.h/.cpp)");
 
-		SEAssert(bufferParams.m_type == re::Buffer::Type::Immutable ||
+		SEAssert(bufferParams.m_cpuAllocationType == re::Buffer::CPUAllocation::Immutable ||
 			(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) == 0,
 			"Only GPU-writable buffers can use the immutable allocator staging memory");
 
-		SEAssert(bufferParams.m_dataType != re::Buffer::DataType::DataType_Count, "Invalid DataType");
+		SEAssert(bufferParams.m_type != re::Buffer::Type::Type_Invalid, "Invalid Type");
 
-		SEAssert((bufferParams.m_dataType == re::Buffer::DataType::Constant && bufferParams.m_numElements == 1) ||
-			(bufferParams.m_dataType == re::Buffer::DataType::Structured && bufferParams.m_numElements >= 1),
+		SEAssert((bufferParams.m_type == re::Buffer::Type::Constant && bufferParams.m_numElements == 1) ||
+			(bufferParams.m_type == re::Buffer::Type::Structured && bufferParams.m_numElements >= 1),
 			"Invalid number of elements");
 		SEAssert(bufferParams.m_usageMask != 0 &&
-			(bufferParams.m_dataType != re::Buffer::DataType::Constant || 
+			(bufferParams.m_type != re::Buffer::Type::Constant || 
 				((bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) == 0)),
 			"Invalid usage mask");
 
-		SEAssert(bufferParams.m_dataType != re::Buffer::DataType::Constant ||
+		SEAssert(bufferParams.m_type != re::Buffer::Type::Constant ||
 			bufferParams.m_numElements == 1,
 			"Constant buffers only support a single element. Arrays are achieved as a member variable within a "
 			"single constant buffer");
 
-		SEAssert((bufferParams.m_type != re::Buffer::Type::Immutable ||
+		SEAssert((bufferParams.m_cpuAllocationType != re::Buffer::CPUAllocation::Immutable ||
 			(bufferParams.m_usageMask & re::Buffer::Usage::GPURead) != 0),
 			"GPU reads must be enabled for immutable buffers");
 #endif
@@ -96,7 +96,7 @@ namespace re
 	{
 		SEAssert(typeIDHash == m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
-		SEAssert(m_bufferParams.m_type == Type::Mutable, "Cannot set data of an immutable buffer");
+		SEAssert(m_bufferParams.m_cpuAllocationType == CPUAllocation::Mutable, "Cannot set data of an immutable buffer");
 
 		re::Context::Get()->GetBufferAllocator()->Commit(GetUniqueID(), data);
 		
@@ -108,9 +108,9 @@ namespace re
 	{
 		SEAssert(typeIDHash == m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
-		SEAssert(m_bufferParams.m_type == re::Buffer::Type::Mutable,
+		SEAssert(m_bufferParams.m_cpuAllocationType == re::Buffer::CPUAllocation::Mutable,
 			"Only mutable buffers can be partially updated");
-		SEAssert(m_bufferParams.m_dataType == DataType::Structured,
+		SEAssert(m_bufferParams.m_type == Type::Structured,
 			"Only structured buffers can be partially updated");
 
 		re::Context::Get()->GetBufferAllocator()->Commit(GetUniqueID(), data, numBytes, dstBaseOffset);

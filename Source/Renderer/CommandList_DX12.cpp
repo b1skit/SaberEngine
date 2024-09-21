@@ -308,9 +308,9 @@ namespace dx12
 			bool transitionResource = false;
 			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
 
-			switch (buffer->GetBufferParams().m_dataType)
+			switch (buffer->GetBufferParams().m_type)
 			{
-			case re::Buffer::DataType::Constant:
+			case re::Buffer::Type::Constant:
 			{
 				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
 					"Unexpected root signature type");
@@ -327,7 +327,7 @@ namespace dx12
 				transitionResource = false;
 			}
 			break;
-			case re::Buffer::DataType::Structured:
+			case re::Buffer::Type::Structured:
 			{
 				switch (rootSigEntry->m_type)
 				{

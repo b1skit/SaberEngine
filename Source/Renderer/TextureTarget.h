@@ -269,7 +269,7 @@ namespace re
 		uint64_t GetTargetSetSignature(); 
 		uint64_t GetTargetSetSignature() const;
 
-		std::shared_ptr<re::Buffer> GetCreateTargetParamsBuffer(re::Buffer::Type = re::Buffer::Type::Mutable);
+		std::shared_ptr<re::Buffer> GetCreateTargetParamsBuffer(re::Buffer::CPUAllocation = re::Buffer::CPUAllocation::Mutable);
 
 
 	private: // Use the object Create factories instead

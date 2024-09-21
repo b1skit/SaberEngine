@@ -149,10 +149,10 @@ namespace gr
 			CubemapShadowRenderData::s_shaderName,
 			cubemapShadowParams,
 			re::Buffer::BufferParams{
-				.m_type = re::Buffer::Type::Mutable,
+				.m_cpuAllocationType = re::Buffer::CPUAllocation::Mutable,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_dataType = re::Buffer::DataType::Constant,
+				.m_type = re::Buffer::Type::Constant,
 			});
 
 		shadowStage->AddPermanentBuffer(cubeShadowBuf);
@@ -186,10 +186,10 @@ namespace gr
 			CameraData::s_shaderName,
 			shadowCamData.m_cameraParams,
 			re::Buffer::BufferParams{
-				.m_type = re::Buffer::Type::Mutable,
+				.m_cpuAllocationType = re::Buffer::CPUAllocation::Mutable,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_dataType = re::Buffer::DataType::Constant,
+				.m_type = re::Buffer::Type::Constant,
 			});
 
 		shadowStage->AddPermanentBuffer(shadowCamParams);

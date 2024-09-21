@@ -19,7 +19,7 @@ using Microsoft::WRL::ComPtr;
 namespace dx12
 {
 	void BufferAllocator::GetSubAllocation(
-		re::Buffer::DataType dataType, 
+		re::Buffer::Type dataType, 
 		uint64_t alignedSize, 
 		uint64_t& heapOffsetOut,
 		Microsoft::WRL::ComPtr<ID3D12Resource>& resourcePtrOut)
@@ -28,22 +28,22 @@ namespace dx12
 
 		switch (dataType)
 		{
-		case re::Buffer::DataType::Constant:
+		case re::Buffer::Type::Constant:
 		{
 			SEAssert(alignedSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
 			resourcePtrOut = m_sharedConstantBufferResources[writeIdx];
 		}
 		break;
-		case re::Buffer::DataType::Structured:
+		case re::Buffer::Type::Structured:
 		{
 			SEAssert(alignedSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
 			resourcePtrOut = m_sharedStructuredBufferResources[writeIdx];
 		}
 		break;
-		default: SEAssertF("Invalid DataType");
+		default: SEAssertF("Invalid Type");
 		}
 
-		// Our heap offset is the base index of the stack we've allocated for each DataType
+		// Our heap offset is the base index of the stack we've allocated for each Type
 		heapOffsetOut = AdvanceBaseIdx(dataType, util::CheckedCast<uint32_t>(alignedSize));
 	}
 

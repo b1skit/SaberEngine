@@ -156,10 +156,10 @@ namespace gr
 			BRDFIntegrationData::s_shaderName,
 			brdfIntegrationParams,
 			re::Buffer::BufferParams{
-				.m_type = re::Buffer::Type::SingleFrame,
+				.m_cpuAllocationType = re::Buffer::CPUAllocation::SingleFrame,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_dataType = re::Buffer::DataType::Constant,
+				.m_type = re::Buffer::Type::Constant,
 			});
 		brdfStage->AddSingleFrameBuffer(brdfIntegrationBuf);
 
@@ -217,10 +217,10 @@ namespace gr
 				IEMPMREMGenerationData::s_shaderName,
 				iemGenerationParams,
 				re::Buffer::BufferParams{
-					.m_type = re::Buffer::Type::SingleFrame,
+					.m_cpuAllocationType = re::Buffer::CPUAllocation::SingleFrame,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-					.m_dataType = re::Buffer::DataType::Constant,
+					.m_type = re::Buffer::Type::Constant,
 				});
 			iemStage->AddSingleFrameBuffer(iemGenerationBuffer);
 
@@ -300,10 +300,10 @@ namespace gr
 					IEMPMREMGenerationData::s_shaderName,
 					pmremGenerationParams,
 					re::Buffer::BufferParams{
-						.m_type = re::Buffer::Type::SingleFrame,
+						.m_cpuAllocationType = re::Buffer::CPUAllocation::SingleFrame,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-						.m_dataType = re::Buffer::DataType::Constant,
+						.m_type = re::Buffer::Type::Constant,
 					});
 				pmremStage->AddSingleFrameBuffer(pmremGenerationBuffer);
 
@@ -392,10 +392,10 @@ namespace gr
 					CameraData::s_shaderName,
 					cubemapCamParams,
 					re::Buffer::BufferParams{
-						.m_type = re::Buffer::Type::Immutable,
+						.m_cpuAllocationType = re::Buffer::CPUAllocation::Immutable,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-						.m_dataType = re::Buffer::DataType::Constant,
+						.m_type = re::Buffer::Type::Constant,
 					});
 			}
 		}
@@ -680,10 +680,10 @@ namespace gr
 						AmbientLightData::s_shaderName,
 						ambientLightParamsData,
 						re::Buffer::BufferParams{
-							.m_type = re::Buffer::Type::Mutable,
+							.m_cpuAllocationType = re::Buffer::CPUAllocation::Mutable,
 							.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 							.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-							.m_dataType = re::Buffer::DataType::Constant,
+							.m_type = re::Buffer::Type::Constant,
 						});
 
 					m_ambientLightData.emplace(ambientData.m_renderDataID,
@@ -808,7 +808,7 @@ namespace gr
 				gr::Transform::RenderData const& transformData = lightItr.GetTransformData();
 
 				std::shared_ptr<re::Buffer> transformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-					re::Buffer::Type::Mutable, transformData);
+					re::Buffer::CPUAllocation::Mutable, transformData);
 
 				punctualLightData.emplace(
 					lightItr.GetRenderDataID(),

@@ -36,7 +36,7 @@ namespace gr
 
 
 	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
-		re::Buffer::Type bufferType, glm::mat4 const* model, glm::mat4* transposeInvModel)
+		re::Buffer::CPUAllocation bufferAlloc, glm::mat4 const* model, glm::mat4* transposeInvModel)
 	{
 		InstancedTransformData const& transformData = 
 			CreateInstancedTransformData(model, transposeInvModel);
@@ -45,17 +45,17 @@ namespace gr
 			InstancedTransformData::s_shaderName,
 			&transformData,
 			re::Buffer::BufferParams{
-				.m_type = bufferType,
+				.m_cpuAllocationType = bufferAlloc,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_dataType = re::Buffer::DataType::Structured,
+				.m_type = re::Buffer::Type::Structured,
 				.m_numElements = 1,
 			});
 	}
 
 
 	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
-		re::Buffer::Type bufferType, gr::Transform::RenderData const& transformData)
+		re::Buffer::CPUAllocation bufferAlloc, gr::Transform::RenderData const& transformData)
 	{
 		InstancedTransformData const& instancedMeshData = 
 			CreateInstancedTransformData(transformData);
@@ -64,17 +64,17 @@ namespace gr
 			InstancedTransformData::s_shaderName,
 			&instancedMeshData,
 			re::Buffer::BufferParams{
-				.m_type = bufferType,
+				.m_cpuAllocationType = bufferAlloc,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_dataType = re::Buffer::DataType::Structured,
+				.m_type = re::Buffer::Type::Structured,
 				.m_numElements = 1,
 			});
 	}
 
 
 	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
-		re::Buffer::Type bufferType, std::vector<gr::Transform::RenderData const*> const& transformRenderData)
+		re::Buffer::CPUAllocation bufferAlloc, std::vector<gr::Transform::RenderData const*> const& transformRenderData)
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(transformRenderData.size());
 
@@ -90,10 +90,10 @@ namespace gr
 			InstancedTransformData::s_shaderName,
 			&instancedMeshData[0],
 			re::Buffer::BufferParams{
-				.m_type = bufferType,
+				.m_cpuAllocationType = bufferAlloc,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_dataType = re::Buffer::DataType::Structured,
+				.m_type = re::Buffer::Type::Structured,
 				.m_numElements = numInstances,
 			});
 

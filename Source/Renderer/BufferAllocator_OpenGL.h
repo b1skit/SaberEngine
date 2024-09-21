@@ -21,7 +21,7 @@ namespace opengl
 
 
 	public: // OpenGL-specific functionality:
-		void GetSubAllocation(re::Buffer::DataType, uint32_t size, GLuint& bufferNameOut, GLintptr& baseOffsetOut);
+		void GetSubAllocation(re::Buffer::Type, uint32_t size, GLuint& bufferNameOut, GLintptr& baseOffsetOut);
 
 
 	private:

@@ -11,7 +11,7 @@
 namespace opengl
 {
 	void BufferAllocator::GetSubAllocation(
-		re::Buffer::DataType dataType, 
+		re::Buffer::Type dataType, 
 		uint32_t size, 
 		GLuint& bufferNameOut,
 		GLintptr& baseOffsetOut)
@@ -21,7 +21,7 @@ namespace opengl
 		uint32_t alignedSize = 0;
 		switch (dataType)
 		{
-		case re::Buffer::DataType::Constant:
+		case re::Buffer::Type::Constant:
 		{
 			bufferNameOut = m_singleFrameUBOs[writeIdx];
 
@@ -32,7 +32,7 @@ namespace opengl
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, uboAlignment);
 		}
 		break;
-		case re::Buffer::DataType::Structured:
+		case re::Buffer::Type::Structured:
 		{
 			bufferNameOut = m_singleFrameSSBOs[writeIdx];
 
@@ -43,7 +43,7 @@ namespace opengl
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, ssboAlignment);
 		}
 		break;
-		default: SEAssertF("Invalid DataType");
+		default: SEAssertF("Invalid Type");
 		}
 
 		baseOffsetOut = AdvanceBaseIdx(dataType, alignedSize);

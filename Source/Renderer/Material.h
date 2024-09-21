@@ -90,8 +90,7 @@ namespace gr
 
 	public:
 		static std::shared_ptr<re::Buffer> CreateInstancedBuffer(
-			re::Buffer::Type,
-			std::vector<MaterialInstanceRenderData const*> const&);
+			re::Buffer::CPUAllocation, std::vector<MaterialInstanceRenderData const*> const&);
 
 		static std::shared_ptr<re::Buffer> ReserveInstancedBuffer(MaterialEffect, uint32_t maxInstances);
 

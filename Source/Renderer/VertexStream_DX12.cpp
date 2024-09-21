@@ -161,6 +161,10 @@ namespace dx12
 		// Record the copy:
 		copyCmdList->UpdateSubresources(&stream, itermediateBufferResource.Get(), 0);
 
+		// This will be released once the copy is done
+		intermediateResources.emplace_back(itermediateBufferResource);
+
+
 		// Create the resource view:
 		switch (stream.GetType())
 		{
@@ -191,16 +195,12 @@ namespace dx12
 		}
 		}
 
-		// This will be released once the copy is done
-		intermediateResources.emplace_back(itermediateBufferResource);
-
 		// Register the resource with the global resource state tracker:
-		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
+		constexpr D3D12_RESOURCE_STATES k_initialState = D3D12_RESOURCE_STATE_COMMON;
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		context->GetGlobalResourceStates().RegisterResource(
+		re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().RegisterResource(
 			streamPlatformParams->m_bufferResource.Get(),
-			initialState,
+			k_initialState,
 			1);
 	}
 
