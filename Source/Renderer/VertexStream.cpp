@@ -1,11 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
-#include "Core/Config.h"
+#include "Buffer.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "VertexStream.h"
 #include "VertexStream_Platform.h"
 
+#include "Core/Assert.h"
+#include "Core/Config.h"
 
 namespace
 {
@@ -30,16 +31,16 @@ namespace
 		}
 	}
 
-	void NormalizeData(util::ByteVector& data, re::VertexStream::DataType dataType)
+	void NormalizeData(util::ByteVector& data, re::DataType dataType)
 	{
-		const uint8_t numComponents = re::VertexStream::DataTypeToNumComponents(dataType);
+		const uint8_t numComponents = re::DataTypeToNumComponents(dataType);
 
 		switch (dataType)
 		{
-		case re::VertexStream::DataType::Float:
-		case re::VertexStream::DataType::Float2:
-		case re::VertexStream::DataType::Float3:
-		case re::VertexStream::DataType::Float4:
+		case re::DataType::Float:
+		case re::DataType::Float2:
+		case re::DataType::Float3:
+		case re::DataType::Float4:
 		{
 			switch (numComponents)
 			{
@@ -97,75 +98,6 @@ namespace
 
 namespace re
 {
-	constexpr uint8_t VertexStream::DataTypeToNumComponents(DataType dataType)
-	{
-		switch (dataType)
-		{
-		case VertexStream::DataType::Float:
-		case VertexStream::DataType::UInt:
-		case VertexStream::DataType::UShort:
-		case VertexStream::DataType::UByte:
-			return 1;
-		case VertexStream::DataType::Float2:
-		case VertexStream::DataType::UInt2:
-		case VertexStream::DataType::UShort2:
-		case VertexStream::DataType::UByte2:
-			return 2;
-		case VertexStream::DataType::Float3:
-		case VertexStream::DataType::UInt3:
-			return 3;
-		case VertexStream::DataType::Float4:
-		case VertexStream::DataType::UInt4:
-		case VertexStream::DataType::UShort4:
-		case VertexStream::DataType::UByte4:
-			return 4;		
-		default: return std::numeric_limits<uint8_t>::max(); // Error
-		}
-	}
-
-
-	constexpr uint8_t VertexStream::DataTypeToComponentByteSize(DataType dataType)
-	{
-		switch (dataType)
-		{
-		case VertexStream::DataType::Float:		// 32-bit
-		case VertexStream::DataType::Float2:
-		case VertexStream::DataType::Float3:
-		case VertexStream::DataType::Float4:
-
-		case VertexStream::DataType::Int:		// 32-bit
-		case VertexStream::DataType::Int2:
-		case VertexStream::DataType::Int3:
-		case VertexStream::DataType::Int4:
-
-		case VertexStream::DataType::UInt:		// 32-bit
-		case VertexStream::DataType::UInt2:
-		case VertexStream::DataType::UInt3:
-		case VertexStream::DataType::UInt4:
-			return 4;
-
-		case VertexStream::DataType::Short:	// 16-bit
-		case VertexStream::DataType::Short2:
-		case VertexStream::DataType::Short4:
-
-		case VertexStream::DataType::UShort:	// 16-bit
-		case VertexStream::DataType::UShort2:
-		case VertexStream::DataType::UShort4:
-			return 2;
-
-		case VertexStream::DataType::Byte:		// 8-bit
-		case VertexStream::DataType::Byte2:
-		case VertexStream::DataType::Byte4:
-
-		case VertexStream::DataType::UByte:		// 8-bit
-		case VertexStream::DataType::UByte2:
-		case VertexStream::DataType::UByte4:
-			return 1;
-		default: return 0; // Error
-		}
-	}
-
-
 	std::shared_ptr<re::VertexStream> VertexStream::Create(CreateParams const& createParams, util::ByteVector&& data)
 	{
 		std::shared_ptr<re::VertexStream> newVertexStream;
@@ -191,23 +123,24 @@ namespace re
 
 	VertexStream::VertexStream(CreateParams const& createParams, util::ByteVector&& data)
 		: m_createParams(createParams)
-		, m_data(std::move(data))
 		, m_platformParams(nullptr)
 	{
 		SEAssert(m_createParams.m_type != Type::Type_Count && m_createParams.m_dataType != DataType::DataType_Count,
 			"Invalid create params");
 
 		SEAssert(m_createParams.m_type != Type::Index || 
-			(m_createParams.m_dataType == DataType::UShort && m_data.IsScalarType<uint16_t>()) ||
-			(m_createParams.m_dataType == DataType::UInt && m_data.IsScalarType<uint32_t>()),
+			(m_createParams.m_dataType == DataType::UShort && data.IsScalarType<uint16_t>()) ||
+			(m_createParams.m_dataType == DataType::UInt && data.IsScalarType<uint32_t>()),
 			"Invalid index data");
+
+		bool isNormalized = false;
 
 		// D3D12 does not support GPU-normalization of 32-bit types. As a hail-mary, we attempt to pre-normalize here
 		if (DoNormalize() && 
-			createParams.m_dataType == re::VertexStream::DataType::Float ||
-			createParams.m_dataType == re::VertexStream::DataType::Float2 ||
-			createParams.m_dataType == re::VertexStream::DataType::Float3 ||
-			createParams.m_dataType == re::VertexStream::DataType::Float4)
+			createParams.m_dataType == re::DataType::Float ||
+			createParams.m_dataType == re::DataType::Float2 ||
+			createParams.m_dataType == re::DataType::Float3 ||
+			createParams.m_dataType == re::DataType::Float4)
 		{
 			static const bool s_doNormalize = 
 				core::Config::Get()->KeyExists(core::configkeys::k_doCPUVertexStreamNormalizationKey);
@@ -216,7 +149,7 @@ namespace re
 			{
 				LOG_WARNING("Pre-normalizing vertex stream data as its format is incompatible with GPU-normalization");
 
-				NormalizeData(m_data, createParams.m_dataType);
+				NormalizeData(data, createParams.m_dataType);
 			}
 			else
 			{
@@ -225,9 +158,30 @@ namespace re
 			}
 
 			m_createParams.m_doNormalize = Normalize::False;
+			isNormalized = true;
 		}
 
 		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(*this, m_createParams.m_type));
+
+		// Create the vertex/index Buffer object that will back our vertex stream:
+		std::string const& bufferName = std::format("VertexStream_{}_{}", TypeToCStr(GetType()), GetDataHash());
+		
+		m_streamBuffer = re::Buffer::Create(
+			bufferName,
+			data.data().data(),
+			util::CheckedCast<uint32_t>(data.GetTotalNumBytes()),
+			re::Buffer::BufferParams{
+				.m_allocationType = re::Buffer::AllocationType::Immutable,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
+				.m_usageMask = re::Buffer::Usage::GPURead,
+				.m_type = m_createParams.m_type == re::VertexStream::Type::Index ? 
+					re::Buffer::Type::Index : re::Buffer::Type::Vertex,
+				.m_arraySize = 1,
+			.m_typeParams = { .m_vertexStream = {
+				.m_dataType = m_createParams.m_dataType,
+				.m_isNormalized = isNormalized,
+				.m_stride = GetElementByteSize()}}
+			});
 
 		ComputeDataHash();
 	}
@@ -236,7 +190,7 @@ namespace re
 	void VertexStream::ComputeDataHash()
 	{
 		AddDataBytesToHash(m_createParams);
-		AddDataBytesToHash(GetData(), GetTotalDataByteSize());
+		AddDataBytesToHash(m_streamBuffer->GetData(), m_streamBuffer->GetTotalBytes());
 	}
 
 
@@ -246,25 +200,15 @@ namespace re
 	}
 
 
-	void const* VertexStream::GetData() const
-	{
-		if (m_data.empty())
-		{
-			return nullptr;
-		}
-		return m_data.data().data();
-	}
-
-
 	uint32_t VertexStream::GetTotalDataByteSize() const
 	{
-		return util::CheckedCast<uint32_t>(m_data.GetTotalNumBytes());
+		return m_streamBuffer->GetTotalBytes();
 	}
 
 
 	uint32_t VertexStream::GetNumElements() const
 	{
-		return  util::CheckedCast<uint32_t>(m_data.size()); // i.e. Get the number of vertices
+		return m_streamBuffer->GetTotalBytes() / GetElementByteSize();
 	}
 
 
@@ -282,7 +226,7 @@ namespace re
 	}
 
 
-	VertexStream::DataType VertexStream::GetDataType() const
+	re::DataType VertexStream::GetDataType() const
 	{
 		return m_createParams.m_dataType;
 	}
@@ -301,7 +245,7 @@ namespace re
 		const bool isMorphTarget = m_createParams.m_isMorphData == VertexStream::IsMorphData::True;
 		ImGui::Text(std::format("Is morph target data? {}", isMorphTarget ? "true" : "false").c_str());
 
-		ImGui::Text(std::format("Data type: {}", DataTypeToCStr(m_createParams.m_dataType)).c_str());
+		ImGui::Text(std::format("Data type: {}", re::DataTypeToCStr(m_createParams.m_dataType)).c_str());
 		ImGui::Text(std::format("Normalized? {}", (m_createParams.m_doNormalize ? "true" : "false")).c_str());
 
 		ImGui::Text(std::format("Total data byte size: {}", GetTotalDataByteSize()).c_str());

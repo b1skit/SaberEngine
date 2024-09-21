@@ -46,6 +46,12 @@ namespace dx12
 
 			std::vector<ReadbackResource> m_readbackResources; // CPU readback
 			uint8_t m_currentMapFrameLatency; // Used to compute the resource index during unmapping
+
+			union
+			{
+				D3D12_INDEX_BUFFER_VIEW  m_indexBufferView;
+				D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+			} m_views;
 		};
 
 

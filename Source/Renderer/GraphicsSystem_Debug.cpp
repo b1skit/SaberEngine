@@ -56,7 +56,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(axisPositions));
 
@@ -64,7 +64,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Color,
-				.m_dataType = re::VertexStream::DataType::Float4
+				.m_dataType = re::DataType::Float4
 			},
 			std::move(axisColors));
 
@@ -147,7 +147,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(boxPositions));
 
@@ -155,7 +155,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Color,
-				.m_dataType = re::VertexStream::DataType::Float4
+				.m_dataType = re::DataType::Float4
 			},
 			std::move(boxColors));
 
@@ -163,7 +163,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UShort,
+				.m_dataType = re::DataType::UShort,
 			},
 			std::move(boxIndexes));
 
@@ -204,13 +204,14 @@ namespace
 
 		util::ByteVector linePositions = util::ByteVector::Create<glm::vec3>();
 
-		SEAssert(positionStream->GetDataType() == re::VertexStream::DataType::Float3 && 
-			normalStream->GetDataType() == re::VertexStream::DataType::Float3,
+		SEAssert(positionStream->GetDataType() == re::DataType::Float3 && 
+			normalStream->GetDataType() == re::DataType::Float3,
 			"Unexpected position or normal data");
 		
 		// Build lines between the position and position + normal offset:
-		glm::vec3 const* positionData = static_cast<glm::vec3 const*>(positionStream->GetData());
-		glm::vec3 const* normalData = static_cast<glm::vec3 const*>(normalStream->GetData());
+		SEAssertF("TODO: Fix this. Vertex streams no longer maintain their initial data, as they're now backed by buffers");
+		glm::vec3 const* positionData = static_cast<glm::vec3 const*>(positionStream->GetBuffer()->GetData());
+		glm::vec3 const* normalData = static_cast<glm::vec3 const*>(normalStream->GetBuffer()->GetData());
 		for (uint32_t elementIdx = 0; elementIdx < positionStream->GetNumElements(); elementIdx++)
 		{
 			linePositions.emplace_back<glm::vec3>(positionData[elementIdx]);
@@ -226,7 +227,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(linePositions));
 
@@ -234,7 +235,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Color,
-				.m_dataType = re::VertexStream::DataType::Float4
+				.m_dataType = re::DataType::Float4
 			},
 			std::move(normalColors));
 
@@ -303,7 +304,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(frustumPositions));
 
@@ -311,7 +312,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Color,
-				.m_dataType = re::VertexStream::DataType::Float4
+				.m_dataType = re::DataType::Float4
 			},
 			std::move(frustumColors));
 
@@ -319,7 +320,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UShort,
+				.m_dataType = re::DataType::UShort,
 			},
 			std::move(frustumIndexes));
 
@@ -360,7 +361,7 @@ namespace
 			re::VertexStream::CreateParams{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Color,
-				.m_dataType = re::VertexStream::DataType::Float4
+				.m_dataType = re::DataType::Float4
 			},
 			std::move(meshColors));
 
@@ -451,7 +452,7 @@ namespace gr
 						m_zAxisColor));
 
 				std::shared_ptr<re::Buffer> identityTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-					re::Buffer::CPUAllocation::Immutable, &k_identity, nullptr);
+					re::Buffer::AllocationType::Immutable, &k_identity, nullptr);
 
 				m_worldCoordinateAxisBatch->SetBuffer(identityTransformBuffer);
 			}
@@ -500,7 +501,7 @@ namespace gr
 						m_meshPrimTransformBuffers.emplace(
 							meshPrimRenderDataID, 
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::CPUAllocation::Mutable, 
+								re::Buffer::AllocationType::Mutable, 
 								transformData));
 					}
 					else
@@ -619,7 +620,7 @@ namespace gr
 							m_meshBoundingBoxBuffers.emplace(
 								meshID,
 								gr::Transform::CreateInstancedTransformBuffer(
-									re::Buffer::CPUAllocation::Mutable, boundsItr.GetTransformData()));
+									re::Buffer::AllocationType::Mutable, boundsItr.GetTransformData()));
 						}
 						else
 						{
@@ -661,7 +662,7 @@ namespace gr
 					if (m_sceneBoundsTransformBuffer == nullptr)
 					{
 						m_sceneBoundsTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-							re::Buffer::CPUAllocation::Mutable, boundsItr.GetTransformData());
+							re::Buffer::AllocationType::Mutable, boundsItr.GetTransformData());
 					}
 
 					if (m_sceneBoundsBatch == nullptr)
@@ -702,7 +703,7 @@ namespace gr
 					m_cameraAxisTransformBuffers.emplace(
 						camID,
 						gr::Transform::CreateInstancedTransformBuffer(
-						re::Buffer::CPUAllocation::Mutable, &camWorldMatrix, nullptr));
+						re::Buffer::AllocationType::Mutable, &camWorldMatrix, nullptr));
 				}
 				else if (camDataIsDirty)
 				{
@@ -772,7 +773,7 @@ namespace gr
 					{
 						m_cameraFrustumTransformBuffers.at(camID)[faceIdx] =
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::CPUAllocation::Mutable,
+								re::Buffer::AllocationType::Mutable,
 								&invViewProjMats.at(faceIdx),
 								nullptr);
 					}
@@ -822,7 +823,7 @@ namespace gr
 						m_deferredLightWireframeTransformBuffers.emplace(
 							pointID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::CPUAllocation::Mutable, &lightTRS, nullptr));
+								re::Buffer::AllocationType::Mutable, &lightTRS, nullptr));
 					}
 					else
 					{
@@ -863,7 +864,7 @@ namespace gr
 						m_deferredLightWireframeTransformBuffers.emplace(
 							spotID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::CPUAllocation::Mutable, &lightTRS, nullptr));
+								re::Buffer::AllocationType::Mutable, &lightTRS, nullptr));
 					}
 					else
 					{
@@ -909,7 +910,7 @@ namespace gr
 						m_lightCoordinateAxisTransformBuffers.emplace(
 							lightID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::CPUAllocation::Mutable, &lightTR, nullptr));
+								re::Buffer::AllocationType::Mutable, &lightTR, nullptr));
 					}
 					else
 					{

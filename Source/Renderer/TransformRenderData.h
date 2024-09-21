@@ -41,10 +41,10 @@ namespace gr
 			glm::mat4 const* model, glm::mat4 const* transposeInvModel);
 
 		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
-			re::Buffer::CPUAllocation, glm::mat4 const* model, glm::mat4* transposeInvModel);
+			re::Buffer::AllocationType, glm::mat4 const* model, glm::mat4* transposeInvModel);
 		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
-			re::Buffer::CPUAllocation, gr::Transform::RenderData const&);
+			re::Buffer::AllocationType, gr::Transform::RenderData const&);
 		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
-			re::Buffer::CPUAllocation, std::vector<gr::Transform::RenderData const*> const&);
+			re::Buffer::AllocationType, std::vector<gr::Transform::RenderData const*> const&);
 	};
 }

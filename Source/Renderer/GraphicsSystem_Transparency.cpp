@@ -78,7 +78,7 @@ namespace
 		return re::Buffer::Create(bufferName,
 			allLightIndexesData, 
 			re::Buffer::BufferParams{
-				.m_cpuAllocationType = re::Buffer::CPUAllocation::SingleFrame,
+				.m_allocationType = re::Buffer::AllocationType::SingleFrame,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 				.m_type = re::Buffer::Type::Constant,
@@ -219,7 +219,7 @@ namespace gr
 					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 					nullptr),
 				re::Buffer::BufferParams{
-					.m_cpuAllocationType = re::Buffer::CPUAllocation::SingleFrame,
+					.m_allocationType = re::Buffer::AllocationType::SingleFrame,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 					.m_type = re::Buffer::Type::Constant,

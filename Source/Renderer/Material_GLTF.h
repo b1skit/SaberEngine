@@ -25,7 +25,7 @@ namespace gr
 
 	public:
 		static std::shared_ptr<re::Buffer> CreateInstancedBuffer(
-			re::Buffer::CPUAllocation, std::vector<MaterialInstanceRenderData const*> const&);
+			re::Buffer::AllocationType, std::vector<MaterialInstanceRenderData const*> const&);
 		
 		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);
 

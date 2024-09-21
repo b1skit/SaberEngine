@@ -90,7 +90,7 @@ namespace gr
 			SkyboxData::s_shaderName,
 			CreateSkyboxParamsData(m_backgroundColor, m_showBackgroundColor),
 			re::Buffer::BufferParams{
-				.m_cpuAllocationType = re::Buffer::CPUAllocation::Mutable,
+				.m_allocationType = re::Buffer::AllocationType::Mutable,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 				.m_type = re::Buffer::Type::Constant,

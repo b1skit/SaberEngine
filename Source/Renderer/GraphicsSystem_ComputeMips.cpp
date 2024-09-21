@@ -166,7 +166,7 @@ namespace gr
 							MipGenerationData::s_shaderName,
 							mipGenerationParams,
 							re::Buffer::BufferParams{
-								.m_cpuAllocationType = re::Buffer::CPUAllocation::SingleFrame,
+								.m_allocationType = re::Buffer::AllocationType::SingleFrame,
 								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 								.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 								.m_type = re::Buffer::Type::Constant,

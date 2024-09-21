@@ -85,7 +85,7 @@ namespace gr
 
 
 	std::shared_ptr<re::Buffer> Material_GLTF::CreateInstancedBuffer(
-		re::Buffer::CPUAllocation bufferAlloc,
+		re::Buffer::AllocationType bufferAlloc,
 		std::vector<MaterialInstanceRenderData const*> const& instanceData)
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(instanceData.size());
@@ -109,7 +109,7 @@ namespace gr
 			InstancedPBRMetallicRoughnessData::s_shaderName,
 			instancedMaterialData.data(),
 			re::Buffer::BufferParams{
-				.m_cpuAllocationType = bufferAlloc,
+				.m_allocationType = bufferAlloc,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 				.m_type = re::Buffer::Type::Structured,

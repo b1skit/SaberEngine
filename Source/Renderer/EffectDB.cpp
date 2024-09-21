@@ -1,6 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "EffectDB.h"
 #include "EffectKeys.h"
+#include "EnumTypes.h"
 #include "Platform.h"
 #include "RenderManager.h"
 
@@ -234,52 +235,6 @@ namespace
 	}
 
 
-	inline re::VertexStream::DataType StrToVertexStreamDataType(std::string const& dataTypeStr)
-	{
-		static const std::unordered_map<util::HashKey const, re::VertexStream::DataType> s_strLowerToDataType =
-		{
-			{ util::HashKey("float"),	re::VertexStream::DataType::Float },
-			{ util::HashKey("float2"),	re::VertexStream::DataType::Float2 },
-			{ util::HashKey("float3"),	re::VertexStream::DataType::Float3 },
-			{ util::HashKey("float4"),	re::VertexStream::DataType::Float4 },
-
-			{ util::HashKey("int"),		re::VertexStream::DataType::Int },
-			{ util::HashKey("int2"),	re::VertexStream::DataType::Int2 },
-			{ util::HashKey("int3"),	re::VertexStream::DataType::Int3 },
-			{ util::HashKey("int4"),	re::VertexStream::DataType::Int4 },
-
-			{ util::HashKey("uint"),	re::VertexStream::DataType::UInt },
-			{ util::HashKey("uint2"),	re::VertexStream::DataType::UInt2 },
-			{ util::HashKey("uint3"),	re::VertexStream::DataType::UInt3 },
-			{ util::HashKey("uint4"),	re::VertexStream::DataType::UInt4 },
-
-			{ util::HashKey("short"),	re::VertexStream::DataType::Short },
-			{ util::HashKey("short2"),	re::VertexStream::DataType::Short2 },
-			{ util::HashKey("short4"),	re::VertexStream::DataType::Short4 },
-
-			{ util::HashKey("ushort"),	re::VertexStream::DataType::UShort },
-			{ util::HashKey("ushort2"),	re::VertexStream::DataType::UShort2 },
-			{ util::HashKey("ushort4"),	re::VertexStream::DataType::UShort4 },
-
-			{ util::HashKey("byte"),	re::VertexStream::DataType::Byte },
-			{ util::HashKey("byte2"),	re::VertexStream::DataType::Byte2 },
-			{ util::HashKey("byte4"),	re::VertexStream::DataType::Byte4 },
-
-			{ util::HashKey("ubyte"),	re::VertexStream::DataType::UByte },
-			{ util::HashKey("ubyte2"),	re::VertexStream::DataType::UByte2 },
-			{ util::HashKey("ubyte4"),	re::VertexStream::DataType::UByte4 },
-		};
-		SEAssert(s_strLowerToDataType.size() == static_cast<size_t>(re::VertexStream::DataType::DataType_Count),
-			"Data types are out of sync");
-
-		const util::HashKey dataTypeStrLowerHashkey = util::HashKey::Create(util::ToLower(dataTypeStr));
-
-		SEAssert(s_strLowerToDataType.contains(dataTypeStrLowerHashkey), "Invalid data type name");
-
-		return s_strLowerToDataType.at(dataTypeStrLowerHashkey);
-	}
-
-
 	re::VertexStreamMap ParseVertexStreamDesc(auto const& vertexStreamsEntry)
 	{
 		re::VertexStreamMap vertexStreamMap;
@@ -310,7 +265,7 @@ namespace
 			ExtractSemanticNameAndIndex(semanticName, semanticIdx);
 
 			const re::VertexStream::Type streamType = SemanticNameToStreamType(semanticName);
-			const re::VertexStream::DataType streamDataType = StrToVertexStreamDataType(dataType);
+			const re::DataType streamDataType = re::StrToDataType(dataType);
 
 			vertexStreamMap.SetSlotIdx(streamType, semanticIdx, streamDataType, slotIndex++);
 
@@ -328,7 +283,7 @@ namespace
 					uint8_t morphSemanticIdx = 0; // Assume 0 if no semantic index is specified (e.g. NORMAL, SV_Position, etc)
 					ExtractSemanticNameAndIndex(morphSemanticName, morphSemanticIdx);
 
-					const re::VertexStream::DataType morphStreamDataType = StrToVertexStreamDataType(morphDataType);
+					const re::DataType morphStreamDataType = re::StrToDataType(morphDataType);
 
 					vertexStreamMap.SetSlotIdx(streamType, morphSemanticIdx, morphStreamDataType, slotIndex++);
 				}

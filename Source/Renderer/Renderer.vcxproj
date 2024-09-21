@@ -241,6 +241,7 @@
     <ClCompile Include="Device_DX12.cpp" />
     <ClCompile Include="Effect.cpp" />
     <ClCompile Include="EffectDB.cpp" />
+    <ClCompile Include="EnumTypes.cpp" />
     <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
     <ClCompile Include="GraphicsSystem.cpp" />

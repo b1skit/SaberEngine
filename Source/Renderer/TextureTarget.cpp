@@ -631,7 +631,7 @@ namespace re
 
 
 	std::shared_ptr<re::Buffer> TextureTargetSet::GetCreateTargetParamsBuffer(
-		re::Buffer::CPUAllocation bufferAlloc /*= re::Buffer::CPUAllocation::Mutable*/)
+		re::Buffer::AllocationType bufferAlloc /*= re::Buffer::AllocationType::Mutable*/)
 	{
 		SEAssert(HasTargets(),
 			"Trying to get or create the TargetParams buffer, but no targets have been added");
@@ -643,7 +643,7 @@ namespace re
 		{
 			m_targetParamsBuffer = re::Buffer::CreateUncommitted<TargetData>(TargetData::s_shaderName, 
 				re::Buffer::BufferParams{
-					.m_cpuAllocationType = bufferAlloc,
+					.m_allocationType = bufferAlloc,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 					.m_type = re::Buffer::Type::Constant,

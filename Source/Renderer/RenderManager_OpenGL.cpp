@@ -42,46 +42,46 @@ namespace
 	}
 
 
-	constexpr GLenum TranslateToOpenGLDataType(re::VertexStream::DataType dataType)
+	constexpr GLenum TranslateToOpenGLDataType(re::DataType dataType)
 	{
 		switch (dataType)
 		{
-		case re::VertexStream::DataType::Float:		// 32-bit
-		case re::VertexStream::DataType::Float2:
-		case re::VertexStream::DataType::Float3:
-		case re::VertexStream::DataType::Float4:
+		case re::DataType::Float:	// 32-bit
+		case re::DataType::Float2:
+		case re::DataType::Float3:
+		case re::DataType::Float4:
 			return GL_FLOAT;
 
-		case re::VertexStream::DataType::Int:		// 32-bit
-		case re::VertexStream::DataType::Int2:
-		case re::VertexStream::DataType::Int3:
-		case re::VertexStream::DataType::Int4:
+		case re::DataType::Int:		// 32-bit
+		case re::DataType::Int2:
+		case re::DataType::Int3:
+		case re::DataType::Int4:
 			return GL_INT;
 
-		case re::VertexStream::DataType::UInt:		// 32-bit
-		case re::VertexStream::DataType::UInt2:
-		case re::VertexStream::DataType::UInt3:
-		case re::VertexStream::DataType::UInt4:
+		case re::DataType::UInt:	// 32-bit
+		case re::DataType::UInt2:
+		case re::DataType::UInt3:
+		case re::DataType::UInt4:
 			return GL_UNSIGNED_INT;
 
-		case re::VertexStream::DataType::Short:		// 16-bit
-		case re::VertexStream::DataType::Short2:
-		case re::VertexStream::DataType::Short4:
+		case re::DataType::Short:	// 16-bit
+		case re::DataType::Short2:
+		case re::DataType::Short4:
 			return GL_SHORT;
 
-		case re::VertexStream::DataType::UShort:	// 16-bit
-		case re::VertexStream::DataType::UShort2:
-		case re::VertexStream::DataType::UShort4:
+		case re::DataType::UShort:	// 16-bit
+		case re::DataType::UShort2:
+		case re::DataType::UShort4:
 			return GL_UNSIGNED_SHORT;
 
-		case re::VertexStream::DataType::Byte:		// 8-bit
-		case re::VertexStream::DataType::Byte2:
-		case re::VertexStream::DataType::Byte4:
+		case re::DataType::Byte:	// 8-bit
+		case re::DataType::Byte2:
+		case re::DataType::Byte4:
 			return GL_BYTE;
 
-		case re::VertexStream::DataType::UByte:		// 8-bit
-		case re::VertexStream::DataType::UByte2:
-		case re::VertexStream::DataType::UByte4:
+		case re::DataType::UByte:	// 8-bit
+		case re::DataType::UByte2:
+		case re::DataType::UByte4:
 			return GL_UNSIGNED_BYTE;
 		default: return GL_INVALID_ENUM; // Error
 		}

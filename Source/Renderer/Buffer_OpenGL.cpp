@@ -18,11 +18,11 @@ namespace opengl
 		uint32_t numBytes;
 		buffer.GetDataAndSize(&data, &numBytes);
 
-		const re::Buffer::CPUAllocation bufferAlloc = buffer.GetCPUAllocationType();
+		const re::Buffer::AllocationType bufferAlloc = buffer.GetAllocationType();
 		switch (bufferAlloc)
 		{
-		case re::Buffer::CPUAllocation::Mutable:
-		case re::Buffer::CPUAllocation::Immutable:
+		case re::Buffer::AllocationType::Mutable:
+		case re::Buffer::AllocationType::Immutable:
 		{
 			// Note: Unlike DX12, OpenGL handles buffer synchronization for us (so long as they're not persistently 
 			// mapped). So we can just create a single mutable buffer and write to it as needed, instead of 
@@ -38,15 +38,15 @@ namespace opengl
 				bufferPlatParams->m_bufferName,
 				static_cast<GLsizeiptr>(numBytes),
 				nullptr,
-				bufferAlloc == re::Buffer::CPUAllocation::Mutable ? GL_DYNAMIC_DRAW  : GL_STATIC_DRAW);
+				bufferAlloc == re::Buffer::AllocationType::Mutable ? GL_DYNAMIC_DRAW  : GL_STATIC_DRAW);
 
 			// RenderDoc label:
 			std::string const& bufferName = 
-				buffer.GetName() + (bufferAlloc == re::Buffer::CPUAllocation::Mutable ? "_Mutable" : "_Immutable");
+				buffer.GetName() + (bufferAlloc == re::Buffer::AllocationType::Mutable ? "_Mutable" : "_Immutable");
 			glObjectLabel(GL_BUFFER, bufferPlatParams->m_bufferName, -1, bufferName.c_str());
 		}
 		break;
-		case re::Buffer::CPUAllocation::SingleFrame:
+		case re::Buffer::AllocationType::SingleFrame:
 		{
 			opengl::BufferAllocator* bufferAllocator =
 				dynamic_cast<opengl::BufferAllocator*>(re::Context::Get()->GetBufferAllocator());
@@ -58,7 +58,7 @@ namespace opengl
 				bufferPlatParams->m_baseOffset);
 		}
 		break;
-		default: SEAssertF("Invalid CPUAllocation");
+		default: SEAssertF("Invalid AllocationType");
 		}
 	}
 
@@ -99,7 +99,7 @@ namespace opengl
 			// Adjust our source pointer if we're doing a partial update:
 			if (!updateAllBytes)
 			{
-				SEAssert(buffer.GetCPUAllocationType() == re::Buffer::CPUAllocation::Mutable,
+				SEAssert(buffer.GetAllocationType() == re::Buffer::AllocationType::Mutable,
 					"Only mutable buffers can be partially updated");
 
 				// Update the source data pointer:
@@ -129,21 +129,21 @@ namespace opengl
 		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
 		SEAssert(bufferPlatParams->m_isCreated, "Attempting to destroy a Buffer that has not been created");
 
-		const re::Buffer::CPUAllocation bufferAlloc = buffer.GetCPUAllocationType();
+		const re::Buffer::AllocationType bufferAlloc = buffer.GetAllocationType();
 		switch (bufferAlloc)
 		{
-		case re::Buffer::CPUAllocation::Mutable:
-		case re::Buffer::CPUAllocation::Immutable:
+		case re::Buffer::AllocationType::Mutable:
+		case re::Buffer::AllocationType::Immutable:
 		{
 			glDeleteBuffers(1, &bufferPlatParams->m_bufferName);
 		}
 		break;
-		case re::Buffer::CPUAllocation::SingleFrame:
+		case re::Buffer::AllocationType::SingleFrame:
 		{
 			// Do nothing: Buffer allocator is responsible for destroying the shared buffers
 		}
 		break;
-		default: SEAssertF("Invalid CPUAllocation");
+		default: SEAssertF("Invalid AllocationType");
 		}
 
 		bufferPlatParams->m_bufferName = 0;
@@ -156,31 +156,53 @@ namespace opengl
 	{
 		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
 		 
-		GLenum bufferTarget = 0;
+		const uint32_t numBytes = buffer.GetTotalBytes();
 		switch (buffer.GetBufferParams().m_type)
 		{
 		case re::Buffer::Type::Constant:
 		{
-			bufferTarget = GL_UNIFORM_BUFFER;
+			glBindBufferRange(GL_UNIFORM_BUFFER, 
+				bindIndex, 
+				bufferPlatParams->m_bufferName, 
+				bufferPlatParams->m_baseOffset, 
+				numBytes);
 		}
 		break;
 		case re::Buffer::Type::Structured:
 		{
-			bufferTarget = GL_SHADER_STORAGE_BUFFER;
+			glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
+				bindIndex,
+				bufferPlatParams->m_bufferName,
+				bufferPlatParams->m_baseOffset,
+				numBytes);
+		}
+		break;
+		case re::Buffer::Type::Vertex:
+		{
+			SEAssert(bufferPlatParams->m_baseOffset == 0, "Base offset != 0. This is unexpected");
+			
+			glBindVertexBuffer(
+				bindIndex,														// Slot index
+				bufferPlatParams->m_bufferName,									// Buffer
+				0,																// Offset
+				buffer.GetBufferParams().m_typeParams.m_vertexStream.m_stride);	// Stride
+		}
+		break;
+		case re::Buffer::Type::Index:
+		{
+			SEAssert(bufferPlatParams->m_baseOffset == 0, "Base offset != 0. This is unexpected");
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatParams->m_bufferName);
 		}
 		break;
 		default: SEAssertF("Invalid Type");
 		}
-
-		const uint32_t numBytes = buffer.GetSize();
-		glBindBufferRange(
-			bufferTarget, bindIndex, bufferPlatParams->m_bufferName, bufferPlatParams->m_baseOffset, numBytes);
 	}
 
 
 	void const* Buffer::MapCPUReadback(re::Buffer const& buffer, uint8_t frameLatency)
 	{
-		const uint32_t bufferSize = buffer.GetSize();
+		const uint32_t bufferSize = buffer.GetTotalBytes();
 
 		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
 

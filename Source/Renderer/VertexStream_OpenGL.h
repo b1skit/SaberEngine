@@ -14,12 +14,12 @@ namespace opengl
 	public:
 		struct PlatformParams final : public re::VertexStream::PlatformParams
 		{
-			GLuint m_VBO = 0;
+			// 
 		};
 		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(
 			re::VertexStream const&, re::VertexStream::Type);
 		
-		static uint32_t GetComponentGLDataType(re::VertexStream::DataType);
+		static uint32_t GetComponentGLDataType(re::DataType);
 
 
 	public:

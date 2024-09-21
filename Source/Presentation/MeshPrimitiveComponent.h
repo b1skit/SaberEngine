@@ -18,15 +18,15 @@ namespace fr
 			fr::EntityManager&,
 			entt::entity owningEntity,
 			gr::MeshPrimitive const*,
-			glm::vec3 const& positionMinXYZ = fr::BoundsComponent::k_invalidMinXYZ, // Default: Compute bounds manually
-			glm::vec3 const& positionMaxXYZ = fr::BoundsComponent::k_invalidMaxXYZ); // Default: Compute bounds manually
+			glm::vec3 const& positionMinXYZ,
+			glm::vec3 const& positionMaxXYZ);
 
 		static void AttachMeshPrimitiveComponent(
 			fr::EntityManager&,
 			entt::entity owningEntity,
 			gr::MeshPrimitive const*,
-			glm::vec3 const& positionMinXYZ = fr::BoundsComponent::k_invalidMinXYZ, // Default: Compute bounds manually
-			glm::vec3 const& positionMaxXYZ = fr::BoundsComponent::k_invalidMaxXYZ); // Default: Compute bounds manually
+			glm::vec3 const& positionMinXYZ,
+			glm::vec3 const& positionMaxXYZ);
 
 		// Attach a MeshPrimitive without any of the typical dependencies (Bounds, Transforms, Material etc). This is
 		// for special cases, such as deferred lights that require a fullscreen quad

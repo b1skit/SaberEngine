@@ -773,13 +773,13 @@ namespace
 					util::ByteVector::Create<uint16_t>(numIndices) : // We'll expand 8 -> 16 bits
 					util::ByteVector::Create<uint32_t>(numIndices);
 
-				re::VertexStream::DataType indexDataType = re::VertexStream::DataType::DataType_Count;
+				re::DataType indexDataType = re::DataType::DataType_Count;
 				switch (indicesComponentNumBytes)
 				{
 				case 1: // uint8_t -> uint16_t
 				{
 					// DX12 does not support 8 bit indices; Here we expand 8 -> 16 bits
-					indexDataType = re::VertexStream::DataType::UShort;
+					indexDataType = re::DataType::UShort;
 
 					std::vector<uint8_t> tempIndices(numIndices);
 					cgltf_accessor_unpack_indices(
@@ -793,14 +793,14 @@ namespace
 				break;
 				case 2: // uint16_t
 				{
-					indexDataType = re::VertexStream::DataType::UShort;
+					indexDataType = re::DataType::UShort;
 					cgltf_accessor_unpack_indices(
 						curPrimitive.indices, indices.data<uint16_t>(), indicesComponentNumBytes, numIndices);
 				}
 				break;
 				case 4: // uint32_t
 				{
-					indexDataType = re::VertexStream::DataType::UInt;
+					indexDataType = re::DataType::UInt;
 					cgltf_accessor_unpack_indices(
 						curPrimitive.indices, indices.data<uint32_t>(), indicesComponentNumBytes, numIndices);
 				}
@@ -861,7 +861,7 @@ namespace
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(positions)),
 						.m_createParams = re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Position,
-							.m_dataType = re::VertexStream::DataType::Float3,
+							.m_dataType = re::DataType::Float3,
 						},
 						.m_streamIdx = streamIdx
 					});
@@ -897,7 +897,7 @@ namespace
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(normals)),
 						.m_createParams = re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Normal,
-							.m_dataType = re::VertexStream::DataType::Float3,
+							.m_dataType = re::DataType::Float3,
 							.m_doNormalize = re::VertexStream::Normalize::True,
 						},
 						.m_streamIdx = streamIdx
@@ -918,7 +918,7 @@ namespace
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(tangents)),
 						.m_createParams = re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Tangent,
-							.m_dataType = re::VertexStream::DataType::Float4,
+							.m_dataType = re::DataType::Float4,
 							.m_doNormalize = re::VertexStream::Normalize::True,
 						},
 						.m_streamIdx = streamIdx
@@ -939,7 +939,7 @@ namespace
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(uvs)),
 						.m_createParams = re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::TexCoord,
-							.m_dataType = re::VertexStream::DataType::Float2,
+							.m_dataType = re::DataType::Float2,
 						},
 						.m_streamIdx = streamIdx
 					});
@@ -984,7 +984,7 @@ namespace
 							.m_streamData = std::make_unique<util::ByteVector>(std::move(colors)),
 							.m_createParams = re::VertexStream::CreateParams{
 								.m_type = re::VertexStream::Type::Color,
-								.m_dataType = re::VertexStream::DataType::Float4,
+								.m_dataType = re::DataType::Float4,
 							},
 							.m_streamIdx = streamIdx
 						});
@@ -1016,7 +1016,7 @@ namespace
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(jointsAsUints)),
 						.m_createParams = re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::BlendIndices,
-							.m_dataType = re::VertexStream::DataType::UByte,
+							.m_dataType = re::DataType::UByte,
 						},
 						.m_streamIdx = streamIdx
 					});
@@ -1039,7 +1039,7 @@ namespace
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(weights)),
 						.m_createParams = re::VertexStream::CreateParams{
 							 .m_type = re::VertexStream::Type::BlendWeight,
-							 .m_dataType = re::VertexStream::DataType::Float,
+							 .m_dataType = re::DataType::Float,
 						},
 						.m_streamIdx = streamIdx
 					});
@@ -1103,7 +1103,7 @@ namespace
 							.m_createParams = re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Position,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
-								 .m_dataType = re::VertexStream::DataType::Float3,
+								 .m_dataType = re::DataType::Float3,
 							}});
 					}
 					break;
@@ -1116,7 +1116,7 @@ namespace
 							.m_createParams = re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Normal,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
-								 .m_dataType = re::VertexStream::DataType::Float3,
+								 .m_dataType = re::DataType::Float3,
 							} });
 					}
 					break;
@@ -1130,7 +1130,7 @@ namespace
 							.m_createParams = re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Tangent,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
-								 .m_dataType = re::VertexStream::DataType::Float3,
+								 .m_dataType = re::DataType::Float3,
 							} });
 					}
 					break;
@@ -1143,7 +1143,7 @@ namespace
 							.m_createParams = re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::TexCoord,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
-								 .m_dataType = re::VertexStream::DataType::Float2,
+								 .m_dataType = re::DataType::Float2,
 							} });
 					}
 					break;
@@ -1158,7 +1158,7 @@ namespace
 							.m_createParams = re::VertexStream::CreateParams{
 								 .m_type = re::VertexStream::Type::Color,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
-								 .m_dataType = re::VertexStream::DataType::Float4,
+								 .m_dataType = re::DataType::Float4,
 							} });
 					}
 					break;
@@ -1199,16 +1199,16 @@ namespace
 					vertexStreamDeferredCreateParams[0][re::VertexStream::Position].m_streamData->size();
 
 				std::unique_ptr<util::ByteVector> indexData;
-				re::VertexStream::DataType indexDataType = re::VertexStream::DataType::DataType_Count;
+				re::DataType indexDataType = re::DataType::DataType_Count;
 				if (numPositions < std::numeric_limits<uint16_t>::max())
 				{
 					indexData = std::make_unique<util::ByteVector>(util::ByteVector::Create<uint16_t>());
-					indexDataType = re::VertexStream::DataType::UShort;
+					indexDataType = re::DataType::UShort;
 				}
 				else
 				{
 					indexData = std::make_unique<util::ByteVector>(util::ByteVector::Create<uint32_t>());
-					indexDataType = re::VertexStream::DataType::UInt;
+					indexDataType = re::DataType::UInt;
 				}			
 
 				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
@@ -1226,7 +1226,7 @@ namespace
 						.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec3>()),
 						.m_createParams = re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Normal,
-							.m_dataType = re::VertexStream::DataType::Float3,
+							.m_dataType = re::DataType::Float3,
 							.m_doNormalize = re::VertexStream::Normalize::True,
 						},
 						.m_streamIdx = 0,
@@ -1238,7 +1238,7 @@ namespace
 					.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec4>()),
 					.m_createParams = re::VertexStream::CreateParams{
 						.m_type = re::VertexStream::Type::Tangent,
-						.m_dataType = re::VertexStream::DataType::Float4,
+						.m_dataType = re::DataType::Float4,
 						.m_doNormalize = re::VertexStream::Normalize::True,
 					},
 					.m_streamIdx = 0,
@@ -1250,7 +1250,7 @@ namespace
 					.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec2>()),
 					.m_createParams = re::VertexStream::CreateParams{
 						.m_type = re::VertexStream::Type::TexCoord,
-						.m_dataType = re::VertexStream::DataType::Float2,
+						.m_dataType = re::DataType::Float2,
 					},
 					.m_streamIdx = 0,
 					});
@@ -1265,7 +1265,7 @@ namespace
 						util::ByteVector::Create<glm::vec4>(numPositionVerts, glm::vec4(1.f) /*= GLTF default*/)),
 					.m_createParams = re::VertexStream::CreateParams{
 							.m_type = re::VertexStream::Type::Color,
-							.m_dataType = re::VertexStream::DataType::Float4,
+							.m_dataType = re::DataType::Float4,
 						},
 					.m_streamIdx = 0,
 					});

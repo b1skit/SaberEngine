@@ -34,8 +34,7 @@ namespace
 			em,
 			owningEntity,
 			positionMinXYZ,
-			positionMaxXYZ,
-			meshPrimitive->GetVertexStream(re::VertexStream::Type::Position, 0)->GetDataByteVector() );
+			positionMaxXYZ);
 
 		fr::BoundsComponent const& meshPrimitiveBounds = em.GetComponent<fr::BoundsComponent>(owningEntity);
 
@@ -103,8 +102,8 @@ namespace fr
 		fr::EntityManager& em,
 		entt::entity owningEntity,
 		gr::MeshPrimitive const* meshPrimitive,
-		glm::vec3 const& positionMinXYZ /*= fr::BoundsComponent::k_invalidMinXYZ*/, // Default: Compute bounds manually
-		glm::vec3 const& positionMaxXYZ /*= fr::BoundsComponent::k_invalidMaxXYZ*/) // Default: Compute bounds manually
+		glm::vec3 const& positionMinXYZ,
+		glm::vec3 const& positionMaxXYZ)
 	{
 		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
 			"A MeshPrimitive's owningEntity requires a TransformComponent");

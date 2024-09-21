@@ -42,6 +42,26 @@ namespace
 			bounds.SetEncapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID);
 		}
 	}
+
+
+	void ValidateMinMaxBounds(glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
+	{
+#if defined(_DEBUG)
+		SEAssert((minXYZ != fr::BoundsComponent::k_invalidMinXYZ && 
+			maxXYZ != fr::BoundsComponent::k_invalidMaxXYZ),
+			"Invalid minXYZ/maxXYZ");
+
+		SEAssert(minXYZ != maxXYZ &&
+			minXYZ.x < maxXYZ.x &&
+			minXYZ.y < maxXYZ.y &&
+			minXYZ.z < maxXYZ.z,
+			"Invalid min/max positions");
+
+		SEAssert(glm::all(glm::isnan(minXYZ)) == false && glm::all(glm::isnan(maxXYZ)) == false &&
+			glm::all(glm::isinf(minXYZ)) == false && glm::all(glm::isinf(maxXYZ)) == false,
+			"Bounds is NaN/Inf");
+#endif
+	}
 }
 
 
@@ -96,29 +116,8 @@ namespace fr
 	}
 
 
-	void BoundsComponent::AttachBoundsComponent(
-		fr::EntityManager& em,
-		entt::entity entity,
-		glm::vec3 const& minXYZ,
-		glm::vec3 const& maxXYZ,
-		util::ByteVector const& positions)
-	{
-		// Attach the BoundsComponent (which will trigger event listeners)
-		fr::BoundsComponent* boundsCmpt = 
-			em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
-
-		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt);
-
-		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
-	}
-
-
 	gr::Bounds::RenderData BoundsComponent::CreateRenderData(entt::entity, fr::BoundsComponent const& bounds)
 	{
-		//SEAssert(bounds.m_minXYZ != BoundsComponent::k_invalidMinXYZ && 
-		//	bounds.m_maxXYZ != BoundsComponent::k_invalidMaxXYZ,
-		//	"Bounds are not valid");
-
 		return gr::Bounds::RenderData
 		{
 			.m_encapsulatingBounds = bounds.GetEncapsulatingBoundsRenderDataID(),
@@ -134,12 +133,7 @@ namespace fr
 		, m_maxXYZ(k_invalidMaxXYZ)
 		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
 	{
-	}
-
-
-	BoundsComponent::BoundsComponent()
-		: BoundsComponent(PrivateCTORTag{})
-	{
+		// Note: The bounds must be set to something valid i.e. by expanding when a child is attached
 	}
 
 
@@ -148,29 +142,9 @@ namespace fr
 		, m_maxXYZ(maxXYZ)
 		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
 	{
-		SEAssert((m_minXYZ == BoundsComponent::k_invalidMinXYZ && m_maxXYZ == BoundsComponent::k_invalidMaxXYZ) ||
-			(m_minXYZ != BoundsComponent::k_invalidMinXYZ && m_maxXYZ != BoundsComponent::k_invalidMaxXYZ),
-			"Cannot have only 1 invalid minXYZ/maxXYZ");
-		SEAssert(glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
-			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false,
-			"Bounds is NaN/Inf");
-	}
+		Make3Dimensional();
 
-
-	BoundsComponent::BoundsComponent(
-		PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, util::ByteVector const& positions)
-		: m_minXYZ(minXYZ)
-		, m_maxXYZ(maxXYZ)
-		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
-	{
-		SEAssert((m_minXYZ == BoundsComponent::k_invalidMinXYZ && m_maxXYZ == BoundsComponent::k_invalidMaxXYZ) ||
-			(m_minXYZ != BoundsComponent::k_invalidMinXYZ && m_maxXYZ != BoundsComponent::k_invalidMaxXYZ),
-			"Cannot have only 1 invalid minXYZ/maxXYZ");
-
-		if (m_minXYZ == fr::BoundsComponent::k_invalidMinXYZ || m_maxXYZ == fr::BoundsComponent::k_invalidMaxXYZ)
-		{
-			ComputeBounds(positions);
-		}
+		ValidateMinMaxBounds(m_minXYZ, m_maxXYZ); // _DEBUG only
 	}
 
 
@@ -220,30 +194,9 @@ namespace fr
 
 		result.Make3Dimensional(); // Ensure the final bounds are 3D
 
-		SEAssert(glm::all(glm::isnan(result.m_minXYZ)) == false && glm::all(glm::isnan(result.m_maxXYZ)) == false &&
-			glm::all(glm::isinf(result.m_minXYZ)) == false && glm::all(glm::isinf(result.m_maxXYZ)) == false,
-			"Bounds is NaN/Inf");
+		ValidateMinMaxBounds(m_minXYZ, m_maxXYZ); // _DEBUG only
 
 		return result;
-	}
-
-
-	void BoundsComponent::ComputeBounds(util::ByteVector const& positions)
-	{
-		for (size_t i = 0; i < positions.size(); i++)
-		{
-			m_minXYZ.x = std::min(positions.at<glm::vec3>(i).x, m_minXYZ.x);
-			m_maxXYZ.x = std::max(positions.at<glm::vec3>(i).x, m_maxXYZ.x);
-
-			m_minXYZ.y = std::min(positions.at<glm::vec3>(i).y, m_minXYZ.y);
-			m_maxXYZ.y = std::max(positions.at<glm::vec3>(i).y, m_maxXYZ.y);
-
-			m_minXYZ.z = std::min(positions.at<glm::vec3>(i).z, m_minXYZ.z);
-			m_maxXYZ.z = std::max(positions.at<glm::vec3>(i).z, m_maxXYZ.z);
-		}
-		SEAssert(glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
-			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false,
-			"Bounds is NaN/Inf");
 	}
 
 
@@ -258,9 +211,7 @@ namespace fr
 		m_minXYZ.z = std::min(newContents.m_minXYZ.z, m_minXYZ.z);
 		m_maxXYZ.z = std::max(newContents.m_maxXYZ.z, m_maxXYZ.z);
 
-		SEAssert(glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
-			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false,
-			"Bounds is NaN/Inf");
+		ValidateMinMaxBounds(m_minXYZ, m_maxXYZ); // _DEBUG only
 	}
 
 
@@ -310,10 +261,6 @@ namespace fr
 			m_minXYZ.z -= k_bounds3DDepthBias;
 			m_maxXYZ.z += k_bounds3DDepthBias;
 		}
-
-		SEAssert(glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
-			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false,
-			"Bounds is NaN/Inf");
 	}
 
 

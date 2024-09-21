@@ -21,7 +21,7 @@ namespace re
 		static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
 
 		uint8_t GetSlotIdx(re::VertexStream::Type, uint8_t semanticIdx) const;
-		void SetSlotIdx(re::VertexStream::Type, uint8_t semanticIdx, re::VertexStream::DataType, uint8_t slotIdx);
+		void SetSlotIdx(re::VertexStream::Type, uint8_t semanticIdx, re::DataType, uint8_t slotIdx);
 
 		uint8_t GetNumSlots() const;
 
@@ -38,7 +38,7 @@ namespace re
 		struct VertexStreamMetadata
 		{
 			VertexStreamKey m_streamKey;
-			re::VertexStream::DataType m_streamDataType;
+			re::DataType m_streamDataType;
 
 			uint8_t m_shaderSlotIdx;
 		};
@@ -135,7 +135,7 @@ namespace re
 	inline void VertexStreamMap::SetSlotIdx(
 		re::VertexStream::Type streamType,
 		uint8_t semanticIdx,
-		re::VertexStream::DataType dataType,
+		re::DataType dataType,
 		uint8_t slotIdx)
 	{
 		SEAssert(m_numAttributes <= re::VertexStream::k_maxVertexStreams, "Vertex stream map is full");

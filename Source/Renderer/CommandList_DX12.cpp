@@ -308,15 +308,17 @@ namespace dx12
 			bool transitionResource = false;
 			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
 
-			switch (buffer->GetBufferParams().m_type)
+			re::Buffer::BufferParams const& bufferParams = buffer->GetBufferParams();
+
+			switch (bufferParams.m_type)
 			{
 			case re::Buffer::Type::Constant:
 			{
 				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
 					"Unexpected root signature type");
 
-				SEAssert((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPURead) != 0 &&
-					(buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite) == 0,
+				SEAssert((bufferParams.m_usageMask & re::Buffer::Usage::GPURead) != 0 &&
+					(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) == 0,
 					"Invalid usage flags for a constant buffer");
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
@@ -333,7 +335,7 @@ namespace dx12
 				{
 				case RootSignature::RootParameter::Type::SRV:
 				{
-					SEAssert((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPURead) != 0, 
+					SEAssert((bufferParams.m_usageMask & re::Buffer::Usage::GPURead) != 0, 
 						"Buffer does not have the GPU read flag set");
 
 					m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
@@ -346,7 +348,7 @@ namespace dx12
 				break;
 				case RootSignature::RootParameter::Type::UAV:
 				{
-					SEAssert(buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite, 
+					SEAssert(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite, 
 						"UAV buffers must have GPU writes enabled");
 
 					m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
@@ -354,7 +356,7 @@ namespace dx12
 						bufferPlatParams->m_resource.Get(),
 						bufferPlatParams->m_heapByteOffset);
 
-					if ((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite))
+					if ((bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite))
 					{
 						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -368,7 +370,7 @@ namespace dx12
 				break;
 				case RootSignature::RootParameter::Type::DescriptorTable:
 				{
-					SEAssert(buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite,
+					SEAssert(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite,
 						"UAV buffers must have GPU writes enabled");
 
 					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
@@ -377,7 +379,7 @@ namespace dx12
 						rootSigEntry->m_tableEntry.m_offset,
 						1);
 
-					if ((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::GPUWrite))
+					if ((bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite))
 					{
 						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -394,7 +396,7 @@ namespace dx12
 			}
 			break;
 			default:
-				SEAssertF("Invalid DataType");
+				SEAssertF("Invalid Buffer Type");
 			}
 
 			// We only transition GPU-writeable buffers (i.e. immutable with GPU-write flag enabled)
@@ -404,7 +406,7 @@ namespace dx12
 			}
 
 			// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
-			if ((buffer->GetBufferParams().m_usageMask & re::Buffer::Usage::CPURead) != 0)
+			if ((bufferParams.m_usageMask & re::Buffer::Usage::CPURead) != 0)
 			{
 				const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
 
@@ -435,9 +437,7 @@ namespace dx12
 			re::VertexStream const* indexStream = batchGraphicsParams.m_indexStream;
 			SEAssert(indexStream, "Index stream cannot be null for indexed draws");
 
-			dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
-				indexStream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
-			SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
+			SetIndexBuffer(indexStream);
 
 			CommitGPUDescriptors();
 
@@ -473,18 +473,20 @@ namespace dx12
 
 	void CommandList::SetVertexBuffer(uint32_t slot, re::VertexStream const* stream)
 	{
-		dx12::VertexStream::PlatformParams* streamPlatParams =
-			stream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
+		re::Buffer const* streamBuffer = stream->GetBuffer();
+		
+		dx12::Buffer::PlatformParams const* streamBufferPlatParams = 
+			streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
 
 		TransitionResource(
-			streamPlatParams->m_bufferResource.Get(),
-			D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+			streamBufferPlatParams->m_resource.Get(),
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
 			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 		m_commandList->IASetVertexBuffers(
-			slot, 
-			1, 
-			&stream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>()->m_vertexBufferView);
+			slot,
+			1,
+			&streamBufferPlatParams->m_views.m_vertexBufferView);
 	}
 
 
@@ -497,16 +499,15 @@ namespace dx12
 		uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;
 		for (uint32_t streamIdx = 0; streamIdx < numVertexStreamInputs; streamIdx++)
 		{
-			dx12::VertexStream::PlatformParams_Vertex* vertexPlatParams =
-				streams[streamIdx].m_vertexStream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
+			re::Buffer const* streamBuffer = streams[streamIdx].m_vertexStream->GetBuffer();
 
-			streamViews.emplace_back(vertexPlatParams->m_vertexBufferView);
+			dx12::Buffer::PlatformParams const* streamBufferPlatParams =
+				streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
 
-			dx12::VertexStream::PlatformParams* streamPlatParams =
-				streams[streamIdx].m_vertexStream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
+			streamViews.emplace_back(streamBufferPlatParams->m_views.m_vertexBufferView);
 
 			TransitionResource(
-				streamPlatParams->m_bufferResource.Get(),
+				streamBufferPlatParams->m_resource.Get(),
 				D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
 				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
@@ -544,6 +545,22 @@ namespace dx12
 		}
 
 		SEAssert(streamViews.empty(), "Unflushed vertex streams");
+	}
+
+
+	void CommandList::SetIndexBuffer(re::VertexStream const* indexStream)
+	{
+		re::Buffer const* streamBuffer = indexStream->GetBuffer();
+
+		dx12::Buffer::PlatformParams const* streamBufferPlatParams =
+			streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();		
+
+		m_commandList->IASetIndexBuffer(&streamBufferPlatParams->m_views.m_indexBufferView);
+
+		TransitionResource(
+			streamBufferPlatParams->m_resource.Get(),
+			D3D12_RESOURCE_STATE_INDEX_BUFFER,
+			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 	}
 
 
@@ -865,39 +882,6 @@ namespace dx12
 			subresourceIdx,							// Index of 1st subresource in the resource
 			1,										// Number of subresources in the subresources array
 			&subresourceData);						// Array of subresource data structs
-		SEAssert(bufferSizeResult > 0, "UpdateSubresources returned 0 bytes. This is unexpected");
-	}
-
-
-	void CommandList::UpdateSubresources(
-		re::VertexStream const* stream, ID3D12Resource* intermediate, size_t intermediateOffset)
-	{
-		SEAssert(m_type == dx12::CommandListType::Copy, "Expected a copy command list");
-
-		dx12::VertexStream::PlatformParams const* streamPlatformParams =
-			stream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams const*>();
-
-		TransitionResource(
-			streamPlatformParams->m_bufferResource.Get(),
-			D3D12_RESOURCE_STATE_COPY_DEST,
-			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-
-		const size_t bufferSize = stream->GetTotalDataByteSize();
-
-		// Populate the subresource:
-		D3D12_SUBRESOURCE_DATA subresourceData = {};
-		subresourceData.pData = stream->GetData();
-		subresourceData.RowPitch = bufferSize;
-		subresourceData.SlicePitch = subresourceData.RowPitch;
-
-		const uint64_t bufferSizeResult = ::UpdateSubresources(
-			m_commandList.Get(),
-			streamPlatformParams->m_bufferResource.Get(),	// Destination resource
-			intermediate,									// Intermediate resource
-			0,												// Index of 1st subresource in the resource
-			0,												// Number of subresources in the resource.
-			1,												// Required byte size for the update
-			&subresourceData);
 		SEAssert(bufferSizeResult > 0, "UpdateSubresources returned 0 bytes. This is unexpected");
 	}
 

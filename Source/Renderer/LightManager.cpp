@@ -65,7 +65,7 @@ namespace gr
 			PoissonSampleParamsData::s_shaderName,
 			poissonSampleParamsData,
 			re::Buffer::BufferParams{
-				.m_cpuAllocationType = re::Buffer::CPUAllocation::Immutable,
+				.m_allocationType = re::Buffer::AllocationType::Immutable,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 				.m_type = re::Buffer::Type::Constant,
@@ -440,7 +440,7 @@ namespace gr
 						bufferName,
 						lightData.data(),
 						re::Buffer::BufferParams{
-							.m_cpuAllocationType = re::Buffer::CPUAllocation::Mutable,
+							.m_allocationType = re::Buffer::AllocationType::Mutable,
 							.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 							.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 							.m_type = re::Buffer::Type::Structured,
@@ -600,7 +600,7 @@ namespace gr
 					shaderName,
 					GetLightIndexData(lightIdx, shadowIdx),
 					re::Buffer::BufferParams{
-						.m_cpuAllocationType = re::Buffer::CPUAllocation::SingleFrame,
+						.m_allocationType = re::Buffer::AllocationType::SingleFrame,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 						.m_type = re::Buffer::Type::Constant,

@@ -10,6 +10,7 @@
 #include "Texture_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_DX12.h"
+#include "VertexStream_DX12.h"
 
 #include "Core/Assert.h"
 #include "Core/Util/TextUtils.h"
@@ -73,46 +74,6 @@ namespace
 	}
 
 
-	inline constexpr DXGI_FORMAT GetDXGIFormtFromVertexStreamDataType(re::VertexStream::DataType dataType)
-	{
-		// NOTE: We don't consider whether the stream is normalized or not here
-		switch (dataType)
-		{
-		case re::VertexStream::DataType::Float: return DXGI_FORMAT_R32_FLOAT;
-		case re::VertexStream::DataType::Float2: return DXGI_FORMAT_R32G32_FLOAT;
-		case re::VertexStream::DataType::Float3: return DXGI_FORMAT_R32G32B32_FLOAT;
-		case re::VertexStream::DataType::Float4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
-
-		case re::VertexStream::DataType::Int: return DXGI_FORMAT_R32_SINT;
-		case re::VertexStream::DataType::Int2: return DXGI_FORMAT_R32G32_SINT;
-		case re::VertexStream::DataType::Int3: return DXGI_FORMAT_R32G32B32_SINT;
-		case re::VertexStream::DataType::Int4: return DXGI_FORMAT_R32G32B32A32_SINT;
-
-		case re::VertexStream::DataType::UInt: return DXGI_FORMAT_R32_UINT;
-		case re::VertexStream::DataType::UInt2: return DXGI_FORMAT_R32G32_UINT;
-		case re::VertexStream::DataType::UInt3: return DXGI_FORMAT_R32G32B32_UINT;
-		case re::VertexStream::DataType::UInt4: return DXGI_FORMAT_R32G32B32A32_UINT;
-
-		case re::VertexStream::DataType::Short: return DXGI_FORMAT_R16_SINT;
-		case re::VertexStream::DataType::Short2: return DXGI_FORMAT_R16G16_SINT;
-		case re::VertexStream::DataType::Short4: return DXGI_FORMAT_R16G16B16A16_SINT;
-
-		case re::VertexStream::DataType::UShort: return DXGI_FORMAT_R16_UINT;
-		case re::VertexStream::DataType::UShort2: return DXGI_FORMAT_R16G16_UINT;
-		case re::VertexStream::DataType::UShort4: return DXGI_FORMAT_R16G16B16A16_UINT;
-
-		case re::VertexStream::DataType::Byte: return DXGI_FORMAT_R8_SINT;
-		case re::VertexStream::DataType::Byte2: return DXGI_FORMAT_R8G8_SINT;
-		case re::VertexStream::DataType::Byte4: return DXGI_FORMAT_R8G8B8A8_SINT;
-
-		case re::VertexStream::DataType::UByte: return DXGI_FORMAT_R8_UINT;
-		case re::VertexStream::DataType::UByte2: return DXGI_FORMAT_R8G8_UINT;
-		case re::VertexStream::DataType::UByte4: return DXGI_FORMAT_R8G8B8A8_UINT;
-		default: return DXGI_FORMAT_UNKNOWN; // Error
-		}
-	}
-
-
 	std::vector<D3D12_INPUT_ELEMENT_DESC> BuildInputLayout(re::Shader const& shader)
 	{
 		// Get the vertex stream metadata, and the number of attributes it points to:
@@ -131,7 +92,7 @@ namespace
 				VertexStreamTypeToSemanticName(
 					entry.m_streamKey.m_streamType, entry.m_streamKey.m_semanticIdx),	// Semantic name
 				entry.m_streamKey.m_semanticIdx,										// Semantic idx
-				GetDXGIFormtFromVertexStreamDataType(entry.m_streamDataType),			// Format
+				dx12::VertexStream::GetDXGIStreamFormat(entry.m_streamDataType, false),	// Format
 				entry.m_shaderSlotIdx,													// Input slot [0, 15]
 				D3D12_APPEND_ALIGNED_ELEMENT,											// Aligned byte offset
 				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,								// Input slot class

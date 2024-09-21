@@ -43,7 +43,7 @@ namespace gr
 			CameraData::s_shaderName,
 			defaultCameraParams,
 			re::Buffer::BufferParams{
-				.m_cpuAllocationType = re::Buffer::CPUAllocation::Mutable,
+				.m_allocationType = re::Buffer::AllocationType::Mutable,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
 				.m_usageMask = re::Buffer::Usage::GPURead,
 				.m_type = re::Buffer::Type::Constant,

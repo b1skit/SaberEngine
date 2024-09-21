@@ -10,6 +10,9 @@
 
 namespace re
 {
+	class Buffer;
+
+
 	class VertexStream : public virtual core::IHashedDataObject
 	{
 	public:
@@ -29,45 +32,6 @@ namespace re
 			True = 1
 		};
 
-		enum class DataType : uint8_t // Of each component in a vertex stream element. Eg. Color/Float4 == Float
-		{
-			Float,	// 32-bit
-			Float2,
-			Float3,
-			Float4,
-
-			Int,	// 32-bit
-			Int2,
-			Int3,
-			Int4,
-
-			UInt,	// 32-bit
-			UInt2,
-			UInt3,
-			UInt4,
-
-			Short,	// 16-bit
-			Short2,
-			Short4,
-
-			UShort,	// 16-bit
-			UShort2,
-			UShort4,
-
-			Byte,	// 8-bit
-			Byte2,
-			Byte4,
-
-			UByte,	// 8-bit
-			UByte2,
-			UByte4,
-
-			DataType_Count
-		};
-		static constexpr char const* DataTypeToCStr(DataType);
-		static constexpr uint8_t DataTypeToNumComponents(DataType);
-		static constexpr uint8_t DataTypeToComponentByteSize(DataType);
-		
 
 		enum Type : uint8_t
 		{
@@ -102,7 +66,7 @@ namespace re
 
 			IsMorphData m_isMorphData = IsMorphData::False;
 
-			DataType m_dataType = DataType::DataType_Count;
+			re::DataType m_dataType = DataType::DataType_Count; // Per component in each element. Eg. Color/Float4 == Float
 			Normalize m_doNormalize = Normalize::False;
 		};
 
@@ -124,8 +88,7 @@ namespace re
 		DataType GetDataType() const; // What data type does each individual component have?
 		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
 
-		void const* GetData() const;
-		util::ByteVector const& GetDataByteVector() const;
+		re::Buffer const* GetBuffer() const;
 
 		uint32_t GetTotalDataByteSize() const;
 		
@@ -152,7 +115,7 @@ namespace re
 	private:
 		CreateParams m_createParams;
 
-		util::ByteVector m_data;
+		std::shared_ptr<re::Buffer> m_streamBuffer;
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 
@@ -185,48 +148,9 @@ namespace re
 	}
 
 
-	inline util::ByteVector const& VertexStream::GetDataByteVector() const
+	inline re::Buffer const* VertexStream::GetBuffer() const
 	{
-		return m_data;
-	}
-
-
-	constexpr char const* VertexStream::DataTypeToCStr(DataType dataType)
-	{
-		switch (dataType)
-		{
-		case re::VertexStream::DataType::Float: return "Float";
-		case re::VertexStream::DataType::Float2: return "Float2";
-		case re::VertexStream::DataType::Float3: return "Float3";
-		case re::VertexStream::DataType::Float4: return "Float4";
-
-		case re::VertexStream::DataType::Int: return "Int";
-		case re::VertexStream::DataType::Int2: return "Int2";
-		case re::VertexStream::DataType::Int3: return "Int3";
-		case re::VertexStream::DataType::Int4: return "Int4";
-
-		case re::VertexStream::DataType::UInt: return "UInt";
-		case re::VertexStream::DataType::UInt2: return "UInt2";
-		case re::VertexStream::DataType::UInt3: return "UInt3";
-		case re::VertexStream::DataType::UInt4: return "UInt4";
-
-		case re::VertexStream::DataType::Short: return "Short";
-		case re::VertexStream::DataType::Short2: return "Short2";
-		case re::VertexStream::DataType::Short4: return "Short4";
-
-		case re::VertexStream::DataType::UShort: return "UShort";
-		case re::VertexStream::DataType::UShort2: return "UShort2";
-		case re::VertexStream::DataType::UShort4: return "UShort4";
-
-		case re::VertexStream::DataType::Byte: return "Byte";
-		case re::VertexStream::DataType::Byte2: return "Byte2";
-		case re::VertexStream::DataType::Byte4: return "Byte4";
-
-		case re::VertexStream::DataType::UByte: return "UByte";
-		case re::VertexStream::DataType::UByte2: return "UByte2";
-		case re::VertexStream::DataType::UByte4: return "UByte4";
-		default: return "INVALID_DATA_TYPE";
-		}
+		return m_streamBuffer.get();
 	}
 
 

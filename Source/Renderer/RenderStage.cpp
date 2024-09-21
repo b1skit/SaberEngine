@@ -863,8 +863,8 @@ namespace re
 	{
 		SEAssert(buffer, "Buffer cannot be null");
 
-		SEAssert(buffer->GetCPUAllocationType() == re::Buffer::CPUAllocation::Mutable || 
-			buffer->GetCPUAllocationType() == re::Buffer::CPUAllocation::Immutable,
+		SEAssert(buffer->GetAllocationType() == re::Buffer::AllocationType::Mutable || 
+			buffer->GetAllocationType() == re::Buffer::AllocationType::Immutable,
 			"Buffer must have a permanent lifetime");
 		
 		SEAssert(std::find_if(

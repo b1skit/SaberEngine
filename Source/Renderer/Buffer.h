@@ -1,5 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "EnumTypes.h"
+
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
 
@@ -7,12 +9,12 @@
 namespace re
 {
 	/*******************************************************************************************************************
-	* Buffers have 2 modification/access types:
+	* Buffers have 2 allocation types:
 	* 1) Mutable:		Can be modified, and are rebuffered when modification is detected
 	* 2) Immutable:		Buffered once at creation, and cannot be modified
 	*
 	* Buffers have 2 lifetime scopes:
-	* 1) Permanent:		Allocated once, and held for the lifetime of the program
+	* 1) Permanent:		Allocated once, and held for the lifetime of their scope
 	* 2) Single frame:	Allocated and destroyed within a single frame
 	*					-> Single frame buffers are immutable once they are committed
 	*
@@ -22,19 +24,22 @@ namespace re
 	class Buffer : public virtual core::INamedObject
 	{
 	public:
-		enum CPUAllocation : uint8_t
+		enum AllocationType : uint8_t
 		{
 			Mutable,		// Permanent, can only be modified by the CPU
 			Immutable,		// Permanent, can only be modified by the GPU
 			SingleFrame,	// Single frame, immutable once committed by the CPU
 
-			CPUAllocation_Invalid
+			AllocationType_Invalid
 		};
 
 		enum Type : uint8_t
 		{
 			Constant,
 			Structured,
+
+			Vertex,
+			Index,
 
 			Type_Invalid
 		};
@@ -48,21 +53,32 @@ namespace re
 		enum Usage : uint8_t
 		{
 			GPURead		= 1 << 0,	// Default
-			GPUWrite	= 1 << 1,	// Buffer::CPUAllocation::Immutable only (DX12: UAV, OpenGL: SSBO)
+			GPUWrite	= 1 << 1,	// Buffer::AllocationType::Immutable only (DX12: UAV, OpenGL: SSBO)
 			CPURead		= 1 << 2,	// CPU readback from the GPU
 			CPUWrite	= 1 << 3,	// CPU-mappable for writing (i.e. to the upload heap). GPUWrites cannot be enabled
 		};
 
 		struct BufferParams
 		{
-			CPUAllocation m_cpuAllocationType = CPUAllocation::CPUAllocation_Invalid;
+			AllocationType m_allocationType = AllocationType::AllocationType_Invalid;
 
 			MemoryPoolPreference m_memPoolPreference = MemoryPoolPreference::Default;
 
 			uint8_t m_usageMask = Usage::GPURead | Usage::CPUWrite; // Constant data mapped by CPU, consumed by the GPU
 
 			Type m_type = Type::Type_Invalid;
-			uint32_t m_arraySize = 1; // Must be 1 for Constant buffers
+
+			uint32_t m_arraySize = 1; // Must be 1 for constant buffers, and vertex/index streams
+
+			union
+			{
+				struct
+				{
+					re::DataType m_dataType;
+					bool m_isNormalized;
+					uint8_t m_stride;
+				} m_vertexStream;
+			} m_typeParams;
 		};
 
 
@@ -101,6 +117,10 @@ namespace re
 		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUncommittedArray(
 			std::string const& bufferName, BufferParams const&);
 
+		// Create a buffer with void type. Useful for when the contents are not known (e.g. VertexStreams).
+		// Risky - this intentionally avoids type checking
+		[[nodiscard]] static std::shared_ptr<re::Buffer> Create(
+			std::string const& bufferName, void const* dataArray, uint32_t numBytes, BufferParams const&);
 
 	public:
 		Buffer(Buffer&&) = default;
@@ -119,9 +139,9 @@ namespace re
 	
 		void const* GetData() const;
 		void GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const;
-		uint32_t GetSize() const;
+		uint32_t GetTotalBytes() const;
 		uint32_t GetStride() const;
-		CPUAllocation GetCPUAllocationType() const;
+		AllocationType GetAllocationType() const;
 
 		uint32_t GetArraySize() const; // Instanced buffers: How many instances of data does the buffer hold?
 
@@ -262,6 +282,28 @@ namespace re
 	}
 
 
+	inline std::shared_ptr<re::Buffer> Buffer::Create(
+		std::string const& bufferName, void const* data, uint32_t numBytes, BufferParams const& bufferParams)
+	{
+		SEAssert(bufferParams.m_type == re::Buffer::Type::Vertex || 
+			bufferParams.m_type == re::Buffer::Type::Index,
+			"Unexpected/untested buffer type for this Create path");
+
+		SEAssert(bufferParams.m_allocationType == re::Buffer::AllocationType::Immutable || 
+			bufferParams.m_allocationType == re::Buffer::AllocationType::SingleFrame,
+			"Invalid AllocationType type: It's (currently) not possible to Commit() via a nullptr");
+
+		const uint64_t voidHashCode = typeid(void const*).hash_code();
+
+		std::shared_ptr<re::Buffer> newBuffer;
+		newBuffer.reset(new Buffer(voidHashCode, bufferName, bufferParams, numBytes));
+
+		RegisterAndCommit(newBuffer, data, numBytes, voidHashCode);
+
+		return newBuffer;
+	}
+
+
 	template <typename T>
 	void Buffer::Commit(T const& data) // Commit *updated* data
 	{
@@ -279,7 +321,7 @@ namespace re
 	}
 
 
-	inline uint32_t Buffer::GetSize() const
+	inline uint32_t Buffer::GetTotalBytes() const
 	{
 		return m_dataByteSize;
 	}
@@ -291,9 +333,9 @@ namespace re
 	}
 
 
-	inline Buffer::CPUAllocation Buffer::GetCPUAllocationType() const
+	inline Buffer::AllocationType Buffer::GetAllocationType() const
 	{
-		return m_bufferParams.m_cpuAllocationType;
+		return m_bufferParams.m_allocationType;
 	}
 
 

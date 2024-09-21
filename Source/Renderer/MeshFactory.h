@@ -29,6 +29,10 @@ namespace gr::meshfactory
 		glm::vec4 m_vertexColor = glm::vec4(1.f); // GLTF default = (1,1,1,1)
 
 		Orientation m_orientation = Orientation::Default;
+
+		// If these are not null, they'll be populated with the min/max position values
+		glm::vec3* m_positionMinXYZOut = nullptr;
+		glm::vec3* m_positionMaxXYZOut = nullptr;
 	};
 
 	enum class ZLocation : uint8_t

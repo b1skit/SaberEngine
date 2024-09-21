@@ -37,12 +37,6 @@ namespace fr
 			glm::vec3 const& minXYZ, 
 			glm::vec3 const& maxXYZ);
 
-		static void AttachBoundsComponent(
-			fr::EntityManager&, 
-			entt::entity, 
-			glm::vec3 const& minXYZ, 
-			glm::vec3 const& maxXYZ, 
-			util::ByteVector const& positions);
 
 	public:
 		static gr::Bounds::RenderData CreateRenderData(entt::entity, fr::BoundsComponent const&);
@@ -51,7 +45,6 @@ namespace fr
 
 
 	public:
-		static BoundsComponent Uninitialized() { return BoundsComponent(); }
 		static BoundsComponent Zero() { return BoundsComponent(PrivateCTORTag{}, glm::vec3(0.f), glm::vec3(0.f)); }
 
 
@@ -80,8 +73,6 @@ namespace fr
 	public:
 		BoundsComponent(PrivateCTORTag);
 		explicit BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ);
-		explicit BoundsComponent(
-			PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, util::ByteVector const& positions);
 
 		BoundsComponent(BoundsComponent const& rhs) = default;
 		BoundsComponent(BoundsComponent&&) = default;
@@ -93,7 +84,6 @@ namespace fr
 
 
 	private:
-		void ComputeBounds(util::ByteVector const&);
 		void Make3Dimensional();
 
 
@@ -104,7 +94,7 @@ namespace fr
 		gr::RenderDataID m_encapsulatingBoundsRenderDataID;
 
 	private:
-		BoundsComponent();
+		BoundsComponent() = delete;
 	};
 
 

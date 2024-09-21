@@ -94,8 +94,12 @@ namespace fr
 			"A LightComponent's owning entity requires a TransformComponent");
 
 		// Create a MeshPrimitive (owned by SceneData):
+		glm::vec3 minPos = glm::vec3(0.f);
+		glm::vec3 maxPos = glm::vec3(0.f);
+		gr::meshfactory::FactoryOptions sphereOptions{ .m_positionMinXYZOut = &minPos, .m_positionMaxXYZOut = &maxPos};
+
 		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = 
-			gr::meshfactory::CreateSphere(gr::meshfactory::FactoryOptions{}, 1.f);
+			gr::meshfactory::CreateSphere(sphereOptions, 1.f);
 
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
 
@@ -103,7 +107,7 @@ namespace fr
 			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, owningTransform.GetTransformID());
 
 		// Attach the MeshPrimitive 
-		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh.get());
+		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh.get(), minPos, maxPos);
 
 		// LightComponent:
 		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
@@ -151,8 +155,14 @@ namespace fr
 			"A LightComponent's owning entity requires a TransformComponent");
 
 		// Create a MeshPrimitive (owned by SceneData):
-		gr::meshfactory::FactoryOptions coneFactoryOptions{};
-		coneFactoryOptions.m_orientation = gr::meshfactory::Orientation::ZNegative;
+		glm::vec3 minPos = glm::vec3(0.f);
+		glm::vec3 maxPos = glm::vec3(0.f);
+
+		gr::meshfactory::FactoryOptions coneFactoryOptions{ 
+			.m_orientation = gr::meshfactory::Orientation::ZNegative,
+			.m_positionMinXYZOut = &minPos, 
+			.m_positionMaxXYZOut = &maxPos
+		};
 
 		std::shared_ptr<gr::MeshPrimitive> spotLightMesh = gr::meshfactory::CreateCone(
 			coneFactoryOptions,
@@ -166,7 +176,7 @@ namespace fr
 			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, owningTransform.GetTransformID());
 
 		// Attach the MeshPrimitive 
-		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh.get());
+		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh.get(), minPos, maxPos);
 
 		// LightComponent:
 		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(

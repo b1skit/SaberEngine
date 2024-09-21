@@ -107,7 +107,6 @@ namespace dx12
 			ID3D12Resource* intermediate,
 			size_t intermediateOffset);
 
-		void UpdateSubresources(re::VertexStream const*, ID3D12Resource* intermediate, size_t intermediateOffset);
 		void UpdateSubresources(
 			re::Buffer const*, uint32_t dstOffset, ID3D12Resource* srcResource, uint32_t srcOffset, uint32_t numBytes);
 
@@ -134,7 +133,7 @@ namespace dx12
 		void SetVertexBuffer(uint32_t slot, re::VertexStream const*);
 		void SetVertexBuffers(re::Batch::VertexStreamInput const*, uint8_t numVertexStreamInputs);
 
-		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
+		void SetIndexBuffer(re::VertexStream const*);
 
 		void TransitionResource(ID3D12Resource*, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 
@@ -234,12 +233,6 @@ namespace dx12
 	inline void CommandList::SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY topologyType) const
 	{
 		m_commandList->IASetPrimitiveTopology(topologyType);
-	}
-
-
-	inline void CommandList::SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW* view) const
-	{
-		m_commandList->IASetIndexBuffer(view);
 	}
 
 

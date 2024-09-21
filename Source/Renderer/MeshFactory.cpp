@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "BoundsRenderData.h"
 #include "MeshFactory.h"
 #include "VertexStreamBuilder.h"
 
@@ -221,6 +222,12 @@ namespace
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+		gr::Bounds::ComputeMinMaxPosition(
+			reinterpret_cast<glm::vec3 const*>(positions.data().data()),
+			positions.size(),
+			factoryOptions.m_positionMinXYZOut,
+			factoryOptions.m_positionMaxXYZOut);
+
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
@@ -232,7 +239,7 @@ namespace
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 		
@@ -241,7 +248,7 @@ namespace
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Normal,
-					.m_dataType = re::VertexStream::DataType::Float3,
+					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)).get());
@@ -252,7 +259,7 @@ namespace
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Tangent,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)).get());
@@ -263,7 +270,7 @@ namespace
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Color,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 				},
 				std::move(*colorsPtr)).get());
 		}
@@ -271,7 +278,7 @@ namespace
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UShort,
+				.m_dataType = re::DataType::UShort,
 			},
 			std::move(indices)).get();
 		
@@ -336,7 +343,7 @@ namespace gr::meshfactory
 		extentDistance = std::abs(extentDistance);
 
 		// Note: Using a RHCS
-		const std::array<glm::vec3, 8> positionsData
+		const std::array<glm::vec3, 8> positions
 		{
 			glm::vec3(-extentDistance, extentDistance, extentDistance),
 			glm::vec3(-extentDistance, -extentDistance, extentDistance),
@@ -347,15 +354,16 @@ namespace gr::meshfactory
 			glm::vec3(extentDistance, -extentDistance, -extentDistance),
 			glm::vec3(extentDistance, extentDistance, -extentDistance)
 		};
+		
 
 		util::ByteVector assembledPositions = util::ByteVector::Create<glm::vec3>(
 		{
-			positionsData[0], positionsData[1], positionsData[2], positionsData[3], // Front face
-			positionsData[4], positionsData[5],	positionsData[1], positionsData[0], // Left face
-			positionsData[3], positionsData[2], positionsData[6], positionsData[7], // Right face
-			positionsData[4], positionsData[0], positionsData[3], positionsData[7], // Top face
-			positionsData[1], positionsData[5],	positionsData[6], positionsData[2], // Bottom face
-			positionsData[7], positionsData[6], positionsData[5], positionsData[4]  // Back face
+			positions[0], positions[1], positions[2], positions[3], // Front face
+			positions[4], positions[5],	positions[1], positions[0], // Left face
+			positions[3], positions[2], positions[6], positions[7], // Right face
+			positions[4], positions[0], positions[3], positions[7], // Top face
+			positions[1], positions[5],	positions[6], positions[2], // Bottom face
+			positions[7], positions[6], positions[5], positions[4]  // Back face
 		});
 
 		const std::vector<glm::vec2> uvs // NOTE: (0,0) = Top left
@@ -419,6 +427,12 @@ namespace gr::meshfactory
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+		gr::Bounds::ComputeMinMaxPosition(
+			reinterpret_cast<glm::vec3 const*>(assembledPositions.data().data()),
+			assembledPositions.size(),
+			factoryOptions.m_positionMinXYZOut,
+			factoryOptions.m_positionMaxXYZOut);
+
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
@@ -430,14 +444,14 @@ namespace gr::meshfactory
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(assembledPositions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::TexCoord,
-				.m_dataType = re::VertexStream::DataType::Float2,
+				.m_dataType = re::DataType::Float2,
 			},
 			std::move(assembledUVs)).get());
 
@@ -446,7 +460,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Normal,
-					.m_dataType = re::VertexStream::DataType::Float3,
+					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)).get());
@@ -457,7 +471,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Tangent,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)).get());
@@ -468,7 +482,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Color,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 				},
 				std::move(*colorsPtr)).get());
 		}
@@ -476,7 +490,7 @@ namespace gr::meshfactory
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UShort,
+				.m_dataType = re::DataType::UShort,
 			},
 			std::move(cubeIndices)).get();
 
@@ -541,21 +555,21 @@ namespace gr::meshfactory
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::TexCoord,
-				.m_dataType = re::VertexStream::DataType::Float2,
+				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)).get());
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UShort,
+				.m_dataType = re::DataType::UShort,
 			},
 			std::move(triIndices)).get();
 
@@ -567,7 +581,6 @@ namespace gr::meshfactory
 	}
 
 
-	// TODO: Most of the meshfactory functions are still hard-coded for OpenGL spaces
 	std::shared_ptr<MeshPrimitive> CreateQuad(
 		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
 		glm::vec3 tl /*= glm::vec3(-0.5f, 0.5f, 0.0f)*/,
@@ -612,6 +625,12 @@ namespace gr::meshfactory
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+		gr::Bounds::ComputeMinMaxPosition(
+			reinterpret_cast<glm::vec3 const*>(positions.data().data()),
+			positions.size(),
+			factoryOptions.m_positionMinXYZOut,
+			factoryOptions.m_positionMaxXYZOut);
+
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
@@ -623,14 +642,14 @@ namespace gr::meshfactory
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::TexCoord,
-				.m_dataType = re::VertexStream::DataType::Float2,
+				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)).get());
 
@@ -639,7 +658,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Normal,
-					.m_dataType = re::VertexStream::DataType::Float3,
+					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)).get());
@@ -650,7 +669,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Tangent,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)).get());
@@ -661,7 +680,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Color,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 				},
 				std::move(*colorsPtr)).get());
 		}
@@ -669,7 +688,7 @@ namespace gr::meshfactory
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UShort,
+				.m_dataType = re::DataType::UShort,
 			},
 			std::move(quadIndices)).get();
 
@@ -873,6 +892,12 @@ namespace gr::meshfactory
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+		gr::Bounds::ComputeMinMaxPosition(
+			reinterpret_cast<glm::vec3 const*>(positions.data().data()),
+			positions.size(),
+			factoryOptions.m_positionMinXYZOut,
+			factoryOptions.m_positionMaxXYZOut);
+
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
@@ -884,14 +909,14 @@ namespace gr::meshfactory
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::TexCoord,
-				.m_dataType = re::VertexStream::DataType::Float2,
+				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)).get());
 
@@ -900,7 +925,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Normal,
-					.m_dataType = re::VertexStream::DataType::Float3,
+					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)).get());
@@ -911,7 +936,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Tangent,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)).get());
@@ -922,7 +947,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Color,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 				},
 				std::move(*colorsPtr)).get());
 		}
@@ -930,7 +955,7 @@ namespace gr::meshfactory
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UShort,
+				.m_dataType = re::DataType::UShort,
 			},
 			std::move(indices)).get();
 
@@ -1056,8 +1081,7 @@ namespace gr::meshfactory
 		positions.at<glm::vec3>(bottomVertIdx) = glm::vec3(0.f, yCoord, 0.f);
 		uvs.at<glm::vec2>(bottomVertIdx) = bottomCenterVertUV;
 		
-		// Soft normals:
-		
+		// Soft normals:		
 		if (factoryOptions.m_generateNormalsAndTangents)
 		{
 			// Top vertices:
@@ -1120,6 +1144,12 @@ namespace gr::meshfactory
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+		gr::Bounds::ComputeMinMaxPosition(
+			reinterpret_cast<glm::vec3 const*>(positions.data().data()),
+			positions.size(),
+			factoryOptions.m_positionMinXYZOut,
+			factoryOptions.m_positionMaxXYZOut);
+
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
@@ -1131,14 +1161,14 @@ namespace gr::meshfactory
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::TexCoord,
-				.m_dataType = re::VertexStream::DataType::Float2,
+				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)).get());
 
@@ -1147,7 +1177,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Normal,
-					.m_dataType = re::VertexStream::DataType::Float3,
+					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)).get());
@@ -1158,7 +1188,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Tangent,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)).get());
@@ -1169,7 +1199,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Color,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 				},
 				std::move(*colorsPtr)).get());
 		}
@@ -1177,7 +1207,7 @@ namespace gr::meshfactory
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UShort,
+				.m_dataType = re::DataType::UShort,
 			},
 			std::move(indices)).get();
 
@@ -1249,6 +1279,12 @@ namespace gr::meshfactory
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+		gr::Bounds::ComputeMinMaxPosition(
+			reinterpret_cast<glm::vec3 const*>(positions.data().data()),
+			positions.size(),
+			factoryOptions.m_positionMinXYZOut,
+			factoryOptions.m_positionMaxXYZOut);
+
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
@@ -1259,14 +1295,14 @@ namespace gr::meshfactory
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Position,
-				.m_dataType = re::VertexStream::DataType::Float3,
+				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::TexCoord,
-				.m_dataType = re::VertexStream::DataType::Float2,
+				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)).get());
 
@@ -1275,7 +1311,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Normal,
-					.m_dataType = re::VertexStream::DataType::Float3,
+					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)).get());
@@ -1286,7 +1322,7 @@ namespace gr::meshfactory
 			vertexStreams.emplace_back(re::VertexStream::Create(
 				re::VertexStream::CreateParams{
 					.m_type = re::VertexStream::Type::Tangent,
-					.m_dataType = re::VertexStream::DataType::Float4,
+					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)).get());
@@ -1295,14 +1331,14 @@ namespace gr::meshfactory
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Color,
-				.m_dataType = re::VertexStream::DataType::Float4,
+				.m_dataType = re::DataType::Float4,
 			},
 			std::move(colors)).get());
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
 				.m_type = re::VertexStream::Type::Index,
-				.m_dataType = re::VertexStream::DataType::UShort,
+				.m_dataType = re::DataType::UShort,
 			},
 			std::move(indices)).get();
 

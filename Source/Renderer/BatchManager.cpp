@@ -31,7 +31,7 @@ namespace
 
 
 	std::shared_ptr<re::Buffer> CreateInstanceIndexBuffer(
-		re::Buffer::CPUAllocation bufferAlloc,
+		re::Buffer::AllocationType bufferAlloc,
 		std::vector<InstanceIndices> const& instanceIndices)
 	{
 		SEAssert(instanceIndices.size() < InstanceIndexData::k_maxInstances,
@@ -47,7 +47,7 @@ namespace
 			InstanceIndexData::s_shaderName,
 			instanceIndexBufferData,
 			re::Buffer::BufferParams{
-				.m_cpuAllocationType = bufferAlloc,
+				.m_allocationType = bufferAlloc,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 				.m_type = re::Buffer::Type::Constant,
@@ -268,7 +268,7 @@ namespace gr
 			m_instancedTransforms = re::Buffer::CreateUncommittedArray<InstancedTransformData>(
 				InstancedTransformData::s_shaderName,
 				re::Buffer::BufferParams{
-					.m_cpuAllocationType = re::Buffer::CPUAllocation::Mutable,
+					.m_allocationType = re::Buffer::AllocationType::Mutable,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
 					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 					.m_type = re::Buffer::Type::Structured,
@@ -500,7 +500,7 @@ namespace gr
 				// Finally, attach our instanced buffers:
 				if (bufferTypeMask != 0)
 				{
-					batches.back().SetBuffer(CreateInstanceIndexBuffer(re::Buffer::CPUAllocation::SingleFrame, instanceIndices));
+					batches.back().SetBuffer(CreateInstanceIndexBuffer(re::Buffer::AllocationType::SingleFrame, instanceIndices));
 
 					if (bufferTypeMask & InstanceType::Transform)
 					{
