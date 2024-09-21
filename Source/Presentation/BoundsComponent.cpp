@@ -115,6 +115,10 @@ namespace fr
 
 	gr::Bounds::RenderData BoundsComponent::CreateRenderData(entt::entity, fr::BoundsComponent const& bounds)
 	{
+		//SEAssert(bounds.m_minXYZ != BoundsComponent::k_invalidMinXYZ && 
+		//	bounds.m_maxXYZ != BoundsComponent::k_invalidMaxXYZ,
+		//	"Bounds are not valid");
+
 		return gr::Bounds::RenderData
 		{
 			.m_encapsulatingBounds = bounds.GetEncapsulatingBoundsRenderDataID(),
@@ -313,10 +317,12 @@ namespace fr
 	}
 
 
-	void BoundsComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	void BoundsComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity, bool startOpen /*= false*/)
 	{
+		const ImGuiTreeNodeFlags_ flags = startOpen ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None;
+
 		if (ImGui::CollapsingHeader(
-			std::format("Local bounds:##{}", static_cast<uint32_t>(owningEntity)).c_str(), ImGuiTreeNodeFlags_None))
+			std::format("Local bounds:##{}", static_cast<uint32_t>(owningEntity)).c_str(), flags))
 		{
 			ImGui::Indent();
 

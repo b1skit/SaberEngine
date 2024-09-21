@@ -1179,6 +1179,20 @@ namespace fr
 
 		ImGui::Separator();
 
+		if (ImGui::CollapsingHeader("Bounds", ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+
+			auto boundsView = m_registry.view<fr::BoundsComponent>();
+			for (auto entity : boundsView)
+			{
+				fr::BoundsComponent::ShowImGuiWindow(*this, entity, true);
+			}
+
+			ImGui::Unindent();
+		} // "Bounds"
+
+		ImGui::Separator();
 
 		if (ImGui::CollapsingHeader("Render data IDs", ImGuiTreeNodeFlags_None))
 		{

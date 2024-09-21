@@ -47,7 +47,7 @@ namespace fr
 	public:
 		static gr::Bounds::RenderData CreateRenderData(entt::entity, fr::BoundsComponent const&);
 
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
+		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity, bool startOpen = false);
 
 
 	public:

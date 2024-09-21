@@ -466,6 +466,16 @@ namespace fr
 				fr::TransformComponent::ShowImGuiWindow(em, lightEntity, static_cast<uint64_t>(lightEntity));
 			}
 
+			fr::BoundsComponent* boundsCmpt = em.TryGetComponent<fr::BoundsComponent>(lightEntity);
+			SEAssert(boundsCmpt || 
+				lightCmpt.m_light.GetType() == fr::Light::Type::AmbientIBL || 
+				lightCmpt.m_light.GetType() == fr::Light::Type::Directional,
+				"Failed to find BoundsComponent");
+			if (boundsCmpt)
+			{
+				fr::BoundsComponent::ShowImGuiWindow(em, lightEntity);
+			}
+
 			// Shadow map
 			fr::ShadowMapComponent* shadowMapCmpt = em.TryGetComponent<fr::ShadowMapComponent>(lightEntity);
 			if (shadowMapCmpt)
