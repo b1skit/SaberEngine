@@ -23,16 +23,21 @@ namespace re
 		
 
 	public:
-		enum class TopologyType : uint8_t
+		// High-level primitive topology type used to configure the PSO. 
+		// Any similar gr::MeshPrimitive::PrimitiveTopology elements can be used interchangeably with a PSO with a 
+		// matching PrimitiveTopologyType. E.g. PrimitiveTopology::Line* -> PrimitiveTopologyType::Line
+		enum class PrimitiveTopologyType : uint8_t
 		{
 			Triangle, // Default
 			Point,
 			Line,
 			Patch
 		};
-		TopologyType GetTopologyType() const;
-		void SetTopologyType(TopologyType);
-		static TopologyType GetTopologyTypeByName(char const*);
+		static PrimitiveTopologyType CStrToPrimitiveTopologyType(char const*);
+
+		PrimitiveTopologyType GetPrimitiveTopologyType() const;
+		void SetPrimitiveTopologyType(PrimitiveTopologyType);
+		
 
 		enum class FillMode : uint8_t
 		{
@@ -83,7 +88,7 @@ namespace re
 		bool m_isDirty;
 
 		// Initialized in ctor
-		TopologyType m_topologyType;
+		PrimitiveTopologyType m_primitiveTopologyType;
 		FillMode m_fillMode;
 		FaceCullingMode m_faceCullingMode;
 		WindingOrder m_windingOrder;

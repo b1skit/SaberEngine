@@ -145,38 +145,36 @@ namespace
 
 
 	bool IsBatchAndShaderTopologyCompatible(
-		gr::MeshPrimitive::TopologyMode topologyMode, re::PipelineState::TopologyType topologyType)
+		gr::MeshPrimitive::PrimitiveTopology topologyMode, re::PipelineState::PrimitiveTopologyType topologyType)
 	{
-		// Note: These rules are not complete. If you fail this assert, it's possible you're in a valid state. The goal
-		// is to catch unintended accidents
 		switch (topologyType)
 		{
-		case re::PipelineState::TopologyType::Point:
+		case re::PipelineState::PrimitiveTopologyType::Point:
 		{
-			return topologyMode == gr::MeshPrimitive::TopologyMode::PointList;
+			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::PointList;
 		}
 		break;
-		case re::PipelineState::TopologyType::Line:
+		case re::PipelineState::PrimitiveTopologyType::Line:
 		{
-			return topologyMode == gr::MeshPrimitive::TopologyMode::LineList ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::LineStrip ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::LineListAdjacency ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::LineStripAdjacency ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStrip ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleListAdjacency ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency;
+			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineList ||
+				topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineStrip ||
+				topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineListAdjacency ||
+				topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineStripAdjacency ||
+				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleList ||
+				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStrip ||
+				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency ||
+				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency;
 		}
 		break;
-		case re::PipelineState::TopologyType::Triangle:
+		case re::PipelineState::PrimitiveTopologyType::Triangle:
 		{
-			return topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStrip ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleListAdjacency ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency;
+			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleList ||
+				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStrip ||
+				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency ||
+				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency;
 		}
 		break;
-		case re::PipelineState::TopologyType::Patch:
+		case re::PipelineState::PrimitiveTopologyType::Patch:
 		{
 			SEAssertF("Patch topology is (currently) unsupported");
 		}
@@ -205,7 +203,7 @@ namespace re
 		m_graphicsParams = GraphicsParams{
 			.m_batchGeometryMode = GeometryMode::IndexedInstanced,
 			.m_numInstances = 1,
-			.m_batchTopologyMode = meshPrimitive->GetMeshParams().m_topologyMode,
+			.m_primitiveTopology = meshPrimitive->GetMeshParams().m_primitiveTopology,
 			.m_numVertexStreams = 0,
 		};
 
@@ -252,7 +250,7 @@ namespace re
 		m_graphicsParams = GraphicsParams{
 			.m_batchGeometryMode = GeometryMode::IndexedInstanced,
 			.m_numInstances = 1,
-			.m_batchTopologyMode = meshPrimRenderData.m_meshPrimitiveParams.m_topologyMode,
+			.m_primitiveTopology = meshPrimRenderData.m_meshPrimitiveParams.m_primitiveTopology,
 			.m_numVertexStreams = 0,
 		};
 
@@ -381,8 +379,8 @@ namespace re
 
 		SEAssert(m_type != BatchType::Graphics ||
 			IsBatchAndShaderTopologyCompatible(
-				GetGraphicsParams().m_batchTopologyMode,
-				m_batchShader->GetPipelineState()->GetTopologyType()),
+				GetGraphicsParams().m_primitiveTopology,
+				m_batchShader->GetPipelineState()->GetPrimitiveTopologyType()),
 			"Graphics topology mode is incompatible with shader pipeline state topology type");
 
 		// Resolve vertex input slots now that we've decided which shader will be used:
@@ -482,7 +480,7 @@ namespace re
 			// Note: We assume the hash is used to evaluate batch equivalence when sorting, to enable instancing. Thus,
 			// we don't consider the m_batchGeometryMode or m_numInstances
 
-			AddDataBytesToHash(m_graphicsParams.m_batchTopologyMode);
+			AddDataBytesToHash(m_graphicsParams.m_primitiveTopology);
 
 			for (VertexStreamInput const& vertexStream : m_graphicsParams.m_vertexStreams)
 			{

@@ -93,19 +93,19 @@ namespace
 	}
 
 
-	constexpr D3D_PRIMITIVE_TOPOLOGY TranslateToD3DPrimitiveTopology(gr::MeshPrimitive::TopologyMode topologyMode)
+	constexpr D3D_PRIMITIVE_TOPOLOGY TranslateToD3DPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology topologyMode)
 	{
 		switch (topologyMode)
 		{
-		case gr::MeshPrimitive::TopologyMode::PointList: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
-		case gr::MeshPrimitive::TopologyMode::LineList: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST;
-		case gr::MeshPrimitive::TopologyMode::LineStrip: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
-		case gr::MeshPrimitive::TopologyMode::TriangleList: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		case gr::MeshPrimitive::TopologyMode::TriangleStrip: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
-		case gr::MeshPrimitive::TopologyMode::LineListAdjacency: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST_ADJ;
-		case gr::MeshPrimitive::TopologyMode::LineStripAdjacency: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ;
-		case gr::MeshPrimitive::TopologyMode::TriangleListAdjacency: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ;
-		case gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ;
+		case gr::MeshPrimitive::PrimitiveTopology::PointList: return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+		case gr::MeshPrimitive::PrimitiveTopology::LineList: return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+		case gr::MeshPrimitive::PrimitiveTopology::LineStrip: return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleList: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleStrip: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+		case gr::MeshPrimitive::PrimitiveTopology::LineListAdjacency: return D3D_PRIMITIVE_TOPOLOGY_LINELIST_ADJ;
+		case gr::MeshPrimitive::PrimitiveTopology::LineStripAdjacency: return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ;
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ;
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ;
 		default:
 			SEAssertF("Invalid topology mode");
 			return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -425,7 +425,7 @@ namespace dx12
 		// Set the geometry for the draw:		
 		re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
 
-		SetPrimitiveType(TranslateToD3DPrimitiveTopology(batchGraphicsParams.m_batchTopologyMode));
+		SetPrimitiveType(TranslateToD3DPrimitiveTopology(batchGraphicsParams.m_primitiveTopology));
 
 		SetVertexBuffers(batchGraphicsParams.m_vertexStreams, batchGraphicsParams.m_numVertexStreams);
 

@@ -644,22 +644,22 @@ namespace
 	}
 
 
-	inline gr::MeshPrimitive::TopologyMode CGLTFPrimitiveTypeToGrTopologyMode(cgltf_primitive_type primitiveType)
+	inline gr::MeshPrimitive::PrimitiveTopology CGLTFPrimitiveTypeToPrimitiveTopology(cgltf_primitive_type primitiveType)
 	{
 		switch (primitiveType)
 		{
-		case cgltf_primitive_type::cgltf_primitive_type_points: return gr::MeshPrimitive::TopologyMode::PointList;
-		case cgltf_primitive_type::cgltf_primitive_type_lines: return gr::MeshPrimitive::TopologyMode::LineList;
-		case cgltf_primitive_type::cgltf_primitive_type_line_strip: return gr::MeshPrimitive::TopologyMode::LineStrip;
-		case cgltf_primitive_type::cgltf_primitive_type_triangles: return gr::MeshPrimitive::TopologyMode::TriangleList;
-		case cgltf_primitive_type::cgltf_primitive_type_triangle_strip: return gr::MeshPrimitive::TopologyMode::TriangleStrip;
+		case cgltf_primitive_type::cgltf_primitive_type_points: return gr::MeshPrimitive::PrimitiveTopology::PointList;
+		case cgltf_primitive_type::cgltf_primitive_type_lines: return gr::MeshPrimitive::PrimitiveTopology::LineList;
+		case cgltf_primitive_type::cgltf_primitive_type_line_strip: return gr::MeshPrimitive::PrimitiveTopology::LineStrip;
+		case cgltf_primitive_type::cgltf_primitive_type_triangles: return gr::MeshPrimitive::PrimitiveTopology::TriangleList;
+		case cgltf_primitive_type::cgltf_primitive_type_triangle_strip: return gr::MeshPrimitive::PrimitiveTopology::TriangleStrip;
 		case cgltf_primitive_type::cgltf_primitive_type_triangle_fan:
 		case cgltf_primitive_type::cgltf_primitive_type_line_loop:
 		case cgltf_primitive_type::cgltf_primitive_type_invalid:
 		case cgltf_primitive_type::cgltf_primitive_type_max_enum:
 		default: SEAssertF("Invalid/unsupported primitive type/draw mode. SE does not support line loops or triangle fans");
 		}
-		return gr::MeshPrimitive::TopologyMode::TriangleList; // This should never happen
+		return gr::MeshPrimitive::PrimitiveTopology::TriangleList; // This should never happen
 	}
 
 
@@ -729,7 +729,7 @@ namespace
 
 			// Populate the mesh params:
 			const gr::MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams{
-				.m_topologyMode = CGLTFPrimitiveTypeToGrTopologyMode(curPrimitive.type),
+				.m_primitiveTopology = CGLTFPrimitiveTypeToPrimitiveTopology(curPrimitive.type),
 			};
 
 			// Vertex streams:

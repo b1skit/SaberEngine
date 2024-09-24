@@ -8,7 +8,7 @@ namespace re
 {
 	PipelineState::PipelineState()
 		: m_isDirty(true)
-		, m_topologyType(TopologyType::Triangle)
+		, m_primitiveTopologyType(PrimitiveTopologyType::Triangle)
 		, m_fillMode(FillMode::Solid)
 		, m_faceCullingMode(FaceCullingMode::Back)
 		, m_windingOrder(WindingOrder::CCW)
@@ -25,7 +25,7 @@ namespace re
 
 		ResetDataHash();
 
-		AddDataBytesToHash(m_topologyType);
+		AddDataBytesToHash(m_primitiveTopologyType);
 		AddDataBytesToHash(m_fillMode);
 		AddDataBytesToHash(m_faceCullingMode);
 		AddDataBytesToHash(m_windingOrder);
@@ -40,29 +40,29 @@ namespace re
 	}
 
 
-	PipelineState::TopologyType PipelineState::GetTopologyType() const
+	PipelineState::PrimitiveTopologyType PipelineState::GetPrimitiveTopologyType() const
 	{
 		SEAssert(!m_isDirty, "PipelineState is dirty");
-		return m_topologyType;
+		return m_primitiveTopologyType;
 	}
 
 
-	void PipelineState::SetTopologyType(PipelineState::TopologyType topologyType)
+	void PipelineState::SetPrimitiveTopologyType(PipelineState::PrimitiveTopologyType topologyType)
 	{
-		m_topologyType = topologyType;
+		m_primitiveTopologyType = topologyType;
 		m_isDirty = true;
 		ComputeDataHash();
 	}
 
 
-	PipelineState::TopologyType PipelineState::GetTopologyTypeByName(char const* name)
+	PipelineState::PrimitiveTopologyType PipelineState::CStrToPrimitiveTopologyType(char const* name)
 	{
-		static const std::map<std::string, PipelineState::TopologyType> s_nameToType =
+		static const std::map<std::string, PipelineState::PrimitiveTopologyType> s_nameToType =
 		{
-			{"triangle", PipelineState::TopologyType::Triangle},
-			{"point", PipelineState::TopologyType::Point},
-			{"line", PipelineState::TopologyType::Line},
-			{"patch", PipelineState::TopologyType::Patch},
+			{"triangle", PipelineState::PrimitiveTopologyType::Triangle},
+			{"point", PipelineState::PrimitiveTopologyType::Point},
+			{"line", PipelineState::PrimitiveTopologyType::Line},
+			{"patch", PipelineState::PrimitiveTopologyType::Patch},
 		};
 		
 		std::string const& lowerCaseName = util::ToLower(name);

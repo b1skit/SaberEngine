@@ -36,7 +36,8 @@ namespace grutil
 
 	void VertexStreamBuilder::ConstructMissingVertexAttributes(MeshData* meshData)
 	{
-		const bool isTriangleList = meshData->m_meshParams->m_topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList;
+		const bool isTriangleList = 
+			meshData->m_meshParams->m_primitiveTopology == gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 		SEAssert(meshData->m_indices && meshData->m_positions && isTriangleList,
 			"Only triangle lists are (currently) supported");
 
@@ -685,7 +686,7 @@ namespace grutil
 	{
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 
-		SEAssert(meshData->m_meshParams->m_topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList,
+		SEAssert(meshData->m_meshParams->m_primitiveTopology == gr::MeshPrimitive::PrimitiveTopology::TriangleList,
 			"Only triangular faces are currently supported");
 		
 		return 3;

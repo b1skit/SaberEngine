@@ -127,7 +127,7 @@ namespace
 		// "TopologyType":
 		if (piplineStateEntry.contains(key_topologyType))
 		{
-			newPipelineState.SetTopologyType(re::PipelineState::GetTopologyTypeByName(
+			newPipelineState.SetPrimitiveTopologyType(re::PipelineState::CStrToPrimitiveTopologyType(
 				piplineStateEntry.at(key_topologyType).template get<std::string>().c_str()));
 		}
 

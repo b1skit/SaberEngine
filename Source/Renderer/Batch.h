@@ -68,7 +68,7 @@ namespace re
 			
 			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
 			uint32_t m_numInstances = 0;
-			gr::MeshPrimitive::TopologyMode m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::TriangleList;
+			gr::MeshPrimitive::PrimitiveTopology m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 
 			VertexStreamInput m_vertexStreams[re::VertexStream::k_maxVertexStreams] = {0};
 			uint8_t m_numVertexStreams = 0;

@@ -6,19 +6,19 @@
 
 namespace
 {
-	constexpr char const* TopologyModeToCStr(gr::MeshPrimitive::TopologyMode drawMode)
+	constexpr char const* TopologyModeToCStr(gr::MeshPrimitive::PrimitiveTopology drawMode)
 	{
 		switch (drawMode)
 		{
-		case gr::MeshPrimitive::TopologyMode::PointList: return "PointList";
-		case gr::MeshPrimitive::TopologyMode::LineList: return "LineList";
-		case gr::MeshPrimitive::TopologyMode::LineStrip: return "LineStrip";
-		case gr::MeshPrimitive::TopologyMode::TriangleList: return "TriangleList";
-		case gr::MeshPrimitive::TopologyMode::TriangleStrip: return "TriangleStrip";
-		case gr::MeshPrimitive::TopologyMode::LineListAdjacency: return "LineListAdjacency";
-		case gr::MeshPrimitive::TopologyMode::LineStripAdjacency: return "LineStripAdjacency";
-		case gr::MeshPrimitive::TopologyMode::TriangleListAdjacency: return "TriangleListAdjacency";
-		case gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency: return "TriangleStripAdjacency";
+		case gr::MeshPrimitive::PrimitiveTopology::PointList: return "PointList";
+		case gr::MeshPrimitive::PrimitiveTopology::LineList: return "LineList";
+		case gr::MeshPrimitive::PrimitiveTopology::LineStrip: return "LineStrip";
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleList: return "TriangleList";
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleStrip: return "TriangleStrip";
+		case gr::MeshPrimitive::PrimitiveTopology::LineListAdjacency: return "LineListAdjacency";
+		case gr::MeshPrimitive::PrimitiveTopology::LineStripAdjacency: return "LineStripAdjacency";
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency: return "TriangleListAdjacency";
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency: return "TriangleStripAdjacency";
 		default: return "INVALID TOPOLOGY MODE";
 		}
 	}
@@ -177,7 +177,7 @@ namespace gr
 		{
 			ImGui::Indent();
 
-			ImGui::Text(std::format("Draw mode: {}", TopologyModeToCStr(m_params.m_topologyMode)).c_str());
+			ImGui::Text(std::format("PrimitiveTopology: {}", TopologyModeToCStr(m_params.m_primitiveTopology)).c_str());
 
 			if (ImGui::CollapsingHeader(
 				std::format("Vertex streams ({})##{}", m_vertexStreams.size(), GetUniqueID()).c_str(), 

@@ -22,19 +22,19 @@
 
 namespace
 {
-	constexpr GLenum TranslateToOpenGLPrimitiveType(gr::MeshPrimitive::TopologyMode topologyMode)
+	constexpr GLenum PrimitiveTopologyToGLPrimitiveType(gr::MeshPrimitive::PrimitiveTopology topologyMode)
 	{
 		switch (topologyMode)
 		{
-		case gr::MeshPrimitive::TopologyMode::PointList: return GL_POINTS;
-		case gr::MeshPrimitive::TopologyMode::LineList: return GL_LINES;
-		case gr::MeshPrimitive::TopologyMode::LineStrip: return GL_LINE_STRIP;
-		case gr::MeshPrimitive::TopologyMode::TriangleList: return GL_TRIANGLES;
-		case gr::MeshPrimitive::TopologyMode::TriangleStrip: return GL_TRIANGLE_STRIP;
-		case gr::MeshPrimitive::TopologyMode::LineListAdjacency: return GL_LINES_ADJACENCY;
-		case gr::MeshPrimitive::TopologyMode::LineStripAdjacency: return GL_LINE_STRIP_ADJACENCY;
-		case gr::MeshPrimitive::TopologyMode::TriangleListAdjacency: return GL_TRIANGLES_ADJACENCY;
-		case gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency: return GL_TRIANGLE_STRIP_ADJACENCY;
+		case gr::MeshPrimitive::PrimitiveTopology::PointList: return GL_POINTS;
+		case gr::MeshPrimitive::PrimitiveTopology::LineList: return GL_LINES;
+		case gr::MeshPrimitive::PrimitiveTopology::LineStrip: return GL_LINE_STRIP;
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleList: return GL_TRIANGLES;
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleStrip: return GL_TRIANGLE_STRIP;
+		case gr::MeshPrimitive::PrimitiveTopology::LineListAdjacency: return GL_LINES_ADJACENCY;
+		case gr::MeshPrimitive::PrimitiveTopology::LineStripAdjacency: return GL_LINE_STRIP_ADJACENCY;
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency: return GL_TRIANGLES_ADJACENCY;
+		case gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency: return GL_TRIANGLE_STRIP_ADJACENCY;
 		default:
 			SEAssertF("Unsupported topology mode");
 			return GL_TRIANGLES;
@@ -358,7 +358,7 @@ namespace opengl
 							case re::Batch::GeometryMode::IndexedInstanced:
 							{
 								glDrawElementsInstanced(
-									TranslateToOpenGLPrimitiveType(batchGraphicsParams.m_batchTopologyMode),	// GLenum mode
+									PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),// GLenum mode
 									(GLsizei)batchGraphicsParams.m_indexStream->GetNumElements(),				// GLsizei count
 									TranslateToOpenGLDataType(batchGraphicsParams.m_indexStream->GetDataType()),// GLenum type
 									0,									// Byte offset (into index buffer)
@@ -371,7 +371,7 @@ namespace opengl
 									batchGraphicsParams.m_vertexStreams[0].m_vertexStream->GetNumElements());
 
 								glDrawArraysInstanced(
-									TranslateToOpenGLPrimitiveType(batchGraphicsParams.m_batchTopologyMode),
+									PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),
 									0,
 									numElements,
 									(GLsizei)batch.GetInstanceCount());

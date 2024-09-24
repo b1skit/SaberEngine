@@ -71,7 +71,7 @@ namespace
 		re::Batch::GraphicsParams axisBatchGraphicsParams{};
 		axisBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
 		axisBatchGraphicsParams.m_numInstances = 1;
-		axisBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::LineList;
+		axisBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
 		axisBatchGraphicsParams.m_vertexStreams[0] = 
 			re::Batch::VertexStreamInput{ .m_vertexStream = axisPositionStream.get() };
@@ -170,7 +170,7 @@ namespace
 		re::Batch::GraphicsParams boundingBoxBatchGraphicsParams{};
 		boundingBoxBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
 		boundingBoxBatchGraphicsParams.m_numInstances = 1;
-		boundingBoxBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::LineList;
+		boundingBoxBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
 		boundingBoxBatchGraphicsParams.m_vertexStreams[0] = 
 			re::Batch::VertexStreamInput{ .m_vertexStream = boxPositionsStream.get() };
@@ -242,7 +242,7 @@ namespace
 		re::Batch::GraphicsParams boundingBoxBatchGraphicsParams{};
 		boundingBoxBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
 		boundingBoxBatchGraphicsParams.m_numInstances = 1;
-		boundingBoxBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::LineList;
+		boundingBoxBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
 		boundingBoxBatchGraphicsParams.m_vertexStreams[0] = 
 			re::Batch::VertexStreamInput{ .m_vertexStream = normalPositionsStream.get() };
@@ -327,7 +327,7 @@ namespace
 		re::Batch::GraphicsParams frustumBatchGraphicsParams{};
 		frustumBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
 		frustumBatchGraphicsParams.m_numInstances = 1;
-		frustumBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::LineList;
+		frustumBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
 		frustumBatchGraphicsParams.m_vertexStreams[0] = 
 			re::Batch::VertexStreamInput{ .m_vertexStream = frustumPositionsStream.get() };
@@ -368,7 +368,7 @@ namespace
 		re::Batch::GraphicsParams wireframeBatchGraphicsParams{};
 		wireframeBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
 		wireframeBatchGraphicsParams.m_numInstances = 1;
-		wireframeBatchGraphicsParams.m_batchTopologyMode = gr::MeshPrimitive::TopologyMode::TriangleList;
+		wireframeBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 
 		wireframeBatchGraphicsParams.m_vertexStreams[0] = 
 			re::Batch::VertexStreamInput{ .m_vertexStream = positionStream };
