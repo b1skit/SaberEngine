@@ -70,10 +70,8 @@ namespace
 			re::Batch::VertexStreamInput{ .m_vertexStream = axisColorStream.get() };
 		axisBatchGraphicsParams.m_numVertexStreams = 2;
 
-		std::unique_ptr<re::Batch> axisBatch = 
-			std::make_unique<re::Batch>(batchLifetime, axisBatchGraphicsParams, k_debugEffectID);
-
-		axisBatch->AddDrawstyleBit(effect::drawstyle::Debug_Line);
+		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
+			batchLifetime, axisBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
 
 		return axisBatch;
 	}
@@ -176,10 +174,8 @@ namespace
 
 		boundingBoxBatchGraphicsParams.m_indexStream = boxIndexStream.get();
 
-		std::unique_ptr<re::Batch> boundingBoxBatch = 
-			std::make_unique<re::Batch>(batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID);
-
-		boundingBoxBatch->AddDrawstyleBit(effect::drawstyle::Debug_Line);
+		std::unique_ptr<re::Batch> boundingBoxBatch = std::make_unique<re::Batch>(
+			batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
 
 		return boundingBoxBatch;
 	}
@@ -215,10 +211,8 @@ namespace
 			.m_numVertexStreams = 2
 		};
 
-		std::unique_ptr<re::Batch> normalDebugBatch = 
-			std::make_unique<re::Batch>(batchLifetime, normalBatchGraphicsParams, k_debugEffectID);
-		
-		normalDebugBatch->AddDrawstyleBit(effect::drawstyle::Debug_Normal);
+		std::unique_ptr<re::Batch> normalDebugBatch = std::make_unique<re::Batch>(
+			batchLifetime, normalBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Normal);
 
 		return normalDebugBatch;
 	}
@@ -307,10 +301,8 @@ namespace
 
 		frustumBatchGraphicsParams.m_indexStream = frustumIndexStream.get();
 
-		std::unique_ptr<re::Batch> frustumBatch = 
-			std::make_unique<re::Batch>(batchLifetime, frustumBatchGraphicsParams, k_debugEffectID);
-
-		frustumBatch->AddDrawstyleBit(effect::drawstyle::Debug_Line);
+		std::unique_ptr<re::Batch> frustumBatch = std::make_unique<re::Batch>(
+			batchLifetime, frustumBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
 
 		return frustumBatch;
 	}
@@ -353,10 +345,8 @@ namespace
 
 		wireframeBatchGraphicsParams.m_indexStream = indexStream;
 
-		std::unique_ptr<re::Batch> wireframeBatch = 
-			std::make_unique<re::Batch>(batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID);
-
-		wireframeBatch->AddDrawstyleBit(effect::drawstyle::Debug_Triangle);
+		std::unique_ptr<re::Batch> wireframeBatch = std::make_unique<re::Batch>(
+			batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Triangle);
 
 		return wireframeBatch;
 	}

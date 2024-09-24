@@ -317,12 +317,13 @@ namespace re
 	Batch::Batch(
 		re::Lifetime lifetime,
 		GraphicsParams const& graphicsParams, 
-		EffectID effectID)
+		EffectID effectID,
+		effect::drawstyle::Bitmask bitmask)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_batchShader(nullptr)
 		, m_effectID(effectID)
-		, m_drawStyleBitmask(0)
+		, m_drawStyleBitmask(bitmask)
 		, m_batchFilterBitmask(0)
 	{
 		SEAssert(graphicsParams.m_numVertexStreams > 0, "Can't have a graphics batch with 0 vertex streams");

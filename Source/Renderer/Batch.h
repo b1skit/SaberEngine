@@ -93,7 +93,7 @@ namespace re
 
 		Batch(re::Lifetime, gr::MeshPrimitive::RenderData const&, gr::Material::MaterialInstanceRenderData const*);
 
-		Batch(re::Lifetime, GraphicsParams const&, EffectID); // e.g. debug topology
+		Batch(re::Lifetime, GraphicsParams const&, EffectID, effect::drawstyle::Bitmask); // e.g. debug topology
 
 		// Compute batches:
 		Batch(re::Lifetime, ComputeParams const&, EffectID);
@@ -153,9 +153,7 @@ namespace re
 		std::vector<RWTextureInput> const& GetRWTextureInputs() const;
 
 		re::Lifetime GetLifetime() const;
-
-		void AddDrawstyleBit(effect::drawstyle::Bitmask); // Logical OR with existing m_drawStyleBitmask
-		
+	
 		FilterBitmask GetBatchFilterMask() const;
 		void SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled);
 		bool MatchesFilterBits(re::Batch::FilterBitmask required, re::Batch::FilterBitmask excluded) const;
@@ -254,12 +252,6 @@ namespace re
 	inline re::Lifetime Batch::GetLifetime() const
 	{
 		return m_lifetime;
-	}
-
-
-	inline void Batch::AddDrawstyleBit(effect::drawstyle::Bitmask bitmask)
-	{
-		m_drawStyleBitmask |= bitmask;
 	}
 
 
