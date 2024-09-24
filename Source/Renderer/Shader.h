@@ -40,6 +40,7 @@ namespace re
 
 			ShaderType_Count
 		};
+		static constexpr char const* ShaderTypeToCStr(ShaderType);
 
 
 	public:
@@ -102,6 +103,23 @@ namespace re
 		friend class dx12::Shader;
 		friend class opengl::Shader;
 	};
+
+
+	inline constexpr char const* Shader::ShaderTypeToCStr(ShaderType shaderType)
+	{
+		switch (shaderType)
+		{
+		case re::Shader::ShaderType::Vertex: return "Vertex";
+		case re::Shader::ShaderType::Geometry: return "Geometry";
+		case re::Shader::ShaderType::Pixel: return "Pixel";
+		case re::Shader::ShaderType::Hull: return "Hull";
+		case re::Shader::ShaderType::Domain: return "Domain";
+		case re::Shader::ShaderType::Mesh: return "Mesh";
+		case re::Shader::ShaderType::Amplification: return "Amplification";
+		case re::Shader::ShaderType::Compute: return "Compute";
+		default: return "INVALID_SHADER_TYPE_RECEIVED";
+		}
+	}
 
 
 	inline ShaderID Shader::GetShaderIdentifier() const

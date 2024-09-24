@@ -14,6 +14,7 @@ namespace
 	constexpr char const* k_projectRootCmdLineArg = "-projectroot";
 	constexpr char const* k_dx12ShaderCompilerCmdLineArg = "-dx12shadercompiler";
 	constexpr char const* k_buildConfigCmdLineArg = "-buildconfig";
+	constexpr char const* k_shadersOnlyCmdLineArg = "-shadersonly";
 }
 
 
@@ -105,6 +106,11 @@ int main(int argc, char* argv[])
 			{
 				doClean = true;
 				doBuild = true;
+			}
+			else if (currentArg == k_shadersOnlyCmdLineArg)
+			{
+				parseParams.m_doCppCodeGen = false;
+				parseParams.m_compileShaders = true;
 			}
 			else if (currentArg == k_projectRootCmdLineArg)
 			{

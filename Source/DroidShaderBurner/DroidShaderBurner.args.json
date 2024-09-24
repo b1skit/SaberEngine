@@ -47,6 +47,10 @@
       "Command": "-cleanAndRebuild"
     },
     {
+      "Id": "ded14db9-8bb7-4bfd-98fe-b0e05bb49dbe",
+      "Command": "-shadersOnly"
+    },
+    {
       "Id": "de56026b-7c88-45a9-85e0-4fe6e80dce4e",
       "Command": "-disallowJSONExceptions"
     },

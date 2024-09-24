@@ -313,10 +313,14 @@ namespace fr
 				entt::entity sceneNode = fr::SceneNode::Create(*fr::EntityManager::Get(), s_nameInputBuffer, entt::null);
 				fr::Mesh::AttachMeshConcept(sceneNode, s_nameInputBuffer);
 
+				glm::vec3 minXYZ = glm::vec3(0.f);
+				glm::vec3 maxXYZ = glm::vec3(0.f);
 				const gr::meshfactory::FactoryOptions factoryOptions
 				{
 					.m_generateNormalsAndTangents = true,
-					.m_vertexColor = glm::vec4(1.f) // GLTF default
+					.m_vertexColor = glm::vec4(1.f), // GLTF default
+					.m_positionMinXYZOut = &minXYZ,
+					.m_positionMaxXYZOut = &maxXYZ,
 				};
 
 				std::shared_ptr<gr::MeshPrimitive> mesh = nullptr;
@@ -374,8 +378,8 @@ namespace fr
 					*fr::EntityManager::Get(),
 					sceneNode,
 					mesh.get(),
-					fr::BoundsComponent::k_invalidMinXYZ,
-					fr::BoundsComponent::k_invalidMaxXYZ);
+					minXYZ,
+					maxXYZ);
 
 				// Attach a material:
 				std::shared_ptr<gr::Material> material =

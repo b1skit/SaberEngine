@@ -45,6 +45,9 @@ namespace droid
 		std::string m_effectManifestFileName;
 
 		util::BuildConfiguration m_buildConfiguration;
+
+		bool m_doCppCodeGen = true;
+		bool m_compileShaders = true;
 	};
 
 

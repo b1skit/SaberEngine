@@ -76,9 +76,10 @@ namespace droid
 		{
 			return result;
 		}
-
-		if (!isSameBuildConfig ||
-			!cppGenDirNewer)
+		
+		if (parseParams.m_doCppCodeGen &&
+			(!isSameBuildConfig ||
+			!cppGenDirNewer))
 		{
 			result = parseDB.GenerateCPPCode();
 			if (result < 0)
@@ -87,11 +88,12 @@ namespace droid
 			}
 		}
 
-		if (!isSameBuildConfig ||
-			!hlslGenDirNewer ||
-			!glslGenDirNewer ||
-			!hlslOutputNewer ||
-			!glslOutputNewer)
+		if (parseParams.m_compileShaders &&
+			(!isSameBuildConfig ||
+				!hlslGenDirNewer ||
+				!glslGenDirNewer ||
+				!hlslOutputNewer ||
+				!glslOutputNewer))
 		{
 			result = parseDB.GenerateShaderCode();
 			if (result < 0)

@@ -4,6 +4,8 @@
 
 #include "Core/Util/TextUtils.h"
 
+#include "Renderer/Shader.h"
+
 
 namespace droid
 {
@@ -234,7 +236,8 @@ namespace droid
 			concatenatedDefines = std::format("{} {}", concatenatedDefines, define);
 		}
 
-		std::string const& outputMsg = std::format("Building GLSL shader \"{}\"{}{}\n",
+		std::string const& outputMsg = std::format("Building GLSL {} shader \"{}\"{}{}\n",
+			re::Shader::ShaderTypeToCStr(shaderType),
 			outputFileName,
 			concatenatedDefines.empty() ? "" : ", Defines =",
 			concatenatedDefines);
@@ -283,8 +286,6 @@ namespace droid
 		{
 			shaderText += include;
 		}
-
-		
 
 		std::string const& combinedFilePath = std::format("{}{}", outputDir, outputFileName);
 

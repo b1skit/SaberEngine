@@ -4,6 +4,8 @@
 
 #include "Core/Util/TextUtils.h"
 
+#include "Renderer/Shader.h"
+
 
 namespace
 {
@@ -96,14 +98,18 @@ namespace droid
 		std::vector<std::string> const& defines,
 		std::string const& outputDir)
 	{
+		std::string const& outputFileName = std::format("{}.cso",
+			BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID));
+
 		std::string concatenatedDefines;
 		for (auto const& define : defines)
 		{
 			concatenatedDefines = std::format("{} {}", concatenatedDefines, define);
 		}
 
-		std::string const& outputMsg = std::format("Compiling HSLS shader \"{}\"{}{}\n",
-			extensionlessSrcFilename,
+		std::string const& outputMsg = std::format("Compiling HLSL {} shader \"{}\"{}{}\n",
+			re::Shader::ShaderTypeToCStr(shaderType),
+			outputFileName,
 			concatenatedDefines.empty() ? "" : ", Defines =",
 			concatenatedDefines);
 		std::cout << outputMsg.c_str();
@@ -172,11 +178,9 @@ namespace droid
 		// Shader configuration:		
 		AppendCmdLineArg(dxcCommandLineArgsW, L"-E", entryPointName);
 
-		std::string const& outputName = std::format("{}{}.cso", 
-			outputDir, 
-			BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID));
+		std::string const& combinedFilePath = std::format("{}{}", outputDir, outputFileName);
 
-		AppendCmdLineArg(dxcCommandLineArgsW, L"-Fo", outputName);
+		AppendCmdLineArg(dxcCommandLineArgsW, L"-Fo", combinedFilePath);
 
 		AppendCmdLineArg(dxcCommandLineArgsW, nullptr, BuildInputPath(includeDirectories, extensionlessSrcFilename));
 
