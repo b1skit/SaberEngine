@@ -7,7 +7,7 @@
 #include "Renderer/Shader.h"
 
 
-namespace droid
+namespace
 {
 	constexpr char const* k_shaderPreambles[] // Per-shader-type preamble
 	{
@@ -46,8 +46,10 @@ namespace droid
 		"#version 460 core\n"
 		"#define SE_OPENGL\n"
 		"\n"; // Note: MUST be terminated with "\n"
+}
 
-
+namespace droid
+{
 	std::string LoadIndividualShaderTextFile(
 		std::vector<std::string> const& includeDirectories, std::string const& filenameAndExtension)
 	{

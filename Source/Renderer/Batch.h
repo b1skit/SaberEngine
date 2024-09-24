@@ -153,6 +153,8 @@ namespace re
 		std::vector<RWTextureInput> const& GetRWTextureInputs() const;
 
 		re::Lifetime GetLifetime() const;
+
+		void AddDrawstyleBit(effect::drawstyle::Bitmask); // Logical OR with existing m_drawStyleBitmask
 		
 		FilterBitmask GetBatchFilterMask() const;
 		void SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled);
@@ -252,6 +254,12 @@ namespace re
 	inline re::Lifetime Batch::GetLifetime() const
 	{
 		return m_lifetime;
+	}
+
+
+	inline void Batch::AddDrawstyleBit(effect::drawstyle::Bitmask bitmask)
+	{
+		m_drawStyleBitmask |= bitmask;
 	}
 
 

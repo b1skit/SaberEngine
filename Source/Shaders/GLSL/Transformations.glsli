@@ -34,4 +34,11 @@ mat3 BuildLookAtMatrix(vec3 forward)
 }
 
 
+mat3 GetTransposeInvRotationScale(mat4 transposeInvModel)
+{
+	// Much simpler in GLSL than HLSL
+	return mat3(transposeInvModel);
+}
+
+
 #endif // SABER_TRANSFORMATIONS

@@ -127,6 +127,9 @@
     <ClInclude Include="Shaders\Common\AnimationParams.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
+    <ClInclude Include="Shaders\Common\DebugParams.h">
+      <Filter>Shaders\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\HLSL\SaberCommon.hlsli">

@@ -4,6 +4,8 @@
 #include "GraphicsSystem.h"
 
 
+struct DebugData;
+
 namespace gr
 {
 	class DebugGraphicsSystem final
@@ -39,15 +41,21 @@ namespace gr
 	private:
 		void CreateBatches();
 
+		DebugData PackDebugData() const;
+
 
 	private:
 		std::shared_ptr<re::RenderStage> m_debugLineStage;
 		std::shared_ptr<re::RenderStage> m_debugTriangleStage;
 
-		// Colors for any/all coordinate axis
+		std::shared_ptr<re::Buffer> m_debugParams;
+		bool m_isDirty; // Triggers m_debugParams recommit
+
+		// Colors for any/all coordinate axes
 		glm::vec3 m_xAxisColor = glm::vec3(1.f, 0.f, 0.f);
 		glm::vec3 m_yAxisColor = glm::vec3(0.f, 1.f, 0.f);
 		glm::vec3 m_zAxisColor = glm::vec3(0.f, 0.f, 1.f);
+		float m_axisOpacity = 1.f;
 
 		std::unordered_map<gr::RenderDataID, std::shared_ptr<re::Buffer>> m_meshPrimTransformBuffers;
 
@@ -80,7 +88,7 @@ namespace gr
 		
 		bool m_showAllVertexNormals = false;
 		float m_vertexNormalsScale = 1.f;
-		glm::vec3 m_normalsColor = glm::vec3(0.f, 0.f, 1.f);
+		glm::vec4 m_normalsColor = glm::vec4(0.f, 0.f, 1.f, 1.f);
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_vertexNormalBatches;
 
 		bool m_showCameraFrustums = false;

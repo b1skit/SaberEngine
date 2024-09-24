@@ -14,6 +14,12 @@
 					{ "Rule": "Debug", "Mode": "Triangle" }
 				],
 				"Technique": "Debug_Triangle"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "Debug", "Mode": "Normal" }
+				],
+				"Technique": "Debug_Normal"
 			}
 		],
 
@@ -35,6 +41,19 @@
 				"PShaderEntryPoint": "PShader",
 				"PipelineState": "Debug_Triangle",
 				"VertexStream": "PositionColor"
+			},
+			{
+				"Name": "Debug_Normal",
+				"VShader": "Line",
+				"VShaderEntryPoint": "VShader",
+				"VShaderDefines" : ["DEBUG_NORMAL"],
+				"GShader": "Line",
+				"GShaderEntryPoint": "GShader",
+				"GShaderDefines" : ["DEBUG_NORMAL"],
+				"PShader": "Line",
+				"PShaderEntryPoint": "PShader",
+				"PipelineState": "Debug_Point",
+				"VertexStream": "PositionNormal"
 			}
 		]
 	},
@@ -51,6 +70,14 @@
 		{
 			"Name": "Debug_Triangle",
 			"TopologyType": "Triangle",
+			"FillMode": "Wireframe",
+			"FaceCullingMode": "Disabled",
+			"WindingOrder": "CCW",
+			"DepthTestMode": "Always"
+		},
+		{
+			"Name": "Debug_Point",
+			"TopologyType": "Point",
 			"FillMode": "Wireframe",
 			"FaceCullingMode": "Disabled",
 			"WindingOrder": "CCW",

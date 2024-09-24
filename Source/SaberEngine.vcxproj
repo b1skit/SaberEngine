@@ -198,6 +198,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClInclude Include="Shaders\Common\AnimationParams.h" />
     <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
     <ClInclude Include="Shaders\Common\CameraParams.h" />
+    <ClInclude Include="Shaders\Common\DebugParams.h" />
     <ClInclude Include="Shaders\Common\IBLGenerationParams.h" />
     <ClInclude Include="Shaders\Common\InstancingParams.h" />
     <ClInclude Include="Shaders\Common\LightParams.h" />

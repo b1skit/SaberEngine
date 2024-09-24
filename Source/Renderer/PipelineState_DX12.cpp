@@ -153,7 +153,7 @@ namespace
 		rasterizerDesc.MultisampleEnable = false;
 		rasterizerDesc.AntialiasedLineEnable = false; // Only applies if drawing lines with .MultisampleEnable = false
 		rasterizerDesc.ForcedSampleCount = 0;
-		rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE::D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+		rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
 		return rasterizerDesc;
 	}
@@ -367,6 +367,12 @@ namespace dx12
 		// Generate the PSO:
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 		
+		SEAssert(!shaderParams->m_shaderBlobs[re::Shader::Hull] &&
+			!shaderParams->m_shaderBlobs[re::Shader::Domain] &&
+			!shaderParams->m_shaderBlobs[re::Shader::Mesh] &&
+			!shaderParams->m_shaderBlobs[re::Shader::Amplification],
+			"TODO: Support this shader type");
+
 		if (shaderParams->m_shaderBlobs[re::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
 		{
 			SEAssert(targetSet, "Graphics pipelines require a valid target set");
@@ -413,12 +419,6 @@ namespace dx12
 			{
 				pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[re::Shader::Pixel].Get());
 			}
-
-			SEAssert(!shaderParams->m_shaderBlobs[re::Shader::Hull] &&
-				!shaderParams->m_shaderBlobs[re::Shader::Domain] &&
-				!shaderParams->m_shaderBlobs[re::Shader::Mesh] &&
-				!shaderParams->m_shaderBlobs[re::Shader::Amplification],
-				"TODO: Support this shader type");
 
 			// Target formats:
 			dx12::TextureTargetSet::PlatformParams* targetSetPlatParams =

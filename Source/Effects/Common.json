@@ -39,6 +39,21 @@
 					"Semantic" : "COLOR0"
 				}
 			]
+		},
+		{
+			"Name" : "PositionNormal",
+			"Slots" : [
+				{
+					"DataType" : "float3",
+					"Name" : "Position",
+					"Semantic" : "SV_Position"
+				},
+				{
+					"DataType" : "float3",
+					"Name" : "Normal",
+					"Semantic" : "NORMAL0"
+				}
+			]
 		}
 	]
 }

@@ -2,6 +2,8 @@
 #ifndef NORMAL_MAP_UTILS_HLSL
 #define NORMAL_MAP_UTILS_HLSL
 
+#include "Transformations.glsli"
+
 
 vec3 WorldNormalFromTextureNormal(vec3 texNormal, mat3 TBN)
 {
@@ -18,7 +20,7 @@ vec3 WorldNormalFromTextureNormal(vec3 texNormal, mat3 TBN)
 // cancel each other)
 mat3 BuildTBN(const vec3 inFaceNormal, const vec4 inLocalTangent, const mat4 transposeInvModel)
 {
-	const mat3 transposeInvRotationScale = mat3(transposeInvModel);
+	const mat3 transposeInvRotationScale = GetTransposeInvRotationScale(transposeInvModel);
 
 	const float signBit = inLocalTangent.w; // Sign bit is packed into localTangent.w == 1.0 or -1.0
 

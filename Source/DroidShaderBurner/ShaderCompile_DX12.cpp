@@ -12,6 +12,35 @@ namespace
 	constexpr size_t k_maxCmdLineArgLength = 4096; // Max = 32,767 chars, including the Unicode null terminator
 
 
+	constexpr char const* k_shaderTypeDefines[] // Per-shader-type defines
+	{
+		// ShaderType::Vertex:
+		"SE_VERTEX_SHADER",
+
+		// ShaderType::Geometry:
+		"SE_GEOMETRY_SHADER",
+
+		// ShaderType::Fragment:
+		"SE_FRAGMENT_SHADER",
+
+		// ShaderType::TesselationControl:
+		"SE_TESS_CONTROL_SHADER",
+
+		// ShaderType::TesselationEvaluation:
+		"SE_TESS_EVALUATION_SHADER",
+
+		// ShaderType::Mesh:
+		"SE_MESH_SHADER",
+
+		// ShaderType::Amplification:
+		"SE_TASK_SHADER",
+
+		// ShaderType::Compute:
+		"SE_COMPUTE_SHADER",
+	};
+	static_assert(_countof(k_shaderTypeDefines) == re::Shader::ShaderType_Count);
+
+
 	void AppendCmdLineArg(std::wstring& cmdLineArgs, wchar_t const* flag, wchar_t const* arg)
 	{
 		if (flag)
@@ -152,6 +181,7 @@ namespace droid
 		}
 
 		// Defines:
+		AppendCmdLineArg(dxcCommandLineArgsW, L"-D", k_shaderTypeDefines[shaderType]);
 		for (auto const& define : defines)
 		{
 			// DXC expects define arguments in the form of "-D defineName=value". If no value is specified, the define

@@ -2,6 +2,8 @@
 #ifndef NORMAL_MAP_UTILS_HLSL
 #define NORMAL_MAP_UTILS_HLSL
 
+#include "Transformations.hlsli"
+
 
 float3 WorldNormalFromTextureNormal(float3 texNormal, float3 normalScale, float3x3 TBN)
 {
@@ -19,15 +21,7 @@ float3 WorldNormalFromTextureNormal(float3 texNormal, float3 normalScale, float3
 // cancel each other)
 float3x3 BuildTBN(float3 inFaceNormal, float4 inLocalTangent, float4x4 transposeInvModel)
 {
-	// Note: In HLSL matrices declared in a shader body do not get packed into constant registers (which is done with 
-	// column major ordering). Row-major/column-major packing order has no influence on the packing order of matrix
-	// constructors (which always follow row-major ordering)	
-	const float3x3 transposeInvRotationScale =
-	{
-		transposeInvModel[0].xyz,
-		transposeInvModel[1].xyz,
-		transposeInvModel[2].xyz
-	};
+	const float3x3 transposeInvRotationScale = GetTransposeInvRotationScale(transposeInvModel);
 
 	const float signBit = inLocalTangent.w; // Sign bit is packed into localTangent.w == 1.0 or -1.0
 

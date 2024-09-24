@@ -37,4 +37,16 @@ float3x3 BuildLookAtMatrix(float3 forward)
 }
 
 
+float3x3 GetTransposeInvRotationScale(float4x4 transposeInvModel)
+{
+	// Note: In HLSL matrices declared in a shader body do not get packed into constant registers (which is done with 
+	// column major ordering). Row-major/column-major packing order has no influence on the packing order of matrix
+	// constructors (which always follow row-major ordering)	
+	return float3x3(
+		transposeInvModel[0].xyz,
+		transposeInvModel[1].xyz,
+		transposeInvModel[2].xyz);
+}
+
+
 #endif // SABER_TRANSFORMATIONS
