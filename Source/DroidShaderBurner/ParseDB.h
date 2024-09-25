@@ -13,7 +13,7 @@ namespace droid
 
 	struct ParseParams
 	{
-		bool m_allowJSONExceptions = false;
+		bool m_allowJSONExceptions = true;
 		bool m_ignoreJSONComments = true;
 
 		// Paths:
