@@ -38,6 +38,52 @@ namespace
 	using AnimationNodeToDataMaps = std::vector<std::unordered_map<cgltf_node const*, fr::AnimationData>>;
 
 
+	util::ByteVector UnpackColorAttributeAsVec4(cgltf_attribute const& colorAttribute)
+	{
+		SEAssert(colorAttribute.type == cgltf_attribute_type::cgltf_attribute_type_color,
+			"Attribute is not a color attribute");
+
+		const size_t numComponents = cgltf_num_components(colorAttribute.data->type);
+		const size_t numElements = colorAttribute.data->count;
+		const size_t totalFloatElements = numComponents * numElements;
+
+		util::ByteVector colors = util::ByteVector::Create<glm::vec4>(colorAttribute.data->count);
+
+		switch (numComponents)
+		{
+		case 3:
+		{
+			std::vector<glm::vec3> tempColors(colorAttribute.data->count);
+
+			const bool unpackResult = cgltf_accessor_unpack_floats(
+				colorAttribute.data,
+				&tempColors[0].r,
+				totalFloatElements);
+			SEAssert(unpackResult, "Failed to unpack data");
+
+			for (size_t colIdx = 0; colIdx < tempColors.size(); ++colIdx)
+			{
+				// GLTF specs: Color attributes of vec3 type are assumed to have an alpha of 1
+				colors.at<glm::vec4>(colIdx) = glm::vec4(tempColors[colIdx], 1.f);
+			}
+		}
+		break;
+		case 4:
+		{
+			const bool unpackResult = cgltf_accessor_unpack_floats(
+				colorAttribute.data,
+				static_cast<float*>(colors.data<float>()),
+				totalFloatElements);
+			SEAssert(unpackResult, "Failed to unpack data");
+		}
+		break;
+		default: SEAssertF("Invalid number of color components");
+		}
+
+		return colors;
+	}
+
+
 	std::shared_ptr<re::Texture> LoadTextureOrColor(
 		re::SceneData& scene,
 		std::string const& sceneRootPath,
@@ -935,38 +981,7 @@ namespace
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_color:
 				{
-					util::ByteVector colors = util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
-
-					switch (numComponents)
-					{
-					case 3:
-					{
-						std::vector<glm::vec3> tempColors(curAttribute.data->count);
-
-						const bool unpackResult = cgltf_accessor_unpack_floats(
-							curAttribute.data,
-							&tempColors[0].r,
-							totalFloatElements);
-						SEAssert(unpackResult, "Failed to unpack data");
-
-						for (size_t colIdx = 0; colIdx < tempColors.size(); ++colIdx)
-						{
-							// GLTF specs: Color attributes of vec3 type are assumed to have an alpha of 1
-							colors.at<glm::vec4>(colIdx) = glm::vec4(tempColors[colIdx], 1.f);
-						}
-					}
-					break;
-					case 4:
-					{
-						const bool unpackResult = cgltf_accessor_unpack_floats(
-							curAttribute.data,
-							static_cast<float*>(colors.data<float>()),
-							totalFloatElements);
-						SEAssert(unpackResult, "Failed to unpack data");
-					}
-					break;
-					default: SEAssertF("Invalid number of color components");
-					}
+					util::ByteVector colors = UnpackColorAttributeAsVec4(curAttribute);
 
 					AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 							.m_streamData = std::make_unique<util::ByteVector>(std::move(colors)),
@@ -1068,26 +1083,26 @@ namespace
 
 					const size_t numTargetFloats = cgltf_accessor_unpack_floats(curTargetAttribute.data, nullptr, 0);
 
-					cgltf_attribute_type targetAttributeType = curTargetAttribute.type;
-
-					util::ByteVector morphData = util::ByteVector::Create<glm::vec3>(curTargetAttribute.data->count);
-
-					const bool unpackResult = cgltf_accessor_unpack_floats(
-						curTargetAttribute.data,
-						static_cast<float*>(morphData.data<float>()),
-						numTargetFloats);
-					SEAssert(unpackResult, "Failed to unpack data");
-
 					const uint8_t targetStreamIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index);
 
+					cgltf_attribute_type targetAttributeType = curTargetAttribute.type;
 					switch (targetAttributeType)
 					{
 					case cgltf_attribute_type::cgltf_attribute_type_position:
 					{
 						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3, "Unexpected data type");
 
+						util::ByteVector posMorphData = 
+							util::ByteVector::Create<glm::vec3>(curTargetAttribute.data->count);
+
+						const bool unpackResult = cgltf_accessor_unpack_floats(
+							curTargetAttribute.data,
+							static_cast<float*>(posMorphData.data<float>()),
+							numTargetFloats);
+						SEAssert(unpackResult, "Failed to unpack data");
+
 						AddMorphCreateParams(targetStreamIdx, re::VertexStream::MorphCreateParams{
-							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphData)),
+							.m_streamData = std::make_unique<util::ByteVector>(std::move(posMorphData)),
 							.m_streamDesc = re::VertexStream::StreamDesc{
 								 .m_type = re::VertexStream::Type::Position,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
@@ -1099,8 +1114,17 @@ namespace
 					{
 						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3, "Unexpected data type");
 
+						util::ByteVector normalMorphData =
+							util::ByteVector::Create<glm::vec3>(curTargetAttribute.data->count);
+
+						const bool unpackResult = cgltf_accessor_unpack_floats(
+							curTargetAttribute.data,
+							static_cast<float*>(normalMorphData.data<float>()),
+							numTargetFloats);
+						SEAssert(unpackResult, "Failed to unpack data");
+
 						AddMorphCreateParams(targetStreamIdx, re::VertexStream::MorphCreateParams{
-							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphData)),
+							.m_streamData = std::make_unique<util::ByteVector>(std::move(normalMorphData)),
 							.m_streamDesc = re::VertexStream::StreamDesc{
 								 .m_type = re::VertexStream::Type::Normal,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
@@ -1113,8 +1137,17 @@ namespace
 						// Note: Tangent morph targets are vec3's
 						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3, "Unexpected data type");
 
+						util::ByteVector tangentMorphData =
+							util::ByteVector::Create<glm::vec3>(curTargetAttribute.data->count);
+
+						const bool unpackResult = cgltf_accessor_unpack_floats(
+							curTargetAttribute.data,
+							static_cast<float*>(tangentMorphData.data<float>()),
+							numTargetFloats);
+						SEAssert(unpackResult, "Failed to unpack data");
+
 						AddMorphCreateParams(targetStreamIdx, re::VertexStream::MorphCreateParams{
-							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphData)),
+							.m_streamData = std::make_unique<util::ByteVector>(std::move(tangentMorphData)),
 							.m_streamDesc = re::VertexStream::StreamDesc{
 								 .m_type = re::VertexStream::Type::Tangent,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
@@ -1126,8 +1159,17 @@ namespace
 					{
 						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec2, "Unexpected data type");
 
+						util::ByteVector uvMorphData =
+							util::ByteVector::Create<glm::vec2>(curTargetAttribute.data->count);
+
+						const bool unpackResult = cgltf_accessor_unpack_floats(
+							curTargetAttribute.data,
+							static_cast<float*>(uvMorphData.data<float>()),
+							numTargetFloats);
+						SEAssert(unpackResult, "Failed to unpack data");
+
 						AddMorphCreateParams(targetStreamIdx, re::VertexStream::MorphCreateParams{
-							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphData)),
+							.m_streamData = std::make_unique<util::ByteVector>(std::move(uvMorphData)),
 							.m_streamDesc = re::VertexStream::StreamDesc{
 								 .m_type = re::VertexStream::Type::TexCoord,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
@@ -1137,12 +1179,14 @@ namespace
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_color:
 					{
-						// Note: Color morph target data can be a vec3 or vec4
-						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec4,
-							"Unexpected data type. Only 4-color RGBA is currently supported");
+						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3 || 
+							curTargetAttribute.data->type == cgltf_type::cgltf_type_vec4,
+							"Unexpected data type");
+
+						util::ByteVector morphColors = UnpackColorAttributeAsVec4(curTargetAttribute);
 
 						AddMorphCreateParams(targetStreamIdx, re::VertexStream::MorphCreateParams{
-							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphData)),
+							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphColors)),
 							.m_streamDesc = re::VertexStream::StreamDesc{
 								 .m_type = re::VertexStream::Type::Color,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
