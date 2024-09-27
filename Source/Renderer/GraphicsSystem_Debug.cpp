@@ -44,7 +44,7 @@ namespace
 		const re::Lifetime streamLifetime = batchLifetime;
 
 		std::shared_ptr<re::VertexStream> axisPositionStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
@@ -53,7 +53,7 @@ namespace
 			false);
 
 		std::shared_ptr<re::VertexStream> axisColorStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
@@ -140,7 +140,7 @@ namespace
 		const re::Lifetime streamLifetime = batchLifetime;
 
 		std::shared_ptr<re::VertexStream> boxPositionsStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
@@ -149,7 +149,7 @@ namespace
 			false);
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
@@ -158,7 +158,7 @@ namespace
 			false);
 
 		std::shared_ptr<re::VertexStream> boxIndexStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
@@ -270,7 +270,7 @@ namespace
 		const re::Lifetime streamLifetime = batchLifetime;
 
 		std::shared_ptr<re::VertexStream> frustumPositionsStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
@@ -279,7 +279,7 @@ namespace
 			false);
 
 		std::shared_ptr<re::VertexStream> frustumColorStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
@@ -288,7 +288,7 @@ namespace
 			false);
 
 		std::shared_ptr<re::VertexStream> frustumIndexStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
@@ -333,7 +333,7 @@ namespace
 		const re::Lifetime streamLifetime = batchLifetime;
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4

@@ -237,7 +237,7 @@ namespace
 		vertexStreams.reserve(4);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
@@ -246,7 +246,7 @@ namespace
 		if (normalsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -257,7 +257,7 @@ namespace
 		if (tangentsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -268,7 +268,7 @@ namespace
 		if (colorsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
@@ -276,7 +276,7 @@ namespace
 		}
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
@@ -442,14 +442,14 @@ namespace gr::meshfactory
 		vertexStreams.reserve(5);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(assembledPositions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
@@ -458,7 +458,7 @@ namespace gr::meshfactory
 		if (normalsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -469,7 +469,7 @@ namespace gr::meshfactory
 		if (tangentsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -480,7 +480,7 @@ namespace gr::meshfactory
 		if (colorsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
@@ -488,7 +488,7 @@ namespace gr::meshfactory
 		}
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
@@ -553,21 +553,21 @@ namespace gr::meshfactory
 		vertexStreams.reserve(2);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)).get());
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
@@ -640,14 +640,14 @@ namespace gr::meshfactory
 		vertexStreams.reserve(5);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
@@ -656,7 +656,7 @@ namespace gr::meshfactory
 		if (normalsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -667,7 +667,7 @@ namespace gr::meshfactory
 		if (tangentsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -678,7 +678,7 @@ namespace gr::meshfactory
 		if (colorsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
@@ -686,7 +686,7 @@ namespace gr::meshfactory
 		}
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
@@ -907,14 +907,14 @@ namespace gr::meshfactory
 		vertexStreams.reserve(4);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
@@ -923,7 +923,7 @@ namespace gr::meshfactory
 		if (normalsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -934,7 +934,7 @@ namespace gr::meshfactory
 		if (tangentsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -945,7 +945,7 @@ namespace gr::meshfactory
 		if (colorsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
@@ -953,7 +953,7 @@ namespace gr::meshfactory
 		}
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
@@ -1159,14 +1159,14 @@ namespace gr::meshfactory
 		vertexStreams.reserve(5);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
@@ -1175,7 +1175,7 @@ namespace gr::meshfactory
 		if (normalsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -1186,7 +1186,7 @@ namespace gr::meshfactory
 		if (tangentsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -1197,7 +1197,7 @@ namespace gr::meshfactory
 		if (colorsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
@@ -1205,7 +1205,7 @@ namespace gr::meshfactory
 		}
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
@@ -1293,14 +1293,14 @@ namespace gr::meshfactory
 		vertexStreams.reserve(5);
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
@@ -1309,7 +1309,7 @@ namespace gr::meshfactory
 		if (normalsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -1320,7 +1320,7 @@ namespace gr::meshfactory
 		if (tangentsPtr)
 		{
 			vertexStreams.emplace_back(re::VertexStream::Create(
-				re::VertexStream::CreateParams{
+				re::VertexStream::StreamDesc{
 					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
@@ -1329,14 +1329,14 @@ namespace gr::meshfactory
 		}
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4,
 			},
 			std::move(colors)).get());
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
-			re::VertexStream::CreateParams{
+			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},

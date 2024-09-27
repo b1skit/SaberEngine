@@ -99,6 +99,12 @@ namespace gr
 			std::vector<MeshVertexStream>&& vertexStreams,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
+		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
+			std::string const& name,
+			std::vector<std::array<re::VertexStream::CreateParams, re::VertexStream::Type::Type_Count>>&&,
+			gr::MeshPrimitive::MeshPrimitiveParams const&,
+			bool queueBufferCreate = true);
+
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
 		MeshPrimitive& operator=(MeshPrimitive&& rhs) = default;
 		~MeshPrimitive() = default;

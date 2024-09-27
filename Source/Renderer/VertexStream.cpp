@@ -99,7 +99,7 @@ namespace
 namespace re
 {
 	std::shared_ptr<re::VertexStream> VertexStream::Create(
-		CreateParams const& createParams, util::ByteVector&& data, bool queueBufferCreate /*= true*/)
+		StreamDesc const& createParams, util::ByteVector&& data, bool queueBufferCreate /*= true*/)
 	{
 		// NOTE: Currently we need to defer creating the VertexStream's backing re::Buffer from the front end thread 
 		// with the ugliness here: If queueBufferCreate == true, we'll enqueue a render command to create the buffer
@@ -140,12 +140,12 @@ namespace re
 						.m_allocationType = re::Buffer::AllocationType::Immutable,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
 						.m_usageMask = re::Buffer::Usage::GPURead,
-						.m_type = newVertexStream->m_createParams.m_type == re::VertexStream::Type::Index ?
+						.m_type = newVertexStream->m_streamDesc.m_type == re::VertexStream::Type::Index ?
 							re::Buffer::Type::Index : re::Buffer::Type::Vertex,
 						.m_arraySize = 1,
 						.m_typeParams = {
 							.m_vertexStream = {
-								.m_dataType = newVertexStream->m_createParams.m_dataType,
+								.m_dataType = newVertexStream->m_streamDesc.m_dataType,
 								.m_isNormalized = isNormalized,
 								.m_stride = newVertexStream->GetElementByteSize() }}
 			};
@@ -211,16 +211,22 @@ namespace re
 	}
 
 
-	VertexStream::VertexStream(CreateParams const& createParams, util::ByteVector&& data, bool& isNormalizedOut)
-		: m_createParams(createParams)
+	std::shared_ptr<re::VertexStream> VertexStream::Create(CreateParams&& createParams, bool queueBufferCreate /*= true*/)
+	{
+		return Create(createParams.m_streamDesc, std::move(*createParams.m_streamData.get()), queueBufferCreate);
+	}
+
+
+	VertexStream::VertexStream(StreamDesc const& createParams, util::ByteVector&& data, bool& isNormalizedOut)
+		: m_streamDesc(createParams)
 		, m_platformParams(nullptr)
 	{
-		SEAssert(m_createParams.m_type != Type::Type_Count && m_createParams.m_dataType != DataType::DataType_Count,
+		SEAssert(m_streamDesc.m_type != Type::Type_Count && m_streamDesc.m_dataType != DataType::DataType_Count,
 			"Invalid create params");
 
-		SEAssert(m_createParams.m_type != Type::Index || 
-			(m_createParams.m_dataType == DataType::UShort && data.IsScalarType<uint16_t>()) ||
-			(m_createParams.m_dataType == DataType::UInt && data.IsScalarType<uint32_t>()),
+		SEAssert(m_streamDesc.m_type != Type::Index || 
+			(m_streamDesc.m_dataType == DataType::UShort && data.IsScalarType<uint16_t>()) ||
+			(m_streamDesc.m_dataType == DataType::UInt && data.IsScalarType<uint32_t>()),
 			"Invalid index data");
 
 		bool isNormalized = false;
@@ -247,13 +253,13 @@ namespace re
 					"GPU-normalization and CPU-side normalization is disabled");
 			}
 
-			m_createParams.m_doNormalize = Normalize::False;
+			m_streamDesc.m_doNormalize = Normalize::False;
 			isNormalized = true;
 		}
 
 		isNormalizedOut = isNormalized; 
 
-		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(*this, m_createParams.m_type));
+		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(*this, m_streamDesc.m_type));
 
 		// Hash the incoming data before it is moved to the BufferAllocator:
 		AddDataBytesToHash(data.data().data(), data.GetTotalNumBytes());
@@ -265,7 +271,7 @@ namespace re
 
 	void VertexStream::ComputeDataHash()
 	{
-		AddDataBytesToHash(m_createParams);
+		AddDataBytesToHash(m_streamDesc);
 	}
 
 
@@ -289,44 +295,44 @@ namespace re
 
 	uint8_t VertexStream::GetElementByteSize() const
 	{
-		const uint8_t numComponents = DataTypeToNumComponents(m_createParams.m_dataType);
-		const uint8_t componentByteSize = DataTypeToComponentByteSize(m_createParams.m_dataType);
+		const uint8_t numComponents = DataTypeToNumComponents(m_streamDesc.m_dataType);
+		const uint8_t componentByteSize = DataTypeToComponentByteSize(m_streamDesc.m_dataType);
 		return numComponents * componentByteSize;
 	}
 
 
 	uint8_t VertexStream::GetNumComponents() const
 	{
-		return DataTypeToNumComponents(m_createParams.m_dataType);
+		return DataTypeToNumComponents(m_streamDesc.m_dataType);
 	}
 
 
 	re::DataType VertexStream::GetDataType() const
 	{
-		return m_createParams.m_dataType;
+		return m_streamDesc.m_dataType;
 	}
 
 
 	VertexStream::Normalize VertexStream::DoNormalize() const
 	{
-		return m_createParams.m_doNormalize;
+		return m_streamDesc.m_doNormalize;
 	}
 
 
 	void VertexStream::ShowImGuiWindow() const
 	{
-		ImGui::Text(std::format("Type: {}", TypeToCStr(m_createParams.m_type)).c_str());
+		ImGui::Text(std::format("Type: {}", TypeToCStr(m_streamDesc.m_type)).c_str());
 
-		const bool isMorphTarget = m_createParams.m_isMorphData == VertexStream::IsMorphData::True;
+		const bool isMorphTarget = m_streamDesc.m_isMorphData == VertexStream::IsMorphData::True;
 		ImGui::Text(std::format("Is morph target data? {}", isMorphTarget ? "true" : "false").c_str());
 
-		ImGui::Text(std::format("Data type: {}", re::DataTypeToCStr(m_createParams.m_dataType)).c_str());
-		ImGui::Text(std::format("Normalized? {}", (m_createParams.m_doNormalize ? "true" : "false")).c_str());
+		ImGui::Text(std::format("Data type: {}", re::DataTypeToCStr(m_streamDesc.m_dataType)).c_str());
+		ImGui::Text(std::format("Normalized? {}", (m_streamDesc.m_doNormalize ? "true" : "false")).c_str());
 
 		ImGui::Text(std::format("Total data byte size: {}", GetTotalDataByteSize()).c_str());
 		ImGui::Text(std::format("Number of elements: {}", GetNumElements()).c_str());
 		ImGui::Text(std::format("Element byte size: {}", GetElementByteSize()).c_str());
-		ImGui::Text(std::format("Number of components: {}", DataTypeToNumComponents(m_createParams.m_dataType)).c_str());
-		ImGui::Text(std::format("Component byte size: {}", DataTypeToComponentByteSize(m_createParams.m_dataType)).c_str());
+		ImGui::Text(std::format("Number of components: {}", DataTypeToNumComponents(m_streamDesc.m_dataType)).c_str());
+		ImGui::Text(std::format("Component byte size: {}", DataTypeToComponentByteSize(m_streamDesc.m_dataType)).c_str());
 	}
 }

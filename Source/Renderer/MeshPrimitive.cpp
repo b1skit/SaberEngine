@@ -113,6 +113,65 @@ namespace gr
 	}
 
 
+	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
+		std::string const& name,
+		std::vector<std::array<re::VertexStream::CreateParams, re::VertexStream::Type::Type_Count>>&& streamCreateParams,
+		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams,
+		bool queueBufferCreate /*= true*/)
+	{
+		// NOTE: Currently we need to defer creating the VertexStream's backing re::Buffer from the front end thread 
+		// with the queueBufferCreate ugliness here: If queueBufferCreate == true, the re::VertexStream will enqueue a
+		// render command to create the buffer on the render thread. This will go away once we have a proper async 
+		// loading system
+
+		SEAssert(streamCreateParams[0][re::VertexStream::Index].m_streamData,
+			"No index stream data. We currently assume it will be in this fixed location");
+
+		re::VertexStream const* indexStream = 
+			re::VertexStream::Create(std::move(streamCreateParams[0][re::VertexStream::Index]), queueBufferCreate).get();
+		
+		// Each vector index streamCreateParams corresponds to the m_streamIdx of the entries in the array elements
+		std::vector<MeshVertexStream> vertexStreams;
+		vertexStreams.reserve(streamCreateParams.size() * re::VertexStream::Type_Count); // + morph targets
+
+		for (uint8_t typeIdx = 0; typeIdx < streamCreateParams.size(); ++typeIdx)
+		{
+			for (uint8_t streamTypeIdx = 0; streamTypeIdx < re::VertexStream::Type_Count; ++streamTypeIdx)
+			{
+				if (streamTypeIdx == re::VertexStream::Index)
+				{
+					continue; // Our single index stream is handled externally
+				}
+
+				if (streamCreateParams[typeIdx][streamTypeIdx].m_streamData)
+				{
+					// Create the morph targets:
+					std::vector<re::VertexStream const*> morphTargets;
+					morphTargets.reserve(
+						streamCreateParams[typeIdx][streamTypeIdx].m_morphTargetData.size());
+
+					for (auto& morphCreateParms : streamCreateParams[typeIdx][streamTypeIdx].m_morphTargetData)
+					{
+						morphTargets.emplace_back(re::VertexStream::Create(
+							morphCreateParms.m_streamDesc,
+							std::move(*morphCreateParms.m_streamData)).get());
+					}
+
+					vertexStreams.emplace_back(gr::MeshPrimitive::MeshVertexStream{
+						.m_vertexStream = re::VertexStream::Create(
+							streamCreateParams[typeIdx][streamTypeIdx].m_streamDesc,
+							std::move(*streamCreateParams[typeIdx][streamTypeIdx].m_streamData)).get(),
+						.m_typeIdx = typeIdx,
+						.m_morphTargets = std::move(morphTargets),
+						});
+				}
+			}
+		}
+
+		return gr::MeshPrimitive::Create(name, indexStream, std::move(vertexStreams), meshParams);
+	}
+
+
 	MeshPrimitive::MeshPrimitive(
 		char const* name,
 		re::VertexStream const* indexStream,

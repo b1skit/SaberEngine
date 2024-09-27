@@ -707,19 +707,7 @@ namespace
 
 		// We must defer vertex stream creation until after we've processed the data with the VertexStreamBuilder,
 		// as we use a data hash to identify duplicate streams for sharing/reuse
-		struct MorphTargetDeferredCreateParams
-		{
-			std::unique_ptr<util::ByteVector> m_streamData;
-			re::VertexStream::CreateParams m_createParams{};
-		};
-		struct VertexStreamDeferredCreateParams
-		{
-			std::unique_ptr<util::ByteVector> m_streamData;
-			re::VertexStream::CreateParams m_createParams{};
-			uint8_t m_streamIdx = std::numeric_limits<uint8_t>::max();
-
-			std::vector<MorphTargetDeferredCreateParams> m_morphTargetData;
-		};
+		
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		const uint32_t numMeshPrimitives = util::CheckedCast<uint32_t>(current->mesh->primitives_count);
@@ -734,25 +722,25 @@ namespace
 
 			// Vertex streams:
 			// Each vector element corresponds to the m_streamIdx of the entries in the array elements
-			std::vector<std::array<VertexStreamDeferredCreateParams,
-				re::VertexStream::Type::Type_Count>> vertexStreamDeferredCreateParams;
+			std::vector<std::array<re::VertexStream::CreateParams,
+				re::VertexStream::Type::Type_Count>> vertexStreamCreateParams;
 
-			auto AddVertexStreamDefferredCreateParam = [&vertexStreamDeferredCreateParams](
-				VertexStreamDeferredCreateParams&& streamCreateParams)
+			auto AddVertexStreamCreateParams = [&vertexStreamCreateParams](
+				re::VertexStream::CreateParams&& streamCreateParams)
 				{
 					// Insert enough elements to make our index valid:
-					while (vertexStreamDeferredCreateParams.size() <= streamCreateParams.m_streamIdx)
+					while (vertexStreamCreateParams.size() <= streamCreateParams.m_streamIdx)
 					{
-						vertexStreamDeferredCreateParams.emplace_back();
+						vertexStreamCreateParams.emplace_back();
 					}
 
-					const size_t streamTypeIdx = static_cast<size_t>(streamCreateParams.m_createParams.m_type);
+					const size_t streamTypeIdx = static_cast<size_t>(streamCreateParams.m_streamDesc.m_type);
 
-					SEAssert(vertexStreamDeferredCreateParams.at(
+					SEAssert(vertexStreamCreateParams.at(
 						streamCreateParams.m_streamIdx)[streamTypeIdx].m_streamData == nullptr,
 						"Stream data is not null, this suggests we've already populated this slot");
 
-					vertexStreamDeferredCreateParams.at(streamCreateParams.m_streamIdx)[streamTypeIdx] =
+					vertexStreamCreateParams.at(streamCreateParams.m_streamIdx)[streamTypeIdx] =
 						std::move(streamCreateParams);
 				};
 
@@ -808,9 +796,9 @@ namespace
 				default: SEAssertF("Unexpected number of bytes in indices component");
 				}
 
-				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+				AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 					.m_streamData = std::make_unique<util::ByteVector>(std::move(indices)),
-					.m_createParams = re::VertexStream::CreateParams{
+					.m_streamDesc = re::VertexStream::StreamDesc{
 						.m_type = re::VertexStream::Type::Index,
 						.m_dataType = indexDataType,
 					},
@@ -851,15 +839,15 @@ namespace
 						totalFloatElements);
 					SEAssert(unpackResult, "Failed to unpack data");
 
-					SEAssert(vertexStreamDeferredCreateParams.empty() ||
-						vertexStreamDeferredCreateParams[0][re::VertexStream::Type::Position].m_streamData == nullptr,
+					SEAssert(vertexStreamCreateParams.empty() ||
+						vertexStreamCreateParams[0][re::VertexStream::Type::Position].m_streamData == nullptr,
 						"Only a single position stream is supported");
 					
 					SEAssert(streamIdx == 0, "Unexpected stream index for position stream");
 
-					AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+					AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(positions)),
-						.m_createParams = re::VertexStream::CreateParams{
+						.m_streamDesc = re::VertexStream::StreamDesc{
 							.m_type = re::VertexStream::Type::Position,
 							.m_dataType = re::DataType::Float3,
 						},
@@ -893,9 +881,9 @@ namespace
 						totalFloatElements);
 					SEAssert(unpackResult, "Failed to unpack data");
 
-					AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+					AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(normals)),
-						.m_createParams = re::VertexStream::CreateParams{
+						.m_streamDesc = re::VertexStream::StreamDesc{
 							.m_type = re::VertexStream::Type::Normal,
 							.m_dataType = re::DataType::Float3,
 							.m_doNormalize = re::VertexStream::Normalize::True,
@@ -914,9 +902,9 @@ namespace
 						totalFloatElements);
 					SEAssert(unpackResult, "Failed to unpack data");
 
-					AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+					AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(tangents)),
-						.m_createParams = re::VertexStream::CreateParams{
+						.m_streamDesc = re::VertexStream::StreamDesc{
 							.m_type = re::VertexStream::Type::Tangent,
 							.m_dataType = re::DataType::Float4,
 							.m_doNormalize = re::VertexStream::Normalize::True,
@@ -935,9 +923,9 @@ namespace
 						totalFloatElements);
 					SEAssert(unpackResult, "Failed to unpack data");
 
-					AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+					AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(uvs)),
-						.m_createParams = re::VertexStream::CreateParams{
+						.m_streamDesc = re::VertexStream::StreamDesc{
 							.m_type = re::VertexStream::Type::TexCoord,
 							.m_dataType = re::DataType::Float2,
 						},
@@ -980,9 +968,9 @@ namespace
 					default: SEAssertF("Invalid number of color components");
 					}
 
-					AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+					AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 							.m_streamData = std::make_unique<util::ByteVector>(std::move(colors)),
-							.m_createParams = re::VertexStream::CreateParams{
+							.m_streamDesc = re::VertexStream::StreamDesc{
 								.m_type = re::VertexStream::Type::Color,
 								.m_dataType = re::DataType::Float4,
 							},
@@ -1012,9 +1000,9 @@ namespace
 						jointsAsUints.at<uint8_t>(jointIdx) = util::CheckedCast<uint8_t>(jointsAsFloats[jointIdx]);
 					}
 				
-					AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+					AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(jointsAsUints)),
-						.m_createParams = re::VertexStream::CreateParams{
+						.m_streamDesc = re::VertexStream::StreamDesc{
 							.m_type = re::VertexStream::Type::BlendIndices,
 							.m_dataType = re::DataType::UByte,
 						},
@@ -1035,9 +1023,9 @@ namespace
 						totalFloatElements);
 					SEAssert(unpackResult, "Failed to unpack data");
 
-					AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+					AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(weights)),
-						.m_createParams = re::VertexStream::CreateParams{
+						.m_streamDesc = re::VertexStream::StreamDesc{
 							 .m_type = re::VertexStream::Type::BlendWeight,
 							 .m_dataType = re::DataType::Float,
 						},
@@ -1059,14 +1047,14 @@ namespace
 
 
 			// Morph targets:
-			auto AddMorphTarget = [&vertexStreamDeferredCreateParams](
-				uint8_t streamIdx, MorphTargetDeferredCreateParams&& morphCreateParams)
+			auto AddMorphCreateParams = [&vertexStreamCreateParams](
+				uint8_t streamIdx, re::VertexStream::MorphCreateParams&& morphCreateParams)
 				{
-					SEAssert(streamIdx < vertexStreamDeferredCreateParams.size(),
+					SEAssert(streamIdx < vertexStreamCreateParams.size(),
 						"Trying to add a morph target to a vertex stream that does not exist");
 
-					std::vector<MorphTargetDeferredCreateParams>& morphTargetData = 
-						vertexStreamDeferredCreateParams[streamIdx][morphCreateParams.m_createParams.m_type].m_morphTargetData;
+					std::vector<re::VertexStream::MorphCreateParams>& morphTargetData = 
+						vertexStreamCreateParams[streamIdx][morphCreateParams.m_streamDesc.m_type].m_morphTargetData;
 
 					morphTargetData.emplace_back(std::move(morphCreateParams));
 				};
@@ -1098,9 +1086,9 @@ namespace
 					{
 						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3, "Unexpected data type");
 
-						AddMorphTarget(targetStreamIdx, MorphTargetDeferredCreateParams{
+						AddMorphCreateParams(targetStreamIdx, re::VertexStream::MorphCreateParams{
 							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphData)),
-							.m_createParams = re::VertexStream::CreateParams{
+							.m_streamDesc = re::VertexStream::StreamDesc{
 								 .m_type = re::VertexStream::Type::Position,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
 								 .m_dataType = re::DataType::Float3,
@@ -1111,9 +1099,9 @@ namespace
 					{
 						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3, "Unexpected data type");
 
-						AddMorphTarget(targetStreamIdx, MorphTargetDeferredCreateParams{
+						AddMorphCreateParams(targetStreamIdx, re::VertexStream::MorphCreateParams{
 							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphData)),
-							.m_createParams = re::VertexStream::CreateParams{
+							.m_streamDesc = re::VertexStream::StreamDesc{
 								 .m_type = re::VertexStream::Type::Normal,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
 								 .m_dataType = re::DataType::Float3,
@@ -1125,9 +1113,9 @@ namespace
 						// Note: Tangent morph targets are vec3's
 						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3, "Unexpected data type");
 
-						AddMorphTarget(targetStreamIdx, MorphTargetDeferredCreateParams{
+						AddMorphCreateParams(targetStreamIdx, re::VertexStream::MorphCreateParams{
 							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphData)),
-							.m_createParams = re::VertexStream::CreateParams{
+							.m_streamDesc = re::VertexStream::StreamDesc{
 								 .m_type = re::VertexStream::Type::Tangent,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
 								 .m_dataType = re::DataType::Float3,
@@ -1138,9 +1126,9 @@ namespace
 					{
 						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec2, "Unexpected data type");
 
-						AddMorphTarget(targetStreamIdx, MorphTargetDeferredCreateParams{
+						AddMorphCreateParams(targetStreamIdx, re::VertexStream::MorphCreateParams{
 							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphData)),
-							.m_createParams = re::VertexStream::CreateParams{
+							.m_streamDesc = re::VertexStream::StreamDesc{
 								 .m_type = re::VertexStream::Type::TexCoord,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
 								 .m_dataType = re::DataType::Float2,
@@ -1153,9 +1141,9 @@ namespace
 						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec4,
 							"Unexpected data type. Only 4-color RGBA is currently supported");
 
-						AddMorphTarget(targetStreamIdx, MorphTargetDeferredCreateParams{
+						AddMorphCreateParams(targetStreamIdx, re::VertexStream::MorphCreateParams{
 							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphData)),
-							.m_createParams = re::VertexStream::CreateParams{
+							.m_streamDesc = re::VertexStream::StreamDesc{
 								 .m_type = re::VertexStream::Type::Color,
 								 .m_isMorphData = re::VertexStream::IsMorphData::True,
 								 .m_dataType = re::DataType::Float4,
@@ -1184,19 +1172,19 @@ namespace
 			// Create empty containers for anything the VertexStreamBuilder can create.
 			// Note: GLTF only supports a single position/normal/tangent (but multiple UV channels etc)
 			const bool hasIndices = 
-				vertexStreamDeferredCreateParams[0][re::VertexStream::Index].m_streamData != nullptr;
+				vertexStreamCreateParams[0][re::VertexStream::Index].m_streamData != nullptr;
 			const bool hasNormal0 =
-				vertexStreamDeferredCreateParams[0][re::VertexStream::Normal].m_streamData != nullptr;
+				vertexStreamCreateParams[0][re::VertexStream::Normal].m_streamData != nullptr;
 			const bool hasTangent0 =
-				vertexStreamDeferredCreateParams[0][re::VertexStream::Tangent].m_streamData != nullptr;
+				vertexStreamCreateParams[0][re::VertexStream::Tangent].m_streamData != nullptr;
 			const bool hasUV0 =
-				vertexStreamDeferredCreateParams[0][re::VertexStream::TexCoord].m_streamData != nullptr;
-			const bool hasColor = vertexStreamDeferredCreateParams[0][re::VertexStream::Color].m_streamData != nullptr;
+				vertexStreamCreateParams[0][re::VertexStream::TexCoord].m_streamData != nullptr;
+			const bool hasColor = vertexStreamCreateParams[0][re::VertexStream::Color].m_streamData != nullptr;
 
 			if (!hasIndices)
 			{
 				const size_t numPositions = 
-					vertexStreamDeferredCreateParams[0][re::VertexStream::Position].m_streamData->size();
+					vertexStreamCreateParams[0][re::VertexStream::Position].m_streamData->size();
 
 				std::unique_ptr<util::ByteVector> indexData;
 				re::DataType indexDataType = re::DataType::DataType_Count;
@@ -1211,9 +1199,9 @@ namespace
 					indexDataType = re::DataType::UInt;
 				}			
 
-				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+				AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 					.m_streamData = std::move(indexData),
-					.m_createParams = re::VertexStream::CreateParams{
+					.m_streamDesc = re::VertexStream::StreamDesc{
 						.m_type = re::VertexStream::Type::Index,
 						.m_dataType = indexDataType,
 					},
@@ -1222,9 +1210,9 @@ namespace
 			}
 			if (!hasNormal0)
 			{
-				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+				AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 						.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec3>()),
-						.m_createParams = re::VertexStream::CreateParams{
+						.m_streamDesc = re::VertexStream::StreamDesc{
 							.m_type = re::VertexStream::Type::Normal,
 							.m_dataType = re::DataType::Float3,
 							.m_doNormalize = re::VertexStream::Normalize::True,
@@ -1234,9 +1222,9 @@ namespace
 			}
 			if (!hasTangent0)
 			{
-				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+				AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 					.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec4>()),
-					.m_createParams = re::VertexStream::CreateParams{
+					.m_streamDesc = re::VertexStream::StreamDesc{
 						.m_type = re::VertexStream::Type::Tangent,
 						.m_dataType = re::DataType::Float4,
 						.m_doNormalize = re::VertexStream::Normalize::True,
@@ -1246,9 +1234,9 @@ namespace
 			}
 			if (!hasUV0)
 			{
-				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+				AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 					.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec2>()),
-					.m_createParams = re::VertexStream::CreateParams{
+					.m_streamDesc = re::VertexStream::StreamDesc{
 						.m_type = re::VertexStream::Type::TexCoord,
 						.m_dataType = re::DataType::Float2,
 					},
@@ -1258,12 +1246,12 @@ namespace
 			if (!hasColor) // SE (currently) expects at least 1 color channel
 			{
 				const size_t numPositionVerts = 
-					vertexStreamDeferredCreateParams[0][re::VertexStream::Position].m_streamData->size();
+					vertexStreamCreateParams[0][re::VertexStream::Position].m_streamData->size();
 
-				AddVertexStreamDefferredCreateParam(VertexStreamDeferredCreateParams{
+				AddVertexStreamCreateParams(re::VertexStream::CreateParams{
 					.m_streamData = std::make_unique<util::ByteVector>(
 						util::ByteVector::Create<glm::vec4>(numPositionVerts, glm::vec4(1.f) /*= GLTF default*/)),
-					.m_createParams = re::VertexStream::CreateParams{
+					.m_streamDesc = re::VertexStream::StreamDesc{
 							.m_type = re::VertexStream::Type::Color,
 							.m_dataType = re::DataType::Float4,
 						},
@@ -1273,8 +1261,8 @@ namespace
 
 			// Assemble the data for the VertexStreamBuilder:					
 			std::vector<util::ByteVector*> extraChannelsData;
-			extraChannelsData.reserve(vertexStreamDeferredCreateParams.size());
-			for (auto& streams : vertexStreamDeferredCreateParams)
+			extraChannelsData.reserve(vertexStreamCreateParams.size());
+			for (auto& streams : vertexStreamCreateParams)
 			{
 				for (auto& stream : streams)
 				{
@@ -1283,7 +1271,7 @@ namespace
 						continue;
 					}
 
-					switch (stream.m_createParams.m_type)
+					switch (stream.m_streamDesc.m_type)
 					{
 					case re::VertexStream::Index:
 					{
@@ -1334,68 +1322,24 @@ namespace
 			{
 				.m_name = meshName,
 				.m_meshParams = &meshPrimitiveParams,
-				.m_indices = vertexStreamDeferredCreateParams[0][re::VertexStream::Index].m_streamData.get(),
-				.m_positions = vertexStreamDeferredCreateParams[0][re::VertexStream::Position].m_streamData.get(),
-				.m_normals = vertexStreamDeferredCreateParams[0][re::VertexStream::Normal].m_streamData.get(),
-				.m_tangents = vertexStreamDeferredCreateParams[0][re::VertexStream::Tangent].m_streamData.get(),
-				.m_UV0 = vertexStreamDeferredCreateParams[0][re::VertexStream::TexCoord].m_streamData.get(),
+				.m_indices = vertexStreamCreateParams[0][re::VertexStream::Index].m_streamData.get(),
+				.m_positions = vertexStreamCreateParams[0][re::VertexStream::Position].m_streamData.get(),
+				.m_normals = vertexStreamCreateParams[0][re::VertexStream::Normal].m_streamData.get(),
+				.m_tangents = vertexStreamCreateParams[0][re::VertexStream::Tangent].m_streamData.get(),
+				.m_UV0 = vertexStreamCreateParams[0][re::VertexStream::TexCoord].m_streamData.get(),
 				.m_extraChannels = &extraChannelsData,
 			};
 			grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
-			// TODO: Bug here - We're creating re::VertexStreams, which are backed by an re::Buffer. Buffers interact
-			// with the re::BufferAllocator, which is only allowed from the render thread. We get away with it for now
-			// since this only runs once before the 1st frame, but it's a fluke.
-			// This will go away once async loading/object creation is done
-
-			re::VertexStream* indexStream = re::VertexStream::Create(
-				vertexStreamDeferredCreateParams[0][re::VertexStream::Index].m_createParams,
-				std::move(*vertexStreamDeferredCreateParams[0][re::VertexStream::Index].m_streamData)).get();
-
-			std::vector<gr::MeshPrimitive::MeshVertexStream> meshPrimitiveVertexStreams;
-			meshPrimitiveVertexStreams.reserve(vertexStreamDeferredCreateParams.size() * re::VertexStream::Type_Count);
-
-			// Finally, create our VertexStreams with the (potentially) modified data:
-			for (uint8_t typeIdx = 0; typeIdx < vertexStreamDeferredCreateParams.size(); ++typeIdx)
-			{
-				for (uint8_t streamTypeIdx = 0; streamTypeIdx < re::VertexStream::Type_Count; ++streamTypeIdx)
-				{
-					if (streamTypeIdx == re::VertexStream::Index)
-					{
-						continue; // Our single index stream is handled externally
-					}
-
-					if (vertexStreamDeferredCreateParams[typeIdx][streamTypeIdx].m_streamData)
-					{
-						// Create the morph targets:
-						std::vector<re::VertexStream const*> morphTargets;
-						morphTargets.reserve(
-							vertexStreamDeferredCreateParams[typeIdx][streamTypeIdx].m_morphTargetData.size());
-
-						for (auto& morphCreateParms : vertexStreamDeferredCreateParams[typeIdx][streamTypeIdx].m_morphTargetData)
-						{
-							morphTargets.emplace_back(re::VertexStream::Create(
-								morphCreateParms.m_createParams,
-								std::move(*morphCreateParms.m_streamData)).get());
-						}
-
-						meshPrimitiveVertexStreams.emplace_back(gr::MeshPrimitive::MeshVertexStream{
-							.m_vertexStream = re::VertexStream::Create(
-								vertexStreamDeferredCreateParams[typeIdx][streamTypeIdx].m_createParams,
-								std::move(*vertexStreamDeferredCreateParams[typeIdx][streamTypeIdx].m_streamData)).get(),
-							.m_typeIdx = typeIdx,
-							.m_morphTargets = std::move(morphTargets),
-							});
-					}
-				}
-			}
-
-			// Construct the MeshPrimitive (internally registers itself with the SceneData):
+			// TODO: Bug here - Internally, gr::MeshPrimitive creates re::VertexStreams which are backed by an 
+			// re::Buffer. Buffers interact with the re::BufferAllocator, which is only allowed from the render thread. 
+			// We get away with it for by using a nasty hack to defer the VertexStream's buffer creation onto a render
+			// command. This will go away once async loading/object creation is done
 			std::shared_ptr<gr::MeshPrimitive> newMeshPrimitive = gr::MeshPrimitive::Create(
-				meshName.c_str(),
-				indexStream,
-				std::move(meshPrimitiveVertexStreams),
-				meshPrimitiveParams);
+				meshName,
+				std::move(vertexStreamCreateParams),
+				meshPrimitiveParams,
+				true);
 
 			// Attach the MeshPrimitive to the Mesh:
 			entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(

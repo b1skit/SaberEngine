@@ -58,7 +58,9 @@ namespace re
 			True
 		};
 
-		struct CreateParams
+
+	public:
+		struct StreamDesc
 		{
 			re::Lifetime m_lifetime = re::Lifetime::Permanent;
 
@@ -72,8 +74,26 @@ namespace re
 
 
 	public:
+		struct MorphCreateParams
+		{
+			std::unique_ptr<util::ByteVector> m_streamData;
+			re::VertexStream::StreamDesc m_streamDesc{};
+		};
+		struct CreateParams
+		{
+			std::unique_ptr<util::ByteVector> m_streamData;
+			re::VertexStream::StreamDesc m_streamDesc{};
+			uint8_t m_streamIdx = std::numeric_limits<uint8_t>::max();
+
+			std::vector<MorphCreateParams> m_morphTargetData;
+		};
+
+
+	public:
 		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(
-			CreateParams const&, util::ByteVector&&, bool queueBufferCreate = true);
+			StreamDesc const&, util::ByteVector&&, bool queueBufferCreate = true);
+
+		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(CreateParams&&, bool queueBufferCreate = true);
 
 		VertexStream(VertexStream&&) = default;
 		VertexStream& operator=(VertexStream&&) = default;
@@ -114,7 +134,7 @@ namespace re
 		
 
 	private:
-		CreateParams m_createParams;
+		StreamDesc m_streamDesc;
 
 		std::shared_ptr<re::Buffer> m_streamBuffer;
 
@@ -122,7 +142,7 @@ namespace re
 
 
 	private: // Use the Create() factory instead
-		VertexStream(CreateParams const&, util::ByteVector&& data, bool& isNormalizedOut);
+		VertexStream(StreamDesc const&, util::ByteVector&& data, bool& isNormalizedOut);
 
 
 	private: // No copying allowed
@@ -133,19 +153,19 @@ namespace re
 
 	inline re::Lifetime VertexStream::GetLifetime() const
 	{
-		return m_createParams.m_lifetime;
+		return m_streamDesc.m_lifetime;
 	}
 
 
 	inline VertexStream::Type VertexStream::GetType() const
 	{
-		return m_createParams.m_type;
+		return m_streamDesc.m_type;
 	}
 
 
 	inline bool VertexStream::IsMorphData() const
 	{
-		return m_createParams.m_isMorphData == IsMorphData::True;
+		return m_streamDesc.m_isMorphData == IsMorphData::True;
 	}
 
 
