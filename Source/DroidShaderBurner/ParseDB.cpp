@@ -116,7 +116,26 @@ namespace
 	{
 		for (auto const& techniqueEntry : techniquesBlock)
 		{
-			const droid::ErrorCode result = parseDB.AddTechnique(owningEffectName, techniqueEntry);
+			droid::TechniqueDesc newTechnique = techniqueEntry;
+
+			// "Parent": Handle inheritance:
+			if (techniqueEntry.contains(key_parent))
+			{
+				std::string const& parentName = techniqueEntry.at(key_parent).template get<std::string>();
+
+				if (!parseDB.HasTechnique(owningEffectName, parentName))
+				{
+					std::cout << "Error: Parent \"" << parentName.c_str() << "\" not found in Effect \"" << 
+						owningEffectName.c_str() << "\"\n";
+					return droid::ErrorCode::JSONError;
+				}
+
+				droid::TechniqueDesc const& parent = parseDB.GetTechnique(owningEffectName, parentName);
+
+				newTechnique.InheritFrom(parent);
+			}
+
+			const droid::ErrorCode result = parseDB.AddTechnique(owningEffectName, std::move(newTechnique));
 			if (result != droid::ErrorCode::Success)
 			{
 				return result;

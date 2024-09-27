@@ -35,23 +35,16 @@
 			},
 			{
 				"Name": "Debug_Triangle",
-				"VShader": "Line",
-				"VShaderEntryPoint": "VShader",
-				"PShader": "Line",
-				"PShaderEntryPoint": "PShader",
-				"PipelineState": "Debug_Triangle",
-				"VertexStream": "PositionColor"
+				"Parent" : "Debug_Line",
+				"PipelineState": "Debug_Triangle"
 			},
 			{
 				"Name": "Debug_Normal",
-				"VShader": "Line",
-				"VShaderEntryPoint": "VShader",
+				"Parent" : "Debug_Line",
 				"VShaderDefines" : ["DEBUG_NORMAL"],
 				"GShader": "Line",
 				"GShaderEntryPoint": "GShader",
 				"GShaderDefines" : ["DEBUG_NORMAL"],
-				"PShader": "Line",
-				"PShaderEntryPoint": "PShader",
 				"PipelineState": "Debug_Point",
 				"VertexStream": "PositionNormal"
 			}

@@ -46,8 +46,10 @@ namespace
 
 	// "Techniques":
 	constexpr char const* key_techniques = "Techniques";
+	constexpr char const* key_parent = "Parent";
 	constexpr char const* key_pipelineState = "PipelineState";
 	constexpr char const* key_vertexStream = "VertexStream";
+	
 
 	constexpr char const* keys_shaderDefines[] =
 	{

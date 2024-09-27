@@ -88,6 +88,8 @@ namespace droid
 		void AddVertexStreamSlot(std::string const& streamBlockName, VertexStreamSlotDesc&&);
 
 		droid::ErrorCode AddTechnique(std::string const& owningEffectName, TechniqueDesc&&);
+		bool HasTechnique(std::string const& effectName, std::string const& techniqueName) const;
+		TechniqueDesc const& GetTechnique(std::string const& effectName, std::string const& techniqueName) const;
 
 
 	private: // Parsing:
@@ -194,5 +196,22 @@ namespace droid
 		m_effectTechniqueDescs.at(owningEffectName).emplace(techniqueDesc.Name, std::move(techniqueDesc));
 
 		return droid::ErrorCode::Success;
+	}
+
+
+	inline bool ParseDB::HasTechnique(std::string const& effectName, std::string const& techniqueName) const
+	{
+		if (m_effectTechniqueDescs.contains(effectName))
+		{
+			return m_effectTechniqueDescs.at(effectName).contains(techniqueName);
+		}
+		return false;
+	}
+
+
+	inline TechniqueDesc const& ParseDB::GetTechnique(
+		std::string const& effectName, std::string const& techniqueName) const
+	{
+		return m_effectTechniqueDescs.at(effectName).at(techniqueName);
 	}
 }

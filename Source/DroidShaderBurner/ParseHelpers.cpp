@@ -88,6 +88,56 @@ namespace droid
 	}
 
 
+	void TechniqueDesc::ComputeMetadata()
+	{
+		for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
+		{
+			m_shaderVariantIDs[shaderTypeIdx] = ComputeShaderVariantID(
+				static_cast<re::Shader::ShaderType>(shaderTypeIdx),
+				_ShaderEntryPoint[shaderTypeIdx],
+				_Defines[shaderTypeIdx]);
+		}
+	}
+
+
+	void TechniqueDesc::InheritFrom(TechniqueDesc const& parent)
+	{
+		// Simple inheritance: If the child has a property, it overrides the parent entirely.
+		// Otherwise, copy anything the parent has that the child doesn't
+		for (size_t i = 0; i < re::Shader::ShaderType_Count; ++i)
+		{
+			if (_Shader[i].empty())
+			{
+				_Shader[i] = parent._Shader[i];
+			}
+			if (_ShaderEntryPoint[i].empty())
+			{
+				_ShaderEntryPoint[i] = parent._ShaderEntryPoint[i];
+			}
+			if (_Defines[i].empty())
+			{
+				_Defines[i] = parent._Defines[i];
+			}
+		}
+
+		if (PipelineState.empty())
+		{
+			PipelineState = parent.PipelineState;
+		}
+		if (VertexStream.empty())
+		{
+			VertexStream = parent.VertexStream;
+		}
+		if (ExcludedPlatforms.empty())
+		{
+			ExcludedPlatforms = parent.ExcludedPlatforms;
+		}
+
+		// Metadata:
+		ComputeMetadata();
+	}
+
+
 	void to_json(nlohmann::json& json, TechniqueDesc const& technique)
 	{
 		auto AddEntry = [&json](char const* key, std::string const& val)
@@ -165,12 +215,6 @@ namespace droid
 		}
 
 		// Metadata:
-		for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
-		{
-			technique.m_shaderVariantIDs[shaderTypeIdx] = ComputeShaderVariantID(
-				static_cast<re::Shader::ShaderType>(shaderTypeIdx),
-				technique._ShaderEntryPoint[shaderTypeIdx],
-				technique._Defines[shaderTypeIdx]);
-		}
+		technique.ComputeMetadata();
 	}
 }
