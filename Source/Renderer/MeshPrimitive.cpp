@@ -160,7 +160,8 @@ namespace gr
 					vertexStreams.emplace_back(gr::MeshPrimitive::MeshVertexStream{
 						.m_vertexStream = re::VertexStream::Create(
 							streamCreateParams[typeIdx][streamTypeIdx].m_streamDesc,
-							std::move(*streamCreateParams[typeIdx][streamTypeIdx].m_streamData)).get(),
+							std::move(*streamCreateParams[typeIdx][streamTypeIdx].m_streamData),
+							queueBufferCreate).get(),
 						.m_typeIdx = typeIdx,
 						.m_morphTargets = std::move(morphTargets),
 						});
