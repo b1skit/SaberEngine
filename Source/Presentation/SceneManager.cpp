@@ -1343,6 +1343,11 @@ namespace
 			};
 			grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+			// TODO: Bug here - We're creating re::VertexStreams, which are backed by an re::Buffer. Buffers interact
+			// with the re::BufferAllocator, which is only allowed from the render thread. We get away with it for now
+			// since this only runs once before the 1st frame, but it's a fluke.
+			// This will go away once async loading/object creation is done
+
 			re::VertexStream* indexStream = re::VertexStream::Create(
 				vertexStreamDeferredCreateParams[0][re::VertexStream::Index].m_createParams,
 				std::move(*vertexStreamDeferredCreateParams[0][re::VertexStream::Index].m_streamData)).get();
