@@ -98,15 +98,24 @@ namespace
 
 namespace re
 {
-	std::shared_ptr<re::VertexStream> VertexStream::Create(CreateParams const& createParams, util::ByteVector&& data)
+	std::shared_ptr<re::VertexStream> VertexStream::Create(
+		CreateParams const& createParams, util::ByteVector&& data, bool queueBufferCreate /*= true*/)
 	{
-		std::shared_ptr<re::VertexStream> newVertexStream;
-		newVertexStream.reset(new VertexStream(createParams, std::move(data)));
+		// NOTE: Currently we need to defer creating the VertexStream's backing re::Buffer from the front end thread 
+		// with the ugliness here: If queueBufferCreate == true, we'll enqueue a render command to create the buffer
+		// on the render thread. This will go away once we have a proper async loading system
+		bool isNormalized = false; // Temporary: required for buffer thread fix
+		bool didCreate = false; // Temporary: required for buffer thread fix
 
+
+		std::shared_ptr<re::VertexStream> newVertexStream;
+		newVertexStream.reset(new VertexStream(createParams, std::move(data), isNormalized));
+		
 		if (createParams.m_lifetime == re::Lifetime::SingleFrame)
 		{
 			re::RenderManager::Get()->RegisterSingleFrameResource(newVertexStream);
 			re::RenderManager::Get()->RegisterForCreate(newVertexStream);
+			didCreate = true;
 		}
 		else
 		{
@@ -114,6 +123,87 @@ namespace re
 			if (!duplicateExists)
 			{
 				re::RenderManager::Get()->RegisterForCreate(newVertexStream);
+				didCreate = true;
+			}
+		}
+
+		// Temporary: required for buffer thread fix
+		if (didCreate) 
+		{
+			// Create the vertex/index Buffer object that will back our vertex stream:
+			std::string const& bufferName = std::format(
+				"VertexStream_{}_{}", 
+				TypeToCStr(newVertexStream->GetType()), 
+				newVertexStream->GetDataHash());
+
+			const re::Buffer::BufferParams bufferParams{
+						.m_allocationType = re::Buffer::AllocationType::Immutable,
+						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
+						.m_usageMask = re::Buffer::Usage::GPURead,
+						.m_type = newVertexStream->m_createParams.m_type == re::VertexStream::Type::Index ?
+							re::Buffer::Type::Index : re::Buffer::Type::Vertex,
+						.m_arraySize = 1,
+						.m_typeParams = {
+							.m_vertexStream = {
+								.m_dataType = newVertexStream->m_createParams.m_dataType,
+								.m_isNormalized = isNormalized,
+								.m_stride = newVertexStream->GetElementByteSize() }}
+			};
+
+			
+			if (queueBufferCreate)
+			{
+				class CreateBufferDeferred
+				{
+				public:
+					CreateBufferDeferred(
+						re::VertexStream* vertexStream,
+						std::string bufferName,
+						util::ByteVector&& data,
+						re::Buffer::BufferParams bufferParams)
+						: m_vertexStream(vertexStream)
+						, m_bufferName(bufferName)
+						, m_data(std::make_unique<util::ByteVector>(std::move(data)))
+						, m_bufferParams(bufferParams)
+					{
+					}
+
+					~CreateBufferDeferred() = default;
+
+					static void Execute(void* cmdData)
+					{
+						CreateBufferDeferred* cmdPtr = reinterpret_cast<CreateBufferDeferred*>(cmdData);
+
+						cmdPtr->m_vertexStream->m_streamBuffer = re::Buffer::Create(
+							cmdPtr->m_bufferName,
+							cmdPtr->m_data->data().data(),
+							util::CheckedCast<uint32_t>(cmdPtr->m_data->GetTotalNumBytes()),
+							cmdPtr->m_bufferParams);
+					}
+
+					static void Destroy(void* cmdData)
+					{
+						CreateBufferDeferred* cmdPtr = reinterpret_cast<CreateBufferDeferred*>(cmdData);
+						cmdPtr->~CreateBufferDeferred();
+					}
+				private:
+					re::VertexStream* m_vertexStream;
+					std::string m_bufferName;
+					std::unique_ptr<util::ByteVector> m_data;
+					re::Buffer::BufferParams m_bufferParams;
+				};
+				
+				re::RenderManager::Get()->EnqueueRenderCommand<CreateBufferDeferred>(
+					newVertexStream.get(), bufferName, std::move(data), bufferParams);
+			}
+			else
+			{
+				// This will be moved back to the CTOR
+				newVertexStream->m_streamBuffer = re::Buffer::Create(
+					bufferName,
+					data.data().data(),
+					util::CheckedCast<uint32_t>(data.GetTotalNumBytes()),
+					bufferParams);
 			}
 		}
 
@@ -121,7 +211,7 @@ namespace re
 	}
 
 
-	VertexStream::VertexStream(CreateParams const& createParams, util::ByteVector&& data)
+	VertexStream::VertexStream(CreateParams const& createParams, util::ByteVector&& data, bool& isNormalizedOut)
 		: m_createParams(createParams)
 		, m_platformParams(nullptr)
 	{
@@ -161,28 +251,14 @@ namespace re
 			isNormalized = true;
 		}
 
+		isNormalizedOut = isNormalized; 
+
 		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(*this, m_createParams.m_type));
 
-		// Create the vertex/index Buffer object that will back our vertex stream:
-		std::string const& bufferName = std::format("VertexStream_{}_{}", TypeToCStr(GetType()), GetDataHash());
-		
-		m_streamBuffer = re::Buffer::Create(
-			bufferName,
-			data.data().data(),
-			util::CheckedCast<uint32_t>(data.GetTotalNumBytes()),
-			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::Immutable,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
-				.m_usageMask = re::Buffer::Usage::GPURead,
-				.m_type = m_createParams.m_type == re::VertexStream::Type::Index ? 
-					re::Buffer::Type::Index : re::Buffer::Type::Vertex,
-				.m_arraySize = 1,
-			.m_typeParams = { .m_vertexStream = {
-				.m_dataType = m_createParams.m_dataType,
-				.m_isNormalized = isNormalized,
-				.m_stride = GetElementByteSize()}}
-			});
+		// Hash the incoming data before it is moved to the BufferAllocator:
+		AddDataBytesToHash(data.data().data(), data.GetTotalNumBytes());
 
+		// Hash any remaining properties
 		ComputeDataHash();
 	}
 
@@ -190,7 +266,6 @@ namespace re
 	void VertexStream::ComputeDataHash()
 	{
 		AddDataBytesToHash(m_createParams);
-		AddDataBytesToHash(m_streamBuffer->GetData(), m_streamBuffer->GetTotalBytes());
 	}
 
 

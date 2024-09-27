@@ -49,7 +49,8 @@ namespace
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
-			std::move(axisPositions));
+			std::move(axisPositions),
+			false);
 
 		std::shared_ptr<re::VertexStream> axisColorStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
@@ -57,7 +58,8 @@ namespace
 				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
-			std::move(axisColors));
+			std::move(axisColors),
+			false);
 
 		re::Batch::GraphicsParams axisBatchGraphicsParams{};
 		axisBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
@@ -143,7 +145,8 @@ namespace
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
-			std::move(boxPositions));
+			std::move(boxPositions),
+			false);
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
@@ -151,7 +154,8 @@ namespace
 				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
-			std::move(boxColors));
+			std::move(boxColors),
+			false);
 
 		std::shared_ptr<re::VertexStream> boxIndexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
@@ -159,7 +163,8 @@ namespace
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
-			std::move(boxIndexes));
+			std::move(boxIndexes),
+			false);
 
 		re::Batch::GraphicsParams boundingBoxBatchGraphicsParams{};
 		boundingBoxBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
@@ -270,7 +275,8 @@ namespace
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
-			std::move(frustumPositions));
+			std::move(frustumPositions),
+			false);
 
 		std::shared_ptr<re::VertexStream> frustumColorStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
@@ -278,7 +284,8 @@ namespace
 				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
-			std::move(frustumColors));
+			std::move(frustumColors),
+			false);
 
 		std::shared_ptr<re::VertexStream> frustumIndexStream = re::VertexStream::Create(
 			re::VertexStream::CreateParams{
@@ -286,7 +293,8 @@ namespace
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
-			std::move(frustumIndexes));
+			std::move(frustumIndexes),
+			false);
 
 		re::Batch::GraphicsParams frustumBatchGraphicsParams{};
 		frustumBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
@@ -330,7 +338,8 @@ namespace
 				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
-			std::move(meshColors));
+			std::move(meshColors),
+			false);
 
 		re::Batch::GraphicsParams wireframeBatchGraphicsParams{};
 		wireframeBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;

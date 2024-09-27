@@ -72,7 +72,8 @@ namespace re
 
 
 	public:
-		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(CreateParams const&, util::ByteVector&&);
+		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(
+			CreateParams const&, util::ByteVector&&, bool queueBufferCreate = true);
 
 		VertexStream(VertexStream&&) = default;
 		VertexStream& operator=(VertexStream&&) = default;
@@ -121,7 +122,7 @@ namespace re
 
 
 	private: // Use the Create() factory instead
-		VertexStream(CreateParams const&, util::ByteVector&& data);
+		VertexStream(CreateParams const&, util::ByteVector&& data, bool& isNormalizedOut);
 
 
 	private: // No copying allowed
