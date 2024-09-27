@@ -226,13 +226,13 @@ namespace opengl
 						if (doSetStageInputs)
 						{
 							// Set stage param blocks:
-							for (std::shared_ptr<re::Buffer const> const& buffer : renderStage->GetPermanentBuffers())
+							for (re::BufferInput const& bufferInput : renderStage->GetPermanentBuffers())
 							{
-								opengl::Shader::SetBuffer(*shader, *buffer.get());
+								opengl::Shader::SetBuffer(*shader, bufferInput);
 							}
-							for (std::shared_ptr<re::Buffer const> const& buffer : renderStage->GetPerFrameBuffers())
+							for (re::BufferInput const& bufferInput : renderStage->GetPerFrameBuffers())
 							{
-								opengl::Shader::SetBuffer(*shader, *buffer.get());
+								opengl::Shader::SetBuffer(*shader, bufferInput);
 							}
 
 							auto SetStageTextureInputs = [shader](
@@ -297,10 +297,10 @@ namespace opengl
 						SEAssert(currentShader, "Current shader is null");
 
 						// Batch buffers:
-						std::vector<std::shared_ptr<re::Buffer>> const& batchBuffers = batch.GetBuffers();
-						for (std::shared_ptr<re::Buffer> const& batchBuffer : batchBuffers)
+						std::vector<re::BufferInput> const& batchBuffers = batch.GetBuffers();
+						for (re::BufferInput const& batchBufferInput : batchBuffers)
 						{
-							opengl::Shader::SetBuffer(*currentShader, *batchBuffer.get());
+							opengl::Shader::SetBuffer(*currentShader, batchBufferInput);
 						}
 
 						// Set Batch Texture/Sampler inputs:

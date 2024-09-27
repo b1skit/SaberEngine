@@ -475,7 +475,7 @@ namespace opengl
 	}
 
 
-	void Shader::SetBuffer(re::Shader const& shader, re::Buffer const& buffer)
+	void Shader::SetBuffer(re::Shader const& shader, re::BufferInput const& bufferInput)
 	{
 		opengl::Shader::PlatformParams const* shaderPlatformParams = 
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
@@ -485,8 +485,8 @@ namespace opengl
 		GLint bindIndex = 0;
 		const GLenum properties = GL_BUFFER_BINDING;
 
-		re::Buffer::PlatformParams const* bufferPlatformParams = buffer.GetPlatformParams();
-		switch (buffer.GetBufferParams().m_type)
+		re::Buffer::PlatformParams const* bufferPlatformParams = bufferInput.GetBuffer()->GetPlatformParams();
+		switch (bufferInput.GetBuffer()->GetBufferParams().m_type)
 		{
 		case re::Buffer::Type::Constant: // Bind our single-element buffers as UBOs
 		{
@@ -494,7 +494,7 @@ namespace opengl
 			const GLint uniformBlockIdx = glGetProgramResourceIndex(
 				shaderPlatformParams->m_shaderReference,	// program
 				GL_UNIFORM_BLOCK,							// programInterface
-				buffer.GetName().c_str());					// name
+				bufferInput.GetShaderName().c_str());		// name
 
 			SEAssert(uniformBlockIdx != GL_INVALID_ENUM, "Failed to get resource index");
 
@@ -523,7 +523,7 @@ namespace opengl
 			const GLint ssboIdx = glGetProgramResourceIndex(
 			shaderPlatformParams->m_shaderReference,	// program
 			GL_SHADER_STORAGE_BLOCK,					// programInterface
-			buffer.GetName().c_str());					// name
+			bufferInput.GetShaderName().c_str());		// name
 
 			SEAssert(ssboIdx != GL_INVALID_ENUM, "Failed to get resource index");
 
@@ -550,7 +550,7 @@ namespace opengl
 		}
 
 		// Bind our buffer to the retrieved bind index:
-		opengl::Buffer::Bind(buffer, bindIndex);
+		opengl::Buffer::Bind(*bufferInput.GetBuffer(), bindIndex);
 	}
 
 

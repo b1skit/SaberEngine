@@ -1,10 +1,15 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Material.h"
 #include "Buffer.h"
+#include "Material.h"
 
 #include "Shaders/Common/MaterialParams.h"
 
+
+namespace re
+{
+	class BufferInput;
+}
 
 namespace gr
 {
@@ -24,7 +29,7 @@ namespace gr
 
 
 	public:
-		static std::shared_ptr<re::Buffer> CreateInstancedBuffer(
+		static re::BufferInput CreateInstancedBuffer(
 			re::Buffer::AllocationType, std::vector<MaterialInstanceRenderData const*> const&);
 		
 		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);

@@ -1,5 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
+#include "BufferInput.h"
 #include "LightParamsHelpers.h"
 #include "RenderObjectIDs.h"
 #include "TextureView.h"
@@ -41,14 +42,14 @@ namespace gr
 	public:
 		// Get the monolithic light data buffer
 		// NOTE: This buffer may be reallocated; It must be attached every frame as a single frame input ONLY
-		std::shared_ptr<re::Buffer> GetLightDataBuffer(gr::Light::Type) const; 
+		re::BufferInput const& GetLightDataBuffer(gr::Light::Type) const;
 
 		uint32_t GetLightDataBufferIdx(gr::Light::Type, gr::RenderDataID lightID) const;
 
 
 	public:
 		// Deferred light volumes: Single-frame buffer containing the indexes of a single light
-		std::shared_ptr<re::Buffer> GetLightIndexDataBuffer(
+		re::BufferInput GetLightIndexDataBuffer(
 			gr::Light::Type, gr::RenderDataID, char const* shaderName) const;
 
 
@@ -63,7 +64,7 @@ namespace gr
 		re::Viewport GetShadowArrayWriteViewport(gr::Light::Type) const;
 		re::ScissorRect GetShadowArrayWriteScissorRect(gr::Light::Type) const;
 		
-		std::shared_ptr<re::Buffer> GetPCSSPoissonSampleParamsBuffer() const;
+		re::BufferInput const& GetPCSSPoissonSampleParamsBuffer() const;
 
 	
 	public:
@@ -84,7 +85,7 @@ namespace gr
 
 			std::vector<uint32_t> m_dirtyMovedIndexes; // Light entries that were moved during per-frame deletion
 
-			std::shared_ptr<re::Buffer> m_lightData; // Always has at least 1 element (i.e. a dummy if no lights exist)
+			re::BufferInput m_lightData; // Always has at least 1 element (i.e. a dummy if no lights exist)
 			uint32_t m_numLights;
 		};
 		LightMetadata m_directionalLightMetadata;
@@ -107,7 +108,7 @@ namespace gr
 		ShadowMetadata m_pointShadowMetadata;
 		ShadowMetadata m_spotShadowMetadata;
 
-		std::shared_ptr<re::Buffer> m_poissonSampleParamsBuffer;
+		re::BufferInput m_poissonSampleParamsBuffer;
 
 
 	private:
@@ -174,7 +175,7 @@ namespace gr
 	}
 
 
-	inline std::shared_ptr<re::Buffer> LightManager::GetPCSSPoissonSampleParamsBuffer() const
+	inline re::BufferInput const& LightManager::GetPCSSPoissonSampleParamsBuffer() const
 	{
 		return m_poissonSampleParamsBuffer;
 	}

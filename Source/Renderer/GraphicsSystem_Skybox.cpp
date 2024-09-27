@@ -96,7 +96,7 @@ namespace gr
 				.m_type = re::Buffer::Type::Constant,
 			});
 
-		m_skyboxStage->AddPermanentBuffer(m_skyboxParams);
+		m_skyboxStage->AddPermanentBuffer(SkyboxData::s_shaderName, m_skyboxParams);
 
 		// Start with our default texture set, in case there is no IBL
 		m_skyTexture = m_fallbackColorTex.get();

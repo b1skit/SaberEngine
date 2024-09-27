@@ -18,6 +18,7 @@ namespace gr
 namespace re
 {
 	class Buffer;
+	class BufferInput;
 	class Shader;
 	class Sampler;
 	class Texture;
@@ -123,8 +124,11 @@ namespace re
 		size_t GetInstanceCount() const;
 		void SetInstanceCount(uint32_t numInstances);
 
-		std::vector<std::shared_ptr<re::Buffer>> const& GetBuffers() const;
-		void SetBuffer(std::shared_ptr<re::Buffer>);
+		std::vector<BufferInput> const& GetBuffers() const;
+		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer>);
+		void SetBuffer(re::BufferInput const&);
+		void SetBuffer(re::BufferInput&&);
+
 
 		void AddTextureInput(
 			char const* shaderName,
@@ -184,7 +188,7 @@ namespace re
 		// Note: Batches can be responsible for the lifetime of a buffer held by a shared pointer: 
 		// e.g. single-frame resources, or permanent buffers that are to be discarded (e.g. batch manager allocated a larger
 		// one)
-		std::vector<std::shared_ptr<re::Buffer>> m_batchBuffers;
+		std::vector<BufferInput> m_batchBuffers;
 
 		std::vector<TextureAndSamplerInput> m_batchTextureSamplerInputs;
 		std::vector<RWTextureInput> m_batchRWTextureInputs;
@@ -231,7 +235,7 @@ namespace re
 	}
 
 
-	inline std::vector<std::shared_ptr<re::Buffer>> const& Batch::GetBuffers() const
+	inline std::vector<BufferInput> const& Batch::GetBuffers() const
 	{
 		return m_batchBuffers;
 	}

@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "Buffer.h"
+#include "BufferInput.h"
 #include "Material.h"
 #include "RenderManager.h"
 #include "Sampler.h"
@@ -359,7 +360,7 @@ namespace re
 #if defined(_DEBUG)
 		for (auto const& buf : result.m_batchBuffers)
 		{
-			ValidateBufferLifetimeCompatibility(result.m_lifetime, buf->GetAllocationType());
+			ValidateBufferLifetimeCompatibility(result.m_lifetime, buf.GetBuffer()->GetAllocationType());
 		}
 #endif
 
@@ -525,7 +526,7 @@ namespace re
 		// instanced batches later
 		for (size_t i = 0; i < m_batchBuffers.size(); i++)
 		{
-			AddDataBytesToHash(m_batchBuffers[i]->GetUniqueID());
+			AddDataBytesToHash(m_batchBuffers[i].GetBuffer()->GetUniqueID());
 		}
 
 		// Note: We don't compute hashes for batch textures/samplers here; they're appended as they're added
@@ -569,22 +570,36 @@ namespace re
 	}
 
 
-	void Batch::SetBuffer(std::shared_ptr<re::Buffer> buffer)
+	void Batch::SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> buffer)
 	{
-		SEAssert(buffer != nullptr, "Cannot set a null buffer");
+		SetBuffer(re::BufferInput(shaderName, buffer));
+	}
 
-		ValidateBufferLifetimeCompatibility(m_lifetime, buffer->GetAllocationType());
+
+	void Batch::SetBuffer(re::BufferInput const& bufferInput)
+	{
+		SetBuffer(re::BufferInput(bufferInput));
+	}
+
+
+	void Batch::SetBuffer(re::BufferInput&& bufferInput)
+	{
+		SEAssert(!bufferInput.GetName().empty() &&
+			bufferInput.GetBuffer() != nullptr,
+			"Cannot set a unnamed or null buffer");
+
+		ValidateBufferLifetimeCompatibility(m_lifetime, bufferInput.GetBuffer()->GetAllocationType());
 
 #if defined(_DEBUG)
 		for (auto const& existingBuffer : m_batchBuffers)
 		{
-			SEAssert(buffer->GetNameID() != existingBuffer->GetNameID(),
+			SEAssert(bufferInput.GetBuffer()->GetNameID() != existingBuffer.GetBuffer()->GetNameID(),
 				"Buffer with the same name has already been set. Re-adding it changes the data hash");
 		}
 #endif
-		AddDataBytesToHash(buffer->GetUniqueID());
+		AddDataBytesToHash(bufferInput.GetBuffer()->GetUniqueID());
 
-		m_batchBuffers.emplace_back(buffer);
+		m_batchBuffers.emplace_back(std::move(bufferInput));
 	}
 
 

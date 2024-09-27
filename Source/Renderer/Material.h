@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Buffer.h"
+#include "BufferInput.h"
 #include "Effect.h"
 
 #include "Core/Interfaces/INamedObject.h"
@@ -89,10 +90,10 @@ namespace gr
 		
 
 	public:
-		static std::shared_ptr<re::Buffer> CreateInstancedBuffer(
+		static re::BufferInput CreateInstancedBuffer(
 			re::Buffer::AllocationType, std::vector<MaterialInstanceRenderData const*> const&);
 
-		static std::shared_ptr<re::Buffer> ReserveInstancedBuffer(MaterialEffect, uint32_t maxInstances);
+		static re::BufferInput ReserveInstancedBuffer(MaterialEffect, uint32_t maxInstances);
 
 		// Convenience helper: Partially update elements of an already committed (mutable) buffer
 		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);

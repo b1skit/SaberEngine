@@ -386,16 +386,18 @@ namespace gr
 	void DebugGraphicsSystem::InitPipeline(
 		re::StagePipeline& stagePipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
 	{
-		m_debugParams = re::Buffer::Create(
+		m_debugParams = re::BufferInput(
 			DebugData::s_shaderName,
-			PackDebugData(),
-			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::Mutable,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::CPUWrite | re::Buffer::GPURead,
-				.m_type = re::Buffer::Constant,
-				.m_arraySize = 1,
-			});
+			re::Buffer::Create(
+				DebugData::s_shaderName,
+				PackDebugData(),
+				re::Buffer::BufferParams{
+					.m_allocationType = re::Buffer::AllocationType::Mutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::CPUWrite | re::Buffer::GPURead,
+					.m_type = re::Buffer::Constant,
+					.m_arraySize = 1,
+				}));
 
 		// Line topology stage:
 		m_debugLineStage = 
@@ -427,7 +429,7 @@ namespace gr
 
 		if (m_isDirty)
 		{
-			m_debugParams->Commit(PackDebugData());
+			m_debugParams.GetBuffer()->Commit(PackDebugData());
 			m_isDirty = false;
 		}
 	}
@@ -450,7 +452,7 @@ namespace gr
 						m_zAxisColor,
 						m_axisOpacity));
 
-				std::shared_ptr<re::Buffer> identityTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
+				re::BufferInput const& identityTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
 					re::Buffer::AllocationType::Immutable, &k_identity, nullptr);
 
 				m_worldCoordinateAxisBatch->SetBuffer(identityTransformBuffer);
@@ -505,11 +507,11 @@ namespace gr
 					}
 					else
 					{
-						m_meshPrimTransformBuffers.at(meshPrimRenderDataID)->Commit(
+						m_meshPrimTransformBuffers.at(meshPrimRenderDataID).GetBuffer()->Commit(
 							gr::Transform::CreateInstancedTransformData(
 								&transformData.g_model, &transformData.g_transposeInvModel));
 					}
-					std::shared_ptr<re::Buffer> meshTransformBuffer = 
+					re::BufferInput const& meshTransformBuffer = 
 						m_meshPrimTransformBuffers.at(meshPrimRenderDataID);
 
 					// MeshPrimitives:
@@ -621,7 +623,7 @@ namespace gr
 						}
 						else
 						{
-							m_meshBoundingBoxBuffers.at(meshID)->Commit(
+							m_meshBoundingBoxBuffers.at(meshID).GetBuffer()->Commit(
 								gr::Transform::CreateInstancedTransformData(boundsItr.GetTransformData()));
 						}
 
@@ -656,7 +658,7 @@ namespace gr
 				{
 					gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
-					if (m_sceneBoundsTransformBuffer == nullptr)
+					if (!m_sceneBoundsTransformBuffer.IsValid())
 					{
 						m_sceneBoundsTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
 							re::Buffer::AllocationType::Mutable, boundsItr.GetTransformData());
@@ -678,7 +680,7 @@ namespace gr
 		else
 		{
 			m_sceneBoundsBatch = nullptr;
-			m_sceneBoundsTransformBuffer = nullptr;
+			m_sceneBoundsTransformBuffer.Release();
 		}
 
 		if (m_showCameraFrustums)
@@ -704,7 +706,7 @@ namespace gr
 				}
 				else if (camDataIsDirty)
 				{
-					m_cameraAxisTransformBuffers.at(camID)->Commit(
+					m_cameraAxisTransformBuffers.at(camID).GetBuffer()->Commit(
 						gr::Transform::CreateInstancedTransformData(&camWorldMatrix, nullptr));
 				}
 
@@ -767,7 +769,7 @@ namespace gr
 				
 				for (uint8_t faceIdx = 0; faceIdx < numFrustums; faceIdx++)
 				{
-					if (m_cameraFrustumTransformBuffers.at(camID)[faceIdx] == nullptr)
+					if (!m_cameraFrustumTransformBuffers.at(camID)[faceIdx].IsValid())
 					{
 						m_cameraFrustumTransformBuffers.at(camID)[faceIdx] =
 							gr::Transform::CreateInstancedTransformBuffer(
@@ -777,7 +779,7 @@ namespace gr
 					}
 					else if (camDataIsDirty)
 					{
-						m_cameraFrustumTransformBuffers.at(camID)[faceIdx]->Commit(
+						m_cameraFrustumTransformBuffers.at(camID)[faceIdx].GetBuffer()->Commit(
 							gr::Transform::CreateInstancedTransformData(&invViewProjMats.at(faceIdx), nullptr));
 					}
 
@@ -825,7 +827,7 @@ namespace gr
 					}
 					else
 					{
-						m_deferredLightWireframeTransformBuffers.at(pointID)->Commit(
+						m_deferredLightWireframeTransformBuffers.at(pointID).GetBuffer()->Commit(
 							gr::Transform::CreateInstancedTransformData(&lightTRS, nullptr));
 					}
 
@@ -866,7 +868,7 @@ namespace gr
 					}
 					else
 					{
-						m_deferredLightWireframeTransformBuffers.at(spotID)->Commit(
+						m_deferredLightWireframeTransformBuffers.at(spotID).GetBuffer()->Commit(
 							gr::Transform::CreateInstancedTransformData(&lightTRS, nullptr));
 					}
 
@@ -912,7 +914,7 @@ namespace gr
 					}
 					else
 					{
-						m_lightCoordinateAxisTransformBuffers.at(lightID)->Commit(
+						m_lightCoordinateAxisTransformBuffers.at(lightID).GetBuffer()->Commit(
 							gr::Transform::CreateInstancedTransformData(&lightTR, nullptr));
 					}
 				};

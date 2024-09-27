@@ -577,9 +577,9 @@ namespace re
 		ValidateConfiguration(); // _DEBUG only
 
 		// Commit the TargetData Buffer data, if necessary
-		if (m_targetParamsBuffer)
+		if (m_targetParamsBuffer.IsValid())
 		{
-			m_targetParamsBuffer->Commit(GetTargetParamsBufferData());
+			m_targetParamsBuffer.GetBuffer()->Commit(GetTargetParamsBufferData());
 		}
 
 		m_platformParams->m_isCommitted = true;
@@ -630,7 +630,7 @@ namespace re
 	}
 
 
-	std::shared_ptr<re::Buffer> TextureTargetSet::GetCreateTargetParamsBuffer(
+	re::BufferInput const& TextureTargetSet::GetCreateTargetParamsBuffer(
 		re::Buffer::AllocationType bufferAlloc /*= re::Buffer::AllocationType::Mutable*/)
 	{
 		SEAssert(HasTargets(),
@@ -639,15 +639,17 @@ namespace re
 		SEAssert(bufferAlloc != re::Buffer::Immutable,
 			"The TextureTargetSet TargetData Buffer cannot be of Immutable type, as we delay committing buffer data");
 
-		if (m_targetParamsBuffer == nullptr)
+		if (!m_targetParamsBuffer.IsValid())
 		{
-			m_targetParamsBuffer = re::Buffer::CreateUncommitted<TargetData>(TargetData::s_shaderName, 
-				re::Buffer::BufferParams{
-					.m_allocationType = bufferAlloc,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-					.m_type = re::Buffer::Type::Constant,
-				});
+			m_targetParamsBuffer = re::BufferInput(
+				TargetData::s_shaderName,
+				re::Buffer::CreateUncommitted<TargetData>(TargetData::s_shaderName, 
+					re::Buffer::BufferParams{
+						.m_allocationType = bufferAlloc,
+						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_type = re::Buffer::Type::Constant,
+					}));
 		}
 
 		// NOTE: We'll commit the buffer data when the target set is committed
@@ -658,8 +660,8 @@ namespace re
 
 	TargetData TextureTargetSet::GetTargetParamsBufferData() const
 	{
-		SEAssert(m_targetParamsBuffer,
-			"Trying to get target params buffer data but the target params pointer is null. This is unexpected");
+		SEAssert(m_targetParamsBuffer.IsValid(),
+			"Trying to get target params buffer data but the target params buffer is invalid. This is unexpected");
 
 		re::Texture const* srcTex = nullptr;
 		if (HasColorTarget())

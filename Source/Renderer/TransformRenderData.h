@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Buffer.h"
+#include "BufferInput.h"
 #include "RenderObjectIDs.h"
 
 #include "Shaders/Common/InstancingParams.h"
@@ -40,11 +41,11 @@ namespace gr
 		static InstancedTransformData CreateInstancedTransformData(
 			glm::mat4 const* model, glm::mat4 const* transposeInvModel);
 
-		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
+		static re::BufferInput CreateInstancedTransformBuffer(
 			re::Buffer::AllocationType, glm::mat4 const* model, glm::mat4* transposeInvModel);
-		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
+		static re::BufferInput CreateInstancedTransformBuffer(
 			re::Buffer::AllocationType, gr::Transform::RenderData const&);
-		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
+		static re::BufferInput CreateInstancedTransformBuffer(
 			re::Buffer::AllocationType, std::vector<gr::Transform::RenderData const*> const&);
 	};
 }

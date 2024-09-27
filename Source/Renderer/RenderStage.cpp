@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer.h"
-#include "PipelineState.h"
+#include "BufferInput.h"
 #include "RenderStage.h"
 #include "RLibrary_Platform.h"
 #include "Shader.h"
@@ -796,12 +796,14 @@ namespace re
 		{
 			for (auto const& singleFrameBuffer : m_singleFrameBuffers)
 			{
-				SEAssert(batchBuffer->GetUniqueID() != singleFrameBuffer->GetUniqueID(),
+				SEAssert(batchBuffer.GetUniqueID() != singleFrameBuffer.GetUniqueID() &&
+					batchBuffer.GetShaderNameID() != singleFrameBuffer.GetShaderNameID(),
 					"Batch and render stage have a duplicate single frame buffer");
 			}
 			for (auto const& permanentBuffer : m_permanentBuffers)
 			{
-				SEAssert(batchBuffer->GetUniqueID() != permanentBuffer->GetUniqueID(),
+				SEAssert(batchBuffer.GetUniqueID() != permanentBuffer.GetUniqueID() &&
+					batchBuffer.GetShaderNameID() != permanentBuffer.GetShaderNameID(),
 					"Batch and render stage have a duplicate permanent buffer");
 			}
 		}
@@ -859,54 +861,78 @@ namespace re
 	}
 
 
-	void RenderStage::AddPermanentBuffer(std::shared_ptr<re::Buffer const> buffer)
+	void RenderStage::AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> buffer)
 	{
-		SEAssert(buffer, "Buffer cannot be null");
-
-		SEAssert(buffer->GetAllocationType() == re::Buffer::AllocationType::Mutable || 
-			buffer->GetAllocationType() == re::Buffer::AllocationType::Immutable,
-			"Buffer must have a permanent lifetime");
-		
-		SEAssert(std::find_if(
-				m_permanentBuffers.begin(),
-				m_permanentBuffers.end(),
-				[&buffer](std::shared_ptr<re::Buffer const> const& existingBuffer) {
-					return buffer->GetNameID() == existingBuffer->GetNameID();
-				}) == m_permanentBuffers.end(),
-			"A permanent Buffer with this name has already been added");
-
-		SEAssert(std::find_if(
-				m_singleFrameBuffers.begin(),
-				m_singleFrameBuffers.end(),
-				[&buffer](std::shared_ptr<re::Buffer const> const& existingBuffer) {
-					return buffer->GetNameID() == existingBuffer->GetNameID();
-				}) == m_singleFrameBuffers.end(),
-			"A single frame Buffer with this name has already been added");
-
-		m_permanentBuffers.emplace_back(buffer);
+		AddPermanentBuffer(re::BufferInput(shaderName, buffer));
 	}
 
 
-	void RenderStage::AddSingleFrameBuffer(std::shared_ptr<re::Buffer const> buffer)
+	void RenderStage::AddPermanentBuffer(re::BufferInput const& bufferInput)
 	{
-		SEAssert(buffer, "Buffer cannot be null");
+		AddPermanentBuffer(re::BufferInput(bufferInput));
+	}
+
+
+	void RenderStage::AddPermanentBuffer(re::BufferInput&& bufferInput)
+	{
+		SEAssert(!bufferInput.GetShaderName().empty() && bufferInput.GetBuffer(), "Buffer cannot be unnamed or null");
+
+		SEAssert(bufferInput.GetBuffer()->GetAllocationType() == re::Buffer::AllocationType::Mutable ||
+			bufferInput.GetBuffer()->GetAllocationType() == re::Buffer::AllocationType::Immutable,
+			"Buffer must have a permanent lifetime");
 
 		SEAssert(std::find_if(
-				m_singleFrameBuffers.begin(),
-				m_singleFrameBuffers.end(),
-				[&buffer](std::shared_ptr<re::Buffer const> const& existingBuffer) {
-					return buffer->GetNameID() == existingBuffer->GetNameID();
-				}) == m_singleFrameBuffers.end(),
-			"A single frame Buffer with this name has already been added");
-		
-		SEAssert(std::find_if(
-				m_permanentBuffers.begin(),
-				m_permanentBuffers.end(),
-				[&buffer](std::shared_ptr<re::Buffer const> const& existingBuffer) {
-					return buffer->GetNameID() == existingBuffer->GetNameID();
-				}) == m_permanentBuffers.end(),
-			"A permanent Buffer with this name has already been added");
+			m_permanentBuffers.begin(),
+			m_permanentBuffers.end(),
+			[&bufferInput](re::BufferInput const& existingBuffer) {
+				return bufferInput.GetShaderNameID() == existingBuffer.GetShaderNameID();
+			}) == m_permanentBuffers.end(),
+				"A permanent Buffer with this shader name has already been added");
 
-		m_singleFrameBuffers.emplace_back(buffer);
+		SEAssert(std::find_if(
+			m_singleFrameBuffers.begin(),
+			m_singleFrameBuffers.end(),
+			[&bufferInput](re::BufferInput const& existingBuffer) {
+				return bufferInput.GetShaderNameID() == existingBuffer.GetShaderNameID();
+			}) == m_singleFrameBuffers.end(),
+				"A single frame Buffer with this shader name has already been added");
+
+		m_permanentBuffers.emplace_back(std::move(bufferInput));
+	}
+
+
+	void RenderStage::AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> buffer)
+	{
+		AddSingleFrameBuffer(re::BufferInput(shaderName, buffer));
+	}
+
+
+	void RenderStage::AddSingleFrameBuffer(re::BufferInput const& bufferInput)
+	{
+		AddSingleFrameBuffer(re::BufferInput(bufferInput));
+	}
+
+
+	void RenderStage::AddSingleFrameBuffer(re::BufferInput&& bufferInput)
+	{
+		SEAssert(!bufferInput.GetShaderName().empty() && bufferInput.GetBuffer(), "Buffer cannot be unnamed or null");
+
+		SEAssert(std::find_if(
+			m_singleFrameBuffers.begin(),
+			m_singleFrameBuffers.end(),
+			[&bufferInput](re::BufferInput const& existingBuffer) {
+				return bufferInput.GetShaderNameID() == existingBuffer.GetShaderNameID();
+			}) == m_singleFrameBuffers.end(),
+				"A single frame Buffer with this shader name has already been added");
+
+		SEAssert(std::find_if(
+			m_permanentBuffers.begin(),
+			m_permanentBuffers.end(),
+			[&bufferInput](re::BufferInput const& existingBuffer) {
+				return bufferInput.GetShaderNameID() == existingBuffer.GetShaderNameID();
+			}) == m_permanentBuffers.end(),
+				"A permanent Buffer with this shader name has already been added");
+
+		m_singleFrameBuffers.emplace_back(std::move(bufferInput));
 	}
 }

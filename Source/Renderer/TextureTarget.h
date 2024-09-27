@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Buffer.h"
+#include "BufferInput.h"
 #include "Texture.h"
 #include "TextureView.h"
 
@@ -15,9 +16,6 @@ struct TargetData;
 
 namespace re
 {
-	class Buffer;
-
-
 	// Wrapper for an individual render target texture
 	class TextureTarget
 	{
@@ -269,7 +267,7 @@ namespace re
 		uint64_t GetTargetSetSignature(); 
 		uint64_t GetTargetSetSignature() const;
 
-		std::shared_ptr<re::Buffer> GetCreateTargetParamsBuffer(re::Buffer::AllocationType = re::Buffer::AllocationType::Mutable);
+		re::BufferInput const& GetCreateTargetParamsBuffer(re::Buffer::AllocationType = re::Buffer::AllocationType::Mutable);
 
 
 	private: // Use the object Create factories instead
@@ -297,7 +295,7 @@ namespace re
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 
-		std::shared_ptr<re::Buffer> m_targetParamsBuffer; // Only created on demand
+		re::BufferInput m_targetParamsBuffer; // Only populated on demand
 
 
 	private:

@@ -286,17 +286,17 @@ namespace dx12
 	}
 
 
-	void CommandList::SetBuffer(re::Buffer const* buffer)
+	void CommandList::SetBuffer(re::BufferInput const& bufferInput)
 	{
 		SEAssert(m_currentRootSignature != nullptr, "Root signature has not been set");
 		SEAssert(m_type == CommandListType::Direct || m_type == CommandListType::Compute,
 			"Unexpected command list type for setting a buffer on");
 
 		dx12::Buffer::PlatformParams* bufferPlatParams =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+			bufferInput.GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		RootSignature::RootParameter const* rootSigEntry = 
-			m_currentRootSignature->GetRootSignatureEntry(buffer->GetName());
+			m_currentRootSignature->GetRootSignatureEntry(bufferInput.GetShaderName());
 		SEAssert(rootSigEntry ||
 			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Invalid root signature entry");
@@ -308,7 +308,7 @@ namespace dx12
 			bool transitionResource = false;
 			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
 
-			re::Buffer::BufferParams const& bufferParams = buffer->GetBufferParams();
+			re::Buffer::BufferParams const& bufferParams = bufferInput.GetBuffer()->GetBufferParams();
 
 			switch (bufferParams.m_type)
 			{

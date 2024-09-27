@@ -13,7 +13,7 @@
 
 namespace
 {
-	std::shared_ptr<re::Buffer> CreateAllLightIndexesBuffer(
+	re::BufferInput CreateAllLightIndexesBuffer(
 		gr::RenderDataManager const& renderData,
 		gr::LightManager const& lightManager,
 		gr::GraphicsSystem::PunctualLightCullingResults const* pointCullingIDs,
@@ -75,14 +75,17 @@ namespace
 			contributingSpot,
 			0);
 
-		return re::Buffer::Create(bufferName,
-			allLightIndexesData, 
-			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::SingleFrame,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Constant,
-			});
+		return re::BufferInput(
+			bufferName,
+			re::Buffer::Create(
+				bufferName,
+				allLightIndexesData, 
+				re::Buffer::BufferParams{
+					.m_allocationType = re::Buffer::AllocationType::SingleFrame,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Constant,
+				}));
 	}
 }
 
@@ -93,7 +96,6 @@ namespace gr
 		, INamedObject(GetScriptName())
 		, m_ambientIEMTex(nullptr)
 		, m_ambientPMREMTex(nullptr)
-		, m_ambientParams(nullptr)
 	{
 	}
 
@@ -206,24 +208,26 @@ namespace gr
 				re::Sampler::GetSampler("WrapMinMagMipLinear"),
 				re::TextureView(*m_ambientPMREMTex));
 
-			m_transparencyStage->AddSingleFrameBuffer(*m_ambientParams);
+			m_transparencyStage->AddSingleFrameBuffer(AmbientLightData::s_shaderName, *m_ambientParams);
 		}
 		else
 		{
-			m_transparencyStage->AddSingleFrameBuffer(re::Buffer::Create(
+			m_transparencyStage->AddSingleFrameBuffer(
 				AmbientLightData::s_shaderName,
-				GetAmbientLightParamsData(
-					1,
-					0.f,
-					0.f,
-					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
-					nullptr),
-				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::AllocationType::SingleFrame,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-					.m_type = re::Buffer::Type::Constant,
-				}));
+				re::Buffer::Create(
+					AmbientLightData::s_shaderName,
+					GetAmbientLightParamsData(
+						1,
+						0.f,
+						0.f,
+						static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
+						nullptr),
+					re::Buffer::BufferParams{
+						.m_allocationType = re::Buffer::AllocationType::SingleFrame,
+						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_type = re::Buffer::Type::Constant,
+					}));
 		}
 
 		// Punctual light buffers:

@@ -79,7 +79,7 @@ namespace gr
 	private: // Ambient lights:
 		struct AmbientLightRenderData
 		{
-			std::shared_ptr<re::Buffer> m_ambientParams;
+			re::BufferInput m_ambientParams;
 			std::shared_ptr<re::Texture> m_IEMTex;
 			std::shared_ptr<re::Texture> m_PMREMTex;
 			re::Batch m_batch;
@@ -90,13 +90,13 @@ namespace gr
 		struct ActiveAmbientRenderData
 		{
 			gr::RenderDataID m_renderDataID = gr::k_invalidRenderDataID;
-			std::shared_ptr<re::Buffer> m_ambientParams;
+			re::BufferInput m_ambientParams;
 			std::shared_ptr<re::Texture> m_IEMTex;
 			std::shared_ptr<re::Texture> m_PMREMTex;
 		} m_activeAmbientLightData;
 
 		std::shared_ptr<re::RenderStage> m_ambientStage;
-		std::shared_ptr<re::Buffer> m_ambientParams;
+		re::BufferInput m_ambientParams;
 		std::shared_ptr<re::Texture> m_ssaoTex;
 
 		re::StagePipeline* m_resourceCreationStagePipeline;
@@ -112,7 +112,7 @@ namespace gr
 		struct PunctualLightRenderData
 		{
 			gr::Light::Type m_type;
-			std::shared_ptr<re::Buffer> m_transformParams;
+			re::BufferInput m_transformParams;
 			re::Batch m_batch;
 			bool m_hasShadow = false;
 			bool m_canContribute = true;

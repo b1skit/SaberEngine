@@ -77,7 +77,7 @@ namespace dx12
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
-		void SetBuffer(re::Buffer const*);
+		void SetBuffer(re::BufferInput const&);
 
 		void SetTexture(re::TextureAndSamplerInput const&, bool skipTransition); // Note: Sampler is not used here
 

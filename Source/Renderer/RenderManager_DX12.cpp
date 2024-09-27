@@ -322,13 +322,13 @@ namespace dx12
 						}
 
 						// Set buffers (Must happen after the root signature is set):
-						for (std::shared_ptr<re::Buffer const> const& buffer : renderStage->GetPermanentBuffers())
+						for (re::BufferInput const& bufferInput : renderStage->GetPermanentBuffers())
 						{
-							commandList->SetBuffer(buffer.get());
+							commandList->SetBuffer(bufferInput);
 						}
-						for (std::shared_ptr<re::Buffer const> const& buffer : renderStage->GetPerFrameBuffers())
+						for (re::BufferInput const& bufferInput : renderStage->GetPerFrameBuffers())
 						{
-							commandList->SetBuffer(buffer.get());
+							commandList->SetBuffer(bufferInput);
 						}
 
 						// Set inputs and targets (once) now that the root signature is set
@@ -417,11 +417,10 @@ namespace dx12
 						SEAssert(currentShader, "Current shader is null");
 
 						// Batch buffers:
-						std::vector<std::shared_ptr<re::Buffer>> const& batchBuffers =
-							batches[batchIdx].GetBuffers();
-						for (std::shared_ptr<re::Buffer> batchBuffer : batchBuffers)
+						std::vector<re::BufferInput> const& batchBuffers = batches[batchIdx].GetBuffers();
+						for (re::BufferInput batchBufferInput : batchBuffers)
 						{
-							currentCommandList->SetBuffer(batchBuffer.get());
+							currentCommandList->SetBuffer(batchBufferInput);
 						}
 
 						// Batch Texture / Sampler inputs :

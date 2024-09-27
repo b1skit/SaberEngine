@@ -119,7 +119,8 @@ namespace gr
 		RegisterTextureOutput(k_activeAmbientPMREMTexOutput, &m_activeAmbientLightData.m_PMREMTex);
 		RegisterTextureOutput(k_activeAmbientDFGTexOutput, &m_BRDF_integrationMap);
 		
-		RegisterBufferOutput(k_activeAmbientParamsBufferOutput, &m_activeAmbientLightData.m_ambientParams);
+		RegisterBufferOutput(
+			k_activeAmbientParamsBufferOutput, &m_activeAmbientLightData.m_ambientParams.GetBufferSharedPtr());
 	}
 
 
@@ -161,7 +162,7 @@ namespace gr
 				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 				.m_type = re::Buffer::Type::Constant,
 			});
-		brdfStage->AddSingleFrameBuffer(brdfIntegrationBuf);
+		brdfStage->AddSingleFrameBuffer(BRDFIntegrationData::s_shaderName, brdfIntegrationBuf);
 
 		// Add our dispatch information to a compute batch. Note: We use numthreads = (1,1,1)
 		re::Batch computeBatch = re::Batch(
@@ -222,9 +223,9 @@ namespace gr
 					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 					.m_type = re::Buffer::Type::Constant,
 				});
-			iemStage->AddSingleFrameBuffer(iemGenerationBuffer);
+			iemStage->AddSingleFrameBuffer(IEMPMREMGenerationData::s_shaderName, iemGenerationBuffer);
 
-			iemStage->AddPermanentBuffer(m_cubemapRenderCamParams[face]);
+			iemStage->AddPermanentBuffer(CameraData::s_shaderName, m_cubemapRenderCamParams[face]);
 
 			std::shared_ptr<re::TextureTargetSet> iemTargets = re::TextureTargetSet::Create("IEM Stage Targets");
 
@@ -305,9 +306,9 @@ namespace gr
 						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 						.m_type = re::Buffer::Type::Constant,
 					});
-				pmremStage->AddSingleFrameBuffer(pmremGenerationBuffer);
+				pmremStage->AddSingleFrameBuffer(IEMPMREMGenerationData::s_shaderName, pmremGenerationBuffer);
 
-				pmremStage->AddPermanentBuffer(m_cubemapRenderCamParams[face]);
+				pmremStage->AddPermanentBuffer(CameraData::s_shaderName, m_cubemapRenderCamParams[face]);
 
 				std::shared_ptr<re::TextureTargetSet> pmremTargetSet =
 					re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);
@@ -508,7 +509,7 @@ namespace gr
 		
 
 		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
-		std::shared_ptr<re::Buffer> poissonSampleParams = lightManager.GetPCSSPoissonSampleParamsBuffer();
+		re::BufferInput const& poissonSampleParams = lightManager.GetPCSSPoissonSampleParamsBuffer();
 
 
 		// Directional light stage:
@@ -676,15 +677,17 @@ namespace gr
 						static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 						m_ssaoTex.get());
 
-					std::shared_ptr<re::Buffer> ambientParams = re::Buffer::Create(
+					re::BufferInput ambientParams(
 						AmbientLightData::s_shaderName,
-						ambientLightParamsData,
-						re::Buffer::BufferParams{
-							.m_allocationType = re::Buffer::AllocationType::Mutable,
-							.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-							.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-							.m_type = re::Buffer::Type::Constant,
-						});
+						re::Buffer::Create(
+							AmbientLightData::s_shaderName,
+							ambientLightParamsData,
+							re::Buffer::BufferParams{
+								.m_allocationType = re::Buffer::AllocationType::Mutable,
+								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+								.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+								.m_type = re::Buffer::Type::Constant,
+							}));
 
 					m_ambientLightData.emplace(ambientData.m_renderDataID,
 						AmbientLightRenderData{
@@ -719,7 +722,7 @@ namespace gr
 		}
 
 		// Update the params of the ambient lights we're tracking:
-		for (auto const& ambientLight : m_ambientLightData)
+		for (auto& ambientLight : m_ambientLightData)
 		{
 			const gr::RenderDataID lightID = ambientLight.first;
 
@@ -737,7 +740,7 @@ namespace gr
 					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 					m_ssaoTex.get());
 
-				ambientLight.second.m_ambientParams->Commit(ambientLightParamsData);
+				ambientLight.second.m_ambientParams.GetBuffer()->Commit(ambientLightParamsData);
 			}
 		}
 
@@ -780,7 +783,7 @@ namespace gr
 						lightID,
 						PunctualLightRenderData{
 							.m_type = gr::Light::Directional,
-							.m_transformParams = nullptr,
+							.m_transformParams = re::BufferInput(),
 							.m_batch = re::Batch(re::Lifetime::Permanent, meshData, nullptr),
 							.m_hasShadow = directionalData.m_hasShadow
 						});
@@ -807,7 +810,7 @@ namespace gr
 				gr::MeshPrimitive::RenderData const& meshData = lightItr.Get<gr::MeshPrimitive::RenderData>();
 				gr::Transform::RenderData const& transformData = lightItr.GetTransformData();
 
-				std::shared_ptr<re::Buffer> transformBuffer = gr::Transform::CreateInstancedTransformBuffer(
+				re::BufferInput const& transformBuffer = gr::Transform::CreateInstancedTransformBuffer(
 					re::Buffer::AllocationType::Mutable, transformData);
 
 				punctualLightData.emplace(
@@ -989,7 +992,7 @@ namespace gr
 					lightRenderData = &pointData;
 					hasShadow = pointData.m_hasShadow;
 
-					light.second.m_transformParams->Commit(gr::Transform::CreateInstancedTransformData(
+					light.second.m_transformParams.GetBuffer()->Commit(gr::Transform::CreateInstancedTransformData(
 							renderData.GetTransformDataFromRenderDataID(lightID)));
 				}
 				break;
@@ -1001,7 +1004,7 @@ namespace gr
 					lightRenderData = &spotData;
 					hasShadow = spotData.m_hasShadow;
 
-					light.second.m_transformParams->Commit(gr::Transform::CreateInstancedTransformData(
+					light.second.m_transformParams.GetBuffer()->Commit(gr::Transform::CreateInstancedTransformData(
 						renderData.GetTransformDataFromRenderDataID(lightID)));
 				}
 				break;

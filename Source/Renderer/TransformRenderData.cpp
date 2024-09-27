@@ -35,45 +35,49 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
+	re::BufferInput Transform::CreateInstancedTransformBuffer(
 		re::Buffer::AllocationType bufferAlloc, glm::mat4 const* model, glm::mat4* transposeInvModel)
 	{
 		InstancedTransformData const& transformData = 
 			CreateInstancedTransformData(model, transposeInvModel);
 
-		return re::Buffer::CreateArray(
+		return re::BufferInput(
 			InstancedTransformData::s_shaderName,
-			&transformData,
-			re::Buffer::BufferParams{
-				.m_allocationType = bufferAlloc,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Structured,
-				.m_arraySize = 1,
-			});
+			re::Buffer::CreateArray(
+				InstancedTransformData::s_shaderName,
+				&transformData,
+				re::Buffer::BufferParams{
+					.m_allocationType = bufferAlloc,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Structured,
+					.m_arraySize = 1,
+				}));
 	}
 
 
-	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
+	re::BufferInput Transform::CreateInstancedTransformBuffer(
 		re::Buffer::AllocationType bufferAlloc, gr::Transform::RenderData const& transformData)
 	{
 		InstancedTransformData const& instancedMeshData = 
 			CreateInstancedTransformData(transformData);
 
-		return re::Buffer::CreateArray(
+		return re::BufferInput(
 			InstancedTransformData::s_shaderName,
-			&instancedMeshData,
-			re::Buffer::BufferParams{
-				.m_allocationType = bufferAlloc,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Structured,
-				.m_arraySize = 1,
-			});
+			re::Buffer::CreateArray(
+				InstancedTransformData::s_shaderName,
+				&instancedMeshData,
+				re::Buffer::BufferParams{
+					.m_allocationType = bufferAlloc,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Structured,
+					.m_arraySize = 1,
+				}));
 	}
 
 
-	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
+	re::BufferInput Transform::CreateInstancedTransformBuffer(
 		re::Buffer::AllocationType bufferAlloc, std::vector<gr::Transform::RenderData const*> const& transformRenderData)
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(transformRenderData.size());
@@ -86,17 +90,17 @@ namespace gr
 			instancedMeshData.emplace_back(CreateInstancedTransformData(*transformRenderData[transformIdx]));
 		}
 
-		std::shared_ptr<re::Buffer> instancedMeshBuffer = re::Buffer::CreateArray(
+		return re::BufferInput(
 			InstancedTransformData::s_shaderName,
-			&instancedMeshData[0],
-			re::Buffer::BufferParams{
-				.m_allocationType = bufferAlloc,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Structured,
-				.m_arraySize = numInstances,
-			});
-
-		return instancedMeshBuffer;
+			re::Buffer::CreateArray(
+				InstancedTransformData::s_shaderName,
+				&instancedMeshData[0],
+				re::Buffer::BufferParams{
+					.m_allocationType = bufferAlloc,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Structured,
+					.m_arraySize = numInstances,
+				}));
 	}
 }

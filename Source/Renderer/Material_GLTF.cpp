@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "BufferInput.h"
 #include "Material_GLTF.h"
 #include "Sampler.h"
 
@@ -84,7 +85,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::Buffer> Material_GLTF::CreateInstancedBuffer(
+	re::BufferInput Material_GLTF::CreateInstancedBuffer(
 		re::Buffer::AllocationType bufferAlloc,
 		std::vector<MaterialInstanceRenderData const*> const& instanceData)
 	{
@@ -105,18 +106,18 @@ namespace gr
 				sizeof(InstancedPBRMetallicRoughnessData));
 		}
 
-		std::shared_ptr<re::Buffer> instancedMaterialParams = re::Buffer::CreateArray(
+		return re::BufferInput(
 			InstancedPBRMetallicRoughnessData::s_shaderName,
-			instancedMaterialData.data(),
-			re::Buffer::BufferParams{
-				.m_allocationType = bufferAlloc,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Structured,
-				.m_arraySize = numInstances,
-			});
-
-		return instancedMaterialParams;
+			re::Buffer::CreateArray(
+				InstancedPBRMetallicRoughnessData::s_shaderName,
+				instancedMaterialData.data(),
+				re::Buffer::BufferParams{
+					.m_allocationType = bufferAlloc,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Structured,
+					.m_arraySize = numInstances,
+				}));
 	}
 
 

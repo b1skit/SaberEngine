@@ -162,15 +162,17 @@ namespace gr
 						MipGenerationData const& mipGenerationParams =
 							CreateMipGenerationParamsData(newTexture, sourceMip, numMipStages, faceIdx, arrayIdx);
 
-						mipGenerationStage->AddSingleFrameBuffer(re::Buffer::Create(
-							MipGenerationData::s_shaderName,
-							mipGenerationParams,
-							re::Buffer::BufferParams{
-								.m_allocationType = re::Buffer::AllocationType::SingleFrame,
-								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-								.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-								.m_type = re::Buffer::Type::Constant,
-							}));
+						mipGenerationStage->AddSingleFrameBuffer(
+							MipGenerationData::s_shaderName, 
+							re::Buffer::Create(
+								MipGenerationData::s_shaderName,
+								mipGenerationParams,
+								re::Buffer::BufferParams{
+									.m_allocationType = re::Buffer::AllocationType::SingleFrame,
+									.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+									.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+									.m_type = re::Buffer::Type::Constant,
+								}));
 
 						// Set the drawstyle:
 						switch (texParams.m_dimension)

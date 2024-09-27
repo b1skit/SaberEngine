@@ -145,15 +145,17 @@ namespace gr
 		// Cubemap shadow buffer:
 		CubemapShadowRenderData const& cubemapShadowParams = GetCubemapShadowRenderParamsData(camData, transformData);
 
-		std::shared_ptr<re::Buffer> cubeShadowBuf = re::Buffer::Create(
+		re::BufferInput cubeShadowBuf(
 			CubemapShadowRenderData::s_shaderName,
-			cubemapShadowParams,
-			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::Mutable,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Constant,
-			});
+			re::Buffer::Create(
+				CubemapShadowRenderData::s_shaderName,
+				cubemapShadowParams,
+				re::Buffer::BufferParams{
+					.m_allocationType = re::Buffer::AllocationType::Mutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Constant,
+				}));
 
 		shadowStage->AddPermanentBuffer(cubeShadowBuf);
 
@@ -182,15 +184,17 @@ namespace gr
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
 
 		// Shadow camera buffer:
-		std::shared_ptr<re::Buffer> shadowCamParams = re::Buffer::Create(
+		re::BufferInput shadowCamParams(
 			CameraData::s_shaderName,
-			shadowCamData.m_cameraParams,
-			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::Mutable,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Constant,
-			});
+			re::Buffer::Create(
+				CameraData::s_shaderName,
+				shadowCamData.m_cameraParams,
+				re::Buffer::BufferParams{
+					.m_allocationType = re::Buffer::AllocationType::Mutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Constant,
+				}));
 
 		shadowStage->AddPermanentBuffer(shadowCamParams);
 
@@ -343,7 +347,7 @@ namespace gr
 					{
 						gr::Camera::RenderData const& shadowCamData = lightItr.Get<gr::Camera::RenderData>();
 
-						shadowStageData.m_shadowCamParamBlock->Commit(shadowCamData.m_cameraParams);
+						shadowStageData.m_shadowCamParamBlock.GetBuffer()->Commit(shadowCamData.m_cameraParams);
 					}
 				}
 			};
@@ -406,7 +410,7 @@ namespace gr
 						CubemapShadowRenderData const& cubemapShadowParams =
 							GetCubemapShadowRenderParamsData(shadowCamData, transformData);
 
-						m_pointShadowStageData.at(pointItr.GetRenderDataID()).m_shadowCamParamBlock->Commit(
+						m_pointShadowStageData.at(pointItr.GetRenderDataID()).m_shadowCamParamBlock.GetBuffer()->Commit(
 							cubemapShadowParams);
 					}
 				}

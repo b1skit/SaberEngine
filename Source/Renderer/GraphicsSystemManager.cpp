@@ -15,7 +15,6 @@ namespace gr
 		: m_owningRenderSystem(owningRS)
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
-		, m_activeCameraParams(nullptr)
 		, m_activeAmbientLightRenderDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightHasChanged(true)
 	{
@@ -39,15 +38,17 @@ namespace gr
 
 		CameraData defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
 
-		m_activeCameraParams = re::Buffer::Create(
+		m_activeCameraParams = re::BufferInput(
 			CameraData::s_shaderName,
-			defaultCameraParams,
-			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::Mutable,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
-				.m_usageMask = re::Buffer::Usage::GPURead,
-				.m_type = re::Buffer::Type::Constant,
-			});
+			re::Buffer::Create(
+				CameraData::s_shaderName,
+				defaultCameraParams,
+				re::Buffer::BufferParams{
+					.m_allocationType = re::Buffer::AllocationType::Mutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
+					.m_usageMask = re::Buffer::Usage::GPURead,
+					.m_type = re::Buffer::Type::Constant,
+				}));
 	}
 
 
@@ -59,7 +60,7 @@ namespace gr
 			gr::Camera::RenderData const& cameraData =
 				m_renderData->GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
 
-			m_activeCameraParams->Commit(cameraData.m_cameraParams);
+			m_activeCameraParams.GetBuffer()->Commit(cameraData.m_cameraParams);
 		}
 
 		UpdateActiveAmbientLight();
@@ -175,9 +176,9 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::Buffer> GraphicsSystemManager::GetActiveCameraParams() const
+	re::BufferInput const& GraphicsSystemManager::GetActiveCameraParams() const
 	{
-		SEAssert(m_activeCameraParams != nullptr, "Camera buffer has not been created");
+		SEAssert(m_activeCameraParams.IsValid(), "Camera buffer has not been created");
 		return m_activeCameraParams;
 	}
 

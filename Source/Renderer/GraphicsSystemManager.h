@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "BatchManager.h"
+#include "BufferInput.h"
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
 #include "CameraRenderData.h"
@@ -48,7 +49,7 @@ namespace gr
 		gr::RenderDataID GetActiveCameraRenderDataID() const;
 		gr::Camera::RenderData const& GetActiveCameraRenderData() const;
 		gr::Transform::RenderData const& GetActiveCameraTransformData() const;
-		std::shared_ptr<re::Buffer> GetActiveCameraParams() const;
+		re::BufferInput const& GetActiveCameraParams() const;
 
 		void SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);
 
@@ -76,7 +77,7 @@ namespace gr
 
 		gr::RenderDataID m_activeCameraRenderDataID;
 		gr::TransformID m_activeCameraTransformDataID;
-		std::shared_ptr<re::Buffer> m_activeCameraParams;
+		re::BufferInput m_activeCameraParams;
 
 		gr::RenderDataID m_activeAmbientLightRenderDataID;
 		bool m_activeAmbientLightHasChanged;

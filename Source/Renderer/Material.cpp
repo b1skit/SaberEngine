@@ -102,7 +102,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::Buffer> Material::CreateInstancedBuffer(
+	re::BufferInput Material::CreateInstancedBuffer(
 		re::Buffer::AllocationType bufferAlloc, 
 		std::vector<MaterialInstanceRenderData const*> const& instanceData)
 	{
@@ -119,30 +119,32 @@ namespace gr
 		default:
 			SEAssertF("Invalid material type");
 		}
-		return nullptr;
+		return re::BufferInput();
 	}
 
 
-	std::shared_ptr<re::Buffer> Material::ReserveInstancedBuffer(MaterialEffect matEffect, uint32_t maxInstances)
+	re::BufferInput Material::ReserveInstancedBuffer(MaterialEffect matEffect, uint32_t maxInstances)
 	{
 		switch (matEffect)
 		{
 		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
 		{
-			return re::Buffer::CreateUncommittedArray<InstancedPBRMetallicRoughnessData>(
+			return re::BufferInput(
 				InstancedPBRMetallicRoughnessData::s_shaderName,
-				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::AllocationType::Mutable,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-					.m_type = re::Buffer::Type::Structured,
-					.m_arraySize = maxInstances,
-				});
+				re::Buffer::CreateUncommittedArray<InstancedPBRMetallicRoughnessData>(
+					InstancedPBRMetallicRoughnessData::s_shaderName,
+					re::Buffer::BufferParams{
+						.m_allocationType = re::Buffer::AllocationType::Mutable,
+						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_type = re::Buffer::Type::Structured,
+						.m_arraySize = maxInstances,
+					}));
 		}
 		break;
 		default: SEAssertF("Invalid material type");
 		}
-		return nullptr;
+		return re::BufferInput(); // This should never happen
 	}
 
 

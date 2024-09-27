@@ -157,7 +157,7 @@ namespace gr
 					.m_type = re::Buffer::Type::Constant,
 				});
 			m_bloomDownBuffers.emplace_back(bloomDownBuf);
-			downStage->AddPermanentBuffer(bloomDownBuf);
+			downStage->AddPermanentBuffer(BloomComputeData::s_shaderName, bloomDownBuf);
 
 			pipeline.AppendRenderStage(downStage);
 
@@ -197,7 +197,7 @@ namespace gr
 					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
 					.m_type = re::Buffer::Type::Constant,
 				});
-			upStage->AddPermanentBuffer(bloomUpBuf);
+			upStage->AddPermanentBuffer(BloomComputeData::s_shaderName, bloomUpBuf);
 			m_bloomUpBuffers.emplace_back(bloomUpBuf);
 
 			pipeline.AppendRenderStage(upStage);

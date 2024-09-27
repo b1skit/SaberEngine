@@ -30,7 +30,7 @@ namespace
 	}
 
 
-	std::shared_ptr<re::Buffer> CreateInstanceIndexBuffer(
+	re::BufferInput CreateInstanceIndexBuffer(
 		re::Buffer::AllocationType bufferAlloc,
 		std::vector<InstanceIndices> const& instanceIndices)
 	{
@@ -43,15 +43,17 @@ namespace
 			instanceIndices.data(), 
 			sizeof(InstanceIndices) * instanceIndices.size());
 
-		return re::Buffer::Create(
+		return re::BufferInput(
 			InstanceIndexData::s_shaderName,
-			instanceIndexBufferData,
-			re::Buffer::BufferParams{
-				.m_allocationType = bufferAlloc,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Constant,
-			});
+			re::Buffer::Create(
+				InstanceIndexData::s_shaderName,
+				instanceIndexBufferData,
+				re::Buffer::BufferParams{
+					.m_allocationType = bufferAlloc,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Constant,
+				}));
 	}
 
 
@@ -256,24 +258,27 @@ namespace gr
 
 		
 		// Create/grow our permanent Transform instance buffers:
-		const bool mustReallocateTransformBuffer = m_instancedTransforms != nullptr && 
-			m_instancedTransforms->GetArraySize() < m_instancedTransformIndexes.size();
+		const bool mustReallocateTransformBuffer = m_instancedTransforms.GetBuffer() != nullptr && 
+			m_instancedTransforms.GetBuffer()->GetArraySize() < m_instancedTransformIndexes.size();
 
 		const uint32_t requestedTransformBufferElements = util::RoundUpToNearestMultiple(
 			util::CheckedCast<uint32_t>(m_instancedTransformIndexes.size()),
 			k_numBlocksPerAllocation);
 
-		if ((mustReallocateTransformBuffer || m_instancedTransforms == nullptr) && requestedTransformBufferElements > 0)
+		if ((mustReallocateTransformBuffer || m_instancedTransforms.GetBuffer() == nullptr) && 
+			requestedTransformBufferElements > 0)
 		{
-			m_instancedTransforms = re::Buffer::CreateUncommittedArray<InstancedTransformData>(
+			m_instancedTransforms = re::BufferInput(
 				InstancedTransformData::s_shaderName,
-				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::AllocationType::Mutable,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-					.m_type = re::Buffer::Type::Structured,
-					.m_arraySize = requestedTransformBufferElements,
-				});
+				re::Buffer::CreateUncommittedArray<InstancedTransformData>(
+					InstancedTransformData::s_shaderName,
+					re::Buffer::BufferParams{
+						.m_allocationType = re::Buffer::AllocationType::Mutable,
+						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_type = re::Buffer::Type::Structured,
+						.m_arraySize = requestedTransformBufferElements,
+					}));
 
 			// If we reallocated, re-copy all of the data to the new buffer
 			if (mustReallocateTransformBuffer)
@@ -293,7 +298,7 @@ namespace gr
 					InstancedTransformData const& transformParams =
 						gr::Transform::CreateInstancedTransformData(transformData);
 
-					m_instancedTransforms->Commit(
+					m_instancedTransforms.GetBuffer()->Commit(
 						&transformParams,
 						transformIdx,
 						1);
@@ -307,14 +312,14 @@ namespace gr
 			MaterialInstanceMetadata& matInstMeta = m_materialInstanceMetadata[matEffectIdx];
 
 			const bool mustReallocateMaterialBuffer = 
-				matInstMeta.m_instancedMaterials != nullptr &&
-				matInstMeta.m_instancedMaterials->GetArraySize() < matInstMeta.m_instancedMaterialIndexes.size();
+				matInstMeta.m_instancedMaterials.GetBuffer() != nullptr &&
+				matInstMeta.m_instancedMaterials.GetBuffer()->GetArraySize() < matInstMeta.m_instancedMaterialIndexes.size();
 
 			const uint32_t requestedMaterialBufferElements = util::RoundUpToNearestMultiple(
 				util::CheckedCast<uint32_t>(matInstMeta.m_instancedMaterialIndexes.size()),
 				k_numBlocksPerAllocation);
 
-			if ((mustReallocateMaterialBuffer || matInstMeta.m_instancedMaterials == nullptr) && 
+			if ((mustReallocateMaterialBuffer || matInstMeta.m_instancedMaterials.GetBuffer() == nullptr) &&
 				requestedMaterialBufferElements > 0)
 			{
 				matInstMeta.m_instancedMaterials = gr::Material::ReserveInstancedBuffer(
@@ -336,7 +341,7 @@ namespace gr
 							renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(materialID);
 
 						gr::Material::CommitMaterialInstanceData(
-							matInstMeta.m_instancedMaterials.get(),
+							matInstMeta.m_instancedMaterials.GetBuffer(),
 							&materialData,
 							materialIdx);
 					}
@@ -359,7 +364,7 @@ namespace gr
 				InstancedTransformData const& transformParams = 
 					gr::Transform::CreateInstancedTransformData(transformData);
 
-				m_instancedTransforms->Commit(
+				m_instancedTransforms.GetBuffer()->Commit(
 					&transformParams,
 					transformIdx,
 					1);
@@ -393,7 +398,7 @@ namespace gr
 							renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(dirtyMaterialID);
 
 						gr::Material::CommitMaterialInstanceData(
-							matInstMeta.m_instancedMaterials.get(),
+							matInstMeta.m_instancedMaterials.GetBuffer(),
 							&materialData,
 							materialIdx);
 

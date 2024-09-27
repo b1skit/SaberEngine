@@ -89,9 +89,9 @@ namespace gr
 		std::shared_ptr<re::Texture> m_hilbertLUT;
 		
 		XeGTAO::GTAOSettings m_settings; // Passed to the XeGTAO library to get the struct we pack into m_XeGTAOConstants
-		std::shared_ptr<re::Buffer> m_XeGTAOConstants; // Our mirror of the XeGTAO constants block
+		re::BufferInput m_XeGTAOConstants; // Our mirror of the XeGTAO constants block
 
-		std::shared_ptr<re::Buffer> m_SEXeGTAOSettings; // Our own SaberEngine settings block
+		re::BufferInput m_SEXeGTAOSettings; // Our own SaberEngine settings block
 		
 		Quality m_XeGTAOQuality;
 		Denoise m_XeGTAODenoiseMode;

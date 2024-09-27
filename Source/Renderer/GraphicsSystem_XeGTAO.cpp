@@ -150,15 +150,18 @@ namespace gr
 		m_hilbertLUT = CreateHilbertLUT();
 
 		// Our own settings buffer:
-		m_SEXeGTAOSettings = re::Buffer::Create(
-			"SEXeGTAOSettings", 
-			CreateXeGTAOSettingsParamsData(m_XeGTAOQuality),
-			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::Mutable,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Constant,
-			});
+		constexpr char const* k_SEXeGTAOSettingsName = "SEXeGTAOSettings";
+		m_SEXeGTAOSettings = re::BufferInput(
+			k_SEXeGTAOSettingsName,
+			re::Buffer::Create(
+				k_SEXeGTAOSettingsName,
+				CreateXeGTAOSettingsParamsData(m_XeGTAOQuality),
+				re::Buffer::BufferParams{
+					.m_allocationType = re::Buffer::AllocationType::Mutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Constant,
+				}));
 		
 		// TODO: Output bent normals
 		// NOTE: This will require recreating the pipeline if we change this value (as targets depend on it)
@@ -169,15 +172,18 @@ namespace gr
 		ConfigureGTAOSettings(m_XeGTAOQuality, m_XeGTAODenoiseMode, m_settings);
 		const XeGTAO::GTAOConstants gtaoConstants = GetGTAOConstantsData(m_xRes, m_yRes, m_settings, glm::mat4(1.f));
 
-		m_XeGTAOConstants = re::Buffer::Create(
-			"SEGTAOConstants", // "GTAOConstants" is already defined for us
-			gtaoConstants, 
-			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::Mutable,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Constant,
-			});
+		constexpr char const* k_SEGTAOConstantsName = "SEGTAOConstants";
+		m_XeGTAOConstants = re::BufferInput(
+			k_SEGTAOConstantsName,
+			re::Buffer::Create(
+				k_SEGTAOConstantsName, // "GTAOConstants" is already defined for us
+				gtaoConstants, 
+				re::Buffer::BufferParams{
+					.m_allocationType = re::Buffer::AllocationType::Mutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Constant,
+				}));
 
 		// Depth prefilter stage:
 		m_prefilterDepthsStage = 
@@ -410,10 +416,10 @@ namespace gr
 		{
 			gr::Camera::RenderData const& mainCamRenderData = m_graphicsSystemManager->GetActiveCameraRenderData();
 
-			m_XeGTAOConstants->Commit(
+			m_XeGTAOConstants.GetBuffer()->Commit(
 				GetGTAOConstantsData(m_xRes, m_yRes, m_settings, mainCamRenderData.m_cameraParams.g_projection));
 
-			m_SEXeGTAOSettings->Commit(CreateXeGTAOSettingsParamsData(m_XeGTAOQuality));
+			m_SEXeGTAOSettings.GetBuffer()->Commit(CreateXeGTAOSettingsParamsData(m_XeGTAOQuality));
 
 			m_isDirty = false;
 		}

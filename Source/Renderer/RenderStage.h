@@ -13,6 +13,7 @@ namespace re
 {
 	class ComputeStage;
 	class Buffer;
+	class BufferInput;
 	class Shader;
 	class Texture;
 
@@ -175,11 +176,15 @@ namespace re
 		bool DepthTargetIsAlsoTextureInput() const;
 		int GetDepthTargetTextureInputIdx() const;
 
-		void AddPermanentBuffer(std::shared_ptr<re::Buffer const>);
-		inline std::vector<std::shared_ptr<re::Buffer const>> const& GetPermanentBuffers() const;
+		void AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer>);
+		void AddPermanentBuffer(re::BufferInput const&);
+		void AddPermanentBuffer(re::BufferInput&&);
+		inline std::vector<re::BufferInput> const& GetPermanentBuffers() const;
 		
-		void AddSingleFrameBuffer(std::shared_ptr<re::Buffer const>);
-		inline std::vector<std::shared_ptr<re::Buffer const>> const& GetPerFrameBuffers() const;
+		void AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer>);
+		void AddSingleFrameBuffer(re::BufferInput const&);
+		void AddSingleFrameBuffer(re::BufferInput&&);
+		inline std::vector<re::BufferInput> const& GetPerFrameBuffers() const;
 
 		// Stage Batches:
 		std::vector<re::Batch> const& GetStageBatches() const;
@@ -217,9 +222,9 @@ namespace re
 		std::vector<re::RWTextureInput> m_permanentRWTextureInputs;
 		std::vector<re::RWTextureInput> m_singleFrameRWTextureInputs;
 
-		std::vector<std::shared_ptr<re::Buffer const>> m_singleFrameBuffers; // Cleared every frame
+		std::vector<re::BufferInput> m_singleFrameBuffers; // Cleared every frame
 
-		std::vector<std::shared_ptr<re::Buffer const>> m_permanentBuffers;
+		std::vector<re::BufferInput> m_permanentBuffers;
 
 		std::vector<re::Batch> m_stageBatches;
 
@@ -405,13 +410,13 @@ namespace re
 	}
 
 
-	inline std::vector<std::shared_ptr<re::Buffer const>> const& RenderStage::GetPermanentBuffers() const
+	inline std::vector<re::BufferInput> const& RenderStage::GetPermanentBuffers() const
 	{
 		return m_permanentBuffers;
 	}
 
 
-	inline std::vector<std::shared_ptr<re::Buffer const>> const& RenderStage::GetPerFrameBuffers() const
+	inline std::vector<re::BufferInput> const& RenderStage::GetPerFrameBuffers() const
 	{
 		return m_singleFrameBuffers;
 	}

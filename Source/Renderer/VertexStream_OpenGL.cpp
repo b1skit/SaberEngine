@@ -64,8 +64,6 @@ namespace opengl
 
 	void VertexStream::Create(re::VertexStream const& vertexStream)
 	{
-		SEAssert(vertexStream.GetNumElements() > 0, "Vertex stream has no data");
-
 		// Do nothing; Most of the heavy lifting is handled by the re::Buffer
 	}
 

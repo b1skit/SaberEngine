@@ -61,15 +61,17 @@ namespace gr
 	{
 		PoissonSampleParamsData const& poissonSampleParamsData = GetPoissonSampleParamsData();
 
-		m_poissonSampleParamsBuffer = re::Buffer::Create(
+		m_poissonSampleParamsBuffer = re::BufferInput(
 			PoissonSampleParamsData::s_shaderName,
-			poissonSampleParamsData,
-			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::Immutable,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-				.m_type = re::Buffer::Type::Constant,
-			});
+			re::Buffer::Create(
+				PoissonSampleParamsData::s_shaderName,
+				poissonSampleParamsData,
+				re::Buffer::BufferParams{
+					.m_allocationType = re::Buffer::AllocationType::Immutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_type = re::Buffer::Type::Constant,
+				}));
 	}
 
 
@@ -376,11 +378,11 @@ namespace gr
 			char const* bufferName)
 			{
 				// If the buffer does not exist we must create it:
-				bool mustReallocate = lightMetadata.m_lightData == nullptr;
+				bool mustReallocate = !lightMetadata.m_lightData.IsValid();
 
 				if (!mustReallocate)
 				{
-					const uint32_t curNumBufferElements = lightMetadata.m_lightData->GetArraySize();
+					const uint32_t curNumBufferElements = lightMetadata.m_lightData.GetBuffer()->GetArraySize();
 
 					// If the buffer is too small, or if the no. of lights has shrunk by too much, we must reallocate:
 					mustReallocate = lightMetadata.m_numLights > 0 &&
@@ -436,16 +438,18 @@ namespace gr
 						lightData.emplace_back(LightData{});
 					}
 
-					lightMetadata.m_lightData = re::Buffer::CreateArray<LightData>(
+					lightMetadata.m_lightData = re::BufferInput(
 						bufferName,
-						lightData.data(),
-						re::Buffer::BufferParams{
-							.m_allocationType = re::Buffer::AllocationType::Mutable,
-							.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-							.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-							.m_type = re::Buffer::Type::Structured,
-							.m_arraySize = util::CheckedCast<uint32_t>(lightData.size()),
-						});
+						re::Buffer::CreateArray<LightData>(
+							bufferName,
+							lightData.data(),
+							re::Buffer::BufferParams{
+								.m_allocationType = re::Buffer::AllocationType::Mutable,
+								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+								.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+								.m_type = re::Buffer::Type::Structured,
+								.m_arraySize = util::CheckedCast<uint32_t>(lightData.size()),
+							}));
 				}
 				else
 				{
@@ -474,7 +478,7 @@ namespace gr
 							shadowMetadata.m_shadowArray.get(),
 							shadowArrayIdx);
 
-						lightMetadata.m_lightData->Commit(&lightData, movedLightIdx, 1);
+						lightMetadata.m_lightData.GetBuffer()->Commit(&lightData, movedLightIdx, 1);
 
 						seenIDs.emplace(movedLightID);
 					}
@@ -525,7 +529,7 @@ namespace gr
 
 								SEAssert(dirtyLightIdx < lightMetadata.m_numLights, "Light index is OOB");
 
-								lightMetadata.m_lightData->Commit(&lightData, dirtyLightIdx, 1);
+								lightMetadata.m_lightData.GetBuffer()->Commit(&lightData, dirtyLightIdx, 1);
 							}
 						}				
 
@@ -557,7 +561,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::Buffer> LightManager::GetLightDataBuffer(gr::Light::Type lightType) const
+	re::BufferInput const& LightManager::GetLightDataBuffer(gr::Light::Type lightType) const
 	{
 		switch (lightType)
 		{
@@ -567,11 +571,11 @@ namespace gr
 		case gr::Light::AmbientIBL:
 		default: SEAssertF("Invalid light type");
 		}
-		return nullptr; // This should never happen
+		return m_directionalLightMetadata.m_lightData; // This should never happen
 	}
 
 
-	std::shared_ptr<re::Buffer> LightManager::GetLightIndexDataBuffer(
+	re::BufferInput LightManager::GetLightIndexDataBuffer(
 		gr::Light::Type lightType,
 		gr::RenderDataID lightID,
 		char const* shaderName) const
@@ -579,13 +583,13 @@ namespace gr
 		auto CreateSingleFrameBuffer = [&lightID, &shaderName](
 			LightMetadata const& lightMetadata,
 			ShadowMetadata const& shadowMetadata) 
-			-> std::shared_ptr<re::Buffer>
+			-> re::BufferInput
 			{
 				SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
 					"Light ID not registered for the given type");
 
 				const uint32_t lightIdx = lightMetadata.m_renderDataIDToBufferIdx.at(lightID);
-				SEAssert(lightIdx < lightMetadata.m_lightData->GetArraySize(), "Light index is OOB");
+				SEAssert(lightIdx < lightMetadata.m_lightData.GetBuffer()->GetArraySize(), "Light index is OOB");
 
 				uint32_t shadowIdx = k_invalidShadowIndex;
 				if (shadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
@@ -596,15 +600,17 @@ namespace gr
 						"Shadow index is OOB");
 				}
 				
-				return re::Buffer::Create(
+				return re::BufferInput(
 					shaderName,
-					GetLightIndexData(lightIdx, shadowIdx),
-					re::Buffer::BufferParams{
-						.m_allocationType = re::Buffer::AllocationType::SingleFrame,
-						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-						.m_type = re::Buffer::Type::Constant,
-					});
+					re::Buffer::Create(
+						shaderName,
+						GetLightIndexData(lightIdx, shadowIdx),
+						re::Buffer::BufferParams{
+							.m_allocationType = re::Buffer::AllocationType::SingleFrame,
+							.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+							.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+							.m_type = re::Buffer::Type::Constant,
+						}));
 			};
 
 		switch (lightType)
@@ -615,7 +621,7 @@ namespace gr
 		case gr::Light::AmbientIBL:
 		default: SEAssertF("Invalid light type");
 		}
-		return nullptr; // This should never happen
+		return re::BufferInput(); // This should never happen
 	}
 
 
@@ -780,7 +786,7 @@ namespace gr
 				ImGui::Text(std::format("No. of lights: {}", lightMetadata.m_numLights).c_str());
 				ImGui::Text(std::format("LightData Buffer size{}: {}", 
 					lightMetadata.m_numLights == 0 ? " (including dummy)" : "", 
-					lightMetadata.m_lightData->GetArraySize()).c_str());
+					lightMetadata.m_lightData.GetBuffer()->GetArraySize()).c_str());
 				ImGui::Unindent();
 			};
 

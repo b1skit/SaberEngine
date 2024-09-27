@@ -63,6 +63,6 @@ namespace opengl
 		
 		static void SetImageTextureTargets(re::Shader const&, std::vector<re::RWTextureInput> const&);
 
-		static void SetBuffer(re::Shader const&, re::Buffer const&);
+		static void SetBuffer(re::Shader const&, re::BufferInput const&);
 	};
 }

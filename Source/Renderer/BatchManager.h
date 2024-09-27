@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
+#include "BufferInput.h"
 #include "Effect.h"
 #include "RenderObjectIDs.h"
 
@@ -78,14 +79,14 @@ namespace gr
 		// Instanced Transforms: We maintain a single, monolithic Transform buffer, and index into it
 		std::unordered_map<gr::TransformID, RefCountedIndex> m_instancedTransformIndexes;
 		std::vector<uint32_t> m_freeTransformIndexes;
-		std::shared_ptr<re::Buffer> m_instancedTransforms;
+		re::BufferInput m_instancedTransforms;
 
 		// Instanced Materials: We maintain a monolithic Material buffer per Material type, and index into it
 		struct MaterialInstanceMetadata
 		{
 			std::unordered_map<gr::RenderDataID, RefCountedIndex> m_instancedMaterialIndexes;
 			std::vector<uint32_t> m_freeInstancedMaterialIndexes;
-			std::shared_ptr<re::Buffer> m_instancedMaterials;
+			re::BufferInput m_instancedMaterials;
 		};
 		std::array<MaterialInstanceMetadata, gr::Material::MaterialEffect_Count> m_materialInstanceMetadata;
 
