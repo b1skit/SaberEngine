@@ -56,12 +56,9 @@ namespace gr
 
 		// Shadow arrays may be reallocated at the beginning of any frame; Texture inputs should be reset each frame
 		re::TextureView const& GetShadowArrayReadView(gr::Light::Type) const;
-		re::TextureView GetShadowWriteView(gr::Light::Type, gr::RenderDataID lightID) const;
 
-		// Shadow target set helpers:
-		re::Viewport GetShadowArrayWriteViewport(gr::Light::Type) const;
-		re::ScissorRect GetShadowArrayWriteScissorRect(gr::Light::Type) const;
-		
+		uint32_t GetShadowArrayIndex(gr::Light::Type, gr::RenderDataID lightID) const;
+
 		re::BufferInput const& GetPCSSPoissonSampleParamsBuffer() const;
 
 	
@@ -112,7 +109,6 @@ namespace gr
 	private:
 		// Get the logical array index (i.e. i * 6 = index of 2DArray face for a cubemap)
 		uint32_t GetShadowArrayIndex(ShadowMetadata const&, gr::RenderDataID) const;
-		uint32_t GetShadowArrayIndex(gr::Light::Type, gr::RenderDataID lightID) const;
 
 
 	private:

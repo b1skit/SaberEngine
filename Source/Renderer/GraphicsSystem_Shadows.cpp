@@ -74,6 +74,32 @@ namespace
 
 		return uniqueRenderDataIDs;
 	}
+
+
+	re::TextureView CreateShadowWriteView(gr::Light::Type lightType, uint32_t shadowArrayIdx)
+	{
+		switch (lightType)
+		{
+		case gr::Light::Directional: return re::TextureView(re::TextureView::Texture2DArrayView{0, 1, shadowArrayIdx, 1});
+		case gr::Light::Point: return re::TextureView(re::TextureView::Texture2DArrayView{0, 1, shadowArrayIdx * 6, 6});
+		case gr::Light::Spot: return re::TextureView(re::TextureView::Texture2DArrayView{0, 1, shadowArrayIdx, 1});
+		case gr::Light::AmbientIBL:
+		default: SEAssertF("Invalid light type");
+		}
+		return re::TextureView(re::TextureView::Texture2DArrayView{0, 1, shadowArrayIdx, 1 }); // This should never happen
+	}
+
+
+	re::Viewport CreateShadowArrayWriteViewport(re::Texture const* shadowArray)
+	{
+		return re::Viewport(0, 0, shadowArray->Width(), shadowArray->Height());
+	}
+
+
+	re::ScissorRect CreateShadowArrayWriteScissorRect(re::Texture const* shadowArray)
+	{
+		return re::ScissorRect(0, 0, static_cast<long>(shadowArray->Width()), static_cast<long>(shadowArray->Height()));
+	}
 }
 
 
@@ -132,12 +158,12 @@ namespace gr
 		pointShadowTargetSet->SetDepthStencilTarget(
 			cubeShadowArrayTex, 
 			re::TextureTarget::TargetParams{
-				.m_textureView = lightManager.GetShadowWriteView(shadowData.m_lightType, lightID) });
+				.m_textureView = CreateShadowWriteView(
+					shadowData.m_lightType, 
+					lightManager.GetShadowArrayIndex(shadowData.m_lightType, lightID)) });
 
-		pointShadowTargetSet->SetViewport(lightManager.GetShadowArrayWriteViewport(shadowData.m_lightType));
-		pointShadowTargetSet->SetScissorRect(lightManager.GetShadowArrayWriteScissorRect(shadowData.m_lightType));
-
-
+		pointShadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(cubeShadowArrayTex.get()));
+		pointShadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(cubeShadowArrayTex.get()));
 		pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::ClearMode::Enabled);
 
 		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
@@ -211,10 +237,12 @@ namespace gr
 		shadowTargetSet->SetDepthStencilTarget(
 			shadowArrayTex, 
 			re::TextureTarget::TargetParams{
-				.m_textureView = lightManager.GetShadowWriteView(shadowData.m_lightType, lightID) });
+				.m_textureView = CreateShadowWriteView(
+					shadowData.m_lightType,
+					lightManager.GetShadowArrayIndex(shadowData.m_lightType, lightID)) });		
 
-		shadowTargetSet->SetViewport(lightManager.GetShadowArrayWriteViewport(shadowData.m_lightType));
-		shadowTargetSet->SetScissorRect(lightManager.GetShadowArrayWriteScissorRect(shadowData.m_lightType));
+		shadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(shadowArrayTex.get()));;
+		shadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(shadowArrayTex.get()));	
 
 		shadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::ClearMode::Enabled);
 
@@ -426,7 +454,8 @@ namespace gr
 
 			directionalStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
 				lightManager.GetShadowArrayTexture(gr::Light::Directional),
-				lightManager.GetShadowWriteView(gr::Light::Directional, lightID));
+				CreateShadowWriteView(
+					gr::Light::Directional, lightManager.GetShadowArrayIndex(gr::Light::Directional, lightID)));			
 
 			m_stagePipeline->AppendRenderStageForSingleFrame(
 				m_directionalParentStageItr, directionalStageItr.second.m_renderStage);
@@ -437,7 +466,7 @@ namespace gr
 
 			pointStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
 				lightManager.GetShadowArrayTexture(gr::Light::Point),
-				lightManager.GetShadowWriteView(gr::Light::Point, lightID));
+				CreateShadowWriteView(gr::Light::Point, lightManager.GetShadowArrayIndex(gr::Light::Point, lightID)));			
 
 			m_stagePipeline->AppendRenderStageForSingleFrame(
 				m_pointParentStageItr, pointStageItr.second.m_renderStage);
@@ -448,7 +477,7 @@ namespace gr
 
 			spotStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
 				lightManager.GetShadowArrayTexture(gr::Light::Spot),
-				lightManager.GetShadowWriteView(gr::Light::Spot, lightID));
+				CreateShadowWriteView(gr::Light::Spot, lightManager.GetShadowArrayIndex(gr::Light::Spot, lightID)));			
 
 			m_stagePipeline->AppendRenderStageForSingleFrame(
 				m_spotParentStageItr, spotStageItr.second.m_renderStage);
