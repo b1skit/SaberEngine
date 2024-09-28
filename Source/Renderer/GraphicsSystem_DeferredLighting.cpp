@@ -1020,23 +1020,38 @@ namespace gr
 			{
 				auto AddDuplicatedBatch = [&light, &lightID, &lightMgr](
 					re::RenderStage* stage,
-					char const* depthInputTexName,
+					char const* shadowTexShaderName,
 					util::HashKey const& samplerTypeName)
 					{
 						re::Batch* duplicatedBatch =
 							stage->AddBatchWithLifetime(light.second.m_batch, re::Lifetime::SingleFrame);
 
-						duplicatedBatch->SetBuffer(
-							lightMgr.GetLightIndexDataBuffer(light.second.m_type, lightID, LightIndexData::s_shaderName));
+						const uint32_t lightIdx = lightMgr.GetLightDataBufferIdx(light.second.m_type, lightID);
 
+						uint32_t shadowIdx = gr::LightManager::k_invalidShadowIndex;
 						if (light.second.m_hasShadow)
-						{					
+						{
+							shadowIdx = lightMgr.GetShadowDataBufferIdx(light.second.m_type, lightID);
+
 							duplicatedBatch->AddTextureInput(
-								depthInputTexName,
+								shadowTexShaderName,
 								lightMgr.GetShadowArrayTexture(light.second.m_type).get(),
 								re::Sampler::GetSampler(samplerTypeName).get(),
 								lightMgr.GetShadowArrayReadView(light.second.m_type));
 						}
+						
+						// Deferred light volumes: Single-frame buffer containing the indexes of a single light
+						duplicatedBatch->SetBuffer(re::BufferInput(
+							LightIndexData::s_shaderName,
+							re::Buffer::Create(
+								LightIndexData::s_shaderName,
+								GetLightIndexData(lightIdx, shadowIdx),
+								re::Buffer::BufferParams{
+									.m_allocationType = re::Buffer::AllocationType::SingleFrame,
+									.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+									.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+									.m_type = re::Buffer::Type::Constant,
+								})));
 					};
 
 				constexpr util::HashKey sampler2DShadowName("BorderCmpMinMagLinearMipPoint");

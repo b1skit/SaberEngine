@@ -575,53 +575,49 @@ namespace gr
 	}
 
 
-	re::BufferInput LightManager::GetLightIndexDataBuffer(
-		gr::Light::Type lightType,
-		gr::RenderDataID lightID,
-		char const* shaderName) const
+	uint32_t LightManager::GetShadowDataBufferIdx(gr::Light::Type lightType, gr::RenderDataID lightID) const
 	{
-		auto CreateSingleFrameBuffer = [&lightID, &shaderName](
-			LightMetadata const& lightMetadata,
-			ShadowMetadata const& shadowMetadata) 
-			-> re::BufferInput
-			{
-				SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
-					"Light ID not registered for the given type");
-
-				const uint32_t lightIdx = lightMetadata.m_renderDataIDToBufferIdx.at(lightID);
-				SEAssert(lightIdx < lightMetadata.m_lightData.GetBuffer()->GetArraySize(), "Light index is OOB");
-
-				uint32_t shadowIdx = k_invalidShadowIndex;
-				if (shadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
-				{
-					shadowIdx = shadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
-					SEAssert(shadowIdx < shadowMetadata.m_numShadows &&
-						shadowIdx < shadowMetadata.m_shadowArray->GetTextureParams().m_arraySize,
-						"Shadow index is OOB");
-				}
-				
-				return re::BufferInput(
-					shaderName,
-					re::Buffer::Create(
-						shaderName,
-						GetLightIndexData(lightIdx, shadowIdx),
-						re::Buffer::BufferParams{
-							.m_allocationType = re::Buffer::AllocationType::SingleFrame,
-							.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-							.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-							.m_type = re::Buffer::Type::Constant,
-						}));
-			};
+		uint32_t shadowIdx = gr::LightManager::k_invalidShadowIndex;
 
 		switch (lightType)
 		{
-		case gr::Light::Directional: return CreateSingleFrameBuffer(m_directionalLightMetadata, m_directionalShadowMetadata);
-		case gr::Light::Point: return CreateSingleFrameBuffer(m_pointLightMetadata, m_pointShadowMetadata);
-		case gr::Light::Spot: return CreateSingleFrameBuffer(m_spotLightMetadata, m_spotShadowMetadata);
+		case gr::Light::Directional:
+		{
+			if (m_directionalShadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
+			{
+				shadowIdx = m_directionalShadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
+				SEAssert(shadowIdx < m_directionalShadowMetadata.m_numShadows &&
+					shadowIdx < m_directionalShadowMetadata.m_shadowArray->GetTextureParams().m_arraySize,
+					"Shadow index is OOB");
+			}
+		}
+		break;
+		case gr::Light::Point:
+		{
+			if (m_pointShadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
+			{
+				shadowIdx = m_pointShadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
+				SEAssert(shadowIdx < m_pointShadowMetadata.m_numShadows &&
+					shadowIdx < m_pointShadowMetadata.m_shadowArray->GetTextureParams().m_arraySize,
+					"Shadow index is OOB");
+			}
+		}
+		break;
+		case gr::Light::Spot:
+		{
+			if (m_spotShadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
+			{
+				shadowIdx = m_spotShadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
+				SEAssert(shadowIdx < m_spotShadowMetadata.m_numShadows &&
+					shadowIdx < m_spotShadowMetadata.m_shadowArray->GetTextureParams().m_arraySize,
+					"Shadow index is OOB");
+			}
+		}
+		break;
 		case gr::Light::AmbientIBL:
 		default: SEAssertF("Invalid light type");
 		}
-		return re::BufferInput(); // This should never happen
+		return shadowIdx;
 	}
 
 

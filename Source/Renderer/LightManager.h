@@ -48,9 +48,7 @@ namespace gr
 
 
 	public:
-		// Deferred light volumes: Single-frame buffer containing the indexes of a single light
-		re::BufferInput GetLightIndexDataBuffer(
-			gr::Light::Type, gr::RenderDataID, char const* shaderName) const;
+		uint32_t GetShadowDataBufferIdx(gr::Light::Type, gr::RenderDataID lightID) const;
 
 
 	public:
