@@ -18,9 +18,6 @@
     <Filter Include="Header Files\gr">
       <UniqueIdentifier>{81ad0db5-97b4-41aa-ae99-f01159930960}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\gr\Components">
-      <UniqueIdentifier>{eeff8831-ca17-45c7-aad7-66c9bd9b30ed}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\gr\grutil">
       <UniqueIdentifier>{43141ded-2d9e-4de4-a0d0-3cc716e0d032}</UniqueIdentifier>
     </Filter>
@@ -29,9 +26,6 @@
     </Filter>
     <Filter Include="Source Files\gr">
       <UniqueIdentifier>{c8c4ee42-1f80-4282-8cfe-3eb22c9a7081}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\gr\Components">
-      <UniqueIdentifier>{b57885f9-a636-414d-bc74-0e813be1e16c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\gr\grutil">
       <UniqueIdentifier>{f6116d2f-d593-4b0f-a2b0-64820ced8b49}</UniqueIdentifier>
@@ -108,6 +102,12 @@
     <Filter Include="Dependencies\imgui\backends">
       <UniqueIdentifier>{a66d41f3-adef-479f-b582-119d0143f1b4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\gr\RenderData">
+      <UniqueIdentifier>{eeff8831-ca17-45c7-aad7-66c9bd9b30ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gr\RenderData">
+      <UniqueIdentifier>{b57885f9-a636-414d-bc74-0e813be1e16c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h">
@@ -123,7 +123,7 @@
       <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="BoundsRenderData.h">
-      <Filter>Header Files\gr\Components</Filter>
+      <Filter>Header Files\gr\RenderData</Filter>
     </ClInclude>
     <ClInclude Include="Buffer.h">
       <Filter>Header Files\re</Filter>
@@ -147,7 +147,7 @@
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="CameraRenderData.h">
-      <Filter>Header Files\gr\Components</Filter>
+      <Filter>Header Files\gr\RenderData</Filter>
     </ClInclude>
     <ClInclude Include="CommandList_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
@@ -246,7 +246,7 @@
       <Filter>Header Files\gr\Materials</Filter>
     </ClInclude>
     <ClInclude Include="LightRenderData.h">
-      <Filter>Header Files\gr\Components</Filter>
+      <Filter>Header Files\gr\RenderData</Filter>
     </ClInclude>
     <ClInclude Include="MeshFactory.h">
       <Filter>Header Files\gr</Filter>
@@ -369,10 +369,10 @@
       <Filter>Header Files\gr\grutil</Filter>
     </ClInclude>
     <ClInclude Include="TransformRenderData.h">
-      <Filter>Header Files\gr\Components</Filter>
+      <Filter>Header Files\gr\RenderData</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMapRenderData.h">
-      <Filter>Header Files\gr\Components</Filter>
+      <Filter>Header Files\gr\RenderData</Filter>
     </ClInclude>
     <ClInclude Include="VertexStream.h">
       <Filter>Header Files\re</Filter>
@@ -656,13 +656,13 @@
       <Filter>Source Files\effect</Filter>
     </ClCompile>
     <ClCompile Include="CameraRenderData.cpp">
-      <Filter>Source Files\gr\Components</Filter>
+      <Filter>Source Files\gr\RenderData</Filter>
     </ClCompile>
     <ClCompile Include="LightRenderData.cpp">
-      <Filter>Source Files\gr\Components</Filter>
+      <Filter>Source Files\gr\RenderData</Filter>
     </ClCompile>
     <ClCompile Include="TransformRenderData.cpp">
-      <Filter>Source Files\gr\Components</Filter>
+      <Filter>Source Files\gr\RenderData</Filter>
     </ClCompile>
     <ClCompile Include="LightParamsHelpers.cpp">
       <Filter>Source Files\gr</Filter>
