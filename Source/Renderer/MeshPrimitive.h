@@ -48,8 +48,6 @@ namespace gr
 		{
 			re::VertexStream const* m_vertexStream = nullptr;
 			uint8_t m_typeIdx = 0; // Index of m_vertexStream, w.r.t other streams of the same type. Used for sorting
-
-			std::vector<re::VertexStream const*> m_morphTargets;
 		};
 
 		struct MeshVertexStreamComparisonData
@@ -65,6 +63,19 @@ namespace gr
 
 
 	public:
+		struct PackedMorphTargetMetadata
+		{
+			uint8_t m_streamTypeIdx;	// e.g. Pos/Nml/Tan/UV
+			uint8_t m_typeIdx;			// e.g.0/1/2/3...
+
+			uint8_t m_numMorphTargets;		// How many morph targets per vertex?
+			uint32_t m_firstFloatIdx;		// Index of first float of a vertex's set of interleaved morph target elements
+			uint8_t m_vertexFloatStride;	// Stride of all elements (# floats) for a whole set of morph target displacements
+			uint8_t m_elementFloatStride;	// Stride of a single element (# floats), within a single morph target displacement			
+		};
+
+
+	public:
 		struct RenderData
 		{
 			MeshPrimitiveParams m_meshPrimitiveParams;
@@ -73,6 +84,9 @@ namespace gr
 			uint8_t m_numVertexStreams;
 
 			re::VertexStream const* m_indexStream;
+
+			bool m_hasMorphTargets;
+			std::shared_ptr<re::Buffer> m_interleavedMorphData;
 			
 			uint64_t m_dataHash;
 
@@ -116,6 +130,9 @@ namespace gr
 		re::VertexStream const* GetVertexStream(re::VertexStream::Type, uint8_t srcTypeIdx) const;
 		std::vector<MeshVertexStream> const& GetVertexStreams() const;
 
+		bool HasMorphTargets() const;
+		std::shared_ptr<re::Buffer> GetInterleavedMorphDataBuffer() const;
+
 		void ShowImGuiWindow() const;
 
 
@@ -123,7 +140,10 @@ namespace gr
 		MeshPrimitiveParams m_params;
 
 		re::VertexStream const* m_indexStream;
-		std::vector<MeshVertexStream> m_vertexStreams;
+		std::vector<MeshVertexStream> m_vertexStreams;	
+
+		std::shared_ptr<re::Buffer> m_interleavedMorphData;
+		std::vector<PackedMorphTargetMetadata> m_interleavedMorphMetadata;
 
 
 		void ComputeDataHash() override;
@@ -158,6 +178,18 @@ namespace gr
 	inline std::vector<MeshPrimitive::MeshVertexStream> const& MeshPrimitive::GetVertexStreams() const
 	{
 		return m_vertexStreams;
+	}
+
+
+	inline bool MeshPrimitive::HasMorphTargets() const
+	{
+		return m_interleavedMorphData != nullptr;
+	}
+
+
+	inline std::shared_ptr<re::Buffer> MeshPrimitive::GetInterleavedMorphDataBuffer() const
+	{
+		return m_interleavedMorphData;
 	}
 
 

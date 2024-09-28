@@ -73,6 +73,7 @@ namespace util
 		T* data();
 
 		void* GetElementPtr(size_t elementIdx); // Risky: Get a raw pointer to the ith element without any type checking
+		void const* GetElementPtr(size_t elementIdx) const;
 
 
 	public:
@@ -307,6 +308,16 @@ namespace util
 		SEAssert(elementIdx * m_elementByteSize < m_data.size(), "elementIdx is OOB");
 
 		uint8_t* dataPtr = m_data.data();
+		dataPtr += elementIdx * m_elementByteSize;
+		return dataPtr;
+	}
+
+
+	inline void const* ByteVector::GetElementPtr(size_t elementIdx) const
+	{
+		SEAssert(elementIdx * m_elementByteSize < m_data.size(), "elementIdx is OOB");
+
+		uint8_t const* dataPtr = m_data.data();
 		dataPtr += elementIdx * m_elementByteSize;
 		return dataPtr;
 	}

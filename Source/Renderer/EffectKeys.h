@@ -42,7 +42,6 @@ namespace
 	constexpr char const* key_slots = "Slots";
 	constexpr char const* key_dataType = "DataType";
 	constexpr char const* key_semantic = "Semantic";
-	constexpr char const* key_morphTargets = "MorphTargets";
 
 	// "Techniques":
 	constexpr char const* key_techniques = "Techniques";

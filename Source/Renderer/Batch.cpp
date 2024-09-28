@@ -137,8 +137,7 @@ namespace
 
 		if (hasMorphTargets)
 		{
-			// TODO: Implement this correctly. For now, we just use a single morph target drawstyle
-			bitmask |= effect::drawstyle::MorphTargets_Pos8;
+			bitmask |= effect::drawstyle::MorphTargets_Enabled;
 		}
 
 		return bitmask;
@@ -257,7 +256,6 @@ namespace re
 
 		// We assume the MeshPrimitive's vertex streams are ordered such that identical stream types are tightly
 		// packed, and in the correct channel order corresponding to the final shader slots (e.g. uv0, uv1, etc)
-		bool hasMorphTargets = false;
 		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(meshPrimRenderData.m_numVertexStreams); slotIdx++)
 		{
 			if (meshPrimRenderData.m_vertexStreams[slotIdx] == nullptr)
@@ -270,11 +268,6 @@ namespace re
 					re::Lifetime::Permanent && 
 					m_lifetime == re::Lifetime::Permanent),
 				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
-
-			if (meshPrimRenderData.m_vertexStreams[slotIdx]->IsMorphData())
-			{
-				hasMorphTargets = true;
-			}
 
 			m_graphicsParams.m_vertexStreams[slotIdx] = VertexStreamInput{
 				.m_vertexStream = meshPrimRenderData.m_vertexStreams[slotIdx],
@@ -309,7 +302,13 @@ namespace re
 			SetFilterMaskBit(Filter::CastsShadow, materialInstanceData->m_isShadowCaster);
 		}
 
-		m_drawStyleBitmask = ComputeBatchBitmask(materialInstanceData, hasMorphTargets);
+		// Add the morph data buffer (it'll be considered when the batch hash is computed)
+		if (meshPrimRenderData.m_hasMorphTargets)
+		{
+			SetBuffer(s_interleavedMorphDataShaderName, meshPrimRenderData.m_interleavedMorphData);
+		}
+
+		m_drawStyleBitmask = ComputeBatchBitmask(materialInstanceData, meshPrimRenderData.m_hasMorphTargets);
 
 		ComputeDataHash();
 	}

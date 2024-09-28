@@ -163,6 +163,8 @@ namespace fr
 			.m_vertexStreams = {nullptr}, // Vertex streams copied below...
 			.m_numVertexStreams = 0,
 			.m_indexStream = meshPrimitiveComponent.m_meshPrimitive->GetIndexStream(),
+			.m_hasMorphTargets = meshPrimitiveComponent.m_meshPrimitive->HasMorphTargets(),
+			.m_interleavedMorphData = meshPrimitiveComponent.m_meshPrimitive->GetInterleavedMorphDataBuffer(),
 			.m_dataHash = meshPrimitiveComponent.m_meshPrimitive->GetDataHash(),
 			.m_owningMeshRenderDataID = owningMeshRenderDataID,
 		};
@@ -178,13 +180,6 @@ namespace fr
 			}
 
 			renderData.m_vertexStreams[slotIdx++] = stream.m_vertexStream;
-
-			for (re::VertexStream const* morphTarget : stream.m_morphTargets)
-			{
-				SEAssert(morphTarget, "Found a null morph target, this is unexpected");
-
-				renderData.m_vertexStreams[slotIdx++] = morphTarget;
-			}
 		}
 		renderData.m_numVertexStreams = slotIdx;
 

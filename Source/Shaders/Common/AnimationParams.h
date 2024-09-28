@@ -7,6 +7,11 @@
 // GLTF Specs: The number of morph targets is not limited; A minimum of 8 morphed attributes must be supported
 #define NUM_MORPH_TARGETS 8
 
+#if defined(__cplusplus)
+static constexpr char const* const s_interleavedMorphDataShaderName = "MorphData";
+#endif
+
+
 struct AnimationData
 {
 	float4 g_morphWeights[NUM_MORPH_TARGETS / 4];

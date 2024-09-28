@@ -82,24 +82,6 @@ namespace
 				});
 			numStreams++;
 
-			if (slotDesc.contains(key_morphTargets))
-			{
-				for (auto const& morphSlotDesc : slotDesc.at(key_morphTargets))
-				{
-					std::string const& morphTargetDataType = morphSlotDesc.at(key_dataType).template get<std::string>();
-					std::string const& morphTargetname = morphSlotDesc.at(key_name).template get<std::string>();
-					std::string const& morphTargetsemantic = morphSlotDesc.at(key_semantic).template get<std::string>();
-
-					parseDB.AddVertexStreamSlot(streamsBlockName,
-						droid::ParseDB::VertexStreamSlotDesc{
-							.m_dataType = morphTargetDataType,
-							.m_name = morphTargetname,
-							.m_semantic = morphTargetsemantic,
-						});
-					numStreams++;
-				}
-			}
-
 			if (numStreams > re::VertexStream::k_maxVertexStreams)
 			{
 				std::cout << "Error: Trying to add too many vertex streams\n";
@@ -856,9 +838,10 @@ namespace droid
 				++slotIdx;
 			}
 
-			// TODO: Only add this when instancing is explicitely specified in the Effect definition
+			// TODO: Only add these when explicitely requested in the Effect definition
 			hlslWriter.EmptyLine();
 			hlslWriter.WriteLine("uint InstanceID : SV_InstanceID;");
+			hlslWriter.WriteLine("uint VertexID : SV_VertexID;");
 			
 			hlslWriter.CloseStructBrace();
 			glslWriter.EmptyLine();

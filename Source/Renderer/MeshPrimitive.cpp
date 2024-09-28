@@ -56,6 +56,120 @@ namespace
 	{
 		std::sort(vertexStreams.begin(), vertexStreams.end(), gr::MeshPrimitive::MeshVertexStreamComparator());
 	}
+
+
+	void GetNumMorphTargetBytes(
+		std::vector<std::array<re::VertexStream::CreateParams, re::VertexStream::Type::Type_Count>> const& streams,
+		size_t& numMorphTargetBytesOut,
+		size_t& numMorphTargetsOut)
+	{
+		numMorphTargetBytesOut = 0;
+		numMorphTargetsOut = 0;
+		
+		for (uint8_t typeIdx = 0; typeIdx < streams.size(); ++typeIdx)
+		{
+			for (uint8_t streamTypeIdx = 0; streamTypeIdx < re::VertexStream::Type_Count; ++streamTypeIdx)
+			{
+				if (streamTypeIdx == re::VertexStream::Index ||
+					streams[typeIdx][streamTypeIdx].m_morphTargetData.empty())
+				{
+					continue;
+				}
+				for (auto const& morphData : streams[typeIdx][streamTypeIdx].m_morphTargetData)
+				{
+					numMorphTargetBytesOut += morphData.m_streamData->GetTotalNumBytes();
+				}
+				numMorphTargetsOut += streams[typeIdx][streamTypeIdx].m_morphTargetData.size();
+			}
+		}
+	}
+
+
+	// Process morph data: We interleave the target values to ensure displacements for each vertex are together
+	// e.g. [t0, t1, t2, ...], for computing T = t + w[0] * t0 + w[1] * t1 + w[2] * t2
+	bool InterleaveMorphData(
+		std::vector<std::array<re::VertexStream::CreateParams, re::VertexStream::Type_Count>> const& streamCreateParams,
+		std::vector<uint8_t>& interleavedMorphDataOut, // All morph data packed into a single, contiguous array
+		std::vector<gr::MeshPrimitive::PackedMorphTargetMetadata>& interleavingMetadataOut)
+	{
+		bool foundMorphData = false;
+
+		// Pre-parse the incoming stream data and count the number of morph targets
+		size_t numMorphTargetBytes;
+		size_t numMorphTargets;
+		GetNumMorphTargetBytes(streamCreateParams, numMorphTargetBytes, numMorphTargets);
+
+		if (numMorphTargets > 0)
+		{
+			foundMorphData = true;
+			
+			interleavingMetadataOut.clear();
+			interleavingMetadataOut.reserve(numMorphTargets);
+
+			interleavedMorphDataOut.clear();
+			interleavedMorphDataOut.resize(numMorphTargetBytes);
+
+			uint8_t* dst = interleavedMorphDataOut.data();
+			size_t curByteOffset = 0;
+
+			for (uint8_t typeIdx = 0; typeIdx < streamCreateParams.size(); ++typeIdx) // e.g. 0/1/2/3...
+			{
+				for (uint8_t streamTypeIdx = 0; streamTypeIdx < re::VertexStream::Type_Count; ++streamTypeIdx) // e.g. Pos/Nml/Tan/UV
+				{
+					if (streamTypeIdx == re::VertexStream::Index ||
+						streamCreateParams[typeIdx][streamTypeIdx].m_morphTargetData.empty())
+					{
+						continue;
+					}
+
+					re::VertexStream::CreateParams const& baseStreamParams = streamCreateParams[typeIdx][streamTypeIdx];
+
+					const uint8_t numMorphTargets = util::CheckedCast<uint8_t>(baseStreamParams.m_morphTargetData.size());
+					const size_t numMorphElements = baseStreamParams.m_morphTargetData[0].m_streamData->size();
+					const uint8_t elementByteSize = baseStreamParams.m_morphTargetData[0].m_streamData->GetElementByteSize();
+
+					SEAssert(elementByteSize % sizeof(float) == 0,
+						"Unexpected element size. Currently assuming all morph data is Float/2/3/4");
+
+					const uint32_t curFloatOffset = util::CheckedCast<uint32_t>(curByteOffset) / sizeof(float);
+					const uint8_t vertexStrideFloats = numMorphTargets * elementByteSize / sizeof(float);
+					const uint8_t elementStrideFloats = elementByteSize / sizeof(float);
+
+					interleavingMetadataOut.emplace_back(gr::MeshPrimitive::PackedMorphTargetMetadata{
+						.m_streamTypeIdx = streamTypeIdx,
+						.m_typeIdx = typeIdx,
+						.m_numMorphTargets = numMorphTargets,
+						.m_firstFloatIdx = curFloatOffset,
+						.m_vertexFloatStride = vertexStrideFloats,
+						.m_elementFloatStride = elementStrideFloats,
+						});
+
+					// Interleave the morph target data, so each vertex's data is packed together:
+					for (size_t elementIdx = 0; elementIdx < numMorphElements; ++elementIdx)
+					{
+						for (uint8_t morphTargetIdx = 0; morphTargetIdx < numMorphTargets; ++morphTargetIdx)
+						{
+							re::VertexStream::MorphCreateParams const& morphCreateParams =
+								baseStreamParams.m_morphTargetData[morphTargetIdx];
+
+							SEAssert(numMorphElements == morphCreateParams.m_streamData->size() &&
+								elementByteSize == morphCreateParams.m_streamData->GetElementByteSize(),
+								"Unexpected element count or size");
+
+							util::ByteVector const* morphData = morphCreateParams.m_streamData.get();
+
+							memcpy(dst, morphData->GetElementPtr(elementIdx), elementByteSize);
+
+							dst += elementByteSize;
+							curByteOffset += elementByteSize;
+						}
+					}
+				}
+			}
+		}
+
+		return foundMorphData;
+	}
 }
 
 namespace gr
@@ -125,7 +239,7 @@ namespace gr
 		// loading system
 
 		SEAssert(streamCreateParams[0][re::VertexStream::Index].m_streamData,
-			"No index stream data. We currently assume it will be in this fixed location");
+			"No index stream data. Indexes are required. We currently assume it will be in this fixed location");
 
 		re::VertexStream const* indexStream = 
 			re::VertexStream::Create(std::move(streamCreateParams[0][re::VertexStream::Index]), queueBufferCreate).get();
@@ -145,31 +259,51 @@ namespace gr
 
 				if (streamCreateParams[typeIdx][streamTypeIdx].m_streamData)
 				{
-					// Create the morph targets:
-					std::vector<re::VertexStream const*> morphTargets;
-					morphTargets.reserve(
-						streamCreateParams[typeIdx][streamTypeIdx].m_morphTargetData.size());
-
-					for (auto& morphCreateParms : streamCreateParams[typeIdx][streamTypeIdx].m_morphTargetData)
-					{
-						morphTargets.emplace_back(re::VertexStream::Create(
-							morphCreateParms.m_streamDesc,
-							std::move(*morphCreateParms.m_streamData)).get());
-					}
-
 					vertexStreams.emplace_back(gr::MeshPrimitive::MeshVertexStream{
 						.m_vertexStream = re::VertexStream::Create(
 							streamCreateParams[typeIdx][streamTypeIdx].m_streamDesc,
 							std::move(*streamCreateParams[typeIdx][streamTypeIdx].m_streamData),
 							queueBufferCreate).get(),
 						.m_typeIdx = typeIdx,
-						.m_morphTargets = std::move(morphTargets),
 						});
 				}
 			}
 		}
 
-		return gr::MeshPrimitive::Create(name, indexStream, std::move(vertexStreams), meshParams);
+		std::shared_ptr<gr::MeshPrimitive> newMeshPrim =
+			gr::MeshPrimitive::Create(name, indexStream, std::move(vertexStreams), meshParams);
+
+
+		// Pack morph data:
+		std::vector<uint8_t> interleavedMorphData;
+		std::vector<PackedMorphTargetMetadata> interleavedMorphMetadata;
+		const bool hasMorphData = InterleaveMorphData(streamCreateParams, interleavedMorphData, interleavedMorphMetadata);
+
+		if (hasMorphData)
+		{
+			// TODO: This is illegal - if we call this from a front end thread, we'll be touching the buffer allocator
+			// which is not allowed. Leaving this for now as it will go away once we have async loading, and we get away
+			// with it if morph data is loaded before the 1st frame
+
+			newMeshPrim->m_interleavedMorphData = re::Buffer::Create(
+				std::format("{}_InterleavedMorphData", name),
+				interleavedMorphData.data(),
+				util::CheckedCast<uint32_t>(interleavedMorphData.size()),
+				re::Buffer::BufferParams{
+					.m_allocationType = re::Buffer::AllocationType::Immutable,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
+					.m_usageMask = re::Buffer::Usage::GPURead,
+					.m_type = re::Buffer::Type::Structured,
+				});
+
+			newMeshPrim->m_interleavedMorphMetadata = std::move(interleavedMorphMetadata);
+
+			// Update the hash with the interleaved morph data
+			newMeshPrim->AddDataBytesToHash(interleavedMorphData.data(),
+				util::CheckedCast<uint32_t>(interleavedMorphData.size()));
+		}
+
+		return newMeshPrim;
 	}
 
 
@@ -221,11 +355,6 @@ namespace gr
 		for (size_t i = 0; i < m_vertexStreams.size(); i++)
 		{
 			AddDataBytesToHash(m_vertexStreams[i].m_vertexStream->GetDataHash());
-
-			for (size_t i = 0; i < m_vertexStreams[i].m_morphTargets.size(); i++)
-			{
-				AddDataBytesToHash(m_vertexStreams[i].m_morphTargets[i]->GetDataHash());
-			}
 		}
 	}
 
@@ -248,24 +377,6 @@ namespace gr
 				{
 					ImGui::Text(std::format("{}:", i).c_str());
 					m_vertexStreams[i].m_vertexStream->ShowImGuiWindow();
-
-
-					ImGui::BeginDisabled(m_vertexStreams[i].m_morphTargets.empty());
-					if (ImGui::CollapsingHeader(
-						std::format("Morph targets ({})##{}", m_vertexStreams[i].m_morphTargets.size(), GetUniqueID()).c_str(),
-						ImGuiTreeNodeFlags_None))
-					{
-						ImGui::Indent();
-						for (size_t i = 0; i < m_vertexStreams[i].m_morphTargets.size(); i++)
-						{
-							ImGui::Text(std::format("{}:", i).c_str());
-							m_vertexStreams[i].m_morphTargets[i]->ShowImGuiWindow();
-							ImGui::Separator();
-						}
-						ImGui::Unindent();
-					}
-					ImGui::EndDisabled();
-
 
 					ImGui::Separator();
 				}

@@ -285,10 +285,6 @@ namespace re
 	inline std::shared_ptr<re::Buffer> Buffer::Create(
 		std::string const& bufferName, void const* data, uint32_t numBytes, BufferParams const& bufferParams)
 	{
-		SEAssert(bufferParams.m_type == re::Buffer::Type::Vertex || 
-			bufferParams.m_type == re::Buffer::Type::Index,
-			"Unexpected/untested buffer type for this Create path");
-
 		SEAssert(bufferParams.m_allocationType == re::Buffer::AllocationType::Immutable || 
 			bufferParams.m_allocationType == re::Buffer::AllocationType::SingleFrame,
 			"Invalid AllocationType type: It's (currently) not possible to Commit() via a nullptr");

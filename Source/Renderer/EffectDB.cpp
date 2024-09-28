@@ -268,26 +268,6 @@ namespace
 			const re::DataType streamDataType = re::StrToDataType(dataType);
 
 			vertexStreamMap.SetSlotIdx(streamType, semanticIdx, streamDataType, slotIndex++);
-
-			// Morph targets occupy the slots immediately following their base attribute:
-			if (slotDesc.contains(key_morphTargets))
-			{
-				for (auto const& morphSlotDesc : slotDesc.at(key_morphTargets))
-				{
-					std::string const& morphDataType = morphSlotDesc.at(key_dataType).template get<std::string>();
-					std::string const& morphName = morphSlotDesc.at(key_name).template get<std::string>();
-					std::string const& morphSemantic = morphSlotDesc.at(key_semantic).template get<std::string>();
-
-
-					std::string morphSemanticName = morphSemantic;
-					uint8_t morphSemanticIdx = 0; // Assume 0 if no semantic index is specified (e.g. NORMAL, SV_Position, etc)
-					ExtractSemanticNameAndIndex(morphSemanticName, morphSemanticIdx);
-
-					const re::DataType morphStreamDataType = re::StrToDataType(morphDataType);
-
-					vertexStreamMap.SetSlotIdx(streamType, morphSemanticIdx, morphStreamDataType, slotIndex++);
-				}
-			}
 		}
 
 		return vertexStreamMap;
