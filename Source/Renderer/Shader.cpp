@@ -136,6 +136,7 @@ namespace re
 		, m_shaderIdentifier(shaderIdentifier)
 		, m_extensionlessSourceFilenames(extensionlessSourceFilenames)
 		, m_pipelineState(rePipelineState)
+		, m_vertexStreamMap(nullptr)
 	{
 		SEAssert(rePipelineState ||
 		(m_extensionlessSourceFilenames.size() == 1 && m_extensionlessSourceFilenames[0].second == re::Shader::Compute),

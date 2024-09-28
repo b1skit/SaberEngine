@@ -86,7 +86,7 @@ namespace gr
 			std::vector<uint32_t> m_dirtyMovedIndexes; // Light entries that were moved during per-frame deletion
 
 			re::BufferInput m_lightData; // Always has at least 1 element (i.e. a dummy if no lights exist)
-			uint32_t m_numLights;
+			uint32_t m_numLights = 0;
 		};
 		LightMetadata m_directionalLightMetadata;
 		LightMetadata m_pointLightMetadata;
@@ -100,7 +100,7 @@ namespace gr
 			std::map<uint32_t, gr::RenderDataID> m_texArrayIdxToRenderDataID;
 
 			std::shared_ptr<re::Texture> m_shadowArray;
-			uint32_t m_numShadows;
+			uint32_t m_numShadows = 0;
 
 			re::TextureView m_readView;
 		};

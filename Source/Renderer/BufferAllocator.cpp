@@ -45,6 +45,7 @@ namespace re
 
 	BufferAllocator::BufferAllocator()
 		: m_numFramesInFlight(0) // We'll fetch the correct value during Create()
+		, m_writeIdx(0)
 		, m_currentFrameNum(k_invalidFrameNum)
 		, m_isValid(false)
 	{

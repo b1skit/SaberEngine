@@ -80,11 +80,11 @@ namespace re
 
 			std::unordered_map<Handle, std::shared_ptr<re::Buffer>> m_handleToPtr;
 
-			uint32_t m_totalAllocations;
-			uint32_t m_totalAllocationsByteSize; // Total bytes over program lifetime
-			uint32_t m_currentAllocationsByteSize;
-			uint32_t m_maxAllocations;
-			uint32_t m_maxAllocationsByteSize; // High water mark
+			uint32_t m_totalAllocations = 0;
+			uint32_t m_totalAllocationsByteSize = 0; // Total bytes over program lifetime
+			uint32_t m_currentAllocationsByteSize = 0;
+			uint32_t m_maxAllocations = 0;
+			uint32_t m_maxAllocationsByteSize = 0; // High water mark
 
 			mutable std::recursive_mutex m_mutex;
 		};

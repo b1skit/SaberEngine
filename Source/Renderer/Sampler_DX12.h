@@ -13,7 +13,7 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::Sampler::PlatformParams
 		{
-			D3D12_STATIC_SAMPLER_DESC m_staticSamplerDesc;
+			D3D12_STATIC_SAMPLER_DESC m_staticSamplerDesc{};
 		};
 
 

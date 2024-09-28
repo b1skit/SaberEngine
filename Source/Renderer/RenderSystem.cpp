@@ -238,7 +238,7 @@ namespace
 			// Create a list of GS's and their dependencies
 			struct GSDependencies
 			{
-				std::string const* m_gsName;
+				std::string const* m_gsName = nullptr;
 				std::unordered_set<std::string> m_dependencies; // Script names of GS's we're dependent on
 
 				bool operator>(GSDependencies const& rhs) const { return m_dependencies.size() > rhs.m_dependencies.size(); }

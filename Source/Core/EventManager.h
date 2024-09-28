@@ -63,8 +63,8 @@ namespace core
 		struct EventInfo
 		{
 			EventType m_type = Uninitialized;
-			EventData m_data0;
-			EventData m_data1;
+			EventData m_data0{0};
+			EventData m_data1{0};
 		};
 
 

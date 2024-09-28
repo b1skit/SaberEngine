@@ -107,9 +107,10 @@ namespace re
 		bool isNormalized = false; // Temporary: required for buffer thread fix
 		bool didCreate = false; // Temporary: required for buffer thread fix
 
-
+		
+		// Currently, we pass the data to the ctor by reference so it can be normalized. We move it to the buffer later
 		std::shared_ptr<re::VertexStream> newVertexStream;
-		newVertexStream.reset(new VertexStream(createParams, std::move(data), isNormalized));
+		newVertexStream.reset(new VertexStream(createParams, data, isNormalized));
 		
 		if (createParams.m_lifetime == re::Lifetime::SingleFrame)
 		{
@@ -217,7 +218,7 @@ namespace re
 	}
 
 
-	VertexStream::VertexStream(StreamDesc const& createParams, util::ByteVector&& data, bool& isNormalizedOut)
+	VertexStream::VertexStream(StreamDesc const& createParams, util::ByteVector& data, bool& isNormalizedOut)
 		: m_streamDesc(createParams)
 		, m_platformParams(nullptr)
 	{

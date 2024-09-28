@@ -27,8 +27,8 @@ namespace platform
 	public:
 		struct Payload final : public virtual re::LibraryStage::IPayload
 		{
-			uint64_t m_currentFrameNum;
-			core::FrameIndexedCommandManager* m_perFrameCommands;
+			uint64_t m_currentFrameNum = std::numeric_limits<uint64_t>::max();
+			core::FrameIndexedCommandManager* m_perFrameCommands = nullptr;
 		};
 
 

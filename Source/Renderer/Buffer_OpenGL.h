@@ -13,8 +13,8 @@ namespace opengl
 	public:
 		struct PlatformParams final : public re::Buffer::PlatformParams
 		{
-			GLuint m_bufferName; // UBO or SSBO handle
-			GLintptr m_baseOffset; // 0 for permanent buffers, or >= 0 for single-frame buffers
+			GLuint m_bufferName = 0; // UBO or SSBO handle
+			GLintptr m_baseOffset = 0; // 0 for permanent buffers, or >= 0 for single-frame buffers
 		};
 
 

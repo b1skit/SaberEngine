@@ -20,7 +20,7 @@ namespace dx12
 			Microsoft::WRL::ComPtr<IDXGISwapChain4> m_swapChain = nullptr;
 
 			std::vector<std::shared_ptr<re::TextureTargetSet>> m_backbufferTargetSets;
-			uint8_t m_backBufferIdx; // Which backbuffer target set to use
+			uint8_t m_backBufferIdx = std::numeric_limits<uint8_t>::max(); // Which backbuffer target set to use
 
 			bool m_vsyncEnabled = false; // Disabled if tearing is enabled (ie. using a variable refresh display)
 			bool m_tearingSupported = false; // Always allow tearing if supported. Required for variable refresh dispays (eg. G-Sync/FreeSync)

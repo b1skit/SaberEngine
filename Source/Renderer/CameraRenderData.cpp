@@ -175,7 +175,7 @@ namespace gr
 		nearTR /= nearTR.w;
 		nearBR /= nearBR.w;
 
-		gr::Camera::Frustum frustum;
+		gr::Camera::Frustum frustum{};
 
 		// Near face (Behind the camera)
 		frustum.m_planes[0].m_point = nearBL;

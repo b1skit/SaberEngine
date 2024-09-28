@@ -94,7 +94,7 @@ namespace re
 
 			SwapchainColorProxy	= 1 << 5, // Pre-existing API-provided resource (i.e. backbuffer color target)
 
-			Invalid
+			Invalid = std::numeric_limits<uint8_t>::max()
 		};
 
 		enum Dimension : uint8_t

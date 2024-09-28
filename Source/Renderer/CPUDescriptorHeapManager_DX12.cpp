@@ -177,12 +177,14 @@ namespace dx12
 
 	AllocationPage::~AllocationPage()
 	{
-		std::lock_guard<std::mutex> pageLock(m_pageMutex);
+		{
+			std::lock_guard<std::mutex> pageLock(m_pageMutex);
 
-		SEAssert(m_numFreeElements == m_totalElements, "Destroying a page before allocations have been freed");
+			SEAssert(m_numFreeElements == m_totalElements, "Destroying a page before allocations have been freed");
 
-		m_descriptorHeap = nullptr;
-		m_baseDescriptor = {0};
+			m_descriptorHeap = nullptr;
+			m_baseDescriptor = { 0 };
+		}
 	}
 
 

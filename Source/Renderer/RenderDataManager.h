@@ -181,14 +181,12 @@ namespace gr
 			friend class gr::RenderDataManager;
 			LinearIterator(T const* beginPtr, T const* endPtr) : m_ptr(beginPtr), m_endPtr(endPtr) {}
 
-
 		public:
 			~LinearIterator() = default;
 			LinearIterator(LinearIterator const&) = default;
 			LinearIterator(LinearIterator&&) noexcept = default;
 			LinearIterator& operator=(LinearIterator const&) = default;
 			LinearIterator& operator=(LinearIterator&&) noexcept = default;
-
 
 		public:
 			[[nodiscard]] T const& operator*() const { return *m_ptr; }
@@ -228,6 +226,7 @@ namespace gr
 				std::tuple<Ts const*...> endPtrs,
 				uint64_t currentFrame);
 
+		public:
 			~ObjectIterator() = default;
 			ObjectIterator(ObjectIterator const&) = default;
 			ObjectIterator(ObjectIterator&&) noexcept = default;
@@ -289,12 +288,12 @@ namespace gr
 				std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const*,
 				uint64_t currentFrame);
 
+		public:
 			~IDIterator() = default;
 			IDIterator(IDIterator const&) = default;
 			IDIterator(IDIterator&&) noexcept = default;
 			IDIterator& operator=(IDIterator const&) = default;
 			IDIterator& operator=(IDIterator&&) noexcept = default;
-
 
 		public:
 			template<typename T>

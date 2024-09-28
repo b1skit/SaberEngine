@@ -36,7 +36,7 @@ namespace gr
 			// Ambient type data:
 			re::Texture const* m_iblTex = nullptr;
 
-			bool m_isActive; // Note: Only *one* ambient light can be active at any time
+			bool m_isActive = false; // Note: Only *one* ambient light can be active at any time
 
 			float m_diffuseScale = 1.f;
 			float m_specularScale = 1.f;
@@ -83,11 +83,11 @@ namespace gr
 			char m_lightName[core::INamedObject::k_maxNameLength];
 
 			// Point type data:
-			glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
-			float m_emitterRadius; // For non-singular attenuation function
-			float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
+			glm::vec4 m_colorIntensity = glm::vec4(0.f); // .rgb = hue, .a = intensity
+			float m_emitterRadius = 0.f; // For non-singular attenuation function
+			float m_intensityCuttoff = 0.f; // Intensity value at which we stop drawing the deferred mesh
 
-			float m_sphericalRadius; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
+			float m_sphericalRadius = 0.f; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
 
 			bool m_hasShadow = false;
 
@@ -113,13 +113,13 @@ namespace gr
 			char m_lightName[core::INamedObject::k_maxNameLength];
 
 			// Spot type data:
-			glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
-			float m_emitterRadius; // For non-singular attenuation function
-			float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
+			glm::vec4 m_colorIntensity = glm::vec4(0.f); // .rgb = hue, .a = intensity
+			float m_emitterRadius = 0.f; // For non-singular attenuation function
+			float m_intensityCuttoff = 0.f; // Intensity value at which we stop drawing the deferred mesh
 
-			float m_innerConeAngle; // Radians: Angle from the center of the light where falloff begins
-			float m_outerConeAngle;
-			float m_coneHeight; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
+			float m_innerConeAngle = 0.f; // Radians: Angle from the center of the light where falloff begins
+			float m_outerConeAngle = 0.f;
+			float m_coneHeight = 0.f; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
 
 			bool m_hasShadow = false;
 

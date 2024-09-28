@@ -105,8 +105,10 @@ namespace util
 	template<typename T>
 	inline ThreadSafeVector<T>::~ThreadSafeVector()
 	{
-		std::unique_lock<std::mutex> lock(m_vectorMutex);
-		m_vector.clear();
+		{
+			std::unique_lock<std::mutex> lock(m_vectorMutex);
+			m_vector.clear();
+		}
 	}
 
 

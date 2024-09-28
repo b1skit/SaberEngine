@@ -14,16 +14,16 @@ namespace opengl
 	public:
 		struct PlatformParams final : public re::Sampler::PlatformParams
 		{
-			GLuint m_samplerID;		// Name of a sampler
+			GLuint m_samplerID = 0;		// Name of a sampler
 
-			GLenum m_textureWrapS;
-			GLenum m_textureWrapT;
-			GLenum m_textureWrapR;
+			GLenum m_textureWrapS = 0;
+			GLenum m_textureWrapT = 0;
+			GLenum m_textureWrapR = 0;
 
-			GLenum m_textureMinFilter;
-			GLenum m_textureMagFilter;
+			GLenum m_textureMinFilter = 0;
+			GLenum m_textureMagFilter = 0;
 
-			GLenum m_comparisonFunc;
+			GLenum m_comparisonFunc = 0;
 		};
 
 	public:

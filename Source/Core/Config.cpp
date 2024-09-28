@@ -69,7 +69,7 @@ namespace core
 			bool HasValue() const { return !m_value.empty(); }
 		};
 		std::vector<KeyValue> keysValues;
-		keysValues.reserve(argc - 1);
+		keysValues.reserve(static_cast<size_t>(argc) - 1);
 
 		// Pre-parse the args into key/value pairs:
 		std::string argString; // The full list of all command line args received		

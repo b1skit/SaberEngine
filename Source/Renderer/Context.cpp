@@ -125,7 +125,7 @@ namespace re
 		// Destroy any render libraries
 		for (size_t i = 0; i < m_renderLibraries.size(); i++)
 		{
-			if (m_renderLibraries[i])
+			if (m_renderLibraries[i] != nullptr)
 			{
 				m_renderLibraries[i]->Destroy();
 				m_renderLibraries[i] = nullptr;

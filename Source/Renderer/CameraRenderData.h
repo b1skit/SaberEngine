@@ -21,7 +21,7 @@ namespace gr
 		};
 		struct Frustum
 		{
-			std::array<FrustumPlane, 6> m_planes;
+			std::array<FrustumPlane, 6> m_planes{};
 			glm::vec3 m_camWorldPos;
 		};
 		class View

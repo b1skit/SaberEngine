@@ -13,9 +13,9 @@ namespace gr
 	{
 	public:
 		// Static world-space CS axis (SaberEngine currently uses a RHCS)
-		static const glm::vec3 WorldAxisX;	// +X
-		static const glm::vec3 WorldAxisY;	// +Y
-		static const glm::vec3 WorldAxisZ;	// +Z
+		static constexpr glm::vec3 WorldAxisX = glm::vec3(1.0f, 0.0f, 0.0f);	// +X
+		static constexpr glm::vec3 WorldAxisY = glm::vec3(0.0f, 1.0f, 0.0f);	// +Y
+		static constexpr glm::vec3 WorldAxisZ = glm::vec3(0.0f, 0.0f, 1.0f);	// +Z
 
 
 	public:
@@ -24,12 +24,12 @@ namespace gr
 			glm::mat4 g_model = glm::mat4(1.f); // Global TRS
 			glm::mat4 g_transposeInvModel = glm::mat4(1.f);
 
-			glm::vec3 m_globalPosition; // World-space position
-			glm::vec3 m_globalScale;
+			glm::vec3 m_globalPosition = glm::vec3(0.f); // World-space position
+			glm::vec3 m_globalScale = glm::vec3(1.f);
 
-			glm::vec3 m_globalRight; // World-space right (X+) vector
-			glm::vec3 m_globalUp; // World-space up (Y+) vector
-			glm::vec3 m_globalForward; // World-space forward (Z+) vector
+			glm::vec3 m_globalRight = WorldAxisX; // World-space right (X+) vector
+			glm::vec3 m_globalUp = WorldAxisY; // World-space up (Y+) vector
+			glm::vec3 m_globalForward = WorldAxisZ; // World-space forward (Z+) vector
 
 			gr::TransformID m_transformID = gr::k_invalidTransformID;
 		};

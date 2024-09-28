@@ -12,7 +12,9 @@
 namespace gr
 {
 	GraphicsSystemManager::GraphicsSystemManager(re::RenderSystem* owningRS)
-		: m_owningRenderSystem(owningRS)
+		: m_renderData(nullptr)
+		, m_batchManager(nullptr)
+		, m_owningRenderSystem(owningRS)
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightRenderDataID(gr::k_invalidTransformID)

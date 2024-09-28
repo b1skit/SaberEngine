@@ -45,7 +45,7 @@ namespace dx12
 			DescriptorAllocation m_uavCPUDescAllocation; // Used for GPU-writable immutable buffers
 
 			std::vector<ReadbackResource> m_readbackResources; // CPU readback
-			uint8_t m_currentMapFrameLatency; // Used to compute the resource index during unmapping
+			uint8_t m_currentMapFrameLatency = std::numeric_limits<uint8_t>::max(); // Used to compute the resource index during unmapping
 
 			union
 			{

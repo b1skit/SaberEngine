@@ -8,7 +8,7 @@
 #include "Renderer/Window_Win32.h"
 
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
 	// Store the HINSTANCE for when we initialize our window
 	win32::Window::s_platformState.m_hInstance = hInstance;

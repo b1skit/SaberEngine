@@ -142,7 +142,7 @@ namespace re
 
 
 	private: // Use the Create() factory instead
-		VertexStream(StreamDesc const&, util::ByteVector&& data, bool& isNormalizedOut);
+		VertexStream(StreamDesc const&, util::ByteVector& data, bool& isNormalizedOut);
 
 
 	private: // No copying allowed

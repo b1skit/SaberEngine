@@ -35,7 +35,7 @@ namespace droid
 
 		// Metadata: Used during Droid processing, not read to/from JSON
 		void ComputeMetadata();
-		std::array<uint64_t, re::Shader::ShaderType_Count> m_shaderVariantIDs;
+		std::array<uint64_t, re::Shader::ShaderType_Count> m_shaderVariantIDs{ 0 };
 	};
 	void to_json(nlohmann::json& json, TechniqueDesc const& technique);
 	void from_json(nlohmann::json const& json, TechniqueDesc& technique);	

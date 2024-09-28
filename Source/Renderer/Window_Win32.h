@@ -13,7 +13,7 @@ namespace win32
 			HINSTANCE m_hInstance = NULL;
 
 			// Mouse cursors:
-			HCURSOR m_defaultCursor; // Default class cursor
+			HCURSOR m_defaultCursor{}; // Default class cursor
 		};
 		static Win32PlatformState s_platformState;
 

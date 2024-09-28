@@ -71,7 +71,7 @@ namespace gr
 
 		// Non-standard GLTF properties:
 		glm::vec3 m_f0 = glm::vec3(0.04, 0.04f, 0.04f);
-		float m_emissiveStrength;
+		float m_emissiveStrength = 0.f;
 
 
 	private:

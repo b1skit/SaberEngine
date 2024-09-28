@@ -366,7 +366,7 @@ namespace grutil
 		matName << material.normal_texture.texture;
 		matName << material.occlusion_texture.texture;
 		matName << material.emissive_texture.texture;
-		matName << material.emissive_factor[0] << material.emissive_factor[2] << material.emissive_factor[3];
+		matName << (material.emissive_factor[0]) << (material.emissive_factor[2]) << (material.emissive_factor[3]);
 		matName << material.alpha_mode;
 		matName << material.alpha_cutoff;
 
