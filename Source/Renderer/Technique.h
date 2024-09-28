@@ -29,8 +29,8 @@ namespace effect
 			re::PipelineState const*,
 			re::VertexStreamMap const*);
 
-		Technique(Technique&&) = default;
-		Technique& operator=(Technique&&) = default;
+		Technique(Technique&&) noexcept = default;
+		Technique& operator=(Technique&&) noexcept = default;
 
 		~Technique() = default;
 

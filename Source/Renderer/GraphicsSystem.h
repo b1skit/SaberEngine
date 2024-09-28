@@ -155,8 +155,8 @@ namespace gr
 
 
 	public:
-		GraphicsSystem(GraphicsSystem&&) = default;
-		GraphicsSystem& operator=(GraphicsSystem&&) = default;
+		GraphicsSystem(GraphicsSystem&&) noexcept = default;
+		GraphicsSystem& operator=(GraphicsSystem&&) noexcept = default;
 
 		virtual ~GraphicsSystem() = default;
 

@@ -107,8 +107,8 @@ namespace gr
 		template <typename T>
 		T GetAs(); // Get the Material as a dynamic cast to a derrived type
 
-		Material(Material&&) = default;
-		Material& operator=(Material&&) = default;
+		Material(Material&&) noexcept = default;
+		Material& operator=(Material&&) noexcept = default;
 
 		virtual ~Material() = 0;
 

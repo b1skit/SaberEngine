@@ -131,8 +131,8 @@ namespace re
 
 		~Sampler();
 
-		Sampler(Sampler&& rhs) = default;
-		Sampler& operator=(Sampler&&) = default;
+		Sampler(Sampler&&) noexcept = default;
+		Sampler& operator=(Sampler&&) noexcept = default;
 
 		SamplerDesc const& GetSamplerDesc() const { return m_samplerDesc; }
 

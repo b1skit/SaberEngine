@@ -120,7 +120,7 @@ namespace gr
 			bool queueBufferCreate = true);
 
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
-		MeshPrimitive& operator=(MeshPrimitive&& rhs) = default;
+		MeshPrimitive& operator=(MeshPrimitive&& rhs) noexcept = default;
 		~MeshPrimitive() = default;
 		
 		MeshPrimitiveParams const& GetMeshParams() const;

@@ -11,8 +11,9 @@ namespace re
 		PipelineState();
 		
 		PipelineState(PipelineState const&) = default;
-		PipelineState(PipelineState&&) = default;
+		PipelineState(PipelineState&&) noexcept = default;
 		PipelineState& operator=(PipelineState const&) = default;
+		PipelineState& operator=(PipelineState&&) = default;
 		~PipelineState() = default;
 		
 

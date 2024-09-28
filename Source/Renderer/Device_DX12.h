@@ -14,8 +14,8 @@ namespace dx12
 	{
 	public:
 		Device();
-		Device(Device&&) = default;
-		Device& operator=(Device&&) = default;
+		Device(Device&&) noexcept = default;
+		Device& operator=(Device&&) noexcept = default;
 		~Device() { Destroy(); };
 
 		void Create();

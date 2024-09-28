@@ -28,8 +28,8 @@ namespace gr
 		LightManager() = default;
 		~LightManager() = default;
 		
-		LightManager(LightManager&&) = default;
-		LightManager& operator=(LightManager&&) = default;
+		LightManager(LightManager&&) noexcept = default;
+		LightManager& operator=(LightManager&&) noexcept = default;
 
 		void Initialize();
 		void Destroy();

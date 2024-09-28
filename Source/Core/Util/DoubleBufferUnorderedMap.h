@@ -53,8 +53,8 @@ namespace util
 		DoubleBufferUnorderedMap& operator=(DoubleBufferUnorderedMap const&) = delete;
 		
 		// We could allow thread-safe moves, but don't need them for now so haven't bothered
-		DoubleBufferUnorderedMap(DoubleBufferUnorderedMap&&) = delete;
-		DoubleBufferUnorderedMap& operator=(DoubleBufferUnorderedMap&&) = delete;
+		DoubleBufferUnorderedMap(DoubleBufferUnorderedMap&&) noexcept = delete;
+		DoubleBufferUnorderedMap& operator=(DoubleBufferUnorderedMap&&) noexcept = delete;
 	};
 
 

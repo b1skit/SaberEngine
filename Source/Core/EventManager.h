@@ -73,8 +73,9 @@ namespace core
 
 	public:
 		EventManager();
-		EventManager(EventManager&&) = default;
-		EventManager& operator=(EventManager&&) = default;
+
+		EventManager(EventManager&&) noexcept = default;
+		EventManager& operator=(EventManager&&) noexcept = default;
 		~EventManager() = default;
 		
 		// IEngineComponent interface:

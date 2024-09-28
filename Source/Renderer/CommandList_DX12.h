@@ -53,8 +53,8 @@ namespace dx12
 
 	public:
 		CommandList(ID3D12Device2*, CommandListType);
-		CommandList(CommandList&&) = default;
-		CommandList& operator=(CommandList&&) = default;
+		CommandList(CommandList&&) noexcept = default;
+		CommandList& operator=(CommandList&&) noexcept = default;
 		~CommandList() { Destroy(); }
 
 		void Destroy();

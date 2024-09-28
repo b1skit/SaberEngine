@@ -11,13 +11,13 @@ namespace util
 	public:
 		ThreadSafeVector() = default;
 		ThreadSafeVector(ThreadSafeVector const&);
-		ThreadSafeVector(ThreadSafeVector&&);
+		ThreadSafeVector(ThreadSafeVector&&) noexcept;
 		
 		ThreadSafeVector(std::vector<T> const&);
-		ThreadSafeVector(std::vector<T>&&);
+		ThreadSafeVector(std::vector<T>&&) noexcept;
 
 		ThreadSafeVector& operator=(ThreadSafeVector const&);
-		ThreadSafeVector& operator=(ThreadSafeVector&&);
+		ThreadSafeVector& operator=(ThreadSafeVector&&) noexcept;
 
 		~ThreadSafeVector();
 
@@ -51,7 +51,7 @@ namespace util
 
 
 	template<typename T>
-	inline ThreadSafeVector<T>::ThreadSafeVector(ThreadSafeVector&& rhs)
+	inline ThreadSafeVector<T>::ThreadSafeVector(ThreadSafeVector&& rhs) noexcept
 	{
 		std::unique_lock<std::mutex> lock(m_vectorMutex);
 		std::unique_lock<std::mutex> rhsLock(rhs.m_vectorMutex);
@@ -68,7 +68,7 @@ namespace util
 
 
 	template<typename T>
-	inline ThreadSafeVector<T>::ThreadSafeVector(std::vector<T>&& rhs)
+	inline ThreadSafeVector<T>::ThreadSafeVector(std::vector<T>&& rhs) noexcept
 	{
 		std::unique_lock<std::mutex> lock(m_vectorMutex);
 		m_vector = std::move(rhs);
@@ -89,7 +89,7 @@ namespace util
 
 
 	template<typename T>
-	inline ThreadSafeVector<T>& ThreadSafeVector<T>::operator=(ThreadSafeVector&& rhs)
+	inline ThreadSafeVector<T>& ThreadSafeVector<T>::operator=(ThreadSafeVector&& rhs) noexcept
 	{
 		if (&rhs == this)
 		{

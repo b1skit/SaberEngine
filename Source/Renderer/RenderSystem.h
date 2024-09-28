@@ -22,8 +22,8 @@ namespace re
 
 		~RenderSystem() { Destroy(); };
 
-		RenderSystem(RenderSystem&&) = default;
-		RenderSystem& operator=(RenderSystem&&) = default;
+		RenderSystem(RenderSystem&&) noexcept = default;
+		RenderSystem& operator=(RenderSystem&&) noexcept = default;
 
 
 	public:

@@ -75,8 +75,9 @@ namespace fr
 		explicit BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ);
 
 		BoundsComponent(BoundsComponent const& rhs) = default;
-		BoundsComponent(BoundsComponent&&) = default;
-		BoundsComponent& operator=(BoundsComponent const& rhs) = default;
+		BoundsComponent(BoundsComponent&&) noexcept = default;
+		BoundsComponent& operator=(BoundsComponent const&) = default;
+		BoundsComponent& operator=(BoundsComponent&&) noexcept = default;
 		~BoundsComponent() = default;
 
 		bool operator==(fr::BoundsComponent const&) const;

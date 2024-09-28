@@ -31,8 +31,8 @@ namespace dx12
 		DescriptorCache(DescriptorType);
 		~DescriptorCache();
 
-		DescriptorCache(DescriptorCache&&) = default;
-		DescriptorCache& operator=(DescriptorCache&&) = default;
+		DescriptorCache(DescriptorCache&&) noexcept = default;
+		DescriptorCache& operator=(DescriptorCache&&) noexcept = default;
 
 		void Destroy();
 

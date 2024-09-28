@@ -16,7 +16,8 @@ namespace re
 	public:
 		StagePipeline(std::string name) : INamedObject(name) {};
 
-		StagePipeline(StagePipeline&&) = default;
+		StagePipeline(StagePipeline&&) noexcept = default;
+		StagePipeline& operator=(StagePipeline&&) noexcept = default;
 
 		~StagePipeline() { Destroy(); };
 		void Destroy();

@@ -19,8 +19,8 @@ namespace fr
 
 	public:
 		SceneManager();
-		SceneManager(SceneManager&&) = default;
-		SceneManager& operator=(SceneManager&&) = default;
+		SceneManager(SceneManager&&) noexcept = default;
+		SceneManager& operator=(SceneManager&&) noexcept = default;
 		~SceneManager() = default;
 
 		// IEngineComponent interface:

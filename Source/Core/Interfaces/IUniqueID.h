@@ -19,9 +19,9 @@ namespace core
 		IUniqueID();
 
 		IUniqueID(IUniqueID const&) = default;
-		IUniqueID(IUniqueID&&) = default;
+		IUniqueID(IUniqueID&&) noexcept = default;
 		IUniqueID& operator=(IUniqueID const&) = default;
-		IUniqueID& operator=(IUniqueID&&) = default;
+		IUniqueID& operator=(IUniqueID&&) noexcept = default;
 
 
 	public:

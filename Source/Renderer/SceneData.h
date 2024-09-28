@@ -23,8 +23,8 @@ namespace re
 	{
 	public:
 		explicit SceneData();
-		SceneData(SceneData&&) = default;
-		SceneData& operator=(SceneData&&) = default;
+		SceneData(SceneData&&) noexcept = default;
+		SceneData& operator=(SceneData&&) noexcept = default;
 		
 		~SceneData();
 		void Destroy();

@@ -7,8 +7,8 @@ namespace core
 	struct IPlatformParams
 	{
 		IPlatformParams() = default;
-		IPlatformParams(IPlatformParams&&) = default;
-		IPlatformParams& operator=(IPlatformParams&&) = default;
+		IPlatformParams(IPlatformParams&&) noexcept = default;
+		IPlatformParams& operator=(IPlatformParams&&) noexcept = default;
 		virtual ~IPlatformParams() = 0;
 
 		template<typename T>

@@ -32,8 +32,8 @@ namespace effect
 	public:
 		Effect(char const* name);
 
-		Effect(Effect&&) = default;
-		Effect& operator=(Effect&&) = default;
+		Effect(Effect&&) noexcept = default;
+		Effect& operator=(Effect&&) noexcept = default;
 
 		~Effect() = default;
 

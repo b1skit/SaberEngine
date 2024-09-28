@@ -33,10 +33,10 @@ namespace util
 		~ByteVector() = default;
 
 		ByteVector(ByteVector const&) = default;
-		ByteVector(ByteVector&&) = default;
+		ByteVector(ByteVector&&) noexcept = default;
 
 		ByteVector& operator=(ByteVector const&) = default;
-		ByteVector& operator=(ByteVector&&) = default;
+		ByteVector& operator=(ByteVector&&) noexcept = default;
 
 
 	public: // std::vector wrappers:

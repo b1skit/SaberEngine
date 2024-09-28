@@ -87,9 +87,9 @@ namespace gr
 
 	private: // No copying allwoed
 		GraphicsSystemManager(GraphicsSystemManager const&) = delete;
-		GraphicsSystemManager(GraphicsSystemManager&&) = delete;
+		GraphicsSystemManager(GraphicsSystemManager&&) noexcept = delete;
 		GraphicsSystemManager& operator=(GraphicsSystemManager const&) = delete;
-		GraphicsSystemManager& operator=(GraphicsSystemManager&&) = delete;
+		GraphicsSystemManager& operator=(GraphicsSystemManager&&) noexcept = delete;
 
 	};
 

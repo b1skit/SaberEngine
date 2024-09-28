@@ -163,9 +163,9 @@ namespace re
 
 	private:
 		BufferAllocator(BufferAllocator const&) = delete;
-		BufferAllocator(BufferAllocator&&) = delete;
+		BufferAllocator(BufferAllocator&&) noexcept = delete;
 		BufferAllocator& operator=(BufferAllocator const&) = delete;
-		BufferAllocator& operator=(BufferAllocator&&) = delete;
+		BufferAllocator& operator=(BufferAllocator&&) noexcept = delete;
 	};
 
 

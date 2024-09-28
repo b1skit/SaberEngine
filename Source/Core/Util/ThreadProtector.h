@@ -27,9 +27,9 @@ namespace util
 	private: // No copying allowed
 		ThreadProtector() = delete;
 		ThreadProtector(ThreadProtector const&) = delete;
-		ThreadProtector(ThreadProtector&&) = delete;
+		ThreadProtector(ThreadProtector&&) noexcept = delete;
 		ThreadProtector& operator=(ThreadProtector const&) = delete;
-		ThreadProtector& operator=(ThreadProtector&&) = delete;
+		ThreadProtector& operator=(ThreadProtector&&) noexcept = delete;
 	};
 
 

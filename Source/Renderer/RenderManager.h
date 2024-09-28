@@ -207,9 +207,9 @@ namespace re
 
 	private:
 		RenderManager(RenderManager const&) = delete;
-		RenderManager(RenderManager&&) = delete;
+		RenderManager(RenderManager&&) noexcept = delete;
 		void operator=(RenderManager const&) = delete;
-		RenderManager& operator=(RenderManager&&) = delete;
+		RenderManager& operator=(RenderManager&&) noexcept = delete;
 	};
 
 	

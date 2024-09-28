@@ -20,10 +20,10 @@ namespace dx12
 	{
 	public:
 		IResourceState(IResourceState const&) = default;
-		IResourceState(IResourceState&&) = default;
+		IResourceState(IResourceState&&) noexcept = default;
 		IResourceState& operator=(IResourceState const&) = default;
-		IResourceState& operator=(IResourceState&&) = default;
-				
+		IResourceState& operator=(IResourceState&&) noexcept = default;
+
 		
 	public:
 		IResourceState(D3D12_RESOURCE_STATES, SubresourceIdx);

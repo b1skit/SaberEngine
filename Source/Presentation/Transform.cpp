@@ -63,7 +63,7 @@ namespace fr
 	}
 
 
-	Transform::Transform(Transform&& rhs)
+	Transform::Transform(Transform&& rhs) noexcept
 		: m_parent(nullptr)
 		, m_transformID(rhs.m_transformID)
 	{

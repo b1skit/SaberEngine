@@ -18,8 +18,9 @@ namespace en
 
 	public:
 		IEngineThread();
-		IEngineThread(IEngineThread&&) = default;
-		IEngineThread& operator=(IEngineThread&&) = default;
+
+		IEngineThread(IEngineThread&&) noexcept = default;
+		IEngineThread& operator=(IEngineThread&&) noexcept = default;
 		~IEngineThread() = default;
 
 

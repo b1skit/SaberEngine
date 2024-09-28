@@ -20,9 +20,9 @@ namespace fr
 		Camera(gr::Camera::Config const& camConfig, fr::Transform const* transform);
 
 		Camera(Camera const&) = default;
-		Camera(Camera&&) = default;
+		Camera(Camera&&) noexcept = default;
 		Camera& operator=(Camera const&) = default;
-		Camera& operator=(Camera&&) = default;
+		Camera& operator=(Camera&&) noexcept = default;
 		~Camera() = default;
 
 		float const GetFieldOfViewYRad() const;

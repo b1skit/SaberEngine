@@ -15,8 +15,9 @@ namespace en
 
 	public:
 		IEngineComponent() = default;
-		IEngineComponent(IEngineComponent&&) = default;
-		IEngineComponent& operator=(IEngineComponent&&) = default;
+		~IEngineComponent() = default;
+		IEngineComponent(IEngineComponent&&) noexcept = default;
+		IEngineComponent& operator=(IEngineComponent&&) noexcept = default;
 
 	private: // No copying allowed
 		IEngineComponent(IEngineComponent const&) = delete;

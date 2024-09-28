@@ -45,8 +45,9 @@ namespace fr
 
 		~ShadowMap() = default;
 		ShadowMap(ShadowMap const&) = default;
-		ShadowMap(ShadowMap&&) = default;
+		ShadowMap(ShadowMap&&) noexcept = default;
 		ShadowMap& operator=(ShadowMap const&) = default;
+		ShadowMap& operator=(ShadowMap&&) noexcept = default;
 
 		void SetMinMaxShadowBias(glm::vec2 const&);
 		glm::vec2 const& GetMinMaxShadowBias() const;

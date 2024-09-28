@@ -53,8 +53,8 @@ namespace core
 	public:
 		ThreadPool();
 
-		ThreadPool(ThreadPool&&) = default;
-		ThreadPool& operator=(ThreadPool&&) = default;
+		ThreadPool(ThreadPool&&) noexcept = default;
+		ThreadPool& operator=(ThreadPool&&) noexcept = default;
 		~ThreadPool() = default;
 
 		void Startup();

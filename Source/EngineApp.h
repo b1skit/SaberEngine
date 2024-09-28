@@ -16,8 +16,9 @@ namespace app
 
 	public:
 		EngineApp();
-		EngineApp(EngineApp&&) = default;
-		EngineApp& operator=(EngineApp&&) = default;
+
+		EngineApp(EngineApp&&) noexcept = default;
+		EngineApp& operator=(EngineApp&&) noexcept = default;
 		~EngineApp() = default;
 
 		// Lifetime flow:

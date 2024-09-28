@@ -105,6 +105,9 @@ namespace re
 	public:
 		~RenderStage() = default;
 
+		RenderStage(RenderStage&&) noexcept = default;
+		RenderStage& operator=(RenderStage&&) noexcept = default;
+
 		void PostUpdatePreRender();
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
 
@@ -237,7 +240,6 @@ namespace re
 	private:
 		RenderStage() = delete;
 		RenderStage(RenderStage const&) = delete;
-		RenderStage(RenderStage&&) = delete;
 		RenderStage& operator=(RenderStage const&) = delete;
 	};
 

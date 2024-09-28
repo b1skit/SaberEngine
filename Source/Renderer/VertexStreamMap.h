@@ -9,11 +9,12 @@ namespace re
 	{
 	public:
 		VertexStreamMap();
+
 		~VertexStreamMap() = default;
 		VertexStreamMap(VertexStreamMap const&) = default;
-		VertexStreamMap(VertexStreamMap&&) = default;
+		VertexStreamMap(VertexStreamMap&&) noexcept = default;
 		VertexStreamMap& operator=(VertexStreamMap const&) = default;
-		VertexStreamMap& operator=(VertexStreamMap&&) = default;
+		VertexStreamMap& operator=(VertexStreamMap&&) noexcept = default;
 
 		bool operator==(VertexStreamMap const&);
 

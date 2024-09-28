@@ -36,8 +36,8 @@ namespace fr
 		Light(Type lightType, glm::vec4 const& colorIntensity);
 		Light(re::Texture const* iblTex, Type = Type::AmbientIBL); // Ambient light only CTOR
 
-		Light(fr::Light&&) = default;
-		Light& operator=(fr::Light&&) = default;
+		Light(fr::Light&&) noexcept = default;
+		Light& operator=(fr::Light&&) noexcept = default;
 		~Light() = default;
 
 		bool Update();

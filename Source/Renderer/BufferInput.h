@@ -17,10 +17,10 @@ namespace re
 		BufferInput(char const* shaderName, std::shared_ptr<re::Buffer>);
 
 		BufferInput(BufferInput const&) = default;
-		BufferInput(BufferInput&&) = default;
+		BufferInput(BufferInput&&) noexcept = default;
 
 		BufferInput& operator=(BufferInput const&) = default;
-		BufferInput& operator=(BufferInput&&) = default;
+		BufferInput& operator=(BufferInput&&) noexcept = default;
 
 		~BufferInput() = default;
 

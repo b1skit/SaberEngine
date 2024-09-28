@@ -16,8 +16,9 @@ namespace en
 
 	public:
 		InputManager();
-		InputManager(InputManager&&) = default;
-		InputManager& operator=(InputManager&&) = default;
+
+		InputManager(InputManager&&) noexcept = default;
+		InputManager& operator=(InputManager&&) noexcept = default;
 		~InputManager() = default;
 
 		// Static member functions:

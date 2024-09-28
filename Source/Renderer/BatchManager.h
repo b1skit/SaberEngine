@@ -32,8 +32,8 @@ namespace gr
 		BatchManager();
 		~BatchManager() = default;
 
-		BatchManager(BatchManager&&) = default;
-		BatchManager& operator=(BatchManager&&) = default;
+		BatchManager(BatchManager&&) noexcept = default;
+		BatchManager& operator=(BatchManager&&) noexcept = default;
 
 
 	public:

@@ -19,8 +19,8 @@ namespace dx12
 
 	public:
 		Fence();
-		Fence(Fence&&) = default;
-		Fence& operator=(Fence&&) = default;
+		Fence(Fence&&) noexcept = default;
+		Fence& operator=(Fence&&) noexcept = default;
 		~Fence() { Destroy(); };
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, char const* eventName);

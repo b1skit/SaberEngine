@@ -55,11 +55,12 @@ namespace droid
 	{
 	public:
 		ParseDB(ParseParams const&);
+
 		~ParseDB() = default;
 		ParseDB(ParseDB const&) = default;
-		ParseDB(ParseDB&&) = default;
+		ParseDB(ParseDB&&) noexcept = default;
 		ParseDB& operator=(ParseDB const&) = default;
-		ParseDB& operator=(ParseDB&&) = default;
+		ParseDB& operator=(ParseDB&&) noexcept = default;
 
 
 	public:

@@ -74,8 +74,8 @@ namespace util
 		NBufferedVector& operator=(NBufferedVector const&) = delete;
 
 		// We could allow thread-safe moves, but don't need them for now so haven't bothered
-		NBufferedVector(NBufferedVector&&) = delete;
-		NBufferedVector& operator=(NBufferedVector&&) = delete;
+		NBufferedVector(NBufferedVector&&) noexcept = delete;
+		NBufferedVector& operator=(NBufferedVector&&) noexcept = delete;
 	};
 
 

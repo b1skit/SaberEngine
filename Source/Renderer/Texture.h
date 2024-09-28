@@ -209,8 +209,8 @@ namespace re
 			std::string const& name,
 			TextureParams const& params);
 
-		Texture(Texture&&) = default;
-		Texture& operator=(Texture&&) = default;
+		Texture(Texture&&) noexcept = default;
+		Texture& operator=(Texture&&) noexcept = default;
 
 		~Texture();
 

@@ -32,9 +32,9 @@ namespace core
 		explicit INamedObject(std::string const& name);
 
 		INamedObject(INamedObject const&) = default;
-		INamedObject(INamedObject&&) = default;
+		INamedObject(INamedObject&&) noexcept = default;
 		INamedObject& operator=(INamedObject const&) = default;
-		INamedObject& operator=(INamedObject&&) = default;
+		INamedObject& operator=(INamedObject&&) noexcept = default;
 
 
 	public:

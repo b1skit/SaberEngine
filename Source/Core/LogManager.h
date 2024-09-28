@@ -41,8 +41,8 @@ namespace core
 	public:
 		LogManager();
 
-		LogManager(LogManager&&) = default;
-		LogManager& operator=(LogManager&&) = default;
+		LogManager(LogManager&&) noexcept = default;
+		LogManager& operator=(LogManager&&) noexcept = default;
 		~LogManager() = default;
 
 		void Startup(bool isSystemConsoleWindowEnabled);

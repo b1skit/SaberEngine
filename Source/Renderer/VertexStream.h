@@ -95,8 +95,8 @@ namespace re
 
 		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(CreateParams&&, bool queueBufferCreate = true);
 
-		VertexStream(VertexStream&&) = default;
-		VertexStream& operator=(VertexStream&&) = default;
+		VertexStream(VertexStream&&) noexcept = default;
+		VertexStream& operator=(VertexStream&&) noexcept = default;
 
 		~VertexStream() { Destroy(); };
 

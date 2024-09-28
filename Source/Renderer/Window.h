@@ -16,8 +16,8 @@ namespace app
 
 	public:
 		Window();
-		Window(Window&&) = default;
-		Window& operator=(Window&&) = default;
+		Window(Window&&) noexcept = default;
+		Window& operator=(Window&&) noexcept = default;
 		~Window();
 
 		Window::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }

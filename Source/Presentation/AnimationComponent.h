@@ -116,8 +116,8 @@ namespace fr
 		AnimationController(PrivateCTORTag);
 
 		~AnimationController() = default;
-		AnimationController(AnimationController&&) = default;
-		AnimationController& operator=(AnimationController&&) = default;
+		AnimationController(AnimationController&&) noexcept = default;
+		AnimationController& operator=(AnimationController&&) noexcept = default;
 
 
 	private: // No copying allowed

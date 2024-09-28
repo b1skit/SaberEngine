@@ -98,7 +98,8 @@ namespace re
 		TextureTarget(TextureTarget const&);
 		TextureTarget& operator=(TextureTarget const&);
 
-		TextureTarget(TextureTarget&&) = default;		
+		TextureTarget(TextureTarget&&) noexcept = default;
+		TextureTarget& operator=(TextureTarget&&) noexcept = default;
 
 		inline bool HasTexture() const { return m_texture != nullptr; }
 

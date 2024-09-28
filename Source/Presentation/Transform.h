@@ -26,7 +26,7 @@ namespace fr
 	public:
 		explicit Transform(Transform* parent);
 		
-		Transform(Transform&&);
+		Transform(Transform&&) noexcept;
 		~Transform();
 		
 		// Hierarchical relationships:
@@ -138,7 +138,7 @@ namespace fr
 		Transform() = delete;
 		Transform(Transform const&) = delete;
 		Transform& operator=(Transform const&) = delete;
-		Transform& operator=(Transform&&) = delete;
+		Transform& operator=(Transform&&) noexcept = delete;
 
 
 	private: // Static TransformID functionality:

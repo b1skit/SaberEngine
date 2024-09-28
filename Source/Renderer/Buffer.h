@@ -123,8 +123,8 @@ namespace re
 			std::string const& bufferName, void const* dataArray, uint32_t numBytes, BufferParams const&);
 
 	public:
-		Buffer(Buffer&&) = default;
-		Buffer& operator=(Buffer&&) = default;
+		Buffer(Buffer&&) noexcept = default;
+		Buffer& operator=(Buffer&&) noexcept = default;
 		~Buffer();
 
 		void Destroy();

@@ -11,8 +11,8 @@ namespace effect
 	{
 	public:
 		EffectDB() = default;
-		EffectDB(EffectDB&&) = default;
-		EffectDB& operator=(EffectDB&&) = default;
+		EffectDB(EffectDB&&) noexcept = default;
+		EffectDB& operator=(EffectDB&&) noexcept = default;
 		~EffectDB();
 
 		void Destroy();

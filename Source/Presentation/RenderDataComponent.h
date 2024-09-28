@@ -30,8 +30,9 @@ namespace gr
 
 
 	public:
-		RenderDataComponent(RenderDataComponent&&) = default;
-		RenderDataComponent& operator=(RenderDataComponent&&) = default;
+		~RenderDataComponent() = default;
+		RenderDataComponent(RenderDataComponent&&) noexcept = default;
+		RenderDataComponent& operator=(RenderDataComponent&&) noexcept = default;
 
 
 	public:

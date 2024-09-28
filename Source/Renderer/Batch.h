@@ -103,8 +103,8 @@ namespace re
 	public:
 		~Batch() = default;
 	
-		Batch(Batch&&) = default;
-		Batch& operator=(Batch&&) = default;
+		Batch(Batch&&) noexcept = default;
+		Batch& operator=(Batch&&) noexcept = default;
 
 
 	public:		
