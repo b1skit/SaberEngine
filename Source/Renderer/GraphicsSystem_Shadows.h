@@ -36,12 +36,12 @@ namespace gr
 		ShadowsGraphicsSystem(gr::GraphicsSystemManager*);
 		~ShadowsGraphicsSystem() override = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
-		void PreRender(DataDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void PreRender();
 
 
 	private:
-		void CreateBatches(DataDependencies const&);
+		void CreateBatches();
 
 
 	private:
@@ -78,5 +78,11 @@ namespace gr
 		re::StagePipeline::StagePipelineItr m_directionalParentStageItr;
 		re::StagePipeline::StagePipelineItr m_pointParentStageItr;
 		re::StagePipeline::StagePipelineItr m_spotParentStageItr;
+
+
+	private: // Cached dependencies:
+		ViewCullingResults const* m_viewCullingResults;
+		PunctualLightCullingResults const* m_pointCullingResults;
+		PunctualLightCullingResults const* m_spotCullingResults;
 	};
 }

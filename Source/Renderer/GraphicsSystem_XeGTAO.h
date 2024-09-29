@@ -36,9 +36,9 @@ namespace gr
 
 		~XeGTAOGraphicsSystem() = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
-		void PreRender(DataDependencies const&);
+		void PreRender();
 
 		void ShowImGuiWindow() override;
 

@@ -43,7 +43,7 @@ namespace
 
 	std::vector<gr::RenderDataID> CombineVisibleRenderDataIDs(
 		gr::RenderDataManager const& renderData,
-		gr::GraphicsSystem::ViewCullingResults const& viewCullingResults,
+		gr::ViewCullingResults const& viewCullingResults,
 		std::vector<gr::Camera::View> const& views)
 	{
 		// TODO: This function is a temporary convenience, we concatenate sets of RenderDataIDs together for point light
@@ -109,6 +109,9 @@ namespace gr
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
 		, m_stagePipeline(nullptr)
+		, m_viewCullingResults(nullptr)
+		, m_pointCullingResults(nullptr)
+		, m_spotCullingResults(nullptr)
 	{
 	}
 
@@ -258,7 +261,10 @@ namespace gr
 
 
 	void ShadowsGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+		re::StagePipeline& pipeline,
+		TextureDependencies const& texDependencies,
+		BufferDependencies const&,
+		DataDependencies const& dataDependencies)
 	{
 		m_stagePipeline = &pipeline;
 
@@ -271,10 +277,15 @@ namespace gr
 
 		std::shared_ptr<re::RenderStage> spotParentStage = re::RenderStage::CreateParentStage("Spot shadow stages");
 		m_spotParentStageItr = pipeline.AppendRenderStage(spotParentStage);
+
+		// Cache our dependencies:
+		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
+		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
+		m_spotCullingResults = GetDataDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
 	}
 
 
-	void ShadowsGraphicsSystem::PreRender(DataDependencies const& dataDependencies)
+	void ShadowsGraphicsSystem::PreRender()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
@@ -483,18 +494,15 @@ namespace gr
 				m_spotParentStageItr, spotStageItr.second.m_renderStage);
 		}
 
-		CreateBatches(dataDependencies);
+		CreateBatches();
 	}
 
 
-	void ShadowsGraphicsSystem::CreateBatches(DataDependencies const& dataDependencies)
+	void ShadowsGraphicsSystem::CreateBatches()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 		
-		ViewCullingResults const* cullingResults =
-			static_cast<ViewCullingResults const*>(dataDependencies.at(k_cullingDataInput));
-
 		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
 			std::vector<gr::RenderDataID> directionalIDs =
@@ -513,10 +521,10 @@ namespace gr
 					re::RenderStage& directionalStage = 
 						*m_directionalShadowStageData.at(lightID).m_renderStage;
 
-					if (cullingResults)
+					if (m_viewCullingResults)
 					{
 						directionalStage.AddBatches(batchMgr.GetSceneBatches(
-							cullingResults->at(lightID),
+							m_viewCullingResults->at(lightID),
 							(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
 							re::Batch::Filter::CastsShadow,
 							re::Batch::Filter::AlphaBlended));
@@ -547,10 +555,9 @@ namespace gr
 
 							re::RenderStage& spotStage = *m_spotShadowStageData.at(lightID).m_renderStage;
 
-							if (cullingResults)
+							if (m_viewCullingResults)
 							{
-								spotStage.AddBatches(batchMgr.GetSceneBatches(
-									cullingResults->at(lightID)));
+								spotStage.AddBatches(batchMgr.GetSceneBatches(m_viewCullingResults->at(lightID)));
 							}
 							else
 							{
@@ -561,12 +568,10 @@ namespace gr
 					}
 				};
 
-			PunctualLightCullingResults const* spotIDs =
-				static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingDataInput));
-			if (spotIDs)
+			if (m_spotCullingResults)
 			{
-				auto spotItr = renderData.IDBegin(*spotIDs);
-				auto const& spotItrEnd = renderData.IDEnd(*spotIDs);
+				auto spotItr = renderData.IDBegin(*m_spotCullingResults);
+				auto const& spotItrEnd = renderData.IDEnd(*m_spotCullingResults);
 				AddSpotLightBatches(spotItr, spotItrEnd);
 			}
 			else
@@ -598,14 +603,14 @@ namespace gr
 								{pointData.m_renderDataID, gr::Camera::View::Face::ZNeg},
 							};
 
-							if (cullingResults)
+							if (m_viewCullingResults)
 							{
 								// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so we need
 								// to add all batches to the same stage. This is wasteful, as 5/6 of the faces don't need a
 								// given batch. We should draw each face of the cubemap seperately instead
 								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
 									batchMgr.GetSceneBatches(
-										CombineVisibleRenderDataIDs(renderData, *cullingResults, views)));
+										CombineVisibleRenderDataIDs(renderData, *m_viewCullingResults, views)));
 							}
 							else
 							{
@@ -617,12 +622,10 @@ namespace gr
 					}
 				};
 
-			PunctualLightCullingResults const* pointIDs =
-				static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingDataInput));
-			if (pointIDs)
+			if (m_pointCullingResults)
 			{
-				auto pointItr = renderData.IDBegin(*pointIDs);
-				auto const& pointItrEnd = renderData.IDEnd(*pointIDs);
+				auto pointItr = renderData.IDBegin(*m_pointCullingResults);
+				auto const& pointItrEnd = renderData.IDEnd(*m_pointCullingResults);
 				AddPointLightBatches(pointItr, pointItrEnd);
 			}
 			else

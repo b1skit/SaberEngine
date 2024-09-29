@@ -35,7 +35,7 @@ namespace gr
 
 
 	void SkyboxGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		re::RenderStage::FullscreenQuadParams fsqParams;
 		fsqParams.m_zLocation = gr::meshfactory::ZLocation::Far;
@@ -125,7 +125,7 @@ namespace gr
 	}
 
 
-	void SkyboxGraphicsSystem::PreRender(DataDependencies const&)
+	void SkyboxGraphicsSystem::PreRender()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 

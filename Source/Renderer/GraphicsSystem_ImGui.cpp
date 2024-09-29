@@ -15,7 +15,7 @@ namespace gr
 
 
 	void ImGuiGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		// Create a library stage:
 		re::RenderStage::LibraryStageParams imGuiLibraryParams(re::RenderStage::LibraryStageParams::LibraryType::ImGui);
@@ -26,7 +26,7 @@ namespace gr
 	}
 
 
-	void ImGuiGraphicsSystem::PreRender(DataDependencies const&)
+	void ImGuiGraphicsSystem::PreRender()
 	{
 		std::unique_ptr<platform::RLibraryImGui::Payload> framePayload =
 			std::make_unique<platform::RLibraryImGui::Payload>();

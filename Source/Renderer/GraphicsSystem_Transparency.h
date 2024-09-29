@@ -23,9 +23,11 @@ namespace gr
 
 		static constexpr util::HashKey k_sceneDepthTexInput = "SceneDepth";
 		static constexpr util::HashKey k_sceneLightingTexInput = "SceneLightingTarget";
+
 		static constexpr util::HashKey k_viewCullingDataInput = "ViewCullingResults";
 		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
 		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
+
 		static constexpr util::HashKey k_ambientIEMTexInput = "AmbientIEMTex";
 		static constexpr util::HashKey k_ambientPMREMTexInput = "AmbientPMREMTex";
 		static constexpr util::HashKey k_ambientDFGTexInput = "AmbientDFGTex";
@@ -40,9 +42,9 @@ namespace gr
 
 		~TransparencyGraphicsSystem() override = default;
 
-		void InitPipeline(re::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&);
+		void InitPipeline(re::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
-		void PreRender(DataDependencies const&);
+		void PreRender();
 
 
 	private:
@@ -51,5 +53,11 @@ namespace gr
 		std::shared_ptr<re::Texture> const* m_ambientIEMTex;
 		std::shared_ptr<re::Texture> const* m_ambientPMREMTex;
 		std::shared_ptr<re::Buffer> const* m_ambientParams;
+
+
+	private: // Cached dependencies:
+		ViewCullingResults const* m_viewCullingResults;
+		PunctualLightCullingResults const* m_pointCullingResults;
+		PunctualLightCullingResults const* m_spotCullingResults;
 	};
 }

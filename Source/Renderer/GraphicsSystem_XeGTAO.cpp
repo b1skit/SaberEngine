@@ -142,7 +142,7 @@ namespace gr
 
 
 	void XeGTAOGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		m_xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		m_yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
@@ -410,7 +410,7 @@ namespace gr
 	}
 
 
-	void XeGTAOGraphicsSystem::PreRender(DataDependencies const&)
+	void XeGTAOGraphicsSystem::PreRender()
 	{	
 		if (m_isDirty)
 		{

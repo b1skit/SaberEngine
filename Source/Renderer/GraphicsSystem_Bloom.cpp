@@ -59,7 +59,7 @@ namespace gr
 
 
 	void BloomGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		std::shared_ptr<re::Sampler> const bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
 
@@ -224,7 +224,7 @@ namespace gr
 	}
 
 
-	void BloomGraphicsSystem::PreRender(DataDependencies const&)
+	void BloomGraphicsSystem::PreRender()
 	{
 		CreateBatches();
 	

@@ -16,7 +16,7 @@ namespace gr
 
 
 	void TonemappingGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		re::RenderStage::FullscreenQuadParams tonemappingStageParams{};
 		tonemappingStageParams.m_effectID = effect::Effect::ComputeEffectID("Tonemapping");
@@ -58,7 +58,7 @@ namespace gr
 	}
 
 
-	void TonemappingGraphicsSystem::PreRender(DataDependencies const&)
+	void TonemappingGraphicsSystem::PreRender()
 	{
 		//
 	}

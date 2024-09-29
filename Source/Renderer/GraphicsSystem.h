@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "CameraRenderData.h"
+#include "GraphicsSystemCommon.h"
 #include "RenderStage.h"
 #include "RenderPipeline.h"
 
@@ -46,16 +47,15 @@ namespace gr
 		//	d) Provide an implementation of the pure virtual RegisterInputs/Outputs() functions
 		//		-> These are called before/after InitPipelineFn execution
 	public:
-		using TextureDependencies = std::map<util::HashKey const, std::shared_ptr<re::Texture> const*>;
-		using BufferDependencies = std::map<util::HashKey const, std::shared_ptr<re::Buffer> const*>;
-		using DataDependencies = std::unordered_map<util::HashKey const, void const*>;
-
 		struct RuntimeBindings
 		{
-			using InitPipelineFn = 
-				std::function<void(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&)>;
+			using InitPipelineFn = std::function<void(
+				re::StagePipeline&,
+				TextureDependencies const&,
+				BufferDependencies const&,
+				DataDependencies const&)>;
 
-			using PreRenderFn = std::function<void(DataDependencies const&)>;
+			using PreRenderFn = std::function<void()>;
 
 			std::vector<std::pair<std::string, InitPipelineFn>> m_initPipelineFunctions;
 			std::vector<std::pair<std::string, PreRenderFn>> m_preRenderFunctions;
@@ -132,9 +132,6 @@ namespace gr
 
 		// Data inputs/outputs:
 	public:
-		using ViewCullingResults = std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>>;
-		using PunctualLightCullingResults = std::vector<gr::RenderDataID>;
-
 		bool HasRegisteredDataInput(util::HashKey const& scriptName) const;
 		bool HasRegisteredDataInput(char const* scriptName) const;
 		bool HasRegisteredDataInput(std::string const& scriptName) const;
@@ -450,7 +447,7 @@ namespace gr
 	.m_preRenderFunctions = {__VA_ARGS__},
 
 #define INIT_PIPELINE_FN(gsClassName, memberFuncName) \
-	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)}
+	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4)}
 
 #define PRE_RENDER_FN(gsClassName, memberFuncName) \
-	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this, std::placeholders::_1)},
+	{util::ToLower(#memberFuncName), std::bind(&gsClassName::memberFuncName, this)},

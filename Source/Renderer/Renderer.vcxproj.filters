@@ -458,6 +458,9 @@
     <ClInclude Include="BufferInput.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsSystemCommon.h">
+      <Filter>Header Files\gr\grutil</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -789,6 +792,9 @@
     </ClCompile>
     <ClCompile Include="BufferInput.cpp">
       <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSystemCommon.cpp">
+      <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

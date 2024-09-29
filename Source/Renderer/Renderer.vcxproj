@@ -133,6 +133,7 @@
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
     <ClInclude Include="GraphicsSystem.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
+    <ClInclude Include="GraphicsSystemCommon.h" />
     <ClInclude Include="GraphicsSystem_Bloom.h" />
     <ClInclude Include="GraphicsSystem_ComputeMips.h" />
     <ClInclude Include="GraphicsSystem_Culling.h" />
@@ -247,6 +248,7 @@
     <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
     <ClCompile Include="GraphicsSystem.cpp" />
+    <ClCompile Include="GraphicsSystemCommon.cpp" />
     <ClCompile Include="GraphicsSystemManager.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />

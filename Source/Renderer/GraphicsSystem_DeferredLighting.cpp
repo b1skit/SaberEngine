@@ -94,6 +94,8 @@ namespace gr
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
 		, m_resourceCreationStagePipeline(nullptr)
+		, m_pointCullingResults(nullptr)
+		, m_spotCullingResults(nullptr)
 	{
 		m_lightingTargetSet = re::TextureTargetSet::Create("Deferred light targets");
 	}
@@ -353,7 +355,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::InitializeResourceGenerationStages(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		m_resourceCreationStagePipeline = &pipeline;
 
@@ -415,7 +417,10 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+		re::StagePipeline& pipeline,
+		TextureDependencies const& texDependencies,
+		BufferDependencies const&,
+		DataDependencies const& dataDependencies)
 	{
 		m_missing2DShadowFallback = re::Texture::Create("Missing 2D shadow fallback",
 			re::Texture::TextureParams
@@ -608,10 +613,14 @@ namespace gr
 
 		m_ambientStage->AddPermanentTextureInput(
 			"DFG", m_BRDF_integrationMap, clampMinMagMipPoint, re::TextureView(m_BRDF_integrationMap));
+
+		// Cache our dependencies:
+		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
+		m_spotCullingResults = GetDataDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
 	}
 
 
-	void DeferredLightingGraphicsSystem::PreRender(DataDependencies const& dataDependencies)
+	void DeferredLightingGraphicsSystem::PreRender()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
@@ -885,11 +894,11 @@ namespace gr
 		m_pointStage->AddSingleFrameBuffer(lightMgr.GetLightDataBuffer(gr::Light::Point));
 		m_spotStage->AddSingleFrameBuffer(lightMgr.GetLightDataBuffer(gr::Light::Spot));
 
-		CreateBatches(dataDependencies);
+		CreateBatches();
 	}
 
 
-	void DeferredLightingGraphicsSystem::CreateBatches(DataDependencies const& dataDependencies)
+	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
@@ -921,11 +930,9 @@ namespace gr
 				}
 			};
 
-		PunctualLightCullingResults const* spotIDs = 
-			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingDataInput));
-		if (spotIDs)
+		if (m_spotCullingResults)
 		{
-			MarkIDsVisible(spotIDs);
+			MarkIDsVisible(m_spotCullingResults);
 		}
 		else
 		{
@@ -934,11 +941,9 @@ namespace gr
 			MarkAllIDsVisible(spotItr, spotItrEnd);
 		}
 
-		PunctualLightCullingResults const* pointIDs = 
-			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingDataInput));
-		if (pointIDs)
+		if (m_pointCullingResults)
 		{
-			MarkIDsVisible(pointIDs);
+			MarkIDsVisible(m_pointCullingResults);
 		}
 		else
 		{

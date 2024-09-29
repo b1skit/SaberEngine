@@ -34,9 +34,10 @@ namespace gr
 
 		~BloomGraphicsSystem() override = default;
 
-		void InitPipeline(re::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&);
+		void InitPipeline(
+			re::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
-		void PreRender(DataDependencies const&);
+		void PreRender();
 	
 
 	private:

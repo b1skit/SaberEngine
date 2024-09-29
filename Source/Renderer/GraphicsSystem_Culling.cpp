@@ -193,13 +193,14 @@ namespace gr
 	};
 
 
-	void CullingGraphicsSystem::InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&)
+	void CullingGraphicsSystem::InitPipeline(
+		re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&)
 	{
 		//
 	}
 
 
-	void CullingGraphicsSystem::PreRender(DataDependencies const&)
+	void CullingGraphicsSystem::PreRender()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 

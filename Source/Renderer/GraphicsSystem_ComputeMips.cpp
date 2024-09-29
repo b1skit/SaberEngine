@@ -50,7 +50,8 @@ namespace gr
 	}
 
 
-	void ComputeMipsGraphicsSystem::InitPipeline(re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+	void ComputeMipsGraphicsSystem::InitPipeline(
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		m_stagePipeline = &pipeline;
 
@@ -59,7 +60,7 @@ namespace gr
 	}
 
 
-	void ComputeMipsGraphicsSystem::PreRender(DataDependencies const&)
+	void ComputeMipsGraphicsSystem::PreRender()
 	{
 		std::vector<std::shared_ptr<re::Texture>> const& newTextures = 
 			re::RenderManager::Get()->GetNewlyCreatedTextures();

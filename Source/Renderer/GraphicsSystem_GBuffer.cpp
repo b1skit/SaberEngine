@@ -15,6 +15,7 @@ namespace gr
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
 		, m_owningPipeline(nullptr)
+		, m_cullingResults(nullptr)
 	{
 		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", {});
 
@@ -26,7 +27,10 @@ namespace gr
 
 
 	void GBufferGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+		re::StagePipeline& pipeline,
+		TextureDependencies const& texDependencies,
+		BufferDependencies const&,
+		DataDependencies const& dataDependencies)
 	{
 		m_owningPipeline = &pipeline;
 
@@ -94,9 +98,11 @@ namespace gr
 		gbufferClearParams.m_depthClearMode = re::TextureTarget::ClearMode::Enabled;
 		m_owningPipeline->AppendRenderStage(re::RenderStage::CreateClearStage(gbufferClearParams, m_gBufferTargets));
 
-
 		// Finally, append the GBuffer stage to the pipeline:
 		m_owningPipeline->AppendRenderStage(m_gBufferStage);
+
+		// Cache our dependencies:
+		m_cullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
 	}
 
 
@@ -120,9 +126,9 @@ namespace gr
 	}
 
 
-	void GBufferGraphicsSystem::PreRender(DataDependencies const& dataDependencies)
+	void GBufferGraphicsSystem::PreRender()
 	{
-		CreateBatches(dataDependencies);
+		CreateBatches();
 
 		if (m_gBufferStage->GetStageBatches().empty())
 		{
@@ -139,19 +145,16 @@ namespace gr
 	}
 
 
-	void GBufferGraphicsSystem::CreateBatches(DataDependencies const& dataDependencies)
+	void GBufferGraphicsSystem::CreateBatches()
 	{
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 
-		ViewCullingResults const* cullingResults = 
-			static_cast<ViewCullingResults const*>(dataDependencies.at(k_cullingDataInput));
-		
-		if (cullingResults)
+		if (m_cullingResults)
 		{
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
 			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(
-				cullingResults->at(mainCamID),
+				m_cullingResults->at(mainCamID),
 				(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
 				0,
 				re::Batch::Filter::AlphaBlended);

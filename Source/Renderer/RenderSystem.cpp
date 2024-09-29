@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "GraphicsSystem.h"
+#include "GraphicsSystemCommon.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"
 #include "RenderSystemDesc.h"
@@ -15,12 +16,12 @@ using SrcDstNamePairs = re::RenderSystemDescription::SrcDstNamePairs;
 
 namespace
 {
-	gr::GraphicsSystem::TextureDependencies ResolveTextureDependencies(
+	gr::TextureDependencies ResolveTextureDependencies(
 		std::string const& dstGSScriptName,
 		re::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
-		gr::GraphicsSystem::TextureDependencies texDependencies;
+		gr::TextureDependencies texDependencies;
 
 		gr::GraphicsSystem* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
 
@@ -127,12 +128,12 @@ namespace
 	}
 
 
-	gr::GraphicsSystem::BufferDependencies ResolveBufferDependencies(
+	gr::BufferDependencies ResolveBufferDependencies(
 		std::string const& dstGSScriptName,
 		re::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
-		gr::GraphicsSystem::BufferDependencies bufferDependencies;
+		gr::BufferDependencies bufferDependencies;
 
 		gr::GraphicsSystem const* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
 
@@ -171,12 +172,12 @@ namespace
 	}
 
 
-	std::unordered_map<util::HashKey const, void const*> ResolveDataDependencies(
+	gr::DataDependencies ResolveDataDependencies(
 		std::string const& dstGSScriptName,
 		re::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
-		std::unordered_map<util::HashKey const, void const*> resolvedDependencies;
+		gr::DataDependencies resolvedDependencies;
 
 		gr::GraphicsSystem const* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
 
@@ -436,11 +437,14 @@ namespace re
 
 				gr::GraphicsSystem* currentGS = gsm.GetGraphicsSystemByScriptName(currentGSScriptName);
 
-				gr::GraphicsSystem::TextureDependencies const& textureInputs =
+				gr::TextureDependencies const& textureInputs =
 					ResolveTextureDependencies(currentGSScriptName, renderSysDesc, gsm);
 
-				gr::GraphicsSystem::BufferDependencies const& bufferInputs = 
+				gr::BufferDependencies const& bufferInputs = 
 					ResolveBufferDependencies(currentGSScriptName, renderSysDesc, gsm);
+
+				gr::DataDependencies const& dataInputs =
+					ResolveDataDependencies(currentGSScriptName, renderSysDesc, gsm);
 
 				for (auto const& initFn : currentGS->GetRuntimeBindings().m_initPipelineFunctions)
 				{
@@ -448,7 +452,8 @@ namespace re
 
 					std::string const& stagePipelineName = std::format("{} stages", currentGS->GetName());
 
-					initFn.second(renderPipeline.AddNewStagePipeline(stagePipelineName), textureInputs, bufferInputs);
+					initFn.second(
+						renderPipeline.AddNewStagePipeline(stagePipelineName), textureInputs, bufferInputs, dataInputs);
 				}
 
 				// Now the GS is initialized, it can populate its resource dependencies for other GS's
@@ -480,10 +485,9 @@ namespace re
 					for (auto const& updateFn : currentGS->GetRuntimeBindings().m_preRenderFunctions)
 					{
 						currentStep.emplace_back(UpdateStep{
-						.m_preRenderFunc = updateFn.second,
-						.m_resolvedDependencies = ResolveDataDependencies(currentGSName, renderSysDesc, gsm),
-						.m_gs = currentGS,
-						.m_scriptFunctionName = updateFn.first });
+							.m_preRenderFunc = updateFn.second,
+							.m_gs = currentGS,
+							.m_scriptFunctionName = updateFn.first });
 
 						updateOrderLog = std::format("{}\n\t- {}::{}", updateOrderLog, currentGSName, updateFn.first);
 					}
@@ -513,7 +517,7 @@ namespace re
 			{
 				try
 				{
-					currentStep.m_preRenderFunc(currentStep.m_resolvedDependencies);
+					currentStep.m_preRenderFunc();
 				}
 				catch (std::exception e)
 				{

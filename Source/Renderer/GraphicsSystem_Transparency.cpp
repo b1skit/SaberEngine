@@ -16,8 +16,8 @@ namespace
 	re::BufferInput CreateAllLightIndexesBuffer(
 		gr::RenderDataManager const& renderData,
 		gr::LightManager const& lightManager,
-		gr::GraphicsSystem::PunctualLightCullingResults const* pointCullingIDs,
-		gr::GraphicsSystem::PunctualLightCullingResults const* spotCullingIDs,
+		gr::PunctualLightCullingResults const* pointCullingIDs,
+		gr::PunctualLightCullingResults const* spotCullingIDs,
 		char const* bufferName)
 	{
 		const uint32_t numDirectional = renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>();
@@ -96,6 +96,9 @@ namespace gr
 		, INamedObject(GetScriptName())
 		, m_ambientIEMTex(nullptr)
 		, m_ambientPMREMTex(nullptr)
+		, m_viewCullingResults(nullptr)
+		, m_pointCullingResults(nullptr)
+		, m_spotCullingResults(nullptr)
 	{
 	}
 
@@ -125,7 +128,8 @@ namespace gr
 	void TransparencyGraphicsSystem::InitPipeline(
 		re::StagePipeline& pipeline,
 		TextureDependencies const& texDependencies,
-		BufferDependencies const& bufferDependencies)
+		BufferDependencies const& bufferDependencies,
+		DataDependencies const& dataDependencies)
 	{
 		SEAssert(texDependencies.contains(k_ambientIEMTexInput) &&
 			texDependencies.at(k_ambientIEMTexInput) != nullptr &&
@@ -179,16 +183,20 @@ namespace gr
 			re::Sampler::GetSampler("ClampMinMagMipPoint").get(),
 			re::TextureView(texDependencies.at(k_ambientDFGTexInput)->get()));
 
-		// Cache the pointers
+		pipeline.AppendRenderStage(m_transparencyStage);
+
+		// Cache our dependencies:
 		m_ambientIEMTex = texDependencies.at(k_ambientIEMTexInput);
 		m_ambientPMREMTex = texDependencies.at(k_ambientPMREMTexInput);
 		m_ambientParams = bufferDependencies.at(k_ambientParamsBufferInput);
 
-		pipeline.AppendRenderStage(m_transparencyStage);
+		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_viewCullingDataInput, dataDependencies);
+		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
+		m_spotCullingResults = GetDataDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
 	}
 
 
-	void TransparencyGraphicsSystem::PreRender(DataDependencies const& dataDependencies)
+	void TransparencyGraphicsSystem::PreRender()
 	{
 		SEAssert(m_ambientIEMTex && m_ambientPMREMTex && m_ambientParams,
 			"Required inputs are null: We should at least have received any empty pointer");
@@ -240,8 +248,8 @@ namespace gr
 		m_transparencyStage->AddSingleFrameBuffer(CreateAllLightIndexesBuffer(
 			m_graphicsSystemManager->GetRenderData(),
 			lightManager,
-			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_pointLightCullingDataInput)),
-			static_cast<PunctualLightCullingResults const*>(dataDependencies.at(k_spotLightCullingDataInput)),
+			m_pointCullingResults,
+			m_spotCullingResults,
 			"AllLightIndexesParams"));
 
 		// Shadow texture arrays:
@@ -269,15 +277,12 @@ namespace gr
 
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 
-		ViewCullingResults const* viewCullingResults =
-			static_cast<ViewCullingResults const*>(dataDependencies.at(k_viewCullingDataInput));
-
-		if (viewCullingResults)
+		if (m_viewCullingResults)
 		{
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
 			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(
-				viewCullingResults->at(mainCamID),
+				m_viewCullingResults->at(mainCamID),
 				(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
 				re::Batch::Filter::AlphaBlended);
 

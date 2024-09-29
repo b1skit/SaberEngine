@@ -55,10 +55,10 @@ namespace gr
 
 		~DeferredLightingGraphicsSystem() override = default;
 
-		void InitializeResourceGenerationStages(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
+		void InitializeResourceGenerationStages(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
-		void PreRender(DataDependencies const&);
+		void PreRender();
 
 
 	private:
@@ -130,6 +130,11 @@ namespace gr
 		std::shared_ptr<re::Texture> m_missingCubeShadowFallback;
 
 	private:
-		void CreateBatches(DataDependencies const&);
+		void CreateBatches();
+
+
+	private: // Cached dependencies:
+		PunctualLightCullingResults const* m_pointCullingResults;
+		PunctualLightCullingResults const* m_spotCullingResults;
 	};
 }

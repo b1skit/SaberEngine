@@ -31,8 +31,8 @@ namespace gr
 
 		~ImGuiGraphicsSystem() = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
-		void PreRender(DataDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void PreRender();
 
 
 	public:

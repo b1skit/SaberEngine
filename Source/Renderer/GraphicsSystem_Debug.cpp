@@ -384,7 +384,7 @@ namespace gr
 
 
 	void DebugGraphicsSystem::InitPipeline(
-		re::StagePipeline& stagePipeline, TextureDependencies const& texDependencies, BufferDependencies const&)
+		re::StagePipeline& stagePipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		m_debugParams = re::BufferInput(
 			DebugData::s_shaderName,
@@ -423,7 +423,7 @@ namespace gr
 	}
 
 
-	void DebugGraphicsSystem::PreRender(DataDependencies const&)
+	void DebugGraphicsSystem::PreRender()
 	{
 		CreateBatches();
 

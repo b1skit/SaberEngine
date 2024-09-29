@@ -67,17 +67,20 @@ namespace gr
 
 		~GBufferGraphicsSystem() override = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
-		void PreRender(DataDependencies const&);
+		void PreRender();
 
 
 	private:
-		void CreateBatches(DataDependencies const&);
+		void CreateBatches();
 
 	private:
 		std::shared_ptr<re::RenderStage> m_gBufferStage;
 		std::shared_ptr<re::TextureTargetSet> m_gBufferTargets;
 		re::StagePipeline* m_owningPipeline;
+
+	private: // Cached dependencies:
+		ViewCullingResults const* m_cullingResults;
 	};
 }
