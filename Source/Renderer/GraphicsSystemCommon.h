@@ -19,10 +19,14 @@ namespace gr
 	using PunctualLightCullingResults = std::vector<gr::RenderDataID>;
 
 	using LightDataBufferIdxMap = std::unordered_map<gr::RenderDataID, uint32_t>;
+	
+	using ShadowArrayIdxMap = std::unordered_map<gr::RenderDataID, uint32_t>;
+	static constexpr uint32_t k_invalidShadowIndex = std::numeric_limits<uint32_t>::max();
 
 
 	// Helper functions:
-	uint32_t GetLightDataBufferIdx(LightDataBufferIdxMap const&, gr::RenderDataID lightID);
+	uint32_t GetLightDataBufferIdx(LightDataBufferIdxMap const*, gr::RenderDataID lightID);
+	uint32_t GetShadowArrayIdx(ShadowArrayIdxMap const*, gr::RenderDataID lightID);
 
 
 	template<typename T>

@@ -861,7 +861,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> buffer)
+	void RenderStage::AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
 	{
 		AddPermanentBuffer(re::BufferInput(shaderName, buffer));
 	}
@@ -901,7 +901,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> buffer)
+	void RenderStage::AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
 	{
 		AddSingleFrameBuffer(re::BufferInput(shaderName, buffer));
 	}

@@ -1,17 +1,10 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "Buffer.h"
-#include "LightRenderData.h"
-#include "LightManager.h"
-#include "LightRenderData.h"
+#include "GraphicsSystem_LightManager.h"
+#include "GraphicsSystemManager.h"
+#include "LightParamsHelpers.h"
 #include "RenderDataManager.h"
-#include "Texture.h"
-#include "TextureTarget.h"
-#include "TextureView.h"
 
-#include "Core/Assert.h"
 #include "Core/Config.h"
-
-#include "Core/Util/CastUtils.h"
 
 #include "Shaders/Common/LightParams.h"
 
@@ -49,45 +42,114 @@ namespace
 
 namespace gr
 {
-	void LightManager::UpdateLightBuffers(gr::RenderDataManager const& renderData)
+	LightManagerGraphicsSystem::LightManagerGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
 	{
+	}
+
+
+	void LightManagerGraphicsSystem::RegisterInputs()
+	{
+		//
+	}
+
+
+	void LightManagerGraphicsSystem::RegisterOutputs()
+	{
+		// Monolithic light buffers:
+		RegisterBufferOutput(k_directionalLightDataBufferOutput, &m_directionalLightMetadata.m_lightData);
+		RegisterBufferOutput(k_pointLightDataBufferOutput, &m_pointLightMetadata.m_lightData);
+		RegisterBufferOutput(k_spotLightDataBufferOutput, &m_spotLightMetadata.m_lightData);
+
+		// RenderDataID -> monolithic light buffer index maps
+		RegisterDataOutput(k_IDToDirectionalIdxDataOutput, &m_directionalLightMetadata.m_renderDataIDToBufferIdx);
+		RegisterDataOutput(k_IDToPointIdxDataOutput, &m_pointLightMetadata.m_renderDataIDToBufferIdx);
+		RegisterDataOutput(k_IDToSpotIdxDataOutput, &m_spotLightMetadata.m_renderDataIDToBufferIdx);
+
+		// Shadow array textures:
+		RegisterTextureOutput(k_directionalShadowArrayTexOutput, &m_directionalShadowMetadata.m_shadowArray);
+		RegisterTextureOutput(k_pointShadowArrayTexOutput, &m_pointShadowMetadata.m_shadowArray);
+		RegisterTextureOutput(k_spotShadowArrayTexOutput, &m_spotShadowMetadata.m_shadowArray);
+
+		// RenderDataID -> shadow texture array index maps
+		RegisterDataOutput(k_IDToDirectionalShadowArrayIdxDataOutput, &m_directionalShadowMetadata.m_renderDataIDToTexArrayIdx);
+		RegisterDataOutput(k_IDToPointShadowArrayIdxDataOutput, &m_pointShadowMetadata.m_renderDataIDToTexArrayIdx);
+		RegisterDataOutput(k_IDToSpotShadowArrayIdxDataOutput, &m_spotShadowMetadata.m_renderDataIDToTexArrayIdx);
+
+		RegisterBufferOutput(k_PCSSSampleParamsBufferOutput, &m_poissonSampleParamsBuffer);
+	}
+
+
+	void LightManagerGraphicsSystem::InitPipeline(
+		re::StagePipeline& pipeline,
+		TextureDependencies const& texDependencies,
+		BufferDependencies const& bufferDependencies,
+		DataDependencies const&)
+	{
+		PoissonSampleParamsData const& poissonSampleParamsData = GetPoissonSampleParamsData();
+
+		m_poissonSampleParamsBuffer = re::Buffer::Create(
+			PoissonSampleParamsData::s_shaderName,
+			poissonSampleParamsData,
+			re::Buffer::BufferParams{
+				.m_allocationType = re::Buffer::AllocationType::Immutable,
+				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_type = re::Buffer::Type::Constant,
+			});
+	}
+
+
+	void LightManagerGraphicsSystem::PreRender()
+	{
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
 		RemoveDeletedLights(renderData);
 		RegisterNewLights(renderData);
 		UpdateLightBufferData(renderData);
 	}
 
 
-	void LightManager::Initialize()
+	uint32_t LightManagerGraphicsSystem::GetShadowArrayIndex(
+		ShadowMetadata const& shadowMetadata, gr::RenderDataID lightID) const
 	{
-		PoissonSampleParamsData const& poissonSampleParamsData = GetPoissonSampleParamsData();
+		uint32_t shadowArrayIdx = INVALID_SHADOW_IDX;
+		if (shadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
+		{
+			shadowArrayIdx = shadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
+		}
+		return shadowArrayIdx;
+	};
 
-		m_poissonSampleParamsBuffer = re::BufferInput(
-			PoissonSampleParamsData::s_shaderName,
-			re::Buffer::Create(
-				PoissonSampleParamsData::s_shaderName,
-				poissonSampleParamsData,
-				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::AllocationType::Immutable,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-					.m_type = re::Buffer::Type::Constant,
-				}));
+
+	uint32_t LightManagerGraphicsSystem::GetShadowArrayIndex(gr::Light::Type lightType, gr::RenderDataID lightID) const
+	{
+		switch (lightType)
+		{
+		case gr::Light::Directional:
+		{
+			return GetShadowArrayIndex(m_directionalShadowMetadata, lightID);
+		}
+		break;
+		case gr::Light::Point:
+		{
+			return GetShadowArrayIndex(m_pointShadowMetadata, lightID);
+		}
+		break;
+		case gr::Light::Spot:
+		{
+			return GetShadowArrayIndex(m_spotShadowMetadata, lightID);
+		}
+		break;
+		case gr::Light::AmbientIBL:
+		default: SEAssertF("Invalid light type");
+		}
+		return 0; // This should never happen
 	}
 
 
-	void LightManager::Destroy()
-	{
-		m_directionalLightMetadata = {};
-		m_pointLightMetadata = {};
-		m_spotLightMetadata = {};
-
-		m_directionalShadowMetadata = {};
-		m_pointShadowMetadata = {};
-		m_spotShadowMetadata = {};
-	}
-
-
-	void LightManager::RemoveDeletedLights(gr::RenderDataManager const& renderData)
+	void LightManagerGraphicsSystem::RemoveDeletedLights(gr::RenderDataManager const& renderData)
 	{
 		auto DeleteLightMetadata = [](
 			std::vector<gr::RenderDataID> const* lightIDs,
@@ -112,11 +174,11 @@ namespace gr
 					const uint32_t lastIdx = lightMetadata.m_bufferIdxToRenderDataID.rbegin()->first;
 					const gr::RenderDataID lastLightID = lightMetadata.m_bufferIdxToRenderDataID.rbegin()->second;
 
-					SEAssert(lastIdx != deletedIdx || 
+					SEAssert(lastIdx != deletedIdx ||
 						(lightMetadata.m_bufferIdxToRenderDataID.at(lastIdx) == deletedID &&
 							lightMetadata.m_renderDataIDToBufferIdx.at(deletedID) == lastIdx),
 						"IDs are out of sync");
-					
+
 					// Move the last entry to replace the one being deleted:
 					if (lastIdx != deletedIdx)
 					{
@@ -140,7 +202,7 @@ namespace gr
 		DeleteLightMetadata(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_pointLightMetadata);
 		DeleteLightMetadata(renderData.GetIDsWithDeletedData<gr::Light::RenderDataSpot>(), m_spotLightMetadata);
 
-		std::vector<gr::RenderDataID> const* deletedShadows = 
+		std::vector<gr::RenderDataID> const* deletedShadows =
 			renderData.GetIDsWithDeletedData<gr::ShadowMap::RenderData>();
 		if (deletedShadows && !deletedShadows->empty())
 		{
@@ -207,7 +269,7 @@ namespace gr
 	}
 
 
-	void LightManager::RegisterNewLights(gr::RenderDataManager const& renderData)
+	void LightManagerGraphicsSystem::RegisterNewLights(gr::RenderDataManager const& renderData)
 	{
 		auto AddToLightMetadata = [](
 			std::vector<gr::RenderDataID> const* lightIDs,
@@ -223,7 +285,7 @@ namespace gr
 					SEAssert(!lightMetadata.m_renderDataIDToBufferIdx.contains(newID), "Light is already registered");
 
 					const uint32_t newLightIndex = lightMetadata.m_numLights++;
-					
+
 					lightMetadata.m_renderDataIDToBufferIdx.emplace(newID, newLightIndex);
 					lightMetadata.m_bufferIdxToRenderDataID.emplace(newLightIndex, newID);
 
@@ -284,7 +346,7 @@ namespace gr
 	}
 
 
-	void LightManager::UpdateLightBufferData(gr::RenderDataManager const& renderData)
+	void LightManagerGraphicsSystem::UpdateLightBufferData(gr::RenderDataManager const& renderData)
 	{
 		// We update the shadows first, as we pack some shadow texture parameters into the LightData buffer
 		auto UpdateShadowTexture = [](
@@ -368,187 +430,185 @@ namespace gr
 
 		auto UpdateLightBuffer = [&renderData, this]<typename T>(
 			gr::Light::Type lightType,
-			LightMetadata& lightMetadata,
+			LightMetadata & lightMetadata,
 			ShadowMetadata const& shadowMetadata,
 			char const* bufferName)
+		{
+			// If the buffer does not exist we must create it:
+			bool mustReallocate = lightMetadata.m_lightData == nullptr;
+
+			if (!mustReallocate)
 			{
-				// If the buffer does not exist we must create it:
-				bool mustReallocate = !lightMetadata.m_lightData.IsValid();
+				const uint32_t curNumBufferElements = lightMetadata.m_lightData->GetArraySize();
 
-				if (!mustReallocate)
+				// If the buffer is too small, or if the no. of lights has shrunk by too much, we must reallocate:
+				mustReallocate = lightMetadata.m_numLights > 0 &&
+					(lightMetadata.m_numLights > curNumBufferElements ||
+						lightMetadata.m_numLights <= curNumBufferElements * k_shrinkReallocationFactor);
+			}
+
+			if (mustReallocate)
+			{
+				std::vector<LightData> lightData;
+				lightData.resize(lightMetadata.m_numLights);
+
+				// Populate the light data:
+				auto lightItr = renderData.ObjectBegin<T>();
+				auto const& lightItrEnd = renderData.ObjectEnd<T>();
+				while (lightItr != lightItrEnd)
 				{
-					const uint32_t curNumBufferElements = lightMetadata.m_lightData.GetBuffer()->GetArraySize();
+					const gr::RenderDataID lightID = lightItr.GetRenderDataID();
 
-					// If the buffer is too small, or if the no. of lights has shrunk by too much, we must reallocate:
-					mustReallocate = lightMetadata.m_numLights > 0 &&
-						(lightMetadata.m_numLights > curNumBufferElements ||
-							lightMetadata.m_numLights <= curNumBufferElements * k_shrinkReallocationFactor);
+					SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
+						"Light ID has not been registered");
+
+					const uint32_t lightIdx = lightMetadata.m_renderDataIDToBufferIdx.at(lightID);
+
+					const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, lightID);
+
+					SEAssert(lightMetadata.m_bufferIdxToRenderDataID.contains(lightIdx),
+						"Light index has not been registered");
+
+					SEAssert(lightIdx < lightMetadata.m_numLights, "Light index is OOB");
+
+					T const& lightRenderData = lightItr.Get<T>();
+					gr::Transform::RenderData const& transformData = lightItr.GetTransformData();
+
+					lightData[lightIdx] = GetLightParamDataHelper(
+						renderData,
+						lightRenderData,
+						transformData,
+						lightID,
+						lightType,
+						shadowMetadata.m_shadowArray.get(),
+						shadowArrayIdx);
+
+					++lightItr;
 				}
-				
-				if (mustReallocate)
+				SEAssert(lightMetadata.m_numLights == lightData.size(),
+					"Number of lights is out of sync with render data");
+
+
+				// If there are 0 lights, create a single dummy entry so we have something to set
+				if (lightData.empty())
 				{
-					std::vector<LightData> lightData;
-					lightData.resize(lightMetadata.m_numLights);
-
-					// Populate the light data:
-					auto lightItr = renderData.ObjectBegin<T>();
-					auto const& lightItrEnd = renderData.ObjectEnd<T>();
-					while (lightItr != lightItrEnd)
-					{
-						const gr::RenderDataID lightID = lightItr.GetRenderDataID();
-						
-						SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
-							"Light ID has not been registered");
-
-						const uint32_t lightIdx = lightMetadata.m_renderDataIDToBufferIdx.at(lightID);
-
-						const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, lightID);
-
-						SEAssert(lightMetadata.m_bufferIdxToRenderDataID.contains(lightIdx),
-							"Light index has not been registered");
-
-						SEAssert(lightIdx < lightMetadata.m_numLights, "Light index is OOB");
-
-						T const& lightRenderData = lightItr.Get<T>();
-						gr::Transform::RenderData const& transformData = lightItr.GetTransformData();
-
-						lightData[lightIdx] = GetLightParamDataHelper(
-							renderData, 
-							lightRenderData, 
-							transformData, 
-							lightID, 
-							lightType,
-							shadowMetadata.m_shadowArray.get(),
-							shadowArrayIdx);
-
-						++lightItr;
-					}
-					SEAssert(lightMetadata.m_numLights == lightData.size(),
-						"Number of lights is out of sync with render data");
-
-
-					// If there are 0 lights, create a single dummy entry so we have something to set
-					if (lightData.empty())
-					{
-						lightData.emplace_back(LightData{});
-					}
-
-					lightMetadata.m_lightData = re::BufferInput(
-						bufferName,
-						re::Buffer::CreateArray<LightData>(
-							bufferName,
-							lightData.data(),
-							re::Buffer::BufferParams{
-								.m_allocationType = re::Buffer::AllocationType::Mutable,
-								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-								.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
-								.m_type = re::Buffer::Type::Structured,
-								.m_arraySize = util::CheckedCast<uint32_t>(lightData.size()),
-							}));
+					lightData.emplace_back(LightData{});
 				}
-				else
+
+				lightMetadata.m_lightData = re::Buffer::CreateArray<LightData>(
+					bufferName,
+					lightData.data(),
+					re::Buffer::BufferParams{
+						.m_allocationType = re::Buffer::AllocationType::Mutable,
+						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_type = re::Buffer::Type::Structured,
+						.m_arraySize = util::CheckedCast<uint32_t>(lightData.size()),
+					});
+			}
+			else
+			{
+				// Update any entries that were moved:
+				std::unordered_set<gr::RenderDataID> seenIDs;
+
+				for (uint32_t movedLightIdx : lightMetadata.m_dirtyMovedIndexes)
 				{
-					// Update any entries that were moved:
-					std::unordered_set<gr::RenderDataID> seenIDs;
+					SEAssert(lightMetadata.m_bufferIdxToRenderDataID.contains(movedLightIdx), "Invalid light index");
 
-					for (uint32_t movedLightIdx : lightMetadata.m_dirtyMovedIndexes)
+					const gr::RenderDataID movedLightID = lightMetadata.m_bufferIdxToRenderDataID.at(movedLightIdx);
+
+					T const& lightRenderData = renderData.GetObjectData<T>(movedLightID);
+
+					gr::Transform::RenderData const& transformData =
+						renderData.GetTransformDataFromRenderDataID(movedLightID);
+
+					const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, movedLightID);
+
+					LightData const& lightData = GetLightParamDataHelper(
+						renderData,
+						lightRenderData,
+						transformData,
+						movedLightID,
+						lightType,
+						shadowMetadata.m_shadowArray.get(),
+						shadowArrayIdx);
+
+					lightMetadata.m_lightData->Commit(&lightData, movedLightIdx, 1);
+
+					seenIDs.emplace(movedLightID);
+				}
+
+				// Note: We iterate over ALL lights (not just those that passed culling)
+				auto lightItr = renderData.ObjectBegin<T>();
+				auto const& lightIterEnd = renderData.ObjectEnd<T>();
+				while (lightItr != lightIterEnd)
+				{
+					const gr::RenderDataID lightID = lightItr.GetRenderDataID();
+
+					if (!seenIDs.contains(lightID))// Don't double-update entries that were moved AND dirty
 					{
-						SEAssert(lightMetadata.m_bufferIdxToRenderDataID.contains(movedLightIdx), "Invalid light index");
+						T const& lightRenderData = renderData.GetObjectData<T>(lightID);
 
-						const gr::RenderDataID movedLightID = lightMetadata.m_bufferIdxToRenderDataID.at(movedLightIdx);
-
-						T const& lightRenderData = renderData.GetObjectData<T>(movedLightID);
-
-						gr::Transform::RenderData const& transformData =
-							renderData.GetTransformDataFromRenderDataID(movedLightID);
-
-						const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, movedLightID);
-
-						LightData const& lightData = GetLightParamDataHelper(
-							renderData,
-							lightRenderData,
-							transformData,
-							movedLightID,
-							lightType,
-							shadowMetadata.m_shadowArray.get(),
-							shadowArrayIdx);
-
-						lightMetadata.m_lightData.GetBuffer()->Commit(&lightData, movedLightIdx, 1);
-
-						seenIDs.emplace(movedLightID);
-					}
-
-					// Note: We iterate over ALL lights (not just those that passed culling)
-					auto lightItr = renderData.ObjectBegin<T>();
-					auto const& lightIterEnd = renderData.ObjectEnd<T>();
-					while (lightItr != lightIterEnd)
-					{
-						const gr::RenderDataID lightID = lightItr.GetRenderDataID();
-
-						if (!seenIDs.contains(lightID))// Don't double-update entries that were moved AND dirty
+						// Check if any of the elements related to this light are dirty:
+						bool isDirty = lightItr.IsDirty<T>() || lightItr.TransformIsDirty();
+						if (!isDirty && lightRenderData.m_hasShadow)
 						{
-							T const& lightRenderData = renderData.GetObjectData<T>(lightID);
+							SEAssert((renderData.HasObjectData<gr::Camera::RenderData>() &&
+								renderData.HasObjectData<gr::ShadowMap::RenderData>()),
+								"If a light has a shadow, it must have ShadowMap::RenderData and Camera::RenderData");
 
-							// Check if any of the elements related to this light are dirty:
-							bool isDirty = lightItr.IsDirty<T>() || lightItr.TransformIsDirty();
-							if (!isDirty && lightRenderData.m_hasShadow)
-							{
-								SEAssert((renderData.HasObjectData<gr::Camera::RenderData>() &&
-									renderData.HasObjectData<gr::ShadowMap::RenderData>()),
-									"If a light has a shadow, it must have ShadowMap::RenderData and Camera::RenderData");
+							isDirty |= renderData.IsDirty<gr::Camera::RenderData>(lightID) ||
+								renderData.IsDirty<gr::ShadowMap::RenderData>(lightID);
+						}
 
-								isDirty |= renderData.IsDirty<gr::Camera::RenderData>(lightID) ||
-									renderData.IsDirty<gr::ShadowMap::RenderData>(lightID);
-							}
+						if (isDirty)
+						{
+							gr::Transform::RenderData const& transformData =
+								renderData.GetTransformDataFromRenderDataID(lightID);
 
-							if (isDirty)
-							{
-								gr::Transform::RenderData const& transformData =
-									renderData.GetTransformDataFromRenderDataID(lightID);
+							const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, lightID);
 
-								const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, lightID);
+							LightData const& lightData = GetLightParamDataHelper(
+								renderData,
+								lightRenderData,
+								transformData,
+								lightID,
+								lightType,
+								shadowMetadata.m_shadowArray.get(),
+								shadowArrayIdx);
 
-								LightData const& lightData = GetLightParamDataHelper(
-									renderData,
-									lightRenderData,
-									transformData,
-									lightID,
-									lightType,
-									shadowMetadata.m_shadowArray.get(),
-									shadowArrayIdx);
+							SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
+								"Light ID has not been registered");
 
-								SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
-									"Light ID has not been registered");
+							const uint32_t dirtyLightIdx = lightMetadata.m_renderDataIDToBufferIdx.at(lightID);
 
-								const uint32_t dirtyLightIdx = lightMetadata.m_renderDataIDToBufferIdx.at(lightID);
+							SEAssert(dirtyLightIdx < lightMetadata.m_numLights, "Light index is OOB");
 
-								SEAssert(dirtyLightIdx < lightMetadata.m_numLights, "Light index is OOB");
-
-								lightMetadata.m_lightData.GetBuffer()->Commit(&lightData, dirtyLightIdx, 1);
-							}
-						}				
-
-						++lightItr;
+							lightMetadata.m_lightData->Commit(&lightData, dirtyLightIdx, 1);
+						}
 					}
+
+					++lightItr;
 				}
+			}
 
-				// Clear the dirty indexes, regardless of whether we fully reallocated or partially updated:
-				lightMetadata.m_dirtyMovedIndexes.clear();
-			};
+			// Clear the dirty indexes, regardless of whether we fully reallocated or partially updated:
+			lightMetadata.m_dirtyMovedIndexes.clear();
+		};
 
-		UpdateLightBuffer.template operator()<gr::Light::RenderDataDirectional>(
+		UpdateLightBuffer.template operator() < gr::Light::RenderDataDirectional > (
 			gr::Light::Directional,
 			m_directionalLightMetadata,
 			m_directionalShadowMetadata,
 			LightData::s_directionalLightDataShaderName);
 
-		UpdateLightBuffer.template operator()<gr::Light::RenderDataPoint>(
+		UpdateLightBuffer.template operator() < gr::Light::RenderDataPoint > (
 			gr::Light::Point,
 			m_pointLightMetadata,
 			m_pointShadowMetadata,
 			LightData::s_pointLightDataShaderName);
 
-		UpdateLightBuffer.template operator()<gr::Light::RenderDataSpot>(
+		UpdateLightBuffer.template operator() < gr::Light::RenderDataSpot > (
 			gr::Light::Spot,
 			m_spotLightMetadata,
 			m_spotShadowMetadata,
@@ -556,115 +616,18 @@ namespace gr
 	}
 
 
-	re::BufferInput const& LightManager::GetLightDataBuffer(gr::Light::Type lightType) const
+	void LightManagerGraphicsSystem::ShowImGuiWindow()
 	{
-		switch (lightType)
-		{
-		case gr::Light::Directional: return m_directionalLightMetadata.m_lightData;
-		case gr::Light::Point: return m_pointLightMetadata.m_lightData;
-		case gr::Light::Spot: return m_spotLightMetadata.m_lightData;
-		case gr::Light::AmbientIBL:
-		default: SEAssertF("Invalid light type");
-		}
-		return m_directionalLightMetadata.m_lightData; // This should never happen
-	}
-
-
-	uint32_t LightManager::GetShadowDataBufferIdx(gr::Light::Type lightType, gr::RenderDataID lightID) const
-	{
-		uint32_t shadowIdx = gr::LightManager::k_invalidShadowIndex;
-
-		switch (lightType)
-		{
-		case gr::Light::Directional:
-		{
-			if (m_directionalShadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
-			{
-				shadowIdx = m_directionalShadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
-				SEAssert(shadowIdx < m_directionalShadowMetadata.m_numShadows &&
-					shadowIdx < m_directionalShadowMetadata.m_shadowArray->GetTextureParams().m_arraySize,
-					"Shadow index is OOB");
-			}
-		}
-		break;
-		case gr::Light::Point:
-		{
-			if (m_pointShadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
-			{
-				shadowIdx = m_pointShadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
-				SEAssert(shadowIdx < m_pointShadowMetadata.m_numShadows &&
-					shadowIdx < m_pointShadowMetadata.m_shadowArray->GetTextureParams().m_arraySize,
-					"Shadow index is OOB");
-			}
-		}
-		break;
-		case gr::Light::Spot:
-		{
-			if (m_spotShadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
-			{
-				shadowIdx = m_spotShadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
-				SEAssert(shadowIdx < m_spotShadowMetadata.m_numShadows &&
-					shadowIdx < m_spotShadowMetadata.m_shadowArray->GetTextureParams().m_arraySize,
-					"Shadow index is OOB");
-			}
-		}
-		break;
-		case gr::Light::AmbientIBL:
-		default: SEAssertF("Invalid light type");
-		}
-		return shadowIdx;
-	}
-
-
-	uint32_t LightManager::GetShadowArrayIndex(ShadowMetadata const& shadowMetadata, gr::RenderDataID lightID) const
-	{
-		uint32_t shadowArrayIdx = INVALID_SHADOW_IDX;
-		if (shadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
-		{
-			shadowArrayIdx = shadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
-		}
-		return shadowArrayIdx;
-	};
-
-
-	uint32_t LightManager::GetShadowArrayIndex(gr::Light::Type lightType, gr::RenderDataID lightID) const
-	{
-		switch (lightType)
-		{
-		case gr::Light::Directional:
-		{
-			return GetShadowArrayIndex(m_directionalShadowMetadata, lightID);
-		}
-		break;
-		case gr::Light::Point:
-		{
-			return GetShadowArrayIndex(m_pointShadowMetadata, lightID);
-		}
-		break;
-		case gr::Light::Spot:
-		{
-			return GetShadowArrayIndex(m_spotShadowMetadata, lightID);
-		}
-		break;
-		case gr::Light::AmbientIBL:
-		default: SEAssertF("Invalid light type");
-		}
-		return 0; // This should never happen
-	}
-
-
-	void LightManager::ShowImGuiWindow() const
-	{
-		constexpr ImGuiTableFlags k_tableFlags = 
+		constexpr ImGuiTableFlags k_tableFlags =
 			ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
 
 		auto ShowLightMetadata = [&k_tableFlags](LightMetadata const& lightMetadata)
 			{
 				ImGui::Indent();
 				ImGui::Text(std::format("No. of lights: {}", lightMetadata.m_numLights).c_str());
-				ImGui::Text(std::format("LightData Buffer size{}: {}", 
-					lightMetadata.m_numLights == 0 ? " (including dummy)" : "", 
-					lightMetadata.m_lightData.GetBuffer()->GetArraySize()).c_str());
+				ImGui::Text(std::format("LightData Buffer size{}: {}",
+					lightMetadata.m_numLights == 0 ? " (including dummy)" : "",
+					lightMetadata.m_lightData->GetArraySize()).c_str());
 				ImGui::Unindent();
 			};
 
@@ -672,7 +635,7 @@ namespace gr
 			{
 				ImGui::Indent();
 				ImGui::Text(std::format("No. of shadows: {}", shadowMetadata.m_numShadows).c_str());
-				ImGui::Text(std::format("Shadow array size: {}", 
+				ImGui::Text(std::format("Shadow array size: {}",
 					shadowMetadata.m_shadowArray->GetTextureParams().m_arraySize).c_str());
 				ImGui::Text(std::format("Shadow array element width: {}",
 					shadowMetadata.m_shadowArray->GetTextureParams().m_width).c_str());
@@ -723,7 +686,7 @@ namespace gr
 					ImGui::EndTable();
 				}
 			};
-		
+
 
 		if (ImGui::CollapsingHeader("Directional Lights", ImGuiTreeNodeFlags_DefaultOpen))
 		{

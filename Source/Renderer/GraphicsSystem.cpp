@@ -11,7 +11,7 @@ namespace gr
 		: INamedObject(name)
 		, m_graphicsSystemManager(owningGSM)
 	{
-		LOG("Creating %s", name);
+		LOG("Creating Graphics System \"%s\"", name);
 	}
 
 

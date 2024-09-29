@@ -39,6 +39,25 @@ namespace gr
 		static constexpr util::HashKey k_ssaoInput = "SSAOTex";
 		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
 		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
+
+		static constexpr util::HashKey k_directionalLightDataBufferInput = "DirectionalLightDataBuffer";
+		static constexpr util::HashKey k_pointLightDataBufferInput = "PointLightDataBuffer";
+		static constexpr util::HashKey k_spotLightDataBufferInput = "SpotLightDataBuffer";
+
+		static constexpr util::HashKey k_IDToDirectionalIdxDataInput = "RenderDataIDToDirectionalBufferIdxMap";
+		static constexpr util::HashKey k_IDToPointIdxDataInput = "RenderDataIDToPointBufferIdxMap";
+		static constexpr util::HashKey k_IDToSpotIdxDataInput = "RenderDataIDToSpotBufferIdxMap";
+
+		static constexpr util::HashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
+		static constexpr util::HashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
+		static constexpr util::HashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
+
+		static constexpr util::HashKey k_IDToDirectionalShadowArrayIdxDataInput = "RenderDataIDToDirectionalShadowArrayIdxMap";
+		static constexpr util::HashKey k_IDToPointShadowArrayIdxDataInput = "RenderDataIDToPointShadowArrayIdxMap";
+		static constexpr util::HashKey k_IDToSpotShadowArrayIdxDataInput = "RenderDataIDToSpotShadowArrayIdxMap";
+
+		static constexpr util::HashKey k_PCSSSampleParamsBufferInput = "PCSSSampleParamsBuffer";
+
 		// Note: The DeferredLightingGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
 		void RegisterInputs() override;
 
@@ -65,6 +84,7 @@ namespace gr
 		// BRDF Pre-integration:
 		void CreateSingleFrameBRDFPreIntegrationStage(re::StagePipeline&);
 		std::shared_ptr<re::Texture> m_BRDF_integrationMap;
+
 
 	private:
 		// Ambient IBL resources:
@@ -129,12 +149,31 @@ namespace gr
 		std::shared_ptr<re::Texture> m_missing2DShadowFallback;
 		std::shared_ptr<re::Texture> m_missingCubeShadowFallback;
 
-	private:
-		void CreateBatches();
-
 
 	private: // Cached dependencies:
 		PunctualLightCullingResults const* m_pointCullingResults;
 		PunctualLightCullingResults const* m_spotCullingResults;
+
+		std::shared_ptr<re::Buffer> const* m_directionalLightDataBuffer;
+		std::shared_ptr<re::Buffer> const* m_pointLightDataBuffer;
+		std::shared_ptr<re::Buffer> const* m_spotLightDataBuffer;
+
+		LightDataBufferIdxMap const* m_directionalLightDataBufferIdxMap;
+		LightDataBufferIdxMap const* m_pointLightDataBufferIdxMap;
+		LightDataBufferIdxMap const* m_spotLightDataBufferIdxMap;
+
+		std::shared_ptr<re::Texture> const* m_directionalShadowArrayTex;
+		std::shared_ptr<re::Texture> const* m_pointShadowArrayTex;
+		std::shared_ptr<re::Texture> const* m_spotShadowArrayTex;
+
+		ShadowArrayIdxMap const* m_directionalShadowArrayIdxMap;
+		ShadowArrayIdxMap const* m_pointShadowArrayIdxMap;
+		ShadowArrayIdxMap const* m_spotShadowArrayIdxMap;
+
+		std::shared_ptr<re::Buffer> const* m_PCSSSampleParamsBuffer;
+
+
+	private:
+		void CreateBatches();
 	};
 }

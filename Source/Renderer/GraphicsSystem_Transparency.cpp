@@ -15,9 +15,10 @@ namespace
 {
 	re::BufferInput CreateAllLightIndexesBuffer(
 		gr::RenderDataManager const& renderData,
-		gr::LightManager const& lightManager,
 		gr::PunctualLightCullingResults const* pointCullingIDs,
 		gr::PunctualLightCullingResults const* spotCullingIDs,
+		gr::LightDataBufferIdxMap const* pointLightDataBufferIdxMap,
+		gr::LightDataBufferIdxMap const* spotLightDataBufferIdxMap,
 		char const* bufferName)
 	{
 		const uint32_t numDirectional = renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>();
@@ -47,7 +48,7 @@ namespace
 					allLightIndexesData,
 					gr::Light::Point,
 					contributingPoint++,
-					lightManager.GetLightDataBufferIdx(gr::Light::Point, pointID));
+					gr::GetLightDataBufferIdx(pointLightDataBufferIdxMap, pointID));
 			}
 		}
 
@@ -65,7 +66,7 @@ namespace
 					allLightIndexesData,
 					gr::Light::Spot,
 					contributingSpot++,
-					lightManager.GetLightDataBufferIdx(gr::Light::Spot, spotID));
+					gr::GetLightDataBufferIdx(spotLightDataBufferIdxMap, spotID));
 			}
 		}
 
@@ -99,6 +100,15 @@ namespace gr
 		, m_viewCullingResults(nullptr)
 		, m_pointCullingResults(nullptr)
 		, m_spotCullingResults(nullptr)
+		, m_directionalLightDataBuffer(nullptr)
+		, m_pointLightDataBuffer(nullptr)
+		, m_spotLightDataBuffer(nullptr)
+		, m_pointLightDataBufferIdxMap(nullptr)
+		, m_spotLightDataBufferIdxMap(nullptr)
+		, m_directionalShadowArrayTex(nullptr)
+		, m_pointShadowArrayTex(nullptr)
+		, m_spotShadowArrayTex(nullptr)
+		, m_PCSSSampleParamsBuffer(nullptr)
 	{
 	}
 
@@ -116,6 +126,19 @@ namespace gr
 		RegisterDataInput(k_viewCullingDataInput);
 		RegisterDataInput(k_pointLightCullingDataInput);
 		RegisterDataInput(k_spotLightCullingDataInput);
+
+		RegisterBufferInput(k_directionalLightDataBufferInput);
+		RegisterBufferInput(k_pointLightDataBufferInput);
+		RegisterBufferInput(k_spotLightDataBufferInput);
+
+		RegisterDataInput(k_IDToPointIdxDataInput);
+		RegisterDataInput(k_IDToSpotIdxDataInput);
+
+		RegisterTextureInput(k_directionalShadowArrayTexInput);
+		RegisterTextureInput(k_pointShadowArrayTexInput);
+		RegisterTextureInput(k_spotShadowArrayTexInput);
+
+		RegisterBufferInput(k_PCSSSampleParamsBufferInput);
 	}
 
 
@@ -143,6 +166,30 @@ namespace gr
 			bufferDependencies.at(k_ambientParamsBufferInput) != nullptr,
 			"Missing a required input: We should at least receive some defaults");
 
+		// Cache our dependencies:
+		m_ambientIEMTex = texDependencies.at(k_ambientIEMTexInput);
+		m_ambientPMREMTex = texDependencies.at(k_ambientPMREMTexInput);
+		m_ambientParams = bufferDependencies.at(k_ambientParamsBufferInput);
+
+		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_viewCullingDataInput, dataDependencies);
+		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
+		m_spotCullingResults = GetDataDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
+
+		m_directionalLightDataBuffer = bufferDependencies.at(k_directionalLightDataBufferInput);
+		m_pointLightDataBuffer = bufferDependencies.at(k_pointLightDataBufferInput);
+		m_spotLightDataBuffer = bufferDependencies.at(k_spotLightDataBufferInput);
+
+		m_pointLightDataBufferIdxMap = GetDataDependency<LightDataBufferIdxMap>(k_IDToPointIdxDataInput, dataDependencies);
+		m_spotLightDataBufferIdxMap = GetDataDependency<LightDataBufferIdxMap>(k_IDToSpotIdxDataInput, dataDependencies);
+
+		m_directionalShadowArrayTex = texDependencies.at(k_directionalShadowArrayTexInput);
+		m_pointShadowArrayTex = texDependencies.at(k_pointShadowArrayTexInput);
+		m_spotShadowArrayTex = texDependencies.at(k_spotShadowArrayTexInput);
+
+		m_PCSSSampleParamsBuffer = bufferDependencies.at(k_PCSSSampleParamsBufferInput);
+
+
+		// Stage setup:
 		m_transparencyStage = re::RenderStage::CreateGraphicsStage("Transparency Stage", {});
 
 		m_transparencyStage->SetBatchFilterMaskBit(
@@ -172,9 +219,7 @@ namespace gr
 		// Buffers:		
 		m_transparencyStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_transparencyStage->AddPermanentBuffer(transparencyTarget->GetCreateTargetParamsBuffer());
-
-		m_transparencyStage->AddPermanentBuffer(
-			re::RenderManager::Get()->GetLightManager().GetPCSSPoissonSampleParamsBuffer());
+		m_transparencyStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
 
 		// Texture inputs:
 		m_transparencyStage->AddPermanentTextureInput(
@@ -184,15 +229,6 @@ namespace gr
 			re::TextureView(texDependencies.at(k_ambientDFGTexInput)->get()));
 
 		pipeline.AppendRenderStage(m_transparencyStage);
-
-		// Cache our dependencies:
-		m_ambientIEMTex = texDependencies.at(k_ambientIEMTexInput);
-		m_ambientPMREMTex = texDependencies.at(k_ambientPMREMTexInput);
-		m_ambientParams = bufferDependencies.at(k_ambientParamsBufferInput);
-
-		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_viewCullingDataInput, dataDependencies);
-		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
-		m_spotCullingResults = GetDataDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
 	}
 
 
@@ -239,40 +275,36 @@ namespace gr
 		}
 
 		// Punctual light buffers:
-		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
-
-		m_transparencyStage->AddSingleFrameBuffer(lightManager.GetLightDataBuffer(gr::Light::Directional));
-		m_transparencyStage->AddSingleFrameBuffer(lightManager.GetLightDataBuffer(gr::Light::Point));
-		m_transparencyStage->AddSingleFrameBuffer(lightManager.GetLightDataBuffer(gr::Light::Spot));
+		m_transparencyStage->AddSingleFrameBuffer(LightData::s_directionalLightDataShaderName, *m_directionalLightDataBuffer);
+		m_transparencyStage->AddSingleFrameBuffer(LightData::s_pointLightDataShaderName, *m_pointLightDataBuffer);
+		m_transparencyStage->AddSingleFrameBuffer(LightData::s_spotLightDataShaderName, *m_spotLightDataBuffer);
 		
 		m_transparencyStage->AddSingleFrameBuffer(CreateAllLightIndexesBuffer(
 			m_graphicsSystemManager->GetRenderData(),
-			lightManager,
 			m_pointCullingResults,
 			m_spotCullingResults,
+			m_pointLightDataBufferIdxMap,
+			m_spotLightDataBufferIdxMap,
 			"AllLightIndexesParams"));
 
 		// Shadow texture arrays:
-		std::shared_ptr<re::Texture> directionalShadowArray = lightManager.GetShadowArrayTexture(gr::Light::Directional);
 		m_transparencyStage->AddSingleFrameTextureInput(
 			"DirectionalShadows",
-			directionalShadowArray,
+			*m_directionalShadowArrayTex,
 			re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"),
-			re::TextureView(directionalShadowArray, {re::TextureView::ViewFlags::ReadOnlyDepth}));
+			re::TextureView(*m_directionalShadowArrayTex, {re::TextureView::ViewFlags::ReadOnlyDepth}));
 
-		std::shared_ptr<re::Texture> pointShadowArray = lightManager.GetShadowArrayTexture(gr::Light::Point);
 		m_transparencyStage->AddSingleFrameTextureInput(
 			"PointShadows",
-			pointShadowArray,
+			*m_pointShadowArrayTex,
 			re::Sampler::GetSampler("WrapCmpMinMagLinearMipPoint"),
-			re::TextureView(pointShadowArray, { re::TextureView::ViewFlags::ReadOnlyDepth }));
+			re::TextureView(*m_pointShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
 
-		std::shared_ptr<re::Texture> spotShadowArray = lightManager.GetShadowArrayTexture(gr::Light::Spot);
 		m_transparencyStage->AddSingleFrameTextureInput(
 			"SpotShadows",
-			spotShadowArray,
+			*m_spotShadowArrayTex,
 			re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"),
-			re::TextureView(spotShadowArray, { re::TextureView::ViewFlags::ReadOnlyDepth }));
+			re::TextureView(*m_spotShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
 
 
 		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();

@@ -179,12 +179,12 @@ namespace re
 		bool DepthTargetIsAlsoTextureInput() const;
 		int GetDepthTargetTextureInputIdx() const;
 
-		void AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer>);
+		void AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&);
 		void AddPermanentBuffer(re::BufferInput const&);
 		void AddPermanentBuffer(re::BufferInput&&);
 		inline std::vector<re::BufferInput> const& GetPermanentBuffers() const;
 		
-		void AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer>);
+		void AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&);
 		void AddSingleFrameBuffer(re::BufferInput const&);
 		void AddSingleFrameBuffer(re::BufferInput&&);
 		inline std::vector<re::BufferInput> const& GetPerFrameBuffers() const;

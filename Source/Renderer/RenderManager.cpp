@@ -208,7 +208,6 @@ namespace re
 		m_effectDB.LoadEffectManifest();
 
 		m_renderData.BeginFrame(m_renderFrameNum);
-		m_lightManager.Initialize();
 
 		SEBeginCPUEvent("platform::RenderManager::Initialize");
 		platform::RenderManager::Initialize(*this);
@@ -269,7 +268,6 @@ namespace re
 		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
 
 		// Update the batch manager now that the RenderData has been populated
-		m_lightManager.UpdateLightBuffers(m_renderData);
 		m_batchManager.UpdateBatchCache(m_renderData);
 
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
@@ -392,7 +390,6 @@ namespace re
 		}
 
 		m_renderData.Destroy();
-		m_lightManager.Destroy();
 
 		m_createdTextures.clear();
 
@@ -971,8 +968,6 @@ namespace re
 
 		constexpr char const* k_panelTitle = "Light manager debug";
 		ImGui::Begin(k_panelTitle, showLightMgrDebug);
-
-		m_lightManager.ShowImGuiWindow();
 
 		ImGui::End();
 	}

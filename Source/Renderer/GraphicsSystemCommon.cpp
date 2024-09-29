@@ -6,9 +6,16 @@
 
 namespace gr
 {
-	uint32_t GetLightDataBufferIdx(LightDataBufferIdxMap const& lightDataBufferIdxMap, gr::RenderDataID lightID)
+	uint32_t GetLightDataBufferIdx(LightDataBufferIdxMap const* lightDataBufferIdxMap, gr::RenderDataID lightID)
 	{
-		SEAssert(lightDataBufferIdxMap.contains(lightID), "Light ID not found, was the light registered?");
-		return lightDataBufferIdxMap.at(lightID);
+		SEAssert(lightDataBufferIdxMap->contains(lightID), "Light ID not found, was the light registered?");
+		return lightDataBufferIdxMap->at(lightID);
+	}
+
+
+	uint32_t GetShadowArrayIdx(ShadowArrayIdxMap const* shadowArrayIdxMap, gr::RenderDataID lightID)
+	{
+		SEAssert(shadowArrayIdxMap->contains(lightID), "Light ID not found, was the light registered?");
+		return shadowArrayIdxMap->at(lightID);
 	}
 }

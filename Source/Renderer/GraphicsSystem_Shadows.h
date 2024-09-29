@@ -26,6 +26,15 @@ namespace gr
 		static constexpr util::HashKey k_cullingDataInput = "ViewCullingResults";
 		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
 		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
+
+		static constexpr util::HashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
+		static constexpr util::HashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
+		static constexpr util::HashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
+
+		static constexpr util::HashKey k_IDToDirectionalShadowArrayIdxDataInput = "RenderDataIDToDirectionalShadowArrayIdxMap";
+		static constexpr util::HashKey k_IDToPointShadowArrayIdxDataInput = "RenderDataIDToPointShadowArrayIdxMap";
+		static constexpr util::HashKey k_IDToSpotShadowArrayIdxDataInput = "RenderDataIDToSpotShadowArrayIdxMap";
+
 		void RegisterInputs() override;
 
 		static constexpr util::HashKey k_shadowTexturesOutput = "ShadowTextures";
@@ -84,5 +93,13 @@ namespace gr
 		ViewCullingResults const* m_viewCullingResults;
 		PunctualLightCullingResults const* m_pointCullingResults;
 		PunctualLightCullingResults const* m_spotCullingResults;
+
+		std::shared_ptr<re::Texture> const* m_directionalShadowArrayTex;
+		std::shared_ptr<re::Texture> const* m_pointShadowArrayTex;
+		std::shared_ptr<re::Texture> const* m_spotShadowArrayTex;
+
+		ShadowArrayIdxMap const* m_directionalShadowArrayIdxMap;
+		ShadowArrayIdxMap const* m_pointShadowArrayIdxMap;
+		ShadowArrayIdxMap const* m_spotShadowArrayIdxMap;
 	};
 }

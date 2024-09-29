@@ -141,12 +141,12 @@
     <ClInclude Include="GraphicsSystem_DeferredLighting.h" />
     <ClInclude Include="GraphicsSystem_GBuffer.h" />
     <ClInclude Include="GraphicsSystem_ImGui.h" />
+    <ClInclude Include="GraphicsSystem_LightManager.h" />
     <ClInclude Include="GraphicsSystem_Shadows.h" />
     <ClInclude Include="GraphicsSystem_Skybox.h" />
     <ClInclude Include="GraphicsSystem_Tonemapping.h" />
     <ClInclude Include="GraphicsSystem_Transparency.h" />
     <ClInclude Include="GraphicsSystem_XeGTAO.h" />
-    <ClInclude Include="LightManager.h" />
     <ClInclude Include="LightParamsHelpers.h" />
     <ClInclude Include="LightRenderData.h" />
     <ClInclude Include="Material.h" />
@@ -257,12 +257,12 @@
     <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
     <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
     <ClCompile Include="GraphicsSystem_ImGui.cpp" />
+    <ClCompile Include="GraphicsSystem_LightManager.cpp" />
     <ClCompile Include="GraphicsSystem_Shadows.cpp" />
     <ClCompile Include="GraphicsSystem_Skybox.cpp" />
     <ClCompile Include="GraphicsSystem_Tonemapping.cpp" />
     <ClCompile Include="GraphicsSystem_Transparency.cpp" />
     <ClCompile Include="GraphicsSystem_XeGTAO.cpp" />
-    <ClCompile Include="LightManager.cpp" />
     <ClCompile Include="LightParamsHelpers.cpp" />
     <ClCompile Include="LightRenderData.cpp" />
     <ClCompile Include="Material.cpp" />

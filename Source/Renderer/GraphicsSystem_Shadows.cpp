@@ -2,7 +2,6 @@
 #include "CameraRenderData.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystemManager.h"
-#include "LightManager.h"
 #include "LightRenderData.h"
 #include "RenderManager.h"
 #include "RenderDataManager.h"
@@ -112,6 +111,12 @@ namespace gr
 		, m_viewCullingResults(nullptr)
 		, m_pointCullingResults(nullptr)
 		, m_spotCullingResults(nullptr)
+		, m_directionalShadowArrayTex(nullptr)
+		, m_pointShadowArrayTex(nullptr)
+		, m_spotShadowArrayTex(nullptr)
+		, m_directionalShadowArrayIdxMap(nullptr)
+		, m_pointShadowArrayIdxMap(nullptr)
+		, m_spotShadowArrayIdxMap(nullptr)
 	{
 	}
 
@@ -121,6 +126,14 @@ namespace gr
 		RegisterDataInput(k_cullingDataInput);
 		RegisterDataInput(k_pointLightCullingDataInput);
 		RegisterDataInput(k_spotLightCullingDataInput);
+
+		RegisterTextureInput(k_directionalShadowArrayTexInput);
+		RegisterTextureInput(k_pointShadowArrayTexInput);
+		RegisterTextureInput(k_spotShadowArrayTexInput);
+
+		RegisterDataInput(k_IDToDirectionalShadowArrayIdxDataInput);
+		RegisterDataInput(k_IDToPointShadowArrayIdxDataInput);
+		RegisterDataInput(k_IDToSpotShadowArrayIdxDataInput);
 	}
 
 
@@ -150,23 +163,19 @@ namespace gr
 		
 		SEAssert(shadowData.m_lightType == gr::Light::Point, "Unexpected light type for a cube stage");
 
-		// Shadow map array target texture:
-		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
-		std::shared_ptr<re::Texture> cubeShadowArrayTex = lightManager.GetShadowArrayTexture(shadowData.m_lightType);
-
 		// Texture target set:
 		std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet =
 			re::TextureTargetSet::Create(std::format("{}_CubeShadowTargetSet", lightName));
-
+		
 		pointShadowTargetSet->SetDepthStencilTarget(
-			cubeShadowArrayTex, 
+			*m_pointShadowArrayTex,
 			re::TextureTarget::TargetParams{
 				.m_textureView = CreateShadowWriteView(
 					shadowData.m_lightType, 
-					lightManager.GetShadowArrayIndex(shadowData.m_lightType, lightID)) });
+					GetShadowArrayIdx(m_pointShadowArrayIdxMap, lightID)) });
 
-		pointShadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(cubeShadowArrayTex.get()));
-		pointShadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(cubeShadowArrayTex.get()));
+		pointShadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(m_pointShadowArrayTex->get()));
+		pointShadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(m_pointShadowArrayTex->get()));
 		pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::ClearMode::Enabled);
 
 		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
@@ -229,23 +238,38 @@ namespace gr
 
 		shadowStage->SetDrawStyle(effect::drawstyle::Shadow_2D);
 
-		// Shadow map array target texture:
-		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
-		std::shared_ptr<re::Texture> shadowArrayTex = lightManager.GetShadowArrayTexture(shadowData.m_lightType);
+		std::shared_ptr<re::Texture> const* shadowArrayTex = nullptr;
+		ShadowArrayIdxMap const* shadowArrayIdxMap = nullptr;
+		switch (shadowData.m_lightType)
+		{
+		case gr::Light::Type::Directional:
+		{
+			shadowArrayTex = m_directionalShadowArrayTex;
+			shadowArrayIdxMap = m_directionalShadowArrayIdxMap;
+		}
+		break;
+		case gr::Light::Type::Spot:
+		{
+			shadowArrayTex = m_spotShadowArrayTex;
+			shadowArrayIdxMap = m_spotShadowArrayIdxMap;
+		}
+		break;
+		default: SEAssertF("Invalid light type");
+		}
 
 		// Texture target set:
 		std::shared_ptr<re::TextureTargetSet> shadowTargetSet =
 			re::TextureTargetSet::Create(std::format("{}_2DShadowTargetSet", lightName));
-
+		
 		shadowTargetSet->SetDepthStencilTarget(
-			shadowArrayTex, 
+			*shadowArrayTex, 
 			re::TextureTarget::TargetParams{
 				.m_textureView = CreateShadowWriteView(
 					shadowData.m_lightType,
-					lightManager.GetShadowArrayIndex(shadowData.m_lightType, lightID)) });		
+					GetShadowArrayIdx(shadowArrayIdxMap, lightID)) });
 
-		shadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(shadowArrayTex.get()));;
-		shadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(shadowArrayTex.get()));	
+		shadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(shadowArrayTex->get()));;
+		shadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(shadowArrayTex->get()));	
 
 		shadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::ClearMode::Enabled);
 
@@ -282,13 +306,20 @@ namespace gr
 		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
 		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
 		m_spotCullingResults = GetDataDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
+
+		m_directionalShadowArrayTex = texDependencies.at(k_directionalShadowArrayTexInput);
+		m_pointShadowArrayTex = texDependencies.at(k_pointShadowArrayTexInput);
+		m_spotShadowArrayTex = texDependencies.at(k_spotShadowArrayTexInput);
+
+		m_directionalShadowArrayIdxMap = GetDataDependency<ShadowArrayIdxMap>(k_IDToDirectionalShadowArrayIdxDataInput, dataDependencies);
+		m_pointShadowArrayIdxMap = GetDataDependency<ShadowArrayIdxMap>(k_IDToPointShadowArrayIdxDataInput, dataDependencies);
+		m_spotShadowArrayIdxMap = GetDataDependency<ShadowArrayIdxMap>(k_IDToSpotShadowArrayIdxDataInput, dataDependencies);
 	}
 
 
 	void ShadowsGraphicsSystem::PreRender()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
-		gr::LightManager const& lightManager = re::RenderManager::Get()->GetLightManager();
 
 		// Delete removed deleted lights:
 		auto DeleteLights = [&](
@@ -365,7 +396,7 @@ namespace gr
 
 
 		// Update directional and spot shadow buffers, if necessary:
-		auto Update2DShadowCamData = [&lightManager](
+		auto Update2DShadowCamData = [](
 			gr::Light::Type lightType,
 			gr::RenderDataManager::IDIterator const& lightItr,
 			std::unordered_map<gr::RenderDataID, ShadowStageData>& stageData,
@@ -464,10 +495,10 @@ namespace gr
 			const gr::RenderDataID lightID = directionalStageItr.first;
 
 			directionalStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
-				lightManager.GetShadowArrayTexture(gr::Light::Directional),
+				*m_directionalShadowArrayTex,
 				CreateShadowWriteView(
-					gr::Light::Directional, lightManager.GetShadowArrayIndex(gr::Light::Directional, lightID)));			
-
+					gr::Light::Directional, GetShadowArrayIdx(m_directionalShadowArrayIdxMap, lightID)));
+			
 			m_stagePipeline->AppendRenderStageForSingleFrame(
 				m_directionalParentStageItr, directionalStageItr.second.m_renderStage);
 		}
@@ -476,8 +507,8 @@ namespace gr
 			const gr::RenderDataID lightID = pointStageItr.first;
 
 			pointStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
-				lightManager.GetShadowArrayTexture(gr::Light::Point),
-				CreateShadowWriteView(gr::Light::Point, lightManager.GetShadowArrayIndex(gr::Light::Point, lightID)));			
+				*m_pointShadowArrayTex,
+				CreateShadowWriteView(gr::Light::Point, GetShadowArrayIdx(m_pointShadowArrayIdxMap, lightID)));
 
 			m_stagePipeline->AppendRenderStageForSingleFrame(
 				m_pointParentStageItr, pointStageItr.second.m_renderStage);
@@ -487,8 +518,8 @@ namespace gr
 			const gr::RenderDataID lightID = spotStageItr.first;
 
 			spotStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
-				lightManager.GetShadowArrayTexture(gr::Light::Spot),
-				CreateShadowWriteView(gr::Light::Spot, lightManager.GetShadowArrayIndex(gr::Light::Spot, lightID)));			
+				*m_spotShadowArrayTex,
+				CreateShadowWriteView(gr::Light::Spot, GetShadowArrayIdx(m_spotShadowArrayIdxMap, lightID)));
 
 			m_stagePipeline->AppendRenderStageForSingleFrame(
 				m_spotParentStageItr, spotStageItr.second.m_renderStage);
