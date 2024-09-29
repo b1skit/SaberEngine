@@ -359,11 +359,6 @@ namespace gr
 					shadowArrayParams.m_clear.m_depthStencil.m_depth = 1.f;
 
 					shadowMetadata.m_shadowArray = re::Texture::Create(shadowTexName, shadowArrayParams);
-
-					// Cache our read view off to minimize recomputation
-					shadowMetadata.m_readView = re::TextureView(
-						shadowMetadata.m_shadowArray,
-						{ re::TextureView::ViewFlags::ReadOnlyDepth });
 				}
 			};
 		UpdateShadowTexture(gr::Light::Directional, m_directionalShadowMetadata, "Directional shadows");
@@ -655,32 +650,6 @@ namespace gr
 		default: SEAssertF("Invalid light type");
 		}
 		return 0; // This should never happen
-	}
-
-
-	re::TextureView const& LightManager::GetShadowArrayReadView(gr::Light::Type lightType) const
-	{
-		switch (lightType)
-		{
-		case gr::Light::Directional:
-		{
-			return m_directionalShadowMetadata.m_readView;
-		}
-		break;
-		case gr::Light::Point:
-		{
-			return m_pointShadowMetadata.m_readView;
-		}
-		break;
-		case gr::Light::Spot:
-		{
-			return m_spotShadowMetadata.m_readView;
-		}
-		break;
-		case gr::Light::AmbientIBL:
-		default: SEAssertF("Invalid light type");
-		}
-		return m_directionalShadowMetadata.m_readView; // This should never happen
 	}
 
 

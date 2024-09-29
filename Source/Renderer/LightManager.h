@@ -54,9 +54,6 @@ namespace gr
 	public:
 		std::shared_ptr<re::Texture> GetShadowArrayTexture(gr::Light::Type) const;
 
-		// Shadow arrays may be reallocated at the beginning of any frame; Texture inputs should be reset each frame
-		re::TextureView const& GetShadowArrayReadView(gr::Light::Type) const;
-
 		uint32_t GetShadowArrayIndex(gr::Light::Type, gr::RenderDataID lightID) const;
 
 		re::BufferInput const& GetPCSSPoissonSampleParamsBuffer() const;
@@ -96,8 +93,6 @@ namespace gr
 
 			std::shared_ptr<re::Texture> m_shadowArray;
 			uint32_t m_numShadows = 0;
-
-			re::TextureView m_readView;
 		};
 		ShadowMetadata m_directionalShadowMetadata;
 		ShadowMetadata m_pointShadowMetadata;

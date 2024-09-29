@@ -77,6 +77,14 @@ namespace
 
 		return generationParams;
 	}
+
+
+	re::TextureView CreateShadowArrayReadView(re::Texture const* shadowArray)
+	{
+		return re::TextureView(
+			shadowArray,
+			{ re::TextureView::ViewFlags::ReadOnlyDepth });
+	}
 }
 
 
@@ -1033,11 +1041,17 @@ namespace gr
 						{
 							shadowIdx = lightMgr.GetShadowDataBufferIdx(light.second.m_type, lightID);
 
+							// Note: Shadow array textures may be reallocated at the beginning of any frame; Texture
+							// inputs/views must be re-set each frame (TODO: Skip recreating the views by tracking 
+							// texture changes)
+							re::Texture const* shadowArrayTex = 
+								lightMgr.GetShadowArrayTexture(light.second.m_type).get();
+							
 							duplicatedBatch->AddTextureInput(
 								shadowTexShaderName,
-								lightMgr.GetShadowArrayTexture(light.second.m_type).get(),
+								shadowArrayTex,
 								re::Sampler::GetSampler(samplerTypeName).get(),
-								lightMgr.GetShadowArrayReadView(light.second.m_type));
+								CreateShadowArrayReadView(shadowArrayTex));
 						}
 						
 						// Deferred light volumes: Single-frame buffer containing the indexes of a single light
