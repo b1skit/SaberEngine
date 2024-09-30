@@ -398,7 +398,7 @@ namespace gr
 		// Update directional and spot shadow buffers, if necessary:
 		auto Update2DShadowCamData = [](
 			gr::Light::Type lightType,
-			gr::RenderDataManager::IDIterator const& lightItr,
+			gr::RenderDataManager::IDIterator<std::vector<gr::RenderDataID>> const& lightItr,
 			std::unordered_map<gr::RenderDataID, ShadowStageData>& stageData,
 			bool hasShadow)
 			{
@@ -605,8 +605,8 @@ namespace gr
 			}
 			else
 			{
-				auto spotItr = renderData.Begin<gr::Light::RenderDataSpot>();
-				auto const& spotItrEnd = renderData.End<gr::Light::RenderDataSpot>();
+				auto spotItr = renderData.LinearBegin<gr::Light::RenderDataSpot>();
+				auto const& spotItrEnd = renderData.LinearEnd<gr::Light::RenderDataSpot>();
 				AddSpotLightBatches(spotItr, spotItrEnd);
 			}
 		}
@@ -659,8 +659,8 @@ namespace gr
 			}
 			else
 			{
-				auto pointItr = renderData.Begin<gr::Light::RenderDataPoint>();
-				auto const& pointItrEnd = renderData.End<gr::Light::RenderDataPoint>();
+				auto pointItr = renderData.LinearBegin<gr::Light::RenderDataPoint>();
+				auto const& pointItrEnd = renderData.LinearEnd<gr::Light::RenderDataPoint>();
 				AddPointLightBatches(pointItr, pointItrEnd);
 
 			}

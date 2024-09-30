@@ -862,7 +862,7 @@ namespace gr
 
 
 		auto RegisterNewDeferredMeshLight = [&](
-			gr::RenderDataManager::IDIterator const& lightItr,
+			gr::RenderDataManager::IDIterator<std::vector<gr::RenderDataID>> const& lightItr,
 			gr::Light::Type lightType,
 			void const* lightRenderData,
 			bool hasShadow,

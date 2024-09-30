@@ -103,9 +103,9 @@ namespace
 			}
 		};
 		DoCulling(
-			renderData.Begin<gr::Light::RenderDataPoint>(), renderData.End<gr::Light::RenderDataPoint>(), pointLightIDsOut);
+			renderData.LinearBegin<gr::Light::RenderDataPoint>(), renderData.LinearEnd<gr::Light::RenderDataPoint>(), pointLightIDsOut);
 		DoCulling(
-			renderData.Begin<gr::Light::RenderDataSpot>(), renderData.End<gr::Light::RenderDataSpot>(), spotLightIDsOut);
+			renderData.LinearBegin<gr::Light::RenderDataSpot>(), renderData.LinearEnd<gr::Light::RenderDataSpot>(), spotLightIDsOut);
 	}
 
 

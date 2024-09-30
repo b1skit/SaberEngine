@@ -273,18 +273,19 @@ namespace gr
 
 
 	public:
-		// Iterate over objects via a vector of RenderDataIDs. This is largely a convenience iterator; it functions 
-		// similarly to calling RenderDataManager::GetObjectData with each RenderDataID in the supplied vector, except
+		// Iterate over objects via std containers of RenderDataIDs. This is largely a convenience iterator; it functions 
+		// similarly to calling RenderDataManager::GetObjectData with each RenderDataID in the supplied container, except
 		// the results of the RenderDataID -> RenderObjectMetadata lookup are cached when the iterator is incremented.
 		// RenderDataManager iterators are not thread safe.
+		template<typename Container>
 		class IDIterator
 		{			
 		protected:
 			friend class gr::RenderDataManager;
 			IDIterator(
 				gr::RenderDataManager const*, 
-				std::vector<gr::RenderDataID>::const_iterator,
-				std::vector<gr::RenderDataID>::const_iterator,
+				Container::const_iterator,
+				Container::const_iterator,
 				std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const*,
 				uint64_t currentFrame);
 
@@ -323,8 +324,8 @@ namespace gr
 
 		private:
 			gr::RenderDataManager const* m_renderData;
-			std::vector<gr::RenderDataID>::const_iterator m_idsIterator;
-			std::vector<gr::RenderDataID>::const_iterator const m_idsEndIterator;
+			Container::const_iterator m_idsIterator;
+			Container::const_iterator const m_idsEndIterator;
 
 			std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const* m_IDToRenderObjectMetadata;
 			std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator m_currentObjectMetadata;
@@ -335,10 +336,10 @@ namespace gr
 
 	public:
 		template <typename T>
-		LinearIterator<T> Begin() const;
+		LinearIterator<T> LinearBegin() const;
 
 		template <typename T>
-		LinearIterator<T> End() const;
+		LinearIterator<T> LinearEnd() const;
 
 		template <typename... Ts>
 		ObjectIterator<Ts...> ObjectBegin() const;
@@ -346,9 +347,11 @@ namespace gr
 		template <typename... Ts>
 		ObjectIterator<Ts...> ObjectEnd() const;
 
-		IDIterator IDBegin(std::vector<gr::RenderDataID> const&) const;
-		
-		IDIterator IDEnd(std::vector<gr::RenderDataID> const&) const;
+		template <typename Container>
+		IDIterator<Container> IDBegin(Container const&) const;
+
+		template <typename Container>
+		IDIterator<Container> IDEnd(Container const&) const;
 
 
 	private:
@@ -834,7 +837,7 @@ namespace gr
 
 
 	template <typename T>
-	RenderDataManager::LinearIterator<T> RenderDataManager::Begin() const
+	RenderDataManager::LinearIterator<T> RenderDataManager::LinearBegin() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -853,7 +856,7 @@ namespace gr
 
 
 	template <typename T>
-	RenderDataManager::LinearIterator<T> RenderDataManager::End() const
+	RenderDataManager::LinearIterator<T> RenderDataManager::LinearEnd() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -893,12 +896,12 @@ namespace gr
 	}
 
 
-	inline RenderDataManager::IDIterator RenderDataManager::IDBegin(
-		std::vector<gr::RenderDataID> const& renderDataIDs) const
+	template <typename Container>
+	RenderDataManager::IDIterator<Container> RenderDataManager::IDBegin(Container const& renderDataIDs) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		return IDIterator(
+		return IDIterator<Container>(
 			this,
 			renderDataIDs.cbegin(),
 			renderDataIDs.cend(),
@@ -906,12 +909,13 @@ namespace gr
 			m_currentFrame);
 	}
 
-	inline RenderDataManager::IDIterator RenderDataManager::IDEnd(
-		std::vector<gr::RenderDataID> const& renderDataIDs) const
+
+	template <typename Container>
+	RenderDataManager::IDIterator<Container> RenderDataManager::IDEnd(Container const& renderDataIDs) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		return IDIterator(
+		return IDIterator<Container>(
 			this,
 			renderDataIDs.cend(),
 			renderDataIDs.cend(),
@@ -1118,10 +1122,11 @@ namespace gr
 	// ---
 
 
-	inline RenderDataManager::IDIterator::IDIterator(
+	template<typename Container>
+	inline RenderDataManager::IDIterator<Container>::IDIterator(
 		gr::RenderDataManager const* renderData,
-		std::vector<gr::RenderDataID>::const_iterator renderDataIDsBegin,
-		std::vector<gr::RenderDataID>::const_iterator renderDataIDsEnd,
+		Container::const_iterator renderDataIDsBegin,
+		Container::const_iterator renderDataIDsEnd,
 		std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const* IDToRenderObjectMetadata,
 		uint64_t currentFrame)
 		: m_renderData(renderData)
@@ -1141,8 +1146,9 @@ namespace gr
 	}
 
 
+	template<typename Container>
 	template<typename T>
-	bool RenderDataManager::IDIterator::HasObjectData() const
+	bool RenderDataManager::IDIterator<Container>::HasObjectData() const
 	{
 		SEAssert(m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend(),
 			"Invalid Get: Current m_currentObjectMetadata is past-the-end");
@@ -1153,8 +1159,9 @@ namespace gr
 	}
 
 
+	template<typename Container>
 	template<typename T>
-	inline T const& RenderDataManager::IDIterator::Get() const
+	inline T const& RenderDataManager::IDIterator<Container>::Get() const
 	{
 		SEAssert(m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend(),
 			"Invalid Get: Current m_currentObjectMetadata is past-the-end");
@@ -1163,8 +1170,9 @@ namespace gr
 	}
 
 
+	template<typename Container>
 	template<typename T>
-	bool RenderDataManager::IDIterator::IsDirty() const
+	bool RenderDataManager::IDIterator<Container>::IsDirty() const
 	{
 		SEAssert(m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend(),
 			"Invalid Get: Current m_currentObjectMetadata is past-the-end");
@@ -1180,21 +1188,24 @@ namespace gr
 	}
 
 
-	inline gr::RenderDataID RenderDataManager::IDIterator::GetRenderDataID() const
+	template<typename Container>
+	inline gr::RenderDataID RenderDataManager::IDIterator<Container>::GetRenderDataID() const
 	{
 		SEAssert(m_idsIterator != m_idsEndIterator, "Invalid Get: Current m_idsIterator is past-the-end");
 		return *m_idsIterator;
 	}
 
 
-	inline gr::TransformID RenderDataManager::IDIterator::GetTransformID() const
+	template<typename Container>
+	inline gr::TransformID RenderDataManager::IDIterator<Container>::GetTransformID() const
 	{
 		SEAssert(m_idsIterator != m_idsEndIterator, "Invalid Get: Current m_idsIterator is past-the-end");
 		return m_currentObjectMetadata->second.m_transformID;
 	}
 
 
-	inline gr::Transform::RenderData const& RenderDataManager::IDIterator::GetTransformData() const
+	template<typename Container>
+	inline gr::Transform::RenderData const& RenderDataManager::IDIterator<Container>::GetTransformData() const
 	{
 		SEAssert(m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend(),
 			"Invalid Get: Current m_currentObjectMetadata is past-the-end");
@@ -1202,7 +1213,8 @@ namespace gr
 	}
 
 
-	inline bool RenderDataManager::IDIterator::TransformIsDirty() const
+	template<typename Container>
+	inline bool RenderDataManager::IDIterator<Container>::TransformIsDirty() const
 	{
 		SEAssert(m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend(),
 			"Invalid Get: Current m_currentObjectMetadata is past-the-end");
@@ -1211,7 +1223,8 @@ namespace gr
 	}
 
 
-	inline gr::FeatureBitmask RenderDataManager::IDIterator::GetFeatureBits() const
+	template<typename Container>
+	inline gr::FeatureBitmask RenderDataManager::IDIterator<Container>::GetFeatureBits() const
 	{
 		SEAssert(m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend(),
 			"Invalid Get: Current m_currentObjectMetadata is past-the-end");
@@ -1220,7 +1233,8 @@ namespace gr
 	}
 
 
-	inline RenderDataManager::IDIterator& RenderDataManager::IDIterator::operator++() // Prefix increment
+	template<typename Container>
+	inline RenderDataManager::IDIterator<Container>& RenderDataManager::IDIterator<Container>::operator++() // Prefix increment
 	{
 		++m_idsIterator;
 		if (m_idsIterator != m_idsEndIterator)
@@ -1236,7 +1250,8 @@ namespace gr
 	}
 
 
-	inline RenderDataManager::IDIterator RenderDataManager::IDIterator::operator++(int) // Postfix increment
+	template<typename Container>
+	inline RenderDataManager::IDIterator<Container> RenderDataManager::IDIterator<Container>::operator++(int) // Postfix increment
 	{
 		IDIterator current = *this;
 		++(*this);
