@@ -24,7 +24,7 @@ namespace effect
 		{
 			return true;
 		}
-		const bool isSame = GetNameID() == rhs.GetNameID();
+		const bool isSame = GetNameHash() == rhs.GetNameHash();
 
 		SEAssert(!isSame ||
 			((m_resolvedShader.get() == rhs.m_resolvedShader.get()) &&

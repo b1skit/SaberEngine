@@ -9,7 +9,7 @@
 #include "Generated/DrawStyles.h"
 
 
-using EffectID = NameID;
+using EffectID = core::NameHash;
 
 
 namespace effect::drawstyle
@@ -25,8 +25,6 @@ namespace effect
 	class Effect : public virtual core::INamedObject
 	{
 	public:
-		static constexpr EffectID k_invalidEffectID = core::INamedObject::k_invalidNameID;
-
 		static EffectID ComputeEffectID(std::string const& effectName);
 
 	public:
@@ -62,13 +60,13 @@ namespace effect
 
 	inline EffectID Effect::ComputeEffectID(std::string const& effectName)
 	{
-		return core::INamedObject::ComputeIDFromName(effectName);
+		return core::NameHash(effectName);
 	}
 
 
 	inline EffectID Effect::GetEffectID() const
 	{
-		return GetNameID();
+		return GetNameHash();
 	}
 
 

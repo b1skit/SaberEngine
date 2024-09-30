@@ -211,7 +211,7 @@ namespace re
 
 	inline void Batch::SetEffectID(EffectID effectID)
 	{
-		SEAssert(m_effectID == effect::Effect::k_invalidEffectID, "EffectID has already been set. This is unexpected");
+		SEAssert(!m_effectID.IsValid(), "EffectID has already been set. This is unexpected");
 		m_effectID = effectID;
 	}
 

@@ -141,8 +141,7 @@ namespace re
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_texturesReadWriteMutex);
 
-			std::unordered_map<size_t, std::shared_ptr<re::Texture>>::const_iterator texturePosition =
-				m_textures.find(newTexture->GetNameID());
+			const auto texturePosition = m_textures.find(newTexture->GetNameHash());
 
 			bool foundExisting = false;
 			if (texturePosition != m_textures.end()) // Found existing
@@ -153,7 +152,7 @@ namespace re
 			}
 			else  // Add new
 			{
-				m_textures[newTexture->GetNameID()] = newTexture;
+				m_textures[newTexture->GetNameHash()] = newTexture;
 				LOG("Texture \"%s\" registered with scene", newTexture->GetName().c_str());
 			}
 
@@ -164,11 +163,11 @@ namespace re
 
 	std::shared_ptr<re::Texture> SceneData::GetTexture(std::string const& texName) const
 	{
-		const uint64_t nameID = core::INamedObject::ComputeIDFromName(texName);
+		const core::NameHash nameHash = core::NameHash(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
-			auto result = m_textures.find(nameID);
+			auto result = m_textures.find(nameHash);
 
 			SEAssert(result != m_textures.end(), "Texture with that name does not exist");
 
@@ -179,24 +178,24 @@ namespace re
 
 	std::shared_ptr<re::Texture> const* SceneData::GetTexturePtr(std::string const& texName) const
 	{
-		const uint64_t nameID = core::INamedObject::ComputeIDFromName(texName);
+		const core::NameHash nameHash(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
-			SEAssert(m_textures.contains(nameID), "Texture with that name does not exist");
+			SEAssert(m_textures.contains(nameHash), "Texture with that name does not exist");
 
-			return &m_textures.at(nameID);
+			return &m_textures.at(nameHash);
 		}
 	}
 
 
 	std::shared_ptr<re::Texture> SceneData::TryGetTexture(std::string const& texName) const
 	{
-		const uint64_t nameID = core::INamedObject::ComputeIDFromName(texName);
+		const core::NameHash nameHash(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
-			auto result = m_textures.find(nameID);
+			auto result = m_textures.find(nameHash);
 			return result == m_textures.end() ? nullptr : result->second;
 		}
 	}
@@ -204,10 +203,10 @@ namespace re
 
 	bool SceneData::TextureExists(std::string const& textureName) const
 	{
-		const uint64_t nameID = core::INamedObject::ComputeIDFromName(textureName);
+		const core::NameHash nameHash(textureName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
-			return m_textures.find(nameID) != m_textures.end();
+			return m_textures.find(nameHash) != m_textures.end();
 		}
 	}
 
@@ -241,15 +240,14 @@ namespace re
 			std::unique_lock<std::shared_mutex> writeLock(m_materialsReadWriteMutex);
 
 			// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
-			std::unordered_map<size_t, std::shared_ptr<gr::Material>>::const_iterator matPosition =
-				m_materials.find(newMaterial->GetNameID());
+			const auto matPosition = m_materials.find(newMaterial->GetNameHash());
 			if (matPosition != m_materials.end()) // Found existing
 			{
 				newMaterial = matPosition->second;
 			}
 			else // Add new
 			{
-				m_materials[newMaterial->GetNameID()] = newMaterial;
+				m_materials[newMaterial->GetNameHash()] = newMaterial;
 				LOG("Material \"%s\" registered to scene data", newMaterial->GetName().c_str());
 			}
 		}
@@ -258,10 +256,10 @@ namespace re
 
 	std::shared_ptr<gr::Material> SceneData::GetMaterial(std::string const& materialName) const
 	{
-		const size_t nameID = core::INamedObject::ComputeIDFromName(materialName);
+		const core::NameHash nameHash(materialName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
-			std::unordered_map<size_t, std::shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);
+			const auto matPos = m_materials.find(nameHash);
 
 			SEAssert(matPos != m_materials.end(), "Could not find material");
 
@@ -272,11 +270,11 @@ namespace re
 
 	bool SceneData::MaterialExists(std::string const& matName) const
 	{
-		const size_t nameID = core::INamedObject::ComputeIDFromName(matName);
+		const core::NameHash nameHash(matName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
 
-			return m_materials.find(nameID) != m_materials.end();
+			return m_materials.find(nameHash) != m_materials.end();
 		}
 	}
 

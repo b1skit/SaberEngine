@@ -67,7 +67,7 @@ namespace re
 		{
 			gr::meshfactory::ZLocation m_zLocation = gr::meshfactory::ZLocation::Near;
 
-			EffectID m_effectID = effect::Effect::k_invalidEffectID;
+			EffectID m_effectID;
 			effect::drawstyle::Bitmask m_drawStyleBitmask = effect::drawstyle::DefaultTechnique;
 		};
 		struct ClearStageParams final : public virtual IStageParams

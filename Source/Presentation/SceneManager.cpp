@@ -1733,7 +1733,7 @@ namespace fr
 
 
 	SceneManager::SceneManager()
-		: m_sceneRenderSystemNameID(core::INamedObject::ComputeIDFromName(k_sceneRenderSystemName))
+		: m_sceneRenderSystemNameHash(k_sceneRenderSystemName)
 	{
 	}
 

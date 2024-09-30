@@ -5,7 +5,7 @@
 #include "Core/Interfaces/INamedObject.h"
 
 
-using TechniqueID = NameID;
+using TechniqueID = core::NameHash;
 
 namespace re
 {
@@ -17,8 +17,6 @@ namespace effect
 	class Technique : public virtual core::INamedObject
 	{
 	public:
-		static constexpr TechniqueID k_invalidTechniqueID = core::INamedObject::k_invalidNameID;
-
 		static TechniqueID ComputeTechniqueID(std::string const& techniqueName);
 
 
@@ -55,13 +53,13 @@ namespace effect
 
 	inline TechniqueID Technique::ComputeTechniqueID(std::string const& techniqueName)
 	{
-		return core::INamedObject::ComputeIDFromName(techniqueName);
+		return core::NameHash(techniqueName);
 	}
 
 
 	inline TechniqueID Technique::GetTechniqueID() const
 	{
-		return GetNameID();
+		return GetNameHash();
 	}
 
 

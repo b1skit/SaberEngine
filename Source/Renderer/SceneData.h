@@ -66,10 +66,10 @@ namespace re
 		std::unordered_map<DataHash, std::shared_ptr<re::VertexStream>> m_vertexStreams;
 		std::mutex m_vertexStreamsMutex;
 
-		std::unordered_map<size_t, std::shared_ptr<re::Texture>> m_textures;
+		std::unordered_map<core::NameHash, std::shared_ptr<re::Texture>> m_textures;
 		mutable std::shared_mutex m_texturesReadWriteMutex; // mutable, as we need to be able to modify it in const functions
 
-		std::unordered_map<size_t, std::shared_ptr<gr::Material>> m_materials;
+		std::unordered_map<core::NameHash, std::shared_ptr<gr::Material>> m_materials;
 		mutable std::shared_mutex m_materialsReadWriteMutex;
 
 		std::unordered_map<size_t, std::shared_ptr<re::Shader>> m_shaders;

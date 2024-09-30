@@ -92,7 +92,7 @@ namespace
 
 	re::Shader const* GetResolvedShader(EffectID effectID, effect::drawstyle::Bitmask drawStyleBitmask)
 	{
-		SEAssert(effectID != effect::Effect::k_invalidEffectID, "Invalid Effect");
+		SEAssert(effectID.IsValid(), "Invalid Effect");
 
 		effect::Effect const* effect = re::RenderManager::Get()->GetEffectDB().GetEffect(effectID);
 		effect::Technique const* technique = effect->GetResolvedTechnique(drawStyleBitmask);
@@ -241,7 +241,7 @@ namespace re
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_batchShader(nullptr)
-		, m_effectID(materialInstanceData ? materialInstanceData->m_materialEffectID : effect::Effect::k_invalidEffectID)
+		, m_effectID(materialInstanceData ? materialInstanceData->m_materialEffectID : core::NameHash(/*Invalid*/))
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
@@ -369,7 +369,7 @@ namespace re
 
 	void Batch::ResolveShader(effect::drawstyle::Bitmask stageBitmask)
 	{
-		SEAssert(m_effectID != effect::Effect::k_invalidEffectID, "Invalid EffectID");
+		SEAssert(m_effectID.IsValid(), "Invalid EffectID");
 		SEAssert(m_batchShader == nullptr, "Batch already has a shader. This is unexpected");
 
 		// TODO: We don't update the data hash even though we're modifying the m_drawStyleBitmask, as by this point
@@ -592,7 +592,7 @@ namespace re
 #if defined(_DEBUG)
 		for (auto const& existingBuffer : m_batchBuffers)
 		{
-			SEAssert(bufferInput.GetBuffer()->GetNameID() != existingBuffer.GetBuffer()->GetNameID(),
+			SEAssert(bufferInput.GetBuffer()->GetNameHash() != existingBuffer.GetBuffer()->GetNameHash(),
 				"Buffer with the same name has already been set. Re-adding it changes the data hash");
 		}
 #endif

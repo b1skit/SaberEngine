@@ -215,7 +215,7 @@ namespace re
 		: INamedObject(name)
 		, RenderStage(name, nullptr, Type::FullscreenQuad, lifetime)
 	{
-		SEAssert(stageParams->m_effectID != effect::Effect::k_invalidEffectID, "Invalid EffectID");
+		SEAssert(stageParams->m_effectID.IsValid(), "Invalid EffectID");
 
 		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(stageParams->m_zLocation);
 
@@ -783,8 +783,7 @@ namespace re
 		SEAssert(m_type != Type::FullscreenQuad || m_stageBatches.empty(),
 			"Cannot add batches to a fullscreen quad stage (except for the initial batch during construction)");
 
-		SEAssert(batch.GetEffectID() != effect::Effect::k_invalidEffectID,
-			"Batch has not been assigned an Effect");
+		SEAssert(batch.GetEffectID().IsValid(), "Batch has not been assigned an Effect");
 
 		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics &&
 			(m_type == Type::Graphics || m_type == Type::FullscreenQuad)) ||
@@ -797,13 +796,13 @@ namespace re
 			for (auto const& singleFrameBuffer : m_singleFrameBuffers)
 			{
 				SEAssert(batchBuffer.GetUniqueID() != singleFrameBuffer.GetUniqueID() &&
-					batchBuffer.GetShaderNameID() != singleFrameBuffer.GetShaderNameID(),
+					batchBuffer.GetShaderNameHash() != singleFrameBuffer.GetShaderNameHash(),
 					"Batch and render stage have a duplicate single frame buffer");
 			}
 			for (auto const& permanentBuffer : m_permanentBuffers)
 			{
 				SEAssert(batchBuffer.GetUniqueID() != permanentBuffer.GetUniqueID() &&
-					batchBuffer.GetShaderNameID() != permanentBuffer.GetShaderNameID(),
+					batchBuffer.GetShaderNameHash() != permanentBuffer.GetShaderNameHash(),
 					"Batch and render stage have a duplicate permanent buffer");
 			}
 		}
@@ -885,7 +884,7 @@ namespace re
 			m_permanentBuffers.begin(),
 			m_permanentBuffers.end(),
 			[&bufferInput](re::BufferInput const& existingBuffer) {
-				return bufferInput.GetShaderNameID() == existingBuffer.GetShaderNameID();
+				return bufferInput.GetShaderNameHash() == existingBuffer.GetShaderNameHash();
 			}) == m_permanentBuffers.end(),
 				"A permanent Buffer with this shader name has already been added");
 
@@ -893,7 +892,7 @@ namespace re
 			m_singleFrameBuffers.begin(),
 			m_singleFrameBuffers.end(),
 			[&bufferInput](re::BufferInput const& existingBuffer) {
-				return bufferInput.GetShaderNameID() == existingBuffer.GetShaderNameID();
+				return bufferInput.GetShaderNameHash() == existingBuffer.GetShaderNameHash();
 			}) == m_singleFrameBuffers.end(),
 				"A single frame Buffer with this shader name has already been added");
 
@@ -921,7 +920,7 @@ namespace re
 			m_singleFrameBuffers.begin(),
 			m_singleFrameBuffers.end(),
 			[&bufferInput](re::BufferInput const& existingBuffer) {
-				return bufferInput.GetShaderNameID() == existingBuffer.GetShaderNameID();
+				return bufferInput.GetShaderNameHash() == existingBuffer.GetShaderNameHash();
 			}) == m_singleFrameBuffers.end(),
 				"A single frame Buffer with this shader name has already been added");
 
@@ -929,7 +928,7 @@ namespace re
 			m_permanentBuffers.begin(),
 			m_permanentBuffers.end(),
 			[&bufferInput](re::BufferInput const& existingBuffer) {
-				return bufferInput.GetShaderNameID() == existingBuffer.GetShaderNameID();
+				return bufferInput.GetShaderNameHash() == existingBuffer.GetShaderNameHash();
 			}) == m_permanentBuffers.end(),
 				"A permanent Buffer with this shader name has already been added");
 
