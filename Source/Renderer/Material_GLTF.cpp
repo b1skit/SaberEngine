@@ -50,7 +50,7 @@ namespace gr
 
 
 	Material_GLTF::Material_GLTF(std::string const& name)
-		: Material(name, gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness)
+		: Material(name, gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness)
 		, INamedObject(name)
 	{
 		// GLTF defaults:
@@ -96,8 +96,8 @@ namespace gr
 
 		for (size_t matIdx = 0; matIdx < numInstances; matIdx++)
 		{
-			SEAssert(instanceData[matIdx]->m_matEffect == gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness,
-				"Incorrect material type found. All instanceData entries must have the same type");
+			SEAssert(instanceData[matIdx]->m_effectID == EffectID("GLTF_PBRMetallicRoughness"),
+				"Incorrect material EffectID found. All instanceData entries must have the same type");
 
 			InstancedPBRMetallicRoughnessData& instancedEntry = instancedMaterialData.emplace_back();
 
@@ -106,10 +106,14 @@ namespace gr
 				sizeof(InstancedPBRMetallicRoughnessData));
 		}
 
+		// Note: Material Buffer names are used to associate Effects with Buffers when building batches
+		char const* bufferName = 
+			gr::Material::k_effectMaterialNames[gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness];
+
 		return re::BufferInput(
 			InstancedPBRMetallicRoughnessData::s_shaderName,
 			re::Buffer::CreateArray(
-				k_materialBufferName, // Name of the buffer: Used to map Effects to Buffers
+				bufferName,
 				instancedMaterialData.data(),
 				re::Buffer::BufferParams{
 					.m_allocationType = bufferAlloc,
@@ -124,8 +128,8 @@ namespace gr
 	void Material_GLTF::CommitMaterialInstanceData(
 		re::Buffer* buffer, MaterialInstanceRenderData const* instanceData, uint32_t baseOffset)
 	{
-		SEAssert(instanceData->m_matEffect == gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness,
-			"Incorrect material type found. All instanceData entries must have the same type");
+		SEAssert(instanceData->m_effectID == EffectID("GLTF_PBRMetallicRoughness"),
+			"Incorrect material EffectID found. All instanceData entries must have the same type");
 
 		// We commit single elements for now as we need to access each element's material param data. This isn't ideal,
 		// but it avoids copying the data into a temporary location and materials are typically updated infrequently

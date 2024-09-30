@@ -18,19 +18,22 @@ namespace gr
 	class Material : public virtual core::INamedObject
 	{
 	public:
-		enum MaterialEffect : uint32_t
+		enum EffectMaterial : uint32_t
 		{
 			GLTF_PBRMetallicRoughness, // GLTF 2.0's PBR metallic-roughness material model
 
-			MaterialEffect_Count
+			EffectMaterial_Count
 		};
-		SEStaticAssert(MaterialEffect_Count < std::numeric_limits<uint32_t>::max(), "Too many material types");
+		SEStaticAssert(EffectMaterial_Count < std::numeric_limits<uint32_t>::max(), "Too many material types");
 
-		static constexpr char const* k_materialEffectNames[] =
+		// Note: Material Buffer names are used to associate Effects with Buffers (e.g. when building batches)
+		static constexpr char const* k_effectMaterialNames[] =
 		{
 			ENUM_TO_STR(GLTF_PBRMetallicRoughness)
 		};
-		SEStaticAssert(_countof(k_materialEffectNames) == MaterialEffect_Count, "Names and enum are out of sync");
+		SEStaticAssert(_countof(k_effectMaterialNames) == EffectMaterial_Count, "Names and enum are out of sync");
+
+		static EffectMaterial EffectIDToEffectMaterial(EffectID);
 
 
 	public:
@@ -82,8 +85,7 @@ namespace gr
 			bool m_isShadowCaster;
 
 			// Material metadata:
-			gr::Material::MaterialEffect m_matEffect;
-			EffectID m_materialEffectID;
+			EffectID m_effectID;
 			char m_materialName[k_shaderSamplerNameLength];
 			uint64_t m_srcMaterialUniqueID;
 		};
@@ -93,7 +95,7 @@ namespace gr
 		static re::BufferInput CreateInstancedBuffer(
 			re::Buffer::AllocationType, std::vector<MaterialInstanceRenderData const*> const&);
 
-		static re::BufferInput ReserveInstancedBuffer(MaterialEffect, uint32_t maxInstances);
+		static re::BufferInput ReserveInstancedBuffer(EffectID, uint32_t maxInstances);
 
 		// Convenience helper: Partially update elements of an already committed (mutable) buffer
 		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);
@@ -102,7 +104,7 @@ namespace gr
 
 
 	public:
-		[[nodiscard]] static std::shared_ptr<gr::Material> Create(std::string const& name, MaterialEffect);
+		[[nodiscard]] static std::shared_ptr<gr::Material> Create(std::string const& name, EffectMaterial);
 
 		template <typename T>
 		T GetAs(); // Get the Material as a dynamic cast to a derrived type
@@ -123,8 +125,8 @@ namespace gr
 
 		void SetShadowCastMode(bool);
 
-		MaterialEffect GetMaterialType() const;
-		EffectID GetMaterialEffectID() const;
+		EffectMaterial GetMaterialType() const;
+		EffectID GetEffectID() const;
 
 
 		void InitializeMaterialInstanceData(MaterialInstanceRenderData&) const;
@@ -138,7 +140,7 @@ namespace gr
 
 
 	protected:
-		const MaterialEffect m_materialEffect;
+		const EffectMaterial m_effectMaterial;
 		const EffectID m_effectID;
 
 
@@ -156,7 +158,7 @@ namespace gr
 
 
 	protected:
-		Material(std::string const& name, MaterialEffect); // Use the CreateMaterial 
+		Material(std::string const& name, EffectMaterial); // Use Create()
 
 
 	private:
@@ -220,13 +222,13 @@ namespace gr
 	}
 
 
-	inline Material::MaterialEffect Material::GetMaterialType() const
+	inline Material::EffectMaterial Material::GetMaterialType() const
 	{
-		return m_materialEffect;
+		return m_effectMaterial;
 	}
 
 
-	inline EffectID Material::GetMaterialEffectID() const
+	inline EffectID Material::GetEffectID() const
 	{
 		return m_effectID;
 	}

@@ -43,8 +43,8 @@ namespace util
 
 
 	public:
-		char const* GetKey() const { return m_key; }
-		uint64_t GetHash() const { return m_keyHash; }
+		constexpr char const* GetKey() const { return m_key; }
+		constexpr uint64_t GetHash() const { return m_keyHash; }
 
 
 	private:

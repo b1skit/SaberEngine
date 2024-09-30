@@ -28,12 +28,6 @@ namespace gr
 		};
 
 	public:
-		// Name of the Buffer objects created here. Used to map Effects to Buffers
-		// Note: This is not the shader name
-		static constexpr char const* k_materialBufferName = "GLTF_PBRMetallicRoughness";
-
-
-	public:
 		static re::BufferInput CreateInstancedBuffer(
 			re::Buffer::AllocationType, std::vector<MaterialInstanceRenderData const*> const&);
 		
@@ -84,7 +78,7 @@ namespace gr
 
 
 	protected: // Use the gr::Material::Create factory
-		friend std::shared_ptr<gr::Material> gr::Material::Create(std::string const&, MaterialEffect);
+		friend std::shared_ptr<gr::Material> gr::Material::Create(std::string const&, EffectMaterial);
 		Material_GLTF(std::string const& name);
 
 

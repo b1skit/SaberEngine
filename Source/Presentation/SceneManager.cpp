@@ -205,7 +205,7 @@ namespace
 
 		std::shared_ptr<gr::Material> defaultMaterialGLTF = gr::Material::Create(
 			en::DefaultResourceNames::k_defaultGLTFMaterialName,
-			gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness);
+			gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness);
 
 		constexpr uint8_t k_defaultUVChannelIdx = 0;
 
@@ -357,7 +357,7 @@ namespace
 						"We currently only support the PBR metallic/roughness material model");
 
 					std::shared_ptr<gr::Material> newMat =
-						gr::Material::Create(matName, gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness);
+						gr::Material::Create(matName, gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness);
 
 					// GLTF specifications: If a texture is not given, all texture components are assumed to be 1.f
 					// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material

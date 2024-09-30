@@ -2,6 +2,7 @@
 #include "Buffer.h"
 #include "Material.h"
 #include "Material_GLTF.h"
+#include "RenderManager.h"
 #include "Sampler.h"
 #include "SysInfo_Platform.h"
 #include "Texture.h"
@@ -12,13 +13,31 @@
 
 namespace gr
 {
-	std::shared_ptr<gr::Material> Material::Create(std::string const& name, MaterialEffect materialType)
+	Material::EffectMaterial Material::EffectIDToEffectMaterial(EffectID effectID)
+	{
+		constexpr uint64_t k_GLTF_PBRMetallicRoughnessHash =
+			util::HashKey(k_effectMaterialNames[GLTF_PBRMetallicRoughness]).GetHash();
+
+		util::HashKey matEffectHashKey =
+			util::HashKey::Create(re::RenderManager::Get()->GetEffectDB().GetEffect(effectID)->GetName());
+
+		switch (matEffectHashKey.GetHash())
+		{
+		case k_GLTF_PBRMetallicRoughnessHash: return GLTF_PBRMetallicRoughness;
+		default: SEAssertF("Invalid EffectID . Material names and Effect names must be the same to be associated "
+			"via an Effect Buffers definition");
+		}
+		return EffectMaterial_Count; // This should never happen
+	}
+
+
+	std::shared_ptr<gr::Material> Material::Create(std::string const& name, EffectMaterial materialType)
 	{
 		std::shared_ptr<gr::Material> newMat;
 
 		switch (materialType)
 		{
-		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
+		case gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness:
 		{
 			newMat.reset(new Material_GLTF(name));
 		}
@@ -30,10 +49,10 @@ namespace gr
 	}
 
 
-	Material::Material(std::string const& name, MaterialEffect materialEffect)
+	Material::Material(std::string const& name, EffectMaterial effectMaterial)
 		: INamedObject(name)
-		, m_materialEffect(materialEffect)
-		, m_effectID(effect::Effect::ComputeEffectID(k_materialEffectNames[materialEffect]))
+		, m_effectMaterial(effectMaterial)
+		, m_effectID(effect::Effect::ComputeEffectID(k_effectMaterialNames[effectMaterial]))
 		, m_alphaMode(AlphaMode::AlphaMode_Count)
 		, m_alphaCutoff(0.f)
 		, m_isDoubleSided(false)
@@ -95,8 +114,7 @@ namespace gr
 		PackMaterialParamsData(instanceData.m_materialParamData.data(), instanceData.m_materialParamData.size());
 
 		// Metadata:
-		instanceData.m_matEffect = m_materialEffect;
-		instanceData.m_materialEffectID = m_effectID;
+		instanceData.m_effectID = m_effectID;
 		strcpy(instanceData.m_materialName, GetName().c_str());
 		instanceData.m_srcMaterialUniqueID = GetUniqueID();
 	}
@@ -108,10 +126,9 @@ namespace gr
 	{
 		SEAssert(!instanceData.empty(), "Instance data is empty");
 
-		const gr::Material::MaterialEffect materialType = instanceData.front()->m_matEffect;
-		switch (materialType)
+		switch (EffectIDToEffectMaterial(instanceData.front()->m_effectID))
 		{
-		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
+		case gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness:
 		{
 			return gr::Material_GLTF::CreateInstancedBuffer(bufferAlloc, instanceData);
 		}
@@ -123,11 +140,11 @@ namespace gr
 	}
 
 
-	re::BufferInput Material::ReserveInstancedBuffer(MaterialEffect matEffect, uint32_t maxInstances)
+	re::BufferInput Material::ReserveInstancedBuffer(EffectID matEffectID, uint32_t maxInstances)
 	{
-		switch (matEffect)
+		switch (EffectIDToEffectMaterial(matEffectID))
 		{
-		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
+		case gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness:
 		{
 			return re::BufferInput(
 				InstancedPBRMetallicRoughnessData::s_shaderName,
@@ -142,7 +159,8 @@ namespace gr
 					}));
 		}
 		break;
-		default: SEAssertF("Invalid material type");
+		default: SEAssertF("Invalid material name. Material names and Effect names must be the same to be associated "
+			"via an Effect Buffers definition");
 		}
 		return re::BufferInput(); // This should never happen
 	}
@@ -156,10 +174,9 @@ namespace gr
 		SEAssert(buffer->GetAllocationType() == re::Buffer::AllocationType::Mutable,
 			"Only mutable buffers can be partially updated");
 
-		const gr::Material::MaterialEffect materialType = instanceData->m_matEffect;
-		switch (materialType)
+		switch (EffectIDToEffectMaterial(instanceData->m_effectID))
 		{
-		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
+		case gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness:
 		{
 			gr::Material_GLTF::CommitMaterialInstanceData(buffer, instanceData, baseOffset);
 		}
@@ -175,7 +192,8 @@ namespace gr
 		bool isDirty = false;
 
 		ImGui::Text("Source material name: \"%s\"", instanceData.m_materialName);
-		ImGui::Text("Source material Type: %s", gr::Material::k_materialEffectNames[instanceData.m_matEffect]);
+		ImGui::Text("Source material Type: %s",
+			gr::Material::k_effectMaterialNames[EffectIDToEffectMaterial(instanceData.m_effectID)]);
 		ImGui::Text(std::format("Source material UniqueID: {}", instanceData.m_srcMaterialUniqueID).c_str());
 
 		if (ImGui::CollapsingHeader(std::format("Textures##{}\"",
@@ -216,9 +234,9 @@ namespace gr
 		isDirty |= ImGui::Checkbox(
 			std::format("Casts shadows?##{}", util::PtrToID(&instanceData)).c_str(), &instanceData.m_isShadowCaster);
 
-		switch (instanceData.m_matEffect)
+		switch (EffectIDToEffectMaterial(instanceData.m_effectID))
 		{
-		case gr::Material::MaterialEffect::GLTF_PBRMetallicRoughness:
+		case gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness:
 		{
 			isDirty |= gr::Material_GLTF::ShowImGuiWindow(instanceData);
 		}

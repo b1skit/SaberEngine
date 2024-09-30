@@ -64,7 +64,7 @@ namespace gr
 			uint64_t m_batchHash;
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
-			gr::Material::MaterialEffect m_matEffect;
+			EffectID m_matEffectID;
 			size_t m_cacheIndex; // m_permanentCachedBatches
 		};
 		std::vector<re::Batch> m_permanentCachedBatches;
@@ -83,7 +83,7 @@ namespace gr
 			std::vector<uint32_t> m_freeInstancedMaterialIndexes;
 			re::BufferInput m_instancedMaterials;
 		};
-		std::array<MaterialInstanceMetadata, gr::Material::MaterialEffect_Count> m_materialInstanceMetadata;
+		std::unordered_map<EffectID, MaterialInstanceMetadata> m_materialInstanceMetadata;
 
 
 	private: // No copying allowed
