@@ -163,7 +163,7 @@ namespace re
 
 	std::shared_ptr<re::Texture> SceneData::GetTexture(std::string const& texName) const
 	{
-		const core::NameHash nameHash = core::NameHash(texName);
+		const util::StringHash nameHash = util::StringHash(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
@@ -178,7 +178,7 @@ namespace re
 
 	std::shared_ptr<re::Texture> const* SceneData::GetTexturePtr(std::string const& texName) const
 	{
-		const core::NameHash nameHash(texName);
+		const util::StringHash nameHash(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
@@ -191,7 +191,7 @@ namespace re
 
 	std::shared_ptr<re::Texture> SceneData::TryGetTexture(std::string const& texName) const
 	{
-		const core::NameHash nameHash(texName);
+		const util::StringHash nameHash(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
@@ -203,7 +203,7 @@ namespace re
 
 	bool SceneData::TextureExists(std::string const& textureName) const
 	{
-		const core::NameHash nameHash(textureName);
+		const util::StringHash nameHash(textureName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 			return m_textures.find(nameHash) != m_textures.end();
@@ -256,7 +256,7 @@ namespace re
 
 	std::shared_ptr<gr::Material> SceneData::GetMaterial(std::string const& materialName) const
 	{
-		const core::NameHash nameHash(materialName);
+		const util::StringHash nameHash(materialName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
 			const auto matPos = m_materials.find(nameHash);
@@ -270,7 +270,7 @@ namespace re
 
 	bool SceneData::MaterialExists(std::string const& matName) const
 	{
-		const core::NameHash nameHash(matName);
+		const util::StringHash nameHash(matName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
 

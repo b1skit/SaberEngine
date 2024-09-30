@@ -68,7 +68,7 @@ namespace re
 
 		re::RenderSystem const* CreateAddRenderSystem(std::string const& name, std::string const& pipelineFileName);
 		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
-		re::RenderSystem* GetRenderSystem(core::NameHash);
+		re::RenderSystem* GetRenderSystem(util::StringHash const&);
 
 		// Not thread safe: Can only be called when other threads are not accessing the render data
 		gr::RenderDataManager& GetRenderDataManagerForModification();
@@ -233,7 +233,7 @@ namespace re
 	}
 
 
-	inline re::RenderSystem* RenderManager::GetRenderSystem(core::NameHash nameHash)
+	inline re::RenderSystem* RenderManager::GetRenderSystem(util::StringHash const& nameHash)
 	{
 		for (auto& renderSystem : m_renderSystems)
 		{

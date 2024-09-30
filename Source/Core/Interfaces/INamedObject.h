@@ -4,44 +4,13 @@
 
 #include "Core/Interfaces/IUniqueID.h"
 
+#include "Core/Util/StringHash.h"
 #include "Core/Util/TextUtils.h"
+
 
 
 namespace core
 {
-	// Convenience/efficiency wrapper for associative containers - Hash of a name string.
-	class NameHash
-	{
-	public:
-		static constexpr uint64_t k_invalidNameHash = std::numeric_limits<uint64_t>::max();
-
-	public:
-		NameHash(std::string const& name) : m_nameHash(std::hash<std::string>{}(name)) {}
-
-		NameHash() : m_nameHash(k_invalidNameHash) {}; // Invalid
-
-		~NameHash() = default;
-		NameHash(NameHash const&) = default;
-		NameHash(NameHash&&) noexcept = default;
-		NameHash& operator=(NameHash const&) = default;
-		NameHash& operator=(NameHash&&) noexcept = default;
-
-		bool operator==(NameHash const& rhs) const { return m_nameHash == rhs.m_nameHash; }
-		bool operator<(NameHash const& rhs) const { return m_nameHash < rhs.m_nameHash; }
-		bool operator>(NameHash const& rhs) const { return m_nameHash > rhs.m_nameHash; }
-
-		bool operator()(NameHash const& lhs, NameHash const& rhs) const { return lhs.m_nameHash == rhs.m_nameHash; }
-		bool operator()(NameHash const& rhs) const { return m_nameHash == rhs.m_nameHash; }
-
-		uint64_t Get() const { return m_nameHash; }
-		bool IsValid() const { return m_nameHash != k_invalidNameHash; }
-
-
-	private:
-		uint64_t m_nameHash;
-	};	
-
-
 	class INamedObject : public virtual IUniqueID
 	{
 	public:
@@ -67,8 +36,8 @@ namespace core
 		std::string const& GetName() const;
 		std::wstring const& GetWName() const;
 
-		// Any object with the same name string will have the same NameHash
-		NameHash GetNameHash() const;
+		// Any object with the same name string will have the same StringHash
+		util::StringHash GetNameHash() const;
 
 		// Update the name of an object. Does not modify the UniqueID assigned at creation
 		void SetName(std::string const& name);
@@ -77,7 +46,7 @@ namespace core
 	private:
 		std::string m_name;
 		std::wstring m_wName;
-		NameHash m_nameHash;
+		util::StringHash m_nameHash;
 		
 
 	private:
@@ -112,7 +81,7 @@ namespace core
 	}
 
 
-	inline NameHash INamedObject::GetNameHash() const
+	inline util::StringHash INamedObject::GetNameHash() const
 	{
 		return m_nameHash;
 	}
@@ -121,7 +90,7 @@ namespace core
 	inline void INamedObject::SetName(std::string const& name)
 	{
 		m_name = name;
-		m_nameHash = NameHash(name);
+		m_nameHash = util::StringHash(name);
 		
 		m_wName = util::ToWideString(m_name);
 	}
@@ -130,31 +99,3 @@ namespace core
 	// We need to provide a destructor implementation since it's pure virtual
 	inline INamedObject::~INamedObject() {}
 }
-
-
-// Hash functions for our NameHash, to allow it to be used as a key in an associative container
-template<>
-struct std::hash<core::NameHash>
-{
-	std::size_t operator()(core::NameHash const& nameHash) const
-	{
-		return nameHash.Get();
-	}
-};
-
-
-template <>
-struct std::formatter<core::NameHash>
-{
-	constexpr auto parse(std::format_parse_context& ctx)
-	{
-		return ctx.begin();
-	}
-
-
-	template <typename FormatContext>
-	auto format(const core::NameHash& nameHash, FormatContext& ctx)
-	{
-		return std::format_to(ctx.out(), "{}", nameHash.Get());
-	}
-};

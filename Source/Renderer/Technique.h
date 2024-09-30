@@ -5,7 +5,7 @@
 #include "Core/Interfaces/INamedObject.h"
 
 
-using TechniqueID = core::NameHash;
+using TechniqueID = util::StringHash;
 
 namespace re
 {
@@ -53,7 +53,7 @@ namespace effect
 
 	inline TechniqueID Technique::ComputeTechniqueID(std::string const& techniqueName)
 	{
-		return core::NameHash(techniqueName);
+		return util::StringHash(techniqueName);
 	}
 
 

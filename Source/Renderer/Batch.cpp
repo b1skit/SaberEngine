@@ -241,7 +241,7 @@ namespace re
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_batchShader(nullptr)
-		, m_effectID(materialInstanceData ? materialInstanceData->m_materialEffectID : core::NameHash(/*Invalid*/))
+		, m_effectID(materialInstanceData ? materialInstanceData->m_materialEffectID : util::StringHash(/*Invalid*/))
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{

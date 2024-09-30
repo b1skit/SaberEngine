@@ -32,7 +32,7 @@ namespace re
 		std::shared_ptr<re::Buffer> const& GetBufferSharedPtr() const;
 
 		std::string const& GetShaderName() const;
-		core::NameHash GetShaderNameHash() const;
+		util::StringHash GetShaderNameHash() const;
 
 		bool IsValid() const;
 		void Release();
@@ -67,7 +67,7 @@ namespace re
 	}
 
 
-	inline core::NameHash BufferInput::GetShaderNameHash() const
+	inline util::StringHash BufferInput::GetShaderNameHash() const
 	{
 		return GetNameHash();
 	}

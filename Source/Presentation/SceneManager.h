@@ -38,7 +38,7 @@ namespace fr
 
 
 	private:
-		core::NameHash m_sceneRenderSystemNameHash;
+		util::StringHash m_sceneRenderSystemNameHash;
 
 	private:
 		SceneManager(SceneManager const&) = delete;

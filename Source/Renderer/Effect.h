@@ -9,7 +9,7 @@
 #include "Generated/DrawStyles.h"
 
 
-using EffectID = core::NameHash;
+using EffectID = util::StringHash;
 
 
 namespace effect::drawstyle
@@ -60,7 +60,7 @@ namespace effect
 
 	inline EffectID Effect::ComputeEffectID(std::string const& effectName)
 	{
-		return core::NameHash(effectName);
+		return util::StringHash(effectName);
 	}
 
 
