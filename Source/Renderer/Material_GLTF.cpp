@@ -109,7 +109,7 @@ namespace gr
 		return re::BufferInput(
 			InstancedPBRMetallicRoughnessData::s_shaderName,
 			re::Buffer::CreateArray(
-				InstancedPBRMetallicRoughnessData::s_shaderName,
+				k_materialBufferName, // Name of the buffer: Used to map Effects to Buffers
 				instancedMaterialData.data(),
 				re::Buffer::BufferParams{
 					.m_allocationType = bufferAlloc,

@@ -556,16 +556,14 @@ namespace gr
 					{
 						directionalStage.AddBatches(batchMgr.GetSceneBatches(
 							m_viewCullingResults->at(lightID),
-							(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
-							re::Batch::Filter::CastsShadow,
-							re::Batch::Filter::AlphaBlended));
+							re::Batch::Filter::CastsShadow,		// Required FilterBitmask
+							re::Batch::Filter::AlphaBlended));	// Excluded FilterBitmask
 					}
 					else
 					{
 						directionalStage.AddBatches(batchMgr.GetAllSceneBatches(
-							(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
-							re::Batch::Filter::CastsShadow,
-							re::Batch::Filter::AlphaBlended));
+							re::Batch::Filter::CastsShadow,		// Required FilterBitmask
+							re::Batch::Filter::AlphaBlended));	// Excluded FilterBitmask
 					}
 					
 				}

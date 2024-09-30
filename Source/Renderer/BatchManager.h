@@ -21,11 +21,8 @@ namespace gr
 		// https://www.nvidia.de/docs/IO/8230/BatchBatchBatch.pdf
 	
 	public:
-		enum InstanceType : uint8_t // Bitmask helper: Which buffers to attach to batches?
-		{
-			Transform	= 1 << 0,
-			Material	= 1 << 1,
-		};
+		// Instanced Transforms buffer name. Used to match Effects to Buffers
+		static constexpr char const* k_instancedTransformBufferName = "InstancedTransforms";
 
 		
 	public:
@@ -44,12 +41,10 @@ namespace gr
 		// Build a vector of single frame scene batches from the vector of RenderDataIDs, from the interal batch cache
 		std::vector<re::Batch> GetSceneBatches(
 			std::vector<gr::RenderDataID> const&,
-			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material),
 			re::Batch::FilterBitmask required = 0,
 			re::Batch::FilterBitmask excluded = 0) const;
 
 		std::vector<re::Batch> GetAllSceneBatches(
-			uint8_t bufferTypeMask = (InstanceType::Transform | InstanceType::Material),
 			re::Batch::FilterBitmask required = 0,
 			re::Batch::FilterBitmask excluded = 0) const;
 

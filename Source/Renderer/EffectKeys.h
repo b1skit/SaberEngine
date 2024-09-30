@@ -22,6 +22,7 @@ namespace
 	constexpr char const* key_parents = "Parents";
 	constexpr char const* key_defaultTechnique = "DefaultTechnique";
 	constexpr char const* key_drawStyles = "DrawStyles";
+	constexpr char const* key_buffers = "Buffers";
 
 	// "DrawStyles":
 	constexpr char const* key_conditions = "Conditions";

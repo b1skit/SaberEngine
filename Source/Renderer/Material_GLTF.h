@@ -27,6 +27,11 @@ namespace gr
 			TextureSlotIdx_Count
 		};
 
+	public:
+		// Name of the Buffer objects created here. Used to map Effects to Buffers
+		// Note: This is not the shader name
+		static constexpr char const* k_materialBufferName = "GLTF_PBRMetallicRoughness";
+
 
 	public:
 		static re::BufferInput CreateInstancedBuffer(

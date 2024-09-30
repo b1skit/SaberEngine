@@ -43,13 +43,19 @@ namespace effect
 
 		Technique const* GetResolvedTechnique(effect::drawstyle::Bitmask) const;
 
+		bool UsesBuffer(util::StringHash) const;
+
 
 	public:
 		void AddTechnique(effect::drawstyle::Bitmask, effect::Technique const*);
 
+		void AddBufferName(util::StringHash);
+
 
 	private:
 		std::unordered_map<effect::drawstyle::Bitmask, effect::Technique const*> m_techniques;
+
+		std::set<util::StringHash> m_buffers; // Opt-in: A Effect can optionally associate itself with buffers by name
 
 
 	private:
@@ -77,5 +83,12 @@ namespace effect
 				effect::drawstyle::GetNamesFromDrawStyleBitmask(drawStyleBitmask)).c_str());
 
 		return m_techniques.at(drawStyleBitmask);
+	}
+
+
+	inline bool Effect::UsesBuffer(util::StringHash bufferNameHash) const
+	{
+		SEAssert(bufferNameHash.IsValid(), "Invalid buffer name hash");
+		return m_buffers.contains(bufferNameHash);
 	}
 }

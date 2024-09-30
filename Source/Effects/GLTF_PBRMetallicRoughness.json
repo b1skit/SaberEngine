@@ -158,6 +158,8 @@
 			}
 		],
 
+		"Buffers": ["InstancedTransforms", "GLTF_PBRMetallicRoughness"],
+
 		"Techniques": [
 			{
 				"Name": "FillGBuffer_SingleSided",

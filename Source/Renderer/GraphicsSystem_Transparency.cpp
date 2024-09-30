@@ -314,8 +314,7 @@ namespace gr
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
 			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(
-				m_viewCullingResults->at(mainCamID),
-				(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
+				m_viewCullingResults->at(mainCamID),	// Required FilterBitmask
 				re::Batch::Filter::AlphaBlended);
 
 			m_transparencyStage->AddBatches(sceneBatches);
@@ -323,8 +322,7 @@ namespace gr
 		else
 		{
 			std::vector<re::Batch> const& allSceneBatches = batchMgr.GetAllSceneBatches(
-				(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
-				re::Batch::Filter::AlphaBlended);
+				re::Batch::Filter::AlphaBlended);	// Required FilterBitmask
 
 			m_transparencyStage->AddBatches(allSceneBatches);
 		}

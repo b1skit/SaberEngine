@@ -115,6 +115,15 @@ namespace
 			}
 		}
 
+		// "Buffers":
+		if (effectBlock.contains(key_buffers) && !effectBlock.at(key_buffers).empty())
+		{
+			for (auto const& bufferName : effectBlock.at(key_buffers))
+			{
+				newEffect.AddBufferName(bufferName.template get<std::string>());
+			}
+		}
+
 		return newEffect;
 	}
 

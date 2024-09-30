@@ -109,4 +109,11 @@ namespace effect
 
 		m_techniques.emplace(drawStyleBitmask, technique);
 	}
+
+
+	void Effect::AddBufferName(util::StringHash bufferNameHash)
+	{
+		SEAssert(bufferNameHash.IsValid(), "Invalid buffer name hash");
+		m_buffers.emplace(bufferNameHash);
+	}
 }

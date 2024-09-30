@@ -167,7 +167,10 @@ namespace droid
 		AddEntry(key_pipelineState, technique.PipelineState);
 		AddEntry(key_vertexStream, technique.VertexStream);
 
-		json[key_excludedPlatforms] = technique.ExcludedPlatforms;
+		if (!technique.ExcludedPlatforms.empty())
+		{
+			json[key_excludedPlatforms] = technique.ExcludedPlatforms;
+		}
 
 		// Note: We exclude the "_Defines" block in the runtime version of the Effect definition
 	}

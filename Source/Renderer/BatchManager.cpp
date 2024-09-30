@@ -3,6 +3,7 @@
 #include "BatchManager.h"
 #include "MeshPrimitive.h"
 #include "RenderDataManager.h"
+#include "RenderManager.h"
 
 #include "Core/Util/CastUtils.h"
 #include "Core/Util/MathUtils.h"
@@ -271,7 +272,7 @@ namespace gr
 			m_instancedTransforms = re::BufferInput(
 				InstancedTransformData::s_shaderName,
 				re::Buffer::CreateUncommittedArray<InstancedTransformData>(
-					InstancedTransformData::s_shaderName,
+					k_instancedTransformBufferName,
 					re::Buffer::BufferParams{
 						.m_allocationType = re::Buffer::AllocationType::Mutable,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
@@ -420,7 +421,6 @@ namespace gr
 
 	std::vector<re::Batch> BatchManager::GetSceneBatches(
 		std::vector<gr::RenderDataID> const& renderDataIDs,
-		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/,
 		re::Batch::FilterBitmask required /*=0*/,
 		re::Batch::FilterBitmask excluded /*= 0*/) const
 	{
@@ -438,6 +438,8 @@ namespace gr
 		// Assemble a list of instanced batches:
 		std::vector<re::Batch> batches;
 		batches.reserve(batchMetadata.size());
+
+		effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
 
 		if (!batchMetadata.empty())
 		{
@@ -501,20 +503,27 @@ namespace gr
 
 					instanceIndices.emplace_back(CreateInstanceIndicesEntry(transformIdx, materialIdx));
 				}
+				SEAssert(!instanceIndices.empty(), "Failed to create any InstanceIndices");
 
 				// Finally, attach our instanced buffers:
-				if (bufferTypeMask != 0)
+				bool setInstancedBuffer = false;
+
+				effect::Effect const* batchEffect = effectDB.GetEffect(batches.back().GetEffectID());
+
+				if (batchEffect->UsesBuffer(m_instancedTransforms.GetBuffer()->GetNameHash()))
+				{
+					batches.back().SetBuffer(m_instancedTransforms);
+					setInstancedBuffer = true;
+				}
+				if (batchEffect->UsesBuffer(m_instancedTransforms.GetBuffer()->GetNameHash()))
+				{
+					batches.back().SetBuffer(matInstMeta.m_instancedMaterials);
+					setInstancedBuffer = true;
+				}
+
+				if (setInstancedBuffer)
 				{
 					batches.back().SetBuffer(CreateInstanceIndexBuffer(re::Buffer::AllocationType::SingleFrame, instanceIndices));
-
-					if (bufferTypeMask & InstanceType::Transform)
-					{
-						batches.back().SetBuffer(m_instancedTransforms);
-					}
-					if (bufferTypeMask & InstanceType::Material)
-					{
-						batches.back().SetBuffer(matInstMeta.m_instancedMaterials);
-					}
 				}
 
 			} while (unmergedIdx < batchMetadata.size());
@@ -525,7 +534,6 @@ namespace gr
 
 
 	std::vector<re::Batch> BatchManager::GetAllSceneBatches(
-		uint8_t bufferTypeMask /*= (InstanceType::Transform | InstanceType::Material)*/,
 		re::Batch::FilterBitmask required /*=0*/,
 		re::Batch::FilterBitmask excluded /*= 0*/) const
 	{
@@ -537,6 +545,6 @@ namespace gr
 			allRenderDataIDs.emplace_back(metadata.first);
 		}
 
-		return GetSceneBatches(allRenderDataIDs, bufferTypeMask, required, excluded);
+		return GetSceneBatches(allRenderDataIDs, required, excluded);
 	}
 }

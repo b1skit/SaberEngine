@@ -154,19 +154,17 @@ namespace gr
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
 			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(
-				m_cullingResults->at(mainCamID),
-				(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
-				0,
-				re::Batch::Filter::AlphaBlended);
+				m_cullingResults->at(mainCamID), 
+				0,									// Required FilterBitmask
+				re::Batch::Filter::AlphaBlended);	// Excluded FilterBitmask
 			
 			m_gBufferStage->AddBatches(sceneBatches);
 		}
 		else
 		{
 			std::vector<re::Batch> const& allSceneBatches = batchMgr.GetAllSceneBatches(
-				(gr::BatchManager::InstanceType::Transform | gr::BatchManager::InstanceType::Material),
-				0,
-				re::Batch::Filter::AlphaBlended);
+				0,									// Required FilterBitmask
+				re::Batch::Filter::AlphaBlended);	// Excluded FilterBitmask
 
 			m_gBufferStage->AddBatches(allSceneBatches);
 		}
