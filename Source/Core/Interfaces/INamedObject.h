@@ -2,8 +2,6 @@
 #pragma once
 #include "Core/Assert.h"
 
-#include "Core/Interfaces/IUniqueID.h"
-
 #include "Core/Util/StringHash.h"
 #include "Core/Util/TextUtils.h"
 
@@ -11,7 +9,7 @@
 
 namespace core
 {
-	class INamedObject : public virtual IUniqueID
+	class INamedObject
 	{
 	public:
 		static constexpr size_t k_maxNameLength = 260; // Windows MAX_PATH = 260 chars, including null terminator

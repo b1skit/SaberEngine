@@ -3,6 +3,7 @@
 #include "Shader.h"
 
 #include "Core/Interfaces/INamedObject.h"
+#include "Core/Interfaces/IUniqueID.h"
 
 
 using TechniqueID = util::StringHash;
@@ -14,7 +15,7 @@ namespace re
 
 namespace effect
 {
-	class Technique : public virtual core::INamedObject
+	class Technique : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
 		static TechniqueID ComputeTechniqueID(std::string const& techniqueName);

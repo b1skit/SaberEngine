@@ -8,6 +8,7 @@
 #include "VertexStream.h"
 
 #include "Core/Interfaces/IHashedDataObject.h"
+#include "Core/Interfaces/IUniqueID.h"
 
 
 namespace gr
@@ -79,7 +80,7 @@ namespace re
 			// If a batch is created via the CTOR that takes a gr::Material::MaterialInstanceRenderData, we store the 
 			// material's unique ID so we can include it in the data hash to ensure batches with identical geometry and
 			// materials will sort together
-			uint64_t m_materialUniqueID = core::INamedObject::k_invalidUniqueID;
+			uint64_t m_materialUniqueID = core::IUniqueID::k_invalidUniqueID;
 		};
 		struct ComputeParams
 		{

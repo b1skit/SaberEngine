@@ -4,6 +4,7 @@
 
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IUniqueID.h"
 
 
 namespace re
@@ -21,7 +22,7 @@ namespace re
 	* The union of these gives us Permanent Mutable, Permanent Immutable, & SingleFrame Immutable Buffer types
 	*******************************************************************************************************************/
 
-	class Buffer : public virtual core::INamedObject
+	class Buffer : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
 		enum AllocationType : uint8_t

@@ -1,6 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Interfaces/INamedObject.h"
+#include "Core/Interfaces/IUniqueID.h"
 
 
 namespace re
@@ -8,7 +9,7 @@ namespace re
 	class Buffer;
 
 
-	class BufferInput : public virtual core::INamedObject
+	class BufferInput : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
 		BufferInput();

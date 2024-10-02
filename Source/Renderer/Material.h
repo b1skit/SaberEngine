@@ -5,6 +5,7 @@
 #include "Effect.h"
 
 #include "Core/Interfaces/INamedObject.h"
+#include "Core/Interfaces/IUniqueID.h"
 
 
 namespace re
@@ -15,7 +16,7 @@ namespace re
 
 namespace gr
 {
-	class Material : public virtual core::INamedObject
+	class Material : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
 		enum EffectMaterial : uint32_t

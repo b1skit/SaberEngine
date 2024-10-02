@@ -5,6 +5,7 @@
 #include "RenderPipeline.h"
 
 #include "Core/Interfaces/INamedObject.h"
+#include "Core/Interfaces/IUniqueID.h"
 
 
 namespace re
@@ -12,7 +13,7 @@ namespace re
 	struct RenderSystemDescription;
 
 
-	class RenderSystem : public virtual core::INamedObject
+	class RenderSystem : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
 		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(

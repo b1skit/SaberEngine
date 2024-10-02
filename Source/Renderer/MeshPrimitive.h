@@ -13,7 +13,10 @@
 
 namespace gr
 {
-	class MeshPrimitive final : public virtual core::INamedObject, public virtual core::IHashedDataObject
+	class MeshPrimitive final : 
+		public virtual core::INamedObject, 
+		public virtual core::IHashedDataObject, 
+		public virtual core::IUniqueID
 	{
 	public:
 		struct PlatformParams : public core::IPlatformParams

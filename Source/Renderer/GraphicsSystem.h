@@ -22,7 +22,7 @@ namespace gr
 	class GraphicsSystemManager;
 
 
-	class GraphicsSystem : public virtual core::INamedObject
+	class GraphicsSystem : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
 		// Scriptable pipeline: Create a graphics system by the (case insensitive) name provided in a script.

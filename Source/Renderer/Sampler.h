@@ -5,11 +5,12 @@
 #include "Core/Util/HashKey.h"
 #include "Core/Interfaces/IPlatformParams.h"
 #include "Core/Interfaces/INamedObject.h"
+#include "Core/Interfaces/IUniqueID.h"
 
 
 namespace re
 {
-	class Sampler final : public virtual core::INamedObject
+	class Sampler final : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
 		struct PlatformParams : public core::IPlatformParams
