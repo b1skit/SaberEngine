@@ -94,5 +94,6 @@ namespace gr
 		ViewCullingResults const* m_viewCullingResults; // From the Culling GS
 		
 		ViewBatches m_viewBatches; // Map of gr::Camera::View to vectors of Batches that passed culling
+		std::unordered_map<DataHash, re::BufferInput> m_instanceIndiciesBuffers;
 	};
 }

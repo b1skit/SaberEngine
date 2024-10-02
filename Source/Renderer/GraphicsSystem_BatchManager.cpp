@@ -451,6 +451,7 @@ namespace gr
 	void BatchManagerGraphicsSystem::EndOfFrame()
 	{
 		m_viewBatches.clear(); // Make sure we're not hanging on to any Buffers etc
+		m_instanceIndiciesBuffers.clear();
 	}
 
 	
@@ -516,6 +517,8 @@ namespace gr
 					std::vector<InstanceIndices> instanceIndices;
 					instanceIndices.reserve(numInstances);
 
+					DataHash instanceIndicesHash = 0; // Hash the Buffer contents so we can reuse buffers
+
 					for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
 					{
 						const size_t unmergedSrcIdx = instanceStartIdx + instanceOffset;
@@ -532,6 +535,9 @@ namespace gr
 							matInstMeta.m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx].m_renderDataID).m_index;
 
 						instanceIndices.emplace_back(CreateInstanceIndicesEntry(transformIdx, materialIdx));
+
+						util::AddDataToHash(instanceIndicesHash, 
+							util::HashDataBytes(&instanceIndices.back(), sizeof(InstanceIndices)));
 					}
 					SEAssert(!instanceIndices.empty(), "Failed to create any InstanceIndices");
 
@@ -553,7 +559,14 @@ namespace gr
 
 					if (setInstancedBuffer)
 					{
-						batches.back().SetBuffer(CreateInstanceIndexBuffer(re::Buffer::AllocationType::SingleFrame, instanceIndices));
+						// Minimize the number of singleframe buffers we need to create: We reuse any instancing buffers
+						// with the same contents
+						if (!m_instanceIndiciesBuffers.contains(instanceIndicesHash))
+						{
+							m_instanceIndiciesBuffers.emplace(instanceIndicesHash,
+								CreateInstanceIndexBuffer(re::Buffer::AllocationType::SingleFrame, instanceIndices));
+						}
+						batches.back().SetBuffer(m_instanceIndiciesBuffers.at(instanceIndicesHash));
 					}
 
 				} while (unmergedIdx < batchMetadata.size());
