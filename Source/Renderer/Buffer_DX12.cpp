@@ -57,7 +57,7 @@ namespace
 	bool NeedsUAV(re::Buffer::BufferParams const& bufferParams)
 	{
 		return bufferParams.m_allocationType == re::Buffer::AllocationType::Immutable &&
-			(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite);
+			(bufferParams.m_accessMask & re::Buffer::Access::GPUWrite);
 	}
 
 
@@ -216,7 +216,7 @@ namespace dx12
 		}
 
 		// CPU readback:
-		const bool cpuReadbackEnabled = (bufferParams.m_usageMask & re::Buffer::Usage::CPURead) != 0;
+		const bool cpuReadbackEnabled = (bufferParams.m_accessMask & re::Buffer::Access::CPURead) != 0;
 		if (cpuReadbackEnabled)
 		{
 			for (uint8_t resourceIdx = 0; resourceIdx < numFramesInFlight; resourceIdx++)
@@ -293,7 +293,7 @@ namespace dx12
 	void Buffer::Update(
 		re::Buffer const& buffer, uint8_t curFrameHeapOffsetFactor, uint32_t baseOffset, uint32_t numBytes)
 	{
-		SEAssert((buffer.GetBufferParams().m_usageMask & re::Buffer::Usage::CPUWrite) != 0 &&
+		SEAssert((buffer.GetBufferParams().m_accessMask & re::Buffer::Access::CPUWrite) != 0 &&
 			buffer.GetBufferParams().m_memPoolPreference == re::Buffer::MemoryPoolPreference::Upload,
 			"CPU writes must be enabled to allow mapping");
 

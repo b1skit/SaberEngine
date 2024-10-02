@@ -140,7 +140,7 @@ namespace re
 			const re::Buffer::BufferParams bufferParams{
 						.m_allocationType = re::Buffer::AllocationType::Immutable,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
-						.m_usageMask = re::Buffer::Usage::GPURead,
+						.m_accessMask = re::Buffer::Access::GPURead,
 						.m_type = newVertexStream->m_streamDesc.m_type == re::VertexStream::Type::Index ?
 							re::Buffer::Type::Index : re::Buffer::Type::Vertex,
 						.m_arraySize = 1,

@@ -199,7 +199,7 @@ namespace gr
 			re::Buffer::BufferParams{
 				.m_allocationType = re::Buffer::AllocationType::SingleFrame,
 				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+				.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
 				.m_type = re::Buffer::Type::Constant,
 			});
 		brdfStage->AddSingleFrameBuffer(BRDFIntegrationData::s_shaderName, brdfIntegrationBuf);
@@ -260,7 +260,7 @@ namespace gr
 				re::Buffer::BufferParams{
 					.m_allocationType = re::Buffer::AllocationType::SingleFrame,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
 					.m_type = re::Buffer::Type::Constant,
 				});
 			iemStage->AddSingleFrameBuffer(IEMPMREMGenerationData::s_shaderName, iemGenerationBuffer);
@@ -343,7 +343,7 @@ namespace gr
 					re::Buffer::BufferParams{
 						.m_allocationType = re::Buffer::AllocationType::SingleFrame,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
 						.m_type = re::Buffer::Type::Constant,
 					});
 				pmremStage->AddSingleFrameBuffer(IEMPMREMGenerationData::s_shaderName, pmremGenerationBuffer);
@@ -435,7 +435,7 @@ namespace gr
 					re::Buffer::BufferParams{
 						.m_allocationType = re::Buffer::AllocationType::Immutable,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
 						.m_type = re::Buffer::Type::Constant,
 					});
 			}
@@ -746,7 +746,7 @@ namespace gr
 							re::Buffer::BufferParams{
 								.m_allocationType = re::Buffer::AllocationType::Mutable,
 								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-								.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+								.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
 								.m_type = re::Buffer::Type::Constant,
 							}));
 
@@ -1107,7 +1107,7 @@ namespace gr
 								re::Buffer::BufferParams{
 									.m_allocationType = re::Buffer::AllocationType::SingleFrame,
 									.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-									.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+									.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
 									.m_type = re::Buffer::Type::Constant,
 								})));
 					};

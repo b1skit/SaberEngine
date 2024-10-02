@@ -647,7 +647,7 @@ namespace re
 					re::Buffer::BufferParams{
 						.m_allocationType = bufferAlloc,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-						.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+						.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
 						.m_type = re::Buffer::Type::Constant,
 					}));
 		}

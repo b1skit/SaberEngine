@@ -394,7 +394,7 @@ namespace gr
 				re::Buffer::BufferParams{
 					.m_allocationType = re::Buffer::AllocationType::Mutable,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_usageMask = re::Buffer::CPUWrite | re::Buffer::GPURead,
+					.m_accessMask = re::Buffer::CPUWrite | re::Buffer::GPURead,
 					.m_type = re::Buffer::Constant,
 					.m_arraySize = 1,
 				}));

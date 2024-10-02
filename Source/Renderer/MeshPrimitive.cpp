@@ -292,7 +292,7 @@ namespace gr
 				re::Buffer::BufferParams{
 					.m_allocationType = re::Buffer::AllocationType::Immutable,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
-					.m_usageMask = re::Buffer::Usage::GPURead,
+					.m_accessMask = re::Buffer::Access::GPURead,
 					.m_type = re::Buffer::Type::Structured,
 				});
 

@@ -51,7 +51,7 @@ namespace re
 			Upload,		// Prefor L0/SysMem. Intended for CPU -> GPU communication
 		};
 
-		enum Usage : uint8_t
+		enum Access : uint8_t
 		{
 			GPURead		= 1 << 0,	// Default
 			GPUWrite	= 1 << 1,	// Buffer::AllocationType::Immutable only (DX12: UAV, OpenGL: SSBO)
@@ -65,7 +65,7 @@ namespace re
 
 			MemoryPoolPreference m_memPoolPreference = MemoryPoolPreference::Default;
 
-			uint8_t m_usageMask = Usage::GPURead | Usage::CPUWrite; // Constant data mapped by CPU, consumed by the GPU
+			uint8_t m_accessMask = Access::GPURead | Access::CPUWrite; // Constant data mapped by CPU, consumed by the GPU
 
 			Type m_type = Type::Type_Invalid;
 

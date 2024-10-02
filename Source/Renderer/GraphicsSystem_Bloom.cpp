@@ -153,7 +153,7 @@ namespace gr
 				re::Buffer::BufferParams{
 					.m_allocationType = re::Buffer::AllocationType::Mutable,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
 					.m_type = re::Buffer::Type::Constant,
 				});
 			m_bloomDownBuffers.emplace_back(bloomDownBuf);
@@ -194,7 +194,7 @@ namespace gr
 				re::Buffer::BufferParams{
 					.m_allocationType = re::Buffer::AllocationType::Mutable,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_usageMask = re::Buffer::Usage::GPURead | re::Buffer::Usage::CPUWrite,
+					.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
 					.m_type = re::Buffer::Type::Constant,
 				});
 			upStage->AddPermanentBuffer(BloomComputeData::s_shaderName, bloomUpBuf);

@@ -317,8 +317,8 @@ namespace dx12
 				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
 					"Unexpected root signature type");
 
-				SEAssert((bufferParams.m_usageMask & re::Buffer::Usage::GPURead) != 0 &&
-					(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite) == 0,
+				SEAssert((bufferParams.m_accessMask & re::Buffer::Access::GPURead) != 0 &&
+					(bufferParams.m_accessMask & re::Buffer::Access::GPUWrite) == 0,
 					"Invalid usage flags for a constant buffer");
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
@@ -335,7 +335,7 @@ namespace dx12
 				{
 				case RootSignature::RootParameter::Type::SRV:
 				{
-					SEAssert((bufferParams.m_usageMask & re::Buffer::Usage::GPURead) != 0, 
+					SEAssert((bufferParams.m_accessMask & re::Buffer::Access::GPURead) != 0, 
 						"Buffer does not have the GPU read flag set");
 
 					m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
@@ -348,7 +348,7 @@ namespace dx12
 				break;
 				case RootSignature::RootParameter::Type::UAV:
 				{
-					SEAssert(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite, 
+					SEAssert(bufferParams.m_accessMask & re::Buffer::Access::GPUWrite, 
 						"UAV buffers must have GPU writes enabled");
 
 					m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
@@ -356,7 +356,7 @@ namespace dx12
 						bufferPlatParams->m_resource.Get(),
 						bufferPlatParams->m_heapByteOffset);
 
-					if ((bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite))
+					if ((bufferParams.m_accessMask & re::Buffer::Access::GPUWrite))
 					{
 						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -370,7 +370,7 @@ namespace dx12
 				break;
 				case RootSignature::RootParameter::Type::DescriptorTable:
 				{
-					SEAssert(bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite,
+					SEAssert(bufferParams.m_accessMask & re::Buffer::Access::GPUWrite,
 						"UAV buffers must have GPU writes enabled");
 
 					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
@@ -379,7 +379,7 @@ namespace dx12
 						rootSigEntry->m_tableEntry.m_offset,
 						1);
 
-					if ((bufferParams.m_usageMask & re::Buffer::Usage::GPUWrite))
+					if ((bufferParams.m_accessMask & re::Buffer::Access::GPUWrite))
 					{
 						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -406,7 +406,7 @@ namespace dx12
 			}
 
 			// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
-			if ((bufferParams.m_usageMask & re::Buffer::Usage::CPURead) != 0)
+			if ((bufferParams.m_accessMask & re::Buffer::Access::CPURead) != 0)
 			{
 				const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
 
