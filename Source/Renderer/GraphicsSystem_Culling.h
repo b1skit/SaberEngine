@@ -51,7 +51,7 @@ namespace gr
 		std::mutex m_cachedFrustumsMutex;
 
 		// Mapping Camera RenderDataIDs to a list of RenderDataIDs visible after culling
-		std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>> m_viewToVisibleIDs;
+		ViewCullingResults m_viewToVisibleIDs;
 		std::mutex m_viewToVisibleIDsMutex;
 
 		// A list of light RenderDataIDs visible to the main camera
