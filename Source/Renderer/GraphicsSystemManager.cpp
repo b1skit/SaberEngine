@@ -13,7 +13,6 @@ namespace gr
 {
 	GraphicsSystemManager::GraphicsSystemManager(re::RenderSystem* owningRS)
 		: m_renderData(nullptr)
-		, m_batchManager(nullptr)
 		, m_owningRenderSystem(owningRS)
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
@@ -27,7 +26,6 @@ namespace gr
 	{
 		m_graphicsSystems.clear();
 		m_renderData = nullptr;
-		m_batchManager = nullptr;
 	}
 
 
@@ -36,7 +34,6 @@ namespace gr
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
 		m_renderData = &renderManager->GetRenderDataManager();
-		m_batchManager = &renderManager->GetBatchManager();
 
 		CameraData defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
 

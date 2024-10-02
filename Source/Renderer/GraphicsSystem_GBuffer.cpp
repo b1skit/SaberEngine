@@ -15,7 +15,8 @@ namespace gr
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
 		, m_owningPipeline(nullptr)
-		, m_cullingResults(nullptr)
+		, m_viewBatches(nullptr)
+		, m_allBatches(nullptr)
 	{
 		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", {});
 
@@ -102,13 +103,16 @@ namespace gr
 		m_owningPipeline->AppendRenderStage(m_gBufferStage);
 
 		// Cache our dependencies:
-		m_cullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
+		m_viewBatches = GetDataDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);
+		m_allBatches = GetDataDependency<AllBatches>(k_allBatchesDataInput, dataDependencies);
+		SEAssert(m_viewBatches || m_allBatches, "Must have received some batches");
 	}
 
 
 	void GBufferGraphicsSystem::RegisterInputs()
 	{
-		RegisterDataInput(k_cullingDataInput);
+		RegisterDataInput(k_viewBatchesDataInput);
+		RegisterDataInput(k_allBatchesDataInput);
 	}
 
 
@@ -147,26 +151,19 @@ namespace gr
 
 	void GBufferGraphicsSystem::CreateBatches()
 	{
-		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
-
-		if (m_cullingResults)
+		if (m_viewBatches)
 		{
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
-			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(
-				m_cullingResults->at(mainCamID), 
-				0,									// Required FilterBitmask
-				re::Batch::Filter::AlphaBlended);	// Excluded FilterBitmask
-			
-			m_gBufferStage->AddBatches(sceneBatches);
+			SEAssert(m_viewBatches->contains(mainCamID), "Cannot find main camera ID in view batches");
+
+			m_gBufferStage->AddBatches(m_viewBatches->at(mainCamID));			
 		}
 		else
 		{
-			std::vector<re::Batch> const& allSceneBatches = batchMgr.GetAllSceneBatches(
-				0,									// Required FilterBitmask
-				re::Batch::Filter::AlphaBlended);	// Excluded FilterBitmask
+			SEAssert(m_allBatches, "Must have all batches if view batches is null");
 
-			m_gBufferStage->AddBatches(allSceneBatches);
+			m_gBufferStage->AddBatches(*m_allBatches);
 		}
 	}
 }

@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "BatchManager.h"
 #include "EffectDB.h"
 #include "Platform.h"
 #include "RenderSystem.h"
@@ -74,8 +73,6 @@ namespace re
 		gr::RenderDataManager& GetRenderDataManagerForModification();
 		gr::RenderDataManager const& GetRenderDataManager() const;
 
-		gr::BatchManager const& GetBatchManager() const;
-
 		effect::EffectDB const& GetEffectDB() const;
 
 
@@ -88,7 +85,6 @@ namespace re
 
 	private:
 		gr::RenderDataManager m_renderData;
-		gr::BatchManager m_batchManager;
 		effect::EffectDB m_effectDB;
 
 
@@ -256,12 +252,6 @@ namespace re
 	inline gr::RenderDataManager const& RenderManager::GetRenderDataManager() const
 	{
 		return m_renderData;
-	}
-
-
-	inline gr::BatchManager const& RenderManager::GetBatchManager() const
-	{
-		return m_batchManager;
 	}
 
 

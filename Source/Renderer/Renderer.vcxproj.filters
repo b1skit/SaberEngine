@@ -119,9 +119,6 @@
     <ClInclude Include="Batch.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
-    <ClInclude Include="BatchManager.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
     <ClInclude Include="BoundsRenderData.h">
       <Filter>Header Files\gr\RenderData</Filter>
     </ClInclude>
@@ -461,6 +458,9 @@
     <ClInclude Include="GraphicsSystemCommon.h">
       <Filter>Header Files\gr\grutil</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsSystem_BatchManager.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -670,9 +670,6 @@
     <ClCompile Include="SceneData.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
-    <ClCompile Include="BatchManager.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
     <ClCompile Include="Context.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
@@ -794,6 +791,9 @@
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsSystemCommon.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSystem_BatchManager.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>

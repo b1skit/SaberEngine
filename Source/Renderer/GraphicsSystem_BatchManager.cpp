@@ -1,17 +1,20 @@
-// © 2023 Adam Badke. All rights reserved.
-#include "Batch.h"
-#include "BatchManager.h"
-#include "MeshPrimitive.h"
+// © 2024 Adam Badke. All rights reserved.
+#include "GraphicsSystem_BatchManager.h"
+#include "GraphicsSystemCommon.h"
+#include "GraphicsSystemManager.h"
 #include "RenderDataManager.h"
 #include "RenderManager.h"
 
-#include "Core/Util/CastUtils.h"
+#include "Core/LogManager.h"
+
 #include "Core/Util/MathUtils.h"
-#include "Core/ProfilingMarkers.h"
 
-#include "Shaders/Common/InstancingParams.h"
-#include "Shaders/Common/MaterialParams.h"
 
+struct RefCountedIndex
+{
+	uint32_t m_index;
+	uint32_t m_refCount;
+};
 
 namespace
 {
@@ -25,7 +28,7 @@ namespace
 		{
 			.g_transformIdx = transformIdx,
 			.g_materialIdx = materialIdx,
-			
+
 			._padding = glm::uvec2(0)
 		};
 	}
@@ -41,7 +44,7 @@ namespace
 		InstanceIndexData instanceIndexBufferData{};
 
 		memcpy(&instanceIndexBufferData.g_instanceIndices,
-			instanceIndices.data(), 
+			instanceIndices.data(),
 			sizeof(InstanceIndices) * instanceIndices.size());
 
 		return re::BufferInput(
@@ -60,14 +63,14 @@ namespace
 
 	template<typename T>
 	void AssignInstancingIndex(
-		std::unordered_map<T, gr::BatchManager::RefCountedIndex>& indexMap,
-		std::vector<uint32_t>& freeIndexes, 
+		std::unordered_map<T, RefCountedIndex>& indexMap,
+		std::vector<uint32_t>& freeIndexes,
 		T newID)
 	{
 		// Transforms can be shared; We only need a single index in our array
 		if (indexMap.contains(newID))
 		{
-			gr::BatchManager::RefCountedIndex& refCountedIndex = indexMap.at(newID);
+			RefCountedIndex& refCountedIndex = indexMap.at(newID);
 			refCountedIndex.m_refCount++;
 		}
 		else
@@ -86,7 +89,7 @@ namespace
 			}
 
 			indexMap.emplace(newID,
-				gr::BatchManager::RefCountedIndex{
+				RefCountedIndex{
 					.m_index = newIndex,
 					.m_refCount = 1
 				});
@@ -96,13 +99,13 @@ namespace
 
 	template<typename T>
 	void FreeInstancingIndex(
-		std::unordered_map<T, gr::BatchManager::RefCountedIndex>& indexMap,
+		std::unordered_map<T, RefCountedIndex>& indexMap,
 		std::vector<uint32_t>& freeIndexes,
 		T idToFree)
 	{
 		SEAssert(indexMap.contains(idToFree), "ID has not been assigned an index");
 
-		gr::BatchManager::RefCountedIndex& refCountedIndex = indexMap.at(idToFree);
+		RefCountedIndex& refCountedIndex = indexMap.at(idToFree);
 		SEAssert(refCountedIndex.m_refCount >= 1, "Invalid ref count");
 
 		refCountedIndex.m_refCount--;
@@ -117,21 +120,51 @@ namespace
 
 namespace gr
 {
-	BatchManager::BatchManager()
+	BatchManagerGraphicsSystem::BatchManagerGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+		: GraphicsSystem(GetScriptName(), owningGSM)
+		, INamedObject(GetScriptName())
+		, m_viewCullingResults(nullptr)
 	{
 		m_instancedTransformIndexes.reserve(k_numBlocksPerAllocation);
 		m_freeTransformIndexes.reserve(k_numBlocksPerAllocation);
 	}
 
 
-	void BatchManager::UpdateBatchCache(gr::RenderDataManager const& renderData)
+	void BatchManagerGraphicsSystem::RegisterInputs()
+	{
+		RegisterDataInput(k_cullingDataInput);
+	}
+
+
+	void BatchManagerGraphicsSystem::RegisterOutputs()
+	{
+		RegisterDataOutput(k_viewBatchesDataOutput, &m_viewBatches);
+		RegisterDataOutput(k_allBatchesDataOutput, &m_permanentCachedBatches);
+	}
+
+
+	void BatchManagerGraphicsSystem::InitPipeline(
+		re::StagePipeline& pipeline,
+		TextureDependencies const&,
+		BufferDependencies const&,
+		DataDependencies const& dataDependencies)
+	{
+		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput,dataDependencies);
+
+		SEAssert(m_viewCullingResults, "View culling results cannot (currently) be null");
+	}
+
+
+	void BatchManagerGraphicsSystem::PreRender()
 	{
 		SEAssert(m_permanentCachedBatches.size() == m_renderDataIDToBatchMetadata.size() &&
 			m_permanentCachedBatches.size() == m_cacheIdxToRenderDataID.size(),
 			"Batch cache and batch maps are out of sync");
 
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
 		// Remove deleted batches
-		std::vector<gr::RenderDataID> const* deletedMeshPrimIDs = 
+		std::vector<gr::RenderDataID> const* deletedMeshPrimIDs =
 			renderData.GetIDsWithDeletedData<gr::MeshPrimitive::RenderData>();
 		if (deletedMeshPrimIDs)
 		{
@@ -195,7 +228,7 @@ namespace gr
 
 
 		// Create batches for newly added IDs
-		std::vector<gr::RenderDataID> const* newMeshPrimIDs = 
+		std::vector<gr::RenderDataID> const* newMeshPrimIDs =
 			renderData.GetIDsWithNewData<gr::MeshPrimitive::RenderData>();
 		if (newMeshPrimIDs)
 		{
@@ -250,16 +283,16 @@ namespace gr
 			}
 		}
 
-		
+
 		// Create/grow our permanent Transform instance buffers:
-		const bool mustReallocateTransformBuffer = m_instancedTransforms.GetBuffer() != nullptr && 
+		const bool mustReallocateTransformBuffer = m_instancedTransforms.GetBuffer() != nullptr &&
 			m_instancedTransforms.GetBuffer()->GetArraySize() < m_instancedTransformIndexes.size();
 
 		const uint32_t requestedTransformBufferElements = util::RoundUpToNearestMultiple(
 			util::CheckedCast<uint32_t>(m_instancedTransformIndexes.size()),
 			k_numBlocksPerAllocation);
 
-		if ((mustReallocateTransformBuffer || m_instancedTransforms.GetBuffer() == nullptr) && 
+		if ((mustReallocateTransformBuffer || m_instancedTransforms.GetBuffer() == nullptr) &&
 			requestedTransformBufferElements > 0)
 		{
 			m_instancedTransforms = re::BufferInput(
@@ -277,7 +310,7 @@ namespace gr
 			// If we reallocated, re-copy all of the data to the new buffer
 			if (mustReallocateTransformBuffer)
 			{
-				LOG_WARNING("gr::BatchManager: Transform instance buffer is being reallocated");
+				LOG_WARNING("gr::BatchManagerGraphicsSystem: Transform instance buffer is being reallocated");
 
 				for (auto& transformRecord : m_instancedTransformIndexes)
 				{
@@ -286,7 +319,7 @@ namespace gr
 					gr::TransformID transformID = transformRecord.first;
 					const uint32_t transformIdx = transformRecord.second.m_index;
 
-					gr::Transform::RenderData const& transformData = 
+					gr::Transform::RenderData const& transformData =
 						renderData.GetTransformDataFromTransformID(transformID);
 
 					InstancedTransformData const& transformParams =
@@ -306,7 +339,7 @@ namespace gr
 			const EffectID matEffectID = materialMedatadataEntry.first;
 			MaterialInstanceMetadata& matInstMeta = materialMedatadataEntry.second;
 
-			const bool mustReallocateMaterialBuffer = 
+			const bool mustReallocateMaterialBuffer =
 				matInstMeta.m_instancedMaterials.GetBuffer() != nullptr &&
 				matInstMeta.m_instancedMaterials.GetBuffer()->GetArraySize() < matInstMeta.m_instancedMaterialIndexes.size();
 
@@ -317,12 +350,12 @@ namespace gr
 			if ((mustReallocateMaterialBuffer || matInstMeta.m_instancedMaterials.GetBuffer() == nullptr) &&
 				requestedMaterialBufferElements > 0)
 			{
-				matInstMeta.m_instancedMaterials = 
+				matInstMeta.m_instancedMaterials =
 					gr::Material::ReserveInstancedBuffer(matEffectID, requestedMaterialBufferElements);
 
 				if (mustReallocateMaterialBuffer)
 				{
-					LOG_WARNING("gr::BatchManager: Material instance buffer for Effect \"%s\"is being reallocated",
+					LOG_WARNING("BatchManagerGraphicsSystem: Effect \"%s\" Material instance buffer is being reallocated",
 						re::RenderManager::Get()->GetEffectDB().GetEffect(matEffectID)->GetName());
 
 					for (auto& materialRecord : matInstMeta.m_instancedMaterialIndexes)
@@ -356,7 +389,7 @@ namespace gr
 
 				gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromTransformID(transformID);
 
-				InstancedTransformData const& transformParams = 
+				InstancedTransformData const& transformParams =
 					gr::Transform::CreateInstancedTransformData(transformData);
 
 				m_instancedTransforms.GetBuffer()->Commit(
@@ -365,7 +398,7 @@ namespace gr
 					1);
 			}
 		}
-		
+
 		// Update dirty instanced Material data:
 		if (renderData.HasObjectData<gr::Material::MaterialInstanceRenderData>())
 		{
@@ -410,135 +443,121 @@ namespace gr
 				}
 			}
 		}
+
+		BuildViewBatches();
 	}
 
 
-	std::vector<re::Batch> BatchManager::GetSceneBatches(
-		std::vector<gr::RenderDataID> const& renderDataIDs,
-		re::Batch::FilterBitmask required /*=0*/,
-		re::Batch::FilterBitmask excluded /*= 0*/) const
+	void BatchManagerGraphicsSystem::EndOfFrame()
 	{
-		// Copy the batch metadata for the requeted RenderDataIDs:
-		std::vector<BatchMetadata> batchMetadata;
-		batchMetadata.reserve(renderDataIDs.size());
-		for (size_t i = 0; i < renderDataIDs.size(); i++)
+		m_viewBatches.clear(); // Make sure we're not hanging on to any Buffers etc
+	}
+
+	
+	void BatchManagerGraphicsSystem::BuildViewBatches()
+	{
+		for (auto const& viewAndCulledIDs : *m_viewCullingResults)
 		{
-			SEAssert(m_renderDataIDToBatchMetadata.contains(renderDataIDs[i]),
-				"Batch with the given ID does not exist");
-			
-			batchMetadata.emplace_back(m_renderDataIDToBatchMetadata.at(renderDataIDs[i]));
-		}
+			gr::Camera::View const& curView = viewAndCulledIDs.first;
+			std::vector<gr::RenderDataID> const& renderDataIDs = viewAndCulledIDs.second;
 
-		// Assemble a list of instanced batches:
-		std::vector<re::Batch> batches;
-		batches.reserve(batchMetadata.size());
-
-		effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
-
-		if (!batchMetadata.empty())
-		{
-			// Sort the batch metadata:
-			std::sort(batchMetadata.begin(), batchMetadata.end(),
-				[](BatchMetadata const& a, BatchMetadata const& b) { return (a.m_batchHash < b.m_batchHash); });
-
-			size_t unmergedIdx = 0;
-			do
+			// Copy the batch metadata for the requeted RenderDataIDs:
+			std::vector<BatchMetadata> batchMetadata;
+			batchMetadata.reserve(renderDataIDs.size());
+			for (size_t i = 0; i < renderDataIDs.size(); i++)
 			{
-				re::Batch const& cachedBatch = m_permanentCachedBatches[batchMetadata[unmergedIdx].m_cacheIndex];
+				SEAssert(m_renderDataIDToBatchMetadata.contains(renderDataIDs[i]),
+					"Batch with the given ID does not exist");
 
-				// Pre-filter the batch. RenderStages will also filter batches, but this allows us to minimize
-				// unnecessary copying when we know certain batches aren't required
-				if (!cachedBatch.MatchesFilterBits(required, excluded))
+				batchMetadata.emplace_back(m_renderDataIDToBatchMetadata.at(renderDataIDs[i]));
+			}
+
+			// Assemble a list of instanced batches:
+			std::vector<re::Batch>& batches = m_viewBatches[curView];
+			batches.reserve(batchMetadata.size());
+			SEAssert(batches.empty(), "Found a non-empty batch of vectors. These should have been cleared");
+
+			effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
+
+			if (!batchMetadata.empty())
+			{
+				// Sort the batch metadata:
+				std::sort(batchMetadata.begin(), batchMetadata.end(),
+					[](BatchMetadata const& a, BatchMetadata const& b) { return (a.m_batchHash < b.m_batchHash); });
+
+				size_t unmergedIdx = 0;
+				do
 				{
-					unmergedIdx++; // Skip the batch
-					continue;
-				}
+					re::Batch const& cachedBatch = m_permanentCachedBatches[batchMetadata[unmergedIdx].m_cacheIndex];
 
-				// Add the first batch in the sequence to our final list. We duplicate the batch, as the cached batches
-				// have a permanent Lifetime
-				batches.emplace_back(re::Batch::Duplicate(cachedBatch, re::Lifetime::SingleFrame));
+					// Add the first batch in the sequence to our final list. We duplicate the batch, as the cached batches
+					// have a permanent Lifetime
+					batches.emplace_back(re::Batch::Duplicate(cachedBatch, re::Lifetime::SingleFrame));
 
-				const uint64_t curBatchHash = batchMetadata[unmergedIdx].m_batchHash;
+					const uint64_t curBatchHash = batchMetadata[unmergedIdx].m_batchHash;
 
-				// Obtain the Material instance metadata while we still have the current unmergedIdx		
-				MaterialInstanceMetadata const& matInstMeta = 
-					m_materialInstanceMetadata.at(batchMetadata[unmergedIdx].m_matEffectID);
+					// Obtain the Material instance metadata while we still have the current unmergedIdx		
+					MaterialInstanceMetadata const& matInstMeta =
+						m_materialInstanceMetadata.at(batchMetadata[unmergedIdx].m_matEffectID);
 
-				// Find the index of the last batch with a matching hash in the sequence:
-				const size_t instanceStartIdx = unmergedIdx++;
-				while (unmergedIdx < batchMetadata.size() &&
-					batchMetadata[unmergedIdx].m_batchHash == curBatchHash)
-				{
-					unmergedIdx++;
-				}
+					// Find the index of the last batch with a matching hash in the sequence:
+					const size_t instanceStartIdx = unmergedIdx++;
+					while (unmergedIdx < batchMetadata.size() &&
+						batchMetadata[unmergedIdx].m_batchHash == curBatchHash)
+					{
+						unmergedIdx++;
+					}
 
-				// Compute and set the number of instances in the batch:
-				const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
-				batches.back().SetInstanceCount(numInstances);
+					// Compute and set the number of instances in the batch:
+					const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
+					batches.back().SetInstanceCount(numInstances);
 
-				// Gather the data we need to build our instanced buffers:
-				std::vector<InstanceIndices> instanceIndices;
-				instanceIndices.reserve(numInstances);
+					// Gather the data we need to build our instanced buffers:
+					std::vector<InstanceIndices> instanceIndices;
+					instanceIndices.reserve(numInstances);
 
-				for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
-				{
-					const size_t unmergedSrcIdx = instanceStartIdx + instanceOffset;
+					for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
+					{
+						const size_t unmergedSrcIdx = instanceStartIdx + instanceOffset;
 
-					SEAssert(m_instancedTransformIndexes.contains(batchMetadata[unmergedSrcIdx].m_transformID),
-						"TransformID is not registered for an instanced transform index");
-					SEAssert(matInstMeta.m_instancedMaterialIndexes.contains(batchMetadata[unmergedSrcIdx].m_renderDataID),
-						"RenderDataID is not registered for an instanced material index");
+						SEAssert(m_instancedTransformIndexes.contains(batchMetadata[unmergedSrcIdx].m_transformID),
+							"TransformID is not registered for an instanced transform index");
+						SEAssert(matInstMeta.m_instancedMaterialIndexes.contains(batchMetadata[unmergedSrcIdx].m_renderDataID),
+							"RenderDataID is not registered for an instanced material index");
 
-					const uint32_t transformIdx =
-						m_instancedTransformIndexes.at(batchMetadata[unmergedSrcIdx].m_transformID).m_index;
+						const uint32_t transformIdx =
+							m_instancedTransformIndexes.at(batchMetadata[unmergedSrcIdx].m_transformID).m_index;
 
-					const uint32_t materialIdx =
-						matInstMeta.m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx].m_renderDataID).m_index;
+						const uint32_t materialIdx =
+							matInstMeta.m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx].m_renderDataID).m_index;
 
-					instanceIndices.emplace_back(CreateInstanceIndicesEntry(transformIdx, materialIdx));
-				}
-				SEAssert(!instanceIndices.empty(), "Failed to create any InstanceIndices");
+						instanceIndices.emplace_back(CreateInstanceIndicesEntry(transformIdx, materialIdx));
+					}
+					SEAssert(!instanceIndices.empty(), "Failed to create any InstanceIndices");
 
-				// Finally, attach our instanced buffers:
-				bool setInstancedBuffer = false;
+					// Finally, attach our instanced buffers:
+					bool setInstancedBuffer = false;
 
-				effect::Effect const* batchEffect = effectDB.GetEffect(batches.back().GetEffectID());
+					effect::Effect const* batchEffect = effectDB.GetEffect(batches.back().GetEffectID());
 
-				if (batchEffect->UsesBuffer(m_instancedTransforms.GetBuffer()->GetNameHash()))
-				{
-					batches.back().SetBuffer(m_instancedTransforms);
-					setInstancedBuffer = true;
-				}
-				if (batchEffect->UsesBuffer(m_instancedTransforms.GetBuffer()->GetNameHash()))
-				{
-					batches.back().SetBuffer(matInstMeta.m_instancedMaterials);
-					setInstancedBuffer = true;
-				}
+					if (batchEffect->UsesBuffer(m_instancedTransforms.GetBuffer()->GetNameHash()))
+					{
+						batches.back().SetBuffer(m_instancedTransforms);
+						setInstancedBuffer = true;
+					}
+					if (batchEffect->UsesBuffer(m_instancedTransforms.GetBuffer()->GetNameHash()))
+					{
+						batches.back().SetBuffer(matInstMeta.m_instancedMaterials);
+						setInstancedBuffer = true;
+					}
 
-				if (setInstancedBuffer)
-				{
-					batches.back().SetBuffer(CreateInstanceIndexBuffer(re::Buffer::AllocationType::SingleFrame, instanceIndices));
-				}
+					if (setInstancedBuffer)
+					{
+						batches.back().SetBuffer(CreateInstanceIndexBuffer(re::Buffer::AllocationType::SingleFrame, instanceIndices));
+					}
 
-			} while (unmergedIdx < batchMetadata.size());
+				} while (unmergedIdx < batchMetadata.size());
+			}
 		}
-
-		return batches;
-	}
-
-
-	std::vector<re::Batch> BatchManager::GetAllSceneBatches(
-		re::Batch::FilterBitmask required /*=0*/,
-		re::Batch::FilterBitmask excluded /*= 0*/) const
-	{
-		std::vector<gr::RenderDataID> allRenderDataIDs;
-		allRenderDataIDs.reserve(m_renderDataIDToBatchMetadata.size());
-
-		for (auto const& metadata : m_renderDataIDToBatchMetadata)
-		{
-			allRenderDataIDs.emplace_back(metadata.first);
-		}
-
-		return GetSceneBatches(allRenderDataIDs, required, excluded);
 	}
 }

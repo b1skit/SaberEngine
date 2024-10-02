@@ -104,7 +104,6 @@
     <ClInclude Include="AnimationParamsHelpers.h" />
     <ClInclude Include="AssetLoadUtils.h" />
     <ClInclude Include="Batch.h" />
-    <ClInclude Include="BatchManager.h" />
     <ClInclude Include="BoundsRenderData.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="BufferAllocator.h" />
@@ -134,6 +133,7 @@
     <ClInclude Include="GraphicsSystem.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystemCommon.h" />
+    <ClInclude Include="GraphicsSystem_BatchManager.h" />
     <ClInclude Include="GraphicsSystem_Bloom.h" />
     <ClInclude Include="GraphicsSystem_ComputeMips.h" />
     <ClInclude Include="GraphicsSystem_Culling.h" />
@@ -222,7 +222,6 @@
     <ClCompile Include="AnimationParamsHelpers.cpp" />
     <ClCompile Include="AssetLoadUtils.cpp" />
     <ClCompile Include="Batch.cpp" />
-    <ClCompile Include="BatchManager.cpp" />
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="BufferAllocator.cpp" />
     <ClCompile Include="BufferAllocator_DX12.cpp" />
@@ -250,6 +249,7 @@
     <ClCompile Include="GraphicsSystem.cpp" />
     <ClCompile Include="GraphicsSystemCommon.cpp" />
     <ClCompile Include="GraphicsSystemManager.cpp" />
+    <ClCompile Include="GraphicsSystem_BatchManager.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
     <ClCompile Include="GraphicsSystem_Culling.cpp" />

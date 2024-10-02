@@ -108,7 +108,6 @@ namespace gr
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
 		, m_stagePipeline(nullptr)
-		, m_viewCullingResults(nullptr)
 		, m_pointCullingResults(nullptr)
 		, m_spotCullingResults(nullptr)
 		, m_directionalShadowArrayTex(nullptr)
@@ -123,9 +122,11 @@ namespace gr
 
 	void ShadowsGraphicsSystem::RegisterInputs()
 	{
-		RegisterDataInput(k_cullingDataInput);
 		RegisterDataInput(k_pointLightCullingDataInput);
 		RegisterDataInput(k_spotLightCullingDataInput);
+
+		RegisterDataInput(k_viewBatchesDataInput);
+		RegisterDataInput(k_allBatchesDataInput);
 
 		RegisterTextureInput(k_directionalShadowArrayTexInput);
 		RegisterTextureInput(k_pointShadowArrayTexInput);
@@ -303,9 +304,12 @@ namespace gr
 		m_spotParentStageItr = pipeline.AppendRenderStage(spotParentStage);
 
 		// Cache our dependencies:
-		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
 		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
 		m_spotCullingResults = GetDataDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
+
+		m_viewBatches = GetDataDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);
+		m_allBatches = GetDataDependency<AllBatches>(k_allBatchesDataInput, dataDependencies);
+		SEAssert(m_viewBatches || m_allBatches, "Must have received some batches");
 
 		m_directionalShadowArrayTex = texDependencies.at(k_directionalShadowArrayTexInput);
 		m_pointShadowArrayTex = texDependencies.at(k_pointShadowArrayTexInput);
@@ -532,7 +536,6 @@ namespace gr
 	void ShadowsGraphicsSystem::CreateBatches()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
-		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
 		
 		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
@@ -552,18 +555,15 @@ namespace gr
 					re::RenderStage& directionalStage = 
 						*m_directionalShadowStageData.at(lightID).m_renderStage;
 
-					if (m_viewCullingResults)
+					if (m_viewBatches)
 					{
-						directionalStage.AddBatches(batchMgr.GetSceneBatches(
-							m_viewCullingResults->at(lightID),
-							re::Batch::Filter::CastsShadow,		// Required FilterBitmask
-							re::Batch::Filter::AlphaBlended));	// Excluded FilterBitmask
+						SEAssert(m_viewBatches->contains(lightID), "Cannot find light camera ID in view batches");
+						directionalStage.AddBatches(m_viewBatches->at(lightID));
 					}
 					else
 					{
-						directionalStage.AddBatches(batchMgr.GetAllSceneBatches(
-							re::Batch::Filter::CastsShadow,		// Required FilterBitmask
-							re::Batch::Filter::AlphaBlended));	// Excluded FilterBitmask
+						SEAssert(m_allBatches, "Must have all batches if view batches is null");
+						directionalStage.AddBatches(*m_allBatches);
 					}
 					
 				}
@@ -584,13 +584,15 @@ namespace gr
 
 							re::RenderStage& spotStage = *m_spotShadowStageData.at(lightID).m_renderStage;
 
-							if (m_viewCullingResults)
+							if (m_viewBatches)
 							{
-								spotStage.AddBatches(batchMgr.GetSceneBatches(m_viewCullingResults->at(lightID)));
+								SEAssert(m_viewBatches->contains(lightID), "Cannot find light camera ID in view batches");
+								spotStage.AddBatches(m_viewBatches->at(lightID));
 							}
 							else
 							{
-								spotStage.AddBatches(batchMgr.GetAllSceneBatches());
+								SEAssert(m_allBatches, "Must have all batches if view batches is null");
+								spotStage.AddBatches(*m_allBatches);
 							}
 						}
 						++spotItr;
@@ -632,19 +634,20 @@ namespace gr
 								{pointData.m_renderDataID, gr::Camera::View::Face::ZNeg},
 							};
 
-							if (m_viewCullingResults)
+							if (m_viewBatches)
 							{
 								// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so we need
 								// to add all batches to the same stage. This is wasteful, as 5/6 of the faces don't need a
 								// given batch. We should draw each face of the cubemap seperately instead
+								SEAssert(m_viewBatches->contains(lightID), "Cannot find light camera ID in view batches");
 								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
-									batchMgr.GetSceneBatches(
-										CombineVisibleRenderDataIDs(renderData, *m_viewCullingResults, views)));
+									m_viewBatches->at(lightID));
 							}
 							else
 							{
+								SEAssert(m_allBatches, "Must have all batches if view batches is null");
 								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
-									batchMgr.GetAllSceneBatches());
+									*m_allBatches);
 							}
 						}
 						++pointItr;

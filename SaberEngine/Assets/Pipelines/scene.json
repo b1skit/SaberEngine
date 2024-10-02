@@ -4,7 +4,7 @@
 			"GraphicsSystem": "Culling"
 		},
 		{
-			"GraphicsSystem": "GBuffer",
+			"GraphicsSystem": "BatchManager",
 			"Inputs": [
 				{
 					"GraphicsSystem": "Culling",
@@ -19,6 +19,24 @@
 		},
 		{
 			"GraphicsSystem": "LightManager"
+		},
+		{
+			"GraphicsSystem": "GBuffer",
+			"Inputs": [
+				{
+					"GraphicsSystem": "BatchManager",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewBatches",
+							"DestinationName": "ViewBatches"
+						},
+						{
+							"SourceName": "AllBatches",
+							"DestinationName": "AllBatches"
+						}
+					]
+				}
+			]
 		},
 		{
 			"GraphicsSystem": "XeGTAO",
@@ -46,16 +64,25 @@
 					"GraphicsSystem": "Culling",
 					"DataDependencies": [
 						{
-							"SourceName": "ViewCullingResults",
-							"DestinationName": "ViewCullingResults"
-						},
-						{
 							"SourceName": "PointLightCullingResults",
 							"DestinationName": "PointLightCullingResults"
 						},
 						{
 							"SourceName": "SpotLightCullingResults",
 							"DestinationName": "SpotLightCullingResults"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "BatchManager",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewBatches",
+							"DestinationName": "ViewBatches"
+						},
+						{
+							"SourceName": "AllBatches",
+							"DestinationName": "AllBatches"
 						}
 					]
 				},
@@ -235,16 +262,25 @@
 					"GraphicsSystem": "Culling",
 					"DataDependencies": [
 						{
-							"SourceName": "ViewCullingResults",
-							"DestinationName": "ViewCullingResults"
-						},
-						{
 							"SourceName": "PointLightCullingResults",
 							"DestinationName": "PointLightCullingResults"
 						},
 						{
 							"SourceName": "SpotLightCullingResults",
 							"DestinationName": "SpotLightCullingResults"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "BatchManager",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewBatches",
+							"DestinationName": "ViewBatches"
+						},
+						{
+							"SourceName": "AllBatches",
+							"DestinationName": "AllBatches"
 						}
 					]
 				},

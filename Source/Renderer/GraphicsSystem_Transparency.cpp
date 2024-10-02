@@ -1,5 +1,4 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "BatchManager.h"
 #include "GraphicsSystem_Transparency.h"
 #include "GraphicsSystemManager.h"
 #include "LightParamsHelpers.h"
@@ -97,7 +96,6 @@ namespace gr
 		, INamedObject(GetScriptName())
 		, m_ambientIEMTex(nullptr)
 		, m_ambientPMREMTex(nullptr)
-		, m_viewCullingResults(nullptr)
 		, m_pointCullingResults(nullptr)
 		, m_spotCullingResults(nullptr)
 		, m_directionalLightDataBuffer(nullptr)
@@ -123,9 +121,11 @@ namespace gr
 
 		RegisterBufferInput(k_ambientParamsBufferInput);
 
-		RegisterDataInput(k_viewCullingDataInput);
 		RegisterDataInput(k_pointLightCullingDataInput);
 		RegisterDataInput(k_spotLightCullingDataInput);
+
+		RegisterDataInput(k_viewBatchesDataInput);
+		RegisterDataInput(k_allBatchesDataInput);
 
 		RegisterBufferInput(k_directionalLightDataBufferInput);
 		RegisterBufferInput(k_pointLightDataBufferInput);
@@ -171,9 +171,12 @@ namespace gr
 		m_ambientPMREMTex = texDependencies.at(k_ambientPMREMTexInput);
 		m_ambientParams = bufferDependencies.at(k_ambientParamsBufferInput);
 
-		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_viewCullingDataInput, dataDependencies);
 		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
 		m_spotCullingResults = GetDataDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
+
+		m_viewBatches = GetDataDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);
+		m_allBatches = GetDataDependency<AllBatches>(k_allBatchesDataInput, dataDependencies);
+		SEAssert(m_viewBatches || m_allBatches, "Must have received some batches");
 
 		m_directionalLightDataBuffer = bufferDependencies.at(k_directionalLightDataBufferInput);
 		m_pointLightDataBuffer = bufferDependencies.at(k_pointLightDataBufferInput);
@@ -306,25 +309,16 @@ namespace gr
 			re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"),
 			re::TextureView(*m_spotShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
 
-
-		gr::BatchManager const& batchMgr = m_graphicsSystemManager->GetBatchManager();
-
-		if (m_viewCullingResults)
+		if (m_viewBatches)
 		{
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
-
-			std::vector<re::Batch> const& sceneBatches = batchMgr.GetSceneBatches(
-				m_viewCullingResults->at(mainCamID),	// Required FilterBitmask
-				re::Batch::Filter::AlphaBlended);
-
-			m_transparencyStage->AddBatches(sceneBatches);
+			SEAssert(m_viewBatches->contains(mainCamID), "Cannot find main camera ID in view batches");
+			m_transparencyStage->AddBatches(m_viewBatches->at(mainCamID));
 		}
 		else
 		{
-			std::vector<re::Batch> const& allSceneBatches = batchMgr.GetAllSceneBatches(
-				re::Batch::Filter::AlphaBlended);	// Required FilterBitmask
-
-			m_transparencyStage->AddBatches(allSceneBatches);
+			SEAssert(m_allBatches, "Must have all batches if view batches is null");
+			m_transparencyStage->AddBatches(*m_allBatches);
 		}
 	}
 }

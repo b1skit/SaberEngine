@@ -7,6 +7,11 @@
 #include "Core/Util/HashKey.h"
 
 
+namespace re
+{
+	class Batch;
+}
+
 namespace gr
 {
 	using TextureDependencies = std::map<util::HashKey const, std::shared_ptr<re::Texture> const*>;
@@ -17,6 +22,9 @@ namespace gr
 	// Data inputs/output types:
 	using ViewCullingResults = std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>>;
 	using PunctualLightCullingResults = std::vector<gr::RenderDataID>;
+
+	using ViewBatches = std::unordered_map<gr::Camera::View const, std::vector<re::Batch>>;
+	using AllBatches = std::vector<re::Batch>;
 
 	using LightDataBufferIdxMap = std::unordered_map<gr::RenderDataID, uint32_t>;
 	

@@ -23,9 +23,11 @@ namespace gr
 			);
 		}
 
-		static constexpr util::HashKey k_cullingDataInput = "ViewCullingResults";
 		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
 		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
+
+		static constexpr util::HashKey k_viewBatchesDataInput = "ViewBatches";
+		static constexpr util::HashKey k_allBatchesDataInput = "AllBatches";
 
 		static constexpr util::HashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
 		static constexpr util::HashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
@@ -90,9 +92,11 @@ namespace gr
 
 
 	private: // Cached dependencies:
-		ViewCullingResults const* m_viewCullingResults;
 		PunctualLightCullingResults const* m_pointCullingResults;
 		PunctualLightCullingResults const* m_spotCullingResults;
+		
+		ViewBatches const* m_viewBatches;
+		AllBatches const* m_allBatches;
 
 		std::shared_ptr<re::Texture> const* m_directionalShadowArrayTex;
 		std::shared_ptr<re::Texture> const* m_pointShadowArrayTex;

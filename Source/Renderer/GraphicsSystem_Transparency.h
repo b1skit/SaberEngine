@@ -24,9 +24,11 @@ namespace gr
 		static constexpr util::HashKey k_sceneDepthTexInput = "SceneDepth";
 		static constexpr util::HashKey k_sceneLightingTexInput = "SceneLightingTarget";
 
-		static constexpr util::HashKey k_viewCullingDataInput = "ViewCullingResults";
 		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
 		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
+
+		static constexpr util::HashKey k_viewBatchesDataInput = "ViewBatches";
+		static constexpr util::HashKey k_allBatchesDataInput = "AllBatches";
 
 		static constexpr util::HashKey k_ambientIEMTexInput = "AmbientIEMTex";
 		static constexpr util::HashKey k_ambientPMREMTexInput = "AmbientPMREMTex";
@@ -69,9 +71,11 @@ namespace gr
 		std::shared_ptr<re::Texture> const* m_ambientPMREMTex;
 		std::shared_ptr<re::Buffer> const* m_ambientParams;
 
-		ViewCullingResults const* m_viewCullingResults;
 		PunctualLightCullingResults const* m_pointCullingResults;
 		PunctualLightCullingResults const* m_spotCullingResults;
+
+		ViewBatches const* m_viewBatches;
+		AllBatches const* m_allBatches;
 
 		std::shared_ptr<re::Buffer> const* m_directionalLightDataBuffer;
 		std::shared_ptr<re::Buffer> const* m_pointLightDataBuffer;

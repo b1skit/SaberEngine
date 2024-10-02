@@ -28,7 +28,8 @@ namespace gr
 			);
 		}
 
-		static constexpr util::HashKey k_cullingDataInput = "ViewCullingResults";
+		static constexpr util::HashKey k_viewBatchesDataInput = "ViewBatches";
+		static constexpr util::HashKey k_allBatchesDataInput = "AllBatches";
 		void RegisterInputs() override;
 		void RegisterOutputs() override;
 
@@ -81,6 +82,7 @@ namespace gr
 		re::StagePipeline* m_owningPipeline;
 
 	private: // Cached dependencies:
-		ViewCullingResults const* m_cullingResults;
+		ViewBatches const* m_viewBatches;
+		AllBatches const* m_allBatches;
 	};
 }
