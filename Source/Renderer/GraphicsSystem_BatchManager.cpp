@@ -517,7 +517,7 @@ namespace gr
 					std::vector<InstanceIndices> instanceIndices;
 					instanceIndices.reserve(numInstances);
 
-					DataHash instanceIndicesHash = 0; // Hash the Buffer contents so we can reuse buffers
+					DataHash instanceIdxsHash = 0; // Hash the Buffer contents so we can reuse buffers
 
 					for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
 					{
@@ -536,8 +536,8 @@ namespace gr
 
 						instanceIndices.emplace_back(CreateInstanceIndicesEntry(transformIdx, materialIdx));
 
-						util::AddDataToHash(instanceIndicesHash, 
-							util::HashDataBytes(&instanceIndices.back(), sizeof(InstanceIndices)));
+						util::AddDataToHash(instanceIdxsHash, util::HashDataBytes(&transformIdx, sizeof(uint32_t)));
+						util::AddDataToHash(instanceIdxsHash, util::HashDataBytes(&materialIdx, sizeof(uint32_t)));
 					}
 					SEAssert(!instanceIndices.empty(), "Failed to create any InstanceIndices");
 
@@ -561,12 +561,12 @@ namespace gr
 					{
 						// Minimize the number of singleframe buffers we need to create: We reuse any instancing buffers
 						// with the same contents
-						if (!m_instanceIndiciesBuffers.contains(instanceIndicesHash))
+						if (!m_instanceIndiciesBuffers.contains(instanceIdxsHash))
 						{
-							m_instanceIndiciesBuffers.emplace(instanceIndicesHash,
+							m_instanceIndiciesBuffers.emplace(instanceIdxsHash,
 								CreateInstanceIndexBuffer(re::Buffer::AllocationType::SingleFrame, instanceIndices));
 						}
-						batches.back().SetBuffer(m_instanceIndiciesBuffers.at(instanceIndicesHash));
+						batches.back().SetBuffer(m_instanceIndiciesBuffers.at(instanceIdxsHash));
 					}
 
 				} while (unmergedIdx < batchMetadata.size());
