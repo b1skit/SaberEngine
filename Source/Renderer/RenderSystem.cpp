@@ -409,6 +409,7 @@ namespace re
 	void RenderSystem::EndOfFrame()
 	{
 		m_renderPipeline.EndOfFrame();
+		m_graphicsSystemManager.EndOfFrame();
 	}
 
 

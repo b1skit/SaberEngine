@@ -157,7 +157,9 @@ namespace gr
 
 		virtual ~GraphicsSystem() = default;
 
-		virtual void ShowImGuiWindow(); // Override this
+		// Override these:
+		virtual void EndOfFrame() {};
+		virtual void ShowImGuiWindow(); 
 
 
 	protected:

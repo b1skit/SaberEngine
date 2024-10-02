@@ -108,6 +108,15 @@ namespace gr
 	}
 
 
+	void GraphicsSystemManager::EndOfFrame()
+	{
+		for (auto& gs : m_graphicsSystems)
+		{
+			gs->EndOfFrame();
+		}
+	}
+
+
 	void GraphicsSystemManager::UpdateActiveAmbientLight()
 	{
 		// Reset our active ambient changed flag for the new frame:

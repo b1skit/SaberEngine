@@ -41,6 +41,10 @@ namespace gr
 
 
 	public:
+		void EndOfFrame();
+
+
+	public:
 		gr::BatchManager const& GetBatchManager() const;
 		gr::RenderDataManager const& GetRenderData() const;
 
