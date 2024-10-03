@@ -25,7 +25,6 @@ namespace opengl
 
 
 	private:
-		std::vector<GLuint> m_singleFrameUBOs;
-		std::vector<GLuint> m_singleFrameSSBOs;
+		std::array<std::vector<GLuint>, re::Buffer::Type::Type_Count> m_singleFrameBuffers;
 	};
 }

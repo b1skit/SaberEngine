@@ -23,7 +23,7 @@ namespace opengl
 		{
 		case re::Buffer::Type::Constant:
 		{
-			bufferNameOut = m_singleFrameUBOs[writeIdx];
+			bufferNameOut = m_singleFrameBuffers[re::Buffer::Constant][writeIdx];
 
 			const GLint uboAlignment = opengl::SysInfo::GetUniformBufferOffsetAlignment(); // e.g. 256
 			SEAssert(re::BufferAllocator::k_fixedAllocationByteSize % uboAlignment == 0,
@@ -34,13 +34,22 @@ namespace opengl
 		break;
 		case re::Buffer::Type::Structured:
 		{
-			bufferNameOut = m_singleFrameSSBOs[writeIdx];
+			bufferNameOut = m_singleFrameBuffers[re::Buffer::Structured][writeIdx];
 
 			const GLint ssboAlignment = opengl::SysInfo::GetShaderStorageBufferOffsetAlignment(); // e.g. 16
 			SEAssert(re::BufferAllocator::k_fixedAllocationByteSize % ssboAlignment == 0,
 				"Incompatible alignment");
 
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, ssboAlignment);
+		}
+		break;
+		case re::Buffer::Type::VertexStream:
+		{
+			bufferNameOut = m_singleFrameBuffers[re::Buffer::VertexStream][writeIdx];
+
+			constexpr GLint vertexAlignment = 16; // Minimum alignment of a float4 is 16B
+
+			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, vertexAlignment);
 		}
 		break;
 		default: SEAssertF("Invalid Type");
@@ -57,41 +66,57 @@ namespace opengl
 		// Note: OpenGL only supports double-buffering via a front and back buffer. Thus we can fill one buffer while
 		// the other is in use, so long as we clear the buffer we're writing to at the beginning of each new frame
 		
-		// Generate our buffer names
-		m_singleFrameUBOs.resize(m_numFramesInFlight, 0);
-		glCreateBuffers(m_numFramesInFlight, m_singleFrameUBOs.data());
+		for (uint8_t i = 0; i < re::Buffer::Type::Type_Count; ++i)
+		{
+			m_singleFrameBuffers[i].resize(m_numFramesInFlight, 0);
+
+			// Generate all of our buffer names for each frame at once:
+			glCreateBuffers(m_numFramesInFlight, m_singleFrameBuffers[i].data());
+		}
 		
-		m_singleFrameSSBOs.resize(m_numFramesInFlight, 0);
-		glCreateBuffers(m_numFramesInFlight, m_singleFrameSSBOs.data());
 		
 		for (uint8_t bufferIdx = 0; bufferIdx < m_numFramesInFlight; bufferIdx++)
 		{
 			// UBO:
-			SEAssert(glIsBuffer(m_singleFrameUBOs[bufferIdx]), "Buffer name is not valid");
+			SEAssert(glIsBuffer(m_singleFrameBuffers[re::Buffer::Constant][bufferIdx]), "Buffer name is not valid");
 
 			glNamedBufferData(
-				m_singleFrameUBOs[bufferIdx],
+				m_singleFrameBuffers[re::Buffer::Constant][bufferIdx],
 				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
 				nullptr,
 				GL_DYNAMIC_DRAW);
 
 			glObjectLabel(GL_BUFFER, 
-				m_singleFrameUBOs[bufferIdx], 
+				m_singleFrameBuffers[re::Buffer::Constant][bufferIdx],
 				-1, 
 				std::format("Single-frame shared UBO {}", bufferIdx).c_str());
 
 
 			// SSBO:
-			SEAssert(glIsBuffer(m_singleFrameSSBOs[bufferIdx]), "Buffer name is not valid");
+			SEAssert(glIsBuffer(m_singleFrameBuffers[re::Buffer::Structured][bufferIdx]), "Buffer name is not valid");
 
 			glNamedBufferData(
-				m_singleFrameSSBOs[bufferIdx],
+				m_singleFrameBuffers[re::Buffer::Structured][bufferIdx],
 				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
 				nullptr,
 				GL_DYNAMIC_DRAW);
 
 			glObjectLabel(GL_BUFFER,
-				m_singleFrameSSBOs[bufferIdx],
+				m_singleFrameBuffers[re::Buffer::Structured][bufferIdx],
+				-1,
+				std::format("Single-frame shared SSBO {}", bufferIdx).c_str());
+
+			// VertexStream:
+			SEAssert(glIsBuffer(m_singleFrameBuffers[re::Buffer::VertexStream][bufferIdx]), "Buffer name is not valid");
+
+			glNamedBufferData(
+				m_singleFrameBuffers[re::Buffer::VertexStream][bufferIdx],
+				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
+				nullptr,
+				GL_DYNAMIC_DRAW);
+
+			glObjectLabel(GL_BUFFER,
+				m_singleFrameBuffers[re::Buffer::VertexStream][bufferIdx],
 				-1,
 				std::format("Single-frame shared SSBO {}", bufferIdx).c_str());
 		}
@@ -113,16 +138,12 @@ namespace opengl
 
 	void BufferAllocator::Destroy()
 	{
-		SEAssert(m_singleFrameUBOs.size() == m_singleFrameSSBOs.size() &&
-			m_numFramesInFlight == m_singleFrameUBOs.size() &&
-			m_numFramesInFlight == opengl::RenderManager::GetNumFramesInFlight(),
-			"Mismatched number of single frame buffers");
-		
-		glDeleteBuffers(m_numFramesInFlight, m_singleFrameUBOs.data());
-		glDeleteBuffers(m_numFramesInFlight, m_singleFrameSSBOs.data());
+		for (uint8_t i = 0; i < re::Buffer::Type::Type_Count; ++i)
+		{
+			glDeleteBuffers(m_numFramesInFlight, m_singleFrameBuffers[i].data());
 
-		m_singleFrameUBOs.assign(m_numFramesInFlight, 0);
-		m_singleFrameSSBOs.assign(m_numFramesInFlight, 0);
+			m_singleFrameBuffers[i].assign(m_numFramesInFlight, 0);
+		}	
 
 		re::BufferAllocator::Destroy();
 	}

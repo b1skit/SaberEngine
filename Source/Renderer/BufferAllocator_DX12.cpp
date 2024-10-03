@@ -31,13 +31,19 @@ namespace dx12
 		case re::Buffer::Type::Constant:
 		{
 			SEAssert(alignedSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
-			resourcePtrOut = m_sharedConstantBufferResources[writeIdx];
+			resourcePtrOut = m_singleFrameBufferResources[re::Buffer::Constant][writeIdx];
 		}
 		break;
 		case re::Buffer::Type::Structured:
 		{
 			SEAssert(alignedSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
-			resourcePtrOut = m_sharedStructuredBufferResources[writeIdx];
+			resourcePtrOut = m_singleFrameBufferResources[re::Buffer::Structured][writeIdx];
+		}
+		break;
+		case re::Buffer::Type::VertexStream:
+		{
+			SEAssert(alignedSize % 16 == 0, "Invalid alignment"); // Minimum alignment of a float4 is 16B
+			resourcePtrOut = m_singleFrameBufferResources[re::Buffer::VertexStream][writeIdx];
 		}
 		break;
 		default: SEAssertF("Invalid Type");
@@ -53,8 +59,10 @@ namespace dx12
 		re::BufferAllocator::Initialize(currentFrame);
 
 		const uint8_t numBuffers = re::RenderManager::GetNumFramesInFlight();
-		m_sharedConstantBufferResources.resize(numBuffers, nullptr);
-		m_sharedStructuredBufferResources.resize(numBuffers, nullptr);
+		for (uint8_t i = 0; i < re::Buffer::Type_Count; ++i)
+		{
+			m_singleFrameBufferResources[i].resize(numBuffers, nullptr);
+		}
 		
 		m_intermediateResourceFenceVals.resize(numBuffers);
 		m_intermediateResources.resize(numBuffers);
@@ -71,28 +79,40 @@ namespace dx12
 		for (uint8_t bufferIdx = 0; bufferIdx < m_numFramesInFlight; bufferIdx++)
 		{	
 			HRESULT hr = device->CreateCommittedResource(
-				&heapProperties,					// this heap will be used to upload the constant buffer data
+				&heapProperties,					// this heap will be used to upload constant buffer data
 				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
 				&resourceDesc,						// Size of the resource heap
 				D3D12_RESOURCE_STATE_GENERIC_READ,	// Mandatory for D3D12_HEAP_TYPE_UPLOAD heaps
 				nullptr,							// Optimized clear value: None for constant buffers
-				IID_PPV_ARGS(&m_sharedConstantBufferResources[bufferIdx]));
+				IID_PPV_ARGS(&m_singleFrameBufferResources[re::Buffer::Constant][bufferIdx]));
 			CheckHResult(hr, "Failed to create committed resource");
 
-			m_sharedConstantBufferResources[bufferIdx]->SetName(
+			m_singleFrameBufferResources[re::Buffer::Constant][bufferIdx]->SetName(
 				util::ToWideString(std::format("Shared constant buffer committed resource {}", bufferIdx)).c_str());
 
 			hr = device->CreateCommittedResource(
-				&heapProperties,					// this heap will be used to upload the structured buffer data
+				&heapProperties,					// this heap will be used to upload structured buffer data
 				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
 				&resourceDesc,						// Size of the resource heap
 				D3D12_RESOURCE_STATE_GENERIC_READ,	// Mandatory for D3D12_HEAP_TYPE_UPLOAD heaps
 				nullptr,							// Optimized clear value: None for structured buffers
-				IID_PPV_ARGS(&m_sharedStructuredBufferResources[bufferIdx]));
+				IID_PPV_ARGS(&m_singleFrameBufferResources[re::Buffer::Structured][bufferIdx]));
 			CheckHResult(hr, "Failed to create committed resource");
 
-			m_sharedStructuredBufferResources[bufferIdx]->SetName(
+			m_singleFrameBufferResources[re::Buffer::Structured][bufferIdx]->SetName(
 				util::ToWideString(std::format("Shared structured buffer committed resource {}", bufferIdx)).c_str());
+
+			hr = device->CreateCommittedResource(
+				&heapProperties,					// this heap will be used to upload vertex buffer data
+				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
+				&resourceDesc,						// Size of the resource heap
+				D3D12_RESOURCE_STATE_GENERIC_READ,	// Mandatory for D3D12_HEAP_TYPE_UPLOAD heaps
+				nullptr,							// Optimized clear value: None for structured buffers
+				IID_PPV_ARGS(&m_singleFrameBufferResources[re::Buffer::VertexStream][bufferIdx]));
+			CheckHResult(hr, "Failed to create committed resource");
+
+			m_singleFrameBufferResources[re::Buffer::VertexStream][bufferIdx]->SetName(
+				util::ToWideString(std::format("Shared vertex buffer committed resource {}", bufferIdx)).c_str());
 		}
 	}
 
@@ -143,13 +163,10 @@ namespace dx12
 
 	void BufferAllocator::Destroy()
 	{
-		SEAssert(m_sharedConstantBufferResources.size() == m_sharedStructuredBufferResources.size() &&
-			m_numFramesInFlight == m_sharedConstantBufferResources.size() &&
-			m_numFramesInFlight == dx12::RenderManager::GetNumFramesInFlight(),
-			"Mismatched number of single frame buffers");
-
-		m_sharedConstantBufferResources.assign(m_numFramesInFlight, nullptr);
-		m_sharedStructuredBufferResources.assign(m_numFramesInFlight, nullptr);
+		for (uint8_t i = 0; i < re::Buffer::Type_Count; ++i)
+		{
+			m_singleFrameBufferResources[i].assign(m_numFramesInFlight, nullptr);
+		}
 
 		re::BufferAllocator::Destroy();
 	}

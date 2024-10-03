@@ -31,11 +31,7 @@ namespace dx12
 
 
 	private:
-		// Constant buffer shared committed resources:
-		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_sharedConstantBufferResources;
-
-		// Structured buffer shared committed resources:
-		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_sharedStructuredBufferResources;
+		std::array<std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>, re::Buffer::Type_Count> m_singleFrameBufferResources;
 
 		std::vector<uint64_t> m_intermediateResourceFenceVals;
 		std::vector<std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>> m_intermediateResources;
