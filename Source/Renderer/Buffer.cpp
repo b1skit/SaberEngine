@@ -29,8 +29,7 @@ namespace
 		SEAssert(bufferParams.m_type != re::Buffer::Type::Type_Invalid, "Invalid Type");
 
 		SEAssert(((bufferParams.m_type == re::Buffer::Type::Constant || 
-				bufferParams.m_type == re::Buffer::Type::Vertex ||
-				bufferParams.m_type == re::Buffer::Type::Index) &&
+				bufferParams.m_type == re::Buffer::Type::VertexStream) &&
 					bufferParams.m_arraySize == 1) ||
 			(bufferParams.m_type == re::Buffer::Type::Structured && bufferParams.m_arraySize >= 1),
 			"Invalid number of elements");

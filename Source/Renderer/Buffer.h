@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "EnumTypes.h"
+#include "VertexStream.h"
 
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
@@ -39,8 +40,7 @@ namespace re
 			Constant,
 			Structured,
 
-			Vertex,
-			Index,
+			VertexStream, // Vertex/index streams
 
 			Type_Invalid
 		};
@@ -75,6 +75,7 @@ namespace re
 			{
 				struct
 				{
+					re::VertexStream::Type m_type;
 					re::DataType m_dataType;
 					bool m_isNormalized;
 					uint8_t m_stride;

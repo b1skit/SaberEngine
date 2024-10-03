@@ -141,11 +141,11 @@ namespace re
 						.m_allocationType = re::Buffer::AllocationType::Immutable,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
 						.m_accessMask = re::Buffer::Access::GPURead,
-						.m_type = newVertexStream->m_streamDesc.m_type == re::VertexStream::Type::Index ?
-							re::Buffer::Type::Index : re::Buffer::Type::Vertex,
+						.m_type = re::Buffer::Type::VertexStream,
 						.m_arraySize = 1,
 						.m_typeParams = {
 							.m_vertexStream = {
+								.m_type = createParams.m_type,
 								.m_dataType = newVertexStream->m_streamDesc.m_dataType,
 								.m_isNormalized = isNormalized,
 								.m_stride = newVertexStream->GetElementByteSize() }}

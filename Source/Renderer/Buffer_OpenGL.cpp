@@ -177,22 +177,28 @@ namespace opengl
 				numBytes);
 		}
 		break;
-		case re::Buffer::Type::Vertex:
+		case re::Buffer::Type::VertexStream:
 		{
-			SEAssert(bufferPlatParams->m_baseOffset == 0, "Base offset != 0. This is unexpected");
-			
-			glBindVertexBuffer(
-				bindIndex,														// Slot index
-				bufferPlatParams->m_bufferName,									// Buffer
-				0,																// Offset
-				buffer.GetBufferParams().m_typeParams.m_vertexStream.m_stride);	// Stride
-		}
-		break;
-		case re::Buffer::Type::Index:
-		{
-			SEAssert(bufferPlatParams->m_baseOffset == 0, "Base offset != 0. This is unexpected");
+			switch (buffer.GetBufferParams().m_typeParams.m_vertexStream.m_type)
+			{
+			case re::VertexStream::Type::Index:
+			{
+				SEAssert(bufferPlatParams->m_baseOffset == 0, "Base offset != 0. This is unexpected");
 
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatParams->m_bufferName);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatParams->m_bufferName);
+			}
+			break;
+			default:
+			{
+				SEAssert(bufferPlatParams->m_baseOffset == 0, "Base offset != 0. This is unexpected");
+
+				glBindVertexBuffer(
+					bindIndex,														// Slot index
+					bufferPlatParams->m_bufferName,									// Buffer
+					0,																// Offset
+					buffer.GetBufferParams().m_typeParams.m_vertexStream.m_stride);	// Stride
+			}
+			}
 		}
 		break;
 		default: SEAssertF("Invalid Type");

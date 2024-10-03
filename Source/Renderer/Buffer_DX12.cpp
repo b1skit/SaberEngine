@@ -25,9 +25,7 @@ namespace
 		{
 		case re::Buffer::Type::Constant: return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT; // CBVs on 256B
 		case re::Buffer::Type::Structured: return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT; // SRVs on 64KB
-		case re::Buffer::Type::Vertex:
-		case re::Buffer::Type::Index:
-			return 16; // Minimum alignment of a float4 is 16B
+		case re::Buffer::Type::VertexStream: return 16; // Minimum alignment of a float4 is 16B
 		case re::Buffer::Type::Type_Invalid:
 		default:
 			SEAssertF("Invalid buffer data type");
@@ -257,24 +255,30 @@ namespace dx12
 			// Do nothing
 		}
 		break;
-		case re::Buffer::Type::Vertex:
+		case re::Buffer::Type::VertexStream:
 		{
-			params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
-				.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
-				.SizeInBytes = bufferSize,
-				.StrideInBytes = bufferParams.m_typeParams.m_vertexStream.m_stride,
-			};
-		}
-		break;
-		case re::Buffer::Type::Index:
-		{
-			params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
+			switch (buffer.GetBufferParams().m_typeParams.m_vertexStream.m_type)
+			{
+			case re::VertexStream::Type::Index:
+			{
+				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
 				.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
 				.SizeInBytes = bufferSize,
 				.Format = dx12::VertexStream::GetDXGIStreamFormat(
-					bufferParams.m_typeParams.m_vertexStream.m_dataType, 
+					bufferParams.m_typeParams.m_vertexStream.m_dataType,
 					bufferParams.m_typeParams.m_vertexStream.m_isNormalized),
-			};
+				};
+			}
+			break;
+			default:
+			{
+				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
+				.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
+				.SizeInBytes = bufferSize,
+				.StrideInBytes = bufferParams.m_typeParams.m_vertexStream.m_stride,
+				};
+			}
+			}
 		}
 		break;
 		default: SEAssertF("Invalid type");
