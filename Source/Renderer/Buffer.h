@@ -42,7 +42,7 @@ namespace re
 
 			VertexStream, // Vertex/index streams
 
-			Type_Invalid
+			Type_Count
 		};
 
 		enum class MemoryPoolPreference : uint8_t
@@ -67,7 +67,7 @@ namespace re
 
 			uint8_t m_accessMask = Access::GPURead | Access::CPUWrite; // Constant data mapped by CPU, consumed by the GPU
 
-			Type m_type = Type::Type_Invalid;
+			Type m_type = Type::Type_Count;
 
 			uint32_t m_arraySize = 1; // Must be 1 for constant buffers, and vertex/index streams
 

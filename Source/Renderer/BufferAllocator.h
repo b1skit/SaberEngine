@@ -60,7 +60,7 @@ namespace re
 
 
 	private:
-		std::array<std::atomic<uint32_t>, re::Buffer::Type::Type_Invalid> m_bufferBaseIndexes;
+		std::array<std::atomic<uint32_t>, re::Buffer::Type::Type_Count> m_bufferBaseIndexes;
 		uint8_t m_writeIdx;
 
 	

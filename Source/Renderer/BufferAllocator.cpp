@@ -50,7 +50,7 @@ namespace re
 		, m_isValid(false)
 	{
 		// We maintain N stack base indexes for each Type; Initialize them to 0
-		for (uint8_t dataType = 0; dataType < re::Buffer::Type::Type_Invalid; dataType++)
+		for (uint8_t dataType = 0; dataType < re::Buffer::Type::Type_Count; dataType++)
 		{
 			m_bufferBaseIndexes[dataType].store(0);
 		}
@@ -866,7 +866,7 @@ namespace re
 			m_writeIdx = (m_writeIdx + 1) % m_numFramesInFlight;
 
 			// Reset the stack base index back to 0 for each type of shared buffer:
-			for (uint8_t dataType = 0; dataType < re::Buffer::Type::Type_Invalid; dataType++)
+			for (uint8_t dataType = 0; dataType < re::Buffer::Type::Type_Count; dataType++)
 			{
 				m_bufferBaseIndexes[dataType].store(0);
 			}

@@ -26,7 +26,7 @@ namespace
 			(bufferParams.m_accessMask & re::Buffer::Access::GPUWrite) == 0,
 			"Only GPU-writable buffers can use the immutable allocator staging memory");
 
-		SEAssert(bufferParams.m_type != re::Buffer::Type::Type_Invalid, "Invalid Type");
+		SEAssert(bufferParams.m_type != re::Buffer::Type::Type_Count, "Invalid Type");
 
 		SEAssert(((bufferParams.m_type == re::Buffer::Type::Constant || 
 				bufferParams.m_type == re::Buffer::Type::VertexStream) &&

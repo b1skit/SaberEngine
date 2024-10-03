@@ -26,7 +26,7 @@ namespace
 		case re::Buffer::Type::Constant: return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT; // CBVs on 256B
 		case re::Buffer::Type::Structured: return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT; // SRVs on 64KB
 		case re::Buffer::Type::VertexStream: return 16; // Minimum alignment of a float4 is 16B
-		case re::Buffer::Type::Type_Invalid:
+		case re::Buffer::Type::Type_Count:
 		default:
 			SEAssertF("Invalid buffer data type");
 		}

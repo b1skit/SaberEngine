@@ -83,11 +83,11 @@ namespace dx12
 				util::ToWideString(std::format("Shared constant buffer committed resource {}", bufferIdx)).c_str());
 
 			hr = device->CreateCommittedResource(
-				&heapProperties,					// this heap will be used to upload the constant buffer data
+				&heapProperties,					// this heap will be used to upload the structured buffer data
 				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
 				&resourceDesc,						// Size of the resource heap
 				D3D12_RESOURCE_STATE_GENERIC_READ,	// Mandatory for D3D12_HEAP_TYPE_UPLOAD heaps
-				nullptr,							// Optimized clear value: None for constant buffers
+				nullptr,							// Optimized clear value: None for structured buffers
 				IID_PPV_ARGS(&m_sharedStructuredBufferResources[bufferIdx]));
 			CheckHResult(hr, "Failed to create committed resource");
 
