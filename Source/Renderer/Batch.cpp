@@ -23,7 +23,7 @@ namespace
 #if defined(_DEBUG)
 		SEAssert(liftime == re::Lifetime::SingleFrame ||
 			(liftime == re::Lifetime::Permanent &&
-			(bufferAlloc == re::Buffer::AllocationType::Mutable || bufferAlloc == re::Buffer::AllocationType::Immutable)),
+			(bufferAlloc == re::Buffer::Mutable || bufferAlloc == re::Buffer::Immutable)),
 			"Trying to set a buffer with a mismatching lifetime. Permanent batches cannot (currently) hold "
 			"single frame buffers, as they'd incorrectly maintain their life beyond the frame. Single frame "
 			"batches can hold any type of buffers (but should not be responsible for the lifetime of a "

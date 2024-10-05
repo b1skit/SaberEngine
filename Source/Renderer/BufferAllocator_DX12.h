@@ -24,14 +24,15 @@ namespace dx12
 
 	public: // DX12-specific functionality:
 		void GetSubAllocation(
-			re::Buffer::Type,
+			re::Buffer::UsageMask,
 			uint64_t alignedSize,
 			uint64_t& heapOffsetOut,
 			Microsoft::WRL::ComPtr<ID3D12Resource>& resourcePtrOut);
 
 
 	private:
-		std::array<std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>, re::Buffer::Type_Count> m_singleFrameBufferResources;
+		std::array<std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>, 
+			re::BufferAllocator::AllocationPool_Count> m_singleFrameBufferResources;
 
 		std::vector<uint64_t> m_intermediateResourceFenceVals;
 		std::vector<std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>> m_intermediateResources;

@@ -290,10 +290,10 @@ namespace gr
 				interleavedMorphData.data(),
 				util::CheckedCast<uint32_t>(interleavedMorphData.size()),
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::AllocationType::Immutable,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Default,
-					.m_accessMask = re::Buffer::Access::GPURead,
-					.m_type = re::Buffer::Type::Structured,
+					.m_allocationType = re::Buffer::Immutable,
+					.m_memPoolPreference = re::Buffer::DefaultHeap,
+					.m_accessMask = re::Buffer::GPURead,
+					.m_usageMask = re::Buffer::Structured,
 				});
 
 			newMeshPrim->m_interleavedMorphMetadata = std::move(interleavedMorphMetadata);

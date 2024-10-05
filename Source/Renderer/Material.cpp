@@ -151,10 +151,10 @@ namespace gr
 				re::Buffer::CreateUncommittedArray<InstancedPBRMetallicRoughnessData>(
 					InstancedPBRMetallicRoughnessData::s_shaderName,
 					re::Buffer::BufferParams{
-						.m_allocationType = re::Buffer::AllocationType::Mutable,
-						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-						.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-						.m_type = re::Buffer::Type::Structured,
+						.m_allocationType = re::Buffer::Mutable,
+						.m_memPoolPreference = re::Buffer::UploadHeap,
+						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+						.m_usageMask = re::Buffer::Structured,
 						.m_arraySize = maxInstances,
 					}));
 		}
@@ -171,7 +171,7 @@ namespace gr
 	{
 		SEAssert(instanceData, "Instance data is null");
 		SEAssert(baseOffset < buffer->GetArraySize(), "Base offset is OOB");
-		SEAssert(buffer->GetAllocationType() == re::Buffer::AllocationType::Mutable,
+		SEAssert(buffer->GetAllocationType() == re::Buffer::Mutable,
 			"Only mutable buffers can be partially updated");
 
 		switch (EffectIDToEffectMaterial(instanceData->m_effectID))

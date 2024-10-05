@@ -486,9 +486,15 @@ namespace opengl
 		const GLenum properties = GL_BUFFER_BINDING;
 
 		re::Buffer::PlatformParams const* bufferPlatformParams = bufferInput.GetBuffer()->GetPlatformParams();
-		switch (bufferInput.GetBuffer()->GetBufferParams().m_type)
+
+		SEAssert(bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::Constant || 
+			bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::Structured ||			
+			bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::VertexStream,
+			"TODO: Support buffer views that target a single specific usage. For now, just use a single bit");
+
+		switch (bufferInput.GetBuffer()->GetUsageMask())
 		{
-		case re::Buffer::Type::Constant: // Bind our single-element buffers as UBOs
+		case re::Buffer::Constant: // Bind our single-element buffers as UBOs
 		{
 			// Find the buffer binding index via introspection
 			const GLint uniformBlockIdx = glGetProgramResourceIndex(
@@ -517,7 +523,7 @@ namespace opengl
 			}
 		}
 		break;
-		case re::Buffer::Type::Structured: // Bind our array buffers as SSBOs, as they support dynamic indexing
+		case re::Buffer::Structured: // Bind our array buffers as SSBOs, as they support dynamic indexing
 		{
 			// Find the buffer binding index via introspection
 			const GLint ssboIdx = glGetProgramResourceIndex(

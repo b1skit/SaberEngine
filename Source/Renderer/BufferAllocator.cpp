@@ -50,9 +50,9 @@ namespace re
 		, m_isValid(false)
 	{
 		// We maintain N stack base indexes for each Type; Initialize them to 0
-		for (uint8_t dataType = 0; dataType < re::Buffer::Type::Type_Count; dataType++)
+		for (uint8_t allocationPoolIdx = 0; allocationPoolIdx < AllocationPool_Count; allocationPoolIdx++)
 		{
-			m_bufferBaseIndexes[dataType].store(0);
+			m_bufferBaseIndexes[allocationPoolIdx].store(0);
 		}
 
 		// Mutable allocations:
@@ -365,7 +365,7 @@ namespace re
 			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
 
 			SEAssert(result != m_handleToTypeAndByteIndex.end(), "Buffer with this ID has not been allocated");
-			SEAssert(result->second.m_allocationType == re::Buffer::AllocationType::Mutable, "Can only partially commit to mutable buffers");
+			SEAssert(result->second.m_allocationType == re::Buffer::Mutable, "Can only partially commit to mutable buffers");
 			
 			startIdx = result->second.m_startIndex;
 			totalBytes = result->second.m_numBytes;
@@ -762,7 +762,7 @@ namespace re
 					{
 						switch (currentBuffer->GetBufferParams().m_memPoolPreference)
 						{
-						case re::Buffer::MemoryPoolPreference::Default:
+						case re::Buffer::DefaultHeap:
 						{
 							m_dirtyBuffersForPlatformUpdate.emplace_back(PlatformCommitMetadata
 								{
@@ -772,7 +772,7 @@ namespace re
 								});
 						}
 						break;
-						case re::Buffer::MemoryPoolPreference::Upload:
+						case re::Buffer::UploadHeap:
 						{
 							platform::Buffer::Update(
 								*currentBuffer,
@@ -808,7 +808,7 @@ namespace re
 
 					switch (currentBuffer->GetBufferParams().m_memPoolPreference)
 					{
-					case re::Buffer::MemoryPoolPreference::Default:
+					case re::Buffer::DefaultHeap:
 					{
 						// If CPU writes are disabled, our buffer will need to be updated via a command list. Record
 						// the update metadata, we'll process these cases in a single batch at the end
@@ -820,7 +820,7 @@ namespace re
 							});
 					}
 					break;
-					case re::Buffer::MemoryPoolPreference::Upload:
+					case re::Buffer::UploadHeap:
 					{
 						BufferTemporaryData(m_immutableAllocations, currentHandle);
 					}
@@ -866,9 +866,9 @@ namespace re
 			m_writeIdx = (m_writeIdx + 1) % m_numFramesInFlight;
 
 			// Reset the stack base index back to 0 for each type of shared buffer:
-			for (uint8_t dataType = 0; dataType < re::Buffer::Type::Type_Count; dataType++)
+			for (uint8_t allocationPoolIdx = 0; allocationPoolIdx < AllocationPool_Count; allocationPoolIdx++)
 			{
-				m_bufferBaseIndexes[dataType].store(0);
+				m_bufferBaseIndexes[allocationPoolIdx].store(0);
 			}
 		}
 	}
@@ -947,10 +947,10 @@ namespace re
 	}
 
 
-	uint32_t BufferAllocator::AdvanceBaseIdx(re::Buffer::Type dataType, uint32_t alignedSize)
+	uint32_t BufferAllocator::AdvanceBaseIdx(AllocationPool allocationPool, uint32_t alignedSize)
 	{
 		// Atomically advance the stack base index for the next call, and return the base index for the current one
-		const uint32_t allocationBaseIdx = m_bufferBaseIndexes[dataType].fetch_add(alignedSize);
+		const uint32_t allocationBaseIdx = m_bufferBaseIndexes[allocationPool].fetch_add(alignedSize);
 
 		SEAssert(allocationBaseIdx + alignedSize <= k_fixedAllocationByteSize,
 			"Allocation is out of bounds. Consider increasing k_fixedAllocationByteSize");

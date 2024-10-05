@@ -21,8 +21,8 @@ namespace opengl
 		const re::Buffer::AllocationType bufferAlloc = buffer.GetAllocationType();
 		switch (bufferAlloc)
 		{
-		case re::Buffer::AllocationType::Mutable:
-		case re::Buffer::AllocationType::Immutable:
+		case re::Buffer::Mutable:
+		case re::Buffer::Immutable:
 		{
 			// Note: Unlike DX12, OpenGL handles buffer synchronization for us (so long as they're not persistently 
 			// mapped). So we can just create a single mutable buffer and write to it as needed, instead of 
@@ -38,21 +38,21 @@ namespace opengl
 				bufferPlatParams->m_bufferName,
 				static_cast<GLsizeiptr>(numBytes),
 				nullptr,
-				bufferAlloc == re::Buffer::AllocationType::Mutable ? GL_DYNAMIC_DRAW  : GL_STATIC_DRAW);
+				bufferAlloc == re::Buffer::Mutable ? GL_DYNAMIC_DRAW  : GL_STATIC_DRAW);
 
 			// RenderDoc label:
 			std::string const& bufferName = 
-				buffer.GetName() + (bufferAlloc == re::Buffer::AllocationType::Mutable ? "_Mutable" : "_Immutable");
+				buffer.GetName() + (bufferAlloc == re::Buffer::Mutable ? "_Mutable" : "_Immutable");
 			glObjectLabel(GL_BUFFER, bufferPlatParams->m_bufferName, -1, bufferName.c_str());
 		}
 		break;
-		case re::Buffer::AllocationType::SingleFrame:
+		case re::Buffer::SingleFrame:
 		{
 			opengl::BufferAllocator* bufferAllocator =
 				dynamic_cast<opengl::BufferAllocator*>(re::Context::Get()->GetBufferAllocator());
 
 			bufferAllocator->GetSubAllocation(
-				buffer.GetBufferParams().m_type,
+				buffer.GetUsageMask(),
 				numBytes,
 				bufferPlatParams->m_bufferName,
 				bufferPlatParams->m_baseOffset);
@@ -77,7 +77,7 @@ namespace opengl
 
 		switch (buffer.GetBufferParams().m_memPoolPreference)
 		{
-		case re::Buffer::MemoryPoolPreference::Default:
+		case re::Buffer::DefaultHeap:
 		{
 			glNamedBufferSubData(
 				bufferPlatParams->m_bufferName,			// Target
@@ -86,7 +86,7 @@ namespace opengl
 				data);									// Data
 		}
 		break;
-		case re::Buffer::MemoryPoolPreference::Upload:
+		case re::Buffer::UploadHeap:
 		{
 			const GLbitfield access = GL_MAP_WRITE_BIT;
 
@@ -99,7 +99,7 @@ namespace opengl
 			// Adjust our source pointer if we're doing a partial update:
 			if (!updateAllBytes)
 			{
-				SEAssert(buffer.GetAllocationType() == re::Buffer::AllocationType::Mutable,
+				SEAssert(buffer.GetAllocationType() == re::Buffer::Mutable,
 					"Only mutable buffers can be partially updated");
 
 				// Update the source data pointer:
@@ -132,13 +132,13 @@ namespace opengl
 		const re::Buffer::AllocationType bufferAlloc = buffer.GetAllocationType();
 		switch (bufferAlloc)
 		{
-		case re::Buffer::AllocationType::Mutable:
-		case re::Buffer::AllocationType::Immutable:
+		case re::Buffer::Mutable:
+		case re::Buffer::Immutable:
 		{
 			glDeleteBuffers(1, &bufferPlatParams->m_bufferName);
 		}
 		break;
-		case re::Buffer::AllocationType::SingleFrame:
+		case re::Buffer::SingleFrame:
 		{
 			// Do nothing: Buffer allocator is responsible for destroying the shared buffers
 		}
@@ -155,11 +155,17 @@ namespace opengl
 	void Buffer::Bind(re::Buffer const& buffer, GLuint bindIndex)
 	{
 		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
-		 
+
 		const uint32_t numBytes = buffer.GetTotalBytes();
-		switch (buffer.GetBufferParams().m_type)
+
+		SEAssert(buffer.GetUsageMask() == re::Buffer::Structured ||
+			buffer.GetUsageMask() == re::Buffer::Constant ||
+			buffer.GetUsageMask() == re::Buffer::VertexStream,
+			"TODO: Support buffer views that target a single specific usage. For now, just use a single bit");
+		 
+		switch (buffer.GetUsageMask())
 		{
-		case re::Buffer::Type::Constant:
+		case re::Buffer::Constant:
 		{
 			glBindBufferRange(GL_UNIFORM_BUFFER, 
 				bindIndex, 
@@ -168,7 +174,7 @@ namespace opengl
 				numBytes);
 		}
 		break;
-		case re::Buffer::Type::Structured:
+		case re::Buffer::Structured:
 		{
 			glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
 				bindIndex,
@@ -177,7 +183,7 @@ namespace opengl
 				numBytes);
 		}
 		break;
-		case re::Buffer::Type::VertexStream:
+		case re::Buffer::VertexStream:
 		{
 			switch (buffer.GetBufferParams().m_typeParams.m_vertexStream.m_type)
 			{
@@ -201,7 +207,7 @@ namespace opengl
 			}
 		}
 		break;
-		default: SEAssertF("Invalid Type");
+		default: SEAssertF("Invalid Usage");
 		}
 	}
 

@@ -54,9 +54,9 @@ namespace
 				instanceIndexBufferData,
 				re::Buffer::BufferParams{
 					.m_allocationType = bufferAlloc,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-					.m_type = re::Buffer::Type::Constant,
+					.m_memPoolPreference = re::Buffer::UploadHeap,
+					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+					.m_usageMask = re::Buffer::Constant,
 				}));
 	}
 
@@ -300,10 +300,10 @@ namespace gr
 				re::Buffer::CreateUncommittedArray<InstancedTransformData>(
 					k_instancedTransformBufferName,
 					re::Buffer::BufferParams{
-						.m_allocationType = re::Buffer::AllocationType::Mutable,
-						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-						.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-						.m_type = re::Buffer::Type::Structured,
+						.m_allocationType = re::Buffer::Mutable,
+						.m_memPoolPreference = re::Buffer::UploadHeap,
+						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+						.m_usageMask = re::Buffer::Structured,
 						.m_arraySize = requestedTransformBufferElements,
 					}));
 
@@ -564,7 +564,7 @@ namespace gr
 						if (!m_instanceIndiciesBuffers.contains(instanceIdxsHash))
 						{
 							m_instanceIndiciesBuffers.emplace(instanceIdxsHash,
-								CreateInstanceIndexBuffer(re::Buffer::AllocationType::SingleFrame, instanceIndices));
+								CreateInstanceIndexBuffer(re::Buffer::SingleFrame, instanceIndices));
 						}
 						batches.back().SetBuffer(m_instanceIndiciesBuffers.at(instanceIdxsHash));
 					}

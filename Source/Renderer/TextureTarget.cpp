@@ -631,7 +631,7 @@ namespace re
 
 
 	re::BufferInput const& TextureTargetSet::GetCreateTargetParamsBuffer(
-		re::Buffer::AllocationType bufferAlloc /*= re::Buffer::AllocationType::Mutable*/)
+		re::Buffer::AllocationType bufferAlloc /*= re::Buffer::Mutable*/)
 	{
 		SEAssert(HasTargets(),
 			"Trying to get or create the TargetParams buffer, but no targets have been added");
@@ -646,9 +646,9 @@ namespace re
 				re::Buffer::CreateUncommitted<TargetData>(TargetData::s_shaderName, 
 					re::Buffer::BufferParams{
 						.m_allocationType = bufferAlloc,
-						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-						.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-						.m_type = re::Buffer::Type::Constant,
+						.m_memPoolPreference = re::Buffer::UploadHeap,
+						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+						.m_usageMask = re::Buffer::Constant,
 					}));
 		}
 

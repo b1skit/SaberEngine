@@ -93,10 +93,10 @@ namespace gr
 			PoissonSampleParamsData::s_shaderName,
 			poissonSampleParamsData,
 			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::Immutable,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-				.m_type = re::Buffer::Type::Constant,
+				.m_allocationType = re::Buffer::Immutable,
+				.m_memPoolPreference = re::Buffer::UploadHeap,
+				.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+				.m_usageMask = re::Buffer::Constant,
 			});
 	}
 
@@ -499,10 +499,10 @@ namespace gr
 					bufferName,
 					lightData.data(),
 					re::Buffer::BufferParams{
-						.m_allocationType = re::Buffer::AllocationType::Mutable,
-						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-						.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-						.m_type = re::Buffer::Type::Structured,
+						.m_allocationType = re::Buffer::Mutable,
+						.m_memPoolPreference = re::Buffer::UploadHeap,
+						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+						.m_usageMask = re::Buffer::Structured,
 						.m_arraySize = util::CheckedCast<uint32_t>(lightData.size()),
 					});
 			}

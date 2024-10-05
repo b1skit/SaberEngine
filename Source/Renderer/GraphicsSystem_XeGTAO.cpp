@@ -157,10 +157,10 @@ namespace gr
 				k_SEXeGTAOSettingsName,
 				CreateXeGTAOSettingsParamsData(m_XeGTAOQuality),
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::AllocationType::Mutable,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-					.m_type = re::Buffer::Type::Constant,
+					.m_allocationType = re::Buffer::Mutable,
+					.m_memPoolPreference = re::Buffer::UploadHeap,
+					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+					.m_usageMask = re::Buffer::Constant,
 				}));
 		
 		// TODO: Output bent normals
@@ -179,10 +179,10 @@ namespace gr
 				k_SEGTAOConstantsName, // "GTAOConstants" is already defined for us
 				gtaoConstants, 
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::AllocationType::Mutable,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-					.m_type = re::Buffer::Type::Constant,
+					.m_allocationType = re::Buffer::Mutable,
+					.m_memPoolPreference = re::Buffer::UploadHeap,
+					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+					.m_usageMask = re::Buffer::Constant,
 				}));
 
 		// Depth prefilter stage:

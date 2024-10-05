@@ -19,43 +19,45 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-	constexpr uint32_t GetAlignment(re::Buffer::Type dataType)
+	constexpr uint32_t GetAlignment(re::BufferAllocator::AllocationPool allocationPool)
 	{
-		switch (dataType)
+		switch (allocationPool)
 		{
-		case re::Buffer::Type::Constant: return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT; // CBVs on 256B
-		case re::Buffer::Type::Structured: return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT; // SRVs on 64KB
-		case re::Buffer::Type::VertexStream: return 16; // Minimum alignment of a float4 is 16B
-		case re::Buffer::Type::Type_Count:
+		case re::BufferAllocator::Constant: return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT; // 256B
+		case re::BufferAllocator::Structured: return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT; // 64KB
+		case re::BufferAllocator::VertexStream: return 16; // Minimum alignment of a float4 is 16B
+		case re::BufferAllocator::AllocationPool_Count:
 		default:
 			SEAssertF("Invalid buffer data type");
 		}
-		return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+		return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT; // This should never happen
 	}
 
 
-	uint64_t GetAlignedSize(re::Buffer::Type dataType, uint32_t bufferSize)
+	inline uint64_t GetAlignedSize(re::Buffer::UsageMask usageMask, uint32_t bufferSize)
 	{
-		return util::RoundUpToNearestMultiple<uint64_t>(bufferSize, GetAlignment(dataType));
+		return util::RoundUpToNearestMultiple<uint64_t>(
+			bufferSize,
+			GetAlignment(re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask)));
 	}
 
 
-	D3D12_HEAP_TYPE MemoryPoolPreferenceToD3DHeapType(re::Buffer::MemoryPoolPreference memPoolPreference)
+	inline D3D12_HEAP_TYPE MemoryPoolPreferenceToD3DHeapType(re::Buffer::MemoryPoolPreference memPoolPreference)
 	{
 		switch (memPoolPreference)
 		{
-		case::re::Buffer::MemoryPoolPreference::Default: return D3D12_HEAP_TYPE_DEFAULT;
-		case::re::Buffer::MemoryPoolPreference::Upload: return D3D12_HEAP_TYPE_UPLOAD;
+		case::re::Buffer::DefaultHeap: return D3D12_HEAP_TYPE_DEFAULT;
+		case::re::Buffer::UploadHeap: return D3D12_HEAP_TYPE_UPLOAD;
 		default: SEAssertF("Invalid MemoryPoolPreference");
 		}
 		return D3D12_HEAP_TYPE_DEFAULT; // This should never happen
 	}
 
 
-	bool NeedsUAV(re::Buffer::BufferParams const& bufferParams)
+	inline bool NeedsUAV(re::Buffer::BufferParams const& bufferParams)
 	{
-		return bufferParams.m_allocationType == re::Buffer::AllocationType::Immutable &&
-			(bufferParams.m_accessMask & re::Buffer::Access::GPUWrite);
+		return bufferParams.m_allocationType == re::Buffer::Immutable &&
+			re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams.m_accessMask);
 	}
 
 
@@ -97,8 +99,8 @@ namespace dx12
 	void Buffer::Create(re::Buffer& buffer)
 	{
 		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
-
-		SEAssert(bufferParams.m_type != re::Buffer::Type::Structured ||
+		
+		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams) ||
 			bufferParams.m_arraySize <= 1024, "Maximum offset of 1024 allowed into an SRV");
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
@@ -111,7 +113,7 @@ namespace dx12
 		const uint8_t numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
 
 		const uint32_t bufferSize = buffer.GetTotalBytes();
-		const uint64_t alignedSize = GetAlignedSize(bufferParams.m_type, bufferSize);
+		const uint64_t alignedSize = GetAlignedSize(bufferParams.m_usageMask, bufferSize);
 
 		constexpr D3D12_RESOURCE_STATES k_initialState = D3D12_RESOURCE_STATE_COMMON;
 
@@ -121,7 +123,7 @@ namespace dx12
 
 		switch (buffer.GetAllocationType())
 		{
-		case re::Buffer::AllocationType::Mutable:
+		case re::Buffer::Mutable:
 		{
 			// We allocate N frames-worth of buffer space, and then set the m_heapByteOffset each frame
 			const uint64_t allFramesAlignedSize = numFramesInFlight * alignedSize;
@@ -142,7 +144,7 @@ namespace dx12
 			params->m_resource->SetName(debugName.c_str());
 		}
 		break;
-		case re::Buffer::AllocationType::Immutable:
+		case re::Buffer::Immutable:
 		{
 			// Immutable buffers cannot change frame-to-frame, thus only need a single buffer's worth of space
 			const CD3DX12_HEAP_PROPERTIES heapProperties(outputBufferHeapType);
@@ -167,13 +169,13 @@ namespace dx12
 			params->m_resource->SetName(debugName.c_str());
 		}
 		break;
-		case re::Buffer::AllocationType::SingleFrame:
+		case re::Buffer::SingleFrame:
 		{
 			dx12::BufferAllocator* bufferAllocator = 
 				dynamic_cast<dx12::BufferAllocator*>(re::Context::Get()->GetBufferAllocator());
 			
 			bufferAllocator->GetSubAllocation(
-				bufferParams.m_type,
+				bufferParams.m_usageMask,
 				alignedSize,
 				params->m_heapByteOffset,
 				params->m_resource);
@@ -182,7 +184,8 @@ namespace dx12
 		default: SEAssertF("Invalid AllocationType");
 		}
 
-		SEAssert(params->m_heapByteOffset % GetAlignment(bufferParams.m_type) == 0,
+		SEAssert(params->m_heapByteOffset % GetAlignment(
+			re::BufferAllocator::BufferUsageMaskToAllocationPool(bufferParams.m_usageMask)) == 0,
 			"Heap byte offset does not have the correct buffer alignment");
 		
 		// Create the appropriate resource views:
@@ -214,7 +217,7 @@ namespace dx12
 		}
 
 		// CPU readback:
-		const bool cpuReadbackEnabled = (bufferParams.m_accessMask & re::Buffer::Access::CPURead) != 0;
+		const bool cpuReadbackEnabled = re::Buffer::HasAccessBit(re::Buffer::CPURead, bufferParams);
 		if (cpuReadbackEnabled)
 		{
 			for (uint8_t resourceIdx = 0; resourceIdx < numFramesInFlight; resourceIdx++)
@@ -229,8 +232,8 @@ namespace dx12
 		// Register non-shared resources with the global resource state tracker:
 		switch (buffer.GetAllocationType())
 		{
-		case re::Buffer::AllocationType::Mutable:
-		case re::Buffer::AllocationType::Immutable:
+		case re::Buffer::Mutable:
+		case re::Buffer::Immutable:
 		{
 			context->GetGlobalResourceStates().RegisterResource(
 				params->m_resource.Get(),
@@ -238,7 +241,7 @@ namespace dx12
 				1);
 		}
 		break;
-		case re::Buffer::AllocationType::SingleFrame:
+		case re::Buffer::SingleFrame:
 		{
 			//
 		}
@@ -246,16 +249,9 @@ namespace dx12
 		default: SEAssertF("Invalid AllocationType");
 		}
 
+
 		// Type-specific setup:
-		switch (bufferParams.m_type)
-		{
-		case re::Buffer::Type::Constant:
-		case re::Buffer::Type::Structured:
-		{
-			// Do nothing
-		}
-		break;
-		case re::Buffer::Type::VertexStream:
+		if (re::Buffer::HasUsageBit(re::Buffer::VertexStream, bufferParams))
 		{
 			switch (buffer.GetBufferParams().m_typeParams.m_vertexStream.m_type)
 			{
@@ -280,9 +276,6 @@ namespace dx12
 			}
 			}
 		}
-		break;
-		default: SEAssertF("Invalid type");
-		}
 
 
 #if defined(_DEBUG)
@@ -297,8 +290,10 @@ namespace dx12
 	void Buffer::Update(
 		re::Buffer const& buffer, uint8_t curFrameHeapOffsetFactor, uint32_t baseOffset, uint32_t numBytes)
 	{
-		SEAssert((buffer.GetBufferParams().m_accessMask & re::Buffer::Access::CPUWrite) != 0 &&
-			buffer.GetBufferParams().m_memPoolPreference == re::Buffer::MemoryPoolPreference::Upload,
+		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
+
+		SEAssert(re::Buffer::HasAccessBit(re::Buffer::CPUWrite, bufferParams) &&
+			bufferParams.m_memPoolPreference == re::Buffer::UploadHeap,
 			"CPU writes must be enabled to allow mapping");
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
@@ -322,9 +317,9 @@ namespace dx12
 		buffer.GetDataAndSize(&data, &totalBytes);
 
 		// Update the heap offset, if required
-		if (buffer.GetAllocationType() == re::Buffer::AllocationType::Mutable)
+		if (buffer.GetAllocationType() == re::Buffer::Mutable)
 		{
-			const uint64_t alignedSize = GetAlignedSize(buffer.GetBufferParams().m_type, totalBytes);
+			const uint64_t alignedSize = GetAlignedSize(bufferParams.m_usageMask, totalBytes);
 			params->m_heapByteOffset = alignedSize * curFrameHeapOffsetFactor;
 		}
 
@@ -335,7 +330,7 @@ namespace dx12
 		// Adjust our pointers if we're doing a partial update:
 		if (!updateAllBytes)
 		{
-			SEAssert(buffer.GetAllocationType() == re::Buffer::AllocationType::Mutable,
+			SEAssert(buffer.GetAllocationType() == re::Buffer::Mutable,
 				"Only mutable buffers can be partially updated");
 
 			// Update the source data pointer:
@@ -375,8 +370,7 @@ namespace dx12
 		data = static_cast<uint8_t const*>(data) + baseOffset;
 
 		// Use the incoming numBytes rather than the buffer size: Might require a smaller buffer for partial updates
-		const uint64_t alignedIntermediateBufferSize = GetAlignedSize(buffer->GetBufferParams().m_type, numBytes);
-
+		const uint64_t alignedIntermediateBufferSize = GetAlignedSize(buffer->GetBufferParams().m_usageMask, numBytes);
 
 		const D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 		const D3D12_RESOURCE_DESC intermediateBufferResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedIntermediateBufferSize);
@@ -440,13 +434,13 @@ namespace dx12
 		// Unregister the resource from the global resource state tracker
 		switch (buffer.GetAllocationType())
 		{
-		case re::Buffer::AllocationType::Mutable:
-		case re::Buffer::AllocationType::Immutable:
+		case re::Buffer::Mutable:
+		case re::Buffer::Immutable:
 		{
 			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(params->m_resource.Get());
 		}
 		break;
-		case re::Buffer::AllocationType::SingleFrame:
+		case re::Buffer::SingleFrame:
 		{
 			//
 		}

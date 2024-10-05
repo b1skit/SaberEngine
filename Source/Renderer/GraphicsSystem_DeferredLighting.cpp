@@ -197,10 +197,10 @@ namespace gr
 			BRDFIntegrationData::s_shaderName,
 			brdfIntegrationParams,
 			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::AllocationType::SingleFrame,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-				.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-				.m_type = re::Buffer::Type::Constant,
+				.m_allocationType = re::Buffer::SingleFrame,
+				.m_memPoolPreference = re::Buffer::UploadHeap,
+				.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+				.m_usageMask = re::Buffer::Constant,
 			});
 		brdfStage->AddSingleFrameBuffer(BRDFIntegrationData::s_shaderName, brdfIntegrationBuf);
 
@@ -258,10 +258,10 @@ namespace gr
 				IEMPMREMGenerationData::s_shaderName,
 				iemGenerationParams,
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::AllocationType::SingleFrame,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-					.m_type = re::Buffer::Type::Constant,
+					.m_allocationType = re::Buffer::SingleFrame,
+					.m_memPoolPreference = re::Buffer::UploadHeap,
+					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+					.m_usageMask = re::Buffer::Constant,
 				});
 			iemStage->AddSingleFrameBuffer(IEMPMREMGenerationData::s_shaderName, iemGenerationBuffer);
 
@@ -341,10 +341,10 @@ namespace gr
 					IEMPMREMGenerationData::s_shaderName,
 					pmremGenerationParams,
 					re::Buffer::BufferParams{
-						.m_allocationType = re::Buffer::AllocationType::SingleFrame,
-						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-						.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-						.m_type = re::Buffer::Type::Constant,
+						.m_allocationType = re::Buffer::SingleFrame,
+						.m_memPoolPreference = re::Buffer::UploadHeap,
+						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+						.m_usageMask = re::Buffer::Constant,
 					});
 				pmremStage->AddSingleFrameBuffer(IEMPMREMGenerationData::s_shaderName, pmremGenerationBuffer);
 
@@ -433,10 +433,10 @@ namespace gr
 					CameraData::s_shaderName,
 					cubemapCamParams,
 					re::Buffer::BufferParams{
-						.m_allocationType = re::Buffer::AllocationType::Immutable,
-						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-						.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-						.m_type = re::Buffer::Type::Constant,
+						.m_allocationType = re::Buffer::Immutable,
+						.m_memPoolPreference = re::Buffer::UploadHeap,
+						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+						.m_usageMask = re::Buffer::Constant,
 					});
 			}
 		}
@@ -744,10 +744,10 @@ namespace gr
 							AmbientLightData::s_shaderName,
 							ambientLightParamsData,
 							re::Buffer::BufferParams{
-								.m_allocationType = re::Buffer::AllocationType::Mutable,
-								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-								.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-								.m_type = re::Buffer::Type::Constant,
+								.m_allocationType = re::Buffer::Mutable,
+								.m_memPoolPreference = re::Buffer::UploadHeap,
+								.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+								.m_usageMask = re::Buffer::Constant,
 							}));
 
 					m_ambientLightData.emplace(ambientData.m_renderDataID,
@@ -872,7 +872,7 @@ namespace gr
 				gr::Transform::RenderData const& transformData = lightItr.GetTransformData();
 
 				re::BufferInput const& transformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-					re::Buffer::AllocationType::Mutable, transformData);
+					re::Buffer::Mutable, transformData);
 
 				punctualLightData.emplace(
 					lightItr.GetRenderDataID(),
@@ -1105,10 +1105,10 @@ namespace gr
 								LightIndexData::s_shaderName,
 								GetLightIndexData(lightIdx, shadowIdx),
 								re::Buffer::BufferParams{
-									.m_allocationType = re::Buffer::AllocationType::SingleFrame,
-									.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-									.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-									.m_type = re::Buffer::Type::Constant,
+									.m_allocationType = re::Buffer::SingleFrame,
+									.m_memPoolPreference = re::Buffer::UploadHeap,
+									.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+									.m_usageMask = re::Buffer::Constant,
 								})));
 					};
 

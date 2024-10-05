@@ -21,10 +21,10 @@ namespace opengl
 
 
 	public: // OpenGL-specific functionality:
-		void GetSubAllocation(re::Buffer::Type, uint32_t size, GLuint& bufferNameOut, GLintptr& baseOffsetOut);
+		void GetSubAllocation(re::Buffer::UsageMask, uint32_t size, GLuint& bufferNameOut, GLintptr& baseOffsetOut);
 
 
 	private:
-		std::array<std::vector<GLuint>, re::Buffer::Type::Type_Count> m_singleFrameBuffers;
+		std::array<std::vector<GLuint>, re::BufferAllocator::AllocationPool_Count> m_singleFrameBuffers;
 	};
 }

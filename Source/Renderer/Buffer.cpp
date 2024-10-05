@@ -12,39 +12,41 @@ namespace
 #if defined(_DEBUG)
 		SEAssert(bufferParams.m_allocationType != re::Buffer::AllocationType::AllocationType_Invalid, "Invalid AllocationType");
 
-		SEAssert(bufferParams.m_memPoolPreference != re::Buffer::MemoryPoolPreference::Upload ||
-			((bufferParams.m_accessMask & re::Buffer::Access::GPURead) &&
-				(bufferParams.m_accessMask & re::Buffer::Access::CPUWrite)),
+		SEAssert(bufferParams.m_memPoolPreference != re::Buffer::UploadHeap ||
+			(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
+				re::Buffer::HasAccessBit(re::Buffer::CPUWrite, bufferParams)),
 			"Buffers in the upload heap must be GPU-readable and CPU-writeable");
 
-		SEAssert(bufferParams.m_allocationType != re::Buffer::AllocationType::SingleFrame ||
-			bufferParams.m_memPoolPreference == re::Buffer::MemoryPoolPreference::Upload,
+		SEAssert(!re::Buffer::HasAccessBit(re::Buffer::CPUWrite, bufferParams) ||
+			bufferParams.m_memPoolPreference != re::Buffer::DefaultHeap,
+			"Buffers in the default heap cannot have CPUWrite enabled");
+
+		SEAssert(bufferParams.m_allocationType != re::Buffer::SingleFrame ||
+			bufferParams.m_memPoolPreference == re::Buffer::UploadHeap,
 			"We currently expect single frame resources to be on the upload heap. This is NOT mandatory, we just need "
 			"to implement support at the API level (i.e. BufferAllocator_DX12.h/.cpp)");
 
-		SEAssert(bufferParams.m_allocationType == re::Buffer::AllocationType::Immutable ||
-			(bufferParams.m_accessMask & re::Buffer::Access::GPUWrite) == 0,
-			"Only GPU-writable buffers can use the immutable allocator staging memory");
+		SEAssert(!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams) ||
+			(bufferParams.m_memPoolPreference == re::Buffer::DefaultHeap &&
+				bufferParams.m_allocationType == re::Buffer::Immutable),
+			"If GPUWrite is enabled, buffers must be CPU-immutable and located in the default heap");
 
-		SEAssert(bufferParams.m_type != re::Buffer::Type::Type_Count, "Invalid Type");
-
-		SEAssert(((bufferParams.m_type == re::Buffer::Type::Constant || 
-				bufferParams.m_type == re::Buffer::Type::VertexStream) &&
+		SEAssert(bufferParams.m_usageMask != re::Buffer::Usage::Invalid, "Invalid usage mask");
+		
+		SEAssert(((re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams) || 
+			re::Buffer::HasUsageBit(re::Buffer::VertexStream, bufferParams)) &&
 					bufferParams.m_arraySize == 1) ||
-			(bufferParams.m_type == re::Buffer::Type::Structured && bufferParams.m_arraySize >= 1),
+			(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams) && 
+				bufferParams.m_arraySize >= 1),
 			"Invalid number of elements");
-		SEAssert(bufferParams.m_accessMask != 0 &&
-			(bufferParams.m_type != re::Buffer::Type::Constant || 
-				((bufferParams.m_accessMask & re::Buffer::Access::GPUWrite) == 0)),
-			"Invalid usage mask");
 
-		SEAssert(bufferParams.m_type != re::Buffer::Type::Constant ||
+		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams) ||
 			bufferParams.m_arraySize == 1,
 			"Constant buffers only support a single element. Arrays are achieved as a member variable within a "
 			"single constant buffer");
-
-		SEAssert((bufferParams.m_allocationType != re::Buffer::AllocationType::Immutable ||
-			(bufferParams.m_accessMask & re::Buffer::Access::GPURead) != 0),
+		
+		SEAssert(bufferParams.m_allocationType != re::Buffer::Immutable ||
+			re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
 			"GPU reads must be enabled for immutable buffers");
 #endif
 	}
@@ -110,9 +112,9 @@ namespace re
 	{
 		SEAssert(typeIDHash == m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
-		SEAssert(m_bufferParams.m_allocationType == re::Buffer::AllocationType::Mutable,
+		SEAssert(m_bufferParams.m_allocationType == re::Buffer::Mutable,
 			"Only mutable buffers can be partially updated");
-		SEAssert(m_bufferParams.m_type == Type::Structured,
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, m_bufferParams),
 			"Only structured buffers can be partially updated");
 
 		re::Context::Get()->GetBufferAllocator()->Commit(GetUniqueID(), data, numBytes, dstBaseOffset);
@@ -160,7 +162,7 @@ namespace re
 
 	void const* Buffer::MapCPUReadback(uint8_t frameLatency /*= k_maxFrameLatency*/)
 	{
-		SEAssert((m_bufferParams.m_accessMask & Access::CPURead) != 0, "CPU reads are not enabled");
+		SEAssert(re::Buffer::HasAccessBit(re::Buffer::CPURead, m_bufferParams), "CPU reads are not enabled");
 		SEAssert(!m_isCurrentlyMapped, "Buffer is already mapped. Did you forget to unmap it during an earlier frame?");
 
 		re::RenderManager const* renderManager = re::RenderManager::Get();
@@ -193,7 +195,7 @@ namespace re
 
 	void Buffer::UnmapCPUReadback()
 	{
-		SEAssert((m_bufferParams.m_accessMask & Access::CPURead) != 0, "CPU reads are not enabled");
+		SEAssert(re::Buffer::HasAccessBit(re::Buffer::CPURead, m_bufferParams), "CPU reads are not enabled");
 		SEAssert(m_isCurrentlyMapped, "Buffer is not currently mapped");
 
 		platform::Buffer::UnmapCPUReadback(*this);

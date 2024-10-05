@@ -117,9 +117,9 @@ namespace gr
 				instancedMaterialData.data(),
 				re::Buffer::BufferParams{
 					.m_allocationType = bufferAlloc,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
-					.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-					.m_type = re::Buffer::Type::Structured,
+					.m_memPoolPreference = re::Buffer::UploadHeap,
+					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+					.m_usageMask = re::Buffer::Structured,
 					.m_arraySize = numInstances,
 				}));
 	}

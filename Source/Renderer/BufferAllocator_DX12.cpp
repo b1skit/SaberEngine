@@ -19,38 +19,41 @@ using Microsoft::WRL::ComPtr;
 namespace dx12
 {
 	void BufferAllocator::GetSubAllocation(
-		re::Buffer::Type dataType, 
+		re::Buffer::UsageMask usageMask,
 		uint64_t alignedSize, 
 		uint64_t& heapOffsetOut,
 		Microsoft::WRL::ComPtr<ID3D12Resource>& resourcePtrOut)
 	{
 		const uint8_t writeIdx = GetWriteIndex();
 
-		switch (dataType)
+		const re::BufferAllocator::AllocationPool allocationPool =
+			re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask);
+
+		switch (allocationPool)
 		{
-		case re::Buffer::Type::Constant:
+		case re::BufferAllocator::Constant:
 		{
 			SEAssert(alignedSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
 			resourcePtrOut = m_singleFrameBufferResources[re::Buffer::Constant][writeIdx];
 		}
 		break;
-		case re::Buffer::Type::Structured:
+		case re::BufferAllocator::Structured:
 		{
 			SEAssert(alignedSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
 			resourcePtrOut = m_singleFrameBufferResources[re::Buffer::Structured][writeIdx];
 		}
 		break;
-		case re::Buffer::Type::VertexStream:
+		case re::BufferAllocator::VertexStream:
 		{
 			SEAssert(alignedSize % 16 == 0, "Invalid alignment"); // Minimum alignment of a float4 is 16B
 			resourcePtrOut = m_singleFrameBufferResources[re::Buffer::VertexStream][writeIdx];
 		}
 		break;
-		default: SEAssertF("Invalid Type");
+		default: SEAssertF("Invalid Usage");
 		}
 
 		// Our heap offset is the base index of the stack we've allocated for each Type
-		heapOffsetOut = AdvanceBaseIdx(dataType, util::CheckedCast<uint32_t>(alignedSize));
+		heapOffsetOut = AdvanceBaseIdx(allocationPool, util::CheckedCast<uint32_t>(alignedSize));
 	}
 
 
@@ -59,7 +62,7 @@ namespace dx12
 		re::BufferAllocator::Initialize(currentFrame);
 
 		const uint8_t numBuffers = re::RenderManager::GetNumFramesInFlight();
-		for (uint8_t i = 0; i < re::Buffer::Type_Count; ++i)
+		for (uint8_t i = 0; i < re::BufferAllocator::AllocationPool_Count; ++i)
 		{
 			m_singleFrameBufferResources[i].resize(numBuffers, nullptr);
 		}
@@ -84,10 +87,10 @@ namespace dx12
 				&resourceDesc,						// Size of the resource heap
 				D3D12_RESOURCE_STATE_GENERIC_READ,	// Mandatory for D3D12_HEAP_TYPE_UPLOAD heaps
 				nullptr,							// Optimized clear value: None for constant buffers
-				IID_PPV_ARGS(&m_singleFrameBufferResources[re::Buffer::Constant][bufferIdx]));
+				IID_PPV_ARGS(&m_singleFrameBufferResources[re::BufferAllocator::Constant][bufferIdx]));
 			CheckHResult(hr, "Failed to create committed resource");
 
-			m_singleFrameBufferResources[re::Buffer::Constant][bufferIdx]->SetName(
+			m_singleFrameBufferResources[re::BufferAllocator::Constant][bufferIdx]->SetName(
 				util::ToWideString(std::format("Shared constant buffer committed resource {}", bufferIdx)).c_str());
 
 			hr = device->CreateCommittedResource(
@@ -96,10 +99,10 @@ namespace dx12
 				&resourceDesc,						// Size of the resource heap
 				D3D12_RESOURCE_STATE_GENERIC_READ,	// Mandatory for D3D12_HEAP_TYPE_UPLOAD heaps
 				nullptr,							// Optimized clear value: None for structured buffers
-				IID_PPV_ARGS(&m_singleFrameBufferResources[re::Buffer::Structured][bufferIdx]));
+				IID_PPV_ARGS(&m_singleFrameBufferResources[re::BufferAllocator::Structured][bufferIdx]));
 			CheckHResult(hr, "Failed to create committed resource");
 
-			m_singleFrameBufferResources[re::Buffer::Structured][bufferIdx]->SetName(
+			m_singleFrameBufferResources[re::BufferAllocator::Structured][bufferIdx]->SetName(
 				util::ToWideString(std::format("Shared structured buffer committed resource {}", bufferIdx)).c_str());
 
 			hr = device->CreateCommittedResource(
@@ -108,10 +111,10 @@ namespace dx12
 				&resourceDesc,						// Size of the resource heap
 				D3D12_RESOURCE_STATE_GENERIC_READ,	// Mandatory for D3D12_HEAP_TYPE_UPLOAD heaps
 				nullptr,							// Optimized clear value: None for structured buffers
-				IID_PPV_ARGS(&m_singleFrameBufferResources[re::Buffer::VertexStream][bufferIdx]));
+				IID_PPV_ARGS(&m_singleFrameBufferResources[re::BufferAllocator::VertexStream][bufferIdx]));
 			CheckHResult(hr, "Failed to create committed resource");
 
-			m_singleFrameBufferResources[re::Buffer::VertexStream][bufferIdx]->SetName(
+			m_singleFrameBufferResources[re::BufferAllocator::VertexStream][bufferIdx]->SetName(
 				util::ToWideString(std::format("Shared vertex buffer committed resource {}", bufferIdx)).c_str());
 		}
 	}
@@ -163,7 +166,7 @@ namespace dx12
 
 	void BufferAllocator::Destroy()
 	{
-		for (uint8_t i = 0; i < re::Buffer::Type_Count; ++i)
+		for (uint8_t i = 0; i < re::BufferAllocator::AllocationPool_Count; ++i)
 		{
 			m_singleFrameBufferResources[i].assign(m_numFramesInFlight, nullptr);
 		}

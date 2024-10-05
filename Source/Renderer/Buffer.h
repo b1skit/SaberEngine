@@ -26,48 +26,58 @@ namespace re
 	class Buffer : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
+		struct BufferParams;
+
+
 		enum AllocationType : uint8_t
 		{
-			Mutable,		// Permanent, can only be modified by the CPU
+			Mutable,		// Permanent, N frames of buffers allocated to allow updates
 			Immutable,		// Permanent, can only be modified by the GPU
 			SingleFrame,	// Single frame, immutable once committed by the CPU
 
 			AllocationType_Invalid
 		};
 
-		enum Type : uint8_t
+		enum Usage : uint8_t
 		{
-			Constant,
-			Structured,
+			Constant		= 1 << 0,
+			Structured		= 1 << 1,
+			VertexStream	= 1 << 2, // Vertex/index buffers
 
-			VertexStream, // Vertex/index streams
-
-			Type_Count
+			Invalid			= 0
 		};
+		using UsageMask = uint8_t;
+		static bool HasUsageBit(Usage, UsageMask);
+		static bool HasUsageBit(Usage, re::Buffer::BufferParams const&);
+		static bool HasUsageBit(Usage, re::Buffer const&);
 
-		enum class MemoryPoolPreference : uint8_t
+
+		enum MemoryPoolPreference : uint8_t
 		{
-			Default,	// Prefer L1/VRAM. No CPU access
-			Upload,		// Prefor L0/SysMem. Intended for CPU -> GPU communication
+			DefaultHeap,	// Prefer L1/VRAM. No CPU access
+			UploadHeap,		// Prefor L0/SysMem. Intended for CPU -> GPU communication
 		};
 
 		enum Access : uint8_t
 		{
 			GPURead		= 1 << 0,	// Default
-			GPUWrite	= 1 << 1,	// Buffer::AllocationType::Immutable only (DX12: UAV, OpenGL: SSBO)
+			GPUWrite	= 1 << 1,	// Default heap & Buffer::AllocationType::Immutable only (DX12: UAV, OpenGL: SSBO)
 			CPURead		= 1 << 2,	// CPU readback from the GPU
-			CPUWrite	= 1 << 3,	// CPU-mappable for writing (i.e. to the upload heap). GPUWrites cannot be enabled
+			CPUWrite	= 1 << 3,	// CPU-mappable for writing. Upload heap only
+			//ReBAR		= 1 << 4,	// TODO
 		};
+		using AccessMask = uint8_t;
+		static bool HasAccessBit(Access, AccessMask);
+		static bool HasAccessBit(Access, re::Buffer::BufferParams const&);
+		static bool HasAccessBit(Access, re::Buffer const&);
+
 
 		struct BufferParams
 		{
 			AllocationType m_allocationType = AllocationType::AllocationType_Invalid;
-
-			MemoryPoolPreference m_memPoolPreference = MemoryPoolPreference::Default;
-
-			uint8_t m_accessMask = Access::GPURead | Access::CPUWrite; // Constant data mapped by CPU, consumed by the GPU
-
-			Type m_type = Type::Type_Count;
+			MemoryPoolPreference m_memPoolPreference = MemoryPoolPreference::DefaultHeap;
+			AccessMask m_accessMask = Access::GPURead;
+			UsageMask m_usageMask = Usage::Invalid;
 
 			uint32_t m_arraySize = 1; // Must be 1 for constant buffers, and vertex/index streams
 
@@ -144,6 +154,7 @@ namespace re
 		uint32_t GetTotalBytes() const;
 		uint32_t GetStride() const;
 		AllocationType GetAllocationType() const;
+		uint8_t GetUsageMask() const;
 
 		uint32_t GetArraySize() const; // Instanced buffers: How many instances of data does the buffer hold?
 
@@ -204,6 +215,42 @@ namespace re
 	};
 
 
+	inline bool Buffer::HasUsageBit(Usage usage, UsageMask usageMask)
+	{
+		return (usageMask & usage);
+	}
+
+
+	inline bool Buffer::HasUsageBit(Usage usage, re::Buffer::BufferParams const& bufferParams)
+	{
+		return HasUsageBit(usage, bufferParams.m_usageMask);
+	}
+
+
+	inline bool Buffer::HasUsageBit(Usage usage, re::Buffer const& buffer)
+	{
+		return HasUsageBit(usage, buffer.GetBufferParams());
+	}
+
+
+	inline bool Buffer::HasAccessBit(Access accessBits, AccessMask accessMask)
+	{
+		return (accessBits & accessMask);
+	}
+
+
+	inline bool Buffer::HasAccessBit(Access access, re::Buffer::BufferParams const& bufferParams)
+	{
+		return HasAccessBit(access, bufferParams.m_accessMask);
+	}
+
+
+	inline bool Buffer::HasAccessBit(Access access, re::Buffer const& buffer)
+	{
+		return HasAccessBit(access, buffer.GetBufferParams());
+	}
+
+
 	// Create any type of buffer:
 	template<typename T>
 	std::shared_ptr<re::Buffer> Buffer::Create(
@@ -256,7 +303,7 @@ namespace re
 	std::shared_ptr<re::Buffer> Buffer::CreateArray(
 		std::string const& bufferName, T const* dataArray, BufferParams const& bufferParams)
 	{
-		SEAssert(bufferParams.m_type == re::Buffer::Type::Structured, "Unexpected data type for a buffer array");
+		SEAssert(HasUsageBit(Usage::Structured, bufferParams), "Unexpected data type for a buffer array");
 
 		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
 
@@ -287,8 +334,8 @@ namespace re
 	inline std::shared_ptr<re::Buffer> Buffer::Create(
 		std::string const& bufferName, void const* data, uint32_t numBytes, BufferParams const& bufferParams)
 	{
-		SEAssert(bufferParams.m_allocationType == re::Buffer::AllocationType::Immutable || 
-			bufferParams.m_allocationType == re::Buffer::AllocationType::SingleFrame,
+		SEAssert(bufferParams.m_allocationType == re::Buffer::Immutable || 
+			bufferParams.m_allocationType == re::Buffer::SingleFrame,
 			"Invalid AllocationType type: It's (currently) not possible to Commit() via a nullptr");
 
 		const uint64_t voidHashCode = typeid(void const*).hash_code();
@@ -334,6 +381,12 @@ namespace re
 	inline Buffer::AllocationType Buffer::GetAllocationType() const
 	{
 		return m_bufferParams.m_allocationType;
+	}
+
+
+	inline uint8_t Buffer::GetUsageMask() const
+	{
+		return m_bufferParams.m_usageMask;
 	}
 
 

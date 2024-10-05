@@ -392,10 +392,10 @@ namespace gr
 				DebugData::s_shaderName,
 				PackDebugData(),
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::AllocationType::Mutable,
-					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::Upload,
+					.m_allocationType = re::Buffer::Mutable,
+					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::CPUWrite | re::Buffer::GPURead,
-					.m_type = re::Buffer::Constant,
+					.m_usageMask = re::Buffer::Constant,
 					.m_arraySize = 1,
 				}));
 
@@ -453,7 +453,7 @@ namespace gr
 						m_axisOpacity));
 
 				re::BufferInput const& identityTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-					re::Buffer::AllocationType::Immutable, &k_identity, nullptr);
+					re::Buffer::Immutable, &k_identity, nullptr);
 
 				m_worldCoordinateAxisBatch->SetBuffer(identityTransformBuffer);
 			}
@@ -502,7 +502,7 @@ namespace gr
 						m_meshPrimTransformBuffers.emplace(
 							meshPrimRenderDataID, 
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::AllocationType::Mutable, 
+								re::Buffer::Mutable, 
 								transformData));
 					}
 					else
@@ -619,7 +619,7 @@ namespace gr
 							m_meshBoundingBoxBuffers.emplace(
 								meshID,
 								gr::Transform::CreateInstancedTransformBuffer(
-									re::Buffer::AllocationType::Mutable, boundsItr.GetTransformData()));
+									re::Buffer::Mutable, boundsItr.GetTransformData()));
 						}
 						else
 						{
@@ -661,7 +661,7 @@ namespace gr
 					if (!m_sceneBoundsTransformBuffer.IsValid())
 					{
 						m_sceneBoundsTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-							re::Buffer::AllocationType::Mutable, boundsItr.GetTransformData());
+							re::Buffer::Mutable, boundsItr.GetTransformData());
 					}
 
 					if (m_sceneBoundsBatch == nullptr)
@@ -702,7 +702,7 @@ namespace gr
 					m_cameraAxisTransformBuffers.emplace(
 						camID,
 						gr::Transform::CreateInstancedTransformBuffer(
-						re::Buffer::AllocationType::Mutable, &camWorldMatrix, nullptr));
+						re::Buffer::Mutable, &camWorldMatrix, nullptr));
 				}
 				else if (camDataIsDirty)
 				{
@@ -773,7 +773,7 @@ namespace gr
 					{
 						m_cameraFrustumTransformBuffers.at(camID)[faceIdx] =
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::AllocationType::Mutable,
+								re::Buffer::Mutable,
 								&invViewProjMats.at(faceIdx),
 								nullptr);
 					}
@@ -823,7 +823,7 @@ namespace gr
 						m_deferredLightWireframeTransformBuffers.emplace(
 							pointID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::AllocationType::Mutable, &lightTRS, nullptr));
+								re::Buffer::Mutable, &lightTRS, nullptr));
 					}
 					else
 					{
@@ -864,7 +864,7 @@ namespace gr
 						m_deferredLightWireframeTransformBuffers.emplace(
 							spotID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::AllocationType::Mutable, &lightTRS, nullptr));
+								re::Buffer::Mutable, &lightTRS, nullptr));
 					}
 					else
 					{
@@ -910,7 +910,7 @@ namespace gr
 						m_lightCoordinateAxisTransformBuffers.emplace(
 							lightID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::AllocationType::Mutable, &lightTR, nullptr));
+								re::Buffer::Mutable, &lightTR, nullptr));
 					}
 					else
 					{

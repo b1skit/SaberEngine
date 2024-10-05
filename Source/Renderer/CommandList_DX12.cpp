@@ -310,15 +310,20 @@ namespace dx12
 
 			re::Buffer::BufferParams const& bufferParams = bufferInput.GetBuffer()->GetBufferParams();
 
-			switch (bufferParams.m_type)
+			SEAssert(bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::Constant || 
+				bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::Structured ||				
+				bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::VertexStream,
+				"TODO: Support buffer views that target a single specific usage. For now, just use a single bit");
+
+			switch (bufferInput.GetBuffer()->GetUsageMask())
 			{
-			case re::Buffer::Type::Constant:
+			case re::Buffer::Constant:
 			{
 				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
 					"Unexpected root signature type");
 
-				SEAssert((bufferParams.m_accessMask & re::Buffer::Access::GPURead) != 0 &&
-					(bufferParams.m_accessMask & re::Buffer::Access::GPUWrite) == 0,
+				SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
+					!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
 					"Invalid usage flags for a constant buffer");
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
@@ -329,13 +334,13 @@ namespace dx12
 				transitionResource = false;
 			}
 			break;
-			case re::Buffer::Type::Structured:
+			case re::Buffer::Structured:
 			{
 				switch (rootSigEntry->m_type)
 				{
 				case RootSignature::RootParameter::Type::SRV:
 				{
-					SEAssert((bufferParams.m_accessMask & re::Buffer::Access::GPURead) != 0, 
+					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams), 
 						"Buffer does not have the GPU read flag set");
 
 					m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
@@ -348,7 +353,7 @@ namespace dx12
 				break;
 				case RootSignature::RootParameter::Type::UAV:
 				{
-					SEAssert(bufferParams.m_accessMask & re::Buffer::Access::GPUWrite, 
+					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams), 
 						"UAV buffers must have GPU writes enabled");
 
 					m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
@@ -356,7 +361,7 @@ namespace dx12
 						bufferPlatParams->m_resource.Get(),
 						bufferPlatParams->m_heapByteOffset);
 
-					if ((bufferParams.m_accessMask & re::Buffer::Access::GPUWrite))
+					if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
 					{
 						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -370,7 +375,7 @@ namespace dx12
 				break;
 				case RootSignature::RootParameter::Type::DescriptorTable:
 				{
-					SEAssert(bufferParams.m_accessMask & re::Buffer::Access::GPUWrite,
+					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
 						"UAV buffers must have GPU writes enabled");
 
 					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
@@ -379,7 +384,7 @@ namespace dx12
 						rootSigEntry->m_tableEntry.m_offset,
 						1);
 
-					if ((bufferParams.m_accessMask & re::Buffer::Access::GPUWrite))
+					if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
 					{
 						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -406,7 +411,7 @@ namespace dx12
 			}
 
 			// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
-			if ((bufferParams.m_accessMask & re::Buffer::Access::CPURead) != 0)
+			if (re::Buffer::HasAccessBit(re::Buffer::CPURead, bufferParams))
 			{
 				const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
 
@@ -890,7 +895,7 @@ namespace dx12
 		re::Buffer const* buffer, uint32_t dstOffset, ID3D12Resource* srcResource, uint32_t srcOffset, uint32_t numBytes)
 	{
 		SEAssert(m_type == dx12::CommandListType::Copy, "Expected a copy command list");
-		SEAssert((buffer->GetBufferParams().m_memPoolPreference == re::Buffer::MemoryPoolPreference::Default),
+		SEAssert((buffer->GetBufferParams().m_memPoolPreference == re::Buffer::DefaultHeap),
 			"Only expecting resources on the default heap to be updated via a copy queue");
 
 		dx12::Buffer::PlatformParams const* bufferPlatformParams =

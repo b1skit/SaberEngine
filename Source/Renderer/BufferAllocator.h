@@ -46,21 +46,34 @@ namespace re
 		BufferAllocator();
 
 
-	protected:
+	public:
 		// For single-frame resources, to ensure resources are available throughout their lifetime we allocate one
 		// buffer in the upload heap, per each of the maximum number of frames in flight.
 		// 
 		// Single-frame resources are stack-allocated from these heaps, AND maintained for a fixed lifetime of N 
-		// frames. We only write into 1 array of each type at a time, thus only need 1 base index per Type.
+		// frames. We only write into 1 array of each type at a time, thus only need 1 base index per AllocationPool.
+		// 
+		// We select the pool with the smallest alignment that will satisfy the Buffer's Usage flags.
 		//
 		// We maintain the stack base indexes here, and let the API-layer figure out how to interpret/use it.
 		//
-		uint32_t AdvanceBaseIdx(re::Buffer::Type, uint32_t alignedSize);
+		enum AllocationPool : uint8_t
+		{
+			VertexStream,	// Vertex/index buffers: 16B aligned
+			Constant,		// 256B aligned
+			Structured,		// 64KB aligned			
+
+			AllocationPool_Count
+		};
+		static AllocationPool BufferUsageMaskToAllocationPool(re::Buffer::UsageMask);
+
+	protected:
+		uint32_t AdvanceBaseIdx(AllocationPool, uint32_t alignedSize);
 		uint8_t GetWriteIndex() const;
 
 
 	private:
-		std::array<std::atomic<uint32_t>, re::Buffer::Type::Type_Count> m_bufferBaseIndexes;
+		std::array<std::atomic<uint32_t>, AllocationPool_Count> m_bufferBaseIndexes;
 		uint8_t m_writeIdx;
 
 	
@@ -172,6 +185,25 @@ namespace re
 	inline uint8_t BufferAllocator::GetWriteIndex() const
 	{
 		return m_writeIdx;
+	}
+
+
+	inline BufferAllocator::AllocationPool BufferAllocator::BufferUsageMaskToAllocationPool(re::Buffer::UsageMask mask)
+	{
+		SEAssert(mask != re::Buffer::Usage::Invalid, "Invalid usage mask");
+
+		if (re::Buffer::HasUsageBit(re::Buffer::Structured, mask))
+		{
+			return AllocationPool::Structured;
+		}
+		else if (re::Buffer::HasUsageBit(re::Buffer::Constant, mask))
+		{
+			return AllocationPool::Constant;
+		}
+
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::VertexStream, mask), "Unexpected usage mask");
+
+		return AllocationPool::VertexStream;
 	}
 
 

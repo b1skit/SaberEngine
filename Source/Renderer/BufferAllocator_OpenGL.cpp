@@ -11,17 +11,20 @@
 namespace opengl
 {
 	void BufferAllocator::GetSubAllocation(
-		re::Buffer::Type dataType, 
+		re::Buffer::UsageMask usageMask, 
 		uint32_t size, 
 		GLuint& bufferNameOut,
 		GLintptr& baseOffsetOut)
 	{
 		const uint8_t writeIdx = GetWriteIndex();
 
+		const re::BufferAllocator::AllocationPool allocationPool = 
+			re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask);
+
 		uint32_t alignedSize = 0;
-		switch (dataType)
+		switch (allocationPool)
 		{
-		case re::Buffer::Type::Constant:
+		case re::BufferAllocator::Constant:
 		{
 			bufferNameOut = m_singleFrameBuffers[re::Buffer::Constant][writeIdx];
 
@@ -32,7 +35,7 @@ namespace opengl
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, uboAlignment);
 		}
 		break;
-		case re::Buffer::Type::Structured:
+		case re::BufferAllocator::Structured:
 		{
 			bufferNameOut = m_singleFrameBuffers[re::Buffer::Structured][writeIdx];
 
@@ -43,7 +46,7 @@ namespace opengl
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, ssboAlignment);
 		}
 		break;
-		case re::Buffer::Type::VertexStream:
+		case re::BufferAllocator::VertexStream:
 		{
 			bufferNameOut = m_singleFrameBuffers[re::Buffer::VertexStream][writeIdx];
 
@@ -52,10 +55,10 @@ namespace opengl
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, vertexAlignment);
 		}
 		break;
-		default: SEAssertF("Invalid Type");
+		default: SEAssertF("Invalid AllocationPool");
 		}
 
-		baseOffsetOut = AdvanceBaseIdx(dataType, alignedSize);
+		baseOffsetOut = AdvanceBaseIdx(allocationPool, alignedSize);
 	}
 
 
@@ -66,7 +69,7 @@ namespace opengl
 		// Note: OpenGL only supports double-buffering via a front and back buffer. Thus we can fill one buffer while
 		// the other is in use, so long as we clear the buffer we're writing to at the beginning of each new frame
 		
-		for (uint8_t i = 0; i < re::Buffer::Type::Type_Count; ++i)
+		for (uint8_t i = 0; i < re::BufferAllocator::AllocationPool_Count; ++i)
 		{
 			m_singleFrameBuffers[i].resize(m_numFramesInFlight, 0);
 
@@ -78,45 +81,48 @@ namespace opengl
 		for (uint8_t bufferIdx = 0; bufferIdx < m_numFramesInFlight; bufferIdx++)
 		{
 			// UBO:
-			SEAssert(glIsBuffer(m_singleFrameBuffers[re::Buffer::Constant][bufferIdx]), "Buffer name is not valid");
+			SEAssert(glIsBuffer(m_singleFrameBuffers[re::BufferAllocator::Constant][bufferIdx]),
+				"Buffer name is not valid");
 
 			glNamedBufferData(
-				m_singleFrameBuffers[re::Buffer::Constant][bufferIdx],
+				m_singleFrameBuffers[re::BufferAllocator::Constant][bufferIdx],
 				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
 				nullptr,
 				GL_DYNAMIC_DRAW);
 
 			glObjectLabel(GL_BUFFER, 
-				m_singleFrameBuffers[re::Buffer::Constant][bufferIdx],
+				m_singleFrameBuffers[re::BufferAllocator::Constant][bufferIdx],
 				-1, 
 				std::format("Single-frame shared UBO {}", bufferIdx).c_str());
 
 
 			// SSBO:
-			SEAssert(glIsBuffer(m_singleFrameBuffers[re::Buffer::Structured][bufferIdx]), "Buffer name is not valid");
+			SEAssert(glIsBuffer(m_singleFrameBuffers[re::BufferAllocator::Structured][bufferIdx]),
+				"Buffer name is not valid");
 
 			glNamedBufferData(
-				m_singleFrameBuffers[re::Buffer::Structured][bufferIdx],
+				m_singleFrameBuffers[re::BufferAllocator::Structured][bufferIdx],
 				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
 				nullptr,
 				GL_DYNAMIC_DRAW);
 
 			glObjectLabel(GL_BUFFER,
-				m_singleFrameBuffers[re::Buffer::Structured][bufferIdx],
+				m_singleFrameBuffers[re::BufferAllocator::Structured][bufferIdx],
 				-1,
 				std::format("Single-frame shared SSBO {}", bufferIdx).c_str());
 
 			// VertexStream:
-			SEAssert(glIsBuffer(m_singleFrameBuffers[re::Buffer::VertexStream][bufferIdx]), "Buffer name is not valid");
+			SEAssert(glIsBuffer(m_singleFrameBuffers[re::BufferAllocator::VertexStream][bufferIdx]),
+				"Buffer name is not valid");
 
 			glNamedBufferData(
-				m_singleFrameBuffers[re::Buffer::VertexStream][bufferIdx],
+				m_singleFrameBuffers[re::BufferAllocator::VertexStream][bufferIdx],
 				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
 				nullptr,
 				GL_DYNAMIC_DRAW);
 
 			glObjectLabel(GL_BUFFER,
-				m_singleFrameBuffers[re::Buffer::VertexStream][bufferIdx],
+				m_singleFrameBuffers[re::BufferAllocator::VertexStream][bufferIdx],
 				-1,
 				std::format("Single-frame shared SSBO {}", bufferIdx).c_str());
 		}
@@ -138,7 +144,7 @@ namespace opengl
 
 	void BufferAllocator::Destroy()
 	{
-		for (uint8_t i = 0; i < re::Buffer::Type::Type_Count; ++i)
+		for (uint8_t i = 0; i < re::BufferAllocator::AllocationPool_Count; ++i)
 		{
 			glDeleteBuffers(m_numFramesInFlight, m_singleFrameBuffers[i].data());
 
