@@ -312,6 +312,11 @@ namespace dx12
 
 			switch (rootSigEntry->m_type)
 			{
+			case RootSignature::RootParameter::Type::Constant:
+			{
+				SEAssertF("Unexpected root parameter type for a buffer");
+			}
+			break;
 			case RootSignature::RootParameter::Type::CBV:
 			{
 				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
@@ -328,8 +333,6 @@ namespace dx12
 					rootSigIdx,
 					bufferPlatParams->m_resource.Get(),
 					bufferPlatParams->m_heapByteOffset);
-
-				transitionResource = false;
 			}
 			break;
 			case RootSignature::RootParameter::Type::SRV:
@@ -344,8 +347,6 @@ namespace dx12
 					rootSigIdx,
 					bufferPlatParams->m_resource.Get(),
 					bufferPlatParams->m_heapByteOffset);
-
-				transitionResource = false;
 			}
 			break;
 			case RootSignature::RootParameter::Type::UAV:
@@ -367,22 +368,49 @@ namespace dx12
 					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 					transitionResource = true;
 				}
-				else
-				{
-					transitionResource = false;
-				}
 			}
 			break;
-			case RootSignature::RootParameter::Type::Constant:
 			case RootSignature::RootParameter::Type::DescriptorTable:
 			{
-				SEAssertF("Unexpected root parameter type for a buffer");
+				switch (rootSigEntry->m_tableEntry.m_type)
+				{
+				case dx12::RootSignature::DescriptorType::SRV:
+				{
+					SEAssertF("TODO: Support this. Create SRVs during Buffer initialization, and bind them here");
+				}
+				break;
+				case dx12::RootSignature::DescriptorType::UAV:
+				{
+					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
+						"UAV buffers must have GPU writes enabled");
+
+					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
+						rootSigEntry->m_index,
+						bufferPlatParams->m_uavCPUDescAllocation[0],
+						rootSigEntry->m_tableEntry.m_offset,
+						1);
+
+					if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
+					{
+						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
+						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+						transitionResource = true;
+					}
+				}
+				break;
+				case dx12::RootSignature::DescriptorType::CBV:
+				{
+					SEAssertF("TODO: Support this. Create CBVs during Buffer initialization, and bind them here");
+				}
+				break;
+				default: SEAssertF("Invalid type");
+				}
 			}
 			break;
 			default: SEAssertF("Invalid root parameter type");
 			}
 
-			// We only transition GPU-writeable buffers (i.e. immutable with GPU-write flag enabled)
+			// We only transition GPU-writeable buffers (i.e. GPU-write flag enabled)
 			if (transitionResource)
 			{
 				TransitionResource(bufferPlatParams->m_resource.Get(), toState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
