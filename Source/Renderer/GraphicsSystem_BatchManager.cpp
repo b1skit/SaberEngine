@@ -464,20 +464,21 @@ namespace gr
 			std::vector<gr::RenderDataID> const& renderDataIDs = viewAndCulledIDs.second;
 
 			// Copy the batch metadata for the requeted RenderDataIDs:
-			std::vector<BatchMetadata> batchMetadata;
+			std::vector<BatchMetadata const*> batchMetadata;
 			batchMetadata.reserve(renderDataIDs.size());
 			for (size_t i = 0; i < renderDataIDs.size(); i++)
 			{
 				SEAssert(m_renderDataIDToBatchMetadata.contains(renderDataIDs[i]),
 					"Batch with the given ID does not exist");
 
-				batchMetadata.emplace_back(m_renderDataIDToBatchMetadata.at(renderDataIDs[i]));
+				batchMetadata.emplace_back(&m_renderDataIDToBatchMetadata.at(renderDataIDs[i]));
 			}
+
+			SEAssert(m_viewBatches[curView].empty(), "Batch vectors should have been cleared");
 
 			// Assemble a list of instanced batches:
 			std::vector<re::Batch>& batches = m_viewBatches[curView];
-			batches.reserve(batchMetadata.size());
-			SEAssert(batches.empty(), "Found a non-empty batch of vectors. These should have been cleared");
+			batches.reserve(batchMetadata.size());			
 
 			effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
 
@@ -485,27 +486,27 @@ namespace gr
 			{
 				// Sort the batch metadata:
 				std::sort(batchMetadata.begin(), batchMetadata.end(),
-					[](BatchMetadata const& a, BatchMetadata const& b) { return (a.m_batchHash < b.m_batchHash); });
+					[](BatchMetadata const* a, BatchMetadata const* b) { return (a->m_batchHash < b->m_batchHash); });
 
 				size_t unmergedIdx = 0;
 				do
 				{
-					re::Batch const& cachedBatch = m_permanentCachedBatches[batchMetadata[unmergedIdx].m_cacheIndex];
+					re::Batch const& cachedBatch = m_permanentCachedBatches[batchMetadata[unmergedIdx]->m_cacheIndex];
 
 					// Add the first batch in the sequence to our final list. We duplicate the batch, as the cached batches
 					// have a permanent Lifetime
 					batches.emplace_back(re::Batch::Duplicate(cachedBatch, re::Lifetime::SingleFrame));
 
-					const uint64_t curBatchHash = batchMetadata[unmergedIdx].m_batchHash;
+					const uint64_t curBatchHash = batchMetadata[unmergedIdx]->m_batchHash;
 
 					// Obtain the Material instance metadata while we still have the current unmergedIdx		
 					MaterialInstanceMetadata const& matInstMeta =
-						m_materialInstanceMetadata.at(batchMetadata[unmergedIdx].m_matEffectID);
+						m_materialInstanceMetadata.at(batchMetadata[unmergedIdx]->m_matEffectID);
 
 					// Find the index of the last batch with a matching hash in the sequence:
 					const size_t instanceStartIdx = unmergedIdx++;
 					while (unmergedIdx < batchMetadata.size() &&
-						batchMetadata[unmergedIdx].m_batchHash == curBatchHash)
+						batchMetadata[unmergedIdx]->m_batchHash == curBatchHash)
 					{
 						unmergedIdx++;
 					}
@@ -524,16 +525,16 @@ namespace gr
 					{
 						const size_t unmergedSrcIdx = instanceStartIdx + instanceOffset;
 
-						SEAssert(m_instancedTransformIndexes.contains(batchMetadata[unmergedSrcIdx].m_transformID),
+						SEAssert(m_instancedTransformIndexes.contains(batchMetadata[unmergedSrcIdx]->m_transformID),
 							"TransformID is not registered for an instanced transform index");
-						SEAssert(matInstMeta.m_instancedMaterialIndexes.contains(batchMetadata[unmergedSrcIdx].m_renderDataID),
+						SEAssert(matInstMeta.m_instancedMaterialIndexes.contains(batchMetadata[unmergedSrcIdx]->m_renderDataID),
 							"RenderDataID is not registered for an instanced material index");
 
 						const uint32_t transformIdx =
-							m_instancedTransformIndexes.at(batchMetadata[unmergedSrcIdx].m_transformID).m_index;
+							m_instancedTransformIndexes.at(batchMetadata[unmergedSrcIdx]->m_transformID).m_index;
 
 						const uint32_t materialIdx =
-							matInstMeta.m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx].m_renderDataID).m_index;
+							matInstMeta.m_instancedMaterialIndexes.at(batchMetadata[unmergedSrcIdx]->m_renderDataID).m_index;
 
 						instanceIndices.emplace_back(CreateInstanceIndicesEntry(transformIdx, materialIdx));
 

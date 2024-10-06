@@ -40,41 +40,6 @@ namespace
 	}
 
 
-	std::vector<gr::RenderDataID> CombineVisibleRenderDataIDs(
-		gr::RenderDataManager const& renderData,
-		gr::ViewCullingResults const& viewCullingResults,
-		std::vector<gr::Camera::View> const& views)
-	{
-		// TODO: This function is a temporary convenience, we concatenate sets of RenderDataIDs together for point light
-		// shadow draws which use a geometry shader to project each batch to every face. This is (potentially?) wasteful!
-		// Instead, we should draw each point light shadow face seperately, using the culling results to send only the
-		// relevant batches to each face.
-
-		const size_t numMeshPrimitives = renderData.GetNumElementsOfType<gr::MeshPrimitive::RenderData>();
-		std::vector<gr::RenderDataID> uniqueRenderDataIDs;
-		uniqueRenderDataIDs.reserve(numMeshPrimitives);
-
-		// Combine the RenderDataIDs visible in each view into a unique set
-		std::unordered_set<gr::RenderDataID> seenIDs;
-		seenIDs.reserve(numMeshPrimitives);
-
-		for (gr::Camera::View const& view : views)
-		{
-			std::vector<gr::RenderDataID> const& visibleIDs = viewCullingResults.at(view);
-			for (gr::RenderDataID id : visibleIDs)
-			{
-				if (!seenIDs.contains(id))
-				{
-					seenIDs.emplace(id);
-					uniqueRenderDataIDs.emplace_back(id);
-				}
-			}
-		}
-
-		return uniqueRenderDataIDs;
-	}
-
-
 	re::TextureView CreateShadowWriteView(gr::Light::Type lightType, uint32_t shadowArrayIdx)
 	{
 		switch (lightType)
@@ -624,24 +589,31 @@ namespace gr
 						{
 							const gr::RenderDataID lightID = pointData.m_renderDataID;
 
-							const std::vector<gr::Camera::View> views =
-							{
-								{pointData.m_renderDataID, gr::Camera::View::Face::XPos},
-								{pointData.m_renderDataID, gr::Camera::View::Face::XNeg},
-								{pointData.m_renderDataID, gr::Camera::View::Face::YPos},
-								{pointData.m_renderDataID, gr::Camera::View::Face::YNeg},
-								{pointData.m_renderDataID, gr::Camera::View::Face::ZPos},
-								{pointData.m_renderDataID, gr::Camera::View::Face::ZNeg},
-							};
-
 							if (m_viewBatches)
 							{
-								// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so we need
-								// to add all batches to the same stage. This is wasteful, as 5/6 of the faces don't need a
-								// given batch. We should draw each face of the cubemap seperately instead
+								// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so
+								// we need to add all batches to the same stage. This is wasteful, as 5/6 of the faces
+								// don't need a given batch. We should draw each face of the cubemap seperately instead
 								SEAssert(m_viewBatches->contains(lightID), "Cannot find light camera ID in view batches");
-								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
-									m_viewBatches->at(lightID));
+								
+								std::unordered_set<DataHash> seenBatches;
+								for (uint8_t faceIdx = 0; faceIdx < 6; ++faceIdx)
+								{
+									const gr::Camera::View faceView(
+										pointData.m_renderDataID, static_cast<gr::Camera::View::Face>(faceIdx));
+
+									for (auto const& batch : m_viewBatches->at(faceView))
+									{
+										// Different views may contain the same batch, so we only add unique ones
+										const DataHash batchDataHash = batch.GetDataHash();
+										if (!seenBatches.contains(batchDataHash))
+										{
+											m_pointShadowStageData.at(
+												pointData.m_renderDataID).m_renderStage->AddBatch(batch);
+											seenBatches.emplace(batchDataHash);
+										}
+									}
+								}
 							}
 							else
 							{
