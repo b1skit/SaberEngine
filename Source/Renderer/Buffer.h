@@ -114,7 +114,8 @@ namespace re
 			std::string const& bufferName, T const& data, BufferParams const&);
 
 		template<typename T>
-		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUncommitted(std::string const& bufferName, BufferParams const&);
+		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUncommitted(
+			std::string const& bufferName, BufferParams const&);
 
 		// Create a read-only buffer for an array of several objects of the same type (eg. instanced mesh matrices)
 		template<typename T>

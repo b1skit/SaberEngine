@@ -21,6 +21,9 @@ namespace opengl
 		const re::BufferAllocator::AllocationPool allocationPool = 
 			re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask);
 
+		SEAssert(allocationPool != re::BufferAllocator::Constant || size <= 4096 * sizeof(glm::vec4),
+			"Constant buffers can only hold up to 4096 float4's");
+
 		uint32_t alignedSize = 0;
 		switch (allocationPool)
 		{

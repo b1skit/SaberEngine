@@ -29,6 +29,9 @@ namespace dx12
 		const re::BufferAllocator::AllocationPool allocationPool =
 			re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask);
 
+		SEAssert(allocationPool != re::BufferAllocator::Constant || alignedSize <= 4096 * sizeof(glm::vec4),
+			"Constant buffers can only hold up to 4096 float4's");
+
 		switch (allocationPool)
 		{
 		case re::BufferAllocator::Constant:
