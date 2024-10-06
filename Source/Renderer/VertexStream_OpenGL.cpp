@@ -64,7 +64,7 @@ namespace opengl
 
 	void VertexStream::Create(re::VertexStream const& vertexStream)
 	{
-		// Do nothing; Most of the heavy lifting is handled by the re::Buffer
+		// Do nothing; The heavy lifting is handled by the re::Buffer
 	}
 
 
@@ -81,6 +81,29 @@ namespace opengl
 		re::Buffer const* streamBuffer = vertexStream.GetBuffer();
 		SEAssert(streamBuffer, "Vertex stream buffer cannot be null");
 
-		opengl::Buffer::Bind(*streamBuffer, slotIdx);
+		re::Buffer::BufferParams const& streamBufferParams = streamBuffer->GetBufferParams();
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::VertexStream, streamBufferParams),
+			"Buffer does not have the vertex stream usage bit set");
+
+		opengl::Buffer::PlatformParams* streamBufferPlatParams = 
+			streamBuffer->GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
+		SEAssert(streamBufferPlatParams->m_baseOffset == 0, "Base offset != 0. This is unexpected");
+
+		switch (streamBufferParams.m_vertexStreamParams.m_type)
+		{
+		case re::VertexStream::Index:
+		{
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, streamBufferPlatParams->m_bufferName);
+		}
+		break;
+		default:
+		{
+			glBindVertexBuffer(
+				slotIdx,													// Slot index
+				streamBufferPlatParams->m_bufferName,						// Buffer
+				0,															// Offset
+				streamBufferParams.m_vertexStreamParams.m_stride);	// Stride
+		}
+		}
 	}
 }

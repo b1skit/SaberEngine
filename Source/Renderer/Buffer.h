@@ -81,16 +81,13 @@ namespace re
 
 			uint32_t m_arraySize = 1; // Must be 1 for constant buffers, and vertex/index streams
 
-			union
+			struct StreamType
 			{
-				struct
-				{
-					re::VertexStream::Type m_type;
-					re::DataType m_dataType;
-					bool m_isNormalized;
-					uint8_t m_stride;
-				} m_vertexStream;
-			} m_typeParams;
+				re::VertexStream::Type m_type;
+				re::DataType m_dataType;
+				bool m_isNormalized;
+				uint8_t m_stride;
+			} m_vertexStreamParams{};
 		};
 
 

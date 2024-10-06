@@ -1,9 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include <GL/glew.h>
-
 #include "Buffer_Platform.h"
 #include "Buffer.h"
+
+#include <GL/glew.h>
 
 
 namespace opengl
@@ -17,6 +17,13 @@ namespace opengl
 			GLintptr m_baseOffset = 0; // 0 for permanent buffers, or >= 0 for single-frame buffers
 		};
 
+		enum BindTarget
+		{
+			UBO,
+			SSBO,
+
+			BindTarget_Count
+		};
 
 	public:
 		static void Create(re::Buffer&);
@@ -28,6 +35,6 @@ namespace opengl
 
 
 	public: // OpenGL-specific functionality:		
-		static void Bind(re::Buffer const&, GLuint uniformBlockIdx);
+		static void Bind(re::Buffer const&, BindTarget, GLuint bindIndex);
 	};
 }

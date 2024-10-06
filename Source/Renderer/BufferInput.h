@@ -30,8 +30,6 @@ namespace re
 		re::Buffer const* GetBuffer() const;
 		re::Buffer* GetBuffer();
 		
-		std::shared_ptr<re::Buffer> const& GetBufferSharedPtr() const;
-
 		std::string const& GetShaderName() const;
 		util::StringHash GetShaderNameHash() const;
 
@@ -53,12 +51,6 @@ namespace re
 	inline re::Buffer* BufferInput::GetBuffer()
 	{
 		return m_buffer.get();
-	}
-
-
-	inline std::shared_ptr<re::Buffer> const& BufferInput::GetBufferSharedPtr() const
-	{
-		return m_buffer;
 	}
 
 

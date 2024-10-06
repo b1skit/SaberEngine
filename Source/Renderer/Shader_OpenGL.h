@@ -1,13 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
+#include "Buffer_OpenGL.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
+
+#include <GL/glew.h> 
 
 
 namespace re
 {
-	class Buffer;
 	class Shader;
 	class Texture;
 	class TextureTargetSet;
@@ -41,7 +42,11 @@ namespace opengl
 
 			uint32_t m_shaderReference = 0;
 
-			std::unordered_map<std::string, int32_t> m_samplerUnits;
+			std::unordered_map<util::StringHash, GLint> m_samplerUnits;		
+			std::unordered_map<util::StringHash, GLint> m_vertexAttributeLocations;
+
+			std::unordered_map<util::StringHash, opengl::Buffer::BindTarget> m_bufferTypes;
+			std::array<std::unordered_map<util::StringHash, GLint>, opengl::Buffer::BindTarget_Count> m_bufferLocations;
 		};
 
 

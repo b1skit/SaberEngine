@@ -20,6 +20,10 @@
 #include <GL/glew.h> 
 
 
+// Enable this to see names/indexes; A convenience since we use StringHash as a key
+//#define LOG_SHADER_NAMES
+
+
 namespace
 {
 	constexpr uint32_t k_shaderTypeFlags[]
@@ -220,6 +224,179 @@ namespace
 
 		return taskFutures;
 	}
+
+
+	void BuildShaderReflection(re::Shader const& shader)
+	{
+#if defined(LOG_SHADER_NAMES)
+		LOG("Building shader reflection for shader \"%s\"", shader.GetName().c_str());
+#endif
+
+		opengl::Shader::PlatformParams* platParams = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
+
+		// Populate the uniform locations
+		// Get the number of active uniforms found in the shader:
+		GLint numUniforms = 0;
+		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_UNIFORMS, &numUniforms);
+
+		// Get the max length of the active uniform names found in the shader:
+		GLint maxUniformNameLength = 0;
+		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
+
+		// Sampler uniforms:
+		GLint uniformSize = 0; // Size of the uniform variable; currently we just ignore this
+		GLenum uniformType; // Data type of the uniform
+		std::vector<GLchar> samplerName(maxUniformNameLength, '\0'); // Uniform name, as described in the shader text
+		for (GLint uniformIdx = 0; uniformIdx < numUniforms; uniformIdx++)
+		{
+			// Get the size, type, and name of the uniform at the current index
+			glGetActiveUniform(
+				platParams->m_shaderReference,		// program
+				static_cast<GLuint>(uniformIdx),	// index
+				maxUniformNameLength,				// buffer size
+				nullptr,							// length
+				&uniformSize,						// size
+				&uniformType,						// type
+				samplerName.data());				// name
+
+			if (UniformIsSamplerType(uniformType))
+			{
+				const GLuint uniformLocation = glGetUniformLocation(platParams->m_shaderReference, samplerName.data());
+
+				// Get the texture unit binding value:
+				GLint bindIdx = 0;
+				glGetUniformiv(
+					platParams->m_shaderReference,	// program
+					uniformLocation,				// location
+					&bindIdx);						// params
+
+				// Populate the shader sampler unit map with unique entries:
+				std::string nameStr(samplerName.data());
+				SEAssert(platParams->m_samplerUnits.find(nameStr) == platParams->m_samplerUnits.end(),
+					"Sampler unit already found! Does the shader have a unique binding layout qualifier?");
+
+				platParams->m_samplerUnits.emplace(std::move(nameStr), bindIdx);
+
+#if defined(LOG_SHADER_NAMES)
+				LOG("Shader \"%s\": Found sampler uniform %s = %d",
+					shader.GetName().c_str(), samplerName.data(), bindIdx);
+#endif
+			}
+		}
+
+		// Vertex attributes:
+		GLint numAttributes = 0;
+		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_ATTRIBUTES, &numAttributes);
+
+		GLint maxAttributeNameLength = 0;
+		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxAttributeNameLength);
+
+		GLint attributeSize = 0; // Size of the uniform variable; currently we just ignore this
+		GLenum attributeType; // Data type of the uniform
+		std::vector<GLchar> attributeName(maxAttributeNameLength, '\0'); // Attribute name, as described in the shader text
+
+		for (GLint attributeIdx = 0; attributeIdx < numAttributes; attributeIdx++)
+		{
+			glGetActiveAttrib(
+				platParams->m_shaderReference,		// program
+				static_cast<GLuint>(attributeIdx),	// index
+				maxAttributeNameLength,				// buffer size
+				nullptr,							// length
+				&attributeSize,						// size
+				&attributeType,						// type
+				attributeName.data());				// name
+
+			const GLint attributeLocation = glGetAttribLocation(platParams->m_shaderReference, attributeName.data());
+
+			if (attributeLocation >= 0) // -1 for gl_InstanceID, gl_VertexID etc
+			{
+				platParams->m_vertexAttributeLocations.emplace(attributeName.data(), attributeLocation);
+
+#if defined(LOG_SHADER_NAMES)
+				LOG("Shader \"%s\": Found vertex attribute %s = %d",
+					shader.GetName().c_str(), attributeName.data(), attributeLocation);
+#endif
+			}
+		}
+
+		constexpr size_t k_maxResourceNameLength = 512;
+		std::vector<GLchar> resourceName(k_maxResourceNameLength, '\0');
+
+		constexpr GLenum k_bufferProperty = GL_BUFFER_BINDING;
+
+		// UBOs:
+		GLint numActiveUniformBlocks = 0;
+		glGetProgramInterfaceiv(
+			platParams->m_shaderReference, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numActiveUniformBlocks);
+
+		for (GLint uboIdx = 0; uboIdx < numActiveUniformBlocks; ++uboIdx)
+		{
+			glGetProgramResourceName(
+				platParams->m_shaderReference,					// program
+				GL_UNIFORM_BLOCK,								// programInterface
+				static_cast<GLuint>(uboIdx),			// index
+				static_cast<GLsizei>(k_maxResourceNameLength),	// bufSize
+				nullptr,										// length (optional)
+				resourceName.data());							// name
+
+			GLint uboBindIdx = 0;
+
+			glGetProgramResourceiv(
+				platParams->m_shaderReference,
+				GL_UNIFORM_BLOCK,
+				uboIdx,
+				1,
+				&k_bufferProperty,
+				1,
+				NULL,
+				&uboBindIdx);
+			SEAssert(uboBindIdx >= 0, "Invalid buffer bind index returned");
+
+			constexpr opengl::Buffer::BindTarget k_bindTarget = opengl::Buffer::BindTarget::UBO;
+			platParams->m_bufferTypes.emplace(resourceName.data(), k_bindTarget);
+			platParams->m_bufferLocations[k_bindTarget].emplace(resourceName.data(), uboBindIdx);
+
+#if defined(LOG_SHADER_NAMES)
+			LOG("Shader \"%s\": Found UBO %s = %d", shader.GetName().c_str(), resourceName.data(), uboBindIdx);
+#endif
+		}
+
+		// SSBOs:
+		GLint numActiveShaderStorageBlocks = 0;
+		glGetProgramInterfaceiv(
+			platParams->m_shaderReference, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numActiveShaderStorageBlocks);
+
+		for (GLint ssboIdx = 0; ssboIdx < numActiveShaderStorageBlocks; ++ssboIdx)
+		{
+			glGetProgramResourceName(
+				platParams->m_shaderReference,					// program
+				GL_SHADER_STORAGE_BLOCK,						// programInterface
+				static_cast<GLuint>(ssboIdx),					// index
+				static_cast<GLsizei>(k_maxResourceNameLength),	// bufSize
+				nullptr,										// length (optional)
+				resourceName.data());							// name
+
+			GLint storageBlockBindIdx = 0;
+
+			glGetProgramResourceiv(
+				platParams->m_shaderReference,
+				GL_SHADER_STORAGE_BLOCK,
+				ssboIdx,
+				1,
+				&k_bufferProperty,
+				1,
+				NULL,
+				&storageBlockBindIdx);
+
+			constexpr opengl::Buffer::BindTarget k_bindTarget = opengl::Buffer::BindTarget::SSBO;
+			platParams->m_bufferTypes.emplace(resourceName.data(), k_bindTarget);
+			platParams->m_bufferLocations[k_bindTarget].emplace(resourceName.data(), storageBlockBindIdx);
+
+#if defined(LOG_SHADER_NAMES)
+			LOG("Shader \"%s\": Found SSBO %s = %d", shader.GetName().c_str(), resourceName.data(), storageBlockBindIdx);
+#endif
+		}
+	}
 }
 
 
@@ -322,50 +499,7 @@ namespace opengl
 		glValidateProgram(platParams->m_shaderReference);
 		AssertShaderIsValid(shader.GetName(), platParams->m_shaderReference, GL_VALIDATE_STATUS, true/*= isProgram*/);
 
-		// Populate the uniform locations
-		// Get the number of active uniforms found in the shader:
-		int numUniforms = 0;
-		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_UNIFORMS, &numUniforms);
-
-		// Get the max length of the active uniform names found in the shader:
-		int maxUniformNameLength = 0;
-		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
-
-		// Populate uniform metadata:
-		int size = 0; // Size of the uniform variable; currently we just ignore this
-		GLenum type; // Data type of the uniform
-		std::vector<GLchar> name(maxUniformNameLength, '\0'); // Uniform name, as described in the shader text
-		for (size_t uniformIdx = 0; uniformIdx < numUniforms; uniformIdx++)
-		{
-			// Get the size, type, and name of the uniform at the current index
-			glGetActiveUniform(
-				platParams->m_shaderReference,		// program
-				static_cast<GLuint>(uniformIdx),	// index
-				maxUniformNameLength,				// buffer size
-				nullptr,							// length
-				&size,								// size
-				&type,								// type
-				name.data());						// name
-
-			if (UniformIsSamplerType(type))
-			{
-				const GLuint uniformLocation = glGetUniformLocation(platParams->m_shaderReference, name.data());
-
-				// Get the texture unit binding value:
-				GLint params = 0;
-				glGetUniformiv(
-					platParams->m_shaderReference,	// program
-					uniformLocation,				// location
-					&params);						// params
-
-				// Populate the shader sampler unit map with unique entries:
-				std::string nameStr(name.data());
-				SEAssert(platParams->m_samplerUnits.find(nameStr) == platParams->m_samplerUnits.end(),
-					"Sampler unit already found! Does the shader have a unique binding layout qualifier?");
-
-				platParams->m_samplerUnits.emplace(std::move(nameStr), static_cast<int32_t>(params));
-			}
-		}
+		BuildShaderReflection(shader);
 
 		LOG("Shader \"%s\" created in %f seconds", shaderFileName.c_str(), timer.StopSec());
 	}
@@ -477,86 +611,26 @@ namespace opengl
 
 	void Shader::SetBuffer(re::Shader const& shader, re::BufferInput const& bufferInput)
 	{
-		opengl::Shader::PlatformParams const* shaderPlatformParams = 
+		opengl::Shader::PlatformParams const* shaderPlatParams = 
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 
-		SEAssert(shaderPlatformParams->m_isCreated == true, "Shader has not been created yet");
+		SEAssert(shaderPlatParams->m_isCreated == true, "Shader has not been created yet");
 		
-		GLint bindIndex = 0;
-		const GLenum properties = GL_BUFFER_BINDING;
-
 		re::Buffer::PlatformParams const* bufferPlatformParams = bufferInput.GetBuffer()->GetPlatformParams();
 
-		SEAssert(bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::Constant || 
-			bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::Structured ||			
-			bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::VertexStream,
-			"TODO: Support buffer views that target a single specific usage. For now, just use a single bit");
+		SEAssert(shaderPlatParams->m_bufferTypes.contains(bufferInput.GetShaderNameHash()) ||
+			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			"Failed to find buffer with the given shader name. This is is not an error, but a useful debugging helper");
 
-		switch (bufferInput.GetBuffer()->GetUsageMask())
+		auto bufferTypeItr = shaderPlatParams->m_bufferTypes.find(bufferInput.GetShaderNameHash());
+		if (bufferTypeItr != shaderPlatParams->m_bufferTypes.end())
 		{
-		case re::Buffer::Constant: // Bind our single-element buffers as UBOs
-		{
-			// Find the buffer binding index via introspection
-			const GLint uniformBlockIdx = glGetProgramResourceIndex(
-				shaderPlatformParams->m_shaderReference,	// program
-				GL_UNIFORM_BLOCK,							// programInterface
-				bufferInput.GetShaderName().c_str());		// name
+			const opengl::Buffer::BindTarget bindTarget = bufferTypeItr->second;
 
-			SEAssert(uniformBlockIdx != GL_INVALID_ENUM, "Failed to get resource index");
+			const GLint bufferLoc = shaderPlatParams->m_bufferLocations[bindTarget].at(bufferInput.GetShaderNameHash());
 
-			// GL_INVALID_INDEX is returned if the the uniform block name does not identify an active uniform block
-			SEAssert(uniformBlockIdx != GL_INVALID_INDEX ||
-				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
-				"Failed to find an active uniform block index. This is is not an error, but a useful debugging helper");
-
-			if (uniformBlockIdx != GL_INVALID_INDEX)
-			{
-				glGetProgramResourceiv(
-					shaderPlatformParams->m_shaderReference,
-					GL_UNIFORM_BLOCK,
-					uniformBlockIdx,
-					1,
-					&properties,
-					1,
-					NULL,
-					&bindIndex);
-			}
+			opengl::Buffer::Bind(*bufferInput.GetBuffer(), bindTarget, bufferLoc);
 		}
-		break;
-		case re::Buffer::Structured: // Bind our array buffers as SSBOs, as they support dynamic indexing
-		{
-			// Find the buffer binding index via introspection
-			const GLint ssboIdx = glGetProgramResourceIndex(
-			shaderPlatformParams->m_shaderReference,	// program
-			GL_SHADER_STORAGE_BLOCK,					// programInterface
-			bufferInput.GetShaderName().c_str());		// name
-
-			SEAssert(ssboIdx != GL_INVALID_ENUM, "Failed to get resource index");
-
-			// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
-			SEAssert(ssboIdx != GL_INVALID_INDEX ||
-				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
-				"Failed to find the resource in the shader. This is is not an error, but a useful debugging helper");
-
-			if (ssboIdx != GL_INVALID_INDEX)
-			{
-				glGetProgramResourceiv(
-					shaderPlatformParams->m_shaderReference,
-					GL_SHADER_STORAGE_BLOCK,
-					ssboIdx,
-					1,
-					&properties,
-					1,
-					NULL,
-					&bindIndex);
-			}
-		}
-		break;
-		default: SEAssertF("Invalid DataType");
-		}
-
-		// Bind our buffer to the retrieved bind index:
-		opengl::Buffer::Bind(*bufferInput.GetBuffer(), bindIndex);
 	}
 
 

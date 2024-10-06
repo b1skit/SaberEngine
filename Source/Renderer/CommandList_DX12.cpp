@@ -310,15 +310,13 @@ namespace dx12
 
 			re::Buffer::BufferParams const& bufferParams = bufferInput.GetBuffer()->GetBufferParams();
 
-			SEAssert(bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::Constant || 
-				bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::Structured ||				
-				bufferInput.GetBuffer()->GetUsageMask() == re::Buffer::VertexStream,
-				"TODO: Support buffer views that target a single specific usage. For now, just use a single bit");
+			switch (rootSigEntry->m_type)
+			{
+			case RootSignature::RootParameter::Type::CBV:
+			{
+				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
+					"Buffer is missing the Constant usage bit");
 
-			switch (bufferInput.GetBuffer()->GetUsageMask())
-			{
-			case re::Buffer::Constant:
-			{
 				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
 					"Unexpected root signature type");
 
@@ -334,74 +332,54 @@ namespace dx12
 				transitionResource = false;
 			}
 			break;
-			case re::Buffer::Structured:
+			case RootSignature::RootParameter::Type::SRV:
 			{
-				switch (rootSigEntry->m_type)
-				{
-				case RootSignature::RootParameter::Type::SRV:
-				{
-					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams), 
-						"Buffer does not have the GPU read flag set");
+				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
+					"Buffer is missing the Structured usage bit");
 
-					m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
-						rootSigIdx,
-						bufferPlatParams->m_resource.Get(),
-						bufferPlatParams->m_heapByteOffset);
+				SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
+					"Buffer does not have the GPU read flag set");
 
+				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
+					rootSigIdx,
+					bufferPlatParams->m_resource.Get(),
+					bufferPlatParams->m_heapByteOffset);
+
+				transitionResource = false;
+			}
+			break;
+			case RootSignature::RootParameter::Type::UAV:
+			{
+				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
+					"Buffer is missing the Structured usage bit");
+
+				SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
+					"UAV buffers must have GPU writes enabled");
+
+				m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
+					rootSigIdx,
+					bufferPlatParams->m_resource.Get(),
+					bufferPlatParams->m_heapByteOffset);
+
+				if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
+				{
+					InsertUAVBarrier(bufferPlatParams->m_resource.Get());
+					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+					transitionResource = true;
+				}
+				else
+				{
 					transitionResource = false;
-				}
-				break;
-				case RootSignature::RootParameter::Type::UAV:
-				{
-					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams), 
-						"UAV buffers must have GPU writes enabled");
-
-					m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
-						rootSigIdx,
-						bufferPlatParams->m_resource.Get(),
-						bufferPlatParams->m_heapByteOffset);
-
-					if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
-					{
-						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
-						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-						transitionResource = true;
-					}
-					else
-					{
-						transitionResource = false;
-					}
-				}
-				break;
-				case RootSignature::RootParameter::Type::DescriptorTable:
-				{
-					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
-						"UAV buffers must have GPU writes enabled");
-
-					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
-						rootSigEntry->m_index,
-						bufferPlatParams->m_uavCPUDescAllocation[0],
-						rootSigEntry->m_tableEntry.m_offset,
-						1);
-
-					if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
-					{
-						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
-						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-						transitionResource = true;
-					}
-					else
-					{
-						transitionResource = false;
-					}
-				}
-				break;
-				default: SEAssertF("Invalid or unexpected root signature type");
 				}
 			}
 			break;
-			default:
-				SEAssertF("Invalid Buffer Type");
+			case RootSignature::RootParameter::Type::Constant:
+			case RootSignature::RootParameter::Type::DescriptorTable:
+			{
+				SEAssertF("Unexpected root parameter type for a buffer");
+			}
+			break;
+			default: SEAssertF("Invalid root parameter type");
 			}
 
 			// We only transition GPU-writeable buffers (i.e. immutable with GPU-write flag enabled)

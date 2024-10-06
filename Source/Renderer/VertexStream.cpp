@@ -143,12 +143,12 @@ namespace re
 				.m_accessMask = re::Buffer::GPURead,
 				.m_usageMask = re::Buffer::VertexStream,
 				.m_arraySize = 1,
-				.m_typeParams = {
-					.m_vertexStream = {
-						.m_type = createParams.m_type,
-						.m_dataType = newVertexStream->m_streamDesc.m_dataType,
-						.m_isNormalized = isNormalized,
-						.m_stride = newVertexStream->GetElementByteSize() }}
+				.m_vertexStreamParams = re::Buffer::BufferParams::StreamType{
+					.m_type = createParams.m_type,
+					.m_dataType = newVertexStream->m_streamDesc.m_dataType,
+					.m_isNormalized = isNormalized,
+					.m_stride = newVertexStream->GetElementByteSize(),
+				},
 			};
 
 			

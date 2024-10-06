@@ -99,7 +99,7 @@ namespace gr
 	private: // Ambient lights:
 		struct AmbientLightRenderData
 		{
-			re::BufferInput m_ambientParams;
+			std::shared_ptr<re::Buffer> m_ambientParams;
 			std::shared_ptr<re::Texture> m_IEMTex;
 			std::shared_ptr<re::Texture> m_PMREMTex;
 			re::Batch m_batch;
@@ -110,7 +110,7 @@ namespace gr
 		struct ActiveAmbientRenderData
 		{
 			gr::RenderDataID m_renderDataID = gr::k_invalidRenderDataID;
-			re::BufferInput m_ambientParams;
+			std::shared_ptr<re::Buffer> m_ambientParams;
 			std::shared_ptr<re::Texture> m_IEMTex;
 			std::shared_ptr<re::Texture> m_PMREMTex;
 		} m_activeAmbientLightData;

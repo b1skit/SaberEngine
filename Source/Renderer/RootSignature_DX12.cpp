@@ -674,13 +674,13 @@ namespace dx12
 				{
 					// Populate the binding metadata for our individual descriptor table entries:
 					RootParameter rootParameter = RootParameter{
-							.m_index = rootIdx,
-							.m_type = RootParameter::Type::DescriptorTable,
-							.m_registerBindPoint = util::CheckedCast<uint8_t>(baseRegister + baseRegisterOffset++),
-							.m_registerSpace = util::CheckedCast<uint8_t>(registerSpace),
-							.m_tableEntry = RootSignature::TableEntry{
-								.m_type = rangeType,
-								.m_offset = util::CheckedCast<uint8_t>(rangeIdx)}
+						.m_index = rootIdx,
+						.m_type = RootParameter::Type::DescriptorTable,
+						.m_registerBindPoint = util::CheckedCast<uint8_t>(baseRegister + baseRegisterOffset++),
+						.m_registerSpace = util::CheckedCast<uint8_t>(registerSpace),
+						.m_tableEntry = RootSignature::TableEntry{
+							.m_type = rangeType,
+							.m_offset = util::CheckedCast<uint8_t>(rangeIdx)}
 					};
 
 					// Populate the descriptor table metadata:

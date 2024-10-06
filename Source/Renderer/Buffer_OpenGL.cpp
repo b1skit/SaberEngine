@@ -1,9 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
-#include "Context.h"
-#include "BufferAllocator_OpenGL.h"
 #include "Buffer_OpenGL.h"
+#include "BufferAllocator_OpenGL.h"
 #include "Buffer.h"
+#include "Context.h"
+
+#include "Core/Assert.h"
 
 
 namespace opengl
@@ -152,21 +153,18 @@ namespace opengl
 	}
 
 
-	void Buffer::Bind(re::Buffer const& buffer, GLuint bindIndex)
+	void Buffer::Bind(re::Buffer const& buffer, BindTarget bindTarget, GLuint bindIndex)
 	{
-		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
-
 		const uint32_t numBytes = buffer.GetTotalBytes();
 
-		SEAssert(buffer.GetUsageMask() == re::Buffer::Structured ||
-			buffer.GetUsageMask() == re::Buffer::Constant ||
-			buffer.GetUsageMask() == re::Buffer::VertexStream,
-			"TODO: Support buffer views that target a single specific usage. For now, just use a single bit");
-		 
-		switch (buffer.GetUsageMask())
+		PlatformParams const* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams const*>();
+		switch (bindTarget)
 		{
-		case re::Buffer::Constant:
+		case opengl::Buffer::BindTarget::UBO:
 		{
+			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, buffer),
+				"Buffer is missing the Constant usage bit");
+
 			glBindBufferRange(GL_UNIFORM_BUFFER, 
 				bindIndex, 
 				bufferPlatParams->m_bufferName, 
@@ -174,8 +172,11 @@ namespace opengl
 				numBytes);
 		}
 		break;
-		case re::Buffer::Structured:
+		case opengl::Buffer::BindTarget::SSBO:
 		{
+			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, buffer),
+				"Buffer is missing the Structured usage bit");
+
 			glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
 				bindIndex,
 				bufferPlatParams->m_bufferName,
@@ -185,26 +186,7 @@ namespace opengl
 		break;
 		case re::Buffer::VertexStream:
 		{
-			switch (buffer.GetBufferParams().m_typeParams.m_vertexStream.m_type)
-			{
-			case re::VertexStream::Type::Index:
-			{
-				SEAssert(bufferPlatParams->m_baseOffset == 0, "Base offset != 0. This is unexpected");
-
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatParams->m_bufferName);
-			}
-			break;
-			default:
-			{
-				SEAssert(bufferPlatParams->m_baseOffset == 0, "Base offset != 0. This is unexpected");
-
-				glBindVertexBuffer(
-					bindIndex,														// Slot index
-					bufferPlatParams->m_bufferName,									// Buffer
-					0,																// Offset
-					buffer.GetBufferParams().m_typeParams.m_vertexStream.m_stride);	// Stride
-			}
-			}
+			SEAssertF("Incorrect location to bind a vertex stream. Use opengl::VertexStream::Bind instead");
 		}
 		break;
 		default: SEAssertF("Invalid Usage");

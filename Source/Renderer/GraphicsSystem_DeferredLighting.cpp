@@ -159,8 +159,7 @@ namespace gr
 		RegisterTextureOutput(k_activeAmbientPMREMTexOutput, &m_activeAmbientLightData.m_PMREMTex);
 		RegisterTextureOutput(k_activeAmbientDFGTexOutput, &m_BRDF_integrationMap);
 		
-		RegisterBufferOutput(
-			k_activeAmbientParamsBufferOutput, &m_activeAmbientLightData.m_ambientParams.GetBufferSharedPtr());
+		RegisterBufferOutput(k_activeAmbientParamsBufferOutput, &m_activeAmbientLightData.m_ambientParams);
 	}
 
 
@@ -738,17 +737,15 @@ namespace gr
 						static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 						m_ssaoTex.get());
 
-					re::BufferInput ambientParams(
+					std::shared_ptr<re::Buffer> ambientParams = re::Buffer::Create(
 						AmbientLightData::s_shaderName,
-						re::Buffer::Create(
-							AmbientLightData::s_shaderName,
-							ambientLightParamsData,
-							re::Buffer::BufferParams{
-								.m_allocationType = re::Buffer::Mutable,
-								.m_memPoolPreference = re::Buffer::UploadHeap,
-								.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
-								.m_usageMask = re::Buffer::Constant,
-							}));
+						ambientLightParamsData,
+						re::Buffer::BufferParams{
+							.m_allocationType = re::Buffer::Mutable,
+							.m_memPoolPreference = re::Buffer::UploadHeap,
+							.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+							.m_usageMask = re::Buffer::Constant,
+						});
 
 					m_ambientLightData.emplace(ambientData.m_renderDataID,
 						AmbientLightRenderData{
@@ -775,7 +772,7 @@ namespace gr
 						re::Sampler::GetSampler("WrapMinMagMipLinear"),
 						re::TextureView(pmremTex));
 
-					ambientBatch.SetBuffer(ambientParams);
+					ambientBatch.SetBuffer(AmbientLightData::s_shaderName, ambientParams);
 
 					++ambientItr;
 				}
@@ -801,7 +798,7 @@ namespace gr
 					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 					m_ssaoTex.get());
 
-				ambientLight.second.m_ambientParams.GetBuffer()->Commit(ambientLightParamsData);
+				ambientLight.second.m_ambientParams->Commit(ambientLightParamsData);
 			}
 		}
 
