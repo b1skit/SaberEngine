@@ -876,8 +876,7 @@ namespace re
 	{
 		SEAssert(!bufferInput.GetShaderName().empty() && bufferInput.GetBuffer(), "Buffer cannot be unnamed or null");
 
-		SEAssert(bufferInput.GetBuffer()->GetAllocationType() == re::Buffer::Mutable ||
-			bufferInput.GetBuffer()->GetAllocationType() == re::Buffer::Immutable,
+		SEAssert(bufferInput.GetBuffer()->GetLifetime() == re::Lifetime::Permanent,
 			"Buffer must have a permanent lifetime");
 
 		SEAssert(std::find_if(

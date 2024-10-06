@@ -268,7 +268,7 @@ namespace re
 		uint64_t GetTargetSetSignature(); 
 		uint64_t GetTargetSetSignature() const;
 
-		re::BufferInput const& GetCreateTargetParamsBuffer(re::Buffer::AllocationType = re::Buffer::Mutable);
+		re::BufferInput const& GetCreateTargetParamsBuffer();
 
 
 	private: // Use the object Create factories instead

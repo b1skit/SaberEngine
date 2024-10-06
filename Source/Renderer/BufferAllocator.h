@@ -82,7 +82,8 @@ namespace re
 
 		struct CommitMetadata
 		{
-			Buffer::AllocationType m_allocationType;
+			Buffer::StagingPool m_stagingPool;
+			re::Lifetime m_bufferLifetime;
 			uint32_t m_startIndex;	// Singleframe: Index of 1st byte. Permanent: Commit array index
 			uint32_t m_numBytes;	// Total number of allocated bytes
 		};
@@ -125,7 +126,7 @@ namespace re
 		TemporaryAllocation m_singleFrameAllocations;
 
 
-		std::unordered_map<Handle, CommitMetadata> m_handleToTypeAndByteIndex;
+		std::unordered_map<Handle, CommitMetadata> m_handleToCommitMetadata;
 		mutable std::recursive_mutex m_handleToTypeAndByteIndexMutex;
 
 		std::unordered_set<Handle> m_dirtyBuffers;
@@ -165,7 +166,7 @@ namespace re
 	protected: // Interfaces for the Buffer friend class:
 		friend class re::Buffer;
 
-		void Allocate(Handle uniqueID, uint32_t numBytes, Buffer::AllocationType); // Called once at creation
+		void Allocate(Handle uniqueID, uint32_t numBytes, Buffer::StagingPool, re::Lifetime bufferLifetime); // Called once at creation
 		void Commit(Handle uniqueID, void const* data);	// Update the buffer data
 		void Commit(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
 		

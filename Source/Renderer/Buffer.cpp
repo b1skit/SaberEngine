@@ -10,7 +10,7 @@ namespace
 	void ValidateBufferParams(re::Buffer::BufferParams const& bufferParams)
 	{
 #if defined(_DEBUG)
-		SEAssert(bufferParams.m_allocationType != re::Buffer::AllocationType::AllocationType_Invalid, "Invalid AllocationType");
+		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::StagingPool_Invalid, "Invalid AllocationType");
 
 		SEAssert(bufferParams.m_memPoolPreference != re::Buffer::UploadHeap ||
 			(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
@@ -21,14 +21,20 @@ namespace
 			bufferParams.m_memPoolPreference != re::Buffer::DefaultHeap,
 			"Buffers in the default heap cannot have CPUWrite enabled");
 
-		SEAssert(bufferParams.m_allocationType != re::Buffer::SingleFrame ||
+		SEAssert(bufferParams.m_lifetime != re::Lifetime::SingleFrame ||
 			bufferParams.m_memPoolPreference == re::Buffer::UploadHeap,
 			"We currently expect single frame resources to be on the upload heap. This is NOT mandatory, we just need "
 			"to implement support at the API level (i.e. BufferAllocator_DX12.h/.cpp)");
 
+		SEAssert(bufferParams.m_lifetime != re::Lifetime::SingleFrame ||
+			(bufferParams.m_stagingPool == re::Buffer::StagingPool::Temporary ||
+				bufferParams.m_stagingPool == re::Buffer::StagingPool::None),
+			"Single frame buffers can only use the temporary staging pool");
+
 		SEAssert(!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams) ||
 			(bufferParams.m_memPoolPreference == re::Buffer::DefaultHeap &&
-				bufferParams.m_allocationType == re::Buffer::Immutable),
+				(bufferParams.m_stagingPool == re::Buffer::StagingPool::Temporary ||
+					bufferParams.m_stagingPool == re::Buffer::StagingPool::None)),
 			"If GPUWrite is enabled, buffers must be CPU-immutable and located in the default heap");
 
 		SEAssert(bufferParams.m_usageMask != re::Buffer::Usage::Invalid, "Invalid usage mask");
@@ -45,7 +51,7 @@ namespace
 			"Constant buffers only support a single element. Arrays are achieved as a member variable within a "
 			"single constant buffer");
 		
-		SEAssert(bufferParams.m_allocationType != re::Buffer::Immutable ||
+		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::Permanent ||
 			re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
 			"GPU reads must be enabled for immutable buffers");
 #endif
@@ -100,7 +106,7 @@ namespace re
 	{
 		SEAssert(typeIDHash == m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
-		SEAssert(m_bufferParams.m_allocationType == AllocationType::Mutable, "Cannot set data of an immutable buffer");
+		SEAssert(m_bufferParams.m_stagingPool == StagingPool::Permanent, "Cannot set data of an immutable buffer");
 
 		re::Context::Get()->GetBufferAllocator()->Commit(GetUniqueID(), data);
 		
@@ -112,8 +118,8 @@ namespace re
 	{
 		SEAssert(typeIDHash == m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
-		SEAssert(m_bufferParams.m_allocationType == re::Buffer::Mutable,
-			"Only mutable buffers can be partially updated");
+		SEAssert(m_bufferParams.m_stagingPool == re::Buffer::StagingPool::Permanent,
+			"Only Permanent buffers can be partially updated");
 		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, m_bufferParams),
 			"Only structured buffers can be partially updated");
 

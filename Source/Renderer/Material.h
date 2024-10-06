@@ -94,7 +94,7 @@ namespace gr
 
 	public:
 		static re::BufferInput CreateInstancedBuffer(
-			re::Buffer::AllocationType, std::vector<MaterialInstanceRenderData const*> const&);
+			re::Buffer::StagingPool, std::vector<MaterialInstanceRenderData const*> const&);
 
 		static re::BufferInput ReserveInstancedBuffer(EffectID, uint32_t maxInstances);
 

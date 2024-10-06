@@ -93,7 +93,7 @@ namespace gr
 			PoissonSampleParamsData::s_shaderName,
 			poissonSampleParamsData,
 			re::Buffer::BufferParams{
-				.m_allocationType = re::Buffer::Immutable,
+				.m_stagingPool = re::Buffer::StagingPool::Temporary,
 				.m_memPoolPreference = re::Buffer::UploadHeap,
 				.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 				.m_usageMask = re::Buffer::Constant,
@@ -499,7 +499,7 @@ namespace gr
 					bufferName,
 					lightData.data(),
 					re::Buffer::BufferParams{
-						.m_allocationType = re::Buffer::Mutable,
+						.m_stagingPool = re::Buffer::StagingPool::Permanent,
 						.m_memPoolPreference = re::Buffer::UploadHeap,
 						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 						.m_usageMask = re::Buffer::Structured,

@@ -151,7 +151,7 @@ namespace gr
 				BloomComputeData::s_shaderName,
 				BloomComputeData{}, // Populated during PreUpdate()
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::Mutable,
+					.m_stagingPool = re::Buffer::StagingPool::Permanent,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Constant,
@@ -192,7 +192,7 @@ namespace gr
 				BloomComputeData::s_shaderName,
 				BloomComputeData{}, // Populated during PreUpdate()
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::Mutable,
+					.m_stagingPool = re::Buffer::StagingPool::Permanent,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Constant,

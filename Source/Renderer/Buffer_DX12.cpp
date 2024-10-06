@@ -56,8 +56,7 @@ namespace
 
 	inline bool NeedsUAV(re::Buffer::BufferParams const& bufferParams)
 	{
-		return bufferParams.m_allocationType == re::Buffer::Immutable &&
-			re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams.m_accessMask);
+		return re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams.m_accessMask);
 	}
 
 
@@ -121,59 +120,68 @@ namespace dx12
 
 		const D3D12_HEAP_TYPE outputBufferHeapType = MemoryPoolPreferenceToD3DHeapType(bufferParams.m_memPoolPreference);
 
-		switch (buffer.GetAllocationType())
+		switch (buffer.GetLifetime())
 		{
-		case re::Buffer::Mutable:
+		case re::Lifetime::Permanent:
 		{
-			// We allocate N frames-worth of buffer space, and then set the m_heapByteOffset each frame
-			const uint64_t allFramesAlignedSize = numFramesInFlight * alignedSize;
-
-			const CD3DX12_HEAP_PROPERTIES heapProperties(outputBufferHeapType);
-			const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(allFramesAlignedSize);
-			
-			HRESULT hr = device->CreateCommittedResource(
-				&heapProperties,					// this heap will be used to upload the constant buffer data
-				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
-				&resourceDesc,						// Size of the resource heap
-				k_initialState,
-				nullptr,							// Optimized clear value: None for constant buffers
-				IID_PPV_ARGS(&params->m_resource));
-			CheckHResult(hr, "Failed to create committed resource for mutable buffer");
-
-			std::wstring const& debugName = buffer.GetWName() + L"_Mutable";
-			params->m_resource->SetName(debugName.c_str());
-		}
-		break;
-		case re::Buffer::Immutable:
-		{
-			// Immutable buffers cannot change frame-to-frame, thus only need a single buffer's worth of space
-			const CD3DX12_HEAP_PROPERTIES heapProperties(outputBufferHeapType);
-			CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedSize);
-
-			if (needsUAV)
+			switch (buffer.GetAllocationType())
 			{
-				resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+			case re::Buffer::StagingPool::Permanent:
+			{
+				// We allocate N frames-worth of buffer space, and then set the m_heapByteOffset each frame
+				const uint64_t allFramesAlignedSize = numFramesInFlight * alignedSize;
+
+				const CD3DX12_HEAP_PROPERTIES heapProperties(outputBufferHeapType);
+				const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(allFramesAlignedSize);
+
+				HRESULT hr = device->CreateCommittedResource(
+					&heapProperties,					// this heap will be used to upload the constant buffer data
+					D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
+					&resourceDesc,						// Size of the resource heap
+					k_initialState,
+					nullptr,							// Optimized clear value: None for constant buffers
+					IID_PPV_ARGS(&params->m_resource));
+				CheckHResult(hr, "Failed to create committed resource for mutable buffer");
+
+				std::wstring const& debugName = buffer.GetWName() + L"_Mutable";
+				params->m_resource->SetName(debugName.c_str());
 			}
+			break;
+			case re::Buffer::StagingPool::Temporary:
+			case re::Buffer::StagingPool::None:
+			{
+				// CPU-immutable buffers only need a single buffer's worth of space
+				const CD3DX12_HEAP_PROPERTIES heapProperties(outputBufferHeapType);
+				CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedSize);
 
-			HRESULT hr = device->CreateCommittedResource(
-				&heapProperties,					// this heap will be used to upload the constant buffer data
-				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
-				&resourceDesc,						// Size of the resource heap
-				k_initialState,
-				nullptr,							// Optimized clear value: None for constant buffers
-				IID_PPV_ARGS(&params->m_resource));
-			CheckHResult(hr, "Failed to create committed resource for immutable buffer");
+				if (needsUAV)
+				{
+					resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+				}
 
-			// Debug names:
-			std::wstring const& debugName = buffer.GetWName() + L"_Immutable";
-			params->m_resource->SetName(debugName.c_str());
+				HRESULT hr = device->CreateCommittedResource(
+					&heapProperties,					// this heap will be used to upload the constant buffer data
+					D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
+					&resourceDesc,						// Size of the resource heap
+					k_initialState,
+					nullptr,							// Optimized clear value: None for constant buffers
+					IID_PPV_ARGS(&params->m_resource));
+				CheckHResult(hr, "Failed to create committed resource for immutable buffer");
+
+				// Debug names:
+				std::wstring const& debugName = buffer.GetWName() + L"_Immutable";
+				params->m_resource->SetName(debugName.c_str());
+			}
+			break;
+			default: SEAssertF("Invalid AllocationType");
+			}
 		}
 		break;
-		case re::Buffer::SingleFrame:
+		case re::Lifetime::SingleFrame:
 		{
-			dx12::BufferAllocator* bufferAllocator = 
+			dx12::BufferAllocator* bufferAllocator =
 				dynamic_cast<dx12::BufferAllocator*>(re::Context::Get()->GetBufferAllocator());
-			
+
 			bufferAllocator->GetSubAllocation(
 				bufferParams.m_usageMask,
 				alignedSize,
@@ -181,7 +189,7 @@ namespace dx12
 				params->m_resource);
 		}
 		break;
-		default: SEAssertF("Invalid AllocationType");
+		default: SEAssertF("Invalid lifetime");
 		}
 
 		SEAssert(params->m_heapByteOffset % GetAlignment(
@@ -230,10 +238,9 @@ namespace dx12
 		}
 
 		// Register non-shared resources with the global resource state tracker:
-		switch (buffer.GetAllocationType())
+		switch (buffer.GetLifetime())
 		{
-		case re::Buffer::Mutable:
-		case re::Buffer::Immutable:
+		case re::Lifetime::Permanent:
 		{
 			context->GetGlobalResourceStates().RegisterResource(
 				params->m_resource.Get(),
@@ -241,14 +248,13 @@ namespace dx12
 				1);
 		}
 		break;
-		case re::Buffer::SingleFrame:
+		case re::Lifetime::SingleFrame:
 		{
 			//
 		}
 		break;
-		default: SEAssertF("Invalid AllocationType");
+		default: SEAssertF("Invalid lifetime");
 		}
-
 
 		// Type-specific setup:
 		if (re::Buffer::HasUsageBit(re::Buffer::VertexStream, bufferParams))
@@ -282,7 +288,7 @@ namespace dx12
 		void const* srcData = nullptr;
 		uint32_t srcSize = 0;
 		buffer.GetDataAndSize(&srcData, &srcSize);
-		SEAssert(srcData != nullptr && srcSize <= alignedSize, "GetDataAndSize returned invalid results");
+		SEAssert(srcData == nullptr || srcSize <= alignedSize, "GetDataAndSize returned invalid results");
 #endif
 	}
 
@@ -317,7 +323,7 @@ namespace dx12
 		buffer.GetDataAndSize(&data, &totalBytes);
 
 		// Update the heap offset, if required
-		if (buffer.GetAllocationType() == re::Buffer::Mutable)
+		if (buffer.GetAllocationType() == re::Buffer::StagingPool::Permanent)
 		{
 			const uint64_t alignedSize = GetAlignedSize(bufferParams.m_usageMask, totalBytes);
 			params->m_heapByteOffset = alignedSize * curFrameHeapOffsetFactor;
@@ -330,7 +336,7 @@ namespace dx12
 		// Adjust our pointers if we're doing a partial update:
 		if (!updateAllBytes)
 		{
-			SEAssert(buffer.GetAllocationType() == re::Buffer::Mutable,
+			SEAssert(buffer.GetAllocationType() == re::Buffer::StagingPool::Permanent,
 				"Only mutable buffers can be partially updated");
 
 			// Update the source data pointer:
@@ -432,20 +438,19 @@ namespace dx12
 		SEAssert(params->m_resource != nullptr, "Resource pointer should not be null");
 
 		// Unregister the resource from the global resource state tracker
-		switch (buffer.GetAllocationType())
+		switch (buffer.GetLifetime())
 		{
-		case re::Buffer::Mutable:
-		case re::Buffer::Immutable:
+		case re::Lifetime::Permanent:
 		{
 			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(params->m_resource.Get());
 		}
 		break;
-		case re::Buffer::SingleFrame:
+		case re::Lifetime::SingleFrame:
 		{
 			//
 		}
 		break;
-		default: SEAssertF("Invalid AllocationType");
+		default: SEAssertF("Invalid lifetime");
 		}
 
 		params->m_resource = nullptr;

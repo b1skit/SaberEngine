@@ -290,7 +290,7 @@ namespace gr
 				interleavedMorphData.data(),
 				util::CheckedCast<uint32_t>(interleavedMorphData.size()),
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::Immutable,
+					.m_stagingPool = re::Buffer::StagingPool::Temporary,
 					.m_memPoolPreference = re::Buffer::DefaultHeap,
 					.m_accessMask = re::Buffer::GPURead,
 					.m_usageMask = re::Buffer::Structured,

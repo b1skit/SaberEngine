@@ -164,12 +164,13 @@ namespace gr
 							CreateMipGenerationParamsData(newTexture, sourceMip, numMipStages, faceIdx, arrayIdx);
 
 						mipGenerationStage->AddSingleFrameBuffer(
-							MipGenerationData::s_shaderName, 
+							MipGenerationData::s_shaderName,
 							re::Buffer::Create(
 								MipGenerationData::s_shaderName,
 								mipGenerationParams,
 								re::Buffer::BufferParams{
-									.m_allocationType = re::Buffer::SingleFrame,
+									.m_lifetime = re::Lifetime::SingleFrame,
+									.m_stagingPool = re::Buffer::StagingPool::Temporary,
 									.m_memPoolPreference = re::Buffer::UploadHeap,
 									.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 									.m_usageMask = re::Buffer::Constant,

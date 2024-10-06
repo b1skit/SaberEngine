@@ -31,7 +31,10 @@ namespace gr
 
 
 	re::BufferInput Transform::CreateInstancedTransformBuffer(
-		re::Buffer::AllocationType bufferAlloc, glm::mat4 const* model, glm::mat4* transposeInvModel)
+		re::Lifetime bufLifetime,
+		re::Buffer::StagingPool bufferAlloc,
+		glm::mat4 const* model,
+		glm::mat4* transposeInvModel)
 	{
 		InstancedTransformData const& transformData = 
 			CreateInstancedTransformData(model, transposeInvModel);
@@ -42,7 +45,8 @@ namespace gr
 				InstancedTransformData::s_shaderName,
 				&transformData,
 				re::Buffer::BufferParams{
-					.m_allocationType = bufferAlloc,
+					.m_lifetime = bufLifetime,
+					.m_stagingPool = bufferAlloc,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Structured,
@@ -52,7 +56,7 @@ namespace gr
 
 
 	re::BufferInput Transform::CreateInstancedTransformBuffer(
-		re::Buffer::AllocationType bufferAlloc, gr::Transform::RenderData const& transformData)
+		re::Lifetime bufLifetime, re::Buffer::StagingPool bufferAlloc, gr::Transform::RenderData const& transformData)
 	{
 		InstancedTransformData const& instancedMeshData = 
 			CreateInstancedTransformData(transformData);
@@ -63,7 +67,8 @@ namespace gr
 				InstancedTransformData::s_shaderName,
 				&instancedMeshData,
 				re::Buffer::BufferParams{
-					.m_allocationType = bufferAlloc,
+					.m_lifetime = bufLifetime,
+					.m_stagingPool = bufferAlloc,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Structured,
@@ -73,7 +78,9 @@ namespace gr
 
 
 	re::BufferInput Transform::CreateInstancedTransformBuffer(
-		re::Buffer::AllocationType bufferAlloc, std::vector<gr::Transform::RenderData const*> const& transformRenderData)
+		re::Lifetime bufLifetime,
+		re::Buffer::StagingPool bufferAlloc,
+		std::vector<gr::Transform::RenderData const*> const& transformRenderData)
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(transformRenderData.size());
 
@@ -91,7 +98,8 @@ namespace gr
 				InstancedTransformData::s_shaderName,
 				&instancedMeshData[0],
 				re::Buffer::BufferParams{
-					.m_allocationType = bufferAlloc,
+					.m_lifetime = bufLifetime,
+					.m_stagingPool = bufferAlloc,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Structured,

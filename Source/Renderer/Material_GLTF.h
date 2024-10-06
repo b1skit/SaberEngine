@@ -29,7 +29,7 @@ namespace gr
 
 	public:
 		static re::BufferInput CreateInstancedBuffer(
-			re::Buffer::AllocationType, std::vector<MaterialInstanceRenderData const*> const&);
+			re::Buffer::StagingPool, std::vector<MaterialInstanceRenderData const*> const&);
 		
 		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);
 

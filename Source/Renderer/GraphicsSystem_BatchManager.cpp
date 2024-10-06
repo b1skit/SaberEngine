@@ -35,7 +35,6 @@ namespace
 
 
 	re::BufferInput CreateInstanceIndexBuffer(
-		re::Buffer::AllocationType bufferAlloc,
 		std::vector<InstanceIndices> const& instanceIndices)
 	{
 		SEAssert(instanceIndices.size() < InstanceIndexData::k_maxInstances,
@@ -53,7 +52,8 @@ namespace
 				InstanceIndexData::s_shaderName,
 				instanceIndexBufferData,
 				re::Buffer::BufferParams{
-					.m_allocationType = bufferAlloc,
+					.m_lifetime = re::Lifetime::SingleFrame,
+					.m_stagingPool = re::Buffer::StagingPool::Temporary,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Constant,
@@ -300,7 +300,8 @@ namespace gr
 				re::Buffer::CreateUncommittedArray<InstancedTransformData>(
 					k_instancedTransformBufferName,
 					re::Buffer::BufferParams{
-						.m_allocationType = re::Buffer::Mutable,
+						.m_lifetime = re::Lifetime::Permanent,
+						.m_stagingPool = re::Buffer::StagingPool::Permanent,
 						.m_memPoolPreference = re::Buffer::UploadHeap,
 						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 						.m_usageMask = re::Buffer::Structured,
@@ -563,8 +564,8 @@ namespace gr
 						// with the same contents
 						if (!m_instanceIndiciesBuffers.contains(instanceIdxsHash))
 						{
-							m_instanceIndiciesBuffers.emplace(instanceIdxsHash,
-								CreateInstanceIndexBuffer(re::Buffer::SingleFrame, instanceIndices));
+							m_instanceIndiciesBuffers.emplace(
+								instanceIdxsHash, CreateInstanceIndexBuffer(instanceIndices));
 						}
 						batches.back().SetBuffer(m_instanceIndiciesBuffers.at(instanceIdxsHash));
 					}

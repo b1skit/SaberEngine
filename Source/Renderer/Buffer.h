@@ -10,32 +10,19 @@
 
 namespace re
 {
-	/*******************************************************************************************************************
-	* Buffers have 2 allocation types:
-	* 1) Mutable:		Can be modified, and are rebuffered when modification is detected
-	* 2) Immutable:		Buffered once at creation, and cannot be modified
-	*
-	* Buffers have 2 lifetime scopes:
-	* 1) Permanent:		Allocated once, and held for the lifetime of their scope
-	* 2) Single frame:	Allocated and destroyed within a single frame
-	*					-> Single frame buffers are immutable once they are committed
-	*
-	* The union of these gives us Permanent Mutable, Permanent Immutable, & SingleFrame Immutable Buffer types
-	*******************************************************************************************************************/
-
 	class Buffer : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
 		struct BufferParams;
 
 
-		enum AllocationType : uint8_t
+		enum class StagingPool : uint8_t
 		{
-			Mutable,		// Permanent, N frames of buffers allocated to allow updates
-			Immutable,		// Permanent, can only be modified by the GPU
-			SingleFrame,	// Single frame, immutable once committed by the CPU
+			Permanent,	// Mutable: Can be modified, and is re-buffered when modification is detected
+			Temporary,	// Immutable: Staging memory for permanent/single frame buffers initialized once
+			None,		// GPU-only buffers
 
-			AllocationType_Invalid
+			StagingPool_Invalid
 		};
 
 		enum Usage : uint8_t
@@ -74,7 +61,8 @@ namespace re
 
 		struct BufferParams
 		{
-			AllocationType m_allocationType = AllocationType::AllocationType_Invalid;
+			re::Lifetime m_lifetime = re::Lifetime::Permanent;
+			StagingPool m_stagingPool = StagingPool::StagingPool_Invalid;
 			MemoryPoolPreference m_memPoolPreference = MemoryPoolPreference::DefaultHeap;
 			AccessMask m_accessMask = Access::GPURead;
 			UsageMask m_usageMask = Usage::Invalid;
@@ -151,8 +139,9 @@ namespace re
 		void GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const;
 		uint32_t GetTotalBytes() const;
 		uint32_t GetStride() const;
-		AllocationType GetAllocationType() const;
+		StagingPool GetAllocationType() const;
 		uint8_t GetUsageMask() const;
+		re::Lifetime GetLifetime() const;
 
 		uint32_t GetArraySize() const; // Instanced buffers: How many instances of data does the buffer hold?
 
@@ -332,8 +321,7 @@ namespace re
 	inline std::shared_ptr<re::Buffer> Buffer::Create(
 		std::string const& bufferName, void const* data, uint32_t numBytes, BufferParams const& bufferParams)
 	{
-		SEAssert(bufferParams.m_allocationType == re::Buffer::Immutable || 
-			bufferParams.m_allocationType == re::Buffer::SingleFrame,
+		SEAssert(bufferParams.m_stagingPool == re::Buffer::StagingPool::Temporary,
 			"Invalid AllocationType type: It's (currently) not possible to Commit() via a nullptr");
 
 		const uint64_t voidHashCode = typeid(void const*).hash_code();
@@ -376,15 +364,21 @@ namespace re
 	}
 
 
-	inline Buffer::AllocationType Buffer::GetAllocationType() const
+	inline Buffer::StagingPool Buffer::GetAllocationType() const
 	{
-		return m_bufferParams.m_allocationType;
+		return m_bufferParams.m_stagingPool;
 	}
 
 
 	inline uint8_t Buffer::GetUsageMask() const
 	{
 		return m_bufferParams.m_usageMask;
+	}
+
+
+	inline re::Lifetime Buffer::GetLifetime() const
+	{
+		return m_bufferParams.m_lifetime;
 	}
 
 

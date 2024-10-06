@@ -86,7 +86,7 @@ namespace gr
 
 
 	re::BufferInput Material_GLTF::CreateInstancedBuffer(
-		re::Buffer::AllocationType bufferAlloc,
+		re::Buffer::StagingPool bufferAlloc,
 		std::vector<MaterialInstanceRenderData const*> const& instanceData)
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(instanceData.size());
@@ -116,7 +116,7 @@ namespace gr
 				bufferName,
 				instancedMaterialData.data(),
 				re::Buffer::BufferParams{
-					.m_allocationType = bufferAlloc,
+					.m_stagingPool = bufferAlloc,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Structured,

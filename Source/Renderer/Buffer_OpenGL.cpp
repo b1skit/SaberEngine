@@ -19,11 +19,11 @@ namespace opengl
 		uint32_t numBytes;
 		buffer.GetDataAndSize(&data, &numBytes);
 
-		const re::Buffer::AllocationType bufferAlloc = buffer.GetAllocationType();
-		switch (bufferAlloc)
+		const re::Buffer::StagingPool bufferAlloc = buffer.GetAllocationType();
+		const re::Lifetime bufferLifetime = buffer.GetLifetime();
+		switch (bufferLifetime)
 		{
-		case re::Buffer::Mutable:
-		case re::Buffer::Immutable:
+		case re::Lifetime::Permanent:
 		{
 			// Note: Unlike DX12, OpenGL handles buffer synchronization for us (so long as they're not persistently 
 			// mapped). So we can just create a single mutable buffer and write to it as needed, instead of 
@@ -39,15 +39,15 @@ namespace opengl
 				bufferPlatParams->m_bufferName,
 				static_cast<GLsizeiptr>(numBytes),
 				nullptr,
-				bufferAlloc == re::Buffer::Mutable ? GL_DYNAMIC_DRAW  : GL_STATIC_DRAW);
+				bufferAlloc == re::Buffer::StagingPool::Permanent ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
 
 			// RenderDoc label:
-			std::string const& bufferName = 
-				buffer.GetName() + (bufferAlloc == re::Buffer::Mutable ? "_Mutable" : "_Immutable");
+			std::string const& bufferName =
+				buffer.GetName() + (bufferAlloc == re::Buffer::StagingPool::Permanent ? "_Permanent" : "_Temporary");
 			glObjectLabel(GL_BUFFER, bufferPlatParams->m_bufferName, -1, bufferName.c_str());
 		}
 		break;
-		case re::Buffer::SingleFrame:
+		case re::Lifetime::SingleFrame:
 		{
 			opengl::BufferAllocator* bufferAllocator =
 				dynamic_cast<opengl::BufferAllocator*>(re::Context::Get()->GetBufferAllocator());
@@ -59,7 +59,7 @@ namespace opengl
 				bufferPlatParams->m_baseOffset);
 		}
 		break;
-		default: SEAssertF("Invalid AllocationType");
+		default: SEAssertF("Invalid lifetime");
 		}
 	}
 
@@ -100,7 +100,7 @@ namespace opengl
 			// Adjust our source pointer if we're doing a partial update:
 			if (!updateAllBytes)
 			{
-				SEAssert(buffer.GetAllocationType() == re::Buffer::Mutable,
+				SEAssert(buffer.GetAllocationType() == re::Buffer::StagingPool::Permanent,
 					"Only mutable buffers can be partially updated");
 
 				// Update the source data pointer:
@@ -130,21 +130,20 @@ namespace opengl
 		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
 		SEAssert(bufferPlatParams->m_isCreated, "Attempting to destroy a Buffer that has not been created");
 
-		const re::Buffer::AllocationType bufferAlloc = buffer.GetAllocationType();
-		switch (bufferAlloc)
+		const re::Lifetime bufferLifetime = buffer.GetLifetime();
+		switch (bufferLifetime)
 		{
-		case re::Buffer::Mutable:
-		case re::Buffer::Immutable:
+		case re::Lifetime::Permanent:
 		{
 			glDeleteBuffers(1, &bufferPlatParams->m_bufferName);
 		}
 		break;
-		case re::Buffer::SingleFrame:
+		case re::Lifetime::SingleFrame:
 		{
 			// Do nothing: Buffer allocator is responsible for destroying the shared buffers
 		}
 		break;
-		default: SEAssertF("Invalid AllocationType");
+		default: SEAssertF("Invalid lifetime");
 		}
 
 		bufferPlatParams->m_bufferName = 0;

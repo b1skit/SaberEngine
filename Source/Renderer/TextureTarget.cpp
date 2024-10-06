@@ -630,14 +630,12 @@ namespace re
 	}
 
 
-	re::BufferInput const& TextureTargetSet::GetCreateTargetParamsBuffer(
-		re::Buffer::AllocationType bufferAlloc /*= re::Buffer::Mutable*/)
+	re::BufferInput const& TextureTargetSet::GetCreateTargetParamsBuffer()
 	{
 		SEAssert(HasTargets(),
 			"Trying to get or create the TargetParams buffer, but no targets have been added");
 
-		SEAssert(bufferAlloc != re::Buffer::Immutable,
-			"The TextureTargetSet TargetData Buffer cannot be of Immutable type, as we delay committing buffer data");
+		// Note: Our buffer must be permanent, as we delay committing buffer data
 
 		if (!m_targetParamsBuffer.IsValid())
 		{
@@ -645,7 +643,7 @@ namespace re
 				TargetData::s_shaderName,
 				re::Buffer::CreateUncommitted<TargetData>(TargetData::s_shaderName, 
 					re::Buffer::BufferParams{
-						.m_allocationType = bufferAlloc,
+						.m_stagingPool = re::Buffer::StagingPool::Permanent,
 						.m_memPoolPreference = re::Buffer::UploadHeap,
 						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 						.m_usageMask = re::Buffer::Constant,

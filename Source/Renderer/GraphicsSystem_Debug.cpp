@@ -392,7 +392,7 @@ namespace gr
 				DebugData::s_shaderName,
 				PackDebugData(),
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::Mutable,
+					.m_stagingPool = re::Buffer::StagingPool::Permanent,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::CPUWrite | re::Buffer::GPURead,
 					.m_usageMask = re::Buffer::Constant,
@@ -453,7 +453,7 @@ namespace gr
 						m_axisOpacity));
 
 				re::BufferInput const& identityTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-					re::Buffer::Immutable, &k_identity, nullptr);
+					re::Lifetime::Permanent, re::Buffer::StagingPool::Temporary, &k_identity, nullptr);
 
 				m_worldCoordinateAxisBatch->SetBuffer(identityTransformBuffer);
 			}
@@ -502,7 +502,8 @@ namespace gr
 						m_meshPrimTransformBuffers.emplace(
 							meshPrimRenderDataID, 
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Mutable, 
+								re::Lifetime::Permanent,
+								re::Buffer::StagingPool::Permanent, 
 								transformData));
 					}
 					else
@@ -619,7 +620,7 @@ namespace gr
 							m_meshBoundingBoxBuffers.emplace(
 								meshID,
 								gr::Transform::CreateInstancedTransformBuffer(
-									re::Buffer::Mutable, boundsItr.GetTransformData()));
+									re::Lifetime::Permanent, re::Buffer::StagingPool::Permanent, boundsItr.GetTransformData()));
 						}
 						else
 						{
@@ -661,7 +662,7 @@ namespace gr
 					if (!m_sceneBoundsTransformBuffer.IsValid())
 					{
 						m_sceneBoundsTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-							re::Buffer::Mutable, boundsItr.GetTransformData());
+							re::Lifetime::Permanent, re::Buffer::StagingPool::Permanent, boundsItr.GetTransformData());
 					}
 
 					if (m_sceneBoundsBatch == nullptr)
@@ -702,7 +703,7 @@ namespace gr
 					m_cameraAxisTransformBuffers.emplace(
 						camID,
 						gr::Transform::CreateInstancedTransformBuffer(
-						re::Buffer::Mutable, &camWorldMatrix, nullptr));
+							re::Lifetime::Permanent, re::Buffer::StagingPool::Permanent, &camWorldMatrix, nullptr));
 				}
 				else if (camDataIsDirty)
 				{
@@ -773,7 +774,8 @@ namespace gr
 					{
 						m_cameraFrustumTransformBuffers.at(camID)[faceIdx] =
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Mutable,
+								re::Lifetime::Permanent,
+								re::Buffer::StagingPool::Permanent,
 								&invViewProjMats.at(faceIdx),
 								nullptr);
 					}
@@ -823,7 +825,7 @@ namespace gr
 						m_deferredLightWireframeTransformBuffers.emplace(
 							pointID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Mutable, &lightTRS, nullptr));
+								re::Lifetime::Permanent, re::Buffer::StagingPool::Permanent, &lightTRS, nullptr));
 					}
 					else
 					{
@@ -864,7 +866,7 @@ namespace gr
 						m_deferredLightWireframeTransformBuffers.emplace(
 							spotID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Mutable, &lightTRS, nullptr));
+								re::Lifetime::Permanent, re::Buffer::StagingPool::Permanent, &lightTRS, nullptr));
 					}
 					else
 					{
@@ -910,7 +912,7 @@ namespace gr
 						m_lightCoordinateAxisTransformBuffers.emplace(
 							lightID,
 							gr::Transform::CreateInstancedTransformBuffer(
-								re::Buffer::Mutable, &lightTR, nullptr));
+								re::Lifetime::Permanent, re::Buffer::StagingPool::Permanent, &lightTR, nullptr));
 					}
 					else
 					{

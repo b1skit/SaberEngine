@@ -138,7 +138,7 @@ namespace re
 				newVertexStream->GetDataHash());
 
 			const re::Buffer::BufferParams bufferParams{
-				.m_allocationType = re::Buffer::Immutable,
+				.m_stagingPool = re::Buffer::StagingPool::Temporary,
 				.m_memPoolPreference = re::Buffer::DefaultHeap,
 				.m_accessMask = re::Buffer::GPURead,
 				.m_usageMask = re::Buffer::VertexStream,

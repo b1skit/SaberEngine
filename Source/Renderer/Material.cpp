@@ -121,7 +121,7 @@ namespace gr
 
 
 	re::BufferInput Material::CreateInstancedBuffer(
-		re::Buffer::AllocationType bufferAlloc, 
+		re::Buffer::StagingPool bufferAlloc, 
 		std::vector<MaterialInstanceRenderData const*> const& instanceData)
 	{
 		SEAssert(!instanceData.empty(), "Instance data is empty");
@@ -151,7 +151,7 @@ namespace gr
 				re::Buffer::CreateUncommittedArray<InstancedPBRMetallicRoughnessData>(
 					InstancedPBRMetallicRoughnessData::s_shaderName,
 					re::Buffer::BufferParams{
-						.m_allocationType = re::Buffer::Mutable,
+						.m_stagingPool = re::Buffer::StagingPool::Permanent,
 						.m_memPoolPreference = re::Buffer::UploadHeap,
 						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 						.m_usageMask = re::Buffer::Structured,
@@ -171,7 +171,7 @@ namespace gr
 	{
 		SEAssert(instanceData, "Instance data is null");
 		SEAssert(baseOffset < buffer->GetArraySize(), "Base offset is OOB");
-		SEAssert(buffer->GetAllocationType() == re::Buffer::Mutable,
+		SEAssert(buffer->GetAllocationType() == re::Buffer::StagingPool::Permanent,
 			"Only mutable buffers can be partially updated");
 
 		switch (EffectIDToEffectMaterial(instanceData->m_effectID))

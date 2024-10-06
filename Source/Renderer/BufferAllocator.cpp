@@ -163,7 +163,7 @@ namespace re
 				m_singleFrameAllocations.m_currentAllocationsByteSize == 0,
 				"Deallocations and tracking data are out of sync");
 
-			SEAssert(m_handleToTypeAndByteIndex.empty(), "Handle to type and byte map should be cleared by now");
+			SEAssert(m_handleToCommitMetadata.empty(), "Handle to type and byte map should be cleared by now");
 		}
 
 		m_dirtyBuffers.clear();
@@ -179,8 +179,8 @@ namespace re
 
 	void BufferAllocator::RegisterAndAllocateBuffer(std::shared_ptr<re::Buffer> buffer, uint32_t numBytes)
 	{
-		const Buffer::AllocationType bufferAlloc = buffer->GetAllocationType();
-		SEAssert(bufferAlloc != re::Buffer::AllocationType::AllocationType_Invalid, "Invalid AllocationType");
+		const Buffer::StagingPool stagingPool = buffer->GetAllocationType();
+		SEAssert(stagingPool != re::Buffer::StagingPool::StagingPool_Invalid, "Invalid AllocationType");
 
 		const Handle uniqueID = buffer->GetUniqueID();
 
@@ -191,37 +191,48 @@ namespace re
 				allocation.m_handleToPtr[uniqueID] = buffer;
 			};
 
-		switch (bufferAlloc)
+
+		switch (stagingPool)
 		{
-		case Buffer::AllocationType::Mutable:
+		case Buffer::StagingPool::Permanent:
 		{
 			RecordHandleToPointer(m_mutableAllocations);
 		}
 		break;
-		case Buffer::AllocationType::Immutable:
+		case Buffer::StagingPool::Temporary:
+		case Buffer::StagingPool::None:
 		{
-			RecordHandleToPointer(m_immutableAllocations);
-		}
-		break;
-		case Buffer::AllocationType::SingleFrame:
-		{
-			RecordHandleToPointer(m_singleFrameAllocations);
+			switch (buffer->GetLifetime())
+			{
+			case re::Lifetime::Permanent:
+			{
+				RecordHandleToPointer(m_immutableAllocations);
+			}
+			break;
+			case re::Lifetime::SingleFrame:
+			{
+				RecordHandleToPointer(m_singleFrameAllocations);
+			}
+			break;
+			default: SEAssertF("Invalid lifetime");
+			}			
 		}
 		break;
 		default: SEAssertF("Invalid AllocationType");
 		}
 
 		// Pre-allocate our buffer so it's ready to commit to:
-		Allocate(uniqueID, numBytes, bufferAlloc);
+		Allocate(uniqueID, numBytes, stagingPool, buffer->GetLifetime());
 	}
 
 
-	void BufferAllocator::Allocate(Handle uniqueID, uint32_t numBytes, Buffer::AllocationType bufferAlloc)
+	void BufferAllocator::Allocate(
+		Handle uniqueID, uint32_t numBytes, Buffer::StagingPool stagingPool, re::Lifetime bufferLifetime)
 	{
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			SEAssert(m_handleToTypeAndByteIndex.find(uniqueID) == m_handleToTypeAndByteIndex.end(),
+			SEAssert(m_handleToCommitMetadata.find(uniqueID) == m_handleToCommitMetadata.end(),
 				"A buffer with this handle has already been added");
 		}
 
@@ -243,9 +254,9 @@ namespace re
 					allocation.m_currentAllocationsByteSize);
 			};
 
-		switch (bufferAlloc)
+		switch (stagingPool)
 		{
-		case Buffer::AllocationType::Mutable:
+		case Buffer::StagingPool::Permanent:
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
@@ -256,23 +267,24 @@ namespace re
 			}
 		}
 		break;
-		case Buffer::AllocationType::Immutable:
+		case Buffer::StagingPool::Temporary:
 		{
+			switch (bufferLifetime)
+			{
+			case re::Lifetime::Permanent:
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
 
 				dataIndex = util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size());
 
 				m_immutableAllocations.m_committed.resize(
-					util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size() + numBytes), 
+					util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size() + numBytes),
 					0);
 
 				UpdateAllocationTracking(m_immutableAllocations);
 			}
-		}
-		break;
-		case Buffer::AllocationType::SingleFrame:
-		{
+			break;
+			case re::Lifetime::SingleFrame:
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 
@@ -284,6 +296,14 @@ namespace re
 
 				UpdateAllocationTracking(m_singleFrameAllocations);
 			}
+			break;
+			default: SEAssertF("Invalid lifetime");
+			}
+		}
+		break;
+		case Buffer::StagingPool::None:
+		{
+			// Do nothing
 		}
 		break;
 		default: SEAssertF("Invalid AllocationType");
@@ -292,7 +312,8 @@ namespace re
 		// Update our ID -> data tracking table:
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
-			m_handleToTypeAndByteIndex.insert({ uniqueID, CommitMetadata{bufferAlloc, dataIndex, numBytes} });
+			m_handleToCommitMetadata.insert(
+				{ uniqueID, CommitMetadata{stagingPool, bufferLifetime, dataIndex, numBytes} });
 		}
 	}
 
@@ -301,51 +322,63 @@ namespace re
 	{
 		uint32_t startIdx;
 		uint32_t numBytes;
-		Buffer::AllocationType bufferAlloc;
+		Buffer::StagingPool stagingPool;
+		re::Lifetime bufferLifetime;
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
+			auto const& result = m_handleToCommitMetadata.find(uniqueID);
 
-			SEAssert(result != m_handleToTypeAndByteIndex.end(),
+			SEAssert(result != m_handleToCommitMetadata.end(),
 				"Buffer with this ID has not been allocated");
 
 			startIdx = result->second.m_startIndex;
 			numBytes = result->second.m_numBytes;
-			bufferAlloc = result->second.m_allocationType;
+			stagingPool = result->second.m_stagingPool;
+			bufferLifetime = result->second.m_bufferLifetime;
 		}
 
 		// Copy the data to our pre-allocated region.
-		switch (bufferAlloc)
+		switch (stagingPool)
 		{
-		case Buffer::AllocationType::Mutable:
+		case Buffer::StagingPool::Permanent:
 		{
 			Commit(uniqueID, data, numBytes, 0);
 		}
 		break;
-		case Buffer::AllocationType::Immutable:
+		case Buffer::StagingPool::Temporary:
 		{
+			switch (bufferLifetime)
+			{
+			case re::Lifetime::Permanent:
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
 				void* dest = &m_immutableAllocations.m_committed[startIdx];
 				memcpy(dest, data, numBytes);
 			}
-		}
-		break;
-		case Buffer::AllocationType::SingleFrame:
-		{
+			break;
+			case re::Lifetime::SingleFrame:
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 				void* dest = &m_singleFrameAllocations.m_committed[startIdx];
 				memcpy(dest, data, numBytes);
 			}
+			break;
+			default: SEAssertF("Invalid lifetime");
+			}
+		}
+		break;
+		case Buffer::StagingPool::None:
+		{
+			// Do nothing
 		}
 		break;
 		default: SEAssertF("Invalid AllocationType");
 		}
 
 		// Add the committed buffer to our dirty list, so we can buffer the data when required
-		if (bufferAlloc != Buffer::AllocationType::Mutable) // Mutables have their own commit path: They add themselves there
+		if (stagingPool != Buffer::StagingPool::Permanent && // Mutables have their own commit path
+			stagingPool != Buffer::StagingPool::None)
 		{
 			std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
 			m_dirtyBuffers.emplace(uniqueID);
@@ -362,10 +395,11 @@ namespace re
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
+			auto const& result = m_handleToCommitMetadata.find(uniqueID);
 
-			SEAssert(result != m_handleToTypeAndByteIndex.end(), "Buffer with this ID has not been allocated");
-			SEAssert(result->second.m_allocationType == re::Buffer::Mutable, "Can only partially commit to mutable buffers");
+			SEAssert(result != m_handleToCommitMetadata.end(), "Buffer with this ID has not been allocated");
+			SEAssert(result->second.m_stagingPool == re::Buffer::StagingPool::Permanent,
+				"Can only partially commit to mutable buffers");
 			
 			startIdx = result->second.m_startIndex;
 			totalBytes = result->second.m_numBytes;
@@ -548,24 +582,26 @@ namespace re
 
 	void BufferAllocator::GetData(Handle uniqueID, void const** out_data) const
 	{
-		Buffer::AllocationType bufferAlloc;
+		Buffer::StagingPool stagingPool;
+		re::Lifetime bufferLifetime;
 		uint32_t startIdx = -1;
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
-			SEAssert(result != m_handleToTypeAndByteIndex.end(), "Buffer with this ID has not been allocated");
+			auto const& result = m_handleToCommitMetadata.find(uniqueID);
+			SEAssert(result != m_handleToCommitMetadata.end(), "Buffer with this ID has not been allocated");
 
-			bufferAlloc = result->second.m_allocationType;
+			stagingPool = result->second.m_stagingPool;
+			bufferLifetime = result->second.m_bufferLifetime;
 			startIdx = result->second.m_startIndex;
 		}
 
 		// Note: This is not thread safe, as the pointer will become stale if m_committed is resized. This should be
 		// fine though, as the BufferAllocator is simply a temporary staging ground for data about to be copied
 		// to GPU heaps. Copies in/resizing should all be done before this function is ever called
-		switch (bufferAlloc)
+		switch (stagingPool)
 		{
-		case Buffer::AllocationType::Mutable:
+		case Buffer::StagingPool::Permanent:
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
@@ -574,22 +610,31 @@ namespace re
 			}
 		}
 		break;
-		case Buffer::AllocationType::Immutable:
+		case Buffer::StagingPool::Temporary:
 		{
+			switch (bufferLifetime)
+			{
+			case re::Lifetime::Permanent:
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
 				SEAssert(startIdx < m_immutableAllocations.m_committed.size(), "Invalid startIdx");
 				*out_data = static_cast<void const*>(&m_immutableAllocations.m_committed[startIdx]);
 			}
-		}
-		break;
-		case Buffer::AllocationType::SingleFrame:
-		{
+			break;
+			case re::Lifetime::SingleFrame:
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 				SEAssert(startIdx < m_singleFrameAllocations.m_committed.size(), "Invalid startIdx");
 				*out_data = static_cast<void const*>(&m_singleFrameAllocations.m_committed[startIdx]);
 			}
+			break;
+			default: SEAssertF("Invalid lifetime");
+			}
+		}
+		break;
+		case Buffer::StagingPool::None:
+		{
+			*out_data = nullptr;
 		}
 		break;
 		default: SEAssertF("Invalid AllocationType");
@@ -599,22 +644,24 @@ namespace re
 
 	void BufferAllocator::Deallocate(Handle uniqueID)
 	{
-		Buffer::AllocationType bufferAlloc = re::Buffer::AllocationType::AllocationType_Invalid;
+		Buffer::StagingPool stagingPool = re::Buffer::StagingPool::StagingPool_Invalid;
+		re::Lifetime bufferLifetime;
 		uint32_t startIdx = -1;
 		uint32_t numBytes = -1;
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			auto const& buffer = m_handleToTypeAndByteIndex.find(uniqueID);
-			SEAssert(buffer != m_handleToTypeAndByteIndex.end(), "Cannot deallocate a buffer that does not exist");
+			auto const& buffer = m_handleToCommitMetadata.find(uniqueID);
+			SEAssert(buffer != m_handleToCommitMetadata.end(), "Cannot deallocate a buffer that does not exist");
 
-			bufferAlloc = buffer->second.m_allocationType;
+			stagingPool = buffer->second.m_stagingPool;
+			bufferLifetime = buffer->second.m_bufferLifetime;
 			startIdx = buffer->second.m_startIndex;
 			numBytes = buffer->second.m_numBytes;
 		}
 
 		// Add our buffer to the deferred deletion queue, then erase the pointer from our allocation list
-		auto ProcessErasure = [&](IAllocation& allocation)
+		auto ProcessErasure = [&](IAllocation& allocation, re::Buffer::StagingPool stagingPool)
 			{
 				AddToDeferredDeletions(m_currentFrameNum, allocation.m_handleToPtr.at(uniqueID));
 
@@ -624,27 +671,39 @@ namespace re
 					allocation.m_handleToPtr.erase(uniqueID);
 				}
 
-				allocation.m_currentAllocationsByteSize -= numBytes;
+				if (stagingPool != re::Buffer::StagingPool::None)
+				{
+					allocation.m_currentAllocationsByteSize -= numBytes;
+				}
 			};
-		switch (bufferAlloc)
+		switch (stagingPool)
 		{
-		case Buffer::AllocationType::Mutable:
+		case Buffer::StagingPool::Permanent:
 		{
-			ProcessErasure(m_mutableAllocations);			
+			ProcessErasure(m_mutableAllocations, stagingPool);
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
 				m_mutableAllocations.m_partialCommits.erase(uniqueID);
 			}
 		}
 		break;
-		case Buffer::AllocationType::Immutable:
+		case Buffer::StagingPool::Temporary:
+		case Buffer::StagingPool::None:
 		{
-			ProcessErasure(m_immutableAllocations);
-		}
-		break;
-		case Buffer::AllocationType::SingleFrame:
-		{
-			ProcessErasure(m_singleFrameAllocations);
+			switch (bufferLifetime)
+			{
+			case re::Lifetime::Permanent:
+			{
+				ProcessErasure(m_immutableAllocations, stagingPool);
+			}
+			break;
+			case re::Lifetime::SingleFrame:
+			{
+				ProcessErasure(m_singleFrameAllocations, stagingPool);
+			}
+			break;
+			default: SEAssertF("Invalid lifetime");
+			}
 		}
 		break;
 		default: SEAssertF("Invalid AllocationType");
@@ -654,12 +713,12 @@ namespace re
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			auto const& buffer = m_handleToTypeAndByteIndex.find(uniqueID);
-			m_handleToTypeAndByteIndex.erase(buffer);
+			auto const& buffer = m_handleToCommitMetadata.find(uniqueID);
+			m_handleToCommitMetadata.erase(buffer);
 		}
 
 		// Finally, free any permanently committed memory:
-		if (bufferAlloc == Buffer::AllocationType::Mutable)
+		if (stagingPool == Buffer::StagingPool::Permanent)
 		{
 			{
 				std::scoped_lock lock(m_mutableAllocations.m_mutex, m_handleToTypeAndByteIndexMutex);
@@ -678,9 +737,9 @@ namespace re
 					// Update the records for the entry that we moved. This is a slow linear search through an
 					// unordered map, but permanent buffers should be deallocated very infrequently
 					bool didUpdate = false;
-					for (auto& entry : m_handleToTypeAndByteIndex)
+					for (auto& entry : m_handleToCommitMetadata)
 					{
-						if (entry.second.m_allocationType == bufferAlloc && entry.second.m_startIndex == idxToMove)
+						if (entry.second.m_stagingPool == stagingPool && entry.second.m_startIndex == idxToMove)
 						{
 							entry.second.m_startIndex = util::CheckedCast<uint32_t>(idxToReplace);
 							didUpdate = true;
@@ -725,23 +784,29 @@ namespace re
 					// Invalidate the commit metadata:
 					{
 						std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
-						m_handleToTypeAndByteIndex.at(currentHandle).m_startIndex = k_invalidCommitValue;
+						m_handleToCommitMetadata.at(currentHandle).m_startIndex = k_invalidCommitValue;
 					}
 				};
 
 			for (Handle currentHandle : m_dirtyBuffers)
 			{
-				Buffer::AllocationType bufferAlloc = Buffer::AllocationType::AllocationType_Invalid;
+				Buffer::StagingPool stagingPool = Buffer::StagingPool::StagingPool_Invalid;
+				re::Lifetime bufferLifetime;
 				{
 					std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
-					bufferAlloc = m_handleToTypeAndByteIndex.find(currentHandle)->second.m_allocationType;
+					SEAssert(m_handleToCommitMetadata.contains(currentHandle), "Failed to find current handle");
+
+					CommitMetadata const& commitMetadata = m_handleToCommitMetadata.at(currentHandle);
+					
+					stagingPool = commitMetadata.m_stagingPool;
+					bufferLifetime = commitMetadata.m_bufferLifetime;
 				}
 
 				// NOTE: Getting the mutexes in this block below is a potential deadlock risk as we already hold the
 				// m_dirtyBuffersMutex. It's safe for now, but leaving this comment here in case things change...
-				switch (bufferAlloc)
+				switch (stagingPool)
 				{
-				case Buffer::AllocationType::Mutable:
+				case Buffer::StagingPool::Permanent:
 				{
 					std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
 
@@ -801,37 +866,50 @@ namespace re
 					}
 				}
 				break;
-				case Buffer::AllocationType::Immutable:
+				case Buffer::StagingPool::Temporary:
 				{
-					SEAssert(m_immutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-					re::Buffer const* currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
+					switch (bufferLifetime)
+					{
+					case re::Lifetime::Permanent:
+					{
+						SEAssert(m_immutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
+						re::Buffer const* currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
 
-					switch (currentBuffer->GetBufferParams().m_memPoolPreference)
-					{
-					case re::Buffer::DefaultHeap:
-					{
-						// If CPU writes are disabled, our buffer will need to be updated via a command list. Record
-						// the update metadata, we'll process these cases in a single batch at the end
-						m_dirtyBuffersForPlatformUpdate.emplace_back(PlatformCommitMetadata
-							{
-								.m_buffer = currentBuffer,
-								.m_baseOffset = 0,
-								.m_numBytes = currentBuffer->GetTotalBytes(),
-							});
+						switch (currentBuffer->GetBufferParams().m_memPoolPreference)
+						{
+						case re::Buffer::DefaultHeap:
+						{
+							// If CPU writes are disabled, our buffer will need to be updated via a command list. Record
+							// the update metadata, we'll process these cases in a single batch at the end
+							m_dirtyBuffersForPlatformUpdate.emplace_back(PlatformCommitMetadata
+								{
+									.m_buffer = currentBuffer,
+									.m_baseOffset = 0,
+									.m_numBytes = currentBuffer->GetTotalBytes(),
+								});
+						}
+						break;
+						case re::Buffer::UploadHeap:
+						{
+							BufferTemporaryData(m_immutableAllocations, currentHandle);
+						}
+						break;
+						default: SEAssertF("Invalid MemoryPoolPreference");
+						}
 					}
 					break;
-					case re::Buffer::UploadHeap:
+					case re::Lifetime::SingleFrame:
 					{
-						BufferTemporaryData(m_immutableAllocations, currentHandle);
+						BufferTemporaryData(m_singleFrameAllocations, currentHandle);
 					}
 					break;
-					default: SEAssertF("Invalid MemoryPoolPreference");
+					default: SEAssertF("Invalid lifetime");
 					}
 				}
 				break;
-				case Buffer::AllocationType::SingleFrame:
+				case Buffer::StagingPool::None:
 				{
-					BufferTemporaryData(m_singleFrameAllocations, currentHandle);
+					// Do nothing
 				}
 				break;
 				default: SEAssertF("Invalid AllocationType");

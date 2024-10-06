@@ -157,7 +157,7 @@ namespace gr
 				k_SEXeGTAOSettingsName,
 				CreateXeGTAOSettingsParamsData(m_XeGTAOQuality),
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::Mutable,
+					.m_stagingPool = re::Buffer::StagingPool::Permanent,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Constant,
@@ -179,7 +179,7 @@ namespace gr
 				k_SEGTAOConstantsName, // "GTAOConstants" is already defined for us
 				gtaoConstants, 
 				re::Buffer::BufferParams{
-					.m_allocationType = re::Buffer::Mutable,
+					.m_stagingPool = re::Buffer::StagingPool::Permanent,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Constant,
