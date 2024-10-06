@@ -20,7 +20,7 @@ namespace gr
 
 
 	// Data inputs/output types:
-	using ViewCullingResults = std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>>;
+	using ViewCullingResults = std::map<gr::Camera::View const, std::vector<gr::RenderDataID>>;
 	using PunctualLightCullingResults = std::vector<gr::RenderDataID>;
 
 	using ViewBatches = std::unordered_map<gr::Camera::View const, std::vector<re::Batch>>;
