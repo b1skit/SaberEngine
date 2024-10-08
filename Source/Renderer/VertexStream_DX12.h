@@ -22,8 +22,7 @@ namespace dx12
 			//
 		};	
 		
-		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(
-			re::VertexStream const&, re::VertexStream::Type);
+		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(re::VertexStream const&);
 
 	public:
 		static void Destroy(re::VertexStream const&);

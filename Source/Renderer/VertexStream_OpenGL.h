@@ -1,10 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include <GL/glew.h>
-
 #include "MeshPrimitive.h"
 #include "VertexStream.h"
+
+#include <GL/glew.h>
 
 
 namespace opengl
@@ -16,8 +15,7 @@ namespace opengl
 		{
 			// 
 		};
-		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(
-			re::VertexStream const&, re::VertexStream::Type);
+		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(re::VertexStream const&);
 		
 		static uint32_t GetComponentGLDataType(re::DataType);
 

@@ -135,7 +135,6 @@ namespace platform
 			platform::Sampler::Destroy	= &opengl::Sampler::Destroy;
 
 			// Vertex stream:
-			platform::VertexStream::CreatePlatformParams	= &opengl::VertexStream::CreatePlatformParams;
 			platform::VertexStream::Destroy					= &opengl::VertexStream::Destroy;
 		}
 		break;
@@ -179,7 +178,6 @@ namespace platform
 			platform::Sampler::Destroy	= &dx12::Sampler::Destroy;
 
 			// Vertex stream:
-			platform::VertexStream::CreatePlatformParams	= &dx12::VertexStream::CreatePlatformParams;
 			platform::VertexStream::Destroy					= &dx12::VertexStream::Destroy;
 		}
 		break;

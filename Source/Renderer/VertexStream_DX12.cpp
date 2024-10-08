@@ -74,8 +74,7 @@ namespace dx12
 	}
 
 
-	std::unique_ptr<re::VertexStream::PlatformParams> VertexStream::CreatePlatformParams(
-		re::VertexStream const& stream, re::VertexStream::Type type)
+	std::unique_ptr<re::VertexStream::PlatformParams> VertexStream::CreatePlatformParams(re::VertexStream const&)
 	{
 		return std::make_unique<dx12::VertexStream::PlatformParams>();
 	}

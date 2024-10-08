@@ -260,7 +260,7 @@ namespace re
 
 		isNormalizedOut = isNormalized; 
 
-		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(*this, m_streamDesc.m_type));
+		m_platformParams = platform::VertexStream::CreatePlatformParams(*this);
 
 		// Hash the incoming data before it is moved to the BufferAllocator:
 		AddDataBytesToHash(data.data().data(), data.GetTotalNumBytes());
