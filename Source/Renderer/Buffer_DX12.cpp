@@ -264,20 +264,20 @@ namespace dx12
 			case re::VertexStream::Type::Index:
 			{
 				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
-				.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
-				.SizeInBytes = bufferSize,
-				.Format = dx12::VertexStream::GetDXGIStreamFormat(
-					bufferParams.m_vertexStreamParams.m_dataType,
-					bufferParams.m_vertexStreamParams.m_isNormalized),
+					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
+					.SizeInBytes = bufferSize,
+					.Format = dx12::VertexStream::GetDXGIStreamFormat(
+						bufferParams.m_vertexStreamParams.m_dataType,
+						bufferParams.m_vertexStreamParams.m_isNormalized),
 				};
 			}
 			break;
 			default:
 			{
 				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
-				.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
-				.SizeInBytes = bufferSize,
-				.StrideInBytes = bufferParams.m_vertexStreamParams.m_stride,
+					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
+					.SizeInBytes = bufferSize,
+					.StrideInBytes = bufferParams.m_vertexStreamParams.m_stride,
 				};
 			}
 			}
