@@ -489,10 +489,7 @@ namespace opengl
 
 			bitmask |= (1 << vertexStreams[streamIdx].m_bindSlot);
 
-			util::AddDataToHash(vertexStreamHash, vertexStream->GetNumComponents()); // 1/2/3/4
-			util::AddDataToHash(
-				vertexStreamHash,
-				opengl::VertexStream::GetComponentGLDataType(vertexStream->GetDataType()));
+			util::AddDataToHash(vertexStreamHash, static_cast<uint64_t>(vertexStream->GetDataType()));
 			util::AddDataToHash(vertexStreamHash, vertexStreams[streamIdx].m_vertexStream->DoNormalize());
 
 			// Note: We assume all vertex streams have a relative offset of 0, so we don't (currently) include it in
@@ -501,9 +498,7 @@ namespace opengl
 
 		if (indexStream)
 		{
-			util::AddDataToHash(vertexStreamHash, indexStream->GetNumComponents()); // 1/2/3/4
-			util::AddDataToHash(
-				vertexStreamHash, opengl::VertexStream::GetComponentGLDataType(indexStream->GetDataType()));
+			util::AddDataToHash(vertexStreamHash, static_cast<uint64_t>(indexStream->GetDataType()));
 			util::AddDataToHash(vertexStreamHash, indexStream->DoNormalize());
 		}
 
@@ -558,7 +553,7 @@ namespace opengl
 					// Define our vertex layout:
 					glVertexAttribFormat(
 						slotIdx,																	// Attribute index
-						vertexStream->GetNumComponents(),											// size: 1/2/3/4 
+						DataTypeToNumComponents(vertexStream->GetDataType()),						// size: 1/2/3/4 						
 						opengl::VertexStream::GetComponentGLDataType(vertexStream->GetDataType()),	// Data type
 						vertexStream->DoNormalize(),												// Normalize data?
 						relativeOffset);							// relativeOffset: Distance between buffer elements

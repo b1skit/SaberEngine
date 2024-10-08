@@ -49,5 +49,6 @@ namespace re
 	extern constexpr char const* DataTypeToCStr(DataType);
 	extern constexpr uint8_t DataTypeToNumComponents(DataType);
 	extern constexpr uint8_t DataTypeToComponentByteSize(DataType);
+	extern constexpr uint8_t DataTypeToStride(DataType);
 	extern re::DataType StrToDataType(std::string const& dataTypeStr);
 }

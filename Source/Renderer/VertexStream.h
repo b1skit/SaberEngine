@@ -109,14 +109,10 @@ namespace re
 		DataType GetDataType() const; // What data type does each individual component have?
 		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
 
-		re::Buffer const* GetBuffer() const;
-
 		uint32_t GetTotalDataByteSize() const;
-		
-		uint8_t GetNumComponents() const; // Number of individual components per element. i.e. 1/2/3/4 (only)
-		
 		uint32_t GetNumElements() const; // How many vertices-worth of attributes do we have?
-		uint8_t GetElementByteSize() const; // Total number of bytes for a single element (ie. all components)
+
+		re::Buffer const* GetBuffer() const;
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 

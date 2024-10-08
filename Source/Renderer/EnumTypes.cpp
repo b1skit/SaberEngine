@@ -117,6 +117,12 @@ namespace re
 	}
 
 
+	constexpr uint8_t DataTypeToStride(DataType dataType)
+	{
+		return DataTypeToComponentByteSize(dataType) * DataTypeToNumComponents(dataType);
+	}
+
+
 	re::DataType StrToDataType(std::string const& dataTypeStr)
 	{
 		static const std::unordered_map<util::HashKey const, re::DataType> s_strLowerToDataType =

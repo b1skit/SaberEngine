@@ -143,11 +143,9 @@ namespace re
 				.m_accessMask = re::Buffer::GPURead,
 				.m_usageMask = re::Buffer::VertexStream,
 				.m_arraySize = 1,
-				.m_vertexStreamParams = re::Buffer::BufferParams::StreamType{
+				.m_vertexStreamParams = re::Buffer::BufferParams::Vertex{
 					.m_type = createParams.m_type,
 					.m_dataType = newVertexStream->m_streamDesc.m_dataType,
-					.m_isNormalized = isNormalized,
-					.m_stride = newVertexStream->GetElementByteSize(),
 				},
 			};
 
@@ -290,21 +288,7 @@ namespace re
 
 	uint32_t VertexStream::GetNumElements() const
 	{
-		return m_streamBuffer->GetTotalBytes() / GetElementByteSize();
-	}
-
-
-	uint8_t VertexStream::GetElementByteSize() const
-	{
-		const uint8_t numComponents = DataTypeToNumComponents(m_streamDesc.m_dataType);
-		const uint8_t componentByteSize = DataTypeToComponentByteSize(m_streamDesc.m_dataType);
-		return numComponents * componentByteSize;
-	}
-
-
-	uint8_t VertexStream::GetNumComponents() const
-	{
-		return DataTypeToNumComponents(m_streamDesc.m_dataType);
+		return m_streamBuffer->GetTotalBytes() / DataTypeToStride(m_streamDesc.m_dataType);
 	}
 
 
@@ -332,7 +316,6 @@ namespace re
 
 		ImGui::Text(std::format("Total data byte size: {}", GetTotalDataByteSize()).c_str());
 		ImGui::Text(std::format("Number of elements: {}", GetNumElements()).c_str());
-		ImGui::Text(std::format("Element byte size: {}", GetElementByteSize()).c_str());
 		ImGui::Text(std::format("Number of components: {}", DataTypeToNumComponents(m_streamDesc.m_dataType)).c_str());
 		ImGui::Text(std::format("Component byte size: {}", DataTypeToComponentByteSize(m_streamDesc.m_dataType)).c_str());
 	}

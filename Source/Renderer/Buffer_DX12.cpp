@@ -3,6 +3,7 @@
 #include "BufferAllocator_DX12.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
+#include "EnumTypes.h"
 #include "Fence_DX12.h"
 #include "RenderManager.h"
 #include "VertexStream_DX12.h"
@@ -242,10 +243,7 @@ namespace dx12
 		{
 		case re::Lifetime::Permanent:
 		{
-			context->GetGlobalResourceStates().RegisterResource(
-				params->m_resource.Get(),
-				k_initialState,
-				1);
+			context->GetGlobalResourceStates().RegisterResource(params->m_resource.Get(), k_initialState, 1);
 		}
 		break;
 		case re::Lifetime::SingleFrame:
@@ -267,8 +265,7 @@ namespace dx12
 					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
 					.SizeInBytes = bufferSize,
 					.Format = dx12::VertexStream::GetDXGIStreamFormat(
-						bufferParams.m_vertexStreamParams.m_dataType,
-						bufferParams.m_vertexStreamParams.m_isNormalized),
+						bufferParams.m_vertexStreamParams.m_dataType, false),
 				};
 			}
 			break;
@@ -277,7 +274,7 @@ namespace dx12
 				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
 					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
 					.SizeInBytes = bufferSize,
-					.StrideInBytes = bufferParams.m_vertexStreamParams.m_stride,
+					.StrideInBytes = DataTypeToStride(bufferParams.m_vertexStreamParams.m_dataType),
 				};
 			}
 			}

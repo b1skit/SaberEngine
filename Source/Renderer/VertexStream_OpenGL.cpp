@@ -98,10 +98,10 @@ namespace opengl
 		default:
 		{
 			glBindVertexBuffer(
-				slotIdx,													// Slot index
-				streamBufferPlatParams->m_bufferName,						// Buffer
-				0,															// Offset
-				streamBufferParams.m_vertexStreamParams.m_stride);	// Stride
+				slotIdx,																// Slot index
+				streamBufferPlatParams->m_bufferName,									// Buffer
+				0,																		// Offset
+				DataTypeToStride(streamBufferParams.m_vertexStreamParams.m_dataType));	// Stride
 		}
 		}
 	}
