@@ -28,6 +28,7 @@ namespace platform
 		default:
 		{
 			SEAssertF("Invalid rendering API argument received");
+			return nullptr;
 		}
 		}
 	}

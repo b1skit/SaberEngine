@@ -257,7 +257,7 @@ namespace dx12
 		// Type-specific setup:
 		if (re::Buffer::HasUsageBit(re::Buffer::VertexStream, bufferParams))
 		{
-			switch (buffer.GetBufferParams().m_vertexStreamParams.m_type)
+			switch (buffer.GetBufferParams().m_vertexStreamView.m_type)
 			{
 			case re::VertexStream::Type::Index:
 			{
@@ -265,7 +265,7 @@ namespace dx12
 					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
 					.SizeInBytes = bufferSize,
 					.Format = dx12::VertexStream::GetDXGIStreamFormat(
-						bufferParams.m_vertexStreamParams.m_dataType, false),
+						bufferParams.m_vertexStreamView.m_dataType, false),
 				};
 			}
 			break;
@@ -274,7 +274,7 @@ namespace dx12
 				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
 					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
 					.SizeInBytes = bufferSize,
-					.StrideInBytes = DataTypeToStride(bufferParams.m_vertexStreamParams.m_dataType),
+					.StrideInBytes = DataTypeToStride(bufferParams.m_vertexStreamView.m_dataType),
 				};
 			}
 			}

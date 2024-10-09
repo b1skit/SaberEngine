@@ -183,6 +183,20 @@ namespace opengl
 				numBytes);
 		}
 		break;
+		case opengl::Buffer::BindTarget::Vertex:
+		{
+			glBindVertexBuffer(
+				bindIndex,																	// Slot index
+				bufferPlatParams->m_bufferName,												// Buffer
+				0,																			// Offset
+				DataTypeToStride(buffer.GetBufferParams().m_vertexStreamView.m_dataType));// Stride
+		}
+		break;
+		case opengl::Buffer::BindTarget::Index:
+		{
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatParams->m_bufferName);
+		}
+		break;
 		case re::Buffer::VertexStream:
 		{
 			SEAssertF("Incorrect location to bind a vertex stream. Use opengl::VertexStream::Bind instead");

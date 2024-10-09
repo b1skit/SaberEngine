@@ -66,11 +66,11 @@ namespace
 		axisBatchGraphicsParams.m_numInstances = 1;
 		axisBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		axisBatchGraphicsParams.m_vertexStreams[0] = 
-			re::Batch::VertexStreamInput{ .m_vertexStream = axisPositionStream.get() };
-		axisBatchGraphicsParams.m_vertexStreams[1] =
-			re::Batch::VertexStreamInput{ .m_vertexStream = axisColorStream.get() };
-		axisBatchGraphicsParams.m_numVertexStreams = 2;
+		axisBatchGraphicsParams.m_vertexBuffers[0] = 
+			re::Batch::VertexBufferInput{ .m_vertexBuffer = axisPositionStream->GetBuffer()};
+		axisBatchGraphicsParams.m_vertexBuffers[1] =
+			re::Batch::VertexBufferInput{ .m_vertexBuffer = axisColorStream->GetBuffer() };
+		axisBatchGraphicsParams.m_numVertexBuffers = 2;
 
 		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
 			batchLifetime, axisBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -171,13 +171,13 @@ namespace
 		boundingBoxBatchGraphicsParams.m_numInstances = 1;
 		boundingBoxBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		boundingBoxBatchGraphicsParams.m_vertexStreams[0] = 
-			re::Batch::VertexStreamInput{ .m_vertexStream = boxPositionsStream.get() };
-		boundingBoxBatchGraphicsParams.m_vertexStreams[1] = 
-			re::Batch::VertexStreamInput{ .m_vertexStream = boxColorStream.get() };
-		boundingBoxBatchGraphicsParams.m_numVertexStreams = 2;
+		boundingBoxBatchGraphicsParams.m_vertexBuffers[0] = 
+			re::Batch::VertexBufferInput{ .m_vertexBuffer = boxPositionsStream->GetBuffer() };
+		boundingBoxBatchGraphicsParams.m_vertexBuffers[1] = 
+			re::Batch::VertexBufferInput{ .m_vertexBuffer = boxColorStream->GetBuffer() };
+		boundingBoxBatchGraphicsParams.m_numVertexBuffers = 2;
 
-		boundingBoxBatchGraphicsParams.m_indexStream = boxIndexStream.get();
+		boundingBoxBatchGraphicsParams.m_indexBuffer = boxIndexStream->GetBuffer();
 
 		std::unique_ptr<re::Batch> boundingBoxBatch = std::make_unique<re::Batch>(
 			batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -209,11 +209,11 @@ namespace
 			.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced,
 			.m_numInstances = 1,
 			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList,
-			.m_vertexStreams = {
-				re::Batch::VertexStreamInput{.m_vertexStream = positionStream },
-				re::Batch::VertexStreamInput{.m_vertexStream = normalStream }
+			.m_vertexBuffers = {
+				re::Batch::VertexBufferInput{.m_vertexBuffer = positionStream->GetBuffer() },
+				re::Batch::VertexBufferInput{.m_vertexBuffer = normalStream->GetBuffer() }
 			},
-			.m_numVertexStreams = 2
+			.m_numVertexBuffers = 2
 		};
 
 		std::unique_ptr<re::Batch> normalDebugBatch = std::make_unique<re::Batch>(
@@ -301,13 +301,13 @@ namespace
 		frustumBatchGraphicsParams.m_numInstances = 1;
 		frustumBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		frustumBatchGraphicsParams.m_vertexStreams[0] = 
-			re::Batch::VertexStreamInput{ .m_vertexStream = frustumPositionsStream.get() };
-		frustumBatchGraphicsParams.m_vertexStreams[1] = 
-			re::Batch::VertexStreamInput{.m_vertexStream = frustumColorStream.get()};
-		frustumBatchGraphicsParams.m_numVertexStreams = 2;
+		frustumBatchGraphicsParams.m_vertexBuffers[0] = 
+			re::Batch::VertexBufferInput{ .m_vertexBuffer = frustumPositionsStream->GetBuffer() };
+		frustumBatchGraphicsParams.m_vertexBuffers[1] = 
+			re::Batch::VertexBufferInput{.m_vertexBuffer = frustumColorStream->GetBuffer() };
+		frustumBatchGraphicsParams.m_numVertexBuffers = 2;
 
-		frustumBatchGraphicsParams.m_indexStream = frustumIndexStream.get();
+		frustumBatchGraphicsParams.m_indexBuffer = frustumIndexStream->GetBuffer();
 
 		std::unique_ptr<re::Batch> frustumBatch = std::make_unique<re::Batch>(
 			batchLifetime, frustumBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -346,13 +346,13 @@ namespace
 		wireframeBatchGraphicsParams.m_numInstances = 1;
 		wireframeBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 
-		wireframeBatchGraphicsParams.m_vertexStreams[0] = 
-			re::Batch::VertexStreamInput{ .m_vertexStream = positionStream };
-		wireframeBatchGraphicsParams.m_vertexStreams[1] = 
-			re::Batch::VertexStreamInput{ .m_vertexStream = boxColorStream.get() };
-		wireframeBatchGraphicsParams.m_numVertexStreams = 2;
+		wireframeBatchGraphicsParams.m_vertexBuffers[0] = 
+			re::Batch::VertexBufferInput{ .m_vertexBuffer = positionStream->GetBuffer() };
+		wireframeBatchGraphicsParams.m_vertexBuffers[1] = 
+			re::Batch::VertexBufferInput{ .m_vertexBuffer = boxColorStream->GetBuffer() };
+		wireframeBatchGraphicsParams.m_numVertexBuffers = 2;
 
-		wireframeBatchGraphicsParams.m_indexStream = indexStream;
+		wireframeBatchGraphicsParams.m_indexBuffer = indexStream->GetBuffer();
 
 		std::unique_ptr<re::Batch> wireframeBatch = std::make_unique<re::Batch>(
 			batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Triangle);

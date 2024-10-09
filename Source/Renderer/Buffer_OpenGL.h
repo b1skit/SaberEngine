@@ -21,6 +21,8 @@ namespace opengl
 		{
 			UBO,
 			SSBO,
+			Vertex,
+			Index,
 
 			BindTarget_Count
 		};

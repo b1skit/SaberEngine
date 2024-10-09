@@ -57,11 +57,11 @@ namespace re
 		SEStaticAssert(re::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
 
 
-		struct VertexStreamInput
+		struct VertexBufferInput
 		{
 			static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
 
-			re::VertexStream const* m_vertexStream = nullptr;
+			re::Buffer const* m_vertexBuffer = nullptr;
 			uint8_t m_bindSlot = k_invalidSlotIdx; // NOTE: Automatically resolved by the batch
 		};
 		struct GraphicsParams
@@ -72,10 +72,10 @@ namespace re
 			uint32_t m_numInstances = 0;
 			gr::MeshPrimitive::PrimitiveTopology m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 
-			VertexStreamInput m_vertexStreams[re::VertexStream::k_maxVertexStreams] = {0};
-			uint8_t m_numVertexStreams = 0;
+			VertexBufferInput m_vertexBuffers[re::VertexStream::k_maxVertexStreams] = {0};
+			uint8_t m_numVertexBuffers = 0;
 
-			re::VertexStream const* m_indexStream = nullptr;
+			re::Buffer const* m_indexBuffer = nullptr;
 
 			// If a batch is created via the CTOR that takes a gr::Material::MaterialInstanceRenderData, we store the 
 			// material's unique ID so we can include it in the data hash to ensure batches with identical geometry and

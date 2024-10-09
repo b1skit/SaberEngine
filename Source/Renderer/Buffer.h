@@ -69,11 +69,13 @@ namespace re
 
 			uint32_t m_arraySize = 1; // Must be 1 for constant buffers, and vertex/index streams
 
-			struct Vertex
+			struct VertexStreamView
 			{
 				re::VertexStream::Type m_type;
 				re::DataType m_dataType;
-			} m_vertexStreamParams{};
+				bool m_isNormalized;
+				uint32_t m_numElements;
+			} m_vertexStreamView{};
 		};
 
 

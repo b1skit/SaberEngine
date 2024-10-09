@@ -33,6 +33,9 @@ namespace gr::meshfactory
 		// If these are not null, they'll be populated with the min/max position values
 		glm::vec3* m_positionMinXYZOut = nullptr;
 		glm::vec3* m_positionMaxXYZOut = nullptr;
+
+		// Temporary hack for VertexStreams created from the front end
+		bool m_queueBufferCreation = true;
 	};
 
 	enum class ZLocation : uint8_t

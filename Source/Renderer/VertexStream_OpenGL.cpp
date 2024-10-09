@@ -75,34 +75,6 @@ namespace opengl
 
 	void VertexStream::Bind(re::VertexStream const& vertexStream, uint8_t slotIdx)
 	{
-		SEAssert(slotIdx < re::VertexStream::k_maxVertexStreams, "OOB slot index");
-
-		re::Buffer const* streamBuffer = vertexStream.GetBuffer();
-		SEAssert(streamBuffer, "Vertex stream buffer cannot be null");
-
-		re::Buffer::BufferParams const& streamBufferParams = streamBuffer->GetBufferParams();
-		SEAssert(re::Buffer::HasUsageBit(re::Buffer::VertexStream, streamBufferParams),
-			"Buffer does not have the vertex stream usage bit set");
-
-		opengl::Buffer::PlatformParams* streamBufferPlatParams = 
-			streamBuffer->GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
-		SEAssert(streamBufferPlatParams->m_baseOffset == 0, "Base offset != 0. This is unexpected");
-
-		switch (streamBufferParams.m_vertexStreamParams.m_type)
-		{
-		case re::VertexStream::Index:
-		{
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, streamBufferPlatParams->m_bufferName);
-		}
-		break;
-		default:
-		{
-			glBindVertexBuffer(
-				slotIdx,																// Slot index
-				streamBufferPlatParams->m_bufferName,									// Buffer
-				0,																		// Offset
-				DataTypeToStride(streamBufferParams.m_vertexStreamParams.m_dataType));	// Stride
-		}
-		}
+		SEAssertF("Deprecated");
 	}
 }

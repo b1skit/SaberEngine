@@ -136,16 +136,18 @@ namespace re
 				"VertexStream_{}_{}", 
 				TypeToCStr(newVertexStream->GetType()), 
 				newVertexStream->GetDataHash());
-
+			
 			const re::Buffer::BufferParams bufferParams{
 				.m_stagingPool = re::Buffer::StagingPool::Temporary,
 				.m_memPoolPreference = re::Buffer::DefaultHeap,
 				.m_accessMask = re::Buffer::GPURead,
 				.m_usageMask = re::Buffer::VertexStream,
 				.m_arraySize = 1,
-				.m_vertexStreamParams = re::Buffer::BufferParams::Vertex{
+				.m_vertexStreamView = re::Buffer::BufferParams::VertexStreamView{
 					.m_type = createParams.m_type,
 					.m_dataType = newVertexStream->m_streamDesc.m_dataType,
+					.m_isNormalized = static_cast<bool>(newVertexStream->DoNormalize()),
+					.m_numElements = util::CheckedCast<uint32_t>(data.size()), // Buffer is null right now
 				},
 			};
 

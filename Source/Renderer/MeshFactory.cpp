@@ -446,14 +446,16 @@ namespace gr::meshfactory
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
-			std::move(assembledPositions)).get());
+			std::move(assembledPositions),
+			factoryOptions.m_queueBufferCreation).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
-			std::move(assembledUVs)).get());
+			std::move(assembledUVs),
+			factoryOptions.m_queueBufferCreation).get());
 
 		if (normalsPtr)
 		{
@@ -463,7 +465,8 @@ namespace gr::meshfactory
 					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
-				std::move(*normalsPtr)).get());
+				std::move(*normalsPtr),
+				factoryOptions.m_queueBufferCreation).get());
 		}
 
 		if (tangentsPtr)
@@ -474,7 +477,8 @@ namespace gr::meshfactory
 					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
-				std::move(*tangentsPtr)).get());
+				std::move(*tangentsPtr),
+				factoryOptions.m_queueBufferCreation).get());
 		}
 
 		if (colorsPtr)
@@ -484,7 +488,8 @@ namespace gr::meshfactory
 					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
-				std::move(*colorsPtr)).get());
+				std::move(*colorsPtr),
+				factoryOptions.m_queueBufferCreation).get());
 		}
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
@@ -492,7 +497,8 @@ namespace gr::meshfactory
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
-			std::move(cubeIndices)).get();
+			std::move(cubeIndices),
+			factoryOptions.m_queueBufferCreation).get();
 
 
 		return gr::MeshPrimitive::Create(
@@ -557,21 +563,24 @@ namespace gr::meshfactory
 				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
-			std::move(positions)).get());
+			std::move(positions),
+			false).get());
 
 		vertexStreams.emplace_back(re::VertexStream::Create(
 			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
-			std::move(uvs)).get());
+			std::move(uvs),
+			false).get());
 
 		re::VertexStream const* indexStream = re::VertexStream::Create(
 			re::VertexStream::StreamDesc{
 				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
-			std::move(triIndices)).get();
+			std::move(triIndices),
+			false).get();
 
 		return gr::MeshPrimitive::Create(
 			"optimizedFullscreenQuad",

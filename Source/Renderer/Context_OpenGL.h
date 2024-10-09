@@ -29,9 +29,9 @@ namespace opengl
 		// OpenGL-specific interface:
 		void SetPipelineState(re::PipelineState const* pipelineState);
 
-		static uint64_t ComputeVAOHash(re::Batch::VertexStreamInput const*, uint8_t count, re::VertexStream const* indexStream);
+		static uint64_t ComputeVAOHash(re::Batch::VertexBufferInput const*, uint8_t count, re::Buffer const* indexStream);
 
-		GLuint GetCreateVAO(re::Batch::VertexStreamInput const*, uint8_t count, re::VertexStream const* indexStream);
+		GLuint GetCreateVAO(re::Batch::VertexBufferInput const*, uint8_t count, re::Buffer const* indexStream);
 		
 
 	protected:
