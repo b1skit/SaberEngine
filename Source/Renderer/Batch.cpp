@@ -43,7 +43,7 @@ namespace
 
 
 	void ValidateVertexStreams(
-		re::Lifetime batchLifetime, re::Batch::VertexBufferInput* vertexBuffers, uint8_t numVertexBuffers)
+		re::Lifetime batchLifetime, re::Batch::VertexBufferInput* vertexBuffers)
 	{
 #if defined(_DEBUG)
 
@@ -53,7 +53,7 @@ namespace
 		SEAssert(vertexBuffers[0].m_vertexBuffer, "Must have at least 1 non-null vertex stream");
 		
 		bool seenNull = false;
-		for (size_t i = 0; i < numVertexBuffers; ++i)
+		for (size_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
 		{
 			if (vertexBuffers[i].m_vertexBuffer == nullptr)
 			{
@@ -72,7 +72,7 @@ namespace
 				"Invalid bind slot detected");
 
 			SEAssert(vertexBuffers[i].m_vertexBuffer == nullptr ||
-				i + 1 == numVertexBuffers ||
+				i + 1 == gr::VertexStream::k_maxVertexStreams ||
 				vertexBuffers[i + 1].m_vertexBuffer == nullptr ||
 				(vertexBuffers[i].m_vertexBuffer->GetBufferParams().m_vertexStreamView.m_type < 
 					vertexBuffers[i + 1].m_vertexBuffer->GetBufferParams().m_vertexStreamView.m_type) ||
@@ -204,7 +204,6 @@ namespace re
 			.m_batchGeometryMode = GeometryMode::IndexedInstanced,
 			.m_numInstances = 1,
 			.m_primitiveTopology = meshPrimitive->GetMeshParams().m_primitiveTopology,
-			.m_numVertexBuffers = 0,
 		};
 
 		// We assume the meshPrimitive's vertex streams are ordered such that identical stream types are tightly
@@ -222,7 +221,6 @@ namespace re
 				.m_vertexBuffer = vertexStreams[slotIdx].m_vertexStream->GetBuffer(),
 				.m_bindSlot = VertexBufferInput::k_invalidSlotIdx, // Populated during shader resolve
 			};
-			m_graphicsParams.m_numVertexBuffers++;
 		}
 		m_graphicsParams.m_indexBuffer = meshPrimitive->GetIndexStream()->GetBuffer();
 
@@ -247,7 +245,6 @@ namespace re
 			.m_batchGeometryMode = GeometryMode::IndexedInstanced,
 			.m_numInstances = 1,
 			.m_primitiveTopology = meshPrimRenderData.m_meshPrimitiveParams.m_primitiveTopology,
-			.m_numVertexBuffers = 0,
 		};
 
 		// We assume the MeshPrimitive's vertex streams are ordered such that identical stream types are tightly
@@ -270,7 +267,6 @@ namespace re
 				.m_vertexBuffer = meshPrimRenderData.m_vertexStreams[slotIdx]->GetBuffer(),
 				.m_bindSlot = VertexBufferInput::k_invalidSlotIdx, // Populated during shader resolve
 			};
-			m_graphicsParams.m_numVertexBuffers++;
 		}
 		m_graphicsParams.m_indexBuffer = meshPrimRenderData.m_indexStream->GetBuffer();
 		
@@ -323,7 +319,7 @@ namespace re
 		, m_drawStyleBitmask(bitmask)
 		, m_batchFilterBitmask(0)
 	{
-		SEAssert(graphicsParams.m_numVertexBuffers > 0, "Can't have a graphics batch with 0 vertex streams");
+		SEAssert(graphicsParams.m_vertexBuffers[0].m_vertexBuffer, "Can't have a graphics batch with 0 vertex streams");
 
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
@@ -384,16 +380,22 @@ namespace re
 		// Resolve vertex input slots now that we've decided which shader will be used:
 		if (m_type == BatchType::Graphics)
 		{
+			uint8_t numVertexStreams = 0;
 			bool needsRepacking = false;
-			for (uint8_t i = 0; i < m_graphicsParams.m_numVertexBuffers; ++i)
+			for (uint8_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
 			{
 				// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
+				if (m_graphicsParams.m_vertexBuffers[i].m_vertexBuffer == nullptr)
+				{
+					break;
+				}
+				
 				const gr::VertexStream::Type curStreamType = 
 					m_graphicsParams.m_vertexBuffers[i].m_vertexBuffer->GetBufferParams().m_vertexStreamView.m_type;
 
 				// Find consecutive streams with the same type, and resolve the final vertex slot from the shader
-				uint8_t semanticIdx = 0;
-				while (i + semanticIdx < m_graphicsParams.m_numVertexBuffers &&
+				uint8_t semanticIdx = 0; // Start at 0 to ensure we process the current stream
+				while (i + semanticIdx < gr::VertexStream::k_maxVertexStreams &&
 					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_vertexBuffer &&
 					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_vertexBuffer
 						->GetBufferParams().m_vertexStreamView.m_type == curStreamType)
@@ -410,6 +412,7 @@ namespace re
 						needsRepacking = true;
 					}
 					++semanticIdx;
+					++numVertexStreams;
 				}
 				if (semanticIdx > 1) // Skip ahead: We've already handled all consecutive streams of the same type
 				{
@@ -419,26 +422,25 @@ namespace re
 
 			if (needsRepacking)
 			{
-				const uint8_t curNumStreams = m_graphicsParams.m_numVertexBuffers;
 				uint8_t numValidStreams = 0;
-				for (uint8_t i = 0; i < curNumStreams; ++i)
+				for (uint8_t i = 0; i < numVertexStreams; ++i)
 				{
 					if (m_graphicsParams.m_vertexBuffers[i].m_vertexBuffer == nullptr)
 					{
 						uint8_t nextValidIdx = i + 1;
-						while (nextValidIdx < curNumStreams && 
+						while (nextValidIdx < numVertexStreams &&
 							m_graphicsParams.m_vertexBuffers[nextValidIdx].m_vertexBuffer == nullptr)
 						{
 							++nextValidIdx;
 						}
-						if (nextValidIdx < curNumStreams && 
+						if (nextValidIdx < numVertexStreams &&
 							m_graphicsParams.m_vertexBuffers[nextValidIdx].m_vertexBuffer != nullptr)
 						{
 							m_graphicsParams.m_vertexBuffers[i] = m_graphicsParams.m_vertexBuffers[nextValidIdx];
 							m_graphicsParams.m_vertexBuffers[nextValidIdx] = {};
 							++numValidStreams;
 						}
-						else if (nextValidIdx == curNumStreams)
+						else if (nextValidIdx == numVertexStreams)
 						{
 							break; // Didn't find anything valid in the remaining elements, no point continuing
 						}
@@ -448,10 +450,9 @@ namespace re
 						++numValidStreams;					
 					}
 				}
-				m_graphicsParams.m_numVertexBuffers = numValidStreams;
 			}
 
-			ValidateVertexStreams(m_lifetime, m_graphicsParams.m_vertexBuffers, m_graphicsParams.m_numVertexBuffers); // _DEBUG only
+			ValidateVertexStreams(m_lifetime, m_graphicsParams.m_vertexBuffers); // _DEBUG only
 		}
 	}
 

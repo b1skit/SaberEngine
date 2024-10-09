@@ -70,7 +70,6 @@ namespace
 			re::Batch::VertexBufferInput{ .m_vertexBuffer = axisPositionStream->GetBuffer()};
 		axisBatchGraphicsParams.m_vertexBuffers[1] =
 			re::Batch::VertexBufferInput{ .m_vertexBuffer = axisColorStream->GetBuffer() };
-		axisBatchGraphicsParams.m_numVertexBuffers = 2;
 
 		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
 			batchLifetime, axisBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -175,7 +174,6 @@ namespace
 			re::Batch::VertexBufferInput{ .m_vertexBuffer = boxPositionsStream->GetBuffer() };
 		boundingBoxBatchGraphicsParams.m_vertexBuffers[1] = 
 			re::Batch::VertexBufferInput{ .m_vertexBuffer = boxColorStream->GetBuffer() };
-		boundingBoxBatchGraphicsParams.m_numVertexBuffers = 2;
 
 		boundingBoxBatchGraphicsParams.m_indexBuffer = boxIndexStream->GetBuffer();
 
@@ -213,7 +211,6 @@ namespace
 				re::Batch::VertexBufferInput{.m_vertexBuffer = positionStream->GetBuffer() },
 				re::Batch::VertexBufferInput{.m_vertexBuffer = normalStream->GetBuffer() }
 			},
-			.m_numVertexBuffers = 2
 		};
 
 		std::unique_ptr<re::Batch> normalDebugBatch = std::make_unique<re::Batch>(
@@ -305,7 +302,6 @@ namespace
 			re::Batch::VertexBufferInput{ .m_vertexBuffer = frustumPositionsStream->GetBuffer() };
 		frustumBatchGraphicsParams.m_vertexBuffers[1] = 
 			re::Batch::VertexBufferInput{.m_vertexBuffer = frustumColorStream->GetBuffer() };
-		frustumBatchGraphicsParams.m_numVertexBuffers = 2;
 
 		frustumBatchGraphicsParams.m_indexBuffer = frustumIndexStream->GetBuffer();
 
@@ -350,7 +346,6 @@ namespace
 			re::Batch::VertexBufferInput{ .m_vertexBuffer = positionStream->GetBuffer() };
 		wireframeBatchGraphicsParams.m_vertexBuffers[1] = 
 			re::Batch::VertexBufferInput{ .m_vertexBuffer = boxColorStream->GetBuffer() };
-		wireframeBatchGraphicsParams.m_numVertexBuffers = 2;
 
 		wireframeBatchGraphicsParams.m_indexBuffer = indexStream->GetBuffer();
 

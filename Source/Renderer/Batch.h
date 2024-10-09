@@ -72,8 +72,8 @@ namespace re
 			uint32_t m_numInstances = 0;
 			gr::MeshPrimitive::PrimitiveTopology m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 
+			// Vertex streams must be contiguously packed, with streams of the same type stored consecutively
 			VertexBufferInput m_vertexBuffers[gr::VertexStream::k_maxVertexStreams] = {0};
-			uint8_t m_numVertexBuffers = 0;
 
 			re::Buffer const* m_indexBuffer = nullptr;
 

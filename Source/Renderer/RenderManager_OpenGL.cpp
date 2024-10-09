@@ -270,7 +270,6 @@ namespace opengl
 							// batch
 							const GLuint vertexStreamVAO = context->GetCreateVAO(
 								batchGraphicsParams.m_vertexBuffers, 
-								batchGraphicsParams.m_numVertexBuffers,
 								batchGraphicsParams.m_indexBuffer);
 							if (vertexStreamVAO != currentVAO)
 							{
@@ -279,7 +278,7 @@ namespace opengl
 							}
 
 							// Bind the vertex streams:
-							for (uint8_t slotIdx = 0; slotIdx < batchGraphicsParams.m_numVertexBuffers; slotIdx++)
+							for (uint8_t slotIdx = 0; slotIdx < gr::VertexStream::k_maxVertexStreams; slotIdx++)
 							{
 								if (batchGraphicsParams.m_vertexBuffers[slotIdx].m_vertexBuffer == nullptr)
 								{

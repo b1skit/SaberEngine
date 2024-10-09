@@ -436,7 +436,7 @@ namespace dx12
 
 		SetPrimitiveType(TranslateToD3DPrimitiveTopology(batchGraphicsParams.m_primitiveTopology));
 
-		SetVertexBuffers(batchGraphicsParams.m_vertexBuffers, batchGraphicsParams.m_numVertexBuffers);
+		SetVertexBuffers(batchGraphicsParams.m_vertexBuffers);
 
 		// Record the draw:
 		switch (batchGraphicsParams.m_batchGeometryMode)
@@ -503,16 +503,22 @@ namespace dx12
 	}
 
 
-	void CommandList::SetVertexBuffers(re::Batch::VertexBufferInput const* vertexBuffers, uint8_t count)
+	void CommandList::SetVertexBuffers(re::Batch::VertexBufferInput const* vertexBuffers)
 	{
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
 		streamViews.reserve(gr::VertexStream::k_maxVertexStreams);
 
 		uint8_t startSlotIdx = vertexBuffers[0].m_bindSlot;
 		uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;
-		for (uint32_t streamIdx = 0; streamIdx < count; streamIdx++)
+		for (uint32_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
+			// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
 			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].m_vertexBuffer;
+			if (!streamBuffer)
+			{
+				SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
+				break;
+			}
 
 			dx12::Buffer::PlatformParams const* streamBufferPlatParams =
 				streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();

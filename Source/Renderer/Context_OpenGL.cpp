@@ -469,16 +469,16 @@ namespace opengl
 
 
 	uint64_t Context::ComputeVAOHash(
-		re::Batch::VertexBufferInput const* vertexBuffers, uint8_t count, re::Buffer const* indexBuffer)
+		re::Batch::VertexBufferInput const* vertexBuffers, re::Buffer const* indexBuffer)
 	{
-		SEAssert(vertexBuffers && count > 0, "Invalid vertex streams");
-		SEAssert(count <= gr::VertexStream::k_maxVertexStreams, "Received more vertex streams that allowed slots");
+		SEAssert(vertexBuffers, "Invalid vertex streams");
 
 		uint64_t vaoHash = 0;
 
 		uint32_t bitmask = 0; // Likely only needs to be 16 bits wide, max
-		for (uint8_t streamIdx = 0; streamIdx < count; streamIdx++)
+		for (uint8_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
+			// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
 			re::Buffer const* vertexBuffer = vertexBuffers[streamIdx].m_vertexBuffer;
 			if (vertexBuffer == nullptr)
 			{
@@ -512,9 +512,9 @@ namespace opengl
 
 
 	GLuint Context::GetCreateVAO(
-		re::Batch::VertexBufferInput const* vertexBuffers, uint8_t count, re::Buffer const* indexBuffer)
+		re::Batch::VertexBufferInput const* vertexBuffers, re::Buffer const* indexBuffer)
 	{
-		const uint64_t vaoHash = ComputeVAOHash(vertexBuffers, count, indexBuffer);
+		const uint64_t vaoHash = ComputeVAOHash(vertexBuffers, indexBuffer);
 
 		{
 			std::lock_guard<std::mutex> lock(m_VAOLibraryMutex);
@@ -531,11 +531,13 @@ namespace opengl
 
 				std::string objectLabel; // Debug name to visually identify our VAOs
 
-				for (uint8_t streamIdx = 0; streamIdx < count; streamIdx++)
+				for (uint8_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 				{
+					// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
 					re::Buffer const* vertexStream = vertexBuffers[streamIdx].m_vertexBuffer;
 					if (vertexStream == nullptr)
 					{
+						SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
 						break;
 					}
 
