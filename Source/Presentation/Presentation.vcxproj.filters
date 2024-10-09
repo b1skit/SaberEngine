@@ -121,9 +121,6 @@
     <ClInclude Include="Light.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
-    <ClInclude Include="LightComponent.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
     <ClInclude Include="SceneManager.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
@@ -170,6 +167,9 @@
       <Filter>Header Files\fr</Filter>
     </ClInclude>
     <ClInclude Include="AnimationComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="LightComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
   </ItemGroup>
