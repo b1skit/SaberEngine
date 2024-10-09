@@ -66,10 +66,8 @@ namespace
 		axisBatchGraphicsParams.m_numInstances = 1;
 		axisBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		axisBatchGraphicsParams.m_vertexBuffers[0] = 
-			re::Batch::VertexBufferInput{ .m_vertexBuffer = axisPositionStream->GetBuffer()};
-		axisBatchGraphicsParams.m_vertexBuffers[1] =
-			re::Batch::VertexBufferInput{ .m_vertexBuffer = axisColorStream->GetBuffer() };
+		axisBatchGraphicsParams.m_vertexBuffers[0] = re::Batch::VertexBufferInput(axisPositionStream.get());
+		axisBatchGraphicsParams.m_vertexBuffers[1] = re::Batch::VertexBufferInput(axisColorStream.get());
 
 		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
 			batchLifetime, axisBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -170,12 +168,10 @@ namespace
 		boundingBoxBatchGraphicsParams.m_numInstances = 1;
 		boundingBoxBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		boundingBoxBatchGraphicsParams.m_vertexBuffers[0] = 
-			re::Batch::VertexBufferInput{ .m_vertexBuffer = boxPositionsStream->GetBuffer() };
-		boundingBoxBatchGraphicsParams.m_vertexBuffers[1] = 
-			re::Batch::VertexBufferInput{ .m_vertexBuffer = boxColorStream->GetBuffer() };
+		boundingBoxBatchGraphicsParams.m_vertexBuffers[0] = boxPositionsStream.get();
+		boundingBoxBatchGraphicsParams.m_vertexBuffers[1] = boxColorStream.get();
 
-		boundingBoxBatchGraphicsParams.m_indexBuffer = boxIndexStream->GetBuffer();
+		boundingBoxBatchGraphicsParams.m_indexBuffer = re::Batch::VertexBufferInput(boxIndexStream.get());
 
 		std::unique_ptr<re::Batch> boundingBoxBatch = std::make_unique<re::Batch>(
 			batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -207,10 +203,7 @@ namespace
 			.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced,
 			.m_numInstances = 1,
 			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList,
-			.m_vertexBuffers = {
-				re::Batch::VertexBufferInput{.m_vertexBuffer = positionStream->GetBuffer() },
-				re::Batch::VertexBufferInput{.m_vertexBuffer = normalStream->GetBuffer() }
-			},
+			.m_vertexBuffers = { positionStream, normalStream, },
 		};
 
 		std::unique_ptr<re::Batch> normalDebugBatch = std::make_unique<re::Batch>(
@@ -298,12 +291,10 @@ namespace
 		frustumBatchGraphicsParams.m_numInstances = 1;
 		frustumBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		frustumBatchGraphicsParams.m_vertexBuffers[0] = 
-			re::Batch::VertexBufferInput{ .m_vertexBuffer = frustumPositionsStream->GetBuffer() };
-		frustumBatchGraphicsParams.m_vertexBuffers[1] = 
-			re::Batch::VertexBufferInput{.m_vertexBuffer = frustumColorStream->GetBuffer() };
+		frustumBatchGraphicsParams.m_vertexBuffers[0] = frustumPositionsStream.get();
+		frustumBatchGraphicsParams.m_vertexBuffers[1] = frustumColorStream.get();
 
-		frustumBatchGraphicsParams.m_indexBuffer = frustumIndexStream->GetBuffer();
+		frustumBatchGraphicsParams.m_indexBuffer = frustumIndexStream.get();
 
 		std::unique_ptr<re::Batch> frustumBatch = std::make_unique<re::Batch>(
 			batchLifetime, frustumBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -342,12 +333,10 @@ namespace
 		wireframeBatchGraphicsParams.m_numInstances = 1;
 		wireframeBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 
-		wireframeBatchGraphicsParams.m_vertexBuffers[0] = 
-			re::Batch::VertexBufferInput{ .m_vertexBuffer = positionStream->GetBuffer() };
-		wireframeBatchGraphicsParams.m_vertexBuffers[1] = 
-			re::Batch::VertexBufferInput{ .m_vertexBuffer = boxColorStream->GetBuffer() };
+		wireframeBatchGraphicsParams.m_vertexBuffers[0] = positionStream;
+		wireframeBatchGraphicsParams.m_vertexBuffers[1] = boxColorStream;
 
-		wireframeBatchGraphicsParams.m_indexBuffer = indexStream->GetBuffer();
+		wireframeBatchGraphicsParams.m_indexBuffer = indexStream;
 
 		std::unique_ptr<re::Batch> wireframeBatch = std::make_unique<re::Batch>(
 			batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Triangle);

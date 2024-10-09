@@ -202,7 +202,9 @@ namespace re
 			return AllocationPool::Constant;
 		}
 
-		SEAssert(re::Buffer::HasUsageBit(re::Buffer::VertexStream, mask), "Unexpected usage mask");
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::VertexStream, mask) || 
+			re::Buffer::HasUsageBit(re::Buffer::IndexStream, mask),
+			"Unexpected usage mask");
 
 		return AllocationPool::VertexStream;
 	}

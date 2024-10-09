@@ -254,32 +254,6 @@ namespace dx12
 		default: SEAssertF("Invalid lifetime");
 		}
 
-		// Type-specific setup:
-		if (re::Buffer::HasUsageBit(re::Buffer::VertexStream, bufferParams))
-		{
-			switch (buffer.GetBufferParams().m_vertexStreamView.m_type)
-			{
-			case gr::VertexStream::Type::Index:
-			{
-				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
-					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
-					.SizeInBytes = bufferSize,
-					.Format = dx12::DataTypeToDXGI_FORMAT(bufferParams.m_vertexStreamView.m_dataType, false),
-				};
-			}
-			break;
-			default:
-			{
-				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
-					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
-					.SizeInBytes = bufferSize,
-					.StrideInBytes = DataTypeToStride(bufferParams.m_vertexStreamView.m_dataType),
-				};
-			}
-			}
-		}
-
-
 #if defined(_DEBUG)
 		void const* srcData = nullptr;
 		uint32_t srcSize = 0;
@@ -517,5 +491,59 @@ namespace dx12
 		params->m_readbackResources[readbackResourceIdx].m_resource->Unmap(
 			0,				// Subresource
 			&writtenRange);	// pWrittenRange
+	}
+
+
+	D3D12_INDEX_BUFFER_VIEW const* dx12::Buffer::PlatformParams::GetOrCreateIndexBufferView(
+		re::Buffer const& buffer, re::VertexStreamView const& view)
+	{
+		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Usage::VertexStream, buffer) &&
+			re::Buffer::HasUsageBit(re::Buffer::Usage::IndexStream, buffer),
+			"Buffer does not have the correct usage flags set");
+
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+		if (params->m_views.m_indexBufferView.BufferLocation == 0)
+		{
+			std::unique_lock<std::mutex> lock(params->m_viewMutex);
+
+			if (params->m_views.m_indexBufferView.BufferLocation == 0)
+			{
+				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
+					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
+					.SizeInBytes = buffer.GetTotalBytes(),
+					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_dataType, false),
+				};
+			}
+		}
+
+		return &params->m_views.m_indexBufferView;
+	}
+
+
+	D3D12_VERTEX_BUFFER_VIEW const* dx12::Buffer::PlatformParams::GetOrCreateVertexBufferView(
+		re::Buffer const& buffer, re::VertexStreamView const& view)
+	{
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::VertexStream, buffer) &&
+			!re::Buffer::HasUsageBit(re::Buffer::Usage::IndexStream, buffer),
+			"Buffer does not have the correct usage flags set");
+
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+		if (params->m_views.m_vertexBufferView.BufferLocation == 0)
+		{
+			std::unique_lock<std::mutex> lock(params->m_viewMutex);
+
+			if (params->m_views.m_vertexBufferView.BufferLocation == 0)
+			{
+				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
+					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
+					.SizeInBytes = buffer.GetTotalBytes(),
+					.StrideInBytes = DataTypeToStride(view.m_dataType),
+				};
+			}
+		}
+
+		return &params->m_views.m_vertexBufferView;
 	}
 }

@@ -29,7 +29,8 @@ namespace re
 		{
 			Constant		= 1 << 0,
 			Structured		= 1 << 1,
-			VertexStream	= 1 << 2, // Vertex/index buffers
+			VertexStream	= 1 << 2,
+			IndexStream		= 1 << 3,
 
 			Invalid			= 0
 		};
@@ -68,14 +69,6 @@ namespace re
 			UsageMask m_usageMask = Usage::Invalid;
 
 			uint32_t m_arraySize = 1; // Must be 1 for constant buffers, and vertex/index streams
-
-			struct VertexStreamView
-			{
-				gr::VertexStream::Type m_type;
-				re::DataType m_dataType;
-				bool m_isNormalized;
-				uint32_t m_numElements;
-			} m_vertexStreamView{};
 		};
 
 

@@ -6,6 +6,11 @@
 #include <GL/glew.h>
 
 
+namespace re
+{
+	struct VertexStreamView;
+}
+
 namespace opengl
 {
 	class Buffer
@@ -38,5 +43,6 @@ namespace opengl
 
 	public: // OpenGL-specific functionality:		
 		static void Bind(re::Buffer const&, BindTarget, GLuint bindIndex);
+		static void Bind(re::Buffer const&, re::VertexStreamView const&, BindTarget, GLuint bindIndex);
 	};
 }

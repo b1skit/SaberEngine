@@ -469,7 +469,7 @@ namespace opengl
 
 
 	uint64_t Context::ComputeVAOHash(
-		re::Batch::VertexBufferInput const* vertexBuffers, re::Buffer const* indexBuffer)
+		re::Batch::VertexBufferInput const* vertexBuffers, re::Batch::VertexBufferInput const& indexBuffer)
 	{
 		SEAssert(vertexBuffers, "Invalid vertex streams");
 
@@ -479,30 +479,26 @@ namespace opengl
 		for (uint8_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
 			// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-			re::Buffer const* vertexBuffer = vertexBuffers[streamIdx].m_vertexBuffer;
+			re::Buffer const* vertexBuffer = vertexBuffers[streamIdx].m_buffer;
 			if (vertexBuffer == nullptr)
 			{
 				SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
 				break;
 			}
 
-			bitmask |= (1 << vertexBuffers[streamIdx].m_bindSlot);
+			bitmask |= (1 << vertexBuffers[streamIdx].m_bindSlot);		
 
-			re::Buffer::BufferParams const& bufferParams = vertexBuffer->GetBufferParams();
-
-			util::AddDataToHash(vaoHash, static_cast<uint64_t>(bufferParams.m_vertexStreamView.m_dataType));
-			util::AddDataToHash(vaoHash, bufferParams.m_vertexStreamView.m_isNormalized);
+			util::AddDataToHash(vaoHash, static_cast<uint64_t>(vertexBuffers[streamIdx].m_view.m_dataType));
+			util::AddDataToHash(vaoHash, vertexBuffers[streamIdx].m_view.m_isNormalized);
 
 			// Note: We assume all vertex streams have a relative offset of 0, so we don't (currently) include it in
 			// the hash here
 		}
 
-		if (indexBuffer)
-		{
-			re::Buffer::BufferParams const& bufferParams = indexBuffer->GetBufferParams();
-
-			util::AddDataToHash(vaoHash, static_cast<uint64_t>(bufferParams.m_vertexStreamView.m_dataType));
-			util::AddDataToHash(vaoHash, bufferParams.m_vertexStreamView.m_isNormalized);
+		if (indexBuffer.m_buffer)
+		{			
+			util::AddDataToHash(vaoHash, static_cast<uint64_t>(indexBuffer.m_view.m_dataType));
+			util::AddDataToHash(vaoHash, indexBuffer.m_view.m_isNormalized);
 		}
 
 		util::AddDataToHash(vaoHash, bitmask);
@@ -512,9 +508,9 @@ namespace opengl
 
 
 	GLuint Context::GetCreateVAO(
-		re::Batch::VertexBufferInput const* vertexBuffers, re::Buffer const* indexBuffer)
+		re::Batch::VertexBufferInput const* vertexBuffers, re::Batch::VertexBufferInput const& indexStream)
 	{
-		const uint64_t vaoHash = ComputeVAOHash(vertexBuffers, indexBuffer);
+		const uint64_t vaoHash = ComputeVAOHash(vertexBuffers, indexStream);
 
 		{
 			std::lock_guard<std::mutex> lock(m_VAOLibraryMutex);
@@ -534,8 +530,7 @@ namespace opengl
 				for (uint8_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 				{
 					// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-					re::Buffer const* vertexStream = vertexBuffers[streamIdx].m_vertexBuffer;
-					if (vertexStream == nullptr)
+					if (vertexBuffers[streamIdx].m_buffer == nullptr)
 					{
 						SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
 						break;
@@ -553,17 +548,15 @@ namespace opengl
 
 					// Relative offset specifies the distance btween elements within the buffer.
 					// Note: If this is ever != 0, update opengl::Context::ComputeVAOHash to include the offset
-					constexpr uint32_t relativeOffset = 0;
-					
-					re::Buffer::BufferParams const& bufferParams = vertexStream->GetBufferParams();
+					constexpr uint32_t k_relativeOffset = 0;
 					
 					// Define our vertex layout:
 					glVertexAttribFormat(
 						slotIdx,																// Attribute index
-						DataTypeToNumComponents(bufferParams.m_vertexStreamView.m_dataType),	// size: 1/2/3/4 						
-						DataTypeToGLDataType(bufferParams.m_vertexStreamView.m_dataType),		// Data type
-						bufferParams.m_vertexStreamView.m_isNormalized,							// Normalize data?
-						relativeOffset);							// relativeOffset: Distance between buffer elements
+						DataTypeToNumComponents(vertexBuffers[streamIdx].m_view.m_dataType),	// size: 1/2/3/4 						
+						DataTypeToGLDataType(vertexBuffers[streamIdx].m_view.m_dataType),		// Data type
+						vertexBuffers[streamIdx].m_view.m_isNormalized,							// Normalize data?
+						k_relativeOffset);							// relativeOffset: Distance between buffer elements
 
 					objectLabel = std::format("{} {}", objectLabel, slotIdx);
 				}

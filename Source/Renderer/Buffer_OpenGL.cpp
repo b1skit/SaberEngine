@@ -1,7 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer_OpenGL.h"
-#include "BufferAllocator_OpenGL.h"
 #include "Buffer.h"
+#include "BufferAllocator_OpenGL.h"
+#include "BufferInput.h"
 #include "Context.h"
 
 #include "Core/Assert.h"
@@ -184,22 +185,42 @@ namespace opengl
 		}
 		break;
 		case opengl::Buffer::BindTarget::Vertex:
+		case opengl::Buffer::BindTarget::Index:
+		{
+			SEAssertF("Incorrect bind function for this Buffer bind target");
+		}
+		break;
+		default: SEAssertF("Invalid Usage");
+		}
+	}
+
+
+	void Buffer::Bind(
+		re::Buffer const& buffer, re::VertexStreamView const& view, BindTarget bindTarget, GLuint bindIndex)
+	{
+		const uint32_t numBytes = buffer.GetTotalBytes();
+
+		PlatformParams const* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams const*>();
+		switch (bindTarget)
+		{
+		case opengl::Buffer::BindTarget::UBO:
+		case opengl::Buffer::BindTarget::SSBO:
+		{
+			SEAssertF("Incorrect bind function for this Buffer bind target");
+		}
+		break;
+		case opengl::Buffer::BindTarget::Vertex:
 		{
 			glBindVertexBuffer(
-				bindIndex,																	// Slot index
-				bufferPlatParams->m_bufferName,												// Buffer
-				0,																			// Offset
-				DataTypeToStride(buffer.GetBufferParams().m_vertexStreamView.m_dataType));// Stride
+				bindIndex,							// Slot index
+				bufferPlatParams->m_bufferName,		// Buffer
+				0,									// Offset
+				DataTypeToStride(view.m_dataType));	// Stride
 		}
 		break;
 		case opengl::Buffer::BindTarget::Index:
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatParams->m_bufferName);
-		}
-		break;
-		case re::Buffer::VertexStream:
-		{
-			SEAssertF("Incorrect location to bind a vertex stream. Use opengl::VertexStream::Bind instead");
 		}
 		break;
 		default: SEAssertF("Invalid Usage");

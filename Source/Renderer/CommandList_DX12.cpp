@@ -443,63 +443,37 @@ namespace dx12
 		{
 		case re::Batch::GeometryMode::IndexedInstanced:
 		{
-			re::Buffer const* indexBuffer = batchGraphicsParams.m_indexBuffer;
-			SEAssert(indexBuffer, "Index stream cannot be null for indexed draws");
+			SEAssert(batchGraphicsParams.m_indexBuffer.m_buffer, "Index stream cannot be null for indexed draws");
 
-			re::Buffer::BufferParams const& bufferParams = indexBuffer->GetBufferParams();
-
-			SetIndexBuffer(indexBuffer);
+			SetIndexBuffer(batchGraphicsParams.m_indexBuffer);
 
 			CommitGPUDescriptors();
-
+			
 			m_commandList->DrawIndexedInstanced(
-				bufferParams.m_vertexStreamView.m_numElements,	// Index count, per instance
-				static_cast<uint32_t>(batch.GetInstanceCount()),// Instance count
-				0,												// Start index location
-				0,												// Base vertex location
-				0);												// Start instance location
+				batchGraphicsParams.m_indexBuffer.m_view.m_numElements,	// Index count, per instance
+				static_cast<uint32_t>(batch.GetInstanceCount()),		// Instance count
+				0,														// Start index location
+				0,														// Base vertex location
+				0);														// Start instance location
 		}
 		break;
 		case re::Batch::GeometryMode::ArrayInstanced:
-		{
-			re::Buffer const* firstStream = batchGraphicsParams.m_vertexBuffers[0].m_vertexBuffer;
-
-			re::Buffer::BufferParams const& bufferParams = firstStream->GetBufferParams();
-
-			SEAssert(bufferParams.m_vertexStreamView.m_type == gr::VertexStream::Type::Position,
+		{		
+			SEAssert(batchGraphicsParams.m_vertexBuffers[0].m_view.m_type == gr::VertexStream::Type::Position,
 				"We're currently assuming the first stream contains the correct number of elements for the entire draw."
 				" If you hit this, validate this logic and delete this assert");
 
 			CommitGPUDescriptors();
 
 			m_commandList->DrawInstanced(
-				bufferParams.m_vertexStreamView.m_numElements,	// VertexCountPerInstance
-				batchGraphicsParams.m_numInstances,				// InstanceCount
-				0,												// StartVertexLocation
-				0);												// StartInstanceLocation
+				batchGraphicsParams.m_vertexBuffers[0].m_view.m_numElements,	// VertexCountPerInstance
+				batchGraphicsParams.m_numInstances,								// InstanceCount
+				0,																// StartVertexLocation
+				0);																// StartInstanceLocation
 		}
 		break;
 		default: SEAssertF("Invalid batch geometry type");
 		}
-	}
-
-
-	void CommandList::SetVertexBuffer(uint32_t slot, gr::VertexStream const* stream)
-	{
-		re::Buffer const* streamBuffer = stream->GetBuffer();
-		
-		dx12::Buffer::PlatformParams const* streamBufferPlatParams = 
-			streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
-
-		TransitionResource(
-			streamBufferPlatParams->m_resource.Get(),
-			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-
-		m_commandList->IASetVertexBuffers(
-			slot,
-			1,
-			&streamBufferPlatParams->m_views.m_vertexBufferView);
 	}
 
 
@@ -513,17 +487,18 @@ namespace dx12
 		for (uint32_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
 			// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].m_vertexBuffer;
+			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].m_buffer;
 			if (!streamBuffer)
 			{
 				SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
 				break;
 			}
 
-			dx12::Buffer::PlatformParams const* streamBufferPlatParams =
-				streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
-
-			streamViews.emplace_back(streamBufferPlatParams->m_views.m_vertexBufferView);
+			dx12::Buffer::PlatformParams* streamBufferPlatParams =
+				streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+			
+			streamViews.emplace_back(
+				*streamBufferPlatParams->GetOrCreateVertexBufferView(*streamBuffer, vertexBuffers[streamIdx].m_view));
 
 			TransitionResource(
 				streamBufferPlatParams->m_resource.Get(),
@@ -567,12 +542,15 @@ namespace dx12
 	}
 
 
-	void CommandList::SetIndexBuffer(re::Buffer const* streamBuffer)
+	void CommandList::SetIndexBuffer(re::Batch::VertexBufferInput const& indexBuffer)
 	{
-		dx12::Buffer::PlatformParams const* streamBufferPlatParams =
-			streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();		
+		SEAssert(indexBuffer.m_buffer, "Index stream buffer is null");
 
-		m_commandList->IASetIndexBuffer(&streamBufferPlatParams->m_views.m_indexBufferView);
+		dx12::Buffer::PlatformParams* streamBufferPlatParams =
+			indexBuffer.m_buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+		m_commandList->IASetIndexBuffer(
+			streamBufferPlatParams->GetOrCreateIndexBufferView(*indexBuffer.m_buffer, indexBuffer.m_view));
 
 		TransitionResource(
 			streamBufferPlatParams->m_resource.Get(),

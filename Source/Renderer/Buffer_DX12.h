@@ -47,11 +47,17 @@ namespace dx12
 			std::vector<ReadbackResource> m_readbackResources; // CPU readback
 			uint8_t m_currentMapFrameLatency = std::numeric_limits<uint8_t>::max(); // Used to compute the resource index during unmapping
 
+
+			D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::VertexStreamView const&);
+			D3D12_VERTEX_BUFFER_VIEW const* GetOrCreateVertexBufferView(re::Buffer const&, re::VertexStreamView const&);
+		
+		private:
 			union
 			{
 				D3D12_INDEX_BUFFER_VIEW  m_indexBufferView;
 				D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 			} m_views;
+			std::mutex m_viewMutex; // Views created at first usage during command recording
 		};
 
 

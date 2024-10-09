@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "Buffer.h"
-#include "BufferInput.h"
 #include "Material.h"
 #include "RenderManager.h"
 #include "Sampler.h"
@@ -50,36 +49,35 @@ namespace
 		std::unordered_set<uint8_t> seenSlots;
 		seenSlots.reserve(gr::VertexStream::k_maxVertexStreams);
 
-		SEAssert(vertexBuffers[0].m_vertexBuffer, "Must have at least 1 non-null vertex stream");
+		SEAssert(vertexBuffers[0].m_buffer, "Must have at least 1 non-null vertex stream");
 		
 		bool seenNull = false;
 		for (size_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
 		{
-			if (vertexBuffers[i].m_vertexBuffer == nullptr)
+			if (vertexBuffers[i].m_buffer == nullptr)
 			{
 				seenNull = true;
 			}
-			SEAssert(!seenNull || vertexBuffers[i].m_vertexBuffer == nullptr,
+			SEAssert(!seenNull || vertexBuffers[i].m_buffer == nullptr,
 				"Found a non-null entry after a null. Vertex streams must be tightly packed");
 
-			if (vertexBuffers[i].m_vertexBuffer)
+			if (vertexBuffers[i].m_buffer)
 			{
-				ValidateVertexStreamLifetime(batchLifetime, vertexBuffers[i].m_vertexBuffer->GetLifetime());
+				ValidateVertexStreamLifetime(batchLifetime, vertexBuffers[i].m_buffer->GetLifetime());
 			}
 
-			SEAssert(vertexBuffers[i].m_vertexBuffer == nullptr || 
+			SEAssert(vertexBuffers[i].m_buffer == nullptr || 
 				vertexBuffers[i].m_bindSlot != re::Batch::VertexBufferInput::k_invalidSlotIdx,
 				"Invalid bind slot detected");
-
-			SEAssert(vertexBuffers[i].m_vertexBuffer == nullptr ||
+			
+			SEAssert(vertexBuffers[i].m_buffer == nullptr ||
 				i + 1 == gr::VertexStream::k_maxVertexStreams ||
-				vertexBuffers[i + 1].m_vertexBuffer == nullptr ||
-				(vertexBuffers[i].m_vertexBuffer->GetBufferParams().m_vertexStreamView.m_type < 
-					vertexBuffers[i + 1].m_vertexBuffer->GetBufferParams().m_vertexStreamView.m_type) ||
+				vertexBuffers[i + 1].m_buffer == nullptr ||
+				(vertexBuffers[i].m_view.m_type < vertexBuffers[i + 1].m_view.m_type) ||
 				vertexBuffers[i].m_bindSlot + 1 == vertexBuffers[i + 1].m_bindSlot,
 				"Vertex streams of the same type must be stored in monotoically-increasing slot order");
 
-			if (vertexBuffers[i].m_vertexBuffer != nullptr)
+			if (vertexBuffers[i].m_buffer != nullptr)
 			{
 				SEAssert(!seenSlots.contains(vertexBuffers[i].m_bindSlot), "Duplicate slot index detected");
 				seenSlots.emplace(vertexBuffers[i].m_bindSlot);
@@ -217,12 +215,9 @@ namespace re
 			}
 			SEAssert(vertexStreams[slotIdx].m_vertexStream->GetBuffer(), "Buffer shouldn't be null here");
 
-			m_graphicsParams.m_vertexBuffers[slotIdx] = VertexBufferInput{
-				.m_vertexBuffer = vertexStreams[slotIdx].m_vertexStream->GetBuffer(),
-				.m_bindSlot = VertexBufferInput::k_invalidSlotIdx, // Populated during shader resolve
-			};
+			m_graphicsParams.m_vertexBuffers[slotIdx] = VertexBufferInput(vertexStreams[slotIdx].m_vertexStream);
 		}
-		m_graphicsParams.m_indexBuffer = meshPrimitive->GetIndexStream()->GetBuffer();
+		m_graphicsParams.m_indexBuffer = meshPrimitive->GetIndexStream();
 
 		ComputeDataHash();
 	}
@@ -263,12 +258,9 @@ namespace re
 					m_lifetime == re::Lifetime::Permanent),
 				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 
-			m_graphicsParams.m_vertexBuffers[slotIdx] = VertexBufferInput{
-				.m_vertexBuffer = meshPrimRenderData.m_vertexStreams[slotIdx]->GetBuffer(),
-				.m_bindSlot = VertexBufferInput::k_invalidSlotIdx, // Populated during shader resolve
-			};
+			m_graphicsParams.m_vertexBuffers[slotIdx] = VertexBufferInput(meshPrimRenderData.m_vertexStreams[slotIdx]);
 		}
-		m_graphicsParams.m_indexBuffer = meshPrimRenderData.m_indexStream->GetBuffer();
+		m_graphicsParams.m_indexBuffer = meshPrimRenderData.m_indexStream;
 		
 		// Material textures/samplers:
 		if (materialInstanceData)
@@ -319,7 +311,7 @@ namespace re
 		, m_drawStyleBitmask(bitmask)
 		, m_batchFilterBitmask(0)
 	{
-		SEAssert(graphicsParams.m_vertexBuffers[0].m_vertexBuffer, "Can't have a graphics batch with 0 vertex streams");
+		SEAssert(graphicsParams.m_vertexBuffers[0].m_buffer, "Can't have a graphics batch with 0 vertex streams");
 
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
@@ -385,21 +377,19 @@ namespace re
 			for (uint8_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
 			{
 				// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-				if (m_graphicsParams.m_vertexBuffers[i].m_vertexBuffer == nullptr)
+				if (m_graphicsParams.m_vertexBuffers[i].m_buffer == nullptr)
 				{
 					break;
 				}
 				
-				const gr::VertexStream::Type curStreamType = 
-					m_graphicsParams.m_vertexBuffers[i].m_vertexBuffer->GetBufferParams().m_vertexStreamView.m_type;
-
+				const gr::VertexStream::Type curStreamType = m_graphicsParams.m_vertexBuffers[i].m_view.m_type;
+				
 				// Find consecutive streams with the same type, and resolve the final vertex slot from the shader
 				uint8_t semanticIdx = 0; // Start at 0 to ensure we process the current stream
 				while (i + semanticIdx < gr::VertexStream::k_maxVertexStreams &&
-					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_vertexBuffer &&
-					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_vertexBuffer
-						->GetBufferParams().m_vertexStreamView.m_type == curStreamType)
-				{				
+					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_buffer &&
+					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_view.m_type == curStreamType)
+				{					
 					const uint8_t vertexAttribSlot = m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
 					if (vertexAttribSlot != re::VertexStreamMap::k_invalidSlotIdx)
 					{
@@ -408,7 +398,7 @@ namespace re
 					}
 					else
 					{
-						m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_vertexBuffer = nullptr;
+						m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_buffer = nullptr;
 						needsRepacking = true;
 					}
 					++semanticIdx;
@@ -425,16 +415,16 @@ namespace re
 				uint8_t numValidStreams = 0;
 				for (uint8_t i = 0; i < numVertexStreams; ++i)
 				{
-					if (m_graphicsParams.m_vertexBuffers[i].m_vertexBuffer == nullptr)
+					if (m_graphicsParams.m_vertexBuffers[i].m_buffer == nullptr)
 					{
 						uint8_t nextValidIdx = i + 1;
 						while (nextValidIdx < numVertexStreams &&
-							m_graphicsParams.m_vertexBuffers[nextValidIdx].m_vertexBuffer == nullptr)
+							m_graphicsParams.m_vertexBuffers[nextValidIdx].m_buffer == nullptr)
 						{
 							++nextValidIdx;
 						}
 						if (nextValidIdx < numVertexStreams &&
-							m_graphicsParams.m_vertexBuffers[nextValidIdx].m_vertexBuffer != nullptr)
+							m_graphicsParams.m_vertexBuffers[nextValidIdx].m_buffer != nullptr)
 						{
 							m_graphicsParams.m_vertexBuffers[i] = m_graphicsParams.m_vertexBuffers[nextValidIdx];
 							m_graphicsParams.m_vertexBuffers[nextValidIdx] = {};
@@ -484,20 +474,20 @@ namespace re
 
 			for (VertexBufferInput const& vertexStream : m_graphicsParams.m_vertexBuffers)
 			{
-				if (vertexStream.m_vertexBuffer == nullptr)
+				if (vertexStream.m_buffer == nullptr)
 				{
 					break;
 				}
 
 				// Note: The the data hash of our vertex stream buffer would be preferable here, but the UniqueID works
 				// as well as we maintain unique vertex streams only
-				AddDataBytesToHash(vertexStream.m_vertexBuffer->GetUniqueID());
+				AddDataBytesToHash(vertexStream.m_buffer->GetUniqueID());
 			}
-			if (m_graphicsParams.m_indexBuffer)
+			if (m_graphicsParams.m_indexBuffer.m_buffer)
 			{
 				// Note: As above - The the data hash of our vertex stream buffer would be preferable here, but the
 				// UniqueID works as well as we maintain unique vertex streams only
-				AddDataBytesToHash(m_graphicsParams.m_indexBuffer->GetUniqueID());
+				AddDataBytesToHash(m_graphicsParams.m_indexBuffer.m_buffer->GetUniqueID());
 			}
 
 			AddDataBytesToHash(m_graphicsParams.m_materialUniqueID);

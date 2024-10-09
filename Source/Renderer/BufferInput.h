@@ -1,5 +1,8 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
+#include "EnumTypes.h"
+#include "VertexStream.h"
+
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
@@ -7,6 +10,15 @@
 namespace re
 {
 	class Buffer;
+
+
+	struct VertexStreamView
+	{
+		gr::VertexStream::Type m_type;
+		re::DataType m_dataType;
+		bool m_isNormalized;
+		uint32_t m_numElements;
+	};
 
 
 	class BufferInput : public virtual core::INamedObject, public virtual core::IUniqueID

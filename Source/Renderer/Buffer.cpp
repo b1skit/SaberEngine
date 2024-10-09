@@ -40,7 +40,8 @@ namespace
 		SEAssert(bufferParams.m_usageMask != re::Buffer::Usage::Invalid, "Invalid usage mask");
 		
 		SEAssert(((re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams) || 
-			re::Buffer::HasUsageBit(re::Buffer::VertexStream, bufferParams)) &&
+			re::Buffer::HasUsageBit(re::Buffer::VertexStream, bufferParams) ||
+			re::Buffer::HasUsageBit(re::Buffer::IndexStream, bufferParams)) &&
 					bufferParams.m_arraySize == 1) ||
 			(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams) && 
 				bufferParams.m_arraySize >= 1),
@@ -54,6 +55,10 @@ namespace
 		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::Permanent ||
 			re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
 			"GPU reads must be enabled for immutable buffers");
+
+		SEAssert((re::Buffer::HasUsageBit(re::Buffer::Usage::VertexStream, bufferParams) && 
+			re::Buffer::HasUsageBit(re::Buffer::Usage::IndexStream, bufferParams)) == false,
+			"Buffer has both the vetex and index stream usage flags set. This is unexpected");
 #endif
 	}
 }

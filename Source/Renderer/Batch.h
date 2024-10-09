@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "BufferInput.h"
 #include "Effect.h"
 #include "EnumTypes.h"
 #include "MeshPrimitive.h"
@@ -14,12 +15,11 @@
 namespace gr
 {
 	class Material;
-	class Mesh;
 }
+
 namespace re
 {
 	class Buffer;
-	class BufferInput;
 	class Shader;
 	class Sampler;
 	class Texture;
@@ -61,7 +61,23 @@ namespace re
 		{
 			static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
 
-			re::Buffer const* m_vertexBuffer = nullptr;
+			VertexBufferInput() = default;
+
+			VertexBufferInput(gr::VertexStream const* stream)
+				: m_buffer(stream ? stream->GetBuffer() : nullptr)
+				, m_view(stream ? stream->GetVertexStreamView() : re::VertexStreamView{})
+			{
+			}
+
+			VertexBufferInput(std::shared_ptr<gr::VertexStream>& stream)
+				: VertexBufferInput(stream ? stream.get() : nullptr)
+			{
+			}
+
+			re::Buffer const* m_buffer = nullptr;
+
+			re::VertexStreamView m_view{};
+
 			uint8_t m_bindSlot = k_invalidSlotIdx; // NOTE: Automatically resolved by the batch
 		};
 		struct GraphicsParams
@@ -75,7 +91,7 @@ namespace re
 			// Vertex streams must be contiguously packed, with streams of the same type stored consecutively
 			VertexBufferInput m_vertexBuffers[gr::VertexStream::k_maxVertexStreams] = {0};
 
-			re::Buffer const* m_indexBuffer = nullptr;
+			VertexBufferInput m_indexBuffer{};
 
 			// If a batch is created via the CTOR that takes a gr::Material::MaterialInstanceRenderData, we store the 
 			// material's unique ID so we can include it in the data hash to ensure batches with identical geometry and

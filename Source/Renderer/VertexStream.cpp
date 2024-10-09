@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer.h"
-#include "MeshPrimitive.h"
+#include "BufferInput.h"
 #include "RenderManager.h"
 #include "VertexStream.h"
 
@@ -137,17 +137,10 @@ namespace gr
 				.m_stagingPool = re::Buffer::StagingPool::Temporary,
 				.m_memPoolPreference = re::Buffer::DefaultHeap,
 				.m_accessMask = re::Buffer::GPURead,
-				.m_usageMask = re::Buffer::VertexStream,
+				.m_usageMask = createParams.m_type == Type::Index ? re::Buffer::IndexStream : re::Buffer::VertexStream,
 				.m_arraySize = 1,
-				.m_vertexStreamView = re::Buffer::BufferParams::VertexStreamView{
-					.m_type = createParams.m_type,
-					.m_dataType = newVertexStream->m_streamDesc.m_dataType,
-					.m_isNormalized = static_cast<bool>(newVertexStream->DoNormalize()),
-					.m_numElements = util::CheckedCast<uint32_t>(data.size()), // Buffer is null right now
-				},
 			};
-
-			
+						
 			if (queueBufferCreate)
 			{
 				class CreateBufferDeferred
@@ -296,6 +289,17 @@ namespace gr
 	VertexStream::Normalize VertexStream::DoNormalize() const
 	{
 		return m_streamDesc.m_doNormalize;
+	}
+
+
+	re::VertexStreamView VertexStream::GetVertexStreamView() const
+	{
+		return re::VertexStreamView{
+			.m_type = m_streamDesc.m_type,
+			.m_dataType = m_streamDesc.m_dataType,
+			.m_isNormalized = static_cast<bool>(m_streamDesc.m_doNormalize),
+			.m_numElements = GetNumElements(),
+		};
 	}
 
 
