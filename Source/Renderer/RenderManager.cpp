@@ -126,12 +126,11 @@ namespace re
 		, m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
-		, m_newVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<std::shared_ptr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newSamplers(util::NBufferedVector<std::shared_ptr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newBuffers(util::NBufferedVector<std::shared_ptr<re::Buffer>>::BufferSize::Two, k_newObjectReserveAmount)
-		, m_singleFrameVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Three, k_newObjectReserveAmount)
+		, m_singleFrameVertexStreams(util::NBufferedVector<std::shared_ptr<gr::VertexStream>>::BufferSize::Three, k_newObjectReserveAmount)
 		, m_quitEventRecieved(false)
 	{
 		m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
@@ -454,7 +453,6 @@ namespace re
 
 		// Aquire read locks:
 		m_newShaders.AquireReadLock();
-		m_newVertexStreams.AquireReadLock();
 		m_newTextures.AquireReadLock();
 		m_newSamplers.AquireReadLock();
 		m_newTargetSets.AquireReadLock();
@@ -477,7 +475,6 @@ namespace re
 
 		// Release read locks:
 		m_newShaders.ReleaseReadLock();
-		m_newVertexStreams.ReleaseReadLock();
 		m_newTextures.ReleaseReadLock();
 		m_newSamplers.ReleaseReadLock();
 		m_newTargetSets.ReleaseReadLock();
@@ -499,7 +496,6 @@ namespace re
 
 		// Swap our new resource double buffers:
 		m_newShaders.Swap();
-		m_newVertexStreams.Swap();
 		m_newTextures.Swap();
 		m_newSamplers.Swap();
 		m_newTargetSets.Swap();
@@ -512,7 +508,6 @@ namespace re
 	void RenderManager::DestroyNewResourceDoubleBuffers()
 	{
 		m_newShaders.Destroy();
-		m_newVertexStreams.Destroy();
 		m_newTextures.Destroy();
 		m_newSamplers.Destroy();
 		m_newTargetSets.Destroy();
@@ -524,13 +519,6 @@ namespace re
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::Shader> newObject)
 	{
 		m_newShaders.EmplaceBack(std::move(newObject));
-	}
-
-
-	template<>
-	void RenderManager::RegisterForCreate(std::shared_ptr<re::VertexStream> newObject)
-	{
-		m_newVertexStreams.EmplaceBack(std::move(newObject));
 	}
 
 
@@ -563,7 +551,7 @@ namespace re
 
 
 	template<>
-	void RenderManager::RegisterSingleFrameResource(std::shared_ptr<re::VertexStream> singleFrameObject)
+	void RenderManager::RegisterSingleFrameResource(std::shared_ptr<gr::VertexStream> singleFrameObject)
 	{
 		m_singleFrameVertexStreams.EmplaceBack(std::move(singleFrameObject));
 	}

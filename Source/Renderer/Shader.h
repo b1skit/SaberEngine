@@ -72,7 +72,7 @@ namespace re
 		inline PlatformParams* GetPlatformParams() const;
 		inline void SetPlatformParams(std::unique_ptr<PlatformParams> params);
 
-		uint8_t GetVertexAttributeSlot(re::VertexStream::Type, uint8_t semanticIdx) const;
+		uint8_t GetVertexAttributeSlot(gr::VertexStream::Type, uint8_t semanticIdx) const;
 		re::VertexStreamMap const* GetVertexStreamMap() const;
 
 
@@ -159,7 +159,7 @@ namespace re
 	}
 
 
-	inline uint8_t Shader::GetVertexAttributeSlot(re::VertexStream::Type streamType, uint8_t semanticIdx) const
+	inline uint8_t Shader::GetVertexAttributeSlot(gr::VertexStream::Type streamType, uint8_t semanticIdx) const
 	{
 		return m_vertexStreamMap->GetSlotIdx(streamType, semanticIdx);
 	}

@@ -1,25 +1,14 @@
-// © 2022 Adam Badke. All rights reserved.
-#include "Context_DX12.h"
-#include "MeshPrimitive.h"
-#include "RenderManager.h"
-#include "VertexStream_DX12.h"
-
-#include "Core/Util/TextUtils.h"
-
-#include <d3dx12.h>
-#include <d3d12.h>
-#include <dxgi1_6.h>
-
-using Microsoft::WRL::ComPtr;
+// © 2024 Adam Badke. All rights reserved.
+#include "EnumTypes_DX12.h"
 
 
 namespace dx12
 {
-	DXGI_FORMAT VertexStream::GetDXGIStreamFormat(re::DataType dataType, bool isNormalized)
+	constexpr DXGI_FORMAT DataTypeToDXGI_FORMAT(re::DataType dataType, bool isNormalized)
 	{
 		switch (dataType)
 		{
-		case re::DataType::Float: return DXGI_FORMAT_R32_FLOAT;			
+		case re::DataType::Float: return DXGI_FORMAT_R32_FLOAT;
 		case re::DataType::Float2: return DXGI_FORMAT_R32G32_FLOAT;
 		case re::DataType::Float3: return DXGI_FORMAT_R32G32B32_FLOAT;
 		case re::DataType::Float4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -41,9 +30,9 @@ namespace dx12
 		case re::DataType::Short4:
 			return isNormalized ? DXGI_FORMAT_R16G16B16A16_SNORM : DXGI_FORMAT_R16G16B16A16_SINT;
 
-		case re::DataType::UShort: 
+		case re::DataType::UShort:
 			return isNormalized ? DXGI_FORMAT_R16_UNORM : DXGI_FORMAT_R16_UINT;
-		case re::DataType::UShort2: 
+		case re::DataType::UShort2:
 			return isNormalized ? DXGI_FORMAT_R16G16_UNORM : DXGI_FORMAT_R16G16_UINT;
 		case re::DataType::UShort4:
 			return isNormalized ? DXGI_FORMAT_R16G16B16A16_UNORM : DXGI_FORMAT_R16G16B16A16_UINT;
@@ -57,43 +46,12 @@ namespace dx12
 
 		case re::DataType::UByte:
 			return isNormalized ? DXGI_FORMAT_R8_UNORM : DXGI_FORMAT_R8_UINT;
-		case re::DataType::UByte2: 
+		case re::DataType::UByte2:
 			return isNormalized ? DXGI_FORMAT_R8G8_UNORM : DXGI_FORMAT_R8G8_UINT;
-		case re::DataType::UByte4: 
+		case re::DataType::UByte4:
 			return isNormalized ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R8G8B8A8_UINT;
-		default: SEAssertF("Invalid stream data type");
+		default: 
+			return DXGI_FORMAT_UNKNOWN; // Error
 		}
-
-		return DXGI_FORMAT_UNKNOWN; // This should never hapen
-	}
-
-
-	DXGI_FORMAT VertexStream::GetDXGIStreamFormat(re::VertexStream const& stream)
-	{
-		return GetDXGIStreamFormat(stream.GetDataType(), stream.DoNormalize());
-	}
-
-
-	std::unique_ptr<re::VertexStream::PlatformParams> VertexStream::CreatePlatformParams(re::VertexStream const&)
-	{
-		return std::make_unique<dx12::VertexStream::PlatformParams>();
-	}
-
-
-	/******************************************************************************************************************/
-
-
-	void VertexStream::Create(
-		re::VertexStream const& stream, 
-		dx12::CommandList* copyCmdList,
-		std::vector<ComPtr<ID3D12Resource>>& intermediateResources)
-	{
-		// Do nothing; Most of the heavy lifting is handled by the re::Buffer
-	}
-
-
-	void VertexStream::Destroy(re::VertexStream const& stream)
-	{
-		//
 	}
 }

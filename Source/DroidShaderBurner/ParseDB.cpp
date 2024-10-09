@@ -82,7 +82,7 @@ namespace
 				});
 			numStreams++;
 
-			if (numStreams > re::VertexStream::k_maxVertexStreams)
+			if (numStreams > gr::VertexStream::k_maxVertexStreams)
 			{
 				std::cout << "Error: Trying to add too many vertex streams\n";
 				return droid::ErrorCode::JSONError;

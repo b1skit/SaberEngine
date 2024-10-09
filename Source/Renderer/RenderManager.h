@@ -116,7 +116,6 @@ namespace re
 
 		static constexpr size_t k_newObjectReserveAmount = 128;
 		util::NBufferedVector<std::shared_ptr<re::Shader>> m_newShaders;
-		util::NBufferedVector<std::shared_ptr<re::VertexStream>> m_newVertexStreams;
 		util::NBufferedVector<std::shared_ptr<re::Texture>> m_newTextures;
 		util::NBufferedVector<std::shared_ptr<re::Sampler>> m_newSamplers;
 		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;
@@ -132,7 +131,7 @@ namespace re
 		void RegisterSingleFrameResource(std::shared_ptr<T>);
 
 	private:
-		util::NBufferedVector<std::shared_ptr<re::VertexStream>> m_singleFrameVertexStreams;
+		util::NBufferedVector<std::shared_ptr<gr::VertexStream>> m_singleFrameVertexStreams;
 
 
 	private:

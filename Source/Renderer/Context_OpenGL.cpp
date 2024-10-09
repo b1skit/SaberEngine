@@ -1,11 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context_OpenGL.h"
 #include "Context.h"
+#include "EnumTypes_OpenGL.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "SysInfo_OpenGL.h"
-#include "VertexStream.h"
-#include "VertexStream_OpenGL.h"
 #include "Window_Win32.h"
 
 #include "Core/Assert.h"
@@ -473,7 +472,7 @@ namespace opengl
 		re::Batch::VertexBufferInput const* vertexBuffers, uint8_t count, re::Buffer const* indexBuffer)
 	{
 		SEAssert(vertexBuffers && count > 0, "Invalid vertex streams");
-		SEAssert(count <= re::VertexStream::k_maxVertexStreams, "Received more vertex streams that allowed slots");
+		SEAssert(count <= gr::VertexStream::k_maxVertexStreams, "Received more vertex streams that allowed slots");
 
 		uint64_t vaoHash = 0;
 
@@ -558,9 +557,9 @@ namespace opengl
 					
 					// Define our vertex layout:
 					glVertexAttribFormat(
-						slotIdx,																	// Attribute index
-						DataTypeToNumComponents(bufferParams.m_vertexStreamView.m_dataType),		// size: 1/2/3/4 						
-						VertexStream::GetComponentGLDataType(bufferParams.m_vertexStreamView.m_dataType),	// Data type
+						slotIdx,																// Attribute index
+						DataTypeToNumComponents(bufferParams.m_vertexStreamView.m_dataType),	// size: 1/2/3/4 						
+						DataTypeToGLDataType(bufferParams.m_vertexStreamView.m_dataType),		// Data type
 						bufferParams.m_vertexStreamView.m_isNormalized,							// Normalize data?
 						relativeOffset);							// relativeOffset: Distance between buffer elements
 

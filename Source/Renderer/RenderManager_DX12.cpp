@@ -10,7 +10,6 @@
 #include "SwapChain_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
-#include "VertexStream_DX12.h"
 
 #include "Core/Assert.h"
 #include "Core/ProfilingMarkers.h"
@@ -62,9 +61,7 @@ namespace dx12
 		}
 		dx12RenderManager.m_intermediateResources[intermediateIdx].clear();
 
-		const bool hasDataToCopy = 
-			renderManager.m_newVertexStreams.HasReadData() ||
-			renderManager.m_newTextures.HasReadData();
+		const bool hasDataToCopy = renderManager.m_newTextures.HasReadData();
 
 		// Handle anything that requires a copy queue:		
 		if (hasDataToCopy)
@@ -74,15 +71,6 @@ namespace dx12
 
 			// TODO: Get multiple command lists, and record on multiple threads:
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
-
-			// Vertex streams:
-			if (renderManager.m_newVertexStreams.HasReadData())
-			{
-				for (auto& newVertexStream : renderManager.m_newVertexStreams.GetReadData())
-				{
-					dx12::VertexStream::Create(*newVertexStream, copyCommandList.get(), intermediateResources);
-				}
-			}
 
 			// Textures:
 			if (renderManager.m_newTextures.HasReadData())

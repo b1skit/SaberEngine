@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
+#include "EnumTypes_DX12.h"
 #include "MeshPrimitive.h"
 #include "PipelineState.h"
 #include "PipelineState_DX12.h"
@@ -10,7 +11,6 @@
 #include "Texture_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_DX12.h"
-#include "VertexStream_DX12.h"
 
 #include "Core/Assert.h"
 #include "Core/Util/TextUtils.h"
@@ -48,11 +48,11 @@ namespace
 	};
 
 
-	inline constexpr char const* VertexStreamTypeToSemanticName(re::VertexStream::Type streamType, uint8_t semanticIdx)
+	inline constexpr char const* VertexStreamTypeToSemanticName(gr::VertexStream::Type streamType, uint8_t semanticIdx)
 	{
 		switch (streamType)
 		{
-		case re::VertexStream::Type::Position:
+		case gr::VertexStream::Type::Position:
 		{
 			if (semanticIdx == 0)
 			{
@@ -61,14 +61,14 @@ namespace
 			return "POSITION";
 		}
 		break;
-		case re::VertexStream::Type::Normal: return "NORMAL";
-		case re::VertexStream::Type::Binormal: return "BINORMAL";
-		case re::VertexStream::Type::Tangent: return "TANGENT";
-		case re::VertexStream::Type::TexCoord: return "TEXCOORD";
-		case re::VertexStream::Type::Color: return "COLOR";
-		case re::VertexStream::Type::BlendIndices: return "BLENDINDICES";
-		case re::VertexStream::Type::BlendWeight: return "BLENDWEIGHT";
-		//case re::VertexStream::Type::PointSize: return "PSIZE";
+		case gr::VertexStream::Type::Normal: return "NORMAL";
+		case gr::VertexStream::Type::Binormal: return "BINORMAL";
+		case gr::VertexStream::Type::Tangent: return "TANGENT";
+		case gr::VertexStream::Type::TexCoord: return "TEXCOORD";
+		case gr::VertexStream::Type::Color: return "COLOR";
+		case gr::VertexStream::Type::BlendIndices: return "BLENDINDICES";
+		case gr::VertexStream::Type::BlendWeight: return "BLENDWEIGHT";
+		//case gr::VertexStream::Type::PointSize: return "PSIZE";
 		default: return "INVALID_RE_VERTEX_STREAM_TYPE";
 		}
 	}
@@ -92,7 +92,7 @@ namespace
 				VertexStreamTypeToSemanticName(
 					entry.m_streamKey.m_streamType, entry.m_streamKey.m_semanticIdx),	// Semantic name
 				entry.m_streamKey.m_semanticIdx,										// Semantic idx
-				dx12::VertexStream::GetDXGIStreamFormat(entry.m_streamDataType, false),	// Format
+				dx12::DataTypeToDXGI_FORMAT(entry.m_streamDataType, false),				// Format
 				entry.m_shaderSlotIdx,													// Input slot [0, 15]
 				D3D12_APPEND_ALIGNED_ELEMENT,											// Aligned byte offset
 				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,								// Input slot class

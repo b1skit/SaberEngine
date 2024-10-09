@@ -128,6 +128,8 @@
     <ClInclude Include="EffectDB.h" />
     <ClInclude Include="EffectKeys.h" />
     <ClInclude Include="EnumTypes.h" />
+    <ClInclude Include="EnumTypes_DX12.h" />
+    <ClInclude Include="EnumTypes_OpenGL.h" />
     <ClInclude Include="Fence_DX12.h" />
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
     <ClInclude Include="GraphicsSystem.h" />
@@ -203,9 +205,6 @@
     <ClInclude Include="VertexStream.h" />
     <ClInclude Include="VertexStreamBuilder.h" />
     <ClInclude Include="VertexStreamMap.h" />
-    <ClInclude Include="VertexStream_DX12.h" />
-    <ClInclude Include="VertexStream_OpenGL.h" />
-    <ClInclude Include="VertexStream_Platform.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="Window_Platform.h" />
     <ClInclude Include="Window_Win32.h" />
@@ -244,6 +243,8 @@
     <ClCompile Include="Effect.cpp" />
     <ClCompile Include="EffectDB.cpp" />
     <ClCompile Include="EnumTypes.cpp" />
+    <ClCompile Include="EnumTypes_DX12.cpp" />
+    <ClCompile Include="EnumTypes_OpenGL.cpp" />
     <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
     <ClCompile Include="GraphicsSystem.cpp" />
@@ -321,9 +322,6 @@
     <ClCompile Include="TransformRenderData.cpp" />
     <ClCompile Include="VertexStream.cpp" />
     <ClCompile Include="VertexStreamBuilder.cpp" />
-    <ClCompile Include="VertexStream_DX12.cpp" />
-    <ClCompile Include="VertexStream_OpenGL.cpp" />
-    <ClCompile Include="VertexStream_Platform.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="Window_Platform.cpp" />
     <ClCompile Include="Window_Win32.cpp" />

@@ -48,7 +48,7 @@ namespace
 #if defined(_DEBUG)
 
 		std::unordered_set<uint8_t> seenSlots;
-		seenSlots.reserve(re::VertexStream::k_maxVertexStreams);
+		seenSlots.reserve(gr::VertexStream::k_maxVertexStreams);
 
 		SEAssert(vertexBuffers[0].m_vertexBuffer, "Must have at least 1 non-null vertex stream");
 		
@@ -388,7 +388,7 @@ namespace re
 			for (uint8_t i = 0; i < m_graphicsParams.m_numVertexBuffers; ++i)
 			{
 				// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-				const re::VertexStream::Type curStreamType = 
+				const gr::VertexStream::Type curStreamType = 
 					m_graphicsParams.m_vertexBuffers[i].m_vertexBuffer->GetBufferParams().m_vertexStreamView.m_type;
 
 				// Find consecutive streams with the same type, and resolve the final vertex slot from the shader

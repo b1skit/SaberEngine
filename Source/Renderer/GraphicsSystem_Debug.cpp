@@ -43,19 +43,19 @@ namespace
 
 		const re::Lifetime streamLifetime = batchLifetime;
 
-		std::shared_ptr<re::VertexStream> axisPositionStream = re::VertexStream::Create(
-			re::VertexStream::StreamDesc{
+		std::shared_ptr<gr::VertexStream> axisPositionStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
-				.m_type = re::VertexStream::Type::Position,
+				.m_type = gr::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(axisPositions),
 			false);
 
-		std::shared_ptr<re::VertexStream> axisColorStream = re::VertexStream::Create(
-			re::VertexStream::StreamDesc{
+		std::shared_ptr<gr::VertexStream> axisColorStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
-				.m_type = re::VertexStream::Type::Color,
+				.m_type = gr::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
 			std::move(axisColors),
@@ -139,28 +139,28 @@ namespace
 
 		const re::Lifetime streamLifetime = batchLifetime;
 
-		std::shared_ptr<re::VertexStream> boxPositionsStream = re::VertexStream::Create(
-			re::VertexStream::StreamDesc{
+		std::shared_ptr<gr::VertexStream> boxPositionsStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
-				.m_type = re::VertexStream::Type::Position,
+				.m_type = gr::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(boxPositions),
 			false);
 
-		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
-			re::VertexStream::StreamDesc{
+		std::shared_ptr<gr::VertexStream> boxColorStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
-				.m_type = re::VertexStream::Type::Color,
+				.m_type = gr::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
 			std::move(boxColors),
 			false);
 
-		std::shared_ptr<re::VertexStream> boxIndexStream = re::VertexStream::Create(
-			re::VertexStream::StreamDesc{
+		std::shared_ptr<gr::VertexStream> boxIndexStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
-				.m_type = re::VertexStream::Type::Index,
+				.m_type = gr::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(boxIndexes),
@@ -190,15 +190,15 @@ namespace
 		re::Lifetime batchLifetime,
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData)
 	{
-		re::VertexStream const* normalStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
-				meshPrimRenderData, re::VertexStream::Type::Normal);
+		gr::VertexStream const* normalStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+				meshPrimRenderData, gr::VertexStream::Type::Normal);
 		if (normalStream == nullptr)
 		{
 			return nullptr; // No normals? Nothing to build
 		}
 
-		re::VertexStream const* positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
-			meshPrimRenderData, re::VertexStream::Type::Position);
+		gr::VertexStream const* positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+			meshPrimRenderData, gr::VertexStream::Type::Position);
 		SEAssert(positionStream, "Cannot find position stream");
 
 		SEAssert(positionStream->GetDataType() == re::DataType::Float3 && 
@@ -269,28 +269,28 @@ namespace
 
 		const re::Lifetime streamLifetime = batchLifetime;
 
-		std::shared_ptr<re::VertexStream> frustumPositionsStream = re::VertexStream::Create(
-			re::VertexStream::StreamDesc{
+		std::shared_ptr<gr::VertexStream> frustumPositionsStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
-				.m_type = re::VertexStream::Type::Position,
+				.m_type = gr::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(frustumPositions),
 			false);
 
-		std::shared_ptr<re::VertexStream> frustumColorStream = re::VertexStream::Create(
-			re::VertexStream::StreamDesc{
+		std::shared_ptr<gr::VertexStream> frustumColorStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
-				.m_type = re::VertexStream::Type::Color,
+				.m_type = gr::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
 			std::move(frustumColors),
 			false);
 
-		std::shared_ptr<re::VertexStream> frustumIndexStream = re::VertexStream::Create(
-			re::VertexStream::StreamDesc{
+		std::shared_ptr<gr::VertexStream> frustumIndexStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
-				.m_type = re::VertexStream::Type::Index,
+				.m_type = gr::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(frustumIndexes),
@@ -321,10 +321,10 @@ namespace
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
 		glm::vec3 const& meshColor)
 	{
-		re::VertexStream const* positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
-			meshPrimRenderData, re::VertexStream::Type::Position);
+		gr::VertexStream const* positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+			meshPrimRenderData, gr::VertexStream::Type::Position);
 
-		re::VertexStream const* indexStream = meshPrimRenderData.m_indexStream;
+		gr::VertexStream const* indexStream = meshPrimRenderData.m_indexStream;
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
 		const glm::vec4 meshColorVec4 = glm::vec4(meshColor, 1.f);
@@ -332,10 +332,10 @@ namespace
 
 		const re::Lifetime streamLifetime = batchLifetime;
 
-		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
-			re::VertexStream::StreamDesc{
+		std::shared_ptr<gr::VertexStream> boxColorStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
-				.m_type = re::VertexStream::Type::Color,
+				.m_type = gr::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
 			std::move(meshColors),

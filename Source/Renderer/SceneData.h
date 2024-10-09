@@ -35,7 +35,7 @@ namespace re
 
 		// Geometry:
 		bool AddUniqueMeshPrimitive(std::shared_ptr<gr::MeshPrimitive>&); // Returns true if incoming ptr is modified
-		bool AddUniqueVertexStream(std::shared_ptr<re::VertexStream>&); // Returns true if incoming ptr is modified
+		bool AddUniqueVertexStream(std::shared_ptr<gr::VertexStream>&); // Returns true if incoming ptr is modified
 
 		// Textures:
 		bool AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture); // Returns true if incoming ptr is modified
@@ -63,7 +63,7 @@ namespace re
 		std::unordered_map<DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 		mutable std::mutex m_meshPrimitivesMutex;
 
-		std::unordered_map<DataHash, std::shared_ptr<re::VertexStream>> m_vertexStreams;
+		std::unordered_map<DataHash, std::shared_ptr<gr::VertexStream>> m_vertexStreams;
 		std::mutex m_vertexStreamsMutex;
 
 		std::unordered_map<util::StringHash, std::shared_ptr<re::Texture>> m_textures;

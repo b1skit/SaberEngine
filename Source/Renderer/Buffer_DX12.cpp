@@ -4,9 +4,9 @@
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "EnumTypes.h"
+#include "EnumTypes_DX12.h"
 #include "Fence_DX12.h"
 #include "RenderManager.h"
-#include "VertexStream_DX12.h"
 
 #include "Core/Assert.h"
 
@@ -259,13 +259,12 @@ namespace dx12
 		{
 			switch (buffer.GetBufferParams().m_vertexStreamView.m_type)
 			{
-			case re::VertexStream::Type::Index:
+			case gr::VertexStream::Type::Index:
 			{
 				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
 					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
 					.SizeInBytes = bufferSize,
-					.Format = dx12::VertexStream::GetDXGIStreamFormat(
-						bufferParams.m_vertexStreamView.m_dataType, false),
+					.Format = dx12::DataTypeToDXGI_FORMAT(bufferParams.m_vertexStreamView.m_dataType, false),
 				};
 			}
 			break;

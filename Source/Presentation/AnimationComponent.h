@@ -350,7 +350,7 @@ namespace fr
 
 
 	private:
-		std::array<float, re::VertexStream::k_maxVertexStreams> m_morphWeights;
+		std::array<float, gr::VertexStream::k_maxVertexStreams> m_morphWeights;
 	};
 
 

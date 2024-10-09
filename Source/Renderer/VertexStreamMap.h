@@ -21,8 +21,8 @@ namespace re
 	public:
 		static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
 
-		uint8_t GetSlotIdx(re::VertexStream::Type, uint8_t semanticIdx) const;
-		void SetSlotIdx(re::VertexStream::Type, uint8_t semanticIdx, re::DataType, uint8_t slotIdx);
+		uint8_t GetSlotIdx(gr::VertexStream::Type, uint8_t semanticIdx) const;
+		void SetSlotIdx(gr::VertexStream::Type, uint8_t semanticIdx, re::DataType, uint8_t slotIdx);
 
 		uint8_t GetNumSlots() const;
 
@@ -33,7 +33,7 @@ namespace re
 	public:
 		struct VertexStreamKey
 		{
-			re::VertexStream::Type m_streamType; // Name portion of the semantic: E.g. NORMAL0 -> Type::Normal
+			gr::VertexStream::Type m_streamType; // Name portion of the semantic: E.g. NORMAL0 -> Type::Normal
 			uint8_t m_semanticIdx;	// Numeric part of the semantic. E.g. NORMAL0 -> 0
 		};
 		struct VertexStreamMetadata
@@ -48,7 +48,7 @@ namespace re
 	private:
 		uint8_t m_numAttributes;
 
-		std::array<VertexStreamMetadata, re::VertexStream::k_maxVertexStreams> m_slotLayout; // Sorted by m_streamKey
+		std::array<VertexStreamMetadata, gr::VertexStream::k_maxVertexStreams> m_slotLayout; // Sorted by m_streamKey
 
 
 		struct StreamMetadataComparator
@@ -115,7 +115,7 @@ namespace re
 	}
 
 
-	inline uint8_t VertexStreamMap::GetSlotIdx(re::VertexStream::Type streamType, uint8_t semanticIdx) const
+	inline uint8_t VertexStreamMap::GetSlotIdx(gr::VertexStream::Type streamType, uint8_t semanticIdx) const
 	{
 		auto result = std::lower_bound( // Find 1st element >=
 			m_slotLayout.begin(),
@@ -134,14 +134,14 @@ namespace re
 
 
 	inline void VertexStreamMap::SetSlotIdx(
-		re::VertexStream::Type streamType,
+		gr::VertexStream::Type streamType,
 		uint8_t semanticIdx,
 		re::DataType dataType,
 		uint8_t slotIdx)
 	{
-		SEAssert(m_numAttributes <= re::VertexStream::k_maxVertexStreams, "Vertex stream map is full");
-		SEAssert(semanticIdx < re::VertexStream::k_maxVertexStreams &&
-			slotIdx < re::VertexStream::k_maxVertexStreams,
+		SEAssert(m_numAttributes <= gr::VertexStream::k_maxVertexStreams, "Vertex stream map is full");
+		SEAssert(semanticIdx < gr::VertexStream::k_maxVertexStreams &&
+			slotIdx < gr::VertexStream::k_maxVertexStreams,
 			"OOB index received");
 
 		auto result = std::lower_bound( // Find 1st element >=

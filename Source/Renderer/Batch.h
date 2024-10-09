@@ -72,7 +72,7 @@ namespace re
 			uint32_t m_numInstances = 0;
 			gr::MeshPrimitive::PrimitiveTopology m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 
-			VertexBufferInput m_vertexBuffers[re::VertexStream::k_maxVertexStreams] = {0};
+			VertexBufferInput m_vertexBuffers[gr::VertexStream::k_maxVertexStreams] = {0};
 			uint8_t m_numVertexBuffers = 0;
 
 			re::Buffer const* m_indexBuffer = nullptr;

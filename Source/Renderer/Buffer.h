@@ -71,7 +71,7 @@ namespace re
 
 			struct VertexStreamView
 			{
-				re::VertexStream::Type m_type;
+				gr::VertexStream::Type m_type;
 				re::DataType m_dataType;
 				bool m_isNormalized;
 				uint32_t m_numElements;

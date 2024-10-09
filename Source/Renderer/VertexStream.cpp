@@ -3,7 +3,6 @@
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "VertexStream.h"
-#include "VertexStream_Platform.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -77,28 +76,28 @@ namespace
 	}
 
 
-	constexpr char const* TypeToCStr(re::VertexStream::Type type)
+	constexpr char const* TypeToCStr(gr::VertexStream::Type type)
 	{
 		switch (type)
 		{
-		case re::VertexStream::Type::Position: return "Position";
-		case re::VertexStream::Type::Normal: return "Normal";
-		case re::VertexStream::Type::Binormal: return "Binormal";
-		case re::VertexStream::Type::Tangent: return "Tangent";
-		case re::VertexStream::Type::TexCoord: return "TexCoord";
-		case re::VertexStream::Type::Color: return "Color";
-		case re::VertexStream::Type::BlendIndices: return "BlendIndices";
-		case re::VertexStream::Type::BlendWeight: return "BlendWeight";
-		case re::VertexStream::Type::Index: return "Index";
+		case gr::VertexStream::Type::Position: return "Position";
+		case gr::VertexStream::Type::Normal: return "Normal";
+		case gr::VertexStream::Type::Binormal: return "Binormal";
+		case gr::VertexStream::Type::Tangent: return "Tangent";
+		case gr::VertexStream::Type::TexCoord: return "TexCoord";
+		case gr::VertexStream::Type::Color: return "Color";
+		case gr::VertexStream::Type::BlendIndices: return "BlendIndices";
+		case gr::VertexStream::Type::BlendWeight: return "BlendWeight";
+		case gr::VertexStream::Type::Index: return "Index";
 		default: return "INVALID_TYPE";
 		}
 	}
 }
 
 
-namespace re
+namespace gr
 {
-	std::shared_ptr<re::VertexStream> VertexStream::Create(
+	std::shared_ptr<gr::VertexStream> VertexStream::Create(
 		StreamDesc const& createParams, util::ByteVector&& data, bool queueBufferCreate /*= true*/)
 	{
 		// NOTE: Currently we need to defer creating the VertexStream's backing re::Buffer from the front end thread 
@@ -109,13 +108,11 @@ namespace re
 
 		
 		// Currently, we pass the data to the ctor by reference so it can be normalized. We move it to the buffer later
-		std::shared_ptr<re::VertexStream> newVertexStream;
+		std::shared_ptr<gr::VertexStream> newVertexStream;
 		newVertexStream.reset(new VertexStream(createParams, data, isNormalized));
 		
 		if (createParams.m_lifetime == re::Lifetime::SingleFrame)
 		{
-			re::RenderManager::Get()->RegisterSingleFrameResource(newVertexStream);
-			re::RenderManager::Get()->RegisterForCreate(newVertexStream);
 			didCreate = true;
 		}
 		else
@@ -123,7 +120,6 @@ namespace re
 			bool duplicateExists = re::RenderManager::GetSceneData()->AddUniqueVertexStream(newVertexStream);
 			if (!duplicateExists)
 			{
-				re::RenderManager::Get()->RegisterForCreate(newVertexStream);
 				didCreate = true;
 			}
 		}
@@ -158,7 +154,7 @@ namespace re
 				{
 				public:
 					CreateBufferDeferred(
-						re::VertexStream* vertexStream,
+						gr::VertexStream* vertexStream,
 						std::string bufferName,
 						util::ByteVector&& data,
 						re::Buffer::BufferParams bufferParams)
@@ -188,7 +184,7 @@ namespace re
 						cmdPtr->~CreateBufferDeferred();
 					}
 				private:
-					re::VertexStream* m_vertexStream;
+					gr::VertexStream* m_vertexStream;
 					std::string m_bufferName;
 					std::unique_ptr<util::ByteVector> m_data;
 					re::Buffer::BufferParams m_bufferParams;
@@ -212,7 +208,7 @@ namespace re
 	}
 
 
-	std::shared_ptr<re::VertexStream> VertexStream::Create(CreateParams&& createParams, bool queueBufferCreate /*= true*/)
+	std::shared_ptr<gr::VertexStream> VertexStream::Create(CreateParams&& createParams, bool queueBufferCreate /*= true*/)
 	{
 		return Create(createParams.m_streamDesc, std::move(*createParams.m_streamData.get()), queueBufferCreate);
 	}
@@ -220,14 +216,13 @@ namespace re
 
 	VertexStream::VertexStream(StreamDesc const& createParams, util::ByteVector& data, bool& isNormalizedOut)
 		: m_streamDesc(createParams)
-		, m_platformParams(nullptr)
 	{
-		SEAssert(m_streamDesc.m_type != Type::Type_Count && m_streamDesc.m_dataType != DataType::DataType_Count,
+		SEAssert(m_streamDesc.m_type != Type::Type_Count && m_streamDesc.m_dataType != re::DataType::DataType_Count,
 			"Invalid create params");
 
 		SEAssert(m_streamDesc.m_type != Type::Index || 
-			(m_streamDesc.m_dataType == DataType::UShort && data.IsScalarType<uint16_t>()) ||
-			(m_streamDesc.m_dataType == DataType::UInt && data.IsScalarType<uint32_t>()),
+			(m_streamDesc.m_dataType == re::DataType::UShort && data.IsScalarType<uint16_t>()) ||
+			(m_streamDesc.m_dataType == re::DataType::UInt && data.IsScalarType<uint32_t>()),
 			"Invalid index data");
 
 		bool isNormalized = false;
@@ -260,8 +255,6 @@ namespace re
 
 		isNormalizedOut = isNormalized; 
 
-		m_platformParams = platform::VertexStream::CreatePlatformParams(*this);
-
 		// Hash the incoming data before it is moved to the BufferAllocator:
 		AddDataBytesToHash(data.data().data(), data.GetTotalNumBytes());
 
@@ -278,7 +271,7 @@ namespace re
 
 	void VertexStream::Destroy()
 	{
-		platform::VertexStream::Destroy(*this);
+		m_streamBuffer = nullptr;
 	}
 
 

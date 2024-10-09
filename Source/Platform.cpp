@@ -38,10 +38,6 @@
 #include "Renderer/TextureTarget_OpenGL.h"
 #include "Renderer/TextureTarget_Platform.h"
 
-#include "Renderer/VertexStream_DX12.h"
-#include "Renderer/VertexStream_OpenGL.h"
-#include "Renderer/VertexStream_Platform.h"
-
 #include "Renderer/Window_Platform.h"
 #include "Renderer/Window_Win32.h"
 
@@ -133,9 +129,6 @@ namespace platform
 			// Texture Samplers:
 			platform::Sampler::Create	= &opengl::Sampler::Create;
 			platform::Sampler::Destroy	= &opengl::Sampler::Destroy;
-
-			// Vertex stream:
-			platform::VertexStream::Destroy					= &opengl::VertexStream::Destroy;
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -176,9 +169,6 @@ namespace platform
 			// Texture Samplers:
 			platform::Sampler::Create	= &dx12::Sampler::Create;
 			platform::Sampler::Destroy	= &dx12::Sampler::Destroy;
-
-			// Vertex stream:
-			platform::VertexStream::Destroy					= &dx12::VertexStream::Destroy;
 		}
 		break;
 		default:

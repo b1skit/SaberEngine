@@ -11,17 +11,13 @@
 namespace re
 {
 	class Buffer;
+}
 
-
+namespace gr
+{
 	class VertexStream : public virtual core::IHashedDataObject
 	{
 	public:
-		struct PlatformParams : public core::IPlatformParams
-		{
-			virtual ~PlatformParams() = 0;
-		};
-
-
 		static constexpr uint8_t k_maxVertexStreams = 16;
 
 
@@ -68,7 +64,7 @@ namespace re
 
 			IsMorphData m_isMorphData = IsMorphData::False;
 
-			re::DataType m_dataType = DataType::DataType_Count; // Per component in each element. Eg. Color/Float4 == Float
+			re::DataType m_dataType = re::DataType::DataType_Count; // Per component in each element. Eg. Color/Float4 == Float
 			Normalize m_doNormalize = Normalize::False;
 		};
 
@@ -77,12 +73,12 @@ namespace re
 		struct MorphCreateParams
 		{
 			std::unique_ptr<util::ByteVector> m_streamData;
-			re::VertexStream::StreamDesc m_streamDesc{};
+			gr::VertexStream::StreamDesc m_streamDesc{};
 		};
 		struct CreateParams
 		{
 			std::unique_ptr<util::ByteVector> m_streamData;
-			re::VertexStream::StreamDesc m_streamDesc{};
+			gr::VertexStream::StreamDesc m_streamDesc{};
 			uint8_t m_streamIdx = std::numeric_limits<uint8_t>::max();
 
 			std::vector<MorphCreateParams> m_morphTargetData;
@@ -90,10 +86,10 @@ namespace re
 
 
 	public:
-		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(
+		[[nodiscard]] static std::shared_ptr<gr::VertexStream> Create(
 			StreamDesc const&, util::ByteVector&&, bool queueBufferCreate = true);
 
-		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(CreateParams&&, bool queueBufferCreate = true);
+		[[nodiscard]] static std::shared_ptr<gr::VertexStream> Create(CreateParams&&, bool queueBufferCreate = true);
 
 		VertexStream(VertexStream&&) noexcept = default;
 		VertexStream& operator=(VertexStream&&) noexcept = default;
@@ -106,15 +102,13 @@ namespace re
 
 		bool IsMorphData() const;
 
-		DataType GetDataType() const; // What data type does each individual component have?
+		re::DataType GetDataType() const; // What data type does each individual component have?
 		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
 
 		uint32_t GetTotalDataByteSize() const;
 		uint32_t GetNumElements() const; // How many vertices-worth of attributes do we have?
 
 		re::Buffer const* GetBuffer() const;
-
-		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 
 
 	public:
@@ -133,8 +127,6 @@ namespace re
 		StreamDesc m_streamDesc;
 
 		std::shared_ptr<re::Buffer> m_streamBuffer;
-
-		std::unique_ptr<PlatformParams> m_platformParams;
 
 
 	private: // Use the Create() factory instead
@@ -187,8 +179,4 @@ namespace re
 		default: return "INVALID_VERTEX_STREAM_TYPE_ENUM_RECEIVED";
 		}
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline re::VertexStream::PlatformParams::~PlatformParams() {};
 }

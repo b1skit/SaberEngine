@@ -109,7 +109,7 @@ namespace re
 	}
 
 
-	bool SceneData::AddUniqueVertexStream(std::shared_ptr<re::VertexStream>& vertexStream)
+	bool SceneData::AddUniqueVertexStream(std::shared_ptr<gr::VertexStream>& vertexStream)
 	{
 		const uint64_t vertexStreamDataHash = vertexStream->GetDataHash();
 		bool replacedIncomingPtr = false;

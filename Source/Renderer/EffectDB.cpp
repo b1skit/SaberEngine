@@ -219,21 +219,21 @@ namespace
 	}
 
 
-	inline re::VertexStream::Type SemanticNameToStreamType(std::string const& semanticName)
+	inline gr::VertexStream::Type SemanticNameToStreamType(std::string const& semanticName)
 	{
-		static const std::unordered_map<util::HashKey const, re::VertexStream::Type> s_semanticLowerToStreamType =
+		static const std::unordered_map<util::HashKey const, gr::VertexStream::Type> s_semanticLowerToStreamType =
 		{
-			{ util::HashKey("position"),		re::VertexStream::Type::Position },
-			{ util::HashKey("sv_position"),		re::VertexStream::Type::Position },
-			{ util::HashKey("normal"),			re::VertexStream::Type::Normal },
-			{ util::HashKey("binormal"),		re::VertexStream::Type::Binormal },
-			{ util::HashKey("tangent"),			re::VertexStream::Type::Tangent },
-			{ util::HashKey("texcoord"),		re::VertexStream::Type::TexCoord },
-			{ util::HashKey("color"),			re::VertexStream::Type::Color },
-			{ util::HashKey("blendindices"),	re::VertexStream::Type::BlendIndices },
-			{ util::HashKey("blendweight"),		re::VertexStream::Type::BlendWeight },
-			/*{ util::HashKey("pointsize"),		re::VertexStream::Type::PointSize },*/
-			{ util::HashKey("index"),			re::VertexStream::Type::Index },
+			{ util::HashKey("position"),		gr::VertexStream::Type::Position },
+			{ util::HashKey("sv_position"),		gr::VertexStream::Type::Position },
+			{ util::HashKey("normal"),			gr::VertexStream::Type::Normal },
+			{ util::HashKey("binormal"),		gr::VertexStream::Type::Binormal },
+			{ util::HashKey("tangent"),			gr::VertexStream::Type::Tangent },
+			{ util::HashKey("texcoord"),		gr::VertexStream::Type::TexCoord },
+			{ util::HashKey("color"),			gr::VertexStream::Type::Color },
+			{ util::HashKey("blendindices"),	gr::VertexStream::Type::BlendIndices },
+			{ util::HashKey("blendweight"),		gr::VertexStream::Type::BlendWeight },
+			/*{ util::HashKey("pointsize"),		gr::VertexStream::Type::PointSize },*/
+			{ util::HashKey("index"),			gr::VertexStream::Type::Index },
 		};
 
 		const util::HashKey semanticNameLowerHashkey = util::HashKey::Create(util::ToLower(semanticName));
@@ -273,7 +273,7 @@ namespace
 			uint8_t semanticIdx = 0; // Assume 0 if no semantic index is specified (e.g. NORMAL, SV_Position, etc)
 			ExtractSemanticNameAndIndex(semanticName, semanticIdx);
 
-			const re::VertexStream::Type streamType = SemanticNameToStreamType(semanticName);
+			const gr::VertexStream::Type streamType = SemanticNameToStreamType(semanticName);
 			const re::DataType streamDataType = re::StrToDataType(dataType);
 
 			vertexStreamMap.SetSlotIdx(streamType, semanticIdx, streamDataType, slotIndex++);

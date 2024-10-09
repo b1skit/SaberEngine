@@ -302,9 +302,6 @@
     <ClInclude Include="TextureTarget_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="VertexStream_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
     <ClInclude Include="RenderManager_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
@@ -324,9 +321,6 @@
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="TextureTarget_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="VertexStream_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="Window_Platform.h">
@@ -353,9 +347,6 @@
     <ClInclude Include="TextureTarget_Platform.h">
       <Filter>Header Files\re\platform</Filter>
     </ClInclude>
-    <ClInclude Include="VertexStream_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
     <ClInclude Include="Window_Win32.h">
       <Filter>Header Files\re\win32</Filter>
     </ClInclude>
@@ -367,9 +358,6 @@
     </ClInclude>
     <ClInclude Include="ShadowMapRenderData.h">
       <Filter>Header Files\gr\RenderData</Filter>
-    </ClInclude>
-    <ClInclude Include="VertexStream.h">
-      <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="RenderObjectIDs.h">
       <Filter>Header Files\gr</Filter>
@@ -461,6 +449,15 @@
     <ClInclude Include="GraphicsSystem_BatchManager.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
+    <ClInclude Include="EnumTypes_OpenGL.h">
+      <Filter>Header Files\re\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="EnumTypes_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexStream.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -529,9 +526,6 @@
     <ClCompile Include="TextureTarget_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
-    <ClCompile Include="VertexStream_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
     <ClCompile Include="Buffer_OpenGL.cpp">
       <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
@@ -562,9 +556,6 @@
     <ClCompile Include="TextureTarget_OpenGL.cpp">
       <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="VertexStream_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="Buffer_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
@@ -590,9 +581,6 @@
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
     <ClCompile Include="TextureTarget_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="VertexStream_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
     <ClCompile Include="Window_Platform.cpp">
@@ -706,9 +694,6 @@
     <ClCompile Include="RenderDataManager.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="VertexStream.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
     <ClCompile Include="PipelineState.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
@@ -794,6 +779,15 @@
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsSystem_BatchManager.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumTypes_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumTypes_OpenGL.cpp">
+      <Filter>Source Files\re\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexStream.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
