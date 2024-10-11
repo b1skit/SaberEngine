@@ -398,7 +398,7 @@ namespace dx12
 					SEAssertF("TODO: Handle this resource type");
 				}
 				break;
-				case D3D_SHADER_INPUT_TYPE::D3D10_SIT_CBUFFER:
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_CBUFFER:
 				{
 					SEAssert(strcmp(inputBindingDesc.Name, "$Globals") != 0, "TODO: Handle root constants");
 					
@@ -428,7 +428,7 @@ namespace dx12
 					}
 				}
 				break;
-				case D3D_SHADER_INPUT_TYPE::D3D10_SIT_TBUFFER:
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_TBUFFER:
 				{
 					SEAssertF("TODO: Handle this resource type");
 				}
@@ -465,7 +465,7 @@ namespace dx12
 					}
 				}
 				break;
-				case D3D_SHADER_INPUT_TYPE::D3D10_SIT_SAMPLER:
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_SAMPLER:
 				{
 					std::shared_ptr<re::Sampler> sampler = 
 						re::Sampler::GetSampler(util::HashKey::Create(inputBindingDesc.Name));
@@ -503,8 +503,8 @@ namespace dx12
 					}
 				}
 				break;
-				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_RWTYPED:		// e.g. Compute texture targets
-				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_RWSTRUCTURED: // e.g. RW structured buffers
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED:		// e.g. Compute texture targets
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWSTRUCTURED:	// e.g. RW structured buffers
 				{
 					auto result = std::find_if(
 						rangeInputs[DescriptorType::UAV].begin(),
@@ -567,11 +567,11 @@ namespace dx12
 					}
 				}
 				break;
-				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_BYTEADDRESS:
-				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_RWBYTEADDRESS:
-				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_APPEND_STRUCTURED:
-				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_CONSUME_STRUCTURED:
-				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_BYTEADDRESS:
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWBYTEADDRESS:
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_APPEND_STRUCTURED:
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_CONSUME_STRUCTURED:
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
 				{
 					SEAssertF("TODO: Handle this resource type");
 				}
