@@ -113,6 +113,11 @@ namespace re
 		[[nodiscard]] static std::shared_ptr<re::Buffer> Create(
 			std::string const& bufferName, void const* dataArray, uint32_t numBytes, BufferParams const&);
 
+		// Create a buffer with no CPU-side staging data
+		[[nodiscard]] static std::shared_ptr<re::Buffer> Create(
+			std::string const& bufferName, uint32_t numBytes, BufferParams const&);
+
+
 	public:
 		Buffer(Buffer&&) noexcept = default;
 		Buffer& operator=(Buffer&&) noexcept = default;
@@ -315,7 +320,7 @@ namespace re
 		std::string const& bufferName, void const* data, uint32_t numBytes, BufferParams const& bufferParams)
 	{
 		SEAssert(bufferParams.m_stagingPool == re::Buffer::StagingPool::Temporary,
-			"Invalid AllocationType type: It's (currently) not possible to Commit() via a nullptr");
+			"Invalid staging pool: It's (currently) not possible to Commit() via a nullptr");
 
 		const uint64_t voidHashCode = typeid(void const*).hash_code();
 
@@ -323,6 +328,23 @@ namespace re
 		newBuffer.reset(new Buffer(voidHashCode, bufferName, bufferParams, numBytes));
 
 		RegisterAndCommit(newBuffer, data, numBytes, voidHashCode);
+
+		return newBuffer;
+	}
+
+
+	inline std::shared_ptr<re::Buffer> Buffer::Create(
+		std::string const& bufferName, uint32_t numBytes, BufferParams const& bufferParams)
+	{
+		SEAssert(bufferParams.m_stagingPool == re::Buffer::StagingPool::None,
+			"Invalid staging pool for a GPU-only buffer");
+
+		const uint64_t voidHashCode = typeid(void const*).hash_code();
+
+		std::shared_ptr<re::Buffer> newBuffer;
+		newBuffer.reset(new Buffer(voidHashCode, bufferName, bufferParams, numBytes));
+
+		RegisterAndCommit(newBuffer, nullptr, numBytes, voidHashCode);
 
 		return newBuffer;
 	}

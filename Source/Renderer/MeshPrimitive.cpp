@@ -43,6 +43,11 @@ namespace
 			SEAssert(!seenSlots[static_cast<uint8_t>(vertexStreams[i].m_vertexStream->GetType())].contains(
 				vertexStreams[i].m_typeIdx),
 				"Duplicate slot index detected");
+
+			// TODO: Re-enable this once we're no longer deferring vertex stream creation
+			/*SEAssert(i + 1 == vertexStreams.size() || 
+				vertexStreams[i].m_vertexStream->GetNumElements() == vertexStreams[i + 1].m_vertexStream->GetNumElements(),
+				"Found vertex streams with mis-matching number of elements. This is unexpected");*/
 			
 			seenSlots[static_cast<uint8_t>(vertexStreams[i].m_vertexStream->GetType())].emplace(
 				vertexStreams[i].m_typeIdx);

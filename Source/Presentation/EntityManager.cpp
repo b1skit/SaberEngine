@@ -143,8 +143,7 @@ namespace fr
 	{
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
-		auto componentsView = m_registry.view<
-			gr::RenderDataComponent, fr::NameComponent, DirtyMarker<CmptType>, CmptType, OtherCmpts...>();
+		auto componentsView = m_registry.view<gr::RenderDataComponent, DirtyMarker<CmptType>, CmptType, OtherCmpts...>();
 		for (auto entity : componentsView)
 		{
 			gr::RenderDataComponent const& renderDataComponent = componentsView.get<gr::RenderDataComponent>(entity);

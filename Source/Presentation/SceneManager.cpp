@@ -1074,6 +1074,8 @@ namespace
 					morphTargetData.emplace_back(std::move(morphCreateParams));
 				};
 
+			meshHasMorphTargets |= curPrimitive.targets_count > 0;
+
 			for (size_t targetIdx = 0; targetIdx < curPrimitive.targets_count; ++targetIdx)
 			{
 				cgltf_morph_target const& curTarget = curPrimitive.targets[targetIdx];

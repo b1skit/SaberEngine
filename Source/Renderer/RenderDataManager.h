@@ -211,7 +211,7 @@ namespace gr
 
 	public:
 		// Iterate over multiple data types, with each iteration's elements associated by gr::RenderDataID.
-		// This is slower than a LinearIterator, but elements of different data types are guaranteed to be assocaited
+		// This is slower than a LinearIterator, but elements of different data types are guaranteed to be associated
 		// with the same gr::RenderDataID.
 		// RenderDataManager iterators are not thread safe.
 		template <typename... Ts>

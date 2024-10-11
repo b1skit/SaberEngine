@@ -41,6 +41,9 @@ namespace
 	static_assert(_countof(k_shaderTypeDefines) == re::Shader::ShaderType_Count);
 
 
+	constexpr char const* k_dx12Flag = "SE_DX12";
+
+
 	void AppendCmdLineArg(std::wstring& cmdLineArgs, wchar_t const* flag, wchar_t const* arg)
 	{
 		if (flag)
@@ -181,6 +184,7 @@ namespace droid
 		}
 
 		// Defines:
+		AppendCmdLineArg(dxcCommandLineArgsW, L"-D", k_dx12Flag);
 		AppendCmdLineArg(dxcCommandLineArgsW, L"-D", k_shaderTypeDefines[shaderType]);
 		for (auto const& define : defines)
 		{
@@ -224,8 +228,7 @@ namespace droid
 		// Copy the assembled command lines into a non-const array, as the unicode CreateProcessW may modify it
 		wchar_t cmdLineArgBuffer[k_maxCmdLineArgLength]; 
 		const size_t cmdLineArgsNumChars = dxcCommandLineArgsW.size();
-		memcpy(
-			cmdLineArgBuffer, 
+		memcpy(cmdLineArgBuffer, 
 			dxcCommandLineArgsW.data(), 
 			dxcCommandLineArgsW.size() * sizeof(wchar_t) + sizeof(wchar_t)); // + null terminator
 		

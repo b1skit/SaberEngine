@@ -79,7 +79,8 @@ namespace effect
 	inline Technique const* Effect::GetResolvedTechnique(effect::drawstyle::Bitmask drawStyleBitmask) const
 	{
 		SEAssert(m_techniques.contains(drawStyleBitmask),
-			std::format("No Technique matches the given Bitmask: {}", 
+			std::format("No Technique matches the Bitmask {}: \"{}\"",
+				drawStyleBitmask,
 				effect::drawstyle::GetNamesFromDrawStyleBitmask(drawStyleBitmask)).c_str());
 
 		return m_techniques.at(drawStyleBitmask);

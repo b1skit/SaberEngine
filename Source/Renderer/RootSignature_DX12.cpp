@@ -525,7 +525,7 @@ namespace dx12
 								.m_bindCount = inputBindingDesc.BindCount,
 								.m_returnType = inputBindingDesc.ReturnType,
 								.m_dimension = inputBindingDesc.Dimension,
-								.m_numSamples = inputBindingDesc.NumSamples
+								.m_numSamples = inputBindingDesc.NumSamples, // Structured buffers: Type byte stride
 							});
 					}
 					else

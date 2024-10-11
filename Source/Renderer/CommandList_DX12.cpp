@@ -362,6 +362,8 @@ namespace dx12
 
 				if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
 				{
+					// TODO: We should only insert a UAV barrier if the we're accessing the resource on the same
+					// command list where a prior modifying use was performed
 					InsertUAVBarrier(bufferPlatParams->m_resource.Get());
 					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 					transitionResource = true;
@@ -390,6 +392,8 @@ namespace dx12
 
 					if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
 					{
+						// TODO: We should only insert a UAV barrier if the we're accessing the resource on the same
+						// command list where a prior modifying use was performed
 						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 						transitionResource = true;

@@ -588,8 +588,14 @@ namespace fr
 		entt::entity entity, MeshAnimationComponent const& meshAnimCmpt)
 	{
 		gr::MeshPrimitive::MeshRenderData meshPrimAnimRenderData{};
+
+		SEAssert(meshAnimCmpt.m_morphWeights.size() == meshPrimAnimRenderData.m_morphWeights.size() &&
+			meshAnimCmpt.m_morphWeights.size() == gr::VertexStream::k_maxVertexStreams,
+			"Array sizes are out of sync. We expect to support a morph weight for each possible vertex stream");
 		
-		memcpy(&meshPrimAnimRenderData.m_morphWeights, &meshAnimCmpt.m_morphWeights, sizeof(meshAnimCmpt.m_morphWeights));
+		memcpy(meshPrimAnimRenderData.m_morphWeights.data(),
+			meshAnimCmpt.m_morphWeights.data(),
+			sizeof(meshAnimCmpt.m_morphWeights));
 
 		return meshPrimAnimRenderData;
 	}

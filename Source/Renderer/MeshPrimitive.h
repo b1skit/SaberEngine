@@ -69,9 +69,9 @@ namespace gr
 		struct PackedMorphTargetMetadata
 		{
 			uint8_t m_streamTypeIdx;	// e.g. Pos/Nml/Tan/UV
-			uint8_t m_typeIdx;			// e.g.0/1/2/3...
+			uint8_t m_typeIdx;			// e.g. 0/1/2/3...
 
-			uint8_t m_numMorphTargets;		// How many morph targets per vertex?
+			uint8_t m_numMorphTargets;		// How many morph targets for the vertex attribute?
 			uint32_t m_firstFloatIdx;		// Index of first float of a vertex's set of interleaved morph target elements
 			uint8_t m_vertexFloatStride;	// Stride of all elements (# floats) for a whole set of morph target displacements
 			uint8_t m_elementFloatStride;	// Stride of a single element (# floats), within a single morph target displacement			
