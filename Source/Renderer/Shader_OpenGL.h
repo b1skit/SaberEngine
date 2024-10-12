@@ -42,11 +42,19 @@ namespace opengl
 
 			uint32_t m_shaderReference = 0;
 
-			std::unordered_map<util::StringHash, GLint> m_samplerUnits;		
+			std::unordered_map<util::StringHash, GLint> m_samplerUnits;
 			std::unordered_map<util::StringHash, GLint> m_vertexAttributeLocations;
 
-			std::unordered_map<util::StringHash, opengl::Buffer::BindTarget> m_bufferTypes;
-			std::array<std::unordered_map<util::StringHash, GLint>, opengl::Buffer::BindTarget_Count> m_bufferLocations;
+			struct BufferMetadata
+			{
+				opengl::Buffer::BindTarget m_bindTarget;
+				
+				std::vector<GLint> m_bufferLocations; // Indexed by shader array index
+			};
+			std::unordered_map<util::StringHash, BufferMetadata> m_bufferMetadata;
+
+			void AddBufferMetadata(
+				char const* name, opengl::Buffer::BindTarget, GLint bufferLocation);
 		};
 
 

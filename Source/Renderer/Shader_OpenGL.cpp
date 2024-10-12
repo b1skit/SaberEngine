@@ -225,6 +225,24 @@ namespace
 		return taskFutures;
 	}
 
+	
+	// OpenGL shader reflection reports buffer array names with their index prefix tokes (E.g. MyBuf[0], MyBug[1], etc).
+	// This strips those out, and gives us the index they contained
+	std::string StripArrayTokens(std::string const& name, GLint& arrayIdxOut)
+	{
+		arrayIdxOut = 0;
+
+		const size_t openArrayBraceIdx = name.find_first_of('[');
+		if (openArrayBraceIdx == std::string::npos)
+		{
+			return name;
+		}
+
+		arrayIdxOut = std::stoi(name.substr(openArrayBraceIdx + 1, name.length() - openArrayBraceIdx + 1));
+
+		return name.substr(0, openArrayBraceIdx);
+	}
+
 
 	void BuildShaderReflection(re::Shader const& shader)
 	{
@@ -353,8 +371,8 @@ namespace
 			SEAssert(uboBindIdx >= 0, "Invalid buffer bind index returned");
 
 			constexpr opengl::Buffer::BindTarget k_bindTarget = opengl::Buffer::BindTarget::UBO;
-			platParams->m_bufferTypes.emplace(resourceName.data(), k_bindTarget);
-			platParams->m_bufferLocations[k_bindTarget].emplace(resourceName.data(), uboBindIdx);
+
+			platParams->AddBufferMetadata(resourceName.data(), k_bindTarget, uboBindIdx);
 
 #if defined(LOG_SHADER_NAMES)
 			LOG("Shader \"%s\": Found UBO %s = %d", shader.GetName().c_str(), resourceName.data(), uboBindIdx);
@@ -389,8 +407,8 @@ namespace
 				&storageBlockBindIdx);
 
 			constexpr opengl::Buffer::BindTarget k_bindTarget = opengl::Buffer::BindTarget::SSBO;
-			platParams->m_bufferTypes.emplace(resourceName.data(), k_bindTarget);
-			platParams->m_bufferLocations[k_bindTarget].emplace(resourceName.data(), storageBlockBindIdx);
+
+			platParams->AddBufferMetadata(resourceName.data(), k_bindTarget, storageBlockBindIdx);
 
 #if defined(LOG_SHADER_NAMES)
 			LOG("Shader \"%s\": Found SSBO %s = %d", shader.GetName().c_str(), resourceName.data(), storageBlockBindIdx);
@@ -402,6 +420,44 @@ namespace
 
 namespace opengl
 {
+	void opengl::Shader::PlatformParams::AddBufferMetadata(
+		char const* name, opengl::Buffer::BindTarget bindTarget, GLint bufferLocation)
+	{
+		constexpr GLint k_invalidLocationIdx = -1;
+
+		// Parse the reflected buffer name and index:
+		GLint arrayIdx = 0;
+		std::string const& strippedName = StripArrayTokens(name, arrayIdx);
+
+		util::StringHash const& strippedNameHash = util::StringHash(strippedName);
+		if (m_bufferMetadata.contains(strippedNameHash))
+		{
+			SEAssert(m_bufferMetadata.at(strippedNameHash).m_bindTarget == bindTarget,
+				"Found an existing entry with a different bind target. This is unexpected");
+
+			std::vector<GLint>& bufLocations = m_bufferMetadata.at(strippedNameHash).m_bufferLocations;
+
+			if (arrayIdx >= bufLocations.size())
+			{
+				bufLocations.resize(arrayIdx + 1, k_invalidLocationIdx);
+			}
+
+			bufLocations[arrayIdx] = bufferLocation;
+		}
+		else
+		{
+			std::vector<GLint> bufLocations(arrayIdx + 1, k_invalidLocationIdx);
+			bufLocations[arrayIdx] = bufferLocation;
+
+			m_bufferMetadata.emplace(strippedNameHash,
+				opengl::Shader::PlatformParams::BufferMetadata{
+				.m_bindTarget = bindTarget,
+				.m_bufferLocations = std::move(bufLocations),
+				});
+		}
+	}
+
+
 	void Shader::Create(re::Shader& shader)
 	{
 		util::PerformanceTimer timer;
@@ -618,16 +674,17 @@ namespace opengl
 		
 		re::Buffer::PlatformParams const* bufferPlatformParams = bufferInput.GetBuffer()->GetPlatformParams();
 
-		SEAssert(shaderPlatParams->m_bufferTypes.contains(bufferInput.GetShaderNameHash()) ||
+		SEAssert(shaderPlatParams->m_bufferMetadata.contains(bufferInput.GetShaderNameHash()) ||
 			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Failed to find buffer with the given shader name. This is is not an error, but a useful debugging helper");
 
-		auto bufferTypeItr = shaderPlatParams->m_bufferTypes.find(bufferInput.GetShaderNameHash());
-		if (bufferTypeItr != shaderPlatParams->m_bufferTypes.end())
+		auto bufferTypeItr = shaderPlatParams->m_bufferMetadata.find(bufferInput.GetShaderNameHash());
+		if (bufferTypeItr != shaderPlatParams->m_bufferMetadata.end())
 		{
-			const opengl::Buffer::BindTarget bindTarget = bufferTypeItr->second;
+			const opengl::Buffer::BindTarget bindTarget = bufferTypeItr->second.m_bindTarget;
 
-			const GLint bufferLoc = shaderPlatParams->m_bufferLocations[bindTarget].at(bufferInput.GetShaderNameHash());
+			const GLint bufferLoc = 
+				bufferTypeItr->second.m_bufferLocations.at(bufferInput.GetView().m_buffer.m_firstDestIdx);
 
 			opengl::Buffer::Bind(*bufferInput.GetBuffer(), bindTarget, bufferInput.GetView(), bufferLoc);
 		}
