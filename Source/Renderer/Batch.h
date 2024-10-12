@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "BufferInput.h"
+#include "BufferView.h"
 #include "Effect.h"
 #include "EnumTypes.h"
 #include "MeshPrimitive.h"
@@ -65,8 +65,17 @@ namespace re
 
 			VertexBufferInput(gr::VertexStream const* stream)
 				: m_buffer(stream ? stream->GetBuffer() : nullptr)
-				, m_view(stream ? stream->GetVertexStreamView() : re::VertexStreamView{})
+				, m_view{}
 			{
+				if (stream)
+				{
+					m_view = re::BufferView::VertexStreamType{
+						.m_type = stream->GetType(),
+						.m_dataType = stream->GetDataType(),
+						.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
+						.m_numElements = stream->GetNumElements(),
+					};
+				}
 			}
 
 			VertexBufferInput(std::shared_ptr<gr::VertexStream>& stream)
@@ -75,9 +84,7 @@ namespace re
 			}
 
 			re::Buffer const* m_buffer = nullptr;
-
-			re::VertexStreamView m_view{};
-
+			re::BufferView m_view{};
 			uint8_t m_bindSlot = k_invalidSlotIdx; // NOTE: Automatically resolved by the batch
 		};
 		struct GraphicsParams
@@ -143,9 +150,9 @@ namespace re
 
 		std::vector<BufferInput> const& GetBuffers() const;
 		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer>);
+		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer>, re::BufferView const&);
 		void SetBuffer(re::BufferInput const&);
 		void SetBuffer(re::BufferInput&&);
-
 
 		void AddTextureInput(
 			char const* shaderName,

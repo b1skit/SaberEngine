@@ -1,12 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "CPUDescriptorHeapManager_DX12.h"
 #include "Buffer.h"
 #include "BufferAllocator.h"
+#include "CPUDescriptorHeapManager_DX12.h"
+#include "DescriptorCache_DX12.h"
 
 #include <d3d12.h>
 #include <wrl.h>
 
+namespace re
+{
+	class BufferView;
+}
 
 namespace dx12
 {
@@ -39,17 +44,31 @@ namespace dx12
 
 		struct PlatformParams final : public re::Buffer::PlatformParams
 		{
+			PlatformParams()
+				: m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
+				, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
+				, m_views{0}
+			{
+			}
+
+			~PlatformParams()
+			{
+				m_srvDescriptors.Destroy();
+				m_uavDescriptors.Destroy();
+			}
+
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_resource = nullptr;
 			uint64_t m_heapByteOffset = 0;
-
-			DescriptorAllocation m_uavCPUDescAllocation; // Used for GPU-writable immutable buffers
 
 			std::vector<ReadbackResource> m_readbackResources; // CPU readback
 			uint8_t m_currentMapFrameLatency = std::numeric_limits<uint8_t>::max(); // Used to compute the resource index during unmapping
 
+			mutable dx12::DescriptorCache m_srvDescriptors;
+			mutable dx12::DescriptorCache m_uavDescriptors;
 
-			D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::VertexStreamView const&);
-			D3D12_VERTEX_BUFFER_VIEW const* GetOrCreateVertexBufferView(re::Buffer const&, re::VertexStreamView const&);
+			// Index/vertex views:
+			D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::BufferView const&);
+			D3D12_VERTEX_BUFFER_VIEW const* GetOrCreateVertexBufferView(re::Buffer const&, re::BufferView const&);
 		
 		private:
 			union
@@ -76,6 +95,9 @@ namespace dx12
 			uint32_t numBytes,
 			dx12::CommandList* copyCmdList,
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources);
+
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRV(re::Buffer const*, re::BufferView const&);
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(re::Buffer const*, re::BufferView const&);
 	};
 
 

@@ -488,8 +488,9 @@ namespace opengl
 
 			bitmask |= (1 << vertexBuffers[streamIdx].m_bindSlot);		
 
-			util::AddDataToHash(vaoHash, static_cast<uint64_t>(vertexBuffers[streamIdx].m_view.m_dataType));
-			util::AddDataToHash(vaoHash, vertexBuffers[streamIdx].m_view.m_isNormalized);
+			util::AddDataToHash(
+				vaoHash, static_cast<uint64_t>(vertexBuffers[streamIdx].m_view.m_stream.m_dataType));
+			util::AddDataToHash(vaoHash, vertexBuffers[streamIdx].m_view.m_stream.m_isNormalized);
 
 			// Note: We assume all vertex streams have a relative offset of 0, so we don't (currently) include it in
 			// the hash here
@@ -497,8 +498,8 @@ namespace opengl
 
 		if (indexBuffer.m_buffer)
 		{			
-			util::AddDataToHash(vaoHash, static_cast<uint64_t>(indexBuffer.m_view.m_dataType));
-			util::AddDataToHash(vaoHash, indexBuffer.m_view.m_isNormalized);
+			util::AddDataToHash(vaoHash, static_cast<uint64_t>(indexBuffer.m_view.m_stream.m_dataType));
+			util::AddDataToHash(vaoHash, indexBuffer.m_view.m_stream.m_isNormalized);
 		}
 
 		util::AddDataToHash(vaoHash, bitmask);
@@ -552,10 +553,10 @@ namespace opengl
 					
 					// Define our vertex layout:
 					glVertexAttribFormat(
-						slotIdx,																// Attribute index
-						DataTypeToNumComponents(vertexBuffers[streamIdx].m_view.m_dataType),	// size: 1/2/3/4 						
-						DataTypeToGLDataType(vertexBuffers[streamIdx].m_view.m_dataType),		// Data type
-						vertexBuffers[streamIdx].m_view.m_isNormalized,							// Normalize data?
+						slotIdx,																		// Attribute index
+						DataTypeToNumComponents(vertexBuffers[streamIdx].m_view.m_stream.m_dataType),	// size: 1/2/3/4 						
+						DataTypeToGLDataType(vertexBuffers[streamIdx].m_view.m_stream.m_dataType),		// Data type
+						vertexBuffers[streamIdx].m_view.m_stream.m_isNormalized,						// Normalize data?
 						k_relativeOffset);							// relativeOffset: Distance between buffer elements
 
 					objectLabel = std::format("{} {}", objectLabel, slotIdx);

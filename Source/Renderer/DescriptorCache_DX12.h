@@ -8,6 +8,8 @@
 
 namespace re
 {
+	class Buffer;
+	class BufferView;
 	class Texture;
 }
 
@@ -41,6 +43,10 @@ namespace dx12
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCreateDescriptor(re::Texture const&, re::TextureView const&);
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCreateDescriptor(re::Texture const*, re::TextureView const&);
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCreateDescriptor(std::shared_ptr<re::Texture const> const&, re::TextureView const&);
+
+		D3D12_CPU_DESCRIPTOR_HANDLE GetCreateDescriptor(re::Buffer const&, re::BufferView const&);
+		D3D12_CPU_DESCRIPTOR_HANDLE GetCreateDescriptor(re::Buffer const*, re::BufferView const&);
+		D3D12_CPU_DESCRIPTOR_HANDLE GetCreateDescriptor(std::shared_ptr<re::Buffer const> const&, re::BufferView const&);
 
 
 	private:

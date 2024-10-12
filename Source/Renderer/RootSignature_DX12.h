@@ -87,6 +87,7 @@ namespace dx12
 		{
 			DescriptorType m_type = DescriptorType::Type_Invalid;
 			uint8_t m_offset = k_invalidOffset;
+			uint8_t m_bindCount = 0; // No. of descriptors bound to the same name (e.g. for arrays of buffers)
 
 			union
 			{

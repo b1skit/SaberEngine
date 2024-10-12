@@ -114,7 +114,7 @@ namespace re
 			std::string const& bufferName, void const* dataArray, uint32_t numBytes, BufferParams const&);
 
 		// Create a buffer with no CPU-side staging data
-		[[nodiscard]] static std::shared_ptr<re::Buffer> Create(
+		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUnstaged(
 			std::string const& bufferName, uint32_t numBytes, BufferParams const&);
 
 
@@ -333,7 +333,7 @@ namespace re
 	}
 
 
-	inline std::shared_ptr<re::Buffer> Buffer::Create(
+	inline std::shared_ptr<re::Buffer> Buffer::CreateUnstaged(
 		std::string const& bufferName, uint32_t numBytes, BufferParams const& bufferParams)
 	{
 		SEAssert(bufferParams.m_stagingPool == re::Buffer::StagingPool::None,

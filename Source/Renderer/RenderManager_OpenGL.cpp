@@ -287,16 +287,16 @@ namespace opengl
 
 								opengl::Buffer::Bind(
 									*batchGraphicsParams.m_vertexBuffers[slotIdx].m_buffer,
-									batchGraphicsParams.m_vertexBuffers[slotIdx].m_view,
 									opengl::Buffer::Vertex,
+									batchGraphicsParams.m_vertexBuffers[slotIdx].m_view,
 									batchGraphicsParams.m_vertexBuffers[slotIdx].m_bindSlot);
 							}
 							if (batchGraphicsParams.m_indexBuffer.m_buffer)
 							{
 								opengl::Buffer::Bind(
 									*batchGraphicsParams.m_indexBuffer.m_buffer,
-									batchGraphicsParams.m_indexBuffer.m_view,
 									opengl::Buffer::Index,
+									batchGraphicsParams.m_indexBuffer.m_view,
 									0); // Arbitrary: Slot is not used for indexes
 							}
 
@@ -304,19 +304,19 @@ namespace opengl
 							switch (batchGraphicsParams.m_batchGeometryMode)
 							{
 							case re::Batch::GeometryMode::IndexedInstanced:
-							{								
+							{
 								glDrawElementsInstanced(
-									PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),	// GLenum mode
-									static_cast<GLsizei>(batchGraphicsParams.m_indexBuffer.m_view.m_numElements),	// GLsizei count
-									DataTypeToGLDataType(batchGraphicsParams.m_indexBuffer.m_view.m_dataType),		// GLenum type
+									PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),			// GLenum mode
+									static_cast<GLsizei>(batchGraphicsParams.m_indexBuffer.m_view.m_stream.m_numElements),	// GLsizei count
+									DataTypeToGLDataType(batchGraphicsParams.m_indexBuffer.m_view.m_stream.m_dataType), 	// GLenum type
 									0,									// Byte offset (into index buffer)
 									(GLsizei)batch.GetInstanceCount());	// Instance count
 							}
 							break;
 							case re::Batch::GeometryMode::ArrayInstanced:
 							{							
-								const GLsizei numElements = 
-									static_cast<GLsizei>(batchGraphicsParams.m_vertexBuffers[0].m_view.m_numElements);
+								const GLsizei numElements = static_cast<GLsizei>(
+									batchGraphicsParams.m_vertexBuffers[0].m_view.m_stream.m_numElements);
 
 								glDrawArraysInstanced(
 									PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),

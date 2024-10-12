@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "BufferInput.h"
+#include "BufferView.h"
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
 #include "CameraRenderData.h"

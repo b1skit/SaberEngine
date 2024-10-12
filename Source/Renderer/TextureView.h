@@ -125,6 +125,8 @@ namespace re
 		TextureView& operator=(TextureView const& rhs) noexcept;
 		TextureView& operator=(TextureView&& rhs) noexcept;
 
+		~TextureView() = default;
+
 
 	public:
 		bool DepthWritesEnabled() const;

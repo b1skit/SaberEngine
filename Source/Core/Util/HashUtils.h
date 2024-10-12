@@ -52,4 +52,11 @@ namespace util
 
 		return dataHash;
 	}
+
+
+	template<typename T>
+	void AddDataBytesToHash(uint64_t& currentHash, T const& data)
+	{
+		CombineHash(currentHash, HashDataBytes(&data, sizeof(T)));
+	}
 }

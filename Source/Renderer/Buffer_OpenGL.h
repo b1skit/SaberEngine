@@ -8,7 +8,7 @@
 
 namespace re
 {
-	struct VertexStreamView;
+	class BufferView;
 }
 
 namespace opengl
@@ -42,7 +42,6 @@ namespace opengl
 
 
 	public: // OpenGL-specific functionality:		
-		static void Bind(re::Buffer const&, BindTarget, GLuint bindIndex);
-		static void Bind(re::Buffer const&, re::VertexStreamView const&, BindTarget, GLuint bindIndex);
+		static void Bind(re::Buffer const&, BindTarget, re::BufferView const&, GLuint bindIndex);
 	};
 }

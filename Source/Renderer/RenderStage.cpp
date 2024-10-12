@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer.h"
-#include "BufferInput.h"
+#include "BufferView.h"
 #include "RenderStage.h"
 #include "RLibrary_Platform.h"
 #include "Shader.h"
@@ -791,18 +791,18 @@ namespace re
 			"Incompatible batch type");
 
 #if defined(_DEBUG)
-		for (auto const& batchBuffer : batch.GetBuffers())
+		for (auto const& batchBufferInput : batch.GetBuffers())
 		{
-			for (auto const& singleFrameBuffer : m_singleFrameBuffers)
-			{
-				SEAssert(batchBuffer.GetUniqueID() != singleFrameBuffer.GetUniqueID() &&
-					batchBuffer.GetShaderNameHash() != singleFrameBuffer.GetShaderNameHash(),
+			for (auto const& singleFrameBufferInput : m_singleFrameBuffers)
+			{				
+				SEAssert(batchBufferInput.GetBuffer()->GetUniqueID() != singleFrameBufferInput.GetBuffer()->GetUniqueID() &&
+					batchBufferInput.GetShaderNameHash() != singleFrameBufferInput.GetShaderNameHash(),
 					"Batch and render stage have a duplicate single frame buffer");
 			}
 			for (auto const& permanentBuffer : m_permanentBuffers)
 			{
-				SEAssert(batchBuffer.GetUniqueID() != permanentBuffer.GetUniqueID() &&
-					batchBuffer.GetShaderNameHash() != permanentBuffer.GetShaderNameHash(),
+				SEAssert(batchBufferInput.GetBuffer()->GetUniqueID() != permanentBuffer.GetBuffer()->GetUniqueID() &&
+					batchBufferInput.GetShaderNameHash() != permanentBuffer.GetShaderNameHash(),
 					"Batch and render stage have a duplicate permanent buffer");
 			}
 		}
@@ -866,6 +866,13 @@ namespace re
 	}
 
 
+	void RenderStage::AddPermanentBuffer(
+		std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
+	{
+		AddPermanentBuffer(re::BufferInput(shaderName, buffer, view));
+	}
+
+
 	void RenderStage::AddPermanentBuffer(re::BufferInput const& bufferInput)
 	{
 		AddPermanentBuffer(re::BufferInput(bufferInput));
@@ -882,16 +889,44 @@ namespace re
 		SEAssert(std::find_if(
 			m_permanentBuffers.begin(),
 			m_permanentBuffers.end(),
-			[&bufferInput](re::BufferInput const& existingBuffer) {
-				return bufferInput.GetShaderNameHash() == existingBuffer.GetShaderNameHash();
+			[&bufferInput](re::BufferInput const& existingBuffer)
+			{
+				const bool matchingNameHash = bufferInput.GetShaderNameHash() == existingBuffer.GetShaderNameHash();
+				if (matchingNameHash)
+				{
+					// Duplicate names are allowed if we're binding to a Constrant/Structured buffer array
+					if ((re::Buffer::HasUsageBit(re::Buffer::Usage::Constant, *bufferInput.GetBuffer()) &&
+							re::Buffer::HasUsageBit(re::Buffer::Usage::Constant, *existingBuffer.GetBuffer())) ||
+						(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, *bufferInput.GetBuffer()) &&
+							re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, *existingBuffer.GetBuffer())))
+					{
+						return bufferInput.GetView().m_buffer.m_firstDestIdx ==
+							existingBuffer.GetView().m_buffer.m_firstDestIdx;
+					}
+				}
+				return false;
 			}) == m_permanentBuffers.end(),
 				"A permanent Buffer with this shader name has already been added");
 
 		SEAssert(std::find_if(
 			m_singleFrameBuffers.begin(),
 			m_singleFrameBuffers.end(),
-			[&bufferInput](re::BufferInput const& existingBuffer) {
-				return bufferInput.GetShaderNameHash() == existingBuffer.GetShaderNameHash();
+			[&bufferInput](re::BufferInput const& existingBuffer)
+			{
+				const bool matchingNameHash = bufferInput.GetShaderNameHash() == existingBuffer.GetShaderNameHash();
+				if (matchingNameHash)
+				{
+					// Duplicate names are allowed if we're binding to a Constrant/Structured buffer array
+					if ((re::Buffer::HasUsageBit(re::Buffer::Usage::Constant, *bufferInput.GetBuffer()) &&
+							re::Buffer::HasUsageBit(re::Buffer::Usage::Constant, *existingBuffer.GetBuffer())) ||
+						(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, *bufferInput.GetBuffer()) &&
+							re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, *existingBuffer.GetBuffer())))
+					{
+						return bufferInput.GetView().m_buffer.m_firstDestIdx ==
+							existingBuffer.GetView().m_buffer.m_firstDestIdx;
+					}
+				}
+				return false;
 			}) == m_singleFrameBuffers.end(),
 				"A single frame Buffer with this shader name has already been added");
 
@@ -902,6 +937,13 @@ namespace re
 	void RenderStage::AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
 	{
 		AddSingleFrameBuffer(re::BufferInput(shaderName, buffer));
+	}
+
+
+	void RenderStage::AddSingleFrameBuffer(
+		std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
+	{
+		AddSingleFrameBuffer(re::BufferInput(shaderName, buffer, view));
 	}
 
 

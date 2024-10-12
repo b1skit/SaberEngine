@@ -110,7 +110,6 @@ namespace gr
 		uint32_t GetNumElements() const; // How many vertices-worth of attributes do we have?
 
 		re::Buffer const* GetBuffer() const;
-		re::VertexStreamView GetVertexStreamView() const;
 
 	public:
 		void ShowImGuiWindow() const;

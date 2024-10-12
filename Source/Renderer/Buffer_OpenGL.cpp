@@ -2,7 +2,7 @@
 #include "Buffer_OpenGL.h"
 #include "Buffer.h"
 #include "BufferAllocator_OpenGL.h"
-#include "BufferInput.h"
+#include "BufferView.h"
 #include "Context.h"
 
 #include "Core/Assert.h"
@@ -153,26 +153,27 @@ namespace opengl
 	}
 
 
-	void Buffer::Bind(re::Buffer const& buffer, BindTarget bindTarget, GLuint bindIndex)
+	void Buffer::Bind(re::Buffer const& buffer, BindTarget bindTarget, re::BufferView const& view, GLuint bindIndex)
 	{
 		const uint32_t numBytes = buffer.GetTotalBytes();
 
 		PlatformParams const* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams const*>();
+
 		switch (bindTarget)
 		{
-		case opengl::Buffer::BindTarget::UBO:
+		case BindTarget::UBO:
 		{
 			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, buffer),
 				"Buffer is missing the Constant usage bit");
 
-			glBindBufferRange(GL_UNIFORM_BUFFER, 
-				bindIndex, 
-				bufferPlatParams->m_bufferName, 
-				bufferPlatParams->m_baseOffset, 
+			glBindBufferRange(GL_UNIFORM_BUFFER,
+				bindIndex,
+				bufferPlatParams->m_bufferName,
+				bufferPlatParams->m_baseOffset,
 				numBytes);
 		}
 		break;
-		case opengl::Buffer::BindTarget::SSBO:
+		case BindTarget::SSBO:
 		{
 			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, buffer),
 				"Buffer is missing the Structured usage bit");
@@ -184,46 +185,27 @@ namespace opengl
 				numBytes);
 		}
 		break;
-		case opengl::Buffer::BindTarget::Vertex:
-		case opengl::Buffer::BindTarget::Index:
+		case BindTarget::Vertex:
 		{
-			SEAssertF("Incorrect bind function for this Buffer bind target");
-		}
-		break;
-		default: SEAssertF("Invalid Usage");
-		}
-	}
+			SEAssert(re::Buffer::HasUsageBit(re::Buffer::VertexStream, buffer),
+				"Buffer is missing the VertexStream usage bit");
 
-
-	void Buffer::Bind(
-		re::Buffer const& buffer, re::VertexStreamView const& view, BindTarget bindTarget, GLuint bindIndex)
-	{
-		const uint32_t numBytes = buffer.GetTotalBytes();
-
-		PlatformParams const* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams const*>();
-		switch (bindTarget)
-		{
-		case opengl::Buffer::BindTarget::UBO:
-		case opengl::Buffer::BindTarget::SSBO:
-		{
-			SEAssertF("Incorrect bind function for this Buffer bind target");
-		}
-		break;
-		case opengl::Buffer::BindTarget::Vertex:
-		{
 			glBindVertexBuffer(
-				bindIndex,							// Slot index
-				bufferPlatParams->m_bufferName,		// Buffer
-				0,									// Offset
-				DataTypeToStride(view.m_dataType));	// Stride
+				bindIndex,													// Slot index
+				bufferPlatParams->m_bufferName,								// Buffer
+				0,															// Offset
+				DataTypeToStride(view.m_stream.m_dataType));	// Stride
 		}
 		break;
-		case opengl::Buffer::BindTarget::Index:
+		case BindTarget::Index:
 		{
+			SEAssert(re::Buffer::HasUsageBit(re::Buffer::IndexStream, buffer),
+				"Buffer is missing the VertexStream usage bit");
+
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatParams->m_bufferName);
 		}
 		break;
-		default: SEAssertF("Invalid Usage");
+		default: SEAssertF("Invalid view type");
 		}
 	}
 

@@ -437,9 +437,6 @@
     <ClInclude Include="EnumTypes.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
-    <ClInclude Include="BufferInput.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsSystem_LightManager.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
@@ -457,6 +454,9 @@
     </ClInclude>
     <ClInclude Include="VertexStream.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferView.h">
+      <Filter>Header Files\re</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -769,9 +769,6 @@
     <ClCompile Include="EnumTypes.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
-    <ClCompile Include="BufferInput.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsSystem_LightManager.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
@@ -789,6 +786,9 @@
     </ClCompile>
     <ClCompile Include="VertexStream.cpp">
       <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferView.cpp">
+      <Filter>Source Files\re</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

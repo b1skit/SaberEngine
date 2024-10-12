@@ -1,4 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
+#include "Buffer_DX12.h"
+#include "Buffer.h"
+#include "BufferView.h"
 #include "Context_DX12.h"
 #include "DescriptorCache_DX12.h"
 #include "Sampler.h"
@@ -40,7 +43,7 @@ namespace
 	}
 
 
-	void InitializeSRV(
+	void InitializeTextureSRV(
 		dx12::DescriptorAllocation& descriptor,
 		re::Texture const& texture,
 		re::TextureView const& texView)
@@ -163,7 +166,7 @@ namespace
 	}
 
 
-	void InitializeUAV(
+	void InitializeTextureUAV(
 		dx12::DescriptorAllocation& descriptor,
 		re::Texture const& texture,
 		re::TextureView const& texView)
@@ -270,7 +273,7 @@ namespace
 	}
 
 
-	void InitializeRTV(
+	void InitializeTextureRTV(
 		dx12::DescriptorAllocation& descriptor,
 		re::Texture const& texture,
 		re::TextureView const& texView)
@@ -374,7 +377,7 @@ namespace
 	}
 
 
-	void InitializeDSV(
+	void InitializeTextureDSV(
 		dx12::DescriptorAllocation& descriptor,
 		re::Texture const& texture,
 		re::TextureView const& texView)
@@ -473,6 +476,69 @@ namespace
 			&dsvDesc,
 			descriptor.GetBaseDescriptor());
 	}
+
+
+	// ---
+
+
+	void InitializeBufferSRV(
+		dx12::DescriptorAllocation& descriptor,
+		re::Buffer const& buffer,
+		re::BufferView const& bufView)
+	{
+		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
+
+		const D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{
+			.Format = DXGI_FORMAT_UNKNOWN, // Assume we're creating a view of a structured buffer
+			.ViewDimension = D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER,
+			.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+			.Buffer = D3D12_BUFFER_SRV{
+					.FirstElement = bufView.m_buffer.m_firstElement,
+					.NumElements = bufView.m_buffer.m_numElements,
+					.StructureByteStride = buffer.GetTotalBytes() / buffer.GetArraySize(),
+					.Flags = D3D12_BUFFER_SRV_FLAGS::D3D12_BUFFER_SRV_FLAG_NONE,
+				}};
+
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+		device->CreateShaderResourceView(params->m_resource.Get(), &srvDesc, descriptor.GetBaseDescriptor());
+	}
+
+
+	void InitializeBufferUAV(
+		dx12::DescriptorAllocation& descriptor,
+		re::Buffer const& buffer,
+		re::BufferView const& bufView)
+	{
+		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
+
+		const D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc
+		{
+			.Format = DXGI_FORMAT_UNKNOWN,
+			.ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
+			.Buffer = D3D12_BUFFER_UAV{
+				.FirstElement = bufView.m_buffer.m_firstElement,
+				.NumElements = bufView.m_buffer.m_numElements,
+				.StructureByteStride = bufView.m_buffer.m_structuredByteStride, // Size of the struct in the shader
+				.CounterOffsetInBytes = 0,
+				.Flags = D3D12_BUFFER_UAV_FLAG_NONE,
+			}
+		};
+
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+		device->CreateUnorderedAccessView(
+			params->m_resource.Get(),
+			nullptr,	// Optional counter resource
+			&uavDesc,
+			descriptor.GetBaseDescriptor());
+	}
 }
 
 namespace dx12
@@ -502,7 +568,7 @@ namespace dx12
 
 			for (auto& cacheEntry : m_descriptorCache)
 			{
-				// Descriptor cache is destroyed via deferred texture deletion; It's safe to immediately free here
+				// Descriptor cache is destroyed via deferred texture/buffer deletion; It's safe to immediately free here
 				cacheEntry.second.Free(0); 
 			}
 			m_descriptorCache.clear();
@@ -550,22 +616,22 @@ namespace dx12
 				{
 				case DescriptorType::SRV:
 				{
-					InitializeSRV(newCacheEntry.second, texture, texView);
+					InitializeTextureSRV(newCacheEntry.second, texture, texView);
 				}
 				break;
 				case DescriptorType::UAV:
 				{
-					InitializeUAV(newCacheEntry.second, texture, texView);
+					InitializeTextureUAV(newCacheEntry.second, texture, texView);
 				}
 				break;
 				case DescriptorType::RTV:
 				{
-					InitializeRTV(newCacheEntry.second, texture, texView);
+					InitializeTextureRTV(newCacheEntry.second, texture, texView);
 				}
 				break;
 				case DescriptorType::DSV:
 				{
-					InitializeDSV(newCacheEntry.second, texture, texView);
+					InitializeTextureDSV(newCacheEntry.second, texture, texView);
 				}
 				break;
 				default: SEAssertF("Invalid heap type");
@@ -603,5 +669,97 @@ namespace dx12
 	{
 		SEAssert(texture, "Trying to get a descriptor for a null texture");
 		return GetCreateDescriptor(*texture.get(), texView);
+	}
+
+
+	// ---
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorCache::GetCreateDescriptor(
+		re::Buffer const& buffer, re::BufferView const& bufView)
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_descriptorCacheMutex);
+
+			const DataHash bufViewHash = bufView.GetDataHash();
+
+			std::vector<CacheEntry>::iterator cacheItr = m_descriptorCache.end();
+			if (m_descriptorCache.empty())
+			{
+				m_descriptorCache.reserve(buffer.GetArraySize()); // A guess
+				cacheItr = m_descriptorCache.end();
+			}
+			else
+			{
+				cacheItr = std::lower_bound( // Get an iterator to the 1st element >= our new texture view data hash
+					m_descriptorCache.begin(),
+					m_descriptorCache.end(),
+					bufViewHash,
+					CacheComparator());
+			}
+
+			// If no cache entries are >= our new data hash, or the one we found doesn't match, create a new descriptor
+			if (cacheItr == m_descriptorCache.end() || cacheItr->first != bufViewHash)
+			{
+				dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+				ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+
+				CacheEntry newCacheEntry{
+					bufViewHash,
+					context->GetCPUDescriptorHeapMgr(DescriptorTypeToHeapType(m_descriptorType)).Allocate(1) };
+
+				switch (m_descriptorType)
+				{
+				case DescriptorType::SRV:
+				{
+					InitializeBufferSRV(newCacheEntry.second, buffer, bufView);
+				}
+				break;
+				case DescriptorType::UAV:
+				{
+					InitializeBufferUAV(newCacheEntry.second, buffer, bufView);
+				}
+				break;
+				case DescriptorType::RTV:
+				case DescriptorType::DSV:
+				{
+					SEAssertF("Invalid heap type for a re::Buffer");
+				}
+				break;
+				default: SEAssertF("Invalid heap type");
+				}
+
+				auto insertResult = m_descriptorCache.insert(
+					std::upper_bound(
+						m_descriptorCache.begin(),
+						m_descriptorCache.end(),
+						newCacheEntry,
+						CacheComparator()),
+					std::move(newCacheEntry)
+				);
+
+				return insertResult->second.GetBaseDescriptor();
+			}
+			else
+			{
+				return cacheItr->second.GetBaseDescriptor();
+			}
+		}
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorCache::GetCreateDescriptor(
+		re::Buffer const* buffer, re::BufferView const& bufView)
+	{
+		SEAssert(buffer, "Trying to get a descriptor for a null buffer");
+		return GetCreateDescriptor(*buffer, bufView);
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorCache::GetCreateDescriptor(
+		std::shared_ptr<re::Buffer const> const& buffer, re::BufferView const& bufView)
+	{
+		SEAssert(buffer, "Trying to get a descriptor for a null buffer");
+		return GetCreateDescriptor(*buffer.get(), bufView);
 	}
 }

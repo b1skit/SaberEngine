@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer_DX12.h"
 #include "BufferAllocator_DX12.h"
+#include "BufferView.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "EnumTypes.h"
@@ -197,34 +198,6 @@ namespace dx12
 			re::BufferAllocator::BufferUsageMaskToAllocationPool(bufferParams.m_usageMask)) == 0,
 			"Heap byte offset does not have the correct buffer alignment");
 		
-		// Create the appropriate resource views:
-		// Note: We (currently) exclusively set Buffer CBVs & SRVs inline directly in the root signature
-		if (needsUAV)
-		{
-			params->m_uavCPUDescAllocation = std::move(context->GetCPUDescriptorHeapMgr(
-				CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1));
-
-			const D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc
-			{
-				.Format = DXGI_FORMAT_UNKNOWN,
-				.ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
-				.Buffer = D3D12_BUFFER_UAV
-					{
-					// Offset the view within the entire N-frames of resource data
-					.FirstElement = 0,
-					.NumElements = bufferParams.m_arraySize,
-					.StructureByteStride = buffer.GetStride(), // Size of the struct in the shader
-					.CounterOffsetInBytes = 0,
-					.Flags = D3D12_BUFFER_UAV_FLAG_NONE,
-				}
-			};
-			device->CreateUnorderedAccessView(
-				params->m_resource.Get(),
-				nullptr, // Optional counter resource
-				&uavDesc,
-				params->m_uavCPUDescAllocation.GetBaseDescriptor());
-		}
-
 		// CPU readback:
 		const bool cpuReadbackEnabled = re::Buffer::HasAccessBit(re::Buffer::CPURead, bufferParams);
 		if (cpuReadbackEnabled)
@@ -425,7 +398,6 @@ namespace dx12
 
 		params->m_resource = nullptr;
 		params->m_heapByteOffset = 0;
-		params->m_uavCPUDescAllocation.Free(0);
 	}
 
 
@@ -495,7 +467,7 @@ namespace dx12
 
 
 	D3D12_INDEX_BUFFER_VIEW const* dx12::Buffer::PlatformParams::GetOrCreateIndexBufferView(
-		re::Buffer const& buffer, re::VertexStreamView const& view)
+		re::Buffer const& buffer, re::BufferView const& view)
 	{
 		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Usage::VertexStream, buffer) &&
 			re::Buffer::HasUsageBit(re::Buffer::Usage::IndexStream, buffer),
@@ -512,7 +484,7 @@ namespace dx12
 				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
 					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
 					.SizeInBytes = buffer.GetTotalBytes(),
-					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_dataType, false),
+					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_stream.m_dataType, false),
 				};
 			}
 		}
@@ -522,11 +494,16 @@ namespace dx12
 
 
 	D3D12_VERTEX_BUFFER_VIEW const* dx12::Buffer::PlatformParams::GetOrCreateVertexBufferView(
-		re::Buffer const& buffer, re::VertexStreamView const& view)
+		re::Buffer const& buffer, re::BufferView const& view)
 	{
 		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::VertexStream, buffer) &&
 			!re::Buffer::HasUsageBit(re::Buffer::Usage::IndexStream, buffer),
 			"Buffer does not have the correct usage flags set");
+
+		SEAssert(view.m_stream.m_dataType != re::DataType::DataType_Count &&
+			view.m_stream.m_dataType >= re::DataType::Float && 
+			view.m_stream.m_dataType <= re::DataType::UByte4,
+			"Invalid data type");
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
@@ -539,11 +516,33 @@ namespace dx12
 				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
 					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
 					.SizeInBytes = buffer.GetTotalBytes(),
-					.StrideInBytes = DataTypeToStride(view.m_dataType),
+					.StrideInBytes = DataTypeToStride(view.m_stream.m_dataType),
 				};
 			}
 		}
 
 		return &params->m_views.m_vertexBufferView;
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetSRV(re::Buffer const* buffer, re::BufferView const& view)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		dx12::Buffer::PlatformParams const* bufferPlatParams =
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+
+		return bufferPlatParams->m_srvDescriptors.GetCreateDescriptor(buffer, view);
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetUAV(re::Buffer const* buffer, re::BufferView const& view)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		dx12::Buffer::PlatformParams const* bufferPlatParams =
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+
+		return bufferPlatParams->m_uavDescriptors.GetCreateDescriptor(buffer, view);
 	}
 }

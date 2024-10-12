@@ -1,5 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "BufferInput.h"
+#include "BufferView.h"
 #include "Material_GLTF.h"
 #include "Sampler.h"
 

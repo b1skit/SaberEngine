@@ -376,18 +376,33 @@ namespace dx12
 				{
 				case dx12::RootSignature::DescriptorType::SRV:
 				{
-					SEAssertF("TODO: Support this. Create SRVs during Buffer initialization, and bind them here");
+					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
+						"SRV buffers must have GPU reads enabled");
+
+					SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
+
+					re::BufferView const& bufView = bufferInput.GetView();
+					
+					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
+						rootSigEntry->m_index,
+						dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView),
+						rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
+						1);
 				}
 				break;
 				case dx12::RootSignature::DescriptorType::UAV:
 				{
 					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
 						"UAV buffers must have GPU writes enabled");
+					
+					SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
+
+					re::BufferView const& bufView = bufferInput.GetView();
 
 					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 						rootSigEntry->m_index,
-						bufferPlatParams->m_uavCPUDescAllocation[0],
-						rootSigEntry->m_tableEntry.m_offset,
+						dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufferInput.GetView()),
+						rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
 						1);
 
 					if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
@@ -454,7 +469,7 @@ namespace dx12
 			CommitGPUDescriptors();
 			
 			m_commandList->DrawIndexedInstanced(
-				batchGraphicsParams.m_indexBuffer.m_view.m_numElements,	// Index count, per instance
+				batchGraphicsParams.m_indexBuffer.m_view.m_stream.m_numElements,	// Index count, per instance
 				static_cast<uint32_t>(batch.GetInstanceCount()),		// Instance count
 				0,														// Start index location
 				0,														// Base vertex location
@@ -463,17 +478,18 @@ namespace dx12
 		break;
 		case re::Batch::GeometryMode::ArrayInstanced:
 		{		
-			SEAssert(batchGraphicsParams.m_vertexBuffers[0].m_view.m_type == gr::VertexStream::Type::Position,
+			SEAssert(batchGraphicsParams.m_vertexBuffers[0].m_view.m_stream.m_type == 
+				gr::VertexStream::Type::Position,
 				"We're currently assuming the first stream contains the correct number of elements for the entire draw."
 				" If you hit this, validate this logic and delete this assert");
 
 			CommitGPUDescriptors();
 
 			m_commandList->DrawInstanced(
-				batchGraphicsParams.m_vertexBuffers[0].m_view.m_numElements,	// VertexCountPerInstance
-				batchGraphicsParams.m_numInstances,								// InstanceCount
-				0,																// StartVertexLocation
-				0);																// StartInstanceLocation
+				batchGraphicsParams.m_vertexBuffers[0].m_view.m_stream.m_numElements,	// VertexCountPerInstance
+				batchGraphicsParams.m_numInstances,										// InstanceCount
+				0,																		// StartVertexLocation
+				0);																		// StartInstanceLocation
 		}
 		break;
 		default: SEAssertF("Invalid batch geometry type");

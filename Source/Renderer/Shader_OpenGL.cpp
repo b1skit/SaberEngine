@@ -629,7 +629,7 @@ namespace opengl
 
 			const GLint bufferLoc = shaderPlatParams->m_bufferLocations[bindTarget].at(bufferInput.GetShaderNameHash());
 
-			opengl::Buffer::Bind(*bufferInput.GetBuffer(), bindTarget, bufferLoc);
+			opengl::Buffer::Bind(*bufferInput.GetBuffer(), bindTarget, bufferInput.GetView(), bufferLoc);
 		}
 	}
 

@@ -236,62 +236,15 @@ namespace dx12
 		SEAssert(rootParam.m_type != RootParameter::Type::DescriptorTable || 
 				(rootParam.m_tableEntry.m_type != DescriptorType::Type_Invalid &&
 					rootParam.m_tableEntry.m_offset != k_invalidOffset && 
-					rootParam.m_tableEntry.m_srvViewDimension != 0), // It's a union, either member should be > 0
-			"Descriptor table union is not fully initialized"); 
+					rootParam.m_tableEntry.m_srvViewDimension != 0 && // It's a union, either member should be > 0
+					rootParam.m_tableEntry.m_bindCount > 0),
+			"TableEntry is not fully initialized"); 
 
 		const size_t metadataIdx = m_rootParams.size();
 
 		// Map the name to the insertion index:
 		auto const& insertResult = m_namesToRootParamsIdx.emplace(name, metadataIdx);
 		SEAssert(insertResult.second == true, "Name mapping metadata already exists");
-
-		// Map the register to the insertion index:
-		DescriptorType insertType = DescriptorType::Type_Invalid;
-		switch (rootParam.m_type)
-		{
-		case RootParameter::Type::Constant:
-		case RootParameter::Type::CBV: // : register (b_, space_)
-		{
-			insertType = DescriptorType::CBV;
-		}
-		break;
-		case RootParameter::Type::SRV: // : register (t_, space_)
-		{
-			insertType = DescriptorType::SRV;
-		}
-		break;
-		case RootParameter::Type::UAV: // : register (u_, space_)
-		{
-			insertType = DescriptorType::UAV;
-		}
-		break;
-		case RootParameter::Type::DescriptorTable:
-		{
-			switch (rootParam.m_tableEntry.m_type)
-			{
-			case DescriptorType::SRV:
-			{
-				insertType = DescriptorType::SRV;
-			}
-			break;
-			case DescriptorType::UAV:
-			{
-				insertType = DescriptorType::UAV;
-			}
-			break;
-			case DescriptorType::CBV:
-			{
-				insertType = DescriptorType::CBV;
-			}
-			break;
-			default:
-				SEAssertF("Invalid descriptor table type");
-			}
-		}
-		break;
-		default:
-			SEAssertF("Invalid root parameter type");
-		}
 
 		// Finally, move the root param into our vector
 		m_rootParams.emplace_back(std::move(rootParam));
@@ -375,11 +328,50 @@ namespace dx12
 
 			auto RangeHasMatchingName = [&inputBindingDesc](RangeInput const& a)
 			{
-				// TODO: We're currently assuming that all textures will be defined once in a common location, and
+				// TODO: We're currently assuming that all resources will be defined once in a common location, and
 				// included in each different shader type (and thus will have the same index... but is this even
 				// true?). This might not always be the case - We should fix this, it's brittle and stupid
 				return strcmp(a.m_name.c_str(), inputBindingDesc.Name) == 0;
-			};			
+			};
+
+			auto AddRangeInput = [&rangeInputs, &inputBindingDesc, &shaderIdx, &RangeHasMatchingName]
+				(DescriptorType descriptorType) -> RangeInput const*
+				{
+					RangeInput const* rangeInput = nullptr;
+
+					// Check to see if our resource has already been added (e.g. if it's referenced in multiple shader
+					// stages). We do a linear search, but in practice the no. of elements is likely very small
+					auto result = std::find_if(
+						rangeInputs[descriptorType].begin(),
+						rangeInputs[descriptorType].end(),
+						RangeHasMatchingName);
+
+					if (result == rangeInputs[descriptorType].end())
+					{
+						rangeInput = &rangeInputs[descriptorType].emplace_back(
+							RangeInput
+							{
+								.m_name = inputBindingDesc.Name,
+								.m_baseRegister = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
+								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
+								.m_shaderVisibility =
+									GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx)),
+								.m_shaderInputType = inputBindingDesc.Type,
+								.m_bindCount = inputBindingDesc.BindCount,
+								.m_returnType = inputBindingDesc.ReturnType,
+								.m_dimension = inputBindingDesc.Dimension,
+								.m_numSamples = inputBindingDesc.NumSamples
+							});
+					}
+					else
+					{
+						result->m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
+
+						rangeInput = &(*result);
+					}
+					return rangeInput;
+				};
+
 
 			for (uint32_t currentResource = 0; currentResource < shaderDesc.BoundResources; currentResource++)
 			{
@@ -387,7 +379,7 @@ namespace dx12
 				CheckHResult(hr, "Failed to get resource binding description");
 				
 				SEAssert(rootParameters.size() < std::numeric_limits<uint8_t>::max(),
-					"Too many root parameters. Consider increasing the root sig index type from a uint8_t");
+					"Too many root parameters. Consider increasing the root sig index type from a uint8_t");			
 
 				// Set the type-specific RootParameter values:
 				switch (inputBindingDesc.Type)
@@ -435,34 +427,7 @@ namespace dx12
 				break;
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_TEXTURE:
 				{
-					// Check to see if our texture has already been added (e.g. if it's referenced in multiple shader
-					// stages). We do a linear search, but in practice the no. of elements is likely very small
-					auto result = std::find_if(
-						rangeInputs[DescriptorType::SRV].begin(),
-						rangeInputs[DescriptorType::SRV].end(),
-						RangeHasMatchingName);
-
-					if (result == rangeInputs[DescriptorType::SRV].end())
-					{
-						rangeInputs[DescriptorType::SRV].emplace_back(
-							RangeInput
-							{
-								.m_name = inputBindingDesc.Name,
-								.m_baseRegister = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
-								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
-								.m_shaderVisibility =
-									GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx)),
-								.m_shaderInputType = inputBindingDesc.Type,
-								.m_bindCount = inputBindingDesc.BindCount,
-								.m_returnType = inputBindingDesc.ReturnType,
-								.m_dimension = inputBindingDesc.Dimension,
-								.m_numSamples = inputBindingDesc.NumSamples
-							});
-					}
-					else
-					{
-						result->m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
-					}
+					AddRangeInput(DescriptorType::SRV);
 				}
 				break;
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_SAMPLER:
@@ -503,67 +468,95 @@ namespace dx12
 					}
 				}
 				break;
-				case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED:		// e.g. Compute texture targets
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED:	// e.g.RWTexture2D
+				{
+					// We can only bind this as a range as UAV root descriptors can only be Raw or Structured buffers
+					RangeInput const* rangeInput = AddRangeInput(DescriptorType::UAV);
+
+					SEAssert(shaderIdx != re::Shader::Compute ||
+						rangeInput->m_shaderVisibility == D3D12_SHADER_VISIBILITY_ALL,
+						"Compute resource visibility should always be D3D12_SHADER_VISIBILITY_ALL");
+				}
+				break;
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWSTRUCTURED:	// e.g. RW structured buffers
 				{
-					auto result = std::find_if(
-						rangeInputs[DescriptorType::UAV].begin(),
-						rangeInputs[DescriptorType::UAV].end(),
-						RangeHasMatchingName);
+					if (inputBindingDesc.BindCount > 1) // RWStructured buffer arrays: Bind as a range
+					{
+						RangeInput const* rangeInput = AddRangeInput(DescriptorType::UAV);
 
-					if (result == rangeInputs[DescriptorType::UAV].end())
-					{
-						rangeInputs[DescriptorType::UAV].emplace_back(
-							RangeInput
-							{
-								.m_name = inputBindingDesc.Name,
-								.m_baseRegister = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
-								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
-								.m_shaderVisibility = GetShaderVisibilityFlagFromShaderType(
-									static_cast<re::Shader::ShaderType>(shaderIdx)),
-								.m_shaderInputType = inputBindingDesc.Type,
-								.m_bindCount = inputBindingDesc.BindCount,
-								.m_returnType = inputBindingDesc.ReturnType,
-								.m_dimension = inputBindingDesc.Dimension,
-								.m_numSamples = inputBindingDesc.NumSamples, // Structured buffers: Type byte stride
-							});
-					}
-					else
-					{
-						SEAssert(result->m_shaderVisibility == D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL,
+						SEAssert(shaderIdx != re::Shader::Compute ||
+							rangeInput->m_shaderVisibility == D3D12_SHADER_VISIBILITY_ALL,
 							"Compute resource visibility should always be D3D12_SHADER_VISIBILITY_ALL");
+					}
+					else // Single RWStructured buffer: Bind in the root signature
+					{
+						if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
+						{
+							const uint8_t rootIdx = util::CheckedCast<uint8_t>(rootParameters.size());
+							rootParameters.emplace_back();
+
+							rootParameters[rootIdx].InitAsUnorderedAccessView(
+								inputBindingDesc.BindPoint,	// Shader register
+								inputBindingDesc.Space,		// Register space
+								D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
+								GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx)));	// Shader visibility
+
+							newRootSig->InsertNewRootParamMetadata(inputBindingDesc.Name,
+								RootParameter{
+									.m_index = rootIdx,
+									.m_type = RootParameter::Type::UAV,
+									.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
+									.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
+									.m_rootUAV{
+										.m_viewDimension = GetD3D12UAVDimension(inputBindingDesc.Dimension)
+									}
+								});
+						}
+						else
+						{
+							const size_t metadataIdx = newRootSig->m_namesToRootParamsIdx[inputBindingDesc.Name];
+							rootParameters[newRootSig->m_rootParams[metadataIdx].m_index].ShaderVisibility =
+								D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
+						}
 					}
 				}
 				break;
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_STRUCTURED:
 				{
-					if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
+					if (inputBindingDesc.BindCount > 1) // Structured buffer arrays: Bind as a range
 					{
-						const uint8_t rootIdx = util::CheckedCast<uint8_t>(rootParameters.size());
-						rootParameters.emplace_back();
-
-						rootParameters[rootIdx].InitAsShaderResourceView(
-							inputBindingDesc.BindPoint,	// Shader register
-							inputBindingDesc.Space,		// Register space
-							D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
-							GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx)));	// Shader visibility
-
-						newRootSig->InsertNewRootParamMetadata(inputBindingDesc.Name,
-							RootParameter{
-								.m_index = rootIdx,
-								.m_type = RootParameter::Type::SRV,
-								.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
-								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
-								.m_rootSRV{
-									.m_viewDimension = GetD3D12SRVDimension(inputBindingDesc.Dimension)
-								}
-							});
+						AddRangeInput(DescriptorType::SRV);
 					}
-					else
+					else // Single structured buffer: Bind in the root signature
 					{
-						const size_t metadataIdx = newRootSig->m_namesToRootParamsIdx[inputBindingDesc.Name];
-						rootParameters[newRootSig->m_rootParams[metadataIdx].m_index].ShaderVisibility =
-							D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
+						if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
+						{
+							const uint8_t rootIdx = util::CheckedCast<uint8_t>(rootParameters.size());
+							rootParameters.emplace_back();
+
+							rootParameters[rootIdx].InitAsShaderResourceView(
+								inputBindingDesc.BindPoint,	// Shader register
+								inputBindingDesc.Space,		// Register space
+								D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
+								GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx)));	// Shader visibility
+
+							newRootSig->InsertNewRootParamMetadata(inputBindingDesc.Name,
+								RootParameter{
+									.m_index = rootIdx,
+									.m_type = RootParameter::Type::SRV,
+									.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
+									.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
+									.m_rootSRV{
+										.m_viewDimension = GetD3D12SRVDimension(inputBindingDesc.Dimension)
+									}
+								});
+						}
+						else
+						{
+							const size_t metadataIdx = newRootSig->m_namesToRootParamsIdx[inputBindingDesc.Name];
+							rootParameters[newRootSig->m_rootParams[metadataIdx].m_index].ShaderVisibility =
+								D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
+						}
 					}
 				}
 				break;
@@ -624,6 +617,8 @@ namespace dx12
 			newRootSig->m_descriptorTables.emplace_back();
 			newRootSig->m_descriptorTables.back().m_index = rootIdx;
 			
+			uint32_t totalRangeDescriptors = 0; // How many descriptors in the entire range
+
 			// Walk through the sorted descriptors, and build ranges from contiguous blocks:
 			size_t rangeStart = 0;
 			size_t rangeEnd = 1;
@@ -631,10 +626,11 @@ namespace dx12
 			D3D12_SHADER_VISIBILITY tableVisibility = rangeInputs[rangeTypeIdx][rangeStart].m_shaderVisibility;
 			while (rangeStart < rangeInputs[rangeTypeIdx].size())
 			{
-				uint8_t expectedNextRegister = rangeInputs[rangeTypeIdx][rangeStart].m_baseRegister + 1;
-
 				// Store the names in order so we can update the binding metadata later:
 				namesInRange.emplace_back(rangeInputs[rangeTypeIdx][rangeStart].m_name);
+
+				uint8_t numDescriptors = rangeInputs[rangeTypeIdx][rangeStart].m_bindCount;
+				uint8_t expectedNextRegister = rangeInputs[rangeTypeIdx][rangeStart].m_baseRegister + numDescriptors;
 
 				// Find the end of the current contiguous range:
 				while (rangeEnd < rangeInputs[rangeTypeIdx].size() &&
@@ -648,14 +644,17 @@ namespace dx12
 						tableVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
 					}
 
-					expectedNextRegister++;
+					numDescriptors += rangeInputs[rangeTypeIdx][rangeEnd].m_bindCount;
+					expectedNextRegister += rangeInputs[rangeTypeIdx][rangeEnd].m_bindCount;
+
 					rangeEnd++;
 				}
+
+				totalRangeDescriptors += numDescriptors;
 
 				// Initialize the descriptor range:
 				const D3D12_DESCRIPTOR_RANGE_TYPE d3dRangeType = GetD3DRangeType(rangeType);
 				
-				const uint32_t numDescriptors = util::CheckedCast<uint32_t>(rangeEnd - rangeStart);
 				tableRanges[rangeTypeIdx].emplace_back();
 
 				const uint32_t baseRegister = rangeInputs[rangeTypeIdx][rangeStart].m_baseRegister;
@@ -680,7 +679,8 @@ namespace dx12
 						.m_registerSpace = util::CheckedCast<uint8_t>(registerSpace),
 						.m_tableEntry = RootSignature::TableEntry{
 							.m_type = rangeType,
-							.m_offset = util::CheckedCast<uint8_t>(rangeIdx)}
+							.m_offset = util::CheckedCast<uint8_t>(rangeIdx),
+							.m_bindCount = util::CheckedCast<uint8_t>(rangeInputs[rangeTypeIdx][rangeIdx].m_bindCount),}
 					};
 
 					// Populate the descriptor table metadata:
@@ -693,7 +693,7 @@ namespace dx12
 
 						rootParameter.m_tableEntry.m_srvViewDimension = d3d12SrvDimension;
 
-						RangeEntry newSrvRangeEntry;
+						RangeEntry newSrvRangeEntry{};
 						newSrvRangeEntry.m_srvDesc.m_format =
 							GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].m_returnType);
 						newSrvRangeEntry.m_srvDesc.m_viewDimension = d3d12SrvDimension;
@@ -708,7 +708,7 @@ namespace dx12
 
 						rootParameter.m_tableEntry.m_uavViewDimension = d3d12UavDimension;
 
-						RangeEntry newUavRangeEntry;
+						RangeEntry newUavRangeEntry{};
 						newUavRangeEntry.m_uavDesc.m_format =
 							GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].m_returnType);
 						newUavRangeEntry.m_uavDesc.m_viewDimension = d3d12UavDimension;
@@ -744,9 +744,9 @@ namespace dx12
 				tableRanges[rangeTypeIdx].data(),
 				tableVisibility);
 		
-			// How many descriptors are in the table stored at the given root sig index:
-			newRootSig->m_numDescriptorsPerTable[rootIdx] = util::CheckedCast<uint32_t>(rangeInputs[rangeTypeIdx].size());
-
+			// How many descriptors are in the table stored at the given root sig index (i.e. including > 1 bind counts):
+			newRootSig->m_numDescriptorsPerTable[rootIdx] = totalRangeDescriptors;
+			
 			const uint32_t descriptorTableBitmask = (1 << rootIdx);
 			newRootSig->m_rootSigDescriptorTableIdxBitmask |= descriptorTableBitmask;
 

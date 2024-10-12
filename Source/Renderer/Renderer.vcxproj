@@ -109,7 +109,7 @@
     <ClInclude Include="BufferAllocator.h" />
     <ClInclude Include="BufferAllocator_DX12.h" />
     <ClInclude Include="BufferAllocator_OpenGL.h" />
-    <ClInclude Include="BufferInput.h" />
+    <ClInclude Include="BufferView.h" />
     <ClInclude Include="Buffer_DX12.h" />
     <ClInclude Include="Buffer_OpenGL.h" />
     <ClInclude Include="Buffer_Platform.h" />
@@ -225,7 +225,7 @@
     <ClCompile Include="BufferAllocator.cpp" />
     <ClCompile Include="BufferAllocator_DX12.cpp" />
     <ClCompile Include="BufferAllocator_OpenGL.cpp" />
-    <ClCompile Include="BufferInput.cpp" />
+    <ClCompile Include="BufferView.cpp" />
     <ClCompile Include="Buffer_DX12.cpp" />
     <ClCompile Include="Buffer_OpenGL.cpp" />
     <ClCompile Include="Buffer_Platform.cpp" />

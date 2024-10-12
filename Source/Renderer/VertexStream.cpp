@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer.h"
-#include "BufferInput.h"
+#include "BufferView.h"
 #include "RenderManager.h"
 #include "VertexStream.h"
 
@@ -289,17 +289,6 @@ namespace gr
 	VertexStream::Normalize VertexStream::DoNormalize() const
 	{
 		return m_streamDesc.m_doNormalize;
-	}
-
-
-	re::VertexStreamView VertexStream::GetVertexStreamView() const
-	{
-		return re::VertexStreamView{
-			.m_type = m_streamDesc.m_type,
-			.m_dataType = m_streamDesc.m_dataType,
-			.m_isNormalized = static_cast<bool>(m_streamDesc.m_doNormalize),
-			.m_numElements = GetNumElements(),
-		};
 	}
 
 

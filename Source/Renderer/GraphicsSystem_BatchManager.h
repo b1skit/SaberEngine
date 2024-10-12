@@ -1,7 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
-#include "BufferInput.h"
+#include "BufferView.h"
 #include "Effect.h"
 #include "RenderObjectIDs.h"
 #include "GraphicsSystem.h"

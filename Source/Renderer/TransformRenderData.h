@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Buffer.h"
-#include "BufferInput.h"
+#include "BufferView.h"
 #include "RenderObjectIDs.h"
 
 #include "Shaders/Common/InstancingParams.h"

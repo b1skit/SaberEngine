@@ -73,7 +73,7 @@ namespace
 			SEAssert(vertexBuffers[i].m_buffer == nullptr ||
 				i + 1 == gr::VertexStream::k_maxVertexStreams ||
 				vertexBuffers[i + 1].m_buffer == nullptr ||
-				(vertexBuffers[i].m_view.m_type < vertexBuffers[i + 1].m_view.m_type) ||
+				(vertexBuffers[i].m_view.m_stream.m_type < vertexBuffers[i + 1].m_view.m_stream.m_type) ||
 				vertexBuffers[i].m_bindSlot + 1 == vertexBuffers[i + 1].m_bindSlot,
 				"Vertex streams of the same type must be stored in monotoically-increasing slot order");
 
@@ -290,7 +290,9 @@ namespace re
 		// Add the morph data buffer (it'll be considered when the batch hash is computed)
 		if (meshPrimRenderData.m_hasMorphTargets)
 		{
-			SetBuffer(s_interleavedMorphDataShaderName, meshPrimRenderData.m_interleavedMorphData);
+			SetBuffer(s_interleavedMorphDataShaderName,
+				meshPrimRenderData.m_interleavedMorphData, 
+				re::BufferView(meshPrimRenderData.m_interleavedMorphData));
 		}
 
 		m_drawStyleBitmask = ComputeBatchBitmask(materialInstanceData, meshPrimRenderData.m_hasMorphTargets);
@@ -382,13 +384,14 @@ namespace re
 					break;
 				}
 				
-				const gr::VertexStream::Type curStreamType = m_graphicsParams.m_vertexBuffers[i].m_view.m_type;
+				const gr::VertexStream::Type curStreamType = 
+					m_graphicsParams.m_vertexBuffers[i].m_view.m_stream.m_type;
 				
 				// Find consecutive streams with the same type, and resolve the final vertex slot from the shader
 				uint8_t semanticIdx = 0; // Start at 0 to ensure we process the current stream
 				while (i + semanticIdx < gr::VertexStream::k_maxVertexStreams &&
 					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_buffer &&
-					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_view.m_type == curStreamType)
+					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_view.m_stream.m_type == curStreamType)
 				{					
 					const uint8_t vertexAttribSlot = m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
 					if (vertexAttribSlot != re::VertexStreamMap::k_invalidSlotIdx)
@@ -566,6 +569,12 @@ namespace re
 	void Batch::SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> buffer)
 	{
 		SetBuffer(re::BufferInput(shaderName, buffer));
+	}
+
+
+	void Batch::SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> buffer, re::BufferView const& view)
+	{
+		SetBuffer(re::BufferInput(shaderName, buffer, view));
 	}
 
 

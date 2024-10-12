@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Buffer.h"
-#include "BufferInput.h"
+#include "BufferView.h"
 #include "Effect.h"
 
 #include "Core/Interfaces/INamedObject.h"
