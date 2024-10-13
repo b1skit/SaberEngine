@@ -145,7 +145,7 @@ namespace dx12
 					IID_PPV_ARGS(&params->m_resource));
 				CheckHResult(hr, "Failed to create committed resource for mutable buffer");
 
-				std::wstring const& debugName = buffer.GetWName() + L"_Mutable";
+				std::wstring const& debugName = buffer.GetWName() + L"_CPUMutable";
 				params->m_resource->SetName(debugName.c_str());
 			}
 			break;
@@ -171,7 +171,7 @@ namespace dx12
 				CheckHResult(hr, "Failed to create committed resource for immutable buffer");
 
 				// Debug names:
-				std::wstring const& debugName = buffer.GetWName() + L"_Immutable";
+				std::wstring const& debugName = buffer.GetWName() + L"_CPUImmutable";
 				params->m_resource->SetName(debugName.c_str());
 			}
 			break;

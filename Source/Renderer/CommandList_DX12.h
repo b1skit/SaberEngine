@@ -246,19 +246,6 @@ namespace dx12
 	}
 
 
-	inline void CommandList::Dispatch(glm::uvec3 const& numThreads)
-	{
-		SEAssert(numThreads.x < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
-			numThreads.y < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
-			numThreads.z < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION,
-			"Invalid dispatch dimensions");
-
-		CommitGPUDescriptors();
-
-		m_commandList->Dispatch(numThreads.x, numThreads.y, numThreads.z);
-	}
-
-
 	inline CommandListType CommandList::GetCommandListType() const
 	{
 		return m_type;

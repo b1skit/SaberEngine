@@ -18,7 +18,7 @@ namespace re
 		struct BufferType
 		{
 			uint32_t m_firstElement = 0;		// Index of first array element to be accessed
-			uint32_t m_numElements = 1;			// Number of array elements visible
+			uint32_t m_numElements = 1;			// Number of array elements visible (i.e. structured buffers)
 			uint32_t m_structuredByteStride;	// Structured buffer: Byte size of 1 struct/element. CBV: Size in bytes
 
 			// TODO: This binding information probably shouldn't be part of the view, but it's convenient for now

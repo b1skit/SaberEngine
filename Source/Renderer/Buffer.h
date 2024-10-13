@@ -257,6 +257,9 @@ namespace re
 	std::shared_ptr<re::Buffer> Buffer::Create(
 		std::string const& bufferName, T const& data, BufferParams const& bufferParams)
 	{
+		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::None, 
+			"Buffer specifies no CPU-side staging, but staging data received. Is this the correct create function?");
+
 		const uint32_t dataByteSize = sizeof(T);
 
 		std::shared_ptr<re::Buffer> newBuffer;
@@ -272,6 +275,9 @@ namespace re
 	std::shared_ptr<re::Buffer> Buffer::CreateUncommitted(
 		std::string const& bufferName, BufferParams const& bufferParams)
 	{
+		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::None,
+			"Buffer specifies no CPU-side staging, but staging data received. Is this the correct create function?");
+
 		const uint32_t dataByteSize = sizeof(T);
 
 		std::shared_ptr<re::Buffer> newBuffer;
@@ -288,6 +294,9 @@ namespace re
 	std::shared_ptr<re::Buffer> Buffer::CreateArray(
 		std::string const& bufferName, T const* dataArray, BufferParams const& bufferParams)
 	{
+		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::None,
+			"Buffer specifies no CPU-side staging, but staging data received. Is this the correct create function?");
+
 		SEAssert(HasUsageBit(Usage::Structured, bufferParams), "Unexpected data type for a buffer array");
 
 		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
@@ -305,6 +314,9 @@ namespace re
 	std::shared_ptr<re::Buffer> Buffer::CreateUncommittedArray(
 		std::string const& bufferName, BufferParams const& bufferParams)
 	{
+		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::None,
+			"Buffer specifies no CPU-side staging, but staging data received. Is this the correct create function?");
+
 		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
 
 		std::shared_ptr<re::Buffer> newBuffer;

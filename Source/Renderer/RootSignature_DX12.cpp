@@ -614,8 +614,8 @@ namespace dx12
 			rootParameters.emplace_back();
 
 			// Create a new descriptor table record, and populate the metadata as we go:
-			newRootSig->m_descriptorTables.emplace_back();
-			newRootSig->m_descriptorTables.back().m_index = rootIdx;
+			DescriptorTable& newDescriptorTable = newRootSig->m_descriptorTables.emplace_back();
+			newDescriptorTable.m_index = rootIdx;
 			
 			uint32_t totalRangeDescriptors = 0; // How many descriptors in the entire range
 
@@ -693,12 +693,12 @@ namespace dx12
 
 						rootParameter.m_tableEntry.m_srvViewDimension = d3d12SrvDimension;
 
-						RangeEntry newSrvRangeEntry{};
-						newSrvRangeEntry.m_srvDesc.m_format =
-							GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].m_returnType);
-						newSrvRangeEntry.m_srvDesc.m_viewDimension = d3d12SrvDimension;
-
-						newRootSig->m_descriptorTables.back().m_ranges[DescriptorType::SRV].emplace_back(newSrvRangeEntry);
+						newDescriptorTable.m_ranges[DescriptorType::SRV].emplace_back(RangeEntry{
+							.m_bindCount = rangeInputs[rangeTypeIdx][rangeIdx].m_bindCount,
+							.m_srvDesc = {
+								.m_format = GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].m_returnType),
+								.m_viewDimension = d3d12SrvDimension,}
+							});
 					}
 					break;
 					case DescriptorType::UAV:
@@ -708,12 +708,12 @@ namespace dx12
 
 						rootParameter.m_tableEntry.m_uavViewDimension = d3d12UavDimension;
 
-						RangeEntry newUavRangeEntry{};
-						newUavRangeEntry.m_uavDesc.m_format =
-							GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].m_returnType);
-						newUavRangeEntry.m_uavDesc.m_viewDimension = d3d12UavDimension;
-
-						newRootSig->m_descriptorTables.back().m_ranges[DescriptorType::UAV].emplace_back(newUavRangeEntry);
+						newDescriptorTable.m_ranges[DescriptorType::UAV].emplace_back(RangeEntry{
+							.m_bindCount = rangeInputs[rangeTypeIdx][rangeIdx].m_bindCount,
+							.m_uavDesc = {
+								.m_format = GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].m_returnType),
+								.m_viewDimension = d3d12UavDimension,}
+							});
 					}
 					break;
 					case DescriptorType::CBV:

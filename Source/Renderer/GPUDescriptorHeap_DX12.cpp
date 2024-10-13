@@ -154,7 +154,7 @@ namespace dx12
 								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_viewDimension,
 								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_format).GetBaseDescriptor(),
 							static_cast<uint32_t>(rangeEntry),
-							1);						
+							descriptorTable.m_ranges[rangeType][rangeEntry].m_bindCount);
 					}
 					break;
 					case RootSignature::DescriptorType::UAV:
@@ -165,7 +165,7 @@ namespace dx12
 								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_viewDimension,
 								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_format).GetBaseDescriptor(),
 							static_cast<uint32_t>(rangeEntry),
-						1);
+							descriptorTable.m_ranges[rangeType][rangeEntry].m_bindCount);
 					}
 					break;
 					case RootSignature::DescriptorType::CBV:

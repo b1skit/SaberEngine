@@ -28,6 +28,7 @@ namespace dx12
 	public: // Descriptor table metadata:
 		struct RangeEntry
 		{
+			uint32_t m_bindCount = std::numeric_limits<uint32_t>::max();
 			union
 			{
 				struct
@@ -61,7 +62,7 @@ namespace dx12
 			DescriptorTable() { m_ranges.resize(DescriptorType::Type_Count); }
 			
 			uint8_t m_index = k_invalidRootSigIndex;
-			std::vector<std::vector<RangeEntry>> m_ranges;
+			std::vector<std::vector<RangeEntry>> m_ranges; // A vector of RangeEntry for each DescriptorType
 		};
 
 

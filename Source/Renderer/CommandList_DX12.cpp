@@ -448,6 +448,19 @@ namespace dx12
 	}
 
 
+	void CommandList::Dispatch(glm::uvec3 const& numThreads)
+	{
+		SEAssert(numThreads.x < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
+			numThreads.y < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
+			numThreads.z < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION,
+			"Invalid dispatch dimensions");
+
+		CommitGPUDescriptors();
+
+		m_commandList->Dispatch(numThreads.x, numThreads.y, numThreads.z);
+	}
+
+
 	void CommandList::DrawBatchGeometry(re::Batch const& batch)
 	{
 		// Set the geometry for the draw:		
@@ -777,11 +790,9 @@ namespace dx12
 					((rwTex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0),
 					"Unexpected texture usage for a RW texture");
 
-				const D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptor = dx12::Texture::GetUAV(rwTex, rwTexInput.m_textureView);
-
 				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 					rootSigEntry->m_index,
-					uavDescriptor,
+					dx12::Texture::GetUAV(rwTex, rwTexInput.m_textureView),
 					rootSigEntry->m_tableEntry.m_offset,
 					1);
 
