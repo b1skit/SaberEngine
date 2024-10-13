@@ -13,7 +13,7 @@ namespace util
 		const T remainder = val % multiple;
 		if (remainder == 0)
 		{
-			return val;
+			return val > 0 ? val : multiple;
 		}
 		return val + multiple - remainder;
 	}
