@@ -435,17 +435,19 @@ namespace dx12
 				break;
 				case dx12::RootSignature::DescriptorType::CBV:
 				{
-					SEAssertF("TODO: Support this");
-
 					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
 						"Buffer is missing the Constant usage bit");
-					SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
-						"Unexpected root signature type");
 					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
 						!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
 						"Invalid usage flags for a constant buffer");
+					
+					re::BufferView const& bufView = bufferInput.GetView();
 
-					//
+					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
+						rootSigEntry->m_index,
+						dx12::Buffer::GetCBV(bufferInput.GetBuffer(), bufView),
+						rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
+						1);
 
 					toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 					transitionResource = !isInSharedHeap;

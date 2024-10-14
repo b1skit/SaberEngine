@@ -28,13 +28,11 @@ namespace dx12
 	public: // Descriptor table metadata:
 		struct RangeEntry
 		{
+			// No. of descriptors bound to the same name (e.g. for arrays of buffers)
 			uint32_t m_bindCount = std::numeric_limits<uint32_t>::max();
+
 			union
 			{
-				struct
-				{
-					uint32_t m_sizeInBytes;
-				} m_cbvDesc;
 				struct
 				{
 					DXGI_FORMAT m_format;
@@ -88,7 +86,6 @@ namespace dx12
 		{
 			DescriptorType m_type = DescriptorType::Type_Invalid;
 			uint8_t m_offset = k_invalidOffset;
-			uint8_t m_bindCount = 0; // No. of descriptors bound to the same name (e.g. for arrays of buffers)
 
 			union
 			{

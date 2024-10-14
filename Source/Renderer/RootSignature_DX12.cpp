@@ -236,8 +236,9 @@ namespace dx12
 		SEAssert(rootParam.m_type != RootParameter::Type::DescriptorTable || 
 				(rootParam.m_tableEntry.m_type != DescriptorType::Type_Invalid &&
 					rootParam.m_tableEntry.m_offset != k_invalidOffset && 
-					rootParam.m_tableEntry.m_srvViewDimension != 0 && // It's a union, either member should be > 0
-					rootParam.m_tableEntry.m_bindCount > 0),
+					(rootParam.m_tableEntry.m_type == DescriptorType::CBV ||
+						rootParam.m_tableEntry.m_srvViewDimension != 0)), // It's a union, either member should be > 0
+					
 			"TableEntry is not fully initialized"); 
 
 		const size_t metadataIdx = m_rootParams.size();
@@ -393,30 +394,37 @@ namespace dx12
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_CBUFFER:
 				{
 					SEAssert(strcmp(inputBindingDesc.Name, "$Globals") != 0, "TODO: Handle root constants");
-					
-					if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
+
+					if (inputBindingDesc.BindCount > 1)
 					{
-						const uint8_t rootIdx = util::CheckedCast<uint8_t>(rootParameters.size());
-						rootParameters.emplace_back();
-
-						rootParameters[rootIdx].InitAsConstantBufferView(
-							inputBindingDesc.BindPoint,	// Shader register
-							inputBindingDesc.Space,		// Register space
-							D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
-							GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx)));	// Shader visibility
-
-						newRootSig->InsertNewRootParamMetadata(inputBindingDesc.Name,
-							RootParameter{
-								.m_index = rootIdx,
-								.m_type = RootParameter::Type::CBV,
-								.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
-								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space)});
+						RangeInput const* rangeInput = AddRangeInput(DescriptorType::CBV);
 					}
 					else
 					{
-						const size_t metadataIdx = newRootSig->m_namesToRootParamsIdx[inputBindingDesc.Name];
-						rootParameters[newRootSig->m_rootParams[metadataIdx].m_index].ShaderVisibility =
-							D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
+						if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
+						{
+							const uint8_t rootIdx = util::CheckedCast<uint8_t>(rootParameters.size());
+							rootParameters.emplace_back();
+
+							rootParameters[rootIdx].InitAsConstantBufferView(
+								inputBindingDesc.BindPoint,	// Shader register
+								inputBindingDesc.Space,		// Register space
+								D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
+								GetShaderVisibilityFlagFromShaderType(static_cast<re::Shader::ShaderType>(shaderIdx)));	// Shader visibility
+
+							newRootSig->InsertNewRootParamMetadata(inputBindingDesc.Name,
+								RootParameter{
+									.m_index = rootIdx,
+									.m_type = RootParameter::Type::CBV,
+									.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
+									.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space) });
+						}
+						else
+						{
+							const size_t metadataIdx = newRootSig->m_namesToRootParamsIdx[inputBindingDesc.Name];
+							rootParameters[newRootSig->m_rootParams[metadataIdx].m_index].ShaderVisibility =
+								D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
+						}
 					}
 				}
 				break;
@@ -680,7 +688,7 @@ namespace dx12
 						.m_tableEntry = RootSignature::TableEntry{
 							.m_type = rangeType,
 							.m_offset = util::CheckedCast<uint8_t>(rangeIdx),
-							.m_bindCount = util::CheckedCast<uint8_t>(rangeInputs[rangeTypeIdx][rangeIdx].m_bindCount),}
+						}
 					};
 
 					// Populate the descriptor table metadata:
@@ -718,16 +726,16 @@ namespace dx12
 					break;
 					case DescriptorType::CBV:
 					{
-						SEAssertF("TODO: Handle this type");
+						newDescriptorTable.m_ranges[DescriptorType::CBV].emplace_back(RangeEntry{
+							.m_bindCount = rangeInputs[rangeTypeIdx][rangeIdx].m_bindCount,
+						});
 					}
 					break;
 					default:
 						SEAssertF("Invalid range type");
 					}
 
-					newRootSig->InsertNewRootParamMetadata(
-						namesInRange[rangeIdx].c_str(),
-						std::move(rootParameter));
+					newRootSig->InsertNewRootParamMetadata(namesInRange[rangeIdx].c_str(), std::move(rootParameter));
 				} // end rangeIdx loop
 
 				// Prepare for the next iteration:

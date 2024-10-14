@@ -49,14 +49,18 @@ namespace dx12
 	public:// Null descriptor library
 		DescriptorAllocation const& GetNullSRVDescriptor(D3D12_SRV_DIMENSION, DXGI_FORMAT);
 		DescriptorAllocation const& GetNullUAVDescriptor(D3D12_UAV_DIMENSION, DXGI_FORMAT);
+		DescriptorAllocation const& GetNullCBVDescriptor();
 
 
 	private:
 		std::unordered_map<D3D12_SRV_DIMENSION, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>> s_nullSRVLibrary;
-		std::mutex s_nullSRVLibraryMutex;
+		std::mutex m_nullSRVLibraryMutex;
 		
 		std::unordered_map<D3D12_UAV_DIMENSION, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>> s_nullUAVLibrary;
-		std::mutex s_nullUAVLibraryMutex;
+		std::mutex m_nullUAVLibraryMutex;
+
+		DescriptorAllocation m_nullCBV;
+		std::mutex m_nullCBVMutex;
 
 
 	private:

@@ -144,36 +144,45 @@ namespace dx12
 			{
 				for (size_t rangeEntry = 0; rangeEntry < descriptorTable.m_ranges[rangeType].size(); rangeEntry++)
 				{
-					switch (rangeType)
+					// Set 1 null descriptor per bind count
+					for (uint32_t bindIdx = 0; bindIdx < descriptorTable.m_ranges[rangeType][rangeEntry].m_bindCount; ++bindIdx)
 					{
-					case RootSignature::DescriptorType::SRV:
-					{
-						SetDescriptorTable(
-							descriptorTable.m_index, 
-							context->GetNullSRVDescriptor(
-								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_viewDimension,
-								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_format).GetBaseDescriptor(),
-							static_cast<uint32_t>(rangeEntry),
-							descriptorTable.m_ranges[rangeType][rangeEntry].m_bindCount);
-					}
-					break;
-					case RootSignature::DescriptorType::UAV:
-					{
-						SetDescriptorTable(
-							descriptorTable.m_index,
-							context->GetNullUAVDescriptor(
-								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_viewDimension,
-								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_format).GetBaseDescriptor(),
-							static_cast<uint32_t>(rangeEntry),
-							descriptorTable.m_ranges[rangeType][rangeEntry].m_bindCount);
-					}
-					break;
-					case RootSignature::DescriptorType::CBV:
-					{
-						SEAssertF("TODO: Handle this type");
-					}
-					default:
-						SEAssertF("Invalid range type");
+						switch (rangeType)
+						{
+						case RootSignature::DescriptorType::SRV:
+						{
+							SetDescriptorTable(
+								descriptorTable.m_index,
+								context->GetNullSRVDescriptor(
+									descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_viewDimension,
+									descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_format).GetBaseDescriptor(),
+								static_cast<uint32_t>(rangeEntry) + bindIdx,
+								1);
+						}
+						break;
+						case RootSignature::DescriptorType::UAV:
+						{
+							SetDescriptorTable(
+								descriptorTable.m_index,
+								context->GetNullUAVDescriptor(
+									descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_viewDimension,
+									descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_format).GetBaseDescriptor(),
+								static_cast<uint32_t>(rangeEntry) + bindIdx,
+								1);
+						}
+						break;
+						case RootSignature::DescriptorType::CBV:
+						{
+							SetDescriptorTable(
+								descriptorTable.m_index,
+								context->GetNullCBVDescriptor().GetBaseDescriptor(),
+								static_cast<uint32_t>(rangeEntry) + bindIdx,
+								1);
+						}
+						break;
+						default:
+							SEAssertF("Invalid range type");
+						}
 					}
 				}
 			}			

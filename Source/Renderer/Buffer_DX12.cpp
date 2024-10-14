@@ -545,4 +545,15 @@ namespace dx12
 
 		return bufferPlatParams->m_uavDescriptors.GetCreateDescriptor(buffer, view);
 	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetCBV(re::Buffer const* buffer, re::BufferView const& view)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		dx12::Buffer::PlatformParams const* bufferPlatParams =
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+
+		return bufferPlatParams->m_cbvDescriptors.GetCreateDescriptor(buffer, view);
+	}
 }

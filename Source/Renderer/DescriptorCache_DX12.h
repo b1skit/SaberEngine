@@ -22,6 +22,7 @@ namespace dx12
 		{
 			SRV,
 			UAV,
+			CBV,
 			RTV,
 			DSV,
 

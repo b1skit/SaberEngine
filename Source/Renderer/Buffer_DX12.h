@@ -47,6 +47,7 @@ namespace dx12
 			PlatformParams()
 				: m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
 				, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
+				, m_cbvDescriptors(dx12::DescriptorCache::DescriptorType::CBV)
 				, m_views{0}
 			{
 			}
@@ -55,6 +56,7 @@ namespace dx12
 			{
 				m_srvDescriptors.Destroy();
 				m_uavDescriptors.Destroy();
+				m_cbvDescriptors.Destroy();
 			}
 
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_resource = nullptr;
@@ -65,6 +67,7 @@ namespace dx12
 
 			mutable dx12::DescriptorCache m_srvDescriptors;
 			mutable dx12::DescriptorCache m_uavDescriptors;
+			mutable dx12::DescriptorCache m_cbvDescriptors;
 
 			// Index/vertex views:
 			D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::BufferView const&);
@@ -98,6 +101,7 @@ namespace dx12
 
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRV(re::Buffer const*, re::BufferView const&);
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(re::Buffer const*, re::BufferView const&);
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetCBV(re::Buffer const*, re::BufferView const&);
 	};
 
 

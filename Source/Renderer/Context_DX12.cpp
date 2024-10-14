@@ -164,12 +164,12 @@ namespace dx12
 
 		// Clear the null descriptor libraries:
 		{
-			std::unique_lock<std::mutex> srvLock(dx12Context.s_nullSRVLibraryMutex);
+			std::scoped_lock lock(
+				dx12Context.m_nullSRVLibraryMutex, dx12Context.m_nullUAVLibraryMutex, dx12Context.m_nullCBVMutex);
+
 			dx12Context.s_nullSRVLibrary.clear();
-		}
-		{
-			std::unique_lock<std::mutex> srvLock(dx12Context.s_nullUAVLibraryMutex);
 			dx12Context.s_nullUAVLibrary.clear();
+			dx12Context.m_nullCBV.Free(0); // Release immediately
 		}
 
 		// DX12 buffers contain cpu descriptors, so we must destroy the cpu descriptor heap manager after the
@@ -337,7 +337,7 @@ namespace dx12
 
 	DescriptorAllocation const& Context::GetNullSRVDescriptor(D3D12_SRV_DIMENSION dimension, DXGI_FORMAT format)
 	{
-		std::unique_lock<std::mutex> lock(s_nullSRVLibraryMutex);
+		std::unique_lock<std::mutex> lock(m_nullSRVLibraryMutex);
 
 		auto dimensionResult = s_nullSRVLibrary.find(dimension);
 		if (dimensionResult == s_nullSRVLibrary.end())
@@ -436,7 +436,7 @@ namespace dx12
 
 	DescriptorAllocation const& Context::GetNullUAVDescriptor(D3D12_UAV_DIMENSION dimension, DXGI_FORMAT format)
 	{
-		std::unique_lock<std::mutex> lock(s_nullUAVLibraryMutex);
+		std::unique_lock<std::mutex> lock(m_nullUAVLibraryMutex);
 
 		auto dimensionResult = s_nullUAVLibrary.find(dimension);
 		if (dimensionResult == s_nullUAVLibrary.end())
@@ -515,5 +515,31 @@ namespace dx12
 		}
 
 		return formatResult->second;
+	}
+
+
+	DescriptorAllocation const& Context::GetNullCBVDescriptor()
+	{
+		if (!m_nullCBV.IsValid())
+		{
+			std::unique_lock<std::mutex> lock(m_nullCBVMutex);
+
+			if (!m_nullCBV.IsValid())
+			{
+				const D3D12_CONSTANT_BUFFER_VIEW_DESC nullCBVDesc
+				{
+					.BufferLocation = 0, // Null
+					.SizeInBytes = 0,
+				};
+
+				m_nullCBV = 
+					std::move(m_cpuDescriptorHeapMgrs[CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV].Allocate(1));
+
+				ID3D12Device2* device = m_device.GetD3DDisplayDevice();
+
+				device->CreateConstantBufferView(&nullCBVDesc, m_nullCBV.GetBaseDescriptor());
+			}
+		}
+		return m_nullCBV;
 	}
 }

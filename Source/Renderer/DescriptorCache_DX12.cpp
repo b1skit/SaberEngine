@@ -9,6 +9,7 @@
 #include "Texture_DX12.h"
 
 #include "Core/Assert.h"
+#include "Core/Util/MathUtils.h"
 
 #include <d3dx12.h>
 
@@ -21,7 +22,9 @@ namespace
 		switch (descriptorType)
 		{
 		case dx12::DescriptorCache::DescriptorType::SRV:
-		case dx12::DescriptorCache::DescriptorType::UAV: return dx12::CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV;
+		case dx12::DescriptorCache::DescriptorType::UAV: 
+		case dx12::DescriptorCache::DescriptorType::CBV:
+			return dx12::CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV;
 		case dx12::DescriptorCache::DescriptorType::RTV: return dx12::CPUDescriptorHeapManager::HeapType::RTV;
 		case dx12::DescriptorCache::DescriptorType::DSV: return dx12::CPUDescriptorHeapManager::HeapType::DSV;
 		default: SEAssertF("Invalid descriptor type");
@@ -30,7 +33,7 @@ namespace
 	}
 
 
-	inline DXGI_FORMAT GetSRVFormat(re::Texture const& texture)
+	inline DXGI_FORMAT GetTextureSRVFormat(re::Texture const& texture)
 	{
 		dx12::Texture::PlatformParams const* texPlatParams =
 			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
@@ -54,7 +57,7 @@ namespace
 			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-		srvDesc.Format = GetSRVFormat(texture);
+		srvDesc.Format = GetTextureSRVFormat(texture);
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 		switch (texView.m_viewDimension)
@@ -539,6 +542,30 @@ namespace
 			&uavDesc,
 			descriptor.GetBaseDescriptor());
 	}
+
+
+	void InitializeBufferCBV(
+		dx12::DescriptorAllocation& descriptor,
+		re::Buffer const& buffer,
+		re::BufferView const& bufView)
+	{
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+		const D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc
+		{
+			.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
+			.SizeInBytes = util::RoundUpToNearestMultiple<uint32_t>(
+				buffer.GetTotalBytes(),
+				D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT),
+		};
+		
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+
+		device->CreateConstantBufferView(
+			&cbvDesc,
+			descriptor.GetBaseDescriptor());
+	}
 }
 
 namespace dx12
@@ -718,6 +745,11 @@ namespace dx12
 				case DescriptorType::UAV:
 				{
 					InitializeBufferUAV(newCacheEntry.second, buffer, bufView);
+				}
+				break;
+				case DescriptorType::CBV:
+				{
+					InitializeBufferCBV(newCacheEntry.second, buffer, bufView);
 				}
 				break;
 				case DescriptorType::RTV:
