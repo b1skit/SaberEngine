@@ -223,6 +223,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <None Include="Effects\Skybox.json" />
     <None Include="Effects\Tonemapping.json" />
     <None Include="Effects\XeGTAO.json" />
+    <None Include="Shaders\GLSL\VertexAnimation_CShader.glsl" />
     <None Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
@@ -717,6 +718,10 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ProjectReference Include="Renderer\Renderer.vcxproj">
       <Project>{f49fca5a-2f00-4a69-b17c-3491b1a39400}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\HLSL\VertexAnimation_CShader.hlsl" />
+    <FxCompile Include="Shaders\HLSL\XeGTAO.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -403,6 +403,9 @@
     <None Include="Effects\XeGTAO.json">
       <Filter>Effects</Filter>
     </None>
+    <None Include="Shaders\GLSL\VertexAnimation_CShader.glsl">
+      <Filter>Shaders\GLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Dependencies\Icon\SaberEngineApplicationIcon.ico">
@@ -413,5 +416,13 @@
     <ResourceCompile Include="SaberEngine.rc">
       <Filter>Dependencies\Resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\HLSL\VertexAnimation_CShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\XeGTAO.hlsl">
+      <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
