@@ -208,7 +208,8 @@ namespace dx12
 		ID3D12Resource* newResource, D3D12_RESOURCE_STATES initialState, uint32_t numSubresources)
 	{
 		SEAssert(newResource, "Resource cannot be null");
-		SEAssert(!m_globalStates.contains(newResource), "Resource is already registered");
+		SEAssert(!m_globalStates.contains(newResource),
+			std::format("Resource \"{}\" already registered", dx12::GetDebugName(newResource)).c_str());
 		SEAssert(numSubresources > 0, "Invalid number of subresources");
 
 		{
@@ -222,7 +223,8 @@ namespace dx12
 	void GlobalResourceStateTracker::UnregisterResource(ID3D12Resource* existingResource)
 	{
 		SEAssert(existingResource, "Resource cannot be null");
-		SEAssert(m_globalStates.contains(existingResource), "Resource is not registered");
+		SEAssert(m_globalStates.contains(existingResource),
+			std::format("Resource \"{}\" not found, was it registered?", dx12::GetDebugName(existingResource)).c_str());
 
 		{
 			std::lock_guard<std::mutex> lock(m_globalStatesMutex);
@@ -236,7 +238,9 @@ namespace dx12
 	{
 		m_threadProtector.ValidateThreadAccess();
 			
-		SEAssert(m_globalStates.contains(resource), "Resource not found, was it registered?");
+		SEAssert(m_globalStates.contains(resource),
+			std::format("Resource \"{}\" not found, was it registered?", dx12::GetDebugName(resource)).c_str());
+
 		return m_globalStates.at(resource);
 	}
 
@@ -247,7 +251,9 @@ namespace dx12
 	{
 		m_threadProtector.ValidateThreadAccess();
 
-		SEAssert(m_globalStates.contains(resource), "Resource not found, was it registered?");
+		SEAssert(m_globalStates.contains(resource), 
+			std::format("Resource \"{}\" not found, was it registered?", dx12::GetDebugName(resource)).c_str());
+
 		m_globalStates.at(resource).SetState(newState, subresourceIdx, lastFence);
 	}
 

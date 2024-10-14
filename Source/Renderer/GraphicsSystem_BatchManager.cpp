@@ -133,6 +133,7 @@ namespace gr
 	void BatchManagerGraphicsSystem::RegisterInputs()
 	{
 		RegisterDataInput(k_cullingDataInput);
+		RegisterDataInput(k_animatedVertexStreamsInput);
 	}
 
 
@@ -149,9 +150,12 @@ namespace gr
 		BufferDependencies const&,
 		DataDependencies const& dataDependencies)
 	{
-		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput,dataDependencies);
-
+		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
 		SEAssert(m_viewCullingResults, "View culling results cannot (currently) be null");
+
+		m_animatedVertexStreams = 
+			GetDataDependency<AnimatedVertexStreams>(k_animatedVertexStreamsInput, dataDependencies);
+		SEAssert(m_animatedVertexStreams, "Animated vertex streams map cannot (currently) be null");
 	}
 
 
@@ -248,8 +252,18 @@ namespace gr
 					const gr::TransformID newBatchTransformID = newMeshPrimDataItr.GetTransformID();
 					const size_t newBatchIdx = m_permanentCachedBatches.size();
 
+					// Get any animated vertex streams overrides, if they exist
+					re::Batch::VertexStreamOverride const* vertexStreamOverrides = nullptr;
+					auto const& animatedStreams = m_animatedVertexStreams->find(newMeshPrimID);
+					if (animatedStreams != m_animatedVertexStreams->end())
+					{
+						vertexStreamOverrides = &animatedStreams->second;
+					}
+					SEAssert(!meshPrimRenderData.m_hasMorphTargets || vertexStreamOverrides,
+						"Morph target flag and vertex stream override results are out of sync");
+
 					m_permanentCachedBatches.emplace_back(
-						re::Batch(re::Lifetime::Permanent, meshPrimRenderData, &materialRenderData));
+						re::Batch(re::Lifetime::Permanent, meshPrimRenderData, &materialRenderData, vertexStreamOverrides));
 
 					const uint64_t batchHash = m_permanentCachedBatches.back().GetDataHash();
 
@@ -463,7 +477,7 @@ namespace gr
 			gr::Camera::View const& curView = viewAndCulledIDs.first;
 			std::vector<gr::RenderDataID> const& renderDataIDs = viewAndCulledIDs.second;
 
-			// Copy the batch metadata for the requeted RenderDataIDs:
+			// Copy the batch metadata for the requested RenderDataIDs:
 			std::vector<BatchMetadata const*> batchMetadata;
 			batchMetadata.reserve(renderDataIDs.size());
 			for (size_t i = 0; i < renderDataIDs.size(); i++)

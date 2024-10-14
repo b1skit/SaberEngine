@@ -33,6 +33,7 @@ namespace gr
 		}
 
 		static constexpr util::HashKey k_cullingDataInput = "ViewCullingResults";
+		static constexpr util::HashKey k_animatedVertexStreamsInput = "AnimatedVertexStreams";
 		void RegisterInputs() override;
 
 		static constexpr util::HashKey k_viewBatchesDataOutput = "ViewBatches";
@@ -92,6 +93,7 @@ namespace gr
 		std::unordered_map<EffectID, MaterialInstanceMetadata> m_materialInstanceMetadata;
 
 		ViewCullingResults const* m_viewCullingResults; // From the Culling GS
+		AnimatedVertexStreams const* m_animatedVertexStreams; // From the vertex animation GS
 		
 		ViewBatches m_viewBatches; // Map of gr::Camera::View to vectors of Batches that passed culling
 		std::unordered_map<DataHash, re::BufferInput> m_instanceIndiciesBuffers;

@@ -41,8 +41,7 @@ namespace
 	}
 
 
-	void ValidateVertexStreams(
-		re::Lifetime batchLifetime, re::Batch::VertexBufferInput* vertexBuffers)
+	void ValidateVertexStreams(re::Lifetime batchLifetime, re::VertexBufferInput* vertexBuffers)
 	{
 #if defined(_DEBUG)
 
@@ -67,7 +66,7 @@ namespace
 			}
 
 			SEAssert(vertexBuffers[i].m_buffer == nullptr || 
-				vertexBuffers[i].m_bindSlot != re::Batch::VertexBufferInput::k_invalidSlotIdx,
+				vertexBuffers[i].m_bindSlot != re::VertexBufferInput::k_invalidSlotIdx,
 				"Invalid bind slot detected");
 			
 			SEAssert(vertexBuffers[i].m_buffer == nullptr ||
@@ -84,6 +83,36 @@ namespace
 			}
 		}
 
+#endif
+	}
+
+	void ValidateVertexStreamOverrides(
+		re::Lifetime batchLifetime,
+		std::array<gr::VertexStream const*, gr::VertexStream::k_maxVertexStreams> const& streams,
+		re::Batch::VertexStreamOverride const* overrides)
+	{
+#if defined(_DEBUG)
+		if (!overrides)
+		{
+			return;
+		}
+
+		for (size_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
+		{
+			SEAssert((streams[i] == nullptr) == ((*overrides)[i].m_buffer == nullptr),
+				"Vertex stream overrides must map 1:1 with mesh primitive buffers");
+
+			if ((*overrides)[i].m_buffer)
+			{
+				ValidateVertexStreamLifetime(batchLifetime, (*overrides)[i].m_buffer->GetLifetime());
+
+				SEAssert(i + 1 == gr::VertexStream::k_maxVertexStreams ||
+					(*overrides)[i + 1].m_buffer == nullptr ||
+					((*overrides)[i].m_view.m_stream.m_type < (*overrides)[i + 1].m_view.m_stream.m_type) ||
+					(*overrides)[i].m_bindSlot + 1 == (*overrides)[i + 1].m_bindSlot,
+					"Vertex streams of the same type must be stored in monotoically-increasing slot order");
+			}
+		}
 #endif
 	}
 
@@ -226,7 +255,8 @@ namespace re
 	Batch::Batch(
 		re::Lifetime lifetime,
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
-		gr::Material::MaterialInstanceRenderData const* materialInstanceData)
+		gr::Material::MaterialInstanceRenderData const* materialInstanceData,
+		VertexStreamOverride const* vertexStreamOverride /*= nullptr*/)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_batchShader(nullptr)
@@ -234,6 +264,8 @@ namespace re
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
+		ValidateVertexStreamOverrides(m_lifetime, meshPrimRenderData.m_vertexStreams, vertexStreamOverride); // _DEBUG only
+
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
 		m_graphicsParams = GraphicsParams{
@@ -258,7 +290,14 @@ namespace re
 					m_lifetime == re::Lifetime::Permanent),
 				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 
-			m_graphicsParams.m_vertexBuffers[slotIdx] = VertexBufferInput(meshPrimRenderData.m_vertexStreams[slotIdx]);
+			if (vertexStreamOverride)
+			{
+				m_graphicsParams.m_vertexBuffers[slotIdx] = (*vertexStreamOverride)[slotIdx];
+			}
+			else
+			{
+				m_graphicsParams.m_vertexBuffers[slotIdx] = VertexBufferInput(meshPrimRenderData.m_vertexStreams[slotIdx]);
+			}
 		}
 		m_graphicsParams.m_indexBuffer = meshPrimRenderData.m_indexStream;
 		

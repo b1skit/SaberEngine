@@ -290,8 +290,9 @@ namespace dx12
 		SEAssert(m_type == CommandListType::Direct || m_type == CommandListType::Compute,
 			"Unexpected command list type for setting a buffer on");
 
-		dx12::Buffer::PlatformParams* bufferPlatParams =
-			bufferInput.GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		re::Buffer const* buffer = bufferInput.GetBuffer();
+		dx12::Buffer::PlatformParams* bufferPlatParams = 
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		RootSignature::RootParameter const* rootSigEntry = 
 			m_currentRootSignature->GetRootSignatureEntry(bufferInput.GetShaderName());
@@ -304,9 +305,12 @@ namespace dx12
 			const uint32_t rootSigIdx = rootSigEntry->m_index;
 
 			bool transitionResource = false;
-			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_COMMON; // Updated below
 
-			re::Buffer::BufferParams const& bufferParams = bufferInput.GetBuffer()->GetBufferParams();
+			re::Buffer::BufferParams const& bufferParams = buffer->GetBufferParams();
+
+			// Don't transition resources representing shared heaps
+			const bool isInSharedHeap = bufferParams.m_lifetime == re::Lifetime::SingleFrame;
 
 			switch (rootSigEntry->m_type)
 			{
@@ -319,10 +323,8 @@ namespace dx12
 			{
 				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
 					"Buffer is missing the Constant usage bit");
-
 				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
 					"Unexpected root signature type");
-
 				SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
 					!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
 					"Invalid usage flags for a constant buffer");
@@ -331,29 +333,37 @@ namespace dx12
 					rootSigIdx,
 					bufferPlatParams->m_resource.Get(),
 					bufferPlatParams->m_heapByteOffset);
+
+				toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+				transitionResource = !isInSharedHeap;
 			}
 			break;
 			case RootSignature::RootParameter::Type::SRV:
 			{
 				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
 					"Buffer is missing the Structured usage bit");
-
 				SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
-					"Buffer does not have the GPU read flag set");
+					"SRV buffers must have GPU reads enabled");
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
 					rootSigIdx,
 					bufferPlatParams->m_resource.Get(),
-					bufferPlatParams->m_heapByteOffset);
+					bufferPlatParams->m_heapByteOffset);			
+
+				toState = (m_type == dx12::CommandListType::Compute ? 
+					D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+				transitionResource = !isInSharedHeap;
 			}
 			break;
 			case RootSignature::RootParameter::Type::UAV:
 			{
 				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
 					"Buffer is missing the Structured usage bit");
-
 				SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
 					"UAV buffers must have GPU writes enabled");
+				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
+					"Buffer is missing the Structured usage bit");
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
 					rootSigIdx,
@@ -365,9 +375,10 @@ namespace dx12
 					// TODO: We should only insert a UAV barrier if the we're accessing the resource on the same
 					// command list where a prior modifying use was performed
 					InsertUAVBarrier(bufferPlatParams->m_resource.Get());
-					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-					transitionResource = true;
 				}
+
+				toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+				transitionResource = true;
 			}
 			break;
 			case RootSignature::RootParameter::Type::DescriptorTable:
@@ -376,9 +387,10 @@ namespace dx12
 				{
 				case dx12::RootSignature::DescriptorType::SRV:
 				{
+					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
+						"Buffer is missing the Structured usage bit");
 					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
 						"SRV buffers must have GPU reads enabled");
-
 					SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
 
 					re::BufferView const& bufView = bufferInput.GetView();
@@ -388,13 +400,18 @@ namespace dx12
 						dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView),
 						rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
 						1);
+
+					toState = (m_type == dx12::CommandListType::Compute ?
+						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+					transitionResource = !isInSharedHeap;
 				}
 				break;
 				case dx12::RootSignature::DescriptorType::UAV:
 				{
+					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
+						"Buffer is missing the Structured usage bit");
 					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
 						"UAV buffers must have GPU writes enabled");
-					
 					SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
 
 					re::BufferView const& bufView = bufferInput.GetView();
@@ -410,14 +427,28 @@ namespace dx12
 						// TODO: We should only insert a UAV barrier if the we're accessing the resource on the same
 						// command list where a prior modifying use was performed
 						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
-						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-						transitionResource = true;
 					}
+
+					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+					transitionResource = true;
 				}
 				break;
 				case dx12::RootSignature::DescriptorType::CBV:
 				{
-					SEAssertF("TODO: Support this. Create CBVs during Buffer initialization, and bind them here");
+					SEAssertF("TODO: Support this");
+
+					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
+						"Buffer is missing the Constant usage bit");
+					SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
+						"Unexpected root signature type");
+					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
+						!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
+						"Invalid usage flags for a constant buffer");
+
+					//
+
+					toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+					transitionResource = !isInSharedHeap;
 				}
 				break;
 				default: SEAssertF("Invalid type");
@@ -427,9 +458,10 @@ namespace dx12
 			default: SEAssertF("Invalid root parameter type");
 			}
 
-			// We only transition GPU-writeable buffers (i.e. GPU-write flag enabled)
 			if (transitionResource)
 			{
+				SEAssert(!isInSharedHeap, "Trying to transition a resource in a shared heap. This is unexpected");
+				SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state")
 				TransitionResource(bufferPlatParams->m_resource.Get(), toState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 			}
 
@@ -510,7 +542,7 @@ namespace dx12
 	}
 
 
-	void CommandList::SetVertexBuffers(re::Batch::VertexBufferInput const* vertexBuffers)
+	void CommandList::SetVertexBuffers(re::VertexBufferInput const* vertexBuffers)
 	{
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
 		streamViews.reserve(gr::VertexStream::k_maxVertexStreams);
@@ -532,6 +564,10 @@ namespace dx12
 			
 			streamViews.emplace_back(
 				*streamBufferPlatParams->GetOrCreateVertexBufferView(*streamBuffer, vertexBuffers[streamIdx].m_view));
+
+			SEAssert(streamBuffer->GetLifetime() != re::Lifetime::SingleFrame,
+				"Found a single frame vertex buffer. Currently, single-frame buffers are held in a shared heap. We're "
+				"about to transition the associated resource here, which would be invalid. Need to handle this");
 
 			TransitionResource(
 				streamBufferPlatParams->m_resource.Get(),
@@ -575,7 +611,7 @@ namespace dx12
 	}
 
 
-	void CommandList::SetIndexBuffer(re::Batch::VertexBufferInput const& indexBuffer)
+	void CommandList::SetIndexBuffer(re::VertexBufferInput const& indexBuffer)
 	{
 		SEAssert(indexBuffer.m_buffer, "Index stream buffer is null");
 
@@ -584,6 +620,10 @@ namespace dx12
 
 		m_commandList->IASetIndexBuffer(
 			streamBufferPlatParams->GetOrCreateIndexBufferView(*indexBuffer.m_buffer, indexBuffer.m_view));
+
+		SEAssert(indexBuffer.m_buffer->GetLifetime() != re::Lifetime::SingleFrame,
+			"Found a single frame index buffer. Currently, single-frame buffers are held in a shared heap. We're "
+			"about to transition the associated resource here, which would be invalid. Need to handle this");
 
 		TransitionResource(
 			streamBufferPlatParams->m_resource.Get(),

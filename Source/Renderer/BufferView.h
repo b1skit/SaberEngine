@@ -157,4 +157,53 @@ namespace re
 	{
 		return m_buffer != nullptr;
 	}
+
+
+	// -----------------------------------------------------------------------------------------------------------------
+
+
+	struct VertexBufferInput
+	{
+		static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
+
+		VertexBufferInput() = default;
+
+		VertexBufferInput(gr::VertexStream const* stream)
+			: m_buffer(stream ? stream->GetBuffer() : nullptr)
+			, m_view{}
+		{
+			if (stream)
+			{
+				m_view = re::BufferView::VertexStreamType{
+					.m_type = stream->GetType(),
+					.m_dataType = stream->GetDataType(),
+					.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
+					.m_numElements = stream->GetNumElements(),
+				};
+			}
+		}
+
+		VertexBufferInput(std::shared_ptr<gr::VertexStream>& stream)
+			: VertexBufferInput(stream ? stream.get() : nullptr)
+		{
+		}
+
+		VertexBufferInput(gr::VertexStream const* stream, re::Buffer const* bufferOverride)
+			: m_buffer(bufferOverride)
+			, m_view{}
+		{
+			SEAssert(stream && bufferOverride, "Override constructure requires a valid stream and buffer");
+
+			m_view = re::BufferView::VertexStreamType{
+				.m_type = stream->GetType(),
+				.m_dataType = stream->GetDataType(),
+				.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
+				.m_numElements = stream->GetNumElements(),
+			};
+		}
+
+		re::Buffer const* m_buffer = nullptr;
+		re::BufferView m_view{};
+		uint8_t m_bindSlot = k_invalidSlotIdx; // NOTE: Automatically resolved by the batch
+	};
 }

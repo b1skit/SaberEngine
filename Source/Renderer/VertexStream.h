@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Buffer.h"
 #include "EnumTypes.h"
 
 #include "Core/Interfaces/IHashedDataObject.h"
@@ -83,12 +84,15 @@ namespace gr
 			uint8_t m_streamIdx = std::numeric_limits<uint8_t>::max();
 
 			std::vector<MorphCreateParams> m_morphTargetData;
+
+			// TODO: Should this be part of the data hash (and if so, moved to the StreamDesc)?
+			re::Buffer::UsageMask m_extraUsageBits = 0; // Logically OR'd with our default vertex/index flags
 		};
 
 
 	public:
 		[[nodiscard]] static std::shared_ptr<gr::VertexStream> Create(
-			StreamDesc const&, util::ByteVector&&, bool queueBufferCreate = true);
+			StreamDesc const&, util::ByteVector&&, bool queueBufferCreate = true, re::Buffer::UsageMask extraUsageBits = 0);
 
 		[[nodiscard]] static std::shared_ptr<gr::VertexStream> Create(CreateParams&&, bool queueBufferCreate = true);
 
@@ -110,6 +114,8 @@ namespace gr
 		uint32_t GetNumElements() const; // How many vertices-worth of attributes do we have?
 
 		re::Buffer const* GetBuffer() const;
+		std::shared_ptr<re::Buffer> GetBufferSharedPtr() const;
+
 
 	public:
 		void ShowImGuiWindow() const;
@@ -160,6 +166,12 @@ namespace gr
 	inline re::Buffer const* VertexStream::GetBuffer() const
 	{
 		return m_streamBuffer.get();
+	}
+
+
+	inline std::shared_ptr<re::Buffer> VertexStream::GetBufferSharedPtr() const
+	{
+		return m_streamBuffer;
 	}
 
 

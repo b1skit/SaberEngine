@@ -44,7 +44,7 @@ namespace opengl
 
 			// RenderDoc label:
 			std::string const& bufferName =
-				buffer.GetName() + (bufferAlloc == re::Buffer::StagingPool::Permanent ? "_Permanent" : "_Temporary");
+				buffer.GetName() + (bufferAlloc == re::Buffer::StagingPool::Permanent ? "_CPUMutable" : "_CPUImmutable");
 			glObjectLabel(GL_BUFFER, bufferPlatParams->m_bufferName, -1, bufferName.c_str());
 		}
 		break;

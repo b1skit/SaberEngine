@@ -493,11 +493,11 @@ namespace
 			.ViewDimension = D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER,
 			.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
 			.Buffer = D3D12_BUFFER_SRV{
-					.FirstElement = bufView.m_buffer.m_firstElement,
-					.NumElements = bufView.m_buffer.m_numElements,
-					.StructureByteStride = buffer.GetTotalBytes() / buffer.GetArraySize(),
-					.Flags = D3D12_BUFFER_SRV_FLAGS::D3D12_BUFFER_SRV_FLAG_NONE,
-				}};
+				.FirstElement = bufView.m_buffer.m_firstElement,
+				.NumElements = bufView.m_buffer.m_numElements,
+				.StructureByteStride = bufView.m_buffer.m_structuredByteStride, // Size of 1 element in the shader
+				.Flags = D3D12_BUFFER_SRV_FLAGS::D3D12_BUFFER_SRV_FLAG_NONE,
+			}};
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();

@@ -37,6 +37,11 @@ namespace
 					bufferParams.m_stagingPool == re::Buffer::StagingPool::None)),
 			"If GPUWrite is enabled, buffers must be CPU-immutable and located in the default heap");
 
+		SEAssert(!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams) || 
+		bufferParams.m_lifetime != re::Lifetime::SingleFrame,
+			"We currently expect single-frame resources to be read-only (as we expect single-frame resources to always"
+			"be in a read state, and can't transition to another state without transitioning the whole shared heap)");
+
 		SEAssert(bufferParams.m_usageMask != re::Buffer::Usage::Invalid, "Invalid usage mask");
 		
 		SEAssert(((re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams) || 

@@ -732,28 +732,10 @@ namespace
 
 		fr::Mesh::AttachMeshConcept(sceneNode, meshName.c_str());
 
-		// Morph target weights: We'll store these on the associated morph target vertex streams
-		std::vector<float> morphWeights; 
-		if (current->weights != nullptr) // GLTF specs: Node weights take priority
-		{
-			SEAssert(current->weights_count > 0, "Node weight count is 0. This is unexpected");
-
-			morphWeights.resize(current->weights_count, 0.f); // GLTF spec: Default target weights are 0
-			memcpy(morphWeights.data(), current->weights, sizeof(float) * current->weights_count);
-		}
-		else if (current->mesh->weights != nullptr) // GLTF specs: Mesh weights used when node weights are undefined
-		{
-			SEAssert(current->mesh->weights_count > 0, "Mesh weight count is 0. This is unexpected");
-
-			morphWeights.resize(current->mesh->weights_count, 0.f); // GLTF spec: Default target weights are 0
-			memcpy(morphWeights.data(), current->mesh->weights, sizeof(float) * current->mesh->weights_count);
-		}
+		// Note: We must defer vertex stream creation until after we've processed the data with the VertexStreamBuilder,
+		// as we use a data hash to identify duplicate streams for sharing/reuse
 
 		bool meshHasMorphTargets = false;
-
-		// We must defer vertex stream creation until after we've processed the data with the VertexStreamBuilder,
-		// as we use a data hash to identify duplicate streams for sharing/reuse
-		
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		const uint32_t numMeshPrimitives = util::CheckedCast<uint32_t>(current->mesh->primitives_count);
@@ -1358,6 +1340,21 @@ namespace
 						for (auto const& morphData : stream.m_morphTargetData)
 						{
 							extraChannelsData.emplace_back(morphData.m_streamData.get());							
+						}
+					}
+				}
+			}
+
+			// If our mesh has morph targets, add the extra structured usage flag to the vertex stream buffers
+			if (meshHasMorphTargets)
+			{
+				for (auto& streamIndexElement : vertexStreamCreateParams)
+				{
+					for (auto& createParams : streamIndexElement)
+					{
+						if (createParams.m_streamDesc.m_type != gr::VertexStream::Index)
+						{
+							createParams.m_extraUsageBits |= re::Buffer::Usage::Structured;
 						}
 					}
 				}

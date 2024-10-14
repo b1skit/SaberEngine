@@ -57,36 +57,6 @@ namespace re
 		SEStaticAssert(re::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
 
 
-		struct VertexBufferInput
-		{
-			static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
-
-			VertexBufferInput() = default;
-
-			VertexBufferInput(gr::VertexStream const* stream)
-				: m_buffer(stream ? stream->GetBuffer() : nullptr)
-				, m_view{}
-			{
-				if (stream)
-				{
-					m_view = re::BufferView::VertexStreamType{
-						.m_type = stream->GetType(),
-						.m_dataType = stream->GetDataType(),
-						.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
-						.m_numElements = stream->GetNumElements(),
-					};
-				}
-			}
-
-			VertexBufferInput(std::shared_ptr<gr::VertexStream>& stream)
-				: VertexBufferInput(stream ? stream.get() : nullptr)
-			{
-			}
-
-			re::Buffer const* m_buffer = nullptr;
-			re::BufferView m_view{};
-			uint8_t m_bindSlot = k_invalidSlotIdx; // NOTE: Automatically resolved by the batch
-		};
 		struct GraphicsParams
 		{
 			// Note: Don't forget to update ComputeDataHash() if modifying this
@@ -109,14 +79,20 @@ namespace re
 		{
 			// Note: Don't forget to update ComputeDataHash() if modifying this
 
-			glm::uvec3 m_threadGroupCount = glm::uvec3(std::numeric_limits<uint32_t>::max());
+			// No. groups dispatched in XYZ directions:
+			glm::uvec3 m_threadGroupCount = glm::uvec3(std::numeric_limits<uint32_t>::max()); 
 		};
+
+		using VertexStreamOverride = std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>;
 
 	public:
 		// Graphics batches:
 		Batch(re::Lifetime, gr::MeshPrimitive const*, EffectID); // No material; e.g. fullscreen quads, cubemap geo etc
 
-		Batch(re::Lifetime, gr::MeshPrimitive::RenderData const&, gr::Material::MaterialInstanceRenderData const*);
+		Batch(re::Lifetime,
+			gr::MeshPrimitive::RenderData const&,
+			gr::Material::MaterialInstanceRenderData const*,
+			VertexStreamOverride const* = nullptr);
 
 		Batch(re::Lifetime, GraphicsParams const&, EffectID, effect::drawstyle::Bitmask); // e.g. debug topology
 

@@ -10,6 +10,7 @@
 namespace re
 {
 	class Batch;
+	struct VertexBufferInput;
 }
 
 namespace gr
@@ -22,6 +23,9 @@ namespace gr
 	// Data inputs/output types:
 	using ViewCullingResults = std::map<gr::Camera::View const, std::vector<gr::RenderDataID>>;
 	using PunctualLightCullingResults = std::vector<gr::RenderDataID>;
+
+	using AnimatedVertexStreams = std::unordered_map<
+		gr::RenderDataID, std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>>;
 
 	using ViewBatches = std::unordered_map<gr::Camera::View const, std::vector<re::Batch>>;
 	using AllBatches = std::vector<re::Batch>;

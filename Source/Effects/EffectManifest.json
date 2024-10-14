@@ -9,6 +9,7 @@
 		"MipGeneration",
 		"Skybox",
 		"Tonemapping",
+		"VertexAnimation",
 		"XeGTAO"
 	]
 }

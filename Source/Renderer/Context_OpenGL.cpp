@@ -469,7 +469,7 @@ namespace opengl
 
 
 	uint64_t Context::ComputeVAOHash(
-		re::Batch::VertexBufferInput const* vertexBuffers, re::Batch::VertexBufferInput const& indexBuffer)
+		re::VertexBufferInput const* vertexBuffers, re::VertexBufferInput const& indexBuffer)
 	{
 		SEAssert(vertexBuffers, "Invalid vertex streams");
 
@@ -509,7 +509,7 @@ namespace opengl
 
 
 	GLuint Context::GetCreateVAO(
-		re::Batch::VertexBufferInput const* vertexBuffers, re::Batch::VertexBufferInput const& indexStream)
+		re::VertexBufferInput const* vertexBuffers, re::VertexBufferInput const& indexStream)
 	{
 		const uint64_t vaoHash = ComputeVAOHash(vertexBuffers, indexStream);
 

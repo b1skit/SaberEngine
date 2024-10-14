@@ -1,0 +1,13 @@
+{
+	"Effect": {
+		"Name": "VertexAnimation",
+		"DefaultTechnique": "VertexAnimation",
+		"Techniques": [
+			{
+				"Name": "VertexAnimation",
+				"CShader": "VertexAnimation_CShader",
+				"CShaderEntryPoint" :  "CShader"
+			}
+		]
+	}
+}

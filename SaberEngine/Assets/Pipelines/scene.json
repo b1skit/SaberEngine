@@ -4,6 +4,20 @@
 			"GraphicsSystem": "Culling"
 		},
 		{
+			"GraphicsSystem": "VertexAnimation",
+			"Inputs": [
+				{
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewCullingResults",
+							"DestinationName": "ViewCullingResults"
+						}
+					]
+				}
+			]
+		},
+		{
 			"GraphicsSystem": "BatchManager",
 			"Inputs": [
 				{
@@ -12,6 +26,15 @@
 						{
 							"SourceName": "ViewCullingResults",
 							"DestinationName": "ViewCullingResults"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "VertexAnimation",
+					"DataDependencies": [
+						{
+							"SourceName": "AnimatedVertexStreams",
+							"DestinationName": "AnimatedVertexStreams"
 						}
 					]
 				}

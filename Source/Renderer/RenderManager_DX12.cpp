@@ -318,6 +318,8 @@ namespace dx12
 						{
 							commandList->SetBuffer(bufferInput);
 						}
+						// TODO: We should pass the whole list of buffers to the command list, to allow resource
+						// transitions to be processed in a single call
 
 						// Set inputs and targets (once) now that the root signature is set
 						if (doSetStageInputsAndTargets)

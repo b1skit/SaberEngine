@@ -148,6 +148,7 @@
     <ClInclude Include="GraphicsSystem_Skybox.h" />
     <ClInclude Include="GraphicsSystem_Tonemapping.h" />
     <ClInclude Include="GraphicsSystem_Transparency.h" />
+    <ClInclude Include="GraphicsSystem_VertexAnimation.h" />
     <ClInclude Include="GraphicsSystem_XeGTAO.h" />
     <ClInclude Include="LightParamsHelpers.h" />
     <ClInclude Include="LightRenderData.h" />
@@ -263,6 +264,7 @@
     <ClCompile Include="GraphicsSystem_Skybox.cpp" />
     <ClCompile Include="GraphicsSystem_Tonemapping.cpp" />
     <ClCompile Include="GraphicsSystem_Transparency.cpp" />
+    <ClCompile Include="GraphicsSystem_VertexAnimation.cpp" />
     <ClCompile Include="GraphicsSystem_XeGTAO.cpp" />
     <ClCompile Include="LightParamsHelpers.cpp" />
     <ClCompile Include="LightRenderData.cpp" />

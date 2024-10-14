@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "EnumTypes.h"
-#include "VertexStream.h"
 
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"

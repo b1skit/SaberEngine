@@ -98,7 +98,10 @@ namespace
 namespace gr
 {
 	std::shared_ptr<gr::VertexStream> VertexStream::Create(
-		StreamDesc const& createParams, util::ByteVector&& data, bool queueBufferCreate /*= true*/)
+		StreamDesc const& streamDesc,
+		util::ByteVector&& data,
+		bool queueBufferCreate /*= true*/,
+		re::Buffer::UsageMask extraUsageBits /*= 0*/)
 	{
 		// NOTE: Currently we need to defer creating the VertexStream's backing re::Buffer from the front end thread 
 		// with the ugliness here: If queueBufferCreate == true, we'll enqueue a render command to create the buffer
@@ -109,9 +112,9 @@ namespace gr
 		
 		// Currently, we pass the data to the ctor by reference so it can be normalized. We move it to the buffer later
 		std::shared_ptr<gr::VertexStream> newVertexStream;
-		newVertexStream.reset(new VertexStream(createParams, data, isNormalized));
+		newVertexStream.reset(new VertexStream(streamDesc, data, isNormalized));
 		
-		if (createParams.m_lifetime == re::Lifetime::SingleFrame)
+		if (streamDesc.m_lifetime == re::Lifetime::SingleFrame)
 		{
 			didCreate = true;
 		}
@@ -132,12 +135,15 @@ namespace gr
 				"VertexStream_{}_{}", 
 				TypeToCStr(newVertexStream->GetType()), 
 				newVertexStream->GetDataHash());
+
+			const re::Buffer::UsageMask bufferUsage = 
+				(streamDesc.m_type == Type::Index ? re::Buffer::IndexStream : re::Buffer::VertexStream) | extraUsageBits;
 			
 			const re::Buffer::BufferParams bufferParams{
 				.m_stagingPool = re::Buffer::StagingPool::Temporary,
 				.m_memPoolPreference = re::Buffer::DefaultHeap,
 				.m_accessMask = re::Buffer::GPURead,
-				.m_usageMask = createParams.m_type == Type::Index ? re::Buffer::IndexStream : re::Buffer::VertexStream,
+				.m_usageMask = bufferUsage,
 				.m_arraySize = 1,
 			};
 						
@@ -203,7 +209,11 @@ namespace gr
 
 	std::shared_ptr<gr::VertexStream> VertexStream::Create(CreateParams&& createParams, bool queueBufferCreate /*= true*/)
 	{
-		return Create(createParams.m_streamDesc, std::move(*createParams.m_streamData.get()), queueBufferCreate);
+		return Create(
+			createParams.m_streamDesc,
+			std::move(*createParams.m_streamData.get()),
+			queueBufferCreate,
+			createParams.m_extraUsageBits);
 	}
 
 

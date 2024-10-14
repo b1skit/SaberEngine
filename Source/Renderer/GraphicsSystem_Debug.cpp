@@ -66,8 +66,8 @@ namespace
 		axisBatchGraphicsParams.m_numInstances = 1;
 		axisBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		axisBatchGraphicsParams.m_vertexBuffers[0] = re::Batch::VertexBufferInput(axisPositionStream.get());
-		axisBatchGraphicsParams.m_vertexBuffers[1] = re::Batch::VertexBufferInput(axisColorStream.get());
+		axisBatchGraphicsParams.m_vertexBuffers[0] = re::VertexBufferInput(axisPositionStream.get());
+		axisBatchGraphicsParams.m_vertexBuffers[1] = re::VertexBufferInput(axisColorStream.get());
 
 		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
 			batchLifetime, axisBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -171,7 +171,7 @@ namespace
 		boundingBoxBatchGraphicsParams.m_vertexBuffers[0] = boxPositionsStream.get();
 		boundingBoxBatchGraphicsParams.m_vertexBuffers[1] = boxColorStream.get();
 
-		boundingBoxBatchGraphicsParams.m_indexBuffer = re::Batch::VertexBufferInput(boxIndexStream.get());
+		boundingBoxBatchGraphicsParams.m_indexBuffer = re::VertexBufferInput(boxIndexStream.get());
 
 		std::unique_ptr<re::Batch> boundingBoxBatch = std::make_unique<re::Batch>(
 			batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);

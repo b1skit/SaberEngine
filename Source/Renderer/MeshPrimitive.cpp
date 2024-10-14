@@ -266,8 +266,7 @@ namespace gr
 				{
 					vertexStreams.emplace_back(gr::MeshPrimitive::MeshVertexStream{
 						.m_vertexStream = gr::VertexStream::Create(
-							streamCreateParams[typeIdx][streamTypeIdx].m_streamDesc,
-							std::move(*streamCreateParams[typeIdx][streamTypeIdx].m_streamData),
+							std::move(streamCreateParams[typeIdx][streamTypeIdx]),
 							queueBufferCreate).get(),
 						.m_typeIdx = typeIdx,
 						});

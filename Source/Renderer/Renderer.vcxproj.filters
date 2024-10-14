@@ -452,6 +452,9 @@
     <ClInclude Include="EnumTypes_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsSystem_VertexAnimation.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
     <ClInclude Include="VertexStream.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
@@ -783,6 +786,9 @@
     </ClCompile>
     <ClCompile Include="EnumTypes_OpenGL.cpp">
       <Filter>Source Files\re\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSystem_VertexAnimation.cpp">
+      <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="VertexStream.cpp">
       <Filter>Source Files\gr</Filter>
