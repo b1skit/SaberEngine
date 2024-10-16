@@ -720,8 +720,12 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders\HLSL\VertexAnimation_CShader.hlsl" />
-    <FxCompile Include="Shaders\HLSL\XeGTAO.hlsl" />
+    <None Include="Shaders\HLSL\VertexAnimation_CShader.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\HLSL\XeGTAO.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
