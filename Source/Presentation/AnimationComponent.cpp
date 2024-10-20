@@ -3,6 +3,7 @@
 #include "EntityManager.h"
 #include "MeshConcept.h"
 #include "NameComponent.h"
+#include "MarkerComponents.h"
 #include "TransformComponent.h"
 
 #include "Core/Util/ImGuiUtils.h"
@@ -506,13 +507,21 @@ namespace fr
 
 
 	MeshAnimationComponent* MeshAnimationComponent::AttachMeshAnimationComponent(
-		fr::EntityManager& em, entt::entity entity)
+		fr::EntityManager& em, entt::entity entity, float const* defaultWeights, uint32_t count)
 	{
 		SEAssert(em.HasComponent<fr::Mesh::MeshConceptMarker>(entity),
 			"An MeshAnimationComponent can only be attached to nodes that have a Mesh::MeshConceptMarker");
 
 		fr::MeshAnimationComponent* meshAnimCmpt =
 			em.EmplaceComponent<fr::MeshAnimationComponent>(entity, PrivateCTORTag{});
+
+		SEAssert(defaultWeights && count > 0, "Invalid default weights");
+		for (uint32_t weightIdx = 0; weightIdx < count; ++weightIdx)
+		{
+			meshAnimCmpt->SetMorphWeight(weightIdx, defaultWeights[weightIdx]);
+		}
+
+		em.EmplaceComponent<DirtyMarker<fr::MeshAnimationComponent>>(entity);
 
 		return meshAnimCmpt;
 	}

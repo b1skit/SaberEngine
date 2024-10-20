@@ -1407,27 +1407,17 @@ namespace
 		// Attach a MeshAnimationComponent, if necessary:
 		if (meshHasMorphTargets)
 		{
-#if defined(_DEBUG)
-			bool hasWeightsAnimation = false;
-			for (auto const& animation : animationNodeToData)
+			// GLTF specs: The default target mesh.weights is optional, and must be used when node.weights is null
+			float const* defaultWeights = current->weights;
+			size_t defaultWeightsCount = current->weights_count;
+			if (!defaultWeights)
 			{
-				if (animation.contains(current))
-				{
-					for (auto const& channel : animation.at(current).m_channels)
-					{
-						if (channel.m_targetPath == fr::AnimationPath::Weights)
-						{
-							hasWeightsAnimation = true;
-							break;
-						}
-					}
-				}
+				defaultWeights = current->mesh->weights;
+				defaultWeightsCount = current->mesh->weights_count;
 			}
-			SEAssert(hasWeightsAnimation, 
-				"Current node contains morph targets, but does not have any animation that targets its morph weights");
-#endif
 
-			fr::MeshAnimationComponent::AttachMeshAnimationComponent(em, sceneNode);
+			fr::MeshAnimationComponent::AttachMeshAnimationComponent(
+				em, sceneNode, current->mesh->weights, util::CheckedCast<uint32_t>(current->mesh->weights_count));
 		}
 	}
 
@@ -1517,10 +1507,12 @@ namespace
 		{
 			for (size_t i = 0; i < current->children_count; i++)
 			{
-				std::string const& nodeName = current->name ? current->name : "Unnamed child node";
+				constexpr char const* k_unnamedChildName = "Unnamed child node";
+				char const* nodeName =
+					current->children[i]->name ? current->children[i]->name : k_unnamedChildName;
 
 				entt::entity childNode =
-					fr::SceneNode::Create(*fr::EntityManager::Get(), nodeName.c_str(), curSceneNodeEntity);
+					fr::SceneNode::Create(*fr::EntityManager::Get(), nodeName, curSceneNodeEntity);
 
 				LoadObjectHierarchyRecursiveHelper(
 					sceneRootPath,
@@ -1543,11 +1535,11 @@ namespace
 		// Process node attachments:
 		if (current->mesh)
 		{
-			loadTasks.emplace_back(
-				core::ThreadPool::Get()->EnqueueJob([&sceneRootPath, &scene, current, curSceneNodeEntity, &animationNodeToData]()
-					{
-						LoadMeshGeometry(sceneRootPath, scene, current, curSceneNodeEntity, animationNodeToData);
-					}));
+			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+				[&sceneRootPath, &scene, current, curSceneNodeEntity, &animationNodeToData]()
+				{
+					LoadMeshGeometry(sceneRootPath, scene, current, curSceneNodeEntity, animationNodeToData);
+				}));
 		}
 		if (current->light)
 		{
@@ -1563,19 +1555,17 @@ namespace
 					LoadAddCamera(scene, curSceneNodeEntity, current);
 				}));
 		}
-		// Node animations: Check each of our animations, if we find a single animation that targets a node we know we
-		// must attach an animation component to it
-		for (auto const& entry : animationNodeToData)
+		if (current->weights || (current->mesh && current->mesh->weights))
 		{
-			if (entry.contains(current))
-			{
-				loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-					[data, animationController, &animationNodeToData, current, curSceneNodeEntity]()
-					{
-						AttachAnimationComponents(current, curSceneNodeEntity, animationController, animationNodeToData);
-					}));
-				break;
-			}
+			SEAssert((current->weights && current->weights_count > 0) ||
+				(current->mesh && current->mesh->weights && current->mesh->weights_count > 0),
+				"Mesh weights count is non-zero, but weights is null");
+
+			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+				[data, animationController, &animationNodeToData, current, curSceneNodeEntity]()
+				{
+					AttachAnimationComponents(current, curSceneNodeEntity, animationController, animationNodeToData);
+				}));
 		}
 	}
 

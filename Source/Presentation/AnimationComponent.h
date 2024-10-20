@@ -329,7 +329,8 @@ namespace fr
 	class MeshAnimationComponent
 	{
 	public:
-		static MeshAnimationComponent* AttachMeshAnimationComponent(fr::EntityManager&, entt::entity);
+		static MeshAnimationComponent* AttachMeshAnimationComponent(
+			fr::EntityManager&, entt::entity, float const* defaultWeights, uint32_t count);
 
 		// Returns true if any animation was applied
 		static bool ApplyAnimation(fr::AnimationComponent const&, fr::MeshAnimationComponent&, entt::entity meshConcept);

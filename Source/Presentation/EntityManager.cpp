@@ -1290,11 +1290,16 @@ namespace fr
 					}
 				};
 
-			// Iterate over all entities:
+			
+			// Sort the entities for readability
+			std::vector<entt::entity> sortedEntities;
 			for (auto entityTuple : m_registry.storage<entt::entity>().each())
 			{
-				entt::entity entity = std::get<entt::entity>(entityTuple);
-
+				sortedEntities.emplace_back(std::get<entt::entity>(entityTuple));
+			}
+			std::sort(sortedEntities.begin(), sortedEntities.end());
+			for (auto entity : sortedEntities) // Iterate over all entities:
+			{
 				fr::NameComponent const& nameCmpt = m_registry.get<fr::NameComponent>(entity);
 				fr::Relationship const& relationshipCmpt = m_registry.get<fr::Relationship>(entity);
 
@@ -1302,7 +1307,7 @@ namespace fr
 				{
 					ImGui::SetNextItemOpen(s_expandAll);
 				}
-				if (ImGui::TreeNode(std::format("Entity {} \"{}\"",
+				if (ImGui::TreeNode(std::format("Entity {}: \"{}\"",
 					static_cast<uint32_t>(entity),
 					nameCmpt.GetName()).c_str()))
 				{

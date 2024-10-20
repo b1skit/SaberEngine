@@ -81,7 +81,7 @@ namespace re
 		, m_isCurrentlyMapped(false)
 	{
 		SEAssert(m_dataByteSize % bufferParams.m_arraySize == 0,
-			"Size must be equally divisible by the number of elements");
+			"Size must be non-zero, and equally divisible by the number of elements");
 		
 		ValidateBufferParams(m_bufferParams); // _DEBUG only
 
