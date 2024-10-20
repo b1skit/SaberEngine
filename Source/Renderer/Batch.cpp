@@ -383,7 +383,7 @@ namespace re
 	}
 
 
-	void Batch::ResolveShader(effect::drawstyle::Bitmask stageBitmask)
+	void Batch::Resolve(effect::drawstyle::Bitmask stageBitmask)
 	{
 		SEAssert(m_effectID.IsValid(), "Invalid EffectID");
 		SEAssert(m_batchShader == nullptr, "Batch already has a shader. This is unexpected");

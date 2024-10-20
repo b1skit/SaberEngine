@@ -516,7 +516,7 @@ namespace dx12
 				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
 					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
 					.SizeInBytes = buffer.GetTotalBytes(),
-					.StrideInBytes = DataTypeToStride(view.m_stream.m_dataType),
+					.StrideInBytes = DataTypeToByteStride(view.m_stream.m_dataType),
 				};
 			}
 		}

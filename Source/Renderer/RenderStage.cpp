@@ -811,7 +811,7 @@ namespace re
 		if (batch.MatchesFilterBits(m_requiredBatchFilterBitmasks, m_excludedBatchFilterBitmasks))
 		{
 			re::Batch* duplicatedBatch = &m_stageBatches.emplace_back(re::Batch::Duplicate(batch, lifetime));
-			duplicatedBatch->ResolveShader(m_drawStyleBits);
+			duplicatedBatch->Resolve(m_drawStyleBits);
 
 			return duplicatedBatch;
 		}

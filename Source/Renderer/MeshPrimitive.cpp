@@ -149,7 +149,7 @@ namespace
 						gr::VertexStream::MorphData const& curDisplacement = 
 							curStreamParams.m_morphTargetData[displacementIdx];
 
-						const uint8_t displacementByteSize = DataTypeToStride(curDisplacement.m_dataType);
+						const uint8_t displacementByteSize = DataTypeToByteStride(curDisplacement.m_dataType);
 
 						if (displacementIdx == 0)
 						{

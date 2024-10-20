@@ -194,7 +194,7 @@ namespace opengl
 				bindIndex,										// Slot index
 				bufferPlatParams->m_bufferName,					// Buffer
 				0,												// Offset
-				DataTypeToStride(view.m_stream.m_dataType));	// Stride
+				DataTypeToByteStride(view.m_stream.m_dataType));	// Stride
 		}
 		break;
 		case BindTarget::Index:

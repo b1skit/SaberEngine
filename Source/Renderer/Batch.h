@@ -117,7 +117,7 @@ namespace re
 		void SetEffectID(EffectID);
 		EffectID GetEffectID() const;
 
-		void ResolveShader(effect::drawstyle::Bitmask stageBitmask);
+		void Resolve(effect::drawstyle::Bitmask stageBitmask);
 
 		re::Shader const* GetShader() const;
 

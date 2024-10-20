@@ -117,7 +117,7 @@ namespace re
 	}
 
 
-	constexpr uint8_t DataTypeToStride(DataType dataType)
+	constexpr uint8_t DataTypeToByteStride(DataType dataType)
 	{
 		return DataTypeToComponentByteSize(dataType) * DataTypeToNumComponents(dataType);
 	}

@@ -286,7 +286,7 @@ namespace gr
 
 	uint32_t VertexStream::GetNumElements() const
 	{
-		return m_streamBuffer->GetTotalBytes() / DataTypeToStride(m_streamDesc.m_dataType);
+		return m_streamBuffer->GetTotalBytes() / DataTypeToByteStride(m_streamDesc.m_dataType);
 	}
 
 
