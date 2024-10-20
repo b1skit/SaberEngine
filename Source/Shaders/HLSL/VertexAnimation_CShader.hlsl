@@ -70,38 +70,34 @@ void CShader(ComputeIn In)
 		const uint displacementFloatStride = VertexStreamMetadataParams.g_morphMetadata[streamIdx].y; // 1 displacement
 		const uint numMorphComponents = VertexStreamMetadataParams.g_morphMetadata[streamIdx].z;
 		
-		// Apply the morph weights iteratively, per component:
-		for (uint componentIdx = 0; componentIdx < numMorphComponents; ++componentIdx)
+		// We loop over all vertex components, as we still need to copy component data when no corresponding morph data
+		// exists (e.g. tangent = float4, with float3 displacements)
+		for (uint componentIdx = 0; componentIdx < numVertComponents; ++componentIdx)
 		{
 			float vertexComponentVal =
 				GetVertexComponentValue(vertexIndex, componentIdx, vertexFloatStride, InVertexStreams[streamIdx]);
 			
-			for (uint morphIdx = 0; morphIdx < maxMorphTargets; ++morphIdx)
-			{		
-				const float morphWeight = MorphWeights[morphIdx];
+			if (componentIdx < numMorphComponents)
+			{
+				for (uint morphIdx = 0; morphIdx < maxMorphTargets; ++morphIdx)
+				{
+					const float morphWeight = MorphWeights[morphIdx];
 			
-				const float morphComponentVal = GetMorphComponentValue(
-					vertexIndex, interleavedMorphStride, componentIdx, firstMorphFloatOffset, displacementFloatStride, morphIdx, MorphData);
+					const float morphDisplacement = GetMorphComponentValue(
+						vertexIndex,
+						interleavedMorphStride,
+						componentIdx, 
+						firstMorphFloatOffset, 
+						displacementFloatStride, 
+						morphIdx, 
+						MorphData);
 				
-				vertexComponentVal += morphWeight * morphComponentVal;
+					vertexComponentVal += morphWeight * morphDisplacement;
+				}
 			}
-			
+
 			SetVertexComponentValue(
 				vertexIndex, componentIdx, vertexFloatStride, OutVertexStreams[streamIdx], vertexComponentVal);
-		}
-		
-		// If the vertex has more components than the morph data (e.g. tangent = float4, with float3 displacements), we
-		// must copy the remaining components:
-		if (numVertComponents > numMorphComponents)
-		{
-			for (uint vertCmptIdx = numMorphComponents; vertCmptIdx < numVertComponents; ++vertCmptIdx)
-			{
-				const float vertexComponentVal =
-					GetVertexComponentValue(vertexIndex, vertCmptIdx, vertexFloatStride, InVertexStreams[streamIdx]);
-				
-				SetVertexComponentValue(
-					vertexIndex, vertCmptIdx, vertexFloatStride, OutVertexStreams[streamIdx], vertexComponentVal);
-			}
 		}
 	}
 }

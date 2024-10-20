@@ -267,7 +267,7 @@ namespace gr
 						
 						// We process verts in 1D (round up to ensure we dispatch at least one thread group)
 						const uint32_t roundedXDim =
-							(numVerts / VERTEX_ANIM_THREADS_X) + (numVerts % VERTEX_ANIM_THREADS_X) == 0 ? 0 : 1;
+							(numVerts / VERTEX_ANIM_THREADS_X) + ((numVerts % VERTEX_ANIM_THREADS_X) == 0 ? 0 : 1);
 
 						AnimationBuffers const& animBuffers = m_meshPrimIDToBuffers.at(visibleID);
 

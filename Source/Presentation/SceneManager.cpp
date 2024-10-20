@@ -1340,14 +1340,15 @@ namespace
 				}
 			}
 
-			// If our mesh has morph targets, add the extra structured usage flag to the vertex stream buffers
+			// If our mesh has morph targets, add the extra structured usage flag to the animated vertex stream buffers
 			if (meshHasMorphTargets)
 			{
 				for (auto& streamIndexElement : vertexStreamCreateParams)
 				{
 					for (auto& createParams : streamIndexElement)
 					{
-						if (createParams.m_streamDesc.m_type != gr::VertexStream::Index)
+						if (createParams.m_streamDesc.m_type != gr::VertexStream::Index &&
+							!createParams.m_morphTargetData.empty())
 						{
 							createParams.m_extraUsageBits |= re::Buffer::Usage::Structured;
 						}
@@ -1613,7 +1614,7 @@ namespace
 
 			// Pack the Channels of an AnimationData struct:
 			std::unordered_map<cgltf_node const*, fr::AnimationData>& nodeToData = animationNodeToData.emplace_back();
-			for (uint64_t channelIdx = 0; channelIdx < data->animations->channels_count; ++channelIdx)
+			for (uint64_t channelIdx = 0; channelIdx < data->animations[animIdx].channels_count; ++channelIdx)
 			{
 				// GLTF animation samplers define an "input/output pair":
 				// - A set of floating-point scalar values representing linear time in seconds
@@ -1636,6 +1637,8 @@ namespace
 				{
 					animationData = &nodeToData.emplace(targetNode, fr::AnimationData{}).first->second;
 				}
+
+				animationData->m_animationIdx = animIdx;
 
 				// Create a new animation channel entry:
 				fr::AnimationData::Channel& animChannel = animationData->m_channels.emplace_back();
