@@ -2,70 +2,47 @@
 
 #include "../Common/AnimationParams.h"
 
-// OpenGL supports a max of 16 SSBOs in a compute shader - We'll need to change strategies here
-#define TEMP_HACK_MAX_SSBOS_ALLOWED 8
 
 layout(std430, binding=0) readonly buffer InVertexStreams
 {
 	float data[];
-} _InVertexStream[TEMP_HACK_MAX_SSBOS_ALLOWED];
+} _InVertexStream[MAX_STREAMS_PER_DISPATCH];
 
-layout(std430, binding=TEMP_HACK_MAX_SSBOS_ALLOWED) buffer OutVertexStreams
+layout(std430, binding=MAX_STREAMS_PER_DISPATCH) buffer OutVertexStreams
 {
 	float data[];
-} _OutVertexStreams[TEMP_HACK_MAX_SSBOS_ALLOWED];
+} _OutVertexStreams[MAX_STREAMS_PER_DISPATCH];
 
-layout(binding=16) uniform VertexStreamMetadataParams { VertexStreamMetadata _VertexStreamMetadataParams; };
+layout(std430, binding=16) readonly buffer MorphData { float data[]; } _MorphData; // Interleaved per-vertex morph displacements
+layout(std430, binding=17) readonly buffer MorphWeights { float data[]; } _MorphWeights;
+
+layout(binding=18) uniform VertexStreamMetadataParams { VertexStreamMetadata _VertexStreamMetadataParams; };
+layout(binding=19) uniform DispatchMetadataParams { DispatchMetadata _DispatchMetadataParams; };
 
 
-vec2 UnpackVertexElementAsVec2(uint elementIdx, const uint srcBufferIdx)
+float GetVertexComponentValue(uint vertexIdx, uint componentIdx, uint floatStride, uint srcBufferIdx)
 {
-	const uint baseIdx = elementIdx * 2;	
-	return vec2(_InVertexStream[srcBufferIdx].data[baseIdx], _InVertexStream[srcBufferIdx].data[baseIdx + 1]);
-}
-
-vec3 UnpackVertexElementAsVec3(uint elementIdx, const uint srcBufferIdx)
-{
-	const uint baseIdx = elementIdx * 3;
-	return vec3(
-		_InVertexStream[srcBufferIdx].data[baseIdx],
-		_InVertexStream[srcBufferIdx].data[baseIdx + 1],
-		_InVertexStream[srcBufferIdx].data[baseIdx + 2]);
-}
-
-vec4 UnpackVertexElementAsVec4(uint elementIdx, const uint srcBufferIdx)
-{
-	const uint baseIdx = elementIdx * 4;
-	return vec4(
-		_InVertexStream[srcBufferIdx].data[baseIdx],
-		_InVertexStream[srcBufferIdx].data[baseIdx + 1],
-		_InVertexStream[srcBufferIdx].data[baseIdx + 2],
-		_InVertexStream[srcBufferIdx].data[baseIdx + 3]);
+	return _InVertexStream[srcBufferIdx].data[(vertexIdx * floatStride) + componentIdx];
 }
 
 
-void PackVertexElementAsVec2(uint elementIdx, vec2 value, const uint dstBufferIdx)
+void SetVertexComponentValue(
+	uint vertexIdx, uint componentIdx, uint floatStride, uint dstBufferIdx, float value)
 {
-	const uint baseIdx = elementIdx * 2;
-	_OutVertexStreams[dstBufferIdx].data[baseIdx] = value.x;
-	_OutVertexStreams[dstBufferIdx].data[baseIdx + 1] = value.y;
+	_OutVertexStreams[dstBufferIdx].data[(vertexIdx * floatStride) + componentIdx] = value;
 }
 
-void PackVertexElementAsVec3(uint elementIdx, vec3 value, const uint dstBufferIdx)
-{
-	const uint baseIdx = elementIdx * 3;
-	_OutVertexStreams[dstBufferIdx].data[baseIdx] = value.x;
-	_OutVertexStreams[dstBufferIdx].data[baseIdx + 1] = value.y;
-	_OutVertexStreams[dstBufferIdx].data[baseIdx + 2] = value.z;
-}
 
-void PackVertexElementAsVec4(uint elementIdx, vec4 value, const uint dstBufferIdx)
+float GetMorphComponentValue(
+	uint vertexIdx,
+	uint interleavedMorphStride,
+	uint componentIdx,
+	uint firstFloatOffset,
+	uint morphFloatStride,
+	uint morphIdx)
 {
-	const uint baseIdx = elementIdx * 4;
-	_OutVertexStreams[dstBufferIdx].data[baseIdx] = value.x;
-	_OutVertexStreams[dstBufferIdx].data[baseIdx + 1] = value.y;
-	_OutVertexStreams[dstBufferIdx].data[baseIdx + 2] = value.z;
-	_OutVertexStreams[dstBufferIdx].data[baseIdx + 3] = value.w;
+	const uint srcIdx = (vertexIdx * interleavedMorphStride) + firstFloatOffset + (morphIdx * morphFloatStride) + componentIdx;
+	return _MorphData.data[srcIdx];
 }
 
 
@@ -81,49 +58,53 @@ void CShader()
 		return;
 	}
 	
-	// Each compute thread processes the same vertex in every stream:
-	for (uint streamIdx = 0; streamIdx < TEMP_HACK_MAX_SSBOS_ALLOWED; ++streamIdx)
-	{
-		const uint4 streamMetadata = _VertexStreamMetadataParams.g_perStreamMetadata[streamIdx];
-		
-		const uint floatStride = streamMetadata.x;
-		if (floatStride == 0)
-		{
-			break; // No more streams to process
-		}
+	const uint numStreamBuffers = _DispatchMetadataParams.g_dispatchMetadata.x;
+	
+	const uint maxMorphTargets = _VertexStreamMetadataParams.g_meshPrimMetadata.y;
+	const uint interleavedMorphStride = _VertexStreamMetadataParams.g_meshPrimMetadata.z; // All displacements combined
 
+	// Each compute thread processes the same vertex in every stream:
+	for (uint streamIdx = 0; streamIdx < numStreamBuffers; ++streamIdx)
+	{			
+		const uint vertexFloatStride = _VertexStreamMetadataParams.g_streamMetadata[streamIdx].x;
+		const uint numVertComponents = _VertexStreamMetadataParams.g_streamMetadata[streamIdx].y;
 		
-		// TODO: Implement animation. For now, just copy the data through as a proof of concept
-		switch (floatStride)
+		const uint firstMorphFloatOffset = _VertexStreamMetadataParams.g_morphMetadata[streamIdx].x;
+		const uint displacementFloatStride = _VertexStreamMetadataParams.g_morphMetadata[streamIdx].y; // 1 displacement
+		const uint numMorphComponents = _VertexStreamMetadataParams.g_morphMetadata[streamIdx].z;
+		
+		// Apply the morph weights iteratively, per component:
+		for (uint componentIdx = 0; componentIdx < numMorphComponents; ++componentIdx)
 		{
-		case 1:
-		{
-			const float srcData = _InVertexStream[streamIdx].data[vertexIndex];
-			_OutVertexStreams[streamIdx].data[vertexIndex] = srcData;
+			float vertexComponentVal =
+				GetVertexComponentValue(vertexIndex, componentIdx, vertexFloatStride, streamIdx);
+			
+			for (uint morphIdx = 0; morphIdx < maxMorphTargets; ++morphIdx)
+			{		
+				const float morphWeight = _MorphWeights.data[morphIdx];
+			
+				const float morphComponentVal = GetMorphComponentValue(
+					vertexIndex, interleavedMorphStride, componentIdx, firstMorphFloatOffset, displacementFloatStride, morphIdx);
+				
+				vertexComponentVal += morphWeight * morphComponentVal;
+			}
+			
+			SetVertexComponentValue(
+				vertexIndex, componentIdx, vertexFloatStride, streamIdx, vertexComponentVal);
 		}
-		break;
-		case 2:
+		
+		// If the vertex has more components than the morph data (e.g. tangent = float4, with float3 displacements), we
+		// must copy the remaining components:
+		if (numVertComponents > numMorphComponents)
 		{
-			const vec2 srcData = UnpackVertexElementAsVec2(vertexIndex, streamIdx);
-			PackVertexElementAsVec2(vertexIndex, srcData, streamIdx);
-		}
-		break;
-		case 3:
-		{
-			const vec3 srcData = UnpackVertexElementAsVec3(vertexIndex, streamIdx);
-			PackVertexElementAsVec3(vertexIndex, srcData, streamIdx);
-		}
-		break;
-		case 4:
-		{
-			const vec4 srcData = UnpackVertexElementAsVec4(vertexIndex, streamIdx);
-			PackVertexElementAsVec4(vertexIndex, srcData, streamIdx);
-		}
-		break;
-		default:
-		{
-			break; // This should never happen
-		}
+			for (uint vertCmptIdx = numMorphComponents; vertCmptIdx < numVertComponents; ++vertCmptIdx)
+			{
+				const float vertexComponentVal =
+					GetVertexComponentValue(vertexIndex, vertCmptIdx, vertexFloatStride, streamIdx);
+				
+				SetVertexComponentValue(
+					vertexIndex, vertCmptIdx, vertexFloatStride, streamIdx, vertexComponentVal);
+			}
 		}
 	}
 }

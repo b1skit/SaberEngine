@@ -350,15 +350,19 @@ namespace fr
 
 
 	private:
-		std::array<float, gr::VertexStream::k_maxVertexStreams> m_morphWeights;
+		std::vector<float> m_morphTargetWeights;
 	};
 
 
 	inline void MeshAnimationComponent::SetMorphWeight(uint8_t weightIdx, float weight)
 	{
-		SEAssert(weightIdx < m_morphWeights.size(), "OOB index");
 		SEAssert(weight >= 0.f && weight <= 1.f, "OOB weight");
 
-		m_morphWeights[weightIdx] = weight;
+		if (weightIdx >= m_morphTargetWeights.size())
+		{
+			m_morphTargetWeights.resize(weightIdx + 1, 0.f); // GLTF specs: Default weights are 0
+		}
+
+		m_morphTargetWeights[weightIdx] = weight;
 	}
 }

@@ -500,8 +500,8 @@ namespace fr
 
 
 	MeshAnimationComponent::MeshAnimationComponent(PrivateCTORTag)
-		: m_morphWeights{ 0.f } // GLTF specs: Default weights are 0
 	{
+		m_morphTargetWeights.reserve(gr::VertexStream::k_maxVertexStreams); // Best guess
 	}
 
 
@@ -587,16 +587,10 @@ namespace fr
 	gr::MeshPrimitive::MeshRenderData MeshAnimationComponent::CreateRenderData(
 		entt::entity entity, MeshAnimationComponent const& meshAnimCmpt)
 	{
-		gr::MeshPrimitive::MeshRenderData meshPrimAnimRenderData{};
+		gr::MeshPrimitive::MeshRenderData meshRenderData{};
+	
+		meshRenderData.m_morphTargetWeights = meshAnimCmpt.m_morphTargetWeights;
 
-		SEAssert(meshAnimCmpt.m_morphWeights.size() == meshPrimAnimRenderData.m_morphWeights.size() &&
-			meshAnimCmpt.m_morphWeights.size() == gr::VertexStream::k_maxVertexStreams,
-			"Array sizes are out of sync. We expect to support a morph weight for each possible vertex stream");
-		
-		memcpy(meshPrimAnimRenderData.m_morphWeights.data(),
-			meshAnimCmpt.m_morphWeights.data(),
-			sizeof(meshAnimCmpt.m_morphWeights));
-
-		return meshPrimAnimRenderData;
+		return meshRenderData;
 	}
 }

@@ -544,7 +544,8 @@ namespace dx12
 	}
 
 
-	void CommandList::SetVertexBuffers(re::VertexBufferInput const* vertexBuffers)
+	void CommandList::SetVertexBuffers(
+		std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const& vertexBuffers)
 	{
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
 		streamViews.reserve(gr::VertexStream::k_maxVertexStreams);

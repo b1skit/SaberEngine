@@ -469,10 +469,9 @@ namespace opengl
 
 
 	uint64_t Context::ComputeVAOHash(
-		re::VertexBufferInput const* vertexBuffers, re::VertexBufferInput const& indexBuffer)
+		std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const& vertexBuffers,
+		re::VertexBufferInput const& indexBuffer)
 	{
-		SEAssert(vertexBuffers, "Invalid vertex streams");
-
 		uint64_t vaoHash = 0;
 
 		uint32_t bitmask = 0; // Likely only needs to be 16 bits wide, max
@@ -509,7 +508,8 @@ namespace opengl
 
 
 	GLuint Context::GetCreateVAO(
-		re::VertexBufferInput const* vertexBuffers, re::VertexBufferInput const& indexStream)
+		std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const& vertexBuffers,
+		re::VertexBufferInput const& indexStream)
 	{
 		const uint64_t vaoHash = ComputeVAOHash(vertexBuffers, indexStream);
 

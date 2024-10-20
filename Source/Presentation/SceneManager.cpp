@@ -1045,13 +1045,13 @@ namespace
 
 			// Morph targets:
 			auto AddMorphCreateParams = [&vertexStreamCreateParams](
-				uint8_t streamIdx, gr::VertexStream::MorphCreateParams&& morphCreateParams)
+				uint8_t streamIdx, gr::VertexStream::Type streamType, gr::VertexStream::MorphData&& morphCreateParams)
 				{
 					SEAssert(streamIdx < vertexStreamCreateParams.size(),
 						"Trying to add a morph target to a vertex stream that does not exist");
 
-					std::vector<gr::VertexStream::MorphCreateParams>& morphTargetData = 
-						vertexStreamCreateParams[streamIdx][morphCreateParams.m_streamDesc.m_type].m_morphTargetData;
+					std::vector<gr::VertexStream::MorphData>& morphTargetData = 
+						vertexStreamCreateParams[streamIdx][streamType].m_morphTargetData;
 
 					morphTargetData.emplace_back(std::move(morphCreateParams));
 				};
@@ -1085,13 +1085,12 @@ namespace
 							numTargetFloats);
 						SEAssert(unpackResult, "Failed to unpack data");
 
-						AddMorphCreateParams(targetStreamIdx, gr::VertexStream::MorphCreateParams{
-							.m_streamData = std::make_unique<util::ByteVector>(std::move(posMorphData)),
-							.m_streamDesc = gr::VertexStream::StreamDesc{
-								 .m_type = gr::VertexStream::Type::Position,
-								 .m_isMorphData = gr::VertexStream::IsMorphData::True,
-								 .m_dataType = re::DataType::Float3,
-							}});
+						AddMorphCreateParams(
+							targetStreamIdx, 
+							gr::VertexStream::Position,
+							gr::VertexStream::MorphData{
+								.m_displacementData = std::make_unique<util::ByteVector>(std::move(posMorphData)),
+								.m_dataType = re::DataType::Float3});
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_normal:
@@ -1107,13 +1106,12 @@ namespace
 							numTargetFloats);
 						SEAssert(unpackResult, "Failed to unpack data");
 
-						AddMorphCreateParams(targetStreamIdx, gr::VertexStream::MorphCreateParams{
-							.m_streamData = std::make_unique<util::ByteVector>(std::move(normalMorphData)),
-							.m_streamDesc = gr::VertexStream::StreamDesc{
-								 .m_type = gr::VertexStream::Type::Normal,
-								 .m_isMorphData = gr::VertexStream::IsMorphData::True,
-								 .m_dataType = re::DataType::Float3,
-							} });
+						AddMorphCreateParams(
+							targetStreamIdx,
+							gr::VertexStream::Normal,
+							gr::VertexStream::MorphData{
+								.m_displacementData = std::make_unique<util::ByteVector>(std::move(normalMorphData)),
+								.m_dataType = re::DataType::Float3});
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_tangent:
@@ -1130,13 +1128,12 @@ namespace
 							numTargetFloats);
 						SEAssert(unpackResult, "Failed to unpack data");
 
-						AddMorphCreateParams(targetStreamIdx, gr::VertexStream::MorphCreateParams{
-							.m_streamData = std::make_unique<util::ByteVector>(std::move(tangentMorphData)),
-							.m_streamDesc = gr::VertexStream::StreamDesc{
-								 .m_type = gr::VertexStream::Type::Tangent,
-								 .m_isMorphData = gr::VertexStream::IsMorphData::True,
-								 .m_dataType = re::DataType::Float3,
-							} });
+						AddMorphCreateParams(
+							targetStreamIdx,
+							gr::VertexStream::Tangent,
+							gr::VertexStream::MorphData{
+								.m_displacementData = std::make_unique<util::ByteVector>(std::move(tangentMorphData)),
+								.m_dataType = re::DataType::Float3});
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_texcoord:
@@ -1152,13 +1149,12 @@ namespace
 							numTargetFloats);
 						SEAssert(unpackResult, "Failed to unpack data");
 
-						AddMorphCreateParams(targetStreamIdx, gr::VertexStream::MorphCreateParams{
-							.m_streamData = std::make_unique<util::ByteVector>(std::move(uvMorphData)),
-							.m_streamDesc = gr::VertexStream::StreamDesc{
-								 .m_type = gr::VertexStream::Type::TexCoord,
-								 .m_isMorphData = gr::VertexStream::IsMorphData::True,
-								 .m_dataType = re::DataType::Float2,
-							} });
+						AddMorphCreateParams(
+							targetStreamIdx,
+							gr::VertexStream::TexCoord,
+							gr::VertexStream::MorphData{
+								.m_displacementData = std::make_unique<util::ByteVector>(std::move(uvMorphData)),
+								.m_dataType = re::DataType::Float2});
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_color:
@@ -1169,13 +1165,12 @@ namespace
 
 						util::ByteVector morphColors = UnpackColorAttributeAsVec4(curTargetAttribute);
 
-						AddMorphCreateParams(targetStreamIdx, gr::VertexStream::MorphCreateParams{
-							.m_streamData = std::make_unique<util::ByteVector>(std::move(morphColors)),
-							.m_streamDesc = gr::VertexStream::StreamDesc{
-								 .m_type = gr::VertexStream::Type::Color,
-								 .m_isMorphData = gr::VertexStream::IsMorphData::True,
-								 .m_dataType = re::DataType::Float4,
-							} });
+						AddMorphCreateParams(
+							targetStreamIdx,
+							gr::VertexStream::Color,
+							gr::VertexStream::MorphData{
+								.m_displacementData = std::make_unique<util::ByteVector>(std::move(morphColors)),
+								.m_dataType = re::DataType::Float4});
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_joints:
@@ -1339,7 +1334,7 @@ namespace
 					{
 						for (auto const& morphData : stream.m_morphTargetData)
 						{
-							extraChannelsData.emplace_back(morphData.m_streamData.get());							
+							extraChannelsData.emplace_back(morphData.m_displacementData.get());							
 						}
 					}
 				}

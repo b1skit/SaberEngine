@@ -24,24 +24,6 @@
 				"Conditions": [
 					{ "Rule": "RenderPath", "Mode": "Deferred" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
-					{ "Rule": "MaterialSidedness", "Mode": "Single" },
-					{ "Rule": "MorphTargets", "Mode": "Enabled" }
-				],
-				"Technique": "FillGBuffer_SingleSided_Morph"
-			},
-			{
-				"Conditions": [
-					{ "Rule": "RenderPath", "Mode": "Deferred" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
-					{ "Rule": "MaterialSidedness", "Mode": "Single" },
-					{ "Rule": "MorphTargets", "Mode": "Enabled" }
-				],
-				"Technique": "FillGBuffer_SingleSided_Morph"
-			},
-			{
-				"Conditions": [
-					{ "Rule": "RenderPath", "Mode": "Deferred" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
 				"Technique": "FillGBuffer_DoubleSided"
@@ -53,24 +35,6 @@
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
 				"Technique": "FillGBuffer_DoubleSided"
-			},
-			{
-				"Conditions": [
-					{ "Rule": "RenderPath", "Mode": "Deferred" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
-					{ "Rule": "MaterialSidedness", "Mode": "Double" },
-					{ "Rule": "MorphTargets", "Mode": "Enabled" }
-				],
-				"Technique": "FillGBuffer_DoubleSided_Morph"
-			},
-			{
-				"Conditions": [
-					{ "Rule": "RenderPath", "Mode": "Deferred" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
-					{ "Rule": "MaterialSidedness", "Mode": "Double" },
-					{ "Rule": "MorphTargets", "Mode": "Enabled" }
-				],
-				"Technique": "FillGBuffer_DoubleSided_Morph"
 			},
 
 			// Transparency:
@@ -177,19 +141,6 @@
 				"Parent" :  "FillGBuffer_SingleSided",
 				"PipelineState": "DoubleSided"
 			},
-			{
-				"Name": "FillGBuffer_SingleSided_Morph",
-				"Parent" :  "FillGBuffer_SingleSided",
-				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "HAS_MORPH_TARGETS"]
-			},
-			{
-				"Name": "FillGBuffer_DoubleSided_Morph",
-				"Parent" :  "FillGBuffer_SingleSided",
-				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "HAS_MORPH_TARGETS"],
-				"PipelineState": "DoubleSided"
-			},
-			// TODO: More permutations...
-
 			{
 				"Name": "AlphaBlend_SingleSided",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",

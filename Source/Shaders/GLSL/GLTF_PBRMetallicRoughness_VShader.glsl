@@ -8,34 +8,6 @@
 #include "../Generated/GLSL/VertexStreams_PosNmlTanUvCol.glsli"
 
 
-#if defined(HAS_MORPH_TARGETS)
-
-layout(std430, binding=16) readonly buffer MorphData { vec4 _MorphData[]; };
-
-vec3 UnpackVec3(
-	uint vertexIndex, // For the current vertex
-	uint firstFloatIdx, // Within the buffer of interleaved morph target data
-	uint vertexStride, // No. of floats for all targets for a single vertex
-	uint elementStride, // No. of floats in the element type we're retrieving
-	uint morphTargetIdx) // Index of the morph target for the current vertex attribute
-{
-	vec3 result = vec3(0.f, 0.f, 0.f);
-	
-	for (uint i = 0; i < 3; ++i)
-	{
-		const uint baseIdx = firstFloatIdx + (vertexIndex * vertexStride) + (morphTargetIdx * elementStride) + i;
-		
-		const uint idxFloat4 = baseIdx / 4;
-		const uint idxComponent = baseIdx % 4;
-
-		result[i] = _MorphData[idxFloat4][idxComponent];
-	}
-	return result;
-}
-
-#endif
-
-
 void VShader()
 {
 	const uint transformIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_transformIdx;
@@ -43,16 +15,6 @@ void VShader()
 
 	vec3 position = Position;
 	
-	// TODO: Implement this correctly. For now, just prove we're getting the data we need
-#if defined(HAS_MORPH_TARGETS)
-	const uint firstFloatIdx = 0;
-	const uint vertexStride = 6;
-	const uint elementStride = 3;
-	const uint morphTargetIdx = 0;
-
-	position += UnpackVec3(gl_VertexID, firstFloatIdx, vertexStride, elementStride, morphTargetIdx);
-#endif
-
 	const vec4 worldPos = _InstancedTransformParams[transformIdx].g_model * vec4(position, 1.0f);
 	gl_Position = _CameraParams.g_viewProjection * worldPos;
 	

@@ -50,13 +50,6 @@ namespace gr
 		static constexpr char const* TypeToCStr(Type);
 
 
-		enum class IsMorphData : bool
-		{
-			False,
-			True
-		};
-
-
 	public:
 		struct StreamDesc
 		{
@@ -64,18 +57,16 @@ namespace gr
 
 			Type m_type = Type::Type_Count;
 
-			IsMorphData m_isMorphData = IsMorphData::False;
-
 			re::DataType m_dataType = re::DataType::DataType_Count; // Per component in each element. Eg. Color/Float4 == Float
 			Normalize m_doNormalize = Normalize::False;
 		};
 
 
 	public:
-		struct MorphCreateParams
+		struct MorphData
 		{
-			std::unique_ptr<util::ByteVector> m_streamData;
-			gr::VertexStream::StreamDesc m_streamDesc{};
+			std::unique_ptr<util::ByteVector> m_displacementData;
+			re::DataType m_dataType;
 		};
 		struct CreateParams
 		{
@@ -83,7 +74,7 @@ namespace gr
 			gr::VertexStream::StreamDesc m_streamDesc{};
 			uint8_t m_streamIdx = std::numeric_limits<uint8_t>::max();
 
-			std::vector<MorphCreateParams> m_morphTargetData;
+			std::vector<MorphData> m_morphTargetData; // 1 entry per displacement
 
 			// TODO: Should this be part of the data hash (and if so, moved to the StreamDesc)?
 			re::Buffer::UsageMask m_extraUsageBits = 0; // Logically OR'd with our default vertex/index flags
@@ -104,8 +95,6 @@ namespace gr
 		re::Lifetime GetLifetime() const;
 
 		Type GetType() const;
-
-		bool IsMorphData() const;
 
 		re::DataType GetDataType() const; // What data type does each individual component have?
 		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
@@ -154,12 +143,6 @@ namespace gr
 	inline VertexStream::Type VertexStream::GetType() const
 	{
 		return m_streamDesc.m_type;
-	}
-
-
-	inline bool VertexStream::IsMorphData() const
-	{
-		return m_streamDesc.m_isMorphData == IsMorphData::True;
 	}
 
 

@@ -41,7 +41,9 @@ namespace
 	}
 
 
-	void ValidateVertexStreams(re::Lifetime batchLifetime, re::VertexBufferInput* vertexBuffers)
+	void ValidateVertexStreams(
+		re::Lifetime batchLifetime, 
+		std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const& vertexBuffers)
 	{
 #if defined(_DEBUG)
 
@@ -109,7 +111,9 @@ namespace
 				SEAssert(i + 1 == gr::VertexStream::k_maxVertexStreams ||
 					(*overrides)[i + 1].m_buffer == nullptr ||
 					((*overrides)[i].m_view.m_stream.m_type < (*overrides)[i + 1].m_view.m_stream.m_type) ||
-					(*overrides)[i].m_bindSlot + 1 == (*overrides)[i + 1].m_bindSlot,
+					(*overrides)[i].m_bindSlot + 1 == (*overrides)[i + 1].m_bindSlot ||
+					((*overrides)[i].m_bindSlot == re::VertexBufferInput::k_invalidSlotIdx && 
+						(*overrides)[i + 1].m_bindSlot == re::VertexBufferInput::k_invalidSlotIdx),
 					"Vertex streams of the same type must be stored in monotoically-increasing slot order");
 			}
 		}
@@ -128,8 +132,7 @@ namespace
 
 
 	effect::drawstyle::Bitmask ComputeBatchBitmask(
-		gr::Material::MaterialInstanceRenderData const* materialInstanceData,
-		bool hasMorphTargets)
+		gr::Material::MaterialInstanceRenderData const* materialInstanceData)
 	{
 		effect::drawstyle::Bitmask bitmask = 0;
 
@@ -160,11 +163,6 @@ namespace
 			// Material sidedness:
 			bitmask |= materialInstanceData->m_isDoubleSided ?
 				effect::drawstyle::MaterialSidedness_Double : effect::drawstyle::MaterialSidedness_Single;
-		}
-
-		if (hasMorphTargets)
-		{
-			bitmask |= effect::drawstyle::MorphTargets_Enabled;
 		}
 
 		return bitmask;
@@ -326,15 +324,7 @@ namespace re
 			SetFilterMaskBit(Filter::CastsShadow, materialInstanceData->m_isShadowCaster);
 		}
 
-		// Add the morph data buffer (it'll be considered when the batch hash is computed)
-		if (meshPrimRenderData.m_hasMorphTargets)
-		{
-			SetBuffer(s_interleavedMorphDataShaderName,
-				meshPrimRenderData.m_interleavedMorphData, 
-				re::BufferView(meshPrimRenderData.m_interleavedMorphData));
-		}
-
-		m_drawStyleBitmask = ComputeBatchBitmask(materialInstanceData, meshPrimRenderData.m_hasMorphTargets);
+		m_drawStyleBitmask = ComputeBatchBitmask(materialInstanceData);
 
 		ComputeDataHash();
 	}

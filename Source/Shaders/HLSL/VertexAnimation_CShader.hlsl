@@ -6,53 +6,40 @@
 
 
 // 1 buffer for each (potential) source vertex stream slot
-StructuredBuffer<float> InVertexStreams[NUM_VERTEX_STREAMS];
-RWStructuredBuffer<float> OutVertexStreams[NUM_VERTEX_STREAMS];
+StructuredBuffer<float> InVertexStreams[MAX_STREAMS_PER_DISPATCH];
+RWStructuredBuffer<float> OutVertexStreams[MAX_STREAMS_PER_DISPATCH];
+
+StructuredBuffer<float> MorphData; // Interleaved per-vertex morph displacements
+StructuredBuffer<float> MorphWeights;
 
 ConstantBuffer<VertexStreamMetadata> VertexStreamMetadataParams;
+ConstantBuffer<DispatchMetadata> DispatchMetadataParams;
 
 
-float2 UnpackVertexElementAsFloat2(uint elementIdx, StructuredBuffer<float> srcBuffer)
+float GetVertexComponentValue(uint vertexIdx, uint componentIdx, uint floatStride, StructuredBuffer<float> srcBuffer)
 {
-	const uint baseIdx = elementIdx * 2;	
-	return float2(srcBuffer[baseIdx], srcBuffer[baseIdx + 1]);
-}
-
-float3 UnpackVertexElementAsFloat3(uint elementIdx, StructuredBuffer<float> srcBuffer)
-{
-	const uint baseIdx = elementIdx * 3;
-	return float3(srcBuffer[baseIdx], srcBuffer[baseIdx + 1], srcBuffer[baseIdx + 2]);
-}
-
-float4 UnpackVertexElementAsFloat4(uint elementIdx, StructuredBuffer<float> srcBuffer)
-{
-	const uint baseIdx = elementIdx * 4;
-	return float4(srcBuffer[baseIdx], srcBuffer[baseIdx + 1], srcBuffer[baseIdx + 2], srcBuffer[baseIdx + 3]);
+	return srcBuffer[NonUniformResourceIndex((vertexIdx * floatStride) + componentIdx)];
 }
 
 
-void PackVertexElementAsFloat2(uint elementIdx, float2 value, RWStructuredBuffer<float> dstBuffer)
+void SetVertexComponentValue(
+	uint vertexIdx, uint componentIdx, uint floatStride, RWStructuredBuffer<float> dstBuffer, float value)
 {
-	const uint baseIdx = elementIdx * 2;
-	dstBuffer[baseIdx] = value.x;
-	dstBuffer[baseIdx + 1] = value.y;
+	dstBuffer[NonUniformResourceIndex((vertexIdx * floatStride) + componentIdx)] = value;
 }
 
-void PackVertexElementAsFloat3(uint elementIdx, float3 value, RWStructuredBuffer<float> dstBuffer)
-{
-	const uint baseIdx = elementIdx * 3;
-	dstBuffer[baseIdx] = value.x;
-	dstBuffer[baseIdx + 1] = value.y;
-	dstBuffer[baseIdx + 2] = value.z;
-}
 
-void PackVertexElementAsFloat4(uint elementIdx, float4 value, RWStructuredBuffer<float> dstBuffer)
+float GetMorphComponentValue(
+	uint vertexIdx,
+	uint interleavedMorphStride,
+	uint componentIdx,
+	uint firstFloatOffset,
+	uint morphFloatStride,
+	uint morphIdx,
+	StructuredBuffer<float> morphData)
 {
-	const uint baseIdx = elementIdx * 4;
-	dstBuffer[baseIdx] = value.x;
-	dstBuffer[baseIdx + 1] = value.y;
-	dstBuffer[baseIdx + 2] = value.z;
-	dstBuffer[baseIdx + 3] = value.w;
+	const uint srcIdx = (vertexIdx * interleavedMorphStride) + firstFloatOffset + (morphIdx * morphFloatStride) + componentIdx;
+	return morphData[NonUniformResourceIndex(srcIdx)];
 }
 
 
@@ -68,48 +55,53 @@ void CShader(ComputeIn In)
 		return;
 	}
 	
+	const uint numStreamBuffers = DispatchMetadataParams.g_dispatchMetadata.x;
+	
+	const uint maxMorphTargets = VertexStreamMetadataParams.g_meshPrimMetadata.y;
+	const uint interleavedMorphStride = VertexStreamMetadataParams.g_meshPrimMetadata.z; // All displacements combined
+	
 	// Each compute thread processes the same vertex in every stream:
-	for (uint streamIdx = 0; streamIdx < NUM_VERTEX_STREAMS; ++streamIdx)
-	{
-		const uint4 streamMetadata = VertexStreamMetadataParams.g_perStreamMetadata[streamIdx];
+	for (uint streamIdx = 0; streamIdx < numStreamBuffers; ++streamIdx)
+	{		
+		const uint vertexFloatStride = VertexStreamMetadataParams.g_streamMetadata[streamIdx].x;
+		const uint numVertComponents = VertexStreamMetadataParams.g_streamMetadata[streamIdx].y;
 		
-		const uint floatStride = streamMetadata.x;
-		if (floatStride == 0)
+		const uint firstMorphFloatOffset = VertexStreamMetadataParams.g_morphMetadata[streamIdx].x;
+		const uint displacementFloatStride = VertexStreamMetadataParams.g_morphMetadata[streamIdx].y; // 1 displacement
+		const uint numMorphComponents = VertexStreamMetadataParams.g_morphMetadata[streamIdx].z;
+		
+		// Apply the morph weights iteratively, per component:
+		for (uint componentIdx = 0; componentIdx < numMorphComponents; ++componentIdx)
 		{
-			break; // No more streams to process
+			float vertexComponentVal =
+				GetVertexComponentValue(vertexIndex, componentIdx, vertexFloatStride, InVertexStreams[streamIdx]);
+			
+			for (uint morphIdx = 0; morphIdx < maxMorphTargets; ++morphIdx)
+			{		
+				const float morphWeight = MorphWeights[morphIdx];
+			
+				const float morphComponentVal = GetMorphComponentValue(
+					vertexIndex, interleavedMorphStride, componentIdx, firstMorphFloatOffset, displacementFloatStride, morphIdx, MorphData);
+				
+				vertexComponentVal += morphWeight * morphComponentVal;
+			}
+			
+			SetVertexComponentValue(
+				vertexIndex, componentIdx, vertexFloatStride, OutVertexStreams[streamIdx], vertexComponentVal);
 		}
 		
-		// TODO: Implement animation. For now, just copy the data through as a proof of concept
-		switch (floatStride)
+		// If the vertex has more components than the morph data (e.g. tangent = float4, with float3 displacements), we
+		// must copy the remaining components:
+		if (numVertComponents > numMorphComponents)
 		{
-		case 1:
-		{
-			const float srcData = InVertexStreams[streamIdx][vertexIndex];
-			OutVertexStreams[streamIdx][vertexIndex] = srcData;
-		}
-		break;
-		case 2:
-		{
-			const float2 srcData = UnpackVertexElementAsFloat2(vertexIndex, InVertexStreams[streamIdx]);
-			PackVertexElementAsFloat2(vertexIndex, srcData, OutVertexStreams[streamIdx]);
-		}
-		break;
-		case 3:
-		{
-			const float3 srcData = UnpackVertexElementAsFloat3(vertexIndex, InVertexStreams[streamIdx]);
-			PackVertexElementAsFloat3(vertexIndex, srcData, OutVertexStreams[streamIdx]);
-		}
-		break;
-		case 4:
-		{
-			const float4 srcData = UnpackVertexElementAsFloat4(vertexIndex, InVertexStreams[streamIdx]);
-			PackVertexElementAsFloat4(vertexIndex, srcData, OutVertexStreams[streamIdx]);
-		}
-		break;
-		default:
-		{
-			break; // This should never happen
-		}
+			for (uint vertCmptIdx = numMorphComponents; vertCmptIdx < numVertComponents; ++vertCmptIdx)
+			{
+				const float vertexComponentVal =
+					GetVertexComponentValue(vertexIndex, vertCmptIdx, vertexFloatStride, InVertexStreams[streamIdx]);
+				
+				SetVertexComponentValue(
+					vertexIndex, vertCmptIdx, vertexFloatStride, OutVertexStreams[streamIdx], vertexComponentVal);
+			}
 		}
 	}
 }

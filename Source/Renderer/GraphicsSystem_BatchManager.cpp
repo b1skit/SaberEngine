@@ -449,10 +449,12 @@ namespace gr
 						// behavior has changed (e.g. filter bits: shadow casting enabled/disabled)
 						re::Batch& permanentBatch =
 							m_permanentCachedBatches.at(m_renderDataIDToBatchMetadata.at(dirtyMaterialID).m_cacheIndex);
+						
 						permanentBatch = re::Batch(
 							re::Lifetime::Permanent,
 							renderData.GetObjectData<gr::MeshPrimitive::RenderData>(dirtyMaterialID),
-							&materialData);
+							&materialData,
+							&permanentBatch.GetGraphicsParams().m_vertexBuffers); // Keep any vertex stream overrides
 					}
 					++dirtyMaterialItr;
 				}

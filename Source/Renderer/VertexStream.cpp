@@ -217,8 +217,8 @@ namespace gr
 	}
 
 
-	VertexStream::VertexStream(StreamDesc const& createParams, util::ByteVector& data, bool& isNormalizedOut)
-		: m_streamDesc(createParams)
+	VertexStream::VertexStream(StreamDesc const& streamDesc, util::ByteVector& data, bool& isNormalizedOut)
+		: m_streamDesc(streamDesc)
 	{
 		SEAssert(m_streamDesc.m_type != Type::Type_Count && m_streamDesc.m_dataType != re::DataType::DataType_Count,
 			"Invalid create params");
@@ -232,10 +232,10 @@ namespace gr
 
 		// D3D12 does not support GPU-normalization of 32-bit types. As a hail-mary, we attempt to pre-normalize here
 		if (DoNormalize() && 
-			createParams.m_dataType == re::DataType::Float ||
-			createParams.m_dataType == re::DataType::Float2 ||
-			createParams.m_dataType == re::DataType::Float3 ||
-			createParams.m_dataType == re::DataType::Float4)
+			streamDesc.m_dataType == re::DataType::Float ||
+			streamDesc.m_dataType == re::DataType::Float2 ||
+			streamDesc.m_dataType == re::DataType::Float3 ||
+			streamDesc.m_dataType == re::DataType::Float4)
 		{
 			static const bool s_doNormalize = 
 				core::Config::Get()->KeyExists(core::configkeys::k_doCPUVertexStreamNormalizationKey);
@@ -244,7 +244,7 @@ namespace gr
 			{
 				LOG_WARNING("Pre-normalizing vertex stream data as its format is incompatible with GPU-normalization");
 
-				NormalizeData(data, createParams.m_dataType);
+				NormalizeData(data, streamDesc.m_dataType);
 			}
 			else
 			{
@@ -305,9 +305,6 @@ namespace gr
 	void VertexStream::ShowImGuiWindow() const
 	{
 		ImGui::Text(std::format("Type: {}", TypeToCStr(m_streamDesc.m_type)).c_str());
-
-		const bool isMorphTarget = m_streamDesc.m_isMorphData == VertexStream::IsMorphData::True;
-		ImGui::Text(std::format("Is morph target data? {}", isMorphTarget ? "true" : "false").c_str());
 
 		ImGui::Text(std::format("Data type: {}", re::DataTypeToCStr(m_streamDesc.m_dataType)).c_str());
 		ImGui::Text(std::format("Normalized? {}", (m_streamDesc.m_doNormalize ? "true" : "false")).c_str());

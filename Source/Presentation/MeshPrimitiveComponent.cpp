@@ -165,6 +165,7 @@ namespace fr
 			.m_indexStream = meshPrimitiveComponent.m_meshPrimitive->GetIndexStream(),
 			.m_hasMorphTargets = meshPrimitiveComponent.m_meshPrimitive->HasMorphTargets(),
 			.m_interleavedMorphData = meshPrimitiveComponent.m_meshPrimitive->GetInterleavedMorphDataBuffer(),
+			.m_morphTargetMetadata = meshPrimitiveComponent.m_meshPrimitive->GetMorphTargetMetadata(),
 			.m_dataHash = meshPrimitiveComponent.m_meshPrimitive->GetDataHash(),
 			.m_owningMeshRenderDataID = owningMeshRenderDataID,
 		};

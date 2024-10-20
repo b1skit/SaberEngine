@@ -66,17 +66,20 @@ namespace gr
 
 
 	public:
-		struct PackedMorphTargetMetadata
+		struct PackingMetadata
 		{
-			uint8_t m_streamTypeIdx;	// e.g. Pos/Nml/Tan/UV
-			uint8_t m_typeIdx;			// e.g. 0/1/2/3...
-
-			uint8_t m_numMorphTargets;		// How many morph targets for the vertex attribute?
-			uint32_t m_firstFloatIdx;		// Index of first float of a vertex's set of interleaved morph target elements
-			uint8_t m_vertexFloatStride;	// Stride of all elements (# floats) for a whole set of morph target displacements
-			uint8_t m_elementFloatStride;	// Stride of a single element (# floats), within a single morph target displacement			
+			uint8_t m_firstByteOffset;	// No. bytes from the start of the packing to 1st byte of this displacment
+			uint8_t m_byteStride;		// No. bytes in 1 displacement (e.g. float3 = 12)
+			uint8_t m_numComponents;	// No. components in 1 displacement (e.g. float3 = 3)
 		};
 
+		struct MorphTargetMetadata
+		{
+			uint8_t m_maxMorphTargets;	// A vertex may either have 0 or m_maxMorphTargets, exactly
+			uint32_t m_morphByteStride;	// Total bytes for all interleaved displacements for 1 vertex (e.g. from Vn to Vn+1)
+
+			std::array<PackingMetadata, gr::VertexStream::k_maxVertexStreams> m_perStreamMetadata;
+		};
 
 	public:
 		struct RenderData
@@ -90,7 +93,8 @@ namespace gr
 
 			bool m_hasMorphTargets;
 			std::shared_ptr<re::Buffer> m_interleavedMorphData;
-			
+			MorphTargetMetadata m_morphTargetMetadata;
+
 			uint64_t m_dataHash;
 
 			gr::RenderDataID m_owningMeshRenderDataID; // To access owning MeshRenderData
@@ -105,7 +109,7 @@ namespace gr
 
 		struct MeshRenderData
 		{
-			std::array<float, AnimationData::k_numMorphTargets> m_morphWeights;
+			std::vector<float> m_morphTargetWeights;
 		};
 
 
@@ -135,6 +139,7 @@ namespace gr
 
 		bool HasMorphTargets() const;
 		std::shared_ptr<re::Buffer> GetInterleavedMorphDataBuffer() const;
+		MorphTargetMetadata const& GetMorphTargetMetadata() const;
 
 		void ShowImGuiWindow() const;
 
@@ -146,7 +151,7 @@ namespace gr
 		std::vector<MeshVertexStream> m_vertexStreams;	
 
 		std::shared_ptr<re::Buffer> m_interleavedMorphData;
-		std::vector<PackedMorphTargetMetadata> m_interleavedMorphMetadata;
+		MorphTargetMetadata m_interleavedMorphMetadata;
 
 
 		void ComputeDataHash() override;
@@ -193,6 +198,12 @@ namespace gr
 	inline std::shared_ptr<re::Buffer> MeshPrimitive::GetInterleavedMorphDataBuffer() const
 	{
 		return m_interleavedMorphData;
+	}
+
+
+	inline MeshPrimitive::MorphTargetMetadata const& MeshPrimitive::GetMorphTargetMetadata() const
+	{
+		return m_interleavedMorphMetadata;
 	}
 
 

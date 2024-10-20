@@ -51,10 +51,15 @@ namespace gr
 	public:
 		// We maintain the shared_ptr<re::Buffer> lifetime, and also prepare VertexBufferInputs that can be used for
 		// Batch construction by other GS's
-		std::unordered_map<gr::RenderDataID, 
-			std::array<std::shared_ptr<re::Buffer>, gr::VertexStream::k_maxVertexStreams>> m_meshPrimIDToDestBuffers;
+		struct AnimationBuffers
+		{
+			std::array<std::shared_ptr<re::Buffer>, gr::VertexStream::k_maxVertexStreams> m_destBuffers;
+			std::shared_ptr<re::Buffer> m_streamMetadataBuffer;
 
-		std::unordered_map<gr::RenderDataID, std::shared_ptr<re::Buffer>> m_meshPrimIDToStreamMetadataBuffer;
+			uint8_t m_numAnimatedStreams = 0;
+		};
+		std::unordered_map<gr::RenderDataID, AnimationBuffers> m_meshPrimIDToBuffers;
+
 		
 		// Maintain this seperately: We share it with other GS's as a dependency output
 		// Note: The contents here are always valid, even if the associated Batch did not pass culling. However,

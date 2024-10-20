@@ -4,31 +4,23 @@
 
 #include "PlatformConversions.h"
 
-// Equivalent to gr::VertexStream::k_maxVertexStreams
-#define NUM_VERTEX_STREAMS 16
+// OpenGL supports a max of 16 SSBOs in a compute shader, we issue additional dispatches to handle more streams
+#define MAX_STREAMS_PER_DISPATCH 7
 
 // Compute shader numthreads: We process our vertex attributes in 1D
-#define VERTEX_ANIM_THREADS_X 16
-
-// GLTF Specs: The number of morph targets is not limited; A minimum of 8 morphed attributes must be supported.
-#define NUM_MORPH_TARGETS 16
-
-#if defined(__cplusplus)
-static constexpr char const* const s_interleavedMorphDataShaderName = "MorphData";
-#endif
+#define VERTEX_ANIM_THREADS_X 32
 
 
 struct VertexStreamMetadata
 {
-	uint4 g_meshPrimMetadata; // .x = No. vertices per stream, .yzw = unused
+	// .x = No. vertices per stream, .y = max morph targets per stream, .z = interleaved morph float stride, .w = unused
+	uint4 g_meshPrimMetadata; 
 
-	// Each element of this array corresponds with a vertex stream slot on our MeshPrimitive
-	// .x = Float stride (i.e. No. floats per element: float3 = 3). 0 = No buffer bound (i.e. end of valid/bound buffers)
-	// .y = unused
-	// .z = unused
-	// .w = unused
-	uint4 g_perStreamMetadata[NUM_VERTEX_STREAMS]; 
-	
+	// .x = vertex float stride, .y = no. components, .zw = unused
+	uint4 g_streamMetadata[MAX_STREAMS_PER_DISPATCH];
+
+	// .x = first float offset, .y = float stride (of 1 displacement), .z = no. components, .w = unused
+	uint4 g_morphMetadata[MAX_STREAMS_PER_DISPATCH];
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "VertexStreamParams";
@@ -36,17 +28,12 @@ struct VertexStreamMetadata
 };
 
 
-struct AnimationData
+struct DispatchMetadata
 {
-	// Morph targets 
-	// Shader-side version of gr::MeshPrimitive::MeshRenderData
-	// Must be reinterpreted as an array of floats with AnimationData::k_numMorphTargets elements:
-	// i.e.		g_morphWeights[targetIdx / 4][targetIdx % 4]
-	float4 g_morphWeights[NUM_MORPH_TARGETS / 4];
+	uint4 g_dispatchMetadata; // .x = num active buffers, .yzw = unused
 
 #if defined(__cplusplus)
-	static constexpr char const* const s_shaderName = "AnimationParams";
-	static constexpr uint8_t k_numMorphTargets = NUM_MORPH_TARGETS;
+	static constexpr char const* const s_shaderName = "DispatchMetadataParams";
 #endif
 };
 

@@ -408,7 +408,7 @@ namespace dx12
 
 						// Batch buffers:
 						std::vector<re::BufferInput> const& batchBuffers = batches[batchIdx].GetBuffers();
-						for (re::BufferInput batchBufferInput : batchBuffers)
+						for (re::BufferInput const& batchBufferInput : batchBuffers)
 						{
 							currentCommandList->SetBuffer(batchBufferInput);
 						}
