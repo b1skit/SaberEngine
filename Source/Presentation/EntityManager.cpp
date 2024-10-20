@@ -776,11 +776,7 @@ namespace fr
 				fr::AnimationComponent const& animCmpt = animatedMeshesView.get<fr::AnimationComponent>(entity);
 				fr::MeshAnimationComponent& meshAnimCmpt = animatedMeshesView.get<fr::MeshAnimationComponent>(entity);
 
-				const bool didAnimate = fr::MeshAnimationComponent::ApplyAnimation(animCmpt, meshAnimCmpt, entity);
-				if (didAnimate) // Attach a dirty marker if anything changed
-				{
-					m_registry.emplace_or_replace<DirtyMarker<fr::MeshAnimationComponent>>(entity);
-				}
+				fr::MeshAnimationComponent::ApplyAnimation(entity, animCmpt, meshAnimCmpt);
 			}
 		}
 	}
@@ -855,10 +851,7 @@ namespace fr
 			{
 				fr::LightComponent& lightComponent = ambientView.get<fr::LightComponent>(entity);
 
-				if (fr::LightComponent::Update(lightComponent, nullptr, nullptr))
-				{
-					m_registry.emplace_or_replace<DirtyMarker<fr::LightComponent>>(entity);
-				}
+				fr::LightComponent::Update(entity, lightComponent, nullptr, nullptr);
 			}
 
 			// Punctual lights with (optional) shadows have the same update flow
@@ -883,11 +876,7 @@ namespace fr
 							shadowCam = &shadowCamCmpt->GetCameraForModification();
 						}
 
-						// Update: Attach a dirty marker if anything changed
-						if (fr::LightComponent::Update(lightComponent, &transformCmpt.GetTransform(), shadowCam))
-						{
-							m_registry.emplace_or_replace<DirtyMarker<fr::LightComponent>>(entity);
-						}
+						fr::LightComponent::Update(entity, lightComponent, &transformCmpt.GetTransform(), shadowCam);
 					}
 				};
 
@@ -922,11 +911,8 @@ namespace fr
 				fr::CameraComponent& shadowCamCmpt = shadowsView.get<fr::CameraComponent>(entity);
 
 				// Update: Attach a dirty marker if anything changed
-				if (fr::ShadowMapComponent::Update(
-					shadowMapCmpt, transformCmpt, lightCmpt, shadowCamCmpt, sceneBounds, activeSceneCam, force))
-				{
-					m_registry.emplace_or_replace<DirtyMarker<fr::ShadowMapComponent>>(entity);
-				}
+				fr::ShadowMapComponent::Update(
+					entity, shadowMapCmpt, transformCmpt, lightCmpt, shadowCamCmpt, sceneBounds, activeSceneCam, force);
 			}
 		}
 	}

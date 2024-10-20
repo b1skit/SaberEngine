@@ -37,7 +37,8 @@ namespace fr
 		static gr::ShadowMap::RenderData CreateRenderData(entt::entity, fr::ShadowMapComponent const&);
 
 
-		static bool Update( // Returns true if modified (or forced to modify)
+		static void Update(
+			entt::entity,
 			fr::ShadowMapComponent&,
 			fr::TransformComponent& lightTransformCmpt,
 			fr::LightComponent const&,

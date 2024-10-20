@@ -66,7 +66,7 @@ namespace fr
 		static gr::Light::RenderDataSpot CreateRenderDataSpot_Deferred(
 			fr::NameComponent const&, fr::LightComponent const&);
 
-		static bool Update(fr::LightComponent&, fr::Transform* lightTransform, fr::Camera* shadowCam);
+		static void Update(entt::entity, fr::LightComponent&, fr::Transform* lightTransform, fr::Camera* shadowCam);
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity lightEntity);
 		static void ShowImGuiSpawnWindow();

@@ -396,7 +396,8 @@ namespace fr
 	}
 
 
-	bool LightComponent::Update(fr::LightComponent& lightComponent, fr::Transform* lightTransform, fr::Camera* shadowCam)
+	void LightComponent::Update(
+		entt::entity entity, fr::LightComponent& lightComponent, fr::Transform* lightTransform, fr::Camera* shadowCam)
 	{
 		fr::Light& light = lightComponent.GetLight();
 
@@ -447,7 +448,10 @@ namespace fr
 			}
 		}
 
-		return didModify;
+		if (didModify)
+		{
+			fr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<fr::LightComponent>>(entity);
+		}
 	}
 
 

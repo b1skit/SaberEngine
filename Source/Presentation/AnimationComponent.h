@@ -333,7 +333,7 @@ namespace fr
 			fr::EntityManager&, entt::entity, float const* defaultWeights, uint32_t count);
 
 		// Returns true if any animation was applied
-		static bool ApplyAnimation(fr::AnimationComponent const&, fr::MeshAnimationComponent&, entt::entity meshConcept);
+		static void ApplyAnimation(entt::entity meshConcept, fr::AnimationComponent const&, fr::MeshAnimationComponent&);
 
 
 		static gr::MeshPrimitive::MeshRenderData CreateRenderData(entt::entity, MeshAnimationComponent const&);

@@ -527,21 +527,21 @@ namespace fr
 	}
 
 
-	bool MeshAnimationComponent::ApplyAnimation(
+	void MeshAnimationComponent::ApplyAnimation(
+		entt::entity meshConcept,
 		fr::AnimationComponent const& animCmpt,
-		fr::MeshAnimationComponent& meshAnimCmpt,
-		entt::entity meshConcept)
+		fr::MeshAnimationComponent& meshAnimCmpt)
 	{
 		if (animCmpt.GetAnimationController()->GetAnimationState() != AnimationState::Playing)
 		{
-			return false;
+			return;
 		}
 
 		AnimationData const* animationData =
 			animCmpt.GetAnimationData(animCmpt.GetAnimationController()->GetActiveAnimationIdx());
 		if (!animationData)
 		{
-			return false; // Node is not animated by the given keyframe times index
+			return; // Node is not animated by the given keyframe times index
 		}
 
 		bool didAnimate = false;
@@ -589,7 +589,10 @@ namespace fr
 			didAnimate = true;
 		}
 
-		return didAnimate;
+		if (didAnimate)
+		{
+			fr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<fr::MeshAnimationComponent>>(meshConcept);
+		}
 	}
 
 

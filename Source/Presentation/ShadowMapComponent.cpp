@@ -327,7 +327,8 @@ namespace fr
 	}
 
 
-	bool ShadowMapComponent::Update(
+	void ShadowMapComponent::Update(
+		entt::entity entity,
 		fr::ShadowMapComponent& shadowMapCmpt,
 		fr::TransformComponent& lightTransformCmpt,
 		fr::LightComponent const& lightCmpt,
@@ -364,8 +365,11 @@ namespace fr
 
 			didModify = true;
 		}
-		
-		return didModify;
+
+		if (didModify)
+		{
+			fr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(entity);
+		}
 	}
 
 
