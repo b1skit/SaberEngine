@@ -1555,9 +1555,24 @@ namespace
 					LoadAddCamera(scene, curSceneNodeEntity, current);
 				}));
 		}
-		if (current->weights || (current->mesh && current->mesh->weights))
+
+		// Attach an animation component, if it is required:
+		bool hasAnimation = current->weights || (current->mesh && current->mesh->weights);
+		if (!hasAnimation)
 		{
-			SEAssert((current->weights && current->weights_count > 0) ||
+			for (auto const& animation : animationNodeToData)
+			{
+				if (animation.contains(current))
+				{
+					hasAnimation = true;
+				}
+			}
+		}
+
+		if (hasAnimation)
+		{
+			SEAssert((current->weights == nullptr && (!current->mesh || !current->mesh->weights)) ||
+				(current->weights && current->weights_count > 0) ||
 				(current->mesh && current->mesh->weights && current->mesh->weights_count > 0),
 				"Mesh weights count is non-zero, but weights is null");
 
