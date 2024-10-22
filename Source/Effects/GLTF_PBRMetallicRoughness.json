@@ -294,12 +294,16 @@
 	"PipelineStates": [
 		{
 			"Name": "SingleSided",
-			"FaceCullingMode": "Back",
+			"RasterizerState" : {
+				"FaceCullingMode": "Back"
+			},
 			"DepthTestMode": "Less"
 		},
 		{
 			"Name": "DoubleSided",
-			"FaceCullingMode": "Disabled",
+			"RasterizerState" : {
+				"FaceCullingMode": "Disabled"
+			},
 			"DepthTestMode": "Less"
 		}
 	]

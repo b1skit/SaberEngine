@@ -9,9 +9,22 @@ namespace re
 	PipelineState::PipelineState()
 		: m_isDirty(true)
 		, m_primitiveTopologyType(PrimitiveTopologyType::Triangle)
+
+		// Rasterizer state. Note: Defaults are set as per D3D12: 
+		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc#remarks
 		, m_fillMode(FillMode::Solid)
 		, m_faceCullingMode(FaceCullingMode::Back)
 		, m_windingOrder(WindingOrder::CCW)
+		, m_depthBias(0)
+		, m_depthBiasClamp(0.f)
+		, m_slopeScaledDepthBias(0.f)
+		, m_depthClipEnable(true)
+		, m_multisampleEnable(false)
+		, m_antialiasedLineEnable(false)
+		, m_forcedSampleCount(0)
+		, m_conservativeRaster(false)
+		
+		//
 		, m_depthTestMode(DepthTestMode::Less)
 	{
 		ComputeDataHash();

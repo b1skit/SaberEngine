@@ -113,17 +113,23 @@
 	"PipelineStates": [
 		{
 			"Name": "IBLGeneration",
-			"FaceCullingMode": "Disabled",
+			"RasterizerState" : {
+				"FaceCullingMode": "Disabled"
+			},
 			"DepthTestMode":  "Always"
 		},
 		{
 			"Name": "DeferredFullscreenQuad",
-			"FaceCullingMode": "Back",
+			"RasterizerState" : {
+				"FaceCullingMode": "Back"
+			},
 			"DepthTestMode":  "Greater"
 		},
 		{
 			"Name": "DeferredMesh",
-			"FaceCullingMode": "Front",
+			"RasterizerState" : {
+				"FaceCullingMode": "Front"
+			},
 			"DepthTestMode":  "GEqual"
 		}
 	]

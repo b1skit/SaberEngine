@@ -140,25 +140,79 @@ namespace
 				piplineStateEntry.at(key_topologyType).template get<std::string>().c_str()));
 		}
 
-		// "FillMode":
-		if (piplineStateEntry.contains(key_fillMode))
+		// "RasterizerState":
+		if (piplineStateEntry.contains(key_rasterizerState))
 		{
-			newPipelineState.SetFillMode(re::PipelineState::GetFillModeByName(
-				piplineStateEntry.at(key_fillMode).template get<std::string>().c_str()));
-		}
+			auto const& rasterizerBlock = piplineStateEntry.at(key_rasterizerState);
 
-		// "FaceCullingMode":
-		if (piplineStateEntry.contains(key_faceCullingMode))
-		{
-			newPipelineState.SetFaceCullingMode(re::PipelineState::GetFaceCullingModeByName(
-				piplineStateEntry.at(key_faceCullingMode).template get<std::string>().c_str()));
-		}
+			// "FillMode":
+			if (rasterizerBlock.contains(key_fillMode))
+			{
+				newPipelineState.SetFillMode(re::PipelineState::GetFillModeByName(
+					rasterizerBlock.at(key_fillMode).template get<std::string>().c_str()));
+			}
 
-		// "WindingOrder":
-		if (piplineStateEntry.contains(key_windingOrder))
-		{
-			newPipelineState.SetWindingOrder(re::PipelineState::GetWindingOrderByName(
-				piplineStateEntry.at(key_windingOrder).template get<std::string>().c_str()));
+			// "FaceCullingMode":
+			if (rasterizerBlock.contains(key_faceCullingMode))
+			{
+				newPipelineState.SetFaceCullingMode(re::PipelineState::GetFaceCullingModeByName(
+					rasterizerBlock.at(key_faceCullingMode).template get<std::string>().c_str()));
+			}
+
+			// "WindingOrder":
+			if (rasterizerBlock.contains(key_windingOrder))
+			{
+				newPipelineState.SetWindingOrder(re::PipelineState::GetWindingOrderByName(
+					rasterizerBlock.at(key_windingOrder).template get<std::string>().c_str()));
+			}
+
+			// "DepthBias":
+			if (rasterizerBlock.contains(key_depthBias))
+			{
+				newPipelineState.SetDepthBias(rasterizerBlock.at(key_depthBias).template get<int>());
+			}
+
+			// "DepthBiasClamp":
+			if (rasterizerBlock.contains(key_depthBiasClamp))
+			{
+				newPipelineState.SetDepthBiasClamp(rasterizerBlock.at(key_depthBiasClamp).template get<float>());
+			}
+
+			// "SlopeScaledDepthBias":
+			if (rasterizerBlock.contains(key_slopeScaledDepthBias))
+			{
+				newPipelineState.SetSlopeScaledDepthBias(rasterizerBlock.at(key_slopeScaledDepthBias).template get<float>());
+			}
+
+			// "DepthClipEnable":
+			if (rasterizerBlock.contains(key_depthClipEnable))
+			{
+				newPipelineState.SetDepthClipEnabled(rasterizerBlock.at(key_depthClipEnable).template get<bool>());
+			}
+
+			// "MultisampleEnable":
+			if (rasterizerBlock.contains(key_multisampleEnable))
+			{
+				newPipelineState.SetMultiSampleEnabled(rasterizerBlock.at(key_multisampleEnable).template get<bool>());
+			}
+
+			// "AntialiasedLineEnable":
+			if (rasterizerBlock.contains(key_antialiasedLineEnable))
+			{
+				newPipelineState.SetAntiAliasedLineEnabled(rasterizerBlock.at(key_antialiasedLineEnable).template get<bool>());
+			}
+
+			// "ForcedSampleCount":
+			if (rasterizerBlock.contains(key_forcedSampleCount))
+			{
+				newPipelineState.SetForcedSampleCount(rasterizerBlock.at(key_forcedSampleCount).template get<uint8_t>());
+			}
+
+			// "ConservativeRaster":
+			if (rasterizerBlock.contains(key_conservativeRaster))
+			{
+				newPipelineState.SetConservativeRaster(rasterizerBlock.at(key_conservativeRaster).template get<bool>());
+			}
 		}
 
 		// "DepthTestMode":

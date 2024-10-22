@@ -55,25 +55,31 @@
 		{
 			"Name": "Debug_Line",
 			"TopologyType": "Line",
-			"FillMode": "Wireframe",
-			"FaceCullingMode": "Disabled",
-			"WindingOrder": "CCW",
+			"RasterizerState" : {
+				"FillMode": "Wireframe",
+				"FaceCullingMode": "Disabled",
+				"WindingOrder": "CCW"
+			},			
 			"DepthTestMode": "Always"
 		},
 		{
 			"Name": "Debug_Triangle",
 			"TopologyType": "Triangle",
-			"FillMode": "Wireframe",
-			"FaceCullingMode": "Disabled",
-			"WindingOrder": "CCW",
+			"RasterizerState" : {
+				"FillMode": "Wireframe",
+				"FaceCullingMode": "Disabled",
+				"WindingOrder": "CCW"
+			},
 			"DepthTestMode": "Always"
 		},
 		{
 			"Name": "Debug_Point",
 			"TopologyType": "Point",
-			"FillMode": "Wireframe",
-			"FaceCullingMode": "Disabled",
-			"WindingOrder": "CCW",
+			"RasterizerState" : {
+				"FillMode": "Wireframe",
+				"FaceCullingMode": "Disabled",
+				"WindingOrder": "CCW"
+			},
 			"DepthTestMode": "Always"
 		}
 	]

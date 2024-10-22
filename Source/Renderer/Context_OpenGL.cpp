@@ -356,10 +356,40 @@ namespace opengl
 	{
 		if (pipelineState)
 		{
-			SetCullingMode(pipelineState->GetFaceCullingMode());
-			SetDepthTestMode(pipelineState->GetDepthTestMode());
+			// Rasterizer state:
 			SetFillMode(pipelineState);
+			SetCullingMode(pipelineState->GetFaceCullingMode());
+			SetDepthBias(pipelineState);
+			SetDepthClip(pipelineState->GetDepthClipEnabled());
+			SEAssert(pipelineState->GetMultiSampleEnabled() == false, "TODO: Handle this");
+			SEAssert(pipelineState->GetForcedSampleCount() == 0, "TODO: Handle this");
+			SEAssert(pipelineState->GetConservativeRaster() == false , "TODO: Handle this");
+
+			// 
+			SetDepthTestMode(pipelineState->GetDepthTestMode());
 		}
+	}
+
+
+	void Context::SetFillMode(re::PipelineState const* pipelineState)
+	{
+		GLenum fillMode = GL_FILL;
+		switch (pipelineState->GetFillMode())
+		{
+		case re::PipelineState::FillMode::Solid:
+		{
+			fillMode = GL_FILL;
+		}
+		break;
+		case re::PipelineState::FillMode::Wireframe:
+		{
+			fillMode = GL_LINE;
+		}
+		break;
+		default: SEAssertF("Invalid fill mode");
+		}
+
+		glPolygonMode(GL_FRONT_AND_BACK, fillMode);
 	}
 
 
@@ -393,6 +423,82 @@ namespace opengl
 	}
 
 
+	void Context::SetDepthBias(re::PipelineState const* pipelineState)
+	{
+		const re::PipelineState::PrimitiveTopologyType topologyType = pipelineState->GetPrimitiveTopologyType();
+		const int depthBias = pipelineState->GetDepthBias();
+
+		if (depthBias == 0)
+		{
+			switch (topologyType)
+			{
+			case re::PipelineState::PrimitiveTopologyType::Triangle:
+			{
+				glDisable(GL_POLYGON_OFFSET_FILL);
+			}
+			break;
+			case re::PipelineState::PrimitiveTopologyType::Point:
+			{
+				glDisable(GL_POLYGON_OFFSET_POINT);
+			}
+			break;
+			case re::PipelineState::PrimitiveTopologyType::Line:
+			{
+				glDisable(GL_POLYGON_OFFSET_LINE);
+			}
+			break;
+			case re::PipelineState::PrimitiveTopologyType::Patch:
+			default: SEAssertF("Invalid topology type");
+			}
+		}
+		else
+		{
+			switch (topologyType)
+			{
+			case re::PipelineState::PrimitiveTopologyType::Triangle:
+			{
+				glEnable(GL_POLYGON_OFFSET_FILL);
+			}
+			break;
+			case re::PipelineState::PrimitiveTopologyType::Point:
+			{
+				glEnable(GL_POLYGON_OFFSET_POINT);
+			}
+			break;
+			case re::PipelineState::PrimitiveTopologyType::Line:
+			{
+				glEnable(GL_POLYGON_OFFSET_LINE);
+			}
+			break;
+			case re::PipelineState::PrimitiveTopologyType::Patch:
+			default: SEAssertF("Invalid topology type");
+			}
+
+			SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
+
+			const GLfloat factor = pipelineState->GetSlopeScaledDepthBias();
+			const GLfloat units = depthBias / static_cast<float>(glm::pow(2.f, 24.f)); // TODO: This should depend on the depth buffer format?
+			glPolygonOffset(factor, units);
+		}		
+	}
+
+	
+	void Context::SetDepthClip(bool doEnable)
+	{
+		// Somewhat counter-intuitively, enabling depth clamping disables depth clipping
+		// https://www.khronos.org/opengl/wiki/Vertex_Post-Processing
+		if (doEnable)
+		{
+			glDisable(GL_DEPTH_CLAMP);			
+		}
+		else
+		{
+			SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
+			glEnable(GL_DEPTH_CLAMP);
+		}
+	}
+
+	
 	void Context::SetDepthTestMode(re::PipelineState::DepthTestMode mode)
 	{
 		if (mode == re::PipelineState::DepthTestMode::Always)
@@ -443,28 +549,6 @@ namespace opengl
 		}
 
 		glDepthFunc(depthMode);
-	}
-
-
-	void Context::SetFillMode(re::PipelineState const* pipelineState)
-	{
-		GLenum fillMode = GL_FILL;
-		switch (pipelineState->GetFillMode())
-		{
-		case re::PipelineState::FillMode::Solid:
-		{
-			fillMode = GL_FILL;
-		}
-		break;
-		case re::PipelineState::FillMode::Wireframe:
-		{
-			fillMode = GL_LINE;
-		}
-		break;
-		default: SEAssertF("Invalid fill mode");
-		}
-
-		glPolygonMode(GL_FRONT_AND_BACK, fillMode);
 	}
 
 

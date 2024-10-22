@@ -43,10 +43,17 @@ namespace opengl
 		friend class re::Context;
 
 	private:
-		void SetCullingMode(re::PipelineState::FaceCullingMode mode);
-		void SetDepthTestMode(re::PipelineState::DepthTestMode mode);
+		// Rasterizer state:
 		void SetFillMode(re::PipelineState const*);
+		void SetCullingMode(re::PipelineState::FaceCullingMode mode);
+		void SetDepthBias(re::PipelineState const*);
+		void SetDepthClip(bool doEnable);
 
+		//
+		void SetDepthTestMode(re::PipelineState::DepthTestMode mode);
+		
+
+	private:
 		void GetOpenGLExtensionProcessAddresses();
 
 

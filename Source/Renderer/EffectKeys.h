@@ -33,9 +33,24 @@ namespace
 	// "PipelineStates":
 	constexpr char const* key_pipelineStatesBlock = "PipelineStates";
 	constexpr char const* key_topologyType = "TopologyType";
+
+	// "RasterizerState":
+	constexpr char const* key_rasterizerState = "RasterizerState";
 	constexpr char const* key_fillMode = "FillMode";
 	constexpr char const* key_faceCullingMode = "FaceCullingMode";
 	constexpr char const* key_windingOrder = "WindingOrder";
+
+	constexpr char const* key_depthBias = "DepthBias";
+	constexpr char const* key_depthBiasClamp = "DepthBiasClamp";
+	constexpr char const* key_slopeScaledDepthBias = "SlopeScaledDepthBias";
+	constexpr char const* key_depthClipEnable = "DepthClipEnable";
+	constexpr char const* key_multisampleEnable = "MultisampleEnable";
+	constexpr char const* key_antialiasedLineEnable = "AntialiasedLineEnable";
+	constexpr char const* key_forcedSampleCount = "ForcedSampleCount";
+	constexpr char const* key_conservativeRaster = "ConservativeRaster";
+
+
+	// Depth stencil state:
 	constexpr char const* key_depthTestMode = "DepthTestMode";
 
 	// "VertexStreams"

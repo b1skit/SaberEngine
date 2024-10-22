@@ -35,11 +35,12 @@ namespace re
 			Patch
 		};
 		static PrimitiveTopologyType CStrToPrimitiveTopologyType(char const*);
-
 		PrimitiveTopologyType GetPrimitiveTopologyType() const;
 		void SetPrimitiveTopologyType(PrimitiveTopologyType);
 		
 
+		// Rasterizer state:
+		//------------------
 		enum class FillMode : uint8_t
 		{
 			Solid, // Default
@@ -69,6 +70,33 @@ namespace re
 		void SetWindingOrder(WindingOrder);
 		static WindingOrder GetWindingOrderByName(char const*);
 
+		int GetDepthBias() const;
+		void SetDepthBias(int);
+
+		float GetDepthBiasClamp() const;
+		void SetDepthBiasClamp(float);
+
+		float GetSlopeScaledDepthBias() const;
+		void SetSlopeScaledDepthBias(float);
+
+		bool GetDepthClipEnabled() const;
+		void SetDepthClipEnabled(bool);
+
+		bool GetMultiSampleEnabled() const;
+		void SetMultiSampleEnabled(bool);
+
+		bool GetAntiAliasedLineEnabled() const;
+		void SetAntiAliasedLineEnabled(bool);
+
+		uint8_t GetForcedSampleCount() const;
+		void SetForcedSampleCount(uint8_t);
+
+		bool GetConservativeRaster() const;
+		void SetConservativeRaster(bool);
+
+
+		//
+		//----
 		enum class DepthTestMode
 		{
 			Less,		// < (Default)
@@ -88,11 +116,124 @@ namespace re
 	private:
 		bool m_isDirty;
 
-		// Initialized in ctor
 		PrimitiveTopologyType m_primitiveTopologyType;
+
+		// Rasterizer state:
 		FillMode m_fillMode;
 		FaceCullingMode m_faceCullingMode;
 		WindingOrder m_windingOrder;
+		int m_depthBias;
+		float m_depthBiasClamp;
+		float m_slopeScaledDepthBias;
+		bool m_depthClipEnable;
+		bool m_multisampleEnable;
+		bool m_antialiasedLineEnable;
+		uint8_t m_forcedSampleCount; // Valid values = 0, 1, 4, 8, and optionally 16. 0 == sample count is not forced
+		bool m_conservativeRaster;
+		
+		//
 		DepthTestMode m_depthTestMode;
 	};
+
+
+	inline int PipelineState::GetDepthBias() const
+	{
+		return m_depthBias;
+	}
+
+
+	inline void PipelineState::SetDepthBias(int depthBias)
+	{
+		m_depthBias = depthBias;
+	}
+
+
+	inline float PipelineState::GetDepthBiasClamp() const
+	{
+		return m_depthBiasClamp;
+	}
+
+
+	inline void PipelineState::SetDepthBiasClamp(float depthBiasClamp)
+	{
+		m_depthBiasClamp = depthBiasClamp;
+	}
+
+
+	inline float PipelineState::GetSlopeScaledDepthBias() const
+	{
+		return m_slopeScaledDepthBias;
+	}
+
+
+	inline void PipelineState::SetSlopeScaledDepthBias(float slopeScaledDepthBias)
+	{
+		m_slopeScaledDepthBias = slopeScaledDepthBias;
+	}
+
+
+	inline bool PipelineState::GetDepthClipEnabled() const
+	{
+		return m_depthClipEnable;
+	}
+
+
+	inline void PipelineState::SetDepthClipEnabled(bool depthClipEnable)
+	{
+		m_depthClipEnable = depthClipEnable;
+	}
+
+
+	inline bool PipelineState::GetMultiSampleEnabled() const
+	{
+		return m_multisampleEnable;
+	}
+
+
+	inline void PipelineState::SetMultiSampleEnabled(bool multisampleEnable)
+	{
+		m_multisampleEnable = multisampleEnable;
+	}
+
+
+	inline bool PipelineState::GetAntiAliasedLineEnabled() const
+	{
+		return m_antialiasedLineEnable;
+	}
+
+
+	inline void PipelineState::SetAntiAliasedLineEnabled(bool antialiasedLineEnable)
+	{
+		m_antialiasedLineEnable = antialiasedLineEnable;
+	}
+
+
+	inline uint8_t PipelineState::GetForcedSampleCount() const
+	{
+		return m_forcedSampleCount;
+	}
+
+
+	inline void PipelineState::SetForcedSampleCount(uint8_t forcedSampleCount)
+	{
+		SEAssert(forcedSampleCount == 0 ||
+			forcedSampleCount == 1 || 
+			forcedSampleCount == 4 || 
+			forcedSampleCount == 8 || 
+			forcedSampleCount == 16,
+			"Invalid forced sample count");
+		m_forcedSampleCount = forcedSampleCount;
+	}
+
+
+	inline bool PipelineState::GetConservativeRaster() const
+	{
+		return m_conservativeRaster;
+	}
+
+
+	inline void PipelineState::SetConservativeRaster(bool conservativeRaster)
+	{
+		m_conservativeRaster = conservativeRaster;
+	}
 }

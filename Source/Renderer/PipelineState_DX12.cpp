@@ -110,50 +110,43 @@ namespace
 		// Polygon fill mode:
 		switch (rePipelineState->GetFillMode())
 		{
-		case re::PipelineState::FillMode::Wireframe:
-			rasterizerDesc.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_WIREFRAME; break;
-		case re::PipelineState::FillMode::Solid:
-			rasterizerDesc.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_SOLID; break;
+		case re::PipelineState::FillMode::Wireframe: rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME; break;
+		case re::PipelineState::FillMode::Solid: rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID; break;
 		default:
 			SEAssertF("Invalid fill mode");
-			rasterizerDesc.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_SOLID;
+			rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 		}
 
 		// Face culling mode:
 		switch (rePipelineState->GetFaceCullingMode())
 		{
-		case re::PipelineState::FaceCullingMode::Disabled:
-			rasterizerDesc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_NONE; break;
-		case re::PipelineState::FaceCullingMode::Front:
-			rasterizerDesc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_FRONT; break;
-		case re::PipelineState::FaceCullingMode::Back:
-			rasterizerDesc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_BACK; break;			
+		case re::PipelineState::FaceCullingMode::Disabled: rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE; break;
+		case re::PipelineState::FaceCullingMode::Front: rasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT; break;
+		case re::PipelineState::FaceCullingMode::Back: rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK; break;			
 		default:
-			SEAssertF("Invalid fill mode");
-			rasterizerDesc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_BACK;
+			SEAssertF("Invalid cull mode");
+			rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 		}
 
 		// Winding order:
 		switch (rePipelineState->GetWindingOrder())
 		{
-		case re::PipelineState::WindingOrder::CCW:
-			rasterizerDesc.FrontCounterClockwise = true; break;
-		case re::PipelineState::WindingOrder::CW:
-			rasterizerDesc.FrontCounterClockwise = false; break;
+		case re::PipelineState::WindingOrder::CCW: rasterizerDesc.FrontCounterClockwise = true; break;
+		case re::PipelineState::WindingOrder::CW: rasterizerDesc.FrontCounterClockwise = false; break;
 		default:
 			SEAssertF("Invalid winding order");
 			rasterizerDesc.FrontCounterClockwise = true;
 		}
 		
-		// TODO: Support these via the re::PipelineState
-		rasterizerDesc.DepthBias = 0;
-		rasterizerDesc.DepthBiasClamp = 0.f;
-		rasterizerDesc.SlopeScaledDepthBias = 0.f;
-		rasterizerDesc.DepthClipEnable = true;
-		rasterizerDesc.MultisampleEnable = false;
-		rasterizerDesc.AntialiasedLineEnable = false; // Only applies if drawing lines with .MultisampleEnable = false
-		rasterizerDesc.ForcedSampleCount = 0;
-		rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+		rasterizerDesc.DepthBias = rePipelineState->GetDepthBias();
+		rasterizerDesc.DepthBiasClamp = rePipelineState->GetDepthBiasClamp();
+		rasterizerDesc.SlopeScaledDepthBias = rePipelineState->GetSlopeScaledDepthBias();
+		rasterizerDesc.DepthClipEnable = rePipelineState->GetDepthClipEnabled();
+		rasterizerDesc.MultisampleEnable = rePipelineState->GetMultiSampleEnabled();
+		rasterizerDesc.AntialiasedLineEnable = rePipelineState->GetAntiAliasedLineEnabled(); // Only applies if drawing lines with .MultisampleEnable = false
+		rasterizerDesc.ForcedSampleCount = rePipelineState->GetForcedSampleCount();
+		rasterizerDesc.ConservativeRaster = rePipelineState->GetConservativeRaster() ? 
+			D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
 		return rasterizerDesc;
 	}

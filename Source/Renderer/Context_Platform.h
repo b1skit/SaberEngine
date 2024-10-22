@@ -1,8 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "Context.h"
-#include "PipelineState.h"
 
 
 namespace platform
