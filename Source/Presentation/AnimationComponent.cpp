@@ -109,7 +109,6 @@ namespace fr
 		: m_animationState(AnimationState::Playing)
 		, m_activeAnimationIdx(0)
 		, m_animationSpeed(1.f)
-		, m_longestChannelTimeSec(0.f)
 	{
 	}
 
@@ -143,13 +142,18 @@ namespace fr
 
 	size_t AnimationController::AddKeyframeTimes(std::vector<float>&& keyframeTimes)
 	{
+		SEAssert(m_keyframeTimesSec.size() == m_longestChannelTimesSec.size(),
+			"Animation index is out of sync");
+
 		const size_t keyframeTimesIdx = m_keyframeTimesSec.size();
-		m_keyframeTimesSec.emplace_back(std::move(keyframeTimes));
+		std::vector<float>& newKeyframeTimes = m_keyframeTimesSec.emplace_back(std::move(keyframeTimes));
+		m_longestChannelTimesSec.emplace_back(std::numeric_limits<float>::min());
 
 		// Update our longest channel timer
-		for (auto const& keyframeTime : m_keyframeTimesSec.back())
+		for (float keyframeTime : newKeyframeTimes)
 		{
-			m_longestChannelTimeSec = std::max(m_longestChannelTimeSec, keyframeTime);
+			m_longestChannelTimesSec[keyframeTimesIdx] =
+				std::max(m_longestChannelTimesSec[keyframeTimesIdx], keyframeTime);
 		}		
 
 		return keyframeTimesIdx;
@@ -242,7 +246,7 @@ namespace fr
 
 				ImGui::PushItemWidth(-ImGui::GetContentRegionAvail().x * 0.4f);
 				const float progress =
-					animController.GetActiveClampedAnimationTimeSec() / animController.GetLongestAnimationTimeSec();
+					animController.GetActiveClampedAnimationTimeSec() / animController.GetActiveLongestAnimationTimeSec();
 				ImGui::ProgressBar(
 					progress,
 					ImVec2(0.f, 0.f),
@@ -253,7 +257,7 @@ namespace fr
 
 				ImGui::Text(std::format("Time: {:0.2f} / {:0.2f} seconds", // Round to 2 decimal places
 					animController.GetActiveClampedAnimationTimeSec(),
-					animController.GetLongestAnimationTimeSec()).c_str());
+					animController.GetActiveLongestAnimationTimeSec()).c_str());
 			}
 			else
 			{
@@ -275,7 +279,7 @@ namespace fr
 				ImGui::Text(std::format("{} data channel{}",
 					numDataChannels,
 					numDataChannels > 1 ? "s" : "").c_str());
-				ImGui::Text(std::format("Longest animation: {} sec", animController.GetLongestAnimationTimeSec()).c_str());
+				ImGui::Text(std::format("Longest animation: {} sec", animController.GetActiveLongestAnimationTimeSec()).c_str());
 				ImGui::Unindent();
 			}
 

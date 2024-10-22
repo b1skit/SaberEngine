@@ -72,10 +72,7 @@ namespace fr
 		float GetAnimationSpeed() const;
 		void SetAnimationSpeed(float);
 
-		float GetLongestAnimationTimeSec() const;
-
-		float GetLongestChannelLength() const;
-		
+		float GetActiveLongestAnimationTimeSec() const;
 
 
 	public:
@@ -98,11 +95,12 @@ namespace fr
 
 		size_t m_activeAnimationIdx;
 		float m_animationSpeed;
-		float m_longestChannelTimeSec;
 
 		std::vector<std::string> m_animationNames;
 		std::vector<double> m_currentTimeSec;
+
 		std::vector<std::vector<float>> m_keyframeTimesSec;
+		std::vector<float> m_longestChannelTimesSec;
 
 		std::vector<std::vector<float>> m_channelData; // ALL data for all animations
 
@@ -134,7 +132,8 @@ namespace fr
 
 	inline float AnimationController::GetActiveClampedAnimationTimeSec() const
 	{
-		return glm::fmod(static_cast<float>(m_currentTimeSec[m_activeAnimationIdx]), m_longestChannelTimeSec);
+		return glm::fmod(static_cast<float>(m_currentTimeSec[m_activeAnimationIdx]),
+			m_longestChannelTimesSec[m_activeAnimationIdx]);
 	}
 
 
@@ -162,15 +161,9 @@ namespace fr
 	}
 
 
-	inline float AnimationController::GetLongestAnimationTimeSec() const
+	inline float AnimationController::GetActiveLongestAnimationTimeSec() const
 	{
-		return m_longestChannelTimeSec;
-	}
-
-
-	inline float AnimationController::GetLongestChannelLength() const
-	{
-		return m_longestChannelTimeSec;
+		return m_longestChannelTimesSec[m_activeAnimationIdx];
 	}
 
 
