@@ -11,14 +11,24 @@
 
 namespace fr
 {
-	TransformComponent& TransformComponent::AttachTransformComponent(
-		fr::EntityManager& em, entt::entity entity, fr::Transform* parent)
+	TransformComponent& TransformComponent::AttachTransformComponent(fr::EntityManager& em, entt::entity entity)
 	{
 		em.EmplaceComponent<fr::TransformComponent::NewIDMarker>(entity);
 		
-		// Note: We don't emplace a dirty marker; The Transform/TransformComponent currently track their dirty state
+		// Retrieve the parent transform, if one exists:
+		TransformComponent* parentTransformCmpt = em.GetFirstInHierarchyAbove<TransformComponent>(entity);
+		fr::Transform* parentTransform = nullptr;
+		if (parentTransformCmpt)
+		{
+			parentTransform = &parentTransformCmpt->GetTransform();
+		}
 
-		return *em.EmplaceComponent<fr::TransformComponent>(entity, PrivateCTORTag{}, parent);
+		// Attach our TransformComponent:
+		TransformComponent& transformCmpt = 
+			*em.EmplaceComponent<fr::TransformComponent>(entity, PrivateCTORTag{}, parentTransform);
+		
+		// Note: We don't emplace a dirty marker; The Transform/TransformComponent currently track their dirty state
+		return transformCmpt;
 	}
 
 

@@ -26,7 +26,7 @@ namespace fr
 
 		em.EmplaceComponent<CameraControlComponent>(sceneNode);
 
-		fr::TransformComponent& controllerTransform = em.GetComponent<fr::TransformComponent>(sceneNode);
+		fr::TransformComponent& controllerTransform = fr::TransformComponent::AttachTransformComponent(em, sceneNode);
 		fr::TransformComponent& camTransform = em.GetComponent<fr::TransformComponent>(cameraConcept);
 
 		// Attach the camera to the camera controller:

@@ -75,7 +75,10 @@ namespace fr
 
 		// Create a Transform and render data representation: 
 		fr::TransformComponent& sceneBoundsTransformComponent = 
-			fr::TransformComponent::AttachTransformComponent(em, sceneBoundsEntity, nullptr);
+			fr::TransformComponent::AttachTransformComponent(em, sceneBoundsEntity);
+
+		SEAssert(sceneBoundsTransformComponent.GetTransform().GetParent() == nullptr,
+			"Found a parent transform for the scene bounds. This is unexpected");
 		
 		gr::RenderDataComponent& sceneBoundsRenderCmpt = gr::RenderDataComponent::AttachNewRenderDataComponent(
 			em, sceneBoundsEntity, sceneBoundsTransformComponent.GetTransformID());

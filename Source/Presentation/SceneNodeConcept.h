@@ -5,18 +5,13 @@
 namespace fr
 {
 	class EntityManager;
-	class Transform;
 
 
-	// A scene node is the foundational concept of anything representable in a scene: It has a Transform, and a Name
+	// A scene node is the foundational concept of anything representable in a scene: It has a Name, and Relationship
 	class SceneNode
 	{
 	public:
 		static entt::entity Create(EntityManager&, char const* name, entt::entity parent);
 		static entt::entity Create(EntityManager&, std::string const& name, entt::entity parent);
-
-
-	public:
-		static fr::Transform& GetTransform(fr::EntityManager&, entt::entity);
 	};
 }

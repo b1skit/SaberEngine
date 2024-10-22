@@ -484,7 +484,10 @@ namespace
 				current->has_scale == 0 && current->has_translation == 0),
 			"Transform has both matrix and decomposed properties");
 
-		fr::Transform& targetTransform = fr::SceneNode::GetTransform(*fr::EntityManager::Get(), sceneNode);
+		fr::EntityManager& em = *fr::EntityManager::Get();
+		SEAssert(em.HasComponent<fr::TransformComponent>(sceneNode), "Entity does not have a TransformComponent");
+
+		fr::Transform& targetTransform = em.GetComponent<fr::TransformComponent>(sceneNode).GetTransform();
 
 		if (current->has_matrix)
 		{
@@ -530,6 +533,7 @@ namespace
 		if (sceneNode == entt::null)
 		{
 			sceneNode = fr::SceneNode::Create(em, std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null);
+			fr::TransformComponent::AttachTransformComponent(em, sceneNode);
 		}
 
 
@@ -555,8 +559,6 @@ namespace
 			cgltf_camera const* const camera = current->camera;
 
 			SEAssert(sceneNode != entt::null && camera != nullptr, "Must supply a scene node and camera pointer");
-
-			SetTransformValues(current, sceneNode);
 
 			const std::string camName = camera->name ? std::string(camera->name) : "Unnamed camera";
 			LOG("Loading camera \"%s\"", camName.c_str());
@@ -1423,6 +1425,28 @@ namespace
 	}
 
 
+	inline entt::entity CreateSceneNode(cgltf_node const* gltfNode, entt::entity parent)
+	{
+		constexpr char const* k_unnamedNodeName = "Unnamed node";
+		char const* nodeName = gltfNode->name ? gltfNode->name : k_unnamedNodeName;
+
+		fr::EntityManager& em = *fr::EntityManager::Get();
+
+		entt::entity newSceneNode = fr::SceneNode::Create(em, nodeName, parent);
+
+		if (gltfNode->has_translation ||
+			gltfNode->has_rotation ||
+			gltfNode->has_scale ||
+			gltfNode->has_matrix)
+		{
+			fr::TransformComponent::AttachTransformComponent(em, newSceneNode);
+			SetTransformValues(gltfNode, newSceneNode);
+		}
+
+		return newSceneNode;
+	}
+
+
 	inline fr::InterpolationMode CGLTFInterpolationTypeToFrInterpolationType(
 		cgltf_interpolation_type interpolationType,
 		cgltf_animation_path_type animationPathType)
@@ -1512,8 +1536,7 @@ namespace
 				char const* nodeName =
 					current->children[i]->name ? current->children[i]->name : k_unnamedChildName;
 
-				entt::entity childNode =
-					fr::SceneNode::Create(*fr::EntityManager::Get(), nodeName, curSceneNodeEntity);
+				entt::entity childNode = CreateSceneNode(current->children[i], curSceneNodeEntity);
 
 				LoadObjectHierarchyRecursiveHelper(
 					sceneRootPath,
@@ -1526,12 +1549,6 @@ namespace
 					loadTasks);
 			}
 		}
-
-		// Set the SceneNode transform:
-		loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob([current, curSceneNodeEntity]()
-			{
-				SetTransformValues(current, curSceneNodeEntity);
-			}));
 
 		// Process node attachments:
 		if (current->mesh)
@@ -1697,13 +1714,12 @@ namespace
 		{
 			SEAssert(data->scenes->nodes[node]->parent == nullptr, "Error: Node is not a root");
 
-			const std::string nodeName =
+			char const* nodeName =
 				data->scenes->nodes[node]->name ? data->scenes->nodes[node]->name : "Unnamed root node";
 
-			LOG("Loading root node %zu: \"%s\"", node, nodeName.c_str());
+			LOG("Loading root node %zu: \"%s\"", node, nodeName);
 
-			entt::entity rootSceneNode =
-				fr::SceneNode::Create(*fr::EntityManager::Get(), nodeName.c_str(), entt::null); // Root has no parent
+			entt::entity rootSceneNode = CreateSceneNode(data->scenes->nodes[node], entt::null);
 
 			LoadObjectHierarchyRecursiveHelper(
 				sceneRootPath,

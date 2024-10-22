@@ -1,11 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EntityManager.h"
-#include "MarkerComponents.h"
-#include "NameComponent.h"
 #include "RelationshipComponent.h"
-#include "RenderDataComponent.h"
 #include "SceneNodeConcept.h"
-#include "TransformComponent.h"
 
 
 namespace fr
@@ -16,16 +12,6 @@ namespace fr
 
 		fr::Relationship& sceneNodeRelationship = em.GetComponent<fr::Relationship>(sceneNodeEntity);
 		sceneNodeRelationship.SetParent(em, parent);
-
-		fr::Transform* parentTransform = nullptr;
-		if (parent != entt::null)
-		{
-			SEAssert(em.HasComponent<fr::TransformComponent>(parent), "Parent entity must have a TransformComponent");
-
-			parentTransform = &em.GetComponent<fr::TransformComponent>(parent).GetTransform();
-		}
-		
-		fr::TransformComponent::AttachTransformComponent(em, sceneNodeEntity, parentTransform);
 		
 		return sceneNodeEntity;
 	}
@@ -34,14 +20,6 @@ namespace fr
 	entt::entity SceneNode::Create(EntityManager& em, std::string const& name, entt::entity parent)
 	{
 		return Create(em, name.c_str(), parent);
-	}
-
-
-	fr::Transform& SceneNode::GetTransform(fr::EntityManager& em, entt::entity entity)
-	{
-		SEAssert(em.HasComponent<fr::TransformComponent>(entity), "Entity does not have a TransformComponent");
-
-		return em.GetComponent<fr::TransformComponent>(entity).GetTransform();
 	}
 }
 
