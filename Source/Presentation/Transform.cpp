@@ -475,8 +475,6 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		SEAssertF("TODO: Test this. If you hit this assert, it's the first time this function has been used");
-
 		if (m_parent)
 		{
 			glm::vec3 const& parentGlobalScale = m_parent->GetGlobalScale();

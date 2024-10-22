@@ -21,53 +21,100 @@ namespace
 	template<typename T>
 	T GetInterpolatedValue(
 		fr::InterpolationMode mode,
-		T const& prevValue,
-		T const& nextValue,
-		float prevSec, 
+		float const* channelData,
+		size_t channelDataCount,
+		size_t prevKeyframeIdx,
+		size_t nextKeyframeIdx,
+		float prevSec,
 		float nextSec, 
 		float requestedSec)
 	{
-		if (prevSec == nextSec || prevValue == nextValue)
-		{
-			return prevValue;
-		}
-
 		const float t = ComputeSegmentNormalizedInterpolationFactor(prevSec, nextSec, requestedSec);
 
 		switch (mode)
 		{
 		case fr::InterpolationMode::Linear:
 		{
+			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx];
+			T const& nextValue = reinterpret_cast<T const*>(channelData)[nextKeyframeIdx];
+
+			if (prevSec == nextSec || prevValue == nextValue)
+			{
+				return prevValue;
+			}
+
 			return (1.f - t) * prevValue + t * nextValue;
 		}
 		break;
 		case fr::InterpolationMode::Step:
 		{
+			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx];
+
 			return prevValue;
 		}
 		break;
 		case fr::InterpolationMode::CubicSpline:
 		{
-			SEAssertF("TODO: Support this. We'll need to overload this function to take in/out tangents");
-			// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#interpolation-cubic
+			const bool isFirstKeyframeTangent = prevKeyframeIdx == 0;
+			const bool isLastKeyframeTangent = prevKeyframeIdx > nextKeyframeIdx;
+
+			const float deltaTime = nextSec - prevSec; // t_d
+
+			// Scale our indexes: Tangents are stored in the 3 elements of animation channel data
+			// {input tangent, keyframe value, output tangent}
+			prevKeyframeIdx *= 3;
+			nextKeyframeIdx *= 3;
+
+			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx + 1];
+			T prevOutputTangent = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx + 2] * deltaTime;
+			
+			T nextInputTangent = reinterpret_cast<T const*>(channelData)[nextKeyframeIdx] * deltaTime;
+			T const& nextValue = reinterpret_cast<T const*>(channelData)[nextKeyframeIdx + 1];
+
+			// GLTF specs - the input tangent of the 1st keyframe, and output tangent of the last keyframe are ignored
+			if (isFirstKeyframeTangent)
+			{
+				prevOutputTangent *= 0.f;
+			}
+			if (isLastKeyframeTangent)
+			{
+				nextInputTangent *= 0.f;
+			}
+
+			SEAssert(prevValue != -nextValue, "Invalid quaternion (all zeros) will be produced by the interpolation");
+
+			const float t2 = t * t;
+			const float t3 = t2 * t;
+
+			return (2.f * t3 - 3.f * t2 + 1.f) * prevValue + 
+				(t3 - 2.f * t2 + t) * prevOutputTangent + 
+				(-2.f * t3 + 3.f * t2) * nextValue + 
+				(t3 - t2) * nextInputTangent;
 		}
 		break;
 		case fr::InterpolationMode::SphericalLinearInterpolation:
 		default: SEAssertF("Invalid interpolation mode");
 		}
-		return prevValue; // This should never happen
+		return reinterpret_cast<T const*>(channelData)[prevKeyframeIdx]; // This should never happen
 	}
 
 
-	glm::quat GetInterpolatedValue(
+	glm::quat GetSphericalLinearInterpolatedValue(
 		fr::InterpolationMode mode,
-		glm::quat const& prevValue,
-		glm::quat const& nextValue,
+		float const* channelData,
+		size_t channelDataCount,
+		size_t prevKeyframeIdx,
+		size_t nextKeyframeIdx,
 		float prevSec,
 		float nextSec,
 		float requestedSec)
 	{
 		SEAssert(mode == fr::InterpolationMode::SphericalLinearInterpolation, "Invalid mode for this implementation");
+
+		glm::quat const& prevValue = reinterpret_cast<glm::quat const*>(channelData)[prevKeyframeIdx];
+		glm::quat const& nextValue = reinterpret_cast<glm::quat const*>(channelData)[nextKeyframeIdx];
+
+		SEAssert(prevValue != -nextValue, "Invalid quaternion (all zeros) will be produced by the interpolation");
 
 		if (prevSec == nextSec || prevValue == nextValue)
 		{
@@ -410,15 +457,12 @@ namespace fr
 			{
 			case AnimationPath::Translation:
 			{
-				SEAssert(channel.m_dataFloatsPerKeyframe == 3, "Translation data must be vec3s");
-
-				glm::vec3 const& prevValue = reinterpret_cast<std::vector<glm::vec3> const&>(channelData)[prevKeyframeIdx];
-				glm::vec3 const& nextValue = reinterpret_cast<std::vector<glm::vec3> const&>(channelData)[nextKeyframeIdx];
-
-				glm::vec3 const& interpolatedValue = GetInterpolatedValue(
+				glm::vec3 const& interpolatedValue = GetInterpolatedValue<glm::vec3>(
 					channel.m_interpolationMode,
-					prevValue,
-					nextValue,
+					channelData.data(),
+					channelData.size(),
+					prevKeyframeIdx,
+					nextKeyframeIdx,
 					keyframeTimes[prevKeyframeIdx],
 					keyframeTimes[nextKeyframeIdx],
 					currentTimeSec);
@@ -428,33 +472,43 @@ namespace fr
 			break;
 			case AnimationPath::Rotation:
 			{
-				SEAssert(channel.m_dataFloatsPerKeyframe == 4, "Rotation data must be vec4s");
+				glm::quat interpolatedValue;
+				if (channel.m_interpolationMode == fr::InterpolationMode::SphericalLinearInterpolation)
+				{
+					interpolatedValue = GetSphericalLinearInterpolatedValue(
+						channel.m_interpolationMode,
+						channelData.data(),
+						channelData.size(),
+						prevKeyframeIdx,
+						nextKeyframeIdx,
+						keyframeTimes[prevKeyframeIdx],
+						keyframeTimes[nextKeyframeIdx],
+						currentTimeSec);
+				}
+				else
+				{
+					interpolatedValue = GetInterpolatedValue<glm::quat>(
+						channel.m_interpolationMode,
+						channelData.data(),
+						channelData.size(),
+						prevKeyframeIdx,
+						nextKeyframeIdx,
+						keyframeTimes[prevKeyframeIdx],
+						keyframeTimes[nextKeyframeIdx],
+						currentTimeSec);
+				}
 
-				glm::quat const& prevValue = reinterpret_cast<std::vector<glm::quat> const&>(channelData)[prevKeyframeIdx];
-				glm::quat const& nextValue = reinterpret_cast<std::vector<glm::quat> const&>(channelData)[nextKeyframeIdx];
-
-				glm::quat const& interpolatedValue = GetInterpolatedValue(
-					channel.m_interpolationMode,
-					prevValue,
-					nextValue,
-					keyframeTimes[prevKeyframeIdx],
-					keyframeTimes[nextKeyframeIdx],
-					currentTimeSec);
-
-				transform.SetGlobalRotation(interpolatedValue);
+				transform.SetGlobalRotation(glm::normalize(interpolatedValue));
 			}
 			break;
 			case AnimationPath::Scale:
 			{
-				SEAssert(channel.m_dataFloatsPerKeyframe == 3, "Scale data must be vec3s");
-
-				glm::vec3 const& prevValue = reinterpret_cast<std::vector<glm::vec3> const&>(channelData)[prevKeyframeIdx];
-				glm::vec3 const& nextValue = reinterpret_cast<std::vector<glm::vec3> const&>(channelData)[nextKeyframeIdx];
-
-				glm::vec3 const& interpolatedValue = GetInterpolatedValue(
+				glm::vec3 const& interpolatedValue = GetInterpolatedValue<glm::vec3>(
 					channel.m_interpolationMode,
-					prevValue,
-					nextValue,
+					channelData.data(),
+					channelData.size(),
+					prevKeyframeIdx,
+					nextKeyframeIdx,
 					keyframeTimes[prevKeyframeIdx],
 					keyframeTimes[nextKeyframeIdx],
 					currentTimeSec);
@@ -464,7 +518,7 @@ namespace fr
 			break;
 			case AnimationPath::Weights:
 			{
-				// MeshAnimationComponent handles AnimationPath::Weights
+				// Do nothing: MeshAnimationComponent handles AnimationPath::Weights
 			}
 			break;
 			default: SEAssertF("Invalid animation target");
@@ -576,13 +630,15 @@ namespace fr
 
 			for (uint8_t weightIdx = 0; weightIdx < channel.m_dataFloatsPerKeyframe; ++weightIdx)
 			{
-				const float prevValue = channelData[prevKeyframeIdx * channel.m_dataFloatsPerKeyframe + weightIdx];
-				const float nextValue = channelData[nextKeyframeIdx * channel.m_dataFloatsPerKeyframe + weightIdx];
+				const size_t prevIdx = prevKeyframeIdx * channel.m_dataFloatsPerKeyframe + weightIdx;
+				const size_t nextIdx = nextKeyframeIdx * channel.m_dataFloatsPerKeyframe + weightIdx;
 
-				const float interpolatedValue = GetInterpolatedValue(
+				const float interpolatedValue = GetInterpolatedValue<float>(
 					channel.m_interpolationMode,
-					prevValue,
-					nextValue,
+					channelData.data(),
+					channelData.size(),
+					prevIdx,
+					nextIdx,
 					keyframeTimes[prevKeyframeIdx],
 					keyframeTimes[nextKeyframeIdx],
 					currentTimeSec);

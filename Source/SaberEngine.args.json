@@ -113,10 +113,6 @@
           "Command": "-scene Corset\\glTF\\Corset.gltf"
         },
         {
-          "Id": "1bfead22-6f3e-43ec-b679-439e0a804f73",
-          "Command": "-scene VertexColor\\VertexColorTest.gltf"
-        },
-        {
           "Id": "a597a9cc-5fd1-4493-9515-92281f037b50",
           "Command": "-scene MyInstanceTest\\InstanceTest.gltf"
         },
@@ -181,10 +177,6 @@
           "Command": "-scene Box\\glTF-Embedded\\Box.gltf"
         },
         {
-          "Id": "1f68c100-0068-4d3a-9f61-fc7b810d0bb6",
-          "Command": "-scene BoxVertexColors\\glTF-Embedded\\BoxVertexColors.gltf"
-        },
-        {
           "Id": "32b7f201-6bda-4d56-91b3-276709892e17",
           "Command": "-scene SunTemple\\suntemple.gltf"
         },
@@ -225,16 +217,22 @@
           "Command": "-scene AlphaBlendModeTest\\glTF\\AlphaBlendModeTest.gltf"
         },
         {
-          "Id": "5c33b5c5-68f4-4728-b41a-373fd6a98ac1",
-          "Command": "-scene RiggedSimple\\glTF-Binary\\RiggedSimple.glb"
-        },
-        {
-          "Id": "208224d3-766f-4d77-91c4-140c3e5ca5ef",
-          "Command": "-scene InterpolationTest\\glTF\\InterpolationTest.gltf"
-        },
-        {
           "Id": "d5dec2bd-cd8a-4e56-86be-c43ecdccc751",
           "Command": "-scene MultiUVTest\\glTF\\MultiUVTest.gltf"
+        },
+        {
+          "Id": "3dcb8108-054d-490a-90fa-9618e5101ff2",
+          "Command": "Vertex colors",
+          "Items": [
+            {
+              "Id": "1bfead22-6f3e-43ec-b679-439e0a804f73",
+              "Command": "-scene VertexColor\\VertexColorTest.gltf"
+            },
+            {
+              "Id": "1f68c100-0068-4d3a-9f61-fc7b810d0bb6",
+              "Command": "-scene BoxVertexColors\\glTF-Embedded\\BoxVertexColors.gltf"
+            }
+          ]
         },
         {
           "Id": "7e3071a8-bd32-4986-a78a-643cc10b3ade",
@@ -251,6 +249,10 @@
             {
               "Id": "7299d3dd-85df-46ee-8420-f2aff3528b93",
               "Command": "-scene AnimatedCube\\glTF\\AnimatedCube.gltf"
+            },
+            {
+              "Id": "208224d3-766f-4d77-91c4-140c3e5ca5ef",
+              "Command": "-scene InterpolationTest\\glTF\\InterpolationTest.gltf"
             }
           ]
         },
@@ -275,6 +277,16 @@
               "Command": "-scene MorphStressTest\\glTF-Binary\\MorphStressTest.glb"
             }
           ]
+        }
+      ]
+    },
+    {
+      "Id": "89814608-821a-4f7f-9a68-63fd101c2656",
+      "Command": "Skinning",
+      "Items": [
+        {
+          "Id": "5c33b5c5-68f4-4728-b41a-373fd6a98ac1",
+          "Command": "-scene RiggedSimple\\glTF-Binary\\RiggedSimple.glb"
         }
       ]
     }
