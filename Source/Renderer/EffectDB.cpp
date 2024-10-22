@@ -215,12 +215,93 @@ namespace
 			}
 		}
 
-		// "DepthTestMode":
-		if (piplineStateEntry.contains(key_depthTestMode))
+		if (piplineStateEntry.contains(key_depthStencilState))
 		{
-			newPipelineState.SetDepthTestMode(re::PipelineState::GetDepthTestModeByName(
-				piplineStateEntry.at(key_depthTestMode).template get<std::string>().c_str()));
-		}
+			auto const& depthStencilBlock = piplineStateEntry.at(key_depthStencilState);
+
+			// "DepthTestEnabled":
+			if (depthStencilBlock.contains(key_depthTestEnabled))
+			{
+				newPipelineState.SetDepthTestEnabled(depthStencilBlock.at(key_depthTestEnabled).template get<bool>());
+			}
+
+			// "DepthWriteMask":
+			if (depthStencilBlock.contains(key_depthWriteMask))
+			{
+				newPipelineState.SetDepthWriteMask(re::PipelineState::GetDepthWriteMaskByName(
+					depthStencilBlock.at(key_depthWriteMask).template get<std::string>().c_str()));
+			}
+
+			// "DepthComparison":
+			if (depthStencilBlock.contains(key_depthComparison))
+			{
+				newPipelineState.SetDepthComparison(re::PipelineState::GetComparisonByName(
+					depthStencilBlock.at(key_depthComparison).template get<std::string>().c_str()));
+			}
+
+			// "StencilEnabled":
+			if (depthStencilBlock.contains(key_stencilEnabled))
+			{
+				newPipelineState.SetStencilEnabled(depthStencilBlock.at(key_stencilEnabled).template get<bool>());
+			}
+
+			// "StencilReadMask":
+			if (depthStencilBlock.contains(key_stencilReadMask))
+			{
+				newPipelineState.SetStencilReadMask(depthStencilBlock.at(key_stencilReadMask).template get<uint8_t>());
+			}
+
+			// "StencilWriteMask":
+			if (depthStencilBlock.contains(key_stencilWriteMask))
+			{
+				newPipelineState.SetStencilWriteMask(depthStencilBlock.at(key_stencilWriteMask).template get<uint8_t>());
+			}
+
+			auto ParseStencilOpDesc = [](auto const& stencilOpDesc) -> re::PipelineState::StencilOpDesc
+				{
+					re::PipelineState::StencilOpDesc desc{};
+
+					if (stencilOpDesc.contains(key_stencilFailOp))
+					{
+						desc.m_failOp = re::PipelineState::GetStencilOpByName(
+							stencilOpDesc.at(key_stencilFailOp).template get<std::string>().c_str());
+					}
+
+					if (stencilOpDesc.contains(key_stencilDepthFailOp))
+					{
+						desc.m_depthFailOp = re::PipelineState::GetStencilOpByName(
+							stencilOpDesc.at(key_stencilDepthFailOp).template get<std::string>().c_str());
+					}
+
+					if (stencilOpDesc.contains(key_stencilPassOp))
+					{
+						desc.m_passOp = re::PipelineState::GetStencilOpByName(
+							stencilOpDesc.at(key_stencilPassOp).template get<std::string>().c_str());
+					}
+
+					if (stencilOpDesc.contains(key_stencilComparison))
+					{
+						desc.m_comparison = re::PipelineState::GetComparisonByName(
+							stencilOpDesc.at(key_stencilComparison).template get<std::string>().c_str());
+					}
+
+					return desc;
+				};
+
+			if (depthStencilBlock.contains(key_frontStencilOpDesc))
+			{
+				auto const& frontStencilOpDesc = piplineStateEntry.at(key_frontStencilOpDesc);
+				re::PipelineState::StencilOpDesc desc = ParseStencilOpDesc(frontStencilOpDesc);
+				newPipelineState.SetFrontFaceStencilOpDesc(desc);
+			}
+
+			if (depthStencilBlock.contains(key_backStencilOpDesc))
+			{
+				auto const& backStencilOpDesc = piplineStateEntry.at(key_backStencilOpDesc);
+				re::PipelineState::StencilOpDesc desc = ParseStencilOpDesc(backStencilOpDesc);
+				newPipelineState.SetBackFaceStencilOpDesc(desc);
+			}
+		}		
 
 		return newPipelineState;
 	}
@@ -583,7 +664,9 @@ namespace effect
 
 			auto result = m_effects.emplace(newEffect.GetEffectID(), std::move(newEffect));
 
-			LOG("Added Effect \"%s\"", result.first->second.GetName().c_str());
+			LOG(std::format("Added Effect \"{}\" with hash {}", 
+				result.first->second.GetName(),
+				result.first->second.GetNameHash()).c_str());
 			
 			return &(result.first->second);
 		}

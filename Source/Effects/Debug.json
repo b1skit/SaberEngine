@@ -59,8 +59,10 @@
 				"FillMode": "Wireframe",
 				"FaceCullingMode": "Disabled",
 				"WindingOrder": "CCW"
-			},			
-			"DepthTestMode": "Always"
+			},		
+			"DepthStencilState" : {
+				"DepthComparison": "Always"
+			}			
 		},
 		{
 			"Name": "Debug_Triangle",
@@ -70,7 +72,9 @@
 				"FaceCullingMode": "Disabled",
 				"WindingOrder": "CCW"
 			},
-			"DepthTestMode": "Always"
+			"DepthStencilState" : {
+				"DepthComparison": "Always"
+			}
 		},
 		{
 			"Name": "Debug_Point",
@@ -80,7 +84,9 @@
 				"FaceCullingMode": "Disabled",
 				"WindingOrder": "CCW"
 			},
-			"DepthTestMode": "Always"
+			"DepthStencilState" : {
+				"DepthComparison": "Always"
+			}
 		}
 	]
 }

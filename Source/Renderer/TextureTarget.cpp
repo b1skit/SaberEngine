@@ -317,6 +317,11 @@ namespace re
 	{
 		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been created");
 
+		SEAssert((depthStencilTarget.GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) || 
+			(depthStencilTarget.GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::StencilTarget) ||
+				(depthStencilTarget.GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget),
+			"Texture does not have the correct usage flags to be a depth stencil target");
+
 		re::TextureView::ValidateView( // _DEBUG only
 			depthStencilTarget.GetTexture().get(), 
 			depthStencilTarget.GetTargetParams().m_textureView);

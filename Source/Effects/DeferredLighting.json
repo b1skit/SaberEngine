@@ -116,21 +116,31 @@
 			"RasterizerState" : {
 				"FaceCullingMode": "Disabled"
 			},
-			"DepthTestMode":  "Always"
+			"DepthStencilState" : {
+				"DepthTestEnabled": false,
+				"DepthComparison":  "Always",
+				"DepthWriteMask": "Zero"
+			}
 		},
 		{
 			"Name": "DeferredFullscreenQuad",
 			"RasterizerState" : {
 				"FaceCullingMode": "Back"
 			},
-			"DepthTestMode":  "Greater"
+			"DepthStencilState" : {
+				"DepthComparison":  "Greater",
+				"DepthWriteMask": "Zero"
+			}
 		},
 		{
 			"Name": "DeferredMesh",
 			"RasterizerState" : {
 				"FaceCullingMode": "Front"
 			},
-			"DepthTestMode":  "GEqual"
+			"DepthStencilState" : {
+				"DepthComparison":  "GEqual",
+				"DepthWriteMask": "Zero"
+			}
 		}
 	]
 }

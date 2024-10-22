@@ -7,11 +7,18 @@
 	"PipelineStates": [
 		{
 			"Name": "FullscreenQuad_Always",
-			"DepthTestMode": "Always"
+			"DepthStencilState" : {
+				"DepthTestEnabled" : false,
+				"DepthComparison": "Always",
+				"DepthWriteMask": "Zero"
+			}
 		},
 		{
 			"Name": "FullscreenQuad_LEqual",
-			"DepthTestMode": "LEqual"
+			"DepthStencilState" : {
+				"DepthComparison": "LEqual",
+				"DepthWriteMask": "Zero"
+			}
 		}
 	]
 }

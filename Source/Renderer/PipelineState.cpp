@@ -10,7 +10,7 @@ namespace re
 		: m_isDirty(true)
 		, m_primitiveTopologyType(PrimitiveTopologyType::Triangle)
 
-		// Rasterizer state. Note: Defaults are set as per D3D12: 
+		// Rasterizer state. Note: Defaults as per D3D12: 
 		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc#remarks
 		, m_fillMode(FillMode::Solid)
 		, m_faceCullingMode(FaceCullingMode::Back)
@@ -24,8 +24,16 @@ namespace re
 		, m_forcedSampleCount(0)
 		, m_conservativeRaster(false)
 		
-		//
-		, m_depthTestMode(DepthTestMode::Less)
+		// Depth stencil state: Note: Defaults as per D3D12:
+		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_desc#remarks
+		, m_depthTestEnable(true)
+		, m_depthWriteMask(DepthWriteMask::All)
+		, m_depthFunc(ComparisonFunc::Less)
+		, m_stencilEnabled(false)
+		, m_stencilReadMask(k_defaultStencilReadMask)
+		, m_stencilWriteMask(k_defaultStencilWriteMask)
+		, m_frontFace{}
+		, m_backFace{}
 	{
 		ComputeDataHash();
 	}
@@ -39,10 +47,29 @@ namespace re
 		ResetDataHash();
 
 		AddDataBytesToHash(m_primitiveTopologyType);
+
+		// Rasterizer state:
 		AddDataBytesToHash(m_fillMode);
 		AddDataBytesToHash(m_faceCullingMode);
 		AddDataBytesToHash(m_windingOrder);
-		AddDataBytesToHash(m_depthTestMode);
+		AddDataBytesToHash(m_depthBias);
+		AddDataBytesToHash(m_depthBiasClamp);
+		AddDataBytesToHash(m_slopeScaledDepthBias);
+		AddDataBytesToHash(m_depthClipEnable);
+		AddDataBytesToHash(m_multisampleEnable);
+		AddDataBytesToHash(m_antialiasedLineEnable);
+		AddDataBytesToHash(m_forcedSampleCount);
+		AddDataBytesToHash(m_conservativeRaster);
+
+		// Depth stencil state:
+		AddDataBytesToHash(m_depthTestEnable);
+		AddDataBytesToHash(m_depthWriteMask);
+		AddDataBytesToHash(m_depthFunc);
+		AddDataBytesToHash(m_stencilEnabled);
+		AddDataBytesToHash(m_stencilReadMask);
+		AddDataBytesToHash(m_stencilWriteMask);
+		AddDataBytesToHash(m_frontFace);
+		AddDataBytesToHash(m_backFace);
 	}
 
 
@@ -175,33 +202,69 @@ namespace re
 	}
 
 
-	PipelineState::DepthTestMode PipelineState::GetDepthTestMode() const
+	PipelineState::ComparisonFunc PipelineState::GetDepthComparison() const
 	{
 		SEAssert(!m_isDirty, "PipelineState is dirty");
-		return m_depthTestMode;
+		return m_depthFunc;
 	}
 
 
-	void PipelineState::SetDepthTestMode(PipelineState::DepthTestMode depthTestMode)
+	void PipelineState::SetDepthComparison(PipelineState::ComparisonFunc depthTestMode)
 	{
-		m_depthTestMode = depthTestMode;
+		m_depthFunc = depthTestMode;
 		m_isDirty = true;
 		ComputeDataHash();
 	}
 
 
-	PipelineState::DepthTestMode PipelineState::GetDepthTestModeByName(char const* name)
+	PipelineState::ComparisonFunc PipelineState::GetComparisonByName(char const* name)
 	{
-		static const std::map<std::string, PipelineState::DepthTestMode> s_nameToType =
+		static const std::map<std::string, PipelineState::ComparisonFunc> s_nameToType =
 		{
-			{"less", PipelineState::DepthTestMode::Less},
-			{"never", PipelineState::DepthTestMode::Never},
-			{"equal", PipelineState::DepthTestMode::Equal},
-			{"lequal", PipelineState::DepthTestMode::LEqual},
-			{"greater", PipelineState::DepthTestMode::Greater},
-			{"notequal", PipelineState::DepthTestMode::NotEqual},
-			{"gequal", PipelineState::DepthTestMode::GEqual},
-			{"always", PipelineState::DepthTestMode::Always},
+			{"less", PipelineState::ComparisonFunc::Less},
+			{"never", PipelineState::ComparisonFunc::Never},
+			{"equal", PipelineState::ComparisonFunc::Equal},
+			{"lequal", PipelineState::ComparisonFunc::LEqual},
+			{"greater", PipelineState::ComparisonFunc::Greater},
+			{"notequal", PipelineState::ComparisonFunc::NotEqual},
+			{"gequal", PipelineState::ComparisonFunc::GEqual},
+			{"always", PipelineState::ComparisonFunc::Always},
+		};
+
+		std::string const& lowerCaseName = util::ToLower(name);
+		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
+
+		return s_nameToType.at(lowerCaseName);
+	}
+
+
+	PipelineState::DepthWriteMask PipelineState::GetDepthWriteMaskByName(char const* name)
+	{
+		static const std::map<std::string, PipelineState::DepthWriteMask> s_nameToType =
+		{
+			{"zero", PipelineState::DepthWriteMask::Zero},
+			{"all", PipelineState::DepthWriteMask::All},
+		};
+
+		std::string const& lowerCaseName = util::ToLower(name);
+		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
+
+		return s_nameToType.at(lowerCaseName);
+	}
+
+
+	PipelineState::StencilOp PipelineState::GetStencilOpByName(char const* name)
+	{
+		static const std::map<std::string, PipelineState::StencilOp> s_nameToType =
+		{
+			{"keep", PipelineState::StencilOp::Keep},
+			{"zero", PipelineState::StencilOp::Zero},
+			{"replace", PipelineState::StencilOp::Replace},
+			{"incrementsaturate", PipelineState::StencilOp::IncrementSaturate},
+			{"decrementsaturate", PipelineState::StencilOp::DecrementSaturate},
+			{"invert", PipelineState::StencilOp::Invert},
+			{"increment", PipelineState::StencilOp::Increment},
+			{"decrement", PipelineState::StencilOp::Decrement},
 		};
 
 		std::string const& lowerCaseName = util::ToLower(name);

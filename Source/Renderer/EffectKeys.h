@@ -49,9 +49,20 @@ namespace
 	constexpr char const* key_forcedSampleCount = "ForcedSampleCount";
 	constexpr char const* key_conservativeRaster = "ConservativeRaster";
 
-
-	// Depth stencil state:
-	constexpr char const* key_depthTestMode = "DepthTestMode";
+	// "DepthStencilState":
+	constexpr char const* key_depthStencilState = "DepthStencilState";
+	constexpr char const* key_depthTestEnabled = "DepthTestEnabled";
+	constexpr char const* key_depthWriteMask = "DepthWriteMask";
+	constexpr char const* key_depthComparison = "DepthComparison";
+	constexpr char const* key_stencilEnabled = "StencilEnabled";
+	constexpr char const* key_stencilReadMask = "StencilReadMask";
+	constexpr char const* key_stencilWriteMask = "StencilWriteMask";
+	constexpr char const* key_frontStencilOpDesc = "FrontStencilOpDesc";
+	constexpr char const* key_backStencilOpDesc = "BackStencilOpDesc";
+	constexpr char const* key_stencilFailOp = "StencilFailOp";
+	constexpr char const* key_stencilDepthFailOp = "StencilDepthFailOp";
+	constexpr char const* key_stencilPassOp = "StencilPassOp";
+	constexpr char const* key_stencilComparison = "StencilComparison";
 
 	// "VertexStreams"
 	constexpr char const* key_vertexStreams = "VertexStreams";

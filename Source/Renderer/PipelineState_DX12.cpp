@@ -152,70 +152,81 @@ namespace
 	}
 
 
-	D3D12_DEPTH_STENCIL_DESC BuildDepthStencilDesc(
-		re::TextureTarget const* depthTarget, re::PipelineState const* rePipelineState)
+	constexpr D3D12_DEPTH_WRITE_MASK DepthWriteMaskToD3DDepthWriteMask(re::PipelineState::DepthWriteMask depthWriteMask)
+	{
+		switch (depthWriteMask)
+		{
+		case re::PipelineState::DepthWriteMask::Zero: return D3D12_DEPTH_WRITE_MASK_ZERO;
+		case re::PipelineState::DepthWriteMask::All: return D3D12_DEPTH_WRITE_MASK_ALL;
+		}
+		return D3D12_DEPTH_WRITE_MASK_ALL; // This should never happen
+	}
+
+
+	constexpr D3D12_STENCIL_OP StencilOpToD3DStencilOp(re::PipelineState::StencilOp stencilOp)
+	{
+		switch (stencilOp)
+		{
+		case re::PipelineState::StencilOp::Keep: return D3D12_STENCIL_OP_KEEP;
+		case re::PipelineState::StencilOp::Zero: return D3D12_STENCIL_OP_ZERO;
+		case re::PipelineState::StencilOp::Replace: return D3D12_STENCIL_OP_REPLACE;
+		case re::PipelineState::StencilOp::IncrementSaturate: return D3D12_STENCIL_OP_INCR_SAT;
+		case re::PipelineState::StencilOp::DecrementSaturate: return D3D12_STENCIL_OP_DECR_SAT;
+		case re::PipelineState::StencilOp::Invert: return D3D12_STENCIL_OP_INVERT;
+		case re::PipelineState::StencilOp::Increment: return D3D12_STENCIL_OP_INCR;
+		case re::PipelineState::StencilOp::Decrement: return D3D12_STENCIL_OP_DECR;
+		}
+		return D3D12_STENCIL_OP_KEEP; // This should never happen
+	}
+
+
+	constexpr D3D12_COMPARISON_FUNC ComparisonFuncToD3DComparisonFunc(re::PipelineState::ComparisonFunc comparison)
+	{
+		switch (comparison)
+		{
+		case re::PipelineState::ComparisonFunc::Less: return D3D12_COMPARISON_FUNC_LESS;
+		case re::PipelineState::ComparisonFunc::Never: return D3D12_COMPARISON_FUNC_NEVER;
+		case re::PipelineState::ComparisonFunc::Equal: return D3D12_COMPARISON_FUNC_EQUAL;
+		case re::PipelineState::ComparisonFunc::LEqual: return D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		case re::PipelineState::ComparisonFunc::Greater: return D3D12_COMPARISON_FUNC_GREATER;
+		case re::PipelineState::ComparisonFunc::NotEqual: return D3D12_COMPARISON_FUNC_NOT_EQUAL;
+		case re::PipelineState::ComparisonFunc::GEqual: return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+		case re::PipelineState::ComparisonFunc::Always: return D3D12_COMPARISON_FUNC_ALWAYS;
+		}
+		return D3D12_COMPARISON_FUNC_NONE; // This should never happen
+	}
+
+
+	D3D12_DEPTH_STENCILOP_DESC StencilOpDescToD3DStencilOpDesc(re::PipelineState::StencilOpDesc const& stencilOpDesc)
+	{
+		return D3D12_DEPTH_STENCILOP_DESC{
+			.StencilFailOp = StencilOpToD3DStencilOp(stencilOpDesc.m_failOp),
+			.StencilDepthFailOp = StencilOpToD3DStencilOp(stencilOpDesc.m_depthFailOp),
+			.StencilPassOp = StencilOpToD3DStencilOp(stencilOpDesc.m_passOp),
+			.StencilFunc = ComparisonFuncToD3DComparisonFunc(stencilOpDesc.m_comparison),
+		};
+	}
+
+
+	D3D12_DEPTH_STENCIL_DESC BuildDepthStencilDesc(re::PipelineState const* rePipelineState)
 	{
 		// We make assumptions when recording resource transitions on our command lists that depth targets will 
 		// specifically have depth disabled (not just masked out) when the depth channel write mode is disabled
-		const bool hasValidDepthBuffer = depthTarget && depthTarget->HasTexture();
-		
-		const bool depthWritesEnabled = hasValidDepthBuffer &&
-			depthTarget->GetTargetParams().m_textureView.DepthWritesEnabled();
+		SEAssert(rePipelineState->GetDepthTestEnabled() ||
+			(!rePipelineState->GetDepthTestEnabled() &&
+				(rePipelineState->GetDepthWriteMask() == re::PipelineState::DepthWriteMask::Zero)),
+			"Depth test state does not match the write mask state");
 
-		D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
-
-		depthStencilDesc.DepthEnable = hasValidDepthBuffer;
-
-		depthStencilDesc.DepthWriteMask = depthWritesEnabled ?
-			D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ZERO;
-
-		// Depth testing:
-		switch (rePipelineState->GetDepthTestMode())
-		{
-		case re::PipelineState::DepthTestMode::Never: // Never pass
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_NEVER; break;
-		case re::PipelineState::DepthTestMode::Less:
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS; break;
-		case re::PipelineState::DepthTestMode::Equal:
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL; break;
-		case re::PipelineState::DepthTestMode::LEqual:
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL; break;
-		case re::PipelineState::DepthTestMode::Greater:
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER; break;
-		case re::PipelineState::DepthTestMode::NotEqual:
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_NOT_EQUAL; break;
-		case re::PipelineState::DepthTestMode::GEqual:
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER_EQUAL; break;
-		case re::PipelineState::DepthTestMode::Always: // Always pass: Disables depth testing
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS; break;
-		default:
-			SEAssertF("Invalid depth test mode");
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-		}
-
-		// TODO: Support these
-		SEAssert(!depthTarget ||
-			!depthTarget->GetTexture() ||
-			(!((depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::StencilTarget) ||
-				(depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget)) &&
-				depthTarget->GetTargetParams().m_textureView.StencilWritesEnabled()),
-			"TODO: Support StencilTarget and DepthStencilTarget usages");
-
-		//const bool stencilEnabled = hasValidDepthBuffer && 
-		//	depthTarget->GetTargetParams().m_textureView.StencilWritesEnabled();
-		const bool stencilEnabled = false;
-
-		depthStencilDesc.StencilEnable = stencilEnabled;
-		depthStencilDesc.StencilReadMask = 0;
-		depthStencilDesc.StencilWriteMask = 0;
-
-		D3D12_DEPTH_STENCILOP_DESC frontFaceDesc{};
-		depthStencilDesc.FrontFace = frontFaceDesc;
-
-		D3D12_DEPTH_STENCILOP_DESC backFaceDesc{};
-		depthStencilDesc.BackFace = backFaceDesc;
-
-		return depthStencilDesc;
+		return D3D12_DEPTH_STENCIL_DESC {
+			.DepthEnable = rePipelineState->GetDepthTestEnabled(),
+			.DepthWriteMask = DepthWriteMaskToD3DDepthWriteMask(rePipelineState->GetDepthWriteMask()),
+			.DepthFunc = ComparisonFuncToD3DComparisonFunc(rePipelineState->GetDepthComparison()),
+			.StencilEnable = rePipelineState->GetStencilEnabled(),
+			.StencilReadMask = rePipelineState->GetStencilReadMask(),
+			.StencilWriteMask = rePipelineState->GetStencilWriteMask(),
+			.FrontFace = StencilOpDescToD3DStencilOpDesc(rePipelineState->GetFrontFaceStencilOpDesc()),
+			.BackFace = StencilOpDescToD3DStencilOpDesc(rePipelineState->GetBackFaceStencilOpDesc()),
+		};
 	}
 
 
@@ -431,9 +442,7 @@ namespace dx12
 			pipelineStateStream.rasterizer = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 
 			// Depth stencil description:
-			const D3D12_DEPTH_STENCIL_DESC depthStencilDesc = 
-				BuildDepthStencilDesc(&targetSet->GetDepthStencilTarget(), rePipelineState);
-			pipelineStateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
+			pipelineStateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(BuildDepthStencilDesc(rePipelineState));
 
 			// Blend description:
 			const D3D12_BLEND_DESC blendDesc = BuildBlendDesc(*targetSet);

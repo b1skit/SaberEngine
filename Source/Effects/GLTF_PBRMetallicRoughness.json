@@ -149,7 +149,7 @@
 				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
 				"PShaderEntryPoint": "PShader",
-				"PipelineState": "SingleSided",
+				"PipelineState": "SingleSided_AlphaBlend",
 				"VertexStream": "PosNmlTanUvCol"				
 			},
 			{
@@ -160,7 +160,7 @@
 				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 				"PShaderEntryPoint": "PShader",
 				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
-				"PipelineState": "DoubleSided",
+				"PipelineState": "DoubleSided_AlphaBlend",
 				"VertexStream": "PosNmlTanUvCol"
 			},
 		
@@ -297,14 +297,38 @@
 			"RasterizerState" : {
 				"FaceCullingMode": "Back"
 			},
-			"DepthTestMode": "Less"
+			"DepthStencilState" : {
+				"DepthComparison": "Less"
+			}
+		},
+		{
+			"Name": "SingleSided_AlphaBlend",
+			"RasterizerState" : {
+				"FaceCullingMode": "Back"
+			},
+			"DepthStencilState" : {
+				"DepthComparison": "Less",
+				"DepthWriteMask": "Zero"
+			}
 		},
 		{
 			"Name": "DoubleSided",
 			"RasterizerState" : {
 				"FaceCullingMode": "Disabled"
 			},
-			"DepthTestMode": "Less"
+			"DepthStencilState" : {
+				"DepthComparison": "Less"
+			}
+		},
+		{
+			"Name": "DoubleSided_AlphaBlend",
+			"RasterizerState" : {
+				"FaceCullingMode": "Disabled"
+			},
+			"DepthStencilState" : {
+				"DepthComparison": "Less",
+				"DepthWriteMask": "Zero"
+			}
 		}
 	]
 }

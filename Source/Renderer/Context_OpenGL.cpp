@@ -359,14 +359,18 @@ namespace opengl
 			// Rasterizer state:
 			SetFillMode(pipelineState);
 			SetCullingMode(pipelineState->GetFaceCullingMode());
-			SetDepthBias(pipelineState);
-			SetDepthClip(pipelineState->GetDepthClipEnabled());
 			SEAssert(pipelineState->GetMultiSampleEnabled() == false, "TODO: Handle this");
 			SEAssert(pipelineState->GetForcedSampleCount() == 0, "TODO: Handle this");
 			SEAssert(pipelineState->GetConservativeRaster() == false , "TODO: Handle this");
 
-			// 
-			SetDepthTestMode(pipelineState->GetDepthTestMode());
+			// Depth stencil state:
+			SetDepthTestEnable(pipelineState->GetDepthTestEnabled());
+			SetDepthWriteMask(pipelineState->GetDepthWriteMask());
+			SetDepthComparison(pipelineState->GetDepthComparison());
+			SetDepthBias(pipelineState);
+			SetDepthClip(pipelineState->GetDepthClipEnabled());
+			SetStencilEnable(pipelineState->GetStencilEnabled());
+			SetStencilOps(pipelineState);
 		}
 	}
 
@@ -419,6 +423,38 @@ namespace opengl
 		break;
 		default:
 			SEAssertF("Invalid face culling mode");
+		}
+	}
+
+
+	void Context::SetDepthTestEnable(bool isEnabled)
+	{
+		if (isEnabled)
+		{
+			glEnable(GL_DEPTH_TEST);
+		}
+		else
+		{
+			glDisable(GL_DEPTH_TEST);
+		}
+	}
+
+
+	void Context::SetDepthWriteMask(re::PipelineState::DepthWriteMask depthWriteMask)
+	{
+		switch (depthWriteMask)
+		{
+		case re::PipelineState::DepthWriteMask::Zero:
+		{
+			glDepthMask(GL_FALSE);
+		}
+		break;
+		case re::PipelineState::DepthWriteMask::All:
+		{
+			glDepthMask(GL_TRUE);
+		}
+		break;
+		default: SEAssertF("Invalid depth write mask");
 		}
 	}
 
@@ -498,57 +534,75 @@ namespace opengl
 		}
 	}
 
-	
-	void Context::SetDepthTestMode(re::PipelineState::DepthTestMode mode)
+
+	void Context::SetStencilEnable(bool doEnable)
 	{
-		if (mode == re::PipelineState::DepthTestMode::Always)
+		if (doEnable)
 		{
-			glDisable(GL_DEPTH_TEST);
-			return;
+			SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
+			glEnable(GL_STENCIL_TEST);
 		}
+		else
+		{
+			glDisable(GL_STENCIL_TEST);
+		}
+	}
 
-		glEnable(GL_DEPTH_TEST);
-		
-		GLenum depthMode = GL_LESS;
-		switch (mode)
-		{
-		case re::PipelineState::DepthTestMode::Less:
-		{
-			depthMode = GL_LESS;
-		}
-		break;
-		case re::PipelineState::DepthTestMode::Equal:
-		{
-			depthMode = GL_EQUAL;
-		}
-		break;
-		case re::PipelineState::DepthTestMode::LEqual:
-		{
-			depthMode = GL_LEQUAL;
-		}
-		break;
-		case re::PipelineState::DepthTestMode::Greater:
-		{
-			depthMode = GL_GREATER;
-		}
-		break;
-		case re::PipelineState::DepthTestMode::NotEqual:
-		{
-			depthMode = GL_NOTEQUAL;
-		}
-		break;
-		case re::PipelineState::DepthTestMode::GEqual:
-		{
-			depthMode = GL_GEQUAL;
-		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid depth test mode");
-		}
-		}
 
-		glDepthFunc(depthMode);
+	constexpr GLenum ComparisonFuncToGLEnum(re::PipelineState::ComparisonFunc comparisonFunc)
+	{
+		switch (comparisonFunc)
+		{
+		case re::PipelineState::ComparisonFunc::Less: return GL_LESS;
+		case re::PipelineState::ComparisonFunc::Never: return GL_NEVER;
+		case re::PipelineState::ComparisonFunc::Equal: return GL_EQUAL;
+		case re::PipelineState::ComparisonFunc::LEqual: return GL_LEQUAL;
+		case re::PipelineState::ComparisonFunc::Greater: return GL_GREATER;
+		case re::PipelineState::ComparisonFunc::NotEqual: return GL_NOTEQUAL;
+		case re::PipelineState::ComparisonFunc::GEqual: return GL_GEQUAL;
+		case re::PipelineState::ComparisonFunc::Always: return GL_ALWAYS;
+		}
+		return GL_ALWAYS; // This should never happen
+	}
+
+
+	constexpr GLenum StencilOpToGLEnum(re::PipelineState::StencilOp stencilOp)
+	{
+		switch (stencilOp)
+		{
+		case re::PipelineState::StencilOp::Keep: return GL_KEEP;
+		case re::PipelineState::StencilOp::Zero: return GL_ZERO;
+		case re::PipelineState::StencilOp::Replace: return GL_REPLACE;
+		case re::PipelineState::StencilOp::IncrementSaturate: return GL_INCR;
+		case re::PipelineState::StencilOp::DecrementSaturate: return GL_DECR;
+		case re::PipelineState::StencilOp::Invert: return GL_INVERT;
+		case re::PipelineState::StencilOp::Increment: return GL_INCR_WRAP;
+		case re::PipelineState::StencilOp::Decrement: return GL_DECR_WRAP;
+		}
+		return GL_KEEP; // This should never happen
+	}
+
+
+	void Context::SetStencilOps(re::PipelineState const* pipelineState)
+	{
+		re::PipelineState::StencilOpDesc const& frontDesc = pipelineState->GetFrontFaceStencilOpDesc();
+		re::PipelineState::StencilOpDesc const& backDesc = pipelineState->GetBackFaceStencilOpDesc();
+
+		glStencilOpSeparate(GL_FRONT,
+			StencilOpToGLEnum(frontDesc.m_failOp),
+			StencilOpToGLEnum(frontDesc.m_depthFailOp),
+			StencilOpToGLEnum(frontDesc.m_passOp));
+
+		glStencilOpSeparate(GL_BACK,
+			StencilOpToGLEnum(backDesc.m_failOp),
+			StencilOpToGLEnum(backDesc.m_depthFailOp),
+			StencilOpToGLEnum(backDesc.m_passOp));
+	}
+
+	
+	void Context::SetDepthComparison(re::PipelineState::ComparisonFunc mode)
+	{
+		glDepthFunc(ComparisonFuncToGLEnum(mode));
 	}
 
 

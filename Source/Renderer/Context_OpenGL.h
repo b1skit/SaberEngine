@@ -46,12 +46,16 @@ namespace opengl
 		// Rasterizer state:
 		void SetFillMode(re::PipelineState const*);
 		void SetCullingMode(re::PipelineState::FaceCullingMode mode);
-		void SetDepthBias(re::PipelineState const*);
-		void SetDepthClip(bool doEnable);
 
-		//
-		void SetDepthTestMode(re::PipelineState::DepthTestMode mode);
-		
+		// Depth stencil state:
+		void SetDepthTestEnable(bool isEnabled);
+		void SetDepthWriteMask(re::PipelineState::DepthWriteMask);
+		void SetDepthComparison(re::PipelineState::ComparisonFunc mode);
+		void SetDepthBias(re::PipelineState const*);
+		void SetDepthClip(bool doEnable);		
+		void SetStencilEnable(bool doEnable);
+		void SetStencilOps(re::PipelineState const*);		
+
 
 	private:
 		void GetOpenGLExtensionProcessAddresses();
