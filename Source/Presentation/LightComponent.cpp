@@ -90,9 +90,6 @@ namespace fr
 		glm::vec4 const& colorIntensity, 
 		bool hasShadow)
 	{
-		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
-			"A LightComponent's owning entity requires a TransformComponent");
-
 		// Create a MeshPrimitive (owned by SceneData):
 		glm::vec3 minPos = glm::vec3(0.f);
 		glm::vec3 maxPos = glm::vec3(0.f);
@@ -101,10 +98,14 @@ namespace fr
 		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = 
 			gr::meshfactory::CreateSphere(sphereOptions, 1.f);
 
-		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
+		fr::TransformComponent const* transformCmpt = em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+		if (!transformCmpt)
+		{
+			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
+		}
 
 		gr::RenderDataComponent& renderDataComponent =
-			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, owningTransform.GetTransformID());
+			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Attach the MeshPrimitive 
 		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh.get(), minPos, maxPos);
@@ -151,9 +152,6 @@ namespace fr
 		glm::vec4 const& colorIntensity,
 		bool hasShadow)
 	{
-		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
-			"A LightComponent's owning entity requires a TransformComponent");
-
 		// Create a MeshPrimitive (owned by SceneData):
 		glm::vec3 minPos = glm::vec3(0.f);
 		glm::vec3 maxPos = glm::vec3(0.f);
@@ -170,10 +168,14 @@ namespace fr
 			1.f,	// Radius
 			16);	// No. sides		
 
-		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
+		fr::TransformComponent const* transformCmpt = em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+		if (!transformCmpt)
+		{
+			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
+		}
 
 		gr::RenderDataComponent& renderDataComponent =
-			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, owningTransform.GetTransformID());
+			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Attach the MeshPrimitive 
 		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh.get(), minPos, maxPos);
@@ -220,16 +222,17 @@ namespace fr
 		glm::vec4 const& colorIntensity,
 		bool hasShadow)
 	{
-		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
-			"A light's owning entity requires a TransformComponent");
-
-		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
+		fr::TransformComponent const* transformCmpt = em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+		if (!transformCmpt)
+		{
+			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
+		}
 
 		// Note: Our fullscreen quad will technically be linked to the owningTransform; We can't use 
 		// k_sharedIdentityTransformID as a directional light/shadow needs a valid transform. 
 		// Fullscreen quads don't use a Transform so this shouldn't matter.
 		gr::RenderDataComponent& renderDataComponent =
-			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, owningTransform.GetTransformID());
+			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// MeshPrimitive:
 		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData =
