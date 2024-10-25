@@ -301,7 +301,107 @@ namespace
 				re::PipelineState::StencilOpDesc desc = ParseStencilOpDesc(backStencilOpDesc);
 				newPipelineState.SetBackFaceStencilOpDesc(desc);
 			}
-		}		
+		}
+
+		if (piplineStateEntry.contains(key_blendState))
+		{
+			auto const& blendStateBlock = piplineStateEntry.at(key_blendState);
+
+			// "AlphaToCoverageEnable":
+			if (blendStateBlock.contains(key_alphaToCoverageEnable))
+			{
+				newPipelineState.SetAlphaToCoverageEnabled(
+					blendStateBlock.at(key_alphaToCoverageEnable).template get<bool>());
+			}
+
+			// "IndependentBlendEnable":
+			if (blendStateBlock.contains(key_independentBlendEnable))
+			{
+				newPipelineState.SetIndependentBlendEnabled(
+					blendStateBlock.at(key_independentBlendEnable).template get<bool>());
+			}
+
+			// "RenderTargets":
+			if (blendStateBlock.contains(key_renderTargets))
+			{
+				uint8_t index = 0;
+				for (auto const& renderTargetDesc : blendStateBlock.at(key_renderTargets))
+				{
+					re::PipelineState::RenderTargetBlendDesc blendDesc{};
+
+					// "BlendEnable":
+					if (renderTargetDesc.contains(key_blendEnable))
+					{
+						blendDesc.m_blendEnable = renderTargetDesc.at(key_blendEnable).template get<bool>();
+					}
+
+					// "LogicOpEnable":
+					if (renderTargetDesc.contains(key_logicOpEnable))
+					{
+						blendDesc.m_logicOpEnable = renderTargetDesc.at(key_logicOpEnable).template get<bool>();
+					}
+
+					// "SrcBlend":
+					if (renderTargetDesc.contains(key_srcBlend))
+					{
+						blendDesc.m_srcBlend = re::PipelineState::GetBlendModeByName(
+							renderTargetDesc.at(key_srcBlend).template get<std::string>().c_str());
+					}
+
+					// "DstBlend":
+					if (renderTargetDesc.contains(key_dstBlend))
+					{
+						blendDesc.m_dstBlend = re::PipelineState::GetBlendModeByName(
+							renderTargetDesc.at(key_dstBlend).template get<std::string>().c_str());
+					}
+
+					// "BlendOp":
+					if (renderTargetDesc.contains(key_blendOp))
+					{
+						blendDesc.m_blendOp = re::PipelineState::GetBlendOpByName(
+							renderTargetDesc.at(key_blendOp).template get<std::string>().c_str());
+					}
+
+					// "SrcBlendAlpha":
+					if (renderTargetDesc.contains(key_srcBlendAlpha))
+					{
+						blendDesc.m_srcBlendAlpha = re::PipelineState::GetBlendModeByName(
+							renderTargetDesc.at(key_srcBlendAlpha).template get<std::string>().c_str());
+					}
+
+					// "DstBlendAlpha":
+					if (renderTargetDesc.contains(key_dstBlendAlpha))
+					{
+						blendDesc.m_dstBlendAlpha = re::PipelineState::GetBlendModeByName(
+							renderTargetDesc.at(key_dstBlendAlpha).template get<std::string>().c_str());
+					}
+
+					// "BlendOpAlpha":
+					if (renderTargetDesc.contains(key_blendOpAlpha))
+					{
+						blendDesc.m_blendOpAlpha = re::PipelineState::GetBlendOpByName(
+							renderTargetDesc.at(key_blendOpAlpha).template get<std::string>().c_str());
+					}
+
+					// "LogicOp":
+					if (renderTargetDesc.contains(key_logicOp))
+					{
+						blendDesc.m_logicOp = re::PipelineState::GetLogicOpByName(
+							renderTargetDesc.at(key_logicOp).template get<std::string>().c_str());
+					}
+
+					// "RenderTargetWriteMask":
+					if (renderTargetDesc.contains(key_renderTargetWriteMask))
+					{
+						blendDesc.m_renderTargetWriteMask = 
+							renderTargetDesc.at(key_renderTargetWriteMask).template get<uint8_t>();
+					}
+
+					newPipelineState.SetRenderTargetBlendDesc(blendDesc, index);
+					++index;
+				}
+			}
+		}
 
 		return newPipelineState;
 	}

@@ -263,7 +263,7 @@ namespace re
 	}
 
 
-	void RenderStage::SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet)
+	void RenderStage::SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> const& targetSet)
 	{
 		m_textureTargetSet = targetSet;
 
@@ -322,8 +322,8 @@ namespace re
 
 	void RenderStage::AddPermanentTextureInput(
 		std::string const& shaderName,
-		std::shared_ptr<re::Texture> tex,
-		std::shared_ptr<re::Sampler> sampler,
+		std::shared_ptr<re::Texture> const& tex,
+		std::shared_ptr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
 		AddPermanentTextureInput(shaderName, tex.get(), sampler.get(), texView);
@@ -333,7 +333,7 @@ namespace re
 	void RenderStage::AddSingleFrameTextureInput(
 		char const* shaderName,
 		re::Texture const* tex,
-		std::shared_ptr<re::Sampler> sampler,
+		std::shared_ptr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
 		SEAssert(shaderName, "Shader name cannot be null");
@@ -370,8 +370,8 @@ namespace re
 
 	void RenderStage::AddSingleFrameTextureInput(
 		char const* shaderName,
-		std::shared_ptr<re::Texture> tex,
-		std::shared_ptr<re::Sampler> sampler,
+		std::shared_ptr<re::Texture> const& tex,
+		std::shared_ptr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
 		AddSingleFrameTextureInput(shaderName, tex.get(), sampler, texView);
@@ -458,7 +458,7 @@ namespace re
 
 	void RenderStage::AddPermanentRWTextureInput(
 		std::string const& shaderName,
-		std::shared_ptr<re::Texture> tex,
+		std::shared_ptr<re::Texture> const& tex,
 		re::TextureView const& texView)
 	{
 		AddPermanentRWTextureInput(shaderName, tex.get(), texView);
@@ -503,7 +503,7 @@ namespace re
 
 	void RenderStage::AddSingleFrameRWTextureInput(
 		char const* shaderName,
-		std::shared_ptr<re::Texture> tex,
+		std::shared_ptr<re::Texture> const& tex,
 		re::TextureView const& texView)
 	{
 		AddSingleFrameRWTextureInput(shaderName, tex.get(), texView);

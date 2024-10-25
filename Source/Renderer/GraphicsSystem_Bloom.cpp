@@ -88,8 +88,6 @@ namespace gr
 			deferredLightTargetTex,
 			re::TextureTarget::TargetParams{.m_textureView = re::TextureView::Texture2DView(0, 1)});
 
-		emissiveTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-			re::TextureTarget::BlendMode::One, re::TextureTarget::BlendMode::One });
 		emissiveTargetSet->SetAllTargetClearModes(re::TextureTarget::ClearMode::Disabled);
 
 		m_emissiveBlitStage->SetTextureTargetSet(emissiveTargetSet);

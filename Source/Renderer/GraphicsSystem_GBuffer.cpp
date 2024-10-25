@@ -80,13 +80,6 @@ namespace gr
 			re::Texture::Create(GBufferTexNameHashKeys[GBufferTexIdx::GBufferDepth].GetKey(), depthTexParams),
 			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1) });
 
-		const re::TextureTarget::TargetParams::BlendModes gbufferBlendModes
-		{
-			re::TextureTarget::BlendMode::Disabled,
-			re::TextureTarget::BlendMode::Disabled
-		};
-		m_gBufferTargets->SetColorTargetBlendModes(1, &gbufferBlendModes);
-
 		m_gBufferStage->SetTextureTargetSet(m_gBufferTargets);
 
 		// Camera:		

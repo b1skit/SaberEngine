@@ -43,18 +43,9 @@ namespace opengl
 		friend class re::Context;
 
 	private:
-		// Rasterizer state:
-		void SetFillMode(re::PipelineState const*);
-		void SetCullingMode(re::PipelineState::FaceCullingMode mode);
-
-		// Depth stencil state:
-		void SetDepthTestEnable(bool isEnabled);
-		void SetDepthWriteMask(re::PipelineState::DepthWriteMask);
-		void SetDepthComparison(re::PipelineState::ComparisonFunc mode);
-		void SetDepthBias(re::PipelineState const*);
-		void SetDepthClip(bool doEnable);		
-		void SetStencilEnable(bool doEnable);
-		void SetStencilOps(re::PipelineState const*);		
+		void SetRasterizerState(re::PipelineState const*);
+		void SetDepthStencilState(re::PipelineState const*);
+		void SetBlendState(re::PipelineState const*);
 
 
 	private:

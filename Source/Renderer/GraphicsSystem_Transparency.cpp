@@ -214,10 +214,6 @@ namespace gr
 				re::TextureView::Texture2DView(0, 1),
 				{re::TextureView::ViewFlags::ReadOnlyDepth} } });
 
-		transparencyTarget->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-			re::TextureTarget::BlendMode::SrcAlpha,
-			re::TextureTarget::BlendMode::OneMinusSrcAlpha });
-
 		m_transparencyStage->SetTextureTargetSet(transparencyTarget);
 
 		// Buffers:		

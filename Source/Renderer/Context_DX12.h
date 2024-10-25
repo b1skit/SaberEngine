@@ -32,7 +32,7 @@ namespace dx12
 
 		dx12::PipelineState const* CreateAddPipelineState(re::Shader const&, re::TextureTargetSet const*);
 			
-		// A null targetSet is valid (it indicates the backbuffer)
+		// A null targetSet is valid (it indicates the backbuffer, compute shaders, etc)
 		dx12::PipelineState const* GetPipelineStateObject(re::Shader const&, re::TextureTargetSet const*);
 
 		bool HasRootSignature(uint64_t rootSigDescHash);

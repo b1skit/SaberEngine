@@ -130,6 +130,16 @@
 			"DepthStencilState" : {
 				"DepthComparison":  "Greater",
 				"DepthWriteMask": "Zero"
+			},
+			"BlendState" : {
+				"RenderTargets": [
+					{
+						"BlendEnable" : true,
+						"SrcBlend" : "One",
+						"DstBlend" : "One",
+						"BlendOp": "Add"
+					}
+				]
 			}
 		},
 		{
@@ -140,6 +150,16 @@
 			"DepthStencilState" : {
 				"DepthComparison":  "GEqual",
 				"DepthWriteMask": "Zero"
+			},
+			"BlendState" : {
+				"RenderTargets": [
+					{
+						"BlendEnable" : true,
+						"SrcBlend" : "One",
+						"DstBlend" : "One",
+						"BlendOp": "Add"
+					}
+				]
 			}
 		}
 	]

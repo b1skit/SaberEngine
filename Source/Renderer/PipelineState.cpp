@@ -34,6 +34,12 @@ namespace re
 		, m_stencilWriteMask(k_defaultStencilWriteMask)
 		, m_frontFace{}
 		, m_backFace{}
+
+		// Blend state. Note: Defaults as per D3D12: 
+		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_blend_desc#remarks
+		, m_alphaToCoverageEnable(false)
+		, m_independentBlendEnable(false)
+		, m_renderTargetBlendDescs{}
 	{
 		ComputeDataHash();
 	}
@@ -70,6 +76,14 @@ namespace re
 		AddDataBytesToHash(m_stencilWriteMask);
 		AddDataBytesToHash(m_frontFace);
 		AddDataBytesToHash(m_backFace);
+
+		// Blend state:
+		AddDataBytesToHash(m_alphaToCoverageEnable);
+		AddDataBytesToHash(m_independentBlendEnable);
+		for (auto const& renderTargetBlendDesc : m_renderTargetBlendDescs)
+		{
+			AddDataBytesToHash(renderTargetBlendDesc);
+		}
 	}
 
 
@@ -265,6 +279,85 @@ namespace re
 			{"invert", PipelineState::StencilOp::Invert},
 			{"increment", PipelineState::StencilOp::Increment},
 			{"decrement", PipelineState::StencilOp::Decrement},
+		};
+
+		std::string const& lowerCaseName = util::ToLower(name);
+		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
+
+		return s_nameToType.at(lowerCaseName);
+	}
+
+
+	PipelineState::BlendMode PipelineState::GetBlendModeByName(char const* name)
+	{
+		static const std::map<std::string, PipelineState::BlendMode> s_nameToType =
+		{
+			{"zero", PipelineState::BlendMode::Zero},
+			{"one", PipelineState::BlendMode::One},
+			{"srccolor", PipelineState::BlendMode::SrcColor},
+			{"invsrccolor", PipelineState::BlendMode::InvSrcColor},
+			{"srcalpha", PipelineState::BlendMode::SrcAlpha},
+			{"invsrcalpha", PipelineState::BlendMode::InvSrcAlpha},
+			{"dstalpha", PipelineState::BlendMode::DstAlpha},
+			{"invdstalpha", PipelineState::BlendMode::InvDstAlpha},
+			{"dstcolor", PipelineState::BlendMode::DstColor},
+			{"invdstcolor", PipelineState::BlendMode::InvDstColor},
+			{"srcalphasat", PipelineState::BlendMode::SrcAlphaSat},
+			{"blendfactor", PipelineState::BlendMode::BlendFactor},
+			{"invblendfactor", PipelineState::BlendMode::InvBlendFactor},
+			{"srconecolor", PipelineState::BlendMode::SrcOneColor},
+			{"invsrconecolor", PipelineState::BlendMode::InvSrcOneColor},
+			{"srconealpha", PipelineState::BlendMode::SrcOneAlpha},
+			{"invsrconealpha", PipelineState::BlendMode::InvSrcOneAlpha},
+			{"alphafactor", PipelineState::BlendMode::AlphaFactor},
+			{"invalphafactor", PipelineState::BlendMode::InvAlphaFactor},
+		};
+
+		std::string const& lowerCaseName = util::ToLower(name);
+		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
+
+		return s_nameToType.at(lowerCaseName);
+	}
+
+
+	PipelineState::BlendOp PipelineState::GetBlendOpByName(char const* name)
+	{
+		static const std::map<std::string, PipelineState::BlendOp> s_nameToType =
+		{
+			{"add", PipelineState::BlendOp::Add},
+			{"subtract", PipelineState::BlendOp::Subtract},
+			{"revsubtract", PipelineState::BlendOp::RevSubtract},
+			{"min", PipelineState::BlendOp::Min},
+			{"max", PipelineState::BlendOp::Max},
+		};
+
+		std::string const& lowerCaseName = util::ToLower(name);
+		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
+
+		return s_nameToType.at(lowerCaseName);
+	}
+
+
+	PipelineState::LogicOp PipelineState::GetLogicOpByName(char const* name)
+	{
+		static const std::map<std::string, PipelineState::LogicOp> s_nameToType =
+		{
+			{"clear", PipelineState::LogicOp::Clear},
+			{"set", PipelineState::LogicOp::Set},
+			{"copy", PipelineState::LogicOp::Copy},
+			{"copyinverted", PipelineState::LogicOp::CopyInverted},
+			{"noop", PipelineState::LogicOp::NoOp},
+			{"invert", PipelineState::LogicOp::Invert},
+			{"and", PipelineState::LogicOp::AND},
+			{"nand", PipelineState::LogicOp::NAND},
+			{"or", PipelineState::LogicOp::OR},
+			{"nor", PipelineState::LogicOp::NOR},
+			{"xor", PipelineState::LogicOp::XOR},
+			{"equiv", PipelineState::LogicOp::EQUIV},
+			{"andreverse", PipelineState::LogicOp::ANDReverse},
+			{"andinverted", PipelineState::LogicOp::AndInverted},
+			{"orreverse", PipelineState::LogicOp::ORReverse},
+			{"orinverted", PipelineState::LogicOp::ORInverted},
 		};
 
 		std::string const& lowerCaseName = util::ToLower(name);

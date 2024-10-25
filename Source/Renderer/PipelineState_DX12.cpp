@@ -230,110 +230,97 @@ namespace
 	}
 
 
-	D3D12_BLEND_DESC BuildBlendDesc(re::TextureTargetSet const& targetSet)
+	constexpr D3D12_BLEND BlendModeToD3DBlendMode(re::PipelineState::BlendMode blendMode)
+	{
+		switch (blendMode)
+		{
+			case re::PipelineState::BlendMode::Zero: return D3D12_BLEND_ZERO;
+			case re::PipelineState::BlendMode::One: return D3D12_BLEND_ONE;
+			case re::PipelineState::BlendMode::SrcColor: return D3D12_BLEND_SRC_COLOR;
+			case re::PipelineState::BlendMode::InvSrcColor: return D3D12_BLEND_INV_SRC_COLOR;
+			case re::PipelineState::BlendMode::SrcAlpha: return D3D12_BLEND_SRC_ALPHA;
+			case re::PipelineState::BlendMode::InvSrcAlpha: return D3D12_BLEND_INV_SRC_ALPHA;
+			case re::PipelineState::BlendMode::DstAlpha: return D3D12_BLEND_DEST_ALPHA;
+			case re::PipelineState::BlendMode::InvDstAlpha: return D3D12_BLEND_INV_DEST_ALPHA;
+			case re::PipelineState::BlendMode::DstColor: return D3D12_BLEND_DEST_COLOR;
+			case re::PipelineState::BlendMode::InvDstColor: return D3D12_BLEND_INV_DEST_COLOR;
+			case re::PipelineState::BlendMode::SrcAlphaSat: return D3D12_BLEND_SRC_ALPHA_SAT;
+			case re::PipelineState::BlendMode::BlendFactor: return D3D12_BLEND_BLEND_FACTOR;
+			case re::PipelineState::BlendMode::InvBlendFactor: return D3D12_BLEND_INV_BLEND_FACTOR;
+			case re::PipelineState::BlendMode::SrcOneColor: return D3D12_BLEND_SRC1_COLOR;
+			case re::PipelineState::BlendMode::InvSrcOneColor: return D3D12_BLEND_INV_SRC1_COLOR;
+			case re::PipelineState::BlendMode::SrcOneAlpha: return D3D12_BLEND_SRC1_ALPHA;
+			case re::PipelineState::BlendMode::InvSrcOneAlpha: return D3D12_BLEND_INV_SRC1_ALPHA;
+			case re::PipelineState::BlendMode::AlphaFactor: return D3D12_BLEND_ALPHA_FACTOR;
+			case re::PipelineState::BlendMode::InvAlphaFactor: return D3D12_BLEND_INV_ALPHA_FACTOR;
+		}
+		return D3D12_BLEND_ONE; // This should never happen
+	}
+
+
+	constexpr D3D12_BLEND_OP BlendOpToD3DBlendOp(re::PipelineState::BlendOp blendOp)
+	{
+		switch (blendOp)
+		{
+			case re::PipelineState::BlendOp::Add: return D3D12_BLEND_OP_ADD;
+			case re::PipelineState::BlendOp::Subtract: return D3D12_BLEND_OP_SUBTRACT;
+			case re::PipelineState::BlendOp::RevSubtract: return D3D12_BLEND_OP_REV_SUBTRACT;
+			case re::PipelineState::BlendOp::Min: return D3D12_BLEND_OP_MIN;
+			case re::PipelineState::BlendOp::Max: return D3D12_BLEND_OP_MAX;
+		}
+		return D3D12_BLEND_OP_ADD; // This should never happen
+	}
+
+
+	constexpr D3D12_LOGIC_OP LogicOpToD3DLogicOp(re::PipelineState::LogicOp logicOp)
+	{
+		switch (logicOp)
+		{
+			case re::PipelineState::LogicOp::Clear: return D3D12_LOGIC_OP_CLEAR;
+			case re::PipelineState::LogicOp::Set: return D3D12_LOGIC_OP_SET;
+			case re::PipelineState::LogicOp::Copy: return D3D12_LOGIC_OP_COPY;
+			case re::PipelineState::LogicOp::CopyInverted: return D3D12_LOGIC_OP_COPY_INVERTED;
+			case re::PipelineState::LogicOp::NoOp: return D3D12_LOGIC_OP_NOOP;
+			case re::PipelineState::LogicOp::Invert: return D3D12_LOGIC_OP_INVERT;
+			case re::PipelineState::LogicOp::AND: return D3D12_LOGIC_OP_AND;
+			case re::PipelineState::LogicOp::NAND: return D3D12_LOGIC_OP_NAND;
+			case re::PipelineState::LogicOp::OR: return D3D12_LOGIC_OP_OR;
+			case re::PipelineState::LogicOp::NOR: return D3D12_LOGIC_OP_NOR;
+			case re::PipelineState::LogicOp::XOR: return D3D12_LOGIC_OP_XOR;
+			case re::PipelineState::LogicOp::EQUIV: return D3D12_LOGIC_OP_EQUIV;
+			case re::PipelineState::LogicOp::ANDReverse: return D3D12_LOGIC_OP_AND_REVERSE;
+			case re::PipelineState::LogicOp::AndInverted: return D3D12_LOGIC_OP_AND_INVERTED;
+			case re::PipelineState::LogicOp::ORReverse: return D3D12_LOGIC_OP_OR_REVERSE;
+			case re::PipelineState::LogicOp::ORInverted: return D3D12_LOGIC_OP_OR_INVERTED;
+		}
+		return D3D12_LOGIC_OP_NOOP; // This should never happen
+	}
+
+
+	D3D12_BLEND_DESC BuildBlendDesc(re::PipelineState const& pipelineState)
 	{
 		D3D12_BLEND_DESC blendDesc{};
 
-		// TODO: Support these
-		blendDesc.AlphaToCoverageEnable = false;
-		blendDesc.IndependentBlendEnable = false;
+		blendDesc.AlphaToCoverageEnable = pipelineState.GetAlphaToCoverageEnabled();
+		blendDesc.IndependentBlendEnable = pipelineState.GetIndependentBlendEnabled();
 
 		// Configure the blend mode for each target:
 		for (uint32_t i = 0; i < dx12::SysInfo::GetMaxRenderTargets(); i++)
 		{
-			D3D12_RENDER_TARGET_BLEND_DESC rtBlendDesc{};
-			rtBlendDesc.BlendEnable = true;
+			re::PipelineState::RenderTargetBlendDesc const& reBlendDesc = pipelineState.GetRenderTargetBlendDescs()[i];
 
-			re::TextureTarget const& colorTarget = targetSet.GetColorTarget(i);
+			D3D12_RENDER_TARGET_BLEND_DESC& rtBlendDesc = blendDesc.RenderTarget[i];
 
-			re::TextureTarget::TargetParams::BlendModes const& blendModes = colorTarget.GetBlendMode();
-
-			// Source blending:
-			switch (blendModes.m_srcBlendMode)
-			{
-			case re::TextureTarget::BlendMode::Disabled:
-			{
-				SEAssert(blendModes.m_srcBlendMode == blendModes.m_dstBlendMode,
-					"Must disable blending for both source and destination");
-
-				rtBlendDesc.BlendEnable = false;
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
-			}
-			break;
-			case re::TextureTarget::BlendMode::Zero:
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ZERO; break;
-			case re::TextureTarget::BlendMode::One:
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ONE; break;
-			case re::TextureTarget::BlendMode::SrcColor:
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_SRC_COLOR; break;
-			case re::TextureTarget::BlendMode::OneMinusSrcColor:
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_COLOR; break;
-			case re::TextureTarget::BlendMode::DstColor:
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_DEST_COLOR; break;
-			case re::TextureTarget::BlendMode::OneMinusDstColor:
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_COLOR; break;
-			case re::TextureTarget::BlendMode::SrcAlpha:
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_SRC_ALPHA; break;
-			case re::TextureTarget::BlendMode::OneMinusSrcAlpha:
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_ALPHA; break;
-			case re::TextureTarget::BlendMode::DstAlpha:
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_DEST_ALPHA; break;
-			case re::TextureTarget::BlendMode::OneMinusDstAlpha:
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_ALPHA; break;
-			default:
-				SEAssertF("Invalid source blend mode");
-				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ONE;
-			}
-
-			// Destination blending:
-			switch (blendModes.m_dstBlendMode)
-			{
-			case re::TextureTarget::BlendMode::Disabled:
-			{
-				SEAssert(blendModes.m_srcBlendMode == blendModes.m_dstBlendMode,
-					"Must disable blending for both source and destination");
-
-				rtBlendDesc.BlendEnable = false;
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
-			}
-			break;
-			case re::TextureTarget::BlendMode::Zero:
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO; break;
-			case re::TextureTarget::BlendMode::One:
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ONE; break;
-			case re::TextureTarget::BlendMode::SrcColor:
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_SRC_COLOR; break;
-			case re::TextureTarget::BlendMode::OneMinusSrcColor:
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_COLOR; break;
-			case re::TextureTarget::BlendMode::DstColor:
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_DEST_COLOR; break;
-			case re::TextureTarget::BlendMode::OneMinusDstColor:
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_COLOR; break;
-			case re::TextureTarget::BlendMode::SrcAlpha:
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_SRC_ALPHA; break;
-			case re::TextureTarget::BlendMode::OneMinusSrcAlpha:
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_ALPHA; break;
-			case re::TextureTarget::BlendMode::DstAlpha:
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_DEST_ALPHA; break;
-			case re::TextureTarget::BlendMode::OneMinusDstAlpha:
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_ALPHA; break;
-			default:
-				SEAssertF("Invalid dest blend mode");
-				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
-			}
-
-			// TODO: Support these
-			rtBlendDesc.LogicOpEnable = false;
-			rtBlendDesc.BlendOp = D3D12_BLEND_OP::D3D12_BLEND_OP_ADD;
-			rtBlendDesc.SrcBlendAlpha = D3D12_BLEND::D3D12_BLEND_ONE;
-			rtBlendDesc.DestBlendAlpha = D3D12_BLEND::D3D12_BLEND_ZERO;
-			rtBlendDesc.BlendOpAlpha = D3D12_BLEND_OP::D3D12_BLEND_OP_ADD;
-			rtBlendDesc.LogicOp = D3D12_LOGIC_OP::D3D12_LOGIC_OP_NOOP;
-			
-			// Build a bitmask for our color write modes:
-			rtBlendDesc.RenderTargetWriteMask = static_cast<uint8_t>(colorTarget.GetColorWriteMask());
-
-			blendDesc.RenderTarget[i] = rtBlendDesc;
+			rtBlendDesc.BlendEnable = reBlendDesc.m_blendEnable;
+			rtBlendDesc.SrcBlend = BlendModeToD3DBlendMode(reBlendDesc.m_srcBlend);
+			rtBlendDesc.DestBlend = BlendModeToD3DBlendMode(reBlendDesc.m_dstBlend);
+			rtBlendDesc.LogicOpEnable = reBlendDesc.m_logicOpEnable;
+			rtBlendDesc.BlendOp = BlendOpToD3DBlendOp(reBlendDesc.m_blendOp);
+			rtBlendDesc.SrcBlendAlpha = BlendModeToD3DBlendMode(reBlendDesc.m_srcBlendAlpha);
+			rtBlendDesc.DestBlendAlpha = BlendModeToD3DBlendMode(reBlendDesc.m_dstBlendAlpha);
+			rtBlendDesc.BlendOpAlpha = BlendOpToD3DBlendOp(reBlendDesc.m_blendOpAlpha);
+			rtBlendDesc.LogicOp = LogicOpToD3DLogicOp(reBlendDesc.m_logicOp);
+			rtBlendDesc.RenderTargetWriteMask = reBlendDesc.m_renderTargetWriteMask;
 		}
 
 		return blendDesc;
@@ -438,14 +425,14 @@ namespace dx12
 			}			
 
 			// Rasterizer description:
-			const D3D12_RASTERIZER_DESC rasterizerDesc = BuildRasterizerDesc(rePipelineState);
+			D3D12_RASTERIZER_DESC const& rasterizerDesc = BuildRasterizerDesc(rePipelineState);
 			pipelineStateStream.rasterizer = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 
 			// Depth stencil description:
 			pipelineStateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(BuildDepthStencilDesc(rePipelineState));
 
 			// Blend description:
-			const D3D12_BLEND_DESC blendDesc = BuildBlendDesc(*targetSet);
+			D3D12_BLEND_DESC const& blendDesc = BuildBlendDesc(*rePipelineState);
 			pipelineStateStream.blend = CD3DX12_BLEND_DESC(blendDesc);
 
 			const D3D12_PIPELINE_STATE_STREAM_DESC graphicsPipelineStateStreamDesc =
@@ -457,6 +444,13 @@ namespace dx12
 			// CreatePipelineState can create both graphics & compute pipelines from a D3D12_PIPELINE_STATE_STREAM_DESC
 			hr = device->CreatePipelineState(&graphicsPipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
 			CheckHResult(hr, "Failed to create graphics pipeline state");
+
+			// Name our PSO:
+			std::wstring const& psoDebugName = util::ToWideString(
+				std::format("{}_{}_GraphicsPSO",
+					shader.GetName(),
+					targetSet ? targetSet->GetName() : "<no targets>"));
+			m_pipelineState->SetName(psoDebugName.c_str());
 		}
 		else if (shaderParams->m_shaderBlobs[re::Shader::Compute])
 		{
@@ -474,18 +468,17 @@ namespace dx12
 			// CreatePipelineState can create both graphics & compute pipelines from a D3D12_PIPELINE_STATE_STREAM_DESC
 			HRESULT hr = device->CreatePipelineState(&computePipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
 			CheckHResult(hr, "Failed to create compute pipeline state");
+
+			// Name our PSO:
+			std::wstring const& psoDebugName = util::ToWideString(
+				std::format("{}_ComputePSO",
+					shader.GetName()));
+			m_pipelineState->SetName(psoDebugName.c_str());
 		}
 		else
 		{
 			SEAssertF("Shader doesn't have a supported combination of shader blobs. TODO: Support this");
 		}
-
-		// Name our PSO:
-		std::wstring const& psoDebugName = util::ToWideString(
-			std::format("{}_{}_PSO",
-				shader.GetName(), 
-				targetSet ? targetSet->GetName() : "<no targets>"));
-		m_pipelineState->SetName(psoDebugName.c_str());
 	}
 
 

@@ -309,7 +309,17 @@
 			"DepthStencilState" : {
 				"DepthComparison": "Less",
 				"DepthWriteMask": "Zero"
-			}
+			},
+			"BlendState" : {
+					"RenderTargets": [
+						{
+							"BlendEnable" : true,
+							"SrcBlend" : "SrcAlpha",
+							"DstBlend" : "InvSrcAlpha",
+							"BlendOp": "Add"
+						}
+					]
+				}
 		},
 		{
 			"Name": "DoubleSided",
@@ -328,7 +338,17 @@
 			"DepthStencilState" : {
 				"DepthComparison": "Less",
 				"DepthWriteMask": "Zero"
-			}
+			},
+			"BlendState" : {
+					"RenderTargets": [
+						{
+							"BlendEnable" : true,
+							"SrcBlend" : "SrcAlpha",
+							"DstBlend" : "InvSrcAlpha",
+							"BlendOp": "Add"
+						}
+					]
+				}
 		}
 	]
 }

@@ -270,13 +270,6 @@ namespace gr
 
 			std::shared_ptr<re::TextureTargetSet> iemTargets = re::TextureTargetSet::Create("IEM Stage Targets");
 
-			re::TextureTarget::TargetParams::BlendModes iemBlendModes
-			{
-				re::TextureTarget::BlendMode::One,
-				re::TextureTarget::BlendMode::Zero,
-			};
-			iemTargets->SetColorTargetBlendModes(1, &iemBlendModes);
-
 			iemTargets->SetColorTarget(
 				0,
 				iemTexOut, 
@@ -368,13 +361,6 @@ namespace gr
 
 				pmremTargetSet->SetViewport(re::Viewport(0, 0, mipWidth, mipHeight));
 				pmremTargetSet->SetScissorRect(re::ScissorRect(0, 0, mipWidth, mipHeight));
-
-				re::TextureTarget::TargetParams::BlendModes pmremBlendModes
-				{
-					re::TextureTarget::BlendMode::One,
-					re::TextureTarget::BlendMode::Zero,
-				};
-				pmremTargetSet->SetColorTargetBlendModes(1, &pmremBlendModes);
 
 				pmremStage->SetTextureTargetSet(pmremTargetSet);
 
@@ -539,15 +525,6 @@ namespace gr
 		m_lightingTargetSet->SetDepthStencilTarget(
 			*texDependencies.at(GBufferGraphicsSystem::GBufferTexNameHashKeys[GBufferGraphicsSystem::GBufferDepth]),
 			depthTargetParams);
-
-		// All deferred lighting is additive
-		re::TextureTarget::TargetParams::BlendModes deferredBlendModes
-		{
-			re::TextureTarget::BlendMode::One,
-			re::TextureTarget::BlendMode::One,
-		};
-		m_lightingTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
-
 
 		// Append a color-only clear stage to clear the lighting target:
 		re::RenderStage::ClearStageParams colorClearParams;

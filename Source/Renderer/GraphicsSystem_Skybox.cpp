@@ -76,14 +76,6 @@ namespace gr
 		
 		skyboxTargets->SetDepthStencilTarget(*texDependencies.at(k_sceneDepthTexInput), depthTargetParams);
 
-		// Render on top of the frame
-		const re::TextureTarget::TargetParams::BlendModes skyboxBlendModes
-		{
-			re::TextureTarget::BlendMode::One,
-			re::TextureTarget::BlendMode::Zero
-		};
-		skyboxTargets->SetColorTargetBlendModes(1, &skyboxBlendModes);
-
 		m_skyboxStage->SetTextureTargetSet(skyboxTargets);
 
 		m_skyboxParams = re::Buffer::Create(

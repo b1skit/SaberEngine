@@ -14,104 +14,6 @@
 
 namespace
 {
-	void SetBlendMode(re::TextureTarget const& textureTarget, uint32_t drawBufferIndex)
-	{
-		const re::TextureTarget::TargetParams::BlendModes blendModes = textureTarget.GetBlendMode();
-		if (blendModes.m_srcBlendMode == re::TextureTarget::BlendMode::Disabled)
-		{
-			SEAssert(blendModes.m_srcBlendMode == blendModes.m_dstBlendMode,
-				"Must disable blending for both source and destination");
-
-			glDisable(GL_BLEND);
-			return;
-		}
-
-		glEnable(GL_BLEND);
-
-		GLenum sFactor = GL_ONE;
-		GLenum dFactor = GL_ZERO;
-
-		auto SetGLBlendFactor = [](
-			re::TextureTarget::BlendMode const& platformBlendMode,
-			GLenum& blendFactor,
-			bool isSrc
-			)
-		{
-			switch (platformBlendMode)
-			{
-			case re::TextureTarget::BlendMode::Zero:
-			{
-				blendFactor = GL_ZERO;
-			}
-			break;
-			case re::TextureTarget::BlendMode::One:
-			{
-				blendFactor = GL_ONE;
-			}
-			break;
-			case re::TextureTarget::BlendMode::SrcColor:
-			{
-				blendFactor = GL_SRC_COLOR;
-			}
-			break;
-			case re::TextureTarget::BlendMode::OneMinusSrcColor:
-			{
-				blendFactor = GL_ONE_MINUS_SRC_COLOR;
-			}
-			break;
-			case re::TextureTarget::BlendMode::DstColor:
-			{
-				blendFactor = GL_DST_COLOR;
-			}
-			break;
-			case re::TextureTarget::BlendMode::OneMinusDstColor:
-			{
-				blendFactor = GL_ONE_MINUS_DST_COLOR;
-			}
-			break;
-			case re::TextureTarget::BlendMode::SrcAlpha:
-			{
-				blendFactor = GL_SRC_ALPHA;
-			}
-			break;
-			case re::TextureTarget::BlendMode::OneMinusSrcAlpha:
-			{
-				blendFactor = GL_ONE_MINUS_SRC_ALPHA;
-			}
-			break;
-			case re::TextureTarget::BlendMode::DstAlpha:
-			{
-				blendFactor = GL_DST_ALPHA;
-			}
-			break;
-			case re::TextureTarget::BlendMode::OneMinusDstAlpha:
-			{
-				blendFactor = GL_ONE_MINUS_DST_ALPHA;
-			}
-			break;
-			default:
-				SEAssertF("Invalid blend mode");
-			}
-		};
-
-		SetGLBlendFactor(blendModes.m_srcBlendMode, sFactor, true);
-		SetGLBlendFactor(blendModes.m_dstBlendMode, dFactor, false);
-
-		glBlendFunci(drawBufferIndex, sFactor, dFactor);
-	}
-
-
-	void SetColorWriteMode(re::TextureTarget const& textureTarget, uint32_t drawBufferIndex)
-	{
-		glColorMaski(
-			drawBufferIndex,
-			textureTarget.WritesColor(re::TextureTarget::Channel::R) ? GL_TRUE : GL_FALSE,
-			textureTarget.WritesColor(re::TextureTarget::Channel::G) ? GL_TRUE : GL_FALSE,
-			textureTarget.WritesColor(re::TextureTarget::Channel::B) ? GL_TRUE : GL_FALSE,
-			textureTarget.WritesColor(re::TextureTarget::Channel::A) ? GL_TRUE : GL_FALSE);
-	}
-
-
 	void SetDepthWriteMode(re::TextureTarget const& textureTarget)
 	{
 		if (textureTarget.GetTargetParams().m_textureView.DepthStencilWritesEnabled())
@@ -424,13 +326,6 @@ namespace opengl
 				firstTarget = texture;
 				firstTargetMipLevel = firstMip;
 			}
-		}
-
-		// Set the blend modes. Note, we set these even if the targets don't contain textures
-		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
-		{
-			SetBlendMode(targetSet.GetColorTarget(i), i);
-			SetColorWriteMode(targetSet.GetColorTarget(i), i);
 		}
 
 		if (!buffers.empty())

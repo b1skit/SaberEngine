@@ -43,11 +43,13 @@ namespace
 		{
 			util::CombineHash(psoKey, pipelineState->GetPipelineStateDataHash());
 
-			if (targetSet)
+			if (targetSet && 
+				(shader.HasShaderType(re::Shader::Vertex) || 
+					shader.HasShaderType(re::Shader::Geometry) ||
+					shader.HasShaderType(re::Shader::Pixel) ))
 			{
-				// We currently store some pipeline state in Texture Targets, thus we must consider the target set
-				// signature for graphics shader types. Even if a compute shader has Texture Targets, they're bound as
-				// UAVs and don't affect the pipeline state
+				// We must consider the target set, as we must specify the RTV/DSV formats when creating the graphics
+				// pipeline state stream
 				util::CombineHash(psoKey, targetSet->GetTargetSetSignature());
 			}
 		}	
@@ -296,9 +298,9 @@ namespace dx12
 		}
 		else
 		{
-			LOG_WARNING("DX12 PSO for Shader \"%s\", TextureTargetSet \"%s\" does not exist and must be created "
-				"immediately", shader.GetName().c_str(), 
-				targetSet ? targetSet->GetName().c_str() : "<null re::TextureTargetSet");
+			LOG_WARNING("Creating DX12 PSO for Shader \"%s\", TextureTargetSet \"%s\"",
+				shader.GetName().c_str(), 
+				targetSet ? targetSet->GetName().c_str() : "<null TextureTargetSet>");
 
 			return CreateAddPipelineState(shader, targetSet);
 		}

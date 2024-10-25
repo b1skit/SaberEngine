@@ -17,6 +17,109 @@
 #include <GL/GL.h> // Must follow glew.h
 
 
+namespace
+{
+	constexpr GLenum ComparisonFuncToGLEnum(re::PipelineState::ComparisonFunc comparisonFunc)
+	{
+		switch (comparisonFunc)
+		{
+		case re::PipelineState::ComparisonFunc::Less: return GL_LESS;
+		case re::PipelineState::ComparisonFunc::Never: return GL_NEVER;
+		case re::PipelineState::ComparisonFunc::Equal: return GL_EQUAL;
+		case re::PipelineState::ComparisonFunc::LEqual: return GL_LEQUAL;
+		case re::PipelineState::ComparisonFunc::Greater: return GL_GREATER;
+		case re::PipelineState::ComparisonFunc::NotEqual: return GL_NOTEQUAL;
+		case re::PipelineState::ComparisonFunc::GEqual: return GL_GEQUAL;
+		case re::PipelineState::ComparisonFunc::Always: return GL_ALWAYS;
+		}
+		return GL_ALWAYS; // This should never happen
+	}
+
+
+	constexpr GLenum StencilOpToGLEnum(re::PipelineState::StencilOp stencilOp)
+	{
+		switch (stencilOp)
+		{
+		case re::PipelineState::StencilOp::Keep: return GL_KEEP;
+		case re::PipelineState::StencilOp::Zero: return GL_ZERO;
+		case re::PipelineState::StencilOp::Replace: return GL_REPLACE;
+		case re::PipelineState::StencilOp::IncrementSaturate: return GL_INCR;
+		case re::PipelineState::StencilOp::DecrementSaturate: return GL_DECR;
+		case re::PipelineState::StencilOp::Invert: return GL_INVERT;
+		case re::PipelineState::StencilOp::Increment: return GL_INCR_WRAP;
+		case re::PipelineState::StencilOp::Decrement: return GL_DECR_WRAP;
+		}
+		return GL_KEEP; // This should never happen
+	}
+
+
+	constexpr GLenum BlendModeToGLEnum(re::PipelineState::BlendMode blendMode)
+	{
+		switch (blendMode)
+		{
+		case re::PipelineState::BlendMode::Zero: return GL_ZERO;
+		case re::PipelineState::BlendMode::One: return GL_ONE;
+		case re::PipelineState::BlendMode::SrcColor: return GL_SRC_COLOR;
+		case re::PipelineState::BlendMode::InvSrcColor: return GL_ONE_MINUS_SRC_COLOR;
+		case re::PipelineState::BlendMode::SrcAlpha: return GL_SRC_ALPHA;
+		case re::PipelineState::BlendMode::InvSrcAlpha: return GL_ONE_MINUS_SRC_ALPHA;
+		case re::PipelineState::BlendMode::DstAlpha: return GL_DST_ALPHA;
+		case re::PipelineState::BlendMode::InvDstAlpha: return GL_ONE_MINUS_DST_ALPHA;
+		case re::PipelineState::BlendMode::DstColor: return GL_DST_COLOR;
+		case re::PipelineState::BlendMode::InvDstColor: return GL_ONE_MINUS_DST_COLOR;
+		case re::PipelineState::BlendMode::SrcAlphaSat: return GL_SRC_ALPHA_SATURATE;
+		case re::PipelineState::BlendMode::BlendFactor: return GL_CONSTANT_COLOR;
+		case re::PipelineState::BlendMode::InvBlendFactor: return GL_ONE_MINUS_CONSTANT_COLOR;
+		case re::PipelineState::BlendMode::SrcOneColor: return GL_SRC1_COLOR;
+		case re::PipelineState::BlendMode::InvSrcOneColor: return GL_ONE_MINUS_SRC1_COLOR;
+		case re::PipelineState::BlendMode::SrcOneAlpha: return GL_SRC1_ALPHA;
+		case re::PipelineState::BlendMode::InvSrcOneAlpha: return GL_ONE_MINUS_SRC1_ALPHA;
+		case re::PipelineState::BlendMode::AlphaFactor: return GL_CONSTANT_ALPHA;
+		case re::PipelineState::BlendMode::InvAlphaFactor: return GL_ONE_MINUS_CONSTANT_ALPHA;
+		}
+		return GL_ONE; // This should never happen
+	}
+
+
+	constexpr GLenum BlendOpToGLEnum(re::PipelineState::BlendOp blendOp)
+	{
+		switch (blendOp)
+		{
+		case re::PipelineState::BlendOp::Add: return GL_FUNC_ADD;
+		case re::PipelineState::BlendOp::Subtract: return GL_FUNC_SUBTRACT;
+		case re::PipelineState::BlendOp::RevSubtract: return GL_FUNC_REVERSE_SUBTRACT;
+		case re::PipelineState::BlendOp::Min: return GL_MIN;
+		case re::PipelineState::BlendOp::Max: return GL_MAX;
+		}
+		return GL_FUNC_ADD; // This should never happen
+	}
+
+
+	constexpr GLenum LogicOpToGLenum(re::PipelineState::LogicOp logicOp)
+	{
+		switch (logicOp)
+		{
+		case re::PipelineState::LogicOp::Clear: return GL_CLEAR;
+		case re::PipelineState::LogicOp::Set: return GL_SET;
+		case re::PipelineState::LogicOp::Copy: return GL_COPY;
+		case re::PipelineState::LogicOp::CopyInverted: return GL_COPY_INVERTED;
+		case re::PipelineState::LogicOp::NoOp: return GL_NOOP;
+		case re::PipelineState::LogicOp::Invert: return GL_INVERT;
+		case re::PipelineState::LogicOp::AND: return GL_AND;
+		case re::PipelineState::LogicOp::NAND: return GL_NAND;
+		case re::PipelineState::LogicOp::OR: return GL_OR;
+		case re::PipelineState::LogicOp::NOR: return GL_NOR;
+		case re::PipelineState::LogicOp::XOR: return GL_XOR;
+		case re::PipelineState::LogicOp::EQUIV: return GL_EQUIV;
+		case re::PipelineState::LogicOp::ANDReverse: return GL_AND_REVERSE;
+		case re::PipelineState::LogicOp::AndInverted: return GL_AND_INVERTED;
+		case re::PipelineState::LogicOp::ORReverse: return GL_OR_REVERSE;
+		case re::PipelineState::LogicOp::ORInverted: return GL_OR_INVERTED;
+		}
+		return GL_NOOP; // This should never happen
+	}
+}
+
 namespace opengl
 {
 	// The function used to get WGL extensions is an extension itself, thus it needs an OpenGL context. Thus, we create
@@ -356,253 +459,328 @@ namespace opengl
 	{
 		if (pipelineState)
 		{
-			// Rasterizer state:
-			SetFillMode(pipelineState);
-			SetCullingMode(pipelineState->GetFaceCullingMode());
+			SetRasterizerState(pipelineState);
+			SetDepthStencilState(pipelineState);
+			SetBlendState(pipelineState);
+		}
+	}
+
+
+	void Context::SetRasterizerState(re::PipelineState const* pipelineState)
+	{
+		// Fill mode:
+		{
+			GLenum fillMode = GL_FILL;
+			switch (pipelineState->GetFillMode())
+			{
+			case re::PipelineState::FillMode::Solid:
+			{
+				fillMode = GL_FILL;
+			}
+			break;
+			case re::PipelineState::FillMode::Wireframe:
+			{
+				fillMode = GL_LINE;
+			}
+			break;
+			default: SEAssertF("Invalid fill mode");
+			}
+
+			glPolygonMode(GL_FRONT_AND_BACK, fillMode);
+		}
+
+		// Culling mode:
+		{
+			const re::PipelineState::FaceCullingMode mode = pipelineState->GetFaceCullingMode();
+
+			if (mode != re::PipelineState::FaceCullingMode::Disabled)
+			{
+				glEnable(GL_CULL_FACE);
+			}
+
+			switch (mode)
+			{
+			case re::PipelineState::FaceCullingMode::Disabled:
+			{
+				glDisable(GL_CULL_FACE);
+			}
+			break;
+			case re::PipelineState::FaceCullingMode::Front:
+			{
+				glCullFace(GL_FRONT);
+			}
+			break;
+			case re::PipelineState::FaceCullingMode::Back:
+			{
+				glCullFace(GL_BACK);
+			}
+			break;
+			default:
+				SEAssertF("Invalid face culling mode");
+			}
+		}
+
+		// 
+		{
 			SEAssert(pipelineState->GetMultiSampleEnabled() == false, "TODO: Handle this");
+		}
+
+		// 
+		{
 			SEAssert(pipelineState->GetForcedSampleCount() == 0, "TODO: Handle this");
-			SEAssert(pipelineState->GetConservativeRaster() == false , "TODO: Handle this");
+		}
 
-			// Depth stencil state:
-			SetDepthTestEnable(pipelineState->GetDepthTestEnabled());
-			SetDepthWriteMask(pipelineState->GetDepthWriteMask());
-			SetDepthComparison(pipelineState->GetDepthComparison());
-			SetDepthBias(pipelineState);
-			SetDepthClip(pipelineState->GetDepthClipEnabled());
-			SetStencilEnable(pipelineState->GetStencilEnabled());
-			SetStencilOps(pipelineState);
+		// 
+		{
+			SEAssert(pipelineState->GetConservativeRaster() == false, "TODO: Handle this");
 		}
 	}
 
 
-	void Context::SetFillMode(re::PipelineState const* pipelineState)
+	void Context::SetDepthStencilState(re::PipelineState const* pipelineState)
 	{
-		GLenum fillMode = GL_FILL;
-		switch (pipelineState->GetFillMode())
+		// Depth test:
 		{
-		case re::PipelineState::FillMode::Solid:
-		{
-			fillMode = GL_FILL;
-		}
-		break;
-		case re::PipelineState::FillMode::Wireframe:
-		{
-			fillMode = GL_LINE;
-		}
-		break;
-		default: SEAssertF("Invalid fill mode");
-		}
-
-		glPolygonMode(GL_FRONT_AND_BACK, fillMode);
-	}
-
-
-	void Context::SetCullingMode(re::PipelineState::FaceCullingMode mode)
-	{
-		if (mode != re::PipelineState::FaceCullingMode::Disabled)
-		{
-			glEnable(GL_CULL_FACE);
-		}
-
-		switch (mode)
-		{
-		case re::PipelineState::FaceCullingMode::Disabled:
-		{
-			glDisable(GL_CULL_FACE);
-		}
-		break;
-		case re::PipelineState::FaceCullingMode::Front:
-		{
-			glCullFace(GL_FRONT);
-		}
-		break;
-		case re::PipelineState::FaceCullingMode::Back:
-		{
-			glCullFace(GL_BACK);
-		}
-		break;
-		default:
-			SEAssertF("Invalid face culling mode");
-		}
-	}
-
-
-	void Context::SetDepthTestEnable(bool isEnabled)
-	{
-		if (isEnabled)
-		{
-			glEnable(GL_DEPTH_TEST);
-		}
-		else
-		{
-			glDisable(GL_DEPTH_TEST);
-		}
-	}
-
-
-	void Context::SetDepthWriteMask(re::PipelineState::DepthWriteMask depthWriteMask)
-	{
-		switch (depthWriteMask)
-		{
-		case re::PipelineState::DepthWriteMask::Zero:
-		{
-			glDepthMask(GL_FALSE);
-		}
-		break;
-		case re::PipelineState::DepthWriteMask::All:
-		{
-			glDepthMask(GL_TRUE);
-		}
-		break;
-		default: SEAssertF("Invalid depth write mask");
-		}
-	}
-
-
-	void Context::SetDepthBias(re::PipelineState const* pipelineState)
-	{
-		const re::PipelineState::PrimitiveTopologyType topologyType = pipelineState->GetPrimitiveTopologyType();
-		const int depthBias = pipelineState->GetDepthBias();
-
-		if (depthBias == 0)
-		{
-			switch (topologyType)
+			if (pipelineState->GetDepthTestEnabled())
 			{
-			case re::PipelineState::PrimitiveTopologyType::Triangle:
+				glEnable(GL_DEPTH_TEST);
+			}
+			else
 			{
-				glDisable(GL_POLYGON_OFFSET_FILL);
+				glDisable(GL_DEPTH_TEST);
+			}
+		}
+
+		// Depth write mask:
+		{
+			switch (pipelineState->GetDepthWriteMask())
+			{
+			case re::PipelineState::DepthWriteMask::Zero:
+			{
+				glDepthMask(GL_FALSE);
 			}
 			break;
-			case re::PipelineState::PrimitiveTopologyType::Point:
+			case re::PipelineState::DepthWriteMask::All:
 			{
-				glDisable(GL_POLYGON_OFFSET_POINT);
+				glDepthMask(GL_TRUE);
 			}
 			break;
-			case re::PipelineState::PrimitiveTopologyType::Line:
+			default: SEAssertF("Invalid depth write mask");
+			}
+		}
+
+		// Depth comparison:
+		{
+			glDepthFunc(ComparisonFuncToGLEnum(pipelineState->GetDepthComparison()));
+		}
+
+		// Depth bias:
+		{
+			const re::PipelineState::PrimitiveTopologyType topologyType = pipelineState->GetPrimitiveTopologyType();
+			const int depthBias = pipelineState->GetDepthBias();
+
+			if (depthBias == 0)
 			{
-				glDisable(GL_POLYGON_OFFSET_LINE);
+				switch (topologyType)
+				{
+				case re::PipelineState::PrimitiveTopologyType::Triangle:
+				{
+					glDisable(GL_POLYGON_OFFSET_FILL);
+				}
+				break;
+				case re::PipelineState::PrimitiveTopologyType::Point:
+				{
+					glDisable(GL_POLYGON_OFFSET_POINT);
+				}
+				break;
+				case re::PipelineState::PrimitiveTopologyType::Line:
+				{
+					glDisable(GL_POLYGON_OFFSET_LINE);
+				}
+				break;
+				case re::PipelineState::PrimitiveTopologyType::Patch:
+				default: SEAssertF("Invalid topology type");
+				}
 			}
-			break;
-			case re::PipelineState::PrimitiveTopologyType::Patch:
-			default: SEAssertF("Invalid topology type");
-			}
-		}
-		else
-		{
-			switch (topologyType)
+			else
 			{
-			case re::PipelineState::PrimitiveTopologyType::Triangle:
+				switch (topologyType)
+				{
+				case re::PipelineState::PrimitiveTopologyType::Triangle:
+				{
+					glEnable(GL_POLYGON_OFFSET_FILL);
+				}
+				break;
+				case re::PipelineState::PrimitiveTopologyType::Point:
+				{
+					glEnable(GL_POLYGON_OFFSET_POINT);
+				}
+				break;
+				case re::PipelineState::PrimitiveTopologyType::Line:
+				{
+					glEnable(GL_POLYGON_OFFSET_LINE);
+				}
+				break;
+				case re::PipelineState::PrimitiveTopologyType::Patch:
+				default: SEAssertF("Invalid topology type");
+				}
+
+				SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
+
+				const GLfloat factor = pipelineState->GetSlopeScaledDepthBias();
+				const GLfloat units = depthBias / static_cast<float>(glm::pow(2.f, 24.f)); // TODO: This should depend on the depth buffer format?
+				glPolygonOffset(factor, units);
+			}
+		}
+
+		// Depth clip:
+		{
+			// Somewhat counter-intuitively, enabling depth clamping disables depth clipping
+			// https://www.khronos.org/opengl/wiki/Vertex_Post-Processing
+			if (pipelineState->GetDepthClipEnabled())
 			{
-				glEnable(GL_POLYGON_OFFSET_FILL);
+				glDisable(GL_DEPTH_CLAMP);
 			}
-			break;
-			case re::PipelineState::PrimitiveTopologyType::Point:
+			else
 			{
-				glEnable(GL_POLYGON_OFFSET_POINT);
+				SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
+				glEnable(GL_DEPTH_CLAMP);
 			}
-			break;
-			case re::PipelineState::PrimitiveTopologyType::Line:
+		}
+
+		// Stencil mode:
+		{
+			if (pipelineState->GetStencilEnabled())
 			{
-				glEnable(GL_POLYGON_OFFSET_LINE);
+				// Note: The stencil READ mask is currently ignored here...
+				SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
+
+				glEnable(GL_STENCIL_TEST);
+
+				re::PipelineState::StencilOpDesc const& frontDesc = pipelineState->GetFrontFaceStencilOpDesc();
+				re::PipelineState::StencilOpDesc const& backDesc = pipelineState->GetBackFaceStencilOpDesc();
+
+				glStencilMaskSeparate(GL_FRONT, pipelineState->GetStencilWriteMask());
+
+				glStencilOpSeparate(GL_FRONT,
+					StencilOpToGLEnum(frontDesc.m_failOp),
+					StencilOpToGLEnum(frontDesc.m_depthFailOp),
+					StencilOpToGLEnum(frontDesc.m_passOp));
+
+				glStencilMaskSeparate(GL_BACK, pipelineState->GetStencilWriteMask());
+
+				glStencilOpSeparate(GL_BACK,
+					StencilOpToGLEnum(backDesc.m_failOp),
+					StencilOpToGLEnum(backDesc.m_depthFailOp),
+					StencilOpToGLEnum(backDesc.m_passOp));
 			}
-			break;
-			case re::PipelineState::PrimitiveTopologyType::Patch:
-			default: SEAssertF("Invalid topology type");
+			else
+			{
+				glDisable(GL_STENCIL_TEST);
+			}
+		}
+	}
+
+
+	void Context::SetBlendState(re::PipelineState const* pipelineState)
+	{
+		if (pipelineState->GetIndependentBlendEnabled())
+		{
+			uint8_t index = 0;
+			for (auto const& renderTargetBlendDesc : pipelineState->GetRenderTargetBlendDescs())
+			{
+				// https://www.khronos.org/opengl/wiki/Logical_Operation
+				SEAssert(renderTargetBlendDesc.m_logicOp == pipelineState->GetRenderTargetBlendDescs()[0].m_logicOp,
+					"OpenGL only supports a single logical operation for all targets, so this is unexpected");
+				SEAssert(!renderTargetBlendDesc.m_blendEnable || !renderTargetBlendDesc.m_logicOpEnable,
+					"If logic operations are enabled, blending operations are disabled, this is unexpected");
+
+				// Blending:
+				if (renderTargetBlendDesc.m_blendEnable)
+				{
+					glEnablei(GL_BLEND, index);
+
+					// Blend function:
+					glBlendFuncSeparatei(
+						index,
+						BlendModeToGLEnum(renderTargetBlendDesc.m_srcBlend),
+						BlendModeToGLEnum(renderTargetBlendDesc.m_dstBlend),
+						BlendModeToGLEnum(renderTargetBlendDesc.m_srcBlendAlpha),
+						BlendModeToGLEnum(renderTargetBlendDesc.m_dstBlendAlpha));
+
+					// Blend operation:
+					glBlendEquationSeparatei(index, 
+						BlendOpToGLEnum(renderTargetBlendDesc.m_blendOp), 
+						BlendOpToGLEnum(renderTargetBlendDesc.m_blendOpAlpha));
+				}
+				else
+				{
+					glDisablei(GL_BLEND, index);
+				}
+
+				// Logic operation:				
+				if (renderTargetBlendDesc.m_logicOpEnable)
+				{					
+					glEnablei(GL_COLOR_LOGIC_OP, index);
+					glLogicOp(LogicOpToGLenum(renderTargetBlendDesc.m_logicOp));
+				}
+				else
+				{
+					glDisablei(GL_COLOR_LOGIC_OP, index);
+				}
+
+				// Write mask:
+				glColorMaski(
+					index,
+					(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Red) ? GL_TRUE : GL_FALSE,
+					(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Green) ? GL_TRUE : GL_FALSE,
+					(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Blue) ? GL_TRUE : GL_FALSE,
+					(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Alpha) ? GL_TRUE : GL_FALSE);
+
+				++index;
+			}
+		}
+		else // Otherwise, just use element [0]
+		{
+			re::PipelineState::RenderTargetBlendDesc const& renderTargetBlendDesc = 
+				pipelineState->GetRenderTargetBlendDescs()[0];
+
+			if (renderTargetBlendDesc.m_blendEnable)
+			{
+				glEnable(GL_BLEND);
+
+				glBlendFuncSeparate(
+					BlendModeToGLEnum(renderTargetBlendDesc.m_srcBlend),
+					BlendModeToGLEnum(renderTargetBlendDesc.m_dstBlend),
+					BlendModeToGLEnum(renderTargetBlendDesc.m_srcBlendAlpha),
+					BlendModeToGLEnum(renderTargetBlendDesc.m_dstBlendAlpha));
+
+				glBlendEquationSeparate(
+					BlendOpToGLEnum(renderTargetBlendDesc.m_blendOp),
+					BlendOpToGLEnum(renderTargetBlendDesc.m_blendOpAlpha));
+			}
+			else
+			{
+				glDisable(GL_BLEND);
 			}
 
-			SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
+			// Logic operation:
+			if (renderTargetBlendDesc.m_logicOpEnable)
+			{
+				glEnable(GL_COLOR_LOGIC_OP);
+				glLogicOp(LogicOpToGLenum(renderTargetBlendDesc.m_logicOp));
+			}
+			else
+			{
+				glDisable(GL_COLOR_LOGIC_OP);
+			}
 
-			const GLfloat factor = pipelineState->GetSlopeScaledDepthBias();
-			const GLfloat units = depthBias / static_cast<float>(glm::pow(2.f, 24.f)); // TODO: This should depend on the depth buffer format?
-			glPolygonOffset(factor, units);
-		}		
-	}
-
-	
-	void Context::SetDepthClip(bool doEnable)
-	{
-		// Somewhat counter-intuitively, enabling depth clamping disables depth clipping
-		// https://www.khronos.org/opengl/wiki/Vertex_Post-Processing
-		if (doEnable)
-		{
-			glDisable(GL_DEPTH_CLAMP);			
+			glColorMask(
+				(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Red) ? GL_TRUE : GL_FALSE,
+				(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Green) ? GL_TRUE : GL_FALSE,
+				(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Blue) ? GL_TRUE : GL_FALSE,
+				(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Alpha) ? GL_TRUE : GL_FALSE);
 		}
-		else
-		{
-			SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
-			glEnable(GL_DEPTH_CLAMP);
-		}
-	}
-
-
-	void Context::SetStencilEnable(bool doEnable)
-	{
-		if (doEnable)
-		{
-			SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
-			glEnable(GL_STENCIL_TEST);
-		}
-		else
-		{
-			glDisable(GL_STENCIL_TEST);
-		}
-	}
-
-
-	constexpr GLenum ComparisonFuncToGLEnum(re::PipelineState::ComparisonFunc comparisonFunc)
-	{
-		switch (comparisonFunc)
-		{
-		case re::PipelineState::ComparisonFunc::Less: return GL_LESS;
-		case re::PipelineState::ComparisonFunc::Never: return GL_NEVER;
-		case re::PipelineState::ComparisonFunc::Equal: return GL_EQUAL;
-		case re::PipelineState::ComparisonFunc::LEqual: return GL_LEQUAL;
-		case re::PipelineState::ComparisonFunc::Greater: return GL_GREATER;
-		case re::PipelineState::ComparisonFunc::NotEqual: return GL_NOTEQUAL;
-		case re::PipelineState::ComparisonFunc::GEqual: return GL_GEQUAL;
-		case re::PipelineState::ComparisonFunc::Always: return GL_ALWAYS;
-		}
-		return GL_ALWAYS; // This should never happen
-	}
-
-
-	constexpr GLenum StencilOpToGLEnum(re::PipelineState::StencilOp stencilOp)
-	{
-		switch (stencilOp)
-		{
-		case re::PipelineState::StencilOp::Keep: return GL_KEEP;
-		case re::PipelineState::StencilOp::Zero: return GL_ZERO;
-		case re::PipelineState::StencilOp::Replace: return GL_REPLACE;
-		case re::PipelineState::StencilOp::IncrementSaturate: return GL_INCR;
-		case re::PipelineState::StencilOp::DecrementSaturate: return GL_DECR;
-		case re::PipelineState::StencilOp::Invert: return GL_INVERT;
-		case re::PipelineState::StencilOp::Increment: return GL_INCR_WRAP;
-		case re::PipelineState::StencilOp::Decrement: return GL_DECR_WRAP;
-		}
-		return GL_KEEP; // This should never happen
-	}
-
-
-	void Context::SetStencilOps(re::PipelineState const* pipelineState)
-	{
-		re::PipelineState::StencilOpDesc const& frontDesc = pipelineState->GetFrontFaceStencilOpDesc();
-		re::PipelineState::StencilOpDesc const& backDesc = pipelineState->GetBackFaceStencilOpDesc();
-
-		glStencilOpSeparate(GL_FRONT,
-			StencilOpToGLEnum(frontDesc.m_failOp),
-			StencilOpToGLEnum(frontDesc.m_depthFailOp),
-			StencilOpToGLEnum(frontDesc.m_passOp));
-
-		glStencilOpSeparate(GL_BACK,
-			StencilOpToGLEnum(backDesc.m_failOp),
-			StencilOpToGLEnum(backDesc.m_depthFailOp),
-			StencilOpToGLEnum(backDesc.m_passOp));
-	}
-
-	
-	void Context::SetDepthComparison(re::PipelineState::ComparisonFunc mode)
-	{
-		glDepthFunc(ComparisonFuncToGLEnum(mode));
 	}
 
 

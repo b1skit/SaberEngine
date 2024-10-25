@@ -166,6 +166,99 @@ namespace re
 		void SetBackFaceStencilOpDesc(StencilOpDesc const&);
 
 
+		// Blend state:
+		//-------------
+		enum class BlendMode : uint8_t // Graphics stages only
+		{
+			// Note: See https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_blend#constants
+			Zero,
+			One,
+			SrcColor,
+			InvSrcColor,
+			SrcAlpha,
+			InvSrcAlpha,
+			DstAlpha,
+			InvDstAlpha,
+			DstColor,
+			InvDstColor,
+			SrcAlphaSat,
+			BlendFactor,
+			InvBlendFactor,
+			SrcOneColor,
+			InvSrcOneColor,
+			SrcOneAlpha,
+			InvSrcOneAlpha,
+			AlphaFactor,
+			InvAlphaFactor,
+		};
+		static BlendMode GetBlendModeByName(char const*);
+
+		enum class BlendOp
+		{
+			// Note: See https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_blend_op#constants
+			Add,
+			Subtract,
+			RevSubtract,
+			Min,
+			Max,
+		};
+		static BlendOp GetBlendOpByName(char const*);
+
+		enum class LogicOp
+		{
+			// Note: See https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_logic_op#constants
+			Clear,
+			Set,
+			Copy,
+			CopyInverted,
+			NoOp,
+			Invert,
+			AND,
+			NAND,
+			OR,
+			NOR,
+			XOR,
+			EQUIV,
+			ANDReverse,
+			AndInverted,
+			ORReverse,
+			ORInverted,
+		};
+		static LogicOp GetLogicOpByName(char const*);
+
+		enum ColorWriteEnable : uint8_t
+		{
+			Red		= 1 << 0,
+			Green	= 1 << 1,
+			Blue	= 1 << 2,
+			Alpha	= 1 << 3,
+			All		= (Red | Green | Blue | Alpha),
+		};
+
+		struct RenderTargetBlendDesc
+		{
+			bool m_blendEnable = false;
+			bool m_logicOpEnable = false;
+			BlendMode m_srcBlend = BlendMode::One;
+			BlendMode m_dstBlend = BlendMode::Zero;
+			BlendOp m_blendOp = BlendOp::Add;
+			BlendMode m_srcBlendAlpha = BlendMode::One;
+			BlendMode m_dstBlendAlpha = BlendMode::Zero;
+			BlendOp m_blendOpAlpha = BlendOp::Add;
+			LogicOp m_logicOp = LogicOp::NoOp;
+			uint8_t m_renderTargetWriteMask = ColorWriteEnable::All;
+		};
+
+		bool GetAlphaToCoverageEnabled() const;
+		void SetAlphaToCoverageEnabled(bool);
+
+		bool GetIndependentBlendEnabled() const;
+		void SetIndependentBlendEnabled(bool);
+
+		std::array<RenderTargetBlendDesc, 8> const& GetRenderTargetBlendDescs() const;
+		void SetRenderTargetBlendDesc(RenderTargetBlendDesc const&, uint8_t index);
+
+
 	private:
 		bool m_isDirty;
 
@@ -193,6 +286,11 @@ namespace re
 		uint8_t m_stencilWriteMask;
 		StencilOpDesc m_frontFace;
 		StencilOpDesc m_backFace;
+
+		// Blend state:
+		bool m_alphaToCoverageEnable;
+		bool m_independentBlendEnable;
+		std::array<RenderTargetBlendDesc, 8> m_renderTargetBlendDescs;
 	};
 
 
@@ -379,5 +477,46 @@ namespace re
 	inline void PipelineState::SetBackFaceStencilOpDesc(StencilOpDesc const& backFace)
 	{
 		m_backFace = backFace;
+	}
+
+
+	inline bool PipelineState::GetAlphaToCoverageEnabled() const
+	{
+		return m_alphaToCoverageEnable;
+	}
+
+
+	inline void PipelineState::SetAlphaToCoverageEnabled(bool alphaToCoverageEnable)
+	{
+		m_alphaToCoverageEnable = alphaToCoverageEnable;
+	}
+
+
+	inline bool PipelineState::GetIndependentBlendEnabled() const
+	{
+		return m_independentBlendEnable;
+	}
+
+
+	inline void PipelineState::SetIndependentBlendEnabled(bool independentBlendEnable)
+	{
+		m_independentBlendEnable = independentBlendEnable;
+	}
+
+
+	inline std::array<PipelineState::RenderTargetBlendDesc, 8> const& PipelineState::GetRenderTargetBlendDescs() const
+	{
+		return m_renderTargetBlendDescs;
+	}
+
+
+	inline void PipelineState::SetRenderTargetBlendDesc(RenderTargetBlendDesc const& blendDesc, uint8_t index)
+	{
+		SEAssert(blendDesc.m_logicOpEnable != blendDesc.m_blendEnable ||
+			(!blendDesc.m_logicOpEnable &&
+				!blendDesc.m_blendEnable),
+			"It is not valid for logic op and blend to both be enabled");
+
+		m_renderTargetBlendDescs[index] = blendDesc;
 	}
 }

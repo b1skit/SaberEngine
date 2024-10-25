@@ -19,7 +19,7 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "Blit_PShader",
 				"PShaderEntryPoint": "PShader",
-				"PipelineState": "FullscreenQuad_Always",
+				"PipelineState": "EmissiveBlitPipelineState",
 				"VertexStream": "PositionUV"
 			},
 			{
@@ -28,5 +28,26 @@
 				"CShaderEntryPoint" :  "CShader"
 			}
 		]
-	}
+	},
+
+	"PipelineStates": [
+			{
+				"Name": "EmissiveBlitPipelineState",
+				"DepthStencilState" : {
+					"DepthTestEnabled" : false,
+					"DepthComparison": "Always",
+					"DepthWriteMask": "Zero"
+				},
+				"BlendState" : {
+					"RenderTargets": [
+						{
+							"BlendEnable" : true,
+							"SrcBlend" : "One",
+							"DstBlend" : "One",
+							"BlendOp": "Add"
+						}
+					]
+				}
+			}
+		]
 }

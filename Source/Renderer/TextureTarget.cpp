@@ -96,50 +96,6 @@ namespace re
 	}
 
 
-	void TextureTarget::SetBlendMode(TargetParams::BlendModes const& blendModes)
-	{
-		m_targetParams.m_blendModes = blendModes;
-	}
-
-
-	re::TextureTarget::TargetParams::BlendModes const& TextureTarget::GetBlendMode() const
-	{
-		return m_targetParams.m_blendModes;
-	}
-
-
-	void TextureTarget::SetColorWriteBit(Channel channels)
-	{
-		SEAssert(channels != 0 &&
-			channels <= Channel::All,
-			"Invalid channels mask");
-
-		m_targetParams.m_colorWriteMask |= channels;
-	}
-
-
-	TextureTarget::ColorWriteMask TextureTarget::GetColorWriteMask() const
-	{
-		return m_targetParams.m_colorWriteMask;
-	}
-
-
-	bool TextureTarget::WritesColor(Channel channel) const
-	{
-		SEAssert(channel != 0 &&
-			channel <= Channel::All,
-			"Invalid channels mask");
-
-		return (m_targetParams.m_colorWriteMask & channel);
-	}
-
-
-	bool TextureTarget::WritesColor() const
-	{
-		return m_targetParams.m_colorWriteMask != 0;
-	}
-
-
 	void TextureTarget::SetClearMode(re::TextureTarget::ClearMode clearMode)
 	{
 		m_targetParams.m_clearMode = clearMode;
@@ -377,28 +333,6 @@ namespace re
 	}
 	
 
-	void TextureTargetSet::SetAllColorWriteModes(TextureTarget::Channel channelMask)
-	{
-		for (size_t i = 0; i < m_colorTargets.size(); i++)
-		{
-			m_colorTargets[i].SetColorWriteBit(channelMask);
-		}
-	}
-
-
-	bool TextureTargetSet::WritesColor() const
-	{
-		for (size_t i = 0; i < m_colorTargets.size(); i++)
-		{
-			if (m_colorTargets[i].WritesColor())
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-
 	uint8_t TextureTargetSet::GetNumColorTargets() const
 	{
 		return m_numColorTargets;
@@ -450,31 +384,6 @@ namespace re
 		}
 
 		return targetDimensions;
-	}
-
-
-	void TextureTargetSet::SetColorTargetBlendModes(
-		size_t numTargets, 
-		re::TextureTarget::TargetParams::BlendModes const* blendModesArray)
-	{
-		SEAssert(blendModesArray, "Array cannot be null");
-		SEAssert(numTargets < m_colorTargets.size(), "Too many blend modes supplied");
-
-		for (size_t i = 0; i < numTargets; i++)
-		{
-			// Note: It's valid to set a blend mode even if a Target does not have a Texture
-			m_colorTargets[i].SetBlendMode(blendModesArray[i]);
-		}
-	}
-
-
-	void TextureTargetSet::SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes const& blendModes)
-	{
-		for (size_t i = 0; i < m_colorTargets.size(); i++)
-		{
-			// Note: It's valid to set a blend mode even if a Target does not have a Texture
-			m_colorTargets[i].SetBlendMode(blendModes);
-		}
 	}
 
 
@@ -603,8 +512,6 @@ namespace re
 			if (m_colorTargets[slot].HasTexture())
 			{
 				AddDataBytesToHash(m_colorTargets[slot].GetTexture()->GetTextureParams().m_format);
-				AddDataBytesToHash(m_colorTargets[slot].GetBlendMode());
-				AddDataBytesToHash(m_colorTargets[slot].GetColorWriteMask());
 				AddDataBytesToHash(m_colorTargets[slot].GetTargetParams().m_textureView.Flags);
 			}
 		}

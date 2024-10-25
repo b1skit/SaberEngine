@@ -122,7 +122,7 @@ namespace re
 
 		re::TextureTargetSet const* GetTextureTargetSet() const;
 		re::TextureTargetSet* GetTextureTargetSet();
-		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
+		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> const& targetSet);
 
 		void AddPermanentTextureInput(
 			std::string const& shaderName,
@@ -132,8 +132,8 @@ namespace re
 
 		void AddPermanentTextureInput(
 			std::string const& shaderName,
-			std::shared_ptr<re::Texture>,
-			std::shared_ptr<re::Sampler>,
+			std::shared_ptr<re::Texture> const&,
+			std::shared_ptr<re::Sampler> const&,
 			re::TextureView const&);
 
 		std::vector<re::TextureAndSamplerInput> const& GetPermanentTextureInputs() const;
@@ -141,13 +141,13 @@ namespace re
 		void AddSingleFrameTextureInput(
 			char const* shaderName,
 			re::Texture const*,
-			std::shared_ptr<re::Sampler>,
+			std::shared_ptr<re::Sampler> const&,
 			re::TextureView const&);
 
 		void AddSingleFrameTextureInput(
 			char const* shaderName,
-			std::shared_ptr<re::Texture>,
-			std::shared_ptr<re::Sampler>,
+			std::shared_ptr<re::Texture> const&,
+			std::shared_ptr<re::Sampler> const&,
 			re::TextureView const&);
 
 		std::vector<re::TextureAndSamplerInput> const& GetSingleFrameTextureInputs() const;
@@ -159,7 +159,7 @@ namespace re
 
 		void AddPermanentRWTextureInput(
 			std::string const& shaderName,
-			std::shared_ptr<re::Texture>,
+			std::shared_ptr<re::Texture> const&,
 			re::TextureView const&);
 
 		std::vector<re::RWTextureInput> const& GetPermanentRWTextureInputs() const;
@@ -171,7 +171,7 @@ namespace re
 
 		void AddSingleFrameRWTextureInput(
 			char const* shaderName,
-			std::shared_ptr<re::Texture>,
+			std::shared_ptr<re::Texture> const&,
 			re::TextureView const&);
 
 		std::vector<re::RWTextureInput> const& GetSingleFrameRWTextureInputs() const;

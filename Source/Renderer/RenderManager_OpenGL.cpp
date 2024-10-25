@@ -157,7 +157,7 @@ namespace opengl
 						"The current stage does not have targets set. This is unexpected");
 
 
-					auto SetDrawState = [&renderStage, &context, &stageTargets](
+					auto SetDrawState = [&renderStage, &context](
 						re::Shader const* shader, bool doSetStageInputs)
 					{
 						opengl::Shader::Bind(*shader);

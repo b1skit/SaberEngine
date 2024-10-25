@@ -29,36 +29,6 @@ namespace re
 
 
 	public:
-		enum class BlendMode : uint8_t // Graphics stages only
-		{
-			Disabled,
-			Zero,
-			One,
-			SrcColor,
-			OneMinusSrcColor,
-			DstColor,
-			OneMinusDstColor,
-			SrcAlpha,
-			OneMinusSrcAlpha,
-			DstAlpha,
-			OneMinusDstAlpha,
-			BlendMode_Count
-		};
-
-
-		enum Channel : uint8_t
-		{
-			R = 1 << 0,
-			G = 1 << 1,
-			B = 1 << 2,
-			A = 1 << 3,
-
-			RGB = (R | G | B),
-			All = (R | G | B | A),
-		};
-		using ColorWriteMask = uint8_t;
-
-
 		enum class ClearMode : bool
 		{
 			Enabled,
@@ -72,21 +42,8 @@ namespace re
 			re::TextureView m_textureView;
 
 			std::string m_shaderName; // For UAV targets
-			
-			struct BlendModes
-			{
-				BlendMode m_srcBlendMode = BlendMode::One;
-				BlendMode m_dstBlendMode = BlendMode::Zero;
-			} m_blendModes;
 
-			ColorWriteMask m_colorWriteMask = Channel::All;
-
-			// TODO: Update PipelineState_DX12.cpp::BuildBlendDesc to have D3D12_BLEND_DESC::IndependentBlendEnable = true
 			ClearMode m_clearMode = ClearMode::Disabled;
-
-			// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
-			// TODO: We should support alpha blend modes, in addition to the color blend modes here
-			// TODO: Support logical operations (AND/OR/XOR etc)
 		};
 
 	public:
@@ -110,14 +67,6 @@ namespace re
 
 		void SetTargetParams(TargetParams const& targetParams);
 		TargetParams const& GetTargetParams() const { return m_targetParams; }
-
-		void SetBlendMode(TargetParams::BlendModes const&);
-		TargetParams::BlendModes const& GetBlendMode() const;
-
-		void SetColorWriteBit(Channel channels);
-		ColorWriteMask GetColorWriteMask() const;
-		bool WritesColor(Channel channel) const;
-		bool WritesColor() const;
 
 		void SetClearMode(re::TextureTarget::ClearMode);
 		re::TextureTarget::ClearMode GetClearMode() const;
@@ -241,14 +190,8 @@ namespace re
 		bool HasColorTarget() const;
 		bool HasDepthTarget() const;
 
-		void SetAllColorWriteModes(TextureTarget::Channel channelMask);
-		bool WritesColor() const;
-
 		uint8_t GetNumColorTargets() const;
 		glm::vec4 GetTargetDimensions() const;
-
-		void SetColorTargetBlendModes(size_t numTargets, re::TextureTarget::TargetParams::BlendModes const* blendModesArray);
-		void SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes const&);
 
 		void SetColorTargetClearMode(size_t targetIdx, re::TextureTarget::ClearMode);
 		void SetAllColorTargetClearModes(re::TextureTarget::ClearMode);
