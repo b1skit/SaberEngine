@@ -20,6 +20,12 @@
 					{ "Rule": "Debug", "Mode": "Normal" }
 				],
 				"Technique": "Debug_Normal"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "Debug", "Mode": "Axis" }
+				],
+				"Technique": "Debug_Axis"
 			}
 		],
 
@@ -47,6 +53,16 @@
 				"GShaderDefines" : ["DEBUG_NORMAL"],
 				"PipelineState": "Debug_Point",
 				"VertexStream": "PositionNormal"
+			},
+			{
+				"Name": "Debug_Axis",
+				"Parent" : "Debug_Line",
+				"VShaderDefines" : ["DEBUG_AXIS"],
+				"GShader": "Line",
+				"GShaderEntryPoint": "GShader",
+				"GShaderDefines" : ["DEBUG_AXIS"],
+				"PipelineState": "Debug_Point",
+				"VertexStream": "PositionOnly"
 			}
 		]
 	},

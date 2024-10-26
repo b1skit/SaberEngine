@@ -7,9 +7,7 @@
 
 struct DebugData
 {
-	float4 g_axisScales; // Axis scales: .x = world CS, .y = mesh CS, .z = LightCS, .w = Camera CS
-
-	float4 g_scales; // Line scales: .x = normal, .yzw = unused
+	float4 g_scales; // Line scales: .x = normal, .y = axis, .zw = unused
 
 	// XYZ Axis (red/green/blue): [0], [1], [2]
 	// Normals: [3]

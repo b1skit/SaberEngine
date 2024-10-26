@@ -56,19 +56,17 @@ namespace gr
 		glm::vec3 m_yAxisColor = glm::vec3(0.f, 1.f, 0.f);
 		glm::vec3 m_zAxisColor = glm::vec3(0.f, 0.f, 1.f);
 		float m_axisOpacity = 0.5f;
+		float m_axisScale = 0.2f;
 
 		std::unordered_map<gr::RenderDataID, re::BufferInput> m_meshPrimTransformBuffers;
 
 		bool m_showWorldCoordinateAxis = false;
-		float m_worldCoordinateAxisScale = 1.f;
 		std::unique_ptr<re::Batch> m_worldCoordinateAxisBatch;
 
 		bool m_showMeshCoordinateAxis = false;
-		float m_meshCoordinateAxisScale = 1.f;
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_meshCoordinateAxisBatches;
 
 		bool m_showLightCoordinateAxis = false;
-		float m_lightCoordinateAxisScale = 1.f;
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_lightCoordinateAxisBatches;
 		std::unordered_map<gr::RenderDataID, re::BufferInput> m_lightCoordinateAxisTransformBuffers;
 
@@ -93,7 +91,6 @@ namespace gr
 
 		bool m_showCameraFrustums = false;
 		glm::vec4 m_cameraFrustumColor = glm::vec4(1.f, 1.f, 1.f, 0.5f);
-		float m_cameraCoordinateAxisScale = 1.f;
 		std::unordered_map<gr::RenderDataID, std::pair<gr::Camera::RenderData const*, gr::Transform::RenderData const*>> m_camerasToDebug;
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_cameraAxisBatches;
 		std::unordered_map<gr::RenderDataID, re::BufferInput> m_cameraAxisTransformBuffers;

@@ -11,6 +11,8 @@
 
 #if defined(DEBUG_NORMAL)
 #include "../Generated/GLSL/VertexStreams_PositionNormal.glsli"
+#elif defined(DEBUG_AXIS)
+#include "../Generated/GLSL/VertexStreams_PositionOnly.glsli"
 #else
 #include "../Generated/GLSL/VertexStreams_PositionColor.glsli"
 #endif
@@ -20,7 +22,10 @@
 struct LineVertexOut
 {
 	vec4 Position;
+
+#if !defined(DEBUG_NORMAL) && !defined(DEBUG_AXIS)
 	vec4 Color;
+#endif
 	
 #ifdef DEBUG_NORMAL
 	vec3 Normal;	
@@ -48,13 +53,13 @@ void VShader()
 #if defined(DEBUG_NORMAL)
 
 	gl_Position = vec4(Position, 1.f);
-	
 	Out.Normal = Normal;
-	
-	Out.Color = _DebugParams.g_colors[3];
-	
 	InstanceID = gl_InstanceID;
 		
+#elif defined(DEBUG_AXIS)
+	gl_Position = vec4(Position, 1.f);
+	InstanceID = gl_InstanceID;
+
 #else
 	
 	Out.Color = Color;
@@ -66,6 +71,7 @@ void VShader()
 	gl_Position = ndcPos;
 	
 #endif
+
 }
 #endif
 
@@ -73,13 +79,15 @@ void VShader()
 #if defined(SE_GEOMETRY_SHADER)
 
 layout (points) in;
-layout (line_strip, max_vertices = 2) out;
 
 layout(location = 6) in LineVertexOut In[];
 layout(location = 6) out LineGeometryOut Out;
 
 flat in uint InstanceID[];
 
+
+#if defined(DEBUG_NORMAL)
+layout (line_strip, max_vertices = 2) out;
 void GShader()
 {
 	const vec4 worldPos = _InstancedTransformParams[InstanceID[0]].g_model * gl_in[0].gl_Position;
@@ -87,7 +95,7 @@ void GShader()
 	ndcPos.y *= -1.f; // Flip the Y axis in NDC space, as we're writing directly to the backbuffer
 
 	gl_Position = ndcPos;
-	Out.Color = In[0].Color;
+	Out.Color = _DebugParams.g_colors[3];
 		
 	EmitVertex();
 
@@ -104,6 +112,50 @@ void GShader()
 
 	EmitVertex();
 }
+#endif
+
+
+#if defined(DEBUG_AXIS)
+layout (line_strip, max_vertices = 6) out;
+void GShader()
+{
+	// Origin:		
+	const vec4 worldPos = _InstancedTransformParams[InstanceID[0]].g_model * gl_in[0].gl_Position;
+	vec4 ndcPos = _CameraParams.g_viewProjection * worldPos;
+	ndcPos.y *= -1.f; // Flip the Y axis in NDC space, as we're writing directly to the backbuffer
+	
+	// Append the axis offsets:
+	const float axisScale = _DebugParams.g_scales.y;
+	const vec3 axisDirs[3] = { vec3(1.f, 0.f, 0.f), vec3(0.f, 1.f, 0.f), vec3(0.f, 0.f, 1.f) };
+	
+	for (uint i = 0; i < 3; ++i)
+	{	
+		Out.Color = _DebugParams.g_colors[i];
+		
+		// Origin position:
+		gl_Position = ndcPos;
+		
+		EmitVertex();
+		
+		// Axis offset:
+		const vec4 offsetWorldPos = 
+			_InstancedTransformParams[InstanceID[0]].g_model * vec4(gl_in[0].gl_Position.xyz + axisDirs[i], 1.f);
+
+		const vec3 scaledOffsetDir = normalize(offsetWorldPos.xyz - worldPos.xyz) * axisScale;
+
+		vec4 offsetNDCPos = _CameraParams.g_viewProjection * vec4(worldPos.xyz + scaledOffsetDir, 1.f);
+		offsetNDCPos.y *= -1.f;
+
+		gl_Position = offsetNDCPos;
+
+		EmitVertex();
+
+		// Prepare for the next line
+		EndPrimitive();
+	}
+}
+#endif
+
 
 #endif
 

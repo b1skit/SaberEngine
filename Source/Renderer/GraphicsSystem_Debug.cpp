@@ -21,56 +21,28 @@ namespace
 	static const EffectID k_debugEffectID = effect::Effect::ComputeEffectID(k_debugEffectName);
 
 
-	std::unique_ptr<re::Batch> BuildAxisBatch(
-		re::Lifetime batchLifetime,
-		float axisScale,
-		glm::vec3 const& xAxisColor,
-		glm::vec3 const& yAxisColor,
-		glm::vec3 const& zAxisColor,
-		float axisOpacity)
+	std::unique_ptr<re::Batch> BuildAxisBatch(re::Lifetime batchLifetime)
 	{
-		util::ByteVector axisPositions = util::ByteVector::Create<glm::vec3>({
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisX * axisScale,
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisY * axisScale,
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisZ * axisScale,
-		});
-
-		util::ByteVector axisColors = util::ByteVector::Create<glm::vec4>({
-			glm::vec4(xAxisColor, axisOpacity), glm::vec4(xAxisColor, axisOpacity),
-			glm::vec4(yAxisColor, axisOpacity), glm::vec4(yAxisColor, axisOpacity),
-			glm::vec4(zAxisColor, axisOpacity), glm::vec4(zAxisColor, axisOpacity),
-		});
-
-		const re::Lifetime streamLifetime = batchLifetime;
+		util::ByteVector axisOriginPos = util::ByteVector::Create<glm::vec3>({ glm::vec3(0.f, 0.f, 0.f) });
 
 		std::shared_ptr<gr::VertexStream> axisPositionStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
-				.m_lifetime = streamLifetime,
+				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
-			std::move(axisPositions),
+			std::move(axisOriginPos),
 			false);
 
-		std::shared_ptr<gr::VertexStream> axisColorStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_lifetime = streamLifetime,
-				.m_type = gr::VertexStream::Type::Color,
-				.m_dataType = re::DataType::Float4
-			},
-			std::move(axisColors),
-			false);
-
-		re::Batch::GraphicsParams axisBatchGraphicsParams{};
-		axisBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
-		axisBatchGraphicsParams.m_numInstances = 1;
-		axisBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
-
-		axisBatchGraphicsParams.m_vertexBuffers[0] = re::VertexBufferInput(axisPositionStream.get());
-		axisBatchGraphicsParams.m_vertexBuffers[1] = re::VertexBufferInput(axisColorStream.get());
+		const re::Batch::GraphicsParams axisBatchGraphicsParams{
+			.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced,
+			.m_numInstances = 1,
+			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList,
+			.m_vertexBuffers = { re::VertexBufferInput(axisPositionStream.get()) },
+		};		
 
 		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
-			batchLifetime, axisBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
+			batchLifetime, axisBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Axis);
 
 		return axisBatch;
 	}
@@ -426,12 +398,7 @@ namespace gr
 		{
 			if (m_worldCoordinateAxisBatch == nullptr)
 			{
-				m_worldCoordinateAxisBatch = std::move(BuildAxisBatch(re::Lifetime::Permanent, 
-						m_worldCoordinateAxisScale, 
-						m_xAxisColor, 
-						m_yAxisColor, 
-						m_zAxisColor,
-						m_axisOpacity));
+				m_worldCoordinateAxisBatch = std::move(BuildAxisBatch(re::Lifetime::Permanent));
 
 				re::BufferInput const& identityTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
 					re::Lifetime::Permanent, re::Buffer::StagingPool::Temporary, &k_identity, nullptr);
@@ -554,13 +521,7 @@ namespace gr
 						{
 							m_meshCoordinateAxisBatches.emplace(
 								meshPrimRenderDataID, 
-								std::move(BuildAxisBatch(
-									re::Lifetime::Permanent,
-									m_meshCoordinateAxisScale,
-									m_xAxisColor,
-									m_yAxisColor,
-									m_zAxisColor,
-									m_axisOpacity)));
+								std::move(BuildAxisBatch(re::Lifetime::Permanent)));
 
 							m_meshCoordinateAxisBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 						}
@@ -697,13 +658,7 @@ namespace gr
 				{
 					m_cameraAxisBatches.emplace(
 						camID, 
-						BuildAxisBatch(
-							re::Lifetime::Permanent, 
-							m_cameraCoordinateAxisScale, 
-							m_xAxisColor, 
-							m_yAxisColor, 
-							m_zAxisColor,
-							m_axisOpacity));
+						BuildAxisBatch(re::Lifetime::Permanent));
 
 					m_cameraAxisBatches.at(camID)->SetBuffer(m_cameraAxisTransformBuffers.at(camID));
 				}
@@ -886,7 +841,7 @@ namespace gr
 				{
 					// Adjust the scale of the light's global TRS matrix basis vectors:
 					glm::mat4 const& lightTR =
-						AdjustMat4Scale(transformData.g_model, transformData.m_globalScale, m_lightCoordinateAxisScale);
+						AdjustMat4Scale(transformData.g_model, transformData.m_globalScale, m_axisScale);
 
 					if (!m_lightCoordinateAxisTransformBuffers.contains(lightID))
 					{
@@ -909,13 +864,7 @@ namespace gr
 					{
 						m_lightCoordinateAxisBatches.emplace(
 							lightID,
-							BuildAxisBatch(
-								re::Lifetime::Permanent,
-								m_lightCoordinateAxisScale,
-								m_xAxisColor,
-								m_yAxisColor,
-								m_zAxisColor,
-								m_axisOpacity));
+							BuildAxisBatch(re::Lifetime::Permanent));
 
 						m_lightCoordinateAxisBatches.at(lightID)->SetBuffer(
 							m_lightCoordinateAxisTransformBuffers.at(lightID));
@@ -988,12 +937,11 @@ namespace gr
 	DebugData DebugGraphicsSystem::PackDebugData() const
 	{
 		return DebugData{
-				.g_axisScales = glm::vec4(
-					m_worldCoordinateAxisScale,
-					m_meshCoordinateAxisScale,
-					m_lightCoordinateAxisScale,
-					m_cameraCoordinateAxisScale),
-				.g_scales = glm::vec4(m_vertexNormalsScale, 0.f, 0.f, 0.f),
+				.g_scales = glm::vec4(
+					m_vertexNormalsScale,
+					m_axisScale,
+					0.f,
+					0.f),
 				.g_colors = {
 					glm::vec4(m_xAxisColor, m_axisOpacity),	// X: Red
 					glm::vec4(m_yAxisColor, m_axisOpacity),	// Y: Green
@@ -1049,29 +997,6 @@ namespace gr
 				}
 			}
 			ImGui::Unindent();
-		}
-
-		m_isDirty |= ImGui::Checkbox(std::format("Show origin coordinate XYZ axis").c_str(), &m_showWorldCoordinateAxis);
-		if (m_showWorldCoordinateAxis)
-		{
-			m_isDirty |= ImGui::SliderFloat("Coordinate axis scale", &m_worldCoordinateAxisScale, 0.f, 20.f);
-		}
-
-		m_isDirty |= ImGui::Checkbox(std::format("Show mesh coordinate axis").c_str(), &m_showMeshCoordinateAxis);
-		if (m_showMeshCoordinateAxis)
-		{
-			m_isDirty |= ImGui::SliderFloat("Mesh coordinate axis scale", &m_meshCoordinateAxisScale, 0.f, 20.f);
-		}
-
-		m_isDirty |= ImGui::Checkbox(std::format("Show light coordinate axis").c_str(), &m_showLightCoordinateAxis);
-		if (m_showLightCoordinateAxis)
-		{
-			m_isDirty |= ImGui::SliderFloat("Light coordinate axis scale", &m_lightCoordinateAxisScale, 0.f, 20.f);
-		}
-
-		if (m_showWorldCoordinateAxis || m_showMeshCoordinateAxis || m_showLightCoordinateAxis)
-		{
-			m_isDirty |= ImGui::SliderFloat("Axis opacity", &m_axisOpacity, 0.f, 1.f);
 		}
 
 		auto ShowColorPicker = [](bool doShow, glm::vec4& color) -> bool
@@ -1136,8 +1061,6 @@ namespace gr
 
 				++camItr;
 			}
-
-			m_isDirty |= ImGui::SliderFloat("Camera coordinate axis scale", &m_cameraCoordinateAxisScale, 0.f, 20.f);
 			ImGui::Unindent();
 		}
 		else
@@ -1146,8 +1069,22 @@ namespace gr
 			m_camerasToDebug.clear();
 		}
 
+		m_isDirty |= ImGui::Checkbox(std::format("Show origin coordinate XYZ axis").c_str(), &m_showWorldCoordinateAxis);
+		m_isDirty |= ImGui::Checkbox(std::format("Show mesh coordinate axis").c_str(), &m_showMeshCoordinateAxis);
+		m_isDirty |= ImGui::Checkbox(std::format("Show light coordinate axis").c_str(), &m_showLightCoordinateAxis);
+
+		if (m_showWorldCoordinateAxis || m_showMeshCoordinateAxis || m_showLightCoordinateAxis || m_showCameraFrustums)
+		{
+			ImGui::Indent();
+			m_isDirty |= ImGui::SliderFloat("Axis scale", &m_axisScale, 0.f, 1.f);
+			m_isDirty |= ImGui::SliderFloat("Axis opacity", &m_axisOpacity, 0.f, 1.f);
+			ImGui::Unindent();
+		}
+
 		m_isDirty |= ImGui::Checkbox(std::format("Show mesh wireframes").c_str(), &m_showAllWireframe);
+		m_isDirty |= ShowColorPicker(m_showAllWireframe, m_wireframeColor);
 
 		m_isDirty |= ImGui::Checkbox(std::format("Show deferred light mesh wireframes").c_str(), &m_showDeferredLightWireframe);
+		m_isDirty |= ShowColorPicker(m_showDeferredLightWireframe, m_deferredLightwireframeColor);
 	}
 }
