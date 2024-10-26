@@ -77,7 +77,7 @@ namespace
 
 
 	std::unique_ptr<re::Batch> BuildBoundingBoxBatch(
-		re::Lifetime batchLifetime, gr::Bounds::RenderData const& bounds, glm::vec3 const& boxColor)
+		re::Lifetime batchLifetime, gr::Bounds::RenderData const& bounds, glm::vec4 const& boxColor)
 	{
 		/* Construct a cube from 8 points:
 		*     e----f
@@ -109,8 +109,7 @@ namespace
 		//																	 0, 1, 2, 3, 4, 5, 6, 7
 		util::ByteVector boxPositions = util::ByteVector::Create<glm::vec3>({a, b, c, d, e, f, g, h});
 
-		const glm::vec4 boxColorVec4 = glm::vec4(boxColor, 1.f);
-		util::ByteVector boxColors = util::ByteVector::Create<glm::vec4>(boxPositions.size(), boxColorVec4);
+		util::ByteVector boxColors = util::ByteVector::Create<glm::vec4>(boxPositions.size(), boxColor);
 
 		util::ByteVector boxIndexes = util::ByteVector::Create<uint16_t>({
 			// Front face:
@@ -216,7 +215,7 @@ namespace
 	std::unique_ptr<re::Batch> BuildCameraFrustumBatch(
 		re::Lifetime batchLifetime,
 		gr::Transform::RenderData const* transformData,
-		glm::vec3 const& frustumColor)
+		glm::vec4 const& frustumColor)
 	{
 		// NDC coordinates:
 		glm::vec4 farTL = glm::vec4(-1.f, 1.f, 1.f, 1.f);
@@ -232,8 +231,7 @@ namespace
 			{ farTL, farBL, farTR, farBR, nearTL, nearBL, nearTR, nearBR });
 		//	  0		1		2	   3	  4		  5		  6		  7
 
-		const glm::vec4 fustumColorVec4 = glm::vec4(frustumColor, 1.f);
-		util::ByteVector frustumColors = util::ByteVector::Create( frustumPositions.size(), fustumColorVec4 );
+		util::ByteVector frustumColors = util::ByteVector::Create( frustumPositions.size(), frustumColor);
 
 		util::ByteVector frustumIndexes = util::ByteVector::Create<uint16_t>({
 			// Back face:
@@ -306,7 +304,7 @@ namespace
 	std::unique_ptr<re::Batch> BuildWireframeBatch(
 		re::Lifetime batchLifetime, 
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
-		glm::vec3 const& meshColor)
+		glm::vec4 const& meshColor)
 	{
 		gr::VertexStream const* positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
 			meshPrimRenderData, gr::VertexStream::Type::Position);
@@ -314,12 +312,11 @@ namespace
 		gr::VertexStream const* indexStream = meshPrimRenderData.m_indexStream;
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
-		const glm::vec4 meshColorVec4 = glm::vec4(meshColor, 1.f);
-		util::ByteVector meshColors = util::ByteVector::Create<glm::vec4>(positionStream->GetNumElements(), meshColorVec4);
+		util::ByteVector meshColors = util::ByteVector::Create<glm::vec4>(positionStream->GetNumElements(), meshColor);
 
 		const re::Lifetime streamLifetime = batchLifetime;
 
-		std::shared_ptr<gr::VertexStream> boxColorStream = gr::VertexStream::Create(
+		std::shared_ptr<gr::VertexStream> colorStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = gr::VertexStream::Type::Color,
@@ -334,7 +331,7 @@ namespace
 		wireframeBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 
 		wireframeBatchGraphicsParams.m_vertexBuffers[0] = positionStream;
-		wireframeBatchGraphicsParams.m_vertexBuffers[1] = boxColorStream;
+		wireframeBatchGraphicsParams.m_vertexBuffers[1] = colorStream;
 
 		wireframeBatchGraphicsParams.m_indexBuffer = indexStream;
 
@@ -991,19 +988,29 @@ namespace gr
 	DebugData DebugGraphicsSystem::PackDebugData() const
 	{
 		return DebugData{
-				.g_normalColor = m_normalsColor,
 				.g_axisScales = glm::vec4(
 					m_worldCoordinateAxisScale,
 					m_meshCoordinateAxisScale,
 					m_lightCoordinateAxisScale,
 					m_cameraCoordinateAxisScale),
 				.g_scales = glm::vec4(m_vertexNormalsScale, 0.f, 0.f, 0.f),
+				.g_colors = {
+					glm::vec4(m_xAxisColor, m_axisOpacity),	// X: Red
+					glm::vec4(m_yAxisColor, m_axisOpacity),	// Y: Green
+					glm::vec4(m_zAxisColor, m_axisOpacity),	// Z: Blue
+					m_normalsColor},
 		};
 	}
 
 
 	void DebugGraphicsSystem::ShowImGuiWindow()
 	{
+		constexpr ImGuiColorEditFlags k_colorPickerFlags =
+			ImGuiColorEditFlags_NoInputs |
+			ImGuiColorEditFlags_Float |
+			ImGuiColorEditFlags_AlphaBar;
+
+
 		if (ImGui::CollapsingHeader("Target render data objects"))
 		{
 			ImGui::Indent();
@@ -1064,20 +1071,38 @@ namespace gr
 
 		if (m_showWorldCoordinateAxis || m_showMeshCoordinateAxis || m_showLightCoordinateAxis)
 		{
-			// TODO: We need to modify how blending works, as debug elements render directly to the (null) backbuffer
-			ImGui::BeginDisabled();
 			m_isDirty |= ImGui::SliderFloat("Axis opacity", &m_axisOpacity, 0.f, 1.f);
-			ImGui::EndDisabled();
 		}
 
+		auto ShowColorPicker = [](bool doShow, glm::vec4& color) -> bool
+			{
+				bool isDirty = false;
+				if (doShow)
+				{
+					ImGui::Indent();
+					isDirty |= ImGui::ColorEdit4("Line color", &color.x, k_colorPickerFlags);
+					ImGui::Unindent();
+				}
+				return isDirty;
+			};
+
 		m_isDirty |= ImGui::Checkbox(std::format("Show scene bounding box").c_str(), &m_showSceneBoundingBox);
+		m_isDirty |= ShowColorPicker(m_showSceneBoundingBox, m_sceneBoundsColor);
+
 		m_isDirty |= ImGui::Checkbox(std::format("Show Mesh bounding boxes").c_str(), &m_showAllMeshBoundingBoxes);
+		m_isDirty |= ShowColorPicker(m_showAllMeshBoundingBoxes, m_meshBoundsColor);
+
 		m_isDirty |= ImGui::Checkbox(std::format("Show MeshPrimitive bounding boxes").c_str(), &m_showAllMeshPrimitiveBoundingBoxes);
+		m_isDirty |= ShowColorPicker(m_showAllMeshPrimitiveBoundingBoxes, m_meshPrimitiveBoundsColor);
 
 		m_isDirty |= ImGui::Checkbox(std::format("Show vertex normals").c_str(), &m_showAllVertexNormals);
 		if (m_showAllVertexNormals)
 		{
-			m_isDirty |= ImGui::SliderFloat("Vertex normals scale", &m_vertexNormalsScale, 0.f, 2.f);
+			ImGui::Indent();
+			m_isDirty |= ImGui::ColorEdit4("Normal color", &m_normalsColor.x, ImGuiColorEditFlags_NoLabel | k_colorPickerFlags);
+			ImGui::SameLine();
+			m_isDirty |= ImGui::SliderFloat("Scale", &m_vertexNormalsScale, 0.f, 1.f);
+			ImGui::Unindent();
 		}
 		
 		if (ImGui::CollapsingHeader(std::format("Debug camera frustums").c_str()))

@@ -6,7 +6,6 @@
 
 #include "../Common/DebugParams.h"
 
-#include "Transformations.glsli"
 
 #if defined(SE_VERTEX_SHADER)
 
@@ -52,7 +51,7 @@ void VShader()
 	
 	Out.Normal = Normal;
 	
-	Out.Color = _DebugParams.g_normalColor;
+	Out.Color = _DebugParams.g_colors[3];
 	
 	InstanceID = gl_InstanceID;
 		
@@ -93,10 +92,12 @@ void GShader()
 	EmitVertex();
 
 	// In[0], extended in the direction of the normal:
-	const vec4 offsetPos = vec4(gl_in[0].gl_Position.xyz + (In[0].Normal.xyz * _DebugParams.g_scales.x), 1.f);
-	const vec4 offsetWorldPos = _InstancedTransformParams[InstanceID[0]].g_model * offsetPos;
+	const vec4 offsetWorldPos = 
+		_InstancedTransformParams[InstanceID[0]].g_model * vec4(gl_in[0].gl_Position.xyz + In[0].Normal.xyz, 1.f);
 
-	vec4 offsetNDCPos = _CameraParams.g_viewProjection * offsetWorldPos;
+	const vec3 scaledOffsetDir = normalize(offsetWorldPos.xyz - worldPos.xyz) * _DebugParams.g_scales.x;
+
+	vec4 offsetNDCPos = _CameraParams.g_viewProjection * vec4(worldPos.xyz + scaledOffsetDir, 1.f);
 	offsetNDCPos.y *= -1.f; 
 
 	gl_Position = offsetNDCPos;

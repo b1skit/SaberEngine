@@ -1,7 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_COLOR
 #include "SaberCommon.hlsli"
-#include "Transformations.hlsli"
 
 #include "../Common/DebugParams.h"
 
@@ -42,7 +41,7 @@ LineVertexOut VShader(VertexIn In)
 	
 	Out.Normal = In.Normal;
 	
-	Out.Color = DebugParams.g_normalColor;
+	Out.Color = DebugParams.g_colors[3];
 	
 	Out.InstanceID = In.InstanceID;
 		
@@ -67,16 +66,19 @@ void GShader(point LineVertexOut In[1], inout LineStream<LineGeometryOut> Stream
 	LineGeometryOut Out;
 		
 	const float4 worldPos = mul(InstancedTransformParams[In[0].InstanceID].g_model, In[0].Position);
-	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
+	const float4 ndcPos = mul(CameraParams.g_viewProjection, worldPos);
+	Out.Position = ndcPos;
 	Out.Color = In[0].Color;
 		
 	StreamOut.Append(Out);
 		
 	// In[0], extended in the direction of the normal:
-	const float4 offsetPos = float4(In[0].Position.xyz + (In[0].Normal.xyz * DebugParams.g_scales.x), 1.f);		
-	const float4 offsetWorldPos = mul(InstancedTransformParams[In[0].InstanceID].g_model, offsetPos);
+	const float4 offsetWorldPos =
+		mul(InstancedTransformParams[In[0].InstanceID].g_model, float4(In[0].Position.xyz + In[0].Normal.xyz, 1.f));
 
-	Out.Position = mul(CameraParams.g_viewProjection, offsetWorldPos);
+	const float3 scaledOffsetDir = normalize(offsetWorldPos.xyz - worldPos.xyz) * DebugParams.g_scales.x;
+
+	Out.Position = mul(CameraParams.g_viewProjection, float4(worldPos.xyz + scaledOffsetDir, 1.f));
 
 	StreamOut.Append(Out);
 }

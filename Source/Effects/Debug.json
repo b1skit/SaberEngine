@@ -62,7 +62,17 @@
 			},		
 			"DepthStencilState" : {
 				"DepthComparison": "Always"
-			}			
+			},
+			"BlendState" : {
+				"RenderTargets" : [
+					{
+						"BlendEnable" : true,
+						"SrcBlend" : "SrcAlpha",
+						"DstBlend" : "InvSrcAlpha",
+						"BlendOp": "Add"
+					}
+				]
+			}
 		},
 		{
 			"Name": "Debug_Triangle",
@@ -74,6 +84,16 @@
 			},
 			"DepthStencilState" : {
 				"DepthComparison": "Always"
+			},
+			"BlendState" : {
+				"RenderTargets" : [
+					{
+						"BlendEnable" : true,
+						"SrcBlend" : "SrcAlpha",
+						"DstBlend" : "InvSrcAlpha",
+						"BlendOp": "Add"
+					}
+				]
 			}
 		},
 		{
@@ -86,6 +106,16 @@
 			},
 			"DepthStencilState" : {
 				"DepthComparison": "Always"
+			},
+			"BlendState" : {
+				"RenderTargets" : [
+					{
+						"BlendEnable" : true,
+						"SrcBlend" : "SrcAlpha",
+						"DstBlend" : "InvSrcAlpha",
+						"BlendOp": "Add"
+					}
+				]
 			}
 		}
 	]
