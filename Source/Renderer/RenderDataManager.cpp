@@ -91,6 +91,10 @@ namespace gr
 			{
 				prevFrameDirtyTypeIDs.clear();
 			}
+
+			// Transforms:
+			m_perFrameNewTransformIDs.clear();
+			m_perFrameDeletedTransformIDs.clear();
 			m_perFrameDirtyTransformIDs.clear();
 			m_perFrameSeenDirtyTransformIDs.clear();
 		}
@@ -205,6 +209,7 @@ namespace gr
 					.m_dirtyFrame = m_currentFrame});
 
 			AddIDToTrackingList(m_registeredTransformIDs, transformID);
+			AddIDToTrackingList(m_perFrameNewTransformIDs, transformID);
 		}
 		else
 		{
@@ -251,6 +256,7 @@ namespace gr
 			m_transformIDToTransformMetadata.erase(transformID);
 			
 			RemoveIDFromTrackingList(m_registeredTransformIDs, transformID);
+			AddIDToTrackingList(m_perFrameDeletedTransformIDs, transformID);
 		}
 
 		// Note: Unregistering a Transform does not dirty it as no data has changed
@@ -350,6 +356,18 @@ namespace gr
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		return m_perFrameDirtyTransformIDs;
+	}
+
+
+	std::vector<gr::TransformID> const& RenderDataManager::GetNewTransformIDs() const
+	{
+		return m_perFrameNewTransformIDs;
+	}
+
+
+	std::vector<gr::TransformID> const& RenderDataManager::GetDeletedTransformIDs() const
+	{
+		return m_perFrameDeletedTransformIDs;
 	}
 
 

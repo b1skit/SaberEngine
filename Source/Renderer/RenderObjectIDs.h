@@ -10,7 +10,7 @@ namespace gr
 	constexpr TransformID k_invalidTransformID = std::numeric_limits<uint32_t>::max();
 
 	// Default for special cases that don't need a Transform
-	constexpr TransformID k_sharedIdentityTransformID = 0;
+	constexpr TransformID k_sharedIdentityTransformID = k_invalidTransformID - 1;
 
 	typedef uint32_t FeatureBitmask;
 

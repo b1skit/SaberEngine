@@ -337,26 +337,14 @@ namespace gr
 				}));
 
 		// Line topology stage:
-		m_debugLineStage = 
+		m_debugStage = 
 			re::RenderStage::CreateGraphicsStage("Debug line stage", re::RenderStage::GraphicsStageParams{});
 		
-		m_debugLineStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
-		m_debugLineStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
-		m_debugLineStage->AddPermanentBuffer(m_debugParams);
+		m_debugStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
+		m_debugStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
+		m_debugStage->AddPermanentBuffer(m_debugParams);
 
-		stagePipeline.AppendRenderStage(m_debugLineStage);
-		
-		// Triangle topology stage:
-		m_debugTriangleStage =
-			re::RenderStage::CreateGraphicsStage("Debug triangle stage", re::RenderStage::GraphicsStageParams{});
-
-		m_debugTriangleStage->SetTextureTargetSet(nullptr);
-		m_debugTriangleStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
-		m_debugTriangleStage->AddPermanentBuffer(m_debugParams);
-
-		stagePipeline.AppendRenderStage(m_debugTriangleStage);
-
-		
+		stagePipeline.AppendRenderStage(m_debugStage);		
 	}
 
 
@@ -390,7 +378,7 @@ namespace gr
 				m_worldCoordinateAxisBatch->SetBuffer(identityTransformBuffer);
 			}
 
-			m_debugLineStage->AddBatch(*m_worldCoordinateAxisBatch);
+			m_debugStage->AddBatch(*m_worldCoordinateAxisBatch);
 		}
 		else
 		{
@@ -462,7 +450,7 @@ namespace gr
 
 								m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 							}
-							m_debugLineStage->AddBatch(*m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID));
+							m_debugStage->AddBatch(*m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID));
 						}
 
 						if (m_showAllVertexNormals)
@@ -481,7 +469,7 @@ namespace gr
 									m_vertexNormalBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 								}
 							}
-							m_debugLineStage->AddBatch(*m_vertexNormalBatches.at(meshPrimRenderDataID));
+							m_debugStage->AddBatch(*m_vertexNormalBatches.at(meshPrimRenderDataID));
 						}
 
 						if (m_showAllWireframe)
@@ -494,7 +482,7 @@ namespace gr
 
 								m_wireframeBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 							}
-							m_debugTriangleStage->AddBatch(*m_wireframeBatches.at(meshPrimRenderDataID));
+							m_debugStage->AddBatch(*m_wireframeBatches.at(meshPrimRenderDataID));
 						}
 					}
 
@@ -509,7 +497,7 @@ namespace gr
 							m_meshCoordinateAxisBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 						}
 
-						m_debugLineStage->AddBatch(*m_meshCoordinateAxisBatches.at(meshPrimRenderDataID));
+						m_debugStage->AddBatch(*m_meshCoordinateAxisBatches.at(meshPrimRenderDataID));
 					}
 				}
 				++meshPrimItr;
@@ -562,7 +550,7 @@ namespace gr
 								m_meshBoundingBoxBuffers.at(meshID));
 						}
 
-						m_debugLineStage->AddBatch(*m_meshBoundingBoxBatches.at(meshID));
+						m_debugStage->AddBatch(*m_meshBoundingBoxBatches.at(meshID));
 					}
 				}
 				++boundsItr;
@@ -598,7 +586,7 @@ namespace gr
 						m_sceneBoundsBatch->SetBuffer(m_sceneBoundsTransformBuffer);
 					}
 					
-					m_debugLineStage->AddBatch(*m_sceneBoundsBatch);
+					m_debugStage->AddBatch(*m_sceneBoundsBatch);
 				}
 				++boundsItr;
 			}
@@ -645,7 +633,7 @@ namespace gr
 
 					m_cameraAxisBatches.at(camID)->SetBuffer(m_cameraAxisTransformBuffers.at(camID));
 				}
-				m_debugLineStage->AddBatch(*m_cameraAxisBatches.at(camID));
+				m_debugStage->AddBatch(*m_cameraAxisBatches.at(camID));
 
 
 				// Camera frustums:
@@ -715,7 +703,7 @@ namespace gr
 							m_cameraFrustumTransformBuffers.at(camID)[faceIdx]);
 					}
 
-					m_debugLineStage->AddBatch(*m_cameraFrustumBatches.at(camID)[faceIdx]);
+					m_debugStage->AddBatch(*m_cameraFrustumBatches.at(camID)[faceIdx]);
 				}
 			}
 		}
@@ -763,7 +751,7 @@ namespace gr
 						m_deferredLightWireframeBatches.at(pointID)->SetBuffer(
 							m_deferredLightWireframeTransformBuffers.at(pointID));
 					}
-					m_debugTriangleStage->AddBatch(*m_deferredLightWireframeBatches.at(pointID));
+					m_debugStage->AddBatch(*m_deferredLightWireframeBatches.at(pointID));
 				}
 
 				++pointItr;
@@ -803,7 +791,7 @@ namespace gr
 						m_deferredLightWireframeBatches.at(spotID)->SetBuffer(
 							m_deferredLightWireframeTransformBuffers.at(spotID));
 					}
-					m_debugTriangleStage->AddBatch(*m_deferredLightWireframeBatches.at(spotID));
+					m_debugStage->AddBatch(*m_deferredLightWireframeBatches.at(spotID));
 				}
 
 				++spotItr;
@@ -864,7 +852,7 @@ namespace gr
 					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
-					m_debugLineStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
+					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
 
 				++directionalItr;
@@ -882,7 +870,7 @@ namespace gr
 					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
-					m_debugLineStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
+					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
 
 				++pointItr;
@@ -901,7 +889,7 @@ namespace gr
 					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
-					m_debugLineStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
+					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
 
 				++spotItr;
@@ -911,6 +899,39 @@ namespace gr
 		{
 			m_lightCoordinateAxisBatches.clear();
 			m_lightCoordinateAxisTransformBuffers.clear();
+		}
+
+		if (m_showAllTransforms)
+		{
+			std::vector<gr::TransformID> const& registeredTransformIDs = renderData.GetRegisteredTransformIDs();
+			for (gr::TransformID transformID : registeredTransformIDs)
+			{
+				if (!m_transformAxisBatches.contains(transformID))
+				{
+					auto newTransformAxisBatchItr =
+						m_transformAxisBatches.emplace(transformID, BuildAxisBatch(re::Lifetime::Permanent));
+
+					auto bufferItr = m_transformAxisTransformBuffers.emplace(transformID,
+						gr::Transform::CreateInstancedTransformBuffer(
+							re::Lifetime::Permanent,
+							re::Buffer::StagingPool::Permanent,
+							renderData.GetTransformDataFromTransformID(transformID)));
+
+					newTransformAxisBatchItr.first->second->SetBuffer(bufferItr.first->second);
+				}
+				else
+				{
+					m_transformAxisTransformBuffers.at(transformID).GetBuffer()->Commit(
+						gr::Transform::CreateInstancedTransformData(renderData.GetTransformDataFromTransformID(transformID)));
+				}
+
+				m_debugStage->AddBatch(*m_transformAxisBatches.at(transformID));
+			}
+		}
+		else
+		{
+			m_transformAxisBatches.clear();
+			m_transformAxisTransformBuffers.clear();
 		}
 	}
 
@@ -1054,8 +1075,13 @@ namespace gr
 		m_isDirty |= ImGui::Checkbox(std::format("Show origin coordinate XYZ axis").c_str(), &m_showWorldCoordinateAxis);
 		m_isDirty |= ImGui::Checkbox(std::format("Show mesh coordinate axis").c_str(), &m_showMeshCoordinateAxis);
 		m_isDirty |= ImGui::Checkbox(std::format("Show light coordinate axis").c_str(), &m_showLightCoordinateAxis);
+		m_isDirty |= ImGui::Checkbox(std::format("Show all transform axes").c_str(), &m_showAllTransforms);
 
-		if (m_showWorldCoordinateAxis || m_showMeshCoordinateAxis || m_showLightCoordinateAxis || m_showCameraFrustums)
+		if (m_showWorldCoordinateAxis || 
+			m_showMeshCoordinateAxis || 
+			m_showLightCoordinateAxis || 
+			m_showCameraFrustums || 
+			m_showAllTransforms)
 		{
 			ImGui::Indent();
 			m_isDirty |= ImGui::SliderFloat("Axis scale", &m_axisScale, 0.f, 1.f);

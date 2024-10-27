@@ -107,6 +107,9 @@ namespace gr
 
 		[[nodiscard]] std::vector<gr::TransformID> const& GetIDsWithDirtyTransformData() const;
 
+		[[nodiscard]] std::vector<gr::TransformID> const& GetNewTransformIDs() const;
+		[[nodiscard]] std::vector<gr::TransformID> const& GetDeletedTransformIDs() const;
+
 
 	public:
 		void ShowImGuiWindow() const;
@@ -165,6 +168,11 @@ namespace gr
 		std::vector<std::vector<gr::RenderDataID>> m_perFramePerTypeDirtyDataIDs;
 		std::vector<std::unordered_set<gr::RenderDataID>> m_perFramePerTypeDirtySeenDataIDs; 
 		
+
+		// Transforms:
+		std::vector<gr::TransformID> m_perFrameNewTransformIDs;
+		std::vector<gr::TransformID> m_perFrameDeletedTransformIDs;
+
 		std::vector<gr::TransformID> m_perFrameDirtyTransformIDs;
 		std::unordered_set<gr::TransformID> m_perFrameSeenDirtyTransformIDs;
 

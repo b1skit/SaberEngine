@@ -45,8 +45,7 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::RenderStage> m_debugLineStage;
-		std::shared_ptr<re::RenderStage> m_debugTriangleStage;
+		std::shared_ptr<re::RenderStage> m_debugStage;
 
 		re::BufferInput m_debugParams;
 		bool m_isDirty; // Triggers m_debugParams recommit
@@ -105,6 +104,11 @@ namespace gr
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_deferredLightWireframeBatches;
 		std::unordered_map<gr::RenderDataID, re::BufferInput> m_deferredLightWireframeTransformBuffers;
 
+		bool m_showAllTransforms = false;
+		std::unordered_map<gr::TransformID, std::unique_ptr<re::Batch>> m_transformAxisBatches;
+		std::unordered_map<gr::TransformID, re::BufferInput> m_transformAxisTransformBuffers;
+
+	private:
 		std::unordered_set<gr::RenderDataID> m_selectedRenderDataIDs; // If emtpy, render all IDs
 	};
 }

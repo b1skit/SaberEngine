@@ -20,8 +20,7 @@ namespace
 
 namespace fr
 {
-	// gr::k_sharedIdentityTransformID == 0, so we start at 1
-	std::atomic<gr::TransformID> Transform::s_transformIDs = gr::k_sharedIdentityTransformID + 1;
+	std::atomic<gr::TransformID> Transform::s_transformIDs = 0;
 
 
 	Transform::Transform(Transform* parent)
