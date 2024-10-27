@@ -83,7 +83,7 @@ namespace gr
 		// Get all RenderDataIDs (regardless of associated data types)
 		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; 
 
-		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredTransformIDs() const;
+		[[nodiscard]] std::vector<gr::TransformID> const& GetRegisteredTransformIDs() const;
 
 
 	private:
@@ -667,7 +667,7 @@ namespace gr
 	}
 
 
-	inline std::vector<gr::RenderDataID> const& RenderDataManager::GetRegisteredTransformIDs() const
+	inline std::vector<gr::TransformID> const& RenderDataManager::GetRegisteredTransformIDs() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
