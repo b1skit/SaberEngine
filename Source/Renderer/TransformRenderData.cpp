@@ -34,7 +34,7 @@ namespace gr
 		re::Lifetime bufLifetime,
 		re::Buffer::StagingPool bufferAlloc,
 		glm::mat4 const* model,
-		glm::mat4* transposeInvModel)
+		glm::mat4 const* transposeInvModel)
 	{
 		InstancedTransformData const& transformData = 
 			CreateInstancedTransformData(model, transposeInvModel);

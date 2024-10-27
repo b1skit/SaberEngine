@@ -46,7 +46,7 @@ namespace fr
 			.m_globalUp = transform.GetGlobalUp(),
 			.m_globalForward = transform.GetGlobalForward(),
 
-			.m_transformID = transformComponent.GetTransformID()
+			.m_transformID = transformComponent.GetTransformID(),
 		};
 	}
 
