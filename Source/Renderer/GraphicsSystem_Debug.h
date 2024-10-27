@@ -102,7 +102,6 @@ namespace gr
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_wireframeBatches;
 
 		bool m_showDeferredLightWireframe = false;
-		glm::vec4 m_deferredLightwireframeColor = glm::vec4(1.f, 1.f, 0.f, 0.5f);
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_deferredLightWireframeBatches;
 		std::unordered_map<gr::RenderDataID, re::BufferInput> m_deferredLightWireframeTransformBuffers;
 

@@ -11,7 +11,8 @@ struct DebugData
 
 	// XYZ Axis (red/green/blue): [0], [1], [2]
 	// Normals: [3]
-	float4 g_colors[4];
+	// Wireframe: [4]
+	float4 g_colors[5];
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "DebugParams";

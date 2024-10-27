@@ -11,7 +11,7 @@
 
 #if defined(DEBUG_NORMAL)
 #include "../Generated/GLSL/VertexStreams_PositionNormal.glsli"
-#elif defined(DEBUG_AXIS)
+#elif defined(DEBUG_AXIS) || defined(DEBUG_WIREFRAME)
 #include "../Generated/GLSL/VertexStreams_PositionOnly.glsli"
 #else
 #include "../Generated/GLSL/VertexStreams_PositionColor.glsli"
@@ -23,7 +23,7 @@ struct LineVertexOut
 {
 	vec4 Position;
 
-#if !defined(DEBUG_NORMAL) && !defined(DEBUG_AXIS)
+#if !defined(DEBUG_NORMAL) && !defined(DEBUG_WIREFRAME)
 	vec4 Color;
 #endif
 	
@@ -35,7 +35,10 @@ struct LineVertexOut
 struct LineGeometryOut
 {
 	vec4 Position;
+
+#if defined(DEBUG_AXIS)
 	vec4 Color;
+#endif
 };
 
 
@@ -62,13 +65,15 @@ void VShader()
 
 #else
 	
-	Out.Color = Color;
-
 	vec4 ndcPos = 
 		_CameraParams.g_viewProjection * _InstancedTransformParams[gl_InstanceID].g_model * vec4(Position.xyz, 1.0);
 	ndcPos.y *= -1.f; // Flip the Y axis in NDC space, as we're writing directly to the backbuffer
 
 	gl_Position = ndcPos;
+
+#if !defined(DEBUG_WIREFRAME)
+	Out.Color = Color;
+#endif
 	
 #endif
 
@@ -95,7 +100,6 @@ void GShader()
 	ndcPos.y *= -1.f; // Flip the Y axis in NDC space, as we're writing directly to the backbuffer
 
 	gl_Position = ndcPos;
-	Out.Color = _DebugParams.g_colors[3];
 		
 	EmitVertex();
 
@@ -167,6 +171,12 @@ layout (location = 0) out vec4 FragColor;
 
 void PShader()
 {
+#if defined(DEBUG_NORMAL)
+	FragColor = _DebugParams.g_colors[3];
+#elif defined(DEBUG_WIREFRAME)
+	FragColor = _DebugParams.g_colors[4];
+#else
 	FragColor = In.Color;
+#endif
 }
 #endif

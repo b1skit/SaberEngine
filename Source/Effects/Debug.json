@@ -11,9 +11,9 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule": "Debug", "Mode": "Triangle" }
+					{ "Rule": "Debug", "Mode": "Wireframe" }
 				],
-				"Technique": "Debug_Triangle"
+				"Technique": "Debug_Wireframe"
 			},
 			{
 				"Conditions": [
@@ -40,9 +40,12 @@
 				"VertexStream": "PositionColor"
 			},
 			{
-				"Name": "Debug_Triangle",
+				"Name": "Debug_Wireframe",
 				"Parent" : "Debug_Line",
-				"PipelineState": "Debug_Triangle"
+				"VShaderDefines" : ["DEBUG_WIREFRAME"],
+				"PShaderDefines" : ["DEBUG_WIREFRAME"],
+				"PipelineState": "Debug_Wireframe",
+				"VertexStream": "PositionOnly"
 			},
 			{
 				"Name": "Debug_Normal",
@@ -51,6 +54,7 @@
 				"GShader": "Line",
 				"GShaderEntryPoint": "GShader",
 				"GShaderDefines" : ["DEBUG_NORMAL"],
+				"PShaderDefines" : ["DEBUG_NORMAL"],
 				"PipelineState": "Debug_Point",
 				"VertexStream": "PositionNormal"
 			},
@@ -61,6 +65,7 @@
 				"GShader": "Line",
 				"GShaderEntryPoint": "GShader",
 				"GShaderDefines" : ["DEBUG_AXIS"],
+				"PShaderDefines" : ["DEBUG_AXIS"],
 				"PipelineState": "Debug_Point",
 				"VertexStream": "PositionOnly"
 			}
@@ -91,7 +96,7 @@
 			}
 		},
 		{
-			"Name": "Debug_Triangle",
+			"Name": "Debug_Wireframe",
 			"TopologyType": "Triangle",
 			"RasterizerState" : {
 				"FillMode": "Wireframe",

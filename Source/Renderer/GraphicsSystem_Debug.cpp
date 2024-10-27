@@ -275,8 +275,7 @@ namespace
 
 	std::unique_ptr<re::Batch> BuildWireframeBatch(
 		re::Lifetime batchLifetime, 
-		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
-		glm::vec4 const& meshColor)
+		gr::MeshPrimitive::RenderData const& meshPrimRenderData)
 	{
 		gr::VertexStream const* positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
 			meshPrimRenderData, gr::VertexStream::Type::Position);
@@ -284,31 +283,16 @@ namespace
 		gr::VertexStream const* indexStream = meshPrimRenderData.m_indexStream;
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
-		util::ByteVector meshColors = util::ByteVector::Create<glm::vec4>(positionStream->GetNumElements(), meshColor);
-
-		const re::Lifetime streamLifetime = batchLifetime;
-
-		std::shared_ptr<gr::VertexStream> colorStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_lifetime = streamLifetime,
-				.m_type = gr::VertexStream::Type::Color,
-				.m_dataType = re::DataType::Float4
-			},
-			std::move(meshColors),
-			false);
-
-		re::Batch::GraphicsParams wireframeBatchGraphicsParams{};
-		wireframeBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
-		wireframeBatchGraphicsParams.m_numInstances = 1;
-		wireframeBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
-
-		wireframeBatchGraphicsParams.m_vertexBuffers[0] = positionStream;
-		wireframeBatchGraphicsParams.m_vertexBuffers[1] = colorStream;
-
-		wireframeBatchGraphicsParams.m_indexBuffer = indexStream;
+		const re::Batch::GraphicsParams wireframeBatchGraphicsParams{
+			.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced,
+			.m_numInstances = 1,
+			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList,
+			.m_vertexBuffers = {positionStream},
+			.m_indexBuffer = indexStream,
+		};
 
 		std::unique_ptr<re::Batch> wireframeBatch = std::make_unique<re::Batch>(
-			batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Triangle);
+			batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Wireframe);
 
 		return wireframeBatch;
 	}
@@ -506,8 +490,7 @@ namespace gr
 							{
 								m_wireframeBatches.emplace(
 									meshPrimRenderDataID,
-									BuildWireframeBatch(
-										re::Lifetime::Permanent, meshPrimRenderData, m_wireframeColor));
+									BuildWireframeBatch(re::Lifetime::Permanent, meshPrimRenderData));
 
 								m_wireframeBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
 							}
@@ -775,8 +758,7 @@ namespace gr
 
 						m_deferredLightWireframeBatches.emplace(
 							pointID,
-							BuildWireframeBatch(
-								re::Lifetime::Permanent, meshPrimData, m_deferredLightwireframeColor));
+							BuildWireframeBatch(re::Lifetime::Permanent, meshPrimData));
 
 						m_deferredLightWireframeBatches.at(pointID)->SetBuffer(
 							m_deferredLightWireframeTransformBuffers.at(pointID));
@@ -816,8 +798,7 @@ namespace gr
 
 						m_deferredLightWireframeBatches.emplace(
 							spotID,
-							BuildWireframeBatch(
-								re::Lifetime::Permanent, meshPrimData, m_deferredLightwireframeColor));
+							BuildWireframeBatch(re::Lifetime::Permanent, meshPrimData));
 
 						m_deferredLightWireframeBatches.at(spotID)->SetBuffer(
 							m_deferredLightWireframeTransformBuffers.at(spotID));
@@ -946,7 +927,8 @@ namespace gr
 					glm::vec4(m_xAxisColor, m_axisOpacity),	// X: Red
 					glm::vec4(m_yAxisColor, m_axisOpacity),	// Y: Green
 					glm::vec4(m_zAxisColor, m_axisOpacity),	// Z: Blue
-					m_normalsColor},
+					m_normalsColor,
+					m_wireframeColor},
 		};
 	}
 
@@ -1005,7 +987,7 @@ namespace gr
 				if (doShow)
 				{
 					ImGui::Indent();
-					isDirty |= ImGui::ColorEdit4("Line color", &color.x, k_colorPickerFlags);
+					isDirty |= ImGui::ColorEdit4("Color", &color.x, k_colorPickerFlags);
 					ImGui::Unindent();
 				}
 				return isDirty;
@@ -1082,9 +1064,7 @@ namespace gr
 		}
 
 		m_isDirty |= ImGui::Checkbox(std::format("Show mesh wireframes").c_str(), &m_showAllWireframe);
-		m_isDirty |= ShowColorPicker(m_showAllWireframe, m_wireframeColor);
-
 		m_isDirty |= ImGui::Checkbox(std::format("Show deferred light mesh wireframes").c_str(), &m_showDeferredLightWireframe);
-		m_isDirty |= ShowColorPicker(m_showDeferredLightWireframe, m_deferredLightwireframeColor);
+		m_isDirty |= ShowColorPicker(m_showAllWireframe || m_showDeferredLightWireframe, m_wireframeColor);
 	}
 }

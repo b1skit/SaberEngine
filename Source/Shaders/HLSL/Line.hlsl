@@ -6,7 +6,7 @@
 
 #if defined(DEBUG_NORMAL)
 #include "../Generated/HLSL/VertexStreams_PositionNormal.hlsli"
-#elif defined(DEBUG_AXIS)
+#elif defined(DEBUG_AXIS) || defined(DEBUG_WIREFRAME)
 #include "../Generated/HLSL/VertexStreams_PositionOnly.hlsli"
 #else
 #include "../Generated/HLSL/VertexStreams_PositionColor.hlsli"
@@ -17,7 +17,7 @@ struct LineVertexOut
 {
 	float4 Position : SV_Position;
 	
-#if !defined(DEBUG_NORMAL) && !defined(DEBUG_AXIS)
+#if !defined(DEBUG_NORMAL) && !defined(DEBUG_AXIS) && !defined(DEBUG_WIREFRAME)
 	float4 Color : COLOR0;
 #endif
 	
@@ -33,7 +33,10 @@ struct LineVertexOut
 struct LineGeometryOut
 {
 	float4 Position : SV_Position;
+	
+#if defined(DEBUG_AXIS)
 	float4 Color : COLOR0;
+#endif
 };
 
 
@@ -52,12 +55,15 @@ LineVertexOut VShader(VertexIn In)
 #elif defined(DEBUG_AXIS)
 	Out.Position = float4(In.Position, 1.f);		
 	Out.InstanceID = In.InstanceID;
+	
 #else
 	
 	const float4 worldPos = mul(InstancedTransformParams[In.InstanceID].g_model, float4(In.Position, 1.f));
 	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 	
+#if !defined(DEBUG_WIREFRAME)
 	Out.Color = In.Color;
+#endif
 	
 #endif
 	
@@ -74,7 +80,6 @@ void GShader(point LineVertexOut In[1], inout LineStream<LineGeometryOut> Stream
 	const float4 worldPos = mul(InstancedTransformParams[In[0].InstanceID].g_model, In[0].Position);
 	const float4 ndcPos = mul(CameraParams.g_viewProjection, worldPos);
 	Out.Position = ndcPos;
-	Out.Color = DebugParams.g_colors[3];
 		
 	StreamOut.Append(Out);
 		
@@ -142,5 +147,11 @@ float4 PShader(LineGeometryOut In) : SV_Target
 float4 PShader(LineVertexOut In) : SV_Target
 #endif
 {
+#if defined(DEBUG_NORMAL)
+	return DebugParams.g_colors[3];
+#elif defined(DEBUG_WIREFRAME)
+	return DebugParams.g_colors[4];
+#else
 	return In.Color;
+#endif
 }
