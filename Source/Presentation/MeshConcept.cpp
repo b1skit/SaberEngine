@@ -30,8 +30,8 @@ namespace fr
 			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
 		}
 
-		gr::RenderDataComponent& meshRenderData = 
-			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		fr::RenderDataComponent& meshRenderData = 
+			fr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Mesh bounds: Encompasses all attached primitive bounds
 		fr::BoundsComponent::AttachBoundsComponent(em, owningEntity);
@@ -51,7 +51,7 @@ namespace fr
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			gr::RenderDataComponent::ShowImGuiWindow(em, meshConcept);
+			fr::RenderDataComponent::ShowImGuiWindow(em, meshConcept);
 
 			fr::Relationship const& meshRelationship = em.GetComponent<fr::Relationship>(meshConcept);
 

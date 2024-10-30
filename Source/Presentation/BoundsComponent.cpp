@@ -31,8 +31,8 @@ namespace
 
 			if (nextBounds != nullptr)
 			{
-				gr::RenderDataComponent const& nextBoundsRenderDataCmpt = 
-					em.GetComponent<gr::RenderDataComponent>(nextEntity);
+				fr::RenderDataComponent const& nextBoundsRenderDataCmpt = 
+					em.GetComponent<fr::RenderDataComponent>(nextEntity);
 
 				bounds.SetEncapsulatingBoundsRenderDataID(nextBoundsRenderDataCmpt.GetRenderDataID());
 			}
@@ -80,7 +80,7 @@ namespace fr
 		SEAssert(sceneBoundsTransformComponent.GetTransform().GetParent() == nullptr,
 			"Found a parent transform for the scene bounds. This is unexpected");
 		
-		gr::RenderDataComponent& sceneBoundsRenderCmpt = gr::RenderDataComponent::AttachNewRenderDataComponent(
+		fr::RenderDataComponent& sceneBoundsRenderCmpt = fr::RenderDataComponent::AttachNewRenderDataComponent(
 			em, sceneBoundsEntity, sceneBoundsTransformComponent.GetTransformID());
 
 		sceneBoundsRenderCmpt.SetFeatureBit(gr::RenderObjectFeature::IsSceneBounds);
@@ -277,7 +277,7 @@ namespace fr
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			gr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
+			fr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
 
 			fr::BoundsComponent const& boundsCmpt = em.GetComponent<fr::BoundsComponent>(owningEntity);
 

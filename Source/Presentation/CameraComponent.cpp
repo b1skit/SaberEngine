@@ -18,12 +18,12 @@ namespace fr
 		SEAssert(em.HasComponent<fr::TransformComponent>(sceneNode),
 			"A CameraComponent must be attached to an entity that has a TransformComponent");
 
-		SEAssert(em.HasComponent<gr::RenderDataComponent>(sceneNode) == false,
+		SEAssert(em.HasComponent<fr::RenderDataComponent>(sceneNode) == false,
 			"A Camera concept creates its own RenderDataComponent, the sceneNode entity already has one attached");
 
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(sceneNode);
 
-		gr::RenderDataComponent::AttachNewRenderDataComponent(em, sceneNode, owningTransform.GetTransformID());
+		fr::RenderDataComponent::AttachNewRenderDataComponent(em, sceneNode, owningTransform.GetTransformID());
 
 		// CameraComponent:
 		fr::CameraComponent* cameraComponent = 
@@ -41,7 +41,7 @@ namespace fr
 		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
 			"A CameraComponent must be attached to an entity that has a TransformComponent");
 
-		SEAssert(em.HasComponent<gr::RenderDataComponent>(owningEntity),
+		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
 			"A CameraComponent must be attached to an entity that has a RenderDataComponent");
 
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
@@ -94,7 +94,7 @@ namespace fr
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			gr::RenderDataComponent::ShowImGuiWindow(em, camEntity);
+			fr::RenderDataComponent::ShowImGuiWindow(em, camEntity);
 			
 			fr::CameraComponent& camCmpt = em.GetComponent<fr::CameraComponent>(camEntity);
 			camCmpt.m_camera.ShowImGuiWindow(nameCmpt.GetUniqueID());

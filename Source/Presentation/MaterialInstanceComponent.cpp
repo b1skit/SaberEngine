@@ -24,7 +24,7 @@ namespace fr
 		SEAssert(sceneMaterial != nullptr, "Cannot attach a null material");
 		SEAssert(em.HasComponent<fr::MeshPrimitiveComponent>(meshPrimitiveConcept),
 			"Material components must be attached to entities with a MeshPrimitiveComponent");
-		SEAssert(em.HasComponent<gr::RenderDataComponent>(meshPrimitiveConcept),
+		SEAssert(em.HasComponent<fr::RenderDataComponent>(meshPrimitiveConcept),
 			"Material components must be attached to entities with a RenderDataComponent");
 
 		// Attach the material component:
@@ -52,7 +52,7 @@ namespace fr
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			gr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
+			fr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
 
 			// MaterialInstanceRenderData:
 			fr::MaterialInstanceComponent& matComponent = em.GetComponent<fr::MaterialInstanceComponent>(owningEntity);

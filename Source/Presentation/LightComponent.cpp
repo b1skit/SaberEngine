@@ -56,8 +56,8 @@ namespace fr
 		entt::entity lightEntity = em.CreateEntity(iblTex->GetName());
 
 		// MeshPrimitive:
-		gr::RenderDataComponent& renderDataComponent = 
-			gr::RenderDataComponent::AttachNewRenderDataComponent(em, lightEntity, gr::k_sharedIdentityTransformID);
+		fr::RenderDataComponent& renderDataComponent = 
+			fr::RenderDataComponent::AttachNewRenderDataComponent(em, lightEntity, gr::k_sharedIdentityTransformID);
 
 		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData = 
 			gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
@@ -104,8 +104,8 @@ namespace fr
 			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
 		}
 
-		gr::RenderDataComponent& renderDataComponent =
-			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		fr::RenderDataComponent& renderDataComponent =
+			fr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Attach the MeshPrimitive 
 		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh.get(), minPos, maxPos);
@@ -174,8 +174,8 @@ namespace fr
 			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
 		}
 
-		gr::RenderDataComponent& renderDataComponent =
-			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		fr::RenderDataComponent& renderDataComponent =
+			fr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Attach the MeshPrimitive 
 		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh.get(), minPos, maxPos);
@@ -231,8 +231,8 @@ namespace fr
 		// Note: Our fullscreen quad will technically be linked to the owningTransform; We can't use 
 		// k_sharedIdentityTransformID as a directional light/shadow needs a valid transform. 
 		// Fullscreen quads don't use a Transform so this shouldn't matter.
-		gr::RenderDataComponent& renderDataComponent =
-			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		fr::RenderDataComponent& renderDataComponent =
+			fr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// MeshPrimitive:
 		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData =
@@ -468,7 +468,7 @@ namespace fr
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			gr::RenderDataComponent::ShowImGuiWindow(em, lightEntity);
+			fr::RenderDataComponent::ShowImGuiWindow(em, lightEntity);
 
 			fr::LightComponent& lightCmpt = em.GetComponent<fr::LightComponent>(lightEntity);
 			
@@ -673,7 +673,7 @@ namespace fr
 
 	LightComponent::LightComponent(
 		PrivateCTORTag,
-		gr::RenderDataComponent const& renderDataComponent, 
+		fr::RenderDataComponent const& renderDataComponent, 
 		fr::Light::Type lightType, 
 		glm::vec4 colorIntensity,
 		bool hasShadow)
@@ -687,7 +687,7 @@ namespace fr
 
 	LightComponent::LightComponent(
 		PrivateCTORTag, 
-		gr::RenderDataComponent const& renderDataComponent,
+		fr::RenderDataComponent const& renderDataComponent,
 		re::Texture const* iblTex,
 		const fr::Light::Type ambientTypeOnly)
 		: m_renderDataID(renderDataComponent.GetRenderDataID())

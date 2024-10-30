@@ -6,24 +6,24 @@
 #include "Renderer/RenderSystem.h"
 
 
-namespace gr
+namespace fr
 {
 	std::atomic<gr::RenderDataID> RenderDataComponent::s_objectIDs = 0;
 
 
 	RenderDataComponent& RenderDataComponent::AttachNewRenderDataComponent(
-		fr::EntityManager& em, entt::entity entity, TransformID transformID)
+		fr::EntityManager& em, entt::entity entity, gr::TransformID transformID)
 	{
-		em.EmplaceComponent<gr::RenderDataComponent::NewRegistrationMarker>(entity);
-		return *em.EmplaceComponent<gr::RenderDataComponent>(entity, PrivateCTORTag{}, transformID);
+		em.EmplaceComponent<fr::RenderDataComponent::NewRegistrationMarker>(entity);
+		return *em.EmplaceComponent<fr::RenderDataComponent>(entity, PrivateCTORTag{}, transformID);
 	}
 
 
 	RenderDataComponent& RenderDataComponent::AttachSharedRenderDataComponent(
 		fr::EntityManager& em, entt::entity entity, RenderDataComponent const& renderDataComponent)
 	{
-		em.EmplaceComponent<gr::RenderDataComponent::NewRegistrationMarker>(entity);
-		return *em.EmplaceComponent<gr::RenderDataComponent>(
+		em.EmplaceComponent<fr::RenderDataComponent::NewRegistrationMarker>(entity);
+		return *em.EmplaceComponent<fr::RenderDataComponent>(
 			entity, 
 			PrivateCTORTag{},
 			renderDataComponent.m_renderDataID, 
@@ -35,7 +35,7 @@ namespace gr
 	{
 		ImGui::Indent();
 
-		gr::RenderDataComponent const& renderDataCmpt = em.GetComponent<gr::RenderDataComponent>(owningEntity);
+		fr::RenderDataComponent const& renderDataCmpt = em.GetComponent<fr::RenderDataComponent>(owningEntity);
 		ImGui::Text(std::format("RenderDataID: {}, TransformID: {}",
 			renderDataCmpt.GetRenderDataID(), renderDataCmpt.GetTransformID()).c_str());
 
@@ -43,7 +43,7 @@ namespace gr
 	}
 
 
-	void RenderDataComponent::ShowImGuiWindow(std::vector<gr::RenderDataComponent const*> const& renderDataComponents)
+	void RenderDataComponent::ShowImGuiWindow(std::vector<fr::RenderDataComponent const*> const& renderDataComponents)
 	{		
 		const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
 		constexpr int numCols = 2;

@@ -18,7 +18,7 @@ namespace
 		fr::EntityManager& em,
 		entt::entity owningEntity,
 		gr::MeshPrimitive const* meshPrimitive,
-		gr::RenderDataComponent& meshPrimRenderCmpt,
+		fr::RenderDataComponent& meshPrimRenderCmpt,
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
@@ -71,7 +71,7 @@ namespace fr
 	{
 		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
 			"A MeshPrimitive's owningEntity requires a TransformComponent");
-		SEAssert(em.HasComponent<gr::RenderDataComponent>(owningEntity),
+		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
 			"A MeshPrimitive's owningEntity requires a RenderDataComponent");
 
 		entt::entity meshPrimitiveConcept = em.CreateEntity(meshPrimitive->GetName());
@@ -83,7 +83,7 @@ namespace fr
 		// RenderDataComponent: A MeshPrimitive has its own RenderDataID, but shares the TransformID of its owningEntity
 		fr::TransformComponent const& transformComponent = em.GetComponent<fr::TransformComponent>(owningEntity);
 
-		gr::RenderDataComponent& meshPrimRenderCmpt = gr::RenderDataComponent::AttachNewRenderDataComponent(
+		fr::RenderDataComponent& meshPrimRenderCmpt = fr::RenderDataComponent::AttachNewRenderDataComponent(
 			em, meshPrimitiveConcept, transformComponent.GetTransformID());
 
 		meshPrimRenderCmpt.SetFeatureBit(gr::RenderObjectFeature::IsMeshPrimitive);
@@ -107,11 +107,11 @@ namespace fr
 	{
 		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
 			"A MeshPrimitive's owningEntity requires a TransformComponent");
-		SEAssert(em.HasComponent<gr::RenderDataComponent>(owningEntity),
+		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
 			"A MeshPrimitive's owningEntity requires a RenderDataComponent");
 
-		gr::RenderDataComponent* meshPrimRenderCmpt = 
-			em.GetFirstInHierarchyAbove<gr::RenderDataComponent>(owningEntity);
+		fr::RenderDataComponent* meshPrimRenderCmpt = 
+			em.GetFirstInHierarchyAbove<fr::RenderDataComponent>(owningEntity);
 
 		// Note: A Material component will typically need to be attached to the owningEntity
 		AttachMeshPrimitiveComponentHelper(
@@ -122,7 +122,7 @@ namespace fr
 	MeshPrimitiveComponent& MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 		EntityManager& em,
 		entt::entity owningEntity, 
-		gr::RenderDataComponent const& sharedRenderDataCmpt, 
+		fr::RenderDataComponent const& sharedRenderDataCmpt, 
 		gr::MeshPrimitive const* meshPrimitive)
 	{
 		// MeshPrimitive:
@@ -151,8 +151,8 @@ namespace fr
 		entt::entity meshConceptEntity = meshPrimRelationship.GetParent();
 		if (meshConceptEntity != entt::null) // null if the MeshPrimitive isn't owned by a MeshConcept
 		{
-			gr::RenderDataComponent const& meshConceptRenderComponent =
-				em->GetComponent<gr::RenderDataComponent>(meshConceptEntity);
+			fr::RenderDataComponent const& meshConceptRenderComponent =
+				em->GetComponent<fr::RenderDataComponent>(meshConceptEntity);
 
 			owningMeshRenderDataID = meshConceptRenderComponent.GetRenderDataID();
 			SEAssert(owningMeshRenderDataID != gr::k_invalidRenderDataID, "Invalid render data ID received from Mesh");
@@ -198,7 +198,7 @@ namespace fr
 			ImGui::Indent();
 			
 			// RenderDataComponent:
-			gr::RenderDataComponent::ShowImGuiWindow(em, meshPrimitive);
+			fr::RenderDataComponent::ShowImGuiWindow(em, meshPrimitive);
 
 			fr::MeshPrimitiveComponent& meshPrimCmpt = em.GetComponent<fr::MeshPrimitiveComponent>(meshPrimitive);
 			meshPrimCmpt.m_meshPrimitive->ShowImGuiWindow();

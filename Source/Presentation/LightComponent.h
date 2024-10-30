@@ -7,11 +7,6 @@
 #include "Renderer/RenderObjectIDs.h"
 
 
-namespace gr
-{
-	class RenderDataComponent;
-}
-
 namespace re
 {
 	class Texture;
@@ -21,6 +16,7 @@ namespace fr
 {
 	class Camera;
 	class EntityManager;
+	class RenderDataComponent;
 	class Transform;
 
 
@@ -94,13 +90,13 @@ namespace fr
 	public:
 		LightComponent(
 			PrivateCTORTag, 
-			gr::RenderDataComponent const&, 
+			fr::RenderDataComponent const&, 
 			fr::Light::Type, 
 			glm::vec4 colorIntensity,
 			bool hasShadow);
 		LightComponent(
 			PrivateCTORTag, 
-			gr::RenderDataComponent const&,
+			fr::RenderDataComponent const&,
 			re::Texture const* iblTex,
 			const fr::Light::Type = fr::Light::Type::AmbientIBL); // Ambient light only
 	};

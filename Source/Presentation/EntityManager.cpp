@@ -143,14 +143,14 @@ namespace fr
 	{
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
-		auto componentsView = m_registry.view<gr::RenderDataComponent, DirtyMarker<CmptType>, CmptType, OtherCmpts...>();
+		auto componentsView = m_registry.view<fr::RenderDataComponent, DirtyMarker<CmptType>, CmptType, OtherCmpts...>();
 		for (auto entity : componentsView)
 		{
-			gr::RenderDataComponent const& renderDataComponent = componentsView.get<gr::RenderDataComponent>(entity);
+			fr::RenderDataComponent const& renderDataComponent = componentsView.get<fr::RenderDataComponent>(entity);
 
 			CmptType const& component = componentsView.get<CmptType>(entity);
 
-			renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<RenderDataType>>(
+			renderManager->EnqueueRenderCommand<fr::UpdateRenderDataRenderCommand<RenderDataType>>(
 				renderDataComponent.GetRenderDataID(),
 				CmptType::CreateRenderData(entity, component));
 
@@ -171,20 +171,20 @@ namespace fr
 
 			// Register new render objects:
 			auto newRenderableEntitiesView = 
-				m_registry.view<gr::RenderDataComponent, gr::RenderDataComponent::NewRegistrationMarker>();
+				m_registry.view<fr::RenderDataComponent, fr::RenderDataComponent::NewRegistrationMarker>();
 			for (auto entity : newRenderableEntitiesView)
 			{
 				// Enqueue a command to create a new object on the render thread:
-				auto& renderDataComponent = newRenderableEntitiesView.get<gr::RenderDataComponent>(entity);
+				auto& renderDataComponent = newRenderableEntitiesView.get<fr::RenderDataComponent>(entity);
 
-				renderManager->EnqueueRenderCommand<gr::RegisterRenderObjectCommand>(renderDataComponent);
+				renderManager->EnqueueRenderCommand<fr::RegisterRenderObjectCommand>(renderDataComponent);
 				
-				m_registry.erase<gr::RenderDataComponent::NewRegistrationMarker>(entity);
+				m_registry.erase<fr::RenderDataComponent::NewRegistrationMarker>(entity);
 			}
 
 			// Initialize new Transforms associated with a RenderDataComponent:
 			auto newTransformComponentsView = 
-				m_registry.view<fr::TransformComponent, fr::TransformComponent::NewIDMarker, gr::RenderDataComponent>();
+				m_registry.view<fr::TransformComponent, fr::TransformComponent::NewIDMarker, fr::RenderDataComponent>();
 			for (auto entity : newTransformComponentsView)
 			{
 				fr::TransformComponent& transformComponent =
@@ -195,7 +195,7 @@ namespace fr
 				m_registry.erase<fr::TransformComponent::NewIDMarker>(entity);
 			}
 
-			// Clear the NewIDMarker from any remaining TransformComponents not associated with a gr::RenderDataComponent
+			// Clear the NewIDMarker from any remaining TransformComponents not associated with a fr::RenderDataComponent
 			auto remainingNewTransformsView = 
 				m_registry.view<fr::TransformComponent, fr::TransformComponent::NewIDMarker>();
 			for (auto entity : remainingNewTransformsView)
@@ -218,7 +218,7 @@ namespace fr
 				if (transformComponent.GetTransform().HasChanged())
 				{
 					// Note: We only send Transforms associated with RenderDataComponents to the render thread
-					if (HasComponent<gr::RenderDataComponent>(entity))
+					if (HasComponent<fr::RenderDataComponent>(entity))
 					{
 						renderManager->EnqueueRenderCommand<fr::UpdateTransformDataRenderCommand>(transformComponent);
 					}
@@ -232,11 +232,11 @@ namespace fr
 				fr::CameraComponent,
 				fr::CameraComponent::MainCameraMarker,
 				fr::CameraComponent::NewMainCameraMarker,
-				gr::RenderDataComponent>();
+				fr::RenderDataComponent>();
 			for (auto entity : newMainCameraView)
 			{
-				gr::RenderDataComponent const& renderDataComponent =
-					newMainCameraView.get<gr::RenderDataComponent>(entity);
+				fr::RenderDataComponent const& renderDataComponent =
+					newMainCameraView.get<fr::RenderDataComponent>(entity);
 
 				renderManager->EnqueueRenderCommand<fr::SetActiveCameraRenderCommand>(
 					renderDataComponent.GetRenderDataID(), renderDataComponent.GetTransformID());
@@ -253,7 +253,7 @@ namespace fr
 
 			// Lights:
 			auto lightComponentsView = m_registry.view<
-				gr::RenderDataComponent, fr::NameComponent, DirtyMarker<fr::LightComponent>, fr::LightComponent>();
+				fr::RenderDataComponent, fr::NameComponent, DirtyMarker<fr::LightComponent>, fr::LightComponent>();
 			for (auto entity : lightComponentsView)
 			{
 				fr::NameComponent const& nameComponent = lightComponentsView.get<fr::NameComponent>(entity);
@@ -497,42 +497,42 @@ namespace fr
 			for (entt::entity entity : m_deferredDeleteQueue)
 			{
 				// If the entity has a RenderDataComponent, we must enqueue delete commands for the render thread
-				if (m_registry.all_of<gr::RenderDataComponent>(entity))
+				if (m_registry.all_of<fr::RenderDataComponent>(entity))
 				{
-					auto& renderDataComponent = m_registry.get<gr::RenderDataComponent>(entity);
+					auto& renderDataComponent = m_registry.get<fr::RenderDataComponent>(entity);
 
 					// Bounds:
 					if (m_registry.all_of<fr::BoundsComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Bounds::RenderData>>(
+						renderManager->EnqueueRenderCommand<fr::DestroyRenderDataRenderCommand<gr::Bounds::RenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
 					// MeshPrimitives:
 					if (m_registry.all_of<fr::MeshPrimitiveComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
+						renderManager->EnqueueRenderCommand<fr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
 					// MeshAnimations:
 					if (m_registry.all_of<fr::MeshAnimationComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::MeshRenderData>>(
+						renderManager->EnqueueRenderCommand<fr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::MeshRenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
 					// Materials:
 					if (m_registry.all_of<fr::MaterialInstanceComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::MaterialInstanceRenderData>>(
+						renderManager->EnqueueRenderCommand<fr::DestroyRenderDataRenderCommand<gr::Material::MaterialInstanceRenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
 					// Cameras:
 					if (m_registry.all_of<fr::CameraComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Camera::RenderData>>(
+						renderManager->EnqueueRenderCommand<fr::DestroyRenderDataRenderCommand<gr::Camera::RenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
@@ -546,13 +546,13 @@ namespace fr
 					// ShadowMaps:
 					if (m_registry.all_of<fr::ShadowMapComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::ShadowMap::RenderData>>(
+						renderManager->EnqueueRenderCommand<fr::DestroyRenderDataRenderCommand<gr::ShadowMap::RenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
 					// Now the render data components associated with this entity's use of the RenderDataID are destroyed, 
 					// we can destroy the render data objects themselves (or decrement the ref. count if it's a shared ID)
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(
+					renderManager->EnqueueRenderCommand<fr::DestroyRenderObjectCommand>(
 						renderDataComponent.GetRenderDataID());
 				}
 
@@ -1181,17 +1181,17 @@ namespace fr
 
 		if (ImGui::CollapsingHeader("Render data IDs", ImGuiTreeNodeFlags_None))
 		{
-			std::vector<gr::RenderDataComponent const*> renderDataComponents;
+			std::vector<fr::RenderDataComponent const*> renderDataComponents;
 
-			auto renderDataView = m_registry.view<gr::RenderDataComponent>();
+			auto renderDataView = m_registry.view<fr::RenderDataComponent>();
 			for (auto entity : renderDataView)
 			{
-				gr::RenderDataComponent const& renderDataCmpt = renderDataView.get<gr::RenderDataComponent>(entity);
+				fr::RenderDataComponent const& renderDataCmpt = renderDataView.get<fr::RenderDataComponent>(entity);
 
 				renderDataComponents.emplace_back(&renderDataCmpt);
 			}
 
-			gr::RenderDataComponent::ShowImGuiWindow(renderDataComponents);
+			fr::RenderDataComponent::ShowImGuiWindow(renderDataComponents);
 		} // "Render data IDs"
 
 		//ImGui::Separator();

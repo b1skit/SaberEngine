@@ -9,7 +9,7 @@ namespace fr
 	class EntityManager;
 }
 
-namespace gr
+namespace fr
 {
 	// Automatically assigns itself a unique RenderDataID
 	class RenderDataComponent
@@ -26,7 +26,7 @@ namespace gr
 
 	public:
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
-		static void ShowImGuiWindow(std::vector<gr::RenderDataComponent const*> const&);
+		static void ShowImGuiWindow(std::vector<fr::RenderDataComponent const*> const&);
 
 
 	public:

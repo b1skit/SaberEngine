@@ -203,11 +203,11 @@ namespace fr
 	{
 		SEAssert(em.HasComponent<fr::LightComponent>(owningEntity),
 			"A ShadowMapComponent must be attached to a LightComponent");
-		SEAssert(em.HasComponent<gr::RenderDataComponent>(owningEntity),
+		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
 			"A ShadowMapComponent must be attached to an entity with a RenderDataComponent");
 
 		fr::LightComponent const& owningLightComponent = em.GetComponent<fr::LightComponent>(owningEntity);
-		gr::RenderDataComponent const& sharedRenderDataCmpt = em.GetComponent<gr::RenderDataComponent>(owningEntity);
+		fr::RenderDataComponent const& sharedRenderDataCmpt = em.GetComponent<fr::RenderDataComponent>(owningEntity);
 
 		ShadowMapComponent& shadowMapComponent = *em.EmplaceComponent<fr::ShadowMapComponent>(
 			owningEntity,
@@ -382,7 +382,7 @@ namespace fr
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			gr::RenderDataComponent::ShowImGuiWindow(em, shadowMapEntity);
+			fr::RenderDataComponent::ShowImGuiWindow(em, shadowMapEntity);
 
 			fr::ShadowMapComponent& shadowMapCmpt = em.GetComponent<fr::ShadowMapComponent>(shadowMapEntity);
 			shadowMapCmpt.GetShadowMap().ShowImGuiWindow(nameCmpt.GetUniqueID());
