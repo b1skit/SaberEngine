@@ -11,7 +11,7 @@ namespace re
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			virtual ~PlatformParams() = 0;
+			virtual ~PlatformParams() = default;
 		};
 
 
@@ -31,8 +31,4 @@ namespace re
 	private:
 		std::unique_ptr<re::SwapChain::PlatformParams> m_platformParams;
 	};
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline SwapChain::PlatformParams::~PlatformParams() {};
 }

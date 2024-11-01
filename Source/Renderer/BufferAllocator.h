@@ -90,7 +90,7 @@ namespace re
 
 		struct IAllocation
 		{
-			virtual ~IAllocation() = 0;
+			virtual ~IAllocation() = default;
 
 			std::unordered_map<Handle, std::shared_ptr<re::Buffer>> m_handleToPtr;
 
@@ -214,8 +214,4 @@ namespace re
 	{
 		return m_isValid;
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline BufferAllocator::IAllocation::~IAllocation() {};
 }

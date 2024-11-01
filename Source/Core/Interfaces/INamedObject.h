@@ -16,7 +16,7 @@ namespace core
 
 
 	public: 
-		virtual ~INamedObject() = 0;
+		virtual ~INamedObject() = default;
 
 
 	public:
@@ -92,8 +92,4 @@ namespace core
 		
 		m_wName = util::ToWideString(m_name);
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline INamedObject::~INamedObject() {}
 }

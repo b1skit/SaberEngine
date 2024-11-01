@@ -13,7 +13,7 @@ namespace core
 		static constexpr UniqueID k_invalidUniqueID = std::numeric_limits<UniqueID>::max();
 
 	public:
-		virtual ~IUniqueID() = 0;
+		virtual ~IUniqueID() = default;
 
 	public:
 		IUniqueID();
@@ -55,8 +55,4 @@ namespace core
 		static std::atomic<UniqueID> s_uniqueIDs = 0;
 		m_uniqueID = s_uniqueIDs.fetch_add(1);
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline IUniqueID::~IUniqueID() {}
 }

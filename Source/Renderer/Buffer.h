@@ -74,7 +74,7 @@ namespace re
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			virtual ~PlatformParams() = 0;
+			virtual ~PlatformParams() = default;
 
 			bool m_isCommitted = false; // Has an initial data commitment been made?
 			bool m_isCreated = false; // Has the buffer been created at the API level?
@@ -418,8 +418,4 @@ namespace re
 	{
 		return m_bufferParams;
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline Buffer::PlatformParams::~PlatformParams() {};
 }

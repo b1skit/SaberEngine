@@ -38,7 +38,7 @@ namespace re
 		};
 		struct IStageParams
 		{
-			virtual ~IStageParams() = 0;
+			virtual ~IStageParams() = default;
 		};
 		struct GraphicsStageParams final : public virtual IStageParams
 		{
@@ -314,7 +314,7 @@ namespace re
 	public:
 		struct IPayload
 		{
-			virtual ~IPayload() = 0;
+			virtual ~IPayload() = default;
 		};
 
 	public:
@@ -430,9 +430,4 @@ namespace re
 	{
 		return m_stageBatches;
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline RenderStage::IStageParams::~IStageParams() {}
-	inline LibraryStage::IPayload::~IPayload() {};
 }

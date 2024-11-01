@@ -22,7 +22,7 @@ namespace re
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			virtual ~PlatformParams() = 0;
+			virtual ~PlatformParams() = default;
 
 			bool m_isCreated = false; // Targets are immutable after creation
 		};
@@ -152,7 +152,7 @@ namespace re
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			virtual ~PlatformParams() = 0;
+			virtual ~PlatformParams() = default;
 
 			bool m_isCommitted = false; // Target sets are immutable after commit
 		};
@@ -249,9 +249,4 @@ namespace re
 		TextureTargetSet& operator=(TextureTargetSet const&) = delete;
 		TextureTargetSet& operator=(TextureTargetSet&&) = delete;
 	};
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline TextureTarget::PlatformParams::~PlatformParams() {};
-	inline TextureTargetSet::PlatformParams::~PlatformParams() {};
 }

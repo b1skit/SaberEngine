@@ -35,10 +35,6 @@ namespace platform
 
 
 	public:
-		virtual ~RLibrary() = 0;
+		virtual ~RLibrary() = default;
 	};
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline RLibrary::~RLibrary() {}
 }

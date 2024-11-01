@@ -15,7 +15,7 @@ namespace re
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			virtual ~PlatformParams() = 0;
+			virtual ~PlatformParams() = default;
 			bool m_isCreated = false;
 		};
 
@@ -155,8 +155,4 @@ namespace re
 		Sampler(Sampler const& rhs) = delete;
 		Sampler& operator=(Sampler const& rhs) = delete;
 	};
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline Sampler::PlatformParams::~PlatformParams() {};
 }

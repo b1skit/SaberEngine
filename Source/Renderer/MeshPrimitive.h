@@ -21,7 +21,7 @@ namespace gr
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			virtual ~PlatformParams() = 0;
+			virtual ~PlatformParams() = default;
 		};
 
 
@@ -68,7 +68,7 @@ namespace gr
 	public:
 		struct PackingMetadata
 		{
-			uint8_t m_firstByteOffset;	// No. bytes from the start of the packing to 1st byte of this displacment
+			uint8_t m_firstByteOffset;	// No. bytes from the start of the packing to 1st byte of this displacement
 			uint8_t m_byteStride;		// No. bytes in 1 displacement (e.g. float3 = 12)
 			uint8_t m_numComponents;	// No. components in 1 displacement (e.g. float3 = 3)
 		};
@@ -227,8 +227,4 @@ namespace gr
 		}
 		return a.m_vertexStream->GetType() < b.m_streamType;
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline gr::MeshPrimitive::PlatformParams::~PlatformParams() {};
 }

@@ -46,7 +46,7 @@ namespace re
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			virtual ~PlatformParams() = 0;
+			virtual ~PlatformParams() = default;
 			bool m_isCreated = false;
 		};
 
@@ -169,8 +169,4 @@ namespace re
 	{
 		return m_vertexStreamMap;
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline Shader::PlatformParams::~PlatformParams() {};
 }

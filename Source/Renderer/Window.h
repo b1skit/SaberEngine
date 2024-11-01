@@ -10,7 +10,7 @@ namespace app
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			virtual ~PlatformParams() = 0;
+			virtual ~PlatformParams() = default;
 		};
 
 
@@ -43,8 +43,4 @@ namespace app
 		Window(Window const&) = delete;
 		Window& operator=(Window const&) = delete;
 	};
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline Window::PlatformParams::~PlatformParams() {};
 }

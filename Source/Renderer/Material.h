@@ -113,7 +113,7 @@ namespace gr
 		Material(Material&&) noexcept = default;
 		Material& operator=(Material&&) noexcept = default;
 
-		virtual ~Material() = 0;
+		virtual ~Material() = default;
 
 		void SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture>, uint8_t uvChannelIdx);
 		re::Texture const* GetTexture(uint32_t slotIndex) const;
@@ -233,10 +233,6 @@ namespace gr
 	{
 		return m_effectID;
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline Material::~Material() {};
 }
 
 

@@ -9,7 +9,7 @@ namespace core
 		IPlatformParams() = default;
 		IPlatformParams(IPlatformParams&&) noexcept = default;
 		IPlatformParams& operator=(IPlatformParams&&) noexcept = default;
-		virtual ~IPlatformParams() = 0;
+		virtual ~IPlatformParams() = default;
 
 		template<typename T>
 		T As();
@@ -35,8 +35,4 @@ namespace core
 	{
 		return static_cast<T const>(this);
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline IPlatformParams::~IPlatformParams() {}
 }

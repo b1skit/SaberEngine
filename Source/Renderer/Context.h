@@ -32,7 +32,7 @@ namespace re
 
 
 	public:
-		virtual ~Context() = 0;
+		virtual ~Context() = default;
 
 		// Context interface:
 		virtual void Create(uint64_t currentFrame) = 0;
@@ -120,8 +120,4 @@ namespace re
 	{
 		return m_renderDocApi;
 	}
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline Context::~Context() {};
 }
