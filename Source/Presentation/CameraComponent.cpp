@@ -18,12 +18,9 @@ namespace fr
 		SEAssert(em.HasComponent<fr::TransformComponent>(sceneNode),
 			"A CameraComponent must be attached to an entity that has a TransformComponent");
 
-		SEAssert(em.HasComponent<fr::RenderDataComponent>(sceneNode) == false,
-			"A Camera concept creates its own RenderDataComponent, the sceneNode entity already has one attached");
-
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(sceneNode);
 
-		fr::RenderDataComponent::AttachNewRenderDataComponent(em, sceneNode, owningTransform.GetTransformID());
+		fr::RenderDataComponent::GetCreateRenderDataComponent(em, sceneNode, owningTransform.GetTransformID());
 
 		// CameraComponent:
 		fr::CameraComponent* cameraComponent = 

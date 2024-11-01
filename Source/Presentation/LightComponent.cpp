@@ -56,8 +56,8 @@ namespace fr
 		entt::entity lightEntity = em.CreateEntity(iblTex->GetName());
 
 		// MeshPrimitive:
-		fr::RenderDataComponent& renderDataComponent = 
-			fr::RenderDataComponent::AttachNewRenderDataComponent(em, lightEntity, gr::k_sharedIdentityTransformID);
+		fr::RenderDataComponent* renderDataComponent = 
+			fr::RenderDataComponent::GetCreateRenderDataComponent(em, lightEntity, gr::k_invalidTransformID);
 
 		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData = 
 			gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
@@ -65,14 +65,14 @@ namespace fr
 		fr::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			em,
 			lightEntity,
-			renderDataComponent,
+			*renderDataComponent,
 			fullscreenQuadSceneData.get());
 
 		// LightComponent:
 		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
 			lightEntity, 
 			PrivateCTORTag{}, 
-			renderDataComponent,
+			*renderDataComponent,
 			iblTex);
 		em.EmplaceComponent<AmbientIBLDeferredMarker>(lightEntity);
 
@@ -104,8 +104,8 @@ namespace fr
 			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
 		}
 
-		fr::RenderDataComponent& renderDataComponent =
-			fr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		fr::RenderDataComponent* renderDataComponent =
+			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Attach the MeshPrimitive 
 		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh.get(), minPos, maxPos);
@@ -114,7 +114,7 @@ namespace fr
 		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
 			owningEntity,
 			PrivateCTORTag{}, 
-			renderDataComponent,
+			*renderDataComponent,
 			fr::Light::Type::Point,
 			colorIntensity,
 			hasShadow);
@@ -174,8 +174,8 @@ namespace fr
 			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
 		}
 
-		fr::RenderDataComponent& renderDataComponent =
-			fr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		fr::RenderDataComponent* renderDataComponent =
+			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Attach the MeshPrimitive 
 		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh.get(), minPos, maxPos);
@@ -184,7 +184,7 @@ namespace fr
 		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
 			owningEntity,
 			PrivateCTORTag{},
-			renderDataComponent,
+			*renderDataComponent,
 			fr::Light::Type::Spot,
 			colorIntensity,
 			hasShadow);
@@ -229,10 +229,10 @@ namespace fr
 		}
 
 		// Note: Our fullscreen quad will technically be linked to the owningTransform; We can't use 
-		// k_sharedIdentityTransformID as a directional light/shadow needs a valid transform. 
+		// k_invalidTransformID as a directional light/shadow needs a valid transform. 
 		// Fullscreen quads don't use a Transform so this shouldn't matter.
-		fr::RenderDataComponent& renderDataComponent =
-			fr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		fr::RenderDataComponent* renderDataComponent =
+			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// MeshPrimitive:
 		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData =
@@ -241,14 +241,14 @@ namespace fr
 		fr::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			em,
 			owningEntity,
-			renderDataComponent,
+			*renderDataComponent,
 			fullscreenQuadSceneData.get());
 
 		// LightComponent:
 		LightComponent& lightComponent = *em.EmplaceComponent<LightComponent>(
 			owningEntity,
 			PrivateCTORTag{},
-			renderDataComponent,
+			*renderDataComponent,
 			fr::Light::Type::Directional,
 			colorIntensity,
 			hasShadow);

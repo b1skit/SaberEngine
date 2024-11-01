@@ -69,8 +69,6 @@ namespace fr
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
-		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
-			"A MeshPrimitive's owningEntity requires a TransformComponent");
 		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
 			"A MeshPrimitive's owningEntity requires a RenderDataComponent");
 
@@ -81,18 +79,25 @@ namespace fr
 		meshPrimitiveRelationship.SetParent(em, owningEntity);
 
 		// RenderDataComponent: A MeshPrimitive has its own RenderDataID, but shares the TransformID of its owningEntity
-		fr::TransformComponent const& transformComponent = em.GetComponent<fr::TransformComponent>(owningEntity);
+		// However, if the owning entity does not have a TransformComponent, we attach one to the meshPrimitiveConcept
+		// entity instead (as it's possible the owning entity is associated with a shared TransformID, without having
+		// the TransformComponent attached to it)
+		fr::TransformComponent const* transformComponent = em.TryGetComponent<fr::TransformComponent>(owningEntity);
+		if (!transformComponent)
+		{
+			transformComponent = &fr::TransformComponent::AttachTransformComponent(em, meshPrimitiveConcept);
+		}
 
-		fr::RenderDataComponent& meshPrimRenderCmpt = fr::RenderDataComponent::AttachNewRenderDataComponent(
-			em, meshPrimitiveConcept, transformComponent.GetTransformID());
+		fr::RenderDataComponent* meshPrimRenderCmpt = fr::RenderDataComponent::GetCreateRenderDataComponent(
+			em, meshPrimitiveConcept, transformComponent->GetTransformID());
 
-		meshPrimRenderCmpt.SetFeatureBit(gr::RenderObjectFeature::IsMeshPrimitive);
+		meshPrimRenderCmpt->SetFeatureBit(gr::RenderObjectFeature::IsMeshPrimitive);
 
 		AttachMeshPrimitiveComponentHelper(
-			em, meshPrimitiveConcept, meshPrimitive, meshPrimRenderCmpt, positionMinXYZ, positionMaxXYZ);
+			em, meshPrimitiveConcept, meshPrimitive, *meshPrimRenderCmpt, positionMinXYZ, positionMaxXYZ);
 
 		// Set the mesh primitive bounds feature bit for the culling system
-		meshPrimRenderCmpt.SetFeatureBit(gr::RenderObjectFeature::IsMeshPrimitiveBounds);
+		meshPrimRenderCmpt->SetFeatureBit(gr::RenderObjectFeature::IsMeshPrimitiveBounds);
 
 		return meshPrimitiveConcept; // Note: A Material component must be attached to the returned entity
 	}

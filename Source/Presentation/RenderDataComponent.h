@@ -18,7 +18,7 @@ namespace fr
 		struct NewRegistrationMarker {}; // Attached when a a new RenderDataID is allocated
 
 	public:
-		static RenderDataComponent& AttachNewRenderDataComponent(
+		static RenderDataComponent* GetCreateRenderDataComponent(
 			fr::EntityManager&, entt::entity, gr::TransformID);
 
 		static RenderDataComponent& AttachSharedRenderDataComponent(

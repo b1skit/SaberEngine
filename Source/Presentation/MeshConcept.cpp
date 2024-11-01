@@ -30,14 +30,14 @@ namespace fr
 			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
 		}
 
-		fr::RenderDataComponent& meshRenderData = 
-			fr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		fr::RenderDataComponent* meshRenderData = 
+			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Mesh bounds: Encompasses all attached primitive bounds
 		fr::BoundsComponent::AttachBoundsComponent(em, owningEntity);
 
 		// Mark our RenderDataComponent so the renderer can differentiate between Mesh and MeshPrimitive Bounds
-		meshRenderData.SetFeatureBit(gr::RenderObjectFeature::IsMeshBounds);
+		meshRenderData->SetFeatureBit(gr::RenderObjectFeature::IsMeshBounds);
 	}
 
 
@@ -54,8 +54,6 @@ namespace fr
 			fr::RenderDataComponent::ShowImGuiWindow(em, meshConcept);
 
 			fr::Relationship const& meshRelationship = em.GetComponent<fr::Relationship>(meshConcept);
-
-			fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(meshConcept);
 
 			// Transform:
 			fr::TransformComponent::TransformComponent::ShowImGuiWindow(

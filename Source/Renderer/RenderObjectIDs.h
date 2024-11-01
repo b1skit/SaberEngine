@@ -9,12 +9,9 @@ namespace gr
 	typedef uint32_t TransformID;
 	constexpr TransformID k_invalidTransformID = std::numeric_limits<uint32_t>::max();
 
-	// Default for special cases that don't need a Transform
-	constexpr TransformID k_sharedIdentityTransformID = k_invalidTransformID - 1;
-
 	typedef uint32_t FeatureBitmask;
 
-	enum RenderObjectFeature
+	enum RenderObjectFeature : uint32_t
 	{
 		IsSceneBounds			= 0x0,
 		IsMeshBounds			= 0x1,

@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AnimationComponent.h"
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
 #include "EntityManager.h"
@@ -17,46 +18,72 @@ namespace
 
 namespace fr
 {
-	entt::entity CameraControlComponent::CreateCameraControlConcept(EntityManager& em, entt::entity cameraConcept)
+	entt::entity CameraControlComponent::CreateCameraControlConcept(EntityManager& em, entt::entity camEntity)
 	{
-		SEAssert(em.HasComponent<fr::CameraComponent>(cameraConcept),
-			"cameraConcept entity must have a CameraComponent attached");
+		SEAssert(camEntity == entt::null ||
+			em.HasComponent<fr::CameraComponent>(camEntity),
+			"camEntity must have a CameraComponent attached");
 
-		entt::entity sceneNode = fr::SceneNode::Create(em, k_defaultCameraControllerName, entt::null);
+		entt::entity camControlNode = fr::SceneNode::Create(em, k_defaultCameraControllerName, entt::null);
 
-		em.EmplaceComponent<CameraControlComponent>(sceneNode);
+		em.EmplaceComponent<CameraControlComponent>(camControlNode);
 
-		fr::TransformComponent& controllerTransform = fr::TransformComponent::AttachTransformComponent(em, sceneNode);
-		fr::TransformComponent& camTransform = em.GetComponent<fr::TransformComponent>(cameraConcept);
+		fr::TransformComponent::AttachTransformComponent(em, camControlNode);
 
 		// Attach the camera to the camera controller:
-		SetCamera(controllerTransform, nullptr, camTransform);
-		
-		return sceneNode;
+		if (camEntity != entt::null)
+		{
+			SetCamera(camControlNode, entt::null, camEntity);
+		}
+
+		return camControlNode;
 	}
 
 
 	void CameraControlComponent::SetCamera(
-		fr::TransformComponent& controllerTransformCmpt,
-		fr::TransformComponent* currentCamTransformCmpt,
-		fr::TransformComponent& newCamTransformCmpt)
-	{
+		entt::entity camControlCmptOwner,
+		entt::entity currentCamCmptOwner,
+		entt::entity newCamCmptOwner)
+	{	
+		fr::EntityManager& em = *fr::EntityManager::Get();
+
+		// The CameraControlComponent gimbal requires 2 Transforms (for pitch/yaw), animations target a single Transform
+		SEAssert(!em.HasComponent<fr::AnimationComponent>(newCamCmptOwner),
+			"The target camera has an AnimationComponent, it cannot be controlled by a camera controller as well");
+
+		SEAssert(em.HasComponent<fr::TransformComponent>(camControlCmptOwner),
+			"CameraControlComponent owning entity must have a TransformComponent");
+
 		// Reparent the existing camera (if any) to a null parent. This effectively collapses the global transform
 		// values to the local transform, so the camera's final location remains the same
-		if (currentCamTransformCmpt)
+		if (currentCamCmptOwner != entt::null)
 		{
-			fr::Transform& currentCamTransform = currentCamTransformCmpt->GetTransform();
+			SEAssert(em.HasComponent<fr::TransformComponent>(currentCamCmptOwner),
+				"Owning entity for the current camera component does not have a TransformComponent. This is unexpected");
+
+			fr::TransformComponent& currentCamTransformCmpt = em.GetComponent<fr::TransformComponent>(currentCamCmptOwner);
+
+			fr::Transform& currentCamTransform = currentCamTransformCmpt.GetTransform();
 			currentCamTransform.ReParent(nullptr);
 		}
+		
+		// Attach the new camera (if any) to the controller:
+		if (newCamCmptOwner != entt::null)
+		{
+			SEAssert(em.HasComponent<fr::TransformComponent>(newCamCmptOwner),
+				"Owning entity for the new camera component does not have a TransformComponent. This is unexpected");
 
-		fr::Transform& controllerTransform = controllerTransformCmpt.GetTransform();
-		fr::Transform& newCamTransform = newCamTransformCmpt.GetTransform();
+			fr::Transform& controllerTransform =
+				em.GetComponent<fr::TransformComponent>(camControlCmptOwner).GetTransform();
 
-		// The controller and Camera must be located at the same point. To avoid stomping imported Camera locations,
-		// we move the camera controller to the camera. Then, we re-parent the Camera's Transform, to maintain its
-		// global orientation but update its local orientation under the camera controller's Transform
-		controllerTransform.SetGlobalPosition(newCamTransform.GetGlobalPosition());
-		newCamTransform.ReParent(&controllerTransform);
+			fr::Transform& newCamTransform = em.GetComponent<fr::TransformComponent>(newCamCmptOwner).GetTransform();
+
+			// The controller and Camera must be located at the same point. To avoid stomping imported Camera locations,
+			// we move the camera controller to the camera. Then, we re-parent the Camera's Transform, to maintain its
+			// global orientation but update its local orientation under the camera controller's Transform
+			controllerTransform.SetGlobalPosition(newCamTransform.GetGlobalPosition());
+			newCamTransform.ReParent(&controllerTransform);
+		}
 	}
 
 

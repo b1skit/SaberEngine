@@ -39,7 +39,7 @@ namespace gr
 			Tangent,
 			TexCoord,
 			Color,
-			BlendIndices,
+			BlendIndices,	// Joints
 			BlendWeight,
 			//PointSize, // Note: Point size is not (currently) supported as OpenGL has no equivalent
 

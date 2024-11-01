@@ -505,15 +505,15 @@ namespace
 		}
 		else
 		{
+			if (current->has_scale)
+			{
+				targetTransform.SetLocalScale(glm::vec3(current->scale[0], current->scale[1], current->scale[2]));
+			}
 			if (current->has_rotation)
 			{
 				// Note: GLM expects quaternions to be specified in WXYZ order
 				targetTransform.SetLocalRotation(
 					glm::quat(current->rotation[3], current->rotation[0], current->rotation[1], current->rotation[2]));
-			}
-			if (current->has_scale)
-			{
-				targetTransform.SetLocalScale(glm::vec3(current->scale[0], current->scale[1], current->scale[2]));
 			}
 			if (current->has_translation)
 			{
@@ -979,31 +979,21 @@ namespace
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_joints: // joints_n == indexes from skin.joints array
 				{
-					SEAssertF("TODO: Fix this - these are vec4's");
-
-					std::vector<float> jointsAsFloats; // We unpack joints as floats...
-					jointsAsFloats.resize(totalFloatElements);
+					// GLTF specs: Max 4 joints (per set) can influence 1 vertex; Joints are stored as vec4's of 
+					// unsigned bytes/shorts
+					util::ByteVector joints = util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
 
 					const bool unpackResult = cgltf_accessor_unpack_floats(
 						curAttribute.data,
-						static_cast<float*>(jointsAsFloats.data()),
+						static_cast<float*>(joints.data<float>()),
 						totalFloatElements);
 					SEAssert(unpackResult, "Failed to unpack data");
-
-					util::ByteVector jointsAsUints = 
-						util::ByteVector::Create<uint8_t>(totalFloatElements); // ...and convert to uint8_t
-
-					for (size_t jointIdx = 0; jointIdx < jointsAsFloats.size(); jointIdx++)
-					{
-						// Cast our joint indexes from floats to uint8_t's:
-						jointsAsUints.at<uint8_t>(jointIdx) = util::CheckedCast<uint8_t>(jointsAsFloats[jointIdx]);
-					}
 				
 					AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-						.m_streamData = std::make_unique<util::ByteVector>(std::move(jointsAsUints)),
+						.m_streamData = std::make_unique<util::ByteVector>(std::move(joints)),
 						.m_streamDesc = gr::VertexStream::StreamDesc{
 							.m_type = gr::VertexStream::Type::BlendIndices,
-							.m_dataType = re::DataType::UByte,
+							.m_dataType = re::DataType::Float4,
 						},
 						.m_streamIdx = streamIdx
 					});
@@ -1011,10 +1001,8 @@ namespace
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_weights: // How stronly a joint influences a vertex
 				{
-					SEAssertF("TODO: Fix this - these are vec4's");
-
-					util::ByteVector weights = 
-						util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
+					// Weights are stored as vec4's of unsigned bytes/shorts
+					util::ByteVector weights = util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
 
 					const bool unpackResult = cgltf_accessor_unpack_floats(
 						curAttribute.data,
@@ -1026,7 +1014,7 @@ namespace
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(weights)),
 						.m_streamDesc = gr::VertexStream::StreamDesc{
 							 .m_type = gr::VertexStream::Type::BlendWeight,
-							 .m_dataType = re::DataType::Float,
+							 .m_dataType = re::DataType::Float4,
 						},
 						.m_streamIdx = streamIdx
 					});

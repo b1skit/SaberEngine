@@ -80,10 +80,10 @@ namespace fr
 		SEAssert(sceneBoundsTransformComponent.GetTransform().GetParent() == nullptr,
 			"Found a parent transform for the scene bounds. This is unexpected");
 		
-		fr::RenderDataComponent& sceneBoundsRenderCmpt = fr::RenderDataComponent::AttachNewRenderDataComponent(
+		fr::RenderDataComponent* sceneBoundsRenderCmpt = fr::RenderDataComponent::GetCreateRenderDataComponent(
 			em, sceneBoundsEntity, sceneBoundsTransformComponent.GetTransformID());
 
-		sceneBoundsRenderCmpt.SetFeatureBit(gr::RenderObjectFeature::IsSceneBounds);
+		sceneBoundsRenderCmpt->SetFeatureBit(gr::RenderObjectFeature::IsSceneBounds);
 
 		em.EmplaceComponent<SceneBoundsMarker>(sceneBoundsEntity);
 

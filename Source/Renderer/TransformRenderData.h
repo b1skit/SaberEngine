@@ -32,6 +32,7 @@ namespace gr
 			glm::vec3 m_globalForward = WorldAxisZ; // World-space forward (Z+) vector
 
 			gr::TransformID m_transformID = gr::k_invalidTransformID;
+			gr::TransformID m_parentTransformID = gr::k_invalidTransformID;
 		};
 
 

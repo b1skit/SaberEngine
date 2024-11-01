@@ -108,8 +108,15 @@ namespace gr
 		std::unordered_map<gr::TransformID, std::unique_ptr<re::Batch>> m_transformAxisBatches;
 		std::unordered_map<gr::TransformID, re::BufferInput> m_transformAxisTransformBuffers;
 
+		bool m_showParentChildLinks = false;
+		std::unordered_map<gr::TransformID, std::unique_ptr<re::Batch>> m_transformParentChildLinkBatches;
+		glm::vec4 m_parentColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+		glm::vec4 m_childColor = glm::vec4(0.f, 0.f, 0.f, 1.f);
+
+
 	private:
 		std::unordered_set<gr::RenderDataID> m_selectedRenderDataIDs; // If emtpy, render all IDs
+		std::unordered_set<gr::TransformID> m_selectedTransformIDs;
 	};
 }
 

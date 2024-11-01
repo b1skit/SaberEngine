@@ -783,10 +783,10 @@ namespace fr
 					cur.m_node->m_children.size() == 1 ? "child" : "children").c_str());
 
 				// View Transform data:
-				cur.m_node->ImGuiHelper_ShowData(cur.m_node->m_transformID);
-
+				cur.m_node->ImGuiHelper_ShowData(util::PtrToID(cur.m_node));
+				
 				// Modification controls:
-				cur.m_node->ImGuiHelper_Modify(cur.m_node->m_transformID);
+				cur.m_node->ImGuiHelper_Modify(util::PtrToID(cur.m_node));
 
 				ImGui::Unindent();
 

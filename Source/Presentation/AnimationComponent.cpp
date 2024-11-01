@@ -342,8 +342,6 @@ namespace fr
 		fr::EntityManager& em, entt::entity entity, AnimationController const* animController)
 	{
 		SEAssert(animController != nullptr, "Animation controller cannot be null");
-		SEAssert(em.HasComponent<fr::TransformComponent>(entity),
-			"An animation component can only be attached to nodes that have a TransformComponent");
 
 		fr::AnimationComponent* animationCmpt = 
 			em.EmplaceComponent<fr::AnimationComponent>(entity, animController, PrivateCTORTag{});
@@ -467,7 +465,7 @@ namespace fr
 					keyframeTimes[nextKeyframeIdx],
 					currentTimeSec);
 
-				transform.SetGlobalPosition(interpolatedValue);
+				transform.SetLocalPosition(interpolatedValue);
 			}
 			break;
 			case AnimationPath::Rotation:
@@ -498,7 +496,7 @@ namespace fr
 						currentTimeSec);
 				}
 
-				transform.SetGlobalRotation(glm::normalize(interpolatedValue));
+				transform.SetLocalRotation(glm::normalize(interpolatedValue));
 			}
 			break;
 			case AnimationPath::Scale:
@@ -513,7 +511,7 @@ namespace fr
 					keyframeTimes[nextKeyframeIdx],
 					currentTimeSec);
 
-				transform.SetGlobalScale(interpolatedValue);
+				transform.SetLocalScale(interpolatedValue);
 			}
 			break;
 			case AnimationPath::Weights:

@@ -63,12 +63,23 @@ namespace fr
 			re::RenderManager::GetSceneData()->GetIBLTexture());
 		SetActiveAmbientLight(ambientLight);
 
-		// Add a player object to the scene:
+		// Add a camera controller to the scene:
 		entt::entity mainCameraEntity = GetMainCamera();
-		fr::NameComponent const& mainCameraName = GetComponent<fr::NameComponent>(mainCameraEntity);
 
-		fr::CameraControlComponent::CreateCameraControlConcept(*this, mainCameraEntity);
-		LOG("Created PlayerObject using \"%s\"", mainCameraName.GetName().c_str());
+		// Only bind non-animated main cameras to the camera controller
+		if (!HasComponent<fr::AnimationComponent>(mainCameraEntity))
+		{
+			fr::CameraControlComponent::CreateCameraControlConcept(*this, mainCameraEntity);
+
+			fr::NameComponent const& mainCameraName = GetComponent<fr::NameComponent>(mainCameraEntity);
+			LOG("Attached CameraControlComponent to camera \"%s\"", mainCameraName.GetName().c_str());
+		}
+		else
+		{
+			fr::CameraControlComponent::CreateCameraControlConcept(*this, entt::null);
+			LOG("Created unbound CameraControlComponent");
+		}		
+
 		m_processInput = true;
 
 		// Push render updates to ensure new data is available for the first frame
@@ -322,29 +333,25 @@ namespace fr
 			m_registry.emplace_or_replace<fr::CameraComponent::NewMainCameraMarker>(newMainCamera);
 
 			// Find and update the camera controller:
-			fr::TransformComponent* camControllerTransformCmpt = nullptr;
 			entt::entity camController = entt::null;
-			bool foundCamController = false;
 			auto camControllerView = m_registry.view<fr::CameraControlComponent>();
 			for (entt::entity entity : camControllerView)
 			{
-				SEAssert(!foundCamController, "Already found camera controller. This shouldn't be possible");
-				foundCamController = true;
-
-				camControllerTransformCmpt = &m_registry.get<fr::TransformComponent>(entity);
+				SEAssert(camController == entt::null, "Already found camera controller. This shouldn't be possible");
+				camController = entity;
 			}
 
-			// No point trying to set a camera if the camera controller doesn't exist yet
-			if (camControllerTransformCmpt)
+			if (camController != entt::null) // No point trying to set a camera if the camera controller doesn't exist yet
 			{
-				fr::TransformComponent& currentCamTransformCmpt = m_registry.get<fr::TransformComponent>(currentMainCamera);
-				fr::TransformComponent& newCamTransformCmpt = m_registry.get<fr::TransformComponent>(newMainCamera);
-
-				fr::CameraControlComponent::SetCamera(
-					*camControllerTransformCmpt, &currentCamTransformCmpt, newCamTransformCmpt);
+				// Animated cameras cannot be controlled by a camera controller
+				entt::entity camControllerTarget = entt::null;
+				if (!HasComponent<fr::AnimationComponent>(newMainCamera))
+				{
+					camControllerTarget = newMainCamera;
+				}
+				fr::CameraControlComponent::SetCamera(camController, currentMainCamera, camControllerTarget);
 			}
 		}
-
 	}
 
 
@@ -630,34 +637,18 @@ namespace fr
 
 	void EntityManager::UpdateCameraController(double stepTimeMs)
 	{
+		const entt::entity mainCamera = GetMainCamera();
+
+		const bool isAnimated = HasComponent<fr::AnimationComponent>(mainCamera);
+
+		if (!isAnimated)
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
-			fr::CameraComponent* cameraComponent = nullptr;
-			fr::TransformComponent* cameraTransform = nullptr;
-			bool foundMainCamera = false;
-			bool isBeingAnimated = false;
-			auto mainCameraView = m_registry.view<
-				fr::CameraComponent, fr::CameraComponent::MainCameraMarker, fr::TransformComponent>();
-			for (entt::entity mainCamEntity : mainCameraView)
-			{
-				SEAssert(foundMainCamera == false, "Already found a main camera. This should not be possible");
-				foundMainCamera = true;
-
-				cameraComponent = &mainCameraView.get<fr::CameraComponent>(mainCamEntity);
-				cameraTransform = &mainCameraView.get<fr::TransformComponent>(mainCamEntity);
-
-				fr::AnimationComponent const* camAnimation =
-					GetFirstInHierarchyAboveInternal<fr::AnimationComponent>(mainCamEntity);
-
-				isBeingAnimated = camAnimation && camAnimation->IsPlaying();
-			}
-			SEAssert(cameraComponent && cameraTransform, "Failed to find main CameraComponent or TransformComponent");
 
 			fr::CameraControlComponent* cameraController = nullptr;
 			fr::TransformComponent* camControllerTransform = nullptr;
 			bool foundCamController = false;
-			
+
 			auto camControllerView = m_registry.view<fr::CameraControlComponent, fr::TransformComponent>();
 			for (entt::entity entity : camControllerView)
 			{
@@ -669,15 +660,12 @@ namespace fr
 			}
 			SEAssert(cameraController && camControllerTransform, "Failed to find a camera controller and/or transform");
 
-			if (!isBeingAnimated) // Disable camera controls if an animation is acting on the camera
-			{
-				fr::CameraControlComponent::Update(
-					*cameraController,
-					camControllerTransform->GetTransform(),
-					cameraComponent->GetCamera(),
-					cameraTransform->GetTransform(),
-					stepTimeMs);
-			}
+			fr::CameraControlComponent::Update(
+				*cameraController,
+				camControllerTransform->GetTransform(),
+				GetComponent<fr::CameraComponent>(mainCamera).GetCamera(),
+				GetComponent<fr::TransformComponent>(mainCamera).GetTransform(),
+				stepTimeMs);
 		}
 	}
 

@@ -18,9 +18,9 @@ namespace fr
 		static entt::entity CreateCameraControlConcept(EntityManager&, entt::entity cameraConcept);
 
 		static void SetCamera(
-			fr::TransformComponent& controllerTransformCmpt,
-			fr::TransformComponent* currentCamTransformCmpt, 
-			fr::TransformComponent& newCamTransformCmpt);
+			entt::entity camControlCmptOwner,
+			entt::entity currentCamCmptOwner,
+			entt::entity newCamCmptOwner);
 
 		static void Update(
 			CameraControlComponent&, 

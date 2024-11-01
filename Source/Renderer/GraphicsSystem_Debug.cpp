@@ -48,6 +48,65 @@ namespace
 	}
 
 
+	std::unique_ptr<re::Batch> BuildParentChildLinkBatch(
+		gr::Transform::RenderData const& parent,
+		gr::Transform::RenderData const& child,
+		re::Lifetime lifetime,
+		glm::vec4 const& parentColor,
+		glm::vec4 const& childColor)
+	{
+		constexpr glm::vec4 k_originPoint(0.f, 0.f, 0.f, 1.f);
+
+		const glm::vec3 parentWorldPos = (parent.g_model * k_originPoint).xyz;
+		const glm::vec3 childWorldPos = (child.g_model * k_originPoint).xyz;
+
+		std::shared_ptr<gr::VertexStream> linePositionsStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
+				.m_lifetime = lifetime,
+				.m_type = gr::VertexStream::Type::Position,
+				.m_dataType = re::DataType::Float3,
+			},
+			util::ByteVector::Create<glm::vec3>({ parentWorldPos, childWorldPos }),
+			false);
+
+		std::shared_ptr<gr::VertexStream> lineColorStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
+				.m_lifetime = lifetime,
+				.m_type = gr::VertexStream::Type::Color,
+				.m_dataType = re::DataType::Float4
+			},
+			util::ByteVector::Create<glm::vec4>({ parentColor, childColor }),
+			false);
+
+		std::shared_ptr<gr::VertexStream> lineIndexStream = gr::VertexStream::Create(
+			gr::VertexStream::StreamDesc{
+				.m_lifetime = lifetime,
+				.m_type = gr::VertexStream::Type::Index,
+				.m_dataType = re::DataType::UShort,
+			},
+			util::ByteVector::Create<uint16_t>({ 0, 1 }),
+			false);
+
+		const re::Batch::GraphicsParams lineBatchGraphicsParams{
+			.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced,
+			.m_numInstances = 1,
+			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList,
+			.m_vertexBuffers = {linePositionsStream.get(), lineColorStream.get() },
+			.m_indexBuffer = re::VertexBufferInput(lineIndexStream.get()),
+		};
+
+		std::unique_ptr<re::Batch> lineBatch = std::make_unique<re::Batch>(
+			lifetime, lineBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
+
+		// For simplicity, we build our lines in world space, and attach an identity transform buffer
+		constexpr glm::mat4 k_identity(1.f);
+		lineBatch->SetBuffer(gr::Transform::CreateInstancedTransformBuffer(
+			lifetime, re::Buffer::StagingPool::Temporary, &k_identity, &k_identity));
+
+		return lineBatch;
+	}
+
+
 	std::unique_ptr<re::Batch> BuildBoundingBoxBatch(
 		re::Lifetime batchLifetime, gr::Bounds::RenderData const& bounds, glm::vec4 const& boxColor)
 	{
@@ -411,10 +470,6 @@ namespace gr
 					gr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<gr::Bounds::RenderData>();
 
 					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformData();
-
-					/*// Adjust the scale of the mesh's global TRS matrix basis vectors:
-					glm::mat4 const& meshTR = 
-						AdjustMat4Scale(transformData.g_model, transformData.m_globalScale, m_meshCoordinateAxisScale);*/
 
 					// Create/update a cached buffer:
 					if (!m_meshPrimTransformBuffers.contains(meshPrimRenderDataID))
@@ -906,32 +961,59 @@ namespace gr
 			std::vector<gr::TransformID> const& registeredTransformIDs = renderData.GetRegisteredTransformIDs();
 			for (gr::TransformID transformID : registeredTransformIDs)
 			{
-				if (!m_transformAxisBatches.contains(transformID))
+				if (m_selectedTransformIDs.empty() || m_selectedTransformIDs.contains(transformID))
 				{
-					auto newTransformAxisBatchItr =
-						m_transformAxisBatches.emplace(transformID, BuildAxisBatch(re::Lifetime::Permanent));
+					if (!m_transformAxisBatches.contains(transformID))
+					{
+						auto newTransformAxisBatchItr =
+							m_transformAxisBatches.emplace(transformID, BuildAxisBatch(re::Lifetime::Permanent));
 
-					auto bufferItr = m_transformAxisTransformBuffers.emplace(transformID,
-						gr::Transform::CreateInstancedTransformBuffer(
-							re::Lifetime::Permanent,
-							re::Buffer::StagingPool::Permanent,
-							renderData.GetTransformDataFromTransformID(transformID)));
+						auto bufferItr = m_transformAxisTransformBuffers.emplace(transformID,
+							gr::Transform::CreateInstancedTransformBuffer(
+								re::Lifetime::Permanent,
+								re::Buffer::StagingPool::Permanent,
+								renderData.GetTransformDataFromTransformID(transformID)));
 
-					newTransformAxisBatchItr.first->second->SetBuffer(bufferItr.first->second);
+						newTransformAxisBatchItr.first->second->SetBuffer(bufferItr.first->second);
+					}
+					else
+					{
+						m_transformAxisTransformBuffers.at(transformID).GetBuffer()->Commit(
+							gr::Transform::CreateInstancedTransformData(renderData.GetTransformDataFromTransformID(transformID)));
+					}
+
+					m_debugStage->AddBatch(*m_transformAxisBatches.at(transformID));
+
+					if (m_showParentChildLinks)
+					{
+						gr::Transform::RenderData const& transformRenderData =
+							renderData.GetTransformDataFromTransformID(transformID);
+
+						const gr::TransformID parentID = transformRenderData.m_parentTransformID;
+						if (parentID != gr::k_invalidTransformID)
+						{
+							gr::Transform::RenderData const& parentTransformRenderData =
+								renderData.GetTransformDataFromTransformID(parentID);
+
+							// Note: This is a bit of an inefficient hack, as we're re-creating the vertex buffers each
+							// frame. But in practice, this is just a debug mode and the data is typically very small so
+							// this is far simpler than writing a bespoke drawstyle and shader
+							m_debugStage->AddBatch(*BuildParentChildLinkBatch(
+								parentTransformRenderData,
+								transformRenderData,
+								re::Lifetime::SingleFrame,
+								m_parentColor,
+								m_childColor));
+						}
+					}
 				}
-				else
-				{
-					m_transformAxisTransformBuffers.at(transformID).GetBuffer()->Commit(
-						gr::Transform::CreateInstancedTransformData(renderData.GetTransformDataFromTransformID(transformID)));
-				}
-
-				m_debugStage->AddBatch(*m_transformAxisBatches.at(transformID));
 			}
 		}
 		else
 		{
 			m_transformAxisBatches.clear();
 			m_transformAxisTransformBuffers.clear();
+			m_transformParentChildLinkBatches.clear();
 		}
 	}
 
@@ -984,7 +1066,6 @@ namespace gr
 
 				for (gr::RenderDataID renderDataID : currentRenderObjects)
 				{
-
 					const bool currentlySelected = m_selectedRenderDataIDs.contains(renderDataID);
 					bool isSelected = currentlySelected;
 					m_isDirty |= ImGui::Checkbox(std::format("{}", renderDataID).c_str(), &isSelected);
@@ -1002,13 +1083,13 @@ namespace gr
 			ImGui::Unindent();
 		}
 
-		auto ShowColorPicker = [](bool doShow, glm::vec4& color) -> bool
+		auto ShowColorPicker = [](bool doShow, glm::vec4& color, char const* label = nullptr) -> bool
 			{
 				bool isDirty = false;
 				if (doShow)
 				{
 					ImGui::Indent();
-					isDirty |= ImGui::ColorEdit4("Color", &color.x, k_colorPickerFlags);
+					isDirty |= ImGui::ColorEdit4(label ? label : "Color", &color.x, k_colorPickerFlags);
 					ImGui::Unindent();
 				}
 				return isDirty;
@@ -1075,7 +1156,56 @@ namespace gr
 		m_isDirty |= ImGui::Checkbox(std::format("Show origin coordinate XYZ axis").c_str(), &m_showWorldCoordinateAxis);
 		m_isDirty |= ImGui::Checkbox(std::format("Show mesh coordinate axis").c_str(), &m_showMeshCoordinateAxis);
 		m_isDirty |= ImGui::Checkbox(std::format("Show light coordinate axis").c_str(), &m_showLightCoordinateAxis);
+
 		m_isDirty |= ImGui::Checkbox(std::format("Show all transform axes").c_str(), &m_showAllTransforms);
+		if (m_showAllTransforms)
+		{
+			ImGui::Indent();
+
+			if (ImGui::CollapsingHeader("Target TransformIDs"))
+			{
+				ImGui::Indent();
+
+				static bool s_targetAll = true;
+				if (ImGui::Button(std::format("{}", s_targetAll ? "Select specific IDs" : "Select all").c_str()))
+				{
+					s_targetAll = !s_targetAll;
+					m_isDirty = true;
+				}
+
+				if (s_targetAll)
+				{
+					m_selectedTransformIDs.clear(); // If emtpy, render all IDs
+				}
+				else
+				{
+					std::vector<gr::RenderDataID> const& currentTransforms =
+						m_graphicsSystemManager->GetRenderData().GetRegisteredTransformIDs();
+
+					for (gr::RenderDataID transformID : currentTransforms)
+					{
+						const bool currentlySelected = m_selectedTransformIDs.contains(transformID);
+						bool isSelected = currentlySelected;
+						m_isDirty |= ImGui::Checkbox(std::format("{}", transformID).c_str(), &isSelected);
+
+						if (currentlySelected && !isSelected)
+						{
+							m_selectedTransformIDs.erase(transformID);
+						}
+						else if (isSelected && !currentlySelected)
+						{
+							m_selectedTransformIDs.emplace(transformID);
+						}
+					}
+				}
+				ImGui::Unindent();
+			}
+
+			m_isDirty |= ImGui::Checkbox(std::format("Show parent/child links").c_str(), &m_showParentChildLinks);
+			ShowColorPicker(m_showParentChildLinks, m_parentColor, "Parent");
+			ShowColorPicker(m_showParentChildLinks, m_childColor, "Child");
+			ImGui::Unindent();
+		}
 
 		if (m_showWorldCoordinateAxis || 
 			m_showMeshCoordinateAxis || 

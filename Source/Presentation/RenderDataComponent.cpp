@@ -11,11 +11,21 @@ namespace fr
 	std::atomic<gr::RenderDataID> RenderDataComponent::s_objectIDs = 0;
 
 
-	RenderDataComponent& RenderDataComponent::AttachNewRenderDataComponent(
+	RenderDataComponent* RenderDataComponent::GetCreateRenderDataComponent(
 		fr::EntityManager& em, entt::entity entity, gr::TransformID transformID)
 	{
-		em.EmplaceComponent<fr::RenderDataComponent::NewRegistrationMarker>(entity);
-		return *em.EmplaceComponent<fr::RenderDataComponent>(entity, PrivateCTORTag{}, transformID);
+		RenderDataComponent* renderDataCmpt = em.TryGetComponent<fr::RenderDataComponent>(entity);
+
+		SEAssert(!renderDataCmpt || renderDataCmpt->GetTransformID() == transformID,
+			"RenderDataComponent already exists, but is associated with a different TransformID");
+
+		if (!renderDataCmpt)
+		{
+			em.EmplaceComponent<fr::RenderDataComponent::NewRegistrationMarker>(entity);
+			renderDataCmpt = em.EmplaceComponent<fr::RenderDataComponent>(entity, PrivateCTORTag{}, transformID);
+		}
+		
+		return renderDataCmpt;
 	}
 
 

@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "MarkerComponents.h"
+#include "RenderDataComponent.h"
 #include "TransformComponent.h"
 
 #include "Core/ThreadPool.h"
@@ -27,6 +28,9 @@ namespace fr
 		TransformComponent& transformCmpt = 
 			*em.EmplaceComponent<fr::TransformComponent>(entity, PrivateCTORTag{}, parentTransform);
 		
+		// A Transform must be associated with a RenderDataID; Attach a RenderDataComponent if one doesn't already exist
+		fr::RenderDataComponent::GetCreateRenderDataComponent(em, entity, transformCmpt.GetTransformID());
+
 		// Note: We don't emplace a dirty marker; The Transform/TransformComponent currently track their dirty state
 		return transformCmpt;
 	}
@@ -35,6 +39,14 @@ namespace fr
 	gr::Transform::RenderData TransformComponent::CreateRenderData(fr::TransformComponent& transformComponent)
 	{
 		fr::Transform& transform = transformComponent.GetTransform();
+
+		gr::TransformID parentTransformID = gr::k_invalidTransformID;
+		fr::Transform const* parentTransform = transform.GetParent();
+		if (parentTransform)
+		{
+			parentTransformID = parentTransform->GetTransformID();
+		}
+
 		return gr::Transform::RenderData{
 			.g_model = transform.GetGlobalMatrix(),
 			.g_transposeInvModel = glm::transpose(glm::inverse(transform.GetGlobalMatrix())),
@@ -47,6 +59,7 @@ namespace fr
 			.m_globalForward = transform.GetGlobalForward(),
 
 			.m_transformID = transformComponent.GetTransformID(),
+			.m_parentTransformID = parentTransformID,
 		};
 	}
 
@@ -57,9 +70,14 @@ namespace fr
 		{
 			ImGui::Indent();
 
-			fr::TransformComponent& transformCmpt = em.GetComponent<fr::TransformComponent>(owningEntity);
-
-			transformCmpt.GetTransform().ShowImGuiWindow();
+			if (fr::TransformComponent* transformCmpt = em.TryGetComponent<fr::TransformComponent>(owningEntity))
+			{
+				transformCmpt->GetTransform().ShowImGuiWindow();
+			}
+			else
+			{
+				ImGui::Text("<No transform component attached>");
+			}
 
 			ImGui::Unindent();
 		}
