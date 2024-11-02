@@ -205,10 +205,6 @@
           "Command": "-scene VC\\glTF\\VC.gltf"
         },
         {
-          "Id": "32bac8c3-5bfd-43c7-8a83-1db3f3583c56",
-          "Command": "-scene Fox\\glTF\\Fox.gltf"
-        },
-        {
           "Id": "e71cae4e-1903-46e0-8510-c5d9f95e2410",
           "Command": "-scene TriangleWithoutIndices\\glTF-Embedded\\TriangleWithoutIndices.gltf"
         },
@@ -285,8 +281,28 @@
       "Command": "Skinning",
       "Items": [
         {
+          "Id": "5d43f725-1974-412e-b3bc-849391061945",
+          "Command": "-scene SimpleSkin\\glTF-Embedded\\SimpleSkin.gltf"
+        },
+        {
           "Id": "5c33b5c5-68f4-4728-b41a-373fd6a98ac1",
           "Command": "-scene RiggedSimple\\glTF-Binary\\RiggedSimple.glb"
+        },
+        {
+          "Id": "d682b84e-0d54-46f5-99c4-c3fbd1711b79",
+          "Command": "-scene RiggedFigure\\glTF\\RiggedFigure.gltf"
+        },
+        {
+          "Id": "1ae94854-57e8-48cf-8e42-60a22f47119c",
+          "Command": "-scene BrainStem\\glTF\\BrainStem.gltf"
+        },
+        {
+          "Id": "8f424adb-8993-4660-b22a-025fd084e81f",
+          "Command": "-scene CesiumMan\\glTF\\CesiumMan.gltf"
+        },
+        {
+          "Id": "32bac8c3-5bfd-43c7-8a83-1db3f3583c56",
+          "Command": "-scene Fox\\glTF\\Fox.gltf"
         }
       ]
     }
