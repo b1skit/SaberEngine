@@ -12,6 +12,9 @@
 
 namespace
 {
+	static const EffectID k_mipGenEffectID = effect::Effect::ComputeEffectID("MipGeneration");
+
+
 	MipGenerationData CreateMipGenerationParamsData(
 		std::shared_ptr<re::Texture> tex, uint32_t srcMipLevel, uint32_t numMips, uint32_t faceIdx, uint32_t arrayIdx)
 	{
@@ -278,7 +281,7 @@ namespace gr
 						re::Batch computeBatch = re::Batch(
 							re::Lifetime::SingleFrame,
 							re::Batch::ComputeParams{ .m_threadGroupCount = glm::uvec3(roundedXDim, roundedYDim, 1u) },
-							effect::Effect::ComputeEffectID("MipGeneration"));
+							k_mipGenEffectID);
 
 						mipGenerationStage->AddBatch(computeBatch);
 

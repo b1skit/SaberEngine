@@ -9,6 +9,9 @@
 
 namespace
 {
+	static const EffectID k_vertexAnimationEffectID = effect::Effect::ComputeEffectID("VertexAnimation");
+
+
 	VertexStreamMetadata GetVertexStreamMetadataData(gr::MeshPrimitive::RenderData const& meshPrimRenderData)
 	{
 		SEAssert(meshPrimRenderData.m_vertexStreams[0] != nullptr &&
@@ -280,7 +283,7 @@ namespace gr
 							re::Batch vertAnimationBatch = re::Batch(
 								re::Lifetime::SingleFrame,
 								re::Batch::ComputeParams{ .m_threadGroupCount = glm::uvec3(roundedXDim, 1u, 1u) },
-								effect::Effect::ComputeEffectID("VertexAnimation"));
+								k_vertexAnimationEffectID);
 
 							// Set the buffers:
 							SEAssert(m_meshIDToMeshRenderParams.contains(meshPrimRenderData.m_owningMeshRenderDataID),

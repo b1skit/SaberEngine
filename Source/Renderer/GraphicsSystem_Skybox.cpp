@@ -13,6 +13,9 @@
 
 namespace
 {
+	static const EffectID k_skyboxEffectID = effect::Effect::ComputeEffectID("Skybox");
+
+
 	SkyboxData CreateSkyboxParamsData(glm::vec3 const& backgroundColor, bool showBackgroundColor)
 	{
 		SkyboxData skyboxParams;
@@ -39,7 +42,7 @@ namespace gr
 	{
 		re::RenderStage::FullscreenQuadParams fsqParams;
 		fsqParams.m_zLocation = gr::meshfactory::ZLocation::Far;
-		fsqParams.m_effectID = effect::Effect::ComputeEffectID("Skybox");
+		fsqParams.m_effectID = k_skyboxEffectID;
 
 		m_skyboxStage = re::RenderStage::CreateFullscreenQuadStage("Skybox stage", fsqParams);
 

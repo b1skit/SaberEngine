@@ -20,6 +20,9 @@
 
 namespace
 {
+	static const EffectID k_deferredLightingEffectID = effect::Effect::ComputeEffectID("DeferredLighting");
+
+
 	BRDFIntegrationData GetBRDFIntegrationParamsDataData()
 	{
 		const uint32_t brdfTexWidthHeight =
@@ -209,7 +212,7 @@ namespace gr
 			re::Lifetime::SingleFrame,
 			re::Batch::ComputeParams{
 				.m_threadGroupCount = glm::uvec3(brdfTexWidthHeight, brdfTexWidthHeight, 1u) },
-			effect::Effect::ComputeEffectID("DeferredLighting"));
+			k_deferredLightingEffectID);
 
 		brdfStage->AddBatch(computeBatch);
 
@@ -393,7 +396,7 @@ namespace gr
 			m_cubeMeshBatch = std::make_unique<re::Batch>(
 				re::Lifetime::Permanent,
 				m_cubeMeshPrimitive.get(),
-				effect::Effect::ComputeEffectID("DeferredLighting"));
+				k_deferredLightingEffectID);
 		}
 
 		// Camera render params for 6 cubemap faces; Just need to update g_view for each face/stage
@@ -738,7 +741,7 @@ namespace gr
 					// Set the batch inputs:
 					re::Batch& ambientBatch = m_ambientLightData.at(lightID).m_batch;
 
-					ambientBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
+					ambientBatch.SetEffectID(k_deferredLightingEffectID);
 
 					ambientBatch.AddTextureInput(
 						"CubeMapIEM",
@@ -828,7 +831,7 @@ namespace gr
 
 					re::Batch& directionalLightBatch = m_punctualLightData.at(directionalData.m_renderDataID).m_batch;
 
-					directionalLightBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
+					directionalLightBatch.SetEffectID(k_deferredLightingEffectID);
 					
 					// Note: We set the shadow texture inputs per frame/batch if/as required
 
@@ -864,7 +867,7 @@ namespace gr
 
 				re::Batch& lightBatch = punctualLightData.at(lightID).m_batch;
 
-				lightBatch.SetEffectID(effect::Effect::ComputeEffectID("DeferredLighting"));
+				lightBatch.SetEffectID(k_deferredLightingEffectID);
 
 				lightBatch.SetBuffer(transformBuffer);
 				

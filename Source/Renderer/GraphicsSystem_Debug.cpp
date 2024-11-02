@@ -16,9 +16,7 @@
 
 namespace
 {
-	static constexpr char const* k_debugEffectName = "Debug";
-
-	static const EffectID k_debugEffectID = effect::Effect::ComputeEffectID(k_debugEffectName);
+	static const EffectID k_debugEffectID = effect::Effect::ComputeEffectID("Debug");
 
 
 	std::unique_ptr<re::Batch> BuildAxisBatch(re::Lifetime batchLifetime)

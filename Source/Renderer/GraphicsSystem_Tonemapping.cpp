@@ -6,6 +6,11 @@
 #include "Core/Definitions/ConfigKeys.h"
 
 
+namespace
+{
+	static const EffectID k_tonemappingEffectID = effect::Effect::ComputeEffectID("Tonemapping");
+}
+
 namespace gr
 {
 	TonemappingGraphicsSystem::TonemappingGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
@@ -19,7 +24,7 @@ namespace gr
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		re::RenderStage::FullscreenQuadParams tonemappingStageParams{};
-		tonemappingStageParams.m_effectID = effect::Effect::ComputeEffectID("Tonemapping");
+		tonemappingStageParams.m_effectID = k_tonemappingEffectID;
 
 		m_tonemappingStage = re::RenderStage::CreateFullscreenQuadStage("Tonemapping stage", tonemappingStageParams);
 

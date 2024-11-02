@@ -8,6 +8,9 @@
 
 namespace
 {
+	static const EffectID k_XeGTAOEffectID = effect::Effect::ComputeEffectID("XeGTAO");
+
+
 	struct SEXeGTAOSettings
 	{
 		float g_enabled; // Boolean: Output 100% white if disabled (g_enabled = 0), AO otherwise
@@ -453,7 +456,7 @@ namespace gr
 			m_prefilterDepthComputeBatch = std::make_unique<re::Batch>(
 				re::Lifetime::Permanent, 
 				prefilterDepthBatchParams, 
-				effect::Effect::ComputeEffectID("XeGTAO"));
+				k_XeGTAOEffectID);
 
 			m_prefilterDepthComputeBatch->SetBuffer(m_XeGTAOConstants);
 		}
@@ -477,7 +480,7 @@ namespace gr
 			m_mainBatch = std::make_unique<re::Batch>(
 				re::Lifetime::Permanent,
 				mainBatchParams,
-				effect::Effect::ComputeEffectID("XeGTAO"));
+				k_XeGTAOEffectID);
 
 			m_mainBatch->SetBuffer(m_XeGTAOConstants);
 			m_mainBatch->SetBuffer(m_graphicsSystemManager->GetActiveCameraParams());
@@ -500,14 +503,14 @@ namespace gr
 			m_denoiseBatch = std::make_unique<re::Batch>(
 				re::Lifetime::Permanent,
 				denoiseBatchParams,
-				effect::Effect::ComputeEffectID("XeGTAO"));
+				k_XeGTAOEffectID);
 			
 			m_denoiseBatch->SetBuffer(m_XeGTAOConstants);
 
 			m_lastPassDenoiseBatch = std::make_unique<re::Batch>(
 				re::Lifetime::Permanent,
 				denoiseBatchParams, 
-				effect::Effect::ComputeEffectID("XeGTAO"));
+				k_XeGTAOEffectID);
 			
 			m_lastPassDenoiseBatch->SetBuffer(m_XeGTAOConstants);
 			m_lastPassDenoiseBatch->SetBuffer(m_SEXeGTAOSettings); // Needed for final stage ONLY

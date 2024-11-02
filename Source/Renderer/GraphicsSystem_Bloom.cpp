@@ -13,6 +13,8 @@ namespace
 {
 	constexpr char const* k_bloomTargetName = "output0";
 
+	static const EffectID k_bloomEffectID = effect::Effect::ComputeEffectID("Bloom");
+
 
 	BloomComputeData CreateBloomComputeParamsData(
 		std::shared_ptr<re::Texture> bloomSrcTex,
@@ -65,7 +67,7 @@ namespace gr
 
 		// Emissive blit:
 		re::RenderStage::FullscreenQuadParams emissiveBlitParams{};
-		emissiveBlitParams.m_effectID = effect::Effect::ComputeEffectID("Bloom");
+		emissiveBlitParams.m_effectID = k_bloomEffectID;
 		emissiveBlitParams.m_drawStyleBitmask = effect::drawstyle::Bloom_EmissiveBlit;
 
 		m_emissiveBlitStage = re::RenderStage::CreateFullscreenQuadStage("Emissive blit stage", emissiveBlitParams);
@@ -313,7 +315,7 @@ namespace gr
 				re::Lifetime::SingleFrame,
 				re::Batch::ComputeParams{
 					.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) },
-				effect::Effect::ComputeEffectID("Bloom"));
+				k_bloomEffectID);
 
 			downStage->AddBatch(computeBatch);
 		}
@@ -327,7 +329,7 @@ namespace gr
 				re::Lifetime::SingleFrame,
 				re::Batch::ComputeParams{
 					.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) },
-				effect::Effect::ComputeEffectID("Bloom"));
+				k_bloomEffectID);
 
 			upStage->AddBatch(computeBatch);
 		}
