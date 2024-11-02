@@ -411,6 +411,21 @@ namespace opengl
 		// OpenGL-specific:
 		opengl::SysInfo::GetUniformBufferOffsetAlignment();
 		opengl::SysInfo::GetShaderStorageBufferOffsetAlignment();
+
+		opengl::SysInfo::GetMaxUniformBufferBindings(re::Shader::Vertex);
+		opengl::SysInfo::GetMaxUniformBufferBindings(re::Shader::Geometry);
+		opengl::SysInfo::GetMaxUniformBufferBindings(re::Shader::Pixel);
+		opengl::SysInfo::GetMaxUniformBufferBindings(re::Shader::Hull);
+		opengl::SysInfo::GetMaxUniformBufferBindings(re::Shader::Domain);
+		opengl::SysInfo::GetMaxUniformBufferBindings(re::Shader::Compute);
+
+		opengl::SysInfo::GetMaxShaderStorageBlockBindings(re::Shader::Vertex);
+		opengl::SysInfo::GetMaxShaderStorageBlockBindings(re::Shader::Geometry);
+		opengl::SysInfo::GetMaxShaderStorageBlockBindings(re::Shader::Pixel);
+		opengl::SysInfo::GetMaxShaderStorageBlockBindings(re::Shader::Hull);
+		opengl::SysInfo::GetMaxShaderStorageBlockBindings(re::Shader::Domain);
+		opengl::SysInfo::GetMaxShaderStorageBlockBindings(re::Shader::Compute);
+
 		opengl::SysInfo::GetMaxAnisotropy();
 
 		// Buffer Allocator:

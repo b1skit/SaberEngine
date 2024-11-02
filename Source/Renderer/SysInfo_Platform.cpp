@@ -5,6 +5,6 @@
 namespace platform
 {
 	uint8_t (*SysInfo::GetMaxRenderTargets)() = nullptr;
-	uint8_t(*SysInfo::GetMaxTextureBindPoints)() = nullptr;
-	uint8_t(*SysInfo::GetMaxVertexAttributes)() = nullptr;
+	uint8_t (*SysInfo::GetMaxTextureBindPoints)() = nullptr;
+	uint8_t (*SysInfo::GetMaxVertexAttributes)() = nullptr;
 }

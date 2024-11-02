@@ -1,5 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "Shader.h"
+
 #include <d3d12.h>
 
 
@@ -11,10 +13,18 @@ namespace dx12
 		static uint8_t GetMaxRenderTargets();
 		static uint8_t GetMaxTextureBindPoints();
 		static uint8_t GetMaxVertexAttributes();
+
+		static uint32_t GetMaxConstantBufferViews();
+		static uint32_t GetMaxShaderResourceViews();
+		static uint32_t GetMaxUnorderedAccessViews();
 		
 
 	public: // DX12-specific:		
+		static void const* GetD3D12FeatureSupportData(D3D12_FEATURE); // Statically caches query results for reuse
+
 		static D3D_ROOT_SIGNATURE_VERSION GetHighestSupportedRootSignatureVersion();
+		static D3D12_RESOURCE_BINDING_TIER GetResourceBindingTier();
+
 		static bool CheckTearingSupport(); // Variable refresh rate dispays (eg. G-Sync/FreeSync) require tearing enabled
 		static uint32_t GetDeviceNodeMask();
 		static bool GPUUploadHeapSupported();

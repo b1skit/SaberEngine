@@ -334,7 +334,8 @@ namespace dx12
 	{
 		switch (featureLevel)
 		{
-		case D3D_FEATURE_LEVEL_1_0_CORE: return "";
+		case D3D_FEATURE_LEVEL_1_0_GENERIC: return "D3D_FEATURE_LEVEL_1_0_GENERIC";
+		case D3D_FEATURE_LEVEL_1_0_CORE: return "D3D_FEATURE_LEVEL_1_0_CORE";
 		case D3D_FEATURE_LEVEL_9_1: return "D3D_FEATURE_LEVEL_9_1";
 		case D3D_FEATURE_LEVEL_9_2: return "D3D_FEATURE_LEVEL_9_2";
 		case D3D_FEATURE_LEVEL_9_3: return "D3D_FEATURE_LEVEL_9_3";
@@ -345,9 +346,20 @@ namespace dx12
 		case D3D_FEATURE_LEVEL_12_0: return "D3D_FEATURE_LEVEL_12_0";
 		case D3D_FEATURE_LEVEL_12_1: return "D3D_FEATURE_LEVEL_12_1";
 		case D3D_FEATURE_LEVEL_12_2: return "D3D_FEATURE_LEVEL_12_2";
-		default:
-			SEAssertF("Invalid feature level");
+		default: return "INVALID FEATURE LEVEL";
 		}
 		return "Invalid D3D Feature Level";
+	}
+
+
+	constexpr char const* D3D12ResourceBindingTierToCStr(D3D12_RESOURCE_BINDING_TIER bindingTier)
+	{
+		switch (bindingTier)
+		{
+		case D3D12_RESOURCE_BINDING_TIER_1: return "D3D12_RESOURCE_BINDING_TIER_1";
+		case D3D12_RESOURCE_BINDING_TIER_2: return "D3D12_RESOURCE_BINDING_TIER_2";
+		case D3D12_RESOURCE_BINDING_TIER_3: return "D3D12_RESOURCE_BINDING_TIER_3";
+		default: return "INVALID RESOURCE BINDING TIER";
+		}
 	}
 }

@@ -54,6 +54,166 @@ namespace opengl
 	}
 
 
+	uint32_t SysInfo::GetMaxUniformBufferBindings(re::Shader::ShaderType shaderType)
+	{
+		switch (shaderType)
+		{
+		case re::Shader::ShaderType::Vertex:
+		{
+			static GLint s_maxVertexUniformBufferBindings = 0;
+			if (s_maxVertexUniformBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS, &s_maxVertexUniformBufferBindings);
+			}
+			return s_maxVertexUniformBufferBindings;
+		}
+		break;
+		case re::Shader::ShaderType::Geometry:
+		{
+			static GLint s_maxGeometryUniformBufferBindings = 0;
+			if (s_maxGeometryUniformBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_BLOCKS, &s_maxGeometryUniformBufferBindings);
+			}
+			return s_maxGeometryUniformBufferBindings;
+		}
+		break;
+		case re::Shader::ShaderType::Pixel:
+		{
+			static GLint s_maxFragmentUniformBufferBindings = 0;
+			if (s_maxFragmentUniformBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS, &s_maxFragmentUniformBufferBindings);
+			}
+			return s_maxFragmentUniformBufferBindings;
+		}
+		break;
+		case re::Shader::ShaderType::Hull:
+		{
+			static GLint s_maxTessCtrlUniformBufferBindings = 0;
+			if (s_maxTessCtrlUniformBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_TESS_CONTROL_UNIFORM_BLOCKS, &s_maxTessCtrlUniformBufferBindings);
+			}
+			return s_maxTessCtrlUniformBufferBindings;
+		}
+		break;
+		case re::Shader::ShaderType::Domain:
+		{
+			static GLint s_maxTessEvalUniformBufferBindings = 0;
+			if (s_maxTessEvalUniformBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_TESS_EVALUATION_UNIFORM_BLOCKS, &s_maxTessEvalUniformBufferBindings);
+			}
+			return s_maxTessEvalUniformBufferBindings;
+		}
+		break;
+		case re::Shader::ShaderType::Mesh:
+		{
+			SEAssertF("Mesh shaders are not (currently) supported on OpenGL");
+		}
+		break;
+		case re::Shader::ShaderType::Amplification:
+		{
+			SEAssertF("Amplification shaders are not (currently) supported on OpenGL");
+		}
+		break;
+		case re::Shader::ShaderType::Compute:
+		{
+			static GLint s_maxComputeUniformBufferBindings = 0;
+			if (s_maxComputeUniformBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_COMPUTE_UNIFORM_BLOCKS, &s_maxComputeUniformBufferBindings);
+			}
+			return s_maxComputeUniformBufferBindings;
+		}
+		break;
+		default: SEAssertF("Invalid shader type");
+		}
+		return 0; // This should never happen
+	}
+
+
+	uint32_t SysInfo::GetMaxShaderStorageBlockBindings(re::Shader::ShaderType shaderType)
+	{
+		switch (shaderType)
+		{
+		case re::Shader::ShaderType::Vertex:
+		{
+			static GLint s_maxVertexShaderStorageBufferBindings = 0;
+			if (s_maxVertexShaderStorageBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &s_maxVertexShaderStorageBufferBindings);
+			}
+			return s_maxVertexShaderStorageBufferBindings;
+		}
+		break;
+		case re::Shader::ShaderType::Geometry:
+		{
+			static GLint s_maxGeometryShaderStorageBufferBindings = 0;
+			if (s_maxGeometryShaderStorageBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_GEOMETRY_SHADER_STORAGE_BLOCKS, &s_maxGeometryShaderStorageBufferBindings);
+			}
+			return s_maxGeometryShaderStorageBufferBindings;
+		}
+		break;
+		case re::Shader::ShaderType::Pixel:
+		{
+			static GLint s_maxFragmentShaderStorageBufferBindings = 0;
+			if (s_maxFragmentShaderStorageBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &s_maxFragmentShaderStorageBufferBindings);
+			}
+			return s_maxFragmentShaderStorageBufferBindings;
+		}
+		break;
+		case re::Shader::ShaderType::Hull:
+		{
+			static GLint s_maxTessCtrlShaderStorageBufferBindings = 0;
+			if (s_maxTessCtrlShaderStorageBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_TESS_CONTROL_SHADER_STORAGE_BLOCKS, &s_maxTessCtrlShaderStorageBufferBindings);
+			}
+			return s_maxTessCtrlShaderStorageBufferBindings;
+		}
+		break;
+		case re::Shader::ShaderType::Domain:
+		{
+			static GLint s_maxTessEvalShaderStorageBufferBindings = 0;
+			if (s_maxTessEvalShaderStorageBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_TESS_EVALUATION_SHADER_STORAGE_BLOCKS, &s_maxTessEvalShaderStorageBufferBindings);
+			}
+			return s_maxTessEvalShaderStorageBufferBindings;
+		}
+		break;
+		case re::Shader::ShaderType::Mesh:
+		{
+			SEAssertF("Mesh shaders are not (currently) supported on OpenGL");
+		}
+		break;
+		case re::Shader::ShaderType::Amplification:
+		{
+			SEAssertF("Amplification shaders are not (currently) supported on OpenGL");
+		}
+		break;
+		case re::Shader::ShaderType::Compute:
+		{
+			static GLint s_maxComputeShaderStorageBufferBindings = 0;
+			if (s_maxComputeShaderStorageBufferBindings == 0)
+			{
+				glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, &s_maxComputeShaderStorageBufferBindings);
+			}
+			return s_maxComputeShaderStorageBufferBindings;
+		}
+		break;
+		default: SEAssertF("Invalid shader type");
+		}
+		return 0; // This should never happen
+	}
+
+
 	uint8_t SysInfo::GetMaxTextureBindPoints()
 	{
 		static uint8_t s_maxCombinedTexInputs = 0;

@@ -4,6 +4,7 @@
 struct ID3D12Object;
 enum D3D12_RESOURCE_STATES;
 enum D3D_FEATURE_LEVEL;
+enum D3D12_RESOURCE_BINDING_TIER;
 
 // Resource barrier debugging macros:
 namespace
@@ -73,4 +74,5 @@ namespace dx12
 	inline extern std::string GetDebugName(ID3D12Object*);
 	inline extern constexpr char const* GetResourceStateAsCStr(D3D12_RESOURCE_STATES state);
 	inline extern constexpr char const* GetFeatureLevelAsCStr(D3D_FEATURE_LEVEL);
+	inline extern constexpr char const* D3D12ResourceBindingTierToCStr(D3D12_RESOURCE_BINDING_TIER);
 }

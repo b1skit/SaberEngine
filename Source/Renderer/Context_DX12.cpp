@@ -113,6 +113,9 @@ namespace dx12
 
 		m_device.Create();
 
+		LOG(std::format("D3D resource binding tier: {}",
+			dx12::D3D12ResourceBindingTierToCStr(dx12::SysInfo::GetResourceBindingTier())).c_str());
+
 		// Descriptor heap managers:
 		m_cpuDescriptorHeapMgrs.reserve(static_cast<size_t>(CPUDescriptorHeapManager::HeapType_Count));
 
