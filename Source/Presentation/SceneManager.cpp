@@ -32,8 +32,6 @@
 
 namespace
 {
-	constexpr size_t k_initialBatchReservations = 100;
-
 	// Each element/index corresponds to an animation: Multiple animations may target the same node
 	using AnimationNodeToDataMaps = std::vector<std::unordered_map<cgltf_node const*, fr::AnimationData>>;
 
@@ -1903,8 +1901,6 @@ namespace fr
 
 	bool SceneManager::Load(std::string const& sceneFilePath)
 	{
-		//stbi_set_flip_vertically_on_load(false); // Set this once. Note: It is NOT thread safe, and must be consistent
-
 		// Start by parsing the the GLTF file metadata:
 		const bool gotSceneFilePath = !sceneFilePath.empty();
 		cgltf_options options = { (cgltf_file_type)0 };
@@ -1928,11 +1924,7 @@ namespace fr
 				GenerateDefaultResources(*sceneData);
 				}));
 
-		// Add a default camera to start:
-		earlyLoadTasks.emplace_back(
-			core::ThreadPool::Get()->EnqueueJob([&sceneData]() {
-				LoadAddCamera(*sceneData, entt::null, nullptr);
-				}));
+		bool foundCamera = false;
 
 		// Load the IBL/skybox HDRI:
 		std::string sceneRootPath;
@@ -1967,8 +1959,19 @@ namespace fr
 			// Load the scene hierarchy:
 			LoadSceneHierarchy(sceneFilePath, sceneRootPath, *sceneData, data);
 
+			SEAssert(data->cameras_count > 0 || data->cameras == nullptr, "Camera pointer and count mismatch");
+			foundCamera = data->cameras_count > 0;
+
 			// Cleanup:
 			cgltf_free(data);
+		}
+
+		if (!foundCamera) // Add a default camera:
+		{
+			earlyLoadTasks.emplace_back(
+				core::ThreadPool::Get()->EnqueueJob([&sceneData]() {
+					LoadAddCamera(*sceneData, entt::null, nullptr);
+					}));
 		}
 
 		// Wait for all of the tasks we spawned here to be done:
