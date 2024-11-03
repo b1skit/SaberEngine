@@ -37,11 +37,11 @@ namespace
 
 			SEAssert(i + 1 == vertexStreams.size() ||
 				vertexStreams[i].m_vertexStream->GetType() != vertexStreams[i + 1].m_vertexStream->GetType() ||
-				vertexStreams[i].m_typeIdx < vertexStreams[i + 1].m_typeIdx,
+				vertexStreams[i].m_setIdx < vertexStreams[i + 1].m_setIdx,
 				"Vertex streams of the same type must be stored in monotoically-increasing source slot order");
 
 			SEAssert(!seenSlots[static_cast<uint8_t>(vertexStreams[i].m_vertexStream->GetType())].contains(
-				vertexStreams[i].m_typeIdx),
+				vertexStreams[i].m_setIdx),
 				"Duplicate slot index detected");
 
 			// TODO: Re-enable this once we're no longer deferring vertex stream creation
@@ -50,7 +50,7 @@ namespace
 				"Found vertex streams with mis-matching number of elements. This is unexpected");*/
 			
 			seenSlots[static_cast<uint8_t>(vertexStreams[i].m_vertexStream->GetType())].emplace(
-				vertexStreams[i].m_typeIdx);
+				vertexStreams[i].m_setIdx);
 		}
 
 #endif
@@ -71,20 +71,20 @@ namespace
 		totalNumMorphTargetBytesOut = 0;
 		totalNumMorphTargetsOut = 0;
 		
-		for (uint8_t typeIdx = 0; typeIdx < streams.size(); ++typeIdx)
+		for (uint8_t setIdx = 0; setIdx < streams.size(); ++setIdx)
 		{
 			for (uint8_t streamTypeIdx = 0; streamTypeIdx < gr::VertexStream::Type_Count; ++streamTypeIdx)
 			{
 				if (streamTypeIdx == gr::VertexStream::Index ||
-					streams[typeIdx][streamTypeIdx].m_morphTargetData.empty())
+					streams[setIdx][streamTypeIdx].m_morphTargetData.empty())
 				{
 					continue;
 				}
-				for (auto const& morphData : streams[typeIdx][streamTypeIdx].m_morphTargetData)
+				for (auto const& morphData : streams[setIdx][streamTypeIdx].m_morphTargetData)
 				{
 					totalNumMorphTargetBytesOut += morphData.m_displacementData->GetTotalNumBytes();
 				}
-				totalNumMorphTargetsOut += streams[typeIdx][streamTypeIdx].m_morphTargetData.size();
+				totalNumMorphTargetsOut += streams[setIdx][streamTypeIdx].m_morphTargetData.size();
 			}
 		}
 	}
@@ -118,17 +118,17 @@ namespace
 
 			// First, parse the data to build our metadata. 
 			// We iterate over our morph displacements in the same order they're packed on the MeshPrimitive
-			for (uint8_t typeIdx = 0; typeIdx < streamCreateParams.size(); ++typeIdx)
+			for (uint8_t setIdx = 0; setIdx < streamCreateParams.size(); ++setIdx)
 			{
 				for (uint8_t streamTypeIdx = 0; streamTypeIdx < gr::VertexStream::Type_Count; ++streamTypeIdx)
 				{
 					if (streamTypeIdx == gr::VertexStream::Index ||
-						streamCreateParams[typeIdx][streamTypeIdx].m_morphTargetData.empty())
+						streamCreateParams[setIdx][streamTypeIdx].m_morphTargetData.empty())
 					{
 						continue;
 					}
 
-					gr::VertexStream::CreateParams const& curStreamParams = streamCreateParams[typeIdx][streamTypeIdx];
+					gr::VertexStream::CreateParams const& curStreamParams = streamCreateParams[setIdx][streamTypeIdx];
 
 					gr::MeshPrimitive::PackingMetadata& metadata = interleavingMetadataOut.m_perStreamMetadata[metadataIdx];
 					metadata = {0};
@@ -173,17 +173,17 @@ namespace
 
 			// Now that we know the layout, we can interleave the data:
 			metadataIdx = 0;
-			for (uint8_t typeIdx = 0; typeIdx < streamCreateParams.size(); ++typeIdx)
+			for (uint8_t setIdx = 0; setIdx < streamCreateParams.size(); ++setIdx)
 			{
 				for (uint8_t streamTypeIdx = 0; streamTypeIdx < gr::VertexStream::Type_Count; ++streamTypeIdx)
 				{
 					if (streamTypeIdx == gr::VertexStream::Index ||
-						streamCreateParams[typeIdx][streamTypeIdx].m_morphTargetData.empty())
+						streamCreateParams[setIdx][streamTypeIdx].m_morphTargetData.empty())
 					{
 						continue;
 					}
 
-					gr::VertexStream::CreateParams const& curStreamParams = streamCreateParams[typeIdx][streamTypeIdx];
+					gr::VertexStream::CreateParams const& curStreamParams = streamCreateParams[setIdx][streamTypeIdx];
 					const size_t numDisplacements = curStreamParams.m_morphTargetData.size();
 
 					gr::MeshPrimitive::PackingMetadata const& metadata =
@@ -223,7 +223,7 @@ namespace gr
 	gr::VertexStream const* MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData,
 		gr::VertexStream::Type streamType,
-		int8_t typeIdx /*= -1*/)
+		int8_t setIdx /*= -1*/)
 	{
 		gr::VertexStream const* result = nullptr;
 
@@ -231,13 +231,13 @@ namespace gr
 		{
 			if (meshPrimRenderData.m_vertexStreams[streamIdx]->GetType() == streamType)
 			{
-				if (typeIdx < 0)
+				if (setIdx < 0)
 				{
 					result = meshPrimRenderData.m_vertexStreams[streamIdx];
 				}
 				else 
 				{
-					const uint8_t offsetIdx = streamIdx + typeIdx;
+					const uint8_t offsetIdx = streamIdx + setIdx;
 
 					if (offsetIdx < meshPrimRenderData.m_vertexStreams.size() &&
 						meshPrimRenderData.m_vertexStreams[offsetIdx]->GetType() == streamType)
@@ -292,11 +292,11 @@ namespace gr
 		
 		const size_t totalVerts = streamCreateParams[0][gr::VertexStream::Position].m_streamData->size();
 
-		// Each vector index streamCreateParams corresponds to the m_streamIdx of the entries in the array elements
+		// Each vector index streamCreateParams corresponds to the m_setIdx of the entries in the array elements
 		std::vector<MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(streamCreateParams.size() * gr::VertexStream::Type_Count); // + morph targets
 
-		for (uint8_t typeIdx = 0; typeIdx < streamCreateParams.size(); ++typeIdx)
+		for (uint8_t setIdx = 0; setIdx < streamCreateParams.size(); ++setIdx)
 		{
 			for (uint8_t streamTypeIdx = 0; streamTypeIdx < gr::VertexStream::Type_Count; ++streamTypeIdx)
 			{
@@ -305,16 +305,16 @@ namespace gr
 					continue; // Our single index stream is handled externally
 				}
 
-				if (streamCreateParams[typeIdx][streamTypeIdx].m_streamData)
+				if (streamCreateParams[setIdx][streamTypeIdx].m_streamData)
 				{
-					SEAssert(streamCreateParams[typeIdx][streamTypeIdx].m_streamData->size() == totalVerts,
+					SEAssert(streamCreateParams[setIdx][streamTypeIdx].m_streamData->size() == totalVerts,
 						"Found a mismatched number of vertices between streams");
 
 					vertexStreams.emplace_back(gr::MeshPrimitive::MeshVertexStream{
 						.m_vertexStream = gr::VertexStream::Create(
-							std::move(streamCreateParams[typeIdx][streamTypeIdx]),
+							std::move(streamCreateParams[setIdx][streamTypeIdx]),
 							queueBufferCreate).get(),
-						.m_typeIdx = typeIdx,
+						.m_setIdx = setIdx,
 						});
 				}
 			}
@@ -373,19 +373,19 @@ namespace gr
 	}
 
 
-	gr::VertexStream const* MeshPrimitive::GetVertexStream(gr::VertexStream::Type streamType, uint8_t typeIdx) const
+	gr::VertexStream const* MeshPrimitive::GetVertexStream(gr::VertexStream::Type streamType, uint8_t setIdx) const
 	{
 		auto result = std::lower_bound(
 			m_vertexStreams.begin(),
 			m_vertexStreams.end(),
 			MeshPrimitive::MeshVertexStreamComparisonData{
 				.m_streamType = streamType,
-				.m_typeIdx = typeIdx },
+				.m_setIdx = setIdx },
 				MeshPrimitive::MeshVertexStreamComparator());
 
 		SEAssert(result != m_vertexStreams.end() &&
 			result->m_vertexStream->GetType() == streamType &&
-			result->m_typeIdx == typeIdx,
+			result->m_setIdx == setIdx,
 			"Failed to find a vertex stream of the given type and source type index. This is probably a surprise");
 
 		return result->m_vertexStream;

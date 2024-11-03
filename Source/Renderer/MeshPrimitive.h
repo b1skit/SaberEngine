@@ -50,13 +50,13 @@ namespace gr
 		struct MeshVertexStream
 		{
 			gr::VertexStream const* m_vertexStream = nullptr;
-			uint8_t m_typeIdx = 0; // Index of m_vertexStream, w.r.t other streams of the same type. Used for sorting
+			uint8_t m_setIdx = 0; // Index of m_vertexStream, w.r.t other streams of the same type. Used for sorting
 		};
 
 		struct MeshVertexStreamComparisonData
 		{
 			gr::VertexStream::Type m_streamType;
-			uint8_t m_typeIdx;
+			uint8_t m_setIdx;
 		};
 		struct MeshVertexStreamComparator
 		{
@@ -101,9 +101,9 @@ namespace gr
 
 
 			// Helper: Get a specific vertex stream packed into a MeshPrimitive::RenderData.
-			// If the typeIdx index < 0, the first matching type is returned
+			// If the setIdx index < 0, the first matching type is returned
 			static gr::VertexStream const* GetVertexStreamFromRenderData(
-				gr::MeshPrimitive::RenderData const&, gr::VertexStream::Type, int8_t typeIdx = -1);
+				gr::MeshPrimitive::RenderData const&, gr::VertexStream::Type, int8_t setIdx = -1);
 		};
 
 
@@ -212,7 +212,7 @@ namespace gr
 	{
 		if (a.m_vertexStream->GetType() == b.m_vertexStream->GetType())
 		{
-			return a.m_typeIdx < b.m_typeIdx;
+			return a.m_setIdx < b.m_setIdx;
 		}
 		return a.m_vertexStream->GetType() < b.m_vertexStream->GetType();
 	}
@@ -223,7 +223,7 @@ namespace gr
 	{
 		if (a.m_vertexStream->GetType() == b.m_streamType)
 		{
-			return a.m_typeIdx < b.m_typeIdx;
+			return a.m_setIdx < b.m_setIdx;
 		}
 		return a.m_vertexStream->GetType() < b.m_streamType;
 	}

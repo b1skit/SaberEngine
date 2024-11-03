@@ -762,15 +762,15 @@ namespace
 			};
 
 			// Vertex streams:
-			// Each vector element corresponds to the m_streamIdx of the entries in the array elements
+			// Each vector element corresponds to the m_setIdx of the entries in the array elements
 			std::vector<std::array<gr::VertexStream::CreateParams,
 				gr::VertexStream::Type::Type_Count>> vertexStreamCreateParams;
 
 			auto AddVertexStreamCreateParams = [&vertexStreamCreateParams](
 				gr::VertexStream::CreateParams&& streamCreateParams)
 				{
-					// Insert enough elements to make our index valid:
-					while (vertexStreamCreateParams.size() <= streamCreateParams.m_streamIdx)
+					// Insert enough elements to make our set index valid:
+					while (vertexStreamCreateParams.size() <= streamCreateParams.m_setIdx)
 					{
 						vertexStreamCreateParams.emplace_back();
 					}
@@ -778,10 +778,10 @@ namespace
 					const size_t streamTypeIdx = static_cast<size_t>(streamCreateParams.m_streamDesc.m_type);
 
 					SEAssert(vertexStreamCreateParams.at(
-						streamCreateParams.m_streamIdx)[streamTypeIdx].m_streamData == nullptr,
+						streamCreateParams.m_setIdx)[streamTypeIdx].m_streamData == nullptr,
 						"Stream data is not null, this suggests we've already populated this slot");
 
-					vertexStreamCreateParams.at(streamCreateParams.m_streamIdx)[streamTypeIdx] =
+					vertexStreamCreateParams.at(streamCreateParams.m_setIdx)[streamTypeIdx] =
 						std::move(streamCreateParams);
 				};
 
@@ -843,7 +843,7 @@ namespace
 						.m_type = gr::VertexStream::Type::Index,
 						.m_dataType = indexDataType,
 					},
-					.m_streamIdx = 0 // Index stream always 0
+					.m_setIdx = 0 // Index stream always 0
 					});
 			}
 		
@@ -864,7 +864,7 @@ namespace
 				const size_t numElements = curAttribute.data->count;
 				const size_t totalFloatElements = numComponents * numElements;
 
-				const uint8_t streamIdx = util::CheckedCast<uint8_t>(curAttribute.index);
+				const uint8_t setIdx = util::CheckedCast<uint8_t>(curAttribute.index);
 
 				const cgltf_attribute_type vertexAttributeType = curAttribute.type;
 				switch (vertexAttributeType)
@@ -884,7 +884,7 @@ namespace
 						vertexStreamCreateParams[0][gr::VertexStream::Type::Position].m_streamData == nullptr,
 						"Only a single position stream is supported");
 					
-					SEAssert(streamIdx == 0, "Unexpected stream index for position stream");
+					SEAssert(setIdx == 0, "Unexpected stream index for position stream");
 
 					AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
 						.m_streamData = std::make_unique<util::ByteVector>(std::move(positions)),
@@ -892,7 +892,7 @@ namespace
 							.m_type = gr::VertexStream::Type::Position,
 							.m_dataType = re::DataType::Float3,
 						},
-						.m_streamIdx = streamIdx
+						.m_setIdx = setIdx
 					});
 
 					// Store our min/max
@@ -929,7 +929,7 @@ namespace
 							.m_dataType = re::DataType::Float3,
 							.m_doNormalize = gr::VertexStream::Normalize::True,
 						},
-						.m_streamIdx = streamIdx
+						.m_setIdx = setIdx
 					});
 				}
 				break;
@@ -950,7 +950,7 @@ namespace
 							.m_dataType = re::DataType::Float4,
 							.m_doNormalize = gr::VertexStream::Normalize::True,
 						},
-						.m_streamIdx = streamIdx
+						.m_setIdx = setIdx
 					});
 				}
 				break;
@@ -970,7 +970,7 @@ namespace
 							.m_type = gr::VertexStream::Type::TexCoord,
 							.m_dataType = re::DataType::Float2,
 						},
-						.m_streamIdx = streamIdx
+						.m_setIdx = setIdx
 					});
 				}
 				break;
@@ -984,7 +984,7 @@ namespace
 								.m_type = gr::VertexStream::Type::Color,
 								.m_dataType = re::DataType::Float4,
 							},
-							.m_streamIdx = streamIdx
+							.m_setIdx = setIdx
 						});
 				}
 				break;
@@ -1006,7 +1006,7 @@ namespace
 							.m_type = gr::VertexStream::Type::BlendIndices,
 							.m_dataType = re::DataType::Float4,
 						},
-						.m_streamIdx = streamIdx
+						.m_setIdx = setIdx
 					});
 				}
 				break;
@@ -1027,7 +1027,7 @@ namespace
 							 .m_type = gr::VertexStream::Type::BlendWeight,
 							 .m_dataType = re::DataType::Float4,
 						},
-						.m_streamIdx = streamIdx
+						.m_setIdx = setIdx
 					});
 				}
 				break;
@@ -1046,13 +1046,13 @@ namespace
 
 			// Morph targets:
 			auto AddMorphCreateParams = [&vertexStreamCreateParams](
-				uint8_t streamIdx, gr::VertexStream::Type streamType, gr::VertexStream::MorphData&& morphCreateParams)
+				uint8_t setIdx, gr::VertexStream::Type streamType, gr::VertexStream::MorphData&& morphCreateParams)
 				{
-					SEAssert(streamIdx < vertexStreamCreateParams.size(),
+					SEAssert(setIdx < vertexStreamCreateParams.size(),
 						"Trying to add a morph target to a vertex stream that does not exist");
 
 					std::vector<gr::VertexStream::MorphData>& morphTargetData = 
-						vertexStreamCreateParams[streamIdx][streamType].m_morphTargetData;
+						vertexStreamCreateParams[setIdx][streamType].m_morphTargetData;
 
 					morphTargetData.emplace_back(std::move(morphCreateParams));
 				};
@@ -1229,7 +1229,7 @@ namespace
 						.m_type = gr::VertexStream::Type::Index,
 						.m_dataType = indexDataType,
 					},
-					.m_streamIdx = 0,
+					.m_setIdx = 0,
 				});
 			}
 			if (!hasNormal0)
@@ -1241,7 +1241,7 @@ namespace
 							.m_dataType = re::DataType::Float3,
 							.m_doNormalize = gr::VertexStream::Normalize::True,
 						},
-						.m_streamIdx = 0,
+						.m_setIdx = 0,
 					});
 			}
 			if (!hasTangent0)
@@ -1253,7 +1253,7 @@ namespace
 						.m_dataType = re::DataType::Float4,
 						.m_doNormalize = gr::VertexStream::Normalize::True,
 					},
-					.m_streamIdx = 0,
+					.m_setIdx = 0,
 					});
 			}
 			if (!hasUV0)
@@ -1264,7 +1264,7 @@ namespace
 						.m_type = gr::VertexStream::Type::TexCoord,
 						.m_dataType = re::DataType::Float2,
 					},
-					.m_streamIdx = 0,
+					.m_setIdx = 0,
 					});
 			}
 			if (!hasColor) // SE (currently) expects at least 1 color channel
@@ -1279,7 +1279,7 @@ namespace
 							.m_type = gr::VertexStream::Type::Color,
 							.m_dataType = re::DataType::Float4,
 						},
-					.m_streamIdx = 0,
+					.m_setIdx = 0,
 					});
 			}
 
@@ -1299,7 +1299,7 @@ namespace
 					{
 					case gr::VertexStream::Index:
 					{
-						SEAssert(stream.m_streamIdx == 0, "Found an index stream beyond index 0. This is unexpected");
+						SEAssert(stream.m_setIdx == 0, "Found an index stream beyond index 0. This is unexpected");
 						continue;
 					}
 					break;
@@ -1316,7 +1316,7 @@ namespace
 					case gr::VertexStream::Tangent:
 					{
 						// Position0/Normal0/Tangent0/UV0 are handled elsewhere; But we do add their morph data below
-						if (stream.m_streamIdx > 0)
+						if (stream.m_setIdx > 0)
 						{
 							extraChannelsData.emplace_back(stream.m_streamData.get());
 						}

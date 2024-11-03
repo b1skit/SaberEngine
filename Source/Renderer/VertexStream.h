@@ -72,7 +72,7 @@ namespace gr
 		{
 			std::unique_ptr<util::ByteVector> m_streamData;
 			gr::VertexStream::StreamDesc m_streamDesc{};
-			uint8_t m_streamIdx = std::numeric_limits<uint8_t>::max();
+			uint8_t m_setIdx = std::numeric_limits<uint8_t>::max();
 
 			std::vector<MorphData> m_morphTargetData; // 1 entry per displacement
 
