@@ -272,7 +272,7 @@ namespace fr
 		const ImGuiTreeNodeFlags_ flags = startOpen ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None;
 
 		if (ImGui::CollapsingHeader(
-			std::format("Local bounds:##{}", static_cast<uint32_t>(owningEntity)).c_str(), flags))
+			std::format("Local bounds##{}", static_cast<uint32_t>(owningEntity)).c_str(), flags))
 		{
 			ImGui::Indent();
 

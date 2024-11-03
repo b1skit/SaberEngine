@@ -98,6 +98,12 @@
     <ClCompile Include="AnimationComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
+    <ClCompile Include="SkinningComponent.cpp">
+      <Filter>Source Files\fr\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshMorphComponent.cpp">
+      <Filter>Source Files\fr\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoundsComponent.h">
@@ -170,6 +176,12 @@
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
     <ClInclude Include="LightComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinningComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshMorphComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
   </ItemGroup>

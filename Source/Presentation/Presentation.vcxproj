@@ -99,6 +99,7 @@
     <ClInclude Include="MarkerComponents.h" />
     <ClInclude Include="MaterialInstanceComponent.h" />
     <ClInclude Include="MeshConcept.h" />
+    <ClInclude Include="MeshMorphComponent.h" />
     <ClInclude Include="MeshPrimitiveComponent.h" />
     <ClInclude Include="NameComponent.h" />
     <ClInclude Include="pch\pch.h" />
@@ -108,6 +109,7 @@
     <ClInclude Include="SceneNodeConcept.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="ShadowMapComponent.h" />
+    <ClInclude Include="SkinningComponent.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="UIManager.h" />
@@ -124,6 +126,7 @@
     <ClCompile Include="LightComponent.cpp" />
     <ClCompile Include="MaterialInstanceComponent.cpp" />
     <ClCompile Include="MeshConcept.cpp" />
+    <ClCompile Include="MeshMorphComponent.cpp" />
     <ClCompile Include="MeshPrimitiveComponent.cpp" />
     <ClCompile Include="NameComponent.cpp" />
     <ClCompile Include="pch\pch.cpp">
@@ -138,6 +141,7 @@
     <ClCompile Include="SceneNodeConcept.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="ShadowMapComponent.cpp" />
+    <ClCompile Include="SkinningComponent.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="UIManager.cpp" />

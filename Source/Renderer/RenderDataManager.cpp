@@ -403,7 +403,8 @@ namespace gr
 			PopulateTypesImGuiHelper<gr::Light::RenderDataPoint>(names, "Light::RenderDataPoint");
 			PopulateTypesImGuiHelper<gr::Material::MaterialInstanceRenderData>(names, "Material::MaterialInstanceRenderData");
 			PopulateTypesImGuiHelper<gr::MeshPrimitive::RenderData>(names, "MeshPrimitive::RenderData");
-			PopulateTypesImGuiHelper<gr::MeshPrimitive::MeshRenderData>(names, "MeshPrimitive::MeshRenderData");
+			PopulateTypesImGuiHelper<gr::MeshPrimitive::MeshMorphRenderData>(names, "MeshPrimitive::MeshMorphRenderData");
+			PopulateTypesImGuiHelper<gr::MeshPrimitive::SkinningRenderData>(names, "MeshPrimitive::SkinningRenderData");
 			PopulateTypesImGuiHelper<gr::ShadowMap::RenderData>(names, "ShadowMap::RenderData");
 		}
 		

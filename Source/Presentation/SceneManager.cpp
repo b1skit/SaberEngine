@@ -7,9 +7,11 @@
 #include "LightComponent.h"
 #include "MaterialInstanceComponent.h"
 #include "MeshConcept.h"
+#include "MeshMorphComponent.h"
 #include "MeshPrimitiveComponent.h"
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
+#include "SkinningComponent.h"
 #include "TransformComponent.h"
 
 #include "Core/Config.h"
@@ -756,6 +758,8 @@ namespace
 		{
 			cgltf_primitive const& curPrimitive = current->mesh->primitives[primitive];
 
+			bool meshPrimitiveIsSkinned = false;
+
 			// Populate the mesh params:
 			const gr::MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams{
 				.m_primitiveTopology = CGLTFPrimitiveTypeToPrimitiveTopology(curPrimitive.type),
@@ -843,7 +847,7 @@ namespace
 						.m_type = gr::VertexStream::Type::Index,
 						.m_dataType = indexDataType,
 					},
-					.m_setIdx = 0 // Index stream always 0
+					.m_setIdx = 0 // Index stream is always in set 0
 					});
 			}
 		
@@ -1008,6 +1012,8 @@ namespace
 						},
 						.m_setIdx = setIdx
 					});
+
+					meshPrimitiveIsSkinned = true;
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_weights: // How stronly a joint influences a vertex
@@ -1029,6 +1035,8 @@ namespace
 						},
 						.m_setIdx = setIdx
 					});
+
+					meshPrimitiveIsSkinned = true;
 				}
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_custom:
@@ -1403,10 +1411,30 @@ namespace
 				material = scene.GetMaterial(en::DefaultResourceNames::k_defaultGLTFMaterialName);
 			}
 			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material.get());
+
+			// Attach a SkinningComponent:
+			if (meshPrimitiveIsSkinned)
+			{
+				// Build our joint index to TransformID mapping table:
+				std::vector<gr::TransformID> jointToTransformIDs;
+				jointToTransformIDs.reserve(current->skin->joints_count);
+
+				for (size_t jointIdx = 0; jointIdx < current->skin->joints_count; ++jointIdx)
+				{
+					SEAssert(sceneMetadata.m_nodeToEntity.contains(current->skin->joints[jointIdx]),
+						"Node is not in the node to entity map. This should not be possible");
+
+					const entt::entity jointNodeEntity = sceneMetadata.m_nodeToEntity.at(current->skin->joints[jointIdx]);
+
+					jointToTransformIDs.emplace_back(
+						em.GetComponent<fr::TransformComponent>(jointNodeEntity).GetTransformID());
+				}
+				fr::SkinningComponent::AttachSkinningComponent(meshPrimimitiveEntity, std::move(jointToTransformIDs));
+			}
 		} // primitives loop
 
 
-		// Attach a MeshAnimationComponent, if necessary:
+		// Attach a MeshMorphComponent, if necessary:
 		if (meshHasMorphTargets)
 		{
 			// GLTF specs: The default target mesh.weights is optional, and must be used when node.weights is null
@@ -1418,7 +1446,7 @@ namespace
 				defaultWeightsCount = current->mesh->weights_count;
 			}
 
-			fr::MeshAnimationComponent::AttachMeshAnimationComponent(
+			fr::MeshMorphComponent::AttachMeshAnimationComponent(
 				em, sceneNode, current->mesh->weights, util::CheckedCast<uint32_t>(current->mesh->weights_count));
 		}
 	}

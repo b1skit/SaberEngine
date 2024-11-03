@@ -44,6 +44,128 @@ namespace fr
 	};
 
 
+	// ---
+
+
+	inline float ComputeSegmentNormalizedInterpolationFactor(float prevSec, float nextSec, float requestedSec)
+	{
+		const float stepDuration = glm::abs(nextSec - prevSec); // td
+		return glm::abs(requestedSec - prevSec) / stepDuration;
+	}
+
+
+	template<typename T>
+	T GetInterpolatedValue(
+		fr::InterpolationMode mode,
+		float const* channelData,
+		size_t channelDataCount,
+		size_t prevKeyframeIdx,
+		size_t nextKeyframeIdx,
+		float prevSec,
+		float nextSec,
+		float requestedSec)
+	{
+		const float t = ComputeSegmentNormalizedInterpolationFactor(prevSec, nextSec, requestedSec);
+
+		switch (mode)
+		{
+		case fr::InterpolationMode::Linear:
+		{
+			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx];
+			T const& nextValue = reinterpret_cast<T const*>(channelData)[nextKeyframeIdx];
+
+			if (prevSec == nextSec || prevValue == nextValue)
+			{
+				return prevValue;
+			}
+
+			return (1.f - t) * prevValue + t * nextValue;
+		}
+		break;
+		case fr::InterpolationMode::Step:
+		{
+			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx];
+
+			return prevValue;
+		}
+		break;
+		case fr::InterpolationMode::CubicSpline:
+		{
+			const bool isFirstKeyframeTangent = prevKeyframeIdx == 0;
+			const bool isLastKeyframeTangent = prevKeyframeIdx > nextKeyframeIdx;
+
+			const float deltaTime = nextSec - prevSec; // t_d
+
+			// Scale our indexes: Tangents are stored in the 3 elements of animation channel data
+			// {input tangent, keyframe value, output tangent}
+			prevKeyframeIdx *= 3;
+			nextKeyframeIdx *= 3;
+
+			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx + 1];
+			T prevOutputTangent = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx + 2] * deltaTime;
+
+			T nextInputTangent = reinterpret_cast<T const*>(channelData)[nextKeyframeIdx] * deltaTime;
+			T const& nextValue = reinterpret_cast<T const*>(channelData)[nextKeyframeIdx + 1];
+
+			// GLTF specs - the input tangent of the 1st keyframe, and output tangent of the last keyframe are ignored
+			if (isFirstKeyframeTangent)
+			{
+				prevOutputTangent *= 0.f;
+			}
+			if (isLastKeyframeTangent)
+			{
+				nextInputTangent *= 0.f;
+			}
+
+			SEAssert(prevValue != -nextValue, "Invalid quaternion (all zeros) will be produced by the interpolation");
+
+			const float t2 = t * t;
+			const float t3 = t2 * t;
+
+			return (2.f * t3 - 3.f * t2 + 1.f) * prevValue +
+				(t3 - 2.f * t2 + t) * prevOutputTangent +
+				(-2.f * t3 + 3.f * t2) * nextValue +
+				(t3 - t2) * nextInputTangent;
+		}
+		break;
+		case fr::InterpolationMode::SphericalLinearInterpolation:
+		default: SEAssertF("Invalid interpolation mode");
+		}
+		return reinterpret_cast<T const*>(channelData)[prevKeyframeIdx]; // This should never happen
+	}
+
+
+	inline glm::quat GetSphericalLinearInterpolatedValue(
+		fr::InterpolationMode mode,
+		float const* channelData,
+		size_t channelDataCount,
+		size_t prevKeyframeIdx,
+		size_t nextKeyframeIdx,
+		float prevSec,
+		float nextSec,
+		float requestedSec)
+	{
+		SEAssert(mode == fr::InterpolationMode::SphericalLinearInterpolation, "Invalid mode for this implementation");
+
+		glm::quat const& prevValue = reinterpret_cast<glm::quat const*>(channelData)[prevKeyframeIdx];
+		glm::quat const& nextValue = reinterpret_cast<glm::quat const*>(channelData)[nextKeyframeIdx];
+
+		SEAssert(prevValue != -nextValue, "Invalid quaternion (all zeros) will be produced by the interpolation");
+
+		if (prevSec == nextSec || prevValue == nextValue)
+		{
+			return prevValue;
+		}
+
+		const float t = ComputeSegmentNormalizedInterpolationFactor(prevSec, nextSec, requestedSec);
+
+		return glm::slerp(prevValue, nextValue, t);
+	}
+
+
+	// ---
+
+
 	class AnimationController
 	{
 	public:
@@ -313,50 +435,5 @@ namespace fr
 	inline bool AnimationComponent::IsPlaying() const
 	{
 		return GetAnimationState() == fr::AnimationState::Playing;
-	}
-
-
-	// ---
-
-
-	class MeshAnimationComponent
-	{
-	public:
-		static MeshAnimationComponent* AttachMeshAnimationComponent(
-			fr::EntityManager&, entt::entity, float const* defaultWeights, uint32_t count);
-
-		// Returns true if any animation was applied
-		static void ApplyAnimation(entt::entity meshConcept, fr::AnimationComponent const&, fr::MeshAnimationComponent&);
-
-
-		static gr::MeshPrimitive::MeshRenderData CreateRenderData(entt::entity, MeshAnimationComponent const&);
-
-
-	private: // Use the static creation factories
-		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
-		MeshAnimationComponent() = delete;
-
-
-	public:
-		MeshAnimationComponent(PrivateCTORTag);
-
-		void SetMorphWeight(uint8_t weightIdx, float weight);
-
-
-	private:
-		std::vector<float> m_morphTargetWeights;
-	};
-
-
-	inline void MeshAnimationComponent::SetMorphWeight(uint8_t weightIdx, float weight)
-	{
-		SEAssert(weight >= 0.f && weight <= 1.f, "OOB weight");
-
-		if (weightIdx >= m_morphTargetWeights.size())
-		{
-			m_morphTargetWeights.resize(weightIdx + 1, 0.f); // GLTF specs: Default weights are 0
-		}
-
-		m_morphTargetWeights[weightIdx] = weight;
 	}
 }

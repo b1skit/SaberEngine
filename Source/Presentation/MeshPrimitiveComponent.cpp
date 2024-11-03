@@ -6,6 +6,7 @@
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
+#include "SkinningComponent.h"
 #include "TransformComponent.h"
 
 #include "Renderer/MeshPrimitive.h"
@@ -229,6 +230,9 @@ namespace fr
 			fr::TransformComponent* transformComponent =
 				em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(meshPrimitive, transformOwner);
 			fr::TransformComponent::ShowImGuiWindow(em, transformOwner, static_cast<uint64_t>(meshPrimitive));
+
+			// Skinning:
+			fr::SkinningComponent::ShowImGuiWindow(em, meshPrimitive);
 
 			ImGui::Unindent();
 		}

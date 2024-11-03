@@ -8,6 +8,7 @@
 #include "MarkerComponents.h"
 #include "MaterialInstanceComponent.h"
 #include "MeshConcept.h"
+#include "MeshMorphComponent.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
@@ -15,6 +16,7 @@
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
 #include "ShadowMapComponent.h"
+#include "SkinningComponent.h"
 
 #include "Core/Config.h"
 
@@ -259,8 +261,9 @@ namespace fr
 			EnqueueRenderUpdateHelper<gr::MeshPrimitive::RenderData, fr::MeshPrimitiveComponent>();
 			EnqueueRenderUpdateHelper<gr::Material::MaterialInstanceRenderData, fr::MaterialInstanceComponent>();
 			EnqueueRenderUpdateHelper<gr::Camera::RenderData, fr::CameraComponent>();
-			EnqueueRenderUpdateHelper<gr::MeshPrimitive::MeshRenderData, fr::MeshAnimationComponent, 
+			EnqueueRenderUpdateHelper<gr::MeshPrimitive::MeshMorphRenderData, fr::MeshMorphComponent, 
 				fr::Mesh::MeshConceptMarker, fr::AnimationComponent>();
+			EnqueueRenderUpdateHelper<gr::MeshPrimitive::SkinningRenderData, fr::SkinningComponent>();
 
 			// Lights:
 			auto lightComponentsView = m_registry.view<
@@ -522,10 +525,17 @@ namespace fr
 							renderDataComponent.GetRenderDataID());
 					}
 
-					// MeshAnimations:
-					if (m_registry.all_of<fr::MeshAnimationComponent>(entity))
+					// Mesh Morph Animations:
+					if (m_registry.all_of<fr::MeshMorphComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<fr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::MeshRenderData>>(
+						renderManager->EnqueueRenderCommand<fr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::MeshMorphRenderData>>(
+							renderDataComponent.GetRenderDataID());
+					}
+
+					// Skinning:
+					if (m_registry.all_of<fr::SkinningComponent>(entity))
+					{
+						renderManager->EnqueueRenderCommand<fr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::SkinningRenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
@@ -758,13 +768,13 @@ namespace fr
 
 			// Mesh animations:
 			auto animatedMeshesView = 
-				m_registry.view<fr::AnimationComponent, fr::MeshAnimationComponent, fr::Mesh::MeshConceptMarker>();
+				m_registry.view<fr::AnimationComponent, fr::MeshMorphComponent, fr::Mesh::MeshConceptMarker>();
 			for (auto entity : animatedMeshesView)
 			{
 				fr::AnimationComponent const& animCmpt = animatedMeshesView.get<fr::AnimationComponent>(entity);
-				fr::MeshAnimationComponent& meshAnimCmpt = animatedMeshesView.get<fr::MeshAnimationComponent>(entity);
+				fr::MeshMorphComponent& meshAnimCmpt = animatedMeshesView.get<fr::MeshMorphComponent>(entity);
 
-				fr::MeshAnimationComponent::ApplyAnimation(entity, animCmpt, meshAnimCmpt);
+				fr::MeshMorphComponent::ApplyAnimation(entity, animCmpt, meshAnimCmpt);
 			}
 		}
 	}

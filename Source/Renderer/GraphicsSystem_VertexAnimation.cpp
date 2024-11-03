@@ -134,39 +134,39 @@ namespace gr
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		// Remove deleted MeshRenderData:
+		// Remove deleted MeshMorphRenderData:
 		std::vector<gr::RenderDataID> const* deletedMeshRenderDataIDs =
-			renderData.GetIDsWithDeletedData<gr::MeshPrimitive::MeshRenderData>();
+			renderData.GetIDsWithDeletedData<gr::MeshPrimitive::MeshMorphRenderData>();
 		if (deletedMeshRenderDataIDs)
 		{
 			for (gr::RenderDataID renderDataIDToDelete : *deletedMeshRenderDataIDs)
 			{
 				SEAssert(m_meshIDToMeshRenderParams.contains(renderDataIDToDelete),
-					"MeshRenderData not found. This should not be possible");
+					"MeshMorphRenderData not found. This should not be possible");
 
 				m_meshIDToMeshRenderParams.erase(renderDataIDToDelete);
 			}
 		}
 
-		// Add new buffers for newly added MeshRenderData:
+		// Add new buffers for newly added MeshMorphRenderData:
 		std::vector<gr::RenderDataID> const* newMeshRenderDataIDs =
-			renderData.GetIDsWithNewData<gr::MeshPrimitive::MeshRenderData>();
+			renderData.GetIDsWithNewData<gr::MeshPrimitive::MeshMorphRenderData>();
 		if (newMeshRenderDataIDs)
 		{
 			for (gr::RenderDataID newRenderDataID : *newMeshRenderDataIDs)
 			{
 				SEAssert(!m_meshIDToMeshRenderParams.contains(newRenderDataID),
-					"MeshRenderData already inserted. This should not be possible");
+					"MeshMorphRenderData already inserted. This should not be possible");
 
 				m_meshIDToMeshRenderParams.emplace(newRenderDataID, nullptr); // We'll populate this later
 			}
 		}
 
-		// Update buffers for dirty MeshRenderData:
-		if (renderData.HasObjectData<gr::MeshPrimitive::MeshRenderData>())
+		// Update buffers for dirty MeshMorphRenderData:
+		if (renderData.HasObjectData<gr::MeshPrimitive::MeshMorphRenderData>())
 		{
 			std::vector<gr::RenderDataID> const* dirtyMeshRenderData =
-				renderData.GetIDsWithDirtyData<gr::MeshPrimitive::MeshRenderData>();
+				renderData.GetIDsWithDirtyData<gr::MeshPrimitive::MeshMorphRenderData>();
 			if (dirtyMeshRenderData)
 			{
 				auto dirtyMeshRenderDataItr = renderData.IDBegin(*dirtyMeshRenderData);
@@ -175,10 +175,10 @@ namespace gr
 				{
 					const gr::RenderDataID meshRenderDataID = dirtyMeshRenderDataItr.GetRenderDataID();
 					SEAssert(m_meshIDToMeshRenderParams.contains(meshRenderDataID),
-						"MeshRenderData not found. This should not be possible");
+						"MeshMorphRenderData not found. This should not be possible");
 
-					gr::MeshPrimitive::MeshRenderData const& meshRenderData =
-						dirtyMeshRenderDataItr.Get<gr::MeshPrimitive::MeshRenderData>();
+					gr::MeshPrimitive::MeshMorphRenderData const& meshRenderData =
+						dirtyMeshRenderDataItr.Get<gr::MeshPrimitive::MeshMorphRenderData>();
 
 					// Create/update the morph target weights buffer:
 					std::vector<float> const& morphWeights = meshRenderData.m_morphTargetWeights;
@@ -187,7 +187,7 @@ namespace gr
 					if (buffer == nullptr)
 					{
 						buffer = re::Buffer::CreateArray(
-							std::format("MeshRenderData {} Morph Weights", meshRenderDataID),
+							std::format("MeshMorphRenderData {} Morph Weights", meshRenderDataID),
 							morphWeights.data(),
 							re::Buffer::BufferParams{
 								.m_stagingPool = re::Buffer::StagingPool::Permanent,

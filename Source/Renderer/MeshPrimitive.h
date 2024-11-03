@@ -97,7 +97,7 @@ namespace gr
 
 			uint64_t m_dataHash;
 
-			gr::RenderDataID m_owningMeshRenderDataID; // To access owning MeshRenderData
+			gr::RenderDataID m_owningMeshRenderDataID; // To access owning MeshConcept's MeshMorphRenderData
 
 
 			// Helper: Get a specific vertex stream packed into a MeshPrimitive::RenderData.
@@ -107,9 +107,15 @@ namespace gr
 		};
 
 
-		struct MeshRenderData
+		struct MeshMorphRenderData
 		{
 			std::vector<float> m_morphTargetWeights;
+		};
+
+
+		struct SkinningRenderData
+		{
+			std::vector<gr::TransformID> m_jointTransformIDs;
 		};
 
 
