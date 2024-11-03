@@ -201,9 +201,9 @@ namespace re
 	}
 
 
-	bool SceneData::TextureExists(std::string const& textureName) const
+	bool SceneData::TextureExists(std::string const& texName) const
 	{
-		const util::StringHash nameHash(textureName);
+		const util::StringHash nameHash(texName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 			return m_textures.find(nameHash) != m_textures.end();

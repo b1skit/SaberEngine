@@ -38,11 +38,12 @@ namespace re
 		bool AddUniqueVertexStream(std::shared_ptr<gr::VertexStream>&); // Returns true if incoming ptr is modified
 
 		// Textures:
+		// Accessed via name (i.e. file path), which must be unique
 		bool AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture); // Returns true if incoming ptr is modified
 		std::shared_ptr<re::Texture> GetTexture(std::string const& texName) const;
 		std::shared_ptr<re::Texture> const* GetTexturePtr(std::string const& texName) const;
 		std::shared_ptr<re::Texture> TryGetTexture(std::string const& texName) const;
-		bool TextureExists(std::string const& textureName) const;
+		bool TextureExists(std::string const& texName) const;
 		std::shared_ptr<re::Texture> TryLoadUniqueTexture(std::string const& filepath, re::Texture::ColorSpace);
 
 		// Materials:
