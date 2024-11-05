@@ -42,11 +42,18 @@ namespace gr
 		static InstancedTransformData CreateInstancedTransformData(
 			glm::mat4 const* model, glm::mat4 const* transposeInvModel);
 
-		static re::BufferInput CreateInstancedTransformBuffer(
+		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
+			re::Lifetime, re::Buffer::StagingPool, glm::mat4 const* model, glm::mat4 const* transposeInvModel);
+		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
+			re::Lifetime, re::Buffer::StagingPool, gr::Transform::RenderData const&);
+		static std::shared_ptr<re::Buffer> CreateInstancedTransformBuffer(
+			re::Lifetime, re::Buffer::StagingPool, std::vector<gr::Transform::RenderData const*> const&);
+
+		static re::BufferInput CreateInstancedTransformBufferInput(
 			char const* shaderName, re::Lifetime, re::Buffer::StagingPool, glm::mat4 const* model, glm::mat4 const* transposeInvModel);
-		static re::BufferInput CreateInstancedTransformBuffer(
+		static re::BufferInput CreateInstancedTransformBufferInput(
 			char const* shaderName, re::Lifetime, re::Buffer::StagingPool, gr::Transform::RenderData const&);
-		static re::BufferInput CreateInstancedTransformBuffer(
+		static re::BufferInput CreateInstancedTransformBufferInput(
 			char const* shaderName, re::Lifetime, re::Buffer::StagingPool, std::vector<gr::Transform::RenderData const*> const&);
 	};
 }

@@ -851,7 +851,7 @@ namespace gr
 				gr::MeshPrimitive::RenderData const& meshData = lightItr.Get<gr::MeshPrimitive::RenderData>();
 				gr::Transform::RenderData const& transformData = lightItr.GetTransformData();
 
-				re::BufferInput const& transformBuffer = gr::Transform::CreateInstancedTransformBuffer(
+				re::BufferInput const& transformBuffer = gr::Transform::CreateInstancedTransformBufferInput(
 					InstancedTransformData::s_shaderName, 
 					re::Lifetime::Permanent, 
 					re::Buffer::StagingPool::Permanent, 

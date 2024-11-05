@@ -98,7 +98,7 @@ namespace
 
 		// For simplicity, we build our lines in world space, and attach an identity transform buffer
 		constexpr glm::mat4 k_identity(1.f);
-		lineBatch->SetBuffer(gr::Transform::CreateInstancedTransformBuffer(
+		lineBatch->SetBuffer(gr::Transform::CreateInstancedTransformBufferInput(
 			InstancedTransformData::s_shaderName, lifetime, re::Buffer::StagingPool::Temporary, &k_identity, &k_identity));
 
 		return lineBatch;
@@ -429,7 +429,7 @@ namespace gr
 			{
 				m_worldCoordinateAxisBatch = std::move(BuildAxisBatch(re::Lifetime::Permanent));
 
-				re::BufferInput const& identityTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
+				re::BufferInput const& identityTransformBuffer = gr::Transform::CreateInstancedTransformBufferInput(
 					InstancedTransformData::s_shaderName,
 					re::Lifetime::Permanent,
 					re::Buffer::StagingPool::Temporary,
@@ -478,7 +478,7 @@ namespace gr
 					{
 						m_meshPrimTransformBuffers.emplace(
 							meshPrimRenderDataID, 
-							gr::Transform::CreateInstancedTransformBuffer(
+							gr::Transform::CreateInstancedTransformBufferInput(
 								InstancedTransformData::s_shaderName,
 								re::Lifetime::Permanent,
 								re::Buffer::StagingPool::Permanent, 
@@ -590,7 +590,7 @@ namespace gr
 						{
 							m_meshBoundingBoxBuffers.emplace(
 								meshID,
-								gr::Transform::CreateInstancedTransformBuffer(
+								gr::Transform::CreateInstancedTransformBufferInput(
 									InstancedTransformData::s_shaderName, 
 									re::Lifetime::Permanent, 
 									re::Buffer::StagingPool::Permanent, 
@@ -635,7 +635,7 @@ namespace gr
 
 					if (!m_sceneBoundsTransformBuffer.IsValid())
 					{
-						m_sceneBoundsTransformBuffer = gr::Transform::CreateInstancedTransformBuffer(
+						m_sceneBoundsTransformBuffer = gr::Transform::CreateInstancedTransformBufferInput(
 							InstancedTransformData::s_shaderName, 
 							re::Lifetime::Permanent, 
 							re::Buffer::StagingPool::Permanent, 
@@ -679,7 +679,7 @@ namespace gr
 				{	
 					m_cameraAxisTransformBuffers.emplace(
 						camID,
-						gr::Transform::CreateInstancedTransformBuffer(
+						gr::Transform::CreateInstancedTransformBufferInput(
 							InstancedTransformData::s_shaderName, 
 							re::Lifetime::Permanent, 
 							re::Buffer::StagingPool::Permanent, 
@@ -748,7 +748,7 @@ namespace gr
 					if (!m_cameraFrustumTransformBuffers.at(camID)[faceIdx].IsValid())
 					{
 						m_cameraFrustumTransformBuffers.at(camID)[faceIdx] =
-							gr::Transform::CreateInstancedTransformBuffer(
+							gr::Transform::CreateInstancedTransformBufferInput(
 								InstancedTransformData::s_shaderName,
 								re::Lifetime::Permanent,
 								re::Buffer::StagingPool::Permanent,
@@ -800,7 +800,7 @@ namespace gr
 					{
 						m_deferredLightWireframeTransformBuffers.emplace(
 							pointID,
-							gr::Transform::CreateInstancedTransformBuffer(
+							gr::Transform::CreateInstancedTransformBufferInput(
 								InstancedTransformData::s_shaderName, 
 								re::Lifetime::Permanent, 
 								re::Buffer::StagingPool::Permanent, 
@@ -844,7 +844,7 @@ namespace gr
 					{
 						m_deferredLightWireframeTransformBuffers.emplace(
 							spotID,
-							gr::Transform::CreateInstancedTransformBuffer(
+							gr::Transform::CreateInstancedTransformBufferInput(
 								InstancedTransformData::s_shaderName, 
 								re::Lifetime::Permanent, 
 								re::Buffer::StagingPool::Permanent, 
@@ -893,7 +893,7 @@ namespace gr
 					{
 						m_lightCoordinateAxisTransformBuffers.emplace(
 							lightID,
-							gr::Transform::CreateInstancedTransformBuffer(
+							gr::Transform::CreateInstancedTransformBufferInput(
 								InstancedTransformData::s_shaderName, 
 								re::Lifetime::Permanent, 
 								re::Buffer::StagingPool::Permanent, 
@@ -995,7 +995,7 @@ namespace gr
 							m_transformAxisBatches.emplace(transformID, BuildAxisBatch(re::Lifetime::Permanent));
 
 						auto bufferItr = m_transformAxisTransformBuffers.emplace(transformID,
-							gr::Transform::CreateInstancedTransformBuffer(
+							gr::Transform::CreateInstancedTransformBufferInput(
 								InstancedTransformData::s_shaderName,
 								re::Lifetime::Permanent,
 								re::Buffer::StagingPool::Permanent,

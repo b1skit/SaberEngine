@@ -30,85 +30,107 @@ namespace gr
 	}
 
 
-	re::BufferInput Transform::CreateInstancedTransformBuffer(
-		char const* shaderName,
-		re::Lifetime bufLifetime,
-		re::Buffer::StagingPool bufferAlloc,
+	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
+		re::Lifetime lifetime,
+		re::Buffer::StagingPool stagingPool,
 		glm::mat4 const* model,
 		glm::mat4 const* transposeInvModel)
 	{
-		InstancedTransformData const& transformData = 
+		InstancedTransformData const& transformData =
 			CreateInstancedTransformData(model, transposeInvModel);
 
-		return re::BufferInput(
-			shaderName,
-			re::Buffer::CreateArray(
+		return re::Buffer::CreateArray(
 				"InstancedTransformBufferArrayFromPtrs",
 				&transformData,
 				re::Buffer::BufferParams{
-					.m_lifetime = bufLifetime,
-					.m_stagingPool = bufferAlloc,
+					.m_lifetime = lifetime,
+					.m_stagingPool = stagingPool,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Structured,
 					.m_arraySize = 1,
-				}));
+				});
 	}
 
 
-	re::BufferInput Transform::CreateInstancedTransformBuffer(
-		char const* shaderName,
-		re::Lifetime bufLifetime,
-		re::Buffer::StagingPool bufferAlloc,
+	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
+		re::Lifetime lifetime,
+		re::Buffer::StagingPool stagingPool,
 		gr::Transform::RenderData const& transformData)
 	{
-		InstancedTransformData const& instancedMeshData = 
+		InstancedTransformData const& instancedMeshData =
 			CreateInstancedTransformData(transformData);
 
-		return re::BufferInput(
-			shaderName,
-			re::Buffer::CreateArray(
-				"InstancedTransformBufferArrayFromRenderData",
-				&instancedMeshData,
-				re::Buffer::BufferParams{
-					.m_lifetime = bufLifetime,
-					.m_stagingPool = bufferAlloc,
-					.m_memPoolPreference = re::Buffer::UploadHeap,
-					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
-					.m_usageMask = re::Buffer::Structured,
-					.m_arraySize = 1,
-				}));
+		return re::Buffer::CreateArray(
+			"InstancedTransformBufferArrayFromRenderData",
+			&instancedMeshData,
+			re::Buffer::BufferParams{
+				.m_lifetime = lifetime,
+				.m_stagingPool = stagingPool,
+				.m_memPoolPreference = re::Buffer::UploadHeap,
+				.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+				.m_usageMask = re::Buffer::Structured,
+				.m_arraySize = 1,
+			});
 	}
 
 
-	re::BufferInput Transform::CreateInstancedTransformBuffer(
-		char const* shaderName,
-		re::Lifetime bufLifetime,
-		re::Buffer::StagingPool bufferAlloc,
-		std::vector<gr::Transform::RenderData const*> const& transformRenderData)
+	std::shared_ptr<re::Buffer> Transform::CreateInstancedTransformBuffer(
+		re::Lifetime lifetime,
+		re::Buffer::StagingPool stagingPool, 
+		std::vector<gr::Transform::RenderData const*> const& transformRenderDatas)
 	{
-		const uint32_t numInstances = util::CheckedCast<uint32_t>(transformRenderData.size());
+		const uint32_t numInstances = util::CheckedCast<uint32_t>(transformRenderDatas.size());
 
 		std::vector<InstancedTransformData> instancedMeshData;
 		instancedMeshData.reserve(numInstances);
 
 		for (size_t transformIdx = 0; transformIdx < numInstances; transformIdx++)
 		{
-			instancedMeshData.emplace_back(CreateInstancedTransformData(*transformRenderData[transformIdx]));
+			instancedMeshData.emplace_back(CreateInstancedTransformData(*transformRenderDatas[transformIdx]));
 		}
 
-		return re::BufferInput(
-			shaderName,
-			re::Buffer::CreateArray(
-				"InstancedTransformBufferArrayFromRenderDatas",
-				&instancedMeshData[0],
-				re::Buffer::BufferParams{
-					.m_lifetime = bufLifetime,
-					.m_stagingPool = bufferAlloc,
-					.m_memPoolPreference = re::Buffer::UploadHeap,
-					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
-					.m_usageMask = re::Buffer::Structured,
-					.m_arraySize = numInstances,
-				}));
+		return re::Buffer::CreateArray(
+			"InstancedTransformBufferArrayFromRenderDatas",
+			&instancedMeshData[0],
+			re::Buffer::BufferParams{
+				.m_lifetime = lifetime,
+				.m_stagingPool = stagingPool,
+				.m_memPoolPreference = re::Buffer::UploadHeap,
+				.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+				.m_usageMask = re::Buffer::Structured,
+				.m_arraySize = numInstances,
+			});
+	}
+
+
+	re::BufferInput Transform::CreateInstancedTransformBufferInput(
+		char const* shaderName,
+		re::Lifetime lifetime,
+		re::Buffer::StagingPool stagingPool,
+		glm::mat4 const* model,
+		glm::mat4 const* transposeInvModel)
+	{
+		return re::BufferInput(shaderName, CreateInstancedTransformBuffer(lifetime, stagingPool, model, transposeInvModel));
+	}
+
+
+	re::BufferInput Transform::CreateInstancedTransformBufferInput(
+		char const* shaderName,
+		re::Lifetime lifetime,
+		re::Buffer::StagingPool stagingPool,
+		gr::Transform::RenderData const& transformData)
+	{
+		return re::BufferInput(shaderName, CreateInstancedTransformBuffer(lifetime, stagingPool, transformData));
+	}
+
+
+	re::BufferInput Transform::CreateInstancedTransformBufferInput(
+		char const* shaderName,
+		re::Lifetime bufLifetime,
+		re::Buffer::StagingPool stagingPool,
+		std::vector<gr::Transform::RenderData const*> const& transformRenderData)
+	{
+		return re::BufferInput(shaderName, CreateInstancedTransformBuffer(bufLifetime, stagingPool, transformRenderData));
 	}
 }
