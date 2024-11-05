@@ -43,10 +43,10 @@ namespace gr
 			glm::mat4 const* model, glm::mat4 const* transposeInvModel);
 
 		static re::BufferInput CreateInstancedTransformBuffer(
-			re::Lifetime, re::Buffer::StagingPool, glm::mat4 const* model, glm::mat4 const* transposeInvModel);
+			char const* shaderName, re::Lifetime, re::Buffer::StagingPool, glm::mat4 const* model, glm::mat4 const* transposeInvModel);
 		static re::BufferInput CreateInstancedTransformBuffer(
-			re::Lifetime, re::Buffer::StagingPool, gr::Transform::RenderData const&);
+			char const* shaderName, re::Lifetime, re::Buffer::StagingPool, gr::Transform::RenderData const&);
 		static re::BufferInput CreateInstancedTransformBuffer(
-			re::Lifetime, re::Buffer::StagingPool, std::vector<gr::Transform::RenderData const*> const&);
+			char const* shaderName, re::Lifetime, re::Buffer::StagingPool, std::vector<gr::Transform::RenderData const*> const&);
 	};
 }

@@ -31,6 +31,7 @@ namespace gr
 
 
 	re::BufferInput Transform::CreateInstancedTransformBuffer(
+		char const* shaderName,
 		re::Lifetime bufLifetime,
 		re::Buffer::StagingPool bufferAlloc,
 		glm::mat4 const* model,
@@ -40,9 +41,9 @@ namespace gr
 			CreateInstancedTransformData(model, transposeInvModel);
 
 		return re::BufferInput(
-			InstancedTransformData::s_shaderName,
+			shaderName,
 			re::Buffer::CreateArray(
-				InstancedTransformData::s_shaderName,
+				"InstancedTransformBufferArrayFromPtrs",
 				&transformData,
 				re::Buffer::BufferParams{
 					.m_lifetime = bufLifetime,
@@ -56,15 +57,18 @@ namespace gr
 
 
 	re::BufferInput Transform::CreateInstancedTransformBuffer(
-		re::Lifetime bufLifetime, re::Buffer::StagingPool bufferAlloc, gr::Transform::RenderData const& transformData)
+		char const* shaderName,
+		re::Lifetime bufLifetime,
+		re::Buffer::StagingPool bufferAlloc,
+		gr::Transform::RenderData const& transformData)
 	{
 		InstancedTransformData const& instancedMeshData = 
 			CreateInstancedTransformData(transformData);
 
 		return re::BufferInput(
-			InstancedTransformData::s_shaderName,
+			shaderName,
 			re::Buffer::CreateArray(
-				InstancedTransformData::s_shaderName,
+				"InstancedTransformBufferArrayFromRenderData",
 				&instancedMeshData,
 				re::Buffer::BufferParams{
 					.m_lifetime = bufLifetime,
@@ -78,6 +82,7 @@ namespace gr
 
 
 	re::BufferInput Transform::CreateInstancedTransformBuffer(
+		char const* shaderName,
 		re::Lifetime bufLifetime,
 		re::Buffer::StagingPool bufferAlloc,
 		std::vector<gr::Transform::RenderData const*> const& transformRenderData)
@@ -93,9 +98,9 @@ namespace gr
 		}
 
 		return re::BufferInput(
-			InstancedTransformData::s_shaderName,
+			shaderName,
 			re::Buffer::CreateArray(
-				InstancedTransformData::s_shaderName,
+				"InstancedTransformBufferArrayFromRenderDatas",
 				&instancedMeshData[0],
 				re::Buffer::BufferParams{
 					.m_lifetime = bufLifetime,

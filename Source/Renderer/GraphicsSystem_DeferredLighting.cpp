@@ -852,7 +852,10 @@ namespace gr
 				gr::Transform::RenderData const& transformData = lightItr.GetTransformData();
 
 				re::BufferInput const& transformBuffer = gr::Transform::CreateInstancedTransformBuffer(
-					re::Lifetime::Permanent, re::Buffer::StagingPool::Permanent, transformData);
+					InstancedTransformData::s_shaderName, 
+					re::Lifetime::Permanent, 
+					re::Buffer::StagingPool::Permanent, 
+					transformData);
 
 				punctualLightData.emplace(
 					lightItr.GetRenderDataID(),
