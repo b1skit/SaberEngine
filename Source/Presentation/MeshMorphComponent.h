@@ -11,7 +11,7 @@ namespace fr
 	class MeshMorphComponent
 	{
 	public:
-		static MeshMorphComponent* AttachMeshAnimationComponent(
+		static MeshMorphComponent* AttachMeshMorphComponent(
 			fr::EntityManager&, entt::entity, float const* defaultWeights, uint32_t count);
 
 		// Returns true if any animation was applied

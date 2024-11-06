@@ -15,7 +15,7 @@ namespace fr
 	}
 
 
-	MeshMorphComponent* MeshMorphComponent::AttachMeshAnimationComponent(
+	MeshMorphComponent* MeshMorphComponent::AttachMeshMorphComponent(
 		fr::EntityManager& em, entt::entity entity, float const* defaultWeights, uint32_t count)
 	{
 		SEAssert(em.HasComponent<fr::Mesh::MeshConceptMarker>(entity),
