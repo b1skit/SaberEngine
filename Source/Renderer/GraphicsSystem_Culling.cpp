@@ -6,6 +6,7 @@
 #include "LightRenderData.h"
 #include "RenderDataManager.h"
 
+#include "Core/Config.h"
 #include "Core/ThreadPool.h"
 
 #include "Core/Util/ThreadSafeVector.h"
@@ -182,6 +183,13 @@ namespace gr
 		, INamedObject(GetScriptName())
 		, m_cullingEnabled(true)
 	{
+		// Optionally start with culling disabled by the command line
+		bool cullingDisabledCmdLineReceived = false;
+		core::Config::Get()->TryGetValue<bool>(core::configkeys::k_disableCullingCmdLineArg, cullingDisabledCmdLineReceived);
+		if (cullingDisabledCmdLineReceived)
+		{
+			m_cullingEnabled = false;
+		}
 	}
 
 

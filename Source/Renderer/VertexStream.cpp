@@ -136,13 +136,23 @@ namespace gr
 				TypeToCStr(newVertexStream->GetType()), 
 				newVertexStream->GetDataHash());
 
+			const re::Buffer::MemoryPoolPreference bufMemPoolPref =
+				streamDesc.m_lifetime == re::Lifetime::SingleFrame ? re::Buffer::UploadHeap : re::Buffer::DefaultHeap;
+
 			const re::Buffer::UsageMask bufferUsage = 
 				(streamDesc.m_type == Type::Index ? re::Buffer::IndexStream : re::Buffer::VertexStream) | extraUsageBits;
 			
+			re::Buffer::AccessMask bufAccessMask = re::Buffer::GPURead;
+			if (bufMemPoolPref == re::Buffer::UploadHeap)
+			{
+				bufAccessMask |= re::Buffer::CPUWrite;
+			}
+
 			const re::Buffer::BufferParams bufferParams{
+				.m_lifetime = streamDesc.m_lifetime,
 				.m_stagingPool = re::Buffer::StagingPool::Temporary,
-				.m_memPoolPreference = re::Buffer::DefaultHeap,
-				.m_accessMask = re::Buffer::GPURead,
+				.m_memPoolPreference = bufMemPoolPref,
+				.m_accessMask = bufAccessMask,
 				.m_usageMask = bufferUsage,
 				.m_arraySize = 1,
 			};
@@ -232,10 +242,10 @@ namespace gr
 
 		// D3D12 does not support GPU-normalization of 32-bit types. As a hail-mary, we attempt to pre-normalize here
 		if (DoNormalize() && 
-			streamDesc.m_dataType == re::DataType::Float ||
-			streamDesc.m_dataType == re::DataType::Float2 ||
-			streamDesc.m_dataType == re::DataType::Float3 ||
-			streamDesc.m_dataType == re::DataType::Float4)
+			(streamDesc.m_dataType == re::DataType::Float ||
+				streamDesc.m_dataType == re::DataType::Float2 ||
+				streamDesc.m_dataType == re::DataType::Float3 ||
+				streamDesc.m_dataType == re::DataType::Float4))
 		{
 			static const bool s_doNormalize = 
 				core::Config::Get()->KeyExists(core::configkeys::k_doCPUVertexStreamNormalizationKey);
@@ -296,9 +306,9 @@ namespace gr
 	}
 
 
-	VertexStream::Normalize VertexStream::DoNormalize() const
+	bool VertexStream::DoNormalize() const
 	{
-		return m_streamDesc.m_doNormalize;
+		return static_cast<bool>(m_streamDesc.m_doNormalize);
 	}
 
 

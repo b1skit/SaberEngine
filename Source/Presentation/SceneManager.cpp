@@ -40,6 +40,12 @@ namespace
 	// We pre-parse the GLTF scene hierarchy into our EnTT registry, and then update the entities later on
 	using NodeToEntityMap = std::unordered_map<cgltf_node const*, entt::entity>;
 
+	struct SkinMetadata
+	{
+		std::vector<glm::mat4> m_inverseBindMatrices;
+	};
+	using SkinToSkinMetadata = std::unordered_map<cgltf_skin const*, SkinMetadata>;
+
 	struct MeshPrimitiveMetadata
 	{
 		gr::MeshPrimitive const* m_meshPrimitive;
@@ -47,8 +53,6 @@ namespace
 		glm::vec3 m_positionsMaxXYZ;
 		
 		std::string m_materialName;
-
-		bool m_meshPrimitiveIsSkinned;
 	};
 	using PrimitiveToMeshPrimitiveMap = std::unordered_map<cgltf_primitive const*, MeshPrimitiveMetadata>;
 
@@ -56,7 +60,10 @@ namespace
 	{
 		fr::AnimationController* m_animationController = nullptr;
 		NodeToAnimationDataMaps m_nodeToAnimationData;
-		
+
+		SkinToSkinMetadata m_skinToSkinMetadata;
+		std::mutex m_skinToSkinMetadataMutex;
+
 		PrimitiveToMeshPrimitiveMap m_primitiveToMeshPrimitiveMetadata;
 		std::mutex m_primitiveToMeshPrimitiveMetadataMutex; 
 
@@ -858,6 +865,7 @@ namespace
 					std::string const& meshName = curMesh->name ? curMesh->name : std::format("UnnamedMesh_{}", meshIdx);
 
 					bool meshHasMorphTargets = false;
+					bool meshHasSkin = false;
 
 					for (size_t primIdx = 0; primIdx < curMesh->primitives_count; ++primIdx)
 					{
@@ -957,7 +965,6 @@ namespace
 
 						glm::vec3 positionsMinXYZ(fr::BoundsComponent::k_invalidMinXYZ);
 						glm::vec3 positionsMaxXYZ(fr::BoundsComponent::k_invalidMaxXYZ);
-						bool meshPrimitiveIsSkinned = false;
 
 						// Unpack each of the primitive's vertex attrbutes:
 						for (size_t attrib = 0; attrib < curPrimitive.attributes_count; attrib++)
@@ -1118,7 +1125,7 @@ namespace
 									.m_setIdx = setIdx
 									});
 
-								meshPrimitiveIsSkinned = true;
+								meshHasSkin = true;
 							}
 							break;
 							case cgltf_attribute_type::cgltf_attribute_type_weights:
@@ -1141,7 +1148,7 @@ namespace
 									.m_setIdx = setIdx
 									});
 
-								meshPrimitiveIsSkinned = true;
+								meshHasSkin = true;
 							}
 							break;
 							case cgltf_attribute_type::cgltf_attribute_type_custom:
@@ -1458,16 +1465,24 @@ namespace
 						}
 
 						// If our mesh has morph targets, add the structured flag to the animated vertex stream buffers
-						if (meshHasMorphTargets)
+						if (meshHasMorphTargets || meshHasSkin)
 						{
 							for (auto& streamIndexElement : vertexStreamCreateParams)
 							{
 								for (auto& createParams : streamIndexElement)
 								{
-									if (createParams.m_streamDesc.m_type != gr::VertexStream::Index &&
-										!createParams.m_morphTargetData.empty())
+									if (createParams.m_streamDesc.m_type != gr::VertexStream::Index)
 									{
-										createParams.m_extraUsageBits |= re::Buffer::Usage::Structured;
+										if (!createParams.m_morphTargetData.empty() || 
+											(meshHasSkin && 
+												(createParams.m_streamDesc.m_type == gr::VertexStream::Position || 
+													createParams.m_streamDesc.m_type == gr::VertexStream::Normal || 
+													createParams.m_streamDesc.m_type == gr::VertexStream::Tangent ||
+													createParams.m_streamDesc.m_type == gr::VertexStream::BlendIndices ||
+													createParams.m_streamDesc.m_type == gr::VertexStream::BlendWeight)))
+										{
+											createParams.m_extraUsageBits |= re::Buffer::Usage::Structured;
+										}
 									}
 								}
 							}
@@ -1521,7 +1536,6 @@ namespace
 									.m_positionsMinXYZ = positionsMinXYZ,
 									.m_positionsMaxXYZ = positionsMaxXYZ,
 									.m_materialName = materialName,
-									.m_meshPrimitiveIsSkinned = meshPrimitiveIsSkinned,
 								});
 						}
 					}
@@ -1530,30 +1544,63 @@ namespace
 	}
 
 
+	void PreLoadSkinData(
+		cgltf_data const* data,
+		SceneMetadata& sceneMetadata,
+		std::vector<std::future<void>>& skinFutures)
+	{
+		for (size_t skinIdx = 0; skinIdx < data->skins_count; ++skinIdx)
+		{
+			cgltf_skin const* skin = &data->skins[skinIdx];
+
+			skinFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+				[skin, &sceneMetadata]()
+				{
+					std::vector<glm::mat4> inverseBindMatrices;
+					if (skin->inverse_bind_matrices)
+					{
+						const cgltf_size numFloats = cgltf_accessor_unpack_floats(skin->inverse_bind_matrices, nullptr, 0);
+
+						constexpr size_t k_numfloatsPerMat4 = sizeof(glm::mat4) / sizeof(float);
+						inverseBindMatrices.resize(numFloats / k_numfloatsPerMat4);
+
+						cgltf_accessor_unpack_floats(
+							skin->inverse_bind_matrices,
+							&inverseBindMatrices[0][0].x,
+							numFloats);
+
+						{
+							std::lock_guard<std::mutex> lock(sceneMetadata.m_skinToSkinMetadataMutex);
+							sceneMetadata.m_skinToSkinMetadata.emplace(skin, std::move(inverseBindMatrices));
+						}
+					}
+				}));
+		}
+	}
+
+	
 	void AttachGeometry(
 		re::SceneData const& sceneData,
 		cgltf_node const* current,
+		size_t nodeIdx, // For default/fallback name
 		entt::entity sceneNode,
-		SceneMetadata const& sceneMetadata)
+		SceneMetadata& sceneMetadata)
 	{
+		SEAssert(current->mesh, "Current node does not have mesh data");
+
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
-		if (current->mesh)
+		std::string meshName;
+		if (current->mesh->name)
 		{
-			std::string meshName;
-			if (current->mesh->name)
-			{
-				meshName = current->mesh->name;
-			}
-			else
-			{
-				static std::atomic<uint32_t> unnamedMeshIdx = 0;
-				const uint32_t thisMeshIdx = unnamedMeshIdx.fetch_add(1);
-				meshName = std::format("UnnamedMesh_{}", thisMeshIdx);
-			}
-
-			fr::Mesh::AttachMeshConcept(sceneNode, meshName.c_str());
+			meshName = current->mesh->name;
 		}
+		else
+		{
+			meshName = std::format("GLTFNode[{}]_Mesh", nodeIdx);
+		}
+
+		fr::Mesh::AttachMeshConcept(sceneNode, meshName.c_str());
 
 		bool meshHasMorphTargets = false;
 
@@ -1567,6 +1614,7 @@ namespace
 
 			meshHasMorphTargets |= curPrimitive.targets_count > 0;
 
+			// Note: No locks here, the work should have already finished and been waited on
 			MeshPrimitiveMetadata const& meshPrimMetadata = 
 				sceneMetadata.m_primitiveToMeshPrimitiveMetadata.at(&curPrimitive);
 
@@ -1582,27 +1630,71 @@ namespace
 			std::shared_ptr<gr::Material> const& material = sceneData.GetMaterial(meshPrimMetadata.m_materialName);
 
 			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material.get());
-
-			// Attach a SkinningComponent:
-			if (meshPrimMetadata.m_meshPrimitiveIsSkinned)
-			{
-				// Build our joint index to TransformID mapping table:
-				std::vector<gr::TransformID> jointToTransformIDs;
-				jointToTransformIDs.reserve(current->skin->joints_count);
-
-				for (size_t jointIdx = 0; jointIdx < current->skin->joints_count; ++jointIdx)
-				{
-					SEAssert(sceneMetadata.m_nodeToEntity.contains(current->skin->joints[jointIdx]),
-						"Node is not in the node to entity map. This should not be possible");
-
-					const entt::entity jointNodeEntity = sceneMetadata.m_nodeToEntity.at(current->skin->joints[jointIdx]);
-
-					jointToTransformIDs.emplace_back(
-						em.GetComponent<fr::TransformComponent>(jointNodeEntity).GetTransformID());
-				}
-				fr::SkinningComponent::AttachSkinningComponent(meshPrimimitiveEntity, std::move(jointToTransformIDs));
-			}
 		} // primitives loop
+
+
+		// Attach a SkinningComponent, if necessary:
+		if (current->skin)
+		{
+			// Build our joint index to TransformID mapping table:
+			std::vector<gr::TransformID> jointToTransformIDs;
+			jointToTransformIDs.reserve(current->skin->joints_count);
+
+			for (size_t jointIdx = 0; jointIdx < current->skin->joints_count; ++jointIdx)
+			{
+				SEAssert(sceneMetadata.m_nodeToEntity.contains(current->skin->joints[jointIdx]),
+					"Node is not in the node to entity map. This should not be possible");
+
+				const entt::entity jointNodeEntity = sceneMetadata.m_nodeToEntity.at(current->skin->joints[jointIdx]);
+
+				fr::TransformComponent const* transformCmpt =
+					em.TryGetComponent<fr::TransformComponent>(jointNodeEntity);
+
+				// GLTF Specs: Animated nodes can only have TRS properties (no matrix)
+				if (transformCmpt && !current->skin->joints[jointIdx]->has_matrix)
+				{
+					jointToTransformIDs.emplace_back(transformCmpt->GetTransformID());
+				}
+				else
+				{
+					// We use this flag to signal an identity matrix, which allows us to skip some calculations
+					// later on
+					jointToTransformIDs.emplace_back(gr::k_invalidTransformID);
+				}
+			}
+
+
+			// We pre-loaded the skinning data
+			std::vector<glm::mat4>* inverseBindMatrices = nullptr;
+			if (sceneMetadata.m_skinToSkinMetadata.contains(current->skin))
+			{
+				// Note: No locks here, the work should have already finished and been waited on
+				inverseBindMatrices = &sceneMetadata.m_skinToSkinMetadata.at(current->skin).m_inverseBindMatrices;
+			}
+
+			gr::TransformID skeletonTransformID = gr::k_invalidTransformID;
+			if (current->skin->skeleton)
+			{
+				SEAssert(sceneMetadata.m_nodeToEntity.contains(current->skin->skeleton),
+					"Skeleton node has not been added to the entity map. This should not be possible");
+
+				const entt::entity skeletonNodeEntity = sceneMetadata.m_nodeToEntity.at(current->skin->skeleton);
+
+				fr::TransformComponent const* skeletonTransformCmpt =
+					em.TryGetComponent<fr::TransformComponent>(skeletonNodeEntity);
+
+				if (skeletonTransformCmpt)
+				{
+					skeletonTransformID = skeletonTransformCmpt->GetTransformID();
+				}
+			}
+
+			fr::SkinningComponent::AttachSkinningComponent(
+				sceneNode,
+				std::move(jointToTransformIDs),
+				inverseBindMatrices ? std::move(*inverseBindMatrices) : std::vector<glm::mat4>(),
+				skeletonTransformID);
+		}
 
 
 		// Attach a MeshMorphComponent, if necessary:
@@ -1720,7 +1812,7 @@ namespace
 			cgltf_node const* current = &data->nodes[nodeIdx];
 
 			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[&sceneData, &sceneMetadata, current]()
+				[&sceneData, &sceneMetadata, current, nodeIdx]()
 				{
 					SEAssert(sceneMetadata.m_nodeToEntity.contains(current),
 					"Node to entity map does not contain the current node. This should not be possible");
@@ -1729,7 +1821,7 @@ namespace
 
 					if (current->mesh)
 					{
-						AttachGeometry(sceneData, current, curSceneNodeEntity, sceneMetadata);
+						AttachGeometry(sceneData, current, nodeIdx, curSceneNodeEntity, sceneMetadata);
 					}
 					if (current->light)
 					{
@@ -2139,6 +2231,7 @@ namespace fr
 			// Pre-load the large/complex data:
 			PreLoadTextures(sceneRootPath, *sceneData, data, loadFutures);
 			PreLoadMeshData(*sceneData, data, sceneMetadata, loadFutures);
+			PreLoadSkinData(data, sceneMetadata, loadFutures);
 
 			// Wait for data to be pre-loaded:
 			for (auto const& loadFuture : loadFutures)

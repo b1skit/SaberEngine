@@ -77,6 +77,8 @@ namespace fr
 		glm::vec3 GetGlobalRight() const; // World-space right (X+) vector
 		glm::vec3 GetGlobalUp() const; // World-space up (Y+) vector
 
+		// Local:
+		glm::mat4 GetLocalMatrix() const;
 
 		// Utility functions:
 		void Recompute(); // Explicitely recompute the local matrix

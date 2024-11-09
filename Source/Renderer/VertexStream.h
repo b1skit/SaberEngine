@@ -97,7 +97,7 @@ namespace gr
 		Type GetType() const;
 
 		re::DataType GetDataType() const; // What data type does each individual component have?
-		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
+		bool DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
 
 		uint32_t GetTotalDataByteSize() const;
 		uint32_t GetNumElements() const; // How many vertices-worth of attributes do we have?

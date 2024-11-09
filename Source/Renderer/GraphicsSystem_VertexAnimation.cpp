@@ -12,7 +12,7 @@ namespace
 	static const EffectID k_vertexAnimationEffectID = effect::Effect::ComputeEffectID("VertexAnimation");
 
 
-	VertexStreamMetadata GetVertexStreamMetadataData(gr::MeshPrimitive::RenderData const& meshPrimRenderData)
+	MorphMetadata GetMorphMetadataData(gr::MeshPrimitive::RenderData const& meshPrimRenderData)
 	{
 		SEAssert(meshPrimRenderData.m_vertexStreams[0] != nullptr &&
 			meshPrimRenderData.m_numVertexStreams > 0,
@@ -23,7 +23,7 @@ namespace
 
 		gr::MeshPrimitive::MorphTargetMetadata const& morphMetadata = meshPrimRenderData.m_morphTargetMetadata;
 
-		VertexStreamMetadata streamData{};
+		MorphMetadata streamData{};
 
 		// .x = No. vertices per stream, .y = max morph targets per stream, .z = interleaved morph float stride, .w = unused
 		streamData.g_meshPrimMetadata = glm::uvec4( 
@@ -83,11 +83,83 @@ namespace
 	}
 
 
-	DispatchMetadata GetDispatchMetadataData(uint8_t numStreamBuffers)
+	MorphDispatchMetadata GetMorphDispatchMetadataData(uint8_t numStreamBuffers)
 	{
-		return DispatchMetadata{
+		return MorphDispatchMetadata{
 			.g_dispatchMetadata = glm::uvec4(numStreamBuffers, 0, 0, 0), // .x = num active buffers, .yzw = unused
 		};
+	}
+
+
+	SkinningData GetSkinningData(gr::MeshPrimitive::RenderData const& meshPrimRenderData)
+	{
+		SEAssert(meshPrimRenderData.m_vertexStreams[0] != nullptr &&
+			meshPrimRenderData.m_numVertexStreams > 0,
+			"Must have at least 1 vertex stream");
+
+		SkinningData skinningData{};
+
+		skinningData.g_meshPrimMetadata = glm::uvec4(
+			meshPrimRenderData.m_vertexStreams[0]->GetNumElements(),
+			0,
+			0,
+			0);
+
+		return skinningData;
+	}
+
+
+	void UpdateSkinningJointsBuffer(
+		gr::RenderDataManager const& renderData,
+		gr::MeshPrimitive::SkinningRenderData const& skinData,
+		std::shared_ptr<re::Buffer> const& jointsBuffer,
+		std::shared_ptr<re::Buffer> const& jointsTransposeInverseBuffer,
+		bool force)
+	{
+		std::vector<gr::TransformID> const& jointTransformIDs = skinData.m_jointTransformIDs;
+
+		for (size_t jointIdx = 0; jointIdx < jointTransformIDs.size(); ++jointIdx)
+		{
+			const gr::TransformID jointTransformID = jointTransformIDs[jointIdx];
+
+			if ((jointTransformID != gr::k_invalidTransformID && renderData.TransformIsDirty(jointTransformID)) || 
+				force) // Note: force is safe as gr::k_invalidTransformID maps to the identity Transform by default
+			{
+				gr::Transform::RenderData const& jointTransformRenderData = 
+					renderData.GetTransformDataFromTransformID(jointTransformID);
+
+				glm::mat4 jointMat = jointTransformRenderData.g_model;
+
+				if (!skinData.m_inverseBindMatrices.empty())
+				{
+					SEAssert(skinData.m_inverseBindMatrices.size() >= jointTransformIDs.size(),
+						"Inverse bind matrices should have >= entries as the number of joints");
+
+					// Apply the per-joint inverse bind matrix BEFORE the base node transformation:
+					jointMat = jointMat * skinData.m_inverseBindMatrices[jointIdx];
+				}
+				glm::mat4 const& transposeInvJointMat = glm::transpose(glm::inverse(jointMat));
+
+				jointsBuffer->Commit(&jointMat, util::CheckedCast<uint32_t>(jointIdx), 1);
+				jointsTransposeInverseBuffer->Commit(&transposeInvJointMat, util::CheckedCast<uint32_t>(jointIdx), 1);
+			
+			}
+		}
+	}
+
+
+	void UpdateSkinningJointsBuffer(
+		gr::RenderDataManager const& renderData,
+		gr::RenderDataID skinnedMeshID,
+		std::shared_ptr<re::Buffer> const& jointsBuffer,
+		std::shared_ptr<re::Buffer> const& jointsTransposeInverseBuffer,
+		bool force)
+	{
+		UpdateSkinningJointsBuffer(renderData,
+			renderData.GetObjectData<gr::MeshPrimitive::SkinningRenderData>(skinnedMeshID),
+			jointsBuffer,
+			jointsTransposeInverseBuffer,
+			force);
 	}
 }
 
@@ -109,12 +181,17 @@ namespace gr
 		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
 		SEAssert(m_viewCullingResults, "View culling results cannot (currently) be null");
 
-		m_vertexAnimationStage = 
-			re::RenderStage::CreateComputeStage("Vertex Animation Stage", re::RenderStage::ComputeStageParams{});
+		m_morphAnimationStage = 
+			re::RenderStage::CreateComputeStage("Morph Animation Stage", re::RenderStage::ComputeStageParams{});
+		m_morphAnimationStage->SetDrawStyle(effect::drawstyle::VertexAnimation_Morph);
+		
+		pipeline.AppendRenderStage(m_morphAnimationStage);
 
+		m_skinAnimationStage =
+			re::RenderStage::CreateComputeStage("Skinned Animation Stage", re::RenderStage::ComputeStageParams{});
+		m_skinAnimationStage->SetDrawStyle(effect::drawstyle::VertexAnimation_Skinning);
 
-
-		pipeline.AppendRenderStage(m_vertexAnimationStage);
+		pipeline.AppendRenderStage(m_skinAnimationStage);
 	}
 
 
@@ -135,46 +212,46 @@ namespace gr
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		// Remove deleted MeshMorphRenderData:
-		std::vector<gr::RenderDataID> const* deletedMeshRenderDataIDs =
+		std::vector<gr::RenderDataID> const* deletedMorphRenderDataIDs =
 			renderData.GetIDsWithDeletedData<gr::MeshPrimitive::MeshMorphRenderData>();
-		if (deletedMeshRenderDataIDs)
+		if (deletedMorphRenderDataIDs)
 		{
-			for (gr::RenderDataID renderDataIDToDelete : *deletedMeshRenderDataIDs)
+			for (gr::RenderDataID renderDataIDToDelete : *deletedMorphRenderDataIDs)
 			{
-				SEAssert(m_meshIDToMeshRenderParams.contains(renderDataIDToDelete),
+				SEAssert(m_meshIDToMorphWeights.contains(renderDataIDToDelete),
 					"MeshMorphRenderData not found. This should not be possible");
 
-				m_meshIDToMeshRenderParams.erase(renderDataIDToDelete);
+				m_meshIDToMorphWeights.erase(renderDataIDToDelete);
 			}
 		}
 
 		// Add new buffers for newly added MeshMorphRenderData:
-		std::vector<gr::RenderDataID> const* newMeshRenderDataIDs =
+		std::vector<gr::RenderDataID> const* newMorphRenderDataIDs =
 			renderData.GetIDsWithNewData<gr::MeshPrimitive::MeshMorphRenderData>();
-		if (newMeshRenderDataIDs)
+		if (newMorphRenderDataIDs)
 		{
-			for (gr::RenderDataID newRenderDataID : *newMeshRenderDataIDs)
+			for (gr::RenderDataID newRenderDataID : *newMorphRenderDataIDs)
 			{
-				SEAssert(!m_meshIDToMeshRenderParams.contains(newRenderDataID),
+				SEAssert(!m_meshIDToMorphWeights.contains(newRenderDataID),
 					"MeshMorphRenderData already inserted. This should not be possible");
 
-				m_meshIDToMeshRenderParams.emplace(newRenderDataID, nullptr); // We'll populate this later
+				m_meshIDToMorphWeights.emplace(newRenderDataID, nullptr); // We'll populate this later
 			}
 		}
 
 		// Update buffers for dirty MeshMorphRenderData:
 		if (renderData.HasObjectData<gr::MeshPrimitive::MeshMorphRenderData>())
 		{
-			std::vector<gr::RenderDataID> const* dirtyMeshRenderData =
+			std::vector<gr::RenderDataID> const* dirtyMorphRenderData =
 				renderData.GetIDsWithDirtyData<gr::MeshPrimitive::MeshMorphRenderData>();
-			if (dirtyMeshRenderData)
+			if (dirtyMorphRenderData)
 			{
-				auto dirtyMeshRenderDataItr = renderData.IDBegin(*dirtyMeshRenderData);
-				auto const& dirtyMeshRenderDataItrEnd = renderData.IDEnd(*dirtyMeshRenderData);
+				auto dirtyMeshRenderDataItr = renderData.IDBegin(*dirtyMorphRenderData);
+				auto const& dirtyMeshRenderDataItrEnd = renderData.IDEnd(*dirtyMorphRenderData);
 				while (dirtyMeshRenderDataItr != dirtyMeshRenderDataItrEnd)
 				{
 					const gr::RenderDataID meshRenderDataID = dirtyMeshRenderDataItr.GetRenderDataID();
-					SEAssert(m_meshIDToMeshRenderParams.contains(meshRenderDataID),
+					SEAssert(m_meshIDToMorphWeights.contains(meshRenderDataID),
 						"MeshMorphRenderData not found. This should not be possible");
 
 					gr::MeshPrimitive::MeshMorphRenderData const& meshRenderData =
@@ -183,7 +260,7 @@ namespace gr
 					// Create/update the morph target weights buffer:
 					std::vector<float> const& morphWeights = meshRenderData.m_morphTargetWeights;
 					
-					auto& buffer = m_meshIDToMeshRenderParams.at(meshRenderDataID);
+					auto& buffer = m_meshIDToMorphWeights.at(meshRenderDataID);
 					if (buffer == nullptr)
 					{
 						buffer = re::Buffer::CreateArray(
@@ -208,6 +285,92 @@ namespace gr
 		}
 
 
+		// Remove deleted skinned meshes:
+		std::vector<gr::RenderDataID> const* deletedSkinnedMeshRenderDataIDs =
+			renderData.GetIDsWithDeletedData<gr::MeshPrimitive::SkinningRenderData>();
+		if (deletedSkinnedMeshRenderDataIDs)
+		{
+			for (gr::RenderDataID renderDataIDToDelete : *deletedSkinnedMeshRenderDataIDs)
+			{
+				SEAssert(m_meshIDToSkinJoints.contains(renderDataIDToDelete),
+					"SkinningRenderData not found. This should not be possible");
+
+				m_meshIDToSkinJoints.erase(renderDataIDToDelete);
+			}
+		}
+
+		// Add new skinned meshes:
+		std::vector<gr::RenderDataID> const* newSkinnedMeshRenderDataIDs =
+			renderData.GetIDsWithNewData<gr::MeshPrimitive::SkinningRenderData>();
+		if (newSkinnedMeshRenderDataIDs)
+		{
+			for (gr::RenderDataID newRenderDataID : *newSkinnedMeshRenderDataIDs)
+			{
+				SEAssert(!m_meshIDToSkinJoints.contains(newRenderDataID),
+					"SkinningRenderData already inserted. This should not be possible");
+
+				m_meshIDToSkinJoints.emplace(newRenderDataID, nullptr); // We'll populate this later
+			}
+		}
+
+		// Update buffers for dirty SkinningRenderData:
+		if (renderData.HasObjectData<gr::MeshPrimitive::SkinningRenderData>())
+		{
+			std::vector<gr::RenderDataID> const* dirtySkinningRenderData =
+				renderData.GetIDsWithDirtyData<gr::MeshPrimitive::SkinningRenderData>();
+			if (dirtySkinningRenderData)
+			{
+				auto dirtySkinRenderDataItr = renderData.IDBegin(*dirtySkinningRenderData);
+				auto const& dirtySkinRenderDataItrEnd = renderData.IDEnd(*dirtySkinningRenderData);
+				while (dirtySkinRenderDataItr != dirtySkinRenderDataItrEnd)
+				{
+					const gr::RenderDataID meshRenderDataID = dirtySkinRenderDataItr.GetRenderDataID();
+					SEAssert(m_meshIDToSkinJoints.contains(meshRenderDataID),
+						"SkinningRenderData not found. This should not be possible");
+
+					gr::MeshPrimitive::SkinningRenderData const& skinRenderData =
+						dirtySkinRenderDataItr.Get<gr::MeshPrimitive::SkinningRenderData>();
+
+					// Create/update the skinning joints buffer:
+					JointBuffers& jointBuffers = m_meshIDToSkinJoints.at(meshRenderDataID);
+					SEAssert((jointBuffers.m_skinJoints == nullptr) ==
+						(jointBuffers.m_transposeInvSkinJoints == nullptr),
+						"Joint buffers are out of sync");
+
+					if (jointBuffers.m_skinJoints == nullptr || jointBuffers.m_transposeInvSkinJoints == nullptr)
+					{
+						jointBuffers.m_skinJoints = re::Buffer::CreateUncommittedArray<glm::mat4>(
+							std::format("SkinningRenderData {} Joints", meshRenderDataID),
+							re::Buffer::BufferParams{
+								.m_stagingPool = re::Buffer::StagingPool::Permanent,
+								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
+								.m_accessMask = re::Buffer::Access::GPURead,
+								.m_usageMask = re::Buffer::Usage::Structured,
+								.m_arraySize = util::CheckedCast<uint32_t>(skinRenderData.m_jointTransformIDs.size()),
+							});
+
+						jointBuffers.m_transposeInvSkinJoints = re::Buffer::CreateUncommittedArray<glm::mat4>(
+							std::format("SkinningRenderData {} Joints Inverse Transpose", meshRenderDataID),
+							re::Buffer::BufferParams{
+								.m_stagingPool = re::Buffer::StagingPool::Permanent,
+								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
+								.m_accessMask = re::Buffer::Access::GPURead,
+								.m_usageMask = re::Buffer::Usage::Structured,
+								.m_arraySize = util::CheckedCast<uint32_t>(skinRenderData.m_jointTransformIDs.size()),
+							});
+
+						// Force the update for newly created buffers, as there is no guarantee the associated
+						// Transforms are dirty
+						UpdateSkinningJointsBuffer(
+							renderData, skinRenderData, jointBuffers.m_skinJoints, jointBuffers.m_transposeInvSkinJoints, true);
+					}					
+
+					++dirtySkinRenderDataItr;
+				}
+			}
+		}
+
+
 		// Remove Buffers/VertexBufferInputs for deleted MeshPrimitive RenderDataIDs:
 		std::vector<gr::RenderDataID> const* deletedMeshPrimitiveRenderDataIDs = 
 			renderData.GetIDsWithDeletedData<gr::MeshPrimitive::RenderData>();
@@ -220,9 +383,9 @@ namespace gr
 				gr::MeshPrimitive::RenderData const& meshPrimRenderData = 
 					deletedMeshPrimItr.Get<gr::MeshPrimitive::RenderData>();
 
-				if (meshPrimRenderData.m_hasMorphTargets)
+				if (meshPrimRenderData.m_hasMorphTargets || meshPrimRenderData.m_meshHasSkinning)
 				{
-					RemoveDestVertexBuffers(deletedMeshPrimItr.GetRenderDataID());
+					RemoveAnimationBuffers(deletedMeshPrimItr.GetRenderDataID());
 				}
 				++deletedMeshPrimItr;
 			}
@@ -239,62 +402,82 @@ namespace gr
 				gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 					renderData.GetObjectData<gr::MeshPrimitive::RenderData>(newRenderDataID);
 
-				if (meshPrimRenderData.m_hasMorphTargets)
+				SEAssert((!meshPrimRenderData.m_meshHasSkinning && !meshPrimRenderData.m_hasMorphTargets) ||
+					meshPrimRenderData.m_meshHasSkinning != meshPrimRenderData.m_hasMorphTargets,
+					"TODO: Support vertex animation when both morph targets and skinning are enabled. For now, we "
+					"assume only one or the other is enabled");
+
+				if (meshPrimRenderData.m_hasMorphTargets || meshPrimRenderData.m_meshHasSkinning)
 				{
-					AddDestVertexBuffers(newRenderDataID, meshPrimRenderData);
+					AddAnimationBuffers(newRenderDataID, meshPrimRenderData);
 				}
 			}
 		}
 
+		// Create batches, if necessary:
+		if (!m_meshIDToMorphWeights.empty())
+		{
+			CreateMorphAnimationBatches();
+		}
 
-		// Dispatch compute batches to animate anything that passed culling:
-		std::unordered_set<gr::RenderDataID> seenMeshPrimitives;
+		if (!m_meshIDToSkinJoints.empty())
+		{
+			CreateSkinningAnimationBatches();
+		}
+	}
+
+
+	void VertexAnimationGraphicsSystem::CreateMorphAnimationBatches()
+	{
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();	
+
 		for (auto const& viewAndCulledIDs : *m_viewCullingResults)
 		{
 			for (gr::RenderDataID visibleID : viewAndCulledIDs.second)
 			{
-				if (!seenMeshPrimitives.contains(visibleID) && 
-					renderData.HasObjectData<gr::MeshPrimitive::RenderData>(visibleID))
+				if (renderData.HasObjectData<gr::MeshPrimitive::RenderData>(visibleID))
 				{
-					gr::MeshPrimitive::RenderData const& meshPrimRenderData = 
+					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 						renderData.GetObjectData<gr::MeshPrimitive::RenderData>(visibleID);
 
 					// Dispatch a compute batch:
 					if (meshPrimRenderData.m_hasMorphTargets)
 					{
-						SEAssert(m_meshPrimIDToBuffers.contains(visibleID),
+						SEAssert(m_meshPrimIDToAnimBuffers.contains(visibleID),
 							"Failed to find a destination vertex buffer to write to. This should not be possible");
+
+						SEAssert(m_meshIDToMorphWeights.contains(meshPrimRenderData.m_owningMeshRenderDataID),
+							"MeshPrimitive has an owning Mesh ID that hasn't been registered. This shouldn't be possible");
 
 						const uint32_t numVerts = meshPrimRenderData.m_vertexStreams[0]->GetNumElements();
 						SEAssert(numVerts >= 3, "Less than 3 verts. This is unexpected");
-						
+
 						// We process verts in 1D (round up to ensure we dispatch at least one thread group)
 						const uint32_t roundedXDim =
 							(numVerts / VERTEX_ANIM_THREADS_X) + ((numVerts % VERTEX_ANIM_THREADS_X) == 0 ? 0 : 1);
 
-						AnimationBuffers const& animBuffers = m_meshPrimIDToBuffers.at(visibleID);
+						AnimationBuffers const& animBuffers = m_meshPrimIDToAnimBuffers.at(visibleID);
 
-						// Process our streams in blocks of max 8 (OpenGL only guarantees 8 SSBO's are accessible at once)
-						const uint8_t numDispatches = 
-							std::max(animBuffers.m_numAnimatedStreams / MAX_STREAMS_PER_DISPATCH, 1);
+						// Process our streams in blocks (OpenGL limits the no. of SSBO's are accessible at once)
+						const uint8_t numDispatches = util::RoundUpToNearestMultiple(
+							animBuffers.m_numAnimatedStreams,
+							static_cast<uint8_t>(MAX_STREAMS_PER_DISPATCH)) / MAX_STREAMS_PER_DISPATCH;
 
 						for (uint8_t dispatchIdx = 0; dispatchIdx < numDispatches; ++dispatchIdx)
 						{
-							re::Batch vertAnimationBatch = re::Batch(
+							re::Batch morphBatch = re::Batch(
 								re::Lifetime::SingleFrame,
 								re::Batch::ComputeParams{ .m_threadGroupCount = glm::uvec3(roundedXDim, 1u, 1u) },
 								k_vertexAnimationEffectID);
 
-							// Set the buffers:
-							SEAssert(m_meshIDToMeshRenderParams.contains(meshPrimRenderData.m_owningMeshRenderDataID),
-								"MeshPrimitive has an owning Mesh ID that hasn't been registered. This shouldn't be possible");
+							// Set the buffers:							
 
 							// AnimationData: Per-Mesh weights
-							vertAnimationBatch.SetBuffer("MorphWeights",
-								m_meshIDToMeshRenderParams.at(meshPrimRenderData.m_owningMeshRenderDataID));
+							morphBatch.SetBuffer("MorphWeights",
+								m_meshIDToMorphWeights.at(meshPrimRenderData.m_owningMeshRenderDataID));
 
 							// Attach input/output vertex buffers:
-							auto const& destBufferArray = m_meshPrimIDToBuffers.at(visibleID);
+							auto const& animBuffers = m_meshPrimIDToAnimBuffers.at(visibleID);
 
 							// Attach the current subset of streams:
 							const uint8_t firstStreamIdx = dispatchIdx * MAX_STREAMS_PER_DISPATCH;
@@ -305,13 +488,19 @@ namespace gr
 							for (uint8_t srcIdx = firstStreamIdx; srcIdx < endStreamIdx; ++srcIdx)
 							{
 								SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx] != nullptr,
-									"Found a null stream while iterating over the number of streams");	
+									"Found a null stream while iterating over the number of streams");
 
 								if (meshPrimRenderData.m_morphTargetMetadata.m_perStreamMetadata[srcIdx].m_byteStride == 0 ||
 									meshPrimRenderData.m_morphTargetMetadata.m_perStreamMetadata[srcIdx].m_numComponents == 0)
 								{
 									continue;
 								}
+
+								SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float ||
+									meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float2 ||
+									meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float3 ||
+									meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float4,
+									"We're expecing our position data will be stored as FloatNs");
 
 								// We view our data as arrays of floats:
 								const uint32_t numFloatElements =
@@ -320,7 +509,7 @@ namespace gr
 								constexpr uint32_t k_floatStride = sizeof(float);
 
 								// Set the input vertex stream buffers:
-								vertAnimationBatch.SetBuffer(
+								morphBatch.SetBuffer(
 									"InVertexStreams",
 									meshPrimRenderData.m_vertexStreams[srcIdx]->GetBufferSharedPtr(),
 									re::BufferView::BufferType{
@@ -331,9 +520,9 @@ namespace gr
 									});
 
 								// Set the output vertex stream buffers:
-								vertAnimationBatch.SetBuffer(
+								morphBatch.SetBuffer(
 									"OutVertexStreams",
-									destBufferArray.m_destBuffers[srcIdx],
+									animBuffers.m_destBuffers[srcIdx],
 									re::BufferView::BufferType{
 										.m_firstElement = 0,
 										.m_numElements = numFloatElements,
@@ -345,11 +534,11 @@ namespace gr
 							}
 
 							// Set the dispatch metadata:
-							vertAnimationBatch.SetBuffer(
-								DispatchMetadata::s_shaderName,
+							morphBatch.SetBuffer(
+								MorphDispatchMetadata::s_shaderName,
 								re::Buffer::Create(
-									DispatchMetadata::s_shaderName,
-									GetDispatchMetadataData(bufferShaderIdx),
+									MorphDispatchMetadata::s_shaderName,
+									GetMorphDispatchMetadataData(bufferShaderIdx),
 									re::Buffer::BufferParams{
 										.m_lifetime = re::Lifetime::SingleFrame,
 										.m_stagingPool = re::Buffer::StagingPool::Temporary,
@@ -359,39 +548,254 @@ namespace gr
 									}));
 
 							// Set the vertex stream metadata:
-							vertAnimationBatch.SetBuffer(
-								"VertexStreamMetadataParams",
-								m_meshPrimIDToBuffers.at(visibleID).m_streamMetadataBuffer);
+							morphBatch.SetBuffer(
+								"MorphMetadataParams",
+								m_meshPrimIDToAnimBuffers.at(visibleID).m_morphMetadataBuffer);
 
 							// Set the interleaved morph data:
-							vertAnimationBatch.SetBuffer(
+							morphBatch.SetBuffer(
 								"MorphData",
 								meshPrimRenderData.m_interleavedMorphData);
 
-							m_vertexAnimationStage->AddBatch(vertAnimationBatch);
+							m_morphAnimationStage->AddBatch(morphBatch);
 						}
 					}
-
-					seenMeshPrimitives.emplace(visibleID);
 				}
 			}
 		}
 	}
 
 
-	void VertexAnimationGraphicsSystem::AddDestVertexBuffers(
+	void VertexAnimationGraphicsSystem::CreateSkinningAnimationBatches()
+	{
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
+		std::unordered_set<gr::RenderDataID> seenSkinnedMeshes;
+		for (auto const& viewAndCulledIDs : *m_viewCullingResults)
+		{
+			for (gr::RenderDataID visibleID : viewAndCulledIDs.second)
+			{
+				if (renderData.HasObjectData<gr::MeshPrimitive::RenderData>(visibleID))
+				{
+					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
+						renderData.GetObjectData<gr::MeshPrimitive::RenderData>(visibleID);
+
+					// Dispatch a compute batch:
+					if (meshPrimRenderData.m_meshHasSkinning)
+					{
+						SEAssert(m_meshPrimIDToAnimBuffers.contains(visibleID),
+							"Failed to find a destination vertex buffer to write to. This should not be possible");
+
+						SEAssert(renderData.HasObjectData<gr::MeshPrimitive::SkinningRenderData>(
+							meshPrimRenderData.m_owningMeshRenderDataID),
+							"Owning mesh does not have skinning render data. This should not be possible");
+
+						SEAssert(m_meshIDToSkinJoints.contains(meshPrimRenderData.m_owningMeshRenderDataID),
+							"Failed to find skinning joints buffer for the owning Mesh. This should not be possible");
+
+						// Only update skinning joints for Meshes that have a MeshPrimitive that passed culling, and 
+						// only update them once
+						auto const& jointBufferItr =
+							m_meshIDToSkinJoints.find(meshPrimRenderData.m_owningMeshRenderDataID);
+						if (jointBufferItr != m_meshIDToSkinJoints.end() &&
+							!seenSkinnedMeshes.contains(meshPrimRenderData.m_owningMeshRenderDataID))
+						{
+							UpdateSkinningJointsBuffer(
+								renderData, 
+								jointBufferItr->first, 
+								jointBufferItr->second.m_skinJoints, 
+								jointBufferItr->second.m_transposeInvSkinJoints, 
+								false);
+
+							seenSkinnedMeshes.emplace(meshPrimRenderData.m_owningMeshRenderDataID);
+						}
+
+						const uint32_t numVerts = meshPrimRenderData.m_vertexStreams[0]->GetNumElements();
+						SEAssert(numVerts >= 3, "Less than 3 verts. This is unexpected");
+
+						// We process verts in 1D (round up to ensure we dispatch at least one thread group)
+						const uint32_t roundedXDim =
+							(numVerts / VERTEX_ANIM_THREADS_X) + ((numVerts % VERTEX_ANIM_THREADS_X) == 0 ? 0 : 1);
+
+						AnimationBuffers const& animBuffers = m_meshPrimIDToAnimBuffers.at(visibleID);
+
+						re::Batch skinningBatch = re::Batch(
+							re::Lifetime::SingleFrame,
+							re::Batch::ComputeParams{ .m_threadGroupCount = glm::uvec3(roundedXDim, 1u, 1u) },
+							k_vertexAnimationEffectID);
+		
+						// Track the streams we've seen for debug validation:
+						bool seenPosition = false;
+						bool seenNormal = false;
+						bool seenTangent = false;
+						bool seenBlendIndices = false;
+						bool seenBlendWeights = false;
+
+						// Attach input/output vertex buffers:
+						for (uint8_t srcIdx = 0; srcIdx < meshPrimRenderData.m_numVertexStreams; ++srcIdx)
+						{
+							const gr::VertexStream::Type streamType = 
+								meshPrimRenderData.m_vertexStreams[srcIdx]->GetType();
+
+							char const* inShaderName = nullptr;
+							char const* outShaderName = nullptr;
+							uint32_t numElements = 0;
+
+							// Set the input and output vertex stream buffers:
+							switch (streamType)
+							{
+							case gr::VertexStream::Type::Position:
+							{
+								SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float3,
+									"We're expecing our position data will be stored as Float3s");
+
+								SEAssert(!seenPosition, "Found multiple position streams. This is unexpected");
+								seenPosition = true;
+
+								constexpr char const* k_posInShaderName = "InPosition";
+								constexpr char const* k_posOutShaderName = "OutPosition";
+
+								inShaderName = k_posInShaderName;
+								outShaderName = k_posOutShaderName;
+								numElements = meshPrimRenderData.m_vertexStreams[srcIdx]->GetNumElements();
+							}
+							break;
+							case gr::VertexStream::Type::Normal:
+							{
+								SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float3,
+									"We're expecing our normal data will be stored as Float3s");
+
+								SEAssert(!seenNormal, "Found multiple normal streams. This is unexpected");
+								seenNormal = true;
+
+								constexpr char const* k_normalInShaderName = "InNormal";
+								constexpr char const* k_normalOutShaderName = "OutNormal";
+
+								inShaderName = k_normalInShaderName;
+								outShaderName = k_normalOutShaderName;
+								numElements = meshPrimRenderData.m_vertexStreams[srcIdx]->GetNumElements();
+							}
+							break;
+							case gr::VertexStream::Type::Tangent:
+							{
+								SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float4,
+									"We're expecing our tangent data will be stored as Float4s");
+
+								SEAssert(!seenTangent, "Found multiple tangent streams. This is unexpected");
+								seenTangent = true;
+
+								constexpr char const* k_tangentInShaderName = "InTangent";
+								constexpr char const* k_tangentOutShaderName = "OutTangent";
+
+								inShaderName = k_tangentInShaderName;
+								outShaderName = k_tangentOutShaderName;
+								numElements = meshPrimRenderData.m_vertexStreams[srcIdx]->GetNumElements();
+							}
+							break;
+							case gr::VertexStream::Type::BlendIndices:
+							{
+								SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float4,
+									"We're expecing our joint indexes will be stored as Float4s");
+
+								SEAssert(!seenBlendIndices, "Found multiple blend index streams. TODO: Support this");
+								seenBlendIndices = true;
+
+								constexpr char const* k_blendIndicesInShaderName = "InBlendIndices";
+
+								inShaderName = k_blendIndicesInShaderName;
+								
+								// We view our joints indices as arrays of floats:
+								numElements = meshPrimRenderData.m_vertexStreams[srcIdx]->GetNumElements() *
+									DataTypeToNumComponents(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType());
+							}
+							break;
+							case gr::VertexStream::Type::BlendWeight:
+							{
+								SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float4,
+									"We're expecing our blend weights will be stored as Float4s");
+
+								SEAssert(!seenBlendWeights, "Found multiple blend weights streams. TODO: Support this");
+								seenBlendWeights = true;
+
+								constexpr char const* k_blendWeightsInShaderName = "InBlendWeights";
+
+								inShaderName = k_blendWeightsInShaderName;
+
+								// We view our weights as arrays of floats
+								numElements = meshPrimRenderData.m_vertexStreams[srcIdx]->GetNumElements() *
+									DataTypeToNumComponents(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType());
+							}
+							break;
+							default: continue;
+							}
+
+							// Attach vertex buffers:
+							if (inShaderName)
+							{
+								skinningBatch.SetBuffer(
+									inShaderName,
+									meshPrimRenderData.m_vertexStreams[srcIdx]->GetBufferSharedPtr(),
+									re::BufferView::BufferType{
+										.m_firstElement = 0,
+										.m_numElements = numElements,
+										.m_structuredByteStride = re::DataTypeToByteStride(
+											meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType()),
+									});
+							}
+
+							if (outShaderName)
+							{
+								skinningBatch.SetBuffer(
+									outShaderName,
+									animBuffers.m_destBuffers[srcIdx],
+									re::BufferView::BufferType{
+										.m_firstElement = 0,
+										.m_numElements = numElements,
+										.m_structuredByteStride = re::DataTypeToByteStride(
+											meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType()),
+									});
+							}
+						}
+
+						// Set the MeshPrimitive skinning buffers::
+						skinningBatch.SetBuffer(SkinningData::s_shaderName,
+							m_meshPrimIDToAnimBuffers.at(visibleID).m_skinningDataBuffer);
+
+						// Set the Mesh skinning buffers:
+						JointBuffers const& jointBuffers = 
+							m_meshIDToSkinJoints.at(meshPrimRenderData.m_owningMeshRenderDataID);
+						skinningBatch.SetBuffer("SkinningJoints", jointBuffers.m_skinJoints);
+						skinningBatch.SetBuffer("TransposeInvSkinningJoints", jointBuffers.m_transposeInvSkinJoints);
+
+						m_skinAnimationStage->AddBatch(skinningBatch);
+					}
+				}
+			}
+		}
+	}
+
+
+	void VertexAnimationGraphicsSystem::AddAnimationBuffers(
 		gr::RenderDataID renderDataID, gr::MeshPrimitive::RenderData const& meshPrimRenderData)
 	{
-		SEAssert(!m_meshPrimIDToBuffers.contains(renderDataID) && !m_outputs.contains(renderDataID),
+		SEAssert(!m_meshPrimIDToAnimBuffers.contains(renderDataID) && !m_outputs.contains(renderDataID),
 			"RenderDataID has already been registered. This should not be possible");
 
-		SEAssert(meshPrimRenderData.m_hasMorphTargets, "Mesh primitive does not have morph targets");
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
+		const bool hasSkinningData = meshPrimRenderData.m_meshHasSkinning;
+		const bool hasMorphData = meshPrimRenderData.m_hasMorphTargets;
+
+		SEAssert(hasSkinningData != hasMorphData,
+			"TODO: Support vertex animation when both morph targets and skinning are enabled. For now, we "
+			"assume only one or the other is enabled");
 
 		// Insert new entries for our output buffers/data:
-		auto destVertexBuffers = m_meshPrimIDToBuffers.emplace(renderDataID, AnimationBuffers{});
+		auto destVertexBuffers = m_meshPrimIDToAnimBuffers.emplace(renderDataID, AnimationBuffers{});
 
 		auto newOutputs = m_outputs.emplace(
 			renderDataID, std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>{});
+
 
 		for (uint8_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; ++streamIdx)
 		{
@@ -400,23 +804,58 @@ namespace gr
 				break;
 			}
 
-			// If we've got morph data, create an output buffer to write into
-			if (meshPrimRenderData.m_morphTargetMetadata.m_perStreamMetadata[streamIdx].m_byteStride != 0 ||
-				meshPrimRenderData.m_morphTargetMetadata.m_perStreamMetadata[streamIdx].m_numComponents != 0)
+			const gr::VertexStream::Type streamType = meshPrimRenderData.m_vertexStreams[streamIdx]->GetType();
+
+			bool needDestBuffer = false;
+			std::string destBufferName;
+
+			if (hasMorphData && !hasSkinningData) // Morph targets only
 			{
-				SEAssert(meshPrimRenderData.m_morphTargetMetadata.m_perStreamMetadata[streamIdx].m_byteStride != 0 &&
-					meshPrimRenderData.m_morphTargetMetadata.m_perStreamMetadata[streamIdx].m_numComponents != 0,
-					"Byte stride and number of components out of sync: Both should be mutually zero/non-zero");
+				// If we've got morph data, create an output buffer to write into
+				if (meshPrimRenderData.m_morphTargetMetadata.m_perStreamMetadata[streamIdx].m_byteStride != 0 ||
+					meshPrimRenderData.m_morphTargetMetadata.m_perStreamMetadata[streamIdx].m_numComponents != 0)
+				{
+					SEAssert(meshPrimRenderData.m_morphTargetMetadata.m_perStreamMetadata[streamIdx].m_byteStride != 0 &&
+						meshPrimRenderData.m_morphTargetMetadata.m_perStreamMetadata[streamIdx].m_numComponents != 0,
+						"Byte stride and number of components out of sync: Both should be mutually zero/non-zero");
 
-				std::string const& destBuffername = std::format("AnimatedVerts: MeshPrim ID {}, stream {}: {}, Hash:{}",
-					renderDataID,
-					streamIdx,
-					gr::VertexStream::TypeToCStr(meshPrimRenderData.m_vertexStreams[streamIdx]->GetType()),
-					meshPrimRenderData.m_vertexStreams[streamIdx]->GetDataHash());
+					destBufferName = std::format(
+						"MorphVerts: MeshPrim ID {}, stream {}: {}, Hash:{}",
+						renderDataID,
+						streamIdx,
+						gr::VertexStream::TypeToCStr(streamType),
+						meshPrimRenderData.m_vertexStreams[streamIdx]->GetDataHash());
 
+					needDestBuffer = true;
+				}
+			}
+			else if (!hasMorphData && hasSkinningData) // Skinning only
+			{
+				if (streamType == gr::VertexStream::Type::Position ||
+					streamType == gr::VertexStream::Type::Normal ||
+					streamType == gr::VertexStream::Type::Tangent)
+				{
+					destBufferName = std::format(
+						"SkinnedVerts: MeshPrim ID {}, stream {}: {}, Hash:{}",
+						renderDataID,
+						streamIdx,
+						gr::VertexStream::TypeToCStr(streamType),
+						meshPrimRenderData.m_vertexStreams[streamIdx]->GetDataHash());
+
+					needDestBuffer = true;
+				}
+			}
+			else if (hasMorphData && hasSkinningData) // Morph targets and skinning
+			{
+				SEAssertF("TODO: Handle this case by writing morph outputs to an intermediate buffer, and using them "
+					"as an input to the skinning stage");
+			}
+
+			if (needDestBuffer)
+			{
 				// Create a destination buffer for our animated vertices:
 				destVertexBuffers.first->second.m_destBuffers[streamIdx] = re::Buffer::CreateUnstaged(
-					destBuffername,
+					destBufferName,
 					meshPrimRenderData.m_vertexStreams[streamIdx]->GetTotalDataByteSize(),
 					re::Buffer::BufferParams{
 						.m_stagingPool = re::Buffer::StagingPool::None,
@@ -432,32 +871,56 @@ namespace gr
 
 				destVertexBuffers.first->second.m_numAnimatedStreams++;
 			}
-			else // Otherwise, just pass through the existing vertex stream:
+			else // Stream is not animated: Just pass it through
 			{
 				newOutputs.first->second[streamIdx] = re::VertexBufferInput(meshPrimRenderData.m_vertexStreams[streamIdx]);
 			}
 		}
 
-		// Mesh primitive metadata:
-		destVertexBuffers.first->second.m_streamMetadataBuffer = re::Buffer::Create(
-			std::format("MeshPrimitiveID {} Vertex stream metadata", renderDataID),
-			GetVertexStreamMetadataData(meshPrimRenderData),
-			re::Buffer::BufferParams{
-				.m_lifetime = re::Lifetime::Permanent,
-				.m_stagingPool = re::Buffer::StagingPool::Temporary,
-				.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
-				.m_accessMask = re::Buffer::Access::GPURead,
-				.m_usageMask = re::Buffer::Usage::Constant,
-			});
+		// Morph target buffers:
+		if (hasMorphData)
+		{
+			// Mesh primitive metadata:
+			destVertexBuffers.first->second.m_morphMetadataBuffer = re::Buffer::Create(
+				std::format("MeshPrimitiveID {} MorphMetadata", renderDataID),
+				GetMorphMetadataData(meshPrimRenderData),
+				re::Buffer::BufferParams{
+					.m_lifetime = re::Lifetime::Permanent,
+					.m_stagingPool = re::Buffer::StagingPool::Temporary,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
+					.m_accessMask = re::Buffer::Access::GPURead,
+					.m_usageMask = re::Buffer::Usage::Constant,
+				});
+		}
+
+		// Skinning buffers:
+		if (hasSkinningData)
+		{
+			AnimationBuffers& animBuffers = destVertexBuffers.first->second;
+
+			animBuffers.m_skinningDataBuffer = re::Buffer::Create(
+				std::format("MeshPrimitiveID {} SkinningData", renderDataID),
+				GetSkinningData(meshPrimRenderData),
+				re::Buffer::BufferParams{
+					.m_lifetime = re::Lifetime::Permanent,
+					.m_stagingPool = re::Buffer::StagingPool::Temporary,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
+					.m_accessMask = re::Buffer::Access::GPURead,
+					.m_usageMask = re::Buffer::Usage::Constant,
+				});
+
+			gr::MeshPrimitive::SkinningRenderData const& skinRenderData = 
+				renderData.GetObjectData<gr::MeshPrimitive::SkinningRenderData>(meshPrimRenderData.m_owningMeshRenderDataID);
+		}
 	}
 
 
-	void VertexAnimationGraphicsSystem::RemoveDestVertexBuffers(gr::RenderDataID renderDataID)
+	void VertexAnimationGraphicsSystem::RemoveAnimationBuffers(gr::RenderDataID renderDataID)
 	{
-		SEAssert(m_meshPrimIDToBuffers.contains(renderDataID) && m_outputs.contains(renderDataID),
+		SEAssert(m_meshPrimIDToAnimBuffers.contains(renderDataID) && m_outputs.contains(renderDataID),
 			"RenderDataID was not registered. This should not be possible");
 
-		m_meshPrimIDToBuffers.erase(renderDataID);
+		m_meshPrimIDToAnimBuffers.erase(renderDataID);
 		m_outputs.erase(renderDataID);
 	}
 }

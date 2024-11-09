@@ -1,11 +1,30 @@
 {
 	"Effect": {
 		"Name": "VertexAnimation",
-		"DefaultTechnique": "VertexAnimation",
+		"DefaultTechnique": "MorphAnimation",
+		"DrawStyles": [
+			{
+				"Conditions": [
+					{ "Rule": "VertexAnimation", "Mode": "Morph" }
+				],
+				"Technique": "MorphAnimation"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "VertexAnimation", "Mode": "Skinning" }
+				],
+				"Technique": "SkinningAnimation"
+			}
+		],
 		"Techniques": [
 			{
-				"Name": "VertexAnimation",
-				"CShader": "VertexAnimation_CShader",
+				"Name": "MorphAnimation",
+				"CShader": "MorphAnimation_CShader",
+				"CShaderEntryPoint" :  "CShader"
+			},
+			{
+				"Name": "SkinningAnimation",
+				"CShader": "SkinningAnimation_CShader",
 				"CShaderEntryPoint" :  "CShader"
 			}
 		]

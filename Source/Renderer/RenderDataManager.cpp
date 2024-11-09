@@ -44,23 +44,31 @@ namespace gr
 		: m_currentFrame(k_invalidDirtyFrameNum)
 		, m_threadProtector(true)
 	{
+		// Set a default identity Transform::RenderData for the gr::k_invalidTransformID:
+		RegisterTransform(gr::k_invalidTransformID);
+		SetTransformData(gr::k_invalidTransformID, gr::Transform::RenderData{ .m_transformID = gr::k_invalidTransformID, });
 	}
 
 
 	void RenderDataManager::Destroy()
 	{
-		// Catch illegal accesses during RenderData modification
-		util::ScopedThreadProtector threadProjector(m_threadProtector);
+		// Destroy the default identity Transform::RenderData for the gr::k_invalidTransformID:
+		UnregisterTransform(gr::k_invalidTransformID);
 
-		SEAssert(m_IDToRenderObjectMetadata.empty() && m_transformIDToTransformMetadata.empty(),
-			"An ID to data map is not empty: Was a render object not destroyed via a render command?");
-
-		SEAssert(m_registeredRenderObjectIDs.empty() && m_registeredTransformIDs.empty(),
-			"A registered ID list is not empty");
-
-		for (auto const& typeVector : m_perTypeRegisteredRenderDataIDs)
 		{
-			SEAssert(typeVector.empty(), "A per-type registered ID list is not empty");
+			// Catch illegal accesses during RenderData modification
+			util::ScopedThreadProtector threadProjector(m_threadProtector);
+
+			SEAssert(m_IDToRenderObjectMetadata.empty() && m_transformIDToTransformMetadata.empty(),
+				"An ID to data map is not empty: Was a render object not destroyed via a render command?");
+
+			SEAssert(m_registeredRenderObjectIDs.empty() && m_registeredTransformIDs.empty(),
+				"A registered ID list is not empty");
+
+			for (auto const& typeVector : m_perTypeRegisteredRenderDataIDs)
+			{
+				SEAssert(typeVector.empty(), "A per-type registered ID list is not empty");
+			}
 		}
 	}
 
@@ -322,6 +330,11 @@ namespace gr
 	bool RenderDataManager::TransformIsDirty(gr::TransformID transformID) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		if (transformID == gr::k_invalidTransformID)
+		{
+			return false; // The default identity transform is never dirty
+		}
 
 		auto transformMetadataItr = m_transformIDToTransformMetadata.find(transformID);
 

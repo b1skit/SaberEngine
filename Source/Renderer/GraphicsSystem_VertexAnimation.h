@@ -39,26 +39,43 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::RenderStage> m_vertexAnimationStage;
+		void CreateMorphAnimationBatches();
+		void CreateSkinningAnimationBatches();
 
 
 	private:
-		// Map from MeshConcept RenderDataID to animation data Buffers. Set on each Batch generated from MeshPrimitives
-		// attached to the MeshConcept
-		std::unordered_map<gr::RenderDataID, std::shared_ptr<re::Buffer>> m_meshIDToMeshRenderParams;
-		
+		std::shared_ptr<re::RenderStage> m_morphAnimationStage;
+		std::shared_ptr<re::RenderStage> m_skinAnimationStage;
 
-	public:
+
+	private:
+		// Map from MeshConcept RenderDataID to mesh-specific morph weight Buffers. Set on each Batch generated from 
+		// MeshPrimitives attached to the MeshConcept
+		std::unordered_map<gr::RenderDataID, std::shared_ptr<re::Buffer>> m_meshIDToMorphWeights;
+
+		// Map from MeshConcept RenderDataIDs with a gr::MeshPrimitive::SkinningRenderData, to . 
+		// Used to update joint matrices
+		struct JointBuffers
+		{
+			std::shared_ptr<re::Buffer> m_skinJoints;
+			std::shared_ptr<re::Buffer> m_transposeInvSkinJoints;
+		};
+		std::unordered_map<gr::RenderDataID, JointBuffers> m_meshIDToSkinJoints;
+
+
+	private:
 		// We maintain the shared_ptr<re::Buffer> lifetime, and also prepare VertexBufferInputs that can be used for
 		// Batch construction by other GS's
 		struct AnimationBuffers
 		{
 			std::array<std::shared_ptr<re::Buffer>, gr::VertexStream::k_maxVertexStreams> m_destBuffers;
-			std::shared_ptr<re::Buffer> m_streamMetadataBuffer;
+			std::shared_ptr<re::Buffer> m_morphMetadataBuffer;
+
+			std::shared_ptr<re::Buffer> m_skinningDataBuffer;
 
 			uint8_t m_numAnimatedStreams = 0;
 		};
-		std::unordered_map<gr::RenderDataID, AnimationBuffers> m_meshPrimIDToBuffers;
+		std::unordered_map<gr::RenderDataID, AnimationBuffers> m_meshPrimIDToAnimBuffers;
 
 		
 		// Maintain this seperately: We share it with other GS's as a dependency output
@@ -66,8 +83,8 @@ namespace gr
 		// the buffers are only actually updated/animated if the batch passed culling
 		AnimatedVertexStreams m_outputs;
 
-		void AddDestVertexBuffers(gr::RenderDataID, gr::MeshPrimitive::RenderData const&);
-		void RemoveDestVertexBuffers(gr::RenderDataID);
+		void AddAnimationBuffers(gr::RenderDataID, gr::MeshPrimitive::RenderData const&);
+		void RemoveAnimationBuffers(gr::RenderDataID);
 
 
 	private:

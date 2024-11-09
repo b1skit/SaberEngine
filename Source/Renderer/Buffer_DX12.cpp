@@ -361,10 +361,7 @@ namespace dx12
 			&writtenRange);		// Unmap range: The region the CPU may have modified. Nullptr = entire subresource
 
 		// Schedule a copy from the intermediate resource to default/L1/vid memory heap via the copy queue:
-		const uint32_t dstOffset = util::CheckedCast<uint32_t>(params->m_heapByteOffset);
-		SEAssert(dstOffset == 0, "Immutable buffers always have m_heapByteOffset = 0, this is unexpected");
-
-		copyCmdList->UpdateSubresources(buffer, dstOffset, itermediateBufferResource.Get(), 0, numBytes);
+		copyCmdList->UpdateSubresources(buffer, baseOffset, itermediateBufferResource.Get(), 0, numBytes);
 
 		// Released once the copy is done
 		intermediateResources.emplace_back(itermediateBufferResource);
@@ -482,7 +479,7 @@ namespace dx12
 			if (params->m_views.m_indexBufferView.BufferLocation == 0)
 			{
 				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
-					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
+					.BufferLocation = params->m_resource->GetGPUVirtualAddress() + params->m_heapByteOffset,
 					.SizeInBytes = buffer.GetTotalBytes(),
 					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_stream.m_dataType, false),
 				};
@@ -514,7 +511,7 @@ namespace dx12
 			if (params->m_views.m_vertexBufferView.BufferLocation == 0)
 			{
 				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
-					.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
+					.BufferLocation = params->m_resource->GetGPUVirtualAddress() + params->m_heapByteOffset,
 					.SizeInBytes = buffer.GetTotalBytes(),
 					.StrideInBytes = DataTypeToByteStride(view.m_stream.m_dataType),
 				};

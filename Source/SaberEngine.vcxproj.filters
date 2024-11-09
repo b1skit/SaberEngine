@@ -403,14 +403,23 @@
     <None Include="Effects\XeGTAO.json">
       <Filter>Effects</Filter>
     </None>
-    <None Include="Shaders\GLSL\VertexAnimation_CShader.glsl">
-      <Filter>Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\HLSL\VertexAnimation_CShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </None>
     <None Include="Shaders\HLSL\XeGTAO.hlsl">
       <Filter>Shaders\HLSL\Libraries\XeGTAO</Filter>
+    </None>
+    <None Include="Effects\VertexAnimation.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Shaders\GLSL\MorphAnimation_CShader.glsl">
+      <Filter>Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\SkinningAnimation_CShader.glsl">
+      <Filter>Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\MorphAnimation_CShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\SkinningAnimation_CShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

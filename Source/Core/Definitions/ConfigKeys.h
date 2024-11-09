@@ -51,6 +51,7 @@ namespace core::configkeys
 	constexpr char const* k_pixCPUProgrammaticCapturesCmdLineArg	= "pixcpucapture";
 	constexpr char const* k_renderDocProgrammaticCapturesCmdLineArg	= "renderdoc";
 	constexpr char const* k_strictShaderBindingCmdLineArg			= "strictshaderbinding";
+	constexpr char const* k_disableCullingCmdLineArg				= "disableculling";
 
 
 	// Config keys:

@@ -378,7 +378,10 @@ namespace gr
 
 
 	void DebugGraphicsSystem::InitPipeline(
-		re::StagePipeline& stagePipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+		re::StagePipeline& stagePipeline,
+		TextureDependencies const& texDependencies,
+		BufferDependencies const&,
+		DataDependencies const&)
 	{
 		m_debugParams = re::BufferInput(
 			DebugData::s_shaderName,
@@ -393,9 +396,7 @@ namespace gr
 					.m_arraySize = 1,
 				}));
 
-		// Line topology stage:
-		m_debugStage = 
-			re::RenderStage::CreateGraphicsStage("Debug line stage", re::RenderStage::GraphicsStageParams{});
+		m_debugStage = re::RenderStage::CreateGraphicsStage("Debug stage", re::RenderStage::GraphicsStageParams{});
 		
 		m_debugStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 		m_debugStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());

@@ -11,7 +11,7 @@
 #define VERTEX_ANIM_THREADS_X 32
 
 
-struct VertexStreamMetadata
+struct MorphMetadata
 {
 	// .x = No. vertices per stream, .y = max morph targets per stream, .z = interleaved morph float stride, .w = unused
 	uint4 g_meshPrimMetadata; 
@@ -23,17 +23,29 @@ struct VertexStreamMetadata
 	uint4 g_morphMetadata[MAX_STREAMS_PER_DISPATCH];
 
 #if defined(__cplusplus)
-	static constexpr char const* const s_shaderName = "VertexStreamParams";
+	static constexpr char const* const s_shaderName = "MorphMetadataParams";
 #endif
 };
 
 
-struct DispatchMetadata
+struct MorphDispatchMetadata
 {
 	uint4 g_dispatchMetadata; // .x = num active buffers, .yzw = unused
 
 #if defined(__cplusplus)
-	static constexpr char const* const s_shaderName = "DispatchMetadataParams";
+	static constexpr char const* const s_shaderName = "MorphDispatchMetadataParams";
+#endif
+};
+
+
+struct SkinningData
+{
+	// .x = No. vertices per stream, .yzw = unused
+	uint4 g_meshPrimMetadata;
+
+
+#if defined(__cplusplus)
+	static constexpr char const* const s_shaderName = "SkinningParams";
 #endif
 };
 

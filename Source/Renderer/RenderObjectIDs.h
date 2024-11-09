@@ -7,7 +7,7 @@ namespace gr
 	constexpr RenderDataID k_invalidRenderDataID = std::numeric_limits<uint32_t>::max();
 
 	typedef uint32_t TransformID;
-	constexpr TransformID k_invalidTransformID = std::numeric_limits<uint32_t>::max();
+	constexpr TransformID k_invalidTransformID = std::numeric_limits<uint32_t>::max(); // Identity Transform
 
 	typedef uint32_t FeatureBitmask;
 

@@ -568,14 +568,14 @@ namespace dx12
 			streamViews.emplace_back(
 				*streamBufferPlatParams->GetOrCreateVertexBufferView(*streamBuffer, vertexBuffers[streamIdx].m_view));
 
-			SEAssert(streamBuffer->GetLifetime() != re::Lifetime::SingleFrame,
-				"Found a single frame vertex buffer. Currently, single-frame buffers are held in a shared heap. We're "
-				"about to transition the associated resource here, which would be invalid. Need to handle this");
-
-			TransitionResource(
-				streamBufferPlatParams->m_resource.Get(),
-				D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+			// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
+			if (streamBuffer->GetLifetime() != re::Lifetime::SingleFrame)
+			{
+				TransitionResource(
+					streamBufferPlatParams->m_resource.Get(),
+					D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+			}
 
 			// Peek ahead: If there are no more contiguous slots, flush the stream views
 			const uint32_t nextStreamIdx = streamIdx + 1;
@@ -624,14 +624,14 @@ namespace dx12
 		m_commandList->IASetIndexBuffer(
 			streamBufferPlatParams->GetOrCreateIndexBufferView(*indexBuffer.m_buffer, indexBuffer.m_view));
 
-		SEAssert(indexBuffer.m_buffer->GetLifetime() != re::Lifetime::SingleFrame,
-			"Found a single frame index buffer. Currently, single-frame buffers are held in a shared heap. We're "
-			"about to transition the associated resource here, which would be invalid. Need to handle this");
-
-		TransitionResource(
-			streamBufferPlatParams->m_resource.Get(),
-			D3D12_RESOURCE_STATE_INDEX_BUFFER,
-			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+		// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
+		if (indexBuffer.m_buffer->GetLifetime() != re::Lifetime::SingleFrame)
+		{
+			TransitionResource(
+				streamBufferPlatParams->m_resource.Get(),
+				D3D12_RESOURCE_STATE_INDEX_BUFFER,
+				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+		}
 	}
 
 

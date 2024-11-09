@@ -222,8 +222,10 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <None Include="Effects\MipGeneration.json" />
     <None Include="Effects\Skybox.json" />
     <None Include="Effects\Tonemapping.json" />
+    <None Include="Effects\VertexAnimation.json" />
     <None Include="Effects\XeGTAO.json" />
-    <None Include="Shaders\GLSL\VertexAnimation_CShader.glsl" />
+    <None Include="Shaders\GLSL\MorphAnimation_CShader.glsl" />
+    <None Include="Shaders\GLSL\SkinningAnimation_CShader.glsl" />
     <None Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
@@ -720,10 +722,15 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\HLSL\VertexAnimation_CShader.hlsl">
+    <None Include="Shaders\HLSL\XeGTAO.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\XeGTAO.hlsl">
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\HLSL\MorphAnimation_CShader.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\HLSL\SkinningAnimation_CShader.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

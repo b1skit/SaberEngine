@@ -32,28 +32,15 @@ namespace dx12
 		SEAssert(allocationPool != re::BufferAllocator::Constant || alignedSize <= 4096 * sizeof(glm::vec4),
 			"Constant buffers can only hold up to 4096 float4's");
 
-		switch (allocationPool)
-		{
-		case re::BufferAllocator::Constant:
-		{
-			SEAssert(alignedSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
-			resourcePtrOut = m_singleFrameBufferResources[re::Buffer::Constant][writeIdx];
-		}
-		break;
-		case re::BufferAllocator::Structured:
-		{
-			SEAssert(alignedSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
-			resourcePtrOut = m_singleFrameBufferResources[re::Buffer::Structured][writeIdx];
-		}
-		break;
-		case re::BufferAllocator::VertexStream:
-		{
-			SEAssert(alignedSize % 16 == 0, "Invalid alignment"); // Minimum alignment of a float4 is 16B
-			resourcePtrOut = m_singleFrameBufferResources[re::Buffer::VertexStream][writeIdx];
-		}
-		break;
-		default: SEAssertF("Invalid Usage");
-		}
+		SEAssert((allocationPool == re::BufferAllocator::Constant && 
+			alignedSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0) ||
+			(allocationPool == re::BufferAllocator::Structured &&
+				alignedSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0) ||
+			(allocationPool == re::BufferAllocator::VertexStream &&
+				alignedSize % 16 == 0),
+			"Invalid alignment");
+
+		resourcePtrOut = m_singleFrameBufferResources[allocationPool][writeIdx];
 
 		// Our heap offset is the base index of the stack we've allocated for each Type
 		heapOffsetOut = AdvanceBaseIdx(allocationPool, util::CheckedCast<uint32_t>(alignedSize));

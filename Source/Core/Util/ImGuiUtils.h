@@ -13,7 +13,6 @@ namespace util
 
 	inline void DisplayMat4x4(char const* label, glm::mat4 const& matrix)
 	{	
-		
 		if (ImGui::TreeNode(label))
 		{
 			if (ImGui::BeginTable("table1", 4, ImGuiTableFlags_SizingFixedFit))

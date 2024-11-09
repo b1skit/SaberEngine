@@ -95,9 +95,11 @@ namespace gr
 			std::shared_ptr<re::Buffer> m_interleavedMorphData;
 			MorphTargetMetadata m_morphTargetMetadata;
 
+			bool m_meshHasSkinning;
+
 			uint64_t m_dataHash;
 
-			gr::RenderDataID m_owningMeshRenderDataID; // To access owning MeshConcept's MeshMorphRenderData
+			gr::RenderDataID m_owningMeshRenderDataID; // Access owning MeshConcept's MeshMorphRenderData/SkinningRenderData
 
 
 			// Helper: Get a specific vertex stream packed into a MeshPrimitive::RenderData.
@@ -116,6 +118,8 @@ namespace gr
 		struct SkinningRenderData
 		{
 			std::vector<gr::TransformID> m_jointTransformIDs;
+			std::vector<glm::mat4> m_inverseBindMatrices;
+			gr::TransformID m_skeletonNodeID;
 		};
 
 

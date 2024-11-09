@@ -9,6 +9,7 @@
 #include "RenderDataComponent.h"
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
+#include "SkinningComponent.h"
 #include "TransformComponent.h"
 
 #include "Core/Util/ImGuiUtils.h"
@@ -64,7 +65,7 @@ namespace fr
 
 			// Mesh primitives:
 			if (ImGui::CollapsingHeader(
-				std::format("Mesh Primitives:##{}", meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+				std::format("Mesh Primitives##{}", meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 
@@ -81,6 +82,9 @@ namespace fr
 
 				ImGui::Unindent();
 			}
+
+			// Skinning component:
+			fr::SkinningComponent::ShowImGuiWindow(em, meshConcept);
 
 			ImGui::Unindent();
 		}

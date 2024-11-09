@@ -155,6 +155,7 @@ namespace fr
 		fr::EntityManager const* em = fr::EntityManager::Get();
 		fr::Relationship const& meshPrimRelationship = em->GetComponent<fr::Relationship>(entity);
 		entt::entity meshConceptEntity = meshPrimRelationship.GetParent();
+		bool meshHasSkinning = false;
 		if (meshConceptEntity != entt::null) // null if the MeshPrimitive isn't owned by a MeshConcept
 		{
 			fr::RenderDataComponent const& meshConceptRenderComponent =
@@ -162,6 +163,12 @@ namespace fr
 
 			owningMeshRenderDataID = meshConceptRenderComponent.GetRenderDataID();
 			SEAssert(owningMeshRenderDataID != gr::k_invalidRenderDataID, "Invalid render data ID received from Mesh");
+
+			fr::SkinningComponent const* skinningCmpt = em->TryGetComponent<fr::SkinningComponent>(meshConceptEntity);
+			if (skinningCmpt)
+			{
+				meshHasSkinning = true;
+			}
 		}
 
 		gr::MeshPrimitive::RenderData renderData{
@@ -172,6 +179,7 @@ namespace fr
 			.m_hasMorphTargets = meshPrimitiveComponent.m_meshPrimitive->HasMorphTargets(),
 			.m_interleavedMorphData = meshPrimitiveComponent.m_meshPrimitive->GetInterleavedMorphDataBuffer(),
 			.m_morphTargetMetadata = meshPrimitiveComponent.m_meshPrimitive->GetMorphTargetMetadata(),
+			.m_meshHasSkinning = meshHasSkinning,
 			.m_dataHash = meshPrimitiveComponent.m_meshPrimitive->GetDataHash(),
 			.m_owningMeshRenderDataID = owningMeshRenderDataID,
 		};
@@ -230,9 +238,6 @@ namespace fr
 			fr::TransformComponent* transformComponent =
 				em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(meshPrimitive, transformOwner);
 			fr::TransformComponent::ShowImGuiWindow(em, transformOwner, static_cast<uint64_t>(meshPrimitive));
-
-			// Skinning:
-			fr::SkinningComponent::ShowImGuiWindow(em, meshPrimitive);
 
 			ImGui::Unindent();
 		}

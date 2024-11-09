@@ -12,8 +12,8 @@ RWStructuredBuffer<float> OutVertexStreams[MAX_STREAMS_PER_DISPATCH];
 StructuredBuffer<float> MorphData; // Interleaved per-vertex morph displacements
 StructuredBuffer<float> MorphWeights;
 
-ConstantBuffer<VertexStreamMetadata> VertexStreamMetadataParams;
-ConstantBuffer<DispatchMetadata> DispatchMetadataParams;
+ConstantBuffer<MorphMetadata> MorphMetadataParams;
+ConstantBuffer<MorphDispatchMetadata> MorphDispatchMetadataParams;
 
 
 float GetVertexComponentValue(uint vertexIdx, uint componentIdx, uint floatStride, StructuredBuffer<float> srcBuffer)
@@ -46,7 +46,7 @@ float GetMorphComponentValue(
 [numthreads(VERTEX_ANIM_THREADS_X, 1, 1)]
 void CShader(ComputeIn In)
 {
-	const uint numVertsPerStream = VertexStreamMetadataParams.g_meshPrimMetadata.x;
+	const uint numVertsPerStream = MorphMetadataParams.g_meshPrimMetadata.x;
 	
 	// Early out if our thread index doesn't correspond to a valid vertex index
 	const uint vertexIndex = In.DTId.x;
@@ -55,20 +55,20 @@ void CShader(ComputeIn In)
 		return;
 	}
 	
-	const uint numStreamBuffers = DispatchMetadataParams.g_dispatchMetadata.x;
+	const uint numStreamBuffers = MorphDispatchMetadataParams.g_dispatchMetadata.x;
 	
-	const uint maxMorphTargets = VertexStreamMetadataParams.g_meshPrimMetadata.y;
-	const uint interleavedMorphStride = VertexStreamMetadataParams.g_meshPrimMetadata.z; // All displacements combined
+	const uint maxMorphTargets = MorphMetadataParams.g_meshPrimMetadata.y;
+	const uint interleavedMorphStride = MorphMetadataParams.g_meshPrimMetadata.z; // All displacements combined
 	
 	// Each compute thread processes the same vertex in every stream:
 	for (uint streamIdx = 0; streamIdx < numStreamBuffers; ++streamIdx)
 	{		
-		const uint vertexFloatStride = VertexStreamMetadataParams.g_streamMetadata[streamIdx].x;
-		const uint numVertComponents = VertexStreamMetadataParams.g_streamMetadata[streamIdx].y;
+		const uint vertexFloatStride = MorphMetadataParams.g_streamMetadata[streamIdx].x;
+		const uint numVertComponents = MorphMetadataParams.g_streamMetadata[streamIdx].y;
 		
-		const uint firstMorphFloatOffset = VertexStreamMetadataParams.g_morphMetadata[streamIdx].x;
-		const uint displacementFloatStride = VertexStreamMetadataParams.g_morphMetadata[streamIdx].y; // 1 displacement
-		const uint numMorphComponents = VertexStreamMetadataParams.g_morphMetadata[streamIdx].z;
+		const uint firstMorphFloatOffset = MorphMetadataParams.g_morphMetadata[streamIdx].x;
+		const uint displacementFloatStride = MorphMetadataParams.g_morphMetadata[streamIdx].y; // 1 displacement
+		const uint numMorphComponents = MorphMetadataParams.g_morphMetadata[streamIdx].z;
 		
 		// We loop over all vertex components, as we still need to copy component data when no corresponding morph data
 		// exists (e.g. tangent = float4, with float3 displacements)
