@@ -12,17 +12,18 @@ Saber Engine is a multi-API, multi-threaded, real-time rendering R&D framework, 
 Features:
 ---------
 Saber Engine is constantly improving. Its current features include:
-- Rendering API agnostic. Supports:
+- Multi-threaded architecture programmed in C++ 20  
+- Rendering API agnostic. Supports:  
 	- DirectX 12 (Agility SDK 1.611.2) (Default)  
 	- OpenGL 4.6  
 	- Upcoming Vulkan support  
-- Dynamic shader selection via an scriptable Effect/Technique/DrawStyle framework  
-- Droid: An offline shader compiler & code generator  
-- Scriptable rendering pipeline  
 - Asynchronous copy/graphics/compute pipelines  
-- Multi-threaded architecture programmed in C++ 20  
+- Scriptable rendering pipeline  
+- Dynamic shader selection via an scriptable Effect/Technique/DrawStyle framework  
+- Droid: A custom offline shader compiler & C++ code generation tool  
 - Entity Component System (EnTT)  
 - GLTF 2.0 scene format support  
+- Supports skinned animations, morph targets, and key frame node/transform animations  
 - HDR physically-based lighting model (As per EA’s Frostbite, Lagarde et al.)  
 - Image-based indirect lighting  
 - Directional, point & spot punctual lights  
@@ -35,6 +36,7 @@ Saber Engine is constantly improving. Its current features include:
 - Automatic GPU instancing  
 - ImGui menus & a robust suite of debugging tools  
 - Support for RenderDoc & PIX programmatic capture APIs  
+- And more!  
 
 
 --------------
