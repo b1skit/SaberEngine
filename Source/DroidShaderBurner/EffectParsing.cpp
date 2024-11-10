@@ -57,12 +57,18 @@ namespace droid
 			glslDstOutputTime > effectDirModificationTime &&
 			glslDstOutputTime > glslSrcDirModificationTime;
 
+		const time_t commonSrcDirModificationTime = GetMostRecentlyModifiedFileTime(parseParams.m_commonShaderSourceDir);
+		const bool commonSrcNewer = 
+			commonSrcDirModificationTime < hlslDstOutputTime &&
+			commonSrcDirModificationTime < glslDstOutputTime;
+
 		if (isSameBuildConfig &&
 			cppGenDirNewer &&
 			hlslGenDirNewer &&
 			glslGenDirNewer &&
 			hlslOutputNewer &&
-			glslOutputNewer)
+			glslOutputNewer &&
+			commonSrcNewer)
 		{
 			return droid::ErrorCode::NoModification;
 		}
@@ -93,7 +99,8 @@ namespace droid
 				!hlslGenDirNewer ||
 				!glslGenDirNewer ||
 				!hlslOutputNewer ||
-				!glslOutputNewer))
+				!glslOutputNewer ||
+				!commonSrcNewer))
 		{
 			result = parseDB.GenerateShaderCode();
 			if (result < 0)
