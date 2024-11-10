@@ -70,6 +70,6 @@ void CShader(ComputeIn In)
 	}
 	
 	OutPosition[vertexIndex] = outPos.xyz;
-	OutNormal[vertexIndex] = outNml;
-	OutTangent[vertexIndex] = outTangent;
+	OutNormal[vertexIndex] = normalize(outNml);
+	OutTangent[vertexIndex] = normalize(outTangent);
 }

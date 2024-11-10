@@ -108,6 +108,6 @@ void CShader()
 	}
 	
 	SetOutPosition(vertexIndex, outPos.xyz);
-	SetOutNormal(vertexIndex, outNml);
-	_OutTangent.data[vertexIndex] = outTangent;
+	SetOutNormal(vertexIndex, normalize(outNml));
+	_OutTangent.data[vertexIndex] = normalize(outTangent);
 }
