@@ -78,7 +78,7 @@ namespace
 	{
 		// Get the vertex stream metadata, and the number of attributes it points to:
 		uint8_t numVertexAttributes = 0;
-		re::VertexStreamMap::MorphMetadata const* vertexStreamMetadata = 
+		re::VertexStreamMap::SteamMetadata const* vertexStreamMetadata = 
 			shader.GetVertexStreamMap()->GetStreamMetadata(numVertexAttributes);
 
 		std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
@@ -86,7 +86,7 @@ namespace
 
 		for (uint8_t i = 0; i < numVertexAttributes; ++i)
 		{
-			re::VertexStreamMap::MorphMetadata const& entry = vertexStreamMetadata[i];
+			re::VertexStreamMap::SteamMetadata const& entry = vertexStreamMetadata[i];
 
 			inputLayout.emplace_back(D3D12_INPUT_ELEMENT_DESC(
 				VertexStreamTypeToSemanticName(

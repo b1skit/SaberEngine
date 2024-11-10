@@ -36,7 +36,7 @@ namespace
 			SEAssert(vertexStreams[i].m_vertexStream != nullptr, "Found a null vertex stream in the input");
 
 			SEAssert(i + 1 == vertexStreams.size() ||
-				vertexStreams[i].m_vertexStream->GetType() != vertexStreams[i + 1].m_vertexStream->GetType() ||
+				vertexStreams[i].m_vertexStream->GetType() <= vertexStreams[i + 1].m_vertexStream->GetType() ||
 				vertexStreams[i].m_setIdx < vertexStreams[i + 1].m_setIdx,
 				"Vertex streams of the same type must be stored in monotoically-increasing source slot order");
 

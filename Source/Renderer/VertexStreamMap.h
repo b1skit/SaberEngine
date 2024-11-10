@@ -26,8 +26,8 @@ namespace re
 
 		uint8_t GetNumSlots() const;
 
-		struct MorphMetadata;
-		MorphMetadata const* GetStreamMetadata(uint8_t& arraySizeOut) const;
+		struct SteamMetadata;
+		SteamMetadata const* GetStreamMetadata(uint8_t& arraySizeOut) const;
 
 
 	public:
@@ -36,7 +36,7 @@ namespace re
 			gr::VertexStream::Type m_streamType; // Name portion of the semantic: E.g. NORMAL0 -> Type::Normal
 			uint8_t m_semanticIdx;	// Numeric part of the semantic. E.g. NORMAL0 -> 0
 		};
-		struct MorphMetadata
+		struct SteamMetadata
 		{
 			VertexStreamKey m_streamKey;
 			re::DataType m_streamDataType;
@@ -48,12 +48,12 @@ namespace re
 	private:
 		uint8_t m_numAttributes;
 
-		std::array<MorphMetadata, gr::VertexStream::k_maxVertexStreams> m_slotLayout; // Sorted by m_streamKey
+		std::array<SteamMetadata, gr::VertexStream::k_maxVertexStreams> m_slotLayout; // Sorted by m_streamKey
 
 
 		struct StreamMetadataComparator
 		{
-			inline bool operator()(MorphMetadata const& a, MorphMetadata const& b)
+			inline bool operator()(SteamMetadata const& a, SteamMetadata const& b)
 			{
 				if (a.m_streamKey.m_streamType == b.m_streamKey.m_streamType)
 				{
@@ -63,7 +63,7 @@ namespace re
 			}
 
 
-			inline bool operator()(MorphMetadata const& a, VertexStreamKey const& b)
+			inline bool operator()(SteamMetadata const& a, VertexStreamKey const& b)
 			{
 				if (a.m_streamKey.m_streamType == b.m_streamType)
 				{
@@ -73,7 +73,7 @@ namespace re
 			}
 
 
-			inline bool operator()(VertexStreamKey const& a, MorphMetadata const& b)
+			inline bool operator()(VertexStreamKey const& a, SteamMetadata const& b)
 			{
 				if (a.m_streamType == b.m_streamKey.m_streamType)
 				{
@@ -91,7 +91,7 @@ namespace re
 	inline VertexStreamMap::VertexStreamMap()
 		: m_numAttributes(0)
 	{
-		memset(m_slotLayout.data(), 0, sizeof(MorphMetadata) * m_slotLayout.size());
+		memset(m_slotLayout.data(), 0, sizeof(SteamMetadata) * m_slotLayout.size());
 	}
 
 
@@ -171,7 +171,7 @@ namespace re
 			m_slotLayout[i] = m_slotLayout[i - 1];
 		}
 
-		m_slotLayout[insertIdx] = MorphMetadata{
+		m_slotLayout[insertIdx] = SteamMetadata{
 			.m_streamKey{
 				.m_streamType = streamType,
 				.m_semanticIdx = semanticIdx,
@@ -207,7 +207,7 @@ namespace re
 	}
 
 
-	inline VertexStreamMap::MorphMetadata const* VertexStreamMap::GetStreamMetadata(uint8_t& arrSizeOut) const
+	inline VertexStreamMap::SteamMetadata const* VertexStreamMap::GetStreamMetadata(uint8_t& arrSizeOut) const
 	{
 		arrSizeOut = m_numAttributes;
 		return m_slotLayout.data();
