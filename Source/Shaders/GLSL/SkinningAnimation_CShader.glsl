@@ -12,12 +12,11 @@ layout(std430, binding=2) readonly buffer InTangent { vec4 data[]; } _InTangent;
 layout(std430, binding=3) readonly buffer InBlendIndices { float data[]; } _InBlendIndices;
 layout(std430, binding=4) readonly buffer InBlendWeights { float data[]; } _InBlendWeights;
 
-layout(std430, binding=5) readonly buffer SkinningJoints { mat4 data[]; } _SkinningJoints;
-layout(std430, binding=6) readonly buffer TransposeInvSkinningJoints { mat4 data[]; } _TransposeInvSkinningJoints;
+layout(std430, binding=5) readonly buffer SkinningMatrices { SkinningJoint data[]; } _SkinningMatrices;
 
-layout(std430, binding=7) buffer OutPosition { float data[]; } _OutPosition;
-layout(std430, binding=8) buffer OutNormal { float data[]; } _OutNormal;
-layout(std430, binding=9) buffer OutTangent { vec4 data[]; } _OutTangent;
+layout(std430, binding=6) buffer OutPosition { float data[]; } _OutPosition;
+layout(std430, binding=7) buffer OutNormal { float data[]; } _OutNormal;
+layout(std430, binding=8) buffer OutTangent { vec4 data[]; } _OutTangent;
 
 layout(binding=9) uniform SkinningParams { SkinningData _SkinningParams; };
 
@@ -94,10 +93,11 @@ void CShader()
 			const uint jointIdx = uint(_InBlendIndices.data[blendSrcIndex]);
 
 			// Position:
-			outPos += _SkinningJoints.data[jointIdx] * vec4(inPos, 1.f) * jointWeight;
+			outPos += _SkinningMatrices.data[jointIdx].g_joint * vec4(inPos, 1.f) * jointWeight;
 			
 			// Normal:
-			const mat3 transposeInvRotationScale = GetTransposeInvRotationScale(_TransposeInvSkinningJoints.data[jointIdx]);
+			const mat3 transposeInvRotationScale = 
+				GetTransposeInvRotationScale(_SkinningMatrices.data[jointIdx].g_transposeInvJoint);
 			
 			outNml += (transposeInvRotationScale * inNml) * jointWeight;
 			

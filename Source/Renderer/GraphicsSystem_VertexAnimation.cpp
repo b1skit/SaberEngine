@@ -112,8 +112,7 @@ namespace
 	void UpdateSkinningJointsBuffer(
 		gr::RenderDataManager const& renderData,
 		gr::MeshPrimitive::SkinningRenderData const& skinData,
-		std::shared_ptr<re::Buffer> const& jointsBuffer,
-		std::shared_ptr<re::Buffer> const& jointsTransposeInverseBuffer,
+		std::shared_ptr<re::Buffer> const& skinningJointsBuffer,
 		bool force)
 	{
 		std::vector<gr::TransformID> const& jointTransformIDs = skinData.m_jointTransformIDs;
@@ -128,7 +127,11 @@ namespace
 				gr::Transform::RenderData const& jointTransformRenderData = 
 					renderData.GetTransformDataFromTransformID(jointTransformID);
 
-				glm::mat4 jointMat = jointTransformRenderData.g_model;
+				struct SkinningJoint joint
+				{
+					.g_joint = jointTransformRenderData.g_model,
+					.g_transposeInvJoint = glm::mat4(1.f),
+				};
 
 				if (!skinData.m_inverseBindMatrices.empty())
 				{
@@ -136,13 +139,11 @@ namespace
 						"Inverse bind matrices should have >= entries as the number of joints");
 
 					// Apply the per-joint inverse bind matrix BEFORE the base node transformation:
-					jointMat = jointMat * skinData.m_inverseBindMatrices[jointIdx];
+					joint.g_joint = joint.g_joint * skinData.m_inverseBindMatrices[jointIdx];
 				}
-				glm::mat4 const& transposeInvJointMat = glm::transpose(glm::inverse(jointMat));
+				joint.g_transposeInvJoint = glm::transpose(glm::inverse(joint.g_joint));
 
-				jointsBuffer->Commit(&jointMat, util::CheckedCast<uint32_t>(jointIdx), 1);
-				jointsTransposeInverseBuffer->Commit(&transposeInvJointMat, util::CheckedCast<uint32_t>(jointIdx), 1);
-			
+				skinningJointsBuffer->Commit(&joint, util::CheckedCast<uint32_t>(jointIdx), 1);			
 			}
 		}
 	}
@@ -151,14 +152,12 @@ namespace
 	void UpdateSkinningJointsBuffer(
 		gr::RenderDataManager const& renderData,
 		gr::RenderDataID skinnedMeshID,
-		std::shared_ptr<re::Buffer> const& jointsBuffer,
-		std::shared_ptr<re::Buffer> const& jointsTransposeInverseBuffer,
+		std::shared_ptr<re::Buffer> const& skinningJointsBuffer,
 		bool force)
 	{
 		UpdateSkinningJointsBuffer(renderData,
 			renderData.GetObjectData<gr::MeshPrimitive::SkinningRenderData>(skinnedMeshID),
-			jointsBuffer,
-			jointsTransposeInverseBuffer,
+			skinningJointsBuffer,
 			force);
 	}
 }
@@ -332,25 +331,12 @@ namespace gr
 						dirtySkinRenderDataItr.Get<gr::MeshPrimitive::SkinningRenderData>();
 
 					// Create/update the skinning joints buffer:
-					JointBuffers& jointBuffers = m_meshIDToSkinJoints.at(meshRenderDataID);
-					SEAssert((jointBuffers.m_skinJoints == nullptr) ==
-						(jointBuffers.m_transposeInvSkinJoints == nullptr),
-						"Joint buffers are out of sync");
+					std::shared_ptr<re::Buffer>& skinJointsBuffer = m_meshIDToSkinJoints.at(meshRenderDataID);
 
-					if (jointBuffers.m_skinJoints == nullptr || jointBuffers.m_transposeInvSkinJoints == nullptr)
+					if (skinJointsBuffer == nullptr)
 					{
-						jointBuffers.m_skinJoints = re::Buffer::CreateUncommittedArray<glm::mat4>(
+						skinJointsBuffer = re::Buffer::CreateUncommittedArray<SkinningJoint>(
 							std::format("SkinningRenderData {} Joints", meshRenderDataID),
-							re::Buffer::BufferParams{
-								.m_stagingPool = re::Buffer::StagingPool::Permanent,
-								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
-								.m_accessMask = re::Buffer::Access::GPURead,
-								.m_usageMask = re::Buffer::Usage::Structured,
-								.m_arraySize = util::CheckedCast<uint32_t>(skinRenderData.m_jointTransformIDs.size()),
-							});
-
-						jointBuffers.m_transposeInvSkinJoints = re::Buffer::CreateUncommittedArray<glm::mat4>(
-							std::format("SkinningRenderData {} Joints Inverse Transpose", meshRenderDataID),
 							re::Buffer::BufferParams{
 								.m_stagingPool = re::Buffer::StagingPool::Permanent,
 								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
@@ -361,8 +347,7 @@ namespace gr
 
 						// Force the update for newly created buffers, as there is no guarantee the associated
 						// Transforms are dirty
-						UpdateSkinningJointsBuffer(
-							renderData, skinRenderData, jointBuffers.m_skinJoints, jointBuffers.m_transposeInvSkinJoints, true);
+						UpdateSkinningJointsBuffer(renderData, skinRenderData, skinJointsBuffer, true);
 					}					
 
 					++dirtySkinRenderDataItr;
@@ -602,9 +587,8 @@ namespace gr
 						{
 							UpdateSkinningJointsBuffer(
 								renderData, 
-								jointBufferItr->first, 
-								jointBufferItr->second.m_skinJoints, 
-								jointBufferItr->second.m_transposeInvSkinJoints, 
+								jointBufferItr->first,
+								jointBufferItr->second,
 								false);
 
 							seenSkinnedMeshes.emplace(meshPrimRenderData.m_owningMeshRenderDataID);
@@ -762,10 +746,8 @@ namespace gr
 							m_meshPrimIDToAnimBuffers.at(visibleID).m_skinningDataBuffer);
 
 						// Set the Mesh skinning buffers:
-						JointBuffers const& jointBuffers = 
-							m_meshIDToSkinJoints.at(meshPrimRenderData.m_owningMeshRenderDataID);
-						skinningBatch.SetBuffer("SkinningJoints", jointBuffers.m_skinJoints);
-						skinningBatch.SetBuffer("TransposeInvSkinningJoints", jointBuffers.m_transposeInvSkinJoints);
+						skinningBatch.SetBuffer("SkinningMatrices", 
+							m_meshIDToSkinJoints.at(meshPrimRenderData.m_owningMeshRenderDataID));
 
 						m_skinAnimationStage->AddBatch(skinningBatch);
 					}

@@ -53,14 +53,8 @@ namespace gr
 		// MeshPrimitives attached to the MeshConcept
 		std::unordered_map<gr::RenderDataID, std::shared_ptr<re::Buffer>> m_meshIDToMorphWeights;
 
-		// Map from MeshConcept RenderDataIDs with a gr::MeshPrimitive::SkinningRenderData, to . 
-		// Used to update joint matrices
-		struct JointBuffers
-		{
-			std::shared_ptr<re::Buffer> m_skinJoints;
-			std::shared_ptr<re::Buffer> m_transposeInvSkinJoints;
-		};
-		std::unordered_map<gr::RenderDataID, JointBuffers> m_meshIDToSkinJoints;
+		// Map from MeshConcept RenderDataIDs with a gr::MeshPrimitive::SkinningRenderData, to our buffer of skin matrices
+		std::unordered_map<gr::RenderDataID, std::shared_ptr<re::Buffer>> m_meshIDToSkinJoints;
 
 
 	private:

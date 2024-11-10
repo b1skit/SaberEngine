@@ -13,8 +13,8 @@ StructuredBuffer<float4> InTangent;
 StructuredBuffer<float> InBlendIndices;
 StructuredBuffer<float> InBlendWeights;
 
-StructuredBuffer<float4x4> SkinningJoints;
-StructuredBuffer<float4x4> TransposeInvSkinningJoints;
+StructuredBuffer<SkinningJoint> SkinningMatrices;
+
 
 RWStructuredBuffer<float3> OutPosition;
 RWStructuredBuffer<float3> OutNormal;
@@ -56,10 +56,11 @@ void CShader(ComputeIn In)
 			const uint jointIdx = InBlendIndices[blendSrcIndex];
 		
 			// Position:
-			outPos += mul(SkinningJoints[jointIdx], inPos) * jointWeight;
+			outPos += mul(SkinningMatrices[jointIdx].g_joint, inPos) * jointWeight;
 			
 			// Normal:
-			const float3x3 transposeInvRotationScale = GetTransposeInvRotationScale(TransposeInvSkinningJoints[jointIdx]);
+			const float3x3 transposeInvRotationScale = 
+				GetTransposeInvRotationScale(SkinningMatrices[jointIdx].g_transposeInvJoint);
 			
 			outNml += mul(transposeInvRotationScale, inNml) * jointWeight;
 			

@@ -50,4 +50,11 @@ struct SkinningData
 };
 
 
+struct SkinningJoint
+{
+	float4x4 g_joint;
+	float4x4 g_transposeInvJoint;
+};
+
+
 #endif // SE_ANIMATION_PARAMS
