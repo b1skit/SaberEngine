@@ -1,5 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "EntityManager.h"
+#include "NameComponent.h"
 #include "Transform.h"
+#include "TransformComponent.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -727,89 +730,80 @@ namespace fr
 	}
 
 
-	void Transform::ShowImGuiWindow()
+	void Transform::ImGuiHelper_Hierarchy(fr::EntityManager& em, entt::entity owningEntity, uint64_t uniqueID)
 	{
-		ImGuiHelper_ShowHierarchy(this, true);
-	}
-
-
-	void Transform::ImGuiHelper_ShowHierarchy(
-		fr::Transform* node, bool highlightCurrentNode, bool expandAllState, bool expandChangeTriggered)
-	{
-		constexpr float k_indentSize = 16.f;
-		constexpr ImVec4 k_thisObjectMarkerTextCol = ImVec4(0, 1, 0, 1);
-		constexpr char const* k_thisObjectText = "<this object>";
-
-		struct NodeState
+		if (ImGui::CollapsingHeader(std::format("Hierarchy##{}", uniqueID).c_str()))
 		{
-			fr::Transform* m_node;
-			uint32_t m_depth;
-		};
+			ImGui::Indent();
 
-		// Find the root node
-		fr::Transform* rootNode = node;
-		while (rootNode->m_parent != nullptr)
-		{
-			rootNode = rootNode->m_parent;
-		}
+			fr::TransformComponent& thisTransformCmpt = em.GetComponent<fr::TransformComponent>(owningEntity);
+			fr::Transform& thisTransform = thisTransformCmpt.GetTransform();
+			fr::Transform const* thisTransformParent = thisTransform.GetParent();
 
-		std::stack<NodeState> nodes;
-		nodes.push({ rootNode, 1 }); // Depth is offset +1 so the indent value will be > 0
+			std::vector<entt::entity> const& transformEntities = em.GetAllEntities<fr::TransformComponent>();
 
-		while (!nodes.empty())
-		{
-			NodeState cur = nodes.top();
-			nodes.pop();
+			std::vector<std::string> transformIDStrings;
+			transformIDStrings.reserve(transformEntities.size());
 
-			// Add children for next iteration:
-			for (fr::Transform* child : cur.m_node->m_children)
+			size_t parentTransformIdx = std::numeric_limits<size_t>::max();
+			for (size_t i = 0; i < transformEntities.size(); ++i)
 			{
-				nodes.push(NodeState{ child, cur.m_depth + 1 });
-			}
+				const entt::entity curEntity = transformEntities[i];
 
-			ImGui::Indent(k_indentSize * cur.m_depth);
+				fr::TransformComponent const& curTransformCmpt = em.GetComponent<fr::TransformComponent>(curEntity);
 
-			if (expandChangeTriggered)
-			{
-				ImGui::SetNextItemOpen(expandAllState);
-			}
-			if (ImGui::TreeNode(std::format("TransformID: {}", cur.m_node->m_transformID).c_str()))
-			{
-				if (highlightCurrentNode && cur.m_node == node)
+				transformIDStrings.emplace_back(std::to_string(curTransformCmpt.GetTransformID()));
+
+				if (&curTransformCmpt.GetTransform() == thisTransformParent)
 				{
-					ImGui::SameLine(); ImGui::TextColored(k_thisObjectMarkerTextCol, k_thisObjectText);
+					parentTransformIdx = i;
 				}
-
-				ImGui::Indent();
-
-				// Show the current node info:
-				ImGui::Text(std::format("{} Depth {}, {} {}",
-					cur.m_node->m_parent ? "" : "Root:",
-					cur.m_depth - 1,
-					cur.m_node->m_children.size(),
-					cur.m_node->m_children.size() == 1 ? "child" : "children").c_str());
-
-				// View Transform data:
-				cur.m_node->ImGuiHelper_ShowData(util::PtrToID(cur.m_node));
-				
-				// Modification controls:
-				cur.m_node->ImGuiHelper_Modify(util::PtrToID(cur.m_node));
-
-				ImGui::Unindent();
-
-				ImGui::TreePop();
 			}
-			else if (highlightCurrentNode && cur.m_node == node)
+
+			// Handle the "<none>" combo element
+			transformIDStrings.emplace_back("<none>");
+			if (parentTransformIdx == std::numeric_limits<size_t>::max())
 			{
-				ImGui::SameLine(); ImGui::TextColored(k_thisObjectMarkerTextCol, k_thisObjectText);
+				parentTransformIdx = transformIDStrings.size() - 1; // "<none>"
 			}
-			
-			ImGui::Unindent(k_indentSize * cur.m_depth);
+
+			size_t newParentTransformIdx = parentTransformIdx;
+			if (util::ShowBasicComboBox(
+				std::format("Parent##{}", uniqueID).c_str(),
+				transformIDStrings.data(),
+				transformIDStrings.size(),
+				newParentTransformIdx))
+			{
+				if (newParentTransformIdx == transformIDStrings.size() - 1) // "<none>"
+				{
+					thisTransform.SetParent(nullptr);
+				}
+				else
+				{
+					fr::TransformComponent& newParentTransformCmpt = 
+						em.GetComponent<fr::TransformComponent>(transformEntities[newParentTransformIdx]);
+
+					fr::Transform* newParentTransform = &newParentTransformCmpt.GetTransform();
+					if (newParentTransform != &thisTransform) // Can't parent a transform to itself
+					{
+						thisTransform.SetParent(newParentTransform);
+					}
+				}
+			}
+
+			ImGui::Unindent();
 		}
 	}
 
 
-	void Transform::ShowImGuiWindow(std::vector<fr::Transform*> const& rootNodes, bool* show)
+	void Transform::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	{
+		ImGuiHelper_ShowHierarchy(em, owningEntity, true);
+	}
+
+
+	void Transform::ShowImGuiWindow(
+		fr::EntityManager& em, std::vector<entt::entity> const& rootNodeEntities, bool* show)
 	{
 		if (!(*show))
 		{
@@ -839,14 +833,148 @@ namespace fr
 		}
 
 		// Show each root node in the panel
-		for (fr::Transform* rootNode : rootNodes)
+		for (entt::entity rootNodeEntity : rootNodeEntities)
 		{
-			ImGuiHelper_ShowHierarchy(rootNode, false, s_expandAll, showHideAll);
+			ImGuiHelper_ShowHierarchy(em, rootNodeEntity, false, s_expandAll, showHideAll);
 
 			ImGui::Separator();
 		}
 
 		ImGui::End();
+	}
+
+
+	void Transform::ImGuiHelper_ShowHierarchy(
+		fr::EntityManager& em,
+		entt::entity nodeEntity,
+		bool highlightCurrentNode/* = false*/,
+		bool expandAllState/* = false*/,
+		bool expandChangeTriggered/* = false*/)
+	{
+		constexpr float k_indentSize = 16.f;
+		constexpr ImVec4 k_thisObjectMarkerTextCol = ImVec4(0, 1, 0, 1);
+		constexpr char const* k_thisObjectText = "<this object>";
+		
+		SEAssert(em.HasComponent<fr::TransformComponent>(nodeEntity), "Node entity does not have a TransformComponent");
+
+		// Find the root node
+		entt::entity rootEntity = nodeEntity;
+		fr::TransformComponent* rootTransformCmpt = &em.GetComponent<fr::TransformComponent>(rootEntity);
+		while (rootTransformCmpt->GetTransform().GetParent() != nullptr)
+		{
+			// Start our search for the next TransformComponent from the parent of the current node:
+			fr::Relationship const& currentRelationship = em.GetComponent<fr::Relationship>(rootEntity);
+			const entt::entity parentEntity = currentRelationship.GetParent();
+			if (parentEntity != entt::null)
+			{
+				entt::entity transformEntity;
+				fr::TransformComponent* parentTransformCmpt =
+					em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(parentEntity, transformEntity);
+
+				SEAssert((transformEntity == entt::null) == (parentTransformCmpt == nullptr),
+					"Mismatched null results. This should not be possible");
+
+				if (parentTransformCmpt)
+				{
+					rootEntity = transformEntity;
+					rootTransformCmpt = parentTransformCmpt;
+				}
+				else
+				{
+					break;
+				}
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		std::vector<entt::entity> transformEntities = em.GetAllEntities<fr::TransformComponent>();
+
+		// Build a map from Transform* -> entt::entity:
+		std::unordered_map<fr::Transform const*, entt::entity> transformToEntity;
+		for (entt::entity curEntity : transformEntities)
+		{
+			fr::TransformComponent const& curTransformCmpt = em.GetComponent<fr::TransformComponent>(curEntity);
+			transformToEntity.emplace(&curTransformCmpt.GetTransform(), curEntity);
+		}
+
+		struct NodeState
+		{
+			fr::Transform* m_node;
+			uint32_t m_depth;
+		};
+
+		fr::Transform* rootNode = &rootTransformCmpt->GetTransform();
+		SEAssert(rootNode->m_parent == nullptr, "Root cannot have a parent");
+	
+		std::stack<NodeState> nodes;
+		nodes.push({ rootNode, 1 }); // Depth is offset +1 so the indent value will be > 0
+
+		while (!nodes.empty())
+		{
+			NodeState curNodeState = nodes.top();
+			nodes.pop();
+
+			// Add children for next iteration:
+			for (fr::Transform* child : curNodeState.m_node->m_children)
+			{
+				nodes.push(NodeState{ child, curNodeState.m_depth + 1 });
+			}
+
+			ImGui::Indent(k_indentSize * curNodeState.m_depth);
+
+			if (expandChangeTriggered)
+			{
+				ImGui::SetNextItemOpen(expandAllState);
+			}
+
+			SEAssert(transformToEntity.contains(curNodeState.m_node), "Failed to find the Transform. This should not be possible");
+
+			const entt::entity curTransformEntity = transformToEntity.at(curNodeState.m_node);
+
+			fr::NameComponent const* nameCmpt = em.TryGetComponent<fr::NameComponent>(curTransformEntity);
+
+			if (ImGui::TreeNode(std::format("TransformID: {}, Entity {}, \"{}\"",
+				curNodeState.m_node->m_transformID,
+				static_cast<uint64_t>(transformToEntity.at(curNodeState.m_node)),
+				nameCmpt ? nameCmpt->GetName().c_str() : "<unnamed>").c_str()))
+			{
+				if (highlightCurrentNode && curTransformEntity == nodeEntity)
+				{
+					ImGui::SameLine(); ImGui::TextColored(k_thisObjectMarkerTextCol, k_thisObjectText);
+				}
+
+				ImGui::Indent();
+
+				// Show the current node info:
+				ImGui::Text(std::format("{} Depth {}, {} {}",
+					curNodeState.m_node->m_parent ? "" : "Root:",
+					curNodeState.m_depth - 1,
+					curNodeState.m_node->m_children.size(),
+					curNodeState.m_node->m_children.size() == 1 ? "child" : "children").c_str());
+
+				// View Transform data:
+				curNodeState.m_node->ImGuiHelper_ShowData(util::PtrToID(curNodeState.m_node));
+
+				// Modification controls:
+				curNodeState.m_node->ImGuiHelper_Modify(util::PtrToID(curNodeState.m_node));
+
+				// Hierarchy modifications:
+				curNodeState.m_node->ImGuiHelper_Hierarchy(em, curTransformEntity, util::PtrToID(curNodeState.m_node));
+
+				ImGui::Unindent();
+
+				ImGui::TreePop();
+			}
+			else if (highlightCurrentNode && transformToEntity.at(curNodeState.m_node) == nodeEntity)
+			{
+				ImGui::SameLine(); ImGui::TextColored(k_thisObjectMarkerTextCol, k_thisObjectText);
+			}
+
+			ImGui::Unindent(k_indentSize * curNodeState.m_depth);
+		}
 	}
 }
 

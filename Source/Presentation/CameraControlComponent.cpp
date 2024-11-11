@@ -41,48 +41,63 @@ namespace fr
 
 
 	void CameraControlComponent::SetCamera(
-		entt::entity camControlCmptOwner,
-		entt::entity currentCamCmptOwner,
-		entt::entity newCamCmptOwner)
+		entt::entity camControlCmptEntity,
+		entt::entity currentCamCmptEntity,
+		entt::entity newCamCmptEntity)
 	{	
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
 		// The CameraControlComponent gimbal requires 2 Transforms (for pitch/yaw), animations target a single Transform
-		SEAssert(!em.HasComponent<fr::AnimationComponent>(newCamCmptOwner),
+		SEAssert(!em.HasComponent<fr::AnimationComponent>(newCamCmptEntity),
 			"The target camera has an AnimationComponent, it cannot be controlled by a camera controller as well");
 
-		SEAssert(em.HasComponent<fr::TransformComponent>(camControlCmptOwner),
+		SEAssert(em.HasComponent<fr::TransformComponent>(camControlCmptEntity),
 			"CameraControlComponent owning entity must have a TransformComponent");
+
+		fr::CameraControlComponent& camControlCmpt = em.GetComponent<fr::CameraControlComponent>(camControlCmptEntity);
 
 		// Reparent the existing camera (if any) to a null parent. This effectively collapses the global transform
 		// values to the local transform, so the camera's final location remains the same
-		if (currentCamCmptOwner != entt::null)
+		if (currentCamCmptEntity != entt::null)
 		{
-			SEAssert(em.HasComponent<fr::TransformComponent>(currentCamCmptOwner),
+			SEAssert(em.HasComponent<fr::TransformComponent>(currentCamCmptEntity),
 				"Owning entity for the current camera component does not have a TransformComponent. This is unexpected");
 
-			fr::TransformComponent& currentCamTransformCmpt = em.GetComponent<fr::TransformComponent>(currentCamCmptOwner);
+			fr::TransformComponent& currentCamTransformCmpt = em.GetComponent<fr::TransformComponent>(currentCamCmptEntity);
 
+			// Restore the previous hierarchy to the camera:
 			fr::Transform& currentCamTransform = currentCamTransformCmpt.GetTransform();
-			currentCamTransform.ReParent(nullptr);
+			currentCamTransform.ReParent(camControlCmpt.m_prevCameraTransformParent);
+
+			fr::Relationship& currentCamRelationship = em.GetComponent<fr::Relationship>(currentCamCmptEntity);
+			currentCamRelationship.SetParent(em, camControlCmpt.m_prevCameraParentEntity);
+
+			// Clear the cached hierarchy records:
+			camControlCmpt.m_prevCameraParentEntity = entt::null;
+			camControlCmpt.m_prevCameraTransformParent = nullptr;
 		}
 		
 		// Attach the new camera (if any) to the controller:
-		if (newCamCmptOwner != entt::null)
+		if (newCamCmptEntity != entt::null)
 		{
-			SEAssert(em.HasComponent<fr::TransformComponent>(newCamCmptOwner),
+			SEAssert(em.HasComponent<fr::TransformComponent>(newCamCmptEntity),
 				"Owning entity for the new camera component does not have a TransformComponent. This is unexpected");
 
 			fr::Transform& controllerTransform =
-				em.GetComponent<fr::TransformComponent>(camControlCmptOwner).GetTransform();
+				em.GetComponent<fr::TransformComponent>(camControlCmptEntity).GetTransform();
 
-			fr::Transform& newCamTransform = em.GetComponent<fr::TransformComponent>(newCamCmptOwner).GetTransform();
+			fr::Transform& newCamTransform = em.GetComponent<fr::TransformComponent>(newCamCmptEntity).GetTransform();
+			camControlCmpt.m_prevCameraTransformParent = newCamTransform.GetParent();
 
 			// The controller and Camera must be located at the same point. To avoid stomping imported Camera locations,
 			// we move the camera controller to the camera. Then, we re-parent the Camera's Transform, to maintain its
 			// global orientation but update its local orientation under the camera controller's Transform
 			controllerTransform.SetGlobalPosition(newCamTransform.GetGlobalPosition());
 			newCamTransform.ReParent(&controllerTransform);
+
+			fr::Relationship& currentCamRelationship = em.GetComponent<fr::Relationship>(newCamCmptEntity);
+			camControlCmpt.m_prevCameraParentEntity = currentCamRelationship.GetParent();
+			currentCamRelationship.SetParent(em, camControlCmptEntity);
 		}
 	}
 
@@ -252,6 +267,8 @@ namespace fr
 		: m_movementSpeed(0.006f)
 		, m_savedPosition(glm::vec3(0.0f, 0.0f, 0.0f))
 		, m_savedEulerRotation(glm::vec3(0.0f, 0.0f, 0.0f))
+		, m_prevCameraParentEntity(entt::null)
+		, m_prevCameraTransformParent(nullptr)
 	{
 		m_sprintSpeedModifier = core::Config::Get()->GetValue<float>(core::configkeys::k_sprintSpeedModifierKey);
 

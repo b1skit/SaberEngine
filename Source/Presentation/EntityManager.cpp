@@ -1210,18 +1210,19 @@ namespace fr
 		std::vector<fr::Transform*> rootNodes;
 		rootNodes.reserve(s_numRootNodes);
 
+		std::vector<entt::entity> rootNodeEntities;
 		auto transformCmptView = m_registry.view<fr::TransformComponent>();
 		for (entt::entity entity : transformCmptView)
 		{
 			fr::TransformComponent& transformCmpt = transformCmptView.get<fr::TransformComponent>(entity);
 			if (transformCmpt.GetTransform().GetParent() == nullptr)
 			{
-				rootNodes.emplace_back(&transformCmpt.GetTransform());
+				rootNodeEntities.emplace_back(entity);
 			}
 		}
 		s_numRootNodes = std::max(s_numRootNodes, rootNodes.size());
 
-		fr::Transform::ShowImGuiWindow(rootNodes, show);
+		fr::Transform::ShowImGuiWindow(*this, rootNodeEntities, show);
 	}
 
 

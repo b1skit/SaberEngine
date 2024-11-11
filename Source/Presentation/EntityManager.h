@@ -127,6 +127,9 @@ namespace fr
 		template<typename T>
 		bool HasComponent(entt::entity entity) const;
 
+		template<typename T, typename... Args>
+		std::vector<entt::entity> GetAllEntities() const;
+
 
 		// Relationships:
 	public:
@@ -144,6 +147,9 @@ namespace fr
 
 		template<typename T>
 		T* GetFirstInChildren(entt::entity);
+
+		template<typename T>
+		std::vector<entt::entity> GetAllEntitiesInChildrenAndBelow(entt::entity) const; // Get all child entities with a T component
 
 
 	private: // Private, lockless versions of the Relationship functions. Convenience for when a lock is already held
@@ -317,6 +323,25 @@ namespace fr
 	}
 
 
+	template<typename T, typename... Args>
+	std::vector<entt::entity> EntityManager::GetAllEntities() const
+	{
+		std::vector<entt::entity> result;
+
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+			auto view = m_registry.view<T, Args...>();
+			for (auto entity : view)
+			{
+				result.emplace_back(entity);
+			}
+		}
+
+		return result;
+	}
+
+
 	// --- 
 	// Relationships
 	// ---
@@ -374,6 +399,27 @@ namespace fr
 
 			return GetFirstInChildrenInternal<T>(entity);
 		}
+	}
+
+
+	template<typename T>
+	std::vector<entt::entity> EntityManager::GetAllEntitiesInChildrenAndBelow(entt::entity entity) const
+	{
+		SEAssert(entity != entt::null, "Invalid entity");
+
+		fr::Relationship const& entityRelationship = m_registry.get<fr::Relationship>(entity);
+
+		std::vector<entt::entity> const& allDescendents = entityRelationship.GetAllDescendents();
+
+		std::vector<entt::entity> result;
+		for (entt::entity cur : allDescendents)
+		{
+			if (HasComponent<T>(cur))
+			{
+				result.emplace_back(cur);
+			}
+		}
+		return result;
 	}
 
 

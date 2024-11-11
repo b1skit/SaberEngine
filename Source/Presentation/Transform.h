@@ -5,6 +5,9 @@
 
 namespace fr
 {
+	class EntityManager;
+
+
 	class Transform
 	{
 		/***************************************************************************************************************
@@ -83,24 +86,31 @@ namespace fr
 		// Utility functions:
 		void Recompute(); // Explicitely recompute the local matrix
 
-
 		void ClearHasChangedFlag();
 		bool HasChanged() const;
 
 		gr::TransformID GetTransformID() const;
 
-		void ShowImGuiWindow();
 
-		static void ShowImGuiWindow(std::vector<fr::Transform*> const& rootNodes, bool* show); // Hierarchy view window
+	public:
+		void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
+		
+		// Hierarchy view window
+		static void ShowImGuiWindow(fr::EntityManager&, std::vector<entt::entity> const& rootNodeEntities, bool* show); 
+
 
 	private:
 		void ImGuiHelper_ShowData(uint64_t uniqueID);
 		void ImGuiHelper_Modify(uint64_t uniqueID);
+		void ImGuiHelper_Hierarchy(fr::EntityManager&, entt::entity owningEntity, uint64_t uniqueID);
+
 		static void ImGuiHelper_ShowHierarchy(
-			fr::Transform* node, 
+			fr::EntityManager&,
+			entt::entity nodeEntity,
 			bool highlightCurrentNode = false,
-			bool expandAllState = false, 
+			bool expandAllState = false,
 			bool expandChangeTriggered = false);
+
 
 	private:
 		Transform* m_parent;

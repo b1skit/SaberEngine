@@ -72,7 +72,7 @@ namespace fr
 
 			if (fr::TransformComponent* transformCmpt = em.TryGetComponent<fr::TransformComponent>(owningEntity))
 			{
-				transformCmpt->GetTransform().ShowImGuiWindow();
+				transformCmpt->GetTransform().ShowImGuiWindow(em, owningEntity);
 			}
 			else
 			{

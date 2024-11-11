@@ -48,6 +48,9 @@ namespace fr
 		// Saved location:
 		glm::vec3 m_savedPosition;
 		glm::vec3 m_savedEulerRotation;
+
+		entt::entity m_prevCameraParentEntity;
+		fr::Transform* m_prevCameraTransformParent;
 	};
 }
 
