@@ -15,8 +15,12 @@ namespace fr
 		static SkinningComponent& AttachSkinningComponent(
 			entt::entity owningEntity,
 			std::vector<gr::TransformID>&& jointTranformIDs,
+			std::vector<entt::entity>&& jointEntities,
 			std::vector<glm::mat4>&& inverseBindMatrices,
-			gr::TransformID skeletonNodeID);
+			entt::entity skeletonRootEntity,
+			gr::TransformID skeletonTransformID);
+
+		static void UpdateSkinMatrices(fr::EntityManager&, entt::entity owningEntity, SkinningComponent&);
 
 		static gr::MeshPrimitive::SkinningRenderData CreateRenderData(
 			entt::entity skinnedMeshPrimitive, SkinningComponent const&);
@@ -28,26 +32,35 @@ namespace fr
 
 	private: // Use the static creation factories
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
-		SkinningComponent() : SkinningComponent(PrivateCTORTag{}, {}, {}, gr::k_invalidTransformID) {}
+		SkinningComponent() : SkinningComponent(PrivateCTORTag{}, {}, {}, {}, entt::null, gr::k_invalidTransformID) {}
 
 
 	public:
 		SkinningComponent(PrivateCTORTag, 
-			std::vector<gr::TransformID>&& jointTranformIDs, 
-			std::vector<glm::mat4>&& inverseBindMatrices, 
-			gr::TransformID skeletonNodeID);
+			std::vector<gr::TransformID>&& jointTranformIDs,
+			std::vector<entt::entity>&& jointEntities,
+			std::vector<glm::mat4>&& inverseBindMatrices,
+			entt::entity skeletonRootEntity,
+			gr::TransformID skeletonTransformID);
 
 
 	private:
-		// All TransformIDs that might influence a MeshPrimitive.
-		// Maps indexes in the MeshPrimitive joints array, to a TransformID
+		std::vector<entt::entity> m_jointEntities;
+		std::unordered_set<entt::entity> m_jointEntitiesSet; // Initialized once at construction
+
+		// Debug: All TransformIDs that might influence a MeshPrimitive: Maps MeshPrimitive joint index to a TransformID
 		std::vector<gr::TransformID> m_jointTransformIDs;
+
+		// Updated each frame:
+		std::vector<glm::mat4> m_jointTransforms; 
+		std::vector<glm::mat4> m_transposeInvJointTransforms;
 
 		// Optional: Matrices used to bring coordinates being skinned into the same space as each joint.
 		// Matches the order of the m_jointTransformIDs array, with >= the number of joints (if not empty)
 		std::vector<glm::mat4> m_inverseBindMatrices; 
 
 		// Optional: Provides a pivot point for skinned geometry
-		gr::TransformID m_skeletonNodeID;
+		entt::entity m_skeletonRootEntity;
+		gr::TransformID m_skeletonTransformID;
 	};
 }

@@ -13,8 +13,10 @@ namespace fr
 	SkinningComponent& SkinningComponent::AttachSkinningComponent(
 		entt::entity owningEntity,
 		std::vector<gr::TransformID>&& jointTranformIDs,
+		std::vector<entt::entity>&& jointEntities,
 		std::vector<glm::mat4>&& inverseBindMatrices,
-		gr::TransformID skeletonNodeID)
+		entt::entity skeletonRootEntity,
+		gr::TransformID skeletonTransformID)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
@@ -26,8 +28,10 @@ namespace fr
 				owningEntity, 
 				PrivateCTORTag{}, 
 				std::move(jointTranformIDs),
+				std::move(jointEntities),
 				std::move(inverseBindMatrices),
-				skeletonNodeID);
+				skeletonRootEntity,
+				skeletonTransformID);
 
 		em.EmplaceComponent<DirtyMarker<fr::SkinningComponent>>(owningEntity);
 
@@ -37,22 +41,107 @@ namespace fr
 
 	SkinningComponent::SkinningComponent(PrivateCTORTag,
 		std::vector<gr::TransformID>&& jointTranformIDs,
+		std::vector<entt::entity>&& jointEntities,
 		std::vector<glm::mat4>&& inverseBindMatrices,
-		gr::TransformID skeletonNodeID)
-		: m_jointTransformIDs(std::move(jointTranformIDs))
+		entt::entity skeletonRootEntity,
+		gr::TransformID skeletonTransformID)
+		: m_jointEntities(std::move(jointEntities))
+		, m_jointTransformIDs(std::move(jointTranformIDs))
 		, m_inverseBindMatrices(std::move(inverseBindMatrices))
-		, m_skeletonNodeID(skeletonNodeID)
+		, m_skeletonRootEntity(skeletonRootEntity)
+		, m_skeletonTransformID(skeletonTransformID)
 	{
+		m_jointTransforms.resize(m_jointEntities.size(), glm::mat4(1.f));
+		m_transposeInvJointTransforms.resize(m_jointEntities.size(), glm::mat4(1.f));
+
+		// Create a set so we can quickly query any entities in the skeleton
+		m_jointEntitiesSet.reserve(m_jointEntities.size() + 1);
+		for (entt::entity entity : m_jointEntities)
+		{
+			m_jointEntitiesSet.emplace(entity);
+		}
+		if (m_skeletonRootEntity != entt::null)
+		{
+			m_jointEntitiesSet.emplace(m_skeletonRootEntity);
+		}
+	}
+
+
+	void SkinningComponent::UpdateSkinMatrices(
+		fr::EntityManager& em, entt::entity owningEntity, SkinningComponent& skinningCmpt)
+	{
+		bool foundDirty = false;
+
+		// Combine skin Transforms:
+		for (size_t jointIdx = 0; jointIdx < skinningCmpt.m_jointEntities.size(); ++jointIdx)
+		{
+			const entt::entity curEntity = skinningCmpt.m_jointEntities[jointIdx];
+
+			fr::TransformComponent const* jointTransformCmpt = em.TryGetComponent<fr::TransformComponent>(curEntity);
+			
+			if (jointTransformCmpt) // If null, no update necessary: Joints are initialized to the identity
+			{
+				fr::Transform const& jointTransform = jointTransformCmpt->GetTransform();
+				foundDirty |= jointTransform.HasChanged();
+
+				skinningCmpt.m_jointTransforms[jointIdx] = jointTransform.GetLocalMatrix();
+
+				fr::Relationship const& jointEntityRelationship = em.GetComponent<fr::Relationship>(curEntity);
+				const entt::entity parentEntity = jointEntityRelationship.GetParent();
+
+				entt::entity nextTransformEntity = entt::null;
+				fr::TransformComponent const* nextTransformCmpt =
+					em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(parentEntity, nextTransformEntity);
+
+				// Combine all the ancestors
+				while (nextTransformEntity != entt::null &&
+					skinningCmpt.m_jointEntitiesSet.contains(nextTransformEntity))
+				{
+					SEAssert(nextTransformCmpt, "Next transform component is null. This is unexpected");
+
+					fr::Transform const* nextTransform = &nextTransformCmpt->GetTransform();
+					foundDirty |= nextTransform->HasChanged();
+
+					skinningCmpt.m_jointTransforms[jointIdx] =
+						nextTransform->GetLocalMatrix() * skinningCmpt.m_jointTransforms[jointIdx];
+
+					fr::Relationship const& nextTransformRelationship =
+						em.GetComponent<fr::Relationship>(nextTransformEntity);
+
+					const entt::entity nextParentEntity = nextTransformRelationship.GetParent();
+					if (nextParentEntity != entt::null)
+					{
+						nextTransformCmpt = em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(
+							nextParentEntity, nextTransformEntity);
+					}
+				}
+
+				// Inverse bind matrix
+				if (!skinningCmpt.m_inverseBindMatrices.empty())
+				{
+					skinningCmpt.m_jointTransforms[jointIdx] =
+						skinningCmpt.m_jointTransforms[jointIdx] * skinningCmpt.m_inverseBindMatrices[jointIdx];
+				}
+
+				// Transpose inverse:
+				skinningCmpt.m_transposeInvJointTransforms[jointIdx] =
+					glm::transpose(glm::inverse(skinningCmpt.m_jointTransforms[jointIdx]));
+			}
+		}
+
+		if (foundDirty)
+		{
+			em.TryEmplaceComponent<DirtyMarker<fr::SkinningComponent>>(owningEntity);
+		}
 	}
 
 
 	gr::MeshPrimitive::SkinningRenderData SkinningComponent::CreateRenderData(
-		entt::entity skinnedMeshPrimitive, SkinningComponent const& skinningComponent)
+		entt::entity skinnedMeshPrimitive, SkinningComponent const& skinningCmpt)
 	{
 		return gr::MeshPrimitive::SkinningRenderData{
-			.m_jointTransformIDs = skinningComponent.m_jointTransformIDs,
-			.m_inverseBindMatrices = skinningComponent.m_inverseBindMatrices,
-			.m_skeletonNodeID = skinningComponent.m_skeletonNodeID,
+			.m_jointTransforms = skinningCmpt.m_jointTransforms,
+			.m_transposeInvJointTransforms = skinningCmpt.m_transposeInvJointTransforms,
 		};
 	}
 
@@ -75,9 +164,13 @@ namespace fr
 				ImGui::Indent();
 
 				// Display the skin metadata:
-				std::string const& skeletonNodeIDStr = skinningCmpt->m_skeletonNodeID == gr::k_invalidTransformID ? 
-					"<none>" : std::format("{}", skinningCmpt->m_skeletonNodeID);
+				std::string const& skeletonNodeIDStr = skinningCmpt->m_skeletonTransformID == gr::k_invalidTransformID ?
+					"<none>" : std::format("{}", skinningCmpt->m_skeletonTransformID);
 				ImGui::Text(std::format("Skeleton TransformID: {}", skeletonNodeIDStr).c_str());
+
+				std::string const& skeltonEntity = skinningCmpt->m_skeletonRootEntity == entt::null ?
+					"<none>" : std::format("{}", static_cast<uint64_t>(skinningCmpt->m_skeletonRootEntity));
+				ImGui::Text(std::format("Skeleton entity: {}", skeltonEntity).c_str());
 
 				ImGui::Text(std::format("Total inverse bind matrices: {}", 
 					skinningCmpt->m_inverseBindMatrices.size()).c_str());

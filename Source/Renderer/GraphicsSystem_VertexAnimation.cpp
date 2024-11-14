@@ -115,37 +115,17 @@ namespace
 		std::shared_ptr<re::Buffer> const& skinningJointsBuffer,
 		bool force)
 	{
-		std::vector<gr::TransformID> const& jointTransformIDs = skinData.m_jointTransformIDs;
+		std::vector<SkinningJoint> jointData;
+		jointData.reserve(skinData.m_jointTransforms.size());
 
-		for (size_t jointIdx = 0; jointIdx < jointTransformIDs.size(); ++jointIdx)
+		for (size_t jointIdx = 0; jointIdx < skinData.m_jointTransforms.size(); ++jointIdx)
 		{
-			const gr::TransformID jointTransformID = jointTransformIDs[jointIdx];
-
-			if ((jointTransformID != gr::k_invalidTransformID && renderData.TransformIsDirty(jointTransformID)) || 
-				force) // Note: force is safe as gr::k_invalidTransformID maps to the identity Transform by default
-			{
-				gr::Transform::RenderData const& jointTransformRenderData = 
-					renderData.GetTransformDataFromTransformID(jointTransformID);
-
-				struct SkinningJoint joint
-				{
-					.g_joint = jointTransformRenderData.g_model,
-					.g_transposeInvJoint = glm::mat4(1.f),
-				};
-
-				if (!skinData.m_inverseBindMatrices.empty())
-				{
-					SEAssert(skinData.m_inverseBindMatrices.size() >= jointTransformIDs.size(),
-						"Inverse bind matrices should have >= entries as the number of joints");
-
-					// Apply the per-joint inverse bind matrix BEFORE the base node transformation:
-					joint.g_joint = joint.g_joint * skinData.m_inverseBindMatrices[jointIdx];
-				}
-				joint.g_transposeInvJoint = glm::transpose(glm::inverse(joint.g_joint));
-
-				skinningJointsBuffer->Commit(&joint, util::CheckedCast<uint32_t>(jointIdx), 1);			
-			}
+			SkinningJoint& joint = jointData.emplace_back(SkinningJoint{
+				.g_joint = skinData.m_jointTransforms[jointIdx],
+				.g_transposeInvJoint = skinData.m_transposeInvJointTransforms[jointIdx], });
 		}
+
+		skinningJointsBuffer->Commit(jointData.data(), 0, util::CheckedCast<uint32_t>(jointData.size()));
 	}
 
 
@@ -342,7 +322,7 @@ namespace gr
 								.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
 								.m_accessMask = re::Buffer::Access::GPURead,
 								.m_usageMask = re::Buffer::Usage::Structured,
-								.m_arraySize = util::CheckedCast<uint32_t>(skinRenderData.m_jointTransformIDs.size()),
+								.m_arraySize = util::CheckedCast<uint32_t>(skinRenderData.m_jointTransforms.size()),
 							});
 
 						// Force the update for newly created buffers, as there is no guarantee the associated

@@ -130,8 +130,9 @@ namespace fr
 		}
 		
 		// Update the scene state:
-		UpdateAnimations(stepTimeMs);
+		UpdateAnimationControllers(stepTimeMs);  // Modifies Transforms
 		UpdateTransforms();
+		UpdateAnimations(stepTimeMs);
 		UpdateSceneBounds();
 		UpdateMaterials();
 		UpdateLightsAndShadows();
@@ -743,7 +744,7 @@ namespace fr
 	}
 
 
-	void EntityManager::UpdateAnimations(double stepTimeMs)
+	void EntityManager::UpdateAnimationControllers(double stepTimeMs)
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
@@ -765,16 +766,33 @@ namespace fr
 
 				fr::AnimationComponent::ApplyAnimation(animationComponent, transformComponent);
 			}
+		}
+	}
 
-			// Mesh animations:
-			auto animatedMeshesView = 
+
+	void EntityManager::UpdateAnimations(double stepTimeMs)
+	{
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+			// Morph animations:
+			auto morphMeshesView = 
 				m_registry.view<fr::AnimationComponent, fr::MeshMorphComponent, fr::Mesh::MeshConceptMarker>();
-			for (auto entity : animatedMeshesView)
+			for (auto entity : morphMeshesView)
 			{
-				fr::AnimationComponent const& animCmpt = animatedMeshesView.get<fr::AnimationComponent>(entity);
-				fr::MeshMorphComponent& meshAnimCmpt = animatedMeshesView.get<fr::MeshMorphComponent>(entity);
+				fr::AnimationComponent const& animCmpt = morphMeshesView.get<fr::AnimationComponent>(entity);
+				fr::MeshMorphComponent& meshAnimCmpt = morphMeshesView.get<fr::MeshMorphComponent>(entity);
 
 				fr::MeshMorphComponent::ApplyAnimation(entity, animCmpt, meshAnimCmpt);
+			}
+
+			// Skin animations:
+			auto skinnedMeshesView =
+				m_registry.view<fr::SkinningComponent, fr::Mesh::MeshConceptMarker>();
+			for (auto entity : skinnedMeshesView)
+			{
+				fr::SkinningComponent& skinCmpt = skinnedMeshesView.get<fr::SkinningComponent>(entity);
+				fr::SkinningComponent::UpdateSkinMatrices(*this, entity, skinCmpt);
 			}
 		}
 	}

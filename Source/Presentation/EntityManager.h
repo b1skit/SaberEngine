@@ -30,6 +30,7 @@ namespace fr
 
 	private: // Systems:
 		void UpdateCameraController(double stepTimeMs);
+		void UpdateAnimationControllers(double stepTimeMs);
 		void UpdateAnimations(double stepTimeMs);
 		void UpdateTransforms();
 		void UpdateSceneBounds();
@@ -462,7 +463,7 @@ namespace fr
 			
 			currentEntity = currentRelationship.GetParent();
 		}
-
+		owningEntityOut = entt::null;
 		return nullptr;
 	}
 

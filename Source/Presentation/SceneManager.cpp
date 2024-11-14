@@ -1640,12 +1640,17 @@ namespace
 			std::vector<gr::TransformID> jointToTransformIDs;
 			jointToTransformIDs.reserve(current->skin->joints_count);
 
+			std::vector<entt::entity> jointEntities;
+			jointEntities.reserve(current->skin->joints_count);
+
 			for (size_t jointIdx = 0; jointIdx < current->skin->joints_count; ++jointIdx)
 			{
 				SEAssert(sceneMetadata.m_nodeToEntity.contains(current->skin->joints[jointIdx]),
 					"Node is not in the node to entity map. This should not be possible");
 
 				const entt::entity jointNodeEntity = sceneMetadata.m_nodeToEntity.at(current->skin->joints[jointIdx]);
+
+				jointEntities.emplace_back(jointNodeEntity);
 
 				fr::TransformComponent const* transformCmpt =
 					em.TryGetComponent<fr::TransformComponent>(jointNodeEntity);
@@ -1657,12 +1662,16 @@ namespace
 				}
 				else
 				{
-					// We use this flag to signal an identity matrix, which allows us to skip some calculations
-					// later on
 					jointToTransformIDs.emplace_back(gr::k_invalidTransformID);
 				}
-			}
+			}		
 
+			// The skeleton root node is part of the skeletal hierarchy
+			entt::entity skeletonRootEntity = entt::null;
+			if (sceneMetadata.m_nodeToEntity.contains(current->skin->skeleton))
+			{
+				skeletonRootEntity = sceneMetadata.m_nodeToEntity.at(current->skin->skeleton);
+			}
 
 			// We pre-loaded the skinning data
 			std::vector<glm::mat4>* inverseBindMatrices = nullptr;
@@ -1692,7 +1701,9 @@ namespace
 			fr::SkinningComponent::AttachSkinningComponent(
 				sceneNode,
 				std::move(jointToTransformIDs),
+				std::move(jointEntities),
 				inverseBindMatrices ? std::move(*inverseBindMatrices) : std::vector<glm::mat4>(),
+				skeletonRootEntity,
 				skeletonTransformID);
 		}
 
@@ -1715,11 +1726,10 @@ namespace
 	}
 
 
-	inline entt::entity CreateSceneNode(cgltf_node const* gltfNode, entt::entity parent)
+	inline entt::entity CreateSceneNode(cgltf_node const* gltfNode, entt::entity parent, size_t nodeIdx)
 	{
-		constexpr char const* k_unnamedNodeName = "Unnamed node";
-		char const* nodeName = gltfNode->name ? gltfNode->name : k_unnamedNodeName;
-
+		std::string const& nodeName = gltfNode->name ? gltfNode->name : std::format("UnnamedNode_{}", nodeIdx);
+		
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
 		entt::entity newSceneNode = fr::SceneNode::Create(em, nodeName, parent);
@@ -1874,6 +1884,7 @@ namespace
 				}
 			}
 
+			size_t nodeIdx = 0; // So we can label any unnamed nodes
 			while (!nodes.empty())
 			{
 				cgltf_node const* curNode = nodes.top();
@@ -1890,7 +1901,7 @@ namespace
 				}
 
 				// Create the current node's entity (and Transform, if it has one):
-				sceneMetadata.m_nodeToEntity.emplace(curNode, CreateSceneNode(curNode, curNodeParentEntity));
+				sceneMetadata.m_nodeToEntity.emplace(curNode, CreateSceneNode(curNode, curNodeParentEntity, nodeIdx++));
 
 				// Add the children:
 				for (size_t childIdx = 0; childIdx < curNode->children_count; ++childIdx)

@@ -81,6 +81,7 @@ namespace fr
 		glm::vec3 GetGlobalUp() const; // World-space up (Y+) vector
 
 		// Local:
+		glm::mat4 GetLocalMatrix();
 		glm::mat4 GetLocalMatrix() const;
 
 		// Utility functions:

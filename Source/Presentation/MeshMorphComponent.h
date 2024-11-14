@@ -14,9 +14,7 @@ namespace fr
 		static MeshMorphComponent* AttachMeshMorphComponent(
 			fr::EntityManager&, entt::entity, float const* defaultWeights, uint32_t count);
 
-		// Returns true if any animation was applied
 		static void ApplyAnimation(entt::entity meshConcept, fr::AnimationComponent const&, fr::MeshMorphComponent&);
-
 
 		static gr::MeshPrimitive::MeshMorphRenderData CreateRenderData(entt::entity, MeshMorphComponent const&);
 

@@ -175,6 +175,16 @@ namespace fr
 	}
 
 
+	glm::mat4 Transform::GetLocalMatrix()
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+
+		Recompute();
+
+		return m_localMat;
+	}
+
+
 	glm::mat4 Transform::GetLocalMatrix() const
 	{
 		SEAssert(!m_isDirty, "Transform is dirty");

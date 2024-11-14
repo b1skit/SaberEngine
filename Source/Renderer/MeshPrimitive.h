@@ -117,9 +117,8 @@ namespace gr
 
 		struct SkinningRenderData
 		{
-			std::vector<gr::TransformID> m_jointTransformIDs;
-			std::vector<glm::mat4> m_inverseBindMatrices;
-			gr::TransformID m_skeletonNodeID;
+			std::vector<glm::mat4> m_jointTransforms;
+			std::vector<glm::mat4> m_transposeInvJointTransforms;
 		};
 
 
