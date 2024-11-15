@@ -112,8 +112,7 @@ namespace
 	void UpdateSkinningJointsBuffer(
 		gr::RenderDataManager const& renderData,
 		gr::MeshPrimitive::SkinningRenderData const& skinData,
-		std::shared_ptr<re::Buffer> const& skinningJointsBuffer,
-		bool force)
+		std::shared_ptr<re::Buffer> const& skinningJointsBuffer)
 	{
 		std::vector<SkinningJoint> jointData;
 		jointData.reserve(skinData.m_jointTransforms.size());
@@ -132,13 +131,11 @@ namespace
 	void UpdateSkinningJointsBuffer(
 		gr::RenderDataManager const& renderData,
 		gr::RenderDataID skinnedMeshID,
-		std::shared_ptr<re::Buffer> const& skinningJointsBuffer,
-		bool force)
+		std::shared_ptr<re::Buffer> const& skinningJointsBuffer)
 	{
 		UpdateSkinningJointsBuffer(renderData,
 			renderData.GetObjectData<gr::MeshPrimitive::SkinningRenderData>(skinnedMeshID),
-			skinningJointsBuffer,
-			force);
+			skinningJointsBuffer);
 	}
 }
 
@@ -327,7 +324,7 @@ namespace gr
 
 						// Force the update for newly created buffers, as there is no guarantee the associated
 						// Transforms are dirty
-						UpdateSkinningJointsBuffer(renderData, skinRenderData, skinJointsBuffer, true);
+						UpdateSkinningJointsBuffer(renderData, skinRenderData, skinJointsBuffer);
 					}					
 
 					++dirtySkinRenderDataItr;
@@ -563,13 +560,14 @@ namespace gr
 						auto const& jointBufferItr =
 							m_meshIDToSkinJoints.find(meshPrimRenderData.m_owningMeshRenderDataID);
 						if (jointBufferItr != m_meshIDToSkinJoints.end() &&
-							!seenSkinnedMeshes.contains(meshPrimRenderData.m_owningMeshRenderDataID))
+							!seenSkinnedMeshes.contains(meshPrimRenderData.m_owningMeshRenderDataID) &&
+							renderData.IsDirty<gr::MeshPrimitive::SkinningRenderData>(
+								meshPrimRenderData.m_owningMeshRenderDataID))
 						{
 							UpdateSkinningJointsBuffer(
 								renderData, 
 								jointBufferItr->first,
-								jointBufferItr->second,
-								false);
+								jointBufferItr->second);
 
 							seenSkinnedMeshes.emplace(meshPrimRenderData.m_owningMeshRenderDataID);
 						}
