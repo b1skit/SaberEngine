@@ -627,6 +627,8 @@ namespace fr
 				ImGui::Text(std::format("Global Right (X): {}", glm::to_string(GetGlobalRight())).c_str());
 				ImGui::Text(std::format("Global Up (Y): {}", glm::to_string(GetGlobalUp())).c_str());
 				ImGui::Text(std::format("Global Forward (Z): {}", glm::to_string(GetGlobalForward())).c_str());
+
+				ImGui::TreePop();
 			}
 
 			ImGui::Unindent();
