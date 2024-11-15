@@ -5,6 +5,14 @@
 #include "NormalMapUtils.hlsli"
 
 
+Texture2D<float4> GBufferAlbedo;
+Texture2D<float4> GBufferWNormal;
+Texture2D<float4> GBufferRMAO;
+Texture2D<float4> GBufferEmissive;
+Texture2D<float4> GBufferMatProp0;
+Texture2D<float4> GBufferDepth;
+
+
 struct GBuffer
 {
 	float3 LinearAlbedo;

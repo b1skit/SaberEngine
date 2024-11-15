@@ -9,6 +9,9 @@
 
 #define TEXEL_OFFSET NUM_TAPS/2
 
+Texture2D<float4> Tex0;
+
+
 struct GaussianBlurParamsCB
 {
 	float4 g_blurSettings; // .x = Bloom direction (0 = horizontal, 1 = vertical), .yzw = unused

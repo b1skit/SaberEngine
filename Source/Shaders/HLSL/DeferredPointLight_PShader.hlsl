@@ -4,6 +4,10 @@
 #include "SaberCommon.hlsli"
 #include "Shadows.hlsli"
 
+#include "../Common/TargetParams.h"
+
+ConstantBuffer<TargetData> TargetParams;
+
 
 float4 PShader(VertexOut In) : SV_Target
 {

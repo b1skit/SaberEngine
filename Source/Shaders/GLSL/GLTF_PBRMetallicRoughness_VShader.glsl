@@ -5,7 +5,19 @@
 #include "NormalMapUtils.glsli"
 #include "SaberCommon.glsli"
 
+#include "../Common/CameraParams.h"
+#include "../Common/InstancingParams.h"
+#include "../Common/MaterialParams.h"
+
 #include "../Generated/GLSL/VertexStreams_PosNmlTanUvCol.glsli"
+
+layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
+
+layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	InstancedPBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
+
+// UBOs can't have a dynamic length; We use SSBOs for instancing instead
+layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformData _InstancedTransformParams[]; };
 
 
 void VShader()

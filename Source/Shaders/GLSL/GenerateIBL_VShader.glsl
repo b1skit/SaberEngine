@@ -3,6 +3,11 @@
 #include "SaberCommon.glsli"
 #include "VertexStreams_PositionOnly.glsli"
 
+#include "../Common/CameraParams.h"
+
+layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+
+
 void VShader()
 {
 	Out.LocalPos = Position; // Untransformed vertex position

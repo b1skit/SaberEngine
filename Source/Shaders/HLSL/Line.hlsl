@@ -3,6 +3,7 @@
 #include "SaberCommon.hlsli"
 
 #include "../Common/DebugParams.h"
+#include "../Common/InstancingParams.h"
 
 #if defined(DEBUG_NORMAL)
 #include "../Generated/HLSL/VertexStreams_PositionNormal.hlsli"
@@ -11,6 +12,8 @@
 #else
 #include "../Generated/HLSL/VertexStreams_PositionColor.hlsli"
 #endif
+
+StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
 
 
 struct LineVertexOut

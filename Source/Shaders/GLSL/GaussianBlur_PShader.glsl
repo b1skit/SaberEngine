@@ -4,6 +4,8 @@
 
 #include "SaberCommon.glsli"
 
+layout(binding=0) uniform sampler2D Tex0;
+
 //#define NUM_TAPS 5
 //#define NUM_TAPS 7
 #define NUM_TAPS 9

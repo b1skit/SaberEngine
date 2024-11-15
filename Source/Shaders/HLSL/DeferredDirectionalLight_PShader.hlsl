@@ -8,6 +8,8 @@
 #include "Shadows.hlsli"
 #include "Transformations.hlsli"
 
+Texture2DArray<float> DirectionalShadows;
+
 
 float4 PShader(VertexOut In) : SV_Target
 {

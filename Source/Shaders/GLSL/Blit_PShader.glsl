@@ -2,6 +2,8 @@
 
 #include "SaberCommon.glsli"
 
+layout(binding=0) uniform sampler2D Tex0;
+
 
 void PShader()
 {	

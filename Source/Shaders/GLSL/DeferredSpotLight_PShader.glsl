@@ -7,6 +7,17 @@
 #include "Shadows.glsli"
 #include "GBufferCommon.glsli"
 
+#include "../Common/CameraParams.h"
+#include "../Common/LightParams.h"
+#include "../Common/TargetParams.h"
+
+
+layout(binding=0) uniform TargetParams { TargetData _TargetParams; };
+layout(binding=6) uniform LightIndexParams { LightIndexData _LightIndexParams; };
+layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+
+layout(std430, binding=5) readonly buffer SpotLightParams { LightData _SpotLightParams[]; };
+
 
 void PShader()
 {	

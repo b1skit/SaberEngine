@@ -8,6 +8,13 @@
 #include "Lighting.glsli"
 #include "UVUtils.glsli"
 
+#include "../Common/IBLGenerationParams.h"
+
+
+layout(binding=12) uniform IEMPMREMGenerationParams { IEMPMREMGenerationData _IEMPMREMGenerationParams; };
+
+layout(binding=0) uniform sampler2D Tex0;
+
 
 // The IEM (Irradiance Environment Map) is the pre-integrated per-light-probe LD term of the diffuse portion of the
 // decomposed approximate microfacet BRDF.

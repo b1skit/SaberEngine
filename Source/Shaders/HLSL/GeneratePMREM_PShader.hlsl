@@ -12,6 +12,8 @@
 
 ConstantBuffer<IEMPMREMGenerationData> IEMPMREMGenerationParams;
 
+Texture2D<float4> Tex0;
+
 
 // The PMREM (Pre-filtered Mip-mapped Radiance Environment Map) is the pre-integrated per-light-probe LD term of the 
 // specular portion of the decomposed approximate microfacet BRDF.

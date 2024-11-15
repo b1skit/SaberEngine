@@ -11,7 +11,6 @@
 
 ConstantBuffer<PoissonSampleParamsData> PoissonSampleParams;
 
-Texture2DArray<float> DirectionalShadows;
 Texture2DArray<float> SpotShadows;
 TextureCubeArray<float> PointShadows;
 

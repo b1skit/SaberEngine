@@ -6,6 +6,11 @@
 #include "Transformations.glsli"
 #include "UVUtils.glsli"
 
+#include "../Common/LightParams.h"
+
+layout(binding=11) uniform sampler2DArrayShadow SpotShadows;
+layout(binding=12) uniform samplerCubeArrayShadow PointShadows;
+
 
 void GetBiasedShadowWorldPos(
 	vec3 worldPos, vec3 worldNormal, vec3 lightWDir, vec2 minMaxShadowBias, out vec3 shadowWorldPosOut)

@@ -5,6 +5,14 @@
 #include "SaberCommon.glsli"
 #include "Lighting.glsli"
 
+#include "../Common/CameraParams.h"
+
+
+layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+
+layout(binding=0) uniform sampler2D Tex0;
+layout(binding=1) uniform sampler2D Tex1;
+
 
 // Attribution: 
 // 2 different ACES implementations are used here:

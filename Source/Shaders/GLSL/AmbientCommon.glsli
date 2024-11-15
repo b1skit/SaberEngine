@@ -7,6 +7,10 @@
 #include "Lighting.glsli"
 #include "UVUtils.glsli"
 
+#include "../Common/LightParams.h"
+
+
+layout(binding=9) uniform AmbientLightParams { AmbientLightData _AmbientLightParams; };
 
 layout(binding=29) uniform sampler2D DFG;
 layout(binding=30) uniform samplerCube CubeMapIEM;

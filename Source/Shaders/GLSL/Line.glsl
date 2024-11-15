@@ -4,8 +4,9 @@
 
 #include "SaberCommon.glsli"
 
+#include "../Common/CameraParams.h"
 #include "../Common/DebugParams.h"
-
+#include "../Common/InstancingParams.h"
 
 #if defined(SE_VERTEX_SHADER)
 
@@ -18,6 +19,13 @@
 #endif
 
 #endif // SE_VERTEX_SHADER
+
+
+layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+
+// UBOs can't have a dynamic length; We use SSBOs for instancing instead
+layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformData _InstancedTransformParams[]; };
+
 
 struct LineVertexOut
 {

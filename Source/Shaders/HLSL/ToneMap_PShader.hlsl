@@ -6,6 +6,10 @@
 #include "Lighting.hlsli"
 
 
+Texture2D<float4> Tex0;
+Texture2D<float4> Tex1;
+
+
 // Attribution: 
 // 2 different ACES implementations are used here:
 // 1) By Krzysztof Narkowicz:

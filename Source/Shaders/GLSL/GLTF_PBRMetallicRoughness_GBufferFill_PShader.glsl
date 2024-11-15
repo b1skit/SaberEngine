@@ -8,6 +8,20 @@
 #include "NormalMapUtils.glsli"
 #include "UVUtils.glsli"
 
+#include "../Common/InstancingParams.h"
+#include "../Common/MaterialParams.h"
+
+
+layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
+
+layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	InstancedPBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
+
+layout(binding=0) uniform sampler2D BaseColorTex;
+layout(binding=1) uniform sampler2D MetallicRoughnessTex;
+layout(binding=2) uniform sampler2D NormalTex;
+layout(binding=3) uniform sampler2D OcclusionTex;
+layout(binding=4) uniform sampler2D EmissiveTex;
+
 
 layout (location = 0) out vec4 Albedo;
 layout (location = 1) out vec4 WorldNormal;

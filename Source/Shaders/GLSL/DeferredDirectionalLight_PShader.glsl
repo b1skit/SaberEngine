@@ -6,6 +6,17 @@
 #include "Shadows.glsli"
 #include "GBufferCommon.glsli"
 
+#include "../Common/CameraParams.h"
+#include "../Common/LightParams.h"
+
+
+layout(binding=6) uniform LightIndexParams { LightIndexData _LightIndexParams; };
+layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+
+layout(std430, binding=3) readonly buffer DirectionalLightParams { LightData _DirectionalLightParams[]; };
+
+layout(binding=10) uniform sampler2DArrayShadow DirectionalShadows;
+
 
 void PShader()
 {

@@ -2,6 +2,13 @@
 #include "SaberCommon.glsli"
 #include "VertexStreams_PositionUV.glsli"
 
+#include "../Common/InstancingParams.h"
+
+layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
+
+// UBOs can't have a dynamic length; We use SSBOs for instancing instead
+layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformData _InstancedTransformParams[]; };
+
 
 void VShader()
 {

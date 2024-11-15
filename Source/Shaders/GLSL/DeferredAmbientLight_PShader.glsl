@@ -6,6 +6,10 @@
 #include "AmbientCommon.glsli"
 #include "GBufferCommon.glsli"
 
+#include "../Common/CameraParams.h"
+
+layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+
 
 float GetSSAO(vec2 screenUV, uvec2 screenPxDims)
 {

@@ -4,6 +4,13 @@
 #include "SaberCommon.glsli"
 #include "UVUtils.glsli"
 
+#include "../Common/BloomComputeParams.h"
+
+
+layout(binding=0) uniform BloomComputeParams { BloomComputeData _BloomComputeParams; };
+
+layout(binding=0) uniform sampler2D Tex0;
+
 layout(location=0, rgba32f) coherent uniform image2D output0;
 
 

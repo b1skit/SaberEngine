@@ -11,6 +11,28 @@
 #include "NormalMapUtils.glsli"
 #include "Shadows.glsli"
 
+#include "../Common/CameraParams.h"
+#include "../Common/InstancingParams.h"
+#include "../Common/LightParams.h"
+#include "../Common/MaterialParams.h"
+
+
+layout(binding=10) uniform AllLightIndexesParams { AllLightIndexesData _AllLightIndexesParams; };
+layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
+
+layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	InstancedPBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
+layout(std430, binding=3) readonly buffer DirectionalLightParams { LightData _DirectionalLightParams[]; };
+layout(std430, binding=4) readonly buffer PointLightParams { LightData _PointLightParams[]; };
+layout(std430, binding=5) readonly buffer SpotLightParams { LightData _SpotLightParams[]; };
+
+layout(binding=0) uniform sampler2D BaseColorTex;
+layout(binding=1) uniform sampler2D MetallicRoughnessTex;
+layout(binding=2) uniform sampler2D NormalTex;
+layout(binding=3) uniform sampler2D OcclusionTex;
+
+layout(binding=10) uniform sampler2DArrayShadow DirectionalShadows;
+
 
 uint UnpackPointLightIndex(uint arrayIdx)
 {

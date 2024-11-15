@@ -5,6 +5,14 @@
 #include "Transformations.glsli"
 #include "UVUtils.glsli"
 
+#include "../Common/CameraParams.h"
+#include "../Common/SkyboxParams.h"
+
+layout(binding=0) uniform SkyboxParams { SkyboxData _SkyboxParams; };
+layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+
+layout(binding=0) uniform sampler2D Tex0;
+
 
 void PShader()
 {	
