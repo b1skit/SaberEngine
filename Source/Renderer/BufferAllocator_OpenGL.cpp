@@ -53,9 +53,9 @@ namespace opengl
 		{
 			bufferNameOut = m_singleFrameBuffers[re::BufferAllocator::VertexStream][writeIdx];
 
-			constexpr GLint vertexAlignment = 16; // Minimum alignment of a float4 is 16B
+			constexpr GLint k_vertexAlignment = 16; // Minimum alignment of a float4 is 16B
 
-			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, vertexAlignment);
+			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, k_vertexAlignment);
 		}
 		break;
 		default: SEAssertF("Invalid AllocationPool");

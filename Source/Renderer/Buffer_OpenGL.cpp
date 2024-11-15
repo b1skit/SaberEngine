@@ -191,9 +191,9 @@ namespace opengl
 				"Buffer is missing the VertexStream usage bit");
 
 			glBindVertexBuffer(
-				bindIndex,										// Slot index
-				bufferPlatParams->m_bufferName,					// Buffer
-				0,												// Offset
+				bindIndex,											// Slot index
+				bufferPlatParams->m_bufferName,						// Buffer
+				bufferPlatParams->m_baseOffset,						// Offset
 				DataTypeToByteStride(view.m_stream.m_dataType));	// Stride
 		}
 		break;
@@ -218,7 +218,7 @@ namespace opengl
 
 		void* cpuVisibleData = glMapNamedBufferRange(
 			bufferPlatParams->m_bufferName,
-			0,								// offset
+			bufferPlatParams->m_baseOffset,	// offset
 			(GLsizeiptr)bufferSize,			// length
 			GL_MAP_READ_BIT);				// access
 
