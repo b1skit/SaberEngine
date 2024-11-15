@@ -29,7 +29,7 @@ namespace opengl
 		{
 		case re::BufferAllocator::Constant:
 		{
-			bufferNameOut = m_singleFrameBuffers[re::Buffer::Constant][writeIdx];
+			bufferNameOut = m_singleFrameBuffers[re::BufferAllocator::Constant][writeIdx];
 
 			const GLint uboAlignment = opengl::SysInfo::GetUniformBufferOffsetAlignment(); // e.g. 256
 			SEAssert(re::BufferAllocator::k_fixedAllocationByteSize % uboAlignment == 0,
@@ -40,7 +40,7 @@ namespace opengl
 		break;
 		case re::BufferAllocator::Structured:
 		{
-			bufferNameOut = m_singleFrameBuffers[re::Buffer::Structured][writeIdx];
+			bufferNameOut = m_singleFrameBuffers[re::BufferAllocator::Structured][writeIdx];
 
 			const GLint ssboAlignment = opengl::SysInfo::GetShaderStorageBufferOffsetAlignment(); // e.g. 16
 			SEAssert(re::BufferAllocator::k_fixedAllocationByteSize % ssboAlignment == 0,
@@ -51,7 +51,7 @@ namespace opengl
 		break;
 		case re::BufferAllocator::VertexStream:
 		{
-			bufferNameOut = m_singleFrameBuffers[re::Buffer::VertexStream][writeIdx];
+			bufferNameOut = m_singleFrameBuffers[re::BufferAllocator::VertexStream][writeIdx];
 
 			constexpr GLint vertexAlignment = 16; // Minimum alignment of a float4 is 16B
 
