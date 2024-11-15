@@ -10,6 +10,8 @@ SamplerState ClampMinMagMipLinear;
 Texture2D<float4> Tex0;
 ConstantBuffer<BloomComputeData> BloomComputeParams;
 
+RWTexture2D<float4> output0 : register(u0);
+
 
 float ComputeKarisAverageWeight(float3 linearColor)
 {

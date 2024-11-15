@@ -1,5 +1,4 @@
 // © 2023 Adam Badke. All rights reserved.
-#define SPECIFY_OWN_COMPUTE_OUTPUTS
 #include "SaberComputeCommon.hlsli"
 
 #include "Color.hlsli"

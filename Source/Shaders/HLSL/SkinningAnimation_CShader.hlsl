@@ -1,5 +1,4 @@
 // © 2024 Adam Badke. All rights reserved.
-#define SPECIFY_OWN_COMPUTE_OUTPUTS
 #include "SaberComputeCommon.hlsli"
 #include "NormalMapUtils.hlsli"
 

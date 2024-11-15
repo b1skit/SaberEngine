@@ -11,6 +11,8 @@
 
 ConstantBuffer<BRDFIntegrationData> BRDFIntegrationParams;
 
+RWTexture2D<float4> output0 : register(u0);
+
 
 #define NUM_SAMPLES 1024
 

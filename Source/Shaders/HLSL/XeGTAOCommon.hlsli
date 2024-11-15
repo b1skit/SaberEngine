@@ -2,7 +2,6 @@
 #ifndef XEGTAO_COMMON
 #define XEGTAO_COMMON
 
-#define SPECIFY_OWN_COMPUTE_OUTPUTS
 #include "SaberComputeCommon.hlsli"
 
 
