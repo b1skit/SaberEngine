@@ -44,7 +44,7 @@ namespace fr
 	};
 
 
-	// ---
+	// -----------------------------------------------------------------------------------------------------------------
 
 
 	inline float ComputeSegmentNormalizedInterpolationFactor(float prevSec, float nextSec, float requestedSec)
@@ -163,7 +163,7 @@ namespace fr
 	}
 
 
-	// ---
+	// -----------------------------------------------------------------------------------------------------------------
 
 
 	class AnimationController
@@ -194,13 +194,13 @@ namespace fr
 		float GetAnimationSpeed() const;
 		void SetAnimationSpeed(float);
 
-		float GetActiveLongestAnimationTimeSec() const;
+		float GetActiveLongestChannelTimeSec() const;
 
 
 	public:
 		void AddNewAnimation(char const* animName); // Called once per animation, during construction
 
-		size_t AddKeyframeTimes(std::vector<float>&&); // Returns keyframeTimesIdx
+		size_t AddChannelKeyframeTimes(size_t animIdx, std::vector<float>&&); // Returns keyframeTimesIdx for channel
 		std::vector<float> const& GetKeyframeTimes(size_t keyframeTimesIdx) const;
 		size_t GetNumKeyframeTimes() const;
 
@@ -221,8 +221,9 @@ namespace fr
 		std::vector<std::string> m_animationNames;
 		std::vector<double> m_currentTimeSec;
 
-		std::vector<std::vector<float>> m_keyframeTimesSec;
-		std::vector<float> m_longestChannelTimesSec;
+		std::vector<std::vector<std::vector<float>>> m_animChannelKeyframeTimesSec; // [animation][channel] == vector<float> keyframe times
+
+		std::vector<float> m_longestAnimChannelTimesSec; // Indexed per animation
 
 		std::vector<std::vector<float>> m_channelData; // ALL data for all animations
 
@@ -254,8 +255,9 @@ namespace fr
 
 	inline float AnimationController::GetActiveClampedAnimationTimeSec() const
 	{
-		return glm::fmod(static_cast<float>(m_currentTimeSec[m_activeAnimationIdx]),
-			m_longestChannelTimesSec[m_activeAnimationIdx]);
+		return glm::fmod(
+			static_cast<float>(m_currentTimeSec[m_activeAnimationIdx]),
+			m_longestAnimChannelTimesSec[m_activeAnimationIdx]);
 	}
 
 
@@ -283,9 +285,9 @@ namespace fr
 	}
 
 
-	inline float AnimationController::GetActiveLongestAnimationTimeSec() const
+	inline float AnimationController::GetActiveLongestChannelTimeSec() const
 	{
-		return m_longestChannelTimesSec[m_activeAnimationIdx];
+		return m_longestAnimChannelTimesSec[m_activeAnimationIdx];
 	}
 
 
@@ -306,14 +308,14 @@ namespace fr
 
 	inline std::vector<float> const& AnimationController::GetKeyframeTimes(size_t keyframeTimesIdx) const
 	{
-		SEAssert(keyframeTimesIdx < m_keyframeTimesSec.size(), "Invalid index");
-		return m_keyframeTimesSec[keyframeTimesIdx];
+		SEAssert(keyframeTimesIdx < m_animChannelKeyframeTimesSec[m_activeAnimationIdx].size(), "Invalid index");
+		return m_animChannelKeyframeTimesSec[m_activeAnimationIdx][keyframeTimesIdx];
 	}
 
 
 	inline size_t AnimationController::GetNumKeyframeTimes() const
 	{
-		return m_keyframeTimesSec.size();
+		return m_animChannelKeyframeTimesSec[m_activeAnimationIdx].size();
 	}
 
 

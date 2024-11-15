@@ -1985,7 +1985,7 @@ namespace
 				cgltf_accessor_unpack_floats(animSampler->input, keyframeTimesSec.data(), numKeyframeTimeEntries);
 
 				animChannel.m_keyframeTimesIdx = 
-					sceneMetadata.m_animationController->AddKeyframeTimes(std::move(keyframeTimesSec));
+					sceneMetadata.m_animationController->AddChannelKeyframeTimes(animIdx, std::move(keyframeTimesSec));
 
 				// Channel output data:
 				const cgltf_size numOutputFloats = cgltf_accessor_unpack_floats(animSampler->output, nullptr, 0);

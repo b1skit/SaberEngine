@@ -61,28 +61,38 @@ namespace fr
 
 	void AnimationController::SetActiveAnimationIdx(size_t animationIdx)
 	{
-		SEAssert(animationIdx < m_keyframeTimesSec.size(), "OOB index");
+		SEAssert(animationIdx < m_animChannelKeyframeTimesSec.size(), "OOB index");
 		m_activeAnimationIdx = animationIdx;
 	}
 
 
-	size_t AnimationController::AddKeyframeTimes(std::vector<float>&& keyframeTimes)
+	size_t AnimationController::AddChannelKeyframeTimes(size_t animIdx, std::vector<float>&& keyframeTimes)
 	{
-		SEAssert(m_keyframeTimesSec.size() == m_longestChannelTimesSec.size(),
-			"Animation index is out of sync");
+		if (animIdx >= m_animChannelKeyframeTimesSec.size())
+		{
+			m_animChannelKeyframeTimesSec.emplace_back();
+			SEAssert(animIdx == m_animChannelKeyframeTimesSec.size() - 1, 
+				"Unexpected animation index: We currently expect new animations and their channels to be added in "
+				"monotonically-increasing order");
 
-		const size_t keyframeTimesIdx = m_keyframeTimesSec.size();
-		std::vector<float>& newKeyframeTimes = m_keyframeTimesSec.emplace_back(std::move(keyframeTimes));
-		m_longestChannelTimesSec.emplace_back(std::numeric_limits<float>::min());
+			m_longestAnimChannelTimesSec.emplace_back(0.f);
+			SEAssert(m_longestAnimChannelTimesSec.size() == m_animChannelKeyframeTimesSec.size(),
+				"Animation times and longest channel times are out of sync");
+		}
 
+		const size_t channelKeyframeTimesIdx = m_animChannelKeyframeTimesSec[animIdx].size();
+
+		std::vector<float> const& newKeyframeTimes = 
+			m_animChannelKeyframeTimesSec[animIdx].emplace_back(std::move(keyframeTimes));
+		
 		// Update our longest channel timer
 		for (float keyframeTime : newKeyframeTimes)
 		{
-			m_longestChannelTimesSec[keyframeTimesIdx] =
-				std::max(m_longestChannelTimesSec[keyframeTimesIdx], keyframeTime);
+			m_longestAnimChannelTimesSec[animIdx] =
+				std::max(m_longestAnimChannelTimesSec[animIdx], keyframeTime);
 		}		
 
-		return keyframeTimesIdx;
+		return channelKeyframeTimesIdx;
 	}
 
 
@@ -172,7 +182,7 @@ namespace fr
 
 				ImGui::PushItemWidth(-ImGui::GetContentRegionAvail().x * 0.4f);
 				const float progress =
-					animController.GetActiveClampedAnimationTimeSec() / animController.GetActiveLongestAnimationTimeSec();
+					animController.GetActiveClampedAnimationTimeSec() / animController.GetActiveLongestChannelTimeSec();
 				ImGui::ProgressBar(
 					progress,
 					ImVec2(0.f, 0.f),
@@ -183,7 +193,7 @@ namespace fr
 
 				ImGui::Text(std::format("Time: {:0.2f} / {:0.2f} seconds", // Round to 2 decimal places
 					animController.GetActiveClampedAnimationTimeSec(),
-					animController.GetActiveLongestAnimationTimeSec()).c_str());
+					animController.GetActiveLongestChannelTimeSec()).c_str());
 			}
 			else
 			{
@@ -205,7 +215,7 @@ namespace fr
 				ImGui::Text(std::format("{} data channel{}",
 					numDataChannels,
 					numDataChannels > 1 ? "s" : "").c_str());
-				ImGui::Text(std::format("Longest animation: {} sec", animController.GetActiveLongestAnimationTimeSec()).c_str());
+				ImGui::Text(std::format("Longest animation: {} sec", animController.GetActiveLongestChannelTimeSec()).c_str());
 				ImGui::Unindent();
 			}
 
@@ -315,6 +325,8 @@ namespace fr
 
 		fr::Transform& transform = transformCmpt.GetTransform();
 
+		const float currentTimeSec = animCmpt.m_animationController->GetActiveClampedAnimationTimeSec();
+
 		for (auto const& channel : animationData->m_channels)
 		{
 			// Find the next smallest/next largest keyframe time value about our current animation time:
@@ -323,8 +335,6 @@ namespace fr
 			GetPrevNextKeyframeIdx(animCmpt.m_animationController, channel, prevKeyframeIdx, nextKeyframeIdx);
 
 			// Select the appropriate channelData values:
-			const float currentTimeSec = animCmpt.m_animationController->GetActiveClampedAnimationTimeSec();
-
 			std::vector<float> const& keyframeTimes =
 				animCmpt.m_animationController->GetKeyframeTimes(channel.m_keyframeTimesIdx);
 

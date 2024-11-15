@@ -331,6 +331,10 @@
               "Command": "-scene RiggedFigure\\glTF\\RiggedFigure.gltf"
             },
             {
+              "Id": "0f478834-b723-4acc-aaa9-ea965cdf1b14",
+              "Command": "-scene RecursiveSkeletons\\glTF-Binary\\RecursiveSkeletons.glb"
+            },
+            {
               "Id": "1ae94854-57e8-48cf-8e42-60a22f47119c",
               "Command": "-scene BrainStem\\glTF\\BrainStem.gltf"
             },
