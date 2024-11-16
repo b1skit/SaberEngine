@@ -56,6 +56,12 @@ namespace
 	};
 	using PrimitiveToMeshPrimitiveMap = std::unordered_map<cgltf_primitive const*, MeshPrimitiveMetadata>;
 
+	struct CameraMetadata
+	{
+		size_t m_srcNodeIdx;
+		entt::entity m_owningEntity;
+	};
+
 	struct SceneMetadata
 	{
 		fr::AnimationController* m_animationController = nullptr;
@@ -65,7 +71,10 @@ namespace
 		std::mutex m_skinToSkinMetadataMutex;
 
 		PrimitiveToMeshPrimitiveMap m_primitiveToMeshPrimitiveMetadata;
-		std::mutex m_primitiveToMeshPrimitiveMetadataMutex; 
+		std::mutex m_primitiveToMeshPrimitiveMetadataMutex;
+
+		std::vector<CameraMetadata> m_cameraMetadata;
+		std::mutex m_cameraMetadataMutex;
 
 		NodeToEntityMap m_nodeToEntity;
 	};
@@ -663,15 +672,16 @@ namespace
 
 
 	// Creates a default camera if current == nullptr
-	void LoadAddCamera(re::SceneData& scene, entt::entity sceneNode, cgltf_node const* current)
+	void LoadAddCamera(
+		entt::entity sceneNodeEntity, size_t nodeIdx, cgltf_node const* current, SceneMetadata& sceneMetadata)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
 		constexpr char const* k_defaultCamName = "DefaultCamera";
-		if (sceneNode == entt::null)
+		if (sceneNodeEntity == entt::null)
 		{
-			sceneNode = fr::SceneNode::Create(em, std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null);
-			fr::TransformComponent::AttachTransformComponent(em, sceneNode);
+			sceneNodeEntity = fr::SceneNode::Create(em, std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null);
+			fr::TransformComponent::AttachTransformComponent(em, sceneNodeEntity);
 		}
 
 
@@ -688,7 +698,7 @@ namespace
 
 			fr::CameraComponent::CreateCameraConcept(
 				em,
-				sceneNode,
+				sceneNodeEntity,
 				k_defaultCamName,
 				camConfig);
 		}
@@ -696,7 +706,7 @@ namespace
 		{
 			cgltf_camera const* const camera = current->camera;
 
-			SEAssert(sceneNode != entt::null && camera != nullptr, "Must supply a scene node and camera pointer");
+			SEAssert(sceneNodeEntity != entt::null && camera != nullptr, "Must supply a scene node and camera pointer");
 
 			char const* camName = camera->name ? camera->name : "Unnamed camera";
 			LOG("Loading camera \"%s\"", camName);
@@ -728,10 +738,17 @@ namespace
 			}
 
 			// Create the camera and set the transform values on the parent object:
-			fr::CameraComponent::CreateCameraConcept(em, sceneNode, camName, camConfig);
+			fr::CameraComponent::CreateCameraConcept(em, sceneNodeEntity, camName, camConfig);
 		}
 
-		em.EnqueueEntityCommand<fr::SetMainCameraCommand>(sceneNode);
+		// Update the camera metadata:
+		{
+			std::lock_guard<std::mutex> lock(sceneMetadata.m_cameraMetadataMutex);
+
+			sceneMetadata.m_cameraMetadata.emplace_back(CameraMetadata{
+				.m_srcNodeIdx = nodeIdx,
+				.m_owningEntity = sceneNodeEntity, });
+		}
 	}
 
 
@@ -1839,7 +1856,7 @@ namespace
 					}
 					if (current->camera)
 					{
-						LoadAddCamera(sceneData, curSceneNodeEntity, current);
+						LoadAddCamera(curSceneNodeEntity, nodeIdx, current, sceneMetadata);
 					}
 
 					// Attach an animation component, if it is required:
@@ -2212,7 +2229,8 @@ namespace fr
 				}));
 
 		// Start loading the GLTF file data:
-		bool foundCamera = false;
+		SceneMetadata sceneMetadata; // We'll pre-parse the scene and populate helper metadata
+		bool sceneHasCamera = false;
 		if (data)
 		{
 			cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, sceneFilePath.c_str());
@@ -2232,10 +2250,7 @@ namespace fr
 #endif
 
 			SEAssert(data->cameras_count > 0 || data->cameras == nullptr, "Camera pointer and count mismatch");
-			foundCamera = data->cameras_count > 0;
-
-			
-			SceneMetadata sceneMetadata; // We'll pre-parse the scene and populate helper metadata
+			sceneHasCamera = data->cameras_count > 0;
 
 			std::vector<std::future<void>> loadFutures;
 
@@ -2279,23 +2294,35 @@ namespace fr
 			}
 			loadFutures.clear();
 
-
 			// Cleanup:
 			cgltf_free(data);
 		}
 
-		if (!foundCamera) // Add a default camera:
+		if (!sceneHasCamera) // Add a default camera:
 		{
 			earlyLoadTasks.emplace_back(
-				core::ThreadPool::Get()->EnqueueJob([&sceneData]() {
-					LoadAddCamera(*sceneData, entt::null, nullptr);
+				core::ThreadPool::Get()->EnqueueJob([&sceneMetadata]() {
+					LoadAddCamera(entt::null, 0, nullptr, sceneMetadata);
 					}));
 		}
 
-		// Wait for all of the tasks we spawned here to be done:
+		// Wait for the early load tasks we spawned here to be done:
 		for (size_t loadTask = 0; loadTask < earlyLoadTasks.size(); loadTask++)
 		{
 			earlyLoadTasks[loadTask].wait();
+		}
+
+		// Set the main camera
+		{
+			std::lock_guard<std::mutex> lock(sceneMetadata.m_cameraMetadataMutex);
+
+			std::sort(
+				sceneMetadata.m_cameraMetadata.begin(),
+				sceneMetadata.m_cameraMetadata.end(),
+				[](CameraMetadata const& a, CameraMetadata const& b) { return a.m_srcNodeIdx < b.m_srcNodeIdx; });
+
+			fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetMainCameraCommand>(
+				sceneMetadata.m_cameraMetadata.back().m_owningEntity);
 		}
 
 		sceneData->EndLoading();
