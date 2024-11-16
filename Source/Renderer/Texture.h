@@ -259,9 +259,9 @@ namespace re
 		static std::shared_ptr<re::Texture> CreateInternal(
 			std::string const& name, TextureParams const&, std::unique_ptr<IInitialData>&&);
 
-		void Fill(glm::vec4 solidColor);	// Fill texture with a solid color
+		void Fill(glm::vec4 const& solidColor);	// Fill texture with a solid color
 
-		void SetTexel(uint8_t arrayIdx, uint32_t face, uint32_t u, uint32_t v, glm::vec4 value); // u == x == col, v == y == row
+		void SetTexel(uint8_t arrayIdx, uint32_t face, uint32_t u, uint32_t v, glm::vec4 const& value); // u == x == col, v == y == row
 
 
 	private:

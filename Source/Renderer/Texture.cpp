@@ -282,7 +282,7 @@ namespace re
 	}
 
 
-	void Texture::SetTexel(uint8_t arrayIdx, uint32_t faceIdx, uint32_t u, uint32_t v, glm::vec4 value)
+	void Texture::SetTexel(uint8_t arrayIdx, uint32_t faceIdx, uint32_t u, uint32_t v, glm::vec4 const& value)
 	{
 		// Note: If texture has < 4 channels, the corresponding channels in value are ignored
 
@@ -308,29 +308,29 @@ namespace re
 		uint8_t* dataPtr = static_cast<uint8_t*>(GetTexelData(arrayIdx, faceIdx));
 
 		// Reinterpret the value:
-		void* const valuePtr = &value.x;
-		void* const pixelPtr = &dataPtr[((v * m_texParams.m_width) + u) * bytesPerPixel];
+		void const* valuePtr = &value.x;
+		void* pixelPtr = &dataPtr[((v * m_texParams.m_width) + u) * bytesPerPixel];
 		switch (m_texParams.m_format)
 		{
 		case re::Texture::Format::RGBA32F:
 		{
-			*static_cast<glm::vec4*>(pixelPtr) = *static_cast<glm::vec4*>(valuePtr);
+			*static_cast<glm::vec4*>(pixelPtr) = *static_cast<glm::vec4 const*>(valuePtr);
 		}
 		break;
 		case re::Texture::Format::RG32F:
 		{
-			*static_cast<glm::vec2*>(pixelPtr) = *static_cast<glm::vec2*>(valuePtr);
+			*static_cast<glm::vec2*>(pixelPtr) = *static_cast<glm::vec2 const*>(valuePtr);
 		}
 		break;
 		case re::Texture::Format::R32F:
 		case re::Texture::Format::Depth32F:
 		{
-			*static_cast<float*>(pixelPtr) = *static_cast<float*>(valuePtr);
+			*static_cast<float*>(pixelPtr) = *static_cast<float const*>(valuePtr);
 		}
 		break;
 		case re::Texture::Format::R32_UINT:
 		{
-			*static_cast<uint32_t*>(pixelPtr) = *static_cast<uint32_t*>(valuePtr);
+			*static_cast<uint32_t*>(pixelPtr) = *static_cast<uint32_t const*>(valuePtr);
 		}
 		break;
 		case re::Texture::Format::RGBA16F:
@@ -362,7 +362,7 @@ namespace re
 		break;
 		case re::Texture::Format::R16_UNORM:
 		{
-			*static_cast<uint16_t*>(pixelPtr) = *static_cast<uint16_t*>(valuePtr);
+			*static_cast<uint16_t*>(pixelPtr) = *static_cast<uint16_t const*>(valuePtr);
 		}
 		break;
 		case re::Texture::Format::RGBA8_UNORM:
@@ -402,7 +402,7 @@ namespace re
 	}
 
 
-	void re::Texture::Fill(glm::vec4 solidColor)
+	void re::Texture::Fill(glm::vec4 const& solidColor)
 	{
 		SEAssert(m_initialData->HasData(), "There are no texels. Texels are only allocated for non-target textures");
 
