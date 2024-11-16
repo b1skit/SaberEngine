@@ -86,33 +86,39 @@ namespace fr
 
 				skinningCmpt.m_jointTransforms[jointIdx] = jointTransform.GetLocalMatrix();
 
+				// Combine all the ancestors
 				fr::Relationship const& jointEntityRelationship = em.GetComponent<fr::Relationship>(curEntity);
 				const entt::entity parentEntity = jointEntityRelationship.GetParent();
-
-				entt::entity nextTransformEntity = entt::null;
-				fr::TransformComponent const* nextTransformCmpt =
-					em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(parentEntity, nextTransformEntity);
-
-				// Combine all the ancestors
-				while (nextTransformEntity != entt::null &&
-					skinningCmpt.m_jointEntitiesSet.contains(nextTransformEntity))
+				if (parentEntity != entt::null)
 				{
-					SEAssert(nextTransformCmpt, "Next transform component is null. This is unexpected");
+					entt::entity nextTransformEntity = entt::null;
+					fr::TransformComponent const* nextTransformCmpt =
+						em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(parentEntity, nextTransformEntity);
 
-					fr::Transform const* nextTransform = &nextTransformCmpt->GetTransform();
-					foundDirty |= nextTransform->HasChanged();
-
-					skinningCmpt.m_jointTransforms[jointIdx] =
-						nextTransform->GetLocalMatrix() * skinningCmpt.m_jointTransforms[jointIdx];
-
-					fr::Relationship const& nextTransformRelationship =
-						em.GetComponent<fr::Relationship>(nextTransformEntity);
-
-					const entt::entity nextParentEntity = nextTransformRelationship.GetParent();
-					if (nextParentEntity != entt::null)
+					while (nextTransformEntity != entt::null &&
+						skinningCmpt.m_jointEntitiesSet.contains(nextTransformEntity))
 					{
-						nextTransformCmpt = em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(
-							nextParentEntity, nextTransformEntity);
+						SEAssert(nextTransformCmpt, "Next transform component is null. This is unexpected");
+
+						fr::Transform const* nextTransform = &nextTransformCmpt->GetTransform();
+						foundDirty |= nextTransform->HasChanged();
+
+						skinningCmpt.m_jointTransforms[jointIdx] =
+							nextTransform->GetLocalMatrix() * skinningCmpt.m_jointTransforms[jointIdx];
+
+						fr::Relationship const& nextTransformRelationship =
+							em.GetComponent<fr::Relationship>(nextTransformEntity);
+
+						const entt::entity nextParentEntity = nextTransformRelationship.GetParent();
+						if (nextParentEntity != entt::null)
+						{
+							nextTransformCmpt = em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(
+								nextParentEntity, nextTransformEntity);
+						}
+						else
+						{
+							break;
+						}
 					}
 				}
 
