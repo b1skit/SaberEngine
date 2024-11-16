@@ -66,13 +66,12 @@ namespace
 
 		// We sample a lower mip level to approximate a Gaussian blur of the input image (i.e. low-pass filter), 
 		// significantly reducing the required number of samples required to get a noise free convolution.
-		// Empirical testing shows that for N = 4096 IEM samples per pixel, a 128x64 src image gives reasonable
-		// results.
+		// Empirical testing shows that for N = 4096 IEM samples per pixel, this fudge factor gives reasonable results.
 		// We assume our IBL inputs are roughly 2:1 in dimensions, and compute the src mip from the maximum dimension
 		const float maxDimension = static_cast<float>(std::max(srcWidth, srcHeight));
-		constexpr uint32_t k_targetMaxDimension = 128;
+
 		generationParams.g_mipLevelSrcWidthSrcHeightSrcNumMips = glm::vec4(
-			glm::log2(maxDimension / k_targetMaxDimension), 
+			glm::log2(glm::sqrt(maxDimension)),
 			srcWidth, 
 			srcHeight, 
 			numMipLevels);
