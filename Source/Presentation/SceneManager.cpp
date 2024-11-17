@@ -68,7 +68,8 @@ namespace
 		NodeToAnimationDataMaps m_nodeToAnimationData;
 
 		SkinToSkinMetadata m_skinToSkinMetadata;
-		std::mutex m_skinToSkinMetadataMutex;
+		std::unordered_set<cgltf_node const*> m_skeletonNodes;
+		mutable std::mutex m_skinDataMutex;
 
 		PrimitiveToMeshPrimitiveMap m_primitiveToMeshPrimitiveMetadata;
 		std::mutex m_primitiveToMeshPrimitiveMetadataMutex;
@@ -1591,8 +1592,9 @@ namespace
 							numFloats);
 
 						{
-							std::lock_guard<std::mutex> lock(sceneMetadata.m_skinToSkinMetadataMutex);
+							std::lock_guard<std::mutex> lock(sceneMetadata.m_skinDataMutex);
 							sceneMetadata.m_skinToSkinMetadata.emplace(skin, std::move(inverseBindMatrices));
+							sceneMetadata.m_skeletonNodes.emplace(skin->skeleton);
 						}
 					}
 				}));
@@ -1687,13 +1689,6 @@ namespace
 				}
 			}		
 
-			// The skeleton root node is part of the skeletal hierarchy
-			entt::entity skeletonRootEntity = entt::null;
-			if (sceneMetadata.m_nodeToEntity.contains(current->skin->skeleton))
-			{
-				skeletonRootEntity = sceneMetadata.m_nodeToEntity.at(current->skin->skeleton);
-			}
-
 			// We pre-loaded the skinning data
 			std::vector<glm::mat4>* inverseBindMatrices = nullptr;
 			if (sceneMetadata.m_skinToSkinMetadata.contains(current->skin))
@@ -1702,17 +1697,17 @@ namespace
 				inverseBindMatrices = &sceneMetadata.m_skinToSkinMetadata.at(current->skin).m_inverseBindMatrices;
 			}
 
+			// The skeleton root node is part of the skeletal hierarchy
+			entt::entity skeletonRootEntity = entt::null;
 			gr::TransformID skeletonTransformID = gr::k_invalidTransformID;
-			if (current->skin->skeleton)
+			if (sceneMetadata.m_nodeToEntity.contains(current->skin->skeleton))
 			{
-				SEAssert(sceneMetadata.m_nodeToEntity.contains(current->skin->skeleton),
-					"Skeleton node has not been added to the entity map. This should not be possible");
+				skeletonRootEntity = sceneMetadata.m_nodeToEntity.at(current->skin->skeleton);
 
-				const entt::entity skeletonNodeEntity = sceneMetadata.m_nodeToEntity.at(current->skin->skeleton);
-
-				fr::TransformComponent const* skeletonTransformCmpt =
-					em.TryGetComponent<fr::TransformComponent>(skeletonNodeEntity);
-
+				// Note: The entity associated with the skeleton node might not be the entity with the next 
+				// TransformationComponent in the hierarchy above; it might be modified here
+				fr::TransformComponent const* skeletonTransformCmpt = 
+					em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(skeletonRootEntity, skeletonRootEntity);
 				if (skeletonTransformCmpt)
 				{
 					skeletonTransformID = skeletonTransformCmpt->GetTransformID();
@@ -1747,7 +1742,11 @@ namespace
 	}
 
 
-	inline entt::entity CreateSceneNode(cgltf_node const* gltfNode, entt::entity parent, size_t nodeIdx)
+	inline entt::entity CreateSceneNode(
+		SceneMetadata const& sceneMetadata,
+		cgltf_node const* gltfNode,
+		entt::entity parent,
+		size_t nodeIdx)
 	{
 		std::string const& nodeName = gltfNode->name ? gltfNode->name : std::format("UnnamedNode_{}", nodeIdx);
 		
@@ -1755,10 +1754,18 @@ namespace
 
 		entt::entity newSceneNode = fr::SceneNode::Create(em, nodeName, parent);
 
+		// We ensure there is a Transformation (even if it's the identity) for all skeleton nodes
+		bool isSkeletonNode = false;
+		{
+			std::lock_guard<std::mutex> lock(sceneMetadata.m_skinDataMutex);
+			isSkeletonNode = sceneMetadata.m_skeletonNodes.contains(gltfNode);
+		}
+
 		if (gltfNode->has_translation ||
 			gltfNode->has_rotation ||
 			gltfNode->has_scale ||
-			gltfNode->has_matrix)
+			gltfNode->has_matrix ||
+			isSkeletonNode)
 		{
 			fr::TransformComponent::AttachTransformComponent(em, newSceneNode);
 			SetTransformValues(gltfNode, newSceneNode);
@@ -1922,7 +1929,9 @@ namespace
 				}
 
 				// Create the current node's entity (and Transform, if it has one):
-				sceneMetadata.m_nodeToEntity.emplace(curNode, CreateSceneNode(curNode, curNodeParentEntity, nodeIdx++));
+				sceneMetadata.m_nodeToEntity.emplace(
+					curNode, 
+					CreateSceneNode(sceneMetadata, curNode, curNodeParentEntity, nodeIdx++));
 
 				// Add the children:
 				for (size_t childIdx = 0; childIdx < curNode->children_count; ++childIdx)

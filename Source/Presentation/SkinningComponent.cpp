@@ -46,6 +46,8 @@ namespace fr
 		entt::entity skeletonRootEntity,
 		gr::TransformID skeletonTransformID)
 		: m_jointEntities(std::move(jointEntities))
+		, m_parentOfCommonRootEntity(entt::null)
+		, m_parentOfCommonRootTransformID(gr::k_invalidTransformID)
 		, m_jointTransformIDs(std::move(jointTranformIDs))
 		, m_inverseBindMatrices(std::move(inverseBindMatrices))
 		, m_skeletonRootEntity(skeletonRootEntity)
@@ -64,6 +66,31 @@ namespace fr
 		{
 			m_jointEntitiesSet.emplace(m_skeletonRootEntity);
 		}
+
+		// Find the first entity with a Transform component in the hierarchy above, that is NOT part of the skeletal
+		// hierarchy:
+		fr::EntityManager& em = *fr::EntityManager::Get();
+		for (entt::entity entity : m_jointEntitiesSet)
+		{
+			fr::Relationship const& entityRelationship = em.GetComponent<fr::Relationship>(entity);
+			const entt::entity entityParent = entityRelationship.GetParent();
+			if (entityParent != entt::null && !m_jointEntitiesSet.contains(entityParent))
+			{
+				entt::entity transformEntity = entt::null;
+				if (fr::TransformComponent const* transformCmpt = 
+					em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(entityParent, transformEntity))
+				{
+					m_parentOfCommonRootEntity = transformEntity;
+					m_parentOfCommonRootTransformID = transformCmpt->GetTransformID();
+
+					// GLTF specs: All nodes in the skeletal hierarchy must have a common root. Thus, we can assume
+					// the first node with a parent NOT part of the transformation hierarchy must be the common root,
+					// and thus this is its parent					
+					break; 
+					
+				}
+			}
+		}
 	}
 
 
@@ -71,6 +98,20 @@ namespace fr
 		fr::EntityManager& em, entt::entity owningEntity, SkinningComponent& skinningCmpt)
 	{
 		bool foundDirty = false;
+
+		// As an optimization, we'll use the inverse of the common root's parent transform's global matrix to cancel out
+		// any unnecessary matrices in the transformation hierarchy, rather than recompute subranges in the skeletal 
+		// hierarchy: i.e. (ABC)^-1 * (ABCDEF) = DEF
+		fr::Transform const* parentOfRootTransform = nullptr;
+		if (skinningCmpt.m_parentOfCommonRootEntity != entt::null)
+		{
+			fr::TransformComponent const& parentOfRootTransformCmpt = 
+				em.GetComponent<fr::TransformComponent>(skinningCmpt.m_parentOfCommonRootEntity);
+
+			parentOfRootTransform = &parentOfRootTransformCmpt.GetTransform();
+		}
+		glm::mat4 const& parentOfRootInverseGlobalMat = parentOfRootTransform ?
+			glm::inverse(parentOfRootTransform->GetGlobalMatrix()) : glm::mat4(1.f);
 
 		// Combine skin Transforms:
 		for (size_t jointIdx = 0; jointIdx < skinningCmpt.m_jointEntities.size(); ++jointIdx)
@@ -82,56 +123,33 @@ namespace fr
 			if (jointTransformCmpt) // If null, no update necessary: Joints are initialized to the identity
 			{
 				fr::Transform const& jointTransform = jointTransformCmpt->GetTransform();
-				foundDirty |= jointTransform.HasChanged();
-
-				skinningCmpt.m_jointTransforms[jointIdx] = jointTransform.GetLocalMatrix();
-
-				// Combine all the ancestors
-				fr::Relationship const& jointEntityRelationship = em.GetComponent<fr::Relationship>(curEntity);
-				const entt::entity parentEntity = jointEntityRelationship.GetParent();
-				if (parentEntity != entt::null)
+				const bool test = jointTransform.HasChanged();
+				if (jointTransform.HasChanged())
 				{
-					entt::entity nextTransformEntity = entt::null;
-					fr::TransformComponent const* nextTransformCmpt =
-						em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(parentEntity, nextTransformEntity);
+					foundDirty = true;
 
-					while (nextTransformEntity != entt::null &&
-						skinningCmpt.m_jointEntitiesSet.contains(nextTransformEntity))
+					// Get the joint transform, isolated using the inverse of the root node's parent global transform:
+					if (parentOfRootTransform)
 					{
-						SEAssert(nextTransformCmpt, "Next transform component is null. This is unexpected");
-
-						fr::Transform const* nextTransform = &nextTransformCmpt->GetTransform();
-						foundDirty |= nextTransform->HasChanged();
-
-						skinningCmpt.m_jointTransforms[jointIdx] =
-							nextTransform->GetLocalMatrix() * skinningCmpt.m_jointTransforms[jointIdx];
-
-						fr::Relationship const& nextTransformRelationship =
-							em.GetComponent<fr::Relationship>(nextTransformEntity);
-
-						const entt::entity nextParentEntity = nextTransformRelationship.GetParent();
-						if (nextParentEntity != entt::null)
-						{
-							nextTransformCmpt = em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(
-								nextParentEntity, nextTransformEntity);
-						}
-						else
-						{
-							break;
-						}
+						skinningCmpt.m_jointTransforms[jointIdx] = 
+							parentOfRootInverseGlobalMat * jointTransform.GetGlobalMatrix();
 					}
-				}
+					else
+					{
+						skinningCmpt.m_jointTransforms[jointIdx] = jointTransform.GetGlobalMatrix();
+					}
 
-				// Inverse bind matrix
-				if (!skinningCmpt.m_inverseBindMatrices.empty())
-				{
-					skinningCmpt.m_jointTransforms[jointIdx] =
-						skinningCmpt.m_jointTransforms[jointIdx] * skinningCmpt.m_inverseBindMatrices[jointIdx];
-				}
+					// Inverse bind matrix
+					if (!skinningCmpt.m_inverseBindMatrices.empty())
+					{
+						skinningCmpt.m_jointTransforms[jointIdx] =
+							skinningCmpt.m_jointTransforms[jointIdx] * skinningCmpt.m_inverseBindMatrices[jointIdx];
+					}
 
-				// Transpose inverse:
-				skinningCmpt.m_transposeInvJointTransforms[jointIdx] =
-					glm::transpose(glm::inverse(skinningCmpt.m_jointTransforms[jointIdx]));
+					// Transpose inverse:
+					skinningCmpt.m_transposeInvJointTransforms[jointIdx] =
+						glm::transpose(glm::inverse(skinningCmpt.m_jointTransforms[jointIdx]));
+				}
 			}
 		}
 
@@ -170,20 +188,38 @@ namespace fr
 				ImGui::Indent();
 
 				// Display the skin metadata:
+
+				// Parent of the root node:
+				std::string const& rootParentTransformIDStr = skinningCmpt->m_parentOfCommonRootTransformID == gr::k_invalidTransformID ?
+					"<none>" : std::format("{}", skinningCmpt->m_parentOfCommonRootTransformID);
+				ImGui::Text(std::format("Parent of root TransformID: {}", rootParentTransformIDStr).c_str());
+
+				std::string const& rootParentEntity = skinningCmpt->m_parentOfCommonRootEntity == entt::null ?
+					"<none>" : std::format("{}", static_cast<uint64_t>(skinningCmpt->m_parentOfCommonRootEntity));
+				ImGui::Text(std::format("Parent of root entity: {}", rootParentEntity).c_str());
+
+
+				ImGui::Separator();
+
+
+				// Skeleton:
 				std::string const& skeletonNodeIDStr = skinningCmpt->m_skeletonTransformID == gr::k_invalidTransformID ?
 					"<none>" : std::format("{}", skinningCmpt->m_skeletonTransformID);
 				ImGui::Text(std::format("Skeleton TransformID: {}", skeletonNodeIDStr).c_str());
 
-				std::string const& skeltonEntity = skinningCmpt->m_skeletonRootEntity == entt::null ?
+				std::string const& skeletonEntity = skinningCmpt->m_skeletonRootEntity == entt::null ?
 					"<none>" : std::format("{}", static_cast<uint64_t>(skinningCmpt->m_skeletonRootEntity));
-				ImGui::Text(std::format("Skeleton entity: {}", skeltonEntity).c_str());
+				ImGui::Text(std::format("Skeleton entity: {}", skeletonEntity).c_str());
 
-				ImGui::Text(std::format("Total inverse bind matrices: {}", 
-					skinningCmpt->m_inverseBindMatrices.size()).c_str());
 
-				ImGui::Text(std::format("Total joint transforms: {}", skinningCmpt->m_jointTransformIDs.size()).c_str());
+				ImGui::Separator();
+
 
 				// Inverse bind matrices:
+				ImGui::Text(std::format("Total inverse bind matrices: {}", 
+					skinningCmpt->m_inverseBindMatrices.size()).c_str());
+				ImGui::Text(std::format("Total joint transforms: {}", skinningCmpt->m_jointTransformIDs.size()).c_str());
+
 				if (skinningCmpt->m_inverseBindMatrices.empty())
 				{
 					ImGui::BeginDisabled();
@@ -201,7 +237,11 @@ namespace fr
 				{
 					ImGui::EndDisabled();
 				}
-				
+
+
+				ImGui::Separator();
+
+
 				// Joints:
 				if (ImGui::CollapsingHeader(
 					std::format("Joint transform IDs##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))

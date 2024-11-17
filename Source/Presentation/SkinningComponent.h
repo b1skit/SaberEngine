@@ -47,10 +47,14 @@ namespace fr
 	private:
 		std::vector<entt::entity> m_jointEntities;
 		std::unordered_set<entt::entity> m_jointEntitiesSet; // Initialized once at construction
+		
+		// Parent of the "common root": The first entity with a TransformComponent NOT part of the skeletal hierarchy
+		entt::entity m_parentOfCommonRootEntity; 
+		gr::TransformID m_parentOfCommonRootTransformID;
 
 		// Debug: All TransformIDs that might influence a MeshPrimitive: Maps MeshPrimitive joint index to a TransformID
 		std::vector<gr::TransformID> m_jointTransformIDs;
-
+		
 		// Updated each frame:
 		std::vector<glm::mat4> m_jointTransforms; 
 		std::vector<glm::mat4> m_transposeInvJointTransforms;
