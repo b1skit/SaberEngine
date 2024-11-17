@@ -701,6 +701,10 @@ namespace
 				sceneNodeEntity,
 				k_defaultCamName,
 				camConfig);
+
+			// Offset the camera in an attempt to frame up things located on the origin
+			fr::TransformComponent& cameraTransformCmpt = em.GetComponent<fr::TransformComponent>(sceneNodeEntity);
+			cameraTransformCmpt.GetTransform().TranslateLocal(glm::vec3(0.f, 1.f, 2.f ));
 		}
 		else
 		{
