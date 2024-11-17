@@ -19,7 +19,7 @@
 
 namespace fr
 {
-	void Mesh::AttachMeshConcept(entt::entity owningEntity, char const* name)
+	void Mesh::AttachMeshConceptMarker(entt::entity owningEntity, char const* name)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 		
@@ -314,7 +314,7 @@ namespace fr
 			case SourceType::MeshFactory:
 			{
 				entt::entity sceneNode = fr::SceneNode::Create(*fr::EntityManager::Get(), s_nameInputBuffer, entt::null);
-				fr::Mesh::AttachMeshConcept(sceneNode, s_nameInputBuffer);
+				fr::Mesh::AttachMeshConceptMarker(sceneNode, s_nameInputBuffer);
 
 				glm::vec3 minXYZ = glm::vec3(0.f);
 				glm::vec3 maxXYZ = glm::vec3(0.f);

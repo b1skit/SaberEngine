@@ -1,6 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "MarkerComponents.h"
+#include "MeshConcept.h"
 #include "RenderDataComponent.h"
 #include "SkinningComponent.h"
 #include "TransformComponent.h"
@@ -22,6 +23,9 @@ namespace fr
 
 		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
 			"A SkinningComponent's owningEntity requires a RenderDataComponent");
+
+		SEAssert(em.HasComponent<fr::Mesh::MeshConceptMarker>(owningEntity),
+			"A SkinningComponent should be attached to the same node as a MeshConceptMarker");
 
 		SkinningComponent* newSkinningCmpt = 
 			em.EmplaceComponent<fr::SkinningComponent>(
@@ -249,7 +253,9 @@ namespace fr
 					ImGui::Indent();
 					{
 						constexpr size_t k_numCols = 10;
-						const size_t numRows = skinningCmpt->m_jointTransformIDs.size() % 10;
+						const size_t numRows = std::max(1llu, 
+							(skinningCmpt->m_jointTransformIDs.size() / 10) + 
+								(skinningCmpt->m_jointTransformIDs.size() % 10 > 0));
 						ImGui::BeginTable("table1", k_numCols, ImGuiTableFlags_SizingFixedSame | ImGuiTableFlags_Borders | ImGuiTableFlags_NoHostExtendX);
 						size_t jointTransformIDIdx = 0;
 						bool seenInvalidTransformID = false;

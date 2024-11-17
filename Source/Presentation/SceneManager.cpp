@@ -1623,7 +1623,7 @@ namespace
 			meshName = std::format("GLTFNode[{}]_Mesh", nodeIdx);
 		}
 
-		fr::Mesh::AttachMeshConcept(sceneNode, meshName.c_str());
+		fr::Mesh::AttachMeshConceptMarker(sceneNode, meshName.c_str());
 
 		bool meshHasMorphTargets = false;
 
