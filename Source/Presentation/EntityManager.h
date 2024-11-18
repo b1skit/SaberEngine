@@ -76,6 +76,12 @@ namespace fr
 		void ShowSceneTransformImGuiWindow(bool* show);
 		void ShowImGuiEntityComponentDebug(bool* show);
 
+	private:
+		void ShowImGuiEntityComponentDebugHelper(
+			std::vector<entt::entity> rootEntities, bool expandAll, bool expandChangeTriggered);
+		void ShowImGuiEntityComponentDebugHelper(
+			entt::entity rootEntity, bool expandAll, bool expandChangeTriggered);
+
 
 	private: // IEventListener interface:
 		void HandleEvents() override;

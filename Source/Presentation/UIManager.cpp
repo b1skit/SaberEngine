@@ -503,9 +503,9 @@ namespace fr
 
 						if (ImGui::BeginMenu("Entity manager"))
 						{
-							ImGui::MenuItem("Debug scene objects", "", &s_show[Show::EntityMgrDbg]);
-							ImGui::MenuItem("Debug transform hierarchy", "", &s_show[Show::TransformationHierarchyDbg]);
-							ImGui::MenuItem("Entity/component viewer", "", &s_show[Show::EntityComponentDbg]);
+							ImGui::MenuItem("Scene objects", "", &s_show[Show::EntityMgrDbg]);
+							ImGui::MenuItem("Node hierarchy", "", &s_show[Show::EntityComponentDbg]);
+							ImGui::MenuItem("Transform hierarchy", "", &s_show[Show::TransformationHierarchyDbg]);
 							ImGui::EndMenu();
 						}
 

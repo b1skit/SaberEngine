@@ -1244,6 +1244,122 @@ namespace fr
 	}
 
 
+	void EntityManager::ShowImGuiEntityComponentDebugHelper(
+		std::vector<entt::entity> rootEntities, bool expandAll, bool expandChangeTriggered)
+	{
+		for (entt::entity curRoot : rootEntities)
+		{
+			ShowImGuiEntityComponentDebugHelper(curRoot, expandAll, expandChangeTriggered);
+
+			ImGui::Separator();
+		}
+	}
+
+
+	void EntityManager::ShowImGuiEntityComponentDebugHelper(
+		entt::entity entity, bool expandAll, bool expandChangeTriggered)
+	{
+		auto ShowEntityControls = [this](entt::entity entity)
+			{
+				if (ImGui::Button("Delete"))
+				{
+					fr::Relationship const& entityRelationship = GetComponent<fr::Relationship>(entity);
+
+					// This is executed on the render thread, so we register children for deletion first, then
+					// parents, so we don't risk having orphans between frames
+					std::vector<entt::entity> descendents = entityRelationship.GetAllDescendents();
+					for (size_t i = descendents.size(); i > 0; i--)
+					{
+						RegisterEntityForDelete(descendents[i - 1]);
+					}
+
+					RegisterEntityForDelete(entity);
+				}
+			};
+
+		constexpr float k_indentSize = 16.f;
+
+		if (expandChangeTriggered)
+		{
+			ImGui::SetNextItemOpen(expandAll);
+		}
+
+		struct NodeState
+		{
+			entt::entity m_entity;
+			uint32_t m_depth;
+		};
+		std::stack<NodeState> nodes;
+		nodes.push(NodeState{.m_entity = entity, .m_depth = 1});
+
+		while (!nodes.empty())
+		{
+			NodeState curNodeState = nodes.top();
+			nodes.pop();
+
+			// Add children for next iteration:
+			fr::Relationship const& curNodeRelationship = GetComponent<fr::Relationship>(curNodeState.m_entity);
+
+			const entt::entity firstChild = curNodeRelationship.GetFirstChild();
+			if (firstChild != entt::null)
+			{
+				entt::entity curChild = firstChild;
+				do
+				{
+					nodes.push(NodeState{ curChild, curNodeState.m_depth + 1 });
+
+					fr::Relationship const& curRelationship = GetComponent<fr::Relationship>(curChild);
+
+					curChild = curRelationship.GetNext();
+				} while (curChild != firstChild);
+			}
+
+			ImGui::Indent(k_indentSize* curNodeState.m_depth);
+
+			if (expandChangeTriggered)
+			{
+				ImGui::SetNextItemOpen(expandAll);
+			}
+
+			fr::NameComponent const& nameCmpt = GetComponent<fr::NameComponent>(curNodeState.m_entity);
+
+			if (ImGui::TreeNode(std::format("Entity {}: \"{}\"",
+				static_cast<uint32_t>(curNodeState.m_entity),
+				nameCmpt.GetName()).c_str()))
+			{
+				ImGui::SameLine();
+				ShowEntityControls(curNodeState.m_entity);
+
+				ImGui::Indent();
+
+				// List the component types:
+				{
+					std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+					for (auto&& curr : m_registry.storage())
+					{
+						entt::id_type cid = curr.first;
+						auto& storage = curr.second;
+						entt::type_info ctype = storage.type();
+
+						if (storage.contains(curNodeState.m_entity))
+						{
+							ImGui::BulletText(std::format("{}", ctype.name()).c_str());
+						}
+					}
+				}
+
+				ImGui::Unindent();
+
+				ImGui::TreePop();
+			}
+
+
+			ImGui::Unindent(k_indentSize* curNodeState.m_depth);
+		}
+	}
+
+
 	void EntityManager::ShowImGuiEntityComponentDebug(bool* show)
 	{
 		if (!*show)
@@ -1262,107 +1378,33 @@ namespace fr
 			ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-		constexpr char const* k_panelTitle = "Entity/Component View";
+		constexpr char const* k_panelTitle = "Node Hierarchy";
 		ImGui::Begin(k_panelTitle, show);
 
-		if (ImGui::CollapsingHeader("Entities & Components"))
+		static bool s_expandAll = false;
+		bool expandChangeTriggered = false;
+		if (ImGui::Button(s_expandAll ? "Hide all" : "Expand all"))
 		{
-			static bool s_expandAll = false;
-			bool expandChangeTriggered = false;
-			if (ImGui::Button(s_expandAll ? "Hide all" : "Expand all"))
+			s_expandAll = !s_expandAll;
+			expandChangeTriggered = true;
+		}
+
+		// Build a list of root entities, and sort them for readability
+		std::vector<entt::entity> sortedRootEntities;
+		for (auto entityTuple : m_registry.storage<entt::entity>().each())
+		{
+			const entt::entity curEntity = std::get<entt::entity>(entityTuple);
+			fr::Relationship const& curRelationship = m_registry.get<fr::Relationship>(curEntity);
+
+			if (!curRelationship.HasParent())
 			{
-				s_expandAll = !s_expandAll;
-				expandChangeTriggered = true;
-			}
-
-			auto ShowEntityControls = [this](entt::entity entity)
-				{
-					if (ImGui::Button("Delete"))
-					{
-						fr::Relationship const& entityRelationship = GetComponent<fr::Relationship>(entity);			
-
-						// This is executed on the render thread, so we register children for deletion first, then
-						// parents, so we don't risk having orphans between frames
-						std::vector<entt::entity> descendents = entityRelationship.GetAllDescendents();
-						for (size_t i = descendents.size(); i > 0; i--)
-						{
-							RegisterEntityForDelete(descendents[i - 1]);
-						}
-
-						RegisterEntityForDelete(entity);
-					}
-				};
-
-			
-			// Sort the entities for readability
-			std::vector<entt::entity> sortedEntities;
-			for (auto entityTuple : m_registry.storage<entt::entity>().each())
-			{
-				sortedEntities.emplace_back(std::get<entt::entity>(entityTuple));
-			}
-			std::sort(sortedEntities.begin(), sortedEntities.end());
-			for (auto entity : sortedEntities) // Iterate over all entities:
-			{
-				fr::NameComponent const& nameCmpt = m_registry.get<fr::NameComponent>(entity);
-				fr::Relationship const& relationshipCmpt = m_registry.get<fr::Relationship>(entity);
-
-				if (expandChangeTriggered)
-				{
-					ImGui::SetNextItemOpen(s_expandAll);
-				}
-				if (ImGui::TreeNode(std::format("Entity {}: \"{}\"",
-					static_cast<uint32_t>(entity),
-					nameCmpt.GetName()).c_str()))
-				{
-					ImGui::Indent();
-
-					const entt::entity parent = relationshipCmpt.GetParent();
-					ImGui::Text(std::format("Parent: {}", 
-						(parent == entt::null) ? "<none>" : std::to_string(static_cast<uint32_t>(parent)).c_str()).c_str());
-
-					std::string descendentsStr = "Descendents: ";
-					std::vector<entt::entity> descendents = relationshipCmpt.GetAllDescendents();
-					if (!descendents.empty())
-					{
-						for (size_t i = 0; i < descendents.size(); i++)
-						{
-							constexpr uint8_t k_entriesPerLine = 12;
-							if (i % k_entriesPerLine == 0)
-							{
-								descendentsStr += "\n\t";
-							}
-							descendentsStr += std::format("{}{}",
-								static_cast<uint32_t>(descendents[i]),
-								(i == descendents.size() - 1) ? "" : ", ");
-						}
-					}
-					else
-					{
-						descendentsStr += "<none>";
-					}
-					ImGui::Text(descendentsStr.c_str());
-
-					for (auto&& curr : m_registry.storage())
-					{
-						entt::id_type cid = curr.first;
-						auto& storage = curr.second;
-						entt::type_info ctype = storage.type();
-
-						if (storage.contains(entity))
-						{
-							ImGui::BulletText(std::format("{}", ctype.name()).c_str());
-						}
-					}
-
-					ShowEntityControls(entity);
-
-					ImGui::Unindent();
-					ImGui::TreePop();
-				}
-
-				ImGui::Separator();
+				sortedRootEntities.emplace_back(curEntity);
 			}
 		}
+		std::sort(sortedRootEntities.begin(), sortedRootEntities.end());
+
+		// Call the recursive helper:
+		ShowImGuiEntityComponentDebugHelper(sortedRootEntities, s_expandAll, expandChangeTriggered);
 
 		ImGui::End();
 	}
