@@ -60,25 +60,26 @@ namespace fr
 		m_jointTransforms.resize(m_jointEntities.size(), glm::mat4(1.f));
 		m_transposeInvJointTransforms.resize(m_jointEntities.size(), glm::mat4(1.f));
 
-		// Create a set so we can quickly query any entities in the skeleton
-		m_jointEntitiesSet.reserve(m_jointEntities.size() + 1);
-		for (entt::entity entity : m_jointEntities)
-		{
-			m_jointEntitiesSet.emplace(entity);
-		}
-		if (m_skeletonRootEntity != entt::null)
-		{
-			m_jointEntitiesSet.emplace(m_skeletonRootEntity);
-		}
+		fr::EntityManager& em = *fr::EntityManager::Get();
 
 		// Find the first entity with a Transform component in the hierarchy above, that is NOT part of the skeletal
 		// hierarchy:
-		fr::EntityManager& em = *fr::EntityManager::Get();
-		for (entt::entity entity : m_jointEntitiesSet)
+		std::unordered_set<entt::entity> jointEntitiesSet;
+		jointEntitiesSet.reserve(m_jointEntities.size() + 1);
+		for (entt::entity entity : m_jointEntities)
+		{
+			jointEntitiesSet.emplace(entity);
+		}
+		if (m_skeletonRootEntity != entt::null)
+		{
+			jointEntitiesSet.emplace(m_skeletonRootEntity);
+		}
+
+		for (entt::entity entity : jointEntitiesSet)
 		{
 			fr::Relationship const& entityRelationship = em.GetComponent<fr::Relationship>(entity);
 			const entt::entity entityParent = entityRelationship.GetParent();
-			if (entityParent != entt::null && !m_jointEntitiesSet.contains(entityParent))
+			if (entityParent != entt::null && !jointEntitiesSet.contains(entityParent))
 			{
 				entt::entity transformEntity = entt::null;
 				if (fr::TransformComponent const* transformCmpt = 
@@ -91,7 +92,6 @@ namespace fr
 					// the first node with a parent NOT part of the transformation hierarchy must be the common root,
 					// and thus this is its parent					
 					break; 
-					
 				}
 			}
 		}
