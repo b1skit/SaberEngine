@@ -424,7 +424,7 @@ namespace fr
 
 			for (entt::entity cur : allDescendents)
 			{
-				if (HasComponent<T>(cur))
+				if (m_registry.any_of<T>(cur))
 				{
 					result.emplace_back(cur);
 				}
