@@ -414,16 +414,20 @@ namespace fr
 	{
 		SEAssert(entity != entt::null, "Invalid entity");
 
-		fr::Relationship const& entityRelationship = m_registry.get<fr::Relationship>(entity);
-
-		std::vector<entt::entity> const& allDescendents = entityRelationship.GetAllDescendents();
-
 		std::vector<entt::entity> result;
-		for (entt::entity cur : allDescendents)
 		{
-			if (HasComponent<T>(cur))
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+			fr::Relationship const& entityRelationship = m_registry.get<fr::Relationship>(entity);
+
+			std::vector<entt::entity> const& allDescendents = entityRelationship.GetAllDescendents();
+
+			for (entt::entity cur : allDescendents)
 			{
-				result.emplace_back(cur);
+				if (HasComponent<T>(cur))
+				{
+					result.emplace_back(cur);
+				}
 			}
 		}
 		return result;
@@ -446,7 +450,11 @@ namespace fr
 	T* EntityManager::GetFirstInHierarchyAboveInternal(entt::entity entity)
 	{
 		entt::entity dummy = entt::null;
-		return GetFirstAndEntityInHierarchyAboveInternal<T>(entity, dummy);
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+			return GetFirstAndEntityInHierarchyAboveInternal<T>(entity, dummy);
+		}
 	}
 
 
