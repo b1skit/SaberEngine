@@ -130,7 +130,6 @@ namespace fr
 			if (jointTransformCmpt) // If null, no update necessary: Joints are initialized to the identity
 			{
 				fr::Transform const& jointTransform = jointTransformCmpt->GetTransform();
-				const bool test = jointTransform.HasChanged();
 				if (jointTransform.HasChanged())
 				{
 					foundDirty = true;
