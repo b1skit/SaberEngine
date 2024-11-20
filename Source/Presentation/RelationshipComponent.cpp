@@ -80,20 +80,18 @@ namespace fr
 
 		// Need to manually destroy relationships; We can't rely on the DTOR as it is only called once the registry has
 		// swapped the object out with another
+		fr::EntityManager& em = *fr::EntityManager::Get();
+
+		SetParent(em, entt::null);
+
+		// Tell the children to remove themselves:
+		entt::entity curChild = GetFirstChild();
+		while (curChild != entt::null)
 		{
-			fr::EntityManager& em = *fr::EntityManager::Get();
+			fr::Relationship& childRelationship = em.GetComponent<fr::Relationship>(curChild);
+			childRelationship.SetParent(em, entt::null);
 
-			fr::Relationship& relationship = em.GetComponent<fr::Relationship>(m_thisEntity);
-			relationship.SetParent(em, entt::null);
-
-			entt::entity curChild = relationship.GetFirstChild();
-			while (curChild != entt::null)
-			{
-				fr::Relationship& childRelationship = em.GetComponent<fr::Relationship>(curChild);
-				childRelationship.SetParent(em, entt::null);
-
-				curChild = childRelationship.GetNext();
-			}
+			curChild = childRelationship.GetNext();
 		}
 	}
 
@@ -108,9 +106,7 @@ namespace fr
 			
 			if (m_parent != entt::null)
 			{
-				writeLock.unlock();
 				Relationship& prevParentRelationship = em.GetComponent<fr::Relationship>(m_parent);
-				writeLock.lock();
 
 				prevParentRelationship.RemoveChild(em, m_thisEntity);
 			}
@@ -121,9 +117,7 @@ namespace fr
 			// Update the parent:
 			if (newParent != entt::null)
 			{
-				writeLock.unlock();
 				Relationship& newParentRelationship = em.GetComponent<fr::Relationship>(newParent);
-				writeLock.lock();
 
 				newParentRelationship.AddChild(em, m_thisEntity);
 			}
@@ -137,9 +131,7 @@ namespace fr
 			std::unique_lock<std::shared_mutex> writeLock(m_relationshipMutex);
 
 			// Children are added to the end of our linked list
-			writeLock.unlock();
 			Relationship& newChildRelationship = em.GetComponent<fr::Relationship>(newChild);
-			writeLock.lock();
 
 			SEAssert(newChildRelationship.m_parent == m_thisEntity,
 				"Child should have already set this entity as its parent");
@@ -159,10 +151,8 @@ namespace fr
 			}
 			else
 			{
-				writeLock.unlock();
 				Relationship& firstChildRelationship = em.GetComponent<fr::Relationship>(m_firstChild);
 				Relationship& lastChildRelationship = em.GetComponent<fr::Relationship>(m_lastChild);
-				writeLock.lock();
 
 				SEAssert(lastChildRelationship.m_next == m_firstChild,
 					"Relationship linked list is corrupt: Last node does not point to the first node");
@@ -188,9 +178,7 @@ namespace fr
 			SEAssert(m_firstChild != entt::null && m_lastChild != entt::null,
 				"Trying to remove a child from a Relationship that has no children");
 
-			writeLock.unlock();
 			Relationship& childRelationship = em.GetComponent<fr::Relationship>(child);
-			writeLock.lock();
 
 			bool foundChild = false;
 
@@ -209,18 +197,14 @@ namespace fr
 				entt::entity currentChild = m_firstChild;
 				while (currentChild != m_lastChild)
 				{
-					writeLock.unlock();
 					Relationship& currentChildRelationship = em.GetComponent<fr::Relationship>(currentChild);
-					writeLock.lock();
 
 					if (child == currentChildRelationship.m_thisEntity)
 					{
-						writeLock.unlock();
 						Relationship& prevChildRelationship = 
 							em.GetComponent<fr::Relationship>(currentChildRelationship.m_prev);
 						Relationship& nextChildRelationship = 
 							em.GetComponent<fr::Relationship>(currentChildRelationship.m_next);
-						writeLock.lock();
 
 						// Remove the node from the list:
 						prevChildRelationship.m_next = nextChildRelationship.m_thisEntity;
@@ -243,7 +227,6 @@ namespace fr
 				{
 					SEAssert(child == m_lastChild, "Searched every node but failed to find child");
 					
-					writeLock.unlock();
 					Relationship& lastChildRelationship = em.GetComponent<fr::Relationship>(m_lastChild);
 
 					Relationship& prevChildRelationship = 
@@ -252,7 +235,6 @@ namespace fr
 						"Last child's next should be the first child");
 
 					Relationship& firstChildRelationship = em.GetComponent<fr::Relationship>(m_firstChild);
-					writeLock.lock();
 
 					prevChildRelationship.m_next = m_firstChild;
 					firstChildRelationship.m_prev = prevChildRelationship.m_thisEntity;
@@ -274,53 +256,56 @@ namespace fr
 
 	std::vector<entt::entity> Relationship::GetAllDescendents() const
 	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
-		std::vector<entt::entity> descendents;
-
 		SEAssert((m_firstChild != entt::null && m_lastChild != entt::null) || 
 			(m_firstChild == entt::null && m_lastChild == entt::null),
 			"Either first and last child must both be null, or both be not null");
 
-		std::stack<entt::entity> remainingChildren;
+		fr::EntityManager& em = *fr::EntityManager::Get();
 
-		// Add the first child:
-		if (m_firstChild != entt::null)
+		std::vector<entt::entity> descendents;
 		{
-			remainingChildren.emplace(m_firstChild);
-		}
+			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
 
-		while (!remainingChildren.empty())
-		{
-			const entt::entity current = remainingChildren.top();
-			remainingChildren.pop();
-			
-			// Add the current entity to the output:
-			descendents.emplace_back(current);
+			std::stack<entt::entity> remainingChildren;
 
-			// Add any siblings at the same depth the our output:
-			fr::Relationship const& currentRelationship = em.GetComponent<fr::Relationship>(current);
-			entt::entity sibling = currentRelationship.GetNext();
-			while (sibling != current)
+			// Add the first child:
+			if (m_firstChild != entt::null)
 			{
-				descendents.emplace_back(sibling);
-
-				fr::Relationship const& siblingRelationship = em.GetComponent<fr::Relationship>(sibling);
-
-				// If a sibling has children, add the first one to the stack for the next iteration:
-				if (siblingRelationship.m_firstChild != entt::null)
-				{
-					remainingChildren.push(siblingRelationship.m_firstChild);
-				}
-
-				sibling = siblingRelationship.GetNext();
+				remainingChildren.emplace(m_firstChild);
 			}
 
-			// Add the first child of the current entity to process the next level:
-			const entt::entity firstChild = currentRelationship.GetFirstChild();
-			if (firstChild != entt::null)
+			while (!remainingChildren.empty())
 			{
-				remainingChildren.push(firstChild);
+				const entt::entity current = remainingChildren.top();
+				remainingChildren.pop();
+
+				// Add the current entity to the output:
+				descendents.emplace_back(current);
+
+				// Add any siblings at the same depth the our output:
+				fr::Relationship const& currentRelationship = em.GetComponent<fr::Relationship>(current);
+				entt::entity sibling = currentRelationship.GetNext();
+				while (sibling != current)
+				{
+					descendents.emplace_back(sibling);
+
+					fr::Relationship const& siblingRelationship = em.GetComponent<fr::Relationship>(sibling);
+
+					// If a sibling has children, add the first one to the stack for the next iteration:
+					if (siblingRelationship.m_firstChild != entt::null)
+					{
+						remainingChildren.push(siblingRelationship.m_firstChild);
+					}
+
+					sibling = siblingRelationship.GetNext();
+				}
+
+				// Add the first child of the current entity to process the next level:
+				const entt::entity firstChild = currentRelationship.GetFirstChild();
+				if (firstChild != entt::null)
+				{
+					remainingChildren.push(firstChild);
+				}
 			}
 		}
 

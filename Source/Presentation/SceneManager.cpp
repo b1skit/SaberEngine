@@ -9,6 +9,7 @@
 #include "MeshConcept.h"
 #include "MeshMorphComponent.h"
 #include "MeshPrimitiveComponent.h"
+#include "RelationshipComponent.h"
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
 #include "SkinningComponent.h"
@@ -1706,8 +1707,9 @@ namespace
 
 				// Note: The entity associated with the skeleton node might not be the entity with the next 
 				// TransformationComponent in the hierarchy above; it might be modified here
+				fr::Relationship const& skeletonRootRelationship = em.GetComponent<fr::Relationship>(skeletonRootEntity);
 				fr::TransformComponent const* skeletonTransformCmpt = 
-					em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(skeletonRootEntity, skeletonRootEntity);
+					skeletonRootRelationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(skeletonRootEntity);
 				if (skeletonTransformCmpt)
 				{
 					skeletonTransformID = skeletonTransformCmpt->GetTransformID();

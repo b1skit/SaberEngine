@@ -2,6 +2,7 @@
 #include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "MeshConcept.h"
+#include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "SkinningComponent.h"
 #include "TransformComponent.h"
@@ -81,9 +82,11 @@ namespace fr
 			const entt::entity entityParent = entityRelationship.GetParent();
 			if (entityParent != entt::null && !jointEntitiesSet.contains(entityParent))
 			{
+				fr::Relationship const& parentRelationship = em.GetComponent<fr::Relationship>(entityParent);
+
 				entt::entity transformEntity = entt::null;
 				if (fr::TransformComponent const* transformCmpt = 
-					em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(entityParent, transformEntity))
+					parentRelationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(transformEntity))
 				{
 					m_parentOfCommonRootEntity = transformEntity;
 					m_parentOfCommonRootTransformID = transformCmpt->GetTransformID();

@@ -98,7 +98,9 @@ namespace fr
 		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = 
 			gr::meshfactory::CreateSphere(sphereOptions, 1.f);
 
-		fr::TransformComponent const* transformCmpt = em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
+
+		fr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
 		if (!transformCmpt)
 		{
 			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
@@ -166,9 +168,11 @@ namespace fr
 			coneFactoryOptions,
 			1.f,	// Height
 			1.f,	// Radius
-			16);	// No. sides		
+			16);	// No. sides
 
-		fr::TransformComponent const* transformCmpt = em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
+
+		fr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
 		if (!transformCmpt)
 		{
 			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
@@ -222,7 +226,8 @@ namespace fr
 		glm::vec4 const& colorIntensity,
 		bool hasShadow)
 	{
-		fr::TransformComponent const* transformCmpt = em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
+		fr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
 		if (!transformCmpt)
 		{
 			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);

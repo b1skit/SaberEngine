@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "MarkerComponents.h"
+#include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "TransformComponent.h"
 
@@ -17,7 +18,9 @@ namespace fr
 		em.EmplaceComponent<fr::TransformComponent::NewIDMarker>(entity);
 		
 		// Retrieve the parent transform, if one exists:
-		TransformComponent* parentTransformCmpt = em.GetFirstInHierarchyAbove<TransformComponent>(entity);
+		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(entity);
+		TransformComponent* parentTransformCmpt = relationship.GetFirstInHierarchyAbove<TransformComponent>();
+
 		fr::Transform* parentTransform = nullptr;
 		if (parentTransformCmpt)
 		{

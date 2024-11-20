@@ -25,7 +25,9 @@ namespace fr
 		
 		em.EmplaceComponent<fr::Mesh::MeshConceptMarker>(owningEntity);
 
-		fr::TransformComponent const* transformCmpt = em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
+
+		fr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
 		if (!transformCmpt)
 		{
 			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);

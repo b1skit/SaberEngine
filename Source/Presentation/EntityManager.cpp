@@ -349,7 +349,7 @@ namespace fr
 			{
 				// Animated cameras cannot be controlled by a camera controller
 				entt::entity camControllerTarget = entt::null;
-				if (!HasComponent<fr::AnimationComponent>(newMainCamera))
+				if (!m_registry.any_of<fr::AnimationComponent>(newMainCamera))
 				{
 					camControllerTarget = newMainCamera;
 				}

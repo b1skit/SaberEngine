@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "NameComponent.h"
+#include "RelationshipComponent.h"
 #include "Transform.h"
 #include "TransformComponent.h"
 
@@ -879,9 +880,11 @@ namespace fr
 			const entt::entity parentEntity = currentRelationship.GetParent();
 			if (parentEntity != entt::null)
 			{
-				entt::entity transformEntity;
-				fr::TransformComponent* parentTransformCmpt =
-					em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(parentEntity, transformEntity);
+				fr::Relationship const& parentRelationship = em.GetComponent<fr::Relationship>(parentEntity);
+
+				entt::entity transformEntity = entt::null;
+				fr::TransformComponent* parentTransformCmpt = 
+					parentRelationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(transformEntity);
 
 				SEAssert((transformEntity == entt::null) == (parentTransformCmpt == nullptr),
 					"Mismatched null results. This should not be possible");

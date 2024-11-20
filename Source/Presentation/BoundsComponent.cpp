@@ -23,11 +23,12 @@ namespace
 		// Recursively expand any Bounds above us:
 		if (owningEntityRelationship.HasParent())
 		{
-			entt::entity nextEntity = entt::null;
+			fr::Relationship const& parentRelationship = 
+				em.GetComponent<fr::Relationship>(owningEntityRelationship.GetParent());
 
-			fr::BoundsComponent* nextBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
-				owningEntityRelationship.GetParent(),
-				nextEntity);
+			entt::entity nextEntity = entt::null;
+			fr::BoundsComponent* nextBounds =
+				parentRelationship.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(nextEntity);
 
 			if (nextBounds != nullptr)
 			{
@@ -231,11 +232,12 @@ namespace fr
 		// Recursively expand any Bounds above us:
 		if (owningEntityRelationship.HasParent())
 		{
-			entt::entity nextEntity = entt::null;
+			fr::Relationship const& parentRelationship =
+				em.GetComponent<fr::Relationship>(owningEntityRelationship.GetParent());
 
-			fr::BoundsComponent* nextBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
-				owningEntityRelationship.GetParent(),
-				nextEntity);
+			entt::entity nextEntity = entt::null;
+			fr::BoundsComponent* nextBounds =
+				parentRelationship.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(nextEntity);
 
 			if (nextBounds != nullptr)
 			{

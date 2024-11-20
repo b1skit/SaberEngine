@@ -4,6 +4,7 @@
 #include "CameraControlComponent.h"
 #include "EntityManager.h"
 #include "NameComponent.h"
+#include "RelationshipComponent.h"
 #include "SceneNodeConcept.h"
 #include "TransformComponent.h"
 

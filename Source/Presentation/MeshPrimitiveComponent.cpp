@@ -45,10 +45,12 @@ namespace
 		// MeshPrimitive:
 		if (owningEntityRelationship.HasParent())
 		{
+			fr::Relationship const& parentRelationship =
+				em.GetComponent<fr::Relationship>(owningEntityRelationship.GetParent());
+
 			entt::entity nextEntity = entt::null;
-			fr::BoundsComponent* encapsulatingBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
-				owningEntityRelationship.GetParent(),
-				nextEntity);
+			fr::BoundsComponent* encapsulatingBounds = 
+				parentRelationship.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(nextEntity);
 			if (encapsulatingBounds != nullptr)
 			{
 				encapsulatingBounds->ExpandBoundsHierarchy(em, meshPrimitiveBounds, nextEntity);
@@ -116,8 +118,9 @@ namespace fr
 		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
 			"A MeshPrimitive's owningEntity requires a RenderDataComponent");
 
-		fr::RenderDataComponent* meshPrimRenderCmpt = 
-			em.GetFirstInHierarchyAbove<fr::RenderDataComponent>(owningEntity);
+		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
+		
+		fr::RenderDataComponent* meshPrimRenderCmpt = relationship.GetFirstInHierarchyAbove<fr::RenderDataComponent>();
 
 		// Note: A Material component will typically need to be attached to the owningEntity
 		AttachMeshPrimitiveComponentHelper(
@@ -234,9 +237,12 @@ namespace fr
 			fr::BoundsComponent::ShowImGuiWindow(em, meshPrimitive);
 
 			// Transform:
+			fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(meshPrimitive);
+			
 			entt::entity transformOwner = entt::null;
 			fr::TransformComponent* transformComponent =
-				em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(meshPrimitive, transformOwner);
+				relationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(transformOwner);
+
 			fr::TransformComponent::ShowImGuiWindow(em, transformOwner, static_cast<uint64_t>(meshPrimitive));
 
 			ImGui::Unindent();
