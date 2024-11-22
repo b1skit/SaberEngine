@@ -1,4 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
+#include "AnimationComponent.h"
 #include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "MeshConcept.h"
@@ -76,6 +77,8 @@ namespace fr
 			jointEntitiesSet.emplace(m_skeletonRootEntity);
 		}
 
+		// Find the first parent transform NOT part of our skeletal hierarchy: We'll use this to isolate the skeletal
+		// hierarchy from within the transformation hierarchy
 		for (entt::entity entity : jointEntitiesSet)
 		{
 			fr::Relationship const& entityRelationship = em.GetComponent<fr::Relationship>(entity);
@@ -95,6 +98,36 @@ namespace fr
 					// the first node with a parent NOT part of the transformation hierarchy must be the common root,
 					// and thus this is its parent					
 					break; 
+				}
+			}
+		}
+
+		if (m_parentOfCommonRootEntity != entt::null)
+		{
+			// If there is an AnimationComponent AT OR ABOVE the m_parentOfCommonRootEntity, we don't want to cancel out
+			// its recursive contribution
+			entt::entity recursiveRoot = m_parentOfCommonRootEntity;
+			fr::Relationship const& curParentOfCommonRootRelationship = em.GetComponent<fr::Relationship>(recursiveRoot);
+			if (curParentOfCommonRootRelationship.GetLastAndEntityInHierarchyAbove<fr::AnimationComponent>(recursiveRoot))
+			{
+				fr::Relationship const& recursiveRootRelationship = em.GetComponent<fr::Relationship>(recursiveRoot);
+				if (recursiveRootRelationship.HasParent())
+				{
+					fr::Relationship const& recursiveRootRelationshipParent =
+						em.GetComponent<fr::Relationship>(recursiveRootRelationship.GetParent());
+
+					fr::TransformComponent const* parentTransform =
+						recursiveRootRelationshipParent.GetFirstInHierarchyAbove<fr::TransformComponent>();
+					if (parentTransform)
+					{
+						// If the last AnimationComponent in the hierarchy above has a parent, and it has a Transform,
+						// that is the actual first matrix we need to cancel
+						m_parentOfCommonRootEntity = recursiveRootRelationship.GetParent();
+					}
+				}
+				else // If there is no parent with a TransformComponent, there is nothing to cancel!
+				{					
+					m_parentOfCommonRootEntity = entt::null;
 				}
 			}
 		}

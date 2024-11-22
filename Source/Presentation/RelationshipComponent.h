@@ -62,6 +62,12 @@ namespace fr
 		T* GetFirstAndEntityInHierarchyAbove(entt::entity& owningEntityOut) const; // Searches current and above
 
 		template<typename T>
+		T* GetLastInHierarchyAbove() const;
+
+		template<typename T>
+		T* GetLastAndEntityInHierarchyAbove(entt::entity& owningEntityOut) const; // Keep searching until nothing is above
+
+		template<typename T>
 		T* GetFirstInChildren() const;
 
 		template<typename T>
@@ -189,6 +195,39 @@ namespace fr
 		}
 		owningEntityOut = entt::null;
 		return nullptr;
+	}
+
+
+	template<typename T>
+	T* Relationship::GetLastInHierarchyAbove() const
+	{
+		entt::entity dummy;
+		return GetLastAndEntityInHierarchyAbove<T>(dummy);
+	}
+
+
+	template<typename T>
+	T* Relationship::GetLastAndEntityInHierarchyAbove(entt::entity& owningEntityOut) const
+	{
+		fr::EntityManager* em = fr::EntityManager::Get();
+
+		T* result = nullptr;
+		owningEntityOut = entt::null;
+
+		entt::entity curEntity = m_thisEntity;// No lock required: This should never change
+		while (curEntity != entt::null)
+		{
+			if (T* curCmpt = em->TryGetComponent<T>(curEntity))
+			{
+				result = curCmpt;
+				owningEntityOut = curEntity;
+			}
+
+			fr::Relationship const& curRelationship = em->GetComponent<fr::Relationship>(curEntity);
+			curEntity = curRelationship.GetParent();
+		}
+
+		return result;
 	}
 
 

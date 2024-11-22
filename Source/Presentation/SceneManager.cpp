@@ -82,6 +82,44 @@ namespace
 	};
 
 
+	inline fr::InterpolationMode CGLTFInterpolationTypeToFrInterpolationType(
+		cgltf_interpolation_type interpolationType,
+		cgltf_animation_path_type animationPathType)
+	{
+		switch (interpolationType)
+		{
+		case cgltf_interpolation_type::cgltf_interpolation_type_linear:
+		{
+			if (animationPathType == cgltf_animation_path_type_rotation)
+			{
+				return fr::InterpolationMode::SphericalLinearInterpolation;
+			}
+			return fr::InterpolationMode::Linear;
+		}
+		case cgltf_interpolation_type::cgltf_interpolation_type_step: return fr::InterpolationMode::Step;
+		case cgltf_interpolation_type::cgltf_interpolation_type_cubic_spline: return fr::InterpolationMode::CubicSpline;
+		default: SEAssertF("Invalid interpolation type");
+		}
+		return fr::InterpolationMode::Linear; // This should never happen
+	}
+
+
+	inline fr::AnimationPath CGLTFAnimationPathToFrAnimationPath(cgltf_animation_path_type pathType)
+	{
+		switch (pathType)
+		{
+		case cgltf_animation_path_type::cgltf_animation_path_type_translation: return fr::AnimationPath::Translation;
+		case cgltf_animation_path_type::cgltf_animation_path_type_rotation: return fr::AnimationPath::Rotation;
+		case cgltf_animation_path_type::cgltf_animation_path_type_scale: return fr::AnimationPath::Scale;
+		case cgltf_animation_path_type::cgltf_animation_path_type_weights: return fr::AnimationPath::Weights;
+		case cgltf_animation_path_type::cgltf_animation_path_type_invalid:
+		case cgltf_animation_path_type::cgltf_animation_path_type_max_enum:
+		default: SEAssertF("Invalid animation path type");
+		}
+		return fr::AnimationPath::Translation; // This should never happen
+	}
+
+
 	util::ByteVector UnpackColorAttributeAsVec4(cgltf_attribute const& colorAttribute)
 	{
 		SEAssert(colorAttribute.type == cgltf_attribute_type::cgltf_attribute_type_color,
@@ -1567,7 +1605,7 @@ namespace
 	}
 
 
-	void PreLoadSkinData(
+	inline void PreLoadSkinData(
 		cgltf_data const* data,
 		SceneMetadata& sceneMetadata,
 		std::vector<std::future<void>>& skinFutures)
@@ -1603,11 +1641,11 @@ namespace
 	}
 
 	
-	void AttachGeometry(
+	inline void AttachGeometry(
 		re::SceneData const& sceneData,
 		cgltf_node const* current,
 		size_t nodeIdx, // For default/fallback name
-		entt::entity sceneNode,
+		entt::entity sceneNodeEntity,
 		SceneMetadata& sceneMetadata)
 	{
 		SEAssert(current->mesh, "Current node does not have mesh data");
@@ -1624,9 +1662,7 @@ namespace
 			meshName = std::format("GLTFNode[{}]_Mesh", nodeIdx);
 		}
 
-		fr::Mesh::AttachMeshConceptMarker(sceneNode, meshName.c_str());
-
-		bool meshHasMorphTargets = false;
+		fr::Mesh::AttachMeshConceptMarker(sceneNodeEntity, meshName.c_str());
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primIdx = 0; primIdx < current->mesh->primitives_count; primIdx++)
@@ -1636,8 +1672,6 @@ namespace
 			SEAssert(sceneMetadata.m_primitiveToMeshPrimitiveMetadata.contains(&curPrimitive),
 				"Failed to find the primitive in our metadata map. This is unexpected");
 
-			meshHasMorphTargets |= curPrimitive.targets_count > 0;
-
 			// Note: No locks here, the work should have already finished and been waited on
 			MeshPrimitiveMetadata const& meshPrimMetadata = 
 				sceneMetadata.m_primitiveToMeshPrimitiveMetadata.at(&curPrimitive);
@@ -1645,7 +1679,7 @@ namespace
 			// Attach the MeshPrimitive to the MeshConcept:
 			const entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
 				em,
-				sceneNode,
+				sceneNodeEntity,
 				meshPrimMetadata.m_meshPrimitive,
 				meshPrimMetadata.m_positionsMinXYZ,
 				meshPrimMetadata.m_positionsMaxXYZ);
@@ -1655,92 +1689,6 @@ namespace
 
 			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material.get());
 		} // primitives loop
-
-
-		// Attach a SkinningComponent, if necessary:
-		if (current->skin)
-		{
-			// Build our joint index to TransformID mapping table:
-			std::vector<gr::TransformID> jointToTransformIDs;
-			jointToTransformIDs.reserve(current->skin->joints_count);
-
-			std::vector<entt::entity> jointEntities;
-			jointEntities.reserve(current->skin->joints_count);
-
-			for (size_t jointIdx = 0; jointIdx < current->skin->joints_count; ++jointIdx)
-			{
-				SEAssert(sceneMetadata.m_nodeToEntity.contains(current->skin->joints[jointIdx]),
-					"Node is not in the node to entity map. This should not be possible");
-
-				const entt::entity jointNodeEntity = sceneMetadata.m_nodeToEntity.at(current->skin->joints[jointIdx]);
-
-				jointEntities.emplace_back(jointNodeEntity);
-
-				fr::TransformComponent const* transformCmpt =
-					em.TryGetComponent<fr::TransformComponent>(jointNodeEntity);
-
-				// GLTF Specs: Animated nodes can only have TRS properties (no matrix)
-				if (transformCmpt && !current->skin->joints[jointIdx]->has_matrix)
-				{
-					jointToTransformIDs.emplace_back(transformCmpt->GetTransformID());
-				}
-				else
-				{
-					jointToTransformIDs.emplace_back(gr::k_invalidTransformID);
-				}
-			}		
-
-			// We pre-loaded the skinning data
-			std::vector<glm::mat4>* inverseBindMatrices = nullptr;
-			if (sceneMetadata.m_skinToSkinMetadata.contains(current->skin))
-			{
-				// Note: No locks here, the work should have already finished and been waited on
-				inverseBindMatrices = &sceneMetadata.m_skinToSkinMetadata.at(current->skin).m_inverseBindMatrices;
-			}
-
-			// The skeleton root node is part of the skeletal hierarchy
-			entt::entity skeletonRootEntity = entt::null;
-			gr::TransformID skeletonTransformID = gr::k_invalidTransformID;
-			if (sceneMetadata.m_nodeToEntity.contains(current->skin->skeleton))
-			{
-				skeletonRootEntity = sceneMetadata.m_nodeToEntity.at(current->skin->skeleton);
-
-				// Note: The entity associated with the skeleton node might not be the entity with the next 
-				// TransformationComponent in the hierarchy above; it might be modified here
-				fr::Relationship const& skeletonRootRelationship = em.GetComponent<fr::Relationship>(skeletonRootEntity);
-				fr::TransformComponent const* skeletonTransformCmpt = 
-					skeletonRootRelationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(skeletonRootEntity);
-				if (skeletonTransformCmpt)
-				{
-					skeletonTransformID = skeletonTransformCmpt->GetTransformID();
-				}
-			}
-
-			fr::SkinningComponent::AttachSkinningComponent(
-				sceneNode,
-				std::move(jointToTransformIDs),
-				std::move(jointEntities),
-				inverseBindMatrices ? std::move(*inverseBindMatrices) : std::vector<glm::mat4>(),
-				skeletonRootEntity,
-				skeletonTransformID);
-		}
-
-
-		// Attach a MeshMorphComponent, if necessary:
-		if (meshHasMorphTargets)
-		{
-			float const* weights = current->weights;
-			size_t weightsCount = current->weights_count;
-			if (!weights)
-			{
-				// GLTF specs: The default target mesh.weights is optional, and must be used when node.weights is null
-				weights = current->mesh->weights;
-				weightsCount = current->mesh->weights_count;
-			}
-
-			fr::MeshMorphComponent::AttachMeshMorphComponent(
-				em, sceneNode, current->mesh->weights, util::CheckedCast<uint32_t>(current->mesh->weights_count));
-		}
 	}
 
 
@@ -1774,44 +1722,6 @@ namespace
 		}
 
 		return newSceneNode;
-	}
-
-
-	inline fr::InterpolationMode CGLTFInterpolationTypeToFrInterpolationType(
-		cgltf_interpolation_type interpolationType,
-		cgltf_animation_path_type animationPathType)
-	{
-		switch (interpolationType)
-		{
-		case cgltf_interpolation_type::cgltf_interpolation_type_linear:
-		{
-			if (animationPathType == cgltf_animation_path_type_rotation)
-			{
-				return fr::InterpolationMode::SphericalLinearInterpolation;
-			}
-			return fr::InterpolationMode::Linear;
-		}
-		case cgltf_interpolation_type::cgltf_interpolation_type_step: return fr::InterpolationMode::Step;
-		case cgltf_interpolation_type::cgltf_interpolation_type_cubic_spline: return fr::InterpolationMode::CubicSpline;
-		default: SEAssertF("Invalid interpolation type");
-		}
-		return fr::InterpolationMode::Linear; // This should never happen
-	}
-
-
-	inline fr::AnimationPath CGLTFAnimationPathToFrAnimationPath(cgltf_animation_path_type pathType)
-	{
-		switch (pathType)
-		{
-		case cgltf_animation_path_type::cgltf_animation_path_type_translation: return fr::AnimationPath::Translation;
-		case cgltf_animation_path_type::cgltf_animation_path_type_rotation: return fr::AnimationPath::Rotation;
-		case cgltf_animation_path_type::cgltf_animation_path_type_scale: return fr::AnimationPath::Scale;
-		case cgltf_animation_path_type::cgltf_animation_path_type_weights: return fr::AnimationPath::Weights;
-		case cgltf_animation_path_type::cgltf_animation_path_type_invalid:
-		case cgltf_animation_path_type::cgltf_animation_path_type_max_enum:
-		default: SEAssertF("Invalid animation path type");
-		}
-		return fr::AnimationPath::Translation; // This should never happen
 	}
 
 
@@ -1872,7 +1782,7 @@ namespace
 						LoadAddCamera(curSceneNodeEntity, nodeIdx, current, sceneMetadata);
 					}
 
-					// Attach an animation component, if it is required:
+					// Attach a transform/weight animation component, if it is required:
 					bool hasAnimation = current->weights || (current->mesh && current->mesh->weights);
 					if (!hasAnimation)
 					{
@@ -1894,6 +1804,128 @@ namespace
 							"Mesh weights count is non-zero, but weights is null");
 
 						AttachAnimationComponents(current, curSceneNodeEntity, sceneMetadata);
+					}
+				}));
+		}
+	}
+
+
+	void AttachMeshAnimationComponents(
+		re::SceneData& sceneData,
+		cgltf_data const* data,
+		SceneMetadata& sceneMetadata,
+		std::vector<std::future<void>>& loadTasks)
+	{
+		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
+		{
+			cgltf_node const* current = &data->nodes[nodeIdx];
+
+			const entt::entity curSceneNodeEntity = sceneMetadata.m_nodeToEntity.at(current);
+
+			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+				[&sceneData, &sceneMetadata, nodeIdx, current, curSceneNodeEntity]()
+				{
+					fr::EntityManager& em = *fr::EntityManager::Get();
+
+					// Morph targets:
+					if (current->mesh)
+					{
+						bool meshHasMorphTargets = false;
+						for (size_t primIdx = 0; primIdx < current->mesh->primitives_count; primIdx++)
+						{
+							cgltf_primitive const& curPrimitive = current->mesh->primitives[primIdx];
+							if (curPrimitive.targets_count > 0)
+							{
+								meshHasMorphTargets = true;
+								break;
+							}
+						}
+
+						if (meshHasMorphTargets)
+						{
+							float const* weights = current->weights;
+							size_t weightsCount = current->weights_count;
+							if (!weights)
+							{
+								// GLTF specs: The default target mesh.weights is optional, and must be used when node.weights is null
+								weights = current->mesh->weights;
+								weightsCount = current->mesh->weights_count;
+							}
+
+							fr::MeshMorphComponent::AttachMeshMorphComponent(
+								em,
+								curSceneNodeEntity,
+								current->mesh->weights,
+								util::CheckedCast<uint32_t>(current->mesh->weights_count));
+						}
+					}
+
+					// Skinning:
+					if (current->skin)
+					{
+						// Build our joint index to TransformID mapping table:
+						std::vector<gr::TransformID> jointToTransformIDs;
+						jointToTransformIDs.reserve(current->skin->joints_count);
+
+						std::vector<entt::entity> jointEntities;
+						jointEntities.reserve(current->skin->joints_count);
+
+						for (size_t jointIdx = 0; jointIdx < current->skin->joints_count; ++jointIdx)
+						{
+							SEAssert(sceneMetadata.m_nodeToEntity.contains(current->skin->joints[jointIdx]),
+								"Node is not in the node to entity map. This should not be possible");
+
+							const entt::entity jointNodeEntity = sceneMetadata.m_nodeToEntity.at(current->skin->joints[jointIdx]);
+
+							jointEntities.emplace_back(jointNodeEntity);
+
+							fr::TransformComponent const* transformCmpt =
+								em.TryGetComponent<fr::TransformComponent>(jointNodeEntity);
+
+							// GLTF Specs: Animated nodes can only have TRS properties (no matrix)
+							if (transformCmpt && !current->skin->joints[jointIdx]->has_matrix)
+							{
+								jointToTransformIDs.emplace_back(transformCmpt->GetTransformID());
+							}
+							else
+							{
+								jointToTransformIDs.emplace_back(gr::k_invalidTransformID);
+							}
+						}
+
+						// We pre-loaded the skinning data
+						std::vector<glm::mat4>* inverseBindMatrices = nullptr;
+						if (sceneMetadata.m_skinToSkinMetadata.contains(current->skin))
+						{
+							// Note: No locks here, the work should have already finished and been waited on
+							inverseBindMatrices = &sceneMetadata.m_skinToSkinMetadata.at(current->skin).m_inverseBindMatrices;
+						}
+
+						// The skeleton root node is part of the skeletal hierarchy
+						entt::entity skeletonRootEntity = entt::null;
+						gr::TransformID skeletonTransformID = gr::k_invalidTransformID;
+						if (sceneMetadata.m_nodeToEntity.contains(current->skin->skeleton))
+						{
+							skeletonRootEntity = sceneMetadata.m_nodeToEntity.at(current->skin->skeleton);
+
+							// Note: The entity associated with the skeleton node might not be the entity with the next 
+							// TransformationComponent in the hierarchy above; it might be modified here
+							fr::Relationship const& skeletonRootRelationship = em.GetComponent<fr::Relationship>(skeletonRootEntity);
+							fr::TransformComponent const* skeletonTransformCmpt =
+								skeletonRootRelationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(skeletonRootEntity);
+							if (skeletonTransformCmpt)
+							{
+								skeletonTransformID = skeletonTransformCmpt->GetTransformID();
+							}
+						}
+
+						fr::SkinningComponent::AttachSkinningComponent(
+							curSceneNodeEntity,
+							std::move(jointToTransformIDs),
+							std::move(jointEntities),
+							inverseBindMatrices ? std::move(*inverseBindMatrices) : std::vector<glm::mat4>(),
+							skeletonRootEntity,
+							skeletonTransformID);
 					}
 				}));
 		}
@@ -2309,8 +2341,11 @@ namespace fr
 			}
 			loadFutures.clear();
 
-			// Cleanup:
-			cgltf_free(data);
+
+			// Now our entities and components are loaded, we can attach mesh animation-related components. In
+			// particular, SkinningComponents can only be constructed AFTER all AnimationComponents have been loaded
+			// Note: We use earlyLoadTasks here so we only need to wait on 1 vector at the end...
+			AttachMeshAnimationComponents(*sceneData, data, sceneMetadata, earlyLoadTasks);
 		}
 
 		if (!sceneHasCamera) // Add a default camera:
@@ -2338,6 +2373,12 @@ namespace fr
 
 			fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetMainCameraCommand>(
 				sceneMetadata.m_cameraMetadata.back().m_owningEntity);
+		}
+
+		// Cleanup:
+		if (data)
+		{
+			cgltf_free(data);
 		}
 
 		sceneData->EndLoading();
