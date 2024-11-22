@@ -147,8 +147,6 @@ namespace app
 			EngineApp::Update(m_frameNum, lastOuterFrameTime);
 			SEEndCPUEvent();
 
-			
-
 			// Update components until enough time has passed to trigger a render.
 			// Or, continue rendering frames until it's time to update again.			
 			elapsed += std::min(lastOuterFrameTime, k_maxOuterFrameTime);
@@ -172,10 +170,10 @@ namespace app
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("fr::SceneManager::Update");
-				sceneManager->Update(m_frameNum, k_fixedTimeStep); // Updates all of the scene objects
+				sceneManager->Update(m_frameNum, k_fixedTimeStep);
 				SEEndCPUEvent();
 
-				// AI, physics, etc should also be pumped here (eventually)
+				// TODO: AI, physics, etc should also be pumped here
 
 				SEEndCPUEvent();
 			}
