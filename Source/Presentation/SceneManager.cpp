@@ -120,6 +120,25 @@ namespace
 	}
 
 
+	inline gr::MeshPrimitive::PrimitiveTopology CGLTFPrimitiveTypeToPrimitiveTopology(cgltf_primitive_type primitiveType)
+	{
+		switch (primitiveType)
+		{
+		case cgltf_primitive_type::cgltf_primitive_type_points: return gr::MeshPrimitive::PrimitiveTopology::PointList;
+		case cgltf_primitive_type::cgltf_primitive_type_lines: return gr::MeshPrimitive::PrimitiveTopology::LineList;
+		case cgltf_primitive_type::cgltf_primitive_type_line_strip: return gr::MeshPrimitive::PrimitiveTopology::LineStrip;
+		case cgltf_primitive_type::cgltf_primitive_type_triangles: return gr::MeshPrimitive::PrimitiveTopology::TriangleList;
+		case cgltf_primitive_type::cgltf_primitive_type_triangle_strip: return gr::MeshPrimitive::PrimitiveTopology::TriangleStrip;
+		case cgltf_primitive_type::cgltf_primitive_type_triangle_fan:
+		case cgltf_primitive_type::cgltf_primitive_type_line_loop:
+		case cgltf_primitive_type::cgltf_primitive_type_invalid:
+		case cgltf_primitive_type::cgltf_primitive_type_max_enum:
+		default: SEAssertF("Invalid/unsupported primitive type/draw mode. SE does not support line loops or triangle fans");
+		}
+		return gr::MeshPrimitive::PrimitiveTopology::TriangleList; // This should never happen
+	}
+
+
 	util::ByteVector UnpackColorAttributeAsVec4(cgltf_attribute const& colorAttribute)
 	{
 		SEAssert(colorAttribute.type == cgltf_attribute_type::cgltf_attribute_type_color,
@@ -307,127 +326,44 @@ namespace
 	}
 
 
-	void GenerateDefaultResources(re::SceneData& scene)
+	void LoadIBLTexture(std::string const& sceneRootPath, re::SceneData& scene)
 	{
-		LOG("Generating default resources...");
+		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
+		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
+		// If that fails, we fall back to a default HDRI
+		// Later, we'll use the IBL texture to generate the IEM and PMREM textures in a GraphicsSystem
+		std::shared_ptr<re::Texture> iblTexture = nullptr;
 
-		// Default error material:
-		LOG("Generating a default GLTF pbrMetallicRoughness material \"%s\"...",
-			en::DefaultResourceNames::k_defaultGLTFMaterialName);
+		auto TryLoadIBL = [&scene](std::string const& IBLPath, std::shared_ptr<re::Texture>& iblTexture) {
+			if (scene.TextureExists(IBLPath))
+			{
+				iblTexture = scene.GetTexture(IBLPath);
+			}
+			else
+			{
+				iblTexture = grutil::LoadTextureFromFilePath(
+					{ IBLPath },
+					re::Texture::ColorSpace::Linear,
+					false,
+					re::Texture::k_errorTextureColor);
+			}
+			};
 
-		std::shared_ptr<gr::Material> defaultMaterialGLTF = gr::Material::Create(
-			en::DefaultResourceNames::k_defaultGLTFMaterialName,
-			gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness);
-
-		constexpr uint8_t k_defaultUVChannelIdx = 0;
-
-		// BaseColorTex
-		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::BaseColor, 
-			grutil::LoadTextureFromFilePath(
-				{ en::DefaultResourceNames::k_defaultAlbedoTexName },
-				re::Texture::ColorSpace::sRGB,
-				true,
-				glm::vec4(1.f)), // White
-			k_defaultUVChannelIdx);
-
-		// MetallicRoughnessTex
-		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::MetallicRoughness, 
-			grutil::LoadTextureFromFilePath(
-				{ en::DefaultResourceNames::k_defaultMetallicRoughnessTexName },
-				re::Texture::ColorSpace::Linear,
-				true,
-				glm::vec4(0.f, 1.f, 1.f, 0.f)), // GLTF specs: .BG = metalness, roughness, Default: .BG = 1, 1
-			k_defaultUVChannelIdx);
-
-		// NormalTex
-		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Normal, 
-			grutil::LoadTextureFromFilePath(
-				{ en::DefaultResourceNames::k_defaultNormalTexName },
-				re::Texture::ColorSpace::Linear,
-				true,
-				glm::vec4(0.5f, 0.5f, 1.f, 0.f)),
-			k_defaultUVChannelIdx);
-
-		// OcclusionTex
-		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Occlusion,
-			grutil::LoadTextureFromFilePath(
-				{ en::DefaultResourceNames::k_defaultOcclusionTexName },
-				re::Texture::ColorSpace::Linear,
-				true,
-				glm::vec4(1.f)),
-			k_defaultUVChannelIdx);
-
-		// EmissiveTex
-		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Emissive,
-			grutil::LoadTextureFromFilePath(
-				{ en::DefaultResourceNames::k_defaultEmissiveTexName },
-				re::Texture::ColorSpace::sRGB,
-				true,
-				glm::vec4(0.f)),
-			k_defaultUVChannelIdx);
-
-		scene.AddUniqueMaterial(defaultMaterialGLTF);
-
-
-		// Default 2D texture fallbacks:
-		const re::Texture::TextureParams defaultTexParams = re::Texture::TextureParams
+		std::string IBLPath;
+		if (core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, IBLPath))
 		{
-			.m_usage = 
-				static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
-			.m_dimension = re::Texture::Dimension::Texture2D,
-			.m_format = re::Texture::Format::RGBA8_UNORM,
-			.m_colorSpace = re::Texture::ColorSpace::Linear
-		};
+			TryLoadIBL(IBLPath, iblTexture);
+		}
 
-		re::Texture::Create(
-			en::DefaultResourceNames::k_opaqueWhiteDefaultTexName,
-			defaultTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 1.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_transparentWhiteDefaultTexName,
-			defaultTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 0.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_opaqueBlackDefaultTexName,
-			defaultTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 1.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_transparentBlackDefaultTexName,
-			defaultTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 0.f));
-
-
-		// Default cube map texture fallbacks:
-		const re::Texture::TextureParams defaultCubeMapTexParams = re::Texture::TextureParams
+		if (!iblTexture)
 		{
-			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
-			.m_dimension = re::Texture::Dimension::TextureCube,
-			.m_format = re::Texture::Format::RGBA8_UNORM,
-			.m_colorSpace = re::Texture::ColorSpace::Linear
-		};
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 1.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 0.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 1.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 0.f));
+			IBLPath = core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey);
+			TryLoadIBL(IBLPath, iblTexture);
+		}
+		SEAssert(iblTexture != nullptr,
+			std::format("Missing IBL texture. Per scene IBLs must be placed at {}; A default fallback must exist at {}",
+				core::Config::Get()->GetValueAsString(core::configkeys::k_sceneIBLPathKey),
+				core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey)).c_str());
 	}
 
 
@@ -664,6 +600,130 @@ namespace
 	}
 
 
+	void GenerateDefaultResources(re::SceneData& scene)
+	{
+		LOG("Generating default resources...");
+
+		// Default error material:
+		LOG("Generating a default GLTF pbrMetallicRoughness material \"%s\"...",
+			en::DefaultResourceNames::k_defaultGLTFMaterialName);
+
+		std::shared_ptr<gr::Material> defaultMaterialGLTF = gr::Material::Create(
+			en::DefaultResourceNames::k_defaultGLTFMaterialName,
+			gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness);
+
+		constexpr uint8_t k_defaultUVChannelIdx = 0;
+
+		// BaseColorTex
+		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::BaseColor,
+			grutil::LoadTextureFromFilePath(
+				{ en::DefaultResourceNames::k_defaultAlbedoTexName },
+				re::Texture::ColorSpace::sRGB,
+				true,
+				glm::vec4(1.f)), // White
+			k_defaultUVChannelIdx);
+
+		// MetallicRoughnessTex
+		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::MetallicRoughness,
+			grutil::LoadTextureFromFilePath(
+				{ en::DefaultResourceNames::k_defaultMetallicRoughnessTexName },
+				re::Texture::ColorSpace::Linear,
+				true,
+				glm::vec4(0.f, 1.f, 1.f, 0.f)), // GLTF specs: .BG = metalness, roughness, Default: .BG = 1, 1
+			k_defaultUVChannelIdx);
+
+		// NormalTex
+		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Normal,
+			grutil::LoadTextureFromFilePath(
+				{ en::DefaultResourceNames::k_defaultNormalTexName },
+				re::Texture::ColorSpace::Linear,
+				true,
+				glm::vec4(0.5f, 0.5f, 1.f, 0.f)),
+			k_defaultUVChannelIdx);
+
+		// OcclusionTex
+		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Occlusion,
+			grutil::LoadTextureFromFilePath(
+				{ en::DefaultResourceNames::k_defaultOcclusionTexName },
+				re::Texture::ColorSpace::Linear,
+				true,
+				glm::vec4(1.f)),
+			k_defaultUVChannelIdx);
+
+		// EmissiveTex
+		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Emissive,
+			grutil::LoadTextureFromFilePath(
+				{ en::DefaultResourceNames::k_defaultEmissiveTexName },
+				re::Texture::ColorSpace::sRGB,
+				true,
+				glm::vec4(0.f)),
+			k_defaultUVChannelIdx);
+
+		scene.AddUniqueMaterial(defaultMaterialGLTF);
+
+
+		// Default 2D texture fallbacks:
+		const re::Texture::TextureParams defaultTexParams = re::Texture::TextureParams
+		{
+			.m_usage =
+				static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
+			.m_dimension = re::Texture::Dimension::Texture2D,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
+			.m_colorSpace = re::Texture::ColorSpace::Linear
+		};
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_opaqueWhiteDefaultTexName,
+			defaultTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 1.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_transparentWhiteDefaultTexName,
+			defaultTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 0.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_opaqueBlackDefaultTexName,
+			defaultTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 1.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_transparentBlackDefaultTexName,
+			defaultTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 0.f));
+
+
+		// Default cube map texture fallbacks:
+		const re::Texture::TextureParams defaultCubeMapTexParams = re::Texture::TextureParams
+		{
+			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
+			.m_dimension = re::Texture::Dimension::TextureCube,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
+			.m_colorSpace = re::Texture::ColorSpace::Linear
+		};
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 1.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 0.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 1.f));
+
+		re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 0.f));
+	}
+
+
 	void SetTransformValues(cgltf_node const* current, entt::entity sceneNode)
 	{
 		SEAssert((current->has_matrix != (current->has_rotation || current->has_scale || current->has_translation)) ||
@@ -709,6 +769,39 @@ namespace
 			}
 		}
 	};
+
+
+	inline entt::entity CreateSceneNode(
+		SceneMetadata const& sceneMetadata,
+		cgltf_node const* gltfNode,
+		entt::entity parent,
+		size_t nodeIdx)
+	{
+		std::string const& nodeName = gltfNode->name ? gltfNode->name : std::format("UnnamedNode_{}", nodeIdx);
+
+		fr::EntityManager& em = *fr::EntityManager::Get();
+
+		entt::entity newSceneNode = fr::SceneNode::Create(em, nodeName, parent);
+
+		// We ensure there is a Transformation (even if it's the identity) for all skeleton nodes
+		bool isSkeletonNode = false;
+		{
+			std::lock_guard<std::mutex> lock(sceneMetadata.m_skinDataMutex);
+			isSkeletonNode = sceneMetadata.m_skeletonNodes.contains(gltfNode);
+		}
+
+		if (gltfNode->has_translation ||
+			gltfNode->has_rotation ||
+			gltfNode->has_scale ||
+			gltfNode->has_matrix ||
+			isSkeletonNode)
+		{
+			fr::TransformComponent::AttachTransformComponent(em, newSceneNode);
+			SetTransformValues(gltfNode, newSceneNode);
+		}
+
+		return newSceneNode;
+	}
 
 
 	// Creates a default camera if current == nullptr
@@ -847,66 +940,6 @@ namespace
 		default:
 			SEAssertF("Invalid light type");
 		}
-	}
-
-
-	void LoadIBLTexture(std::string const& sceneRootPath, re::SceneData& scene)
-	{
-		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
-		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
-		// If that fails, we fall back to a default HDRI
-		// Later, we'll use the IBL texture to generate the IEM and PMREM textures in a GraphicsSystem
-		std::shared_ptr<re::Texture> iblTexture = nullptr;
-
-		auto TryLoadIBL = [&scene](std::string const& IBLPath, std::shared_ptr<re::Texture>& iblTexture) {
-			if (scene.TextureExists(IBLPath))
-			{
-				iblTexture = scene.GetTexture(IBLPath);
-			}
-			else
-			{
-				iblTexture = grutil::LoadTextureFromFilePath(
-					{ IBLPath },
-					re::Texture::ColorSpace::Linear,
-					false,
-					re::Texture::k_errorTextureColor);
-			}
-			};
-
-		std::string IBLPath;
-		if (core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, IBLPath))
-		{
-			TryLoadIBL(IBLPath, iblTexture);
-		}
-
-		if (!iblTexture)
-		{
-			IBLPath = core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey);
-			TryLoadIBL(IBLPath, iblTexture);
-		}
-		SEAssert(iblTexture != nullptr,
-			std::format("Missing IBL texture. Per scene IBLs must be placed at {}; A default fallback must exist at {}",
-				core::Config::Get()->GetValueAsString(core::configkeys::k_sceneIBLPathKey),
-				core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey)).c_str());
-	}
-
-
-	inline gr::MeshPrimitive::PrimitiveTopology CGLTFPrimitiveTypeToPrimitiveTopology(cgltf_primitive_type primitiveType)
-	{
-		switch (primitiveType)
-		{
-		case cgltf_primitive_type::cgltf_primitive_type_points: return gr::MeshPrimitive::PrimitiveTopology::PointList;
-		case cgltf_primitive_type::cgltf_primitive_type_lines: return gr::MeshPrimitive::PrimitiveTopology::LineList;
-		case cgltf_primitive_type::cgltf_primitive_type_line_strip: return gr::MeshPrimitive::PrimitiveTopology::LineStrip;
-		case cgltf_primitive_type::cgltf_primitive_type_triangles: return gr::MeshPrimitive::PrimitiveTopology::TriangleList;
-		case cgltf_primitive_type::cgltf_primitive_type_triangle_strip: return gr::MeshPrimitive::PrimitiveTopology::TriangleStrip;
-		case cgltf_primitive_type::cgltf_primitive_type_triangle_fan:
-		case cgltf_primitive_type::cgltf_primitive_type_line_loop:
-		case cgltf_primitive_type::cgltf_primitive_type_invalid:
-		case cgltf_primitive_type::cgltf_primitive_type_max_enum:
-		default: SEAssertF("Invalid/unsupported primitive type/draw mode. SE does not support line loops or triangle fans");
-		}
-		return gr::MeshPrimitive::PrimitiveTopology::TriangleList; // This should never happen
 	}
 
 
@@ -1640,6 +1673,97 @@ namespace
 		}
 	}
 
+
+	void LoadAnimationData(
+		std::string const& sceneFilePath, cgltf_data const* data, SceneMetadata& sceneMetadata)
+	{
+		fr::EntityManager& em = *fr::EntityManager::Get();
+
+		sceneMetadata.m_animationController =
+			fr::AnimationController::CreateAnimationController(em, sceneFilePath.c_str());
+
+		for (uint64_t animIdx = 0; animIdx < data->animations_count; ++animIdx)
+		{
+			std::string animationName;
+			if (data->animations[animIdx].name)
+			{
+				animationName = data->animations[animIdx].name;
+			}
+			else
+			{
+				static std::atomic<uint32_t> unnamedAnimationIdx = 0;
+				animationName = std::format("UnnamedAnimation_{}", unnamedAnimationIdx.fetch_add(1));
+			}
+			LOG("Loading animation \"%s\"...", animationName.c_str());
+
+			sceneMetadata.m_animationController->AddNewAnimation(animationName.c_str());
+
+			// Pack the Channels of an AnimationData struct:
+			std::unordered_map<cgltf_node const*, fr::AnimationData>& nodeToData =
+				sceneMetadata.m_nodeToAnimationData.emplace_back();
+			for (uint64_t channelIdx = 0; channelIdx < data->animations[animIdx].channels_count; ++channelIdx)
+			{
+				// GLTF animation samplers define an "input/output pair":
+				// - A set of floating-point scalar values representing linear time in seconds
+				// - A set of vectors or scalars representing the animated property
+				// 
+				// Note: The GLTF specifications also mandate that within 1 animation, each target (i.e. target node and
+				// animation path) MUST NOT be used more than once
+				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#animations
+
+				cgltf_animation_sampler const* animSampler = data->animations[animIdx].channels[channelIdx].sampler;
+
+				// Get/create a new AnimationData structure:
+				cgltf_node const* targetNode = data->animations[animIdx].channels[channelIdx].target_node;
+				fr::AnimationData* animationData = nullptr;
+				if (nodeToData.contains(targetNode))
+				{
+					animationData = &nodeToData.at(targetNode);
+				}
+				else
+				{
+					animationData = &nodeToData.emplace(targetNode, fr::AnimationData{}).first->second;
+				}
+
+				animationData->m_animationIdx = animIdx;
+
+				// Create a new animation channel entry:
+				fr::AnimationData::Channel& animChannel = animationData->m_channels.emplace_back();
+
+				// Channel interpolation mode:
+				animChannel.m_interpolationMode = CGLTFInterpolationTypeToFrInterpolationType(
+					animSampler->interpolation,
+					data->animations[animIdx].channels[channelIdx].target_path);
+
+				// Channel target path:
+				animChannel.m_targetPath =
+					CGLTFAnimationPathToFrAnimationPath(data->animations[animIdx].channels[channelIdx].target_path);
+
+				// Channel input data: (Linear keyframe times, in seconds)
+				const cgltf_size numKeyframeTimeEntries = cgltf_accessor_unpack_floats(animSampler->input, nullptr, 0);
+
+				std::vector<float> keyframeTimesSec(numKeyframeTimeEntries);
+				cgltf_accessor_unpack_floats(animSampler->input, keyframeTimesSec.data(), numKeyframeTimeEntries);
+
+				animChannel.m_keyframeTimesIdx =
+					sceneMetadata.m_animationController->AddChannelKeyframeTimes(animIdx, std::move(keyframeTimesSec));
+
+				// Channel output data:
+				const cgltf_size numOutputFloats = cgltf_accessor_unpack_floats(animSampler->output, nullptr, 0);
+
+				std::vector<float> outputFloatData(numOutputFloats);
+				cgltf_accessor_unpack_floats(animSampler->output, outputFloatData.data(), numOutputFloats);
+
+				animChannel.m_dataIdx = sceneMetadata.m_animationController->AddChannelData(std::move(outputFloatData));
+
+				SEAssert(numOutputFloats % numKeyframeTimeEntries == 0,
+					"The number of keyframe entries must be an exact multiple of the number of output floats");
+
+				animChannel.m_dataFloatsPerKeyframe = util::CheckedCast<uint8_t>(numOutputFloats / numKeyframeTimeEntries);
+			}
+		}
+	}
+
 	
 	inline void AttachGeometry(
 		re::SceneData const& sceneData,
@@ -1692,39 +1816,6 @@ namespace
 	}
 
 
-	inline entt::entity CreateSceneNode(
-		SceneMetadata const& sceneMetadata,
-		cgltf_node const* gltfNode,
-		entt::entity parent,
-		size_t nodeIdx)
-	{
-		std::string const& nodeName = gltfNode->name ? gltfNode->name : std::format("UnnamedNode_{}", nodeIdx);
-		
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
-		entt::entity newSceneNode = fr::SceneNode::Create(em, nodeName, parent);
-
-		// We ensure there is a Transformation (even if it's the identity) for all skeleton nodes
-		bool isSkeletonNode = false;
-		{
-			std::lock_guard<std::mutex> lock(sceneMetadata.m_skinDataMutex);
-			isSkeletonNode = sceneMetadata.m_skeletonNodes.contains(gltfNode);
-		}
-
-		if (gltfNode->has_translation ||
-			gltfNode->has_rotation ||
-			gltfNode->has_scale ||
-			gltfNode->has_matrix ||
-			isSkeletonNode)
-		{
-			fr::TransformComponent::AttachTransformComponent(em, newSceneNode);
-			SetTransformValues(gltfNode, newSceneNode);
-		}
-
-		return newSceneNode;
-	}
-
-
 	void AttachAnimationComponents(
 		cgltf_node const* current,
 		entt::entity curSceneNodeEntity,
@@ -1747,65 +1838,6 @@ namespace
 			}
 			
 			animationCmpt->SetAnimationData(animation.at(current));
-		}
-	}
-
-
-	void AttachNodeComponents(
-		re::SceneData& sceneData,
-		cgltf_data const* data,
-		SceneMetadata& sceneMetadata,
-		std::vector<std::future<void>>& loadTasks)
-	{
-		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
-		{
-			cgltf_node const* current = &data->nodes[nodeIdx];
-
-			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[&sceneData, &sceneMetadata, current, nodeIdx]()
-				{
-					SEAssert(sceneMetadata.m_nodeToEntity.contains(current),
-					"Node to entity map does not contain the current node. This should not be possible");
-
-					const entt::entity curSceneNodeEntity = sceneMetadata.m_nodeToEntity.at(current);
-
-					if (current->mesh)
-					{
-						AttachGeometry(sceneData, current, nodeIdx, curSceneNodeEntity, sceneMetadata);
-					}
-					if (current->light)
-					{
-						LoadAddLight(sceneData, current, curSceneNodeEntity);
-					}
-					if (current->camera)
-					{
-						LoadAddCamera(curSceneNodeEntity, nodeIdx, current, sceneMetadata);
-					}
-
-					// Attach a transform/weight animation component, if it is required:
-					bool hasAnimation = current->weights || (current->mesh && current->mesh->weights);
-					if (!hasAnimation)
-					{
-						// Also need to search the node animations
-						for (auto const& animation : sceneMetadata.m_nodeToAnimationData)
-						{
-							if (animation.contains(current))
-							{
-								hasAnimation = true;
-							}
-						}
-					}
-
-					if (hasAnimation)
-					{
-						SEAssert((current->weights == nullptr && (!current->mesh || !current->mesh->weights)) ||
-							(current->weights && current->weights_count > 0) ||
-							(current->mesh && current->mesh->weights && current->mesh->weights_count > 0),
-							"Mesh weights count is non-zero, but weights is null");
-
-						AttachAnimationComponents(current, curSceneNodeEntity, sceneMetadata);
-					}
-				}));
 		}
 	}
 
@@ -1932,6 +1964,65 @@ namespace
 	}
 
 
+	void AttachNodeComponents(
+		re::SceneData& sceneData,
+		cgltf_data const* data,
+		SceneMetadata& sceneMetadata,
+		std::vector<std::future<void>>& loadTasks)
+	{
+		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
+		{
+			cgltf_node const* current = &data->nodes[nodeIdx];
+
+			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+				[&sceneData, &sceneMetadata, current, nodeIdx]()
+				{
+					SEAssert(sceneMetadata.m_nodeToEntity.contains(current),
+					"Node to entity map does not contain the current node. This should not be possible");
+
+			const entt::entity curSceneNodeEntity = sceneMetadata.m_nodeToEntity.at(current);
+
+			if (current->mesh)
+			{
+				AttachGeometry(sceneData, current, nodeIdx, curSceneNodeEntity, sceneMetadata);
+			}
+			if (current->light)
+			{
+				LoadAddLight(sceneData, current, curSceneNodeEntity);
+			}
+			if (current->camera)
+			{
+				LoadAddCamera(curSceneNodeEntity, nodeIdx, current, sceneMetadata);
+			}
+
+			// Attach a transform/weight animation component, if it is required:
+			bool hasAnimation = current->weights || (current->mesh && current->mesh->weights);
+			if (!hasAnimation)
+			{
+				// Also need to search the node animations
+				for (auto const& animation : sceneMetadata.m_nodeToAnimationData)
+				{
+					if (animation.contains(current))
+					{
+						hasAnimation = true;
+					}
+				}
+			}
+
+			if (hasAnimation)
+			{
+				SEAssert((current->weights == nullptr && (!current->mesh || !current->mesh->weights)) ||
+					(current->weights && current->weights_count > 0) ||
+					(current->mesh && current->mesh->weights && current->mesh->weights_count > 0),
+					"Mesh weights count is non-zero, but weights is null");
+
+				AttachAnimationComponents(current, curSceneNodeEntity, sceneMetadata);
+			}
+				}));
+		}
+	}
+
+
 	void CreateSceneNodeEntities(cgltf_data const* data, SceneMetadata& sceneMetadata)
 	{
 		for (size_t sceneIdx = 0; sceneIdx < data->scenes_count; ++sceneIdx)
@@ -1972,97 +2063,6 @@ namespace
 				{
 					nodes.emplace(curNode->children[childIdx]);
 				}
-			}
-		}
-	}
-
-
-	void LoadAnimationData(
-		std::string const& sceneFilePath, cgltf_data const* data, SceneMetadata& sceneMetadata)
-	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
-		sceneMetadata.m_animationController = 
-			fr::AnimationController::CreateAnimationController(em, sceneFilePath.c_str());
-
-		for (uint64_t animIdx = 0; animIdx < data->animations_count; ++animIdx)
-		{
-			std::string animationName;
-			if (data->animations[animIdx].name)
-			{
-				animationName = data->animations[animIdx].name;
-			}
-			else
-			{
-				static std::atomic<uint32_t> unnamedAnimationIdx = 0;
-				animationName = std::format("UnnamedAnimation_{}", unnamedAnimationIdx.fetch_add(1));
-			}
-			LOG("Loading animation \"%s\"...", animationName.c_str());
-
-			sceneMetadata.m_animationController->AddNewAnimation(animationName.c_str());
-
-			// Pack the Channels of an AnimationData struct:
-			std::unordered_map<cgltf_node const*, fr::AnimationData>& nodeToData = 
-				sceneMetadata.m_nodeToAnimationData.emplace_back();
-			for (uint64_t channelIdx = 0; channelIdx < data->animations[animIdx].channels_count; ++channelIdx)
-			{
-				// GLTF animation samplers define an "input/output pair":
-				// - A set of floating-point scalar values representing linear time in seconds
-				// - A set of vectors or scalars representing the animated property
-				// 
-				// Note: The GLTF specifications also mandate that within 1 animation, each target (i.e. target node and
-				// animation path) MUST NOT be used more than once
-				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#animations
-
-				cgltf_animation_sampler const* animSampler = data->animations[animIdx].channels[channelIdx].sampler;
-
-				// Get/create a new AnimationData structure:
-				cgltf_node const* targetNode = data->animations[animIdx].channels[channelIdx].target_node;
-				fr::AnimationData* animationData = nullptr;
-				if (nodeToData.contains(targetNode))
-				{
-					animationData = &nodeToData.at(targetNode);
-				}
-				else
-				{
-					animationData = &nodeToData.emplace(targetNode, fr::AnimationData{}).first->second;
-				}
-
-				animationData->m_animationIdx = animIdx;
-
-				// Create a new animation channel entry:
-				fr::AnimationData::Channel& animChannel = animationData->m_channels.emplace_back();
-
-				// Channel interpolation mode:
-				animChannel.m_interpolationMode = CGLTFInterpolationTypeToFrInterpolationType(
-						animSampler->interpolation,
-						data->animations[animIdx].channels[channelIdx].target_path);
-
-				// Channel target path:
-				animChannel.m_targetPath = 
-					CGLTFAnimationPathToFrAnimationPath(data->animations[animIdx].channels[channelIdx].target_path);
-
-				// Channel input data: (Linear keyframe times, in seconds)
-				const cgltf_size numKeyframeTimeEntries = cgltf_accessor_unpack_floats(animSampler->input, nullptr, 0);
-
-				std::vector<float> keyframeTimesSec(numKeyframeTimeEntries);
-				cgltf_accessor_unpack_floats(animSampler->input, keyframeTimesSec.data(), numKeyframeTimeEntries);
-
-				animChannel.m_keyframeTimesIdx = 
-					sceneMetadata.m_animationController->AddChannelKeyframeTimes(animIdx, std::move(keyframeTimesSec));
-
-				// Channel output data:
-				const cgltf_size numOutputFloats = cgltf_accessor_unpack_floats(animSampler->output, nullptr, 0);
-
-				std::vector<float> outputFloatData(numOutputFloats);
-				cgltf_accessor_unpack_floats(animSampler->output, outputFloatData.data(), numOutputFloats);
-
-				animChannel.m_dataIdx = sceneMetadata.m_animationController->AddChannelData(std::move(outputFloatData));
-
-				SEAssert(numOutputFloats % numKeyframeTimeEntries == 0,
-					"The number of keyframe entries must be an exact multiple of the number of output floats");
-
-				animChannel.m_dataFloatsPerKeyframe = util::CheckedCast<uint8_t>(numOutputFloats / numKeyframeTimeEntries);
 			}
 		}
 	}
