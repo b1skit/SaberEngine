@@ -2268,7 +2268,7 @@ namespace fr
 		
 		// Load the IBL/skybox HDRI:
 		std::string sceneRootPath;
-		core::Config::Get()->TryGetValue<std::string>("sceneRootPath", sceneRootPath);
+		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneRootPathKey, sceneRootPath);
 
 		earlyLoadTasks.emplace_back(
 			core::ThreadPool::Get()->EnqueueJob([&sceneData, &sceneRootPath]() {
