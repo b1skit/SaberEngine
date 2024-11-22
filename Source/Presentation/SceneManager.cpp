@@ -2243,7 +2243,26 @@ namespace fr
 
 	bool SceneManager::Load(std::string const& sceneFilePath)
 	{
-		// Start by parsing the the GLTF file metadata:
+		re::SceneData* sceneData = re::RenderManager::GetSceneData();
+
+		// Start by kicking off some jobs without any dependencies:
+		std::vector<std::future<void>> earlyLoadTasks;
+
+		earlyLoadTasks.emplace_back(
+			core::ThreadPool::Get()->EnqueueJob([&sceneData]() {
+				GenerateDefaultResources(*sceneData);
+				}));
+
+		// Load the IBL/skybox HDRI:
+		std::string sceneRootPath;
+		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneRootPathKey, sceneRootPath);
+
+		earlyLoadTasks.emplace_back(
+			core::ThreadPool::Get()->EnqueueJob([&sceneData, &sceneRootPath]() {
+				LoadIBLTexture(sceneRootPath, *sceneData);
+				}));
+
+		// Now parse the the GLTF metadata:
 		const bool gotSceneFilePath = !sceneFilePath.empty();
 		cgltf_options options = { (cgltf_file_type)0 };
 		cgltf_data* data = nullptr;
@@ -2257,25 +2276,14 @@ namespace fr
 			}
 		}
 
-		std::vector<std::future<void>> earlyLoadTasks;
-
-		re::SceneData* sceneData = re::RenderManager::GetSceneData();
-
-		earlyLoadTasks.emplace_back(
-			core::ThreadPool::Get()->EnqueueJob([&sceneData]() {
-				GenerateDefaultResources(*sceneData);
-				}));
+		// We need the default resources to be available, so wait until they're done
+		for (size_t loadTask = 0; loadTask < earlyLoadTasks.size(); loadTask++)
+		{
+			earlyLoadTasks[loadTask].wait();
+		}
 		
-		// Load the IBL/skybox HDRI:
-		std::string sceneRootPath;
-		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneRootPathKey, sceneRootPath);
 
-		earlyLoadTasks.emplace_back(
-			core::ThreadPool::Get()->EnqueueJob([&sceneData, &sceneRootPath]() {
-				LoadIBLTexture(sceneRootPath, *sceneData);
-				}));
-
-		// Start loading the GLTF file data:
+		// Load the GLTF data:
 		SceneMetadata sceneMetadata; // We'll pre-parse the scene and populate helper metadata
 		bool sceneHasCamera = false;
 		if (data)
