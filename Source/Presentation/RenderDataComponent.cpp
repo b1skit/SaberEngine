@@ -127,6 +127,13 @@ namespace fr
 	}
 
 
+	bool RenderDataComponent::HasFeatureBit(gr::RenderObjectFeature feature) const
+	{
+		SEAssert(feature != gr::RenderObjectFeature::Invalid, "Invalid feature");
+		return (m_featureBits & feature);
+	}
+
+
 	gr::FeatureBitmask RenderDataComponent::GetFeatureBits() const
 	{
 		return m_featureBits;

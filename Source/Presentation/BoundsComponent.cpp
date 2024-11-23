@@ -95,6 +95,9 @@ namespace fr
 
 	void BoundsComponent::AttachBoundsComponent(fr::EntityManager& em, entt::entity entity)
 	{
+		SEAssert(em.GetComponent<fr::Relationship>(entity).IsInHierarchyAbove<fr::TransformComponent>(),
+			"A Bounds requires a TransformComponent");
+
 		// Attach the BoundsComponent (which will trigger event listeners)
 		fr::BoundsComponent* boundsCmpt = em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
 
@@ -110,6 +113,9 @@ namespace fr
 		glm::vec3 const& minXYZ,
 		glm::vec3 const& maxXYZ)
 	{
+		SEAssert(em.GetComponent<fr::Relationship>(entity).IsInHierarchyAbove<fr::TransformComponent>(),
+			"A Bounds requires a TransformComponent");
+
 		// Attach the BoundsComponent (which will trigger event listeners)
 		fr::BoundsComponent* boundsCmpt = 
 			em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
@@ -120,21 +126,41 @@ namespace fr
 	}
 
 
-	gr::Bounds::RenderData BoundsComponent::CreateRenderData(entt::entity, fr::BoundsComponent const& bounds)
+	gr::Bounds::RenderData BoundsComponent::CreateRenderData(
+		entt::entity owningEntity, fr::BoundsComponent const& bounds)
 	{
+		fr::EntityManager const* em = fr::EntityManager::Get();;
+
+		glm::vec3 globalMinXYZ = bounds.m_localMinXYZ;
+		glm::vec3 globalMaxXYZ = bounds.m_localMaxXYZ;
+		if (!em->HasComponent<SceneBoundsMarker>(owningEntity))
+		{
+			fr::TransformComponent const* transformCmpt = 
+				em->GetComponent<fr::Relationship>(owningEntity).GetFirstInHierarchyAbove<fr::TransformComponent>();
+
+			BoundsComponent const& globalBounds =
+				bounds.GetTransformedAABBBounds(transformCmpt->GetTransform().GetGlobalMatrix());
+
+			globalMinXYZ = globalBounds.m_localMinXYZ;
+			globalMaxXYZ = globalBounds.m_localMaxXYZ;
+		}
+		
 		return gr::Bounds::RenderData
 		{
 			.m_encapsulatingBounds = bounds.GetEncapsulatingBoundsRenderDataID(),
 
-			.m_minXYZ = bounds.m_minXYZ,
-			.m_maxXYZ = bounds.m_maxXYZ
+			.m_localMinXYZ = bounds.m_localMinXYZ,
+			.m_localMaxXYZ = bounds.m_localMaxXYZ,
+
+			.m_globalMinXYZ = globalMinXYZ,
+			.m_globalMaxXYZ = globalMaxXYZ,
 		};
 	}
 
 
 	BoundsComponent::BoundsComponent(PrivateCTORTag)
-		: m_minXYZ(k_invalidMinXYZ)
-		, m_maxXYZ(k_invalidMaxXYZ)
+		: m_localMinXYZ(k_invalidMinXYZ)
+		, m_localMaxXYZ(k_invalidMaxXYZ)
 		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
 	{
 		// Note: The bounds must be set to something valid i.e. by expanding when a child is attached
@@ -142,19 +168,19 @@ namespace fr
 
 
 	BoundsComponent::BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
-		: m_minXYZ(minXYZ)
-		, m_maxXYZ(maxXYZ)
+		: m_localMinXYZ(minXYZ)
+		, m_localMaxXYZ(maxXYZ)
 		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
 	{
 		Make3Dimensional();
 
-		ValidateMinMaxBounds(m_minXYZ, m_maxXYZ); // _DEBUG only
+		ValidateMinMaxBounds(m_localMinXYZ, m_localMaxXYZ); // _DEBUG only
 	}
 
 
 	bool BoundsComponent::operator==(fr::BoundsComponent const& rhs) const
 	{
-		return m_minXYZ == rhs.m_minXYZ && m_maxXYZ == rhs.m_maxXYZ;
+		return m_localMinXYZ == rhs.m_localMinXYZ && m_localMaxXYZ == rhs.m_localMaxXYZ;
 	}
 
 
@@ -186,19 +212,19 @@ namespace fr
 		{
 			points[i] = worldMatrix * points[i];
 
-			result.m_minXYZ.x = std::min(points[i].x, result.m_minXYZ.x );
-			result.m_maxXYZ.x = std::max(points[i].x, result.m_maxXYZ.x);
+			result.m_localMinXYZ.x = std::min(points[i].x, result.m_localMinXYZ.x );
+			result.m_localMaxXYZ.x = std::max(points[i].x, result.m_localMaxXYZ.x);
 
-			result.m_minXYZ.y = std::min(points[i].y, result.m_minXYZ.y);
-			result.m_maxXYZ.y = std::max(points[i].y, result.m_maxXYZ.y);
+			result.m_localMinXYZ.y = std::min(points[i].y, result.m_localMinXYZ.y);
+			result.m_localMaxXYZ.y = std::max(points[i].y, result.m_localMaxXYZ.y);
 
-			result.m_minXYZ.z = std::min(points[i].z, result.m_minXYZ.z);
-			result.m_maxXYZ.z = std::max(points[i].z, result.m_maxXYZ.z);
+			result.m_localMinXYZ.z = std::min(points[i].z, result.m_localMinXYZ.z);
+			result.m_localMaxXYZ.z = std::max(points[i].z, result.m_localMaxXYZ.z);
 		}
 
 		result.Make3Dimensional(); // Ensure the final bounds are 3D
 
-		ValidateMinMaxBounds(m_minXYZ, m_maxXYZ); // _DEBUG only
+		ValidateMinMaxBounds(m_localMinXYZ, m_localMaxXYZ); // _DEBUG only
 
 		return result;
 	}
@@ -206,16 +232,16 @@ namespace fr
 
 	void BoundsComponent::ExpandBounds(BoundsComponent const& newContents)
 	{
-		m_minXYZ.x = std::min(newContents.m_minXYZ.x, m_minXYZ.x);
-		m_maxXYZ.x = std::max(newContents.m_maxXYZ.x, m_maxXYZ.x);
+		m_localMinXYZ.x = std::min(newContents.m_localMinXYZ.x, m_localMinXYZ.x);
+		m_localMaxXYZ.x = std::max(newContents.m_localMaxXYZ.x, m_localMaxXYZ.x);
 
-		m_minXYZ.y = std::min(newContents.m_minXYZ.y, m_minXYZ.y);
-		m_maxXYZ.y = std::max(newContents.m_maxXYZ.y, m_maxXYZ.y);
+		m_localMinXYZ.y = std::min(newContents.m_localMinXYZ.y, m_localMinXYZ.y);
+		m_localMaxXYZ.y = std::max(newContents.m_localMaxXYZ.y, m_localMaxXYZ.y);
 		
-		m_minXYZ.z = std::min(newContents.m_minXYZ.z, m_minXYZ.z);
-		m_maxXYZ.z = std::max(newContents.m_maxXYZ.z, m_maxXYZ.z);
+		m_localMinXYZ.z = std::min(newContents.m_localMinXYZ.z, m_localMinXYZ.z);
+		m_localMaxXYZ.z = std::max(newContents.m_localMaxXYZ.z, m_localMaxXYZ.z);
 
-		ValidateMinMaxBounds(m_minXYZ, m_maxXYZ); // _DEBUG only
+		ValidateMinMaxBounds(m_localMinXYZ, m_localMaxXYZ); // _DEBUG only
 	}
 
 
@@ -249,22 +275,22 @@ namespace fr
 
 	void BoundsComponent::Make3Dimensional()
 	{
-		if (glm::abs(m_maxXYZ.x - m_minXYZ.x) < k_bounds3DDepthBias)
+		if (glm::abs(m_localMaxXYZ.x - m_localMinXYZ.x) < k_bounds3DDepthBias)
 		{
-			m_minXYZ.x -= k_bounds3DDepthBias;
-			m_maxXYZ.x += k_bounds3DDepthBias;
+			m_localMinXYZ.x -= k_bounds3DDepthBias;
+			m_localMaxXYZ.x += k_bounds3DDepthBias;
 		}
 
-		if (glm::abs(m_maxXYZ.y - m_minXYZ.y) < k_bounds3DDepthBias)
+		if (glm::abs(m_localMaxXYZ.y - m_localMinXYZ.y) < k_bounds3DDepthBias)
 		{
-			m_minXYZ.y -= k_bounds3DDepthBias;
-			m_maxXYZ.y += k_bounds3DDepthBias;
+			m_localMinXYZ.y -= k_bounds3DDepthBias;
+			m_localMaxXYZ.y += k_bounds3DDepthBias;
 		}
 
-		if (glm::abs(m_maxXYZ.z - m_minXYZ.z) < k_bounds3DDepthBias)
+		if (glm::abs(m_localMaxXYZ.z - m_localMinXYZ.z) < k_bounds3DDepthBias)
 		{
-			m_minXYZ.z -= k_bounds3DDepthBias;
-			m_maxXYZ.z += k_bounds3DDepthBias;
+			m_localMinXYZ.z -= k_bounds3DDepthBias;
+			m_localMaxXYZ.z += k_bounds3DDepthBias;
 		}
 	}
 
@@ -283,8 +309,8 @@ namespace fr
 
 			fr::BoundsComponent const& boundsCmpt = em.GetComponent<fr::BoundsComponent>(owningEntity);
 
-			ImGui::Text("Min XYZ = %s", glm::to_string(boundsCmpt.m_minXYZ).c_str());
-			ImGui::Text("Max XYZ = %s", glm::to_string(boundsCmpt.m_maxXYZ).c_str());
+			ImGui::Text("Min XYZ = %s", glm::to_string(boundsCmpt.m_localMinXYZ).c_str());
+			ImGui::Text("Max XYZ = %s", glm::to_string(boundsCmpt.m_localMaxXYZ).c_str());
 
 			ImGui::Unindent();
 		}

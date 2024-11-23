@@ -24,18 +24,18 @@ namespace
 		// Transform our Bounds into world space:
 		constexpr uint8_t k_numBoundsPoints = 8;
 		const std::array<glm::vec3, k_numBoundsPoints> boundsPoints = {
-			transform.g_model * glm::vec4(bounds.m_minXYZ.x, bounds.m_maxXYZ.y, bounds.m_maxXYZ.z, 1.f), // farTL
-			transform.g_model * glm::vec4(bounds.m_minXYZ.x, bounds.m_minXYZ.y, bounds.m_maxXYZ.z, 1.f), // farBL
-			transform.g_model * glm::vec4(bounds.m_maxXYZ.x, bounds.m_maxXYZ.y, bounds.m_maxXYZ.z, 1.f), // farTR
-			transform.g_model * glm::vec4(bounds.m_maxXYZ.x, bounds.m_minXYZ.y, bounds.m_maxXYZ.z, 1.f), // farBR
-			transform.g_model * glm::vec4(bounds.m_minXYZ.x, bounds.m_maxXYZ.y, bounds.m_minXYZ.z, 1.f), // nearTL
-			transform.g_model * glm::vec4(bounds.m_minXYZ.x, bounds.m_minXYZ.y, bounds.m_minXYZ.z, 1.f), // nearBL
-			transform.g_model * glm::vec4(bounds.m_maxXYZ.x, bounds.m_maxXYZ.y, bounds.m_minXYZ.z, 1.f), // nearTR
-			transform.g_model * glm::vec4(bounds.m_maxXYZ.x, bounds.m_minXYZ.y, bounds.m_minXYZ.z, 1.f), // nearBR
+			transform.g_model * glm::vec4(bounds.m_localMinXYZ.x, bounds.m_localMaxXYZ.y, bounds.m_localMaxXYZ.z, 1.f), // farTL
+			transform.g_model * glm::vec4(bounds.m_localMinXYZ.x, bounds.m_localMinXYZ.y, bounds.m_localMaxXYZ.z, 1.f), // farBL
+			transform.g_model * glm::vec4(bounds.m_localMaxXYZ.x, bounds.m_localMaxXYZ.y, bounds.m_localMaxXYZ.z, 1.f), // farTR
+			transform.g_model * glm::vec4(bounds.m_localMaxXYZ.x, bounds.m_localMinXYZ.y, bounds.m_localMaxXYZ.z, 1.f), // farBR
+			transform.g_model * glm::vec4(bounds.m_localMinXYZ.x, bounds.m_localMaxXYZ.y, bounds.m_localMinXYZ.z, 1.f), // nearTL
+			transform.g_model * glm::vec4(bounds.m_localMinXYZ.x, bounds.m_localMinXYZ.y, bounds.m_localMinXYZ.z, 1.f), // nearBL
+			transform.g_model * glm::vec4(bounds.m_localMaxXYZ.x, bounds.m_localMaxXYZ.y, bounds.m_localMinXYZ.z, 1.f), // nearTR
+			transform.g_model * glm::vec4(bounds.m_localMaxXYZ.x, bounds.m_localMinXYZ.y, bounds.m_localMinXYZ.z, 1.f), // nearBR
 		};
 
 		// We sort our results based on the distance to the bounds center:
-		const glm::vec3 boundsCenter = (bounds.m_minXYZ + bounds.m_maxXYZ) * 0.5f;
+		const glm::vec3 boundsCenter = (bounds.m_localMinXYZ + bounds.m_localMaxXYZ) * 0.5f;
 
 		// Note: Frustum normals point outward
 

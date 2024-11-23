@@ -46,9 +46,10 @@ namespace fr
 
 	public:
 		static BoundsComponent Zero() { return BoundsComponent(PrivateCTORTag{}, glm::vec3(0.f), glm::vec3(0.f)); }
+		static BoundsComponent Invalid() { return BoundsComponent(PrivateCTORTag{}); }
 
 
-		// Returns a new AABB BoundsConcept, transformed from local space using transform
+		// Returns a new AABB BoundsConcept, transformed from local -> global space using the given matrix
 		BoundsComponent GetTransformedAABBBounds(glm::mat4 const& worldMatrix) const;
 
 		// Expands a bounds to contain another Bounds
@@ -89,8 +90,8 @@ namespace fr
 
 
 	private: // Axis-Aligned Bounding Box (AABB) points
-		glm::vec3 m_minXYZ;
-		glm::vec3 m_maxXYZ;
+		glm::vec3 m_localMinXYZ;
+		glm::vec3 m_localMaxXYZ;
 
 		gr::RenderDataID m_encapsulatingBoundsRenderDataID;
 
@@ -101,37 +102,37 @@ namespace fr
 
 	inline float BoundsComponent::xMin() const 
 	{ 
-		return m_minXYZ.x;
+		return m_localMinXYZ.x;
 	}
 
 
 	inline float BoundsComponent::xMax() const 
 	{ 
-		return m_maxXYZ.x;
+		return m_localMaxXYZ.x;
 	}
 
 
 	inline float BoundsComponent::yMin() const 
 	{ 
-		return m_minXYZ.y;
+		return m_localMinXYZ.y;
 	}
 
 
 	inline float BoundsComponent::yMax() const 
 	{ 
-		return m_maxXYZ.y;
+		return m_localMaxXYZ.y;
 	}
 
 
 	inline float BoundsComponent::zMin() const 
 	{ 
-		return m_minXYZ.z;
+		return m_localMinXYZ.z;
 	}
 
 
 	inline float BoundsComponent::zMax() const 
 	{ 
-		return m_maxXYZ.z;
+		return m_localMaxXYZ.z;
 	}
 
 

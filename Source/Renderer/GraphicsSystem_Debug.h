@@ -72,16 +72,14 @@ namespace gr
 		bool m_showSceneBoundingBox = false;
 		glm::vec4 m_sceneBoundsColor = glm::vec4(1.f, 0.4f, 0.f, 0.5f);
 		std::unique_ptr<re::Batch> m_sceneBoundsBatch;
-		re::BufferInput m_sceneBoundsTransformBuffer;
 
-		bool m_showAllMeshBoundingBoxes = false;
+		bool m_showAllMeshBounds = false;
 		glm::vec4 m_meshBoundsColor = glm::vec4(1.f, 0.f, 0.f, 0.5f);
-		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_meshBoundingBoxBatches;
-		std::unordered_map<gr::RenderDataID, re::BufferInput> m_meshBoundingBoxBuffers;
+		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_meshBoundsBatches;
 
-		bool m_showAllMeshPrimitiveBoundingBoxes = false;
-		glm::vec4 m_meshPrimitiveBoundsColor = glm::vec4(0.f, 1.f, 0.f, 0.5f);
-		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_meshPrimBoundingBoxBatches;
+		bool m_showAllMeshPrimitiveBounds = false;
+		glm::vec4 m_meshPrimBoundsColor = glm::vec4(0.f, 1.f, 0.f, 0.5f);
+		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_meshPrimBoundsBatches;
 		
 		bool m_showAllVertexNormals = false;
 		float m_vertexNormalsScale = 0.2f;

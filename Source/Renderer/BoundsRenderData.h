@@ -15,8 +15,11 @@ namespace gr
 			gr::RenderDataID m_encapsulatingBounds = gr::k_invalidRenderDataID;
 
 			// Axis-Aligned Bounding Box (AABB) points
-			glm::vec3 m_minXYZ;
-			glm::vec3 m_maxXYZ;
+			glm::vec3 m_localMinXYZ;
+			glm::vec3 m_localMaxXYZ;
+
+			glm::vec3 m_globalMinXYZ;
+			glm::vec3 m_globalMaxXYZ;
 		};
 
 

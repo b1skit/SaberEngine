@@ -83,9 +83,6 @@ namespace fr
 		}		
 
 		m_processInput = true;
-
-		// Push render updates to ensure new data is available for the first frame
-		EnqueueRenderUpdates();
 	}
 
 
@@ -133,7 +130,7 @@ namespace fr
 		UpdateAnimationControllers(stepTimeMs);  // Modifies Transforms
 		UpdateTransforms();
 		UpdateAnimations(stepTimeMs);
-		UpdateSceneBounds();
+		UpdateBounds();
 		UpdateMaterials();
 		UpdateLightsAndShadows();
 		UpdateCameras();
@@ -231,12 +228,7 @@ namespace fr
 
 				if (transformComponent.GetTransform().HasChanged())
 				{
-					// Note: We only send Transforms associated with RenderDataComponents to the render thread
-					if (HasComponent<fr::RenderDataComponent>(entity))
-					{
-						renderManager->EnqueueRenderCommand<fr::UpdateTransformDataRenderCommand>(transformComponent);
-					}
-
+					renderManager->EnqueueRenderCommand<fr::UpdateTransformDataRenderCommand>(transformComponent);
 					transformComponent.GetTransform().ClearHasChangedFlag();
 				}
 			}
@@ -681,7 +673,7 @@ namespace fr
 	}
 
 
-	void EntityManager::UpdateSceneBounds()
+	void EntityManager::UpdateBounds()
 	{
 		entt::entity sceneBoundsEntity = entt::null;
 		bool sceneBoundsChanged = false;
@@ -709,22 +701,17 @@ namespace fr
 					auto meshConceptEntitiesView = 
 						m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent, fr::TransformComponent>();
 
-					// We must process every MeshConcept in the scene, even if it hasn't changed since we last checked
+					sceneBoundsComponent = fr::BoundsComponent::Invalid();
+
+					// We must check every MeshConcept in the scene: If even 1 is dirty, we need to recompute everything
 					bool seenMeshConceptEntity = false;
-					for (auto meshConceptEntity : meshConceptEntitiesView)
+					for (entt::entity meshConceptEntity : meshConceptEntitiesView)
 					{
-						fr::Transform const& meshTransform =
-							meshConceptEntitiesView.get<fr::TransformComponent>(meshConceptEntity).GetTransform();
-
-						// Copy the first bounds we see; we'll expand it to encompass all Bounds in the scene
-						if (!seenMeshConceptEntity)
-						{
-							sceneBoundsComponent = meshConceptEntitiesView.get<fr::BoundsComponent>(meshConceptEntity);
-							seenMeshConceptEntity = true;
-						}
-
 						fr::BoundsComponent const& boundsComponent =
 							meshConceptEntitiesView.get<fr::BoundsComponent>(meshConceptEntity);
+
+						fr::Transform const& meshTransform =
+							meshConceptEntitiesView.get<fr::TransformComponent>(meshConceptEntity).GetTransform();
 
 						sceneBoundsComponent.ExpandBounds(
 							boundsComponent.GetTransformedAABBBounds(meshTransform.GetGlobalMatrix()));
@@ -740,6 +727,25 @@ namespace fr
 		if (sceneBoundsChanged)
 		{
 			EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(sceneBoundsEntity);
+		}
+
+
+		// Update "regular" bounds: Mark them as dirty if their transforms have changed
+		auto boundsView = m_registry.view<fr::BoundsComponent, fr::Relationship>(
+			entt::exclude<fr::BoundsComponent::SceneBoundsMarker>);
+		for (entt::entity entity : boundsView)
+		{
+			fr::Relationship const& relationship = boundsView.get<fr::Relationship>(entity);
+
+			entt::entity transformEntity = entt::null;
+			if (fr::TransformComponent const* transformCmpt = 
+				relationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(transformEntity))
+			{
+				if (transformCmpt->GetTransform().HasChanged())
+				{
+					TryEmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
+				}
+			}
 		}
 	}
 
@@ -812,23 +818,22 @@ namespace fr
 			auto transformComponentsView = m_registry.view<fr::TransformComponent>();
 			for (auto entity : transformComponentsView)
 			{
-				fr::TransformComponent& transformComponent = transformComponentsView.get<fr::TransformComponent>(entity);
-
 				// Find root nodes:
+				fr::TransformComponent& transformComponent = transformComponentsView.get<fr::TransformComponent>(entity);
 				fr::Transform& node = transformComponent.GetTransform();
 				if (node.GetParent() == nullptr)
 				{
 					fr::TransformComponent::DispatchTransformUpdateThreads(taskFutures, &node);
 				}
 			}
+		}
 
-			prevNumRootTransforms = std::max(1llu, taskFutures.size());
+		prevNumRootTransforms = std::max(1llu, taskFutures.size());
 
-			// Wait for the updates to complete
-			for (std::future<void> const& taskFuture : taskFutures)
-			{
-				taskFuture.wait();
-			}
+		// Wait for the updates to complete
+		for (std::future<void> const& taskFuture : taskFutures)
+		{
+			taskFuture.wait();
 		}
 	}
 

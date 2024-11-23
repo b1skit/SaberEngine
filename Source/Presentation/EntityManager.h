@@ -32,7 +32,7 @@ namespace fr
 		void UpdateAnimationControllers(double stepTimeMs);
 		void UpdateAnimations(double stepTimeMs);
 		void UpdateTransforms();
-		void UpdateSceneBounds();
+		void UpdateBounds();
 		void UpdateMaterials();
 		void UpdateLightsAndShadows();
 		void UpdateCameras();

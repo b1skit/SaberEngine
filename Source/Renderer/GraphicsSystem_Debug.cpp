@@ -117,13 +117,13 @@ namespace
 		*   |/   |/
 		* 	c----d	
 		*/
-		const float xMin = bounds.m_minXYZ.x;
-		const float yMin = bounds.m_minXYZ.y;
-		const float zMin = bounds.m_minXYZ.z;
+		const float xMin = bounds.m_globalMinXYZ.x;
+		const float yMin = bounds.m_globalMinXYZ.y;
+		const float zMin = bounds.m_globalMinXYZ.z;
 
-		const float xMax = bounds.m_maxXYZ.x;
-		const float yMax = bounds.m_maxXYZ.y;
-		const float zMax = bounds.m_maxXYZ.z;
+		const float xMax = bounds.m_globalMaxXYZ.x;
+		const float yMax = bounds.m_globalMaxXYZ.y;
+		const float zMax = bounds.m_globalMaxXYZ.z;
 
 		const glm::vec3 a = glm::vec3(xMin, yMax, zMax);
 		const glm::vec3 b = glm::vec3(xMax, yMax, zMax);
@@ -162,11 +162,9 @@ namespace
 			7, 3
 		});
 
-		const re::Lifetime streamLifetime = batchLifetime;
-
 		std::shared_ptr<gr::VertexStream> boxPositionsStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
-				.m_lifetime = streamLifetime,
+				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
@@ -175,7 +173,7 @@ namespace
 
 		std::shared_ptr<gr::VertexStream> boxColorStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
-				.m_lifetime = streamLifetime,
+				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
@@ -184,7 +182,7 @@ namespace
 
 		std::shared_ptr<gr::VertexStream> boxIndexStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
-				.m_lifetime = streamLifetime,
+				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
@@ -203,6 +201,11 @@ namespace
 
 		std::unique_ptr<re::Batch> boundingBoxBatch = std::make_unique<re::Batch>(
 			batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
+
+		// For simplicity, we build our lines in world space, and attach an identity transform buffer
+		constexpr glm::mat4 k_identity(1.f);
+		boundingBoxBatch->SetBuffer(gr::Transform::CreateInstancedTransformBufferInput(
+			InstancedTransformData::s_shaderName, batchLifetime, re::Buffer::StagingPool::Temporary, &k_identity, &k_identity));
 
 		return boundingBoxBatch;
 	}
@@ -447,7 +450,7 @@ namespace gr
 			m_worldCoordinateAxisBatch = nullptr;
 		}
 
-		if (m_showAllMeshPrimitiveBoundingBoxes || 
+		if (m_showAllMeshPrimitiveBounds || 
 			m_showMeshCoordinateAxis || 
 			m_showAllVertexNormals ||
 			m_showAllWireframe)
@@ -495,21 +498,18 @@ namespace gr
 						m_meshPrimTransformBuffers.at(meshPrimRenderDataID);
 
 					// MeshPrimitives:
-					if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
+					if (m_showAllMeshPrimitiveBounds || m_showAllVertexNormals || m_showAllWireframe)
 					{
-						if (m_showAllMeshPrimitiveBoundingBoxes && 
+						if (m_showAllMeshPrimitiveBounds && 
 							gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveBounds, meshPrimItr.GetFeatureBits()))
 						{
-							if (!m_meshPrimBoundingBoxBatches.contains(meshPrimRenderDataID))
+							if (!m_meshPrimBoundsBatches.contains(meshPrimRenderDataID) ||
+								meshPrimItr.IsDirty<gr::Bounds::RenderData>())
 							{
-								m_meshPrimBoundingBoxBatches.emplace(
-									meshPrimRenderDataID,
-									BuildBoundingBoxBatch(
-										re::Lifetime::Permanent, boundsRenderData, m_meshPrimitiveBoundsColor));
-
-								m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
+								m_meshPrimBoundsBatches[meshPrimRenderDataID] =
+									BuildBoundingBoxBatch(re::Lifetime::Permanent, boundsRenderData, m_meshPrimBoundsColor);
 							}
-							m_debugStage->AddBatch(*m_meshPrimBoundingBoxBatches.at(meshPrimRenderDataID));
+							m_debugStage->AddBatch(*m_meshPrimBoundsBatches.at(meshPrimRenderDataID));
 						}
 
 						if (m_showAllVertexNormals)
@@ -566,14 +566,14 @@ namespace gr
 		{
 			m_meshPrimTransformBuffers.clear();
 
-			m_meshPrimBoundingBoxBatches.clear();
+			m_meshPrimBoundsBatches.clear();
 			m_vertexNormalBatches.clear();
 			m_wireframeBatches.clear();
 			m_meshCoordinateAxisBatches.clear();
 		}
 
 		// Mesh: Draw this after MeshPrimitive bounds so they're on top if the bounding box is the same
-		if (m_showAllMeshBoundingBoxes)
+		if (m_showAllMeshBounds)
 		{
 			auto boundsItr = renderData.ObjectBegin<gr::Bounds::RenderData>();
 			auto boundsItrEnd = renderData.ObjectEnd<gr::Bounds::RenderData>();
@@ -587,32 +587,14 @@ namespace gr
 					{
 						gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
-						if (!m_meshBoundingBoxBuffers.contains(meshID))
+						if (!m_meshBoundsBatches.contains(meshID) || 
+							boundsItr.IsDirty<gr::Bounds::RenderData>())
 						{
-							m_meshBoundingBoxBuffers.emplace(
-								meshID,
-								gr::Transform::CreateInstancedTransformBufferInput(
-									InstancedTransformData::s_shaderName, 
-									re::Lifetime::Permanent, 
-									re::Buffer::StagingPool::Permanent, 
-									boundsItr.GetTransformData()));
-						}
-						else
-						{
-							m_meshBoundingBoxBuffers.at(meshID).GetBuffer()->Commit(
-								gr::Transform::CreateInstancedTransformData(boundsItr.GetTransformData()));
+							m_meshBoundsBatches[meshID] = 
+								BuildBoundingBoxBatch(re::Lifetime::Permanent,boundsRenderData, m_meshBoundsColor);
 						}
 
-						if (!m_meshBoundingBoxBatches.contains(meshID))
-						{
-							m_meshBoundingBoxBatches.emplace(meshID,
-								BuildBoundingBoxBatch(re::Lifetime::Permanent,boundsRenderData, m_meshBoundsColor));
-
-							m_meshBoundingBoxBatches.at(meshID)->SetBuffer(
-								m_meshBoundingBoxBuffers.at(meshID));
-						}
-
-						m_debugStage->AddBatch(*m_meshBoundingBoxBatches.at(meshID));
+						m_debugStage->AddBatch(*m_meshBoundsBatches.at(meshID));
 					}
 				}
 				++boundsItr;
@@ -620,7 +602,7 @@ namespace gr
 		}
 		else
 		{
-			m_meshBoundingBoxBatches.clear();
+			m_meshBoundsBatches.clear();
 		}
 
 		// Scene bounds
@@ -633,22 +615,12 @@ namespace gr
 				if (gr::HasFeature(gr::RenderObjectFeature::IsSceneBounds, boundsItr.GetFeatureBits()))
 				{
 					gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
-
-					if (!m_sceneBoundsTransformBuffer.IsValid())
+					
+					if (m_sceneBoundsBatch == nullptr ||
+						boundsItr.IsDirty<gr::Bounds::RenderData>())
 					{
-						m_sceneBoundsTransformBuffer = gr::Transform::CreateInstancedTransformBufferInput(
-							InstancedTransformData::s_shaderName, 
-							re::Lifetime::Permanent, 
-							re::Buffer::StagingPool::Permanent, 
-							boundsItr.GetTransformData());
-					}
-
-					if (m_sceneBoundsBatch == nullptr)
-					{
-						m_sceneBoundsBatch =
-							BuildBoundingBoxBatch(re::Lifetime::Permanent, boundsRenderData, m_sceneBoundsColor);
-
-						m_sceneBoundsBatch->SetBuffer(m_sceneBoundsTransformBuffer);
+						m_sceneBoundsBatch = BuildBoundingBoxBatch(
+							re::Lifetime::Permanent, boundsRenderData, m_sceneBoundsColor);
 					}
 					
 					m_debugStage->AddBatch(*m_sceneBoundsBatch);
@@ -659,7 +631,6 @@ namespace gr
 		else
 		{
 			m_sceneBoundsBatch = nullptr;
-			m_sceneBoundsTransformBuffer.Release();
 		}
 
 		if (m_showCameraFrustums)
@@ -1126,11 +1097,11 @@ namespace gr
 		m_isDirty |= ImGui::Checkbox(std::format("Show scene bounding box").c_str(), &m_showSceneBoundingBox);
 		m_isDirty |= ShowColorPicker(m_showSceneBoundingBox, m_sceneBoundsColor);
 
-		m_isDirty |= ImGui::Checkbox(std::format("Show Mesh bounding boxes").c_str(), &m_showAllMeshBoundingBoxes);
-		m_isDirty |= ShowColorPicker(m_showAllMeshBoundingBoxes, m_meshBoundsColor);
+		m_isDirty |= ImGui::Checkbox(std::format("Show Mesh bounding boxes").c_str(), &m_showAllMeshBounds);
+		m_isDirty |= ShowColorPicker(m_showAllMeshBounds, m_meshBoundsColor);
 
-		m_isDirty |= ImGui::Checkbox(std::format("Show MeshPrimitive bounding boxes").c_str(), &m_showAllMeshPrimitiveBoundingBoxes);
-		m_isDirty |= ShowColorPicker(m_showAllMeshPrimitiveBoundingBoxes, m_meshPrimitiveBoundsColor);
+		m_isDirty |= ImGui::Checkbox(std::format("Show MeshPrimitive bounding boxes").c_str(), &m_showAllMeshPrimitiveBounds);
+		m_isDirty |= ShowColorPicker(m_showAllMeshPrimitiveBounds, m_meshPrimBoundsColor);
 
 		m_isDirty |= ImGui::Checkbox(std::format("Show vertex normals").c_str(), &m_showAllVertexNormals);
 		if (m_showAllVertexNormals)

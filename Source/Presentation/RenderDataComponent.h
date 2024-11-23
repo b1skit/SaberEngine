@@ -40,6 +40,7 @@ namespace fr
 		gr::TransformID GetTransformID() const;
 
 		void SetFeatureBit(gr::RenderObjectFeature);
+		bool HasFeatureBit(gr::RenderObjectFeature) const;
 		gr::FeatureBitmask GetFeatureBits() const;
 
 
