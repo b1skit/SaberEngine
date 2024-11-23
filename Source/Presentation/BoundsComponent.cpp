@@ -152,8 +152,8 @@ namespace fr
 			.m_localMinXYZ = bounds.m_localMinXYZ,
 			.m_localMaxXYZ = bounds.m_localMaxXYZ,
 
-			.m_globalMinXYZ = globalMinXYZ,
-			.m_globalMaxXYZ = globalMaxXYZ,
+			.m_worldMinXYZ = globalMinXYZ,
+			.m_worldMaxXYZ = globalMaxXYZ,
 		};
 	}
 

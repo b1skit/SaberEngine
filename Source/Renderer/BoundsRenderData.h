@@ -18,8 +18,8 @@ namespace gr
 			glm::vec3 m_localMinXYZ;
 			glm::vec3 m_localMaxXYZ;
 
-			glm::vec3 m_globalMinXYZ;
-			glm::vec3 m_globalMaxXYZ;
+			glm::vec3 m_worldMinXYZ;
+			glm::vec3 m_worldMaxXYZ;
 		};
 
 

@@ -117,13 +117,13 @@ namespace
 		*   |/   |/
 		* 	c----d	
 		*/
-		const float xMin = bounds.m_globalMinXYZ.x;
-		const float yMin = bounds.m_globalMinXYZ.y;
-		const float zMin = bounds.m_globalMinXYZ.z;
+		const float xMin = bounds.m_worldMinXYZ.x;
+		const float yMin = bounds.m_worldMinXYZ.y;
+		const float zMin = bounds.m_worldMinXYZ.z;
 
-		const float xMax = bounds.m_globalMaxXYZ.x;
-		const float yMax = bounds.m_globalMaxXYZ.y;
-		const float zMax = bounds.m_globalMaxXYZ.z;
+		const float xMax = bounds.m_worldMaxXYZ.x;
+		const float yMax = bounds.m_worldMaxXYZ.y;
+		const float zMax = bounds.m_worldMaxXYZ.z;
 
 		const glm::vec3 a = glm::vec3(xMin, yMax, zMax);
 		const glm::vec3 b = glm::vec3(xMax, yMax, zMax);
