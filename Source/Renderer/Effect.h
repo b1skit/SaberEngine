@@ -42,6 +42,7 @@ namespace effect
 		EffectID GetEffectID() const;
 
 		Technique const* GetResolvedTechnique(effect::drawstyle::Bitmask) const;
+		std::unordered_map<effect::drawstyle::Bitmask, effect::Technique const*> const& GetAllTechniques() const;
 
 		bool UsesBuffer(util::StringHash) const;
 
@@ -84,6 +85,12 @@ namespace effect
 				effect::drawstyle::GetNamesFromDrawStyleBitmask(drawStyleBitmask)).c_str());
 
 		return m_techniques.at(drawStyleBitmask);
+	}
+
+	
+	inline std::unordered_map<effect::drawstyle::Bitmask, effect::Technique const*> const& Effect::GetAllTechniques() const
+	{
+		return m_techniques;
 	}
 
 

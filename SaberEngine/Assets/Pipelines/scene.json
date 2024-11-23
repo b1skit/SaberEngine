@@ -438,7 +438,17 @@
 		},
 		{
 			"GraphicsSystem": "Debug",
-			"Inputs": []
+			"Inputs": [
+				{
+					"GraphicsSystem": "BatchManager",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewBatches",
+							"DestinationName": "ViewBatches"
+						}
+					]
+				}
+			]
 		}
 	]
 }

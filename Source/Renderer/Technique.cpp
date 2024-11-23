@@ -12,9 +12,8 @@ namespace effect
 		re::PipelineState const* pipelineState,
 		re::VertexStreamMap const* vertexStreamMap)
 		: INamedObject(name)
-		, m_resolvedShader(nullptr)
+		, m_resolvedShader(re::Shader::GetOrCreate(shaderNames, pipelineState, vertexStreamMap))
 	{
-		m_resolvedShader = re::Shader::GetOrCreate(shaderNames, pipelineState, vertexStreamMap);
 	}
 
 

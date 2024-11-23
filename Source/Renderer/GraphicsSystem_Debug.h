@@ -24,7 +24,9 @@ namespace gr
 			);
 		}
 
-		void RegisterInputs() override {};
+		static constexpr util::HashKey k_viewBatchesDataInput = "ViewBatches";
+		void RegisterInputs() override;
+
 		void RegisterOutputs() override {};
 
 
@@ -44,8 +46,14 @@ namespace gr
 		DebugData PackDebugData() const;
 
 
+	private: // Cached dependencies:
+		ViewBatches const* m_viewBatches;
+
+
 	private:
 		std::shared_ptr<re::RenderStage> m_debugStage;
+		std::shared_ptr<re::RenderStage> m_wireframeStage;
+
 
 		re::BufferInput m_debugParams;
 		bool m_isDirty; // Triggers m_debugParams recommit
@@ -96,7 +104,6 @@ namespace gr
 
 		bool m_showAllWireframe = false;
 		glm::vec4 m_wireframeColor = glm::vec4(152/255.f, 1.f, 166/255.f, 0.5f);
-		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_wireframeBatches;
 
 		bool m_showDeferredLightWireframe = false;
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_deferredLightWireframeBatches;

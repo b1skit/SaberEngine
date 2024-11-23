@@ -26,7 +26,7 @@ namespace effect
 
 
 	private:
-		void LoadEffect(std::string const&);
+		effect::Effect const* LoadEffect(std::string const&);
 
 		bool HasEffect(EffectID) const;
 		effect::Effect* AddEffect(effect::Effect&&);

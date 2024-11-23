@@ -620,12 +620,12 @@ namespace effect
 	}
 
 
-	void EffectDB::LoadEffect(std::string const& effectName)
+	effect::Effect const* EffectDB::LoadEffect(std::string const& effectName)
 	{
 		const EffectID effectID = effect::Effect::ComputeEffectID(effectName);
 		if (HasEffect(effectID)) // Only process new Effects
 		{
-			return;
+			return GetEffect(effectID);
 		}
 
 		constexpr char const* k_effectDefinitionFileExtension = ".json";
@@ -693,17 +693,31 @@ namespace effect
 				{
 					LOG("Effect \"%s\" is excluded on the current platform. Skipping.",
 						effectFilepath.c_str());
+
+					return nullptr;
 				}
 				else
 				{
 					// "Parents": Parsed first to ensure dependencies exist
+					std::vector<std::pair<drawstyle::Bitmask, Technique const*>> allParentTechniques;
 					if (effectBlock.contains(key_parents) &&
 						!effectBlock.at(key_parents).empty())
 					{
 						for (auto const& parent : effectBlock.at(key_parents))
 						{
 							std::string const& parentName = parent.template get<std::string>();
-							LoadEffect(parentName);
+							Effect const* parentEffect = LoadEffect(parentName);
+							
+							if (parentEffect) // It's valid for the parent Effect to be null (e.g. platform exclusions)
+							{
+								std::unordered_map<drawstyle::Bitmask, Technique const*> const& parentTechniques =
+									parentEffect->GetAllTechniques();
+
+								for (auto const& technique : parentTechniques)
+								{
+									allParentTechniques.emplace_back(technique);
+								}
+							}
 						}
 					}
 
@@ -725,7 +739,20 @@ namespace effect
 					}
 
 					// "Effect":
-					AddEffect(ParseJSONEffectBlock(effectBlock, *this, excludedTechniques));
+					Effect newEffect = ParseJSONEffectBlock(effectBlock, *this, excludedTechniques);
+
+
+					// Post-processing:
+					// ----------------
+					
+					// Add any inherited techniques:
+					for (auto const& parentTechnique : allParentTechniques)
+					{
+						newEffect.AddTechnique(parentTechnique.first, parentTechnique.second);
+					}
+
+					// Finally, add the new Effect. We must do this last once the Effect is fully created
+					return AddEffect(std::move(newEffect));
 				}
 			}
 		}
@@ -737,13 +764,15 @@ namespace effect
 				parseException.what());
 			SEAssertF(error.c_str());
 		}
+
+		return nullptr;
 	}
 
 
 	bool EffectDB::HasEffect(EffectID effectID) const
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_effectsMutex);
+			std::shared_lock<std::shared_mutex> lock(m_effectsMutex);
 			return m_effects.contains(effectID);
 		}
 	}
@@ -776,7 +805,7 @@ namespace effect
 	bool EffectDB::HasTechnique(TechniqueID techniqueID) const
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_techniquesMutex);
+			std::shared_lock<std::shared_mutex> lock(m_techniquesMutex);
 			return m_techniques.contains(techniqueID);
 		}
 	}
@@ -807,7 +836,7 @@ namespace effect
 	bool EffectDB::HasPipelineState(std::string const& name) const
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_pipelineStatesMutex);
+			std::shared_lock<std::shared_mutex> lock(m_pipelineStatesMutex);
 			return m_pipelineStates.contains(name);
 		}
 	}
@@ -836,7 +865,7 @@ namespace effect
 	bool EffectDB::HasVertexStreamMap(std::string const& name) const
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_vertexStreamMapsMutex);
+			std::shared_lock<std::shared_mutex> lock(m_vertexStreamMapsMutex);
 			return m_vertexStreamMaps.contains(name);
 		}
 	}

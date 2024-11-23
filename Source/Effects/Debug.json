@@ -11,6 +11,48 @@
 			},
 			{
 				"Conditions": [
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" },
+					{ "Rule": "Debug", "Mode": "Wireframe" }
+				],
+				"Technique": "Debug_Wireframe"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" },
+					{ "Rule": "Debug", "Mode": "Wireframe" }
+				],
+				"Technique": "Debug_Wireframe"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" },
+					{ "Rule": "Debug", "Mode": "Wireframe" }
+				],
+				"Technique": "Debug_Wireframe"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" },
+					{ "Rule": "Debug", "Mode": "Wireframe" }
+				],
+				"Technique": "Debug_Wireframe"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" },
+					{ "Rule": "Debug", "Mode": "Wireframe" }
+				],
+				"Technique": "Debug_Wireframe"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" },
 					{ "Rule": "Debug", "Mode": "Wireframe" }
 				],
 				"Technique": "Debug_Wireframe"

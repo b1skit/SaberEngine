@@ -372,6 +372,12 @@ namespace
 
 namespace gr
 {
+	void DebugGraphicsSystem::RegisterInputs()
+	{
+		RegisterDataInput(k_viewBatchesDataInput);
+	}
+
+
 	DebugGraphicsSystem::DebugGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
@@ -384,7 +390,7 @@ namespace gr
 		re::StagePipeline& stagePipeline,
 		TextureDependencies const& texDependencies,
 		BufferDependencies const&,
-		DataDependencies const&)
+		DataDependencies const& dataDependencies)
 	{
 		m_debugParams = re::BufferInput(
 			DebugData::s_shaderName,
@@ -405,7 +411,21 @@ namespace gr
 		m_debugStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_debugStage->AddPermanentBuffer(m_debugParams);
 
-		stagePipeline.AppendRenderStage(m_debugStage);		
+		stagePipeline.AppendRenderStage(m_debugStage);
+
+
+		m_wireframeStage = re::RenderStage::CreateGraphicsStage("Debug: Wireframe stage", re::RenderStage::GraphicsStageParams{});
+
+		m_wireframeStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
+		m_wireframeStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
+		m_wireframeStage->AddPermanentBuffer(m_debugParams);
+		m_wireframeStage->SetDrawStyle(effect::drawstyle::Debug_Wireframe);
+
+		stagePipeline.AppendRenderStage(m_wireframeStage);
+
+		// Cache our dependencies:
+		m_viewBatches = GetDataDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);
+		SEAssert(m_viewBatches, "Must have received some batches");
 	}
 
 
@@ -450,12 +470,22 @@ namespace gr
 			m_worldCoordinateAxisBatch = nullptr;
 		}
 
+		if (m_showAllWireframe)
+		{
+			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+			SEAssert(m_viewBatches->contains(mainCamID), "Cannot find main camera ID in view batches");
+
+			std::vector<re::Batch> const& mainCamBatches = m_viewBatches->at(mainCamID);
+			for (re::Batch const& batch : mainCamBatches)
+			{
+				m_wireframeStage->AddBatch(batch);
+			}
+		}
+
 		if (m_showAllMeshPrimitiveBounds || 
 			m_showMeshCoordinateAxis || 
-			m_showAllVertexNormals ||
-			m_showAllWireframe)
+			m_showAllVertexNormals)
 		{
-
 			auto meshPrimItr = renderData.ObjectBegin<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>();
 			auto const& meshPrimItrEnd = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>();
 			while (meshPrimItr != meshPrimItrEnd)
@@ -498,7 +528,7 @@ namespace gr
 						m_meshPrimTransformBuffers.at(meshPrimRenderDataID);
 
 					// MeshPrimitives:
-					if (m_showAllMeshPrimitiveBounds || m_showAllVertexNormals || m_showAllWireframe)
+					if (m_showAllMeshPrimitiveBounds || m_showAllVertexNormals)
 					{
 						if (m_showAllMeshPrimitiveBounds && 
 							gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveBounds, meshPrimItr.GetFeatureBits()))
@@ -530,19 +560,6 @@ namespace gr
 							}
 							m_debugStage->AddBatch(*m_vertexNormalBatches.at(meshPrimRenderDataID));
 						}
-
-						if (m_showAllWireframe)
-						{
-							if (!m_wireframeBatches.contains(meshPrimRenderDataID))
-							{
-								m_wireframeBatches.emplace(
-									meshPrimRenderDataID,
-									BuildWireframeBatch(re::Lifetime::Permanent, meshPrimRenderData));
-
-								m_wireframeBatches.at(meshPrimRenderDataID)->SetBuffer(meshTransformBuffer);
-							}
-							m_debugStage->AddBatch(*m_wireframeBatches.at(meshPrimRenderDataID));
-						}
 					}
 
 					if (m_showMeshCoordinateAxis)
@@ -568,7 +585,6 @@ namespace gr
 
 			m_meshPrimBoundsBatches.clear();
 			m_vertexNormalBatches.clear();
-			m_wireframeBatches.clear();
 			m_meshCoordinateAxisBatches.clear();
 		}
 
