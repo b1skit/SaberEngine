@@ -36,6 +36,7 @@ namespace fr
 		, m_localScale(1.0f, 1.0f, 1.0f)
 		
 		, m_localMat(1.0f)
+		, m_globalMat(1.f)
 
 		, m_isDirty(true)
 		, m_hasChanged(true)
@@ -86,6 +87,7 @@ namespace fr
 		m_localScale = rhs.m_localScale;
 
 		m_localMat = rhs.m_localMat;
+		m_globalMat = rhs.m_globalMat;
 
 		m_isDirty = true;
 		m_hasChanged = true;
@@ -98,14 +100,7 @@ namespace fr
 
 		Recompute();
 
-		if (m_parent)
-		{
-			return m_parent->GetGlobalMatrix() * m_localMat;
-		}
-		else
-		{
-			return m_localMat;
-		}
+		return m_globalMat;
 	}
 
 
@@ -115,14 +110,7 @@ namespace fr
 
 		SEAssert(!m_isDirty, "Transform is dirty");
 
-		if (m_parent)
-		{
-			return m_parent->GetGlobalMatrix() * m_localMat;
-		}
-		else
-		{
-			return m_localMat;
-		}
+		return m_globalMat;
 	}
 
 
@@ -595,6 +583,15 @@ namespace fr
 		m_hasChanged = true;
 
 		m_localMat = GetLocalTranslationMat() * GetLocalRotationMat() * GetLocalScaleMat();
+
+		if (m_parent)
+		{
+			m_globalMat = m_parent->GetGlobalMatrix() * m_localMat;
+		}
+		else
+		{
+			m_globalMat = m_localMat;
+		}
 	}
 
 
@@ -619,7 +616,7 @@ namespace fr
 			ImGui::Text(std::format("Global Euler XYZ Radians: {}", glm::to_string(GetGlobalEulerXYZRotationRadians())).c_str());
 			ImGui::Text(std::format("Global Scale: {}", glm::to_string(GetGlobalScale())).c_str());
 
-			util::DisplayMat4x4(std::format("Global Matrix:##{}", uniqueID).c_str(), GetGlobalMatrix());
+			util::DisplayMat4x4(std::format("Global Matrix:##{}", uniqueID).c_str(), m_globalMat);
 
 			ImGui::Separator();
 

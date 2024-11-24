@@ -125,6 +125,7 @@ namespace fr
 		
 		// Concatenated local TRS matrix, *before* any parent transforms are applied
 		glm::mat4 m_localMat; // == T*R*S
+		glm::mat4 m_globalMat;
 
 		bool m_isDirty;	// Do our local or combinedModel matrices need to be recomputed?
 		bool m_hasChanged; // Has the transform (or its parental heirarchy) changed since the last time this was false?
