@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
+#include "Config.h"
 #include "LogManager.h"
 #include "ThreadPool.h"
 
@@ -33,8 +34,11 @@ namespace core
 		SEAssert(m_maxThreads > 0, "Failed to query the number of threads supported");
 		LOG("System has %d logical threads", m_maxThreads);
 
-		// Leave a couple of a thread spare for the OS
-		const size_t actualNumThreads = m_maxThreads - 1;
+		size_t actualNumThreads = m_maxThreads - 1;
+		if (Config::Get()->KeyExists(configkeys::k_maxWorkerThreads))
+		{
+			actualNumThreads = static_cast<size_t>(Config::Get()->GetValue<int>(configkeys::k_maxWorkerThreads));
+		}		
 
 		m_isRunning = true; // Must be true BEFORE a new thread checks this in ExecuteJobs()
 
