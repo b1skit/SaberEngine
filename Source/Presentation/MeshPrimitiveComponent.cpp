@@ -2,6 +2,7 @@
 #include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "MaterialInstanceComponent.h"
+#include "MeshConcept.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
@@ -30,32 +31,18 @@ namespace
 				.m_meshPrimitive = meshPrimitive
 			});
 
+		fr::Relationship const& owningEntityRelationship = em.GetComponent<fr::Relationship>(owningEntity);
+
+		const entt::entity encapsulatingBounds =
+			owningEntityRelationship.GetFirstEntityInHierarchyAbove<fr::Mesh::MeshConceptMarker, fr::BoundsComponent>();
+
 		// Bounds for the MeshPrimitive
-		fr::BoundsComponent::AttachBoundsComponent(
+		fr::BoundsComponent const& meshPrimitiveBounds = fr::BoundsComponent::AttachBoundsComponent(
 			em,
 			owningEntity,
+			encapsulatingBounds,
 			positionMinXYZ,
-			positionMaxXYZ);
-
-		fr::BoundsComponent const& meshPrimitiveBounds = em.GetComponent<fr::BoundsComponent>(owningEntity);
-
-		fr::Relationship& owningEntityRelationship = em.GetComponent<fr::Relationship>(owningEntity);
-
-		// If there's a BoundsComponent in the heirarchy above (i.e. from a Mesh), assume it's encapsulating the
-		// MeshPrimitive:
-		if (owningEntityRelationship.HasParent())
-		{
-			fr::Relationship const& parentRelationship =
-				em.GetComponent<fr::Relationship>(owningEntityRelationship.GetParent());
-
-			entt::entity nextEntity = entt::null;
-			fr::BoundsComponent* encapsulatingBounds = 
-				parentRelationship.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(nextEntity);
-			if (encapsulatingBounds != nullptr)
-			{
-				encapsulatingBounds->ExpandBoundsHierarchy(em, meshPrimitiveBounds, nextEntity);
-			}
-		}
+			positionMaxXYZ);	
 
 		// Mark our new MeshPrimitive as dirty:
 		em.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(owningEntity);

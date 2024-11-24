@@ -57,6 +57,9 @@ namespace
 	};
 	using PrimitiveToMeshPrimitiveMap = std::unordered_map<cgltf_primitive const*, MeshPrimitiveMetadata>;
 
+	// Map from a MeshConcept entity, to a vector of Mesh/MeshPrimitive/Bounds entities. Used by SkinningComponent
+	using MeshEntityToAllBoundsEntityMap = std::unordered_map<entt::entity, std::vector<entt::entity>>;
+
 	struct CameraMetadata
 	{
 		size_t m_srcNodeIdx;
@@ -74,6 +77,9 @@ namespace
 
 		PrimitiveToMeshPrimitiveMap m_primitiveToMeshPrimitiveMetadata;
 		std::mutex m_primitiveToMeshPrimitiveMetadataMutex;
+
+		MeshEntityToAllBoundsEntityMap m_meshEntityToBoundsEntityMap;
+		std::mutex m_meshEntityToBoundsEntityMapMutex;
 
 		std::vector<CameraMetadata> m_cameraMetadata;
 		std::mutex m_cameraMetadataMutex;
@@ -1786,7 +1792,12 @@ namespace
 			meshName = std::format("GLTFNode[{}]_Mesh", nodeIdx);
 		}
 
+		// Record the entities we know will have Bounds, we'll update them from any SkinningComponents
+		std::vector<entt::entity> meshAndMeshPrimitiveEntities;
+		meshAndMeshPrimitiveEntities.reserve(current->mesh->primitives_count + 1);
+
 		fr::Mesh::AttachMeshConceptMarker(sceneNodeEntity, meshName.c_str());
+		meshAndMeshPrimitiveEntities.emplace_back(sceneNodeEntity);
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primIdx = 0; primIdx < current->mesh->primitives_count; primIdx++)
@@ -1797,7 +1808,7 @@ namespace
 				"Failed to find the primitive in our metadata map. This is unexpected");
 
 			// Note: No locks here, the work should have already finished and been waited on
-			MeshPrimitiveMetadata const& meshPrimMetadata = 
+			MeshPrimitiveMetadata& meshPrimMetadata = 
 				sceneMetadata.m_primitiveToMeshPrimitiveMetadata.at(&curPrimitive);
 
 			// Attach the MeshPrimitive to the MeshConcept:
@@ -1808,11 +1819,18 @@ namespace
 				meshPrimMetadata.m_positionsMinXYZ,
 				meshPrimMetadata.m_positionsMaxXYZ);
 
+			meshAndMeshPrimitiveEntities.emplace_back(meshPrimimitiveEntity);
+
 			// Attach the MaterialInstanceComponent to the MeshPrimitive:
 			std::shared_ptr<gr::Material> const& material = sceneData.GetMaterial(meshPrimMetadata.m_materialName);
-
-			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material.get());
+			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material.get());			
 		} // primitives loop
+
+		// Store our Mesh entity -> vector of Mesh/MeshPrimive Bounds entities:
+		{
+			std::unique_lock<std::mutex> lock(sceneMetadata.m_meshEntityToBoundsEntityMapMutex);
+			sceneMetadata.m_meshEntityToBoundsEntityMap[sceneNodeEntity] = std::move(meshAndMeshPrimitiveEntities);
+		}
 	}
 
 
@@ -1907,7 +1925,8 @@ namespace
 							SEAssert(sceneMetadata.m_nodeToEntity.contains(current->skin->joints[jointIdx]),
 								"Node is not in the node to entity map. This should not be possible");
 
-							const entt::entity jointNodeEntity = sceneMetadata.m_nodeToEntity.at(current->skin->joints[jointIdx]);
+							const entt::entity jointNodeEntity = 
+								sceneMetadata.m_nodeToEntity.at(current->skin->joints[jointIdx]);
 
 							jointEntities.emplace_back(jointNodeEntity);
 
@@ -1930,7 +1949,8 @@ namespace
 						if (sceneMetadata.m_skinToSkinMetadata.contains(current->skin))
 						{
 							// Note: No locks here, the work should have already finished and been waited on
-							inverseBindMatrices = &sceneMetadata.m_skinToSkinMetadata.at(current->skin).m_inverseBindMatrices;
+							inverseBindMatrices =
+								&sceneMetadata.m_skinToSkinMetadata.at(current->skin).m_inverseBindMatrices;
 						}
 
 						// The skeleton root node is part of the skeletal hierarchy
@@ -1957,7 +1977,9 @@ namespace
 							std::move(jointEntities),
 							inverseBindMatrices ? std::move(*inverseBindMatrices) : std::vector<glm::mat4>(),
 							skeletonRootEntity,
-							skeletonTransformID);
+							skeletonTransformID,
+							sceneMetadata.m_animationController->GetActiveLongestChannelTimeSec(),
+							std::move(sceneMetadata.m_meshEntityToBoundsEntityMap.at(curSceneNodeEntity)));
 					}
 				}));
 		}
@@ -1980,44 +2002,44 @@ namespace
 					SEAssert(sceneMetadata.m_nodeToEntity.contains(current),
 					"Node to entity map does not contain the current node. This should not be possible");
 
-			const entt::entity curSceneNodeEntity = sceneMetadata.m_nodeToEntity.at(current);
+					const entt::entity curSceneNodeEntity = sceneMetadata.m_nodeToEntity.at(current);
 
-			if (current->mesh)
-			{
-				AttachGeometry(sceneData, current, nodeIdx, curSceneNodeEntity, sceneMetadata);
-			}
-			if (current->light)
-			{
-				LoadAddLight(sceneData, current, curSceneNodeEntity);
-			}
-			if (current->camera)
-			{
-				LoadAddCamera(curSceneNodeEntity, nodeIdx, current, sceneMetadata);
-			}
-
-			// Attach a transform/weight animation component, if it is required:
-			bool hasAnimation = current->weights || (current->mesh && current->mesh->weights);
-			if (!hasAnimation)
-			{
-				// Also need to search the node animations
-				for (auto const& animation : sceneMetadata.m_nodeToAnimationData)
-				{
-					if (animation.contains(current))
+					if (current->mesh)
 					{
-						hasAnimation = true;
+						AttachGeometry(sceneData, current, nodeIdx, curSceneNodeEntity, sceneMetadata);
 					}
-				}
-			}
+					if (current->light)
+					{
+						LoadAddLight(sceneData, current, curSceneNodeEntity);
+					}
+					if (current->camera)
+					{
+						LoadAddCamera(curSceneNodeEntity, nodeIdx, current, sceneMetadata);
+					}
 
-			if (hasAnimation)
-			{
-				SEAssert((current->weights == nullptr && (!current->mesh || !current->mesh->weights)) ||
-					(current->weights && current->weights_count > 0) ||
-					(current->mesh && current->mesh->weights && current->mesh->weights_count > 0),
-					"Mesh weights count is non-zero, but weights is null");
+					// Attach a transform/weight animation component, if it is required:
+					bool hasAnimation = current->weights || (current->mesh && current->mesh->weights);
+					if (!hasAnimation)
+					{
+						// Also need to search the node animations
+						for (auto const& animation : sceneMetadata.m_nodeToAnimationData)
+						{
+							if (animation.contains(current))
+							{
+								hasAnimation = true;
+							}
+						}
+					}
 
-				AttachAnimationComponents(current, curSceneNodeEntity, sceneMetadata);
-			}
+					if (hasAnimation)
+					{
+						SEAssert((current->weights == nullptr && (!current->mesh || !current->mesh->weights)) ||
+							(current->weights && current->weights_count > 0) ||
+							(current->mesh && current->mesh->weights && current->mesh->weights_count > 0),
+							"Mesh weights count is non-zero, but weights is null");
+
+						AttachAnimationComponents(current, curSceneNodeEntity, sceneMetadata);
+					}
 				}));
 		}
 	}

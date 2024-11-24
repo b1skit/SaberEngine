@@ -16,31 +16,41 @@ namespace
 
 
 	void ConfigureEncapsulatingBoundsRenderDataID(
-		fr::EntityManager& em, entt::entity owningEntity, fr::BoundsComponent& bounds)
+		fr::EntityManager& em, entt::entity boundsEntity, fr::BoundsComponent& bounds, entt::entity encapsulatingBounds)
 	{
-		fr::Relationship const& owningEntityRelationship = em.GetComponent<fr::Relationship>(owningEntity);
-
-		// Recursively expand any Bounds above us:
-		if (owningEntityRelationship.HasParent())
+		if (encapsulatingBounds == entt::null)
 		{
-			fr::Relationship const& parentRelationship = 
-				em.GetComponent<fr::Relationship>(owningEntityRelationship.GetParent());
-
-			entt::entity nextEntity = entt::null;
-			fr::BoundsComponent* nextBounds =
-				parentRelationship.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(nextEntity);
-
-			if (nextBounds != nullptr)
-			{
-				fr::RenderDataComponent const& nextBoundsRenderDataCmpt = 
-					em.GetComponent<fr::RenderDataComponent>(nextEntity);
-
-				bounds.SetEncapsulatingBoundsRenderDataID(nextBoundsRenderDataCmpt.GetRenderDataID());
-			}
+			return;
 		}
-		else
+		SEAssert(em.HasComponent<fr::BoundsComponent>(encapsulatingBounds),
+			"Encapsulating bounds entity does not have a BoundsComponent");
+
+		fr::RenderDataComponent const& encapsulatingRenderDataCmpt =
+			em.GetComponent<fr::RenderDataComponent>(encapsulatingBounds);
+
+		bounds.SetEncapsulatingBounds(encapsulatingBounds, encapsulatingRenderDataCmpt.GetRenderDataID());
+	}
+
+
+	void ComputeWorldMinMax(
+		fr::EntityManager& em,
+		entt::entity boundsEntity,
+		fr::BoundsComponent const& bounds,
+		glm::vec3& globalMinXYZOut,
+		glm::vec3& globalMaxXYZOut)
+	{
+		globalMinXYZOut = bounds.GetLocalMinXYZ();
+		globalMaxXYZOut = bounds.GetLocalMaxXYZ();
+		if (!em.HasComponent<fr::BoundsComponent::SceneBoundsMarker>(boundsEntity))
 		{
-			bounds.SetEncapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID);
+			fr::TransformComponent const* transformCmpt =
+				em.GetComponent<fr::Relationship>(boundsEntity).GetFirstInHierarchyAbove<fr::TransformComponent>();
+
+			fr::BoundsComponent const& globalBounds =
+				bounds.GetTransformedAABBBounds(transformCmpt->GetTransform().GetGlobalMatrix());
+
+			globalMinXYZOut = globalBounds.GetLocalMinXYZ();
+			globalMaxXYZOut = globalBounds.GetLocalMaxXYZ();
 		}
 	}
 
@@ -68,7 +78,7 @@ namespace
 
 namespace fr
 {
-	void BoundsComponent::CreateSceneBoundsConcept(fr::EntityManager& em)
+	fr::BoundsComponent& BoundsComponent::CreateSceneBoundsConcept(fr::EntityManager& em)
 	{
 		constexpr char const* k_sceneBoundsName = "SceneBounds";
 
@@ -88,12 +98,12 @@ namespace fr
 
 		em.EmplaceComponent<SceneBoundsMarker>(sceneBoundsEntity);
 
-		// Attach the BoundsComponent:
-		AttachBoundsComponent(em, sceneBoundsEntity);
+		return AttachBoundsComponent(em, sceneBoundsEntity, entt::null);
 	}
 
 
-	void BoundsComponent::AttachBoundsComponent(fr::EntityManager& em, entt::entity entity)
+	fr::BoundsComponent& BoundsComponent::AttachBoundsComponent(
+		fr::EntityManager& em, entt::entity entity, entt::entity encapsulatingBounds)
 	{
 		SEAssert(em.GetComponent<fr::Relationship>(entity).IsInHierarchyAbove<fr::TransformComponent>(),
 			"A Bounds requires a TransformComponent");
@@ -101,15 +111,18 @@ namespace fr
 		// Attach the BoundsComponent (which will trigger event listeners)
 		fr::BoundsComponent* boundsCmpt = em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
 
-		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt);
+		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt, encapsulatingBounds);
 
-		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
+		boundsCmpt->MarkDirty(entity);
+
+		return *boundsCmpt;
 	}
 
 
-	void BoundsComponent::AttachBoundsComponent(
+	fr::BoundsComponent& BoundsComponent::AttachBoundsComponent(
 		fr::EntityManager& em,
-		entt::entity entity, 
+		entt::entity entity,
+		entt::entity encapsulatingBounds,
 		glm::vec3 const& minXYZ,
 		glm::vec3 const& maxXYZ)
 	{
@@ -118,32 +131,52 @@ namespace fr
 
 		// Attach the BoundsComponent (which will trigger event listeners)
 		fr::BoundsComponent* boundsCmpt = 
-			em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
+			em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, encapsulatingBounds);
 
-		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt);
+		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt, encapsulatingBounds);
 
-		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
+		boundsCmpt->ExpandEncapsulatingBounds(em, *boundsCmpt, entity);
+
+		boundsCmpt->MarkDirty(entity);
+
+		return *boundsCmpt;
+	}
+
+
+	void BoundsComponent::UpdateBoundsComponent(
+		fr::EntityManager& em,
+		fr::BoundsComponent& boundsCmpt,
+		fr::Relationship const& relationship,
+		entt::entity boundsEntity)
+	{
+		if (fr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>())
+		{
+			if (transformCmpt->GetTransform().HasChanged())
+			{
+				boundsCmpt.MarkDirty(boundsEntity);
+			}
+		}
+
+		std::vector<entt::entity> const& childBounds = 
+			relationship.GetAllEntitiesInImmediateChildren<fr::BoundsComponent>();
+		for (entt::entity child : childBounds)
+		{
+			fr::BoundsComponent& childBounds = em.GetComponent<fr::BoundsComponent>(child);
+			if (childBounds.GetEncapsulatingBoundsEntity() == boundsEntity)
+			{
+				// Internally calls MarkDirty()
+				boundsCmpt.ExpandBoundsInternal(childBounds.m_localMinXYZ, childBounds.m_localMaxXYZ, boundsEntity);
+			}
+		}
 	}
 
 
 	gr::Bounds::RenderData BoundsComponent::CreateRenderData(
 		entt::entity owningEntity, fr::BoundsComponent const& bounds)
 	{
-		fr::EntityManager const* em = fr::EntityManager::Get();;
-
-		glm::vec3 globalMinXYZ = bounds.m_localMinXYZ;
-		glm::vec3 globalMaxXYZ = bounds.m_localMaxXYZ;
-		if (!em->HasComponent<SceneBoundsMarker>(owningEntity))
-		{
-			fr::TransformComponent const* transformCmpt = 
-				em->GetComponent<fr::Relationship>(owningEntity).GetFirstInHierarchyAbove<fr::TransformComponent>();
-
-			BoundsComponent const& globalBounds =
-				bounds.GetTransformedAABBBounds(transformCmpt->GetTransform().GetGlobalMatrix());
-
-			globalMinXYZ = globalBounds.m_localMinXYZ;
-			globalMaxXYZ = globalBounds.m_localMaxXYZ;
-		}
+		glm::vec3 worldMinXYZ;
+		glm::vec3 worldMaxXYZ;
+		ComputeWorldMinMax(*fr::EntityManager::Get(), owningEntity, bounds, worldMinXYZ, worldMaxXYZ);
 		
 		return gr::Bounds::RenderData
 		{
@@ -152,8 +185,8 @@ namespace fr
 			.m_localMinXYZ = bounds.m_localMinXYZ,
 			.m_localMaxXYZ = bounds.m_localMaxXYZ,
 
-			.m_worldMinXYZ = globalMinXYZ,
-			.m_worldMaxXYZ = globalMaxXYZ,
+			.m_worldMinXYZ = worldMinXYZ,
+			.m_worldMaxXYZ = worldMaxXYZ,
 		};
 	}
 
@@ -161,15 +194,22 @@ namespace fr
 	BoundsComponent::BoundsComponent(PrivateCTORTag)
 		: m_localMinXYZ(k_invalidMinXYZ)
 		, m_localMaxXYZ(k_invalidMaxXYZ)
+		, m_originalMinXYZ(k_invalidMinXYZ)
+		, m_originalMaxXYZ(k_invalidMaxXYZ)
+		, m_encapsulatingBoundsEntity(entt::null)
 		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
 	{
 		// Note: The bounds must be set to something valid i.e. by expanding when a child is attached
 	}
 
 
-	BoundsComponent::BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
+	BoundsComponent::BoundsComponent(
+		PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, entt::entity encapsulatingBounds)
 		: m_localMinXYZ(minXYZ)
 		, m_localMaxXYZ(maxXYZ)
+		, m_originalMinXYZ(minXYZ)
+		, m_originalMaxXYZ(maxXYZ)
+		, m_encapsulatingBoundsEntity(encapsulatingBounds)
 		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
 	{
 		Make3Dimensional();
@@ -230,46 +270,123 @@ namespace fr
 	}
 
 
-	void BoundsComponent::ExpandBounds(BoundsComponent const& newContents)
+	void BoundsComponent::MarkDirty(entt::entity boundsEntity)
 	{
-		m_localMinXYZ.x = std::min(newContents.m_localMinXYZ.x, m_localMinXYZ.x);
-		m_localMaxXYZ.x = std::max(newContents.m_localMaxXYZ.x, m_localMaxXYZ.x);
-
-		m_localMinXYZ.y = std::min(newContents.m_localMinXYZ.y, m_localMinXYZ.y);
-		m_localMaxXYZ.y = std::max(newContents.m_localMaxXYZ.y, m_localMaxXYZ.y);
-		
-		m_localMinXYZ.z = std::min(newContents.m_localMinXYZ.z, m_localMinXYZ.z);
-		m_localMaxXYZ.z = std::max(newContents.m_localMaxXYZ.z, m_localMaxXYZ.z);
-
-		ValidateMinMaxBounds(m_localMinXYZ, m_localMaxXYZ); // _DEBUG only
+		fr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<fr::BoundsComponent>>(boundsEntity);
 	}
 
 
-	void BoundsComponent::ExpandBoundsHierarchy(
+	void BoundsComponent::SetLocalMinXYZ(glm::vec3 const& newLocalMinXYZ, entt::entity boundsEntity)
+	{
+		SetLocalMinMaxXYZ(newLocalMinXYZ, m_localMaxXYZ, boundsEntity);
+	}
+
+
+	void BoundsComponent::SetLocalMaxXYZ(glm::vec3 const& newLocalMaxXYZ, entt::entity boundsEntity)
+	{
+		SetLocalMinMaxXYZ(m_localMinXYZ, newLocalMaxXYZ, boundsEntity);
+	}
+
+
+	void BoundsComponent::SetLocalMinMaxXYZ(
+		glm::vec3 const& newLocalMinXYZ, glm::vec3 const& newLocalMaxXYZ, entt::entity boundsEntity)
+	{
+		ExpandBounds(newLocalMinXYZ, newLocalMaxXYZ, boundsEntity);
+	}
+
+
+	void BoundsComponent::ExpandBounds(BoundsComponent const& newContents, entt::entity boundsEntity)
+	{
+		ExpandBounds(newContents.m_localMinXYZ, newContents.m_localMaxXYZ, boundsEntity);
+	}
+
+
+	void BoundsComponent::ExpandBounds(glm::vec3 const& newMinXYZ, glm::vec3 const& newMaxXYZ, entt::entity boundsEntity)
+	{
+		ExpandBoundsInternal(newMinXYZ, newMaxXYZ, boundsEntity);
+	}
+
+
+	void BoundsComponent::ExpandEncapsulatingBounds(
 		fr::EntityManager& em, BoundsComponent const& newContents, entt::entity boundsEntity)
 	{
-		ExpandBounds(newContents);
+		ExpandEncapsulatingBounds(em, newContents.m_localMinXYZ, newContents.m_localMaxXYZ, boundsEntity);
+	}
 
-		SEAssert(em.HasComponent<fr::Relationship>(boundsEntity),
-			"Owning entity does not have a Relationship component");
 
-		fr::Relationship const& owningEntityRelationship = em.GetComponent<fr::Relationship>(boundsEntity);
-
-		// Recursively expand any Bounds above us:
-		if (owningEntityRelationship.HasParent())
+	void BoundsComponent::ExpandEncapsulatingBounds(
+		fr::EntityManager& em,
+		glm::vec3 const& newLocalMinXYZ,
+		glm::vec3 const& newLocalMaxXYZ,
+		entt::entity boundsEntity)
+	{
+		if (m_encapsulatingBoundsEntity != entt::null)
 		{
-			fr::Relationship const& parentRelationship =
-				em.GetComponent<fr::Relationship>(owningEntityRelationship.GetParent());
-
-			entt::entity nextEntity = entt::null;
-			fr::BoundsComponent* nextBounds =
-				parentRelationship.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(nextEntity);
-
-			if (nextBounds != nullptr)
-			{
-				ExpandBoundsHierarchy(em, *this, nextEntity);
-			}
+			fr::BoundsComponent& encapsulatingBounds = em.GetComponent<fr::BoundsComponent>(m_encapsulatingBoundsEntity);
+			encapsulatingBounds.ExpandBounds(newLocalMinXYZ, newLocalMaxXYZ, boundsEntity);
 		}
+	}
+
+
+	bool BoundsComponent::ExpandBoundsInternal(
+		glm::vec3 const& newMinXYZ, glm::vec3 const& newMaxXYZ, entt::entity boundsEntity)
+	{
+		bool isDirty = false;
+
+		if (m_originalMinXYZ == k_invalidMinXYZ)
+		{
+			m_originalMinXYZ = newMinXYZ;
+			isDirty = true;
+		}
+
+		if (m_originalMaxXYZ == k_invalidMaxXYZ)
+		{
+			m_originalMaxXYZ = newMaxXYZ;
+			isDirty = true;
+		}
+
+		
+		if (newMinXYZ.x < m_localMinXYZ.x)
+		{
+			m_localMinXYZ.x = newMinXYZ.x;
+			isDirty = true;
+		}
+		if (newMaxXYZ.x > m_localMaxXYZ.x)
+		{
+			m_localMaxXYZ.x = newMaxXYZ.x;
+			isDirty = true;
+		}
+
+		if (newMinXYZ.y < m_localMinXYZ.y)
+		{
+			m_localMinXYZ.y = newMinXYZ.y;
+			isDirty = true;
+		}
+		if (newMaxXYZ.y > m_localMaxXYZ.y)
+		{
+			m_localMaxXYZ.y = newMaxXYZ.y;
+			isDirty = true;
+		}
+
+		if (newMinXYZ.z < m_localMinXYZ.z)
+		{
+			m_localMinXYZ.z = newMinXYZ.z;
+			isDirty = true;
+		}
+		if (newMaxXYZ.z > m_localMaxXYZ.z)
+		{
+			m_localMaxXYZ.z = newMaxXYZ.z;
+			isDirty = true;
+		}
+
+		if (isDirty)
+		{
+			MarkDirty(boundsEntity);
+		}
+
+		ValidateMinMaxBounds(m_localMinXYZ, m_localMaxXYZ); // _DEBUG only
+
+		return isDirty;
 	}
 
 
@@ -302,15 +419,32 @@ namespace fr
 		if (ImGui::CollapsingHeader(
 			std::format("Local bounds##{}", static_cast<uint32_t>(owningEntity)).c_str(), flags))
 		{
+			fr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
+
 			ImGui::Indent();
 
-			// RenderDataComponent:
-			fr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
+			fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(owningEntity);
+			ImGui::Text(std::format("\"{}\", entity: {}", nameCmpt.GetName(), static_cast<uint64_t>(owningEntity)).c_str());
 
 			fr::BoundsComponent const& boundsCmpt = em.GetComponent<fr::BoundsComponent>(owningEntity);
 
-			ImGui::Text("Min XYZ = %s", glm::to_string(boundsCmpt.m_localMinXYZ).c_str());
-			ImGui::Text("Max XYZ = %s", glm::to_string(boundsCmpt.m_localMaxXYZ).c_str());
+			ImGui::Text(std::format("Encapsulting bounds entity: {}",
+				static_cast<uint64_t>(boundsCmpt.m_encapsulatingBoundsEntity)).c_str());
+			ImGui::Text(std::format("Encapsulting bounds RenderDataID: {}",
+				boundsCmpt.m_encapsulatingBoundsRenderDataID).c_str());
+
+			ImGui::Text("Original min XYZ = %s", glm::to_string(boundsCmpt.m_originalMinXYZ).c_str());
+			ImGui::Text("Original max XYZ = %s", glm::to_string(boundsCmpt.m_originalMaxXYZ).c_str());
+
+			ImGui::Text("Local min XYZ = %s", glm::to_string(boundsCmpt.m_localMinXYZ).c_str());
+			ImGui::Text("Local max XYZ = %s", glm::to_string(boundsCmpt.m_localMaxXYZ).c_str());
+
+			glm::vec3 worldMinXYZ;
+			glm::vec3 worldMaxXYZ;
+			ComputeWorldMinMax(*fr::EntityManager::Get(), owningEntity, boundsCmpt, worldMinXYZ, worldMaxXYZ);
+
+			ImGui::Text("World min XYZ = %s", glm::to_string(worldMinXYZ).c_str());
+			ImGui::Text("World max XYZ = %s", glm::to_string(worldMaxXYZ).c_str());
 
 			ImGui::Unindent();
 		}

@@ -25,6 +25,7 @@ namespace fr
 
 		entt::entity GetFirstChild() const;
 		entt::entity GetLastChild() const;
+		bool HasChildren() const;
 
 		entt::entity GetThisEntity() const;
 
@@ -61,6 +62,9 @@ namespace fr
 		template<typename T>
 		T* GetFirstAndEntityInHierarchyAbove(entt::entity& owningEntityOut) const; // Searches current and above
 
+		template<typename T, typename... Args>
+		entt::entity GetFirstEntityInHierarchyAbove() const;
+
 		template<typename T>
 		T* GetLastInHierarchyAbove() const;
 
@@ -73,8 +77,11 @@ namespace fr
 		template<typename T>
 		T* GetFirstAndEntityInChildren(entt::entity& childEntityOut) const; // Searches direct descendent children only (depth 1)
 
-		template<typename T>
-		std::vector<entt::entity> GetAllEntitiesInChildrenAndBelow() const; // Get all child entities with a T component
+		template<typename T, typename... Args>
+		std::vector<entt::entity> GetAllEntitiesInChildrenAndBelow() const; // Get all child entities with Type of
+
+		template<typename T, typename... Args>
+		std::vector<entt::entity> GetAllEntitiesInImmediateChildren() const;
 
 
 	private:
@@ -152,6 +159,17 @@ namespace fr
 	}
 
 
+	inline bool Relationship::HasChildren() const
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
+			SEAssert(m_firstChild != entt::null || m_firstChild == m_lastChild,
+				"Children are out of sync");
+			return m_firstChild != entt::null;
+		}
+	}
+
+
 	inline entt::entity Relationship::GetThisEntity() const
 	{
 		return m_thisEntity;
@@ -189,12 +207,28 @@ namespace fr
 				return component;
 			}
 
-			fr::Relationship const& currentRelationship = em->GetComponent<fr::Relationship>(currentEntity);
-
-			currentEntity = currentRelationship.GetParent();
+			currentEntity = em->GetComponent<fr::Relationship>(currentEntity).GetParent();
 		}
 		owningEntityOut = entt::null;
 		return nullptr;
+	}
+
+
+	template<typename T, typename... Args>
+	entt::entity Relationship::GetFirstEntityInHierarchyAbove() const
+	{
+		fr::EntityManager* em = fr::EntityManager::Get();
+
+		entt::entity currentEntity = m_thisEntity; // No lock needed: This should never change
+		while (currentEntity != entt::null)
+		{
+			if (em->HasComponents<T, Args...>(currentEntity))
+			{
+				return currentEntity;
+			}
+			currentEntity = em->GetComponent<fr::Relationship>(currentEntity).GetParent();
+		}
+		return entt::null;
 	}
 
 
@@ -242,6 +276,12 @@ namespace fr
 	template<typename T>
 	T* Relationship::GetFirstAndEntityInChildren(entt::entity& childEntityOut) const
 	{
+		childEntityOut = entt::null;
+		if (!HasChildren())
+		{
+			return nullptr;
+		}
+
 		fr::EntityManager* em = fr::EntityManager::Get();
 
 		childEntityOut = entt::null;
@@ -266,21 +306,48 @@ namespace fr
 	}
 
 
-	template<typename T>
+	template<typename T, typename... Args>
 	std::vector<entt::entity> Relationship::GetAllEntitiesInChildrenAndBelow() const
 	{
 		fr::EntityManager* em = fr::EntityManager::Get();
 
-		std::vector<entt::entity> result;
-		
 		std::vector<entt::entity> const& allDescendents = GetAllDescendents();
+		
+		std::vector<entt::entity> result;
+		result.reserve(allDescendents.size());
 
 		for (entt::entity cur : allDescendents)
 		{
-			if (em->HasComponent<T>(cur))
+			if (em->HasComponents<T, Args...>(cur))
 			{
 				result.emplace_back(cur);
 			}
+		}
+
+		return result;
+	}
+
+
+	template<typename T, typename... Args>
+	std::vector<entt::entity> Relationship::GetAllEntitiesInImmediateChildren() const
+	{
+		fr::EntityManager* em = fr::EntityManager::Get();
+		std::vector<entt::entity> result;
+
+		if (HasChildren())
+		{
+			const entt::entity firstChild = GetFirstChild();
+			entt::entity curEntity = firstChild;
+			do
+			{
+				if (em->HasComponents<T, Args...>(curEntity))
+				{
+					result.emplace_back(curEntity);
+				}
+
+				fr::Relationship const& curRelationship = em->GetComponent<fr::Relationship>(curEntity);
+				curEntity = curRelationship.GetNext();
+			} while (curEntity != firstChild);
 		}
 
 		return result;

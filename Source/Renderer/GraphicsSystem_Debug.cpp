@@ -582,7 +582,6 @@ namespace gr
 		else
 		{
 			m_meshPrimTransformBuffers.clear();
-
 			m_meshPrimBoundsBatches.clear();
 			m_vertexNormalBatches.clear();
 			m_meshCoordinateAxisBatches.clear();

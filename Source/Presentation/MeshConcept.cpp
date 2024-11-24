@@ -36,8 +36,12 @@ namespace fr
 		fr::RenderDataComponent* meshRenderData = 
 			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
+		// Before we attach a BoundsComponent, search the hierarchy above for a potential encapsulation
+		const entt::entity encapsulatingBounds =
+			relationship.GetFirstEntityInHierarchyAbove<fr::Mesh::MeshConceptMarker, fr::BoundsComponent>();
+
 		// Mesh bounds: Encompasses all attached primitive bounds
-		fr::BoundsComponent::AttachBoundsComponent(em, owningEntity);
+		fr::BoundsComponent::AttachBoundsComponent(em, owningEntity, encapsulatingBounds);
 
 		// Mark our RenderDataComponent so the renderer can differentiate between Mesh and MeshPrimitive Bounds
 		meshRenderData->SetFeatureBit(gr::RenderObjectFeature::IsMeshBounds);

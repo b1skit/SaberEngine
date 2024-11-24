@@ -1,8 +1,10 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "AnimationComponent.h"
+#include "BoundsComponent.h"
 #include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "MeshConcept.h"
+#include "MeshPrimitiveComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "SkinningComponent.h"
@@ -19,7 +21,9 @@ namespace fr
 		std::vector<entt::entity>&& jointEntities,
 		std::vector<glm::mat4>&& inverseBindMatrices,
 		entt::entity skeletonRootEntity,
-		gr::TransformID skeletonTransformID)
+		gr::TransformID skeletonTransformID,
+		float longestAnimationTimeSec,
+		std::vector<entt::entity>&& boundsEntities)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
@@ -37,7 +41,9 @@ namespace fr
 				std::move(jointEntities),
 				std::move(inverseBindMatrices),
 				skeletonRootEntity,
-				skeletonTransformID);
+				skeletonTransformID,
+				longestAnimationTimeSec,
+				std::move(boundsEntities));
 
 		em.EmplaceComponent<DirtyMarker<fr::SkinningComponent>>(owningEntity);
 
@@ -50,7 +56,9 @@ namespace fr
 		std::vector<entt::entity>&& jointEntities,
 		std::vector<glm::mat4>&& inverseBindMatrices,
 		entt::entity skeletonRootEntity,
-		gr::TransformID skeletonTransformID)
+		gr::TransformID skeletonTransformID,
+		float longestAnimationTimeSec,
+		std::vector<entt::entity>&& boundsEntities)
 		: m_jointEntities(std::move(jointEntities))
 		, m_parentOfCommonRootEntity(entt::null)
 		, m_parentOfCommonRootTransformID(gr::k_invalidTransformID)
@@ -58,6 +66,8 @@ namespace fr
 		, m_inverseBindMatrices(std::move(inverseBindMatrices))
 		, m_skeletonRootEntity(skeletonRootEntity)
 		, m_skeletonTransformID(skeletonTransformID)
+		, m_remainingBoundsUpdatePeriodMs(longestAnimationTimeSec * 1000.f)
+		, m_boundsEntities(std::move(boundsEntities))
 	{
 		m_jointTransforms.resize(m_jointEntities.size(), glm::mat4(1.f));
 		m_transposeInvJointTransforms.resize(m_jointEntities.size(), glm::mat4(1.f));
@@ -94,40 +104,40 @@ namespace fr
 					m_parentOfCommonRootEntity = transformEntity;
 					m_parentOfCommonRootTransformID = transformCmpt->GetTransformID();
 
+					// If there is an AnimationComponent AT OR ABOVE the m_parentOfCommonRootEntity, we don't want to
+					// cancel out its recursive contribution
+					entt::entity recursiveRoot = m_parentOfCommonRootEntity;
+					fr::Relationship const& curParentRelationship = em.GetComponent<fr::Relationship>(recursiveRoot);
+					if (curParentRelationship.GetLastAndEntityInHierarchyAbove<fr::AnimationComponent>(recursiveRoot))
+					{
+						fr::Relationship const& recursiveRootRelationship = em.GetComponent<fr::Relationship>(recursiveRoot);
+						if (recursiveRootRelationship.HasParent())
+						{
+							fr::Relationship const& nextParentRelationship =
+								em.GetComponent<fr::Relationship>(recursiveRootRelationship.GetParent());
+
+							entt::entity parentTransformEntity = entt::null;
+							fr::TransformComponent const* parentTransform =
+								nextParentRelationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(parentTransformEntity);
+							if (parentTransform)
+							{
+								// If the last AnimationComponent in the hierarchy above has a parent, and it has a Transform,
+								// that is the actual first matrix we need to cancel
+								m_parentOfCommonRootEntity = parentTransformEntity;
+								m_parentOfCommonRootTransformID = parentTransform->GetTransformID();
+							}
+						}
+						else // If there is no parent with a TransformComponent, there is nothing to cancel!
+						{
+							m_parentOfCommonRootEntity = entt::null;
+							m_parentOfCommonRootTransformID = gr::k_invalidTransformID;
+						}
+					}
+
 					// GLTF specs: All nodes in the skeletal hierarchy must have a common root. Thus, we can assume
 					// the first node with a parent NOT part of the transformation hierarchy must be the common root,
 					// and thus this is its parent					
-					break; 
-				}
-			}
-		}
-
-		if (m_parentOfCommonRootEntity != entt::null)
-		{
-			// If there is an AnimationComponent AT OR ABOVE the m_parentOfCommonRootEntity, we don't want to cancel out
-			// its recursive contribution
-			entt::entity recursiveRoot = m_parentOfCommonRootEntity;
-			fr::Relationship const& curParentOfCommonRootRelationship = em.GetComponent<fr::Relationship>(recursiveRoot);
-			if (curParentOfCommonRootRelationship.GetLastAndEntityInHierarchyAbove<fr::AnimationComponent>(recursiveRoot))
-			{
-				fr::Relationship const& recursiveRootRelationship = em.GetComponent<fr::Relationship>(recursiveRoot);
-				if (recursiveRootRelationship.HasParent())
-				{
-					fr::Relationship const& recursiveRootRelationshipParent =
-						em.GetComponent<fr::Relationship>(recursiveRootRelationship.GetParent());
-
-					fr::TransformComponent const* parentTransform =
-						recursiveRootRelationshipParent.GetFirstInHierarchyAbove<fr::TransformComponent>();
-					if (parentTransform)
-					{
-						// If the last AnimationComponent in the hierarchy above has a parent, and it has a Transform,
-						// that is the actual first matrix we need to cancel
-						m_parentOfCommonRootEntity = recursiveRootRelationship.GetParent();
-					}
-				}
-				else // If there is no parent with a TransformComponent, there is nothing to cancel!
-				{					
-					m_parentOfCommonRootEntity = entt::null;
+					break;
 				}
 			}
 		}
@@ -135,7 +145,7 @@ namespace fr
 
 
 	void SkinningComponent::UpdateSkinMatrices(
-		fr::EntityManager& em, entt::entity owningEntity, SkinningComponent& skinningCmpt)
+		fr::EntityManager& em, entt::entity owningEntity, SkinningComponent& skinningCmpt, float deltaTime)
 	{
 		bool foundDirty = false;
 
@@ -150,8 +160,6 @@ namespace fr
 
 			parentOfRootTransform = &parentOfRootTransformCmpt.GetTransform();
 		}
-		glm::mat4 const& parentOfRootInverseGlobalMat = parentOfRootTransform ?
-			glm::inverse(parentOfRootTransform->GetGlobalMatrix()) : glm::mat4(1.f);
 
 		// Combine skin Transforms:
 		for (size_t jointIdx = 0; jointIdx < skinningCmpt.m_jointEntities.size(); ++jointIdx)
@@ -171,7 +179,7 @@ namespace fr
 					if (parentOfRootTransform)
 					{
 						skinningCmpt.m_jointTransforms[jointIdx] = 
-							parentOfRootInverseGlobalMat * jointTransform.GetGlobalMatrix();
+							glm::inverse(parentOfRootTransform->GetGlobalMatrix()) * jointTransform.GetGlobalMatrix();
 					}
 					else
 					{
@@ -195,6 +203,26 @@ namespace fr
 		if (foundDirty)
 		{
 			em.TryEmplaceComponent<DirtyMarker<fr::SkinningComponent>>(owningEntity);
+		}
+
+
+		// Expand the bounds during the first animation cycle:
+		if (skinningCmpt.m_remainingBoundsUpdatePeriodMs > 0.f)
+		{
+			skinningCmpt.m_remainingBoundsUpdatePeriodMs -= deltaTime;
+
+			for (size_t jointIdx = 0; jointIdx < skinningCmpt.m_jointTransforms.size(); ++jointIdx)
+			{
+				for (entt::entity boundsEntity : skinningCmpt.m_boundsEntities)
+				{
+					fr::BoundsComponent& bounds = em.GetComponent<fr::BoundsComponent>(boundsEntity);
+
+					bounds.ExpandBounds(
+						(skinningCmpt.m_jointTransforms[jointIdx] * glm::vec4(bounds.GetOriginalMinXYZ(), 1.f)).xyz,
+						(skinningCmpt.m_jointTransforms[jointIdx] * glm::vec4(bounds.GetOriginalMaxXYZ(), 1.f)).xyz,
+						boundsEntity);
+				}
+			}
 		}
 	}
 

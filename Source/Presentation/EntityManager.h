@@ -134,6 +134,9 @@ namespace fr
 		bool HasComponent(entt::entity entity) const;
 
 		template<typename T, typename... Args>
+		bool HasComponents(entt::entity entity) const;
+
+		template<typename T, typename... Args>
 		std::vector<entt::entity> GetAllEntities() const;
 
 
@@ -265,8 +268,17 @@ namespace fr
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-			
 			return m_registry.any_of<T>(entity);
+		}
+	}
+
+
+	template<typename T, typename... Args>
+	bool EntityManager::HasComponents(entt::entity entity) const
+	{
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+			return m_registry.all_of<T, Args...>(entity);
 		}
 	}
 
