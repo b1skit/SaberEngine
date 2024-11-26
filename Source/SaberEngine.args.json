@@ -3,6 +3,24 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "cd8d3386-29c2-4e04-8734-81fa20c0f4fc",
+      "Command": "Controls",
+      "Items": [
+        {
+          "Id": "cc85a630-84ef-4afd-8789-846040d7fa38",
+          "Command": "-defaultCameraNear 0.1"
+        },
+        {
+          "Id": "7766049e-4ecb-4582-9e8e-ff4a491beda6",
+          "Command": "-defaultCameraFar 1000.0"
+        },
+        {
+          "Id": "a87b7aba-f5c7-4a0c-9635-d9ed4a5486dd",
+          "Command": "-sprintSpeedModifier 5.0"
+        }
+      ]
+    },
+    {
       "Id": "470bfc8f-402b-4c6d-8f0d-ac4e409172da",
       "Command": "Platform",
       "Items": [

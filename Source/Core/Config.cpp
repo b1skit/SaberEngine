@@ -117,16 +117,43 @@ namespace core
 				bool isNumericValue = true;
 				try
 				{
-					int numericValue = std::stoi(keysValues[i].m_value);
-					SetValue(util::HashKey::Create(keysValues[i].m_key.c_str()), numericValue, Config::SettingType::Runtime);
+					// The sto_ functions will throw std::invalid_argument if the value isn't a numeric type
+
+					const bool containsDecimal = keysValues[i].m_value.find_first_of('.') != std::string::npos;
+					if (containsDecimal)
+					{
+						const float floatVal = std::stof(keysValues[i].m_value);
+						SetValue(util::HashKey::Create(keysValues[i].m_key.c_str()), floatVal, Config::SettingType::Runtime);
+					}
+					else
+					{
+						const int intVal = std::stoi(keysValues[i].m_value);
+						SetValue(util::HashKey::Create(keysValues[i].m_key.c_str()), intVal, Config::SettingType::Runtime);
+					}
 				}
 				catch (std::invalid_argument)
 				{
 					isNumericValue = false;
 				}
+
 				if (!isNumericValue)
 				{
-					SetValue(util::HashKey::Create(keysValues[i].m_key), keysValues[i].m_value, Config::SettingType::Runtime);
+					if (keysValues[i].m_value == "true")
+					{
+						SetValue<bool>(util::HashKey::Create(keysValues[i].m_key), true, Config::SettingType::Runtime);
+					}
+					else if (keysValues[i].m_value == "false")
+					{
+						SetValue<bool>(util::HashKey::Create(keysValues[i].m_key), false, Config::SettingType::Runtime);
+					}
+					else if (keysValues[i].m_value.length() == 1)
+					{
+						SetValue<char>(util::HashKey::Create(keysValues[i].m_key), keysValues[i].m_value[0], Config::SettingType::Runtime);
+					} 
+					else
+					{
+						SetValue(util::HashKey::Create(keysValues[i].m_key), keysValues[i].m_value, Config::SettingType::Runtime);
+					}
 				}
 			}
 			else
@@ -467,43 +494,31 @@ namespace core
 			std::shared_lock<std::shared_mutex> readLock(m_configValuesMutex);
 
 			auto const& result = m_configValues.find(valueName);
-
 			if (result != m_configValues.end())
 			{
-				try
+				if (std::string const* val = std::get_if<std::string>(&result->second.first))
 				{
-					if (result->second.first.type() == typeid(std::string))
-					{
-						returnVal = any_cast<std::string>(result->second.first);
-					}
-					else if (result->second.first.type() == typeid(char const*))
-					{
-						returnVal = std::string(any_cast<char const*>(result->second.first));
-					}
-					else if (result->second.first.type() == typeid(float))
-					{
-						float configValue = any_cast<float>(result->second.first);
-						returnVal = std::to_string(configValue);
-					}
-					else if (result->second.first.type() == typeid(int))
-					{
-						int configValue = any_cast<int>(result->second.first);
-						returnVal = std::to_string(configValue);
-					}
-					else if (result->second.first.type() == typeid(char))
-					{
-						char configValue = any_cast<char>(result->second.first);
-						returnVal = std::string(1, configValue); // Construct a std::string with 1 element
-					}
-					else if (result->second.first.type() == typeid(bool))
-					{
-						bool configValue = any_cast<bool>(result->second.first);
-						returnVal = configValue == true ? "1" : "0";
-					}
+					return *val;
 				}
-				catch (const std::bad_any_cast& e)
+				if (char const* const* val = std::get_if<char const*>(&result->second.first))
 				{
-					LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
+					return *val;
+				}
+				if (float const* val = std::get_if<float>(&result->second.first))
+				{
+					return std::to_string(*val);
+				}
+				if (int const* val = std::get_if<int>(&result->second.first))
+				{
+					return std::to_string(*val);
+				}
+				if (std::get_if<char>(&result->second.first))
+				{
+					return std::string(1, std::get<char>(result->second.first));
+				}
+				if (bool const* val = std::get_if<bool>(&result->second.first))
+				{
+					returnVal = *val ? k_trueString : k_falseString;
 				}
 			}
 			else
@@ -563,67 +578,67 @@ namespace core
 
 				SEAssert(currentElement.first.GetKey() != nullptr, "Found a HashKey with a null key string");
 
-				if (currentElement.second.first.type() == typeid(std::string) &&
+				if (std::get_if<std::string>(&currentElement.second.first) &&
 					strstr(currentElement.first.GetKey(), "Input") == nullptr)
 				{
 					configEntries.emplace_back(ConfigEntry{
 						.m_cmdPrefix = SET_CMD,
 						.m_key = currentElement.first.GetKey(),
 						.m_value = PropertyToConfigString<std::string const&>(
-							any_cast<std::string const&>(currentElement.second.first)) });
+							std::get<std::string>(currentElement.second.first)) });
 				}
-				else if (currentElement.second.first.type() == typeid(char const*) &&
+				else if (std::get_if<char const*>(&currentElement.second.first) &&
 					strstr(currentElement.first.GetKey(), "Input") == nullptr)
 				{
 					configEntries.emplace_back(ConfigEntry{
 						.m_cmdPrefix = SET_CMD,
 						.m_key = currentElement.first.GetKey(),
-						.m_value = PropertyToConfigString(any_cast<char const*>(currentElement.second.first)) });
+						.m_value = PropertyToConfigString(std::get<char const*>(currentElement.second.first)) });
 				}
-				else if (currentElement.second.first.type() == typeid(float))
+				else if (std::get_if<float>(&currentElement.second.first))
 				{
 					configEntries.emplace_back(ConfigEntry{
 						.m_cmdPrefix = SET_CMD,
 						.m_key = currentElement.first.GetKey(),
-						.m_value = PropertyToConfigString(any_cast<float>(currentElement.second.first)) });
+						.m_value = PropertyToConfigString(std::get<float>(currentElement.second.first)) });
 				}
-				else if (currentElement.second.first.type() == typeid(int))
+				else if (std::get_if<int>(&currentElement.second.first))
 				{
 					configEntries.emplace_back(ConfigEntry{
 						.m_cmdPrefix = SET_CMD,
 						.m_key = currentElement.first.GetKey(),
-						.m_value = PropertyToConfigString(any_cast<int>(currentElement.second.first)) });
+						.m_value = PropertyToConfigString(std::get<int>(currentElement.second.first)) });
 				}
-				else if (currentElement.second.first.type() == typeid(bool))
+				else if (std::get_if<bool>(&currentElement.second.first))
 				{
 					configEntries.emplace_back(ConfigEntry{
 						.m_cmdPrefix = SET_CMD,
 						.m_key = currentElement.first.GetKey(),
-						.m_value = PropertyToConfigString(any_cast<bool>(currentElement.second.first)) });
+						.m_value = PropertyToConfigString(std::get<bool>(currentElement.second.first)) });
 				}
-				else if (currentElement.second.first.type() == typeid(char))
+				else if (std::get_if<char>(&currentElement.second.first))
 				{
 					configEntries.emplace_back(ConfigEntry{
 						.m_cmdPrefix = BIND_CMD,
 						.m_key = currentElement.first.GetKey(),
-						.m_value = PropertyToConfigString(any_cast<char>(currentElement.second.first)) });
+						.m_value = PropertyToConfigString(std::get<char>(currentElement.second.first)) });
 				}
-				else if (currentElement.second.first.type() == typeid(std::string) &&
+				else if (std::get_if<std::string>(&currentElement.second.first) &&
 					strstr(currentElement.first.GetKey(), "Input") != nullptr)
 				{
 					configEntries.emplace_back(ConfigEntry{
 						.m_cmdPrefix = BIND_CMD,
 						.m_key = currentElement.first.GetKey(),
 						.m_value = PropertyToConfigString<std::string const&>(
-							any_cast<std::string const&>(currentElement.second.first)) });
+							std::get<std::string>(currentElement.second.first)) });
 				}
-				else if (currentElement.second.first.type() == typeid(char const*) &&
+				else if (std::get_if<char const*>(&currentElement.second.first) &&
 					strstr(currentElement.first.GetKey(), "Input") != nullptr)
 				{
 					configEntries.emplace_back(ConfigEntry{
 						.m_cmdPrefix = BIND_CMD,
 						.m_key = currentElement.first.GetKey(),
-						.m_value = PropertyToConfigString(any_cast<char const*>(currentElement.second.first)) });
+						.m_value = PropertyToConfigString(std::get<char const*>(currentElement.second.first)) });
 				}
 				else
 				{

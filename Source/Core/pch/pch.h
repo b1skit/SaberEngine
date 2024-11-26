@@ -24,6 +24,7 @@
 #include <queue>
 #include <regex>
 #include <shared_mutex>
+#include <variant>
 
 
 // Win32 API:

@@ -65,7 +65,8 @@ namespace core
 		
 
 	private:
-		std::unordered_map<util::HashKey const, std::pair<std::any, SettingType>> m_configValues;
+		using ConfigValue = std::variant<bool, int, float, char, char const*, std::string>;
+		std::unordered_map<util::HashKey const, std::pair<ConfigValue, SettingType>> m_configValues;
 		mutable std::shared_mutex m_configValuesMutex;
 		bool m_isDirty; // Marks whether we need to save the config file or not
 
@@ -111,19 +112,18 @@ namespace core
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_configValuesMutex);
 
+			bool foundValue = false;
 			auto const& result = m_configValues.find(key);
 			if (result != m_configValues.end())
 			{
-				try
+				if (T const* val = std::get_if<T>(&result->second.first))
 				{
-					returnVal = any_cast<T>(result->second.first);
-				}
-				catch (const std::bad_any_cast& e)
-				{
-					LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
+					returnVal = *val;
+					foundValue = true;
 				}
 			}
-			else
+			
+			if (!foundValue)
 			{
 				LOG_ERROR("Config::GetValue: Key does not exist");
 			}
