@@ -130,13 +130,20 @@ namespace dx12
 			const uint8_t intermediateIdx = renderMgr->GetIntermediateResourceIdx();
 
 			// Ensure any updates using the intermediate resources created during the previous frame are done
+			SEBeginCPUEvent("dx12::BufferAllocator::BufferDataPlatform: CPU wait");
 			if (!copyQueue->GetFence().IsFenceComplete(m_intermediateResourceFenceVals[intermediateIdx]))
 			{
+				
 				copyQueue->CPUWait(m_intermediateResourceFenceVals[intermediateIdx]);
 			}
+			SEEndCPUEvent();
+
+			SEBeginCPUEvent("dx12::BufferAllocator::BufferDataPlatform: Clear intermediate resources");
 			m_intermediateResources[intermediateIdx].clear();
+			SEEndCPUEvent();
 
 			// Record our updates:
+			SEBeginCPUEvent("dx12::BufferAllocator::BufferDataPlatform: dx12::Buffer::Update(s)");
 			for (auto const& entry : m_dirtyBuffersForPlatformUpdate)
 			{
 				dx12::Buffer::Update(
@@ -146,8 +153,11 @@ namespace dx12
 					copyCommandList.get(), 
 					m_intermediateResources[intermediateIdx]);
 			}
+			SEEndCPUEvent();
 
+			SEBeginCPUEvent("dx12::BufferAllocator::BufferDataPlatform: Execute copy queue");
 			m_intermediateResourceFenceVals[intermediateIdx] = copyQueue->Execute(1, &copyCommandList);
+			SEEndCPUEvent();
 
 			SEEndGPUEvent(copyQueue->GetD3DCommandQueue());
 		}

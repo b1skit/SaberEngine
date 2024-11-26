@@ -759,6 +759,8 @@ namespace re
 	{
 		SEBeginCPUEvent("re::BufferAllocator::BufferData");
 		{
+			SEBeginCPUEvent("re::BufferAllocator::BufferData: Dirty buffers");
+
 			std::scoped_lock dirtyLock(m_dirtyBuffersMutex, m_dirtyBuffersForPlatformUpdateMutex);
 
 			// We keep mutable buffers committed within m_numFramesInFlight in the dirty list to ensure they're
@@ -918,13 +920,17 @@ namespace re
 
 			// Swap in our dirty list for the next frame
 			m_dirtyBuffers = std::move(dirtyMutableBuffers);
+
+			SEEndCPUEvent();
 		}
 
 		// Perform any platform-specific buffering (e.g. update buffers that do not have CPU writes enabled)
 		{
+			SEBeginCPUEvent("re::BufferAllocator::BufferDataPlatform");
 			std::lock_guard<std::mutex> lock(m_dirtyBuffersForPlatformUpdateMutex);
 			BufferDataPlatform();
 			m_dirtyBuffersForPlatformUpdate.clear();
+			SEEndCPUEvent();
 		}
 
 
