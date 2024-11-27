@@ -382,10 +382,10 @@ namespace fr
 		~AnimationComponent() = default;
 
 		AnimationComponent(AnimationComponent const&) = default;
-		AnimationComponent(AnimationComponent&&) = default;
+		AnimationComponent(AnimationComponent&&) noexcept = default;
 
 		AnimationComponent& operator=(AnimationComponent const&) = default;
-		AnimationComponent& operator=(AnimationComponent&&) = default;
+		AnimationComponent& operator=(AnimationComponent&&) noexcept = default;
 
 
 	public:

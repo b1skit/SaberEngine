@@ -30,6 +30,10 @@ namespace core
 		Config();
 		~Config();
 
+		Config(Config&&) noexcept = default;
+		Config& operator=(Config&&) noexcept = default;
+
+	public:
 		void ProcessCommandLineArgs(int argc, char** argv);
 
 		void LoadConfigFile(); // Load the config file
@@ -99,8 +103,6 @@ namespace core
 	private: // No copying allowed
 		Config(Config const&) = delete;
 		Config& operator=(Config const&) = delete;
-		Config(Config&&) = delete;
-		Config& operator=(Config&&) = delete;
 	};
 
 

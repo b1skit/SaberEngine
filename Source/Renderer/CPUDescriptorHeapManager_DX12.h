@@ -59,7 +59,7 @@ namespace dx12
 
 	private:
 		CPUDescriptorHeapManager(CPUDescriptorHeapManager const&) = delete;
-		CPUDescriptorHeapManager& operator=(CPUDescriptorHeapManager&&) = delete;
+		CPUDescriptorHeapManager& operator=(CPUDescriptorHeapManager&&) noexcept = delete;
 		CPUDescriptorHeapManager& operator=(CPUDescriptorHeapManager const&) = delete;
 	};
 
@@ -115,8 +115,8 @@ namespace dx12
 	public:
 		AllocationPage(
 			CPUDescriptorHeapManager::HeapType type, uint32_t elementSize, uint32_t totalElements, uint32_t pageIdx);
-		AllocationPage(AllocationPage&&) = default;
-		AllocationPage& operator=(AllocationPage&&) = default;
+		AllocationPage(AllocationPage&&) noexcept = default;
+		AllocationPage& operator=(AllocationPage&&) noexcept = default;
 		~AllocationPage();
 
 		DescriptorAllocation Allocate(uint32_t descriptorCount);

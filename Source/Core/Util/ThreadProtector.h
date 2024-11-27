@@ -46,9 +46,9 @@ namespace util
 	private: // No copying allowed
 		ScopedThreadProtector() = delete;
 		ScopedThreadProtector(ScopedThreadProtector const&) = delete;
-		ScopedThreadProtector(ScopedThreadProtector&&) = delete;
+		ScopedThreadProtector(ScopedThreadProtector&&) noexcept = delete;
 		ScopedThreadProtector& operator=(ScopedThreadProtector const&) = delete;
-		ScopedThreadProtector& operator=(ScopedThreadProtector&&) = delete;
+		ScopedThreadProtector& operator=(ScopedThreadProtector&&) noexcept = delete;
 	};
 
 

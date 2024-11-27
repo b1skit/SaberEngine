@@ -38,8 +38,7 @@ namespace dx12
 		, m_d3dType(rhs.m_d3dType)
 		, m_elementSize(rhs.m_elementSize)
 	{
-		std::lock_guard<std::mutex> rhsAllocationLock(rhs.m_allocationPagesIndexesMutex);
-		std::lock_guard<std::mutex> allocationLock(m_allocationPagesIndexesMutex);
+		std::scoped_lock lock(m_allocationPagesIndexesMutex, rhs.m_allocationPagesIndexesMutex);
 
 		m_allocationPages = std::move(rhs.m_allocationPages);
 		m_freePageIndexes = std::move(rhs.m_freePageIndexes);

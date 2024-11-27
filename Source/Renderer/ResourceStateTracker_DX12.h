@@ -112,8 +112,8 @@ namespace dx12
 		GlobalResourceStateTracker();
 
 		~GlobalResourceStateTracker() = default;
-		GlobalResourceStateTracker(GlobalResourceStateTracker&&) = default;
-		GlobalResourceStateTracker& operator=(GlobalResourceStateTracker&&) = default;
+		GlobalResourceStateTracker(GlobalResourceStateTracker&&) noexcept = default;
+		GlobalResourceStateTracker& operator=(GlobalResourceStateTracker&&) noexcept = default;
 
 	public:
 		// Registration/deregistration: No external locking/unlocking required
@@ -157,8 +157,8 @@ namespace dx12
 	public:
 		LocalResourceStateTracker() = default;
 		~LocalResourceStateTracker() = default;
-		LocalResourceStateTracker(LocalResourceStateTracker&&) = default;
-		LocalResourceStateTracker& operator=(LocalResourceStateTracker&&) = default;
+		LocalResourceStateTracker(LocalResourceStateTracker&&) noexcept = default;
+		LocalResourceStateTracker& operator=(LocalResourceStateTracker&&) noexcept = default;
 
 		bool HasSeenSubresourceInState(ID3D12Resource*, D3D12_RESOURCE_STATES) const;
 		bool HasResourceState(ID3D12Resource*, SubresourceIdx) const;

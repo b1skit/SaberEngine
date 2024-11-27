@@ -59,8 +59,8 @@ namespace re
 	public:	
 		RenderPipeline(std::string const& name);
 
-		RenderPipeline(RenderPipeline&&) = default;
-		RenderPipeline& operator=(RenderPipeline&&) = default;
+		RenderPipeline(RenderPipeline&&) noexcept = default;
+		RenderPipeline& operator=(RenderPipeline&&) noexcept = default;
 
 		~RenderPipeline() { Destroy(); };
 

@@ -90,8 +90,9 @@ namespace re
 		Viewport(uint32_t xMin, uint32_t yMin, uint32_t width, uint32_t height);
 
 		Viewport(Viewport const&) = default;
-		Viewport(Viewport&&) = default;
+		Viewport(Viewport&&) noexcept = default;
 		Viewport& operator=(Viewport const&) = default;
+		Viewport& operator=(Viewport&&) noexcept = default;
 		~Viewport() = default;
 
 		uint32_t& xMin() { return m_xMin; } // Top-left X
@@ -245,8 +246,8 @@ namespace re
 	private:
 		TextureTargetSet() = delete;
 		TextureTargetSet(TextureTargetSet const&) = delete;
-		TextureTargetSet(TextureTargetSet&&) = delete;
+		TextureTargetSet(TextureTargetSet&&) noexcept = delete;
 		TextureTargetSet& operator=(TextureTargetSet const&) = delete;
-		TextureTargetSet& operator=(TextureTargetSet&&) = delete;
+		TextureTargetSet& operator=(TextureTargetSet&&) noexcept = delete;
 	};
 }
