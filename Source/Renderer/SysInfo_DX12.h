@@ -24,6 +24,7 @@ namespace dx12
 
 		static D3D_ROOT_SIGNATURE_VERSION GetHighestSupportedRootSignatureVersion();
 		static D3D12_RESOURCE_BINDING_TIER GetResourceBindingTier();
+		static D3D12_FEATURE_DATA_ARCHITECTURE1 const* GetFeatureDataArchitecture();
 
 		static bool CheckTearingSupport(); // Variable refresh rate dispays (eg. G-Sync/FreeSync) require tearing enabled
 		static uint32_t GetDeviceNodeMask();

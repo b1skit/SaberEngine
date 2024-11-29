@@ -133,11 +133,6 @@ namespace dx12
 			return &optionsData;
 		}
 		break;
-		case D3D12_FEATURE_ARCHITECTURE:
-		{
-			SEAssertF("TODO: Implement support for this query");
-		}
-		break;
 		case D3D12_FEATURE_FEATURE_LEVELS:
 		{
 			constexpr D3D_FEATURE_LEVEL k_featureLevels[] = { 
@@ -245,9 +240,28 @@ namespace dx12
 			return &featureData;
 		}
 		break;
+		case D3D12_FEATURE_ARCHITECTURE:
 		case D3D12_FEATURE_ARCHITECTURE1:
 		{
-			SEAssertF("TODO: Implement support for this query");
+			static D3D12_FEATURE_DATA_ARCHITECTURE1 architectureData{ .NodeIndex = 0, }; // Always node 0 for now...
+			static bool firstQuery(true);
+			if (firstQuery)
+			{
+				std::lock_guard<std::mutex> lock(firstQueryMutex);
+
+				if (firstQuery)
+				{
+					const HRESULT hr =
+						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CheckFeatureSupport(
+							D3D12_FEATURE_ARCHITECTURE1,
+							&architectureData,
+							sizeof(D3D12_FEATURE_DATA_ARCHITECTURE1));
+					CheckHResult(hr, "Failed to check D3D12_FEATURE_DATA_ARCHITECTURE1 support");
+
+					firstQuery = false;
+				}
+			}
+			return &architectureData;
 		}
 		break;
 		case D3D12_FEATURE_D3D12_OPTIONS2:
@@ -444,6 +458,15 @@ namespace dx12
 			static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS const*>(GetD3D12FeatureSupportData(D3D12_FEATURE_D3D12_OPTIONS));
 
 		return featureData->ResourceBindingTier;
+	}
+
+
+	D3D12_FEATURE_DATA_ARCHITECTURE1 const* SysInfo::GetFeatureDataArchitecture()
+	{
+		D3D12_FEATURE_DATA_ARCHITECTURE1 const* architectureData =
+			static_cast<D3D12_FEATURE_DATA_ARCHITECTURE1 const*>(GetD3D12FeatureSupportData(D3D12_FEATURE_ARCHITECTURE1));
+
+		return architectureData;
 	}
 
 
