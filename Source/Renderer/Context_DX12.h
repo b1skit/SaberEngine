@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "CPUDescriptorHeapManager_DX12.h"
 #include "CommandQueue_DX12.h"
 #include "Context.h"
+#include "CPUDescriptorHeapManager_DX12.h"
 #include "Device_DX12.h"
 #include "ResourceStateTracker_DX12.h"
 

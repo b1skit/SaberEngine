@@ -443,21 +443,30 @@ namespace dx12
 	}
 	
 
-	D3D_ROOT_SIGNATURE_VERSION SysInfo::GetHighestSupportedRootSignatureVersion()
+	D3D_ROOT_SIGNATURE_VERSION const* SysInfo::GetHighestSupportedRootSignatureVersion()
 	{
 		D3D12_FEATURE_DATA_ROOT_SIGNATURE const* featureData = 
 			static_cast<D3D12_FEATURE_DATA_ROOT_SIGNATURE const*>(GetD3D12FeatureSupportData(D3D12_FEATURE_ROOT_SIGNATURE));
 
-		return featureData->HighestVersion;
+		return &featureData->HighestVersion;
 	}
 
 
-	D3D12_RESOURCE_BINDING_TIER SysInfo::GetResourceBindingTier()
+	D3D12_RESOURCE_BINDING_TIER const* SysInfo::GetResourceBindingTier()
 	{
 		D3D12_FEATURE_DATA_D3D12_OPTIONS const* featureData =
 			static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS const*>(GetD3D12FeatureSupportData(D3D12_FEATURE_D3D12_OPTIONS));
 
-		return featureData->ResourceBindingTier;
+		return &featureData->ResourceBindingTier;
+	}
+
+
+	D3D12_RESOURCE_HEAP_TIER const* SysInfo::GetResourceHeapTier()
+	{
+		D3D12_FEATURE_DATA_D3D12_OPTIONS const* featureData =
+			static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS const*>(GetD3D12FeatureSupportData(D3D12_FEATURE_D3D12_OPTIONS));
+
+		return &featureData->ResourceHeapTier;
 	}
 
 

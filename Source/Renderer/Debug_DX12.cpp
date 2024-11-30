@@ -324,9 +324,8 @@ namespace dx12
 		// Combinations:
 		case D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE: return "D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE";
 		default:
-			SEAssertF("Invalid state");
+			return "Invalid D3D12_RESOURCE_STATES received";
 		}
-		return "INVALID STATE";
 	}
 
 
@@ -348,7 +347,7 @@ namespace dx12
 		case D3D_FEATURE_LEVEL_12_2: return "D3D_FEATURE_LEVEL_12_2";
 		default: return "INVALID FEATURE LEVEL";
 		}
-		return "Invalid D3D Feature Level";
+		return "Invalid D3D_FEATURE_LEVEL received";
 	}
 
 
@@ -359,7 +358,18 @@ namespace dx12
 		case D3D12_RESOURCE_BINDING_TIER_1: return "D3D12_RESOURCE_BINDING_TIER_1";
 		case D3D12_RESOURCE_BINDING_TIER_2: return "D3D12_RESOURCE_BINDING_TIER_2";
 		case D3D12_RESOURCE_BINDING_TIER_3: return "D3D12_RESOURCE_BINDING_TIER_3";
-		default: return "INVALID RESOURCE BINDING TIER";
+		default: return "Invalid D3D12_RESOURCE_BINDING_TIER received";
+		}
+	}
+
+
+	constexpr char const* D3D12ResourceHeapTierToCStr(D3D12_RESOURCE_HEAP_TIER heapTier)
+	{
+		switch (heapTier)
+		{
+		case D3D12_RESOURCE_HEAP_TIER_1: return "D3D12_RESOURCE_HEAP_TIER_1";
+		case D3D12_RESOURCE_HEAP_TIER_2: return "D3D12_RESOURCE_HEAP_TIER_2";
+		default: return "Invalid D3D12_RESOURCE_HEAP_TIER received";
 		}
 	}
 }

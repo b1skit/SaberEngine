@@ -1,10 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-struct ID3D12Object;
-enum D3D12_RESOURCE_STATES;
-enum D3D_FEATURE_LEVEL;
-enum D3D12_RESOURCE_BINDING_TIER;
 
 // Resource barrier debugging macros:
 namespace
@@ -66,6 +62,13 @@ namespace
 }
 
 
+struct ID3D12Object;
+enum D3D12_RESOURCE_STATES;
+enum D3D_FEATURE_LEVEL;
+enum D3D12_RESOURCE_BINDING_TIER;
+enum D3D12_RESOURCE_HEAP_TIER;
+
+
 namespace dx12
 {
 	inline extern bool CheckHResult(HRESULT hr, char const* msg);
@@ -75,4 +78,5 @@ namespace dx12
 	inline extern constexpr char const* GetResourceStateAsCStr(D3D12_RESOURCE_STATES state);
 	inline extern constexpr char const* GetFeatureLevelAsCStr(D3D_FEATURE_LEVEL);
 	inline extern constexpr char const* D3D12ResourceBindingTierToCStr(D3D12_RESOURCE_BINDING_TIER);
+	inline extern constexpr char const* D3D12ResourceHeapTierToCStr(D3D12_RESOURCE_HEAP_TIER);
 }
