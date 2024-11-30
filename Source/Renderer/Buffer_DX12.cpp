@@ -321,8 +321,10 @@ namespace dx12
 		// Use the incoming numBytes rather than the buffer size: Might require a smaller buffer for partial updates
 		const uint64_t alignedIntermediateBufferSize = GetAlignedSize(buffer->GetBufferParams().m_usageMask, numBytes);
 
-		const D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-		const D3D12_RESOURCE_DESC intermediateBufferResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedIntermediateBufferSize);
+		D3D12_HEAP_PROPERTIES const& uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		
+		D3D12_RESOURCE_DESC const& intermediateBufferResourceDesc = 
+			CD3DX12_RESOURCE_DESC::Buffer(alignedIntermediateBufferSize);
 
 		ComPtr<ID3D12Resource> itermediateBufferResource = nullptr;
 		HRESULT hr = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CreateCommittedResource(

@@ -780,28 +780,12 @@ namespace dx12
 				totalBytes, 
 				static_cast<uint32_t>(D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT));
 
-			const D3D12_RESOURCE_DESC intermediateBufferResourceDesc =
-			{
-				.Dimension = D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_BUFFER,
-				.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, // == 64KB, default
-				.Width = intermediateBufferWidth,
-				.Height = 1,			// Mandatory for buffers
-				.DepthOrArraySize = 1,	// Mandatory for buffers
-				.MipLevels = 1,			// Mandatory for buffers
-				.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN, // Mandatory for buffers
-				.SampleDesc
-				{
-					.Count = 1,		// Mandatory for buffers
-					.Quality = 0	// Mandatory for buffers
-				},
-				.Layout = D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_ROW_MAJOR, // Mandatory for buffers
-				.Flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE
-			};
+			D3D12_RESOURCE_DESC const& intermediateBufferResourceDesc = 
+				CD3DX12_RESOURCE_DESC::Buffer(intermediateBufferWidth);
 
-			const D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+			D3D12_HEAP_PROPERTIES const& uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 
 			ComPtr<ID3D12Resource> itermediateBufferResource = nullptr;
-
 			HRESULT hr = device->CreateCommittedResource(
 				&uploadHeapProperties,
 				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
