@@ -342,13 +342,7 @@ namespace gr
 			auto const& deletedMeshPrimItrEnd = renderData.IDEnd(*deletedMeshPrimitiveRenderDataIDs);
 			while (deletedMeshPrimItr != deletedMeshPrimItrEnd)
 			{
-				gr::MeshPrimitive::RenderData const& meshPrimRenderData = 
-					deletedMeshPrimItr.Get<gr::MeshPrimitive::RenderData>();
-
-				if (meshPrimRenderData.m_hasMorphTargets || meshPrimRenderData.m_meshHasSkinning)
-				{
-					RemoveAnimationBuffers(deletedMeshPrimItr.GetRenderDataID());
-				}
+				RemoveAnimationBuffers(deletedMeshPrimItr.GetRenderDataID());
 				++deletedMeshPrimItr;
 			}
 		}
@@ -877,9 +871,6 @@ namespace gr
 
 	void VertexAnimationGraphicsSystem::RemoveAnimationBuffers(gr::RenderDataID renderDataID)
 	{
-		SEAssert(m_meshPrimIDToAnimBuffers.contains(renderDataID) && m_outputs.contains(renderDataID),
-			"RenderDataID was not registered. This should not be possible");
-
 		m_meshPrimIDToAnimBuffers.erase(renderDataID);
 		m_outputs.erase(renderDataID);
 	}
