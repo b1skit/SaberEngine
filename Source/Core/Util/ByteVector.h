@@ -349,14 +349,14 @@ namespace util
 				m_typeInfoHash == typeid(uint32_t).hash_code()),
 			"Only uint16_t or uint32_t types are currently supported");
 
+		SEAssert(elementIdx < size(), "Element index is OOB");
+
 		if (m_typeInfoHash == typeid(uint16_t).hash_code())
 		{
-			SEAssert(elementIdx < std::numeric_limits<uint16_t>::max(), "Element index is OOB");
 			return util::CheckedCast<T>(at<uint16_t>(elementIdx));
 		}
 		else if (m_typeInfoHash == typeid(uint32_t).hash_code())
 		{
-			SEAssert(elementIdx < std::numeric_limits<uint32_t>::max(), "Element index is OOB");
 			return util::CheckedCast<T>(at<uint32_t>(elementIdx));
 		}
 		else

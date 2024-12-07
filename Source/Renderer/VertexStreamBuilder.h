@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "MeshPrimitive.h"
+#include "VertexStream.h"
 
 #include "Core/Util/ByteVector.h"
 
@@ -20,8 +21,9 @@ namespace grutil
 			std::string const& m_name; // For debug spew...
 			gr::MeshPrimitive::MeshPrimitiveParams const* m_meshParams = nullptr;
 
-			// If an attribute does not exist but can be built, pass a vector of size 0
 			util::ByteVector* m_indices = nullptr;		// uint32_t
+			gr::VertexStream::StreamDesc* m_indicesStreamDesc = nullptr; // Required if we change the data type
+
 			util::ByteVector* m_positions = nullptr;	// glm::vec3 (Note: Cannot be built)
 
 			util::ByteVector* m_normals = nullptr;		// glm::vec3: Created as face normals if empty

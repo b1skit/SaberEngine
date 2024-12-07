@@ -133,14 +133,33 @@ namespace grutil
 
 	void VertexStreamBuilder::SplitSharedAttributes(MeshData* meshData)
 	{
-		const size_t numIndices = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
-
 		SEAssert(meshData->m_indices->IsScalarType<uint16_t>() || meshData->m_indices->IsScalarType<uint32_t>(),
 			"Unexpected index format");
 
-		util::ByteVector newIndices = meshData->m_indices->IsScalarType<uint16_t>() ? 
-			util::ByteVector::Create<uint16_t>(numIndices) :
-			util::ByteVector::Create<uint32_t>(numIndices);
+		const size_t numIndices = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
+
+		// Shrink our indices to 16 bits if possible:
+		const bool use16BitIndices = numIndices < std::numeric_limits<uint16_t>::max();
+
+		util::ByteVector newIndices = use16BitIndices ?
+			util::ByteVector::Create<uint16_t>(numIndices) : util::ByteVector::Create<uint32_t>(numIndices);
+
+		SEAssert(meshData->m_indicesStreamDesc || 
+			newIndices.IsScalarType<uint16_t>() == meshData->m_indices->IsScalarType<uint16_t>(),
+			"Indices stream ptr is null, yet we must change the indices data type");
+
+		if (meshData->m_indicesStreamDesc &&
+			newIndices.IsScalarType<uint16_t>() != meshData->m_indices->IsScalarType<uint16_t>())
+		{
+			if (use16BitIndices)
+			{
+				meshData->m_indicesStreamDesc->m_dataType = re::DataType::Short;
+			}
+			else
+			{
+				meshData->m_indicesStreamDesc->m_dataType = re::DataType::UInt;
+			}
+		}
 
 		util::ByteVector newPositions = util::ByteVector::Create<glm::vec3>(numIndices);
 

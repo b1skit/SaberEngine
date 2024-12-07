@@ -978,8 +978,8 @@ namespace
 
 						// Vertex streams:
 						// Each vector element corresponds to the m_setIdx of the entries in the array elements
-						std::vector<std::array<gr::VertexStream::CreateParams,
-							gr::VertexStream::Type::Type_Count>> vertexStreamCreateParams;
+						std::vector<std::array<gr::VertexStream::CreateParams, 
+							gr::VertexStream::Type_Count>> vertexStreamCreateParams;
 
 						auto AddVertexStreamCreateParams = [&vertexStreamCreateParams](
 							gr::VertexStream::CreateParams&& streamCreateParams)
@@ -1594,6 +1594,7 @@ namespace
 							.m_name = meshName,
 							.m_meshParams = &meshPrimitiveParams,
 							.m_indices = vertexStreamCreateParams[0][gr::VertexStream::Index].m_streamData.get(),
+							.m_indicesStreamDesc = &vertexStreamCreateParams[0][gr::VertexStream::Index].m_streamDesc,
 							.m_positions = vertexStreamCreateParams[0][gr::VertexStream::Position].m_streamData.get(),
 							.m_normals = vertexStreamCreateParams[0][gr::VertexStream::Normal].m_streamData.get(),
 							.m_tangents = vertexStreamCreateParams[0][gr::VertexStream::Tangent].m_streamData.get(),
