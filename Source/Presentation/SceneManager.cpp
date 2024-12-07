@@ -2378,7 +2378,9 @@ namespace fr
 			AttachMeshAnimationComponents(*sceneData, data, sceneMetadata, earlyLoadTasks);
 		}
 
-		if (!sceneHasCamera) // Add a default camera:
+		// Add a default camera:
+		const bool forceAddDefaultCamera = core::Config::Get()->KeyExists(core::configkeys::k_forceDefaultCameraKey);
+		if (!sceneHasCamera || forceAddDefaultCamera)
 		{
 			earlyLoadTasks.emplace_back(
 				core::ThreadPool::Get()->EnqueueJob([&sceneMetadata]() {
@@ -2401,8 +2403,17 @@ namespace fr
 				sceneMetadata.m_cameraMetadata.end(),
 				[](CameraMetadata const& a, CameraMetadata const& b) { return a.m_srcNodeIdx < b.m_srcNodeIdx; });
 
-			fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetMainCameraCommand>(
-				sceneMetadata.m_cameraMetadata.back().m_owningEntity);
+			if (forceAddDefaultCamera)
+			{
+				// Default camera has a null source node index
+				fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetMainCameraCommand>(
+					sceneMetadata.m_cameraMetadata.front().m_owningEntity);
+			}
+			else
+			{
+				fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetMainCameraCommand>(
+					sceneMetadata.m_cameraMetadata.back().m_owningEntity);
+			}
 		}
 
 		// Cleanup:

@@ -100,9 +100,10 @@ namespace core::configkeys
 	constexpr util::HashKey k_defaultSpotLightShadowSoftnessKey			= "defaultSpotLightMaxShadowSoftness";
 
 	// Camera:
-	constexpr util::HashKey k_defaultFOVKey		= "defaultyCameraFOV";
-	constexpr util::HashKey k_defaultNearKey	= "defaultCameraNear";
-	constexpr util::HashKey k_defaultFarKey		= "defaultCameraFar";
+	constexpr util::HashKey k_forceDefaultCameraKey = "forceCreateDefaultCamera";
+	constexpr util::HashKey k_defaultFOVKey			= "defaultyCameraFOV";
+	constexpr util::HashKey k_defaultNearKey		= "defaultCameraNear";
+	constexpr util::HashKey k_defaultFarKey			= "defaultCameraFar";
 
 	// Quality:
 	constexpr util::HashKey k_brdfLUTWidthHeightKey						= "brdfLUTWidthHeight";

@@ -7,6 +7,10 @@
       "Command": "Controls",
       "Items": [
         {
+          "Id": "a68069e9-e22b-48a7-b681-9577184b98f6",
+          "Command": "-forceCreateDefaultCamera"
+        },
+        {
           "Id": "cc85a630-84ef-4afd-8789-846040d7fa38",
           "Command": "-defaultCameraNear 0.1"
         },
