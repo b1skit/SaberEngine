@@ -177,6 +177,7 @@
     <ClInclude Include="RenderStage.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="RenderSystemDesc.h" />
+    <ClInclude Include="HeapManager_DX12.h" />
     <ClInclude Include="ResourceStateTracker_DX12.h" />
     <ClInclude Include="RLibrary_ImGui_DX12.h" />
     <ClInclude Include="RLibrary_ImGui_OpenGL.h" />
@@ -296,6 +297,7 @@
     <ClCompile Include="RenderStage.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
     <ClCompile Include="RenderSystemDesc.cpp" />
+    <ClCompile Include="HeapManager_DX12.cpp" />
     <ClCompile Include="ResourceStateTracker_DX12.cpp" />
     <ClCompile Include="RLibrary_ImGui_DX12.cpp" />
     <ClCompile Include="RLibrary_ImGui_OpenGL.cpp" />

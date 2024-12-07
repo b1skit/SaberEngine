@@ -181,7 +181,7 @@ namespace dx12
 		break;
 		case D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS:
 		{
-			SEAssertF("TODO: Implement support for this query");
+			SEAssertF("This function is implemented elsewhere");
 		}
 		break;
 		case D3D12_FEATURE_FORMAT_INFO:
@@ -443,30 +443,30 @@ namespace dx12
 	}
 	
 
-	D3D_ROOT_SIGNATURE_VERSION const* SysInfo::GetHighestSupportedRootSignatureVersion()
+	D3D_ROOT_SIGNATURE_VERSION SysInfo::GetHighestSupportedRootSignatureVersion()
 	{
 		D3D12_FEATURE_DATA_ROOT_SIGNATURE const* featureData = 
 			static_cast<D3D12_FEATURE_DATA_ROOT_SIGNATURE const*>(GetD3D12FeatureSupportData(D3D12_FEATURE_ROOT_SIGNATURE));
 
-		return &featureData->HighestVersion;
+		return featureData->HighestVersion;
 	}
 
 
-	D3D12_RESOURCE_BINDING_TIER const* SysInfo::GetResourceBindingTier()
+	D3D12_RESOURCE_BINDING_TIER SysInfo::GetResourceBindingTier()
 	{
 		D3D12_FEATURE_DATA_D3D12_OPTIONS const* featureData =
 			static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS const*>(GetD3D12FeatureSupportData(D3D12_FEATURE_D3D12_OPTIONS));
 
-		return &featureData->ResourceBindingTier;
+		return featureData->ResourceBindingTier;
 	}
 
 
-	D3D12_RESOURCE_HEAP_TIER const* SysInfo::GetResourceHeapTier()
+	D3D12_RESOURCE_HEAP_TIER SysInfo::GetResourceHeapTier()
 	{
 		D3D12_FEATURE_DATA_D3D12_OPTIONS const* featureData =
 			static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS const*>(GetD3D12FeatureSupportData(D3D12_FEATURE_D3D12_OPTIONS));
 
-		return &featureData->ResourceHeapTier;
+		return featureData->ResourceHeapTier;
 	}
 
 
@@ -476,6 +476,40 @@ namespace dx12
 			static_cast<D3D12_FEATURE_DATA_ARCHITECTURE1 const*>(GetD3D12FeatureSupportData(D3D12_FEATURE_ARCHITECTURE1));
 
 		return architectureData;
+	}
+
+
+	uint32_t SysInfo::GetMaxMultisampleQualityLevel(DXGI_FORMAT format)
+	{
+		if (format == DXGI_FORMAT_UNKNOWN)
+		{
+			return 0;
+		}
+
+		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+
+		uint32_t sampleCount = 16;
+
+		D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS multisampleQualityLevels{
+			.Format = format,
+			.SampleCount = sampleCount,
+			.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE, // Note: We currently ignore tiled resources...
+		};
+
+		while (sampleCount >= 1)
+		{
+			if (!FAILED(device->CheckFeatureSupport(
+					D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
+					&multisampleQualityLevels,
+					sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS))) &&
+				multisampleQualityLevels.NumQualityLevels > 0)
+			{
+				return multisampleQualityLevels.NumQualityLevels;				
+			}
+			--sampleCount;
+		}
+		
+		return 0;
 	}
 
 

@@ -328,6 +328,8 @@ namespace re
 
 		ProcessDeferredDeletions(GetCurrentRenderFrameNum());
 
+		platform::RenderManager::EndOfFrame(*this);
+
 		SEEndCPUEvent();
 	}
 

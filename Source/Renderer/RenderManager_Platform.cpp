@@ -8,6 +8,7 @@ namespace platform
 	void (*RenderManager::Initialize)(re::RenderManager&) = nullptr;
 	void (*RenderManager::Shutdown)(re::RenderManager&) = nullptr;
 	void (*RenderManager::CreateAPIResources)(re::RenderManager&) = nullptr;
+	void (*RenderManager::EndOfFrame)(re::RenderManager&) = nullptr;
 
 	uint8_t(*RenderManager::GetNumFramesInFlight)() = nullptr;
 

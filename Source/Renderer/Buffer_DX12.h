@@ -4,6 +4,7 @@
 #include "BufferAllocator.h"
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "DescriptorCache_DX12.h"
+#include "HeapManager_DX12.h"
 
 #include <d3d12.h>
 #include <wrl.h>
@@ -30,12 +31,12 @@ namespace dx12
 				{
 					std::scoped_lock lock(m_readbackFenceMutex, rhs.m_readbackFenceMutex);
 
-					m_resource = std::move(rhs.m_resource);
+					m_readbackGPUResource = std::move(rhs.m_readbackGPUResource);
 					m_readbackFence = rhs.m_readbackFence;
 				}
 			}
 
-			Microsoft::WRL::ComPtr<ID3D12Resource> m_resource = nullptr;
+			std::unique_ptr<dx12::GPUResource> m_readbackGPUResource;
 
 			uint64_t m_readbackFence = 0;
 			std::mutex m_readbackFenceMutex;
@@ -45,7 +46,11 @@ namespace dx12
 		struct PlatformParams final : public re::Buffer::PlatformParams
 		{
 			PlatformParams()
-				: m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
+				: m_gpuResource(nullptr)
+				, m_resovedGPUResource(nullptr)
+				, m_heapByteOffset(0)
+				, m_currentMapFrameLatency(std::numeric_limits<uint8_t>::max())
+				, m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
 				, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
 				, m_cbvDescriptors(dx12::DescriptorCache::DescriptorType::CBV)
 				, m_views{0}
@@ -59,11 +64,12 @@ namespace dx12
 				m_cbvDescriptors.Destroy();
 			}
 
-			Microsoft::WRL::ComPtr<ID3D12Resource> m_resource = nullptr;
-			uint64_t m_heapByteOffset = 0;
+			ID3D12Resource* m_resovedGPUResource; // Use this instead of m_gpuResource
+
+			uint64_t m_heapByteOffset; // For multiple resources sub-allocated from a single GPUResource
 
 			std::vector<ReadbackResource> m_readbackResources; // CPU readback
-			uint8_t m_currentMapFrameLatency = std::numeric_limits<uint8_t>::max(); // Used to compute the resource index during unmapping
+			uint8_t m_currentMapFrameLatency; // Used to compute the resource index during unmapping
 
 			mutable dx12::DescriptorCache m_srvDescriptors;
 			mutable dx12::DescriptorCache m_uavDescriptors;
@@ -72,6 +78,9 @@ namespace dx12
 			// Index/vertex views:
 			D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::BufferView const&);
 			D3D12_VERTEX_BUFFER_VIEW const* GetOrCreateVertexBufferView(re::Buffer const&, re::BufferView const&);
+
+			bool GPUResourceIsValid() const;
+
 		
 		private:
 			union
@@ -80,6 +89,11 @@ namespace dx12
 				D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 			} m_views;
 			std::mutex m_viewMutex; // Views created at first usage during command recording
+
+
+			// May be invalid (e.g. single-frame buffers in shared resource). Use m_resovedGPUResource instead
+			friend class Buffer;
+			std::unique_ptr<dx12::GPUResource> m_gpuResource; 
 		};
 
 
@@ -96,13 +110,18 @@ namespace dx12
 			re::Buffer const*,
 			uint32_t baseOffset,
 			uint32_t numBytes,
-			dx12::CommandList* copyCmdList,
-			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources);
+			dx12::CommandList* copyCmdList);
 
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRV(re::Buffer const*, re::BufferView const&);
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(re::Buffer const*, re::BufferView const&);
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetCBV(re::Buffer const*, re::BufferView const&);
 	};
+
+
+	inline bool Buffer::PlatformParams::GPUResourceIsValid() const
+	{
+		return m_gpuResource && m_gpuResource->IsValid();
+	}
 
 
 	SEStaticAssert(re::BufferAllocator::k_fixedAllocationByteSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0,

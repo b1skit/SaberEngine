@@ -16,6 +16,7 @@ namespace platform
 		static void (*Initialize)(re::RenderManager&);
 		static void (*Shutdown)(re::RenderManager&);
 		static void (*CreateAPIResources)(re::RenderManager&);
+		static void (*EndOfFrame)(re::RenderManager&);
 
 		static uint8_t (*GetNumFramesInFlight)();
 

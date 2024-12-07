@@ -273,16 +273,16 @@ namespace dx12
 
 	std::wstring GetWDebugName(ID3D12Object* object)
 	{
-		// Name our descriptor heap. We extract the command list's debug name to ensure consistency
 		constexpr uint32_t k_nameLength = 1024;
 		uint32_t nameLength = k_nameLength;
-		wchar_t extractedname[k_nameLength];
+		wchar_t extractedname[k_nameLength]{ '\0' };
 		object->GetPrivateData(WKPDID_D3DDebugObjectNameW, &nameLength, &extractedname);
-		SEAssert(nameLength > 0, "Invalid name length retrieved. Was a debug name set on this object?");
-
-		extractedname[k_nameLength - 1] = '\0'; // Suppress warning C6054
-
-		return std::wstring(extractedname);
+		
+		if (nameLength > 0)
+		{
+			return std::wstring(extractedname);
+		}
+		return L"<No debug name set>";
 	}
 
 

@@ -22,10 +22,12 @@ namespace dx12
 	public: // DX12-specific:		
 		static void const* GetD3D12FeatureSupportData(D3D12_FEATURE); // Statically caches query results for reuse
 
-		static D3D_ROOT_SIGNATURE_VERSION const* GetHighestSupportedRootSignatureVersion();
-		static D3D12_RESOURCE_BINDING_TIER const* GetResourceBindingTier();
-		static D3D12_RESOURCE_HEAP_TIER const* GetResourceHeapTier();
+		static D3D_ROOT_SIGNATURE_VERSION GetHighestSupportedRootSignatureVersion();
+		static D3D12_RESOURCE_BINDING_TIER GetResourceBindingTier();
+		static D3D12_RESOURCE_HEAP_TIER GetResourceHeapTier();
 		static D3D12_FEATURE_DATA_ARCHITECTURE1 const* GetFeatureDataArchitecture();
+
+		static uint32_t GetMaxMultisampleQualityLevel(DXGI_FORMAT);
 
 		static bool CheckTearingSupport(); // Variable refresh rate dispays (eg. G-Sync/FreeSync) require tearing enabled
 		static uint32_t GetDeviceNodeMask();

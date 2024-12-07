@@ -62,35 +62,55 @@ namespace
 	}
 
 
-	dx12::Buffer::ReadbackResource CreateReadbackResource(uint64_t bufferAlignedSize, wchar_t const* debugName)
+	dx12::Buffer::ReadbackResource CreateReadbackResource(uint64_t numBytes, wchar_t const* debugName)
 	{
 		dx12::Buffer::ReadbackResource readbackResource;
 
-		const D3D12_HEAP_PROPERTIES readbackHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK);
-		const D3D12_RESOURCE_DESC readbackBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferAlignedSize);
+		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
 
-		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
-
-		constexpr D3D12_RESOURCE_STATES k_initialReadbackState = D3D12_RESOURCE_STATE_COPY_DEST;
-
-		const HRESULT hr = device->CreateCommittedResource(
-			&readbackHeapProperties,
-			D3D12_HEAP_FLAG_NONE, // Zero our initial readback resource
-			&readbackBufferDesc,
-			k_initialReadbackState,
-			nullptr,			// Optimized clear value: Null for buffers
-			IID_PPV_ARGS(&readbackResource.m_resource));
-		dx12::CheckHResult(hr, "Failed to create committed resource for readback buffer");
-
-		readbackResource.m_resource->SetName(debugName);
-
-		// Register the resource with the global resource state tracker:
-		re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().RegisterResource(
-			readbackResource.m_resource.Get(),
-			k_initialReadbackState,
-			1);
+		readbackResource.m_readbackGPUResource = heapMgr.CreateResource(
+			dx12::ResourceDesc{
+				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(numBytes),
+				.m_heapType = D3D12_HEAP_TYPE_READBACK,
+				.m_initialState = D3D12_RESOURCE_STATE_COPY_DEST,
+			},
+			debugName);
 
 		return readbackResource;
+	}
+
+
+	std::wstring CreateDebugName(re::Buffer const& buffer)
+	{
+		switch (buffer.GetLifetime())
+		{
+		case re::Lifetime::Permanent:
+		{
+			switch (buffer.GetAllocationType())
+			{
+			case re::Buffer::StagingPool::Permanent:
+			{
+				return buffer.GetWName() + L"_CPUMutable";
+			}
+			break;
+			case re::Buffer::StagingPool::Temporary:
+			case re::Buffer::StagingPool::None:
+			{
+				return buffer.GetWName() + L"_CPUImmutable";
+			}
+			break;
+			default: SEAssertF("Invalid AllocationType");
+			}
+		}
+		break;
+		case re::Lifetime::SingleFrame:
+		{
+			return buffer.GetWName() + L"_SingleFrame";
+		}
+		break;
+		default: SEAssertF("Invalid lifetime");
+		}
+		return L"CreateDebugName failed"; // This should never happen
 	}
 }
 
@@ -108,95 +128,59 @@ namespace dx12
 		SEAssert(!params->m_isCreated, "Buffer is already created");
 		params->m_isCreated = true;
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
-
 		const uint8_t numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
 
-		const uint32_t bufferSize = buffer.GetTotalBytes();
-		const uint64_t alignedSize = GetAlignedSize(bufferParams.m_usageMask, bufferSize);
-
-		constexpr D3D12_RESOURCE_STATES k_initialState = D3D12_RESOURCE_STATE_COMMON;
+		const re::Lifetime bufferLifetime = buffer.GetLifetime();
 
 		const bool needsUAV = NeedsUAV(bufferParams);
 
-		const D3D12_HEAP_TYPE outputBufferHeapType = MemoryPoolPreferenceToD3DHeapType(bufferParams.m_memPoolPreference);
-
-		switch (buffer.GetLifetime())
+		uint32_t requestedSize = buffer.GetTotalBytes();
+		if (bufferLifetime == re::Lifetime::Permanent &&
+			buffer.GetAllocationType() == re::Buffer::StagingPool::Permanent)
 		{
-		case re::Lifetime::Permanent:
-		{
-			switch (buffer.GetAllocationType())
-			{
-			case re::Buffer::StagingPool::Permanent:
-			{
-				// We allocate N frames-worth of buffer space, and then set the m_heapByteOffset each frame
-				const uint64_t allFramesAlignedSize = numFramesInFlight * alignedSize;
-
-				const CD3DX12_HEAP_PROPERTIES heapProperties(outputBufferHeapType);
-				const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(allFramesAlignedSize);
-
-				HRESULT hr = device->CreateCommittedResource(
-					&heapProperties,					// this heap will be used to upload the constant buffer data
-					D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
-					&resourceDesc,						// Size of the resource heap
-					k_initialState,
-					nullptr,							// Optimized clear value: None for constant buffers
-					IID_PPV_ARGS(&params->m_resource));
-				CheckHResult(hr, "Failed to create committed resource for mutable buffer");
-
-				std::wstring const& debugName = buffer.GetWName() + L"_CPUMutable";
-				params->m_resource->SetName(debugName.c_str());
-			}
-			break;
-			case re::Buffer::StagingPool::Temporary:
-			case re::Buffer::StagingPool::None:
-			{
-				// CPU-immutable buffers only need a single buffer's worth of space
-				const CD3DX12_HEAP_PROPERTIES heapProperties(outputBufferHeapType);
-				CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedSize);
-
-				if (needsUAV)
-				{
-					resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-				}
-
-				HRESULT hr = device->CreateCommittedResource(
-					&heapProperties,					// this heap will be used to upload the constant buffer data
-					D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
-					&resourceDesc,						// Size of the resource heap
-					k_initialState,
-					nullptr,							// Optimized clear value: None for constant buffers
-					IID_PPV_ARGS(&params->m_resource));
-				CheckHResult(hr, "Failed to create committed resource for immutable buffer");
-
-				// Debug names:
-				std::wstring const& debugName = buffer.GetWName() + L"_CPUImmutable";
-				params->m_resource->SetName(debugName.c_str());
-			}
-			break;
-			default: SEAssertF("Invalid AllocationType");
-			}
+			// We allocate N aligned frames-worth of buffer space, and then set the m_heapByteOffset each frame
+			requestedSize = util::CheckedCast<uint32_t>(
+				GetAlignedSize(bufferParams.m_usageMask, requestedSize) * numFramesInFlight);
 		}
-		break;
-		case re::Lifetime::SingleFrame:
+
+		// Single frame buffers sub-allocated from a single resource:
+		if (bufferLifetime == re::Lifetime::SingleFrame &&
+			bufferParams.m_memPoolPreference == re::Buffer::MemoryPoolPreference::UploadHeap &&
+			!needsUAV)
 		{
 			dx12::BufferAllocator* bufferAllocator =
 				dynamic_cast<dx12::BufferAllocator*>(re::Context::Get()->GetBufferAllocator());
 
 			bufferAllocator->GetSubAllocation(
 				bufferParams.m_usageMask,
-				alignedSize,
+				GetAlignedSize(bufferParams.m_usageMask, requestedSize),
 				params->m_heapByteOffset,
-				params->m_resource);
-		}
-		break;
-		default: SEAssertF("Invalid lifetime");
-		}
+				params->m_resovedGPUResource);
 
-		SEAssert(params->m_heapByteOffset % GetAlignment(
-			re::BufferAllocator::BufferUsageMaskToAllocationPool(bufferParams.m_usageMask)) == 0,
-			"Heap byte offset does not have the correct buffer alignment");
+			SEAssert(params->m_heapByteOffset % GetAlignment(
+				re::BufferAllocator::BufferUsageMaskToAllocationPool(bufferParams.m_usageMask)) == 0,
+				"Heap byte offset does not have the correct buffer alignment");
+		}
+		else // Placed resources via the heap manager:
+		{
+			CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(requestedSize);
+			if (needsUAV)
+			{
+				bufferDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+			}
+
+			std::wstring const& debugName = CreateDebugName(buffer);
+
+			params->m_gpuResource = re::Context::GetAs<dx12::Context*>()->GetHeapManager().CreateResource(
+				dx12::ResourceDesc{
+					.m_resourceDesc = bufferDesc,
+					.m_heapType = MemoryPoolPreferenceToD3DHeapType(bufferParams.m_memPoolPreference),
+					.m_initialState = D3D12_RESOURCE_STATE_COMMON,
+				},
+				debugName.c_str());
+
+			params->m_resovedGPUResource = params->m_gpuResource->Get();
+		}
 		
 		// CPU readback:
 		const bool cpuReadbackEnabled = re::Buffer::HasAccessBit(re::Buffer::CPURead, bufferParams);
@@ -207,32 +191,10 @@ namespace dx12
 				std::wstring const& readbackDebugName = 
 					buffer.GetWName() + L"_ReadbackBuffer" + std::to_wstring(resourceIdx);
 
-				params->m_readbackResources.emplace_back(CreateReadbackResource(alignedSize, readbackDebugName.c_str()));
+				params->m_readbackResources.emplace_back(
+					CreateReadbackResource(buffer.GetTotalBytes(), readbackDebugName.c_str()));
 			}
 		}
-
-		// Register non-shared resources with the global resource state tracker:
-		switch (buffer.GetLifetime())
-		{
-		case re::Lifetime::Permanent:
-		{
-			context->GetGlobalResourceStates().RegisterResource(params->m_resource.Get(), k_initialState, 1);
-		}
-		break;
-		case re::Lifetime::SingleFrame:
-		{
-			//
-		}
-		break;
-		default: SEAssertF("Invalid lifetime");
-		}
-
-#if defined(_DEBUG)
-		void const* srcData = nullptr;
-		uint32_t srcSize = 0;
-		buffer.GetDataAndSize(&srcData, &srcSize);
-		SEAssert(srcData == nullptr || srcSize <= alignedSize, "GetDataAndSize returned invalid results");
-#endif
 	}
 
 
@@ -247,13 +209,11 @@ namespace dx12
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-		constexpr uint32_t k_subresourceIdx = 0;
-
 		// Get a CPU pointer to the subresource (i.e subresource 0)
 		void* cpuVisibleData = nullptr;
 		const CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
-		HRESULT hr = params->m_resource->Map(
-			k_subresourceIdx,
+		HRESULT hr = params->m_resovedGPUResource->Map(
+			0,									// Subresource index: Buffers only have a single subresource
 			&readRange,
 			&cpuVisibleData);
 		CheckHResult(hr, "Buffer::Update: Failed to map committed resource");
@@ -295,12 +255,12 @@ namespace dx12
 		memcpy(offsetPtr, data, totalBytes);
 	
 		// Release the map:
-		D3D12_RANGE writtenRange{
+		const D3D12_RANGE writtenRange{
 			params->m_heapByteOffset + baseOffset,
 			params->m_heapByteOffset + baseOffset + totalBytes };
 
-		params->m_resource->Unmap(
-			k_subresourceIdx,	// Subresource
+		params->m_resovedGPUResource->Unmap(
+			0,					// Subresource index: Buffers only have a single subresource
 			&writtenRange);		// Unmap range: The region the CPU may have modified. Nullptr = entire subresource
 	}
 
@@ -309,9 +269,10 @@ namespace dx12
 		re::Buffer const* buffer,
 		uint32_t baseOffset,
 		uint32_t numBytes,
-		dx12::CommandList* copyCmdList,
-		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources)
+		dx12::CommandList* copyCmdList)
 	{
+		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
+
 		dx12::Buffer::PlatformParams* params = buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		void const* data = buffer->GetData();
@@ -320,31 +281,22 @@ namespace dx12
 
 		// Use the incoming numBytes rather than the buffer size: Might require a smaller buffer for partial updates
 		const uint64_t alignedIntermediateBufferSize = GetAlignedSize(buffer->GetBufferParams().m_usageMask, numBytes);
-
-		D3D12_HEAP_PROPERTIES const& uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 		
-		D3D12_RESOURCE_DESC const& intermediateBufferResourceDesc = 
-			CD3DX12_RESOURCE_DESC::Buffer(alignedIntermediateBufferSize);
-
-		ComPtr<ID3D12Resource> itermediateBufferResource = nullptr;
-		HRESULT hr = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CreateCommittedResource(
-			&uploadHeapProperties,
-			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
-			&intermediateBufferResourceDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&itermediateBufferResource));
-		CheckHResult(hr, "Failed to create intermediate texture buffer resource");
-
-		std::wstring const& intermediateName = buffer->GetWName() + L" intermediate buffer";
-		itermediateBufferResource->SetName(intermediateName.c_str());
+		// GPUResources automatically use a deferred deletion, it is safe to let this go out of scope immediately
+		std::wstring const& intermediateName = buffer->GetWName() + L" intermediate GPU buffer resource";
+		std::unique_ptr<dx12::GPUResource> intermediateResource = heapMgr.CreateResource(dx12::ResourceDesc{
+				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedIntermediateBufferSize),
+				.m_heapType = D3D12_HEAP_TYPE_UPLOAD,
+				.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
+			},
+			intermediateName.c_str());
 
 		constexpr uint32_t k_intermediateSubresourceIdx = 0;
 
 		// Map the intermediate resource, and copy our data into it
 		void* cpuVisibleData = nullptr;
 		const CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
-		hr = itermediateBufferResource->Map(
+		const HRESULT hr = intermediateResource->Map(
 			k_intermediateSubresourceIdx,
 			&readRange,
 			&cpuVisibleData);
@@ -358,15 +310,12 @@ namespace dx12
 			0,
 			numBytes };
 
-		itermediateBufferResource->Unmap(
+		intermediateResource->Unmap(
 			k_intermediateSubresourceIdx,
 			&writtenRange);		// Unmap range: The region the CPU may have modified. Nullptr = entire subresource
 
 		// Schedule a copy from the intermediate resource to default/L1/vid memory heap via the copy queue:
-		copyCmdList->UpdateSubresources(buffer, baseOffset, itermediateBufferResource.Get(), 0, numBytes);
-
-		// Released once the copy is done
-		intermediateResources.emplace_back(itermediateBufferResource);
+		copyCmdList->UpdateSubresources(buffer, baseOffset, intermediateResource->Get(), 0, numBytes);
 	}
 
 
@@ -377,25 +326,12 @@ namespace dx12
 
 		params->m_isCreated = false;
 
-		SEAssert(params->m_resource != nullptr, "Resource pointer should not be null");
+		SEAssert((params->m_gpuResource && params->m_gpuResource->IsValid()) || 
+			(!params->m_gpuResource && params->m_resovedGPUResource != nullptr),
+			"GPUResource should be valid");
 
-		// Unregister the resource from the global resource state tracker
-		switch (buffer.GetLifetime())
-		{
-		case re::Lifetime::Permanent:
-		{
-			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(params->m_resource.Get());
-		}
-		break;
-		case re::Lifetime::SingleFrame:
-		{
-			//
-		}
-		break;
-		default: SEAssertF("Invalid lifetime");
-		}
-
-		params->m_resource = nullptr;
+		params->m_gpuResource = nullptr;
+		params->m_resovedGPUResource = nullptr;
 		params->m_heapByteOffset = 0;
 	}
 
@@ -431,7 +367,7 @@ namespace dx12
 		
 		void* cpuVisibleData = nullptr;
 
-		HRESULT hr = params->m_readbackResources[readbackResourceIdx].m_resource->Map(
+		HRESULT hr = params->m_readbackResources[readbackResourceIdx].m_readbackGPUResource->Map(
 			0,						// Subresource
 			&readbackBufferRange,	// pReadRange
 			&cpuVisibleData);		// ppData
@@ -454,12 +390,11 @@ namespace dx12
 		const uint8_t readbackResourceIdx =
 			(renderManager->GetCurrentRenderFrameNum() - params->m_currentMapFrameLatency) % renderManager->GetNumFramesInFlight();
 
-
 		const D3D12_RANGE writtenRange{
 			0,		// Begin
 			0 };	// End: Signifies CPU did not write any data when End <= Begin
 
-		params->m_readbackResources[readbackResourceIdx].m_resource->Unmap(
+		params->m_readbackResources[readbackResourceIdx].m_readbackGPUResource->Unmap(
 			0,				// Subresource
 			&writtenRange);	// pWrittenRange
 	}
@@ -481,7 +416,7 @@ namespace dx12
 			if (params->m_views.m_indexBufferView.BufferLocation == 0)
 			{
 				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
-					.BufferLocation = params->m_resource->GetGPUVirtualAddress() + params->m_heapByteOffset,
+					.BufferLocation = params->m_resovedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
 					.SizeInBytes = buffer.GetTotalBytes(),
 					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_stream.m_dataType, false),
 				};
@@ -513,7 +448,7 @@ namespace dx12
 			if (params->m_views.m_vertexBufferView.BufferLocation == 0)
 			{
 				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
-					.BufferLocation = params->m_resource->GetGPUVirtualAddress() + params->m_heapByteOffset,
+					.BufferLocation = params->m_resovedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
 					.SizeInBytes = buffer.GetTotalBytes(),
 					.StrideInBytes = DataTypeToByteStride(view.m_stream.m_dataType),
 				};

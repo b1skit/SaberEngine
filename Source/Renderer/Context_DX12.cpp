@@ -114,10 +114,10 @@ namespace dx12
 		m_device.Create();
 
 		LOG(std::format("D3D resource binding tier: {}",
-			dx12::D3D12ResourceBindingTierToCStr(*dx12::SysInfo::GetResourceBindingTier())).c_str());
+			dx12::D3D12ResourceBindingTierToCStr(dx12::SysInfo::GetResourceBindingTier())).c_str());
 
 		LOG(std::format("D3D heap tier: {}",
-			dx12::D3D12ResourceHeapTierToCStr(*dx12::SysInfo::GetResourceHeapTier())).c_str());
+			dx12::D3D12ResourceHeapTierToCStr(dx12::SysInfo::GetResourceHeapTier())).c_str());
 
 		// Descriptor heap managers:
 		m_cpuDescriptorHeapMgrs.reserve(static_cast<size_t>(CPUDescriptorHeapManager::HeapType_Count));
@@ -132,6 +132,8 @@ namespace dx12
 		m_commandQueues[CommandListType::Direct].Create(device, CommandListType::Direct);
 		m_commandQueues[CommandListType::Compute].Create(device, CommandListType::Compute);
 		m_commandQueues[CommandListType::Copy].Create(device, CommandListType::Copy);
+
+		m_heapManager.Initialize();
 
 		// NOTE: Must create the swapchain after our command queues. This is because the DX12 swapchain creation
 		// requires a direct command queue; dx12::SwapChain::Create recursively gets it from the Context platform params
@@ -186,6 +188,9 @@ namespace dx12
 
 		dx12Context.m_PSOLibrary.clear();
 		dx12Context.m_rootSigLibrary.clear();
+
+		// The heap manager can only be destroyed after all GPUResources have been released
+		dx12Context.m_heapManager.Destroy();
 
 		dx12Context.m_device.Destroy();
 	}

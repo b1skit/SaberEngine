@@ -458,6 +458,9 @@
     <ClInclude Include="BufferView.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
+    <ClInclude Include="HeapManager_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -789,6 +792,9 @@
     </ClCompile>
     <ClCompile Include="BufferView.cpp">
       <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="HeapManager_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -165,7 +165,7 @@ namespace
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
-		device->CreateShaderResourceView(texPlatParams->m_textureResource.Get(), &srvDesc, descriptor.GetBaseDescriptor());
+		device->CreateShaderResourceView(texPlatParams->m_gpuResource->Get(), &srvDesc, descriptor.GetBaseDescriptor());
 	}
 
 
@@ -269,7 +269,7 @@ namespace
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
 		device->CreateUnorderedAccessView(
-			texPlatParams->m_textureResource.Get(),
+			texPlatParams->m_gpuResource->Get(),
 			nullptr,		// Counter resource
 			&uavDesc,
 			descriptor.GetBaseDescriptor());
@@ -373,7 +373,7 @@ namespace
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
 		device->CreateRenderTargetView(
-			texPlatParams->m_textureResource.Get(),
+			texPlatParams->m_gpuResource->Get(),
 			&rtvDesc,
 			descriptor.GetBaseDescriptor());
 
@@ -475,7 +475,7 @@ namespace
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
 		device->CreateDepthStencilView(
-			texPlatParams->m_textureResource.Get(),
+			texPlatParams->m_gpuResource->Get(),
 			&dsvDesc,
 			descriptor.GetBaseDescriptor());
 	}
@@ -507,7 +507,7 @@ namespace
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-		device->CreateShaderResourceView(params->m_resource.Get(), &srvDesc, descriptor.GetBaseDescriptor());
+		device->CreateShaderResourceView(params->m_resovedGPUResource, &srvDesc, descriptor.GetBaseDescriptor());
 	}
 
 
@@ -537,7 +537,7 @@ namespace
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		device->CreateUnorderedAccessView(
-			params->m_resource.Get(),
+			params->m_resovedGPUResource,
 			nullptr,	// Optional counter resource
 			&uavDesc,
 			descriptor.GetBaseDescriptor());
@@ -553,7 +553,7 @@ namespace
 
 		const D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc
 		{
-			.BufferLocation = params->m_resource->GetGPUVirtualAddress(),
+			.BufferLocation = params->m_resovedGPUResource->GetGPUVirtualAddress(),
 			.SizeInBytes = util::RoundUpToNearestMultiple<uint32_t>(
 				buffer.GetTotalBytes(),
 				D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT),

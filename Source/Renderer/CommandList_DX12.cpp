@@ -331,7 +331,7 @@ namespace dx12
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
 					rootSigIdx,
-					bufferPlatParams->m_resource.Get(),
+					bufferPlatParams->m_resovedGPUResource,
 					bufferPlatParams->m_heapByteOffset);
 
 				toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
@@ -347,7 +347,7 @@ namespace dx12
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
 					rootSigIdx,
-					bufferPlatParams->m_resource.Get(),
+					bufferPlatParams->m_resovedGPUResource,
 					bufferPlatParams->m_heapByteOffset);			
 
 				toState = (m_type == dx12::CommandListType::Compute ? 
@@ -367,14 +367,14 @@ namespace dx12
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
 					rootSigIdx,
-					bufferPlatParams->m_resource.Get(),
+					bufferPlatParams->m_resovedGPUResource,
 					bufferPlatParams->m_heapByteOffset);
 
 				if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
 				{
 					// TODO: We should only insert a UAV barrier if the we're accessing the resource on the same
 					// command list where a prior modifying use was performed
-					InsertUAVBarrier(bufferPlatParams->m_resource.Get());
+					InsertUAVBarrier(bufferPlatParams->m_resovedGPUResource);
 				}
 
 				toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -426,7 +426,7 @@ namespace dx12
 					{
 						// TODO: We should only insert a UAV barrier if the we're accessing the resource on the same
 						// command list where a prior modifying use was performed
-						InsertUAVBarrier(bufferPlatParams->m_resource.Get());
+						InsertUAVBarrier(bufferPlatParams->m_resovedGPUResource);
 					}
 
 					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -464,7 +464,7 @@ namespace dx12
 			{
 				SEAssert(!isInSharedHeap, "Trying to transition a resource in a shared heap. This is unexpected");
 				SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state")
-				TransitionResource(bufferPlatParams->m_resource.Get(), toState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				TransitionResource(bufferPlatParams->m_resovedGPUResource, toState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 			}
 
 			// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
@@ -473,8 +473,8 @@ namespace dx12
 				const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
 
 				m_seenReadbackResources.emplace_back(ReadbackResourceMetadata{
-					.m_srcResource = bufferPlatParams->m_resource.Get(),
-					.m_dstResource = bufferPlatParams->m_readbackResources[readbackIdx].m_resource.Get(),
+					.m_srcResource = bufferPlatParams->m_resovedGPUResource,
+					.m_dstResource = bufferPlatParams->m_readbackResources[readbackIdx].m_readbackGPUResource->Get(),
 					.m_dstModificationFence = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFence,
 					.m_dstModificationFenceMutex = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFenceMutex });
 			}
@@ -572,7 +572,7 @@ namespace dx12
 			if (streamBuffer->GetLifetime() != re::Lifetime::SingleFrame)
 			{
 				TransitionResource(
-					streamBufferPlatParams->m_resource.Get(),
+					streamBufferPlatParams->m_resovedGPUResource,
 					D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
 					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 			}
@@ -628,7 +628,7 @@ namespace dx12
 		if (indexBuffer.m_buffer->GetLifetime() != re::Lifetime::SingleFrame)
 		{
 			TransitionResource(
-				streamBufferPlatParams->m_resource.Get(),
+				streamBufferPlatParams->m_resovedGPUResource,
 				D3D12_RESOURCE_STATE_INDEX_BUFFER,
 				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 		}
@@ -687,7 +687,7 @@ namespace dx12
 				re::TextureView::GetSubresourceIndex(colorTargetTex, colorTargetParams.m_textureView);
 
 			TransitionResource(
-				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_textureResource.Get(),
+				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_gpuResource->Get(),
 				D3D12_RESOURCE_STATE_RENDER_TARGET, 
 				subresourceIdx);
 
@@ -843,7 +843,7 @@ namespace dx12
 					rwTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 				// We're writing to a UAV, we may need a UAV barrier:
-				ID3D12Resource* resource = texPlatParams->m_textureResource.Get();
+				ID3D12Resource* resource = texPlatParams->m_gpuResource->Get();
 				if (m_resourceStates.HasSeenSubresourceInState(resource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS) &&
 					!ResourceWasTransitionedInThisCall(resource))
 				{
@@ -939,13 +939,13 @@ namespace dx12
 		const uint32_t subresourceIdx = texture->GetSubresourceIndex(arrayIdx, faceIdx, mipLevel);
 		
 		TransitionResourceInternal(
-			texPlatParams->m_textureResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, { subresourceIdx });
+			texPlatParams->m_gpuResource->Get(), D3D12_RESOURCE_STATE_COPY_DEST, {subresourceIdx});
 
 		// Record the update:
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/updatesubresources2
 		const uint64_t bufferSizeResult = ::UpdateSubresources(
 			m_commandList.Get(),					// Command list
-			texPlatParams->m_textureResource.Get(),	// Destination resource
+			texPlatParams->m_gpuResource->Get(),	// Destination resource
 			intermediate,							// Intermediate resource
 			0,										// Byte offset to the intermediate resource
 			subresourceIdx,							// Index of 1st subresource in the resource
@@ -964,20 +964,21 @@ namespace dx12
 
 		dx12::Buffer::PlatformParams const* bufferPlatformParams =
 			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+		
+		SEAssert(bufferPlatformParams->GPUResourceIsValid(),
+			"GPUResource is not valid. Buffers using a shared resource cannot be used here");
 
-		// Note: We only allow Immutable buffers to live on the default heap; They have a single, unshared backing 
-		// resource so this transition is safe
 		TransitionResource(
-			bufferPlatformParams->m_resource.Get(),
+			bufferPlatformParams->m_resovedGPUResource,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 		m_commandList->CopyBufferRegion(
-			bufferPlatformParams->m_resource.Get(), // pDstBuffer
-			dstOffset,								// DstOffset
-			srcResource,							// pSrcBuffer
-			srcOffset,								// SrcOffset
-			numBytes);								// NumBytes
+			bufferPlatformParams->m_resovedGPUResource,	// pDstBuffer
+			dstOffset,									// DstOffset
+			srcResource,								// pSrcBuffer
+			srcOffset,									// SrcOffset
+			numBytes);									// NumBytes
 	}
 
 
@@ -1193,7 +1194,7 @@ namespace dx12
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		TransitionResourceInternal(
-			texPlatParams->m_textureResource.Get(),
+			texPlatParams->m_gpuResource->Get(),
 			toState,
 			re::TextureView::GetSubresourceIndexes(texture, texView));
 	}
@@ -1226,7 +1227,7 @@ namespace dx12
 
 	void CommandList::InsertUAVBarrier(re::Texture const* texture)
 	{
-		InsertUAVBarrier(texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_textureResource.Get());
+		InsertUAVBarrier(texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_gpuResource->Get());
 	}
 
 

@@ -11,6 +11,7 @@
 namespace dx12
 {
 	class CommandList;
+	class GPUResource;
 
 
 	class Texture
@@ -23,9 +24,9 @@ namespace dx12
 
 			void Destroy() override;
 
+			std::unique_ptr<dx12::GPUResource> m_gpuResource;
 
 			DXGI_FORMAT m_format;
-			Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
 
 			mutable dx12::DescriptorCache m_srvDescriptors;
 			mutable dx12::DescriptorCache m_uavDescriptors;
@@ -37,9 +38,7 @@ namespace dx12
 
 	public:
 		// DX12-specific functionality:
-		static void Create(re::Texture&, 
-			dx12::CommandList* copyCmdList,
-			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources);
+		static void Create(re::Texture&, dx12::CommandList* copyCmdList);
 		
 		static std::shared_ptr<re::Texture> CreateFromExistingResource(
 			std::string const& name, re::Texture::TextureParams const&, Microsoft::WRL::ComPtr<ID3D12Resource>);

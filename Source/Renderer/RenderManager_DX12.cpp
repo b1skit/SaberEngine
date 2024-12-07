@@ -26,9 +26,6 @@ namespace dx12
 		, k_numFrames(core::Config::Get()->GetValue<int>(core::configkeys::k_numBackbuffersKey))
 	{
 		SEAssert(k_numFrames >= 2 && k_numFrames <= 3, "Invalid number of frames in flight");
-
-		m_intermediateResources.resize(k_numFrames);
-		m_intermediateResourceFenceVals.resize(k_numFrames, 0);
 	}
 
 
@@ -52,23 +49,11 @@ namespace dx12
 
 		SEBeginGPUEvent(copyQueue->GetD3DCommandQueue(), perfmarkers::Type::CopyQueue, "Copy Queue: Create API Resources");
 
-		// Ensure any updates using the intermediate resources created during the previous frame are done
-		const uint8_t intermediateIdx = GetIntermediateResourceIdx();
-		if (!copyQueue->GetFence().IsFenceComplete(
-			dx12RenderManager.m_intermediateResourceFenceVals[intermediateIdx]))
-		{
-			copyQueue->CPUWait(dx12RenderManager.m_intermediateResourceFenceVals[intermediateIdx]);
-		}
-		dx12RenderManager.m_intermediateResources[intermediateIdx].clear();
-
 		const bool hasDataToCopy = renderManager.m_newTextures.HasReadData();
 
 		// Handle anything that requires a copy queue:		
 		if (hasDataToCopy)
 		{
-			std::vector<ComPtr<ID3D12Resource>>& intermediateResources = 
-				dx12RenderManager.m_intermediateResources[intermediateIdx];
-
 			// TODO: Get multiple command lists, and record on multiple threads:
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
 
@@ -77,12 +62,12 @@ namespace dx12
 			{
 				for (auto& texture : renderManager.m_newTextures.GetReadData())
 				{
-					dx12::Texture::Create(*texture, copyCommandList.get(), intermediateResources);
+					dx12::Texture::Create(*texture, copyCommandList.get());
 				}
 			}
 
 			// Execute the copy before moving on
-			dx12RenderManager.m_intermediateResourceFenceVals[intermediateIdx] = copyQueue->Execute(1, &copyCommandList);
+			copyQueue->Execute(1, &copyCommandList);
 		}
 
 		// Samplers:
@@ -121,6 +106,17 @@ namespace dx12
 		}
 
 		SEEndGPUEvent(copyQueue->GetD3DCommandQueue());
+	}
+
+
+	void RenderManager::EndOfFrame(re::RenderManager& renderManager)
+	{
+		SEBeginCPUEvent("dx12::RenderManager::EndOfFrame");
+
+		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
+		heapMgr.EndOfFrame(renderManager.m_renderFrameNum);
+
+		SEEndCPUEvent();
 	}
 
 
@@ -557,5 +553,7 @@ namespace dx12
 				context->GetCommandQueue(static_cast<dx12::CommandListType>(i)).Flush();
 			}
 		}
+
+		
 	}
 }

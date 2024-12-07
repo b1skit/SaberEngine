@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CommandList_DX12.h"
 #include "Context_DX12.h"
+#include "HeapManager_DX12.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
@@ -245,7 +246,7 @@ namespace
 		}
 
 		// As per the documentation, simultaneous access cannot be used with buffers, MSAA textures, or when the
-		// D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL flag is used
+		// D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL flag is used
 		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_flags
 
 		const bool doesNotUseMSAA = (texParams.m_multisampleMode == re::Texture::MultisampleMode::Disabled);
@@ -309,23 +310,21 @@ namespace
 			return true;
 		}
 
-		// TODO: We'll need to check multisampling is disabled here, once it's implemented
-
 		// We didn't hit a case where a UAV is explicitely needed
 		return false;
 	}
 
 
 	// Returns the initial state
-	D3D12_RESOURCE_STATES CreateTextureCommittedResource(re::Texture& texture, bool needsUAV, bool simultaneousAccess)
+	D3D12_RESOURCE_STATES CreateTextureResource(re::Texture& texture, bool needsUAV, bool simultaneousAccess)
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-		SEAssert(texPlatParams->m_textureResource == nullptr, "Texture resource already created");
+		SEAssert(!texPlatParams->m_gpuResource, "Texture resource already created");
 		
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
 		// We'll update these settings for each type of texture resource:
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE;
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 		if (needsUAV)
 		{
 			flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -340,23 +339,15 @@ namespace
 		// more complex cases arise
 		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
 
-		D3D12_CLEAR_VALUE optimizedClearValue = {};
-		optimizedClearValue.Format = texPlatParams->m_format;
-
-		D3D12_CLEAR_VALUE* optimizedClearValuePtr = &optimizedClearValue;
-		// Note: optimizedClearValuePtr must be null unless:
+		// Note: optimizedClearValuePtr is ignored unless:
 		// - D3D12_RESOURCE_DESC::Dimension is D3D12_RESOURCE_DIMENSION_BUFFER,
 		// - D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET or D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL are set in flags
-
-		if ((texParams.m_usage & re::Texture::Usage::ColorTarget) == 0 &&
-			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0)
-		{
-			optimizedClearValuePtr = nullptr;
-		}
-
+		D3D12_CLEAR_VALUE optimizedClearValue = {};
+		optimizedClearValue.Format = texPlatParams->m_format;
+		
 		if (texParams.m_usage & re::Texture::Usage::ColorTarget)
 		{
-			flags |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+			flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
 			optimizedClearValue.Color[0] = texParams.m_clear.m_color.r;
 			optimizedClearValue.Color[1] = texParams.m_clear.m_color.g;
@@ -370,7 +361,7 @@ namespace
 				"Depth target cannot have mips. Note: Depth-Stencil formats support mipmaps, arrays, and multiple "
 				"planes. See https://learn.microsoft.com/en-us/windows/win32/direct3d12/subresources");
 
-			flags |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+			flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 			optimizedClearValue.DepthStencil.Depth = texParams.m_clear.m_depthStencil.m_depth;
 			optimizedClearValue.DepthStencil.Stencil = texParams.m_clear.m_depthStencil.m_stencil;
@@ -450,19 +441,15 @@ namespace
 			SEAssertF("Invalid texture dimension");
 		}
 
-		D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
 
-		HRESULT hr = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CreateCommittedResource(
-			&heapProperties,
-			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED, // TODO: Query support: Unsupported on older versions of Windows
-			&resourceDesc,
-			initialState,
-			optimizedClearValuePtr, // Optimized clear value: Must be NULL except for buffers, or render/depth-stencil targets
-			IID_PPV_ARGS(&texPlatParams->m_textureResource));
-		dx12::CheckHResult(hr, "Failed to create texture committed resource");
-
-		// Name our D3D resource:
-		texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
+		texPlatParams->m_gpuResource = heapMgr.CreateResource(dx12::ResourceDesc{
+				.m_resourceDesc = resourceDesc,
+				.m_optimizedClearValue = optimizedClearValue,
+				.m_heapType = D3D12_HEAP_TYPE_DEFAULT,
+				.m_initialState = initialState,
+				.m_isMSAATexture = (texParams.m_multisampleMode == re::Texture::MultisampleMode::Enabled)},
+			texture.GetWName().c_str());
 
 		return initialState;
 	}
@@ -678,7 +665,7 @@ namespace dx12
 
 	Texture::PlatformParams::~PlatformParams()
 	{
-		SEAssert(m_textureResource == nullptr && m_format == DXGI_FORMAT_UNKNOWN,
+		SEAssert(m_gpuResource == nullptr && m_format == DXGI_FORMAT_UNKNOWN,
 			"dx12::Texture::PlatformParams::~PlatformParams() called before Destroy()");
 	}
 
@@ -686,8 +673,8 @@ namespace dx12
 	void Texture::PlatformParams::Destroy()
 	{
 		m_format = DXGI_FORMAT_UNKNOWN;
-		m_textureResource = nullptr;
-		
+		m_gpuResource = nullptr;
+
 		m_srvDescriptors.Destroy();
 		m_uavDescriptors.Destroy();
 
@@ -699,10 +686,7 @@ namespace dx12
 	// -----------------------------------------------------------------------------------------------------------------
 
 
-	void Texture::Create(
-		re::Texture& texture,
-		dx12::CommandList* copyCmdList,
-		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources)
+	void Texture::Create(re::Texture& texture, dx12::CommandList* copyCmdList)
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		SEAssert(texPlatParams->m_isCreated == false, "Texture is already created");
@@ -754,7 +738,7 @@ namespace dx12
 		// Create a committed resource:
 		if ((texParams.m_usage & re::Texture::Usage::SwapchainColorProxy) == 0)
 		{
-			initialState = CreateTextureCommittedResource(texture, needsUAV, needsSimultaneousAccess);
+			initialState = CreateTextureResource(texture, needsUAV, needsSimultaneousAccess);
 		}
 
 		// Upload initial data via an intermediate upload heap:
@@ -773,45 +757,25 @@ namespace dx12
 			// Buffers have the same size on all adapters: The smallest multiple of 64KB >= the buffer width
 			// See remarks here:
 			// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getresourceallocationinfo(uint_uint_constd3d12_resource_desc)
-			// D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 64KB, as per:
-			// https://learn.microsoft.com/en-us/windows/win32/direct3d12/constants
 
 			const uint32_t intermediateBufferWidth = util::RoundUpToNearestMultiple(
 				totalBytes, 
 				static_cast<uint32_t>(D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT));
 
-			D3D12_RESOURCE_DESC const& intermediateBufferResourceDesc = 
-				CD3DX12_RESOURCE_DESC::Buffer(intermediateBufferWidth);
+			dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
 
-			D3D12_HEAP_PROPERTIES const& uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-
-			ComPtr<ID3D12Resource> itermediateBufferResource = nullptr;
-			HRESULT hr = device->CreateCommittedResource(
-				&uploadHeapProperties,
-				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
-				&intermediateBufferResourceDesc,
-				D3D12_RESOURCE_STATE_GENERIC_READ,
-				nullptr,
-				IID_PPV_ARGS(&itermediateBufferResource));
-			CheckHResult(hr, "Failed to create intermediate texture buffer resource");
-
+			// GPUResources automatically use a deferred deletion, it is safe to let this go out of scope immediately
 			std::wstring const& intermediateName = texture.GetWName() + L" intermediate buffer";
-			itermediateBufferResource->SetName(intermediateName.c_str());
+			std::unique_ptr<dx12::GPUResource> intermediateResource = heapMgr.CreateResource(dx12::ResourceDesc{
+					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(intermediateBufferWidth),
+					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,
+					.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ, },
+				intermediateName.c_str());
 
-			// Buffer the initial data:
-			UpdateTopLevelSubresources(copyCmdList, &texture, itermediateBufferResource.Get());
-
-			// Released once the copy is done
-			intermediateResources.emplace_back(itermediateBufferResource);
+			UpdateTopLevelSubresources(copyCmdList, &texture, intermediateResource->Get());
 		}
 
 		texPlatParams->m_isDirty = false;
-
-		// Register the resource with the global resource state tracker:
-		context->GetGlobalResourceStates().RegisterResource(
-			texPlatParams->m_textureResource.Get(),
-			initialState,
-			numSubresources);
 	}
 
 
@@ -831,14 +795,10 @@ namespace dx12
 
 		dx12::Texture::PlatformParams* texPlatParams = 
 			newTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-		SEAssert(!texPlatParams->m_isCreated && texPlatParams->m_textureResource == nullptr,
-			"Texture is already created");
+		SEAssert(!texPlatParams->m_gpuResource, "Texture is already created");
 
-		texPlatParams->m_textureResource = textureResource;
-
-		// Set the debug name:
-		const std::wstring wideName = util::ToWideString(name);
-		texPlatParams->m_textureResource->SetName(wideName.c_str());
+		texPlatParams->m_gpuResource = std::make_unique<dx12::GPUResource>(
+			textureResource, D3D12_RESOURCE_STATE_COMMON, util::ToWideString(name).c_str());
 
 		return newTexture;
 	}
@@ -892,12 +852,6 @@ namespace dx12
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		// Unregister the resource from the global resource state tracker. Note: The resource might be null if it was
-		// never created (e.g. a duplicate was detected after loading)
-		if (texPlatParams->m_textureResource)
-		{
-			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(
-				texPlatParams->m_textureResource.Get());
-		}
+		texPlatParams->m_gpuResource = nullptr;
 	}
 }

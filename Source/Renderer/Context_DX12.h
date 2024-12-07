@@ -4,6 +4,7 @@
 #include "Context.h"
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "Device_DX12.h"
+#include "HeapManager_DX12.h"
 #include "ResourceStateTracker_DX12.h"
 
 #include <wrl.h>
@@ -44,6 +45,8 @@ namespace dx12
 		dx12::Device& GetDevice();
 
 		dx12::GlobalResourceStateTracker& GetGlobalResourceStates();
+
+		HeapManager& GetHeapManager();
 		
 
 	public:// Null descriptor library
@@ -68,6 +71,8 @@ namespace dx12
 
 		std::array<dx12::CommandQueue, CommandListType::CommandListType_Count> m_commandQueues;
 
+		HeapManager m_heapManager;
+
 		dx12::GlobalResourceStateTracker m_globalResourceStates;
 
 		std::vector<uint64_t> m_frameFenceValues; // Fence values for signalling the command queue
@@ -78,7 +83,6 @@ namespace dx12
 		// Hashed D3D12_VERSIONED_ROOT_SIGNATURE_DESC -> D3D Root sig ComPtr
 		std::unordered_map<uint64_t, Microsoft::WRL::ComPtr<ID3D12RootSignature>> m_rootSigLibrary;
 		mutable std::mutex m_rootSigLibraryMutex;
-
 
 		std::vector<dx12::CPUDescriptorHeapManager> m_cpuDescriptorHeapMgrs; // HeapType_Count
 
@@ -108,5 +112,11 @@ namespace dx12
 	inline dx12::GlobalResourceStateTracker& Context::GetGlobalResourceStates()
 	{
 		return m_globalResourceStates;
+	}
+
+
+	inline HeapManager& Context::GetHeapManager()
+	{
+		return m_heapManager;
 	}
 }

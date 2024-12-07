@@ -107,6 +107,7 @@ namespace platform
 			platform::RenderManager::Initialize				= &opengl::RenderManager::Initialize;
 			platform::RenderManager::Shutdown				= &opengl::RenderManager::Shutdown;
 			platform::RenderManager::CreateAPIResources		= &opengl::RenderManager::CreateAPIResources;
+			platform::RenderManager::EndOfFrame				= &opengl::RenderManager::EndOfFrame;
 			platform::RenderManager::GetNumFramesInFlight	= &opengl::RenderManager::GetNumFramesInFlight;
 
 			// Shader:
@@ -144,10 +145,11 @@ namespace platform
 			platform::Buffer::UnmapCPUReadback	= &dx12::Buffer::UnmapCPUReadback;
 			
 			// Render manager:
-			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;
-			platform::RenderManager::Shutdown			= &dx12::RenderManager::Shutdown;
-			platform::RenderManager::CreateAPIResources = &dx12::RenderManager::CreateAPIResources;
-			platform::RenderManager::GetNumFramesInFlight		= &dx12::RenderManager::GetNumFramesInFlight;
+			platform::RenderManager::Initialize				= &dx12::RenderManager::Initialize;
+			platform::RenderManager::Shutdown				= &dx12::RenderManager::Shutdown;
+			platform::RenderManager::CreateAPIResources		= &dx12::RenderManager::CreateAPIResources;
+			platform::RenderManager::EndOfFrame				= &dx12::RenderManager::EndOfFrame;
+			platform::RenderManager::GetNumFramesInFlight	= &dx12::RenderManager::GetNumFramesInFlight;
 
 			// Shader:
 			platform::Shader::Create	= &dx12::Shader::Create;

@@ -106,6 +106,12 @@ namespace opengl
 	}
 
 
+	void RenderManager::EndOfFrame(re::RenderManager&)
+	{
+		//
+	}
+
+
 	void RenderManager::Render()
 	{
 		opengl::Context* context = re::Context::GetAs<opengl::Context*>();

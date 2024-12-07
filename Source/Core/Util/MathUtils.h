@@ -20,6 +20,14 @@ namespace util
 
 
 	template<typename T>
+	T DivideAndRoundUp(T val, T divisor)
+	{
+		// Rounds the remainder up to the nearest integer, and includes it in the result
+		return (val + divisor - T(1)) / divisor;
+	}
+
+
+	template<typename T>
 	bool IsPowerOfTwo(T v)
 	{
 		// Bit twiddling hack: http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2

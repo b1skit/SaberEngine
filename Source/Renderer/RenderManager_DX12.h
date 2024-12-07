@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "HeapManager_DX12.h"
 #include "RenderManager.h"
 
 #include <wrl.h>
@@ -16,6 +17,7 @@ namespace dx12
 		RenderManager();
 		~RenderManager() override = default;
 
+
 	public:
 		static uint8_t GetNumFramesInFlight(); // Number of frames in flight
 		static uint8_t GetIntermediateResourceIdx(); // Get an index in [0, NumFramesInFight)
@@ -25,6 +27,7 @@ namespace dx12
 		static void Initialize(re::RenderManager&);
 		static void Shutdown(re::RenderManager&);
 		static void CreateAPIResources(re::RenderManager&);
+		static void EndOfFrame(re::RenderManager&);
 
 
 	private: // re::RenderManager interface:
@@ -33,11 +36,6 @@ namespace dx12
 
 	protected:
 		const uint8_t k_numFrames;
-
-
-	private:
-		std::vector<std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>> m_intermediateResources; // From resources created in the previous frame
-		std::vector<uint64_t> m_intermediateResourceFenceVals;
 	};
 
 

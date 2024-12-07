@@ -797,7 +797,7 @@ namespace dx12
 			ComPtr<ID3DBlob> errorBlob = nullptr;
 			HRESULT hr = D3DX12SerializeVersionedRootSignature(
 				&rootSignatureDescription,
-				*SysInfo::GetHighestSupportedRootSignatureVersion(),
+				SysInfo::GetHighestSupportedRootSignatureVersion(),
 				&rootSignatureBlob,
 				&errorBlob);			
 			CheckHResult(hr, errorBlob ? 
