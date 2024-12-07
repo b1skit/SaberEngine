@@ -124,9 +124,9 @@ namespace dx12
 	}
 
 
-	SEStaticAssert(re::BufferAllocator::k_fixedAllocationByteSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0,
+	SEStaticAssert(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0,
 		"CBV sizes must be in multiples of 256B");
 
-	SEStaticAssert(re::BufferAllocator::k_fixedAllocationByteSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0,
+	SEStaticAssert(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0,
 		"Structured buffer sizes must be in multiples of 64KB");
 }

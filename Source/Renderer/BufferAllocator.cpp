@@ -1036,8 +1036,8 @@ namespace re
 		// Atomically advance the stack base index for the next call, and return the base index for the current one
 		const uint32_t allocationBaseIdx = m_bufferBaseIndexes[allocationPool].fetch_add(alignedSize);
 
-		SEAssert(allocationBaseIdx + alignedSize <= k_fixedAllocationByteSize,
-			"Allocation is out of bounds. Consider increasing k_fixedAllocationByteSize");
+		SEAssert(allocationBaseIdx + alignedSize <= k_sharedSingleFrameAllocationByteSize,
+			"Allocation is out of bounds. Consider increasing k_sharedSingleFrameAllocationByteSize");
 
 		return allocationBaseIdx;
 	}

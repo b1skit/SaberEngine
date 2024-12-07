@@ -32,7 +32,7 @@ namespace opengl
 			bufferNameOut = m_singleFrameBuffers[re::BufferAllocator::Constant][writeIdx];
 
 			const GLint uboAlignment = opengl::SysInfo::GetUniformBufferOffsetAlignment(); // e.g. 256
-			SEAssert(re::BufferAllocator::k_fixedAllocationByteSize % uboAlignment == 0,
+			SEAssert(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize % uboAlignment == 0,
 				"Incompatible alignment");
 
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, uboAlignment);
@@ -43,7 +43,7 @@ namespace opengl
 			bufferNameOut = m_singleFrameBuffers[re::BufferAllocator::Structured][writeIdx];
 
 			const GLint ssboAlignment = opengl::SysInfo::GetShaderStorageBufferOffsetAlignment(); // e.g. 16
-			SEAssert(re::BufferAllocator::k_fixedAllocationByteSize % ssboAlignment == 0,
+			SEAssert(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize % ssboAlignment == 0,
 				"Incompatible alignment");
 
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, ssboAlignment);
@@ -89,7 +89,7 @@ namespace opengl
 
 			glNamedBufferData(
 				m_singleFrameBuffers[re::BufferAllocator::Constant][bufferIdx],
-				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
+				static_cast<GLsizeiptr>(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 				nullptr,
 				GL_DYNAMIC_DRAW);
 
@@ -105,7 +105,7 @@ namespace opengl
 
 			glNamedBufferData(
 				m_singleFrameBuffers[re::BufferAllocator::Structured][bufferIdx],
-				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
+				static_cast<GLsizeiptr>(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 				nullptr,
 				GL_DYNAMIC_DRAW);
 
@@ -120,7 +120,7 @@ namespace opengl
 
 			glNamedBufferData(
 				m_singleFrameBuffers[re::BufferAllocator::VertexStream][bufferIdx],
-				static_cast<GLsizeiptr>(re::BufferAllocator::k_fixedAllocationByteSize),
+				static_cast<GLsizeiptr>(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 				nullptr,
 				GL_DYNAMIC_DRAW);
 
