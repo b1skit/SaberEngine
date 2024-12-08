@@ -179,9 +179,12 @@ namespace gr
 
 			// gr::Material: This is a Material instance, so we're modifying the data that will be sent to our buffers
 			{
-				const bool isOpaque = instanceData.m_alphaMode == Material::AlphaMode::Opaque;
+				// Alpha-blended materials render their shadows using alpha clipping, if enabled
+				const bool showAlphaCutoff = 
+					instanceData.m_alphaMode == Material::AlphaMode::Mask ||
+					(instanceData.m_alphaMode == Material::AlphaMode::Blend && instanceData.m_isShadowCaster);
 
-				ImGui::BeginDisabled(isOpaque);
+				ImGui::BeginDisabled(!showAlphaCutoff);
 				isDirty |= ImGui::SliderFloat(
 					std::format("Alpha cutoff##{}", util::PtrToID(&instanceData)).c_str(),
 					&matData->g_f0AlphaCutoff.w,
@@ -189,7 +192,11 @@ namespace gr
 					1.f,
 					"%.4f");
 				ImGui::EndDisabled();
+
+				ImGui::SetItemTooltip("Alpha clipped or alpha blended materials only.\n"
+					"Alpha-blended materials render shadows using alpha clipping");
 			}
+			
 
 			ImGui::Unindent();
 		}

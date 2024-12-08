@@ -55,7 +55,7 @@
 				"Technique": "AlphaBlend_DoubleSided"
 			},
 
-			// Shadows:
+			// 2D Shadows:
 			{
 				"Conditions": [
 					{ "Rule": "Shadow", "Mode": "2D" },
@@ -75,6 +75,14 @@
 			{
 				"Conditions": [
 					{ "Rule": "Shadow", "Mode": "2D" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "Shadow_2D_SingleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
+			},
+			{
+				"Conditions": [
+					{ "Rule": "Shadow", "Mode": "2D" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -88,6 +96,16 @@
 				],
 				"Technique": "Shadow_2D_DoubleSided_AlphaMask"
 			},
+			{
+				"Conditions": [
+					{ "Rule": "Shadow", "Mode": "2D" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "Shadow_2D_DoubleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
+			},
+
+			// Cubemap shadows:
 			{
 				"Conditions": [
 					{ "Rule": "Shadow", "Mode": "Cube" },
@@ -107,6 +125,14 @@
 			{
 				"Conditions": [
 					{ "Rule": "Shadow", "Mode": "Cube" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "Shadow_Cube_SingleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
+			},
+			{
+				"Conditions": [
+					{ "Rule": "Shadow", "Mode": "Cube" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -119,6 +145,14 @@
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
 				"Technique": "Shadow_Cube_DoubleSided_AlphaMask"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "Shadow", "Mode": "Cube" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "Shadow_Cube_DoubleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
 			}
 		],
 

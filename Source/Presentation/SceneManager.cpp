@@ -590,11 +590,23 @@ namespace
 					switch (matSrc->alpha_mode)
 					{
 					case cgltf_alpha_mode::cgltf_alpha_mode_opaque:
-						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Opaque); break;
+					{
+						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Opaque);
+						newGLTFMat->SetShadowCastMode(true);
+					}
+					break;
 					case cgltf_alpha_mode::cgltf_alpha_mode_mask:
-						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Mask); break;
+					{
+						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Mask);
+						newGLTFMat->SetShadowCastMode(true);
+					}
+					break;
 					case cgltf_alpha_mode::cgltf_alpha_mode_blend:
-						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Blend); break;
+					{
+						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Blend);
+						newGLTFMat->SetShadowCastMode(false);
+					}
+					break;
 					}
 
 					newGLTFMat->SetAlphaCutoff(matSrc->alpha_cutoff);
