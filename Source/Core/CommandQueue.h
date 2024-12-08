@@ -106,6 +106,35 @@ namespace core
 	/******************************************************************************************************************/
 
 
+	// Wraps a lambda in a command function for convenience
+	class LambdaCommandWrapper
+	{
+	public:
+		inline LambdaCommandWrapper(std::function<void(void)>&& lambda) : m_lambda(std::move(lambda)) { }
+
+		LambdaCommandWrapper(LambdaCommandWrapper const&) = default;
+		LambdaCommandWrapper(LambdaCommandWrapper&&) noexcept = default;
+		LambdaCommandWrapper& operator=(LambdaCommandWrapper const&) = default;
+		LambdaCommandWrapper& operator=(LambdaCommandWrapper&&) noexcept = default;
+		~LambdaCommandWrapper() = default;
+
+	public:
+		static inline void Execute(void* cmdData)
+		{
+			reinterpret_cast<LambdaCommandWrapper*>(cmdData)->m_lambda();
+		}
+
+
+		static inline void Destroy(void* cmdData)
+		{
+			reinterpret_cast<LambdaCommandWrapper*>(cmdData)->~LambdaCommandWrapper();
+		}
+
+	private:
+		std::function<void(void)> m_lambda;
+	};
+
+
 	class CommandManager
 	{
 	public:
@@ -113,6 +142,8 @@ namespace core
 
 		template<typename T, typename... Args>
 		void Enqueue(Args&&... args);
+
+		void Enqueue(std::function<void(void)>&&);
 
 		void SwapBuffers();
 
@@ -144,6 +175,12 @@ namespace core
 	}
 
 
+	inline void CommandManager::Enqueue(std::function<void(void)>&& lambda)
+	{
+		Enqueue<LambdaCommandWrapper>(LambdaCommandWrapper(std::move(lambda)));
+	}
+
+
 	inline bool CommandManager::HasCommandsToExecute() const
 	{
 		return m_commandBuffers[GetReadIdx()]->HasCommandsToExecute();
@@ -160,6 +197,8 @@ namespace core
 
 		template<typename T, typename... Args>
 		void Enqueue(uint64_t frameNum, Args&&... args);
+
+		void Enqueue(uint64_t frameNum, std::function<void(void)>&&);
 
 		void Execute(uint64_t frameNum); // Single-threaded execution to ensure deterministic command ordering
 
@@ -198,6 +237,12 @@ namespace core
 		m_commandBuffers[GetWriteIdx(frameNum)]->Enqueue<T>(std::forward<Args>(args)...);
 
 		m_lastEnqueuedFrameNum = frameNum;
+	}
+
+
+	inline void FrameIndexedCommandManager::Enqueue(uint64_t frameNum, std::function<void(void)>&& lambda)
+	{
+		Enqueue<LambdaCommandWrapper>(frameNum, LambdaCommandWrapper(std::move(lambda)));
 	}
 
 

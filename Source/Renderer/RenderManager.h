@@ -92,6 +92,8 @@ namespace re
 		template<typename T, typename... Args>
 		void EnqueueRenderCommand(Args&&... args);
 
+		void EnqueueRenderCommand(std::function<void(void)>&&);
+
 
 	private:
 		static constexpr size_t k_renderCommandBufferSize = 16 * 1024 * 1024;
@@ -264,6 +266,12 @@ namespace re
 	inline void RenderManager::EnqueueRenderCommand(Args&&... args)
 	{
 		m_renderCommandManager.Enqueue<T>(std::forward<Args>(args)...);
+	}
+
+
+	inline void RenderManager::EnqueueRenderCommand(std::function<void(void)>&& lambda)
+	{
+		m_renderCommandManager.Enqueue(std::move(lambda));
 	}
 
 

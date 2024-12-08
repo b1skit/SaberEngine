@@ -171,56 +171,29 @@ namespace fr
 		core::EventManager::Get()->Subscribe(core::EventManager::EventType::MouseWheelEvent, this);
 
 		// Create UI render systems:
-		class CreateDebugUIRenderSystemCommand
-		{
-		public:
-			CreateDebugUIRenderSystemCommand(
-				std::atomic<bool>* createdFlag,
-				core::FrameIndexedCommandManager** cmdMgrPtr,
-				std::mutex** imguiMutexPtr)
-				: m_uiMgrCreateFlag(createdFlag)
-				, m_cmdMgr(cmdMgrPtr)
-				, m_imguiMutex(imguiMutexPtr)
-			{};
-
-			~CreateDebugUIRenderSystemCommand() = default;
-
-			static void Execute(void* cmdData)
+		std::atomic<bool>* createdFlag = &m_debugUIRenderSystemCreated;
+		core::FrameIndexedCommandManager** cmdMgrPtr = &m_debugUICommandMgr;
+		std::mutex** imguiMutexPtr = &m_imguiGlobalMutex;
+		std::function<void()> test = [createdFlag, cmdMgrPtr, imguiMutexPtr]()
 			{
-				CreateDebugUIRenderSystemCommand* cmdPtr = reinterpret_cast<CreateDebugUIRenderSystemCommand*>(cmdData);
-
 				constexpr char const* k_debugUIRenderSystemName = "DebugImGui";
 				constexpr char const* k_debugUIPipelineFilename = "ui.json";
 
 				re::RenderSystem const* debugUIRenderSystem = re::RenderManager::Get()->CreateAddRenderSystem(
-					k_debugUIRenderSystemName, 
+					k_debugUIRenderSystemName,
 					k_debugUIPipelineFilename);
 
 				gr::GraphicsSystemManager const& gsm = debugUIRenderSystem->GetGraphicsSystemManager();
 
 				gr::ImGuiGraphicsSystem* debugUIGraphicsSystem = gsm.GetGraphicsSystem<gr::ImGuiGraphicsSystem>();
 
-				*cmdPtr->m_cmdMgr = debugUIGraphicsSystem->GetFrameIndexedCommandManager();
-				*cmdPtr->m_imguiMutex = &debugUIGraphicsSystem->GetGlobalImGuiMutex();
+				*cmdMgrPtr = debugUIGraphicsSystem->GetFrameIndexedCommandManager();
+				*imguiMutexPtr = &debugUIGraphicsSystem->GetGlobalImGuiMutex();
 
-				cmdPtr->m_uiMgrCreateFlag->store(true);
-			}
+				createdFlag->store(true);
+			};
 
-			static void Destroy(void* cmdData)
-			{
-				CreateDebugUIRenderSystemCommand* cmdPtr = reinterpret_cast<CreateDebugUIRenderSystemCommand*>(cmdData);
-				cmdPtr->~CreateDebugUIRenderSystemCommand();
-			}
-
-		private:
-			std::atomic<bool>* m_uiMgrCreateFlag;
-			core::FrameIndexedCommandManager** m_cmdMgr;
-			std::mutex** m_imguiMutex;
-		};
-		re::RenderManager::Get()->EnqueueRenderCommand<CreateDebugUIRenderSystemCommand>(
-			&m_debugUIRenderSystemCreated, 
-			&m_debugUICommandMgr, 
-			&m_imguiGlobalMutex);
+		re::RenderManager::Get()->EnqueueRenderCommand(std::move(test));
 	}
 
 
