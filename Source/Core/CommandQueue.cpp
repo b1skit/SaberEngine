@@ -9,15 +9,11 @@ namespace core
 		, m_baseIdx(0)
 		, m_bufferNumBytes(allocationByteSize)		
 	{
-		{
-			std::unique_lock<std::mutex> lock(m_commandMetadataMutex);
+		m_buffer = malloc(m_bufferNumBytes);
 
-			m_buffer = malloc(m_bufferNumBytes);
-
-			// As a micro-optimization, reserve a reasonable amount of space in the metadata vector
-			constexpr size_t expectedAllocationChunkByteSize = 64;
-			m_commandMetadata.reserve(allocationByteSize / expectedAllocationChunkByteSize);
-		}
+		// As a micro-optimization, reserve a reasonable amount of space in the metadata vector
+		constexpr size_t expectedAllocationChunkByteSize = 64;
+		m_commandMetadata.reserve(allocationByteSize / expectedAllocationChunkByteSize);
 	}
 
 
@@ -26,6 +22,7 @@ namespace core
 		Reset();
 		{
 			std::unique_lock<std::mutex> lock(m_commandMetadataMutex);
+			
 			if (m_buffer != nullptr)
 			{
 				delete m_buffer;
@@ -75,13 +72,9 @@ namespace core
 		: m_writeIdx(0)
 		, m_readIdx(static_cast<uint8_t>(-1)) // Read index starts OOB
 	{
+		for (uint8_t bufferIdx = 0; bufferIdx < k_numBuffers; bufferIdx++)
 		{
-			std::unique_lock<std::mutex> lock(m_commandBuffersMutex);
-			
-			for (uint8_t bufferIdx = 0; bufferIdx < k_numBuffers; bufferIdx++)
-			{
-				m_commandBuffers[bufferIdx] = std::make_unique<CommandBuffer>(bufferAllocationSize);
-			}
+			m_commandBuffers[bufferIdx] = std::make_unique<CommandBuffer>(bufferAllocationSize);
 		}
 	}
 
@@ -89,33 +82,44 @@ namespace core
 	void CommandManager::SwapBuffers()
 	{
 		{
-			std::unique_lock<std::mutex> writeLock(m_commandBuffersMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_commandBuffersMutex);
 
 			m_readIdx = m_writeIdx;
 			m_writeIdx = (m_writeIdx + 1) % k_numBuffers;
-		}
 
-		// No need to keep the mutex locked now that we've swapped the read/write indexes
-		m_commandBuffers[m_writeIdx]->Reset();
+			// We must reset while we hold the m_commandBuffersMutex, in case another thread is trying to Enqueue a
+			// command using the old/new write index
+			m_commandBuffers[m_writeIdx]->Reset();
+		}
 	}
 
 
 	void CommandManager::Execute()
 	{
 		// To ensure deterministic execution order, we execute commands single threaded
-		m_commandBuffers[m_readIdx]->Execute();
+
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_commandBuffersMutex);
+			m_commandBuffers[m_readIdx]->Execute();
+		}
 	}
 
 
 	uint8_t CommandManager::GetReadIdx() const
 	{
-		return m_readIdx;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_commandBuffersMutex);
+			return m_readIdx;
+		}
 	}
 
 
 	uint8_t CommandManager::GetWriteIdx() const
 	{
-		return m_writeIdx;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_commandBuffersMutex);
+			return m_writeIdx;
+		}
 	}
 
 

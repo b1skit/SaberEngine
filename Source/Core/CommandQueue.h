@@ -133,7 +133,7 @@ namespace core
 		static constexpr uint8_t k_numBuffers = 2; // Double-buffer our CommandBuffers
 
 		std::array<std::unique_ptr<CommandBuffer>, k_numBuffers> m_commandBuffers;
-		mutable std::mutex m_commandBuffersMutex;
+		mutable std::shared_mutex m_commandBuffersMutex;
 	};
 
 
