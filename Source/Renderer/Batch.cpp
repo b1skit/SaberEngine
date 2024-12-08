@@ -148,7 +148,7 @@ namespace
 			break;
 			case gr::Material::AlphaMode::Mask:
 			{
-				bitmask |= effect::drawstyle::MaterialAlphaMode_Mask;
+				bitmask |= effect::drawstyle::MaterialAlphaMode_Clip;
 			}
 			break;
 			case gr::Material::AlphaMode::Blend:

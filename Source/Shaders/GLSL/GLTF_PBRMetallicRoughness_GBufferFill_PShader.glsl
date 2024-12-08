@@ -52,11 +52,13 @@ void PShader()
 	const vec4 matAlbedo = texture(BaseColorTex, albedoUV);
 
 	// Alpha clipping
+#if defined(DO_ALPHA_CLIP)
 	const float alphaCutoff = _InstancedPBRMetallicRoughnessParams[materialIdx].g_f0AlphaCutoff.w;
 	if (matAlbedo.a < alphaCutoff)
 	{
 		discard;
 	}
+#endif
 
 	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
 	// g_baseColorFactor and In.Color are factored into the albedo as per the GLTF 2.0 specifications

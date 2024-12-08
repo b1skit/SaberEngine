@@ -19,7 +19,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" },
 					{ "Rule": "Debug", "Mode": "Wireframe" }
 				],
@@ -35,7 +35,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" },
 					{ "Rule": "Debug", "Mode": "Wireframe" }
 				],

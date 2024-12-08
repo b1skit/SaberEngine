@@ -133,10 +133,10 @@ namespace gr
 
 		// We commit single elements for now as we need to access each element's material param data. This isn't ideal,
 		// but it avoids copying the data into a temporary location and materials are typically updated infrequently
-		buffer->Commit(
-			reinterpret_cast<InstancedPBRMetallicRoughnessData const*>(instanceData->m_materialParamData.data()),
-			baseOffset,
-			1);
+		InstancedPBRMetallicRoughnessData const* matData = 
+			reinterpret_cast<InstancedPBRMetallicRoughnessData const*>(instanceData->m_materialParamData.data());
+		
+		buffer->Commit(matData, baseOffset, 1);
 	}
 
 

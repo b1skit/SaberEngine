@@ -48,7 +48,7 @@ namespace gr
 		static constexpr char const* k_alphaModeNames[] =
 		{
 			"Opaque",
-			"Mask",
+			"Clip",
 			"Blend"
 		};
 		SEStaticAssert(_countof(k_alphaModeNames) == static_cast<uint8_t>(gr::Material::AlphaMode::AlphaMode_Count),

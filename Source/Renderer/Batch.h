@@ -94,7 +94,7 @@ namespace re
 			gr::Material::MaterialInstanceRenderData const*,
 			VertexStreamOverride const* = nullptr);
 
-		Batch(re::Lifetime, GraphicsParams const&, EffectID, effect::drawstyle::Bitmask); // e.g. debug topology
+		Batch(re::Lifetime, GraphicsParams const&, EffectID, effect::drawstyle::Bitmask); // Custom (e.g. debug topology)
 
 		// Compute batches:
 		Batch(re::Lifetime, ComputeParams const&, EffectID);

@@ -10,15 +10,15 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "FillGBuffer_SingleSided"
+				"Technique": "FillGBuffer_SingleSidedOpaque"
 			},
 			{
 				"Conditions": [
 					{ "Rule": "RenderPath", "Mode": "Deferred" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "FillGBuffer_SingleSided"
+				"Technique": "FillGBuffer_SingleSidedAlphaClip"
 			},
 			{
 				"Conditions": [
@@ -26,15 +26,15 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "FillGBuffer_DoubleSided"
+				"Technique": "FillGBuffer_DoubleSidedOpaque"
 			},
 			{
 				"Conditions": [
 					{ "Rule": "RenderPath", "Mode": "Deferred" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "FillGBuffer_DoubleSided"
+				"Technique": "FillGBuffer_DoubleSidedAlphaClip"
 			},
 
 			// Transparency:
@@ -67,7 +67,7 @@
 			{
 				"Conditions": [
 					{ "Rule": "Shadow", "Mode": "2D" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
 				"Technique": "Shadow_2D_SingleSided_AlphaMask"
@@ -83,7 +83,7 @@
 			{
 				"Conditions": [
 					{ "Rule": "Shadow", "Mode": "2D" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
 				"Technique": "Shadow_2D_DoubleSided_AlphaMask"
@@ -99,7 +99,7 @@
 			{
 				"Conditions": [
 					{ "Rule": "Shadow", "Mode": "Cube" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
 				"Technique": "Shadow_Cube_SingleSided_AlphaMask"
@@ -115,7 +115,7 @@
 			{
 				"Conditions": [
 					{ "Rule": "Shadow", "Mode": "Cube" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Mask" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
 				"Technique": "Shadow_Cube_DoubleSided_AlphaMask"
@@ -126,7 +126,7 @@
 
 		"Techniques": [
 			{
-				"Name": "FillGBuffer_SingleSided",
+				"Name": "FillGBuffer_SingleSidedOpaque",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
 				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
 				"VShaderEntryPoint": "VShader",
@@ -137,8 +137,18 @@
 				"VertexStream": "PosNmlTanUvCol"
 			},
 			{
-				"Name": "FillGBuffer_DoubleSided",
-				"Parent" :  "FillGBuffer_SingleSided",
+				"Name": "FillGBuffer_SingleSidedAlphaClip",
+				"Parent" :  "FillGBuffer_SingleSidedOpaque",
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "DO_ALPHA_CLIP"]
+			},
+			{
+				"Name": "FillGBuffer_DoubleSidedOpaque",
+				"Parent" :  "FillGBuffer_SingleSidedOpaque",
+				"PipelineState": "DoubleSided"
+			},
+			{
+				"Name": "FillGBuffer_DoubleSidedAlphaClip",
+				"Parent" :  "FillGBuffer_SingleSidedAlphaClip",
 				"PipelineState": "DoubleSided"
 			},
 			{
