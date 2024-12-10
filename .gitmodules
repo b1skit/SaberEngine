@@ -1,3 +1,7 @@
 [submodule "Source/Dependencies/vcpkg"]
 	path = Source/Dependencies/vcpkg
 	url = https://github.com/microsoft/vcpkg.git
+[submodule "Source/Dependencies/imgui"]
+	path = Source/Dependencies/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking

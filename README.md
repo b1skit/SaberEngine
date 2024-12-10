@@ -203,8 +203,8 @@ GLM: https://github.com/g-truc/glm/releases
 
 Imgui: https://github.com/ocornut/imgui/
 -----------------------------------------
-- Included as a git subtree: `<project root>\Source\Dependencies\imgui\`  
-- Current version: v1.89.9  
+- Included as a git submodule: `<project root>\Source\Dependencies\imgui\`  
+- Current version: v1.91.5 (Docking branch)  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\imgui\"  
 - All of the .h & .cpp files in the .\Source\Dependencies\imgui\ directory are added to the Visual Studio project (under the "imgui" filter)  
 - The dx12, opengl3, & win32 imgui_impl_* .h & .cpp files in the .\Source\Dependencies\imgui\backends\are added to the Visual Studio project (under the "imgui\backends" filter)  

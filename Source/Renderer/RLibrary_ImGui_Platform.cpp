@@ -42,7 +42,10 @@ namespace platform
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
+
+		// Configure ImGui:
 		io.IniFilename = core::configkeys::k_imguiIniPath;
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
