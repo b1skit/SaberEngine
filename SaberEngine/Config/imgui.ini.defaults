@@ -1,0 +1,81 @@
+[Window][SaberEngineMainDockSpace]
+Pos=0,19
+Size=1920,1061
+Collapsed=0
+
+[Window][Saber Engine Log]
+Pos=377,748
+Size=1172,332
+Collapsed=0
+DockId=0x00000004,0
+
+[Window][Debug##Default]
+Pos=60,60
+Size=400,400
+Collapsed=0
+
+[Window][Scene Manager]
+Pos=1551,19
+Size=369,1061
+Collapsed=0
+DockId=0x00000006,0
+
+[Window][Node Hierarchy]
+Pos=0,19
+Size=375,1061
+Collapsed=0
+DockId=0x00000001,1
+
+[Window][Transform Hierarchy]
+Pos=0,19
+Size=375,1061
+Collapsed=0
+DockId=0x00000001,2
+
+[Window][Render Systems (3)]
+Pos=1551,19
+Size=369,1061
+Collapsed=0
+DockId=0x00000006,0
+
+[Window][Render Data Viewer]
+Pos=377,748
+Size=1172,332
+Collapsed=0
+DockId=0x00000004,1
+
+[Window][Light manager debug]
+Pos=1551,19
+Size=369,1061
+Collapsed=0
+DockId=0x00000006,1
+
+[Window][Scene objects]
+Pos=0,19
+Size=375,1061
+Collapsed=0
+DockId=0x00000001,0
+
+[Table][0xA9909916,12]
+Column 0  Weight=1.0000
+Column 1  Weight=1.0000
+Column 2  Weight=1.0000
+Column 3  Weight=1.0000
+Column 4  Weight=1.0000
+Column 5  Weight=1.0000
+Column 6  Weight=1.0000
+Column 7  Weight=1.0000
+Column 8  Weight=1.0000
+Column 9  Weight=1.0000
+Column 10 Weight=1.0000
+Column 11 Weight=1.0000
+
+[Docking][Data]
+DockSpace       ID=0x28A806DB Window=0xD665507B Pos=0,19 Size=1920,1061 Split=X
+  DockNode      ID=0x00000005 Parent=0x28A806DB SizeRef=1549,1061 Split=X
+    DockNode    ID=0x00000001 Parent=0x00000005 SizeRef=375,1061 Selected=0xCB7FDB99
+    DockNode    ID=0x00000002 Parent=0x00000005 SizeRef=1172,1061 Split=Y
+      DockNode  ID=0x00000003 Parent=0x00000002 SizeRef=1439,727 CentralNode=1
+      DockNode  ID=0x00000004 Parent=0x00000002 SizeRef=1439,332 Selected=0x700C6C32
+  DockNode      ID=0x00000006 Parent=0x28A806DB SizeRef=369,1061 Selected=0x4E587322
+

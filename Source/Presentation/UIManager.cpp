@@ -429,9 +429,47 @@ namespace fr
 
 		static ImVec2 menuBarSize = { 0, 0 }; // Record the size of the menu bar so we can align things absolutely underneath it
 
+
+		// Create a hidden dock node to keep our dock space active
+		// Note: Our showAny logic above means this is only ever submitted if there is a window actually visible
+		m_debugUICommandMgr->Enqueue(frameNum,
+			[]()
+			{
+				const ImGuiWindowFlags passthroughDockingWindowFlags =
+					ImGuiWindowFlags_NoDocking |
+					ImGuiWindowFlags_NoTitleBar |
+					ImGuiWindowFlags_NoCollapse |
+					ImGuiWindowFlags_NoResize |
+					ImGuiWindowFlags_NoMove |
+					ImGuiWindowFlags_NoBringToFrontOnFocus |
+					ImGuiWindowFlags_NoNavFocus |
+					ImGuiWindowFlags_NoBackground;
+
+				const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+				ImGui::SetNextWindowPos(viewport->WorkPos);
+				ImGui::SetNextWindowSize(viewport->WorkSize);
+				ImGui::SetNextWindowViewport(viewport->ID);
+
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+				ImGui::Begin("SaberEngineMainDockSpace", nullptr, passthroughDockingWindowFlags);
+
+				ImGui::PopStyleVar(3);
+
+				// Submit the DockSpace:
+				ImGuiID dockspaceID = ImGui::GetID("SaberEngineMainDockSpaceID");
+				ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+
+				ImGui::End();
+			});
+
+
 		// Menu bar:
 		auto ShowMenuBar = [&]()
-			{
+			{	
 				ImGui::BeginMainMenuBar();
 				{
 					menuBarSize = ImGui::GetWindowSize();
