@@ -553,8 +553,7 @@ namespace fr
 			};
 		if (m_imguiMenuVisible)
 		{
-			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowMenuBar)>>(
-				frameNum, fr::ImGuiRenderCommand<decltype(ShowMenuBar)>(ShowMenuBar));
+			m_debugUICommandMgr->Enqueue(frameNum, ShowMenuBar);
 		}
 
 		// Console log window:
@@ -570,8 +569,7 @@ namespace fr
 			};
 		if (s_show[Show::LogConsole])
 		{
-			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowConsoleLog)>>(
-				frameNum, fr::ImGuiRenderCommand<decltype(ShowConsoleLog)>(ShowConsoleLog));
+			m_debugUICommandMgr->Enqueue(frameNum, ShowConsoleLog);
 		}
 
 		// Scene manager debug:
@@ -581,8 +579,7 @@ namespace fr
 			};
 		if (s_show[Show::SceneMgrDbg])
 		{
-			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowSceneMgrDebug)>>(
-				frameNum, fr::ImGuiRenderCommand<decltype(ShowSceneMgrDebug)>(ShowSceneMgrDebug));
+			m_debugUICommandMgr->Enqueue(frameNum, ShowSceneMgrDebug);
 		}
 
 		// Entity manager debug:
@@ -594,8 +591,7 @@ namespace fr
 			};
 		if (s_show[Show::EntityMgrDbg] || s_show[Show::TransformationHierarchyDbg] || s_show[Show::EntityComponentDbg])
 		{
-			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>>(
-				frameNum, fr::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>(ShowEntityMgrDebug));
+			m_debugUICommandMgr->Enqueue(frameNum, ShowEntityMgrDebug);
 		}
 
 		// Render manager debug:
@@ -618,8 +614,7 @@ namespace fr
 			s_show[Show::LightMgrDbg] ||
 			s_show[Show::GPUCaptures])
 		{
-			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>>(
-				frameNum, fr::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>(ShowRenderMgrDebug));
+			m_debugUICommandMgr->Enqueue(frameNum, ShowRenderMgrDebug);
 		}
 
 
@@ -633,8 +628,7 @@ namespace fr
 			};
 		if (s_show[Show::ImGuiDemo])
 		{
-			m_debugUICommandMgr->Enqueue<fr::ImGuiRenderCommand<decltype(ShowImGuiDemo)>>(
-				frameNum, fr::ImGuiRenderCommand<decltype(ShowImGuiDemo)>(ShowImGuiDemo));
+			m_debugUICommandMgr->Enqueue(frameNum, ShowImGuiDemo);
 		}
 #endif
 	}

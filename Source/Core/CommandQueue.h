@@ -143,6 +143,8 @@ namespace core
 		template<typename T, typename... Args>
 		void Enqueue(Args&&... args);
 
+		// Note: This is a convenience helper intended to reduce boilerplate for one-off commands. Avoid use in hot
+		// paths, as std::function will likely use dynamic allocation to hold any captures
 		void Enqueue(std::function<void(void)>&&);
 
 		void SwapBuffers();
@@ -198,6 +200,8 @@ namespace core
 		template<typename T, typename... Args>
 		void Enqueue(uint64_t frameNum, Args&&... args);
 
+		// Note: This is a convenience helper intended to reduce boilerplate for one-off commands. Avoid use in hot
+		// paths, as std::function will likely use dynamic allocation to hold any captures
 		void Enqueue(uint64_t frameNum, std::function<void(void)>&&);
 
 		void Execute(uint64_t frameNum); // Single-threaded execution to ensure deterministic command ordering
