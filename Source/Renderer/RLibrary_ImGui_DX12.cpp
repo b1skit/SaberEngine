@@ -63,7 +63,7 @@ namespace dx12
 			platParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 			platParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
-		platParams->m_imGuiGPUVisibleSRVDescriptorHeap->SetName(L"Imgui descriptor heap");
+		platParams->m_imGuiGPUVisibleSRVDescriptorHeap->SetName(L"ImGui descriptor heap");
 
 		return std::move(newLibrary);
 	}

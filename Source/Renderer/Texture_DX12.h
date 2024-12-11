@@ -54,5 +54,6 @@ namespace dx12
 
 		// Platform functionality:
 		static void Destroy(re::Texture&);
+		static void ShowImGuiWindow(re::Texture const&, float scale);
 	};
 }

@@ -665,6 +665,35 @@ namespace re
 	{
 		ImGui::Text("Texture name: \"%s\"", GetName().c_str());
 		ImGui::Text(std::format("Texture unique ID: {}", GetUniqueID()).c_str());
+
+		static size_t s_selectedIdx = 2;
+		constexpr char const* k_scaleNames[] =
+		{
+			"10%",
+			"25%",
+			"50%",
+			"75%",
+			"100%",
+		};
+		util::ShowBasicComboBox(
+			std::format("Texture display scale##{}", GetUniqueID()).c_str(),
+			k_scaleNames,
+			_countof(k_scaleNames),
+			s_selectedIdx);
+
+		float scale = 1.f;
+		switch (s_selectedIdx)
+		{
+		case 0: scale = 0.1f; break;
+		case 1: scale = 0.25f; break;
+		case 2: scale = 0.5f; break;
+		case 3: scale = 0.75f; break;
+		case 4:
+		default:
+			scale = 1; break;
+		}
+
+		platform::Texture::ShowImGuiWindow(*this, scale);
 	}
 }
 

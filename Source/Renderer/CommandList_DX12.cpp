@@ -211,11 +211,8 @@ namespace dx12
 			// Reset the GPU descriptor heap managers:
 			m_gpuCbvSrvUavDescriptorHeaps->Reset();
 
-			constexpr uint8_t k_numHeaps = 1;
-			ID3D12DescriptorHeap* descriptorHeaps[k_numHeaps] = {
-				m_gpuCbvSrvUavDescriptorHeaps->GetD3DDescriptorHeap()
-			};
-			m_commandList->SetDescriptorHeaps(k_numHeaps, descriptorHeaps);
+			ID3D12DescriptorHeap* descriptorHeap = m_gpuCbvSrvUavDescriptorHeaps->GetD3DDescriptorHeap();
+			m_commandList->SetDescriptorHeaps(1, &descriptorHeap);
 		}
 
 		m_commandAllocatorReuseFenceValue = 0;

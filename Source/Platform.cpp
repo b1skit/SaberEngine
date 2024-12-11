@@ -125,7 +125,8 @@ namespace platform
 			platform::SwapChain::SetVSyncMode	= &opengl::SwapChain::SetVSyncMode;
 
 			// Texture:
-			platform::Texture::Destroy	= &opengl::Texture::Destroy;
+			platform::Texture::Destroy			= &opengl::Texture::Destroy;
+			platform::Texture::ShowImGuiWindow	= &opengl::Texture::ShowImGuiWindow;
 
 			// Texture Samplers:
 			platform::Sampler::Create	= &opengl::Sampler::Create;
@@ -166,7 +167,8 @@ namespace platform
 			platform::SwapChain::SetVSyncMode	= &dx12::SwapChain::SetVSyncMode;
 
 			// Texture:
-			platform::Texture::Destroy	= &dx12::Texture::Destroy;
+			platform::Texture::Destroy			= &dx12::Texture::Destroy;
+			platform::Texture::ShowImGuiWindow	= &dx12::Texture::ShowImGuiWindow;
 
 			// Texture Samplers:
 			platform::Sampler::Create	= &dx12::Sampler::Create;

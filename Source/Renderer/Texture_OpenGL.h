@@ -40,8 +40,8 @@ namespace opengl
 
 
 	public:
+		// OpenGL-specific functionality:
 		static void Create(re::Texture& texture);
-		static void Destroy(re::Texture& texture);
 		
 		static void Bind(re::Texture const&, uint32_t textureUnit);
 		static void Bind(re::Texture const&, uint32_t textureUnit, re::TextureView const&);
@@ -52,5 +52,9 @@ namespace opengl
 		static void GenerateMipMaps(re::Texture const&);
 
 		static GLuint GetOrCreateTextureView(re::Texture const&, re::TextureView const&);
+
+		// Platform functionality:
+		static void Destroy(re::Texture&);
+		static void ShowImGuiWindow(re::Texture const&, float scale);
 	};	
 }

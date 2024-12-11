@@ -854,4 +854,10 @@ namespace dx12
 
 		texPlatParams->m_gpuResource = nullptr;
 	}
+
+
+	void Texture::ShowImGuiWindow(re::Texture const& texture, float scale)
+	{
+		ImGui::Text("TODO: Support ImGui texture previews in DX12");
+	}
 }

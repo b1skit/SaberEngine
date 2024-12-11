@@ -36,5 +36,6 @@ namespace platform
 
 	// platform::Texture static members:
 	/***********************************/
-	void (*platform::Texture::Destroy)(re::Texture&) = nullptr;
+	void (*Texture::Destroy)(re::Texture&) = nullptr;
+	void (*Texture::ShowImGuiWindow)(re::Texture const&, float scale) = nullptr;
 }

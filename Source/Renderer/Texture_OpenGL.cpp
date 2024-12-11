@@ -229,12 +229,6 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::Destroy(re::Texture& texture)
-	{
-		//
-	}
-
-
 	void opengl::Texture::Bind(re::Texture const& texture, uint32_t textureUnit)
 	{
 		// Note: textureUnit is a binding point
@@ -730,5 +724,20 @@ namespace opengl
 		}
 
 		return platParams->m_textureViews.at(viewDataHash);
+	}
+
+
+	void Texture::Destroy(re::Texture& texture)
+	{
+		//
+	}
+
+
+	void Texture::ShowImGuiWindow(re::Texture const& texture, float scale)
+	{
+		opengl::Texture::PlatformParams const* platParams =
+			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+
+		ImGui::Image(platParams->m_textureID, ImVec2(texture.Width() * scale, texture.Height() * scale));
 	}
 }
