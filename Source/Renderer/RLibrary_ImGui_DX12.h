@@ -56,7 +56,7 @@ namespace dx12
 			std::vector<uint32_t> m_freeIndices;
 
 			static constexpr D3D12_DESCRIPTOR_HEAP_TYPE k_heapType = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-			static constexpr uint32_t k_imguiHeapSize = 64;
+			static constexpr uint32_t k_imguiHeapSize = 128;
 
 			// The ImGui descriptor heap is not thread-safe; We use a thread protector to ensure we don't forget
 			util::ThreadProtector m_threadProtector = util::ThreadProtector(false);
