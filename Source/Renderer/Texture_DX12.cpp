@@ -3,6 +3,7 @@
 #include "Context_DX12.h"
 #include "HeapManager_DX12.h"
 #include "RenderManager_DX12.h"
+#include "RLibrary_ImGui_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
 
@@ -848,16 +849,26 @@ namespace dx12
 	}
 
 
-	void Texture::Destroy(re::Texture& texture)
+	void Texture::Destroy(re::Texture& tex)
 	{
-		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::Texture::PlatformParams* texPlatParams = tex.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		texPlatParams->m_gpuResource = nullptr;
 	}
 
 
-	void Texture::ShowImGuiWindow(re::Texture const& texture, float scale)
+	void Texture::ShowImGuiWindow(re::Texture const& tex, float scale)
 	{
-		ImGui::Text("TODO: Support ImGui texture previews in DX12");
+		dx12::Texture::PlatformParams const* texPlatParams =
+			tex.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+		const D3D12_CPU_DESCRIPTOR_HANDLE texSRV = 
+			texPlatParams->m_srvDescriptors.GetCreateDescriptor(tex, re::TextureView::Texture2DView());
+
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuDesc{};
+		D3D12_GPU_DESCRIPTOR_HANDLE gpuDesc{};
+		RLibraryImGui::CopyTempDescriptorToImGuiHeap(texSRV, cpuDesc, gpuDesc);
+
+		ImGui::Image(static_cast<ImTextureID>(gpuDesc.ptr), ImVec2(tex.Width() * scale, tex.Height() * scale));
 	}
 }
