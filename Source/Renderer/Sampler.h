@@ -116,19 +116,16 @@ namespace re
 			bool operator==(SamplerDesc const& rhs) const;
 		};
 
-	
-		// Sampler library:
-	public:
-		static std::shared_ptr<re::Sampler> const GetSampler(util::HashKey const& samplerName);
-		static void DestroySamplerLibrary();
 
-	private:
-		static std::unique_ptr<std::unordered_map<util::HashKey, std::shared_ptr<re::Sampler>>> m_samplerLibrary;
-		static std::recursive_mutex m_samplerLibraryMutex;
+	public: // Convenience helpers that retrieve Samplers from the SceneData
+		static std::shared_ptr<re::Sampler> GetSampler(util::StringHash const&);
+		static std::shared_ptr<re::Sampler> GetSampler(char const* samplerName);
+		static std::shared_ptr<re::Sampler> GetSampler(std::string const& samplerName);
 
 
-	public:
-		[[nodiscard]] static std::shared_ptr<re::Sampler> Create(util::HashKey const& name, SamplerDesc const&);
+	public:	
+		[[nodiscard]] static std::shared_ptr<re::Sampler> Create(char const*, SamplerDesc const&);
+		[[nodiscard]] static std::shared_ptr<re::Sampler> Create(std::string const&, SamplerDesc const&);
 
 		~Sampler();
 
@@ -155,4 +152,19 @@ namespace re
 		Sampler(Sampler const& rhs) = delete;
 		Sampler& operator=(Sampler const& rhs) = delete;
 	};
+
+
+	inline bool re::Sampler::SamplerDesc::operator==(SamplerDesc const& rhs) const
+	{
+		return m_filterMode == rhs.m_filterMode &&
+			m_edgeModeU == rhs.m_edgeModeU &&
+			m_edgeModeV == rhs.m_edgeModeV &&
+			m_edgeModeW == rhs.m_edgeModeW &&
+			m_mipLODBias == rhs.m_mipLODBias &&
+			m_maxAnisotropy == rhs.m_maxAnisotropy &&
+			m_comparisonFunc == rhs.m_comparisonFunc &&
+			m_borderColor == rhs.m_borderColor &&
+			m_minLOD == rhs.m_minLOD &&
+			m_maxLOD == rhs.m_maxLOD;
+	}
 }

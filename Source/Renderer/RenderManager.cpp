@@ -188,9 +188,13 @@ namespace re
 		SEBeginCPUEvent("re::RenderManager::Startup");
 
 		LOG("RenderManager starting...");
+		
 		re::Context::Get()->Create(m_renderFrameNum);
+		
 		core::EventManager::Get()->Subscribe(core::EventManager::InputToggleVSync, this);
 		core::EventManager::Get()->Subscribe(core::EventManager::EngineQuit, this);
+		
+		m_sceneData->Initialize();
 
 		SEEndCPUEvent();
 	}
@@ -378,9 +382,7 @@ namespace re
 		m_sceneData->Destroy();
 
 		m_effectDB.Destroy();
-
-		re::Sampler::DestroySamplerLibrary();
-		
+	
 		// Destroy render systems:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
