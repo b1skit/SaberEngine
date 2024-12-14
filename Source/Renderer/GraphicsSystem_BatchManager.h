@@ -6,6 +6,8 @@
 #include "RenderObjectIDs.h"
 #include "GraphicsSystem.h"
 
+#include "Core/Util/HashUtils.h"
+
 
 struct RefCountedIndex;
 
@@ -96,6 +98,6 @@ namespace gr
 		AnimatedVertexStreams const* m_animatedVertexStreams; // From the vertex animation GS
 		
 		ViewBatches m_viewBatches; // Map of gr::Camera::View to vectors of Batches that passed culling
-		std::unordered_map<DataHash, re::BufferInput> m_instanceIndiciesBuffers;
+		std::unordered_map<util::DataHash, re::BufferInput> m_instanceIndiciesBuffers;
 	};
 }

@@ -75,14 +75,14 @@ namespace gr
 			}
 
 
-			bool operator==(View const& rhs) const
+			bool operator==(View const& rhs) const noexcept
 			{
 				return m_cameraRenderDataID == rhs.m_cameraRenderDataID && 
 					m_face == rhs.m_face;
 			}
 
 
-			bool operator<(View const& rhs) const
+			bool operator<(View const& rhs) const noexcept
 			{
 				if (m_cameraRenderDataID == rhs.m_cameraRenderDataID)
 				{
@@ -210,9 +210,22 @@ namespace gr
 
 // Hash functions for our gr::Camera::View, to allow it to be used as a key in an associative container
 template<>
+struct std::hash<gr::Camera::View>
+{
+	std::size_t operator()(gr::Camera::View const& view) const noexcept
+	{
+		size_t result = 0;
+		util::AddDataToHash(result, view.m_cameraRenderDataID);
+		util::AddDataToHash(result, view.m_face);
+		return result;
+	}
+};
+
+
+template<>
 struct std::hash<gr::Camera::View const>
 {
-	std::size_t operator()(gr::Camera::View const& view) const
+	std::size_t operator()(gr::Camera::View const& view) const noexcept
 	{
 		size_t result = 0;
 		util::AddDataToHash(result, view.m_cameraRenderDataID);

@@ -43,7 +43,7 @@ namespace re
 
 
 	private:
-		DataHash m_dataHash; // To sidestep headaches caused by our union, we manually handle our data hash
+		util::DataHash m_dataHash; // To sidestep headaches caused by our union, we manually handle our data hash
 
 
 	public:
@@ -67,11 +67,11 @@ namespace re
 
 
 	public:
-		DataHash GetDataHash() const;
+		util::DataHash GetDataHash() const;
 	};
 
 
-	inline DataHash BufferView::GetDataHash() const
+	inline util::DataHash BufferView::GetDataHash() const
 	{
 		return m_dataHash;
 	}

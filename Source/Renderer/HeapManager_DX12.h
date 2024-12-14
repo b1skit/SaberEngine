@@ -285,7 +285,7 @@ namespace dx12
 
 
 	private:
-		std::unordered_map<DataHash, std::unique_ptr<PagedResourceHeap>> m_pagedHeaps;
+		std::unordered_map<util::DataHash, std::unique_ptr<PagedResourceHeap>> m_pagedHeaps;
 		std::shared_mutex m_pagedHeapsMutex;
 
 		std::queue<std::pair<uint64_t, GPUResource>> m_deferredGPUResourceDeletions;

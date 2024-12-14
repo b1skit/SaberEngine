@@ -61,10 +61,10 @@ namespace re
 
 		
 	private:
-		std::unordered_map<DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
+		std::unordered_map<util::DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 		mutable std::mutex m_meshPrimitivesMutex;
 
-		std::unordered_map<DataHash, std::shared_ptr<gr::VertexStream>> m_vertexStreams;
+		std::unordered_map<util::DataHash, std::shared_ptr<gr::VertexStream>> m_vertexStreams;
 		std::mutex m_vertexStreamsMutex;
 
 		std::unordered_map<util::StringHash, std::shared_ptr<re::Texture>> m_textures;
@@ -73,7 +73,7 @@ namespace re
 		std::unordered_map<util::StringHash, std::shared_ptr<gr::Material>> m_materials;
 		mutable std::shared_mutex m_materialsReadWriteMutex;
 
-		std::unordered_map<size_t, std::shared_ptr<re::Shader>> m_shaders;
+		std::unordered_map<ShaderID, std::shared_ptr<re::Shader>> m_shaders;
 		mutable std::shared_mutex m_shadersReadWriteMutex;
 
 		bool m_isCreated; // Validate Destroy() was called after a scene was loaded

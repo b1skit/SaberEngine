@@ -595,7 +595,7 @@ namespace gr
 								// don't need a given batch. We should draw each face of the cubemap seperately instead
 								SEAssert(m_viewBatches->contains(lightID), "Cannot find light camera ID in view batches");
 								
-								std::unordered_set<DataHash> seenBatches;
+								std::unordered_set<util::DataHash> seenBatches;
 								for (uint8_t faceIdx = 0; faceIdx < 6; ++faceIdx)
 								{
 									const gr::Camera::View faceView(
@@ -604,7 +604,7 @@ namespace gr
 									for (auto const& batch : m_viewBatches->at(faceView))
 									{
 										// Different views may contain the same batch, so we only add unique ones
-										const DataHash batchDataHash = batch.GetDataHash();
+										const util::DataHash batchDataHash = batch.GetDataHash();
 										if (!seenBatches.contains(batchDataHash))
 										{
 											m_pointShadowStageData.at(

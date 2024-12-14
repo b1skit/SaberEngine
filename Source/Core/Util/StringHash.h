@@ -14,25 +14,25 @@ namespace util
 		static constexpr uint64_t k_invalidNameHash = std::numeric_limits<uint64_t>::max();
 
 	public:
-		StringHash(std::string const& name);
+		StringHash(std::string const& name) noexcept;
 
-		StringHash() : m_nameHash(k_invalidNameHash) {}; // Invalid
+		StringHash() noexcept : m_nameHash(k_invalidNameHash) {}; // Invalid
 
 		~StringHash() = default;
-		StringHash(StringHash const&) = default;
+		StringHash(StringHash const&) noexcept = default;
 		StringHash(StringHash&&) noexcept = default;
-		StringHash& operator=(StringHash const&) = default;
+		StringHash& operator=(StringHash const&) noexcept = default;
 		StringHash& operator=(StringHash&&) noexcept = default;
 
-		bool operator==(StringHash const& rhs) const { return m_nameHash == rhs.m_nameHash; }
-		bool operator<(StringHash const& rhs) const { return m_nameHash < rhs.m_nameHash; }
-		bool operator>(StringHash const& rhs) const { return m_nameHash > rhs.m_nameHash; }
+		bool operator==(StringHash const& rhs) const noexcept { return m_nameHash == rhs.m_nameHash; }
+		bool operator<(StringHash const& rhs) const noexcept{ return m_nameHash < rhs.m_nameHash; }
+		bool operator>(StringHash const& rhs) const noexcept{ return m_nameHash > rhs.m_nameHash; }
 
-		bool operator()(StringHash const& lhs, StringHash const& rhs) const { return lhs.m_nameHash == rhs.m_nameHash; }
-		bool operator()(StringHash const& rhs) const { return m_nameHash == rhs.m_nameHash; }
+		bool operator()(StringHash const& lhs, StringHash const& rhs) const noexcept { return lhs.m_nameHash == rhs.m_nameHash; }
+		bool operator()(StringHash const& rhs) const noexcept { return m_nameHash == rhs.m_nameHash; }
 
-		uint64_t Get() const { return m_nameHash; }
-		bool IsValid() const { return m_nameHash != k_invalidNameHash; }
+		uint64_t Get() const noexcept { return m_nameHash; }
+		bool IsValid() const noexcept { return m_nameHash != k_invalidNameHash; }
 
 
 	private:
@@ -40,7 +40,7 @@ namespace util
 	};
 
 
-	inline StringHash::StringHash(std::string const& name)
+	inline StringHash::StringHash(std::string const& name) noexcept
 		: m_nameHash(util::HashString(name))
 	{
 		SEAssert(m_nameHash != k_invalidNameHash, "Hash collides with invalid hash sentinel");
@@ -51,6 +51,16 @@ namespace util
 // Hash functions for our StringHash, to allow it to be used as a key in an associative container
 template<>
 struct std::hash<util::StringHash>
+{
+	std::size_t operator()(util::StringHash const& nameHash) const
+	{
+		return nameHash.Get();
+	}
+};
+
+
+template<>
+struct std::hash<util::StringHash const>
 {
 	std::size_t operator()(util::StringHash const& nameHash) const
 	{

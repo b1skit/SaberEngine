@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Assert.h"
+
 #include "Core/Util/HashUtils.h"
 
 
@@ -15,7 +16,7 @@ namespace core
 		IHashedDataObject() : m_dataHash(0) {}
 
 	public:
-		DataHash GetDataHash() const;
+		util::DataHash GetDataHash() const;
 
 		void AddDataBytesToHash(void const* const data, size_t numBytes);
 
@@ -30,11 +31,11 @@ namespace core
 		void ResetDataHash();
 
 	private:
-		DataHash m_dataHash;
+		util::DataHash m_dataHash;
 	};
 
 
-	inline DataHash IHashedDataObject::GetDataHash() const
+	inline util::DataHash IHashedDataObject::GetDataHash() const
 	{
 		return m_dataHash;
 	}

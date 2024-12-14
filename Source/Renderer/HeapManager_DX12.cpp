@@ -413,10 +413,10 @@ namespace
 	}
 
 
-	DataHash ComputePagedResourceHeapHash(
+	util::DataHash ComputePagedResourceHeapHash(
 		dx12::ResourceDesc const& resourceDesc, uint32_t heapAlignment, bool canMixResourceTypes)
 	{
-		DataHash resourceHeapKey = 0;
+		util::DataHash resourceHeapKey = 0;
 		util::AddDataBytesToHash(resourceHeapKey, resourceDesc.m_heapType);
 		util::AddDataBytesToHash(resourceHeapKey, resourceDesc.m_isMSAATexture);
 
@@ -1277,7 +1277,7 @@ namespace dx12
 
 		const uint32_t destinationHeapAlignment = ResourceDescToHeapAlignment(resourceDesc);
 
-		const DataHash resourceHeapKey =
+		const util::DataHash resourceHeapKey =
 			ComputePagedResourceHeapHash(resourceDesc, destinationHeapAlignment, m_canMixResourceTypes);
 
 		PagedResourceHeap* pagedResourceHeap = nullptr;

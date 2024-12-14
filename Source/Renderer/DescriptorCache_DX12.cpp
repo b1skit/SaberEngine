@@ -708,7 +708,7 @@ namespace dx12
 		{
 			std::lock_guard<std::mutex> lock(m_descriptorCacheMutex);
 
-			const DataHash bufViewHash = bufView.GetDataHash();
+			const util::DataHash bufViewHash = bufView.GetDataHash();
 
 			std::vector<CacheEntry>::iterator cacheItr = m_descriptorCache.end();
 			if (m_descriptorCache.empty())

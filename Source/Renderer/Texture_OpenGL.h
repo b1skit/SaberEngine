@@ -35,7 +35,7 @@ namespace opengl
 
 			bool m_formatIsImageTextureCompatible;
 
-			mutable std::map<DataHash, GLuint> m_textureViews; // OpenGL-equivalent of a descriptor cache
+			mutable std::map<util::DataHash, GLuint> m_textureViews; // OpenGL-equivalent of a descriptor cache
 		};
 
 
