@@ -7,7 +7,7 @@
 
 #include <GL/glew.h>
 
-namespace re
+namespace gr
 {
 	class VertexStream;
 }

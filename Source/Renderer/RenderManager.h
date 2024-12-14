@@ -29,12 +29,12 @@ namespace dx12
 namespace gr
 {
 	class GraphicsSystem;
+	class VertexStream;
 }
 
 namespace re
 {
 	class TextureTarget;
-	class VertexStream;
 }
 
 namespace re

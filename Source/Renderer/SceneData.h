@@ -9,12 +9,12 @@ namespace gr
 {
 	class Material;
 	class MeshPrimitive;
+	class VertexStream;
 }
 
 namespace re
 {
 	class Shader;
-	class VertexStream;
 }
 
 namespace re

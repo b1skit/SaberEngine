@@ -9,10 +9,14 @@
 #include <d3d12.h>
 
 
+namespace gr
+{
+	class VertexStream;
+}
+
 namespace re
 {
 	class Buffer;
-	class VertexStream;
 	class Texture;
 	class TextureTarget;
 	class TextureTargetSet;
