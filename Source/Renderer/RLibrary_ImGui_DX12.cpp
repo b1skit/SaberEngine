@@ -69,20 +69,20 @@ namespace dx12
 	void RLibraryImGui::PlatformParams::Allocate(
 		ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* cpuHandleOut, D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandleOut)
 	{
-		RLibraryImGui* imGuiLibrary = nullptr;
+		dx12::RLibraryImGui* dx12ImGuiLibrary = nullptr;
 		if (info) // Might be null if we're calling internally
 		{
-			imGuiLibrary = static_cast<RLibraryImGui*>(info->UserData);
+			dx12ImGuiLibrary = static_cast<dx12::RLibraryImGui*>(info->UserData);
 		}
 		else
 		{
-			imGuiLibrary = dynamic_cast<RLibraryImGui*>(
+			dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(
 				re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 		}
-		SEAssert(imGuiLibrary, "Failed to get RLibraryImGui");
+		SEAssert(dx12ImGuiLibrary, "Failed to get RLibraryImGui");
 
 		dx12::RLibraryImGui::PlatformParams* platParams =
-			imGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
+			dx12ImGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
 
 		util::ScopedThreadProtector scopedThreadProtector(platParams->m_threadProtector);
 
@@ -100,20 +100,20 @@ namespace dx12
 	void RLibraryImGui::PlatformParams::Free(
 		ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHanle)
 	{
-		RLibraryImGui* imGuiLibrary = nullptr;
+		dx12::RLibraryImGui* dx12ImGuiLibrary = nullptr;
 		if (info) // Might be null if we're calling internally
 		{
-			imGuiLibrary = static_cast<RLibraryImGui*>(info->UserData);
+			dx12ImGuiLibrary = static_cast<dx12::RLibraryImGui*>(info->UserData);
 		}
 		else
 		{
-			imGuiLibrary = dynamic_cast<RLibraryImGui*>(
+			dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(
 				re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 		}
-		SEAssert(imGuiLibrary, "Failed to get RLibraryImGui");
+		SEAssert(dx12ImGuiLibrary, "Failed to get RLibraryImGui");
 
 		dx12::RLibraryImGui::PlatformParams* platParams =
-			imGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
+			dx12ImGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
 
 		util::ScopedThreadProtector scopedThreadProtector(platParams->m_threadProtector);
 
@@ -193,8 +193,8 @@ namespace dx12
 	{
 		std::unique_ptr<platform::RLibrary> newLibrary = std::make_unique<dx12::RLibraryImGui>();
 
-		platform::RLibraryImGui* imguiLibrary = dynamic_cast<platform::RLibraryImGui*>(newLibrary.get());
-		platform::RLibraryImGui::CreateInternal(*imguiLibrary);
+		dx12::RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(newLibrary.get());
+		platform::RLibraryImGui::CreateInternal(*dx12ImGuiLibrary);
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
@@ -214,7 +214,7 @@ namespace dx12
 
 		// Initialize our ImGui descriptor heap (lives in our PlatformParams):
 		dx12::RLibraryImGui::PlatformParams* platParams = 
-			imguiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
+			dx12ImGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
 		
 		platParams->InitializeImGuiSRVHeap();
 
@@ -235,7 +235,7 @@ namespace dx12
 
 		// Store our RLibraryImGui pointer so we can access it during alloc/dealloc
 		// Note: This is also required as otherwise the alloc/dealloc functions would recursively call this function
-		initInfo.UserData = imguiLibrary; 
+		initInfo.UserData = dx12ImGuiLibrary; 
 
 		ImGui_ImplDX12_Init(&initInfo);
 
@@ -250,11 +250,11 @@ namespace dx12
 	{
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
-		RLibraryImGui* imGuiLibrary = dynamic_cast<RLibraryImGui*>(
+		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
 			context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
 		dx12::RLibraryImGui::PlatformParams* platParams =
-			imGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
+			dx12ImGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
 
 		platParams->CopyTempDescriptorToImGuiHeap(srcDescriptor, cpuDstOut, gpuDstOut);
 	}
@@ -270,11 +270,11 @@ namespace dx12
 		ImGui::DestroyContext();
 
 		// Clean up our ImGui descriptor heap:
-		RLibraryImGui* imGuiLibrary = dynamic_cast<RLibraryImGui*>(
+		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
 			re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
 		dx12::RLibraryImGui::PlatformParams* platParams =
-			imGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
+			dx12ImGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
 
 		platParams->FreeTempDescriptors(std::numeric_limits<uint64_t>::max());
 
@@ -291,13 +291,13 @@ namespace dx12
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
-		RLibraryImGui* imGuiLibrary = dynamic_cast<RLibraryImGui*>(
+		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
 			context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
-		SEAssert(imGuiStage && payload && imGuiLibrary, "A critical resource is null");
+		SEAssert(imGuiStage && payload && dx12ImGuiLibrary, "A critical resource is null");
 
 		dx12::RLibraryImGui::PlatformParams* platParams =
-			imGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
+			dx12ImGuiLibrary->GetPlatformParams()->As<dx12::RLibraryImGui::PlatformParams*>();
 
 		if (payload->m_perFrameCommands->HasCommandsToExecute(payload->m_currentFrameNum))
 		{
