@@ -15,9 +15,9 @@ namespace re
 
 namespace gr
 {
-	using TextureDependencies = std::map<util::HashKey const, std::shared_ptr<re::Texture> const*>;
-	using BufferDependencies = std::map<util::HashKey const, std::shared_ptr<re::Buffer> const*>;
-	using DataDependencies = std::unordered_map<util::HashKey const, void const*>;
+	using TextureDependencies = std::map<util::HashKey, std::shared_ptr<re::Texture> const*>;
+	using BufferDependencies = std::map<util::HashKey, std::shared_ptr<re::Buffer> const*>;
+	using DataDependencies = std::unordered_map<util::HashKey, void const*>;
 
 
 	// Data inputs/output types:

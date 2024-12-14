@@ -132,7 +132,7 @@ namespace
 	{
 		util::HashKey dataTypeNameHash = util::HashKey::Create(dataTypeName);
 
-		static const std::unordered_map<util::HashKey const, char const*> s_dataTypeNameToGLSLTypeName =
+		static const std::unordered_map<util::HashKey, char const*> s_dataTypeNameToGLSLTypeName =
 		{
 			{util::HashKey("uint2"), "uvec2"},
 			{util::HashKey("uint3"), "uvec3"},
@@ -730,8 +730,8 @@ namespace droid
 		// Static functions:
 		{
 			filewriter.EmptyLine();
-			filewriter.WriteLine("using ModeToBitmask = std::unordered_map<util::HashKey const, effect::drawstyle::Bitmask>;");
-			filewriter.WriteLine("using DrawStyleRuleToModes = std::unordered_map<util::HashKey const, ModeToBitmask>;");
+			filewriter.WriteLine("using ModeToBitmask = std::unordered_map<util::HashKey, effect::drawstyle::Bitmask>;");
+			filewriter.WriteLine("using DrawStyleRuleToModes = std::unordered_map<util::HashKey, ModeToBitmask>;");
 
 			filewriter.EmptyLine();
 

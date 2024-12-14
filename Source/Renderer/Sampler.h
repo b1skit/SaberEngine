@@ -123,7 +123,7 @@ namespace re
 		static void DestroySamplerLibrary();
 
 	private:
-		static std::unique_ptr<std::unordered_map<util::HashKey const, std::shared_ptr<re::Sampler>>> m_samplerLibrary;
+		static std::unique_ptr<std::unordered_map<util::HashKey, std::shared_ptr<re::Sampler>>> m_samplerLibrary;
 		static std::recursive_mutex m_samplerLibraryMutex;
 
 

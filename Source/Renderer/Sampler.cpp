@@ -10,7 +10,7 @@
 namespace re
 {
 	// Static members:
-	std::unique_ptr<std::unordered_map<util::HashKey const, std::shared_ptr<re::Sampler>>> Sampler::m_samplerLibrary = nullptr;
+	std::unique_ptr<std::unordered_map<util::HashKey, std::shared_ptr<re::Sampler>>> Sampler::m_samplerLibrary = nullptr;
 	std::recursive_mutex Sampler::m_samplerLibraryMutex;
 
 
@@ -37,7 +37,7 @@ namespace re
 			if (Sampler::m_samplerLibrary == nullptr)
 			{
 				Sampler::m_samplerLibrary = 
-					std::make_unique<std::unordered_map<util::HashKey const, std::shared_ptr<Sampler>>>();
+					std::make_unique<std::unordered_map<util::HashKey, std::shared_ptr<Sampler>>>();
 
 				// Pre-add some samplers we know we need:
 

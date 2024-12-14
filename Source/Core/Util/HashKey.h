@@ -82,6 +82,16 @@ namespace util
 
 // Hash functions for our util::HashKey, to allow it to be used as a key in an associative container
 template<>
+struct std::hash<util::HashKey>
+{
+	std::size_t operator()(util::HashKey const& hashKey) const
+	{
+		return hashKey.GetHash();
+	}
+};
+
+
+template<>
 struct std::hash<util::HashKey const>
 {
 	std::size_t operator()(util::HashKey const& hashKey) const

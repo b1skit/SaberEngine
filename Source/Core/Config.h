@@ -70,7 +70,7 @@ namespace core
 
 	private:
 		using ConfigValue = std::variant<bool, int, float, char, char const*, std::string>;
-		std::unordered_map<util::HashKey const, std::pair<ConfigValue, SettingType>> m_configValues;
+		std::unordered_map<util::HashKey, std::pair<ConfigValue, SettingType>> m_configValues;
 		mutable std::shared_mutex m_configValuesMutex;
 		bool m_isDirty; // Marks whether we need to save the config file or not
 

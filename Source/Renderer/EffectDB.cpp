@@ -456,7 +456,7 @@ namespace
 
 	inline gr::VertexStream::Type SemanticNameToStreamType(std::string const& semanticName)
 	{
-		static const std::unordered_map<util::HashKey const, gr::VertexStream::Type> s_semanticLowerToStreamType =
+		static const std::unordered_map<util::HashKey, gr::VertexStream::Type> s_semanticLowerToStreamType =
 		{
 			{ util::HashKey("position"),		gr::VertexStream::Type::Position },
 			{ util::HashKey("sv_position"),		gr::VertexStream::Type::Position },

@@ -14,6 +14,7 @@ namespace util
 		static constexpr uint64_t k_invalidNameHash = std::numeric_limits<uint64_t>::max();
 
 	public:
+		StringHash(char const* name) noexcept;
 		StringHash(std::string const& name) noexcept;
 
 		StringHash() noexcept : m_nameHash(k_invalidNameHash) {}; // Invalid
@@ -40,10 +41,16 @@ namespace util
 	};
 
 
-	inline StringHash::StringHash(std::string const& name) noexcept
+	inline StringHash::StringHash(char const* name) noexcept
 		: m_nameHash(util::HashString(name))
 	{
 		SEAssert(m_nameHash != k_invalidNameHash, "Hash collides with invalid hash sentinel");
+	}
+
+
+	inline StringHash::StringHash(std::string const& name) noexcept
+		: StringHash(name.c_str())
+	{
 	}
 }
 

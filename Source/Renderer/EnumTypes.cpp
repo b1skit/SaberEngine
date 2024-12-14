@@ -125,7 +125,7 @@ namespace re
 
 	re::DataType StrToDataType(std::string const& dataTypeStr)
 	{
-		static const std::unordered_map<util::HashKey const, re::DataType> s_strLowerToDataType =
+		static const std::unordered_map<util::HashKey, re::DataType> s_strLowerToDataType =
 		{
 			{ util::HashKey("float"),	re::DataType::Float },
 			{ util::HashKey("float2"),	re::DataType::Float2 },
