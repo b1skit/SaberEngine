@@ -10,7 +10,7 @@ namespace re
 	/******************************************** StagePipeline********************************************/
 
 	std::list<std::shared_ptr<re::RenderStage>>::iterator StagePipeline::AppendRenderStage(
-		std::shared_ptr<re::RenderStage> renderStage)
+		std::shared_ptr<re::RenderStage> const& renderStage)
 	{
 		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
 		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
@@ -23,7 +23,7 @@ namespace re
 
 	StagePipeline::StagePipelineItr StagePipeline::AppendRenderStage(
 		StagePipeline::StagePipelineItr const& parentItr, 
-		std::shared_ptr<re::RenderStage> renderStage)
+		std::shared_ptr<re::RenderStage> const& renderStage)
 	{
 		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
 		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
@@ -85,7 +85,7 @@ namespace re
 
 	StagePipeline::StagePipelineItr StagePipeline::AppendRenderStageForSingleFrame(
 		StagePipeline::StagePipelineItr const& parentItr,
-		std::shared_ptr<re::RenderStage> renderStage)
+		std::shared_ptr<re::RenderStage> const& renderStage)
 	{
 		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
 		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
@@ -102,7 +102,7 @@ namespace re
 		}
 		else
 		{
-			newSingleFrameStageItr = m_renderStages.emplace(next, std::move(renderStage));
+			newSingleFrameStageItr = m_renderStages.emplace(next, renderStage);
 		}
 
 		m_singleFrameInsertionPoints.emplace_back(newSingleFrameStageItr);

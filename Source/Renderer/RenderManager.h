@@ -5,6 +5,7 @@
 #include "RenderSystem.h"
 #include "SceneData.h"
 
+#include "Core/InvPtr.h"
 #include "Core/CommandQueue.h"
 #include "Core/LogManager.h"
 
@@ -16,9 +17,9 @@
 #include "Core/Util/NBufferedVector.h"
 
 
-namespace opengl
+namespace core
 {
-	class RenderManager;
+	class Inventory;
 }
 
 namespace dx12
@@ -30,6 +31,11 @@ namespace gr
 {
 	class GraphicsSystem;
 	class VertexStream;
+}
+
+namespace opengl
+{
+	class RenderManager;
 }
 
 namespace re
@@ -77,6 +83,14 @@ namespace re
 
 
 	public:
+		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
+		core::Inventory* GetInventory() const;
+
+	private:
+		core::Inventory* m_inventory;
+
+
+	public:
 		void ShowRenderSystemsImGuiWindow(bool* showRenderMgrDebug);
 		void ShowGPUCapturesImGuiWindow(bool* show);
 		void ShowRenderDataImGuiWindow(bool* showRenderDataDebug) const;
@@ -105,7 +119,10 @@ namespace re
 		// data); We provide a thread-safe registration system that allows us to create the graphics API-side
 		// representations at the beginning of a new frame when they're needed
 		template<typename T>
-		void RegisterForCreate(std::shared_ptr<T>);
+		void RegisterForCreateDEPRECATED(std::shared_ptr<T>);
+
+		template<typename T>
+		void RegisterForCreate(core::InvPtr<T> const&);
 
 		// Textures seen during CreateAPIResources() for the current frame:
 		std::vector<std::shared_ptr<re::Texture>> const& GetNewlyCreatedTextures() const;
@@ -119,13 +136,16 @@ namespace re
 		static constexpr size_t k_newObjectReserveAmount = 128;
 		util::NBufferedVector<std::shared_ptr<re::Shader>> m_newShaders;
 		util::NBufferedVector<std::shared_ptr<re::Texture>> m_newTextures;
-		util::NBufferedVector<std::shared_ptr<re::Sampler>> m_newSamplers;
+		util::NBufferedVector<core::InvPtr<re::Sampler>> m_newSamplers;
 		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;
 		util::NBufferedVector<std::shared_ptr<re::Buffer>> m_newBuffers;
 
 		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
 		// Used as a holding ground for operations that must be performed once after creation (E.g. mip generation)
 		std::vector<std::shared_ptr<re::Texture>> m_createdTextures;
+
+	private:
+		void CreateSamplerLibrary();
 
 
 	public: // Ensure the lifetime of single-frame resources that are referenced by in-flight batches
@@ -259,6 +279,18 @@ namespace re
 	inline effect::EffectDB const& RenderManager::GetEffectDB() const
 	{
 		return m_effectDB;
+	}
+
+
+	inline void RenderManager::SetInventory(core::Inventory* inventory)
+	{
+		m_inventory = inventory;
+	}
+
+
+	inline core::Inventory* RenderManager::GetInventory() const
+	{
+		return m_inventory;
 	}
 
 

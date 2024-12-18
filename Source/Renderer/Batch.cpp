@@ -3,7 +3,6 @@
 #include "Buffer.h"
 #include "Material.h"
 #include "RenderManager.h"
-#include "Sampler.h"
 #include "Shader.h"
 #include "Texture.h"
 
@@ -637,12 +636,12 @@ namespace re
 	void Batch::AddTextureInput(
 		char const* shaderName,
 		re::Texture const* texture,
-		re::Sampler const* sampler,
+		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
 		SEAssert(shaderName != nullptr && strlen(shaderName) > 0, "Invalid shader sampler name");
 		SEAssert(texture != nullptr, "Invalid texture");
-		SEAssert(sampler != nullptr, "Invalid sampler");
+		SEAssert(sampler.IsValid(), "Invalid sampler");
 		SEAssert(texView.m_viewDimension != re::Texture::Dimension_Invalid, "Invalid view dimension");
 		SEAssert((texture->GetTextureParams().m_usage & re::Texture::ColorSrc) != 0, "Invalid usage");
 
@@ -655,8 +654,7 @@ namespace re
 		}
 #endif
 
-		m_batchTextureSamplerInputs.emplace_back(
-			TextureAndSamplerInput{ shaderName, texture, sampler, texView });
+		m_batchTextureSamplerInputs.emplace_back(shaderName, texture, sampler, texView);
 
 		// Include textures/samplers in the batch hash:
 		AddDataBytesToHash(texture->GetUniqueID());
@@ -666,11 +664,11 @@ namespace re
 
 	void Batch::AddTextureInput(
 		char const* shaderName,
-		std::shared_ptr<re::Texture const> texture,
-		std::shared_ptr<re::Sampler const> sampler,
+		std::shared_ptr<re::Texture const> const& texture,
+		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
-		AddTextureInput(shaderName, texture.get(), sampler.get(), texView);
+		AddTextureInput(shaderName, texture.get(), sampler, texView);
 	}
 
 

@@ -9,48 +9,61 @@
 
 namespace re
 {
-	std::shared_ptr<re::Sampler> Sampler::GetSampler(util::StringHash const& samplerNameHash)
+	core::InvPtr<re::Sampler> Sampler::GetSampler(util::StringHash const& samplerNameHash)
 	{
-		re::SceneData* sceneData = re::RenderManager::GetSceneData();
-		return sceneData->GetSampler(samplerNameHash);
+		return re::RenderManager::Get()->GetInventory()->Get<re::Sampler>(samplerNameHash, nullptr);
 	}
 
 
-	std::shared_ptr<re::Sampler> Sampler::GetSampler(char const* samplerName)
+	core::InvPtr<re::Sampler> Sampler::GetSampler(char const* samplerName)
 	{
 		return GetSampler(util::StringHash(samplerName));
 	}
 
 
-	std::shared_ptr<re::Sampler> Sampler::GetSampler(std::string const& samplerName)
+	core::InvPtr<re::Sampler> Sampler::GetSampler(std::string const& samplerName)
 	{
 		return GetSampler(samplerName.c_str());
 	}
 
 
-	std::shared_ptr<re::Sampler> Sampler::Create(char const* name, SamplerDesc const& samplerDesc)
+	core::InvPtr<re::Sampler> Sampler::Create(char const* name, SamplerDesc const& samplerDesc)
 	{
-		re::SceneData* sceneData = re::RenderManager::GetSceneData();
-		if (sceneData->SamplerExists(name))
+		struct LoadContext final : public virtual core::ILoadContext<re::Sampler>
 		{
-			return sceneData->GetSampler(name);
-		}
+			void OnLoadBegin(core::InvPtr<re::Sampler>) override
+			{
+				LOG(std::format("Creating sampler \"{}\"", m_samplerName).c_str());
+			}
 
-		std::shared_ptr<re::Sampler> newSampler;
-		newSampler.reset(new re::Sampler(name, samplerDesc));
+			std::unique_ptr<re::Sampler> Load(core::InvPtr<re::Sampler>) override
+			{
+				return std::unique_ptr<re::Sampler>(new re::Sampler(m_samplerName.c_str(), m_samplerDesc));
+			}
+			
+			void OnLoadComplete(core::InvPtr<re::Sampler> newSampler) override
+			{
+				re::RenderManager::Get()->RegisterForCreate(newSampler); // API-layer creation
+			}
 
-		// Register the Shader with the SceneData object for lifetime management:
-		if (sceneData->AddUniqueSampler(newSampler))
-		{
-			// Register the Shader with the RenderManager (once only), so its API-level object can be created before use
-			re::RenderManager::Get()->RegisterForCreate(newSampler);
-		}
+			std::string m_samplerName;
+			SamplerDesc m_samplerDesc;
+		};
+		std::shared_ptr<LoadContext> samplerLoadContext = std::make_shared<LoadContext>();
+
+		samplerLoadContext->m_samplerName = name;
+		samplerLoadContext->m_samplerDesc = samplerDesc;
+		samplerLoadContext->m_isPermanent = true;
+
+		core::InvPtr<re::Sampler> const& newSampler = re::RenderManager::Get()->GetInventory()->Get(
+				util::StringHash(name), 
+				static_pointer_cast<core::ILoadContext<re::Sampler>>(samplerLoadContext));
 
 		return newSampler;
 	}
 
 
-	std::shared_ptr<re::Sampler> Sampler::Create(std::string const& name, SamplerDesc const& samplerDesc)
+	core::InvPtr<re::Sampler> Sampler::Create(std::string const& name, SamplerDesc const& samplerDesc)
 	{
 		return Create(name.c_str(), samplerDesc);
 	}
@@ -65,6 +78,13 @@ namespace re
 
 
 	Sampler::~Sampler()
+	{
+		SEAssert(m_platformParams == nullptr,
+			"Sampler dtor called, but platform params is not null. Was Destroy() called?");
+	}
+
+
+	void Sampler::Destroy()
 	{
 		SEAssert(m_platformParams->m_isCreated, "Sampler has not been created");
 		platform::Sampler::Destroy(*this);

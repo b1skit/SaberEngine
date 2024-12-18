@@ -125,9 +125,10 @@ namespace re
 		, m_sceneData(nullptr)
 		, m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
+		, m_inventory(nullptr)
 		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<std::shared_ptr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
-		, m_newSamplers(util::NBufferedVector<std::shared_ptr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newBuffers(util::NBufferedVector<std::shared_ptr<re::Buffer>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_singleFrameVertexStreams(util::NBufferedVector<std::shared_ptr<gr::VertexStream>>::BufferSize::Three, k_newObjectReserveAmount)
@@ -196,6 +197,8 @@ namespace re
 		
 		m_sceneData->Initialize();
 
+		CreateSamplerLibrary();
+
 		SEEndCPUEvent();
 	}
 	
@@ -207,6 +210,8 @@ namespace re
 		LOG("RenderManager Initializing...");
 		util::PerformanceTimer timer;
 		timer.Start();
+
+		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
 
 		m_effectDB.LoadEffectManifest();
 
@@ -388,6 +393,7 @@ namespace re
 		{
 			renderSystem->Destroy();
 		}
+		m_renderSystems.clear();
 
 		m_renderData.Destroy();
 
@@ -398,6 +404,10 @@ namespace re
 
 		// Clear single-frame resources:
 		m_singleFrameVertexStreams.Destroy();
+
+		// We destroy this on behalf of the EngineApp, as the inventory typically contains GPU resources that need to
+		// be destroyed from the render thread (i.e. for OpenGL)
+		m_inventory->Destroy();
 
 		// Destroy the swap chain before forcing deferred deletions. This is safe, as we've already flushed any
 		// remaining outstanding work
@@ -520,35 +530,35 @@ namespace re
 
 
 	template<>
-	void RenderManager::RegisterForCreate(std::shared_ptr<re::Shader> newObject)
+	void RenderManager::RegisterForCreateDEPRECATED(std::shared_ptr<re::Shader> newObject)
 	{
 		m_newShaders.EmplaceBack(std::move(newObject));
 	}
 
 
 	template<>
-	void RenderManager::RegisterForCreate(std::shared_ptr<re::Texture> newObject)
+	void RenderManager::RegisterForCreateDEPRECATED(std::shared_ptr<re::Texture> newObject)
 	{
 		m_newTextures.EmplaceBack(std::move(newObject));
 	}
 
 
 	template<>
-	void RenderManager::RegisterForCreate(std::shared_ptr<re::Sampler> newObject)
+	void RenderManager::RegisterForCreate(core::InvPtr<re::Sampler> const& newObject)
 	{
-		m_newSamplers.EmplaceBack(std::move(newObject));
+		m_newSamplers.EmplaceBack(newObject);
 	}
 
 
 	template<>
-	void RenderManager::RegisterForCreate(std::shared_ptr<re::TextureTargetSet> newObject)
+	void RenderManager::RegisterForCreateDEPRECATED(std::shared_ptr<re::TextureTargetSet> newObject)
 	{
 		m_newTargetSets.EmplaceBack(std::move(newObject));
 	}
 
 
 	template<>
-	void RenderManager::RegisterForCreate(std::shared_ptr<re::Buffer> newObject)
+	void RenderManager::RegisterForCreateDEPRECATED(std::shared_ptr<re::Buffer> newObject)
 	{
 		m_newBuffers.EmplaceBack(std::move(newObject));
 	}
@@ -558,6 +568,150 @@ namespace re
 	void RenderManager::RegisterSingleFrameResource(std::shared_ptr<gr::VertexStream> singleFrameObject)
 	{
 		m_singleFrameVertexStreams.EmplaceBack(std::move(singleFrameObject));
+	}
+
+
+	void RenderManager::CreateSamplerLibrary()
+	{
+		// Internally, our Samplers will permanently self-register with the inventory, we're just triggering that here
+
+		constexpr re::Sampler::SamplerDesc k_wrapMinMagLinearMipPoint = re::Sampler::SamplerDesc
+		{
+			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_LINEAR_MIP_POINT,
+			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
+			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
+			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
+			.m_mipLODBias = 0.f,
+			.m_maxAnisotropy = 16,
+			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+			.m_minLOD = 0,
+			.m_maxLOD = std::numeric_limits<float>::max() // No limit
+		};
+		std::ignore = re::Sampler::Create("WrapMinMagLinearMipPoint", k_wrapMinMagLinearMipPoint);
+
+		constexpr re::Sampler::SamplerDesc k_clampMinMagLinearMipPoint = re::Sampler::SamplerDesc
+		{
+			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_LINEAR_MIP_POINT,
+			.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
+			.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
+			.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
+			.m_mipLODBias = 0.f,
+			.m_maxAnisotropy = 16,
+			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+			.m_minLOD = 0,
+			.m_maxLOD = std::numeric_limits<float>::max() // No limit
+		};
+		std::ignore = re::Sampler::Create("ClampMinMagLinearMipPoint", k_clampMinMagLinearMipPoint);
+
+		constexpr re::Sampler::SamplerDesc k_clampMinMagMipPoint = re::Sampler::SamplerDesc
+		{
+			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_POINT,
+			.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
+			.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
+			.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
+			.m_mipLODBias = 0.f,
+			.m_maxAnisotropy = 16,
+			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+			.m_minLOD = 0,
+			.m_maxLOD = std::numeric_limits<float>::max() // No limit
+		};
+		std::ignore = re::Sampler::Create("ClampMinMagMipPoint", k_clampMinMagMipPoint);
+
+		constexpr re::Sampler::SamplerDesc k_borderMinMagMipPoint = re::Sampler::SamplerDesc
+		{
+			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_POINT,
+			.m_edgeModeU = re::Sampler::EdgeMode::Border,
+			.m_edgeModeV = re::Sampler::EdgeMode::Border,
+			.m_edgeModeW = re::Sampler::EdgeMode::Border,
+			.m_mipLODBias = 0.f,
+			.m_maxAnisotropy = 16,
+			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+			.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
+			.m_minLOD = 0,
+			.m_maxLOD = std::numeric_limits<float>::max() // No limit
+		};
+		std::ignore = re::Sampler::Create("WhiteBorderMinMagMipPoint", k_borderMinMagMipPoint);
+
+		constexpr re::Sampler::SamplerDesc k_clampMinMagMipLinear = re::Sampler::SamplerDesc
+		{
+			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,
+			.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
+			.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
+			.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
+			.m_mipLODBias = 0.f,
+			.m_maxAnisotropy = 16,
+			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+			.m_minLOD = 0,
+			.m_maxLOD = std::numeric_limits<float>::max() // No limit
+		};
+		std::ignore = re::Sampler::Create("ClampMinMagMipLinear", k_clampMinMagMipLinear);
+
+		constexpr re::Sampler::SamplerDesc k_wrapMinMagMipLinear = re::Sampler::SamplerDesc
+		{
+			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,
+			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
+			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
+			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
+			.m_mipLODBias = 0.f,
+			.m_maxAnisotropy = 16,
+			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+			.m_minLOD = 0,
+			.m_maxLOD = std::numeric_limits<float>::max() // No limit
+		};
+		std::ignore = re::Sampler::Create("WrapMinMagMipLinear", k_wrapMinMagMipLinear);
+
+		constexpr re::Sampler::SamplerDesc k_wrapAnisotropic = re::Sampler::SamplerDesc
+		{
+			.m_filterMode = re::Sampler::FilterMode::ANISOTROPIC,
+			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
+			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
+			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
+			.m_mipLODBias = 0.f,
+			.m_maxAnisotropy = 16,
+			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
+			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
+			.m_minLOD = 0,
+			.m_maxLOD = std::numeric_limits<float>::max() // No limit
+		};
+		std::ignore = re::Sampler::Create("WrapAnisotropic", k_wrapAnisotropic);
+
+		// PCF Samplers
+		constexpr float k_maxLinearDepth = std::numeric_limits<float>::max();
+
+		constexpr re::Sampler::SamplerDesc k_borderCmpMinMagLinearMipPoint = re::Sampler::SamplerDesc
+		{
+			.m_filterMode = re::Sampler::FilterMode::COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
+			.m_edgeModeU = re::Sampler::EdgeMode::Border,
+			.m_edgeModeV = re::Sampler::EdgeMode::Border,
+			.m_edgeModeW = re::Sampler::EdgeMode::Border,
+			.m_mipLODBias = 0.f,
+			.m_maxAnisotropy = 16,
+			.m_comparisonFunc = re::Sampler::ComparisonFunc::Less,
+			.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
+			.m_minLOD = 0,
+			.m_maxLOD = std::numeric_limits<float>::max() // No limit
+		};
+		std::ignore = re::Sampler::Create("BorderCmpMinMagLinearMipPoint", k_borderCmpMinMagLinearMipPoint);
+
+		constexpr re::Sampler::SamplerDesc k_wrapCmpMinMagLinearMipPoint = re::Sampler::SamplerDesc
+		{
+			.m_filterMode = re::Sampler::FilterMode::COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
+			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
+			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
+			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
+			.m_mipLODBias = 0.f,
+			.m_maxAnisotropy = 16,
+			.m_comparisonFunc = re::Sampler::ComparisonFunc::Less,
+			.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
+			.m_minLOD = 0,
+			.m_maxLOD = std::numeric_limits<float>::max() // No limit
+		};
+		std::ignore = re::Sampler::Create("WrapCmpMinMagLinearMipPoint", k_wrapCmpMinMagLinearMipPoint);
 	}
 
 

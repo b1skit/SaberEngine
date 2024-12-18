@@ -116,7 +116,7 @@ namespace re
 		if (addedNewShader)
 		{
 			// Register the Shader with the RenderManager (once only), so its API-level object can be created before use
-			re::RenderManager::Get()->RegisterForCreate(sharedShaderPtr);
+			re::RenderManager::Get()->RegisterForCreateDEPRECATED(sharedShaderPtr);
 		}
 
 		SEAssert(vertexStreamMap != nullptr || isComputeShader,

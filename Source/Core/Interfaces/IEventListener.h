@@ -10,6 +10,8 @@ namespace core
 	public: // IEventListener interface:
 		virtual void HandleEvents() = 0;
 
+		virtual ~IEventListener() = default;
+
 
 	public:
 		void RegisterEvent(core::EventManager::EventInfo const& eventInfo);

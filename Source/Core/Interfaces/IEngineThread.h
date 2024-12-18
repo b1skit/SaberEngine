@@ -21,7 +21,7 @@ namespace en
 
 		IEngineThread(IEngineThread&&) noexcept = default;
 		IEngineThread& operator=(IEngineThread&&) noexcept = default;
-		~IEngineThread() = default;
+		virtual ~IEngineThread() = default;
 
 
 	public:

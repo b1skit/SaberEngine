@@ -72,7 +72,7 @@ namespace gr
 			return;
 		}
 
-		std::shared_ptr<re::Sampler> const mipSampler = re::Sampler::GetSampler("ClampMinMagLinearMipPoint");
+		core::InvPtr<re::Sampler> const& mipSampler = re::Sampler::GetSampler("ClampMinMagLinearMipPoint");
 
 		re::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
 

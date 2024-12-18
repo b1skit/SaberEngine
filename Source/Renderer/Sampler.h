@@ -2,10 +2,14 @@
 #pragma once
 #include "Sampler_Platform.h"
 
-#include "Core/Util/HashKey.h"
+#include "Core/Inventory.h"
+#include "Core/InvPtr.h"
+
 #include "Core/Interfaces/IPlatformParams.h"
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IUniqueID.h"
+
+#include "Core/Util/StringHash.h"
 
 
 namespace re
@@ -15,7 +19,6 @@ namespace re
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			virtual ~PlatformParams() = default;
 			bool m_isCreated = false;
 		};
 
@@ -117,20 +120,22 @@ namespace re
 		};
 
 
-	public: // Convenience helpers that retrieve Samplers from the SceneData
-		static std::shared_ptr<re::Sampler> GetSampler(util::StringHash const&);
-		static std::shared_ptr<re::Sampler> GetSampler(char const* samplerName);
-		static std::shared_ptr<re::Sampler> GetSampler(std::string const& samplerName);
+	public: // Convenience helpers that retrieve pre-created Samplers (only) from the Inventory
+		static core::InvPtr<re::Sampler> GetSampler(util::StringHash const&);
+		static core::InvPtr<re::Sampler> GetSampler(char const* samplerName);
+		static core::InvPtr<re::Sampler> GetSampler(std::string const& samplerName);
 
 
 	public:	
-		[[nodiscard]] static std::shared_ptr<re::Sampler> Create(char const*, SamplerDesc const&);
-		[[nodiscard]] static std::shared_ptr<re::Sampler> Create(std::string const&, SamplerDesc const&);
-
-		~Sampler();
+		[[nodiscard]] static core::InvPtr<re::Sampler> Create(char const*, SamplerDesc const&);
+		[[nodiscard]] static core::InvPtr<re::Sampler> Create(std::string const&, SamplerDesc const&);
 
 		Sampler(Sampler&&) noexcept = default;
 		Sampler& operator=(Sampler&&) noexcept = default;
+
+		~Sampler();
+
+		void Destroy();
 
 		SamplerDesc const& GetSamplerDesc() const { return m_samplerDesc; }
 

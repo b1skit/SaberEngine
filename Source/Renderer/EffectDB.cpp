@@ -531,10 +531,12 @@ namespace effect
 	void EffectDB::Destroy()
 	{
 		{
-			std::scoped_lock lock(m_effectsMutex, m_techniquesMutex);
+			std::scoped_lock lock(m_effectsMutex, m_techniquesMutex, m_pipelineStatesMutex, m_vertexStreamMapsMutex);
 
 			m_effects.clear();
 			m_techniques.clear();
+			m_pipelineStates.clear();
+			m_vertexStreamMaps.clear();
 		}
 	}
 

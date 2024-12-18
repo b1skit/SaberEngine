@@ -62,11 +62,13 @@ namespace gr
 
 		m_texSlots.resize(TextureSlotIdx::TextureSlotIdx_Count);
 
-		m_texSlots[TextureSlotIdx::BaseColor] = { nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "BaseColorTex", 0 };
-		m_texSlots[TextureSlotIdx::MetallicRoughness] = { nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "MetallicRoughnessTex", 0 }; // G = roughness, B = metalness. R & A are unused.
-		m_texSlots[TextureSlotIdx::Normal] = { nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "NormalTex", 0 };
-		m_texSlots[TextureSlotIdx::Occlusion] = { nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "OcclusionTex", 0 };
-		m_texSlots[TextureSlotIdx::Emissive] = { nullptr, re::Sampler::GetSampler("WrapAnisotropic"), "EmissiveTex", 0 };
+		core::InvPtr<re::Sampler> const& wrapAnisoSampler = re::Sampler::GetSampler("WrapAnisotropic");
+
+		m_texSlots[TextureSlotIdx::BaseColor] = { nullptr, wrapAnisoSampler, "BaseColorTex", 0 };
+		m_texSlots[TextureSlotIdx::MetallicRoughness] = { nullptr, wrapAnisoSampler, "MetallicRoughnessTex", 0 }; // G = roughness, B = metalness. R & A are unused.
+		m_texSlots[TextureSlotIdx::Normal] = { nullptr, wrapAnisoSampler, "NormalTex", 0 };
+		m_texSlots[TextureSlotIdx::Occlusion] = { nullptr, wrapAnisoSampler, "OcclusionTex", 0 };
+		m_texSlots[TextureSlotIdx::Emissive] = { nullptr, wrapAnisoSampler, "EmissiveTex", 0 };
 
 		// Build a map from shader sampler name, to texture slot index:
 		for (size_t i = 0; i < m_texSlots.size(); i++)

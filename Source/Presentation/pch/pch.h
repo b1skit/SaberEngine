@@ -27,6 +27,7 @@
 #include <shared_mutex>
 #include <stack>
 #include <string>
+#include <typeindex>
 #include <unordered_set>
 #include <variant>
 

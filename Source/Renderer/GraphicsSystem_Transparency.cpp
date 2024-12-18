@@ -225,7 +225,7 @@ namespace gr
 		m_transparencyStage->AddPermanentTextureInput(
 			"DFG",
 			texDependencies.at(k_ambientDFGTexInput)->get(),
-			re::Sampler::GetSampler("ClampMinMagMipPoint").get(),
+			re::Sampler::GetSampler("ClampMinMagMipPoint"),
 			re::TextureView(texDependencies.at(k_ambientDFGTexInput)->get()));
 
 		pipeline.AppendRenderStage(m_transparencyStage);

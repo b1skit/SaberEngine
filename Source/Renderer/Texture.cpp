@@ -197,7 +197,7 @@ namespace re
 			}
 
 			// Register new Textures with the RenderManager, so their API-level objects are created before use
-			re::RenderManager::Get()->RegisterForCreate(newTexture);
+			re::RenderManager::Get()->RegisterForCreateDEPRECATED(newTexture);
 		}
 
 		return newTexture;

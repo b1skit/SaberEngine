@@ -21,6 +21,7 @@
 #include <set>
 #include <shared_mutex>
 #include <string>
+#include <typeindex>
 #include <unordered_map>
 #include <unordered_set>
 #include <variant>

@@ -49,14 +49,16 @@ namespace
 
 namespace app
 {
-	EngineApp*	EngineApp::m_engineApp = nullptr;
+	EngineApp* EngineApp::m_engineApp = nullptr;
 
 
 	EngineApp::EngineApp()
 		: m_isRunning(false)
 		, m_frameNum(0)
+		, m_inventory(std::make_unique<core::Inventory>())
 	{
 		m_engineApp = this;
+
 		m_copyBarrier = std::make_unique<std::barrier<>>(k_numSystemThreads);
 		core::ThreadPool::NameCurrentThread(L"Main Thread");
 	}
@@ -79,6 +81,9 @@ namespace app
 
 		// Render thread:
 		re::RenderManager* renderManager = re::RenderManager::Get();
+
+		renderManager->SetInventory(m_inventory.get()); // Dependency injection
+
 		core::ThreadPool::Get()->EnqueueJob([&]()
 			{
 				core::ThreadPool::NameCurrentThread(L"Render Thread");
@@ -192,6 +197,8 @@ namespace app
 			m_copyBarrier->arrive_and_wait();
 			SEEndCPUEvent();
 
+			m_inventory->OnEndOfFrame();
+
 			++m_frameNum;
 
 			lastOuterFrameTime = outerLoopTimer.StopMs();
@@ -220,7 +227,9 @@ namespace app
 		fr::SceneManager::Get()->Shutdown();
 
 		// We need to signal the render thread to shut down and wait on it to complete before we can start destroying
-		// anything it might be using
+		// anything it might be using.
+		// Note: The RenderManager destroys the Inventory via the pointer we gave it to ensure render objects are
+		// destroyed on the main render thread (as required by OpenGL)
 		re::RenderManager::Get()->ThreadShutdown();
 
 		en::InputManager::Get()->Shutdown();

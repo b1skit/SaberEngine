@@ -195,7 +195,7 @@ namespace util
 	void NBufferedVector<T>::EmplaceBack(T const& value)
 	{
 		{
-			std::lock_guard<std::mutex> lock(m_vectorMutexes[s_writeMutexIdx]);
+			std::lock_guard<std::shared_mutex> lock(m_vectorMutexes[s_writeMutexIdx]);
 
 			m_vectors[m_writeIdx].emplace_back(value);
 		}

@@ -63,7 +63,7 @@ namespace gr
 	void BloomGraphicsSystem::InitPipeline(
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
-		std::shared_ptr<re::Sampler> const bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
+		core::InvPtr<re::Sampler> const& bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
 
 		// Emissive blit:
 		re::RenderStage::FullscreenQuadParams emissiveBlitParams{};

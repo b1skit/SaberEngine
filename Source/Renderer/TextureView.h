@@ -1,8 +1,11 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
+#include "Sampler.h"
 #include "Texture.h"
 
-#include "core/Interfaces/IHashedDataObject.h"
+#include "Core/InvPtr.h"
+
+#include "Core/Interfaces/IHashedDataObject.h"
 
 
 namespace re
@@ -181,8 +184,8 @@ namespace re
 
 	struct TextureAndSamplerInput
 	{
-		TextureAndSamplerInput(char const* shaderName, re::Texture const*, re::Sampler const*, TextureView const&);
-		TextureAndSamplerInput(std::string const& shaderName, re::Texture const*, re::Sampler const*, TextureView const&);
+		TextureAndSamplerInput(char const* shaderName, re::Texture const*, core::InvPtr<re::Sampler> const&, TextureView const&);
+		TextureAndSamplerInput(std::string const& shaderName, re::Texture const*, core::InvPtr<re::Sampler> const&, TextureView const&);
 
 		TextureAndSamplerInput(TextureAndSamplerInput const& rhs) noexcept;
 		TextureAndSamplerInput(TextureAndSamplerInput&& rhs) noexcept;
@@ -194,7 +197,7 @@ namespace re
 
 		std::string m_shaderName;
 		re::Texture const* m_texture;
-		re::Sampler const* m_sampler;
+		core::InvPtr<re::Sampler> m_sampler;
 
 		TextureView m_textureView;
 	};

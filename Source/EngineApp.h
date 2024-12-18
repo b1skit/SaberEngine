@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Core/Inventory.h"
 #include "Core/LogManager.h"
 
 #include "Core/Interfaces/IEngineComponent.h"
@@ -50,6 +51,8 @@ namespace app
 
 	private: 
 		static EngineApp* m_engineApp;
+		
+		std::unique_ptr<core::Inventory> m_inventory;
 
 
 	private:

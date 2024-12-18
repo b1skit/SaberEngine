@@ -7,6 +7,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/Inventory.h"
 
 #include "Core/Interfaces/INamedObject.h"
 
@@ -27,7 +28,7 @@ namespace re
 
 	void SceneData::Initialize()
 	{
-		CreateSamplerLibrary();
+		//
 	}
 
 
@@ -39,15 +40,13 @@ namespace re
 				m_vertexStreamsMutex,
 				m_texturesReadWriteMutex,
 				m_materialsReadWriteMutex,
-				m_shadersReadWriteMutex,
-				m_samplersReadWriteMutex);
+				m_shadersReadWriteMutex);
 
 			m_meshPrimitives.clear();
 			m_vertexStreams.clear();
 			m_textures.clear();
 			m_materials.clear();
 			m_shaders.clear();
-			m_samplers.clear();
 		}
 
 		m_isCreated = false; // Flag that Destroy has been called
@@ -345,193 +344,5 @@ namespace re
 
 			return m_shaders.find(shaderID) != m_shaders.end();
 		}
-	}
-
-
-	bool SceneData::AddUniqueSampler(std::shared_ptr<re::Sampler>& newSampler)
-	{
-		{
-			std::unique_lock<std::shared_mutex> samplerLock(m_samplersReadWriteMutex);
-
-			bool addedNewSampler = false;
-
-			auto samplerItr = m_samplers.find(newSampler->GetNameHash());
-			if (samplerItr != m_samplers.end()) // Found existing
-			{
-				newSampler = samplerItr->second;
-			}
-			else
-			{
-				m_samplers.emplace(newSampler->GetNameHash(), newSampler);
-				addedNewSampler = true;
-				LOG("Sampler \"%s\" registered with the scene", newSampler->GetName().c_str());
-			}
-
-			return addedNewSampler;
-		}
-	}
-
-
-	std::shared_ptr<re::Sampler> SceneData::GetSampler(util::StringHash const& samplerName)
-	{
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_samplersReadWriteMutex);
-
-			SEAssert(m_samplers.contains(samplerName), "Invalid sampler name");
-			return m_samplers.at(samplerName);
-		}
-	}
-
-
-	bool SceneData::SamplerExists(util::StringHash const& samplerName) const
-	{
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_samplersReadWriteMutex);
-			return m_samplers.contains(samplerName);
-		}
-	}
-
-
-	void SceneData::CreateSamplerLibrary()
-	{
-		// Internally, our Samplers will self-register with the SceneData. So we just trigger that here
-
-		constexpr re::Sampler::SamplerDesc k_wrapMinMagLinearMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_LINEAR_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("WrapMinMagLinearMipPoint", k_wrapMinMagLinearMipPoint);
-
-		constexpr re::Sampler::SamplerDesc k_clampMinMagLinearMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_LINEAR_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("ClampMinMagLinearMipPoint", k_clampMinMagLinearMipPoint);
-
-		constexpr re::Sampler::SamplerDesc k_clampMinMagMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("ClampMinMagMipPoint", k_clampMinMagMipPoint);
-
-		constexpr re::Sampler::SamplerDesc k_borderMinMagMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Border,
-			.m_edgeModeV = re::Sampler::EdgeMode::Border,
-			.m_edgeModeW = re::Sampler::EdgeMode::Border,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("WhiteBorderMinMagMipPoint", k_borderMinMagMipPoint);
-
-		constexpr re::Sampler::SamplerDesc k_clampMinMagMipLinear = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,
-			.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("ClampMinMagMipLinear", k_clampMinMagMipLinear);
-
-		constexpr re::Sampler::SamplerDesc k_wrapMinMagMipLinear = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,
-			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("WrapMinMagMipLinear", k_wrapMinMagMipLinear);
-
-		constexpr re::Sampler::SamplerDesc k_wrapAnisotropic = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::ANISOTROPIC,
-			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("WrapAnisotropic", k_wrapAnisotropic);
-
-		// PCF Samplers
-		constexpr float k_maxLinearDepth = std::numeric_limits<float>::max();
-
-		constexpr re::Sampler::SamplerDesc k_borderCmpMinMagLinearMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Border,
-			.m_edgeModeV = re::Sampler::EdgeMode::Border,
-			.m_edgeModeW = re::Sampler::EdgeMode::Border,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::Less,
-			.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("BorderCmpMinMagLinearMipPoint", k_borderCmpMinMagLinearMipPoint);
-
-		constexpr re::Sampler::SamplerDesc k_wrapCmpMinMagLinearMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::Less,
-			.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("WrapCmpMinMagLinearMipPoint", k_wrapCmpMinMagLinearMipPoint);
 	}
 }

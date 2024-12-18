@@ -2,6 +2,8 @@
 #pragma once
 #include "Texture.h"
 
+#include "Core/InvPtr.h"
+
 #include "Core/Util/HashUtils.h"
 #include "Core/Util/StringHash.h"
 
@@ -61,11 +63,6 @@ namespace re
 		std::shared_ptr<re::Shader> GetShader(ShaderID) const;
 		bool ShaderExists(ShaderID) const;
 
-		// Samplers:
-		bool AddUniqueSampler(std::shared_ptr<re::Sampler>&); // Returns true if new object was added
-		std::shared_ptr<re::Sampler> GetSampler(util::StringHash const& samplerName);
-		bool SamplerExists(util::StringHash const& samplerName) const;
-
 		void EndLoading();
 
 		
@@ -85,9 +82,6 @@ namespace re
 		std::unordered_map<ShaderID, std::shared_ptr<re::Shader>> m_shaders;
 		mutable std::shared_mutex m_shadersReadWriteMutex;
 
-		void CreateSamplerLibrary();
-		std::unordered_map<util::StringHash, std::shared_ptr<re::Sampler>> m_samplers;
-		mutable std::shared_mutex m_samplersReadWriteMutex;
 
 		bool m_isCreated; // Validate Destroy() was called after a scene was loaded
 

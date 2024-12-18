@@ -3,7 +3,7 @@
 #include "Texture_Platform.h"
 #include "Texture.h"
 
-#include "core/Util/HashUtils.h"
+#include "Core/Util/DataHash.h"
 
 #include <GL/glew.h>
 

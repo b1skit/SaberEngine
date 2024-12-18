@@ -6,6 +6,8 @@
 #include "TextureView.h"
 #include "TextureTarget.h"
 
+#include "Core/InvPtr.h"
+
 #include "Core/Interfaces/INamedObject.h"
 
 
@@ -127,13 +129,13 @@ namespace re
 		void AddPermanentTextureInput(
 			std::string const& shaderName,
 			re::Texture const*,
-			re::Sampler const*,
+			core::InvPtr<re::Sampler> const&,
 			re::TextureView const&);
 
 		void AddPermanentTextureInput(
 			std::string const& shaderName,
 			std::shared_ptr<re::Texture> const&,
-			std::shared_ptr<re::Sampler> const&,
+			core::InvPtr<re::Sampler> const&,
 			re::TextureView const&);
 
 		std::vector<re::TextureAndSamplerInput> const& GetPermanentTextureInputs() const;
@@ -141,13 +143,13 @@ namespace re
 		void AddSingleFrameTextureInput(
 			char const* shaderName,
 			re::Texture const*,
-			std::shared_ptr<re::Sampler> const&,
+			core::InvPtr<re::Sampler> const&,
 			re::TextureView const&);
 
 		void AddSingleFrameTextureInput(
 			char const* shaderName,
 			std::shared_ptr<re::Texture> const&,
-			std::shared_ptr<re::Sampler> const&,
+			core::InvPtr<re::Sampler> const&,
 			re::TextureView const&);
 
 		std::vector<re::TextureAndSamplerInput> const& GetSingleFrameTextureInputs() const;

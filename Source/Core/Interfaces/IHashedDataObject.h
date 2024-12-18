@@ -2,6 +2,7 @@
 #pragma once
 #include "Core/Assert.h"
 
+#include "Core/Util/DataHash.h"
 #include "Core/Util/HashUtils.h"
 
 
@@ -14,6 +15,9 @@ namespace core
 
 	public:
 		IHashedDataObject() : m_dataHash(0) {}
+		
+		virtual ~IHashedDataObject() = default;
+
 
 	public:
 		util::DataHash GetDataHash() const;

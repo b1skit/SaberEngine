@@ -1,7 +1,8 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Assert.h"
-#include "Core/Util/HashUtils.h"
+
+#include "Core/Util/DataHash.h"
 #include "Core/Util/MathUtils.h"
 #include "Core/Util/ThreadProtector.h"
 

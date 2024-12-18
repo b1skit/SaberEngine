@@ -660,7 +660,7 @@ namespace re
 	TextureAndSamplerInput::TextureAndSamplerInput(
 		char const* shaderName,
 		re::Texture const* texture,
-		re::Sampler const* sampler,
+		core::InvPtr<re::Sampler> const& sampler,
 		TextureView const& texView)
 		: m_shaderName(shaderName)
 		, m_texture(texture)
@@ -673,7 +673,7 @@ namespace re
 	TextureAndSamplerInput::TextureAndSamplerInput(
 		std::string const& shaderName,
 		re::Texture const* texture,
-		re::Sampler const* sampler,
+		core::InvPtr<re::Sampler> const& sampler,
 		TextureView const& texView)
 		: TextureAndSamplerInput(shaderName.c_str(), texture, sampler, texView)
 	{
@@ -710,9 +710,9 @@ namespace re
 		if (&rhs != this)
 		{
 			m_shaderName = std::move(rhs.m_shaderName);
-			m_texture = rhs.m_texture;
-			m_sampler = rhs.m_sampler;
-			m_textureView = rhs.m_textureView;
+			m_texture = std::move(rhs.m_texture);
+			m_sampler = std::move(rhs.m_sampler);
+			m_textureView = std::move(rhs.m_textureView);
 		}
 		return *this;
 	}

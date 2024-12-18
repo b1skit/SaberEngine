@@ -123,16 +123,21 @@
     <ClInclude Include="Interfaces\IEngineThread.h" />
     <ClInclude Include="Interfaces\IEventListener.h" />
     <ClInclude Include="Interfaces\IHashedDataObject.h" />
+    <ClInclude Include="Interfaces\ILoadContext.h" />
     <ClInclude Include="Interfaces\INamedObject.h" />
     <ClInclude Include="Interfaces\IPlatformParams.h" />
     <ClInclude Include="Interfaces\IUniqueID.h" />
+    <ClInclude Include="Inventory.h" />
+    <ClInclude Include="InvPtr.h" />
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="ProfilingMarkers.h" />
+    <ClInclude Include="ResourceSystem.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Util\ByteVector.h" />
     <ClInclude Include="Util\CastUtils.h" />
+    <ClInclude Include="Util\DataHash.h" />
     <ClInclude Include="Util\DoubleBufferUnorderedMap.h" />
     <ClInclude Include="Util\FileIOUtils.h" />
     <ClInclude Include="Util\HashKey.h" />
@@ -156,6 +161,7 @@
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="Interfaces\IEngineThread.cpp" />
+    <ClCompile Include="Inventory.cpp" />
     <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="pch\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

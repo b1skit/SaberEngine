@@ -3,7 +3,6 @@
 #include "Material.h"
 #include "Material_GLTF.h"
 #include "RenderManager.h"
-#include "Sampler.h"
 #include "SysInfo_Platform.h"
 #include "Texture.h"
 
@@ -79,7 +78,7 @@ namespace gr
 
 
 	void Material::PackMaterialInstanceTextureSlotDescs(
-		re::Texture const** textures, re::Sampler const** samplers, char shaderNames[][k_shaderSamplerNameLength]) const
+		re::Texture const** textures, core::InvPtr<re::Sampler>* samplers, char shaderNames[][k_shaderSamplerNameLength]) const
 	{
 		SEAssert(m_texSlots.size() <= k_numTexInputs, "Too many texture slot descriptions");
 
@@ -87,7 +86,7 @@ namespace gr
 		for (size_t i = 0; i < m_texSlots.size(); i++)
 		{
 			textures[i] = m_texSlots[i].m_texture.get();
-			samplers[i] = m_texSlots[i].m_samplerObject.get();
+			samplers[i] = m_texSlots[i].m_samplerObject;
 
 			SEAssert(m_texSlots[i].m_shaderSamplerName.size() < k_shaderSamplerNameLength, 
 				"Shader name is too long. Consider shortening it, or increasing k_shaderSamplerNameLength");

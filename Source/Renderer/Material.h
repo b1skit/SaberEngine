@@ -3,6 +3,9 @@
 #include "Buffer.h"
 #include "BufferView.h"
 #include "Effect.h"
+#include "Sampler.h"
+
+#include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IUniqueID.h"
@@ -11,7 +14,6 @@
 namespace re
 {
 	class Texture;
-	class Sampler;
 }
 
 namespace gr
@@ -59,7 +61,7 @@ namespace gr
 		struct TextureSlotDesc
 		{
 			std::shared_ptr<re::Texture> m_texture = nullptr;
-			std::shared_ptr<re::Sampler> m_samplerObject = nullptr; // eg. Sampler object from the sampler library
+			core::InvPtr<re::Sampler> m_samplerObject;
 			std::string m_shaderSamplerName;
 			uint8_t m_uvChannelIdx = 0;
 		};
@@ -74,7 +76,7 @@ namespace gr
 		struct MaterialInstanceRenderData
 		{
 			std::array<re::Texture const*, gr::Material::k_numTexInputs> m_textures;
-			std::array<re::Sampler const*, gr::Material::k_numTexInputs> m_samplers;
+			std::array<core::InvPtr<re::Sampler>, gr::Material::k_numTexInputs> m_samplers;
 			char m_shaderSamplerNames[gr::Material::k_numTexInputs][gr::Material::k_shaderSamplerNameLength];
 
 			// Material implementations must pack *all* buffer data into this block of bytes (i.e what the GPU consumes)
@@ -135,7 +137,7 @@ namespace gr
 
 	private:
 		void PackMaterialInstanceTextureSlotDescs(
-			re::Texture const**, re::Sampler const**, char[][k_shaderSamplerNameLength]) const;
+			re::Texture const**, core::InvPtr<re::Sampler>*, char[][k_shaderSamplerNameLength]) const;
 		
 		virtual void PackMaterialParamsData(void*, size_t maxSize) const = 0;
 

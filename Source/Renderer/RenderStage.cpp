@@ -3,6 +3,7 @@
 #include "BufferView.h"
 #include "RenderStage.h"
 #include "RLibrary_Platform.h"
+#include "Sampler.h"
 #include "Shader.h"
 #include "Texture.h"
 
@@ -274,12 +275,12 @@ namespace re
 	void RenderStage::AddPermanentTextureInput(
 		std::string const& shaderName,
 		re::Texture const* tex,
-		re::Sampler const* sampler,
+		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
 		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
 		SEAssert(tex != nullptr, "Invalid texture");
-		SEAssert(sampler != nullptr, "Invalid sampler");
+		SEAssert(sampler.IsValid(), "Invalid sampler");
 
 		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0,
 			"Attempting to add a Texture input that does not have an appropriate usage flag");
@@ -300,7 +301,7 @@ namespace re
 				// If we find an input with the same name, replace it:
 				if (strcmp(m_permanentTextureSamplerInputs[i].m_shaderName.c_str(), shaderName.c_str()) == 0)
 				{
-					m_permanentTextureSamplerInputs[i] = re::TextureAndSamplerInput{shaderName, tex, sampler, texView};
+					m_permanentTextureSamplerInputs[i] = re::TextureAndSamplerInput(shaderName, tex, sampler, texView);
 					foundExistingEntry = true;
 					break;
 				}
@@ -323,17 +324,17 @@ namespace re
 	void RenderStage::AddPermanentTextureInput(
 		std::string const& shaderName,
 		std::shared_ptr<re::Texture> const& tex,
-		std::shared_ptr<re::Sampler> const& sampler,
+		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
-		AddPermanentTextureInput(shaderName, tex.get(), sampler.get(), texView);
+		AddPermanentTextureInput(shaderName, tex.get(), sampler, texView);
 	}
 
 
 	void RenderStage::AddSingleFrameTextureInput(
 		char const* shaderName,
 		re::Texture const* tex,
-		std::shared_ptr<re::Sampler> const& sampler,
+		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
 		SEAssert(shaderName, "Shader name cannot be null");
@@ -356,7 +357,7 @@ namespace re
 				"single frame texture is not allowed");
 		}
 #endif
-		m_singleFrameTextureSamplerInputs.emplace_back(shaderName, tex, sampler.get(), texView);
+		m_singleFrameTextureSamplerInputs.emplace_back(shaderName, tex, sampler, texView);
 
 
 		if (m_textureTargetSet &&
@@ -371,7 +372,7 @@ namespace re
 	void RenderStage::AddSingleFrameTextureInput(
 		char const* shaderName,
 		std::shared_ptr<re::Texture> const& tex,
-		std::shared_ptr<re::Sampler> const& sampler,
+		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
 		AddSingleFrameTextureInput(shaderName, tex.get(), sampler, texView);

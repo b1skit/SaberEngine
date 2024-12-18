@@ -23,10 +23,10 @@ namespace re
 		void Destroy();
 	
 
-		StagePipelineItr AppendRenderStage(std::shared_ptr<re::RenderStage>);
-		StagePipelineItr AppendRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::RenderStage>);
+		StagePipelineItr AppendRenderStage(std::shared_ptr<re::RenderStage> const&);
+		StagePipelineItr AppendRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::RenderStage> const&);
 
-		StagePipelineItr AppendRenderStageForSingleFrame(StagePipelineItr const& parent, std::shared_ptr<re::RenderStage>);
+		StagePipelineItr AppendRenderStageForSingleFrame(StagePipelineItr const& parent, std::shared_ptr<re::RenderStage> const&);
 
 		StagePipelineItr AppendSingleFrameRenderStage(std::shared_ptr<re::RenderStage>&&); // Append to end
 		StagePipelineItr AppendSingleFrameRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::RenderStage>&&);

@@ -4,7 +4,9 @@
 #include "GraphicsSystemManager.h"
 #include "RenderDataManager.h"
 #include "RenderManager.h"
+#include "Sampler.h"
 
+#include "Core/InvPtr.h"
 #include "Core/LogManager.h"
 
 #include "Core/Util/MathUtils.h"

@@ -250,7 +250,7 @@ namespace gr
 			iemStage->AddPermanentTextureInput(
 				"Tex0",
 				iblTex,
-				re::Sampler::GetSampler("WrapMinMagLinearMipPoint").get(),
+				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"),
 				re::TextureView(iblTex));
 
 			// Buffers:
@@ -327,7 +327,7 @@ namespace gr
 				pmremStage->AddPermanentTextureInput(
 					"Tex0",
 					iblTex,
-					re::Sampler::GetSampler("ClampMinMagMipLinear").get(),
+					re::Sampler::GetSampler("ClampMinMagMipLinear"),
 					re::TextureView(iblTex));
 
 				// Buffers:
@@ -546,7 +546,7 @@ namespace gr
 		// Get/set the AO texture. If it doesn't exist, we'll get a default opaque white texture
 		m_ssaoTex = *texDependencies.at(k_ssaoInput);
 
-		std::shared_ptr<re::Sampler> clampMinMagMipPoint = re::Sampler::GetSampler("ClampMinMagMipPoint");
+		core::InvPtr<re::Sampler> const& clampMinMagMipPoint = re::Sampler::GetSampler("ClampMinMagMipPoint");
 
 		m_ambientStage->AddPermanentTextureInput(
 			k_ssaoInput.GetKey(), m_ssaoTex, clampMinMagMipPoint, re::TextureView(m_ssaoTex));
@@ -594,7 +594,7 @@ namespace gr
 
 
 		// Attach GBuffer color inputs:
-		std::shared_ptr<re::Sampler> wrapMinMagLinearMipPoint = re::Sampler::GetSampler("WrapMinMagLinearMipPoint");
+		core::InvPtr<re::Sampler> const& wrapMinMagLinearMipPoint = re::Sampler::GetSampler("WrapMinMagLinearMipPoint");
 
 		constexpr uint8_t numGBufferColorInputs = 
 			static_cast<uint8_t>(GBufferGraphicsSystem::GBufferTexIdx::GBufferColorTex_Count);
@@ -1076,7 +1076,7 @@ namespace gr
 							duplicatedBatch->AddTextureInput(
 								shadowTexShaderName,
 								shadowArrayTex,
-								re::Sampler::GetSampler(samplerTypeName).get(),
+								re::Sampler::GetSampler(samplerTypeName),
 								CreateShadowArrayReadView(shadowArrayTex));
 						}
 						

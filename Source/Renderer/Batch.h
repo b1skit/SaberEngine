@@ -4,9 +4,12 @@
 #include "Effect.h"
 #include "EnumTypes.h"
 #include "MeshPrimitive.h"
+#include "Sampler.h"
 #include "Shader_Platform.h"
 #include "TextureView.h"
 #include "VertexStream.h"
+
+#include "Core/InvPtr.h"
 
 #include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/IUniqueID.h"
@@ -21,7 +24,6 @@ namespace re
 {
 	class Buffer;
 	class Shader;
-	class Sampler;
 	class Texture;
 }
 
@@ -133,13 +135,13 @@ namespace re
 		void AddTextureInput(
 			char const* shaderName,
 			re::Texture const*,
-			re::Sampler const*,
+			core::InvPtr<re::Sampler> const&,
 			re::TextureView const&);
 
 		void AddTextureInput(
 			char const* shaderName, 
-			std::shared_ptr<re::Texture const>,
-			std::shared_ptr<re::Sampler const>,
+			std::shared_ptr<re::Texture const> const&,
+			core::InvPtr<re::Sampler> const&,
 			re::TextureView const&);
 		
 		std::vector<TextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
