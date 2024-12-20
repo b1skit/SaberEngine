@@ -48,7 +48,7 @@ namespace re
 
 	public:
 		TextureTarget() = default;
-		explicit TextureTarget(std::shared_ptr<re::Texture> texture, TargetParams const&);
+		explicit TextureTarget(core::InvPtr<re::Texture> texture, TargetParams const&);
 		
 		~TextureTarget();
 
@@ -60,10 +60,10 @@ namespace re
 
 		inline bool HasTexture() const { return m_texture != nullptr; }
 
-		std::shared_ptr<re::Texture>& GetTexture() { return m_texture; }
-		std::shared_ptr<re::Texture> const& GetTexture() const { return m_texture; }
+		core::InvPtr<re::Texture>& GetTexture() { return m_texture; }
+		core::InvPtr<re::Texture> const& GetTexture() const { return m_texture; }
 
-		void ReplaceTexture(std::shared_ptr<re::Texture>, re::TextureView const&);
+		void ReplaceTexture(core::InvPtr<re::Texture>, re::TextureView const&);
 
 		void SetTargetParams(TargetParams const& targetParams);
 		TargetParams const& GetTargetParams() const { return m_targetParams; }
@@ -76,7 +76,7 @@ namespace re
 
 
 	private:
-		std::shared_ptr<re::Texture> m_texture;
+		core::InvPtr<re::Texture> m_texture;
 		std::unique_ptr<PlatformParams> m_platformParams;
 
 		TargetParams m_targetParams;
@@ -176,16 +176,16 @@ namespace re
 
 		// Color targets must be set in monotonically-increasing order from 0
 		void SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget);
-		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> const&, TextureTarget::TargetParams const&);
+		void SetColorTarget(uint8_t slot, core::InvPtr<re::Texture> const&, TextureTarget::TargetParams const&);
 
 		re::TextureTarget const& GetDepthStencilTarget() const;
 
 		void SetDepthStencilTarget(re::TextureTarget const&);
-		void SetDepthStencilTarget(std::shared_ptr<re::Texture> const&, re::TextureTarget::TargetParams const&);
+		void SetDepthStencilTarget(core::InvPtr<re::Texture> const&, re::TextureTarget::TargetParams const&);
 
 		// Replace a TargetTexture with a pipeline-compatible alternative
-		void ReplaceColorTargetTexture(uint8_t slot, std::shared_ptr<re::Texture>&, re::TextureView const& texView);
-		void ReplaceDepthStencilTargetTexture(std::shared_ptr<re::Texture>, re::TextureView const&);
+		void ReplaceColorTargetTexture(uint8_t slot, core::InvPtr<re::Texture>&, re::TextureView const& texView);
+		void ReplaceDepthStencilTargetTexture(core::InvPtr<re::Texture>, re::TextureView const&);
 
 		bool HasTargets() const;
 		bool HasColorTarget() const;

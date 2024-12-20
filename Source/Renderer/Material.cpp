@@ -4,7 +4,6 @@
 #include "Material_GLTF.h"
 #include "RenderManager.h"
 #include "SysInfo_Platform.h"
-#include "Texture.h"
 
 #include "Core/Assert.h"
 #include "Core/Util/ImGuiUtils.h"
@@ -65,7 +64,7 @@ namespace gr
 	}
 
 
-	re::Texture const* Material::GetTexture(std::string const& samplerName) const
+	core::InvPtr<re::Texture> Material::GetTexture(std::string const& samplerName) const
 	{
 		auto const& index = m_namesToSlotIndex.find(samplerName);
 
@@ -73,19 +72,19 @@ namespace gr
 			(uint32_t)index->second < (uint32_t)m_texSlots.size(),
 			"Invalid sampler name");
 
-		return m_texSlots[index->second].m_texture.get();
+		return m_texSlots[index->second].m_texture;
 	}
 
 
 	void Material::PackMaterialInstanceTextureSlotDescs(
-		re::Texture const** textures, core::InvPtr<re::Sampler>* samplers, char shaderNames[][k_shaderSamplerNameLength]) const
+		core::InvPtr<re::Texture>* textures, core::InvPtr<re::Sampler>* samplers, char shaderNames[][k_shaderSamplerNameLength]) const
 	{
 		SEAssert(m_texSlots.size() <= k_numTexInputs, "Too many texture slot descriptions");
 
 		// Populate the texture/sampler data:
 		for (size_t i = 0; i < m_texSlots.size(); i++)
 		{
-			textures[i] = m_texSlots[i].m_texture.get();
+			textures[i] = m_texSlots[i].m_texture;
 			samplers[i] = m_texSlots[i].m_samplerObject;
 
 			SEAssert(m_texSlots[i].m_shaderSamplerName.size() < k_shaderSamplerNameLength, 
@@ -213,7 +212,7 @@ namespace gr
 					instanceData.m_srcMaterialUniqueID).c_str(),
 					ImGuiTreeNodeFlags_None))
 				{
-					instanceData.m_textures[slotIdx]->ShowImGuiWindow();
+					re::Texture::ShowImGuiWindow(instanceData.m_textures[slotIdx]);
 				}
 				ImGui::EndDisabled();
 			}

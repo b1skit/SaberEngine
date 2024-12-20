@@ -129,7 +129,7 @@ namespace core
 
 		SEAssert(IsValid(), "InvPtr is invalid after loading");
 
-		return m_control->m_object->get();
+		return static_cast<T*>(m_control->m_data);
 	}
 
 
@@ -142,7 +142,7 @@ namespace core
 
 		SEAssert(IsValid(), "InvPtr is invalid after loading");
 
-		return *m_control->m_object->get();
+		return *static_cast<T*>(m_control->m_data);
 	}
 
 
@@ -183,8 +183,9 @@ namespace core
 
 			if (--m_control->m_refCount == 0)
 			{
+				m_control->m_state.store(core::ResourceState::Released);
 				m_control->m_owningResourceSystem->Release(m_control->m_id);
-				m_control = nullptr; // The Release() call just deleted this, null out our copy to invalidate ourselves
+				m_control = nullptr; // The Release() will (deferred) delete this, null out our copy to invalidate ourselves
 			}
 		}
 	}
@@ -212,6 +213,7 @@ namespace core
 			const core::ResourceState currentState = m_control->m_state.load();
 
 			return currentState != core::ResourceState::Empty &&
+				currentState != core::ResourceState::Released &&
 				currentState != core::ResourceState::Error;
 		}
 
@@ -224,6 +226,15 @@ namespace core
 		: m_control(controlBlock) // Note: The controlBlock may already be in use by other InvPtr<T>s
 	{
 		SEAssert(m_control, "Control cannot be null here");
+
+		SEAssert(m_control->m_state.load() != core::ResourceState::Released || 
+			m_control->m_refCount.load() == 0,
+			"State is Released, but ref count is not 0. This should not be possible");
+
+		// If the resource was Released, set its state back to Ready as it is still loaded
+		core::ResourceState expected = core::ResourceState::Released;
+		m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Ready);
+
 		m_control->m_refCount++;
 	}
 
@@ -238,14 +249,20 @@ namespace core
 		core::ResourceState expected = core::ResourceState::Empty;
 		if (newInvPtr.m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Loading))
 		{
+			SEAssert(loadContext != nullptr, "Load context is null");
+
 			core::ThreadPool::Get()->EnqueueJob([newInvPtr, loadContext]()
 				{
 					loadContext->OnLoadBegin(newInvPtr);
 
-					*newInvPtr.m_control->m_object = loadContext->Load(newInvPtr);
-					
-					SEAssert(*newInvPtr.m_control->m_object != nullptr,
-						"Load returned null. Did you remember to override ILoadContext::Load ?");
+					// Populate the unique_ptr held by the ResourceSystem:
+					*static_cast<std::unique_ptr<T>*>(newInvPtr.m_control->m_data) = loadContext->Load(newInvPtr);
+
+					SEAssert(*static_cast<std::unique_ptr<T>*>(newInvPtr.m_control->m_data) != nullptr,
+						"Load returned null");
+
+					// Now the unique_ptr owning our object is created, swap our pointer to minimize indirection
+					newInvPtr.m_control->m_data = static_cast<std::unique_ptr<T>*>(newInvPtr.m_control->m_data)->get();
 
 					// Note: Our InvPtr is not yet marked as ready to ensure this call completes first
 					loadContext->OnLoadComplete(newInvPtr);

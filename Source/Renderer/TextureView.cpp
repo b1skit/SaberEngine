@@ -81,17 +81,10 @@ namespace re
 	};
 
 
-	TextureView::TextureView(re::Texture const* tex, ViewFlags const& viewFlags/*= ViewFlags{}*/)
+	TextureView::TextureView(core::InvPtr<re::Texture> const& tex, ViewFlags const& viewFlags/*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::Dimension_Invalid)
 	{
 		*this = CreateDefaultView(*tex, viewFlags);
-	};
-
-
-	TextureView::TextureView(re::Texture const& tex, ViewFlags const& viewFlags/*= ViewFlags{}*/)
-		: m_viewDimension(re::Texture::Dimension_Invalid)
-	{
-		*this = CreateDefaultView(tex, viewFlags);
 	};
 
 
@@ -142,7 +135,7 @@ namespace re
 	}
 
 
-	uint32_t TextureView::GetSubresourceIndex(re::Texture const* texture, TextureView const& texView)
+	uint32_t TextureView::GetSubresourceIndex(core::InvPtr<re::Texture> const& texture, TextureView const& texView)
 	{
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
@@ -203,7 +196,7 @@ namespace re
 
 
 	uint32_t TextureView::GetSubresourceIndexFromRelativeOffsets(
-		re::Texture const* tex, TextureView const& texView, uint32_t relativeArrayIdx, uint32_t relativeMipIdx)
+		core::InvPtr<re::Texture> const& tex, TextureView const& texView, uint32_t relativeArrayIdx, uint32_t relativeMipIdx)
 	{
 		// NOTE: Array/mip indexes are RELATIVE to the 1st array/mip index in the view
 
@@ -293,7 +286,7 @@ namespace re
 	}
 
 
-	std::vector<uint32_t> TextureView::GetSubresourceIndexes(re::Texture const* texture, re::TextureView const& texView)
+	std::vector<uint32_t> TextureView::GetSubresourceIndexes(core::InvPtr<re::Texture> const& texture, re::TextureView const& texView)
 	{
 		std::vector<uint32_t> subresourceIndexes;
 
@@ -545,7 +538,7 @@ namespace re
 	}
 
 
-	void TextureView::ValidateView(re::Texture const* tex, re::TextureView const& view)
+	void TextureView::ValidateView(core::InvPtr<re::Texture> const& tex, re::TextureView const& view)
 	{
 #if defined(_DEBUG)
 		SEAssert(view.m_viewDimension != re::Texture::Dimension::Dimension_Invalid,
@@ -659,7 +652,7 @@ namespace re
 
 	TextureAndSamplerInput::TextureAndSamplerInput(
 		char const* shaderName,
-		re::Texture const* texture,
+		core::InvPtr<re::Texture> const& texture,
 		core::InvPtr<re::Sampler> const& sampler,
 		TextureView const& texView)
 		: m_shaderName(shaderName)
@@ -672,7 +665,7 @@ namespace re
 
 	TextureAndSamplerInput::TextureAndSamplerInput(
 		std::string const& shaderName,
-		re::Texture const* texture,
+		core::InvPtr<re::Texture> const& texture,
 		core::InvPtr<re::Sampler> const& sampler,
 		TextureView const& texView)
 		: TextureAndSamplerInput(shaderName.c_str(), texture, sampler, texView)
@@ -723,7 +716,7 @@ namespace re
 
 	RWTextureInput::RWTextureInput(
 		char const* shaderName,
-		re::Texture const* texture,
+		core::InvPtr<re::Texture> const& texture,
 		TextureView const& texView)
 		: m_shaderName(shaderName)
 		, m_texture(texture)
@@ -735,7 +728,7 @@ namespace re
 
 	RWTextureInput::RWTextureInput(
 		std::string const& shaderName,
-		re::Texture const* texture,
+		core::InvPtr<re::Texture> const& texture,
 		TextureView const& texView)
 		: RWTextureInput(shaderName.c_str(), texture, texView)
 	{

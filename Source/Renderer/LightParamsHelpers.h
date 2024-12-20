@@ -24,7 +24,7 @@ namespace gr
 		float diffuseScale, 
 		float specularScale, 
 		const uint32_t dfgTexWidthHeight, 
-		re::Texture const* ssaoTex);
+		core::InvPtr<re::Texture> const& ssaoTex);
 
 
 	LightData GetLightParamData(
@@ -33,7 +33,7 @@ namespace gr
 		gr::Transform::RenderData const& transformData,
 		gr::ShadowMap::RenderData const* shadowData,
 		gr::Camera::RenderData const* shadowCamData,
-		re::Texture const* shadowTex,
+		core::InvPtr<re::Texture> const& shadowTex,
 		uint32_t shadowArrayIdx);
 
 

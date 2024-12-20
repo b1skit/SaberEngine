@@ -636,7 +636,7 @@ namespace dx12
 	{
 		if (depthTarget.GetClearMode() == re::TextureTarget::ClearMode::Enabled)
 		{
-			re::Texture const* depthTex = depthTarget.GetTexture().get();
+			core::InvPtr<re::Texture> const& depthTex = depthTarget.GetTexture();
 
 			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
 
@@ -676,7 +676,7 @@ namespace dx12
 
 		if (colorTarget->GetClearMode() == re::TextureTarget::ClearMode::Enabled)
 		{
-			re::Texture const* colorTargetTex = colorTarget->GetTexture().get();
+			core::InvPtr<re::Texture> const& colorTargetTex = colorTarget->GetTexture();
 
 			re::TextureTarget::TargetParams const& colorTargetParams = colorTarget->GetTargetParams();
 
@@ -738,7 +738,7 @@ namespace dx12
 			{
 				break; // Targets must be bound in monotonically-increasing order from slot 0
 			}
-			re::Texture const* targetTexture = target.GetTexture().get();
+			core::InvPtr<re::Texture> const& targetTexture = target.GetTexture();
 
 			dx12::Texture::PlatformParams const* texPlatParams =
 				targetTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
@@ -758,7 +758,7 @@ namespace dx12
 		const bool hasDepthTargetTex = depthStencilTarget.HasTexture();
 		if (hasDepthTargetTex)
 		{
-			re::Texture const* depthTex = depthStencilTarget.GetTexture().get();
+			core::InvPtr<re::Texture> const& depthTex = depthStencilTarget.GetTexture();
 
 			re::TextureTarget::TargetParams const& depthTargetParams = depthStencilTarget.GetTargetParams();
 
@@ -824,7 +824,7 @@ namespace dx12
 				SEAssert(rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV,
 					"RW textures must be UAVs");
 
-				re::Texture const* rwTex = rwTexInput.m_texture;
+				core::InvPtr<re::Texture> const& rwTex = rwTexInput.m_texture;
 
 				SEAssert(((rwTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0) &&
 					((rwTex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0),
@@ -892,7 +892,7 @@ namespace dx12
 
 
 	void CommandList::UpdateSubresource(
-		re::Texture const* texture,
+		core::InvPtr<re::Texture> const& texture,
 		uint32_t arrayIdx,
 		uint32_t faceIdx,
 		uint32_t mipLevel,
@@ -992,7 +992,7 @@ namespace dx12
 	{
 		SEAssert(m_currentPSO, "Pipeline is not currently set");
 
-		re::Texture const* texture = texSamplerInput.m_texture;
+		core::InvPtr<re::Texture> const& texture = texSamplerInput.m_texture;
 
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
@@ -1185,7 +1185,7 @@ namespace dx12
 
 
 	void CommandList::TransitionResource(
-		re::Texture const* texture, D3D12_RESOURCE_STATES toState, re::TextureView const& texView)
+		core::InvPtr<re::Texture> const& texture, D3D12_RESOURCE_STATES toState, re::TextureView const& texView)
 	{
 		dx12::Texture::PlatformParams const* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
@@ -1222,7 +1222,7 @@ namespace dx12
 	}
 
 
-	void CommandList::InsertUAVBarrier(re::Texture const* texture)
+	void CommandList::InsertUAVBarrier(core::InvPtr<re::Texture> const& texture)
 	{
 		InsertUAVBarrier(texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_gpuResource->Get());
 	}

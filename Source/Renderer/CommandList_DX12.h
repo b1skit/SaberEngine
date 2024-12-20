@@ -104,7 +104,7 @@ namespace dx12
 		void Dispatch(glm::uvec3 const& numThreads);
 
 		void UpdateSubresource(
-			re::Texture const*,
+			core::InvPtr<re::Texture> const&,
 			uint32_t arrayIdx,
 			uint32_t faceIdx,
 			uint32_t mipLevel,
@@ -116,7 +116,7 @@ namespace dx12
 
 		void CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource);
 
-		void TransitionResource(re::Texture const*, D3D12_RESOURCE_STATES to, re::TextureView const&);
+		void TransitionResource(core::InvPtr<re::Texture> const&, D3D12_RESOURCE_STATES to, re::TextureView const&);
 
 		void ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers);
 
@@ -130,7 +130,7 @@ namespace dx12
 
 	private:
 		void InsertUAVBarrier(ID3D12Resource*);
-		void InsertUAVBarrier(re::Texture const*);
+		void InsertUAVBarrier(core::InvPtr<re::Texture> const&);
 
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
 

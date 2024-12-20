@@ -71,22 +71,22 @@ namespace gr
 
 	private:
 		std::shared_ptr<re::RenderStage> m_prefilterDepthsStage;
-		std::shared_ptr<re::Texture> m_prefilterDepthsTex;
+		core::InvPtr<re::Texture> m_prefilterDepthsTex;
 		std::unique_ptr<re::Batch> m_prefilterDepthComputeBatch;
 			
 		std::shared_ptr<re::RenderStage> m_mainStage;
-		std::shared_ptr<re::Texture> m_workingAOTex;
-		std::shared_ptr<re::Texture> m_workingEdgesTargetTex;
+		core::InvPtr<re::Texture> m_workingAOTex;
+		core::InvPtr<re::Texture> m_workingEdgesTargetTex;
 		std::unique_ptr<re::Batch> m_mainBatch;
 
 		uint8_t m_denoiseFinalOutputIdx;
 		std::vector<std::shared_ptr<re::RenderStage>> m_denoiseStages;
-		std::shared_ptr<re::Texture> m_denoisePingTargetTex;
+		core::InvPtr<re::Texture> m_denoisePingTargetTex;
 		std::unique_ptr<re::Batch> m_denoiseBatch;
 		std::unique_ptr<re::Batch> m_lastPassDenoiseBatch;
 
 		static constexpr char const* k_hilbertLutTexName = "g_srcHilbertLUT"; // As defined in 
-		std::shared_ptr<re::Texture> m_hilbertLUT;
+		core::InvPtr<re::Texture> m_hilbertLUT;
 		
 		XeGTAO::GTAOSettings m_settings; // Passed to the XeGTAO library to get the struct we pack into m_XeGTAOConstants
 		re::BufferInput m_XeGTAOConstants; // Our mirror of the XeGTAO constants block

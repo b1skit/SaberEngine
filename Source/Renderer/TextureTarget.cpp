@@ -15,9 +15,9 @@
 namespace
 {
 	bool TextureCanBeSwapped(
-		re::Texture const* existing, 
+		core::InvPtr<re::Texture> const& existing,
 		re::TextureView const& existingView, 
-		re::Texture const* replacement,
+		core::InvPtr<re::Texture> const& replacement,
 		re::TextureView const& replacementView)
 	{
 		re::Texture::TextureParams const& existingParams = existing->GetTextureParams();
@@ -44,7 +44,7 @@ namespace re
 	//TextureTarget
 	/**************/
 
-	TextureTarget::TextureTarget(std::shared_ptr<re::Texture> texture, TargetParams const& targetParams)
+	TextureTarget::TextureTarget(core::InvPtr<re::Texture> texture, TargetParams const& targetParams)
 		: m_texture(texture)
 		, m_targetParams(targetParams)
 	{
@@ -80,9 +80,9 @@ namespace re
 	}
 
 
-	void TextureTarget::ReplaceTexture(std::shared_ptr<re::Texture> newTex, re::TextureView const& texView)
+	void TextureTarget::ReplaceTexture(core::InvPtr<re::Texture> newTex, re::TextureView const& texView)
 	{
-		SEAssert(TextureCanBeSwapped(newTex.get(), texView, m_texture.get(), m_targetParams.m_textureView),
+		SEAssert(TextureCanBeSwapped(newTex, texView, m_texture, m_targetParams.m_textureView),
 			"Replacement texture is incompatible with the existing texture");
 
 		m_texture = newTex;
@@ -248,7 +248,7 @@ namespace re
 			"Targets must be set in monotonically-increasing order");
 		
 		re::TextureView::ValidateView( // _DEBUG only
-			texTarget.GetTexture().get(),
+			texTarget.GetTexture(),
 			texTarget.GetTargetParams().m_textureView);
 
 		m_colorTargets[slot] = texTarget;
@@ -258,7 +258,7 @@ namespace re
 
 
 	void TextureTargetSet::SetColorTarget(
-		uint8_t slot, std::shared_ptr<re::Texture> const& texture, TextureTarget::TargetParams const& targetParams)
+		uint8_t slot, core::InvPtr<re::Texture> const& texture, TextureTarget::TargetParams const& targetParams)
 	{
 		SetColorTarget(slot, re::TextureTarget(texture, targetParams));
 	}
@@ -279,7 +279,7 @@ namespace re
 			"Texture does not have the correct usage flags to be a depth stencil target");
 
 		re::TextureView::ValidateView( // _DEBUG only
-			depthStencilTarget.GetTexture().get(), 
+			depthStencilTarget.GetTexture(), 
 			depthStencilTarget.GetTargetParams().m_textureView);
 
 		m_depthStencilTarget = re::TextureTarget(depthStencilTarget);
@@ -287,7 +287,7 @@ namespace re
 
 
 	void TextureTargetSet::SetDepthStencilTarget(
-		std::shared_ptr<re::Texture> const& depthStencilTargetTex, re::TextureTarget::TargetParams const& targetParams)
+		core::InvPtr<re::Texture> const& depthStencilTargetTex, re::TextureTarget::TargetParams const& targetParams)
 	{
 		SetDepthStencilTarget(re::TextureTarget(depthStencilTargetTex, targetParams));
 	}
@@ -295,7 +295,7 @@ namespace re
 
 	void TextureTargetSet::ReplaceColorTargetTexture(
 		uint8_t slot, 
-		std::shared_ptr<re::Texture>& newTex, 
+		core::InvPtr<re::Texture>& newTex, 
 		re::TextureView const& texView)
 	{
 		SEAssert(newTex, "Cannot replace a Target's texture with a null texture");
@@ -306,7 +306,7 @@ namespace re
 
 
 	void TextureTargetSet::ReplaceDepthStencilTargetTexture(
-		std::shared_ptr<re::Texture> newTex, re::TextureView const& texView)
+		core::InvPtr<re::Texture> newTex, re::TextureView const& texView)
 	{
 		SEAssert(newTex, "Cannot replace a Target's texture with a null texture");
 		SEAssert(m_depthStencilTarget.HasTexture(), "Target does not have a texture to replace");
@@ -348,7 +348,7 @@ namespace re
 		// Find a single target we can get the resolution details from; This assumes all targets are the same dimensions
 		if (m_depthStencilTarget.HasTexture())
 		{
-			std::shared_ptr<re::Texture> depthTargetTex = m_depthStencilTarget.GetTexture();
+			core::InvPtr<re::Texture> depthTargetTex = m_depthStencilTarget.GetTexture();
 			targetDimensions = depthTargetTex->GetTextureDimenions();
 			foundDimensions = true;
 		}
@@ -358,7 +358,7 @@ namespace re
 			{
 				if (m_colorTargets[slot].HasTexture())
 				{
-					std::shared_ptr<re::Texture> colorTargetTex = m_colorTargets[slot].GetTexture();
+					core::InvPtr<re::Texture> colorTargetTex = m_colorTargets[slot].GetTexture();
 					targetDimensions = colorTargetTex->GetTextureDimenions();
 					foundDimensions = true;
 
@@ -573,14 +573,14 @@ namespace re
 		SEAssert(m_targetParamsBuffer.IsValid(),
 			"Trying to get target params buffer data but the target params buffer is invalid. This is unexpected");
 
-		re::Texture const* srcTex = nullptr;
+		core::InvPtr<re::Texture> srcTex;
 		if (HasColorTarget())
 		{
-			srcTex = m_colorTargets[0].GetTexture().get();
+			srcTex = m_colorTargets[0].GetTexture();
 		}
 		else
 		{
-			srcTex = m_depthStencilTarget.GetTexture().get();
+			srcTex = m_depthStencilTarget.GetTexture();
 		}
 
 		return TargetData{

@@ -34,7 +34,7 @@ namespace fr
 
 	public:
 		Light(Type lightType, glm::vec4 const& colorIntensity);
-		Light(re::Texture const* iblTex, Type = Type::AmbientIBL); // Ambient light only CTOR
+		Light(core::InvPtr<re::Texture> const& iblTex, Type = Type::AmbientIBL); // Ambient light only CTOR
 
 		Light(fr::Light&&) noexcept = default;
 		Light& operator=(fr::Light&&) noexcept = default;
@@ -58,7 +58,7 @@ namespace fr
 		{
 			struct AmbientProperties
 			{
-				re::Texture const* m_IBLTex;
+				core::InvPtr<re::Texture> m_IBLTex;
 
 				bool m_isActive; // Note: Only *one* ambient light can be active at any time
 
@@ -103,7 +103,11 @@ namespace fr
 			bool m_specularEnabled;
 
 			TypeProperties();
-			~TypeProperties() = default;
+			TypeProperties(TypeProperties const&) noexcept;
+			TypeProperties(TypeProperties&&) noexcept;
+			TypeProperties& operator=(TypeProperties const&) noexcept;
+			TypeProperties& operator=(TypeProperties&&) noexcept;
+			~TypeProperties();
 		};
 		TypeProperties const& GetLightTypeProperties(Type) const;
 		void SetLightTypeProperties(Type, void const*);

@@ -20,6 +20,8 @@
 
 #include "Core/Config.h"
 
+#include "Core/Definitions/ConfigKeys.h"
+
 #include "Renderer/RenderManager.h"
 
 
@@ -50,6 +52,8 @@ namespace fr
 	{
 		LOG("EntityManager starting...");
 
+		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
+
 		// Event subscriptions:
 		core::EventManager::Get()->Subscribe(core::EventManager::EventType::InputToggleConsole, this);
 
@@ -61,8 +65,9 @@ namespace fr
 
 		// Create an Ambient light, and make it active:
 		entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
-			*this, 
-			re::RenderManager::GetSceneData()->GetIBLTexture());
+			*this,
+			en::DefaultResourceNames::k_defaultIBLTexName,
+			m_inventory->Get<re::Texture>(util::StringHash(en::DefaultResourceNames::k_defaultIBLTexName)));
 		SetActiveAmbientLight(ambientLight);
 
 		// Add a camera controller to the scene:

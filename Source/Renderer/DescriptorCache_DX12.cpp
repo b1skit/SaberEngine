@@ -33,10 +33,10 @@ namespace
 	}
 
 
-	inline DXGI_FORMAT GetTextureSRVFormat(re::Texture const& texture)
+	inline DXGI_FORMAT GetTextureSRVFormat(core::InvPtr<re::Texture> const& texture)
 	{
 		dx12::Texture::PlatformParams const* texPlatParams =
-			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		switch (texPlatParams->m_format)
 		{
@@ -48,13 +48,13 @@ namespace
 
 	void InitializeTextureSRV(
 		dx12::DescriptorAllocation& descriptor,
-		re::Texture const& texture,
+		core::InvPtr<re::Texture> const& texture,
 		re::TextureView const& texView)
 	{
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
 		dx12::Texture::PlatformParams const* texPlatParams = 
-			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 		srvDesc.Format = GetTextureSRVFormat(texture);
@@ -171,13 +171,13 @@ namespace
 
 	void InitializeTextureUAV(
 		dx12::DescriptorAllocation& descriptor,
-		re::Texture const& texture,
+		core::InvPtr<re::Texture> const& texture,
 		re::TextureView const& texView)
 	{
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
 		dx12::Texture::PlatformParams const* texPlatParams = 
-			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		const DXGI_FORMAT uavCompatibleFormat = dx12::Texture::GetEquivalentUAVCompatibleFormat(texPlatParams->m_format);
 		SEAssert(uavCompatibleFormat != DXGI_FORMAT_UNKNOWN, "Failed to find equivalent UAV-compatible format");
@@ -278,13 +278,13 @@ namespace
 
 	void InitializeTextureRTV(
 		dx12::DescriptorAllocation& descriptor,
-		re::Texture const& texture,
+		core::InvPtr<re::Texture> const& texture,
 		re::TextureView const& texView)
 	{
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
 		dx12::Texture::PlatformParams const* texPlatParams =
-			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
 		rtvDesc.Format = texPlatParams->m_format;
@@ -382,13 +382,13 @@ namespace
 
 	void InitializeTextureDSV(
 		dx12::DescriptorAllocation& descriptor,
-		re::Texture const& texture,
+		core::InvPtr<re::Texture> const& texture,
 		re::TextureView const& texView)
 	{
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
 		dx12::Texture::PlatformParams const* texPlatParams =
-			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 		dsvDesc.Format = texPlatParams->m_format;
@@ -605,9 +605,9 @@ namespace dx12
 
 
 	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorCache::GetCreateDescriptor(
-		re::Texture const& texture, re::TextureView const& texView)
+		core::InvPtr<re::Texture> const& texture, re::TextureView const& texView)
 	{
-		re::TextureView::ValidateView(&texture, texView); // _DEBUG only
+		re::TextureView::ValidateView(texture, texView); // _DEBUG only
 
 		SEAssert(texView.m_viewDimension != re::Texture::Dimension::Dimension_Invalid, "Invalid view dimension");
 
@@ -617,7 +617,7 @@ namespace dx12
 			std::vector<CacheEntry>::iterator cacheItr = m_descriptorCache.end();
 			if (m_descriptorCache.empty())
 			{
-				m_descriptorCache.reserve(texture.GetTotalNumSubresources());
+				m_descriptorCache.reserve(texture->GetTotalNumSubresources());
 				cacheItr = m_descriptorCache.end();
 			}
 			else
@@ -680,22 +680,6 @@ namespace dx12
 				return cacheItr->second.GetBaseDescriptor();
 			}
 		}
-	}
-
-
-	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorCache::GetCreateDescriptor(
-		re::Texture const* texture, re::TextureView const& texView)
-	{
-		SEAssert(texture, "Trying to get a descriptor for a null texture");
-		return GetCreateDescriptor(*texture, texView);
-	}
-
-
-	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorCache::GetCreateDescriptor(
-		std::shared_ptr<re::Texture const> const& texture, re::TextureView const& texView)
-	{
-		SEAssert(texture, "Trying to get a descriptor for a null texture");
-		return GetCreateDescriptor(*texture.get(), texView);
 	}
 
 

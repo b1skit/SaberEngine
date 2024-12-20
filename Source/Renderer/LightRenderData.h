@@ -1,14 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
+#include "Texture.h"
+
+#include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
 
-
-namespace re
-{
-	class Texture;
-}
 
 namespace gr
 {
@@ -34,7 +32,7 @@ namespace gr
 			char m_lightName[core::INamedObject::k_maxNameLength];
 
 			// Ambient type data:
-			re::Texture const* m_iblTex = nullptr;
+			core::InvPtr<re::Texture> m_iblTex;
 
 			bool m_isActive = false; // Note: Only *one* ambient light can be active at any time
 

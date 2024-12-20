@@ -56,7 +56,6 @@ namespace gr
 			fallbackParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 			fallbackParams.m_mipMode = re::Texture::MipMode::AllocateGenerate;
 			fallbackParams.m_multisampleMode = re::Texture::MultisampleMode::Disabled;
-			fallbackParams.m_addToSceneData = false;
 
 			m_fallbackColorTex = 
 				re::Texture::Create("Skybox flat color fallback", fallbackParams, glm::vec4(m_backgroundColor.rgb, 1.f));
@@ -70,7 +69,7 @@ namespace gr
 
 		skyboxTargets->SetColorTarget(
 			0, 
-			*texDependencies.at(k_skyboxTargetInput), 
+			*texDependencies.at(k_skyboxTargetInput),
 			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1) });
 
 		re::TextureTarget::TargetParams depthTargetParams{ .m_textureView = {
@@ -94,13 +93,13 @@ namespace gr
 		m_skyboxStage->AddPermanentBuffer(SkyboxData::s_shaderName, m_skyboxParams);
 
 		// Start with our default texture set, in case there is no IBL
-		m_skyTexture = m_fallbackColorTex.get();
+		m_skyTexture = &m_fallbackColorTex;
 
 		m_skyboxStage->AddPermanentTextureInput(
 			k_skyboxTexShaderName,
-			m_skyTexture,
+			*m_skyTexture,
 			re::Sampler::GetSampler("WrapMinMagLinearMipPoint"),
-			re::TextureView(m_skyTexture));
+			re::TextureView(*m_skyTexture));
 
 
 		pipeline.AppendRenderStage(m_skyboxStage);
@@ -133,18 +132,18 @@ namespace gr
 				gr::Light::RenderDataAmbientIBL const& ambientRenderData =
 					renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
 
-				m_skyTexture = ambientRenderData.m_iblTex;
+				m_skyTexture = &ambientRenderData.m_iblTex;
 			}
 			else
 			{
-				m_skyTexture = m_fallbackColorTex.get();
+				m_skyTexture = &m_fallbackColorTex;
 			}
 
 			m_skyboxStage->AddPermanentTextureInput(
 				k_skyboxTexShaderName,
-				m_skyTexture,
+				*m_skyTexture,
 				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"),
-				re::TextureView(m_skyTexture));
+				re::TextureView(*m_skyTexture));
 
 		}
 		SEAssert(m_skyTexture != nullptr, "Failed to set a valid sky texture");

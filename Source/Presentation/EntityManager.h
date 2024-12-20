@@ -4,6 +4,7 @@
 
 #include "Core/Assert.h"
 #include "Core/CommandQueue.h"
+#include "Core/Inventory.h"
 
 #include "Core/Interfaces/IEngineComponent.h"
 #include "Core/Interfaces/IEventListener.h"
@@ -25,6 +26,13 @@ namespace fr
 		void Shutdown() override;
 
 		void Update(uint64_t frameNum, double stepTimeMs) override;
+
+
+	public:
+		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
+		core::Inventory* GetInventory() const;
+	private:
+		core::Inventory* m_inventory;
 
 
 	private: // Systems:
@@ -156,6 +164,18 @@ namespace fr
 	public:
 		EntityManager(PrivateCTORTag);
 	};
+
+
+	inline void EntityManager::SetInventory(core::Inventory* inventory)
+	{
+		m_inventory = inventory;
+	}
+
+
+	inline core::Inventory* EntityManager::GetInventory() const
+	{
+		return m_inventory;
+	}
 
 
 	template<typename T>

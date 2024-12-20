@@ -101,10 +101,14 @@ namespace app
 
 		en::InputManager::Get()->Startup(); // Now that the window is created
 
-		fr::SceneManager::Get()->Startup(); // Load assets
+		fr::SceneManager* sceneMgr = fr::SceneManager::Get();
+		sceneMgr->SetInventory(m_inventory.get()); // Dependency injection
+		sceneMgr->Startup(); // Load assets
 
 		// Create entity/component representations now that the scene data is loaded
-		fr::EntityManager::Get()->Startup();
+		fr::EntityManager* entityMgr = fr::EntityManager::Get();
+		entityMgr->SetInventory(m_inventory.get()); // Dependency injection
+		entityMgr->Startup();
 
 		renderManager->ThreadInitialize(); // Create render systems, close buffer registration
 

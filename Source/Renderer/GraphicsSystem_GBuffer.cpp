@@ -43,7 +43,6 @@ namespace gr
 		gBufferColorParams.m_dimension = re::Texture::Dimension::Texture2D;
 		gBufferColorParams.m_format = re::Texture::Format::RGBA8_UNORM;
 		gBufferColorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		gBufferColorParams.m_addToSceneData = false;
 		gBufferColorParams.m_mipMode = re::Texture::MipMode::None;
 
 		// World normal may have negative components, emissive values may be > 1

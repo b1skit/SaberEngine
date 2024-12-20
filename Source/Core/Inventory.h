@@ -24,28 +24,71 @@ namespace core
 
 		void Destroy();
 
+
 	public:
 		void OnEndOfFrame();
 
 
 	public: // All resource requests come through here:
 		template<typename T>
-		core::InvPtr<T> Get(util::DataHash const&, std::shared_ptr<core::ILoadContext<T>>);
+		core::InvPtr<T> Get(
+			util::DataHash, // ID for the T
+			std::shared_ptr<core::ILoadContext<T>> = nullptr); // Can only be null if the resource already exists
+
+		template<typename T>
+		bool Contains(util::DataHash) const;
+
+
+	private:
+		template<typename T>
+		ResourceSystem<T>* GetCreateResourceSystem();
 
 
 	private:
 		std::unordered_map<std::type_index, std::unique_ptr<IResourceSystem>> m_resourceSystems;
-		std::shared_mutex m_resourceSystemsMutex;
+		mutable std::shared_mutex m_resourceSystemsMutex;
 	};
 
 
 	template<typename T>
-	core::InvPtr<T> Inventory::Get(util::DataHash const& id, std::shared_ptr<core::ILoadContext<T>> loadContext)
+	core::InvPtr<T> Inventory::Get(
+		util::DataHash id, std::shared_ptr<core::ILoadContext<T>> loadContext /*= nullptr*/)
+	{
+		ResourceSystem<T>* resourceSystem = GetCreateResourceSystem<T>();
+
+		auto controlBlock = resourceSystem->Get<T>(id, loadContext.get());
+
+		return core::InvPtr<T>::Create(controlBlock, std::move(loadContext));
+	}
+
+
+	template<typename T>
+	bool Inventory::Contains(util::DataHash ID) const
 	{
 		const std::type_index typeIdx = std::type_index(typeid(T));
 
-		// Get/create the typed ResourceSystem:
+		ResourceSystem<T> const* resourceSystem = nullptr;
+
+		{
+			std::shared_lock readLock(m_resourceSystemsMutex);
+
+			auto iResourceSystemItr = m_resourceSystems.find(typeIdx);
+			if (iResourceSystemItr != m_resourceSystems.end())
+			{
+				resourceSystem = dynamic_cast<ResourceSystem<T> const*>(iResourceSystemItr->second.get());
+			}
+		}
+
+		return resourceSystem != nullptr && resourceSystem->Contains(ID);
+	}
+
+
+	template<typename T>
+	ResourceSystem<T>* Inventory::GetCreateResourceSystem()
+	{
 		ResourceSystem<T>* resourceSystem = nullptr;
+
+		const std::type_index typeIdx = std::type_index(typeid(T));
 		{
 			std::shared_lock readLock(m_resourceSystemsMutex);
 
@@ -80,8 +123,6 @@ namespace core
 		}
 		SEAssert(resourceSystem, "Failed to find or create a ResourceSystem");
 
-		auto newControlBlock = resourceSystem->Get<T>(id, loadContext.get());
-
-		return core::InvPtr<T>::Create(newControlBlock, std::move(loadContext));
+		return resourceSystem;
 	}
 }

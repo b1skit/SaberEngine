@@ -140,4 +140,6 @@ namespace en::DefaultResourceNames
 	constexpr char const* k_cubeMapTransparentWhiteDefaultTexName	= "DefaultCube_TransparentWhite";
 	constexpr char const* k_cubeMapOpaqueBlackDefaultTexName		= "DefaultCube_OpaqueBlack";
 	constexpr char const* k_cubeMapTransparentBlackDefaultTexName	= "DefaultCube_TransparentBlack";
+
+	constexpr char const* k_defaultIBLTexName = "DefaultIBL"; // Get whatever IBL was loaded as the default
 }

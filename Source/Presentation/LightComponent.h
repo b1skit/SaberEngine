@@ -32,7 +32,7 @@ namespace fr
 
 
 	public:
-		static entt::entity CreateDeferredAmbientLightConcept(EntityManager&, re::Texture const* iblTex);
+		static entt::entity CreateDeferredAmbientLightConcept(EntityManager&, char const* name, core::InvPtr<re::Texture> const& iblTex);
 
 		static LightComponent& AttachDeferredPointLightConcept(
 			fr::EntityManager&, entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);
@@ -97,7 +97,7 @@ namespace fr
 		LightComponent(
 			PrivateCTORTag, 
 			fr::RenderDataComponent const&,
-			re::Texture const* iblTex,
+			core::InvPtr<re::Texture> const& iblTex,
 			const fr::Light::Type = fr::Light::Type::AmbientIBL); // Ambient light only
 	};
 
@@ -109,6 +109,7 @@ namespace fr
 	{
 	public:
 		UpdateLightDataRenderCommand(fr::NameComponent const&, LightComponent const&);
+		~UpdateLightDataRenderCommand();
 
 		static void Execute(void*);
 		static void Destroy(void*);

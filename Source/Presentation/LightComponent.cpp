@@ -17,6 +17,7 @@
 #include "Core/Util/FileIOUtils.h"
 #include "Core/Util/ImGuiUtils.h"
 
+#include "Renderer/AssetLoadUtils.h"
 #include "Renderer/MeshFactory.h"
 #include "Renderer/RenderSystem.h"
 
@@ -49,11 +50,12 @@ namespace
 
 namespace fr
 {
-	entt::entity LightComponent::CreateDeferredAmbientLightConcept(EntityManager& em, re::Texture const* iblTex)
+	entt::entity LightComponent::CreateDeferredAmbientLightConcept(
+		EntityManager& em, char const* name, core::InvPtr<re::Texture> const& iblTex)
 	{
-		SEAssert(iblTex, "IBL texture cannot be null");
+		SEAssert(name && iblTex, "IBL name or texture cannot be null");
 
-		entt::entity lightEntity = em.CreateEntity(iblTex->GetName());
+		entt::entity lightEntity = em.CreateEntity(name);
 
 		// MeshPrimitive:
 		fr::RenderDataComponent* renderDataComponent = 
@@ -624,14 +626,19 @@ namespace fr
 			case fr::Light::Type::AmbientIBL:
 			{
 				// TODO: This should be part of the ambient light logic, not the ImGui panel
-				re::Texture const* newIBL = re::RenderManager::GetSceneData()->TryLoadUniqueTexture(
-					s_spawnParams->m_ambientLightSpawnParams.m_filepath,
-					re::Texture::ColorSpace::Linear).get();
 
-				if (newIBL)
+				if (util::FileExists(s_spawnParams->m_ambientLightSpawnParams.m_filepath))
 				{
-					entt::entity newAmbientLight =
-						fr::LightComponent::CreateDeferredAmbientLightConcept(*fr::EntityManager::Get(), newIBL);
+					core::InvPtr<re::Texture> const& newIBL = grutil::LoadTextureFromFilePath(
+						{ s_spawnParams->m_ambientLightSpawnParams.m_filepath },
+						s_spawnParams->m_ambientLightSpawnParams.m_filepath,
+						re::Texture::ColorSpace::Linear,
+						true);
+
+					entt::entity newAmbientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
+						*fr::EntityManager::Get(),
+						s_spawnParams->m_ambientLightSpawnParams.m_filepath,
+						newIBL);
 
 					fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(newAmbientLight);
 				}
@@ -693,7 +700,7 @@ namespace fr
 	LightComponent::LightComponent(
 		PrivateCTORTag, 
 		fr::RenderDataComponent const& renderDataComponent,
-		re::Texture const* iblTex,
+		core::InvPtr<re::Texture> const& iblTex,
 		const fr::Light::Type ambientTypeOnly)
 		: m_renderDataID(renderDataComponent.GetRenderDataID())
 		, m_transformID(renderDataComponent.GetTransformID())
@@ -717,6 +724,9 @@ namespace fr
 		{
 		case gr::Light::Type::AmbientIBL:
 		{
+			// Zero initialize the union, as it contains an InvPtr
+			memset(&m_ambientData, 0, sizeof(gr::Light::RenderDataAmbientIBL));
+
 			m_ambientData = fr::LightComponent::CreateRenderDataAmbientIBL_Deferred(nameComponent, lightComponent);
 		}
 		break;
@@ -733,6 +743,35 @@ namespace fr
 		case gr::Light::Type::Spot:
 		{
 			m_spotData = fr::LightComponent::CreateRenderDataSpot_Deferred(nameComponent, lightComponent);
+		}
+		break;
+		default: SEAssertF("Invalid type");
+		}
+	}
+
+
+	UpdateLightDataRenderCommand::~UpdateLightDataRenderCommand()
+	{
+		switch (m_type)
+		{
+		case gr::Light::Type::AmbientIBL:
+		{
+			m_ambientData.m_iblTex = nullptr; // Make sure we don't leak
+		}
+		break;
+		case gr::Light::Type::Directional:
+		{
+			//
+		}
+		break;
+		case gr::Light::Type::Point:
+		{
+			//
+		}
+		break;
+		case gr::Light::Type::Spot:
+		{
+			//
 		}
 		break;
 		default: SEAssertF("Invalid type");

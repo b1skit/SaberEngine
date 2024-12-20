@@ -38,6 +38,18 @@ namespace util
 	}
 
 
+	bool FileExists(char const* path)
+	{
+		return std::filesystem::exists(path);
+	}
+
+
+	bool FileExists(std::string const& path)
+	{
+		return FileExists(path.c_str());
+	}
+
+
 	BuildConfiguration CStrToBuildConfiguration(char const* buildConfigCStr)
 	{
 		std::string const& buildConfigCStrLower = util::ToLower(buildConfigCStr);

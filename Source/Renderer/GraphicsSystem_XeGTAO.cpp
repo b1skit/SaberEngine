@@ -89,7 +89,7 @@ namespace
 	}
 
 
-	std::shared_ptr<re::Texture> CreateHilbertLUT()
+	core::InvPtr<re::Texture> CreateHilbertLUT()
 	{
 		constexpr uint32_t k_texWidthHeight = 64;
 		constexpr uint32_t k_bytesPerTexel = sizeof(uint16_t);
@@ -121,8 +121,6 @@ namespace
 
 		hilbertLUTParams.m_mipMode = re::Texture::MipMode::None;
 		hilbertLUTParams.m_multisampleMode = re::Texture::MultisampleMode::Disabled;
-
-		hilbertLUTParams.m_addToSceneData = false;
 
 		return re::Texture::Create("HilbertLUT", hilbertLUTParams, std::move(texData));
 	}
@@ -203,7 +201,6 @@ namespace gr
 		prefilterDepthTexParams.m_format = re::Texture::Format::R16F;
 		prefilterDepthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		prefilterDepthTexParams.m_mipMode = re::Texture::MipMode::Allocate;
-		prefilterDepthTexParams.m_addToSceneData = false;
 
 		m_prefilterDepthsTex = re::Texture::Create("XeGTAO: Prefiltered depths", prefilterDepthTexParams);
 
@@ -271,7 +268,6 @@ namespace gr
 		workingAOTexParams.m_format = workingAOTermFormat;
 		workingAOTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		workingAOTexParams.m_mipMode = re::Texture::MipMode::None;
-		workingAOTexParams.m_addToSceneData = false;
 
 		m_workingAOTex = re::Texture::Create("XeGTAO: Working AO", workingAOTexParams);
 
@@ -287,7 +283,6 @@ namespace gr
 		workingEdgesTexParams.m_format = re::Texture::Format::R8_UNORM;
 		workingEdgesTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		workingEdgesTexParams.m_mipMode = re::Texture::MipMode::None;
-		workingEdgesTexParams.m_addToSceneData = false;
 
 		m_workingEdgesTargetTex = re::Texture::Create("XeGTAO: Working Edges", workingEdgesTexParams);
 

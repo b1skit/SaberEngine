@@ -1,5 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Core/InvPtr.h"
+
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
 #include "Core/Interfaces/IUniqueID.h"
@@ -173,7 +175,7 @@ namespace re
 			MipMode m_mipMode = MipMode::AllocateGenerate;
 			MultisampleMode m_multisampleMode = MultisampleMode::Disabled;
 
-			bool m_addToSceneData = true; // Typically false if the texture is a target
+			bool m_createAsPermanent = false; // Should this texture be kept alive beyond the scope of its InvPtr?
 
 			union ClearValues
 			{
@@ -191,22 +193,22 @@ namespace re
 
 
 	public:
-		[[nodiscard]] static std::shared_ptr<re::Texture> Create(
+		[[nodiscard]] static core::InvPtr<re::Texture> Create(
 			std::string const& name, 
 			TextureParams const& params,
 			std::vector<ImageDataUniquePtr>&& initialData);
 
-		[[nodiscard]] static std::shared_ptr<re::Texture> Create(
+		[[nodiscard]] static core::InvPtr<re::Texture> Create(
 			std::string const& name,
 			TextureParams const& params,
 			std::vector<uint8_t>&& initialData);
 
-		static std::shared_ptr<re::Texture> Create(
+		static core::InvPtr<re::Texture> Create(
 			std::string const& name,
 			TextureParams const& params,
 			glm::vec4 fillColor);
 
-		[[nodiscard]] static std::shared_ptr<re::Texture> Create(
+		[[nodiscard]] static core::InvPtr<re::Texture> Create(
 			std::string const& name,
 			TextureParams const& params);
 
@@ -214,6 +216,8 @@ namespace re
 		Texture& operator=(Texture&&) noexcept = default;
 
 		~Texture();
+
+		void Destroy();
 
 		glm::vec4 GetTextureDimenions() const;	// .xyzw = width, height, 1/width, 1/height
 		inline uint32_t const& Width() const { return m_texParams.m_width; }
@@ -240,7 +244,7 @@ namespace re
 
 		TextureParams const& GetTextureParams() const { return m_texParams; }
 
-		void ShowImGuiWindow() const;
+		static void ShowImGuiWindow(core::InvPtr<re::Texture> const&);
 
 
 	public:
@@ -249,6 +253,7 @@ namespace re
 		
 		static uint8_t GetNumBytesPerTexel(const Format texFormat);
 		
+		static uint8_t GetNumFaces(core::InvPtr<re::Texture> const&);
 		static uint8_t GetNumFaces(re::Texture const*);
 		static uint8_t GetNumFaces(re::Texture::Dimension);
 
@@ -256,7 +261,7 @@ namespace re
 	private:
 		explicit Texture(std::string const& name, TextureParams const& params);
 
-		static std::shared_ptr<re::Texture> CreateInternal(
+		static core::InvPtr<re::Texture> CreateInternal(
 			std::string const& name, TextureParams const&, std::unique_ptr<IInitialData>&&);
 
 		void Fill(glm::vec4 const& solidColor);	// Fill texture with a solid color

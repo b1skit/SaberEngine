@@ -6,7 +6,11 @@
 
 #include "Core/Util/HashKey.h"
 
-
+namespace core
+{
+	template<typename T>
+	class InvPtr;
+}
 namespace re
 {
 	class Batch;
@@ -15,7 +19,7 @@ namespace re
 
 namespace gr
 {
-	using TextureDependencies = std::map<util::HashKey, std::shared_ptr<re::Texture> const*>;
+	using TextureDependencies = std::map<util::HashKey, core::InvPtr<re::Texture> const*>;
 	using BufferDependencies = std::map<util::HashKey, std::shared_ptr<re::Buffer> const*>;
 	using DataDependencies = std::unordered_map<util::HashKey, void const*>;
 

@@ -72,7 +72,7 @@ namespace
 
 namespace opengl
 {
-	Texture::PlatformParams::PlatformParams(re::Texture const& texture)
+	Texture::PlatformParams::PlatformParams(re::Texture& texture)
 		: m_textureID(0)
 		, m_format(GL_RGBA)
 		, m_internalFormat(GL_RGBA32F)
@@ -229,12 +229,12 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::Bind(re::Texture const& texture, uint32_t textureUnit)
+	void opengl::Texture::Bind(core::InvPtr<re::Texture> const& texture, uint32_t textureUnit)
 	{
 		// Note: textureUnit is a binding point
 
 		opengl::Texture::PlatformParams const* params =
-			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+			texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
 		// TODO: Support texture updates after modification
 		SEAssert(params->m_isDirty == false, "Texture has been modified, and needs to be rebuffered");
@@ -243,10 +243,10 @@ namespace opengl
 	}
 
 
-	void Texture::Bind(re::Texture const& texture, uint32_t textureUnit, re::TextureView const& texView)
+	void Texture::Bind(core::InvPtr<re::Texture> const& texture, uint32_t textureUnit, re::TextureView const& texView)
 	{
 		opengl::Texture::PlatformParams const* params =
-			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+			texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
 		// TODO: Support texture updates after modification
 		SEAssert(params->m_isDirty == false, "Texture has been modified, and needs to be rebuffered");
@@ -258,7 +258,7 @@ namespace opengl
 
 
 	void Texture::BindAsImageTexture(
-		re::Texture const& texture, uint32_t textureUnit, re::TextureView const& texView, uint32_t accessMode)
+		core::InvPtr<re::Texture> const& texture, uint32_t textureUnit, re::TextureView const& texView, uint32_t accessMode)
 	{
 		SEAssert(accessMode == GL_READ_ONLY ||
 			accessMode == GL_WRITE_ONLY ||
@@ -266,11 +266,11 @@ namespace opengl
 			"Invalid access mode");
 
 		opengl::Texture::PlatformParams const* texPlatParams =
-			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+			texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
 		SEAssert(texPlatParams->m_isCreated, "Texture is not created");
 
-		SEAssert((texture.GetTextureParams().m_usage & re::Texture::Usage::ColorTarget),
+		SEAssert((texture->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget),
 			"Texture is not marked for target usage");
 
 		SEAssert(texPlatParams->m_formatIsImageTextureCompatible,
@@ -290,20 +290,20 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::Create(re::Texture& texture)
+	void opengl::Texture::Create(core::InvPtr<re::Texture> const& texture)
 	{
-		opengl::Texture::PlatformParams* params = texture.GetPlatformParams()->As<opengl::Texture::PlatformParams*>();
+		opengl::Texture::PlatformParams* params = texture->GetPlatformParams()->As<opengl::Texture::PlatformParams*>();
 		SEAssert(!glIsTexture(params->m_textureID) && !params->m_isCreated,
 			"Attempting to create a texture that already exists");
 		params->m_isCreated = true;
 
-		LOG("Creating & buffering texture: \"%s\"", texture.GetName().c_str());
+		LOG("Creating & buffering texture: \"%s\"", texture->GetName().c_str());
 
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
-		const uint32_t width = texture.Width();
-		const uint32_t height = texture.Height();
-		const uint32_t numMips = texture.GetNumMips();
+		const uint32_t width = texture->Width();
+		const uint32_t height = texture->Height();
+		const uint32_t numMips = texture->GetNumMips();
 
 		// Create texture handles and initialize them:
 		switch (texParams.m_dimension)
@@ -383,7 +383,7 @@ namespace opengl
 		break;
 		case re::Texture::Dimension::TextureCubeArray:
 		{
-			SEAssert(texture.GetTotalNumSubresources() == texParams.m_arraySize * 6 * texture.GetNumMips(),
+			SEAssert(texture->GetTotalNumSubresources() == texParams.m_arraySize * 6 * texture->GetNumMips(),
 				"Unexpected number of subresources");
 
 			glCreateTextures(GL_TEXTURE_CUBE_MAP_ARRAY, 1, &params->m_textureID);
@@ -394,7 +394,7 @@ namespace opengl
 				params->m_internalFormat,
 				width,
 				height,
-				texture.GetTotalNumSubresources()); // depth: No. of layer-faces (must be divisible by 6)
+				texture->GetTotalNumSubresources()); // depth: No. of layer-faces (must be divisible by 6)
 		}
 		break;
 		default:
@@ -405,18 +405,18 @@ namespace opengl
 
 		// RenderDoc object name:
 		glObjectLabel(
-			GL_TEXTURE, params->m_textureID, -1, std::format("{} ({})", texture.GetName(), params->m_textureID).c_str());
+			GL_TEXTURE, params->m_textureID, -1, std::format("{} ({})", texture->GetName(), params->m_textureID).c_str());
 
-		const uint8_t numFaces = re::Texture::GetNumFaces(&texture);
+		const uint8_t numFaces = re::Texture::GetNumFaces(texture);
 
 		// Upload data (if any) to the GPU:
-		if ((texParams.m_usage & re::Texture::Usage::ColorSrc) && texture.HasInitialData())
+		if ((texParams.m_usage & re::Texture::Usage::ColorSrc) && texture->HasInitialData())
 		{
 			for (uint32_t arrayIdx = 0; arrayIdx < texParams.m_arraySize; arrayIdx++)
 			{
 				for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 				{
-					void* data = texture.GetTexelData(arrayIdx, faceIdx);
+					void* data = texture->GetTexelData(arrayIdx, faceIdx);
 					SEAssert(data, "Color target must have data to buffer");
 
 					switch (texParams.m_dimension)
@@ -542,12 +542,12 @@ namespace opengl
 	}
 
 
-	void Texture::GenerateMipMaps(re::Texture const& texture)
+	void Texture::GenerateMipMaps(core::InvPtr<re::Texture> const& texture)
 	{
 		opengl::Texture::PlatformParams const* params =
-			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+			texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
-		if (texture.GetTextureParams().m_mipMode == re::Texture::MipMode::AllocateGenerate)
+		if (texture->GetTextureParams().m_mipMode == re::Texture::MipMode::AllocateGenerate)
 		{
 			glGenerateTextureMipmap(params->m_textureID);
 		}
@@ -559,13 +559,13 @@ namespace opengl
 	}
 
 
-	GLuint Texture::GetOrCreateTextureView(re::Texture const& tex, re::TextureView const& texView)
+	GLuint Texture::GetOrCreateTextureView(core::InvPtr<re::Texture> const& tex, re::TextureView const& texView)
 	{
-		re::TextureView::ValidateView(&tex, texView); // _DEBUG only
+		re::TextureView::ValidateView(tex, texView); // _DEBUG only
 
-		re::Texture::TextureParams const& texParams = tex.GetTextureParams();
+		re::Texture::TextureParams const& texParams = tex->GetTextureParams();
 		opengl::Texture::PlatformParams const* platParams =
-			tex.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+			tex->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
 		const util::DataHash viewDataHash = texView.GetDataHash();
 
@@ -733,11 +733,11 @@ namespace opengl
 	}
 
 
-	void Texture::ShowImGuiWindow(re::Texture const& texture, float scale)
+	void Texture::ShowImGuiWindow(core::InvPtr<re::Texture> const& texture, float scale)
 	{
 		opengl::Texture::PlatformParams const* platParams =
-			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+			texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
-		ImGui::Image(platParams->m_textureID, ImVec2(texture.Width() * scale, texture.Height() * scale));
+		ImGui::Image(platParams->m_textureID, ImVec2(texture->Width() * scale, texture->Height() * scale));
 	}
 }

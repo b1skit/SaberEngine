@@ -65,7 +65,7 @@ namespace opengl
 		{
 			for (auto const& newObject : renderManager.m_newTextures.GetReadData())
 			{
-				opengl::Texture::Create(*newObject);
+				opengl::Texture::Create(newObject);
 			}
 		}
 		// Samplers:

@@ -156,16 +156,12 @@ namespace gr
 		DataDependencies const& dataDependencies)
 	{
 		SEAssert(texDependencies.contains(k_ambientIEMTexInput) &&
-			texDependencies.at(k_ambientIEMTexInput) != nullptr &&
 			texDependencies.contains(k_ambientPMREMTexInput) &&
-			texDependencies.at(k_ambientPMREMTexInput) != nullptr &&
 			texDependencies.contains(k_sceneLightingTexInput) &&
-			texDependencies.at(k_sceneLightingTexInput) != nullptr &&
 			texDependencies.contains(k_ambientDFGTexInput) &&
-			texDependencies.at(k_ambientDFGTexInput) != nullptr &&
 			bufferDependencies.contains(k_ambientParamsBufferInput) &&
 			bufferDependencies.at(k_ambientParamsBufferInput) != nullptr,
-			"Missing a required input: We should at least receive some defaults");
+			"Missing a required input");
 
 		// Cache our dependencies:
 		m_ambientIEMTex = texDependencies.at(k_ambientIEMTexInput);
@@ -224,9 +220,9 @@ namespace gr
 		// Texture inputs:
 		m_transparencyStage->AddPermanentTextureInput(
 			"DFG",
-			texDependencies.at(k_ambientDFGTexInput)->get(),
+			*texDependencies.at(k_ambientDFGTexInput),
 			re::Sampler::GetSampler("ClampMinMagMipPoint"),
-			re::TextureView(texDependencies.at(k_ambientDFGTexInput)->get()));
+			re::TextureView(*texDependencies.at(k_ambientDFGTexInput)));
 
 		pipeline.AppendRenderStage(m_transparencyStage);
 	}
@@ -238,7 +234,7 @@ namespace gr
 			"Required inputs are null: We should at least have received any empty pointer");
 
 		// Add our inputs each frame in case the light changes/they're updated by the source GS
-		if (*m_ambientIEMTex && *m_ambientPMREMTex && *m_ambientParams)
+		if (m_ambientIEMTex && m_ambientPMREMTex && *m_ambientParams)
 		{
 			m_transparencyStage->AddSingleFrameTextureInput(
 				"CubeMapIEM",

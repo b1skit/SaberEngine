@@ -125,7 +125,7 @@ namespace re
 		void RegisterForCreate(core::InvPtr<T> const&);
 
 		// Textures seen during CreateAPIResources() for the current frame:
-		std::vector<std::shared_ptr<re::Texture>> const& GetNewlyCreatedTextures() const;
+		std::vector<core::InvPtr<re::Texture>> const& GetNewlyCreatedTextures() const;
 
 	private: // API resource management:
 		void CreateAPIResources();
@@ -135,17 +135,23 @@ namespace re
 
 		static constexpr size_t k_newObjectReserveAmount = 128;
 		util::NBufferedVector<std::shared_ptr<re::Shader>> m_newShaders;
-		util::NBufferedVector<std::shared_ptr<re::Texture>> m_newTextures;
+		util::NBufferedVector<core::InvPtr<re::Texture>> m_newTextures;
 		util::NBufferedVector<core::InvPtr<re::Sampler>> m_newSamplers;
 		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;
 		util::NBufferedVector<std::shared_ptr<re::Buffer>> m_newBuffers;
 
 		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
 		// Used as a holding ground for operations that must be performed once after creation (E.g. mip generation)
-		std::vector<std::shared_ptr<re::Texture>> m_createdTextures;
+		std::vector<core::InvPtr<re::Texture>> m_createdTextures;
 
 	private:
 		void CreateSamplerLibrary();
+		
+		void CreateDefaultTextures();
+		std::unordered_map<util::StringHash, core::InvPtr<re::Texture>> m_defaultTextures;
+
+	public:
+		core::InvPtr<re::Texture> const& GetDefaultTexture(util::StringHash);
 
 
 	public: // Ensure the lifetime of single-frame resources that are referenced by in-flight batches
@@ -307,7 +313,7 @@ namespace re
 	}
 
 
-	inline std::vector<std::shared_ptr<re::Texture>> const& RenderManager::GetNewlyCreatedTextures() const
+	inline std::vector<core::InvPtr<re::Texture>> const& RenderManager::GetNewlyCreatedTextures() const
 	{
 		return m_createdTextures;
 	}
@@ -329,5 +335,12 @@ namespace re
 			m_vsyncEnabled = !m_vsyncEnabled;
 		}
 		LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
+	}
+
+
+	inline core::InvPtr<re::Texture> const& RenderManager::GetDefaultTexture(util::StringHash texName)
+	{
+		SEAssert(m_defaultTextures.contains(texName), "Default texture with the given name not found");
+		return m_defaultTextures.at(texName);
 	}
 }

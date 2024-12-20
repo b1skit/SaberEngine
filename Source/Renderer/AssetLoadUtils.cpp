@@ -27,10 +27,12 @@ namespace grutil
 	};
 
 
-	std::shared_ptr<re::Texture> LoadTextureFromFilePath(
-		std::vector<std::string> texturePaths,
+	core::InvPtr<re::Texture> LoadTextureFromFilePath(
+		std::vector<std::string> const& texturePaths,
+		std::string const& idName,
 		re::Texture::ColorSpace colorSpace,
 		bool returnErrorTex,
+		bool createAsPermanent /*= false*/,
 		glm::vec4 const& errorTexFillColor /*= glm::vec4(1.f, 0.f, 1.f, 1.f)*/)
 	{
 		SEAssert(texturePaths.size() == 1 || texturePaths.size() == 6, "Can load single faces or cubemaps only");
@@ -50,13 +52,14 @@ namespace grutil
 			.m_dimension = (totalFaces == 1 ?
 				re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCube),
 			.m_format = re::Texture::Format::RGBA8_UNORM,
-			.m_colorSpace = colorSpace
+			.m_colorSpace = colorSpace,
+			.m_createAsPermanent = createAsPermanent,
 		};
 		glm::vec4 fillColor = errorTexFillColor;
 
 		// Load the texture, face-by-face:
 		std::vector<re::Texture::ImageDataUniquePtr> initialData;
-		std::shared_ptr<re::Texture> texture = nullptr;
+		core::InvPtr<re::Texture> texture = nullptr;
 		for (size_t face = 0; face < totalFaces; face++)
 		{
 			// Get the image data:
@@ -101,10 +104,7 @@ namespace grutil
 
 					if ((width == 1 || height == 1) && (width != height))
 					{
-						SEAssertF("Found 1D texture, but 1D textures are currently not supported. Treating "
-							"this texture as 2D");
-						texParams.m_dimension = re::Texture::Dimension::Texture2D; // TODO: Support 1D textures
-						/*texParams.m_dimension = re::Texture::Dimension::Texture1D;*/
+						texParams.m_dimension = re::Texture::Dimension::Texture1D;
 					}
 
 					switch (desiredChannels)
@@ -160,7 +160,7 @@ namespace grutil
 				}
 
 				// We'll populate the initial image data internally:
-				texture = re::Texture::Create(texturePaths[0], texParams, fillColor);
+				texture = re::Texture::Create(idName, texParams, fillColor);
 				break;
 			}
 			else
@@ -174,17 +174,17 @@ namespace grutil
 
 		if (!texture)
 		{
-			texture = re::Texture::Create(texturePaths[0], texParams, std::move(initialData));
+			texture = re::Texture::Create(idName, texParams, std::move(initialData));
 		}
 
-		LOG("Loaded texture \"%s\" in %f seconds...", texturePaths[0].c_str(), timer.StopSec());
+		LOG("Loaded texture \"%s\" from \"%s\"in %f seconds...", idName.c_str(), texturePaths[0].c_str(), timer.StopSec());
 
 		// Note: Texture color space must still be set
 		return texture;
 	}
 
 
-	std::shared_ptr<re::Texture> LoadTextureFromMemory(
+	core::InvPtr<re::Texture> LoadTextureFromMemory(
 		std::string const& texName,
 		unsigned char const* texSrc,
 		uint32_t texSrcNumBytes,
@@ -233,7 +233,7 @@ namespace grutil
 			bitDepth = 8;
 		}
 
-		std::shared_ptr<re::Texture> texture(nullptr);
+		core::InvPtr<re::Texture> texture(nullptr);
 		std::vector<re::Texture::ImageDataUniquePtr> initialData;
 		if (imageData)
 		{

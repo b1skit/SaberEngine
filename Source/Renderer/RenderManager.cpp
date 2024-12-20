@@ -127,7 +127,7 @@ namespace re
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_inventory(nullptr)
 		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
-		, m_newTextures(util::NBufferedVector<std::shared_ptr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newTextures(util::NBufferedVector<core::InvPtr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newBuffers(util::NBufferedVector<std::shared_ptr<re::Buffer>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -198,6 +198,7 @@ namespace re
 		m_sceneData->Initialize();
 
 		CreateSamplerLibrary();
+		CreateDefaultTextures();
 
 		SEEndCPUEvent();
 	}
@@ -405,13 +406,15 @@ namespace re
 		// Clear single-frame resources:
 		m_singleFrameVertexStreams.Destroy();
 
-		// We destroy this on behalf of the EngineApp, as the inventory typically contains GPU resources that need to
-		// be destroyed from the render thread (i.e. for OpenGL)
-		m_inventory->Destroy();
+		m_defaultTextures.clear();
 
 		// Destroy the swap chain before forcing deferred deletions. This is safe, as we've already flushed any
 		// remaining outstanding work
 		re::Context::Get()->GetSwapChain().Destroy();
+
+		// We destroy this on behalf of the EngineApp, as the inventory typically contains GPU resources that need to
+		// be destroyed from the render thread (i.e. for OpenGL)
+		m_inventory->Destroy();
 
 		ProcessDeferredDeletions(k_forceDeferredDeletionsFlag); // Force-delete everything
 
@@ -537,7 +540,7 @@ namespace re
 
 
 	template<>
-	void RenderManager::RegisterForCreateDEPRECATED(std::shared_ptr<re::Texture> newObject)
+	void RenderManager::RegisterForCreate(core::InvPtr<re::Texture> const& newObject)
 	{
 		m_newTextures.EmplaceBack(std::move(newObject));
 	}
@@ -712,6 +715,72 @@ namespace re
 			.m_maxLOD = std::numeric_limits<float>::max() // No limit
 		};
 		std::ignore = re::Sampler::Create("WrapCmpMinMagLinearMipPoint", k_wrapCmpMinMagLinearMipPoint);
+	}
+
+
+	void RenderManager::CreateDefaultTextures()
+	{
+		// Default 2D texture fallbacks:
+		const re::Texture::TextureParams defaultTexParams = re::Texture::TextureParams
+		{
+			.m_usage =
+				static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
+			.m_dimension = re::Texture::Dimension::Texture2D,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
+			.m_colorSpace = re::Texture::ColorSpace::Linear,
+			.m_createAsPermanent = true,
+		};
+
+		m_defaultTextures[en::DefaultResourceNames::k_opaqueWhiteDefaultTexName] = re::Texture::Create(
+			en::DefaultResourceNames::k_opaqueWhiteDefaultTexName,
+			defaultTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 1.f));
+
+		m_defaultTextures[en::DefaultResourceNames::k_transparentWhiteDefaultTexName] = re::Texture::Create(
+			en::DefaultResourceNames::k_transparentWhiteDefaultTexName,
+			defaultTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 0.f));
+
+		m_defaultTextures[en::DefaultResourceNames::k_opaqueBlackDefaultTexName] = re::Texture::Create(
+			en::DefaultResourceNames::k_opaqueBlackDefaultTexName,
+			defaultTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 1.f));
+
+		m_defaultTextures[en::DefaultResourceNames::k_transparentBlackDefaultTexName] = re::Texture::Create(
+			en::DefaultResourceNames::k_transparentBlackDefaultTexName,
+			defaultTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 0.f));
+
+
+		// Default cube map texture fallbacks:
+		const re::Texture::TextureParams defaultCubeMapTexParams = re::Texture::TextureParams
+		{
+			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
+			.m_dimension = re::Texture::Dimension::TextureCube,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
+			.m_colorSpace = re::Texture::ColorSpace::Linear,
+			.m_createAsPermanent = true,
+		};
+
+		m_defaultTextures[en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName] = re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 1.f));
+
+		m_defaultTextures[en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName] = re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(1.f, 1.f, 1.f, 0.f));
+
+		m_defaultTextures[en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName] = re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 1.f));
+
+		m_defaultTextures[en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName] = re::Texture::Create(
+			en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName,
+			defaultCubeMapTexParams,
+			glm::vec4(0.f, 0.f, 0.f, 0.f));
 	}
 
 

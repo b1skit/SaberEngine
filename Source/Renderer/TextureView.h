@@ -116,8 +116,7 @@ namespace re
 		TextureView(TextureView::TextureCubeView const& view, ViewFlags const& = ViewFlags{});
 		TextureView(TextureView::TextureCubeArrayView const& view, ViewFlags const& = ViewFlags{});
 
-		TextureView(re::Texture const* tex, ViewFlags const& = ViewFlags{}); // Create a default view that includes all subresources
-		TextureView(re::Texture const& tex, ViewFlags const& = ViewFlags{});
+		TextureView(core::InvPtr<re::Texture> const& tex, ViewFlags const& = ViewFlags{}); // Create a default view that includes all subresources
 		TextureView(std::shared_ptr<re::Texture const> const& tex, ViewFlags const& = ViewFlags{});
 
 		TextureView(/* Don't use this directly */);
@@ -139,16 +138,16 @@ namespace re
 
 	public:
 		// For views describing exactly 1 subresource only
-		static uint32_t GetSubresourceIndex(re::Texture const*, TextureView const&);
+		static uint32_t GetSubresourceIndex(core::InvPtr<re::Texture> const&, TextureView const&);
 
 		// Get a subresource index from array/mip indexes RELATIVE to the TextureView's 1st array/mip index
 		static uint32_t GetSubresourceIndexFromRelativeOffsets( 
-			re::Texture const*, TextureView const&, uint32_t relativeArrayIdx, uint32_t relativeMipIdx);
+			core::InvPtr<re::Texture> const&, TextureView const&, uint32_t relativeArrayIdx, uint32_t relativeMipIdx);
 
 		// Get a vector of all of the subresources described by a view
-		static std::vector<uint32_t> GetSubresourceIndexes(re::Texture const*, re::TextureView const&);
+		static std::vector<uint32_t> GetSubresourceIndexes(core::InvPtr<re::Texture> const&, re::TextureView const&);
 
-		static void ValidateView(re::Texture const*, re::TextureView const&); // _DEBUG only
+		static void ValidateView(core::InvPtr<re::Texture> const&, re::TextureView const&); // _DEBUG only
 
 
 	public:
@@ -184,8 +183,8 @@ namespace re
 
 	struct TextureAndSamplerInput
 	{
-		TextureAndSamplerInput(char const* shaderName, re::Texture const*, core::InvPtr<re::Sampler> const&, TextureView const&);
-		TextureAndSamplerInput(std::string const& shaderName, re::Texture const*, core::InvPtr<re::Sampler> const&, TextureView const&);
+		TextureAndSamplerInput(char const* shaderName, core::InvPtr<re::Texture> const&, core::InvPtr<re::Sampler> const&, TextureView const&);
+		TextureAndSamplerInput(std::string const& shaderName, core::InvPtr<re::Texture> const&, core::InvPtr<re::Sampler> const&, TextureView const&);
 
 		TextureAndSamplerInput(TextureAndSamplerInput const& rhs) noexcept;
 		TextureAndSamplerInput(TextureAndSamplerInput&& rhs) noexcept;
@@ -196,7 +195,7 @@ namespace re
 		~TextureAndSamplerInput() = default;
 
 		std::string m_shaderName;
-		re::Texture const* m_texture;
+		core::InvPtr<re::Texture> m_texture;
 		core::InvPtr<re::Sampler> m_sampler;
 
 		TextureView m_textureView;
@@ -205,8 +204,8 @@ namespace re
 
 	struct RWTextureInput
 	{
-		RWTextureInput(char const* shaderName, re::Texture const*, TextureView const&);
-		RWTextureInput(std::string const& shaderName, re::Texture const*, TextureView const&);
+		RWTextureInput(char const* shaderName, core::InvPtr<re::Texture> const&, TextureView const&);
+		RWTextureInput(std::string const& shaderName, core::InvPtr<re::Texture> const&, TextureView const&);
 
 		RWTextureInput(RWTextureInput const& rhs) noexcept;
 		RWTextureInput(RWTextureInput&& rhs) noexcept;
@@ -217,7 +216,7 @@ namespace re
 		~RWTextureInput() = default;
 
 		std::string m_shaderName;
-		re::Texture const* m_texture;
+		core::InvPtr<re::Texture> m_texture;
 
 		TextureView m_textureView;
 	};

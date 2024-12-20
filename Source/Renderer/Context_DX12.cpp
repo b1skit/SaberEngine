@@ -219,7 +219,7 @@ namespace dx12
 		SEBeginGPUEvent(commandList->GetD3DCommandList(), perfmarkers::Type::GraphicsCommandList, "Swapchain transitions");
 
 		commandList->TransitionResource(
-			swapChainTargetSet->GetColorTarget(0).GetTexture().get(),
+			swapChainTargetSet->GetColorTarget(0).GetTexture(),
 			D3D12_RESOURCE_STATE_PRESENT,
 			swapChainTargetSet->GetColorTarget(0).GetTargetParams().m_textureView);
 

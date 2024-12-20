@@ -98,7 +98,7 @@ namespace gr
 			std::unordered_map<gr::RenderDataID, uint32_t> m_renderDataIDToTexArrayIdx;
 			std::map<uint32_t, gr::RenderDataID> m_texArrayIdxToRenderDataID;
 
-			std::shared_ptr<re::Texture> m_shadowArray;
+			core::InvPtr<re::Texture> m_shadowArray;
 			uint32_t m_numShadows = 0;
 		};
 		ShadowMetadata m_directionalShadowMetadata;

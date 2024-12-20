@@ -95,18 +95,18 @@ namespace gr
 
 		std::map<util::HashKey, TextureInputDefault> const& GetTextureInputs() const;
 
-		std::shared_ptr<re::Texture> const* GetTextureOutput(util::HashKey const& outputScriptName) const;
-		std::shared_ptr<re::Texture> const* GetTextureOutput(char const* outputScriptName) const;
-		std::shared_ptr<re::Texture> const* GetTextureOutput(std::string const& outputScriptName) const;
+		core::InvPtr<re::Texture> const* GetTextureOutput(util::HashKey const& outputScriptName) const;
+		core::InvPtr<re::Texture> const* GetTextureOutput(char const* outputScriptName) const;
+		core::InvPtr<re::Texture> const* GetTextureOutput(std::string const& outputScriptName) const;
 
 	protected:
 		void RegisterTextureInput(util::HashKey const&, TextureInputDefault = TextureInputDefault::None);
-		void RegisterTextureOutput(util::HashKey const&, std::shared_ptr<re::Texture> const*);
+		void RegisterTextureOutput(util::HashKey const&, core::InvPtr<re::Texture> const*);
 
 	private:
 		// These must be populated during the call to RegisterInputs/Outputs()
 		std::map<util::HashKey, TextureInputDefault> m_textureInputs;
-		std::map<util::HashKey, std::shared_ptr<re::Texture> const*> m_textureOutputs;
+		std::map<util::HashKey, core::InvPtr<re::Texture> const*> m_textureOutputs;
 
 
 		// Buffer inputs/outputs:
@@ -259,7 +259,7 @@ namespace gr
 	}
 
 
-	inline std::shared_ptr<re::Texture> const* GraphicsSystem::GetTextureOutput(util::HashKey const& scriptName) const
+	inline core::InvPtr<re::Texture> const* GraphicsSystem::GetTextureOutput(util::HashKey const& scriptName) const
 	{
 		// Note: It's possible for GS's with multiple initialization steps to hit this if its first initialization step
 		// runs before a GS it is dependent on has been initialized (because we (currently) just initialize in the order
@@ -270,13 +270,13 @@ namespace gr
 	}
 
 
-	inline std::shared_ptr<re::Texture> const* GraphicsSystem::GetTextureOutput(char const* scriptName) const
+	inline core::InvPtr<re::Texture> const* GraphicsSystem::GetTextureOutput(char const* scriptName) const
 	{
 		return GetTextureOutput(util::HashKey::Create(scriptName));
 	}
 
 
-	inline std::shared_ptr<re::Texture> const* GraphicsSystem::GetTextureOutput(std::string const& scriptName) const
+	inline core::InvPtr<re::Texture> const* GraphicsSystem::GetTextureOutput(std::string const& scriptName) const
 	{
 		return GetTextureOutput(scriptName.c_str());
 	}
@@ -293,7 +293,7 @@ namespace gr
 
 
 	inline void GraphicsSystem::RegisterTextureOutput(
-		util::HashKey const& scriptName, std::shared_ptr<re::Texture> const* outputTex)
+		util::HashKey const& scriptName, core::InvPtr<re::Texture> const* outputTex)
 	{
 		// Note: It's possible for the texture to be null here (e.g. for GS's with multiple initialization steps). This
 		// is fine long as everything exists the last time a GS calls this function.

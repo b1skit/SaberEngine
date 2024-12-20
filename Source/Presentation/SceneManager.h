@@ -1,5 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Core/Inventory.h"
+
 #include "Core/Interfaces/IEventListener.h"
 #include "Core/Interfaces/IEngineComponent.h"
 #include "Core/Interfaces/INamedObject.h"
@@ -30,11 +32,20 @@ namespace fr
 
 
 	public:
+		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
+		core::Inventory* GetInventory() const;
+	private:
+		core::Inventory* m_inventory;
+
+
+	public:
 		void ShowImGuiWindow(bool*) const;
 
 
 	private:
 		bool Load(std::string const& relativeFilePath); // Filename and path, relative to the ..\Scenes\ dir
+
+		void CreateDefaultSceneResources();
 
 
 	private:
@@ -44,5 +55,17 @@ namespace fr
 		SceneManager(SceneManager const&) = delete;
 		void operator=(SceneManager const&) = delete;
 	};
+
+
+	inline void SceneManager::SetInventory(core::Inventory* inventory)
+	{
+		m_inventory = inventory;
+	}
+
+
+	inline core::Inventory* SceneManager::GetInventory() const
+	{
+		return m_inventory;
+	}
 }
 

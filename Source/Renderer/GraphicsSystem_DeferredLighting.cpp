@@ -80,7 +80,7 @@ namespace
 	}
 
 
-	re::TextureView CreateShadowArrayReadView(re::Texture const* shadowArray)
+	re::TextureView CreateShadowArrayReadView(core::InvPtr<re::Texture> const& shadowArray)
 	{
 		return re::TextureView(
 			shadowArray,
@@ -186,7 +186,6 @@ namespace gr
 		brdfParams.m_format = re::Texture::Format::RGBA16F;
 		brdfParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		brdfParams.m_mipMode = re::Texture::MipMode::None;
-		brdfParams.m_addToSceneData = false;
 		brdfParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams);
@@ -220,7 +219,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::PopulateIEMTex(
-		re::StagePipeline* pipeline, re::Texture const* iblTex, std::shared_ptr<re::Texture>& iemTexOut) const
+		re::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& iemTexOut) const
 	{
 		const uint32_t iemTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_iemTexWidthHeightKey));
@@ -234,7 +233,6 @@ namespace gr
 		iemTexParams.m_dimension = re::Texture::Dimension::TextureCube;
 		iemTexParams.m_format = re::Texture::Format::RGBA16F;
 		iemTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		iemTexParams.m_addToSceneData = false;
 		iemTexParams.m_mipMode = re::Texture::MipMode::None;
 
 		const std::string IEMTextureName = iblTex->GetName() + "_IEMTexture";
@@ -289,7 +287,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::PopulatePMREMTex(
-		re::StagePipeline* pipeline, re::Texture const* iblTex, std::shared_ptr<re::Texture>& pmremTexOut) const
+		re::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& pmremTexOut) const
 	{
 		const uint32_t pmremTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_pmremTexWidthHeightKey));
@@ -303,7 +301,7 @@ namespace gr
 		pmremTexParams.m_dimension = re::Texture::Dimension::TextureCube;
 		pmremTexParams.m_format = re::Texture::Format::RGBA16F;
 		pmremTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		pmremTexParams.m_addToSceneData = false;
+		pmremTexParams.m_createAsPermanent = false;
 		pmremTexParams.m_mipMode = re::Texture::MipMode::Allocate;
 
 		const std::string PMREMTextureName = iblTex->GetName() + "_PMREMTexture";
@@ -473,7 +471,6 @@ namespace gr
 				.m_format = re::Texture::Format::Depth32F,
 				.m_colorSpace = re::Texture::ColorSpace::Linear,
 				.m_mipMode = re::Texture::MipMode::None,
-				.m_addToSceneData = false,
 				.m_clear = re::Texture::TextureParams::ClearValues{},
 			},
 			glm::vec4(1.f, 1.f, 1.f, 1.f));
@@ -486,7 +483,6 @@ namespace gr
 				.m_format = re::Texture::Format::Depth32F,
 				.m_colorSpace = re::Texture::ColorSpace::Linear,
 				.m_mipMode = re::Texture::MipMode::None,
-				.m_addToSceneData = false,
 				.m_clear = re::Texture::TextureParams::ClearValues{},
 			},
 			glm::vec4(1.f, 1.f, 1.f, 1.f));
@@ -508,10 +504,9 @@ namespace gr
 		lightTargetTexParams.m_format = re::Texture::Format::RGBA16F;
 		lightTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		lightTargetTexParams.m_mipMode = re::Texture::MipMode::None;
-		lightTargetTexParams.m_addToSceneData = false;
 		lightTargetTexParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		std::shared_ptr<re::Texture> lightTargetTex = re::Texture::Create("DeferredLightTarget", lightTargetTexParams);
+		core::InvPtr<re::Texture> const& lightTargetTex = re::Texture::Create("DeferredLightTarget", lightTargetTexParams);
 
 		// Create the lighting target set (shared by all lights/stages):
 		re::TextureTarget::TargetParams deferredTargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1)};
@@ -610,7 +605,7 @@ namespace gr
 				"Texture dependency not found");
 
 			util::HashKey const& texName = GBufferGraphicsSystem::GBufferTexNameHashKeys[slot];
-			std::shared_ptr<re::Texture> const& gbufferTex = *texDependencies.at(texName);
+			core::InvPtr<re::Texture> const& gbufferTex = *texDependencies.at(texName);
 			
 			re::TextureView gbufferTexView = re::TextureView(gbufferTex);
 
@@ -628,7 +623,7 @@ namespace gr
 		// Attach the GBUffer depth input:
 		constexpr uint8_t depthBufferSlot = gr::GBufferGraphicsSystem::GBufferDepth;
 		util::HashKey const& depthName = GBufferGraphicsSystem::GBufferTexNameHashKeys[depthBufferSlot];
-		std::shared_ptr<re::Texture> const& depthTex = *texDependencies.at(depthName);
+		core::InvPtr<re::Texture> const& depthTex = *texDependencies.at(depthName);
 
 		const re::TextureView gbufferDepthTexView = re::TextureView(depthTex);
 
@@ -701,13 +696,13 @@ namespace gr
 					gr::MeshPrimitive::RenderData const& ambientMeshPrimData =
 						ambientItr.Get<gr::MeshPrimitive::RenderData>();
 
-					re::Texture const* iblTex = ambientData.m_iblTex;
+					core::InvPtr<re::Texture> const& iblTex = ambientData.m_iblTex;
 					SEAssert(iblTex, "IBL texture cannot be null");
 
-					std::shared_ptr<re::Texture> iemTex = nullptr;
+					core::InvPtr<re::Texture> iemTex;
 					PopulateIEMTex(m_resourceCreationStagePipeline, iblTex, iemTex);
 
-					std::shared_ptr<re::Texture> pmremTex = nullptr;
+					core::InvPtr<re::Texture> pmremTex;
 					PopulatePMREMTex(m_resourceCreationStagePipeline, iblTex, pmremTex);
 
 					const uint32_t totalPMREMMipLevels = pmremTex->GetNumMips();
@@ -717,7 +712,7 @@ namespace gr
 						ambientData.m_diffuseScale,
 						ambientData.m_specularScale,
 						static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
-						m_ssaoTex.get());
+						m_ssaoTex);
 
 					std::shared_ptr<re::Buffer> ambientParams = re::Buffer::Create(
 						AmbientLightData::s_shaderName,
@@ -778,7 +773,7 @@ namespace gr
 					ambientRenderData.m_diffuseScale,
 					ambientRenderData.m_specularScale,
 					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
-					m_ssaoTex.get());
+					m_ssaoTex);
 
 				ambientLight.second.m_ambientParams->Commit(ambientLightParamsData);
 			}
@@ -1057,7 +1052,7 @@ namespace gr
 					char const* shadowTexShaderName,
 					util::StringHash const& samplerTypeName,
 					LightDataBufferIdxMap const* lightDataBufferIdxMap,
-					re::Texture const* shadowArrayTex,
+					core::InvPtr<re::Texture> const* shadowArrayTex,
 					ShadowArrayIdxMap const* shadowArrayIdxMap)
 					{
 						re::Batch* duplicatedBatch =
@@ -1075,9 +1070,9 @@ namespace gr
 							// texture changes)						
 							duplicatedBatch->AddTextureInput(
 								shadowTexShaderName,
-								shadowArrayTex,
+								*shadowArrayTex,
 								re::Sampler::GetSampler(samplerTypeName),
-								CreateShadowArrayReadView(shadowArrayTex));
+								CreateShadowArrayReadView(*shadowArrayTex));
 						}
 						
 						// Deferred light volumes: Single-frame buffer containing the indexes of a single light
@@ -1106,7 +1101,7 @@ namespace gr
 						"DirectionalShadows",
 						sampler2DShadowName,
 						m_directionalLightDataBufferIdxMap,
-						m_directionalShadowArrayTex->get(),
+						m_directionalShadowArrayTex,
 						m_directionalShadowArrayIdxMap);
 				}
 				break;
@@ -1117,7 +1112,7 @@ namespace gr
 						"PointShadows",
 						samplerCubeShadowName,
 						m_pointLightDataBufferIdxMap,
-						m_pointShadowArrayTex->get(),
+						m_pointShadowArrayTex,
 						m_pointShadowArrayIdxMap);
 				}
 				break;
@@ -1128,7 +1123,7 @@ namespace gr
 						"SpotShadows", 
 						sampler2DShadowName, 
 						m_spotLightDataBufferIdxMap, 
-						m_spotShadowArrayTex->get(),
+						m_spotShadowArrayTex,
 						m_spotShadowArrayIdxMap);
 				}
 				break;

@@ -96,7 +96,7 @@ namespace opengl
 			SEAssert(!targetPlatParams->m_isCreated, "Target has already been created");
 			targetPlatParams->m_isCreated = true;
 
-			re::Texture const* texture = colorTarget.GetTexture().get();
+			core::InvPtr<re::Texture> const& texture = colorTarget.GetTexture();
 
 			re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 			SEAssert((textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
@@ -239,7 +239,7 @@ namespace opengl
 		std::vector<GLenum> buffers;
 		buffers.reserve(targetSet.GetNumColorTargets());
 
-		re::Texture const* firstTarget = nullptr;
+		core::InvPtr<re::Texture> firstTarget;
 		uint32_t firstTargetMipLevel = 0;
 		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
@@ -248,7 +248,7 @@ namespace opengl
 				break;
 			}
 			
-			re::Texture const* texture = targetSet.GetColorTarget(i).GetTexture().get();
+			core::InvPtr<re::Texture> const& texture = targetSet.GetColorTarget(i).GetTexture();
 			SEAssert(texture->GetPlatformParams()->m_isCreated, "Texture is not created");
 
 			re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
@@ -266,7 +266,7 @@ namespace opengl
 
 			re::TextureView const& texView = targetParams.m_textureView;
 
-			const GLuint textureID = opengl::Texture::GetOrCreateTextureView(*texture, texView);
+			const GLuint textureID = opengl::Texture::GetOrCreateTextureView(texture, texView);
 
 			glNamedFramebufferTexture( // Note: "Named" DSA function: no need to explicitely bind the framebuffer first
 				targetSetParams->m_frameBufferObject,		// framebuffer
@@ -380,7 +380,7 @@ namespace opengl
 			SEAssert(!depthTargetPlatParams->m_isCreated, "Target has already been created");
 			depthTargetPlatParams->m_isCreated = true;
 
-			re::Texture const* depthStencilTex = depthStencilTarget->GetTexture().get();
+			core::InvPtr<re::Texture> const& depthStencilTex = depthStencilTarget->GetTexture();
 
 			// Create framebuffer:
 			re::Texture::TextureParams const& depthTextureParams = depthStencilTex->GetTextureParams();
@@ -435,7 +435,7 @@ namespace opengl
 			SEAssert(depthTarget.GetTexture()->GetNumMips() == 1,
 				"It is (currently) unexpected that a depth target has mips");
 
-			re::Texture const* depthTex = depthTarget.GetTexture().get();
+			core::InvPtr<re::Texture> const& depthTex = depthTarget.GetTexture();
 			SEAssert(depthTex->GetPlatformParams()->m_isCreated, "Texture is not created");
 
 			SEAssert((depthTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget),
@@ -452,7 +452,7 @@ namespace opengl
 
 			re::TextureView const& texView = depthTarget.GetTargetParams().m_textureView;
 
-			const GLuint textureID = opengl::Texture::GetOrCreateTextureView(*depthTex, texView);
+			const GLuint textureID = opengl::Texture::GetOrCreateTextureView(depthTex, texView);
 
 			glNamedFramebufferTexture( // Note: "Named" DSA function: no need to explicitely bind the framebuffer first
 				targetSetParams->m_frameBufferObject,		// framebuffer
@@ -519,7 +519,7 @@ namespace opengl
 			opengl::TextureTargetSet::PlatformParams const* targetSetPlatParams =
 				targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 
-			re::Texture const* depthStencilTex = targetSet.GetDepthStencilTarget().GetTexture().get();
+			core::InvPtr<re::Texture> const& depthStencilTex = targetSet.GetDepthStencilTarget().GetTexture();
 			re::Texture::TextureParams const& texParams = depthStencilTex->GetTextureParams();
 
 			opengl::TextureTarget::PlatformParams const* targetPlatParams =
@@ -580,12 +580,12 @@ namespace opengl
 				break;;
 			}
 			
-			re::Texture const* texture = texTarget.GetTexture().get();
+			core::InvPtr<re::Texture> const& texture = texTarget.GetTexture();
 			re::TextureTarget::TargetParams const& targetParams = texTarget.GetTargetParams();
 			
 			constexpr uint32_t k_accessMode = GL_READ_WRITE;
 
-			opengl::Texture::BindAsImageTexture(*texture, slot, targetParams.m_textureView, k_accessMode);
+			opengl::Texture::BindAsImageTexture(texture, slot, targetParams.m_textureView, k_accessMode);
 		}
 
 		// TODO: Support compute target clearing

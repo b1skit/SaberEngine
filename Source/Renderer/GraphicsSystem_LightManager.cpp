@@ -18,7 +18,7 @@ namespace
 		gr::Transform::RenderData const& transformData,
 		gr::RenderDataID lightID,
 		gr::Light::Type lightType,
-		re::Texture const* shadowTex,
+		core::InvPtr<re::Texture> const& shadowTex,
 		uint32_t shadowArrayIdx)
 	{
 		gr::ShadowMap::RenderData const* shadowData = nullptr;
@@ -414,9 +414,7 @@ namespace gr
 
 					shadowArrayParams.m_format = re::Texture::Format::Depth32F;
 					shadowArrayParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-
 					shadowArrayParams.m_mipMode = re::Texture::MipMode::None;
-					shadowArrayParams.m_addToSceneData = false;
 
 					shadowArrayParams.m_clear.m_depthStencil.m_depth = 1.f;
 
@@ -480,7 +478,7 @@ namespace gr
 						transformData,
 						lightID,
 						lightType,
-						shadowMetadata.m_shadowArray.get(),
+						shadowMetadata.m_shadowArray,
 						shadowArrayIdx);
 
 					++lightItr;
@@ -530,7 +528,7 @@ namespace gr
 						transformData,
 						movedLightID,
 						lightType,
-						shadowMetadata.m_shadowArray.get(),
+						shadowMetadata.m_shadowArray,
 						shadowArrayIdx);
 
 					lightMetadata.m_lightData->Commit(&lightData, movedLightIdx, 1);
@@ -574,7 +572,7 @@ namespace gr
 								transformData,
 								lightID,
 								lightType,
-								shadowMetadata.m_shadowArray.get(),
+								shadowMetadata.m_shadowArray,
 								shadowArrayIdx);
 
 							SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),

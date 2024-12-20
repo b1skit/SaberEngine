@@ -56,7 +56,6 @@ namespace dx12
 		colorParams.m_format = re::Texture::Format::RGBA8_UNORM;
 		colorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		colorParams.m_mipMode = re::Texture::MipMode::None;
-		colorParams.m_addToSceneData = false;
 		colorParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		// Ensure our format here matches the one that our texture will be created with:
@@ -117,7 +116,7 @@ namespace dx12
 			CheckHResult(hr, "Failed to get backbuffer");
 
 			// Create (and name) a color target texture:
-			std::shared_ptr<re::Texture> colorTargetTex = dx12::Texture::CreateFromExistingResource(
+			core::InvPtr<re::Texture> colorTargetTex = dx12::Texture::CreateFromExistingResource(
 				"SwapChainColorTarget_" + std::to_string(backbufferIdx), 
 				colorParams, 
 				backbufferResource);

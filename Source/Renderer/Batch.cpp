@@ -635,7 +635,7 @@ namespace re
 
 	void Batch::AddTextureInput(
 		char const* shaderName,
-		re::Texture const* texture,
+		core::InvPtr<re::Texture> const& texture,
 		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
@@ -662,19 +662,9 @@ namespace re
 	}
 
 
-	void Batch::AddTextureInput(
-		char const* shaderName,
-		std::shared_ptr<re::Texture const> const& texture,
-		core::InvPtr<re::Sampler> const& sampler,
-		re::TextureView const& texView)
-	{
-		AddTextureInput(shaderName, texture.get(), sampler, texView);
-	}
-
-
 	void Batch::AddRWTextureInput(
 		char const* shaderName,
-		re::Texture const* texture,
+		core::InvPtr<re::Texture> const& texture,
 		re::TextureView const& texView)
 	{
 		SEAssert(shaderName != nullptr && strlen(shaderName) > 0, "Invalid shader sampler name");
@@ -698,14 +688,5 @@ namespace re
 
 		// Include RW textures in the batch hash:
 		AddDataBytesToHash(texture->GetUniqueID());
-	}
-
-
-	void Batch::AddRWTextureInput(
-		char const* shaderName,
-		std::shared_ptr<re::Texture const> texture,
-		re::TextureView const& texView)
-	{
-		AddRWTextureInput(shaderName, texture.get(),  texView);
 	}
 }

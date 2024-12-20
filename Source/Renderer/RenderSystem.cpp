@@ -57,7 +57,7 @@ namespace
 					else
 					{
 						// Source GS doesn't exist. Attempt to use a default texture as a fallback
-						re::SceneData* sceneData = re::RenderManager::GetSceneData();
+						re::RenderManager* renderMgr = re::RenderManager::Get();
 
 						gr::GraphicsSystem::TextureInputDefault inputDefault =
 							dstGS->GetTextureInputDefaultType(dstName);
@@ -66,50 +66,50 @@ namespace
 						{
 						case gr::GraphicsSystem::TextureInputDefault::OpaqueWhite:
 						{
-							texDependencies[dstName] =
-								sceneData->GetTexturePtr(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName);
+							texDependencies[dstName] = 
+								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::TransparentWhite:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexturePtr(en::DefaultResourceNames::k_transparentWhiteDefaultTexName);
+								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_transparentWhiteDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::OpaqueBlack:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexturePtr(en::DefaultResourceNames::k_opaqueBlackDefaultTexName);
+								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_opaqueBlackDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::TransparentBlack:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexturePtr(en::DefaultResourceNames::k_transparentBlackDefaultTexName);
+								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_transparentBlackDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::CubeMap_OpaqueWhite:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexturePtr(en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName);
+								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::CubeMap_TransparentWhite:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexturePtr(en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName);
+								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::CubeMap_OpaqueBlack:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexturePtr(en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName);
+								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::CubeMap_TransparentBlack:
 						{
 							texDependencies[dstName] =
-								sceneData->GetTexturePtr(en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName);
+								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName);
 						}
 						break;
 						case gr::GraphicsSystem::TextureInputDefault::None:

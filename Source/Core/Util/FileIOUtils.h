@@ -8,6 +8,9 @@ namespace util
 	std::vector<std::string> GetDirectoryFilenameContents(
 		char const* directoryPath, char const* fileExtension = nullptr);
 
+	bool FileExists(char const* path);
+	bool FileExists(std::string const& path);
+
 
 	enum class BuildConfiguration
 	{

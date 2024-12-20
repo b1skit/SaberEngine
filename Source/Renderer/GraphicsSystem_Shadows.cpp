@@ -8,6 +8,7 @@
 #include "ShadowMapRenderData.h"
 
 #include "Core/Config.h"
+#include "Core/InvPtr.h"
 
 #include "Shaders/Common/ShadowRenderParams.h"
 
@@ -54,13 +55,13 @@ namespace
 	}
 
 
-	re::Viewport CreateShadowArrayWriteViewport(re::Texture const* shadowArray)
+	re::Viewport CreateShadowArrayWriteViewport(core::InvPtr<re::Texture> const& shadowArray)
 	{
 		return re::Viewport(0, 0, shadowArray->Width(), shadowArray->Height());
 	}
 
 
-	re::ScissorRect CreateShadowArrayWriteScissorRect(re::Texture const* shadowArray)
+	re::ScissorRect CreateShadowArrayWriteScissorRect(core::InvPtr<re::Texture> const& shadowArray)
 	{
 		return re::ScissorRect(0, 0, static_cast<long>(shadowArray->Width()), static_cast<long>(shadowArray->Height()));
 	}
@@ -140,8 +141,8 @@ namespace gr
 					shadowData.m_lightType, 
 					GetShadowArrayIdx(m_pointShadowArrayIdxMap, lightID)) });
 
-		pointShadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(m_pointShadowArrayTex->get()));
-		pointShadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(m_pointShadowArrayTex->get()));
+		pointShadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(*m_pointShadowArrayTex));
+		pointShadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(*m_pointShadowArrayTex));
 		pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::ClearMode::Enabled);
 
 		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
@@ -203,19 +204,19 @@ namespace gr
 
 		shadowStage->SetDrawStyle(effect::drawstyle::Shadow_2D);
 
-		std::shared_ptr<re::Texture> const* shadowArrayTex = nullptr;
+		core::InvPtr<re::Texture> shadowArrayTex;
 		ShadowArrayIdxMap const* shadowArrayIdxMap = nullptr;
 		switch (shadowData.m_lightType)
 		{
 		case gr::Light::Type::Directional:
 		{
-			shadowArrayTex = m_directionalShadowArrayTex;
+			shadowArrayTex = *m_directionalShadowArrayTex;
 			shadowArrayIdxMap = m_directionalShadowArrayIdxMap;
 		}
 		break;
 		case gr::Light::Type::Spot:
 		{
-			shadowArrayTex = m_spotShadowArrayTex;
+			shadowArrayTex = *m_spotShadowArrayTex;
 			shadowArrayIdxMap = m_spotShadowArrayIdxMap;
 		}
 		break;
@@ -227,14 +228,14 @@ namespace gr
 			re::TextureTargetSet::Create(std::format("{}_2DShadowTargetSet", lightName));
 		
 		shadowTargetSet->SetDepthStencilTarget(
-			*shadowArrayTex, 
+			shadowArrayTex, 
 			re::TextureTarget::TargetParams{
 				.m_textureView = CreateShadowWriteView(
 					shadowData.m_lightType,
 					GetShadowArrayIdx(shadowArrayIdxMap, lightID)) });
 
-		shadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(shadowArrayTex->get()));;
-		shadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(shadowArrayTex->get()));	
+		shadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(shadowArrayTex));;
+		shadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(shadowArrayTex));	
 
 		shadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::ClearMode::Enabled);
 

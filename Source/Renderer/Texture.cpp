@@ -84,7 +84,7 @@ namespace re
 	}
 
 
-	std::shared_ptr<re::Texture> Texture::Create(
+	core::InvPtr<re::Texture> Texture::Create(
 		std::string const& name, 
 		TextureParams const& params, 
 		std::vector<ImageDataUniquePtr>&& initialData)
@@ -107,13 +107,11 @@ namespace re
 			ComputeTotalBytesPerFace(params),
 			std::move(initialData));
 
-		std::shared_ptr<re::Texture> newTex = CreateInternal(name, params, std::move(initialDataPtr));
-
-		return newTex;
+		return CreateInternal(name, params, std::move(initialDataPtr));
 	}
 
 
-	std::shared_ptr<re::Texture> Texture::Create(
+	core::InvPtr<re::Texture> Texture::Create(
 		std::string const& name,
 		TextureParams const& params,
 		std::vector<uint8_t>&& initialData)
@@ -128,13 +126,13 @@ namespace re
 			ComputeTotalBytesPerFace(params),
 			std::move(initialData));
 
-		std::shared_ptr<re::Texture> newTex = CreateInternal(name, params, std::move(initialDataPtr));
+		core::InvPtr<re::Texture> newTex = CreateInternal(name, params, std::move(initialDataPtr));
 
 		return newTex;
 	}
 
 
-	std::shared_ptr<re::Texture> Texture::Create(
+	core::InvPtr<re::Texture> Texture::Create(
 		std::string const& name,
 		TextureParams const& params,
 		glm::vec4 fillColor)
@@ -149,7 +147,7 @@ namespace re
 			ComputeTotalBytesPerFace(params),
 			std::vector<uint8_t>());
 
-		std::shared_ptr<re::Texture> newTex = CreateInternal(name, params, std::move(initialData));
+		core::InvPtr<re::Texture> newTex = CreateInternal(name, params, std::move(initialData));
 
 		newTex->Fill(fillColor);
 		
@@ -157,48 +155,55 @@ namespace re
 	}
 
 
-	std::shared_ptr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params)
+	core::InvPtr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params)
 	{
 		SEAssert((params.m_usage ^ Usage::ColorSrc), "Textures with Usage::ColorSrc only must have initial data");
 		return CreateInternal(name, params, nullptr);
 	}
 
 
-	std::shared_ptr<re::Texture> Texture::CreateInternal(
+	core::InvPtr<re::Texture> Texture::CreateInternal(
 		std::string const& name, TextureParams const& params, std::unique_ptr<IInitialData>&& initialData)
 	{
-		std::shared_ptr<re::Texture> newTexture = nullptr;
+		struct LoadContext final : public virtual core::ILoadContext<re::Texture>
 		{
-			static std::mutex s_createInternalMutex;
-			std::lock_guard<std::mutex> lock(s_createInternalMutex);
-
-			// If the Texture already exists, return it. Otherwise, create the Texture 
-			if (params.m_addToSceneData && re::RenderManager::GetSceneData()->TextureExists(name))
+			void OnLoadBegin(core::InvPtr<re::Texture>) override
 			{
-				// Note: In this case, we're assuming the texture is identical and ignoring the initial data
-				return re::RenderManager::GetSceneData()->GetTexture(name);
+				LOG(std::format("Creating texture \"{}\"", m_texName).c_str());
 			}
 
-			LOG(std::format("Creating texture \"{}\"", name).c_str());
-
-			newTexture.reset(new re::Texture(name, params));
-
-			// If requested, register the Texture with the SceneData object for lifetime management:
-			bool foundExistingTexture = false;
-			if (params.m_addToSceneData)
+			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>) override
 			{
-				foundExistingTexture = re::RenderManager::GetSceneData()->AddUniqueTexture(newTexture);
-			}
-			SEAssert(!foundExistingTexture, "Found an existing texture, this should not be possible due to the local mutex");
+				std::unique_ptr<re::Texture> newTexture(new re::Texture(m_texName.c_str(), m_texParams));
 
-			if (initialData)
-			{
-				newTexture->m_initialData = std::move(initialData);
+				if (m_initialData)
+				{
+					newTexture->m_initialData = std::move(m_initialData);
+				}
+
+				return newTexture;
 			}
 
-			// Register new Textures with the RenderManager, so their API-level objects are created before use
-			re::RenderManager::Get()->RegisterForCreateDEPRECATED(newTexture);
-		}
+			void OnLoadComplete(core::InvPtr<re::Texture> newTex) override
+			{
+				re::RenderManager::Get()->RegisterForCreate(newTex); // API-layer creation
+			}
+
+			std::string m_texName;
+			TextureParams m_texParams;
+			std::unique_ptr<IInitialData> m_initialData;
+		};
+		std::shared_ptr<LoadContext> texLoadContext = std::make_shared<LoadContext>();
+
+		texLoadContext->m_isPermanent = params.m_createAsPermanent;
+
+		texLoadContext->m_texName = name;
+		texLoadContext->m_texParams = params;
+		texLoadContext->m_initialData = std::move(initialData);		
+
+		core::InvPtr<re::Texture> const& newTexture = re::RenderManager::Get()->GetInventory()->Get(
+			util::StringHash(name),
+			static_pointer_cast<core::ILoadContext<re::Texture>>(texLoadContext));
 
 		return newTexture;
 	}
@@ -235,6 +240,13 @@ namespace re
 
 
 	Texture::~Texture()
+	{
+		SEAssert(m_platformParams == nullptr,
+			"Texture dtor called, but platform params is not null. Was Destroy() called?");
+	}
+
+
+	void Texture::Destroy()
 	{
 		LOG(std::format("Destroying texture \"{}\"", GetName()).c_str());
 
@@ -523,6 +535,12 @@ namespace re
 	}
 
 
+	uint8_t Texture::GetNumFaces(core::InvPtr<re::Texture> const& tex)
+	{
+		return GetNumFaces(tex->m_texParams.m_dimension);
+	}
+
+
 	uint8_t Texture::GetNumFaces(re::Texture const* tex)
 	{
 		return GetNumFaces(tex->m_texParams.m_dimension);
@@ -661,10 +679,10 @@ namespace re
 	// ---
 
 
-	void Texture::ShowImGuiWindow() const
+	void Texture::ShowImGuiWindow(core::InvPtr<re::Texture> const& tex)
 	{
-		ImGui::Text("Texture name: \"%s\"", GetName().c_str());
-		ImGui::Text(std::format("Texture unique ID: {}", GetUniqueID()).c_str());
+		ImGui::Text("Texture name: \"%s\"", tex->GetName().c_str());
+		ImGui::Text(std::format("Texture unique ID: {}", tex->GetUniqueID()).c_str());
 
 		static size_t s_selectedIdx = 2;
 		constexpr char const* k_scaleNames[] =
@@ -676,7 +694,7 @@ namespace re
 			"100%",
 		};
 		util::ShowBasicComboBox(
-			std::format("Texture display scale##{}", GetUniqueID()).c_str(),
+			std::format("Texture display scale##{}", tex->GetUniqueID()).c_str(),
 			k_scaleNames,
 			_countof(k_scaleNames),
 			s_selectedIdx);
@@ -693,7 +711,7 @@ namespace re
 			scale = 1; break;
 		}
 
-		platform::Texture::ShowImGuiWindow(*this, scale);
+		platform::Texture::ShowImGuiWindow(tex, scale);
 	}
 }
 

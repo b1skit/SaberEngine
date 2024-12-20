@@ -38,40 +38,16 @@ namespace re
 			std::scoped_lock lock(
 				m_meshPrimitivesMutex,
 				m_vertexStreamsMutex,
-				m_texturesReadWriteMutex,
 				m_materialsReadWriteMutex,
 				m_shadersReadWriteMutex);
 
 			m_meshPrimitives.clear();
 			m_vertexStreams.clear();
-			m_textures.clear();
 			m_materials.clear();
 			m_shaders.clear();
 		}
 
 		m_isCreated = false; // Flag that Destroy has been called
-	}
-
-
-	re::Texture const* SceneData::GetIBLTexture() const
-	{
-		// We search for a scene-specific IBL, and fallback to the engine default IBL if it's not found
-		std::shared_ptr<re::Texture> iblTexture = nullptr;
-		std::string sceneIBLPath;
-		bool result = core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, sceneIBLPath);
-		if (result)
-		{
-			iblTexture = TryGetTexture(sceneIBLPath);
-		}
-		
-		if (!iblTexture)
-		{
-			std::string const& defaultIBLPath = 
-				core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey);
-			iblTexture = GetTexture(defaultIBLPath); // Guaranteed to exist
-		}
-
-		return iblTexture.get();
 	}
 
 
@@ -133,104 +109,6 @@ namespace re
 			}
 		}
 		return replacedIncomingPtr;
-	}
-
-
-	bool SceneData::AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture)
-	{
-		SEAssert(newTexture != nullptr, "Cannot add null texture to textures table");
-
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_texturesReadWriteMutex);
-
-			const auto texturePosition = m_textures.find(newTexture->GetNameHash());
-
-			bool foundExisting = false;
-			if (texturePosition != m_textures.end()) // Found existing
-			{
-				LOG("Texture \"%s\" has alredy been registed with scene", newTexture->GetName().c_str());
-				newTexture = texturePosition->second;
-				foundExisting = true;
-			}
-			else  // Add new
-			{
-				m_textures[newTexture->GetNameHash()] = newTexture;
-				LOG("Texture \"%s\" registered with scene", newTexture->GetName().c_str());
-			}
-
-			return foundExisting;
-		}
-	}
-
-
-	std::shared_ptr<re::Texture> SceneData::GetTexture(std::string const& texName) const
-	{
-		const util::StringHash nameHash = util::StringHash(texName);
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
-
-			auto result = m_textures.find(nameHash);
-
-			SEAssert(result != m_textures.end(), "Texture with that name does not exist");
-
-			return result->second;
-		}
-	}
-
-
-	std::shared_ptr<re::Texture> const* SceneData::GetTexturePtr(std::string const& texName) const
-	{
-		const util::StringHash nameHash(texName);
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
-
-			SEAssert(m_textures.contains(nameHash), "Texture with that name does not exist");
-
-			return &m_textures.at(nameHash);
-		}
-	}
-
-
-	std::shared_ptr<re::Texture> SceneData::TryGetTexture(std::string const& texName) const
-	{
-		const util::StringHash nameHash(texName);
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
-
-			auto result = m_textures.find(nameHash);
-			return result == m_textures.end() ? nullptr : result->second;
-		}
-	}
-
-
-	bool SceneData::TextureExists(std::string const& texName) const
-	{
-		const util::StringHash nameHash(texName);
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
-			return m_textures.find(nameHash) != m_textures.end();
-		}
-	}
-
-
-	std::shared_ptr<re::Texture> SceneData::TryLoadUniqueTexture(
-		std::string const& filepath, re::Texture::ColorSpace colorSpace)
-	{
-		std::shared_ptr<re::Texture> result = TryGetTexture(filepath);
-
-		SEAssert(result == nullptr || result->GetTextureParams().m_colorSpace == colorSpace,
-			"Found a texture with the same filepath name, but different colorspace. This is unexpected");
-
-		if (result == nullptr)
-		{
-			result = grutil::LoadTextureFromFilePath({ filepath }, colorSpace, false);
-			if (result)
-			{
-				AddUniqueTexture(result);
-			}
-		}
-
-		return result;
 	}
 
 

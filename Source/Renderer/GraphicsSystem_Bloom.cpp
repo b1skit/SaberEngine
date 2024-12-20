@@ -17,8 +17,8 @@ namespace
 
 
 	BloomComputeData CreateBloomComputeParamsData(
-		std::shared_ptr<re::Texture> bloomSrcTex,
-		std::shared_ptr<re::Texture> bloomDstTex,
+		core::InvPtr<re::Texture> bloomSrcTex,
+		core::InvPtr<re::Texture> bloomDstTex,
 		uint32_t srcMipLevel,
 		uint32_t dstMipLevel,
 		bool isDownStage,
@@ -80,7 +80,7 @@ namespace gr
 			re::TextureView(*texDependencies.at(k_emissiveInput)));
 
 		// Additively blit the emissive values to the deferred lighting target:
-		std::shared_ptr<re::Texture> deferredLightTargetTex = *texDependencies.at(k_bloomTargetInput);
+		core::InvPtr<re::Texture> const& deferredLightTargetTex = *texDependencies.at(k_bloomTargetInput);
 
 		std::shared_ptr<re::TextureTargetSet> emissiveTargetSet = 
 			re::TextureTargetSet::Create("Emissive Blit Target Set");
@@ -113,7 +113,7 @@ namespace gr
 		bloomTargetTexParams.m_format = deferredLightTargetTex->GetTextureParams().m_format;
 		bloomTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		bloomTargetTexParams.m_mipMode = re::Texture::MipMode::Allocate;
-		bloomTargetTexParams.m_addToSceneData = false;
+		bloomTargetTexParams.m_createAsPermanent = false;
 
 		m_bloomTargetTex = re::Texture::Create("Bloom Target", bloomTargetTexParams);
 
@@ -228,7 +228,7 @@ namespace gr
 	{
 		CreateBatches();
 	
-		std::shared_ptr<re::Texture> deferredLightTargetTex = 
+		core::InvPtr<re::Texture> deferredLightTargetTex = 
 			m_emissiveBlitStage->GetTextureTargetSet()->GetColorTarget(0).GetTexture();
 
 		gr::Camera::Config const& cameraConfig =

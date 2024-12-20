@@ -134,13 +134,7 @@ namespace re
 
 		void AddTextureInput(
 			char const* shaderName,
-			re::Texture const*,
-			core::InvPtr<re::Sampler> const&,
-			re::TextureView const&);
-
-		void AddTextureInput(
-			char const* shaderName, 
-			std::shared_ptr<re::Texture const> const&,
+			core::InvPtr<re::Texture> const&,
 			core::InvPtr<re::Sampler> const&,
 			re::TextureView const&);
 		
@@ -148,12 +142,7 @@ namespace re
 
 		void AddRWTextureInput(
 			char const* shaderName,
-			re::Texture const*,
-			re::TextureView const&);
-
-		void AddRWTextureInput(
-			char const* shaderName,
-			std::shared_ptr<re::Texture const>,
+			core::InvPtr<re::Texture> const&,
 			re::TextureView const&);
 
 		std::vector<RWTextureInput> const& GetRWTextureInputs() const;

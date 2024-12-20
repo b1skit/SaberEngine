@@ -13,6 +13,7 @@ namespace core
 		Empty,
 		Loading,
 		Ready,
+		Released,
 		Error,
 	};
 
@@ -41,7 +42,9 @@ namespace core
 	public:
 		struct ControlBlock
 		{
-			std::unique_ptr<T>* m_object; // Pointer to the owning unique_ptr, so creation can be deferred
+			// Initially, this will point to the PtrAndControl::m_object to allow deferred creation, then it will be
+			// swapped to m_object.get() to minimize indirection
+			void* m_data;
 
 			util::DataHash m_id = 0;
 			ResourceSystem<T>* m_owningResourceSystem = nullptr;
@@ -73,7 +76,7 @@ namespace core
 
 
 	public:
-		bool Contains(util::DataHash);
+		bool Contains(util::DataHash) const;
 
 		template<typename L>
 		ControlBlock* Get(util::DataHash, ILoadContext<L> const*);
@@ -81,6 +84,7 @@ namespace core
 
 	private:
 		void OnEndOfFrame() override;
+		void FreeDeferredReleases(uint64_t frameNum);
 
 
 	private:
@@ -92,7 +96,7 @@ namespace core
 
 	private:
 		std::unordered_map<util::DataHash, PtrAndControl> m_objects;
-		std::shared_mutex m_objectsMutex;
+		mutable std::shared_mutex m_objectsMutex;
 
 		// We defer resource release to avoid degenerate cases (e.g. release and then re-load the same thing)
 		std::queue<std::pair<uint64_t, uint64_t>> m_deferredRelease; // <frame num, id>
@@ -112,6 +116,8 @@ namespace core
 	template<typename T>
 	void ResourceSystem<T>::Destroy()
 	{
+		FreeDeferredReleases(std::numeric_limits<uint64_t>::max()); // Force-release everything
+
 		{
 			std::lock_guard<std::shared_mutex> readLock(m_objectsMutex);
 
@@ -128,7 +134,7 @@ namespace core
 
 
 	template<typename T>
-	bool ResourceSystem<T>::Contains(util::DataHash id)
+	bool ResourceSystem<T>::Contains(util::DataHash id) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_objectsMutex);
@@ -170,7 +176,9 @@ namespace core
 
 				newPtrAndCntrl.m_control = std::make_unique<ControlBlock>();
 				
-				newPtrAndCntrl.m_control->m_object = &newPtrAndCntrl.m_object;
+				// Initially, the control gets a pointer to the unique_ptr to allow deferred creation. Then, it'll swap
+				// itself for m_object.get()
+				newPtrAndCntrl.m_control->m_data = &newPtrAndCntrl.m_object;
 
 				newPtrAndCntrl.m_control->m_id = id;
 				newPtrAndCntrl.m_control->m_owningResourceSystem = this;
@@ -196,17 +204,32 @@ namespace core
 	{
 		++m_currentFrameNum; // Increment the relative frame number each time this is called
 
-		// Deferred resource release:
+		FreeDeferredReleases(m_currentFrameNum);
+	}
+
+
+	template<typename T>
+	void ResourceSystem<T>::FreeDeferredReleases(uint64_t frameNum)
+	{
 		{
 			std::scoped_lock lock(m_deferredReleaseMutex, m_objectsMutex);
 
 			while (!m_deferredRelease.empty() &&
-				m_deferredRelease.front().first + k_deferredReleaseNumFrames < m_currentFrameNum)
+				m_deferredRelease.front().first + k_deferredReleaseNumFrames < frameNum)
 			{
 				SEAssert(m_objects.contains(m_deferredRelease.front().second), "ID not found");
 
-				m_objects.at(m_deferredRelease.front().second).m_object->Destroy();
-				m_objects.erase(m_deferredRelease.front().second);
+				// Allow resources to be resurrected from the deferred delete queue: Only actually destroy them if
+				// their ref. count is 0
+				if (m_objects.at(m_deferredRelease.front().second).m_control->m_refCount.load() == 0)
+				{
+					SEAssert(m_objects.at(m_deferredRelease.front().second).m_control->m_state.load() == 
+						core::ResourceState::Released,
+						"Ref count is 0, but state is not Released. This should not be possible");
+
+					m_objects.at(m_deferredRelease.front().second).m_object->Destroy();
+					m_objects.erase(m_deferredRelease.front().second);
+				}
 
 				m_deferredRelease.pop();
 			}

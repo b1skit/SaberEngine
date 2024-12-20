@@ -98,7 +98,7 @@ namespace dx12
 		SEAssert(!depthTargetPlatParams->m_isCreated, "Target has already been created");
 		depthTargetPlatParams->m_isCreated = true;
 
-		re::Texture const* depthTex = depthTarget->GetTexture().get();
+		core::InvPtr<re::Texture> const& depthTex = depthTarget->GetTexture();
 		re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
 		SEAssert(depthTexParams.m_usage & re::Texture::Usage::DepthTarget,
 			"Target does not have the depth target usage type");

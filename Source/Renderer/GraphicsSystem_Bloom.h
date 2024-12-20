@@ -54,7 +54,7 @@ namespace gr
 		std::vector<std::shared_ptr<re::RenderStage>> m_bloomUpStages;
 		std::vector<std::shared_ptr<re::Buffer>> m_bloomUpBuffers;
 
-		std::shared_ptr<re::Texture> m_bloomTargetTex;
+		core::InvPtr<re::Texture> m_bloomTargetTex;
 
 		uint32_t m_firstUpsampleSrcMipLevel; // == # of upsample stages
 	};

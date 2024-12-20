@@ -317,12 +317,12 @@ namespace
 
 
 	// Returns the initial state
-	D3D12_RESOURCE_STATES CreateTextureResource(re::Texture& texture, bool needsUAV, bool simultaneousAccess)
+	D3D12_RESOURCE_STATES CreateTextureResource(core::InvPtr<re::Texture> const& texture, bool needsUAV, bool simultaneousAccess)
 	{
-		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::Texture::PlatformParams* texPlatParams = texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		SEAssert(!texPlatParams->m_gpuResource, "Texture resource already created");
 		
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
 		// We'll update these settings for each type of texture resource:
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
@@ -358,7 +358,7 @@ namespace
 
 		if (texParams.m_usage & re::Texture::Usage::DepthTarget)
 		{
-			SEAssert(texture.GetNumMips() == 1,
+			SEAssert(texture->GetNumMips() == 1,
 				"Depth target cannot have mips. Note: Depth-Stencil formats support mipmaps, arrays, and multiple "
 				"planes. See https://learn.microsoft.com/en-us/windows/win32/direct3d12/subresources");
 
@@ -367,13 +367,13 @@ namespace
 			optimizedClearValue.DepthStencil.Depth = texParams.m_clear.m_depthStencil.m_depth;
 			optimizedClearValue.DepthStencil.Stencil = texParams.m_clear.m_depthStencil.m_stencil;
 
-			if (texture.HasInitialData())
+			if (texture->HasInitialData())
 			{
 				initialState = D3D12_RESOURCE_STATE_COPY_DEST;
 			}
 		}
 
-		const uint32_t numMips = texture.GetNumMips();
+		const uint32_t numMips = texture->GetNumMips();
 
 		D3D12_RESOURCE_DESC resourceDesc{};
 		switch (texParams.m_dimension)
@@ -450,14 +450,14 @@ namespace
 				.m_heapType = D3D12_HEAP_TYPE_DEFAULT,
 				.m_initialState = initialState,
 				.m_isMSAATexture = (texParams.m_multisampleMode == re::Texture::MultisampleMode::Enabled)},
-			texture.GetWName().c_str());
+			texture->GetWName().c_str());
 
 		return initialState;
 	}
 
 
 	void UpdateTopLevelSubresources(
-		dx12::CommandList* copyCmdList, re::Texture const* texture, ID3D12Resource* intermediate)
+		dx12::CommandList* copyCmdList, core::InvPtr<re::Texture> const& texture, ID3D12Resource* intermediate)
 	{
 		dx12::Texture::PlatformParams const* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
@@ -652,7 +652,7 @@ namespace dx12
 	}
 
 
-	Texture::PlatformParams::PlatformParams(re::Texture const& texture)
+	Texture::PlatformParams::PlatformParams(re::Texture& texture)
 		: m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
 		, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
 		, m_rtvDescriptors(dx12::DescriptorCache::DescriptorType::RTV)
@@ -687,16 +687,16 @@ namespace dx12
 	// -----------------------------------------------------------------------------------------------------------------
 
 
-	void Texture::Create(re::Texture& texture, dx12::CommandList* copyCmdList)
+	void Texture::Create(core::InvPtr<re::Texture> const& texture, dx12::CommandList* copyCmdList)
 	{
-		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::Texture::PlatformParams* texPlatParams = texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		SEAssert(texPlatParams->m_isCreated == false, "Texture is already created");
 		texPlatParams->m_isCreated = true;
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
 		SEAssert(texParams.m_usage > 0 && texParams.m_usage != re::Texture::Usage::Invalid,
 			"Invalid texture usage");
@@ -721,8 +721,8 @@ namespace dx12
 
 		// Figure out our resource needs:
 		const bool needsUAV = UAVIsNeeded(texParams, texPlatParams->m_format);
-		const uint32_t numMips = texture.GetNumMips();
-		const uint32_t numSubresources = texture.GetTotalNumSubresources();
+		const uint32_t numMips = texture->GetNumMips();
+		const uint32_t numSubresources = texture->GetTotalNumSubresources();
 
 		SEAssert(((texParams.m_usage & re::Texture::Usage::SwapchainColorProxy) == 0 &&
 			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0 &&
@@ -743,11 +743,11 @@ namespace dx12
 		}
 
 		// Upload initial data via an intermediate upload heap:
-		if ((texParams.m_usage & re::Texture::Usage::ColorSrc) && texture.HasInitialData())
+		if ((texParams.m_usage & re::Texture::Usage::ColorSrc) && texture->HasInitialData())
 		{
-			const uint8_t numFaces = re::Texture::GetNumFaces(&texture);
+			const uint8_t numFaces = re::Texture::GetNumFaces(texture);
 			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);
-			const uint32_t numBytesPerFace = static_cast<uint32_t>(texture.GetTotalBytesPerFace());
+			const uint32_t numBytesPerFace = static_cast<uint32_t>(texture->GetTotalBytesPerFace());
 			const uint32_t totalBytes = texParams.m_arraySize * numFaces * numBytesPerFace;
 			SEAssert(totalBytes > 0 &&
 				totalBytes == texParams.m_arraySize * numFaces * texParams.m_width * texParams.m_height * bytesPerTexel,
@@ -766,14 +766,14 @@ namespace dx12
 			dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
 
 			// GPUResources automatically use a deferred deletion, it is safe to let this go out of scope immediately
-			std::wstring const& intermediateName = texture.GetWName() + L" intermediate buffer";
+			std::wstring const& intermediateName = texture->GetWName() + L" intermediate buffer";
 			std::unique_ptr<dx12::GPUResource> intermediateResource = heapMgr.CreateResource(dx12::ResourceDesc{
 					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(intermediateBufferWidth),
 					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,
 					.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ, },
 				intermediateName.c_str());
 
-			UpdateTopLevelSubresources(copyCmdList, &texture, intermediateResource->Get());
+			UpdateTopLevelSubresources(copyCmdList, texture, intermediateResource->Get());
 		}
 
 		texPlatParams->m_isDirty = false;
@@ -782,7 +782,7 @@ namespace dx12
 
 	// re::Texture::Create factory wrapper, for the DX12-specific case where we need to create a Texture resource using
 	// an existing ID3D12Resource
-	std::shared_ptr<re::Texture> Texture::CreateFromExistingResource(
+	core::InvPtr<re::Texture> Texture::CreateFromExistingResource(
 		std::string const& name, 
 		re::Texture::TextureParams const& params, 
 		Microsoft::WRL::ComPtr<ID3D12Resource> textureResource)
@@ -792,7 +792,7 @@ namespace dx12
 
 		// Note: re::Texture::Create will enroll the texture in API object creation, and eventually call the standard 
 		// dx12::Texture::Create above
-		std::shared_ptr<re::Texture> newTexture = re::Texture::Create(name, params);
+		core::InvPtr<re::Texture> newTexture = re::Texture::Create(name, params);
 
 		dx12::Texture::PlatformParams* texPlatParams = 
 			newTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
@@ -805,7 +805,7 @@ namespace dx12
 	}
 
 
-	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetSRV(re::Texture const* tex, re::TextureView const& texView)
+	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetSRV(core::InvPtr<re::Texture> const& tex, re::TextureView const& texView)
 	{
 		SEAssert(tex, "Texture cannot be null");
 
@@ -816,7 +816,7 @@ namespace dx12
 	}
 
 
-	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetUAV(re::Texture const* tex, re::TextureView const& texView)
+	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetUAV(core::InvPtr<re::Texture> const& tex, re::TextureView const& texView)
 	{
 		SEAssert(tex, "Texture cannot be null");
 
@@ -827,7 +827,7 @@ namespace dx12
 	}
 
 
-	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetRTV(re::Texture const* tex, re::TextureView const& texView)
+	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetRTV(core::InvPtr<re::Texture> const& tex, re::TextureView const& texView)
 	{
 		SEAssert(tex, "Texture cannot be null");
 
@@ -838,7 +838,7 @@ namespace dx12
 	}
 
 
-	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetDSV(re::Texture const* tex, re::TextureView const& texView)
+	D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetDSV(core::InvPtr<re::Texture> const& tex, re::TextureView const& texView)
 	{
 		SEAssert(tex, "Texture cannot be null");
 
@@ -857,10 +857,10 @@ namespace dx12
 	}
 
 
-	void Texture::ShowImGuiWindow(re::Texture const& tex, float scale)
+	void Texture::ShowImGuiWindow(core::InvPtr<re::Texture> const& tex, float scale)
 	{
 		dx12::Texture::PlatformParams const* texPlatParams =
-			tex.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			tex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		const D3D12_CPU_DESCRIPTOR_HANDLE texSRV = 
 			texPlatParams->m_srvDescriptors.GetCreateDescriptor(tex, re::TextureView::Texture2DView());
@@ -869,6 +869,6 @@ namespace dx12
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuDesc{};
 		RLibraryImGui::CopyTempDescriptorToImGuiHeap(texSRV, cpuDesc, gpuDesc);
 
-		ImGui::Image(static_cast<ImTextureID>(gpuDesc.ptr), ImVec2(tex.Width() * scale, tex.Height() * scale));
+		ImGui::Image(static_cast<ImTextureID>(gpuDesc.ptr), ImVec2(tex->Width() * scale, tex->Height() * scale));
 	}
 }

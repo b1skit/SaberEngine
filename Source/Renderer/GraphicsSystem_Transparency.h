@@ -67,8 +67,8 @@ namespace gr
 		std::shared_ptr<re::RenderStage> m_transparencyStage;
 
 	private: // Cached dependencies:
-		std::shared_ptr<re::Texture> const* m_ambientIEMTex;
-		std::shared_ptr<re::Texture> const* m_ambientPMREMTex;
+		core::InvPtr<re::Texture> const* m_ambientIEMTex;
+		core::InvPtr<re::Texture> const* m_ambientPMREMTex;
 		std::shared_ptr<re::Buffer> const* m_ambientParams;
 
 		PunctualLightCullingResults const* m_pointCullingResults;
@@ -84,9 +84,9 @@ namespace gr
 		LightDataBufferIdxMap const* m_pointLightDataBufferIdxMap;
 		LightDataBufferIdxMap const* m_spotLightDataBufferIdxMap;
 
-		std::shared_ptr<re::Texture> const* m_directionalShadowArrayTex;
-		std::shared_ptr<re::Texture> const* m_pointShadowArrayTex;
-		std::shared_ptr<re::Texture> const* m_spotShadowArrayTex;
+		core::InvPtr<re::Texture> const* m_directionalShadowArrayTex;
+		core::InvPtr<re::Texture> const* m_pointShadowArrayTex;
+		core::InvPtr<re::Texture> const* m_spotShadowArrayTex;
 
 		std::shared_ptr<re::Buffer> const* m_PCSSSampleParamsBuffer;
 	};

@@ -43,11 +43,11 @@ namespace gr
 		static constexpr char const* k_skyboxTexShaderName = "Tex0";
 
 		std::shared_ptr<re::RenderStage> m_skyboxStage;
-		re::Texture const* m_skyTexture;
+		core::InvPtr<re::Texture> const* m_skyTexture;
 		std::shared_ptr<re::Buffer> m_skyboxParams;
 
 		// Fallback if no ambient light/IBL texture is found, but the flat color debug mode is not enabled
-		std::shared_ptr<re::Texture> m_fallbackColorTex; 
+		core::InvPtr<re::Texture> m_fallbackColorTex; 
 		
 		glm::vec3 m_backgroundColor;
 		bool m_showBackgroundColor;

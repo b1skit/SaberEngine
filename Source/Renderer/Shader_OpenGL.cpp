@@ -632,16 +632,18 @@ namespace opengl
 		break;
 		case opengl::Shader::UniformType::Texture:
 		{
-			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
-			if (bindingUnit == params->m_samplerUnits.end())
-			{
-				SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
-					std::format("Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
-						shader.GetName(), uniformName).c_str());
-				return;
-			}
+			SEAssertF("TODO: Re-implement this with support for core::InvPtr<re::Texture>");
 
-			opengl::Texture::Bind(*static_cast<re::Texture const*>(value), bindingUnit->second);
+			//auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
+			//if (bindingUnit == params->m_samplerUnits.end())
+			//{
+			//	SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			//		std::format("Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
+			//			shader.GetName(), uniformName).c_str());
+			//	return;
+			//}
+
+			//opengl::Texture::Bind(*static_cast<re::Texture const*>(value), bindingUnit->second);
 		}
 		break;
 		case opengl::Shader::UniformType::Sampler:
@@ -706,7 +708,7 @@ namespace opengl
 					shader.GetName(), texSamplerInput.m_shaderName).c_str());
 			return;
 		}
-		opengl::Texture::Bind(*texSamplerInput.m_texture, textureBindingUnit->second, texSamplerInput.m_textureView);
+		opengl::Texture::Bind(texSamplerInput.m_texture, textureBindingUnit->second, texSamplerInput.m_textureView);
 
 
 		// Bind the sampler:
@@ -733,10 +735,8 @@ namespace opengl
 
 			auto const& bindingUnit = params->m_samplerUnits.find(rwTexInput.m_shaderName);
 
-			re::Texture const* texture = rwTexInput.m_texture;
-
 			constexpr uint32_t k_accessMode = GL_READ_WRITE;
-			opengl::Texture::BindAsImageTexture(*texture, bindingUnit->second, rwTexInput.m_textureView, k_accessMode);
+			opengl::Texture::BindAsImageTexture(rwTexInput.m_texture, bindingUnit->second, rwTexInput.m_textureView, k_accessMode);
 		}
 	}
 }

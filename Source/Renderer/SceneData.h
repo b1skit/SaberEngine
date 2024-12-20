@@ -37,20 +37,9 @@ namespace re
 		void Destroy();
 
 	public:		
-		re::Texture const* GetIBLTexture() const;
-
 		// Geometry:
 		bool AddUniqueMeshPrimitive(std::shared_ptr<gr::MeshPrimitive>&); // Returns true if incoming ptr is modified
 		bool AddUniqueVertexStream(std::shared_ptr<gr::VertexStream>&); // Returns true if incoming ptr is modified
-
-		// Textures:
-		// Accessed via name (i.e. file path), which must be unique
-		bool AddUniqueTexture(std::shared_ptr<re::Texture>&); // Returns true if incoming ptr is modified
-		std::shared_ptr<re::Texture> GetTexture(std::string const& texName) const;
-		std::shared_ptr<re::Texture> const* GetTexturePtr(std::string const& texName) const;
-		std::shared_ptr<re::Texture> TryGetTexture(std::string const& texName) const;
-		bool TextureExists(std::string const& texName) const;
-		std::shared_ptr<re::Texture> TryLoadUniqueTexture(std::string const& filepath, re::Texture::ColorSpace);
 
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>&);
@@ -72,9 +61,6 @@ namespace re
 
 		std::unordered_map<util::DataHash, std::shared_ptr<gr::VertexStream>> m_vertexStreams;
 		std::mutex m_vertexStreamsMutex;
-
-		std::unordered_map<util::StringHash, std::shared_ptr<re::Texture>> m_textures;
-		mutable std::shared_mutex m_texturesReadWriteMutex; // mutable, as we need to be able to modify it in const functions
 
 		std::unordered_map<util::StringHash, std::shared_ptr<gr::Material>> m_materials;
 		mutable std::shared_mutex m_materialsReadWriteMutex;

@@ -15,7 +15,7 @@ namespace platform
 		// API-specific function bindings:
 		/*********************************/
 		static void (*Destroy)(re::Texture&);
-		static void (*ShowImGuiWindow)(re::Texture const&, float scale);
+		static void (*ShowImGuiWindow)(core::InvPtr<re::Texture> const&, float scale);
 	};
 }
 

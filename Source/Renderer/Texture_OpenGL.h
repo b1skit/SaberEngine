@@ -20,7 +20,7 @@ namespace opengl
 	public:
 		struct PlatformParams final : public re::Texture::PlatformParams
 		{
-			PlatformParams(re::Texture const&);
+			PlatformParams(re::Texture&);
 
 			~PlatformParams() override;
 
@@ -41,20 +41,20 @@ namespace opengl
 
 	public:
 		// OpenGL-specific functionality:
-		static void Create(re::Texture& texture);
+		static void Create(core::InvPtr<re::Texture> const& texture);
 		
-		static void Bind(re::Texture const&, uint32_t textureUnit);
-		static void Bind(re::Texture const&, uint32_t textureUnit, re::TextureView const&);
+		static void Bind(core::InvPtr<re::Texture> const&, uint32_t textureUnit);
+		static void Bind(core::InvPtr<re::Texture> const&, uint32_t textureUnit, re::TextureView const&);
 
 		static void BindAsImageTexture(
-			re::Texture const&, uint32_t textureUnit, re::TextureView const&, uint32_t accessMode);
+			core::InvPtr<re::Texture> const&, uint32_t textureUnit, re::TextureView const&, uint32_t accessMode);
 
-		static void GenerateMipMaps(re::Texture const&);
+		static void GenerateMipMaps(core::InvPtr<re::Texture> const&);
 
-		static GLuint GetOrCreateTextureView(re::Texture const&, re::TextureView const&);
+		static GLuint GetOrCreateTextureView(core::InvPtr<re::Texture> const&, re::TextureView const&);
 
 		// Platform functionality:
 		static void Destroy(re::Texture&);
-		static void ShowImGuiWindow(re::Texture const&, float scale);
+		static void ShowImGuiWindow(core::InvPtr<re::Texture> const&, float scale);
 	};	
 }

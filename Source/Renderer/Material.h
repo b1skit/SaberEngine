@@ -4,6 +4,7 @@
 #include "BufferView.h"
 #include "Effect.h"
 #include "Sampler.h"
+#include "Texture.h"
 
 #include "Core/InvPtr.h"
 
@@ -60,7 +61,7 @@ namespace gr
 	public:
 		struct TextureSlotDesc
 		{
-			std::shared_ptr<re::Texture> m_texture = nullptr;
+			core::InvPtr<re::Texture> m_texture;
 			core::InvPtr<re::Sampler> m_samplerObject;
 			std::string m_shaderSamplerName;
 			uint8_t m_uvChannelIdx = 0;
@@ -75,7 +76,7 @@ namespace gr
 		// Material render data:
 		struct MaterialInstanceRenderData
 		{
-			std::array<re::Texture const*, gr::Material::k_numTexInputs> m_textures;
+			std::array<core::InvPtr<re::Texture>, gr::Material::k_numTexInputs> m_textures;
 			std::array<core::InvPtr<re::Sampler>, gr::Material::k_numTexInputs> m_samplers;
 			char m_shaderSamplerNames[gr::Material::k_numTexInputs][gr::Material::k_shaderSamplerNameLength];
 
@@ -117,9 +118,9 @@ namespace gr
 
 		virtual ~Material() = default;
 
-		void SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture>, uint8_t uvChannelIdx);
-		re::Texture const* GetTexture(uint32_t slotIndex) const;
-		re::Texture const* GetTexture(std::string const& samplerName) const;
+		void SetTexture(uint32_t slotIndex, core::InvPtr<re::Texture>, uint8_t uvChannelIdx);
+		core::InvPtr<re::Texture> GetTexture(uint32_t slotIndex) const;
+		core::InvPtr<re::Texture> GetTexture(std::string const& samplerName) const;
 		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() const;
 
 		void SetAlphaMode(AlphaMode);
@@ -137,7 +138,7 @@ namespace gr
 
 	private:
 		void PackMaterialInstanceTextureSlotDescs(
-			re::Texture const**, core::InvPtr<re::Sampler>*, char[][k_shaderSamplerNameLength]) const;
+			core::InvPtr<re::Texture>*, core::InvPtr<re::Sampler>*, char[][k_shaderSamplerNameLength]) const;
 		
 		virtual void PackMaterialParamsData(void*, size_t maxSize) const = 0;
 
@@ -178,7 +179,7 @@ namespace gr
 	}
 
 
-	inline void Material::SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture> texture, uint8_t uvChannelIdx)
+	inline void Material::SetTexture(uint32_t slotIndex, core::InvPtr<re::Texture> texture, uint8_t uvChannelIdx)
 	{
 		SEAssert(slotIndex < m_texSlots.size(), "Out of bounds slot index");
 		SEAssert(uvChannelIdx <= 1, 
@@ -188,10 +189,10 @@ namespace gr
 		m_texSlots[slotIndex].m_uvChannelIdx = uvChannelIdx;
 	}
 
-
-	inline re::Texture const* Material::GetTexture(uint32_t slotIndex) const
+	
+	inline core::InvPtr<re::Texture> Material::GetTexture(uint32_t slotIndex) const
 	{
-		return m_texSlots[slotIndex].m_texture.get();
+		return m_texSlots[slotIndex].m_texture;
 	}
 
 

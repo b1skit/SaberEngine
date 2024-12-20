@@ -16,7 +16,7 @@ namespace
 
 
 	MipGenerationData CreateMipGenerationParamsData(
-		std::shared_ptr<re::Texture> tex, uint32_t srcMipLevel, uint32_t numMips, uint32_t faceIdx, uint32_t arrayIdx)
+		core::InvPtr<re::Texture> tex, uint32_t srcMipLevel, uint32_t numMips, uint32_t faceIdx, uint32_t arrayIdx)
 	{
 		re::Texture::TextureParams const& texParams = tex->GetTextureParams();
 
@@ -65,7 +65,7 @@ namespace gr
 
 	void ComputeMipsGraphicsSystem::PreRender()
 	{
-		std::vector<std::shared_ptr<re::Texture>> const& newTextures = 
+		std::vector<core::InvPtr<re::Texture>> const& newTextures = 
 			re::RenderManager::Get()->GetNewlyCreatedTextures();
 		if (newTextures.empty())
 		{
@@ -76,7 +76,7 @@ namespace gr
 
 		re::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
 
-		for (std::shared_ptr<re::Texture> const& newTexture : newTextures)
+		for (core::InvPtr<re::Texture> const& newTexture : newTextures)
 		{
 			re::Texture::TextureParams const& texParams = newTexture->GetTextureParams();
 			if (texParams.m_mipMode != re::Texture::MipMode::AllocateGenerate)
@@ -89,7 +89,7 @@ namespace gr
 
 			const uint32_t totalMipLevels = newTexture->GetNumMips(); // Includes mip 0
 
-			const uint32_t numFaces = re::Texture::GetNumFaces(newTexture.get());
+			const uint32_t numFaces = re::Texture::GetNumFaces(newTexture);
 
 			for (uint32_t arrayIdx = 0; arrayIdx < texParams.m_arraySize; arrayIdx++)
 			{

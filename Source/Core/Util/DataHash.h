@@ -14,8 +14,11 @@ namespace util
 		DataHash() noexcept : m_dataHash(0) {}
 
 		DataHash(uint64_t hash) noexcept : m_dataHash(hash) {}
+		DataHash(int zeroInit) noexcept : m_dataHash(zeroInit) { SEAssert(m_dataHash == 0, "Unexpected data width"); }
 
 		DataHash(util::StringHash const& stringHash) noexcept : m_dataHash(stringHash.Get()) {}
+		DataHash(char const* const cStr) noexcept : m_dataHash(util::StringHash(cStr).Get()) {}
+		DataHash(std::string const& str) noexcept : DataHash(str.c_str()) {}
 
 		DataHash(DataHash const&) noexcept = default;
 		DataHash(DataHash&&) noexcept = default;

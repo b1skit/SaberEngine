@@ -21,6 +21,7 @@
 
 #include "Core/Util/ByteVector.h"
 #include "Core/Util/CastUtils.h"
+#include "Core/Util/FileIOUtils.h"
 #include "Core/Util/ThreadSafeVector.h"
 
 #include "Renderer/AssetLoadUtils.h"
@@ -250,8 +251,8 @@ namespace
 	}
 
 
-	std::shared_ptr<re::Texture> LoadTextureOrColor(
-		re::SceneData& scene,
+	core::InvPtr<re::Texture> LoadTextureOrColor(
+		core::Inventory* inventory,
 		std::string const& sceneRootPath,
 		cgltf_texture const* texture,
 		glm::vec4 const& colorFallback,
@@ -264,12 +265,12 @@ namespace
 		std::string const& texName = 
 			GenerateTextureName(sceneRootPath, texture, colorFallback, formatFallback, colorSpace);
 
-		if (scene.TextureExists(texName))
+		if (inventory->Contains<re::Texture>(texName))
 		{
-			return scene.GetTexture(texName);
+			return inventory->Get<re::Texture>(texName);
 		}
 
-		std::shared_ptr<re::Texture> tex;
+		core::InvPtr<re::Texture> tex;
 		if (texture && texture->image)
 		{
 			if (texture->image->uri && std::strncmp(texture->image->uri, "data:image/", 11) == 0) // uri = embedded data
@@ -300,7 +301,8 @@ namespace
 			}
 			else if (texture->image->uri) // uri is a filename (e.g. "myImage.png")
 			{
-				tex = grutil::LoadTextureFromFilePath({ texName }, colorSpace, false, re::Texture::k_errorTextureColor);
+				tex = grutil::LoadTextureFromFilePath(
+					{ texName }, texName, colorSpace, false, false, re::Texture::k_errorTextureColor);
 			}
 			else if (texture->image->buffer_view) // texture data is already loaded in memory
 			{
@@ -332,48 +334,8 @@ namespace
 	}
 
 
-	void LoadIBLTexture(std::string const& sceneRootPath, re::SceneData& scene)
-	{
-		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
-		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
-		// If that fails, we fall back to a default HDRI
-		// Later, we'll use the IBL texture to generate the IEM and PMREM textures in a GraphicsSystem
-		std::shared_ptr<re::Texture> iblTexture = nullptr;
-
-		auto TryLoadIBL = [&scene](std::string const& IBLPath, std::shared_ptr<re::Texture>& iblTexture) {
-			if (scene.TextureExists(IBLPath))
-			{
-				iblTexture = scene.GetTexture(IBLPath);
-			}
-			else
-			{
-				iblTexture = grutil::LoadTextureFromFilePath(
-					{ IBLPath },
-					re::Texture::ColorSpace::Linear,
-					false,
-					re::Texture::k_errorTextureColor);
-			}
-			};
-
-		std::string IBLPath;
-		if (core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, IBLPath))
-		{
-			TryLoadIBL(IBLPath, iblTexture);
-		}
-
-		if (!iblTexture)
-		{
-			IBLPath = core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey);
-			TryLoadIBL(IBLPath, iblTexture);
-		}
-		SEAssert(iblTexture != nullptr,
-			std::format("Missing IBL texture. Per scene IBLs must be placed at {}; A default fallback must exist at {}",
-				core::Config::Get()->GetValueAsString(core::configkeys::k_sceneIBLPathKey),
-				core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey)).c_str());
-	}
-
-
 	void PreLoadTextures(
+		core::Inventory* inventory,
 		std::string const& sceneRootPath,
 		re::SceneData& sceneData,
 		cgltf_data const* data,
@@ -406,9 +368,9 @@ namespace
 
 			// BaseColorTex
 			textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[&k_defaultTextureColor, &sceneData, &sceneRootPath, matSrc]() {
+				[inventory, &k_defaultTextureColor, &sceneRootPath, matSrc]() {
 					LoadTextureOrColor(
-						sceneData,
+						inventory,
 						sceneRootPath,
 						matSrc->pbr_metallic_roughness.base_color_texture.texture,
 						k_defaultTextureColor,
@@ -418,9 +380,9 @@ namespace
 
 			// MetallicRoughnessTex
 			textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[&k_defaultTextureColor, &sceneData, &sceneRootPath, matSrc]() {
+				[inventory, &k_defaultTextureColor, &sceneRootPath, matSrc]() {
 					LoadTextureOrColor(
-						sceneData,
+						inventory,
 						sceneRootPath,
 						matSrc->pbr_metallic_roughness.metallic_roughness_texture.texture,
 						k_defaultTextureColor,
@@ -430,9 +392,9 @@ namespace
 
 			// NormalTex
 			textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[&k_defaultTextureColor, &sceneData, &sceneRootPath, matSrc]() {
+				[inventory, &k_defaultTextureColor, &sceneRootPath, matSrc]() {
 					LoadTextureOrColor(
-						sceneData,
+						inventory,
 						sceneRootPath,
 						matSrc->normal_texture.texture,
 						glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
@@ -442,9 +404,9 @@ namespace
 
 			// OcclusionTex
 			textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[&k_defaultTextureColor, &sceneData, &sceneRootPath, matSrc]() {
+				[inventory, &k_defaultTextureColor, &sceneRootPath, matSrc]() {
 					LoadTextureOrColor(
-						sceneData,
+						inventory,
 						sceneRootPath,
 						matSrc->occlusion_texture.texture,
 						k_defaultTextureColor,	// Completely unoccluded
@@ -454,9 +416,9 @@ namespace
 
 			// EmissiveTex
 			textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[&k_defaultTextureColor, &sceneData, &sceneRootPath, matSrc]() {
+				[inventory, &k_defaultTextureColor, &sceneRootPath, matSrc]() {
 					LoadTextureOrColor(
-						sceneData,
+						inventory,
 						sceneRootPath,
 						matSrc->emissive_texture.texture,
 						k_defaultTextureColor,
@@ -468,6 +430,7 @@ namespace
 
 
 	void LoadMaterials(
+		core::Inventory* inventory,
 		std::string const& sceneRootPath,
 		re::SceneData& sceneData,
 		cgltf_data const* data,
@@ -481,7 +444,7 @@ namespace
 		for (size_t matIdx = 0; matIdx < numMaterials; matIdx++)
 		{
 			matFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[data, matIdx, &sceneData, &sceneRootPath]()
+				[inventory, data, matIdx, &sceneData, &sceneRootPath]()
 				{
 					cgltf_material const* const matSrc = &data->materials[matIdx];
 					SEAssert(matSrc, "Found a null material, this is unexpected");
@@ -518,7 +481,7 @@ namespace
 
 					newMat->SetTexture(
 						gr::Material_GLTF::TextureSlotIdx::BaseColor, 
-						sceneData.GetTexture(baseColorName),
+						inventory->Get<re::Texture>(util::StringHash(baseColorName)),
 						matSrc->pbr_metallic_roughness.base_color_texture.texcoord);
 
 					// MetallicRoughnessTex
@@ -531,7 +494,7 @@ namespace
 
 					newMat->SetTexture(
 						gr::Material_GLTF::TextureSlotIdx::MetallicRoughness,
-						sceneData.GetTexture(metallicRoughnessName),
+						inventory->Get<re::Texture>(util::StringHash(metallicRoughnessName)),
 						matSrc->pbr_metallic_roughness.metallic_roughness_texture.texcoord);
 
 					// NormalTex
@@ -544,7 +507,7 @@ namespace
 
 					newMat->SetTexture(
 						gr::Material_GLTF::TextureSlotIdx::Normal,
-						sceneData.GetTexture(normalName),
+						inventory->Get<re::Texture>(util::StringHash(normalName)),
 						matSrc->normal_texture.texcoord);
 
 					// OcclusionTex
@@ -557,7 +520,7 @@ namespace
 
 					newMat->SetTexture(
 						gr::Material_GLTF::TextureSlotIdx::Occlusion,
-						sceneData.GetTexture(occlusionName),
+						inventory->Get<re::Texture>(util::StringHash(occlusionName)),
 						matSrc->occlusion_texture.texcoord);
 
 					// EmissiveTex
@@ -570,7 +533,7 @@ namespace
 
 					newMat->SetTexture(
 						gr::Material_GLTF::TextureSlotIdx::Emissive,
-						sceneData.GetTexture(emissiveName),
+						inventory->Get<re::Texture>(util::StringHash(emissiveName)),
 						matSrc->emissive_texture.texcoord);
 
 
@@ -636,7 +599,9 @@ namespace
 		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::BaseColor,
 			grutil::LoadTextureFromFilePath(
 				{ en::DefaultResourceNames::k_defaultAlbedoTexName },
+				en::DefaultResourceNames::k_defaultAlbedoTexName,
 				re::Texture::ColorSpace::sRGB,
+				true,
 				true,
 				glm::vec4(1.f)), // White
 			k_defaultUVChannelIdx);
@@ -645,7 +610,9 @@ namespace
 		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::MetallicRoughness,
 			grutil::LoadTextureFromFilePath(
 				{ en::DefaultResourceNames::k_defaultMetallicRoughnessTexName },
+				en::DefaultResourceNames::k_defaultMetallicRoughnessTexName,
 				re::Texture::ColorSpace::Linear,
+				true,
 				true,
 				glm::vec4(0.f, 1.f, 1.f, 0.f)), // GLTF specs: .BG = metalness, roughness, Default: .BG = 1, 1
 			k_defaultUVChannelIdx);
@@ -654,8 +621,10 @@ namespace
 		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Normal,
 			grutil::LoadTextureFromFilePath(
 				{ en::DefaultResourceNames::k_defaultNormalTexName },
+				en::DefaultResourceNames::k_defaultNormalTexName,
 				re::Texture::ColorSpace::Linear,
 				true,
+				false,
 				glm::vec4(0.5f, 0.5f, 1.f, 0.f)),
 			k_defaultUVChannelIdx);
 
@@ -663,7 +632,9 @@ namespace
 		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Occlusion,
 			grutil::LoadTextureFromFilePath(
 				{ en::DefaultResourceNames::k_defaultOcclusionTexName },
+				en::DefaultResourceNames::k_defaultOcclusionTexName,
 				re::Texture::ColorSpace::Linear,
+				true,
 				true,
 				glm::vec4(1.f)),
 			k_defaultUVChannelIdx);
@@ -672,73 +643,14 @@ namespace
 		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Emissive,
 			grutil::LoadTextureFromFilePath(
 				{ en::DefaultResourceNames::k_defaultEmissiveTexName },
+				en::DefaultResourceNames::k_defaultEmissiveTexName,
 				re::Texture::ColorSpace::sRGB,
+				true,
 				true,
 				glm::vec4(0.f)),
 			k_defaultUVChannelIdx);
 
 		scene.AddUniqueMaterial(defaultMaterialGLTF);
-
-
-		// Default 2D texture fallbacks:
-		const re::Texture::TextureParams defaultTexParams = re::Texture::TextureParams
-		{
-			.m_usage =
-				static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
-			.m_dimension = re::Texture::Dimension::Texture2D,
-			.m_format = re::Texture::Format::RGBA8_UNORM,
-			.m_colorSpace = re::Texture::ColorSpace::Linear
-		};
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_opaqueWhiteDefaultTexName,
-			defaultTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 1.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_transparentWhiteDefaultTexName,
-			defaultTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 0.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_opaqueBlackDefaultTexName,
-			defaultTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 1.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_transparentBlackDefaultTexName,
-			defaultTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 0.f));
-
-
-		// Default cube map texture fallbacks:
-		const re::Texture::TextureParams defaultCubeMapTexParams = re::Texture::TextureParams
-		{
-			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
-			.m_dimension = re::Texture::Dimension::TextureCube,
-			.m_format = re::Texture::Format::RGBA8_UNORM,
-			.m_colorSpace = re::Texture::ColorSpace::Linear
-		};
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 1.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 0.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 1.f));
-
-		re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 0.f));
 	}
 
 
@@ -2115,6 +2027,7 @@ namespace fr
 
 	SceneManager::SceneManager()
 		: m_sceneRenderSystemNameHash(k_sceneRenderSystemName)
+		, m_inventory(nullptr)
 	{
 	}
 
@@ -2122,6 +2035,8 @@ namespace fr
 	void SceneManager::Startup()
 	{
 		LOG("SceneManager starting...");
+
+		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
 
 		util::PerformanceTimer timer;
 		timer.Start();
@@ -2288,14 +2203,7 @@ namespace fr
 				GenerateDefaultResources(*sceneData);
 				}));
 
-		// Load the IBL/skybox HDRI:
-		std::string sceneRootPath;
-		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneRootPathKey, sceneRootPath);
-
-		earlyLoadTasks.emplace_back(
-			core::ThreadPool::Get()->EnqueueJob([&sceneData, &sceneRootPath]() {
-				LoadIBLTexture(sceneRootPath, *sceneData);
-				}));
+		CreateDefaultSceneResources(); // Kick off async loading of required assets
 
 		// Now parse the the GLTF metadata:
 		const bool gotSceneFilePath = !sceneFilePath.empty();
@@ -2344,8 +2252,11 @@ namespace fr
 
 			std::vector<std::future<void>> loadFutures;
 
+			std::string sceneRootPath;
+			core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneRootPathKey, sceneRootPath);
+
 			// Pre-load the large/complex data:
-			PreLoadTextures(sceneRootPath, *sceneData, data, loadFutures);
+			PreLoadTextures(m_inventory, sceneRootPath, *sceneData, data, loadFutures);
 			PreLoadMeshData(*sceneData, data, sceneMetadata, loadFutures);
 			PreLoadSkinData(data, sceneMetadata, loadFutures);
 
@@ -2357,7 +2268,7 @@ namespace fr
 			loadFutures.clear();
 
 			// Create scene resources, now that we have data available:
-			LoadMaterials(sceneRootPath, *sceneData, data, loadFutures);
+			LoadMaterials(m_inventory, sceneRootPath, *sceneData, data, loadFutures);
 
 			loadFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob([data, &sceneMetadata]() {
 					CreateSceneNodeEntities(data, sceneMetadata);
@@ -2438,5 +2349,43 @@ namespace fr
 		sceneData->EndLoading();
 
 		return true;
+	}
+
+
+	void SceneManager::CreateDefaultSceneResources()
+	{
+		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
+		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
+		// If that fails, we fall back to a default HDRI
+		// Later, we'll use the IBL texture to generate the IEM and PMREM textures in a GraphicsSystem
+		std::string defaultIBLPath;
+		if (core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, defaultIBLPath) &&
+			util::FileExists(defaultIBLPath))
+		{
+			grutil::LoadTextureFromFilePath(
+				{ defaultIBLPath },
+				en::DefaultResourceNames::k_defaultIBLTexName,
+				re::Texture::ColorSpace::Linear,
+				false,
+				true, // Create as permanent
+				re::Texture::k_errorTextureColor);
+		}
+		else
+		{
+			defaultIBLPath = core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey);
+
+			SEAssert(util::FileExists(defaultIBLPath),
+				std::format("Missing IBL texture. Per scene IBLs must be placed at {}; A default fallback must exist at {}",
+					core::Config::Get()->GetValueAsString(core::configkeys::k_sceneIBLPathKey),
+					core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey)).c_str());
+
+			grutil::LoadTextureFromFilePath(
+				{ defaultIBLPath },
+				en::DefaultResourceNames::k_defaultIBLTexName,
+				re::Texture::ColorSpace::Linear,
+				false,
+				true, // Create as permanent
+				re::Texture::k_errorTextureColor);
+		}
 	}
 }

@@ -19,7 +19,7 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::Texture::PlatformParams
 		{
-			PlatformParams(re::Texture const&);
+			PlatformParams(re::Texture&);
 			~PlatformParams();
 
 			void Destroy() override;
@@ -38,22 +38,22 @@ namespace dx12
 
 	public:
 		// DX12-specific functionality:
-		static void Create(re::Texture&, dx12::CommandList* copyCmdList);
+		static void Create(core::InvPtr<re::Texture> const&, dx12::CommandList* copyCmdList);
 		
-		static std::shared_ptr<re::Texture> CreateFromExistingResource(
+		static core::InvPtr<re::Texture> CreateFromExistingResource(
 			std::string const& name, re::Texture::TextureParams const&, Microsoft::WRL::ComPtr<ID3D12Resource>);
 
-		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRV(re::Texture const*, re::TextureView const&);
-		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(re::Texture const*, re::TextureView const&);
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRV(core::InvPtr<re::Texture> const&, re::TextureView const&);
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(core::InvPtr<re::Texture> const&, re::TextureView const&);
 
-		static D3D12_CPU_DESCRIPTOR_HANDLE GetRTV(re::Texture const*, re::TextureView const&);
-		static D3D12_CPU_DESCRIPTOR_HANDLE GetDSV(re::Texture const*, re::TextureView const&);
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetRTV(core::InvPtr<re::Texture> const&, re::TextureView const&);
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetDSV(core::InvPtr<re::Texture> const&, re::TextureView const&);
 
 		static DXGI_FORMAT GetTextureFormat(re::Texture::TextureParams const&);
 		static DXGI_FORMAT GetEquivalentUAVCompatibleFormat(DXGI_FORMAT format); // DXGI_FORMAT_UNKNOWN if none exists
 
 		// Platform functionality:
 		static void Destroy(re::Texture&);
-		static void ShowImGuiWindow(re::Texture const&, float scale);
+		static void ShowImGuiWindow(core::InvPtr<re::Texture> const&, float scale);
 	};
 }

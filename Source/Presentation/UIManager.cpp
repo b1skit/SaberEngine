@@ -174,7 +174,7 @@ namespace fr
 		std::atomic<bool>* createdFlag = &m_debugUIRenderSystemCreated;
 		core::FrameIndexedCommandManager** cmdMgrPtr = &m_debugUICommandMgr;
 		std::mutex** imguiMutexPtr = &m_imguiGlobalMutex;
-		std::function<void()> test = [createdFlag, cmdMgrPtr, imguiMutexPtr]()
+		std::function<void()> createUIRenderSystem = [createdFlag, cmdMgrPtr, imguiMutexPtr]()
 			{
 				constexpr char const* k_debugUIRenderSystemName = "DebugImGui";
 				constexpr char const* k_debugUIPipelineFilename = "ui.json";
@@ -193,7 +193,7 @@ namespace fr
 				createdFlag->store(true);
 			};
 
-		re::RenderManager::Get()->EnqueueRenderCommand(std::move(test));
+		re::RenderManager::Get()->EnqueueRenderCommand(std::move(createUIRenderSystem));
 	}
 
 

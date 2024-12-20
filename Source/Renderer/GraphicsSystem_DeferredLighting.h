@@ -83,7 +83,7 @@ namespace gr
 	private:
 		// BRDF Pre-integration:
 		void CreateSingleFrameBRDFPreIntegrationStage(re::StagePipeline&);
-		std::shared_ptr<re::Texture> m_BRDF_integrationMap;
+		core::InvPtr<re::Texture> m_BRDF_integrationMap;
 
 
 	private:
@@ -91,17 +91,17 @@ namespace gr
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
 		// -> Need to change the HLSL Get___DominantDir functions to ensure the result is normalized
 		void PopulateIEMTex(
-			re::StagePipeline*, re::Texture const* iblTex, std::shared_ptr<re::Texture>& iemTexOut) const;
+			re::StagePipeline*, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& iemTexOut) const;
 
 		void PopulatePMREMTex(
-			re::StagePipeline*, re::Texture const* iblTex, std::shared_ptr<re::Texture>& pmremTexOut) const;
+			re::StagePipeline*, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& pmremTexOut) const;
 
 	private: // Ambient lights:
 		struct AmbientLightRenderData
 		{
 			std::shared_ptr<re::Buffer> m_ambientParams;
-			std::shared_ptr<re::Texture> m_IEMTex;
-			std::shared_ptr<re::Texture> m_PMREMTex;
+			core::InvPtr<re::Texture> m_IEMTex;
+			core::InvPtr<re::Texture> m_PMREMTex;
 			re::Batch m_batch;
 		};
 		std::unordered_map<gr::RenderDataID, AmbientLightRenderData> m_ambientLightData;
@@ -111,13 +111,13 @@ namespace gr
 		{
 			gr::RenderDataID m_renderDataID = gr::k_invalidRenderDataID;
 			std::shared_ptr<re::Buffer> m_ambientParams;
-			std::shared_ptr<re::Texture> m_IEMTex;
-			std::shared_ptr<re::Texture> m_PMREMTex;
+			core::InvPtr<re::Texture> m_IEMTex;
+			core::InvPtr<re::Texture> m_PMREMTex;
 		} m_activeAmbientLightData;
 
 		std::shared_ptr<re::RenderStage> m_ambientStage;
 		re::BufferInput m_ambientParams;
-		std::shared_ptr<re::Texture> m_ssaoTex;
+		core::InvPtr<re::Texture> m_ssaoTex;
 
 		re::StagePipeline* m_resourceCreationStagePipeline;
 		re::StagePipeline::StagePipelineItr m_resourceCreationStageParentItr;
@@ -146,8 +146,8 @@ namespace gr
 	private: // Common:
 		std::shared_ptr<re::TextureTargetSet> m_lightingTargetSet;
 		
-		std::shared_ptr<re::Texture> m_missing2DShadowFallback;
-		std::shared_ptr<re::Texture> m_missingCubeShadowFallback;
+		core::InvPtr<re::Texture> m_missing2DShadowFallback;
+		core::InvPtr<re::Texture> m_missingCubeShadowFallback;
 
 
 	private: // Cached dependencies:
@@ -162,9 +162,9 @@ namespace gr
 		LightDataBufferIdxMap const* m_pointLightDataBufferIdxMap;
 		LightDataBufferIdxMap const* m_spotLightDataBufferIdxMap;
 
-		std::shared_ptr<re::Texture> const* m_directionalShadowArrayTex;
-		std::shared_ptr<re::Texture> const* m_pointShadowArrayTex;
-		std::shared_ptr<re::Texture> const* m_spotShadowArrayTex;
+		core::InvPtr<re::Texture> const* m_directionalShadowArrayTex;
+		core::InvPtr<re::Texture> const* m_pointShadowArrayTex;
+		core::InvPtr<re::Texture> const* m_spotShadowArrayTex;
 
 		ShadowArrayIdxMap const* m_directionalShadowArrayIdxMap;
 		ShadowArrayIdxMap const* m_pointShadowArrayIdxMap;

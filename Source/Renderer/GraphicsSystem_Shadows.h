@@ -5,6 +5,12 @@
 #include "ShadowMapRenderData.h"
 
 
+namespace core
+{
+	template<typename T>
+	class InvPtr;
+}
+
 namespace gr
 {
 	class ShadowsGraphicsSystem final
@@ -98,9 +104,9 @@ namespace gr
 		ViewBatches const* m_viewBatches;
 		AllBatches const* m_allBatches;
 
-		std::shared_ptr<re::Texture> const* m_directionalShadowArrayTex;
-		std::shared_ptr<re::Texture> const* m_pointShadowArrayTex;
-		std::shared_ptr<re::Texture> const* m_spotShadowArrayTex;
+		core::InvPtr<re::Texture> const* m_directionalShadowArrayTex;
+		core::InvPtr<re::Texture> const* m_pointShadowArrayTex;
+		core::InvPtr<re::Texture> const* m_spotShadowArrayTex;
 
 		ShadowArrayIdxMap const* m_directionalShadowArrayIdxMap;
 		ShadowArrayIdxMap const* m_pointShadowArrayIdxMap;

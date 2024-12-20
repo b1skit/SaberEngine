@@ -62,7 +62,7 @@ namespace dx12
 			{
 				for (auto& texture : renderManager.m_newTextures.GetReadData())
 				{
-					dx12::Texture::Create(*texture, copyCommandList.get());
+					dx12::Texture::Create(texture, copyCommandList.get());
 				}
 			}
 
@@ -413,7 +413,7 @@ namespace dx12
 						for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 						{
 							SEAssert(!stageTargets->HasDepthTarget() ||
-								texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget().GetTexture().get(),
+								texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget().GetTexture(),
 								"We don't currently handle batches with the current depth buffer attached as "
 								"a texture input. We need to make sure skipping transitions is handled correctly here");
 

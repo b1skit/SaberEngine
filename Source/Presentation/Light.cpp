@@ -74,6 +74,140 @@ namespace fr
 	}
 
 
+	Light::TypeProperties::TypeProperties(TypeProperties const& rhs) noexcept
+	{
+		*this = rhs;
+	}
+
+
+	Light::TypeProperties::TypeProperties(Light::TypeProperties&& rhs) noexcept
+	{
+		*this = std::move(rhs);
+	}
+
+
+	Light::TypeProperties& Light::TypeProperties::operator=(Light::TypeProperties const& rhs) noexcept
+	{
+		if (this != &rhs)
+		{
+			memset(this, 0, sizeof(TypeProperties));
+
+			m_type = rhs.m_type;
+
+			switch (rhs.m_type)
+			{
+			case Directional:
+			{
+				m_directional = rhs.m_directional;
+			}
+			break;
+			case Point:
+			{
+				m_point = rhs.m_point;
+			}
+			break;
+			case Spot:
+			{
+				m_spot = rhs.m_spot;
+			}
+			break;
+			case AmbientIBL:
+			{
+				m_ambient = rhs.m_ambient;
+			}
+			break;
+			default: SEAssertF("Invalid light type");
+			}
+
+			m_diffuseEnabled = rhs.m_diffuseEnabled;
+			m_specularEnabled = rhs.m_specularEnabled;
+		}
+		return *this;
+	}
+
+
+	Light::TypeProperties& Light::TypeProperties::operator=(Light::TypeProperties&& rhs) noexcept
+	{
+		if (this != &rhs)
+		{
+			// Clean up before we replace anything:
+			if (m_type == AmbientIBL)
+			{
+				m_ambient.m_IBLTex = nullptr; // Don't leak
+			}
+
+			// Move:
+			m_type = rhs.m_type;
+			rhs.m_type = Type::Type_Count;
+
+			switch (m_type)
+			{
+			case Directional:
+			{
+				m_directional = rhs.m_directional;
+				rhs.m_directional = {};
+			}
+			break;
+			case Point:
+			{
+				m_point = rhs.m_point;
+				rhs.m_point = {};
+			}
+			break;
+			case Spot:
+			{
+				m_spot = rhs.m_spot;
+				rhs.m_spot = {};
+			}
+			break;
+			case AmbientIBL:
+			{
+				m_ambient = rhs.m_ambient;
+				rhs.m_ambient = {};
+			}
+			break;
+			default: SEAssertF("Invalid light type");
+			}
+
+			m_diffuseEnabled = rhs.m_diffuseEnabled;
+			rhs.m_diffuseEnabled = false;
+			
+			m_specularEnabled = rhs.m_specularEnabled;
+			rhs.m_specularEnabled = false;
+		}
+		return *this;
+	}
+
+
+	Light::TypeProperties::~TypeProperties()
+	{
+		switch (m_type)
+		{
+		case Directional:
+		{
+			//
+		}
+		break;
+		case Point:
+		{
+			//
+		}
+		break;
+		case Spot:
+		{
+			//
+		}
+		break;
+		case AmbientIBL:
+		{
+			m_ambient.m_IBLTex = nullptr; // Make sure we don't leak
+		}
+		break;
+		default: SEAssertF("Invalid light type");
+		}
+	}
+
+
 	Light::Light(Type lightType, glm::vec4 const& colorIntensity)
 		: m_isDirty(true)
 	{
@@ -112,7 +246,7 @@ namespace fr
 	}
 
 
-	Light::Light(re::Texture const* iblTex, Type lightType)
+	Light::Light(core::InvPtr<re::Texture> const& iblTex, Type lightType)
 		: m_isDirty(true)
 	{
 		SEAssert(lightType == Type::AmbientIBL, "This constructor is only for AmbientIBL lights");

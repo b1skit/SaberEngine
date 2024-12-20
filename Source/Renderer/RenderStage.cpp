@@ -273,12 +273,12 @@ namespace re
 
 
 	void RenderStage::AddPermanentTextureInput(
-		std::string const& shaderName,
-		re::Texture const* tex,
+		char const* shaderName,
+		core::InvPtr<re::Texture> const& tex,
 		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
-		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
+		SEAssert(shaderName && strlen(shaderName), "Invalid texture name");
 		SEAssert(tex != nullptr, "Invalid texture");
 		SEAssert(sampler.IsValid(), "Invalid sampler");
 
@@ -299,7 +299,7 @@ namespace re
 			for (size_t i = 0; i < m_permanentTextureSamplerInputs.size(); i++)
 			{
 				// If we find an input with the same name, replace it:
-				if (strcmp(m_permanentTextureSamplerInputs[i].m_shaderName.c_str(), shaderName.c_str()) == 0)
+				if (strcmp(m_permanentTextureSamplerInputs[i].m_shaderName.c_str(), shaderName) == 0)
 				{
 					m_permanentTextureSamplerInputs[i] = re::TextureAndSamplerInput(shaderName, tex, sampler, texView);
 					foundExistingEntry = true;
@@ -314,7 +314,7 @@ namespace re
 
 		if (m_textureTargetSet && 
 			m_textureTargetSet->HasDepthTarget() &&
-			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture().get())
+			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture())
 		{
 			m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Need to revalidate
 		}
@@ -323,22 +323,23 @@ namespace re
 
 	void RenderStage::AddPermanentTextureInput(
 		std::string const& shaderName,
-		std::shared_ptr<re::Texture> const& tex,
+		core::InvPtr<re::Texture> const& tex,
 		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
-		AddPermanentTextureInput(shaderName, tex.get(), sampler, texView);
+		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
+		AddPermanentTextureInput(shaderName.c_str(), tex, sampler, texView);
 	}
 
 
 	void RenderStage::AddSingleFrameTextureInput(
 		char const* shaderName,
-		re::Texture const* tex,
+		core::InvPtr<re::Texture> const& tex,
 		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
 		SEAssert(shaderName, "Shader name cannot be null");
-		SEAssert(tex != nullptr, "Invalid texture");
+		SEAssert(tex.IsValid(), "Invalid texture");
 		SEAssert(sampler != nullptr, "Invalid sampler");
 
 		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0,
@@ -362,7 +363,7 @@ namespace re
 
 		if (m_textureTargetSet &&
 			m_textureTargetSet->HasDepthTarget() &&
-			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture().get())
+			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture())
 		{
 			m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Need to revalidate
 		}
@@ -370,12 +371,12 @@ namespace re
 
 
 	void RenderStage::AddSingleFrameTextureInput(
-		char const* shaderName,
-		std::shared_ptr<re::Texture> const& tex,
+		std::string const& shaderName,
+		core::InvPtr<re::Texture> const& tex,
 		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
-		AddSingleFrameTextureInput(shaderName, tex.get(), sampler, texView);
+		AddSingleFrameTextureInput(shaderName.c_str(), tex, sampler, texView);
 	}
 
 
@@ -392,7 +393,7 @@ namespace re
 			const bool depthTargetWritesEnabled = depthTarget.GetTargetParams().m_textureView.DepthWritesEnabled();
 
 			// Check each of our texture inputs against the depth texture:		
-			re::Texture const* depthTex = depthTarget.GetTexture().get();
+			core::InvPtr<re::Texture> const& depthTex = depthTarget.GetTexture();
 
 			for (uint32_t i = 0; i < m_permanentTextureSamplerInputs.size(); i++)
 			{
@@ -412,7 +413,7 @@ namespace re
 
 	void RenderStage::AddPermanentRWTextureInput(
 		std::string const& shaderName,
-		re::Texture const* tex,
+		core::InvPtr<re::Texture> const& tex,
 		re::TextureView const& texView)
 	{
 		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
@@ -450,25 +451,16 @@ namespace re
 
 		if (m_textureTargetSet &&
 			m_textureTargetSet->HasDepthTarget() &&
-			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture().get())
+			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture())
 		{
 			m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Need to revalidate
 		}
 	}
 
 
-	void RenderStage::AddPermanentRWTextureInput(
-		std::string const& shaderName,
-		std::shared_ptr<re::Texture> const& tex,
-		re::TextureView const& texView)
-	{
-		AddPermanentRWTextureInput(shaderName, tex.get(), texView);
-	}
-
-
 	void RenderStage::AddSingleFrameRWTextureInput(
 		char const* shaderName,
-		re::Texture const* tex,
+		core::InvPtr<re::Texture> const& tex,
 		re::TextureView const& texView)
 	{
 		SEAssert(shaderName, "Shader name cannot be null");
@@ -495,19 +487,10 @@ namespace re
 
 		if (m_textureTargetSet &&
 			m_textureTargetSet->HasDepthTarget() &&
-			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture().get())
+			tex == m_textureTargetSet->GetDepthStencilTarget().GetTexture())
 		{
 			m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Need to revalidate
 		}
-	}
-
-
-	void RenderStage::AddSingleFrameRWTextureInput(
-		char const* shaderName,
-		std::shared_ptr<re::Texture> const& tex,
-		re::TextureView const& texView)
-	{
-		AddSingleFrameRWTextureInput(shaderName, tex.get(), texView);
 	}
 
 
@@ -523,11 +506,11 @@ namespace re
 					{
 						for (uint8_t i = 0; i < m_textureTargetSet->GetNumColorTargets(); i++)
 						{
-							re::Texture const* targetTex = m_textureTargetSet->GetColorTarget(i).GetTexture().get();
+							core::InvPtr<re::Texture> const& targetTex = m_textureTargetSet->GetColorTarget(i).GetTexture();
 							re::TextureView const& targetTexView = 
 								m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_textureView;
 
-							re::Texture const* inputTex = texInput.m_texture;
+							core::InvPtr<re::Texture> const& inputTex = texInput.m_texture;
 							re::TextureView const& inputTexView = texInput.m_textureView;
 
 							if (targetTex != inputTex)
@@ -674,7 +657,7 @@ namespace re
 						if (m_textureTargetSet->HasDepthTarget())
 						{
 							re::TextureTarget const& depthTarget = m_textureTargetSet->GetDepthStencilTarget();
-							re::Texture const* depthTargetTex = depthTarget.GetTexture().get();
+							core::InvPtr<re::Texture> const& depthTargetTex = depthTarget.GetTexture();
 							
 							SEAssert(depthTargetTex != texInput.m_texture ||
 								!depthTarget.GetTargetParams().m_textureView.DepthWritesEnabled(),
@@ -704,7 +687,7 @@ namespace re
 			re::TextureTarget const* depthTarget = &m_textureTargetSet->GetDepthStencilTarget();
 			if (depthTarget && depthTarget->HasTexture())
 			{
-				re::Texture const* depthTex = depthTarget->GetTexture().get();
+				core::InvPtr<re::Texture> const& depthTex = depthTarget->GetTexture();
 
 				for (auto const& singleFrameInput : m_singleFrameTextureSamplerInputs)
 				{
