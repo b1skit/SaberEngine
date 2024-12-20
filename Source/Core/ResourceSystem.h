@@ -58,6 +58,7 @@ namespace core
 		{
 			std::unique_ptr<T> m_object;
 			std::unique_ptr<ControlBlock> m_control;
+			bool m_isPermanent = false;
 		};
 		
 
@@ -95,8 +96,8 @@ namespace core
 
 
 	private:
-		std::unordered_map<util::DataHash, PtrAndControl> m_objects;
-		mutable std::shared_mutex m_objectsMutex;
+		std::unordered_map<util::DataHash, PtrAndControl> m_ptrAndControlBlocks;
+		mutable std::shared_mutex m_ptrAndControlBlocksMutex;
 
 		// We defer resource release to avoid degenerate cases (e.g. release and then re-load the same thing)
 		std::queue<std::pair<uint64_t, uint64_t>> m_deferredRelease; // <frame num, id>
@@ -119,16 +120,16 @@ namespace core
 		FreeDeferredReleases(std::numeric_limits<uint64_t>::max()); // Force-release everything
 
 		{
-			std::lock_guard<std::shared_mutex> readLock(m_objectsMutex);
+			std::lock_guard<std::shared_mutex> readLock(m_ptrAndControlBlocksMutex);
 
-			for (auto& object : m_objects)
+			for (auto& entry : m_ptrAndControlBlocks)
 			{
-				SEAssert(object.second.m_control->m_refCount.load() == 1,
+				SEAssert(entry.second.m_control->m_refCount.load() == 1 && entry.second.m_isPermanent == true,
 					"ResourceSystem has outstanding InvPtr<T>s to be Release()'d. Only permanent objects should remain");
 
-				object.second.m_object->Destroy();
+				entry.second.m_object->Destroy();
 			}
-			m_objects.clear();
+			m_ptrAndControlBlocks.clear();
 		}
 	}
 
@@ -137,8 +138,8 @@ namespace core
 	bool ResourceSystem<T>::Contains(util::DataHash id) const
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_objectsMutex);
-			return m_objects.contains(id);
+			std::shared_lock<std::shared_mutex> readLock(m_ptrAndControlBlocksMutex);
+			return m_ptrAndControlBlocks.contains(id);
 		}
 	}
 
@@ -148,23 +149,23 @@ namespace core
 	ResourceSystem<T>::ControlBlock* ResourceSystem<T>::Get(util::DataHash id, ILoadContext<L> const* loadContext)
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_objectsMutex);
+			std::shared_lock<std::shared_mutex> readLock(m_ptrAndControlBlocksMutex);
 
-			auto objectsItr = m_objects.find(id);
-			if (objectsItr != m_objects.end())
+			auto entryItr = m_ptrAndControlBlocks.find(id);
+			if (entryItr != m_ptrAndControlBlocks.end())
 			{
-				return objectsItr->second.m_control.get();
+				return entryItr->second.m_control.get();
 			}
 		}
 
 		// If we made it this far, we probably need to construct our object:
 		{
-			std::unique_lock<std::shared_mutex> write(m_objectsMutex);
+			std::unique_lock<std::shared_mutex> write(m_ptrAndControlBlocksMutex);
 
-			auto objectsItr = m_objects.find(id);
-			if (objectsItr != m_objects.end()) // It might have been created while we waited
+			auto entryItr = m_ptrAndControlBlocks.find(id);
+			if (entryItr != m_ptrAndControlBlocks.end()) // It might have been created while we waited
 			{
-				return objectsItr->second.m_control.get();
+				return entryItr->second.m_control.get();
 			}
 			else
 			{
@@ -172,7 +173,7 @@ namespace core
 					"Get() called with a null loadContext, this is only valid if the object is guaranteed to exist");
 
 				ResourceSystem<T>::PtrAndControl& newPtrAndCntrl =
-					m_objects.emplace(id, ResourceSystem<T>::PtrAndControl{}).first->second;
+					m_ptrAndControlBlocks.emplace(id, ResourceSystem<T>::PtrAndControl{}).first->second;
 
 				newPtrAndCntrl.m_control = std::make_unique<ControlBlock>();
 				
@@ -191,6 +192,7 @@ namespace core
 				if (loadContext->m_isPermanent)
 				{
 					newPtrAndCntrl.m_control->m_refCount++;
+					newPtrAndCntrl.m_isPermanent = true;
 				}
 
 				return newPtrAndCntrl.m_control.get();
@@ -212,23 +214,23 @@ namespace core
 	void ResourceSystem<T>::FreeDeferredReleases(uint64_t frameNum)
 	{
 		{
-			std::scoped_lock lock(m_deferredReleaseMutex, m_objectsMutex);
+			std::scoped_lock lock(m_deferredReleaseMutex, m_ptrAndControlBlocksMutex);
 
 			while (!m_deferredRelease.empty() &&
 				m_deferredRelease.front().first + k_deferredReleaseNumFrames < frameNum)
 			{
-				SEAssert(m_objects.contains(m_deferredRelease.front().second), "ID not found");
+				SEAssert(m_ptrAndControlBlocks.contains(m_deferredRelease.front().second), "ID not found");
 
 				// Allow resources to be resurrected from the deferred delete queue: Only actually destroy them if
 				// their ref. count is 0
-				if (m_objects.at(m_deferredRelease.front().second).m_control->m_refCount.load() == 0)
+				if (m_ptrAndControlBlocks.at(m_deferredRelease.front().second).m_control->m_refCount.load() == 0)
 				{
-					SEAssert(m_objects.at(m_deferredRelease.front().second).m_control->m_state.load() == 
+					SEAssert(m_ptrAndControlBlocks.at(m_deferredRelease.front().second).m_control->m_state.load() == 
 						core::ResourceState::Released,
 						"Ref count is 0, but state is not Released. This should not be possible");
 
-					m_objects.at(m_deferredRelease.front().second).m_object->Destroy();
-					m_objects.erase(m_deferredRelease.front().second);
+					m_ptrAndControlBlocks.at(m_deferredRelease.front().second).m_object->Destroy();
+					m_ptrAndControlBlocks.erase(m_deferredRelease.front().second);
 				}
 
 				m_deferredRelease.pop();
