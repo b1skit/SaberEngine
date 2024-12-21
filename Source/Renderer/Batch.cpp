@@ -120,7 +120,7 @@ namespace
 	}
 
 
-	re::Shader const* GetResolvedShader(EffectID effectID, effect::drawstyle::Bitmask drawStyleBitmask)
+	core::InvPtr<re::Shader> const& GetResolvedShader(EffectID effectID, effect::drawstyle::Bitmask drawStyleBitmask)
 	{
 		SEAssert(effectID.IsValid(), "Invalid Effect");
 

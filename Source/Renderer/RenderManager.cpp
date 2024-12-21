@@ -126,7 +126,7 @@ namespace re
 		, m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_inventory(nullptr)
-		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newShaders(util::NBufferedVector<core::InvPtr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<core::InvPtr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -533,7 +533,7 @@ namespace re
 
 
 	template<>
-	void RenderManager::RegisterForCreateDEPRECATED(std::shared_ptr<re::Shader> newObject)
+	void RenderManager::RegisterForCreate(core::InvPtr<re::Shader> const& newObject)
 	{
 		m_newShaders.EmplaceBack(std::move(newObject));
 	}

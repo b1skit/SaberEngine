@@ -134,7 +134,7 @@ namespace re
 		void DestroyNewResourceDoubleBuffers();
 
 		static constexpr size_t k_newObjectReserveAmount = 128;
-		util::NBufferedVector<std::shared_ptr<re::Shader>> m_newShaders;
+		util::NBufferedVector<core::InvPtr<re::Shader>> m_newShaders;
 		util::NBufferedVector<core::InvPtr<re::Texture>> m_newTextures;
 		util::NBufferedVector<core::InvPtr<re::Sampler>> m_newSamplers;
 		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;

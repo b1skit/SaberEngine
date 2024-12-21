@@ -164,7 +164,7 @@ namespace opengl
 
 
 					auto SetDrawState = [&renderStage, &context](
-						re::Shader const* shader, bool doSetStageInputs)
+						core::InvPtr<re::Shader> const& shader, bool doSetStageInputs)
 					{
 						opengl::Shader::Bind(*shader);
 
@@ -186,7 +186,7 @@ namespace opengl
 								opengl::Shader::SetBuffer(*shader, bufferInput);
 							}
 
-							auto SetStageTextureInputs = [shader](
+							auto SetStageTextureInputs = [&shader](
 								std::vector<re::TextureAndSamplerInput> const& texInputs)
 								{
 									for (auto const& texSamplerInput : texInputs)
@@ -228,14 +228,14 @@ namespace opengl
 					// OpenGL is stateful; We only need to set the stage inputs once
 					bool hasSetStageInputs = false;
 
-					re::Shader const* currentShader = nullptr;
+					core::InvPtr<re::Shader> currentShader;
 					GLuint currentVAO = 0;
 
 					// RenderStage batches:
 					std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 					for (re::Batch const& batch : batches)
 					{
-						re::Shader const* batchShader = batch.GetShader();
+						core::InvPtr<re::Shader> const& batchShader = batch.GetShader();
 						SEAssert(batchShader != nullptr, "Batch must have a shader");
 
 						if (currentShader != batchShader)

@@ -47,11 +47,6 @@ namespace re
 		bool MaterialExists(std::string const& matName) const;
 		std::vector<std::string> GetAllMaterialNames() const;
 
-		// Shaders:
-		bool AddUniqueShader(std::shared_ptr<re::Shader>&); // Returns true if new object was added
-		std::shared_ptr<re::Shader> GetShader(ShaderID) const;
-		bool ShaderExists(ShaderID) const;
-
 		void EndLoading();
 
 		
@@ -64,10 +59,6 @@ namespace re
 
 		std::unordered_map<util::StringHash, std::shared_ptr<gr::Material>> m_materials;
 		mutable std::shared_mutex m_materialsReadWriteMutex;
-
-		std::unordered_map<ShaderID, std::shared_ptr<re::Shader>> m_shaders;
-		mutable std::shared_mutex m_shadersReadWriteMutex;
-
 
 		bool m_isCreated; // Validate Destroy() was called after a scene was loaded
 

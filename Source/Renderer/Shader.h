@@ -7,7 +7,14 @@
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
 
+#include "Core/Util/DataHash.h"
 
+
+namespace core
+{
+	template<typename T>
+	class InvPtr;
+}
 namespace dx12
 {
 	class Shader;
@@ -17,7 +24,7 @@ namespace opengl
 	class Shader;
 }
 
-using ShaderID = uint64_t;
+using ShaderID = util::DataHash;
 
 namespace re
 {
@@ -52,17 +59,20 @@ namespace re
 
 
 	public:
-		[[nodiscard]] static std::shared_ptr<re::Shader> GetOrCreate(
+		[[nodiscard]] static core::InvPtr<re::Shader> GetOrCreate(
 			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames,
 			re::PipelineState const*,
 			re::VertexStreamMap const*);
 
+		Shader(Shader&&) noexcept = default;
+		Shader& operator=(Shader&&) noexcept = default;
 
 		~Shader();
 
-		Shader(Shader&&) noexcept = default;
-		Shader& operator=(Shader&&) noexcept = default;
-		
+		void Destroy();
+
+
+	public:		
 		ShaderID GetShaderIdentifier() const;
 
 		bool HasShaderType(ShaderType) const;
@@ -81,11 +91,12 @@ namespace re
 			std::string const& shaderName,
 			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames, 
 			re::PipelineState const*,
+			re::VertexStreamMap const*,
 			uint64_t shaderIdentifier);
 
 
 	private:
-		const uint64_t m_shaderIdentifier;
+		const ShaderID m_shaderIdentifier;
 		std::vector<std::pair<std::string, ShaderType>> m_extensionlessSourceFilenames;
 
 		std::unique_ptr<PlatformParams> m_platformParams;

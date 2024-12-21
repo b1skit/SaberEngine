@@ -6,6 +6,9 @@
 #include "Shader_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/InvPtr.h"
+
+#include "Core/Interfaces/ILoadContext.h"
 
 #include "Core/Util/HashUtils.h"
 
@@ -18,7 +21,7 @@ namespace
 		std::vector<std::pair<std::string, re::Shader::ShaderType>> const& extensionlessSourceFilenames,
 		re::PipelineState const* rePipelineState)
 	{
-		uint64_t hashResult = 0;
+		ShaderID hashResult = 0;
 
 		bool isComputeShader = false;
 		for (auto const& shaderStage : extensionlessSourceFilenames)
@@ -39,7 +42,7 @@ namespace
 
 		SEAssert(rePipelineState || isComputeShader, "Pipeline state is null. This is unexpected");
 
-		if (!isComputeShader)
+		if (!isComputeShader && rePipelineState)
 		{
 			util::CombineHash(hashResult, rePipelineState->GetDataHash());
 		}
@@ -68,7 +71,7 @@ namespace
 
 namespace re
 {
-	[[nodiscard]] std::shared_ptr<re::Shader> Shader::GetOrCreate(
+	[[nodiscard]] core::InvPtr<re::Shader> Shader::GetOrCreate(
 		std::vector<std::pair<std::string, ShaderType>> const& extensionlessSourceFilenames,
 		re::PipelineState const* rePipelineState,
 		re::VertexStreamMap const* vertexStreamMap)
@@ -76,54 +79,71 @@ namespace re
 		const ShaderID shaderID = ComputeShaderIdentifier(extensionlessSourceFilenames, rePipelineState);
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
-		re::SceneData* sceneData = re::RenderManager::GetSceneData();
-		if (sceneData->ShaderExists(shaderID))
+		core::Inventory* inventory = re::RenderManager::Get()->GetInventory();
+		if (inventory->Contains<re::Shader>(shaderID))
 		{
-			return sceneData->GetShader(shaderID);
+			return inventory->Get<re::Shader>(shaderID);
 		}
-		// Note: It's possible that 2 threads might simultaneously fail to find a Shader in the SceneData, and create
-		// it. But that's OK, the SceneData will tell us if this shader was actually added
 
-		bool isComputeShader = false;
 
-		// Concatenate the various filenames together to build a helpful identifier
-		std::string shaderName;
-		for (size_t i = 0; i < extensionlessSourceFilenames.size(); ++i)
+		struct ShaderLoadContext : core::ILoadContext<re::Shader>
 		{
-			std::string const& filename = extensionlessSourceFilenames.at(i).first;
-			const ShaderType shaderType = extensionlessSourceFilenames.at(i).second;
-
-			shaderName += std::format("{}={}{}",
-				ShaderTypeToCStr(shaderType),
-				filename,
-				i == extensionlessSourceFilenames.size() - 1 ? "" : "__");
-
-			if (shaderType == re::Shader::Compute)
+			void OnLoadBegin(core::InvPtr<re::Shader> newShader) override
 			{
-				isComputeShader = true;
+				LOG(std::format("Scheduling load for Shader with ID \"{}\"", m_shaderID).c_str());
+
+				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
+				re::RenderManager::Get()->RegisterForCreate(newShader);
 			}
-		}
-		SEAssert(!isComputeShader || extensionlessSourceFilenames.size() == 1,
-			"A compute shader should only have a single shader entry. This is unexpected");
-		SEAssert(rePipelineState || isComputeShader, "PipelineState is null. This is unexpected for non-compute shaders");
 
-		// Our ctor is private; We must manually create the Shader, and then pass the ownership to a shared_ptr
-		std::shared_ptr<re::Shader> sharedShaderPtr;
-		sharedShaderPtr.reset(new re::Shader(shaderName, extensionlessSourceFilenames, rePipelineState, shaderID));
+			std::unique_ptr<re::Shader> Load(core::InvPtr<re::Shader>) override
+			{
+				bool isComputeShader = false;
 
-		// Register the Shader with the SceneData object for lifetime management:
-		const bool addedNewShader = sceneData->AddUniqueShader(sharedShaderPtr);
-		if (addedNewShader)
-		{
-			// Register the Shader with the RenderManager (once only), so its API-level object can be created before use
-			re::RenderManager::Get()->RegisterForCreateDEPRECATED(sharedShaderPtr);
-		}
+				// Concatenate the various filenames together to build a helpful identifier
+				std::string shaderName;
+				for (size_t i = 0; i < m_extensionlessSrcFilenames.size(); ++i)
+				{
+					std::string const& filename = m_extensionlessSrcFilenames.at(i).first;
+					const ShaderType shaderType = m_extensionlessSrcFilenames.at(i).second;
 
-		SEAssert(vertexStreamMap != nullptr || isComputeShader,
-			"Invalid attempt to set a VertexStreamMap");
-		sharedShaderPtr->m_vertexStreamMap = vertexStreamMap;
+					shaderName += std::format("{}={}{}",
+						ShaderTypeToCStr(shaderType),
+						filename,
+						i == m_extensionlessSrcFilenames.size() - 1 ? "" : "__");
 
-		return sharedShaderPtr;
+					if (shaderType == re::Shader::Compute)
+					{
+						isComputeShader = true;
+					}
+				}
+				LOG(std::format("Loading Shader \"{}\" (ID {})", shaderName, m_shaderID).c_str());
+
+				SEAssert(!isComputeShader || m_extensionlessSrcFilenames.size() == 1,
+					"A compute shader should only have a single shader entry. This is unexpected");
+				SEAssert(m_rePipelineState || isComputeShader,
+					"PipelineState is null. This is unexpected for non-compute shaders");
+				SEAssert(m_vertexStreamMap != nullptr || isComputeShader, "Invalid attempt to set a VertexStreamMap");
+
+				return std::unique_ptr<re::Shader>(new re::Shader(
+					shaderName, m_extensionlessSrcFilenames, m_rePipelineState, m_vertexStreamMap, m_shaderID));				
+			}
+
+			ShaderID m_shaderID;
+			std::vector<std::pair<std::string, ShaderType>> m_extensionlessSrcFilenames;
+			re::PipelineState const* m_rePipelineState;
+			re::VertexStreamMap const* m_vertexStreamMap;
+		};
+		std::shared_ptr<ShaderLoadContext> shaderLoadContext = std::make_shared<ShaderLoadContext>();
+
+		shaderLoadContext->m_shaderID = shaderID;
+		shaderLoadContext->m_extensionlessSrcFilenames = extensionlessSourceFilenames;
+		shaderLoadContext->m_rePipelineState = rePipelineState;
+		shaderLoadContext->m_vertexStreamMap = vertexStreamMap;
+
+		return re::RenderManager::Get()->GetInventory()->Get(
+			shaderID,
+			static_pointer_cast<core::ILoadContext<re::Shader>>(shaderLoadContext));
 	}
 
 
@@ -131,12 +151,13 @@ namespace re
 		std::string const& shaderName,
 		std::vector<std::pair<std::string, ShaderType>> const& extensionlessSourceFilenames,
 		re::PipelineState const* rePipelineState,
+		re::VertexStreamMap const* m_vertexStreamMap,
 		uint64_t shaderIdentifier)
 		: INamedObject(shaderName)
 		, m_shaderIdentifier(shaderIdentifier)
 		, m_extensionlessSourceFilenames(extensionlessSourceFilenames)
 		, m_pipelineState(rePipelineState)
-		, m_vertexStreamMap(nullptr)
+		, m_vertexStreamMap(m_vertexStreamMap)
 	{
 		SEAssert(rePipelineState ||
 		(m_extensionlessSourceFilenames.size() == 1 && m_extensionlessSourceFilenames[0].second == re::Shader::Compute),
@@ -148,6 +169,13 @@ namespace re
 
 	Shader::~Shader()
 	{
+		SEAssert(m_platformParams == nullptr, "Platform parameters is not null. Was Destroy() called?");
+	}
+
+
+	void Shader::Destroy()
+	{
 		platform::Shader::Destroy(*this);
+		m_platformParams = nullptr;
 	}
 }

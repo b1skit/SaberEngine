@@ -2,6 +2,8 @@
 #pragma once
 #include "Shader.h"
 
+#include "Core/InvPtr.h"
+
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
@@ -39,11 +41,11 @@ namespace effect
 	public:
 		TechniqueID GetTechniqueID() const;
 
-		re::Shader const* GetShader() const;
+		core::InvPtr<re::Shader> const& GetShader() const;
 
 
 	private:
-		std::shared_ptr<re::Shader> m_resolvedShader;
+		core::InvPtr<re::Shader> m_resolvedShader;
 
 
 	private: // No copying allowed
@@ -64,8 +66,8 @@ namespace effect
 	}
 
 
-	inline re::Shader const* Technique::GetShader() const
+	inline core::InvPtr<re::Shader> const& Technique::GetShader() const
 	{
-		return m_resolvedShader.get();
+		return m_resolvedShader;
 	}
 }

@@ -279,7 +279,7 @@ namespace dx12
 
 
 					auto SetDrawState = [&renderStage, &context, &curRenderStageType](
-						re::Shader const* shader,
+						core::InvPtr<re::Shader> const& shader,
 						re::TextureTargetSet const* targetSet,
 						dx12::CommandList* commandList,
 						bool doSetStageInputsAndTargets)
@@ -383,14 +383,14 @@ namespace dx12
 						SEAssertF("Invalid stage type");
 					}
 
-					re::Shader const* currentShader = nullptr;
+					core::InvPtr<re::Shader> currentShader;
 					bool hasSetStageInputsAndTargets = false;
 
 					// RenderStage batches:
 					std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 					for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
 					{
-						re::Shader const* batchShader = batches[batchIdx].GetShader();
+						core::InvPtr<re::Shader> const& batchShader = batches[batchIdx].GetShader();
 						SEAssert(batchShader != nullptr, "Batch must have a shader");
 
 						if (currentShader != batchShader)

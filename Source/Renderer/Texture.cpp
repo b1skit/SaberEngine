@@ -239,30 +239,8 @@ namespace re
 
 
 	Texture::Texture(std::string const& name, TextureParams const& params)
-		: INamedObject(name)
-		, m_texParams(params)
-		, m_platformParams(nullptr)
-		, m_initialData(nullptr)
-		, m_numMips(ComputeNumMips(params))
-		, m_numSubresources(ComputeNumSubresources(params))
+		: Texture(name, params, std::vector<ImageDataUniquePtr>())
 	{
-		SEAssert(m_texParams.m_usage != Texture::Usage::Invalid, "Invalid usage");
-		SEAssert(m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid, "Invalid dimension");
-		SEAssert(m_texParams.m_format != Texture::Format::Invalid, "Invalid format");
-		SEAssert(m_texParams.m_colorSpace != Texture::ColorSpace::Invalid, "Invalid color space");
-		SEAssert(m_texParams.m_width > 0 && m_texParams.m_height > 0, "Invalid dimensions");
-		SEAssert(m_texParams.m_arraySize == 1 || 
-			m_texParams.m_dimension == Dimension::Texture1DArray ||
-			m_texParams.m_dimension == Dimension::Texture2DArray ||
-			m_texParams.m_dimension == Dimension::Texture3D ||
-			m_texParams.m_dimension == Dimension::TextureCubeArray,
-			"Dimension and array size mismatch");
-
-		SEAssert(m_texParams.m_dimension != re::Texture::Texture3D || 
-			m_texParams.m_mipMode != re::Texture::MipMode::AllocateGenerate,
-			"Texture3D mip generation is not (currently) supported");
-
-		platform::Texture::CreatePlatformParams(*this);
 	}
 
 
@@ -292,11 +270,14 @@ namespace re
 
 		const uint8_t numFaces = re::Texture::GetNumFaces(params.m_dimension);
 
-		m_initialData = std::make_unique<InitialDataSTBIImage>(
-			params.m_arraySize,
-			numFaces,
-			ComputeTotalBytesPerFace(params),
-			std::move(initialData));
+		if (!initialData.empty())
+		{
+			m_initialData = std::make_unique<InitialDataSTBIImage>(
+				params.m_arraySize,
+				numFaces,
+				ComputeTotalBytesPerFace(params),
+				std::move(initialData));
+		}
 
 		platform::Texture::CreatePlatformParams(*this);
 	}

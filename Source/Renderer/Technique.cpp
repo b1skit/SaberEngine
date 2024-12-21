@@ -26,7 +26,7 @@ namespace effect
 		const bool isSame = GetNameHash() == rhs.GetNameHash();
 
 		SEAssert(!isSame ||
-			((m_resolvedShader.get() == rhs.m_resolvedShader.get()) &&
+			((m_resolvedShader == rhs.m_resolvedShader) &&
 				GetUniqueID() == rhs.GetUniqueID()),
 			"Multiple Techniques with the same name detected");
 

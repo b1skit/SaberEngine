@@ -35,16 +35,11 @@ namespace re
 	void SceneData::Destroy()
 	{
 		{
-			std::scoped_lock lock(
-				m_meshPrimitivesMutex,
-				m_vertexStreamsMutex,
-				m_materialsReadWriteMutex,
-				m_shadersReadWriteMutex);
+			std::scoped_lock lock(m_meshPrimitivesMutex, m_vertexStreamsMutex, m_materialsReadWriteMutex);
 
 			m_meshPrimitives.clear();
 			m_vertexStreams.clear();
 			m_materials.clear();
-			m_shaders.clear();
 		}
 
 		m_isCreated = false; // Flag that Destroy has been called
@@ -171,56 +166,5 @@ namespace re
 			}
 		}
 		return result;
-	}
-
-
-	bool SceneData::AddUniqueShader(std::shared_ptr<re::Shader>& newShader)
-	{
-		SEAssert(newShader != nullptr, "Cannot add null shader to shader table");
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_shadersReadWriteMutex);
-
-			bool addedNewShader = false;
-
-			const ShaderID shaderIdentifier = newShader->GetShaderIdentifier();
-
-			auto shaderItr = m_shaders.find(shaderIdentifier);
-			if (shaderItr != m_shaders.end()) // Found existing
-			{
-				newShader = shaderItr->second;
-			}
-			else // Add new
-			{
-				m_shaders[shaderIdentifier] = newShader;
-				addedNewShader = true;
-				LOG("Shader \"%s\" (ID %llu) registered with scene",
-					newShader->GetName().c_str(),
-					newShader->GetShaderIdentifier());
-			}
-			return addedNewShader;
-		}
-	}
-
-
-	std::shared_ptr<re::Shader> SceneData::GetShader(ShaderID shaderID) const
-	{
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_shadersReadWriteMutex);
-			std::unordered_map<size_t, std::shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(shaderID);
-
-			SEAssert(shaderPos != m_shaders.end(), "Could not find shader");
-
-			return shaderPos->second;
-		}
-	}
-
-
-	bool SceneData::ShaderExists(ShaderID shaderID) const
-	{
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_shadersReadWriteMutex);
-
-			return m_shaders.find(shaderID) != m_shaders.end();
-		}
 	}
 }

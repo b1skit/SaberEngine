@@ -121,7 +121,7 @@ namespace re
 
 		void Resolve(effect::drawstyle::Bitmask stageBitmask);
 
-		re::Shader const* GetShader() const;
+		core::InvPtr<re::Shader> const& GetShader() const;
 
 		size_t GetInstanceCount() const;
 		void SetInstanceCount(uint32_t numInstances);
@@ -170,7 +170,7 @@ namespace re
 			ComputeParams m_computeParams;
 		};
 		
-		re::Shader const* m_batchShader;
+		core::InvPtr<re::Shader> m_batchShader;
 
 		EffectID m_effectID;
 		effect::drawstyle::Bitmask m_drawStyleBitmask;
@@ -213,7 +213,7 @@ namespace re
 	}
 
 
-	inline re::Shader const* Batch::GetShader() const
+	inline core::InvPtr<re::Shader> const& Batch::GetShader() const
 	{
 		return m_batchShader;
 	}
