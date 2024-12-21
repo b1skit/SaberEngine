@@ -266,12 +266,10 @@ namespace core
 					// Now the unique_ptr owning our object is created, swap our pointer to minimize indirection
 					newInvPtr.m_control->m_data = static_cast<std::unique_ptr<T>*>(newInvPtr.m_control->m_data)->get();
 
-					// Note: Our InvPtr is not yet marked as ready to ensure this call completes first
-					loadContext->OnLoadComplete(newInvPtr);
-
 					newInvPtr.m_control->m_state.store(core::ResourceState::Ready);
-
 					newInvPtr.m_control->m_state.notify_all();
+
+					loadContext->OnLoadComplete(newInvPtr);
 				});
 		}
 

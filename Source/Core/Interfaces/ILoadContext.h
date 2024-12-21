@@ -21,8 +21,7 @@ namespace core
 		// Async: The bulk of the loading and creation should be done here
 		inline virtual std::unique_ptr<T> Load(core::InvPtr<T>) = 0;
 
-		// Async: Called after loading completes, but before any threads waiting on the InvPointer to become Ready. At
-		// this point, the underlying resource must be fully constructed
+		// Async: Called after loading completes, and the InvPointer state has been set to Ready
 		inline virtual void OnLoadComplete(core::InvPtr<T>) {}; 
 
 		bool m_isPermanent = false; // If true, the resource will not be deleted when the last InvPtr goes out of scope
