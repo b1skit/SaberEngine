@@ -251,10 +251,12 @@ namespace core
 		{
 			SEAssert(loadContext != nullptr, "Load context is null");
 
+			// Do this on the current thread; guarantees the InvPtr can be registered with any systems that might
+			// require it before the creation can possibly have finished
+			loadContext->OnLoadBegin(newInvPtr); 
+
 			core::ThreadPool::Get()->EnqueueJob([newInvPtr, loadContext]()
 				{
-					loadContext->OnLoadBegin(newInvPtr);
-
 					// Populate the unique_ptr held by the ResourceSystem:
 					*static_cast<std::unique_ptr<T>*>(newInvPtr.m_control->m_data) = loadContext->Load(newInvPtr);
 

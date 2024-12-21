@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "AssetLoadUtils.h"
 #include "Texture.h"
+#include "RenderManager.h"
 
 #include "Core/LogManager.h"
 #include "Core/PerformanceTimer.h"
@@ -27,7 +28,74 @@ namespace grutil
 	};
 
 
-	core::InvPtr<re::Texture> LoadTextureFromFilePath(
+	// ---
+
+
+	template<>
+	void TextureFromFilePath<re::Texture>::OnLoadBegin(core::InvPtr<re::Texture> newTex)
+	{
+		LOG(std::format("Creating texture from file path \"{}\"", m_filePath).c_str());
+
+		// Register for API-layer creation now to ensure we don't miss our chance for the current frame
+		re::RenderManager::Get()->RegisterForCreate(newTex);
+	}
+
+
+	template<>
+	std::unique_ptr<re::Texture> TextureFromFilePath<re::Texture>::Load(core::InvPtr<re::Texture>)
+	{
+		re::Texture::TextureParams texParams{};
+		std::vector<re::Texture::ImageDataUniquePtr> imageData;
+
+		const bool loadSuccess = grutil::LoadTextureDataFromFilePath(
+			texParams,
+			imageData,
+			{ m_filePath },
+			m_filePath,
+			m_colorSpace,
+			true,
+			false,
+			m_colorFallback);
+
+		if (!loadSuccess)
+		{
+			// Create a error color fallback:
+			texParams = re::Texture::TextureParams{
+				.m_width = 2,
+				.m_height = 2,
+				.m_usage = re::Texture::Usage::ColorSrc,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = m_formatFallback,
+				.m_colorSpace = m_colorSpace,
+				.m_mipMode = re::Texture::MipMode::None,
+			};
+
+			std::unique_ptr<re::Texture::InitialDataVec> errorData = std::make_unique<re::Texture::InitialDataVec>(
+				texParams.m_arraySize,
+				1, // 1 face
+				re::Texture::ComputeTotalBytesPerFace(texParams),
+				std::vector<uint8_t>());
+
+			// Initialize with the error color:
+			re::Texture::Fill(static_cast<re::Texture::IInitialData*>(errorData.get()), texParams, m_colorFallback);
+
+			return std::unique_ptr<re::Texture>(new re::Texture(m_filePath, texParams, std::move(errorData)));
+		}
+		SEAssert(loadSuccess, "Failed to load texture: Does the asset exist?");
+
+		// Update the tex params with our preferences:
+		texParams.m_mipMode = m_mipMode;
+
+		return std::unique_ptr<re::Texture>(new re::Texture(m_filePath, texParams, std::move(imageData)));
+	}
+
+
+	// ---
+
+
+	bool LoadTextureDataFromFilePath(
+		re::Texture::TextureParams& texParamsOut,
+		std::vector<re::Texture::ImageDataUniquePtr>& imageDataOut,
 		std::vector<std::string> const& texturePaths,
 		std::string const& idName,
 		re::Texture::ColorSpace colorSpace,
@@ -46,8 +114,7 @@ namespace grutil
 		const uint8_t totalFaces = util::CheckedCast<uint8_t>(texturePaths.size());
 
 		// Modify default TextureParams to be suitable for a generic error texture:
-		re::Texture::TextureParams texParams
-		{
+		texParamsOut = re::Texture::TextureParams{
 			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
 			.m_dimension = (totalFaces == 1 ?
 				re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCube),
@@ -57,9 +124,9 @@ namespace grutil
 		};
 		glm::vec4 fillColor = errorTexFillColor;
 
+		SEAssert(imageDataOut.empty(), "Image data is not empty. This is unexpected");
+
 		// Load the texture, face-by-face:
-		std::vector<re::Texture::ImageDataUniquePtr> initialData;
-		core::InvPtr<re::Texture> texture = nullptr;
 		for (size_t face = 0; face < totalFaces; face++)
 		{
 			// Get the image data:
@@ -95,39 +162,39 @@ namespace grutil
 				LOG("Texture \"%s\" is %dx%d, %d-bit, %d channels",
 					texturePaths[face].c_str(), width, height, bitDepth, desiredChannels);
 
-				initialData.emplace_back(CreateImageDataUniquePtr(imageData));
+				imageDataOut.emplace_back(CreateImageDataUniquePtr(imageData));
 
 				if (face == 0) // 1st face: Update the texture parameters
 				{
-					texParams.m_width = width;
-					texParams.m_height = height;
+					texParamsOut.m_width = width;
+					texParamsOut.m_height = height;
 
 					if ((width == 1 || height == 1) && (width != height))
 					{
-						texParams.m_dimension = re::Texture::Dimension::Texture1D;
+						texParamsOut.m_dimension = re::Texture::Dimension::Texture1D;
 					}
 
 					switch (desiredChannels)
 					{
 					case 1:
 					{
-						if (bitDepth == 8) texParams.m_format = re::Texture::Format::R8_UNORM;
-						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::R16F;
-						else texParams.m_format = re::Texture::Format::R32F;
+						if (bitDepth == 8) texParamsOut.m_format = re::Texture::Format::R8_UNORM;
+						else if (bitDepth == 16) texParamsOut.m_format = re::Texture::Format::R16F;
+						else texParamsOut.m_format = re::Texture::Format::R32F;
 					}
 					break;
 					case 2:
 					{
-						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8_UNORM;
-						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RG16F;
-						else texParams.m_format = re::Texture::Format::RG32F;
+						if (bitDepth == 8) texParamsOut.m_format = re::Texture::Format::RG8_UNORM;
+						else if (bitDepth == 16) texParamsOut.m_format = re::Texture::Format::RG16F;
+						else texParamsOut.m_format = re::Texture::Format::RG32F;
 					}
 					break;
 					case 4:
 					{
-						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGBA8_UNORM;
-						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RGBA16F;
-						else texParams.m_format = re::Texture::Format::RGBA32F;
+						if (bitDepth == 8) texParamsOut.m_format = re::Texture::Format::RGBA8_UNORM;
+						else if (bitDepth == 16) texParamsOut.m_format = re::Texture::Format::RGBA16F;
+						else texParamsOut.m_format = re::Texture::Format::RGBA32F;
 					}
 					break;
 					default:
@@ -138,53 +205,66 @@ namespace grutil
 				}
 				else // texture already exists: Ensure the face has the same dimensions
 				{
-					SEAssert(texParams.m_width == width && texParams.m_height == height, "Parameter mismatch");
+					SEAssert(texParamsOut.m_width == width && texParamsOut.m_height == height, "Parameter mismatch");
 				}
 			}
 			else if (returnErrorTex)
 			{
-				if (!initialData.empty())
+				if (!imageDataOut.empty())
 				{
-					initialData.clear();
+					imageDataOut.clear();
 
-					// Reset texParams to be suitable for an error texture
-					texParams.m_width = 2;
-					texParams.m_height = 2;
-					texParams.m_dimension = totalFaces == 1 ?
+					// Reset texParamsOut to be suitable for an error texture
+					texParamsOut.m_width = 2;
+					texParamsOut.m_height = 2;
+					texParamsOut.m_dimension = totalFaces == 1 ?
 						re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCube;
-					texParams.m_format = re::Texture::Format::RGBA8_UNORM;
-					texParams.m_colorSpace = re::Texture::ColorSpace::sRGB;
-					texParams.m_mipMode = re::Texture::MipMode::AllocateGenerate;
+					texParamsOut.m_format = re::Texture::Format::RGBA8_UNORM;
+					texParamsOut.m_colorSpace = re::Texture::ColorSpace::sRGB;
+					texParamsOut.m_mipMode = re::Texture::MipMode::AllocateGenerate;
 
 					fillColor = errorTexFillColor;
 				}
 
-				// We'll populate the initial image data internally:
-				texture = re::Texture::Create(idName, texParams, fillColor);
-				break;
+				SEAssert((texParamsOut.m_usage & re::Texture::Usage::ColorSrc), "Trying to fill a non-color texture");
+
+				const uint8_t numFaces = re::Texture::GetNumFaces(texParamsOut.m_dimension);
+
+				re::Texture::ImageDataUniquePtr newImgDataPtr(
+					new re::Texture::InitialDataVec(
+						texParamsOut.m_arraySize,
+						numFaces,
+						re::Texture::ComputeTotalBytesPerFace(texParamsOut),
+						std::vector<uint8_t>()),
+					[](void*) { std::default_delete<re::Texture::InitialDataVec>(); });
+
+				imageDataOut.emplace_back(std::move(newImgDataPtr));
+
+				// Initialize with the error color:
+				re::Texture::Fill(
+					static_cast<re::Texture::IInitialData*>(imageDataOut.back().get()), texParamsOut, fillColor);
+
+				return true;
 			}
 			else
 			{
 				char const* failResult = stbi_failure_reason();
 				LOG_WARNING("Failed to load image \"%s\": %s", texturePaths[0].c_str(), failResult);
 				timer.StopSec();
-				return nullptr;
+				return false;
 			}
-		}
-
-		if (!texture)
-		{
-			texture = re::Texture::Create(idName, texParams, std::move(initialData));
 		}
 
 		LOG("Loaded texture \"%s\" from \"%s\"in %f seconds...", idName.c_str(), texturePaths[0].c_str(), timer.StopSec());
 
 		// Note: Texture color space must still be set
-		return texture;
+		return true;
 	}
 
 
-	core::InvPtr<re::Texture> LoadTextureFromMemory(
+	bool LoadTextureDataFromMemory(
+		re::Texture::TextureParams& texParamsOut,
+		std::vector<re::Texture::ImageDataUniquePtr>& imageDataOut,
 		std::string const& texName,
 		unsigned char const* texSrc,
 		uint32_t texSrcNumBytes,
@@ -197,14 +277,15 @@ namespace grutil
 		timer.Start();
 
 		// Modify default TextureParams to be suitable for a generic error texture:
-		re::Texture::TextureParams texParams
-		{
+		texParamsOut = re::Texture::TextureParams{
 			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
 			.m_dimension = re::Texture::Dimension::Texture2D,
 			.m_format = re::Texture::Format::RGBA8_UNORM,
 			.m_colorSpace = colorSpace
 		};
 		glm::vec4 fillColor = re::Texture::k_errorTextureColor;
+
+		SEAssert(imageDataOut.empty(), "Image data is not empty. This is unexpected");
 
 		// Get the image data:
 		int width = 0;
@@ -233,66 +314,61 @@ namespace grutil
 			bitDepth = 8;
 		}
 
-		core::InvPtr<re::Texture> texture(nullptr);
-		std::vector<re::Texture::ImageDataUniquePtr> initialData;
 		if (imageData)
 		{
 			LOG("Texture \"%s\" is %dx%d, %d-bit, %d channels",
 				texName.c_str(), width, height, bitDepth, desiredChannels);
 
-			initialData.emplace_back(std::move(CreateImageDataUniquePtr(imageData)));
+			imageDataOut.emplace_back(std::move(CreateImageDataUniquePtr(imageData)));
 
 			// Update the texture parameters:
-			texParams.m_width = width;
-			texParams.m_height = height;
+			texParamsOut.m_width = width;
+			texParamsOut.m_height = height;
 
 			if ((width == 1 || height == 1) && (width != height))
 			{
-				LOG_WARNING("Found 1D texture, but 1D textures are currently not supported. Treating "
-					"this texture as 2D");
-				texParams.m_dimension = re::Texture::Dimension::Texture2D; // TODO: Support 1D textures
-				/*texParams.m_dimension = re::Texture::Dimension::Texture1D;*/
+				texParamsOut.m_dimension = re::Texture::Dimension::Texture1D;
 			}
 
 			switch (desiredChannels)
 			{
 			case 1:
 			{
-				if (bitDepth == 8) texParams.m_format = re::Texture::Format::R8_UNORM;
-				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::R16F;
-				else texParams.m_format = re::Texture::Format::R32F;
+				if (bitDepth == 8) texParamsOut.m_format = re::Texture::Format::R8_UNORM;
+				else if (bitDepth == 16) texParamsOut.m_format = re::Texture::Format::R16F;
+				else texParamsOut.m_format = re::Texture::Format::R32F;
 			}
 			break;
 			case 2:
 			{
-				if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8_UNORM;
-				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RG16F;
-				else texParams.m_format = re::Texture::Format::RG32F;
+				if (bitDepth == 8) texParamsOut.m_format = re::Texture::Format::RG8_UNORM;
+				else if (bitDepth == 16) texParamsOut.m_format = re::Texture::Format::RG16F;
+				else texParamsOut.m_format = re::Texture::Format::RG32F;
 			}
 			break;
 			case 4:
 			{
-				if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGBA8_UNORM;
-				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RGBA16F;
-				else texParams.m_format = re::Texture::Format::RGBA32F;
+				if (bitDepth == 8) texParamsOut.m_format = re::Texture::Format::RGBA8_UNORM;
+				else if (bitDepth == 16) texParamsOut.m_format = re::Texture::Format::RGBA16F;
+				else texParamsOut.m_format = re::Texture::Format::RGBA32F;
 			}
 			break;
 			default:
 				SEAssertF("Invalid number of channels");
 			}
 
-			// Create the texture now the params are configured:
-			texture = re::Texture::Create(texName, texParams, std::move(initialData));
+			return true;
 		}
 		else
 		{
 			SEAssertF("Failed to load image data");
+			return false;
 		}
 
 		LOG("Loaded texture \"%s\" from memory in %f seconds...", texName.c_str(), timer.StopSec());
 
 		// Note: Texture color space must still be set
-		return texture;
+		return true;
 	}
 
 

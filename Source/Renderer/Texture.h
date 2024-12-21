@@ -2,10 +2,23 @@
 #pragma once
 #include "Core/InvPtr.h"
 
+#include "Core/Interfaces/ILoadContext.h"
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
 #include "Core/Interfaces/IUniqueID.h"
 
+
+namespace grutil
+{
+	template<typename T>
+	struct TextureFromFilePath;
+}
+
+namespace
+{
+	template<typename T>
+	struct TextureFromCGLTF;
+}
 
 namespace re
 {
@@ -72,6 +85,11 @@ namespace re
 
 		static glm::vec4 ComputeTextureDimenions(uint32_t width, uint32_t height);
 		static glm::vec4 ComputeTextureDimenions(glm::uvec2 widthHeight);
+
+		struct TextureParams;
+		static uint32_t ComputeTotalBytesPerFace(re::Texture::TextureParams const&, uint32_t mipLevel = 0);
+
+		static void Fill(IInitialData*, TextureParams const&, glm::vec4 const& fillColor);
 
 
 	public:
@@ -193,24 +211,16 @@ namespace re
 
 
 	public:
+		// Create a Texture with data from a vector of bytes. Useful for creating data on the CPU
 		[[nodiscard]] static core::InvPtr<re::Texture> Create(
-			std::string const& name, 
-			TextureParams const& params,
-			std::vector<ImageDataUniquePtr>&& initialData);
+			std::string const& name, TextureParams const& params, std::vector<uint8_t>&& initialData);
 
+		// Create a texture with a solid fill color:
 		[[nodiscard]] static core::InvPtr<re::Texture> Create(
-			std::string const& name,
-			TextureParams const& params,
-			std::vector<uint8_t>&& initialData);
+			std::string const& name, TextureParams const& params, glm::vec4 fillColor);
 
-		static core::InvPtr<re::Texture> Create(
-			std::string const& name,
-			TextureParams const& params,
-			glm::vec4 fillColor);
-
-		[[nodiscard]] static core::InvPtr<re::Texture> Create(
-			std::string const& name,
-			TextureParams const& params);
+		// Create a basic runtime texture (no initial data):
+		[[nodiscard]] static core::InvPtr<re::Texture> Create(std::string const& name, TextureParams const& params);
 
 		Texture(Texture&&) noexcept = default;
 		Texture& operator=(Texture&&) noexcept = default;
@@ -258,15 +268,28 @@ namespace re
 		static uint8_t GetNumFaces(re::Texture::Dimension);
 
 
-	private:
+	protected:
+		friend struct grutil::TextureFromFilePath<re::Texture>;
+		friend struct TextureFromCGLTF<re::Texture>;
+
 		explicit Texture(std::string const& name, TextureParams const& params);
+		explicit Texture(std::string const& name, TextureParams const& params, std::vector<ImageDataUniquePtr>&&);
+		explicit Texture(std::string const& name, TextureParams const& params, std::unique_ptr<InitialDataVec>&&);
 
-		static core::InvPtr<re::Texture> CreateInternal(
-			std::string const& name, TextureParams const&, std::unique_ptr<IInitialData>&&);
 
+	private:
 		void Fill(glm::vec4 const& solidColor);	// Fill texture with a solid color
 
-		void SetTexel(uint8_t arrayIdx, uint32_t face, uint32_t u, uint32_t v, glm::vec4 const& value); // u == x == col, v == y == row
+		static void SetTexel( // u == x == col, v == y == row
+			IInitialData*,
+			TextureParams const&,
+			uint8_t arrayIdx, 
+			uint32_t faceIdx,
+			uint32_t u, 
+			uint32_t v, 
+			glm::vec4 const& value);
+		
+		void SetTexel(uint8_t arrayIdx, uint32_t faceIdx, uint32_t u, uint32_t v, glm::vec4 const& value);
 
 
 	private:

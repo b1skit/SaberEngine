@@ -723,11 +723,11 @@ namespace re
 		// Default 2D texture fallbacks:
 		const re::Texture::TextureParams defaultTexParams = re::Texture::TextureParams
 		{
-			.m_usage =
-				static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
+			.m_usage = re::Texture::Usage::ColorSrc,
 			.m_dimension = re::Texture::Dimension::Texture2D,
 			.m_format = re::Texture::Format::RGBA8_UNORM,
 			.m_colorSpace = re::Texture::ColorSpace::Linear,
+			.m_mipMode = re::Texture::MipMode::None,
 			.m_createAsPermanent = true,
 		};
 

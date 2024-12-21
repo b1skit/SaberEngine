@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AssetLoadUtils.h"
 #include "RenderManager.h"
 #include "SceneData.h"
 #include "Texture.h"
@@ -48,13 +49,6 @@ namespace
 			static_cast<uint32_t>(width / static_cast<float>(glm::pow(2.0f, mipLevel))),
 			static_cast<uint32_t>(height / static_cast<float>(glm::pow(2.0f, mipLevel))));
 	}
-
-
-	uint32_t ComputeTotalBytesPerFace(re::Texture::TextureParams const& texParams, uint32_t mipLevel = 0)
-	{
-		glm::uvec2 const& widthHeight = GetMipWidthHeight(texParams.m_width, texParams.m_height, mipLevel);
-		return widthHeight.x * widthHeight.y * re::Texture::GetNumBytesPerTexel(texParams.m_format);
-	}
 }
 
 
@@ -84,30 +78,33 @@ namespace re
 	}
 
 
-	core::InvPtr<re::Texture> Texture::Create(
-		std::string const& name, 
-		TextureParams const& params, 
-		std::vector<ImageDataUniquePtr>&& initialData)
+	uint32_t Texture::ComputeTotalBytesPerFace(re::Texture::TextureParams const& texParams, uint32_t mipLevel /*= 0*/)
 	{
-		const uint8_t numFaces = re::Texture::GetNumFaces(params.m_dimension);
-		SEAssert(initialData.size() == numFaces,
-			"Number of initial data entries must match the number of faces");
-		
-		SEAssert(params.m_dimension == Texture1D || 
-			params.m_dimension == Texture1DArray ||
-			params.m_dimension == Texture2D ||
-			params.m_dimension == Texture2DArray ||
-			params.m_dimension == TextureCube ||
-			params.m_dimension == TextureCubeArray,
-			"Only Textures with initial data that can be non-contiguous in memory at buffer time are supported here");
+		glm::uvec2 const& widthHeight = GetMipWidthHeight(texParams.m_width, texParams.m_height, mipLevel);
+		return widthHeight.x * widthHeight.y * re::Texture::GetNumBytesPerTexel(texParams.m_format);
+	}
 
-		std::unique_ptr<IInitialData> initialDataPtr = std::make_unique<InitialDataSTBIImage>(
-			params.m_arraySize,
-			numFaces,
-			ComputeTotalBytesPerFace(params),
-			std::move(initialData));
 
-		return CreateInternal(name, params, std::move(initialDataPtr));
+	void Texture::Fill(
+		IInitialData* initialData, TextureParams const& texParams, glm::vec4 const& fillColor)
+	{
+		SEAssert(initialData->HasData(), "There are no texels. Texels are only allocated for non-target textures");
+
+		const uint8_t numFaces = re::Texture::GetNumFaces(texParams.m_dimension);
+
+		for (uint32_t arrayIdx = 0; arrayIdx < texParams.m_arraySize; arrayIdx++)
+		{
+			for (uint32_t face = 0; face < numFaces; face++)
+			{
+				for (uint32_t row = 0; row < texParams.m_height; row++)
+				{
+					for (uint32_t col = 0; col < texParams.m_width; col++)
+					{
+						SetTexel(initialData, texParams, arrayIdx, face, col, row, fillColor);
+					}
+				}
+			}
+		}
 	}
 
 
@@ -116,102 +113,132 @@ namespace re
 		TextureParams const& params,
 		std::vector<uint8_t>&& initialData)
 	{
-		const uint8_t numFaces = re::Texture::GetNumFaces(params.m_dimension);
-		SEAssert(initialData.size() == params.m_arraySize * numFaces * ComputeTotalBytesPerFace(params),
-			"Invalid data size");
-
-		std::unique_ptr<IInitialData> initialDataPtr = std::make_unique<InitialDataVec>(
-			params.m_arraySize,
-			numFaces,
-			ComputeTotalBytesPerFace(params),
-			std::move(initialData));
-
-		core::InvPtr<re::Texture> newTex = CreateInternal(name, params, std::move(initialDataPtr));
-
-		return newTex;
-	}
-
-
-	core::InvPtr<re::Texture> Texture::Create(
-		std::string const& name,
-		TextureParams const& params,
-		glm::vec4 fillColor)
-	{
-		SEAssert((params.m_usage & Usage::ColorSrc), "Trying to fill a non-color texture");
-
-		const uint8_t numFaces = re::Texture::GetNumFaces(params.m_dimension);
-
-		std::unique_ptr<IInitialData> initialData = std::make_unique<InitialDataVec>(
-			params.m_arraySize,
-			numFaces,
-			ComputeTotalBytesPerFace(params),
-			std::vector<uint8_t>());
-
-		core::InvPtr<re::Texture> newTex = CreateInternal(name, params, std::move(initialData));
-
-		newTex->Fill(fillColor);
-		
-		return newTex;
-	}
-
-
-	core::InvPtr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params)
-	{
-		SEAssert((params.m_usage ^ Usage::ColorSrc), "Textures with Usage::ColorSrc only must have initial data");
-		return CreateInternal(name, params, nullptr);
-	}
-
-
-	core::InvPtr<re::Texture> Texture::CreateInternal(
-		std::string const& name, TextureParams const& params, std::unique_ptr<IInitialData>&& initialData)
-	{
-		struct LoadContext final : public virtual core::ILoadContext<re::Texture>
+		struct TextureFromByteVecLoadContext final : public virtual core::ILoadContext<re::Texture>
 		{
-			void OnLoadBegin(core::InvPtr<re::Texture>) override
+			void OnLoadBegin(core::InvPtr<re::Texture> newTex) override
 			{
-				LOG(std::format("Creating texture \"{}\"", m_texName).c_str());
+				LOG(std::format("Creating texture \"{}\" from byte vector", m_texName).c_str());
+				
+				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
+				re::RenderManager::Get()->RegisterForCreate(newTex); 
 			}
 
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>) override
 			{
+				const uint8_t numFaces = re::Texture::GetNumFaces(m_texParams.m_dimension);
+				const uint32_t totalBytesPerFace = ComputeTotalBytesPerFace(m_texParams);
+
+				SEAssert(m_initialDataBytes.size() == m_texParams.m_arraySize * numFaces * totalBytesPerFace,
+					"Invalid data size");
+
 				std::unique_ptr<re::Texture> newTexture(new re::Texture(m_texName.c_str(), m_texParams));
 
-				if (m_initialData)
-				{
-					newTexture->m_initialData = std::move(m_initialData);
-				}
+				newTexture->m_initialData = std::make_unique<re::Texture::InitialDataVec>(
+					m_texParams.m_arraySize,
+					numFaces,
+					totalBytesPerFace,
+					std::move(m_initialDataBytes));
 
 				return newTexture;
 			}
 
-			void OnLoadComplete(core::InvPtr<re::Texture> newTex) override
-			{
-				re::RenderManager::Get()->RegisterForCreate(newTex); // API-layer creation
-			}
-
 			std::string m_texName;
 			TextureParams m_texParams;
-			std::unique_ptr<IInitialData> m_initialData;
+			std::vector<uint8_t> m_initialDataBytes;
 		};
-		std::shared_ptr<LoadContext> texLoadContext = std::make_shared<LoadContext>();
+		std::shared_ptr<TextureFromByteVecLoadContext> loadContext =
+			std::make_shared<TextureFromByteVecLoadContext>();
 
-		texLoadContext->m_isPermanent = params.m_createAsPermanent;
+		loadContext->m_isPermanent = params.m_createAsPermanent;
 
-		texLoadContext->m_texName = name;
-		texLoadContext->m_texParams = params;
-		texLoadContext->m_initialData = std::move(initialData);		
+		loadContext->m_texName = name;
+		loadContext->m_texParams = params;
+		loadContext->m_initialDataBytes = std::move(initialData);
 
 		core::InvPtr<re::Texture> const& newTexture = re::RenderManager::Get()->GetInventory()->Get(
 			util::StringHash(name),
-			static_pointer_cast<core::ILoadContext<re::Texture>>(texLoadContext));
+			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 
 		return newTexture;
 	}
 
 
-	Texture::Texture(
-		std::string const& name,
-		TextureParams const& params)
+	core::InvPtr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params, glm::vec4 fillColor)
+	{
+		SEAssert((params.m_usage & Usage::ColorSrc), "Trying to fill a non-color texture");
+
+		struct TextureFromColor final : public virtual core::ILoadContext<re::Texture>
+		{
+			
+			void OnLoadBegin(core::InvPtr<re::Texture> newTex) override
+			{
+				LOG(std::format("Creating texture \"{}\" from color", m_texName).c_str());
+
+				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
+				re::RenderManager::Get()->RegisterForCreate(newTex);
+			}
+			
+			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>) override
+			{
+				std::unique_ptr<re::Texture::InitialDataVec> initialData = std::make_unique<re::Texture::InitialDataVec>(
+					m_texParams.m_arraySize,
+					re::Texture::GetNumFaces(m_texParams.m_dimension),
+					re::Texture::ComputeTotalBytesPerFace(m_texParams),
+					std::vector<uint8_t>());
+
+				re::Texture::Fill(static_cast<re::Texture::IInitialData*>(initialData.get()), m_texParams, m_fillColor);
+
+				return std::unique_ptr<re::Texture>(new re::Texture(m_texName, m_texParams, std::move(initialData)));
+			}
+
+			std::string m_texName;
+			re::Texture::TextureParams m_texParams;
+			glm::vec4 m_fillColor;
+		};
+		std::shared_ptr<TextureFromColor> colorTexLoadCtx = std::make_shared<TextureFromColor>(TextureFromColor());
+
+		colorTexLoadCtx->m_texName = name;
+		colorTexLoadCtx->m_texParams = params;
+		colorTexLoadCtx->m_fillColor = fillColor;
+
+		return re::RenderManager::Get()->GetInventory()->Get(
+			util::StringHash(name),
+			static_pointer_cast<core::ILoadContext<re::Texture>>(colorTexLoadCtx));
+	}
+
+
+	core::InvPtr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params)
+	{
+		struct RuntimeTexLoadContext final : public virtual core::ILoadContext<re::Texture>
+		{
+			void OnLoadBegin(core::InvPtr<re::Texture> newTex) override
+			{
+				LOG(std::format("Creating runtime texture \"{}\"", m_idName).c_str());
+
+				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
+				re::RenderManager::Get()->RegisterForCreate(newTex);
+			}
+
+			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>) override
+			{
+				return std::unique_ptr<re::Texture>(new re::Texture(m_idName, m_texParams));
+			}
+
+			std::string m_idName;
+			re::Texture::TextureParams m_texParams;
+		};
+		std::shared_ptr<RuntimeTexLoadContext> runtimeTexLoadContext = std::make_shared<RuntimeTexLoadContext>();
+
+		runtimeTexLoadContext->m_idName = name;
+		runtimeTexLoadContext->m_texParams = params;
+
+		return re::RenderManager::Get()->GetInventory()->Get(
+			util::StringHash(name),
+			static_pointer_cast<core::ILoadContext<re::Texture>>(runtimeTexLoadContext));
+	}
+
+
+	Texture::Texture(std::string const& name, TextureParams const& params)
 		: INamedObject(name)
 		, m_texParams(params)
 		, m_platformParams(nullptr)
@@ -232,6 +259,70 @@ namespace re
 			"Dimension and array size mismatch");
 
 		SEAssert(m_texParams.m_dimension != re::Texture::Texture3D || 
+			m_texParams.m_mipMode != re::Texture::MipMode::AllocateGenerate,
+			"Texture3D mip generation is not (currently) supported");
+
+		platform::Texture::CreatePlatformParams(*this);
+	}
+
+
+	Texture::Texture(std::string const& name, TextureParams const& params, std::vector<ImageDataUniquePtr>&& initialData)
+		: INamedObject(name)
+		, m_texParams(params)
+		, m_platformParams(nullptr)
+		, m_initialData(nullptr)
+		, m_numMips(ComputeNumMips(params))
+		, m_numSubresources(ComputeNumSubresources(params))
+	{
+		SEAssert(m_texParams.m_usage != Texture::Usage::Invalid, "Invalid usage");
+		SEAssert(m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid, "Invalid dimension");
+		SEAssert(m_texParams.m_format != Texture::Format::Invalid, "Invalid format");
+		SEAssert(m_texParams.m_colorSpace != Texture::ColorSpace::Invalid, "Invalid color space");
+		SEAssert(m_texParams.m_width > 0 && m_texParams.m_height > 0, "Invalid dimensions");
+		SEAssert(m_texParams.m_arraySize == 1 ||
+			m_texParams.m_dimension == Dimension::Texture1DArray ||
+			m_texParams.m_dimension == Dimension::Texture2DArray ||
+			m_texParams.m_dimension == Dimension::Texture3D ||
+			m_texParams.m_dimension == Dimension::TextureCubeArray,
+			"Dimension and array size mismatch");
+
+		SEAssert(m_texParams.m_dimension != re::Texture::Texture3D ||
+			m_texParams.m_mipMode != re::Texture::MipMode::AllocateGenerate,
+			"Texture3D mip generation is not (currently) supported");
+
+		const uint8_t numFaces = re::Texture::GetNumFaces(params.m_dimension);
+
+		m_initialData = std::make_unique<InitialDataSTBIImage>(
+			params.m_arraySize,
+			numFaces,
+			ComputeTotalBytesPerFace(params),
+			std::move(initialData));
+
+		platform::Texture::CreatePlatformParams(*this);
+	}
+
+
+	Texture::Texture(std::string const& name, TextureParams const& params, std::unique_ptr<InitialDataVec>&& initialData)
+		: INamedObject(name)
+		, m_texParams(params)
+		, m_platformParams(nullptr)
+		, m_initialData(std::move(initialData))
+		, m_numMips(ComputeNumMips(params))
+		, m_numSubresources(ComputeNumSubresources(params))
+	{
+		SEAssert(m_texParams.m_usage != Texture::Usage::Invalid, "Invalid usage");
+		SEAssert(m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid, "Invalid dimension");
+		SEAssert(m_texParams.m_format != Texture::Format::Invalid, "Invalid format");
+		SEAssert(m_texParams.m_colorSpace != Texture::ColorSpace::Invalid, "Invalid color space");
+		SEAssert(m_texParams.m_width > 0 && m_texParams.m_height > 0, "Invalid dimensions");
+		SEAssert(m_texParams.m_arraySize == 1 ||
+			m_texParams.m_dimension == Dimension::Texture1DArray ||
+			m_texParams.m_dimension == Dimension::Texture2DArray ||
+			m_texParams.m_dimension == Dimension::Texture3D ||
+			m_texParams.m_dimension == Dimension::TextureCubeArray,
+			"Dimension and array size mismatch");
+
+		SEAssert(m_texParams.m_dimension != re::Texture::Texture3D ||
 			m_texParams.m_mipMode != re::Texture::MipMode::AllocateGenerate,
 			"Texture3D mip generation is not (currently) supported");
 
@@ -294,21 +385,28 @@ namespace re
 	}
 
 
-	void Texture::SetTexel(uint8_t arrayIdx, uint32_t faceIdx, uint32_t u, uint32_t v, glm::vec4 const& value)
+	void Texture::SetTexel(
+		IInitialData* initialData,
+		TextureParams const& texParams,
+		uint8_t arrayIdx, 
+		uint32_t faceIdx,
+		uint32_t u, 
+		uint32_t v, 
+		glm::vec4 const& value)
 	{
 		// Note: If texture has < 4 channels, the corresponding channels in value are ignored
 
-		SEAssert(m_initialData->HasData() && 
-			arrayIdx < m_initialData->ArrayDepth() && 
-			faceIdx < m_initialData->NumFaces(),
+		SEAssert(initialData->HasData() &&
+			arrayIdx < initialData->ArrayDepth() &&
+			faceIdx < initialData->NumFaces(),
 			"There are no texels. Texels are only allocated for non-target textures");
 
-		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
+		const uint8_t bytesPerPixel = GetNumBytesPerTexel(texParams.m_format);
 
-		SEAssert(u >= 0 && 
-			u  < m_texParams.m_width &&
-			v >= 0 && 
-			v < m_texParams.m_height, 
+		SEAssert(u >= 0 &&
+			u < texParams.m_width &&
+			v >= 0 &&
+			v < texParams.m_height,
 			"OOB texel coordinates");
 
 		SEAssert(value.x >= 0.f && value.x <= 1.f &&
@@ -317,12 +415,12 @@ namespace re
 			value.w >= 0.f && value.w <= 1.f,
 			"Pixel value is not normalized");
 
-		uint8_t* dataPtr = static_cast<uint8_t*>(GetTexelData(arrayIdx, faceIdx));
-
+		uint8_t* dataPtr = static_cast<uint8_t*>(initialData->GetDataBytes(arrayIdx, faceIdx));
+		
 		// Reinterpret the value:
 		void const* valuePtr = &value.x;
-		void* pixelPtr = &dataPtr[((v * m_texParams.m_width) + u) * bytesPerPixel];
-		switch (m_texParams.m_format)
+		void* pixelPtr = &dataPtr[((v * texParams.m_width) + u) * bytesPerPixel];
+		switch (texParams.m_format)
 		{
 		case re::Texture::Format::RGBA32F:
 		{
@@ -409,30 +507,19 @@ namespace re
 			SEAssertF("Invalid texture format to set a texel");
 		}
 		}
+	}
 
+
+	void Texture::SetTexel(uint8_t arrayIdx, uint32_t faceIdx, uint32_t u, uint32_t v, glm::vec4 const& value)
+	{
+		SetTexel(m_initialData.get(), m_texParams, arrayIdx, faceIdx, u, v, value);
 		m_platformParams->m_isDirty = true;
 	}
 
 
 	void re::Texture::Fill(glm::vec4 const& solidColor)
 	{
-		SEAssert(m_initialData->HasData(), "There are no texels. Texels are only allocated for non-target textures");
-
-		const uint8_t numFaces = re::Texture::GetNumFaces(this);
-
-		for (uint32_t arrayIdx = 0; arrayIdx < m_texParams.m_arraySize; arrayIdx++)
-		{
-			for (uint32_t face = 0; face < numFaces; face++)
-			{
-				for (uint32_t row = 0; row < m_texParams.m_height; row++)
-				{
-					for (uint32_t col = 0; col < m_texParams.m_width; col++)
-					{
-						SetTexel(arrayIdx, face, col, row, solidColor);
-					}
-				}
-			}
-		}
+		Fill(m_initialData.get(), m_texParams, solidColor);
 		m_platformParams->m_isDirty = true;
 	}
 

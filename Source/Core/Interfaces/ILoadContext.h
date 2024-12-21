@@ -14,11 +14,16 @@ namespace core
 	{
 		virtual ~ILoadContext() = default;
 
+		// This is executed on the calling thread, before any async load work is kicked off. Use this to notify any 
+		// systems that might need a copy of the InvPtr immediately
 		inline virtual void OnLoadBegin(core::InvPtr<T>) {};
 
+		// Async: The bulk of the loading and creation should be done here
 		inline virtual std::unique_ptr<T> Load(core::InvPtr<T>) = 0;
 
-		inline virtual void OnLoadComplete(core::InvPtr<T>) {}; // Called after loading, but before the InvPointer state is updated
+		// Async: Called after loading completes, but before any threads waiting on the InvPointer to become Ready. At
+		// this point, the underlying resource must be fully constructed
+		inline virtual void OnLoadComplete(core::InvPtr<T>) {}; 
 
 		bool m_isPermanent = false; // If true, the resource will not be deleted when the last InvPtr goes out of scope
 	};

@@ -251,8 +251,128 @@ namespace
 	}
 
 
+	template<typename T>
+	struct TextureFromCGLTF final : public virtual core::ILoadContext<T>
+	{
+		void OnLoadBegin(core::InvPtr<re::Texture> newTex) override
+		{
+			LOG(std::format("Creating texture \"{}\" from GLTF", m_texName).c_str());
+
+			// Register for API-layer creation now to ensure we don't miss our chance for the current frame
+			re::RenderManager::Get()->RegisterForCreate(newTex);
+		}
+
+		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>) override
+		{
+			re::Texture::TextureParams texParams{};
+			std::vector<re::Texture::ImageDataUniquePtr> imageData;
+
+			bool loadSuccess = false;
+			if (m_srcTexture && m_srcTexture->image)
+			{
+				if (m_srcTexture->image->uri &&
+					std::strncmp(m_srcTexture->image->uri, "data:image/", 11) == 0) // uri = embedded data
+				{
+					// Unpack the base64 data embedded in the URI. Note: Usage of cgltf's cgltf_load_buffer_base64
+					// function is currently not well documented. This solution was cribbed from Google's filament
+					// usage (parseDataUri, line 285):
+					// https://github.com/google/filament/blob/676694e4589dca55c1cdbbb669cf3dba0e2b576f/libs/gltfio/src/ResourceLoader.cpp
+
+					const char* comma = strchr(m_srcTexture->image->uri, ',');
+					if (comma && comma - m_srcTexture->image->uri >= 7 && strncmp(comma - 7, ";base64", 7) == 0)
+					{
+						const char* base64 = comma + 1;
+						const size_t base64Size = strlen(base64);
+						size_t size = base64Size - base64Size / 4;
+						if (base64Size >= 2) {
+							size -= base64[base64Size - 2] == '=';
+							size -= base64[base64Size - 1] == '=';
+						}
+						void* data = 0;
+						cgltf_options options = {};
+						cgltf_result result = cgltf_load_buffer_base64(&options, size, base64, &data);
+
+						// Data is decoded, now load it as usual:
+						loadSuccess = grutil::LoadTextureDataFromMemory(
+							texParams,
+							imageData,
+							m_texName,
+							static_cast<unsigned char const*>(data),
+							static_cast<uint32_t>(size),
+							m_colorSpace);
+					}
+				}
+				else if (m_srcTexture->image->uri) // uri is a filename (e.g. "myImage.png")
+				{
+					loadSuccess = grutil::LoadTextureDataFromFilePath(
+						texParams,
+						imageData,
+						{ m_texName },
+						m_texName,
+						m_colorSpace,
+						false,
+						false,
+						re::Texture::k_errorTextureColor);
+				}
+				else if (m_srcTexture->image->buffer_view) // texture data is already loaded in memory
+				{
+					unsigned char const* texSrc = static_cast<unsigned char const*>(
+						m_srcTexture->image->buffer_view->buffer->data) + m_srcTexture->image->buffer_view->offset;
+
+					const uint32_t texSrcNumBytes = static_cast<uint32_t>(m_srcTexture->image->buffer_view->size);
+					loadSuccess = grutil::LoadTextureDataFromMemory(
+						texParams,
+						imageData,
+						m_texName,
+						texSrc,
+						texSrcNumBytes,
+						m_colorSpace);
+				}
+			}
+			else
+			{
+				// Create a error color fallback:
+				texParams = re::Texture::TextureParams{
+					.m_width = 2,
+					.m_height = 2,
+					.m_usage = static_cast<re::Texture::Usage>(
+						re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
+					.m_dimension = re::Texture::Dimension::Texture2D,
+					.m_format = m_formatFallback,
+					.m_colorSpace = m_colorSpace
+				};
+
+				std::unique_ptr<re::Texture::InitialDataVec> errorData = std::make_unique<re::Texture::InitialDataVec>(
+					texParams.m_arraySize,
+					1, // 1 face
+					re::Texture::ComputeTotalBytesPerFace(texParams),
+					std::vector<uint8_t>());
+
+				// Initialize with the error color:
+				re::Texture::Fill(static_cast<re::Texture::IInitialData*>(errorData.get()), texParams, m_colorFallback);
+
+				return std::unique_ptr<re::Texture>(new re::Texture(m_texName, texParams, std::move(errorData)));
+			}
+
+			SEAssert(loadSuccess, "Failed to load texture: Does the asset exist?");
+
+			return std::unique_ptr<re::Texture>(new re::Texture(m_texName, texParams, std::move(imageData)));
+		}
+
+
+		std::string m_texName;
+
+		std::shared_ptr<cgltf_data const> m_data;
+		cgltf_texture const* m_srcTexture;
+		glm::vec4 m_colorFallback;
+		re::Texture::Format m_formatFallback;
+		re::Texture::ColorSpace m_colorSpace;
+	};
+
+
 	core::InvPtr<re::Texture> LoadTextureOrColor(
 		core::Inventory* inventory,
+		std::shared_ptr<cgltf_data const> const& data, // So we can keep this alive while we're accessing the cgltf_texture*
 		std::string const& sceneRootPath,
 		cgltf_texture const* texture,
 		glm::vec4 const& colorFallback,
@@ -262,7 +382,7 @@ namespace
 		SEAssert(formatFallback != re::Texture::Format::Depth32F && formatFallback != re::Texture::Format::Invalid,
 			"Invalid fallback format");
 
-		std::string const& texName = 
+		std::string const& texName =
 			GenerateTextureName(sceneRootPath, texture, colorFallback, formatFallback, colorSpace);
 
 		if (inventory->Contains<re::Texture>(texName))
@@ -270,67 +390,22 @@ namespace
 			return inventory->Get<re::Texture>(texName);
 		}
 
-		core::InvPtr<re::Texture> tex;
-		if (texture && texture->image)
-		{
-			if (texture->image->uri && std::strncmp(texture->image->uri, "data:image/", 11) == 0) // uri = embedded data
-			{
-				// Unpack the base64 data embedded in the URI. Note: Usage of cgltf's cgltf_load_buffer_base64 function
-				// is currently not well documented. This solution was cribbed from Google's filament usage
-				// (parseDataUri, line 285):
-				// https://github.com/google/filament/blob/676694e4589dca55c1cdbbb669cf3dba0e2b576f/libs/gltfio/src/ResourceLoader.cpp
+		std::shared_ptr<TextureFromCGLTF<re::Texture>> loadContext = std::make_shared<TextureFromCGLTF<re::Texture>>();
 
-				const char* comma = strchr(texture->image->uri, ',');
-				if (comma && comma - texture->image->uri >= 7 && strncmp(comma - 7, ";base64", 7) == 0)
-				{
-					const char* base64 = comma + 1;
-					const size_t base64Size = strlen(base64);
-					size_t size = base64Size - base64Size / 4;
-					if (base64Size >= 2) {
-						size -= base64[base64Size - 2] == '=';
-						size -= base64[base64Size - 1] == '=';
-					}
-					void* data = 0;
-					cgltf_options options = {};
-					cgltf_result result = cgltf_load_buffer_base64(&options, size, base64, &data);
+		loadContext->m_texName = texName;
+		
+		loadContext->m_data = data;
+		loadContext->m_srcTexture = texture;
 
-					// Data is decoded, now load it as usual:
-					tex = grutil::LoadTextureFromMemory(
-						texName, static_cast<unsigned char const*>(data), static_cast<uint32_t>(size), colorSpace);
-				}
-			}
-			else if (texture->image->uri) // uri is a filename (e.g. "myImage.png")
-			{
-				tex = grutil::LoadTextureFromFilePath(
-					{ texName }, texName, colorSpace, false, false, re::Texture::k_errorTextureColor);
-			}
-			else if (texture->image->buffer_view) // texture data is already loaded in memory
-			{
-				unsigned char const* texSrc = static_cast<unsigned char const*>(
-					texture->image->buffer_view->buffer->data) + texture->image->buffer_view->offset;
+		loadContext->m_colorFallback = colorFallback;
+		loadContext->m_formatFallback = formatFallback;
+		loadContext->m_colorSpace = colorSpace;
 
-				const uint32_t texSrcNumBytes = static_cast<uint32_t>(texture->image->buffer_view->size);
-				tex = grutil::LoadTextureFromMemory(texName, texSrc, texSrcNumBytes, colorSpace);
-			}
+		core::InvPtr<re::Texture> const& newTexture = inventory->Get(
+			util::StringHash(texName),
+			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 
-			SEAssert(tex != nullptr, "Failed to load texture: Does the asset exist?");
-		}
-		else
-		{
-			// Create a texture color fallback:
-			const re::Texture::TextureParams colorTexParams
-			{
-				.m_usage = 
-					static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
-				.m_dimension = re::Texture::Dimension::Texture2D,
-				.m_format = formatFallback,
-				.m_colorSpace = colorSpace
-			};
-
-			tex = re::Texture::Create(texName, colorTexParams, colorFallback);
-		}
-
-		return tex;
+		return newTexture;
 	}
 
 
@@ -338,11 +413,13 @@ namespace
 		core::Inventory* inventory,
 		std::string const& sceneRootPath,
 		re::SceneData& sceneData,
-		cgltf_data const* data,
-		std::vector<std::future<void>>& textureFutures)
+		std::shared_ptr<cgltf_data const> const& data)
 	{
-		// Note: We must load our images through materials in order to infer the format and color space of the data
+		// Note: We kick off async loads of non-permanent textures here, which technically risks them going out of 
+		// scope. However, the inventory's deferred delete will keep them alive for the frame, and we'll retrieve them
+		// before they're freed
 
+		// Note: We must load our images through materials in order to infer the format and color space of the data
 		for (size_t matIdx = 0; matIdx < data->materials_count; matIdx++)
 		{
 			cgltf_material const* const matSrc = &data->materials[matIdx];
@@ -367,64 +444,54 @@ namespace
 			constexpr glm::vec4 k_defaultTextureColor(1.f, 1.f, 1.f, 1.f);
 
 			// BaseColorTex
-			textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[inventory, &k_defaultTextureColor, &sceneRootPath, matSrc]() {
-					LoadTextureOrColor(
-						inventory,
-						sceneRootPath,
-						matSrc->pbr_metallic_roughness.base_color_texture.texture,
-						k_defaultTextureColor,
-						re::Texture::Format::RGBA8_UNORM,
-						re::Texture::ColorSpace::sRGB);
-				}));
+			LoadTextureOrColor(
+				inventory,
+				data,
+				sceneRootPath,
+				matSrc->pbr_metallic_roughness.base_color_texture.texture,
+				k_defaultTextureColor,
+				re::Texture::Format::RGBA8_UNORM,
+				re::Texture::ColorSpace::sRGB);
 
 			// MetallicRoughnessTex
-			textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[inventory, &k_defaultTextureColor, &sceneRootPath, matSrc]() {
-					LoadTextureOrColor(
-						inventory,
-						sceneRootPath,
-						matSrc->pbr_metallic_roughness.metallic_roughness_texture.texture,
-						k_defaultTextureColor,
-						re::Texture::Format::RGBA8_UNORM,
-						re::Texture::ColorSpace::Linear);
-				}));
+			LoadTextureOrColor(
+				inventory,
+				data,
+				sceneRootPath,
+				matSrc->pbr_metallic_roughness.metallic_roughness_texture.texture,
+				k_defaultTextureColor,
+				re::Texture::Format::RGBA8_UNORM,
+				re::Texture::ColorSpace::Linear);
 
 			// NormalTex
-			textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[inventory, &k_defaultTextureColor, &sceneRootPath, matSrc]() {
-					LoadTextureOrColor(
-						inventory,
-						sceneRootPath,
-						matSrc->normal_texture.texture,
-						glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-						re::Texture::Format::RGBA8_UNORM,
-						re::Texture::ColorSpace::Linear);
-				}));
+			LoadTextureOrColor(
+				inventory,
+				data,
+				sceneRootPath,
+				matSrc->normal_texture.texture,
+				glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
+				re::Texture::Format::RGBA8_UNORM,
+				re::Texture::ColorSpace::Linear);
 
 			// OcclusionTex
-			textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[inventory, &k_defaultTextureColor, &sceneRootPath, matSrc]() {
-					LoadTextureOrColor(
-						inventory,
-						sceneRootPath,
-						matSrc->occlusion_texture.texture,
-						k_defaultTextureColor,	// Completely unoccluded
-						re::Texture::Format::RGBA8_UNORM,
-						re::Texture::ColorSpace::Linear);
-				}));
+			LoadTextureOrColor(
+				inventory,
+				data,
+				sceneRootPath,
+				matSrc->occlusion_texture.texture,
+				k_defaultTextureColor,	// Completely unoccluded
+				re::Texture::Format::RGBA8_UNORM,
+				re::Texture::ColorSpace::Linear);
 
 			// EmissiveTex
-			textureFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[inventory, &k_defaultTextureColor, &sceneRootPath, matSrc]() {
-					LoadTextureOrColor(
-						inventory,
-						sceneRootPath,
-						matSrc->emissive_texture.texture,
-						k_defaultTextureColor,
-						re::Texture::Format::RGBA8_UNORM,
-						re::Texture::ColorSpace::sRGB); // GLTF spec: Must be converted to linear before use
-				}));
+			LoadTextureOrColor(
+				inventory,
+				data,
+				sceneRootPath,
+				matSrc->emissive_texture.texture,
+				k_defaultTextureColor,
+				re::Texture::Format::RGBA8_UNORM,
+				re::Texture::ColorSpace::sRGB); // GLTF spec: Must be converted to linear before use
 		}
 	}
 
@@ -433,7 +500,7 @@ namespace
 		core::Inventory* inventory,
 		std::string const& sceneRootPath,
 		re::SceneData& sceneData,
-		cgltf_data const* data,
+		std::shared_ptr<cgltf_data const> const& data,
 		std::vector<std::future<void>>& matFutures)
 	{
 		// Note: Textures must have been loaded before this is called
@@ -581,7 +648,7 @@ namespace
 	}
 
 
-	void GenerateDefaultResources(re::SceneData& scene)
+	void GenerateDefaultResources(core::Inventory* inventory, re::SceneData& scene)
 	{
 		LOG("Generating default resources...");
 
@@ -595,58 +662,65 @@ namespace
 
 		constexpr uint8_t k_defaultUVChannelIdx = 0;
 
+		const re::Texture::TextureParams defaultSRGBTexParams{
+			.m_width = 1,
+			.m_height = 1,
+			.m_usage = re::Texture::Usage::ColorSrc,
+			.m_dimension = re::Texture::Dimension::Texture2D,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
+			.m_colorSpace = re::Texture::ColorSpace::sRGB,
+			.m_mipMode = re::Texture::MipMode::None,
+			.m_createAsPermanent = true,
+		};
+
+		const re::Texture::TextureParams defaultLinearTexParams{
+			.m_width = 1,
+			.m_height = 1,
+			.m_usage = re::Texture::Usage::ColorSrc,
+			.m_dimension = re::Texture::Dimension::Texture2D,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
+			.m_colorSpace = re::Texture::ColorSpace::sRGB,
+			.m_mipMode = re::Texture::MipMode::None,
+			.m_createAsPermanent = true,
+		};
+
 		// BaseColorTex
 		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::BaseColor,
-			grutil::LoadTextureFromFilePath(
-				{ en::DefaultResourceNames::k_defaultAlbedoTexName },
-				en::DefaultResourceNames::k_defaultAlbedoTexName,
-				re::Texture::ColorSpace::sRGB,
-				true,
-				true,
-				glm::vec4(1.f)), // White
+			re::Texture::Create(
+				en::DefaultResourceNames::k_defaultAlbedoTexName, 
+				defaultSRGBTexParams,
+				glm::vec4(1.f)),
 			k_defaultUVChannelIdx);
 
 		// MetallicRoughnessTex
 		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::MetallicRoughness,
-			grutil::LoadTextureFromFilePath(
-				{ en::DefaultResourceNames::k_defaultMetallicRoughnessTexName },
+			re::Texture::Create(
 				en::DefaultResourceNames::k_defaultMetallicRoughnessTexName,
-				re::Texture::ColorSpace::Linear,
-				true,
-				true,
+				defaultLinearTexParams,
 				glm::vec4(0.f, 1.f, 1.f, 0.f)), // GLTF specs: .BG = metalness, roughness, Default: .BG = 1, 1
 			k_defaultUVChannelIdx);
 
 		// NormalTex
 		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Normal,
-			grutil::LoadTextureFromFilePath(
-				{ en::DefaultResourceNames::k_defaultNormalTexName },
+			re::Texture::Create(
 				en::DefaultResourceNames::k_defaultNormalTexName,
-				re::Texture::ColorSpace::Linear,
-				true,
-				false,
+				defaultLinearTexParams,
 				glm::vec4(0.5f, 0.5f, 1.f, 0.f)),
 			k_defaultUVChannelIdx);
 
 		// OcclusionTex
 		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Occlusion,
-			grutil::LoadTextureFromFilePath(
-				{ en::DefaultResourceNames::k_defaultOcclusionTexName },
+			re::Texture::Create(
 				en::DefaultResourceNames::k_defaultOcclusionTexName,
-				re::Texture::ColorSpace::Linear,
-				true,
-				true,
+				defaultLinearTexParams,
 				glm::vec4(1.f)),
 			k_defaultUVChannelIdx);
 
 		// EmissiveTex
 		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Emissive,
-			grutil::LoadTextureFromFilePath(
-				{ en::DefaultResourceNames::k_defaultEmissiveTexName },
+			re::Texture::Create(
 				en::DefaultResourceNames::k_defaultEmissiveTexName,
-				re::Texture::ColorSpace::sRGB,
-				true,
-				true,
+				defaultSRGBTexParams,
 				glm::vec4(0.f)),
 			k_defaultUVChannelIdx);
 
@@ -875,7 +949,7 @@ namespace
 
 	void PreLoadMeshData(
 		re::SceneData& scene,
-		cgltf_data const* data,
+		std::shared_ptr<cgltf_data const> const& data,
 		SceneMetadata& sceneMetadata,
 		std::vector<std::future<void>>& meshFutures)
 	{
@@ -1570,7 +1644,7 @@ namespace
 
 
 	inline void PreLoadSkinData(
-		cgltf_data const* data,
+		std::shared_ptr<cgltf_data const> const& data,
 		SceneMetadata& sceneMetadata,
 		std::vector<std::future<void>>& skinFutures)
 	{
@@ -1606,7 +1680,7 @@ namespace
 
 
 	void LoadAnimationData(
-		std::string const& sceneFilePath, cgltf_data const* data, SceneMetadata& sceneMetadata)
+		std::string const& sceneFilePath, std::shared_ptr<cgltf_data const> const& data, SceneMetadata& sceneMetadata)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
@@ -1787,7 +1861,7 @@ namespace
 
 	void AttachMeshAnimationComponents(
 		re::SceneData& sceneData,
-		cgltf_data const* data,
+		std::shared_ptr<cgltf_data const> const& data,
 		SceneMetadata& sceneMetadata,
 		std::vector<std::future<void>>& loadTasks)
 	{
@@ -1913,7 +1987,7 @@ namespace
 
 	void AttachNodeComponents(
 		re::SceneData& sceneData,
-		cgltf_data const* data,
+		std::shared_ptr<cgltf_data const> const& data,
 		SceneMetadata& sceneMetadata,
 		std::vector<std::future<void>>& loadTasks)
 	{
@@ -1970,7 +2044,7 @@ namespace
 	}
 
 
-	void CreateSceneNodeEntities(cgltf_data const* data, SceneMetadata& sceneMetadata)
+	void CreateSceneNodeEntities(std::shared_ptr<cgltf_data const> const& data, SceneMetadata& sceneMetadata)
 	{
 		for (size_t sceneIdx = 0; sceneIdx < data->scenes_count; ++sceneIdx)
 		{
@@ -2197,10 +2271,10 @@ namespace fr
 
 		// Start by kicking off some jobs without any dependencies:
 		std::vector<std::future<void>> earlyLoadTasks;
-
+		
 		earlyLoadTasks.emplace_back(
-			core::ThreadPool::Get()->EnqueueJob([&sceneData]() {
-				GenerateDefaultResources(*sceneData);
+			core::ThreadPool::Get()->EnqueueJob([this, &sceneData]() {
+				GenerateDefaultResources(m_inventory, *sceneData);
 				}));
 
 		CreateDefaultSceneResources(); // Kick off async loading of required assets
@@ -2208,15 +2282,20 @@ namespace fr
 		// Now parse the the GLTF metadata:
 		const bool gotSceneFilePath = !sceneFilePath.empty();
 		cgltf_options options = { (cgltf_file_type)0 };
-		cgltf_data* data = nullptr;
+		std::shared_ptr<cgltf_data> data;
 		if (gotSceneFilePath)
 		{
-			cgltf_result parseResult = cgltf_parse_file(&options, sceneFilePath.c_str(), &data);
+			cgltf_data* rawData = nullptr;
+			cgltf_result parseResult = cgltf_parse_file(&options, sceneFilePath.c_str(), &rawData);
 			if (parseResult != cgltf_result::cgltf_result_success)
 			{
 				SEAssert(parseResult == cgltf_result_success, "Failed to parse scene file \"" + sceneFilePath + "\"");
 				return false;
 			}
+
+			// Convert our raw pointer into a shared_ptr, to ensure it remains in scope for async loading
+			data = std::shared_ptr<cgltf_data>(rawData);
+			rawData = nullptr;
 		}
 
 		// We need the default resources to be available, so wait until they're done
@@ -2231,7 +2310,7 @@ namespace fr
 		bool sceneHasCamera = false;
 		if (data)
 		{
-			cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, sceneFilePath.c_str());
+			cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data.get(), sceneFilePath.c_str());
 			if (bufferLoadResult != cgltf_result::cgltf_result_success)
 			{
 				SEAssert(bufferLoadResult == cgltf_result_success, "Failed to load scene data \"" + sceneFilePath + "\"");
@@ -2239,7 +2318,7 @@ namespace fr
 			}
 
 #if defined(_DEBUG)
-			cgltf_result validationResult = cgltf_validate(data);
+			cgltf_result validationResult = cgltf_validate(data.get());
 			if (validationResult != cgltf_result::cgltf_result_success)
 			{
 				SEAssert(validationResult == cgltf_result_success, "GLTF file failed validation!");
@@ -2256,7 +2335,7 @@ namespace fr
 			core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneRootPathKey, sceneRootPath);
 
 			// Pre-load the large/complex data:
-			PreLoadTextures(m_inventory, sceneRootPath, *sceneData, data, loadFutures);
+			PreLoadTextures(m_inventory, sceneRootPath, *sceneData, data);
 			PreLoadMeshData(*sceneData, data, sceneMetadata, loadFutures);
 			PreLoadSkinData(data, sceneMetadata, loadFutures);
 
@@ -2340,12 +2419,6 @@ namespace fr
 			}
 		}
 
-		// Cleanup:
-		if (data)
-		{
-			cgltf_free(data);
-		}
-
 		sceneData->EndLoading();
 
 		return true;
@@ -2353,39 +2426,32 @@ namespace fr
 
 
 	void SceneManager::CreateDefaultSceneResources()
-	{
+	{	
+		std::shared_ptr<grutil::TextureFromFilePath<re::Texture>> texLoadCtx =
+			std::make_shared<grutil::TextureFromFilePath<re::Texture>>();
+		
+		texLoadCtx->m_isPermanent = true;
+
+		texLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
+		texLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
+
 		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
 		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
 		// If that fails, we fall back to a default HDRI
 		// Later, we'll use the IBL texture to generate the IEM and PMREM textures in a GraphicsSystem
-		std::string defaultIBLPath;
-		if (core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, defaultIBLPath) &&
-			util::FileExists(defaultIBLPath))
+		if (!core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, texLoadCtx->m_filePath) ||
+			!util::FileExists(texLoadCtx->m_filePath))
 		{
-			grutil::LoadTextureFromFilePath(
-				{ defaultIBLPath },
-				en::DefaultResourceNames::k_defaultIBLTexName,
-				re::Texture::ColorSpace::Linear,
-				false,
-				true, // Create as permanent
-				re::Texture::k_errorTextureColor);
-		}
-		else
-		{
-			defaultIBLPath = core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey);
+			texLoadCtx->m_filePath = core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey);
 
-			SEAssert(util::FileExists(defaultIBLPath),
+			SEAssert(util::FileExists(texLoadCtx->m_filePath),
 				std::format("Missing IBL texture. Per scene IBLs must be placed at {}; A default fallback must exist at {}",
 					core::Config::Get()->GetValueAsString(core::configkeys::k_sceneIBLPathKey),
 					core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey)).c_str());
-
-			grutil::LoadTextureFromFilePath(
-				{ defaultIBLPath },
-				en::DefaultResourceNames::k_defaultIBLTexName,
-				re::Texture::ColorSpace::Linear,
-				false,
-				true, // Create as permanent
-				re::Texture::k_errorTextureColor);
 		}
+
+		m_inventory->Get<re::Texture>(
+			util::StringHash(en::DefaultResourceNames::k_defaultIBLTexName),
+			texLoadCtx);
 	}
 }

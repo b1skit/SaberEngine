@@ -618,8 +618,9 @@ namespace fr
 
 		if (ImGui::Button("Spawn"))
 		{
-			entt::entity sceneNode =
-				fr::SceneNode::Create(*fr::EntityManager::Get(), s_nameInputBuffer.data(), entt::null);
+			fr::EntityManager* em = fr::EntityManager::Get();
+
+			entt::entity sceneNode = fr::SceneNode::Create(*em, s_nameInputBuffer.data(), entt::null);
 
 			switch (static_cast<fr::Light::Type>(s_selectedLightType))
 			{
@@ -627,27 +628,33 @@ namespace fr
 			{
 				// TODO: This should be part of the ambient light logic, not the ImGui panel
 
+				core::Inventory* inventory = em->GetInventory();
+
+				std::shared_ptr<grutil::TextureFromFilePath<re::Texture>> texLoadCtx =
+					std::make_shared<grutil::TextureFromFilePath<re::Texture>>();
+
+				texLoadCtx->m_filePath = s_spawnParams->m_ambientLightSpawnParams.m_filepath;
+				texLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
+
 				if (util::FileExists(s_spawnParams->m_ambientLightSpawnParams.m_filepath))
 				{
-					core::InvPtr<re::Texture> const& newIBL = grutil::LoadTextureFromFilePath(
-						{ s_spawnParams->m_ambientLightSpawnParams.m_filepath },
-						s_spawnParams->m_ambientLightSpawnParams.m_filepath,
-						re::Texture::ColorSpace::Linear,
-						true);
+					core::InvPtr<re::Texture> const& newIBL = inventory->Get<re::Texture>(
+						util::StringHash(s_spawnParams->m_ambientLightSpawnParams.m_filepath),
+						texLoadCtx);
 
 					entt::entity newAmbientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
-						*fr::EntityManager::Get(),
+						*em,
 						s_spawnParams->m_ambientLightSpawnParams.m_filepath,
 						newIBL);
 
-					fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(newAmbientLight);
+					em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(newAmbientLight);
 				}
 			}
 			break;
 			case fr::Light::Type::Directional:
 			{
 				fr::LightComponent::AttachDeferredDirectionalLightConcept(
-					*fr::EntityManager::Get(),
+					*em,
 					sceneNode,
 					std::format("{}_DirectionalLight", s_nameInputBuffer.data()).c_str(),
 					s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
@@ -657,7 +664,7 @@ namespace fr
 			case fr::Light::Type::Point:
 			{
 				fr::LightComponent::AttachDeferredPointLightConcept(
-					*fr::EntityManager::Get(),
+					*em,
 					sceneNode,
 					std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
 					s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
@@ -667,7 +674,7 @@ namespace fr
 			case fr::Light::Type::Spot:
 			{
 				fr::LightComponent::AttachDeferredSpotLightConcept(
-					*fr::EntityManager::Get(),
+					*em,
 					sceneNode,
 					std::format("{}_SpotLight", s_nameInputBuffer.data()).c_str(),
 					s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
