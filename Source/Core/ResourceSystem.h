@@ -40,19 +40,19 @@ namespace core
 
 
 	public:
-		struct ControlBlock
+// Put our atomics on their own cache lines
+#define CACHE_LINE_SIZE 64 
+		struct alignas(CACHE_LINE_SIZE) ControlBlock
 		{
-			// Initially, this will point to the PtrAndControl::m_object to allow deferred creation, then it will be
-			// swapped to m_object.get() to minimize indirection
-			void* m_data;
+			std::unique_ptr<T>* m_object = nullptr; // The InvPtr populates our unique_ptr asyncronously
 
 			util::DataHash m_id = 0;
 			ResourceSystem<T>* m_owningResourceSystem = nullptr;
 
-			std::atomic<RefCountType> m_refCount = 0;
-			std::atomic<ResourceState> m_state = ResourceState::Empty;
+			alignas(CACHE_LINE_SIZE) std::atomic<RefCountType> m_refCount = 0;
+			alignas(CACHE_LINE_SIZE) std::atomic<ResourceState> m_state = ResourceState::Empty;
 		};
-
+#undef CACHE_LINE_SIZE
 
 		struct PtrAndControl
 		{
@@ -177,9 +177,8 @@ namespace core
 
 				newPtrAndCntrl.m_control = std::make_unique<ControlBlock>();
 				
-				// Initially, the control gets a pointer to the unique_ptr to allow deferred creation. Then, it'll swap
-				// itself for m_object.get()
-				newPtrAndCntrl.m_control->m_data = &newPtrAndCntrl.m_object;
+				// The first InvPtr created will initialize the unique_ptr for us
+				newPtrAndCntrl.m_control->m_object = &newPtrAndCntrl.m_object;
 
 				newPtrAndCntrl.m_control->m_id = id;
 				newPtrAndCntrl.m_control->m_owningResourceSystem = this;
