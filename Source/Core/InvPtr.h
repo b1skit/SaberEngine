@@ -22,10 +22,9 @@ namespace core
 
 		T* operator->() const noexcept;
 		T& operator*() const noexcept;
+		T& operator[](std::ptrdiff_t idx) const;
 
 		bool operator==(InvPtr<T> const&) const noexcept;
-
-		T& operator[](std::ptrdiff_t idx) const;
 
 		explicit operator bool() const noexcept;
 
@@ -162,16 +161,16 @@ namespace core
 
 
 	template<typename T>
-	inline bool InvPtr<T>::operator==(InvPtr<T> const& rhs) const noexcept
+	inline T& InvPtr<T>::operator[](std::ptrdiff_t idx) const
 	{
-		return m_control == rhs.m_control;
+		return operator->()[idx];
 	}
 
 
 	template<typename T>
-	inline T& InvPtr<T>::operator[](std::ptrdiff_t idx) const
+	inline bool InvPtr<T>::operator==(InvPtr<T> const& rhs) const noexcept
 	{
-		return operator->()[idx];
+		return m_control == rhs.m_control;
 	}
 
 
