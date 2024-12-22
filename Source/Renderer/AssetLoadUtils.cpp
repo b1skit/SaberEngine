@@ -276,6 +276,8 @@ namespace grutil
 		util::PerformanceTimer timer;
 		timer.Start();
 
+		bool loadSuccess = false;
+
 		// Modify default TextureParams to be suitable for a generic error texture:
 		texParamsOut = re::Texture::TextureParams{
 			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
@@ -357,18 +359,20 @@ namespace grutil
 				SEAssertF("Invalid number of channels");
 			}
 
-			return true;
+			loadSuccess = true;
 		}
 		else
 		{
 			SEAssertF("Failed to load image data");
-			return false;
 		}
 
-		LOG("Loaded texture \"%s\" from memory in %f seconds...", texName.c_str(), timer.StopSec());
+		LOG(std::format("{} texture \"{}\" from memory in %f seconds...",
+			loadSuccess ? "Loaded" : "Failed to load",
+			texName.c_str(),
+			timer.StopSec()).c_str());
 
 		// Note: Texture color space must still be set
-		return true;
+		return loadSuccess;
 	}
 
 
