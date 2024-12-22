@@ -141,7 +141,7 @@ namespace re
 		shaderLoadContext->m_rePipelineState = rePipelineState;
 		shaderLoadContext->m_vertexStreamMap = vertexStreamMap;
 
-		return re::RenderManager::Get()->GetInventory()->Get(
+		return inventory->Get(
 			shaderID,
 			static_pointer_cast<core::ILoadContext<re::Shader>>(shaderLoadContext));
 	}
