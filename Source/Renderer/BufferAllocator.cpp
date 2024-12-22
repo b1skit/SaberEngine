@@ -106,7 +106,7 @@ namespace re
 	{
 		{
 			std::scoped_lock lock(
-				m_handleToTypeAndByteIndexMutex,
+				m_handleToCommitMetadataMutex,
 				m_mutableAllocations.m_mutex,
 				m_immutableAllocations.m_mutex,
 				m_singleFrameAllocations.m_mutex);
@@ -221,37 +221,44 @@ namespace re
 		default: SEAssertF("Invalid AllocationType");
 		}
 
-		// Pre-allocate our buffer so it's ready to commit to:
-		Allocate(uniqueID, numBytes, stagingPool, buffer->GetLifetime());
+		// Register our buffer so we're ready when it is committed:
+		Register(uniqueID, numBytes, stagingPool, buffer->GetLifetime());
 	}
 
 
-	void BufferAllocator::Allocate(
+	void BufferAllocator::Register(
 		Handle uniqueID, uint32_t numBytes, Buffer::StagingPool stagingPool, re::Lifetime bufferLifetime)
 	{
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
 
 			SEAssert(m_handleToCommitMetadata.find(uniqueID) == m_handleToCommitMetadata.end(),
 				"A buffer with this handle has already been added");
+
+			// Update our ID -> data tracking table:
+			m_handleToCommitMetadata.insert(
+				{ uniqueID, CommitMetadata{stagingPool, bufferLifetime, k_invalidStartIdx, numBytes} });
 		}
+	}
 
+
+	uint32_t BufferAllocator::Allocate(
+		Handle uniqueID, uint32_t totalBytes, Buffer::StagingPool stagingPool, re::Lifetime bufferLifetime)
+	{
 		// Get the index we'll be inserting the 1st byte of our data to, resize the vector, and initialize it with zeros
-		uint32_t dataIndex = -1; // Start with something obviously incorrect
+		uint32_t startIdx = k_invalidStartIdx;
 
-		auto UpdateAllocationTracking = [&numBytes](IAllocation& allocation)
+		auto UpdateAllocationTracking = [&totalBytes](IAllocation& allocation)
 			{
 				// Note: IAllocation::m_mutex is already locked
 
 				allocation.m_totalAllocations++;
-				allocation.m_totalAllocationsByteSize += numBytes;
-				allocation.m_currentAllocationsByteSize += numBytes;
-				allocation.m_maxAllocations = std::max(
-					allocation.m_maxAllocations,
-					util::CheckedCast<uint32_t>(allocation.m_handleToPtr.size()));
-				allocation.m_maxAllocationsByteSize = std::max(
-					allocation.m_maxAllocationsByteSize,
-					allocation.m_currentAllocationsByteSize);
+				allocation.m_totalAllocationsByteSize += totalBytes;
+				allocation.m_currentAllocationsByteSize += totalBytes;
+				allocation.m_maxAllocations =
+					std::max(allocation.m_maxAllocations, util::CheckedCast<uint32_t>(allocation.m_handleToPtr.size()));
+				allocation.m_maxAllocationsByteSize =
+					std::max(allocation.m_maxAllocationsByteSize, allocation.m_currentAllocationsByteSize);
 			};
 
 		switch (stagingPool)
@@ -260,8 +267,8 @@ namespace re
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
-				dataIndex = util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed.size());
-				m_mutableAllocations.m_committed.emplace_back(numBytes, 0);
+				startIdx = util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed.size());
+				m_mutableAllocations.m_committed.emplace_back(totalBytes, 0); // Add a new zero-filled vector<uint8_t>
 
 				UpdateAllocationTracking(m_mutableAllocations);
 			}
@@ -275,10 +282,10 @@ namespace re
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
 
-				dataIndex = util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size());
+				startIdx = util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size());
 
 				m_immutableAllocations.m_committed.resize(
-					util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size() + numBytes),
+					util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size() + totalBytes),
 					0);
 
 				UpdateAllocationTracking(m_immutableAllocations);
@@ -288,10 +295,10 @@ namespace re
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 
-				dataIndex = util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_committed.size());
+				startIdx = util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_committed.size());
 
 				m_singleFrameAllocations.m_committed.resize(
-					util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_committed.size() + numBytes),
+					util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_committed.size() + totalBytes),
 					0);
 
 				UpdateAllocationTracking(m_singleFrameAllocations);
@@ -309,41 +316,53 @@ namespace re
 		default: SEAssertF("Invalid AllocationType");
 		}
 
-		// Update our ID -> data tracking table:
+		// Store the starting data index in our ID -> metadata tracking table:
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
-			m_handleToCommitMetadata.insert(
-				{ uniqueID, CommitMetadata{stagingPool, bufferLifetime, dataIndex, numBytes} });
+			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
+
+			auto entryItr = m_handleToCommitMetadata.find(uniqueID);
+
+			SEAssert(entryItr != m_handleToCommitMetadata.end(), "A buffer with this handle has not been registered");
+			SEAssert(entryItr->second.m_startIndex == k_invalidStartIdx, "Buffer has already been allocated");
+
+			m_handleToCommitMetadata.at(uniqueID).m_startIndex = startIdx;
 		}
+		return startIdx;
 	}
 
 
 	void BufferAllocator::Commit(Handle uniqueID, void const* data)
 	{
 		uint32_t startIdx;
-		uint32_t numBytes;
+		uint32_t totalBytes;
 		Buffer::StagingPool stagingPool;
 		re::Lifetime bufferLifetime;
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
 
 			auto const& result = m_handleToCommitMetadata.find(uniqueID);
 
-			SEAssert(result != m_handleToCommitMetadata.end(),
-				"Buffer with this ID has not been allocated");
+			SEAssert(result != m_handleToCommitMetadata.end(), "Buffer with this ID has not been allocated");
 
 			startIdx = result->second.m_startIndex;
-			numBytes = result->second.m_numBytes;
+			totalBytes = result->second.m_totalBytes;
 			stagingPool = result->second.m_stagingPool;
 			bufferLifetime = result->second.m_bufferLifetime;
 		}
+
+		// If it's our first commit, allocate first:
+		if (startIdx == k_invalidStartIdx)
+		{
+			startIdx = Allocate(uniqueID, totalBytes, stagingPool, bufferLifetime);
+		}
+
 
 		// Copy the data to our pre-allocated region.
 		switch (stagingPool)
 		{
 		case Buffer::StagingPool::Permanent:
 		{
-			CommitMutable(uniqueID, data, numBytes, 0);
+			CommitMutable(uniqueID, data, totalBytes, 0);
 		}
 		break;
 		case Buffer::StagingPool::Temporary:
@@ -354,14 +373,14 @@ namespace re
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
 				void* dest = &m_immutableAllocations.m_committed[startIdx];
-				memcpy(dest, data, numBytes);
+				memcpy(dest, data, totalBytes);
 			}
 			break;
 			case re::Lifetime::SingleFrame:
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 				void* dest = &m_singleFrameAllocations.m_committed[startIdx];
-				memcpy(dest, data, numBytes);
+				memcpy(dest, data, totalBytes);
 			}
 			break;
 			default: SEAssertF("Invalid lifetime");
@@ -393,24 +412,32 @@ namespace re
 		uint32_t startIdx;
 		uint32_t totalBytes;
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
 
 			auto const& result = m_handleToCommitMetadata.find(uniqueID);
 
 			SEAssert(result != m_handleToCommitMetadata.end(), "Buffer with this ID has not been allocated");
-			SEAssert(result->second.m_stagingPool == re::Buffer::StagingPool::Permanent,
+			SEAssert(result->second.m_stagingPool == re::Buffer::StagingPool::Permanent &&
+				result->second.m_bufferLifetime == re::Lifetime::Permanent,
 				"Can only partially commit to mutable buffers");
 			
 			startIdx = result->second.m_startIndex;
-			totalBytes = result->second.m_numBytes;
+			totalBytes = result->second.m_totalBytes;
 
 			SEAssert(numBytes <= totalBytes, "Trying to commit more data than is allocated");
+		}
+
+		// If it's our first commit, allocate first:
+		if (startIdx == k_invalidStartIdx)
+		{
+			startIdx = Allocate(uniqueID, totalBytes, Buffer::StagingPool::Permanent, re::Lifetime::Permanent);
 		}
 
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
 
-			SEAssert(totalBytes == util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed[startIdx].size()),
+			SEAssert(startIdx < m_mutableAllocations.m_committed.size() &&
+				totalBytes == util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed[startIdx].size()),
 				"CommitMetadata and physical allocation out of sync");
 
 			SEAssert(dstBaseByteOffset + numBytes <= totalBytes, "Number of bytes is too large for the given offset");
@@ -586,7 +613,7 @@ namespace re
 		re::Lifetime bufferLifetime;
 		uint32_t startIdx = -1;
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
 
 			auto const& result = m_handleToCommitMetadata.find(uniqueID);
 			SEAssert(result != m_handleToCommitMetadata.end(), "Buffer with this ID has not been allocated");
@@ -649,7 +676,7 @@ namespace re
 		uint32_t startIdx = -1;
 		uint32_t numBytes = -1;
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
 
 			auto const& buffer = m_handleToCommitMetadata.find(uniqueID);
 			SEAssert(buffer != m_handleToCommitMetadata.end(), "Cannot deallocate a buffer that does not exist");
@@ -657,7 +684,7 @@ namespace re
 			stagingPool = buffer->second.m_stagingPool;
 			bufferLifetime = buffer->second.m_bufferLifetime;
 			startIdx = buffer->second.m_startIndex;
-			numBytes = buffer->second.m_numBytes;
+			numBytes = buffer->second.m_totalBytes;
 		}
 
 		// Add our buffer to the deferred deletion queue, then erase the pointer from our allocation list
@@ -711,7 +738,7 @@ namespace re
 
 		// Remove the handle from our map:
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
 
 			auto const& buffer = m_handleToCommitMetadata.find(uniqueID);
 			m_handleToCommitMetadata.erase(buffer);
@@ -721,7 +748,7 @@ namespace re
 		if (stagingPool == Buffer::StagingPool::Permanent)
 		{
 			{
-				std::scoped_lock lock(m_mutableAllocations.m_mutex, m_handleToTypeAndByteIndexMutex);
+				std::scoped_lock lock(m_mutableAllocations.m_mutex, m_handleToCommitMetadataMutex);
 
 				const size_t idxToReplace = startIdx;
 				const size_t idxToMove = m_mutableAllocations.m_committed.size() - 1;
@@ -754,14 +781,48 @@ namespace re
 	}
 
 
+	void BufferAllocator::ResetForNewFrame(uint64_t renderFrameNum)
+	{
+		// Avoid stomping existing data when the BufferAllocator has already been accessed (e.g. during
+		// RenderManager::Initialize, before BufferAllocator::BufferData has been called)
+		if (renderFrameNum != m_currentFrameNum)
+		{
+			m_currentFrameNum = renderFrameNum;
+
+			// Increment the single frame GPU resource write index:
+			m_singleFrameGPUWriteIdx = (m_singleFrameGPUWriteIdx + 1) % m_numFramesInFlight;
+
+			// Reset the stack base index back to 0 for each type of shared buffer:
+			for (uint8_t allocationPoolIdx = 0; allocationPoolIdx < AllocationPool_Count; allocationPoolIdx++)
+			{
+				m_bufferBaseIndexes[allocationPoolIdx].store(0);
+			}
+		}
+	}
+
+
 	// Buffer dirty data
-	void BufferAllocator::BufferData()
+	void BufferAllocator::BufferData(uint64_t renderFrameNum)
 	{
 		SEBeginCPUEvent("re::BufferAllocator::BufferData");
-		{
-			SEBeginCPUEvent("re::BufferAllocator::BufferData: Dirty buffers");
 
-			std::scoped_lock dirtyLock(m_dirtyBuffersMutex, m_dirtyBuffersForPlatformUpdateMutex);
+		{
+			// This is a blocking call: Lock all of the mutexes (except for m_deferredDeleteQueueMutex, which is
+			// indirectly locked when we destroy single frame buffers at the end during ClearTemporaryStaging(), and
+			// when we call ClearDeferredDeletions())
+			std::scoped_lock lock(
+				m_mutableAllocations.m_mutex,
+				m_immutableAllocations.m_mutex,
+				m_singleFrameAllocations.m_mutex,
+				m_handleToCommitMetadataMutex,
+				m_dirtyBuffersMutex,
+				m_dirtyBuffersForPlatformUpdateMutex);
+
+			// Start by resetting all of our indexes etc:
+			ResetForNewFrame(renderFrameNum);
+
+
+			SEBeginCPUEvent("re::BufferAllocator::BufferData: Dirty buffers");
 
 			// We keep mutable buffers committed within m_numFramesInFlight in the dirty list to ensure they're
 			// kept up to date
@@ -771,38 +832,26 @@ namespace re
 
 			auto BufferTemporaryData = [&](IAllocation& allocation, Handle currentHandle)
 				{
-					{
-						std::lock_guard<std::recursive_mutex> lock(allocation.m_mutex);
+					SEAssert(allocation.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
+					re::Buffer const* currentBuffer = allocation.m_handleToPtr.at(currentHandle).get();
 
-						SEAssert(allocation.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-						re::Buffer const* currentBuffer = allocation.m_handleToPtr.at(currentHandle).get();
+					SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
+						"Trying to buffer a buffer that has not had an initial commit made");
 
-						SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
-							"Trying to buffer a buffer that has not had an initial commit made");
-
-						platform::Buffer::Update(*currentBuffer, curFrameHeapOffsetFactor, 0, 0);
-					}
+					platform::Buffer::Update(*currentBuffer, curFrameHeapOffsetFactor, 0, 0);
 
 					// Invalidate the commit metadata:
-					{
-						std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
-						m_handleToCommitMetadata.at(currentHandle).m_startIndex = k_invalidCommitValue;
-					}
+					m_handleToCommitMetadata.at(currentHandle).m_startIndex = k_invalidCommitValue;
 				};
 
 			for (Handle currentHandle : m_dirtyBuffers)
 			{
-				Buffer::StagingPool stagingPool = Buffer::StagingPool::StagingPool_Invalid;
-				re::Lifetime bufferLifetime;
-				{
-					std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
-					SEAssert(m_handleToCommitMetadata.contains(currentHandle), "Failed to find current handle");
+				SEAssert(m_handleToCommitMetadata.contains(currentHandle), "Failed to find current handle");
 
-					CommitMetadata const& commitMetadata = m_handleToCommitMetadata.at(currentHandle);
-					
-					stagingPool = commitMetadata.m_stagingPool;
-					bufferLifetime = commitMetadata.m_bufferLifetime;
-				}
+				CommitMetadata const& commitMetadata = m_handleToCommitMetadata.at(currentHandle);
+
+				const Buffer::StagingPool stagingPool = commitMetadata.m_stagingPool;
+				const re::Lifetime bufferLifetime = commitMetadata.m_bufferLifetime;
 
 				// NOTE: Getting the mutexes in this block below is a potential deadlock risk as we already hold the
 				// m_dirtyBuffersMutex. It's safe for now, but leaving this comment here in case things change...
@@ -810,8 +859,6 @@ namespace re
 				{
 				case Buffer::StagingPool::Permanent:
 				{
-					std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
-
 					SEAssert(m_mutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
 					re::Buffer const* currentBuffer = m_mutableAllocations.m_handleToPtr.at(currentHandle).get();
 
@@ -921,80 +968,49 @@ namespace re
 			// Swap in our dirty list for the next frame
 			m_dirtyBuffers = std::move(dirtyMutableBuffers);
 
-			SEEndCPUEvent();
-		}
+			SEEndCPUEvent(); // "re::BufferAllocator::BufferData: Dirty buffers"
 
-		// Perform any platform-specific buffering (e.g. update buffers that do not have CPU writes enabled)
-		{
+
+			// Perform any platform-specific buffering (e.g. update buffers that do not have CPU writes enabled)
 			SEBeginCPUEvent("re::BufferAllocator::BufferDataPlatform");
-			std::lock_guard<std::mutex> lock(m_dirtyBuffersForPlatformUpdateMutex);
 			BufferDataPlatform();
 			m_dirtyBuffersForPlatformUpdate.clear();
 			SEEndCPUEvent();
+
+			// We're done! Clear everything for the next round:
+			SEBeginCPUEvent("re::BufferAllocator: Clear temp staging and deferred deletions");
+			ClearTemporaryStaging();
+			ClearDeferredDeletions(m_currentFrameNum);
+			SEEndCPUEvent();
 		}
 
-
-		SEEndCPUEvent();
+		SEEndCPUEvent(); // "re::BufferAllocator::BufferData"
 	}
 
 
-	void BufferAllocator::BeginFrame(uint64_t renderFrameNum)
+	void BufferAllocator::ClearTemporaryStaging()
 	{
-		// Avoid stomping existing data when the BufferAllocator has already been accessed (e.g. during
-		// RenderManager::Initialize, before BufferAllocator::BeginFrame has been called)
-		if (renderFrameNum != m_currentFrameNum)
-		{
-			m_currentFrameNum = renderFrameNum;
-			
-			// Increment the single frame GPU resource write index:
-			m_singleFrameGPUWriteIdx = (m_singleFrameGPUWriteIdx + 1) % m_numFramesInFlight;
+		// NOTE: We hold a scoped lock of (almost) all mutexes before calling this
 
-			// Reset the stack base index back to 0 for each type of shared buffer:
-			for (uint8_t allocationPoolIdx = 0; allocationPoolIdx < AllocationPool_Count; allocationPoolIdx++)
-			{
-				m_bufferBaseIndexes[allocationPoolIdx].store(0);
-			}
-		}
-	}
-
-
-	void BufferAllocator::EndFrame()
-	{
-		SEBeginCPUEvent("re::BufferAllocator::EndFrame");
+		SEBeginCPUEvent("re::BufferAllocator::ClearTemporaryStaging");
 
 		// Clear single-frame allocations:
+		// Note: Calling Destroy() on our Buffer recursively calls BufferAllocator::Deallocate, which
+		// erases an entry from m_singleFrameAllocations.m_handleToPtr. Thus, we can't use an iterator as it'll be
+		// invalidated. Instead, we just loop until it's empty
+		while (!m_singleFrameAllocations.m_handleToPtr.empty())
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);		
-
-			// Calling Destroy() on our Buffer recursively calls BufferAllocator::Deallocate, which
-			// erases an entry from m_singleFrameAllocations.m_handleToPtr. Thus, we can't use an iterator as it'll be
-			// invalidated. Instead, we just loop until it's empty
-			while (!m_singleFrameAllocations.m_handleToPtr.empty())
-			{
-				SEAssert(m_singleFrameAllocations.m_handleToPtr.begin()->second.use_count() == 1,
-					std::format("Trying to deallocate a single frame buffer \"{}\", but there is still a live "
-						"shared_ptr. Is something holding onto a single frame buffer beyond the frame lifetime? Or, "
-						"has a batch been added to a stage, but the stage is not added to the pipeline (thus has not "
-						"been cleared)?",
-						m_singleFrameAllocations.m_handleToPtr.begin()->second->GetName()).c_str());
-
-				m_singleFrameAllocations.m_handleToPtr.begin()->second->Destroy();
-			}
-
-			m_singleFrameAllocations.m_handleToPtr.clear();
-			m_singleFrameAllocations.m_committed.clear();
-
-			SEAssert(m_singleFrameAllocations.m_currentAllocationsByteSize == 0,
-				"Single frame temporary deallocations are out of sync");
+			m_singleFrameAllocations.m_handleToPtr.begin()->second->Destroy();
 		}
+
+		m_singleFrameAllocations.m_handleToPtr.clear();
+		m_singleFrameAllocations.m_committed.clear();
+
+		SEAssert(m_singleFrameAllocations.m_currentAllocationsByteSize == 0,
+			"Single frame temporary deallocations are out of sync");
 
 		// Clear immutable allocations: We only write this data exactly once, no point keeping it around
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-			m_immutableAllocations.m_committed.clear();
-		}
-
-		ClearDeferredDeletions(m_currentFrameNum);
+		m_immutableAllocations.m_committed.clear();
 
 		SEEndCPUEvent();
 	}
@@ -1014,6 +1030,13 @@ namespace re
 			while (!m_deferredDeleteQueue.empty() &&
 				m_deferredDeleteQueue.front().first + m_numFramesInFlight < frameNum)
 			{
+				SEAssert(m_deferredDeleteQueue.front().second.use_count() == 1,
+					std::format("Trying to deferred-delete the buffer \"{}\", but there is still a live "
+						"shared_ptr. Is something still holding onto the buffer beyond its lifetime? Has a single-frame"
+						" batch been added to a stage, but the stage is not added to the pipeline (thus has not been "
+						"cleared)?",
+						m_deferredDeleteQueue.front().second->GetName()).c_str());			
+
 				platform::Buffer::Destroy(*m_deferredDeleteQueue.front().second);
 				m_deferredDeleteQueue.pop();
 			}

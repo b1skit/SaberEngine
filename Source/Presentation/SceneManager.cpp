@@ -1608,8 +1608,7 @@ namespace
 						std::shared_ptr<gr::MeshPrimitive> newMeshPrimitive = gr::MeshPrimitive::Create(
 							meshName,
 							std::move(vertexStreamCreateParams),
-							meshPrimitiveParams,
-							true);
+							meshPrimitiveParams);
 
 
 						// Cache the material:

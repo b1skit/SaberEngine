@@ -276,8 +276,7 @@ namespace gr
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
 		std::string const& name,
 		std::vector<std::array<gr::VertexStream::CreateParams, gr::VertexStream::Type::Type_Count>>&& streamCreateParams,
-		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams,
-		bool queueBufferCreate /*= true*/)
+		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
 		// NOTE: Currently we need to defer creating the VertexStream's backing re::Buffer from the front end thread 
 		// with the queueBufferCreate ugliness here: If queueBufferCreate == true, the gr::VertexStream will enqueue a
@@ -288,7 +287,7 @@ namespace gr
 			"No index stream data. Indexes are required. We currently assume it will be in this fixed location");
 
 		gr::VertexStream const* indexStream = 
-			gr::VertexStream::Create(std::move(streamCreateParams[0][gr::VertexStream::Index]), queueBufferCreate).get();
+			gr::VertexStream::Create(std::move(streamCreateParams[0][gr::VertexStream::Index])).get();
 		
 		const size_t totalVerts = streamCreateParams[0][gr::VertexStream::Position].m_streamData->size();
 
@@ -312,8 +311,7 @@ namespace gr
 
 					vertexStreams.emplace_back(gr::MeshPrimitive::MeshVertexStream{
 						.m_vertexStream = gr::VertexStream::Create(
-							std::move(streamCreateParams[setIdx][streamTypeIdx]),
-							queueBufferCreate).get(),
+							std::move(streamCreateParams[setIdx][streamTypeIdx])).get(),
 						.m_setIdx = setIdx,
 						});
 				}

@@ -32,17 +32,16 @@ namespace re
 
 		virtual void BufferDataPlatform() = 0; // API-specific data buffering
 
-
-	public:
-		void BufferData();
-
 		bool IsValid() const; // Has Destroy() been called?
 
-		void BeginFrame(uint64_t renderFrameNum);
-		void EndFrame(); // Clears temporary buffers
 
+	public:
+		void BufferData(uint64_t renderFrameNum);
 
 	private:
+		void ResetForNewFrame(uint64_t renderFrameNum);
+		void ClearTemporaryStaging();
+	
 		void RegisterAndAllocateBuffer(std::shared_ptr<re::Buffer>, uint32_t numBytes);
 
 
@@ -84,12 +83,14 @@ namespace re
 	private:
 		typedef uint64_t Handle; // == INamedObject::UniqueID()
 
+		static constexpr uint32_t k_invalidStartIdx = std::numeric_limits<uint32_t>::max();
+
 		struct CommitMetadata
 		{
-			Buffer::StagingPool m_stagingPool;
+			Buffer::StagingPool m_stagingPool = Buffer::StagingPool::StagingPool_Invalid;
 			re::Lifetime m_bufferLifetime;
-			uint32_t m_startIndex;	// Singleframe: Index of 1st byte. Permanent: Commit array index
-			uint32_t m_numBytes;	// Total number of allocated bytes
+			uint32_t m_startIndex = k_invalidStartIdx;	// Temporary: Index of 1st byte. Permanent: Commit array index
+			uint32_t m_totalBytes = 0;	// Total number of allocated bytes
 		};
 
 		struct IAllocation
@@ -131,7 +132,7 @@ namespace re
 
 
 		std::unordered_map<Handle, CommitMetadata> m_handleToCommitMetadata;
-		mutable std::recursive_mutex m_handleToTypeAndByteIndexMutex;
+		mutable std::recursive_mutex m_handleToCommitMetadataMutex;
 
 		std::unordered_set<Handle> m_dirtyBuffers;
 		std::mutex m_dirtyBuffersMutex;
@@ -170,13 +171,22 @@ namespace re
 	protected: // Interfaces for the Buffer friend class:
 		friend class re::Buffer;
 
-		void Allocate(Handle uniqueID, uint32_t numBytes, Buffer::StagingPool, re::Lifetime bufferLifetime); // Called once at creation
+		void Register(Handle uniqueID, uint32_t numBytes, Buffer::StagingPool, re::Lifetime bufferLifetime); // Called once at creation
+
+	private:
+		uint32_t Allocate(Handle uniqueID, uint32_t numBytes, Buffer::StagingPool, re::Lifetime bufferLifetime); // Returns the start index
+
+	protected:
 		void Commit(Handle uniqueID, void const* data);	// Update the buffer data
 		void CommitMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
 		
 		void GetData(Handle uniqueID, void const** out_data) const;
 
 		void Deallocate(Handle uniqueID);
+
+
+	
+
 
 
 	private:

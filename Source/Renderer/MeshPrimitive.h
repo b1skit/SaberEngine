@@ -132,8 +132,7 @@ namespace gr
 		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
 			std::string const& name,
 			std::vector<std::array<gr::VertexStream::CreateParams, gr::VertexStream::Type::Type_Count>>&&,
-			gr::MeshPrimitive::MeshPrimitiveParams const&,
-			bool queueBufferCreate = true);
+			gr::MeshPrimitive::MeshPrimitiveParams const&);
 
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
 		MeshPrimitive& operator=(MeshPrimitive&& rhs) noexcept = default;

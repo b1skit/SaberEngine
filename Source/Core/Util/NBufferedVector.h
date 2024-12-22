@@ -39,9 +39,9 @@ namespace util
 		void EmplaceBack(T const&);
 
 
-		void Swap(); // Advance the read/write indexes, and clears the oldest buffer
+		void SwapAndClear(); // Advance the read/write indexes, and clears the oldest buffer
 
-		// Optional: Clear the data in the read buffer. Useful when you need to clear without calling Swap()
+		// Optional: Clear the data in the read buffer. Useful when you need to clear without calling SwapAndClear()
 		void ClearReadData();
 
 
@@ -115,7 +115,7 @@ namespace util
 
 
 	template<typename T>
-	void NBufferedVector<T>::Swap()
+	void NBufferedVector<T>::SwapAndClear()
 	{
 		std::scoped_lock lock(m_vectorMutexes[s_readMutexIdx], m_vectorMutexes[s_writeMutexIdx]);
 

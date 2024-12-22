@@ -83,9 +83,9 @@ namespace gr
 
 	public:
 		[[nodiscard]] static std::shared_ptr<gr::VertexStream> Create(
-			StreamDesc const&, util::ByteVector&&, bool queueBufferCreate = true, re::Buffer::UsageMask extraUsageBits = 0);
+			StreamDesc const&, util::ByteVector&&, re::Buffer::UsageMask extraUsageBits = 0);
 
-		[[nodiscard]] static std::shared_ptr<gr::VertexStream> Create(CreateParams&&, bool queueBufferCreate = true);
+		[[nodiscard]] static std::shared_ptr<gr::VertexStream> Create(CreateParams&&);
 
 		VertexStream(VertexStream&&) noexcept = default;
 		VertexStream& operator=(VertexStream&&) noexcept = default;
@@ -125,7 +125,7 @@ namespace gr
 
 
 	private: // Use the Create() factory instead
-		VertexStream(StreamDesc const&, util::ByteVector& data, bool& isNormalizedOut);
+		VertexStream(StreamDesc const&, util::ByteVector& data, re::Buffer::UsageMask extraUsageBits);
 
 
 	private: // No copying allowed

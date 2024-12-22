@@ -100,134 +100,33 @@ namespace gr
 	std::shared_ptr<gr::VertexStream> VertexStream::Create(
 		StreamDesc const& streamDesc,
 		util::ByteVector&& data,
-		bool queueBufferCreate /*= true*/,
 		re::Buffer::UsageMask extraUsageBits /*= 0*/)
-	{
-		// NOTE: Currently we need to defer creating the VertexStream's backing re::Buffer from the front end thread 
-		// with the ugliness here: If queueBufferCreate == true, we'll enqueue a render command to create the buffer
-		// on the render thread. This will go away once we have a proper async loading system
-		bool isNormalized = false; // Temporary: required for buffer thread fix
-		bool didCreate = false; // Temporary: required for buffer thread fix
-
-		
+	{		
 		// Currently, we pass the data to the ctor by reference so it can be normalized. We move it to the buffer later
 		std::shared_ptr<gr::VertexStream> newVertexStream;
-		newVertexStream.reset(new VertexStream(streamDesc, data, isNormalized));
+		newVertexStream.reset(new VertexStream(streamDesc, data, extraUsageBits));
 		
-		if (streamDesc.m_lifetime == re::Lifetime::SingleFrame)
+		if (streamDesc.m_lifetime != re::Lifetime::SingleFrame)
 		{
-			didCreate = true;
-		}
-		else
-		{
-			bool duplicateExists = re::RenderManager::GetSceneData()->AddUniqueVertexStream(newVertexStream);
-			if (!duplicateExists)
-			{
-				didCreate = true;
-			}
-		}
-
-		// Temporary: required for buffer thread fix
-		if (didCreate) 
-		{
-			// Create the vertex/index Buffer object that will back our vertex stream:
-			std::string const& bufferName = std::format(
-				"VertexStream_{}_{}", 
-				TypeToCStr(newVertexStream->GetType()), 
-				newVertexStream->GetDataHash());
-
-			const re::Buffer::MemoryPoolPreference bufMemPoolPref =
-				streamDesc.m_lifetime == re::Lifetime::SingleFrame ? re::Buffer::UploadHeap : re::Buffer::DefaultHeap;
-
-			const re::Buffer::UsageMask bufferUsage = 
-				(streamDesc.m_type == Type::Index ? re::Buffer::IndexStream : re::Buffer::VertexStream) | extraUsageBits;
-			
-			re::Buffer::AccessMask bufAccessMask = re::Buffer::GPURead;
-			if (bufMemPoolPref == re::Buffer::UploadHeap)
-			{
-				bufAccessMask |= re::Buffer::CPUWrite;
-			}
-
-			const re::Buffer::BufferParams bufferParams{
-				.m_lifetime = streamDesc.m_lifetime,
-				.m_stagingPool = re::Buffer::StagingPool::Temporary,
-				.m_memPoolPreference = bufMemPoolPref,
-				.m_accessMask = bufAccessMask,
-				.m_usageMask = bufferUsage,
-				.m_arraySize = 1,
-			};
-						
-			if (queueBufferCreate)
-			{
-				class CreateBufferDeferred
-				{
-				public:
-					CreateBufferDeferred(
-						gr::VertexStream* vertexStream,
-						std::string bufferName,
-						util::ByteVector&& data,
-						re::Buffer::BufferParams bufferParams)
-						: m_vertexStream(vertexStream)
-						, m_bufferName(bufferName)
-						, m_data(std::make_unique<util::ByteVector>(std::move(data)))
-						, m_bufferParams(bufferParams)
-					{
-					}
-
-					~CreateBufferDeferred() = default;
-
-					static void Execute(void* cmdData)
-					{
-						CreateBufferDeferred* cmdPtr = reinterpret_cast<CreateBufferDeferred*>(cmdData);
-
-						cmdPtr->m_vertexStream->m_streamBuffer = re::Buffer::Create(
-							cmdPtr->m_bufferName,
-							cmdPtr->m_data->data().data(),
-							util::CheckedCast<uint32_t>(cmdPtr->m_data->GetTotalNumBytes()),
-							cmdPtr->m_bufferParams);
-					}
-
-					static void Destroy(void* cmdData)
-					{
-						CreateBufferDeferred* cmdPtr = reinterpret_cast<CreateBufferDeferred*>(cmdData);
-						cmdPtr->~CreateBufferDeferred();
-					}
-				private:
-					gr::VertexStream* m_vertexStream;
-					std::string m_bufferName;
-					std::unique_ptr<util::ByteVector> m_data;
-					re::Buffer::BufferParams m_bufferParams;
-				};
-				
-				re::RenderManager::Get()->EnqueueRenderCommand<CreateBufferDeferred>(
-					newVertexStream.get(), bufferName, std::move(data), bufferParams);
-			}
-			else
-			{
-				// This will be moved back to the CTOR
-				newVertexStream->m_streamBuffer = re::Buffer::Create(
-					bufferName,
-					data.data().data(),
-					util::CheckedCast<uint32_t>(data.GetTotalNumBytes()),
-					bufferParams);
-			}
+			// This call might replace the shared_ptr if a vertex stream already exists
+			re::RenderManager::GetSceneData()->AddUniqueVertexStream(newVertexStream);
 		}
 
 		return newVertexStream;
 	}
 
 
-	std::shared_ptr<gr::VertexStream> VertexStream::Create(CreateParams&& createParams, bool queueBufferCreate /*= true*/)
+	std::shared_ptr<gr::VertexStream> VertexStream::Create(CreateParams&& createParams)
 	{
 		return Create(
 			createParams.m_streamDesc,
 			std::move(*createParams.m_streamData.get()),
-			queueBufferCreate,
 			createParams.m_extraUsageBits);
 	}
 
 
-	VertexStream::VertexStream(StreamDesc const& streamDesc, util::ByteVector& data, bool& isNormalizedOut)
+	VertexStream::VertexStream(
+		StreamDesc const& streamDesc, util::ByteVector& data, re::Buffer::UsageMask extraUsageBits)
 		: m_streamDesc(streamDesc)
 	{
 		SEAssert(m_streamDesc.m_type != Type::Type_Count && m_streamDesc.m_dataType != re::DataType::DataType_Count,
@@ -237,8 +136,6 @@ namespace gr
 			(m_streamDesc.m_dataType == re::DataType::UShort && data.IsScalarType<uint16_t>()) ||
 			(m_streamDesc.m_dataType == re::DataType::UInt && data.IsScalarType<uint32_t>()),
 			"Invalid index data");
-
-		bool isNormalized = false;
 
 		// D3D12 does not support GPU-normalization of 32-bit types. As a hail-mary, we attempt to pre-normalize here
 		if (DoNormalize() && 
@@ -263,16 +160,42 @@ namespace gr
 			}
 
 			m_streamDesc.m_doNormalize = Normalize::False;
-			isNormalized = true;
 		}
-
-		isNormalizedOut = isNormalized; 
 
 		// Hash the incoming data before it is moved to the BufferAllocator:
 		AddDataBytesToHash(data.data().data(), data.GetTotalNumBytes());
 
 		// Hash any remaining properties
 		ComputeDataHash();
+
+
+		// Create the vertex/index Buffer object that will back our vertex stream:
+		std::string const& bufferName =
+			std::format("VertexStream_{}_{}", TypeToCStr(m_streamDesc.m_type), GetDataHash());
+
+		const re::Buffer::MemoryPoolPreference bufMemPoolPref =
+			streamDesc.m_lifetime == re::Lifetime::SingleFrame ? re::Buffer::UploadHeap : re::Buffer::DefaultHeap;
+
+		const re::Buffer::UsageMask bufferUsage =
+			(streamDesc.m_type == Type::Index ? re::Buffer::IndexStream : re::Buffer::VertexStream) | extraUsageBits;
+
+		re::Buffer::AccessMask bufAccessMask = re::Buffer::GPURead;
+		if (bufMemPoolPref == re::Buffer::UploadHeap)
+		{
+			bufAccessMask |= re::Buffer::CPUWrite;
+		}
+
+		m_streamBuffer = re::Buffer::Create(
+			bufferName,
+			data.data().data(),
+			util::CheckedCast<uint32_t>(data.GetTotalNumBytes()),
+			re::Buffer::BufferParams{
+				.m_lifetime = streamDesc.m_lifetime,
+				.m_stagingPool = re::Buffer::StagingPool::Temporary,
+				.m_memPoolPreference = bufMemPoolPref,
+				.m_accessMask = bufAccessMask,
+				.m_usageMask = bufferUsage,
+				.m_arraySize = 1, });
 	}
 
 

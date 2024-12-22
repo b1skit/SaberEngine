@@ -216,18 +216,11 @@ namespace re
 
 		m_effectDB.LoadEffectManifest();
 
-		m_renderData.BeginFrame(m_renderFrameNum);
-
 		SEBeginCPUEvent("platform::RenderManager::Initialize");
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
 
-		// Process any pending render commands to ensure we've processed anything queued during creation
-		m_renderCommandManager.SwapBuffers();
-		m_renderCommandManager.Execute();
-
-		// Create/buffer new resources added by our RenderSystems/GraphicsSystems. During Initialize(), most data has
-		// just been loaded so there is typically something of all types to create here
+		// TODO: It would be nice to not have to explicitely call this here, but if don't, DX12 IEM textures are black?
 		CreateAPIResources();
 				
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
@@ -268,8 +261,6 @@ namespace re
 		{
 			return; // Early-out: Prevents issues related to queued ImGui commands referring to now-destroyed data
 		}
-
-		re::Context::Get()->GetBufferAllocator()->BeginFrame(frameNum);
 		
 		// Get the RenderDataManager ready for the new frame
 		m_renderData.BeginFrame(m_renderFrameNum);
@@ -288,8 +279,8 @@ namespace re
 		// Create any new resources that have been created by GS's during the ExecuteUpdatePipeline call:
 		CreateAPIResources();
 
-		// Update/buffer param blocks
-		re::Context::Get()->GetBufferAllocator()->BufferData();
+		// Update buffers
+		re::Context::Get()->GetBufferAllocator()->BufferData(frameNum);
 
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");
@@ -330,9 +321,7 @@ namespace re
 		SEBeginCPUEvent("Swap buffers");
 		{
 			// Swap the single-frame resource n-buffers:
-			m_singleFrameVertexStreams.Swap();
-
-			re::Context::Get()->GetBufferAllocator()->EndFrame();
+			m_singleFrameVertexStreams.SwapAndClear();
 		}
 		SEEndCPUEvent();
 
@@ -512,11 +501,11 @@ namespace re
 		SEBeginCPUEvent("RenderManager::SwapNewResourceDoubleBuffers");
 
 		// Swap our new resource double buffers:
-		m_newShaders.Swap();
-		m_newTextures.Swap();
-		m_newSamplers.Swap();
-		m_newTargetSets.Swap();
-		m_newBuffers.Swap();
+		m_newShaders.SwapAndClear();
+		m_newTextures.SwapAndClear();
+		m_newSamplers.SwapAndClear();
+		m_newTargetSets.SwapAndClear();
+		m_newBuffers.SwapAndClear();
 
 		SEEndCPUEvent();
 	}
