@@ -49,7 +49,7 @@ namespace gr
 
 		struct MeshVertexStream
 		{
-			gr::VertexStream const* m_vertexStream = nullptr;
+			core::InvPtr<gr::VertexStream> m_vertexStream;
 			uint8_t m_setIdx = 0; // Index of m_vertexStream, w.r.t other streams of the same type. Used for sorting
 		};
 
@@ -86,10 +86,10 @@ namespace gr
 		{
 			MeshPrimitiveParams m_meshPrimitiveParams;
 
-			std::array<gr::VertexStream const*, gr::VertexStream::k_maxVertexStreams> m_vertexStreams;
+			std::array<core::InvPtr<gr::VertexStream>, gr::VertexStream::k_maxVertexStreams> m_vertexStreams;
 			uint8_t m_numVertexStreams;
 
-			gr::VertexStream const* m_indexStream;
+			core::InvPtr<gr::VertexStream> m_indexStream;
 
 			bool m_hasMorphTargets;
 			std::shared_ptr<re::Buffer> m_interleavedMorphData;
@@ -104,7 +104,7 @@ namespace gr
 
 			// Helper: Get a specific vertex stream packed into a MeshPrimitive::RenderData.
 			// If the setIdx index < 0, the first matching type is returned
-			static gr::VertexStream const* GetVertexStreamFromRenderData(
+			static core::InvPtr<gr::VertexStream> GetVertexStreamFromRenderData(
 				gr::MeshPrimitive::RenderData const&, gr::VertexStream::Type, int8_t setIdx = -1);
 		};
 
@@ -125,7 +125,7 @@ namespace gr
 	public:
 		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
 			std::string const& name,
-			gr::VertexStream const* indexStream,
+			core::InvPtr<gr::VertexStream> const& indexStream,
 			std::vector<MeshVertexStream>&& vertexStreams,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
@@ -140,9 +140,9 @@ namespace gr
 		
 		MeshPrimitiveParams const& GetMeshParams() const;
 
-		gr::VertexStream const* GetIndexStream() const;
+		core::InvPtr<gr::VertexStream> const& GetIndexStream() const;
 		
-		gr::VertexStream const* GetVertexStream(gr::VertexStream::Type, uint8_t srcTypeIdx) const;
+		core::InvPtr<gr::VertexStream> const& GetVertexStream(gr::VertexStream::Type, uint8_t srcTypeIdx) const;
 		std::vector<MeshVertexStream> const& GetVertexStreams() const;
 
 		bool HasMorphTargets() const;
@@ -155,7 +155,7 @@ namespace gr
 	private:		
 		MeshPrimitiveParams m_params;
 
-		gr::VertexStream const* m_indexStream;
+		core::InvPtr<gr::VertexStream> m_indexStream;
 		std::vector<MeshVertexStream> m_vertexStreams;	
 
 		std::shared_ptr<re::Buffer> m_interleavedMorphData;
@@ -167,7 +167,7 @@ namespace gr
 
 	private: // Private ctor: Use the Create factory instead
 		MeshPrimitive(char const* name,
-			gr::VertexStream const* indexStream,
+			core::InvPtr<gr::VertexStream> const& indexStream,
 			std::vector<MeshVertexStream>&& vertexStreams,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
@@ -185,7 +185,7 @@ namespace gr
 	}
 
 
-	inline gr::VertexStream const* MeshPrimitive::GetIndexStream() const
+	inline core::InvPtr<gr::VertexStream> const& MeshPrimitive::GetIndexStream() const
 	{
 		return m_indexStream;
 	}

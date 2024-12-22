@@ -89,7 +89,7 @@ namespace
 
 	void ValidateVertexStreamOverrides(
 		re::Lifetime batchLifetime,
-		std::array<gr::VertexStream const*, gr::VertexStream::k_maxVertexStreams> const& streams,
+		std::array<core::InvPtr<gr::VertexStream>, gr::VertexStream::k_maxVertexStreams> const& streams,
 		re::Batch::VertexStreamOverride const* overrides)
 	{
 #if defined(_DEBUG)

@@ -4,6 +4,8 @@
 #include "EnumTypes.h"
 #include "VertexStream.h"
 
+#include "Core/InvPtr.h"
+
 #include "Core/Interfaces/INamedObject.h"
 
 
@@ -168,7 +170,7 @@ namespace re
 
 		VertexBufferInput() = default;
 
-		VertexBufferInput(gr::VertexStream const* stream)
+		VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream)
 			: m_buffer(stream ? stream->GetBuffer() : nullptr)
 			, m_view{}
 		{
@@ -183,12 +185,7 @@ namespace re
 			}
 		}
 
-		VertexBufferInput(std::shared_ptr<gr::VertexStream>& stream)
-			: VertexBufferInput(stream ? stream.get() : nullptr)
-		{
-		}
-
-		VertexBufferInput(gr::VertexStream const* stream, re::Buffer const* bufferOverride)
+		VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream, re::Buffer const* bufferOverride)
 			: m_buffer(bufferOverride)
 			, m_view{}
 		{

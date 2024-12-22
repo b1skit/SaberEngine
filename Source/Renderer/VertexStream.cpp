@@ -6,6 +6,12 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/InvPtr.h"
+
+#include "Core/Interfaces/ILoadContext.h"
+
+#include "Core/Util/DataHash.h"
+
 
 namespace
 {
@@ -92,41 +98,77 @@ namespace
 		default: return "INVALID_TYPE";
 		}
 	}
+
+
+	util::DataHash ComputeVertexStreamDataHash(
+		gr::VertexStream::StreamDesc const& streamDesc, void const* data, size_t numBytes)
+	{
+		util::DataHash result = util::HashDataBytes(data, numBytes);
+		util::AddDataBytesToHash(result, streamDesc);
+		
+		return result;
+	}
 }
 
 
 namespace gr
 {
-	std::shared_ptr<gr::VertexStream> VertexStream::Create(
+	core::InvPtr<gr::VertexStream> VertexStream::Create(
 		StreamDesc const& streamDesc,
 		util::ByteVector&& data,
 		re::Buffer::UsageMask extraUsageBits /*= 0*/)
 	{		
-		// Currently, we pass the data to the ctor by reference so it can be normalized. We move it to the buffer later
-		std::shared_ptr<gr::VertexStream> newVertexStream;
-		newVertexStream.reset(new VertexStream(streamDesc, data, extraUsageBits));
-		
-		if (streamDesc.m_lifetime != re::Lifetime::SingleFrame)
+		// Vertex streams use a data hash as their ID (to allow sharing/reuse). Thus, we must compute it before we can
+		// make a decision about whether to actually create the stream or not
+		const util::DataHash streamDataHash =
+			ComputeVertexStreamDataHash(streamDesc, data.data().data(), data.GetTotalNumBytes());
+
+		core::Inventory* inventory = re::RenderManager::Get()->GetInventory();
+		if (inventory->HasLoaded<gr::VertexStream>(streamDataHash))
 		{
-			// This call might replace the shared_ptr if a vertex stream already exists
-			re::RenderManager::GetSceneData()->AddUniqueVertexStream(newVertexStream);
+			return inventory->Get<gr::VertexStream>(streamDataHash);
 		}
 
-		return newVertexStream;
+
+		struct VertexStreamLoadContext : core::ILoadContext<gr::VertexStream>
+		{
+			std::unique_ptr<gr::VertexStream> Load(core::InvPtr<gr::VertexStream>) override
+			{
+				return std::unique_ptr<gr::VertexStream>(
+					new VertexStream(m_streamDesc, std::move(m_data), m_dataHash, m_extraUsageBits));
+			}
+
+			util::DataHash m_dataHash;
+
+			StreamDesc m_streamDesc;
+			util::ByteVector m_data;
+			re::Buffer::UsageMask m_extraUsageBits;
+		};
+		std::shared_ptr<VertexStreamLoadContext> vertexStreamLoadContext = std::make_shared<VertexStreamLoadContext>();
+
+		vertexStreamLoadContext->m_dataHash = streamDataHash;
+		vertexStreamLoadContext->m_streamDesc = streamDesc;
+		vertexStreamLoadContext->m_data = std::move(data);
+		vertexStreamLoadContext->m_extraUsageBits = extraUsageBits;
+
+		return inventory->Get(
+			streamDataHash,
+			static_pointer_cast<core::ILoadContext<gr::VertexStream>>(vertexStreamLoadContext));
 	}
 
 
-	std::shared_ptr<gr::VertexStream> VertexStream::Create(CreateParams&& createParams)
+	core::InvPtr<gr::VertexStream> VertexStream::Create(CreateParams&& createParams)
 	{
 		return Create(
-			createParams.m_streamDesc,
-			std::move(*createParams.m_streamData.get()),
-			createParams.m_extraUsageBits);
+			createParams.m_streamDesc, std::move(*createParams.m_streamData.get()), createParams.m_extraUsageBits);
 	}
 
 
 	VertexStream::VertexStream(
-		StreamDesc const& streamDesc, util::ByteVector& data, re::Buffer::UsageMask extraUsageBits)
+		StreamDesc const& streamDesc,
+		util::ByteVector&& data,
+		util::DataHash dataHash,
+		re::Buffer::UsageMask extraUsageBits)
 		: m_streamDesc(streamDesc)
 	{
 		SEAssert(m_streamDesc.m_type != Type::Type_Count && m_streamDesc.m_dataType != re::DataType::DataType_Count,
@@ -162,11 +204,8 @@ namespace gr
 			m_streamDesc.m_doNormalize = Normalize::False;
 		}
 
-		// Hash the incoming data before it is moved to the BufferAllocator:
-		AddDataBytesToHash(data.data().data(), data.GetTotalNumBytes());
-
-		// Hash any remaining properties
-		ComputeDataHash();
+		// Force-set the pre-computed data hash
+		SetDataHash(dataHash);
 
 
 		// Create the vertex/index Buffer object that will back our vertex stream:
@@ -202,6 +241,13 @@ namespace gr
 	void VertexStream::ComputeDataHash()
 	{
 		AddDataBytesToHash(m_streamDesc);
+	}
+
+
+	VertexStream::~VertexStream()
+	{
+		SEAssert(m_streamBuffer == nullptr,
+			"Vertex stream DTOR called, but m_streamBuffer is not null. Was Destroy() called?");
 	}
 
 

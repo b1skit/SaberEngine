@@ -220,12 +220,12 @@ namespace
 
 namespace gr
 {
-	gr::VertexStream const* MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+	core::InvPtr<gr::VertexStream> MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData,
 		gr::VertexStream::Type streamType,
 		int8_t setIdx /*= -1*/)
 	{
-		gr::VertexStream const* result = nullptr;
+		core::InvPtr<gr::VertexStream> result;
 
 		for (uint8_t streamIdx = 0; streamIdx < meshPrimRenderData.m_vertexStreams.size(); ++streamIdx)
 		{
@@ -255,7 +255,7 @@ namespace gr
 
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
 		std::string const& name,
-		gr::VertexStream const* indexStream,
+		core::InvPtr<gr::VertexStream> const& indexStream,
 		std::vector<MeshVertexStream>&& vertexStreams,
 		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
@@ -286,8 +286,8 @@ namespace gr
 		SEAssert(streamCreateParams[0][gr::VertexStream::Index].m_streamData,
 			"No index stream data. Indexes are required. We currently assume it will be in this fixed location");
 
-		gr::VertexStream const* indexStream = 
-			gr::VertexStream::Create(std::move(streamCreateParams[0][gr::VertexStream::Index])).get();
+		core::InvPtr<gr::VertexStream> const& indexStream =
+			gr::VertexStream::Create(std::move(streamCreateParams[0][gr::VertexStream::Index]));
 		
 		const size_t totalVerts = streamCreateParams[0][gr::VertexStream::Position].m_streamData->size();
 
@@ -311,7 +311,7 @@ namespace gr
 
 					vertexStreams.emplace_back(gr::MeshPrimitive::MeshVertexStream{
 						.m_vertexStream = gr::VertexStream::Create(
-							std::move(streamCreateParams[setIdx][streamTypeIdx])).get(),
+							std::move(streamCreateParams[setIdx][streamTypeIdx])),
 						.m_setIdx = setIdx,
 						});
 				}
@@ -355,7 +355,7 @@ namespace gr
 
 	MeshPrimitive::MeshPrimitive(
 		char const* name,
-		gr::VertexStream const* indexStream,
+		core::InvPtr<gr::VertexStream> const& indexStream,
 		std::vector<MeshVertexStream>&& vertexStreams,
 		MeshPrimitiveParams const& meshParams)
 		: INamedObject(name)
@@ -371,7 +371,7 @@ namespace gr
 	}
 
 
-	gr::VertexStream const* MeshPrimitive::GetVertexStream(gr::VertexStream::Type streamType, uint8_t setIdx) const
+	core::InvPtr<gr::VertexStream> const& MeshPrimitive::GetVertexStream(gr::VertexStream::Type streamType, uint8_t setIdx) const
 	{
 		auto result = std::lower_bound(
 			m_vertexStreams.begin(),

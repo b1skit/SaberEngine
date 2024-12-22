@@ -77,7 +77,7 @@ namespace core
 
 
 	public:
-		bool Contains(util::DataHash) const;
+		bool HasLoaded(util::DataHash) const;
 
 		template<typename L>
 		ControlBlock* Get(util::DataHash, ILoadContext<L> const*);
@@ -135,11 +135,17 @@ namespace core
 
 
 	template<typename T>
-	bool ResourceSystem<T>::Contains(util::DataHash id) const
+	bool ResourceSystem<T>::HasLoaded(util::DataHash id) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_ptrAndControlBlocksMutex);
-			return m_ptrAndControlBlocks.contains(id);
+			
+			auto ptrCtrlItr = m_ptrAndControlBlocks.find(id);
+			if (ptrCtrlItr != m_ptrAndControlBlocks.end())
+			{
+				return m_ptrAndControlBlocks.at(id).m_control->m_state.load() == ResourceState::Ready;
+			}
+			return false;
 		}
 	}
 

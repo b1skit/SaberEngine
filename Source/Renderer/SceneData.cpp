@@ -35,10 +35,9 @@ namespace re
 	void SceneData::Destroy()
 	{
 		{
-			std::scoped_lock lock(m_meshPrimitivesMutex, m_vertexStreamsMutex, m_materialsReadWriteMutex);
+			std::scoped_lock lock(m_meshPrimitivesMutex, m_materialsReadWriteMutex);
 
 			m_meshPrimitives.clear();
-			m_vertexStreams.clear();
 			m_materials.clear();
 		}
 
@@ -76,31 +75,6 @@ namespace re
 			else
 			{
 				m_meshPrimitives.insert({ meshPrimitiveDataHash, meshPrimitive });
-			}
-		}
-		return replacedIncomingPtr;
-	}
-
-
-	bool SceneData::AddUniqueVertexStream(std::shared_ptr<gr::VertexStream>& vertexStream)
-	{
-		const uint64_t vertexStreamDataHash = vertexStream->GetDataHash();
-		bool replacedIncomingPtr = false;
-		{
-			std::lock_guard<std::mutex> lock(m_vertexStreamsMutex);
-
-			auto const& result = m_vertexStreams.find(vertexStreamDataHash);
-			if (result != m_vertexStreams.end())
-			{
-				LOG(std::format("Vertex stream has the same data hash \"{}\" as an existing vertex stream. It will be "
-					"replaced with a shared copy", vertexStreamDataHash).c_str());
-
-				vertexStream = result->second;
-				replacedIncomingPtr = true;
-			}
-			else
-			{
-				m_vertexStreams.insert({ vertexStreamDataHash, vertexStream });
 			}
 		}
 		return replacedIncomingPtr;

@@ -131,7 +131,6 @@ namespace re
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newBuffers(util::NBufferedVector<std::shared_ptr<re::Buffer>>::BufferSize::Two, k_newObjectReserveAmount)
-		, m_singleFrameVertexStreams(util::NBufferedVector<std::shared_ptr<gr::VertexStream>>::BufferSize::Three, k_newObjectReserveAmount)
 		, m_quitEventRecieved(false)
 	{
 		m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
@@ -318,13 +317,6 @@ namespace re
 		}
 		SEEndCPUEvent();
 
-		SEBeginCPUEvent("Swap buffers");
-		{
-			// Swap the single-frame resource n-buffers:
-			m_singleFrameVertexStreams.SwapAndClear();
-		}
-		SEEndCPUEvent();
-
 		ProcessDeferredDeletions(GetCurrentRenderFrameNum());
 
 		platform::RenderManager::EndOfFrame(*this);
@@ -391,9 +383,6 @@ namespace re
 
 		// Clear the new object queues:
 		DestroyNewResourceDoubleBuffers();
-
-		// Clear single-frame resources:
-		m_singleFrameVertexStreams.Destroy();
 
 		m_defaultTextures.clear();
 
@@ -553,13 +542,6 @@ namespace re
 	void RenderManager::RegisterForCreateDEPRECATED(std::shared_ptr<re::Buffer> newObject)
 	{
 		m_newBuffers.EmplaceBack(std::move(newObject));
-	}
-
-
-	template<>
-	void RenderManager::RegisterSingleFrameResource(std::shared_ptr<gr::VertexStream> singleFrameObject)
-	{
-		m_singleFrameVertexStreams.EmplaceBack(std::move(singleFrameObject));
 	}
 
 

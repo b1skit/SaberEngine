@@ -18,7 +18,7 @@ namespace
 			meshPrimRenderData.m_numVertexStreams > 0,
 			"Must have at least 1 vertex stream");
 
-		std::array<gr::VertexStream const*, gr::VertexStream::k_maxVertexStreams> const& vertexStreams = 
+		std::array<core::InvPtr<gr::VertexStream>, gr::VertexStream::k_maxVertexStreams> const& vertexStreams =
 			meshPrimRenderData.m_vertexStreams;
 
 		gr::MeshPrimitive::MorphTargetMetadata const& morphMetadata = meshPrimRenderData.m_morphTargetMetadata;

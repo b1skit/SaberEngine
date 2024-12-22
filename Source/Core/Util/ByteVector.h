@@ -29,7 +29,8 @@ namespace util
 			AllocateAndCopy
 		};
 		static ByteVector Clone(ByteVector const&, CloneMode);
-
+		
+		ByteVector() = default;
 		~ByteVector() = default;
 
 		ByteVector(ByteVector const&) = default;

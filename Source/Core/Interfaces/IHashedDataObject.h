@@ -34,6 +34,9 @@ namespace core
 
 		void ResetDataHash();
 
+		void SetDataHash(util::DataHash); // Set the data hash using a precomputed value
+
+
 	private:
 		util::DataHash m_dataHash;
 	};
@@ -79,5 +82,11 @@ namespace core
 	inline void IHashedDataObject::ResetDataHash()
 	{
 		m_dataHash = 0;
+	}
+
+
+	inline void IHashedDataObject::SetDataHash(util::DataHash dataHash)
+	{
+		m_dataHash = dataHash;
 	}
 }

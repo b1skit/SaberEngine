@@ -9,6 +9,12 @@
 #include "Core/Util/ByteVector.h"
 
 
+namespace core
+{
+	template<typename T>
+	class InvPtr;
+}
+
 namespace re
 {
 	class Buffer;
@@ -82,15 +88,17 @@ namespace gr
 
 
 	public:
-		[[nodiscard]] static std::shared_ptr<gr::VertexStream> Create(
+		[[nodiscard]] static core::InvPtr<gr::VertexStream> Create(
 			StreamDesc const&, util::ByteVector&&, re::Buffer::UsageMask extraUsageBits = 0);
 
-		[[nodiscard]] static std::shared_ptr<gr::VertexStream> Create(CreateParams&&);
+		[[nodiscard]] static core::InvPtr<gr::VertexStream> Create(CreateParams&&);
 
 		VertexStream(VertexStream&&) noexcept = default;
 		VertexStream& operator=(VertexStream&&) noexcept = default;
 
-		~VertexStream() { Destroy(); };
+		~VertexStream();
+
+		void Destroy();
 
 		re::Lifetime GetLifetime() const;
 
@@ -112,10 +120,6 @@ namespace gr
 
 	protected:
 		void ComputeDataHash() override;
-
-
-	private:
-		void Destroy();
 		
 
 	private:
@@ -125,7 +129,7 @@ namespace gr
 
 
 	private: // Use the Create() factory instead
-		VertexStream(StreamDesc const&, util::ByteVector& data, re::Buffer::UsageMask extraUsageBits);
+		VertexStream(StreamDesc const&, util::ByteVector&& data, util::DataHash, re::Buffer::UsageMask extraUsageBits);
 
 
 	private: // No copying allowed

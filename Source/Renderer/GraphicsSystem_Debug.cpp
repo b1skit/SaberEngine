@@ -23,7 +23,7 @@ namespace
 	{
 		util::ByteVector axisOriginPos = util::ByteVector::Create<glm::vec3>({ glm::vec3(0.f, 0.f, 0.f) });
 
-		std::shared_ptr<gr::VertexStream> axisPositionStream = gr::VertexStream::Create(
+		core::InvPtr<gr::VertexStream> const& axisPositionStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Position,
@@ -36,7 +36,7 @@ namespace
 			.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced,
 			.m_numInstances = 1,
 			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList,
-			.m_vertexBuffers = { re::VertexBufferInput(axisPositionStream.get()) },
+			.m_vertexBuffers = { re::VertexBufferInput(axisPositionStream) },
 		};		
 
 		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
@@ -58,7 +58,7 @@ namespace
 		const glm::vec3 parentWorldPos = (parent.g_model * k_originPoint).xyz;
 		const glm::vec3 childWorldPos = (child.g_model * k_originPoint).xyz;
 
-		std::shared_ptr<gr::VertexStream> linePositionsStream = gr::VertexStream::Create(
+		core::InvPtr<gr::VertexStream> const& linePositionsStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = lifetime,
 				.m_type = gr::VertexStream::Type::Position,
@@ -67,7 +67,7 @@ namespace
 			util::ByteVector::Create<glm::vec3>({ parentWorldPos, childWorldPos }),
 			false);
 
-		std::shared_ptr<gr::VertexStream> lineColorStream = gr::VertexStream::Create(
+		core::InvPtr<gr::VertexStream> const& lineColorStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = lifetime,
 				.m_type = gr::VertexStream::Type::Color,
@@ -76,7 +76,7 @@ namespace
 			util::ByteVector::Create<glm::vec4>({ parentColor, childColor }),
 			false);
 
-		std::shared_ptr<gr::VertexStream> lineIndexStream = gr::VertexStream::Create(
+		core::InvPtr<gr::VertexStream> const& lineIndexStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = lifetime,
 				.m_type = gr::VertexStream::Type::Index,
@@ -89,8 +89,8 @@ namespace
 			.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced,
 			.m_numInstances = 1,
 			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList,
-			.m_vertexBuffers = {linePositionsStream.get(), lineColorStream.get() },
-			.m_indexBuffer = re::VertexBufferInput(lineIndexStream.get()),
+			.m_vertexBuffers = {linePositionsStream, lineColorStream },
+			.m_indexBuffer = re::VertexBufferInput(lineIndexStream),
 		};
 
 		std::unique_ptr<re::Batch> lineBatch = std::make_unique<re::Batch>(
@@ -162,7 +162,7 @@ namespace
 			7, 3
 		});
 
-		std::shared_ptr<gr::VertexStream> boxPositionsStream = gr::VertexStream::Create(
+		core::InvPtr<gr::VertexStream> const& boxPositionsStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Position,
@@ -171,7 +171,7 @@ namespace
 			std::move(boxPositions),
 			false);
 
-		std::shared_ptr<gr::VertexStream> boxColorStream = gr::VertexStream::Create(
+		core::InvPtr<gr::VertexStream> const& boxColorStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Color,
@@ -180,7 +180,7 @@ namespace
 			std::move(boxColors),
 			false);
 
-		std::shared_ptr<gr::VertexStream> boxIndexStream = gr::VertexStream::Create(
+		core::InvPtr<gr::VertexStream> const& boxIndexStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Index,
@@ -194,10 +194,10 @@ namespace
 		boundingBoxBatchGraphicsParams.m_numInstances = 1;
 		boundingBoxBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		boundingBoxBatchGraphicsParams.m_vertexBuffers[0] = boxPositionsStream.get();
-		boundingBoxBatchGraphicsParams.m_vertexBuffers[1] = boxColorStream.get();
+		boundingBoxBatchGraphicsParams.m_vertexBuffers[0] = boxPositionsStream;
+		boundingBoxBatchGraphicsParams.m_vertexBuffers[1] = boxColorStream;
 
-		boundingBoxBatchGraphicsParams.m_indexBuffer = re::VertexBufferInput(boxIndexStream.get());
+		boundingBoxBatchGraphicsParams.m_indexBuffer = re::VertexBufferInput(boxIndexStream);
 
 		std::unique_ptr<re::Batch> boundingBoxBatch = std::make_unique<re::Batch>(
 			batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -215,14 +215,14 @@ namespace
 		re::Lifetime batchLifetime,
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData)
 	{
-		gr::VertexStream const* normalStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+		core::InvPtr<gr::VertexStream> const& normalStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
 				meshPrimRenderData, gr::VertexStream::Type::Normal);
 		if (normalStream == nullptr)
 		{
 			return nullptr; // No normals? Nothing to build
 		}
 
-		gr::VertexStream const* positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+		core::InvPtr<gr::VertexStream> const& positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
 			meshPrimRenderData, gr::VertexStream::Type::Position);
 		SEAssert(positionStream, "Cannot find position stream");
 
@@ -289,7 +289,7 @@ namespace
 
 		const re::Lifetime streamLifetime = batchLifetime;
 
-		std::shared_ptr<gr::VertexStream> frustumPositionsStream = gr::VertexStream::Create(
+		core::InvPtr<gr::VertexStream> const& frustumPositionsStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = gr::VertexStream::Type::Position,
@@ -298,7 +298,7 @@ namespace
 			std::move(frustumPositions),
 			false);
 
-		std::shared_ptr<gr::VertexStream> frustumColorStream = gr::VertexStream::Create(
+		core::InvPtr<gr::VertexStream> const& frustumColorStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = gr::VertexStream::Type::Color,
@@ -307,7 +307,7 @@ namespace
 			std::move(frustumColors),
 			false);
 
-		std::shared_ptr<gr::VertexStream> frustumIndexStream = gr::VertexStream::Create(
+		core::InvPtr<gr::VertexStream> const& frustumIndexStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_lifetime = streamLifetime,
 				.m_type = gr::VertexStream::Type::Index,
@@ -321,10 +321,10 @@ namespace
 		frustumBatchGraphicsParams.m_numInstances = 1;
 		frustumBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		frustumBatchGraphicsParams.m_vertexBuffers[0] = frustumPositionsStream.get();
-		frustumBatchGraphicsParams.m_vertexBuffers[1] = frustumColorStream.get();
+		frustumBatchGraphicsParams.m_vertexBuffers[0] = frustumPositionsStream;
+		frustumBatchGraphicsParams.m_vertexBuffers[1] = frustumColorStream;
 
-		frustumBatchGraphicsParams.m_indexBuffer = frustumIndexStream.get();
+		frustumBatchGraphicsParams.m_indexBuffer = frustumIndexStream;
 
 		std::unique_ptr<re::Batch> frustumBatch = std::make_unique<re::Batch>(
 			batchLifetime, frustumBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -337,10 +337,10 @@ namespace
 		re::Lifetime batchLifetime, 
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData)
 	{
-		gr::VertexStream const* positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
+		core::InvPtr<gr::VertexStream> const& positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
 			meshPrimRenderData, gr::VertexStream::Type::Position);
 
-		gr::VertexStream const* indexStream = meshPrimRenderData.m_indexStream;
+		core::InvPtr<gr::VertexStream> const& indexStream = meshPrimRenderData.m_indexStream;
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
 		const re::Batch::GraphicsParams wireframeBatchGraphicsParams{

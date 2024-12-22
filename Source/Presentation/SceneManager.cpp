@@ -385,7 +385,7 @@ namespace
 		std::string const& texName =
 			GenerateTextureName(sceneRootPath, texture, colorFallback, formatFallback, colorSpace);
 
-		if (inventory->Contains<re::Texture>(texName))
+		if (inventory->HasLoaded<re::Texture>(texName))
 		{
 			return inventory->Get<re::Texture>(texName);
 		}

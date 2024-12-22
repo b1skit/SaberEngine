@@ -36,7 +36,7 @@ namespace core
 			std::shared_ptr<core::ILoadContext<T>> = nullptr); // Can only be null if the resource already exists
 
 		template<typename T>
-		bool Contains(util::DataHash) const;
+		bool HasLoaded(util::DataHash) const;
 
 
 	private:
@@ -63,7 +63,7 @@ namespace core
 
 
 	template<typename T>
-	bool Inventory::Contains(util::DataHash ID) const
+	bool Inventory::HasLoaded(util::DataHash ID) const
 	{
 		const std::type_index typeIdx = std::type_index(typeid(T));
 
@@ -79,7 +79,7 @@ namespace core
 			}
 		}
 
-		return resourceSystem != nullptr && resourceSystem->Contains(ID);
+		return resourceSystem != nullptr && resourceSystem->HasLoaded(ID);
 	}
 
 

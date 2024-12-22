@@ -154,14 +154,6 @@ namespace re
 		core::InvPtr<re::Texture> const& GetDefaultTexture(util::StringHash);
 
 
-	public: // Ensure the lifetime of single-frame resources that are referenced by in-flight batches
-		template<typename T>
-		void RegisterSingleFrameResource(std::shared_ptr<T>);
-
-	private:
-		util::NBufferedVector<std::shared_ptr<gr::VertexStream>> m_singleFrameVertexStreams;
-
-
 	private:
 		// IEngineComponent interface:
 		void Update(uint64_t frameNum, double stepTimeMs) override;

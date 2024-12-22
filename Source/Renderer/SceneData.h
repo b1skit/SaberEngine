@@ -39,7 +39,6 @@ namespace re
 	public:		
 		// Geometry:
 		bool AddUniqueMeshPrimitive(std::shared_ptr<gr::MeshPrimitive>&); // Returns true if incoming ptr is modified
-		bool AddUniqueVertexStream(std::shared_ptr<gr::VertexStream>&); // Returns true if incoming ptr is modified
 
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>&);
@@ -53,9 +52,6 @@ namespace re
 	private:
 		std::unordered_map<util::DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 		mutable std::mutex m_meshPrimitivesMutex;
-
-		std::unordered_map<util::DataHash, std::shared_ptr<gr::VertexStream>> m_vertexStreams;
-		std::mutex m_vertexStreamsMutex;
 
 		std::unordered_map<util::StringHash, std::shared_ptr<gr::Material>> m_materials;
 		mutable std::shared_mutex m_materialsReadWriteMutex;
