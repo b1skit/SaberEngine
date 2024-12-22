@@ -73,12 +73,12 @@ namespace re
 
 	protected:
 		uint32_t AdvanceBaseIdx(AllocationPool, uint32_t alignedSize);
-		uint8_t GetWriteIndex() const;
+		uint8_t GetSingleFrameGPUWriteIndex() const;
 
 
 	private:
 		std::array<std::atomic<uint32_t>, AllocationPool_Count> m_bufferBaseIndexes;
-		uint8_t m_writeIdx;
+		uint8_t m_singleFrameGPUWriteIdx;
 
 	
 	private:
@@ -187,9 +187,9 @@ namespace re
 	};
 
 
-	inline uint8_t BufferAllocator::GetWriteIndex() const
+	inline uint8_t BufferAllocator::GetSingleFrameGPUWriteIndex() const
 	{
-		return m_writeIdx;
+		return m_singleFrameGPUWriteIdx;
 	}
 
 

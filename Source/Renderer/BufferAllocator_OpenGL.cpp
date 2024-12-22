@@ -16,7 +16,7 @@ namespace opengl
 		GLuint& bufferNameOut,
 		GLintptr& baseOffsetOut)
 	{
-		const uint8_t writeIdx = GetWriteIndex();
+		const uint8_t writeIdx = GetSingleFrameGPUWriteIndex();
 
 		const re::BufferAllocator::AllocationPool allocationPool = 
 			re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask);

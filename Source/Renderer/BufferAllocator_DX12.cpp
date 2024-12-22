@@ -22,7 +22,7 @@ namespace dx12
 		uint64_t& heapOffsetOut,
 		ID3D12Resource*& resourcePtrOut)
 	{
-		const uint8_t writeIdx = GetWriteIndex();
+		const uint8_t writeIdx = GetSingleFrameGPUWriteIndex();
 
 		const re::BufferAllocator::AllocationPool allocationPool =
 			re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask);

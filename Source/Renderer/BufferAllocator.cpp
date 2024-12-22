@@ -45,7 +45,7 @@ namespace re
 
 	BufferAllocator::BufferAllocator()
 		: m_numFramesInFlight(0) // We'll fetch the correct value during Create()
-		, m_writeIdx(0)
+		, m_singleFrameGPUWriteIdx(0)
 		, m_currentFrameNum(k_invalidFrameNum)
 		, m_isValid(false)
 	{
@@ -90,7 +90,7 @@ namespace re
 		m_numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
 		m_isValid = true;
 
-		m_writeIdx = 0;
+		m_singleFrameGPUWriteIdx = 0;
 	}
 
 
@@ -946,8 +946,8 @@ namespace re
 		{
 			m_currentFrameNum = renderFrameNum;
 			
-			// Increment the write index
-			m_writeIdx = (m_writeIdx + 1) % m_numFramesInFlight;
+			// Increment the single frame GPU resource write index:
+			m_singleFrameGPUWriteIdx = (m_singleFrameGPUWriteIdx + 1) % m_numFramesInFlight;
 
 			// Reset the stack base index back to 0 for each type of shared buffer:
 			for (uint8_t allocationPoolIdx = 0; allocationPoolIdx < AllocationPool_Count; allocationPoolIdx++)
