@@ -172,7 +172,7 @@ namespace re
 
 		void Allocate(Handle uniqueID, uint32_t numBytes, Buffer::StagingPool, re::Lifetime bufferLifetime); // Called once at creation
 		void Commit(Handle uniqueID, void const* data);	// Update the buffer data
-		void Commit(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
+		void CommitMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
 		
 		void GetData(Handle uniqueID, void const** out_data) const;
 

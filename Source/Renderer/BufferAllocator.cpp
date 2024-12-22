@@ -343,7 +343,7 @@ namespace re
 		{
 		case Buffer::StagingPool::Permanent:
 		{
-			Commit(uniqueID, data, numBytes, 0);
+			CommitMutable(uniqueID, data, numBytes, 0);
 		}
 		break;
 		case Buffer::StagingPool::Temporary:
@@ -386,7 +386,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::Commit(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset)
+	void BufferAllocator::CommitMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset)
 	{
 		SEAssert(numBytes > 0, "0 bytes is only valid for signalling the Buffer::Update to update all bytes");
 

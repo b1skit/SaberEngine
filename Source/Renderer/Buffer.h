@@ -18,7 +18,7 @@ namespace re
 		enum class StagingPool : uint8_t
 		{
 			Permanent,	// Mutable: Can be modified, and is re-buffered when modification is detected
-			Temporary,	// Immutable: Staging memory for permanent/single frame buffers initialized once
+			Temporary,	// Immutable: Temporary staging memory for permanent/single frame buffers initialized once
 			None,		// GPU-only buffers
 
 			StagingPool_Invalid
@@ -189,7 +189,7 @@ namespace re
 		
 		void CommitInternal(void const* data, uint64_t typeIDHash);
 
-		void CommitInternal(void const* data, uint32_t baseOffset, uint32_t numBytes, uint64_t typeIDHash); // Partial
+		void CommitMutableInternal(void const* data, uint32_t baseOffset, uint32_t numBytes, uint64_t typeIDHash); // Partial
 
 
 	private:
@@ -374,7 +374,7 @@ namespace re
 		const uint32_t dstBaseByteOffset = baseIdx * sizeof(T);
 		const uint32_t numBytes = numElements * sizeof(T);
 
-		CommitInternal(data, dstBaseByteOffset, numBytes, typeid(T).hash_code());
+		CommitMutableInternal(data, dstBaseByteOffset, numBytes, typeid(T).hash_code());
 	}
 
 

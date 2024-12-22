@@ -124,7 +124,7 @@ namespace re
 	}
 
 
-	void Buffer::CommitInternal(void const* data, uint32_t dstBaseOffset, uint32_t numBytes, uint64_t typeIDHash)
+	void Buffer::CommitMutableInternal(void const* data, uint32_t dstBaseOffset, uint32_t numBytes, uint64_t typeIDHash)
 	{
 		SEAssert(typeIDHash == m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
@@ -133,7 +133,7 @@ namespace re
 		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, m_bufferParams),
 			"Only structured buffers can be partially updated");
 
-		re::Context::Get()->GetBufferAllocator()->Commit(GetUniqueID(), data, numBytes, dstBaseOffset);
+		re::Context::Get()->GetBufferAllocator()->CommitMutable(GetUniqueID(), data, numBytes, dstBaseOffset);
 
 		m_platformParams->m_isCommitted = true;
 	}
