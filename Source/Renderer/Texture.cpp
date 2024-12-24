@@ -169,7 +169,6 @@ namespace re
 
 		struct TextureFromColor final : public virtual core::ILoadContext<re::Texture>
 		{
-			
 			void OnLoadBegin(core::InvPtr<re::Texture> newTex) override
 			{
 				LOG(std::format("Creating texture \"{}\" from color", m_texName).c_str());

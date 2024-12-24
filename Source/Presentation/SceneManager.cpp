@@ -251,8 +251,8 @@ namespace
 	}
 
 
-	template<typename T>
-	struct TextureFromCGLTF final : public virtual core::ILoadContext<T>
+	template<>
+	struct TextureFromCGLTF<re::Texture> final : public virtual core::ILoadContext<re::Texture>
 	{
 		void OnLoadBegin(core::InvPtr<re::Texture> newTex) override
 		{
