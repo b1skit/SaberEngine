@@ -3,6 +3,12 @@
 #include "Renderer/Material.h"
 
 
+namespace core
+{
+	template<typename T>
+	class InvPtr;
+}
+
 namespace fr
 {
 	class NameComponent;
@@ -12,7 +18,7 @@ namespace fr
 	{
 	public:
 		static MaterialInstanceComponent& AttachMaterialComponent(
-			fr::EntityManager&, entt::entity meshPrimitiveConcept, gr::Material const*);
+			fr::EntityManager&, entt::entity meshPrimitiveConcept, core::InvPtr<gr::Material> const&);
 
 	public:
 		static gr::Material::MaterialInstanceRenderData CreateRenderData(entt::entity, MaterialInstanceComponent const&);
@@ -23,11 +29,20 @@ namespace fr
 	public:
 		bool IsDirty() const;
 		void ClearDirtyFlag();
+		core::InvPtr<gr::Material> const& GetMaterial() const;
+
+
+	public:
+		gr::Material::MaterialInstanceRenderData m_instanceData;
+		const core::InvPtr<gr::Material> m_srcMaterial;
+		bool m_isDirty;
 
 
 	private:
-		gr::Material::MaterialInstanceRenderData m_instanceData;
-		bool m_isDirty;
+		struct PrivateCTORTag {};
+		MaterialInstanceComponent() = delete;
+	public:
+		MaterialInstanceComponent(PrivateCTORTag, core::InvPtr<gr::Material> const&);
 	};
 
 	
@@ -40,5 +55,11 @@ namespace fr
 	inline void MaterialInstanceComponent::ClearDirtyFlag()
 	{
 		m_isDirty = false;
+	}
+
+
+	inline core::InvPtr<gr::Material> const& MaterialInstanceComponent::GetMaterial()  const
+	{
+		return m_srcMaterial;
 	}
 }

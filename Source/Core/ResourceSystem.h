@@ -38,12 +38,14 @@ namespace core
 	public:
 		using RefCountType = uint32_t; // Type to use for the reference counter
 
-
 	public:
 // Put our atomics on their own cache lines
 #define CACHE_LINE_SIZE 64 
 		struct alignas(CACHE_LINE_SIZE) ControlBlock
 		{
+			std::shared_ptr<ILoadContextBase> m_loadContext; // For dependency management
+			std::mutex m_loadContextMutex;
+
 			std::unique_ptr<T>* m_object = nullptr; // The InvPtr populates our unique_ptr asyncronously
 
 			util::DataHash m_id = 0;
@@ -224,19 +226,24 @@ namespace core
 			while (!m_deferredRelease.empty() &&
 				m_deferredRelease.front().first + k_deferredReleaseNumFrames < frameNum)
 			{
-				SEAssert(m_ptrAndControlBlocks.contains(m_deferredRelease.front().second), "ID not found");
+				const util::DataHash ID = m_deferredRelease.front().second;
 
-				// Allow resources to be resurrected from the deferred delete queue: Only actually destroy them if
-				// their ref. count is 0
-				if (m_ptrAndControlBlocks.at(m_deferredRelease.front().second).m_control->m_refCount.load() == 0)
+				// It is possible for Resources to be added to the deferred delete queue multiple times (e.g. if they're
+				// resurrected/released multiple times), the important thing is that they have a ref count of zero for
+				// the entry when we actually free them
+				auto entryItr = m_ptrAndControlBlocks.find(ID);
+				if (entryItr != m_ptrAndControlBlocks.end())
 				{
-					SEAssert(m_ptrAndControlBlocks.at(m_deferredRelease.front().second).m_control->m_state.load() == 
-						core::ResourceState::Released,
-						"Ref count is 0, but state is not Released. This should not be possible");
+					PtrAndControl& ptrAndCtrl = entryItr->second;
+					if (ptrAndCtrl.m_control->m_refCount.load() == 0)
+					{
+						SEAssert(ptrAndCtrl.m_control->m_state.load() == core::ResourceState::Released,
+							"Ref count is 0, but state is not Released. This should not be possible");
 
-					m_ptrAndControlBlocks.at(m_deferredRelease.front().second).m_object->Destroy();
-					m_ptrAndControlBlocks.erase(m_deferredRelease.front().second);
-				}
+						ptrAndCtrl.m_object->Destroy();
+						m_ptrAndControlBlocks.erase(ID);
+					}
+				}				
 
 				m_deferredRelease.pop();
 			}

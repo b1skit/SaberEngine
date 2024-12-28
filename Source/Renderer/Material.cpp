@@ -29,24 +29,6 @@ namespace gr
 	}
 
 
-	std::shared_ptr<gr::Material> Material::Create(std::string const& name, EffectMaterial materialType)
-	{
-		std::shared_ptr<gr::Material> newMat;
-
-		switch (materialType)
-		{
-		case gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness:
-		{
-			newMat.reset(new Material_GLTF(name));
-		}
-		break;
-		default:
-			SEAssertF("Invalid material type");
-		}
-		return newMat;
-	}
-
-
 	Material::Material(std::string const& name, EffectMaterial effectMaterial)
 		: INamedObject(name)
 		, m_effectMaterial(effectMaterial)

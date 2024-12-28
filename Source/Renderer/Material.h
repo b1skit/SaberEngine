@@ -108,8 +108,6 @@ namespace gr
 
 
 	public:
-		[[nodiscard]] static std::shared_ptr<gr::Material> Create(std::string const& name, EffectMaterial);
-
 		template <typename T>
 		T GetAs(); // Get the Material as a dynamic cast to a derrived type
 
@@ -118,7 +116,9 @@ namespace gr
 
 		virtual ~Material() = default;
 
-		void SetTexture(uint32_t slotIndex, core::InvPtr<re::Texture>, uint8_t uvChannelIdx);
+		virtual void Destroy() = 0;
+
+		void SetTexture(uint32_t slotIndex, core::InvPtr<re::Texture> const&, uint8_t uvChannelIdx);
 		core::InvPtr<re::Texture> GetTexture(uint32_t slotIndex) const;
 		core::InvPtr<re::Texture> GetTexture(std::string const& samplerName) const;
 		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() const;
@@ -179,7 +179,7 @@ namespace gr
 	}
 
 
-	inline void Material::SetTexture(uint32_t slotIndex, core::InvPtr<re::Texture> texture, uint8_t uvChannelIdx)
+	inline void Material::SetTexture(uint32_t slotIndex, core::InvPtr<re::Texture> const& texture, uint8_t uvChannelIdx)
 	{
 		SEAssert(slotIndex < m_texSlots.size(), "Out of bounds slot index");
 		SEAssert(uvChannelIdx <= 1, 

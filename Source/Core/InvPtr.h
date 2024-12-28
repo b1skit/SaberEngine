@@ -32,6 +32,12 @@ namespace core
 
 		void Release() noexcept;
 
+		template<typename Child>
+		InvPtr<Child>& AddDependency(InvPtr<Child>&);
+
+		template<typename Child>
+		InvPtr<Child> AddDependency(InvPtr<Child>&&);
+
 		core::ResourceSystem<T>::RefCountType UseCount() const;
 		core::ResourceState GetState() const;
 
@@ -49,6 +55,9 @@ namespace core
 		friend class Inventory;
 		static InvPtr<T> Create(core::ResourceSystem<T>::ControlBlock*, std::shared_ptr<core::ILoadContext<T>>);
 		explicit InvPtr(core::ResourceSystem<T>::ControlBlock*); // Create a new managed InvPtr
+
+		template<typename Dependency>
+		friend class InvPtr;
 	};
 
 
@@ -197,6 +206,8 @@ namespace core
 
 			if (--m_control->m_refCount == 0)
 			{
+				SEAssert(m_control->m_loadContext == nullptr, "Load context is not null. This should not be possible");
+
 				m_control->m_state.store(core::ResourceState::Released);
 				m_control->m_owningResourceSystem->Release(m_control->m_id);
 				m_control = nullptr; // The Release() will (deferred) delete this, null out our copy to invalidate ourselves
@@ -204,6 +215,55 @@ namespace core
 				m_objectCache = nullptr;
 			}
 		}
+	}
+
+	template<typename T>
+	template<typename Child>
+	InvPtr<Child>& InvPtr<T>::AddDependency(InvPtr<Child>& child)
+	{
+		SEAssert(IsValid() && child.IsValid(), "Cannot add dependencies to invalid InvPtrs");
+
+		// Add our callback to the child:
+		{
+			std::scoped_lock lock(m_control->m_loadContextMutex, child.m_control->m_loadContextMutex);
+
+			SEAssert(child.m_control->m_loadContext ||
+				child.m_control->m_state.load() == ResourceState::Ready,
+				"Trying to add a null load context as a child dependency, this should only be possible if it is Ready");
+
+			// Add our callback to the child:
+			if (child.m_control->m_loadContext) // If the child has no load context, it must be Ready
+			{
+				ILoadContextBase::CreateLoadDependency(m_control->m_loadContext, child.m_control->m_loadContext);
+			}
+		}
+
+		return child;
+	}
+
+
+	template<typename T>
+	template<typename Child>
+	InvPtr<Child> InvPtr<T>::AddDependency(InvPtr<Child>&& child)
+	{
+		SEAssert(IsValid() && child.IsValid(), "Cannot add dependencies to invalid InvPtrs");
+
+		{
+			std::scoped_lock lock(m_control->m_loadContextMutex, child.m_control->m_loadContextMutex);
+
+			SEAssert(child.m_control->m_loadContext ||
+				child.m_control->m_state.load() == ResourceState::Ready,
+				"Trying to add a null load context as a child dependency, this should only be possible if it is Ready");
+
+			// Add our callback to the child:
+			if (child.m_control->m_loadContext && // If the child has no load context, it must be Ready
+				child.m_control->m_state.load() != ResourceState::Ready) // It might be ready, but not have cleared its load context yet
+			{
+				ILoadContextBase::CreateLoadDependency(m_control->m_loadContext, child.m_control->m_loadContext);
+			}
+		}
+
+		return std::move(child);
 	}
 
 
@@ -272,27 +332,49 @@ namespace core
 		{
 			SEAssert(loadContext != nullptr, "Load context is null");
 
+			// Initialize and store our own load context: We use this for dependency callbacks
+			{
+				std::lock_guard<std::mutex> lock(newInvPtr.m_control->m_loadContextMutex);
+
+				loadContext->Initialize(newInvPtr.m_control->m_id);
+				newInvPtr.m_control->m_loadContext = loadContext;
+			}
+
 			// Do this on the current thread; guarantees the InvPtr can be registered with any systems that might
 			// require it before the creation can possibly have finished
 			loadContext->OnLoadBegin(newInvPtr); 
 
-			core::ThreadPool::Get()->EnqueueJob([newInvPtr, loadContext]()
+			core::ThreadPool::Get()->EnqueueJob([newInvPtr]()
 				{
 					SEAssert(newInvPtr.m_control->m_object != nullptr && newInvPtr.m_control->m_object->get() == nullptr,
 						"Pointer should refer to an empty unique pointer here");
 
-					// Populate the unique_ptr held by the ResourceSystem:
-					*newInvPtr.m_control->m_object = loadContext->Load(newInvPtr);
+					// Populate the unique_ptr held by the ResourceSystem.
+					// Note: We don't lock m_loadContextMutex here, it will be locked internally to add dependencies
+					*newInvPtr.m_control->m_object =
+						std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext)->Load(newInvPtr);
 
 					SEAssert(*newInvPtr.m_control->m_object != nullptr, "Load returned null");
 
 					// Now the unique_ptr owning our object is created, swap our pointer to minimize indirection
 					newInvPtr.m_objectCache = newInvPtr.m_control->m_object->get();
 
+					// We're done! Mark ourselves as ready, and notify anybody waiting on us
 					newInvPtr.m_control->m_state.store(core::ResourceState::Ready);
 					newInvPtr.m_control->m_state.notify_all();
 
-					loadContext->OnLoadComplete(newInvPtr);
+					// Finally, handle dependencies:
+					{
+						std::lock_guard<std::mutex> lock(newInvPtr.m_control->m_loadContextMutex);
+
+						// The last thread through here will execute ILoadContextBase::OnLoadComplete, and call
+						// back to any parents
+						newInvPtr.m_control->m_loadContext->Finalize();
+
+						// Release load context: No need for this anymore. Any children with a copy will keep this alive
+						// until it is no longer needed
+						newInvPtr.m_control->m_loadContext = nullptr;
+					}
 				});
 		}
 

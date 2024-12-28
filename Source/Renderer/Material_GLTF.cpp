@@ -205,4 +205,11 @@ namespace gr
 
 		return isDirty;
 	}
+
+
+	void Material_GLTF::Destroy()
+	{
+		m_texSlots.clear();
+		m_namesToSlotIndex.clear();
+	}
 }

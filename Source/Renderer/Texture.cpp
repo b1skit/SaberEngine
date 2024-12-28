@@ -194,7 +194,7 @@ namespace re
 			re::Texture::TextureParams m_texParams;
 			glm::vec4 m_fillColor;
 		};
-		std::shared_ptr<TextureFromColor> colorTexLoadCtx = std::make_shared<TextureFromColor>(TextureFromColor());
+		std::shared_ptr<TextureFromColor> colorTexLoadCtx = std::make_shared<TextureFromColor>();
 
 		colorTexLoadCtx->m_texName = name;
 		colorTexLoadCtx->m_texParams = params;

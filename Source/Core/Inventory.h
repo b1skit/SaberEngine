@@ -52,11 +52,11 @@ namespace core
 
 	template<typename T>
 	core::InvPtr<T> Inventory::Get(
-		util::DataHash id, std::shared_ptr<core::ILoadContext<T>> loadContext /*= nullptr*/)
+		util::DataHash ID, std::shared_ptr<core::ILoadContext<T>> loadContext /*= nullptr*/)
 	{
 		ResourceSystem<T>* resourceSystem = GetCreateResourceSystem<T>();
 
-		auto controlBlock = resourceSystem->Get<T>(id, loadContext.get());
+		auto controlBlock = resourceSystem->Get<T>(ID, loadContext.get());
 
 		return core::InvPtr<T>::Create(controlBlock, std::move(loadContext));
 	}

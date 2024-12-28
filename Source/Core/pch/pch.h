@@ -23,6 +23,7 @@
 #include <latch>
 #include <queue>
 #include <regex>
+#include <unordered_set>
 #include <shared_mutex>
 #include <typeindex>
 #include <variant>

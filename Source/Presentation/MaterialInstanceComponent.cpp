@@ -4,7 +4,8 @@
 #include "MaterialInstanceComponent.h"
 #include "MeshPrimitiveComponent.h"
 #include "RenderDataComponent.h"
-#include "SceneManager.h"
+
+#include "Core/InvPtr.h"
 
 
 namespace fr
@@ -19,7 +20,7 @@ namespace fr
 	MaterialInstanceComponent& MaterialInstanceComponent::AttachMaterialComponent(
 		fr::EntityManager& em,
 		entt::entity meshPrimitiveConcept,
-		gr::Material const* sceneMaterial)
+		core::InvPtr<gr::Material> const& sceneMaterial)
 	{
 		SEAssert(sceneMaterial != nullptr, "Cannot attach a null material");
 		SEAssert(em.HasComponent<fr::MeshPrimitiveComponent>(meshPrimitiveConcept),
@@ -28,17 +29,21 @@ namespace fr
 			"Material components must be attached to entities with a RenderDataComponent");
 
 		// Attach the material component:
-		em.EmplaceComponent<fr::MaterialInstanceComponent>(meshPrimitiveConcept);
 		fr::MaterialInstanceComponent& matComponent = 
-			em.GetComponent<fr::MaterialInstanceComponent>(meshPrimitiveConcept);
-
-		// Copy data from the source material to make a material instance:
-		sceneMaterial->InitializeMaterialInstanceData(matComponent.m_instanceData);
+			*em.EmplaceComponent<fr::MaterialInstanceComponent>(meshPrimitiveConcept, PrivateCTORTag{}, sceneMaterial);
 
 		// Mark our Material as dirty:
 		em.EmplaceOrReplaceComponent<DirtyMarker<fr::MaterialInstanceComponent>>(meshPrimitiveConcept);
 
 		return matComponent;
+	}
+
+
+	MaterialInstanceComponent::MaterialInstanceComponent(PrivateCTORTag, core::InvPtr<gr::Material> const& srcMat)
+		: m_srcMaterial(srcMat)
+	{
+		// Copy data from the source material to make a material instance:
+		m_srcMaterial->InitializeMaterialInstanceData(m_instanceData);
 	}
 
 
@@ -60,10 +65,10 @@ namespace fr
 
 			if (ImGui::Button("Reset"))
 			{
-				gr::Material const* srcMateral = 
-					re::RenderManager::GetSceneData()->GetMaterial(matComponent.m_instanceData.m_materialName).get();
+				core::InvPtr<gr::Material> const& srcMaterial =
+					em.GetInventory()->Get<gr::Material>(matComponent.m_instanceData.m_materialName);
 
-				srcMateral->InitializeMaterialInstanceData(matComponent.m_instanceData);
+				srcMaterial->InitializeMaterialInstanceData(matComponent.m_instanceData);
 				matComponent.m_isDirty = true;
 			}
 

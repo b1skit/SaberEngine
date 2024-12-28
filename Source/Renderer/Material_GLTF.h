@@ -6,6 +6,15 @@
 #include "Shaders/Common/MaterialParams.h"
 
 
+namespace
+{
+	template<typename T>
+	struct MaterialLoadContext_GLTF;
+
+	template<typename T>
+	struct DefaultMaterialLoadContext_GLTF;
+}
+
 namespace re
 {
 	class BufferInput;
@@ -27,13 +36,20 @@ namespace gr
 			TextureSlotIdx_Count
 		};
 
-	public:
-		static re::BufferInput CreateInstancedBuffer(
+
+		static constexpr re::Texture::Format GetDefaultTextureFormat(gr::Material_GLTF::TextureSlotIdx);
+		static constexpr re::Texture::ColorSpace GetDefaultTextureColorSpace(gr::Material_GLTF::TextureSlotIdx);
+
+		[[nodiscard]] static re::BufferInput CreateInstancedBuffer(
 			re::Buffer::StagingPool, std::vector<MaterialInstanceRenderData const*> const&);
 		
 		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);
 
 		static bool ShowImGuiWindow(MaterialInstanceRenderData&); // Returns true if data was modified
+
+
+	public:
+		void Destroy();
 
 
 	public:
@@ -77,14 +93,52 @@ namespace gr
 		void PackMaterialParamsData(void*, size_t maxSize) const override;
 
 
-	protected: // Use the gr::Material::Create factory
-		friend std::shared_ptr<gr::Material> gr::Material::Create(std::string const&, EffectMaterial);
+		template<typename T>
+		friend struct MaterialLoadContext_GLTF;
+
+		template<typename T>
+		friend struct DefaultMaterialLoadContext_GLTF;
+
+	private:
 		Material_GLTF(std::string const& name);
 
 
 	private:
 		InstancedPBRMetallicRoughnessData GetPBRMetallicRoughnessParamsData() const;
 	};
+
+
+	inline constexpr re::Texture::Format Material_GLTF::GetDefaultTextureFormat(
+		gr::Material_GLTF::TextureSlotIdx slotIdx)
+	{
+		switch (slotIdx)
+		{
+		case gr::Material_GLTF::BaseColor:
+		case gr::Material_GLTF::MetallicRoughness:
+		case gr::Material_GLTF::Normal:
+		case gr::Material_GLTF::Occlusion:
+		case gr::Material_GLTF::Emissive:
+		case gr::Material_GLTF::TextureSlotIdx_Count:
+		default:
+			return re::Texture::Format::RGBA8_UNORM;
+		}
+	}
+
+
+	inline constexpr re::Texture::ColorSpace Material_GLTF::GetDefaultTextureColorSpace(
+		gr::Material_GLTF::TextureSlotIdx slotIdx)
+	{
+		switch (slotIdx)
+		{
+		case gr::Material_GLTF::BaseColor: return re::Texture::ColorSpace::sRGB; break;
+		case gr::Material_GLTF::MetallicRoughness: return re::Texture::ColorSpace::Linear;
+		case gr::Material_GLTF::Normal: return re::Texture::ColorSpace::Linear; break;
+		case gr::Material_GLTF::Occlusion: re::Texture::ColorSpace::Linear; break;
+		case gr::Material_GLTF::Emissive: return re::Texture::ColorSpace::sRGB; break; // GLTF spec: Must be converted to linear before use
+		case gr::Material_GLTF::TextureSlotIdx_Count:
+		default: return re::Texture::ColorSpace::Linear; break; // This should never happen
+		}
+	}
 
 
 	inline void Material_GLTF::SetEmissiveFactor(glm::vec3 const& emissiveFactor)

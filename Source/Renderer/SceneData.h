@@ -40,21 +40,12 @@ namespace re
 		// Geometry:
 		bool AddUniqueMeshPrimitive(std::shared_ptr<gr::MeshPrimitive>&); // Returns true if incoming ptr is modified
 
-		// Materials:
-		void AddUniqueMaterial(std::shared_ptr<gr::Material>&);
-		std::shared_ptr<gr::Material> GetMaterial(std::string const& materialName) const;
-		bool MaterialExists(std::string const& matName) const;
-		std::vector<std::string> GetAllMaterialNames() const;
-
 		void EndLoading();
 
 		
 	private:
 		std::unordered_map<util::DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 		mutable std::mutex m_meshPrimitivesMutex;
-
-		std::unordered_map<util::StringHash, std::shared_ptr<gr::Material>> m_materials;
-		mutable std::shared_mutex m_materialsReadWriteMutex;
 
 		bool m_isCreated; // Validate Destroy() was called after a scene was loaded
 

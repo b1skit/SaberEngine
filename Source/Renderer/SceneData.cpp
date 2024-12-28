@@ -35,10 +35,9 @@ namespace re
 	void SceneData::Destroy()
 	{
 		{
-			std::scoped_lock lock(m_meshPrimitivesMutex, m_materialsReadWriteMutex);
+			std::lock_guard<std::mutex> lock(m_meshPrimitivesMutex);
 
 			m_meshPrimitives.clear();
-			m_materials.clear();
 		}
 
 		m_isCreated = false; // Flag that Destroy has been called
@@ -78,67 +77,5 @@ namespace re
 			}
 		}
 		return replacedIncomingPtr;
-	}
-
-
-	void SceneData::AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial)
-	{
-		SEAssert(newMaterial != nullptr, "Cannot add null material to material table");
-
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_materialsReadWriteMutex);
-
-			// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
-			const auto matPosition = m_materials.find(newMaterial->GetNameHash());
-			if (matPosition != m_materials.end()) // Found existing
-			{
-				newMaterial = matPosition->second;
-			}
-			else // Add new
-			{
-				m_materials[newMaterial->GetNameHash()] = newMaterial;
-				LOG("Material \"%s\" registered to scene data", newMaterial->GetName().c_str());
-			}
-		}
-	}
-
-
-	std::shared_ptr<gr::Material> SceneData::GetMaterial(std::string const& materialName) const
-	{
-		const util::StringHash nameHash(materialName);
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
-			const auto matPos = m_materials.find(nameHash);
-
-			SEAssert(matPos != m_materials.end(), "Could not find material");
-
-			return matPos->second;
-		}
-	}
-
-
-	bool SceneData::MaterialExists(std::string const& matName) const
-	{
-		const util::StringHash nameHash(matName);
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
-
-			return m_materials.find(nameHash) != m_materials.end();
-		}
-	}
-
-
-	std::vector<std::string> SceneData::GetAllMaterialNames() const
-	{
-		std::vector<std::string> result;
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
-
-			for (auto const& material : m_materials)
-			{
-				result.emplace_back(material.second->GetName());
-			}
-		}
-		return result;
 	}
 }

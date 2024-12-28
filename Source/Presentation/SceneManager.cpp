@@ -54,7 +54,7 @@ namespace
 		glm::vec3 m_positionsMinXYZ;
 		glm::vec3 m_positionsMaxXYZ;
 		
-		std::string m_materialName;
+		core::InvPtr<gr::Material> m_material;
 	};
 	using PrimitiveToMeshPrimitiveMap = std::unordered_map<cgltf_primitive const*, MeshPrimitiveMetadata>;
 
@@ -251,8 +251,8 @@ namespace
 	}
 
 
-	template<>
-	struct TextureFromCGLTF<re::Texture> final : public virtual core::ILoadContext<re::Texture>
+	template<typename T>
+	struct TextureFromCGLTF final : public virtual core::ILoadContext<re::Texture>
 	{
 		void OnLoadBegin(core::InvPtr<re::Texture> newTex) override
 		{
@@ -409,322 +409,241 @@ namespace
 	}
 
 
-	void PreLoadTextures(
-		core::Inventory* inventory,
-		std::string const& sceneRootPath,
-		re::SceneData& sceneData,
-		std::shared_ptr<cgltf_data const> const& data)
+	template<typename T>
+	struct MaterialLoadContext_GLTF final : public virtual core::ILoadContext<gr::Material>
 	{
-		// Note: We kick off async loads of non-permanent textures here, which technically risks them going out of 
-		// scope. However, the inventory's deferred delete will keep them alive for the frame, and we'll retrieve them
-		// before they're freed
-
-		// Note: We must load our images through materials in order to infer the format and color space of the data
-		for (size_t matIdx = 0; matIdx < data->materials_count; matIdx++)
+		void OnLoadBegin(core::InvPtr<gr::Material>) override
 		{
-			cgltf_material const* const matSrc = &data->materials[matIdx];
-			SEAssert(matSrc, "Found a null material, this is unexpected");
-			SEAssert(matSrc->has_pbr_metallic_roughness == 1,
+			LOG(std::format("Loading material \"{}\" from GLTF", m_matName).c_str());
+		}
+
+		std::unique_ptr<gr::Material> Load(core::InvPtr<gr::Material> newMatHandle) override
+		{
+			SEAssert(m_srcMaterial, "Source material is null, this is unexpected");
+			SEAssert(m_srcMaterial->has_pbr_metallic_roughness == 1,
 				"We currently only support the PBR metallic/roughness material model");
-
-			std::string const& matName = grutil::GenerateMaterialName(*matSrc);
-			if (sceneData.MaterialExists(matName))
-			{
-				LOG_WARNING(
-					"Found materials with dupicate names. Assuming all instances of \"%s\" are identical",
-					matName.c_str());
-
-				continue;
-			}
-
-			LOG("Loading textures from material \"%s\"", matName.c_str());
 
 			// GLTF specifications: If a texture is not given, all texture components are assumed to be 1.f
 			// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
 			constexpr glm::vec4 k_defaultTextureColor(1.f, 1.f, 1.f, 1.f);
 
+			std::unique_ptr<gr::Material> newMat(new gr::Material_GLTF(m_matName));
+
 			// BaseColorTex
-			LoadTextureOrColor(
-				inventory,
-				data,
-				sceneRootPath,
-				matSrc->pbr_metallic_roughness.base_color_texture.texture,
-				k_defaultTextureColor,
-				re::Texture::Format::RGBA8_UNORM,
-				re::Texture::ColorSpace::sRGB);
+			newMat->SetTexture(
+				gr::Material_GLTF::TextureSlotIdx::BaseColor,
+				newMatHandle.AddDependency(LoadTextureOrColor(
+					m_inventory,
+					m_data,
+					m_sceneRootPath,
+					m_srcMaterial->pbr_metallic_roughness.base_color_texture.texture,
+					k_defaultTextureColor,
+					gr::Material_GLTF::GetDefaultTextureFormat(gr::Material_GLTF::TextureSlotIdx::BaseColor),
+					gr::Material_GLTF::GetDefaultTextureColorSpace(gr::Material_GLTF::TextureSlotIdx::BaseColor))),
+				m_srcMaterial->pbr_metallic_roughness.base_color_texture.texcoord);
+
 
 			// MetallicRoughnessTex
-			LoadTextureOrColor(
-				inventory,
-				data,
-				sceneRootPath,
-				matSrc->pbr_metallic_roughness.metallic_roughness_texture.texture,
-				k_defaultTextureColor,
-				re::Texture::Format::RGBA8_UNORM,
-				re::Texture::ColorSpace::Linear);
+			newMat->SetTexture(
+				gr::Material_GLTF::TextureSlotIdx::MetallicRoughness,
+				newMatHandle.AddDependency(LoadTextureOrColor(
+					m_inventory,
+					m_data,
+					m_sceneRootPath,
+					m_srcMaterial->pbr_metallic_roughness.metallic_roughness_texture.texture,
+					k_defaultTextureColor,
+					gr::Material_GLTF::GetDefaultTextureFormat(gr::Material_GLTF::TextureSlotIdx::MetallicRoughness),
+					gr::Material_GLTF::GetDefaultTextureColorSpace(gr::Material_GLTF::TextureSlotIdx::MetallicRoughness))),
+				m_srcMaterial->pbr_metallic_roughness.metallic_roughness_texture.texcoord);
 
 			// NormalTex
-			LoadTextureOrColor(
-				inventory,
-				data,
-				sceneRootPath,
-				matSrc->normal_texture.texture,
-				glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-				re::Texture::Format::RGBA8_UNORM,
-				re::Texture::ColorSpace::Linear);
+			newMat->SetTexture(
+				gr::Material_GLTF::TextureSlotIdx::Normal,
+				newMatHandle.AddDependency(LoadTextureOrColor(
+					m_inventory,
+					m_data,
+					m_sceneRootPath,
+					m_srcMaterial->normal_texture.texture,
+					glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
+					gr::Material_GLTF::GetDefaultTextureFormat(gr::Material_GLTF::TextureSlotIdx::Normal),
+					gr::Material_GLTF::GetDefaultTextureColorSpace(gr::Material_GLTF::TextureSlotIdx::Normal))),
+				m_srcMaterial->normal_texture.texcoord);
 
 			// OcclusionTex
-			LoadTextureOrColor(
-				inventory,
-				data,
-				sceneRootPath,
-				matSrc->occlusion_texture.texture,
-				k_defaultTextureColor,	// Completely unoccluded
-				re::Texture::Format::RGBA8_UNORM,
-				re::Texture::ColorSpace::Linear);
+			newMat->SetTexture(
+				gr::Material_GLTF::TextureSlotIdx::Occlusion,
+				newMatHandle.AddDependency(LoadTextureOrColor(
+					m_inventory,
+					m_data,
+					m_sceneRootPath,
+					m_srcMaterial->occlusion_texture.texture,
+					k_defaultTextureColor,	// Completely unoccluded
+					gr::Material_GLTF::GetDefaultTextureFormat(gr::Material_GLTF::TextureSlotIdx::Occlusion),
+					gr::Material_GLTF::GetDefaultTextureColorSpace(gr::Material_GLTF::TextureSlotIdx::Occlusion))),
+				m_srcMaterial->occlusion_texture.texcoord);
 
 			// EmissiveTex
-			LoadTextureOrColor(
-				inventory,
-				data,
-				sceneRootPath,
-				matSrc->emissive_texture.texture,
-				k_defaultTextureColor,
-				re::Texture::Format::RGBA8_UNORM,
-				re::Texture::ColorSpace::sRGB); // GLTF spec: Must be converted to linear before use
+			newMat->SetTexture(
+				gr::Material_GLTF::TextureSlotIdx::Emissive,
+				newMatHandle.AddDependency(LoadTextureOrColor(
+					m_inventory,
+					m_data,
+					m_sceneRootPath,
+					m_srcMaterial->emissive_texture.texture,
+					k_defaultTextureColor,
+					gr::Material_GLTF::GetDefaultTextureFormat(gr::Material_GLTF::TextureSlotIdx::Emissive),
+					gr::Material_GLTF::GetDefaultTextureColorSpace(gr::Material_GLTF::TextureSlotIdx::Emissive))),
+				m_srcMaterial->emissive_texture.texcoord);
+
+
+			gr::Material_GLTF* newGLTFMat = newMat->GetAs<gr::Material_GLTF*>();
+
+			newGLTFMat->SetBaseColorFactor(glm::make_vec4(m_srcMaterial->pbr_metallic_roughness.base_color_factor));
+			newGLTFMat->SetMetallicFactor(m_srcMaterial->pbr_metallic_roughness.metallic_factor);
+			newGLTFMat->SetRoughnessFactor(m_srcMaterial->pbr_metallic_roughness.roughness_factor);
+			newGLTFMat->SetNormalScale(m_srcMaterial->normal_texture.texture ? m_srcMaterial->normal_texture.scale : 1.0f);
+			newGLTFMat->SetOcclusionStrength(
+				m_srcMaterial->occlusion_texture.texture ? m_srcMaterial->occlusion_texture.scale : 1.0f);
+
+			newGLTFMat->SetEmissiveFactor(glm::make_vec3(m_srcMaterial->emissive_factor));
+			newGLTFMat->SetEmissiveStrength(
+				m_srcMaterial->has_emissive_strength ? m_srcMaterial->emissive_strength.emissive_strength : 1.0f);
+
+			switch (m_srcMaterial->alpha_mode)
+			{
+			case cgltf_alpha_mode::cgltf_alpha_mode_opaque:
+			{
+				newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Opaque);
+				newGLTFMat->SetShadowCastMode(true);
+			}
+			break;
+			case cgltf_alpha_mode::cgltf_alpha_mode_mask:
+			{
+				newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Mask);
+				newGLTFMat->SetShadowCastMode(true);
+			}
+			break;
+			case cgltf_alpha_mode::cgltf_alpha_mode_blend:
+			{
+				newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Blend);
+				newGLTFMat->SetShadowCastMode(false);
+			}
+			break;
+			}
+
+			newGLTFMat->SetAlphaCutoff(m_srcMaterial->alpha_cutoff);
+			newGLTFMat->SetDoubleSidedMode(m_srcMaterial->double_sided);
+
+			return std::move(newMat);
 		}
-	}
 
 
-	void LoadMaterials(
-		core::Inventory* inventory,
-		std::string const& sceneRootPath,
-		re::SceneData& sceneData,
-		std::shared_ptr<cgltf_data const> const& data,
-		std::vector<std::future<void>>& matFutures)
+		core::Inventory* m_inventory = nullptr;
+
+		std::string m_sceneRootPath;
+		std::shared_ptr<cgltf_data const> m_data;
+		cgltf_material const* m_srcMaterial = nullptr;
+		
+		std::string m_matName;
+	};
+
+
+	template<typename T>
+	struct DefaultMaterialLoadContext_GLTF final : public virtual core::ILoadContext<gr::Material>
 	{
-		// Note: Textures must have been loaded before this is called
-
-		const size_t numMaterials = data->materials_count;
-		LOG("Loading %d scene materials", numMaterials);
-
-		for (size_t matIdx = 0; matIdx < numMaterials; matIdx++)
+		void OnLoadBegin(core::InvPtr<gr::Material>) override
 		{
-			matFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[inventory, data, matIdx, &sceneData, &sceneRootPath]()
-				{
-					cgltf_material const* const matSrc = &data->materials[matIdx];
-					SEAssert(matSrc, "Found a null material, this is unexpected");
-					SEAssert(matSrc->has_pbr_metallic_roughness == 1,
-						"We currently only support the PBR metallic/roughness material model");
-
-					std::string const& matName = grutil::GenerateMaterialName(*matSrc);
-					if (sceneData.MaterialExists(matName))
-					{
-						LOG_WARNING(
-							"Found materials with dupicate names. Assuming all instances of \"%s\" are identical",
-							matName.c_str());
-
-						return;
-					}
-
-					LOG("Loading material \"%s\"", matName.c_str());
-
-					std::shared_ptr<gr::Material> newMat =
-						gr::Material::Create(matName, gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness);
-
-					// GLTF specifications: If a texture is not given, all texture components are assumed to be 1.f
-					// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
-					constexpr glm::vec4 k_defaultTextureColor(1.f, 1.f, 1.f, 1.f);
-
-
-					// BaseColorTex
-					std::string const& baseColorName = GenerateTextureName(
-						sceneRootPath, 
-						matSrc->pbr_metallic_roughness.base_color_texture.texture,
-						k_defaultTextureColor,
-						re::Texture::Format::RGBA8_UNORM,
-						re::Texture::ColorSpace::sRGB);
-
-					newMat->SetTexture(
-						gr::Material_GLTF::TextureSlotIdx::BaseColor, 
-						inventory->Get<re::Texture>(util::StringHash(baseColorName)),
-						matSrc->pbr_metallic_roughness.base_color_texture.texcoord);
-
-					// MetallicRoughnessTex
-					std::string const& metallicRoughnessName = GenerateTextureName(
-						sceneRootPath,
-						matSrc->pbr_metallic_roughness.metallic_roughness_texture.texture,
-						k_defaultTextureColor,
-						re::Texture::Format::RGBA8_UNORM,
-						re::Texture::ColorSpace::Linear);
-
-					newMat->SetTexture(
-						gr::Material_GLTF::TextureSlotIdx::MetallicRoughness,
-						inventory->Get<re::Texture>(util::StringHash(metallicRoughnessName)),
-						matSrc->pbr_metallic_roughness.metallic_roughness_texture.texcoord);
-
-					// NormalTex
-					std::string const& normalName = GenerateTextureName(
-						sceneRootPath,
-						matSrc->normal_texture.texture,
-						glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-						re::Texture::Format::RGBA8_UNORM,
-						re::Texture::ColorSpace::Linear);
-
-					newMat->SetTexture(
-						gr::Material_GLTF::TextureSlotIdx::Normal,
-						inventory->Get<re::Texture>(util::StringHash(normalName)),
-						matSrc->normal_texture.texcoord);
-
-					// OcclusionTex
-					std::string const& occlusionName = GenerateTextureName(
-						sceneRootPath,
-						matSrc->occlusion_texture.texture,
-						k_defaultTextureColor,	// Completely unoccluded
-						re::Texture::Format::RGBA8_UNORM,
-						re::Texture::ColorSpace::Linear);
-
-					newMat->SetTexture(
-						gr::Material_GLTF::TextureSlotIdx::Occlusion,
-						inventory->Get<re::Texture>(util::StringHash(occlusionName)),
-						matSrc->occlusion_texture.texcoord);
-
-					// EmissiveTex
-					std::string const& emissiveName = GenerateTextureName(
-						sceneRootPath,
-						matSrc->emissive_texture.texture,
-						k_defaultTextureColor,	// Completely unoccluded
-						re::Texture::Format::RGBA8_UNORM,
-						re::Texture::ColorSpace::sRGB); // GLTF spec: Must be converted to linear before use
-
-					newMat->SetTexture(
-						gr::Material_GLTF::TextureSlotIdx::Emissive,
-						inventory->Get<re::Texture>(util::StringHash(emissiveName)),
-						matSrc->emissive_texture.texcoord);
-
-
-					gr::Material_GLTF* newGLTFMat = newMat->GetAs<gr::Material_GLTF*>();
-
-					newGLTFMat->SetBaseColorFactor(glm::make_vec4(matSrc->pbr_metallic_roughness.base_color_factor));
-					newGLTFMat->SetMetallicFactor(matSrc->pbr_metallic_roughness.metallic_factor);
-					newGLTFMat->SetRoughnessFactor(matSrc->pbr_metallic_roughness.roughness_factor);
-					newGLTFMat->SetNormalScale(matSrc->normal_texture.texture ? matSrc->normal_texture.scale : 1.0f);
-					newGLTFMat->SetOcclusionStrength(
-						matSrc->occlusion_texture.texture ? matSrc->occlusion_texture.scale : 1.0f);
-
-					newGLTFMat->SetEmissiveFactor(glm::make_vec3(matSrc->emissive_factor));
-					newGLTFMat->SetEmissiveStrength(
-						matSrc->has_emissive_strength ? matSrc->emissive_strength.emissive_strength : 1.0f);
-
-					switch (matSrc->alpha_mode)
-					{
-					case cgltf_alpha_mode::cgltf_alpha_mode_opaque:
-					{
-						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Opaque);
-						newGLTFMat->SetShadowCastMode(true);
-					}
-					break;
-					case cgltf_alpha_mode::cgltf_alpha_mode_mask:
-					{
-						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Mask);
-						newGLTFMat->SetShadowCastMode(true);
-					}
-					break;
-					case cgltf_alpha_mode::cgltf_alpha_mode_blend:
-					{
-						newGLTFMat->SetAlphaMode(gr::Material::AlphaMode::Blend);
-						newGLTFMat->SetShadowCastMode(false);
-					}
-					break;
-					}
-
-					newGLTFMat->SetAlphaCutoff(matSrc->alpha_cutoff);
-					newGLTFMat->SetDoubleSidedMode(matSrc->double_sided);
-
-					sceneData.AddUniqueMaterial(newMat);
-				}));
+			LOG("Generating a default GLTF pbrMetallicRoughness material \"%s\"...",
+				en::DefaultResourceNames::k_defaultGLTFMaterialName);
 		}
-	}
+
+		std::unique_ptr<gr::Material> Load(core::InvPtr<gr::Material> newMat) override
+		{
+			// Default error material:
+			std::unique_ptr<gr::Material> defaultMaterialGLTF(
+				new gr::Material_GLTF(en::DefaultResourceNames::k_defaultGLTFMaterialName));
+
+			constexpr uint8_t k_defaultUVChannelIdx = 0;
+
+			const re::Texture::TextureParams defaultSRGBTexParams{
+				.m_width = 1,
+				.m_height = 1,
+				.m_usage = re::Texture::Usage::ColorSrc,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = re::Texture::Format::RGBA8_UNORM,
+				.m_colorSpace = re::Texture::ColorSpace::sRGB,
+				.m_mipMode = re::Texture::MipMode::None,
+				.m_createAsPermanent = true,
+			};
+
+			const re::Texture::TextureParams defaultLinearTexParams{
+				.m_width = 1,
+				.m_height = 1,
+				.m_usage = re::Texture::Usage::ColorSrc,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = re::Texture::Format::RGBA8_UNORM,
+				.m_colorSpace = re::Texture::ColorSpace::sRGB,
+				.m_mipMode = re::Texture::MipMode::None,
+				.m_createAsPermanent = true,
+			};
+
+			// BaseColorTex
+			defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::BaseColor,
+				newMat.AddDependency(re::Texture::Create(
+					en::DefaultResourceNames::k_defaultAlbedoTexName,
+					defaultSRGBTexParams,
+					glm::vec4(1.f))),
+				k_defaultUVChannelIdx);
+
+			// MetallicRoughnessTex
+			defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::MetallicRoughness,
+				newMat.AddDependency(re::Texture::Create(
+					en::DefaultResourceNames::k_defaultMetallicRoughnessTexName,
+					defaultLinearTexParams,
+					glm::vec4(0.f, 1.f, 1.f, 0.f))), // GLTF specs: .BG = metalness, roughness, Default: .BG = 1, 1
+				k_defaultUVChannelIdx);
+
+			// NormalTex
+			defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Normal,
+				newMat.AddDependency(re::Texture::Create(
+					en::DefaultResourceNames::k_defaultNormalTexName,
+					defaultLinearTexParams,
+					glm::vec4(0.5f, 0.5f, 1.f, 0.f))),
+				k_defaultUVChannelIdx);
+
+			// OcclusionTex
+			defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Occlusion,
+				newMat.AddDependency(re::Texture::Create(
+					en::DefaultResourceNames::k_defaultOcclusionTexName,
+					defaultLinearTexParams,
+					glm::vec4(1.f))),
+				k_defaultUVChannelIdx);
+
+			// EmissiveTex
+			defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Emissive,
+				newMat.AddDependency(re::Texture::Create(
+					en::DefaultResourceNames::k_defaultEmissiveTexName,
+					defaultSRGBTexParams,
+					glm::vec4(0.f))),
+				k_defaultUVChannelIdx);
+
+			return std::move(defaultMaterialGLTF);
+		}
+	};
 
 
 	void GenerateDefaultResources(core::Inventory* inventory, re::SceneData& scene)
 	{
 		LOG("Generating default resources...");
 
-		// Default error material:
-		LOG("Generating a default GLTF pbrMetallicRoughness material \"%s\"...",
-			en::DefaultResourceNames::k_defaultGLTFMaterialName);
+		std::shared_ptr<DefaultMaterialLoadContext_GLTF<gr::Material_GLTF>> matLoadCtx =
+			std::make_shared<DefaultMaterialLoadContext_GLTF<gr::Material_GLTF>>();
 
-		std::shared_ptr<gr::Material> defaultMaterialGLTF = gr::Material::Create(
-			en::DefaultResourceNames::k_defaultGLTFMaterialName,
-			gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness);
+		matLoadCtx->m_isPermanent = true;
 
-		constexpr uint8_t k_defaultUVChannelIdx = 0;
-
-		const re::Texture::TextureParams defaultSRGBTexParams{
-			.m_width = 1,
-			.m_height = 1,
-			.m_usage = re::Texture::Usage::ColorSrc,
-			.m_dimension = re::Texture::Dimension::Texture2D,
-			.m_format = re::Texture::Format::RGBA8_UNORM,
-			.m_colorSpace = re::Texture::ColorSpace::sRGB,
-			.m_mipMode = re::Texture::MipMode::None,
-			.m_createAsPermanent = true,
-		};
-
-		const re::Texture::TextureParams defaultLinearTexParams{
-			.m_width = 1,
-			.m_height = 1,
-			.m_usage = re::Texture::Usage::ColorSrc,
-			.m_dimension = re::Texture::Dimension::Texture2D,
-			.m_format = re::Texture::Format::RGBA8_UNORM,
-			.m_colorSpace = re::Texture::ColorSpace::sRGB,
-			.m_mipMode = re::Texture::MipMode::None,
-			.m_createAsPermanent = true,
-		};
-
-		// BaseColorTex
-		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::BaseColor,
-			re::Texture::Create(
-				en::DefaultResourceNames::k_defaultAlbedoTexName, 
-				defaultSRGBTexParams,
-				glm::vec4(1.f)),
-			k_defaultUVChannelIdx);
-
-		// MetallicRoughnessTex
-		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::MetallicRoughness,
-			re::Texture::Create(
-				en::DefaultResourceNames::k_defaultMetallicRoughnessTexName,
-				defaultLinearTexParams,
-				glm::vec4(0.f, 1.f, 1.f, 0.f)), // GLTF specs: .BG = metalness, roughness, Default: .BG = 1, 1
-			k_defaultUVChannelIdx);
-
-		// NormalTex
-		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Normal,
-			re::Texture::Create(
-				en::DefaultResourceNames::k_defaultNormalTexName,
-				defaultLinearTexParams,
-				glm::vec4(0.5f, 0.5f, 1.f, 0.f)),
-			k_defaultUVChannelIdx);
-
-		// OcclusionTex
-		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Occlusion,
-			re::Texture::Create(
-				en::DefaultResourceNames::k_defaultOcclusionTexName,
-				defaultLinearTexParams,
-				glm::vec4(1.f)),
-			k_defaultUVChannelIdx);
-
-		// EmissiveTex
-		defaultMaterialGLTF->SetTexture(gr::Material_GLTF::TextureSlotIdx::Emissive,
-			re::Texture::Create(
-				en::DefaultResourceNames::k_defaultEmissiveTexName,
-				defaultSRGBTexParams,
-				glm::vec4(0.f)),
-			k_defaultUVChannelIdx);
-
-		scene.AddUniqueMaterial(defaultMaterialGLTF);
+		inventory->Get(
+			util::StringHash(en::DefaultResourceNames::k_defaultGLTFMaterialName),
+			static_pointer_cast<core::ILoadContext<gr::Material>>(matLoadCtx));
 	}
 
 
@@ -948,6 +867,8 @@ namespace
 
 
 	void PreLoadMeshData(
+		core::Inventory* inventory,
+		std::string const& sceneRootPath,
 		re::SceneData& scene,
 		std::shared_ptr<cgltf_data const> const& data,
 		SceneMetadata& sceneMetadata,
@@ -958,7 +879,7 @@ namespace
 			cgltf_mesh const* curMesh = &data->meshes[meshIdx];
 
 			meshFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[curMesh, meshIdx, &sceneMetadata]()
+				[inventory, sceneRootPath, data, curMesh, meshIdx, &sceneMetadata]()
 				{
 					std::string const& meshName = curMesh->name ? curMesh->name : std::format("UnnamedMesh_{}", meshIdx);
 
@@ -1601,39 +1522,38 @@ namespace
 						};
 						grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
-						// TODO: Bug here - Internally, gr::MeshPrimitive creates re::VertexStreams which are backed by an 
-						// re::Buffer. Buffers interact with the re::BufferAllocator, which is only allowed from the render thread. 
-						// We get away with it for by using a nasty hack to defer the VertexStream's buffer creation onto a render
-						// command. This will go away once async loading/object creation is done
 						std::shared_ptr<gr::MeshPrimitive> newMeshPrimitive = gr::MeshPrimitive::Create(
 							meshName,
 							std::move(vertexStreamCreateParams),
 							meshPrimitiveParams);
 
 
-						// Cache the material:
-						std::string materialName;
-						if (curPrimitive.material != nullptr)
-						{
-							materialName = grutil::GenerateMaterialName(*curPrimitive.material);
-						}
-						else
-						{
-							LOG_WARNING("MeshPrimitive \"%s\" does not have a material. Assigning \"%s\"",
-								meshName.c_str(), en::DefaultResourceNames::k_defaultGLTFMaterialName);
-							materialName = en::DefaultResourceNames::k_defaultGLTFMaterialName;
-						}
+						// Load the material:
+						std::shared_ptr<MaterialLoadContext_GLTF<gr::Material_GLTF>> matLoadCtx =
+							std::make_shared<MaterialLoadContext_GLTF<gr::Material_GLTF>>();
+
+						matLoadCtx->m_inventory = inventory;
+						matLoadCtx->m_sceneRootPath = sceneRootPath;
+						matLoadCtx->m_data = data;
+						matLoadCtx->m_srcMaterial = curPrimitive.material;
+						matLoadCtx->m_matName = grutil::GenerateMaterialName(*curPrimitive.material);
 
 						// Update the mesh primitive metadata
 						{
 							std::lock_guard<std::mutex> lock(sceneMetadata.m_primitiveToMeshPrimitiveMetadataMutex);
+
+							// TODO: The material should be loaded as a dependency of the MeshPrimitive, once we switch
+							// MeshPrimitive to use InvPtr
+
 							sceneMetadata.m_primitiveToMeshPrimitiveMetadata.emplace(
 								&curPrimitive,
 								MeshPrimitiveMetadata{
 									.m_meshPrimitive = newMeshPrimitive.get(),
 									.m_positionsMinXYZ = positionsMinXYZ,
 									.m_positionsMaxXYZ = positionsMaxXYZ,
-									.m_materialName = materialName,
+									.m_material = inventory->Get(
+										util::StringHash(matLoadCtx->m_matName),
+										static_pointer_cast<core::ILoadContext<gr::Material>>(matLoadCtx)),
 								});
 						}
 					}
@@ -1770,6 +1690,7 @@ namespace
 
 	
 	inline void AttachGeometry(
+		core::Inventory* inventory,
 		re::SceneData const& sceneData,
 		cgltf_node const* current,
 		size_t nodeIdx, // For default/fallback name
@@ -1818,10 +1739,9 @@ namespace
 				meshPrimMetadata.m_positionsMaxXYZ);
 
 			meshAndMeshPrimitiveEntities.emplace_back(meshPrimimitiveEntity);
-
+			
 			// Attach the MaterialInstanceComponent to the MeshPrimitive:
-			std::shared_ptr<gr::Material> const& material = sceneData.GetMaterial(meshPrimMetadata.m_materialName);
-			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material.get());			
+			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, meshPrimMetadata.m_material);
 		} // primitives loop
 
 		// Store our Mesh entity -> vector of Mesh/MeshPrimive Bounds entities:
@@ -1985,6 +1905,7 @@ namespace
 
 
 	void AttachNodeComponents(
+		core::Inventory* inventory,
 		re::SceneData& sceneData,
 		std::shared_ptr<cgltf_data const> const& data,
 		SceneMetadata& sceneMetadata,
@@ -1995,7 +1916,7 @@ namespace
 			cgltf_node const* current = &data->nodes[nodeIdx];
 
 			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[&sceneData, &sceneMetadata, current, nodeIdx]()
+				[inventory, &sceneData, &sceneMetadata, current, nodeIdx]()
 				{
 					SEAssert(sceneMetadata.m_nodeToEntity.contains(current),
 					"Node to entity map does not contain the current node. This should not be possible");
@@ -2004,7 +1925,7 @@ namespace
 
 					if (current->mesh)
 					{
-						AttachGeometry(sceneData, current, nodeIdx, curSceneNodeEntity, sceneMetadata);
+						AttachGeometry(inventory, sceneData, current, nodeIdx, curSceneNodeEntity, sceneMetadata);
 					}
 					if (current->light)
 					{
@@ -2314,8 +2235,7 @@ namespace fr
 			core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneRootPathKey, sceneRootPath);
 
 			// Pre-load the large/complex data:
-			PreLoadTextures(m_inventory, sceneRootPath, *sceneData, data);
-			PreLoadMeshData(*sceneData, data, sceneMetadata, loadFutures);
+			PreLoadMeshData(m_inventory, sceneRootPath, *sceneData, data, sceneMetadata, loadFutures);
 			PreLoadSkinData(data, sceneMetadata, loadFutures);
 
 			// Wait for data to be pre-loaded:
@@ -2324,9 +2244,6 @@ namespace fr
 				loadFuture.wait();
 			}
 			loadFutures.clear();
-
-			// Create scene resources, now that we have data available:
-			LoadMaterials(m_inventory, sceneRootPath, *sceneData, data, loadFutures);
 
 			loadFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob([data, &sceneMetadata]() {
 					CreateSceneNodeEntities(data, sceneMetadata);
@@ -2344,7 +2261,7 @@ namespace fr
 			loadFutures.clear();
 
 			// Asyncronously attach the components to the entities, now that they exist:
-			AttachNodeComponents(*sceneData, data, sceneMetadata, loadFutures);
+			AttachNodeComponents(m_inventory, *sceneData, data, sceneMetadata, loadFutures);
 
 			// Wait for all of the tasks to be done:
 			for (auto const& loadFuture : loadFutures)

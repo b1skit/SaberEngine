@@ -38,6 +38,8 @@ namespace util
 		operator T () const noexcept { return m_dataHash; }
 
 		bool operator==(DataHash const& rhs) const noexcept { return m_dataHash == rhs.m_dataHash; }
+		bool operator==(uint64_t rhs) const noexcept { return m_dataHash == rhs; }
+
 		bool operator<(DataHash const& rhs) const noexcept { return m_dataHash < rhs.m_dataHash; }
 		bool operator>(DataHash const& rhs) const noexcept { return m_dataHash > rhs.m_dataHash; }
 

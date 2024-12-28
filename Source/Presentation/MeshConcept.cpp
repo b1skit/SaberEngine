@@ -288,10 +288,29 @@ namespace fr
 			default: SEAssertF("Invalid mesh factory type");
 			}
 
-
+			
 			// Material:
 			static uint32_t s_selectedMaterialIdx = 0;
-			std::vector<std::string> const& materialNames = re::RenderManager::GetSceneData()->GetAllMaterialNames();			
+			std::vector<std::string> materialNames;
+			{
+				fr::EntityManager* em = fr::EntityManager::Get();
+				std::vector<entt::entity> const& materialEntities = em->GetAllEntities<fr::MaterialInstanceComponent>();
+
+				materialNames.reserve(materialEntities.size());
+
+				// Build a vector of unique material names (multiple material instances can share the same base material)
+				std::unordered_set<std::string> seenMaterials;
+				for (entt::entity matEntity : materialEntities)
+				{
+					fr::MaterialInstanceComponent& material = em->GetComponent<fr::MaterialInstanceComponent>(matEntity);
+
+					if (!seenMaterials.contains(material.GetMaterial()->GetName()))
+					{
+						materialNames.emplace_back(material.GetMaterial()->GetName());
+						seenMaterials.emplace(material.GetMaterial()->GetName());
+					}
+				}
+			}
 			
 			util::ShowBasicComboBox(
 				"Material##spawnMeshFactory", materialNames.data(), materialNames.size(), s_selectedMaterialIdx);
@@ -391,11 +410,11 @@ namespace fr
 					maxXYZ);
 
 				// Attach a material:
-				std::shared_ptr<gr::Material> material =
-					re::RenderManager::GetSceneData()->GetMaterial(s_meshFactoryMaterialName.c_str());
+				core::InvPtr<gr::Material> const& material =
+					fr::EntityManager::Get()->GetInventory()->Get<gr::Material>(s_meshFactoryMaterialName.c_str());
 
 				fr::MaterialInstanceComponent::AttachMaterialComponent(
-					*fr::EntityManager::Get(), meshPrimimitiveEntity, material.get());
+					*fr::EntityManager::Get(), meshPrimimitiveEntity, material);
 			}
 			break;
 			case SourceType::GLTFFile:
