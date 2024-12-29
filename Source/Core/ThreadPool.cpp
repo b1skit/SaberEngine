@@ -4,6 +4,8 @@
 #include "LogManager.h"
 #include "ThreadPool.h"
 
+#include "Util/CastUtils.h"
+
 
 namespace core
 {
@@ -22,7 +24,7 @@ namespace core
 
 
 	ThreadPool::ThreadPool()
-		: m_maxThreads(0)
+		: m_minThreadCount(0)
 		, m_isRunning(false)
 	{
 	}
@@ -30,43 +32,50 @@ namespace core
 
 	void ThreadPool::Startup()
 	{
-		m_maxThreads = std::thread::hardware_concurrency();
-		SEAssert(m_maxThreads > 0, "Failed to query the number of threads supported");
-		LOG("System has %d logical threads", m_maxThreads);
+		m_minThreadCount = std::thread::hardware_concurrency();
+		SEAssert(m_minThreadCount > 0, "Failed to query the number of threads supported");
+		LOG("System has %d logical threads", m_minThreadCount);
 
-		size_t actualNumThreads = m_maxThreads;
-		if (Config::Get()->KeyExists(configkeys::k_maxWorkerThreads))
+		size_t actualNumThreads = m_minThreadCount;
+		if (Config::Get()->KeyExists(configkeys::k_minWorkerThreads))
 		{
-			actualNumThreads = static_cast<size_t>(Config::Get()->GetValue<int>(configkeys::k_maxWorkerThreads));
+			actualNumThreads = util::CheckedCast<size_t>(Config::Get()->GetValue<int>(configkeys::k_minWorkerThreads));
 		}		
 
 		m_isRunning = true; // Must be true BEFORE a new thread checks this in ExecuteJobs()
 
-		m_workerThreads.reserve(actualNumThreads);
-		for (size_t i = 0; i < actualNumThreads; i++)
+		for (size_t i = 0; i < actualNumThreads; ++i)
 		{
-			m_workerThreads.emplace_back(std::thread(&ThreadPool::ExecuteJobs, this));
-
-			// Set this as a default, it can be overriden at any point
-			NameCurrentThread(L"Worker Thread");
+			AddWorkerThread();
 		}
 	}
 
 
 	void ThreadPool::Stop()
 	{
-		LOG("ThreadPool stopping...");
-
-		std::unique_lock<std::mutex> waitingLock(m_jobQueueMutex);
-		m_isRunning = false;
-		waitingLock.unlock();
-		m_jobQueueCV.notify_all();
-
-		for (size_t i = 0; i < m_workerThreads.size(); i++)
 		{
-			m_workerThreads[i].join();
+			std::unique_lock<std::mutex> waitingLock(m_jobQueueMutex);
+
+			m_isRunning = false;
+			waitingLock.unlock();
+			m_jobQueueCV.notify_all();
 		}
-		m_workerThreads.clear();
+
+		{
+			std::lock_guard<std::shared_mutex> lock(m_workerThreadsMutex);
+
+			for (auto& thread : m_workerThreads)
+			{
+				m_workerThreads.at(thread.first).join();
+			}
+			m_workerThreads.clear();
+
+			while (!m_workerThreadsToJoin.empty())
+			{
+				m_workerThreadsToJoin.front().join();
+			}
+			m_workerThreadsToJoin.clear();
+		}
 	}
 
 
@@ -88,10 +97,16 @@ namespace core
 			FunctionWrapper currentJob = std::move(m_jobQueue.front());
 			m_jobQueue.pop();
 
+			const size_t currentJobQueueSize = m_jobQueue.size();
+
 			waitingLock.unlock();
 
-			// Finally, do the work:
-			currentJob();
+			currentJob(); // Do the work
+
+			if (ShrinkThreadPool(currentJobQueueSize, std::this_thread::get_id()))
+			{
+				return;
+			}
 		}
 	}
 
@@ -103,5 +118,71 @@ namespace core
 			threadName);
 
 		SEAssert(hr >= 0, "Failed to set thread name");
+	}
+
+
+	void ThreadPool::GrowThreadPool(size_t currentJobQueueSize)
+	{
+		size_t numWorkerThreads = 0;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_workerThreadsMutex);
+
+			numWorkerThreads = m_workerThreads.size();
+		}
+
+		// Grow the pool by adding 1 thread for each additional k_targetJobsPerThread in the queue
+		const size_t flooredSize = (currentJobQueueSize / k_targetJobsPerThread) * k_targetJobsPerThread;
+		if (flooredSize > (numWorkerThreads * k_targetJobsPerThread))
+		{
+			AddWorkerThread();
+		}
+	}
+
+
+	bool ThreadPool::ShrinkThreadPool(size_t currentJobQueueSize, std::thread::id currentThread)
+	{
+		bool shouldTerminate = false;
+		{
+			std::unique_lock<std::shared_mutex> lock(m_workerThreadsMutex);
+
+			if (currentJobQueueSize < m_minThreadCount &&
+				m_workerThreads.size() > m_minThreadCount) // Never shrink smaller than our target
+			{
+				SEAssert(m_workerThreads.contains(currentThread), "Failed to find the current thread");
+
+				m_workerThreadsToJoin.emplace_back(std::move(m_workerThreads.at(currentThread)));
+				m_workerThreads.erase(currentThread);
+
+				shouldTerminate = true;
+
+				LOG(std::format("Thread pool shrunk to {} threads", m_workerThreads.size()).c_str());
+			}
+
+			// Threads can't join() themselves, clean up any previously-released threads
+			while (!m_workerThreadsToJoin.empty() &&
+				m_workerThreadsToJoin.front().get_id() != currentThread)
+			{
+				m_workerThreadsToJoin.front().join();
+				m_workerThreadsToJoin.pop_front();
+			}
+		}
+
+		return shouldTerminate;
+	}
+
+
+	void ThreadPool::AddWorkerThread()
+	{
+		{
+			std::lock_guard<std::shared_mutex> lock(m_workerThreadsMutex);
+
+			std::thread newThread = std::thread(&ThreadPool::ExecuteJobs, this);
+			m_workerThreads.emplace(newThread.get_id(), std::move(newThread));
+
+			// Set this as a default, it can be overriden at any point
+			NameCurrentThread(L"Worker Thread");
+
+			LOG(std::format("Thread pool grown to {} threads", m_workerThreads.size()).c_str());
+		}
 	}
 }
