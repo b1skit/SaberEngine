@@ -34,7 +34,7 @@ namespace core
 		SEAssert(m_maxThreads > 0, "Failed to query the number of threads supported");
 		LOG("System has %d logical threads", m_maxThreads);
 
-		size_t actualNumThreads = m_maxThreads - 1;
+		size_t actualNumThreads = m_maxThreads;
 		if (Config::Get()->KeyExists(configkeys::k_maxWorkerThreads))
 		{
 			actualNumThreads = static_cast<size_t>(Config::Get()->GetValue<int>(configkeys::k_maxWorkerThreads));
