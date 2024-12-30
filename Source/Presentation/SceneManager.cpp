@@ -1680,7 +1680,6 @@ namespace
 					matLoadCtx->m_srcMaterial = curMesh->primitives[primIdx].material;
 					matLoadCtx->m_matName = GenerateGLTFMaterialName(curMesh->primitives[primIdx].material);
 
-
 					meshPrimMetadata.m_material = meshPrimMetadata.m_meshPrimitive.AddDependency(inventory->Get(
 						util::StringHash(matLoadCtx->m_matName),
 						std::static_pointer_cast<core::ILoadContext<gr::Material>>(matLoadCtx)));
@@ -1717,6 +1716,7 @@ namespace
 
 						{
 							std::lock_guard<std::mutex> lock(sceneMetadata->m_skinDataMutex);
+
 							sceneMetadata->m_skinToSkinMetadata.emplace(skin, std::move(inverseBindMatrices));
 							sceneMetadata->m_skeletonNodes.emplace(skin->skeleton);
 						}

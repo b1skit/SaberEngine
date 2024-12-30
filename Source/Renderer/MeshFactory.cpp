@@ -591,7 +591,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			inventory,
-			"optimizedFullscreenQuad",
+			k_meshName,
 			indexStream,
 			std::move(vertexStreams),
 			defaultMeshPrimitiveParams);
@@ -1268,7 +1268,14 @@ namespace gr::meshfactory
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
 
-		return CreateCylinderHelper("cylinder", factoryOptions, height, radius, radius, numSides, true);
+		constexpr char const* k_meshName = "MeshFactory_Cylinder";
+		
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		{
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
+		}
+
+		return CreateCylinderHelper(k_meshName, factoryOptions, height, radius, radius, numSides, true);
 	}
 
 	core::InvPtr<gr::MeshPrimitive> CreateHelloTriangle(
