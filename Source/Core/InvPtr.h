@@ -232,7 +232,8 @@ namespace core
 				"Trying to add a null load context as a child dependency, this should only be possible if it is Ready");
 
 			// Add our callback to the child:
-			if (child.m_control->m_loadContext) // If the child has no load context, it must be Ready
+			if (child.m_control->m_loadContext && // If the child has no load context, it must be Ready
+				child.m_control->m_state.load() != ResourceState::Ready) // It might be ready, but not have cleared its load context yet
 			{
 				ILoadContextBase::CreateLoadDependency(m_control->m_loadContext, child.m_control->m_loadContext);
 			}
@@ -354,14 +355,23 @@ namespace core
 					*newInvPtr.m_control->m_object =
 						std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext)->Load(newInvPtr);
 
-					SEAssert(*newInvPtr.m_control->m_object != nullptr, "Load returned null");
+					if (*newInvPtr.m_control->m_object == nullptr)
+					{
+						newInvPtr.m_control->m_state.store(core::ResourceState::Error);
 
-					// Now the unique_ptr owning our object is created, swap our pointer to minimize indirection
-					newInvPtr.m_objectCache = newInvPtr.m_control->m_object->get();
+						SEAssertF("Resource loading error. TODO: Handle dependencies now that we have an error state");
+					}
+					else
+					{
+						// The unique_ptr owning our object is created: Swap our pointer to minimize indirection
+						newInvPtr.m_objectCache = newInvPtr.m_control->m_object->get();
 
-					// We're done! Mark ourselves as ready, and notify anybody waiting on us
-					newInvPtr.m_control->m_state.store(core::ResourceState::Ready);
+						// We're done! Mark ourselves as ready, and notify anybody waiting on us
+						newInvPtr.m_control->m_state.store(core::ResourceState::Ready);
+						
+					}
 					newInvPtr.m_control->m_state.notify_all();
+					
 
 					// Finally, handle dependencies:
 					{

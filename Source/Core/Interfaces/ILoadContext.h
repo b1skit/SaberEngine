@@ -54,7 +54,7 @@ namespace core
 		// systems that might need a copy of the InvPtr immediately
 		inline virtual void OnLoadBegin(core::InvPtr<T>) {};
 
-		// Async: The bulk of the loading and creation should be done here
+		// Async: The bulk of the loading and creation should be done here. Returning nullptr signals a loading error
 		inline virtual std::unique_ptr<T> Load(core::InvPtr<T>) = 0;
 
 		// Optional: Handle any post-loading steps here. Called by whatever thread loaded the last dependency
