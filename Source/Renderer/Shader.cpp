@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Material.h"
 #include "RenderManager.h"
-#include "SceneData.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
 

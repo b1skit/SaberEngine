@@ -105,7 +105,7 @@ namespace re
 
 
 	public:
-		~RenderStage() = default;
+		virtual ~RenderStage() = default;
 
 		RenderStage(RenderStage&&) noexcept = default;
 		RenderStage& operator=(RenderStage&&) noexcept = default;
@@ -275,7 +275,7 @@ namespace re
 		//
 
 	private:
-		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
+		core::InvPtr<gr::MeshPrimitive> m_screenAlignedQuad;
 		std::unique_ptr<re::Batch> m_fullscreenQuadBatch;
 
 	private:

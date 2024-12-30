@@ -384,7 +384,8 @@ namespace gr
 		// Cube mesh, for rendering of IBL cubemaps
 		if (m_cubeMeshPrimitive == nullptr)
 		{
-			m_cubeMeshPrimitive = gr::meshfactory::CreateCube(gr::meshfactory::FactoryOptions{.m_queueBufferCreation = false});
+			m_cubeMeshPrimitive = gr::meshfactory::CreateCube(gr::meshfactory::FactoryOptions{
+				.m_inventory = re::RenderManager::Get()->GetInventory(), });
 		}
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
@@ -392,7 +393,7 @@ namespace gr
 		{
 			m_cubeMeshBatch = std::make_unique<re::Batch>(
 				re::Lifetime::Permanent,
-				m_cubeMeshPrimitive.get(),
+				m_cubeMeshPrimitive,
 				k_deferredLightingEffectID);
 		}
 
@@ -662,15 +663,18 @@ namespace gr
 		// Null out the active ambient light tracking if it has been deleted
 		std::vector<gr::RenderDataID> const* deletedAmbientIDs =
 			renderData.GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
-		for (auto const& deletedAmbientID : *deletedAmbientIDs)
+		if (deletedAmbientIDs)
 		{
-			if (deletedAmbientID == m_activeAmbientLightData.m_renderDataID)
+			for (auto const& deletedAmbientID : *deletedAmbientIDs)
 			{
-				m_activeAmbientLightData = {};
-				break;
+				if (deletedAmbientID == m_activeAmbientLightData.m_renderDataID)
+				{
+					m_activeAmbientLightData = {};
+					break;
+				}
 			}
+			DeleteLights(deletedAmbientIDs, m_ambientLightData);
 		}
-		DeleteLights(deletedAmbientIDs, m_ambientLightData);
 		
 		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_punctualLightData);
 		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_punctualLightData);

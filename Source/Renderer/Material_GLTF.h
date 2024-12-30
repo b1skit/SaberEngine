@@ -135,9 +135,8 @@ namespace gr
 		case gr::Material_GLTF::Normal: return re::Texture::ColorSpace::Linear; break;
 		case gr::Material_GLTF::Occlusion: re::Texture::ColorSpace::Linear; break;
 		case gr::Material_GLTF::Emissive: return re::Texture::ColorSpace::sRGB; break; // GLTF spec: Must be converted to linear before use
-		case gr::Material_GLTF::TextureSlotIdx_Count:
-		default: return re::Texture::ColorSpace::Linear; break; // This should never happen
 		}
+		return re::Texture::ColorSpace::Linear; // This should never happen
 	}
 
 

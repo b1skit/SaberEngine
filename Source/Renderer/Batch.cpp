@@ -213,7 +213,7 @@ namespace re
 {
 	Batch::Batch(
 		re::Lifetime lifetime,
-		gr::MeshPrimitive const* meshPrimitive,
+		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive,
 		EffectID effectID)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
@@ -244,6 +244,9 @@ namespace re
 			m_graphicsParams.m_vertexBuffers[slotIdx] = VertexBufferInput(vertexStreams[slotIdx].m_vertexStream);
 		}
 		m_graphicsParams.m_indexBuffer = meshPrimitive->GetIndexStream();
+
+		SEAssert(m_graphicsParams.m_indexBuffer.m_buffer != nullptr,
+			"This constructor is for IndexedInstanced geometry. The index buffer cannot be null");
 
 		ComputeDataHash();
 	}
@@ -297,6 +300,9 @@ namespace re
 			}
 		}
 		m_graphicsParams.m_indexBuffer = meshPrimRenderData.m_indexStream;
+
+		SEAssert(m_graphicsParams.m_indexBuffer.m_buffer != nullptr,
+			"This constructor is for IndexedInstanced geometry. The index buffer cannot be null");
 		
 		// Material textures/samplers:
 		if (materialInstanceData)

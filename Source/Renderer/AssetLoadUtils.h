@@ -47,7 +47,4 @@ namespace grutil
 
 	std::string GenerateTextureColorFallbackName(
 		glm::vec4 const& colorFallback, size_t numChannels, re::Texture::ColorSpace colorSpace);
-
-
-	std::string GenerateMaterialName(cgltf_material const& material);
 }

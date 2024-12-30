@@ -10,6 +10,8 @@
 #include "SkinningComponent.h"
 #include "TransformComponent.h"
 
+#include "Core/InvPtr.h"
+
 #include "Renderer/MeshPrimitive.h"
 #include "Renderer/VertexStream.h"
 
@@ -19,7 +21,7 @@ namespace
 	void AttachMeshPrimitiveComponentHelper(
 		fr::EntityManager& em,
 		entt::entity owningEntity,
-		gr::MeshPrimitive const* meshPrimitive,
+		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive,
 		fr::RenderDataComponent& meshPrimRenderCmpt,
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
@@ -55,7 +57,7 @@ namespace fr
 	entt::entity MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
 		fr::EntityManager& em,
 		entt::entity owningEntity, 
-		gr::MeshPrimitive const* meshPrimitive, 
+		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive,
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
@@ -96,7 +98,7 @@ namespace fr
 	void MeshPrimitiveComponent::AttachMeshPrimitiveComponent(
 		fr::EntityManager& em,
 		entt::entity owningEntity,
-		gr::MeshPrimitive const* meshPrimitive,
+		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive,
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
@@ -119,7 +121,7 @@ namespace fr
 		EntityManager& em,
 		entt::entity owningEntity, 
 		fr::RenderDataComponent const& sharedRenderDataCmpt, 
-		gr::MeshPrimitive const* meshPrimitive)
+		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive)
 	{
 		// MeshPrimitive:
 		MeshPrimitiveComponent& meshPrimCmpt = *em.EmplaceComponent<MeshPrimitiveComponent>(

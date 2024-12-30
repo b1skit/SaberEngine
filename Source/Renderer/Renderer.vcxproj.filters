@@ -281,9 +281,6 @@
     <ClInclude Include="Sampler.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
-    <ClInclude Include="SceneData.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
     <ClInclude Include="RootSignature_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
@@ -657,9 +654,6 @@
     </ClCompile>
     <ClCompile Include="LightParamsHelpers.cpp">
       <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneData.cpp">
-      <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="Context.cpp">
       <Filter>Source Files\re</Filter>

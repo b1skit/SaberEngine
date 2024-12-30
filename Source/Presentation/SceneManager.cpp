@@ -50,9 +50,9 @@ namespace
 
 	struct MeshPrimitiveMetadata
 	{
-		gr::MeshPrimitive const* m_meshPrimitive;
-		glm::vec3 m_positionsMinXYZ;
-		glm::vec3 m_positionsMaxXYZ;
+		core::InvPtr<gr::MeshPrimitive> m_meshPrimitive;
+		glm::vec3 m_positionsMinXYZ = fr::BoundsComponent::k_invalidMinXYZ;
+		glm::vec3 m_positionsMaxXYZ = fr::BoundsComponent::k_invalidMaxXYZ;
 		
 		core::InvPtr<gr::Material> m_material;
 	};
@@ -146,7 +146,60 @@ namespace
 	}
 
 
-	util::ByteVector UnpackColorAttributeAsVec4(cgltf_attribute const& colorAttribute)
+	// Generate a unique name for a CGLTF material from (some of) the values in the cgltf_material struct
+	inline std::string GenerateGLTFMaterialName(cgltf_material const* material)
+	{
+		if (!material)
+		{
+			return en::DefaultResourceNames::k_defaultGLTFMaterialName;
+		}
+
+		if (material->name)
+		{
+			return std::string(material->name);
+		}
+		SEAssert(material->has_pbr_specular_glossiness == 0, "Specular/Glossiness materials are not currently supported");
+
+		// TODO: Expand the values used to generate the name here, and/or use hashes to identify materials
+		// -> String streams are very slow...
+		std::stringstream matName;
+
+		matName << material->pbr_metallic_roughness.base_color_texture.texture;
+		matName << material->pbr_metallic_roughness.metallic_roughness_texture.texture;
+
+		matName << material->pbr_metallic_roughness.base_color_factor[0]
+			<< material->pbr_metallic_roughness.base_color_factor[1]
+			<< material->pbr_metallic_roughness.base_color_factor[2]
+			<< material->pbr_metallic_roughness.base_color_factor[3];
+
+		matName << material->pbr_metallic_roughness.metallic_factor;
+		matName << material->pbr_metallic_roughness.roughness_factor;
+
+		matName << material->emissive_strength.emissive_strength;
+		matName << material->normal_texture.texture;
+		matName << material->occlusion_texture.texture;
+		matName << material->emissive_texture.texture;
+		matName << (material->emissive_factor[0]) << (material->emissive_factor[2]) << (material->emissive_factor[3]);
+		matName << material->alpha_mode;
+		matName << material->alpha_cutoff;
+
+		return matName.str();
+	}
+
+
+	inline std::string GenerateGLTFMeshName(cgltf_mesh const* curMesh, size_t meshIdx)
+	{
+		return curMesh->name ? curMesh->name : std::format("UnnamedMesh[{}]", meshIdx);
+	}
+
+
+	inline std::string GenerateGLTFMeshPrimitiveName(cgltf_mesh const* curMesh, size_t meshIdx, size_t primIdx)
+	{
+		return std::format("{}_Primitive[{}]", GenerateGLTFMeshName(curMesh, meshIdx), primIdx);
+	}
+
+
+	util::ByteVector UnpackGLTFColorAttributeAsVec4(cgltf_attribute const& colorAttribute)
 	{
 		SEAssert(colorAttribute.type == cgltf_attribute_type::cgltf_attribute_type_color,
 			"Attribute is not a color attribute");
@@ -192,7 +245,7 @@ namespace
 	}
 
 
-	std::string GenerateTextureName(
+	std::string GenerateGLTFTextureName(
 		std::string const& sceneRootPath,
 		cgltf_texture const* textureSrc,
 		glm::vec4 const& colorFallback,
@@ -383,7 +436,7 @@ namespace
 			"Invalid fallback format");
 
 		std::string const& texName =
-			GenerateTextureName(sceneRootPath, texture, colorFallback, formatFallback, colorSpace);
+			GenerateGLTFTextureName(sceneRootPath, texture, colorFallback, formatFallback, colorSpace);
 
 		if (inventory->HasLoaded<re::Texture>(texName))
 		{
@@ -632,7 +685,7 @@ namespace
 	};
 
 
-	void GenerateDefaultResources(core::Inventory* inventory, re::SceneData& scene)
+	void GenerateDefaultMaterial(core::Inventory* inventory)
 	{
 		LOG("Generating default resources...");
 
@@ -695,7 +748,7 @@ namespace
 
 
 	inline entt::entity CreateSceneNode(
-		SceneMetadata const& sceneMetadata,
+		std::shared_ptr<SceneMetadata> const& sceneMetadata,
 		cgltf_node const* gltfNode,
 		entt::entity parent,
 		size_t nodeIdx)
@@ -709,8 +762,8 @@ namespace
 		// We ensure there is a Transformation (even if it's the identity) for all skeleton nodes
 		bool isSkeletonNode = false;
 		{
-			std::lock_guard<std::mutex> lock(sceneMetadata.m_skinDataMutex);
-			isSkeletonNode = sceneMetadata.m_skeletonNodes.contains(gltfNode);
+			std::lock_guard<std::mutex> lock(sceneMetadata->m_skinDataMutex);
+			isSkeletonNode = sceneMetadata->m_skeletonNodes.contains(gltfNode);
 		}
 
 		if (gltfNode->has_translation ||
@@ -729,7 +782,10 @@ namespace
 
 	// Creates a default camera if current == nullptr
 	void LoadAddCamera(
-		entt::entity sceneNodeEntity, size_t nodeIdx, cgltf_node const* current, SceneMetadata& sceneMetadata)
+		entt::entity sceneNodeEntity,
+		size_t nodeIdx,
+		cgltf_node const* current,
+		std::shared_ptr<SceneMetadata>& sceneMetadata)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
@@ -803,16 +859,16 @@ namespace
 
 		// Update the camera metadata:
 		{
-			std::lock_guard<std::mutex> lock(sceneMetadata.m_cameraMetadataMutex);
+			std::lock_guard<std::mutex> lock(sceneMetadata->m_cameraMetadataMutex);
 
-			sceneMetadata.m_cameraMetadata.emplace_back(CameraMetadata{
+			sceneMetadata->m_cameraMetadata.emplace_back(CameraMetadata{
 				.m_srcNodeIdx = nodeIdx,
 				.m_owningEntity = sceneNodeEntity, });
 		}
 	}
 
 
-	void LoadAddLight(re::SceneData& scene, cgltf_node const* current, entt::entity sceneNode)
+	void LoadAddLight(cgltf_node const* current, entt::entity sceneNode)
 	{
 		std::string lightName;
 		if (current->light->name)
@@ -866,705 +922,777 @@ namespace
 	}
 
 
-	void PreLoadMeshData(
+	template<typename T>
+	struct MeshPrimitiveFromCGLTF final : public virtual core::ILoadContext<gr::MeshPrimitive>
+	{
+		std::unique_ptr<gr::MeshPrimitive> Load(core::InvPtr<gr::MeshPrimitive> newMeshPrimHandle) override
+		{
+			// Populate the mesh params:
+			const gr::MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams{
+				.m_primitiveTopology = CGLTFPrimitiveTypeToPrimitiveTopology(m_srcPrimitive->type),
+			};
+
+			// Vertex streams:
+			// Each vector element corresponds to the m_setIdx of the entries in the array elements
+			std::vector<std::array<gr::VertexStream::CreateParams,
+				gr::VertexStream::Type_Count>> vertexStreamCreateParams;
+
+			auto AddVertexStreamCreateParams = [&vertexStreamCreateParams](
+				gr::VertexStream::CreateParams&& streamCreateParams)
+				{
+					// Insert enough elements to make our set index valid:
+					while (vertexStreamCreateParams.size() <= streamCreateParams.m_setIdx)
+					{
+						vertexStreamCreateParams.emplace_back();
+					}
+
+					const size_t streamTypeIdx = static_cast<size_t>(streamCreateParams.m_streamDesc.m_type);
+
+					SEAssert(vertexStreamCreateParams.at(
+						streamCreateParams.m_setIdx)[streamTypeIdx].m_streamData == nullptr,
+						"Stream data is not null, this suggests we've already populated this slot");
+
+					vertexStreamCreateParams.at(streamCreateParams.m_setIdx)[streamTypeIdx] =
+						std::move(streamCreateParams);
+				};
+
+
+			// Index stream:
+			if (m_srcPrimitive->indices != nullptr)
+			{
+				const size_t indicesComponentNumBytes =
+					cgltf_component_size(m_srcPrimitive->indices->component_type);
+				SEAssert(indicesComponentNumBytes == 1 ||
+					indicesComponentNumBytes == 2 ||
+					indicesComponentNumBytes == 4,
+					"Unexpected index component byte size");
+
+				const size_t numIndices = cgltf_accessor_unpack_indices(
+					m_srcPrimitive->indices, nullptr, indicesComponentNumBytes, m_srcPrimitive->indices->count);
+
+				util::ByteVector indices = (indicesComponentNumBytes == 1 || indicesComponentNumBytes == 2) ?
+					util::ByteVector::Create<uint16_t>(numIndices) : // We'll expand 8 -> 16 bits
+					util::ByteVector::Create<uint32_t>(numIndices);
+
+				re::DataType indexDataType = re::DataType::DataType_Count;
+				switch (indicesComponentNumBytes)
+				{
+				case 1: // uint8_t -> uint16_t
+				{
+					// DX12 does not support 8 bit indices; Here we expand 8 -> 16 bits
+					indexDataType = re::DataType::UShort;
+
+					std::vector<uint8_t> tempIndices(numIndices);
+					cgltf_accessor_unpack_indices(
+						m_srcPrimitive->indices, tempIndices.data(), indicesComponentNumBytes, numIndices);
+
+					for (size_t i = 0; i < tempIndices.size(); ++i)
+					{
+						indices.at<uint16_t>(i) = static_cast<uint16_t>(tempIndices[i]);
+					}
+				}
+				break;
+				case 2: // uint16_t
+				{
+					indexDataType = re::DataType::UShort;
+					cgltf_accessor_unpack_indices(
+						m_srcPrimitive->indices, indices.data<uint16_t>(), indicesComponentNumBytes, numIndices);
+				}
+				break;
+				case 4: // uint32_t
+				{
+					indexDataType = re::DataType::UInt;
+					cgltf_accessor_unpack_indices(
+						m_srcPrimitive->indices, indices.data<uint32_t>(), indicesComponentNumBytes, numIndices);
+				}
+				break;
+				default: SEAssertF("Unexpected number of bytes in indices component");
+				}
+
+				AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+					.m_streamData = std::make_unique<util::ByteVector>(std::move(indices)),
+					.m_streamDesc = gr::VertexStream::StreamDesc{
+						.m_type = gr::VertexStream::Type::Index,
+						.m_dataType = indexDataType,
+					},
+					.m_setIdx = 0 // Index stream is always in set 0
+					});
+			}
+
+			glm::vec3 positionsMinXYZ(fr::BoundsComponent::k_invalidMinXYZ);
+			glm::vec3 positionsMaxXYZ(fr::BoundsComponent::k_invalidMaxXYZ);
+
+			// Unpack each of the primitive's vertex attrbutes:
+			for (size_t attrib = 0; attrib < m_srcPrimitive->attributes_count; attrib++)
+			{
+				cgltf_attribute const& curAttribute = m_srcPrimitive->attributes[attrib];
+
+				const size_t numComponents = cgltf_num_components(curAttribute.data->type);
+
+				// GLTF mesh vertex attributes are stored as vecN's only:
+				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
+				SEAssert(numComponents <= 4, "Invalid vertex attribute data type");
+
+				const size_t numElements = curAttribute.data->count;
+				const size_t totalFloatElements = numComponents * numElements;
+
+				const uint8_t setIdx = util::CheckedCast<uint8_t>(curAttribute.index);
+
+				const cgltf_attribute_type vertexAttributeType = curAttribute.type;
+				switch (vertexAttributeType)
+				{
+				case cgltf_attribute_type::cgltf_attribute_type_position:
+				{
+					util::ByteVector positions =
+						util::ByteVector::Create<glm::vec3>(curAttribute.data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curAttribute.data,
+						static_cast<float*>(positions.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					SEAssert(vertexStreamCreateParams.empty() ||
+						vertexStreamCreateParams[0][gr::VertexStream::Type::Position].m_streamData == nullptr,
+						"Only a single position stream is supported");
+
+					SEAssert(setIdx == 0, "Unexpected stream index for position stream");
+
+					AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+						.m_streamData = std::make_unique<util::ByteVector>(std::move(positions)),
+						.m_streamDesc = gr::VertexStream::StreamDesc{
+							.m_type = gr::VertexStream::Type::Position,
+							.m_dataType = re::DataType::Float3,
+						},
+						.m_setIdx = setIdx
+						});
+
+					// Store our min/max
+					if (curAttribute.data->has_min)
+					{
+						SEAssert(sizeof(curAttribute.data->min) == 64,
+							"Unexpected number of bytes in min value array data");
+
+						memcpy(&positionsMinXYZ.x, curAttribute.data->min, sizeof(glm::vec3));
+					}
+					if (curAttribute.data->has_max)
+					{
+						SEAssert(sizeof(curAttribute.data->max) == 64,
+							"Unexpected number of bytes in max value array data");
+
+						memcpy(&positionsMaxXYZ.x, curAttribute.data->max, sizeof(glm::vec3));
+					}
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_normal:
+				{
+					util::ByteVector normals = util::ByteVector::Create<glm::vec3>(curAttribute.data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curAttribute.data,
+						static_cast<float*>(normals.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+						.m_streamData = std::make_unique<util::ByteVector>(std::move(normals)),
+						.m_streamDesc = gr::VertexStream::StreamDesc{
+							.m_type = gr::VertexStream::Type::Normal,
+							.m_dataType = re::DataType::Float3,
+							.m_doNormalize = gr::VertexStream::Normalize::True,
+						},
+						.m_setIdx = setIdx
+						});
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_tangent:
+				{
+					util::ByteVector tangents = util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curAttribute.data,
+						static_cast<float*>(tangents.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+						.m_streamData = std::make_unique<util::ByteVector>(std::move(tangents)),
+						.m_streamDesc = gr::VertexStream::StreamDesc{
+							.m_type = gr::VertexStream::Type::Tangent,
+							.m_dataType = re::DataType::Float4,
+							.m_doNormalize = gr::VertexStream::Normalize::True,
+						},
+						.m_setIdx = setIdx
+						});
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_texcoord:
+				{
+					util::ByteVector uvs = util::ByteVector::Create<glm::vec2>(curAttribute.data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curAttribute.data,
+						static_cast<float*>(uvs.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+						.m_streamData = std::make_unique<util::ByteVector>(std::move(uvs)),
+						.m_streamDesc = gr::VertexStream::StreamDesc{
+							.m_type = gr::VertexStream::Type::TexCoord,
+							.m_dataType = re::DataType::Float2,
+						},
+						.m_setIdx = setIdx
+						});
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_color:
+				{
+					util::ByteVector colors = UnpackGLTFColorAttributeAsVec4(curAttribute);
+
+					AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+							.m_streamData = std::make_unique<util::ByteVector>(std::move(colors)),
+							.m_streamDesc = gr::VertexStream::StreamDesc{
+								.m_type = gr::VertexStream::Type::Color,
+								.m_dataType = re::DataType::Float4,
+							},
+							.m_setIdx = setIdx
+						});
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_joints: // joints_n = indexes from skin.joints array
+				{
+					// GLTF specs: Max 4 joints (per set) can influence 1 vertex; Joints are stored as
+					// vec4's of unsigned bytes/shorts
+					util::ByteVector joints = util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curAttribute.data,
+						static_cast<float*>(joints.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+						.m_streamData = std::make_unique<util::ByteVector>(std::move(joints)),
+						.m_streamDesc = gr::VertexStream::StreamDesc{
+							.m_type = gr::VertexStream::Type::BlendIndices,
+							.m_dataType = re::DataType::Float4,
+						},
+						.m_setIdx = setIdx
+						});
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_weights:
+				{
+					// Weights are stored as vec4's of unsigned bytes/shorts
+					util::ByteVector weights = util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
+
+					const bool unpackResult = cgltf_accessor_unpack_floats(
+						curAttribute.data,
+						static_cast<float*>(weights.data<float>()),
+						totalFloatElements);
+					SEAssert(unpackResult, "Failed to unpack data");
+
+					AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+						.m_streamData = std::make_unique<util::ByteVector>(std::move(weights)),
+						.m_streamDesc = gr::VertexStream::StreamDesc{
+							 .m_type = gr::VertexStream::Type::BlendWeight,
+							 .m_dataType = re::DataType::Float4,
+						},
+						.m_setIdx = setIdx
+						});
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_custom:
+				{
+					SEAssertF("Custom vertex attributes are not (currently) supported");
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_max_enum:
+				case cgltf_attribute_type::cgltf_attribute_type_invalid:
+				default:
+					SEAssertF("Invalid attribute type");
+				}
+			} // End vertex attribute unpacking
+
+
+			// Morph targets:
+			auto AddMorphCreateParams = [&vertexStreamCreateParams](
+				uint8_t setIdx, gr::VertexStream::Type streamType, gr::VertexStream::MorphData&& morphData)
+				{
+					SEAssert(setIdx < vertexStreamCreateParams.size(),
+						"Trying to add a morph target to a vertex stream that does not exist");
+
+					std::vector<gr::VertexStream::MorphData>& morphTargetData =
+						vertexStreamCreateParams[setIdx][streamType].m_morphTargetData;
+
+					morphTargetData.emplace_back(std::move(morphData));
+				};
+
+			for (size_t targetIdx = 0; targetIdx < m_srcPrimitive->targets_count; ++targetIdx)
+			{
+				cgltf_morph_target const& curTarget = m_srcPrimitive->targets[targetIdx];
+				for (size_t targetAttribIdx = 0; targetAttribIdx < curTarget.attributes_count; ++targetAttribIdx)
+				{
+					cgltf_attribute const& curTargetAttribute = curTarget.attributes[targetAttribIdx];
+
+					const size_t numTargetFloats =
+						cgltf_accessor_unpack_floats(curTargetAttribute.data, nullptr, 0);
+
+					const uint8_t targetStreamIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index);
+
+					cgltf_attribute_type targetAttributeType = curTargetAttribute.type;
+					switch (targetAttributeType)
+					{
+					case cgltf_attribute_type::cgltf_attribute_type_position:
+					{
+						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3,
+							"Unexpected data type");
+
+						util::ByteVector posMorphData =
+							util::ByteVector::Create<glm::vec3>(curTargetAttribute.data->count);
+
+						const bool unpackResult = cgltf_accessor_unpack_floats(
+							curTargetAttribute.data,
+							static_cast<float*>(posMorphData.data<float>()),
+							numTargetFloats);
+						SEAssert(unpackResult, "Failed to unpack data");
+
+						AddMorphCreateParams(
+							targetStreamIdx,
+							gr::VertexStream::Position,
+							gr::VertexStream::MorphData{
+								.m_displacementData = std::make_unique<util::ByteVector>(std::move(posMorphData)),
+								.m_dataType = re::DataType::Float3 });
+					}
+					break;
+					case cgltf_attribute_type::cgltf_attribute_type_normal:
+					{
+						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3,
+							"Unexpected data type");
+
+						util::ByteVector normalMorphData =
+							util::ByteVector::Create<glm::vec3>(curTargetAttribute.data->count);
+
+						const bool unpackResult = cgltf_accessor_unpack_floats(
+							curTargetAttribute.data,
+							static_cast<float*>(normalMorphData.data<float>()),
+							numTargetFloats);
+						SEAssert(unpackResult, "Failed to unpack data");
+
+						AddMorphCreateParams(
+							targetStreamIdx,
+							gr::VertexStream::Normal,
+							gr::VertexStream::MorphData{
+								.m_displacementData = std::make_unique<util::ByteVector>(std::move(normalMorphData)),
+								.m_dataType = re::DataType::Float3 });
+					}
+					break;
+					case cgltf_attribute_type::cgltf_attribute_type_tangent:
+					{
+						// Note: Tangent morph targets are vec3's
+						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3, "Unexpected data type");
+
+						util::ByteVector tangentMorphData =
+							util::ByteVector::Create<glm::vec3>(curTargetAttribute.data->count);
+
+						const bool unpackResult = cgltf_accessor_unpack_floats(
+							curTargetAttribute.data,
+							static_cast<float*>(tangentMorphData.data<float>()),
+							numTargetFloats);
+						SEAssert(unpackResult, "Failed to unpack data");
+
+						AddMorphCreateParams(
+							targetStreamIdx,
+							gr::VertexStream::Tangent,
+							gr::VertexStream::MorphData{
+								.m_displacementData = std::make_unique<util::ByteVector>(std::move(tangentMorphData)),
+								.m_dataType = re::DataType::Float3 });
+					}
+					break;
+					case cgltf_attribute_type::cgltf_attribute_type_texcoord:
+					{
+						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec2, "Unexpected data type");
+
+						util::ByteVector uvMorphData =
+							util::ByteVector::Create<glm::vec2>(curTargetAttribute.data->count);
+
+						const bool unpackResult = cgltf_accessor_unpack_floats(
+							curTargetAttribute.data,
+							static_cast<float*>(uvMorphData.data<float>()),
+							numTargetFloats);
+						SEAssert(unpackResult, "Failed to unpack data");
+
+						AddMorphCreateParams(
+							targetStreamIdx,
+							gr::VertexStream::TexCoord,
+							gr::VertexStream::MorphData{
+								.m_displacementData = std::make_unique<util::ByteVector>(std::move(uvMorphData)),
+								.m_dataType = re::DataType::Float2 });
+					}
+					break;
+					case cgltf_attribute_type::cgltf_attribute_type_color:
+					{
+						SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3 ||
+							curTargetAttribute.data->type == cgltf_type::cgltf_type_vec4,
+							"Unexpected data type");
+
+						util::ByteVector morphColors = UnpackGLTFColorAttributeAsVec4(curTargetAttribute);
+
+						AddMorphCreateParams(
+							targetStreamIdx,
+							gr::VertexStream::Color,
+							gr::VertexStream::MorphData{
+								.m_displacementData = std::make_unique<util::ByteVector>(std::move(morphColors)),
+								.m_dataType = re::DataType::Float4 });
+					}
+					break;
+					case cgltf_attribute_type::cgltf_attribute_type_joints:
+					case cgltf_attribute_type::cgltf_attribute_type_weights:
+					{
+						SEAssertF("Invalid attribute type for morph target data");
+					}
+					break;
+					case cgltf_attribute_type::cgltf_attribute_type_custom:
+					{
+						SEAssertF("Custom vertex attributes are not (currently) supported");
+					}
+					break;
+					case cgltf_attribute_type::cgltf_attribute_type_max_enum:
+					case cgltf_attribute_type::cgltf_attribute_type_invalid:
+					default: SEAssertF("Invalid attribute type");
+					}
+				}
+			}
+
+
+			// Create empty containers for anything the VertexStreamBuilder can create.
+			// Note: GLTF only supports a single position/normal/tangent (but multiple UV channels etc)
+			const bool hasIndices =
+				vertexStreamCreateParams[0][gr::VertexStream::Index].m_streamData != nullptr;
+			const bool hasNormal0 =
+				vertexStreamCreateParams[0][gr::VertexStream::Normal].m_streamData != nullptr;
+			const bool hasTangent0 =
+				vertexStreamCreateParams[0][gr::VertexStream::Tangent].m_streamData != nullptr;
+			const bool hasUV0 =
+				vertexStreamCreateParams[0][gr::VertexStream::TexCoord].m_streamData != nullptr;
+			const bool hasColor = vertexStreamCreateParams[0][gr::VertexStream::Color].m_streamData != nullptr;
+
+			if (!hasIndices)
+			{
+				const size_t numPositions =
+					vertexStreamCreateParams[0][gr::VertexStream::Position].m_streamData->size();
+
+				std::unique_ptr<util::ByteVector> indexData;
+				re::DataType indexDataType = re::DataType::DataType_Count;
+				if (numPositions < std::numeric_limits<uint16_t>::max())
+				{
+					indexData = std::make_unique<util::ByteVector>(util::ByteVector::Create<uint16_t>());
+					indexDataType = re::DataType::UShort;
+				}
+				else
+				{
+					indexData = std::make_unique<util::ByteVector>(util::ByteVector::Create<uint32_t>());
+					indexDataType = re::DataType::UInt;
+				}
+
+				AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+					.m_streamData = std::move(indexData),
+					.m_streamDesc = gr::VertexStream::StreamDesc{
+						.m_type = gr::VertexStream::Type::Index,
+						.m_dataType = indexDataType,
+					},
+					.m_setIdx = 0,
+					});
+			}
+			if (!hasNormal0)
+			{
+				AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+						.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec3>()),
+						.m_streamDesc = gr::VertexStream::StreamDesc{
+							.m_type = gr::VertexStream::Type::Normal,
+							.m_dataType = re::DataType::Float3,
+							.m_doNormalize = gr::VertexStream::Normalize::True,
+						},
+						.m_setIdx = 0,
+					});
+			}
+			if (!hasTangent0)
+			{
+				AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+					.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec4>()),
+					.m_streamDesc = gr::VertexStream::StreamDesc{
+						.m_type = gr::VertexStream::Type::Tangent,
+						.m_dataType = re::DataType::Float4,
+						.m_doNormalize = gr::VertexStream::Normalize::True,
+					},
+					.m_setIdx = 0,
+					});
+			}
+			if (!hasUV0)
+			{
+				AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+					.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec2>()),
+					.m_streamDesc = gr::VertexStream::StreamDesc{
+						.m_type = gr::VertexStream::Type::TexCoord,
+						.m_dataType = re::DataType::Float2,
+					},
+					.m_setIdx = 0,
+					});
+			}
+			if (!hasColor) // SE (currently) expects at least 1 color channel
+			{
+				const size_t numPositionVerts =
+					vertexStreamCreateParams[0][gr::VertexStream::Position].m_streamData->size();
+
+				AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
+					.m_streamData = std::make_unique<util::ByteVector>(
+						util::ByteVector::Create<glm::vec4>(numPositionVerts, glm::vec4(1.f) /*= GLTF default*/)),
+					.m_streamDesc = gr::VertexStream::StreamDesc{
+							.m_type = gr::VertexStream::Type::Color,
+							.m_dataType = re::DataType::Float4,
+						},
+					.m_setIdx = 0,
+					});
+			}
+
+			// Assemble the data for the VertexStreamBuilder:					
+			std::vector<util::ByteVector*> extraChannelsData;
+			extraChannelsData.reserve(vertexStreamCreateParams.size());
+			for (auto& streams : vertexStreamCreateParams)
+			{
+				for (auto& stream : streams)
+				{
+					if (stream.m_streamData == nullptr)
+					{
+						continue;
+					}
+
+					switch (stream.m_streamDesc.m_type)
+					{
+					case gr::VertexStream::Index:
+					{
+						SEAssert(stream.m_setIdx == 0, "Found an index stream beyond index 0. This is unexpected");
+						continue;
+					}
+					break;
+					case gr::VertexStream::Color:
+					case gr::VertexStream::BlendIndices:
+					case gr::VertexStream::BlendWeight:
+					{
+						extraChannelsData.emplace_back(stream.m_streamData.get());
+					}
+					break;
+					case gr::VertexStream::TexCoord:
+					case gr::VertexStream::Position:
+					case gr::VertexStream::Normal:
+					case gr::VertexStream::Tangent:
+					{
+						// Position0/Normal0/Tangent0/UV0 are handled elsewhere; But we do add their morph data below
+						if (stream.m_setIdx > 0)
+						{
+							extraChannelsData.emplace_back(stream.m_streamData.get());
+						}
+					}
+					break;
+					case gr::VertexStream::Binormal:
+					{
+						SEAssertF("Binormal streams are nto supported by GLTF, this is unexpected");
+					}
+					break;
+					default: SEAssertF("Invalid stream type");
+					}
+
+					// Add any morph target data
+					if (!stream.m_morphTargetData.empty())
+					{
+						for (auto const& morphData : stream.m_morphTargetData)
+						{
+							extraChannelsData.emplace_back(morphData.m_displacementData.get());
+						}
+					}
+				}
+			}
+
+			// If our Mesh is animated, add the structured flag to the animated vertex stream buffers
+			if (m_meshHasMorphTargets || m_meshHasSkin)
+			{
+				for (auto& streamIndexElement : vertexStreamCreateParams)
+				{
+					for (auto& createParams : streamIndexElement)
+					{
+						if (createParams.m_streamDesc.m_type != gr::VertexStream::Index)
+						{
+							if (!createParams.m_morphTargetData.empty() ||
+								(m_meshHasSkin &&
+									(createParams.m_streamDesc.m_type == gr::VertexStream::Position ||
+										createParams.m_streamDesc.m_type == gr::VertexStream::Normal ||
+										createParams.m_streamDesc.m_type == gr::VertexStream::Tangent ||
+										createParams.m_streamDesc.m_type == gr::VertexStream::BlendIndices ||
+										createParams.m_streamDesc.m_type == gr::VertexStream::BlendWeight)))
+							{
+								createParams.m_extraUsageBits |= re::Buffer::Usage::Structured;
+							}
+						}
+					}
+				}
+			}
+
+			// Construct any missing vertex attributes for the mesh:
+			grutil::VertexStreamBuilder::MeshData meshData
+			{
+				.m_name = m_meshName,
+				.m_meshParams = &meshPrimitiveParams,
+				.m_indices = vertexStreamCreateParams[0][gr::VertexStream::Index].m_streamData.get(),
+				.m_indicesStreamDesc = &vertexStreamCreateParams[0][gr::VertexStream::Index].m_streamDesc,
+				.m_positions = vertexStreamCreateParams[0][gr::VertexStream::Position].m_streamData.get(),
+				.m_normals = vertexStreamCreateParams[0][gr::VertexStream::Normal].m_streamData.get(),
+				.m_tangents = vertexStreamCreateParams[0][gr::VertexStream::Tangent].m_streamData.get(),
+				.m_UV0 = vertexStreamCreateParams[0][gr::VertexStream::TexCoord].m_streamData.get(),
+				.m_extraChannels = &extraChannelsData,
+			};
+			grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+
+
+			std::unique_ptr<gr::MeshPrimitive> newMeshPrimitive = std::unique_ptr<gr::MeshPrimitive>(new gr::MeshPrimitive(
+				m_primitiveName.c_str(),
+				std::move(vertexStreamCreateParams),
+				meshPrimitiveParams));
+
+			// Update the mesh primitive metadata:
+			{
+				std::lock_guard<std::mutex> lock(m_sceneMetadata->m_primitiveToMeshPrimitiveMetadataMutex);
+
+				SEAssert(m_sceneMetadata->m_primitiveToMeshPrimitiveMetadata.contains(m_srcPrimitive),
+					"Failed to find a metadata entry for this primitive. This should not be possible");
+
+				MeshPrimitiveMetadata& meshPrimMetadata =
+					m_sceneMetadata->m_primitiveToMeshPrimitiveMetadata.at(m_srcPrimitive);
+
+				SEAssert(meshPrimMetadata.m_material != nullptr,
+					"A load job for the Material should have already been dispatched");
+
+				meshPrimMetadata.m_positionsMinXYZ = positionsMinXYZ;
+				meshPrimMetadata.m_positionsMaxXYZ = positionsMaxXYZ;				
+			}
+
+			return newMeshPrimitive;
+
+		} // Load()
+
+		std::shared_ptr<SceneMetadata> m_sceneMetadata;
+
+		std::string m_meshName;
+		std::string m_primitiveName;
+
+		std::shared_ptr<cgltf_data const> m_data;
+		cgltf_primitive const* m_srcPrimitive = nullptr;
+
+		bool m_meshHasMorphTargets = false;
+		bool m_meshHasSkin = false;
+	};
+
+
+	void LoadMeshData(
 		core::Inventory* inventory,
 		std::string const& sceneRootPath,
-		re::SceneData& scene,
 		std::shared_ptr<cgltf_data const> const& data,
-		SceneMetadata& sceneMetadata,
-		std::vector<std::future<void>>& meshFutures)
+		std::shared_ptr<SceneMetadata>& sceneMetadata)
 	{
 		for (size_t meshIdx = 0; meshIdx < data->meshes_count; ++meshIdx)
 		{
 			cgltf_mesh const* curMesh = &data->meshes[meshIdx];
 
-			meshFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[inventory, sceneRootPath, data, curMesh, meshIdx, &sceneMetadata]()
+			std::string const& meshName = GenerateGLTFMeshName(curMesh, meshIdx);
+
+			// Parse the mesh in advance to determine if it has any animation:
+			bool meshHasMorphTargets = false;
+			bool meshHasSkin = false;
+			for (size_t primIdx = 0; primIdx < curMesh->primitives_count; ++primIdx)
+			{
+				cgltf_primitive& curPrimitive = curMesh->primitives[primIdx];
+
+				if (curPrimitive.targets_count > 0)
 				{
-					std::string const& meshName = curMesh->name ? curMesh->name : std::format("UnnamedMesh_{}", meshIdx);
+					meshHasMorphTargets = true;
+				}
 
-					bool meshHasMorphTargets = false;
-					bool meshHasSkin = false;
-
-					for (size_t primIdx = 0; primIdx < curMesh->primitives_count; ++primIdx)
+				for (size_t attrib = 0; attrib < curPrimitive.attributes_count; ++attrib)
+				{
+					cgltf_attribute const& curAttribute = curPrimitive.attributes[attrib];
+					const cgltf_attribute_type vertexAttributeType = curAttribute.type;
+					if (vertexAttributeType == cgltf_attribute_type::cgltf_attribute_type_joints ||
+						vertexAttributeType == cgltf_attribute_type::cgltf_attribute_type_weights)
 					{
-						cgltf_primitive const& curPrimitive = curMesh->primitives[primIdx];
-
-						// Populate the mesh params:
-						const gr::MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams{
-							.m_primitiveTopology = CGLTFPrimitiveTypeToPrimitiveTopology(curPrimitive.type),
-						};
-
-						// Vertex streams:
-						// Each vector element corresponds to the m_setIdx of the entries in the array elements
-						std::vector<std::array<gr::VertexStream::CreateParams, 
-							gr::VertexStream::Type_Count>> vertexStreamCreateParams;
-
-						auto AddVertexStreamCreateParams = [&vertexStreamCreateParams](
-							gr::VertexStream::CreateParams&& streamCreateParams)
-							{
-								// Insert enough elements to make our set index valid:
-								while (vertexStreamCreateParams.size() <= streamCreateParams.m_setIdx)
-								{
-									vertexStreamCreateParams.emplace_back();
-								}
-
-								const size_t streamTypeIdx = static_cast<size_t>(streamCreateParams.m_streamDesc.m_type);
-
-								SEAssert(vertexStreamCreateParams.at(
-									streamCreateParams.m_setIdx)[streamTypeIdx].m_streamData == nullptr,
-									"Stream data is not null, this suggests we've already populated this slot");
-
-								vertexStreamCreateParams.at(streamCreateParams.m_setIdx)[streamTypeIdx] =
-									std::move(streamCreateParams);
-							};
-
-
-						// Index stream:
-						if (curPrimitive.indices != nullptr)
-						{
-							const size_t indicesComponentNumBytes = 
-								cgltf_component_size(curPrimitive.indices->component_type);
-							SEAssert(indicesComponentNumBytes == 1 ||
-								indicesComponentNumBytes == 2 ||
-								indicesComponentNumBytes == 4,
-								"Unexpected index component byte size");
-
-							const size_t numIndices = cgltf_accessor_unpack_indices(
-								curPrimitive.indices, nullptr, indicesComponentNumBytes, curPrimitive.indices->count);
-
-							util::ByteVector indices = (indicesComponentNumBytes == 1 || indicesComponentNumBytes == 2) ?
-								util::ByteVector::Create<uint16_t>(numIndices) : // We'll expand 8 -> 16 bits
-								util::ByteVector::Create<uint32_t>(numIndices);
-
-							re::DataType indexDataType = re::DataType::DataType_Count;
-							switch (indicesComponentNumBytes)
-							{
-							case 1: // uint8_t -> uint16_t
-							{
-								// DX12 does not support 8 bit indices; Here we expand 8 -> 16 bits
-								indexDataType = re::DataType::UShort;
-
-								std::vector<uint8_t> tempIndices(numIndices);
-								cgltf_accessor_unpack_indices(
-									curPrimitive.indices, tempIndices.data(), indicesComponentNumBytes, numIndices);
-
-								for (size_t i = 0; i < tempIndices.size(); ++i)
-								{
-									indices.at<uint16_t>(i) = static_cast<uint16_t>(tempIndices[i]);
-								}
-							}
-							break;
-							case 2: // uint16_t
-							{
-								indexDataType = re::DataType::UShort;
-								cgltf_accessor_unpack_indices(
-									curPrimitive.indices, indices.data<uint16_t>(), indicesComponentNumBytes, numIndices);
-							}
-							break;
-							case 4: // uint32_t
-							{
-								indexDataType = re::DataType::UInt;
-								cgltf_accessor_unpack_indices(
-									curPrimitive.indices, indices.data<uint32_t>(), indicesComponentNumBytes, numIndices);
-							}
-							break;
-							default: SEAssertF("Unexpected number of bytes in indices component");
-							}
-
-							AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-								.m_streamData = std::make_unique<util::ByteVector>(std::move(indices)),
-								.m_streamDesc = gr::VertexStream::StreamDesc{
-									.m_type = gr::VertexStream::Type::Index,
-									.m_dataType = indexDataType,
-								},
-								.m_setIdx = 0 // Index stream is always in set 0
-								});
-						}
-
-						glm::vec3 positionsMinXYZ(fr::BoundsComponent::k_invalidMinXYZ);
-						glm::vec3 positionsMaxXYZ(fr::BoundsComponent::k_invalidMaxXYZ);
-
-						// Unpack each of the primitive's vertex attrbutes:
-						for (size_t attrib = 0; attrib < curPrimitive.attributes_count; attrib++)
-						{
-							cgltf_attribute const& curAttribute = curPrimitive.attributes[attrib];
-
-							const size_t numComponents = cgltf_num_components(curAttribute.data->type);
-
-							// GLTF mesh vertex attributes are stored as vecN's only:
-							// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
-							SEAssert(numComponents <= 4, "Invalid vertex attribute data type");
-
-							const size_t numElements = curAttribute.data->count;
-							const size_t totalFloatElements = numComponents * numElements;
-
-							const uint8_t setIdx = util::CheckedCast<uint8_t>(curAttribute.index);
-
-							const cgltf_attribute_type vertexAttributeType = curAttribute.type;
-							switch (vertexAttributeType)
-							{
-							case cgltf_attribute_type::cgltf_attribute_type_position:
-							{
-								util::ByteVector positions =
-									util::ByteVector::Create<glm::vec3>(curAttribute.data->count);
-
-								const bool unpackResult = cgltf_accessor_unpack_floats(
-									curAttribute.data,
-									static_cast<float*>(positions.data<float>()),
-									totalFloatElements);
-								SEAssert(unpackResult, "Failed to unpack data");
-
-								SEAssert(vertexStreamCreateParams.empty() ||
-									vertexStreamCreateParams[0][gr::VertexStream::Type::Position].m_streamData == nullptr,
-									"Only a single position stream is supported");
-
-								SEAssert(setIdx == 0, "Unexpected stream index for position stream");
-
-								AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-									.m_streamData = std::make_unique<util::ByteVector>(std::move(positions)),
-									.m_streamDesc = gr::VertexStream::StreamDesc{
-										.m_type = gr::VertexStream::Type::Position,
-										.m_dataType = re::DataType::Float3,
-									},
-									.m_setIdx = setIdx
-									});
-
-								// Store our min/max
-								if (curAttribute.data->has_min)
-								{
-									SEAssert(sizeof(curAttribute.data->min) == 64,
-										"Unexpected number of bytes in min value array data");
-
-									memcpy(&positionsMinXYZ.x, curAttribute.data->min, sizeof(glm::vec3));
-								}
-								if (curAttribute.data->has_max)
-								{
-									SEAssert(sizeof(curAttribute.data->max) == 64,
-										"Unexpected number of bytes in max value array data");
-
-									memcpy(&positionsMaxXYZ.x, curAttribute.data->max, sizeof(glm::vec3));
-								}
-							}
-							break;
-							case cgltf_attribute_type::cgltf_attribute_type_normal:
-							{
-								util::ByteVector normals = util::ByteVector::Create<glm::vec3>(curAttribute.data->count);
-
-								const bool unpackResult = cgltf_accessor_unpack_floats(
-									curAttribute.data,
-									static_cast<float*>(normals.data<float>()),
-									totalFloatElements);
-								SEAssert(unpackResult, "Failed to unpack data");
-
-								AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-									.m_streamData = std::make_unique<util::ByteVector>(std::move(normals)),
-									.m_streamDesc = gr::VertexStream::StreamDesc{
-										.m_type = gr::VertexStream::Type::Normal,
-										.m_dataType = re::DataType::Float3,
-										.m_doNormalize = gr::VertexStream::Normalize::True,
-									},
-									.m_setIdx = setIdx
-									});
-							}
-							break;
-							case cgltf_attribute_type::cgltf_attribute_type_tangent:
-							{
-								util::ByteVector tangents = util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
-
-								const bool unpackResult = cgltf_accessor_unpack_floats(
-									curAttribute.data,
-									static_cast<float*>(tangents.data<float>()),
-									totalFloatElements);
-								SEAssert(unpackResult, "Failed to unpack data");
-
-								AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-									.m_streamData = std::make_unique<util::ByteVector>(std::move(tangents)),
-									.m_streamDesc = gr::VertexStream::StreamDesc{
-										.m_type = gr::VertexStream::Type::Tangent,
-										.m_dataType = re::DataType::Float4,
-										.m_doNormalize = gr::VertexStream::Normalize::True,
-									},
-									.m_setIdx = setIdx
-									});
-							}
-							break;
-							case cgltf_attribute_type::cgltf_attribute_type_texcoord:
-							{
-								util::ByteVector uvs = util::ByteVector::Create<glm::vec2>(curAttribute.data->count);
-
-								const bool unpackResult = cgltf_accessor_unpack_floats(
-									curAttribute.data,
-									static_cast<float*>(uvs.data<float>()),
-									totalFloatElements);
-								SEAssert(unpackResult, "Failed to unpack data");
-
-								AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-									.m_streamData = std::make_unique<util::ByteVector>(std::move(uvs)),
-									.m_streamDesc = gr::VertexStream::StreamDesc{
-										.m_type = gr::VertexStream::Type::TexCoord,
-										.m_dataType = re::DataType::Float2,
-									},
-									.m_setIdx = setIdx
-									});
-							}
-							break;
-							case cgltf_attribute_type::cgltf_attribute_type_color:
-							{
-								util::ByteVector colors = UnpackColorAttributeAsVec4(curAttribute);
-
-								AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-										.m_streamData = std::make_unique<util::ByteVector>(std::move(colors)),
-										.m_streamDesc = gr::VertexStream::StreamDesc{
-											.m_type = gr::VertexStream::Type::Color,
-											.m_dataType = re::DataType::Float4,
-										},
-										.m_setIdx = setIdx
-									});
-							}
-							break;
-							case cgltf_attribute_type::cgltf_attribute_type_joints: // joints_n = indexes from skin.joints array
-							{
-								// GLTF specs: Max 4 joints (per set) can influence 1 vertex; Joints are stored as
-								// vec4's of unsigned bytes/shorts
-								util::ByteVector joints = util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
-
-								const bool unpackResult = cgltf_accessor_unpack_floats(
-									curAttribute.data,
-									static_cast<float*>(joints.data<float>()),
-									totalFloatElements);
-								SEAssert(unpackResult, "Failed to unpack data");
-
-								AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-									.m_streamData = std::make_unique<util::ByteVector>(std::move(joints)),
-									.m_streamDesc = gr::VertexStream::StreamDesc{
-										.m_type = gr::VertexStream::Type::BlendIndices,
-										.m_dataType = re::DataType::Float4,
-									},
-									.m_setIdx = setIdx
-									});
-
-								meshHasSkin = true;
-							}
-							break;
-							case cgltf_attribute_type::cgltf_attribute_type_weights:
-							{
-								// Weights are stored as vec4's of unsigned bytes/shorts
-								util::ByteVector weights = util::ByteVector::Create<glm::vec4>(curAttribute.data->count);
-
-								const bool unpackResult = cgltf_accessor_unpack_floats(
-									curAttribute.data,
-									static_cast<float*>(weights.data<float>()),
-									totalFloatElements);
-								SEAssert(unpackResult, "Failed to unpack data");
-
-								AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-									.m_streamData = std::make_unique<util::ByteVector>(std::move(weights)),
-									.m_streamDesc = gr::VertexStream::StreamDesc{
-										 .m_type = gr::VertexStream::Type::BlendWeight,
-										 .m_dataType = re::DataType::Float4,
-									},
-									.m_setIdx = setIdx
-									});
-
-								meshHasSkin = true;
-							}
-							break;
-							case cgltf_attribute_type::cgltf_attribute_type_custom:
-							{
-								SEAssertF("Custom vertex attributes are not (currently) supported");
-							}
-							break;
-							case cgltf_attribute_type::cgltf_attribute_type_max_enum:
-							case cgltf_attribute_type::cgltf_attribute_type_invalid:
-							default:
-								SEAssertF("Invalid attribute type");
-							}
-						} // End vertex attribute unpacking
-
-
-						// Morph targets:
-						auto AddMorphCreateParams = [&vertexStreamCreateParams](
-							uint8_t setIdx, gr::VertexStream::Type streamType, gr::VertexStream::MorphData&& morphData)
-							{
-								SEAssert(setIdx < vertexStreamCreateParams.size(),
-									"Trying to add a morph target to a vertex stream that does not exist");
-
-								std::vector<gr::VertexStream::MorphData>& morphTargetData =
-									vertexStreamCreateParams[setIdx][streamType].m_morphTargetData;
-
-								morphTargetData.emplace_back(std::move(morphData));
-							};
-
-						meshHasMorphTargets |= curPrimitive.targets_count > 0;
-
-						for (size_t targetIdx = 0; targetIdx < curPrimitive.targets_count; ++targetIdx)
-						{
-							cgltf_morph_target const& curTarget = curPrimitive.targets[targetIdx];
-							for (size_t targetAttribIdx = 0; targetAttribIdx < curTarget.attributes_count; ++targetAttribIdx)
-							{
-								cgltf_attribute const& curTargetAttribute = curTarget.attributes[targetAttribIdx];
-
-								const size_t numTargetFloats = 
-									cgltf_accessor_unpack_floats(curTargetAttribute.data, nullptr, 0);
-
-								const uint8_t targetStreamIdx = util::CheckedCast<uint8_t>(curTargetAttribute.index);
-
-								cgltf_attribute_type targetAttributeType = curTargetAttribute.type;
-								switch (targetAttributeType)
-								{
-								case cgltf_attribute_type::cgltf_attribute_type_position:
-								{
-									SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3,
-										"Unexpected data type");
-
-									util::ByteVector posMorphData =
-										util::ByteVector::Create<glm::vec3>(curTargetAttribute.data->count);
-
-									const bool unpackResult = cgltf_accessor_unpack_floats(
-										curTargetAttribute.data,
-										static_cast<float*>(posMorphData.data<float>()),
-										numTargetFloats);
-									SEAssert(unpackResult, "Failed to unpack data");
-
-									AddMorphCreateParams(
-										targetStreamIdx,
-										gr::VertexStream::Position,
-										gr::VertexStream::MorphData{
-											.m_displacementData = std::make_unique<util::ByteVector>(std::move(posMorphData)),
-											.m_dataType = re::DataType::Float3 });
-								}
-								break;
-								case cgltf_attribute_type::cgltf_attribute_type_normal:
-								{
-									SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3,
-										"Unexpected data type");
-
-									util::ByteVector normalMorphData =
-										util::ByteVector::Create<glm::vec3>(curTargetAttribute.data->count);
-
-									const bool unpackResult = cgltf_accessor_unpack_floats(
-										curTargetAttribute.data,
-										static_cast<float*>(normalMorphData.data<float>()),
-										numTargetFloats);
-									SEAssert(unpackResult, "Failed to unpack data");
-
-									AddMorphCreateParams(
-										targetStreamIdx,
-										gr::VertexStream::Normal,
-										gr::VertexStream::MorphData{
-											.m_displacementData = std::make_unique<util::ByteVector>(std::move(normalMorphData)),
-											.m_dataType = re::DataType::Float3 });
-								}
-								break;
-								case cgltf_attribute_type::cgltf_attribute_type_tangent:
-								{
-									// Note: Tangent morph targets are vec3's
-									SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3, "Unexpected data type");
-
-									util::ByteVector tangentMorphData =
-										util::ByteVector::Create<glm::vec3>(curTargetAttribute.data->count);
-
-									const bool unpackResult = cgltf_accessor_unpack_floats(
-										curTargetAttribute.data,
-										static_cast<float*>(tangentMorphData.data<float>()),
-										numTargetFloats);
-									SEAssert(unpackResult, "Failed to unpack data");
-
-									AddMorphCreateParams(
-										targetStreamIdx,
-										gr::VertexStream::Tangent,
-										gr::VertexStream::MorphData{
-											.m_displacementData = std::make_unique<util::ByteVector>(std::move(tangentMorphData)),
-											.m_dataType = re::DataType::Float3 });
-								}
-								break;
-								case cgltf_attribute_type::cgltf_attribute_type_texcoord:
-								{
-									SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec2, "Unexpected data type");
-
-									util::ByteVector uvMorphData =
-										util::ByteVector::Create<glm::vec2>(curTargetAttribute.data->count);
-
-									const bool unpackResult = cgltf_accessor_unpack_floats(
-										curTargetAttribute.data,
-										static_cast<float*>(uvMorphData.data<float>()),
-										numTargetFloats);
-									SEAssert(unpackResult, "Failed to unpack data");
-
-									AddMorphCreateParams(
-										targetStreamIdx,
-										gr::VertexStream::TexCoord,
-										gr::VertexStream::MorphData{
-											.m_displacementData = std::make_unique<util::ByteVector>(std::move(uvMorphData)),
-											.m_dataType = re::DataType::Float2 });
-								}
-								break;
-								case cgltf_attribute_type::cgltf_attribute_type_color:
-								{
-									SEAssert(curTargetAttribute.data->type == cgltf_type::cgltf_type_vec3 ||
-										curTargetAttribute.data->type == cgltf_type::cgltf_type_vec4,
-										"Unexpected data type");
-
-									util::ByteVector morphColors = UnpackColorAttributeAsVec4(curTargetAttribute);
-
-									AddMorphCreateParams(
-										targetStreamIdx,
-										gr::VertexStream::Color,
-										gr::VertexStream::MorphData{
-											.m_displacementData = std::make_unique<util::ByteVector>(std::move(morphColors)),
-											.m_dataType = re::DataType::Float4 });
-								}
-								break;
-								case cgltf_attribute_type::cgltf_attribute_type_joints:
-								case cgltf_attribute_type::cgltf_attribute_type_weights:
-								{
-									SEAssertF("Invalid attribute type for morph target data");
-								}
-								break;
-								case cgltf_attribute_type::cgltf_attribute_type_custom:
-								{
-									SEAssertF("Custom vertex attributes are not (currently) supported");
-								}
-								break;
-								case cgltf_attribute_type::cgltf_attribute_type_max_enum:
-								case cgltf_attribute_type::cgltf_attribute_type_invalid:
-								default: SEAssertF("Invalid attribute type");
-								}
-							}
-						}
-
-
-						// Create empty containers for anything the VertexStreamBuilder can create.
-						// Note: GLTF only supports a single position/normal/tangent (but multiple UV channels etc)
-						const bool hasIndices =
-							vertexStreamCreateParams[0][gr::VertexStream::Index].m_streamData != nullptr;
-						const bool hasNormal0 =
-							vertexStreamCreateParams[0][gr::VertexStream::Normal].m_streamData != nullptr;
-						const bool hasTangent0 =
-							vertexStreamCreateParams[0][gr::VertexStream::Tangent].m_streamData != nullptr;
-						const bool hasUV0 =
-							vertexStreamCreateParams[0][gr::VertexStream::TexCoord].m_streamData != nullptr;
-						const bool hasColor = vertexStreamCreateParams[0][gr::VertexStream::Color].m_streamData != nullptr;
-
-						if (!hasIndices)
-						{
-							const size_t numPositions =
-								vertexStreamCreateParams[0][gr::VertexStream::Position].m_streamData->size();
-
-							std::unique_ptr<util::ByteVector> indexData;
-							re::DataType indexDataType = re::DataType::DataType_Count;
-							if (numPositions < std::numeric_limits<uint16_t>::max())
-							{
-								indexData = std::make_unique<util::ByteVector>(util::ByteVector::Create<uint16_t>());
-								indexDataType = re::DataType::UShort;
-							}
-							else
-							{
-								indexData = std::make_unique<util::ByteVector>(util::ByteVector::Create<uint32_t>());
-								indexDataType = re::DataType::UInt;
-							}
-
-							AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-								.m_streamData = std::move(indexData),
-								.m_streamDesc = gr::VertexStream::StreamDesc{
-									.m_type = gr::VertexStream::Type::Index,
-									.m_dataType = indexDataType,
-								},
-								.m_setIdx = 0,
-								});
-						}
-						if (!hasNormal0)
-						{
-							AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-									.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec3>()),
-									.m_streamDesc = gr::VertexStream::StreamDesc{
-										.m_type = gr::VertexStream::Type::Normal,
-										.m_dataType = re::DataType::Float3,
-										.m_doNormalize = gr::VertexStream::Normalize::True,
-									},
-									.m_setIdx = 0,
-								});
-						}
-						if (!hasTangent0)
-						{
-							AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-								.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec4>()),
-								.m_streamDesc = gr::VertexStream::StreamDesc{
-									.m_type = gr::VertexStream::Type::Tangent,
-									.m_dataType = re::DataType::Float4,
-									.m_doNormalize = gr::VertexStream::Normalize::True,
-								},
-								.m_setIdx = 0,
-								});
-						}
-						if (!hasUV0)
-						{
-							AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-								.m_streamData = std::make_unique<util::ByteVector>(util::ByteVector::Create<glm::vec2>()),
-								.m_streamDesc = gr::VertexStream::StreamDesc{
-									.m_type = gr::VertexStream::Type::TexCoord,
-									.m_dataType = re::DataType::Float2,
-								},
-								.m_setIdx = 0,
-								});
-						}
-						if (!hasColor) // SE (currently) expects at least 1 color channel
-						{
-							const size_t numPositionVerts =
-								vertexStreamCreateParams[0][gr::VertexStream::Position].m_streamData->size();
-
-							AddVertexStreamCreateParams(gr::VertexStream::CreateParams{
-								.m_streamData = std::make_unique<util::ByteVector>(
-									util::ByteVector::Create<glm::vec4>(numPositionVerts, glm::vec4(1.f) /*= GLTF default*/)),
-								.m_streamDesc = gr::VertexStream::StreamDesc{
-										.m_type = gr::VertexStream::Type::Color,
-										.m_dataType = re::DataType::Float4,
-									},
-								.m_setIdx = 0,
-								});
-						}
-
-						// Assemble the data for the VertexStreamBuilder:					
-						std::vector<util::ByteVector*> extraChannelsData;
-						extraChannelsData.reserve(vertexStreamCreateParams.size());
-						for (auto& streams : vertexStreamCreateParams)
-						{
-							for (auto& stream : streams)
-							{
-								if (stream.m_streamData == nullptr)
-								{
-									continue;
-								}
-
-								switch (stream.m_streamDesc.m_type)
-								{
-								case gr::VertexStream::Index:
-								{
-									SEAssert(stream.m_setIdx == 0, "Found an index stream beyond index 0. This is unexpected");
-									continue;
-								}
-								break;
-								case gr::VertexStream::Color:
-								case gr::VertexStream::BlendIndices:
-								case gr::VertexStream::BlendWeight:
-								{
-									extraChannelsData.emplace_back(stream.m_streamData.get());
-								}
-								break;
-								case gr::VertexStream::TexCoord:
-								case gr::VertexStream::Position:
-								case gr::VertexStream::Normal:
-								case gr::VertexStream::Tangent:
-								{
-									// Position0/Normal0/Tangent0/UV0 are handled elsewhere; But we do add their morph data below
-									if (stream.m_setIdx > 0)
-									{
-										extraChannelsData.emplace_back(stream.m_streamData.get());
-									}
-								}
-								break;
-								case gr::VertexStream::Binormal:
-								{
-									SEAssertF("Binormal streams are nto supported by GLTF, this is unexpected");
-								}
-								break;
-								default: SEAssertF("Invalid stream type");
-								}
-
-								// Add any morph target data
-								if (!stream.m_morphTargetData.empty())
-								{
-									for (auto const& morphData : stream.m_morphTargetData)
-									{
-										extraChannelsData.emplace_back(morphData.m_displacementData.get());
-									}
-								}
-							}
-						}
-
-						// If our mesh has morph targets, add the structured flag to the animated vertex stream buffers
-						if (meshHasMorphTargets || meshHasSkin)
-						{
-							for (auto& streamIndexElement : vertexStreamCreateParams)
-							{
-								for (auto& createParams : streamIndexElement)
-								{
-									if (createParams.m_streamDesc.m_type != gr::VertexStream::Index)
-									{
-										if (!createParams.m_morphTargetData.empty() || 
-											(meshHasSkin && 
-												(createParams.m_streamDesc.m_type == gr::VertexStream::Position || 
-													createParams.m_streamDesc.m_type == gr::VertexStream::Normal || 
-													createParams.m_streamDesc.m_type == gr::VertexStream::Tangent ||
-													createParams.m_streamDesc.m_type == gr::VertexStream::BlendIndices ||
-													createParams.m_streamDesc.m_type == gr::VertexStream::BlendWeight)))
-										{
-											createParams.m_extraUsageBits |= re::Buffer::Usage::Structured;
-										}
-									}
-								}
-							}
-						}
-
-						// Construct any missing vertex attributes for the mesh:
-						grutil::VertexStreamBuilder::MeshData meshData
-						{
-							.m_name = meshName,
-							.m_meshParams = &meshPrimitiveParams,
-							.m_indices = vertexStreamCreateParams[0][gr::VertexStream::Index].m_streamData.get(),
-							.m_indicesStreamDesc = &vertexStreamCreateParams[0][gr::VertexStream::Index].m_streamDesc,
-							.m_positions = vertexStreamCreateParams[0][gr::VertexStream::Position].m_streamData.get(),
-							.m_normals = vertexStreamCreateParams[0][gr::VertexStream::Normal].m_streamData.get(),
-							.m_tangents = vertexStreamCreateParams[0][gr::VertexStream::Tangent].m_streamData.get(),
-							.m_UV0 = vertexStreamCreateParams[0][gr::VertexStream::TexCoord].m_streamData.get(),
-							.m_extraChannels = &extraChannelsData,
-						};
-						grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
-
-						std::shared_ptr<gr::MeshPrimitive> newMeshPrimitive = gr::MeshPrimitive::Create(
-							meshName,
-							std::move(vertexStreamCreateParams),
-							meshPrimitiveParams);
-
-
-						// Load the material:
-						std::shared_ptr<MaterialLoadContext_GLTF<gr::Material_GLTF>> matLoadCtx =
-							std::make_shared<MaterialLoadContext_GLTF<gr::Material_GLTF>>();
-
-						matLoadCtx->m_inventory = inventory;
-						matLoadCtx->m_sceneRootPath = sceneRootPath;
-						matLoadCtx->m_data = data;
-						matLoadCtx->m_srcMaterial = curPrimitive.material;
-						matLoadCtx->m_matName = grutil::GenerateMaterialName(*curPrimitive.material);
-
-						// Update the mesh primitive metadata
-						{
-							std::lock_guard<std::mutex> lock(sceneMetadata.m_primitiveToMeshPrimitiveMetadataMutex);
-
-							// TODO: The material should be loaded as a dependency of the MeshPrimitive, once we switch
-							// MeshPrimitive to use InvPtr
-
-							sceneMetadata.m_primitiveToMeshPrimitiveMetadata.emplace(
-								&curPrimitive,
-								MeshPrimitiveMetadata{
-									.m_meshPrimitive = newMeshPrimitive.get(),
-									.m_positionsMinXYZ = positionsMinXYZ,
-									.m_positionsMaxXYZ = positionsMaxXYZ,
-									.m_material = inventory->Get(
-										util::StringHash(matLoadCtx->m_matName),
-										static_pointer_cast<core::ILoadContext<gr::Material>>(matLoadCtx)),
-								});
-						}
+						meshHasSkin = true;
+						break;
 					}
-				}));	
+				}
+
+				if (meshHasMorphTargets && meshHasSkin)
+				{
+					break; // Nothing more to search for
+				}
+			}
+
+			// Load each primitive:
+			for (size_t primIdx = 0; primIdx < curMesh->primitives_count; ++primIdx)
+			{
+				std::string const& primitiveName = GenerateGLTFMeshPrimitiveName(curMesh, meshIdx, primIdx);
+
+				std::shared_ptr<MeshPrimitiveFromCGLTF<gr::MeshPrimitive>> loadContext =
+					std::make_shared<MeshPrimitiveFromCGLTF<gr::MeshPrimitive>>();
+
+				loadContext->m_sceneMetadata = sceneMetadata;
+
+				loadContext->m_meshName = meshName;
+				loadContext->m_primitiveName = primitiveName;
+
+				loadContext->m_data = data;
+				loadContext->m_srcPrimitive = &curMesh->primitives[primIdx];
+
+				loadContext->m_meshHasMorphTargets = meshHasMorphTargets;
+				loadContext->m_meshHasSkin = meshHasSkin;
+
+				// Update the mesh primitive metadata
+				{
+					std::lock_guard<std::mutex> lock(sceneMetadata->m_primitiveToMeshPrimitiveMetadataMutex);
+
+					// Note: We must dispatch this while the m_primitiveToMeshPrimitiveMetadataMutex is locked to
+					// prevent a race condition where the async loading thread tries to access the metadata before we've
+					// populated it
+					MeshPrimitiveMetadata& meshPrimMetadata = sceneMetadata->m_primitiveToMeshPrimitiveMetadata.emplace(
+						&curMesh->primitives[primIdx],
+						MeshPrimitiveMetadata{
+							.m_meshPrimitive = inventory->Get(
+								util::StringHash(primitiveName),
+								static_pointer_cast<core::ILoadContext<gr::MeshPrimitive>>(loadContext)),
+						}).first->second;
+
+
+					// Load the Material and add it as a dependency:
+					std::shared_ptr<MaterialLoadContext_GLTF<gr::Material_GLTF>> matLoadCtx =
+						std::make_shared<MaterialLoadContext_GLTF<gr::Material_GLTF>>();
+
+					matLoadCtx->m_inventory = inventory;
+					matLoadCtx->m_sceneRootPath = sceneRootPath;
+					matLoadCtx->m_data = data;
+					matLoadCtx->m_srcMaterial = curMesh->primitives[primIdx].material;
+					matLoadCtx->m_matName = GenerateGLTFMaterialName(curMesh->primitives[primIdx].material);
+
+
+					meshPrimMetadata.m_material = meshPrimMetadata.m_meshPrimitive.AddDependency(inventory->Get(
+						util::StringHash(matLoadCtx->m_matName),
+						std::static_pointer_cast<core::ILoadContext<gr::Material>>(matLoadCtx)));
+				}
+			}
 		}
 	}
 
 
 	inline void PreLoadSkinData(
 		std::shared_ptr<cgltf_data const> const& data,
-		SceneMetadata& sceneMetadata,
+		std::shared_ptr<SceneMetadata>& sceneMetadata,
 		std::vector<std::future<void>>& skinFutures)
 	{
 		for (size_t skinIdx = 0; skinIdx < data->skins_count; ++skinIdx)
@@ -1588,9 +1716,9 @@ namespace
 							numFloats);
 
 						{
-							std::lock_guard<std::mutex> lock(sceneMetadata.m_skinDataMutex);
-							sceneMetadata.m_skinToSkinMetadata.emplace(skin, std::move(inverseBindMatrices));
-							sceneMetadata.m_skeletonNodes.emplace(skin->skeleton);
+							std::lock_guard<std::mutex> lock(sceneMetadata->m_skinDataMutex);
+							sceneMetadata->m_skinToSkinMetadata.emplace(skin, std::move(inverseBindMatrices));
+							sceneMetadata->m_skeletonNodes.emplace(skin->skeleton);
 						}
 					}
 				}));
@@ -1599,11 +1727,13 @@ namespace
 
 
 	void LoadAnimationData(
-		std::string const& sceneFilePath, std::shared_ptr<cgltf_data const> const& data, SceneMetadata& sceneMetadata)
+		std::string const& sceneFilePath,
+		std::shared_ptr<cgltf_data const> const& data,
+		std::shared_ptr<SceneMetadata>& sceneMetadata)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
-		sceneMetadata.m_animationController =
+		sceneMetadata->m_animationController =
 			fr::AnimationController::CreateAnimationController(em, sceneFilePath.c_str());
 
 		for (uint64_t animIdx = 0; animIdx < data->animations_count; ++animIdx)
@@ -1620,11 +1750,11 @@ namespace
 			}
 			LOG("Loading animation \"%s\"...", animationName.c_str());
 
-			sceneMetadata.m_animationController->AddNewAnimation(animationName.c_str());
+			sceneMetadata->m_animationController->AddNewAnimation(animationName.c_str());
 
 			// Pack the Channels of an AnimationData struct:
 			std::unordered_map<cgltf_node const*, fr::AnimationData>& nodeToData =
-				sceneMetadata.m_nodeToAnimationData.emplace_back();
+				sceneMetadata->m_nodeToAnimationData.emplace_back();
 			for (uint64_t channelIdx = 0; channelIdx < data->animations[animIdx].channels_count; ++channelIdx)
 			{
 				// GLTF animation samplers define an "input/output pair":
@@ -1670,7 +1800,7 @@ namespace
 				cgltf_accessor_unpack_floats(animSampler->input, keyframeTimesSec.data(), numKeyframeTimeEntries);
 
 				animChannel.m_keyframeTimesIdx =
-					sceneMetadata.m_animationController->AddChannelKeyframeTimes(animIdx, std::move(keyframeTimesSec));
+					sceneMetadata->m_animationController->AddChannelKeyframeTimes(animIdx, std::move(keyframeTimesSec));
 
 				// Channel output data:
 				const cgltf_size numOutputFloats = cgltf_accessor_unpack_floats(animSampler->output, nullptr, 0);
@@ -1678,7 +1808,7 @@ namespace
 				std::vector<float> outputFloatData(numOutputFloats);
 				cgltf_accessor_unpack_floats(animSampler->output, outputFloatData.data(), numOutputFloats);
 
-				animChannel.m_dataIdx = sceneMetadata.m_animationController->AddChannelData(std::move(outputFloatData));
+				animChannel.m_dataIdx = sceneMetadata->m_animationController->AddChannelData(std::move(outputFloatData));
 
 				SEAssert(numOutputFloats % numKeyframeTimeEntries == 0,
 					"The number of keyframe entries must be an exact multiple of the number of output floats");
@@ -1691,11 +1821,10 @@ namespace
 	
 	inline void AttachGeometry(
 		core::Inventory* inventory,
-		re::SceneData const& sceneData,
 		cgltf_node const* current,
 		size_t nodeIdx, // For default/fallback name
 		entt::entity sceneNodeEntity,
-		SceneMetadata& sceneMetadata)
+		std::shared_ptr<SceneMetadata>& sceneMetadata)
 	{
 		SEAssert(current->mesh, "Current node does not have mesh data");
 
@@ -1723,12 +1852,12 @@ namespace
 		{
 			cgltf_primitive const& curPrimitive = current->mesh->primitives[primIdx];
 
-			SEAssert(sceneMetadata.m_primitiveToMeshPrimitiveMetadata.contains(&curPrimitive),
+			SEAssert(sceneMetadata->m_primitiveToMeshPrimitiveMetadata.contains(&curPrimitive),
 				"Failed to find the primitive in our metadata map. This is unexpected");
 
 			// Note: No locks here, the work should have already finished and been waited on
 			MeshPrimitiveMetadata& meshPrimMetadata = 
-				sceneMetadata.m_primitiveToMeshPrimitiveMetadata.at(&curPrimitive);
+				sceneMetadata->m_primitiveToMeshPrimitiveMetadata.at(&curPrimitive);
 
 			// Attach the MeshPrimitive to the MeshConcept:
 			const entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
@@ -1746,8 +1875,8 @@ namespace
 
 		// Store our Mesh entity -> vector of Mesh/MeshPrimive Bounds entities:
 		{
-			std::unique_lock<std::mutex> lock(sceneMetadata.m_meshEntityToBoundsEntityMapMutex);
-			sceneMetadata.m_meshEntityToBoundsEntityMap[sceneNodeEntity] = std::move(meshAndMeshPrimitiveEntities);
+			std::unique_lock<std::mutex> lock(sceneMetadata->m_meshEntityToBoundsEntityMapMutex);
+			sceneMetadata->m_meshEntityToBoundsEntityMap[sceneNodeEntity] = std::move(meshAndMeshPrimitiveEntities);
 		}
 	}
 
@@ -1755,18 +1884,18 @@ namespace
 	void AttachAnimationComponents(
 		cgltf_node const* current,
 		entt::entity curSceneNodeEntity,
-		SceneMetadata const& sceneMetadata)
+		std::shared_ptr<SceneMetadata>& sceneMetadata)
 	{
-		SEAssert(sceneMetadata.m_animationController, "animationController cannot be null");
+		SEAssert(sceneMetadata->m_animationController, "animationController cannot be null");
 
 		fr::EntityManager& em = *fr::EntityManager::Get();
 		SEAssert(!em.HasComponent<fr::AnimationComponent>(curSceneNodeEntity), "Node already has an animation component");
 
 		fr::AnimationComponent* animationCmpt = 
-			fr::AnimationComponent::AttachAnimationComponent(em, curSceneNodeEntity, sceneMetadata.m_animationController);
+			fr::AnimationComponent::AttachAnimationComponent(em, curSceneNodeEntity, sceneMetadata->m_animationController);
 
 		// Attach each/all animations that target the current node to its animation component:
-		for (auto const& animation : sceneMetadata.m_nodeToAnimationData)
+		for (auto const& animation : sceneMetadata->m_nodeToAnimationData)
 		{
 			if (!animation.contains(current))
 			{
@@ -1779,19 +1908,18 @@ namespace
 
 
 	void AttachMeshAnimationComponents(
-		re::SceneData& sceneData,
 		std::shared_ptr<cgltf_data const> const& data,
-		SceneMetadata& sceneMetadata,
+		std::shared_ptr<SceneMetadata>& sceneMetadata,
 		std::vector<std::future<void>>& loadTasks)
 	{
 		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
 		{
 			cgltf_node const* current = &data->nodes[nodeIdx];
 
-			const entt::entity curSceneNodeEntity = sceneMetadata.m_nodeToEntity.at(current);
+			const entt::entity curSceneNodeEntity = sceneMetadata->m_nodeToEntity.at(current);
 
 			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[&sceneData, &sceneMetadata, nodeIdx, current, curSceneNodeEntity]()
+				[&sceneMetadata, nodeIdx, current, curSceneNodeEntity]()
 				{
 					fr::EntityManager& em = *fr::EntityManager::Get();
 
@@ -1840,11 +1968,11 @@ namespace
 
 						for (size_t jointIdx = 0; jointIdx < current->skin->joints_count; ++jointIdx)
 						{
-							SEAssert(sceneMetadata.m_nodeToEntity.contains(current->skin->joints[jointIdx]),
+							SEAssert(sceneMetadata->m_nodeToEntity.contains(current->skin->joints[jointIdx]),
 								"Node is not in the node to entity map. This should not be possible");
 
 							const entt::entity jointNodeEntity = 
-								sceneMetadata.m_nodeToEntity.at(current->skin->joints[jointIdx]);
+								sceneMetadata->m_nodeToEntity.at(current->skin->joints[jointIdx]);
 
 							jointEntities.emplace_back(jointNodeEntity);
 
@@ -1864,19 +1992,19 @@ namespace
 
 						// We pre-loaded the skinning data
 						std::vector<glm::mat4>* inverseBindMatrices = nullptr;
-						if (sceneMetadata.m_skinToSkinMetadata.contains(current->skin))
+						if (sceneMetadata->m_skinToSkinMetadata.contains(current->skin))
 						{
 							// Note: No locks here, the work should have already finished and been waited on
 							inverseBindMatrices =
-								&sceneMetadata.m_skinToSkinMetadata.at(current->skin).m_inverseBindMatrices;
+								&sceneMetadata->m_skinToSkinMetadata.at(current->skin).m_inverseBindMatrices;
 						}
 
 						// The skeleton root node is part of the skeletal hierarchy
 						entt::entity skeletonRootEntity = entt::null;
 						gr::TransformID skeletonTransformID = gr::k_invalidTransformID;
-						if (sceneMetadata.m_nodeToEntity.contains(current->skin->skeleton))
+						if (sceneMetadata->m_nodeToEntity.contains(current->skin->skeleton))
 						{
-							skeletonRootEntity = sceneMetadata.m_nodeToEntity.at(current->skin->skeleton);
+							skeletonRootEntity = sceneMetadata->m_nodeToEntity.at(current->skin->skeleton);
 
 							// Note: The entity associated with the skeleton node might not be the entity with the next 
 							// TransformationComponent in the hierarchy above; it might be modified here
@@ -1896,8 +2024,8 @@ namespace
 							inverseBindMatrices ? std::move(*inverseBindMatrices) : std::vector<glm::mat4>(),
 							skeletonRootEntity,
 							skeletonTransformID,
-							sceneMetadata.m_animationController->GetActiveLongestChannelTimeSec(),
-							std::move(sceneMetadata.m_meshEntityToBoundsEntityMap.at(curSceneNodeEntity)));
+							sceneMetadata->m_animationController->GetActiveLongestChannelTimeSec(),
+							std::move(sceneMetadata->m_meshEntityToBoundsEntityMap.at(curSceneNodeEntity)));
 					}
 				}));
 		}
@@ -1906,9 +2034,8 @@ namespace
 
 	void AttachNodeComponents(
 		core::Inventory* inventory,
-		re::SceneData& sceneData,
 		std::shared_ptr<cgltf_data const> const& data,
-		SceneMetadata& sceneMetadata,
+		std::shared_ptr<SceneMetadata>& sceneMetadata,
 		std::vector<std::future<void>>& loadTasks)
 	{
 		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
@@ -1916,20 +2043,20 @@ namespace
 			cgltf_node const* current = &data->nodes[nodeIdx];
 
 			loadTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[inventory, &sceneData, &sceneMetadata, current, nodeIdx]()
+				[inventory, &sceneMetadata, current, nodeIdx]()
 				{
-					SEAssert(sceneMetadata.m_nodeToEntity.contains(current),
+					SEAssert(sceneMetadata->m_nodeToEntity.contains(current),
 					"Node to entity map does not contain the current node. This should not be possible");
 
-					const entt::entity curSceneNodeEntity = sceneMetadata.m_nodeToEntity.at(current);
+					const entt::entity curSceneNodeEntity = sceneMetadata->m_nodeToEntity.at(current);
 
 					if (current->mesh)
 					{
-						AttachGeometry(inventory, sceneData, current, nodeIdx, curSceneNodeEntity, sceneMetadata);
+						AttachGeometry(inventory, current, nodeIdx, curSceneNodeEntity, sceneMetadata);
 					}
 					if (current->light)
 					{
-						LoadAddLight(sceneData, current, curSceneNodeEntity);
+						LoadAddLight(current, curSceneNodeEntity);
 					}
 					if (current->camera)
 					{
@@ -1941,7 +2068,7 @@ namespace
 					if (!hasAnimation)
 					{
 						// Also need to search the node animations
-						for (auto const& animation : sceneMetadata.m_nodeToAnimationData)
+						for (auto const& animation : sceneMetadata->m_nodeToAnimationData)
 						{
 							if (animation.contains(current))
 							{
@@ -1964,7 +2091,8 @@ namespace
 	}
 
 
-	void CreateSceneNodeEntities(std::shared_ptr<cgltf_data const> const& data, SceneMetadata& sceneMetadata)
+	void CreateSceneNodeEntities(
+		std::shared_ptr<cgltf_data const> const& data, std::shared_ptr<SceneMetadata>& sceneMetadata)
 	{
 		for (size_t sceneIdx = 0; sceneIdx < data->scenes_count; ++sceneIdx)
 		{
@@ -1988,14 +2116,14 @@ namespace
 				entt::entity curNodeParentEntity = entt::null;
 				if (curNode->parent)
 				{
-					SEAssert(sceneMetadata.m_nodeToEntity.contains(curNode->parent),
+					SEAssert(sceneMetadata->m_nodeToEntity.contains(curNode->parent),
 						"Failed to find the parent, this should not be possible");
 
-					curNodeParentEntity = sceneMetadata.m_nodeToEntity.at(curNode->parent);
+					curNodeParentEntity = sceneMetadata->m_nodeToEntity.at(curNode->parent);
 				}
 
 				// Create the current node's entity (and Transform, if it has one):
-				sceneMetadata.m_nodeToEntity.emplace(
+				sceneMetadata->m_nodeToEntity.emplace(
 					curNode, 
 					CreateSceneNode(sceneMetadata, curNode, curNodeParentEntity, nodeIdx++));
 
@@ -2166,18 +2294,8 @@ namespace fr
 
 
 	bool SceneManager::Load(std::string const& sceneFilePath)
-	{
-		re::SceneData* sceneData = re::RenderManager::GetSceneData();
-
-		// Start by kicking off some jobs without any dependencies:
-		std::vector<std::future<void>> earlyLoadTasks;
-		
-		earlyLoadTasks.emplace_back(
-			core::ThreadPool::Get()->EnqueueJob([this, &sceneData]() {
-				GenerateDefaultResources(m_inventory, *sceneData);
-				}));
-
-		CreateDefaultSceneResources(); // Kick off async loading of required assets
+	{		
+		CreateDefaultSceneResources(); // Kick off async loading of mandatory assets
 
 		// Now parse the the GLTF metadata:
 		const bool gotSceneFilePath = !sceneFilePath.empty();
@@ -2197,16 +2315,13 @@ namespace fr
 			data = std::shared_ptr<cgltf_data>(rawData);
 			rawData = nullptr;
 		}
-
-		// We need the default resources to be available, so wait until they're done
-		for (size_t loadTask = 0; loadTask < earlyLoadTasks.size(); loadTask++)
-		{
-			earlyLoadTasks[loadTask].wait();
-		}
 		
+		// Simply parsing by populating some tracking data to associate different types as we load them
+		std::shared_ptr<SceneMetadata> sceneMetadata = std::make_shared<SceneMetadata>();
+
+		std::vector<std::future<void>> commonLoadTasks;
 
 		// Load the GLTF data:
-		SceneMetadata sceneMetadata; // We'll pre-parse the scene and populate helper metadata
 		bool sceneHasCamera = false;
 		if (data)
 		{
@@ -2229,13 +2344,13 @@ namespace fr
 			SEAssert(data->cameras_count > 0 || data->cameras == nullptr, "Camera pointer and count mismatch");
 			sceneHasCamera = data->cameras_count > 0;
 
-			std::vector<std::future<void>> loadFutures;
-
 			std::string sceneRootPath;
 			core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneRootPathKey, sceneRootPath);
 
 			// Pre-load the large/complex data:
-			PreLoadMeshData(m_inventory, sceneRootPath, *sceneData, data, sceneMetadata, loadFutures);
+			LoadMeshData(m_inventory, sceneRootPath, data, sceneMetadata);
+
+			std::vector<std::future<void>> loadFutures;
 			PreLoadSkinData(data, sceneMetadata, loadFutures);
 
 			// Wait for data to be pre-loaded:
@@ -2261,7 +2376,7 @@ namespace fr
 			loadFutures.clear();
 
 			// Asyncronously attach the components to the entities, now that they exist:
-			AttachNodeComponents(m_inventory, *sceneData, data, sceneMetadata, loadFutures);
+			AttachNodeComponents(m_inventory, data, sceneMetadata, loadFutures);
 
 			// Wait for all of the tasks to be done:
 			for (auto const& loadFuture : loadFutures)
@@ -2273,56 +2388,57 @@ namespace fr
 
 			// Now our entities and components are loaded, we can attach mesh animation-related components. In
 			// particular, SkinningComponents can only be constructed AFTER all AnimationComponents have been loaded
-			// Note: We use earlyLoadTasks here so we only need to wait on 1 vector at the end...
-			AttachMeshAnimationComponents(*sceneData, data, sceneMetadata, earlyLoadTasks);
+			// Note: We use commonLoadTasks here so we only need to wait on 1 vector at the end...
+			AttachMeshAnimationComponents(data, sceneMetadata, commonLoadTasks);
 		}
 
 		// Add a default camera:
 		const bool forceAddDefaultCamera = core::Config::Get()->KeyExists(core::configkeys::k_forceDefaultCameraKey);
 		if (!sceneHasCamera || forceAddDefaultCamera)
 		{
-			earlyLoadTasks.emplace_back(
+			commonLoadTasks.emplace_back(
 				core::ThreadPool::Get()->EnqueueJob([&sceneMetadata]() {
 					LoadAddCamera(entt::null, 0, nullptr, sceneMetadata);
 					}));
 		}
 
 		// Wait for the early load tasks we spawned here to be done:
-		for (size_t loadTask = 0; loadTask < earlyLoadTasks.size(); loadTask++)
+		for (size_t loadTask = 0; loadTask < commonLoadTasks.size(); loadTask++)
 		{
-			earlyLoadTasks[loadTask].wait();
+			commonLoadTasks[loadTask].wait();
 		}
 
 		// Set the main camera
 		{
-			std::lock_guard<std::mutex> lock(sceneMetadata.m_cameraMetadataMutex);
+			std::lock_guard<std::mutex> lock(sceneMetadata->m_cameraMetadataMutex);
 
 			std::sort(
-				sceneMetadata.m_cameraMetadata.begin(),
-				sceneMetadata.m_cameraMetadata.end(),
+				sceneMetadata->m_cameraMetadata.begin(),
+				sceneMetadata->m_cameraMetadata.end(),
 				[](CameraMetadata const& a, CameraMetadata const& b) { return a.m_srcNodeIdx < b.m_srcNodeIdx; });
 
 			if (forceAddDefaultCamera)
 			{
 				// Default camera has a null source node index
 				fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetMainCameraCommand>(
-					sceneMetadata.m_cameraMetadata.front().m_owningEntity);
+					sceneMetadata->m_cameraMetadata.front().m_owningEntity);
 			}
 			else
 			{
 				fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetMainCameraCommand>(
-					sceneMetadata.m_cameraMetadata.back().m_owningEntity);
+					sceneMetadata->m_cameraMetadata.back().m_owningEntity);
 			}
 		}
-
-		sceneData->EndLoading();
 
 		return true;
 	}
 
 
 	void SceneManager::CreateDefaultSceneResources()
-	{	
+	{
+		GenerateDefaultMaterial(m_inventory);
+
+		// Load a default Ambient IBL:
 		std::shared_ptr<grutil::TextureFromFilePath<re::Texture>> texLoadCtx =
 			std::make_shared<grutil::TextureFromFilePath<re::Texture>>();
 		

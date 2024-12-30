@@ -14,7 +14,7 @@ namespace
 
 
 	// Common functionality for creating cyliner-like meshes
-	std::shared_ptr<gr::MeshPrimitive> CreateCylinderHelper(
+	core::InvPtr<gr::MeshPrimitive> CreateCylinderHelper(
 		char const* meshName,
 		gr::meshfactory::FactoryOptions const& factoryOptions,
 		float height = 1.f,
@@ -284,6 +284,7 @@ namespace
 		
 
 		return gr::MeshPrimitive::Create(
+			factoryOptions.m_inventory,
 			meshName,
 			indexStream,
 			std::move(vertexStreams),
@@ -337,9 +338,11 @@ namespace
 
 namespace gr::meshfactory
 {
-	std::shared_ptr<MeshPrimitive> CreateCube(
+	core::InvPtr<gr::MeshPrimitive> CreateCube(
 		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/, float extentDistance /*= 1.f*/)
 	{
+		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
+
 		extentDistance = std::abs(extentDistance);
 
 		// Note: Using a RHCS
@@ -446,16 +449,14 @@ namespace gr::meshfactory
 				.m_type = gr::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
-			std::move(assembledPositions),
-			factoryOptions.m_queueBufferCreation));
+			std::move(assembledPositions)));
 
 		vertexStreams.emplace_back(gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_type = gr::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
-			std::move(assembledUVs),
-			factoryOptions.m_queueBufferCreation));
+			std::move(assembledUVs)));
 
 		if (normalsPtr)
 		{
@@ -465,8 +466,7 @@ namespace gr::meshfactory
 					.m_dataType = re::DataType::Float3,
 					.m_doNormalize = gr::VertexStream::Normalize::True,
 				},
-				std::move(*normalsPtr),
-				factoryOptions.m_queueBufferCreation));
+				std::move(*normalsPtr)));
 		}
 
 		if (tangentsPtr)
@@ -477,8 +477,7 @@ namespace gr::meshfactory
 					.m_dataType = re::DataType::Float4,
 					.m_doNormalize = gr::VertexStream::Normalize::True,
 				},
-				std::move(*tangentsPtr),
-				factoryOptions.m_queueBufferCreation));
+				std::move(*tangentsPtr)));
 		}
 
 		if (colorsPtr)
@@ -488,8 +487,7 @@ namespace gr::meshfactory
 					.m_type = gr::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
-				std::move(*colorsPtr),
-				factoryOptions.m_queueBufferCreation));
+				std::move(*colorsPtr)));
 		}
 
 		core::InvPtr<gr::VertexStream> const& indexStream = gr::VertexStream::Create(
@@ -497,11 +495,11 @@ namespace gr::meshfactory
 				.m_type = gr::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
-			std::move(cubeIndices),
-			factoryOptions.m_queueBufferCreation);
+			std::move(cubeIndices));
 
 
 		return gr::MeshPrimitive::Create(
+			factoryOptions.m_inventory,
 			meshName,
 			indexStream,
 			std::move(vertexStreams),
@@ -509,8 +507,10 @@ namespace gr::meshfactory
 	}
 
 
-	std::shared_ptr<MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation)
+	core::InvPtr<gr::MeshPrimitive> CreateFullscreenQuad(core::Inventory* inventory, ZLocation zLocation)
 	{
+		SEAssert(inventory, "Inventory cannot be null, it is required");
+
 		float zDepth;
 		// NOTE: OpenGL & GLM's default clip coordinates have been overridden
 		// (via glClipControl/GLM_FORCE_DEPTH_ZERO_TO_ONE)
@@ -563,26 +563,24 @@ namespace gr::meshfactory
 				.m_type = gr::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
-			std::move(positions),
-			false));
+			std::move(positions)));
 
 		vertexStreams.emplace_back(gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_type = gr::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
-			std::move(uvs),
-			false));
+			std::move(uvs)));
 
 		core::InvPtr<gr::VertexStream> const& indexStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
 				.m_type = gr::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
-			std::move(triIndices),
-			false);
+			std::move(triIndices));
 
 		return gr::MeshPrimitive::Create(
+			inventory,
 			"optimizedFullscreenQuad",
 			indexStream,
 			std::move(vertexStreams),
@@ -590,13 +588,15 @@ namespace gr::meshfactory
 	}
 
 
-	std::shared_ptr<MeshPrimitive> CreateQuad(
+	core::InvPtr<gr::MeshPrimitive> CreateQuad(
 		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
 		glm::vec3 tl /*= glm::vec3(-0.5f, 0.5f, 0.0f)*/,
 		glm::vec3 tr /*= glm::vec3(0.5f, 0.5f, 0.0f)*/,
 		glm::vec3 bl /*= glm::vec3(-0.5f, -0.5f, 0.0f)*/,
 		glm::vec3 br /*= glm::vec3(0.5f, -0.5f, 0.0f)*/)
 	{
+		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
+
 		util::ByteVector positions = util::ByteVector::Create<glm::vec3>({ tl, bl, tr, br });
 
 		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>( // Note: (0,0) = Top left
@@ -702,6 +702,7 @@ namespace gr::meshfactory
 			std::move(quadIndices));
 
 		return gr::MeshPrimitive::Create(
+			factoryOptions.m_inventory,
 			meshName,
 			indexStream,
 			std::move(vertexStreams),
@@ -709,7 +710,7 @@ namespace gr::meshfactory
 	}
 
 
-	std::shared_ptr<gr::MeshPrimitive> CreateQuad(
+	core::InvPtr<gr::MeshPrimitive> CreateQuad(
 		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
 		float extentDistance /*= 0.5f*/)
 	{
@@ -724,12 +725,14 @@ namespace gr::meshfactory
 	}
 
 	
-	std::shared_ptr<MeshPrimitive> CreateSphere(
+	core::InvPtr<gr::MeshPrimitive> CreateSphere(
 		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
 		float radius /*= 0.5f*/,
 		uint32_t numLatSlices /*= 16*/,
 		uint32_t numLongSlices /*= 16*/)
 	{
+		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
+
 		radius = std::max(std::abs(radius), k_minRadius);
 		numLatSlices = std::max(numLatSlices, k_minSideEdges);
 		numLongSlices = std::max(numLongSlices, k_minSideEdges);
@@ -969,6 +972,7 @@ namespace gr::meshfactory
 			std::move(indices));
 
 		return gr::MeshPrimitive::Create(
+			factoryOptions.m_inventory,
 			meshName,
 			indexStream,
 			std::move(vertexStreams),
@@ -976,12 +980,14 @@ namespace gr::meshfactory
 	}
 
 
-	std::shared_ptr<gr::MeshPrimitive> CreateCone(
+	core::InvPtr<gr::MeshPrimitive> CreateCone(
 		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
 		float height /*= 1.f*/,
 		float radius /*= 0.5f*/,
 		uint32_t numSides /*= 16*/)
 	{
+		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
+
 		height = std::max(std::abs(height), k_minHeight);
 		radius = std::max(std::abs(radius), k_minRadius);
 		numSides = std::max(numSides, k_minSideEdges);
@@ -1221,6 +1227,7 @@ namespace gr::meshfactory
 			std::move(indices));
 
 		return gr::MeshPrimitive::Create(
+			factoryOptions.m_inventory,
 			meshName,
 			indexStream,
 			std::move(vertexStreams),
@@ -1228,20 +1235,24 @@ namespace gr::meshfactory
 	}
 
 
-	std::shared_ptr<gr::MeshPrimitive> CreateCylinder(
+	core::InvPtr<gr::MeshPrimitive> CreateCylinder(
 		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
 		float height /*= 1.f*/,
 		float radius /*= 0.5f*/,
 		uint32_t numSides /*= 16*/)
 	{
+		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
+
 		return CreateCylinderHelper("cylinder", factoryOptions, height, radius, radius, numSides, true);
 	}
 
-	std::shared_ptr<gr::MeshPrimitive> CreateHelloTriangle(
+	core::InvPtr<gr::MeshPrimitive> CreateHelloTriangle(
 		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
 		float scale /*= 1.f*/, 
 		float zDepth /*= 0.5f*/)
 	{
+		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
+
 		zDepth = std::clamp(zDepth, 0.f, 1.f);
 
 		util::ByteVector positions = util::ByteVector::Create<glm::vec3>( // In clip space: bl near = [-1,-1, 0] , tr far = [1,1,1]
@@ -1352,6 +1363,7 @@ namespace gr::meshfactory
 			std::move(indices));
 
 		return gr::MeshPrimitive::Create(
+			factoryOptions.m_inventory,
 			meshName,
 			indexStream,
 			std::move(vertexStreams),

@@ -61,14 +61,14 @@ namespace fr
 		fr::RenderDataComponent* renderDataComponent = 
 			fr::RenderDataComponent::GetCreateRenderDataComponent(em, lightEntity, gr::k_invalidTransformID);
 
-		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData = 
-			gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
+		core::InvPtr<gr::MeshPrimitive> const& fullscreenQuad = 
+			gr::meshfactory::CreateFullscreenQuad(em.GetInventory(), gr::meshfactory::ZLocation::Far);
 
 		fr::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			em,
 			lightEntity,
 			*renderDataComponent,
-			fullscreenQuadSceneData.get());
+			fullscreenQuad);
 
 		// LightComponent:
 		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
@@ -92,12 +92,15 @@ namespace fr
 		glm::vec4 const& colorIntensity, 
 		bool hasShadow)
 	{
-		// Create a MeshPrimitive (owned by SceneData):
+		// Create a MeshPrimitive:
 		glm::vec3 minPos = glm::vec3(0.f);
 		glm::vec3 maxPos = glm::vec3(0.f);
-		gr::meshfactory::FactoryOptions sphereOptions{ .m_positionMinXYZOut = &minPos, .m_positionMaxXYZOut = &maxPos};
+		const gr::meshfactory::FactoryOptions sphereOptions{ 
+			.m_inventory = em.GetInventory(),
+			.m_positionMinXYZOut = &minPos, 
+			.m_positionMaxXYZOut = &maxPos};
 
-		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = 
+		core::InvPtr<gr::MeshPrimitive> const& pointLightMesh = 
 			gr::meshfactory::CreateSphere(sphereOptions, 1.f);
 
 		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
@@ -112,7 +115,7 @@ namespace fr
 			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Attach the MeshPrimitive 
-		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh.get(), minPos, maxPos);
+		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh, minPos, maxPos);
 
 		// LightComponent:
 		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
@@ -156,17 +159,18 @@ namespace fr
 		glm::vec4 const& colorIntensity,
 		bool hasShadow)
 	{
-		// Create a MeshPrimitive (owned by SceneData):
+		// Create a MeshPrimitive:
 		glm::vec3 minPos = glm::vec3(0.f);
 		glm::vec3 maxPos = glm::vec3(0.f);
 
 		gr::meshfactory::FactoryOptions coneFactoryOptions{ 
+			.m_inventory = em.GetInventory(),
 			.m_orientation = gr::meshfactory::Orientation::ZNegative,
 			.m_positionMinXYZOut = &minPos, 
 			.m_positionMaxXYZOut = &maxPos
 		};
 
-		std::shared_ptr<gr::MeshPrimitive> spotLightMesh = gr::meshfactory::CreateCone(
+		core::InvPtr<gr::MeshPrimitive> const& spotLightMesh = gr::meshfactory::CreateCone(
 			coneFactoryOptions,
 			1.f,	// Height
 			1.f,	// Radius
@@ -184,7 +188,7 @@ namespace fr
 			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Attach the MeshPrimitive 
-		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh.get(), minPos, maxPos);
+		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh, minPos, maxPos);
 
 		// LightComponent:
 		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
@@ -242,14 +246,14 @@ namespace fr
 			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// MeshPrimitive:
-		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData =
-			gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
+		core::InvPtr<gr::MeshPrimitive> const& fullscreenQuad =
+			gr::meshfactory::CreateFullscreenQuad(em.GetInventory(), gr::meshfactory::ZLocation::Far);
 
 		fr::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			em,
 			owningEntity,
 			*renderDataComponent,
-			fullscreenQuadSceneData.get());
+			fullscreenQuad);
 
 		// LightComponent:
 		LightComponent& lightComponent = *em.EmplaceComponent<LightComponent>(

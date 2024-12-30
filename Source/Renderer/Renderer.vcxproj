@@ -188,7 +188,6 @@
     <ClInclude Include="Sampler_DX12.h" />
     <ClInclude Include="Sampler_OpenGL.h" />
     <ClInclude Include="Sampler_Platform.h" />
-    <ClInclude Include="SceneData.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Shader_DX12.h" />
     <ClInclude Include="Shader_OpenGL.h" />
@@ -308,7 +307,6 @@
     <ClCompile Include="Sampler_DX12.cpp" />
     <ClCompile Include="Sampler_OpenGL.cpp" />
     <ClCompile Include="Sampler_Platform.cpp" />
-    <ClCompile Include="SceneData.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Shader_DX12.cpp" />
     <ClCompile Include="Shader_OpenGL.cpp" />

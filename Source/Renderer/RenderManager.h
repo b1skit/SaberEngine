@@ -3,7 +3,6 @@
 #include "EffectDB.h"
 #include "Platform.h"
 #include "RenderSystem.h"
-#include "SceneData.h"
 
 #include "Core/InvPtr.h"
 #include "Core/CommandQueue.h"
@@ -68,8 +67,6 @@ namespace re
 
 		platform::RenderingAPI GetRenderingAPI() const;
 		uint64_t GetCurrentRenderFrameNum() const;
-
-		static re::SceneData* GetSceneData();
 
 		re::RenderSystem const* CreateAddRenderSystem(std::string const& name, std::string const& pipelineFileName);
 		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
@@ -198,7 +195,6 @@ namespace re
 		platform::RenderingAPI m_renderingAPI;
 
 	private:
-		std::unique_ptr<re::SceneData> m_sceneData;
 		std::vector<std::unique_ptr<re::RenderSystem>> m_renderSystems;
 		
 		uint64_t m_renderFrameNum;
@@ -233,12 +229,6 @@ namespace re
 	inline uint64_t RenderManager::GetCurrentRenderFrameNum() const
 	{
 		return m_renderFrameNum;
-	}
-
-
-	inline re::SceneData* RenderManager::GetSceneData()
-	{
-		return RenderManager::Get()->m_sceneData.get();
 	}
 
 

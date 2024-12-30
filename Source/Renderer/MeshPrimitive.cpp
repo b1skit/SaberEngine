@@ -3,6 +3,8 @@
 #include "RenderManager.h"
 #include "SysInfo_Platform.h"
 
+#include "Core/InvPtr.h"
+
 
 namespace
 {
@@ -44,10 +46,9 @@ namespace
 				vertexStreams[i].m_setIdx),
 				"Duplicate slot index detected");
 
-			// TODO: Re-enable this once we're no longer deferring vertex stream creation
-			/*SEAssert(i + 1 == vertexStreams.size() || 
+			SEAssert(i + 1 == vertexStreams.size() || 
 				vertexStreams[i].m_vertexStream->GetNumElements() == vertexStreams[i + 1].m_vertexStream->GetNumElements(),
-				"Found vertex streams with mis-matching number of elements. This is unexpected");*/
+				"Found vertex streams with mis-matching number of elements. This is unexpected");
 			
 			seenSlots[static_cast<uint8_t>(vertexStreams[i].m_vertexStream->GetType())].emplace(
 				vertexStreams[i].m_setIdx);
@@ -253,103 +254,69 @@ namespace gr
 	}
 
 
-	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
+	core::InvPtr<MeshPrimitive> MeshPrimitive::Create(
+		core::Inventory* inventory,
 		std::string const& name,
 		core::InvPtr<gr::VertexStream> const& indexStream,
 		std::vector<MeshVertexStream>&& vertexStreams,
 		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
-		std::shared_ptr<MeshPrimitive> newMeshPrimitive;
-		newMeshPrimitive.reset(new MeshPrimitive(
-			name.c_str(),
-			indexStream,
-			std::move(vertexStreams),
-			meshParams));
+		struct MeshPrimitiveLoadContext final : public virtual core::ILoadContext<gr::MeshPrimitive>
+		{
+			std::unique_ptr<gr::MeshPrimitive> Load(core::InvPtr<gr::MeshPrimitive>) override
+			{
+				return std::unique_ptr<gr::MeshPrimitive>(new MeshPrimitive(
+					m_meshName.c_str(),
+					m_indexStream,
+					std::move(m_vertexStreams),
+					m_meshParams));
+			}
 
-		// This call will replace the newMeshPrimitive pointer if a duplicate MeshPrimitive already exists
-		re::RenderManager::GetSceneData()->AddUniqueMeshPrimitive(newMeshPrimitive);
+			std::string m_meshName;
+			core::InvPtr<gr::VertexStream> m_indexStream;
+			std::vector<MeshVertexStream> m_vertexStreams;
+			gr::MeshPrimitive::MeshPrimitiveParams m_meshParams;
+		};
+		std::shared_ptr<MeshPrimitiveLoadContext> loadContext = std::make_shared<MeshPrimitiveLoadContext>();
 
-		return newMeshPrimitive;
+		loadContext->m_meshName = name;
+		loadContext->m_indexStream = indexStream;
+		loadContext->m_vertexStreams = std::move(vertexStreams);
+		loadContext->m_meshParams = meshParams;
+
+		return inventory->Get<gr::MeshPrimitive>(util::StringHash(name), loadContext);
 	}
 
 
-	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
+	core::InvPtr<MeshPrimitive> MeshPrimitive::Create(
+		core::Inventory* inventory,
 		std::string const& name,
 		std::vector<std::array<gr::VertexStream::CreateParams, gr::VertexStream::Type::Type_Count>>&& streamCreateParams,
 		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
-		// NOTE: Currently we need to defer creating the VertexStream's backing re::Buffer from the front end thread 
-		// with the queueBufferCreate ugliness here: If queueBufferCreate == true, the gr::VertexStream will enqueue a
-		// render command to create the buffer on the render thread. This will go away once we have a proper async 
-		// loading system
-
-		SEAssert(streamCreateParams[0][gr::VertexStream::Index].m_streamData,
-			"No index stream data. Indexes are required. We currently assume it will be in this fixed location");
-
-		core::InvPtr<gr::VertexStream> const& indexStream =
-			gr::VertexStream::Create(std::move(streamCreateParams[0][gr::VertexStream::Index]));
-		
-		const size_t totalVerts = streamCreateParams[0][gr::VertexStream::Position].m_streamData->size();
-
-		// Each vector index streamCreateParams corresponds to the m_setIdx of the entries in the array elements
-		std::vector<MeshVertexStream> vertexStreams;
-		vertexStreams.reserve(streamCreateParams.size() * gr::VertexStream::Type_Count); // + morph targets
-
-		for (uint8_t setIdx = 0; setIdx < streamCreateParams.size(); ++setIdx)
+		struct MeshPrimitiveAndStreamLoadContext final : public virtual core::ILoadContext<gr::MeshPrimitive>
 		{
-			for (uint8_t streamTypeIdx = 0; streamTypeIdx < gr::VertexStream::Type_Count; ++streamTypeIdx)
+			std::unique_ptr<gr::MeshPrimitive> Load(core::InvPtr<gr::MeshPrimitive>) override
 			{
-				if (streamTypeIdx == gr::VertexStream::Index)
-				{
-					continue; // Our single index stream is handled externally
-				}
+				std::unique_ptr<gr::MeshPrimitive> newMeshPrim = std::unique_ptr<gr::MeshPrimitive>(new MeshPrimitive(
+					m_meshName.c_str(),
+					std::move(m_streamCreateParams),
+					m_meshParams));
 
-				if (streamCreateParams[setIdx][streamTypeIdx].m_streamData)
-				{
-					SEAssert(streamCreateParams[setIdx][streamTypeIdx].m_streamData->size() == totalVerts,
-						"Found a mismatched number of vertices between streams");
-
-					vertexStreams.emplace_back(gr::MeshPrimitive::MeshVertexStream{
-						.m_vertexStream = gr::VertexStream::Create(
-							std::move(streamCreateParams[setIdx][streamTypeIdx])),
-						.m_setIdx = setIdx,
-						});
-				}
+				return newMeshPrim;
 			}
-		}
 
-		std::shared_ptr<gr::MeshPrimitive> newMeshPrim =
-			gr::MeshPrimitive::Create(name, indexStream, std::move(vertexStreams), meshParams);
+			std::string m_meshName;
+			std::vector<std::array<gr::VertexStream::CreateParams, gr::VertexStream::Type::Type_Count>> m_streamCreateParams;
+			gr::MeshPrimitive::MeshPrimitiveParams m_meshParams;
+		};
+		std::shared_ptr<MeshPrimitiveAndStreamLoadContext> loadContext = std::make_shared<MeshPrimitiveAndStreamLoadContext>();
 
+		loadContext->m_meshName = name;
+		loadContext->m_streamCreateParams = std::move(streamCreateParams);
+		loadContext->m_meshParams = meshParams;
 
-		// Pack morph data:
-		std::vector<uint8_t> interleavedMorphData;
-		const bool hasMorphData = InterleaveMorphData(
-			totalVerts, streamCreateParams, interleavedMorphData, newMeshPrim->m_interleavedMorphMetadata);
-
-		if (hasMorphData)
-		{
-			// TODO: This is illegal - if we call this from a front end thread, we'll be touching the buffer allocator
-			// which is not allowed. Leaving this for now as it will go away once we have async loading, and we get away
-			// with it if morph data is loaded before the 1st frame
-
-			newMeshPrim->m_interleavedMorphData = re::Buffer::Create(
-				std::format("{}_InterleavedMorphData", name),
-				interleavedMorphData.data(),
-				util::CheckedCast<uint32_t>(interleavedMorphData.size()),
-				re::Buffer::BufferParams{
-					.m_stagingPool = re::Buffer::StagingPool::Temporary,
-					.m_memPoolPreference = re::Buffer::DefaultHeap,
-					.m_accessMask = re::Buffer::GPURead,
-					.m_usageMask = re::Buffer::Structured,
-				});
-
-			// Update the hash with the interleaved morph data
-			newMeshPrim->AddDataBytesToHash(interleavedMorphData.data(),
-				util::CheckedCast<uint32_t>(interleavedMorphData.size()));
-		}
-
-		return newMeshPrim;
+		return inventory->Get<gr::MeshPrimitive>(util::StringHash(name), loadContext);		
 	}
 
 
@@ -368,6 +335,85 @@ namespace gr
 		ValidateVertexStreams(m_vertexStreams); // _DEBUG only
 
 		ComputeDataHash();
+	}
+
+
+	MeshPrimitive::MeshPrimitive(char const* name,
+		std::vector<std::array<gr::VertexStream::CreateParams, gr::VertexStream::Type::Type_Count>>&& streamCreateParams,
+		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
+		: INamedObject(name)
+		, m_params(meshParams)
+	{
+		SEAssert(streamCreateParams[0][gr::VertexStream::Index].m_streamData,
+			"No index stream data. Indexes are required. We currently assume it will be in this fixed location");
+
+		m_indexStream = gr::VertexStream::Create(std::move(streamCreateParams[0][gr::VertexStream::Index]));
+
+		const size_t totalVerts = streamCreateParams[0][gr::VertexStream::Position].m_streamData->size();
+
+		// Each vector index streamCreateParams corresponds to the m_setIdx of the entries in the array elements
+		m_vertexStreams.reserve(streamCreateParams.size() * gr::VertexStream::Type_Count); // + morph targets
+
+		for (uint8_t setIdx = 0; setIdx < streamCreateParams.size(); ++setIdx)
+		{
+			for (uint8_t streamTypeIdx = 0; streamTypeIdx < gr::VertexStream::Type_Count; ++streamTypeIdx)
+			{
+				if (streamTypeIdx == gr::VertexStream::Index)
+				{
+					continue; // Our single index stream is handled externally
+				}
+
+				if (streamCreateParams[setIdx][streamTypeIdx].m_streamData)
+				{
+					SEAssert(streamCreateParams[setIdx][streamTypeIdx].m_streamData->size() == totalVerts,
+						"Found a mismatched number of vertices between streams");
+
+					m_vertexStreams.emplace_back(gr::MeshPrimitive::MeshVertexStream{
+						.m_vertexStream = gr::VertexStream::Create(
+							std::move(streamCreateParams[setIdx][streamTypeIdx])),
+						.m_setIdx = setIdx,
+						});
+				}
+			}
+		}
+
+		SortVertexStreams(m_vertexStreams);
+
+		ValidateVertexStreams(m_vertexStreams); // _DEBUG only
+
+		ComputeDataHash();
+
+		// Pack morph data:
+		std::vector<uint8_t> interleavedMorphData;
+		const bool hasMorphData = InterleaveMorphData(
+			totalVerts, streamCreateParams, interleavedMorphData, m_interleavedMorphMetadata);
+
+		if (hasMorphData)
+		{
+			m_interleavedMorphData = re::Buffer::Create(
+				std::format("{}_InterleavedMorphData", name),
+				interleavedMorphData.data(),
+				util::CheckedCast<uint32_t>(interleavedMorphData.size()),
+				re::Buffer::BufferParams{
+					.m_stagingPool = re::Buffer::StagingPool::Temporary,
+					.m_memPoolPreference = re::Buffer::DefaultHeap,
+					.m_accessMask = re::Buffer::GPURead,
+					.m_usageMask = re::Buffer::Structured,
+				});
+
+			// Update the hash with the interleaved morph data
+			AddDataBytesToHash(interleavedMorphData.data(),
+				util::CheckedCast<uint32_t>(interleavedMorphData.size()));
+		}
+	}
+
+
+	void MeshPrimitive::Destroy()
+	{
+		m_indexStream = nullptr;
+		m_vertexStreams.clear();
+		m_interleavedMorphData = nullptr;
+		m_interleavedMorphMetadata = {};
 	}
 
 

@@ -192,6 +192,7 @@ namespace fr
 		};
 		static HelloTriangleSpawnParams s_helloTriangleSpawnParams;
 
+		fr::EntityManager* em = fr::EntityManager::Get();
 
 		static char* s_nameInputBuffer = nullptr;
 		static std::string s_meshFactoryMaterialName;
@@ -288,12 +289,10 @@ namespace fr
 			default: SEAssertF("Invalid mesh factory type");
 			}
 
-			
 			// Material:
 			static uint32_t s_selectedMaterialIdx = 0;
 			std::vector<std::string> materialNames;
 			{
-				fr::EntityManager* em = fr::EntityManager::Get();
 				std::vector<entt::entity> const& materialEntities = em->GetAllEntities<fr::MaterialInstanceComponent>();
 
 				materialNames.reserve(materialEntities.size());
@@ -338,20 +337,21 @@ namespace fr
 			{
 			case SourceType::MeshFactory:
 			{
-				entt::entity sceneNode = fr::SceneNode::Create(*fr::EntityManager::Get(), s_nameInputBuffer, entt::null);
+				const entt::entity sceneNode = fr::SceneNode::Create(*em, s_nameInputBuffer, entt::null);
 				fr::Mesh::AttachMeshConceptMarker(sceneNode, s_nameInputBuffer);
 
 				glm::vec3 minXYZ = glm::vec3(0.f);
 				glm::vec3 maxXYZ = glm::vec3(0.f);
 				const gr::meshfactory::FactoryOptions factoryOptions
 				{
+					.m_inventory = em->GetInventory(),
 					.m_generateNormalsAndTangents = true,
 					.m_vertexColor = glm::vec4(1.f), // GLTF default
 					.m_positionMinXYZOut = &minXYZ,
 					.m_positionMaxXYZOut = &maxXYZ,
 				};
 
-				std::shared_ptr<gr::MeshPrimitive> mesh = nullptr;
+				core::InvPtr<gr::MeshPrimitive> mesh;
 				switch (s_selectedFactoryType)
 				{
 				case MeshFactoryType::Quad:
@@ -403,18 +403,18 @@ namespace fr
 				}
 
 				entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
-					*fr::EntityManager::Get(),
+					*em,
 					sceneNode,
-					mesh.get(),
+					mesh,
 					minXYZ,
 					maxXYZ);
 
 				// Attach a material:
 				core::InvPtr<gr::Material> const& material =
-					fr::EntityManager::Get()->GetInventory()->Get<gr::Material>(s_meshFactoryMaterialName.c_str());
+					em->GetInventory()->Get<gr::Material>(s_meshFactoryMaterialName.c_str());
 
 				fr::MaterialInstanceComponent::AttachMaterialComponent(
-					*fr::EntityManager::Get(), meshPrimimitiveEntity, material);
+					*em, meshPrimimitiveEntity, material);
 			}
 			break;
 			case SourceType::GLTFFile:

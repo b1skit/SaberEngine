@@ -79,11 +79,16 @@ namespace app
 		// Create a window (and interally pass it to the re::Context)
 		app::Window* mainWindow = InitializeAppWindowHelper();
 
-		// Render thread:
 		re::RenderManager* renderManager = re::RenderManager::Get();
+		fr::EntityManager* entityMgr = fr::EntityManager::Get();
+		fr::SceneManager* sceneMgr = fr::SceneManager::Get();
 
-		renderManager->SetInventory(m_inventory.get()); // Dependency injection
+		// Dependency injection:
+		entityMgr->SetInventory(m_inventory.get()); 
+		renderManager->SetInventory(m_inventory.get());
+		sceneMgr->SetInventory(m_inventory.get());
 
+		// Render thread:
 		core::ThreadPool::Get()->EnqueueJob([&]()
 			{
 				core::ThreadPool::NameCurrentThread(L"Render Thread");
@@ -101,13 +106,9 @@ namespace app
 
 		en::InputManager::Get()->Startup(); // Now that the window is created
 
-		fr::SceneManager* sceneMgr = fr::SceneManager::Get();
-		sceneMgr->SetInventory(m_inventory.get()); // Dependency injection
 		sceneMgr->Startup(); // Load assets
 
 		// Create entity/component representations now that the scene data is loaded
-		fr::EntityManager* entityMgr = fr::EntityManager::Get();
-		entityMgr->SetInventory(m_inventory.get()); // Dependency injection
 		entityMgr->Startup();
 
 		renderManager->ThreadInitialize(); // Create render systems, close buffer registration

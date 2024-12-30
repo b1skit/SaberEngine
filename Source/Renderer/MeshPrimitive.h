@@ -11,6 +11,20 @@
 #include "Shaders/Common/AnimationParams.h"
 
 
+namespace
+{
+	template<typename T>
+	struct MeshPrimitiveFromCGLTF;
+}
+
+namespace core
+{
+	class Inventory; 
+
+	template<typename T>
+	class InvPtr;
+}
+
 namespace gr
 {
 	class MeshPrimitive final : 
@@ -123,13 +137,15 @@ namespace gr
 
 
 	public:
-		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
+		[[nodiscard]] static core::InvPtr<MeshPrimitive> Create(
+			core::Inventory*,
 			std::string const& name,
 			core::InvPtr<gr::VertexStream> const& indexStream,
 			std::vector<MeshVertexStream>&& vertexStreams,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
-		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
+		[[nodiscard]] static core::InvPtr<MeshPrimitive> Create(
+			core::Inventory*,
 			std::string const& name,
 			std::vector<std::array<gr::VertexStream::CreateParams, gr::VertexStream::Type::Type_Count>>&&,
 			gr::MeshPrimitive::MeshPrimitiveParams const&);
@@ -137,6 +153,8 @@ namespace gr
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
 		MeshPrimitive& operator=(MeshPrimitive&& rhs) noexcept = default;
 		~MeshPrimitive() = default;
+
+		void Destroy();
 		
 		MeshPrimitiveParams const& GetMeshParams() const;
 
@@ -171,11 +189,20 @@ namespace gr
 			std::vector<MeshVertexStream>&& vertexStreams,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
+		MeshPrimitive(char const* name,
+			std::vector<std::array<gr::VertexStream::CreateParams, gr::VertexStream::Type::Type_Count>>&&,
+			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
+
 
 	private: // No copying allowed
 		MeshPrimitive() = delete;
 		MeshPrimitive(MeshPrimitive const& rhs) = delete;
 		MeshPrimitive& operator=(MeshPrimitive const& rhs) = delete;
+
+
+	private:
+		template<typename T>
+		friend struct MeshPrimitiveFromCGLTF;
 	};
 
 

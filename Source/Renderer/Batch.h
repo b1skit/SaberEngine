@@ -89,7 +89,7 @@ namespace re
 
 	public:
 		// Graphics batches:
-		Batch(re::Lifetime, gr::MeshPrimitive const*, EffectID); // No material; e.g. fullscreen quads, cubemap geo etc
+		Batch(re::Lifetime, core::InvPtr<gr::MeshPrimitive> const&, EffectID); // No material; e.g. fullscreen quads, cubemap geo etc
 
 		Batch(re::Lifetime,
 			gr::MeshPrimitive::RenderData const&,

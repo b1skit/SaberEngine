@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer.h"
 #include "BufferView.h"
+#include "RenderManager.h"
 #include "RenderStage.h"
 #include "RLibrary_Platform.h"
 #include "Sampler.h"
@@ -218,13 +219,14 @@ namespace re
 	{
 		SEAssert(stageParams->m_effectID.IsValid(), "Invalid EffectID");
 
-		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(stageParams->m_zLocation);
+		m_screenAlignedQuad = 
+			gr::meshfactory::CreateFullscreenQuad(re::RenderManager::Get()->GetInventory(), stageParams->m_zLocation);
 
 		m_drawStyleBits = stageParams->m_drawStyleBitmask;
 
 		m_fullscreenQuadBatch = std::make_unique<re::Batch>(
 			re::Lifetime::Permanent,
-			m_screenAlignedQuad.get(),
+			m_screenAlignedQuad,
 			stageParams->m_effectID);
 		
 		AddBatch(*m_fullscreenQuadBatch);

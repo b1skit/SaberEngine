@@ -113,16 +113,13 @@ namespace re
 #elif defined(SE_RELEASE)
 		SEFatalAssert(buildConfig == util::BuildConfiguration::Release, "Shader directory build configuration marker mismatch");
 #endif
-
-		newRenderManager->m_sceneData = std::make_unique<re::SceneData>();
-		
+	
 		return newRenderManager;
 	}
 
 
 	RenderManager::RenderManager(platform::RenderingAPI renderingAPI)
 		: m_renderingAPI(renderingAPI)
-		, m_sceneData(nullptr)
 		, m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_inventory(nullptr)
@@ -194,8 +191,6 @@ namespace re
 		core::EventManager::Get()->Subscribe(core::EventManager::InputToggleVSync, this);
 		core::EventManager::Get()->Subscribe(core::EventManager::EngineQuit, this);
 		
-		m_sceneData->Initialize();
-
 		CreateSamplerLibrary();
 		CreateDefaultTextures();
 
@@ -365,8 +360,6 @@ namespace re
 		// Process any remaining render commands (i.e. delete platform objects)
 		m_renderCommandManager.SwapBuffers();
 		m_renderCommandManager.Execute();
-
-		m_sceneData->Destroy();
 
 		m_effectDB.Destroy();
 	

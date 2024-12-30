@@ -126,9 +126,8 @@ namespace core
 
 			for (auto& entry : m_ptrAndControlBlocks)
 			{
-				SEAssert(entry.second.m_control->m_refCount.load() == 1 && entry.second.m_isPermanent == true,
-					"ResourceSystem has outstanding InvPtr<T>s to be Release()'d. Only permanent objects should remain");
-
+				// Note: Resources may still have a ref count >= 1 here, as they may be permanent or still referenced
+				// by another resource held another ResourceSystem that has not been Destroy()ed yet
 				entry.second.m_object->Destroy();
 			}
 			m_ptrAndControlBlocks.clear();

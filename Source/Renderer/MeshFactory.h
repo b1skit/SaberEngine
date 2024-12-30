@@ -2,6 +2,10 @@
 #pragma once
 #include "MeshPrimitive.h"
 
+namespace core
+{
+	class Inventory;
+}
 
 namespace gr::meshfactory
 {
@@ -24,6 +28,8 @@ namespace gr::meshfactory
 
 	struct FactoryOptions
 	{
+		core::Inventory* m_inventory = nullptr;
+
 		bool m_generateNormalsAndTangents = false;
 		
 		glm::vec4 m_vertexColor = glm::vec4(1.f); // GLTF default = (1,1,1,1)
@@ -33,9 +39,6 @@ namespace gr::meshfactory
 		// If these are not null, they'll be populated with the min/max position values
 		glm::vec3* m_positionMinXYZOut = nullptr;
 		glm::vec3* m_positionMaxXYZOut = nullptr;
-
-		// Temporary hack for VertexStreams created from the front end
-		bool m_queueBufferCreation = true;
 	};
 
 	enum class ZLocation : uint8_t
@@ -45,34 +48,34 @@ namespace gr::meshfactory
 	};
 
 	
-	extern std::shared_ptr<gr::MeshPrimitive> CreateCube(
+	extern core::InvPtr<gr::MeshPrimitive> CreateCube(
 		FactoryOptions const& factoryOptions = FactoryOptions{}, float extentDistance = 1.f);
 
-	extern std::shared_ptr<gr::MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation);
+	extern core::InvPtr<gr::MeshPrimitive> CreateFullscreenQuad(core::Inventory*, ZLocation zLocation);
 
-	extern std::shared_ptr<gr::MeshPrimitive> CreateQuad(
+	extern core::InvPtr<gr::MeshPrimitive> CreateQuad(
 		FactoryOptions const& factoryOptions = FactoryOptions{},
 		glm::vec3 tl = glm::vec3(-0.5f, 0.5f, 0.0f),
 		glm::vec3 tr = glm::vec3(0.5f, 0.5f, 0.0f),
 		glm::vec3 bl = glm::vec3(-0.5f, -0.5f, 0.0f),
 		glm::vec3 br = glm::vec3(0.5f, -0.5f, 0.0f));
 
-	extern std::shared_ptr<gr::MeshPrimitive> CreateQuad(
+	extern core::InvPtr<gr::MeshPrimitive> CreateQuad(
 		FactoryOptions const& factoryOptions = FactoryOptions{}, float extentDistance = 0.5f);
 
-	extern std::shared_ptr<gr::MeshPrimitive> CreateSphere(
+	extern core::InvPtr<gr::MeshPrimitive> CreateSphere(
 		FactoryOptions const& factoryOptions = FactoryOptions{},
 		float radius = 0.5f,
 		uint32_t numLatSlices = 16,
 		uint32_t numLongSlices = 16);
 
-	extern std::shared_ptr<gr::MeshPrimitive> CreateCone(
+	extern core::InvPtr<gr::MeshPrimitive> CreateCone(
 		FactoryOptions const& factoryOptions = FactoryOptions{},
 		float height = 1.f,
 		float radius = 0.5f,
 		uint32_t numSides = 16);
 
-	extern std::shared_ptr<gr::MeshPrimitive> CreateCylinder(
+	extern core::InvPtr<gr::MeshPrimitive> CreateCylinder(
 		FactoryOptions const& factoryOptions = FactoryOptions{},
 		float height = 1.f,
 		float radius = 0.5f,
@@ -82,6 +85,6 @@ namespace gr::meshfactory
 	// Using the default arguments, the triangle will be in NDC.
 	// Override the defaults to simulate a world-space transform (Reminder: We use a RHCS. Use negative zDepths to push
 	// the triangle in front of the camera once a view-projection transformation is applied)
-	extern std::shared_ptr<gr::MeshPrimitive> CreateHelloTriangle(
+	extern core::InvPtr<gr::MeshPrimitive> CreateHelloTriangle(
 		FactoryOptions const& factoryOptions = FactoryOptions{}, float scale = 1.f, float zDepth = 0.5);
 }

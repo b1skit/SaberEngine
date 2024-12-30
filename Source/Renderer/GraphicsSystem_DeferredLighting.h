@@ -123,7 +123,7 @@ namespace gr
 		re::StagePipeline::StagePipelineItr m_resourceCreationStageParentItr;
 
 		// For rendering into a cube map (IEM/PMREM generation)
-		std::shared_ptr<gr::MeshPrimitive> m_cubeMeshPrimitive;
+		core::InvPtr<gr::MeshPrimitive> m_cubeMeshPrimitive;
 		std::unique_ptr<re::Batch> m_cubeMeshBatch;
 		std::array<std::shared_ptr<re::Buffer>, 6> m_cubemapRenderCamParams;
 
