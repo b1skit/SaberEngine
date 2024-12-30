@@ -343,6 +343,13 @@ namespace gr::meshfactory
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
 
+		constexpr char const* k_meshName = "MeshFactory_Cube";
+
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		{
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
+		}
+
 		extentDistance = std::abs(extentDistance);
 
 		// Note: Using a RHCS
@@ -413,13 +420,11 @@ namespace gr::meshfactory
 		util::ByteVector colors = 
 			util::ByteVector::Create<glm::vec4>(assembledPositions.size(), factoryOptions.m_vertexColor);
 
-		constexpr char const* meshName = "cube";
-
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
 		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = meshName,
+			.m_name = k_meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &cubeIndices,
 			.m_positions = &assembledPositions,
@@ -500,7 +505,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			factoryOptions.m_inventory,
-			meshName,
+			k_meshName,
 			indexStream,
 			std::move(vertexStreams),
 			defaultMeshPrimitiveParams);
@@ -510,6 +515,13 @@ namespace gr::meshfactory
 	core::InvPtr<gr::MeshPrimitive> CreateFullscreenQuad(core::Inventory* inventory, ZLocation zLocation)
 	{
 		SEAssert(inventory, "Inventory cannot be null, it is required");
+
+		constexpr char const* k_meshName = "MeshFactory_OptimizedFullscreenQuad";
+
+		if (inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		{
+			return inventory->Get<gr::MeshPrimitive>(k_meshName);
+		}
 
 		float zDepth;
 		// NOTE: OpenGL & GLM's default clip coordinates have been overridden
@@ -539,13 +551,11 @@ namespace gr::meshfactory
 		util::ByteVector positions = util::ByteVector::Create<glm::vec3>({ tl, bl, br });
 		util::ByteVector triIndices = util::ByteVector::Create<uint16_t>({ 0, 1, 2 }); // Note: CCW winding
 
-		constexpr char meshName[] = "optimizedFullscreenQuad";
-
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams; // Use defaults
 
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = meshName,
+			.m_name = k_meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &triIndices,
 			.m_positions = &positions,
@@ -597,6 +607,13 @@ namespace gr::meshfactory
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
 
+		constexpr char const* k_meshName = "MeshFactory_Quad";
+
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		{
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
+		}
+
 		util::ByteVector positions = util::ByteVector::Create<glm::vec3>({ tl, bl, tr, br });
 
 		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>( // Note: (0,0) = Top left
@@ -617,13 +634,11 @@ namespace gr::meshfactory
 		util::ByteVector tangents = util::ByteVector::Create<glm::vec4>();
 		util::ByteVector colors = util::ByteVector::Create<glm::vec4>(positions.size(), factoryOptions.m_vertexColor);
 
-		constexpr char meshName[] = "quad";
-
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
 		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = meshName,
+			.m_name = k_meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &quadIndices,
 			.m_positions = &positions,
@@ -703,7 +718,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			factoryOptions.m_inventory,
-			meshName,
+			k_meshName,
 			indexStream,
 			std::move(vertexStreams),
 			MeshPrimitive::MeshPrimitiveParams{});
@@ -732,6 +747,13 @@ namespace gr::meshfactory
 		uint32_t numLongSlices /*= 16*/)
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
+
+		constexpr char const* k_meshName = "MeshFactory_Sphere";
+
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		{
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
+		}
 
 		radius = std::max(std::abs(radius), k_minRadius);
 		numLatSlices = std::max(numLatSlices, k_minSideEdges);
@@ -884,8 +906,6 @@ namespace gr::meshfactory
 		}
 		indices.at<uint16_t>(currentIndex - 1) = numVerts - numLatSlices - 1; // Wrap the last edge back to the start
 
-		constexpr char meshName[] = "sphere";
-
 		util::ByteVector tangents = util::ByteVector::Create<glm::vec4>(); // Empty: Will be generated if necessary
 		util::ByteVector colors = util::ByteVector::Create<glm::vec4>(positions.size(), factoryOptions.m_vertexColor);
 
@@ -893,7 +913,7 @@ namespace gr::meshfactory
 		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = meshName,
+			.m_name = k_meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &indices,
 			.m_positions = &positions,
@@ -973,7 +993,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			factoryOptions.m_inventory,
-			meshName,
+			k_meshName,
 			indexStream,
 			std::move(vertexStreams),
 			defaultMeshPrimitiveParams);
@@ -987,6 +1007,13 @@ namespace gr::meshfactory
 		uint32_t numSides /*= 16*/)
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
+
+		constexpr char const* k_meshName = "MeshFactory_Cone";
+
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		{
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
+		}
 
 		height = std::max(std::abs(height), k_minHeight);
 		radius = std::max(std::abs(radius), k_minRadius);
@@ -1139,8 +1166,6 @@ namespace gr::meshfactory
 		// Apply the orientation before we generate any additional parameters:
 		ApplyOrientation(positions, normals, factoryOptions.m_orientation);
 
-		constexpr char const* meshName = "cone";
-
 		util::ByteVector tangents = util::ByteVector::Create<glm::vec4>(); // Empty: Will be generated if necessary
 		util::ByteVector colors = util::ByteVector::Create<glm::vec4>(positions.size(), factoryOptions.m_vertexColor);
 
@@ -1148,7 +1173,7 @@ namespace gr::meshfactory
 		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = meshName,
+			.m_name = k_meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &indices,
 			.m_positions = &positions,
@@ -1228,7 +1253,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			factoryOptions.m_inventory,
-			meshName,
+			k_meshName,
 			indexStream,
 			std::move(vertexStreams),
 			defaultMeshPrimitiveParams);
@@ -1252,6 +1277,13 @@ namespace gr::meshfactory
 		float zDepth /*= 0.5f*/)
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
+
+		constexpr char const* k_meshName = "MeshFactory_HelloTriangle";
+
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		{
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
+		}
 
 		zDepth = std::clamp(zDepth, 0.f, 1.f);
 
@@ -1283,12 +1315,11 @@ namespace gr::meshfactory
 		util::ByteVector normals = util::ByteVector::Create<glm::vec3>(); // Empty: Will be generated if necessary
 		util::ByteVector tangents = util::ByteVector::Create<glm::vec4>();
 		std::vector<util::ByteVector*> extraChannels = { &colors };
-		constexpr char meshName[] = "helloTriangle";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = meshName,
+			.m_name = k_meshName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &indices,
 			.m_positions = &positions,
@@ -1364,7 +1395,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			factoryOptions.m_inventory,
-			meshName,
+			k_meshName,
 			indexStream,
 			std::move(vertexStreams),
 			defaultMeshPrimitiveParams);
