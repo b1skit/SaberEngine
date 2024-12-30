@@ -73,11 +73,11 @@ namespace core
 		{
 			std::scoped_lock lock(parentLoadCtx->m_childDependenciesMutex, childLoadCtx->m_parentLoadContextsMutex);
 
-			SEAssert(!parentLoadCtx->m_childDependencies.contains(childLoadCtx->m_objectID),
-				"Child already added as a dependency");
-
-			parentLoadCtx->m_childDependencies.emplace(childLoadCtx->m_objectID);
-			childLoadCtx->m_parentLoadContexts.emplace_back(parentLoadCtx);
+			// Only add unique dependencies
+			if (parentLoadCtx->m_childDependencies.emplace(childLoadCtx->m_objectID).second)
+			{
+				childLoadCtx->m_parentLoadContexts.emplace_back(parentLoadCtx);
+			}
 		}
 	};
 
