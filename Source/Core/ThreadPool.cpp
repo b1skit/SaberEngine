@@ -56,24 +56,26 @@ namespace core
 		{
 			std::unique_lock<std::mutex> waitingLock(m_jobQueueMutex);
 
-			m_isRunning = false;
-			waitingLock.unlock();
-			m_jobQueueCV.notify_all();
+			m_isRunning = false;			
+		}
+		m_jobQueueCV.notify_all();
+
+		// Wait for all of our threads to complete:
+		for (auto& thread : m_workerThreads)
+		{
+			m_workerThreads.at(thread.first).join();
 		}
 
+		while (!m_workerThreadsToJoin.empty())
+		{
+			m_workerThreadsToJoin.front().join();
+		}
+
+		// Finally, clear the now-joined threads:
 		{
 			std::lock_guard<std::shared_mutex> lock(m_workerThreadsMutex);
-
-			for (auto& thread : m_workerThreads)
-			{
-				m_workerThreads.at(thread.first).join();
-			}
+			
 			m_workerThreads.clear();
-
-			while (!m_workerThreadsToJoin.empty())
-			{
-				m_workerThreadsToJoin.front().join();
-			}
 			m_workerThreadsToJoin.clear();
 		}
 	}
@@ -83,11 +85,12 @@ namespace core
 	{
 		while (m_isRunning)
 		{
-			// Aquire the lock and get a job, waiting if no jobs exist:
+			// Aquire the lock and get a job, or wait if no jobs exist:
 			std::unique_lock<std::mutex> waitingLock(m_jobQueueMutex);
-			m_jobQueueCV.wait(waitingLock, 
-				[this](){ return !m_jobQueue.empty() || !m_isRunning;} // False if waiting should continue
-			);
+			m_jobQueueCV.wait(
+				waitingLock, 
+				[this](){ return !m_jobQueue.empty() || !m_isRunning;}); // False if waiting should continue
+			
 			if (!m_isRunning)
 			{
 				return;
