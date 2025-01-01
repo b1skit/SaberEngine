@@ -264,7 +264,7 @@ namespace fr
 
 		result.Make3Dimensional(); // Ensure the final bounds are 3D
 
-		ValidateMinMaxBounds(m_localMinXYZ, m_localMaxXYZ); // _DEBUG only
+		ValidateMinMaxBounds(result.m_localMinXYZ, result.m_localMaxXYZ); // _DEBUG only
 
 		return result;
 	}
