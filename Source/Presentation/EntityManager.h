@@ -61,6 +61,9 @@ namespace fr
 		template<typename T, typename... Args>
 		void EnqueueEntityCommand(Args&&... args);
 
+		void EnqueueEntityCommand(std::function<void(void)>&&);
+
+
 	private:
 		void SetMainCamera(entt::entity);
 		friend fr::SetMainCameraCommand;
@@ -146,6 +149,9 @@ namespace fr
 
 		template<typename T, typename... Args>
 		std::vector<entt::entity> GetAllEntities() const;
+
+		template<typename T, typename... Args>
+		bool EntityExists() const;
 
 
 	private:
@@ -343,8 +349,31 @@ namespace fr
 
 
 	template<typename T, typename... Args>
+	bool EntityManager::EntityExists() const
+	{
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+			auto view = m_registry.view<T, Args...>();
+			for (auto entity : view)
+			{
+				return true; // If we hit this even once, an entity must exists with the given components
+			}
+		}
+		return false;
+	}
+
+
+
+	template<typename T, typename... Args>
 	void EntityManager::EnqueueEntityCommand(Args&&... args)
 	{
 		m_entityCommands.Enqueue<T>(std::forward<Args>(args)...);
+	}
+
+
+	inline void EntityManager::EnqueueEntityCommand(std::function<void(void)>&& lambdaCmd)
+	{
+		m_entityCommands.Enqueue(std::move(lambdaCmd));
 	}
 }
