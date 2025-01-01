@@ -489,10 +489,11 @@ namespace fr
 		{
 			ShowCommonOptions(nullptr);
 
-			if (ImGui::CollapsingHeader(std::format("IBL Textures##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader(std::format("IBL Texture##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
-				ImGui::Text("IBL texture: \"%s\"", m_typeProperties.m_ambient.m_IBLTex->GetName().c_str());
+
+				re::Texture::ShowImGuiWindow(m_typeProperties.m_ambient.m_IBLTex);
 				
 				static bool s_unifyScale = true;
 				bool currentUnifyScale = s_unifyScale;
