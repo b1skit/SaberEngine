@@ -41,8 +41,6 @@ namespace re
 	private:
 		void ResetForNewFrame(uint64_t renderFrameNum);
 		void ClearTemporaryStaging();
-	
-		void RegisterAndAllocateBuffer(std::shared_ptr<re::Buffer>, uint32_t numBytes);
 
 
 	protected:
@@ -170,10 +168,10 @@ namespace re
 
 	protected: // Interfaces for the Buffer friend class:
 		friend class re::Buffer;
+		void Register(std::shared_ptr<re::Buffer>, uint32_t numBytes);
 
-		void Register(Handle uniqueID, uint32_t numBytes, Buffer::StagingPool, re::Lifetime bufferLifetime); // Called once at creation
 
-	private:
+	private:		
 		uint32_t Allocate(Handle uniqueID, uint32_t numBytes, Buffer::StagingPool, re::Lifetime bufferLifetime); // Returns the start index
 
 	protected:
@@ -183,10 +181,6 @@ namespace re
 		void GetData(Handle uniqueID, void const** out_data) const;
 
 		void Deallocate(Handle uniqueID);
-
-
-	
-
 
 
 	private:

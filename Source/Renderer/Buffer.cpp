@@ -95,9 +95,9 @@ namespace re
 		SEAssert(typeIDHash == newBuffer->m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
 
-		re::Context::Get()->GetBufferAllocator()->RegisterAndAllocateBuffer(newBuffer, numBytes);
+		re::Context::Get()->GetBufferAllocator()->Register(newBuffer, numBytes);
 
-		RenderManager::Get()->RegisterForCreateDEPRECATED(newBuffer); // Enroll for deferred platform layer creation
+		RenderManager::Get()->RegisterForCreate(newBuffer); // Enroll for deferred platform layer creation
 	}
 
 

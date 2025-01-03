@@ -177,7 +177,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::RegisterAndAllocateBuffer(std::shared_ptr<re::Buffer> buffer, uint32_t numBytes)
+	void BufferAllocator::Register(std::shared_ptr<re::Buffer> buffer, uint32_t numBytes)
 	{
 		const Buffer::StagingPool stagingPool = buffer->GetAllocationType();
 		SEAssert(stagingPool != re::Buffer::StagingPool::StagingPool_Invalid, "Invalid AllocationType");
@@ -221,14 +221,7 @@ namespace re
 		default: SEAssertF("Invalid AllocationType");
 		}
 
-		// Register our buffer so we're ready when it is committed:
-		Register(uniqueID, numBytes, stagingPool, buffer->GetLifetime());
-	}
-
-
-	void BufferAllocator::Register(
-		Handle uniqueID, uint32_t numBytes, Buffer::StagingPool stagingPool, re::Lifetime bufferLifetime)
-	{
+		// Record the initial commit metadata:
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
 
@@ -237,7 +230,7 @@ namespace re
 
 			// Update our ID -> data tracking table:
 			m_handleToCommitMetadata.insert(
-				{ uniqueID, CommitMetadata{stagingPool, bufferLifetime, k_invalidStartIdx, numBytes} });
+				{ uniqueID, CommitMetadata{stagingPool, buffer->GetLifetime(), k_invalidStartIdx, numBytes} });
 		}
 	}
 
