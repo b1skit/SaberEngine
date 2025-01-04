@@ -97,7 +97,7 @@ namespace re
 
 		re::Context::Get()->GetBufferAllocator()->Register(newBuffer, numBytes);
 
-		RenderManager::Get()->RegisterForCreate(newBuffer); // Enroll for deferred platform layer creation
+		RenderManager::Get()->RegisterForCreateDEPRECATED(newBuffer); // Enroll for deferred platform layer creation
 	}
 
 
