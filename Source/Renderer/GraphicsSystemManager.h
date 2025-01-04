@@ -49,8 +49,6 @@ namespace gr
 
 	public:
 		gr::RenderDataID GetActiveCameraRenderDataID() const;
-		gr::Camera::RenderData const& GetActiveCameraRenderData() const;
-		gr::Transform::RenderData const& GetActiveCameraTransformData() const;
 		re::BufferInput const& GetActiveCameraParams() const;
 
 		void SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);

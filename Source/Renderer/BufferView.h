@@ -87,14 +87,13 @@ namespace re
 	public:
 		BufferInput();
 
-		BufferInput(char const* shaderName, std::shared_ptr<re::Buffer>, re::BufferView const&);
-		BufferInput(std::string const& shaderName, std::shared_ptr<re::Buffer>, re::BufferView const&);
+		BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
+		BufferInput(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
 		
 		// Infer a default view from the Buffer
-		BufferInput(char const* shaderName, std::shared_ptr<re::Buffer>);
-		BufferInput(std::string const& shaderName, std::shared_ptr<re::Buffer>);
+		BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> const&);
+		BufferInput(std::string const& shaderName, std::shared_ptr<re::Buffer> const&);
 		
-
 
 	public:
 		BufferInput(BufferInput const&) = default;
@@ -164,33 +163,56 @@ namespace re
 	// -----------------------------------------------------------------------------------------------------------------
 
 
-	struct VertexBufferInput
+	class VertexBufferInput
 	{
+	public:
 		static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
+		
+		VertexBufferInput();
+		VertexBufferInput(core::InvPtr<gr::VertexStream> const&);
+		VertexBufferInput(core::InvPtr<gr::VertexStream> const&, re::Buffer const* bufferOverride);
 
-		VertexBufferInput() = default;
+		VertexBufferInput(VertexBufferInput const&) noexcept = default;
+		VertexBufferInput(VertexBufferInput&&) noexcept = default;
+		VertexBufferInput& operator=(VertexBufferInput const&) noexcept = default;
+		VertexBufferInput& operator=(VertexBufferInput&&) noexcept = default;
+		~VertexBufferInput() = default;
 
-		VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream)
-			: m_buffer(stream ? stream->GetBuffer() : nullptr)
-			, m_view{}
+	public:
+		core::InvPtr<gr::VertexStream> const& GetStream() const;
+		core::InvPtr<gr::VertexStream>& GetStream();
+
+		re::Buffer const* GetBuffer() const;
+
+
+	public:
+		re::BufferView m_view;
+		uint8_t m_bindSlot = k_invalidSlotIdx;
+
+
+	private:
+		core::InvPtr<gr::VertexStream> m_vertexStream;
+		re::Buffer const* m_bufferOverride;
+	};
+
+
+	inline VertexBufferInput::VertexBufferInput()
+		: m_vertexStream()
+		, m_bufferOverride(nullptr)
+		, m_view{}
+		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
+	{
+	}
+
+
+	inline VertexBufferInput::VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream)
+		: m_vertexStream(stream)
+		, m_bufferOverride(nullptr)
+		, m_view{}
+		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
+	{
+		if (m_vertexStream)
 		{
-			if (stream)
-			{
-				m_view = re::BufferView::VertexStreamType{
-					.m_type = stream->GetType(),
-					.m_dataType = stream->GetDataType(),
-					.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
-					.m_numElements = stream->GetNumElements(),
-				};
-			}
-		}
-
-		VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream, re::Buffer const* bufferOverride)
-			: m_buffer(bufferOverride)
-			, m_view{}
-		{
-			SEAssert(stream && bufferOverride, "Override constructure requires a valid stream and buffer");
-
 			m_view = re::BufferView::VertexStreamType{
 				.m_type = stream->GetType(),
 				.m_dataType = stream->GetDataType(),
@@ -198,9 +220,44 @@ namespace re
 				.m_numElements = stream->GetNumElements(),
 			};
 		}
+	}
 
-		re::Buffer const* m_buffer = nullptr;
-		re::BufferView m_view{};
-		uint8_t m_bindSlot = k_invalidSlotIdx; // NOTE: Automatically resolved by the batch
-	};
+
+	inline VertexBufferInput::VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream, re::Buffer const* bufferOverride)
+		: m_vertexStream(stream)
+		, m_bufferOverride(bufferOverride)
+		, m_view{}
+		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
+	{
+		SEAssert(m_vertexStream && m_bufferOverride, "Override constructure requires a valid stream and buffer");
+
+		m_view = re::BufferView::VertexStreamType{
+			.m_type = stream->GetType(),
+			.m_dataType = stream->GetDataType(),
+			.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
+			.m_numElements = stream->GetNumElements(),
+		};
+	}
+
+
+	inline core::InvPtr<gr::VertexStream> const& VertexBufferInput::GetStream() const
+	{
+		return m_vertexStream;
+	}
+
+
+	inline core::InvPtr<gr::VertexStream>& VertexBufferInput::GetStream()
+	{
+		return m_vertexStream;
+	}
+
+
+	inline re::Buffer const* VertexBufferInput::GetBuffer() const
+	{
+		if (m_bufferOverride)
+		{
+			return m_bufferOverride;
+		}
+		return m_vertexStream->GetBuffer();
+	}
 }

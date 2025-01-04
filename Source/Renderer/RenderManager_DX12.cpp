@@ -96,12 +96,12 @@ namespace dx12
 				dx12::Shader::Create(*shader);
 			}
 		}
-		// Buffers:
-		if (renderManager.m_newBuffers.HasReadData())
+		// Vertex streams:
+		if (renderManager.m_newVertexStreams.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newBuffers.GetReadData())
+			for (auto& vertexStream : renderManager.m_newVertexStreams.GetReadData())
 			{
-				dx12::Buffer::Create(*newObject);
+				vertexStream->CreateBuffers();
 			}
 		}
 
@@ -404,9 +404,9 @@ namespace dx12
 
 						// Batch buffers:
 						std::vector<re::BufferInput> const& batchBuffers = batches[batchIdx].GetBuffers();
-						for (re::BufferInput const& batchBufferInput : batchBuffers)
+						for (size_t bufferIdx = 0; bufferIdx < batchBuffers.size(); ++bufferIdx)
 						{
-							currentCommandList->SetBuffer(batchBufferInput);
+							currentCommandList->SetBuffer(batchBuffers[bufferIdx]);
 						}
 
 						// Batch Texture / Sampler inputs :

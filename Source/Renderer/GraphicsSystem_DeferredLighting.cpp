@@ -224,19 +224,19 @@ namespace gr
 		const uint32_t iemTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_iemTexWidthHeightKey));
 
-		// IEM-specific texture params:
-		re::Texture::TextureParams iemTexParams;
-		iemTexParams.m_width = iemTexWidthHeight;
-		iemTexParams.m_height = iemTexWidthHeight;
-		iemTexParams.m_usage = 
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
-		iemTexParams.m_dimension = re::Texture::Dimension::TextureCube;
-		iemTexParams.m_format = re::Texture::Format::RGBA16F;
-		iemTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		iemTexParams.m_mipMode = re::Texture::MipMode::None;
+		const re::Texture::TextureParams iemTexParams
+		{
+			.m_width = iemTexWidthHeight,
+			.m_height = iemTexWidthHeight,
+			.m_usage = static_cast<re::Texture::Usage>(re::Texture::ColorTarget | re::Texture::ColorSrc),
+			.m_dimension = re::Texture::Dimension::TextureCube,
+			.m_format = re::Texture::Format::RGBA16F,
+			.m_colorSpace = re::Texture::ColorSpace::Linear,
+			.m_mipMode = re::Texture::MipMode::None, 
+		};
 
-		const std::string IEMTextureName = iblTex->GetName() + "_IEMTexture";
-		iemTexOut = re::Texture::Create(IEMTextureName, iemTexParams);
+		std::string const& iemTexName = iblTex->GetName() + "_IEMTexture";
+		iemTexOut = re::Texture::Create(iemTexName, iemTexParams);
 
 		for (uint32_t face = 0; face < 6; face++)
 		{
@@ -254,6 +254,7 @@ namespace gr
 			// Buffers:
 			IEMPMREMGenerationData const& iemGenerationParams =
 				GetIEMPMREMGenerationParamsDataData(0, 1, face, iblTex->Width(), iblTex->Height());
+
 			std::shared_ptr<re::Buffer> iemGenerationBuffer = re::Buffer::Create(
 				IEMPMREMGenerationData::s_shaderName,
 				iemGenerationParams,

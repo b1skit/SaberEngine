@@ -22,6 +22,30 @@ namespace fr
 	}
 
 
+	std::unique_ptr<AnimationController> AnimationController::CreateAnimationControllerObject()
+	{
+		return std::make_unique<AnimationController>(AnimationController::PrivateCTORTag{});
+	}
+
+
+	AnimationController* AnimationController::CreateAnimationController(
+		fr::EntityManager& em, char const* name, std::unique_ptr<AnimationController>&& initializedAnimationController)
+	{
+		SEAssert(initializedAnimationController != nullptr, "initializedAnimationController is null");
+
+		entt::entity newEntity = em.CreateEntity(name);
+
+		AnimationController* newAnimationController =
+			em.EmplaceComponent<AnimationController>(newEntity, std::move(*initializedAnimationController));
+		
+		SEAssert(newAnimationController, "Failed to create newAnimationController");
+
+		initializedAnimationController = nullptr;
+
+		return newAnimationController;
+	}
+
+
 	void AnimationController::UpdateAnimationController(AnimationController& animController, double stepTimeMs)
 	{
 		if (animController.HasAnimations())	

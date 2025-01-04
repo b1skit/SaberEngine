@@ -303,9 +303,9 @@ namespace gr
 			re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"),
 			re::TextureView(*m_spotShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
 
-		if (m_viewBatches)
+		const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+		if (m_viewBatches && mainCamID != gr::k_invalidRenderDataID)
 		{
-			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 			SEAssert(m_viewBatches->contains(mainCamID), "Cannot find main camera ID in view batches");
 			m_transparencyStage->AddBatches(m_viewBatches->at(mainCamID));
 		}

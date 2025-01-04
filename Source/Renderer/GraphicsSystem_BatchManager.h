@@ -98,6 +98,7 @@ namespace gr
 		AnimatedVertexStreams const* m_animatedVertexStreams; // From the vertex animation GS
 		
 		ViewBatches m_viewBatches; // Map of gr::Camera::View to vectors of Batches that passed culling
+		std::vector<re::Batch> m_allBatches; // Per-frame copy of m_permanentCachedBatches, with Buffers set
 		std::unordered_map<util::DataHash, re::BufferInput> m_instanceIndiciesBuffers;
 	};
 }

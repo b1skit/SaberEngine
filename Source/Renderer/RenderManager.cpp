@@ -126,8 +126,8 @@ namespace re
 		, m_newShaders(util::NBufferedVector<core::InvPtr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<core::InvPtr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newVertexStreams(util::NBufferedVector<core::InvPtr<gr::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
-		, m_newBuffers(util::NBufferedVector<std::shared_ptr<re::Buffer>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_quitEventRecieved(false)
 	{
 		m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
@@ -214,9 +214,6 @@ namespace re
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
 
-		// TODO: It would be nice to not have to explicitely call this here, but if don't, DX12 IEM textures are black?
-		CreateAPIResources();
-				
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 
 		SEEndCPUEvent();
@@ -261,6 +258,10 @@ namespace re
 
 		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
 
+		// We must create any API resources that were passed via render commands, as they may be required during GS
+		// updates (e.g. MeshPrimitive VertexStream Buffers need to be alive so we can set them on BufferInputs)
+		CreateAPIResources(false);
+
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
 		SEBeginCPUEvent("Execute update pipeline");
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
@@ -271,7 +272,7 @@ namespace re
 		SEEndCPUEvent();
 
 		// Create any new resources that have been created by GS's during the ExecuteUpdatePipeline call:
-		CreateAPIResources();
+		CreateAPIResources(true);
 
 		// Update buffers
 		re::Context::Get()->GetBufferAllocator()->BufferData(frameNum);
@@ -293,15 +294,6 @@ namespace re
 	void RenderManager::EndOfFrame()
 	{
 		SEBeginCPUEvent("re::RenderManager::EndOfFrame");
-
-		// Need to clear the buffer read data now, to make sure we're not holding on to any single frame buffers beyond the
-		// end of the current frame
-		SEBeginCPUEvent("Clear buffer data");
-		{
-			m_newBuffers.ClearReadData();
-		}
-
-		SEEndCPUEvent();
 
 		SEBeginCPUEvent("Process render systems");
 		{
@@ -432,7 +424,7 @@ namespace re
 	}
 
 
-	void RenderManager::CreateAPIResources()
+	void RenderManager::CreateAPIResources(bool clearCreatedTextures)
 	{
 		SEBeginCPUEvent("platform::RenderManager::CreateAPIResources");
 
@@ -443,16 +435,17 @@ namespace re
 		m_newShaders.AquireReadLock();
 		m_newTextures.AquireReadLock();
 		m_newSamplers.AquireReadLock();
+		m_newVertexStreams.AquireReadLock();
 		m_newTargetSets.AquireReadLock();
-		m_newBuffers.AquireReadLock();
 
-		// Clear any textures created during the last frame as late as possible. This allows systems that use this list
-		// (e.g. the MIP generation GS) to see new textures registered for creation between the last time we swapped
-		// the m_newTextures buffers and now
-		m_createdTextures.clear();
+		if (clearCreatedTextures)
+		{
+			// Clear any textures created during the frame. We do this each frame after the RenderSystem updates to
+			// ensure anything that needs to know about new Textures being created (e.g. MIP generation GS) can see them
+			m_createdTextures.clear();
+		}
 
-		// Record any newly created textures (we clear m_newTextures during Initialize, so we maintain a separate copy)
-		// This allows us an easy way to create MIPs, and clear the initial data after buffering
+		// Record newly created textures. This provides an easy way to create MIPs, and clear initial data after buffering
 		for (auto const& newTexture : m_newTextures.GetReadData())
 		{
 			m_createdTextures.emplace_back(newTexture);
@@ -465,8 +458,8 @@ namespace re
 		m_newShaders.ReleaseReadLock();
 		m_newTextures.ReleaseReadLock();
 		m_newSamplers.ReleaseReadLock();
+		m_newVertexStreams.ReleaseReadLock();
 		m_newTargetSets.ReleaseReadLock();
-		m_newBuffers.ReleaseReadLock();
 
 		// Clear the initial data of our new textures now that they have been buffered
 		for (auto const& newTexture : m_createdTextures)
@@ -486,8 +479,8 @@ namespace re
 		m_newShaders.SwapAndClear();
 		m_newTextures.SwapAndClear();
 		m_newSamplers.SwapAndClear();
+		m_newVertexStreams.SwapAndClear();
 		m_newTargetSets.SwapAndClear();
-		m_newBuffers.SwapAndClear();
 
 		SEEndCPUEvent();
 	}
@@ -498,22 +491,22 @@ namespace re
 		m_newShaders.Destroy();
 		m_newTextures.Destroy();
 		m_newSamplers.Destroy();
+		m_newVertexStreams.Destroy();
 		m_newTargetSets.Destroy();
-		m_newBuffers.Destroy();
 	}
 
 
 	template<>
 	void RenderManager::RegisterForCreate(core::InvPtr<re::Shader> const& newObject)
 	{
-		m_newShaders.EmplaceBack(std::move(newObject));
+		m_newShaders.EmplaceBack(newObject);
 	}
 
 
 	template<>
 	void RenderManager::RegisterForCreate(core::InvPtr<re::Texture> const& newObject)
 	{
-		m_newTextures.EmplaceBack(std::move(newObject));
+		m_newTextures.EmplaceBack(newObject);
 	}
 
 
@@ -525,16 +518,16 @@ namespace re
 
 
 	template<>
-	void RenderManager::RegisterForCreateDEPRECATED(std::shared_ptr<re::TextureTargetSet> newObject)
+	void RenderManager::RegisterForCreate(core::InvPtr<gr::VertexStream> const& newObject)
 	{
-		m_newTargetSets.EmplaceBack(std::move(newObject));
+		m_newVertexStreams.EmplaceBack(newObject);
 	}
 
 
 	template<>
-	void RenderManager::RegisterForCreateDEPRECATED(std::shared_ptr<re::Buffer> newObject)
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::TextureTargetSet> const& newObject)
 	{
-		m_newBuffers.EmplaceBack(std::move(newObject));
+		m_newTargetSets.EmplaceBack(newObject);
 	}
 
 

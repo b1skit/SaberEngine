@@ -409,10 +409,13 @@ namespace gr
 
 
 	void XeGTAOGraphicsSystem::PreRender()
-	{	
-		if (m_isDirty)
+	{
+		const gr::RenderDataID activeCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+
+		if (m_isDirty && activeCamID != gr::k_invalidRenderDataID)
 		{
-			gr::Camera::RenderData const& mainCamRenderData = m_graphicsSystemManager->GetActiveCameraRenderData();
+			gr::Camera::RenderData const& mainCamRenderData = 
+				m_graphicsSystemManager->GetRenderData().GetObjectData<gr::Camera::RenderData>(activeCamID);
 
 			m_XeGTAOConstants.GetBuffer()->Commit(
 				GetGTAOConstantsData(m_xRes, m_yRes, m_settings, mainCamRenderData.m_cameraParams.g_projection));

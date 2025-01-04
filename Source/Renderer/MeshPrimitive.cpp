@@ -263,7 +263,7 @@ namespace gr
 	{
 		struct MeshPrimitiveLoadContext final : public virtual core::ILoadContext<gr::MeshPrimitive>
 		{
-			std::unique_ptr<gr::MeshPrimitive> Load(core::InvPtr<gr::MeshPrimitive>) override
+			std::unique_ptr<gr::MeshPrimitive> Load(core::InvPtr<gr::MeshPrimitive>&) override
 			{
 				return std::unique_ptr<gr::MeshPrimitive>(new MeshPrimitive(
 					m_meshName.c_str(),
@@ -296,7 +296,7 @@ namespace gr
 	{
 		struct MeshPrimitiveAndStreamLoadContext final : public virtual core::ILoadContext<gr::MeshPrimitive>
 		{
-			std::unique_ptr<gr::MeshPrimitive> Load(core::InvPtr<gr::MeshPrimitive>) override
+			std::unique_ptr<gr::MeshPrimitive> Load(core::InvPtr<gr::MeshPrimitive>&) override
 			{
 				std::unique_ptr<gr::MeshPrimitive> newMeshPrim = std::unique_ptr<gr::MeshPrimitive>(new MeshPrimitive(
 					m_meshName.c_str(),

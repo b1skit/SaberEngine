@@ -132,8 +132,10 @@ namespace gr
 
 		struct VertexStreamLoadContext : core::ILoadContext<gr::VertexStream>
 		{
-			std::unique_ptr<gr::VertexStream> Load(core::InvPtr<gr::VertexStream>) override
+			std::unique_ptr<gr::VertexStream> Load(core::InvPtr<gr::VertexStream>& newVertexStream) override
 			{
+				re::RenderManager::Get()->RegisterForCreate(newVertexStream);
+
 				return std::unique_ptr<gr::VertexStream>(
 					new VertexStream(m_streamDesc, std::move(m_data), m_dataHash, m_extraUsageBits));
 			}
@@ -161,6 +163,44 @@ namespace gr
 	{
 		return Create(
 			createParams.m_streamDesc, std::move(*createParams.m_streamData.get()), createParams.m_extraUsageBits);
+	}
+
+
+	void VertexStream::CreateBuffers()
+	{
+		SEAssert(m_deferredBufferCreateParams, "Deferred create params cannot be null");
+
+		// Create the vertex/index Buffer object that will back our vertex stream:
+		std::string const& bufferName =
+			std::format("VertexStream_{}_{}", TypeToCStr(m_streamDesc.m_type), GetDataHash());
+
+		const re::Buffer::MemoryPoolPreference bufMemPoolPref =
+			m_streamDesc.m_lifetime == re::Lifetime::SingleFrame ? re::Buffer::UploadHeap : re::Buffer::DefaultHeap;
+
+		const re::Buffer::UsageMask bufferUsage =
+			(m_streamDesc.m_type == Type::Index ? re::Buffer::IndexStream : re::Buffer::VertexStream) | 
+			m_deferredBufferCreateParams->m_extraUsageBits;
+
+		re::Buffer::AccessMask bufAccessMask = re::Buffer::GPURead;
+		if (bufMemPoolPref == re::Buffer::UploadHeap)
+		{
+			bufAccessMask |= re::Buffer::CPUWrite;
+		}
+
+		m_streamBuffer = re::Buffer::Create(
+			bufferName,
+			m_deferredBufferCreateParams->m_data.data().data(),
+			util::CheckedCast<uint32_t>(m_deferredBufferCreateParams->m_data.GetTotalNumBytes()),
+			re::Buffer::BufferParams{
+				.m_lifetime = m_streamDesc.m_lifetime,
+				.m_stagingPool = re::Buffer::StagingPool::Temporary,
+				.m_memPoolPreference = bufMemPoolPref,
+				.m_accessMask = bufAccessMask,
+				.m_usageMask = bufferUsage,
+				.m_arraySize = 1, });
+
+		// Finally, release the data:
+		m_deferredBufferCreateParams = nullptr;
 	}
 
 
@@ -208,33 +248,10 @@ namespace gr
 		SetDataHash(dataHash);
 
 
-		// Create the vertex/index Buffer object that will back our vertex stream:
-		std::string const& bufferName =
-			std::format("VertexStream_{}_{}", TypeToCStr(m_streamDesc.m_type), GetDataHash());
-
-		const re::Buffer::MemoryPoolPreference bufMemPoolPref =
-			streamDesc.m_lifetime == re::Lifetime::SingleFrame ? re::Buffer::UploadHeap : re::Buffer::DefaultHeap;
-
-		const re::Buffer::UsageMask bufferUsage =
-			(streamDesc.m_type == Type::Index ? re::Buffer::IndexStream : re::Buffer::VertexStream) | extraUsageBits;
-
-		re::Buffer::AccessMask bufAccessMask = re::Buffer::GPURead;
-		if (bufMemPoolPref == re::Buffer::UploadHeap)
-		{
-			bufAccessMask |= re::Buffer::CPUWrite;
-		}
-
-		m_streamBuffer = re::Buffer::Create(
-			bufferName,
-			data.data().data(),
-			util::CheckedCast<uint32_t>(data.GetTotalNumBytes()),
-			re::Buffer::BufferParams{
-				.m_lifetime = streamDesc.m_lifetime,
-				.m_stagingPool = re::Buffer::StagingPool::Temporary,
-				.m_memPoolPreference = bufMemPoolPref,
-				.m_accessMask = bufAccessMask,
-				.m_usageMask = bufferUsage,
-				.m_arraySize = 1, });
+		m_deferredBufferCreateParams = std::make_unique<DeferredBufferCreateParams>(DeferredBufferCreateParams{
+			.m_data = std::move(data),
+			.m_extraUsageBits = extraUsageBits,
+			});
 	}
 
 
@@ -253,19 +270,28 @@ namespace gr
 
 	void VertexStream::Destroy()
 	{
+		SEAssert((m_streamBuffer == nullptr) != (m_deferredBufferCreateParams == nullptr),
+			"A null Buffer and deferred buffer create params are expected to be mutually exclusive");
+
 		m_streamBuffer = nullptr;
+		m_deferredBufferCreateParams = nullptr;
 	}
 
 
 	uint32_t VertexStream::GetTotalDataByteSize() const
 	{
-		return m_streamBuffer->GetTotalBytes();
+		SEAssert((m_streamBuffer == nullptr) != (m_deferredBufferCreateParams == nullptr),
+			"A null Buffer and deferred buffer create params are expected to be mutually exclusive");
+
+		return m_streamBuffer ? 
+			m_streamBuffer->GetTotalBytes() : 
+			util::CheckedCast<uint32_t>(m_deferredBufferCreateParams->m_data.GetTotalNumBytes());
 	}
 
 
 	uint32_t VertexStream::GetNumElements() const
 	{
-		return m_streamBuffer->GetTotalBytes() / DataTypeToByteStride(m_streamDesc.m_dataType);
+		return GetTotalDataByteSize() / DataTypeToByteStride(m_streamDesc.m_dataType);
 	}
 
 

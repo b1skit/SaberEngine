@@ -58,7 +58,7 @@ namespace re
 
 
 	BufferInput::BufferInput(
-		std::string const& shaderName, std::shared_ptr<re::Buffer> buffer, re::BufferView const& view)
+		std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
 		: core::INamedObject(shaderName)
 		, m_buffer(buffer)
 		, m_view(view)
@@ -66,7 +66,7 @@ namespace re
 	}
 
 
-	BufferInput::BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> buffer, re::BufferView const& view)
+	BufferInput::BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
 		: core::INamedObject(shaderName)
 		, m_buffer(buffer)
 		, m_view(view)
@@ -74,7 +74,7 @@ namespace re
 	}
 
 
-	BufferInput::BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> buffer)
+	BufferInput::BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> const& buffer)
 		: core::INamedObject(shaderName)
 		, m_buffer(buffer)
 	{
@@ -82,7 +82,7 @@ namespace re
 	}
 
 
-	BufferInput::BufferInput(std::string const& shaderName, std::shared_ptr<re::Buffer> buffer)
+	BufferInput::BufferInput(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
 		:BufferInput(shaderName.c_str(), buffer)
 	{
 	}

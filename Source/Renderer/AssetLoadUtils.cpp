@@ -32,7 +32,7 @@ namespace grutil
 
 
 	template<>
-	void TextureFromFilePath<re::Texture>::OnLoadBegin(core::InvPtr<re::Texture> newTex)
+	void TextureFromFilePath<re::Texture>::OnLoadBegin(core::InvPtr<re::Texture>& newTex)
 	{
 		LOG(std::format("Creating texture from file path \"{}\"", m_filePath).c_str());
 
@@ -42,7 +42,7 @@ namespace grutil
 
 
 	template<>
-	std::unique_ptr<re::Texture> TextureFromFilePath<re::Texture>::Load(core::InvPtr<re::Texture>)
+	std::unique_ptr<re::Texture> TextureFromFilePath<re::Texture>::Load(core::InvPtr<re::Texture>&)
 	{
 		re::Texture::TextureParams texParams{};
 		std::vector<re::Texture::ImageDataUniquePtr> imageData;

@@ -506,7 +506,7 @@ namespace dx12
 		{
 		case re::Batch::GeometryMode::IndexedInstanced:
 		{
-			SEAssert(batchGraphicsParams.m_indexBuffer.m_buffer, "Index stream cannot be null for indexed draws");
+			SEAssert(batchGraphicsParams.m_indexBuffer.GetBuffer(), "Index stream cannot be null for indexed draws");
 
 			SetIndexBuffer(batchGraphicsParams.m_indexBuffer);
 
@@ -552,12 +552,12 @@ namespace dx12
 		for (uint32_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
 			// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].m_buffer;
-			if (!streamBuffer)
+			if (!vertexBuffers[streamIdx].GetStream())
 			{
 				SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
 				break;
 			}
+			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].GetBuffer();
 
 			dx12::Buffer::PlatformParams* streamBufferPlatParams =
 				streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
@@ -613,16 +613,16 @@ namespace dx12
 
 	void CommandList::SetIndexBuffer(re::VertexBufferInput const& indexBuffer)
 	{
-		SEAssert(indexBuffer.m_buffer, "Index stream buffer is null");
+		SEAssert(indexBuffer.GetStream(), "Index stream buffer is null");
 
 		dx12::Buffer::PlatformParams* streamBufferPlatParams =
-			indexBuffer.m_buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+			indexBuffer.GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		m_commandList->IASetIndexBuffer(
-			streamBufferPlatParams->GetOrCreateIndexBufferView(*indexBuffer.m_buffer, indexBuffer.m_view));
+			streamBufferPlatParams->GetOrCreateIndexBufferView(*indexBuffer.GetBuffer(), indexBuffer.m_view));
 
 		// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
-		if (indexBuffer.m_buffer->GetLifetime() != re::Lifetime::SingleFrame)
+		if (indexBuffer.GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame)
 		{
 			TransitionResource(
 				streamBufferPlatParams->m_resovedGPUResource,

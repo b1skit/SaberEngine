@@ -14,7 +14,7 @@ namespace core
 namespace re
 {
 	class Batch;
-	struct VertexBufferInput;
+	class VertexBufferInput;
 }
 
 namespace gr

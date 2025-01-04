@@ -73,7 +73,7 @@ namespace core
 		ResourceSystem& operator=(ResourceSystem const&) = default;
 		ResourceSystem& operator=(ResourceSystem&&) = default;
 
-		~ResourceSystem() = default;
+		~ResourceSystem();
 
 		void Destroy() override;
 
@@ -117,6 +117,24 @@ namespace core
 
 
 	template<typename T>
+	ResourceSystem<T>::~ResourceSystem()
+	{
+		// Due to indeterminate ordering when Destroy() is called, we must check for resource leaks here, once we know
+		// all ResourceSystems have destroyed their contents
+#if defined (_DEBUG)
+		for (auto& entry : m_ptrAndControlBlocks)
+		{
+			const RefCountType entryRefCount = entry.second.m_control->m_refCount.load();
+
+			SEAssert(entryRefCount == 0 ||
+				entryRefCount == 1 && entry.second.m_isPermanent,
+				"There is an outstanding InvPtr that has not been released yet. This might indicate a resource leak");
+		}
+#endif
+	}
+
+
+	template<typename T>
 	void ResourceSystem<T>::Destroy()
 	{
 		FreeDeferredReleases(std::numeric_limits<uint64_t>::max()); // Force-release everything
@@ -130,7 +148,9 @@ namespace core
 				// by another resource held another ResourceSystem that has not been Destroy()ed yet
 				entry.second.m_object->Destroy();
 			}
-			m_ptrAndControlBlocks.clear();
+			// Note: For the same reason as above, we can't clear m_ptrAndControlBlocks here: A Resource held by an
+			// InvPtr might contain other InvPtrs. If we clear m_ptrAndControlBlocks, they won't be able to destroy
+			// themselves
 		}
 	}
 

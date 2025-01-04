@@ -116,7 +116,7 @@ namespace re
 		// data); We provide a thread-safe registration system that allows us to create the graphics API-side
 		// representations at the beginning of a new frame when they're needed
 		template<typename T>
-		void RegisterForCreateDEPRECATED(std::shared_ptr<T>);
+		void RegisterForCreate(std::shared_ptr<T> const&);
 
 		template<typename T>
 		void RegisterForCreate(core::InvPtr<T> const&);
@@ -125,7 +125,7 @@ namespace re
 		std::vector<core::InvPtr<re::Texture>> const& GetNewlyCreatedTextures() const;
 
 	private: // API resource management:
-		void CreateAPIResources();
+		void CreateAPIResources(bool clearCreatedTextures);
 
 		void SwapNewResourceDoubleBuffers();
 		void DestroyNewResourceDoubleBuffers();
@@ -134,8 +134,8 @@ namespace re
 		util::NBufferedVector<core::InvPtr<re::Shader>> m_newShaders;
 		util::NBufferedVector<core::InvPtr<re::Texture>> m_newTextures;
 		util::NBufferedVector<core::InvPtr<re::Sampler>> m_newSamplers;
+		util::NBufferedVector<core::InvPtr<gr::VertexStream>> m_newVertexStreams;
 		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;
-		util::NBufferedVector<std::shared_ptr<re::Buffer>> m_newBuffers;
 
 		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
 		// Used as a holding ground for operations that must be performed once after creation (E.g. mip generation)

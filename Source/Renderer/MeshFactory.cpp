@@ -4,6 +4,7 @@
 #include "VertexStreamBuilder.h"
 
 #include "Core/Util/ByteVector.h"
+#include "Core/Util/HashUtils.h"
 
 
 namespace
@@ -11,6 +12,33 @@ namespace
 	constexpr float k_minHeight = 0.001f;
 	constexpr float k_minRadius = 0.001f;
 	constexpr uint32_t k_minSideEdges = 3;
+
+
+	void ComputeCylinderMinMaxXYZ(
+		gr::meshfactory::FactoryOptions const& factoryOptions,
+		float height,
+		float topRadius,
+		float botRadius)
+	{
+		if (!factoryOptions.m_positionMinXYZOut && !factoryOptions.m_positionMaxXYZOut)
+		{
+			return;
+		}
+
+		if (factoryOptions.m_positionMinXYZOut)
+		{
+			factoryOptions.m_positionMinXYZOut->x = std::max(botRadius, topRadius) * -1.f;
+			factoryOptions.m_positionMinXYZOut->y = -height;
+			factoryOptions.m_positionMinXYZOut->z = std::max(botRadius, topRadius) * -1.f;
+		}
+
+		if (factoryOptions.m_positionMaxXYZOut)
+		{
+			factoryOptions.m_positionMaxXYZOut->x = std::max(botRadius, topRadius);
+			factoryOptions.m_positionMaxXYZOut->y = 0.f;
+			factoryOptions.m_positionMaxXYZOut->z = std::max(botRadius, topRadius);
+		}
+	}
 
 
 	// Common functionality for creating cyliner-like meshes
@@ -222,12 +250,6 @@ namespace
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
-		gr::Bounds::ComputeMinMaxPosition(
-			reinterpret_cast<glm::vec3 const*>(positions.data().data()),
-			positions.size(),
-			factoryOptions.m_positionMinXYZOut,
-			factoryOptions.m_positionMaxXYZOut);
-
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
 		util::ByteVector* tangentsPtr = factoryOptions.m_generateNormalsAndTangents ? &tangents : nullptr;
@@ -333,6 +355,103 @@ namespace
 			normals.at<glm::vec3>(i) = lookatMatrix * normals.at<glm::vec3>(i);
 		}
 	}
+
+
+	void ComputeCubeMinMaxXYZ(gr::meshfactory::FactoryOptions const& factoryOptions, float extentDistance)
+	{
+		if (!factoryOptions.m_positionMinXYZOut && !factoryOptions.m_positionMaxXYZOut)
+		{
+			return;
+		}
+
+		if (factoryOptions.m_positionMinXYZOut)
+		{
+			factoryOptions.m_positionMinXYZOut->x = -extentDistance;
+			factoryOptions.m_positionMinXYZOut->y = -extentDistance;
+			factoryOptions.m_positionMinXYZOut->z = -extentDistance;
+		}
+
+		if (factoryOptions.m_positionMaxXYZOut)
+		{
+			factoryOptions.m_positionMaxXYZOut->x = extentDistance;
+			factoryOptions.m_positionMaxXYZOut->y = extentDistance;
+			factoryOptions.m_positionMaxXYZOut->z = extentDistance;
+		}
+	}
+
+
+	void ComputeQuadMinMaxXYZ(
+		gr::meshfactory::FactoryOptions const& factoryOptions,
+		glm::vec3 const& tl,
+		glm::vec3 const& tr,
+		glm::vec3 const& bl,
+		glm::vec3 const& br)
+	{
+		if (!factoryOptions.m_positionMinXYZOut && !factoryOptions.m_positionMaxXYZOut)
+		{
+			return;
+		}
+
+		if (factoryOptions.m_positionMinXYZOut)
+		{
+			factoryOptions.m_positionMinXYZOut->x = std::min(tl.x, std::min(bl.x, std::min(tr.x, br.x)));
+			factoryOptions.m_positionMinXYZOut->y = std::min(tl.y, std::min(bl.y, std::min(tr.y, br.y)));
+			factoryOptions.m_positionMinXYZOut->z = std::min(tl.z, std::min(bl.z, std::min(tr.z, br.z)));
+		}
+
+		if (factoryOptions.m_positionMaxXYZOut)
+		{
+			factoryOptions.m_positionMaxXYZOut->x = std::max(tl.x, std::max(bl.x, std::max(tr.x, br.x)));
+			factoryOptions.m_positionMaxXYZOut->y = std::max(tl.y, std::max(bl.y, std::max(tr.y, br.y)));
+			factoryOptions.m_positionMaxXYZOut->z = std::max(tl.z, std::max(bl.z, std::max(tr.z, br.z)));
+		}
+	}
+
+
+	void ComputeSphereMinMaxXYZ(gr::meshfactory::FactoryOptions const& factoryOptions, float radius)
+	{
+		if (!factoryOptions.m_positionMinXYZOut && !factoryOptions.m_positionMaxXYZOut)
+		{
+			return;
+		}
+
+		if (factoryOptions.m_positionMinXYZOut)
+		{
+			factoryOptions.m_positionMinXYZOut->x = -radius;
+			factoryOptions.m_positionMinXYZOut->y = -radius;
+			factoryOptions.m_positionMinXYZOut->z = -radius;
+		}
+
+		if (factoryOptions.m_positionMaxXYZOut)
+		{
+			factoryOptions.m_positionMaxXYZOut->x = radius;
+			factoryOptions.m_positionMaxXYZOut->y = radius;
+			factoryOptions.m_positionMaxXYZOut->z = radius;
+		}
+	}
+
+
+	void ComputeConeMinMaxXYZ(gr::meshfactory::FactoryOptions const& factoryOptions, float height, float radius)
+	{
+		if (!factoryOptions.m_positionMinXYZOut && !factoryOptions.m_positionMaxXYZOut)
+		{
+			return;
+		}
+
+		if (factoryOptions.m_positionMinXYZOut)
+		{
+			factoryOptions.m_positionMinXYZOut->x = -radius;
+			factoryOptions.m_positionMinXYZOut->y = -height;
+			factoryOptions.m_positionMinXYZOut->z = -radius;
+		}
+
+		if (factoryOptions.m_positionMaxXYZOut)
+		{
+			factoryOptions.m_positionMaxXYZOut->x = radius;
+			factoryOptions.m_positionMaxXYZOut->y = 0.f;
+			factoryOptions.m_positionMaxXYZOut->z = radius;
+		}
+	}
 }
 
 
@@ -345,12 +464,22 @@ namespace gr::meshfactory
 
 		constexpr char const* k_meshName = "MeshFactory_Cube";
 
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
-		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
-		}
-
 		extentDistance = std::abs(extentDistance);
+
+		ComputeCubeMinMaxXYZ(factoryOptions, extentDistance);
+
+		// Build a unique name specific to this mesh's params:
+		uint64_t paramHash = 0;
+		util::AddDataBytesToHash(paramHash, extentDistance);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_generateNormalsAndTangents);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_vertexColor);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
+		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
+
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
+		{
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
+		}
 
 		// Note: Using a RHCS
 		const std::array<glm::vec3, 8> positions
@@ -424,7 +553,7 @@ namespace gr::meshfactory
 		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = k_meshName,
+			.m_name = instanceName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &cubeIndices,
 			.m_positions = &assembledPositions,
@@ -434,12 +563,6 @@ namespace gr::meshfactory
 			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
-
-		gr::Bounds::ComputeMinMaxPosition(
-			reinterpret_cast<glm::vec3 const*>(assembledPositions.data().data()),
-			assembledPositions.size(),
-			factoryOptions.m_positionMinXYZOut,
-			factoryOptions.m_positionMaxXYZOut);
 
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
@@ -505,7 +628,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			factoryOptions.m_inventory,
-			k_meshName,
+			instanceName,
 			indexStream,
 			std::move(vertexStreams),
 			defaultMeshPrimitiveParams);
@@ -518,9 +641,14 @@ namespace gr::meshfactory
 
 		constexpr char const* k_meshName = "MeshFactory_OptimizedFullscreenQuad";
 
-		if (inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		// Build a unique name specific to this mesh's params:
+		uint64_t paramHash = 0;
+		util::AddDataBytesToHash(paramHash, zLocation);
+		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
+
+		if (inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
 		{
-			return inventory->Get<gr::MeshPrimitive>(k_meshName);
+			return inventory->Get<gr::MeshPrimitive>(instanceName);
 		}
 
 		float zDepth;
@@ -555,7 +683,7 @@ namespace gr::meshfactory
 
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = k_meshName,
+			.m_name = instanceName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &triIndices,
 			.m_positions = &positions,
@@ -591,7 +719,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			inventory,
-			k_meshName,
+			instanceName,
 			indexStream,
 			std::move(vertexStreams),
 			defaultMeshPrimitiveParams);
@@ -607,11 +735,24 @@ namespace gr::meshfactory
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
 
+		ComputeQuadMinMaxXYZ(factoryOptions, tl, tr, bl, br);
+
 		constexpr char const* k_meshName = "MeshFactory_Quad";
 
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		// Build a unique name specific to this mesh's params:
+		uint64_t paramHash = 0;
+		util::AddDataBytesToHash(paramHash, tl);
+		util::AddDataBytesToHash(paramHash, tr);
+		util::AddDataBytesToHash(paramHash, bl);
+		util::AddDataBytesToHash(paramHash, br);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_generateNormalsAndTangents);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_vertexColor);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
+		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
+
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
 		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
 		}
 
 		util::ByteVector positions = util::ByteVector::Create<glm::vec3>({ tl, bl, tr, br });
@@ -638,7 +779,7 @@ namespace gr::meshfactory
 		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = k_meshName,
+			.m_name = instanceName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &quadIndices,
 			.m_positions = &positions,
@@ -648,12 +789,6 @@ namespace gr::meshfactory
 			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
-
-		gr::Bounds::ComputeMinMaxPosition(
-			reinterpret_cast<glm::vec3 const*>(positions.data().data()),
-			positions.size(),
-			factoryOptions.m_positionMinXYZOut,
-			factoryOptions.m_positionMaxXYZOut);
 
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
@@ -718,7 +853,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			factoryOptions.m_inventory,
-			k_meshName,
+			instanceName,
 			indexStream,
 			std::move(vertexStreams),
 			MeshPrimitive::MeshPrimitiveParams{});
@@ -748,14 +883,27 @@ namespace gr::meshfactory
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
 
+		radius = std::max(std::abs(radius), k_minRadius);
+
+		ComputeSphereMinMaxXYZ(factoryOptions, radius);
+
 		constexpr char const* k_meshName = "MeshFactory_Sphere";
 
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		// Build a unique name specific to this mesh's params:
+		uint64_t paramHash = 0;
+		util::AddDataBytesToHash(paramHash, radius);
+		util::AddDataBytesToHash(paramHash, numLatSlices);
+		util::AddDataBytesToHash(paramHash, numLongSlices);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_generateNormalsAndTangents);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_vertexColor);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
+		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
+
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
 		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
 		}
 
-		radius = std::max(std::abs(radius), k_minRadius);
 		numLatSlices = std::max(numLatSlices, k_minSideEdges);
 		numLongSlices = std::max(numLongSlices, k_minSideEdges);
 
@@ -913,7 +1061,7 @@ namespace gr::meshfactory
 		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = k_meshName,
+			.m_name = instanceName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &indices,
 			.m_positions = &positions,
@@ -923,12 +1071,6 @@ namespace gr::meshfactory
 			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
-
-		gr::Bounds::ComputeMinMaxPosition(
-			reinterpret_cast<glm::vec3 const*>(positions.data().data()),
-			positions.size(),
-			factoryOptions.m_positionMinXYZOut,
-			factoryOptions.m_positionMaxXYZOut);
 
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
@@ -993,7 +1135,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			factoryOptions.m_inventory,
-			k_meshName,
+			instanceName,
 			indexStream,
 			std::move(vertexStreams),
 			defaultMeshPrimitiveParams);
@@ -1008,14 +1150,26 @@ namespace gr::meshfactory
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
 
+		height = std::max(std::abs(height), k_minHeight);		
+		ComputeConeMinMaxXYZ(factoryOptions, height, radius);
+
 		constexpr char const* k_meshName = "MeshFactory_Cone";
 
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
-		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
-		}
+		// Build a unique name specific to this mesh's params:
+		uint64_t paramHash = 0;
+		util::AddDataBytesToHash(paramHash, height);
+		util::AddDataBytesToHash(paramHash, radius);
+		util::AddDataBytesToHash(paramHash, numSides);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_generateNormalsAndTangents);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_vertexColor);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
+		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		height = std::max(std::abs(height), k_minHeight);
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
+		{
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
+		}
+		
 		radius = std::max(std::abs(radius), k_minRadius);
 		numSides = std::max(numSides, k_minSideEdges);
 
@@ -1173,7 +1327,7 @@ namespace gr::meshfactory
 		std::vector<util::ByteVector*> extraChannels = { &colors };
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = k_meshName,
+			.m_name = instanceName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &indices,
 			.m_positions = &positions,
@@ -1183,12 +1337,6 @@ namespace gr::meshfactory
 			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
-
-		gr::Bounds::ComputeMinMaxPosition(
-			reinterpret_cast<glm::vec3 const*>(positions.data().data()),
-			positions.size(),
-			factoryOptions.m_positionMinXYZOut,
-			factoryOptions.m_positionMaxXYZOut);
 
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
@@ -1253,7 +1401,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			factoryOptions.m_inventory,
-			k_meshName,
+			instanceName,
 			indexStream,
 			std::move(vertexStreams),
 			defaultMeshPrimitiveParams);
@@ -1268,15 +1416,30 @@ namespace gr::meshfactory
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
 
+		height = std::max(std::abs(height), k_minHeight);
+		radius = std::max(std::abs(radius), k_minRadius);
+		ComputeCylinderMinMaxXYZ(factoryOptions, height, radius, radius);
+
 		constexpr char const* k_meshName = "MeshFactory_Cylinder";
+
+		// Build a unique name specific to this mesh's params:
+		uint64_t paramHash = 0;
+		util::AddDataBytesToHash(paramHash, height);
+		util::AddDataBytesToHash(paramHash, radius);
+		util::AddDataBytesToHash(paramHash, numSides);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_generateNormalsAndTangents);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_vertexColor);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
+		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 		
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
 		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
 		}
 
-		return CreateCylinderHelper(k_meshName, factoryOptions, height, radius, radius, numSides, true);
+		return CreateCylinderHelper(instanceName.c_str(), factoryOptions, height, radius, radius, numSides, true);
 	}
+
 
 	core::InvPtr<gr::MeshPrimitive> CreateHelloTriangle(
 		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/,
@@ -1285,20 +1448,45 @@ namespace gr::meshfactory
 	{
 		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
 
-		constexpr char const* k_meshName = "MeshFactory_HelloTriangle";
+		zDepth = std::clamp(zDepth, 0.f, 1.f);
 
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(k_meshName))
+		constexpr float k_baseScale = 1.f;
+
+		if (factoryOptions.m_positionMinXYZOut)
 		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(k_meshName);
+			factoryOptions.m_positionMinXYZOut->x = -k_baseScale * scale;
+			factoryOptions.m_positionMinXYZOut->y = -k_baseScale * scale;
+			factoryOptions.m_positionMinXYZOut->z = zDepth;
 		}
 
-		zDepth = std::clamp(zDepth, 0.f, 1.f);
+		if (factoryOptions.m_positionMaxXYZOut)
+		{
+			factoryOptions.m_positionMaxXYZOut->x = k_baseScale * scale;
+			factoryOptions.m_positionMaxXYZOut->y = k_baseScale * scale;
+			factoryOptions.m_positionMaxXYZOut->z = zDepth;
+		}
+
+		constexpr char const* k_meshName = "MeshFactory_HelloTriangle";
+
+		// Build a unique name specific to this mesh's params:
+		uint64_t paramHash = 0;
+		util::AddDataBytesToHash(paramHash, scale);
+		util::AddDataBytesToHash(paramHash, zDepth);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_generateNormalsAndTangents);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_vertexColor);
+		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
+		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
+
+		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
+		{
+			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
+		}
 
 		util::ByteVector positions = util::ByteVector::Create<glm::vec3>( // In clip space: bl near = [-1,-1, 0] , tr far = [1,1,1]
 		{
-			glm::vec3(0.0f * scale,		0.75f * scale,	zDepth),	// Top center
-			glm::vec3(-0.75f * scale,	-0.75f * scale, zDepth),	// bl
-			glm::vec3(0.75f * scale,	-0.75f * scale, zDepth)		// br
+			glm::vec3(0.0f * scale,			k_baseScale * scale,	zDepth),	// Top center
+			glm::vec3(-k_baseScale * scale,	-k_baseScale * scale,	zDepth),	// bl
+			glm::vec3(k_baseScale * scale,	-k_baseScale * scale,	zDepth)		// br
 		});
 
 		util::ByteVector uvs = util::ByteVector::Create<glm::vec2>( // Note: (0,0) = Top left
@@ -1326,7 +1514,7 @@ namespace gr::meshfactory
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
 		grutil::VertexStreamBuilder::MeshData meshData
 		{
-			.m_name = k_meshName,
+			.m_name = instanceName,
 			.m_meshParams = &defaultMeshPrimitiveParams,
 			.m_indices = &indices,
 			.m_positions = &positions,
@@ -1336,12 +1524,6 @@ namespace gr::meshfactory
 			.m_extraChannels = &extraChannels,
 		};
 		grutil::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
-
-		gr::Bounds::ComputeMinMaxPosition(
-			reinterpret_cast<glm::vec3 const*>(positions.data().data()),
-			positions.size(),
-			factoryOptions.m_positionMinXYZOut,
-			factoryOptions.m_positionMaxXYZOut);
 
 		// Get pointers for our missing attributes, if necessary:
 		util::ByteVector* normalsPtr = factoryOptions.m_generateNormalsAndTangents ? &normals : nullptr;
@@ -1402,7 +1584,7 @@ namespace gr::meshfactory
 
 		return gr::MeshPrimitive::Create(
 			factoryOptions.m_inventory,
-			k_meshName,
+			instanceName,
 			indexStream,
 			std::move(vertexStreams),
 			defaultMeshPrimitiveParams);

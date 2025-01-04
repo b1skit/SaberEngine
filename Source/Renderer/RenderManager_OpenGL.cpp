@@ -94,13 +94,12 @@ namespace opengl
 				opengl::Shader::Create(*newObject);
 			}
 		}
-
-		// Buffers:
-		if (renderManager.m_newBuffers.HasReadData())
+		// Vertex streams:
+		if (renderManager.m_newVertexStreams.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newBuffers.GetReadData())
+			for (auto& vertexStream : renderManager.m_newVertexStreams.GetReadData())
 			{
-				opengl::Buffer::Create(*newObject);
+				vertexStream->CreateBuffers();
 			}
 		}
 	}
@@ -286,21 +285,21 @@ namespace opengl
 							// Bind the vertex streams:
 							for (uint8_t slotIdx = 0; slotIdx < gr::VertexStream::k_maxVertexStreams; slotIdx++)
 							{
-								if (batchGraphicsParams.m_vertexBuffers[slotIdx].m_buffer == nullptr)
+								if (batchGraphicsParams.m_vertexBuffers[slotIdx].GetStream() == nullptr)
 								{
 									break;
 								}
 
 								opengl::Buffer::Bind(
-									*batchGraphicsParams.m_vertexBuffers[slotIdx].m_buffer,
+									*batchGraphicsParams.m_vertexBuffers[slotIdx].GetBuffer(),
 									opengl::Buffer::Vertex,
 									batchGraphicsParams.m_vertexBuffers[slotIdx].m_view,
 									batchGraphicsParams.m_vertexBuffers[slotIdx].m_bindSlot);
 							}
-							if (batchGraphicsParams.m_indexBuffer.m_buffer)
+							if (batchGraphicsParams.m_indexBuffer.GetStream())
 							{
 								opengl::Buffer::Bind(
-									*batchGraphicsParams.m_indexBuffer.m_buffer,
+									*batchGraphicsParams.m_indexBuffer.GetBuffer(),
 									opengl::Buffer::Index,
 									batchGraphicsParams.m_indexBuffer.m_view,
 									0); // Arbitrary: Slot is not used for indexes

@@ -32,12 +32,11 @@ namespace
 			std::move(axisOriginPos),
 			false);
 
-		const re::Batch::GraphicsParams axisBatchGraphicsParams{
-			.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced,
-			.m_numInstances = 1,
-			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList,
-			.m_vertexBuffers = { re::VertexBufferInput(axisPositionStream) },
-		};		
+		re::Batch::GraphicsParams axisBatchGraphicsParams;
+		axisBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
+		axisBatchGraphicsParams.m_numInstances = 1;
+		axisBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList;
+		axisBatchGraphicsParams.m_vertexBuffers = { re::VertexBufferInput(axisPositionStream) };
 
 		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
 			batchLifetime, axisBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Axis);
@@ -85,13 +84,12 @@ namespace
 			util::ByteVector::Create<uint16_t>({ 0, 1 }),
 			false);
 
-		const re::Batch::GraphicsParams lineBatchGraphicsParams{
-			.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced,
-			.m_numInstances = 1,
-			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList,
-			.m_vertexBuffers = {linePositionsStream, lineColorStream },
-			.m_indexBuffer = re::VertexBufferInput(lineIndexStream),
-		};
+		re::Batch::GraphicsParams lineBatchGraphicsParams;
+		lineBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
+		lineBatchGraphicsParams.m_numInstances = 1;
+		lineBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
+		lineBatchGraphicsParams.m_vertexBuffers = {linePositionsStream, lineColorStream };
+		lineBatchGraphicsParams.m_indexBuffer = re::VertexBufferInput(lineIndexStream);
 
 		std::unique_ptr<re::Batch> lineBatch = std::make_unique<re::Batch>(
 			lifetime, lineBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
@@ -230,12 +228,11 @@ namespace
 			normalStream->GetDataType() == re::DataType::Float3,
 			"Unexpected position or normal data");
 
-		const re::Batch::GraphicsParams normalBatchGraphicsParams{
-			.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced,
-			.m_numInstances = 1,
-			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList,
-			.m_vertexBuffers = { positionStream, normalStream, },
-		};
+		re::Batch::GraphicsParams normalBatchGraphicsParams;
+		normalBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
+		normalBatchGraphicsParams.m_numInstances = 1;
+		normalBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList;
+		normalBatchGraphicsParams.m_vertexBuffers = { positionStream, normalStream, };
 
 		std::unique_ptr<re::Batch> normalDebugBatch = std::make_unique<re::Batch>(
 			batchLifetime, normalBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Normal);
@@ -343,13 +340,12 @@ namespace
 		core::InvPtr<gr::VertexStream> const& indexStream = meshPrimRenderData.m_indexStream;
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
-		const re::Batch::GraphicsParams wireframeBatchGraphicsParams{
-			.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced,
-			.m_numInstances = 1,
-			.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList,
-			.m_vertexBuffers = {positionStream},
-			.m_indexBuffer = indexStream,
-		};
+		re::Batch::GraphicsParams wireframeBatchGraphicsParams;
+		wireframeBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
+		wireframeBatchGraphicsParams.m_numInstances = 1;
+		wireframeBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
+		wireframeBatchGraphicsParams.m_vertexBuffers = {positionStream};
+		wireframeBatchGraphicsParams.m_indexBuffer = indexStream;
 
 		std::unique_ptr<re::Batch> wireframeBatch = std::make_unique<re::Batch>(
 			batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Wireframe);

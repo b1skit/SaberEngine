@@ -61,6 +61,13 @@ namespace re
 
 		struct GraphicsParams
 		{
+			GraphicsParams();
+			GraphicsParams(GraphicsParams const&) noexcept;
+			GraphicsParams(GraphicsParams&&) noexcept;
+			GraphicsParams& operator=(GraphicsParams const&) noexcept;
+			GraphicsParams& operator=(GraphicsParams&&) noexcept;
+			~GraphicsParams();
+
 			// Note: Don't forget to update ComputeDataHash() if modifying this
 			
 			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
@@ -103,12 +110,12 @@ namespace re
 
 
 	public:
-		~Batch() = default;
-	
-		Batch(Batch&&) noexcept = default;
-		Batch& operator=(Batch&&) noexcept = default;
+		Batch(Batch&&) noexcept;
+		Batch& operator=(Batch&&) noexcept;
 
+		~Batch();
 
+		
 	public:		
 		static Batch Duplicate(Batch const&, re::Lifetime);
 
@@ -127,8 +134,8 @@ namespace re
 		void SetInstanceCount(uint32_t numInstances);
 
 		std::vector<BufferInput> const& GetBuffers() const;
-		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer>);
-		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer>, re::BufferView const&);
+		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&);
+		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
 		void SetBuffer(re::BufferInput const&);
 		void SetBuffer(re::BufferInput&&);
 
@@ -186,8 +193,9 @@ namespace re
 
 
 	private:
-		Batch(Batch const&) = default;
-		Batch& operator=(Batch const&) = default;
+		Batch(Batch const&) noexcept;
+		Batch& operator=(Batch const&) noexcept;
+
 
 	private:
 		Batch() = delete;

@@ -12,6 +12,8 @@
 #include "SkinningComponent.h"
 #include "TransformComponent.h"
 
+#include "Core/Definitions/ConfigKeys.h"
+
 #include "Core/Util/ImGuiUtils.h"
 
 #include "Renderer/MeshFactory.h"
@@ -295,7 +297,7 @@ namespace fr
 			{
 				std::vector<entt::entity> const& materialEntities = em->GetAllEntities<fr::MaterialInstanceComponent>();
 
-				materialNames.reserve(materialEntities.size());
+				materialNames.reserve(materialEntities.size() + 1); // +1 for the default material
 
 				// Build a vector of unique material names (multiple material instances can share the same base material)
 				std::unordered_set<std::string> seenMaterials;
@@ -309,6 +311,15 @@ namespace fr
 						seenMaterials.emplace(material.GetMaterial()->GetName());
 					}
 				}
+
+				// Add the default GLTF material if we haven't seen it yet.
+				// TODO: This is brittle, we shouldn't be specifically referencing any specific material model here, but
+				// for now it prevents a crash when no materials exist
+				if (!seenMaterials.contains(en::DefaultResourceNames::k_defaultGLTFMaterialName))
+				{
+					materialNames.emplace_back(en::DefaultResourceNames::k_defaultGLTFMaterialName);
+					seenMaterials.emplace(en::DefaultResourceNames::k_defaultGLTFMaterialName);
+				}				
 			}
 			
 			util::ShowBasicComboBox(

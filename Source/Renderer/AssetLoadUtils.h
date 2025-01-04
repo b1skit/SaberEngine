@@ -11,10 +11,10 @@ namespace grutil
 
 
 	template<typename T>
-	struct TextureFromFilePath final : public virtual core::ILoadContext<T>
+	struct TextureFromFilePath : public virtual core::ILoadContext<T>
 	{
-		void OnLoadBegin(core::InvPtr<re::Texture>) override;
-		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>) override;
+		void OnLoadBegin(core::InvPtr<re::Texture>&) override;
+		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>&) override;
 
 		std::string m_filePath;
 

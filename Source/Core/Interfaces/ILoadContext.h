@@ -16,8 +16,7 @@ namespace core
 
 
 	public:
-		inline virtual void OnLoadComplete() = 0;
-
+		inline virtual void CallOnLoadComplete() = 0;
 
 	protected: // InvPtr interface:
 		template<typename T>
@@ -48,17 +47,37 @@ namespace core
 	template<typename T>
 	struct ILoadContext : public virtual ILoadContextBase
 	{
+	protected: // InvPtr interface:
+		friend class InvPtr<T>;
+
+		inline void Initialize(util::DataHash objectID, InvPtr<T> const& invPtr)
+		{
+			ILoadContextBase::Initialize(objectID);
+			m_invPtr = invPtr;
+		}
+
+		inline void					CallOnLoadBegin()				{ OnLoadBegin(m_invPtr); }
+		inline std::unique_ptr<T>	CallLoad()						{ return Load(m_invPtr); }
+		inline void					CallOnLoadComplete() override	{ OnLoadComplete(m_invPtr); }
+
+		InvPtr<T> m_invPtr;
+
+
+	public: // Virtual interface: Implement as necessary
 		virtual ~ILoadContext() = default;
+
 
 		// Optional: Executed on the calling thread before any async load work is kicked off. Use this to notify any 
 		// systems that might need a copy of the InvPtr immediately
-		inline virtual void OnLoadBegin(core::InvPtr<T>) {};
+		inline virtual void OnLoadBegin(core::InvPtr<T>&) {};
 
 		// Async: The bulk of the loading and creation should be done here. Returning nullptr signals a loading error
-		inline virtual std::unique_ptr<T> Load(core::InvPtr<T>) = 0;
+		inline virtual std::unique_ptr<T> Load(core::InvPtr<T>&) = 0;
 
 		// Optional: Handle any post-loading steps here. Called by whatever thread loaded the last dependency
-		inline virtual void OnLoadComplete() override {};
+		// Note: The ResourceState will already be Ready by this point, do not use this for anything that must be done
+		// before waiting threads are unblocked
+		inline virtual void OnLoadComplete(core::InvPtr<T>&) {};
 
 		bool m_isPermanent = false; // If true, the resource will not be deleted when the last InvPtr goes out of scope
 	};
@@ -114,7 +133,7 @@ namespace core
 			if (m_childDependencies.empty()) // This thread must be constructing the last child to complete
 			{
 				// We're done! Execute any remaining post-processing work:
-				OnLoadComplete();
+				CallOnLoadComplete();
 
 				// Notify any parent waiting on us to complete:
 				{

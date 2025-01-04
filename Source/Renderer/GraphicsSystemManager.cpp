@@ -170,20 +170,6 @@ namespace gr
 	}
 
 
-	gr::Camera::RenderData const& GraphicsSystemManager::GetActiveCameraRenderData() const
-	{
-		SEAssert(m_activeCameraRenderDataID != gr::k_invalidRenderDataID, "No active camera has been set");
-		return m_renderData->GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
-	}
-
-
-	gr::Transform::RenderData const& GraphicsSystemManager::GetActiveCameraTransformData() const
-	{
-		SEAssert(m_activeCameraTransformDataID != gr::k_invalidTransformID, "No active camera has been set");
-		return m_renderData->GetTransformDataFromTransformID(m_activeCameraTransformDataID);
-	}
-
-
 	re::BufferInput const& GraphicsSystemManager::GetActiveCameraParams() const
 	{
 		SEAssert(m_activeCameraParams.IsValid(), "Camera buffer has not been created");

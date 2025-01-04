@@ -14,7 +14,14 @@ namespace core
 	template<typename T>
 	class InvPtr;
 }
-
+namespace dx12
+{
+	class RenderManager;
+}
+namespace opengl
+{
+	class RenderManager;
+}
 namespace re
 {
 	class Buffer;
@@ -111,7 +118,7 @@ namespace gr
 		uint32_t GetNumElements() const; // How many vertices-worth of attributes do we have?
 
 		re::Buffer const* GetBuffer() const;
-		std::shared_ptr<re::Buffer> GetBufferSharedPtr() const;
+		std::shared_ptr<re::Buffer> const& GetBufferSharedPtr() const;
 
 
 	public:
@@ -122,10 +129,26 @@ namespace gr
 		void ComputeDataHash() override;
 		
 
+	protected:
+		friend class dx12::RenderManager;
+		friend class opengl::RenderManager;
+		void CreateBuffers();
+
+
 	private:
 		StreamDesc m_streamDesc;
 
 		std::shared_ptr<re::Buffer> m_streamBuffer;
+		
+		// Vertex streams are often loaded asyncronously. To prevent race conditions around Buffer 
+		// registration/allocation/committing, we temporarily store everything we need to create the Buffer, and then
+		// immediately release it after creation
+		struct DeferredBufferCreateParams
+		{
+			util::ByteVector m_data;
+			re::Buffer::UsageMask m_extraUsageBits;
+		};
+		std::unique_ptr<DeferredBufferCreateParams> m_deferredBufferCreateParams;
 
 
 	private: // Use the Create() factory instead
@@ -156,7 +179,7 @@ namespace gr
 	}
 
 
-	inline std::shared_ptr<re::Buffer> VertexStream::GetBufferSharedPtr() const
+	inline std::shared_ptr<re::Buffer> const& VertexStream::GetBufferSharedPtr() const
 	{
 		return m_streamBuffer;
 	}

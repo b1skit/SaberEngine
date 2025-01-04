@@ -809,8 +809,7 @@ namespace opengl
 		for (uint8_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
 			// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-			re::Buffer const* vertexBuffer = vertexBuffers[streamIdx].m_buffer;
-			if (vertexBuffer == nullptr)
+			if (vertexBuffers[streamIdx].GetStream() == nullptr)
 			{
 				SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
 				break;
@@ -826,7 +825,7 @@ namespace opengl
 			// the hash here
 		}
 
-		if (indexBuffer.m_buffer)
+		if (indexBuffer.GetStream())
 		{			
 			util::AddDataToHash(vaoHash, static_cast<uint64_t>(indexBuffer.m_view.m_stream.m_dataType));
 			util::AddDataToHash(vaoHash, indexBuffer.m_view.m_stream.m_isNormalized);
@@ -862,7 +861,7 @@ namespace opengl
 				for (uint8_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 				{
 					// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-					if (vertexBuffers[streamIdx].m_buffer == nullptr)
+					if (vertexBuffers[streamIdx].GetStream() == nullptr)
 					{
 						SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
 						break;

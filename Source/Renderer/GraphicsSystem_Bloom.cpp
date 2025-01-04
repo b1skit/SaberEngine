@@ -226,13 +226,20 @@ namespace gr
 
 	void BloomGraphicsSystem::PreRender()
 	{
+		const gr::RenderDataID activeCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+		if (activeCamID == gr::k_invalidRenderDataID)
+		{
+			return;
+		}
+
 		CreateBatches();
 	
 		core::InvPtr<re::Texture> deferredLightTargetTex = 
 			m_emissiveBlitStage->GetTextureTargetSet()->GetColorTarget(0).GetTexture();
 
 		gr::Camera::Config const& cameraConfig =
-			m_graphicsSystemManager->GetActiveCameraRenderData().m_cameraConfig;
+			m_graphicsSystemManager->GetRenderData().GetObjectData<gr::Camera::RenderData>(activeCamID).m_cameraConfig;
+
 
 		// Buffers:
 		const uint32_t numBloomMips = m_bloomTargetTex->GetNumMips();

@@ -134,6 +134,9 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet =
 			re::TextureTargetSet::Create(std::format("{}_CubeShadowTargetSet", lightName));
 		
+		SEAssert(GetShadowArrayIdx(m_pointShadowArrayIdxMap, lightID) < (*m_pointShadowArrayTex)->GetTextureParams().m_arraySize,
+			"Shadow array index is out of bounds");
+
 		pointShadowTargetSet->SetDepthStencilTarget(
 			*m_pointShadowArrayTex,
 			re::TextureTarget::TargetParams{
@@ -227,6 +230,9 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet> shadowTargetSet =
 			re::TextureTargetSet::Create(std::format("{}_2DShadowTargetSet", lightName));
 		
+		SEAssert(GetShadowArrayIdx(shadowArrayIdxMap, lightID) < shadowArrayTex->GetTextureParams().m_arraySize,
+			"Shadow array index is out of bounds");
+
 		shadowTargetSet->SetDepthStencilTarget(
 			shadowArrayTex, 
 			re::TextureTarget::TargetParams{

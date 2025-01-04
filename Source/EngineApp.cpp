@@ -106,12 +106,11 @@ namespace app
 
 		en::InputManager::Get()->Startup(); // Now that the window is created
 
-		sceneMgr->Startup(); // Load assets
+		sceneMgr->Startup();
 
-		// Create entity/component representations now that the scene data is loaded
 		entityMgr->Startup();
 
-		renderManager->ThreadInitialize(); // Create render systems, close buffer registration
+		renderManager->ThreadInitialize();
 
 		fr::UIManager::Get()->Startup();
 

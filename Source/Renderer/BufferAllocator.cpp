@@ -179,6 +179,9 @@ namespace re
 
 	void BufferAllocator::Register(std::shared_ptr<re::Buffer> buffer, uint32_t numBytes)
 	{
+		SEAssert(!buffer->GetPlatformParams()->m_isCreated,
+			"Buffer is already marked as created. This should not be possible");
+
 		const Buffer::StagingPool stagingPool = buffer->GetAllocationType();
 		SEAssert(stagingPool != re::Buffer::StagingPool::StagingPool_Invalid, "Invalid AllocationType");
 
@@ -215,7 +218,16 @@ namespace re
 			}
 			break;
 			default: SEAssertF("Invalid lifetime");
-			}			
+			}
+
+			// Unstaged buffers never commit any data, so we must add them to the dirty buffers list here to ensure
+			// they're created (i.e. on the main render thread as required by OpenGL)
+			if (stagingPool == Buffer::StagingPool::None)
+			{
+				std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
+
+				m_dirtyBuffers.emplace(uniqueID);
+			}
 		}
 		break;
 		default: SEAssertF("Invalid AllocationType");
@@ -355,7 +367,7 @@ namespace re
 		{
 		case Buffer::StagingPool::Permanent:
 		{
-			CommitMutable(uniqueID, data, totalBytes, 0);
+			CommitMutable(uniqueID, data, totalBytes, 0); // Internally adds the buffer to m_dirtyBuffers
 		}
 		break;
 		case Buffer::StagingPool::Temporary:
@@ -378,6 +390,13 @@ namespace re
 			break;
 			default: SEAssertF("Invalid lifetime");
 			}
+
+			// Add the committed buffer to our dirty list, so we can buffer the data when required
+			{
+				std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
+
+				m_dirtyBuffers.emplace(uniqueID);
+			}
 		}
 		break;
 		case Buffer::StagingPool::None:
@@ -386,15 +405,7 @@ namespace re
 		}
 		break;
 		default: SEAssertF("Invalid AllocationType");
-		}
-
-		// Add the committed buffer to our dirty list, so we can buffer the data when required
-		if (stagingPool != Buffer::StagingPool::Permanent && // Mutables have their own commit path
-			stagingPool != Buffer::StagingPool::None)
-		{
-			std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
-			m_dirtyBuffers.emplace(uniqueID);
-		}
+		}		
 	}
 
 
@@ -595,6 +606,7 @@ namespace re
 		// Add the mutable buffer to our dirty list, so we can buffer the data when required
 		{
 			std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
+
 			m_dirtyBuffers.emplace(uniqueID); // Does nothing if the uniqueID was already recorded
 		}
 	}
@@ -823,10 +835,22 @@ namespace re
 
 			const uint8_t curFrameHeapOffsetFactor = m_currentFrameNum % m_numFramesInFlight; // Only used for mutable buffers
 
+
+			auto PlatformCreate = [](re::Buffer* currentBuffer)
+				{
+					if (!currentBuffer->GetPlatformParams()->m_isCreated)
+					{
+						platform::Buffer::Create(*currentBuffer);
+					}
+				};
+
+
 			auto BufferTemporaryData = [&](IAllocation& allocation, Handle currentHandle)
 				{
 					SEAssert(allocation.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-					re::Buffer const* currentBuffer = allocation.m_handleToPtr.at(currentHandle).get();
+					re::Buffer* currentBuffer = allocation.m_handleToPtr.at(currentHandle).get();
+
+					PlatformCreate(currentBuffer); // Trigger platform creation, if necessary
 
 					SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
 						"Trying to buffer a buffer that has not had an initial commit made");
@@ -836,6 +860,7 @@ namespace re
 					// Invalidate the commit metadata:
 					m_handleToCommitMetadata.at(currentHandle).m_startIndex = k_invalidCommitValue;
 				};
+
 
 			for (Handle currentHandle : m_dirtyBuffers)
 			{
@@ -853,7 +878,9 @@ namespace re
 				case Buffer::StagingPool::Permanent:
 				{
 					SEAssert(m_mutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-					re::Buffer const* currentBuffer = m_mutableAllocations.m_handleToPtr.at(currentHandle).get();
+					re::Buffer* currentBuffer = m_mutableAllocations.m_handleToPtr.at(currentHandle).get();
+
+					PlatformCreate(currentBuffer); // Trigger platform creation, if necessary
 
 					SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
 						"Trying to buffer a buffer that has not had an initial commit made");
@@ -915,7 +942,9 @@ namespace re
 					case re::Lifetime::Permanent:
 					{
 						SEAssert(m_immutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-						re::Buffer const* currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
+						re::Buffer* currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
+
+						PlatformCreate(currentBuffer); // Trigger platform creation, if necessary
 
 						switch (currentBuffer->GetBufferParams().m_memPoolPreference)
 						{
@@ -951,7 +980,25 @@ namespace re
 				break;
 				case Buffer::StagingPool::None:
 				{
-					// Do nothing
+					re::Buffer* currentBuffer = nullptr;
+					switch (bufferLifetime)
+					{
+					case re::Lifetime::Permanent:
+					{
+						SEAssert(m_immutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
+						currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
+					}
+					break;
+					case re::Lifetime::SingleFrame:
+					{
+						SEAssert(m_singleFrameAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
+						currentBuffer = m_singleFrameAllocations.m_handleToPtr.at(currentHandle).get();
+					}
+					break;
+					default: SEAssertF("Invalid lifetime");
+					}
+
+					PlatformCreate(currentBuffer); // Trigger platform creation
 				}
 				break;
 				default: SEAssertF("Invalid AllocationType");

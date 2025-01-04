@@ -337,13 +337,13 @@ namespace core
 			{
 				std::lock_guard<std::mutex> lock(newInvPtr.m_control->m_loadContextMutex);
 
-				loadContext->Initialize(newInvPtr.m_control->m_id);
+				loadContext->Initialize(newInvPtr.m_control->m_id, newInvPtr);
 				newInvPtr.m_control->m_loadContext = loadContext;
 			}
 
 			// Do this on the current thread; guarantees the InvPtr can be registered with any systems that might
 			// require it before the creation can possibly have finished
-			loadContext->OnLoadBegin(newInvPtr); 
+			loadContext->CallOnLoadBegin();
 
 			core::ThreadPool::Get()->EnqueueJob([newInvPtr]()
 				{
@@ -353,7 +353,7 @@ namespace core
 					// Populate the unique_ptr held by the ResourceSystem.
 					// Note: We don't lock m_loadContextMutex here, it will be locked internally to add dependencies
 					*newInvPtr.m_control->m_object =
-						std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext)->Load(newInvPtr);
+						std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext)->CallLoad();
 
 					if (*newInvPtr.m_control->m_object == nullptr)
 					{
@@ -382,7 +382,8 @@ namespace core
 						newInvPtr.m_control->m_loadContext->Finalize();
 
 						// Release load context: No need for this anymore. Any children with a copy will keep this alive
-						// until it is no longer needed
+						// until it is no longer needed. Note: ILoadContext contains a copy of this InvPtr, it MUST be
+						// released here to prevent circular dependencies
 						newInvPtr.m_control->m_loadContext = nullptr;
 					}
 				});

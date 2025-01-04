@@ -142,7 +142,7 @@ namespace gr
 	void BatchManagerGraphicsSystem::RegisterOutputs()
 	{
 		RegisterDataOutput(k_viewBatchesDataOutput, &m_viewBatches);
-		RegisterDataOutput(k_allBatchesDataOutput, &m_permanentCachedBatches);
+		RegisterDataOutput(k_allBatchesDataOutput, &m_allBatches);
 	}
 
 
@@ -351,10 +351,10 @@ namespace gr
 		}
 
 		// Create/grow our permanent Material instance buffers:
-		for (auto& materialMedatadataEntry : m_materialInstanceMetadata)
+		for (auto& materialMetadataEntry : m_materialInstanceMetadata)
 		{
-			const EffectID matEffectID = materialMedatadataEntry.first;
-			MaterialInstanceMetadata& matInstMeta = materialMedatadataEntry.second;
+			const EffectID matEffectID = materialMetadataEntry.first;
+			MaterialInstanceMetadata& matInstMeta = materialMetadataEntry.second;
 
 			const bool mustReallocateMaterialBuffer =
 				matInstMeta.m_instancedMaterials.GetBuffer() != nullptr &&
@@ -470,12 +470,17 @@ namespace gr
 	void BatchManagerGraphicsSystem::EndOfFrame()
 	{
 		m_viewBatches.clear(); // Make sure we're not hanging on to any Buffers etc
+		m_allBatches.clear();
 		m_instanceIndiciesBuffers.clear();
 	}
 
 	
 	void BatchManagerGraphicsSystem::BuildViewBatches()
 	{
+		SEAssert(m_allBatches.empty(), "Batch vectors should have been cleared");
+
+		std::unordered_set<gr::RenderDataID> seenIDs; // Ensure no duplicates in m_allBatches
+
 		for (auto const& viewAndCulledIDs : *m_viewCullingResults)
 		{
 			gr::Camera::View const& curView = viewAndCulledIDs.first;
@@ -511,9 +516,15 @@ namespace gr
 				{
 					re::Batch const& cachedBatch = m_permanentCachedBatches[batchMetadata[unmergedIdx]->m_cacheIndex];
 
-					// Add the first batch in the sequence to our final list. We duplicate the batch, as the cached batches
+					const bool isFirstTimeSeen = seenIDs.emplace(batchMetadata[unmergedIdx]->m_renderDataID).second;
+
+					// Add the first batch in the sequence to our final list. We duplicate the batch, as cached batches
 					// have a permanent Lifetime
 					batches.emplace_back(re::Batch::Duplicate(cachedBatch, re::Lifetime::SingleFrame));
+					if (isFirstTimeSeen)
+					{
+						m_allBatches.emplace_back(re::Batch::Duplicate(cachedBatch, re::Lifetime::SingleFrame));
+					}
 
 					const uint64_t curBatchHash = batchMetadata[unmergedIdx]->m_batchHash;
 
@@ -532,7 +543,11 @@ namespace gr
 					// Compute and set the number of instances in the batch:
 					const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
 					batches.back().SetInstanceCount(numInstances);
-
+					if (isFirstTimeSeen)
+					{
+						m_allBatches.back().SetInstanceCount(numInstances);
+					}
+					
 					// Gather the data we need to build our instanced buffers:
 					std::vector<InstanceIndices> instanceIndices;
 					instanceIndices.reserve(numInstances);
@@ -569,11 +584,19 @@ namespace gr
 					if (batchEffect->UsesBuffer(m_instancedTransforms.GetBuffer()->GetNameHash()))
 					{
 						batches.back().SetBuffer(m_instancedTransforms);
+						if (isFirstTimeSeen)
+						{
+							m_allBatches.back().SetBuffer(m_instancedTransforms);
+						}						
 						setInstancedBuffer = true;
 					}
-					if (batchEffect->UsesBuffer(m_instancedTransforms.GetBuffer()->GetNameHash()))
+					if (batchEffect->UsesBuffer(matInstMeta.m_instancedMaterials.GetBuffer()->GetNameHash()))
 					{
 						batches.back().SetBuffer(matInstMeta.m_instancedMaterials);
+						if (isFirstTimeSeen)
+						{
+							m_allBatches.back().SetBuffer(matInstMeta.m_instancedMaterials);
+						}						
 						setInstancedBuffer = true;
 					}
 
@@ -587,6 +610,10 @@ namespace gr
 								instanceIdxsHash, CreateInstanceIndexBuffer(instanceIndices));
 						}
 						batches.back().SetBuffer(m_instanceIndiciesBuffers.at(instanceIdxsHash));
+						if (isFirstTimeSeen)
+						{
+							m_allBatches.back().SetBuffer(m_instanceIndiciesBuffers.at(instanceIdxsHash));
+						}
 					}
 
 				} while (unmergedIdx < batchMetadata.size());

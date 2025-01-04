@@ -173,7 +173,16 @@ namespace fr
 
 
 	public:
+		// Create an empty AnimationController entity directly:
 		static AnimationController* CreateAnimationController(fr::EntityManager&, char const* name);
+
+		// 2-step/deferred AnimationController construction:
+		// 1) Create an animation controller object
+		// 2) Populate it
+		// 3) Move it to initialize an entity/component with it
+		static std::unique_ptr<AnimationController> CreateAnimationControllerObject();
+		static AnimationController* CreateAnimationController(
+			fr::EntityManager&, char const* name, std::unique_ptr<AnimationController>&&);
 
 		static void UpdateAnimationController(AnimationController&, double stepTimeMs);
 
@@ -255,6 +264,8 @@ namespace fr
 
 	inline float AnimationController::GetActiveClampedAnimationTimeSec() const
 	{
+		SEAssert(m_activeAnimationIdx < m_currentTimeSec.size(), "m_activeAnimationIdx is out of sync");
+
 		return glm::fmod(
 			static_cast<float>(m_currentTimeSec[m_activeAnimationIdx]),
 			m_longestAnimChannelTimesSec[m_activeAnimationIdx]);

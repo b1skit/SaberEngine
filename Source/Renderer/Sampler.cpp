@@ -31,14 +31,14 @@ namespace re
 	{
 		struct LoadContext final : public virtual core::ILoadContext<re::Sampler>
 		{
-			void OnLoadBegin(core::InvPtr<re::Sampler> newSampler) override
+			void OnLoadBegin(core::InvPtr<re::Sampler>& newSampler) override
 			{
 				LOG(std::format("Creating sampler \"{}\"", m_samplerName).c_str());
 
 				re::RenderManager::Get()->RegisterForCreate(newSampler); // API-layer creation
 			}
 
-			std::unique_ptr<re::Sampler> Load(core::InvPtr<re::Sampler>) override
+			std::unique_ptr<re::Sampler> Load(core::InvPtr<re::Sampler>&) override
 			{
 				return std::unique_ptr<re::Sampler>(new re::Sampler(m_samplerName.c_str(), m_samplerDesc));
 			}

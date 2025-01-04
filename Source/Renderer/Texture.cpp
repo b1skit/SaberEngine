@@ -114,7 +114,7 @@ namespace re
 	{
 		struct TextureFromByteVecLoadContext final : public virtual core::ILoadContext<re::Texture>
 		{
-			void OnLoadBegin(core::InvPtr<re::Texture> newTex) override
+			void OnLoadBegin(core::InvPtr<re::Texture>& newTex) override
 			{
 				LOG(std::format("Creating texture \"{}\" from byte vector", m_texName).c_str());
 				
@@ -122,7 +122,7 @@ namespace re
 				re::RenderManager::Get()->RegisterForCreate(newTex); 
 			}
 
-			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>) override
+			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>&) override
 			{
 				const uint8_t numFaces = re::Texture::GetNumFaces(m_texParams.m_dimension);
 				const uint32_t totalBytesPerFace = ComputeTotalBytesPerFace(m_texParams);
@@ -168,7 +168,7 @@ namespace re
 
 		struct TextureFromColor final : public virtual core::ILoadContext<re::Texture>
 		{
-			void OnLoadBegin(core::InvPtr<re::Texture> newTex) override
+			void OnLoadBegin(core::InvPtr<re::Texture>& newTex) override
 			{
 				LOG(std::format("Creating texture \"{}\" from color", m_texName).c_str());
 
@@ -176,7 +176,7 @@ namespace re
 				re::RenderManager::Get()->RegisterForCreate(newTex);
 			}
 			
-			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>) override
+			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>&) override
 			{
 				std::unique_ptr<re::Texture::InitialDataVec> initialData = std::make_unique<re::Texture::InitialDataVec>(
 					m_texParams.m_arraySize,
@@ -209,7 +209,7 @@ namespace re
 	{
 		struct RuntimeTexLoadContext final : public virtual core::ILoadContext<re::Texture>
 		{
-			void OnLoadBegin(core::InvPtr<re::Texture> newTex) override
+			void OnLoadBegin(core::InvPtr<re::Texture>& newTex) override
 			{
 				LOG(std::format("Creating runtime texture \"{}\"", m_idName).c_str());
 
@@ -217,7 +217,7 @@ namespace re
 				re::RenderManager::Get()->RegisterForCreate(newTex);
 			}
 
-			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>) override
+			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>&) override
 			{
 				return std::unique_ptr<re::Texture>(new re::Texture(m_idName, m_texParams));
 			}
@@ -227,11 +227,18 @@ namespace re
 		};
 		std::shared_ptr<RuntimeTexLoadContext> runtimeTexLoadContext = std::make_shared<RuntimeTexLoadContext>();
 
-		runtimeTexLoadContext->m_idName = name;
+		// Runtime textures might have different parameters but use the same name (e.g. resizing an existing target
+		// texture), so we append a hash of the params to the name to ensure it is unique
+		const std::string runtimeName = std::format("{}_{})",
+			name,
+			util::HashDataBytes(&params, sizeof(re::Texture::TextureParams)));
+
+		runtimeTexLoadContext->m_idName = runtimeName;
+
 		runtimeTexLoadContext->m_texParams = params;
 
 		return re::RenderManager::Get()->GetInventory()->Get(
-			util::StringHash(name),
+			util::StringHash(runtimeName),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(runtimeTexLoadContext));
 	}
 
@@ -359,8 +366,8 @@ namespace re
 		if (m_initialData)
 		{
 			m_initialData->Clear();
+			m_initialData = nullptr;
 		}
-		m_initialData = nullptr;
 	}
 
 

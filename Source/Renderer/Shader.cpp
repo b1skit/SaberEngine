@@ -87,7 +87,7 @@ namespace re
 
 		struct ShaderLoadContext : core::ILoadContext<re::Shader>
 		{
-			void OnLoadBegin(core::InvPtr<re::Shader> newShader) override
+			void OnLoadBegin(core::InvPtr<re::Shader>& newShader) override
 			{
 				LOG(std::format("Scheduling load for Shader with ID \"{}\"", m_shaderID).c_str());
 
@@ -95,7 +95,7 @@ namespace re
 				re::RenderManager::Get()->RegisterForCreate(newShader);
 			}
 
-			std::unique_ptr<re::Shader> Load(core::InvPtr<re::Shader>) override
+			std::unique_ptr<re::Shader> Load(core::InvPtr<re::Shader>&) override
 			{
 				bool isComputeShader = false;
 

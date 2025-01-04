@@ -60,33 +60,6 @@ namespace fr
 		// Process entity commands issued during scene loading:
 		ProcessEntityCommands();
 
-		// Create a scene bounds entity:
-		fr::BoundsComponent::CreateSceneBoundsConcept(*this);
-
-		// Create an Ambient light, and make it active:
-		entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
-			*this,
-			en::DefaultResourceNames::k_defaultIBLTexName,
-			m_inventory->Get<re::Texture>(util::StringHash(en::DefaultResourceNames::k_defaultIBLTexName)));
-		SetActiveAmbientLight(ambientLight);
-
-		// Add a camera controller to the scene:
-		entt::entity mainCameraEntity = GetMainCamera();
-
-		// Only bind non-animated main cameras to the camera controller
-		if (!HasComponent<fr::AnimationComponent>(mainCameraEntity))
-		{
-			fr::CameraControlComponent::CreateCameraControlConcept(*this, mainCameraEntity);
-
-			fr::NameComponent const& mainCameraName = GetComponent<fr::NameComponent>(mainCameraEntity);
-			LOG("Attached CameraControlComponent to camera \"%s\"", mainCameraName.GetName().c_str());
-		}
-		else
-		{
-			fr::CameraControlComponent::CreateCameraControlConcept(*this, entt::null);
-			LOG("Created unbound CameraControlComponent");
-		}		
-
 		m_processInput = true;
 	}
 
@@ -147,7 +120,6 @@ namespace fr
 	void EntityManager::ProcessEntityCommands()
 	{
 		{
-			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 			m_entityCommands.SwapBuffers();
 			m_entityCommands.Execute();
 		}
@@ -372,7 +344,6 @@ namespace fr
 
 				mainCamEntity = entity;
 			}
-			SEAssert(mainCamEntity != entt::null, "Failed to find a main camera entity");
 
 			return mainCamEntity;
 		}
@@ -647,9 +618,8 @@ namespace fr
 	{
 		const entt::entity mainCamera = GetMainCamera();
 
-		const bool isAnimated = HasComponent<fr::AnimationComponent>(mainCamera);
-
-		if (!isAnimated)
+		if (mainCamera != entt::null &&
+			!HasComponent<fr::AnimationComponent>(mainCamera))
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
@@ -862,8 +832,14 @@ namespace fr
 
 	void EntityManager::UpdateLightsAndShadows()
 	{
+		const entt::entity mainCameraEntity = GetMainCamera();
+		if (mainCameraEntity == entt::null)
+		{
+			return;
+		}
+
 		fr::BoundsComponent const* sceneBounds = GetSceneBounds();
-		fr::CameraComponent const* activeSceneCam = &GetComponent<fr::CameraComponent>(GetMainCamera());
+		fr::CameraComponent const* activeSceneCam = &GetComponent<fr::CameraComponent>(mainCameraEntity);
 
 		// Add dirty markers to lights and shadows so the render data will be updated
 		{

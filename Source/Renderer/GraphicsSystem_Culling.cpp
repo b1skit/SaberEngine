@@ -323,158 +323,161 @@ namespace gr
 
 		// Cull for every camera, every frame: Even if the camera hasn't moved, something in its view might have
 		m_viewToVisibleIDs.clear();
-
-		const size_t numMeshPrimitives = m_meshPrimitivesToEncapsulatingMesh.size();
-
-		util::ThreadSafeVector<std::future<void>> cullingFutures;
-		cullingFutures.reserve(renderData.GetNumElementsOfType<gr::Camera::RenderData>());
-
-		// We'll also cull lights against the currently active camera
-		const gr::RenderDataID activeCamRenderDataID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
-
-		// Cull every registered camera:
-		std::vector<gr::RenderDataID> const& cameraIDs = renderData.GetRegisteredRenderDataIDs<gr::Camera::RenderData>();
-		auto cameraItr = renderData.IDBegin(cameraIDs);
-		auto const& cameraItrEnd = renderData.IDEnd(cameraIDs);
-		while (cameraItr != cameraItrEnd)
+		
+		if (renderData.HasObjectData<gr::Camera::RenderData>())
 		{
-			// Gather the data we'll pass by value:
-			const gr::RenderDataID cameraID = cameraItr.GetRenderDataID();
+			util::ThreadSafeVector<std::future<void>> cullingFutures;
+			cullingFutures.reserve(renderData.GetNumElementsOfType<gr::Camera::RenderData>());
 
-			gr::Camera::RenderData const* camData = &cameraItr.Get<gr::Camera::RenderData>();
-			gr::Transform::RenderData const* camTransformData = &cameraItr.GetTransformData();
+			const size_t numMeshPrimitives = m_meshPrimitivesToEncapsulatingMesh.size();
 
-			const bool cameraIsDirty = cameraItr.IsDirty<gr::Camera::RenderData>();
+			// We'll also cull lights against the currently active camera
+			const gr::RenderDataID activeCamRenderDataID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
-			// Enqueue the culling job:
-			cullingFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[cameraID, camData, cameraIsDirty, camTransformData, numMeshPrimitives, activeCamRenderDataID,
-				this, &renderData]()
+			// Cull every registered camera:
+			std::vector<gr::RenderDataID> const& cameraIDs = renderData.GetRegisteredRenderDataIDs<gr::Camera::RenderData>();
+			auto cameraItr = renderData.IDBegin(cameraIDs);
+			auto const& cameraItrEnd = renderData.IDEnd(cameraIDs);
+			while (cameraItr != cameraItrEnd)
 			{
-				// Create/update frustum planes for dirty cameras:
-				// A Camera will be dirty if it has just been created, or if it has just been modified
-				const uint8_t numViews = gr::Camera::NumViews(*camData);
-				if (cameraIsDirty)
-				{
-					// Clear any existing FrustumPlanes:
-					for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
+				// Gather the data we'll pass by value:
+				const gr::RenderDataID cameraID = cameraItr.GetRenderDataID();
+
+				gr::Camera::RenderData const* camData = &cameraItr.Get<gr::Camera::RenderData>();
+				gr::Transform::RenderData const* camTransformData = &cameraItr.GetTransformData();
+
+				const bool cameraIsDirty = cameraItr.IsDirty<gr::Camera::RenderData>();
+
+				// Enqueue the culling job:
+				cullingFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+					[cameraID, camData, cameraIsDirty, camTransformData, numMeshPrimitives, activeCamRenderDataID,
+					this, &renderData]()
 					{
-						gr::Camera::View const& dirtyView = gr::Camera::View(cameraID, faceIdx);
-
+						// Create/update frustum planes for dirty cameras:
+						// A Camera will be dirty if it has just been created, or if it has just been modified
+						const uint8_t numViews = gr::Camera::NumViews(*camData);
+						if (cameraIsDirty)
 						{
-							std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
-
-							const bool hasCachedFrustumPlanes = m_cachedFrustums.contains(dirtyView);
-							if (hasCachedFrustumPlanes)
+							// Clear any existing FrustumPlanes:
+							for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
 							{
-								m_cachedFrustums.erase(dirtyView);
+								gr::Camera::View const& dirtyView = gr::Camera::View(cameraID, faceIdx);
+
+								{
+									std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
+
+									const bool hasCachedFrustumPlanes = m_cachedFrustums.contains(dirtyView);
+									if (hasCachedFrustumPlanes)
+									{
+										m_cachedFrustums.erase(dirtyView);
+									}
+								}
 							}
-						}
-					}
 
-					// Build a new set of FrustumPlanes:
-					switch (numViews)
-					{
-					case 1:
-					{
-						{
-							std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
+							// Build a new set of FrustumPlanes:
+							switch (numViews)
+							{
+							case 1:
+							{
+								{
+									std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
 
-							m_cachedFrustums.emplace(
-								gr::Camera::View(cameraID, gr::Camera::View::Face::Default),
-								gr::Camera::BuildWorldSpaceFrustumData(
-									camTransformData->m_globalPosition, camData->m_cameraParams.g_invViewProjection));
-						}
-					}
-					break;
-					case 6:
-					{
-						std::vector<glm::mat4> invViewProjMats;
-						invViewProjMats.reserve(6);
+									m_cachedFrustums.emplace(
+										gr::Camera::View(cameraID, gr::Camera::View::Face::Default),
+										gr::Camera::BuildWorldSpaceFrustumData(
+											camTransformData->m_globalPosition, camData->m_cameraParams.g_invViewProjection));
+								}
+							}
+							break;
+							case 6:
+							{
+								std::vector<glm::mat4> invViewProjMats;
+								invViewProjMats.reserve(6);
 
-						std::vector<glm::mat4> const& viewMats = gr::Camera::BuildCubeViewMatrices(
-							camTransformData->m_globalPosition,
-							camTransformData->m_globalRight,
-							camTransformData->m_globalUp,
-							camTransformData->m_globalForward);
+								std::vector<glm::mat4> const& viewMats = gr::Camera::BuildCubeViewMatrices(
+									camTransformData->m_globalPosition,
+									camTransformData->m_globalRight,
+									camTransformData->m_globalUp,
+									camTransformData->m_globalForward);
 
-						std::vector<glm::mat4> const& viewProjMats =
-							gr::Camera::BuildCubeViewProjectionMatrices(viewMats, camData->m_cameraParams.g_projection);
+								std::vector<glm::mat4> const& viewProjMats =
+									gr::Camera::BuildCubeViewProjectionMatrices(viewMats, camData->m_cameraParams.g_projection);
 
-						invViewProjMats = gr::Camera::BuildCubeInvViewProjectionMatrices(viewProjMats);
+								invViewProjMats = gr::Camera::BuildCubeInvViewProjectionMatrices(viewProjMats);
 
+								for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
+								{
+									{
+										std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
+
+										m_cachedFrustums.emplace(
+											gr::Camera::View(cameraID, faceIdx),
+											gr::Camera::BuildWorldSpaceFrustumData(
+												camTransformData->m_globalPosition, invViewProjMats[faceIdx]));
+									}
+								}
+							}
+							break;
+							default: SEAssertF("Invalid number of views");
+							}
+						} //cameraIsDirty
+
+						// Clear any previous visibility results (Objects may have moved, we need to cull everything each frame)
 						for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
 						{
-							{
-								std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
+							gr::Camera::View const& currentView = gr::Camera::View(cameraID, faceIdx);
 
-								m_cachedFrustums.emplace(
-									gr::Camera::View(cameraID, faceIdx),
-									gr::Camera::BuildWorldSpaceFrustumData(
-										camTransformData->m_globalPosition, invViewProjMats[faceIdx]));
+							std::vector<gr::RenderDataID> renderIDsOut;
+							renderIDsOut.reserve(numMeshPrimitives);
+
+							// Cull our views and populate the set of visible IDs:
+							CullGeometry(
+								renderData,
+								m_meshesToMeshPrimitiveBounds,
+								m_cachedFrustums.at(currentView),
+								renderIDsOut,
+								m_cullingEnabled);
+
+							// Finally, cache the results:
+							{
+								std::lock_guard<std::mutex> lock(m_viewToVisibleIDsMutex);
+
+								auto visibleIDsItr = m_viewToVisibleIDs.find(currentView);
+								if (visibleIDsItr != m_viewToVisibleIDs.end())
+								{
+									visibleIDsItr->second = std::move(renderIDsOut);
+								}
+								else
+								{
+									m_viewToVisibleIDs.emplace(currentView, std::move(renderIDsOut));
+								}
 							}
 						}
-					}
-					break;
-					default: SEAssertF("Invalid number of views");
-					}
-				} //cameraIsDirty
 
-				// Clear any previous visibility results (Objects may have moved, we need to cull everything each frame)
-				for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
-				{
-					gr::Camera::View const& currentView = gr::Camera::View(cameraID, faceIdx);
-
-					std::vector<gr::RenderDataID> renderIDsOut;
-					renderIDsOut.reserve(numMeshPrimitives);
-
-					// Cull our views and populate the set of visible IDs:
-					CullGeometry(
-						renderData,
-						m_meshesToMeshPrimitiveBounds,
-						m_cachedFrustums.at(currentView),
-						renderIDsOut,
-						m_cullingEnabled);
-
-					// Finally, cache the results:
-					{
-						std::lock_guard<std::mutex> lock(m_viewToVisibleIDsMutex);
-
-						auto visibleIDsItr = m_viewToVisibleIDs.find(currentView);
-						if (visibleIDsItr != m_viewToVisibleIDs.end())
+						// If we're the active camera, also cull the lights:
+						if (cameraID == activeCamRenderDataID)
 						{
-							visibleIDsItr->second = std::move(renderIDsOut);
+							{
+								std::lock_guard<std::mutex> lock(m_visibleLightsMutex);
+
+								CullLights(
+									renderData,
+									m_cachedFrustums.at(gr::Camera::View(cameraID)),
+									m_visiblePointLightIDs,
+									m_visibleSpotLightIDs,
+									m_cullingEnabled);
+							}
 						}
-						else
-						{
-							m_viewToVisibleIDs.emplace(currentView, std::move(renderIDsOut));
-						}
-					}
-				}
+					}));
 
-				// If we're the active camera, also cull the lights:
-				if (cameraID == activeCamRenderDataID)
-				{
-					{
-						std::lock_guard<std::mutex> lock(m_visibleLightsMutex);
+				++cameraItr;
+			}
 
-						CullLights(
-							renderData, 
-							m_cachedFrustums.at(gr::Camera::View(cameraID)),
-							m_visiblePointLightIDs, 
-							m_visibleSpotLightIDs,
-							m_cullingEnabled);
-					}
-				}
-			}));
-						
-			++cameraItr;
-		}
-
-		// Wait for our jobs to complete
-		for (size_t cullingFutureIdx = 0; cullingFutureIdx < cullingFutures.size(); cullingFutureIdx++)
-		{
-			cullingFutures[cullingFutureIdx].wait();
+			// Wait for our jobs to complete
+			for (size_t cullingFutureIdx = 0; cullingFutureIdx < cullingFutures.size(); cullingFutureIdx++)
+			{
+				cullingFutures[cullingFutureIdx].wait();
+			}
 		}
 	}
 
@@ -567,8 +570,9 @@ namespace gr
 		{
 			for (auto const& viewFrustum : m_cachedFrustums)
 			{
-				ImGui::Text(std::format("Camera RenderObjectID {}", 
-					static_cast<uint32_t>(viewFrustum.first.m_cameraRenderDataID)).c_str());
+				ImGui::Text(std::format("Camera RenderObjectID {}, face {}", 
+					static_cast<uint32_t>(viewFrustum.first.m_cameraRenderDataID),
+					gr::Camera::View::k_faceNames[viewFrustum.first.m_face]).c_str());
 
 				ImGui::Text("Near:");
 				ImGui::Text(std::format("Point: {}", 

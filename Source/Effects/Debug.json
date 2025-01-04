@@ -59,6 +59,12 @@
 			},
 			{
 				"Conditions": [
+					{ "Rule": "Debug", "Mode": "Wireframe" }
+				],
+				"Technique": "Debug_Wireframe"
+			},
+			{
+				"Conditions": [
 					{ "Rule": "Debug", "Mode": "Normal" }
 				],
 				"Technique": "Debug_Normal"

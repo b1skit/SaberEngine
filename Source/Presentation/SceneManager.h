@@ -30,6 +30,9 @@ namespace fr
 		void Shutdown() override;
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
+	public:
+		void LoadScene(std::string const& sceneFilePath); // Filename and path, relative to the ..\Scenes\ dir
+
 
 	public:
 		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
@@ -43,8 +46,6 @@ namespace fr
 
 
 	private:
-		bool Load(std::string const& relativeFilePath); // Filename and path, relative to the ..\Scenes\ dir
-
 		void CreateDefaultSceneResources();
 
 
