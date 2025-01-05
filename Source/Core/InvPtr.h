@@ -230,7 +230,7 @@ namespace core
 		std::shared_ptr<ILoadContextBase> curLoadContext = m_control->m_loadContext;
 		if (curLoadContext != nullptr)
 		{
-			std::scoped_lock lock(curLoadContext->m_loadContextMutex, child.m_control->m_loadContextMutex);
+			std::scoped_lock lock(m_control->m_loadContextMutex, child.m_control->m_loadContextMutex);
 
 			SEAssert(child.m_control->m_loadContext ||
 				child.m_control->m_state.load() == ResourceState::Ready,
@@ -261,7 +261,7 @@ namespace core
 		std::shared_ptr<ILoadContextBase> curLoadContext = m_control->m_loadContext;
 		if (curLoadContext != nullptr)
 		{
-			std::scoped_lock lock(curLoadContext->m_loadContextMutex, child.m_control->m_loadContextMutex);
+			std::scoped_lock lock(m_control->m_loadContextMutex, child.m_control->m_loadContextMutex);
 
 			SEAssert(child.m_control->m_loadContext ||
 				child.m_control->m_state.load() == ResourceState::Ready,
