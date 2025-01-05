@@ -2,6 +2,12 @@
 #pragma once
 
 
+// Add this to the head of a file (after includes) to disable optimizations for the whole file. This is useful for
+// debugging optimized builds
+#define SE_DISABLE_OPTIMIZATIONS \
+	_Pragma("optimize(\"\", off)");
+
+
 // Enable this to print failed asserts as messages when _DEBUG is not enabled. Warning: Do not leave this enabled
 //#define RELEASE_ASSERTS_AS_LOG_ERRORS
 
