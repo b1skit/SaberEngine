@@ -223,9 +223,14 @@ namespace core
 	{
 		SEAssert(IsValid() && child.IsValid(), "Cannot add dependencies to invalid InvPtrs");
 
-		// Add our callback to the child:
+		// We make a local copy of our m_loadContext in case we finish loading and it goes out of scope while we're here
+		// Note: It is (currently) possible for a dependency to fail to register if the parent object finishes 
+		// asyncronously loading before the dependency-adding thread registers the dependency. We currently just ignore
+		// this, as accessing a loading InvPtr we're dependent on will block
+		std::shared_ptr<ILoadContextBase> curLoadContext = m_control->m_loadContext;
+		if (curLoadContext != nullptr)
 		{
-			std::scoped_lock lock(m_control->m_loadContextMutex, child.m_control->m_loadContextMutex);
+			std::scoped_lock lock(curLoadContext->m_loadContextMutex, child.m_control->m_loadContextMutex);
 
 			SEAssert(child.m_control->m_loadContext ||
 				child.m_control->m_state.load() == ResourceState::Ready,
@@ -235,7 +240,7 @@ namespace core
 			if (child.m_control->m_loadContext && // If the child has no load context, it must be Ready
 				child.m_control->m_state.load() != ResourceState::Ready) // It might be ready, but not have cleared its load context yet
 			{
-				ILoadContextBase::CreateLoadDependency(m_control->m_loadContext, child.m_control->m_loadContext);
+				ILoadContextBase::CreateLoadDependency(curLoadContext, child.m_control->m_loadContext);
 			}
 		}
 
@@ -249,8 +254,14 @@ namespace core
 	{
 		SEAssert(IsValid() && child.IsValid(), "Cannot add dependencies to invalid InvPtrs");
 
+		// We make a local copy of our m_loadContext in case we finish loading and it goes out of scope while we're here
+		// Note: It is (currently) possible for a dependency to fail to register if the parent object finishes 
+		// asyncronously loading before the dependency-adding thread registers the dependency. We currently just ignore
+		// this, as accessing a loading InvPtr we're dependent on will block
+		std::shared_ptr<ILoadContextBase> curLoadContext = m_control->m_loadContext;
+		if (curLoadContext != nullptr)
 		{
-			std::scoped_lock lock(m_control->m_loadContextMutex, child.m_control->m_loadContextMutex);
+			std::scoped_lock lock(curLoadContext->m_loadContextMutex, child.m_control->m_loadContextMutex);
 
 			SEAssert(child.m_control->m_loadContext ||
 				child.m_control->m_state.load() == ResourceState::Ready,
@@ -260,7 +271,7 @@ namespace core
 			if (child.m_control->m_loadContext && // If the child has no load context, it must be Ready
 				child.m_control->m_state.load() != ResourceState::Ready) // It might be ready, but not have cleared its load context yet
 			{
-				ILoadContextBase::CreateLoadDependency(m_control->m_loadContext, child.m_control->m_loadContext);
+				ILoadContextBase::CreateLoadDependency(curLoadContext, child.m_control->m_loadContext);
 			}
 		}
 
