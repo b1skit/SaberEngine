@@ -23,7 +23,7 @@ void HandleLogError(char const*); // Wrapper for the LOG_ERROR macro, as we can'
 #if defined(_DEBUG)
 
 // TODO: Move the Win32-specific stuff to a platform wrapper (ClipCursor, ShowCursor)
-// TODO: Reverse the argument order, so we can support variadic arguments in the message: condition, msg, args
+// TODO: Support variadic arguments in the message
 
 void HandleAssertInternal();
 
