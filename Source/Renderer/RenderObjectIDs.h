@@ -13,11 +13,12 @@ namespace gr
 
 	enum RenderObjectFeature : uint32_t
 	{
-		IsSceneBounds			= 0x0,
-		IsMeshBounds			= 0x1,
-		IsMeshPrimitiveBounds	= 0x2,
+		IsSceneBounds			= 1 << 0,
+		IsMeshBounds			= 1 << 1,
+		IsMeshPrimitiveBounds	= 1 << 2,
+		IsLightBounds			= 1 << 3,
 		
-		IsMeshPrimitive			= 0x4,
+		IsMeshPrimitive			= 1 << 4,
 
 		Invalid
 	};

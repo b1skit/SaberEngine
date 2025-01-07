@@ -114,6 +114,8 @@ namespace fr
 		fr::RenderDataComponent* renderDataComponent =
 			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
+		renderDataComponent->SetFeatureBit(gr::RenderObjectFeature::IsLightBounds);
+
 		// Attach the MeshPrimitive 
 		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh, minPos, maxPos);
 
@@ -186,6 +188,8 @@ namespace fr
 
 		fr::RenderDataComponent* renderDataComponent =
 			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+
+		renderDataComponent->SetFeatureBit(gr::RenderObjectFeature::IsLightBounds);
 
 		// Attach the MeshPrimitive 
 		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh, minPos, maxPos);

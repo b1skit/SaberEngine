@@ -79,7 +79,7 @@ namespace gr
 
 		bool m_showSceneBoundingBox = false;
 		glm::vec4 m_sceneBoundsColor = glm::vec4(1.f, 0.4f, 0.f, 0.5f);
-		std::unique_ptr<re::Batch> m_sceneBoundsBatch;
+		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_sceneBoundsBatches; // This is wasteful but convenient
 
 		bool m_showAllMeshBounds = false;
 		glm::vec4 m_meshBoundsColor = glm::vec4(1.f, 0.f, 0.f, 0.5f);
@@ -88,6 +88,10 @@ namespace gr
 		bool m_showAllMeshPrimitiveBounds = false;
 		glm::vec4 m_meshPrimBoundsColor = glm::vec4(0.f, 1.f, 0.f, 0.5f);
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_meshPrimBoundsBatches;
+
+		bool m_showAllLightBounds = false;
+		glm::vec4 m_lightBoundsColor = glm::vec4(1.f, 1.f, 0.f, 0.5f);
+		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_lightBoundsBatches;
 		
 		bool m_showAllVertexNormals = false;
 		float m_vertexNormalsScale = 0.2f;

@@ -583,66 +583,54 @@ namespace gr
 			m_meshCoordinateAxisBatches.clear();
 		}
 
-		// Mesh: Draw this after MeshPrimitive bounds so they're on top if the bounding box is the same
-		if (m_showAllMeshBounds)
-		{
-			auto boundsItr = renderData.ObjectBegin<gr::Bounds::RenderData>();
-			auto boundsItrEnd = renderData.ObjectEnd<gr::Bounds::RenderData>();
-			while (boundsItr != boundsItrEnd)
+		auto HandleBoundsBatches = [this, &renderData](
+			bool doShowBounds,
+			gr::RenderObjectFeature boundsFeatureBit, 
+			std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>>& boundsBatches,
+			glm::vec4 const& boundsColor)
 			{
-				const gr::RenderDataID meshID = boundsItr.GetRenderDataID();
-
-				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(meshID))
+				if (doShowBounds)
 				{
-					if (gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, boundsItr.GetFeatureBits()))
+					auto boundsItr = renderData.ObjectBegin<gr::Bounds::RenderData>();
+					auto boundsItrEnd = renderData.ObjectEnd<gr::Bounds::RenderData>();
+					while (boundsItr != boundsItrEnd)
 					{
-						gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
+						const gr::RenderDataID objectID = boundsItr.GetRenderDataID();
 
-						if (!m_meshBoundsBatches.contains(meshID) || 
-							boundsItr.IsDirty<gr::Bounds::RenderData>())
+						if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(objectID))
 						{
-							m_meshBoundsBatches[meshID] = 
-								BuildBoundingBoxBatch(re::Lifetime::Permanent,boundsRenderData, m_meshBoundsColor);
+							if (gr::HasFeature(boundsFeatureBit, boundsItr.GetFeatureBits()))
+							{
+								gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
+
+								if (!boundsBatches.contains(objectID) ||
+									boundsItr.IsDirty<gr::Bounds::RenderData>())
+								{
+									boundsBatches[objectID] =
+										BuildBoundingBoxBatch(re::Lifetime::Permanent, boundsRenderData, boundsColor);
+								}
+
+								m_debugStage->AddBatch(*boundsBatches.at(objectID));
+							}
 						}
-
-						m_debugStage->AddBatch(*m_meshBoundsBatches.at(meshID));
+						++boundsItr;
 					}
 				}
-				++boundsItr;
-			}
-		}
-		else
-		{
-			m_meshBoundsBatches.clear();
-		}
-
-		// Scene bounds
-		if (m_showSceneBoundingBox)
-		{
-			auto boundsItr = renderData.ObjectBegin<gr::Bounds::RenderData>();
-			auto boundsItrEnd = renderData.ObjectEnd<gr::Bounds::RenderData>();
-			while (boundsItr != boundsItrEnd)
-			{
-				if (gr::HasFeature(gr::RenderObjectFeature::IsSceneBounds, boundsItr.GetFeatureBits()))
+				else
 				{
-					gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
-					
-					if (m_sceneBoundsBatch == nullptr ||
-						boundsItr.IsDirty<gr::Bounds::RenderData>())
-					{
-						m_sceneBoundsBatch = BuildBoundingBoxBatch(
-							re::Lifetime::Permanent, boundsRenderData, m_sceneBoundsColor);
-					}
-					
-					m_debugStage->AddBatch(*m_sceneBoundsBatch);
+					boundsBatches.clear();
 				}
-				++boundsItr;
-			}
-		}
-		else
-		{
-			m_sceneBoundsBatch = nullptr;
-		}
+			};
+		
+		HandleBoundsBatches( // Mesh: Draw this after MeshPrimitive bounds so they're on top if the bounding box is the same
+			m_showAllMeshBounds, gr::RenderObjectFeature::IsMeshBounds, m_meshBoundsBatches, m_meshBoundsColor);
+
+		HandleBoundsBatches(
+			m_showSceneBoundingBox, gr::RenderObjectFeature::IsSceneBounds, m_sceneBoundsBatches, m_sceneBoundsColor);
+
+		HandleBoundsBatches(
+			m_showAllLightBounds, gr::RenderObjectFeature::IsLightBounds, m_lightBoundsBatches, m_lightBoundsColor);
+		
 
 		if (m_showCameraFrustums)
 		{
@@ -1118,6 +1106,9 @@ namespace gr
 
 		m_isDirty |= ImGui::Checkbox(std::format("Show MeshPrimitive bounding boxes").c_str(), &m_showAllMeshPrimitiveBounds);
 		m_isDirty |= ShowColorPicker(m_showAllMeshPrimitiveBounds, m_meshPrimBoundsColor);
+
+		m_isDirty |= ImGui::Checkbox(std::format("Show Light bounding boxes").c_str(), &m_showAllLightBounds);
+		m_isDirty |= ShowColorPicker(m_showAllLightBounds, m_lightBoundsColor);
 
 		m_isDirty |= ImGui::Checkbox(std::format("Show vertex normals").c_str(), &m_showAllVertexNormals);
 		if (m_showAllVertexNormals)
