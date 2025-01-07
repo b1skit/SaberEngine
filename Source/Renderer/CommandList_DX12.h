@@ -5,6 +5,8 @@
 #include "GPUDescriptorHeap_DX12.h"
 #include "ResourceStateTracker_DX12.h"
 
+#include "Core/LogManager.h"
+
 #include <wrl.h>
 #include <d3d12.h>
 
