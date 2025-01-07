@@ -608,10 +608,9 @@ namespace dx12
 #endif
 					cmdList->ResourceBarrier(util::CheckedCast<uint32_t>(barriers.size()), barriers.data());
 
-					const uint64_t directBarrierFence =
-						cmdQueue.ExecuteInternal({ cmdList }, markerLabel);
+					const uint64_t fenceVal = cmdQueue.ExecuteInternal({ cmdList }, markerLabel);
 
-					GPUWait(cmdQueue.GetFence(), directBarrierFence);
+					GPUWait(cmdQueue.GetFence(), fenceVal);
 				}
 			};
 		ExecuteTransitionsToCommon(directQueue, directCmdList, directBarriers, "Direct queue: Transitions to common");
@@ -960,7 +959,7 @@ namespace dx12
 #endif
 
 		// Updates the fence to the specified value from the CPU side
-		m_fence.CPUSignal(++m_fenceValue); // Note: First (raw) value actually signaled == 1
+		m_fence.CPUSignal(++m_fenceValue); // Note: First (decoded) value actually signaled == 1
 		return m_fenceValue;
 	}
 
@@ -1001,7 +1000,7 @@ namespace dx12
 			"Attempting to GPUSignal with a fence from an invalid CommandListType");
 
 #if defined(DEBUG_FENCES)
-		LOG_WARNING("CommandQueue::GPUSignal: %s, %llu = %llu",
+		LOG_WARNING("CommandQueue::GPUSignal: %s, %llu (encoded) / %llu (decoded)",
 			dx12::GetDebugName(m_commandQueue.Get()).c_str(),
 			fenceValue,
 			dx12::Fence::GetRawFenceValue(fenceValue));
@@ -1018,7 +1017,7 @@ namespace dx12
 			"Attempting to GPUWait on a fence from an invalid CommandListType");
 
 #if defined(DEBUG_FENCES)
-		LOG_WARNING("CommandQueue::GPUWait: %s, %llu = %llu",
+		LOG_WARNING("CommandQueue::GPUWait: %s, %llu (encoded) / %llu (decoded)",
 			dx12::GetDebugName(m_commandQueue.Get()).c_str(),
 			fenceValue,
 			dx12::Fence::GetRawFenceValue(fenceValue));
@@ -1036,7 +1035,8 @@ namespace dx12
 			"Attempting to GPUWait on a fence from an invalid CommandListType");
 
 #if defined(DEBUG_FENCES)
-		LOG_WARNING("CommandQueue::GPUWait on another fence: \"%s\" waiting on \"%s\" from queue type \"%s\" for value %llu = %llu",
+		LOG_WARNING("CommandQueue::GPUWait on another fence: \"%s\" waiting on \"%s\" from queue type \"%s\" for value "
+			"%llu (encoded) / %llu (decoded)",
 			dx12::GetDebugName(m_commandQueue.Get()).c_str(),
 			dx12::GetDebugName(fence.GetD3DFence()).c_str(),
 			dx12::CommandList::GetCommandListTypeName(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue)),

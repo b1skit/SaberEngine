@@ -65,10 +65,16 @@ namespace dx12
 		// We don't (currently) use the simultaneous access flag due to some of its drawbacks
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/executing-and-synchronizing-command-lists#accessing-resources-from-multiple-command-queues
 		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_flags
-		if (IsWriteableState(afterState) ||
+
+		// Note: If we're changing command lists, we count a state transition barrier as a "modification" here (as
+		// non-simultaneous-access resources cannot be referenced by transition barriers on multiple in-flight GPU
+		// operations).
+		// TODO: If we decide to use D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS, we'll need to modify this logic
+		const bool resourceWasTransitioned = (currentState != afterState) && 
 			(dx12::Fence::GetCommandListTypeFromFenceValue(lastFence) !=
-				dx12::Fence::GetCommandListTypeFromFenceValue(m_lastFence) &&
-			IsWriteableState(currentState))) // Changing command lists, and previous state was writeable
+				dx12::Fence::GetCommandListTypeFromFenceValue(m_lastFence)); 
+
+		if (IsWriteableState(afterState) || resourceWasTransitioned) 
 		{
 			m_lastModificationFence = lastFence;
 		}
