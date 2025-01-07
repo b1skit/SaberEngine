@@ -671,6 +671,8 @@ namespace fr
 				{
 					sceneBoundsComponent = fr::BoundsComponent::Invalid();
 
+					bool foundOtherBounds = false;
+
 					// We must check every MeshConcept in the scene: If even 1 is dirty, we need to recompute everything
 					auto meshConceptEntitiesView =
 						m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent, fr::TransformComponent>();
@@ -685,6 +687,8 @@ namespace fr
 						sceneBoundsComponent.ExpandBounds(
 							boundsComponent.GetTransformedAABBBounds(meshTransform.GetGlobalMatrix()),
 							sceneBoundsEntity);
+
+						foundOtherBounds = true;
 					}
 
 					// It is valid for a MeshConcept to have no TransformComponent; We handle this case with its own
@@ -705,6 +709,16 @@ namespace fr
 						sceneBoundsComponent.ExpandBounds(
 							boundsComponent.GetTransformedAABBBounds(transformCmpt->GetTransform().GetGlobalMatrix()),
 							sceneBoundsEntity);
+
+						foundOtherBounds = true;
+					}
+
+					// If there are no other bounds, we set the scene bounds to zero (preventing it from getting stuck
+					// at the last size it saw another bounds)
+					if (!foundOtherBounds)
+					{
+						sceneBoundsComponent = fr::BoundsComponent::Zero();
+						fr::BoundsComponent::MarkDirty(sceneBoundsEntity);
 					}
 				});
 		}

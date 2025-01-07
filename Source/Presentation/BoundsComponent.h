@@ -52,6 +52,7 @@ namespace fr
 		static BoundsComponent Zero() { return BoundsComponent(PrivateCTORTag{}, glm::vec3(0.f), glm::vec3(0.f), entt::null); }
 		static BoundsComponent Invalid() { return BoundsComponent(PrivateCTORTag{}); }
 
+		static void MarkDirty(entt::entity boundsEntity);
 
 		// Returns a new AABB BoundsConcept, transformed from local -> global space using the given matrix
 		BoundsComponent GetTransformedAABBBounds(glm::mat4 const& worldMatrix) const;
@@ -83,7 +84,6 @@ namespace fr
 
 
 	private:
-		void MarkDirty(entt::entity boundsEntity);
 
 		void ExpandEncapsulatingBounds(
 			fr::EntityManager&, BoundsComponent const& newContents, entt::entity boundsEntity);

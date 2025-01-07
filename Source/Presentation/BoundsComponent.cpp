@@ -113,7 +113,7 @@ namespace fr
 
 		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt, encapsulatingBounds);
 
-		boundsCmpt->MarkDirty(entity);
+		MarkDirty(entity);
 
 		return *boundsCmpt;
 	}
@@ -137,7 +137,7 @@ namespace fr
 
 		boundsCmpt->ExpandEncapsulatingBounds(em, *boundsCmpt, entity);
 
-		boundsCmpt->MarkDirty(entity);
+		MarkDirty(entity);
 
 		return *boundsCmpt;
 	}
