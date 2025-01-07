@@ -223,12 +223,6 @@ namespace core
 	{
 		SEAssert(IsValid() && child.IsValid(), "Cannot add dependencies to invalid InvPtrs");
 
-		// We make a local copy of our m_loadContext in case we finish loading and it goes out of scope while we're here
-		// Note: It is (currently) possible for a dependency to fail to register if the parent object finishes 
-		// asyncronously loading before the dependency-adding thread registers the dependency. We currently just ignore
-		// this, as accessing a loading InvPtr we're dependent on will block
-		std::shared_ptr<ILoadContextBase> curLoadContext = m_control->m_loadContext;
-		if (curLoadContext != nullptr)
 		{
 			std::scoped_lock lock(m_control->m_loadContextMutex, child.m_control->m_loadContextMutex);
 
@@ -237,10 +231,14 @@ namespace core
 				"Trying to add a null load context as a child dependency, this should only be possible if it is Ready");
 
 			// Add our callback to the child:
-			if (child.m_control->m_loadContext && // If the child has no load context, it must be Ready
+			// Note: It is (currently) possible for a dependency to fail to register if the parent object finishes 
+			// asyncronously loading before the dependency-adding thread registers the dependency. We currently just
+			// ignore this, as accessing a loading InvPtr will block
+			if (m_control->m_loadContext && // Might be null if Resource finished loading (potentially early...)
+				child.m_control->m_loadContext && // If the child has no load context, it must be Ready
 				child.m_control->m_state.load() != ResourceState::Ready) // It might be ready, but not have cleared its load context yet
 			{
-				ILoadContextBase::CreateLoadDependency(curLoadContext, child.m_control->m_loadContext);
+				ILoadContextBase::CreateLoadDependency(m_control->m_loadContext, child.m_control->m_loadContext);
 			}
 		}
 
@@ -254,12 +252,6 @@ namespace core
 	{
 		SEAssert(IsValid() && child.IsValid(), "Cannot add dependencies to invalid InvPtrs");
 
-		// We make a local copy of our m_loadContext in case we finish loading and it goes out of scope while we're here
-		// Note: It is (currently) possible for a dependency to fail to register if the parent object finishes 
-		// asyncronously loading before the dependency-adding thread registers the dependency. We currently just ignore
-		// this, as accessing a loading InvPtr we're dependent on will block
-		std::shared_ptr<ILoadContextBase> curLoadContext = m_control->m_loadContext;
-		if (curLoadContext != nullptr)
 		{
 			std::scoped_lock lock(m_control->m_loadContextMutex, child.m_control->m_loadContextMutex);
 
@@ -268,10 +260,14 @@ namespace core
 				"Trying to add a null load context as a child dependency, this should only be possible if it is Ready");
 
 			// Add our callback to the child:
-			if (child.m_control->m_loadContext && // If the child has no load context, it must be Ready
+			// Note: It is (currently) possible for a dependency to fail to register if the parent object finishes 
+			// asyncronously loading before the dependency-adding thread registers the dependency. We currently just
+			// ignore this, as accessing a loading InvPtr will block
+			if (m_control->m_loadContext && // Might be null if Resource finished loading (potentially early...)
+				child.m_control->m_loadContext && // If the child has no load context, it must be Ready
 				child.m_control->m_state.load() != ResourceState::Ready) // It might be ready, but not have cleared its load context yet
 			{
-				ILoadContextBase::CreateLoadDependency(curLoadContext, child.m_control->m_loadContext);
+				ILoadContextBase::CreateLoadDependency(m_control->m_loadContext, child.m_control->m_loadContext);
 			}
 		}
 
