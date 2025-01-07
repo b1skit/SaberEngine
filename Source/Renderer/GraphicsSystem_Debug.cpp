@@ -1099,7 +1099,12 @@ namespace gr
 				if (doShow)
 				{
 					ImGui::Indent();
-					isDirty |= ImGui::ColorEdit4(label ? label : "Color", &color.x, k_colorPickerFlags);
+
+					isDirty |= ImGui::ColorEdit4(
+						std::format("{}##{}", label ? label : "Color", util::PtrToID(&color)).c_str(),
+						&color.x,
+						k_colorPickerFlags);
+
 					ImGui::Unindent();
 				}
 				return isDirty;
