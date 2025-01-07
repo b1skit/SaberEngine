@@ -100,11 +100,14 @@ namespace core
 			FunctionWrapper currentJob = std::move(m_jobQueue.front());
 			m_jobQueue.pop();
 
-			const size_t currentJobQueueSize = m_jobQueue.size();
-
 			waitingLock.unlock();
 
 			currentJob(); // Do the work
+
+			// Get the current number of jobs in the queue:
+			waitingLock.lock();
+			const size_t currentJobQueueSize = m_jobQueue.size();
+			waitingLock.unlock();
 
 			if (ShrinkThreadPool(currentJobQueueSize, std::this_thread::get_id()))
 			{
@@ -148,17 +151,25 @@ namespace core
 		{
 			std::unique_lock<std::shared_mutex> lock(m_workerThreadsMutex);
 
-			if (currentJobQueueSize < m_minThreadCount &&
-				m_workerThreads.size() > m_minThreadCount) // Never shrink smaller than our target
+			const size_t numWorkerThreads = m_workerThreads.size();
+
+			if (currentJobQueueSize < m_minThreadCount && 
+				m_workerThreads.size() > m_minThreadCount)
 			{
-				SEAssert(m_workerThreads.contains(currentThread), "Failed to find the current thread");
+				const size_t flooredSize = (currentJobQueueSize / k_targetJobsPerThread) * k_targetJobsPerThread;
+				const size_t curCapacity = numWorkerThreads * k_targetJobsPerThread;
 
-				m_workerThreadsToJoin.emplace_back(std::move(m_workerThreads.at(currentThread)));
-				m_workerThreads.erase(currentThread);
+				if (flooredSize + k_targetJobsPerThread < curCapacity)
+				{
+					SEAssert(m_workerThreads.contains(currentThread), "Failed to find the current thread");
 
-				shouldTerminate = true;
+					m_workerThreadsToJoin.emplace_back(std::move(m_workerThreads.at(currentThread)));
+					m_workerThreads.erase(currentThread);
 
-				LOG(std::format("Thread pool shrunk to {} threads", m_workerThreads.size()).c_str());
+					shouldTerminate = true;
+
+					LOG(std::format("Thread pool shrunk to {} threads", m_workerThreads.size()).c_str());
+				}
 			}
 
 			// Threads can't join() themselves, clean up any previously-released threads
