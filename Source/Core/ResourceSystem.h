@@ -11,6 +11,7 @@ namespace core
 	enum class ResourceState : uint8_t
 	{
 		Empty,
+		Requested,
 		Loading,
 		Ready,
 		Released,
@@ -182,7 +183,10 @@ namespace core
 			if (ptrCtrlItr != m_ptrAndControlBlocks.end())
 			{
 				const ResourceState resourceState = m_ptrAndControlBlocks.at(id).m_control->m_state.load();
-				return resourceState == ResourceState::Loading || resourceState == ResourceState::Ready;
+				return resourceState == ResourceState::Empty || 
+					resourceState == ResourceState::Requested ||
+					resourceState == ResourceState::Loading ||
+					resourceState == ResourceState::Ready;
 			}
 			return false;
 		}

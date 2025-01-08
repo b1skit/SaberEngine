@@ -44,7 +44,7 @@ namespace core::configkeys
 	constexpr char const* k_scenePipelineCmdLineArg					= "scenepipeline";
 	constexpr char const* k_singleThreadEffectLoading				= "singlethreadeffectloading";
 	constexpr char const* k_singleThreadGSExecution					= "singlethreadgsexecution";
-	constexpr char const* k_minWorkerThreads						= "minworkerthreads";
+	constexpr char const* k_numWorkerThreads						= "numworkerthreads";
 	constexpr char const* k_platformCmdLineArg						= "platform";
 	constexpr char const* k_debugLevelCmdLineArg					= "debuglevel";
 	constexpr char const* k_enableDredCmdLineArg					= "enabledred";

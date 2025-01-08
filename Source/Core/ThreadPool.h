@@ -68,14 +68,10 @@ namespace core
 	private:
 		void ExecuteJobs(); // Consumer loop
 
-		void GrowThreadPool(size_t currentJobQueueSize);
-		bool ShrinkThreadPool(size_t currentJobQueueSize, std::thread::id currentThread); // Returns true if calling thread should terminate
 		void AddWorkerThread();
 
 
 	private:
-		size_t m_minThreadCount;
-		static constexpr size_t k_targetJobsPerThread = 4;
 		bool m_isRunning;
 
 		std::mutex m_jobQueueMutex;
@@ -83,9 +79,7 @@ namespace core
 
 		std::queue<FunctionWrapper> m_jobQueue;
 
-		std::unordered_map<std::thread::id, std::thread> m_workerThreads;
-		std::list<std::thread> m_workerThreadsToJoin;
-		std::shared_mutex m_workerThreadsMutex;
+		std::vector<std::thread> m_workerThreads;
 
 
 	private: // No copying allowed
@@ -103,14 +97,10 @@ namespace core
 		std::future<resultType> taskFuture(packagedTask.get_future());
 
 		// Add the task to our queue:
-		size_t currentJobQueueSize = 0;
 		{
 			std::unique_lock<std::mutex> waitingLock(m_jobQueueMutex);
 			m_jobQueue.push(std::move(packagedTask));
-			currentJobQueueSize = m_jobQueue.size();
 		}
-
-		GrowThreadPool(currentJobQueueSize);
 
 		m_jobQueueCV.notify_one();
 

@@ -176,7 +176,7 @@
         },
         {
           "Id": "97a8f732-f326-4216-bbe6-cd030918b58b",
-          "Command": "-minworkerthreads 12"
+          "Command": "-numworkerthreads 12"
         }
       ]
     },

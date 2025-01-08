@@ -41,7 +41,10 @@ namespace core
 		core::ResourceSystem<T>::RefCountType UseCount() const;
 		core::ResourceState GetState() const;
 
-		bool IsValid() const; // Is this InvPtr Loaded/Loading?
+		bool IsValid() const; // Is this InvPtr Empty/Requested/Loaded/Loading?
+
+	private:
+		void TryToLoad() const; // Work stealing: First thread to call this will do the load job
 
 
 	private:
@@ -92,6 +95,114 @@ namespace core
 		, m_control(nullptr)
 	{
 		*this = std::move(rhs);
+	}
+
+
+	template<typename T>
+	inline InvPtr<T>::InvPtr(core::ResourceSystem<T>::ControlBlock* controlBlock)
+		: m_control(controlBlock) // Note: The controlBlock may already be in use by other InvPtr<T>s
+		, m_objectCache(nullptr)
+	{
+		SEAssert(m_control, "Control cannot be null here");
+		SEAssert(m_control->m_object != nullptr, "Control object pointer cannot be null here");
+
+		SEAssert(m_control->m_state.load() != core::ResourceState::Released ||
+			m_control->m_refCount.load() == 0,
+			"State is Released, but ref count is not 0. This should not be possible");
+
+		// If the resource was Released, set its state back to Ready as it is still loaded
+		core::ResourceState expected = core::ResourceState::Released;
+		if (m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Ready))
+		{
+			// If the object was released, we need to re-set the local cache of the object pointer
+			m_objectCache = m_control->m_object->get();
+		}
+
+		m_control->m_refCount++;
+	}
+
+
+	template<typename T>
+	void InvPtr<T>::TryToLoad() const
+	{
+		// Work stealing: First thread to get here will do the loading work rather than block
+		core::ResourceState expected = core::ResourceState::Requested;
+		if (m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Loading))
+		{
+			SEAssert(m_control->m_object != nullptr && m_control->m_object->get() == nullptr,
+				"Pointer should refer to an empty unique pointer here");
+
+			// Populate the unique_ptr held by the ResourceSystem.
+			// Note: We don't lock m_loadContextMutex here, it will be locked internally to add dependencies
+			*m_control->m_object =
+				std::dynamic_pointer_cast<ILoadContext<T>>(m_control->m_loadContext)->CallLoad();
+
+			if (*m_control->m_object == nullptr)
+			{
+				m_control->m_state.store(core::ResourceState::Error);
+
+				SEAssertF("Resource loading error. TODO: Handle dependencies now that we have an error state");
+			}
+			else
+			{
+				// The unique_ptr owning our object is created: Swap our pointer to minimize indirection
+				m_objectCache = m_control->m_object->get();
+
+				// We're done! Mark ourselves as ready, and notify anybody waiting on us
+				m_control->m_state.store(core::ResourceState::Ready);
+
+			}
+			m_control->m_state.notify_all();
+
+
+			// Finally, handle dependencies:
+			{
+				std::lock_guard<std::mutex> lock(m_control->m_loadContextMutex);
+
+				// The last thread through here will execute ILoadContextBase::OnLoadComplete, and call
+				// back to any parents
+				m_control->m_loadContext->Finalize();
+
+				// Release load context: No need for this anymore. Any children with a copy will keep this alive
+				// until it is no longer needed. Note: ILoadContext contains a copy of this InvPtr, it MUST be
+				// released here to prevent circular dependencies
+				m_control->m_loadContext = nullptr;
+			}
+		}
+	}
+
+
+	template<typename T>
+	inline InvPtr<T> InvPtr<T>::Create(
+		core::ResourceSystem<T>::ControlBlock* control, std::shared_ptr<core::ILoadContext<T>> loadContext)
+	{
+		InvPtr<T> newInvPtr(control);
+
+		// If we're in the Empty state, kick off an asyncronous loading job:
+		core::ResourceState expected = core::ResourceState::Empty;
+		if (newInvPtr.m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Requested))
+		{
+			SEAssert(loadContext != nullptr, "Load context is null");
+
+			// Initialize and store our own load context: We use this for dependency callbacks
+			{
+				std::lock_guard<std::mutex> lock(newInvPtr.m_control->m_loadContextMutex);
+
+				loadContext->Initialize(newInvPtr.m_control->m_id, newInvPtr);
+				newInvPtr.m_control->m_loadContext = loadContext;
+			}
+
+			// Do this on the current thread; guarantees the InvPtr can be registered with any systems that might
+			// require it before the creation can possibly have finished
+			loadContext->CallOnLoadBegin();
+
+			core::ThreadPool::Get()->EnqueueJob([newInvPtr]()
+				{
+					newInvPtr.TryToLoad();
+				});
+		}
+
+		return newInvPtr;
 	}
 
 
@@ -151,11 +262,12 @@ namespace core
 			return m_objectCache;
 		}
 
+		TryToLoad(); // Check if we can steal the work
+
 		m_control->m_state.wait(ResourceState::Loading); // Block until the resource is loaded
 		SEAssert(IsValid() && m_control->m_object && m_control->m_object->get(), "InvPtr is invalid after loading");
 		
-		// Update the local cache of the object pointer, now that loading has finished:
-		SEAssert(m_objectCache == nullptr, "Cached object pointer should be null until the resource has loaded");
+		// Update this object's local cache of the object pointer, now that loading has finished:
 		m_objectCache = m_control->m_object->get();
 
 		return m_objectCache;
@@ -302,101 +414,5 @@ namespace core
 		}
 
 		return false;
-	}
-
-
-	template<typename T>
-	inline InvPtr<T>::InvPtr(core::ResourceSystem<T>::ControlBlock* controlBlock)
-		: m_control(controlBlock) // Note: The controlBlock may already be in use by other InvPtr<T>s
-		, m_objectCache(nullptr)
-	{
-		SEAssert(m_control, "Control cannot be null here");
-		SEAssert(m_control->m_object != nullptr, "Control object pointer cannot be null here");
-
-		SEAssert(m_control->m_state.load() != core::ResourceState::Released || 
-			m_control->m_refCount.load() == 0,
-			"State is Released, but ref count is not 0. This should not be possible");
-
-		// If the resource was Released, set its state back to Ready as it is still loaded
-		core::ResourceState expected = core::ResourceState::Released;
-		if (m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Ready))
-		{
-			// If the object was released, we need to re-set the local cache of the object pointer
-			m_objectCache = m_control->m_object->get();
-		}
-
-		m_control->m_refCount++;
-	}
-
-
-	template<typename T>
-	inline InvPtr<T> InvPtr<T>::Create(
-		core::ResourceSystem<T>::ControlBlock* control, std::shared_ptr<core::ILoadContext<T>> loadContext)
-	{
-		InvPtr<T> newInvPtr(control);
-
-		// If we're in the Empty state, kick off an asyncronous loading job:
-		core::ResourceState expected = core::ResourceState::Empty;
-		if (newInvPtr.m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Loading))
-		{
-			SEAssert(loadContext != nullptr, "Load context is null");
-
-			// Initialize and store our own load context: We use this for dependency callbacks
-			{
-				std::lock_guard<std::mutex> lock(newInvPtr.m_control->m_loadContextMutex);
-
-				loadContext->Initialize(newInvPtr.m_control->m_id, newInvPtr);
-				newInvPtr.m_control->m_loadContext = loadContext;
-			}
-
-			// Do this on the current thread; guarantees the InvPtr can be registered with any systems that might
-			// require it before the creation can possibly have finished
-			loadContext->CallOnLoadBegin();
-
-			core::ThreadPool::Get()->EnqueueJob([newInvPtr]()
-				{
-					SEAssert(newInvPtr.m_control->m_object != nullptr && newInvPtr.m_control->m_object->get() == nullptr,
-						"Pointer should refer to an empty unique pointer here");
-
-					// Populate the unique_ptr held by the ResourceSystem.
-					// Note: We don't lock m_loadContextMutex here, it will be locked internally to add dependencies
-					*newInvPtr.m_control->m_object =
-						std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext)->CallLoad();
-
-					if (*newInvPtr.m_control->m_object == nullptr)
-					{
-						newInvPtr.m_control->m_state.store(core::ResourceState::Error);
-
-						SEAssertF("Resource loading error. TODO: Handle dependencies now that we have an error state");
-					}
-					else
-					{
-						// The unique_ptr owning our object is created: Swap our pointer to minimize indirection
-						newInvPtr.m_objectCache = newInvPtr.m_control->m_object->get();
-
-						// We're done! Mark ourselves as ready, and notify anybody waiting on us
-						newInvPtr.m_control->m_state.store(core::ResourceState::Ready);
-						
-					}
-					newInvPtr.m_control->m_state.notify_all();
-					
-
-					// Finally, handle dependencies:
-					{
-						std::lock_guard<std::mutex> lock(newInvPtr.m_control->m_loadContextMutex);
-
-						// The last thread through here will execute ILoadContextBase::OnLoadComplete, and call
-						// back to any parents
-						newInvPtr.m_control->m_loadContext->Finalize();
-
-						// Release load context: No need for this anymore. Any children with a copy will keep this alive
-						// until it is no longer needed. Note: ILoadContext contains a copy of this InvPtr, it MUST be
-						// released here to prevent circular dependencies
-						newInvPtr.m_control->m_loadContext = nullptr;
-					}
-				});
-		}
-
-		return newInvPtr;
 	}
 }
