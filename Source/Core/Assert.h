@@ -2,10 +2,30 @@
 #pragma once
 
 
+/**********************************************************************************************************************
+*	Debugging helpers:
+***********************************************************************************************************************/
+
+
 // Add this to the head of a file (after includes) to disable optimizations for the whole file. This is useful for
 // debugging optimized builds
 #define SE_DISABLE_OPTIMIZATIONS \
 	_Pragma("optimize(\"\", off)");
+
+
+/**********************************************************************************************************************
+*	Assert macros:
+***********************************************************************************************************************/
+
+
+namespace assertinternal
+{
+	void HandleAssertInternal(char const*);
+
+	void LogAssertAsError(char const*);
+
+	std::string StringFromVariadicArgs(char const* msg, ...);
+}
 
 
 // Enable this to print failed asserts as messages when _DEBUG is not enabled. Warning: Do not leave this enabled
@@ -17,67 +37,111 @@
 	static_assert(condition, msg);
 
 
-void HandleLogError(char const*); // Wrapper for the LOG_ERROR macro, as we can't include LogManager.h here
+// SEVerify will always evaluate the condition, but does not check the result or abort in non-_DEBUG builds
+#if defined(_DEBUG)
+
+#define SEVerify(condition, errorMsg, ...) \
+	if(!(condition)) \
+	{ \
+		std::string const& errorStr = std::format("\n\n\n\n\nAssertion failed: {} == {}\n\"{}\"\nFile: {}\nLine: {}\nFunction: {}\n\n\n", \
+			#condition, \
+			(condition ? "true" : "false"), \
+			assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
+			__FILE__, \
+			__LINE__, \
+			__func__ \
+		); \
+		assertinternal::HandleAssertInternal(errorStr.c_str()); \
+		std::cerr << errorStr.c_str(); \
+		std::abort(); \
+	}
+
+#else
+
+#define SEVerify(condition, errorMsg) \
+		do { static_cast<void>(condition); } while (0);
+
+#endif
 
 
 #if defined(_DEBUG)
 
-// TODO: Move the Win32-specific stuff to a platform wrapper (ClipCursor, ShowCursor)
-// TODO: Support variadic arguments in the message
-
-void HandleAssertInternal();
-
-
-#define SEAssert(condition, errorMsg) \
+#define SEAssert(condition, errorMsg, ...) \
 	if(!(condition)) \
 	{ \
-		void HandleAssertInternal(); \
-		const std::string errorStr((errorMsg)); \
-		HandleLogError(errorStr.c_str()); \
-		std::cerr << "Assertion failed: " << #condition << " == " << (condition ? "true" : "false") << std::endl; \
-		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
+		std::string const& errorStr = std::format("\n\n\n\n\nAssertion failed: {} == {}\n\"{}\"\nFile: {}\nLine: {}\nFunction: {}\n\n\n", \
+			#condition, \
+			(condition ? "true" : "false"), \
+			assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
+			__FILE__, \
+			__LINE__, \
+			__func__ \
+		); \
+		assertinternal::HandleAssertInternal(errorStr.c_str()); \
+		std::cerr << errorStr.c_str(); \
 		std::abort(); \
 	}
 
-#define SEAssertF(errorMsg) \
-	{ \
-		void HandleAssertInternal(); \
-		const std::string errorStr((errorMsg)); \
-		HandleLogError(errorStr.c_str()); \
-		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
-		std::abort(); \
-	}
+#elif defined(RELEASE_ASSERTS_AS_LOG_ERRORS)
 
-#define SEFatalAssert(condition, errorMsg) SEAssert(condition, errorMsg)
+#define SEAssert(condition, errorMsg, ...)	\
+		if (!(condition)) \
+		{ \
+			std::string const& errorStr = std::format("\n\n\n\n\nAssertion failed: {} == {}\n\"{}\"\nFile: {}\nLine: {}\nFunction: {}\n\n\n", \
+				#condition, \
+				(condition ? "true" : "false"), \
+				assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
+				__FILE__, \
+				__LINE__, \
+				__func__ \
+			); \
+			assertinternal::LogAssertAsError(errorStr.c_str()); \
+			std::cerr << errorStr.c_str(); \
+		}
 
 #else
 
-#if defined(RELEASE_ASSERTS_AS_LOG_ERRORS)
+#define SEAssert(condition, errorMsg, ...)
 
-	#define SEAssert(condition, errorMsg)	\
-		if (!(condition)) HandleLogError(std::string(errorMsg).c_str());
-
-#else
-
-#define SEAssert(condition, errorMsg)	\
-	do { static_cast<void>(condition); } while (0);
+#endif
 
 
-#define SEFatalAssert(condition, errorMsg)	\
-	if(!(condition)) \
+#if defined(_DEBUG)
+
+#define SEAssertF(errorMsg, ...) \
 	{ \
-		void HandleAssertInternal(); \
-		const std::string errorStr((errorMsg)); \
-		HandleLogError(errorStr.c_str()); \
-		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
+		std::string const& errorStr = std::format("\n\n\n\n\nAssertion failed:\n\"{}\"\nFile: {}\nLine: {}\nFunction: {}\n\n\n", \
+			assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
+			__FILE__, \
+			__LINE__, \
+			__func__ \
+		); \
+		assertinternal::HandleAssertInternal(errorStr.c_str()); \
+		std::cerr << errorStr.c_str(); \
 		std::abort(); \
 	}
+#else
 
-#endif // RELEASE_ASSERTS_AS_LOG_ERRORS
+#define SEAssertF(errorMsg, ...) \
+		std::string const& errorStr = assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__); \
+		assertinternal::LogAssertAsError(errorStr.c_str());
 
-#define SEAssertF(errorMsg)	\
+#endif
+
+
+// SEFatalAssert is always active in all build configurations
+#define SEFatalAssert(condition, errorMsg, ...)	\
+	if(!(condition)) \
 	{ \
-		HandleLogError(std::string(errorMsg).c_str()); \
+		std::string const& errorStr = std::format("\n\n\n\n\nAssertion failed: {} == {}\n\"{}\"\nFile: {}\nLine: {}\nFunction: {}\n\n\n", \
+			#condition, \
+			(condition ? "true" : "false"), \
+			assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
+			__FILE__, \
+			__LINE__, \
+			__func__ \
+		); \
+		assertinternal::HandleAssertInternal(errorStr.c_str()); \
+		std::cerr << errorStr.c_str(); \
+		std::abort(); \
 	}
-
-#endif // _DEBUG

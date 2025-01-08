@@ -113,11 +113,11 @@ namespace
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
 		ComPtr<ID3D12DeviceRemovedExtendedData> dredQuery;
-		SEAssert(SUCCEEDED(context->GetDevice().GetD3DDisplayDevice()->QueryInterface(IID_PPV_ARGS(&dredQuery))),
+		SEVerify(SUCCEEDED(context->GetDevice().GetD3DDisplayDevice()->QueryInterface(IID_PPV_ARGS(&dredQuery))),
 			"Failed to get DRED query interface");
 
 		D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput;
-		SEAssert(SUCCEEDED(dredQuery->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)),
+		SEVerify(SUCCEEDED(dredQuery->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)),
 			"Failed to get DRED auto breadcrumbs output");
 
 		// Breadcrumbs:
@@ -144,7 +144,7 @@ namespace
 		
 		// Page fault allocation output:
 		D3D12_DRED_PAGE_FAULT_OUTPUT dredPageFaultOutput;
-		SEAssert(SUCCEEDED(dredQuery->GetPageFaultAllocationOutput(&dredPageFaultOutput)),
+		SEVerify(SUCCEEDED(dredQuery->GetPageFaultAllocationOutput(&dredPageFaultOutput)),
 			"Failed to get DRED page fault allocation output");
 
 		LOG_ERROR("DRED PAGE FAULT OUTPUT:\n-----------------------");

@@ -2183,7 +2183,7 @@ namespace
 				cgltf_result parseResult = cgltf_parse_file(&options, m_sceneFilePath.c_str(), &rawData);
 				if (parseResult != cgltf_result::cgltf_result_success)
 				{
-					SEAssert(parseResult == cgltf_result_success, "Failed to parse scene file \"" + m_sceneFilePath + "\"");
+					SEAssert(parseResult == cgltf_result_success, "Failed to parse scene file \"%s\"", m_sceneFilePath.c_str());
 					return nullptr;
 				}
 
@@ -2203,7 +2203,7 @@ namespace
 				cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, m_sceneFilePath.c_str());
 				if (bufferLoadResult != cgltf_result::cgltf_result_success)
 				{
-					SEAssert(bufferLoadResult == cgltf_result_success, "Failed to load scene data \"" + m_sceneFilePath + "\"");
+					SEAssert(bufferLoadResult == cgltf_result_success, "Failed to load scene data \"%s\"", m_sceneFilePath.c_str());
 					return nullptr;
 				}
 
