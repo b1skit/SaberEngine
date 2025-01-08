@@ -366,11 +366,7 @@ namespace gr
 								{
 									std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
 
-									const bool hasCachedFrustumPlanes = m_cachedFrustums.contains(dirtyView);
-									if (hasCachedFrustumPlanes)
-									{
-										m_cachedFrustums.erase(dirtyView);
-									}
+									m_cachedFrustums.erase(dirtyView); // Erases IFF it contains dirtyView
 								}
 							}
 
@@ -427,6 +423,13 @@ namespace gr
 						{
 							gr::Camera::View const& currentView = gr::Camera::View(cameraID, faceIdx);
 
+							gr::Camera::Frustum currentFrustum;
+							{
+								std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
+
+								currentFrustum = m_cachedFrustums.at(currentView);
+							}
+
 							std::vector<gr::RenderDataID> renderIDsOut;
 							renderIDsOut.reserve(numMeshPrimitives);
 
@@ -434,7 +437,7 @@ namespace gr
 							CullGeometry(
 								renderData,
 								m_meshesToMeshPrimitiveBounds,
-								m_cachedFrustums.at(currentView),
+								currentFrustum,
 								renderIDsOut,
 								m_cullingEnabled);
 
@@ -457,12 +460,19 @@ namespace gr
 						// If we're the active camera, also cull the lights:
 						if (cameraID == activeCamRenderDataID)
 						{
+							gr::Camera::Frustum lightFrustum;
+							{
+								std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
+
+								lightFrustum = m_cachedFrustums.at(gr::Camera::View(cameraID));
+							}
+
 							{
 								std::lock_guard<std::mutex> lock(m_visibleLightsMutex);
 
 								CullLights(
 									renderData,
-									m_cachedFrustums.at(gr::Camera::View(cameraID)),
+									lightFrustum,
 									m_visiblePointLightIDs,
 									m_visibleSpotLightIDs,
 									m_cullingEnabled);
