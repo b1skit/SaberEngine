@@ -51,6 +51,9 @@ namespace core
 
 			EngineQuit,
 
+			// Notifications:
+			SceneCreated,
+
 			Uninitialized, // Error
 			EventType_Count = Uninitialized
 		};

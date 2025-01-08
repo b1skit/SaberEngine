@@ -17,6 +17,7 @@
 #include "TransformComponent.h"
 
 #include "Core/Config.h"
+#include "Core/EventManager.h"
 #include "Core/PerformanceTimer.h"
 #include "Core/ThreadPool.h"
 
@@ -2305,6 +2306,9 @@ namespace
 					// TODO: It would be nice to not need to double-enqueue this
 					em->EnqueueEntityCommand<fr::SetMainCameraCommand>(mainCameraEntity);
 				});
+
+			// Finally, let the scene manager know we're done
+			fr::SceneManager::NotifyLoadComplete();
 		}
 
 
@@ -2345,8 +2349,8 @@ namespace fr
 
 
 	SceneManager::SceneManager()
-		: m_sceneRenderSystemNameHash(k_sceneRenderSystemName)
-		, m_inventory(nullptr)
+		: m_inventory(nullptr)
+		, m_hasCreatedScene(false)
 	{
 	}
 
@@ -2503,6 +2507,22 @@ namespace fr
 
 		LOG("\nSceneManager scheduled scene \"%s\" loading in %f seconds\n",
 			sceneFilePath.c_str(), timer.StopSec());
+	}
+
+
+	void SceneManager::NotifyLoadComplete()
+	{
+		SceneManager* sceneMgr = fr::SceneManager::Get();
+
+		bool expected = false;
+		if (sceneMgr->m_hasCreatedScene.compare_exchange_strong(expected, true))
+		{
+			LOG("SceneManager: Initial scene load complete");
+
+			core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+				.m_type = core::EventManager::EventType::SceneCreated
+				});
+		}
 	}
 
 

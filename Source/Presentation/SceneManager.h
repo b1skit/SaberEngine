@@ -33,6 +33,11 @@ namespace fr
 	public:
 		void LoadScene(std::string const& sceneFilePath); // Filename and path, relative to the ..\Scenes\ dir
 
+		static void NotifyLoadComplete(); // Callback to notify the Scenemanager when a load completes
+
+	private:
+		std::atomic<bool> m_hasCreatedScene; // Has an initial scene been loaded?
+
 
 	public:
 		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
@@ -48,9 +53,6 @@ namespace fr
 	private:
 		void CreateDefaultSceneResources();
 
-
-	private:
-		util::StringHash m_sceneRenderSystemNameHash;
 
 	private:
 		SceneManager(SceneManager const&) = delete;

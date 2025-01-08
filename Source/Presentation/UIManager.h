@@ -41,5 +41,23 @@ namespace fr
 
 		bool m_imguiWantsToCaptureKeyboard;
 		bool m_imguiWantsToCaptureMouse;
+
+		enum Show : uint8_t
+		{
+			LogConsole,
+			SceneMgrDbg,
+			EntityMgrDbg,
+			TransformationHierarchyDbg,
+			EntityComponentDbg,
+			RenderMgrDbg,
+			RenderDataDbg,
+			LightMgrDbg,
+			GPUCaptures,
+
+			ImGuiDemo,
+
+			Show_Count
+		};
+		std::array<bool, Show::Show_Count> m_show;
 	};
 }

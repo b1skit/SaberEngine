@@ -148,10 +148,11 @@ namespace fr
 		: m_debugUIRenderSystemCreated(false)
 		, m_debugUICommandMgr(nullptr)
 		, m_imguiGlobalMutex(nullptr)
-		, m_imguiMenuVisible(false)
-		, m_prevImguiMenuVisible(false)
+		, m_imguiMenuVisible(true)
+		, m_prevImguiMenuVisible(true)
 		, m_imguiWantsToCaptureKeyboard(false)
 		, m_imguiWantsToCaptureMouse(false)
+		, m_show{0}
 	{
 	}
 
@@ -169,6 +170,9 @@ namespace fr
 		core::EventManager::Get()->Subscribe(core::EventManager::EventType::MouseMotionEvent, this);
 		core::EventManager::Get()->Subscribe(core::EventManager::EventType::MouseButtonEvent, this);
 		core::EventManager::Get()->Subscribe(core::EventManager::EventType::MouseWheelEvent, this);
+
+		// Notification events:
+		core::EventManager::Get()->Subscribe(core::EventManager::EventType::SceneCreated, this);
 
 		// Create UI render systems:
 		std::atomic<bool>* createdFlag = &m_debugUIRenderSystemCreated;
@@ -194,6 +198,8 @@ namespace fr
 			};
 
 		re::RenderManager::Get()->EnqueueRenderCommand(std::move(createUIRenderSystem));
+
+		m_show[LogConsole] = true;
 	}
 
 
@@ -294,6 +300,12 @@ namespace fr
 
 			switch (eventInfo.m_type)
 			{
+			case core::EventManager::EventType::SceneCreated:
+			{
+				m_imguiMenuVisible = false;
+				m_show[LogConsole] = false;
+			}
+			break;
 			case core::EventManager::EventType::InputToggleConsole:
 			{
 				if (eventInfo.m_data0.m_dataB)
@@ -376,29 +388,12 @@ namespace fr
 	}
 
 
+
+
 	void UIManager::SubmitImGuiRenderCommands(uint64_t frameNum)
 	{
 		// Importantly, this function does NOT modify any ImGui state. Instead, it submits commands to the render
 		// manager, which will execute the updates on the render thread
-
-		enum Show : uint8_t
-		{
-			LogConsole,
-			SceneMgrDbg,
-			EntityMgrDbg,
-			TransformationHierarchyDbg,
-			EntityComponentDbg,
-			RenderMgrDbg,
-			RenderDataDbg,
-			LightMgrDbg,
-			GPUCaptures,
-			
-			ImGuiDemo,
-
-			Show_Count
-		};
-		static std::array<bool, Show::Show_Count> s_show = {0};
-
 
 
 //#define FORCE_SHOW_IMGUI_DEMO
@@ -410,7 +405,7 @@ namespace fr
 		bool showAny = false;
 		if (!m_imguiMenuVisible)
 		{
-			for (bool show : s_show)
+			for (bool show : m_show)
 			{
 				if (show)
 				{
@@ -504,34 +499,34 @@ namespace fr
 
 					if (ImGui::BeginMenu("Window"))
 					{
-						ImGui::MenuItem("Console log", "", &s_show[Show::LogConsole]); // Console debug log window
+						ImGui::MenuItem("Console log", "", &m_show[Show::LogConsole]); // Console debug log window
 						
 						if (ImGui::BeginMenu("Scene manager"))
 						{
-							ImGui::MenuItem("Spawn scene objects", "", &s_show[Show::SceneMgrDbg]);
+							ImGui::MenuItem("Spawn scene objects", "", &m_show[Show::SceneMgrDbg]);
 							ImGui::EndMenu();
 						}
 
 						if (ImGui::BeginMenu("Entity manager"))
 						{
-							ImGui::MenuItem("Scene objects", "", &s_show[Show::EntityMgrDbg]);
-							ImGui::MenuItem("Node hierarchy", "", &s_show[Show::EntityComponentDbg]);
-							ImGui::MenuItem("Transform hierarchy", "", &s_show[Show::TransformationHierarchyDbg]);
+							ImGui::MenuItem("Scene objects", "", &m_show[Show::EntityMgrDbg]);
+							ImGui::MenuItem("Node hierarchy", "", &m_show[Show::EntityComponentDbg]);
+							ImGui::MenuItem("Transform hierarchy", "", &m_show[Show::TransformationHierarchyDbg]);
 							ImGui::EndMenu();
 						}
 
 						if (ImGui::BeginMenu("Render manager"))
 						{
-							ImGui::MenuItem("Render Systems", "", &s_show[Show::RenderMgrDbg]);
-							ImGui::MenuItem("Render data debug", "", &s_show[Show::RenderDataDbg]);
-							ImGui::MenuItem("Light manager debug", "", &s_show[Show::LightMgrDbg]);
+							ImGui::MenuItem("Render Systems", "", &m_show[Show::RenderMgrDbg]);
+							ImGui::MenuItem("Render data debug", "", &m_show[Show::RenderDataDbg]);
+							ImGui::MenuItem("Light manager debug", "", &m_show[Show::LightMgrDbg]);
 							ImGui::EndMenu();
 						}
 						
 
 #if defined(SHOW_IMGUI_DEMO_WINDOW)
 						ImGui::Separator();
-						ImGui::MenuItem("Show ImGui demo", "", &s_show[Show::ImGuiDemo]);
+						ImGui::MenuItem("Show ImGui demo", "", &m_show[Show::ImGuiDemo]);
 #endif
 
 						ImGui::EndMenu();
@@ -541,7 +536,7 @@ namespace fr
 					{
 						ImGui::TextDisabled("Performance statistics");
 
-						ImGui::MenuItem("GPU Captures", "", &s_show[Show::GPUCaptures]);
+						ImGui::MenuItem("GPU Captures", "", &m_show[Show::GPUCaptures]);
 
 						// TODO...
 						ImGui::TextDisabled("Save screenshot");
@@ -565,9 +560,9 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				core::LogManager::Get()->ShowImGuiWindow(&s_show[Show::LogConsole]);
+				core::LogManager::Get()->ShowImGuiWindow(&m_show[Show::LogConsole]);
 			};
-		if (s_show[Show::LogConsole])
+		if (m_show[Show::LogConsole])
 		{
 			m_debugUICommandMgr->Enqueue(frameNum, ShowConsoleLog);
 		}
@@ -575,9 +570,9 @@ namespace fr
 		// Scene manager debug:
 		auto ShowSceneMgrDebug = [&]()
 			{
-				fr::SceneManager::Get()->ShowImGuiWindow(&s_show[Show::SceneMgrDbg]);
+				fr::SceneManager::Get()->ShowImGuiWindow(&m_show[Show::SceneMgrDbg]);
 			};
-		if (s_show[Show::SceneMgrDbg])
+		if (m_show[Show::SceneMgrDbg])
 		{
 			m_debugUICommandMgr->Enqueue(frameNum, ShowSceneMgrDebug);
 		}
@@ -585,11 +580,11 @@ namespace fr
 		// Entity manager debug:
 		auto ShowEntityMgrDebug = [&]()
 			{
-				fr::EntityManager::Get()->ShowSceneObjectsImGuiWindow(&s_show[Show::EntityMgrDbg]);
-				fr::EntityManager::Get()->ShowSceneTransformImGuiWindow(&s_show[Show::TransformationHierarchyDbg]);
-				fr::EntityManager::Get()->ShowImGuiEntityComponentDebug(&s_show[Show::EntityComponentDbg]);
+				fr::EntityManager::Get()->ShowSceneObjectsImGuiWindow(&m_show[Show::EntityMgrDbg]);
+				fr::EntityManager::Get()->ShowSceneTransformImGuiWindow(&m_show[Show::TransformationHierarchyDbg]);
+				fr::EntityManager::Get()->ShowImGuiEntityComponentDebug(&m_show[Show::EntityComponentDbg]);
 			};
-		if (s_show[Show::EntityMgrDbg] || s_show[Show::TransformationHierarchyDbg] || s_show[Show::EntityComponentDbg])
+		if (m_show[Show::EntityMgrDbg] || m_show[Show::TransformationHierarchyDbg] || m_show[Show::EntityComponentDbg])
 		{
 			m_debugUICommandMgr->Enqueue(frameNum, ShowEntityMgrDebug);
 		}
@@ -603,16 +598,16 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				re::RenderManager::Get()->ShowRenderSystemsImGuiWindow(&s_show[Show::RenderMgrDbg]);
-				re::RenderManager::Get()->ShowRenderDataImGuiWindow(&s_show[Show::RenderDataDbg]);
-				re::RenderManager::Get()->ShowLightManagerImGuiWindow(&s_show[Show::LightMgrDbg]);
-				re::RenderManager::Get()->ShowGPUCapturesImGuiWindow(&s_show[Show::GPUCaptures]);
+				re::RenderManager::Get()->ShowRenderSystemsImGuiWindow(&m_show[Show::RenderMgrDbg]);
+				re::RenderManager::Get()->ShowRenderDataImGuiWindow(&m_show[Show::RenderDataDbg]);
+				re::RenderManager::Get()->ShowLightManagerImGuiWindow(&m_show[Show::LightMgrDbg]);
+				re::RenderManager::Get()->ShowGPUCapturesImGuiWindow(&m_show[Show::GPUCaptures]);
 				
 			};
-		if (s_show[Show::RenderMgrDbg] ||
-			s_show[Show::RenderDataDbg] ||
-			s_show[Show::LightMgrDbg] ||
-			s_show[Show::GPUCaptures])
+		if (m_show[Show::RenderMgrDbg] ||
+			m_show[Show::RenderDataDbg] ||
+			m_show[Show::LightMgrDbg] ||
+			m_show[Show::GPUCaptures])
 		{
 			m_debugUICommandMgr->Enqueue(frameNum, ShowRenderMgrDebug);
 		}
@@ -624,9 +619,9 @@ namespace fr
 			{
 				ImGui::SetNextWindowPos(
 					ImVec2(static_cast<float>(windowWidth) * 0.25f, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
-				ImGui::ShowDemoWindow(&s_show[Show::ImGuiDemo]);
+				ImGui::ShowDemoWindow(&m_show[Show::ImGuiDemo]);
 			};
-		if (s_show[Show::ImGuiDemo])
+		if (m_show[Show::ImGuiDemo])
 		{
 			m_debugUICommandMgr->Enqueue(frameNum, ShowImGuiDemo);
 		}
