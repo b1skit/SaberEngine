@@ -41,18 +41,19 @@ namespace dx12
 
 
 	GlobalResourceState::GlobalResourceState(
-		D3D12_RESOURCE_STATES initialState, uint32_t numSubresources)
+		D3D12_RESOURCE_STATES initialState, uint32_t numSubresources, bool allowSimultaneousAccess)
 		: IResourceState(initialState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
-		, m_numSubresources(numSubresources)
 		, m_lastFence(k_invalidLastFence) // Not yet used on a command list
 		, m_lastModificationFence(k_invalidLastFence)
+		, m_numSubresources(numSubresources)
+		, m_allowSimultaneousAccess(allowSimultaneousAccess)
 	{
 		SEAssert(numSubresources > 0, "Invalid number of subresources");
 	}
 
 
 	void GlobalResourceState::SetState(
-		D3D12_RESOURCE_STATES afterState, SubresourceIdx subresourceIdx, uint64_t lastFence)
+		D3D12_RESOURCE_STATES afterState, SubresourceIdx subresourceIdx, uint64_t fenceVal)
 	{
 		const D3D12_RESOURCE_STATES currentState = GetState(subresourceIdx);
 
@@ -62,24 +63,24 @@ namespace dx12
 		// Resources not created with the D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS flag cannot be written to from
 		// multiple queues simultaneously. A queue that transitions a resource to a writeable state is considered to
 		// exclusively own a resource. 
-		// We don't (currently) use the simultaneous access flag due to some of its drawbacks
+		// We don't (currently) use the simultaneous access flag due to some of its drawbacks, but still handle it here
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/executing-and-synchronizing-command-lists#accessing-resources-from-multiple-command-queues
 		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_flags
 
-		// Note: If we're changing command lists, we count a state transition barrier as a "modification" here (as
+		// Note: If we're changing command lists, we count a state transition barrier as a "modification" here as
 		// non-simultaneous-access resources cannot be referenced by transition barriers on multiple in-flight GPU
-		// operations).
-		// TODO: If we decide to use D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS, we'll need to modify this logic
-		const bool resourceWasTransitioned = (currentState != afterState) && 
-			(dx12::Fence::GetCommandListTypeFromFenceValue(lastFence) !=
-				dx12::Fence::GetCommandListTypeFromFenceValue(m_lastFence)); 
+		// operations.
+		const bool transitionModification = (currentState != afterState) &&
+			(dx12::Fence::GetCommandListTypeFromFenceValue(fenceVal) !=
+				dx12::Fence::GetCommandListTypeFromFenceValue(m_lastFence)) &&
+			(!m_allowSimultaneousAccess || IsWriteableState(afterState));
 
-		if (IsWriteableState(afterState) || resourceWasTransitioned) 
+		if (IsWriteableState(afterState) || transitionModification)
 		{
-			m_lastModificationFence = lastFence;
+			m_lastModificationFence = fenceVal;
 		}
 
-		m_lastFence = lastFence;
+		m_lastFence = fenceVal;
 	}
 
 
@@ -218,10 +219,13 @@ namespace dx12
 			std::format("Resource \"{}\" already registered", dx12::GetDebugName(newResource)).c_str());
 		SEAssert(numSubresources > 0, "Invalid number of subresources");
 
+		const bool allowSimultaneousAccess = 
+			newResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
+
 		{
 			std::lock_guard<std::mutex> lock(m_globalStatesMutex);
 			m_globalStates.emplace(newResource,
-				dx12::GlobalResourceState(initialState, numSubresources));
+				dx12::GlobalResourceState(initialState, numSubresources, allowSimultaneousAccess));;
 		}
 	}
 

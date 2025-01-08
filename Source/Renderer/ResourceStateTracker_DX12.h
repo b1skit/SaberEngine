@@ -56,7 +56,7 @@ namespace dx12
 	struct GlobalResourceState final : public virtual IResourceState
 	{
 	public:
-		GlobalResourceState(D3D12_RESOURCE_STATES, uint32_t numSubresources);
+		GlobalResourceState(D3D12_RESOURCE_STATES, uint32_t numSubresources, bool allowSimultaneousAccess);
 
 		void SetState(D3D12_RESOURCE_STATES, SubresourceIdx, uint64_t lastFence);
 		uint32_t GetNumSubresources() const;
@@ -81,10 +81,12 @@ namespace dx12
 
 
 	private:
-		uint32_t m_numSubresources;
-
 		uint64_t m_lastFence; // std::numeric_limits<uint64_t>::max() if not yet used on a command list
 		uint64_t m_lastModificationFence; // std::numeric_limits<uint64_t>::max() if not yet used on a command list
+
+		uint32_t m_numSubresources;
+
+		bool m_allowSimultaneousAccess;
 	};
 
 
