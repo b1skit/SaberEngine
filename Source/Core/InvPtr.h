@@ -308,6 +308,7 @@ namespace core
 	template<typename T>
 	inline InvPtr<T>::InvPtr(core::ResourceSystem<T>::ControlBlock* controlBlock)
 		: m_control(controlBlock) // Note: The controlBlock may already be in use by other InvPtr<T>s
+		, m_objectCache(nullptr)
 	{
 		SEAssert(m_control, "Control cannot be null here");
 		SEAssert(m_control->m_object != nullptr, "Control object pointer cannot be null here");
