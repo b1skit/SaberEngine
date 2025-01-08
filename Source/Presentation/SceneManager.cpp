@@ -446,7 +446,7 @@ namespace
 		std::string const& texName =
 			GenerateGLTFTextureName(sceneRootPath, texture, colorFallback, formatFallback, colorSpace);
 
-		if (inventory->HasLoaded<re::Texture>(texName))
+		if (inventory->Has<re::Texture>(texName))
 		{
 			return inventory->Get<re::Texture>(texName);
 		}

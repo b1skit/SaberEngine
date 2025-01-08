@@ -36,7 +36,10 @@ namespace core
 			std::shared_ptr<core::ILoadContext<T>> = nullptr); // Can only be null if the resource already exists
 
 		template<typename T>
-		bool HasLoaded(util::DataHash) const;
+		bool HasLoaded(util::DataHash) const; // Has the Resource been requested, and finished loading?
+
+		template<typename T>
+		bool Has(util::DataHash) const; // Has the Resource been requested?
 
 
 	private:
@@ -80,6 +83,27 @@ namespace core
 		}
 
 		return resourceSystem != nullptr && resourceSystem->HasLoaded(ID);
+	}
+
+
+	template<typename T>
+	bool Inventory::Has(util::DataHash ID) const
+	{
+		const std::type_index typeIdx = std::type_index(typeid(T));
+
+		ResourceSystem<T> const* resourceSystem = nullptr;
+
+		{
+			std::shared_lock readLock(m_resourceSystemsMutex);
+
+			auto iResourceSystemItr = m_resourceSystems.find(typeIdx);
+			if (iResourceSystemItr != m_resourceSystems.end())
+			{
+				resourceSystem = dynamic_cast<ResourceSystem<T> const*>(iResourceSystemItr->second.get());
+			}
+		}
+
+		return resourceSystem != nullptr && resourceSystem->Has(ID);
 	}
 
 

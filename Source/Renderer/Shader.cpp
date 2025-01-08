@@ -79,7 +79,7 @@ namespace re
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
 		core::Inventory* inventory = re::RenderManager::Get()->GetInventory();
-		if (inventory->HasLoaded<re::Shader>(shaderID))
+		if (inventory->Has<re::Shader>(shaderID))
 		{
 			return inventory->Get<re::Shader>(shaderID);
 		}

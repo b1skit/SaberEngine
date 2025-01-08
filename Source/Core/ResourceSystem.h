@@ -80,6 +80,7 @@ namespace core
 
 	public:
 		bool HasLoaded(util::DataHash) const;
+		bool Has(util::DataHash) const;
 
 		template<typename L>
 		ControlBlock* Get(util::DataHash, ILoadContext<L> const*);
@@ -165,6 +166,23 @@ namespace core
 			if (ptrCtrlItr != m_ptrAndControlBlocks.end())
 			{
 				return m_ptrAndControlBlocks.at(id).m_control->m_state.load() == ResourceState::Ready;
+			}
+			return false;
+		}
+	}
+
+
+	template<typename T>
+	bool ResourceSystem<T>::Has(util::DataHash id) const
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_ptrAndControlBlocksMutex);
+
+			auto ptrCtrlItr = m_ptrAndControlBlocks.find(id);
+			if (ptrCtrlItr != m_ptrAndControlBlocks.end())
+			{
+				const ResourceState resourceState = m_ptrAndControlBlocks.at(id).m_control->m_state.load();
+				return resourceState == ResourceState::Loading || resourceState == ResourceState::Ready;
 			}
 			return false;
 		}

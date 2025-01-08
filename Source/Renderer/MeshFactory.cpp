@@ -476,7 +476,7 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
+		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
 		{
 			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
 		}
@@ -646,7 +646,7 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, zLocation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
+		if (inventory->Has<gr::MeshPrimitive>(instanceName))
 		{
 			return inventory->Get<gr::MeshPrimitive>(instanceName);
 		}
@@ -750,7 +750,7 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
+		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
 		{
 			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
 		}
@@ -899,7 +899,7 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
+		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
 		{
 			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
 		}
@@ -1165,7 +1165,7 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
+		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
 		{
 			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
 		}
@@ -1432,7 +1432,7 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 		
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
+		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
 		{
 			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
 		}
@@ -1477,7 +1477,7 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (factoryOptions.m_inventory->HasLoaded<gr::MeshPrimitive>(instanceName))
+		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
 		{
 			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
 		}

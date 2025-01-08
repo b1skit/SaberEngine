@@ -124,7 +124,7 @@ namespace gr
 			ComputeVertexStreamDataHash(streamDesc, data.data().data(), data.GetTotalNumBytes());
 
 		core::Inventory* inventory = re::RenderManager::Get()->GetInventory();
-		if (inventory->HasLoaded<gr::VertexStream>(streamDataHash))
+		if (inventory->Has<gr::VertexStream>(streamDataHash))
 		{
 			return inventory->Get<gr::VertexStream>(streamDataHash);
 		}
