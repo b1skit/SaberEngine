@@ -3,9 +3,10 @@
 #include "Context_DX12.h"
 #include "RLibrary_ImGui_OpenGL.h"
 #include "RenderStage.h"
-#include "Window_Win32.h"
 
 #include "Core/ProfilingMarkers.h"
+
+#include "Core/App/Window_Win32.h"
 
 #include <GL/glew.h>
 #include <GL/GL.h> // Must follow glew.h...

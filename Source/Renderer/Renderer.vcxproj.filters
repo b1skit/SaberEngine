@@ -78,20 +78,8 @@
     <Filter Include="Header Files\effect">
       <UniqueIdentifier>{e7736690-990b-4bd4-aa84-373dd6445f0d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\re\win32">
-      <UniqueIdentifier>{ce73ca9a-37fd-483a-b526-27cee042e500}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\win32">
-      <UniqueIdentifier>{ca0e185c-61be-498f-8ba5-52a0eb751ef8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\effect">
       <UniqueIdentifier>{fa376f6a-5320-48e4-aa18-eaab1524a3cc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\app">
-      <UniqueIdentifier>{a6685de9-2b2a-4b99-9740-7e53a0ce3618}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\app">
-      <UniqueIdentifier>{8322eb32-b248-4866-b229-d46c76e5612a}</UniqueIdentifier>
     </Filter>
     <Filter Include="Dependencies">
       <UniqueIdentifier>{264a9728-ed6c-4351-95a0-7f0c0a2e3dae}</UniqueIdentifier>
@@ -320,9 +308,6 @@
     <ClInclude Include="TextureTarget_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="Window_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
     <ClInclude Include="RenderManager_Platform.h">
       <Filter>Header Files\re\platform</Filter>
     </ClInclude>
@@ -343,9 +328,6 @@
     </ClInclude>
     <ClInclude Include="TextureTarget_Platform.h">
       <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Window_Win32.h">
-      <Filter>Header Files\re\win32</Filter>
     </ClInclude>
     <ClInclude Include="VertexStreamBuilder.h">
       <Filter>Header Files\gr\grutil</Filter>
@@ -388,9 +370,6 @@
     </ClInclude>
     <ClInclude Include="MeshPrimitive.h">
       <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>Header Files\app</Filter>
     </ClInclude>
     <ClInclude Include="..\Dependencies\imgui\imconfig.h">
       <Filter>Dependencies\imgui</Filter>
@@ -583,9 +562,6 @@
     <ClCompile Include="TextureTarget_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
-    <ClCompile Include="Window_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
     <ClCompile Include="AssetLoadUtils.cpp">
       <Filter>Source Files\gr\grutil</Filter>
     </ClCompile>
@@ -633,9 +609,6 @@
     </ClCompile>
     <ClCompile Include="GraphicsSystemManager.cpp">
       <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="Window_Win32.cpp">
-      <Filter>Source Files\win32</Filter>
     </ClCompile>
     <ClCompile Include="EffectDB.cpp">
       <Filter>Source Files\effect</Filter>
@@ -729,9 +702,6 @@
     </ClCompile>
     <ClCompile Include="MeshPrimitive.cpp">
       <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Source Files\app</Filter>
     </ClCompile>
     <ClCompile Include="..\Dependencies\imgui\imgui.cpp">
       <Filter>Dependencies\imgui</Filter>

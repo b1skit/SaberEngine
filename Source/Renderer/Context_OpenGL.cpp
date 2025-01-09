@@ -5,10 +5,11 @@
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "SysInfo_OpenGL.h"
-#include "Window_Win32.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+
+#include "Core/App/Window_Win32.h"
 
 #include "Core/Util/HashUtils.h"
 

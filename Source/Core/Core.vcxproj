@@ -108,6 +108,9 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="App\Window.h" />
+    <ClInclude Include="App\Window_Platform.h" />
+    <ClInclude Include="App\Window_Win32.h" />
     <ClInclude Include="Assert.h" />
     <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="Config.h" />
@@ -151,6 +154,9 @@
     <ClInclude Include="Util\ThreadSafeVector.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="App\Window.cpp" />
+    <ClCompile Include="App\Window_Platform.cpp" />
+    <ClCompile Include="App\Window_Win32.cpp" />
     <ClCompile Include="Assert.cpp" />
     <ClCompile Include="CommandQueue.cpp" />
     <ClCompile Include="Config.cpp" />

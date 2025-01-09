@@ -38,15 +38,15 @@
 #include "Renderer/TextureTarget_OpenGL.h"
 #include "Renderer/TextureTarget_Platform.h"
 
-#include "Renderer/Window_Platform.h"
-#include "Renderer/Window_Win32.h"
-
 #include "Core/Assert.h"
 #include "Core/Config.h"
 #include "Core/EventManager_Platform.h"
 #include "Core/EventManager_Win32.h"
 #include "Core/InputManager_Platform.h"
 #include "Core/InputManager_Win32.h"
+
+#include "Core/App/Window_Platform.h"
+#include "Core/App/Window_Win32.h"
 
 
 namespace platform

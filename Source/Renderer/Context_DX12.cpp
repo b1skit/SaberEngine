@@ -8,7 +8,6 @@
 #include "SysInfo_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
-#include "Window_Win32.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"

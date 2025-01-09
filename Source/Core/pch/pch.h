@@ -35,6 +35,7 @@
 #define NOMINMAX
 #endif
 #include <Windows.h>
+#include <hidusage.h>
 #include <shlobj_core.h> // Windows shell
 // TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
 

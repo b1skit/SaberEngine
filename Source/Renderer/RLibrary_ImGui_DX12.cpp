@@ -7,9 +7,10 @@
 #include "SysInfo_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
-#include "Window_Win32.h"
 
 #include "Core/ProfilingMarkers.h"
+
+#include "Core/App/Window_Win32.h"
 
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"

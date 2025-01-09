@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Context.h"
 #include "GraphicsSystemManager.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
@@ -113,7 +112,7 @@ namespace re
 #elif defined(SE_RELEASE)
 		SEFatalAssert(buildConfig == util::BuildConfiguration::Release, "Shader directory build configuration marker mismatch");
 #endif
-	
+
 		return newRenderManager;
 	}
 
@@ -193,6 +192,9 @@ namespace re
 		
 		CreateSamplerLibrary();
 		CreateDefaultTextures();
+
+		// Trigger creation of render libraries:
+		re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui);
 
 		SEEndCPUEvent();
 	}

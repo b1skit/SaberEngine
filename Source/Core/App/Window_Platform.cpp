@@ -2,7 +2,7 @@
 #include "Window_Platform.h"
 #include "Window_Win32.h"
 
-#include "Core/Assert.h"
+#include "../Assert.h"
 
 
 namespace platform

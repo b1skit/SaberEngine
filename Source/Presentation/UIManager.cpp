@@ -8,9 +8,10 @@
 #include "Core/InputManager_Platform.h"
 #include "Core/LogManager.h"
 
+#include "Core/App/Window.h"
+
 #include "Core/Definitions/KeyConfiguration.h"
 
-#include "Renderer/Context.h"
 #include "Renderer/GraphicsSystem_ImGui.h"
 #include "Renderer/RenderManager.h"
 
@@ -153,6 +154,7 @@ namespace fr
 		, m_imguiWantsToCaptureKeyboard(false)
 		, m_imguiWantsToCaptureMouse(false)
 		, m_show{0}
+		, m_window(nullptr)
 	{
 	}
 
@@ -219,7 +221,7 @@ namespace fr
 
 				// If true, hide the mouse and lock it to the window
 				const bool captureMouse = !m_imguiMenuVisible;
-				re::Context::Get()->GetWindow()->SetRelativeMouseMode(captureMouse);
+				m_window->SetRelativeMouseMode(captureMouse);
 
 				// Disable ImGui mouse listening if the console is not active: Prevents UI elements
 				// flashing as the hidden mouse cursor passes by
@@ -388,6 +390,10 @@ namespace fr
 	}
 
 
+	void UIManager::SetWindow(app::Window* window)
+	{
+		m_window = window;
+	}
 
 
 	void UIManager::SubmitImGuiRenderCommands(uint64_t frameNum)

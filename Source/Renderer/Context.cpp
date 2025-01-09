@@ -46,7 +46,7 @@ namespace re
 
 
 	Context::Context()
-		: m_window(std::make_unique<app::Window>()) // Must call app::Window::Create() from the thread owning the OS event queue
+		: m_window(nullptr)
 		, m_renderDocApi(nullptr)
 	{
 		// RenderDoc cannot be enabled when DRED is enabled
@@ -133,8 +133,6 @@ namespace re
 		}
 
 		platform::Context::Destroy(*this);
-
-		m_window->Destroy();
 	}
 
 

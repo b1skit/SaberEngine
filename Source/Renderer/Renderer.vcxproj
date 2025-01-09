@@ -214,9 +214,6 @@
     <ClInclude Include="VertexStream.h" />
     <ClInclude Include="VertexStreamBuilder.h" />
     <ClInclude Include="VertexStreamMap.h" />
-    <ClInclude Include="Window.h" />
-    <ClInclude Include="Window_Platform.h" />
-    <ClInclude Include="Window_Win32.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_dx12.cpp" />
@@ -331,9 +328,6 @@
     <ClCompile Include="TransformRenderData.cpp" />
     <ClCompile Include="VertexStream.cpp" />
     <ClCompile Include="VertexStreamBuilder.cpp" />
-    <ClCompile Include="Window.cpp" />
-    <ClCompile Include="Window_Platform.cpp" />
-    <ClCompile Include="Window_Win32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">

@@ -3,6 +3,8 @@
 #include "Core/Inventory.h"
 #include "Core/LogManager.h"
 
+#include "Core/App/Window.h"
+
 #include "Core/Interfaces/IEngineComponent.h"
 #include "Core/Interfaces/IEventListener.h"
 
@@ -51,6 +53,8 @@ namespace app
 
 	private: 
 		static EngineApp* m_engineApp;
+
+		std::unique_ptr<app::Window> m_window;
 		
 		std::unique_ptr<core::Inventory> m_inventory;
 

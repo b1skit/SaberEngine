@@ -34,6 +34,24 @@
     <Filter Include="Source Files\Interfaces">
       <UniqueIdentifier>{fa4108d0-eefd-4a18-8836-45399ac99bbf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\App">
+      <UniqueIdentifier>{fc0e1af9-2479-4ddb-9d0d-b6e742f2a283}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\App">
+      <UniqueIdentifier>{d40f70fe-9725-4cf6-813a-ff4d81176788}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\App\platform">
+      <UniqueIdentifier>{b7f7ab84-716f-4dc7-9ed7-8d81e5ea1b31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\App\win32">
+      <UniqueIdentifier>{30d17986-0a73-41c7-a105-7c539cb4ccd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\App\platform">
+      <UniqueIdentifier>{d57654dc-3f2a-4da6-baa8-77a1101943a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\App\win32">
+      <UniqueIdentifier>{c682cb02-16e3-4c14-9b22-35cbcd674c21}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h">
@@ -159,6 +177,15 @@
     <ClInclude Include="Interfaces\ILoadContext.h">
       <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="App\Window.h">
+      <Filter>Header Files\App</Filter>
+    </ClInclude>
+    <ClInclude Include="App\Window_Platform.h">
+      <Filter>Header Files\App\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="App\Window_Win32.h">
+      <Filter>Header Files\App\win32</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -211,6 +238,15 @@
     </ClCompile>
     <ClCompile Include="Inventory.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="App\Window.cpp">
+      <Filter>Source Files\App</Filter>
+    </ClCompile>
+    <ClCompile Include="App\Window_Platform.cpp">
+      <Filter>Source Files\App\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="App\Window_Win32.cpp">
+      <Filter>Source Files\App\win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

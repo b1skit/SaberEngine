@@ -6,6 +6,11 @@
 #include "Core/Util/ImGuiUtils.h"
 
 
+namespace app
+{
+	class Window;
+}
+
 namespace fr
 {
 	class UIManager : public virtual en::IEngineComponent, public virtual core::IEventListener
@@ -25,6 +30,10 @@ namespace fr
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 		void HandleEvents() override;
+
+
+	public:
+		void SetWindow(app::Window*);
 
 
 	private:
@@ -59,5 +68,9 @@ namespace fr
 			Show_Count
 		};
 		std::array<bool, Show::Show_Count> m_show;
+
+
+	private:
+		app::Window* m_window;
 	};
 }

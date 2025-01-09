@@ -2,8 +2,8 @@
 #include "Window.h"
 #include "Window_Platform.h"
 
-#include "Core/Assert.h"
-#include "Core/EventManager.h"
+#include "../Assert.h"
+#include "../EventManager.h"
 
 
 namespace app

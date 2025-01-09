@@ -10,13 +10,14 @@
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
 
+#include "Core/App/Window.h"
+
 #include "Presentation/EntityManager.h"
 #include "Presentation/SceneManager.h"
 #include "Presentation/UIManager.h"
 
 #include "Renderer/Context.h"
 #include "Renderer/RenderManager.h"
-#include "Renderer/Window.h"
 
 
 namespace
@@ -25,7 +26,7 @@ namespace
 
 
 	// Create the main window on the engine thread to associate it with the correct Win32 event queue
-	app::Window* InitializeAppWindowHelper()
+	void InitializeAppWindow(app::Window* appWindow)
 	{
 		std::string commandLineArgs;
 		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
@@ -36,14 +37,8 @@ namespace
 		const int xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		const int yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 
-		// The re::Context constructs an uninitialized app::Window; We must call app::Window::Create from the thread
-		// that owns the Win32 event queue
-		app::Window* appWindow = re::Context::Get()->GetWindow();
-
 		const bool windowCreated = appWindow->InitializeFromEventQueueThread(windowTitle, xRes, yRes);
 		SEAssert(windowCreated, "Failed to create a window");
-
-		return appWindow;
 	}
 }
 
@@ -55,6 +50,7 @@ namespace app
 	EngineApp::EngineApp()
 		: m_isRunning(false)
 		, m_frameNum(0)
+		, m_window(std::make_unique<app::Window>())
 		, m_inventory(std::make_unique<core::Inventory>())
 	{
 		m_engineApp = this;
@@ -77,16 +73,20 @@ namespace app
 			core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
 
 		// Create a window (and interally pass it to the re::Context)
-		app::Window* mainWindow = InitializeAppWindowHelper();
+		InitializeAppWindow(m_window.get());
 
 		re::RenderManager* renderManager = re::RenderManager::Get();
 		fr::EntityManager* entityMgr = fr::EntityManager::Get();
 		fr::SceneManager* sceneMgr = fr::SceneManager::Get();
+		fr::UIManager* uiMgr = fr::UIManager::Get();
 
 		// Dependency injection:
 		entityMgr->SetInventory(m_inventory.get()); 
 		renderManager->SetInventory(m_inventory.get());
 		sceneMgr->SetInventory(m_inventory.get());
+
+		renderManager->SetWindow(m_window.get());
+		uiMgr->SetWindow(m_window.get());
 
 		// Render thread:
 		core::ThreadPool::Get()->EnqueueJob([&]()
@@ -97,7 +97,7 @@ namespace app
 		renderManager->ThreadStartup(); // Initializes context
 		
 		// Don't capture the mouse while we're loading
-		mainWindow->SetRelativeMouseMode(false);
+		m_window->SetRelativeMouseMode(false);
 
 		// Start managers:
 		core::EventManager* eventManager = core::EventManager::Get();
@@ -112,12 +112,12 @@ namespace app
 
 		renderManager->ThreadInitialize();
 
-		fr::UIManager::Get()->Startup();
+		uiMgr->Startup();
 
 		m_isRunning = true;
 
 		// We're done loading: Capture the mouse
-		mainWindow->SetRelativeMouseMode(true);
+		m_window->SetRelativeMouseMode(true);
 
 		SEEndCPUEvent();
 	}
@@ -242,6 +242,8 @@ namespace app
 		core::LogManager::Get()->Shutdown(); // Destroy last
 
 		core::ThreadPool::Get()->Stop();
+		
+		m_window->Destroy();
 
 		SEEndCPUEvent();
 	}

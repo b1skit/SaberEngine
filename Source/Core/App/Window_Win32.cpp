@@ -1,15 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Context.h"
 #include "Window.h"
 #include "Window_Win32.h"
 
-#include "Core/Assert.h"
-#include "Core/EventManager.h"
+#include "../Assert.h"
+#include "../EventManager.h"
+#include "../LogManager.h"
 
 
 namespace win32
 {
-	win32::Window::Win32PlatformState win32::Window::s_platformState;
+	win32::Window::Win32PlatformState win32::Window::s_platformState{};
 
 	
 	// Handle messages we've (re)broadcasted (i.e. tranlated & dispatched) from win32::EventManager::ProcessMessages
@@ -19,6 +19,8 @@ namespace win32
 		bool doBroadcastSEEvent = true;
 
 		LRESULT result = 0;
+
+		app::Window* window = reinterpret_cast<app::Window*>(::GetWindowLongPtrA(hWnd, GWLP_USERDATA));
 
 		switch (uMsg)
 		{
@@ -55,14 +57,14 @@ namespace win32
 		case WM_SETFOCUS:
 		case WM_EXITSIZEMOVE:
 		{
-			re::Context::Get()->GetWindow()->SetFocusState(true);
+			window->SetFocusState(true);
 			doBroadcastSEEvent = false;
 		}
 		break;
 		case WM_KILLFOCUS:
 		case WM_ENTERSIZEMOVE:
 		{
-			re::Context::Get()->GetWindow()->SetFocusState(false);
+			window->SetFocusState(false);
 			doBroadcastSEEvent = false;
 		}
 		break;
@@ -168,6 +170,17 @@ namespace win32
 			}
 		}
 		break;
+		case WM_NCCREATE:
+		{
+			// Window creation: Retrieve our app::Window* and store it in the win32 Window's user data:
+			CREATESTRUCTA* createStruct = reinterpret_cast<CREATESTRUCTA*>(lParam);
+		
+			::SetWindowLongPtrA(
+				hWnd,
+				GWLP_USERDATA,
+				reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams));
+		}
+		[[fallthrough]];
 		default:
 			result = DefWindowProcW(hWnd, uMsg, wParam, lParam);
 			doBroadcastSEEvent = false;
@@ -253,7 +266,7 @@ namespace win32
 			NULL, // Optional: Handle to the window parent
 			NULL, // Handle to a menu, or, specifies a child-window identifier
 			win32::Window::s_platformState.m_hInstance, // Handle to the instance of the module associated with the window
-			nullptr // Pointer to a value that will be passed to the window through the CREATESTRUCT. Sent by this function before it returns
+			&window // lpParam: A pointer that will be passed to the window through the CREATESTRUCT
 		);
 
 		SEAssert(platformParams->m_hWindow, "Failed to create hWnd");

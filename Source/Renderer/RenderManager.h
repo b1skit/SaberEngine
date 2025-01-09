@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Context.h"
 #include "EffectDB.h"
 #include "Platform.h"
 #include "RenderSystem.h"
@@ -15,6 +16,11 @@
 #include "Core/Util/ImGuiUtils.h"
 #include "Core/Util/NBufferedVector.h"
 
+
+namespace app
+{
+	class Window;
+}
 
 namespace core
 {
@@ -85,6 +91,9 @@ namespace re
 
 	private:
 		core::Inventory* m_inventory;
+
+	public:
+		void SetWindow(app::Window*);
 
 
 	public:
@@ -273,6 +282,13 @@ namespace re
 	inline void RenderManager::SetInventory(core::Inventory* inventory)
 	{
 		m_inventory = inventory;
+	}
+
+
+	inline void RenderManager::SetWindow(app::Window* window)
+	{
+		SEAssert(window != nullptr, "Trying to set a null window. This is unexpected");
+		re::Context::Get()->SetWindow(window);
 	}
 
 
