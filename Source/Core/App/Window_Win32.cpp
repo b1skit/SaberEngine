@@ -17,6 +17,7 @@ namespace win32
 	{
 		core::EventManager::EventInfo eventInfo;
 		bool doBroadcastSEEvent = true;
+		bool doRebroadcastWinEvent = true;
 
 		LRESULT result = 0;
 
@@ -179,17 +180,23 @@ namespace win32
 				hWnd,
 				GWLP_USERDATA,
 				reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams));
-		}
-		[[fallthrough]];
-		default:
-			result = DefWindowProcW(hWnd, uMsg, wParam, lParam);
+
 			doBroadcastSEEvent = false;
 		}
-
+		break;
+		default:
+			doRebroadcastWinEvent = true;
+			doBroadcastSEEvent = false;
+		}
 
 		if (doBroadcastSEEvent)
 		{
 			core::EventManager::Get()->Notify(std::move(eventInfo));
+		}
+
+		if (doRebroadcastWinEvent)
+		{
+			result = DefWindowProcW(hWnd, uMsg, wParam, lParam);
 		}
 
 		return result;
