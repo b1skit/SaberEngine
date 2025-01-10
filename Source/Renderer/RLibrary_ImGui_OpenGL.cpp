@@ -4,9 +4,9 @@
 #include "RLibrary_ImGui_OpenGL.h"
 #include "RenderStage.h"
 
-#include "Core/ProfilingMarkers.h"
+#include "Core/Host/Window_Win32.h"
 
-#include "Core/App/Window_Win32.h"
+#include "Core/ProfilingMarkers.h"
 
 #include <GL/glew.h>
 #include <GL/GL.h> // Must follow glew.h...
@@ -25,7 +25,7 @@ namespace opengl
 		platform::RLibraryImGui::CreateInternal(*imguiLibrary);
 
 		// Setup OpenGL ImGui backend:
-		app::Window* window = re::Context::Get()->GetWindow();
+		host::Window* window = re::Context::Get()->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatformParams* windowPlatParams =

@@ -4,7 +4,7 @@
 #include "RLibrary_Platform.h"
 #include "SwapChain.h"
 
-#include "Core/App/Window.h"
+#include "Core/Host/Window.h"
 
 #include "Core/Interfaces/IPlatformParams.h"
 
@@ -45,8 +45,8 @@ namespace re
 
 
 	public:
-		void SetWindow(app::Window*); // Set once
-		app::Window* GetWindow() const;
+		void SetWindow(host::Window*); // Set once
+		host::Window* GetWindow() const;
 
 		re::SwapChain& GetSwapChain();
 		re::SwapChain const& GetSwapChain() const;
@@ -68,7 +68,7 @@ namespace re
 		std::array<std::unique_ptr<platform::RLibrary>, platform::RLibrary::Type_Count> m_renderLibraries;
 
 	private:
-		app::Window* m_window;
+		host::Window* m_window;
 		re::SwapChain m_swapChain;
 
 		
@@ -81,7 +81,7 @@ namespace re
 	};
 
 
-	inline void Context::SetWindow(app::Window* window)
+	inline void Context::SetWindow(host::Window* window)
 	{
 		SEAssert(window != nullptr, "Trying to set a null window. This is unexpected");
 		SEAssert(m_window == nullptr, "Trying to re-set the window. This is unexpected");
@@ -89,7 +89,7 @@ namespace re
 	}
 
 
-	inline app::Window* Context::GetWindow() const
+	inline host::Window* Context::GetWindow() const
 	{
 		return m_window;
 	}

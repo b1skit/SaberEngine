@@ -45,8 +45,10 @@
 #include "Core/InputManager_Platform.h"
 #include "Core/InputManager_Win32.h"
 
-#include "Core/App/Window_Platform.h"
-#include "Core/App/Window_Win32.h"
+#include "Core/Host/Dialog_Platform.h"
+#include "Core/Host/Dialog_Win32.h"
+#include "Core/Host/Window_Platform.h"
+#include "Core/Host/Window_Win32.h"
 
 
 namespace platform
@@ -79,6 +81,8 @@ namespace platform
 		platform::Window::Create				= &win32::Window::Create;
 		platform::Window::Destroy				= &win32::Window::Destroy;
 		platform::Window::SetRelativeMouseMode	= &win32::Window::SetRelativeMouseMode;
+
+		platform::Dialog::OpenFileDialogBox		= &win32::Dialog::OpenFileDialogBox;
 
 		// Input manager:
 		platform::InputManager::Startup				= &win32::InputManager::Startup;

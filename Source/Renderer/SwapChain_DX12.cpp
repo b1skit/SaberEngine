@@ -11,7 +11,7 @@
 #include "Core/Assert.h"
 #include "Core/Config.h"
 
-#include "Core/App/Window_Win32.h"
+#include "Core/Host/Window_Win32.h"
 
 #include <d3dx12.h>
 #include <dxgi1_6.h>

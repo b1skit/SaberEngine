@@ -9,7 +9,7 @@
 #include "Core/Assert.h"
 #include "Core/Config.h"
 
-#include "Core/App/Window_Win32.h"
+#include "Core/Host/Window_Win32.h"
 
 #include "Core/Util/HashUtils.h"
 
@@ -272,7 +272,7 @@ namespace opengl
 	{		
 		GetOpenGLExtensionProcessAddresses();
 
-		app::Window* window = GetWindow();
+		host::Window* window = GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatformParams* windowPlatParams = 

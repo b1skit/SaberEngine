@@ -19,7 +19,7 @@ namespace win32
 
 
 	public:
-		struct PlatformParams final : public app::Window::PlatformParams
+		struct PlatformParams final : public host::Window::PlatformParams
 		{
 			HWND m_hWindow = NULL;
 		};
@@ -30,9 +30,9 @@ namespace win32
 
 
 	public:
-		static bool Create(app::Window& window, std::string const& title, uint32_t width, uint32_t height);
-		static void Destroy(app::Window& window);
+		static bool Create(host::Window&, std::string const& title, uint32_t width, uint32_t height);
+		static void Destroy(host::Window&);
 
-		static void SetRelativeMouseMode(app::Window const& window, bool enabled);
+		static void SetRelativeMouseMode(host::Window const&, bool enabled);
 	};
 }

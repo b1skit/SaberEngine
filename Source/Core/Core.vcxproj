@@ -108,9 +108,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="App\Window.h" />
-    <ClInclude Include="App\Window_Platform.h" />
-    <ClInclude Include="App\Window_Win32.h" />
     <ClInclude Include="Assert.h" />
     <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="Config.h" />
@@ -119,6 +116,12 @@
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventManager_Platform.h" />
     <ClInclude Include="EventManager_Win32.h" />
+    <ClInclude Include="Host\Dialog.h" />
+    <ClInclude Include="Host\Dialog_Platform.h" />
+    <ClInclude Include="Host\Dialog_Win32.h" />
+    <ClInclude Include="Host\Window.h" />
+    <ClInclude Include="Host\Window_Platform.h" />
+    <ClInclude Include="Host\Window_Win32.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="InputManager_Platform.h" />
     <ClInclude Include="InputManager_Win32.h" />
@@ -154,15 +157,18 @@
     <ClInclude Include="Util\ThreadSafeVector.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="App\Window.cpp" />
-    <ClCompile Include="App\Window_Platform.cpp" />
-    <ClCompile Include="App\Window_Win32.cpp" />
     <ClCompile Include="Assert.cpp" />
     <ClCompile Include="CommandQueue.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="EventManager_Platform.cpp" />
     <ClCompile Include="EventManager_Win32.cpp" />
+    <ClCompile Include="Host\Dialog.cpp" />
+    <ClCompile Include="Host\Dialog_Platform.cpp" />
+    <ClCompile Include="Host\Dialog_Win32.cpp" />
+    <ClCompile Include="Host\Window.cpp" />
+    <ClCompile Include="Host\Window_Platform.cpp" />
+    <ClCompile Include="Host\Window_Win32.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />

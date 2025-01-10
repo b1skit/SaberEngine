@@ -3,7 +3,7 @@
 #include "../Interfaces/IPlatformParams.h"
 
 
-namespace app
+namespace host
 {
 	class Window
 	{
@@ -24,7 +24,7 @@ namespace app
 		void SetPlatformParams(std::unique_ptr<Window::PlatformParams> params) { m_platformParams = std::move(params); }
 
 		// Platform wrappers:
-		bool InitializeFromEventQueueThread(std::string const& title, uint32_t width, uint32_t height);
+		bool Create(std::string const& title, uint32_t width, uint32_t height); // Must be called from the thread that owns the OS event queue
 		void Destroy();
 
 		void SetFocusState(bool hasFocus); // To be called by event handlers only

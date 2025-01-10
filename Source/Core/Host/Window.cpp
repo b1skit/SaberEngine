@@ -6,7 +6,7 @@
 #include "../EventManager.h"
 
 
-namespace app
+namespace host
 {
 	Window::Window()
 		: m_hasFocus(false)
@@ -22,9 +22,8 @@ namespace app
 	}
 
 
-	bool Window::InitializeFromEventQueueThread(std::string const& title, uint32_t width, uint32_t height)
+	bool Window::Create(std::string const& title, uint32_t width, uint32_t height)
 	{
-		// Must be called from the thread that owns the OS event queue
 		return platform::Window::Create(*this, title, width, height);
 	}
 

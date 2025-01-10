@@ -8,7 +8,8 @@
 #include "Core/InputManager_Platform.h"
 #include "Core/LogManager.h"
 
-#include "Core/App/Window.h"
+#include "Core/Host/Dialog.h"
+#include "Core/Host/Window.h"
 
 #include "Core/Definitions/KeyConfiguration.h"
 
@@ -133,6 +134,26 @@ namespace
 
 		default: break; // Do nothing
 		}
+	}
+
+
+	void FileImport()
+	{
+		core::ThreadPool::Get()->EnqueueJob([]()
+			{
+				std::string requestedFilepath;
+				const bool didRequestFile = host::Dialog::OpenFileDialogBox(
+					"GLTF Files",
+					{"*.gltf", "*.glb"},
+					requestedFilepath);
+
+				if (didRequestFile)
+				{
+					// TODO: Implement this. For now, just print the result to the log
+					LOG(requestedFilepath.c_str());
+					LOG(util::GetFileNameAndExtensionFromFilePath(requestedFilepath).c_str());
+				}
+			});
 	}
 }
 
@@ -390,7 +411,7 @@ namespace fr
 	}
 
 
-	void UIManager::SetWindow(app::Window* window)
+	void UIManager::SetWindow(host::Window* window)
 	{
 		m_window = window;
 	}
@@ -477,11 +498,12 @@ namespace fr
 
 					if (ImGui::BeginMenu("File"))
 					{
-						// TODO...
-						ImGui::TextDisabled("Load Scene");
-						ImGui::TextDisabled("Reload Scene");
-						ImGui::TextDisabled("Reload Shaders");
-						ImGui::TextDisabled("Reload Materials");
+						if (ImGui::MenuItem("Import"))
+						{
+							FileImport();
+						}
+
+						ImGui::Separator();
 
 						if (ImGui::MenuItem("Quit"))
 						{

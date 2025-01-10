@@ -21,7 +21,7 @@ namespace win32
 
 		LRESULT result = 0;
 
-		app::Window* window = reinterpret_cast<app::Window*>(::GetWindowLongPtrA(hWnd, GWLP_USERDATA));
+		host::Window* window = reinterpret_cast<host::Window*>(::GetWindowLongPtrA(hWnd, GWLP_USERDATA));
 
 		switch (uMsg)
 		{
@@ -173,7 +173,7 @@ namespace win32
 		break;
 		case WM_NCCREATE:
 		{
-			// Window creation: Retrieve our app::Window* and store it in the win32 Window's user data:
+			// Window creation: Retrieve our host::Window* and store it in the win32 Window's user data:
 			CREATESTRUCTA* createStruct = reinterpret_cast<CREATESTRUCTA*>(lParam);
 		
 			::SetWindowLongPtrA(
@@ -203,7 +203,7 @@ namespace win32
 	}
 
 	
-	bool Window::Create(app::Window& window, std::string const& title, uint32_t width, uint32_t height)
+	bool Window::Create(host::Window& window, std::string const& title, uint32_t width, uint32_t height)
 	{
 		// Since the Windows 10 Creators update, we have per-monitor V2 DPI awareness context. This allows the client
 		// area of the window to achieve 100% scaling while still allowing non-client window content to be rendered in
@@ -297,7 +297,7 @@ namespace win32
 	}
 
 
-	void Window::Destroy(app::Window& window)
+	void Window::Destroy(host::Window& window)
 	{
 		win32::Window::PlatformParams* platformParams = 
 			window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
@@ -306,7 +306,7 @@ namespace win32
 	}
 
 
-	void Window::SetRelativeMouseMode(app::Window const& window, bool relativeModeEnabled)
+	void Window::SetRelativeMouseMode(host::Window const& window, bool relativeModeEnabled)
 	{
 		if (relativeModeEnabled)
 		{

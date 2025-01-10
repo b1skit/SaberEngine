@@ -6,7 +6,7 @@
 #include "Core/Util/ImGuiUtils.h"
 
 
-namespace app
+namespace host
 {
 	class Window;
 }
@@ -33,7 +33,7 @@ namespace fr
 
 
 	public:
-		void SetWindow(app::Window*);
+		void SetWindow(host::Window*);
 
 
 	private:
@@ -71,6 +71,6 @@ namespace fr
 
 
 	private:
-		app::Window* m_window;
+		host::Window* m_window;
 	};
 }

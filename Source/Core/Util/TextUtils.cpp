@@ -85,4 +85,11 @@ namespace util
 	{
 		return ToLower(str.c_str());
 	}
+
+
+	std::string GetFileNameAndExtensionFromFilePath(std::string const& filepath)
+	{
+		const size_t slash = filepath.find_last_of("/\\");
+		return filepath.substr(slash + 1);
+	}
 }

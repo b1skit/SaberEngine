@@ -10,7 +10,7 @@
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
 
-#include "Core/App/Window.h"
+#include "Core/Host/Window.h"
 
 #include "Presentation/EntityManager.h"
 #include "Presentation/SceneManager.h"
@@ -26,7 +26,7 @@ namespace
 
 
 	// Create the main window on the engine thread to associate it with the correct Win32 event queue
-	void InitializeAppWindow(app::Window* appWindow)
+	void InitializeAppWindow(host::Window* appWindow)
 	{
 		std::string commandLineArgs;
 		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
@@ -37,7 +37,7 @@ namespace
 		const int xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		const int yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 
-		const bool windowCreated = appWindow->InitializeFromEventQueueThread(windowTitle, xRes, yRes);
+		const bool windowCreated = appWindow->Create(windowTitle, xRes, yRes);
 		SEAssert(windowCreated, "Failed to create a window");
 	}
 }
@@ -50,7 +50,7 @@ namespace app
 	EngineApp::EngineApp()
 		: m_isRunning(false)
 		, m_frameNum(0)
-		, m_window(std::make_unique<app::Window>())
+		, m_window(std::make_unique<host::Window>())
 		, m_inventory(std::make_unique<core::Inventory>())
 	{
 		m_engineApp = this;

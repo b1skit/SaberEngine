@@ -93,7 +93,7 @@ namespace re
 		core::Inventory* m_inventory;
 
 	public:
-		void SetWindow(app::Window*);
+		void SetWindow(host::Window*);
 
 
 	public:
@@ -285,7 +285,7 @@ namespace re
 	}
 
 
-	inline void RenderManager::SetWindow(app::Window* window)
+	inline void RenderManager::SetWindow(host::Window* window)
 	{
 		SEAssert(window != nullptr, "Trying to set a null window. This is unexpected");
 		re::Context::Get()->SetWindow(window);
