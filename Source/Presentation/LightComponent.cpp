@@ -14,8 +14,11 @@
 #include "TransformComponent.h"
 
 #include "Core/Config.h"
-#include "Core/Util/FileIOUtils.h"
+
+#include "Core/Host/Dialog.h"
+
 #include "Core/Util/ImGuiUtils.h"
+#include "Core/Util/TextUtils.h"
 
 #include "Renderer/AssetLoadUtils.h"
 #include "Renderer/MeshFactory.h"
@@ -522,7 +525,7 @@ namespace fr
 
 	void LightComponent::ShowImGuiSpawnWindow()
 	{
-		union LightSpawnParams
+		struct LightSpawnParams
 		{
 			LightSpawnParams(fr::Light::Type lightType)
 			{
@@ -530,7 +533,7 @@ namespace fr
 				{
 				case fr::Light::Type::AmbientIBL:
 				{
-					m_ambientLightSpawnParams.m_filepath = nullptr;
+					//
 				}
 				break;
 				case fr::Light::Type::Directional:
@@ -547,11 +550,6 @@ namespace fr
 			}
 			LightSpawnParams() = delete;
 			~LightSpawnParams() {}
-
-			struct AmbientLightSpawnParams
-			{
-				char const* m_filepath;
-			} m_ambientLightSpawnParams;
 
 			struct PunctualLightSpawnParams
 			{
@@ -579,31 +577,43 @@ namespace fr
 		}
 
 		// Display type-specific spawn options
-		std::vector<std::string> iblHDRFiles;
 		switch (s_selectedLightType)
 		{
 		case fr::Light::Type::AmbientIBL:
 		{
-			iblHDRFiles = util::GetDirectoryFilenameContents(
-				core::Config::Get()->GetValue<std::string>(core::configkeys::k_sceneIBLDirKey).c_str(), ".hdr");
-
-			static size_t selectedFileIdx = 0;
-			if (ImGui::BeginListBox("Selected source IBL HDR File"))
+			if (ImGui::Button("Import"))
 			{
-				for (size_t i = 0; i < iblHDRFiles.size(); i++)
-				{
-					const bool isSelected = selectedFileIdx == i;
-					if (ImGui::Selectable(iblHDRFiles[i].c_str(), isSelected))
+				core::ThreadPool::Get()->EnqueueJob([]()
 					{
-						selectedFileIdx = i;
-					}
-					if (isSelected)
-					{
-						ImGui::SetItemDefaultFocus();
-						s_spawnParams->m_ambientLightSpawnParams.m_filepath = iblHDRFiles[selectedFileIdx].c_str();
-					}
-				}
-				ImGui::EndListBox();
+						std::string filepath;
+						if (host::Dialog::OpenFileDialogBox("HDR Files", {"*.hdr"}, filepath))
+						{
+							fr::EntityManager* em = fr::EntityManager::Get();
+							core::Inventory* inventory = em->GetInventory();
+
+							std::shared_ptr<grutil::TextureFromFilePath<re::Texture>> texLoadCtx =
+								std::make_shared<grutil::TextureFromFilePath<re::Texture>>();
+
+							texLoadCtx->m_filePath = filepath;
+							texLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
+
+							core::InvPtr<re::Texture> const& newIBL = inventory->Get<re::Texture>(
+								util::StringHash(filepath),
+								texLoadCtx);
+
+							fr::EntityManager::Get()->EnqueueEntityCommand([newIBL, filepath]()
+								{
+									fr::EntityManager* em = fr::EntityManager::Get();
+
+									entt::entity newAmbientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
+										*em,
+										filepath.c_str(),
+										newIBL);
+
+									em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(newAmbientLight);
+								});
+						}
+					});
 			}
 		}
 		break;
@@ -616,81 +626,59 @@ namespace fr
 				&s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.r,
 				ImGuiColorEditFlags_NoInputs);
 			ImGui::SliderFloat("Luminous power", &s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.a, 0.f, 1000.f);
+
+			static std::array<char, 64> s_nameInputBuffer = { "Spawned\0" };
+			ImGui::InputText("Name", s_nameInputBuffer.data(), s_nameInputBuffer.size());
+
+			if (ImGui::Button("Spawn"))
+			{
+				fr::EntityManager* em = fr::EntityManager::Get();
+
+				entt::entity sceneNode = fr::SceneNode::Create(*em, s_nameInputBuffer.data(), entt::null);
+
+				switch (static_cast<fr::Light::Type>(s_selectedLightType))
+				{
+				case fr::Light::Type::AmbientIBL:
+				{
+					//
+				}
+				break;
+				case fr::Light::Type::Directional:
+				{
+					fr::LightComponent::AttachDeferredDirectionalLightConcept(
+						*em,
+						sceneNode,
+						std::format("{}_DirectionalLight", s_nameInputBuffer.data()).c_str(),
+						s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
+						s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+				}
+				break;
+				case fr::Light::Type::Point:
+				{
+					fr::LightComponent::AttachDeferredPointLightConcept(
+						*em,
+						sceneNode,
+						std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
+						s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
+						s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+				}
+				break;
+				case fr::Light::Type::Spot:
+				{
+					fr::LightComponent::AttachDeferredSpotLightConcept(
+						*em,
+						sceneNode,
+						std::format("{}_SpotLight", s_nameInputBuffer.data()).c_str(),
+						s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
+						s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+				}
+				break;
+				default: SEAssertF("Invalid light type");
+				}
+			}
 		}
 		break;
 		default: SEAssertF("Invalid type");
-		}
-
-		static std::array<char, 64> s_nameInputBuffer = { "Spawned\0" };
-		ImGui::InputText("Name", s_nameInputBuffer.data(), s_nameInputBuffer.size());
-
-		if (ImGui::Button("Spawn"))
-		{
-			fr::EntityManager* em = fr::EntityManager::Get();
-
-			entt::entity sceneNode = fr::SceneNode::Create(*em, s_nameInputBuffer.data(), entt::null);
-
-			switch (static_cast<fr::Light::Type>(s_selectedLightType))
-			{
-			case fr::Light::Type::AmbientIBL:
-			{
-				// TODO: This should be part of the ambient light logic, not the ImGui panel
-
-				core::Inventory* inventory = em->GetInventory();
-
-				std::shared_ptr<grutil::TextureFromFilePath<re::Texture>> texLoadCtx =
-					std::make_shared<grutil::TextureFromFilePath<re::Texture>>();
-
-				texLoadCtx->m_filePath = s_spawnParams->m_ambientLightSpawnParams.m_filepath;
-				texLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
-
-				if (util::FileExists(s_spawnParams->m_ambientLightSpawnParams.m_filepath))
-				{
-					core::InvPtr<re::Texture> const& newIBL = inventory->Get<re::Texture>(
-						util::StringHash(s_spawnParams->m_ambientLightSpawnParams.m_filepath),
-						texLoadCtx);
-
-					entt::entity newAmbientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
-						*em,
-						s_spawnParams->m_ambientLightSpawnParams.m_filepath,
-						newIBL);
-
-					em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(newAmbientLight);
-				}
-			}
-			break;
-			case fr::Light::Type::Directional:
-			{
-				fr::LightComponent::AttachDeferredDirectionalLightConcept(
-					*em,
-					sceneNode,
-					std::format("{}_DirectionalLight", s_nameInputBuffer.data()).c_str(),
-					s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
-					s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
-			}
-			break;
-			case fr::Light::Type::Point:
-			{
-				fr::LightComponent::AttachDeferredPointLightConcept(
-					*em,
-					sceneNode,
-					std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
-					s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
-					s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
-			}
-			break;
-			case fr::Light::Type::Spot:
-			{
-				fr::LightComponent::AttachDeferredSpotLightConcept(
-					*em,
-					sceneNode,
-					std::format("{}_SpotLight", s_nameInputBuffer.data()).c_str(),
-					s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
-					s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
-			}
-			break;
-			default: SEAssertF("Invalid light type");
-			}
 		}
 	}
 
