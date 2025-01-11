@@ -30,13 +30,15 @@ namespace fr
 		void Shutdown() override;
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
-	public:
-		void LoadScene(std::string const& sceneFilePath); // Filename and path, relative to the ..\Scenes\ dir
+
+	public:		
+		void ImportFile(std::string const& filePath); // Filename and path, relative to the ..\Scenes\ dir
 
 		static void NotifyLoadComplete(); // Callback to notify the Scenemanager when a load completes
 
+
 	private:
-		std::atomic<bool> m_hasCreatedScene; // Has an initial scene been loaded?
+		std::atomic<bool> m_hasCreatedScene; // Has an initial scene been create?
 
 
 	public:

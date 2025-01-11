@@ -17,6 +17,4 @@ namespace util
 
 	std::string ToLower(char const* str);
 	std::string ToLower(std::string const& str);
-
-	std::string GetFileNameAndExtensionFromFilePath(std::string const& filepath);
 }

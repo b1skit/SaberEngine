@@ -15,6 +15,8 @@ namespace core::configkeys
 	constexpr char const* k_platformPipelineFileName_DX12	= "platformDX12.json";
 	constexpr char const* k_effectDirName					= "Assets\\Effects\\";
 	constexpr char const* k_effectManifestFilename			= "EffectManifest.json";
+	constexpr char const* k_defaultEngineIBLFilePath		= "Assets\\DefaultIBL\\default.hdr";
+	constexpr char const* k_perFileIBLRelativeFilePath		= "IBL\\default.hdr"; // Overrides the engine default HDR/IBL
 	constexpr char const* k_glslShaderDirName				= "Assets\\Shaders\\GLSL\\";
 	constexpr char const* k_hlslShaderDirName				= "Assets\\Shaders\\HLSL\\";
 	constexpr char const* k_commonShaderDirName				= "Assets\\Shaders\\Common\\";
@@ -39,7 +41,7 @@ namespace core::configkeys
 
 	// Command line controls:
 	/******************************************************************************************************************/
-	constexpr char const* k_sceneCmdLineArg							= "scene";
+	constexpr char const* k_importCmdLineArg						= "import";
 	constexpr char const* k_showSystemConsoleWindowCmdLineArg		= "console";
 	constexpr char const* k_scenePipelineCmdLineArg					= "scenepipeline";
 	constexpr char const* k_singleThreadEffectLoading				= "singlethreadeffectloading";
@@ -62,19 +64,10 @@ namespace core::configkeys
 	constexpr util::HashKey k_documentsFolderPathKey = "documentsFolderPath"; // e.g. "C:\Users\<username>\Documents"
 
 	// Command line args:
-	constexpr util::HashKey k_commandLineArgsValueKey = "commandLineArgs"; // Gets the command line arg string
+	constexpr util::HashKey k_commandLineArgsValueKey = "commandLineArgs"; // Get the entire command line arg string
 
-	// Scene
-	constexpr util::HashKey k_scenesDirNameKey	= "ScenesDirName";
-	constexpr util::HashKey k_sceneFilePathKey	= "sceneFilePath";	// "Scenes\Scene\Folder\Names\sceneFile.extension"
-	constexpr util::HashKey k_sceneNameKey		= "sceneName";		// "sceneFile"
-	constexpr util::HashKey k_sceneRootPathKey	= "sceneRootPath";	// ".\Scenes\Scene\Folder\Names\"
-	
-	constexpr util::HashKey k_sceneIBLDirKey			= "sceneIBLDir";	// "Scenes\SceneFolderName\IBL\"
-	constexpr util::HashKey k_sceneIBLPathKey			= "sceneIBLPath";	// "Scenes\SceneFolderName\IBL\ibl.hdr"
-	constexpr util::HashKey k_defaultEngineIBLPathKey	= "defaultEngineIBLPath"; // "Assets\\DefaultIBL\\default.hdr"
-
-	constexpr util::HashKey k_shaderDirectoryKey = "shaderDirectory"; // e.g. ".\\Shaders\\HLSL\\"
+	// Dynamic engine defaults:
+	constexpr util::HashKey k_shaderDirectoryKey	= "shaderDirectory"; // e.g. ".\\Shaders\\HLSL\\"
 
 	// System:
 	constexpr util::HashKey k_windowTitleKey		= "windowTitle";
@@ -140,6 +133,4 @@ namespace en::DefaultResourceNames
 	constexpr char const* k_cubeMapTransparentWhiteDefaultTexName	= "DefaultCube_TransparentWhite";
 	constexpr char const* k_cubeMapOpaqueBlackDefaultTexName		= "DefaultCube_OpaqueBlack";
 	constexpr char const* k_cubeMapTransparentBlackDefaultTexName	= "DefaultCube_TransparentBlack";
-
-	constexpr char const* k_defaultIBLTexName = "DefaultIBL"; // Get whatever IBL was loaded as the default
 }

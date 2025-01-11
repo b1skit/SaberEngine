@@ -50,6 +50,20 @@ namespace util
 	}
 
 
+	std::string ExtractDirectoryPathFromFilePath(std::string const& filepath)
+	{
+		const size_t lastSlash = filepath.find_last_of("/\\");
+		return filepath.substr(0, lastSlash) + "\\";
+	}
+
+
+	std::string ExtractFileNameAndExtensionFromFilePath(std::string const& filepath)
+	{
+		const size_t lastSlash = filepath.find_last_of("/\\");
+		return filepath.substr(lastSlash + 1);
+	}
+
+
 	BuildConfiguration CStrToBuildConfiguration(char const* buildConfigCStr)
 	{
 		std::string const& buildConfigCStrLower = util::ToLower(buildConfigCStr);

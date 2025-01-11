@@ -22,7 +22,7 @@ Saber Engine is constantly improving. Its current features include:
 - Dynamic shader selection via an scriptable Effect/Technique/DrawStyle framework  
 - Droid: A custom offline shader compiler & C++ code generation tool  
 - Entity Component System (EnTT)  
-- GLTF 2.0 scene format support  
+- GLTF 2.0 format support  
 - Supports skinned animations, morph targets, and key frame node/transform animations  
 - HDR physically-based lighting model (As per EA’s Frostbite, Lagarde et al.)  
 - Image-based indirect lighting  
@@ -56,8 +56,7 @@ SaberEngine: Command line arguments:
 ------------------------------------
 Most of the keys described in `ConfigKeys.h` can be set/overridden via key/value command line arguments using a `-keyname value` pattern.  If `value` is omitted, it will be stored as a boolean true value.  The most important command line arguments are described here:
 
-Scene loading: `-scene Folder\Name\filename.extension`  
-* Path is relative to the `<project root>\Scenes\` directory  
+File loading: `-import Directory\Path\filename.extension`  
 * Supports GLTF 2.0 files
 
 Display log messages in a system console window: `-console`  
@@ -116,9 +115,10 @@ Press the ` (tilde/grave) key to show/hide the ImGui overlay
 ---------------------
 Image-based Lighting:
 ---------------------
-* A per-scene IBL is loaded from `<project root>\Scenes\SceneFolderName\IBL\ibl.hdr`, if it exists  
-  * A default IBL (`<project root>\Assets\DefaultIBL\default.hdr`) is used as a fallback if no scene IBL is found  
-  * New IBLs can be loaded at runtime via the ImGui menus  
+* A default HDR is included for IBL at `<project root>\Assets\DefaultIBL\default.hdr`  
+  * GLTF files can override this default by placing a `default.hdr` file in an `IBL` folder alongside theGLTF file  
+	* E.g. When loading `Some\Folder\Example.gltf`, a HDR at `Some\Folder\IBL\default.hdr` will be loaded at the same time as the GLTF file  
+  * Additional HDRs can also be imported from any location at runtime via the ImGui menus  
 
 
 ------------------------------------------

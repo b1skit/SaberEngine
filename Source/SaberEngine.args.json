@@ -186,123 +186,123 @@
       "Items": [
         {
           "Id": "6dd1fc69-ed79-4d85-b912-fcc514e395a2",
-          "Command": "-scene MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
+          "Command": "-import Scenes\\MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
         },
         {
           "Id": "839a8f0d-8f42-430f-9fb6-34250cda78b9",
-          "Command": "-scene MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf"
+          "Command": "-import Scenes\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf"
         },
         {
           "Id": "98bedead-9373-4ad5-a1c2-c716f6322f5c",
-          "Command": "-scene Corset\\glTF-Binary\\Corset.glb"
+          "Command": "-import Scenes\\Corset\\glTF-Binary\\Corset.glb"
         },
         {
           "Id": "4655280e-785b-4a54-81ad-5f907ba49804",
-          "Command": "-scene Corset\\glTF\\Corset.gltf"
+          "Command": "-import Scenes\\Corset\\glTF\\Corset.gltf"
         },
         {
           "Id": "a597a9cc-5fd1-4493-9515-92281f037b50",
-          "Command": "-scene MyInstanceTest\\InstanceTest.gltf"
+          "Command": "-import Scenes\\MyInstanceTest\\InstanceTest.gltf"
         },
         {
           "Id": "78b72e43-f264-490c-be44-81c5face5020",
-          "Command": "-scene Duck\\glTF\\Duck.gltf"
+          "Command": "-import Scenes\\Duck\\glTF\\Duck.gltf"
         },
         {
           "Id": "fb976e8d-28b2-45a6-8a57-b740be8156b6",
-          "Command": "-scene Duck\\glTF-Embedded\\Duck.gltf"
+          "Command": "-import Scenes\\Duck\\glTF-Embedded\\Duck.gltf"
         },
         {
           "Id": "fedc2bde-0b47-426d-958b-b2f73e676030",
-          "Command": "-scene Duck\\glTF-Binary\\Duck.glb"
+          "Command": "-import Scenes\\Duck\\glTF-Binary\\Duck.glb"
         },
         {
           "Id": "7c9082e9-1698-490b-b049-d34c6350685f",
-          "Command": "-scene EmissiveStrengthTest\\glTF\\EmissiveStrengthTest.gltf"
+          "Command": "-import Scenes\\EmissiveStrengthTest\\glTF\\EmissiveStrengthTest.gltf"
         },
         {
           "Id": "fed39c3e-c597-47ba-aabb-eab3e2c2348d",
-          "Command": "-scene NormalTangentMirrorTest\\NormalTangentMirrorTest.gltf"
+          "Command": "-import Scenes\\NormalTangentMirrorTest\\NormalTangentMirrorTest.gltf"
         },
         {
           "Id": "05b3455c-11e5-4f24-9357-810a270059db",
-          "Command": "-scene NormalTangentTest\\NormalTangentTest.gltf"
+          "Command": "-import Scenes\\NormalTangentTest\\NormalTangentTest.gltf"
         },
         {
           "Id": "e8c82d8a-e5e3-4a47-90a1-45390d632948",
-          "Command": "-scene LightsPunctualLamp\\LightsPunctualLamp.gltf"
+          "Command": "-import Scenes\\LightsPunctualLamp\\LightsPunctualLamp.gltf"
         },
         {
           "Id": "9382fbc7-26a4-4ccf-aadc-544a1a934d4a",
-          "Command": "-scene Cameras\\Cameras.gltf"
+          "Command": "-import Scenes\\Cameras\\Cameras.gltf"
         },
         {
           "Id": "24ef9bef-0471-465c-9aaa-2b758fec797d",
-          "Command": "-scene WaterBottle\\WaterBottle.gltf"
+          "Command": "-import Scenes\\WaterBottle\\WaterBottle.gltf"
         },
         {
           "Id": "bb9ed7d8-2d99-4d7d-8b97-a572c67eca65",
-          "Command": "-scene OrientationTest\\OrientationTest.gltf"
+          "Command": "-import Scenes\\OrientationTest\\OrientationTest.gltf"
         },
         {
           "Id": "2940251e-a995-4b02-b726-a82d74ce9c04",
-          "Command": "-scene Sponza\\Sponza.gltf"
+          "Command": "-import Scenes\\Sponza\\Sponza.gltf"
         },
         {
           "Id": "cb55f864-2acd-4c42-ba1c-7861e297bd99",
-          "Command": "-scene Sponza_Intel\\NewSponza_Main_glTF_003.gltf"
+          "Command": "-import Scenes\\Sponza_Intel\\NewSponza_Main_glTF_003.gltf"
         },
         {
           "Id": "3f7808ce-703c-48b0-b666-4655b96bc979",
-          "Command": "-scene AntiqueCamera\\AntiqueCamera.gltf"
+          "Command": "-import Scenes\\AntiqueCamera\\AntiqueCamera.gltf"
         },
         {
           "Id": "41091ec8-c372-4107-bd51-ffb672bcbe78",
-          "Command": "-scene BoomBoxWithAxes\\BoomBoxWithAxes.gltf"
+          "Command": "-import Scenes\\BoomBoxWithAxes\\BoomBoxWithAxes.gltf"
         },
         {
           "Id": "241aa5df-00ed-4aef-b8a7-04d0f9ab5100",
-          "Command": "-scene Box\\glTF-Embedded\\Box.gltf"
+          "Command": "-import Scenes\\Box\\glTF-Embedded\\Box.gltf"
         },
         {
           "Id": "32b7f201-6bda-4d56-91b3-276709892e17",
-          "Command": "-scene SunTemple\\suntemple.gltf"
+          "Command": "-import Scenes\\SunTemple\\suntemple.gltf"
         },
         {
           "Id": "5a59ebe8-2088-49eb-9fa5-a25bd960b6fc",
-          "Command": "-scene abandoned_warehouse\\scene.gltf"
+          "Command": "-import Scenes\\abandoned_warehouse\\scene.gltf"
         },
         {
           "Id": "d5f60a21-9cbb-411e-b816-c3322a2b104c",
-          "Command": "-scene DamagedHelmet\\GLTF\\DamagedHelmet.gltf"
+          "Command": "-import Scenes\\DamagedHelmet\\GLTF\\DamagedHelmet.gltf"
         },
         {
           "Id": "80ece5d4-ce71-4705-845e-28c8b2eeb71e",
-          "Command": "-scene FlightHelmet\\glTF\\FlightHelmet.gltf"
+          "Command": "-import Scenes\\FlightHelmet\\glTF\\FlightHelmet.gltf"
         },
         {
           "Id": "44070e8c-0040-4955-bea0-a05f3fb48ae3",
-          "Command": "-scene StainedGlassLamp\\glTF\\StainedGlassLamp.gltf"
+          "Command": "-import Scenes\\StainedGlassLamp\\glTF\\StainedGlassLamp.gltf"
         },
         {
           "Id": "8d6c419b-86e9-4ab4-a6f1-a2e1107cb399",
-          "Command": "-scene ToyCar\\glTF\\ToyCar.gltf"
+          "Command": "-import Scenes\\ToyCar\\glTF\\ToyCar.gltf"
         },
         {
           "Id": "ed5ac280-363a-47cb-a061-34a722fbd941",
-          "Command": "-scene VC\\glTF\\VC.gltf"
+          "Command": "-import Scenes\\VC\\glTF\\VC.gltf"
         },
         {
           "Id": "e71cae4e-1903-46e0-8510-c5d9f95e2410",
-          "Command": "-scene TriangleWithoutIndices\\glTF-Embedded\\TriangleWithoutIndices.gltf"
+          "Command": "-import Scenes\\TriangleWithoutIndices\\glTF-Embedded\\TriangleWithoutIndices.gltf"
         },
         {
           "Id": "42a5dff5-b2c6-44e2-8462-7ac0ac0dbf0c",
-          "Command": "-scene AlphaBlendModeTest\\glTF\\AlphaBlendModeTest.gltf"
+          "Command": "-import Scenes\\AlphaBlendModeTest\\glTF\\AlphaBlendModeTest.gltf"
         },
         {
           "Id": "d5dec2bd-cd8a-4e56-86be-c43ecdccc751",
-          "Command": "-scene MultiUVTest\\glTF\\MultiUVTest.gltf"
+          "Command": "-import Scenes\\MultiUVTest\\glTF\\MultiUVTest.gltf"
         },
         {
           "Id": "3dcb8108-054d-490a-90fa-9618e5101ff2",
@@ -310,11 +310,11 @@
           "Items": [
             {
               "Id": "1bfead22-6f3e-43ec-b679-439e0a804f73",
-              "Command": "-scene VertexColor\\VertexColorTest.gltf"
+              "Command": "-import Scenes\\VertexColor\\VertexColorTest.gltf"
             },
             {
               "Id": "1f68c100-0068-4d3a-9f61-fc7b810d0bb6",
-              "Command": "-scene BoxVertexColors\\glTF-Embedded\\BoxVertexColors.gltf"
+              "Command": "-import Scenes\\BoxVertexColors\\glTF-Embedded\\BoxVertexColors.gltf"
             }
           ]
         },
@@ -324,19 +324,19 @@
           "Items": [
             {
               "Id": "ddfd5765-89c1-4506-88a9-515d5fc0f6eb",
-              "Command": "-scene AnimatedTriangle\\glTF\\AnimatedTriangle.gltf"
+              "Command": "-import Scenes\\AnimatedTriangle\\glTF\\AnimatedTriangle.gltf"
             },
             {
               "Id": "7299d3dd-85df-46ee-8420-f2aff3528b93",
-              "Command": "-scene AnimatedCube\\glTF\\AnimatedCube.gltf"
+              "Command": "-import Scenes\\AnimatedCube\\glTF\\AnimatedCube.gltf"
             },
             {
               "Id": "bd9ca670-8a0b-47d1-8613-a23d4d16aec7",
-              "Command": "-scene BoxAnimated\\glTF-Binary\\BoxAnimated.glb"
+              "Command": "-import Scenes\\BoxAnimated\\glTF-Binary\\BoxAnimated.glb"
             },
             {
               "Id": "208224d3-766f-4d77-91c4-140c3e5ca5ef",
-              "Command": "-scene InterpolationTest\\glTF\\InterpolationTest.gltf"
+              "Command": "-import Scenes\\InterpolationTest\\glTF\\InterpolationTest.gltf"
             }
           ]
         },
@@ -346,19 +346,19 @@
           "Items": [
             {
               "Id": "328eb56c-fe81-4413-8019-164545186f07",
-              "Command": "-scene SimpleMorph\\glTF-Embedded\\SimpleMorph.gltf"
+              "Command": "-import Scenes\\SimpleMorph\\glTF-Embedded\\SimpleMorph.gltf"
             },
             {
               "Id": "cda5fb05-55eb-4c76-b0cd-f8f3cb249d3e",
-              "Command": "-scene AnimatedMorphCube\\glTF\\AnimatedMorphCube.gltf"
+              "Command": "-import Scenes\\AnimatedMorphCube\\glTF\\AnimatedMorphCube.gltf"
             },
             {
               "Id": "5daf0aea-8012-49fc-ac40-a2ceb65b50ef",
-              "Command": "-scene MorphPrimitivesTest\\glTF\\MorphPrimitivesTest.gltf"
+              "Command": "-import Scenes\\MorphPrimitivesTest\\glTF\\MorphPrimitivesTest.gltf"
             },
             {
               "Id": "42d0ed64-408d-48b0-97f8-a0574a667666",
-              "Command": "-scene MorphStressTest\\glTF-Binary\\MorphStressTest.glb"
+              "Command": "-import Scenes\\MorphStressTest\\glTF-Binary\\MorphStressTest.glb"
             }
           ]
         },
@@ -368,31 +368,31 @@
           "Items": [
             {
               "Id": "5d43f725-1974-412e-b3bc-849391061945",
-              "Command": "-scene SimpleSkin\\glTF-Embedded\\SimpleSkin.gltf"
+              "Command": "-import Scenes\\SimpleSkin\\glTF-Embedded\\SimpleSkin.gltf"
             },
             {
               "Id": "5c33b5c5-68f4-4728-b41a-373fd6a98ac1",
-              "Command": "-scene RiggedSimple\\glTF-Binary\\RiggedSimple.glb"
+              "Command": "-import Scenes\\RiggedSimple\\glTF-Binary\\RiggedSimple.glb"
             },
             {
               "Id": "d682b84e-0d54-46f5-99c4-c3fbd1711b79",
-              "Command": "-scene RiggedFigure\\glTF\\RiggedFigure.gltf"
+              "Command": "-import Scenes\\RiggedFigure\\glTF\\RiggedFigure.gltf"
             },
             {
               "Id": "0f478834-b723-4acc-aaa9-ea965cdf1b14",
-              "Command": "-scene RecursiveSkeletons\\glTF-Binary\\RecursiveSkeletons.glb"
+              "Command": "-import Scenes\\RecursiveSkeletons\\glTF-Binary\\RecursiveSkeletons.glb"
             },
             {
               "Id": "1ae94854-57e8-48cf-8e42-60a22f47119c",
-              "Command": "-scene BrainStem\\glTF\\BrainStem.gltf"
+              "Command": "-import Scenes\\BrainStem\\glTF\\BrainStem.gltf"
             },
             {
               "Id": "8f424adb-8993-4660-b22a-025fd084e81f",
-              "Command": "-scene CesiumMan\\glTF\\CesiumMan.gltf"
+              "Command": "-import Scenes\\CesiumMan\\glTF\\CesiumMan.gltf"
             },
             {
               "Id": "32bac8c3-5bfd-43c7-8a83-1db3f3583c56",
-              "Command": "-scene Fox\\glTF\\Fox.gltf"
+              "Command": "-import Scenes\\Fox\\glTF\\Fox.gltf"
             }
           ]
         }

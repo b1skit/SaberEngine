@@ -37,8 +37,6 @@ namespace core
 		: m_isDirty(false)
 	{
 		// Insert engine defaults:
-		SetValue<std::string>(core::configkeys::k_scenesDirNameKey, "Scenes\\", Config::SettingType::Runtime);
-
 		SetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey, true, Config::SettingType::Runtime);
 		SetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey, true, Config::SettingType::Runtime);
 	}
@@ -161,36 +159,6 @@ namespace core
 				// If no value was provided with a key, just set it as a boolean flag
 				SetValue(util::HashKey::Create(keysValues[i].m_key), true, Config::SettingType::Runtime);
 			}
-		}
-
-		// Post-processing:
-		if (KeyExists(util::HashKey(core::configkeys::k_sceneCmdLineArg)))
-		{
-			std::string const& sceneDirName = GetValue<std::string>(core::configkeys::k_scenesDirNameKey); // "Scenes\\"
-			std::string const& extractedSceneArg = GetValue<std::string>(core::configkeys::k_sceneCmdLineArg);
-			
-			// Assemble the relative scene file path:
-			const std::string sceneFilePath = sceneDirName + extractedSceneArg; // == "Scenes\Some\Folder\Names\file.ext"
-			SetValue(core::configkeys::k_sceneFilePathKey, sceneFilePath, Config::SettingType::Runtime);
-
-			// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
-			const size_t lastSlash = sceneFilePath.find_last_of("\\");
-			const std::string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\";
-			SetValue(core::configkeys::k_sceneRootPathKey, sceneRootPath, Config::SettingType::Runtime);
-
-			// sceneName == "sceneFile"
-			const std::string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
-			const size_t extensionPeriod = filenameAndExt.find_last_of(".");
-			const std::string sceneName = filenameAndExt.substr(0, extensionPeriod);
-			SetValue(core::configkeys::k_sceneNameKey, sceneName, Config::SettingType::Runtime);
-
-			// sceneIBLDir == ".\Scenes\SceneFolderName\IBL\"
-			std::string const& sceneIBLDir = sceneRootPath + "IBL\\";
-			SetValue(core::configkeys::k_sceneIBLDirKey, sceneIBLDir, Config::SettingType::Runtime);
-
-			// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
-			const std::string sceneIBLPath = sceneIBLDir + "ibl.hdr";
-			SetValue(core::configkeys::k_sceneIBLPathKey, sceneIBLPath, Config::SettingType::Runtime);
 		}
 
 		// We don't count command line arg entries as dirtying the config
@@ -429,9 +397,6 @@ namespace core
 		SetValue(core::configkeys::k_mousePitchSensitivityKey,		0.5f,	SettingType::Serialized);
 		SetValue(core::configkeys::k_mouseYawSensitivityKey,		0.5f,	SettingType::Serialized);
 		SetValue(core::configkeys::k_sprintSpeedModifierKey,		2.0f,	SettingType::Serialized);
-
-		// Scene data:
-		SetValue(core::configkeys::k_defaultEngineIBLPathKey,	"Assets\\DefaultIBL\\default.hdr",	SettingType::Serialized);
 
 		// Key bindings:
 		//--------------

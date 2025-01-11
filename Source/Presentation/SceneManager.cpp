@@ -66,9 +66,9 @@ namespace
 		entt::entity m_owningEntity;
 	};
 
-	struct SceneMetadata
+	struct FileMetadata
 	{
-		std::string m_sceneFilePath;
+		std::string m_filePath;
 
 		std::unique_ptr<fr::AnimationController> m_animationController;
 		NodeToAnimationDataMaps m_nodeToAnimationData;
@@ -313,6 +313,48 @@ namespace
 
 		return texName;
 	}
+
+
+	struct IBLTextureFromFilePath final : public virtual grutil::TextureFromFilePath<re::Texture>
+	{
+		// We override this so we can skip the early registration (which would make the render thread wait)
+		void OnLoadBegin(core::InvPtr<re::Texture>&) override
+		{
+			LOG(std::format("Creating IBL texture from file path \"{}\"", m_filePath).c_str());
+		}
+
+		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& newIBL) override
+		{
+			std::unique_ptr<re::Texture> result = grutil::TextureFromFilePath<re::Texture>::Load(newIBL);
+
+			// Register for API-layer creation now that we've loaded the (typically large amount of) data
+			re::RenderManager::Get()->RegisterForCreate(newIBL);
+
+			return std::move(result);
+		}
+
+		void OnLoadComplete(core::InvPtr<re::Texture>& newIBL) override
+		{
+			fr::EntityManager* em = fr::EntityManager::Get();
+
+			em->EnqueueEntityCommand([em, newIBL, makeActive = m_makeActive]()
+				{
+					// Create an Ambient LightComponent, and make it active:
+					entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
+						*em,
+						newIBL->GetName().c_str(),
+						newIBL);
+
+					// TODO: It would be nice to not need to nest this EnqueueEntityCommand() call
+					if (makeActive)
+					{
+						em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
+					}
+				});
+		}
+
+		bool m_makeActive = true;
+	};
 
 
 	template<typename T>
@@ -757,7 +799,7 @@ namespace
 
 	inline entt::entity CreateSceneNode(
 		fr::EntityManager* em,
-		std::shared_ptr<SceneMetadata> const& sceneMetadata,
+		std::shared_ptr<FileMetadata> const& sceneMetadata,
 		cgltf_node const* gltfNode,
 		entt::entity parent,
 		size_t nodeIdx)
@@ -793,7 +835,7 @@ namespace
 		entt::entity sceneNodeEntity,
 		size_t nodeIdx,
 		cgltf_node const* current,
-		std::shared_ptr<SceneMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& sceneMetadata)
 	{
 		constexpr char const* k_defaultCamName = "DefaultCamera";
 		if (sceneNodeEntity == entt::null)
@@ -1548,7 +1590,7 @@ namespace
 
 		} // Load()
 
-		std::shared_ptr<SceneMetadata> m_sceneMetadata;
+		std::shared_ptr<FileMetadata> m_sceneMetadata;
 
 		std::string m_meshName;
 		std::string m_primitiveName;
@@ -1565,7 +1607,7 @@ namespace
 		core::Inventory* inventory,
 		std::string const& sceneRootPath,
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<SceneMetadata>& sceneMetadata,
+		std::shared_ptr<FileMetadata>& sceneMetadata,
 		core::InvPtr<GLTFSceneHandle>& gltfScene)
 	{
 		for (size_t meshIdx = 0; meshIdx < data->meshes_count; ++meshIdx)
@@ -1661,7 +1703,7 @@ namespace
 
 	inline void PreLoadSkinData(
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<SceneMetadata>& sceneMetadata,
+		std::shared_ptr<FileMetadata>& sceneMetadata,
 		std::vector<std::future<void>>& skinFutures)
 	{
 		for (size_t skinIdx = 0; skinIdx < data->skins_count; ++skinIdx)
@@ -1698,7 +1740,7 @@ namespace
 
 	void PreLoadAnimationData(
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<SceneMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& sceneMetadata)
 	{
 		sceneMetadata->m_animationController = fr::AnimationController::CreateAnimationControllerObject();
 
@@ -1857,7 +1899,7 @@ namespace
 		cgltf_node const* current,
 		size_t nodeIdx, // For default/fallback name
 		entt::entity sceneNodeEntity,
-		std::shared_ptr<SceneMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& sceneMetadata)
 	{
 		SEAssert(current->mesh, "Current node does not have mesh data");
 
@@ -1920,11 +1962,11 @@ namespace
 	void AttachMeshAnimationComponents(
 		fr::EntityManager* em,
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<SceneMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& sceneMetadata)
 	{
 		// Move our pre-populated AnimationController into an entity/component so we can obtain its final pointer:
 		fr::AnimationController* animationController = fr::AnimationController::CreateAnimationController(
-			*em, sceneMetadata->m_sceneFilePath.c_str(), std::move(sceneMetadata->m_animationController));
+			*em, sceneMetadata->m_filePath.c_str(), std::move(sceneMetadata->m_animationController));
 
 
 		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
@@ -2089,7 +2131,7 @@ namespace
 	void AttachNodeComponents(
 		fr::EntityManager* em,
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<SceneMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& sceneMetadata)
 	{
 		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
 		{
@@ -2119,7 +2161,7 @@ namespace
 	void CreateSceneNodeEntities(
 		fr::EntityManager* em,
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<SceneMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& sceneMetadata)
 	{
 		for (size_t sceneIdx = 0; sceneIdx < data->scenes_count; ++sceneIdx)
 		{
@@ -2165,25 +2207,25 @@ namespace
 
 
 	template<typename T>
-	struct GLTFSceneLoadContext final : public virtual core::ILoadContext<GLTFSceneHandle>
+	struct GLTFFileLoadContext final : public virtual core::ILoadContext<GLTFSceneHandle>
 	{
 		void OnLoadBegin(core::InvPtr<GLTFSceneHandle>&) override
 		{
-			LOG("Loading GLTF scene from \"%s\"", m_sceneFilePath.c_str());
+			LOG("Loading GLTF scene from \"%s\"", m_filePath.c_str());
 		}
 
 		std::unique_ptr<GLTFSceneHandle> Load(core::InvPtr<GLTFSceneHandle>& gltfScene) override
 		{
 			// Parse the the GLTF metadata:
-			const bool gotSceneFilePath = !m_sceneFilePath.empty();
+			const bool gotFilePath = !m_filePath.empty();
 			cgltf_options options = { (cgltf_file_type)0 };
-			if (gotSceneFilePath)
+			if (gotFilePath)
 			{
 				cgltf_data* rawData = nullptr;
-				cgltf_result parseResult = cgltf_parse_file(&options, m_sceneFilePath.c_str(), &rawData);
+				cgltf_result parseResult = cgltf_parse_file(&options, m_filePath.c_str(), &rawData);
 				if (parseResult != cgltf_result::cgltf_result_success)
 				{
-					SEAssert(parseResult == cgltf_result_success, "Failed to parse scene file \"%s\"", m_sceneFilePath.c_str());
+					SEAssert(parseResult == cgltf_result_success, "Failed to parse scene file \"%s\"", m_filePath.c_str());
 					return nullptr;
 				}
 
@@ -2191,19 +2233,19 @@ namespace
 				rawData = nullptr;
 			}
 
-			// SceneMetadata is populated with tracking data as we go
-			m_sceneMetadata = std::make_shared<SceneMetadata>();
-			m_sceneMetadata->m_sceneFilePath = m_sceneFilePath;
+			// FileMetadata is populated with tracking data as we go
+			m_sceneMetadata = std::make_shared<FileMetadata>();
+			m_sceneMetadata->m_filePath = m_filePath;
 
 			cgltf_data* data = m_sceneData ? m_sceneData.get() : nullptr;
 
 			// Load the GLTF data:
 			if (data)
 			{
-				cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, m_sceneFilePath.c_str());
+				cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, m_filePath.c_str());
 				if (bufferLoadResult != cgltf_result::cgltf_result_success)
 				{
-					SEAssert(bufferLoadResult == cgltf_result_success, "Failed to load scene data \"%s\"", m_sceneFilePath.c_str());
+					SEAssert(bufferLoadResult == cgltf_result_success, "Failed to load scene data \"%s\"", m_filePath.c_str());
 					return nullptr;
 				}
 
@@ -2216,8 +2258,7 @@ namespace
 				}
 #endif
 
-				std::string sceneRootPath;
-				core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneRootPathKey, sceneRootPath);
+				std::string const& sceneRootPath = util::ExtractDirectoryPathFromFilePath(m_filePath);
 
 				LoadMeshData(m_inventory, sceneRootPath, m_sceneData, m_sceneMetadata, gltfScene);
 
@@ -2244,7 +2285,7 @@ namespace
 
 			fr::EntityManager* em = fr::EntityManager::Get();
 
-			std::shared_ptr<SceneMetadata> sceneMetadata = m_sceneMetadata;
+			std::shared_ptr<FileMetadata> sceneMetadata = m_sceneMetadata;
 
 			if (m_sceneData)
 			{
@@ -2295,7 +2336,7 @@ namespace
 							// Default camera is at the front() as it has a null source node index
 							mainCameraEntity = sceneMetadata->m_cameraMetadata.front().m_owningEntity;
 						}
-						else
+						else if (!sceneMetadata->m_cameraMetadata.empty())
 						{
 							// Otherwise, make the last camera loaded active
 							mainCameraEntity = sceneMetadata->m_cameraMetadata.back().m_owningEntity;
@@ -2304,7 +2345,10 @@ namespace
 
 					// Finally, set the main camera:
 					// TODO: It would be nice to not need to double-enqueue this
-					em->EnqueueEntityCommand<fr::SetMainCameraCommand>(mainCameraEntity);
+					if (mainCameraEntity != entt::null)
+					{
+						em->EnqueueEntityCommand<fr::SetMainCameraCommand>(mainCameraEntity);
+					}
 				});
 
 			// Finally, let the scene manager know we're done
@@ -2314,26 +2358,26 @@ namespace
 
 	private:
 		std::shared_ptr<cgltf_data> m_sceneData;
-		std::shared_ptr<SceneMetadata> m_sceneMetadata;
+		std::shared_ptr<FileMetadata> m_sceneMetadata;
 
 
 	public:
 		core::Inventory* m_inventory;
-		std::string m_sceneFilePath;
+		std::string m_filePath;
 	};
 
 
-	void LoadGLTFScene(core::Inventory* inventory, std::string const& sceneFilePath)
+	void ImportGLTFFile(core::Inventory* inventory, std::string const& filePath)
 	{
-		std::shared_ptr<GLTFSceneLoadContext<GLTFSceneHandle>> loadContext =
-			std::make_shared<GLTFSceneLoadContext<GLTFSceneHandle>>();
+		std::shared_ptr<GLTFFileLoadContext<GLTFSceneHandle>> loadContext =
+			std::make_shared<GLTFFileLoadContext<GLTFSceneHandle>>();
 
 		loadContext->m_inventory = inventory;
-		loadContext->m_sceneFilePath = sceneFilePath;
+		loadContext->m_filePath = filePath;
 
 		// We let this go out of scope, it'll clean up after itself once loading is done
 		inventory->Get(
-			util::StringHash(sceneFilePath),
+			util::StringHash(filePath),
 			static_pointer_cast<core::ILoadContext<GLTFSceneHandle>>(loadContext));
 	}
 } // namespace
@@ -2377,10 +2421,11 @@ namespace fr
 			});
 
 		// Note: Even if a command line argument was not provided to load a scene, we kick off the loading flow anyway
-		// to ensure a default camera is created
-		std::string sceneFilePath;
-		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneFilePathKey, sceneFilePath);
-		LoadScene(sceneFilePath);
+		// to ensure a default camera is created		
+		std::string importFilePathArg;
+		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_importCmdLineArg, importFilePathArg);
+
+		ImportFile(importFilePathArg);
 
 		// Create a scene render system:
 		re::RenderManager::Get()->EnqueueRenderCommand([]()
@@ -2498,15 +2543,36 @@ namespace fr
 	}
 
 
-	void SceneManager::LoadScene(std::string const& sceneFilePath)
+	void SceneManager::ImportFile(std::string const& filePath)
 	{
 		util::PerformanceTimer timer;
 		timer.Start();
 
-		LoadGLTFScene(m_inventory, sceneFilePath); // Kicks off async loading
+		ImportGLTFFile(m_inventory, filePath); // Kicks off async loading
 
-		LOG("\nSceneManager scheduled scene \"%s\" loading in %f seconds\n",
-			sceneFilePath.c_str(), timer.StopSec());
+
+		// Load any HDRs place alongside the file:
+		std::string const& importIBLFilePath = 
+			util::ExtractDirectoryPathFromFilePath(filePath) + core::configkeys::k_perFileIBLRelativeFilePath;
+		if (util::FileExists(importIBLFilePath))
+		{
+			std::shared_ptr<IBLTextureFromFilePath> importCmdIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>();
+
+			importCmdIBLLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
+			importCmdIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
+
+			importCmdIBLLoadCtx->m_filePath = importIBLFilePath;
+
+			importCmdIBLLoadCtx->m_makeActive = true;
+
+			// This will go out of scope, but that's ok because it'll register itself during OnLoadComplete()
+			m_inventory->Get<re::Texture>(
+				util::StringHash(importIBLFilePath),
+				importCmdIBLLoadCtx);
+		}
+
+
+		LOG("\nSceneManager scheduled file \"%s\" import in %f seconds\n", filePath.c_str(), timer.StopSec());
 	}
 
 
@@ -2530,68 +2596,36 @@ namespace fr
 	{
 		GenerateDefaultMaterial(m_inventory);
 
+		bool importHasDefaultIBL = false;
 
-		// Load a default Ambient IBL:
-		struct IBLTextureFromFilePath final : public virtual grutil::TextureFromFilePath<re::Texture>
+		// If the "-import" command line argument was used, we won't make the default IBL active if an override exists	
+		std::string importIBLFilePathArg;
+		if (core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_importCmdLineArg, importIBLFilePathArg))
 		{
-			// We override this so we can skip the early registration (which would make the render thread wait)
-			void OnLoadBegin(core::InvPtr<re::Texture>&) override
+			std::string const& importIBLFilePath =
+				util::ExtractDirectoryPathFromFilePath(importIBLFilePathArg) + core::configkeys::k_perFileIBLRelativeFilePath;
+
+			if (util::FileExists(importIBLFilePath))
 			{
-				LOG(std::format("Creating IBL texture from file path \"{}\"", m_filePath).c_str());
+				importHasDefaultIBL = true;
 			}
-
-			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& newIBL) override
-			{
-				std::unique_ptr<re::Texture> result = grutil::TextureFromFilePath<re::Texture>::Load(newIBL);
-
-				// Register for API-layer creation now that we've loaded the (typically large amount of) data
-				re::RenderManager::Get()->RegisterForCreate(newIBL);
-
-				return std::move(result);
-			}
-
-			void OnLoadComplete(core::InvPtr<re::Texture>& newIBL) override
-			{
-				fr::EntityManager* em = fr::EntityManager::Get();
-				
-				em->EnqueueEntityCommand([em, newIBL]()
-					{
-						// Create an Ambient LightComponent, and make it active:
-						entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
-							*em,
-							newIBL->GetName().c_str(),
-							newIBL);
-
-						// TODO: It would be nice to not need to nest this EnqueueEntityCommand() call
-						em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
-					});
-			}
-		};
-		std::shared_ptr<IBLTextureFromFilePath> iblLoadCtx = std::make_shared<IBLTextureFromFilePath>();
-
-		iblLoadCtx->m_isPermanent = true;
-
-		iblLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
-		iblLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
-
-		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
-		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
-		// If that fails, we fall back to a default HDRI
-		// Later, we'll use the IBL texture to generate the IEM and PMREM textures in a GraphicsSystem
-		if (!core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_sceneIBLPathKey, iblLoadCtx->m_filePath) ||
-			!util::FileExists(iblLoadCtx->m_filePath))
-		{
-			iblLoadCtx->m_filePath = core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey);
-
-			SEAssert(util::FileExists(iblLoadCtx->m_filePath),
-				std::format("Missing IBL texture. Per scene IBLs must be placed at {}; A default fallback must exist at {}",
-					core::Config::Get()->GetValueAsString(core::configkeys::k_sceneIBLPathKey),
-					core::Config::Get()->GetValueAsString(core::configkeys::k_defaultEngineIBLPathKey)).c_str());
 		}
+
+		// Load the engine default IBL:
+		std::shared_ptr<IBLTextureFromFilePath> defaultIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>();
+
+		defaultIBLLoadCtx->m_isPermanent = true;
+
+		defaultIBLLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
+		defaultIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
+
+		defaultIBLLoadCtx->m_filePath = core::configkeys::k_defaultEngineIBLFilePath;
+
+		defaultIBLLoadCtx->m_makeActive = !importHasDefaultIBL;
 
 		// This will go out of scope, but that's ok because it'll register itself during OnLoadComplete()
 		m_inventory->Get<re::Texture>(
-			util::StringHash(en::DefaultResourceNames::k_defaultIBLTexName),
-			iblLoadCtx);
+			util::StringHash(core::configkeys::k_defaultEngineIBLFilePath),
+			defaultIBLLoadCtx);
 	}
 }

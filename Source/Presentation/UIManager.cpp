@@ -8,10 +8,12 @@
 #include "Core/InputManager_Platform.h"
 #include "Core/LogManager.h"
 
+#include "Core/Definitions/KeyConfiguration.h"
+
 #include "Core/Host/Dialog.h"
 #include "Core/Host/Window.h"
 
-#include "Core/Definitions/KeyConfiguration.h"
+#include "Core/Util/FileIOUtils.h"
 
 #include "Renderer/GraphicsSystem_ImGui.h"
 #include "Renderer/RenderManager.h"
@@ -149,9 +151,7 @@ namespace
 
 				if (didRequestFile)
 				{
-					// TODO: Implement this. For now, just print the result to the log
-					LOG(requestedFilepath.c_str());
-					LOG(util::GetFileNameAndExtensionFromFilePath(requestedFilepath).c_str());
+					fr::SceneManager::Get()->ImportFile(requestedFilepath);					
 				}
 			});
 	}
