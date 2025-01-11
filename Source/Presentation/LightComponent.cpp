@@ -527,35 +527,8 @@ namespace fr
 	{
 		struct LightSpawnParams
 		{
-			LightSpawnParams(fr::Light::Type lightType)
-			{
-				switch (lightType)
-				{
-				case fr::Light::Type::AmbientIBL:
-				{
-					//
-				}
-				break;
-				case fr::Light::Type::Directional:
-				case fr::Light::Type::Point:
-				case fr::Light::Type::Spot:
-				{
-					m_punctualLightSpawnParams.m_attachShadow = true;
-					m_punctualLightSpawnParams.m_colorIntensity = glm::vec4(1.f, 1.f, 1.f, 100.f);
-				}
-				break;
-				default: SEAssertF("Invalid type");
-				}
-				
-			}
-			LightSpawnParams() = delete;
-			~LightSpawnParams() {}
-
-			struct PunctualLightSpawnParams
-			{
-				bool m_attachShadow;
-				glm::vec4 m_colorIntensity;
-			} m_punctualLightSpawnParams;
+			bool m_attachShadow = true;
+			glm::vec4 m_colorIntensity = glm::vec4(1.f, 1.f, 1.f, 100.f);
 		};
 
 		auto InitializeSpawnParams = [](fr::Light::Type lightType, std::unique_ptr<LightSpawnParams>& spawnParams)
@@ -621,11 +594,11 @@ namespace fr
 		case fr::Light::Type::Point:
 		case fr::Light::Type::Spot:
 		{
-			ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+			ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_attachShadow);
 			ImGui::ColorEdit3("Color",
-				&s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.r,
+				&s_spawnParams->m_colorIntensity.r,
 				ImGuiColorEditFlags_NoInputs);
-			ImGui::SliderFloat("Luminous power", &s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity.a, 0.f, 1000.f);
+			ImGui::SliderFloat("Luminous power", &s_spawnParams->m_colorIntensity.a, 0.f, 1000.f);
 
 			static std::array<char, 64> s_nameInputBuffer = { "Spawned\0" };
 			ImGui::InputText("Name", s_nameInputBuffer.data(), s_nameInputBuffer.size());
@@ -649,8 +622,8 @@ namespace fr
 						*em,
 						sceneNode,
 						std::format("{}_DirectionalLight", s_nameInputBuffer.data()).c_str(),
-						s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
-						s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+						s_spawnParams->m_colorIntensity,
+						s_spawnParams->m_attachShadow);
 				}
 				break;
 				case fr::Light::Type::Point:
@@ -659,8 +632,8 @@ namespace fr
 						*em,
 						sceneNode,
 						std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
-						s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
-						s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+						s_spawnParams->m_colorIntensity,
+						s_spawnParams->m_attachShadow);
 				}
 				break;
 				case fr::Light::Type::Spot:
@@ -669,8 +642,8 @@ namespace fr
 						*em,
 						sceneNode,
 						std::format("{}_SpotLight", s_nameInputBuffer.data()).c_str(),
-						s_spawnParams->m_punctualLightSpawnParams.m_colorIntensity,
-						s_spawnParams->m_punctualLightSpawnParams.m_attachShadow);
+						s_spawnParams->m_colorIntensity,
+						s_spawnParams->m_attachShadow);
 				}
 				break;
 				default: SEAssertF("Invalid light type");
