@@ -22,9 +22,9 @@ namespace host
 	}
 
 
-	bool Window::Create(std::string const& title, uint32_t width, uint32_t height)
+	bool Window::Create(CreateParams const& createParams)
 	{
-		return platform::Window::Create(*this, title, width, height);
+		return platform::Window::Create(*this, createParams);
 	}
 
 

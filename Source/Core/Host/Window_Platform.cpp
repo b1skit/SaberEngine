@@ -13,7 +13,7 @@ namespace platform
 	}
 
 
-	bool (*platform::Window::Create)(host::Window&, std::string const& title, uint32_t width, uint32_t height) = nullptr;
+	bool (*platform::Window::Create)(host::Window&, host::Window::CreateParams const&) = nullptr;
 	void (*platform::Window::Destroy)(host::Window&) = nullptr;
 	void (*platform::Window::SetRelativeMouseMode)(host::Window const& window, bool enabled) = nullptr;
 }

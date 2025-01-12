@@ -14,6 +14,15 @@ namespace host
 		};
 
 
+		struct CreateParams
+		{
+			std::string m_title;
+			uint32_t m_width;
+			uint32_t m_height;
+			bool m_allowDragAndDrop = false;
+		};
+
+
 	public:
 		Window();
 		Window(Window&&) noexcept = default;
@@ -24,7 +33,7 @@ namespace host
 		void SetPlatformParams(std::unique_ptr<Window::PlatformParams> params) { m_platformParams = std::move(params); }
 
 		// Platform wrappers:
-		bool Create(std::string const& title, uint32_t width, uint32_t height); // Must be called from the thread that owns the OS event queue
+		bool Create(CreateParams const&); // Must be called from the thread that owns the OS event queue
 		void Destroy();
 
 		void SetFocusState(bool hasFocus); // To be called by event handlers only

@@ -11,7 +11,7 @@ namespace platform
 		static void CreatePlatformParams(host::Window&);
 
 	public:
-		static bool (*Create)(host::Window&, std::string const& title, uint32_t width, uint32_t height);
+		static bool (*Create)(host::Window&, host::Window::CreateParams const&);
 		static void (*Destroy)(host::Window&);
 		static void (*SetRelativeMouseMode)(host::Window const&, bool enabled);
 	};

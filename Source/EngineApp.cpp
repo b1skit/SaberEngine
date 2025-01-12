@@ -26,7 +26,7 @@ namespace
 
 
 	// Create the main window on the engine thread to associate it with the correct Win32 event queue
-	void InitializeAppWindow(host::Window* appWindow)
+	void InitializeAppWindow(host::Window* appWindow, bool allowDragAndDrop)
 	{
 		std::string commandLineArgs;
 		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
@@ -37,7 +37,15 @@ namespace
 		const int xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		const int yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 
-		const bool windowCreated = appWindow->Create(windowTitle, xRes, yRes);
+		const host::Window::CreateParams createParams
+		{
+			.m_title = windowTitle,
+			.m_width = util::CheckedCast<uint32_t>(xRes),
+			.m_height = util::CheckedCast<uint32_t>(yRes),
+			.m_allowDragAndDrop = allowDragAndDrop,
+		};
+
+		const bool windowCreated = appWindow->Create(createParams);
 		SEAssert(windowCreated, "Failed to create a window");
 	}
 }
@@ -73,7 +81,8 @@ namespace app
 			core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
 
 		// Create a window (and interally pass it to the re::Context)
-		InitializeAppWindow(m_window.get());
+		constexpr bool k_allowDragAndDrop = true; // Allways allowed, for now
+		InitializeAppWindow(m_window.get(), k_allowDragAndDrop);
 
 		re::RenderManager* renderManager = re::RenderManager::Get();
 		fr::EntityManager* entityMgr = fr::EntityManager::Get();

@@ -6,6 +6,10 @@
 #include "../EventManager.h"
 #include "../LogManager.h"
 
+#include "../Util/CastUtils.h"
+
+#include "shellapi.h"
+
 
 namespace win32
 {
@@ -203,7 +207,7 @@ namespace win32
 	}
 
 	
-	bool Window::Create(host::Window& window, std::string const& title, uint32_t width, uint32_t height)
+	bool Window::Create(host::Window& window, host::Window::CreateParams const& createParams)
 	{
 		// Since the Windows 10 Creators update, we have per-monitor V2 DPI awareness context. This allows the client
 		// area of the window to achieve 100% scaling while still allowing non-client window content to be rendered in
@@ -241,13 +245,17 @@ namespace win32
 		const int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
 		const int screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
 
+		// WS_OVERLAPPEDWINDOW: Can be min/maximized, has a thick window frame
 		constexpr uint32_t k_windowStyle = WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX & ~WS_THICKFRAME;
 
 		// Calculate the coordinates of the top-left/bottom-right corners of the desired client area:
-		RECT windowRect = { 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
+		RECT windowRect = {
+			0,
+			0, 
+			util::CheckedCast<LONG>(createParams.m_width), 
+			util::CheckedCast<LONG>(createParams.m_height) };
 		::AdjustWindowRect(&windowRect, k_windowStyle, FALSE);
-		// WS_OVERLAPPEDWINDOW: Can be min/maximized, has a thick window frame
-
+		
 		// Compute the width/height of the window we're creating:
 		const int windowWidth = windowRect.right - windowRect.left;
 		const int windowHeight = windowRect.bottom - windowRect.top;
@@ -259,7 +267,7 @@ namespace win32
 
 		win32::Window::PlatformParams* platformParams = window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
-		const std::wstring titleWideStr = std::wstring(title.begin(), title.end());
+		std::wstring const& titleWideStr = util::ToWideString(createParams.m_title);
 
 		platformParams->m_hWindow = ::CreateWindowExW(
 			NULL, // Extended window styles: https://learn.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
@@ -280,6 +288,19 @@ namespace win32
 
 		::ShowWindow(platformParams->m_hWindow, SW_SHOW);
 		::UpdateWindow(platformParams->m_hWindow);
+
+		// Initialize the OLE (Object Linking and Embedding) library for the thread 
+		const HRESULT hr = ::OleInitialize(NULL);
+		platformParams->m_OLEIInitialized = SUCCEEDED(hr);
+		SEAssert(platformParams->m_OLEIInitialized, "Failed to initialize OLE");
+
+		// Register the window as a target for drag-and-drop operations:
+		if (createParams.m_allowDragAndDrop && platformParams->m_OLEIInitialized)
+		{
+			platformParams->m_dropTarget = std::make_unique<SEWindowDropTarget>();
+
+			::RegisterDragDrop(platformParams->m_hWindow, platformParams->m_dropTarget.get());
+		}		
 
 		// Register the mouse as a raw input device:
 		// https://learn.microsoft.com/en-us/windows/win32/dxtecharts/taking-advantage-of-high-dpi-mouse-movement?redirectedfrom=MSDN
@@ -303,6 +324,15 @@ namespace win32
 			window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		::DestroyWindow(platformParams->m_hWindow);
+
+		platformParams->m_dropTarget = nullptr;
+
+		// Uninitialize the OLE (Object Linking and Embedding) library for the thread
+		if (platformParams->m_OLEIInitialized)
+		{
+			::OleUninitialize();
+			platformParams->m_OLEIInitialized = false;
+		}
 	}
 
 
@@ -342,5 +372,107 @@ namespace win32
 
 			::SetCursor(win32::Window::s_platformState.m_defaultCursor); // Restore the cursor
 		}
+	}
+
+
+	SEWindowDropTarget::~SEWindowDropTarget()
+	{
+		Release();
+
+		SEAssert(m_refCount.load() == 0, "SEWindowDropTarget destroyed with a non-zero ref count");
+	}
+
+
+	HRESULT SEWindowDropTarget::QueryInterface(REFIID riid, void** ppv)
+	{
+		if (riid == IID_IUnknown || riid == IID_IDropTarget)
+		{
+			*ppv = static_cast<IDropTarget*>(this);
+			AddRef();
+			return S_OK;
+		}
+		*ppv = nullptr;
+		return E_NOINTERFACE;
+	}
+
+
+	ULONG SEWindowDropTarget::AddRef()
+	{
+		return ++m_refCount;
+	}
+
+
+	ULONG SEWindowDropTarget::Release()
+	{
+		return --m_refCount;
+	}
+
+
+	HRESULT SEWindowDropTarget::DragEnter(
+		IDataObject* pDataObj,
+		DWORD grfKeyState,
+		POINTL pt,
+		DWORD* pdwEffect)
+	{
+		*pdwEffect = DROPEFFECT_COPY;
+		return S_OK;
+	}
+
+
+	HRESULT SEWindowDropTarget::DragOver(
+		DWORD grfKeyState,
+		POINTL pt,
+		DWORD* pdwEffect)
+	{
+		*pdwEffect = DROPEFFECT_COPY;
+		return S_OK;
+	}
+
+
+	HRESULT SEWindowDropTarget::DragLeave(void)
+	{
+		return S_OK;
+	}
+
+
+	HRESULT SEWindowDropTarget::Drop(
+		IDataObject* pDataObj,	// Data object interface being transferred in the drag-and-drop operation
+		DWORD grfKeyState,		// Current state of modifier keys MK_CONTROL/MK_SHIFT/MK_ALT/MK_BUTTON/MK_LBUTTON/MK_MBUTTON/MK_RBUTTON
+		POINTL pt,				// Current cursor coordinates (in screen coordinates)
+		DWORD* pdwEffect		// Input: pdwEffect parameter of the DoDragDrop function. Output: DROPEFFECT flag to indicate the result of the drop operation
+	)
+	{
+		// Handle dropped files:
+		FORMATETC format = { CF_HDROP, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+		STGMEDIUM stg;
+		if (SUCCEEDED(pDataObj->GetData(&format, &stg)))
+		{
+			const HDROP hDrop = static_cast<HDROP>(GlobalLock(stg.hGlobal));
+
+			if (hDrop)
+			{
+				const uint32_t fileCount = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
+
+				// For now, we just log the incoming file path
+				// TODO: Broadcast an event with this to trigger a load
+				// - Remove the LogManager.h include
+				std::wstring message = L"Dropped files:\n";
+
+				for (uint32_t i = 0; i < fileCount; ++i) {
+					wchar_t filePath[MAX_PATH];
+					DragQueryFile(hDrop, i, filePath, MAX_PATH);
+					message += filePath;
+					message += L"\n";
+				}
+				LOG_WARNING("Unhandled drag-and-drop operation triggered:\n%s", util::FromWideString(message).c_str());
+
+
+				GlobalUnlock(stg.hGlobal);
+			}
+			ReleaseStgMedium(&stg);
+		}
+
+		*pdwEffect = DROPEFFECT_COPY;
+		return S_OK;
 	}
 }
