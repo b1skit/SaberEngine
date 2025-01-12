@@ -64,6 +64,13 @@ namespace util
 	}
 
 
+	std::string ExtractExtensionFromFilePath(std::string const& filepath)
+	{
+		const size_t lastPeriod = filepath.find_last_of(".");
+		return filepath.substr(lastPeriod + 1);
+	}
+
+
 	BuildConfiguration CStrToBuildConfiguration(char const* buildConfigCStr)
 	{
 		std::string const& buildConfigCStrLower = util::ToLower(buildConfigCStr);

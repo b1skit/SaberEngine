@@ -41,6 +41,8 @@ namespace util
 		bool operator()(HashKey const& lhs, HashKey const& rhs) const { return lhs == rhs; }
 		bool operator()(HashKey const& rhs) const { return m_keyHash == rhs.m_keyHash; }
 
+		constexpr operator uint64_t() const { return m_keyHash; }
+
 
 	public:
 		constexpr char const* GetKey() const { return m_key; }

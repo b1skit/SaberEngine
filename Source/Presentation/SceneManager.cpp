@@ -2586,7 +2586,7 @@ namespace fr
 			LOG("SceneManager: Initial scene load complete");
 
 			core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-				.m_type = core::EventManager::EventType::SceneCreated
+				.m_eventKey = eventkey::SceneCreated
 				});
 		}
 	}

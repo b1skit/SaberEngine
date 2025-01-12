@@ -55,7 +55,7 @@ namespace fr
 		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
 
 		// Event subscriptions:
-		core::EventManager::Get()->Subscribe(core::EventManager::EventType::InputToggleConsole, this);
+		core::EventManager::Get()->Subscribe(eventkey::InputToggleConsole, this);
 
 		// Process entity commands issued during scene loading:
 		ProcessEntityCommands();
@@ -560,12 +560,12 @@ namespace fr
 		{
 			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
-			switch (eventInfo.m_type)
+			switch (eventInfo.m_eventKey)
 			{
-			case core::EventManager::EventType::InputToggleConsole:
+			case eventkey::InputToggleConsole:
 			{
 				// Only enable/disable input processing when the console button is toggled
-				if (eventInfo.m_data0.m_dataB)
+				if (std::get<bool>(eventInfo.m_data0))
 				{
 					m_processInput = !m_processInput;
 				}

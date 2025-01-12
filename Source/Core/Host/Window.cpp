@@ -49,8 +49,8 @@ namespace host
 		}
 
 		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-				.m_type = core::EventManager::EventType::WindowFocusChanged,
-				.m_data0 = core::EventManager::EventData{.m_dataB = m_hasFocus}
+				.m_eventKey = eventkey::WindowFocusChanged,
+				.m_data0 = m_hasFocus,
 				//.m_data1 = unused
 			});
 	}

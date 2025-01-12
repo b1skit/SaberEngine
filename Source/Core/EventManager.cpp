@@ -18,20 +18,7 @@ namespace core
 
 	EventManager::EventManager()
 	{
-		std::lock_guard<std::mutex> lock(m_eventMutex);
-
-		m_eventQueues.reserve(EventType_Count);
-		for (uint32_t i = 0; i < EventType_Count; i++)
-		{
-			m_eventQueues.push_back(std::vector<EventInfo>());
-		}
-
-		constexpr size_t eventQueueStartSize = 100; // The starting size of the event queue to reserve
-		m_eventListeners.reserve(eventQueueStartSize);
-		for (uint32_t i = 0; i < eventQueueStartSize; i++)
-		{
-			m_eventListeners.push_back(std::vector<IEventListener*>());
-		}
+		//
 	}
 
 
@@ -53,42 +40,44 @@ namespace core
 	{
 		platform::EventManager::ProcessMessages(*this);
 
-		std::lock_guard<std::mutex> lock(m_eventMutex);
-
-		// Loop through each type of event:
-		for (size_t currentEventType = 0; currentEventType < EventType_Count; currentEventType++)
 		{
-			// Loop through each event item in the current event queue:
-			size_t numCurrentEvents = m_eventQueues[currentEventType].size();
-			for (size_t currentEvent = 0; currentEvent < numCurrentEvents; currentEvent++)
+			std::lock_guard<std::mutex> lock(m_eventMutex);
+
+			// Loop through each type of event:
+			for (auto const& eventType : m_eventQueues)
 			{
-				// Loop through each listener subscribed to the current event:
-				size_t numListeners = m_eventListeners[currentEventType].size();
-				for (size_t currentListener = 0; currentListener < numListeners; currentListener++)
+				for (auto const& eventInfo : eventType.second)
 				{
-					m_eventListeners[currentEventType][currentListener]->RegisterEvent(
-						m_eventQueues[currentEventType][currentEvent]);
+					if (m_eventListeners.contains(eventInfo.m_eventKey))
+					{
+						for (auto& listener : m_eventListeners.at(eventInfo.m_eventKey))
+						{
+							listener->RegisterEvent(eventInfo);
+						}
+					}
 				}
 			}
-
-			// Clear the current event queue:
-			m_eventQueues[currentEventType].clear();
+			m_eventQueues.clear();
 		}
 	}
 
 
-	void EventManager::Subscribe(EventType eventType, IEventListener* listener)
+	void EventManager::Subscribe(util::HashKey const& eventType, IEventListener* listener)
 	{
-		std::lock_guard<std::mutex> lock(m_eventMutex);
-		m_eventListeners[eventType].emplace_back(listener);
+		{
+			std::lock_guard<std::mutex> lock(m_eventMutex);
+
+			m_eventListeners[eventType].emplace_back(listener);
+		}
 	}
 
 
 	void EventManager::Notify(EventInfo&& eventInfo)
 	{
-		SEAssert(eventInfo.m_type != EventManager::Uninitialized, "Event type is not initialized");
+		{
+			std::lock_guard<std::mutex> lock(m_eventMutex);
 
-		std::lock_guard<std::mutex> lock(m_eventMutex);
-		m_eventQueues[(size_t)eventInfo.m_type].emplace_back(std::move(eventInfo));
+			m_eventQueues[eventInfo.m_eventKey].emplace_back(std::move(eventInfo));
+		}
 	}
 }

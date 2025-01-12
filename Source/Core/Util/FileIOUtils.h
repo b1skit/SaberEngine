@@ -13,6 +13,7 @@ namespace util
 
 	std::string ExtractDirectoryPathFromFilePath(std::string const& filepath); // "X:\dir\f.ext" -> "X:\dir\"
 	std::string ExtractFileNameAndExtensionFromFilePath(std::string const& filepath); // "X:\dir\f.ext" -> "f.ext"
+	std::string ExtractExtensionFromFilePath(std::string const& filepath); // "X:\dir\f.ext" -> "ext"
 
 	enum class BuildConfiguration
 	{

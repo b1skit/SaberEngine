@@ -22,10 +22,10 @@
 namespace
 {
 	// Helper wrapper to reduce boilerplate
-	void SendEvent(core::EventManager::EventType eventType)
+	void SendEvent(util::HashKey const& eventKey)
 	{
 		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-				.m_type = eventType,
+				.m_eventKey = eventKey,
 				//.m_data0 = ,
 				//.m_data1 = 
 			});
@@ -151,7 +151,7 @@ namespace
 
 				if (didRequestFile)
 				{
-					fr::SceneManager::Get()->ImportFile(requestedFilepath);					
+					fr::SceneManager::Get()->ImportFile(requestedFilepath);
 				}
 			});
 	}
@@ -185,17 +185,18 @@ namespace fr
 		LOG("UI manager starting...");
 
 		// Event subscriptions:
-		core::EventManager::Get()->Subscribe(core::EventManager::EventType::InputToggleConsole, this);
+		core::EventManager::Get()->Subscribe(eventkey::InputToggleConsole, this);
 
 		// Input events:
-		core::EventManager::Get()->Subscribe(core::EventManager::EventType::TextInputEvent, this);
-		core::EventManager::Get()->Subscribe(core::EventManager::EventType::KeyEvent, this);
-		core::EventManager::Get()->Subscribe(core::EventManager::EventType::MouseMotionEvent, this);
-		core::EventManager::Get()->Subscribe(core::EventManager::EventType::MouseButtonEvent, this);
-		core::EventManager::Get()->Subscribe(core::EventManager::EventType::MouseWheelEvent, this);
+		core::EventManager::Get()->Subscribe(eventkey::TextInputEvent, this);
+		core::EventManager::Get()->Subscribe(eventkey::KeyEvent, this);
+		core::EventManager::Get()->Subscribe(eventkey::MouseMotionEvent, this);
+		core::EventManager::Get()->Subscribe(eventkey::MouseButtonEvent, this);
+		core::EventManager::Get()->Subscribe(eventkey::MouseWheelEvent, this);
+		core::EventManager::Get()->Subscribe(eventkey::DragAndDrop, this);
 
 		// Notification events:
-		core::EventManager::Get()->Subscribe(core::EventManager::EventType::SceneCreated, this);
+		core::EventManager::Get()->Subscribe(eventkey::SceneCreated, this);
 
 		// Create UI render systems:
 		std::atomic<bool>* createdFlag = &m_debugUIRenderSystemCreated;
@@ -281,8 +282,8 @@ namespace fr
 						m_imguiWantsToCaptureKeyboard = currentImguiWantsToCaptureKeyboard;
 
 						core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-							.m_type = core::EventManager::EventType::KeyboardInputCaptureChange,
-							.m_data0 = core::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureKeyboard },
+							.m_eventKey = eventkey::KeyboardInputCaptureChange,
+							.m_data0 = m_imguiWantsToCaptureKeyboard,
 							//.m_data1 = 
 							});
 					}
@@ -292,8 +293,8 @@ namespace fr
 						m_imguiWantsToCaptureMouse = currentImguiWantsToCaptureMouse;
 
 						core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-							.m_type = core::EventManager::EventType::MouseInputCaptureChange,
-							.m_data0 = core::EventManager::EventData{.m_dataB = m_imguiWantsToCaptureMouse },
+							.m_eventKey = eventkey::MouseInputCaptureChange,
+							.m_data0 = m_imguiWantsToCaptureMouse,
 							//.m_data1 = 
 							});
 					}
@@ -321,36 +322,36 @@ namespace fr
 		{
 			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
-			switch (eventInfo.m_type)
+			switch (eventInfo.m_eventKey)
 			{
-			case core::EventManager::EventType::SceneCreated:
+			case eventkey::SceneCreated:
 			{
 				m_imguiMenuVisible = false;
 				m_show[LogConsole] = false;
 			}
 			break;
-			case core::EventManager::EventType::InputToggleConsole:
+			case eventkey::InputToggleConsole:
 			{
-				if (eventInfo.m_data0.m_dataB)
+				if (std::get<bool>(eventInfo.m_data0))
 				{
 					m_imguiMenuVisible = !m_imguiMenuVisible;
 				}
 			}
 			break;
-			case core::EventManager::EventType::TextInputEvent:
+			case eventkey::TextInputEvent:
 			{
 				if (debugUISystemCreated)
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
-					io.AddInputCharacter(eventInfo.m_data0.m_dataC);
+					io.AddInputCharacter(std::get<char>(eventInfo.m_data0));
 				}
 			}
 			break;
-			case core::EventManager::KeyEvent:
+			case eventkey::KeyEvent:
 			{
-				const definitions::SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(eventInfo.m_data0.m_dataUI);
-				const bool keystate = eventInfo.m_data1.m_dataB;
+				const definitions::SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(std::get<uint32_t>(eventInfo.m_data0));
+				const bool keystate = std::get<bool>(eventInfo.m_data1);
 
 				// We always broadcast to ImGui, even if it doesn't want exclusive capture of input
 				if (debugUISystemCreated)
@@ -361,16 +362,16 @@ namespace fr
 				}
 			}
 			break;
-			case core::EventManager::MouseButtonEvent:
+			case eventkey::MouseButtonEvent:
 			{
-				const bool buttonState = eventInfo.m_data1.m_dataB;
+				const bool buttonState = std::get<bool>(eventInfo.m_data1);
 				
 				if (debugUISystemCreated)
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
 
-					switch (eventInfo.m_data0.m_dataUI)
+					switch (std::get<uint32_t>(eventInfo.m_data0))
 					{
 					case 0: // Left
 					{
@@ -393,14 +394,29 @@ namespace fr
 				}
 			}
 			break;
-			case core::EventManager::MouseWheelEvent:
+			case eventkey::MouseWheelEvent:
 			{
 				if (debugUISystemCreated)
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
 					io.AddMouseWheelEvent(
-						static_cast<float>(eventInfo.m_data0.m_dataI), static_cast<float>(eventInfo.m_data1.m_dataI));
+						static_cast<float>(std::get<int32_t>(eventInfo.m_data0)),
+						static_cast<float>(std::get<int32_t>(eventInfo.m_data1)));
+				}
+			}
+			break;
+			case eventkey::DragAndDrop:
+			{
+				std::string const& filePath = std::get<std::string>(eventInfo.m_data0);
+
+				std::string const& extension = util::ExtractExtensionFromFilePath(filePath);
+				if (extension == "gltf" || extension == "glb")
+				{
+					core::ThreadPool::Get()->EnqueueJob([filePath]()
+						{
+							fr::SceneManager::Get()->ImportFile(filePath);
+						});
 				}
 			}
 			break;
@@ -507,7 +523,7 @@ namespace fr
 
 						if (ImGui::MenuItem("Quit"))
 						{
-							SendEvent(core::EventManager::EngineQuit);
+							SendEvent(eventkey::EngineQuit);
 						}
 
 						ImGui::EndMenu();

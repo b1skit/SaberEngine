@@ -111,7 +111,7 @@ namespace app
 		// Start managers:
 		core::EventManager* eventManager = core::EventManager::Get();
 		eventManager->Startup();
-		eventManager->Subscribe(core::EventManager::EngineQuit, this);
+		eventManager->Subscribe(eventkey::EngineQuit, this);
 
 		en::InputManager::Get()->Startup(); // Now that the window is created
 
@@ -276,9 +276,9 @@ namespace app
 		{
 			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
-			switch (eventInfo.m_type)
+			switch (eventInfo.m_eventKey)
 			{
-			case core::EventManager::EngineQuit:
+			case eventkey::EngineQuit:
 			{
 				Stop();
 			}

@@ -33,7 +33,7 @@ namespace win32
 		case WM_DESTROY:
 		case WM_QUIT:
 		{
-			eventInfo.m_type = core::EventManager::EventType::EngineQuit;
+			eventInfo.m_eventKey = eventkey::EngineQuit;
 
 			::PostQuitMessage(0);
 		}
@@ -44,7 +44,7 @@ namespace win32
 			// https://learn.microsoft.com/en-us/windows/win32/menurc/wm-syscommand
 			if (wParam == SC_CLOSE)
 			{
-				eventInfo.m_type = core::EventManager::EventType::EngineQuit;
+				eventInfo.m_eventKey = eventkey::EngineQuit;
 			}
 			else
 			{
@@ -78,7 +78,7 @@ namespace win32
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
 		{
-			eventInfo.m_type = core::EventManager::EventType::KeyEvent;
+			eventInfo.m_eventKey = eventkey::KeyEvent;
 
 			switch (wParam)
 			{
@@ -97,12 +97,12 @@ namespace win32
 				WORD vkCode = vkCode = LOWORD(MapVirtualKeyW(scanCode, MAPVK_VSC_TO_VK_EX)); // virtual-key code
 
 				// Pack VK_LSHIFT/VK_RSHIFT/VK_LCONTROL/VK_RCONTROL/VK_LMENU/VK_RMENU
-				eventInfo.m_data0.m_dataUI = static_cast<uint32_t>(vkCode);
+				eventInfo.m_data0 = static_cast<uint32_t>(vkCode);
 			}
 			break;
 			default: // Regular key press
 			{
-				eventInfo.m_data0.m_dataUI = static_cast<uint32_t>(wParam); // Win32 virtual key code
+				eventInfo.m_data0 = static_cast<uint32_t>(wParam); // Win32 virtual key code
 			}
 			}
 
@@ -110,46 +110,46 @@ namespace win32
 			constexpr unsigned short k_mostSignificantBit = 1 << (std::numeric_limits<short>::digits);
 
 			// true/false == pressed/released
-			eventInfo.m_data1.m_dataB =
+			eventInfo.m_data1 =
 				static_cast<bool>(GetAsyncKeyState(static_cast<int>(wParam)) & k_mostSignificantBit);
 		}
 		break;
 		case WM_CHAR:
 		{
 			// Posted when a WM_KEYDOWN message is translated by TranslateMessage
-			eventInfo.m_type = core::EventManager::EventType::TextInputEvent;
-			eventInfo.m_data0.m_dataC = static_cast<char>(wParam);
+			eventInfo.m_eventKey = eventkey::TextInputEvent;
+			eventInfo.m_data0 = static_cast<char>(wParam);
 		}
 		break;
 		case WM_LBUTTONDOWN:
 		case WM_LBUTTONUP:
 		{
-			eventInfo.m_type = core::EventManager::EventType::MouseButtonEvent;
-			eventInfo.m_data0.m_dataUI = 0;
-			eventInfo.m_data1.m_dataB = (uMsg == WM_LBUTTONDOWN);
+			eventInfo.m_eventKey = eventkey::MouseButtonEvent;
+			eventInfo.m_data0 = 0u;
+			eventInfo.m_data1 = (uMsg == WM_LBUTTONDOWN);
 		}
 		break;
 		case WM_MBUTTONDOWN:
 		case WM_MBUTTONUP:
 		{
-			eventInfo.m_type = core::EventManager::EventType::MouseButtonEvent;
-			eventInfo.m_data0.m_dataUI = 1;
-			eventInfo.m_data1.m_dataB = (uMsg == WM_MBUTTONDOWN);
+			eventInfo.m_eventKey = eventkey::MouseButtonEvent;
+			eventInfo.m_data0= 1u;
+			eventInfo.m_data1 = (uMsg == WM_MBUTTONDOWN);
 		}
 		break;
 		case WM_RBUTTONDOWN:
 		case WM_RBUTTONUP:
 		{
-			eventInfo.m_type = core::EventManager::EventType::MouseButtonEvent;
-			eventInfo.m_data0.m_dataUI = 2;
-			eventInfo.m_data1.m_dataB = (uMsg == WM_RBUTTONDOWN);
+			eventInfo.m_eventKey = eventkey::MouseButtonEvent;
+			eventInfo.m_data0 = 2u;
+			eventInfo.m_data1 = (uMsg == WM_RBUTTONDOWN);
 		}
 		break;
 		case WM_MOUSEWHEEL:
 		{
-			eventInfo.m_type = core::EventManager::EventType::MouseWheelEvent;
-			eventInfo.m_data0.m_dataI = 0; // X: Currently not supported
-			eventInfo.m_data1.m_dataI = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA; // Y
+			eventInfo.m_eventKey = eventkey::MouseWheelEvent;
+			eventInfo.m_data0 = 0; // X: Currently not supported
+			eventInfo.m_data1 = static_cast<int>(GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA); // Y
 			// Note: Wheel motion is in of +/- units WHEEL_DELTA == 120
 		}
 		break;
@@ -164,10 +164,10 @@ namespace win32
 
 			if (raw->header.dwType == RIM_TYPEMOUSE)
 			{
-				eventInfo.m_type = core::EventManager::EventType::MouseMotionEvent;
+				eventInfo.m_eventKey = eventkey::MouseMotionEvent;
 
-				eventInfo.m_data0.m_dataI = raw->data.mouse.lLastX;
-				eventInfo.m_data1.m_dataI = raw->data.mouse.lLastY;
+				eventInfo.m_data0 = static_cast<int>(raw->data.mouse.lLastX);
+				eventInfo.m_data1 = static_cast<int>(raw->data.mouse.lLastY);
 			}
 			else
 			{
@@ -453,19 +453,19 @@ namespace win32
 			{
 				const uint32_t fileCount = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
 
-				// For now, we just log the incoming file path
-				// TODO: Broadcast an event with this to trigger a load
-				// - Remove the LogManager.h include
-				std::wstring message = L"Dropped files:\n";
-
-				for (uint32_t i = 0; i < fileCount; ++i) {
+				for (uint32_t i = 0; i < fileCount; ++i)
+				{
+					// Get the current file path arg:
 					wchar_t filePath[MAX_PATH];
 					DragQueryFile(hDrop, i, filePath, MAX_PATH);
-					message += filePath;
-					message += L"\n";
-				}
-				LOG_WARNING("Unhandled drag-and-drop operation triggered:\n%s", util::FromWideString(message).c_str());
 
+					// Convert it to a string, and send it as an event:
+					std::string const& filePathStr = util::FromWideCString(filePath);
+
+					core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+						.m_eventKey = eventkey::DragAndDrop,
+						.m_data0 = filePathStr, });
+				}
 
 				GlobalUnlock(stg.hGlobal);
 			}

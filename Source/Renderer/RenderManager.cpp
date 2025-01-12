@@ -187,8 +187,8 @@ namespace re
 		
 		re::Context::Get()->Create(m_renderFrameNum);
 		
-		core::EventManager::Get()->Subscribe(core::EventManager::InputToggleVSync, this);
-		core::EventManager::Get()->Subscribe(core::EventManager::EngineQuit, this);
+		core::EventManager::Get()->Subscribe(eventkey::InputToggleVSync, this);
+		core::EventManager::Get()->Subscribe(eventkey::EngineQuit, this);
 		
 		CreateSamplerLibrary();
 		CreateDefaultTextures();
@@ -398,18 +398,18 @@ namespace re
 		{
 			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
-			switch (eventInfo.m_type)
+			switch (eventInfo.m_eventKey)
 			{
-			case core::EventManager::InputToggleVSync:
+			case eventkey::InputToggleVSync:
 			{
-				if (eventInfo.m_data0.m_dataB == true)
+				if (std::get<bool>(eventInfo.m_data0) == true)
 				{
 					ToggleVSync();
 					re::Context::Get()->GetSwapChain().SetVSyncMode(m_vsyncEnabled);
 				}				
 			}
 			break;
-			case core::EventManager::EngineQuit:
+			case eventkey::EngineQuit:
 			{
 				m_quitEventRecieved = true;
 			}
