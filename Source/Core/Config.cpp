@@ -6,9 +6,6 @@
 
 #include "Util/TextUtils.h"
 
-#define SET_CMD		"set"		// Set a value
-#define BIND_CMD	"bind"		// Bind a key
-
 
 namespace
 {
@@ -280,7 +277,7 @@ namespace core
 
 			// Update config hashtables. We set all SettingsType as common, to ensure otherwise API-specific settings
 			// will be written to disk
-			if (command == SET_CMD)
+			if (command == k_setCmd)
 			{
 				// std::strings:
 				if (isString)
@@ -527,7 +524,7 @@ namespace core
 			// Build a list of the std::strings we plan to write, so we can sort them
 			struct ConfigEntry
 			{
-				std::string m_cmdPrefix; // SET_CMD, BIND_CMD
+				std::string m_cmdPrefix; // k_setCmd, k_bindCmd
 				std::string m_key;
 				std::string m_value;
 			};
@@ -547,7 +544,7 @@ namespace core
 					strstr(currentElement.first.GetKey(), "Input") == nullptr)
 				{
 					configEntries.emplace_back(ConfigEntry{
-						.m_cmdPrefix = SET_CMD,
+						.m_cmdPrefix = k_setCmd,
 						.m_key = currentElement.first.GetKey(),
 						.m_value = PropertyToConfigString<std::string const&>(
 							std::get<std::string>(currentElement.second.first)) });
@@ -556,35 +553,35 @@ namespace core
 					strstr(currentElement.first.GetKey(), "Input") == nullptr)
 				{
 					configEntries.emplace_back(ConfigEntry{
-						.m_cmdPrefix = SET_CMD,
+						.m_cmdPrefix = k_setCmd,
 						.m_key = currentElement.first.GetKey(),
 						.m_value = PropertyToConfigString(std::get<char const*>(currentElement.second.first)) });
 				}
 				else if (std::get_if<float>(&currentElement.second.first))
 				{
 					configEntries.emplace_back(ConfigEntry{
-						.m_cmdPrefix = SET_CMD,
+						.m_cmdPrefix = k_setCmd,
 						.m_key = currentElement.first.GetKey(),
 						.m_value = PropertyToConfigString(std::get<float>(currentElement.second.first)) });
 				}
 				else if (std::get_if<int>(&currentElement.second.first))
 				{
 					configEntries.emplace_back(ConfigEntry{
-						.m_cmdPrefix = SET_CMD,
+						.m_cmdPrefix = k_setCmd,
 						.m_key = currentElement.first.GetKey(),
 						.m_value = PropertyToConfigString(std::get<int>(currentElement.second.first)) });
 				}
 				else if (std::get_if<bool>(&currentElement.second.first))
 				{
 					configEntries.emplace_back(ConfigEntry{
-						.m_cmdPrefix = SET_CMD,
+						.m_cmdPrefix = k_setCmd,
 						.m_key = currentElement.first.GetKey(),
 						.m_value = PropertyToConfigString(std::get<bool>(currentElement.second.first)) });
 				}
 				else if (std::get_if<char>(&currentElement.second.first))
 				{
 					configEntries.emplace_back(ConfigEntry{
-						.m_cmdPrefix = BIND_CMD,
+						.m_cmdPrefix = k_bindCmd,
 						.m_key = currentElement.first.GetKey(),
 						.m_value = PropertyToConfigString(std::get<char>(currentElement.second.first)) });
 				}
@@ -592,7 +589,7 @@ namespace core
 					strstr(currentElement.first.GetKey(), "Input") != nullptr)
 				{
 					configEntries.emplace_back(ConfigEntry{
-						.m_cmdPrefix = BIND_CMD,
+						.m_cmdPrefix = k_bindCmd,
 						.m_key = currentElement.first.GetKey(),
 						.m_value = PropertyToConfigString<std::string const&>(
 							std::get<std::string>(currentElement.second.first)) });
@@ -601,7 +598,7 @@ namespace core
 					strstr(currentElement.first.GetKey(), "Input") != nullptr)
 				{
 					configEntries.emplace_back(ConfigEntry{
-						.m_cmdPrefix = BIND_CMD,
+						.m_cmdPrefix = k_bindCmd,
 						.m_key = currentElement.first.GetKey(),
 						.m_value = PropertyToConfigString(std::get<char const*>(currentElement.second.first)) });
 				}

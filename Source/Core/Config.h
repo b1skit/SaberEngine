@@ -98,6 +98,8 @@ namespace core
 	private:
 		static constexpr char const* k_trueString = "true";
 		static constexpr char const* k_falseString = "false";
+		static constexpr char const* k_setCmd = "set"; // Set a value
+		static constexpr char const* k_bindCmd = "bind"; // Bind a key
 
 
 	private: // No copying allowed
