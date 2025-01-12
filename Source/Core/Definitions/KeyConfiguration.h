@@ -26,7 +26,6 @@ namespace definitions
 
 		InputButton_Console,
 		InputButton_VSync,
-		InputButton_Quit,
 
 		KeyboardInputButton_Count
 	};
@@ -46,7 +45,6 @@ namespace definitions
 
 		ENUM_TO_STR(InputButton_Console),
 		ENUM_TO_STR(InputButton_VSync),
-		ENUM_TO_STR(InputButton_Quit),
 	};
 
 	enum MouseInputButton : uint8_t

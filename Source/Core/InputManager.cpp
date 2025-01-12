@@ -189,11 +189,6 @@ namespace en
 							transformedEvent.m_eventKey = eventkey::InputToggleVSync;							
 						}
 						break;
-						case definitions::KeyboardInputButton::InputButton_Quit:
-						{
-							transformedEvent.m_eventKey = eventkey::EngineQuit;
-						}
-						break;
 						default:
 							SEAssertF("Input has not been handled. Is there a case for it in this switch?");
 							break;

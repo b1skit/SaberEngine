@@ -407,7 +407,6 @@ namespace core
 
 		SetValue(ENUM_TO_STR(InputButton_Console),	"Grave",		SettingType::Serialized); // The "grave accent"/tilde key: `
 		SetValue(ENUM_TO_STR(InputButton_VSync),	'v',			SettingType::Serialized);
-		SetValue(ENUM_TO_STR(InputButton_Quit),		"Escape",		SettingType::Serialized);
 
 		// Mouse bindings:
 		SetValue(ENUM_TO_STR(InputMouse_Left),	ENUM_TO_STR(InputMouse_Left),	SettingType::Serialized);
