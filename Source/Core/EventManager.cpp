@@ -18,7 +18,7 @@ namespace core
 
 	EventManager::EventManager()
 	{
-		//
+		m_eventQueue.reserve(1024); // Just a wild guess; we clear this each frame
 	}
 
 
@@ -41,23 +41,19 @@ namespace core
 		platform::EventManager::ProcessMessages(*this);
 
 		{
-			std::lock_guard<std::mutex> lock(m_eventMutex);
+			std::scoped_lock lock(m_eventQueueMutex, m_eventListenersMutex);
 
-			// Loop through each type of event:
-			for (auto const& eventType : m_eventQueues)
+			for (auto const& curEvent : m_eventQueue)
 			{
-				for (auto const& eventInfo : eventType.second)
+				if (m_eventListeners.contains(curEvent.m_eventKey))
 				{
-					if (m_eventListeners.contains(eventInfo.m_eventKey))
+					for (auto& listener : m_eventListeners.at(curEvent.m_eventKey))
 					{
-						for (auto& listener : m_eventListeners.at(eventInfo.m_eventKey))
-						{
-							listener->RegisterEvent(eventInfo);
-						}
+						listener->RegisterEvent(curEvent);
 					}
 				}
 			}
-			m_eventQueues.clear();
+			m_eventQueue.clear();
 		}
 	}
 
@@ -65,7 +61,7 @@ namespace core
 	void EventManager::Subscribe(util::HashKey const& eventType, IEventListener* listener)
 	{
 		{
-			std::lock_guard<std::mutex> lock(m_eventMutex);
+			std::lock_guard<std::mutex> lock(m_eventListenersMutex);
 
 			m_eventListeners[eventType].emplace_back(listener);
 		}
@@ -75,9 +71,9 @@ namespace core
 	void EventManager::Notify(EventInfo&& eventInfo)
 	{
 		{
-			std::lock_guard<std::mutex> lock(m_eventMutex);
+			std::lock_guard<std::mutex> lock(m_eventQueueMutex);
 
-			m_eventQueues[eventInfo.m_eventKey].emplace_back(std::move(eventInfo));
+			m_eventQueue.emplace_back(std::move(eventInfo));
 		}
 	}
 }

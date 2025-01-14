@@ -88,9 +88,11 @@ namespace core
 
 
 	private:
-		std::unordered_map<util::HashKey, std::vector<EventInfo>> m_eventQueues;
+		std::vector<EventInfo> m_eventQueue;
+		std::mutex m_eventQueueMutex;
+
 		std::unordered_map<util::HashKey, std::vector<IEventListener*>> m_eventListeners;
-		std::mutex m_eventMutex;
+		std::mutex m_eventListenersMutex;
 
 
 	private:
