@@ -113,16 +113,6 @@ namespace fr
 		SEAssert(cameraTransform.GetParent() == &controllerTransform,
 			"Camera transform must be parented to the camera controller's transform");
 
-		// Reset the cam back to the saved position
-		if (en::InputManager::GetMouseInputState(definitions::InputMouse_Left))
-		{
-			controllerTransform.SetLocalPosition(camController.m_savedPosition);
-			cameraTransform.SetLocalRotation(glm::vec3(camController.m_savedEulerRotation.x, 0.f, 0.f));
-			controllerTransform.SetLocalRotation(glm::vec3(0.f, camController.m_savedEulerRotation.y, 0.f));
-
-			return;
-		}
-
 		// Map mouse pixel deltas to pitch/yaw rotations in radians. This ensures that we have consistent mouse 
 		// movement regardless of the resolution/aspect ratio/etc
 		const float mousePxDeltaX = 
@@ -194,16 +184,6 @@ namespace fr
 
 			controllerTransform.TranslateLocal(direction);
 		}
-
-		// Save the current position/rotation:
-		if (en::InputManager::GetMouseInputState(definitions::InputMouse_Right))
-		{
-			camController.m_savedPosition = controllerTransform.GetGlobalPosition();
-			camController.m_savedEulerRotation = glm::vec3(
-				cameraTransform.GetLocalEulerXYZRotationRadians().x,
-				controllerTransform.GetGlobalEulerXYZRotationRadians().y,
-				0);
-		}
 	}
 
 
@@ -251,9 +231,6 @@ namespace fr
 			}
 			ImGui::EndDisabled();
 
-			ImGui::Text(std::format("Saved position: {}", glm::to_string(camControlCmpt.m_savedPosition)).c_str());
-			ImGui::Text(std::format("Saved Euler rotation: {}", glm::to_string(camControlCmpt.m_savedEulerRotation)).c_str());
-
 			// Transform:
 			fr::TransformComponent::ShowImGuiWindow(em, camControlEntity, nameCmpt.GetUniqueID());
 
@@ -266,8 +243,6 @@ namespace fr
 
 	CameraControlComponent::CameraControlComponent()
 		: m_movementSpeed(0.006f)
-		, m_savedPosition(glm::vec3(0.0f, 0.0f, 0.0f))
-		, m_savedEulerRotation(glm::vec3(0.0f, 0.0f, 0.0f))
 		, m_prevCameraParentEntity(entt::null)
 		, m_prevCameraTransformParent(nullptr)
 	{
