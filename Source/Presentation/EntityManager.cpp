@@ -40,8 +40,7 @@ namespace fr
 
 
 	EntityManager::EntityManager(PrivateCTORTag)
-		: m_processInput(false)
-		, m_entityCommands(k_entityCommandBufferSize)
+		: m_entityCommands(k_entityCommandBufferSize)
 	{
 		// Handle this during construction before anything can interact with the registry
 		ConfigureRegistry();
@@ -55,12 +54,10 @@ namespace fr
 		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
 
 		// Event subscriptions:
-		core::EventManager::Get()->Subscribe(eventkey::InputToggleConsole, this);
+		//
 
 		// Process entity commands issued during scene loading:
 		ProcessEntityCommands();
-
-		m_processInput = true;
 	}
 
 
@@ -99,10 +96,7 @@ namespace fr
 		ProcessEntityCommands();
 
 		// Handle interaction (player input, physics, animation, etc)
-		if (m_processInput)
-		{
-			UpdateCameraController(stepTimeMs);
-		}
+		UpdateCameraController(stepTimeMs);
 		
 		// Update the scene state:
 		UpdateAnimationControllers(stepTimeMs);  // Modifies Transforms
@@ -560,20 +554,16 @@ namespace fr
 		{
 			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
-			switch (eventInfo.m_eventKey)
-			{
-			case eventkey::InputToggleConsole:
-			{
-				// Only enable/disable input processing when the console button is toggled
-				if (std::get<bool>(eventInfo.m_data0))
-				{
-					m_processInput = !m_processInput;
-				}
-			}
-			break;
-			default:
-				break;
-			}
+			//switch (eventInfo.m_eventKey)
+			//{
+			//case :
+			//{
+			//	//
+			//}
+			//break;
+			//default:
+			//	break;
+			//}
 		}
 	}
 

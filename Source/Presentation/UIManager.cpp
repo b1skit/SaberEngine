@@ -171,9 +171,10 @@ namespace fr
 		, m_debugUICommandMgr(nullptr)
 		, m_imguiGlobalMutex(nullptr)
 		, m_imguiMenuVisible(true)
-		, m_prevImguiMenuVisible(true)
+		, m_prevImguiMenuVisible(false)
 		, m_imguiWantsToCaptureKeyboard(false)
 		, m_imguiWantsToCaptureMouse(false)
+		, m_imguiWantsTextInput(false)
 		, m_show{0}
 		, m_window(nullptr)
 		, m_vsyncState(false) // Will be updated by the initial state broadcast event
@@ -183,11 +184,11 @@ namespace fr
 
 	void UIManager::Startup()
 	{
+		SEAssert(m_window, "Window should have been set by now");
+
 		LOG("UI manager starting...");
 
 		// Event subscriptions:
-		core::EventManager::Get()->Subscribe(eventkey::InputToggleConsole, this);
-
 		// Input events:
 		core::EventManager::Get()->Subscribe(eventkey::TextInputEvent, this);
 		core::EventManager::Get()->Subscribe(eventkey::KeyEvent, this);
@@ -196,6 +197,7 @@ namespace fr
 		core::EventManager::Get()->Subscribe(eventkey::MouseWheelEvent, this);
 		core::EventManager::Get()->Subscribe(eventkey::DragAndDrop, this);
 		core::EventManager::Get()->Subscribe(eventkey::VSyncModeChanged, this);
+		core::EventManager::Get()->Subscribe(eventkey::ToggleConsole, this);
 		
 		// Notification events:
 		core::EventManager::Get()->Subscribe(eventkey::SceneCreated, this);
@@ -204,7 +206,8 @@ namespace fr
 		std::atomic<bool>* createdFlag = &m_debugUIRenderSystemCreated;
 		core::FrameIndexedCommandManager** cmdMgrPtr = &m_debugUICommandMgr;
 		std::mutex** imguiMutexPtr = &m_imguiGlobalMutex;
-		std::function<void()> createUIRenderSystem = [createdFlag, cmdMgrPtr, imguiMutexPtr]()
+
+		re::RenderManager::Get()->EnqueueRenderCommand([createdFlag, cmdMgrPtr, imguiMutexPtr]()
 			{
 				constexpr char const* k_debugUIRenderSystemName = "DebugImGui";
 				constexpr char const* k_debugUIPipelineFilename = "ui.json";
@@ -221,86 +224,61 @@ namespace fr
 				*imguiMutexPtr = &debugUIGraphicsSystem->GetGlobalImGuiMutex();
 
 				createdFlag->store(true);
-			};
-
-		re::RenderManager::Get()->EnqueueRenderCommand(std::move(createUIRenderSystem));
+			});
 
 		m_show[LogConsole] = true;
+
+		m_window->SetRelativeMouseMode(!m_imguiMenuVisible);
 	}
 
 
 	void UIManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		SEAssert(!m_debugUIRenderSystemCreated || (m_debugUICommandMgr && m_imguiGlobalMutex),
+		SEAssert(!m_debugUIRenderSystemCreated.load() || (m_debugUICommandMgr && m_imguiGlobalMutex),
 			"One of our GS pointers is null");
 
 		HandleEvents();
 
-		if (m_debugUIRenderSystemCreated)
+		if (m_debugUIRenderSystemCreated.load())
 		{
 			// ImGui visibility state has changed:
-			if (m_imguiMenuVisible != m_prevImguiMenuVisible)
+			const bool imguiVisiblityChanged = m_imguiMenuVisible != m_prevImguiMenuVisible;
+			m_prevImguiMenuVisible = m_imguiMenuVisible;
+			
 			{
-				m_prevImguiMenuVisible = m_imguiMenuVisible;
+				std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 
-				// If true, hide the mouse and lock it to the window
-				const bool captureMouse = !m_imguiMenuVisible;
-				m_window->SetRelativeMouseMode(captureMouse);
+				ImGuiIO& io = ImGui::GetIO();
+
+				m_imguiWantsToCaptureKeyboard = io.WantCaptureKeyboard;
+				m_imguiWantsToCaptureMouse = io.WantCaptureMouse;
+				m_imguiWantsTextInput = io.WantTextInput;
 
 				// Disable ImGui mouse listening if the console is not active: Prevents UI elements
 				// flashing as the hidden mouse cursor passes by
-
+				if (m_imguiMenuVisible)
 				{
-					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
-
-					ImGuiIO& io = ImGui::GetIO();
-					if (m_imguiMenuVisible)
-					{
-						io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
-					}
-					else
-					{
-						io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
-					}
+					io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+				}
+				else
+				{
+					io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
 				}
 			}
 
-			// Capture input, if necessary:
-			if (m_imguiMenuVisible)
+			// Capture the input if the ImGui menu bar is visible, or if ImGui explicitely requests it:
+			const bool imguiWantsCapture =
+				m_imguiWantsToCaptureKeyboard || m_imguiWantsToCaptureMouse || m_imguiWantsTextInput;
+
+			if (imguiVisiblityChanged || imguiWantsCapture)
 			{
-				{
-					bool currentImguiWantsToCaptureKeyboard = 0;
-					bool currentImguiWantsToCaptureMouse = 0;
+				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+					.m_eventKey = eventkey::KeyboardInputCaptureChange,
+					.m_data0 = (m_imguiMenuVisible || imguiWantsCapture), });
 
-					{
-						std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
-						ImGuiIO& io = ImGui::GetIO();
-						currentImguiWantsToCaptureKeyboard = io.WantCaptureKeyboard;
-						currentImguiWantsToCaptureMouse = io.WantCaptureMouse;
-					}
-
-					if (currentImguiWantsToCaptureKeyboard != m_imguiWantsToCaptureKeyboard)
-					{
-						m_imguiWantsToCaptureKeyboard = currentImguiWantsToCaptureKeyboard;
-
-						core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-							.m_eventKey = eventkey::KeyboardInputCaptureChange,
-							.m_data0 = m_imguiWantsToCaptureKeyboard,
-							//.m_data1 = 
-							});
-					}
-
-					if (currentImguiWantsToCaptureMouse != m_imguiWantsToCaptureMouse)
-					{
-						m_imguiWantsToCaptureMouse = currentImguiWantsToCaptureMouse;
-
-						core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-							.m_eventKey = eventkey::MouseInputCaptureChange,
-							.m_data0 = m_imguiWantsToCaptureMouse,
-							//.m_data1 = 
-							});
-					}
-				}
+				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+					.m_eventKey = eventkey::MouseInputCaptureChange,
+					.m_data0 = (m_imguiMenuVisible || imguiWantsCapture), });
 			}
 
 			SubmitImGuiRenderCommands(frameNum);
@@ -318,7 +296,7 @@ namespace fr
 	void UIManager::HandleEvents()
 	{
 		// Cache this once to prevent a race where it changes midway through processing
-		const bool debugUISystemCreated = m_debugUIRenderSystemCreated;
+		const bool debugUISystemCreated = m_debugUIRenderSystemCreated.load();
 
 		while (HasEvents())
 		{
@@ -328,15 +306,18 @@ namespace fr
 			{
 			case eventkey::SceneCreated:
 			{
-				m_imguiMenuVisible = false;
-				m_show[LogConsole] = false;
+				//
 			}
 			break;
-			case eventkey::InputToggleConsole:
+			case eventkey::ToggleConsole:
 			{
-				if (std::get<bool>(eventInfo.m_data0))
+				// Only respond to console toggle events if we're not typing
+				if (!m_imguiWantsToCaptureKeyboard && !m_imguiWantsTextInput)
 				{
 					m_imguiMenuVisible = !m_imguiMenuVisible;
+
+					// If ImGui is not visible, hide the mouse and lock it to the window
+					m_window->SetRelativeMouseMode(!m_imguiMenuVisible);
 				}
 			}
 			break;

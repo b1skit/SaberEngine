@@ -42,7 +42,7 @@ namespace eventkey
 	constexpr util::HashKey InputMouseRight("InputMouseRight");
 
 	// System:
-	constexpr util::HashKey InputToggleConsole("InputToggleConsole");
+	constexpr util::HashKey ToggleConsole("ToggleConsole");
 	constexpr util::HashKey ToggleVSync("ToggleVSync");
 	constexpr util::HashKey VSyncModeChanged("VSyncModeChanged");
 	constexpr util::HashKey WindowFocusChanged("WindowFocusChanged");

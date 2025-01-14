@@ -105,9 +105,6 @@ namespace app
 			});
 		renderManager->ThreadStartup(); // Initializes context
 		
-		// Don't capture the mouse while we're loading
-		m_window->SetRelativeMouseMode(false);
-
 		// Start managers:
 		core::EventManager* eventManager = core::EventManager::Get();
 		eventManager->Startup();
@@ -124,9 +121,6 @@ namespace app
 		uiMgr->Startup();
 
 		m_isRunning = true;
-
-		// We're done loading: Capture the mouse
-		m_window->SetRelativeMouseMode(true);
 
 		SEEndCPUEvent();
 	}

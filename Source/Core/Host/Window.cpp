@@ -24,7 +24,12 @@ namespace host
 
 	bool Window::Create(CreateParams const& createParams)
 	{
-		return platform::Window::Create(*this, createParams);
+		const bool result = platform::Window::Create(*this, createParams);
+		SEAssert(result, "Window Create failed");
+
+		platform::Window::SetRelativeMouseMode(*this, m_relativeMouseModeEnabled);
+
+		return result;
 	}
 
 
@@ -51,14 +56,7 @@ namespace host
 		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 				.m_eventKey = eventkey::WindowFocusChanged,
 				.m_data0 = m_hasFocus,
-				//.m_data1 = unused
 			});
-	}
-
-
-	bool Window::GetFocusState() const
-	{
-		return m_hasFocus;
 	}
 
 
@@ -67,7 +65,7 @@ namespace host
 		if (enabled != m_relativeMouseModeEnabled)
 		{
 			platform::Window::SetRelativeMouseMode(*this, enabled);
+			m_relativeMouseModeEnabled = enabled;
 		}
-		m_relativeMouseModeEnabled = enabled;
 	}
 }

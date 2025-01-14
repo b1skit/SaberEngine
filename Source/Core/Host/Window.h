@@ -3,6 +3,15 @@
 #include "../Interfaces/IPlatformParams.h"
 
 
+namespace fr
+{
+	class UIManager;
+}
+namespace win32
+{
+	class Window;
+}
+
 namespace host
 {
 	class Window
@@ -36,10 +45,15 @@ namespace host
 		bool Create(CreateParams const&); // Must be called from the thread that owns the OS event queue
 		void Destroy();
 
-		void SetFocusState(bool hasFocus); // To be called by event handlers only
-		bool GetFocusState() const;
 
-		void SetRelativeMouseMode(bool enabled); // Hides cursor and wraps movements around boundaries
+	protected:
+		friend class win32::Window;
+		void SetFocusState(bool hasFocus); // To be called by event handlers only
+
+
+	protected:
+		friend class fr::UIManager;
+		void SetRelativeMouseMode(bool enabled); // enabled: Hides cursor and wraps movements around boundaries
 
 
 	private:

@@ -8,9 +8,8 @@ namespace definitions
 	// Adding new button input functionality to SaberEngine:
 	// 1) Add the new button function to KeyboardInputButton and KeyboardInputButtonNames in this file
 	// 2) Add a default button for this function in Config::InitializeDefaultValues()
-	// 3) Add an event type to EventManager::EventType
-	// 4) Fire a SaberEngine EventManager::EventType event in InputManager::HandleEvents()
-	// 5) Subscribe to the event anywhere you want to react to the button press
+	// 3) Fire an event in InputManager::HandleEvents() when the associated button is pressed
+	// 4) Subscribe to the event anywhere you want to react to the button press
 
 	// Buttons for specific functionality/controls (eg. forward, sprint, quit, etc)
 	// These enums are also converted to strings by a pre-processor macro, and mapped to buttons in the config file

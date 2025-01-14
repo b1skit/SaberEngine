@@ -50,6 +50,7 @@ namespace fr
 
 		bool m_imguiWantsToCaptureKeyboard;
 		bool m_imguiWantsToCaptureMouse;
+		bool m_imguiWantsTextInput;
 
 		enum Show : uint8_t
 		{

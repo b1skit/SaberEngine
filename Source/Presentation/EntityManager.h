@@ -161,8 +161,6 @@ namespace fr
 		std::vector<entt::entity> m_deferredDeleteQueue;
 		std::mutex m_deferredDeleteQueueMutex;
 
-		bool m_processInput;
-
 
 	private:
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };

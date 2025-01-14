@@ -127,87 +127,84 @@ namespace en
 					platform::InputManager::ConvertToSEKeycode(std::get<uint32_t>(eventInfo.m_data0));
 				const bool keystate = std::get<bool>(eventInfo.m_data1);
 
-				doBroadcastToSE = !m_keyboardInputCaptured;
-				if (doBroadcastToSE)
+				auto const& result = m_SEKeycodesToSEEventEnums.find(keycode);
+				if (result != m_SEKeycodesToSEEventEnums.end())
 				{
-					auto const& result = m_SEKeycodesToSEEventEnums.find(keycode);
-					if (result != m_SEKeycodesToSEEventEnums.end())
+					const definitions::KeyboardInputButton key = result->second;
+
+					m_keyboardInputButtonStates[key] = keystate && !m_keyboardInputCaptured;
+
+					transformedEvent.m_data0 = keystate; // Always true...
+
+					// Note: We only broadcast key presses (not releases)
+					doBroadcastToSE = keystate;
+
+					switch (key)
 					{
-						const definitions::KeyboardInputButton key = result->second;
-
-						m_keyboardInputButtonStates[key] = keystate;
-
-						transformedEvent.m_data0 = keystate; // Always true...
-
-						// Note: We only broadcast key presses (not releases)
-						doBroadcastToSE = keystate;
-
-						switch (key)
-						{
-						case definitions::KeyboardInputButton::InputButton_Forward:
-						{
-							transformedEvent.m_eventKey = eventkey::InputForward;
-						}
-						break;
-						case definitions::KeyboardInputButton::InputButton_Backward:
-						{
-							transformedEvent.m_eventKey = eventkey::InputBackward;
-						}
-						break;
-						case definitions::KeyboardInputButton::InputButton_Left:
-						{
-							transformedEvent.m_eventKey = eventkey::InputLeft;
-						}
-						break;
-						case definitions::KeyboardInputButton::InputButton_Right:
-						{
-							transformedEvent.m_eventKey = eventkey::InputRight;
-						}
-						break;
-						case definitions::KeyboardInputButton::InputButton_Up:
-						{
-							transformedEvent.m_eventKey = eventkey::InputUp;
-						}
-						break;
-						case definitions::KeyboardInputButton::InputButton_Down:
-						{
-							transformedEvent.m_eventKey = eventkey::InputDown;
-						}
-						break;
-						case definitions::KeyboardInputButton::InputButton_Sprint:
-						{
-							transformedEvent.m_eventKey = eventkey::InputSprint;
-						}
-						break;
-						case definitions::KeyboardInputButton::InputButton_Console:
-						{
-							transformedEvent.m_eventKey = eventkey::InputToggleConsole;
-						}
-						break;
-						case definitions::KeyboardInputButton::InputButton_VSync:
-						{
-							transformedEvent.m_eventKey = eventkey::ToggleVSync;							
-						}
-						break;
-						default:
-							SEAssertF("Input has not been handled. Is there a case for it in this switch?");
-							break;
-						}
-					}
-					else
+					case definitions::KeyboardInputButton::InputButton_Forward:
 					{
-						// Not a key we've got mapped to an input/function
-						doBroadcastToSE = false; 
+						transformedEvent.m_eventKey = eventkey::InputForward;
 					}
+					break;
+					case definitions::KeyboardInputButton::InputButton_Backward:
+					{
+						transformedEvent.m_eventKey = eventkey::InputBackward;
+					}
+					break;
+					case definitions::KeyboardInputButton::InputButton_Left:
+					{
+						transformedEvent.m_eventKey = eventkey::InputLeft;
+					}
+					break;
+					case definitions::KeyboardInputButton::InputButton_Right:
+					{
+						transformedEvent.m_eventKey = eventkey::InputRight;
+					}
+					break;
+					case definitions::KeyboardInputButton::InputButton_Up:
+					{
+						transformedEvent.m_eventKey = eventkey::InputUp;
+					}
+					break;
+					case definitions::KeyboardInputButton::InputButton_Down:
+					{
+						transformedEvent.m_eventKey = eventkey::InputDown;
+					}
+					break;
+					case definitions::KeyboardInputButton::InputButton_Sprint:
+					{
+						transformedEvent.m_eventKey = eventkey::InputSprint;
+					}
+					break;
+					case definitions::KeyboardInputButton::InputButton_Console:
+					{
+						transformedEvent.m_eventKey = eventkey::ToggleConsole;
+					}
+					break;
+					case definitions::KeyboardInputButton::InputButton_VSync:
+					{
+						transformedEvent.m_eventKey = eventkey::ToggleVSync;
+					}
+					break;
+					default:
+						SEAssertF("Input has not been handled. Is there a case for it in this switch?");
+						break;
+					}
+				}
+				else
+				{
+					// Not a key we've got mapped to an input/function
+					doBroadcastToSE = false;
 				}
 			} // end KeyEvent
 			break;
 			case eventkey::MouseMotionEvent:
 			{
 				// Unpack the mouse data:
-				m_mouseAxisStates[definitions::Input_MouseX] += static_cast<float>(std::get<int32_t>(eventInfo.m_data0));
-				m_mouseAxisStates[definitions::Input_MouseY] += static_cast<float>(std::get<int32_t>(eventInfo.m_data1));
-				doBroadcastToSE = false;
+				m_mouseAxisStates[definitions::Input_MouseX] +=
+					static_cast<float>(std::get<int32_t>(eventInfo.m_data0)) * !m_mouseInputCaptured;
+				m_mouseAxisStates[definitions::Input_MouseY] +=
+					static_cast<float>(std::get<int32_t>(eventInfo.m_data1)) * !m_mouseInputCaptured;
 			}
 			break;
 			case eventkey::MouseButtonEvent:
@@ -217,44 +214,26 @@ namespace en
 				{
 				case 0: // Left
 				{
-					if (m_mouseInputCaptured)
-					{
-						doBroadcastToSE = false;
-					}
-					else
-					{
-						m_mouseButtonStates[definitions::InputMouse_Left] = buttonState;
-						transformedEvent.m_eventKey = eventkey::InputMouseLeft;
-						transformedEvent.m_data0 = buttonState;
-					}
+					m_mouseButtonStates[definitions::InputMouse_Left] = buttonState && !m_mouseInputCaptured;
+
+					transformedEvent.m_eventKey = eventkey::InputMouseLeft;
+					transformedEvent.m_data0 = buttonState;
 				}
 				break;
 				case 1: // Middle
 				{
-					if (m_mouseInputCaptured)
-					{
-						doBroadcastToSE = false;
-					}
-					else
-					{
-						m_mouseButtonStates[definitions::InputMouse_Middle] = buttonState;
-						transformedEvent.m_eventKey = eventkey::InputMouseMiddle;
-						transformedEvent.m_data0 = buttonState;
-					}
+					m_mouseButtonStates[definitions::InputMouse_Middle] = buttonState && !m_mouseInputCaptured;
+					
+					transformedEvent.m_eventKey = eventkey::InputMouseMiddle;
+					transformedEvent.m_data0 = buttonState;
 				}
 				break;
 				case 2: // Right
 				{
-					if (m_mouseInputCaptured)
-					{
-						doBroadcastToSE = false;
-					}
-					else
-					{
-						m_mouseButtonStates[definitions::InputMouse_Right] = buttonState;
-						transformedEvent.m_eventKey = eventkey::InputMouseRight;
-						transformedEvent.m_data0 = buttonState;
-					}
+					m_mouseButtonStates[definitions::InputMouse_Right] = buttonState && !m_mouseInputCaptured;
+					
+					transformedEvent.m_eventKey = eventkey::InputMouseRight;
+					transformedEvent.m_data0 = buttonState;
 				}
 				break;
 				default:
