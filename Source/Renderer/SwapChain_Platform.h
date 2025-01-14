@@ -13,6 +13,6 @@ namespace platform
 	public:
 		static void (*Create)(re::SwapChain&);
 		static void (*Destroy)(re::SwapChain&);
-		static void (*SetVSyncMode)(re::SwapChain const& swapChain, bool enabled);
+		static bool (*ToggleVSync)(re::SwapChain const& swapChain);
 	};
 }

@@ -176,6 +176,7 @@ namespace fr
 		, m_imguiWantsToCaptureMouse(false)
 		, m_show{0}
 		, m_window(nullptr)
+		, m_vsyncState(false) // Will be updated by the initial state broadcast event
 	{
 	}
 
@@ -194,7 +195,8 @@ namespace fr
 		core::EventManager::Get()->Subscribe(eventkey::MouseButtonEvent, this);
 		core::EventManager::Get()->Subscribe(eventkey::MouseWheelEvent, this);
 		core::EventManager::Get()->Subscribe(eventkey::DragAndDrop, this);
-
+		core::EventManager::Get()->Subscribe(eventkey::VSyncModeChanged, this);
+		
 		// Notification events:
 		core::EventManager::Get()->Subscribe(eventkey::SceneCreated, this);
 
@@ -420,6 +422,13 @@ namespace fr
 				}
 			}
 			break;
+			case eventkey::VSyncModeChanged:
+			{
+				m_vsyncState = std::get<bool>(eventInfo.m_data0);
+
+				LOG("VSync %s", m_vsyncState ? "enabled" : "disabled");
+			}
+			break;
 			default:
 				break;
 			}
@@ -531,12 +540,10 @@ namespace fr
 
 					if (ImGui::BeginMenu("Config"))
 					{
-						const bool currentVSyncEnabled = re::RenderManager::Get()->IsVSyncEnabled();
-						bool vsyncEnabled = currentVSyncEnabled;
-						ImGui::Checkbox("V-Sync", &vsyncEnabled);
-						if (currentVSyncEnabled != vsyncEnabled)
+						if (ImGui::Checkbox("V-Sync", &m_vsyncState))
 						{
-							re::RenderManager::Get()->ToggleVSync();
+							core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+								.m_eventKey = eventkey::ToggleVSync, });
 						}
 						ImGui::EndMenu();
 					}

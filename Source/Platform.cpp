@@ -126,7 +126,7 @@ namespace platform
 			// Swap chain:
 			platform::SwapChain::Create			= &opengl::SwapChain::Create;
 			platform::SwapChain::Destroy		= &opengl::SwapChain::Destroy;
-			platform::SwapChain::SetVSyncMode	= &opengl::SwapChain::SetVSyncMode;
+			platform::SwapChain::ToggleVSync	= &opengl::SwapChain::ToggleVSync;
 
 			// Texture:
 			platform::Texture::Destroy			= &opengl::Texture::Destroy;
@@ -168,7 +168,7 @@ namespace platform
 			// Swap chain:
 			platform::SwapChain::Create			= &dx12::SwapChain::Create;
 			platform::SwapChain::Destroy		= &dx12::SwapChain::Destroy;
-			platform::SwapChain::SetVSyncMode	= &dx12::SwapChain::SetVSyncMode;
+			platform::SwapChain::ToggleVSync	= &dx12::SwapChain::ToggleVSync;
 
 			// Texture:
 			platform::Texture::Destroy			= &dx12::Texture::Destroy;

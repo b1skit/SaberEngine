@@ -69,6 +69,9 @@ namespace fr
 		};
 		std::array<bool, Show::Show_Count> m_show;
 
+	private:
+		bool m_vsyncState;
+
 
 	private:
 		host::Window* m_window;

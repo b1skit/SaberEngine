@@ -3,6 +3,8 @@
 #include "SwapChain_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/Config.h"
+#include "Core/EventManager.h"
 
 
 namespace re
@@ -22,7 +24,14 @@ namespace re
 
 	void SwapChain::Create()
 	{
+		m_platformParams->m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
+
 		platform::SwapChain::Create(*this);
+
+		// Broadcast the starting VSync state:
+		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+			.m_eventKey = eventkey::VSyncModeChanged,
+			.m_data0 = m_platformParams->m_vsyncEnabled, });
 	}
 
 
@@ -33,8 +42,20 @@ namespace re
 	}
 
 
-	void SwapChain::SetVSyncMode(bool enabled) const
+	bool SwapChain::GetVSyncState() const
 	{
-		platform::SwapChain::SetVSyncMode(*this, enabled);
+		return m_platformParams->m_vsyncEnabled;
+	}
+
+
+	bool SwapChain::ToggleVSync() const
+	{
+		const bool vsyncState = platform::SwapChain::ToggleVSync(*this);
+
+		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+					.m_eventKey = eventkey::VSyncModeChanged,
+					.m_data0 = vsyncState, });
+
+		return vsyncState;
 	}
 }

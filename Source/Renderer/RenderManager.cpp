@@ -129,7 +129,6 @@ namespace re
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_quitEventRecieved(false)
 	{
-		m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
 	}
 
 
@@ -187,7 +186,7 @@ namespace re
 		
 		re::Context::Get()->Create(m_renderFrameNum);
 		
-		core::EventManager::Get()->Subscribe(eventkey::InputToggleVSync, this);
+		core::EventManager::Get()->Subscribe(eventkey::ToggleVSync, this);
 		core::EventManager::Get()->Subscribe(eventkey::EngineQuit, this);
 		
 		CreateSamplerLibrary();
@@ -400,13 +399,9 @@ namespace re
 
 			switch (eventInfo.m_eventKey)
 			{
-			case eventkey::InputToggleVSync:
+			case eventkey::ToggleVSync:
 			{
-				if (std::get<bool>(eventInfo.m_data0) == true)
-				{
-					ToggleVSync();
-					re::Context::Get()->GetSwapChain().SetVSyncMode(m_vsyncEnabled);
-				}				
+				re::Context::Get()->GetSwapChain().ToggleVSync();
 			}
 			break;
 			case eventkey::EngineQuit:

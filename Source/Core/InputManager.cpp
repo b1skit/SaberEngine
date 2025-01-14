@@ -186,7 +186,7 @@ namespace en
 						break;
 						case definitions::KeyboardInputButton::InputButton_VSync:
 						{
-							transformedEvent.m_eventKey = eventkey::InputToggleVSync;							
+							transformedEvent.m_eventKey = eventkey::ToggleVSync;							
 						}
 						break;
 						default:

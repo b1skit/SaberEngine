@@ -232,7 +232,7 @@ namespace dx12
 		const uint32_t presentFlags = 
 			(swapChainPlatParams->m_tearingSupported && !vsyncEnabled) ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
-		HRESULT hr = swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
+		const HRESULT hr = swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
 		if (hr == DXGI_STATUS_OCCLUDED)
 		{
 			// TODO: Handle this.

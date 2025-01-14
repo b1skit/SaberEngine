@@ -1,10 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <GL/glew.h>
-#include <GL/wglew.h> // Windows-specific GL functions and macros
-
-#include "Core/Config.h"
-#include "Core/Assert.h"
 #include "SwapChain_OpenGL.h"
+
+#include "Core/Assert.h"
+#include "Core/Config.h"
+
+#include <GL/glew.h>
+#include <GL/wglew.h>
 
 
 namespace opengl
@@ -43,33 +44,40 @@ namespace opengl
 	}
 
 
-	void SwapChain::SetVSyncMode(re::SwapChain const& swapChain, bool enabled)
+	bool SwapChain::ToggleVSync(re::SwapChain const& swapChain)
 	{
+		opengl::SwapChain::PlatformParams* swapChainParams =
+			swapChain.GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
+
+		swapChainParams->m_vsyncEnabled = !swapChainParams->m_vsyncEnabled;
+
 		// Based on the technique desecribed here:
 		// https://stackoverflow.com/questions/589064/how-to-enable-vertical-sync-in-opengl
 		auto WGLExtensionSupported = [](const char* extension_name)
-		{
-			// Wgl function pointer, gets a string with list of wgl extensions:
-			PFNWGLGETEXTENSIONSSTRINGEXTPROC _wglGetExtensionsStringEXT =
-				(PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
-
-			if (::strstr(_wglGetExtensionsStringEXT(), extension_name) == nullptr)
 			{
-				return false; // Extension not found/supported
-			}
+				// Wgl function pointer, gets a string with list of wgl extensions:
+				PFNWGLGETEXTENSIONSSTRINGEXTPROC _wglGetExtensionsStringEXT =
+					(PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
 
-			return true; // Extension supported
-		};
+				if (::strstr(_wglGetExtensionsStringEXT(), extension_name) == nullptr)
+				{
+					return false; // Extension not found/supported
+				}
+
+				return true; // Extension supported
+			};
 
 		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = nullptr;
 		if (WGLExtensionSupported("WGL_EXT_swap_control"))
 		{
 			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-			wglSwapIntervalEXT(static_cast<int8_t>(enabled)); // # frames of delay: VSync == 1
+			wglSwapIntervalEXT(static_cast<int8_t>(swapChainParams->m_vsyncEnabled)); // 0/1: VSync disabled/enabled
 		}
 		else
 		{
 			SEAssertF("VSync extension not supported");
 		}
+
+		return swapChainParams->m_vsyncEnabled;
 	}
 }

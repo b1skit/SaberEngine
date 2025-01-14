@@ -2,7 +2,7 @@
 #pragma once
 #include "Interfaces/IEngineComponent.h"
 
-#include "../Util/HashKey.h"
+#include "Util/HashKey.h"
 
 
 namespace core
@@ -43,7 +43,8 @@ namespace eventkey
 
 	// System:
 	constexpr util::HashKey InputToggleConsole("InputToggleConsole");
-	constexpr util::HashKey InputToggleVSync("InputToggleVSync");
+	constexpr util::HashKey ToggleVSync("ToggleVSync");
+	constexpr util::HashKey VSyncModeChanged("VSyncModeChanged");
 	constexpr util::HashKey WindowFocusChanged("WindowFocusChanged");
 	constexpr util::HashKey DragAndDrop("DragAndDropEvent");
 
