@@ -241,10 +241,11 @@ namespace fr
 
 		if (m_debugUIRenderSystemCreated.load())
 		{
-			// ImGui visibility state has changed:
+			// Update ImGui visibility state:
 			const bool imguiVisiblityChanged = m_imguiMenuVisible != m_prevImguiMenuVisible;
 			m_prevImguiMenuVisible = m_imguiMenuVisible;
 			
+			// Update ImGui input capture states:
 			{
 				std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 
@@ -267,18 +268,19 @@ namespace fr
 			}
 
 			// Capture the input if the ImGui menu bar is visible, or if ImGui explicitely requests it:
-			const bool imguiWantsCapture =
-				m_imguiWantsToCaptureKeyboard || m_imguiWantsToCaptureMouse || m_imguiWantsTextInput;
-
-			if (imguiVisiblityChanged || imguiWantsCapture)
+			const bool imguiWantsButtonCapture = m_imguiWantsToCaptureKeyboard || m_imguiWantsTextInput;
+			if (imguiVisiblityChanged || imguiWantsButtonCapture)
 			{
 				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::KeyboardInputCaptureChange,
-					.m_data0 = (m_imguiMenuVisible || imguiWantsCapture), });
+					.m_data0 = (m_imguiMenuVisible || imguiWantsButtonCapture), });
+			}
 
+			if (imguiVisiblityChanged || m_imguiWantsToCaptureMouse)
+			{
 				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::MouseInputCaptureChange,
-					.m_data0 = (m_imguiMenuVisible || imguiWantsCapture), });
+					.m_data0 = (m_imguiMenuVisible || m_imguiWantsToCaptureMouse), });
 			}
 
 			SubmitImGuiRenderCommands(frameNum);
