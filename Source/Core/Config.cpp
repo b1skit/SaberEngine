@@ -1,25 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
 #include "Config.h"
+#include "EventManager.h"
 
 #include "Definitions/KeyConfiguration.h"
 
 #include "Util/TextUtils.h"
 
-
-namespace
-{
-	// Convert a std::string to lower case: Used to simplify comparisons
-	inline std::string ToLowerCase(std::string input)
-	{
-		std::string output;
-		for (auto const& currentChar : input)
-		{
-			output += std::tolower(currentChar);
-		}
-		return output;
-	}
-}
 
 namespace core
 {
@@ -32,6 +19,8 @@ namespace core
 
 	Config::Config()
 		: m_isDirty(false)
+		, m_argc(0)
+		, m_argv(nullptr)
 	{
 		// Insert engine defaults:
 		SetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey, true, Config::SettingType::Runtime);
@@ -45,9 +34,19 @@ namespace core
 	}
 
 
-	void Config::ProcessCommandLineArgs(int argc, char** argv)
+	void Config::SetCommandLineArgs(int argc, char** argv)
 	{
-		// NOTE: This is one of the first functions run at startup; We cannot use the LogManager yet
+		m_argc = argc;
+		m_argv = argv;
+	}
+
+
+	void Config::ProcessCommandLineArgs()
+	{
+		if (m_argc == 0)
+		{
+			return; // Early out if no command line args were received
+		}
 
 		constexpr char k_keyDelimiter = '-'; // Signifies a -key (e.g. -scene mySceneName)
 		auto StripKeyDelimiter = [](std::string const& key) -> char const*
@@ -64,18 +63,18 @@ namespace core
 			bool HasValue() const { return !m_value.empty(); }
 		};
 		std::vector<KeyValue> keysValues;
-		keysValues.reserve(static_cast<size_t>(argc) - 1);
+		keysValues.reserve(static_cast<size_t>(m_argc) - 1);
 
 		// Pre-parse the args into key/value pairs:
 		std::string argString; // The full list of all command line args received		
-		for (int i = 1; i < argc; i++)
+		for (int i = 1; i < m_argc; i++)
 		{
-			std::string currentToken = argv[i];
+			std::string currentToken = m_argv[i];
 
 			// Append the current token to our argument std::string:
 			argString += std::format("{}{}",
 				currentToken,
-				i + 1 < argc ? " " : ""); // Don't add a space if it's the last token
+				i + 1 < m_argc ? " " : ""); // Don't add a space if it's the last token
 
 			auto CurrentTokenIsKey = [&]()
 				{
@@ -85,7 +84,7 @@ namespace core
 			if (CurrentTokenIsKey())
 			{
 				keysValues.emplace_back(KeyValue{
-					StripKeyDelimiter(argv[i]),
+					StripKeyDelimiter(m_argv[i]),
 					""}); // Empty, until we check the next token and see it's a value
 			}
 			else
@@ -99,10 +98,23 @@ namespace core
 				}
 				keysValues.back().m_value = std::move(currentToken);
 			}
+
+			// Handle "-import" commands as a special case, as they stack:
+			if (keysValues.back().m_key == core::configkeys::k_importCmdLineArg &&
+				!keysValues.back().m_value.empty())
+			{
+				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+					.m_eventKey = eventkey::FileImportRequest,
+					.m_data = keysValues.back().m_value });
+			}
 		}
 
-		// Store the received command line std::string
+		// Store & log the received command line string
 		SetValue(core::configkeys::k_commandLineArgsValueKey, argString, Config::SettingType::Runtime);
+
+		LOG("Config: Received %d command line tokens: %s",
+			m_argc - 1, // -1, as 1st arg is program name
+			argString.c_str());
 
 		// Process the key/value pairs:
 		for (size_t i = 0; i < keysValues.size(); i++)
@@ -287,7 +299,7 @@ namespace core
 				else
 				{
 					// Booleans:
-					std::string const& boolString = ToLowerCase(value);
+					std::string const& boolString = util::ToLower(value);
 					if (boolString == k_trueString)
 					{
 						SetValue(util::HashKey::Create(property), true, SettingType::Serialized);

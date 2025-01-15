@@ -21,15 +21,6 @@
 
 namespace
 {
-	// Helper wrapper to reduce boilerplate
-	void SendEvent(util::HashKey const& eventKey)
-	{
-		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-				.m_eventKey = eventKey,
-			});
-	}
-
-
 	void AddKeyEventToImGui(ImGuiIO& io, definitions::SEKeycode keycode, bool keystate)
 	{
 		// Keyboard sections: left to right, row-by-row
@@ -149,7 +140,9 @@ namespace
 
 				if (didRequestFile)
 				{
-					fr::SceneManager::Get()->ImportFile(requestedFilepath);
+					core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+						.m_eventKey = eventkey::FileImportRequest,
+						.m_data = requestedFilepath });
 				}
 			});
 	}
@@ -401,10 +394,9 @@ namespace fr
 				std::string const& extension = util::ExtractExtensionFromFilePath(filePath);
 				if (extension == "gltf" || extension == "glb")
 				{
-					core::ThreadPool::Get()->EnqueueJob([filePath]()
-						{
-							fr::SceneManager::Get()->ImportFile(filePath);
-						});
+					core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+						.m_eventKey = eventkey::FileImportRequest,
+						.m_data = filePath });
 				}
 			}
 			break;
@@ -518,7 +510,8 @@ namespace fr
 
 						if (ImGui::MenuItem("Quit"))
 						{
-							SendEvent(eventkey::EngineQuit);
+							core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+								.m_eventKey = eventkey::EngineQuit, });
 						}
 
 						ImGui::EndMenu();

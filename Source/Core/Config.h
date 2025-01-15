@@ -34,7 +34,8 @@ namespace core
 		Config& operator=(Config&&) noexcept = default;
 
 	public:
-		void ProcessCommandLineArgs(int argc, char** argv);
+		void SetCommandLineArgs(int argc, char** argv);
+		void ProcessCommandLineArgs();
 
 		void LoadConfigFile(); // Load the config file
 		void SaveConfigFile(); // Save config file to disk
@@ -73,6 +74,10 @@ namespace core
 		std::unordered_map<util::HashKey, std::pair<ConfigValue, SettingType>> m_configValues;
 		mutable std::shared_mutex m_configValuesMutex;
 		bool m_isDirty; // Marks whether we need to save the config file or not
+
+		// Command line arguments:
+		int m_argc;
+		char** m_argv;
 
 
 	private: // Helper functions:

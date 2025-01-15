@@ -74,6 +74,22 @@ namespace app
 
 		LOG("EngineApp starting...");
 
+		core::EventManager* eventManager = core::EventManager::Get();
+		eventManager->Startup();
+
+		eventManager->Subscribe(eventkey::EngineQuit, this);
+
+		core::Config::Get()->ProcessCommandLineArgs();
+
+		// Show the console if requested now that we've parsed the command line args
+		const bool showConsole = core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg);
+		if (showConsole)
+		{
+			AllocConsole();
+			freopen("CONOUT$", "wb", stdout);
+		}
+
+		// Stand up critical systems first:
 		core::ThreadPool::Get()->Startup();
 
 		// Start the logging thread:
@@ -105,11 +121,6 @@ namespace app
 			});
 		renderManager->ThreadStartup(); // Initializes context
 		
-		// Start managers:
-		core::EventManager* eventManager = core::EventManager::Get();
-		eventManager->Startup();
-		eventManager->Subscribe(eventkey::EngineQuit, this);
-
 		en::InputManager::Get()->Startup(); // Now that the window is created
 
 		sceneMgr->Startup();
@@ -247,6 +258,13 @@ namespace app
 		core::ThreadPool::Get()->Stop();
 		
 		m_window->Destroy();
+
+		// Finally, close the console if it was opened:
+		if (core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg))
+		{
+			FreeConsole();
+			fclose(stdout);
+		}
 
 		SEEndCPUEvent();
 	}

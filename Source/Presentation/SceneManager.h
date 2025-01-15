@@ -9,7 +9,7 @@
 
 namespace fr
 {
-	class SceneManager final : public virtual en::IEngineComponent
+	class SceneManager final : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
 	public: // Helper for identifying the scene render system
 		static constexpr char const* k_sceneRenderSystemName = "Scene";
@@ -17,6 +17,8 @@ namespace fr
 
 	public:
 		static SceneManager* Get(); // Singleton functionality
+
+		static void NotifyLoadComplete(); // Callback to notify the Scenemanager when a load completes
 
 
 	public:
@@ -30,15 +32,8 @@ namespace fr
 		void Shutdown() override;
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
-
-	public:		
-		void ImportFile(std::string const& filePath); // Filename and path, relative to the ..\Scenes\ dir
-
-		static void NotifyLoadComplete(); // Callback to notify the Scenemanager when a load completes
-
-
-	private:
-		std::atomic<bool> m_hasCreatedScene; // Has an initial scene been create?
+		// IEventListener interface:
+		void HandleEvents() override;
 
 
 	public:
@@ -47,6 +42,9 @@ namespace fr
 	private:
 		core::Inventory* m_inventory;
 
+	private:
+		std::atomic<bool> m_hasCreatedScene; // Has an initial scene been created?
+
 
 	public:
 		void ShowImGuiWindow(bool*) const;
@@ -54,6 +52,8 @@ namespace fr
 
 	private:
 		void CreateDefaultSceneResources();
+
+		void ImportFile(std::string const& filePath); // Filename and path, relative to the ..\Scenes\ dir
 
 
 	private:

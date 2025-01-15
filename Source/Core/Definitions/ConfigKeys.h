@@ -16,7 +16,7 @@ namespace core::configkeys
 	constexpr char const* k_effectDirName					= "Assets\\Effects\\";
 	constexpr char const* k_effectManifestFilename			= "EffectManifest.json";
 	constexpr char const* k_defaultEngineIBLFilePath		= "Assets\\DefaultIBL\\default.hdr";
-	constexpr char const* k_perFileIBLRelativeFilePath		= "IBL\\default.hdr"; // Overrides the engine default HDR/IBL
+	constexpr char const* k_perFileDefaultIBLRelFilePath	= "IBL\\default.hdr"; // Overrides the engine default HDR/IBL
 	constexpr char const* k_glslShaderDirName				= "Assets\\Shaders\\GLSL\\";
 	constexpr char const* k_hlslShaderDirName				= "Assets\\Shaders\\HLSL\\";
 	constexpr char const* k_commonShaderDirName				= "Assets\\Shaders\\Common\\";

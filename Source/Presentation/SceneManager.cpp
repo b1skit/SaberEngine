@@ -337,23 +337,49 @@ namespace
 		{
 			fr::EntityManager* em = fr::EntityManager::Get();
 
-			em->EnqueueEntityCommand([em, newIBL, makeActive = m_makeActive]()
+			em->EnqueueEntityCommand([em, newIBL, activationMode = m_activationMode]()
 				{
-					// Create an Ambient LightComponent, and make it active:
-					entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
+					const bool ambientExists = em->EntityExists<fr::LightComponent::AmbientIBLDeferredMarker>();
+
+					// Create an Ambient LightComponent, and make it active if requested:
+					const entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
 						*em,
 						newIBL->GetName().c_str(),
 						newIBL);
 
-					// TODO: It would be nice to not need to nest this EnqueueEntityCommand() call
-					if (makeActive)
+					switch (activationMode)
+					{
+					case ActivationMode::Always:
 					{
 						em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
+					}
+					break;
+					case ActivationMode::IfNoneExists:
+					{
+						if (!ambientExists)
+						{
+							em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
+						}
+					}
+					break;
+					case ActivationMode::Never:
+					{
+						//
+					}
+					break;
+					default: SEAssertF("Invalid activation mode");
 					}
 				});
 		}
 
-		bool m_makeActive = true;
+		enum class ActivationMode
+		{
+			Always,
+			IfNoneExists, // If no Ambient IBL exists when we're creating this one, make it active (E.g. Scene default)
+			Never,
+		};
+
+		ActivationMode m_activationMode = ActivationMode::Always;
 	};
 
 
@@ -2265,7 +2291,7 @@ namespace
 				std::vector<std::future<void>> loadFutures;
 				PreLoadSkinData(m_sceneData, m_sceneMetadata, loadFutures);
 
-				PreLoadAnimationData(m_sceneData, m_sceneMetadata); // We do this single-threaded while everything else loads
+				PreLoadAnimationData(m_sceneData, m_sceneMetadata); // Single-threaded while everything else loads
 
 				// Wait for the async creation tasks to be done:
 				for (auto const& loadFuture : loadFutures)
@@ -2362,13 +2388,36 @@ namespace
 
 
 	public:
-		core::Inventory* m_inventory;
+		core::Inventory* m_inventory = nullptr;
 		std::string m_filePath;
 	};
 
 
+	core::InvPtr<re::Texture> ImportIBL(
+		core::Inventory* inventory, std::string const& filepath, IBLTextureFromFilePath::ActivationMode activationMode)
+	{
+		std::shared_ptr<IBLTextureFromFilePath> importCmdIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>();
+
+		importCmdIBLLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
+		importCmdIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
+		importCmdIBLLoadCtx->m_filePath = filepath;
+		importCmdIBLLoadCtx->m_activationMode = activationMode;
+
+		return inventory->Get<re::Texture>(util::StringHash(filepath), importCmdIBLLoadCtx);
+	}
+
+
 	void ImportGLTFFile(core::Inventory* inventory, std::string const& filePath)
 	{
+		// GLTF does not support IBLs so we handle it manually by loading any HDRs placed alongside the GLTF file:
+		std::string const& importIBLFilePath =
+			util::ExtractDirectoryPathFromFilePath(filePath) + core::configkeys::k_perFileDefaultIBLRelFilePath;
+		if (util::FileExists(importIBLFilePath))
+		{
+			// We let this go out of scope, but it'll register itself during OnLoadComplete()
+			ImportIBL(inventory, importIBLFilePath, IBLTextureFromFilePath::ActivationMode::Always);
+		}
+
 		std::shared_ptr<GLTFFileLoadContext<GLTFSceneHandle>> loadContext =
 			std::make_shared<GLTFFileLoadContext<GLTFSceneHandle>>();
 
@@ -2405,6 +2454,9 @@ namespace fr
 
 		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
 
+		// Event subscriptions:
+		core::EventManager::Get()->Subscribe(eventkey::FileImportRequest, this);
+
 		CreateDefaultSceneResources(); // Kick off async loading of mandatory assets
 
 		// Initial scene setup:
@@ -2420,18 +2472,14 @@ namespace fr
 				LOG("Created unbound CameraControlComponent");
 			});
 
-		// Note: Even if a command line argument was not provided to load a scene, we kick off the loading flow anyway
-		// to ensure a default camera is created		
-		std::string importFilePathArg;
-		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_importCmdLineArg, importFilePathArg);
-
-		ImportFile(importFilePathArg);
+		// Note: We kick off the loading flow with an empty string to ensure a default camera is created
+		ImportFile("");
 
 		// Create a scene render system:
 		re::RenderManager::Get()->EnqueueRenderCommand([]()
 			{
 				std::string pipelineFileName;
-				if (core::Config::Get()->TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName) == false)
+				if (!core::Config::Get()->TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName))
 				{
 					pipelineFileName = core::configkeys::k_defaultScenePipelineFileName;
 				}
@@ -2452,7 +2500,28 @@ namespace fr
 
 	void SceneManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		// 
+		HandleEvents();
+	}
+
+
+	void SceneManager::HandleEvents()
+	{
+		while (HasEvents())
+		{
+			core::EventManager::EventInfo const& eventInfo = GetEvent();
+
+			switch (eventInfo.m_eventKey)
+			{
+			case eventkey::FileImportRequest:
+			{
+				std::string const& filepath = std::get<std::string>(eventInfo.m_data);
+				ImportFile(filepath);
+			}
+			break;
+			default:
+				break;
+			}
+		}
 	}
 
 
@@ -2550,28 +2619,6 @@ namespace fr
 
 		ImportGLTFFile(m_inventory, filePath); // Kicks off async loading
 
-
-		// Load any HDRs place alongside the file:
-		std::string const& importIBLFilePath = 
-			util::ExtractDirectoryPathFromFilePath(filePath) + core::configkeys::k_perFileIBLRelativeFilePath;
-		if (util::FileExists(importIBLFilePath))
-		{
-			std::shared_ptr<IBLTextureFromFilePath> importCmdIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>();
-
-			importCmdIBLLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
-			importCmdIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
-
-			importCmdIBLLoadCtx->m_filePath = importIBLFilePath;
-
-			importCmdIBLLoadCtx->m_makeActive = true;
-
-			// This will go out of scope, but that's ok because it'll register itself during OnLoadComplete()
-			m_inventory->Get<re::Texture>(
-				util::StringHash(importIBLFilePath),
-				importCmdIBLLoadCtx);
-		}
-
-
 		LOG("\nSceneManager scheduled file \"%s\" import in %f seconds\n", filePath.c_str(), timer.StopSec());
 	}
 
@@ -2583,49 +2630,22 @@ namespace fr
 		bool expected = false;
 		if (sceneMgr->m_hasCreatedScene.compare_exchange_strong(expected, true))
 		{
-			LOG("SceneManager: Initial scene load complete");
+			LOG("SceneManager: Initial scene created");
 
 			core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-				.m_eventKey = eventkey::SceneCreated
-				});
+				.m_eventKey = eventkey::SceneCreated });
 		}
 	}
 
 
 	void SceneManager::CreateDefaultSceneResources()
 	{
+		// The return value here will go out of scope, but that's ok because it'll register itself during OnLoadComplete()
+		ImportIBL(
+			m_inventory,
+			core::configkeys::k_defaultEngineIBLFilePath,
+			IBLTextureFromFilePath::ActivationMode::IfNoneExists);
+
 		GenerateDefaultMaterial(m_inventory);
-
-		bool importHasDefaultIBL = false;
-
-		// If the "-import" command line argument was used, we won't make the default IBL active if an override exists	
-		std::string importIBLFilePathArg;
-		if (core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_importCmdLineArg, importIBLFilePathArg))
-		{
-			std::string const& importIBLFilePath =
-				util::ExtractDirectoryPathFromFilePath(importIBLFilePathArg) + core::configkeys::k_perFileIBLRelativeFilePath;
-
-			if (util::FileExists(importIBLFilePath))
-			{
-				importHasDefaultIBL = true;
-			}
-		}
-
-		// Load the engine default IBL:
-		std::shared_ptr<IBLTextureFromFilePath> defaultIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>();
-
-		defaultIBLLoadCtx->m_isPermanent = true;
-
-		defaultIBLLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
-		defaultIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
-
-		defaultIBLLoadCtx->m_filePath = core::configkeys::k_defaultEngineIBLFilePath;
-
-		defaultIBLLoadCtx->m_makeActive = !importHasDefaultIBL;
-
-		// This will go out of scope, but that's ok because it'll register itself during OnLoadComplete()
-		m_inventory->Get<re::Texture>(
-			util::StringHash(core::configkeys::k_defaultEngineIBLFilePath),
-			defaultIBLLoadCtx);
 	}
 }

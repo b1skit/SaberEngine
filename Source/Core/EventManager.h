@@ -1,5 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Assert.h"
+
 #include "Interfaces/IEngineComponent.h"
 
 #include "Util/HashKey.h"
@@ -50,6 +52,7 @@ namespace eventkey
 
 	constexpr util::HashKey EngineQuit("EngineQuit");
 
+	constexpr util::HashKey FileImportRequest("FileImportRequest");
 	constexpr util::HashKey SceneCreated("SceneCreated");
 }
 
@@ -76,6 +79,7 @@ namespace core
 			util::HashKey m_eventKey = util::HashKey("UninitializedEvent");
 			EventData m_data;
 		};
+		SEStaticAssert(sizeof(EventInfo) == 64, "EventInfo size no longer 64B");
 
 
 	public:
