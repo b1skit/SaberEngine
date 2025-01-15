@@ -1,15 +1,14 @@
-// © 2023 Adam Badke. All rights reserved.
+// © 2025 Adam Badke. All rights reserved.
 #pragma once
-#include "Texture.h"
-
-struct cgltf_material;
 
 
-namespace grutil
+namespace core
 {
-	re::Texture::ImageDataUniquePtr CreateImageDataUniquePtr(void* imageData);
+	class Inventory;
+}
 
-
+namespace load
+{
 	template<typename T>
 	struct TextureFromFilePath : public virtual core::ILoadContext<T>
 	{
@@ -47,4 +46,28 @@ namespace grutil
 
 	std::string GenerateTextureColorFallbackName(
 		glm::vec4 const& colorFallback, size_t numChannels, re::Texture::ColorSpace colorSpace);
+
+
+	struct IBLTextureFromFilePath final : public virtual TextureFromFilePath<re::Texture>
+	{
+		// We override this so we can skip the early registration (which would make the render thread wait)
+		void OnLoadBegin(core::InvPtr<re::Texture>&) override;
+		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& newIBL) override;
+		void OnLoadComplete(core::InvPtr<re::Texture>& newIBL) override;
+
+		enum class ActivationMode
+		{
+			Always,
+			IfNoneExists, // If no Ambient IBL exists when we're creating this one, make it active (E.g. Scene default)
+			Never,
+		};
+		ActivationMode m_activationMode = ActivationMode::Always;
+	};
+
+
+	core::InvPtr<re::Texture> ImportIBL(
+		core::Inventory* inventory,
+		std::string const& filepath,
+		IBLTextureFromFilePath::ActivationMode activationMode,
+		bool makePermanent = false);
 }

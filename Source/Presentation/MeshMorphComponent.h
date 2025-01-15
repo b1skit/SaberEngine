@@ -1,5 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
+#include "Renderer/MeshPrimitive.h"
 
 
 namespace fr

@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "AssetLoadUtils.h"
 #include "RenderManager.h"
 #include "Texture.h"
 #include "Texture_Platform.h"

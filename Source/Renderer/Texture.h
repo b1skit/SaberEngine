@@ -8,7 +8,7 @@
 #include "Core/Interfaces/IUniqueID.h"
 
 
-namespace grutil
+namespace load
 {
 	template<typename T>
 	struct TextureFromFilePath;
@@ -269,7 +269,7 @@ namespace re
 
 
 	protected:
-		friend struct grutil::TextureFromFilePath<re::Texture>;
+		friend struct load::TextureFromFilePath<re::Texture>;
 		friend struct TextureFromCGLTF<re::Texture>;
 
 		explicit Texture(std::string const& name, TextureParams const& params);

@@ -1,14 +1,14 @@
-// © 2023 Adam Badke. All rights reserved.
-#include "AssetLoadUtils.h"
-#include "Texture.h"
-#include "RenderManager.h"
+// © 2025 Adam Badke. All rights reserved.
+#include "EntityManager.h"
+#include "LightComponent.h"
+#include "Load_Common.h"
 
+#include "Core/Inventory.h"
 #include "Core/LogManager.h"
 #include "Core/PerformanceTimer.h"
 
-#include "Core/Definitions/ConfigKeys.h"
-
-#include "Core/Util/CastUtils.h"
+#include "Renderer/RenderManager.h"
+#include "Renderer/Texture.h"
 
 // Note: We can't include STBI in our pch, as the following define can only be included ONCE in the project
 #define STB_IMAGE_IMPLEMENTATION
@@ -16,7 +16,7 @@
 #include <stb_image.h>
 
 
-namespace grutil
+namespace
 {
 	re::Texture::ImageDataUniquePtr CreateImageDataUniquePtr(void* imageData)
 	{
@@ -26,11 +26,10 @@ namespace grutil
 
 		return std::move(imageDataPtr);
 	};
+}
 
-
-	// ---
-
-
+namespace load
+{
 	template<>
 	void TextureFromFilePath<re::Texture>::OnLoadBegin(core::InvPtr<re::Texture>& newTex)
 	{
@@ -47,7 +46,7 @@ namespace grutil
 		re::Texture::TextureParams texParams{};
 		std::vector<re::Texture::ImageDataUniquePtr> imageData;
 
-		const bool loadSuccess = grutil::LoadTextureDataFromFilePath(
+		const bool loadSuccess = LoadTextureDataFromFilePath(
 			texParams,
 			imageData,
 			{ m_filePath },
@@ -415,5 +414,82 @@ namespace grutil
 		}
 
 		return texNameStr;
+	}
+
+
+	core::InvPtr<re::Texture> ImportIBL(
+		core::Inventory* inventory,
+		std::string const& filepath,
+		IBLTextureFromFilePath::ActivationMode activationMode,
+		bool makePermanent /*= false*/)
+	{
+		std::shared_ptr<IBLTextureFromFilePath> importCmdIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>();
+
+		importCmdIBLLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
+		importCmdIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
+		importCmdIBLLoadCtx->m_filePath = filepath;
+		importCmdIBLLoadCtx->m_activationMode = activationMode;
+
+		importCmdIBLLoadCtx->m_isPermanent = makePermanent;
+
+		return inventory->Get<re::Texture>(util::StringHash(filepath), importCmdIBLLoadCtx);
+	}
+
+
+	// We override this so we can skip the early registration (which would make the render thread wait)
+	void IBLTextureFromFilePath::OnLoadBegin(core::InvPtr<re::Texture>&)
+	{
+		LOG(std::format("Creating IBL texture from file path \"{}\"", m_filePath).c_str());
+	}
+
+
+	std::unique_ptr<re::Texture> IBLTextureFromFilePath::Load(core::InvPtr<re::Texture>& newIBL)
+	{
+		std::unique_ptr<re::Texture> result = load::TextureFromFilePath<re::Texture>::Load(newIBL);
+
+		// Register for API-layer creation now that we've loaded the (typically large amount of) data
+		re::RenderManager::Get()->RegisterForCreate(newIBL);
+
+		return std::move(result);
+	}
+
+
+	void IBLTextureFromFilePath::OnLoadComplete(core::InvPtr<re::Texture>& newIBL)
+	{
+		fr::EntityManager* em = fr::EntityManager::Get();
+
+		em->EnqueueEntityCommand([em, newIBL, activationMode = m_activationMode]()
+			{
+				const bool ambientExists = em->EntityExists<fr::LightComponent::AmbientIBLDeferredMarker>();
+
+				// Create an Ambient LightComponent, and make it active if requested:
+				const entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
+					*em,
+					newIBL->GetName().c_str(),
+					newIBL);
+
+				switch (activationMode)
+				{
+				case ActivationMode::Always:
+				{
+					em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
+				}
+				break;
+				case ActivationMode::IfNoneExists:
+				{
+					if (!ambientExists)
+					{
+						em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
+					}
+				}
+				break;
+				case ActivationMode::Never:
+				{
+					//
+				}
+				break;
+				default: SEAssertF("Invalid activation mode");
+				}
+			});
 	}
 }

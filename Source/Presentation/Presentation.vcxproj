@@ -68,12 +68,12 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -81,7 +81,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion />
       <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -89,7 +89,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion />
       <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -105,6 +105,8 @@
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightComponent.h" />
+    <ClInclude Include="Load_Common.h" />
+    <ClInclude Include="Load_GLTF.h" />
     <ClInclude Include="MarkerComponents.h" />
     <ClInclude Include="MaterialInstanceComponent.h" />
     <ClInclude Include="MeshConcept.h" />
@@ -133,6 +135,8 @@
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightComponent.cpp" />
+    <ClCompile Include="Load_Common.cpp" />
+    <ClCompile Include="Load_GLTF.cpp" />
     <ClCompile Include="MaterialInstanceComponent.cpp" />
     <ClCompile Include="MeshConcept.cpp" />
     <ClCompile Include="MeshMorphComponent.cpp" />

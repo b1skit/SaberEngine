@@ -27,6 +27,12 @@
     <Filter Include="Header Files\fr\Components">
       <UniqueIdentifier>{2db72d74-df2d-4e05-a4dd-eaaa9663b847}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\load">
+      <UniqueIdentifier>{42c73958-281d-4b11-9df5-3b70ec6b049b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\load">
+      <UniqueIdentifier>{9a7edd0c-7efc-43b6-9fbf-d242c4f7868d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BoundsComponent.cpp">
@@ -103,6 +109,12 @@
     </ClCompile>
     <ClCompile Include="MeshMorphComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Load_GLTF.cpp">
+      <Filter>Source Files\load</Filter>
+    </ClCompile>
+    <ClCompile Include="Load_Common.cpp">
+      <Filter>Source Files\load</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -183,6 +195,12 @@
     </ClInclude>
     <ClInclude Include="MeshMorphComponent.h">
       <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Load_GLTF.h">
+      <Filter>Header Files\load</Filter>
+    </ClInclude>
+    <ClInclude Include="Load_Common.h">
+      <Filter>Header Files\load</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

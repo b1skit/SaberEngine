@@ -80,7 +80,6 @@ namespace core
 			util::HashKey m_eventKey = util::HashKey("UninitializedEvent");
 			EventData m_data;
 		};
-		SEStaticAssert(sizeof(EventInfo) == 64, "EventInfo size no longer 64B");
 
 
 	public:

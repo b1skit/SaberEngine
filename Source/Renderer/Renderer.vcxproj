@@ -69,13 +69,13 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SE_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SE_DEBUGRELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
@@ -84,7 +84,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SE_PROFILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -93,7 +93,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SE_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -110,7 +110,6 @@
     <ClInclude Include="..\Dependencies\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\Dependencies\imgui\imstb_textedit.h" />
     <ClInclude Include="..\Dependencies\imgui\imstb_truetype.h" />
-    <ClInclude Include="AssetLoadUtils.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="BoundsRenderData.h" />
     <ClInclude Include="Buffer.h" />
@@ -224,7 +223,6 @@
     <ClCompile Include="..\Dependencies\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\Dependencies\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Dependencies\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="AssetLoadUtils.cpp" />
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="BufferAllocator.cpp" />

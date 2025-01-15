@@ -101,9 +101,6 @@
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
-    <ClInclude Include="AssetLoadUtils.h">
-      <Filter>Header Files\gr\grutil</Filter>
-    </ClInclude>
     <ClInclude Include="Batch.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
@@ -561,9 +558,6 @@
     </ClCompile>
     <ClCompile Include="TextureTarget_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="AssetLoadUtils.cpp">
-      <Filter>Source Files\gr\grutil</Filter>
     </ClCompile>
     <ClCompile Include="VertexStreamBuilder.cpp">
       <Filter>Source Files\gr\grutil</Filter>

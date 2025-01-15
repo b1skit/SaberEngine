@@ -3,6 +3,7 @@
 #include "EntityCommands.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
+#include "Load_Common.h"
 #include "MarkerComponents.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
@@ -20,7 +21,6 @@
 #include "Core/Util/ImGuiUtils.h"
 #include "Core/Util/TextUtils.h"
 
-#include "Renderer/AssetLoadUtils.h"
 #include "Renderer/MeshFactory.h"
 #include "Renderer/RenderSystem.h"
 
@@ -564,8 +564,8 @@ namespace fr
 							fr::EntityManager* em = fr::EntityManager::Get();
 							core::Inventory* inventory = em->GetInventory();
 
-							std::shared_ptr<grutil::TextureFromFilePath<re::Texture>> texLoadCtx =
-								std::make_shared<grutil::TextureFromFilePath<re::Texture>>();
+							std::shared_ptr<load::TextureFromFilePath<re::Texture>> texLoadCtx =
+								std::make_shared<load::TextureFromFilePath<re::Texture>>();
 
 							texLoadCtx->m_filePath = filepath;
 							texLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
