@@ -234,8 +234,10 @@ namespace fr
 			// Transform:
 			fr::TransformComponent::ShowImGuiWindow(em, camControlEntity, nameCmpt.GetUniqueID());
 
-			// Camera:
+			// Camera: Push/pop IDs to prevent a collision if the Camera menu is also expanded
+			ImGui::PushID(std::format("Camera controller \"{}\"##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str());
 			fr::CameraComponent::ShowImGuiWindow(em, currentCam);
+			ImGui::PopID();
 
 			ImGui::Unindent();
 		}
