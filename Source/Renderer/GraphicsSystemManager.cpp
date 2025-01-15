@@ -179,8 +179,8 @@ namespace gr
 
 	void GraphicsSystemManager::SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID)
 	{
-		SEAssert(cameraRenderDataID != gr::k_invalidRenderDataID && cameraTransformID != gr::k_invalidTransformID,
-			"Invalid ID");
+		SEAssert((cameraRenderDataID != gr::k_invalidRenderDataID) == (cameraTransformID != gr::k_invalidTransformID),
+			"Invalid ID: Must both be valid or invalid");
 
 		m_activeCameraRenderDataID = cameraRenderDataID;
 		m_activeCameraTransformDataID = cameraTransformID;

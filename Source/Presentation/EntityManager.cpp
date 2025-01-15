@@ -54,7 +54,7 @@ namespace fr
 		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
 
 		// Event subscriptions:
-		//
+		core::EventManager::Get()->Subscribe(eventkey::SceneResetRequest, this);
 
 		// Process entity commands issued during scene loading:
 		ProcessEntityCommands();
@@ -429,6 +429,32 @@ namespace fr
 	}
 
 
+	void EntityManager::Reset()
+	{
+		LOG("EntityManager: Resetting registry");
+
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+			// Register all entities for delete
+			for (auto entityTuple : m_registry.storage<entt::entity>().each())
+			{
+				const entt::entity curEntity = std::get<entt::entity>(entityTuple);
+
+				RegisterEntityForDelete(curEntity);
+			}
+
+			ExecuteDeferredDeletions();
+
+			m_registry.clear();
+		}
+
+		// Note: There's a potential ordering issue here, where we'll receive a reset event and clear the registry, and
+		// then possibly immediately create new entities from ProcessEntityCommands() registered before the reset event.
+		// There are arguements either way about which is preferable, for now just leaving this comment for awareness
+	}
+
+
 	entt::entity EntityManager::CreateEntity(std::string const& name)
 	{
 		return CreateEntity(name.c_str());
@@ -512,6 +538,14 @@ namespace fr
 					// Cameras:
 					if (m_registry.all_of<fr::CameraComponent>(entity))
 					{
+						const entt::entity mainCamera = GetMainCamera();
+
+						if (entity == mainCamera)
+						{
+							renderManager->EnqueueRenderCommand<fr::SetActiveCameraRenderCommand>(
+								gr::k_invalidRenderDataID, gr::k_invalidTransformID);
+						}
+
 						renderManager->EnqueueRenderCommand<fr::DestroyRenderDataRenderCommand<gr::Camera::RenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
@@ -554,16 +588,16 @@ namespace fr
 		{
 			core::EventManager::EventInfo const& eventInfo = GetEvent();
 
-			//switch (eventInfo.m_eventKey)
-			//{
-			//case :
-			//{
-			//	//
-			//}
-			//break;
-			//default:
-			//	break;
-			//}
+			switch (eventInfo.m_eventKey)
+			{
+			case eventkey::SceneResetRequest:
+			{
+				Reset();
+			}
+			break;
+			default:
+				break;
+			}
 		}
 	}
 
@@ -656,61 +690,64 @@ namespace fr
 				sceneBoundsEntity = entity;
 			}
 
-			// Modify our bounds component in-place:
-			m_registry.patch<fr::BoundsComponent>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
-				{
-					sceneBoundsComponent = fr::BoundsComponent::Invalid();
-
-					bool foundOtherBounds = false;
-
-					// We must check every MeshConcept in the scene: If even 1 is dirty, we need to recompute everything
-					auto meshConceptEntitiesView =
-						m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent, fr::TransformComponent>();
-					for (entt::entity entity : meshConceptEntitiesView)
+			if (foundSceneBoundsEntity) // Might be a null entity (e.g. if we just reset the scene)
+			{
+				// Modify our bounds component in-place:
+				m_registry.patch<fr::BoundsComponent>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
 					{
-						fr::BoundsComponent const& boundsComponent =
-							meshConceptEntitiesView.get<fr::BoundsComponent>(entity);
+						sceneBoundsComponent = fr::BoundsComponent::Invalid();
 
-						fr::Transform const& meshTransform =
-							meshConceptEntitiesView.get<fr::TransformComponent>(entity).GetTransform();
+						bool foundOtherBounds = false;
 
-						sceneBoundsComponent.ExpandBounds(
-							boundsComponent.GetTransformedAABBBounds(meshTransform.GetGlobalMatrix()),
-							sceneBoundsEntity);
+						// We must check every MeshConcept in the scene: If even 1 is dirty, we need to recompute everything
+						auto meshConceptEntitiesView =
+							m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent, fr::TransformComponent>();
+						for (entt::entity entity : meshConceptEntitiesView)
+						{
+							fr::BoundsComponent const& boundsComponent =
+								meshConceptEntitiesView.get<fr::BoundsComponent>(entity);
 
-						foundOtherBounds = true;
-					}
+							fr::Transform const& meshTransform =
+								meshConceptEntitiesView.get<fr::TransformComponent>(entity).GetTransform();
 
-					// It is valid for a MeshConcept to have no TransformComponent; We handle this case with its own
-					// specialized view
-					auto meshWithNoTransformView =
-						m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent>(entt::exclude<fr::TransformComponent>);
-					for (entt::entity entity : meshWithNoTransformView)
-					{
-						fr::BoundsComponent const& boundsComponent =
-							meshWithNoTransformView.get<fr::BoundsComponent>(entity);
+							sceneBoundsComponent.ExpandBounds(
+								boundsComponent.GetTransformedAABBBounds(meshTransform.GetGlobalMatrix()),
+								sceneBoundsEntity);
 
-						fr::Relationship const& relationship = GetComponent<fr::Relationship>(entity);
-						fr::TransformComponent const* transformCmpt =
-							relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
-						SEAssert(transformCmpt,
-							"Failed to find a TransformComponent in the hierarchy above. This is unexpected");
+							foundOtherBounds = true;
+						}
 
-						sceneBoundsComponent.ExpandBounds(
-							boundsComponent.GetTransformedAABBBounds(transformCmpt->GetTransform().GetGlobalMatrix()),
-							sceneBoundsEntity);
+						// It is valid for a MeshConcept to have no TransformComponent; We handle this case with its own
+						// specialized view
+						auto meshWithNoTransformView =
+							m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent>(entt::exclude<fr::TransformComponent>);
+						for (entt::entity entity : meshWithNoTransformView)
+						{
+							fr::BoundsComponent const& boundsComponent =
+								meshWithNoTransformView.get<fr::BoundsComponent>(entity);
 
-						foundOtherBounds = true;
-					}
+							fr::Relationship const& relationship = GetComponent<fr::Relationship>(entity);
+							fr::TransformComponent const* transformCmpt =
+								relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
+							SEAssert(transformCmpt,
+								"Failed to find a TransformComponent in the hierarchy above. This is unexpected");
 
-					// If there are no other bounds, we set the scene bounds to zero (preventing it from getting stuck
-					// at the last size it saw another bounds)
-					if (!foundOtherBounds)
-					{
-						sceneBoundsComponent = fr::BoundsComponent::Zero();
-						fr::BoundsComponent::MarkDirty(sceneBoundsEntity);
-					}
-				});
+							sceneBoundsComponent.ExpandBounds(
+								boundsComponent.GetTransformedAABBBounds(transformCmpt->GetTransform().GetGlobalMatrix()),
+								sceneBoundsEntity);
+
+							foundOtherBounds = true;
+						}
+
+						// If there are no other bounds, we set the scene bounds to zero (preventing it from getting stuck
+						// at the last size it saw another bounds)
+						if (!foundOtherBounds)
+						{
+							sceneBoundsComponent = fr::BoundsComponent::Zero();
+							fr::BoundsComponent::MarkDirty(sceneBoundsEntity);
+						}
+					});
+			}
 		}
 
 

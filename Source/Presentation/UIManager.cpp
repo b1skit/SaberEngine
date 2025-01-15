@@ -506,6 +506,12 @@ namespace fr
 							FileImport();
 						}
 
+						if (ImGui::MenuItem("Reset"))
+						{
+							core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+								.m_eventKey = eventkey::SceneResetRequest, });
+						}
+
 						ImGui::Separator();
 
 						if (ImGui::MenuItem("Quit"))

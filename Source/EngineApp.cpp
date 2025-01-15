@@ -193,7 +193,7 @@ namespace app
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("fr::SceneManager::Update");
-				sceneManager->Update(m_frameNum, k_fixedTimeStep);
+				sceneManager->Update(m_frameNum, k_fixedTimeStep); // Note: Must be updated after entity manager (e.g. Reset)
 				SEEndCPUEvent();
 
 				// TODO: AI, physics, etc should also be pumped here

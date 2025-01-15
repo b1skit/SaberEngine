@@ -51,6 +51,8 @@ namespace fr
 
 
 	private:
+		void Reset();
+
 		void CreateDefaultSceneResources();
 
 		void ImportFile(std::string const& filePath); // Filename and path, relative to the ..\Scenes\ dir

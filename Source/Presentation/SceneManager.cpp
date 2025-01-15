@@ -2456,6 +2456,30 @@ namespace fr
 
 		// Event subscriptions:
 		core::EventManager::Get()->Subscribe(eventkey::FileImportRequest, this);
+		core::EventManager::Get()->Subscribe(eventkey::SceneResetRequest, this);
+
+		Reset();
+
+		// Create a scene render system:
+		re::RenderManager::Get()->EnqueueRenderCommand([]()
+			{
+				std::string pipelineFileName;
+				if (!core::Config::Get()->TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName))
+				{
+					pipelineFileName = core::configkeys::k_defaultScenePipelineFileName;
+				}
+
+				re::RenderSystem const* sceneRenderSystem =
+					re::RenderManager::Get()->CreateAddRenderSystem(k_sceneRenderSystemName, pipelineFileName);
+			});
+	}
+
+	void SceneManager::Reset()
+	{
+		LOG("SceneManager: Resetting scene");
+
+		const bool prevHasCreatedScene = m_hasCreatedScene.load();
+		m_hasCreatedScene.store(false);
 
 		CreateDefaultSceneResources(); // Kick off async loading of mandatory assets
 
@@ -2472,21 +2496,26 @@ namespace fr
 				LOG("Created unbound CameraControlComponent");
 			});
 
+		// If we're reseting an existing scene, recreate the default IBL
+		if (prevHasCreatedScene)
+		{
+			core::InvPtr<re::Texture> defaultIBL = 
+				m_inventory->Get<re::Texture>(core::configkeys::k_defaultEngineIBLFilePath);
+
+			em->EnqueueEntityCommand([em, defaultIBL]()
+				{
+					// Create an Ambient LightComponent, and make it active if requested:
+					const entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
+						*em,
+						defaultIBL->GetName().c_str(),
+						defaultIBL);
+
+					em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
+				});
+		}
+
 		// Note: We kick off the loading flow with an empty string to ensure a default camera is created
 		ImportFile("");
-
-		// Create a scene render system:
-		re::RenderManager::Get()->EnqueueRenderCommand([]()
-			{
-				std::string pipelineFileName;
-				if (!core::Config::Get()->TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName))
-				{
-					pipelineFileName = core::configkeys::k_defaultScenePipelineFileName;
-				}
-
-				re::RenderSystem const* sceneRenderSystem =
-					re::RenderManager::Get()->CreateAddRenderSystem(k_sceneRenderSystemName, pipelineFileName);
-			});
 	}
 
 
@@ -2518,10 +2547,53 @@ namespace fr
 				ImportFile(filepath);
 			}
 			break;
+			case eventkey::SceneResetRequest:
+			{
+				Reset();
+			}
+			break;
 			default:
 				break;
 			}
 		}
+	}
+
+
+	void SceneManager::ImportFile(std::string const& filePath)
+	{
+		util::PerformanceTimer timer;
+		timer.Start();
+
+		ImportGLTFFile(m_inventory, filePath); // Kicks off async loading
+
+		LOG("\nSceneManager scheduled file \"%s\" import in %f seconds\n", filePath.c_str(), timer.StopSec());
+	}
+
+
+	void SceneManager::NotifyLoadComplete()
+	{
+		SceneManager* sceneMgr = fr::SceneManager::Get();
+
+		bool expected = false;
+		if (sceneMgr->m_hasCreatedScene.compare_exchange_strong(expected, true))
+		{
+			LOG("SceneManager: Initial scene created");
+
+			core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+				.m_eventKey = eventkey::SceneCreated });
+		}
+	}
+
+
+	void SceneManager::CreateDefaultSceneResources()
+	{
+		// The return value here will go out of scope, but that's ok because it'll register itself during OnLoadComplete()
+		ImportIBL(
+			m_inventory,
+			core::configkeys::k_defaultEngineIBLFilePath,
+			IBLTextureFromFilePath::ActivationMode::IfNoneExists);
+
+		GenerateDefaultMaterial(m_inventory);
 	}
 
 
@@ -2609,43 +2681,5 @@ namespace fr
 		}
 
 		ImGui::End();
-	}
-
-
-	void SceneManager::ImportFile(std::string const& filePath)
-	{
-		util::PerformanceTimer timer;
-		timer.Start();
-
-		ImportGLTFFile(m_inventory, filePath); // Kicks off async loading
-
-		LOG("\nSceneManager scheduled file \"%s\" import in %f seconds\n", filePath.c_str(), timer.StopSec());
-	}
-
-
-	void SceneManager::NotifyLoadComplete()
-	{
-		SceneManager* sceneMgr = fr::SceneManager::Get();
-
-		bool expected = false;
-		if (sceneMgr->m_hasCreatedScene.compare_exchange_strong(expected, true))
-		{
-			LOG("SceneManager: Initial scene created");
-
-			core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-				.m_eventKey = eventkey::SceneCreated });
-		}
-	}
-
-
-	void SceneManager::CreateDefaultSceneResources()
-	{
-		// The return value here will go out of scope, but that's ok because it'll register itself during OnLoadComplete()
-		ImportIBL(
-			m_inventory,
-			core::configkeys::k_defaultEngineIBLFilePath,
-			IBLTextureFromFilePath::ActivationMode::IfNoneExists);
-
-		GenerateDefaultMaterial(m_inventory);
 	}
 }

@@ -54,6 +54,7 @@ namespace eventkey
 
 	constexpr util::HashKey FileImportRequest("FileImportRequest");
 	constexpr util::HashKey SceneCreated("SceneCreated");
+	constexpr util::HashKey SceneResetRequest("SceneResetRequest");
 }
 
 namespace core

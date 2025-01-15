@@ -75,6 +75,8 @@ namespace fr
 
 		fr::BoundsComponent const* GetSceneBounds() const;
 		entt::entity GetMainCamera() const;
+
+		void Reset();
 		
 	private:
 		void ProcessEntityCommands();
@@ -101,12 +103,12 @@ namespace fr
 		void ConfigureRegistry();
 		void OnBoundsDirty();
 
+		void RegisterEntityForDelete(entt::entity);
+
 
 	public: // EnTT wrappers:
 		entt::entity CreateEntity(std::string const& name);
 		entt::entity CreateEntity(char const* name);
-
-		void RegisterEntityForDelete(entt::entity);
 
 		template<typename T>
 		void EmplaceComponent(entt::entity);
