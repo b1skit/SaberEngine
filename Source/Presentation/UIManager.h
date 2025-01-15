@@ -45,8 +45,8 @@ namespace fr
 
 
 	private:
-		bool m_imguiMenuVisible;
-		bool m_prevImguiMenuVisible;
+		bool m_imguiMenuActive;
+		bool m_prevImguiMenuActive;
 
 		bool m_imguiWantsToCaptureKeyboard;
 		bool m_imguiWantsToCaptureMouse;

@@ -161,8 +161,8 @@ namespace fr
 		: m_debugUIRenderSystemCreated(false)
 		, m_debugUICommandMgr(nullptr)
 		, m_imguiGlobalMutex(nullptr)
-		, m_imguiMenuVisible(true)
-		, m_prevImguiMenuVisible(false)
+		, m_imguiMenuActive(true)
+		, m_prevImguiMenuActive(false)
 		, m_imguiWantsToCaptureKeyboard(false)
 		, m_imguiWantsToCaptureMouse(false)
 		, m_imguiWantsTextInput(false)
@@ -219,7 +219,7 @@ namespace fr
 
 		m_show[LogConsole] = true;
 
-		m_window->SetRelativeMouseMode(!m_imguiMenuVisible);
+		m_window->SetRelativeMouseMode(!m_imguiMenuActive);
 	}
 
 
@@ -233,8 +233,8 @@ namespace fr
 		if (m_debugUIRenderSystemCreated.load())
 		{
 			// Update ImGui visibility state:
-			const bool imguiVisiblityChanged = m_imguiMenuVisible != m_prevImguiMenuVisible;
-			m_prevImguiMenuVisible = m_imguiMenuVisible;
+			const bool imguiVisiblityChanged = m_imguiMenuActive != m_prevImguiMenuActive;
+			m_prevImguiMenuActive = m_imguiMenuActive;
 			
 			// Update ImGui input capture states:
 			{
@@ -248,7 +248,7 @@ namespace fr
 
 				// Disable ImGui mouse listening if the console is not active: Prevents UI elements
 				// flashing as the hidden mouse cursor passes by
-				if (m_imguiMenuVisible)
+				if (m_imguiMenuActive)
 				{
 					io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
 				}
@@ -264,14 +264,14 @@ namespace fr
 			{
 				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::KeyboardInputCaptureChange,
-					.m_data = (m_imguiMenuVisible || imguiWantsButtonCapture), });
+					.m_data = (m_imguiMenuActive || imguiWantsButtonCapture), });
 			}
 
 			if (imguiVisiblityChanged || m_imguiWantsToCaptureMouse)
 			{
 				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::MouseInputCaptureChange,
-					.m_data = (m_imguiMenuVisible || m_imguiWantsToCaptureMouse), });
+					.m_data = (m_imguiMenuActive || m_imguiWantsToCaptureMouse), });
 			}
 
 			SubmitImGuiRenderCommands(frameNum);
@@ -282,7 +282,7 @@ namespace fr
 	void UIManager::Shutdown()
 	{
 		LOG("UI manager shutting down...");
-		m_imguiMenuVisible = false;
+		m_imguiMenuActive = false;
 	}
 
 
@@ -307,10 +307,10 @@ namespace fr
 				// Only respond to console toggle events if we're not typing
 				if (!m_imguiWantsToCaptureKeyboard && !m_imguiWantsTextInput)
 				{
-					m_imguiMenuVisible = !m_imguiMenuVisible;
+					m_imguiMenuActive = !m_imguiMenuActive;
 
 					// If ImGui is not visible, hide the mouse and lock it to the window
-					m_window->SetRelativeMouseMode(!m_imguiMenuVisible);
+					m_window->SetRelativeMouseMode(!m_imguiMenuActive);
 				}
 			}
 			break;
@@ -346,7 +346,7 @@ namespace fr
 
 				const bool buttonState = data.second;
 				
-				if (debugUISystemCreated)
+				if (debugUISystemCreated && m_imguiMenuActive)
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
@@ -433,7 +433,7 @@ namespace fr
 
 		// Early out if we can
 		bool showAny = false;
-		if (!m_imguiMenuVisible)
+		if (!m_imguiMenuActive)
 		{
 			for (bool show : m_show)
 			{
@@ -576,7 +576,7 @@ namespace fr
 				}
 				ImGui::EndMainMenuBar();
 			};
-		if (m_imguiMenuVisible)
+		if (m_imguiMenuActive)
 		{
 			m_debugUICommandMgr->Enqueue(frameNum, ShowMenuBar);
 		}
