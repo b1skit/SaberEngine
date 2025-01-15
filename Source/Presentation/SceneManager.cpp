@@ -2394,7 +2394,10 @@ namespace
 
 
 	core::InvPtr<re::Texture> ImportIBL(
-		core::Inventory* inventory, std::string const& filepath, IBLTextureFromFilePath::ActivationMode activationMode)
+		core::Inventory* inventory,
+		std::string const& filepath,
+		IBLTextureFromFilePath::ActivationMode activationMode,
+		bool makePermanent = false)
 	{
 		std::shared_ptr<IBLTextureFromFilePath> importCmdIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>();
 
@@ -2402,6 +2405,8 @@ namespace
 		importCmdIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
 		importCmdIBLLoadCtx->m_filePath = filepath;
 		importCmdIBLLoadCtx->m_activationMode = activationMode;
+
+		importCmdIBLLoadCtx->m_isPermanent = makePermanent;
 
 		return inventory->Get<re::Texture>(util::StringHash(filepath), importCmdIBLLoadCtx);
 	}
@@ -2587,11 +2592,11 @@ namespace fr
 
 	void SceneManager::CreateDefaultSceneResources()
 	{
-		// The return value here will go out of scope, but that's ok because it'll register itself during OnLoadComplete()
 		ImportIBL(
 			m_inventory,
 			core::configkeys::k_defaultEngineIBLFilePath,
-			IBLTextureFromFilePath::ActivationMode::IfNoneExists);
+			IBLTextureFromFilePath::ActivationMode::IfNoneExists,
+			true);
 
 		GenerateDefaultMaterial(m_inventory);
 	}
