@@ -103,7 +103,7 @@ namespace en
 			{
 			case eventkey::KeyboardInputCaptureChange:
 			{
-				m_keyboardInputCaptured = std::get<bool>(eventInfo.m_data0);
+				m_keyboardInputCaptured = std::get<bool>(eventInfo.m_data);
 				if (m_keyboardInputCaptured)
 				{
 					InitializeKeyboardStates();
@@ -113,7 +113,7 @@ namespace en
 			break;
 			case eventkey::MouseInputCaptureChange:
 			{
-				m_mouseInputCaptured = std::get<bool>(eventInfo.m_data0);
+				m_mouseInputCaptured = std::get<bool>(eventInfo.m_data);
 				if (m_mouseInputCaptured)
 				{
 					InitializeMouseAxisStates();
@@ -123,9 +123,10 @@ namespace en
 			break;
 			case eventkey::KeyEvent:
 			{
-				const definitions::SEKeycode keycode = 
-					platform::InputManager::ConvertToSEKeycode(std::get<uint32_t>(eventInfo.m_data0));
-				const bool keystate = std::get<bool>(eventInfo.m_data1);
+				std::pair<uint32_t, bool> const& data = std::get<std::pair<uint32_t, bool>>(eventInfo.m_data);
+				
+				const definitions::SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(data.first);
+				const bool keystate = data.second;
 
 				auto const& result = m_SEKeycodesToSEEventEnums.find(keycode);
 				if (result != m_SEKeycodesToSEEventEnums.end())
@@ -134,7 +135,7 @@ namespace en
 
 					m_keyboardInputButtonStates[key] = keystate && !m_keyboardInputCaptured;
 
-					transformedEvent.m_data0 = keystate; // Always true...
+					transformedEvent.m_data = keystate; // Always true...
 
 					// Note: We only broadcast key presses (not releases)
 					doBroadcastToSE = keystate;
@@ -201,23 +202,25 @@ namespace en
 			case eventkey::MouseMotionEvent:
 			{
 				// Unpack the mouse data:
-				m_mouseAxisStates[definitions::Input_MouseX] +=
-					static_cast<float>(std::get<int32_t>(eventInfo.m_data0)) * !m_mouseInputCaptured;
-				m_mouseAxisStates[definitions::Input_MouseY] +=
-					static_cast<float>(std::get<int32_t>(eventInfo.m_data1)) * !m_mouseInputCaptured;
+				std::pair<int32_t, int32_t> const& data = std::get<std::pair<int32_t, int32_t>>(eventInfo.m_data);
+				
+				m_mouseAxisStates[definitions::Input_MouseX] += static_cast<float>(data.first) * !m_mouseInputCaptured;
+				m_mouseAxisStates[definitions::Input_MouseY] += static_cast<float>(data.second) * !m_mouseInputCaptured;
 			}
 			break;
 			case eventkey::MouseButtonEvent:
 			{
-				const bool buttonState = std::get<bool>(eventInfo.m_data1);
-				switch (std::get<uint32_t>(eventInfo.m_data0))
+				std::pair<uint32_t, bool> const& data = std::get<std::pair<uint32_t, bool>>(eventInfo.m_data);
+
+				const bool buttonState = data.second;
+				switch (data.first)
 				{
 				case 0: // Left
 				{
 					m_mouseButtonStates[definitions::InputMouse_Left] = buttonState && !m_mouseInputCaptured;
 
 					transformedEvent.m_eventKey = eventkey::InputMouseLeft;
-					transformedEvent.m_data0 = buttonState;
+					transformedEvent.m_data = buttonState;
 				}
 				break;
 				case 1: // Middle
@@ -225,7 +228,7 @@ namespace en
 					m_mouseButtonStates[definitions::InputMouse_Middle] = buttonState && !m_mouseInputCaptured;
 					
 					transformedEvent.m_eventKey = eventkey::InputMouseMiddle;
-					transformedEvent.m_data0 = buttonState;
+					transformedEvent.m_data = buttonState;
 				}
 				break;
 				case 2: // Right
@@ -233,7 +236,7 @@ namespace en
 					m_mouseButtonStates[definitions::InputMouse_Right] = buttonState && !m_mouseInputCaptured;
 					
 					transformedEvent.m_eventKey = eventkey::InputMouseRight;
-					transformedEvent.m_data0 = buttonState;
+					transformedEvent.m_data = buttonState;
 				}
 				break;
 				default:
@@ -248,15 +251,14 @@ namespace en
 				{
 					// Pass on the data set in EventManager_Win32.cpp
 					transformedEvent.m_eventKey = eventkey::MouseWheelEvent;
-					transformedEvent.m_data0 = eventInfo.m_data0;
-					transformedEvent.m_data1 = eventInfo.m_data1;
+					transformedEvent.m_data = eventInfo.m_data;
 				}
 			}
 			break;
 			case eventkey::WindowFocusChanged:
 			{
 				// If we've lost focus, zero out any currently-pressed keys to prevent them getting stuck
-				if (!std::get<bool>(transformedEvent.m_data0))
+				if (!std::get<bool>(transformedEvent.m_data))
 				{
 					InitializeKeyboardStates();
 				}

@@ -79,6 +79,8 @@ namespace win32
 		case WM_KEYUP:
 		{
 			eventInfo.m_eventKey = eventkey::KeyEvent;
+			eventInfo.m_data = std::pair<uint32_t, bool>(0, 0);
+			std::pair<uint32_t, bool>& dataRef = std::get<std::pair<uint32_t, bool>>(eventInfo.m_data);
 
 			switch (wParam)
 			{
@@ -97,12 +99,12 @@ namespace win32
 				WORD vkCode = vkCode = LOWORD(MapVirtualKeyW(scanCode, MAPVK_VSC_TO_VK_EX)); // virtual-key code
 
 				// Pack VK_LSHIFT/VK_RSHIFT/VK_LCONTROL/VK_RCONTROL/VK_LMENU/VK_RMENU
-				eventInfo.m_data0 = static_cast<uint32_t>(vkCode);
+				dataRef.first = static_cast<uint32_t>(vkCode);
 			}
 			break;
 			default: // Regular key press
 			{
-				eventInfo.m_data0 = static_cast<uint32_t>(wParam); // Win32 virtual key code
+				dataRef.first = static_cast<uint32_t>(wParam); // Win32 virtual key code
 			}
 			}
 
@@ -110,7 +112,7 @@ namespace win32
 			constexpr unsigned short k_mostSignificantBit = 1 << (std::numeric_limits<short>::digits);
 
 			// true/false == pressed/released
-			eventInfo.m_data1 =
+			dataRef.second =
 				static_cast<bool>(GetAsyncKeyState(static_cast<int>(wParam)) & k_mostSignificantBit);
 		}
 		break;
@@ -118,38 +120,42 @@ namespace win32
 		{
 			// Posted when a WM_KEYDOWN message is translated by TranslateMessage
 			eventInfo.m_eventKey = eventkey::TextInputEvent;
-			eventInfo.m_data0 = static_cast<char>(wParam);
+			eventInfo.m_data = static_cast<char>(wParam);
 		}
 		break;
 		case WM_LBUTTONDOWN:
 		case WM_LBUTTONUP:
 		{
 			eventInfo.m_eventKey = eventkey::MouseButtonEvent;
-			eventInfo.m_data0 = 0u;
-			eventInfo.m_data1 = (uMsg == WM_LBUTTONDOWN);
+			eventInfo.m_data = std::pair<uint32_t, bool>(
+				0u,
+				uMsg == WM_LBUTTONDOWN);
 		}
 		break;
 		case WM_MBUTTONDOWN:
 		case WM_MBUTTONUP:
 		{
 			eventInfo.m_eventKey = eventkey::MouseButtonEvent;
-			eventInfo.m_data0= 1u;
-			eventInfo.m_data1 = (uMsg == WM_MBUTTONDOWN);
+			eventInfo.m_data = std::pair<uint32_t, bool>(
+				1u,
+				uMsg == WM_MBUTTONDOWN);
 		}
 		break;
 		case WM_RBUTTONDOWN:
 		case WM_RBUTTONUP:
 		{
 			eventInfo.m_eventKey = eventkey::MouseButtonEvent;
-			eventInfo.m_data0 = 2u;
-			eventInfo.m_data1 = (uMsg == WM_RBUTTONDOWN);
+			eventInfo.m_data = std::pair<uint32_t, bool>(
+				2u,
+				uMsg == WM_RBUTTONDOWN);
 		}
 		break;
 		case WM_MOUSEWHEEL:
 		{
 			eventInfo.m_eventKey = eventkey::MouseWheelEvent;
-			eventInfo.m_data0 = 0; // X: Currently not supported
-			eventInfo.m_data1 = static_cast<int>(GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA); // Y
+			eventInfo.m_data = std::pair<int32_t, int32_t>(
+				0,																	// X: Currently not supported
+				static_cast<int>(GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA));	// Y
 			// Note: Wheel motion is in of +/- units WHEEL_DELTA == 120
 		}
 		break;
@@ -166,8 +172,9 @@ namespace win32
 			{
 				eventInfo.m_eventKey = eventkey::MouseMotionEvent;
 
-				eventInfo.m_data0 = static_cast<int>(raw->data.mouse.lLastX);
-				eventInfo.m_data1 = static_cast<int>(raw->data.mouse.lLastY);
+				eventInfo.m_data = std::pair<int32_t, int32_t>(
+					static_cast<int>(raw->data.mouse.lLastX),
+					static_cast<int>(raw->data.mouse.lLastY));
 			}
 			else
 			{
@@ -464,7 +471,7 @@ namespace win32
 
 					core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 						.m_eventKey = eventkey::DragAndDrop,
-						.m_data0 = filePathStr, });
+						.m_data = filePathStr, });
 				}
 
 				GlobalUnlock(stg.hGlobal);

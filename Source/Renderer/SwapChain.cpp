@@ -31,7 +31,7 @@ namespace re
 		// Broadcast the starting VSync state:
 		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 			.m_eventKey = eventkey::VSyncModeChanged,
-			.m_data0 = m_platformParams->m_vsyncEnabled, });
+			.m_data = m_platformParams->m_vsyncEnabled, });
 	}
 
 
@@ -54,7 +54,7 @@ namespace re
 
 		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::VSyncModeChanged,
-					.m_data0 = vsyncState, });
+					.m_data = vsyncState, });
 
 		return vsyncState;
 	}

@@ -58,12 +58,23 @@ namespace core
 	class EventManager final : public virtual en::IEngineComponent
 	{
 	public:
-		using EventData = std::variant<bool, int32_t, uint32_t, float, char, char const*, std::string>;
+		using EventData = std::variant<
+			bool, 
+			int32_t, 
+			uint32_t, 
+			float, 
+			char, 
+			char const*, 
+			std::string, 
+			std::pair<int32_t, int32_t>,
+			std::pair<uint32_t, bool>,
+			std::pair<uint32_t, uint32_t>,
+			std::pair<float, float>>;
+
 		struct EventInfo
 		{
 			util::HashKey m_eventKey = util::HashKey("UninitializedEvent");
-			EventData m_data0;
-			EventData m_data1;
+			EventData m_data;
 		};
 
 

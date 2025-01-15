@@ -26,8 +26,6 @@ namespace
 	{
 		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 				.m_eventKey = eventKey,
-				//.m_data0 = ,
-				//.m_data1 = 
 			});
 	}
 
@@ -273,14 +271,14 @@ namespace fr
 			{
 				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::KeyboardInputCaptureChange,
-					.m_data0 = (m_imguiMenuVisible || imguiWantsButtonCapture), });
+					.m_data = (m_imguiMenuVisible || imguiWantsButtonCapture), });
 			}
 
 			if (imguiVisiblityChanged || m_imguiWantsToCaptureMouse)
 			{
 				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::MouseInputCaptureChange,
-					.m_data0 = (m_imguiMenuVisible || m_imguiWantsToCaptureMouse), });
+					.m_data = (m_imguiMenuVisible || m_imguiWantsToCaptureMouse), });
 			}
 
 			SubmitImGuiRenderCommands(frameNum);
@@ -329,14 +327,16 @@ namespace fr
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
-					io.AddInputCharacter(std::get<char>(eventInfo.m_data0));
+					io.AddInputCharacter(std::get<char>(eventInfo.m_data));
 				}
 			}
 			break;
 			case eventkey::KeyEvent:
 			{
-				const definitions::SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(std::get<uint32_t>(eventInfo.m_data0));
-				const bool keystate = std::get<bool>(eventInfo.m_data1);
+				std::pair<uint32_t, bool> const& data = std::get<std::pair<uint32_t, bool>>(eventInfo.m_data);
+
+				const definitions::SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(data.first);
+				const bool keystate = data.second;
 
 				// We always broadcast to ImGui, even if it doesn't want exclusive capture of input
 				if (debugUISystemCreated)
@@ -349,14 +349,16 @@ namespace fr
 			break;
 			case eventkey::MouseButtonEvent:
 			{
-				const bool buttonState = std::get<bool>(eventInfo.m_data1);
+				std::pair<uint32_t, bool> const& data = std::get<std::pair<uint32_t, bool>>(eventInfo.m_data);
+
+				const bool buttonState = data.second;
 				
 				if (debugUISystemCreated)
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
 
-					switch (std::get<uint32_t>(eventInfo.m_data0))
+					switch (data.first)
 					{
 					case 0: // Left
 					{
@@ -385,15 +387,16 @@ namespace fr
 				{
 					std::lock_guard<std::mutex> lock(*m_imguiGlobalMutex);
 					ImGuiIO& io = ImGui::GetIO();
-					io.AddMouseWheelEvent(
-						static_cast<float>(std::get<int32_t>(eventInfo.m_data0)),
-						static_cast<float>(std::get<int32_t>(eventInfo.m_data1)));
+
+					std::pair<int32_t, int32_t> const& data = std::get<std::pair<int32_t, int32_t>>(eventInfo.m_data);
+
+					io.AddMouseWheelEvent(static_cast<float>(data.first), static_cast<float>(data.second));
 				}
 			}
 			break;
 			case eventkey::DragAndDrop:
 			{
-				std::string const& filePath = std::get<std::string>(eventInfo.m_data0);
+				std::string const& filePath = std::get<std::string>(eventInfo.m_data);
 
 				std::string const& extension = util::ExtractExtensionFromFilePath(filePath);
 				if (extension == "gltf" || extension == "glb")
@@ -407,7 +410,7 @@ namespace fr
 			break;
 			case eventkey::VSyncModeChanged:
 			{
-				m_vsyncState = std::get<bool>(eventInfo.m_data0);
+				m_vsyncState = std::get<bool>(eventInfo.m_data);
 
 				LOG("VSync %s", m_vsyncState ? "enabled" : "disabled");
 			}
