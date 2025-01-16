@@ -18,6 +18,9 @@ namespace
 		ImVector<int> m_lineOffsets; // Index to lines offset. We maintain this with AddLog() calls.
 		bool m_autoScroll;  // Keep scrolling if already at the bottom.
 		
+		static constexpr ImVec4 s_logColor = ImVec4(1,1,1,1);
+		static constexpr ImVec4 s_warningColor = ImVec4(1, 0.404f, 0.f, 1);
+		static constexpr ImVec4 s_errorColor = ImVec4(1, 0, 0, 1);
 
 		ImGuiLogWindow()
 		{
@@ -51,6 +54,30 @@ namespace
 				{
 					m_lineOffsets.push_back(oldSize + 1);
 				}
+			}
+		}
+
+		ImVec4 const& GetTextColor(const char* lineStart, ImVec4 const*& lastLineColor)
+		{
+			// We update the lastLineColor to maintain consistent colors for multi-line cases without a prefix
+			if (strncmp(lineStart, logging::k_logPrefix, logging::k_logPrefixLen) == 0)
+			{
+				lastLineColor = &s_logColor;
+				return s_logColor;
+			}
+			else if (strncmp(lineStart, logging::k_warnPrefix, logging::k_warnPrefixLen) == 0)
+			{
+				lastLineColor = &s_warningColor;
+				return s_warningColor;
+			}
+			else if (strncmp(lineStart, logging::k_errorPrefix, logging::k_errorPrefixLen) == 0)
+			{
+				lastLineColor = &s_errorColor;
+				return s_errorColor;
+			}
+			else
+			{
+				return *lastLineColor;
 			}
 		}
 
@@ -95,6 +122,8 @@ namespace
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
+			ImVec4 const* lastLineColor = &s_logColor;
+
 			std::lock_guard<std::mutex> lock(m_textBufferMutex);
 			const char* buf = m_textBuffer.begin();
 			const char* buf_end = m_textBuffer.end();
@@ -106,11 +135,13 @@ namespace
 				// search/filter.. especially if the filtering function is not trivial (e.g. reg-exp).
 				for (int line_no = 0; line_no < m_lineOffsets.Size; line_no++)
 				{
-					const char* line_start = buf + m_lineOffsets[line_no];
-					const char* line_end = (line_no + 1 < m_lineOffsets.Size) ? (buf + m_lineOffsets[line_no + 1] - 1) : buf_end;
-					if (m_textFilter.PassFilter(line_start, line_end))
+					const char* lineStart = buf + m_lineOffsets[line_no];
+					const char* lineEnd = (line_no + 1 < m_lineOffsets.Size) ? (buf + m_lineOffsets[line_no + 1] - 1) : buf_end;
+					if (m_textFilter.PassFilter(lineStart, lineEnd))
 					{
-						ImGui::TextUnformatted(line_start, line_end);
+						ImGui::PushStyleColor(ImGuiCol_Text, GetTextColor(lineStart, lastLineColor));
+						ImGui::TextUnformatted(lineStart, lineEnd);
+						ImGui::PopStyleColor();
 					}
 				}
 			}
@@ -135,9 +166,12 @@ namespace
 				{
 					for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++)
 					{
-						const char* line_start = buf + m_lineOffsets[line_no];
-						const char* line_end = (line_no + 1 < m_lineOffsets.Size) ? (buf + m_lineOffsets[line_no + 1] - 1) : buf_end;
-						ImGui::TextUnformatted(line_start, line_end);
+						const char* lineStart = buf + m_lineOffsets[line_no];
+						const char* lineEnd = (line_no + 1 < m_lineOffsets.Size) ? (buf + m_lineOffsets[line_no + 1] - 1) : buf_end;
+
+						ImGui::PushStyleColor(ImGuiCol_Text, GetTextColor(lineStart, lastLineColor));
+						ImGui::TextUnformatted(lineStart, lineEnd);
+						ImGui::PopStyleColor();
 					}
 				}
 				clipper.End();

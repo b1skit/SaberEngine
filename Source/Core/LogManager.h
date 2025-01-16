@@ -1,5 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Definitions/ConfigKeys.h"
+
 #include "Util/TextUtils.h"
 
 
@@ -76,27 +78,6 @@ namespace core
 			Warning,
 			Error
 		};
-		
-
-		static constexpr char const* k_logPrefix = "Log:\t";
-		static constexpr wchar_t const* k_logWPrefix = L"Log:\t";
-		static constexpr size_t k_logPrefixLen = std::char_traits<char>::length(k_logPrefix);
-
-		static constexpr char const* k_warnPrefix = "Warn:\t";
-		static constexpr wchar_t const* k_warnWPrefix = L"Warn:\t";
-		static constexpr size_t k_warnPrefixLen = std::char_traits<char>::length(k_warnPrefix);
-
-		static constexpr char const* k_errorPrefix = "Error:\t";
-		static constexpr wchar_t const* k_errorWPrefix = L"Error:\t";
-		static constexpr size_t k_errorPrefixLen = std::char_traits<char>::length(k_errorPrefix);
-
-		static constexpr char const* k_newlinePrefix = "\n";
-		static constexpr wchar_t const* k_newlineWPrefix = L"\n";
-		static constexpr size_t k_newlinePrefixLen = std::char_traits<char>::length(k_newlinePrefix);
-
-		static constexpr char const* k_tabPrefix = "\t";
-		static constexpr wchar_t const* k_tabWPrefix = L"\t";
-		static constexpr size_t k_tabPrefixLen = std::char_traits<char>::length(k_tabPrefix);
 
 		
 	private:
@@ -175,39 +156,39 @@ namespace core
 		{
 			if constexpr (std::is_same<T, wchar_t>::value)
 			{
-				tagPrefix = k_logWPrefix;
+				tagPrefix = logging::k_logWPrefix;
 			}
 			else
 			{
-				tagPrefix = k_logPrefix;
+				tagPrefix = logging::k_logPrefix;
 			}
-			tagPrefixLen = k_logPrefixLen;
+			tagPrefixLen = logging::k_logPrefixLen;
 		}
 		break;
 		case LogType::Warning:
 		{
 			if constexpr (std::is_same<T, wchar_t>::value)
 			{
-				tagPrefix = k_warnWPrefix;
+				tagPrefix = logging::k_warnWPrefix;
 			}
 			else
 			{
-				tagPrefix = k_warnPrefix;
+				tagPrefix = logging::k_warnPrefix;
 			}			
-			tagPrefixLen = k_warnPrefixLen;
+			tagPrefixLen = logging::k_warnPrefixLen;
 		}
 		break;
 		case LogType::Error:
 		{
 			if constexpr (std::is_same<T, wchar_t>::value)
 			{
-				tagPrefix = k_errorWPrefix;
+				tagPrefix = logging::k_errorWPrefix;
 			}
 			else
 			{
-				tagPrefix = k_errorPrefix;
+				tagPrefix = logging::k_errorPrefix;
 			}
-			tagPrefixLen = k_errorPrefixLen;
+			tagPrefixLen = logging::k_errorPrefixLen;
 		}
 		break;
 		default: break;
@@ -223,19 +204,19 @@ namespace core
 			T const* formatPrefix = nullptr;
 			if constexpr (std::is_same<T, wchar_t>::value)
 			{
-				formatPrefix = k_newlineWPrefix;
+				formatPrefix = logging::k_newlineWPrefix;
 			}
 			else
 			{
-				formatPrefix = k_newlinePrefix;
+				formatPrefix = logging::k_newlinePrefix;
 			}
 
-			prependLength = k_newlinePrefixLen + tagPrefixLen;
+			prependLength = logging::k_newlinePrefixLen + tagPrefixLen;
 			messageStart = msg + 1;
 
 			InsertLogPrefix<T>(
 				formatPrefix,
-				k_newlinePrefixLen, 
+				logging::k_newlinePrefixLen, 
 				tagPrefix, 
 				tagPrefixLen,
 				stagingBuffer.data());
@@ -245,19 +226,19 @@ namespace core
 			T const* formatPrefix = nullptr;
 			if constexpr (std::is_same<T, wchar_t>::value)
 			{
-				formatPrefix = k_tabWPrefix;
+				formatPrefix = logging::k_tabWPrefix;
 			}
 			else
 			{
-				formatPrefix = k_tabPrefix;
+				formatPrefix = logging::k_tabPrefix;
 			}
 
-			prependLength = k_tabPrefixLen;
+			prependLength = logging::k_tabPrefixLen;
 			messageStart = msg + 1;
 
 			InsertLogPrefix<T>(
 				formatPrefix,
-				k_tabPrefixLen,
+				logging::k_tabPrefixLen,
 				nullptr,
 				0,
 				stagingBuffer.data());

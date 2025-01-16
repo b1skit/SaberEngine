@@ -133,3 +133,27 @@ namespace en::DefaultResourceNames
 	constexpr char const* k_cubeMapOpaqueBlackDefaultTexName		= "DefaultCube_OpaqueBlack";
 	constexpr char const* k_cubeMapTransparentBlackDefaultTexName	= "DefaultCube_TransparentBlack";
 }
+
+
+namespace logging
+{
+	constexpr char const* k_logPrefix = "Log:\t";
+	constexpr wchar_t const* k_logWPrefix = L"Log:\t";
+	constexpr size_t k_logPrefixLen = std::char_traits<char>::length(k_logPrefix);
+
+	constexpr char const* k_warnPrefix = "Warn:\t";
+	constexpr wchar_t const* k_warnWPrefix = L"Warn:\t";
+	constexpr size_t k_warnPrefixLen = std::char_traits<char>::length(k_warnPrefix);
+
+	constexpr char const* k_errorPrefix = "Error:\t";
+	constexpr wchar_t const* k_errorWPrefix = L"Error:\t";
+	constexpr size_t k_errorPrefixLen = std::char_traits<char>::length(k_errorPrefix);
+
+	constexpr char const* k_newlinePrefix = "\n";
+	constexpr wchar_t const* k_newlineWPrefix = L"\n";
+	constexpr size_t k_newlinePrefixLen = std::char_traits<char>::length(k_newlinePrefix);
+
+	constexpr char const* k_tabPrefix = "\t";
+	constexpr wchar_t const* k_tabWPrefix = L"\t";
+	constexpr size_t k_tabPrefixLen = std::char_traits<char>::length(k_tabPrefix);
+}
