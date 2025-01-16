@@ -18,8 +18,6 @@ namespace fr
 	public:
 		static SceneManager* Get(); // Singleton functionality
 
-		static void NotifyLoadComplete(); // Callback to notify the Scenemanager when a load completes
-
 
 	public:
 		SceneManager();
@@ -41,9 +39,6 @@ namespace fr
 		core::Inventory* GetInventory() const;
 	private:
 		core::Inventory* m_inventory;
-
-	private:
-		std::atomic<bool> m_hasCreatedScene; // Has an initial scene been created?
 
 
 	public:

@@ -1,11 +1,17 @@
 // © 2025 Adam Badke. All rights reserved.
+#include "CameraComponent.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "Load_Common.h"
+#include "SceneNodeConcept.h"
+#include "TransformComponent.h"
 
+#include "Core/Config.h"
 #include "Core/Inventory.h"
 #include "Core/LogManager.h"
 #include "Core/PerformanceTimer.h"
+
+#include "Core/Util/FileIOUtils.h"
 
 #include "Renderer/RenderManager.h"
 #include "Renderer/Texture.h"
@@ -86,6 +92,30 @@ namespace load
 		texParams.m_mipMode = m_mipMode;
 
 		return std::unique_ptr<re::Texture>(new re::Texture(m_filePath, texParams, std::move(imageData)));
+	}
+
+
+	core::InvPtr<re::Texture> ImportTexture(
+		core::Inventory* inventory,
+		std::string const& filepath,
+		glm::vec4 const& colorFallback /*= re::Texture::k_errorTextureColor*/,
+		re::Texture::Format formatFallback /*= re::Texture::Format::RGBA8_UNORM*/,
+		re::Texture::ColorSpace colorSpace /*= re::Texture::ColorSpace::sRGB*/,
+		re::Texture::MipMode mipMode /*= re::Texture::MipMode::AllocateGenerate*/,
+		bool makePermanent /*= false*/)
+	{
+		std::shared_ptr<load::TextureFromFilePath<re::Texture>> texLoadCtx =
+			std::make_shared<load::TextureFromFilePath<re::Texture>>();
+
+		texLoadCtx->m_filePath = filepath;
+		texLoadCtx->m_colorFallback = colorFallback;
+		texLoadCtx->m_formatFallback = formatFallback;
+		texLoadCtx->m_colorSpace = colorSpace;
+		texLoadCtx->m_mipMode = mipMode;
+
+		texLoadCtx->m_isPermanent = makePermanent;
+
+		return inventory->Get<re::Texture>(util::StringHash(filepath), texLoadCtx);
 	}
 
 
@@ -417,25 +447,6 @@ namespace load
 	}
 
 
-	core::InvPtr<re::Texture> ImportIBL(
-		core::Inventory* inventory,
-		std::string const& filepath,
-		IBLTextureFromFilePath::ActivationMode activationMode,
-		bool makePermanent /*= false*/)
-	{
-		std::shared_ptr<IBLTextureFromFilePath> importCmdIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>();
-
-		importCmdIBLLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
-		importCmdIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
-		importCmdIBLLoadCtx->m_filePath = filepath;
-		importCmdIBLLoadCtx->m_activationMode = activationMode;
-
-		importCmdIBLLoadCtx->m_isPermanent = makePermanent;
-
-		return inventory->Get<re::Texture>(util::StringHash(filepath), importCmdIBLLoadCtx);
-	}
-
-
 	// We override this so we can skip the early registration (which would make the render thread wait)
 	void IBLTextureFromFilePath::OnLoadBegin(core::InvPtr<re::Texture>&)
 	{
@@ -491,5 +502,60 @@ namespace load
 				default: SEAssertF("Invalid activation mode");
 				}
 			});
+	}
+
+	core::InvPtr<re::Texture> ImportIBL(
+		core::Inventory* inventory,
+		std::string const& filepath,
+		IBLTextureFromFilePath::ActivationMode activationMode,
+		bool makePermanent /*= false*/)
+	{
+		std::shared_ptr<IBLTextureFromFilePath> importCmdIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>();
+
+		importCmdIBLLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
+		importCmdIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
+		importCmdIBLLoadCtx->m_filePath = filepath;
+		importCmdIBLLoadCtx->m_activationMode = activationMode;
+
+		importCmdIBLLoadCtx->m_isPermanent = makePermanent;
+
+		return inventory->Get<re::Texture>(util::StringHash(filepath), importCmdIBLLoadCtx);
+	}
+
+
+	CameraMetadata CreateDefaultCamera(fr::EntityManager* em)
+	{
+		constexpr char const* k_defaultCamName = "DefaultCamera";
+
+		const entt::entity sceneNodeEntity = 
+			fr::SceneNode::Create(*em, std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null);
+		
+		fr::TransformComponent& cameraTransformCmpt = 
+			fr::TransformComponent::AttachTransformComponent(*em, sceneNodeEntity);
+
+		LOG("Creating a default camera");
+
+		const gr::Camera::Config defaultCamConfig
+		{
+			.m_yFOV = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultFOVKey),			
+			.m_near = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultNearKey),
+			.m_far = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultFarKey),
+			.m_aspectRatio = re::RenderManager::Get()->GetWindowAspectRatio(),
+		};	
+
+		fr::CameraComponent::CreateCameraConcept(
+			*em,
+			sceneNodeEntity,
+			k_defaultCamName,
+			defaultCamConfig);
+
+		// Offset the camera in an attempt to frame up things located on the origin
+		cameraTransformCmpt.GetTransform().TranslateLocal(glm::vec3(0.f, 1.f, 2.f));
+
+		return CameraMetadata
+		{
+			.m_srcNodeIdx = std::numeric_limits<size_t>::max(), // No source node
+			.m_owningEntity = sceneNodeEntity,
+		};
 	}
 }

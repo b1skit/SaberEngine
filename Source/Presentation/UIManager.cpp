@@ -134,8 +134,8 @@ namespace
 			{
 				std::string requestedFilepath;
 				const bool didRequestFile = host::Dialog::OpenFileDialogBox(
-					"GLTF Files",
-					{"*.gltf", "*.glb"},
+					"Scene Files",
+					{"*.gltf", "*.glb", "*.hdr"},
 					requestedFilepath);
 
 				if (didRequestFile)
@@ -189,9 +189,6 @@ namespace fr
 		core::EventManager::Get()->Subscribe(eventkey::DragAndDrop, this);
 		core::EventManager::Get()->Subscribe(eventkey::VSyncModeChanged, this);
 		core::EventManager::Get()->Subscribe(eventkey::ToggleConsole, this);
-		
-		// Notification events:
-		core::EventManager::Get()->Subscribe(eventkey::SceneCreated, this);
 
 		// Create UI render systems:
 		std::atomic<bool>* createdFlag = &m_debugUIRenderSystemCreated;
@@ -297,11 +294,6 @@ namespace fr
 
 			switch (eventInfo.m_eventKey)
 			{
-			case eventkey::SceneCreated:
-			{
-				//
-			}
-			break;
 			case eventkey::ToggleConsole:
 			{
 				// Only respond to console toggle events if we're not typing
@@ -391,13 +383,9 @@ namespace fr
 			{
 				std::string const& filePath = std::get<std::string>(eventInfo.m_data);
 
-				std::string const& extension = util::ExtractExtensionFromFilePath(filePath);
-				if (extension == "gltf" || extension == "glb")
-				{
-					core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-						.m_eventKey = eventkey::FileImportRequest,
-						.m_data = filePath });
-				}
+				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+					.m_eventKey = eventkey::FileImportRequest, 
+					.m_data = filePath });
 			}
 			break;
 			case eventkey::VSyncModeChanged:

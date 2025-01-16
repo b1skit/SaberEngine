@@ -54,12 +54,7 @@ namespace
 	// Map from a MeshConcept entity, to a vector of Mesh/MeshPrimitive/Bounds entities. Used by SkinningComponent
 	using MeshEntityToAllBoundsEntityMap = std::unordered_map<entt::entity, std::vector<entt::entity>>;
 
-	struct CameraMetadata
-	{
-		size_t m_srcNodeIdx;
-		entt::entity m_owningEntity;
-	};
-
+	
 	struct FileMetadata
 	{
 		std::string m_filePath;
@@ -77,7 +72,7 @@ namespace
 		MeshEntityToAllBoundsEntityMap m_meshEntityToBoundsEntityMap;
 		std::mutex m_meshEntityToBoundsEntityMapMutex;
 
-		std::vector<CameraMetadata> m_cameraMetadata;
+		std::vector<load::CameraMetadata> m_cameraMetadata;
 		std::mutex m_cameraMetadataMutex;
 
 		NodeToEntityMap m_nodeToEntity;
@@ -766,7 +761,6 @@ namespace
 	}
 
 
-	// Creates a default camera if current == nullptr
 	void LoadAddGLTFCamera(
 		fr::EntityManager* em,
 		entt::entity sceneNodeEntity,
@@ -774,79 +768,49 @@ namespace
 		cgltf_node const* current,
 		std::shared_ptr<FileMetadata>& sceneMetadata)
 	{
-		constexpr char const* k_defaultCamName = "DefaultCamera";
-		if (sceneNodeEntity == entt::null)
+		SEAssert(current != nullptr, "Null cgltf_node");
+		SEAssert(sceneNodeEntity != entt::null, "Null scene node entity");
+		SEAssert(current->camera != nullptr, "Must supply a scene node that has a camera");
+
+		cgltf_camera const* camera = current->camera;
+
+		char const* camName = camera->name ? camera->name : "Unnamed camera";
+		LOG("Loading camera \"%s\"", camName);
+
+		gr::Camera::Config camConfig;
+		camConfig.m_projectionType = camera->type == cgltf_camera_type_orthographic ?
+			gr::Camera::Config::ProjectionType::Orthographic : gr::Camera::Config::ProjectionType::Perspective;
+		if (camConfig.m_projectionType == gr::Camera::Config::ProjectionType::Orthographic)
 		{
-			sceneNodeEntity = fr::SceneNode::Create(*em, std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null);
-			fr::TransformComponent::AttachTransformComponent(*em, sceneNodeEntity);
-		}
-
-
-		if (current == nullptr || current->camera == nullptr)
-		{
-			LOG("Creating a default camera");
-
-			gr::Camera::Config camConfig;
-
-			camConfig.m_aspectRatio = re::RenderManager::Get()->GetWindowAspectRatio();
-			camConfig.m_yFOV = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultFOVKey);
-			camConfig.m_near = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultNearKey);
-			camConfig.m_far = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultFarKey);
-
-			fr::CameraComponent::CreateCameraConcept(
-				*em,
-				sceneNodeEntity,
-				k_defaultCamName,
-				camConfig);
-
-			// Offset the camera in an attempt to frame up things located on the origin
-			fr::TransformComponent& cameraTransformCmpt = em->GetComponent<fr::TransformComponent>(sceneNodeEntity);
-			cameraTransformCmpt.GetTransform().TranslateLocal(glm::vec3(0.f, 1.f, 2.f));
+			camConfig.m_yFOV = 0;
+			camConfig.m_near = camera->data.orthographic.znear;
+			camConfig.m_far = camera->data.orthographic.zfar;
+			camConfig.m_orthoLeftRightBotTop.x = -camera->data.orthographic.xmag / 2.0f;
+			camConfig.m_orthoLeftRightBotTop.y = camera->data.orthographic.xmag / 2.0f;
+			camConfig.m_orthoLeftRightBotTop.z = -camera->data.orthographic.ymag / 2.0f;
+			camConfig.m_orthoLeftRightBotTop.w = camera->data.orthographic.ymag / 2.0f;
 		}
 		else
 		{
-			cgltf_camera const* const camera = current->camera;
-
-			SEAssert(sceneNodeEntity != entt::null && camera != nullptr, "Must supply a scene node and camera pointer");
-
-			char const* camName = camera->name ? camera->name : "Unnamed camera";
-			LOG("Loading camera \"%s\"", camName);
-
-			gr::Camera::Config camConfig;
-			camConfig.m_projectionType = camera->type == cgltf_camera_type_orthographic ?
-				gr::Camera::Config::ProjectionType::Orthographic : gr::Camera::Config::ProjectionType::Perspective;
-			if (camConfig.m_projectionType == gr::Camera::Config::ProjectionType::Orthographic)
-			{
-				camConfig.m_yFOV = 0;
-				camConfig.m_near = camera->data.orthographic.znear;
-				camConfig.m_far = camera->data.orthographic.zfar;
-				camConfig.m_orthoLeftRightBotTop.x = -camera->data.orthographic.xmag / 2.0f;
-				camConfig.m_orthoLeftRightBotTop.y = camera->data.orthographic.xmag / 2.0f;
-				camConfig.m_orthoLeftRightBotTop.z = -camera->data.orthographic.ymag / 2.0f;
-				camConfig.m_orthoLeftRightBotTop.w = camera->data.orthographic.ymag / 2.0f;
-			}
-			else
-			{
-				camConfig.m_yFOV = camera->data.perspective.yfov;
-				camConfig.m_near = camera->data.perspective.znear;
-				camConfig.m_far = camera->data.perspective.zfar;
-				camConfig.m_aspectRatio =
-					camera->data.perspective.has_aspect_ratio ? camera->data.perspective.aspect_ratio : 1.0f;
-				camConfig.m_orthoLeftRightBotTop.x = 0.f;
-				camConfig.m_orthoLeftRightBotTop.y = 0.f;
-				camConfig.m_orthoLeftRightBotTop.z = 0.f;
-				camConfig.m_orthoLeftRightBotTop.w = 0.f;
-			}
-
-			// Create the camera and set the transform values on the parent object:
-			fr::CameraComponent::CreateCameraConcept(*em, sceneNodeEntity, camName, camConfig);
+			camConfig.m_yFOV = camera->data.perspective.yfov;
+			camConfig.m_near = camera->data.perspective.znear;
+			camConfig.m_far = camera->data.perspective.zfar;
+			camConfig.m_aspectRatio =
+				camera->data.perspective.has_aspect_ratio ? camera->data.perspective.aspect_ratio : 1.0f;
+			camConfig.m_orthoLeftRightBotTop.x = 0.f;
+			camConfig.m_orthoLeftRightBotTop.y = 0.f;
+			camConfig.m_orthoLeftRightBotTop.z = 0.f;
+			camConfig.m_orthoLeftRightBotTop.w = 0.f;
 		}
+
+		// Create the camera and set the transform values on the parent object:
+		fr::CameraComponent::CreateCameraConcept(*em, sceneNodeEntity, camName, camConfig);
 
 		// Update the camera metadata:
 		{
 			std::lock_guard<std::mutex> lock(sceneMetadata->m_cameraMetadataMutex);
 
-			sceneMetadata->m_cameraMetadata.emplace_back(CameraMetadata{
+			sceneMetadata->m_cameraMetadata.emplace_back(load::CameraMetadata{
 				.m_srcNodeIdx = nodeIdx,
 				.m_owningEntity = sceneNodeEntity, });
 		}
@@ -2221,61 +2185,41 @@ namespace
 			SEAssert(m_sceneMetadata, "Scene metadata should not be null here");
 
 			fr::EntityManager* em = fr::EntityManager::Get();
-
 			std::shared_ptr<FileMetadata> sceneMetadata = m_sceneMetadata;
-
-			if (m_sceneData)
-			{
-				std::shared_ptr<cgltf_data> sceneData = m_sceneData;
-
-				em->EnqueueEntityCommand(
-					[em, sceneData, sceneMetadata]() mutable
-					{
-						// Create scene node entities:
-						CreateGLTFSceneNodeEntities(em, sceneData, sceneMetadata);
-
-						// Attach the components to the entities, now that they exist:
-						AttachGLTFNodeComponents(em, sceneData, sceneMetadata);
-
-						// Animation components:
-						AttachGLTFMeshAnimationComponents(em, sceneData, sceneMetadata);
-					});
-			}
-
-
-			// Add a camera (even if we didn't load a GLTF scene):
-			const bool camEntityExists = em->EntityExists<fr::CameraComponent>();
-			const bool sceneHasCamera = m_sceneData && m_sceneData->cameras_count > 0;
+			std::shared_ptr<cgltf_data> sceneData = m_sceneData;
 			em->EnqueueEntityCommand(
-				[em, camEntityExists, sceneHasCamera, sceneMetadata]() mutable
+				[em, sceneData, sceneMetadata]() mutable
 				{
-					// Add a default camera if none already exist, and either the scene doesn't have one or a command
-					// line arg requested one:
-					const bool forceAddDefaultCamera = !camEntityExists &&
-						(!sceneHasCamera || core::Config::Get()->KeyExists(core::configkeys::k_forceDefaultCameraKey));
+					// Create scene node entities:
+					CreateGLTFSceneNodeEntities(em, sceneData, sceneMetadata);
 
-					if (forceAddDefaultCamera)
-					{
-						LoadAddGLTFCamera(em, entt::null, 0, nullptr, sceneMetadata);
-					}
+					// Attach the components to the entities, now that they exist:
+					AttachGLTFNodeComponents(em, sceneData, sceneMetadata);
 
+					// Animation components:
+					AttachGLTFMeshAnimationComponents(em, sceneData, sceneMetadata);
+				});
+
+
+			// Add a camera::
+			em->EnqueueEntityCommand(
+				[em, sceneMetadata]() mutable
+				{
 					// Set the main camera:
 					entt::entity mainCameraEntity = entt::null;
 					{
 						std::lock_guard<std::mutex> lock(sceneMetadata->m_cameraMetadataMutex);
 
-						// Sort our cameras for deterministic ordering
-						std::sort(sceneMetadata->m_cameraMetadata.begin(), sceneMetadata->m_cameraMetadata.end(),
-							[](CameraMetadata const& a, CameraMetadata const& b) { return a.m_srcNodeIdx < b.m_srcNodeIdx; });
+						if (!sceneMetadata->m_cameraMetadata.empty())
+						{
+							// Sort our cameras for deterministic ordering
+							std::sort(sceneMetadata->m_cameraMetadata.begin(), sceneMetadata->m_cameraMetadata.end(),
+								[](load::CameraMetadata const& a, load::CameraMetadata const& b)
+								{
+									return a.m_srcNodeIdx < b.m_srcNodeIdx;
+								});
 
-						if (forceAddDefaultCamera)
-						{
-							// Default camera is at the front() as it has a null source node index
-							mainCameraEntity = sceneMetadata->m_cameraMetadata.front().m_owningEntity;
-						}
-						else if (!sceneMetadata->m_cameraMetadata.empty())
-						{
-							// Otherwise, make the last camera loaded active
+							// Make the last camera loaded active
 							mainCameraEntity = sceneMetadata->m_cameraMetadata.back().m_owningEntity;
 						}
 					}
@@ -2287,9 +2231,6 @@ namespace
 						em->EnqueueEntityCommand<fr::SetMainCameraCommand>(mainCameraEntity);
 					}
 				});
-
-			// Finally, let the scene manager know we're done
-			fr::SceneManager::NotifyLoadComplete();
 		}
 
 
@@ -2309,6 +2250,8 @@ namespace load
 {
 	void ImportGLTFFile(core::Inventory* inventory, std::string const& filePath)
 	{
+		SEAssert(!filePath.empty(), "Invalid file path");
+
 		// GLTF does not support IBLs so we handle it manually by loading any HDRs placed alongside the GLTF file:
 		std::string const& importIBLFilePath =
 			util::ExtractDirectoryPathFromFilePath(filePath) + core::configkeys::k_perFileDefaultIBLRelFilePath;

@@ -561,30 +561,9 @@ namespace fr
 						std::string filepath;
 						if (host::Dialog::OpenFileDialogBox("HDR Files", {"*.hdr"}, filepath))
 						{
-							fr::EntityManager* em = fr::EntityManager::Get();
-							core::Inventory* inventory = em->GetInventory();
-
-							std::shared_ptr<load::TextureFromFilePath<re::Texture>> texLoadCtx =
-								std::make_shared<load::TextureFromFilePath<re::Texture>>();
-
-							texLoadCtx->m_filePath = filepath;
-							texLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
-
-							core::InvPtr<re::Texture> const& newIBL = inventory->Get<re::Texture>(
-								util::StringHash(filepath),
-								texLoadCtx);
-
-							fr::EntityManager::Get()->EnqueueEntityCommand([newIBL, filepath]()
-								{
-									fr::EntityManager* em = fr::EntityManager::Get();
-
-									entt::entity newAmbientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
-										*em,
-										filepath.c_str(),
-										newIBL);
-
-									em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(newAmbientLight);
-								});
+							core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+							.m_eventKey = eventkey::FileImportRequest,
+							.m_data = filepath });
 						}
 					});
 			}

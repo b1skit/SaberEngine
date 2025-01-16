@@ -182,7 +182,7 @@ namespace gr
 					// Move the last entry to replace the one being deleted:
 					if (lastIdx != deletedIdx)
 					{
-						// Record the index so we can update the buffer data it later
+						// Record the index so we can update its buffer data later
 						lightMetadata.m_dirtyMovedIndexes.emplace_back(deletedIdx);
 
 						// Update the metadata: The last element is moved to the deleted location
@@ -196,6 +196,12 @@ namespace gr
 
 					SEAssert(lightMetadata.m_numLights >= 1, "Removing this light will underflow the counter");
 					lightMetadata.m_numLights--;
+
+					// If there are no more lights, we don't need to update anything
+					if (lightMetadata.m_numLights == 0)
+					{
+						lightMetadata.m_dirtyMovedIndexes.clear();
+					}
 				}
 			};
 		DeleteLightMetadata(renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_directionalLightMetadata);
@@ -428,7 +434,7 @@ namespace gr
 
 		auto UpdateLightBuffer = [&renderData, this]<typename T>(
 			gr::Light::Type lightType,
-			LightMetadata & lightMetadata,
+			LightMetadata& lightMetadata,
 			ShadowMetadata const& shadowMetadata,
 			char const* bufferName)
 		{
@@ -594,19 +600,19 @@ namespace gr
 			lightMetadata.m_dirtyMovedIndexes.clear();
 		};
 
-		UpdateLightBuffer.template operator() < gr::Light::RenderDataDirectional > (
+		UpdateLightBuffer.template operator()<gr::Light::RenderDataDirectional>(
 			gr::Light::Directional,
 			m_directionalLightMetadata,
 			m_directionalShadowMetadata,
 			LightData::s_directionalLightDataShaderName);
 
-		UpdateLightBuffer.template operator() < gr::Light::RenderDataPoint > (
+		UpdateLightBuffer.template operator()<gr::Light::RenderDataPoint>(
 			gr::Light::Point,
 			m_pointLightMetadata,
 			m_pointShadowMetadata,
 			LightData::s_pointLightDataShaderName);
 
-		UpdateLightBuffer.template operator() < gr::Light::RenderDataSpot > (
+		UpdateLightBuffer.template operator()<gr::Light::RenderDataSpot>(
 			gr::Light::Spot,
 			m_spotLightMetadata,
 			m_spotShadowMetadata,

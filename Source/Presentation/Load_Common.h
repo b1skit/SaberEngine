@@ -23,6 +23,15 @@ namespace load
 		re::Texture::MipMode m_mipMode = re::Texture::MipMode::None;
 	};
 
+	core::InvPtr<re::Texture> ImportTexture(
+		core::Inventory* inventory,
+		std::string const& filepath,
+		glm::vec4 const& colorFallback = re::Texture::k_errorTextureColor,
+		re::Texture::Format formatFallback = re::Texture::Format::RGBA8_UNORM,
+		re::Texture::ColorSpace colorSpace = re::Texture::ColorSpace::sRGB,
+		re::Texture::MipMode mipMode = re::Texture::MipMode::AllocateGenerate,
+		bool makePermanent = false);
+
 
 	bool LoadTextureDataFromFilePath( // Returns true if load was successful, or false otherwise
 		re::Texture::TextureParams& texParamsOut,
@@ -64,10 +73,18 @@ namespace load
 		ActivationMode m_activationMode = ActivationMode::Always;
 	};
 
-
 	core::InvPtr<re::Texture> ImportIBL(
 		core::Inventory* inventory,
 		std::string const& filepath,
 		IBLTextureFromFilePath::ActivationMode activationMode,
 		bool makePermanent = false);
+
+
+	struct CameraMetadata
+	{
+		size_t m_srcNodeIdx;
+		entt::entity m_owningEntity;
+	};
+
+	CameraMetadata CreateDefaultCamera(fr::EntityManager* em);
 }

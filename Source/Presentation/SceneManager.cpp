@@ -12,6 +12,8 @@
 #include "Core/EventManager.h"
 #include "Core/PerformanceTimer.h"
 
+#include "Core/Util/FileIOUtils.h"
+
 #include "Renderer/RenderManager.h"
 
 
@@ -26,7 +28,6 @@ namespace fr
 
 	SceneManager::SceneManager()
 		: m_inventory(nullptr)
-		, m_hasCreatedScene(false)
 	{
 	}
 
@@ -61,12 +62,9 @@ namespace fr
 	{
 		LOG("SceneManager: Resetting scene");
 
-		const bool prevHasCreatedScene = m_hasCreatedScene.load();
-		m_hasCreatedScene.store(false);
-
 		CreateDefaultSceneResources(); // Kick off async loading of mandatory assets
 
-		// Initial scene setup:
+		// Schedule initial scene setup:
 		fr::EntityManager* em = fr::EntityManager::Get();
 		em->EnqueueEntityCommand([em]()
 			{
@@ -79,26 +77,28 @@ namespace fr
 				LOG("Created unbound CameraControlComponent");
 			});
 
-		// If we're reseting an existing scene, recreate the default IBL
-		if (prevHasCreatedScene)
-		{
-			core::InvPtr<re::Texture> defaultIBL = 
-				m_inventory->Get<re::Texture>(core::configkeys::k_defaultEngineIBLFilePath);
+		// Schedule creation of a default camera. Note: The ordering is important here, we schedule this 1st which
+		// ensures if we import a camera after this point it will be activated
+		fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetMainCameraCommand>(
+			load::CreateDefaultCamera(fr::EntityManager::Get()).m_owningEntity);
 
-			em->EnqueueEntityCommand([em, defaultIBL]()
+		core::InvPtr<re::Texture> defaultIBL =
+			m_inventory->Get<re::Texture>(core::configkeys::k_defaultEngineIBLFilePath);
+
+		em->EnqueueEntityCommand([em, defaultIBL]()
+			{
+				// Create an Ambient LightComponent, and make it active if requested:
+				const bool ambientExists = em->EntityExists<fr::LightComponent::AmbientIBLDeferredMarker>();
+				if (!ambientExists)
 				{
-					// Create an Ambient LightComponent, and make it active if requested:
 					const entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
 						*em,
 						defaultIBL->GetName().c_str(),
 						defaultIBL);
 
 					em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
-				});
-		}
-
-		// Note: We kick off the loading flow with an empty string to ensure a default camera is created
-		ImportFile("");
+				}
+			});
 	}
 
 
@@ -147,24 +147,30 @@ namespace fr
 		util::PerformanceTimer timer;
 		timer.Start();
 
-		load::ImportGLTFFile(m_inventory, filePath); // Kicks off async loading
+		bool success = false;
 
-		LOG("\nSceneManager scheduled file \"%s\" import in %f seconds\n", filePath.c_str(), timer.StopSec());
-	}
-
-
-	void SceneManager::NotifyLoadComplete()
-	{
-		SceneManager* sceneMgr = fr::SceneManager::Get();
-
-		bool expected = false;
-		if (sceneMgr->m_hasCreatedScene.compare_exchange_strong(expected, true))
+		std::string const& fileExtension = util::ExtractExtensionFromFilePath(filePath);
+		if (fileExtension == "gltf" || fileExtension == "glb")
 		{
-			LOG("SceneManager: Initial scene created");
-
-			core::EventManager::Get()->Notify(core::EventManager::EventInfo{
-				.m_eventKey = eventkey::SceneCreated });
+			load::ImportGLTFFile(m_inventory, filePath); // Kicks off async loading
+			success = true;
 		}
+		else if (fileExtension == "hdr") // Assume we want to create an IBL from the loaded texture
+		{
+			load::ImportIBL(m_inventory, filePath, load::IBLTextureFromFilePath::ActivationMode::Always);
+			success = true;
+		}
+
+		if (success)
+		{
+			LOG("\nSceneManager scheduled file \"%s\" import in %f seconds\n", filePath.c_str(), timer.PeekSec());
+		}
+		else
+		{
+			LOG_ERROR("File path \"%s\" cannot be imported, it is not a recognized format", filePath.c_str());
+		}
+
+		timer.StopSec();
 	}
 
 
@@ -172,10 +178,13 @@ namespace fr
 	{
 		LOG("Generating default resources...");
 
-		load::ImportIBL(
+		load::ImportTexture(
 			m_inventory,
 			core::configkeys::k_defaultEngineIBLFilePath,
-			load::IBLTextureFromFilePath::ActivationMode::IfNoneExists,
+			re::Texture::k_errorTextureColor,
+			re::Texture::Format::RGBA8_UNORM, // Fallback to something simple
+			re::Texture::ColorSpace::Linear,
+			re::Texture::MipMode::AllocateGenerate,
 			true);
 
 		load::GenerateDefaultGLTFMaterial(m_inventory);
