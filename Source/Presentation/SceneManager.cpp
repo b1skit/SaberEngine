@@ -42,6 +42,8 @@ namespace fr
 		core::EventManager::Get()->Subscribe(eventkey::FileImportRequest, this);
 		core::EventManager::Get()->Subscribe(eventkey::SceneResetRequest, this);
 
+		CreateDefaultSceneResources(); // Kick off async loading of mandatory assets
+
 		Reset();
 
 		// Create a scene render system:
@@ -61,8 +63,6 @@ namespace fr
 	void SceneManager::Reset()
 	{
 		LOG("SceneManager: Resetting scene");
-
-		CreateDefaultSceneResources(); // Kick off async loading of mandatory assets
 
 		// Schedule initial scene setup:
 		fr::EntityManager* em = fr::EntityManager::Get();

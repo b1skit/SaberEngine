@@ -1008,21 +1008,15 @@ namespace fr
 
 			const entt::entity mainCamEntity = GetMainCamera();
 
-			// Set the initial state of our active index
-			static int s_mainCamIdx = 0;
-			static bool s_foundFirstMainCam = false;
-			if (!s_foundFirstMainCam)
+			// Find the index of the main camera:
+			int mainCamIdx = 0;
+			for (entt::entity entity : cameraCmptView)
 			{
-				s_mainCamIdx = 0;
-				for (entt::entity entity : cameraCmptView)
+				if (entity == mainCamEntity)
 				{
-					if (entity == mainCamEntity)
-					{
-						break;
-					}
-					s_mainCamIdx++;
+					break;
 				}
-				s_foundFirstMainCam = true;
+				mainCamIdx++;
 			}
 
 			int buttonIdx = 0;
@@ -1031,7 +1025,7 @@ namespace fr
 				// Display a radio button on the same line as our camera header:
 				const bool pressed = ImGui::RadioButton(
 					std::format("##{}", static_cast<uint32_t>(entity)).c_str(),
-					&s_mainCamIdx,
+					&mainCamIdx,
 					buttonIdx++);
 				ImGui::SameLine();
 				fr::CameraComponent::ShowImGuiWindow(*this, entity);
