@@ -13,6 +13,10 @@
 #include "../Generated/HLSL/VertexStreams_PositionColor.hlsli"
 #endif
 
+#if defined(DEBUG_WIREFRAME)
+ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space1);
+#endif
+
 StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
 
 
@@ -58,10 +62,16 @@ LineVertexOut VShader(VertexIn In)
 #elif defined(DEBUG_AXIS)
 	Out.Position = float4(In.Position, 1.f);		
 	Out.InstanceID = In.InstanceID;
-	
+
 #else
 	
-	const float4 worldPos = mul(InstancedTransformParams[In.InstanceID].g_model, float4(In.Position, 1.f));
+#if defined(DEBUG_WIREFRAME)
+	const uint transformIdx = InstanceIndexParams.g_instanceIndices[In.InstanceID].g_transformIdx;
+#else
+	const uint transformIdx = In.InstanceID;
+#endif
+	
+	const float4 worldPos = mul(InstancedTransformParams[transformIdx].g_model, float4(In.Position, 1.f));
 	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 	
 #if !defined(DEBUG_WIREFRAME)

@@ -23,6 +23,10 @@
 
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
 
+#if defined(DEBUG_WIREFRAME)
+layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
+#endif
+
 // UBOs can't have a dynamic length; We use SSBOs for instancing instead
 layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformData _InstancedTransformParams[]; };
 
@@ -73,8 +77,14 @@ void VShader()
 
 #else
 	
+#if defined(DEBUG_WIREFRAME)
+	const uint transformIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_transformIdx;
+#else
+	const uint transformIdx = gl_InstanceID;
+#endif
+
 	vec4 ndcPos = 
-		_CameraParams.g_viewProjection * _InstancedTransformParams[gl_InstanceID].g_model * vec4(Position.xyz, 1.0);
+		_CameraParams.g_viewProjection * _InstancedTransformParams[transformIdx].g_model * vec4(Position.xyz, 1.0);
 	ndcPos.y *= -1.f; // Flip the Y axis in NDC space, as we're writing directly to the backbuffer
 
 	gl_Position = ndcPos;

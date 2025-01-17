@@ -469,12 +469,15 @@ namespace gr
 		if (m_showAllWireframe)
 		{
 			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
-			SEAssert(m_viewBatches->contains(mainCamID), "Cannot find main camera ID in view batches");
-
-			std::vector<re::Batch> const& mainCamBatches = m_viewBatches->at(mainCamID);
-			for (re::Batch const& batch : mainCamBatches)
+			if (mainCamID != gr::k_invalidRenderDataID)
 			{
-				m_wireframeStage->AddBatch(batch);
+				SEAssert(m_viewBatches->contains(mainCamID), "Cannot find main camera ID in view batches");
+
+				std::vector<re::Batch> const& mainCamBatches = m_viewBatches->at(mainCamID);
+				for (re::Batch const& batch : mainCamBatches)
+				{
+					m_wireframeStage->AddBatch(batch);
+				}
 			}
 		}
 
