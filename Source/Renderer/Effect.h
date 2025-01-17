@@ -4,7 +4,7 @@
 
 #include "Core/Interfaces/INamedObject.h"
 
-#include "Core/Util/HashKey.h"
+#include "Core/Util/CHashKey.h"
 
 #include "Generated/DrawStyles.h"
 

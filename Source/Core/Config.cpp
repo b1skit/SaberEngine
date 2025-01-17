@@ -130,12 +130,12 @@ namespace core
 					if (containsDecimal)
 					{
 						const float floatVal = std::stof(keysValues[i].m_value);
-						SetValue(util::HashKey::Create(keysValues[i].m_key.c_str()), floatVal, Config::SettingType::Runtime);
+						SetValue(util::CHashKey::Create(keysValues[i].m_key.c_str()), floatVal, Config::SettingType::Runtime);
 					}
 					else
 					{
 						const int intVal = std::stoi(keysValues[i].m_value);
-						SetValue(util::HashKey::Create(keysValues[i].m_key.c_str()), intVal, Config::SettingType::Runtime);
+						SetValue(util::CHashKey::Create(keysValues[i].m_key.c_str()), intVal, Config::SettingType::Runtime);
 					}
 				}
 				catch (std::invalid_argument)
@@ -147,26 +147,26 @@ namespace core
 				{
 					if (keysValues[i].m_value == "true")
 					{
-						SetValue<bool>(util::HashKey::Create(keysValues[i].m_key), true, Config::SettingType::Runtime);
+						SetValue<bool>(util::CHashKey::Create(keysValues[i].m_key), true, Config::SettingType::Runtime);
 					}
 					else if (keysValues[i].m_value == "false")
 					{
-						SetValue<bool>(util::HashKey::Create(keysValues[i].m_key), false, Config::SettingType::Runtime);
+						SetValue<bool>(util::CHashKey::Create(keysValues[i].m_key), false, Config::SettingType::Runtime);
 					}
 					else if (keysValues[i].m_value.length() == 1)
 					{
-						SetValue<char>(util::HashKey::Create(keysValues[i].m_key), keysValues[i].m_value[0], Config::SettingType::Runtime);
+						SetValue<char>(util::CHashKey::Create(keysValues[i].m_key), keysValues[i].m_value[0], Config::SettingType::Runtime);
 					} 
 					else
 					{
-						SetValue(util::HashKey::Create(keysValues[i].m_key), keysValues[i].m_value, Config::SettingType::Runtime);
+						SetValue(util::CHashKey::Create(keysValues[i].m_key), keysValues[i].m_value, Config::SettingType::Runtime);
 					}
 				}
 			}
 			else
 			{
 				// If no value was provided with a key, just set it as a boolean flag
-				SetValue(util::HashKey::Create(keysValues[i].m_key), true, Config::SettingType::Runtime);
+				SetValue(util::CHashKey::Create(keysValues[i].m_key), true, Config::SettingType::Runtime);
 			}
 		}
 
@@ -294,7 +294,7 @@ namespace core
 				// std::strings:
 				if (isString)
 				{
-					SetValue(util::HashKey::Create(property), std::string(value), SettingType::Serialized);
+					SetValue(util::CHashKey::Create(property), std::string(value), SettingType::Serialized);
 				}
 				else
 				{
@@ -302,12 +302,12 @@ namespace core
 					std::string const& boolString = util::ToLower(value);
 					if (boolString == k_trueString)
 					{
-						SetValue(util::HashKey::Create(property), true, SettingType::Serialized);
+						SetValue(util::CHashKey::Create(property), true, SettingType::Serialized);
 						continue;
 					}
 					else if (boolString == k_falseString)
 					{
-						SetValue(util::HashKey::Create(property), false, SettingType::Serialized);
+						SetValue(util::CHashKey::Create(property), false, SettingType::Serialized);
 						continue;
 					}
 
@@ -320,12 +320,12 @@ namespace core
 					// Ints:
 					if (position == value.length())
 					{
-						SetValue(util::HashKey::Create(property), intResult, SettingType::Serialized);
+						SetValue(util::CHashKey::Create(property), intResult, SettingType::Serialized);
 					}
 					else // Floats:
 					{
 						float floatResult = std::stof(value);
-						SetValue(util::HashKey::Create(property), floatResult, SettingType::Serialized);
+						SetValue(util::CHashKey::Create(property), floatResult, SettingType::Serialized);
 					}
 				}
 			}
@@ -333,12 +333,12 @@ namespace core
 			{
 				if (isString)
 				{
-					SetValue(util::HashKey::Create(property), std::string(value), SettingType::Serialized);
+					SetValue(util::CHashKey::Create(property), std::string(value), SettingType::Serialized);
 				}
 				else
 				{
 					// Assume bound values are single chars, for now. Might need to rework this to bind more complex keys
-					SetValue(util::HashKey::Create(property), (char)value[0], SettingType::Serialized);
+					SetValue(util::CHashKey::Create(property), (char)value[0], SettingType::Serialized);
 				}
 			}
 			else
@@ -428,7 +428,7 @@ namespace core
 
 	void Config::SetRuntimeDefaults()
 	{
-		auto SetRuntimeValue = [&](util::HashKey const& key, auto const& value)
+		auto SetRuntimeValue = [&](util::CHashKey const& key, auto const& value)
 		{
 			SetValue(key, value, SettingType::Runtime);
 		};
@@ -449,7 +449,7 @@ namespace core
 	}
 	
 
-	bool Config::KeyExists(util::HashKey const& valueName) const
+	bool Config::KeyExists(util::CHashKey const& valueName) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_configValuesMutex);
@@ -460,7 +460,7 @@ namespace core
 	}
 
 
-	std::string Config::GetValueAsString(util::HashKey const& valueName) const
+	std::string Config::GetValueAsString(util::CHashKey const& valueName) const
 	{
 		std::string returnVal;
 		{
@@ -504,7 +504,7 @@ namespace core
 	}
 
 
-	std::wstring Config::GetValueAsWString(util::HashKey const& valueName) const
+	std::wstring Config::GetValueAsWString(util::CHashKey const& valueName) const
 	{
 		std::string const& result = GetValueAsString(valueName);
 		return util::ToWideString(result);
@@ -549,7 +549,7 @@ namespace core
 					continue;	// Skip API-specific settings
 				}
 
-				SEAssert(currentElement.first.GetKey() != nullptr, "Found a HashKey with a null key string");
+				SEAssert(currentElement.first.GetKey() != nullptr, "Found a CHashKey with a null key string");
 
 				if (std::get_if<std::string>(&currentElement.second.first) &&
 					strstr(currentElement.first.GetKey(), "Input") == nullptr)

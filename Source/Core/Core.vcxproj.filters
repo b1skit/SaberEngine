@@ -147,7 +147,7 @@
     <ClInclude Include="Definitions\ConfigKeys.h">
       <Filter>Header Files\Definitions</Filter>
     </ClInclude>
-    <ClInclude Include="Util\HashKey.h">
+    <ClInclude Include="Util\CHashKey.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="ProfilingMarkers.h">

@@ -58,7 +58,7 @@ namespace core
 	}
 
 
-	void EventManager::Subscribe(util::HashKey const& eventType, IEventListener* listener)
+	void EventManager::Subscribe(util::CHashKey const& eventType, IEventListener* listener)
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_eventListenersMutex);

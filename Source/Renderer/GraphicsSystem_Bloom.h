@@ -21,11 +21,11 @@ namespace gr
 			);
 		}
 
-		static constexpr util::HashKey k_emissiveInput = "EmissiveLight";
-		static constexpr util::HashKey k_bloomTargetInput = "BloomTarget";
+		static constexpr util::CHashKey k_emissiveInput = "EmissiveLight";
+		static constexpr util::CHashKey k_bloomTargetInput = "BloomTarget";
 		void RegisterInputs() override;
 
-		static constexpr util::HashKey k_bloomResultOutput = "BloomResult";
+		static constexpr util::CHashKey k_bloomResultOutput = "BloomResult";
 		void RegisterOutputs() override;
 
 

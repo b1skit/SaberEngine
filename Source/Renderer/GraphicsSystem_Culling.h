@@ -24,9 +24,9 @@ namespace gr
 
 		void RegisterInputs() override { /*No inputs*/ };
 
-		static constexpr util::HashKey k_cullingOutput = "ViewCullingResults";
-		static constexpr util::HashKey k_pointLightCullingOutput = "PointLightCullingResults";
-		static constexpr util::HashKey k_spotLightCullingOutput = "SpotLightCullingResults";
+		static constexpr util::CHashKey k_cullingOutput = "ViewCullingResults";
+		static constexpr util::CHashKey k_pointLightCullingOutput = "PointLightCullingResults";
+		static constexpr util::CHashKey k_spotLightCullingOutput = "SpotLightCullingResults";
 		void RegisterOutputs() override;
 
 

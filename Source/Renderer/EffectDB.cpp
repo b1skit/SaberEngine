@@ -9,7 +9,7 @@
 #include "Core/Config.h"
 #include "Core/ThreadPool.h"
 
-#include "Core/Util/HashKey.h"
+#include "Core/Util/CHashKey.h"
 #include "Core/Util/TextUtils.h"
 
 #include "Core/Definitions/ConfigKeys.h"
@@ -456,22 +456,22 @@ namespace
 
 	inline gr::VertexStream::Type SemanticNameToStreamType(std::string const& semanticName)
 	{
-		static const std::unordered_map<util::HashKey, gr::VertexStream::Type> s_semanticLowerToStreamType =
+		static const std::unordered_map<util::CHashKey, gr::VertexStream::Type> s_semanticLowerToStreamType =
 		{
-			{ util::HashKey("position"),		gr::VertexStream::Type::Position },
-			{ util::HashKey("sv_position"),		gr::VertexStream::Type::Position },
-			{ util::HashKey("normal"),			gr::VertexStream::Type::Normal },
-			{ util::HashKey("binormal"),		gr::VertexStream::Type::Binormal },
-			{ util::HashKey("tangent"),			gr::VertexStream::Type::Tangent },
-			{ util::HashKey("texcoord"),		gr::VertexStream::Type::TexCoord },
-			{ util::HashKey("color"),			gr::VertexStream::Type::Color },
-			{ util::HashKey("blendindices"),	gr::VertexStream::Type::BlendIndices },
-			{ util::HashKey("blendweight"),		gr::VertexStream::Type::BlendWeight },
-			/*{ util::HashKey("pointsize"),		gr::VertexStream::Type::PointSize },*/
-			{ util::HashKey("index"),			gr::VertexStream::Type::Index },
+			{ util::CHashKey("position"),		gr::VertexStream::Type::Position },
+			{ util::CHashKey("sv_position"),		gr::VertexStream::Type::Position },
+			{ util::CHashKey("normal"),			gr::VertexStream::Type::Normal },
+			{ util::CHashKey("binormal"),		gr::VertexStream::Type::Binormal },
+			{ util::CHashKey("tangent"),			gr::VertexStream::Type::Tangent },
+			{ util::CHashKey("texcoord"),		gr::VertexStream::Type::TexCoord },
+			{ util::CHashKey("color"),			gr::VertexStream::Type::Color },
+			{ util::CHashKey("blendindices"),	gr::VertexStream::Type::BlendIndices },
+			{ util::CHashKey("blendweight"),		gr::VertexStream::Type::BlendWeight },
+			/*{ util::CHashKey("pointsize"),		gr::VertexStream::Type::PointSize },*/
+			{ util::CHashKey("index"),			gr::VertexStream::Type::Index },
 		};
 
-		const util::HashKey semanticNameLowerHashkey = util::HashKey::Create(util::ToLower(semanticName));
+		const util::CHashKey semanticNameLowerHashkey = util::CHashKey::Create(util::ToLower(semanticName));
 
 		SEAssert(s_semanticLowerToStreamType.contains(semanticNameLowerHashkey), "Invalid semantic name");
 

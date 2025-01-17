@@ -30,27 +30,27 @@ namespace gr
 
 		// Monolithic light data buffers:
 		// NOTE: These buffers may be reallocated; They must be attached every frame as a single frame input ONLY
-		static constexpr util::HashKey k_directionalLightDataBufferOutput = "DirectionalLightDataBuffer";
-		static constexpr util::HashKey k_pointLightDataBufferOutput = "PointLightDataBuffer";
-		static constexpr util::HashKey k_spotLightDataBufferOutput = "SpotLightDataBuffer";
+		static constexpr util::CHashKey k_directionalLightDataBufferOutput = "DirectionalLightDataBuffer";
+		static constexpr util::CHashKey k_pointLightDataBufferOutput = "PointLightDataBuffer";
+		static constexpr util::CHashKey k_spotLightDataBufferOutput = "SpotLightDataBuffer";
 
 		// Maps from RenderDataID to monolithic light data buffer indexes:
-		static constexpr util::HashKey k_IDToDirectionalIdxDataOutput = "RenderDataIDToDirectionalBufferIdxMap";
-		static constexpr util::HashKey k_IDToPointIdxDataOutput = "RenderDataIDToPointBufferIdxMap";
-		static constexpr util::HashKey k_IDToSpotIdxDataOutput = "RenderDataIDToSpotBufferIdxMap";
+		static constexpr util::CHashKey k_IDToDirectionalIdxDataOutput = "RenderDataIDToDirectionalBufferIdxMap";
+		static constexpr util::CHashKey k_IDToPointIdxDataOutput = "RenderDataIDToPointBufferIdxMap";
+		static constexpr util::CHashKey k_IDToSpotIdxDataOutput = "RenderDataIDToSpotBufferIdxMap";
 
 		// Shadow array textures:
 		// Note: Textures may be reallocated at the start of any frame; Texture inputs should be reset each frame
-		static constexpr util::HashKey k_directionalShadowArrayTexOutput = "DirectionalShadowArrayTex";
-		static constexpr util::HashKey k_pointShadowArrayTexOutput = "PointShadowArrayTex";
-		static constexpr util::HashKey k_spotShadowArrayTexOutput = "SpotShadowArrayTex";
+		static constexpr util::CHashKey k_directionalShadowArrayTexOutput = "DirectionalShadowArrayTex";
+		static constexpr util::CHashKey k_pointShadowArrayTexOutput = "PointShadowArrayTex";
+		static constexpr util::CHashKey k_spotShadowArrayTexOutput = "SpotShadowArrayTex";
 
 		// Maps from RenderDataID to shadow array texture indexes:
-		static constexpr util::HashKey k_IDToDirectionalShadowArrayIdxDataOutput = "RenderDataIDToDirectionalShadowArrayIdxMap";
-		static constexpr util::HashKey k_IDToPointShadowArrayIdxDataOutput = "RenderDataIDToPointShadowArrayIdxMap";
-		static constexpr util::HashKey k_IDToSpotShadowArrayIdxDataOutput = "RenderDataIDToSpotShadowArrayIdxMap";
+		static constexpr util::CHashKey k_IDToDirectionalShadowArrayIdxDataOutput = "RenderDataIDToDirectionalShadowArrayIdxMap";
+		static constexpr util::CHashKey k_IDToPointShadowArrayIdxDataOutput = "RenderDataIDToPointShadowArrayIdxMap";
+		static constexpr util::CHashKey k_IDToSpotShadowArrayIdxDataOutput = "RenderDataIDToSpotShadowArrayIdxMap";
 
-		static constexpr util::HashKey k_PCSSSampleParamsBufferOutput = "PCSSSampleParamsBuffer";
+		static constexpr util::CHashKey k_PCSSSampleParamsBufferOutput = "PCSSSampleParamsBuffer";
 
 		void RegisterOutputs() override;
 

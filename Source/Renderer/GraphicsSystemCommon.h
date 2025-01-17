@@ -4,7 +4,7 @@
 #include "LightRenderData.h"
 #include "RenderObjectIDs.h"
 
-#include "Core/Util/HashKey.h"
+#include "Core/Util/CHashKey.h"
 
 namespace core
 {
@@ -19,9 +19,9 @@ namespace re
 
 namespace gr
 {
-	using TextureDependencies = std::map<util::HashKey, core::InvPtr<re::Texture> const*>;
-	using BufferDependencies = std::map<util::HashKey, std::shared_ptr<re::Buffer> const*>;
-	using DataDependencies = std::unordered_map<util::HashKey, void const*>;
+	using TextureDependencies = std::map<util::CHashKey, core::InvPtr<re::Texture> const*>;
+	using BufferDependencies = std::map<util::CHashKey, std::shared_ptr<re::Buffer> const*>;
+	using DataDependencies = std::unordered_map<util::CHashKey, void const*>;
 
 
 	// Data inputs/output types:
@@ -46,7 +46,7 @@ namespace gr
 
 
 	template<typename T>
-	T const* GetDataDependency(util::HashKey const& scriptName, DataDependencies const& dataDependencies)
+	T const* GetDataDependency(util::CHashKey const& scriptName, DataDependencies const& dataDependencies)
 	{
 		auto const& result = dataDependencies.find(scriptName);
 		return result == dataDependencies.end() ? nullptr : static_cast<T const*>(result->second);

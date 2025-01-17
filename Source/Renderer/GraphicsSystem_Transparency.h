@@ -21,32 +21,32 @@ namespace gr
 			);
 		}
 
-		static constexpr util::HashKey k_sceneDepthTexInput = "SceneDepth";
-		static constexpr util::HashKey k_sceneLightingTexInput = "SceneLightingTarget";
+		static constexpr util::CHashKey k_sceneDepthTexInput = "SceneDepth";
+		static constexpr util::CHashKey k_sceneLightingTexInput = "SceneLightingTarget";
 
-		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
-		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
+		static constexpr util::CHashKey k_pointLightCullingDataInput = "PointLightCullingResults";
+		static constexpr util::CHashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
 
-		static constexpr util::HashKey k_viewBatchesDataInput = "ViewBatches";
-		static constexpr util::HashKey k_allBatchesDataInput = "AllBatches";
+		static constexpr util::CHashKey k_viewBatchesDataInput = "ViewBatches";
+		static constexpr util::CHashKey k_allBatchesDataInput = "AllBatches";
 
-		static constexpr util::HashKey k_ambientIEMTexInput = "AmbientIEMTex";
-		static constexpr util::HashKey k_ambientPMREMTexInput = "AmbientPMREMTex";
-		static constexpr util::HashKey k_ambientDFGTexInput = "AmbientDFGTex";
-		static constexpr util::HashKey k_ambientParamsBufferInput = "AmbientParamsBuffer";
+		static constexpr util::CHashKey k_ambientIEMTexInput = "AmbientIEMTex";
+		static constexpr util::CHashKey k_ambientPMREMTexInput = "AmbientPMREMTex";
+		static constexpr util::CHashKey k_ambientDFGTexInput = "AmbientDFGTex";
+		static constexpr util::CHashKey k_ambientParamsBufferInput = "AmbientParamsBuffer";
 
-		static constexpr util::HashKey k_directionalLightDataBufferInput = "DirectionalLightDataBuffer";
-		static constexpr util::HashKey k_pointLightDataBufferInput = "PointLightDataBuffer";
-		static constexpr util::HashKey k_spotLightDataBufferInput = "SpotLightDataBuffer";
+		static constexpr util::CHashKey k_directionalLightDataBufferInput = "DirectionalLightDataBuffer";
+		static constexpr util::CHashKey k_pointLightDataBufferInput = "PointLightDataBuffer";
+		static constexpr util::CHashKey k_spotLightDataBufferInput = "SpotLightDataBuffer";
 
-		static constexpr util::HashKey k_IDToPointIdxDataInput = "RenderDataIDToPointBufferIdxMap";
-		static constexpr util::HashKey k_IDToSpotIdxDataInput = "RenderDataIDToSpotBufferIdxMap";
+		static constexpr util::CHashKey k_IDToPointIdxDataInput = "RenderDataIDToPointBufferIdxMap";
+		static constexpr util::CHashKey k_IDToSpotIdxDataInput = "RenderDataIDToSpotBufferIdxMap";
 
-		static constexpr util::HashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
-		static constexpr util::HashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
-		static constexpr util::HashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
+		static constexpr util::CHashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
+		static constexpr util::CHashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
+		static constexpr util::CHashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
 
-		static constexpr util::HashKey k_PCSSSampleParamsBufferInput = "PCSSSampleParamsBuffer";
+		static constexpr util::CHashKey k_PCSSSampleParamsBufferInput = "PCSSSampleParamsBuffer";
 
 		void RegisterInputs() override;
 

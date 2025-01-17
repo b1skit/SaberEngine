@@ -146,7 +146,7 @@
     <ClInclude Include="Util\DataHash.h" />
     <ClInclude Include="Util\DoubleBufferUnorderedMap.h" />
     <ClInclude Include="Util\FileIOUtils.h" />
-    <ClInclude Include="Util\HashKey.h" />
+    <ClInclude Include="Util\CHashKey.h" />
     <ClInclude Include="Util\HashUtils.h" />
     <ClInclude Include="Util\ImGuiUtils.h" />
     <ClInclude Include="Util\MathUtils.h" />

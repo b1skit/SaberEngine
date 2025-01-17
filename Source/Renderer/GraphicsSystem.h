@@ -7,7 +7,7 @@
 
 #include "Core/Interfaces/INamedObject.h"
 
-#include "Core/Util/HashKey.h"
+#include "Core/Util/CHashKey.h"
 #include "Core/Util/TextUtils.h"
 
 
@@ -85,70 +85,70 @@ namespace gr
 			TextureInputDefault_Count
 		};
 
-		TextureInputDefault GetTextureInputDefaultType(util::HashKey const&) const;
+		TextureInputDefault GetTextureInputDefaultType(util::CHashKey const&) const;
 		TextureInputDefault GetTextureInputDefaultType(char const* inputScriptName) const;
 		TextureInputDefault GetTextureInputDefaultType(std::string const& inputScriptName) const;
 
-		bool HasRegisteredTextureInput(util::HashKey const& inputScriptName) const;
+		bool HasRegisteredTextureInput(util::CHashKey const& inputScriptName) const;
 		bool HasRegisteredTextureInput(char const* inputScriptName) const;
 		bool HasRegisteredTextureInput(std::string const& inputScriptName) const;
 
-		std::map<util::HashKey, TextureInputDefault> const& GetTextureInputs() const;
+		std::map<util::CHashKey, TextureInputDefault> const& GetTextureInputs() const;
 
-		core::InvPtr<re::Texture> const* GetTextureOutput(util::HashKey const& outputScriptName) const;
+		core::InvPtr<re::Texture> const* GetTextureOutput(util::CHashKey const& outputScriptName) const;
 		core::InvPtr<re::Texture> const* GetTextureOutput(char const* outputScriptName) const;
 		core::InvPtr<re::Texture> const* GetTextureOutput(std::string const& outputScriptName) const;
 
 	protected:
-		void RegisterTextureInput(util::HashKey const&, TextureInputDefault = TextureInputDefault::None);
-		void RegisterTextureOutput(util::HashKey const&, core::InvPtr<re::Texture> const*);
+		void RegisterTextureInput(util::CHashKey const&, TextureInputDefault = TextureInputDefault::None);
+		void RegisterTextureOutput(util::CHashKey const&, core::InvPtr<re::Texture> const*);
 
 	private:
 		// These must be populated during the call to RegisterInputs/Outputs()
-		std::map<util::HashKey, TextureInputDefault> m_textureInputs;
-		std::map<util::HashKey, core::InvPtr<re::Texture> const*> m_textureOutputs;
+		std::map<util::CHashKey, TextureInputDefault> m_textureInputs;
+		std::map<util::CHashKey, core::InvPtr<re::Texture> const*> m_textureOutputs;
 
 
 		// Buffer inputs/outputs:
 	public:
-		bool HasRegisteredBufferInput(util::HashKey const& scriptName) const;
+		bool HasRegisteredBufferInput(util::CHashKey const& scriptName) const;
 		bool HasRegisteredBufferInput(char const* scriptName) const;
 		bool HasRegisteredBufferInput(std::string const& scriptName) const;
 
-		std::set<util::HashKey> const& GetBufferInputs() const;
+		std::set<util::CHashKey> const& GetBufferInputs() const;
 
-		std::shared_ptr<re::Buffer> const* GetBufferOutput(util::HashKey const& scriptName) const;
+		std::shared_ptr<re::Buffer> const* GetBufferOutput(util::CHashKey const& scriptName) const;
 		std::shared_ptr<re::Buffer> const* GetBufferOutput(char const* scriptName) const;
 		std::shared_ptr<re::Buffer> const* GetBufferOutput(std::string const& scriptName) const;
 
 	protected:
-		void RegisterBufferInput(util::HashKey const&);
-		void RegisterBufferOutput(util::HashKey const&, std::shared_ptr<re::Buffer> const*);
+		void RegisterBufferInput(util::CHashKey const&);
+		void RegisterBufferOutput(util::CHashKey const&, std::shared_ptr<re::Buffer> const*);
 
 	private:
-		std::set<util::HashKey> m_bufferInputs;
-		std::map<util::HashKey, std::shared_ptr<re::Buffer> const*> m_bufferOutputs;
+		std::set<util::CHashKey> m_bufferInputs;
+		std::map<util::CHashKey, std::shared_ptr<re::Buffer> const*> m_bufferOutputs;
 
 
 		// Data inputs/outputs:
 	public:
-		bool HasRegisteredDataInput(util::HashKey const& scriptName) const;
+		bool HasRegisteredDataInput(util::CHashKey const& scriptName) const;
 		bool HasRegisteredDataInput(char const* scriptName) const;
 		bool HasRegisteredDataInput(std::string const& scriptName) const;
 
-		std::set<util::HashKey> const& GetDataInputs() const;
+		std::set<util::CHashKey> const& GetDataInputs() const;
 
-		void const* GetDataOutput(util::HashKey const& scriptName) const;
+		void const* GetDataOutput(util::CHashKey const& scriptName) const;
 		void const* GetDataOutput(char const* scriptName) const;
 		void const* GetDataOutput(std::string const& scriptName) const;
 
 	protected:
-		void RegisterDataInput(util::HashKey const&);
-		void RegisterDataOutput(util::HashKey const&, void const*);
+		void RegisterDataInput(util::CHashKey const&);
+		void RegisterDataOutput(util::CHashKey const&, void const*);
 		
 	private:
-		std::set<util::HashKey> m_dataInputs;
-		std::map<util::HashKey, void const*> m_dataOutputs;
+		std::set<util::CHashKey> m_dataInputs;
+		std::map<util::CHashKey, void const*> m_dataOutputs;
 
 
 	public:
@@ -214,7 +214,7 @@ namespace gr
 
 
 	inline GraphicsSystem::TextureInputDefault GraphicsSystem::GetTextureInputDefaultType(
-		util::HashKey const& inputScriptName) const
+		util::CHashKey const& inputScriptName) const
 	{
 		SEAssert(HasRegisteredTextureInput(inputScriptName), "Texture input with that name has not been registered");
 		return m_textureInputs.at(inputScriptName);
@@ -224,7 +224,7 @@ namespace gr
 	inline GraphicsSystem::TextureInputDefault GraphicsSystem::GetTextureInputDefaultType(
 		char const* inputScriptName) const
 	{
-		return GetTextureInputDefaultType(util::HashKey::Create(inputScriptName));
+		return GetTextureInputDefaultType(util::CHashKey::Create(inputScriptName));
 	}
 
 
@@ -235,7 +235,7 @@ namespace gr
 	}
 
 
-	inline bool GraphicsSystem::HasRegisteredTextureInput(util::HashKey const& inputScriptName) const
+	inline bool GraphicsSystem::HasRegisteredTextureInput(util::CHashKey const& inputScriptName) const
 	{
 		return m_textureInputs.contains(inputScriptName);
 	}
@@ -243,7 +243,7 @@ namespace gr
 
 	inline bool GraphicsSystem::HasRegisteredTextureInput(char const* inputScriptName) const
 	{
-		return HasRegisteredTextureInput(util::HashKey::Create(inputScriptName));
+		return HasRegisteredTextureInput(util::CHashKey::Create(inputScriptName));
 	}
 
 
@@ -253,13 +253,13 @@ namespace gr
 	}
 
 
-	inline std::map<util::HashKey, GraphicsSystem::TextureInputDefault> const& GraphicsSystem::GetTextureInputs() const
+	inline std::map<util::CHashKey, GraphicsSystem::TextureInputDefault> const& GraphicsSystem::GetTextureInputs() const
 	{
 		return m_textureInputs;
 	}
 
 
-	inline core::InvPtr<re::Texture> const* GraphicsSystem::GetTextureOutput(util::HashKey const& scriptName) const
+	inline core::InvPtr<re::Texture> const* GraphicsSystem::GetTextureOutput(util::CHashKey const& scriptName) const
 	{
 		// Note: It's possible for GS's with multiple initialization steps to hit this if its first initialization step
 		// runs before a GS it is dependent on has been initialized (because we (currently) just initialize in the order
@@ -272,7 +272,7 @@ namespace gr
 
 	inline core::InvPtr<re::Texture> const* GraphicsSystem::GetTextureOutput(char const* scriptName) const
 	{
-		return GetTextureOutput(util::HashKey::Create(scriptName));
+		return GetTextureOutput(util::CHashKey::Create(scriptName));
 	}
 
 
@@ -283,7 +283,7 @@ namespace gr
 
 
 	inline void GraphicsSystem::RegisterTextureInput(
-		util::HashKey const& scriptName, TextureInputDefault fallbackDefault /*= TextureInputDefault::None*/)
+		util::CHashKey const& scriptName, TextureInputDefault fallbackDefault /*= TextureInputDefault::None*/)
 	{
 		// This function might be called multiple times by the same GS (e.g. if it has multiple initialization steps)
 		SEAssert(!m_textureInputs.contains(scriptName) || m_textureInputs.at(scriptName) == fallbackDefault,
@@ -293,7 +293,7 @@ namespace gr
 
 
 	inline void GraphicsSystem::RegisterTextureOutput(
-		util::HashKey const& scriptName, core::InvPtr<re::Texture> const* outputTex)
+		util::CHashKey const& scriptName, core::InvPtr<re::Texture> const* outputTex)
 	{
 		// Note: It's possible for the texture to be null here (e.g. for GS's with multiple initialization steps). This
 		// is fine long as everything exists the last time a GS calls this function.
@@ -301,7 +301,7 @@ namespace gr
 	}
 
 
-	inline bool GraphicsSystem::HasRegisteredBufferInput(util::HashKey const& scriptName) const
+	inline bool GraphicsSystem::HasRegisteredBufferInput(util::CHashKey const& scriptName) const
 	{
 		return m_bufferInputs.contains(scriptName);
 	}
@@ -309,7 +309,7 @@ namespace gr
 
 	inline bool GraphicsSystem::HasRegisteredBufferInput(char const* scriptName) const
 	{
-		return HasRegisteredBufferInput(util::HashKey::Create(scriptName));
+		return HasRegisteredBufferInput(util::CHashKey::Create(scriptName));
 	}
 
 
@@ -319,13 +319,13 @@ namespace gr
 	}
 
 
-	inline std::set<util::HashKey> const& GraphicsSystem::GetBufferInputs() const
+	inline std::set<util::CHashKey> const& GraphicsSystem::GetBufferInputs() const
 	{
 		return m_bufferInputs;
 	}
 
 
-	inline std::shared_ptr<re::Buffer> const* GraphicsSystem::GetBufferOutput(util::HashKey const& scriptName) const
+	inline std::shared_ptr<re::Buffer> const* GraphicsSystem::GetBufferOutput(util::CHashKey const& scriptName) const
 	{
 		SEAssert(m_bufferOutputs.contains(scriptName),
 			"No Buffer output with the given script name was registered by the GS");
@@ -335,7 +335,7 @@ namespace gr
 
 	inline std::shared_ptr<re::Buffer> const* GraphicsSystem::GetBufferOutput(char const* scriptName) const
 	{
-		return GetBufferOutput(util::HashKey::Create(scriptName));
+		return GetBufferOutput(util::CHashKey::Create(scriptName));
 	}
 
 
@@ -345,20 +345,20 @@ namespace gr
 	}
 
 
-	inline void GraphicsSystem::RegisterBufferInput(util::HashKey const& scriptName)
+	inline void GraphicsSystem::RegisterBufferInput(util::CHashKey const& scriptName)
 	{
 		m_bufferInputs.emplace(scriptName);
 	}
 
 
 	inline void GraphicsSystem::RegisterBufferOutput(
-		util::HashKey const& scriptName, std::shared_ptr<re::Buffer> const* buffer)
+		util::CHashKey const& scriptName, std::shared_ptr<re::Buffer> const* buffer)
 	{
 		m_bufferOutputs.emplace(scriptName, buffer);
 	}
 
 
-	inline bool GraphicsSystem::HasRegisteredDataInput(util::HashKey const& scriptName) const
+	inline bool GraphicsSystem::HasRegisteredDataInput(util::CHashKey const& scriptName) const
 	{
 		return m_dataInputs.contains(scriptName);
 	}
@@ -366,7 +366,7 @@ namespace gr
 
 	inline bool GraphicsSystem::HasRegisteredDataInput(char const* scriptName) const
 	{
-		return HasRegisteredDataInput(util::HashKey::Create(scriptName));
+		return HasRegisteredDataInput(util::CHashKey::Create(scriptName));
 	}
 
 
@@ -376,13 +376,13 @@ namespace gr
 	}
 
 
-	inline std::set<util::HashKey> const& GraphicsSystem::GetDataInputs() const
+	inline std::set<util::CHashKey> const& GraphicsSystem::GetDataInputs() const
 	{
 		return m_dataInputs;
 	}
 
 
-	inline void const* GraphicsSystem::GetDataOutput(util::HashKey const& scriptName) const
+	inline void const* GraphicsSystem::GetDataOutput(util::CHashKey const& scriptName) const
 	{
 		SEAssert(m_dataOutputs.contains(scriptName), "No data output with the given name has been registered");
 		return m_dataOutputs.at(scriptName);
@@ -391,7 +391,7 @@ namespace gr
 
 	inline void const* GraphicsSystem::GetDataOutput(char const* scriptName) const
 	{
-		return GetDataOutput(util::HashKey::Create(scriptName));
+		return GetDataOutput(util::CHashKey::Create(scriptName));
 	}
 
 
@@ -401,13 +401,13 @@ namespace gr
 	}
 
 
-	inline void GraphicsSystem::RegisterDataInput(util::HashKey const& scriptName)
+	inline void GraphicsSystem::RegisterDataInput(util::CHashKey const& scriptName)
 	{
 		m_dataInputs.emplace(scriptName);
 	}
 
 
-	inline void GraphicsSystem::RegisterDataOutput(util::HashKey const& scriptName, void const* data)
+	inline void GraphicsSystem::RegisterDataOutput(util::CHashKey const& scriptName, void const* data)
 	{
 		m_dataOutputs.emplace(scriptName, data);
 	}

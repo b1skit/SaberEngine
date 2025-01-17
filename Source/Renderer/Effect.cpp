@@ -12,11 +12,11 @@ namespace effect::drawstyle
 		effect::drawstyle::DrawStyleRuleToModes const& drawstyleBitmaskMappings =
 			effect::drawstyle::GetDrawStyleRuleToModesMap();
 
-		SEAssert(drawstyleBitmaskMappings.contains(util::HashKey::Create(drawstyleName)) &&
-			drawstyleBitmaskMappings.at(util::HashKey::Create(drawstyleName)).contains(util::HashKey::Create(mode)),
+		SEAssert(drawstyleBitmaskMappings.contains(util::CHashKey::Create(drawstyleName)) &&
+			drawstyleBitmaskMappings.at(util::CHashKey::Create(drawstyleName)).contains(util::CHashKey::Create(mode)),
 			"Draw style name or mode name not found");
 
-		return drawstyleBitmaskMappings.at(util::HashKey::Create(drawstyleName)).at(util::HashKey::Create(mode));
+		return drawstyleBitmaskMappings.at(util::CHashKey::Create(drawstyleName)).at(util::CHashKey::Create(mode));
 	}
 
 

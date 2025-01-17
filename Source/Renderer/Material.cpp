@@ -14,10 +14,10 @@ namespace gr
 	Material::EffectMaterial Material::EffectIDToEffectMaterial(EffectID effectID)
 	{
 		constexpr uint64_t k_GLTF_PBRMetallicRoughnessHash =
-			util::HashKey(k_effectMaterialNames[GLTF_PBRMetallicRoughness]).GetHash();
+			util::CHashKey(k_effectMaterialNames[GLTF_PBRMetallicRoughness]).GetHash();
 
-		util::HashKey matEffectHashKey =
-			util::HashKey::Create(re::RenderManager::Get()->GetEffectDB().GetEffect(effectID)->GetName());
+		util::CHashKey matEffectHashKey =
+			util::CHashKey::Create(re::RenderManager::Get()->GetEffectDB().GetEffect(effectID)->GetName());
 
 		switch (matEffectHashKey.GetHash())
 		{

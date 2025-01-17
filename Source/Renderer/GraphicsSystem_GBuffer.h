@@ -28,8 +28,8 @@ namespace gr
 			);
 		}
 
-		static constexpr util::HashKey k_viewBatchesDataInput = "ViewBatches";
-		static constexpr util::HashKey k_allBatchesDataInput = "AllBatches";
+		static constexpr util::CHashKey k_viewBatchesDataInput = "ViewBatches";
+		static constexpr util::CHashKey k_allBatchesDataInput = "AllBatches";
 		void RegisterInputs() override;
 		void RegisterOutputs() override;
 
@@ -49,14 +49,14 @@ namespace gr
 			GBufferTexIdx_Count,
 			GBufferColorTex_Count = 5 // Helper for iterating over color indexes only
 		};
-		static constexpr std::array<util::HashKey, GBufferTexIdx_Count> GBufferTexNameHashKeys =
+		static constexpr std::array<util::CHashKey, GBufferTexIdx_Count> GBufferTexNameHashKeys =
 		{
-			util::HashKey(ENUM_TO_STR(GBufferAlbedo)),		// 0
-			util::HashKey(ENUM_TO_STR(GBufferWNormal)),		// 1
-			util::HashKey(ENUM_TO_STR(GBufferRMAO)),		// 2
-			util::HashKey(ENUM_TO_STR(GBufferEmissive)),	// 3
-			util::HashKey(ENUM_TO_STR(GBufferMatProp0)),	// 4
-			util::HashKey(ENUM_TO_STR(GBufferDepth)),		// 5
+			util::CHashKey(ENUM_TO_STR(GBufferAlbedo)),		// 0
+			util::CHashKey(ENUM_TO_STR(GBufferWNormal)),		// 1
+			util::CHashKey(ENUM_TO_STR(GBufferRMAO)),		// 2
+			util::CHashKey(ENUM_TO_STR(GBufferEmissive)),	// 3
+			util::CHashKey(ENUM_TO_STR(GBufferMatProp0)),	// 4
+			util::CHashKey(ENUM_TO_STR(GBufferDepth)),		// 5
 		};
 		SEStaticAssert(GBufferGraphicsSystem::GBufferTexNameHashKeys.size() ==
 			GBufferGraphicsSystem::GBufferTexIdx::GBufferTexIdx_Count,

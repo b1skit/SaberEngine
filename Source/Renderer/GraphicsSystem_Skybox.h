@@ -22,8 +22,8 @@ namespace gr
 		}
 
 
-		static constexpr util::HashKey k_skyboxTargetInput = "SkyboxTarget";
-		static constexpr util::HashKey k_sceneDepthTexInput = "SceneDepth";
+		static constexpr util::CHashKey k_skyboxTargetInput = "SkyboxTarget";
+		static constexpr util::CHashKey k_sceneDepthTexInput = "SceneDepth";
 		void RegisterInputs() override;
 
 		void RegisterOutputs() override;

@@ -24,7 +24,7 @@ namespace gr
 			);
 		}
 
-		static constexpr util::HashKey k_viewBatchesDataInput = "ViewBatches";
+		static constexpr util::CHashKey k_viewBatchesDataInput = "ViewBatches";
 		void RegisterInputs() override;
 
 		void RegisterOutputs() override {};

@@ -1,5 +1,5 @@
 #pragma once
-#include "../Util/HashKey.h"
+#include "../Util/CHashKey.h"
 
 
 namespace core::configkeys
@@ -35,8 +35,8 @@ namespace core::configkeys
 	constexpr char const* k_logOutputDir	= ".\\Logs\\";
 
 	// JSON parsing:
-	constexpr util::HashKey k_jsonAllowExceptionsKey	= "JSONAllowExceptions";
-	constexpr util::HashKey k_jsonIgnoreCommentsKey		= "JSONIgnoreComments"; // Allow C-style comments (not to JSON spec)
+	constexpr util::CHashKey k_jsonAllowExceptionsKey	= "JSONAllowExceptions";
+	constexpr util::CHashKey k_jsonIgnoreCommentsKey		= "JSONIgnoreComments"; // Allow C-style comments (not to JSON spec)
 
 
 	// Command line controls:
@@ -61,54 +61,54 @@ namespace core::configkeys
 	/******************************************************************************************************************/
 
 	// OS:
-	constexpr util::HashKey k_documentsFolderPathKey = "documentsFolderPath"; // e.g. "C:\Users\<username>\Documents"
+	constexpr util::CHashKey k_documentsFolderPathKey = "documentsFolderPath"; // e.g. "C:\Users\<username>\Documents"
 
 	// Command line args:
-	constexpr util::HashKey k_commandLineArgsValueKey = "commandLineArgs"; // Get the entire command line arg string
+	constexpr util::CHashKey k_commandLineArgsValueKey = "commandLineArgs"; // Get the entire command line arg string
 
 	// Dynamic engine defaults:
-	constexpr util::HashKey k_shaderDirectoryKey	= "shaderDirectory"; // e.g. ".\\Shaders\\HLSL\\"
+	constexpr util::CHashKey k_shaderDirectoryKey	= "shaderDirectory"; // e.g. ".\\Shaders\\HLSL\\"
 
 	// System:
-	constexpr util::HashKey k_windowTitleKey		= "windowTitle";
-	constexpr util::HashKey k_windowWidthKey		= "width";
-	constexpr util::HashKey k_windowHeightKey		= "height";
-	constexpr util::HashKey k_numBackbuffersKey		= "numframesinflight";
-	constexpr util::HashKey k_vsyncEnabledKey		= "vsync";
+	constexpr util::CHashKey k_windowTitleKey		= "windowTitle";
+	constexpr util::CHashKey k_windowWidthKey		= "width";
+	constexpr util::CHashKey k_windowHeightKey		= "height";
+	constexpr util::CHashKey k_numBackbuffersKey		= "numframesinflight";
+	constexpr util::CHashKey k_vsyncEnabledKey		= "vsync";
 
 	// Control defaults:
-	constexpr util::HashKey k_mousePitchSensitivityKey	= "mousePitchSensitivity";
-	constexpr util::HashKey k_mouseYawSensitivityKey	= "mouseYawSensitivity";
-	constexpr util::HashKey k_sprintSpeedModifierKey	= "sprintSpeedModifier";
+	constexpr util::CHashKey k_mousePitchSensitivityKey	= "mousePitchSensitivity";
+	constexpr util::CHashKey k_mouseYawSensitivityKey	= "mouseYawSensitivity";
+	constexpr util::CHashKey k_sprintSpeedModifierKey	= "sprintSpeedModifier";
 
 	// Lights/shadows:
-	constexpr util::HashKey k_defaultDirectionalLightMinShadowBiasKey	= "defaultDirectionalLightMinShadowBias";
-	constexpr util::HashKey k_defaultDirectionalLightMaxShadowBiasKey	= "defaultDirectionalLightMaxShadowBias";
-	constexpr util::HashKey k_defaultDirectionalLightShadowSoftnessKey	= "defaultDirectionalLightShadowSoftness";
-	constexpr util::HashKey k_defaultPointLightMinShadowBiasKey			= "defaultPointLightMinShadowBias";
-	constexpr util::HashKey k_defaultPointLightMaxShadowBiasKey			= "defaultPointLightMaxShadowBias";
-	constexpr util::HashKey k_defaultPointLightShadowSoftnessKey		= "defaultPointLightMaxShadowSoftness";
-	constexpr util::HashKey k_defaultSpotLightMinShadowBiasKey			= "defaultSpotLightMinShadowBias";
-	constexpr util::HashKey k_defaultSpotLightMaxShadowBiasKey			= "defaultSpotLightMaxShadowBias";
-	constexpr util::HashKey k_defaultSpotLightShadowSoftnessKey			= "defaultSpotLightMaxShadowSoftness";
+	constexpr util::CHashKey k_defaultDirectionalLightMinShadowBiasKey	= "defaultDirectionalLightMinShadowBias";
+	constexpr util::CHashKey k_defaultDirectionalLightMaxShadowBiasKey	= "defaultDirectionalLightMaxShadowBias";
+	constexpr util::CHashKey k_defaultDirectionalLightShadowSoftnessKey	= "defaultDirectionalLightShadowSoftness";
+	constexpr util::CHashKey k_defaultPointLightMinShadowBiasKey			= "defaultPointLightMinShadowBias";
+	constexpr util::CHashKey k_defaultPointLightMaxShadowBiasKey			= "defaultPointLightMaxShadowBias";
+	constexpr util::CHashKey k_defaultPointLightShadowSoftnessKey		= "defaultPointLightMaxShadowSoftness";
+	constexpr util::CHashKey k_defaultSpotLightMinShadowBiasKey			= "defaultSpotLightMinShadowBias";
+	constexpr util::CHashKey k_defaultSpotLightMaxShadowBiasKey			= "defaultSpotLightMaxShadowBias";
+	constexpr util::CHashKey k_defaultSpotLightShadowSoftnessKey			= "defaultSpotLightMaxShadowSoftness";
 
 	// Camera:
-	constexpr util::HashKey k_defaultFOVKey			= "defaultyCameraFOV";
-	constexpr util::HashKey k_defaultNearKey		= "defaultCameraNear";
-	constexpr util::HashKey k_defaultFarKey			= "defaultCameraFar";
+	constexpr util::CHashKey k_defaultFOVKey			= "defaultyCameraFOV";
+	constexpr util::CHashKey k_defaultNearKey		= "defaultCameraNear";
+	constexpr util::CHashKey k_defaultFarKey			= "defaultCameraFar";
 
 	// Quality:
-	constexpr util::HashKey k_brdfLUTWidthHeightKey						= "brdfLUTWidthHeight";
-	constexpr util::HashKey k_iemTexWidthHeightKey						= "iemWidthHeight";
-	constexpr util::HashKey k_iemNumSamplesKey							= "iemNumSamples";
-	constexpr util::HashKey k_pmremTexWidthHeightKey					= "pmremWidthHeight";
-	constexpr util::HashKey k_pmremNumSamplesKey						= "pmremNumSamples";
-	constexpr util::HashKey k_defaultDirectionalShadowMapResolutionKey	= "defaultDirectionalShadowMapRes";
-	constexpr util::HashKey k_defaultShadowCubeMapResolutionKey			= "defaultShadowCubeMapRes";
-	constexpr util::HashKey k_defaultSpotShadowMapResolutionKey			= "defaultSpotShadowMapRes";
+	constexpr util::CHashKey k_brdfLUTWidthHeightKey						= "brdfLUTWidthHeight";
+	constexpr util::CHashKey k_iemTexWidthHeightKey						= "iemWidthHeight";
+	constexpr util::CHashKey k_iemNumSamplesKey							= "iemNumSamples";
+	constexpr util::CHashKey k_pmremTexWidthHeightKey					= "pmremWidthHeight";
+	constexpr util::CHashKey k_pmremNumSamplesKey						= "pmremNumSamples";
+	constexpr util::CHashKey k_defaultDirectionalShadowMapResolutionKey	= "defaultDirectionalShadowMapRes";
+	constexpr util::CHashKey k_defaultShadowCubeMapResolutionKey			= "defaultShadowCubeMapRes";
+	constexpr util::CHashKey k_defaultSpotShadowMapResolutionKey			= "defaultSpotShadowMapRes";
 
 	// Data processing:
-	constexpr util::HashKey k_doCPUVertexStreamNormalizationKey = "cpunormalizevertexstreams";
+	constexpr util::CHashKey k_doCPUVertexStreamNormalizationKey = "cpunormalizevertexstreams";
 }
 
 

@@ -36,36 +36,36 @@ namespace gr
 			);
 		}
 
-		static constexpr util::HashKey k_ssaoInput = "SSAOTex";
-		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
-		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
+		static constexpr util::CHashKey k_ssaoInput = "SSAOTex";
+		static constexpr util::CHashKey k_pointLightCullingDataInput = "PointLightCullingResults";
+		static constexpr util::CHashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
 
-		static constexpr util::HashKey k_directionalLightDataBufferInput = "DirectionalLightDataBuffer";
-		static constexpr util::HashKey k_pointLightDataBufferInput = "PointLightDataBuffer";
-		static constexpr util::HashKey k_spotLightDataBufferInput = "SpotLightDataBuffer";
+		static constexpr util::CHashKey k_directionalLightDataBufferInput = "DirectionalLightDataBuffer";
+		static constexpr util::CHashKey k_pointLightDataBufferInput = "PointLightDataBuffer";
+		static constexpr util::CHashKey k_spotLightDataBufferInput = "SpotLightDataBuffer";
 
-		static constexpr util::HashKey k_IDToDirectionalIdxDataInput = "RenderDataIDToDirectionalBufferIdxMap";
-		static constexpr util::HashKey k_IDToPointIdxDataInput = "RenderDataIDToPointBufferIdxMap";
-		static constexpr util::HashKey k_IDToSpotIdxDataInput = "RenderDataIDToSpotBufferIdxMap";
+		static constexpr util::CHashKey k_IDToDirectionalIdxDataInput = "RenderDataIDToDirectionalBufferIdxMap";
+		static constexpr util::CHashKey k_IDToPointIdxDataInput = "RenderDataIDToPointBufferIdxMap";
+		static constexpr util::CHashKey k_IDToSpotIdxDataInput = "RenderDataIDToSpotBufferIdxMap";
 
-		static constexpr util::HashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
-		static constexpr util::HashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
-		static constexpr util::HashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
+		static constexpr util::CHashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
+		static constexpr util::CHashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
+		static constexpr util::CHashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
 
-		static constexpr util::HashKey k_IDToDirectionalShadowArrayIdxDataInput = "RenderDataIDToDirectionalShadowArrayIdxMap";
-		static constexpr util::HashKey k_IDToPointShadowArrayIdxDataInput = "RenderDataIDToPointShadowArrayIdxMap";
-		static constexpr util::HashKey k_IDToSpotShadowArrayIdxDataInput = "RenderDataIDToSpotShadowArrayIdxMap";
+		static constexpr util::CHashKey k_IDToDirectionalShadowArrayIdxDataInput = "RenderDataIDToDirectionalShadowArrayIdxMap";
+		static constexpr util::CHashKey k_IDToPointShadowArrayIdxDataInput = "RenderDataIDToPointShadowArrayIdxMap";
+		static constexpr util::CHashKey k_IDToSpotShadowArrayIdxDataInput = "RenderDataIDToSpotShadowArrayIdxMap";
 
-		static constexpr util::HashKey k_PCSSSampleParamsBufferInput = "PCSSSampleParamsBuffer";
+		static constexpr util::CHashKey k_PCSSSampleParamsBufferInput = "PCSSSampleParamsBuffer";
 
 		// Note: The DeferredLightingGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
 		void RegisterInputs() override;
 
-		static constexpr util::HashKey k_lightingTexOutput = "DeferredLightTarget";
-		static constexpr util::HashKey k_activeAmbientIEMTexOutput = "ActiveAmbientIEMTex";
-		static constexpr util::HashKey k_activeAmbientPMREMTexOutput = "ActiveAmbientPMREMTex";
-		static constexpr util::HashKey k_activeAmbientDFGTexOutput = "ActiveAmbientDFGTex";
-		static constexpr util::HashKey k_activeAmbientParamsBufferOutput = "ActiveAmbientParamsBuffer";
+		static constexpr util::CHashKey k_lightingTexOutput = "DeferredLightTarget";
+		static constexpr util::CHashKey k_activeAmbientIEMTexOutput = "ActiveAmbientIEMTex";
+		static constexpr util::CHashKey k_activeAmbientPMREMTexOutput = "ActiveAmbientPMREMTex";
+		static constexpr util::CHashKey k_activeAmbientDFGTexOutput = "ActiveAmbientDFGTex";
+		static constexpr util::CHashKey k_activeAmbientParamsBufferOutput = "ActiveAmbientParamsBuffer";
 		void RegisterOutputs() override;
 
 

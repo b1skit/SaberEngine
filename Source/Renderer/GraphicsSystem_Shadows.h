@@ -29,23 +29,23 @@ namespace gr
 			);
 		}
 
-		static constexpr util::HashKey k_pointLightCullingDataInput = "PointLightCullingResults";
-		static constexpr util::HashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
+		static constexpr util::CHashKey k_pointLightCullingDataInput = "PointLightCullingResults";
+		static constexpr util::CHashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
 
-		static constexpr util::HashKey k_viewBatchesDataInput = "ViewBatches";
-		static constexpr util::HashKey k_allBatchesDataInput = "AllBatches";
+		static constexpr util::CHashKey k_viewBatchesDataInput = "ViewBatches";
+		static constexpr util::CHashKey k_allBatchesDataInput = "AllBatches";
 
-		static constexpr util::HashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
-		static constexpr util::HashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
-		static constexpr util::HashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
+		static constexpr util::CHashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
+		static constexpr util::CHashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
+		static constexpr util::CHashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
 
-		static constexpr util::HashKey k_IDToDirectionalShadowArrayIdxDataInput = "RenderDataIDToDirectionalShadowArrayIdxMap";
-		static constexpr util::HashKey k_IDToPointShadowArrayIdxDataInput = "RenderDataIDToPointShadowArrayIdxMap";
-		static constexpr util::HashKey k_IDToSpotShadowArrayIdxDataInput = "RenderDataIDToSpotShadowArrayIdxMap";
+		static constexpr util::CHashKey k_IDToDirectionalShadowArrayIdxDataInput = "RenderDataIDToDirectionalShadowArrayIdxMap";
+		static constexpr util::CHashKey k_IDToPointShadowArrayIdxDataInput = "RenderDataIDToPointShadowArrayIdxMap";
+		static constexpr util::CHashKey k_IDToSpotShadowArrayIdxDataInput = "RenderDataIDToSpotShadowArrayIdxMap";
 
 		void RegisterInputs() override;
 
-		static constexpr util::HashKey k_shadowTexturesOutput = "ShadowTextures";
+		static constexpr util::CHashKey k_shadowTexturesOutput = "ShadowTextures";
 		void RegisterOutputs() override;
 
 

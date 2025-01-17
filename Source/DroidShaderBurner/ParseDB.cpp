@@ -10,7 +10,7 @@
 #include "Core/Definitions/ConfigKeys.h"
 
 #include "Core/Util/FileIOUtils.h"
-#include "Core/Util/HashKey.h"
+#include "Core/Util/CHashKey.h"
 #include "Core/Util/TextUtils.h"
 
 #include "Renderer/EffectKeys.h"
@@ -130,25 +130,25 @@ namespace
 
 	char const* DataTypeNameToGLSLDataTypeName(std::string const& dataTypeName)
 	{
-		util::HashKey dataTypeNameHash = util::HashKey::Create(dataTypeName);
+		util::CHashKey dataTypeNameHash = util::CHashKey::Create(dataTypeName);
 
-		static const std::unordered_map<util::HashKey, char const*> s_dataTypeNameToGLSLTypeName =
+		static const std::unordered_map<util::CHashKey, char const*> s_dataTypeNameToGLSLTypeName =
 		{
-			{util::HashKey("uint2"), "uvec2"},
-			{util::HashKey("uint3"), "uvec3"},
-			{util::HashKey("uint4"), "uvec4"},
+			{util::CHashKey("uint2"), "uvec2"},
+			{util::CHashKey("uint3"), "uvec3"},
+			{util::CHashKey("uint4"), "uvec4"},
 
-			{util::HashKey("int2"), "ivec2"},
-			{util::HashKey("int3"), "ivec3"},
-			{util::HashKey("int4"), "ivec4"},
+			{util::CHashKey("int2"), "ivec2"},
+			{util::CHashKey("int3"), "ivec3"},
+			{util::CHashKey("int4"), "ivec4"},
 
-			{util::HashKey("float2"), "vec2"},
-			{util::HashKey("float3"), "vec3"},
-			{util::HashKey("float4"), "vec4"},
+			{util::CHashKey("float2"), "vec2"},
+			{util::CHashKey("float3"), "vec3"},
+			{util::CHashKey("float4"), "vec4"},
 
-			{util::HashKey("float2x2"), "mat2"},
-			{util::HashKey("float3x3"), "mat3"},
-			{util::HashKey("float4x4"), "mat4"},
+			{util::CHashKey("float2x2"), "mat2"},
+			{util::CHashKey("float3x3"), "mat3"},
+			{util::CHashKey("float4x4"), "mat4"},
 		};
 
 		return s_dataTypeNameToGLSLTypeName.at(dataTypeNameHash);
@@ -730,8 +730,8 @@ namespace droid
 		// Static functions:
 		{
 			filewriter.EmptyLine();
-			filewriter.WriteLine("using ModeToBitmask = std::unordered_map<util::HashKey, effect::drawstyle::Bitmask>;");
-			filewriter.WriteLine("using DrawStyleRuleToModes = std::unordered_map<util::HashKey, ModeToBitmask>;");
+			filewriter.WriteLine("using ModeToBitmask = std::unordered_map<util::CHashKey, effect::drawstyle::Bitmask>;");
+			filewriter.WriteLine("using DrawStyleRuleToModes = std::unordered_map<util::CHashKey, ModeToBitmask>;");
 
 			filewriter.EmptyLine();
 
@@ -749,11 +749,11 @@ namespace droid
 				filewriter.WriteLine("{");
 				filewriter.Indent();
 
-				filewriter.WriteLine(std::format("util::HashKey(\"{}\"),", rule));
+				filewriter.WriteLine(std::format("util::CHashKey(\"{}\"),", rule));
 				filewriter.OpenBrace();
 				for (auto const& mode : drawstyle.second)
 				{
-					filewriter.WriteLine(std::format("{{util::HashKey(\"{}\"), effect::drawstyle::{}_{}}},",
+					filewriter.WriteLine(std::format("{{util::CHashKey(\"{}\"), effect::drawstyle::{}_{}}},",
 						mode,
 						rule,
 						mode));

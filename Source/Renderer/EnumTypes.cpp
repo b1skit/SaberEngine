@@ -3,7 +3,7 @@
 
 #include "Core/Assert.h"
 
-#include "Core/Util/HashKey.h"
+#include "Core/Util/CHashKey.h"
 #include "Core/Util/TextUtils.h"
 
 
@@ -125,43 +125,43 @@ namespace re
 
 	re::DataType StrToDataType(std::string const& dataTypeStr)
 	{
-		static const std::unordered_map<util::HashKey, re::DataType> s_strLowerToDataType =
+		static const std::unordered_map<util::CHashKey, re::DataType> s_strLowerToDataType =
 		{
-			{ util::HashKey("float"),	re::DataType::Float },
-			{ util::HashKey("float2"),	re::DataType::Float2 },
-			{ util::HashKey("float3"),	re::DataType::Float3 },
-			{ util::HashKey("float4"),	re::DataType::Float4 },
+			{ util::CHashKey("float"),	re::DataType::Float },
+			{ util::CHashKey("float2"),	re::DataType::Float2 },
+			{ util::CHashKey("float3"),	re::DataType::Float3 },
+			{ util::CHashKey("float4"),	re::DataType::Float4 },
 
-			{ util::HashKey("int"),		re::DataType::Int },
-			{ util::HashKey("int2"),	re::DataType::Int2 },
-			{ util::HashKey("int3"),	re::DataType::Int3 },
-			{ util::HashKey("int4"),	re::DataType::Int4 },
+			{ util::CHashKey("int"),		re::DataType::Int },
+			{ util::CHashKey("int2"),	re::DataType::Int2 },
+			{ util::CHashKey("int3"),	re::DataType::Int3 },
+			{ util::CHashKey("int4"),	re::DataType::Int4 },
 
-			{ util::HashKey("uint"),	re::DataType::UInt },
-			{ util::HashKey("uint2"),	re::DataType::UInt2 },
-			{ util::HashKey("uint3"),	re::DataType::UInt3 },
-			{ util::HashKey("uint4"),	re::DataType::UInt4 },
+			{ util::CHashKey("uint"),	re::DataType::UInt },
+			{ util::CHashKey("uint2"),	re::DataType::UInt2 },
+			{ util::CHashKey("uint3"),	re::DataType::UInt3 },
+			{ util::CHashKey("uint4"),	re::DataType::UInt4 },
 
-			{ util::HashKey("short"),	re::DataType::Short },
-			{ util::HashKey("short2"),	re::DataType::Short2 },
-			{ util::HashKey("short4"),	re::DataType::Short4 },
+			{ util::CHashKey("short"),	re::DataType::Short },
+			{ util::CHashKey("short2"),	re::DataType::Short2 },
+			{ util::CHashKey("short4"),	re::DataType::Short4 },
 
-			{ util::HashKey("ushort"),	re::DataType::UShort },
-			{ util::HashKey("ushort2"),	re::DataType::UShort2 },
-			{ util::HashKey("ushort4"),	re::DataType::UShort4 },
+			{ util::CHashKey("ushort"),	re::DataType::UShort },
+			{ util::CHashKey("ushort2"),	re::DataType::UShort2 },
+			{ util::CHashKey("ushort4"),	re::DataType::UShort4 },
 
-			{ util::HashKey("byte"),	re::DataType::Byte },
-			{ util::HashKey("byte2"),	re::DataType::Byte2 },
-			{ util::HashKey("byte4"),	re::DataType::Byte4 },
+			{ util::CHashKey("byte"),	re::DataType::Byte },
+			{ util::CHashKey("byte2"),	re::DataType::Byte2 },
+			{ util::CHashKey("byte4"),	re::DataType::Byte4 },
 
-			{ util::HashKey("ubyte"),	re::DataType::UByte },
-			{ util::HashKey("ubyte2"),	re::DataType::UByte2 },
-			{ util::HashKey("ubyte4"),	re::DataType::UByte4 },
+			{ util::CHashKey("ubyte"),	re::DataType::UByte },
+			{ util::CHashKey("ubyte2"),	re::DataType::UByte2 },
+			{ util::CHashKey("ubyte4"),	re::DataType::UByte4 },
 		};
 		SEAssert(s_strLowerToDataType.size() == static_cast<size_t>(re::DataType::DataType_Count),
 			"Data types are out of sync");
 
-		const util::HashKey dataTypeStrLowerHashkey = util::HashKey::Create(util::ToLower(dataTypeStr));
+		const util::CHashKey dataTypeStrLowerHashkey = util::CHashKey::Create(util::ToLower(dataTypeStr));
 
 		SEAssert(s_strLowerToDataType.contains(dataTypeStrLowerHashkey), "Invalid data type name");
 

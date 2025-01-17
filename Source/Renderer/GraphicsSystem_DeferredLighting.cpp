@@ -606,7 +606,7 @@ namespace gr
 			SEAssert(texDependencies.contains(GBufferGraphicsSystem::GBufferTexNameHashKeys[slot]),
 				"Texture dependency not found");
 
-			util::HashKey const& texName = GBufferGraphicsSystem::GBufferTexNameHashKeys[slot];
+			util::CHashKey const& texName = GBufferGraphicsSystem::GBufferTexNameHashKeys[slot];
 			core::InvPtr<re::Texture> const& gbufferTex = *texDependencies.at(texName);
 			
 			re::TextureView gbufferTexView = re::TextureView(gbufferTex);
@@ -624,7 +624,7 @@ namespace gr
 
 		// Attach the GBUffer depth input:
 		constexpr uint8_t depthBufferSlot = gr::GBufferGraphicsSystem::GBufferDepth;
-		util::HashKey const& depthName = GBufferGraphicsSystem::GBufferTexNameHashKeys[depthBufferSlot];
+		util::CHashKey const& depthName = GBufferGraphicsSystem::GBufferTexNameHashKeys[depthBufferSlot];
 		core::InvPtr<re::Texture> const& depthTex = *texDependencies.at(depthName);
 
 		const re::TextureView gbufferDepthTexView = re::TextureView(depthTex);

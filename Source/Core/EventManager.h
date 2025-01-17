@@ -4,7 +4,7 @@
 
 #include "Interfaces/IEngineComponent.h"
 
-#include "Util/HashKey.h"
+#include "Util/CHashKey.h"
 
 
 namespace core
@@ -20,41 +20,41 @@ namespace re
 namespace eventkey
 {
 	// Generic events: These will likely have packed data that needs to be interpreted
-	constexpr util::HashKey KeyEvent("KeyEvent");
-	constexpr util::HashKey MouseMotionEvent("MouseMotionEvent");
-	constexpr util::HashKey MouseButtonEvent("MouseButtonEvent");
-	constexpr util::HashKey MouseWheelEvent("MouseWheelEvent");
-	constexpr util::HashKey TextInputEvent("TextInputEvent");
+	constexpr util::CHashKey KeyEvent("KeyEvent");
+	constexpr util::CHashKey MouseMotionEvent("MouseMotionEvent");
+	constexpr util::CHashKey MouseButtonEvent("MouseButtonEvent");
+	constexpr util::CHashKey MouseWheelEvent("MouseWheelEvent");
+	constexpr util::CHashKey TextInputEvent("TextInputEvent");
 
-	constexpr util::HashKey KeyboardInputCaptureChange("KeyboardInputCaptureChange");
-	constexpr util::HashKey MouseInputCaptureChange("MouseInputCaptureChange");
+	constexpr util::CHashKey KeyboardInputCaptureChange("KeyboardInputCaptureChange");
+	constexpr util::CHashKey MouseInputCaptureChange("MouseInputCaptureChange");
 
 	// Functionality triggers: Typically a system will be interested in these, not specific button states
-	constexpr util::HashKey InputForward("InputForward");
-	constexpr util::HashKey InputBackward("InputBackward");
-	constexpr util::HashKey InputLeft("InputLeft");
-	constexpr util::HashKey InputRight("InputRight");
-	constexpr util::HashKey InputUp("InputUp");
-	constexpr util::HashKey InputDown("InputDown");
-	constexpr util::HashKey InputSprint("InputSprint");
+	constexpr util::CHashKey InputForward("InputForward");
+	constexpr util::CHashKey InputBackward("InputBackward");
+	constexpr util::CHashKey InputLeft("InputLeft");
+	constexpr util::CHashKey InputRight("InputRight");
+	constexpr util::CHashKey InputUp("InputUp");
+	constexpr util::CHashKey InputDown("InputDown");
+	constexpr util::CHashKey InputSprint("InputSprint");
 
 	// Mouse functions:
-	constexpr util::HashKey InputMouseLeft("InputMouseLeft");
-	constexpr util::HashKey InputMouseMiddle("InputMouseMiddle");
-	constexpr util::HashKey InputMouseRight("InputMouseRight");
+	constexpr util::CHashKey InputMouseLeft("InputMouseLeft");
+	constexpr util::CHashKey InputMouseMiddle("InputMouseMiddle");
+	constexpr util::CHashKey InputMouseRight("InputMouseRight");
 
 	// System:
-	constexpr util::HashKey ToggleConsole("ToggleConsole");
-	constexpr util::HashKey ToggleVSync("ToggleVSync");
-	constexpr util::HashKey VSyncModeChanged("VSyncModeChanged");
-	constexpr util::HashKey WindowFocusChanged("WindowFocusChanged");
-	constexpr util::HashKey DragAndDrop("DragAndDropEvent");
+	constexpr util::CHashKey ToggleConsole("ToggleConsole");
+	constexpr util::CHashKey ToggleVSync("ToggleVSync");
+	constexpr util::CHashKey VSyncModeChanged("VSyncModeChanged");
+	constexpr util::CHashKey WindowFocusChanged("WindowFocusChanged");
+	constexpr util::CHashKey DragAndDrop("DragAndDropEvent");
 
-	constexpr util::HashKey EngineQuit("EngineQuit");
+	constexpr util::CHashKey EngineQuit("EngineQuit");
 
-	constexpr util::HashKey FileImportRequest("FileImportRequest");
-	constexpr util::HashKey SceneCreated("SceneCreated");
-	constexpr util::HashKey SceneResetRequest("SceneResetRequest");
+	constexpr util::CHashKey FileImportRequest("FileImportRequest");
+	constexpr util::CHashKey SceneCreated("SceneCreated");
+	constexpr util::CHashKey SceneResetRequest("SceneResetRequest");
 }
 
 namespace core
@@ -77,7 +77,7 @@ namespace core
 
 		struct EventInfo
 		{
-			util::HashKey m_eventKey = util::HashKey("UninitializedEvent");
+			util::CHashKey m_eventKey = util::CHashKey("UninitializedEvent");
 			EventData m_data;
 		};
 
@@ -98,7 +98,7 @@ namespace core
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 		// Member functions:
-		void Subscribe(util::HashKey const& eventType, IEventListener* listener); // Subscribe to an event
+		void Subscribe(util::CHashKey const& eventType, IEventListener* listener); // Subscribe to an event
 		void Notify(EventInfo&&); // Post an event
 
 
@@ -106,7 +106,7 @@ namespace core
 		std::vector<EventInfo> m_eventQueue;
 		std::mutex m_eventQueueMutex;
 
-		std::unordered_map<util::HashKey, std::vector<IEventListener*>> m_eventListeners;
+		std::unordered_map<util::CHashKey, std::vector<IEventListener*>> m_eventListeners;
 		std::mutex m_eventListenersMutex;
 
 

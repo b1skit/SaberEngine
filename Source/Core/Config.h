@@ -5,7 +5,7 @@
 
 #include "Definitions/ConfigKeys.h"
 
-#include "Util/HashKey.h"
+#include "Util/CHashKey.h"
 
 
 namespace core
@@ -43,24 +43,24 @@ namespace core
 
 	public:
 		template<typename T>
-		T GetValue(util::HashKey const&) const;
+		T GetValue(util::CHashKey const&) const;
 
 		template<typename T>
-		bool TryGetValue(util::HashKey const&, T& valueOut) const;
+		bool TryGetValue(util::CHashKey const&, T& valueOut) const;
 
-		bool KeyExists(util::HashKey const&) const;
+		bool KeyExists(util::CHashKey const&) const;
 
-		std::string GetValueAsString(util::HashKey const&) const;
-		std::wstring GetValueAsWString(util::HashKey const&) const;
+		std::string GetValueAsString(util::CHashKey const&) const;
+		std::wstring GetValueAsWString(util::CHashKey const&) const;
 	
 
 	public:
 		template<typename T>
-		void SetValue(util::HashKey const&, T const& value, SettingType = SettingType::Serialized);
+		void SetValue(util::CHashKey const&, T const& value, SettingType = SettingType::Serialized);
 
 		// Set a new config value, IFF it doesn't already exist. Returns true if the value was set
 		template<typename T>
-		bool TrySetValue(util::HashKey const&, T const& value, SettingType = SettingType::Serialized);
+		bool TrySetValue(util::CHashKey const&, T const& value, SettingType = SettingType::Serialized);
 
 
 	private:
@@ -71,7 +71,7 @@ namespace core
 
 	private:
 		using ConfigValue = std::variant<bool, int, float, char, char const*, std::string>;
-		std::unordered_map<util::HashKey, std::pair<ConfigValue, SettingType>> m_configValues;
+		std::unordered_map<util::CHashKey, std::pair<ConfigValue, SettingType>> m_configValues;
 		mutable std::shared_mutex m_configValuesMutex;
 		bool m_isDirty; // Marks whether we need to save the config file or not
 
@@ -115,7 +115,7 @@ namespace core
 
 	// Get a config value, by type
 	template<typename T>
-	T Config::GetValue(util::HashKey const& key) const
+	T Config::GetValue(util::CHashKey const& key) const
 	{
 		T returnVal{};
 		{
@@ -142,7 +142,7 @@ namespace core
 
 
 	template<typename T>
-	bool Config::TryGetValue(util::HashKey const& key, T& valueOut) const
+	bool Config::TryGetValue(util::CHashKey const& key, T& valueOut) const
 	{
 		if (!KeyExists(key))
 		{
@@ -158,7 +158,7 @@ namespace core
 	// Note: Strings must be explicitely defined as a string("value")
 	template<typename T>
 	void Config::SetValue(
-		util::HashKey const& key, T const& value, SettingType settingType /*= SettingType::Serialized*/)
+		util::CHashKey const& key, T const& value, SettingType settingType /*= SettingType::Serialized*/)
 	{
 		{
 			std::unique_lock<std::shared_mutex> readLock(m_configValuesMutex);
@@ -179,7 +179,7 @@ namespace core
 
 	template<typename T>
 	bool Config::TrySetValue(
-		util::HashKey const& key, T const&  value, SettingType settingType /*= SettingType::Serialized*/)
+		util::CHashKey const& key, T const&  value, SettingType settingType /*= SettingType::Serialized*/)
 	{
 		if (KeyExists(key))
 		{

@@ -46,7 +46,7 @@ namespace
 				{
 					std::string const& srcName = dependencySrcDstNameMapping.first;
 					
-					util::HashKey const& dstName = util::HashKey::Create(dependencySrcDstNameMapping.second);
+					util::CHashKey const& dstName = util::CHashKey::Create(dependencySrcDstNameMapping.second);
 					SEAssert(dstGS->HasRegisteredTextureInput(dstName),
 						"Destination GS hasn't registered this input name");
 
@@ -158,7 +158,7 @@ namespace
 
 				for (auto const& srcDstNames : curDependency.second)
 				{
-					util::HashKey const& dependencyDstName = util::HashKey::Create(srcDstNames.second);
+					util::CHashKey const& dependencyDstName = util::CHashKey::Create(srcDstNames.second);
 					SEAssert(dstGS->HasRegisteredBufferInput(dependencyDstName),
 						"No Buffer input with the given name has been registered");
 
@@ -202,7 +202,7 @@ namespace
 
 				for (auto const& srcDstNames : curDependency.second)
 				{
-					util::HashKey const& dependencyDstName = util::HashKey::Create(srcDstNames.second);
+					util::CHashKey const& dependencyDstName = util::CHashKey::Create(srcDstNames.second);
 					SEAssert(dstGS->HasRegisteredDataInput(dependencyDstName),
 						"No data input with the given name has been registered");
 

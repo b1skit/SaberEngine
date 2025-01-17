@@ -23,10 +23,10 @@ namespace gr
 			);
 		}
 
-		static constexpr util::HashKey k_cullingDataInput = "ViewCullingResults";
+		static constexpr util::CHashKey k_cullingDataInput = "ViewCullingResults";
 		void RegisterInputs() override;
 
-		static constexpr util::HashKey k_animatedVertexStreamsOutput = "AnimatedVertexStreams";
+		static constexpr util::CHashKey k_animatedVertexStreamsOutput = "AnimatedVertexStreams";
 		void RegisterOutputs() override;
 
 

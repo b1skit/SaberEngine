@@ -21,8 +21,8 @@ namespace gr
 			);
 		}
 
-		static constexpr util::HashKey k_tonemappingTargetInput = "TonemappingTarget";
-		static constexpr util::HashKey k_bloomResultInput = "BloomResult";
+		static constexpr util::CHashKey k_tonemappingTargetInput = "TonemappingTarget";
+		static constexpr util::CHashKey k_bloomResultInput = "BloomResult";
 		void RegisterInputs() override;
 
 		void RegisterOutputs() override;
