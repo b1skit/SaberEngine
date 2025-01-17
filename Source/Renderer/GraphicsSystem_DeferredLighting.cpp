@@ -1055,7 +1055,7 @@ namespace gr
 				auto AddDuplicatedBatch = [&light, &lightID](
 					re::RenderStage* stage,
 					char const* shadowTexShaderName,
-					util::StringHash const& samplerTypeName,
+					util::DataHash const& samplerTypeName,
 					LightDataBufferIdxMap const* lightDataBufferIdxMap,
 					core::InvPtr<re::Texture> const* shadowArrayTex,
 					ShadowArrayIdxMap const* shadowArrayIdxMap)
@@ -1095,8 +1095,8 @@ namespace gr
 								})));
 					};
 
-				const util::StringHash sampler2DShadowName("BorderCmpMinMagLinearMipPoint");
-				const util::StringHash samplerCubeShadowName("WrapCmpMinMagLinearMipPoint");
+				const util::DataHash sampler2DShadowName("BorderCmpMinMagLinearMipPoint");
+				const util::DataHash samplerCubeShadowName("WrapCmpMinMagLinearMipPoint");
 				switch (light.second.m_type)
 				{
 				case gr::Light::Type::Directional:

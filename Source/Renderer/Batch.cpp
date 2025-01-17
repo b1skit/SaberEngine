@@ -122,7 +122,7 @@ namespace
 
 	core::InvPtr<re::Shader> const& GetResolvedShader(EffectID effectID, effect::drawstyle::Bitmask drawStyleBitmask)
 	{
-		SEAssert(effectID.IsValid(), "Invalid Effect");
+		SEAssert(effectID != 0, "Invalid Effect");
 
 		effect::Effect const* effect = re::RenderManager::Get()->GetEffectDB().GetEffect(effectID);
 		effect::Technique const* technique = effect->GetResolvedTechnique(drawStyleBitmask);
@@ -333,7 +333,7 @@ namespace re
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
 		, m_batchShader(nullptr)
-		, m_effectID(materialInstanceData ? materialInstanceData->m_effectID : util::StringHash(/*Invalid*/))
+		, m_effectID(materialInstanceData ? materialInstanceData->m_effectID : util::DataHash())
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
@@ -606,7 +606,7 @@ namespace re
 
 	void Batch::Resolve(effect::drawstyle::Bitmask stageBitmask)
 	{
-		SEAssert(m_effectID.IsValid(), "Invalid EffectID");
+		SEAssert(m_effectID != 0, "Invalid EffectID");
 		SEAssert(m_batchShader == nullptr, "Batch already has a shader. This is unexpected");
 
 		// TODO: We don't update the data hash even though we're modifying the m_drawStyleBitmask, as by this point

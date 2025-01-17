@@ -9,7 +9,7 @@
 #include "Generated/DrawStyles.h"
 
 
-using EffectID = util::StringHash;
+using EffectID = util::DataHash;
 
 
 namespace effect::drawstyle
@@ -44,19 +44,19 @@ namespace effect
 		Technique const* GetResolvedTechnique(effect::drawstyle::Bitmask) const;
 		std::unordered_map<effect::drawstyle::Bitmask, effect::Technique const*> const& GetAllTechniques() const;
 
-		bool UsesBuffer(util::StringHash) const;
+		bool UsesBuffer(util::DataHash) const;
 
 
 	public:
 		void AddTechnique(effect::drawstyle::Bitmask, effect::Technique const*);
 
-		void AddBufferName(util::StringHash);
+		void AddBufferName(util::DataHash);
 
 
 	private:
 		std::unordered_map<effect::drawstyle::Bitmask, effect::Technique const*> m_techniques;
 
-		std::set<util::StringHash> m_buffers; // Opt-in: A Effect can optionally associate itself with buffers by name
+		std::set<util::DataHash> m_buffers; // Opt-in: A Effect can optionally associate itself with buffers by name
 
 
 	private:
@@ -67,7 +67,7 @@ namespace effect
 
 	inline EffectID Effect::ComputeEffectID(std::string const& effectName)
 	{
-		return util::StringHash(effectName);
+		return util::DataHash(effectName);
 	}
 
 
@@ -94,9 +94,9 @@ namespace effect
 	}
 
 
-	inline bool Effect::UsesBuffer(util::StringHash bufferNameHash) const
+	inline bool Effect::UsesBuffer(util::DataHash bufferNameHash) const
 	{
-		SEAssert(bufferNameHash.IsValid(), "Invalid buffer name hash");
+		SEAssert(bufferNameHash != 0, "Invalid buffer name hash");
 		return m_buffers.contains(bufferNameHash);
 	}
 }

@@ -284,7 +284,7 @@ namespace gr
 		loadContext->m_vertexStreams = std::move(vertexStreams);
 		loadContext->m_meshParams = meshParams;
 
-		return inventory->Get<gr::MeshPrimitive>(util::StringHash(name), loadContext);
+		return inventory->Get<gr::MeshPrimitive>(util::DataHash(name), loadContext);
 	}
 
 
@@ -316,7 +316,7 @@ namespace gr
 		loadContext->m_streamCreateParams = std::move(streamCreateParams);
 		loadContext->m_meshParams = meshParams;
 
-		return inventory->Get<gr::MeshPrimitive>(util::StringHash(name), loadContext);		
+		return inventory->Get<gr::MeshPrimitive>(util::DataHash(name), loadContext);		
 	}
 
 

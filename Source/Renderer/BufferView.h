@@ -110,7 +110,7 @@ namespace re
 		re::Buffer* GetBuffer();
 		
 		std::string const& GetShaderName() const;
-		util::StringHash GetShaderNameHash() const;
+		util::DataHash GetShaderNameHash() const;
 
 		BufferView const& GetView() const;
 
@@ -142,7 +142,7 @@ namespace re
 	}
 
 
-	inline util::StringHash BufferInput::GetShaderNameHash() const
+	inline util::DataHash BufferInput::GetShaderNameHash() const
 	{
 		return GetNameHash();
 	}

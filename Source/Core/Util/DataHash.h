@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "StringHash.h"
+#include "HashUtils.h"
 
 
 namespace util
@@ -16,8 +16,7 @@ namespace util
 		DataHash(uint64_t hash) noexcept : m_dataHash(hash) {}
 		DataHash(int zeroInit) noexcept : m_dataHash(zeroInit) { SEAssert(m_dataHash == 0, "Unexpected data width"); }
 
-		DataHash(util::StringHash const& stringHash) noexcept : m_dataHash(stringHash.Get()) {}
-		DataHash(char const* const cStr) noexcept : m_dataHash(util::StringHash(cStr).Get()) {}
+		DataHash(char const* const cStr) noexcept : m_dataHash(util::HashString(cStr)) {}
 		DataHash(std::string const& str) noexcept : DataHash(str.c_str()) {}
 
 		DataHash(DataHash const&) noexcept = default;
@@ -39,6 +38,7 @@ namespace util
 
 		bool operator==(DataHash const& rhs) const noexcept { return m_dataHash == rhs.m_dataHash; }
 		bool operator==(uint64_t rhs) const noexcept { return m_dataHash == rhs; }
+		bool operator==(int rhs) const noexcept { SEAssert(rhs == 0, "Unexpected comparison"); return m_dataHash == rhs; } // Convenience only
 
 		bool operator<(DataHash const& rhs) const noexcept { return m_dataHash < rhs.m_dataHash; }
 		bool operator>(DataHash const& rhs) const noexcept { return m_dataHash > rhs.m_dataHash; }

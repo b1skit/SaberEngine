@@ -3,9 +3,6 @@
 #include "InvPtr.h"
 #include "ResourceSystem.h"
 
-#include "Util/StringHash.h"
-
-
 
 namespace core
 {

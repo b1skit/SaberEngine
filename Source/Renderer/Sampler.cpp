@@ -9,7 +9,7 @@
 
 namespace re
 {
-	core::InvPtr<re::Sampler> Sampler::GetSampler(util::StringHash const& samplerNameHash)
+	core::InvPtr<re::Sampler> Sampler::GetSampler(util::DataHash const& samplerNameHash)
 	{
 		return re::RenderManager::Get()->GetInventory()->Get<re::Sampler>(samplerNameHash, nullptr);
 	}
@@ -17,7 +17,7 @@ namespace re
 
 	core::InvPtr<re::Sampler> Sampler::GetSampler(char const* samplerName)
 	{
-		return GetSampler(util::StringHash(samplerName));
+		return GetSampler(util::DataHash(samplerName));
 	}
 
 
@@ -53,7 +53,7 @@ namespace re
 		samplerLoadContext->m_isPermanent = true;
 
 		core::InvPtr<re::Sampler> const& newSampler = re::RenderManager::Get()->GetInventory()->Get(
-				util::StringHash(name), 
+				util::DataHash(name), 
 				static_pointer_cast<core::ILoadContext<re::Sampler>>(samplerLoadContext));
 
 		return newSampler;

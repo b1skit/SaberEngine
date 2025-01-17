@@ -8,7 +8,7 @@
 #include "Core/Interfaces/IUniqueID.h"
 
 
-using TechniqueID = util::StringHash;
+using TechniqueID = util::DataHash;
 
 namespace re
 {
@@ -56,7 +56,7 @@ namespace effect
 
 	inline TechniqueID Technique::ComputeTechniqueID(std::string const& techniqueName)
 	{
-		return util::StringHash(techniqueName);
+		return util::DataHash(techniqueName);
 	}
 
 

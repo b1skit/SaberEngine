@@ -111,9 +111,9 @@ namespace effect
 	}
 
 
-	void Effect::AddBufferName(util::StringHash bufferNameHash)
+	void Effect::AddBufferName(util::DataHash bufferNameHash)
 	{
-		SEAssert(bufferNameHash.IsValid(), "Invalid buffer name hash");
+		SEAssert(bufferNameHash != 0, "Invalid buffer name hash");
 		m_buffers.emplace(bufferNameHash);
 	}
 }

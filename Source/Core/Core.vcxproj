@@ -151,7 +151,6 @@
     <ClInclude Include="Util\ImGuiUtils.h" />
     <ClInclude Include="Util\MathUtils.h" />
     <ClInclude Include="Util\NBufferedVector.h" />
-    <ClInclude Include="Util\StringHash.h" />
     <ClInclude Include="Util\TextUtils.h" />
     <ClInclude Include="Util\ThreadProtector.h" />
     <ClInclude Include="Util\ThreadSafeVector.h" />

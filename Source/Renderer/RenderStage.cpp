@@ -217,7 +217,7 @@ namespace re
 		: INamedObject(name)
 		, RenderStage(name, nullptr, Type::FullscreenQuad, lifetime)
 	{
-		SEAssert(stageParams->m_effectID.IsValid(), "Invalid EffectID");
+		SEAssert(stageParams->m_effectID != 0, "Invalid EffectID");
 
 		m_screenAlignedQuad = 
 			gr::meshfactory::CreateFullscreenQuad(re::RenderManager::Get()->GetInventory(), stageParams->m_zLocation);
@@ -769,7 +769,7 @@ namespace re
 		SEAssert(m_type != Type::FullscreenQuad || m_stageBatches.empty(),
 			"Cannot add batches to a fullscreen quad stage (except for the initial batch during construction)");
 
-		SEAssert(batch.GetEffectID().IsValid(), "Batch has not been assigned an Effect");
+		SEAssert(batch.GetEffectID() != 0, "Batch has not been assigned an Effect");
 
 		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics &&
 			(m_type == Type::Graphics || m_type == Type::FullscreenQuad)) ||
