@@ -7,7 +7,7 @@
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
 
-#include "Core/Util/DataHash.h"
+#include "Core/Util/HashKey.h"
 
 
 namespace core
@@ -24,7 +24,7 @@ namespace opengl
 	class Shader;
 }
 
-using ShaderID = util::DataHash;
+using ShaderID = util::HashKey;
 
 namespace re
 {

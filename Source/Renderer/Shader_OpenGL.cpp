@@ -429,7 +429,7 @@ namespace opengl
 		GLint arrayIdx = 0;
 		std::string const& strippedName = StripArrayTokens(name, arrayIdx);
 
-		util::DataHash const& strippedNameHash = util::DataHash(strippedName);
+		util::HashKey const& strippedNameHash = util::HashKey(strippedName);
 		if (m_bufferMetadata.contains(strippedNameHash))
 		{
 			SEAssert(m_bufferMetadata.at(strippedNameHash).m_bindTarget == bindTarget,

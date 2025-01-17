@@ -3,7 +3,7 @@
 #include "Texture_Platform.h"
 #include "Texture.h"
 
-#include "Core/Util/DataHash.h"
+#include "Core/Util/HashKey.h"
 
 #include <GL/glew.h>
 
@@ -35,7 +35,7 @@ namespace opengl
 
 			bool m_formatIsImageTextureCompatible;
 
-			mutable std::map<util::DataHash, GLuint> m_textureViews; // OpenGL-equivalent of a descriptor cache
+			mutable std::map<util::HashKey, GLuint> m_textureViews; // OpenGL-equivalent of a descriptor cache
 		};
 
 

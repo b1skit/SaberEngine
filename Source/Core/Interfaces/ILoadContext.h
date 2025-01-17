@@ -1,6 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
-#include "../Util/DataHash.h"
+#include "../Util/HashKey.h"
 
 
 namespace core
@@ -26,20 +26,20 @@ namespace core
 			std::shared_ptr<ILoadContextBase>& parentLoadCtx,
 			std::shared_ptr<ILoadContextBase>& childLoadCtx);
 
-		void Initialize(util::DataHash objectID);
+		void Initialize(util::HashKey objectID);
 		void Finalize();
 
 
 	private:
-		void FinalizeDependencies(util::DataHash);
+		void FinalizeDependencies(util::HashKey);
 
-		std::unordered_set<util::DataHash> m_childDependencies; // We need to wait until these notify us they're done
+		std::unordered_set<util::HashKey> m_childDependencies; // We need to wait until these notify us they're done
 		std::mutex m_childDependenciesMutex;
 
 		std::vector<std::shared_ptr<ILoadContextBase>> m_parentLoadContexts; // We'll notify these when we're done loading
 		std::mutex m_parentLoadContextsMutex;
 
-		util::DataHash m_objectID; // ID of the object associated with this instance
+		util::HashKey m_objectID; // ID of the object associated with this instance
 	};
 
 
@@ -50,7 +50,7 @@ namespace core
 	protected: // InvPtr interface:
 		friend class InvPtr<T>;
 
-		inline void Initialize(util::DataHash objectID, InvPtr<T> const& invPtr)
+		inline void Initialize(util::HashKey objectID, InvPtr<T> const& invPtr)
 		{
 			ILoadContextBase::Initialize(objectID);
 			m_invPtr = invPtr;
@@ -101,7 +101,7 @@ namespace core
 	};
 
 
-	inline void ILoadContextBase::Initialize(util::DataHash objectID)
+	inline void ILoadContextBase::Initialize(util::HashKey objectID)
 	{
 		m_objectID = objectID;
 
@@ -120,7 +120,7 @@ namespace core
 	}
 
 
-	inline void ILoadContextBase::FinalizeDependencies(util::DataHash childID)
+	inline void ILoadContextBase::FinalizeDependencies(util::HashKey childID)
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_childDependenciesMutex);

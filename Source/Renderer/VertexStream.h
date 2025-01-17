@@ -152,7 +152,7 @@ namespace gr
 
 
 	private: // Use the Create() factory instead
-		VertexStream(StreamDesc const&, util::ByteVector&& data, util::DataHash, re::Buffer::UsageMask extraUsageBits);
+		VertexStream(StreamDesc const&, util::ByteVector&& data, util::HashKey, re::Buffer::UsageMask extraUsageBits);
 
 
 	private: // No copying allowed

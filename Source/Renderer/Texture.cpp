@@ -154,7 +154,7 @@ namespace re
 		loadContext->m_initialDataBytes = std::move(initialData);
 
 		core::InvPtr<re::Texture> const& newTexture = re::RenderManager::Get()->GetInventory()->Get(
-			util::DataHash(name),
+			util::HashKey(name),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 
 		return newTexture;
@@ -199,7 +199,7 @@ namespace re
 		colorTexLoadCtx->m_fillColor = fillColor;
 
 		return re::RenderManager::Get()->GetInventory()->Get(
-			util::DataHash(name),
+			util::HashKey(name),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(colorTexLoadCtx));
 	}
 
@@ -237,7 +237,7 @@ namespace re
 		runtimeTexLoadContext->m_texParams = params;
 
 		return re::RenderManager::Get()->GetInventory()->Get(
-			util::DataHash(runtimeName),
+			util::HashKey(runtimeName),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(runtimeTexLoadContext));
 	}
 

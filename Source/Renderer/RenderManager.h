@@ -76,7 +76,7 @@ namespace re
 
 		re::RenderSystem const* CreateAddRenderSystem(std::string const& name, std::string const& pipelineFileName);
 		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
-		re::RenderSystem* GetRenderSystem(util::DataHash const&);
+		re::RenderSystem* GetRenderSystem(util::HashKey const&);
 
 		// Not thread safe: Can only be called when other threads are not accessing the render data
 		gr::RenderDataManager& GetRenderDataManagerForModification();
@@ -154,10 +154,10 @@ namespace re
 		void CreateSamplerLibrary();
 		
 		void CreateDefaultTextures();
-		std::unordered_map<util::DataHash, core::InvPtr<re::Texture>> m_defaultTextures;
+		std::unordered_map<util::HashKey, core::InvPtr<re::Texture>> m_defaultTextures;
 
 	public:
-		core::InvPtr<re::Texture> const& GetDefaultTexture(util::DataHash);
+		core::InvPtr<re::Texture> const& GetDefaultTexture(util::HashKey);
 
 
 	private:
@@ -239,7 +239,7 @@ namespace re
 	}
 
 
-	inline re::RenderSystem* RenderManager::GetRenderSystem(util::DataHash const& nameHash)
+	inline re::RenderSystem* RenderManager::GetRenderSystem(util::HashKey const& nameHash)
 	{
 		for (auto& renderSystem : m_renderSystems)
 		{
@@ -309,7 +309,7 @@ namespace re
 	}
 
 
-	inline core::InvPtr<re::Texture> const& RenderManager::GetDefaultTexture(util::DataHash texName)
+	inline core::InvPtr<re::Texture> const& RenderManager::GetDefaultTexture(util::HashKey texName)
 	{
 		SEAssert(m_defaultTextures.contains(texName), "Default texture with the given name not found");
 		return m_defaultTextures.at(texName);

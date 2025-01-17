@@ -552,7 +552,7 @@ namespace gr
 					std::vector<InstanceIndices> instanceIndices;
 					instanceIndices.reserve(numInstances);
 
-					util::DataHash instanceIdxsHash = 0; // Hash the Buffer contents so we can reuse buffers
+					util::HashKey instanceIdxsHash = 0; // Hash the Buffer contents so we can reuse buffers
 
 					for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
 					{

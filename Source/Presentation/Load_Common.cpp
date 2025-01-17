@@ -115,7 +115,7 @@ namespace load
 
 		texLoadCtx->m_isPermanent = makePermanent;
 
-		return inventory->Get<re::Texture>(util::DataHash(filepath), texLoadCtx);
+		return inventory->Get<re::Texture>(util::HashKey(filepath), texLoadCtx);
 	}
 
 
@@ -519,7 +519,7 @@ namespace load
 
 		importCmdIBLLoadCtx->m_isPermanent = makePermanent;
 
-		return inventory->Get<re::Texture>(util::DataHash(filepath), importCmdIBLLoadCtx);
+		return inventory->Get<re::Texture>(util::HashKey(filepath), importCmdIBLLoadCtx);
 	}
 
 

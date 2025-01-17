@@ -453,7 +453,7 @@ namespace
 		loadContext->m_colorSpace = colorSpace;
 
 		core::InvPtr<re::Texture> const& newTexture = inventory->Get(
-			util::DataHash(texName),
+			util::HashKey(texName),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 
 		return newTexture;
@@ -1579,7 +1579,7 @@ namespace
 						&curMesh->primitives[primIdx],
 						MeshPrimitiveMetadata{
 							.m_meshPrimitive = gltfScene.AddDependency(inventory->Get(
-								util::DataHash(primitiveName),
+								util::HashKey(primitiveName),
 								static_pointer_cast<core::ILoadContext<gr::MeshPrimitive>>(loadContext))),
 						}).first->second;
 
@@ -1594,7 +1594,7 @@ namespace
 					matLoadCtx->m_matName = GenerateGLTFMaterialName(curMesh->primitives[primIdx].material);
 
 					meshPrimMetadata.m_material = meshPrimMetadata.m_meshPrimitive.AddDependency(inventory->Get(
-						util::DataHash(matLoadCtx->m_matName),
+						util::HashKey(matLoadCtx->m_matName),
 						std::static_pointer_cast<core::ILoadContext<gr::Material>>(matLoadCtx)));
 				}
 			}
@@ -2269,7 +2269,7 @@ namespace load
 
 		// We let this go out of scope, it'll clean up after itself once loading is done
 		inventory->Get(
-			util::DataHash(filePath),
+			util::HashKey(filePath),
 			static_pointer_cast<core::ILoadContext<GLTFSceneHandle>>(loadContext));
 	}
 
@@ -2282,7 +2282,7 @@ namespace load
 		matLoadCtx->m_isPermanent = true;
 
 		inventory->Get(
-			util::DataHash(en::DefaultResourceNames::k_defaultGLTFMaterialName),
+			util::HashKey(en::DefaultResourceNames::k_defaultGLTFMaterialName),
 			static_pointer_cast<core::ILoadContext<gr::Material>>(matLoadCtx));
 	}
 }

@@ -2,7 +2,7 @@
 #pragma once
 #include "Core/Assert.h"
 
-#include "Core/Util/DataHash.h"
+#include "Core/Util/HashKey.h"
 #include "Core/Util/TextUtils.h"
 
 
@@ -34,7 +34,7 @@ namespace core
 		std::string const& GetName() const;
 		std::wstring const& GetWName() const;
 
-		util::DataHash GetNameHash() const;
+		util::HashKey GetNameHash() const;
 
 		// Update the name of an object. Does not modify the UniqueID assigned at creation
 		void SetName(std::string const& name);
@@ -43,7 +43,7 @@ namespace core
 	private:
 		std::string m_name;
 		std::wstring m_wName;
-		util::DataHash m_nameHash;
+		util::HashKey m_nameHash;
 		
 
 	private:
@@ -78,7 +78,7 @@ namespace core
 	}
 
 
-	inline util::DataHash INamedObject::GetNameHash() const
+	inline util::HashKey INamedObject::GetNameHash() const
 	{
 		return m_nameHash;
 	}
@@ -87,7 +87,7 @@ namespace core
 	inline void INamedObject::SetName(std::string const& name)
 	{
 		m_name = name;
-		m_nameHash = util::DataHash(name);
+		m_nameHash = util::HashKey(name);
 		
 		m_wName = util::ToWideString(m_name);
 	}

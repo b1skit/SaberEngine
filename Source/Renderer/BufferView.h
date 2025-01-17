@@ -45,7 +45,7 @@ namespace re
 
 
 	private:
-		util::DataHash m_dataHash; // To sidestep headaches caused by our union, we manually handle our data hash
+		util::HashKey m_dataHash; // To sidestep headaches caused by our union, we manually handle our data hash
 
 
 	public:
@@ -69,11 +69,11 @@ namespace re
 
 
 	public:
-		util::DataHash GetDataHash() const;
+		util::HashKey GetDataHash() const;
 	};
 
 
-	inline util::DataHash BufferView::GetDataHash() const
+	inline util::HashKey BufferView::GetDataHash() const
 	{
 		return m_dataHash;
 	}
@@ -110,7 +110,7 @@ namespace re
 		re::Buffer* GetBuffer();
 		
 		std::string const& GetShaderName() const;
-		util::DataHash GetShaderNameHash() const;
+		util::HashKey GetShaderNameHash() const;
 
 		BufferView const& GetView() const;
 
@@ -142,7 +142,7 @@ namespace re
 	}
 
 
-	inline util::DataHash BufferInput::GetShaderNameHash() const
+	inline util::HashKey BufferInput::GetShaderNameHash() const
 	{
 		return GetNameHash();
 	}

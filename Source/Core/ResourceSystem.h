@@ -3,7 +3,7 @@
 #include "Interfaces/ILoadContext.h"
 
 #include "Util/HashUtils.h"
-#include "Util/DataHash.h"
+#include "Util/HashKey.h"
 
 
 namespace core
@@ -49,7 +49,7 @@ namespace core
 
 			std::unique_ptr<T>* m_object = nullptr; // The InvPtr populates our unique_ptr asyncronously
 
-			util::DataHash m_id = 0;
+			util::HashKey m_id = 0;
 			ResourceSystem<T>* m_owningResourceSystem = nullptr;
 
 			alignas(CACHE_LINE_SIZE) std::atomic<RefCountType> m_refCount = 0;
@@ -80,11 +80,11 @@ namespace core
 
 
 	public:
-		bool HasLoaded(util::DataHash) const;
-		bool Has(util::DataHash) const;
+		bool HasLoaded(util::HashKey) const;
+		bool Has(util::HashKey) const;
 
 		template<typename L>
-		ControlBlock* Get(util::DataHash, ILoadContext<L> const*);
+		ControlBlock* Get(util::HashKey, ILoadContext<L> const*);
 
 
 	private:
@@ -96,11 +96,11 @@ namespace core
 		template<typename F>
 		friend class InvPtr;
 
-		void Release(util::DataHash id);
+		void Release(util::HashKey id);
 
 
 	private:
-		std::unordered_map<util::DataHash, PtrAndControl> m_ptrAndControlBlocks;
+		std::unordered_map<util::HashKey, PtrAndControl> m_ptrAndControlBlocks;
 		mutable std::shared_mutex m_ptrAndControlBlocksMutex;
 
 		// We defer resource release to avoid degenerate cases (e.g. release and then re-load the same thing)
@@ -158,7 +158,7 @@ namespace core
 
 
 	template<typename T>
-	bool ResourceSystem<T>::HasLoaded(util::DataHash id) const
+	bool ResourceSystem<T>::HasLoaded(util::HashKey id) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_ptrAndControlBlocksMutex);
@@ -174,7 +174,7 @@ namespace core
 
 
 	template<typename T>
-	bool ResourceSystem<T>::Has(util::DataHash id) const
+	bool ResourceSystem<T>::Has(util::HashKey id) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_ptrAndControlBlocksMutex);
@@ -195,7 +195,7 @@ namespace core
 
 	template<typename T>
 	template<typename L>
-	ResourceSystem<T>::ControlBlock* ResourceSystem<T>::Get(util::DataHash id, ILoadContext<L> const* loadContext)
+	ResourceSystem<T>::ControlBlock* ResourceSystem<T>::Get(util::HashKey id, ILoadContext<L> const* loadContext)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_ptrAndControlBlocksMutex);
@@ -267,7 +267,7 @@ namespace core
 			while (!m_deferredRelease.empty() &&
 				m_deferredRelease.front().first + k_deferredReleaseNumFrames < frameNum)
 			{
-				const util::DataHash ID = m_deferredRelease.front().second;
+				const util::HashKey ID = m_deferredRelease.front().second;
 
 				// It is possible for Resources to be added to the deferred delete queue multiple times (e.g. if they're
 				// resurrected/released multiple times), the important thing is that they have a ref count of zero for
@@ -293,7 +293,7 @@ namespace core
 
 
 	template<typename T>
-	void ResourceSystem<T>::Release(util::DataHash ID)
+	void ResourceSystem<T>::Release(util::HashKey ID)
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_deferredReleaseMutex);

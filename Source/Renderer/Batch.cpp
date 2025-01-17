@@ -333,7 +333,7 @@ namespace re
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
 		, m_batchShader(nullptr)
-		, m_effectID(materialInstanceData ? materialInstanceData->m_effectID : util::DataHash())
+		, m_effectID(materialInstanceData ? materialInstanceData->m_effectID : util::HashKey())
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{

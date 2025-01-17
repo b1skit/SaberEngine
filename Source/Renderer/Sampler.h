@@ -9,7 +9,7 @@
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
-#include "Core/Util/DataHash.h"
+#include "Core/Util/HashKey.h"
 
 
 namespace re
@@ -121,7 +121,7 @@ namespace re
 
 
 	public: // Convenience helpers that retrieve pre-created Samplers (only) from the Inventory
-		static core::InvPtr<re::Sampler> GetSampler(util::DataHash const&);
+		static core::InvPtr<re::Sampler> GetSampler(util::HashKey const&);
 		static core::InvPtr<re::Sampler> GetSampler(char const* samplerName);
 		static core::InvPtr<re::Sampler> GetSampler(std::string const& samplerName);
 

@@ -42,8 +42,8 @@ namespace opengl
 
 			uint32_t m_shaderReference = 0;
 
-			std::unordered_map<util::DataHash, GLint> m_samplerUnits;
-			std::unordered_map<util::DataHash, GLint> m_vertexAttributeLocations;
+			std::unordered_map<util::HashKey, GLint> m_samplerUnits;
+			std::unordered_map<util::HashKey, GLint> m_vertexAttributeLocations;
 
 			struct BufferMetadata
 			{
@@ -51,7 +51,7 @@ namespace opengl
 				
 				std::vector<GLint> m_bufferLocations; // Indexed by shader array index
 			};
-			std::unordered_map<util::DataHash, BufferMetadata> m_bufferMetadata;
+			std::unordered_map<util::HashKey, BufferMetadata> m_bufferMetadata;
 
 			void AddBufferMetadata(
 				char const* name, opengl::Buffer::BindTarget, GLint bufferLocation);

@@ -29,14 +29,14 @@ namespace core
 	public: // All resource requests come through here:
 		template<typename T>
 		core::InvPtr<T> Get(
-			util::DataHash, // ID for the T
+			util::HashKey, // ID for the T
 			std::shared_ptr<core::ILoadContext<T>> = nullptr); // Can only be null if the resource already exists
 
 		template<typename T>
-		bool HasLoaded(util::DataHash) const; // Has the Resource been requested, and finished loading?
+		bool HasLoaded(util::HashKey) const; // Has the Resource been requested, and finished loading?
 
 		template<typename T>
-		bool Has(util::DataHash) const; // Has the Resource been requested?
+		bool Has(util::HashKey) const; // Has the Resource been requested?
 
 
 	private:
@@ -52,7 +52,7 @@ namespace core
 
 	template<typename T>
 	core::InvPtr<T> Inventory::Get(
-		util::DataHash ID, std::shared_ptr<core::ILoadContext<T>> loadContext /*= nullptr*/)
+		util::HashKey ID, std::shared_ptr<core::ILoadContext<T>> loadContext /*= nullptr*/)
 	{
 		ResourceSystem<T>* resourceSystem = GetCreateResourceSystem<T>();
 
@@ -63,7 +63,7 @@ namespace core
 
 
 	template<typename T>
-	bool Inventory::HasLoaded(util::DataHash ID) const
+	bool Inventory::HasLoaded(util::HashKey ID) const
 	{
 		const std::type_index typeIdx = std::type_index(typeid(T));
 
@@ -84,7 +84,7 @@ namespace core
 
 
 	template<typename T>
-	bool Inventory::Has(util::DataHash ID) const
+	bool Inventory::Has(util::HashKey ID) const
 	{
 		const std::type_index typeIdx = std::type_index(typeid(T));
 

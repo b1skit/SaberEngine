@@ -168,9 +168,6 @@
     <ClInclude Include="ResourceSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\DataHash.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="Interfaces\ILoadContext.h">
       <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
@@ -191,6 +188,9 @@
     </ClInclude>
     <ClInclude Include="Host\Dialog_Win32.h">
       <Filter>Header Files\host\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\HashKey.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

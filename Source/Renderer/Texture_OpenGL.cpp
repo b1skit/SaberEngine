@@ -567,7 +567,7 @@ namespace opengl
 		opengl::Texture::PlatformParams const* platParams =
 			tex->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
-		const util::DataHash viewDataHash = texView.GetDataHash();
+		const util::HashKey viewDataHash = texView.GetDataHash();
 
 		std::string dimensionName;
 

@@ -2,7 +2,7 @@
 #pragma once
 #include "Core/Assert.h"
 
-#include "Core/Util/DataHash.h"
+#include "Core/Util/HashKey.h"
 #include "Core/Util/MathUtils.h"
 #include "Core/Util/ThreadProtector.h"
 
@@ -286,7 +286,7 @@ namespace dx12
 
 
 	private:
-		std::unordered_map<util::DataHash, std::unique_ptr<PagedResourceHeap>> m_pagedHeaps;
+		std::unordered_map<util::HashKey, std::unique_ptr<PagedResourceHeap>> m_pagedHeaps;
 		std::shared_mutex m_pagedHeapsMutex;
 
 		std::queue<std::pair<uint64_t, GPUResource>> m_deferredGPUResourceDeletions;

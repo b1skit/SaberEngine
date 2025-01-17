@@ -49,12 +49,12 @@ namespace dx12
 
 
 	private:
-		using CacheEntry = std::pair<util::DataHash, dx12::DescriptorAllocation>;
+		using CacheEntry = std::pair<util::HashKey, dx12::DescriptorAllocation>;
 
 		struct CacheComparator
 		{
 			// Return true if 1st element is ordered before the 2nd
-			inline bool operator()(dx12::DescriptorCache::CacheEntry const& cacheEntry, util::DataHash dataHash)
+			inline bool operator()(dx12::DescriptorCache::CacheEntry const& cacheEntry, util::HashKey dataHash)
 			{
 				return cacheEntry.first < dataHash;
 			}

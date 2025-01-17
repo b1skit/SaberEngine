@@ -2,7 +2,7 @@
 #pragma once
 #include "Core/Assert.h"
 
-#include "Core/Util/DataHash.h"
+#include "Core/Util/HashKey.h"
 #include "Core/Util/HashUtils.h"
 
 
@@ -20,7 +20,7 @@ namespace core
 
 
 	public:
-		util::DataHash GetDataHash() const;
+		util::HashKey GetDataHash() const;
 
 		void AddDataBytesToHash(void const* const data, size_t numBytes);
 
@@ -34,15 +34,15 @@ namespace core
 
 		void ResetDataHash();
 
-		void SetDataHash(util::DataHash); // Set the data hash using a precomputed value
+		void SetDataHash(util::HashKey); // Set the data hash using a precomputed value
 
 
 	private:
-		util::DataHash m_dataHash;
+		util::HashKey m_dataHash;
 	};
 
 
-	inline util::DataHash IHashedDataObject::GetDataHash() const
+	inline util::HashKey IHashedDataObject::GetDataHash() const
 	{
 		return m_dataHash;
 	}
@@ -85,7 +85,7 @@ namespace core
 	}
 
 
-	inline void IHashedDataObject::SetDataHash(util::DataHash dataHash)
+	inline void IHashedDataObject::SetDataHash(util::HashKey dataHash)
 	{
 		m_dataHash = dataHash;
 	}
