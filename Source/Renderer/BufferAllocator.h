@@ -79,7 +79,7 @@ namespace re
 
 	
 	private:
-		typedef uint64_t Handle; // == INamedObject::UniqueID()
+		typedef UniqueID Handle;
 
 		static constexpr uint32_t k_invalidStartIdx = std::numeric_limits<uint32_t>::max();
 
