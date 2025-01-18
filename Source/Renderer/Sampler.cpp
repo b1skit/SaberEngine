@@ -31,6 +31,8 @@ namespace re
 	{
 		struct LoadContext final : public virtual core::ILoadContext<re::Sampler>
 		{
+			LoadContext() : ILoadContextBase(core::ILoadContextBase::RetentionPolicy::Permanent) {}
+
 			void OnLoadBegin(core::InvPtr<re::Sampler>& newSampler) override
 			{
 				LOG(std::format("Creating sampler \"{}\"", m_samplerName).c_str());
@@ -50,13 +52,10 @@ namespace re
 
 		samplerLoadContext->m_samplerName = name;
 		samplerLoadContext->m_samplerDesc = samplerDesc;
-		samplerLoadContext->m_isPermanent = true;
 
-		core::InvPtr<re::Sampler> const& newSampler = re::RenderManager::Get()->GetInventory()->Get(
+		return re::RenderManager::Get()->GetInventory()->Get(
 				util::HashKey(name), 
 				static_pointer_cast<core::ILoadContext<re::Sampler>>(samplerLoadContext));
-
-		return newSampler;
 	}
 
 

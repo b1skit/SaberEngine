@@ -602,6 +602,9 @@ namespace
 	template<typename T>
 	struct DefaultMaterialLoadContext_GLTF final : public virtual core::ILoadContext<gr::Material>
 	{
+		DefaultMaterialLoadContext_GLTF(core::ILoadContextBase::RetentionPolicy policy)
+			: ILoadContextBase(policy) {}
+
 		void OnLoadBegin(core::InvPtr<gr::Material>&) override
 		{
 			LOG("Generating a default GLTF pbrMetallicRoughness material \"%s\"...",
@@ -2277,9 +2280,8 @@ namespace load
 	void GenerateDefaultGLTFMaterial(core::Inventory* inventory)
 	{
 		std::shared_ptr<DefaultMaterialLoadContext_GLTF<gr::Material_GLTF>> matLoadCtx =
-			std::make_shared<DefaultMaterialLoadContext_GLTF<gr::Material_GLTF>>();
-
-		matLoadCtx->m_isPermanent = true;
+			std::make_shared<DefaultMaterialLoadContext_GLTF<gr::Material_GLTF>>(
+				core::ILoadContextBase::RetentionPolicy::Permanent);
 
 		inventory->Get(
 			util::HashKey(en::DefaultResourceNames::k_defaultGLTFMaterialName),

@@ -61,7 +61,8 @@ namespace core
 		{
 			std::unique_ptr<T> m_object;
 			std::unique_ptr<ControlBlock> m_control;
-			bool m_isPermanent = false;
+			
+			ILoadContextBase::RetentionPolicy m_retentionPolicy;
 		};
 		
 
@@ -84,7 +85,7 @@ namespace core
 		bool Has(util::HashKey) const;
 
 		template<typename L>
-		ControlBlock* Get(util::HashKey, ILoadContext<L> const*);
+		ControlBlock* Get(util::HashKey, std::shared_ptr<ILoadContext<L>> const&);
 
 
 	private:
@@ -103,7 +104,8 @@ namespace core
 		std::unordered_map<util::HashKey, PtrAndControl> m_ptrAndControlBlocks;
 		mutable std::shared_mutex m_ptrAndControlBlocksMutex;
 
-		// We defer resource release to avoid degenerate cases (e.g. release and then re-load the same thing)
+		// We defer resource release to avoid degenerate cases (e.g. release and then re-load the same thing). 
+		// Note: This is not intended to guarantee resource lifetime/scope, it is only a reload optimization
 		std::queue<std::pair<uint64_t, uint64_t>> m_deferredRelease; // <frame num, id>
 		std::mutex m_deferredReleaseMutex;
 		uint64_t m_currentFrameNum; // Relative to when this object was constructed
@@ -129,7 +131,7 @@ namespace core
 			const RefCountType entryRefCount = entry.second.m_control->m_refCount.load();
 
 			SEAssert(entryRefCount == 0 ||
-				entryRefCount == 1 && entry.second.m_isPermanent,
+				entryRefCount == 1 && entry.second.m_retentionPolicy == ILoadContextBase::RetentionPolicy::Permanent,
 				"There is an outstanding InvPtr that has not been released yet. This might indicate a resource leak");
 		}
 #endif
@@ -183,8 +185,11 @@ namespace core
 			if (ptrCtrlItr != m_ptrAndControlBlocks.end())
 			{
 				const ResourceState resourceState = m_ptrAndControlBlocks.at(id).m_control->m_state.load();
-				return resourceState == ResourceState::Empty || 
-					resourceState == ResourceState::Requested ||
+
+				// Note: We cannot say we have a resource if it is in the Empty state, as this allows a race condition
+				// where a thread that does not supply a load context might transition the resource state to Requested
+				// but not be able to load it
+				return resourceState == ResourceState::Requested ||
 					resourceState == ResourceState::Loading ||
 					resourceState == ResourceState::Ready;
 			}
@@ -195,7 +200,8 @@ namespace core
 
 	template<typename T>
 	template<typename L>
-	ResourceSystem<T>::ControlBlock* ResourceSystem<T>::Get(util::HashKey id, ILoadContext<L> const* loadContext)
+	ResourceSystem<T>::ControlBlock* ResourceSystem<T>::Get(
+		util::HashKey id, std::shared_ptr<ILoadContext<L>> const& loadContext)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_ptrAndControlBlocksMutex);
@@ -218,6 +224,11 @@ namespace core
 			}
 			else
 			{
+				// Note: There's a race condition here if 2 resources are created at the same time with different load
+				// contexts: The first one will set the load context, and the second one will be ignored. If this
+				// becomes an issue, we should implement operator==() for our load contexts and assert on equality here
+				// to catch it
+
 				SEAssert(loadContext != nullptr, 
 					"Get() called with a null loadContext, this is only valid if the object is guaranteed to exist");
 
@@ -225,6 +236,8 @@ namespace core
 					m_ptrAndControlBlocks.emplace(id, ResourceSystem<T>::PtrAndControl{}).first->second;
 
 				newPtrAndCntrl.m_control = std::make_unique<ControlBlock>();
+
+				newPtrAndCntrl.m_control->m_loadContext = loadContext; // InvPtr calls ILoadContextBase::Initialize()
 				
 				// The first InvPtr created will initialize the unique_ptr for us
 				newPtrAndCntrl.m_control->m_object = &newPtrAndCntrl.m_object;
@@ -236,11 +249,12 @@ namespace core
 				newPtrAndCntrl.m_control->m_refCount.store(0);
 				newPtrAndCntrl.m_control->m_state.store(ResourceState::Empty);
 
+				newPtrAndCntrl.m_retentionPolicy = loadContext->GetRetentionPolicy();
+
 				// Bump the ref. count to keep permanent objects from going out of scope
-				if (loadContext->m_isPermanent)
+				if (newPtrAndCntrl.m_retentionPolicy == ILoadContextBase::RetentionPolicy::Permanent)
 				{
 					newPtrAndCntrl.m_control->m_refCount++;
-					newPtrAndCntrl.m_isPermanent = true;
 				}
 
 				return newPtrAndCntrl.m_control.get();
@@ -295,9 +309,30 @@ namespace core
 	template<typename T>
 	void ResourceSystem<T>::Release(util::HashKey ID)
 	{
+		bool immediatelyReleased = false;
+		{
+			std::unique_lock<std::shared_mutex> write(m_ptrAndControlBlocksMutex);
+
+			SEAssert(m_ptrAndControlBlocks.contains(ID),
+				"Trying to release an ID that doesn't exist. This should not be possible");
+
+			if (m_ptrAndControlBlocks.at(ID).m_retentionPolicy == ILoadContextBase::RetentionPolicy::ForceNew)
+			{
+				SEAssert(m_ptrAndControlBlocks.at(ID).m_control->m_refCount.load() == 0 &&
+					m_ptrAndControlBlocks.at(ID).m_control->m_state.load() == core::ResourceState::Released,
+					"Immediately-released resources must have a ref. count of 0 and Released state");
+
+				m_ptrAndControlBlocks.at(ID).m_object->Destroy();
+				m_ptrAndControlBlocks.erase(ID);
+
+				immediatelyReleased = true;
+			}
+		}
+
+		if (!immediatelyReleased)
 		{
 			std::lock_guard<std::mutex> lock(m_deferredReleaseMutex);
-			
+
 			m_deferredRelease.emplace(m_currentFrameNum, ID);
 		}
 	}

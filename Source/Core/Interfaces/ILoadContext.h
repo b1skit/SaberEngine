@@ -12,7 +12,23 @@ namespace core
 	struct ILoadContextBase
 	{
 	public:
+		enum class RetentionPolicy : uint8_t
+		{
+			ForceNew,	// Resource cannot be resurrected/reused after Release. A new one must be created/loaded
+			Reusable,	// Default: Resource can be resurrected if the deferred delete has not occurred yet
+			Permanent,	// Resource is permanent and cannot be deleted
+		};
+
+
+	public:
+		ILoadContextBase() : m_retentionPolicy(RetentionPolicy::Reusable){};
+		ILoadContextBase(RetentionPolicy policy) : m_retentionPolicy(policy) {};
+
 		virtual ~ILoadContextBase() = default;
+
+
+	public:
+		RetentionPolicy GetRetentionPolicy() const;
 
 
 	public:
@@ -40,6 +56,8 @@ namespace core
 		std::mutex m_parentLoadContextsMutex;
 
 		util::HashKey m_objectID; // ID of the object associated with this instance
+
+		RetentionPolicy m_retentionPolicy;
 	};
 
 
@@ -63,9 +81,11 @@ namespace core
 		InvPtr<T> m_invPtr;
 
 
-	public: // Virtual interface: Implement as necessary
+	public:
 		virtual ~ILoadContext() = default;
 
+
+	public: // Virtual interface: Implement as necessary
 
 		// Optional: Executed on the calling thread before any async load work is kicked off. Use this to notify any 
 		// systems that might need a copy of the InvPtr immediately
@@ -78,9 +98,13 @@ namespace core
 		// Note: The ResourceState will already be Ready by this point, do not use this for anything that must be done
 		// before waiting threads are unblocked
 		inline virtual void OnLoadComplete(core::InvPtr<T>&) {};
-
-		bool m_isPermanent = false; // If true, the resource will not be deleted when the last InvPtr goes out of scope
 	};
+
+
+	inline ILoadContextBase::RetentionPolicy ILoadContextBase::GetRetentionPolicy() const
+	{
+		return m_retentionPolicy;
+	}
 
 
 	inline void ILoadContextBase::CreateLoadDependency(

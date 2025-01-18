@@ -105,15 +105,15 @@ namespace load
 		bool makePermanent /*= false*/)
 	{
 		std::shared_ptr<load::TextureFromFilePath<re::Texture>> texLoadCtx =
-			std::make_shared<load::TextureFromFilePath<re::Texture>>();
+			std::make_shared<load::TextureFromFilePath<re::Texture>>(makePermanent ?
+				core::ILoadContextBase::RetentionPolicy::Permanent :
+				core::ILoadContextBase::RetentionPolicy::Reusable);
 
 		texLoadCtx->m_filePath = filepath;
 		texLoadCtx->m_colorFallback = colorFallback;
 		texLoadCtx->m_formatFallback = formatFallback;
 		texLoadCtx->m_colorSpace = colorSpace;
 		texLoadCtx->m_mipMode = mipMode;
-
-		texLoadCtx->m_isPermanent = makePermanent;
 
 		return inventory->Get<re::Texture>(util::HashKey(filepath), texLoadCtx);
 	}
@@ -510,14 +510,15 @@ namespace load
 		IBLTextureFromFilePath::ActivationMode activationMode,
 		bool makePermanent /*= false*/)
 	{
-		std::shared_ptr<IBLTextureFromFilePath> importCmdIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>();
+		std::shared_ptr<IBLTextureFromFilePath> importCmdIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>(
+			makePermanent ?
+				core::ILoadContextBase::RetentionPolicy::Permanent :
+				core::ILoadContextBase::RetentionPolicy::Reusable);
 
 		importCmdIBLLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
 		importCmdIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
 		importCmdIBLLoadCtx->m_filePath = filepath;
 		importCmdIBLLoadCtx->m_activationMode = activationMode;
-
-		importCmdIBLLoadCtx->m_isPermanent = makePermanent;
 
 		return inventory->Get<re::Texture>(util::HashKey(filepath), importCmdIBLLoadCtx);
 	}

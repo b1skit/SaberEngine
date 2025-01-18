@@ -56,7 +56,7 @@ namespace core
 
 	private: // Use core::Inventory::Get()
 		friend class Inventory;
-		static InvPtr<T> Create(core::ResourceSystem<T>::ControlBlock*, std::shared_ptr<core::ILoadContext<T>>);
+		static InvPtr<T> Create(core::ResourceSystem<T>::ControlBlock*);
 		explicit InvPtr(core::ResourceSystem<T>::ControlBlock*); // Create a new managed InvPtr
 
 		template<typename Dependency>
@@ -174,31 +174,23 @@ namespace core
 
 
 	template<typename T>
-	inline InvPtr<T> InvPtr<T>::Create(
-		core::ResourceSystem<T>::ControlBlock* control, std::shared_ptr<core::ILoadContext<T>> loadContext)
+	inline InvPtr<T> InvPtr<T>::Create(core::ResourceSystem<T>::ControlBlock* control)
 	{
 		InvPtr<T> newInvPtr(control);
-
-		// If we have a load context, store and initialize it before we change the state
-		if (loadContext)
-		{
-			std::lock_guard<std::mutex> lock(newInvPtr.m_control->m_loadContextMutex);
-
-			SEAssert(newInvPtr.m_control->m_loadContext == nullptr, "Load context has already been set");
-
-			newInvPtr.m_control->m_loadContext = loadContext;
-			loadContext->Initialize(newInvPtr.m_control->m_id, newInvPtr);
-		}
 
 		// If we're in the Empty state, kick off an asyncronous loading job:
 		core::ResourceState expected = core::ResourceState::Empty;
 		if (newInvPtr.m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Requested))
 		{
-			SEAssert(loadContext != nullptr, "Load context is null");
+			SEAssert(newInvPtr.m_control->m_loadContext != nullptr,
+				"Load context is null: It cannot be null for the transition to Requested");
+
+			std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext)->Initialize(
+				newInvPtr.m_control->m_id, newInvPtr);
 
 			// Do this on the current thread; guarantees the InvPtr can be registered with any systems that might
 			// require it before the creation can possibly have finished
-			loadContext->CallOnLoadBegin();
+			std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext)->CallOnLoadBegin();
 
 			core::ThreadPool::Get()->EnqueueJob([newInvPtr]()
 				{
@@ -326,7 +318,7 @@ namespace core
 
 				m_control->m_state.store(core::ResourceState::Released);
 				m_control->m_owningResourceSystem->Release(m_control->m_id);
-				m_control = nullptr; // The Release() will (deferred) delete this, null out our copy to invalidate ourselves
+				m_control = nullptr; // Release() will delete the control object, null out our copy to invalidate ourselves
 
 				m_objectCache = nullptr;
 			}

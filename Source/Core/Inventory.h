@@ -56,9 +56,9 @@ namespace core
 	{
 		ResourceSystem<T>* resourceSystem = GetCreateResourceSystem<T>();
 
-		auto controlBlock = resourceSystem->Get<T>(ID, loadContext.get());
+		auto controlBlock = resourceSystem->Get<T>(ID, loadContext);
 
-		return core::InvPtr<T>::Create(controlBlock, std::move(loadContext));
+		return core::InvPtr<T>::Create(controlBlock);
 	}
 
 
