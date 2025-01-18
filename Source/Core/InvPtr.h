@@ -133,7 +133,8 @@ namespace core
 				"Pointer should refer to an empty unique pointer here");
 
 			// Populate the unique_ptr held by the ResourceSystem.
-			// Note: We don't lock m_loadContextMutex here, it will be locked internally to add dependencies
+			// Note: We don't lock m_loadContextMutex here to modify m_object as the Loading state can only be reached
+			// by a single thread, but it will be locked internally to add dependencies
 			*m_control->m_object =
 				std::dynamic_pointer_cast<ILoadContext<T>>(m_control->m_loadContext)->CallLoad();
 
@@ -178,19 +179,22 @@ namespace core
 	{
 		InvPtr<T> newInvPtr(control);
 
+		// If we have a load context, store and initialize it before we change the state
+		if (loadContext)
+		{
+			std::lock_guard<std::mutex> lock(newInvPtr.m_control->m_loadContextMutex);
+
+			SEAssert(newInvPtr.m_control->m_loadContext == nullptr, "Load context has already been set");
+
+			newInvPtr.m_control->m_loadContext = loadContext;
+			loadContext->Initialize(newInvPtr.m_control->m_id, newInvPtr);
+		}
+
 		// If we're in the Empty state, kick off an asyncronous loading job:
 		core::ResourceState expected = core::ResourceState::Empty;
 		if (newInvPtr.m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Requested))
 		{
 			SEAssert(loadContext != nullptr, "Load context is null");
-
-			// Initialize and store our own load context: We use this for dependency callbacks
-			{
-				std::lock_guard<std::mutex> lock(newInvPtr.m_control->m_loadContextMutex);
-
-				loadContext->Initialize(newInvPtr.m_control->m_id, newInvPtr);
-				newInvPtr.m_control->m_loadContext = loadContext;
-			}
 
 			// Do this on the current thread; guarantees the InvPtr can be registered with any systems that might
 			// require it before the creation can possibly have finished
