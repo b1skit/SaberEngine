@@ -144,6 +144,13 @@ namespace fr
 	}
 
 
+	glm::vec3 Transform::GetGlobalForward()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetGlobalForward();
+	}
+
+
 	glm::vec3 Transform::GetGlobalRight() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
@@ -154,6 +161,13 @@ namespace fr
 	}
 
 
+	glm::vec3 Transform::GetGlobalRight()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetGlobalRight();
+	}
+
+
 	glm::vec3 Transform::GetGlobalUp() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
@@ -161,6 +175,13 @@ namespace fr
 		const glm::quat globalRotationQuat = GetGlobalRotation();		
 
 		return normalize(globalRotationQuat * gr::Transform::WorldAxisY);
+	}
+
+
+	glm::vec3 Transform::GetGlobalUp()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetGlobalUp();
 	}
 
 
