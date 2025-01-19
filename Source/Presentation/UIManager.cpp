@@ -214,7 +214,13 @@ namespace fr
 				createdFlag->store(true);
 			});
 
+		// Default visible debug ImGui panels:
 		m_show[LogConsole] = true;
+		m_show[SceneMgrDbg] = true;
+		m_show[EntityMgrDbg] = true;
+		m_show[TransformationHierarchyDbg] = true;
+		m_show[EntityComponentDbg] = true;
+		m_show[RenderMgrDbg] = true;		
 
 		m_window->SetRelativeMouseMode(!m_imguiMenuActive);
 	}
