@@ -43,8 +43,14 @@ namespace gr
 		template<typename T>
 		[[nodiscard]] bool HasObjectData(gr::RenderDataID) const;
 		
+		template<typename T, typename Next, typename... Rest>
+		[[nodiscard]] bool HasObjectData(gr::RenderDataID) const;
+
 		template<typename T>
 		[[nodiscard]] bool HasObjectData() const; // Does data of the given type exist for any ID
+
+		template<typename T, typename Next, typename... Rest>
+		[[nodiscard]] bool HasObjectData() const;
 
 		template<typename T>
 		[[nodiscard]] bool HasIDsWithNewData() const;
@@ -516,6 +522,13 @@ namespace gr
 	}
 
 
+	template<typename T, typename Next, typename... Rest>
+	bool RenderDataManager::HasObjectData(gr::RenderDataID renderDataID) const
+	{
+		return HasObjectData<T>(renderDataID) && HasObjectData<Next, Rest...>(renderDataID);
+	}
+
+
 	template<typename T>
 	bool RenderDataManager::HasObjectData() const
 	{
@@ -524,6 +537,13 @@ namespace gr
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 
 		return dataTypeIndex != k_invalidDataTypeIdx;
+	}
+
+
+	template<typename T, typename Next, typename... Rest>
+	bool RenderDataManager::HasObjectData() const
+	{
+		return HasObjectData<T>() && HasObjectData<Next, Rest...>();
 	}
 
 
