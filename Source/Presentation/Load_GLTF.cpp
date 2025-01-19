@@ -58,6 +58,7 @@ namespace
 	struct FileMetadata
 	{
 		std::string m_filePath;
+		std::string m_sceneRootPath;
 
 		std::unique_ptr<fr::AnimationController> m_animationController;
 		NodeToAnimationDataMaps m_nodeToAnimationData;
@@ -146,56 +147,243 @@ namespace
 	}
 
 
-	// Generate a unique name for a CGLTF material from (some of) the values in the cgltf_material struct
-	inline std::string GenerateGLTFMaterialName(cgltf_material const* material)
+	std::string GenerateGLTFTextureName(
+		std::string const& sceneRootPath,
+		cgltf_texture const* textureSrc)
 	{
-		if (!material)
+		SEAssert(textureSrc && textureSrc->image, "Invalid texture source");
+
+		std::string texName;
+
+		if (textureSrc->image->uri &&
+			std::strncmp(textureSrc->image->uri, "data:image/", 11) == 0) // URI = embedded data
+		{
+			if (textureSrc->image->name)
+			{
+				texName = textureSrc->image->name;
+			}
+			else
+			{
+				// Data URIs are long; Just choose the first N characters and hope for the best...
+				constexpr uint8_t k_maxURINameLength = 128;
+				std::string const& uriString = textureSrc->image->uri;
+				texName = uriString.substr(0, k_maxURINameLength);
+			}
+		}
+		else if (textureSrc->image->uri) // uri is a filename (e.g. "myImage.png")
+		{
+			texName = sceneRootPath + textureSrc->image->uri;
+		}
+		else if (textureSrc->image->buffer_view) // texture data is already loaded in memory
+		{
+			if (textureSrc->image->name)
+			{
+				texName = textureSrc->image->name;
+			}
+			else if (textureSrc->image->buffer_view->name)
+			{
+				texName = textureSrc->image->buffer_view->name;
+			}
+			else
+			{
+				// Hail mary: We've got nothing else to go on, so use the buffer_view pointer address
+				texName = std::format("UnnamedImageBuffer_{}_{}",
+					reinterpret_cast<uint64_t>(textureSrc->image->buffer_view),
+					sceneRootPath);
+			}
+		}
+
+		return texName;
+	}
+
+
+	std::string GenerateGLTFTextureName(
+		std::string const& sceneRootPath,
+		cgltf_texture const* textureSrc,
+		glm::vec4 const& colorFallback,
+		re::Texture::Format formatFallback,
+		re::Texture::ColorSpace colorSpace)
+	{
+		if (textureSrc && textureSrc->image)
+		{
+			return GenerateGLTFTextureName(sceneRootPath, textureSrc);
+		}
+		else
+		{
+			const size_t numChannels = re::Texture::GetNumberOfChannels(formatFallback);
+
+			return load::GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
+		}
+	}
+
+
+	// Generate a unique name for a CGLTF material from (some of) the values in the cgltf_material struct
+	inline std::string GenerateGLTFMaterialName(
+		std::shared_ptr<FileMetadata> const& fileMetadata, cgltf_material const* material)
+	{
+		if (!material) // No material? Use the default material
 		{
 			return en::DefaultResourceNames::k_defaultGLTFMaterialName;
 		}
 
+		util::HashKey matHash = 0;
+
+		std::string matName;
+
 		if (material->name)
 		{
-			return std::string(material->name);
+			util::AddDataBytesToHash(matHash, material->name);
+			matName = material->name;
 		}
-		SEAssert(material->has_pbr_specular_glossiness == 0, "Specular/Glossiness materials are not currently supported");
 
-		// TODO: Expand the values used to generate the name here, and/or use hashes to identify materials
-		// -> String streams are very slow...
-		std::stringstream matName;
+		// pbr_metallic_roughness:
+		if (material->has_pbr_metallic_roughness)
+		{
+			if (material->pbr_metallic_roughness.base_color_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->pbr_metallic_roughness.base_color_texture.texture));
+			}
+			if (material->pbr_metallic_roughness.metallic_roughness_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->pbr_metallic_roughness.metallic_roughness_texture.texture));
+			}
+			util::AddDataBytesToHash(matHash, material->pbr_metallic_roughness.base_color_factor[0]);
+			util::AddDataBytesToHash(matHash, material->pbr_metallic_roughness.base_color_factor[1]);
+			util::AddDataBytesToHash(matHash, material->pbr_metallic_roughness.base_color_factor[2]);
+			util::AddDataBytesToHash(matHash, material->pbr_metallic_roughness.base_color_factor[3]);
 
-		matName << material->pbr_metallic_roughness.base_color_texture.texture;
-		matName << material->pbr_metallic_roughness.metallic_roughness_texture.texture;
+			util::AddDataBytesToHash(matHash, material->pbr_metallic_roughness.metallic_factor);
+			util::AddDataBytesToHash(matHash, material->pbr_metallic_roughness.roughness_factor);
+		}
 
-		matName << material->pbr_metallic_roughness.base_color_factor[0]
-			<< material->pbr_metallic_roughness.base_color_factor[1]
-			<< material->pbr_metallic_roughness.base_color_factor[2]
-			<< material->pbr_metallic_roughness.base_color_factor[3];
+		if (material->has_pbr_specular_glossiness)
+		{
+			SEAssertF("TODO: Hash these");
+		}
 
-		matName << material->pbr_metallic_roughness.metallic_factor;
-		matName << material->pbr_metallic_roughness.roughness_factor;
+		if (material->has_clearcoat)
+		{
+			SEAssertF("TODO: Hash these");
+		}
 
-		matName << material->emissive_strength.emissive_strength;
-		matName << material->normal_texture.texture;
-		matName << material->occlusion_texture.texture;
-		matName << material->emissive_texture.texture;
-		matName << (material->emissive_factor[0]) << (material->emissive_factor[2]) << (material->emissive_factor[3]);
-		matName << material->alpha_mode;
-		matName << material->alpha_cutoff;
+		if (material->has_transmission)
+		{
+			SEAssertF("TODO: Hash these");
+		}
 
-		return matName.str();
+		if (material->has_volume)
+		{
+			SEAssertF("TODO: Hash these");
+		}
+
+		if (material->has_ior)
+		{
+			SEAssertF("TODO: Hash these");
+		}
+
+		if (material->has_specular)
+		{
+			SEAssertF("TODO: Hash these");
+		}
+
+		if (material->has_sheen)
+		{
+			SEAssertF("TODO: Hash these");
+		}
+
+		if (material->has_emissive_strength)
+		{
+			util::AddDataBytesToHash(matHash, material->emissive_strength.emissive_strength);	
+		}
+
+		if (material->has_iridescence)
+		{
+			SEAssertF("TODO: Hash these");
+		}
+
+		if (material->has_anisotropy)
+		{
+			SEAssertF("TODO: Hash these");
+		}
+
+		if (material->has_dispersion)
+		{
+			SEAssertF("TODO: Hash these");
+		}
+
+		if (material->normal_texture.texture)
+		{
+			util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+				fileMetadata->m_sceneRootPath,
+				material->normal_texture.texture));
+		}
+
+		if (material->occlusion_texture.texture)
+		{
+			util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+				fileMetadata->m_sceneRootPath,
+				material->occlusion_texture.texture));
+		}
+
+		if (material->emissive_texture.texture)
+		{
+			util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+				fileMetadata->m_sceneRootPath,
+				material->emissive_texture.texture));
+		}
+
+		util::AddDataBytesToHash(matHash, material->emissive_factor[0]);
+		util::AddDataBytesToHash(matHash, material->emissive_factor[1]);
+		util::AddDataBytesToHash(matHash, material->emissive_factor[2]);
+
+		util::AddDataBytesToHash(matHash, material->alpha_mode);
+		util::AddDataBytesToHash(matHash, material->alpha_cutoff);
+		util::AddDataBytesToHash(matHash, material->double_sided);
+
+		util::AddDataBytesToHash(matHash, material->unlit);
+
+		SEAssert(material->extras.data == nullptr, "TODO: Handle extra data");
+
+		return std::format("{}_{}", matName.empty() ? "UnnamedMaterial" : matName, matHash);
 	}
 
 
-	inline std::string GenerateGLTFMeshName(cgltf_mesh const* curMesh, size_t meshIdx)
+	inline std::string GenerateGLTFNodeName(
+		std::shared_ptr<FileMetadata> const& fileMetadata, cgltf_node const* gltfNode, size_t nodeIdx)
 	{
-		return curMesh->name ? curMesh->name : std::format("UnnamedMesh[{}]", meshIdx);
+		return gltfNode->name ? gltfNode->name : std::format("{}_Node_[{}]", fileMetadata->m_filePath, nodeIdx);
 	}
 
 
-	inline std::string GenerateGLTFMeshPrimitiveName(cgltf_mesh const* curMesh, size_t meshIdx, size_t primIdx)
+	inline std::string GenerateGLTFMeshName(
+		std::shared_ptr<FileMetadata> const& fileMetadata, cgltf_mesh const* curMesh, size_t meshIdx)
 	{
-		return std::format("{}_Primitive[{}]", GenerateGLTFMeshName(curMesh, meshIdx), primIdx);
+		return curMesh->name ? curMesh->name : std::format("{}_Mesh[{}]", fileMetadata->m_filePath, meshIdx);
+	}
+
+
+	inline std::string GenerateGLTFMeshPrimitiveName(
+		std::shared_ptr<FileMetadata> const& fileMetadata, cgltf_mesh const* curMesh, size_t meshIdx, size_t primIdx)
+	{
+		return std::format("{}_Primitive[{}]", GenerateGLTFMeshName(fileMetadata, curMesh, meshIdx), primIdx);
+	}
+
+
+	inline std::string GenerateGLTFCameraName(
+		std::shared_ptr<FileMetadata> const& fileMetadata, cgltf_camera const* camNode, size_t nodeIdx)
+	{
+		return camNode->name ? camNode->name : std::format("{}_Camera_[{}]", fileMetadata->m_filePath, nodeIdx);
+	}
+
+
+	inline std::string GenerateGLTFLightName(
+		std::shared_ptr<FileMetadata> const& fileMetadata, cgltf_light const* lightNode, size_t nodeIdx)
+	{
+		return lightNode->name ? lightNode->name : std::format("{}_Light_[{}]", fileMetadata->m_filePath, nodeIdx);
 	}
 
 
@@ -242,65 +430,6 @@ namespace
 		}
 
 		return colors;
-	}
-
-
-	std::string GenerateGLTFTextureName(
-		std::string const& sceneRootPath,
-		cgltf_texture const* textureSrc,
-		glm::vec4 const& colorFallback,
-		re::Texture::Format formatFallback,
-		re::Texture::ColorSpace colorSpace)
-	{
-		std::string texName;
-
-		if (textureSrc && textureSrc->image)
-		{
-			if (textureSrc->image->uri &&
-				std::strncmp(textureSrc->image->uri, "data:image/", 11) == 0) // URI = embedded data
-			{
-				if (textureSrc->image->name)
-				{
-					texName = textureSrc->image->name;
-				}
-				else
-				{
-					// Data URIs are long; Just choose the first N characters and hope for the best...
-					constexpr uint8_t k_maxURINameLength = 128;
-					std::string const& uriString = textureSrc->image->uri;
-					texName = uriString.substr(0, k_maxURINameLength);
-				}
-			}
-			else if (textureSrc->image->uri) // uri is a filename (e.g. "myImage.png")
-			{
-				texName = sceneRootPath + textureSrc->image->uri;
-			}
-			else if (textureSrc->image->buffer_view) // texture data is already loaded in memory
-			{
-				if (textureSrc->image->name)
-				{
-					texName = textureSrc->image->name;
-				}
-				else if (textureSrc->image->buffer_view->name)
-				{
-					texName = textureSrc->image->buffer_view->name;
-				}
-				else
-				{
-					// Hail mary: We've got nothing else to go on, so use the buffer_view pointer address
-					texName = std::format("UnnamedImageBuffer_{}",
-						reinterpret_cast<uint64_t>(textureSrc->image->buffer_view));
-				}
-			}
-		}
-		else
-		{
-			const size_t numChannels = re::Texture::GetNumberOfChannels(formatFallback);
-
-			texName = load::GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
-		}
-
-		return texName;
 	}
 
 
@@ -731,20 +860,20 @@ namespace
 
 	inline entt::entity CreateGLTFSceneNode(
 		fr::EntityManager* em,
-		std::shared_ptr<FileMetadata> const& sceneMetadata,
+		std::shared_ptr<FileMetadata> const& fileMetadata,
 		cgltf_node const* gltfNode,
 		entt::entity parent,
 		size_t nodeIdx)
 	{
-		std::string const& nodeName = gltfNode->name ? gltfNode->name : std::format("UnnamedNode_{}", nodeIdx);
+		std::string const& nodeName = GenerateGLTFNodeName(fileMetadata, gltfNode, nodeIdx);
 
 		entt::entity newSceneNode = fr::SceneNode::Create(*em, nodeName, parent);
 
 		// We ensure there is a Transform (even just the identity) for all skeleton nodes
 		bool isSkeletonNode = false;
 		{
-			std::lock_guard<std::mutex> lock(sceneMetadata->m_skinDataMutex);
-			isSkeletonNode = sceneMetadata->m_skeletonNodes.contains(gltfNode);
+			std::lock_guard<std::mutex> lock(fileMetadata->m_skinDataMutex);
+			isSkeletonNode = fileMetadata->m_skeletonNodes.contains(gltfNode);
 		}
 
 		if (gltfNode->has_translation ||
@@ -763,10 +892,10 @@ namespace
 
 	void LoadAddGLTFCamera(
 		fr::EntityManager* em,
-		entt::entity sceneNodeEntity,
-		size_t nodeIdx,
 		cgltf_node const* current,
-		std::shared_ptr<FileMetadata>& sceneMetadata)
+		size_t nodeIdx,
+		entt::entity sceneNodeEntity,		
+		std::shared_ptr<FileMetadata>& fileMetadata)
 	{
 		SEAssert(current != nullptr, "Null cgltf_node");
 		SEAssert(sceneNodeEntity != entt::null, "Null scene node entity");
@@ -774,8 +903,8 @@ namespace
 
 		cgltf_camera const* camera = current->camera;
 
-		char const* camName = camera->name ? camera->name : "Unnamed camera";
-		LOG("Loading camera \"%s\"", camName);
+		std::string const& camName = GenerateGLTFCameraName(fileMetadata, camera, nodeIdx);
+		LOG("Loading camera \"%s\"", camName.c_str());
 
 		gr::Camera::Config camConfig;
 		camConfig.m_projectionType = camera->type == cgltf_camera_type_orthographic ?
@@ -804,32 +933,29 @@ namespace
 		}
 
 		// Create the camera and set the transform values on the parent object:
-		fr::CameraComponent::CreateCameraConcept(*em, sceneNodeEntity, camName, camConfig);
+		fr::CameraComponent::CreateCameraConcept(*em, sceneNodeEntity, camName.c_str(), camConfig);
 
 		// Update the camera metadata:
 		{
-			std::lock_guard<std::mutex> lock(sceneMetadata->m_cameraMetadataMutex);
+			std::lock_guard<std::mutex> lock(fileMetadata->m_cameraMetadataMutex);
 
-			sceneMetadata->m_cameraMetadata.emplace_back(load::CameraMetadata{
+			fileMetadata->m_cameraMetadata.emplace_back(load::CameraMetadata{
 				.m_srcNodeIdx = nodeIdx,
 				.m_owningEntity = sceneNodeEntity, });
 		}
 	}
 
 
-	void LoadAddGLTFLight(fr::EntityManager* em, cgltf_node const* current, entt::entity sceneNode)
+	void LoadAddGLTFLight(
+		fr::EntityManager* em, 
+		cgltf_node const* current, 
+		size_t nodeIdx,
+		entt::entity sceneNode,
+		std::shared_ptr<FileMetadata> const& fileMetadata)
 	{
-		std::string lightName;
-		if (current->light->name)
-		{
-			lightName = std::string(current->light->name);
-		}
-		else
-		{
-			static std::atomic<uint32_t> unnamedLightIndex = 0;
-			const uint32_t thisLightIndex = unnamedLightIndex.fetch_add(1);
-			lightName = "UnnamedLight_" + std::to_string(thisLightIndex);
-		}
+		SEAssert(current && current->light, "Invalid light node");
+
+		std::string const& lightName = GenerateGLTFLightName(fileMetadata, current->light, nodeIdx);
 
 		LOG("Found light \"%s\"", lightName.c_str());
 
@@ -1506,16 +1632,15 @@ namespace
 
 	void LoadGLTFMeshData(
 		core::Inventory* inventory,
-		std::string const& sceneRootPath,
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<FileMetadata>& sceneMetadata,
+		std::shared_ptr<FileMetadata>& fileMetadata,
 		core::InvPtr<GLTFSceneHandle>& gltfScene)
 	{
 		for (size_t meshIdx = 0; meshIdx < data->meshes_count; ++meshIdx)
 		{
 			cgltf_mesh const* curMesh = &data->meshes[meshIdx];
 
-			std::string const& meshName = GenerateGLTFMeshName(curMesh, meshIdx);
+			std::string const& meshName = GenerateGLTFMeshName(fileMetadata, curMesh, meshIdx);
 
 			// Parse the mesh in advance to determine if it has any animation:
 			bool meshHasMorphTargets = false;
@@ -1550,12 +1675,12 @@ namespace
 			// Load each primitive:
 			for (size_t primIdx = 0; primIdx < curMesh->primitives_count; ++primIdx)
 			{
-				std::string const& primitiveName = GenerateGLTFMeshPrimitiveName(curMesh, meshIdx, primIdx);
+				std::string const& primitiveName = GenerateGLTFMeshPrimitiveName(fileMetadata, curMesh, meshIdx, primIdx);
 
 				std::shared_ptr<MeshPrimitiveFromCGLTF<gr::MeshPrimitive>> loadContext =
 					std::make_shared<MeshPrimitiveFromCGLTF<gr::MeshPrimitive>>();
 
-				loadContext->m_sceneMetadata = sceneMetadata;
+				loadContext->m_sceneMetadata = fileMetadata;
 
 				loadContext->m_meshName = meshName;
 				loadContext->m_primitiveName = primitiveName;
@@ -1568,14 +1693,14 @@ namespace
 
 				// Update the mesh primitive metadata
 				{
-					std::lock_guard<std::mutex> lock(sceneMetadata->m_primitiveToMeshPrimitiveMetadataMutex);
+					std::lock_guard<std::mutex> lock(fileMetadata->m_primitiveToMeshPrimitiveMetadataMutex);
 
 					// Note: We must dispatch this while the m_primitiveToMeshPrimitiveMetadataMutex is locked to
 					// prevent a race condition where the async loading thread tries to access the metadata before we've
 					// populated it
 
 					// Load the MeshPrimitive as a dependency of the GLTF scene:
-					MeshPrimitiveMetadata& meshPrimMetadata = sceneMetadata->m_primitiveToMeshPrimitiveMetadata.emplace(
+					MeshPrimitiveMetadata& meshPrimMetadata = fileMetadata->m_primitiveToMeshPrimitiveMetadata.emplace(
 						&curMesh->primitives[primIdx],
 						MeshPrimitiveMetadata{
 							.m_meshPrimitive = gltfScene.AddDependency(inventory->Get(
@@ -1588,10 +1713,10 @@ namespace
 						std::make_shared<MaterialLoadContext_GLTF<gr::Material_GLTF>>();
 
 					matLoadCtx->m_inventory = inventory;
-					matLoadCtx->m_sceneRootPath = sceneRootPath;
+					matLoadCtx->m_sceneRootPath = fileMetadata->m_sceneRootPath;
 					matLoadCtx->m_data = data;
 					matLoadCtx->m_srcMaterial = curMesh->primitives[primIdx].material;
-					matLoadCtx->m_matName = GenerateGLTFMaterialName(curMesh->primitives[primIdx].material);
+					matLoadCtx->m_matName = GenerateGLTFMaterialName(fileMetadata, curMesh->primitives[primIdx].material);
 
 					meshPrimMetadata.m_material = meshPrimMetadata.m_meshPrimitive.AddDependency(inventory->Get(
 						util::HashKey(matLoadCtx->m_matName),
@@ -1604,7 +1729,7 @@ namespace
 
 	inline void PreLoadGLTFSkinData(
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<FileMetadata>& sceneMetadata,
+		std::shared_ptr<FileMetadata>& fileMetadata,
 		std::vector<std::future<void>>& skinFutures)
 	{
 		for (size_t skinIdx = 0; skinIdx < data->skins_count; ++skinIdx)
@@ -1612,7 +1737,7 @@ namespace
 			cgltf_skin const* skin = &data->skins[skinIdx];
 
 			skinFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
-				[skin, &sceneMetadata]()
+				[skin, &fileMetadata]()
 				{
 					std::vector<glm::mat4> inverseBindMatrices;
 					if (skin->inverse_bind_matrices)
@@ -1628,10 +1753,10 @@ namespace
 							numFloats);
 
 						{
-							std::lock_guard<std::mutex> lock(sceneMetadata->m_skinDataMutex);
+							std::lock_guard<std::mutex> lock(fileMetadata->m_skinDataMutex);
 
-							sceneMetadata->m_skinToSkinMetadata.emplace(skin, std::move(inverseBindMatrices));
-							sceneMetadata->m_skeletonNodes.emplace(skin->skeleton);
+							fileMetadata->m_skinToSkinMetadata.emplace(skin, std::move(inverseBindMatrices));
+							fileMetadata->m_skeletonNodes.emplace(skin->skeleton);
 						}
 					}
 				}));
@@ -1641,9 +1766,9 @@ namespace
 
 	void PreLoadGLTFAnimationData(
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<FileMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& fileMetadata)
 	{
-		sceneMetadata->m_animationController = fr::AnimationController::CreateAnimationControllerObject();
+		fileMetadata->m_animationController = fr::AnimationController::CreateAnimationControllerObject();
 
 		for (uint64_t animIdx = 0; animIdx < data->animations_count; ++animIdx)
 		{
@@ -1659,11 +1784,11 @@ namespace
 			}
 			LOG("Loading animation \"%s\"...", animationName.c_str());
 
-			sceneMetadata->m_animationController->AddNewAnimation(animationName.c_str());
+			fileMetadata->m_animationController->AddNewAnimation(animationName.c_str());
 
 			// Pack the Channels of an AnimationData struct:
 			std::unordered_map<cgltf_node const*, fr::AnimationData>& nodeToData =
-				sceneMetadata->m_nodeToAnimationData.emplace_back();
+				fileMetadata->m_nodeToAnimationData.emplace_back();
 			for (uint64_t channelIdx = 0; channelIdx < data->animations[animIdx].channels_count; ++channelIdx)
 			{
 				// GLTF animation samplers define an "input/output pair":
@@ -1709,7 +1834,7 @@ namespace
 				cgltf_accessor_unpack_floats(animSampler->input, keyframeTimesSec.data(), numKeyframeTimeEntries);
 
 				animChannel.m_keyframeTimesIdx =
-					sceneMetadata->m_animationController->AddChannelKeyframeTimes(animIdx, std::move(keyframeTimesSec));
+					fileMetadata->m_animationController->AddChannelKeyframeTimes(animIdx, std::move(keyframeTimesSec));
 
 				// Channel output data:
 				const cgltf_size numOutputFloats = cgltf_accessor_unpack_floats(animSampler->output, nullptr, 0);
@@ -1717,7 +1842,7 @@ namespace
 				std::vector<float> outputFloatData(numOutputFloats);
 				cgltf_accessor_unpack_floats(animSampler->output, outputFloatData.data(), numOutputFloats);
 
-				animChannel.m_dataIdx = sceneMetadata->m_animationController->AddChannelData(std::move(outputFloatData));
+				animChannel.m_dataIdx = fileMetadata->m_animationController->AddChannelData(std::move(outputFloatData));
 
 				SEAssert(numOutputFloats % numKeyframeTimeEntries == 0,
 					"The number of keyframe entries must be an exact multiple of the number of output floats");
@@ -1800,7 +1925,7 @@ namespace
 		cgltf_node const* current,
 		size_t nodeIdx, // For default/fallback name
 		entt::entity sceneNodeEntity,
-		std::shared_ptr<FileMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& fileMetadata)
 	{
 		SEAssert(current->mesh, "Current node does not have mesh data");
 
@@ -1826,7 +1951,7 @@ namespace
 		{
 			cgltf_primitive const& curPrimitive = current->mesh->primitives[primIdx];
 
-			SEAssert(sceneMetadata->m_primitiveToMeshPrimitiveMetadata.contains(&curPrimitive),
+			SEAssert(fileMetadata->m_primitiveToMeshPrimitiveMetadata.contains(&curPrimitive),
 				"Failed to find the primitive in our metadata map. This is unexpected");
 
 			// Parse the min/max positions for our Bounds:
@@ -1836,7 +1961,7 @@ namespace
 
 			// Note: No locks here, the work should have already finished and been waited on
 			MeshPrimitiveMetadata& meshPrimMetadata =
-				sceneMetadata->m_primitiveToMeshPrimitiveMetadata.at(&curPrimitive);
+				fileMetadata->m_primitiveToMeshPrimitiveMetadata.at(&curPrimitive);
 
 			// Attach the MeshPrimitive to the MeshConcept:
 			const entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
@@ -1854,8 +1979,8 @@ namespace
 
 		// Store our Mesh entity -> vector of Mesh/MeshPrimive Bounds entities:
 		{
-			std::unique_lock<std::mutex> lock(sceneMetadata->m_meshEntityToBoundsEntityMapMutex);
-			sceneMetadata->m_meshEntityToBoundsEntityMap[sceneNodeEntity] = std::move(meshAndMeshPrimitiveEntities);
+			std::unique_lock<std::mutex> lock(fileMetadata->m_meshEntityToBoundsEntityMapMutex);
+			fileMetadata->m_meshEntityToBoundsEntityMap[sceneNodeEntity] = std::move(meshAndMeshPrimitiveEntities);
 		}
 	}
 
@@ -1863,17 +1988,17 @@ namespace
 	void AttachGLTFMeshAnimationComponents(
 		fr::EntityManager* em,
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<FileMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& fileMetadata)
 	{
 		// Move our pre-populated AnimationController into an entity/component so we can obtain its final pointer:
 		fr::AnimationController* animationController = fr::AnimationController::CreateAnimationController(
-			*em, sceneMetadata->m_filePath.c_str(), std::move(sceneMetadata->m_animationController));
+			*em, fileMetadata->m_filePath.c_str(), std::move(fileMetadata->m_animationController));
 
 
 		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
 		{
 			cgltf_node const* current = &data->nodes[nodeIdx];
-			const entt::entity curSceneNodeEntity = sceneMetadata->m_nodeToEntity.at(current);
+			const entt::entity curSceneNodeEntity = fileMetadata->m_nodeToEntity.at(current);
 
 			// Morph targets:
 			bool meshHasWeights = false;
@@ -1923,11 +2048,11 @@ namespace
 
 				for (size_t jointIdx = 0; jointIdx < current->skin->joints_count; ++jointIdx)
 				{
-					SEAssert(sceneMetadata->m_nodeToEntity.contains(current->skin->joints[jointIdx]),
+					SEAssert(fileMetadata->m_nodeToEntity.contains(current->skin->joints[jointIdx]),
 						"Node is not in the node to entity map. This should not be possible");
 
 					const entt::entity jointNodeEntity =
-						sceneMetadata->m_nodeToEntity.at(current->skin->joints[jointIdx]);
+						fileMetadata->m_nodeToEntity.at(current->skin->joints[jointIdx]);
 
 					jointEntities.emplace_back(jointNodeEntity);
 
@@ -1947,19 +2072,19 @@ namespace
 
 				// We pre-loaded the skinning data
 				std::vector<glm::mat4>* inverseBindMatrices = nullptr;
-				if (sceneMetadata->m_skinToSkinMetadata.contains(current->skin))
+				if (fileMetadata->m_skinToSkinMetadata.contains(current->skin))
 				{
 					// Note: No locks here, the work should have already finished and been waited on
 					inverseBindMatrices =
-						&sceneMetadata->m_skinToSkinMetadata.at(current->skin).m_inverseBindMatrices;
+						&fileMetadata->m_skinToSkinMetadata.at(current->skin).m_inverseBindMatrices;
 				}
 
 				// The skeleton root node is part of the skeletal hierarchy
 				entt::entity skeletonRootEntity = entt::null;
 				gr::TransformID skeletonTransformID = gr::k_invalidTransformID;
-				if (sceneMetadata->m_nodeToEntity.contains(current->skin->skeleton))
+				if (fileMetadata->m_nodeToEntity.contains(current->skin->skeleton))
 				{
-					skeletonRootEntity = sceneMetadata->m_nodeToEntity.at(current->skin->skeleton);
+					skeletonRootEntity = fileMetadata->m_nodeToEntity.at(current->skin->skeleton);
 
 					// Note: The entity associated with the skeleton node might not be the entity with the next 
 					// TransformationComponent in the hierarchy above; it might be modified here
@@ -1980,7 +2105,7 @@ namespace
 					skeletonRootEntity,
 					skeletonTransformID,
 					animationController->GetActiveLongestChannelTimeSec(),
-					std::move(sceneMetadata->m_meshEntityToBoundsEntityMap.at(curSceneNodeEntity)));
+					std::move(fileMetadata->m_meshEntityToBoundsEntityMap.at(curSceneNodeEntity)));
 			}
 
 
@@ -1988,7 +2113,7 @@ namespace
 			bool hasAnimation = meshHasWeights;
 			if (!hasAnimation) // Also need to search the node animations
 			{
-				for (auto const& animation : sceneMetadata->m_nodeToAnimationData)
+				for (auto const& animation : fileMetadata->m_nodeToAnimationData)
 				{
 					if (animation.contains(current))
 					{
@@ -2005,7 +2130,7 @@ namespace
 					(current->mesh && current->mesh->weights && current->mesh->weights_count > 0),
 					"Mesh weights count is non-zero, but weights is null");
 
-				SEAssert(sceneMetadata->m_animationController == nullptr &&
+				SEAssert(fileMetadata->m_animationController == nullptr &&
 					animationController != nullptr,
 					"m_animationController should have already been moved, finalAnimationController cannot be null");
 
@@ -2015,7 +2140,7 @@ namespace
 					*em, curSceneNodeEntity, animationController);
 
 				// Attach each/all animations that target the current node to its animation component:
-				for (auto const& animation : sceneMetadata->m_nodeToAnimationData)
+				for (auto const& animation : fileMetadata->m_nodeToAnimationData)
 				{
 					if (!animation.contains(current))
 					{
@@ -2032,28 +2157,28 @@ namespace
 	void AttachGLTFNodeComponents(
 		fr::EntityManager* em,
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<FileMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& fileMetadata)
 	{
 		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
 		{
 			cgltf_node const* current = &data->nodes[nodeIdx];
 
-			SEAssert(sceneMetadata->m_nodeToEntity.contains(current),
+			SEAssert(fileMetadata->m_nodeToEntity.contains(current),
 				"Node to entity map does not contain the current node. This should not be possible");
 
-			const entt::entity curSceneNodeEntity = sceneMetadata->m_nodeToEntity.at(current);
+			const entt::entity curSceneNodeEntity = fileMetadata->m_nodeToEntity.at(current);
 
 			if (current->mesh)
 			{
-				AttachGLTFGeometry(em, current, nodeIdx, curSceneNodeEntity, sceneMetadata);
+				AttachGLTFGeometry(em, current, nodeIdx, curSceneNodeEntity, fileMetadata);
 			}
 			if (current->light)
 			{
-				LoadAddGLTFLight(em, current, curSceneNodeEntity);
+				LoadAddGLTFLight(em, current, nodeIdx, curSceneNodeEntity, fileMetadata);
 			}
 			if (current->camera)
 			{
-				LoadAddGLTFCamera(em, curSceneNodeEntity, nodeIdx, current, sceneMetadata);
+				LoadAddGLTFCamera(em, current, nodeIdx, curSceneNodeEntity, fileMetadata);
 			}
 		}
 	}
@@ -2062,7 +2187,7 @@ namespace
 	void CreateGLTFSceneNodeEntities(
 		fr::EntityManager* em,
 		std::shared_ptr<cgltf_data const> const& data,
-		std::shared_ptr<FileMetadata>& sceneMetadata)
+		std::shared_ptr<FileMetadata>& fileMetadata)
 	{
 		for (size_t sceneIdx = 0; sceneIdx < data->scenes_count; ++sceneIdx)
 		{
@@ -2086,16 +2211,16 @@ namespace
 				entt::entity curNodeParentEntity = entt::null;
 				if (curNode->parent)
 				{
-					SEAssert(sceneMetadata->m_nodeToEntity.contains(curNode->parent),
+					SEAssert(fileMetadata->m_nodeToEntity.contains(curNode->parent),
 						"Failed to find the parent, this should not be possible");
 
-					curNodeParentEntity = sceneMetadata->m_nodeToEntity.at(curNode->parent);
+					curNodeParentEntity = fileMetadata->m_nodeToEntity.at(curNode->parent);
 				}
 
 				// Create the current node's entity (and Transform, if it has one):
-				sceneMetadata->m_nodeToEntity.emplace(
+				fileMetadata->m_nodeToEntity.emplace(
 					curNode,
-					CreateGLTFSceneNode(em, sceneMetadata, curNode, curNodeParentEntity, nodeIdx++));
+					CreateGLTFSceneNode(em, fileMetadata, curNode, curNodeParentEntity, nodeIdx++));
 
 				// Add the children:
 				for (size_t childIdx = 0; childIdx < curNode->children_count; ++childIdx)
@@ -2137,6 +2262,7 @@ namespace
 			// FileMetadata is populated with tracking data as we go
 			m_sceneMetadata = std::make_shared<FileMetadata>();
 			m_sceneMetadata->m_filePath = m_filePath;
+			m_sceneMetadata->m_sceneRootPath = util::ExtractDirectoryPathFromFilePath(m_filePath);
 
 			cgltf_data* data = m_sceneData ? m_sceneData.get() : nullptr;
 
@@ -2159,9 +2285,7 @@ namespace
 				}
 #endif
 
-				std::string const& sceneRootPath = util::ExtractDirectoryPathFromFilePath(m_filePath);
-
-				LoadGLTFMeshData(m_inventory, sceneRootPath, m_sceneData, m_sceneMetadata, gltfScene);
+				LoadGLTFMeshData(m_inventory, m_sceneData, m_sceneMetadata, gltfScene);
 
 				std::vector<std::future<void>> loadFutures;
 				PreLoadGLTFSkinData(m_sceneData, m_sceneMetadata, loadFutures);
@@ -2185,42 +2309,42 @@ namespace
 			SEAssert(m_sceneMetadata, "Scene metadata should not be null here");
 
 			fr::EntityManager* em = fr::EntityManager::Get();
-			std::shared_ptr<FileMetadata> sceneMetadata = m_sceneMetadata;
+			std::shared_ptr<FileMetadata> fileMetadata = m_sceneMetadata;
 			std::shared_ptr<cgltf_data> sceneData = m_sceneData;
 			em->EnqueueEntityCommand(
-				[em, sceneData, sceneMetadata]() mutable
+				[em, sceneData, fileMetadata]() mutable
 				{
 					// Create scene node entities:
-					CreateGLTFSceneNodeEntities(em, sceneData, sceneMetadata);
+					CreateGLTFSceneNodeEntities(em, sceneData, fileMetadata);
 
 					// Attach the components to the entities, now that they exist:
-					AttachGLTFNodeComponents(em, sceneData, sceneMetadata);
+					AttachGLTFNodeComponents(em, sceneData, fileMetadata);
 
 					// Animation components:
-					AttachGLTFMeshAnimationComponents(em, sceneData, sceneMetadata);
+					AttachGLTFMeshAnimationComponents(em, sceneData, fileMetadata);
 				});
 
 
 			// Add a camera::
 			em->EnqueueEntityCommand(
-				[em, sceneMetadata]() mutable
+				[em, fileMetadata]() mutable
 				{
 					// Set the main camera:
 					entt::entity mainCameraEntity = entt::null;
 					{
-						std::lock_guard<std::mutex> lock(sceneMetadata->m_cameraMetadataMutex);
+						std::lock_guard<std::mutex> lock(fileMetadata->m_cameraMetadataMutex);
 
-						if (!sceneMetadata->m_cameraMetadata.empty())
+						if (!fileMetadata->m_cameraMetadata.empty())
 						{
 							// Sort our cameras for deterministic ordering
-							std::sort(sceneMetadata->m_cameraMetadata.begin(), sceneMetadata->m_cameraMetadata.end(),
+							std::sort(fileMetadata->m_cameraMetadata.begin(), fileMetadata->m_cameraMetadata.end(),
 								[](load::CameraMetadata const& a, load::CameraMetadata const& b)
 								{
 									return a.m_srcNodeIdx < b.m_srcNodeIdx;
 								});
 
 							// Make the last camera loaded active
-							mainCameraEntity = sceneMetadata->m_cameraMetadata.back().m_owningEntity;
+							mainCameraEntity = fileMetadata->m_cameraMetadata.back().m_owningEntity;
 						}
 					}
 

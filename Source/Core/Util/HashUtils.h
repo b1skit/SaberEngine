@@ -4,6 +4,18 @@
 
 namespace util
 {
+	inline uint64_t HashString(std::string const& str)
+	{
+		return std::hash<std::string>{}(str);
+	}
+
+
+	inline uint64_t HashCStr(char const* cStr) // Constructs a temporary std::string, avoid this if you can
+	{
+		return HashString(cStr);
+	}
+
+
 	inline void CombineHash(uint64_t& currentHash, const uint64_t newHash)
 	{
 		// Lifted from Boost hash_combine + the 64-bit suggestions for the magic number & shift distances on this page:
@@ -16,12 +28,6 @@ namespace util
 	{
 		static const std::hash<uint64_t> hasher;
 		CombineHash(currentHash, hasher(dataVal));
-	}
-
-
-	inline uint64_t HashString(std::string const& str)
-	{
-		return std::hash<std::string>{}(str);
 	}
 
 
@@ -49,6 +55,18 @@ namespace util
 		util::AddDataToHash(dataHash, remainingBytes);
 
 		return dataHash;
+	}
+
+
+	inline void AddDataBytesToHash(uint64_t& currentHash, char const* cStr) // Constructs a temporary std::string, avoid this if you can
+	{
+		CombineHash(currentHash, HashCStr(cStr));
+	}
+
+
+	inline void AddDataBytesToHash(uint64_t& currentHash, std::string const& str)
+	{
+		CombineHash(currentHash, HashString(str));
 	}
 
 
