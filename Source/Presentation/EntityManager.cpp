@@ -97,10 +97,12 @@ namespace fr
 
 		// Handle interaction (player input, physics, animation, etc)
 		UpdateCameraController(stepTimeMs);
-		
+
 		// Update the scene state:
 		UpdateAnimationControllers(stepTimeMs);  // Modifies Transforms
-		UpdateTransforms();
+
+		UpdateTransforms(); // Transforms are immutable after this point
+		
 		UpdateAnimations(stepTimeMs);
 		UpdateBounds();
 		UpdateMaterials();

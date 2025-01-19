@@ -575,7 +575,8 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		if (!IsDirty())
+		if (!IsDirty() && 
+			(!m_parent || !m_parent->HasChanged()))
 		{
 			return;
 		}
