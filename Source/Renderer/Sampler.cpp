@@ -31,8 +31,6 @@ namespace re
 	{
 		struct LoadContext final : public virtual core::ILoadContext<re::Sampler>
 		{
-			LoadContext() : ILoadContextBase(core::ILoadContextBase::RetentionPolicy::Permanent) {}
-
 			void OnLoadBegin(core::InvPtr<re::Sampler>& newSampler) override
 			{
 				LOG(std::format("Creating sampler \"{}\"", m_samplerName).c_str());
@@ -49,6 +47,8 @@ namespace re
 			SamplerDesc m_samplerDesc;
 		};
 		std::shared_ptr<LoadContext> samplerLoadContext = std::make_shared<LoadContext>();
+
+		samplerLoadContext->m_retentionPolicy = core::RetentionPolicy::Permanent;
 
 		samplerLoadContext->m_samplerName = name;
 		samplerLoadContext->m_samplerDesc = samplerDesc;

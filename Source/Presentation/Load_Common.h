@@ -12,9 +12,6 @@ namespace load
 	template<typename T>
 	struct TextureFromFilePath : public virtual core::ILoadContext<T>
 	{
-		TextureFromFilePath(core::ILoadContextBase::RetentionPolicy policy)
-			: core::ILoadContextBase(policy) {}
-
 		void OnLoadBegin(core::InvPtr<re::Texture>&) override;
 		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>&) override;
 
@@ -62,9 +59,6 @@ namespace load
 
 	struct IBLTextureFromFilePath final : public virtual TextureFromFilePath<re::Texture>
 	{
-		IBLTextureFromFilePath(core::ILoadContextBase::RetentionPolicy policy)
-			: TextureFromFilePath<re::Texture>(policy) {}
-
 		// We override this so we can skip the early registration (which would make the render thread wait)
 		void OnLoadBegin(core::InvPtr<re::Texture>&) override;
 		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& newIBL) override;

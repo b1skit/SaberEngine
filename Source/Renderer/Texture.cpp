@@ -113,9 +113,6 @@ namespace re
 	{
 		struct TextureFromByteVecLoadContext final : public virtual core::ILoadContext<re::Texture>
 		{
-			TextureFromByteVecLoadContext(core::ILoadContextBase::RetentionPolicy policy) 
-				: core::ILoadContextBase(policy) {}
-
 			void OnLoadBegin(core::InvPtr<re::Texture>& newTex) override
 			{
 				LOG(std::format("Creating texture \"{}\" from byte vector", m_texName).c_str());
@@ -147,10 +144,11 @@ namespace re
 			TextureParams m_texParams;
 			std::vector<uint8_t> m_initialDataBytes;
 		};
-		std::shared_ptr<TextureFromByteVecLoadContext> loadContext = std::make_shared<TextureFromByteVecLoadContext>(
-			params.m_createAsPermanent ? 
-				core::ILoadContextBase::RetentionPolicy::Permanent : 
-				core::ILoadContextBase::RetentionPolicy::Reusable);
+		std::shared_ptr<TextureFromByteVecLoadContext> loadContext = std::make_shared<TextureFromByteVecLoadContext>();
+
+		loadContext->m_retentionPolicy = params.m_createAsPermanent ?
+			core::RetentionPolicy::Permanent :
+			core::RetentionPolicy::Reusable;
 
 		loadContext->m_texName = name;
 		loadContext->m_texParams = params;
@@ -170,9 +168,6 @@ namespace re
 
 		struct TextureFromColor final : public virtual core::ILoadContext<re::Texture>
 		{
-			TextureFromColor(core::ILoadContextBase::RetentionPolicy policy)
-				: ILoadContextBase(policy) {}
-
 			void OnLoadBegin(core::InvPtr<re::Texture>& newTex) override
 			{
 				LOG(std::format("Creating texture \"{}\" from color", m_texName).c_str());
@@ -198,18 +193,19 @@ namespace re
 			re::Texture::TextureParams m_texParams;
 			glm::vec4 m_fillColor;
 		};
-		std::shared_ptr<TextureFromColor> colorTexLoadCtx = std::make_shared<TextureFromColor>(
-			params.m_createAsPermanent ?
-				core::ILoadContextBase::RetentionPolicy::Permanent :
-				core::ILoadContextBase::RetentionPolicy::Reusable);
+		std::shared_ptr<TextureFromColor> loadContext = std::make_shared<TextureFromColor>();
 
-		colorTexLoadCtx->m_texName = name;
-		colorTexLoadCtx->m_texParams = params;
-		colorTexLoadCtx->m_fillColor = fillColor;
+		loadContext->m_retentionPolicy = params.m_createAsPermanent ?
+			core::RetentionPolicy::Permanent :
+			core::RetentionPolicy::Reusable;
+
+		loadContext->m_texName = name;
+		loadContext->m_texParams = params;
+		loadContext->m_fillColor = fillColor;
 
 		return re::RenderManager::Get()->GetInventory()->Get(
 			util::HashKey(name),
-			static_pointer_cast<core::ILoadContext<re::Texture>>(colorTexLoadCtx));
+			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 	}
 
 
@@ -217,9 +213,6 @@ namespace re
 	{
 		struct RuntimeTexLoadContext final : public virtual core::ILoadContext<re::Texture>
 		{
-			RuntimeTexLoadContext(core::ILoadContextBase::RetentionPolicy policy)
-				: ILoadContextBase(policy) {}
-
 			void OnLoadBegin(core::InvPtr<re::Texture>& newTex) override
 			{
 				LOG(std::format("Creating runtime texture \"{}\"", m_idName).c_str());
@@ -236,10 +229,11 @@ namespace re
 			std::string m_idName;
 			re::Texture::TextureParams m_texParams;
 		};
-		std::shared_ptr<RuntimeTexLoadContext> runtimeTexLoadContext = std::make_shared<RuntimeTexLoadContext>(
-			params.m_createAsPermanent ?
-				core::ILoadContextBase::RetentionPolicy::Permanent :
-				core::ILoadContextBase::RetentionPolicy::Reusable);
+		std::shared_ptr<RuntimeTexLoadContext> loadContext = std::make_shared<RuntimeTexLoadContext>();
+
+		loadContext->m_retentionPolicy = params.m_createAsPermanent ?
+			core::RetentionPolicy::Permanent :
+			core::RetentionPolicy::Reusable;
 
 		// Runtime textures might have different parameters but use the same name (e.g. resizing an existing target
 		// texture), so we append a hash of the params to the name to ensure it is unique
@@ -247,13 +241,13 @@ namespace re
 			name,
 			util::HashDataBytes(&params, sizeof(re::Texture::TextureParams)));
 
-		runtimeTexLoadContext->m_idName = runtimeName;
+		loadContext->m_idName = runtimeName;
 
-		runtimeTexLoadContext->m_texParams = params;
+		loadContext->m_texParams = params;
 
 		return re::RenderManager::Get()->GetInventory()->Get(
 			util::HashKey(runtimeName),
-			static_pointer_cast<core::ILoadContext<re::Texture>>(runtimeTexLoadContext));
+			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 	}
 
 

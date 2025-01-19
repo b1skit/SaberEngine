@@ -132,10 +132,6 @@ namespace gr
 
 		struct VertexStreamLoadContext : core::ILoadContext<gr::VertexStream>
 		{
-			VertexStreamLoadContext(core::ILoadContextBase::RetentionPolicy policy)
-				: ILoadContextBase(policy) {}
-
-
 			std::unique_ptr<gr::VertexStream> Load(core::InvPtr<gr::VertexStream>& newVertexStream) override
 			{
 				re::RenderManager::Get()->RegisterForCreate(newVertexStream);
@@ -150,19 +146,20 @@ namespace gr
 			util::ByteVector m_data;
 			re::Buffer::UsageMask m_extraUsageBits;
 		};
-		std::shared_ptr<VertexStreamLoadContext> vertexStreamLoadContext = std::make_shared<VertexStreamLoadContext>(
-			streamDesc.m_lifetime == re::Lifetime::SingleFrame ? 
-				core::ILoadContextBase::RetentionPolicy::ForceNew : // We must re-create single frame Buffers
-				core::ILoadContextBase::RetentionPolicy::Reusable);
+		std::shared_ptr<VertexStreamLoadContext> loadContext = std::make_shared<VertexStreamLoadContext>();
 
-		vertexStreamLoadContext->m_dataHash = streamDataHash;
-		vertexStreamLoadContext->m_streamDesc = streamDesc;
-		vertexStreamLoadContext->m_data = std::move(data);
-		vertexStreamLoadContext->m_extraUsageBits = extraUsageBits;
+		loadContext->m_retentionPolicy = streamDesc.m_lifetime == re::Lifetime::SingleFrame ?
+			core::RetentionPolicy::ForceNew : // We must re-create single frame Buffers
+			core::RetentionPolicy::Reusable;
+
+		loadContext->m_dataHash = streamDataHash;
+		loadContext->m_streamDesc = streamDesc;
+		loadContext->m_data = std::move(data);
+		loadContext->m_extraUsageBits = extraUsageBits;
 
 		return inventory->Get(
 			streamDataHash,
-			static_pointer_cast<core::ILoadContext<gr::VertexStream>>(vertexStreamLoadContext));
+			static_pointer_cast<core::ILoadContext<gr::VertexStream>>(loadContext));
 	}
 
 

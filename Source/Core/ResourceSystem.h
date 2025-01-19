@@ -62,7 +62,7 @@ namespace core
 			std::unique_ptr<T> m_object;
 			std::unique_ptr<ControlBlock> m_control;
 			
-			ILoadContextBase::RetentionPolicy m_retentionPolicy;
+			RetentionPolicy m_retentionPolicy;
 		};
 		
 
@@ -131,7 +131,7 @@ namespace core
 			const RefCountType entryRefCount = entry.second.m_control->m_refCount.load();
 
 			SEAssert(entryRefCount == 0 ||
-				entryRefCount == 1 && entry.second.m_retentionPolicy == ILoadContextBase::RetentionPolicy::Permanent,
+				entryRefCount == 1 && entry.second.m_retentionPolicy == core::RetentionPolicy::Permanent,
 				"There is an outstanding InvPtr that has not been released yet. This might indicate a resource leak");
 		}
 #endif
@@ -249,10 +249,10 @@ namespace core
 				newPtrAndCntrl.m_control->m_refCount.store(0);
 				newPtrAndCntrl.m_control->m_state.store(ResourceState::Empty);
 
-				newPtrAndCntrl.m_retentionPolicy = loadContext->GetRetentionPolicy();
+				newPtrAndCntrl.m_retentionPolicy = loadContext->m_retentionPolicy;
 
 				// Bump the ref. count to keep permanent objects from going out of scope
-				if (newPtrAndCntrl.m_retentionPolicy == ILoadContextBase::RetentionPolicy::Permanent)
+				if (newPtrAndCntrl.m_retentionPolicy == core::RetentionPolicy::Permanent)
 				{
 					newPtrAndCntrl.m_control->m_refCount++;
 				}
@@ -316,7 +316,7 @@ namespace core
 			SEAssert(m_ptrAndControlBlocks.contains(ID),
 				"Trying to release an ID that doesn't exist. This should not be possible");
 
-			if (m_ptrAndControlBlocks.at(ID).m_retentionPolicy == ILoadContextBase::RetentionPolicy::ForceNew)
+			if (m_ptrAndControlBlocks.at(ID).m_retentionPolicy == core::RetentionPolicy::ForceNew)
 			{
 				SEAssert(m_ptrAndControlBlocks.at(ID).m_control->m_refCount.load() == 0 &&
 					m_ptrAndControlBlocks.at(ID).m_control->m_state.load() == core::ResourceState::Released,

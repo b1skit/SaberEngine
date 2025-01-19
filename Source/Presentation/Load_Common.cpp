@@ -104,18 +104,20 @@ namespace load
 		re::Texture::MipMode mipMode /*= re::Texture::MipMode::AllocateGenerate*/,
 		bool makePermanent /*= false*/)
 	{
-		std::shared_ptr<load::TextureFromFilePath<re::Texture>> texLoadCtx =
-			std::make_shared<load::TextureFromFilePath<re::Texture>>(makePermanent ?
-				core::ILoadContextBase::RetentionPolicy::Permanent :
-				core::ILoadContextBase::RetentionPolicy::Reusable);
+		std::shared_ptr<load::TextureFromFilePath<re::Texture>> loadContext =
+			std::make_shared<load::TextureFromFilePath<re::Texture>>();
 
-		texLoadCtx->m_filePath = filepath;
-		texLoadCtx->m_colorFallback = colorFallback;
-		texLoadCtx->m_formatFallback = formatFallback;
-		texLoadCtx->m_colorSpace = colorSpace;
-		texLoadCtx->m_mipMode = mipMode;
+		loadContext->m_retentionPolicy = makePermanent ?
+			core::RetentionPolicy::Permanent :
+			core::RetentionPolicy::Reusable;
 
-		return inventory->Get<re::Texture>(util::HashKey(filepath), texLoadCtx);
+		loadContext->m_filePath = filepath;
+		loadContext->m_colorFallback = colorFallback;
+		loadContext->m_formatFallback = formatFallback;
+		loadContext->m_colorSpace = colorSpace;
+		loadContext->m_mipMode = mipMode;
+
+		return inventory->Get<re::Texture>(util::HashKey(filepath), loadContext);
 	}
 
 
@@ -510,17 +512,18 @@ namespace load
 		IBLTextureFromFilePath::ActivationMode activationMode,
 		bool makePermanent /*= false*/)
 	{
-		std::shared_ptr<IBLTextureFromFilePath> importCmdIBLLoadCtx = std::make_shared<IBLTextureFromFilePath>(
-			makePermanent ?
-				core::ILoadContextBase::RetentionPolicy::Permanent :
-				core::ILoadContextBase::RetentionPolicy::Reusable);
+		std::shared_ptr<IBLTextureFromFilePath> loadContext = std::make_shared<IBLTextureFromFilePath>();
 
-		importCmdIBLLoadCtx->m_colorSpace = re::Texture::ColorSpace::Linear;
-		importCmdIBLLoadCtx->m_mipMode = re::Texture::MipMode::AllocateGenerate;
-		importCmdIBLLoadCtx->m_filePath = filepath;
-		importCmdIBLLoadCtx->m_activationMode = activationMode;
+		loadContext->m_retentionPolicy = makePermanent ?
+			core::RetentionPolicy::Permanent :
+			core::RetentionPolicy::Reusable;
 
-		return inventory->Get<re::Texture>(util::HashKey(filepath), importCmdIBLLoadCtx);
+		loadContext->m_colorSpace = re::Texture::ColorSpace::Linear;
+		loadContext->m_mipMode = re::Texture::MipMode::AllocateGenerate;
+		loadContext->m_filePath = filepath;
+		loadContext->m_activationMode = activationMode;
+
+		return inventory->Get<re::Texture>(util::HashKey(filepath), loadContext);
 	}
 
 
