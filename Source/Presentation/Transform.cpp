@@ -31,11 +31,11 @@ namespace fr
 		: m_parent(nullptr)
 		, m_transformID(s_transformIDs.fetch_add(1))
 		
-		, m_localPosition(0.0f, 0.0f, 0.0f)
-		, m_localRotationQuat(glm::vec3(0, 0, 0))
-		, m_localScale(1.0f, 1.0f, 1.0f)
+		, m_localPosition(0.f, 0.f, 0.f)
+		, m_localRotationQuat(1.f, 0.f, 0.f, 0.f)
+		, m_localScale(1.f, 1.f, 1.f)
 		
-		, m_localMat(1.0f)
+		, m_localMat(1.f)
 		, m_globalMat(1.f)
 
 		, m_isDirty(true)
@@ -121,12 +121,12 @@ namespace fr
 		glm::vec3 eulerRadians;
 		if (m_parent)
 		{
-			const glm::quat globalRotationQuat = m_localRotationQuat * m_parent->GetLocalRotation();
+			const glm::quat globalRotationQuat = GetLocalRotation() * m_parent->GetLocalRotation();
 			eulerRadians = glm::eulerAngles(globalRotationQuat);
 		}
 		else
 		{
-			eulerRadians = glm::eulerAngles(m_localRotationQuat);			
+			eulerRadians = glm::eulerAngles(GetLocalRotation());
 		}
 
 		ClampEulerRotationsToPlusMinus2Pi(eulerRadians);
@@ -262,7 +262,7 @@ namespace fr
 	glm::vec3 Transform::GetLocalPosition() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-
+		SEAssert(!m_isDirty, "Transformation should not be dirty");
 		return m_localPosition;
 	}
 
@@ -271,7 +271,7 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		return glm::translate(glm::mat4(1.0f), m_localPosition);
+		return glm::translate(glm::mat4(1.f), GetLocalPosition());
 	}
 
 
@@ -387,7 +387,6 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 		SEAssert(!m_isDirty, "Transformation should not be dirty");
-
 		return m_localRotationQuat;
 	}
 
@@ -395,9 +394,7 @@ namespace fr
 	glm::mat4 Transform::GetLocalRotationMat() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-		SEAssert(!m_isDirty, "Transformation should not be dirty");
-
-		return glm::mat4_cast(m_localRotationQuat);
+		return glm::mat4_cast(GetLocalRotation());
 	}
 
 
@@ -426,11 +423,11 @@ namespace fr
 		if (m_parent)
 		{
 			// Apply our local rotation first
-			return m_parent->GetGlobalRotation() * m_localRotationQuat;
+			return m_parent->GetGlobalRotation() * GetLocalRotation();
 		}
 		else
 		{
-			return m_localRotationQuat;
+			return GetLocalRotation();
 		}
 	}
 
@@ -448,7 +445,7 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		glm::vec3 localRotationEulerRadians = glm::eulerAngles(m_localRotationQuat);
+		glm::vec3 localRotationEulerRadians = glm::eulerAngles(GetLocalRotation());
 		ClampEulerRotationsToPlusMinus2Pi(localRotationEulerRadians);
 
 		return localRotationEulerRadians;
@@ -468,6 +465,7 @@ namespace fr
 	glm::vec3 Transform::GetLocalScale() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+		SEAssert(!m_isDirty, "Transformation should not be dirty");
 		return m_localScale;
 	}
 
@@ -475,7 +473,7 @@ namespace fr
 	glm::mat4 Transform::GetLocalScaleMat() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-		return glm::scale(glm::mat4(1.f), m_localScale);
+		return glm::scale(glm::mat4(1.f), GetLocalScale());
 	}
 
 
@@ -503,11 +501,11 @@ namespace fr
 
 		if (m_parent)
 		{
-			return m_parent->GetGlobalScale() * m_localScale;
+			return m_parent->GetGlobalScale() * GetLocalScale();
 		}
 		else
 		{
-			return m_localScale;
+			return GetLocalScale();
 		}
 	}
 

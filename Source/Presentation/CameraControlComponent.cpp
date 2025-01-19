@@ -70,6 +70,10 @@ namespace fr
 			fr::Transform& currentCamTransform = currentCamTransformCmpt.GetTransform();
 			currentCamTransform.ReParent(camControlCmpt.m_prevCameraTransformParent);
 
+			currentCamTransform.SetLocalPosition(camControlCmpt.m_prevLocalTranslation);
+			currentCamTransform.SetLocalRotation(camControlCmpt.m_prevLocalRotation);
+			currentCamTransform.SetLocalScale(camControlCmpt.m_prevLocalScale);
+
 			fr::Relationship& currentCamRelationship = em.GetComponent<fr::Relationship>(currentCamCmptEntity);
 			currentCamRelationship.SetParent(em, camControlCmpt.m_prevCameraParentEntity);
 
@@ -89,6 +93,12 @@ namespace fr
 
 			fr::Transform& newCamTransform = em.GetComponent<fr::TransformComponent>(newCamCmptEntity).GetTransform();
 			camControlCmpt.m_prevCameraTransformParent = newCamTransform.GetParent();
+
+			// Store the previous local Translation so we can restore it later. We need to Recompute() to ensure the Transform is not dirty
+			newCamTransform.Recompute();
+			camControlCmpt.m_prevLocalTranslation = newCamTransform.GetLocalPosition();
+			camControlCmpt.m_prevLocalRotation = newCamTransform.GetLocalRotation();
+			camControlCmpt.m_prevLocalScale = newCamTransform.GetLocalScale();
 
 			// The controller and Camera must be located at the same point. To avoid stomping imported Camera locations,
 			// we move the camera controller to the camera. Then, we re-parent the Camera's Transform, to maintain its
@@ -247,6 +257,9 @@ namespace fr
 		: m_movementSpeed(0.006f)
 		, m_prevCameraParentEntity(entt::null)
 		, m_prevCameraTransformParent(nullptr)
+		, m_prevLocalTranslation(0.f, 0.f, 0.f)
+		, m_prevLocalRotation(1.f, 0.f, 0.f, 0.f)
+		, m_prevLocalScale(1.f, 1.f, 1.f)
 	{
 		m_sprintSpeedModifier = core::Config::Get()->GetValue<float>(core::configkeys::k_sprintSpeedModifierKey);
 

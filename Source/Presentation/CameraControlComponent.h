@@ -47,6 +47,10 @@ namespace fr
 
 		entt::entity m_prevCameraParentEntity;
 		fr::Transform* m_prevCameraTransformParent;
+
+		glm::vec3 m_prevLocalTranslation;
+		glm::quat m_prevLocalRotation;
+		glm::vec3 m_prevLocalScale;
 	};
 }
 
