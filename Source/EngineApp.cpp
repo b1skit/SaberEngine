@@ -181,28 +181,26 @@ namespace app
 
 				// Pump our events/input:
 				SEBeginCPUEvent("core::EventManager::Update");
-				eventManager->Update(m_frameNum, lastOuterFrameTime);
+				eventManager->Update(m_frameNum, k_fixedTimeStep);
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("en::InputManager::Update");
-				inputManager->Update(m_frameNum, lastOuterFrameTime);
+				inputManager->Update(m_frameNum, k_fixedTimeStep);
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("en::EntityManager::Update");
 				entityManager->Update(m_frameNum, k_fixedTimeStep);
 				SEEndCPUEvent();
 
-				SEBeginCPUEvent("fr::SceneManager::Update");
-				sceneManager->Update(m_frameNum, k_fixedTimeStep); // Note: Must be updated after entity manager (e.g. Reset)
-				SEEndCPUEvent();
-
-				// TODO: AI, physics, etc should also be pumped here
-
 				SEEndCPUEvent();
 			}
 
+			SEBeginCPUEvent("fr::SceneManager::Update");
+			sceneManager->Update(m_frameNum, lastOuterFrameTime); // Note: Must be updated after entity manager (e.g. Reset)
+			SEEndCPUEvent();
+
 			SEBeginCPUEvent("fr::UIManager::Update");
-			uiManager->Update(m_frameNum, k_fixedTimeStep);
+			uiManager->Update(m_frameNum, lastOuterFrameTime);
 			SEEndCPUEvent();
 
 			SEBeginCPUEvent("fr::EntityManager::EnqueueRenderUpdates");
