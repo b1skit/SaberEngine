@@ -77,7 +77,7 @@ namespace fr
 		glm::mat4 GetGlobalMatrix() const; // Transform must not be dirty
 
 		glm::vec3 GetGlobalForward() const; // World-space forward (Z+) vector
-		glm::vec3 GetGlobalForward(); // World-space forward (Z+) vector
+		glm::vec3 GetGlobalForward();
 		glm::vec3 GetGlobalRight() const; // World-space right (X+) vector
 		glm::vec3 GetGlobalRight();
 		glm::vec3 GetGlobalUp() const; // World-space up (Y+) vector
