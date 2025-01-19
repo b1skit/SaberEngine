@@ -338,12 +338,9 @@ namespace gr
 			renderData.GetIDsWithDeletedData<gr::MeshPrimitive::RenderData>();
 		if (deletedMeshPrimitiveRenderDataIDs)
 		{
-			auto deletedMeshPrimItr = renderData.IDBegin(*deletedMeshPrimitiveRenderDataIDs);
-			auto const& deletedMeshPrimItrEnd = renderData.IDEnd(*deletedMeshPrimitiveRenderDataIDs);
-			while (deletedMeshPrimItr != deletedMeshPrimItrEnd)
+			for (gr::RenderDataID deletedID : *deletedMeshPrimitiveRenderDataIDs)
 			{
-				RemoveAnimationBuffers(deletedMeshPrimItr.GetRenderDataID());
-				++deletedMeshPrimItr;
+				RemoveAnimationBuffers(deletedID);
 			}
 		}
 

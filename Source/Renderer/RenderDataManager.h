@@ -1146,6 +1146,9 @@ namespace gr
 		if (m_idsIterator != m_idsEndIterator)
 		{
 			m_currentObjectMetadata = m_IDToRenderObjectMetadata->find(*m_idsIterator);
+
+			SEAssert(m_currentObjectMetadata != m_IDToRenderObjectMetadata->end(),
+				"Failed to find a metadata entry for the current ID."); // We can't iterate over deleted IDs
 		}
 		else
 		{

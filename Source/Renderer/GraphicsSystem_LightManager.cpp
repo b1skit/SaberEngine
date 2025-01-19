@@ -208,16 +208,11 @@ namespace gr
 		DeleteLightMetadata(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_pointLightMetadata);
 		DeleteLightMetadata(renderData.GetIDsWithDeletedData<gr::Light::RenderDataSpot>(), m_spotLightMetadata);
 
-		std::vector<gr::RenderDataID> const* deletedShadows =
-			renderData.GetIDsWithDeletedData<gr::ShadowMap::RenderData>();
+		std::vector<gr::RenderDataID> const* deletedShadows = renderData.GetIDsWithDeletedData<gr::ShadowMap::RenderData>();
 		if (deletedShadows && !deletedShadows->empty())
 		{
-			auto shadowItr = renderData.IDBegin(*deletedShadows);
-			auto const& shadowItrEnd = renderData.IDEnd(*deletedShadows);
-			while (shadowItr != shadowItrEnd)
+			for (gr::RenderDataID deletedID : *deletedShadows)
 			{
-				const gr::RenderDataID deletedID = shadowItr.GetRenderDataID();
-
 				bool foundShadow = false;
 
 				auto DeleteShadowEntry = [&deletedID, &foundShadow](ShadowMetadata& shadowMetadata)
@@ -268,8 +263,6 @@ namespace gr
 					DeleteShadowEntry(m_directionalShadowMetadata);
 				}
 				SEAssert(foundShadow, "Trying to delete a light RenderDataID that has not been registered");
-
-				++shadowItr;
 			}
 		}
 	}

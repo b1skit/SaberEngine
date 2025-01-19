@@ -76,8 +76,7 @@ namespace
 		std::vector<gr::RenderDataID>& spotLightIDsOut,
 		bool cullingEnabled)
 	{
-		pointLightIDsOut.clear();
-		spotLightIDsOut.clear();
+		SEAssert(pointLightIDsOut.empty() && spotLightIDsOut.empty(), "ID vectors are not empty");
 
 		pointLightIDsOut.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataPoint>());
 		spotLightIDsOut.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataSpot>());
@@ -211,70 +210,62 @@ namespace gr
 	void CullingGraphicsSystem::PreRender()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
-
-		// Add any new bounds to our tracking tables:
+		
 		if (renderData.HasIDsWithNewData<gr::Bounds::RenderData>())
 		{
+			// Add any new bounds to our tracking tables:
 			std::vector<gr::RenderDataID> const* newBoundsIDS = renderData.GetIDsWithNewData<gr::Bounds::RenderData>();
-			if (newBoundsIDS)
+			auto newBoundsItr = renderData.IDBegin(*newBoundsIDS);
+			auto const& newBoundsItrEnd = renderData.IDEnd(*newBoundsIDS);
+			while (newBoundsItr != newBoundsItrEnd)
 			{
-				auto newBoundsItr = renderData.IDBegin(*newBoundsIDS);
-				auto const& newBoundsItrEnd = renderData.IDEnd(*newBoundsIDS);
-				while (newBoundsItr != newBoundsItrEnd)
+				gr::Bounds::RenderData const& boundsData = newBoundsItr.Get<gr::Bounds::RenderData>();
+
+				const gr::RenderDataID newBoundsID = newBoundsItr.GetRenderDataID();
+
+				const gr::RenderDataID encapsulatingBounds = boundsData.m_encapsulatingBounds;
+
+				// If we've never seen the encapsulating bounds before, add a new (empty) vector of IDs
+				if (encapsulatingBounds != k_invalidRenderDataID &&
+					!m_meshesToMeshPrimitiveBounds.contains(encapsulatingBounds))
 				{
-					gr::Bounds::RenderData const& boundsData = newBoundsItr.Get<gr::Bounds::RenderData>();
-
-					const gr::RenderDataID newBoundsID = newBoundsItr.GetRenderDataID();
-
-					const gr::RenderDataID encapsulatingBounds = boundsData.m_encapsulatingBounds;
-
-					// If we've never seen the encapsulating bounds before, add a new (empty) vector of IDs
-					if (encapsulatingBounds != k_invalidRenderDataID &&
-						!m_meshesToMeshPrimitiveBounds.contains(encapsulatingBounds))
-					{
-						m_meshesToMeshPrimitiveBounds.emplace(encapsulatingBounds, std::vector<gr::RenderDataID>());
-					}
-					else if (gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, renderData.GetFeatureBits(newBoundsID)) &&
-						!m_meshesToMeshPrimitiveBounds.contains(newBoundsID))
-					{
-						SEAssert(encapsulatingBounds == gr::k_invalidRenderDataID,
-							"Mesh Bounds should not have an encapsulating bounds");
-
-						m_meshesToMeshPrimitiveBounds.emplace(newBoundsID, std::vector<gr::RenderDataID>());
-					}
-
-					if (gr::HasFeature(
-						gr::RenderObjectFeature::IsMeshPrimitiveBounds, renderData.GetFeatureBits(newBoundsID)))
-					{
-						SEAssert(encapsulatingBounds != gr::k_invalidRenderDataID,
-							"MeshPrimitive Bounds must have an encapsulating bounds");
-						SEAssert(m_meshesToMeshPrimitiveBounds.contains(encapsulatingBounds),
-							"Encapsulating bounds should have already been recorded");
-
-						// Store the MeshPrimitive's ID under its encapsulating Mesh:
-						m_meshesToMeshPrimitiveBounds.at(encapsulatingBounds).emplace_back(newBoundsID);
-
-						// Map the MeshPrimitive back to its encapsulating Mesh:
-						m_meshPrimitivesToEncapsulatingMesh.emplace(newBoundsID, boundsData.m_encapsulatingBounds);
-					}
-
-					++newBoundsItr;
+					m_meshesToMeshPrimitiveBounds.emplace(encapsulatingBounds, std::vector<gr::RenderDataID>());
 				}
-			}
-		}
-		
-		// Remove any deleted bounds from our tracking tables:
-		std::vector<gr::RenderDataID> const* deletedBoundsIDs = renderData.GetIDsWithDeletedData<gr::Bounds::RenderData>();
-		if (deletedBoundsIDs)
-		{			
-			auto deletedBoundsItr = renderData.IDBegin(*deletedBoundsIDs);
-			auto const& deletedBoundsItrEnd = renderData.IDEnd(*deletedBoundsIDs);
-			while (deletedBoundsItr != deletedBoundsItrEnd)
-			{
-				// Note: We don't have access to the filterbits of the deleted IDs anymore; It's possible the bounds
-				// were not associated with a Mesh/MeshPrimitive (e.g. scene bounds, light mesh bounds)
-				gr::RenderDataID deletedBoundsID = deletedBoundsItr.GetRenderDataID();
+				else if (gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, renderData.GetFeatureBits(newBoundsID)) &&
+					!m_meshesToMeshPrimitiveBounds.contains(newBoundsID))
+				{
+					SEAssert(encapsulatingBounds == gr::k_invalidRenderDataID,
+						"Mesh Bounds should not have an encapsulating bounds");
 
+					m_meshesToMeshPrimitiveBounds.emplace(newBoundsID, std::vector<gr::RenderDataID>());
+				}
+
+				if (gr::HasFeature(
+					gr::RenderObjectFeature::IsMeshPrimitiveBounds, renderData.GetFeatureBits(newBoundsID)))
+				{
+					SEAssert(encapsulatingBounds != gr::k_invalidRenderDataID,
+						"MeshPrimitive Bounds must have an encapsulating bounds");
+					SEAssert(m_meshesToMeshPrimitiveBounds.contains(encapsulatingBounds),
+						"Encapsulating bounds should have already been recorded");
+
+					// Store the MeshPrimitive's ID under its encapsulating Mesh:
+					m_meshesToMeshPrimitiveBounds.at(encapsulatingBounds).emplace_back(newBoundsID);
+
+					// Map the MeshPrimitive back to its encapsulating Mesh:
+					m_meshPrimitivesToEncapsulatingMesh.emplace(newBoundsID, boundsData.m_encapsulatingBounds);
+				}
+
+				++newBoundsItr;
+			}
+		}		
+
+		// Remove any deleted bounds from our tracking tables:
+		if (renderData.HasIDsWithDeletedData<gr::Bounds::RenderData>())
+		{
+			std::vector<gr::RenderDataID> const* deletedBoundsIDs =
+				renderData.GetIDsWithDeletedData<gr::Bounds::RenderData>();
+			for (gr::RenderDataID deletedBoundsID : *deletedBoundsIDs)
+			{
 				// Handle deleted Mesh bounds:
 				if (m_meshesToMeshPrimitiveBounds.contains(deletedBoundsID))
 				{
@@ -289,13 +280,11 @@ namespace gr
 					gr::RenderDataID encapsulatingBoundsID = m_meshPrimitivesToEncapsulatingMesh.at(deletedBoundsID);
 
 					auto primitiveIDItr = std::find(m_meshesToMeshPrimitiveBounds[encapsulatingBoundsID].begin(),
-						m_meshesToMeshPrimitiveBounds[encapsulatingBoundsID].end(), 
+						m_meshesToMeshPrimitiveBounds[encapsulatingBoundsID].end(),
 						deletedBoundsID);
 
 					m_meshesToMeshPrimitiveBounds[encapsulatingBoundsID].erase(primitiveIDItr);
 				}
-
-				++deletedBoundsItr;
 			}
 		}
 
@@ -323,6 +312,10 @@ namespace gr
 
 		// Cull for every camera, every frame: Even if the camera hasn't moved, something in its view might have
 		m_viewToVisibleIDs.clear();
+
+		// Clear our light culling results for the new frame: Prevents them getting stale if the scene is reset
+		m_visiblePointLightIDs.clear();
+		m_visibleSpotLightIDs.clear();
 		
 		if (renderData.HasObjectData<gr::Camera::RenderData>())
 		{
@@ -331,7 +324,7 @@ namespace gr
 
 			const size_t numMeshPrimitives = m_meshPrimitivesToEncapsulatingMesh.size();
 
-			// We'll also cull lights against the currently active camera
+			// We'll also cull lights against the currently active camera (if there is one)
 			const gr::RenderDataID activeCamRenderDataID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
 			// Cull every registered camera:
