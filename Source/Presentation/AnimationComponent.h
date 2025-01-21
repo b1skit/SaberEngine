@@ -298,7 +298,7 @@ namespace fr
 
 	inline float AnimationController::GetActiveLongestChannelTimeSec() const
 	{
-		return m_longestAnimChannelTimesSec[m_activeAnimationIdx];
+		return m_longestAnimChannelTimesSec.empty() ? 0 : m_longestAnimChannelTimesSec[m_activeAnimationIdx];
 	}
 
 
@@ -326,7 +326,7 @@ namespace fr
 
 	inline size_t AnimationController::GetNumKeyframeTimes() const
 	{
-		return m_animChannelKeyframeTimesSec[m_activeAnimationIdx].size();
+		return m_animChannelKeyframeTimesSec.empty() ? 0 : m_animChannelKeyframeTimesSec[m_activeAnimationIdx].size();
 	}
 
 
