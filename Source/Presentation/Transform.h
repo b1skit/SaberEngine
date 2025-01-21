@@ -88,7 +88,7 @@ namespace fr
 		glm::mat4 GetLocalMatrix() const;
 
 		// Utility functions:
-		void Recompute(); // Explicitely recompute the local matrix
+		bool Recompute(bool force = false); // Recompute the local matrix. Returns true if recomputation occurred
 
 		void ClearHasChangedFlag();
 		bool HasChanged() const;

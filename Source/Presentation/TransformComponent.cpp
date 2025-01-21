@@ -108,12 +108,14 @@ namespace fr
 				std::stack<fr::Transform*> transforms;
 				transforms.push(rootNode);
 
+				bool parentChanged = false;
+
 				while (!transforms.empty())
 				{
 					fr::Transform* topTransform = transforms.top();
 					transforms.pop();
 
-					topTransform->Recompute();
+					parentChanged |= topTransform->Recompute(parentChanged);
 
 					for (fr::Transform* child : topTransform->GetChildren())
 					{

@@ -590,14 +590,13 @@ namespace fr
 	}
 
 	
-	void Transform::Recompute()
+	bool Transform::Recompute(bool force /*= false*/)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		if (!IsDirty() && 
-			(!m_parent || !m_parent->HasChanged()))
+		if (!IsDirty() && !force)
 		{
-			return;
+			return false;
 		}
 		m_isDirty = false;
 		m_hasChanged = true;
@@ -612,6 +611,8 @@ namespace fr
 		{
 			m_globalMat = m_localMat;
 		}
+
+		return true;
 	}
 
 
