@@ -387,6 +387,13 @@ namespace
 	}
 
 
+	inline std::string GenerateGLTFAnimationControllerName(
+		std::shared_ptr<FileMetadata> const& fileMetadata)
+	{
+		return std::format("AnimationController: {}", fileMetadata->m_filePath);
+	}
+
+
 	util::ByteVector UnpackGLTFColorAttributeAsVec4(cgltf_attribute const& colorAttribute)
 	{
 		SEAssert(colorAttribute.type == cgltf_attribute_type::cgltf_attribute_type_color,
@@ -1992,8 +1999,7 @@ namespace
 	{
 		// Move our pre-populated AnimationController into an entity/component so we can obtain its final pointer:
 		fr::AnimationController* animationController = fr::AnimationController::CreateAnimationController(
-			*em, fileMetadata->m_filePath.c_str(), std::move(fileMetadata->m_animationController));
-
+			*em, GenerateGLTFAnimationControllerName(fileMetadata).c_str(), std::move(fileMetadata->m_animationController));
 
 		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
 		{
