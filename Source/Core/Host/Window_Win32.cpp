@@ -9,6 +9,8 @@
 #include "../Util/CastUtils.h"
 
 #include "shellapi.h"
+#include "shellscalingapi.h"
+#include "winuser.h"
 
 
 namespace win32
@@ -290,8 +292,37 @@ namespace win32
 			win32::Window::s_platformState.m_hInstance, // Handle to the instance of the module associated with the window
 			&window // lpParam: A pointer that will be passed to the window through the CREATESTRUCT
 		);
-
 		SEAssert(platformParams->m_hWindow, "Failed to create hWnd");
+		
+		// Get window scaling:
+		{
+			::SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+
+			const HMONITOR monitor = MonitorFromWindow(platformParams->m_hWindow, MONITOR_DEFAULTTONEAREST);
+
+			uint32_t dpiX = 0;
+			uint32_t dpiY = 0;
+			const HRESULT hr = ::GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
+			SEAssert(SUCCEEDED(hr), "Failed to get DPI for primary monitor");
+
+			// The DPI of a 100% scaled monitor is 96; Thus DPI/96 = scale factor
+			constexpr float k_dpi100PercentScale = 96.f;
+			platformParams->m_windowScale = dpiY / k_dpi100PercentScale;
+
+			const std::string scalingResults = std::format(
+				"Display device reported DPI X/Y = ({}, {}). Assuming scaling factor = {}%%",
+				dpiX,
+				dpiY,
+				platformParams->m_windowScale * 100.f);
+			if (dpiX == dpiY)
+			{
+				LOG(scalingResults.c_str());
+			}
+			else
+			{
+				LOG_WARNING(scalingResults.c_str());
+			}
+		}
 
 		::ShowWindow(platformParams->m_hWindow, SW_SHOW);
 		::UpdateWindow(platformParams->m_hWindow);

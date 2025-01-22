@@ -34,6 +34,8 @@ namespace win32
 			std::unique_ptr<SEWindowDropTarget> m_dropTarget;
 
 			bool m_OLEIInitialized = false;
+
+			float m_windowScale = 0.f; // e.g. Windows Settings -> Display -> Scale & layout
 		};
 
 

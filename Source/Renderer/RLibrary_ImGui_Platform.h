@@ -38,7 +38,7 @@ namespace platform
 
 	protected:
 		static void CreateInternal(RLibraryImGui&); // Common/platform-agnostic creation & ImGui setup steps
-
+		static void ConfigureScaling(RLibraryImGui&);
 
 	public:
 		virtual void Execute(re::RenderStage*) = 0;

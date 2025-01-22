@@ -32,9 +32,12 @@ namespace opengl
 			window->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		::ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
+		::ImGui_ImplWin32_EnableDpiAwareness();
 
 		constexpr char const* imguiGLSLVersionString = "#version 130";
 		::ImGui_ImplOpenGL3_Init(imguiGLSLVersionString);
+
+		platform::RLibraryImGui::ConfigureScaling(*dynamic_cast<platform::RLibraryImGui*>(newLibrary.get()));
 
 		return std::move(newLibrary);
 	}

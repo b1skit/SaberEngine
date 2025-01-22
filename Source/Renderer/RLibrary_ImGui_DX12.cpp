@@ -211,7 +211,8 @@ namespace dx12
 			dx12::SwapChain::GetBackBufferTargetSet(swapChain)->GetColorTarget(0).GetTexture()
 				->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
+		::ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
+		::ImGui_ImplWin32_EnableDpiAwareness();
 
 		// Initialize our ImGui descriptor heap (lives in our PlatformParams):
 		dx12::RLibraryImGui::PlatformParams* platParams = 
@@ -239,6 +240,8 @@ namespace dx12
 		initInfo.UserData = dx12ImGuiLibrary; 
 
 		ImGui_ImplDX12_Init(&initInfo);
+
+		platform::RLibraryImGui::ConfigureScaling(*dynamic_cast<platform::RLibraryImGui*>(newLibrary.get()));
 
 		return std::move(newLibrary);
 	}

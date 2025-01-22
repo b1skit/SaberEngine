@@ -1,9 +1,13 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "Core/Definitions/ConfigKeys.h"
+#include "Context.h"
 #include "RenderManager.h"
 #include "RLibrary_ImGui_DX12.h"
 #include "RLibrary_ImGui_OpenGL.h"
 #include "RLibrary_ImGui_Platform.h"
+
+#include "Core/Definitions/ConfigKeys.h"
+
+#include "Core/Host/Window_Win32.h"
 
 
 namespace platform
@@ -49,6 +53,23 @@ namespace platform
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
+	}
+
+
+	void RLibraryImGui::ConfigureScaling(RLibraryImGui& imguiLibrary)
+	{
+		host::Window* window = re::Context::Get()->GetWindow();
+		SEAssert(window, "Window pointer cannot be null");
+
+		win32::Window::PlatformParams* windowPlatParams =
+			window->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+
+		ImGuiIO& io = ImGui::GetIO();
+
+		const float fontPixelSize = 15 * windowPlatParams->m_windowScale;
+		io.Fonts->AddFontFromFileTTF("Assets\\Fonts\\source-code-pro.regular.ttf", fontPixelSize);
+
+		ImGui::GetStyle().ScaleAllSizes(windowPlatParams->m_windowScale);
 	}
 
 
