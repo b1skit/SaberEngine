@@ -406,7 +406,7 @@ namespace gr
 		{
 			foundTypeNames = true;
 
-			constexpr size_t k_numHardcodedNames = 8;
+			constexpr size_t k_numHardcodedNames = 11;
 			names.resize(std::max(m_dataVectors.size(), k_numHardcodedNames), "Unknown");
 
 			PopulateTypesImGuiHelper<gr::Bounds::RenderData>(names, "Bounds::RenderData");
