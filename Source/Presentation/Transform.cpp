@@ -94,16 +94,6 @@ namespace fr
 	}
 
 
-	glm::mat4 Transform::GetGlobalMatrix()
-	{
-		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-
-		Recompute();
-
-		return m_globalMat;
-	}
-
-
 	glm::mat4 Transform::GetGlobalMatrix() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
@@ -111,6 +101,14 @@ namespace fr
 		SEAssert(!m_isDirty, "Transform is dirty");
 
 		return m_globalMat;
+	}
+
+
+
+	glm::mat4 Transform::GetGlobalMatrix()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetGlobalMatrix();
 	}
 
 
@@ -131,6 +129,13 @@ namespace fr
 
 		ClampEulerRotationsToPlusMinus2Pi(eulerRadians);
 		return eulerRadians;
+	}
+
+
+	glm::vec3 Transform::GetGlobalEulerXYZRotationRadians()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetGlobalEulerXYZRotationRadians();
 	}
 
 
@@ -185,20 +190,18 @@ namespace fr
 	}
 
 
-	glm::mat4 Transform::GetLocalMatrix()
+	glm::mat4 Transform::GetLocalMatrix() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-
-		Recompute();
-
+		SEAssert(!m_isDirty, "Transform is dirty");
 		return m_localMat;
 	}
 
 
-	glm::mat4 Transform::GetLocalMatrix() const
+	glm::mat4 Transform::GetLocalMatrix()
 	{
-		SEAssert(!m_isDirty, "Transform is dirty");
-		return m_localMat;
+		Recompute();
+		return static_cast<Transform const*>(this)->GetLocalMatrix();
 	}
 
 
@@ -288,11 +291,25 @@ namespace fr
 	}
 
 
+	glm::vec3 Transform::GetLocalPosition()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetLocalPosition();
+	}
+
+
 	glm::mat4 Transform::GetLocalTranslationMat() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-
+		SEAssert(!m_isDirty, "Transformation should not be dirty");
 		return glm::translate(glm::mat4(1.f), GetLocalPosition());
+	}
+
+
+	glm::mat4 Transform::GetLocalTranslationMat()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetLocalTranslationMat();
 	}
 
 
@@ -314,9 +331,11 @@ namespace fr
 	}
 
 
-	glm::vec3 Transform::GetGlobalPosition()
+	glm::vec3 Transform::GetGlobalPosition() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+
+		SEAssert(!m_isDirty, "Transform is dirty");
 
 		glm::mat4 const& globalMatrix = GetGlobalMatrix();
 
@@ -324,15 +343,10 @@ namespace fr
 	}
 
 
-	glm::vec3 Transform::GetGlobalPosition() const
+	glm::vec3 Transform::GetGlobalPosition()
 	{
-		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-
-		SEAssert(!m_isDirty, "Camera is dirty");
-
-		glm::mat4 const& globalMatrix = GetGlobalMatrix();
-
-		return globalMatrix[3].xyz;
+		Recompute();
+		return static_cast<Transform const*>(this)->GetGlobalPosition();
 	}
 
 
@@ -412,10 +426,24 @@ namespace fr
 	}
 
 
+	glm::quat Transform::GetLocalRotation()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetLocalRotation();
+	}
+
+
 	glm::mat4 Transform::GetLocalRotationMat() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 		return glm::mat4_cast(GetLocalRotation());
+	}
+
+
+	glm::mat4 Transform::GetLocalRotationMat()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetLocalRotationMat();
 	}
 
 
@@ -453,12 +481,26 @@ namespace fr
 	}
 
 
+	glm::quat Transform::GetGlobalRotation()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetGlobalRotation();
+	}
+
+
 	glm::mat4 Transform::GetGlobalRotationMat() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
 		glm::quat const& globalRotationQuat = GetGlobalRotation();
 		return glm::mat4_cast(globalRotationQuat);
+	}
+
+
+	glm::mat4 Transform::GetGlobalRotationMat()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetGlobalRotationMat();
 	}
 
 
@@ -470,6 +512,13 @@ namespace fr
 		ClampEulerRotationsToPlusMinus2Pi(localRotationEulerRadians);
 
 		return localRotationEulerRadians;
+	}
+
+
+	glm::vec3 Transform::GetLocalEulerXYZRotationRadians()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetLocalEulerXYZRotationRadians();
 	}
 
 
@@ -491,10 +540,24 @@ namespace fr
 	}
 
 
+	glm::vec3 Transform::GetLocalScale()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetLocalScale();
+	}
+
+
 	glm::mat4 Transform::GetLocalScaleMat() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 		return glm::scale(glm::mat4(1.f), GetLocalScale());
+	}
+
+
+	glm::mat4 Transform::GetLocalScaleMat()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetLocalScaleMat();
 	}
 
 
@@ -531,6 +594,13 @@ namespace fr
 	}
 
 
+	glm::vec3 Transform::GetGlobalScale()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetGlobalScale();
+	}
+
+
 	glm::mat4 Transform::GetGlobalScaleMat() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
@@ -543,6 +613,13 @@ namespace fr
 		{
 			return GetLocalScaleMat();
 		}
+	}
+
+
+	glm::mat4 Transform::GetGlobalScaleMat()
+	{
+		Recompute();
+		return static_cast<Transform const*>(this)->GetGlobalScaleMat();
 	}
 
 
@@ -590,18 +667,19 @@ namespace fr
 	}
 
 	
-	bool Transform::Recompute(bool force /*= false*/)
+	bool Transform::Recompute(bool returnHasChanged /*= false*/)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		if (!IsDirty() && !force)
+		if (!IsDirty() && !returnHasChanged)
 		{
-			return false;
+			return m_hasChanged; // We're not currently dirty, but signal we might have been at some point.
 		}
 		m_isDirty = false;
 		m_hasChanged = true;
 
-		m_localMat = GetLocalTranslationMat() * GetLocalRotationMat() * GetLocalScaleMat();
+		Transform const* constThis = static_cast<Transform const*>(this);
+		m_localMat = constThis->GetLocalTranslationMat() * constThis->GetLocalRotationMat() * constThis->GetLocalScaleMat();
 
 		if (m_parent)
 		{

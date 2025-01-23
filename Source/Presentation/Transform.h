@@ -42,10 +42,12 @@ namespace fr
 		void TranslateLocal(glm::vec3 const& amount); // Apply additional translation to the current position, in local space
 		void SetLocalPosition(glm::vec3 const& position); // Set the total translation of this Transform, in local space
 		glm::vec3 GetLocalPosition() const;
+		glm::vec3 GetLocalPosition();
 		glm::mat4 GetLocalTranslationMat() const;
+		glm::mat4 GetLocalTranslationMat();
 		void SetGlobalPosition(glm::vec3 position);
-		glm::vec3 GetGlobalPosition(); // May cause recomputation
 		glm::vec3 GetGlobalPosition() const; // Transform must not be dirty
+		glm::vec3 GetGlobalPosition();
 		glm::mat4 GetGlobalTranslationMat() const;
 
 		// Rotation:
@@ -55,26 +57,36 @@ namespace fr
 		void SetLocalRotation(glm::vec3 const& eulerXYZ);
 		void SetLocalRotation(glm::quat const& newRotation);
 		glm::quat GetLocalRotation() const;
+		glm::quat GetLocalRotation();
 		glm::mat4 GetLocalRotationMat() const;
+		glm::mat4 GetLocalRotationMat();
 
 		void SetGlobalRotation(glm::quat const&);
 		glm::quat GetGlobalRotation() const;
+		glm::quat GetGlobalRotation();
 		glm::mat4 GetGlobalRotationMat() const;
+		glm::mat4 GetGlobalRotationMat();
 		glm::vec3 GetLocalEulerXYZRotationRadians() const;
+		glm::vec3 GetLocalEulerXYZRotationRadians();
 		glm::vec3 GetGlobalEulerXYZRotationRadians() const;
+		glm::vec3 GetGlobalEulerXYZRotationRadians();
 		
 		// Scale:
 		void SetLocalScale(glm::vec3 const& scale);
 		glm::vec3 GetLocalScale() const;
+		glm::vec3 GetLocalScale();
 		glm::mat4 GetLocalScaleMat() const;
+		glm::mat4 GetLocalScaleMat();
 
 		void SetGlobalScale(glm::vec3 const& scale);
 		glm::vec3 GetGlobalScale() const;
+		glm::vec3 GetGlobalScale();
 		glm::mat4 GetGlobalScaleMat() const;
+		glm::mat4 GetGlobalScaleMat();
 		
 		// World-space transformations:
-		glm::mat4 GetGlobalMatrix(); // May cause recomputation
 		glm::mat4 GetGlobalMatrix() const; // Transform must not be dirty
+		glm::mat4 GetGlobalMatrix();
 
 		glm::vec3 GetGlobalForward() const; // World-space forward (Z+) vector
 		glm::vec3 GetGlobalForward();
@@ -84,11 +96,11 @@ namespace fr
 		glm::vec3 GetGlobalUp();
 
 		// Local:
-		glm::mat4 GetLocalMatrix();
 		glm::mat4 GetLocalMatrix() const;
+		glm::mat4 GetLocalMatrix();
 
 		// Utility functions:
-		bool Recompute(bool force = false); // Recompute the local matrix. Returns true if recomputation occurred
+		bool Recompute(bool returnHasChanged = false); // Recompute the local matrix. Returns true if recomputation occurred
 
 		void ClearHasChangedFlag();
 		bool HasChanged() const;
@@ -126,7 +138,6 @@ namespace fr
 		glm::quat m_localRotationQuat;	// Rotation as a quaternion
 		glm::vec3 m_localScale;
 		
-		// Concatenated local TRS matrix, *before* any parent transforms are applied
 		glm::mat4 m_localMat; // == T*R*S
 		glm::mat4 m_globalMat;
 
