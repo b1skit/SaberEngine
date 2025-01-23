@@ -390,7 +390,9 @@ namespace fr
 
 			// Shadow camera:
 			fr::CameraComponent& shadowCamCmpt = em.GetComponent<fr::CameraComponent>(shadowMapEntity);
+			ImGui::PushID(nameCmpt.GetUniqueID());
 			fr::CameraComponent::ShowImGuiWindow(em, shadowMapEntity);
+			ImGui::PopID();
 
 			ImGui::Unindent();
 		}
