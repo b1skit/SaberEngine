@@ -355,14 +355,18 @@ namespace
 	inline std::string GenerateGLTFNodeName(
 		std::shared_ptr<FileMetadata> const& fileMetadata, cgltf_node const* gltfNode, size_t nodeIdx)
 	{
-		return gltfNode->name ? gltfNode->name : std::format("{}_Node_[{}]", fileMetadata->m_filePath, nodeIdx);
+		return gltfNode->name ? 
+			gltfNode->name : 
+			std::format("{}_Node_[{}]", util::ExtractFileNameAndExtensionFromFilePath(fileMetadata->m_filePath), nodeIdx);
 	}
 
 
 	inline std::string GenerateGLTFMeshName(
 		std::shared_ptr<FileMetadata> const& fileMetadata, cgltf_mesh const* curMesh, size_t meshIdx)
 	{
-		return curMesh->name ? curMesh->name : std::format("{}_Mesh[{}]", fileMetadata->m_filePath, meshIdx);
+		return curMesh->name ? 
+			curMesh->name : 
+			std::format("{}_Mesh[{}]", util::ExtractFileNameAndExtensionFromFilePath(fileMetadata->m_filePath), meshIdx);
 	}
 
 
@@ -376,21 +380,25 @@ namespace
 	inline std::string GenerateGLTFCameraName(
 		std::shared_ptr<FileMetadata> const& fileMetadata, cgltf_camera const* camNode, size_t nodeIdx)
 	{
-		return camNode->name ? camNode->name : std::format("{}_Camera_[{}]", fileMetadata->m_filePath, nodeIdx);
+		return camNode->name ? 
+			camNode->name : 
+			std::format("{}_Camera_[{}]", util::ExtractFileNameAndExtensionFromFilePath(fileMetadata->m_filePath), nodeIdx);
 	}
 
 
 	inline std::string GenerateGLTFLightName(
 		std::shared_ptr<FileMetadata> const& fileMetadata, cgltf_light const* lightNode, size_t nodeIdx)
 	{
-		return lightNode->name ? lightNode->name : std::format("{}_Light_[{}]", fileMetadata->m_filePath, nodeIdx);
+		return lightNode->name ? 
+			lightNode->name :
+			std::format("{}_Light_[{}]", util::ExtractFileNameAndExtensionFromFilePath(fileMetadata->m_filePath), nodeIdx);
 	}
 
 
 	inline std::string GenerateGLTFAnimationControllerName(
 		std::shared_ptr<FileMetadata> const& fileMetadata)
 	{
-		return std::format("AnimationController: {}", fileMetadata->m_filePath);
+		return std::format("AnimationController: {}", util::ExtractFileNameAndExtensionFromFilePath(fileMetadata->m_filePath));
 	}
 
 
@@ -2296,7 +2304,10 @@ namespace
 				std::vector<std::future<void>> loadFutures;
 				PreLoadGLTFSkinData(m_sceneData, m_sceneMetadata, loadFutures);
 
-				PreLoadGLTFAnimationData(m_sceneData, m_sceneMetadata); // Single-threaded while everything else loads
+				if (m_sceneData->animations_count > 0)
+				{
+					PreLoadGLTFAnimationData(m_sceneData, m_sceneMetadata); // Single-threaded while everything else loads
+				}
 
 				// Wait for the async creation tasks to be done:
 				for (auto const& loadFuture : loadFutures)
@@ -2327,7 +2338,10 @@ namespace
 					AttachGLTFNodeComponents(em, sceneData, fileMetadata);
 
 					// Animation components:
-					AttachGLTFMeshAnimationComponents(em, sceneData, fileMetadata);
+					if (sceneData->animations_count > 0)
+					{
+						AttachGLTFMeshAnimationComponents(em, sceneData, fileMetadata);
+					}
 				});
 
 
