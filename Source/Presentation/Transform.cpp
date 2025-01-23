@@ -31,7 +31,7 @@ namespace fr
 		: m_parent(nullptr)
 		, m_transformID(s_transformIDs.fetch_add(1))
 		
-		, m_localPosition(0.f, 0.f, 0.f)
+		, m_localTranslation(0.f, 0.f, 0.f)
 		, m_localRotationQuat(1.f, 0.f, 0.f, 0.f)
 		, m_localScale(1.f, 1.f, 1.f)
 		
@@ -82,7 +82,7 @@ namespace fr
 			rhsChild->SetParent(this);
 		}
 
-		m_localPosition = rhs.m_localPosition;
+		m_localTranslation = rhs.m_localTranslation;
 		m_localRotationQuat = rhs.m_localRotationQuat;
 		m_localScale = rhs.m_localScale;
 
@@ -255,7 +255,7 @@ namespace fr
 		// Decompose our new matrix & update the individual components for when we call Recompute():
 		glm::vec3 skew;
 		glm::vec4 perspective;
-		glm::decompose(newLocalMatrix, m_localScale, m_localRotationQuat, m_localPosition, skew, perspective);
+		glm::decompose(newLocalMatrix, m_localScale, m_localRotationQuat, m_localTranslation, skew, perspective);
 
 		SetParent(newParent);
 
@@ -267,34 +267,34 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 			
-		m_localPosition += amount;
+		m_localTranslation += amount;
 
 		MarkDirty();
 	}
 
 
-	void Transform::SetLocalPosition(glm::vec3 const& position)
+	void Transform::SetLocalTranslation(glm::vec3 const& position)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		m_localPosition = position;
+		m_localTranslation = position;
 
 		MarkDirty();
 	}
 
 
-	glm::vec3 Transform::GetLocalPosition() const
+	glm::vec3 Transform::GetLocalTranslation() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 		SEAssert(!m_isDirty, "Transformation should not be dirty");
-		return m_localPosition;
+		return m_localTranslation;
 	}
 
 
-	glm::vec3 Transform::GetLocalPosition()
+	glm::vec3 Transform::GetLocalTranslation()
 	{
 		Recompute();
-		return static_cast<Transform const*>(this)->GetLocalPosition();
+		return static_cast<Transform const*>(this)->GetLocalTranslation();
 	}
 
 
@@ -302,7 +302,7 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 		SEAssert(!m_isDirty, "Transformation should not be dirty");
-		return glm::translate(glm::mat4(1.f), GetLocalPosition());
+		return glm::translate(glm::mat4(1.f), GetLocalTranslation());
 	}
 
 
@@ -313,25 +313,25 @@ namespace fr
 	}
 
 
-	void Transform::SetGlobalPosition(glm::vec3 position)
+	void Transform::SetGlobalTranslation(glm::vec3 position)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
 		if (m_parent)
 		{
 			glm::mat4 const& parentGlobalTRS = m_parent->GetGlobalMatrix();
-			SetLocalPosition(glm::inverse(parentGlobalTRS) * glm::vec4(position, 1.f));
+			SetLocalTranslation(glm::inverse(parentGlobalTRS) * glm::vec4(position, 1.f));
 		}
 		else
 		{
-			SetLocalPosition(position);
+			SetLocalTranslation(position);
 		}
 
-		Recompute(); // Note: Already marked dirty when we called SetLocalPosition
+		Recompute(); // Note: Already marked dirty when we called SetLocalTranslation
 	}
 
 
-	glm::vec3 Transform::GetGlobalPosition() const
+	glm::vec3 Transform::GetGlobalTranslation() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
@@ -343,10 +343,10 @@ namespace fr
 	}
 
 
-	glm::vec3 Transform::GetGlobalPosition()
+	glm::vec3 Transform::GetGlobalTranslation()
 	{
 		Recompute();
-		return static_cast<Transform const*>(this)->GetGlobalPosition();
+		return static_cast<Transform const*>(this)->GetGlobalTranslation();
 	}
 
 
@@ -461,7 +461,7 @@ namespace fr
 			SetLocalRotation(rotation);
 		}
 
-		Recompute(); // Note: Already marked dirty when we called SetLocalPosition
+		Recompute(); // Note: Already marked dirty when we called SetLocalTranslation
 	}
 
 
@@ -575,7 +575,7 @@ namespace fr
 			SetLocalScale(scale);
 		}
 
-		Recompute(); // Note: Already marked dirty when we called SetLocalPosition
+		Recompute(); // Note: Already marked dirty when we called SetLocalTranslation
 	}
 
 
@@ -700,7 +700,7 @@ namespace fr
 		{
 			ImGui::Indent();
 
-			ImGui::Text(std::format("Local Position: {}", glm::to_string(m_localPosition)).c_str());
+			ImGui::Text(std::format("Local Position: {}", glm::to_string(m_localTranslation)).c_str());
 			ImGui::Text(std::format("Local Quaternion: {}", glm::to_string(m_localRotationQuat)).c_str());
 			ImGui::Text(std::format("Local Euler XYZ Radians: {}",
 				glm::to_string(GetLocalEulerXYZRotationRadians())).c_str());
@@ -710,7 +710,7 @@ namespace fr
 
 			ImGui::Separator();
 
-			ImGui::Text(std::format("Global Position: {}", glm::to_string(GetGlobalPosition())).c_str());
+			ImGui::Text(std::format("Global Position: {}", glm::to_string(GetGlobalTranslation())).c_str());
 			ImGui::Text(std::format("Global Quaternion: {}", glm::to_string(GetGlobalRotation())).c_str());
 			ImGui::Text(std::format("Global Euler XYZ Radians: {}", glm::to_string(GetGlobalEulerXYZRotationRadians())).c_str());
 			ImGui::Text(std::format("Global Scale: {}", glm::to_string(GetGlobalScale())).c_str());
@@ -772,11 +772,11 @@ namespace fr
 		if (ImGui::CollapsingHeader(std::format("Modify##{}", uniqueID).c_str()))
 		{
 			// Dragable local translation:
-			glm::vec3 localPosition = GetLocalPosition();
+			glm::vec3 localPosition = GetLocalTranslation();
 			bool localTranslationDirty = Display3ComponentTransform("Local Translation", localPosition);
 			if (localTranslationDirty)
 			{
-				SetLocalPosition(localPosition);
+				SetLocalTranslation(localPosition);
 			}
 
 			// Clickable local translation
@@ -829,11 +829,11 @@ namespace fr
 			}
 
 			// Global translation:
-			glm::vec3 globalTranslation = GetGlobalPosition();
+			glm::vec3 globalTranslation = GetGlobalTranslation();
 			bool globalTranslationDirty = Display3ComponentTransform("Global Translation", globalTranslation);
 			if (globalTranslationDirty)
 			{
-				SetGlobalPosition(globalTranslation);
+				SetGlobalTranslation(globalTranslation);
 			}
 		}
 	}

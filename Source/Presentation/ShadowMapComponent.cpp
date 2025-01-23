@@ -59,7 +59,7 @@ namespace
 
 				centerPoint = lightTransform.GetGlobalMatrix() * centerPoint; // Light view -> world space
 
-				lightTransform.SetGlobalPosition(centerPoint.xyz);
+				lightTransform.SetGlobalTranslation(centerPoint.xyz);
 
 				lightSpaceSceneBounds = 
 					sceneWorldBounds->GetTransformedAABBBounds(glm::inverse(lightTransform.GetGlobalMatrix()));

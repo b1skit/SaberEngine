@@ -70,7 +70,7 @@ namespace fr
 			fr::Transform& currentCamTransform = currentCamTransformCmpt.GetTransform();
 			currentCamTransform.ReParent(camControlCmpt.m_prevCameraTransformParent);
 
-			currentCamTransform.SetLocalPosition(camControlCmpt.m_prevLocalTranslation);
+			currentCamTransform.SetLocalTranslation(camControlCmpt.m_prevLocalTranslation);
 			currentCamTransform.SetLocalRotation(camControlCmpt.m_prevLocalRotation);
 			currentCamTransform.SetLocalScale(camControlCmpt.m_prevLocalScale);
 
@@ -96,14 +96,14 @@ namespace fr
 
 			// Store the previous local Translation so we can restore it later. We need to Recompute() to ensure the Transform is not dirty
 			newCamTransform.Recompute();
-			camControlCmpt.m_prevLocalTranslation = newCamTransform.GetLocalPosition();
+			camControlCmpt.m_prevLocalTranslation = newCamTransform.GetLocalTranslation();
 			camControlCmpt.m_prevLocalRotation = newCamTransform.GetLocalRotation();
 			camControlCmpt.m_prevLocalScale = newCamTransform.GetLocalScale();
 
 			// The controller and Camera must be located at the same point. To avoid stomping imported Camera locations,
 			// we move the camera controller to the camera. Then, we re-parent the Camera's Transform, to maintain its
 			// global orientation but update its local orientation under the camera controller's Transform
-			controllerTransform.SetGlobalPosition(newCamTransform.GetGlobalPosition());
+			controllerTransform.SetGlobalTranslation(newCamTransform.GetGlobalTranslation());
 			newCamTransform.ReParent(&controllerTransform);
 
 			fr::Relationship& currentCamRelationship = em.GetComponent<fr::Relationship>(newCamCmptEntity);

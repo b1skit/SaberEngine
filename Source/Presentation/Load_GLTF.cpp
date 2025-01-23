@@ -850,7 +850,7 @@ namespace
 
 			targetTransform.SetLocalRotation(rotation);
 			targetTransform.SetLocalScale(scale);
-			targetTransform.SetLocalPosition(translation);
+			targetTransform.SetLocalTranslation(translation);
 		}
 		else
 		{
@@ -866,7 +866,7 @@ namespace
 			}
 			if (current->has_translation)
 			{
-				targetTransform.SetLocalPosition(
+				targetTransform.SetLocalTranslation(
 					glm::vec3(current->translation[0], current->translation[1], current->translation[2]));
 			}
 		}

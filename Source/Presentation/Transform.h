@@ -40,14 +40,14 @@ namespace fr
 
 		// Translation:
 		void TranslateLocal(glm::vec3 const& amount); // Apply additional translation to the current position, in local space
-		void SetLocalPosition(glm::vec3 const& position); // Set the total translation of this Transform, in local space
-		glm::vec3 GetLocalPosition() const;
-		glm::vec3 GetLocalPosition();
+		void SetLocalTranslation(glm::vec3 const& position); // Set the total translation of this Transform, in local space
+		glm::vec3 GetLocalTranslation() const;
+		glm::vec3 GetLocalTranslation();
 		glm::mat4 GetLocalTranslationMat() const;
 		glm::mat4 GetLocalTranslationMat();
-		void SetGlobalPosition(glm::vec3 position);
-		glm::vec3 GetGlobalPosition() const; // Transform must not be dirty
-		glm::vec3 GetGlobalPosition();
+		void SetGlobalTranslation(glm::vec3 position);
+		glm::vec3 GetGlobalTranslation() const; // Transform must not be dirty
+		glm::vec3 GetGlobalTranslation();
 		glm::mat4 GetGlobalTranslationMat() const;
 
 		// Rotation:
@@ -134,7 +134,7 @@ namespace fr
 		std::vector<Transform*> m_children; 
 
 		// Transform's local orientation, *before* any parent transforms are applied:
-		glm::vec3 m_localPosition;
+		glm::vec3 m_localTranslation;
 		glm::quat m_localRotationQuat;	// Rotation as a quaternion
 		glm::vec3 m_localScale;
 		

@@ -378,7 +378,7 @@ namespace fr
 					keyframeTimes[nextKeyframeIdx],
 					currentTimeSec);
 
-				transform.SetLocalPosition(interpolatedValue);
+				transform.SetLocalTranslation(interpolatedValue);
 			}
 			break;
 			case AnimationPath::Rotation:
