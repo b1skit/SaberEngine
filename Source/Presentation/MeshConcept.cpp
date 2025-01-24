@@ -65,8 +65,10 @@ namespace fr
 			fr::Relationship const& meshRelationship = em.GetComponent<fr::Relationship>(meshConcept);
 
 			// Transform:
+			ImGui::PushID(static_cast<uint64_t>(meshConcept));
 			fr::TransformComponent::TransformComponent::ShowImGuiWindow(
 				em, meshConcept, static_cast<uint64_t>(meshConcept));
+			ImGui::PopID();
 
 			// Bounds:
 			fr::BoundsComponent::ShowImGuiWindow(em, meshConcept);

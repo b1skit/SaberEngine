@@ -231,8 +231,10 @@ namespace fr
 			entt::entity transformOwner = entt::null;
 			fr::TransformComponent* transformComponent =
 				relationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(transformOwner);
-
+			
+			ImGui::PushID(static_cast<uint64_t>(meshPrimitive));
 			fr::TransformComponent::ShowImGuiWindow(em, transformOwner, static_cast<uint64_t>(meshPrimitive));
+			ImGui::PopID();
 
 			ImGui::Unindent();
 		}
