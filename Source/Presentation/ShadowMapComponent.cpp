@@ -35,12 +35,12 @@ namespace
 		shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::Orthographic;
 		shadowCamConfig.m_yFOV = 0.f; // Not used
 
-		fr::ShadowMap::TypeProperties directionalProperties =
+		fr::ShadowMap::ShadowParams directionalProperties =
 			shadowMap.GetTypeProperties(fr::ShadowMap::ShadowType::Orthographic);
 
 		switch (directionalProperties.m_orthographic.m_frustumSnapMode)
 		{
-		case fr::ShadowMap::TypeProperties::Orthographic::FrustumSnapMode::SceneBounds:
+		case fr::ShadowMap::ShadowParams::Orthographic::FrustumSnapMode::SceneBounds:
 		{
 			// Set the light's location so that it's oriented directly in the middle of the bounds, looking towards the
 			// bounds region. This ensures the near and far planes are both on the same side of the X-axis, so that we
@@ -98,7 +98,7 @@ namespace
 			}
 		}
 		break;
-		case fr::ShadowMap::TypeProperties::Orthographic::FrustumSnapMode::ActiveCamera:
+		case fr::ShadowMap::ShadowParams::Orthographic::FrustumSnapMode::ActiveCamera:
 		{
 			if (activeSceneCam && sceneWorldBounds)
 			{
@@ -341,11 +341,11 @@ namespace fr
 		bool didModify = false;
 
 		fr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
-		fr::ShadowMap::TypeProperties const& typeProperties = shadowMap.GetTypeProperties(shadowMap.GetShadowMapType());
+		fr::ShadowMap::ShadowParams const& typeProperties = shadowMap.GetTypeProperties(shadowMap.GetShadowMapType());
 
 		const bool mustUpdateFrustumSnap = (shadowMap.GetShadowMapType() == fr::ShadowMap::ShadowType::Orthographic &&
 				typeProperties.m_orthographic.m_frustumSnapMode == 
-			ShadowMap::TypeProperties::Orthographic::FrustumSnapMode::ActiveCamera) &&
+			ShadowMap::ShadowParams::Orthographic::FrustumSnapMode::ActiveCamera) &&
 			activeSceneCam->GetCamera().GetTransform()->HasChanged();
 
 		const bool mustUpdate = force ||
@@ -390,7 +390,7 @@ namespace fr
 
 			// Shadow camera:
 			fr::CameraComponent& shadowCamCmpt = em.GetComponent<fr::CameraComponent>(shadowMapEntity);
-			ImGui::PushID(nameCmpt.GetUniqueID());
+			ImGui::PushID(static_cast<uint64_t>(shadowMapEntity));
 			fr::CameraComponent::ShowImGuiWindow(em, shadowMapEntity);
 			ImGui::PopID();
 

@@ -68,7 +68,7 @@ namespace fr
 
 
 	public:
-		struct TypeProperties
+		struct ShadowParams
 		{
 			struct Orthographic
 			{
@@ -95,17 +95,19 @@ namespace fr
 
 			const ShadowType m_shadowType;
 			const fr::Light::Type m_lightType;
+
+			ShadowQuality m_shadowQuality;
+
+			glm::vec2 m_minMaxShadowBias;
+			float m_softness;
 		};
-		TypeProperties const& GetTypeProperties(ShadowType) const;
+		ShadowParams const& GetTypeProperties(ShadowType) const;
 		
 
 	private:
-		TypeProperties m_typeProperties;
+		ShadowParams m_typeProperties;
 
-		ShadowQuality m_shadowQuality;
-
-		glm::vec2 m_minMaxShadowBias;
-		float m_softness;
+		
 
 		bool m_isEnabled;
 		bool m_isDirty;
@@ -145,13 +147,13 @@ namespace fr
 
 	inline glm::vec2 const& ShadowMap::GetMinMaxShadowBias() const
 	{
-		return m_minMaxShadowBias;
+		return m_typeProperties.m_minMaxShadowBias;
 	}
 
 
 	inline float ShadowMap::GetSoftness() const
 	{
-		return m_softness;
+		return m_typeProperties.m_softness;
 	}
 
 
@@ -169,7 +171,7 @@ namespace fr
 
 	inline fr::ShadowMap::ShadowQuality  fr::ShadowMap::GetShadowQuality() const
 	{
-		return m_shadowQuality;
+		return m_typeProperties.m_shadowQuality;
 	}
 
 	inline bool ShadowMap::IsEnabled() const
@@ -190,7 +192,7 @@ namespace fr
 	}
 
 
-	inline ShadowMap::TypeProperties const& ShadowMap::GetTypeProperties(ShadowType shadowType) const
+	inline ShadowMap::ShadowParams const& ShadowMap::GetTypeProperties(ShadowType shadowType) const
 	{
 		SEAssert(shadowType == m_typeProperties.m_shadowType, "Trying to access type properties for the wrong type");
 		return m_typeProperties;

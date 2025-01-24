@@ -20,6 +20,51 @@ namespace
 		}
 		return fr::ShadowMap::ShadowType::ShadowType_Count;
 	}
+
+
+	void SetDefaults(fr::ShadowMap::ShadowParams& shadowParams)
+	{
+		switch (shadowParams.m_lightType)
+		{
+		case fr::Light::Type::Directional:
+		{
+			shadowParams.m_shadowQuality = fr::ShadowMap::ShadowQuality::PCSS_HIGH;
+
+			shadowParams.m_minMaxShadowBias = glm::vec2(
+				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightMinShadowBiasKey),
+				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightMaxShadowBiasKey));
+
+			shadowParams.m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightShadowSoftnessKey);
+
+			shadowParams.m_orthographic.m_frustumSnapMode = fr::ShadowMap::ShadowParams::Orthographic::ActiveCamera;
+		}
+		break;
+		case fr::Light::Type::Spot:
+		{
+			shadowParams.m_shadowQuality = fr::ShadowMap::ShadowQuality::PCSS_HIGH;
+
+			shadowParams.m_minMaxShadowBias = glm::vec2(
+				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightMinShadowBiasKey),
+				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightMaxShadowBiasKey));
+
+			shadowParams.m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightShadowSoftnessKey);
+		}
+		break;
+		case fr::Light::Type::Point:
+		{
+			shadowParams.m_shadowQuality = fr::ShadowMap::ShadowQuality::PCSS_HIGH;
+
+			shadowParams.m_minMaxShadowBias = glm::vec2(
+				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightMinShadowBiasKey),
+				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightMaxShadowBiasKey));
+
+			shadowParams.m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightShadowSoftnessKey);
+		}
+		break;
+		case fr::Light::Type::AmbientIBL:
+		default: SEAssertF("Invalid light type");
+		}
+	}
 }
 
 namespace fr
@@ -27,58 +72,19 @@ namespace fr
 	ShadowMap::ShadowMap(fr::Light::Type lightType)
 		: m_typeProperties{ 
 			.m_shadowType = GetShadowTypeFromLightType(lightType), 
-			.m_lightType = lightType }
-		, m_shadowQuality(ShadowQuality::ShadowQuality_Count)
-		, m_minMaxShadowBias(0.f, 0.f)
+			.m_lightType = lightType,
+			.m_shadowQuality = ShadowQuality::ShadowQuality_Count,
+			.m_minMaxShadowBias = glm::vec2(0.f, 0.f), }
 		, m_isEnabled(true)
 		, m_isDirty(true)
 	{
-		switch (lightType)
-		{
-		case fr::Light::Type::Directional:
-		{
-			m_shadowQuality = ShadowQuality::PCSS_HIGH;
-
-			m_minMaxShadowBias = glm::vec2(
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightMinShadowBiasKey),
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightMaxShadowBiasKey));
-
-			m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightShadowSoftnessKey);
-
-			m_typeProperties.m_orthographic.m_frustumSnapMode = TypeProperties::Orthographic::ActiveCamera;
-		}
-		break;
-		case fr::Light::Type::Spot:
-		{
-			m_shadowQuality = ShadowQuality::PCSS_HIGH;
-
-			m_minMaxShadowBias = glm::vec2(
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightMinShadowBiasKey),
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightMaxShadowBiasKey));
-
-			m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightShadowSoftnessKey);
-		}
-		break;
-		case fr::Light::Type::Point:
-		{
-			m_shadowQuality = ShadowQuality::PCSS_HIGH;
-
-			m_minMaxShadowBias = glm::vec2(
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightMinShadowBiasKey),
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightMaxShadowBiasKey));
-
-			m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightShadowSoftnessKey);
-		}
-		break;
-		case fr::Light::Type::AmbientIBL:
-		default: SEAssertF("Invalid light type");
-		}
+		SetDefaults(m_typeProperties);
 	}
 
 
 	void ShadowMap::SetMinMaxShadowBias(glm::vec2 const& minMaxShadowBias)
 	{
-		m_minMaxShadowBias = minMaxShadowBias;
+		m_typeProperties.m_minMaxShadowBias = minMaxShadowBias;
 		m_isDirty = true;
 	}
 
@@ -87,56 +93,42 @@ namespace fr
 	{
 		m_isDirty |= ImGui::Checkbox(std::format("Shadow enabled?##{}", uniqueID).c_str(), &m_isEnabled);
 
-		const char* qualityNames[] = { "PCS", "PCSS Low", "PCSS High" };
-		static int currentQuality = static_cast<int>(m_shadowQuality);
+		constexpr char const* k_qualityNames[] = { "PCS", "PCSS Low", "PCSS High" };
+		static int currentQuality = static_cast<int>(m_typeProperties.m_shadowQuality);
 		if (ImGui::Combo(
-			std::format("Quality##{}", uniqueID).c_str(), &currentQuality, qualityNames, IM_ARRAYSIZE(qualityNames)))
+			std::format("Quality##{}", uniqueID).c_str(), &currentQuality, k_qualityNames, IM_ARRAYSIZE(k_qualityNames)))
 		{
 			m_isDirty = true;
-			m_shadowQuality = static_cast<ShadowMap::ShadowQuality>(currentQuality);
+			m_typeProperties.m_shadowQuality = static_cast<ShadowMap::ShadowQuality>(currentQuality);
 		}
 
-		bool softnessIsSelectable = 
-			m_shadowQuality == ShadowQuality::PCSS_LOW || m_shadowQuality == ShadowQuality::PCSS_HIGH;
+		const bool softnessIsSelectable = 
+			m_typeProperties.m_shadowQuality == ShadowQuality::PCSS_LOW || 
+			m_typeProperties.m_shadowQuality == ShadowQuality::PCSS_HIGH;
+
 		ImGui::BeginDisabled(!softnessIsSelectable);
-		m_isDirty |= ImGui::SliderFloat(std::format("Softness##{}", uniqueID).c_str(), &m_softness, 0.f, 1.f);
+		m_isDirty |= ImGui::SliderFloat(std::format("Softness##{}", uniqueID).c_str(), &m_typeProperties.m_softness, 0.f, 1.f);
 		ImGui::SetItemTooltip("PCSS light size");
 		ImGui::EndDisabled();
 
-		std::string const& minLabel = std::format("Min shadow bias##{}", uniqueID);
-		m_isDirty |= ImGui::SliderFloat(minLabel.c_str(), &m_minMaxShadowBias.x, 0.f, 0.1f, "%.5f");
+		m_isDirty |= ImGui::SliderFloat(
+			std::format("Min shadow bias##{}", uniqueID).c_str(), 
+			&m_typeProperties.m_minMaxShadowBias.x, 
+			0.f, 
+			0.1f, 
+			"%.5f");
 		
-		std::string const& maxLabel = std::format("Max shadow bias##{}", uniqueID);
-		m_isDirty |= ImGui::SliderFloat(maxLabel.c_str(), &m_minMaxShadowBias.y, 0.f, 0.1f, "%.5f");
+		m_isDirty |= ImGui::SliderFloat(
+			std::format("Max shadow bias##{}", uniqueID).c_str(),
+			&m_typeProperties.m_minMaxShadowBias.y,
+			0.f,
+			0.1f,
+			"%.5f");
 
-		std::string const& resetLabel = std::format("Reset biases to defaults##{}", uniqueID);
-		if (ImGui::Button(resetLabel.c_str()))
+		if (ImGui::Button(std::format("Reset##{}", uniqueID).c_str()))
 		{
-			switch (m_typeProperties.m_lightType)
-			{
-			case fr::Light::Type::Directional:
-			{
-				m_minMaxShadowBias = glm::vec2(
-					core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightMinShadowBiasKey),
-					core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightMaxShadowBiasKey));
-			}
-			break;
-			case fr::Light::Type::Point:
-			{
-				m_minMaxShadowBias = glm::vec2(
-					core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightMinShadowBiasKey),
-					core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightMaxShadowBiasKey));
-			}
-			break;
-			case fr::Light::Type::Spot:
-			{
-				m_minMaxShadowBias = glm::vec2(
-					core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightMinShadowBiasKey),
-					core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightMaxShadowBiasKey));
-			}
-			break;
-			default: SEAssertF("Invalid/unsupported light type");
-			}
+			SetDefaults(m_typeProperties);
+			
 			m_isDirty = true;
 		}
 
@@ -146,8 +138,8 @@ namespace fr
 		case ShadowType::Orthographic:
 		{
 			m_isDirty |= util::ShowBasicComboBox("Shadow camera snap mode",
-				ShadowMap::TypeProperties::Orthographic::k_frustumSnapModeNames.data(),
-				ShadowMap::TypeProperties::Orthographic::k_frustumSnapModeNames.size(),
+				ShadowMap::ShadowParams::Orthographic::k_frustumSnapModeNames.data(),
+				ShadowMap::ShadowParams::Orthographic::k_frustumSnapModeNames.size(),
 				m_typeProperties.m_orthographic.m_frustumSnapMode);
 		}
 		break;
