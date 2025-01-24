@@ -147,8 +147,14 @@ namespace fr
 		// Apply the first person view orientation: (pitch + yaw)
 		const glm::vec3 yaw(0.0f, xRotationRadians, 0.0f);
 		const glm::vec3 pitch(yRotationRadians, 0.0f, 0.0f);
-		controllerTransform.RotateLocal(yaw);
-		cameraTransform.RotateLocal(pitch);
+		if (glm::length(yaw) > 0.f)
+		{
+			controllerTransform.RotateLocal(yaw);
+		}
+		if (glm::length(pitch) > 0.f)
+		{
+			cameraTransform.RotateLocal(pitch);
+		}
 
 		// Handle direction:
 		glm::vec3 direction = glm::vec3(0.0f, 0.0f, 0.0f);
