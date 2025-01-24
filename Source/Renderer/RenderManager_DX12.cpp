@@ -43,69 +43,177 @@ namespace dx12
 		// Note: We've already obtained the read lock on all new resources by this point
 
 		dx12::RenderManager& dx12RenderManager = dynamic_cast<dx12::RenderManager&>(renderManager);
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
-		dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
+		std::vector<std::future<void>> createTasks;
 
-		SEBeginGPUEvent(copyQueue->GetD3DCommandQueue(), perfmarkers::Type::CopyQueue, "Copy Queue: Create API Resources");
+		static const bool singleThreadResourceCreate = 
+			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGPUResourceCreation);
 
-		const bool hasDataToCopy = renderManager.m_newTextures.HasReadData();
-
-		// Handle anything that requires a copy queue:		
-		if (hasDataToCopy)
+		// Textures:
+		if (renderManager.m_newTextures.HasReadData())
 		{
-			// TODO: Get multiple command lists, and record on multiple threads:
-			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
-
-			// Textures:
-			if (renderManager.m_newTextures.HasReadData())
-			{
-				for (auto& texture : renderManager.m_newTextures.GetReadData())
+			auto CreateTextures = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
-					dx12::Texture::Create(texture, copyCommandList.get());
-				}
-			}
+					dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
-			// Execute the copy before moving on
-			copyQueue->Execute(1, &copyCommandList);
+					dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
+
+					SEBeginGPUEvent(copyQueue->GetD3DCommandQueue(), perfmarkers::Type::CopyQueue, "Copy Queue: Create API Resources");
+
+					std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
+
+					if (!singleThreaded)
+					{
+						renderManager.m_newTextures.AquireReadLock();
+					}
+					for (auto& texture : renderManager.m_newTextures.GetReadData())
+					{
+						dx12::Texture::Create(texture, copyCommandList.get());
+					}
+					if (!singleThreaded)
+					{
+						renderManager.m_newTextures.ReleaseReadLock();
+					}
+
+					copyQueue->Execute(1, &copyCommandList);
+
+					SEEndGPUEvent(copyQueue->GetD3DCommandQueue());
+				};
+			
+			if (singleThreadResourceCreate)
+			{
+				CreateTextures();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateTextures));
+			}
 		}
 
 		// Samplers:
 		if (renderManager.m_newSamplers.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newSamplers.GetReadData())
+			auto CreateSamplers = [&renderManager, singleThreaded = singleThreadResourceCreate]()
+				{
+					if (!singleThreaded)
+					{
+						renderManager.m_newSamplers.AquireReadLock();
+					}
+					for (auto& newObject : renderManager.m_newSamplers.GetReadData())
+					{
+						dx12::Sampler::Create(*newObject);
+					}
+					if (!singleThreaded)
+					{
+						renderManager.m_newSamplers.ReleaseReadLock();
+					}
+				};
+
+			if (singleThreadResourceCreate)
 			{
-				dx12::Sampler::Create(*newObject);
+				CreateSamplers();
 			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateSamplers));
+			}
+			
 		}
 		// Texture Target Sets:
 		if (renderManager.m_newTargetSets.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newTargetSets.GetReadData())
+			auto CreateTextureTargetSets = [&renderManager, singleThreaded = singleThreadResourceCreate]()
+				{
+					if (!singleThreaded)
+					{
+						renderManager.m_newTargetSets.AquireReadLock();
+					}
+					for (auto& newObject : renderManager.m_newTargetSets.GetReadData())
+					{
+						newObject->Commit();
+						dx12::TextureTargetSet::CreateColorTargets(*newObject);
+						dx12::TextureTargetSet::CreateDepthStencilTarget(*newObject);
+					}
+					if (!singleThreaded)
+					{
+						renderManager.m_newTargetSets.ReleaseReadLock();
+					}
+				};
+
+			if (singleThreadResourceCreate)
 			{
-				newObject->Commit();
-				dx12::TextureTargetSet::CreateColorTargets(*newObject);
-				dx12::TextureTargetSet::CreateDepthStencilTarget(*newObject);
+				CreateTextureTargetSets();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateTextureTargetSets));
 			}
 		}
 		// Shaders:
 		if (renderManager.m_newShaders.HasReadData())
 		{
-			for (auto& shader : renderManager.m_newShaders.GetReadData())
+			auto CreateShaders = [&renderManager, singleThreaded = singleThreadResourceCreate]()
+				{
+					if (!singleThreaded)
+					{
+						renderManager.m_newShaders.AquireReadLock();
+					}
+					for (auto& shader : renderManager.m_newShaders.GetReadData())
+					{
+						dx12::Shader::Create(*shader);
+					}
+					if (!singleThreaded)
+					{
+						renderManager.m_newShaders.ReleaseReadLock();
+					}
+				};
+
+			if (singleThreadResourceCreate)
 			{
-				dx12::Shader::Create(*shader);
+				CreateShaders();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateShaders));
 			}
 		}
 		// Vertex streams:
 		if (renderManager.m_newVertexStreams.HasReadData())
 		{
-			for (auto& vertexStream : renderManager.m_newVertexStreams.GetReadData())
+			auto CreateVertexStreams = [&renderManager, singleThreaded = singleThreadResourceCreate]()
+				{
+					if (!singleThreaded)
+					{
+						renderManager.m_newVertexStreams.AquireReadLock();
+					}
+					for (auto& vertexStream : renderManager.m_newVertexStreams.GetReadData())
+					{
+						vertexStream->CreateBuffers();
+					}
+					if (!singleThreaded)
+					{
+						renderManager.m_newVertexStreams.ReleaseReadLock();
+					}
+				};
+
+			if (singleThreadResourceCreate)
 			{
-				vertexStream->CreateBuffers();
+				CreateVertexStreams();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateVertexStreams));
 			}
 		}
 
-		SEEndGPUEvent(copyQueue->GetD3DCommandQueue());
+		// Finally, wait for everything to complete:
+		if (!singleThreadResourceCreate)
+		{
+			for (auto& createTask : createTasks)
+			{
+				createTask.wait();
+			}
+		}
 	}
 
 

@@ -103,13 +103,6 @@ namespace dx12
 		SEAssert(depthTexParams.m_usage & re::Texture::Usage::DepthTarget,
 			"Target does not have the depth target usage type");
 
-		dx12::Texture::PlatformParams const* depthTexPlatParams =
-			depthTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
-		SEAssert(depthTexPlatParams->m_isCreated && 
-			depthTexPlatParams->m_gpuResource && 
-			depthTexPlatParams->m_gpuResource->IsValid(),
-			"Depth texture has not been created");
-
 		// If we don't have any color targets, we must configure the viewport and scissor rect here instead
 		if (!targetSet.HasColorTarget())
 		{
