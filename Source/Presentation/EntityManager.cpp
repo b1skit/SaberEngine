@@ -676,16 +676,28 @@ namespace fr
 
 	void EntityManager::UpdateBounds()
 	{
-		entt::entity sceneBoundsEntity = entt::null;
 		{
-			// We're only viewing the registry and modifying components in place; Only need a read lock
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
+			// Update "regular" bounds: Mark them as dirty if their transforms have changed
+			auto boundsView = m_registry.view<fr::BoundsComponent, fr::Relationship>(
+				entt::exclude<fr::BoundsComponent::SceneBoundsMarker>);
+			for (entt::entity entity : boundsView)
+			{
+				fr::BoundsComponent& bounds = boundsView.get<fr::BoundsComponent>(entity);
+				fr::Relationship const& relationship = boundsView.get<fr::Relationship>(entity);
+
+				fr::BoundsComponent::UpdateBoundsComponent(*this, bounds, relationship, entity);
+			}
+
+			// Find the scene bounds entity:
+			// TODO: Cache this entity by subscribing to create/delete callbacks for the SceneBoundsMarker
+			entt::entity sceneBoundsEntity = entt::null;
 			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::SceneBoundsMarker>();
 			bool foundSceneBoundsEntity = false;
 			for (entt::entity entity : sceneBoundsEntityView)
 			{
-				SEAssert(foundSceneBoundsEntity == false, 
+				SEAssert(foundSceneBoundsEntity == false,
 					"Scene bounds entity already found. This should not be possible");
 				foundSceneBoundsEntity = true;
 
@@ -694,74 +706,54 @@ namespace fr
 
 			if (foundSceneBoundsEntity) // Might be a null entity (e.g. if we just reset the scene)
 			{
-				// Modify our bounds component in-place:
-				m_registry.patch<fr::BoundsComponent>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
-					{
-						sceneBoundsComponent = fr::BoundsComponent::Invalid();
-
-						bool foundOtherBounds = false;
-
-						// We must check every MeshConcept in the scene: If even 1 is dirty, we need to recompute everything
-						auto meshConceptEntitiesView =
-							m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent, fr::TransformComponent>();
-						for (entt::entity entity : meshConceptEntitiesView)
+				// If any bounds are dirty, we must update the scene bounds:
+				if (EntityExists<fr::BoundsComponent, DirtyMarker<fr::BoundsComponent>>())
+				{
+					// Modify our bounds component in-place:
+					m_registry.patch<fr::BoundsComponent>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
 						{
-							fr::BoundsComponent const& boundsComponent =
-								meshConceptEntitiesView.get<fr::BoundsComponent>(entity);
+							sceneBoundsComponent = fr::BoundsComponent::Invalid();
 
-							fr::Transform const& meshTransform =
-								meshConceptEntitiesView.get<fr::TransformComponent>(entity).GetTransform();
+							bool foundOtherBounds = false;
 
-							sceneBoundsComponent.ExpandBounds(
-								boundsComponent.GetTransformedAABBBounds(meshTransform.GetGlobalMatrix()),
-								sceneBoundsEntity);
+							auto boundsView = m_registry.view<fr::BoundsComponent, fr::Relationship>(
+								entt::exclude<fr::BoundsComponent::SceneBoundsMarker>);
+							for (entt::entity entity : boundsView)
+							{
+								fr::BoundsComponent const& boundsComponent = boundsView.get<fr::BoundsComponent>(entity);
 
-							foundOtherBounds = true;
-						}
+								// Only need to recompute on Bounds with no parents (as they're recursively recomputed
+								// on children)
+								// TODO: It would be more logical to add the scene bounds as the encapsulating bounds
+								// for otherwise root Bounds
+								if (boundsComponent.GetEncapsulatingBoundsEntity() == entt::null)
+								{
+									fr::Relationship const& relationship = boundsView.get<fr::Relationship>(entity);
 
-						// It is valid for a MeshConcept to have no TransformComponent; We handle this case with its own
-						// specialized view
-						auto meshWithNoTransformView =
-							m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent>(entt::exclude<fr::TransformComponent>);
-						for (entt::entity entity : meshWithNoTransformView)
-						{
-							fr::BoundsComponent const& boundsComponent =
-								meshWithNoTransformView.get<fr::BoundsComponent>(entity);
+									fr::TransformComponent const* transformCmpt =
+										relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
+									SEAssert(transformCmpt,
+										"Failed to find a TransformComponent in the hierarchy above. This is unexpected");
 
-							fr::Relationship const& relationship = GetComponent<fr::Relationship>(entity);
-							fr::TransformComponent const* transformCmpt =
-								relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
-							SEAssert(transformCmpt,
-								"Failed to find a TransformComponent in the hierarchy above. This is unexpected");
+									sceneBoundsComponent.ExpandBounds(
+										boundsComponent.GetTransformedAABBBounds(
+											transformCmpt->GetTransform().GetGlobalMatrix()),
+										sceneBoundsEntity);
 
-							sceneBoundsComponent.ExpandBounds(
-								boundsComponent.GetTransformedAABBBounds(transformCmpt->GetTransform().GetGlobalMatrix()),
-								sceneBoundsEntity);
+									foundOtherBounds = true;
+								}
+							}
 
-							foundOtherBounds = true;
-						}
-
-						// If there are no other bounds, we set the scene bounds to zero (preventing it from getting stuck
-						// at the last size it saw another bounds)
-						if (!foundOtherBounds)
-						{
-							sceneBoundsComponent = fr::BoundsComponent::Zero();
-							fr::BoundsComponent::MarkDirty(sceneBoundsEntity);
-						}
-					});
+							// If there are no other bounds, we set the scene bounds to zero (preventing it from getting
+							// stuck at the last size it saw another bounds)
+							if (!foundOtherBounds)
+							{
+								sceneBoundsComponent = fr::BoundsComponent::Zero();
+								fr::BoundsComponent::MarkDirty(sceneBoundsEntity);
+							}
+						});
+				}				
 			}
-		}
-
-
-		// Update "regular" bounds: Mark them as dirty if their transforms have changed
-		auto boundsView = m_registry.view<fr::BoundsComponent, fr::Relationship>(
-			entt::exclude<fr::BoundsComponent::SceneBoundsMarker>);
-		for (entt::entity entity : boundsView)
-		{
-			fr::BoundsComponent& bounds = boundsView.get<fr::BoundsComponent>(entity);
-			fr::Relationship const& relationship = boundsView.get<fr::Relationship>(entity);
-
-			fr::BoundsComponent::UpdateBoundsComponent(*this, bounds, relationship, entity);
 		}
 	}
 

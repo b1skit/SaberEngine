@@ -78,7 +78,7 @@ namespace gr
 		std::unordered_map<gr::RenderDataID, re::BufferInput> m_lightCoordinateAxisTransformBuffers;
 
 		bool m_showSceneBoundingBox = false;
-		glm::vec4 m_sceneBoundsColor = glm::vec4(1.f, 0.4f, 0.f, 0.5f);
+		glm::vec4 m_sceneBoundsColor = glm::vec4(1.f, 1.f, 1.f, 0.5f);
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_sceneBoundsBatches; // This is wasteful but convenient
 
 		bool m_showAllMeshBounds = false;
