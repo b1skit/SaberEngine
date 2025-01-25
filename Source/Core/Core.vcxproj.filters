@@ -190,7 +190,7 @@
       <Filter>Header Files\host\win32</Filter>
     </ClInclude>
     <ClInclude Include="Util\HashKey.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -236,9 +236,6 @@
     <ClCompile Include="InputManager_Win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Util\TextUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Util\FileIOUtils.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
@@ -262,6 +259,9 @@
     </ClCompile>
     <ClCompile Include="Host\Dialog_Win32.cpp">
       <Filter>Source Files\host\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Util\TextUtils.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
