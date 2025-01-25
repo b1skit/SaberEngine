@@ -8,6 +8,8 @@
 #include "RLibrary_ImGui_Platform.h"
 #include "RenderStage.h"
 
+#include "Core/Logger.h"
+
 
 namespace platform
 {

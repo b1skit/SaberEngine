@@ -6,6 +6,7 @@
 
 #include "Core/Assert.h"
 #include "Core/InvPtr.h"
+#include "Core/Logger.h"
 
 #include "Core/Interfaces/ILoadContext.h"
 

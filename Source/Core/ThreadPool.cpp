@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
 #include "Config.h"
-#include "LogManager.h"
 #include "ThreadPool.h"
 
 #include "Util/CastUtils.h"

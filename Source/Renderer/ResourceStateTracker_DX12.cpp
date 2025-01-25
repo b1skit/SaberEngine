@@ -5,7 +5,7 @@
 #include "ResourceStateTracker_DX12.h"
 
 #include "Core/Assert.h"
-#include "Core/LogManager.h"
+#include "Core/Logger.h"
 
 
 namespace

@@ -7,7 +7,7 @@
 #include "Sampler.h"
 
 #include "Core/InvPtr.h"
-#include "Core/LogManager.h"
+#include "Core/Logger.h"
 
 #include "Core/Util/MathUtils.h"
 

@@ -5,7 +5,7 @@
 #include "TextureView.h"
 
 #include "Core/Assert.h"
-#include "Core/LogManager.h"
+#include "Core/Logger.h"
 
 #include <GL/glew.h>
 

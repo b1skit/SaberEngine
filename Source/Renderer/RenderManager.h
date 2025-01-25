@@ -7,7 +7,6 @@
 
 #include "Core/InvPtr.h"
 #include "Core/CommandQueue.h"
-#include "Core/LogManager.h"
 
 #include "Core/Interfaces/IEngineComponent.h"
 #include "Core/Interfaces/IEngineThread.h"

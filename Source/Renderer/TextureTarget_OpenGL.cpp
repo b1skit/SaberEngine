@@ -5,7 +5,7 @@
 #include "Texture_OpenGL.h"
 #include "Texture_Platform.h"
 
-#include "Core/LogManager.h"
+#include "Core/Logger.h"
 
 #include "Core/Util/CastUtils.h"
 

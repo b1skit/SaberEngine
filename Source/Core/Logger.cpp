@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "LogManager.h"
+#include "Logger.h"
 #include "ThreadPool.h"
 
 #include "Definitions/ConfigKeys.h"
@@ -192,35 +192,37 @@ namespace
 
 namespace core
 {
-	LogManager* LogManager::Get()
+	Logger* Logger::Get()
 	{
-		static std::unique_ptr<core::LogManager> instance = std::make_unique<core::LogManager>();
+		static std::unique_ptr<core::Logger> instance = std::make_unique<core::Logger>();
 		return instance.get();
 	}
 
 
-	LogManager::LogManager()
+	Logger::Logger()
 		: m_imGuiLogWindow(std::make_unique<ImGuiLogWindow>())
 		, m_isRunning(false)
+		, m_showHostConsole(false)
 	{
 	}
 
 
-	void LogManager::Startup(bool isSystemConsoleWindowEnabled)
+	void Logger::Startup(bool isSystemConsoleWindowEnabled)
 	{
 		LOG("Log manager starting...");
 
 		m_isRunning = true; // Start running *before* we kick off a thread
+		m_showHostConsole = isSystemConsoleWindowEnabled;
 
-		core::ThreadPool::Get()->EnqueueJob([&]()
+		core::ThreadPool::Get()->EnqueueJob([this]()
 			{
-				core::ThreadPool::NameCurrentThread(L"LogManager Thread");
-				core::LogManager::Get()->Run(isSystemConsoleWindowEnabled);
+				core::ThreadPool::NameCurrentThread(L"Logger Thread");
+				Run();
 			});
 	}
 
 
-	void LogManager::Shutdown()
+	void Logger::Shutdown()
 	{
 		LOG("Log manager shutting down...");
 		m_isRunning = false;
@@ -228,7 +230,7 @@ namespace core
 	}
 
 
-	void LogManager::Run(bool isSystemConsoleWindowEnabled)
+	void Logger::Run()
 	{
 		std::filesystem::create_directory(core::configkeys::k_logOutputDir); // No error if the directory already exists
 
@@ -243,7 +245,7 @@ namespace core
 
 				// Print the message to the terminal. Note: We might get different ordering since m_imGuiLogWindow
 				// internally locks a mutex before appending the new message
-				if (isSystemConsoleWindowEnabled)
+				if (m_showHostConsole)
 				{
 					printf(msg);
 				}
@@ -283,7 +285,7 @@ namespace core
 	}
 
 
-	void LogManager::ShowImGuiWindow(bool* show)
+	void Logger::ShowImGuiWindow(bool* show)
 	{
 		if (*show)
 		{
@@ -297,7 +299,7 @@ namespace core
 	}
 
 
-	void LogManager::AddMessage(char const* msg)
+	void Logger::AddMessage(char const* msg)
 	{
 		{
 			std::unique_lock<std::mutex> lock(m_messagesMutex);

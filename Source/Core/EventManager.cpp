@@ -2,7 +2,7 @@
 #include "Assert.h"
 #include "EventManager.h"
 #include "EventManager_Platform.h"
-#include "LogManager.h"
+#include "Logger.h"
 
 #include "Interfaces/IEventListener.h"
 

@@ -1,6 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "LogManager.h"
+#include "Logger.h"
 
 
 namespace assertinternal

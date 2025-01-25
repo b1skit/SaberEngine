@@ -8,7 +8,7 @@
 
 #include "Core/Config.h"
 #include "Core/Inventory.h"
-#include "Core/LogManager.h"
+#include "Core/Logger.h"
 #include "Core/PerformanceTimer.h"
 
 #include "Core/Util/FileIOUtils.h"

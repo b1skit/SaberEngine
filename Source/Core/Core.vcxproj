@@ -135,7 +135,7 @@
     <ClInclude Include="Interfaces\IUniqueID.h" />
     <ClInclude Include="Inventory.h" />
     <ClInclude Include="InvPtr.h" />
-    <ClInclude Include="LogManager.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="ProfilingMarkers.h" />
@@ -173,7 +173,7 @@
     <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="Interfaces\IEngineThread.cpp" />
     <ClCompile Include="Inventory.cpp" />
-    <ClCompile Include="LogManager.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="pch\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>

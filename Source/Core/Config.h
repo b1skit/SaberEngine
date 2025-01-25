@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
-#include "LogManager.h"
+#include "Logger.h"
 
 #include "Definitions/ConfigKeys.h"
 

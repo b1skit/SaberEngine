@@ -3,7 +3,6 @@
 #include "Window.h"
 
 #include "../Assert.h"
-#include "../LogManager.h" // TODO: Remove this
 
 #include "oleidl.h"
 

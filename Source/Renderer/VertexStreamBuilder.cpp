@@ -3,6 +3,7 @@
 #include "VertexStreamBuilder.h"
 
 #include "Core/Assert.h"
+#include "Core/Logger.h"
 
 #include "mikktspace.c" // LNK2019 otherwise...
 #include "weldmesh.h"

@@ -4,6 +4,7 @@
 #include "Texture_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/Logger.h"
 
 #include "Core/Util/CastUtils.h"
 

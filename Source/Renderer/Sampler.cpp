@@ -5,6 +5,7 @@
 #include "Sampler_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/Logger.h"
 
 
 namespace re

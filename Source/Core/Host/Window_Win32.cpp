@@ -4,7 +4,7 @@
 
 #include "../Assert.h"
 #include "../EventManager.h"
-#include "../LogManager.h"
+#include "../Logger.h"
 
 #include "../Util/CastUtils.h"
 

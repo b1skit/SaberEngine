@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Inventory.h"
-#include "Core/LogManager.h"
 
 #include "Core/Host/Window.h"
 

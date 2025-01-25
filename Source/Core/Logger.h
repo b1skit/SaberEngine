@@ -12,10 +12,10 @@ namespace
 
 namespace core
 {
-	class LogManager final
+	class Logger final
 	{
 	public:
-		static LogManager* Get(); // Singleton functionality
+		static Logger* Get(); // Singleton functionality
 
 
 	public:
@@ -41,11 +41,11 @@ namespace core
 
 
 	public:
-		LogManager();
+		Logger();
 
-		LogManager(LogManager&&) noexcept = default;
-		LogManager& operator=(LogManager&&) noexcept = default;
-		~LogManager() = default;
+		Logger(Logger&&) noexcept = default;
+		Logger& operator=(Logger&&) noexcept = default;
+		~Logger() = default;
 
 		void Startup(bool isSystemConsoleWindowEnabled);
 		void Shutdown();
@@ -53,7 +53,7 @@ namespace core
 		void ShowImGuiWindow(bool* show);
 
 	private:
-		void Run(bool isSystemConsoleWindowEnabled); // LogManager thread
+		void Run(); // Logger thread
 
 	private:
 		constexpr static uint32_t k_internalStagingBufferSize = 4096;
@@ -63,6 +63,7 @@ namespace core
 		std::unique_ptr<ImGuiLogWindow> m_imGuiLogWindow; // Internally contains a mutex
 
 		bool m_isRunning;
+		bool m_showHostConsole;
 
 		std::queue<std::array<char, k_internalStagingBufferSize>> m_messages;
 		std::mutex m_messagesMutex;
@@ -97,55 +98,55 @@ namespace core
 	
 
 	private: // No copying allowed
-		LogManager(LogManager const&) = delete;
-		void operator=(LogManager const&) = delete;
+		Logger(Logger const&) = delete;
+		void operator=(Logger const&) = delete;
 	};
 
 
 	template<typename...Args>
-	inline void LogManager::Log(char const* msg, Args&&... args)
+	inline void Logger::Log(char const* msg, Args&&... args)
 	{
-		LogInternal<char, Args...>(LogManager::LogType::Log, msg, std::forward<Args>(args)...);
+		LogInternal<char, Args...>(Logger::LogType::Log, msg, std::forward<Args>(args)...);
 	}
 
 
 	template<typename...Args>
-	inline void LogManager::Log(wchar_t const* msg, Args&&... args)
+	inline void Logger::Log(wchar_t const* msg, Args&&... args)
 	{
-		LogInternal<wchar_t, Args...>(LogManager::LogType::Log, msg, std::forward<Args>(args)...);
+		LogInternal<wchar_t, Args...>(Logger::LogType::Log, msg, std::forward<Args>(args)...);
 	}
 
 	template<typename... Args>
-	inline void LogManager::LogWarning(char const* msg, Args&&... args)
+	inline void Logger::LogWarning(char const* msg, Args&&... args)
 	{
-		LogInternal<char, Args...>(LogManager::LogType::Warning, msg, std::forward<Args>(args)...);
-	}
-
-
-	template<typename... Args>
-	inline void LogManager::LogWarning(wchar_t const* msg, Args&&... args)
-	{
-
-		LogInternal<wchar_t, Args...>(LogManager::LogType::Warning, msg, std::forward<Args>(args)...);
+		LogInternal<char, Args...>(Logger::LogType::Warning, msg, std::forward<Args>(args)...);
 	}
 
 
 	template<typename... Args>
-	inline void LogManager::LogError(char const* msg, Args&&... args)
+	inline void Logger::LogWarning(wchar_t const* msg, Args&&... args)
 	{
-		LogInternal<char, Args...>(LogManager::LogType::Error, msg, std::forward<Args>(args)...);
+
+		LogInternal<wchar_t, Args...>(Logger::LogType::Warning, msg, std::forward<Args>(args)...);
 	}
 
 
 	template<typename... Args>
-	inline void LogManager::LogError(wchar_t const* msg, Args&&... args)
+	inline void Logger::LogError(char const* msg, Args&&... args)
 	{
-		LogInternal<wchar_t, Args...>(LogManager::LogType::Error, msg, std::forward<Args>(args)...);
+		LogInternal<char, Args...>(Logger::LogType::Error, msg, std::forward<Args>(args)...);
+	}
+
+
+	template<typename... Args>
+	inline void Logger::LogError(wchar_t const* msg, Args&&... args)
+	{
+		LogInternal<wchar_t, Args...>(Logger::LogType::Error, msg, std::forward<Args>(args)...);
 	}
 
 
 	template<typename T, typename... Args>
-	inline void LogManager::LogInternal(LogType logType, T const* msg, Args&&... args)
+	inline void Logger::LogInternal(LogType logType, T const* msg, Args&&... args)
 	{
 		// Select the appropriate tag prefix:
 		T const* tagPrefix = nullptr;
@@ -263,8 +264,8 @@ namespace core
 			messageStart,
 			std::forward<Args>(args)...);
 
-		// Finally, pass the message to our LogManager singleton:
-		static LogManager* const s_logMgr = LogManager::Get();
+		// Finally, pass the message to our Logger singleton:
+		static Logger* const s_logMgr = Logger::Get();
 		if constexpr (std::is_same<T, wchar_t>::value)
 		{
 			s_logMgr->AddMessage(util::FromWideCString(stagingBuffer.data()).c_str());
@@ -277,7 +278,7 @@ namespace core
 
 
 	template<typename T>
-	void LogManager::InsertLogPrefix(
+	void Logger::InsertLogPrefix(
 		T const* alignPrefix,
 		size_t alignPrefixLen,
 		T const* tag,
@@ -325,7 +326,7 @@ namespace core
 
 
 	template<typename T>
-	void LogManager::InsertMessageAndVariadicArgs(T* buf, uint32_t bufferSize, T const* msg, ...)
+	void Logger::InsertMessageAndVariadicArgs(T* buf, uint32_t bufferSize, T const* msg, ...)
 	{
 		va_list args;
 		va_start(args, msg);
@@ -360,6 +361,6 @@ namespace core
 
 // Log macros:
 // ------------------------------------------------
-#define LOG(msg, ...)			core::LogManager::Log(msg, __VA_ARGS__);
-#define LOG_WARNING(msg, ...)	core::LogManager::LogWarning(msg, __VA_ARGS__);
-#define LOG_ERROR(msg, ...)		core::LogManager::LogError(msg, __VA_ARGS__);
+#define LOG(msg, ...)			core::Logger::Log(msg, __VA_ARGS__);
+#define LOG_WARNING(msg, ...)	core::Logger::LogWarning(msg, __VA_ARGS__);
+#define LOG_ERROR(msg, ...)		core::Logger::LogError(msg, __VA_ARGS__);

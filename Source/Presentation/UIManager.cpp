@@ -6,7 +6,7 @@
 #include "Core/CommandQueue.h"
 #include "Core/Config.h"
 #include "Core/InputManager_Platform.h"
-#include "Core/LogManager.h"
+#include "Core/Logger.h"
 
 #include "Core/Definitions/KeyConfiguration.h"
 
@@ -590,7 +590,7 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				core::LogManager::Get()->ShowImGuiWindow(&m_show[Show::LogConsole]);
+				core::Logger::Get()->ShowImGuiWindow(&m_show[Show::LogConsole]);
 			};
 		if (m_show[Show::LogConsole])
 		{

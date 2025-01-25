@@ -5,7 +5,7 @@
 #include "Core/Config.h"
 #include "Core/EventManager.h"
 #include "Core/InputManager.h"
-#include "Core/LogManager.h"
+#include "Core/Logger.h"
 #include "Core/PerformanceTimer.h"
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
@@ -93,7 +93,7 @@ namespace app
 		core::ThreadPool::Get()->Startup();
 
 		// Start the logging thread:
-		core::LogManager::Get()->Startup(
+		core::Logger::Get()->Startup(
 			core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
 
 		// Create a window (and interally pass it to the re::Context)
@@ -143,7 +143,7 @@ namespace app
 		LOG("\nEngineApp: Starting main game loop\n");
 
 		core::EventManager* eventManager = core::EventManager::Get();
-		core::LogManager* logManager = core::LogManager::Get();
+		core::Logger* logger = core::Logger::Get();
 		en::InputManager* inputManager = en::InputManager::Get();
 		fr::EntityManager* entityManager = fr::EntityManager::Get();
 		fr::SceneManager* sceneManager = fr::SceneManager::Get();
@@ -251,7 +251,7 @@ namespace app
 		en::InputManager::Get()->Shutdown();
 		core::EventManager::Get()->Shutdown();
 
-		core::LogManager::Get()->Shutdown(); // Destroy last
+		core::Logger::Get()->Shutdown(); // Destroy last
 
 		core::ThreadPool::Get()->Stop();
 		
