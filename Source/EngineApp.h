@@ -47,7 +47,7 @@ namespace app
 
 		uint64_t m_frameNum;
 
-		std::unique_ptr<std::barrier<>> m_copyBarrier;
+		std::unique_ptr<std::barrier<>> m_syncBarrier;
 		
 
 	private: 

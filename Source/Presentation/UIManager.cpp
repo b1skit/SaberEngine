@@ -7,6 +7,7 @@
 #include "Core/Config.h"
 #include "Core/InputManager_Platform.h"
 #include "Core/Logger.h"
+#include "Core/PerfLogger.h"
 
 #include "Core/Definitions/KeyConfiguration.h"
 
@@ -215,7 +216,8 @@ namespace fr
 			});
 
 		// Default visible debug ImGui panels:
-		m_show[LogConsole] = true;
+		m_show[Logger] = true;
+		m_show[PerfLogger] = true;
 		m_show[SceneMgrDbg] = true;
 		m_show[EntityMgrDbg] = true;
 		m_show[TransformationHierarchyDbg] = true;
@@ -529,7 +531,7 @@ namespace fr
 
 					if (ImGui::BeginMenu("Window"))
 					{
-						ImGui::MenuItem("Console log", "", &m_show[Show::LogConsole]); // Console debug log window
+						ImGui::MenuItem("Log", "", &m_show[Show::Logger]);
 						
 						if (ImGui::BeginMenu("Scene manager"))
 						{
@@ -564,8 +566,7 @@ namespace fr
 
 					if (ImGui::BeginMenu("Capture"))
 					{
-						ImGui::TextDisabled("Performance statistics");
-
+						ImGui::MenuItem("Performance overlay", "", &m_show[Show::PerfLogger]);
 						ImGui::MenuItem("GPU Captures", "", &m_show[Show::GPUCaptures]);
 
 						// TODO...
@@ -590,9 +591,9 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				core::Logger::Get()->ShowImGuiWindow(&m_show[Show::LogConsole]);
+				core::Logger::Get()->ShowImGuiWindow(&m_show[Show::Logger]);
 			};
-		if (m_show[Show::LogConsole])
+		if (m_show[Show::Logger])
 		{
 			m_debugUICommandMgr->Enqueue(frameNum, ShowConsoleLog);
 		}
@@ -617,6 +618,16 @@ namespace fr
 		if (m_show[Show::EntityMgrDbg] || m_show[Show::TransformationHierarchyDbg] || m_show[Show::EntityComponentDbg])
 		{
 			m_debugUICommandMgr->Enqueue(frameNum, ShowEntityMgrDebug);
+		}
+
+		// Performance logger:
+		if (m_show[Show::PerfLogger])
+		{
+			m_debugUICommandMgr->Enqueue(frameNum,
+				[&]()
+				{
+					core::PerfLogger::Get()->ShowImGuiWindow(&m_show[Show::PerfLogger]);
+				});
 		}
 
 		// Render manager debug:

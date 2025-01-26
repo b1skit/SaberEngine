@@ -9,11 +9,18 @@
 #include "VertexStream.h"
 
 #include "Core/Config.h"
+#include "Core/PerfLogger.h"
 #include "Core/ProfilingMarkers.h"
 
 #include "Core/Host/PerformanceTimer.h"
 
 #include "Core/Util/FileIOUtils.h"
+
+
+namespace
+{
+	constexpr util::CHashKey k_renderThreadLoggerKey("Render thread");
+}
 
 
 namespace re
@@ -133,7 +140,7 @@ namespace re
 	}
 
 
-	void RenderManager::Lifetime(std::barrier<>* copyBarrier)
+	void RenderManager::Lifetime(std::barrier<>* syncBarrier)
 	{
 		// Synchronized startup: Blocks main thread until complete
 		m_startupLatch[static_cast<size_t>(SyncType::ReleaseWorker)].arrive_and_wait();
@@ -145,30 +152,33 @@ namespace re
 		Initialize();
 		m_initializeLatch[static_cast<size_t>(SyncType::ReleaseCommander)].arrive_and_wait();
 
+		core::PerfLogger* perfLogger = core::PerfLogger::Get();
 
 		IEngineThread::ThreadUpdateParams updateParams{};
 
 		m_isRunning = true;
 		while (m_isRunning)
 		{
-			SEBeginCPUEvent("RenderManager frame");
-
-			// Blocks until a new update params is received, or the IEngineThread has been signaled to stop
-			const bool doUpdate = GetUpdateParams(updateParams);
-			if (!doUpdate)
+			// Blocks until updateParams is updated, or the IEngineThread has been signaled to stop
+			if (!GetUpdateParams(updateParams))
 			{
 				break;
 			}
+
+			SEBeginCPUEvent("RenderManager frame");
+			perfLogger->NotifyBegin(k_renderThreadLoggerKey);
+
 			m_renderFrameNum = updateParams.m_frameNum;
 
-			// Copy stage: Blocks other threads until complete
 			PreUpdate(m_renderFrameNum);
-			const std::barrier<>::arrival_token& copyArrive = copyBarrier->arrive();
+
+			const std::barrier<>::arrival_token& copyArrive = syncBarrier->arrive();
 
 			Update(m_renderFrameNum, updateParams.m_elapsed);
 
 			EndOfFrame(); // Clear batches, process pipeline and buffer allocator EndOfFrames
 
+			perfLogger->NotifyEnd(k_renderThreadLoggerKey);
 			SEEndCPUEvent();
 		}
 
@@ -195,6 +205,8 @@ namespace re
 
 		// Trigger creation of render libraries:
 		re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui);
+
+		core::PerfLogger::Get()->Register(k_renderThreadLoggerKey);
 
 		SEEndCPUEvent();
 	}
@@ -236,7 +248,6 @@ namespace re
 
 	void RenderManager::PreUpdate(uint64_t frameNum)
 	{
-		// This function is blocking; We do the bare minimum work possible here
 		SEBeginCPUEvent("re::RenderManager::PreUpdate");
 		
 		m_renderCommandManager.SwapBuffers();

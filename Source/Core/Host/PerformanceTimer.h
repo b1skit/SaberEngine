@@ -6,6 +6,7 @@ namespace win32
 {
 	class PerformanceTimer;
 }
+
 namespace host
 {
 	class PerformanceTimer
@@ -21,6 +22,9 @@ namespace host
 		double StopMs(); // Stops the timer, and returns the high precision time since Start() in ms
 		double StopSec(); // Stops the timer, and returns the high precision time since Start() in seconds
 
+		bool IsRunning() const; // Has the timer been started?
+
+
 	private:
 		friend class win32::PerformanceTimer;
 
@@ -29,4 +33,10 @@ namespace host
 
 		bool m_isStarted;
 	};
+
+
+	inline bool PerformanceTimer::IsRunning() const
+	{
+		return m_isStarted;
+	}
 }

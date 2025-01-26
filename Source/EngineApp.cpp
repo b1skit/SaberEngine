@@ -6,6 +6,7 @@
 #include "Core/EventManager.h"
 #include "Core/InputManager.h"
 #include "Core/Logger.h"
+#include "Core/PerfLogger.h"
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
 
@@ -23,6 +24,8 @@
 namespace
 {
 	constexpr size_t k_numSystemThreads = 2;
+
+	constexpr util::CHashKey k_mainThreadLoggerKey("Main thread");
 
 
 	// Create the main window on the engine thread to associate it with the correct Win32 event queue
@@ -63,7 +66,7 @@ namespace app
 	{
 		m_engineApp = this;
 
-		m_copyBarrier = std::make_unique<std::barrier<>>(k_numSystemThreads);
+		m_syncBarrier = std::make_unique<std::barrier<>>(k_numSystemThreads);
 		core::ThreadPool::NameCurrentThread(L"Main Thread");
 	}
 
@@ -117,7 +120,7 @@ namespace app
 		core::ThreadPool::Get()->EnqueueJob([&]()
 			{
 				core::ThreadPool::NameCurrentThread(L"Render Thread");
-				renderManager->Lifetime(m_copyBarrier.get()); 
+				renderManager->Lifetime(m_syncBarrier.get()); 
 			});
 		renderManager->ThreadStartup(); // Initializes context
 		
@@ -130,6 +133,8 @@ namespace app
 		renderManager->ThreadInitialize();
 
 		uiMgr->Startup();
+
+		core::PerfLogger::Get()->Register(k_mainThreadLoggerKey);
 
 		m_isRunning = true;
 
@@ -150,6 +155,8 @@ namespace app
 		re::RenderManager* renderManager = re::RenderManager::Get();
 		fr::UIManager* uiManager = fr::UIManager::Get();
 
+		core::PerfLogger* perfLogger = core::PerfLogger::Get();
+
 		// Process any events that might have occurred during startup:
 		eventManager->Update(m_frameNum, 0.0);
 
@@ -165,6 +172,9 @@ namespace app
 			SEBeginCPUEvent("app::EngineApp::Run frame outer loop");
 
 			outerLoopTimer.Start();
+
+			perfLogger->NotifyEnd(k_mainThreadLoggerKey);
+			perfLogger->NotifyBegin(k_mainThreadLoggerKey);
 
 			SEBeginCPUEvent("app::EngineApp::Update");
 			EngineApp::Update(m_frameNum, lastOuterFrameTime);
@@ -210,7 +220,7 @@ namespace app
 			// Pump the render thread, and wait for it to signal copying is complete:
 			SEBeginCPUEvent("app::EngineApp::Run Wait on copy step");
 			renderManager->EnqueueUpdate({m_frameNum, lastOuterFrameTime});
-			m_copyBarrier->arrive_and_wait();
+			m_syncBarrier->arrive_and_wait();
 			SEEndCPUEvent();
 
 			m_inventory->OnEndOfFrame();

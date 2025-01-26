@@ -54,7 +54,8 @@ namespace fr
 
 		enum Show : uint8_t
 		{
-			LogConsole,
+			Logger,
+			PerfLogger,
 			SceneMgrDbg,
 			EntityMgrDbg,
 			TransformationHierarchyDbg,

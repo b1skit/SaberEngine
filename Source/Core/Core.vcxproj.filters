@@ -198,6 +198,9 @@
     <ClInclude Include="Host\PerformanceTimer_Win32.h">
       <Filter>Header Files\host\win32</Filter>
     </ClInclude>
+    <ClInclude Include="PerfLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -274,6 +277,9 @@
     </ClCompile>
     <ClCompile Include="Host\PerformanceTimer_Win32.cpp">
       <Filter>Source Files\host\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="PerfLogger.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

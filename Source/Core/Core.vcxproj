@@ -140,6 +140,7 @@
     <ClInclude Include="InvPtr.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="pch\pch.h" />
+    <ClInclude Include="PerfLogger.h" />
     <ClInclude Include="ProfilingMarkers.h" />
     <ClInclude Include="ResourceSystem.h" />
     <ClInclude Include="ThreadPool.h" />
@@ -185,6 +186,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PerfLogger.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="Util\FileIOUtils.cpp" />
     <ClCompile Include="Util\TextUtils.cpp" />
