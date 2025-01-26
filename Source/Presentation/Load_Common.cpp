@@ -9,7 +9,8 @@
 #include "Core/Config.h"
 #include "Core/Inventory.h"
 #include "Core/Logger.h"
-#include "Core/PerformanceTimer.h"
+
+#include "Core/Host/PerformanceTimer.h"
 
 #include "Core/Util/FileIOUtils.h"
 
@@ -139,7 +140,7 @@ namespace load
 
 		LOG("Attempting to load %d texture(s): \"%s\"...", texturePaths.size(), texturePaths[0].c_str());
 
-		util::PerformanceTimer timer;
+		host::PerformanceTimer timer;
 		timer.Start();
 
 		const uint8_t totalFaces = util::CheckedCast<uint8_t>(texturePaths.size());
@@ -304,7 +305,7 @@ namespace load
 		SEAssert(texSrc != nullptr && texSrcNumBytes > 0, "Invalid texture memory allocation");
 
 		LOG("Attempting to load texture \"%s\" from memory...", texName.c_str());
-		util::PerformanceTimer timer;
+		host::PerformanceTimer timer;
 		timer.Start();
 
 		bool loadSuccess = false;

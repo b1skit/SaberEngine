@@ -1,13 +1,18 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
 #include "PerformanceTimer.h"
+#include "PerformanceTimer_Platform.h"
+
+#include "../Assert.h"
 
 
-namespace util
+namespace host
 {
 	PerformanceTimer::PerformanceTimer() 
-		: m_isStarted(false)
+		: m_startTime(0)
+		, m_frequency(0.0)
+		, m_isStarted(false)
 	{
+		platform::PerformanceTimer::Create(*this);
 	}
 
 
@@ -21,23 +26,24 @@ namespace util
 	{
 		SEAssert(!m_isStarted, "Timer has already been started");
 		m_isStarted = true;
-		m_startTime = std::chrono::steady_clock::now();
+
+		platform::PerformanceTimer::Start(*this);
 	}
 
 
 	double PerformanceTimer::PeekMs() const
 	{
 		SEAssert(m_isStarted, "Timer has not been started");
-		const std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
-		return std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - m_startTime).count() / 1000000.f;
+
+		return platform::PerformanceTimer::PeekMs(*this);
 	}
 
 
 	double PerformanceTimer::PeekSec() const
 	{
 		SEAssert(m_isStarted, "Timer has not been started");
-		const std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
-		return std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - m_startTime).count() / 1000000000.f;
+
+		return platform::PerformanceTimer::PeekSec(*this);
 	}
 
 

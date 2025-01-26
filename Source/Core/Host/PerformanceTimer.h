@@ -2,7 +2,11 @@
 #pragma once
 
 
-namespace util
+namespace win32
+{
+	class PerformanceTimer;
+}
+namespace host
 {
 	class PerformanceTimer
 	{
@@ -18,7 +22,11 @@ namespace util
 		double StopSec(); // Stops the timer, and returns the high precision time since Start() in seconds
 
 	private:
-		std::chrono::steady_clock::time_point m_startTime;
+		friend class win32::PerformanceTimer;
+
+		uint64_t m_startTime;
+		double m_frequency; // Counts per ms
+
 		bool m_isStarted;
 	};
 }

@@ -12,8 +12,9 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
-#include "Core/PerformanceTimer.h"
 #include "Core/ThreadPool.h"
+
+#include "Core/Host/PerformanceTimer.h"
 
 #include "Core/Util/TextUtils.h"
 
@@ -460,7 +461,7 @@ namespace opengl
 
 	void Shader::Create(re::Shader& shader)
 	{
-		util::PerformanceTimer timer;
+		host::PerformanceTimer timer;
 		timer.Start();
 
 		opengl::Shader::PlatformParams* platParams = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();

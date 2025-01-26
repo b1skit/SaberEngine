@@ -10,7 +10,8 @@
 
 #include "Core/Config.h"
 #include "Core/EventManager.h"
-#include "Core/PerformanceTimer.h"
+
+#include "Core/Host/PerformanceTimer.h"
 
 #include "Core/Util/FileIOUtils.h"
 
@@ -144,7 +145,7 @@ namespace fr
 
 	void SceneManager::ImportFile(std::string const& filePath)
 	{
-		util::PerformanceTimer timer;
+		host::PerformanceTimer timer;
 		timer.Start();
 
 		bool success = false;

@@ -47,6 +47,8 @@
 
 #include "Core/Host/Dialog_Platform.h"
 #include "Core/Host/Dialog_Win32.h"
+#include "Core/Host/PerformanceTimer_Platform.h"
+#include "Core/Host/PerformanceTimer_Win32.h"
 #include "Core/Host/Window_Platform.h"
 #include "Core/Host/Window_Win32.h"
 
@@ -82,6 +84,13 @@ namespace platform
 		platform::Window::Destroy				= &win32::Window::Destroy;
 		platform::Window::SetRelativeMouseMode	= &win32::Window::SetRelativeMouseMode;
 
+		// Performance timer:
+		platform::PerformanceTimer::Create	= &win32::PerformanceTimer::Create;
+		platform::PerformanceTimer::Start	= &win32::PerformanceTimer::Start;
+		platform::PerformanceTimer::PeekMs	= &win32::PerformanceTimer::PeekMs;
+		platform::PerformanceTimer::PeekSec = &win32::PerformanceTimer::PeekSec;
+
+		// Windows dialogues:
 		platform::Dialog::OpenFileDialogBox		= &win32::Dialog::OpenFileDialogBox;
 
 		// Input manager:

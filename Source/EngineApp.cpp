@@ -6,10 +6,10 @@
 #include "Core/EventManager.h"
 #include "Core/InputManager.h"
 #include "Core/Logger.h"
-#include "Core/PerformanceTimer.h"
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
 
+#include "Core/Host/PerformanceTimer.h"
 #include "Core/Host/Window.h"
 
 #include "Presentation/EntityManager.h"
@@ -156,8 +156,8 @@ namespace app
 		// Initialize game loop timing:
 		double elapsed = k_fixedTimeStep; // Ensure we pump Updates once before the 1st render
 
-		util::PerformanceTimer outerLoopTimer;
-		util::PerformanceTimer innerLoopTimer;
+		host::PerformanceTimer outerLoopTimer;
+		host::PerformanceTimer innerLoopTimer;
 		double lastOuterFrameTime = 0.0;
 
 		while (m_isRunning)

@@ -9,8 +9,9 @@
 #include "VertexStream.h"
 
 #include "Core/Config.h"
-#include "Core/PerformanceTimer.h"
 #include "Core/ProfilingMarkers.h"
+
+#include "Core/Host/PerformanceTimer.h"
 
 #include "Core/Util/FileIOUtils.h"
 
@@ -204,7 +205,7 @@ namespace re
 		SEBeginCPUEvent("re::RenderManager::Initialize");
 
 		LOG("RenderManager Initializing...");
-		util::PerformanceTimer timer;
+		host::PerformanceTimer timer;
 		timer.Start();
 
 		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");

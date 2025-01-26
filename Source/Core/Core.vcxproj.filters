@@ -96,9 +96,6 @@
     <ClInclude Include="ThreadPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PerformanceTimer.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="Definitions\KeyConfiguration.h">
       <Filter>Header Files\Definitions</Filter>
     </ClInclude>
@@ -192,6 +189,15 @@
     <ClInclude Include="Util\HashKey.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="Host\PerformanceTimer.h">
+      <Filter>Header Files\host</Filter>
+    </ClInclude>
+    <ClInclude Include="Host\PerformanceTimer_Platform.h">
+      <Filter>Header Files\host\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Host\PerformanceTimer_Win32.h">
+      <Filter>Header Files\host\win32</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -205,9 +211,6 @@
     </ClCompile>
     <ClCompile Include="ThreadPool.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PerformanceTimer.cpp">
-      <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="Config.cpp">
       <Filter>Source Files</Filter>
@@ -262,6 +265,15 @@
     </ClCompile>
     <ClCompile Include="Util\TextUtils.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="Host\PerformanceTimer.cpp">
+      <Filter>Source Files\host</Filter>
+    </ClCompile>
+    <ClCompile Include="Host\PerformanceTimer_Platform.cpp">
+      <Filter>Source Files\host\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Host\PerformanceTimer_Win32.cpp">
+      <Filter>Source Files\host\win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
