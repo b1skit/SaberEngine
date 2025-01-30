@@ -171,9 +171,13 @@ namespace app
 		{
 			SEBeginCPUEvent("app::EngineApp::Run frame outer loop");
 
+			// Get the total time taken to reach this point from the previous frame:
+			if (outerLoopTimer.IsRunning()) // Not running if this is the 1st frame
+			{
+				lastOuterFrameTime = outerLoopTimer.StopMs();
+			}
 			outerLoopTimer.Start();
 
-			perfLogger->NotifyEnd(k_mainThreadLoggerKey);
 			perfLogger->NotifyBegin(k_mainThreadLoggerKey);
 
 			SEBeginCPUEvent("app::EngineApp::Update");
@@ -217,19 +221,26 @@ namespace app
 			entityManager->EnqueueRenderUpdates();
 			SEEndCPUEvent();
 
-			// Pump the render thread, and wait for it to signal copying is complete:
-			SEBeginCPUEvent("app::EngineApp::Run Wait on copy step");
-			renderManager->EnqueueUpdate({m_frameNum, lastOuterFrameTime});
-			m_syncBarrier->arrive_and_wait();
-			SEEndCPUEvent();
+			m_inventory->OnEndOfFrame(); // Free Resources that have gone out of scope
 
-			m_inventory->OnEndOfFrame();
+			// Pump the render thread:
+			renderManager->EnqueueUpdate({ m_frameNum, lastOuterFrameTime });
 
 			++m_frameNum;
 
-			lastOuterFrameTime = outerLoopTimer.StopMs();
+			perfLogger->NotifyEnd(k_mainThreadLoggerKey);
+
+			// Wait for the render thread to begin processing the current frame before we proceed to the next one:
+			SEBeginCPUEvent("app::EngineApp::Run Wait on render thread");
+			m_syncBarrier->arrive_and_wait();
+			SEEndCPUEvent();
 
 			SEEndCPUEvent();
+		}
+
+		if (outerLoopTimer.IsRunning())
+		{
+			outerLoopTimer.StopMs();
 		}
 	}
 

@@ -146,9 +146,10 @@ namespace core
 
 				for (auto const& record : m_times)
 				{
-					std::string const& recordTex = std::format("{}: {:4f} ms",
+					std::string const& recordTex = std::format("{}: {:.2f}ms / {:.2f}fps",
 						record.first.GetKey(),
-						record.second.m_mostRecentTimeMs);
+						record.second.m_mostRecentTimeMs,
+						1000.0 / record.second.m_mostRecentTimeMs);
 
 					if (record.second.m_mostRecentTimeMs < record.second.m_warnThresholdMs)
 					{
