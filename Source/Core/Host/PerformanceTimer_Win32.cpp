@@ -13,7 +13,7 @@ namespace win32
 		LARGE_INTEGER largeInt;
 		QueryPerformanceFrequency(&largeInt); // Guaranteed to succeed on WindowsXP or later
 
-		// Output is in counts per second, we convert it here to counts per ms
+		// Output is in counts per second (Hz), we convert it here to counts per ms
 		timer.m_frequency = double(largeInt.QuadPart) / 1000.0;
 	}
 
