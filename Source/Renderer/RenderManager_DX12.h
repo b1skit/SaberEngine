@@ -19,7 +19,6 @@ namespace dx12
 
 
 	public:
-		static uint8_t GetNumFramesInFlight(); // Number of frames in flight
 		static uint8_t GetIntermediateResourceIdx(); // Get an index in [0, NumFramesInFight)
 
 
@@ -28,6 +27,8 @@ namespace dx12
 		static void Shutdown(re::RenderManager&);
 		static void CreateAPIResources(re::RenderManager&);
 		static void EndOfFrame(re::RenderManager&);
+
+		static uint8_t GetNumFramesInFlight(); // Number of frames in flight
 
 
 	private: // re::RenderManager interface:
