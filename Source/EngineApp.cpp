@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EngineApp.h"
+#include "Platform.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -77,12 +78,19 @@ namespace app
 
 		LOG("EngineApp starting...");
 
+		core::Config::Get()->ProcessCommandLineArgs();
+
+		// Register our API-specific bindings before anything attempts to call them:
+		if (!platform::RegisterPlatformFunctions())
+		{
+			LOG_ERROR("Failed to configure API-specific platform bindings!\n");
+			exit(-1);
+		}
+
 		core::EventManager* eventManager = core::EventManager::Get();
 		eventManager->Startup();
 
 		eventManager->Subscribe(eventkey::EngineQuit, this);
-
-		core::Config::Get()->ProcessCommandLineArgs();
 
 		// Show the console if requested now that we've parsed the command line args
 		const bool showConsole = core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg);

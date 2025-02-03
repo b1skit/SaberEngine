@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EngineApp.h"
-#include "Platform.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -15,13 +14,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 	core::Config::Get()->LoadConfigFile();
 	core::Config::Get()->SetCommandLineArgs(__argc, __argv);
-
-	// Register our API-specific bindings before anything attempts to call them:
-	if (!platform::RegisterPlatformFunctions())
-	{
-		LOG_ERROR("Failed to configure API-specific platform bindings!\n");
-		exit(-1);
-	}
 
 	LOG("\nWelcome to the Saber Engine!\n");
 

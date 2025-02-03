@@ -74,7 +74,7 @@ namespace core::configkeys
 	constexpr util::CHashKey k_windowTitleKey		= "windowTitle";
 	constexpr util::CHashKey k_windowWidthKey		= "width";
 	constexpr util::CHashKey k_windowHeightKey		= "height";
-	constexpr util::CHashKey k_numBackbuffersKey		= "numframesinflight";
+	constexpr util::CHashKey k_numBackbuffersKey	= "numframesinflight";
 	constexpr util::CHashKey k_vsyncEnabledKey		= "vsync";
 
 	// Control defaults:
