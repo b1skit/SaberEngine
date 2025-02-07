@@ -6,6 +6,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/PerfLogger.h"
 
 #include "Core/Util/TextUtils.h"
 
@@ -48,6 +49,7 @@ namespace re
 	Context::Context()
 		: m_window(nullptr)
 		, m_renderDocApi(nullptr)
+		, m_gpuTimer(core::PerfLogger::Get(), re::RenderManager::Get()->GetNumFramesInFlight())
 	{
 		// RenderDoc cannot be enabled when DRED is enabled
 		const bool dredEnabled = core::Config::Get()->KeyExists(core::configkeys::k_enableDredCmdLineArg);
@@ -120,6 +122,12 @@ namespace re
 	}
 
 
+	void Context::Create(uint64_t currentFrame)
+	{
+		CreateInternal(currentFrame);
+	}
+
+
 	void Context::Destroy()
 	{
 		// Destroy any render libraries
@@ -131,7 +139,7 @@ namespace re
 				m_renderLibraries[i] = nullptr;
 			}
 		}
-
+		m_gpuTimer.Destroy();
 		platform::Context::Destroy(*this);
 	}
 

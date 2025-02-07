@@ -55,6 +55,10 @@ namespace re
 	public:
 		static RenderManager* Get(); // Singleton functionality
 
+	public:
+		static constexpr char const* k_GPUFrameTimerName = "GPU Frame";
+		static constexpr char const* k_GPUResourceCreateTimerName = "GPU Resource Creation";
+
 
 	public: // Platform wrappers:
 		static uint8_t GetNumFramesInFlight();
@@ -170,8 +174,8 @@ namespace re
 
 		virtual void Render() = 0;
 
-		void PreUpdate(uint64_t frameNum); // Synchronization step: Copies data, swaps buffers etc
-		void EndOfFrame();
+		void BeginFrame(uint64_t frameNum);
+		void EndFrame();
 
 
 	public:
@@ -193,6 +197,7 @@ namespace re
 
 	protected:
 		platform::RenderingAPI m_renderingAPI;
+
 
 	private:
 		std::vector<std::unique_ptr<re::RenderSystem>> m_renderSystems;

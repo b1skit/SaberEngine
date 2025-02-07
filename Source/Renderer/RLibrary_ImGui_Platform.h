@@ -41,7 +41,7 @@ namespace platform
 		static void ConfigureScaling(RLibraryImGui&);
 
 	public:
-		virtual void Execute(re::RenderStage*) = 0;
+		virtual void Execute(re::RenderStage*, void* platformObject) = 0;
 		virtual void Destroy() = 0;
 
 

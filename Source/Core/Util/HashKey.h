@@ -1,7 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Assert.h"
 #include "HashUtils.h"
+
+#include "../Assert.h"
 
 
 namespace util

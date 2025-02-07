@@ -17,14 +17,11 @@
 #include "Core/Util/FileIOUtils.h"
 
 
-namespace
-{
-	constexpr util::CHashKey k_renderThreadLoggerKey("Render thread");
-}
-
-
 namespace re
 {
+	constexpr char const* k_renderThreadLogName = "Render thread";
+
+
 	RenderManager* RenderManager::Get()
 	{
 		static std::unique_ptr<re::RenderManager> instance = std::move(re::RenderManager::Create());
@@ -166,19 +163,19 @@ namespace re
 			}
 
 			SEBeginCPUEvent("RenderManager frame");
-			perfLogger->NotifyBegin(k_renderThreadLoggerKey);
+			perfLogger->NotifyBegin(k_renderThreadLogName);
 
 			m_renderFrameNum = updateParams.m_frameNum;
 
-			PreUpdate(m_renderFrameNum);
+			BeginFrame(m_renderFrameNum);
 
 			const std::barrier<>::arrival_token& copyArrive = syncBarrier->arrive();
 
 			Update(m_renderFrameNum, updateParams.m_elapsed);
 
-			EndOfFrame(); // Clear batches, process pipeline and buffer allocator EndOfFrames
+			EndFrame(); // Clear batches, process pipeline and buffer allocator EndOfFrames
 
-			perfLogger->NotifyEnd(k_renderThreadLoggerKey);
+			perfLogger->NotifyEnd(k_renderThreadLogName);
 			SEEndCPUEvent();
 		}
 
@@ -204,9 +201,10 @@ namespace re
 		CreateDefaultTextures();
 
 		// Trigger creation of render libraries:
-		re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui);
-
-		core::PerfLogger::Get()->Register(k_renderThreadLoggerKey);
+		for (uint8_t i = 0; i < platform::RLibrary::Type::Type_Count; ++i)
+		{
+			re::Context::Get()->GetOrCreateRenderLibrary(static_cast<platform::RLibrary::Type>(i));
+		}
 
 		SEEndCPUEvent();
 	}
@@ -246,11 +244,13 @@ namespace re
 	}
 
 
-	void RenderManager::PreUpdate(uint64_t frameNum)
+	void RenderManager::BeginFrame(uint64_t frameNum)
 	{
-		SEBeginCPUEvent("re::RenderManager::PreUpdate");
+		SEBeginCPUEvent("re::RenderManager::BeginFrame");
 		
 		m_renderCommandManager.SwapBuffers();
+
+		platform::RenderManager::BeginFrame(*this, frameNum);
 
 		SEEndCPUEvent();
 	}
@@ -271,6 +271,10 @@ namespace re
 
 		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
 
+		re::Context* context = re::Context::Get();
+
+		context->GetGPUTimer().BeginFrame(m_renderFrameNum); // Platform layers internally call GPUTimer::EndFrame()
+
 		// We must create any API resources that were passed via render commands, as they may be required during GS
 		// updates (e.g. MeshPrimitive VertexStream Buffers need to be alive so we can set them on BufferInputs)
 		CreateAPIResources(false);
@@ -288,7 +292,7 @@ namespace re
 		CreateAPIResources(true);
 
 		// Update buffers
-		re::Context::Get()->GetBufferAllocator()->BufferData(frameNum);
+		context->GetBufferAllocator()->BufferData(frameNum);
 
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");
@@ -297,16 +301,16 @@ namespace re
 
 		// Present the finished frame:
 		SEBeginCPUEvent("re::Context::Present");
-		re::Context::Get()->Present();
+		context->Present();
 		SEEndCPUEvent();
 
 		SEEndCPUEvent();
 	}
 
 
-	void RenderManager::EndOfFrame()
+	void RenderManager::EndFrame()
 	{
-		SEBeginCPUEvent("re::RenderManager::EndOfFrame");
+		SEBeginCPUEvent("re::RenderManager::EndFrame");
 
 		SEBeginCPUEvent("Process render systems");
 		{
@@ -319,7 +323,7 @@ namespace re
 
 		ProcessDeferredDeletions(GetCurrentRenderFrameNum());
 
-		platform::RenderManager::EndOfFrame(*this);
+		platform::RenderManager::EndFrame(*this);
 
 		SEEndCPUEvent();
 	}

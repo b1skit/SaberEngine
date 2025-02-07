@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
+#include "GPUTimer_DX12.h"
 #include "PipelineState_DX12.h"
 #include "RenderManager_DX12.h"
 #include "Shader.h"
@@ -67,7 +68,7 @@ namespace dx12
 	}
 
 
-	void Context::Create(uint64_t currentFrame)
+	void Context::CreateInternal(uint64_t currentFrame)
 	{
 		// PIX must be loaded before loading any D3D12 APIs
 		const bool enablePIXPGPUrogrammaticCaptures = 
@@ -142,6 +143,13 @@ namespace dx12
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
 		m_bufferAllocator->Initialize(currentFrame);
+
+		// GPU Timers:
+		const dx12::GPUTimer::CreateParams timerCreateParams{
+			.m_device = m_device.GetD3DDisplayDevice(),
+			.m_directCommandQueue = m_commandQueues[CommandListType::Direct].GetD3DCommandQueue(),
+		};
+		m_gpuTimer.Create(&timerCreateParams);
 	}
 
 
@@ -197,6 +205,8 @@ namespace dx12
 
 	void Context::Present()
 	{
+		SEBeginCPUEvent("Context::Present");
+
 		// Create a command list to transition the backbuffer to the presentation state
 		dx12::CommandQueue& directQueue = m_commandQueues[dx12::CommandListType::Direct];
 
@@ -206,25 +216,25 @@ namespace dx12
 		dx12::SwapChain::PlatformParams* swapChainPlatParams =
 			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
-		std::shared_ptr<re::TextureTargetSet> swapChainTargetSet = SwapChain::GetBackBufferTargetSet(swapChain);
+		std::shared_ptr<re::TextureTargetSet> const& swapChainTargetSet = SwapChain::GetBackBufferTargetSet(swapChain);
 
 		// Transition our current backbuffer target set resource to the present state:
-		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
+		std::shared_ptr<dx12::CommandList> directCmdList = directQueue.GetCreateCommandList();
 
 #if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
-		commandList->RecordStageName("<Present>");
+		directCmdList->RecordStageName("<Present>");
 #endif
 
-		SEBeginGPUEvent(commandList->GetD3DCommandList(), perfmarkers::Type::GraphicsCommandList, "Swapchain transitions");
+		SEBeginGPUEvent(directCmdList->GetD3DCommandList(), perfmarkers::Type::GraphicsCommandList, "Swapchain transitions");
 
-		commandList->TransitionResource(
+		directCmdList->TransitionResource(
 			swapChainTargetSet->GetColorTarget(0).GetTexture(),
 			D3D12_RESOURCE_STATE_PRESENT,
 			swapChainTargetSet->GetColorTarget(0).GetTargetParams().m_textureView);
 
-		SEEndGPUEvent(commandList->GetD3DCommandList());
+		SEEndGPUEvent(directCmdList->GetD3DCommandList());
 
-		directQueue.Execute(1, &commandList);
+		directQueue.Execute(1, &directCmdList);
 
 		// Present the backbuffer:
 		const bool vsyncEnabled = swapChainPlatParams->m_vsyncEnabled;
@@ -247,19 +257,23 @@ namespace dx12
 
 		// Insert a signal into the command queue: Once this is reached, we know the work for the current frame is done
 		const uint8_t currentFrameBackbufferIdx = dx12::SwapChain::GetCurrentBackBufferIdx(swapChain);
-		m_frameFenceValues[currentFrameBackbufferIdx] = m_commandQueues[dx12::CommandListType::Direct].GPUSignal();
+		m_frameFenceValues[currentFrameBackbufferIdx] = directQueue.GPUSignal();
 
 		const uint8_t nextFrameBackbufferIdx = dx12::SwapChain::IncrementBackBufferIdx(swapChain);
 		
 		// Block the CPU on the fence for our new backbuffer, to ensure all of its work is done
-		m_commandQueues[dx12::CommandListType::Direct].CPUWait(m_frameFenceValues[nextFrameBackbufferIdx]);
+		SEBeginCPUEvent("Context::Present: Frame fence CPU wait");
+		directQueue.CPUWait(m_frameFenceValues[nextFrameBackbufferIdx]);
+		SEEndCPUEvent();
 
 		// Free the descriptors used on the next backbuffer now that we know the fence has been reached:
 		for (size_t i = 0; i < CPUDescriptorHeapManager::HeapType_Count; i++)
 		{
 			m_cpuDescriptorHeapMgrs[static_cast<CPUDescriptorHeapManager::HeapType>(i)].ReleaseFreedAllocations(
 				m_frameFenceValues[nextFrameBackbufferIdx]);
-		}	
+		}
+
+		SEEndCPUEvent();
 	}
 
 

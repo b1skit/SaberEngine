@@ -2,6 +2,7 @@
 #include "Context_OpenGL.h"
 #include "Context.h"
 #include "EnumTypes_OpenGL.h"
+#include "GPUTimer_OpenGL.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "SysInfo_OpenGL.h"
@@ -268,7 +269,7 @@ namespace opengl
 	}
 
 
-	void Context::Create(uint64_t currentFrame)
+	void Context::CreateInternal(uint64_t currentFrame)
 	{		
 		GetOpenGLExtensionProcessAddresses();
 
@@ -430,6 +431,9 @@ namespace opengl
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
 		m_bufferAllocator->Initialize(currentFrame);
+
+		// GPU Timers:
+		m_gpuTimer.Create(nullptr);
 	}
 
 

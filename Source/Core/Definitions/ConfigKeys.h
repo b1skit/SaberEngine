@@ -36,7 +36,7 @@ namespace core::configkeys
 
 	// JSON parsing:
 	constexpr util::CHashKey k_jsonAllowExceptionsKey	= "JSONAllowExceptions";
-	constexpr util::CHashKey k_jsonIgnoreCommentsKey		= "JSONIgnoreComments"; // Allow C-style comments (not to JSON spec)
+	constexpr util::CHashKey k_jsonIgnoreCommentsKey	= "JSONIgnoreComments"; // Allow C-style comments (not to JSON spec)
 
 
 	// Command line controls:
@@ -47,6 +47,8 @@ namespace core::configkeys
 	constexpr char const* k_singleThreadEffectLoading				= "singlethreadeffectloading";
 	constexpr char const* k_singleThreadGSExecution					= "singlethreadgsexecution";
 	constexpr char const* k_singleThreadGPUResourceCreation			= "singlethreadgpuresourcecreation";
+	constexpr char const* k_singleThreadCmdListRecording			= "singlethreadcommandlistrecording";
+	
 	constexpr char const* k_numWorkerThreads						= "numworkerthreads";
 	constexpr char const* k_platformCmdLineArg						= "platform";
 	constexpr char const* k_debugLevelCmdLineArg					= "debuglevel";

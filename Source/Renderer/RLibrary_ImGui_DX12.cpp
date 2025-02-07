@@ -286,7 +286,7 @@ namespace dx12
 	}
 
 
-	void RLibraryImGui::Execute(re::RenderStage* renderStage)
+	void RLibraryImGui::Execute(re::RenderStage* renderStage, void* platformObject)
 	{
 		re::LibraryStage* imGuiStage = dynamic_cast<re::LibraryStage*>(renderStage);
 
@@ -295,8 +295,8 @@ namespace dx12
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
-		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
-			context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+		RLibraryImGui* dx12ImGuiLibrary = 
+			dynamic_cast<RLibraryImGui*>(context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
 		SEAssert(imGuiStage && payload && dx12ImGuiLibrary, "A critical resource is null");
 
@@ -318,10 +318,10 @@ namespace dx12
 			ImGui::Render(); // Note: Does not touch the GPU/graphics API
 
 			// Get our SE rendering objects:
-			dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
+			dx12::CommandList* commandList = static_cast<dx12::CommandList*>(platformObject);
+			SEAssert(commandList && commandList->GetCommandListType() == dx12::CommandListType::Direct,
+				"ImGui expects a graphics command list")
 
-			// Configure the command list:
-			std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 			ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
 
 #if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
@@ -341,9 +341,6 @@ namespace dx12
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3dCommandList);
 
 			SEEndGPUEvent(d3dCommandList);
-
-			// Submit the populated command list:
-			directQueue.Execute(1, &commandList);
 		}
 
 		// Descriptor deferred delete queue:

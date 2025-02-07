@@ -54,7 +54,7 @@ namespace opengl
 	}
 
 
-	void RLibraryImGui::Execute(re::RenderStage* renderStage)
+	void RLibraryImGui::Execute(re::RenderStage* renderStage, void* platformObject)
 	{
 		re::LibraryStage* imGuiStage = dynamic_cast<re::LibraryStage*>(renderStage);
 

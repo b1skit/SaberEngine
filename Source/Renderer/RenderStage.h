@@ -31,13 +31,16 @@ namespace re
 			Graphics,
 			Compute,
 			
-			Library, // Wrapper for external libraries
+			LibraryGraphics,
+			LibraryCompute,
 
 			FullscreenQuad, // Graphics queue
 			Clear, // Graphics queue
 
 			Invalid
 		};
+		static constexpr bool IsLibraryType(Type type);
+
 		struct IStageParams
 		{
 			virtual ~IStageParams() = default;
@@ -53,12 +56,14 @@ namespace re
 		};
 		struct LibraryStageParams final : public virtual IStageParams
 		{
+			Type m_stageType;
+
 			enum class LibraryType
 			{
 				ImGui,
 			} m_type;
 
-			LibraryStageParams(LibraryType type) : m_type(type) {}
+			LibraryStageParams(Type stageType, LibraryType type) : m_stageType(stageType), m_type(type) {}
 
 			std::shared_ptr<void> m_payload; // Interpreted by the library wrapper
 
@@ -81,6 +86,17 @@ namespace re
 			re::TextureTarget::ClearMode m_depthClearMode = 
 				re::TextureTarget::ClearMode::Disabled;
 			float m_clearDepth = 1.f; // Far plane
+
+			std::string ColorClearModeToStr() const
+			{
+				SEAssert(!m_colorClearModes.empty(), "Color clear modes not set");
+				std::string result;
+				for (auto const& mode : m_colorClearModes)
+				{
+					result += re::TextureTarget::ClearModeToCStr(mode);
+				}
+				return result;
+			}
 		};
 
 
@@ -99,9 +115,9 @@ namespace re
 		static std::shared_ptr<RenderStage> CreateSingleFrameFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
 
 		static std::shared_ptr<RenderStage> CreateClearStage(
-			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const>);
+			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const> const&);
 		static std::shared_ptr<RenderStage> CreateSingleFrameClearStage(
-			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const>);
+			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const>const&);
 
 
 	public:
@@ -310,7 +326,7 @@ namespace re
 		};
 
 	public:
-		void Execute();
+		void Execute(void* platformObject); // e.g. platformObject == DX12 command list
 		
 		// The payload is an arbitrary data blob passed by a graphics system every frame for consumption by the backend
 		void SetPayload(std::unique_ptr<IPayload>&&);
@@ -326,6 +342,12 @@ namespace re
 
 
 	//---
+
+
+	inline constexpr bool RenderStage::IsLibraryType(Type type)
+	{
+		return type == Type::LibraryGraphics || type == Type::LibraryCompute;
+	}
 
 
 	inline RenderStage::Type RenderStage::GetStageType() const

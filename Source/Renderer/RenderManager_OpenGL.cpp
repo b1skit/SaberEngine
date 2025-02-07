@@ -60,6 +60,10 @@ namespace opengl
 	{
 		// Note: We've already obtained the read lock on all new resources by this point
 
+		re::GPUTimer& gpuTimer = re::Context::Get()->GetGPUTimer();
+		re::GPUTimer::Handle createResourcesTimer = 
+			gpuTimer.StartTimer(nullptr, k_GPUResourceCreateTimerName, k_GPUFrameTimerName);
+
 		// Textures:
 		if (renderManager.m_newTextures.HasReadData())
 		{
@@ -102,10 +106,18 @@ namespace opengl
 				vertexStream->CreateBuffers();
 			}
 		}
+
+		createResourcesTimer.StopTimer(nullptr);
 	}
 
 
-	void RenderManager::EndOfFrame(re::RenderManager&)
+	void RenderManager::BeginFrame(re::RenderManager&, uint64_t frameNum)
+	{
+		//
+	}
+
+
+	void RenderManager::EndFrame(re::RenderManager&)
 	{
 		//
 	}
@@ -115,37 +127,55 @@ namespace opengl
 	{
 		opengl::Context* context = re::Context::GetAs<opengl::Context*>();
 
+		re::GPUTimer& gpuTimer = context->GetGPUTimer();
+
+		re::GPUTimer::Handle frameTimer = gpuTimer.StartTimer(nullptr, k_GPUFrameTimerName);
+
 		// Render each RenderSystem in turn:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
+			re::GPUTimer::Handle renderSystemTimer = 
+				gpuTimer.StartTimer(nullptr, renderSystem->GetName().c_str(), k_GPUFrameTimerName);
+
 			// Render each stage in the RenderSystem's RenderPipeline:
 			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
 			for (re::StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
 			{
-				// Profiling markers: Graphics system group name
-				SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, stagePipeline.GetName().c_str());
+				re::GPUTimer::Handle stagePipelineTimer;
+				bool isNewStagePipeline = true;			
 
 				// Process RenderStages:
 				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 				for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
 				{
-					const re::RenderStage::Type curRenderStageType = renderStage->GetStageType();
-
-					// Library stages are executed with their own internal logic:
-					if (curRenderStageType == re::RenderStage::Type::Library)
-					{
-						dynamic_cast<re::LibraryStage*>(renderStage.get())->Execute();
-						continue;
-					}
-
 					// Skip empty stages:
 					if (renderStage->IsSkippable())
 					{
 						continue;
 					}
 
+					if (isNewStagePipeline)
+					{
+						SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, stagePipeline.GetName().c_str());
+						stagePipelineTimer =
+							gpuTimer.StartTimer(nullptr, stagePipeline.GetName().c_str(), renderSystem->GetName().c_str());
+						isNewStagePipeline = false;
+					}
+
 					// Profiling makers: Render stage name
 					SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, renderStage->GetName().c_str());
+
+					re::GPUTimer::Handle renderStageTimer =
+						gpuTimer.StartTimer(nullptr, renderStage->GetName().c_str(), stagePipeline.GetName().c_str());
+
+					// Library stages are executed with their own internal logic:
+					const re::RenderStage::Type curRenderStageType = renderStage->GetStageType();
+					if (re::RenderStage::IsLibraryType(curRenderStageType))
+					{
+						dynamic_cast<re::LibraryStage*>(renderStage.get())->Execute(nullptr);
+						renderStageTimer.StopTimer(nullptr);
+						continue;
+					}
 
 					// Get the stage targets:
 					re::TextureTargetSet const* stageTargets = renderStage->GetTextureTargetSet();
@@ -354,11 +384,20 @@ namespace opengl
 					} // batches
 
 					SEEndOpenGLGPUEvent();
+
+					renderStageTimer.StopTimer(nullptr);
 				}; // ProcessRenderStage
 
-				SEEndOpenGLGPUEvent(); // Graphics system group name
+				stagePipelineTimer.StopTimer(nullptr);
+				SEEndOpenGLGPUEvent(); // StagePipeline
 			} // StagePipeline loop
+
+			renderSystemTimer.StopTimer(nullptr);
 		} // m_renderSystems loop
+	
+		frameTimer.StopTimer(nullptr);
+
+		gpuTimer.EndFrame(nullptr);
 	}
 
 

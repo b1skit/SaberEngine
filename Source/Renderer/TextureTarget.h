@@ -34,6 +34,7 @@ namespace re
 			Enabled,
 			Disabled
 		};
+		static constexpr char const* ClearModeToCStr(ClearMode clearMode);
 
 
 	public:
@@ -250,4 +251,15 @@ namespace re
 		TextureTargetSet& operator=(TextureTargetSet const&) = delete;
 		TextureTargetSet& operator=(TextureTargetSet&&) noexcept = delete;
 	};
+
+
+	inline constexpr char const* TextureTarget::ClearModeToCStr(ClearMode clearMode)
+	{
+		switch (clearMode)
+		{
+		case ClearMode::Enabled: return "Enabled";
+		case ClearMode::Disabled: return "Disabled";
+		default: return "Invalid ClearMode"; // This should never happen
+		}
+	}
 }

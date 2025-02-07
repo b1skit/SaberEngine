@@ -83,14 +83,40 @@
               ]
             },
             {
-              "Id": "4634c00d-31b2-4580-8e6a-7c85989ee233",
+              "Id": "30858f17-046e-4453-8777-36d7b4c25827",
               "Command": "DX12",
               "Items": [
                 {
                   "Id": "8a08c18d-a6d3-4cbf-b5a3-a3e8dcde4164",
                   "Command": "-enabledred"
+                },
+                {
+                  "Id": "e4ab4c88-dd05-4482-8379-51cc4aa2591d",
+                  "Command": "-singlethreadgpuresourcecreation"
+                },
+                {
+                  "Id": "1fb775bb-6234-4b82-a30e-02e90ad8fff2",
+                  "Command": "-singlethreadcommandlistrecording"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "Id": "64d10a54-468b-49e2-80aa-ea9b5c0f7464",
+          "Command": "Threading",
+          "Items": [
+            {
+              "Id": "c3d6eda4-a91d-4fe1-9eb5-cfd47124c191",
+              "Command": "-singlethreadgsexecution"
+            },
+            {
+              "Id": "61c70afa-1525-4467-b4f8-790abd0b010c",
+              "Command": "-singlethreadeffectloading"
+            },
+            {
+              "Id": "97a8f732-f326-4216-bbe6-cd030918b58b",
+              "Command": "-numworkerthreads 12"
             }
           ]
         }
@@ -155,28 +181,6 @@
         {
           "Id": "bcab5ca4-fc56-4988-ae94-77438e7e80de",
           "Command": "-console"
-        }
-      ]
-    },
-    {
-      "Id": "64d10a54-468b-49e2-80aa-ea9b5c0f7464",
-      "Command": "Threading",
-      "Items": [
-        {
-          "Id": "c3d6eda4-a91d-4fe1-9eb5-cfd47124c191",
-          "Command": "-singlethreadgsexecution"
-        },
-        {
-          "Id": "61c70afa-1525-4467-b4f8-790abd0b010c",
-          "Command": "-singlethreadeffectloading"
-        },
-        {
-          "Id": "e4ab4c88-dd05-4482-8379-51cc4aa2591d",
-          "Command": "-singlethreadgpuresourcecreation"
-        },
-        {
-          "Id": "97a8f732-f326-4216-bbe6-cd030918b58b",
-          "Command": "-numworkerthreads 12"
         }
       ]
     },

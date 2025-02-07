@@ -49,6 +49,17 @@ namespace
 
 		newClearStage->SetTextureTargetSet(clearTargets);
 	}
+
+
+	std::string CreateClearStageName(
+		std::shared_ptr<re::TextureTargetSet const> const& targetSet,
+		re::RenderStage::ClearStageParams const& clearStageParams)
+	{
+		return std::format("Clear: {} (Color {}, Depth {})",
+			targetSet->GetName(),
+			clearStageParams.ColorClearModeToStr(),
+			re::TextureTarget::ClearModeToCStr(clearStageParams.m_depthClearMode));
+	}
 }
 
 
@@ -119,6 +130,8 @@ namespace re
 	std::shared_ptr<RenderStage> RenderStage::CreateLibraryStage(
 		char const* name, LibraryStageParams const& stageParams)
 	{
+		SEAssert(IsLibraryType(stageParams.m_stageType), "Library stages must specify a Library stage type");
+
 		std::shared_ptr<RenderStage> newLibraryStage;
 		newLibraryStage.reset(new LibraryStage(
 			name,
@@ -154,11 +167,11 @@ namespace re
 
 	std::shared_ptr<RenderStage> RenderStage::CreateClearStage(
 		ClearStageParams const& clearStageParams, 
-		std::shared_ptr<re::TextureTargetSet const> targetSet)
+		std::shared_ptr<re::TextureTargetSet const> const& targetSet)
 	{
 		std::shared_ptr<RenderStage> newClearStage;
 		newClearStage.reset(
-			new ClearStage(std::format("Clear: {}", targetSet->GetName()).c_str(), re::Lifetime::Permanent));
+			new ClearStage(CreateClearStageName(targetSet, clearStageParams).c_str(), re::Lifetime::Permanent));
 
 		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
 
@@ -168,11 +181,11 @@ namespace re
 
 	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameClearStage(
 		ClearStageParams const& clearStageParams,
-		std::shared_ptr<re::TextureTargetSet const> targetSet)
+		std::shared_ptr<re::TextureTargetSet const> const& targetSet)
 	{
 		std::shared_ptr<RenderStage> newClearStage;
 		newClearStage.reset(
-			new ClearStage(std::format("Clear: {}", targetSet->GetName()).c_str(), re::Lifetime::SingleFrame));
+			new ClearStage(CreateClearStageName(targetSet, clearStageParams).c_str(), re::Lifetime::SingleFrame));
 
 		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
 
@@ -240,9 +253,9 @@ namespace re
 	}
 
 
-	void LibraryStage::Execute()
+	void LibraryStage::Execute(void* platformObject)
 	{
-		platform::RLibrary::Execute(this);
+		platform::RLibrary::Execute(this, platformObject);
 	}
 
 
@@ -261,7 +274,7 @@ namespace re
 	LibraryStage::LibraryStage(
 		char const* name, std::unique_ptr<LibraryStageParams>&& stageParams, re::Lifetime lifetime)
 		: INamedObject(name)
-		, RenderStage(name, std::move(stageParams), Type::Library, lifetime)
+		, RenderStage(name, std::move(stageParams), stageParams->m_stageType, lifetime)
 	{
 	}
 
@@ -710,8 +723,11 @@ namespace re
 
 	bool RenderStage::IsSkippable() const
 	{
-		return (m_stageBatches.empty() && m_type != Type::Clear) ||
-			m_type == Type::Parent;
+		if (m_type == Type::Clear || IsLibraryType(m_type))
+		{
+			return false; // Assume library and clear stages always do work
+		}
+		return m_type == Type::Parent || m_stageBatches.empty();
 	}
 	
 

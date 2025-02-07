@@ -17,7 +17,7 @@ namespace opengl
 	class Context final : public virtual re::Context
 	{
 	public:
-		void Create(uint64_t currentFrame) override;
+		void CreateInternal(uint64_t currentFrame) override;
 		~Context() override = default;
 
 		// Platform implementations:

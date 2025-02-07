@@ -18,7 +18,9 @@ namespace gr
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		// Create a library stage:
-		re::RenderStage::LibraryStageParams imGuiLibraryParams(re::RenderStage::LibraryStageParams::LibraryType::ImGui);
+		re::RenderStage::LibraryStageParams imGuiLibraryParams(
+			re::RenderStage::Type::LibraryGraphics,
+			re::RenderStage::LibraryStageParams::LibraryType::ImGui);
 		m_imguiLibraryStage = re::RenderStage::CreateLibraryStage("ImGui stage", imGuiLibraryParams);
 
 		// Append the library stage

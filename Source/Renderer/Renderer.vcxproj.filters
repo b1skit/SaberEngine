@@ -434,6 +434,18 @@
     <ClInclude Include="HeapManager_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="GPUTimer.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUTimer_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUTimer_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUTimer_OpenGL.h">
+      <Filter>Header Files\re\OpenGL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -753,6 +765,18 @@
     </ClCompile>
     <ClCompile Include="HeapManager_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="GPUTimer.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="GPUTimer_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="GPUTimer_OpenGL.cpp">
+      <Filter>Source Files\re\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="GPUTimer_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

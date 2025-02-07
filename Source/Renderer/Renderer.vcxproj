@@ -139,6 +139,10 @@
     <ClInclude Include="EnumTypes_OpenGL.h" />
     <ClInclude Include="Fence_DX12.h" />
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
+    <ClInclude Include="GPUTimer.h" />
+    <ClInclude Include="GPUTimer_DX12.h" />
+    <ClInclude Include="GPUTimer_OpenGL.h" />
+    <ClInclude Include="GPUTimer_Platform.h" />
     <ClInclude Include="GraphicsSystem.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystemCommon.h" />
@@ -250,6 +254,10 @@
     <ClCompile Include="EnumTypes_OpenGL.cpp" />
     <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
+    <ClCompile Include="GPUTimer.cpp" />
+    <ClCompile Include="GPUTimer_DX12.cpp" />
+    <ClCompile Include="GPUTimer_OpenGL.cpp" />
+    <ClCompile Include="GPUTimer_Platform.cpp" />
     <ClCompile Include="GraphicsSystem.cpp" />
     <ClCompile Include="GraphicsSystemCommon.cpp" />
     <ClCompile Include="GraphicsSystemManager.cpp" />

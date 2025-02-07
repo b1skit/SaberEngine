@@ -319,26 +319,33 @@ namespace dx12
 		m_deviceCache = nullptr;
 		
 		// Swap our queue with an empty version to clear it
-		std::queue<std::shared_ptr<dx12::CommandList>> emptyCommandListPool;
-		std::swap(m_commandListPool, emptyCommandListPool);
+		{
+			std::lock_guard<std::mutex> lock(m_commandListPoolMutex);
+
+			std::queue<std::shared_ptr<dx12::CommandList>> emptyCommandListPool;
+			std::swap(m_commandListPool, emptyCommandListPool);
+		}
 	}
 
 
 	std::shared_ptr<dx12::CommandList> CommandQueue::GetCreateCommandList()
 	{
-		std::shared_ptr<dx12::CommandList> commandList = nullptr;
-		if (!m_commandListPool.empty() && m_fence.IsFenceComplete(m_commandListPool.front()->GetReuseFenceValue()))
+		std::shared_ptr<dx12::CommandList> commandList;
 		{
-			commandList = m_commandListPool.front();
-			m_commandListPool.pop();
-		}
-		else
-		{
-			commandList = std::make_shared<dx12::CommandList>(m_deviceCache.Get(), m_type);
-		}
+			std::lock_guard<std::mutex> lock(m_commandListPoolMutex);
 
-		commandList->Reset();
+			if (!m_commandListPool.empty() && m_fence.IsFenceComplete(m_commandListPool.front()->GetReuseFenceValue()))
+			{
+				commandList = m_commandListPool.front();
+				m_commandListPool.pop();
+			}
+			else
+			{
+				commandList = std::make_shared<dx12::CommandList>(m_deviceCache.Get(), m_type);
+			}
 
+			commandList->Reset();
+		}
 		return commandList;
 	}
 
@@ -940,7 +947,12 @@ namespace dx12
 		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
 		{
 			finalCommandLists[i]->SetReuseFenceValue(fenceVal);
-			m_commandListPool.push(finalCommandLists[i]);
+
+			{
+				std::lock_guard<std::mutex> lock(m_commandListPoolMutex);
+
+				m_commandListPool.push(finalCommandLists[i]);
+			}
 		}
 
 		SEEndCPUEvent();

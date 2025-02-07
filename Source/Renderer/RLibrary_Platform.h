@@ -16,7 +16,7 @@ namespace platform
 
 
 	public:
-		enum Type
+		enum Type : uint8_t
 		{
 			ImGui,
 
@@ -27,7 +27,7 @@ namespace platform
 	public:
 		static std::unique_ptr<RLibrary> Create(Type);
 
-		static void Execute(re::RenderStage*);
+		static void Execute(re::RenderStage*, void* platformObject);
 
 
 	public:

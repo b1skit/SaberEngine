@@ -2,6 +2,7 @@
 #include "PerfLogger.h"
 
 #include "../Assert.h"
+#include "../Config.h"
 
 
 namespace core
@@ -10,6 +11,12 @@ namespace core
 	{
 		static std::unique_ptr<core::PerfLogger> instance = std::make_unique<core::PerfLogger>();
 		return instance.get();
+	}
+
+
+	PerfLogger::PerfLogger()
+		: m_numFramesInFlight(core::Config::Get()->GetValue<int>(core::configkeys::k_numBackbuffersKey))
+	{
 	}
 
 
@@ -25,46 +32,160 @@ namespace core
 	}
 
 
-	void PerfLogger::Register(util::CHashKey key, double warnThresholdMs /*= 14.0*/, double alertThresholdMs /*= 16.0*/)
+	void PerfLogger::BeginFrame()
 	{
 		{
-			std::lock_guard<std::shared_mutex> lock(m_timesMutex);
+			std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
 
-			m_times.emplace(
-				key, 
+			// Update our lifetime counters, and erase anything that ages out
+			for (auto recordItr = m_times.begin(); recordItr != m_times.end(); )
+			{
+				recordItr->second.m_numFramesSinceUpdated++;
+
+				if (recordItr->second.m_numFramesSinceUpdated > k_maxFramesWithoutUpdate &&
+					recordItr->second.m_children.empty()) // Keep parents alive
+				{
+					// Remove ourselves from our parent's records:
+					if (recordItr->second.m_hasParent)
+					{
+						SEAssert(m_times.contains(recordItr->second.m_parentNameHash),
+							"Parent not found. This should not be possible");
+
+						std::vector<util::HashKey>& parentsChildren = 
+							m_times.at(recordItr->second.m_parentNameHash).m_children;
+
+						auto childEntryItr = std::find(parentsChildren.begin(), parentsChildren.end(), recordItr->first);
+						SEAssert(childEntryItr != parentsChildren.end(),
+							"Failed to find child record. This should not be possible");
+
+						parentsChildren.erase(childEntryItr);
+					}
+
+					// Remove ourselves as a parent from any child records:
+					for (auto& childNameHash : recordItr->second.m_children)
+					{
+						SEAssert(m_times.contains(childNameHash), "Child record not found. This should not be possible");
+
+						TimeRecord& childRecord = m_times.at(childNameHash);
+
+						SEAssert(childRecord.m_hasParent, "Child not marked as having a parent. This should not be possible");
+
+						childRecord.m_hasParent = false;
+						childRecord.m_parentName = std::string(/*empty*/);
+						childRecord.m_parentNameHash = util::HashKey();
+					}
+
+					if (recordItr->second.m_timer.IsRunning())
+					{
+						recordItr->second.m_timer.StopMs();
+					}
+
+					recordItr = m_times.erase(recordItr);
+				}
+				else
+				{
+					++recordItr;
+				}
+			}
+		}
+	}
+
+
+	PerfLogger::TimeRecord& PerfLogger::AddUpdateTimeRecordHelper(
+		char const* name,
+		char const* parentName /*= nullptr*/)
+	{
+		// Note: Internal helper function: We assume m_perfLoggerMutex is already locked
+
+		const util::HashKey nameHash(name);
+		const bool hasParent = parentName != nullptr;
+
+		auto recordItr = m_times.find(nameHash);
+		if (recordItr == m_times.end())
+		{
+			recordItr = m_times.emplace(
+				nameHash,
 				TimeRecord{
-					.m_warnThresholdMs = warnThresholdMs,
-					.m_alertThresholdMs = alertThresholdMs});
+					.m_name = name,
+					.m_nameHash = nameHash,
+					.m_parentName = hasParent ? parentName : std::string(/*empty*/),
+					.m_parentNameHash = hasParent ? util::HashKey(parentName) : util::HashKey(),
+					.m_mostRecentTimeMs = 0.0,
+					.m_hasParent = hasParent,
+					.m_numFramesSinceUpdated = 0,
+				}).first;
+
+			if (hasParent)
+			{
+				// If the parent has not been found, recursively add it:
+				TimeRecord* parentRecord = nullptr;
+				if (!m_times.contains(recordItr->second.m_parentNameHash))
+				{
+					parentRecord = &AddUpdateTimeRecordHelper(parentName, nullptr);
+				}
+				else
+				{
+					parentRecord = &m_times.at(recordItr->second.m_parentNameHash);
+				}
+				parentRecord->m_children.emplace_back(nameHash);
+			}
+		}
+		else
+		{
+			recordItr->second.m_numFramesSinceUpdated = 0;
+
+			// If our record was recursively pre-created by a child, ensure our own parent is correctly recorded
+			if (hasParent && !recordItr->second.m_hasParent)
+			{
+				recordItr->second.m_hasParent = true;
+				recordItr->second.m_parentName = parentName;
+				recordItr->second.m_parentNameHash = util::HashKey(parentName);
+
+				if (!m_times.contains(recordItr->second.m_parentNameHash))
+				{
+					AddUpdateTimeRecordHelper(parentName, nullptr);
+				}
+
+				m_times.at(recordItr->second.m_parentNameHash).m_children.emplace_back(nameHash);
+			}
+		}
+
+		SEAssert(!hasParent ||
+			(recordItr->second.m_hasParent && m_times.contains(recordItr->second.m_parentNameHash)),
+			"Parent inconsistency");
+
+		if (hasParent) // Keep parents alive if their children are being updated
+		{
+			TimeRecord& parentRecord = m_times.at(recordItr->second.m_parentNameHash);
+			parentRecord.m_numFramesSinceUpdated = 0;
+		}
+
+		return recordItr->second;
+	}
+
+
+	void PerfLogger::NotifyBegin(char const* name, char const* parentName /*= nullptr*/)
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
+
+			TimeRecord& record = PerfLogger::AddUpdateTimeRecordHelper(name, parentName);
+
+			record.m_timer.Start();
 		}
 	}
 
 
-	void PerfLogger::NotifyBegin(util::CHashKey key)
+	void PerfLogger::NotifyEnd(char const* name)
 	{
+		const util::HashKey nameHash(name);
+
 		{
-			// We're modifying existing entries in place, don't need an exclusive lock
-			std::shared_lock<std::shared_mutex> readLock(m_timesMutex);
+			std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
 
-			SEAssert(m_times.contains(key), "Key not found, was it registered?");
+			SEAssert(m_times.contains(nameHash), "Key not found, was NotifyBegin() called?");
 
-			TimeRecord& record = m_times.at(key);
-
-			m_times.at(key).m_timer.Start();
-		}
-	}
-
-
-	void PerfLogger::NotifyEnd(util::CHashKey key)
-	{
-		{
-			// We're modifying existing entries in place, don't need an exclusive lock.
-			// Note: There's a potential issue here where multiple threads could modify the same record, but that's
-			// invalid usage of this system
-			std::shared_lock<std::shared_mutex> readLock(m_timesMutex);
-
-			SEAssert(m_times.contains(key), "Key not found, was it registered?");
-
-			TimeRecord& record = m_times.at(key);
+			TimeRecord& record = m_times.at(nameHash);
 
 			if (record.m_timer.IsRunning()) // Might not be running (e.g. 1st update in a loop)
 			{
@@ -74,17 +195,14 @@ namespace core
 	}
 
 
-	void PerfLogger::NotifyPeriod(util::CHashKey key, double totalTimeMs)
+	void PerfLogger::NotifyPeriod(double totalTimeMs, char const* name, char const* parentName /*= nullptr*/)
 	{
 		{
-			// We're modifying existing entries in place, don't need an exclusive lock
-			std::shared_lock<std::shared_mutex> readLock(m_timesMutex);
+			std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
 
-			SEAssert(m_times.contains(key), "Key not found, was it registered?");
-
-			TimeRecord& record = m_times.at(key);
-
-			SEAssert(!record.m_timer.IsRunning(), "Timer is running, This is invalid if manually setting the period");
+			TimeRecord& record = AddUpdateTimeRecordHelper(name, parentName);
+			SEAssert(!record.m_timer.IsRunning(),
+				"Timer is running, this is invalid for manual time periods");
 
 			record.m_mostRecentTimeMs = totalTimeMs;
 		}
@@ -112,21 +230,21 @@ namespace core
 
 		ImGuiIO& io = ImGui::GetIO();
 
-		static OverlayLocation location = OverlayLocation::TopRight;
+		static OverlayLocation s_location = OverlayLocation::TopRight;
 
 		constexpr float k_padding = 10.0f;
-		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGuiViewport const* viewport = ImGui::GetMainViewport();
 
 		ImVec2 const& workPos = viewport->WorkPos; // Use work area to avoid menu/task-bar, if any
 		ImVec2 const& workSize = viewport->WorkSize;
 
 		const ImVec2 windowPos(
-			(location & 1) ? (workPos.x + workSize.x - k_padding) : (workPos.x + k_padding),
-			(location & 2) ? (workPos.y + workSize.y - k_padding) : (workPos.y + k_padding));
+			(s_location & 1) ? (workPos.x + workSize.x - k_padding) : (workPos.x + k_padding),
+			(s_location & 2) ? (workPos.y + workSize.y - k_padding) : (workPos.y + k_padding));
 		
 		const ImVec2 windowPosPivot(
-			(location & 1) ? 1.f : 0.f,
-			(location & 2) ? 1.f : 0.f);
+			(s_location & 1) ? 1.f : 0.f,	// Right / left
+			(s_location & 2) ? 1.f : 0.f);	// Bottom / top
 
 		ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always, windowPosPivot);
 		ImGui::SetNextWindowViewport(viewport->ID);
@@ -139,50 +257,105 @@ namespace core
 			constexpr ImVec4 k_warningColor = ImVec4(1.f, 0.404f, 0.f, 1.f);
 			constexpr ImVec4 k_alertColor = ImVec4(1.f, 0.f, 0.f, 1.f);
 
-			{
-				// We're getting a read lock here, so there is a potential race condition if another thread modifies a
-				// record, but we're trying to avoid contention skewing our results
-				std::shared_lock<std::shared_mutex> readLock(m_timesMutex);
+			auto BuildRecordText = [](TimeRecord const& record) -> std::string
+				{
+					if (!record.m_hasParent) // Root node: Show the ms -> FPS conversion
+					{
+						return std::format("{}{}",
+							record.m_name,
+							record.m_mostRecentTimeMs == 0.0 ? // Don't show a time if none was recorded (e.g. untimed parent)
+							""
+							: std::format(": {:6.2f}ms /{:8.2f}fps",
+								record.m_mostRecentTimeMs,
+								record.m_mostRecentTimeMs > 0 ? 1000.0 / record.m_mostRecentTimeMs : 0.0).c_str());
+					}
+					else // Don't show the ms -> FPS conversion for child nodes
+					{
+						return std::format("{}: {:6.2f}ms",
+							record.m_name,
+							record.m_mostRecentTimeMs);
+					}
+				};
 
+			{
+				std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
+			
 				for (auto const& record : m_times)
 				{
-					std::string const& recordTex = std::format("{}: {:6.2f}ms /{:8.2f}fps",
-						record.first.GetKey(),
-						record.second.m_mostRecentTimeMs,
-						1000.0 / record.second.m_mostRecentTimeMs);
+					if (record.second.m_hasParent)
+					{
+						continue; // Nested records are printed by their parent
+					}
 
-					if (record.second.m_mostRecentTimeMs < record.second.m_warnThresholdMs)
-					{
-						ImGui::TextColored(k_defaultColor, recordTex.c_str());
-					}
-					else if (record.second.m_mostRecentTimeMs < record.second.m_alertThresholdMs)
-					{
-						ImGui::TextColored(k_warningColor, recordTex.c_str());
-					}
-					else
-					{
-						ImGui::TextColored(k_alertColor, recordTex.c_str());
-					}
+					// Must fully specialize our function object to be able to recursively call it:
+					std::function<void(TimeRecord const&)> RecursiveNodeDisplay;
+					RecursiveNodeDisplay = [&BuildRecordText, this, &RecursiveNodeDisplay]
+						(TimeRecord const& record)
+						{
+							std::string const& recordTex = BuildRecordText(record);
+
+							// Set the color for the upcoming element:
+							if (record.m_mostRecentTimeMs < k_warnThresholdMs)
+							{
+								ImGui::PushStyleColor(ImGuiCol_Text, k_defaultColor);
+							}
+							else if (record.m_mostRecentTimeMs < k_alertThresholdMs)
+							{
+								ImGui::PushStyleColor(ImGuiCol_Text, k_warningColor);
+							}
+							else
+							{
+								ImGui::PushStyleColor(ImGuiCol_Text, k_alertColor);
+							}
+
+							// Hide the ">" icon if an entry has no children
+							const ImGuiTreeNodeFlags flags = record.m_children.empty() ?
+								ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet
+								: ImGuiTreeNodeFlags_None;
+
+							if (ImGui::TreeNodeEx(std::format("##{}", record.m_name).c_str(), flags))
+							{
+								ImGui::SameLine();
+								ImGui::Text(recordTex.c_str());
+
+								for (auto const& childKey : record.m_children)
+								{
+									RecursiveNodeDisplay(m_times.at(childKey));
+								}
+
+								ImGui::TreePop();
+							}
+							else
+							{
+								ImGui::SameLine();
+								ImGui::Text(recordTex.c_str());
+							}
+
+							// Cleanup:
+							ImGui::PopStyleColor();
+						};
+
+					RecursiveNodeDisplay(record.second);
 				}
 			}
 
 			if (ImGui::BeginPopupContextWindow())
 			{
-				if (ImGui::MenuItem("Top-left", nullptr, location == TopLeft))
+				if (ImGui::MenuItem("Top-left", nullptr, s_location == TopLeft))
 				{
-					location = TopLeft;
+					s_location = TopLeft;
 				}
-				if (ImGui::MenuItem("Top-right", nullptr, location == TopRight))
+				if (ImGui::MenuItem("Top-right", nullptr, s_location == TopRight))
 				{
-					location = TopRight;
+					s_location = TopRight;
 				}
-				if (ImGui::MenuItem("Bottom-left", nullptr, location == BottomLeft))
+				if (ImGui::MenuItem("Bottom-left", nullptr, s_location == BottomLeft))
 				{
-					location = BottomLeft;
+					s_location = BottomLeft;
 				}
-				if (ImGui::MenuItem("Bottom-right", nullptr, location == BottomRight))
+				if (ImGui::MenuItem("Bottom-right", nullptr, s_location == BottomRight))
 				{
-					location = BottomRight;
+					s_location = BottomRight;
 				}
 				if (show && ImGui::MenuItem("Hide"))
 				{

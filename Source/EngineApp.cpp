@@ -26,7 +26,7 @@ namespace
 {
 	constexpr size_t k_numSystemThreads = 2;
 
-	constexpr util::CHashKey k_mainThreadLoggerKey("Main thread");
+	constexpr char const* k_mainThreadLoggerName = "Main thread";
 
 
 	// Create the main window on the engine thread to associate it with the correct Win32 event queue
@@ -142,8 +142,6 @@ namespace app
 
 		uiMgr->Startup();
 
-		core::PerfLogger::Get()->Register(k_mainThreadLoggerKey);
-
 		m_isRunning = true;
 
 		SEEndCPUEvent();
@@ -186,7 +184,8 @@ namespace app
 			}
 			outerLoopTimer.Start();
 
-			perfLogger->NotifyBegin(k_mainThreadLoggerKey);
+			perfLogger->BeginFrame();
+			perfLogger->NotifyBegin(k_mainThreadLoggerName);
 
 			SEBeginCPUEvent("app::EngineApp::Update");
 			EngineApp::Update(m_frameNum, lastOuterFrameTime);
@@ -236,7 +235,7 @@ namespace app
 
 			++m_frameNum;
 
-			perfLogger->NotifyEnd(k_mainThreadLoggerKey);
+			perfLogger->NotifyEnd(k_mainThreadLoggerName);
 
 			// Wait for the render thread to begin processing the current frame before we proceed to the next one:
 			SEBeginCPUEvent("app::EngineApp::Run Wait on render thread");

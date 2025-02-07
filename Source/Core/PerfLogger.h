@@ -2,7 +2,7 @@
 #pragma once
 #include "Host/PerformanceTimer.h"
 
-#include "Util/CHashKey.h"
+#include "Util/HashKey.h"
 
 
 namespace core
@@ -14,7 +14,8 @@ namespace core
 
 
 	public:
-		PerfLogger() = default;
+		PerfLogger();
+
 		PerfLogger(PerfLogger&&) noexcept = default;
 		PerfLogger& operator=(PerfLogger&&) noexcept = default;
 		
@@ -22,12 +23,12 @@ namespace core
 
 	
 	public:
-		void Register(util::CHashKey key, double warnThresholdMs = 14.0, double alertThresholdMs = 16.0);
-		
-		void NotifyBegin(util::CHashKey key);
-		void NotifyEnd(util::CHashKey key);
+		void BeginFrame();
 
-		void NotifyPeriod(util::CHashKey key, double totalTimeMs);
+		void NotifyBegin(char const* name, char const* parentName = nullptr);
+		void NotifyEnd(char const* name);
+
+		void NotifyPeriod(double totalTimeMs, char const*, char const* parentName = nullptr);
 
 
 	public:
@@ -35,17 +36,37 @@ namespace core
 
 
 	private:
+		static constexpr uint8_t k_maxFramesWithoutUpdate = 10; // No. frames without update to delete a record
+		
 		struct TimeRecord
 		{
 			host::PerformanceTimer m_timer;
 
+			std::string m_name;
+			util::HashKey m_nameHash;
+
+			std::string m_parentName;
+			util::HashKey m_parentNameHash;
+
 			double m_mostRecentTimeMs = 0.0;
-			
-			double m_warnThresholdMs = std::numeric_limits<double>::max();
-			double m_alertThresholdMs = std::numeric_limits<double>::max();
+
+			std::vector<util::HashKey> m_children;
+			bool m_hasParent = false; // If true, will be nested
+
+			uint8_t m_numFramesSinceUpdated = 0;
 		};
-		std::unordered_map<util::CHashKey, TimeRecord> m_times;
-		std::shared_mutex m_timesMutex;
+		std::unordered_map<util::HashKey, TimeRecord> m_times;
+
+		static constexpr double k_warnThresholdMs = 1000.0 / 70.0;
+		static constexpr double k_alertThresholdMs = 1000.0 / 60.0;
+
+		uint8_t m_numFramesInFlight;
+
+		std::mutex m_perfLoggerMutex;
+
+
+	private:
+		TimeRecord& AddUpdateTimeRecordHelper(char const* name, char const* parentName /*= nullptr*/);
 
 
 	private: // No copying allowed

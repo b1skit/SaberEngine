@@ -26,7 +26,7 @@ namespace opengl
 		RLibraryImGui() = default;
 		~RLibraryImGui() = default;
 
-		void Execute(re::RenderStage*) override;
+		void Execute(re::RenderStage*, void* platformObject) override;
 
 		void Destroy() override;
 

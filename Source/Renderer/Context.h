@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BufferAllocator.h"
+#include "GPUTimer.h"
 #include "RLibrary_Platform.h"
 #include "SwapChain.h"
 
@@ -35,14 +36,15 @@ namespace re
 	public:
 		virtual ~Context() = default;
 
-		// Context interface:
-		virtual void Create(uint64_t currentFrame) = 0;
-		
-		virtual void Present() = 0;
-
-		// Platform wrappers:
+		void Create(uint64_t currentFrame);
 		void Destroy();
 
+
+	public: // Context interface:
+		virtual void Present() = 0;
+	private:
+		virtual void CreateInternal(uint64_t currentFrame) = 0;
+	
 
 	public:
 		void SetWindow(host::Window*); // Set once
@@ -55,6 +57,9 @@ namespace re
 		re::BufferAllocator const* GetBufferAllocator() const;
 
 		platform::RLibrary* GetOrCreateRenderLibrary(platform::RLibrary::Type);
+
+		re::GPUTimer& GetGPUTimer();
+
 
 	private:
 		static std::unique_ptr<re::Context> CreateSingleton();
@@ -70,6 +75,10 @@ namespace re
 	private:
 		host::Window* m_window;
 		re::SwapChain m_swapChain;
+
+
+	protected:
+		re::GPUTimer m_gpuTimer;
 
 		
 	public: // RenderDoc debugging
@@ -118,6 +127,12 @@ namespace re
 	{
 		SEAssert(m_bufferAllocator && m_bufferAllocator->IsValid(), "Buffer allocator has already been destroyed");
 		return m_bufferAllocator.get();
+	}
+
+
+	inline re::GPUTimer& Context::GetGPUTimer()
+	{
+		return m_gpuTimer;
 	}
 
 

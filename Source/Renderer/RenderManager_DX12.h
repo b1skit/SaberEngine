@@ -26,7 +26,8 @@ namespace dx12
 		static void Initialize(re::RenderManager&);
 		static void Shutdown(re::RenderManager&);
 		static void CreateAPIResources(re::RenderManager&);
-		static void EndOfFrame(re::RenderManager&);
+		static void BeginFrame(re::RenderManager&, uint64_t frameNum);
+		static void EndFrame(re::RenderManager&);
 
 		static uint8_t GetNumFramesInFlight(); // Number of frames in flight
 
@@ -35,15 +36,14 @@ namespace dx12
 		void Render() override;
 		
 
-	protected:
-		const uint8_t k_numFrames;
+	private:
+		const uint8_t m_numFrames;
 	};
 
 
 	inline uint8_t RenderManager::GetNumFramesInFlight()
 	{
-		static const uint8_t k_numFrames = dynamic_cast<dx12::RenderManager*>(re::RenderManager::Get())->k_numFrames;
-		return k_numFrames;
+		return dynamic_cast<dx12::RenderManager*>(re::RenderManager::Get())->m_numFrames;
 	}
 
 

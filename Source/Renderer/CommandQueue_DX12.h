@@ -73,6 +73,7 @@ namespace dx12
 		uint64_t m_typeFenceBitMask; // Upper 3 bits indicate the fence type
 
 		std::queue<std::shared_ptr<dx12::CommandList>> m_commandListPool;
+		std::mutex m_commandListPoolMutex;
 
 		bool m_isCreated;
 

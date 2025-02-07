@@ -8,6 +8,11 @@
 #include "Renderer/Buffer_DX12.h"
 #include "Renderer/Buffer_OpenGL.h"
 #include "Renderer/Buffer_Platform.h"
+
+#include "Renderer/GPUTimer_DX12.h"
+#include "Renderer/GPUTimer_OpenGL.h"
+#include "Renderer/GPUTimer_Platform.h"
+
 #include "Renderer/RLibrary_Platform.h"
 
 #include "Renderer/RenderManager_DX12.h"
@@ -116,11 +121,20 @@ namespace platform
 			platform::Buffer::MapCPUReadback	= &opengl::Buffer::MapCPUReadback;
 			platform::Buffer::UnmapCPUReadback	= &opengl::Buffer::UnmapCPUReadback;
 
+			// GPU Timer:
+			platform::GPUTimer::Create		= &opengl::GPUTimer::Create;
+			platform::GPUTimer::Destroy		= &opengl::GPUTimer::Destroy;
+			platform::GPUTimer::BeginFrame	= &opengl::GPUTimer::BeginFrame;
+			platform::GPUTimer::EndFrame	= &opengl::GPUTimer::EndFrame;
+			platform::GPUTimer::StartTimer	= &opengl::GPUTimer::StartTimer;
+			platform::GPUTimer::StopTimer	= &opengl::GPUTimer::StopTimer;
+
 			// Render manager:
 			platform::RenderManager::Initialize				= &opengl::RenderManager::Initialize;
 			platform::RenderManager::Shutdown				= &opengl::RenderManager::Shutdown;
 			platform::RenderManager::CreateAPIResources		= &opengl::RenderManager::CreateAPIResources;
-			platform::RenderManager::EndOfFrame				= &opengl::RenderManager::EndOfFrame;
+			platform::RenderManager::BeginFrame				= &opengl::RenderManager::BeginFrame;
+			platform::RenderManager::EndFrame				= &opengl::RenderManager::EndFrame;
 			platform::RenderManager::GetNumFramesInFlight	= &opengl::RenderManager::GetNumFramesInFlight;
 
 			// Shader:
@@ -157,12 +171,21 @@ namespace platform
 			platform::Buffer::Destroy			= &dx12::Buffer::Destroy;
 			platform::Buffer::MapCPUReadback	= &dx12::Buffer::MapCPUReadback;
 			platform::Buffer::UnmapCPUReadback	= &dx12::Buffer::UnmapCPUReadback;
+
+			// GPU Timer:
+			platform::GPUTimer::Create		= &dx12::GPUTimer::Create;
+			platform::GPUTimer::Destroy		= &dx12::GPUTimer::Destroy;
+			platform::GPUTimer::BeginFrame	= &dx12::GPUTimer::BeginFrame;
+			platform::GPUTimer::EndFrame	= &dx12::GPUTimer::EndFrame;
+			platform::GPUTimer::StartTimer	= &dx12::GPUTimer::StartTimer;
+			platform::GPUTimer::StopTimer	= &dx12::GPUTimer::StopTimer;
 			
 			// Render manager:
 			platform::RenderManager::Initialize				= &dx12::RenderManager::Initialize;
 			platform::RenderManager::Shutdown				= &dx12::RenderManager::Shutdown;
 			platform::RenderManager::CreateAPIResources		= &dx12::RenderManager::CreateAPIResources;
-			platform::RenderManager::EndOfFrame				= &dx12::RenderManager::EndOfFrame;
+			platform::RenderManager::BeginFrame				= &dx12::RenderManager::BeginFrame;
+			platform::RenderManager::EndFrame				= &dx12::RenderManager::EndFrame;
 			platform::RenderManager::GetNumFramesInFlight	= &dx12::RenderManager::GetNumFramesInFlight;
 
 			// Shader:
