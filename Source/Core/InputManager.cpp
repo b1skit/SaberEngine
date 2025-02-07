@@ -5,6 +5,7 @@
 #include "InputManager.h"
 #include "InputManager_Platform.h"
 
+#include "Definitions/EventKeys.h"
 #include "Definitions/KeyConfiguration.h"
 
 

@@ -12,6 +12,8 @@
 #include "Core/PerfLogger.h"
 #include "Core/ProfilingMarkers.h"
 
+#include "Core/Definitions/EventKeys.h"
+
 #include "Core/Host/PerformanceTimer.h"
 
 #include "Core/Util/FileIOUtils.h"
@@ -329,12 +331,12 @@ namespace re
 	}
 
 
-	void RenderManager::RegisterTextureForDeferredDelete(std::unique_ptr<re::Texture::PlatformParams>&& platParams)
+	void RenderManager::RegisterForDeferredDelete(std::unique_ptr<core::IPlatformParams>&& platParams)
 	{
 		{
-			std::lock_guard<std::mutex> lock(m_deletedTexturesMutex);
+			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
 
-			m_deletedTextures.emplace(TextureDeferredDelete{
+			m_deletedPlatObjects.emplace(PlatformDeferredDelete{
 				.m_platformParams = std::move(platParams),
 				.m_frameNum = GetCurrentRenderFrameNum() });
 		}
@@ -345,13 +347,13 @@ namespace re
 	{
 		const uint8_t numFramesInFlight = GetNumFramesInFlight();
 		{
-			std::lock_guard<std::mutex> lock(m_deletedTexturesMutex);
+			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
 
-			while (!m_deletedTextures.empty() &&
-				m_deletedTextures.front().m_frameNum + numFramesInFlight < frameNum)
+			while (!m_deletedPlatObjects.empty() &&
+				m_deletedPlatObjects.front().m_frameNum + numFramesInFlight < frameNum)
 			{
-				m_deletedTextures.front().m_platformParams->Destroy();
-				m_deletedTextures.pop();
+				m_deletedPlatObjects.front().m_platformParams->Destroy();
+				m_deletedPlatObjects.pop();
 			}
 		}
 	}

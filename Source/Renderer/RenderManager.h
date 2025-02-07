@@ -11,6 +11,7 @@
 #include "Core/Interfaces/IEngineComponent.h"
 #include "Core/Interfaces/IEngineThread.h"
 #include "Core/Interfaces/IEventListener.h"
+#include "Core/Interfaces/IPlatformParams.h"
 
 #include "Core/Util/ImGuiUtils.h"
 #include "Core/Util/NBufferedVector.h"
@@ -179,20 +180,20 @@ namespace re
 
 
 	public:
-		void RegisterTextureForDeferredDelete(std::unique_ptr<re::Texture::PlatformParams>&&);
+		void RegisterForDeferredDelete(std::unique_ptr<core::IPlatformParams>&&);
 
 	private:
 		static constexpr uint64_t k_forceDeferredDeletionsFlag = std::numeric_limits<uint64_t>::max();
 
 		void ProcessDeferredDeletions(uint64_t frameNum);
 		
-		struct TextureDeferredDelete
+		struct PlatformDeferredDelete
 		{
-			std::unique_ptr<re::Texture::PlatformParams> m_platformParams;
+			std::unique_ptr<core::IPlatformParams> m_platformParams;
 			uint64_t m_frameNum; // When the delete was recorded: Delete will happen after GetNumFramesInFlight() frames
 		};
-		std::queue<TextureDeferredDelete> m_deletedTextures;
-		std::mutex m_deletedTexturesMutex;
+		std::queue<PlatformDeferredDelete> m_deletedPlatObjects;
+		std::mutex m_deletedPlatObjectsMutex;
 
 
 	protected:

@@ -143,13 +143,6 @@ namespace dx12
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
 		m_bufferAllocator->Initialize(currentFrame);
-
-		// GPU Timers:
-		const dx12::GPUTimer::CreateParams timerCreateParams{
-			.m_device = m_device.GetD3DDisplayDevice(),
-			.m_directCommandQueue = m_commandQueues[CommandListType::Direct].GetD3DCommandQueue(),
-		};
-		m_gpuTimer.Create(&timerCreateParams);
 	}
 
 

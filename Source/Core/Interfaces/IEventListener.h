@@ -7,10 +7,12 @@ namespace core
 {
 	class IEventListener
 	{
-	public: // IEventListener interface:
-		virtual void HandleEvents() = 0;
-
+	public:
 		virtual ~IEventListener() = default;
+
+
+	protected: // IEventListener interface:
+		virtual void HandleEvents() = 0;
 
 
 	public:

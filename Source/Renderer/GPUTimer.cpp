@@ -1,9 +1,12 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "GPUTimer.h"
 #include "GPUTimer_Platform.h"
+#include "RenderManager.h"
 
 #include "Core/Assert.h"
 #include "Core/PerfLogger.h"
+
+#include "Core/Definitions/EventKeys.h"
 
 #include "Core/Util/CastUtils.h"
 
@@ -68,12 +71,15 @@ namespace re
 	GPUTimer::GPUTimer(core::PerfLogger* perfLogger, uint8_t numFramesInFlight)
 		: m_platformParams(platform::GPUTimer::CreatePlatformParams())
 		, m_perfLogger(perfLogger)
+		, m_isEnabled(false)
 	{
 		SEAssert(m_perfLogger && numFramesInFlight > 0 && numFramesInFlight <= 3, "Invalid args received");
 
 		m_platformParams->m_numFramesInFlight = numFramesInFlight;		
 		m_platformParams->m_currentFrameNum = 0;
 		m_platformParams->m_currentFrameTimerCount = 0;
+
+		core::EventManager::Get()->Subscribe(eventkey::TogglePerformanceTimers, this);
 	}
 
 
@@ -82,17 +88,20 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
-			SEAssert(m_platformParams == nullptr, "Platform params is not null. Was Destroy() called?");
+			SEAssert(m_platformParams && !m_platformParams->m_isCreated,
+				"Invalid Platform params state. Was Destroy() called?");
 		}
 	}
 	
 
-	void GPUTimer::Create(void const* createParams)
+	void GPUTimer::Create()
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
-			platform::GPUTimer::Create(*this, createParams);
+			SEAssert(m_platformParams && !m_platformParams->m_isCreated, "Invalid Platform params state");
+
+			platform::GPUTimer::Create(*this);
 
 			m_platformParams->m_isCreated = true;
 		}
@@ -104,16 +113,35 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
-			SEAssert(m_platformParams && m_platformParams->m_isCreated, "GPU Timer already Destroyed");
+			SEAssert(m_platformParams, "Invalid platform params state");
 
-			platform::GPUTimer::Destroy(*this);
-			m_platformParams = nullptr;
+			if (m_platformParams->m_isCreated) // Not already destroyed
+			{
+				// Copy simple params in case we're re-created
+				std::unique_ptr<PlatformParams> newPlatformParams = platform::GPUTimer::CreatePlatformParams();
+				newPlatformParams->m_numFramesInFlight = m_platformParams->m_numFramesInFlight;
+				newPlatformParams->m_currentFrameNum = 0;
+				newPlatformParams->m_currentFrameTimerCount = 0;
+
+				newPlatformParams->m_isCreated = false;
+
+				re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
+
+				m_platformParams = std::move(newPlatformParams);
+			}
 		}
 	}
 
 
 	void GPUTimer::BeginFrame(uint64_t frameNum)
 	{
+		HandleEvents();
+
+		if (m_isEnabled.load() == false)
+		{
+			return;
+		}
+
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
@@ -128,6 +156,11 @@ namespace re
 
 	void GPUTimer::EndFrame(void* platformObject)
 	{
+		if (m_isEnabled.load() == false)
+		{
+			return;
+		}
+
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
@@ -193,9 +226,43 @@ namespace re
 	}
 
 
+	void GPUTimer::HandleEvents()
+	{
+		while (HasEvents())
+		{
+			core::EventManager::EventInfo const& eventInfo = GetEvent();
+
+			switch (eventInfo.m_eventKey)
+			{
+			case eventkey::TogglePerformanceTimers:
+			{
+				m_isEnabled.store(std::get<bool>(eventInfo.m_data));
+
+				if (m_isEnabled.load())
+				{
+					Create();
+				}
+				else
+				{
+					Destroy();
+				}
+			}
+			break;
+			default:
+				break;
+			}
+		}
+	}
+
+
 	GPUTimer::Handle GPUTimer::StartTimer(
 		void* platformObject, char const* name, char const* parentName /*= nullptr*/)
 	{
+		if (m_isEnabled.load() == false)
+		{
+			return Handle();
+		}
+
 		Handle newHandle(this, StartHandleTimer(platformObject, name, parentName));
 
 		return newHandle;
@@ -207,6 +274,8 @@ namespace re
 		char const* name,
 		char const* parentName /*= nullptr*/)
 	{
+		SEAssert(m_isEnabled.load(), "Timer is not enabled");
+
 		const util::HashKey nameHash(name);
 
 		{
@@ -259,6 +328,11 @@ namespace re
 
 	void GPUTimer::StopTimer(std::multimap<util::HashKey, TimeRecord>::iterator timeRecordItr, void* platformObject)
 	{
+		if (m_isEnabled.load() == false)
+		{
+			return;
+		}
+
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 

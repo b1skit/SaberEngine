@@ -338,7 +338,7 @@ namespace re
 
 		platform::Texture::Destroy(*this);
 
-		re::RenderManager::Get()->RegisterTextureForDeferredDelete(std::move(m_platformParams));
+		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
 	}
 
 

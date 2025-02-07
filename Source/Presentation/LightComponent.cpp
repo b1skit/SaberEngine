@@ -16,6 +16,8 @@
 
 #include "Core/Config.h"
 
+#include "Core/Definitions/EventKeys.h"
+
 #include "Core/Host/Dialog.h"
 
 #include "Core/Util/ImGuiUtils.h"

@@ -2,12 +2,14 @@
 #pragma once
 #include "Host/PerformanceTimer.h"
 
+#include "Interfaces/IEventListener.h"
+
 #include "Util/HashKey.h"
 
 
 namespace core
 {
-	class PerfLogger
+	class PerfLogger : public virtual core::IEventListener
 	{
 	public:
 		static PerfLogger* Get(); // Singleton functionality
@@ -33,6 +35,12 @@ namespace core
 
 	public:
 		void ShowImGuiWindow(bool* show);
+
+
+	private:
+		void HandleEvents() override;
+
+		void Destroy();
 
 
 	private:
@@ -63,6 +71,8 @@ namespace core
 		uint8_t m_numFramesInFlight;
 
 		std::mutex m_perfLoggerMutex;
+		
+		std::atomic<bool> m_isEnabled;
 
 
 	private:

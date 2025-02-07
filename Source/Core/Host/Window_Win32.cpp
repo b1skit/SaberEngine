@@ -6,6 +6,8 @@
 #include "../EventManager.h"
 #include "../Logger.h"
 
+#include "../Definitions/EventKeys.h"
+
 #include "../Util/CastUtils.h"
 
 #include "shellapi.h"

@@ -9,6 +9,7 @@
 #include "Core/Logger.h"
 #include "Core/PerfLogger.h"
 
+#include "Core/Definitions/EventKeys.h"
 #include "Core/Definitions/KeyConfiguration.h"
 
 #include "Core/Host/Dialog.h"
@@ -222,7 +223,12 @@ namespace fr
 		m_show[EntityMgrDbg] = true;
 		m_show[TransformationHierarchyDbg] = true;
 		m_show[EntityComponentDbg] = true;
-		m_show[RenderMgrDbg] = true;		
+		m_show[RenderMgrDbg] = true;
+
+		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+			.m_eventKey = eventkey::TogglePerformanceTimers,
+			.m_data = m_show[PerfLogger],
+			});
 
 		m_window->SetRelativeMouseMode(!m_imguiMenuActive);
 	}
@@ -566,7 +572,13 @@ namespace fr
 
 					if (ImGui::BeginMenu("Capture"))
 					{
-						ImGui::MenuItem("Performance overlay", "", &m_show[Show::PerfLogger]);
+						if (ImGui::MenuItem("Performance overlay", "", &m_show[Show::PerfLogger]))
+						{
+							core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+								.m_eventKey = eventkey::TogglePerformanceTimers,
+								.m_data = m_show[PerfLogger],
+							});
+						}
 						ImGui::MenuItem("GPU Captures", "", &m_show[Show::GPUCaptures]);
 
 						// TODO...

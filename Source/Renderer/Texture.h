@@ -95,7 +95,7 @@ namespace re
 	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
-			virtual void Destroy() = 0; // API-specific GPU bindings should be destroyed here
+			virtual void Destroy() override = 0; // API-specific GPU bindings should be destroyed here
 
 			bool m_isCreated = false;
 			bool m_isDirty = true; // Signal the platform layer that the texture data has been modified

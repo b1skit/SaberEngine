@@ -13,6 +13,8 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::GPUTimer::PlatformParams
 		{
+			void Destroy() override;
+
 			Microsoft::WRL::ComPtr<ID3D12QueryHeap> m_gpuQueryHeap;
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_gpuQueryBuffer;
 
@@ -20,15 +22,8 @@ namespace dx12
 		};
 
 
-		struct CreateParams
-		{
-			ID3D12Device2* m_device = nullptr;
-			ID3D12CommandQueue* m_directCommandQueue = nullptr;
-		};
-
-
 	public:
-		static void Create(re::GPUTimer const&, void const* createParams); // dx12::GPUTimer::CreateParams const*
+		static void Create(re::GPUTimer const&);
 		static void Destroy(re::GPUTimer const&);
 
 		static void BeginFrame(re::GPUTimer const&);

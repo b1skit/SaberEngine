@@ -12,12 +12,14 @@ namespace opengl
 	public:
 		struct PlatformParams final : public re::GPUTimer::PlatformParams
 		{
+			void Destroy() override;
+
 			std::vector<GLuint> m_queryIDs;
 		};
 
 
 	public:
-		static void Create(re::GPUTimer const&, void const* createParams);
+		static void Create(re::GPUTimer const&);
 		static void Destroy(re::GPUTimer const&);
 
 		static void BeginFrame(re::GPUTimer const&);

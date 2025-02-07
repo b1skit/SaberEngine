@@ -21,6 +21,7 @@
 #include "Core/Config.h"
 
 #include "Core/Definitions/ConfigKeys.h"
+#include "Core/Definitions/EventKeys.h"
 
 #include "Renderer/RenderManager.h"
 

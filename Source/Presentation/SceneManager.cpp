@@ -11,6 +11,8 @@
 #include "Core/Config.h"
 #include "Core/EventManager.h"
 
+#include "Core/Definitions/EventKeys.h"
+
 #include "Core/Host/PerformanceTimer.h"
 
 #include "Core/Util/FileIOUtils.h"

@@ -11,7 +11,7 @@ namespace platform
 		static std::unique_ptr<re::GPUTimer::PlatformParams> CreatePlatformParams();
 
 	public:
-		static void (*Create)(re::GPUTimer const&, void const* createParams);
+		static void (*Create)(re::GPUTimer const&);
 		static void (*Destroy)(re::GPUTimer const&);
 
 		static void (*BeginFrame)(re::GPUTimer const&);

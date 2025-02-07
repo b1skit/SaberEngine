@@ -1,5 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
+#include "Core/Interfaces/IEventListener.h"
 #include "Core/Interfaces/IPlatformParams.h"
 
 #include "Core/Util/HashKey.h"
@@ -12,7 +13,7 @@ namespace core
 
 namespace re
 {
-	class GPUTimer
+	class GPUTimer : public virtual core::IEventListener
 	{
 	public:
 		// Arbitrary: How many timers should we allocate? Each timer allocates 2 query elements (i.e. start + stop)
@@ -37,6 +38,8 @@ namespace re
 
 		struct PlatformParams : public core::IPlatformParams
 		{
+			virtual void Destroy() override = 0;
+
 			std::multimap<util::HashKey, TimeRecord> m_gpuTimes;
 
 			double m_invGPUFrequency = 0.0; // 1.0 / (Ticks/ms)
@@ -82,7 +85,6 @@ namespace re
 
 		~GPUTimer();
 
-		void Create(void const* createParams);
 		void Destroy();
 
 		PlatformParams* GetPlatformParams() const;
@@ -93,6 +95,12 @@ namespace re
 		void EndFrame(void* platformObject);
 
 		[[nodiscard]] Handle StartTimer(void* platformObject, char const* name, char const* parentName = nullptr);
+
+
+	private:
+		void HandleEvents() override;
+
+		void Create();		
 
 
 	private:
@@ -107,6 +115,8 @@ namespace re
 		std::mutex m_platformParamsMutex;
 
 		core::PerfLogger* m_perfLogger;
+		
+		std::atomic<bool> m_isEnabled;
 
 
 	private: // No copying allowed

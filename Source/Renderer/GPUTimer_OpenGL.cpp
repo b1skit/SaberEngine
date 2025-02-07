@@ -8,7 +8,16 @@
 
 namespace opengl
 {
-	void GPUTimer::Create(re::GPUTimer const& timer, void const*)
+	void GPUTimer::PlatformParams::Destroy()
+	{
+		SEAssert(!m_queryIDs.empty(), "Trying to destroy an empty list of query IDs");
+
+		glDeleteQueries(util::CheckedCast<GLsizei>(m_queryIDs.size()), m_queryIDs.data());
+		m_queryIDs.clear();
+	}
+
+
+	void GPUTimer::Create(re::GPUTimer const& timer)
 	{
 		opengl::GPUTimer::PlatformParams* platParams = timer.GetPlatformParams()->As<opengl::GPUTimer::PlatformParams*>();
 

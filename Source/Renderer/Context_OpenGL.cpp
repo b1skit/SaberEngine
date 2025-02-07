@@ -431,9 +431,6 @@ namespace opengl
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
 		m_bufferAllocator->Initialize(currentFrame);
-
-		// GPU Timers:
-		m_gpuTimer.Create(nullptr);
 	}
 
 

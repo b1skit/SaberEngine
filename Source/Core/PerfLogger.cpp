@@ -3,6 +3,7 @@
 
 #include "../Assert.h"
 #include "../Config.h"
+#include "../Definitions/EventKeys.h"
 
 
 namespace core
@@ -16,24 +17,27 @@ namespace core
 
 	PerfLogger::PerfLogger()
 		: m_numFramesInFlight(core::Config::Get()->GetValue<int>(core::configkeys::k_numBackbuffersKey))
+		, m_isEnabled(false)
 	{
+		core::EventManager::Get()->Subscribe(eventkey::TogglePerformanceTimers, this);
 	}
 
 
 	PerfLogger::~PerfLogger()
 	{
-		for (auto& record : m_times)
-		{
-			if (record.second.m_timer.IsRunning())
-			{
-				record.second.m_timer.StopMs();
-			}
-		}
+		Destroy();
 	}
 
 
 	void PerfLogger::BeginFrame()
 	{
+		HandleEvents();
+
+		if (m_isEnabled.load() == false)
+		{
+			return;
+		}
+
 		{
 			std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
 
@@ -96,6 +100,8 @@ namespace core
 		char const* parentName /*= nullptr*/)
 	{
 		// Note: Internal helper function: We assume m_perfLoggerMutex is already locked
+
+		SEAssert(m_isEnabled.load(), "Timer is not enabled");
 
 		const util::HashKey nameHash(name);
 		const bool hasParent = parentName != nullptr;
@@ -166,6 +172,11 @@ namespace core
 
 	void PerfLogger::NotifyBegin(char const* name, char const* parentName /*= nullptr*/)
 	{
+		if (m_isEnabled.load() == false)
+		{
+			return;
+		}
+
 		{
 			std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
 
@@ -178,18 +189,23 @@ namespace core
 
 	void PerfLogger::NotifyEnd(char const* name)
 	{
+		if (m_isEnabled.load() == false)
+		{
+			return;
+		}
+
 		const util::HashKey nameHash(name);
 
 		{
 			std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
 
-			SEAssert(m_times.contains(nameHash), "Key not found, was NotifyBegin() called?");
-
-			TimeRecord& record = m_times.at(nameHash);
-
-			if (record.m_timer.IsRunning()) // Might not be running (e.g. 1st update in a loop)
+			auto recordItr = m_times.find(nameHash);
+			if (recordItr != m_times.end())
 			{
-				record.m_mostRecentTimeMs = record.m_timer.StopMs();
+				if (recordItr->second.m_timer.IsRunning()) // Might not be running (e.g. 1st update in a loop)
+				{
+					recordItr->second.m_mostRecentTimeMs = recordItr->second.m_timer.StopMs();
+				}
 			}
 		}
 	}
@@ -197,6 +213,11 @@ namespace core
 
 	void PerfLogger::NotifyPeriod(double totalTimeMs, char const* name, char const* parentName /*= nullptr*/)
 	{
+		if (m_isEnabled.load() == false)
+		{
+			return;
+		}
+
 		{
 			std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
 
@@ -205,6 +226,48 @@ namespace core
 				"Timer is running, this is invalid for manual time periods");
 
 			record.m_mostRecentTimeMs = totalTimeMs;
+		}
+	}
+
+
+	void PerfLogger::HandleEvents()
+	{
+		while (HasEvents())
+		{
+			core::EventManager::EventInfo const& eventInfo = GetEvent();
+
+			switch (eventInfo.m_eventKey)
+			{
+			case eventkey::TogglePerformanceTimers:
+			{
+				m_isEnabled.store(std::get<bool>(eventInfo.m_data));
+
+				if (!m_isEnabled.load())
+				{
+					Destroy();
+				}
+			}
+			break;			
+			default:
+				break;
+			}
+		}
+	}
+
+
+	void PerfLogger::Destroy()
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
+
+			for (auto& record : m_times)
+			{
+				if (record.second.m_timer.IsRunning())
+				{
+					record.second.m_timer.StopMs();
+				}
+			}
+			m_times.clear();
 		}
 	}
 

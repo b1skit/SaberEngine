@@ -17,6 +17,8 @@ namespace core
 		template<typename T>
 		T const As() const;
 
+		virtual void Destroy() {}
+
 		// No copying allowed:
 		IPlatformParams(IPlatformParams const&) = delete;
 		IPlatformParams const& operator=(IPlatformParams const&) = delete;

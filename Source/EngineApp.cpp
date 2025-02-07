@@ -11,6 +11,8 @@
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
 
+#include "Core/Definitions/EventKeys.h"
+
 #include "Core/Host/PerformanceTimer.h"
 #include "Core/Host/Window.h"
 

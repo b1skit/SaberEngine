@@ -30,7 +30,7 @@ namespace platform
 	}
 
 
-	void (*GPUTimer::Create)(re::GPUTimer const&, void const*) = nullptr;
+	void (*GPUTimer::Create)(re::GPUTimer const&) = nullptr;
 	void (*GPUTimer::Destroy)(re::GPUTimer const&) = nullptr;
 
 	void (*GPUTimer::BeginFrame)(re::GPUTimer const&) = nullptr;

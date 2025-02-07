@@ -16,11 +16,18 @@ namespace
 
 namespace dx12
 {
-	void GPUTimer::Create(re::GPUTimer const& timer, void const* createParams)
+	void GPUTimer::PlatformParams::Destroy()
+	{
+		m_gpuQueryHeap = nullptr;
+		m_gpuQueryBuffer = nullptr;
+	}
+
+
+	void GPUTimer::Create(re::GPUTimer const& timer)
 	{
 		dx12::GPUTimer::PlatformParams* platParams = timer.GetPlatformParams()->As<dx12::GPUTimer::PlatformParams*>();
 
-		CreateParams const* dx12CreateParams = static_cast<CreateParams const*>(createParams);
+		dx12::Context* dx12Context = re::Context::Get()->GetAs<dx12::Context*>();
 
 		const uint8_t totalQueriesPerTimer = platParams->m_numFramesInFlight * 2; // x2 for start/end timestamps
 		const uint32_t totalQuerySlots = totalQueriesPerTimer * re::GPUTimer::k_maxGPUTimersPerFrame;
@@ -33,16 +40,19 @@ namespace dx12
 			.Count = totalQuerySlots,
 			.NodeMask = dx12::SysInfo::GetDeviceNodeMask(),
 		};
-		HRESULT hr = dx12CreateParams->m_device->CreateQueryHeap(
+
+		ID3D12Device2* d3dDevice = dx12Context->GetDevice().GetD3DDisplayDevice();
+		HRESULT hr = d3dDevice->CreateQueryHeap(
 			&queryHeapdesc,
 			IID_PPV_ARGS(&platParams->m_gpuQueryHeap));
 		CheckHResult(hr, "Failed to create query heap");
 
-		platParams->m_gpuQueryHeap->SetName(L"GPU Timer query heap");
+		platParams->m_gpuQueryHeap->SetName(L"GPU Timer query heap");		
 
 		// Get the GPU timestamp frequency:
 		uint64_t gpuFrequency = 0;
-		hr = dx12CreateParams->m_directCommandQueue->GetTimestampFrequency(&gpuFrequency);
+		hr = dx12Context->GetCommandQueue(
+			dx12::CommandListType::Direct).GetD3DCommandQueue()->GetTimestampFrequency(&gpuFrequency);
 		CheckHResult(hr, "Failed to get timestamp frequency");
 
 		platParams->m_invGPUFrequency = 1000.0 / static_cast<double>(gpuFrequency); // Ticks/second (Hz) -> ticks/ms
@@ -51,7 +61,7 @@ namespace dx12
 		const D3D12_HEAP_PROPERTIES gpuTimerReadbackHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK);
 		const D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(totalQueryBytes);
 
-		hr = dx12CreateParams->m_device->CreateCommittedResource(
+		hr = d3dDevice->CreateCommittedResource(
 			&gpuTimerReadbackHeapProperties,
 			D3D12_HEAP_FLAG_NONE,
 			&bufferDesc,
