@@ -6,20 +6,16 @@
 #include "CameraRenderData.h"
 
 
-namespace re
-{
-	class RenderSystem;
-}
-
 namespace gr
 {
 	class GraphicsSystem;
+	class RenderSystem;
 
 
 	class GraphicsSystemManager
 	{
 	public:
-		GraphicsSystemManager(re::RenderSystem*);
+		GraphicsSystemManager(gr::RenderSystem*);
 		~GraphicsSystemManager() = default;
 
 		void Destroy();
@@ -81,7 +77,7 @@ namespace gr
 		gr::RenderDataID m_activeAmbientLightRenderDataID;
 		bool m_activeAmbientLightHasChanged;
 
-		re::RenderSystem* const m_owningRenderSystem;
+		gr::RenderSystem* const m_owningRenderSystem;
 
 
 	private: // No copying allwoed

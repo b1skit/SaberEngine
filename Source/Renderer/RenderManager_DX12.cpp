@@ -285,7 +285,7 @@ namespace dx12
 		// A WorkRange spans a contiguous subset of the RenderStages within a single StagePipeline
 		struct WorkRange
 		{
-			std::vector<std::unique_ptr<re::RenderSystem>>::const_iterator m_renderSystemItr;
+			std::vector<std::unique_ptr<gr::RenderSystem>>::const_iterator m_renderSystemItr;
 			std::vector<re::StagePipeline>::const_iterator m_stagePipelineItr;
 			std::list<std::shared_ptr<re::RenderStage>>::const_iterator m_renderStageBeginItr;
 			std::list<std::shared_ptr<re::RenderStage>>::const_iterator m_renderStageEndItr;
@@ -413,7 +413,7 @@ namespace dx12
 				default: SEAssertF("Unexpected command list type");
 				}
 
-				re::RenderSystem const* lastSeenRenderSystem = nullptr;
+				gr::RenderSystem const* lastSeenRenderSystem = nullptr;
 				re::StagePipeline const* lastSeenStagePipeline = nullptr;
 
 				re::GPUTimer& gpuTimer = context->GetGPUTimer();
@@ -426,7 +426,7 @@ namespace dx12
 				{
 					const bool isLastWorkEntry = std::next(workRangeItr) == workRange.end();
 
-					std::unique_ptr<re::RenderSystem> const& renderSystem = *workRangeItr->m_renderSystemItr;
+					std::unique_ptr<gr::RenderSystem> const& renderSystem = *workRangeItr->m_renderSystemItr;
 
 					const bool isNewRenderSystem = lastSeenRenderSystem != renderSystem.get();
 					if (isNewRenderSystem)

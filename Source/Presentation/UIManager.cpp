@@ -204,7 +204,7 @@ namespace fr
 				constexpr char const* k_debugUIRenderSystemName = "DebugImGui";
 				constexpr char const* k_debugUIPipelineFilename = "ui.json";
 
-				re::RenderSystem const* debugUIRenderSystem = re::RenderManager::Get()->CreateAddRenderSystem(
+				gr::RenderSystem const* debugUIRenderSystem = re::RenderManager::Get()->CreateAddRenderSystem(
 					k_debugUIRenderSystemName,
 					k_debugUIPipelineFilename);
 

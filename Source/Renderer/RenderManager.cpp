@@ -234,10 +234,10 @@ namespace re
 	}
 
 
-	re::RenderSystem const* RenderManager::CreateAddRenderSystem(
+	gr::RenderSystem const* RenderManager::CreateAddRenderSystem(
 		std::string const& name, std::string const& pipelineFileName)
 	{
-		m_renderSystems.emplace_back(re::RenderSystem::Create(name, pipelineFileName));
+		m_renderSystems.emplace_back(gr::RenderSystem::Create(name, pipelineFileName));
 
 		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
 		m_renderSystems.back()->ExecuteInitializationPipeline();
@@ -283,7 +283,7 @@ namespace re
 
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
 		SEBeginCPUEvent("Execute update pipeline");
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		for (std::unique_ptr<gr::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteUpdatePipeline();
 			renderSystem->PostUpdatePreRender();
@@ -316,7 +316,7 @@ namespace re
 
 		SEBeginCPUEvent("Process render systems");
 		{
-			for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+			for (std::unique_ptr<gr::RenderSystem>& renderSystem : m_renderSystems)
 			{
 				renderSystem->EndOfFrame();
 			}
@@ -375,7 +375,7 @@ namespace re
 		m_effectDB.Destroy();
 	
 		// Destroy render systems:
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		for (std::unique_ptr<gr::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->Destroy();
 		}
@@ -766,7 +766,7 @@ namespace re
 		ImGui::Begin(std::format("Render Systems ({})", m_renderSystems.size()).c_str(), show);
 
 		// Render systems:
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		for (std::unique_ptr<gr::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			if (ImGui::CollapsingHeader(renderSystem->GetName().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 			{

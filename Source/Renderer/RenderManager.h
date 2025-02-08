@@ -78,9 +78,9 @@ namespace re
 		platform::RenderingAPI GetRenderingAPI() const;
 		uint64_t GetCurrentRenderFrameNum() const;
 
-		re::RenderSystem const* CreateAddRenderSystem(std::string const& name, std::string const& pipelineFileName);
-		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
-		re::RenderSystem* GetRenderSystem(util::HashKey const&);
+		gr::RenderSystem const* CreateAddRenderSystem(std::string const& name, std::string const& pipelineFileName);
+		std::vector<std::unique_ptr<gr::RenderSystem>> const& GetRenderSystems() const;
+		gr::RenderSystem* GetRenderSystem(util::HashKey const&);
 
 		// Not thread safe: Can only be called when other threads are not accessing the render data
 		gr::RenderDataManager& GetRenderDataManagerForModification();
@@ -201,7 +201,7 @@ namespace re
 
 
 	private:
-		std::vector<std::unique_ptr<re::RenderSystem>> m_renderSystems;
+		std::vector<std::unique_ptr<gr::RenderSystem>> m_renderSystems;
 		
 		uint64_t m_renderFrameNum;
 
@@ -238,13 +238,13 @@ namespace re
 	}
 
 
-	inline std::vector<std::unique_ptr<re::RenderSystem>> const& RenderManager::GetRenderSystems() const
+	inline std::vector<std::unique_ptr<gr::RenderSystem>> const& RenderManager::GetRenderSystems() const
 	{
 		return m_renderSystems;
 	}
 
 
-	inline re::RenderSystem* RenderManager::GetRenderSystem(util::HashKey const& nameHash)
+	inline gr::RenderSystem* RenderManager::GetRenderSystem(util::HashKey const& nameHash)
 	{
 		for (auto& renderSystem : m_renderSystems)
 		{

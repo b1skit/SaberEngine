@@ -6,11 +6,11 @@
 #include "Core/Assert.h"
 #include "Core/Config.h"
 
-using GSName = re::RenderSystemDescription::GSName;
-using SrcDstNamePairs = re::RenderSystemDescription::SrcDstNamePairs;
+using GSName = gr::RenderSystemDescription::GSName;
+using SrcDstNamePairs = gr::RenderSystemDescription::SrcDstNamePairs;
 
 
-namespace re
+namespace gr
 {
 	void from_json(nlohmann::json const& jsonDesc, RenderSystemDescription& renderSysDesc)
 	{

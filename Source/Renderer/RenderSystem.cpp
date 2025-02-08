@@ -10,15 +10,15 @@
 
 #include "Core/Util/ImGuiUtils.h"
 
-using GSName = re::RenderSystemDescription::GSName;
-using SrcDstNamePairs = re::RenderSystemDescription::SrcDstNamePairs;
+using GSName = gr::RenderSystemDescription::GSName;
+using SrcDstNamePairs = gr::RenderSystemDescription::SrcDstNamePairs;
 
 
 namespace
 {
 	gr::TextureDependencies ResolveTextureDependencies(
 		std::string const& dstGSScriptName,
-		re::RenderSystemDescription const& renderSysDesc,
+		gr::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
 		gr::TextureDependencies texDependencies;
@@ -130,7 +130,7 @@ namespace
 
 	gr::BufferDependencies ResolveBufferDependencies(
 		std::string const& dstGSScriptName,
-		re::RenderSystemDescription const& renderSysDesc,
+		gr::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
 		gr::BufferDependencies bufferDependencies;
@@ -174,7 +174,7 @@ namespace
 
 	gr::DataDependencies ResolveDataDependencies(
 		std::string const& dstGSScriptName,
-		re::RenderSystemDescription const& renderSysDesc,
+		gr::RenderSystemDescription const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
 		gr::DataDependencies resolvedDependencies;
@@ -217,7 +217,7 @@ namespace
 	
 	
 	void ComputeExecutionGroups(
-		re::RenderSystemDescription const& renderSysDesc,
+		gr::RenderSystemDescription const& renderSysDesc,
 		std::vector<std::vector<std::string>>& updateExecutionGroups,
 		bool singleThreadGSExecution)
 	{
@@ -359,14 +359,14 @@ namespace
 }
 
 
-namespace re
+namespace gr
 {
 	std::unique_ptr<RenderSystem> RenderSystem::Create(std::string const& name, std::string const& pipelineFileName)
 	{
 		// Load the render system description:
 		std::string const& scriptPath = std::format("{}{}", core::configkeys::k_pipelineDirName, pipelineFileName);
 
-		RenderSystemDescription const& renderSystemDesc = LoadRenderSystemDescription(scriptPath.c_str());
+		gr::RenderSystemDescription const& renderSystemDesc = gr::LoadRenderSystemDescription(scriptPath.c_str());
 
 		LOG("Render pipeline description \"%s\" loaded!", pipelineFileName.c_str());
 
@@ -413,7 +413,7 @@ namespace re
 	}
 
 
-	void RenderSystem::BuildPipeline(RenderSystemDescription const& renderSysDesc)
+	void RenderSystem::BuildPipeline(gr::RenderSystemDescription const& renderSysDesc)
 	{
 		// Create the GrpahicsSystems:
 		for (std::string const& gsName : renderSysDesc.m_graphicsSystemNames)
@@ -421,7 +421,7 @@ namespace re
 			m_graphicsSystemManager.CreateAddGraphicsSystemByScriptName(gsName);
 		}
 
-		m_initPipeline = [this, renderSysDesc](re::RenderSystem* renderSystem)
+		m_initPipeline = [this, renderSysDesc](gr::RenderSystem* renderSystem)
 		{
 			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
 			gsm.Create();

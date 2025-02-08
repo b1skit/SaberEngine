@@ -132,7 +132,7 @@ namespace opengl
 		re::GPUTimer::Handle frameTimer = gpuTimer.StartTimer(nullptr, k_GPUFrameTimerName);
 
 		// Render each RenderSystem in turn:
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		for (std::unique_ptr<gr::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			re::GPUTimer::Handle renderSystemTimer = 
 				gpuTimer.StartTimer(nullptr, renderSystem->GetName().c_str(), k_GPUFrameTimerName);

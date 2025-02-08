@@ -125,7 +125,7 @@ namespace fr
 
 	void SetActiveCameraRenderCommand::Execute(void* cmdData)
 	{
-		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
+		std::vector<std::unique_ptr<gr::RenderSystem>> const& renderSystems =
 			re::RenderManager::Get()->GetRenderSystems();
 
 		SetActiveCameraRenderCommand* cmdPtr = reinterpret_cast<SetActiveCameraRenderCommand*>(cmdData);

@@ -58,7 +58,7 @@ namespace fr
 					pipelineFileName = core::configkeys::k_defaultScenePipelineFileName;
 				}
 
-				re::RenderSystem const* sceneRenderSystem =
+				gr::RenderSystem const* sceneRenderSystem =
 					re::RenderManager::Get()->CreateAddRenderSystem(k_sceneRenderSystemName, pipelineFileName);
 			});
 	}

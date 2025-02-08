@@ -11,7 +11,7 @@
 
 namespace gr
 {
-	GraphicsSystemManager::GraphicsSystemManager(re::RenderSystem* owningRS)
+	GraphicsSystemManager::GraphicsSystemManager(gr::RenderSystem* owningRS)
 		: m_renderData(nullptr)
 		, m_owningRenderSystem(owningRS)
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)

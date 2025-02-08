@@ -13,13 +13,13 @@
 
 namespace re
 {
-	class RenderSystem;
 	class TextureTargetSet;
 }
 
 namespace gr
 {
 	class GraphicsSystemManager;
+	class RenderSystem;
 
 
 	class GraphicsSystem : public virtual core::INamedObject, public virtual core::IUniqueID

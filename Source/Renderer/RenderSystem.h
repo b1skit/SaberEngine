@@ -8,7 +8,7 @@
 #include "Core/Interfaces/IUniqueID.h"
 
 
-namespace re
+namespace gr
 {
 	struct RenderSystemDescription;
 
@@ -29,7 +29,7 @@ namespace re
 
 	public:
 		// Scriptable rendering pipeline:
-		void BuildPipeline(RenderSystemDescription const&); // Creates graphics systems + init/update pipelines
+		void BuildPipeline(gr::RenderSystemDescription const&); // Creates graphics systems + init/update pipelines
 		void ExecuteInitializationPipeline();
 		void ExecuteUpdatePipeline();
 
@@ -52,8 +52,8 @@ namespace re
 		gr::GraphicsSystemManager m_graphicsSystemManager;
 
 		re::RenderPipeline m_renderPipeline;
-		std::function<void(re::RenderSystem*)> m_creationPipeline;
-		std::function<void(re::RenderSystem*)> m_initPipeline;
+		std::function<void(gr::RenderSystem*)> m_creationPipeline;
+		std::function<void(gr::RenderSystem*)> m_initPipeline;
 
 	private:
 		struct UpdateStep
