@@ -222,8 +222,7 @@ namespace core
 			std::lock_guard<std::mutex> lock(m_perfLoggerMutex);
 
 			TimeRecord& record = AddUpdateTimeRecordHelper(name, parentName);
-			SEAssert(!record.m_timer.IsRunning(),
-				"Timer is running, this is invalid for manual time periods");
+			SEAssert(!record.m_timer.IsRunning(), "Timer is running, this is invalid for manual time periods");
 
 			record.m_mostRecentTimeMs = totalTimeMs;
 		}
