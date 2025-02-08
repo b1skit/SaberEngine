@@ -186,8 +186,15 @@ namespace dx12
 		// buffer allocator
 		dx12Context.m_cpuDescriptorHeapMgrs.clear();
 
-		dx12Context.m_PSOLibrary.clear();
-		dx12Context.m_rootSigLibrary.clear();
+		{
+			std::lock_guard<std::mutex> psoLibraryLock(dx12Context.m_PSOLibraryMutex);
+			dx12Context.m_PSOLibrary.clear();
+		}
+
+		{
+			std::lock_guard<std::mutex> rootSigLibraryLock(dx12Context.m_rootSigLibraryMutex);
+			dx12Context.m_rootSigLibrary.clear();
+		}
 
 		// The heap manager can only be destroyed after all GPUResources have been released
 		dx12Context.m_heapManager.Destroy();
@@ -277,16 +284,26 @@ namespace dx12
 		std::shared_ptr<dx12::PipelineState> pso = nullptr;
 
 		const uint64_t psoKey = ComputePSOKey(shader, targetSet);
-		if (m_PSOLibrary.contains(psoKey))
+
 		{
-			pso = m_PSOLibrary[psoKey];
+			std::lock_guard<std::mutex> lock(m_PSOLibraryMutex);
+
+			if (m_PSOLibrary.contains(psoKey))
+			{
+				pso = m_PSOLibrary.at(psoKey);
+			}
 		}
-		else
+
+		if (pso == nullptr)
 		{
 			pso = std::make_shared<dx12::PipelineState>();
 			pso->Create(shader, targetSet);
 
-			m_PSOLibrary[psoKey] = pso;
+			{
+				std::lock_guard<std::mutex> lock(m_PSOLibraryMutex);
+
+				m_PSOLibrary.emplace(psoKey, pso);
+			}
 		}
 		return pso.get();
 	}
@@ -309,18 +326,21 @@ namespace dx12
 		re::Shader const& shader, re::TextureTargetSet const* targetSet)
 	{
 		const uint64_t psoKey = ComputePSOKey(shader, targetSet);
-		if (m_PSOLibrary.contains(psoKey))
+		
 		{
-			return m_PSOLibrary[psoKey].get();
-		}
-		else
-		{
-			LOG_WARNING("Creating DX12 PSO for Shader \"%s\", TextureTargetSet \"%s\"",
-				shader.GetName().c_str(), 
-				targetSet ? targetSet->GetName().c_str() : "<null TextureTargetSet>");
+			std::lock_guard<std::mutex> lock(m_PSOLibraryMutex);
 
-			return CreateAddPipelineState(shader, targetSet);
+			if (m_PSOLibrary.contains(psoKey))
+			{
+				return m_PSOLibrary[psoKey].get();
+			}
 		}
+		
+		LOG_WARNING("Creating DX12 PSO for Shader \"%s\", TextureTargetSet \"%s\"",
+			shader.GetName().c_str(),
+			targetSet ? targetSet->GetName().c_str() : "<null TextureTargetSet>");
+
+		return CreateAddPipelineState(shader, targetSet);
 	}
 
 

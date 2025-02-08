@@ -79,6 +79,7 @@ namespace dx12
 
 		// Access the PSO library via dx12::Context::GetPipelineStateObject():
 		std::unordered_map<uint64_t, std::shared_ptr<dx12::PipelineState>> m_PSOLibrary;
+		std::mutex m_PSOLibraryMutex;
 
 		// Hashed D3D12_VERSIONED_ROOT_SIGNATURE_DESC -> D3D Root sig ComPtr
 		std::unordered_map<uint64_t, Microsoft::WRL::ComPtr<ID3D12RootSignature>> m_rootSigLibrary;
