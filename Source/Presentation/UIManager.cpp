@@ -163,6 +163,7 @@ namespace fr
 		: m_debugUIRenderSystemCreated(false)
 		, m_debugUICommandMgr(nullptr)
 		, m_imguiGlobalMutex(nullptr)
+		, m_showImGui(true)
 		, m_imguiMenuActive(true)
 		, m_prevImguiMenuActive(false)
 		, m_imguiWantsToCaptureKeyboard(false)
@@ -191,6 +192,7 @@ namespace fr
 		core::EventManager::Get()->Subscribe(eventkey::DragAndDrop, this);
 		core::EventManager::Get()->Subscribe(eventkey::VSyncModeChanged, this);
 		core::EventManager::Get()->Subscribe(eventkey::ToggleConsole, this);
+		core::EventManager::Get()->Subscribe(eventkey::ToggleUIVisibility, this);
 
 		// Create UI render systems:
 		std::atomic<bool>* createdFlag = &m_debugUIRenderSystemCreated;
@@ -240,6 +242,11 @@ namespace fr
 			"One of our GS pointers is null");
 
 		HandleEvents();
+
+		if (!m_showImGui)
+		{
+			return;
+		}
 
 		if (m_debugUIRenderSystemCreated.load())
 		{
@@ -317,6 +324,19 @@ namespace fr
 
 					// If ImGui is not visible, hide the mouse and lock it to the window
 					m_window->SetRelativeMouseMode(!m_imguiMenuActive);
+				}
+			}
+			break;
+			case eventkey::ToggleUIVisibility:
+			{
+				m_showImGui = !m_showImGui;
+
+				// Enable/disable the performance logging, for efficiency
+				if (m_show[PerfLogger])
+				{
+					core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+						.m_eventKey = eventkey::TogglePerformanceTimers,
+						.m_data = m_showImGui, });
 				}
 			}
 			break;

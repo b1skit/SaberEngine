@@ -34,6 +34,7 @@ namespace eventkey
 	constexpr util::CHashKey TogglePerformanceTimers("TogglePerformanceTimers");
 	constexpr util::CHashKey ToggleVSync("ToggleVSync");
 	constexpr util::CHashKey VSyncModeChanged("VSyncModeChanged");
+	constexpr util::CHashKey ToggleUIVisibility("ToggleUIVisibility");
 	constexpr util::CHashKey WindowFocusChanged("WindowFocusChanged");
 	constexpr util::CHashKey DragAndDrop("DragAndDropEvent");
 

@@ -45,6 +45,7 @@ namespace fr
 
 
 	private:
+		bool m_showImGui;
 		bool m_imguiMenuActive;
 		bool m_prevImguiMenuActive;
 

@@ -418,8 +418,9 @@ namespace core
 		SetValue(ENUM_TO_STR(InputButton_Down),		"Left Shift",	SettingType::Serialized);
 		SetValue(ENUM_TO_STR(InputButton_Sprint),	"Left Ctrl",	SettingType::Serialized);
 
-		SetValue(ENUM_TO_STR(InputButton_Console),	"Grave",		SettingType::Serialized); // The "grave accent"/tilde key: `
-		SetValue(ENUM_TO_STR(InputButton_VSync),	'v',			SettingType::Serialized);
+		SetValue(ENUM_TO_STR(InputButton_Console),				"Grave",	SettingType::Serialized); // The "grave accent"/tilde key: `
+		SetValue(ENUM_TO_STR(InputButton_ToggleUIVisibility),	"F11",		SettingType::Serialized);
+		SetValue(ENUM_TO_STR(InputButton_VSync),				'v',		SettingType::Serialized);
 
 		// Mouse bindings:
 		SetValue(ENUM_TO_STR(InputMouse_Left),	ENUM_TO_STR(InputMouse_Left),	SettingType::Serialized);

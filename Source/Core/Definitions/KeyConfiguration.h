@@ -23,6 +23,7 @@ namespace definitions
 		InputButton_Down,
 		InputButton_Sprint,
 
+		InputButton_ToggleUIVisibility,
 		InputButton_Console,
 		InputButton_VSync,
 
@@ -42,6 +43,7 @@ namespace definitions
 		ENUM_TO_STR(InputButton_Down),
 		ENUM_TO_STR(InputButton_Sprint),
 
+		ENUM_TO_STR(InputButton_ToggleUIVisibility),
 		ENUM_TO_STR(InputButton_Console),
 		ENUM_TO_STR(InputButton_VSync),
 	};

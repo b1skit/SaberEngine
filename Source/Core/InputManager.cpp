@@ -178,6 +178,11 @@ namespace en
 						transformedEvent.m_eventKey = eventkey::InputSprint;
 					}
 					break;
+					case definitions::KeyboardInputButton::InputButton_ToggleUIVisibility:
+					{
+						transformedEvent.m_eventKey = eventkey::ToggleUIVisibility;
+					}
+					break;
 					case definitions::KeyboardInputButton::InputButton_Console:
 					{
 						transformedEvent.m_eventKey = eventkey::ToggleConsole;
