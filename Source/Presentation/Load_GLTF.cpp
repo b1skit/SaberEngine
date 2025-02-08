@@ -262,37 +262,132 @@ namespace
 
 		if (material->has_pbr_specular_glossiness)
 		{
-			SEAssertF("TODO: Hash these");
+			util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+				fileMetadata->m_sceneRootPath,
+				material->pbr_specular_glossiness.diffuse_texture.texture));
+
+			util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+				fileMetadata->m_sceneRootPath,
+				material->pbr_specular_glossiness.specular_glossiness_texture.texture));
+
+			util::AddDataBytesToHash(matHash, material->pbr_specular_glossiness.diffuse_factor[0]);
+			util::AddDataBytesToHash(matHash, material->pbr_specular_glossiness.diffuse_factor[1]);
+			util::AddDataBytesToHash(matHash, material->pbr_specular_glossiness.diffuse_factor[2]);
+			util::AddDataBytesToHash(matHash, material->pbr_specular_glossiness.diffuse_factor[3]);
+
+			util::AddDataBytesToHash(matHash, material->pbr_specular_glossiness.specular_factor[0]);
+			util::AddDataBytesToHash(matHash, material->pbr_specular_glossiness.specular_factor[1]);
+			util::AddDataBytesToHash(matHash, material->pbr_specular_glossiness.specular_factor[2]);
+
+			util::AddDataBytesToHash(matHash, material->pbr_specular_glossiness.glossiness_factor);
 		}
 
 		if (material->has_clearcoat)
 		{
-			SEAssertF("TODO: Hash these");
+			if (material->clearcoat.clearcoat_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->clearcoat.clearcoat_texture.texture));
+			}
+
+			if (material->clearcoat.clearcoat_roughness_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->clearcoat.clearcoat_roughness_texture.texture));
+			}
+
+			if (material->clearcoat.clearcoat_normal_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->clearcoat.clearcoat_normal_texture.texture));
+			}
+
+			util::AddDataBytesToHash(matHash, material->clearcoat.clearcoat_factor);
+			util::AddDataBytesToHash(matHash, material->clearcoat.clearcoat_roughness_factor);
 		}
 
 		if (material->has_transmission)
 		{
-			SEAssertF("TODO: Hash these");
+			if (material->transmission.transmission_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->transmission.transmission_texture.texture));
+			}
+
+			util::AddDataBytesToHash(matHash, material->transmission.transmission_factor);
 		}
 
 		if (material->has_volume)
 		{
-			SEAssertF("TODO: Hash these");
+			if (material->volume.thickness_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->volume.thickness_texture.texture));
+			}
+
+			util::AddDataBytesToHash(matHash, material->volume.thickness_factor);
+
+			util::AddDataBytesToHash(matHash, material->volume.attenuation_color[0]);
+			util::AddDataBytesToHash(matHash, material->volume.attenuation_color[1]);
+			util::AddDataBytesToHash(matHash, material->volume.attenuation_color[2]);
+
+			util::AddDataBytesToHash(matHash, material->volume.attenuation_distance);
 		}
 
 		if (material->has_ior)
 		{
-			SEAssertF("TODO: Hash these");
+			util::AddDataBytesToHash(matHash, material->ior.ior);
 		}
 
 		if (material->has_specular)
 		{
-			SEAssertF("TODO: Hash these");
+			if (material->specular.specular_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->specular.specular_texture.texture));
+			}
+
+			if (material->specular.specular_color_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->specular.specular_color_texture.texture));
+			}
+
+			util::AddDataBytesToHash(matHash, material->specular.specular_color_factor[0]);
+			util::AddDataBytesToHash(matHash, material->specular.specular_color_factor[1]);
+			util::AddDataBytesToHash(matHash, material->specular.specular_color_factor[2]);
+
+			util::AddDataBytesToHash(matHash, material->specular.specular_factor);
 		}
 
 		if (material->has_sheen)
 		{
-			SEAssertF("TODO: Hash these");
+			if (material->sheen.sheen_color_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->sheen.sheen_color_texture.texture));
+			}
+			
+			util::AddDataBytesToHash(matHash, material->sheen.sheen_color_factor[0]);
+			util::AddDataBytesToHash(matHash, material->sheen.sheen_color_factor[1]);
+			util::AddDataBytesToHash(matHash, material->sheen.sheen_color_factor[2]);
+
+			if (material->sheen.sheen_roughness_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->sheen.sheen_roughness_texture.texture));
+			}
+
+			util::AddDataBytesToHash(matHash, material->sheen.sheen_roughness_factor);
 		}
 
 		if (material->has_emissive_strength)
@@ -302,17 +397,43 @@ namespace
 
 		if (material->has_iridescence)
 		{
-			SEAssertF("TODO: Hash these");
+			util::AddDataBytesToHash(matHash, material->iridescence.iridescence_factor);
+
+			if (material->iridescence.iridescence_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->iridescence.iridescence_texture.texture));
+			}
+
+			util::AddDataBytesToHash(matHash, material->iridescence.iridescence_ior);
+			util::AddDataBytesToHash(matHash, material->iridescence.iridescence_thickness_min);
+			util::AddDataBytesToHash(matHash, material->iridescence.iridescence_thickness_max);
+
+			if (material->iridescence.iridescence_thickness_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->iridescence.iridescence_thickness_texture.texture));
+			}
 		}
 
 		if (material->has_anisotropy)
 		{
-			SEAssertF("TODO: Hash these");
+			util::AddDataBytesToHash(matHash, material->anisotropy.anisotropy_strength);
+			util::AddDataBytesToHash(matHash, material->anisotropy.anisotropy_rotation);
+
+			if (material->anisotropy.anisotropy_texture.texture)
+			{
+				util::AddDataBytesToHash(matHash, GenerateGLTFTextureName(
+					fileMetadata->m_sceneRootPath,
+					material->anisotropy.anisotropy_texture.texture));
+			}
 		}
 
 		if (material->has_dispersion)
 		{
-			SEAssertF("TODO: Hash these");
+			util::AddDataBytesToHash(matHash, material->dispersion.dispersion);
 		}
 
 		if (material->normal_texture.texture)
