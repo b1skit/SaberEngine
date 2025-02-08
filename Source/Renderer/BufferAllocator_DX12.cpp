@@ -105,6 +105,11 @@ namespace dx12
 
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
 
+			re::GPUTimer::Handle copyTimer = context->GetGPUTimer().StartCopyTimer(
+				copyCommandList->GetD3DCommandList(),
+				"Copy buffers",
+				re::RenderManager::k_GPUFrameTimerName);
+
 			// Record our updates:
 			SEBeginCPUEvent("dx12::BufferAllocator::BufferDataPlatform: dx12::Buffer::Update(s)");
 			for (auto const& entry : m_dirtyBuffersForPlatformUpdate)
@@ -116,6 +121,8 @@ namespace dx12
 					copyCommandList.get());
 			}
 			SEEndCPUEvent();
+
+			copyTimer.StopTimer(copyCommandList->GetD3DCommandList());
 
 			SEBeginCPUEvent("dx12::BufferAllocator::BufferDataPlatform: Execute copy queue");
 			copyQueue->Execute(1, &copyCommandList);

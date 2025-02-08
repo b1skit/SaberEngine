@@ -40,24 +40,37 @@ namespace re
 		{
 			virtual void Destroy() override = 0;
 
-			std::multimap<util::HashKey, TimeRecord> m_gpuTimes;
+			std::multimap<util::HashKey, TimeRecord> m_directComputeTimes;
+			std::multimap<util::HashKey, TimeRecord> m_copyTimes;
 
 			double m_invGPUFrequency = 0.0; // 1.0 / (Ticks/ms)
 
 			uint64_t m_currentFrameNum = 0;
+			uint8_t m_currentFrameIdx = 0;
 			uint8_t m_numFramesInFlight = 0;			
-			uint8_t m_currentFrameTimerCount = 0; // How many timers started this frame?
+			
+			uint8_t m_currentDirectComputeTimerCount = 0; // How many direct/compute queue timers started this frame?
+			uint8_t m_currentCopyTimerCount = 0; // How many copy queue timers started this frame?
 
 			bool m_isCreated = false;
 		};
 
 
 	public:
+		enum class TimerType : uint8_t
+		{
+			DirectCompute,
+			Copy,
+			
+			Invalid,
+		};
+
+
 		class Handle
 		{
 		public:
 			Handle();
-			Handle(GPUTimer*, std::multimap<util::HashKey, TimeRecord>::iterator);
+			Handle(GPUTimer*, TimerType, std::multimap<util::HashKey, TimeRecord>::iterator);
 
 			Handle(Handle&&) noexcept;
 			Handle& operator=(Handle&&) noexcept;
@@ -74,6 +87,7 @@ namespace re
 		private:
 			std::multimap<util::HashKey, TimeRecord>::iterator m_timerRecordItr;
 			GPUTimer* m_gpuTimer;
+			TimerType m_type;
 		};
 
 
@@ -92,9 +106,10 @@ namespace re
 
 	public: // Note: Use platformObject to pass external dependencies (e.g. DX12 graphics command lists)
 		void BeginFrame(uint64_t frameNum);
-		void EndFrame(void* platformObject);
+		void EndFrame();
 
 		[[nodiscard]] Handle StartTimer(void* platformObject, char const* name, char const* parentName = nullptr);
+		[[nodiscard]] Handle StartCopyTimer(void* platformObject, char const* name, char const* parentName = nullptr);
 
 
 	private:
@@ -106,13 +121,14 @@ namespace re
 	private:
 		friend class Handle;
 		std::multimap<util::HashKey, TimeRecord>::iterator StartHandleTimer(
-			void* platformObject, char const* name, char const* parentName = nullptr);
-		
-		void StopTimer(std::multimap<util::HashKey, TimeRecord>::iterator, void* platformObject);
+			TimerType, void* platformObject, char const* name, char const* parentName = nullptr);
+
+		void StopTimer(TimerType, std::multimap<util::HashKey, TimeRecord>::iterator, void* platformObject);
+
 
 	private:
 		std::unique_ptr<PlatformParams> m_platformParams;
-		std::mutex m_platformParamsMutex;
+		mutable std::mutex m_platformParamsMutex;
 
 		core::PerfLogger* m_perfLogger;
 		

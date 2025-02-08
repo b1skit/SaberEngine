@@ -123,7 +123,6 @@ namespace platform
 
 			// GPU Timer:
 			platform::GPUTimer::Create		= &opengl::GPUTimer::Create;
-			platform::GPUTimer::Destroy		= &opengl::GPUTimer::Destroy;
 			platform::GPUTimer::BeginFrame	= &opengl::GPUTimer::BeginFrame;
 			platform::GPUTimer::EndFrame	= &opengl::GPUTimer::EndFrame;
 			platform::GPUTimer::StartTimer	= &opengl::GPUTimer::StartTimer;
@@ -174,7 +173,6 @@ namespace platform
 
 			// GPU Timer:
 			platform::GPUTimer::Create		= &dx12::GPUTimer::Create;
-			platform::GPUTimer::Destroy		= &dx12::GPUTimer::Destroy;
 			platform::GPUTimer::BeginFrame	= &dx12::GPUTimer::BeginFrame;
 			platform::GPUTimer::EndFrame	= &dx12::GPUTimer::EndFrame;
 			platform::GPUTimer::StartTimer	= &dx12::GPUTimer::StartTimer;

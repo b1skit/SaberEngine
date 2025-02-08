@@ -5,6 +5,11 @@
 #include <GL/glew.h>
 
 
+namespace platform
+{
+	class GPUTimer;
+}
+
 namespace opengl
 {
 	class GPUTimer
@@ -14,18 +19,21 @@ namespace opengl
 		{
 			void Destroy() override;
 
-			std::vector<GLuint> m_queryIDs;
+			// OpenGL handles the difference in direct/compute and copy queues for us; we maintain seperate queries to
+			// simplify the platform API
+			std::vector<GLuint> m_directComputeQueryIDs;
+			std::vector<GLuint> m_copyQueryIDs;
 		};
 
 
 	public:
 		static void Create(re::GPUTimer const&);
-		static void Destroy(re::GPUTimer const&);
+		// Destroy is handled via GPUTimer::PlatformParams
 
 		static void BeginFrame(re::GPUTimer const&);
-		static std::vector<uint64_t> EndFrame(re::GPUTimer const&, void*);
+		static std::vector<uint64_t> EndFrame(re::GPUTimer const&, re::GPUTimer::TimerType);
 
-		static void StartTimer(re::GPUTimer const&, uint32_t startQueryIdx, void*);
-		static void StopTimer(re::GPUTimer const&, uint32_t endQueryIdx, void*);
+		static void StartTimer(re::GPUTimer const&, re::GPUTimer::TimerType, uint32_t startQueryIdx, void*);
+		static void StopTimer(re::GPUTimer const&, re::GPUTimer::TimerType, uint32_t endQueryIdx, void*);
 	};
 }

@@ -61,6 +61,11 @@ namespace dx12
 
 					std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
 
+					re::GPUTimer::Handle texCopyTimer = context->GetGPUTimer().StartCopyTimer(
+						copyCommandList->GetD3DCommandList(),
+						"Copy textures",
+						k_GPUFrameTimerName);
+
 					if (!singleThreaded)
 					{
 						renderManager.m_newTextures.AquireReadLock();
@@ -73,6 +78,8 @@ namespace dx12
 					{
 						renderManager.m_newTextures.ReleaseReadLock();
 					}
+
+					texCopyTimer.StopTimer(copyCommandList->GetD3DCommandList());
 
 					copyQueue->Execute(1, &copyCommandList);
 
@@ -666,9 +673,6 @@ namespace dx12
 					if (stopGPUFrameTimer)
 					{
 						frameTimer.StopTimer(cmdList->GetD3DCommandList());
-
-						// End the GPU timer frame here while we still have a command list
-						re::Context::Get()->GetGPUTimer().EndFrame(cmdList->GetD3DCommandList());
 					}
 
 					switch (cmdListType)
@@ -701,9 +705,6 @@ namespace dx12
 							if (stopGPUFrameTimer)
 							{
 								frameTimer.StopTimer(populatedCmdList->GetD3DCommandList());
-
-								// End the GPU timer frame here while we still have a command list
-								re::Context::Get()->GetGPUTimer().EndFrame(populatedCmdList->GetD3DCommandList());
 							}
 
 							return populatedCmdList;
@@ -834,6 +835,8 @@ namespace dx12
 				SEAssertF(e.what());
 			}
 		}
+
+		re::Context::Get()->GetGPUTimer().EndFrame();
 	}
 
 

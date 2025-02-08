@@ -60,10 +60,6 @@ namespace opengl
 	{
 		// Note: We've already obtained the read lock on all new resources by this point
 
-		re::GPUTimer& gpuTimer = re::Context::Get()->GetGPUTimer();
-		re::GPUTimer::Handle createResourcesTimer = 
-			gpuTimer.StartTimer(nullptr, k_GPUResourceCreateTimerName, k_GPUFrameTimerName);
-
 		// Textures:
 		if (renderManager.m_newTextures.HasReadData())
 		{
@@ -106,8 +102,6 @@ namespace opengl
 				vertexStream->CreateBuffers();
 			}
 		}
-
-		createResourcesTimer.StopTimer(nullptr);
 	}
 
 
@@ -174,6 +168,7 @@ namespace opengl
 					{
 						dynamic_cast<re::LibraryStage*>(renderStage.get())->Execute(nullptr);
 						renderStageTimer.StopTimer(nullptr);
+						SEEndOpenGLGPUEvent();
 						continue;
 					}
 
@@ -388,8 +383,11 @@ namespace opengl
 					renderStageTimer.StopTimer(nullptr);
 				}; // ProcessRenderStage
 
-				stagePipelineTimer.StopTimer(nullptr);
-				SEEndOpenGLGPUEvent(); // StagePipeline
+				if (!isNewStagePipeline) // Must have started a timer...
+				{
+					stagePipelineTimer.StopTimer(nullptr);
+					SEEndOpenGLGPUEvent(); // StagePipeline
+				}
 			} // StagePipeline loop
 
 			renderSystemTimer.StopTimer(nullptr);
@@ -397,7 +395,7 @@ namespace opengl
 	
 		frameTimer.StopTimer(nullptr);
 
-		gpuTimer.EndFrame(nullptr);
+		gpuTimer.EndFrame();
 	}
 
 

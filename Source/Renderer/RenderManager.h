@@ -58,7 +58,6 @@ namespace re
 
 	public:
 		static constexpr char const* k_GPUFrameTimerName = "GPU Frame";
-		static constexpr char const* k_GPUResourceCreateTimerName = "GPU Resource Creation";
 
 
 	public: // Platform wrappers:

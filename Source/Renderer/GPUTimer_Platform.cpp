@@ -31,11 +31,10 @@ namespace platform
 
 
 	void (*GPUTimer::Create)(re::GPUTimer const&) = nullptr;
-	void (*GPUTimer::Destroy)(re::GPUTimer const&) = nullptr;
 
 	void (*GPUTimer::BeginFrame)(re::GPUTimer const&) = nullptr;
-	std::vector<uint64_t> (*GPUTimer::EndFrame)(re::GPUTimer const&, void*) = nullptr;
+	std::vector<uint64_t> (*GPUTimer::EndFrame)(re::GPUTimer const&, re::GPUTimer::TimerType) = nullptr;
 
-	void (*GPUTimer::StartTimer)(re::GPUTimer const&, uint32_t queryIdx, void*) = nullptr;
-	void (*GPUTimer::StopTimer)(re::GPUTimer const&, uint32_t queryIdx, void*) = nullptr;
+	void (*GPUTimer::StartTimer)(re::GPUTimer const&, re::GPUTimer::TimerType, uint32_t queryIdx, void*) = nullptr;
+	void (*GPUTimer::StopTimer)(re::GPUTimer const&, re::GPUTimer::TimerType, uint32_t queryIdx, void*) = nullptr;
 }

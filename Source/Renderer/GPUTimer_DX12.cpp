@@ -18,8 +18,11 @@ namespace dx12
 {
 	void GPUTimer::PlatformParams::Destroy()
 	{
-		m_gpuQueryHeap = nullptr;
-		m_gpuQueryBuffer = nullptr;
+		m_directComputeQueryHeap = nullptr;
+		m_directComputeQueryBuffer = nullptr;
+
+		m_copyQueryHeap = nullptr;
+		m_copyQueryBuffer = nullptr;
 	}
 
 
@@ -29,55 +32,84 @@ namespace dx12
 
 		dx12::Context* dx12Context = re::Context::Get()->GetAs<dx12::Context*>();
 
+		ID3D12Device2* d3dDevice = dx12Context->GetDevice().GetD3DDisplayDevice();
+
 		const uint8_t totalQueriesPerTimer = platParams->m_numFramesInFlight * 2; // x2 for start/end timestamps
 		const uint32_t totalQuerySlots = totalQueriesPerTimer * re::GPUTimer::k_maxGPUTimersPerFrame;
 		const uint64_t totalQueryBytes = static_cast<uint64_t>(totalQuerySlots) * k_queryElementSize;
 
 		platParams->m_totalQueryBytesPerFrame = re::GPUTimer::k_maxGPUTimersPerFrame * k_queryElementSize * 2;
 
-		const D3D12_QUERY_HEAP_DESC queryHeapdesc = {
-			.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
-			.Count = totalQuerySlots,
-			.NodeMask = dx12::SysInfo::GetDeviceNodeMask(),
-		};
-
-		ID3D12Device2* d3dDevice = dx12Context->GetDevice().GetD3DDisplayDevice();
-		HRESULT hr = d3dDevice->CreateQueryHeap(
-			&queryHeapdesc,
-			IID_PPV_ARGS(&platParams->m_gpuQueryHeap));
-		CheckHResult(hr, "Failed to create query heap");
-
-		platParams->m_gpuQueryHeap->SetName(L"GPU Timer query heap");		
-
 		// Get the GPU timestamp frequency:
 		uint64_t gpuFrequency = 0;
-		hr = dx12Context->GetCommandQueue(
+		HRESULT hr = dx12Context->GetCommandQueue(
 			dx12::CommandListType::Direct).GetD3DCommandQueue()->GetTimestampFrequency(&gpuFrequency);
 		CheckHResult(hr, "Failed to get timestamp frequency");
 
 		platParams->m_invGPUFrequency = 1000.0 / static_cast<double>(gpuFrequency); // Ticks/second (Hz) -> ticks/ms
 
-		// Create a buffer and readback heap:
-		const D3D12_HEAP_PROPERTIES gpuTimerReadbackHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK);
-		const D3D12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(totalQueryBytes);
+		auto CreateQueryResources = [&d3dDevice](
+			uint32_t totalQuerySlots,
+			uint64_t totalQueryBytes,
+			D3D12_QUERY_HEAP_TYPE queryHeapType,
+			Microsoft::WRL::ComPtr<ID3D12QueryHeap>& queryHeapOut,
+			Microsoft::WRL::ComPtr<ID3D12Resource>& queryBufferOut)
+			{
+				// Direct and compute command list query heap:
+				const D3D12_QUERY_HEAP_DESC queryHeapdesc = {
+					.Type = queryHeapType,
+					.Count = totalQuerySlots,
+					.NodeMask = dx12::SysInfo::GetDeviceNodeMask(),
+				};
 
-		hr = d3dDevice->CreateCommittedResource(
-			&gpuTimerReadbackHeapProperties,
-			D3D12_HEAP_FLAG_NONE,
-			&bufferDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST,
-			nullptr,
-			IID_PPV_ARGS(&platParams->m_gpuQueryBuffer));
+				HRESULT hr = d3dDevice->CreateQueryHeap(&queryHeapdesc, IID_PPV_ARGS(&queryHeapOut));
+				CheckHResult(hr, "Failed to create query heap");
 
-		CheckHResult(hr, "Failed to create query heap");
+				// Direct and compute command list readback resource:
+				D3D12_HEAP_PROPERTIES const& gpuTimerReadbackHeapProperties = 
+					CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK);
 
-		platParams->m_gpuQueryBuffer->SetName(L"GPU Timer query buffer");
-	}
+				D3D12_RESOURCE_DESC const& bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(totalQueryBytes);
 
+				hr = d3dDevice->CreateCommittedResource(
+					&gpuTimerReadbackHeapProperties,
+					D3D12_HEAP_FLAG_NONE,
+					&bufferDesc,
+					D3D12_RESOURCE_STATE_COPY_DEST,
+					nullptr,
+					IID_PPV_ARGS(&queryBufferOut));
 
-	void GPUTimer::Destroy(re::GPUTimer const&)
-	{
-		//
+				CheckHResult(hr, "Failed to create query heap");
+			};
+
+		// Direct and compute command list queries:
+		CreateQueryResources(
+			totalQuerySlots, 
+			totalQueryBytes, 
+			D3D12_QUERY_HEAP_TYPE_TIMESTAMP, 
+			platParams->m_directComputeQueryHeap, 
+			platParams->m_directComputeQueryBuffer);
+
+		platParams->m_directComputeQueryHeap->SetName(L"Direct/Compute GPU Timer query heap");
+		platParams->m_directComputeQueryBuffer->SetName(L"Direct/Compute GPU Timer query buffer");
+
+		// Copy command list queries (if supported):
+		D3D12_FEATURE_DATA_D3D12_OPTIONS3 const* options3 = static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS3 const*>(
+			dx12::SysInfo::GetD3D12FeatureSupportData(D3D12_FEATURE_D3D12_OPTIONS3));
+
+		platParams->m_copyQueriesSupported = options3->CopyQueueTimestampQueriesSupported;
+		if (platParams->m_copyQueriesSupported)
+		{
+			CreateQueryResources(
+				totalQuerySlots,
+				totalQueryBytes,
+				D3D12_QUERY_HEAP_TYPE_COPY_QUEUE_TIMESTAMP,
+				platParams->m_copyQueryHeap,
+				platParams->m_copyQueryBuffer);
+
+			platParams->m_copyQueryHeap->SetName(L"Copy GPU Timer query heap");
+			platParams->m_copyQueryBuffer->SetName(L"Copy GPU Timer query buffer");
+		}
 	}
 
 
@@ -87,34 +119,65 @@ namespace dx12
 	}
 
 
-	std::vector<uint64_t> GPUTimer::EndFrame(re::GPUTimer const& timer, void* platformObject)
+	std::vector<uint64_t> GPUTimer::EndFrame(
+		re::GPUTimer const& timer, re::GPUTimer::TimerType timerType)
 	{
-		ID3D12GraphicsCommandList* cmdList = static_cast<ID3D12GraphicsCommandList*>(platformObject);
-
-		SEAssert(cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_DIRECT ||
-			cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE,
-			"Command list does not support timestamp queries");
-
 		dx12::GPUTimer::PlatformParams* platParams = timer.GetPlatformParams()->As<dx12::GPUTimer::PlatformParams*>();
-	
-		const uint8_t frameIdx = (platParams->m_currentFrameNum % platParams->m_numFramesInFlight);
+
+		if (timerType == re::GPUTimer::TimerType::Copy && !platParams->m_copyQueriesSupported)
+		{
+			return {};
+		}
+
+		dx12::CommandQueue* cmdQueue = nullptr;
+		Microsoft::WRL::ComPtr<ID3D12QueryHeap> queryHeap;
+		Microsoft::WRL::ComPtr<ID3D12Resource> queryBuffer;
+		uint8_t timerCount = 0;
+		switch (timerType)
+		{
+		case re::GPUTimer::TimerType::DirectCompute:
+		{
+			cmdQueue = &re::Context::Get()->GetAs<dx12::Context*>()->GetCommandQueue(dx12::CommandListType::Direct);
+
+			queryHeap = platParams->m_directComputeQueryHeap;
+			queryBuffer = platParams->m_directComputeQueryBuffer;
+			timerCount = platParams->m_currentDirectComputeTimerCount;
+		}
+		break;
+		case re::GPUTimer::TimerType::Copy:
+		{
+			cmdQueue = &re::Context::Get()->GetAs<dx12::Context*>()->GetCommandQueue(dx12::CommandListType::Copy);
+
+			queryHeap = platParams->m_copyQueryHeap;
+			queryBuffer = platParams->m_copyQueryBuffer;
+			timerCount = platParams->m_currentCopyTimerCount;
+		}
+		break;
+		default: SEAssertF("Invalid timer type");
+		}
+
+		const uint8_t frameIdx = platParams->m_currentFrameIdx;
 
 		// Schedule readbacks of the current frame's queries:
-		if (platParams->m_currentFrameTimerCount > 0)
+		if (timerCount > 0)
 		{
-			const uint32_t totalQueries = platParams->m_currentFrameTimerCount * 2;
+			const uint32_t totalQueries = timerCount * 2;
 
 			const uint32_t queryStartIdx = frameIdx * re::GPUTimer::k_maxGPUTimersPerFrame * 2;
 			const uint64_t alignedDestBufferOffset = frameIdx * platParams->m_totalQueryBytesPerFrame;
 
+			std::shared_ptr<dx12::CommandList> cmdList = cmdQueue->GetCreateCommandList();
+
 			// Record a command to resolve the current frame's start/end queries:
-			cmdList->ResolveQueryData(
-				platParams->m_gpuQueryHeap.Get(),	// Query heap to resolve
-				D3D12_QUERY_TYPE_TIMESTAMP,			// Query type
-				queryStartIdx,						// Start index
-				totalQueries,						// No. queries
-				platParams->m_gpuQueryBuffer.Get(),	// Destination buffer
-				alignedDestBufferOffset);			// Aligned destination buffer offset
+			cmdList->GetD3DCommandList()->ResolveQueryData(
+				queryHeap.Get(),				// Query heap to resolve
+				D3D12_QUERY_TYPE_TIMESTAMP,		// Query type
+				queryStartIdx,					// Start index
+				totalQueries,					// No. queries
+				queryBuffer.Get(),				// Destination buffer
+				alignedDestBufferOffset);		// Aligned destination buffer offset
+
+			cmdQueue->Execute(1, &cmdList);
 		}
 
 		// Readback our oldest queries:
@@ -130,41 +193,85 @@ namespace dx12
 
 		uint64_t* timingSrcData = nullptr;
 		const HRESULT hr =
-			platParams->m_gpuQueryBuffer->Map(0, &readbackRange, reinterpret_cast<void**>(&timingSrcData));
+			queryBuffer->Map(0, &readbackRange, reinterpret_cast<void**>(&timingSrcData));
 		CheckHResult(hr, "Failed to map GPU timer query buffer");
 
 		memcpy(gpuTimes.data(), timingSrcData, platParams->m_totalQueryBytesPerFrame);
 
-		platParams->m_gpuQueryBuffer->Unmap(0, nullptr);
+		queryBuffer->Unmap(0, nullptr);
 
 		return gpuTimes;
 	}
 
 
-	void GPUTimer::StartTimer(re::GPUTimer const& timer, uint32_t startQueryIdx, void* platformObject)
+	void GPUTimer::StartTimer(
+		re::GPUTimer const& timer, re::GPUTimer::TimerType timerType, uint32_t startQueryIdx, void* platformObject)
 	{
-		ID3D12GraphicsCommandList* cmdList = static_cast<ID3D12GraphicsCommandList*>(platformObject);
-		
-		SEAssert(cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_DIRECT ||
-			cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE,
-			"Command list does not support timestamp queries");		
-
 		dx12::GPUTimer::PlatformParams* platParams = timer.GetPlatformParams()->As<dx12::GPUTimer::PlatformParams*>();
-		
-		cmdList->EndQuery(platParams->m_gpuQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, startQueryIdx);
+
+		if (timerType == re::GPUTimer::TimerType::Copy && !platParams->m_copyQueriesSupported)
+		{
+			return;
+		}
+
+		ID3D12GraphicsCommandList* cmdList = static_cast<ID3D12GraphicsCommandList*>(platformObject);
+
+		switch (timerType)
+		{
+		case re::GPUTimer::TimerType::DirectCompute:
+		{
+			SEAssert(cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_DIRECT ||
+				cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE,
+				"TimerType and command list type mismatch");
+
+			cmdList->EndQuery(platParams->m_directComputeQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, startQueryIdx);
+		}
+		break;
+		case re::GPUTimer::TimerType::Copy:
+		{
+			SEAssert(cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_COPY,
+				"TimerType and command list type mismatch");
+
+			cmdList->EndQuery(platParams->m_copyQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, startQueryIdx);
+		}
+		break;
+		default: SEAssertF("Invalid timer type");
+		}
 	}
 	
 	
-	void GPUTimer::StopTimer(re::GPUTimer const& timer, uint32_t endQueryIdx, void* platformObject)
+	void GPUTimer::StopTimer(
+		re::GPUTimer const& timer, re::GPUTimer::TimerType timerType, uint32_t endQueryIdx, void* platformObject)
 	{
-		ID3D12GraphicsCommandList* cmdList = static_cast<ID3D12GraphicsCommandList*>(platformObject);
-
-		SEAssert(cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_DIRECT ||
-			cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE,
-			"Command list does not support timestamp queries");
-
 		dx12::GPUTimer::PlatformParams* platParams = timer.GetPlatformParams()->As<dx12::GPUTimer::PlatformParams*>();
 
-		cmdList->EndQuery(platParams->m_gpuQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, endQueryIdx);
+		if (timerType == re::GPUTimer::TimerType::Copy && !platParams->m_copyQueriesSupported)
+		{
+			return;
+		}
+
+		ID3D12GraphicsCommandList* cmdList = static_cast<ID3D12GraphicsCommandList*>(platformObject);
+
+		switch (timerType)
+		{
+		case re::GPUTimer::TimerType::DirectCompute:
+		{
+			SEAssert(cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_DIRECT ||
+				cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE,
+				"TimerType and command list type mismatch");
+
+			cmdList->EndQuery(platParams->m_directComputeQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, endQueryIdx);
+		}
+		break;
+		case re::GPUTimer::TimerType::Copy:
+		{
+			SEAssert(cmdList->GetType() == D3D12_COMMAND_LIST_TYPE_COPY,
+				"TimerType and command list type mismatch");
+
+			cmdList->EndQuery(platParams->m_copyQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, endQueryIdx);
+		}
+		break;
+		default: SEAssertF("Invalid timer type");
+		}
 	}
 }
