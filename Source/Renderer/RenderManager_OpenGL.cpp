@@ -4,7 +4,7 @@
 #include "EnumTypes_OpenGL.h"
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"
-#include "RenderStage.h"
+#include "Stage.h"
 #include "RenderSystem.h"
 #include "Sampler_OpenGL.h"
 #include "Shader.h"
@@ -125,22 +125,23 @@ namespace opengl
 
 		re::GPUTimer::Handle frameTimer = gpuTimer.StartTimer(nullptr, k_GPUFrameTimerName);
 
-		// Render each RenderSystem in turn:
+		// Process RenderPiplines of each RenderSystem in turn:
 		for (std::unique_ptr<gr::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			re::GPUTimer::Handle renderSystemTimer = 
-				gpuTimer.StartTimer(nullptr, renderSystem->GetName().c_str(), k_GPUFrameTimerName);
+			re::RenderPipeline const& renderPipeline = renderSystem->GetRenderPipeline();
 
-			// Render each stage in the RenderSystem's RenderPipeline:
-			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
-			for (re::StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
+			re::GPUTimer::Handle renderPipelineTimer = 
+				gpuTimer.StartTimer(nullptr, renderPipeline.GetName().c_str(), k_GPUFrameTimerName);
+
+			// Render each stage in the RenderSystem's RenderPipeline:			
+			for (re::StagePipeline const& stagePipeline : renderPipeline.GetStagePipeline())
 			{
 				re::GPUTimer::Handle stagePipelineTimer;
 				bool isNewStagePipeline = true;			
 
 				// Process RenderStages:
-				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
-				for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
+				std::list<std::shared_ptr<re::Stage>> const& renderStages = stagePipeline.GetRenderStages();
+				for (std::shared_ptr<re::Stage> renderStage : renderStages)
 				{
 					// Skip empty stages:
 					if (renderStage->IsSkippable())
@@ -152,7 +153,7 @@ namespace opengl
 					{
 						SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, stagePipeline.GetName().c_str());
 						stagePipelineTimer =
-							gpuTimer.StartTimer(nullptr, stagePipeline.GetName().c_str(), renderSystem->GetName().c_str());
+							gpuTimer.StartTimer(nullptr, stagePipeline.GetName().c_str(), renderPipeline.GetName().c_str());
 						isNewStagePipeline = false;
 					}
 
@@ -163,8 +164,8 @@ namespace opengl
 						gpuTimer.StartTimer(nullptr, renderStage->GetName().c_str(), stagePipeline.GetName().c_str());
 
 					// Library stages are executed with their own internal logic:
-					const re::RenderStage::Type curRenderStageType = renderStage->GetStageType();
-					if (re::RenderStage::IsLibraryType(curRenderStageType))
+					const re::Stage::Type curRenderStageType = renderStage->GetStageType();
+					if (re::Stage::IsLibraryType(curRenderStageType))
 					{
 						dynamic_cast<re::LibraryStage*>(renderStage.get())->Execute(nullptr);
 						renderStageTimer.StopTimer(nullptr);
@@ -174,7 +175,7 @@ namespace opengl
 
 					// Get the stage targets:
 					re::TextureTargetSet const* stageTargets = renderStage->GetTextureTargetSet();
-					if (!stageTargets && curRenderStageType != re::RenderStage::Type::Compute)
+					if (!stageTargets && curRenderStageType != re::Stage::Type::Compute)
 					{
 						opengl::SwapChain::PlatformParams* swapChainParams =
 							context->GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
@@ -183,7 +184,7 @@ namespace opengl
 
 						stageTargets = swapChainParams->m_backbufferTargetSet.get(); // Draw to the swapchain backbuffer
 					}
-					SEAssert(stageTargets || curRenderStageType == re::RenderStage::Type::Compute,
+					SEAssert(stageTargets || curRenderStageType == re::Stage::Type::Compute,
 						"The current stage does not have targets set. This is unexpected");
 
 
@@ -193,7 +194,7 @@ namespace opengl
 						opengl::Shader::Bind(*shader);
 
 						SEAssert(shader->GetPipelineState() || 
-							renderStage->GetStageType() == re::RenderStage::Type::Compute,
+							renderStage->GetStageType() == re::Stage::Type::Compute,
 							"Pipeline state is null. This is unexpected");
 
 						context->SetPipelineState(shader->GetPipelineState());
@@ -230,14 +231,14 @@ namespace opengl
 
 					switch (curRenderStageType)
 					{
-					case re::RenderStage::Type::Compute:
+					case re::Stage::Type::Compute:
 					{
 						//
 					}
 					break;
-					case re::RenderStage::Type::Graphics:
-					case re::RenderStage::Type::FullscreenQuad:
-					case re::RenderStage::Type::Clear:
+					case re::Stage::Type::Graphics:
+					case re::Stage::Type::FullscreenQuad:
+					case re::Stage::Type::Clear:
 					{
 						opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
 						opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
@@ -255,7 +256,7 @@ namespace opengl
 					core::InvPtr<re::Shader> currentShader;
 					GLuint currentVAO = 0;
 
-					// RenderStage batches:
+					// Stage batches:
 					std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 					for (re::Batch const& batch : batches)
 					{
@@ -290,8 +291,8 @@ namespace opengl
 						// Draw!
 						switch (curRenderStageType)
 						{
-						case re::RenderStage::Type::Graphics:
-						case re::RenderStage::Type::FullscreenQuad:
+						case re::Stage::Type::Graphics:
+						case re::Stage::Type::FullscreenQuad:
 						{
 							re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
 
@@ -359,7 +360,7 @@ namespace opengl
 							}
 						}
 						break;
-						case re::RenderStage::Type::Compute:
+						case re::Stage::Type::Compute:
 						{
 							glm::uvec3 const& threadGroupCount = batch.GetComputeParams().m_threadGroupCount;
 							glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
@@ -390,7 +391,7 @@ namespace opengl
 				}
 			} // StagePipeline loop
 
-			renderSystemTimer.StopTimer(nullptr);
+			renderPipelineTimer.StopTimer(nullptr);
 		} // m_renderSystems loop
 	
 		frameTimer.StopTimer(nullptr);

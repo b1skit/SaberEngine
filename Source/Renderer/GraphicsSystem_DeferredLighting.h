@@ -115,7 +115,7 @@ namespace gr
 			core::InvPtr<re::Texture> m_PMREMTex;
 		} m_activeAmbientLightData;
 
-		std::shared_ptr<re::RenderStage> m_ambientStage;
+		std::shared_ptr<re::Stage> m_ambientStage;
 		re::BufferInput m_ambientParams;
 		core::InvPtr<re::Texture> m_ssaoTex;
 
@@ -139,9 +139,9 @@ namespace gr
 		};
 		std::unordered_map<gr::RenderDataID, PunctualLightRenderData> m_punctualLightData;
 
-		std::shared_ptr<re::RenderStage> m_directionalStage;
-		std::shared_ptr<re::RenderStage> m_pointStage;
-		std::shared_ptr<re::RenderStage> m_spotStage;
+		std::shared_ptr<re::Stage> m_directionalStage;
+		std::shared_ptr<re::Stage> m_pointStage;
+		std::shared_ptr<re::Stage> m_spotStage;
 
 	private: // Common:
 		std::shared_ptr<re::TextureTargetSet> m_lightingTargetSet;

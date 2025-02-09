@@ -120,11 +120,11 @@ namespace gr
 		char const* lightName = shadowData.m_owningLightName;
 		std::string const& stageName = std::format("{}_CubeShadow", lightName);
 
-		std::shared_ptr<re::RenderStage> shadowStage =
-			re::RenderStage::CreateGraphicsStage(stageName.c_str(), re::RenderStage::GraphicsStageParams{});
+		std::shared_ptr<re::Stage> shadowStage =
+			re::Stage::CreateGraphicsStage(stageName.c_str(), re::Stage::GraphicsStageParams{});
 
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::RenderStage::FilterMode::Require, true);
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::Stage::FilterMode::Require, true);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::Stage::FilterMode::Exclude, true);
 
 		shadowStage->SetDrawStyle(effect::drawstyle::Shadow_Cube);
 		
@@ -185,10 +185,10 @@ namespace gr
 		char const* lightName = shadowData.m_owningLightName;
 		std::string const& stageName = std::format("{}_2DShadow", lightName);
 
-		std::shared_ptr<re::RenderStage> shadowStage =
-			re::RenderStage::CreateGraphicsStage(stageName.c_str(), re::RenderStage::GraphicsStageParams{});
+		std::shared_ptr<re::Stage> shadowStage =
+			re::Stage::CreateGraphicsStage(stageName.c_str(), re::Stage::GraphicsStageParams{});
 
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::RenderStage::FilterMode::Require, true);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::Stage::FilterMode::Require, true);
 
 		// Shadow camera buffer:
 		re::BufferInput shadowCamParams(
@@ -264,14 +264,14 @@ namespace gr
 	{
 		m_stagePipeline = &pipeline;
 
-		std::shared_ptr<re::RenderStage> directionalParentStage = 
-			re::RenderStage::CreateParentStage("Directional shadow stages");
+		std::shared_ptr<re::Stage> directionalParentStage = 
+			re::Stage::CreateParentStage("Directional shadow stages");
 		m_directionalParentStageItr = pipeline.AppendRenderStage(directionalParentStage);
 
-		std::shared_ptr<re::RenderStage> pointParentStage = re::RenderStage::CreateParentStage("Point shadow stages");
+		std::shared_ptr<re::Stage> pointParentStage = re::Stage::CreateParentStage("Point shadow stages");
 		m_pointParentStageItr = pipeline.AppendRenderStage(pointParentStage);
 
-		std::shared_ptr<re::RenderStage> spotParentStage = re::RenderStage::CreateParentStage("Spot shadow stages");
+		std::shared_ptr<re::Stage> spotParentStage = re::Stage::CreateParentStage("Spot shadow stages");
 		m_spotParentStageItr = pipeline.AppendRenderStage(spotParentStage);
 
 		// Cache our dependencies:
@@ -523,7 +523,7 @@ namespace gr
 				{
 					const gr::RenderDataID lightID = directionalData.m_renderDataID;
 
-					re::RenderStage& directionalStage = 
+					re::Stage& directionalStage = 
 						*m_directionalShadowStageData.at(lightID).m_renderStage;
 
 					if (m_viewBatches)
@@ -553,7 +553,7 @@ namespace gr
 						{
 							const gr::RenderDataID lightID = spotData.m_renderDataID;
 
-							re::RenderStage& spotStage = *m_spotShadowStageData.at(lightID).m_renderStage;
+							re::Stage& spotStage = *m_spotShadowStageData.at(lightID).m_renderStage;
 
 							if (m_viewBatches)
 							{

@@ -4,7 +4,7 @@
 
 namespace re
 {
-	class RenderStage;
+	class Stage;
 }
 
 namespace platform
@@ -27,7 +27,7 @@ namespace platform
 	public:
 		static std::unique_ptr<RLibrary> Create(Type);
 
-		static void Execute(re::RenderStage*, void* platformObject);
+		static void Execute(re::Stage*, void* platformObject);
 
 
 	public:

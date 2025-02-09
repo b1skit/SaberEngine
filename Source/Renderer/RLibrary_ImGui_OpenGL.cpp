@@ -2,7 +2,7 @@
 #include "Context.h"
 #include "Context_DX12.h"
 #include "RLibrary_ImGui_OpenGL.h"
-#include "RenderStage.h"
+#include "Stage.h"
 
 #include "Core/Host/Window_Win32.h"
 
@@ -54,7 +54,7 @@ namespace opengl
 	}
 
 
-	void RLibraryImGui::Execute(re::RenderStage* renderStage, void* platformObject)
+	void RLibraryImGui::Execute(re::Stage* renderStage, void* platformObject)
 	{
 		re::LibraryStage* imGuiStage = dynamic_cast<re::LibraryStage*>(renderStage);
 

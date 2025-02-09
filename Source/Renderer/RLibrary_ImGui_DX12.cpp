@@ -3,7 +3,7 @@
 #include "Context_DX12.h"
 #include "RLibrary_ImGui_DX12.h"
 #include "RenderManager.h"
-#include "RenderStage.h"
+#include "Stage.h"
 #include "SysInfo_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
@@ -286,7 +286,7 @@ namespace dx12
 	}
 
 
-	void RLibraryImGui::Execute(re::RenderStage* renderStage, void* platformObject)
+	void RLibraryImGui::Execute(re::Stage* renderStage, void* platformObject)
 	{
 		re::LibraryStage* imGuiStage = dynamic_cast<re::LibraryStage*>(renderStage);
 

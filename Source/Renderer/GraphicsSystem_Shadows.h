@@ -64,7 +64,7 @@ namespace gr
 	private:
 		struct ShadowStageData
 		{
-			std::shared_ptr<re::RenderStage> m_renderStage;
+			std::shared_ptr<re::Stage> m_renderStage;
 			std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
 			re::BufferInput m_shadowCamParamBlock;
 		};

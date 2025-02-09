@@ -23,10 +23,10 @@ namespace gr
 	void TonemappingGraphicsSystem::InitPipeline(
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
-		re::RenderStage::FullscreenQuadParams tonemappingStageParams{};
+		re::Stage::FullscreenQuadParams tonemappingStageParams{};
 		tonemappingStageParams.m_effectID = k_tonemappingEffectID;
 
-		m_tonemappingStage = re::RenderStage::CreateFullscreenQuadStage("Tonemapping stage", tonemappingStageParams);
+		m_tonemappingStage = re::Stage::CreateFullscreenQuadStage("Tonemapping stage", tonemappingStageParams);
 
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 

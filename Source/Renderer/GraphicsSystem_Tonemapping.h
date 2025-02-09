@@ -38,6 +38,6 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::RenderStage> m_tonemappingStage;
+		std::shared_ptr<re::Stage> m_tonemappingStage;
 	};
 }

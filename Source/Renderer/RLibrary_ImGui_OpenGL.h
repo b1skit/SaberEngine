@@ -5,7 +5,7 @@
 
 namespace re
 {
-	class RenderStage;
+	class Stage;
 }
 
 namespace opengl
@@ -26,7 +26,7 @@ namespace opengl
 		RLibraryImGui() = default;
 		~RLibraryImGui() = default;
 
-		void Execute(re::RenderStage*, void* platformObject) override;
+		void Execute(re::Stage*, void* platformObject) override;
 
 		void Destroy() override;
 

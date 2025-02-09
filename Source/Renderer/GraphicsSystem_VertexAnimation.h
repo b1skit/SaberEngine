@@ -44,8 +44,8 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::RenderStage> m_morphAnimationStage;
-		std::shared_ptr<re::RenderStage> m_skinAnimationStage;
+		std::shared_ptr<re::Stage> m_morphAnimationStage;
+		std::shared_ptr<re::Stage> m_skinAnimationStage;
 
 
 	private:

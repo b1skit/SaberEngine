@@ -20,7 +20,7 @@ namespace re
 	class Texture;
 
 
-	class RenderStage : public virtual core::INamedObject
+	class Stage : public virtual core::INamedObject
 	{
 	public:
 		static constexpr int k_noDepthTexAsInputFlag = -1;
@@ -101,30 +101,30 @@ namespace re
 
 
 	public:
-		static std::shared_ptr<RenderStage> CreateParentStage(char const* name);
+		static std::shared_ptr<Stage> CreateParentStage(char const* name);
 
-		static std::shared_ptr<RenderStage> CreateGraphicsStage(char const* name, GraphicsStageParams const&);
-		static std::shared_ptr<RenderStage> CreateSingleFrameGraphicsStage(char const* name, GraphicsStageParams const&);
+		static std::shared_ptr<Stage> CreateGraphicsStage(char const* name, GraphicsStageParams const&);
+		static std::shared_ptr<Stage> CreateSingleFrameGraphicsStage(char const* name, GraphicsStageParams const&);
 
-		static std::shared_ptr<RenderStage> CreateComputeStage(char const* name, ComputeStageParams const&);
-		static std::shared_ptr<RenderStage> CreateSingleFrameComputeStage(char const* name, ComputeStageParams const&);
+		static std::shared_ptr<Stage> CreateComputeStage(char const* name, ComputeStageParams const&);
+		static std::shared_ptr<Stage> CreateSingleFrameComputeStage(char const* name, ComputeStageParams const&);
 
-		static std::shared_ptr<RenderStage> CreateLibraryStage(char const* name, LibraryStageParams const&);
+		static std::shared_ptr<Stage> CreateLibraryStage(char const* name, LibraryStageParams const&);
 
-		static std::shared_ptr<RenderStage> CreateFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
-		static std::shared_ptr<RenderStage> CreateSingleFrameFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
+		static std::shared_ptr<Stage> CreateFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
+		static std::shared_ptr<Stage> CreateSingleFrameFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
 
-		static std::shared_ptr<RenderStage> CreateClearStage(
+		static std::shared_ptr<Stage> CreateClearStage(
 			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const> const&);
-		static std::shared_ptr<RenderStage> CreateSingleFrameClearStage(
+		static std::shared_ptr<Stage> CreateSingleFrameClearStage(
 			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const>const&);
 
 
 	public:
-		virtual ~RenderStage() = default;
+		virtual ~Stage() = default;
 
-		RenderStage(RenderStage&&) noexcept = default;
-		RenderStage& operator=(RenderStage&&) noexcept = default;
+		Stage(Stage&&) noexcept = default;
+		Stage& operator=(Stage&&) noexcept = default;
 
 		void PostUpdatePreRender();
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
@@ -214,7 +214,7 @@ namespace re
 
 
 	protected:
-		explicit RenderStage(char const* name, std::unique_ptr<IStageParams>&&, Type, re::Lifetime);
+		explicit Stage(char const* name, std::unique_ptr<IStageParams>&&, Type, re::Lifetime);
 
 
 	private:
@@ -248,44 +248,44 @@ namespace re
 
 		
 	private:
-		RenderStage() = delete;
-		RenderStage(RenderStage const&) = delete;
-		RenderStage& operator=(RenderStage const&) = delete;
+		Stage() = delete;
+		Stage(Stage const&) = delete;
+		Stage& operator=(Stage const&) = delete;
 	};
 
 
 	//---
 
 
-	class ParentStage final : public virtual RenderStage
+	class ParentStage final : public virtual Stage
 	{
 	public:
 		// 
 
 	private:
 		ParentStage(char const* name, re::Lifetime);
-		friend class RenderStage;
+		friend class Stage;
 	};
 
 
 	//---
 
 
-	class ComputeStage final : public virtual RenderStage
+	class ComputeStage final : public virtual Stage
 	{
 	public:
 		// 
 
 	private:
 		ComputeStage(char const* name, std::unique_ptr<ComputeStageParams>&&, re::Lifetime);
-		friend class RenderStage;
+		friend class Stage;
 	};
 
 
 	//---
 
 
-	class FullscreenQuadStage final : public virtual RenderStage
+	class FullscreenQuadStage final : public virtual Stage
 	{
 	public:
 		//
@@ -296,28 +296,28 @@ namespace re
 
 	private:
 		FullscreenQuadStage(char const* name, std::unique_ptr<FullscreenQuadParams>&&, re::Lifetime);
-		friend class RenderStage;
+		friend class Stage;
 	};
 
 
 	//---
 
 
-	class ClearStage final : public virtual RenderStage
+	class ClearStage final : public virtual Stage
 	{
 	public:
 		// 
 
 	private:
 		ClearStage(char const* name, re::Lifetime);
-		friend class RenderStage;
+		friend class Stage;
 	};
 
 
 	//---
 
 
-	class LibraryStage final : public virtual RenderStage
+	class LibraryStage final : public virtual Stage
 	{
 	public:
 		struct IPayload
@@ -337,110 +337,110 @@ namespace re
 
 	private:
 		LibraryStage(char const* name, std::unique_ptr<LibraryStageParams>&&, re::Lifetime);
-		friend class RenderStage;
+		friend class Stage;
 	};
 
 
 	//---
 
 
-	inline constexpr bool RenderStage::IsLibraryType(Type type)
+	inline constexpr bool Stage::IsLibraryType(Type type)
 	{
 		return type == Type::LibraryGraphics || type == Type::LibraryCompute;
 	}
 
 
-	inline RenderStage::Type RenderStage::GetStageType() const
+	inline Stage::Type Stage::GetStageType() const
 	{
 		return m_type;
 	}
 
 
-	inline re::Lifetime RenderStage::GetStageLifetime() const
+	inline re::Lifetime Stage::GetStageLifetime() const
 	{
 		return m_lifetime;
 	}
 
 
-	inline RenderStage::IStageParams const* RenderStage::GetStageParams() const
+	inline Stage::IStageParams const* Stage::GetStageParams() const
 	{
 		return m_stageParams.get();
 	}
 
 
-	inline void RenderStage::SetDrawStyle(effect::drawstyle::Bitmask drawStyleBits)
+	inline void Stage::SetDrawStyle(effect::drawstyle::Bitmask drawStyleBits)
 	{
 		m_drawStyleBits |= drawStyleBits;
 	}
 
 
-	inline void RenderStage::ClearDrawStyle()
+	inline void Stage::ClearDrawStyle()
 	{
 		m_drawStyleBits = 0;
 	}
 
 
-	inline re::TextureTargetSet const* RenderStage::GetTextureTargetSet() const
+	inline re::TextureTargetSet const* Stage::GetTextureTargetSet() const
 	{
 		return m_textureTargetSet.get();
 	}
 
 
-	inline re::TextureTargetSet* RenderStage::GetTextureTargetSet()
+	inline re::TextureTargetSet* Stage::GetTextureTargetSet()
 	{
 		return m_textureTargetSet.get();
 	}
 
 
-	inline std::vector<re::TextureAndSamplerInput> const& RenderStage::GetPermanentTextureInputs() const
+	inline std::vector<re::TextureAndSamplerInput> const& Stage::GetPermanentTextureInputs() const
 	{
 		return m_permanentTextureSamplerInputs;
 	}
 
 
-	inline std::vector<re::TextureAndSamplerInput> const& RenderStage::GetSingleFrameTextureInputs() const
+	inline std::vector<re::TextureAndSamplerInput> const& Stage::GetSingleFrameTextureInputs() const
 	{
 		return m_singleFrameTextureSamplerInputs;
 	}
 
 
-	inline std::vector<re::RWTextureInput> const& RenderStage::GetPermanentRWTextureInputs() const
+	inline std::vector<re::RWTextureInput> const& Stage::GetPermanentRWTextureInputs() const
 	{
 		return m_permanentRWTextureInputs;
 	}
 
 
-	inline std::vector<re::RWTextureInput> const& RenderStage::GetSingleFrameRWTextureInputs() const
+	inline std::vector<re::RWTextureInput> const& Stage::GetSingleFrameRWTextureInputs() const
 	{
 		return m_singleFrameRWTextureInputs;
 	}
 
 
-	inline bool RenderStage::DepthTargetIsAlsoTextureInput() const
+	inline bool Stage::DepthTargetIsAlsoTextureInput() const
 	{
 		return m_depthTextureInputIdx != k_noDepthTexAsInputFlag;
 	}
 
 
-	inline int RenderStage::GetDepthTargetTextureInputIdx() const
+	inline int Stage::GetDepthTargetTextureInputIdx() const
 	{
 		return m_depthTextureInputIdx;
 	}
 
 
-	inline std::vector<re::BufferInput> const& RenderStage::GetPermanentBuffers() const
+	inline std::vector<re::BufferInput> const& Stage::GetPermanentBuffers() const
 	{
 		return m_permanentBuffers;
 	}
 
 
-	inline std::vector<re::BufferInput> const& RenderStage::GetPerFrameBuffers() const
+	inline std::vector<re::BufferInput> const& Stage::GetPerFrameBuffers() const
 	{
 		return m_singleFrameBuffers;
 	}
 
 
-	inline std::vector<re::Batch> const& RenderStage::GetStageBatches() const
+	inline std::vector<re::Batch> const& Stage::GetStageBatches() const
 	{
 		return m_stageBatches;
 	}

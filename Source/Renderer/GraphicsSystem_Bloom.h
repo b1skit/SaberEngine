@@ -45,13 +45,13 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::RenderStage> m_emissiveBlitStage;
+		std::shared_ptr<re::Stage> m_emissiveBlitStage;
 
 		// Bloom compute:
-		std::vector<std::shared_ptr<re::RenderStage>> m_bloomDownStages;
+		std::vector<std::shared_ptr<re::Stage>> m_bloomDownStages;
 		std::vector<std::shared_ptr<re::Buffer>> m_bloomDownBuffers;
 
-		std::vector<std::shared_ptr<re::RenderStage>> m_bloomUpStages;
+		std::vector<std::shared_ptr<re::Stage>> m_bloomUpStages;
 		std::vector<std::shared_ptr<re::Buffer>> m_bloomUpBuffers;
 
 		core::InvPtr<re::Texture> m_bloomTargetTex;

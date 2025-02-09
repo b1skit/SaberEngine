@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "RenderStage.h"
+#include "Stage.h"
 
 #include "Core/Interfaces/INamedObject.h"
 
@@ -10,7 +10,7 @@ namespace re
 	class StagePipeline final : public virtual core::INamedObject
 	{
 	public:
-		typedef std::list<std::shared_ptr<re::RenderStage>>::iterator StagePipelineItr;
+		typedef std::list<std::shared_ptr<re::Stage>>::iterator StagePipelineItr;
 
 
 	public:
@@ -23,26 +23,26 @@ namespace re
 		void Destroy();
 	
 
-		StagePipelineItr AppendRenderStage(std::shared_ptr<re::RenderStage> const&);
-		StagePipelineItr AppendRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::RenderStage> const&);
+		StagePipelineItr AppendRenderStage(std::shared_ptr<re::Stage> const&);
+		StagePipelineItr AppendRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::Stage> const&);
 
-		StagePipelineItr AppendRenderStageForSingleFrame(StagePipelineItr const& parent, std::shared_ptr<re::RenderStage> const&);
+		StagePipelineItr AppendRenderStageForSingleFrame(StagePipelineItr const& parent, std::shared_ptr<re::Stage> const&);
 
-		StagePipelineItr AppendSingleFrameRenderStage(std::shared_ptr<re::RenderStage>&&); // Append to end
-		StagePipelineItr AppendSingleFrameRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::RenderStage>&&);
+		StagePipelineItr AppendSingleFrameRenderStage(std::shared_ptr<re::Stage>&&); // Append to end
+		StagePipelineItr AppendSingleFrameRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::Stage>&&);
 
 		size_t GetNumberOfStages() const;
 
-		std::list<std::shared_ptr<re::RenderStage>> const& GetRenderStages() const;
+		std::list<std::shared_ptr<re::Stage>> const& GetRenderStages() const;
 
 
 	public:
 		void PostUpdatePreRender();
-		void EndOfFrame(); // Calls RenderStage::EndOfFrame, clears single frame data etc
+		void EndOfFrame(); // Calls Stage::EndOfFrame, clears single frame data etc
 
 
 	private:
-		std::list<std::shared_ptr<re::RenderStage>> m_renderStages;
+		std::list<std::shared_ptr<re::Stage>> m_renderStages;
 
 		std::vector<StagePipelineItr> m_singleFrameInsertionPoints;
 
@@ -106,7 +106,7 @@ namespace re
 	}
 
 
-	inline std::list<std::shared_ptr<re::RenderStage>> const& StagePipeline::GetRenderStages() const
+	inline std::list<std::shared_ptr<re::Stage>> const& StagePipeline::GetRenderStages() const
 	{
 		return m_renderStages;
 	}

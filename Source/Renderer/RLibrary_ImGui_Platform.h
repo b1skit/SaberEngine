@@ -1,7 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "RLibrary_Platform.h"
-#include "RenderStage.h"
+#include "Stage.h"
 
 #include "Core/CommandQueue.h"
 #include "Core/Interfaces/IPlatformParams.h"
@@ -41,7 +41,7 @@ namespace platform
 		static void ConfigureScaling(RLibraryImGui&);
 
 	public:
-		virtual void Execute(re::RenderStage*, void* platformObject) = 0;
+		virtual void Execute(re::Stage*, void* platformObject) = 0;
 		virtual void Destroy() = 0;
 
 

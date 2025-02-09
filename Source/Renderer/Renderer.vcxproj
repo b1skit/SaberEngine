@@ -177,7 +177,7 @@
     <ClInclude Include="RenderManager_Platform.h" />
     <ClInclude Include="RenderObjectIDs.h" />
     <ClInclude Include="RenderPipeline.h" />
-    <ClInclude Include="RenderStage.h" />
+    <ClInclude Include="Stage.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="RenderSystemDesc.h" />
     <ClInclude Include="HeapManager_DX12.h" />
@@ -296,7 +296,7 @@
     <ClCompile Include="RenderManager_OpenGL.cpp" />
     <ClCompile Include="RenderManager_Platform.cpp" />
     <ClCompile Include="RenderPipeline.cpp" />
-    <ClCompile Include="RenderStage.cpp" />
+    <ClCompile Include="Stage.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
     <ClCompile Include="RenderSystemDesc.cpp" />
     <ClCompile Include="HeapManager_DX12.cpp" />

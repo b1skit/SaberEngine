@@ -66,11 +66,11 @@ namespace gr
 		core::InvPtr<re::Sampler> const& bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
 
 		// Emissive blit:
-		re::RenderStage::FullscreenQuadParams emissiveBlitParams{};
+		re::Stage::FullscreenQuadParams emissiveBlitParams{};
 		emissiveBlitParams.m_effectID = k_bloomEffectID;
 		emissiveBlitParams.m_drawStyleBitmask = effect::drawstyle::Bloom_EmissiveBlit;
 
-		m_emissiveBlitStage = re::RenderStage::CreateFullscreenQuadStage("Emissive blit stage", emissiveBlitParams);
+		m_emissiveBlitStage = re::Stage::CreateFullscreenQuadStage("Emissive blit stage", emissiveBlitParams);
 
 		// Emissive blit texture inputs:
 		m_emissiveBlitStage->AddPermanentTextureInput(
@@ -125,8 +125,8 @@ namespace gr
 			// Stage:
 			std::string const& stageName = 
 				std::format("Bloom downsample stage {}/{}: MIP {}", (level + 1), numBloomMips, level);
-			std::shared_ptr<re::RenderStage> downStage = 
-				re::RenderStage::CreateComputeStage(stageName.c_str(), re::RenderStage::ComputeStageParams());
+			std::shared_ptr<re::Stage> downStage = 
+				re::Stage::CreateComputeStage(stageName.c_str(), re::Stage::ComputeStageParams());
 
 			// Input:
 			if (level == 0)
@@ -176,8 +176,8 @@ namespace gr
 			// Stage:
 			std::string const& stageName = 
 				std::format("Bloom upsample stage {}/{}: MIP {}", upsampleNameLevel++, numUpsampleStages, upsampleDstMip);
-			std::shared_ptr<re::RenderStage> upStage =
-				re::RenderStage::CreateComputeStage(stageName.c_str(), re::RenderStage::ComputeStageParams());
+			std::shared_ptr<re::Stage> upStage =
+				re::Stage::CreateComputeStage(stageName.c_str(), re::Stage::ComputeStageParams());
 
 			// Input:
 			upStage->AddPermanentTextureInput(
@@ -314,7 +314,7 @@ namespace gr
 		const uint32_t numBloomTexMips = m_bloomTargetTex->GetNumMips();
 
 		uint32_t downsampleDstMipLevel = 0;
-		for (std::shared_ptr<re::RenderStage> downStage : m_bloomDownStages)
+		for (std::shared_ptr<re::Stage> downStage : m_bloomDownStages)
 		{
 			glm::vec2 dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(downsampleDstMipLevel++).xy;
 
@@ -328,7 +328,7 @@ namespace gr
 		}
 
 		uint32_t upsampleDstMipLevel = m_firstUpsampleSrcMipLevel - 1;
-		for (std::shared_ptr<re::RenderStage> upStage : m_bloomUpStages)
+		for (std::shared_ptr<re::Stage> upStage : m_bloomUpStages)
 		{
 			glm::vec2 dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(upsampleDstMipLevel--).xy;
 

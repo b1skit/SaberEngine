@@ -3,7 +3,7 @@
 #include "GraphicsSystem_GBuffer.h"
 #include "RenderManager.h"
 #include "RenderObjectIDs.h"
-#include "RenderStage.h"
+#include "Stage.h"
 #include "Texture.h"
 
 #include "Core/Config.h"
@@ -18,10 +18,10 @@ namespace gr
 		, m_viewBatches(nullptr)
 		, m_allBatches(nullptr)
 	{
-		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", {});
+		m_gBufferStage = re::Stage::CreateGraphicsStage("GBuffer Stage", {});
 
 		m_gBufferStage->SetBatchFilterMaskBit(
-			re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Exclude, true);
+			re::Batch::Filter::AlphaBlended, re::Stage::FilterMode::Exclude, true);
 
 		m_gBufferStage->SetDrawStyle(effect::drawstyle::RenderPath_Deferred);
 	}
@@ -86,10 +86,10 @@ namespace gr
 
 
 		// Create a clear stage for the GBuffer targets:
-		re::RenderStage::ClearStageParams gbufferClearParams; // Clear both color and depth
+		re::Stage::ClearStageParams gbufferClearParams; // Clear both color and depth
 		gbufferClearParams.m_colorClearModes = { re::TextureTarget::ClearMode::Enabled };
 		gbufferClearParams.m_depthClearMode = re::TextureTarget::ClearMode::Enabled;
-		m_owningPipeline->AppendRenderStage(re::RenderStage::CreateClearStage(gbufferClearParams, m_gBufferTargets));
+		m_owningPipeline->AppendRenderStage(re::Stage::CreateClearStage(gbufferClearParams, m_gBufferTargets));
 
 		// Finally, append the GBuffer stage to the pipeline:
 		m_owningPipeline->AppendRenderStage(m_gBufferStage);
@@ -130,11 +130,11 @@ namespace gr
 		{
 			// Append a clear stage, to ensure that the depth buffer is cleared when there is no batches (i.e. so the 
 			// skybox will still render in an empty scene)
-			re::RenderStage::ClearStageParams depthClearStageParams;
+			re::Stage::ClearStageParams depthClearStageParams;
 			depthClearStageParams.m_colorClearModes = { re::TextureTarget::ClearMode::Disabled };
 			depthClearStageParams.m_depthClearMode = re::TextureTarget::ClearMode::Enabled;
 			
-			m_owningPipeline->AppendSingleFrameRenderStage(re::RenderStage::CreateSingleFrameClearStage(
+			m_owningPipeline->AppendSingleFrameRenderStage(re::Stage::CreateSingleFrameClearStage(
 				depthClearStageParams, 
 				m_gBufferTargets));
 		}

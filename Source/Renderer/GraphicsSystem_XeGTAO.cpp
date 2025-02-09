@@ -188,7 +188,7 @@ namespace gr
 
 		// Depth prefilter stage:
 		m_prefilterDepthsStage = 
-			re::RenderStage::CreateComputeStage("XeGTAO: Prefilter depths stage", re::RenderStage::ComputeStageParams{});
+			re::Stage::CreateComputeStage("XeGTAO: Prefilter depths stage", re::Stage::ComputeStageParams{});
 		m_prefilterDepthsStage->SetDrawStyle(effect::drawstyle::XeGTAO_PrefilterDepths);
 
 		// Depth prefilter texture:	
@@ -249,7 +249,7 @@ namespace gr
 
 		
 		// Main pass:
-		m_mainStage = re::RenderStage::CreateComputeStage("XeGTAO: Main stage", re::RenderStage::ComputeStageParams{});
+		m_mainStage = re::Stage::CreateComputeStage("XeGTAO: Main stage", re::Stage::ComputeStageParams{});
 
 		SetQuality(m_XeGTAOQuality);
 
@@ -327,9 +327,9 @@ namespace gr
 		
 		for (uint8_t passIdx = 0; passIdx < numDenoisePasses; passIdx++)
 		{
-			m_denoiseStages[passIdx] = re::RenderStage::CreateComputeStage(
+			m_denoiseStages[passIdx] = re::Stage::CreateComputeStage(
 				std::format("XeGTAO: Denoise stage {}/{}", (passIdx + 1), numDenoisePasses).c_str(),
-					re::RenderStage::ComputeStageParams{});
+					re::Stage::ComputeStageParams{});
 
 			const bool isLastPass = passIdx == lastPassIdx;
 			if (isLastPass)

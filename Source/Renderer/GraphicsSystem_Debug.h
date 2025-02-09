@@ -51,8 +51,8 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::RenderStage> m_debugStage;
-		std::shared_ptr<re::RenderStage> m_wireframeStage;
+		std::shared_ptr<re::Stage> m_debugStage;
+		std::shared_ptr<re::Stage> m_wireframeStage;
 
 
 		re::BufferInput m_debugParams;

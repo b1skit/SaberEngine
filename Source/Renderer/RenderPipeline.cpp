@@ -9,10 +9,10 @@ namespace re
 {
 	/******************************************** StagePipeline********************************************/
 
-	std::list<std::shared_ptr<re::RenderStage>>::iterator StagePipeline::AppendRenderStage(
-		std::shared_ptr<re::RenderStage> const& renderStage)
+	std::list<std::shared_ptr<re::Stage>>::iterator StagePipeline::AppendRenderStage(
+		std::shared_ptr<re::Stage> const& renderStage)
 	{
-		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
+		SEAssert(renderStage != nullptr, "Cannot append a null Stage");
 		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
 			"Incorrect stage lifetime");
 		
@@ -23,9 +23,9 @@ namespace re
 
 	StagePipeline::StagePipelineItr StagePipeline::AppendRenderStage(
 		StagePipeline::StagePipelineItr const& parentItr, 
-		std::shared_ptr<re::RenderStage> const& renderStage)
+		std::shared_ptr<re::Stage> const& renderStage)
 	{
-		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
+		SEAssert(renderStage != nullptr, "Cannot append a null Stage");
 		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
 			"Incorrect stage lifetime");
 
@@ -39,9 +39,9 @@ namespace re
 
 
 	StagePipeline::StagePipelineItr StagePipeline::AppendSingleFrameRenderStage(
-		std::shared_ptr<re::RenderStage>&& renderStage)
+		std::shared_ptr<re::Stage>&& renderStage)
 	{
-		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
+		SEAssert(renderStage != nullptr, "Cannot append a null Stage");
 		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::SingleFrame,
 			"Incorrect stage lifetime");
 
@@ -57,9 +57,9 @@ namespace re
 
 	StagePipeline::StagePipelineItr StagePipeline::AppendSingleFrameRenderStage(
 		StagePipeline::StagePipelineItr const& parentItr,
-		std::shared_ptr<re::RenderStage>&& renderStage)
+		std::shared_ptr<re::Stage>&& renderStage)
 	{
-		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
+		SEAssert(renderStage != nullptr, "Cannot append a null Stage");
 		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::SingleFrame,
 			"Incorrect stage lifetime");
 		
@@ -85,9 +85,9 @@ namespace re
 
 	StagePipeline::StagePipelineItr StagePipeline::AppendRenderStageForSingleFrame(
 		StagePipeline::StagePipelineItr const& parentItr,
-		std::shared_ptr<re::RenderStage> const& renderStage)
+		std::shared_ptr<re::Stage> const& renderStage)
 	{
-		SEAssert(renderStage != nullptr, "Cannot append a null RenderStage");
+		SEAssert(renderStage != nullptr, "Cannot append a null Stage");
 		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
 			"Incorrect stage lifetime");
 
@@ -115,7 +115,7 @@ namespace re
 	{
 		SEBeginCPUEvent("StagePipeline::PostUpdatePreRender");
 
-		for (std::shared_ptr<re::RenderStage>& renderStage : m_renderStages)
+		for (std::shared_ptr<re::Stage>& renderStage : m_renderStages)
 		{
 			renderStage->PostUpdatePreRender();
 		}
@@ -128,7 +128,7 @@ namespace re
 	{
 		SEBeginCPUEvent("StagePipeline::EndOfFrame");
 
-		for (std::shared_ptr<re::RenderStage>& renderStage : m_renderStages)
+		for (std::shared_ptr<re::Stage>& renderStage : m_renderStages)
 		{
 			renderStage->EndOfFrame();
 		}

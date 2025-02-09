@@ -50,7 +50,7 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::RenderStage> m_imguiLibraryStage;
+		std::shared_ptr<re::Stage> m_imguiLibraryStage;
 	};
 
 

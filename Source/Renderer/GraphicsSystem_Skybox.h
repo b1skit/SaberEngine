@@ -42,7 +42,7 @@ namespace gr
 	private:
 		static constexpr char const* k_skyboxTexShaderName = "Tex0";
 
-		std::shared_ptr<re::RenderStage> m_skyboxStage;
+		std::shared_ptr<re::Stage> m_skyboxStage;
 		core::InvPtr<re::Texture> const* m_skyTexture;
 		std::shared_ptr<re::Buffer> m_skyboxParams;
 

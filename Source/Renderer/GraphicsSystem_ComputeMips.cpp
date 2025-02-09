@@ -59,7 +59,7 @@ namespace gr
 		m_stagePipeline = &pipeline;
 
 		m_parentStageItr = m_stagePipeline->AppendRenderStage(
-			re::RenderStage::CreateParentStage("MIP Generation Parent stage"));
+			re::Stage::CreateParentStage("MIP Generation Parent stage"));
 	}
 
 
@@ -114,10 +114,10 @@ namespace gr
 							firstTargetMipIdx,
 							firstTargetMipIdx + numMipStages - 1);
 
-						std::shared_ptr<re::RenderStage> mipGenerationStage = 
-							re::RenderStage::CreateSingleFrameComputeStage(
+						std::shared_ptr<re::Stage> mipGenerationStage = 
+							re::Stage::CreateSingleFrameComputeStage(
 								stageName.c_str(),
-								re::RenderStage::ComputeStageParams{});
+								re::Stage::ComputeStageParams{});
 
 						re::TextureView inputView;
 

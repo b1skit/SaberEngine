@@ -190,10 +190,10 @@ namespace gr
 
 
 		// Stage setup:
-		m_transparencyStage = re::RenderStage::CreateGraphicsStage("Transparency Stage", {});
+		m_transparencyStage = re::Stage::CreateGraphicsStage("Transparency Stage", {});
 
 		m_transparencyStage->SetBatchFilterMaskBit(
-			re::Batch::Filter::AlphaBlended, re::RenderStage::FilterMode::Require, true);
+			re::Batch::Filter::AlphaBlended, re::Stage::FilterMode::Require, true);
 
 		m_transparencyStage->SetDrawStyle(effect::drawstyle::RenderPath_Forward);
 

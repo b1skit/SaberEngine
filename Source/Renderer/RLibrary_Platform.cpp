@@ -6,7 +6,7 @@
 #include "RLibrary_ImGui_DX12.h"
 #include "RLibrary_ImGui_OpenGL.h"
 #include "RLibrary_ImGui_Platform.h"
-#include "RenderStage.h"
+#include "Stage.h"
 
 #include "Core/Logger.h"
 
@@ -59,18 +59,18 @@ namespace platform
 	}
 
 
-	void RLibrary::Execute(re::RenderStage* renderStage, void* platformObject)
+	void RLibrary::Execute(re::Stage* renderStage, void* platformObject)
 	{
-		SEAssert(renderStage->GetStageType() == re::RenderStage::Type::LibraryGraphics ||
-			renderStage->GetStageType() == re::RenderStage::Type::LibraryCompute,
+		SEAssert(renderStage->GetStageType() == re::Stage::Type::LibraryGraphics ||
+			renderStage->GetStageType() == re::Stage::Type::LibraryCompute,
 			"Invalid stage type");
 
-		re::RenderStage::LibraryStageParams const* libraryStageParams =
-			dynamic_cast<re::RenderStage::LibraryStageParams const*>(renderStage->GetStageParams());
+		re::Stage::LibraryStageParams const* libraryStageParams =
+			dynamic_cast<re::Stage::LibraryStageParams const*>(renderStage->GetStageParams());
 
 		switch (libraryStageParams->m_type)
 		{
-		case re::RenderStage::LibraryStageParams::LibraryType::ImGui:
+		case re::Stage::LibraryStageParams::LibraryType::ImGui:
 		{
 			dynamic_cast<platform::RLibraryImGui*>(
 				re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui))->Execute(renderStage, platformObject);

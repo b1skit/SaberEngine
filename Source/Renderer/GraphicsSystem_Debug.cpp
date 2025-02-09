@@ -401,7 +401,7 @@ namespace gr
 					.m_arraySize = 1,
 				}));
 
-		m_debugStage = re::RenderStage::CreateGraphicsStage("Debug stage", re::RenderStage::GraphicsStageParams{});
+		m_debugStage = re::Stage::CreateGraphicsStage("Debug stage", re::Stage::GraphicsStageParams{});
 		
 		m_debugStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 		m_debugStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
@@ -410,7 +410,7 @@ namespace gr
 		stagePipeline.AppendRenderStage(m_debugStage);
 
 
-		m_wireframeStage = re::RenderStage::CreateGraphicsStage("Debug: Wireframe stage", re::RenderStage::GraphicsStageParams{});
+		m_wireframeStage = re::Stage::CreateGraphicsStage("Debug: Wireframe stage", re::Stage::GraphicsStageParams{});
 
 		m_wireframeStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 		m_wireframeStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());

@@ -7,7 +7,7 @@
 
 namespace re
 {
-	class RenderStage;
+	class Stage;
 }
 
 namespace gr
@@ -77,7 +77,7 @@ namespace gr
 		void CreateBatches();
 
 	private:
-		std::shared_ptr<re::RenderStage> m_gBufferStage;
+		std::shared_ptr<re::Stage> m_gBufferStage;
 		std::shared_ptr<re::TextureTargetSet> m_gBufferTargets;
 		re::StagePipeline* m_owningPipeline;
 

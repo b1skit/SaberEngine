@@ -10,7 +10,7 @@
 #include "ShadowMapRenderData.h"
 #include "RenderDataManager.h"
 #include "RenderManager.h"
-#include "RenderStage.h"
+#include "Stage.h"
 
 #include "Core/Config.h"
 
@@ -167,9 +167,9 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::CreateSingleFrameBRDFPreIntegrationStage(re::StagePipeline& pipeline)
 	{
-		re::RenderStage::ComputeStageParams computeStageParams;
-		std::shared_ptr<re::RenderStage> brdfStage =
-			re::RenderStage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
+		re::Stage::ComputeStageParams computeStageParams;
+		std::shared_ptr<re::Stage> brdfStage =
+			re::Stage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
 
 		brdfStage->SetDrawStyle(effect::drawstyle::DeferredLighting_BRDFIntegration);
 
@@ -240,8 +240,8 @@ namespace gr
 
 		for (uint32_t face = 0; face < 6; face++)
 		{
-			re::RenderStage::GraphicsStageParams gfxStageParams;
-			std::shared_ptr<re::RenderStage> iemStage = re::RenderStage::CreateSingleFrameGraphicsStage(
+			re::Stage::GraphicsStageParams gfxStageParams;
+			std::shared_ptr<re::Stage> iemStage = re::Stage::CreateSingleFrameGraphicsStage(
 				std::format("IEM generation: Face {}/6", face + 1).c_str(), gfxStageParams);
 
 			iemStage->SetDrawStyle(effect::drawstyle::DeferredLighting_IEMGeneration);
@@ -317,8 +317,8 @@ namespace gr
 				std::string const& postFix = std::format("Face {}, Mip {}", face, currentMipLevel);
 				std::string const& stageName = std::format("PMREM generation: {}", postFix);
 
-				re::RenderStage::GraphicsStageParams gfxStageParams;
-				std::shared_ptr<re::RenderStage> pmremStage = re::RenderStage::CreateSingleFrameGraphicsStage(
+				re::Stage::GraphicsStageParams gfxStageParams;
+				std::shared_ptr<re::Stage> pmremStage = re::Stage::CreateSingleFrameGraphicsStage(
 					stageName.c_str(), gfxStageParams);
 
 				pmremStage->SetDrawStyle(effect::drawstyle::DeferredLighting_PMREMGeneration);
@@ -379,7 +379,7 @@ namespace gr
 		m_resourceCreationStagePipeline = &pipeline;
 
 		m_resourceCreationStageParentItr = pipeline.AppendRenderStage(
-			re::RenderStage::CreateParentStage("Resource creation stages parent"));
+			re::Stage::CreateParentStage("Resource creation stages parent"));
 
 
 		// Cube mesh, for rendering of IBL cubemaps
@@ -489,12 +489,12 @@ namespace gr
 			},
 			glm::vec4(1.f, 1.f, 1.f, 1.f));
 
-		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_ambientStage = re::RenderStage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
+		re::Stage::GraphicsStageParams gfxStageParams;
+		m_ambientStage = re::Stage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
 
-		m_directionalStage = re::RenderStage::CreateGraphicsStage("Directional light stage", gfxStageParams);
-		m_pointStage = re::RenderStage::CreateGraphicsStage("Point light stage", gfxStageParams);
-		m_spotStage = re::RenderStage::CreateGraphicsStage("Spot light stage", gfxStageParams);
+		m_directionalStage = re::Stage::CreateGraphicsStage("Directional light stage", gfxStageParams);
+		m_pointStage = re::Stage::CreateGraphicsStage("Point light stage", gfxStageParams);
+		m_spotStage = re::Stage::CreateGraphicsStage("Spot light stage", gfxStageParams);
 
 		// Create a lighting texture target:
 		re::Texture::TextureParams lightTargetTexParams;
@@ -526,10 +526,10 @@ namespace gr
 			depthTargetParams);
 
 		// Append a color-only clear stage to clear the lighting target:
-		re::RenderStage::ClearStageParams colorClearParams;
+		re::Stage::ClearStageParams colorClearParams;
 		colorClearParams.m_colorClearModes = { re::TextureTarget::ClearMode::Enabled };
 		colorClearParams.m_depthClearMode = re::TextureTarget::ClearMode::Disabled;
-		pipeline.AppendRenderStage(re::RenderStage::CreateClearStage(colorClearParams, m_lightingTargetSet));
+		pipeline.AppendRenderStage(re::Stage::CreateClearStage(colorClearParams, m_lightingTargetSet));
 
 
 		// Ambient stage:
@@ -1053,7 +1053,7 @@ namespace gr
 					visibleLightIDs.contains(lightID)))
 			{
 				auto AddDuplicatedBatch = [&light, &lightID](
-					re::RenderStage* stage,
+					re::Stage* stage,
 					char const* shadowTexShaderName,
 					util::HashKey const& samplerTypeName,
 					LightDataBufferIdxMap const* lightDataBufferIdxMap,

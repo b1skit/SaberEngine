@@ -158,13 +158,13 @@ namespace gr
 		SEAssert(m_viewCullingResults, "View culling results cannot (currently) be null");
 
 		m_morphAnimationStage = 
-			re::RenderStage::CreateComputeStage("Morph Animation Stage", re::RenderStage::ComputeStageParams{});
+			re::Stage::CreateComputeStage("Morph Animation Stage", re::Stage::ComputeStageParams{});
 		m_morphAnimationStage->SetDrawStyle(effect::drawstyle::VertexAnimation_Morph);
 		
 		pipeline.AppendRenderStage(m_morphAnimationStage);
 
 		m_skinAnimationStage =
-			re::RenderStage::CreateComputeStage("Skinned Animation Stage", re::RenderStage::ComputeStageParams{});
+			re::Stage::CreateComputeStage("Skinned Animation Stage", re::Stage::ComputeStageParams{});
 		m_skinAnimationStage->SetDrawStyle(effect::drawstyle::VertexAnimation_Skinning);
 
 		pipeline.AppendRenderStage(m_skinAnimationStage);

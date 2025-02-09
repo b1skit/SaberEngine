@@ -2,7 +2,7 @@
 #pragma once
 #include "CameraRenderData.h"
 #include "GraphicsSystemCommon.h"
-#include "RenderStage.h"
+#include "Stage.h"
 #include "RenderPipeline.h"
 
 #include "Core/Interfaces/INamedObject.h"

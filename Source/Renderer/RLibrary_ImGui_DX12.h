@@ -11,7 +11,7 @@ struct ImGui_ImplDX12_InitInfo;
 
 namespace re
 {
-	class RenderStage;
+	class Stage;
 }
 
 namespace dx12
@@ -77,7 +77,7 @@ namespace dx12
 		RLibraryImGui() = default;
 		~RLibraryImGui() = default;
 
-		void Execute(re::RenderStage*, void* platformObject) override;
+		void Execute(re::Stage*, void* platformObject) override;
 
 		void Destroy() override;
 

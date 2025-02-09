@@ -341,7 +341,7 @@
     <ClInclude Include="RenderPipeline.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
-    <ClInclude Include="RenderStage.h">
+    <ClInclude Include="Stage.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="RenderSystem.h">
@@ -679,7 +679,7 @@
     <ClCompile Include="RenderPipeline.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
-    <ClCompile Include="RenderStage.cpp">
+    <ClCompile Include="Stage.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="RenderSystem.cpp">

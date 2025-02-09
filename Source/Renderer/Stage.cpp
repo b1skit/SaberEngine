@@ -2,7 +2,7 @@
 #include "Buffer.h"
 #include "BufferView.h"
 #include "RenderManager.h"
-#include "RenderStage.h"
+#include "Stage.h"
 #include "RLibrary_Platform.h"
 #include "Sampler.h"
 #include "Shader.h"
@@ -14,8 +14,8 @@
 namespace
 {
 	void ConfigureClearStage(
-		std::shared_ptr<re::RenderStage> newClearStage,
-		re::RenderStage::ClearStageParams const& clearStageParams,
+		std::shared_ptr<re::Stage> newClearStage,
+		re::Stage::ClearStageParams const& clearStageParams,
 		std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
 		const uint8_t numColorTargets = targetSet->GetNumColorTargets();
@@ -53,7 +53,7 @@ namespace
 
 	std::string CreateClearStageName(
 		std::shared_ptr<re::TextureTargetSet const> const& targetSet,
-		re::RenderStage::ClearStageParams const& clearStageParams)
+		re::Stage::ClearStageParams const& clearStageParams)
 	{
 		return std::format("Clear: {} (Color {}, Depth {})",
 			targetSet->GetName(),
@@ -65,48 +65,48 @@ namespace
 
 namespace re
 {
-	std::shared_ptr<RenderStage> RenderStage::CreateParentStage(char const* name)
+	std::shared_ptr<Stage> Stage::CreateParentStage(char const* name)
 	{
-		std::shared_ptr<RenderStage> newParentStage;
-		newParentStage.reset(new RenderStage(
+		std::shared_ptr<Stage> newParentStage;
+		newParentStage.reset(new Stage(
 			name,
 			nullptr,
-			RenderStage::Type::Parent,
+			Stage::Type::Parent,
 			re::Lifetime::Permanent));
 		return newParentStage;
 	}
 
 
-	std::shared_ptr<RenderStage> RenderStage::CreateGraphicsStage(
+	std::shared_ptr<Stage> Stage::CreateGraphicsStage(
 		char const* name, GraphicsStageParams const& stageParams)
 	{
-		std::shared_ptr<RenderStage> newGFXStage;
-		newGFXStage.reset(new RenderStage(
+		std::shared_ptr<Stage> newGFXStage;
+		newGFXStage.reset(new Stage(
 			name, 
 			std::make_unique<GraphicsStageParams>(stageParams), 
-			RenderStage::Type::Graphics,
+			Stage::Type::Graphics,
 			re::Lifetime::Permanent));
 		return newGFXStage;
 	}
 
 
-	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameGraphicsStage(
+	std::shared_ptr<Stage> Stage::CreateSingleFrameGraphicsStage(
 		char const* name, GraphicsStageParams const& stageParams)
 	{
-		std::shared_ptr<RenderStage> newGFXStage;
-		newGFXStage.reset(new RenderStage(
+		std::shared_ptr<Stage> newGFXStage;
+		newGFXStage.reset(new Stage(
 			name,
 			std::make_unique<GraphicsStageParams>(stageParams),
-			RenderStage::Type::Graphics,
+			Stage::Type::Graphics,
 			re::Lifetime::SingleFrame));
 		return newGFXStage;
 	}
 
 
-	std::shared_ptr<RenderStage> RenderStage::CreateComputeStage(
+	std::shared_ptr<Stage> Stage::CreateComputeStage(
 		char const* name, ComputeStageParams const& stageParams)
 	{
-		std::shared_ptr<RenderStage> newComputeStage;
+		std::shared_ptr<Stage> newComputeStage;
 		newComputeStage.reset(new ComputeStage(
 			name, 
 			std::make_unique<ComputeStageParams>(stageParams),
@@ -115,10 +115,10 @@ namespace re
 	}
 
 
-	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameComputeStage(
+	std::shared_ptr<Stage> Stage::CreateSingleFrameComputeStage(
 		char const* name, ComputeStageParams const& stageParams)
 	{
-		std::shared_ptr<RenderStage> newComputeStage;
+		std::shared_ptr<Stage> newComputeStage;
 		newComputeStage.reset(new ComputeStage(
 			name,
 			std::make_unique<ComputeStageParams>(stageParams),
@@ -127,12 +127,12 @@ namespace re
 	}
 
 
-	std::shared_ptr<RenderStage> RenderStage::CreateLibraryStage(
+	std::shared_ptr<Stage> Stage::CreateLibraryStage(
 		char const* name, LibraryStageParams const& stageParams)
 	{
 		SEAssert(IsLibraryType(stageParams.m_stageType), "Library stages must specify a Library stage type");
 
-		std::shared_ptr<RenderStage> newLibraryStage;
+		std::shared_ptr<Stage> newLibraryStage;
 		newLibraryStage.reset(new LibraryStage(
 			name,
 			std::make_unique<LibraryStageParams>(stageParams),
@@ -141,10 +141,10 @@ namespace re
 	}
 
 
-	std::shared_ptr<RenderStage> RenderStage::CreateFullscreenQuadStage(
+	std::shared_ptr<Stage> Stage::CreateFullscreenQuadStage(
 		char const* name, FullscreenQuadParams const& stageParams)
 	{
-		std::shared_ptr<RenderStage> newFSQuadStage;
+		std::shared_ptr<Stage> newFSQuadStage;
 		newFSQuadStage.reset(new FullscreenQuadStage(
 			name,
 			std::make_unique<FullscreenQuadParams>(stageParams),
@@ -153,10 +153,10 @@ namespace re
 	}
 
 
-	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameFullscreenQuadStage(
+	std::shared_ptr<Stage> Stage::CreateSingleFrameFullscreenQuadStage(
 		char const* name, FullscreenQuadParams const& stageParams)
 	{
-		std::shared_ptr<RenderStage> newFSQuadStage;
+		std::shared_ptr<Stage> newFSQuadStage;
 		newFSQuadStage.reset(new FullscreenQuadStage(
 			name,
 			std::make_unique<FullscreenQuadParams>(stageParams),
@@ -165,11 +165,11 @@ namespace re
 	}
 
 
-	std::shared_ptr<RenderStage> RenderStage::CreateClearStage(
+	std::shared_ptr<Stage> Stage::CreateClearStage(
 		ClearStageParams const& clearStageParams, 
 		std::shared_ptr<re::TextureTargetSet const> const& targetSet)
 	{
-		std::shared_ptr<RenderStage> newClearStage;
+		std::shared_ptr<Stage> newClearStage;
 		newClearStage.reset(
 			new ClearStage(CreateClearStageName(targetSet, clearStageParams).c_str(), re::Lifetime::Permanent));
 
@@ -179,11 +179,11 @@ namespace re
 	}
 
 
-	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameClearStage(
+	std::shared_ptr<Stage> Stage::CreateSingleFrameClearStage(
 		ClearStageParams const& clearStageParams,
 		std::shared_ptr<re::TextureTargetSet const> const& targetSet)
 	{
-		std::shared_ptr<RenderStage> newClearStage;
+		std::shared_ptr<Stage> newClearStage;
 		newClearStage.reset(
 			new ClearStage(CreateClearStageName(targetSet, clearStageParams).c_str(), re::Lifetime::SingleFrame));
 
@@ -193,7 +193,7 @@ namespace re
 	}
 
 
-	RenderStage::RenderStage(
+	Stage::Stage(
 		char const* name, std::unique_ptr<IStageParams>&& stageParams, Type stageType, re::Lifetime lifetime)
 		: INamedObject(name)
 		, m_type(stageType)
@@ -205,7 +205,7 @@ namespace re
 		, m_requiredBatchFilterBitmasks(0)	// Accept all batches by default
 		, m_excludedBatchFilterBitmasks(0)
 	{
-		SEAssert(!GetName().empty(), "Invalid RenderStage name");
+		SEAssert(!GetName().empty(), "Invalid Stage name");
 
 		m_stageParams = std::move(stageParams);
 	}
@@ -213,14 +213,14 @@ namespace re
 
 	ParentStage::ParentStage(char const* name, re::Lifetime lifetime)
 		: INamedObject(name)
-		, RenderStage(name, nullptr, Type::Parent, lifetime)
+		, Stage(name, nullptr, Type::Parent, lifetime)
 	{
 	}
 
 
 	ComputeStage::ComputeStage(char const* name, std::unique_ptr<ComputeStageParams>&& stageParams, re::Lifetime lifetime)
 		: INamedObject(name)
-		, RenderStage(name, std::move(stageParams), Type::Compute, lifetime)
+		, Stage(name, std::move(stageParams), Type::Compute, lifetime)
 	{
 	}
 
@@ -228,7 +228,7 @@ namespace re
 	FullscreenQuadStage::FullscreenQuadStage(
 		char const* name, std::unique_ptr<FullscreenQuadParams>&& stageParams, re::Lifetime lifetime)
 		: INamedObject(name)
-		, RenderStage(name, nullptr, Type::FullscreenQuad, lifetime)
+		, Stage(name, nullptr, Type::FullscreenQuad, lifetime)
 	{
 		SEAssert(stageParams->m_effectID != 0, "Invalid EffectID");
 
@@ -248,7 +248,7 @@ namespace re
 
 	ClearStage::ClearStage(char const* name, re::Lifetime lifetime)
 		: INamedObject(name)
-		, RenderStage(name, nullptr, Type::Clear, lifetime)
+		, Stage(name, nullptr, Type::Clear, lifetime)
 	{
 	}
 
@@ -274,12 +274,12 @@ namespace re
 	LibraryStage::LibraryStage(
 		char const* name, std::unique_ptr<LibraryStageParams>&& stageParams, re::Lifetime lifetime)
 		: INamedObject(name)
-		, RenderStage(name, std::move(stageParams), stageParams->m_stageType, lifetime)
+		, Stage(name, std::move(stageParams), stageParams->m_stageType, lifetime)
 	{
 	}
 
 
-	void RenderStage::SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> const& targetSet)
+	void Stage::SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> const& targetSet)
 	{
 		m_textureTargetSet = targetSet;
 
@@ -287,7 +287,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddPermanentTextureInput(
+	void Stage::AddPermanentTextureInput(
 		char const* shaderName,
 		core::InvPtr<re::Texture> const& tex,
 		core::InvPtr<re::Sampler> const& sampler,
@@ -336,7 +336,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddPermanentTextureInput(
+	void Stage::AddPermanentTextureInput(
 		std::string const& shaderName,
 		core::InvPtr<re::Texture> const& tex,
 		core::InvPtr<re::Sampler> const& sampler,
@@ -347,7 +347,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddSingleFrameTextureInput(
+	void Stage::AddSingleFrameTextureInput(
 		char const* shaderName,
 		core::InvPtr<re::Texture> const& tex,
 		core::InvPtr<re::Sampler> const& sampler,
@@ -385,7 +385,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddSingleFrameTextureInput(
+	void Stage::AddSingleFrameTextureInput(
 		std::string const& shaderName,
 		core::InvPtr<re::Texture> const& tex,
 		core::InvPtr<re::Sampler> const& sampler,
@@ -395,7 +395,7 @@ namespace re
 	}
 
 
-	void RenderStage::UpdateDepthTextureInputIndex()
+	void Stage::UpdateDepthTextureInputIndex()
 	{
 		if (m_textureTargetSet == nullptr || m_depthTextureInputIdx != k_noDepthTexAsInputFlag)
 		{
@@ -426,7 +426,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddPermanentRWTextureInput(
+	void Stage::AddPermanentRWTextureInput(
 		std::string const& shaderName,
 		core::InvPtr<re::Texture> const& tex,
 		re::TextureView const& texView)
@@ -473,7 +473,7 @@ namespace re
 	}
 
 
-	void RenderStage::AddSingleFrameRWTextureInput(
+	void Stage::AddSingleFrameRWTextureInput(
 		char const* shaderName,
 		core::InvPtr<re::Texture> const& tex,
 		re::TextureView const& texView)
@@ -509,7 +509,7 @@ namespace re
 	}
 
 
-	void RenderStage::ValidateTexturesAndTargets()
+	void Stage::ValidateTexturesAndTargets()
 	{
 		// This is a debug sanity check to make sure we're not trying to bind the same subresources in different ways
 #if defined _DEBUG
@@ -676,7 +676,7 @@ namespace re
 							
 							SEAssert(depthTargetTex != texInput.m_texture ||
 								!depthTarget.GetTargetParams().m_textureView.DepthWritesEnabled(),
-								std::format("The RenderStage \"{}\" is trying to use the depth target \"{} \" as both "
+								std::format("The Stage \"{}\" is trying to use the depth target \"{} \" as both "
 									"an input, and a target. Depth targets with depth writes enabled cannot also be "
 									"bound as an input. "
 									"NOTE: This assert doesn't consider non-overlapping mip indexes, but it should!",
@@ -721,7 +721,7 @@ namespace re
 	}
 
 
-	bool RenderStage::IsSkippable() const
+	bool Stage::IsSkippable() const
 	{
 		if (m_type == Type::Clear || IsLibraryType(m_type))
 		{
@@ -731,14 +731,14 @@ namespace re
 	}
 	
 
-	void RenderStage::PostUpdatePreRender()
+	void Stage::PostUpdatePreRender()
 	{
 		UpdateDepthTextureInputIndex();
 		ValidateTexturesAndTargets(); // _DEBUG only
 	}
 
 
-	void RenderStage::EndOfFrame()
+	void Stage::EndOfFrame()
 	{
 		SEBeginCPUEvent("StagePipeline::EndOfFrame");
 
@@ -746,7 +746,7 @@ namespace re
 		m_singleFrameTextureSamplerInputs.clear();
 		m_singleFrameRWTextureInputs.clear();
 
-		if (m_type != RenderStage::Type::FullscreenQuad) // FSQ stages keep the same batch created during construction
+		if (m_type != Stage::Type::FullscreenQuad) // FSQ stages keep the same batch created during construction
 		{
 			m_stageBatches.clear();
 		}
@@ -755,9 +755,9 @@ namespace re
 	}
 
 
-	void RenderStage::AddBatches(std::vector<re::Batch> const& batches)
+	void Stage::AddBatches(std::vector<re::Batch> const& batches)
 	{
-		SEBeginCPUEvent("RenderStage::AddBatches");
+		SEBeginCPUEvent("Stage::AddBatches");
 
 		m_stageBatches.reserve(m_stageBatches.size() + batches.size());
 
@@ -770,16 +770,16 @@ namespace re
 	}
 
 
-	re::Batch* RenderStage::AddBatch(re::Batch const& batch)
+	re::Batch* Stage::AddBatch(re::Batch const& batch)
 	{
 		return AddBatchWithLifetime(batch, batch.GetLifetime());
 	}
 
 
-	re::Batch* RenderStage::AddBatchWithLifetime(re::Batch const& batch, re::Lifetime lifetime)
+	re::Batch* Stage::AddBatchWithLifetime(re::Batch const& batch, re::Lifetime lifetime)
 	{
-		SEAssert(m_type != re::RenderStage::Type::Parent &&
-			m_type != re::RenderStage::Type::Clear,
+		SEAssert(m_type != re::Stage::Type::Parent &&
+			m_type != re::Stage::Type::Clear,
 			"Incompatible stage type: Cannot add batches");
 
 		SEAssert(m_type != Type::FullscreenQuad || m_stageBatches.empty(),
@@ -821,7 +821,7 @@ namespace re
 	}
 
 
-	void RenderStage::SetBatchFilterMaskBit(re::Batch::Filter filterBit, FilterMode mode, bool enabled)
+	void Stage::SetBatchFilterMaskBit(re::Batch::Filter filterBit, FilterMode mode, bool enabled)
 	{
 		switch (mode)
 		{
@@ -862,26 +862,26 @@ namespace re
 	}
 
 
-	void RenderStage::AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
+	void Stage::AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
 	{
 		AddPermanentBuffer(re::BufferInput(shaderName, buffer));
 	}
 
 
-	void RenderStage::AddPermanentBuffer(
+	void Stage::AddPermanentBuffer(
 		std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
 	{
 		AddPermanentBuffer(re::BufferInput(shaderName, buffer, view));
 	}
 
 
-	void RenderStage::AddPermanentBuffer(re::BufferInput const& bufferInput)
+	void Stage::AddPermanentBuffer(re::BufferInput const& bufferInput)
 	{
 		AddPermanentBuffer(re::BufferInput(bufferInput));
 	}
 
 
-	void RenderStage::AddPermanentBuffer(re::BufferInput&& bufferInput)
+	void Stage::AddPermanentBuffer(re::BufferInput&& bufferInput)
 	{
 		SEAssert(!bufferInput.GetShaderName().empty() && bufferInput.GetBuffer(), "Buffer cannot be unnamed or null");
 
@@ -936,26 +936,26 @@ namespace re
 	}
 
 
-	void RenderStage::AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
+	void Stage::AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
 	{
 		AddSingleFrameBuffer(re::BufferInput(shaderName, buffer));
 	}
 
 
-	void RenderStage::AddSingleFrameBuffer(
+	void Stage::AddSingleFrameBuffer(
 		std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
 	{
 		AddSingleFrameBuffer(re::BufferInput(shaderName, buffer, view));
 	}
 
 
-	void RenderStage::AddSingleFrameBuffer(re::BufferInput const& bufferInput)
+	void Stage::AddSingleFrameBuffer(re::BufferInput const& bufferInput)
 	{
 		AddSingleFrameBuffer(re::BufferInput(bufferInput));
 	}
 
 
-	void RenderStage::AddSingleFrameBuffer(re::BufferInput&& bufferInput)
+	void Stage::AddSingleFrameBuffer(re::BufferInput&& bufferInput)
 	{
 		SEAssert(!bufferInput.GetShaderName().empty() && bufferInput.GetBuffer(), "Buffer cannot be unnamed or null");
 

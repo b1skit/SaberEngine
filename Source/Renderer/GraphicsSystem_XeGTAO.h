@@ -70,17 +70,17 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::RenderStage> m_prefilterDepthsStage;
+		std::shared_ptr<re::Stage> m_prefilterDepthsStage;
 		core::InvPtr<re::Texture> m_prefilterDepthsTex;
 		std::unique_ptr<re::Batch> m_prefilterDepthComputeBatch;
 			
-		std::shared_ptr<re::RenderStage> m_mainStage;
+		std::shared_ptr<re::Stage> m_mainStage;
 		core::InvPtr<re::Texture> m_workingAOTex;
 		core::InvPtr<re::Texture> m_workingEdgesTargetTex;
 		std::unique_ptr<re::Batch> m_mainBatch;
 
 		uint8_t m_denoiseFinalOutputIdx;
-		std::vector<std::shared_ptr<re::RenderStage>> m_denoiseStages;
+		std::vector<std::shared_ptr<re::Stage>> m_denoiseStages;
 		core::InvPtr<re::Texture> m_denoisePingTargetTex;
 		std::unique_ptr<re::Batch> m_denoiseBatch;
 		std::unique_ptr<re::Batch> m_lastPassDenoiseBatch;
