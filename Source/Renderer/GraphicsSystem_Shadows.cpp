@@ -170,7 +170,7 @@ namespace gr
 		dstStageData.emplace(
 			lightID,
 			ShadowStageData{
-				.m_renderStage = shadowStage,
+				.m_stage = shadowStage,
 				.m_shadowTargetSet = pointShadowTargetSet,
 				.m_shadowCamParamBlock = cubeShadowBuf });
 	}
@@ -250,7 +250,7 @@ namespace gr
 		dstStageData.emplace(
 			lightID,
 			ShadowStageData{
-				.m_renderStage = shadowStage,
+				.m_stage = shadowStage,
 				.m_shadowTargetSet = shadowTargetSet,
 				.m_shadowCamParamBlock = shadowCamParams });
 	}
@@ -266,13 +266,13 @@ namespace gr
 
 		std::shared_ptr<re::Stage> directionalParentStage = 
 			re::Stage::CreateParentStage("Directional shadow stages");
-		m_directionalParentStageItr = pipeline.AppendRenderStage(directionalParentStage);
+		m_directionalParentStageItr = pipeline.AppendStage(directionalParentStage);
 
 		std::shared_ptr<re::Stage> pointParentStage = re::Stage::CreateParentStage("Point shadow stages");
-		m_pointParentStageItr = pipeline.AppendRenderStage(pointParentStage);
+		m_pointParentStageItr = pipeline.AppendStage(pointParentStage);
 
 		std::shared_ptr<re::Stage> spotParentStage = re::Stage::CreateParentStage("Spot shadow stages");
-		m_spotParentStageItr = pipeline.AppendRenderStage(spotParentStage);
+		m_spotParentStageItr = pipeline.AppendStage(spotParentStage);
 
 		// Cache our dependencies:
 		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
@@ -469,35 +469,35 @@ namespace gr
 		{
 			const gr::RenderDataID lightID = directionalStageItr.first;
 
-			directionalStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+			directionalStageItr.second.m_stage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
 				*m_directionalShadowArrayTex,
 				CreateShadowWriteView(
 					gr::Light::Directional, GetShadowArrayIdx(m_directionalShadowArrayIdxMap, lightID)));
 			
-			m_stagePipeline->AppendRenderStageForSingleFrame(
-				m_directionalParentStageItr, directionalStageItr.second.m_renderStage);
+			m_stagePipeline->AppendStageForSingleFrame(
+				m_directionalParentStageItr, directionalStageItr.second.m_stage);
 		}
 		for (auto& pointStageItr : m_pointShadowStageData)
 		{
 			const gr::RenderDataID lightID = pointStageItr.first;
 
-			pointStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+			pointStageItr.second.m_stage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
 				*m_pointShadowArrayTex,
 				CreateShadowWriteView(gr::Light::Point, GetShadowArrayIdx(m_pointShadowArrayIdxMap, lightID)));
 
-			m_stagePipeline->AppendRenderStageForSingleFrame(
-				m_pointParentStageItr, pointStageItr.second.m_renderStage);
+			m_stagePipeline->AppendStageForSingleFrame(
+				m_pointParentStageItr, pointStageItr.second.m_stage);
 		}
 		for (auto& spotStageItr : m_spotShadowStageData)
 		{
 			const gr::RenderDataID lightID = spotStageItr.first;
 
-			spotStageItr.second.m_renderStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+			spotStageItr.second.m_stage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
 				*m_spotShadowArrayTex,
 				CreateShadowWriteView(gr::Light::Spot, GetShadowArrayIdx(m_spotShadowArrayIdxMap, lightID)));
 
-			m_stagePipeline->AppendRenderStageForSingleFrame(
-				m_spotParentStageItr, spotStageItr.second.m_renderStage);
+			m_stagePipeline->AppendStageForSingleFrame(
+				m_spotParentStageItr, spotStageItr.second.m_stage);
 		}
 
 		CreateBatches();
@@ -524,7 +524,7 @@ namespace gr
 					const gr::RenderDataID lightID = directionalData.m_renderDataID;
 
 					re::Stage& directionalStage = 
-						*m_directionalShadowStageData.at(lightID).m_renderStage;
+						*m_directionalShadowStageData.at(lightID).m_stage;
 
 					if (m_viewBatches)
 					{
@@ -553,7 +553,7 @@ namespace gr
 						{
 							const gr::RenderDataID lightID = spotData.m_renderDataID;
 
-							re::Stage& spotStage = *m_spotShadowStageData.at(lightID).m_renderStage;
+							re::Stage& spotStage = *m_spotShadowStageData.at(lightID).m_stage;
 
 							if (m_viewBatches)
 							{
@@ -615,7 +615,7 @@ namespace gr
 										if (!seenBatches.contains(batchDataHash))
 										{
 											m_pointShadowStageData.at(
-												pointData.m_renderDataID).m_renderStage->AddBatch(batch);
+												pointData.m_renderDataID).m_stage->AddBatch(batch);
 											seenBatches.emplace(batchDataHash);
 										}
 									}
@@ -624,7 +624,7 @@ namespace gr
 							else
 							{
 								SEAssert(m_allBatches, "Must have all batches if view batches is null");
-								m_pointShadowStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
+								m_pointShadowStageData.at(pointData.m_renderDataID).m_stage->AddBatches(
 									*m_allBatches);
 							}
 						}

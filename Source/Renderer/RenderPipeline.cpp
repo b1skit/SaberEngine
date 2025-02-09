@@ -9,45 +9,45 @@ namespace re
 {
 	/******************************************** StagePipeline********************************************/
 
-	std::list<std::shared_ptr<re::Stage>>::iterator StagePipeline::AppendRenderStage(
-		std::shared_ptr<re::Stage> const& renderStage)
+	std::list<std::shared_ptr<re::Stage>>::iterator StagePipeline::AppendStage(
+		std::shared_ptr<re::Stage> const& stage)
 	{
-		SEAssert(renderStage != nullptr, "Cannot append a null Stage");
-		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
+		SEAssert(stage != nullptr, "Cannot append a null Stage");
+		SEAssert(stage->GetStageLifetime() == re::Lifetime::Permanent,
 			"Incorrect stage lifetime");
 		
-		m_renderStages.emplace_back(renderStage);
-		return std::prev(m_renderStages.end());
+		m_stages.emplace_back(stage);
+		return std::prev(m_stages.end());
 	}
 
 
-	StagePipeline::StagePipelineItr StagePipeline::AppendRenderStage(
+	StagePipeline::StagePipelineItr StagePipeline::AppendStage(
 		StagePipeline::StagePipelineItr const& parentItr, 
-		std::shared_ptr<re::Stage> const& renderStage)
+		std::shared_ptr<re::Stage> const& stage)
 	{
-		SEAssert(renderStage != nullptr, "Cannot append a null Stage");
-		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
+		SEAssert(stage != nullptr, "Cannot append a null Stage");
+		SEAssert(stage->GetStageLifetime() == re::Lifetime::Permanent,
 			"Incorrect stage lifetime");
 
 		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 
 		const StagePipelineItr next = std::next(parentItr);
 
-		StagePipelineItr newStageItr = m_renderStages.emplace(next, std::move(renderStage));
+		StagePipelineItr newStageItr = m_stages.emplace(next, std::move(stage));
 
 		return newStageItr;
 	}
 
 
-	StagePipeline::StagePipelineItr StagePipeline::AppendSingleFrameRenderStage(
-		std::shared_ptr<re::Stage>&& renderStage)
+	StagePipeline::StagePipelineItr StagePipeline::AppendSingleFrameStage(
+		std::shared_ptr<re::Stage>&& stage)
 	{
-		SEAssert(renderStage != nullptr, "Cannot append a null Stage");
-		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::SingleFrame,
+		SEAssert(stage != nullptr, "Cannot append a null Stage");
+		SEAssert(stage->GetStageLifetime() == re::Lifetime::SingleFrame,
 			"Incorrect stage lifetime");
 
-		m_renderStages.emplace_back(std::move(renderStage));
+		m_stages.emplace_back(std::move(stage));
 
-		const StagePipelineItr lastItem = std::prev(m_renderStages.end());
+		const StagePipelineItr lastItem = std::prev(m_stages.end());
 
 		m_singleFrameInsertionPoints.emplace_back(lastItem);
 
@@ -55,26 +55,26 @@ namespace re
 	}
 
 
-	StagePipeline::StagePipelineItr StagePipeline::AppendSingleFrameRenderStage(
+	StagePipeline::StagePipelineItr StagePipeline::AppendSingleFrameStage(
 		StagePipeline::StagePipelineItr const& parentItr,
-		std::shared_ptr<re::Stage>&& renderStage)
+		std::shared_ptr<re::Stage>&& stage)
 	{
-		SEAssert(renderStage != nullptr, "Cannot append a null Stage");
-		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::SingleFrame,
+		SEAssert(stage != nullptr, "Cannot append a null Stage");
+		SEAssert(stage->GetStageLifetime() == re::Lifetime::SingleFrame,
 			"Incorrect stage lifetime");
 		
 		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 
 		const StagePipelineItr next = std::next(parentItr);
 		
 		StagePipelineItr newSingleFrameStageItr;
-		if (next == m_renderStages.end())
+		if (next == m_stages.end())
 		{
-			m_renderStages.emplace_back(std::move(renderStage));
-			newSingleFrameStageItr = std::prev(m_renderStages.end());
+			m_stages.emplace_back(std::move(stage));
+			newSingleFrameStageItr = std::prev(m_stages.end());
 		}
 		else
 		{
-			newSingleFrameStageItr = m_renderStages.emplace(next, std::move(renderStage));
+			newSingleFrameStageItr = m_stages.emplace(next, std::move(stage));
 		}
 
 		m_singleFrameInsertionPoints.emplace_back(newSingleFrameStageItr);
@@ -83,26 +83,26 @@ namespace re
 	}
 
 
-	StagePipeline::StagePipelineItr StagePipeline::AppendRenderStageForSingleFrame(
+	StagePipeline::StagePipelineItr StagePipeline::AppendStageForSingleFrame(
 		StagePipeline::StagePipelineItr const& parentItr,
-		std::shared_ptr<re::Stage> const& renderStage)
+		std::shared_ptr<re::Stage> const& stage)
 	{
-		SEAssert(renderStage != nullptr, "Cannot append a null Stage");
-		SEAssert(renderStage->GetStageLifetime() == re::Lifetime::Permanent,
+		SEAssert(stage != nullptr, "Cannot append a null Stage");
+		SEAssert(stage->GetStageLifetime() == re::Lifetime::Permanent,
 			"Incorrect stage lifetime");
 
 		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 
 		const StagePipelineItr next = std::next(parentItr);
 
 		StagePipelineItr newSingleFrameStageItr;
-		if (next == m_renderStages.end())
+		if (next == m_stages.end())
 		{
-			m_renderStages.emplace_back(renderStage);
-			newSingleFrameStageItr = std::prev(m_renderStages.end());
+			m_stages.emplace_back(stage);
+			newSingleFrameStageItr = std::prev(m_stages.end());
 		}
 		else
 		{
-			newSingleFrameStageItr = m_renderStages.emplace(next, renderStage);
+			newSingleFrameStageItr = m_stages.emplace(next, stage);
 		}
 
 		m_singleFrameInsertionPoints.emplace_back(newSingleFrameStageItr);
@@ -115,9 +115,9 @@ namespace re
 	{
 		SEBeginCPUEvent("StagePipeline::PostUpdatePreRender");
 
-		for (std::shared_ptr<re::Stage>& renderStage : m_renderStages)
+		for (std::shared_ptr<re::Stage>& stage : m_stages)
 		{
-			renderStage->PostUpdatePreRender();
+			stage->PostUpdatePreRender();
 		}
 
 		SEEndCPUEvent();
@@ -128,15 +128,15 @@ namespace re
 	{
 		SEBeginCPUEvent("StagePipeline::EndOfFrame");
 
-		for (std::shared_ptr<re::Stage>& renderStage : m_renderStages)
+		for (std::shared_ptr<re::Stage>& stage : m_stages)
 		{
-			renderStage->EndOfFrame();
+			stage->EndOfFrame();
 		}
 
 		// Other references/iterators are not affected when we erase std::list elements
 		for (auto const& insertionPoint : m_singleFrameInsertionPoints)
 		{
-			m_renderStages.erase(insertionPoint);
+			m_stages.erase(insertionPoint);
 		}
 		m_singleFrameInsertionPoints.clear();
 
@@ -146,7 +146,7 @@ namespace re
 
 	void StagePipeline::Destroy()
 	{
-		m_renderStages.clear();
+		m_stages.clear();
 		m_singleFrameInsertionPoints.clear();
 	}
 

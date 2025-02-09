@@ -224,7 +224,7 @@ namespace gr
 			re::Sampler::GetSampler("ClampMinMagMipPoint"),
 			re::TextureView(*texDependencies.at(k_ambientDFGTexInput)));
 
-		pipeline.AppendRenderStage(m_transparencyStage);
+		pipeline.AppendStage(m_transparencyStage);
 	}
 
 

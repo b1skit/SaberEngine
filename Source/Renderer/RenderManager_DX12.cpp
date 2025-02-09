@@ -254,7 +254,7 @@ namespace dx12
 		re::GPUTimer::Handle frameTimer;
 
 
-		auto RenderStageTypeToCommandListType = [](const re::Stage::Type stageType) -> dx12::CommandListType
+		auto StageTypeToCommandListType = [](const re::Stage::Type stageType) -> dx12::CommandListType
 			{
 				switch (stageType)
 				{
@@ -273,9 +273,9 @@ namespace dx12
 				return dx12::CommandListType_Invalid; // This should never happen
 			};
 
-		auto IsGraphicsQueueStageType = [&RenderStageTypeToCommandListType](const re::Stage::Type stageType) -> bool
+		auto IsGraphicsQueueStageType = [&StageTypeToCommandListType](const re::Stage::Type stageType) -> bool
 			{
-				return RenderStageTypeToCommandListType(stageType) == dx12::CommandListType::Direct;
+				return StageTypeToCommandListType(stageType) == dx12::CommandListType::Direct;
 			};
 
 		auto CmdListTypeChanged = [&IsGraphicsQueueStageType](
@@ -289,17 +289,17 @@ namespace dx12
 					IsGraphicsQueueStageType(prev) != IsGraphicsQueueStageType(current);
 			};
 
-		// A WorkRange spans a contiguous subset of the RenderStages within a single StagePipeline
+		// A WorkRange spans a contiguous subset of the Stages within a single StagePipeline
 		struct WorkRange
 		{
 			re::RenderPipeline const* m_renderPipeline;
 			std::vector<re::StagePipeline>::const_iterator m_stagePipelineItr;
-			std::list<std::shared_ptr<re::Stage>>::const_iterator m_renderStageBeginItr;
-			std::list<std::shared_ptr<re::Stage>>::const_iterator m_renderStageEndItr;
+			std::list<std::shared_ptr<re::Stage>>::const_iterator m_stageBeginItr;
+			std::list<std::shared_ptr<re::Stage>>::const_iterator m_stageEndItr;
 		};
 
 
-		auto RecordCommandList = [this, context, &RenderStageTypeToCommandListType](
+		auto RecordCommandList = [this, context, &StageTypeToCommandListType](
 			std::vector<WorkRange>&& workRangeIn,
 			std::shared_ptr<dx12::CommandList>&& cmdListIn)
 				-> std::shared_ptr<dx12::CommandList>
@@ -312,7 +312,7 @@ namespace dx12
 				SEAssert(!workRange.empty(), "Work range is empty");
 
 				auto SetDrawState = [&context](
-					re::Stage const* renderStage,
+					re::Stage const* stage,
 					re::Stage::Type stageType,
 					core::InvPtr<re::Shader> const& shader,
 					re::TextureTargetSet const* targetSet,
@@ -340,11 +340,11 @@ namespace dx12
 						}
 
 						// Set buffers (Must happen after the root signature is set):
-						for (re::BufferInput const& bufferInput : renderStage->GetPermanentBuffers())
+						for (re::BufferInput const& bufferInput : stage->GetPermanentBuffers())
 						{
 							commandList->SetBuffer(bufferInput);
 						}
-						for (re::BufferInput const& bufferInput : renderStage->GetPerFrameBuffers())
+						for (re::BufferInput const& bufferInput : stage->GetPerFrameBuffers())
 						{
 							commandList->SetBuffer(bufferInput);
 						}
@@ -354,7 +354,7 @@ namespace dx12
 						// Set inputs and targets (once) now that the root signature is set
 						if (doSetStageInputsAndTargets)
 						{
-							const int depthTargetTexInputIdx = renderStage->GetDepthTargetTextureInputIdx();
+							const int depthTargetTexInputIdx = stage->GetDepthTargetTextureInputIdx();
 
 							auto SetStageTextureInputs = [&commandList, depthTargetTexInputIdx]
 							(std::vector<re::TextureAndSamplerInput> const& texInputs)
@@ -370,11 +370,11 @@ namespace dx12
 										// Note: Static samplers have already been set during root signature creation
 									}
 								};
-							SetStageTextureInputs(renderStage->GetPermanentTextureInputs());
-							SetStageTextureInputs(renderStage->GetSingleFrameTextureInputs());
+							SetStageTextureInputs(stage->GetPermanentTextureInputs());
+							SetStageTextureInputs(stage->GetSingleFrameTextureInputs());
 
-							commandList->SetRWTextures(renderStage->GetPermanentRWTextureInputs());
-							commandList->SetRWTextures(renderStage->GetSingleFrameRWTextureInputs());
+							commandList->SetRWTextures(stage->GetPermanentRWTextureInputs());
+							commandList->SetRWTextures(stage->GetSingleFrameRWTextureInputs());
 
 							// Set the targets:
 							switch (stageType)
@@ -401,7 +401,7 @@ namespace dx12
 				// All stages in a range are recorded to the same queue/command list type
 				
 				const dx12::CommandListType cmdListType = cmdList->GetCommandListType();
-				SEAssert(cmdListType == RenderStageTypeToCommandListType((*workRange[0].m_renderStageBeginItr)->GetStageType()),
+				SEAssert(cmdListType == StageTypeToCommandListType((*workRange[0].m_stageBeginItr)->GetStageType()),
 					"Incorrect command list type received");
 
 				perfmarkers::Type perfMarkerType = perfmarkers::Type::GraphicsCommandList;
@@ -472,42 +472,42 @@ namespace dx12
 						lastSeenStagePipeline != &(*std::next(workRangeItr)->m_stagePipelineItr);
 					
 					// Stage ranges are contiguous within a single StagePipeline
-					auto renderStageItr = workRangeItr->m_renderStageBeginItr;
-					while (renderStageItr != workRangeItr->m_renderStageEndItr)
+					auto stageItr = workRangeItr->m_stageBeginItr;
+					while (stageItr != workRangeItr->m_stageEndItr)
 					{
 						SEBeginGPUEvent( // Stage
 							cmdList->GetD3DCommandList(),
 							perfMarkerType,
-							(*renderStageItr)->GetName().c_str());
+							(*stageItr)->GetName().c_str());
 
-						re::GPUTimer::Handle renderStageTimer = gpuTimer.StartTimer(cmdList->GetD3DCommandList(),
-							(*renderStageItr)->GetName().c_str(),
+						re::GPUTimer::Handle stageTimer = gpuTimer.StartTimer(cmdList->GetD3DCommandList(),
+							(*stageItr)->GetName().c_str(),
 							stagePipeline.GetName().c_str());
 
 #if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
-						cmdList->RecordStageName(renderStage->GetName());
+						cmdList->RecordStageName(stage->GetName());
 #endif
 
-						const re::Stage::Type curRenderStageType = (*renderStageItr)->GetStageType();
-						if (re::Stage::IsLibraryType(curRenderStageType))
+						const re::Stage::Type curStageType = (*stageItr)->GetStageType();
+						if (re::Stage::IsLibraryType(curStageType))
 						{
 							// Library stages are executed with their own internal logic
-							dynamic_cast<re::LibraryStage*>((*renderStageItr).get())->Execute(cmdList.get());
+							dynamic_cast<re::LibraryStage*>((*stageItr).get())->Execute(cmdList.get());
 						}
 						else
 						{
 							// Get the stage targets:
-							re::TextureTargetSet const* stageTargets = (*renderStageItr)->GetTextureTargetSet();
-							if (stageTargets == nullptr && curRenderStageType != re::Stage::Type::Compute)
+							re::TextureTargetSet const* stageTargets = (*stageItr)->GetTextureTargetSet();
+							if (stageTargets == nullptr && curStageType != re::Stage::Type::Compute)
 							{
 								stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain()).get();
 							}
-							SEAssert(stageTargets || curRenderStageType == re::Stage::Type::Compute,
+							SEAssert(stageTargets || curStageType == re::Stage::Type::Compute,
 								"The current stage does not have targets set. This is unexpected");
 
 
 							// Clear the targets
-							switch (curRenderStageType)
+							switch (curStageType)
 							{
 							case re::Stage::Type::Compute:
 							case re::Stage::Type::LibraryCompute:
@@ -537,7 +537,7 @@ namespace dx12
 							bool hasSetStageInputsAndTargets = false;
 
 							// Stage batches:
-							std::vector<re::Batch> const& batches = (*renderStageItr)->GetStageBatches();
+							std::vector<re::Batch> const& batches = (*stageItr)->GetStageBatches();
 							for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
 							{
 								core::InvPtr<re::Shader> const& batchShader = batches[batchIdx].GetShader();
@@ -548,8 +548,8 @@ namespace dx12
 									currentShader = batchShader;
 
 									SetDrawState(
-										(*renderStageItr).get(),
-										curRenderStageType,
+										(*stageItr).get(),
+										curStageType,
 										currentShader,
 										stageTargets,
 										cmdList.get(),
@@ -580,7 +580,7 @@ namespace dx12
 								// Batch compute inputs:
 								cmdList->SetRWTextures(batches[batchIdx].GetRWTextureInputs());
 
-								switch (curRenderStageType)
+								switch (curStageType)
 								{
 								case re::Stage::Type::Graphics:
 								case re::Stage::Type::FullscreenQuad:
@@ -604,10 +604,10 @@ namespace dx12
 							}
 						}
 
-						renderStageTimer.StopTimer(cmdList->GetD3DCommandList());
+						stageTimer.StopTimer(cmdList->GetD3DCommandList());
 						SEEndGPUEvent(cmdList->GetD3DCommandList()); // Stage
 
-						++renderStageItr;
+						++stageItr;
 					}
 
 					if (isLastOfStagePipeline)
@@ -629,7 +629,7 @@ namespace dx12
 			};
 
 		auto EnqueueWorkRecording = 
-			[&commandListJobs, &RecordCommandList, &RenderStageTypeToCommandListType, &directQueue, &computeQueue, &frameTimer]
+			[&commandListJobs, &RecordCommandList, &StageTypeToCommandListType, &directQueue, &computeQueue, &frameTimer]
 			(std::vector<WorkRange>&& workRange, bool startGPUFrameTimer, bool stopGPUFrameTimer)
 			{
 				if (workRange.empty())
@@ -638,7 +638,7 @@ namespace dx12
 				}
 
 				const dx12::CommandListType cmdListType =
-					RenderStageTypeToCommandListType((*workRange[0].m_renderStageBeginItr)->GetStageType());
+					StageTypeToCommandListType((*workRange[0].m_stageBeginItr)->GetStageType());
 
 				std::shared_ptr<dx12::CommandList> cmdList;
 				switch (cmdListType)
@@ -713,11 +713,11 @@ namespace dx12
 
 
 		// Populate sets of WorkRanges that can be recorded on the same command list. A single WorkRange spans a
-		// contiguous subset of the RenderStages of a single StagePipeline, we asyncronously record all work on a single 
+		// contiguous subset of the Stages of a single StagePipeline, we asyncronously record all work on a single 
 		// command list and then immediately execute it when we detect the command list type has changed
 		std::vector<WorkRange> workRange;
 
-		re::Stage::Type prevRenderStageType = re::Stage::Type::Invalid;
+		re::Stage::Type prevStageType = re::Stage::Type::Invalid;
 		bool mustStartFrameTimer = true;
 
 		auto renderSystemItr = m_renderSystems.begin();
@@ -728,74 +728,74 @@ namespace dx12
 			auto stagePipelineItr = renderPipeline.GetStagePipeline().begin();
 			while (stagePipelineItr != renderPipeline.GetStagePipeline().end())
 			{
-				std::list<std::shared_ptr<re::Stage>> const& renderStages = (*stagePipelineItr).GetRenderStages();
-				if (renderStages.empty())
+				std::list<std::shared_ptr<re::Stage>> const& stages = (*stagePipelineItr).GetStages();
+				if (stages.empty())
 				{
 					++stagePipelineItr;
 					continue;
 				}
 
-				auto renderStageStartItr = renderStages.begin();
-				auto renderStageEndItr = renderStages.begin();
-				while (renderStageEndItr != renderStages.end())
+				auto stageStartItr = stages.begin();
+				auto stageEndItr = stages.begin();
+				while (stageEndItr != stages.end())
 				{
 					// Skip empty stages:
-					if ((*renderStageEndItr)->IsSkippable())
+					if ((*stageEndItr)->IsSkippable())
 					{
 						// If we've traversed beyond the 1st element, record some work:
-						if (renderStageEndItr != renderStageStartItr)
+						if (stageEndItr != stageStartItr)
 						{
 							workRange.emplace_back(WorkRange{
 								.m_renderPipeline = &(*renderSystemItr)->GetRenderPipeline(),
 								.m_stagePipelineItr = stagePipelineItr,
-								.m_renderStageBeginItr = renderStageStartItr,
-								.m_renderStageEndItr = renderStageEndItr, });
+								.m_stageBeginItr = stageStartItr,
+								.m_stageEndItr = stageEndItr, });
 						}
 
-						++renderStageEndItr; // This element is skipable: Advance before we update renderStageStartItr
-						renderStageStartItr = renderStageEndItr;
+						++stageEndItr; // This element is skipable: Advance before we update stageStartItr
+						stageStartItr = stageEndItr;
 
 						continue;
 					}
 
 					// We've found our first valid Stage: Initialize our state:
-					if (prevRenderStageType == re::Stage::Type::Invalid)
+					if (prevStageType == re::Stage::Type::Invalid)
 					{
-						prevRenderStageType = (*renderStageEndItr)->GetStageType();
-						SEAssert(prevRenderStageType != re::Stage::Type::Invalid, "Invalid stage type");
+						prevStageType = (*stageEndItr)->GetStageType();
+						SEAssert(prevStageType != re::Stage::Type::Invalid, "Invalid stage type");
 					}
 
-					const re::Stage::Type curRenderStageType = (*renderStageEndItr)->GetStageType();
-					const bool cmdListTypeChanged = CmdListTypeChanged(prevRenderStageType, curRenderStageType);
+					const re::Stage::Type curStageType = (*stageEndItr)->GetStageType();
+					const bool cmdListTypeChanged = CmdListTypeChanged(prevStageType, curStageType);
 					if (cmdListTypeChanged)
 					{
 						// If we've traversed beyond the 1st element, record some work:
-						if (renderStageEndItr != renderStageStartItr)
+						if (stageEndItr != stageStartItr)
 						{
 							workRange.emplace_back(WorkRange{
 								.m_renderPipeline = &(*renderSystemItr)->GetRenderPipeline(),
 								.m_stagePipelineItr = stagePipelineItr,
-								.m_renderStageBeginItr = renderStageStartItr,
-								.m_renderStageEndItr = renderStageEndItr, });
+								.m_stageBeginItr = stageStartItr,
+								.m_stageEndItr = stageEndItr, });
 						}
 
 						EnqueueWorkRecording(std::move(workRange), mustStartFrameTimer, false);
 						mustStartFrameTimer = false;
 
-						renderStageStartItr = renderStageEndItr;
-						prevRenderStageType = curRenderStageType;
+						stageStartItr = stageEndItr;
+						prevStageType = curStageType;
 					}
 
-					++renderStageEndItr;
+					++stageEndItr;
 
-					const bool isLastRenderStage = renderStageEndItr == renderStages.end();
-					if (isLastRenderStage)
+					const bool isLastStage = stageEndItr == stages.end();
+					if (isLastStage)
 					{
 						workRange.emplace_back(WorkRange{
 							.m_renderPipeline = &(*renderSystemItr)->GetRenderPipeline(),
 							.m_stagePipelineItr = stagePipelineItr,
-							.m_renderStageBeginItr = renderStageStartItr,
-							.m_renderStageEndItr = renderStages.end(), });
+							.m_stageBeginItr = stageStartItr,
+							.m_stageEndItr = stages.end(), });
 					}
 				}
 				++stagePipelineItr;

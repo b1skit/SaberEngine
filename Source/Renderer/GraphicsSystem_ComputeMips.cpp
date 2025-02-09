@@ -58,7 +58,7 @@ namespace gr
 	{
 		m_stagePipeline = &pipeline;
 
-		m_parentStageItr = m_stagePipeline->AppendRenderStage(
+		m_parentStageItr = m_stagePipeline->AppendStage(
 			re::Stage::CreateParentStage("MIP Generation Parent stage"));
 	}
 
@@ -285,7 +285,7 @@ namespace gr
 
 						mipGenerationStage->AddBatch(computeBatch);
 
-						insertItr = m_stagePipeline->AppendSingleFrameRenderStage(insertItr, std::move(mipGenerationStage));
+						insertItr = m_stagePipeline->AppendSingleFrameStage(insertItr, std::move(mipGenerationStage));
 					}
 				}
 			}

@@ -245,7 +245,7 @@ namespace gr
 			{ re::TextureView::Texture2DView(0, 1), re::TextureView::ViewFlags{re::TextureView::ViewFlags::ReadOnlyDepth} });
 
 		// Append the depth prefilter stage:
-		pipeline.AppendRenderStage(m_prefilterDepthsStage);
+		pipeline.AppendStage(m_prefilterDepthsStage);
 
 		
 		// Main pass:
@@ -309,7 +309,7 @@ namespace gr
 			re::TextureView(m_hilbertLUT));
 
 		// Append the main stage:
-		pipeline.AppendRenderStage(m_mainStage);
+		pipeline.AppendStage(m_mainStage);
 
 
 		// Denoise passes:
@@ -377,7 +377,7 @@ namespace gr
 				re::Sampler::GetSampler("ClampMinMagMipPoint"),
 				re::TextureView(m_workingEdgesTargetTex));
 
-			pipeline.AppendRenderStage(m_denoiseStages[passIdx]);
+			pipeline.AppendStage(m_denoiseStages[passIdx]);
 		}
 	}
 

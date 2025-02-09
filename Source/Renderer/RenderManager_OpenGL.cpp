@@ -139,12 +139,12 @@ namespace opengl
 				re::GPUTimer::Handle stagePipelineTimer;
 				bool isNewStagePipeline = true;			
 
-				// Process RenderStages:
-				std::list<std::shared_ptr<re::Stage>> const& renderStages = stagePipeline.GetRenderStages();
-				for (std::shared_ptr<re::Stage> renderStage : renderStages)
+				// Process Stages:
+				std::list<std::shared_ptr<re::Stage>> const& stages = stagePipeline.GetStages();
+				for (std::shared_ptr<re::Stage> stage : stages)
 				{
 					// Skip empty stages:
-					if (renderStage->IsSkippable())
+					if (stage->IsSkippable())
 					{
 						continue;
 					}
@@ -158,24 +158,24 @@ namespace opengl
 					}
 
 					// Profiling makers: Render stage name
-					SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, renderStage->GetName().c_str());
+					SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, stage->GetName().c_str());
 
-					re::GPUTimer::Handle renderStageTimer =
-						gpuTimer.StartTimer(nullptr, renderStage->GetName().c_str(), stagePipeline.GetName().c_str());
+					re::GPUTimer::Handle stageTimer =
+						gpuTimer.StartTimer(nullptr, stage->GetName().c_str(), stagePipeline.GetName().c_str());
 
 					// Library stages are executed with their own internal logic:
-					const re::Stage::Type curRenderStageType = renderStage->GetStageType();
-					if (re::Stage::IsLibraryType(curRenderStageType))
+					const re::Stage::Type curStageType = stage->GetStageType();
+					if (re::Stage::IsLibraryType(curStageType))
 					{
-						dynamic_cast<re::LibraryStage*>(renderStage.get())->Execute(nullptr);
-						renderStageTimer.StopTimer(nullptr);
+						dynamic_cast<re::LibraryStage*>(stage.get())->Execute(nullptr);
+						stageTimer.StopTimer(nullptr);
 						SEEndOpenGLGPUEvent();
 						continue;
 					}
 
 					// Get the stage targets:
-					re::TextureTargetSet const* stageTargets = renderStage->GetTextureTargetSet();
-					if (!stageTargets && curRenderStageType != re::Stage::Type::Compute)
+					re::TextureTargetSet const* stageTargets = stage->GetTextureTargetSet();
+					if (!stageTargets && curStageType != re::Stage::Type::Compute)
 					{
 						opengl::SwapChain::PlatformParams* swapChainParams =
 							context->GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
@@ -184,17 +184,17 @@ namespace opengl
 
 						stageTargets = swapChainParams->m_backbufferTargetSet.get(); // Draw to the swapchain backbuffer
 					}
-					SEAssert(stageTargets || curRenderStageType == re::Stage::Type::Compute,
+					SEAssert(stageTargets || curStageType == re::Stage::Type::Compute,
 						"The current stage does not have targets set. This is unexpected");
 
 
-					auto SetDrawState = [&renderStage, &context](
+					auto SetDrawState = [&stage, &context](
 						core::InvPtr<re::Shader> const& shader, bool doSetStageInputs)
 					{
 						opengl::Shader::Bind(*shader);
 
 						SEAssert(shader->GetPipelineState() || 
-							renderStage->GetStageType() == re::Stage::Type::Compute,
+							stage->GetStageType() == re::Stage::Type::Compute,
 							"Pipeline state is null. This is unexpected");
 
 						context->SetPipelineState(shader->GetPipelineState());
@@ -202,11 +202,11 @@ namespace opengl
 						if (doSetStageInputs)
 						{
 							// Set stage param blocks:
-							for (re::BufferInput const& bufferInput : renderStage->GetPermanentBuffers())
+							for (re::BufferInput const& bufferInput : stage->GetPermanentBuffers())
 							{
 								opengl::Shader::SetBuffer(*shader, bufferInput);
 							}
-							for (re::BufferInput const& bufferInput : renderStage->GetPerFrameBuffers())
+							for (re::BufferInput const& bufferInput : stage->GetPerFrameBuffers())
 							{
 								opengl::Shader::SetBuffer(*shader, bufferInput);
 							}
@@ -219,17 +219,17 @@ namespace opengl
 										opengl::Shader::SetTextureAndSampler(*shader, texSamplerInput);
 									}
 								};
-							SetStageTextureInputs(renderStage->GetPermanentTextureInputs());
-							SetStageTextureInputs(renderStage->GetSingleFrameTextureInputs());
+							SetStageTextureInputs(stage->GetPermanentTextureInputs());
+							SetStageTextureInputs(stage->GetSingleFrameTextureInputs());
 
 							// Set compute inputs
-							opengl::Shader::SetImageTextureTargets(*shader, renderStage->GetPermanentRWTextureInputs());
-							opengl::Shader::SetImageTextureTargets(*shader, renderStage->GetSingleFrameRWTextureInputs());
+							opengl::Shader::SetImageTextureTargets(*shader, stage->GetPermanentRWTextureInputs());
+							opengl::Shader::SetImageTextureTargets(*shader, stage->GetSingleFrameRWTextureInputs());
 						}
 					};
 
 
-					switch (curRenderStageType)
+					switch (curStageType)
 					{
 					case re::Stage::Type::Compute:
 					{
@@ -257,7 +257,7 @@ namespace opengl
 					GLuint currentVAO = 0;
 
 					// Stage batches:
-					std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
+					std::vector<re::Batch> const& batches = stage->GetStageBatches();
 					for (re::Batch const& batch : batches)
 					{
 						core::InvPtr<re::Shader> const& batchShader = batch.GetShader();
@@ -289,7 +289,7 @@ namespace opengl
 						opengl::Shader::SetImageTextureTargets(*currentShader, batch.GetRWTextureInputs());
 
 						// Draw!
-						switch (curRenderStageType)
+						switch (curStageType)
 						{
 						case re::Stage::Type::Graphics:
 						case re::Stage::Type::FullscreenQuad:
@@ -381,8 +381,8 @@ namespace opengl
 
 					SEEndOpenGLGPUEvent();
 
-					renderStageTimer.StopTimer(nullptr);
-				}; // ProcessRenderStage
+					stageTimer.StopTimer(nullptr);
+				}; // Stage loop
 
 				if (!isNewStagePipeline) // Must have started a timer...
 				{

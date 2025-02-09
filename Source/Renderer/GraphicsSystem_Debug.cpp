@@ -407,7 +407,7 @@ namespace gr
 		m_debugStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_debugStage->AddPermanentBuffer(m_debugParams);
 
-		stagePipeline.AppendRenderStage(m_debugStage);
+		stagePipeline.AppendStage(m_debugStage);
 
 
 		m_wireframeStage = re::Stage::CreateGraphicsStage("Debug: Wireframe stage", re::Stage::GraphicsStageParams{});
@@ -417,7 +417,7 @@ namespace gr
 		m_wireframeStage->AddPermanentBuffer(m_debugParams);
 		m_wireframeStage->SetDrawStyle(effect::drawstyle::Debug_Wireframe);
 
-		stagePipeline.AppendRenderStage(m_wireframeStage);
+		stagePipeline.AppendStage(m_wireframeStage);
 
 		// Cache our dependencies:
 		m_viewBatches = GetDataDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);

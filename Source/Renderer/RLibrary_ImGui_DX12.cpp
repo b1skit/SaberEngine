@@ -286,9 +286,9 @@ namespace dx12
 	}
 
 
-	void RLibraryImGui::Execute(re::Stage* renderStage, void* platformObject)
+	void RLibraryImGui::Execute(re::Stage* stage, void* platformObject)
 	{
-		re::LibraryStage* imGuiStage = dynamic_cast<re::LibraryStage*>(renderStage);
+		re::LibraryStage* imGuiStage = dynamic_cast<re::LibraryStage*>(stage);
 
 		std::unique_ptr<re::LibraryStage::IPayload> iPayload = imGuiStage->TakePayload();
 		platform::RLibraryImGui::Payload* payload = dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.get());

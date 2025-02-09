@@ -102,7 +102,7 @@ namespace gr
 			re::TextureView(*m_skyTexture));
 
 
-		pipeline.AppendRenderStage(m_skyboxStage);
+		pipeline.AppendStage(m_skyboxStage);
 	}
 
 

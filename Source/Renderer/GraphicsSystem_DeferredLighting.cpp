@@ -214,7 +214,7 @@ namespace gr
 
 		brdfStage->AddBatch(computeBatch);
 
-		pipeline.AppendSingleFrameRenderStage(std::move(brdfStage));
+		pipeline.AppendSingleFrameStage(std::move(brdfStage));
 	}
 
 
@@ -282,7 +282,7 @@ namespace gr
 
 			iemStage->AddBatch(*m_cubeMeshBatch);
 
-			pipeline->AppendSingleFrameRenderStage(std::move(iemStage));
+			pipeline->AppendSingleFrameStage(std::move(iemStage));
 		}
 	}
 
@@ -367,7 +367,7 @@ namespace gr
 
 				pmremStage->AddBatch(*m_cubeMeshBatch);
 
-				pipeline->AppendSingleFrameRenderStage(std::move(pmremStage));
+				pipeline->AppendSingleFrameStage(std::move(pmremStage));
 			}
 		}
 	}
@@ -378,7 +378,7 @@ namespace gr
 	{
 		m_resourceCreationStagePipeline = &pipeline;
 
-		m_resourceCreationStageParentItr = pipeline.AppendRenderStage(
+		m_resourceCreationStageParentItr = pipeline.AppendStage(
 			re::Stage::CreateParentStage("Resource creation stages parent"));
 
 
@@ -529,7 +529,7 @@ namespace gr
 		re::Stage::ClearStageParams colorClearParams;
 		colorClearParams.m_colorClearModes = { re::TextureTarget::ClearMode::Enabled };
 		colorClearParams.m_depthClearMode = re::TextureTarget::ClearMode::Disabled;
-		pipeline.AppendRenderStage(re::Stage::CreateClearStage(colorClearParams, m_lightingTargetSet));
+		pipeline.AppendStage(re::Stage::CreateClearStage(colorClearParams, m_lightingTargetSet));
 
 
 		// Ambient stage:
@@ -549,7 +549,7 @@ namespace gr
 			k_ssaoInput.GetKey(), m_ssaoTex, clampMinMagMipPoint, re::TextureView(m_ssaoTex));
 
 		// Append the ambient stage:
-		pipeline.AppendRenderStage(m_ambientStage);
+		pipeline.AppendStage(m_ambientStage);
 		
 
 		// Directional light stage:
@@ -561,7 +561,7 @@ namespace gr
 		m_directionalStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_directionalStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
 
-		pipeline.AppendRenderStage(m_directionalStage);
+		pipeline.AppendStage(m_directionalStage);
 
 
 		// Point light stage:
@@ -574,7 +574,7 @@ namespace gr
 
 		m_pointStage->SetDrawStyle(effect::drawstyle::DeferredLighting_DeferredPoint);
 
-		pipeline.AppendRenderStage(m_pointStage);
+		pipeline.AppendStage(m_pointStage);
 
 
 		// Spot light stage:
@@ -587,7 +587,7 @@ namespace gr
 
 		m_spotStage->SetDrawStyle(effect::drawstyle::DeferredLighting_DeferredSpot);
 
-		pipeline.AppendRenderStage(m_spotStage);
+		pipeline.AppendStage(m_spotStage);
 
 
 		// Attach GBuffer color inputs:

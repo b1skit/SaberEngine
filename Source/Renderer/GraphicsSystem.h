@@ -34,7 +34,7 @@ namespace gr
 		// -------------------------
 		// GraphicsSystems intentionally have a flexible interface with minimal required virtual functionality.
 		// Typically, a Graphics System will require 1 or more of the following functions:
-		// - InitPipeline(re::StagePipeline&) method(s): Used to attach a sequence of RenderStages to a StagePipeline
+		// - InitPipeline(re::StagePipeline&) method(s): Used to attach a sequence of Stages to a StagePipeline
 		// - PreRender() method(s): Called every frame to update the GraphicsSystem before platform-level rendering
 		// 
 		// ------------------------

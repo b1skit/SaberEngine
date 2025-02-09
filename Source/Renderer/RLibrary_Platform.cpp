@@ -59,21 +59,21 @@ namespace platform
 	}
 
 
-	void RLibrary::Execute(re::Stage* renderStage, void* platformObject)
+	void RLibrary::Execute(re::Stage* stage, void* platformObject)
 	{
-		SEAssert(renderStage->GetStageType() == re::Stage::Type::LibraryGraphics ||
-			renderStage->GetStageType() == re::Stage::Type::LibraryCompute,
+		SEAssert(stage->GetStageType() == re::Stage::Type::LibraryGraphics ||
+			stage->GetStageType() == re::Stage::Type::LibraryCompute,
 			"Invalid stage type");
 
 		re::Stage::LibraryStageParams const* libraryStageParams =
-			dynamic_cast<re::Stage::LibraryStageParams const*>(renderStage->GetStageParams());
+			dynamic_cast<re::Stage::LibraryStageParams const*>(stage->GetStageParams());
 
 		switch (libraryStageParams->m_type)
 		{
 		case re::Stage::LibraryStageParams::LibraryType::ImGui:
 		{
 			dynamic_cast<platform::RLibraryImGui*>(
-				re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui))->Execute(renderStage, platformObject);
+				re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui))->Execute(stage, platformObject);
 		}
 		break;
 		default: SEAssertF("Invalid library type");

@@ -23,17 +23,17 @@ namespace re
 		void Destroy();
 	
 
-		StagePipelineItr AppendRenderStage(std::shared_ptr<re::Stage> const&);
-		StagePipelineItr AppendRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::Stage> const&);
+		StagePipelineItr AppendStage(std::shared_ptr<re::Stage> const&);
+		StagePipelineItr AppendStage(StagePipelineItr const& parent, std::shared_ptr<re::Stage> const&);
 
-		StagePipelineItr AppendRenderStageForSingleFrame(StagePipelineItr const& parent, std::shared_ptr<re::Stage> const&);
+		StagePipelineItr AppendStageForSingleFrame(StagePipelineItr const& parent, std::shared_ptr<re::Stage> const&);
 
-		StagePipelineItr AppendSingleFrameRenderStage(std::shared_ptr<re::Stage>&&); // Append to end
-		StagePipelineItr AppendSingleFrameRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::Stage>&&);
+		StagePipelineItr AppendSingleFrameStage(std::shared_ptr<re::Stage>&&); // Append to end
+		StagePipelineItr AppendSingleFrameStage(StagePipelineItr const& parent, std::shared_ptr<re::Stage>&&);
 
 		size_t GetNumberOfStages() const;
 
-		std::list<std::shared_ptr<re::Stage>> const& GetRenderStages() const;
+		std::list<std::shared_ptr<re::Stage>> const& GetStages() const;
 
 
 	public:
@@ -42,7 +42,7 @@ namespace re
 
 
 	private:
-		std::list<std::shared_ptr<re::Stage>> m_renderStages;
+		std::list<std::shared_ptr<re::Stage>> m_stages;
 
 		std::vector<StagePipelineItr> m_singleFrameInsertionPoints;
 
@@ -102,13 +102,13 @@ namespace re
 
 	inline size_t StagePipeline::GetNumberOfStages() const
 	{
-		return m_renderStages.size();
+		return m_stages.size();
 	}
 
 
-	inline std::list<std::shared_ptr<re::Stage>> const& StagePipeline::GetRenderStages() const
+	inline std::list<std::shared_ptr<re::Stage>> const& StagePipeline::GetStages() const
 	{
-		return m_renderStages;
+		return m_stages;
 	}
 
 

@@ -46,7 +46,7 @@ namespace gr
 			re::Sampler::GetSampler("ClampMinMagMipLinear"),
 			re::TextureView(*texDependencies.at(k_bloomResultInput)));
 
-		pipeline.AppendRenderStage(m_tonemappingStage);
+		pipeline.AppendStage(m_tonemappingStage);
 	}
 
 

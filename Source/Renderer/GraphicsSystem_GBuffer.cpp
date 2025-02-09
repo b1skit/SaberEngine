@@ -89,10 +89,10 @@ namespace gr
 		re::Stage::ClearStageParams gbufferClearParams; // Clear both color and depth
 		gbufferClearParams.m_colorClearModes = { re::TextureTarget::ClearMode::Enabled };
 		gbufferClearParams.m_depthClearMode = re::TextureTarget::ClearMode::Enabled;
-		m_owningPipeline->AppendRenderStage(re::Stage::CreateClearStage(gbufferClearParams, m_gBufferTargets));
+		m_owningPipeline->AppendStage(re::Stage::CreateClearStage(gbufferClearParams, m_gBufferTargets));
 
 		// Finally, append the GBuffer stage to the pipeline:
-		m_owningPipeline->AppendRenderStage(m_gBufferStage);
+		m_owningPipeline->AppendStage(m_gBufferStage);
 
 		// Cache our dependencies:
 		m_viewBatches = GetDataDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);
@@ -134,7 +134,7 @@ namespace gr
 			depthClearStageParams.m_colorClearModes = { re::TextureTarget::ClearMode::Disabled };
 			depthClearStageParams.m_depthClearMode = re::TextureTarget::ClearMode::Enabled;
 			
-			m_owningPipeline->AppendSingleFrameRenderStage(re::Stage::CreateSingleFrameClearStage(
+			m_owningPipeline->AppendSingleFrameStage(re::Stage::CreateSingleFrameClearStage(
 				depthClearStageParams, 
 				m_gBufferTargets));
 		}

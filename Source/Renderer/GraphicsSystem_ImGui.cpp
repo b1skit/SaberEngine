@@ -24,7 +24,7 @@ namespace gr
 		m_imguiLibraryStage = re::Stage::CreateLibraryStage("ImGui stage", imGuiLibraryParams);
 
 		// Append the library stage
-		pipeline.AppendRenderStage(m_imguiLibraryStage);
+		pipeline.AppendStage(m_imguiLibraryStage);
 	}
 
 

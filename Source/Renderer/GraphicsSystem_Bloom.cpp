@@ -95,7 +95,7 @@ namespace gr
 		m_emissiveBlitStage->SetTextureTargetSet(emissiveTargetSet);
 
 		// Append the emissive blit stage:
-		pipeline.AppendRenderStage(m_emissiveBlitStage);
+		pipeline.AppendStage(m_emissiveBlitStage);
 
 
 		// Bloom:
@@ -159,7 +159,7 @@ namespace gr
 			m_bloomDownBuffers.emplace_back(bloomDownBuf);
 			downStage->AddPermanentBuffer(BloomComputeData::s_shaderName, bloomDownBuf);
 
-			pipeline.AppendRenderStage(downStage);
+			pipeline.AppendStage(downStage);
 
 			m_bloomDownStages.emplace_back(downStage);
 		}
@@ -200,7 +200,7 @@ namespace gr
 			upStage->AddPermanentBuffer(BloomComputeData::s_shaderName, bloomUpBuf);
 			m_bloomUpBuffers.emplace_back(bloomUpBuf);
 
-			pipeline.AppendRenderStage(upStage);
+			pipeline.AppendStage(upStage);
 
 			m_bloomUpStages.emplace_back(upStage);
 
