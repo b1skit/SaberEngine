@@ -81,8 +81,6 @@ namespace re
 
 
 	public:
-		static uint32_t ComputeMaxMips(uint32_t width, uint32_t height);
-
 		static glm::vec4 ComputeTextureDimenions(uint32_t width, uint32_t height);
 		static glm::vec4 ComputeTextureDimenions(glm::uvec2 widthHeight);
 
@@ -132,7 +130,7 @@ namespace re
 			Dimension_Invalid = Dimension_Count
 		};
 
-		enum class Format
+		enum class Format : uint8_t
 		{
 			RGBA32F,	// 32 bits per channel x N channels
 			RG32F,
@@ -158,7 +156,7 @@ namespace re
 			Invalid
 		};
 
-		enum class ColorSpace
+		enum class ColorSpace : uint8_t
 		{
 			sRGB,
 			Linear,
@@ -184,6 +182,7 @@ namespace re
 			uint32_t m_width = 4; // Must be a minimum of 4x4 for block compressed formats
 			uint32_t m_height = 4;
 			uint32_t m_arraySize = 1; // No. textures in an array texture, or depth slices in a 3D texture
+			uint32_t m_numMips = k_allMips; // k_allMips = Max. mips possible. Otherwise [1, log2(max(width, height)) + 1]
 
 			Usage m_usage = Usage::Invalid;
 			Dimension m_dimension = Dimension::Dimension_Invalid;
@@ -298,7 +297,7 @@ namespace re
 
 		std::unique_ptr<IInitialData> m_initialData; // Owns a vector with [1,6] faces of data
 
-		const uint32_t m_numMips;
+		const uint32_t m_numMips; // No. of actual mip levels (computed from TextureParams::m_numMips)
 		const uint32_t m_numSubresources; // No. array elements * no. faces * no. of mips
 
 

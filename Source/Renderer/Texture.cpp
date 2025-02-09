@@ -11,6 +11,14 @@
 
 namespace
 {
+	// Computes the maximum number of mip levels (e.g. 4x4 texture has 3 mip levels [0,2])
+	uint32_t ComputeMaxMips(uint32_t width, uint32_t height)
+	{
+		const uint32_t largestDimension = glm::max(width, height);
+		return glm::log2(static_cast<float>(std::max(width, height))) + 1;
+	}
+
+
 	uint32_t ComputeNumMips(re::Texture::TextureParams const& params)
 	{
 		if (params.m_mipMode == re::Texture::MipMode::None)
@@ -18,7 +26,18 @@ namespace
 			return 1;
 		}
 
-		return re::Texture::ComputeMaxMips(params.m_width, params.m_height);
+		if (params.m_numMips == re::Texture::k_allMips)
+		{
+			return ComputeMaxMips(params.m_width, params.m_height);
+		}
+		else
+		{
+			SEAssert(params.m_numMips > 0 &&
+				params.m_numMips <= ComputeMaxMips(params.m_width, params.m_height),
+					"Invalid number of mips requested");
+
+			return params.m_numMips;
+		}
 	}
 
 
@@ -53,13 +72,6 @@ namespace
 
 namespace re
 {
-	uint32_t Texture::ComputeMaxMips(uint32_t width, uint32_t height)
-	{
-		const uint32_t largestDimension = glm::max(width, height);
-		return (uint32_t)glm::log2((float)largestDimension) + 1;
-	}
-
-
 	glm::vec4 Texture::ComputeTextureDimenions(uint32_t width, uint32_t height)
 	{
 		// .xyzw = width, height, 1/width, 1/height
@@ -528,6 +540,8 @@ namespace re
 
 	glm::vec4 Texture::GetMipLevelDimensions(uint32_t mipLevel) const
 	{
+		SEAssert(mipLevel < ComputeMaxMips(m_texParams.m_width, m_texParams.m_height), "Invalid mip level");
+
 		glm::uvec2 const& widthHeight = GetMipWidthHeight(Width(), Height(), mipLevel);
 		return glm::vec4(widthHeight.x, widthHeight.y, 1.f / widthHeight.x, 1.f / widthHeight.y);
 	}
@@ -535,6 +549,8 @@ namespace re
 
 	uint32_t Texture::GetSubresourceIndex(uint32_t arrayIdx, uint32_t faceIdx, uint32_t mipIdx) const
 	{
+		SEAssert(mipIdx < ComputeMaxMips(m_texParams.m_width, m_texParams.m_height), "Invalid mip level");
+
 		const uint8_t numFaces = re::Texture::GetNumFaces(this);
 
 		SEAssert(arrayIdx < m_texParams.m_arraySize && faceIdx < numFaces && mipIdx < m_numMips, "OOB index");

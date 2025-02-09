@@ -145,8 +145,8 @@ namespace gr
 	void XeGTAOGraphicsSystem::InitPipeline(
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
-		m_xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		m_yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		m_xRes = static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey));
+		m_yRes = static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey));
 
 		m_hilbertLUT = CreateHilbertLUT();
 
@@ -192,15 +192,16 @@ namespace gr
 		m_prefilterDepthsStage->SetDrawStyle(effect::drawstyle::XeGTAO_PrefilterDepths);
 
 		// Depth prefilter texture:	
-		re::Texture::TextureParams prefilterDepthTexParams{};
-		prefilterDepthTexParams.m_width = m_xRes;
-		prefilterDepthTexParams.m_height = m_yRes;
-		prefilterDepthTexParams.m_usage = 
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
-		prefilterDepthTexParams.m_dimension = re::Texture::Dimension::Texture2D;
-		prefilterDepthTexParams.m_format = re::Texture::Format::R16F;
-		prefilterDepthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		prefilterDepthTexParams.m_mipMode = re::Texture::MipMode::Allocate;
+		const re::Texture::TextureParams prefilterDepthTexParams{
+			.m_width = m_xRes,
+			.m_height = m_yRes,
+			.m_numMips = 5, // Mips [0,4]
+			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc),
+			.m_dimension = re::Texture::Dimension::Texture2D,
+			.m_format = re::Texture::Format::R16F,
+			.m_colorSpace = re::Texture::ColorSpace::Linear,
+			.m_mipMode = re::Texture::MipMode::Allocate,
+		};
 
 		m_prefilterDepthsTex = re::Texture::Create("XeGTAO: Prefiltered depths", prefilterDepthTexParams);
 

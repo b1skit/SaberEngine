@@ -97,7 +97,7 @@ namespace gr
 		Denoise m_XeGTAODenoiseMode;
 		bool m_isDirty;
 
-		int m_xRes;
-		int m_yRes;
+		uint32_t m_xRes;
+		uint32_t m_yRes;
 	};
 }
