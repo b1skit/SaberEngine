@@ -643,8 +643,6 @@ namespace dx12
 			SEAssert((depthTexParams.m_usage & re::Texture::Usage::DepthTarget) != 0,
 				"Target texture must be a depth target");
 
-			SEAssert(depthTex->GetNumMips() == 1, "Depth target has mips. This is (currently) unexpected");
-
 			re::TextureTarget::TargetParams const& depthTargetParams = depthTarget.GetTargetParams();
 
 			SEAssert(depthTargetParams.m_textureView.DepthWritesEnabled(), "Texture view has depth writes disabled");

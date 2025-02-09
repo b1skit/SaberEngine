@@ -358,10 +358,6 @@ namespace
 
 		if (texParams.m_usage & re::Texture::Usage::DepthTarget)
 		{
-			SEAssert(texture->GetNumMips() == 1,
-				"Depth target cannot have mips. Note: Depth-Stencil formats support mipmaps, arrays, and multiple "
-				"planes. See https://learn.microsoft.com/en-us/windows/win32/direct3d12/subresources");
-
 			flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 			optimizedClearValue.DepthStencil.Depth = texParams.m_clear.m_depthStencil.m_depth;
@@ -724,13 +720,11 @@ namespace dx12
 		const uint32_t numMips = texture->GetNumMips();
 		const uint32_t numSubresources = texture->GetTotalNumSubresources();
 
-		SEAssert(((texParams.m_usage & re::Texture::Usage::SwapchainColorProxy) == 0 &&
-			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0 &&
-			(texParams.m_usage & re::Texture::Usage::StencilTarget) == 0) ||
+		SEAssert((texParams.m_usage & re::Texture::Usage::SwapchainColorProxy) == 0 ||
 			numMips == 1,
 			"Current texture usage type cannot have MIPs");
 		SEAssert((texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0,
-			"TODO: Support depth-stencil textures (which do support mips, arrays, and multiple planes)");
+			"TODO: Support depth-stencil textures");
 
 		// D3D12 Initial resource states:
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#initial-states-for-resources

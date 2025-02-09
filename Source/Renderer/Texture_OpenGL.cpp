@@ -553,8 +553,8 @@ namespace opengl
 		}
 		else
 		{
-			const GLint maxLevel = GL_TEXTURE_MAX_LEVEL;
-			glTextureParameteriv(params->m_textureID, GL_TEXTURE_MAX_LEVEL, &maxLevel);
+			const GLint highestMipIdx = static_cast<GLint>(texture->GetNumMips()) - 1;
+			glTextureParameteriv(params->m_textureID, GL_TEXTURE_MAX_LEVEL, &highestMipIdx);
 		}
 	}
 

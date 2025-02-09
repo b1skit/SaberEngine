@@ -432,9 +432,6 @@ namespace opengl
 		{
 			re::TextureTarget const& depthTarget = targetSet.GetDepthStencilTarget();
 
-			SEAssert(depthTarget.GetTexture()->GetNumMips() == 1,
-				"It is (currently) unexpected that a depth target has mips");
-
 			core::InvPtr<re::Texture> const& depthTex = depthTarget.GetTexture();
 			SEAssert(depthTex->GetPlatformParams()->m_isCreated, "Texture is not created");
 

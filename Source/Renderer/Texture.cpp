@@ -15,7 +15,7 @@ namespace
 	uint32_t ComputeMaxMips(uint32_t width, uint32_t height)
 	{
 		const uint32_t largestDimension = glm::max(width, height);
-		return glm::log2(static_cast<float>(std::max(width, height))) + 1;
+		return static_cast<uint32_t>(glm::log2(static_cast<float>(std::max(width, height))) + 1);
 	}
 
 
