@@ -11,58 +11,6 @@
 #include "Core/ProfilingMarkers.h"
 
 
-namespace
-{
-	void ConfigureClearStage(
-		std::shared_ptr<re::Stage> newClearStage,
-		re::Stage::ClearStageParams const& clearStageParams,
-		std::shared_ptr<re::TextureTargetSet const> targetSet)
-	{
-		const uint8_t numColorTargets = targetSet->GetNumColorTargets();
-
-		SEAssert(clearStageParams.m_colorClearModes.size() == 1 ||
-			clearStageParams.m_colorClearModes.size() == numColorTargets,
-			"Invalid number of color clear modes specified");
-
-		// Create a copy of the targets so we don't modify the originals
-		std::shared_ptr<re::TextureTargetSet> clearTargets =
-			re::TextureTargetSet::Create(*targetSet, targetSet->GetName());
-
-		if (numColorTargets > 0)
-		{
-			if (clearStageParams.m_colorClearModes.size() == 1)
-			{
-				clearTargets->SetAllColorTargetClearModes(clearStageParams.m_colorClearModes[0]);
-			}
-			else
-			{
-				for (size_t targetIdx = 0; targetIdx < numColorTargets; targetIdx++)
-				{
-					clearTargets->SetColorTargetClearMode(targetIdx, clearStageParams.m_colorClearModes[targetIdx]);
-				}
-			}
-		}
-		if (clearTargets->HasDepthTarget())
-		{
-			clearTargets->SetDepthTargetClearMode(clearStageParams.m_depthClearMode);
-		}		
-
-		newClearStage->SetTextureTargetSet(clearTargets);
-	}
-
-
-	std::string CreateClearStageName(
-		std::shared_ptr<re::TextureTargetSet const> const& targetSet,
-		re::Stage::ClearStageParams const& clearStageParams)
-	{
-		return std::format("Clear: {} (Color {}, Depth {})",
-			targetSet->GetName(),
-			clearStageParams.ColorClearModeToStr(),
-			re::TextureTarget::ClearModeToCStr(clearStageParams.m_depthClearMode));
-	}
-}
-
-
 namespace re
 {
 	std::shared_ptr<Stage> Stage::CreateParentStage(char const* name)
@@ -165,29 +113,32 @@ namespace re
 	}
 
 
-	std::shared_ptr<Stage> Stage::CreateClearStage(
-		ClearStageParams const& clearStageParams, 
-		std::shared_ptr<re::TextureTargetSet const> const& targetSet)
+	std::shared_ptr<ClearStage> Stage::CreateClearStage(
+		char const* name,
+		std::shared_ptr<re::TextureTargetSet> const& targetSet)
 	{
-		std::shared_ptr<Stage> newClearStage;
-		newClearStage.reset(
-			new ClearStage(CreateClearStageName(targetSet, clearStageParams).c_str(), re::Lifetime::Permanent));
+		std::shared_ptr<ClearStage> newClearStage;
 
-		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
+		newClearStage.reset(new ClearStage(
+			std::format("Clear Stage: {} ({})", name, targetSet->GetName()).c_str(),
+			re::Lifetime::Permanent));
+
+		newClearStage->SetTextureTargetSet(targetSet);
 
 		return newClearStage;
 	}
 
 
-	std::shared_ptr<Stage> Stage::CreateSingleFrameClearStage(
-		ClearStageParams const& clearStageParams,
-		std::shared_ptr<re::TextureTargetSet const> const& targetSet)
+	std::shared_ptr<ClearStage> Stage::CreateSingleFrameClearStage(
+		char const* name,
+		std::shared_ptr<re::TextureTargetSet> const& targetSet)
 	{
-		std::shared_ptr<Stage> newClearStage;
-		newClearStage.reset(
-			new ClearStage(CreateClearStageName(targetSet, clearStageParams).c_str(), re::Lifetime::SingleFrame));
+		std::shared_ptr<ClearStage> newClearStage;
+		newClearStage.reset(new ClearStage(
+			std::format("Clear Stage: {} ({})", name, targetSet->GetName()).c_str(),
+			re::Lifetime::SingleFrame));
 
-		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
+		newClearStage->SetTextureTargetSet(targetSet);
 
 		return newClearStage;
 	}
@@ -249,6 +200,13 @@ namespace re
 	ClearStage::ClearStage(char const* name, re::Lifetime lifetime)
 		: INamedObject(name)
 		, Stage(name, nullptr, Type::Clear, lifetime)
+		, m_colorClearModes(nullptr)
+		, m_colorClearValues(nullptr)
+		, m_numColorClears(0)
+		, m_depthClearVal(1.f) // Far plane
+		, m_stencilClearVal(0)
+		, m_depthClearMode(false)
+		, m_stencilClearMode(false)
 	{
 	}
 

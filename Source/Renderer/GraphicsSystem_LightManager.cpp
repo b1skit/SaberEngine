@@ -415,8 +415,6 @@ namespace gr
 					shadowArrayParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 					shadowArrayParams.m_mipMode = re::Texture::MipMode::None;
 
-					shadowArrayParams.m_clear.m_depthStencil.m_depth = 1.f;
-
 					shadowMetadata.m_shadowArray = re::Texture::Create(shadowTexName, shadowArrayParams);
 				}
 			};

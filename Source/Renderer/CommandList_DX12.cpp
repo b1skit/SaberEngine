@@ -632,39 +632,7 @@ namespace dx12
 	}
 
 
-	void CommandList::ClearDepthTarget(re::TextureTarget const& depthTarget)
-	{
-		if (depthTarget.GetClearMode() == re::TextureTarget::ClearMode::Enabled)
-		{
-			core::InvPtr<re::Texture> const& depthTex = depthTarget.GetTexture();
-
-			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
-
-			SEAssert((depthTexParams.m_usage & re::Texture::Usage::DepthTarget) != 0,
-				"Target texture must be a depth target");
-
-			re::TextureTarget::TargetParams const& depthTargetParams = depthTarget.GetTargetParams();
-
-			SEAssert(depthTargetParams.m_textureView.DepthWritesEnabled(), "Texture view has depth writes disabled");
-
-			// Ensure we're in a depth write state:
-			TransitionResource(depthTex, D3D12_RESOURCE_STATE_DEPTH_WRITE, depthTargetParams.m_textureView);
-
-			const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = 
-				dx12::Texture::GetDSV(depthTex, depthTargetParams.m_textureView);
-
-			m_commandList->ClearDepthStencilView(
-				targetDescriptor,
-				D3D12_CLEAR_FLAG_DEPTH,
-				depthTexParams.m_clear.m_depthStencil.m_depth,
-				depthTexParams.m_clear.m_depthStencil.m_stencil,
-				0,
-				nullptr);
-		}
-	}
-
-
-	void CommandList::ClearColorTarget(re::TextureTarget const* colorTarget)
+	void CommandList::ClearColorTarget(glm::vec4 const& clearVal, re::TextureTarget const* colorTarget)
 	{
 		SEAssert(colorTarget, "Target texture cannot be null");
 
@@ -672,52 +640,139 @@ namespace dx12
 			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy),
 			"Target texture must be a color target");
 
-		if (colorTarget->GetClearMode() == re::TextureTarget::ClearMode::Enabled)
-		{
-			core::InvPtr<re::Texture> const& colorTargetTex = colorTarget->GetTexture();
+		core::InvPtr<re::Texture> const& colorTargetTex = colorTarget->GetTexture();
 
-			re::TextureTarget::TargetParams const& colorTargetParams = colorTarget->GetTargetParams();
+		re::TextureTarget::TargetParams const& colorTargetParams = colorTarget->GetTargetParams();
 
-			const uint32_t subresourceIdx = 
-				re::TextureView::GetSubresourceIndex(colorTargetTex, colorTargetParams.m_textureView);
+		const uint32_t subresourceIdx =
+			re::TextureView::GetSubresourceIndex(colorTargetTex, colorTargetParams.m_textureView);
 
-			TransitionResource(
-				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_gpuResource->Get(),
-				D3D12_RESOURCE_STATE_RENDER_TARGET, 
-				subresourceIdx);
+		TransitionResource(
+			colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_gpuResource->Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			subresourceIdx);
 
-			const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = 
-				dx12::Texture::GetRTV(colorTargetTex, colorTargetParams.m_textureView);
+		const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor =
+			dx12::Texture::GetRTV(colorTargetTex, colorTargetParams.m_textureView);
 
-			m_commandList->ClearRenderTargetView(
-				targetDescriptor,
-				&colorTargetTex->GetTextureParams().m_clear.m_color.r,
-				0,			// Number of rectangles in the proceeding D3D12_RECT ptr
-				nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
-		}
+		m_commandList->ClearRenderTargetView(
+			targetDescriptor,
+			&clearVal.r,
+			0,			// Number of rectangles in the proceeding D3D12_RECT ptr
+			nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
 	}
 
 
-	void CommandList::ClearColorTargets(re::TextureTargetSet const& targetSet)
+	void CommandList::ClearColorTargets(
+		bool const* colorClearModes,
+		glm::vec4 const* colorClearVals,
+		uint8_t numColorClears,
+		re::TextureTargetSet const& targetSet)
 	{
-		for (re::TextureTarget const& target : targetSet.GetColorTargets())
+		SEAssert(colorClearModes && colorClearVals && numColorClears > 0,
+			"Invalid clear args");
+
+		std::vector<re::TextureTarget> const& texTargets = targetSet.GetColorTargets();
+
+		SEAssert(numColorClears == 1 || 
+			(numColorClears > 0 && numColorClears == texTargets.size()),
+			"Number of clear values doesn't match the number of texture targets");
+		
+		for (size_t i = 0; i < texTargets.size(); ++i)
 		{
-			if (!target.HasTexture())
+			if (!texTargets[i].HasTexture())
 			{
-				break;
+				break; // Targets must be bound in monotonically-increasing order from slot 0
 			}
-			ClearColorTarget(&target);
+			
+			if (numColorClears == 1)
+			{
+				ClearColorTarget(colorClearVals[0], &texTargets[i]);
+			}
+			else if (colorClearModes[i])
+			{
+				ClearColorTarget(colorClearVals[i], &texTargets[i]);
+			}
 		}
 	}
 
 
-	void CommandList::ClearTargets(re::TextureTargetSet const& targetSet)
+	void CommandList::ClearTargets(
+		bool const* colorClearModes,
+		glm::vec4 const* colorClearVals,
+		uint8_t numColorClears,
+		bool depthClearMode,
+		float depthClearVal,
+		bool stencilClearMode,
+		uint8_t stencilClearVal,
+		re::TextureTargetSet const& targetSet)
 	{
-		ClearColorTargets(targetSet);
-		if (targetSet.HasDepthTarget())
+		SEAssert((colorClearModes != nullptr) == (colorClearVals != nullptr) &&
+			(colorClearModes != nullptr) == (numColorClears != 0),
+			"Invalid color clear args");
+
+		if (colorClearModes)
 		{
-			ClearDepthTarget(targetSet.GetDepthStencilTarget());
+			ClearColorTargets(colorClearModes, colorClearVals, numColorClears, targetSet);
 		}
+
+		if (targetSet.HasDepthTarget() && (depthClearMode || stencilClearMode))
+		{
+			ClearDepthStencilTarget(
+				depthClearMode, depthClearVal, stencilClearMode, stencilClearVal, targetSet.GetDepthStencilTarget());
+		}
+
+		SEAssert(!stencilClearMode, "TODO: Support stencil clears");
+	}
+
+
+	void CommandList::ClearDepthStencilTarget(
+		bool depthClearMode,
+		float depthClearVal,
+		bool stencilClearMode,
+		uint8_t stencilClearVal,
+		re::TextureTarget const& depthTarget)
+	{
+		SEAssert((depthClearMode || stencilClearMode) && depthTarget.HasTexture(), "Invalid depth/stencil clear params");
+
+		core::InvPtr<re::Texture> const& depthTex = depthTarget.GetTexture();
+
+		SEAssert((depthTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) != 0 ||
+			(depthTex->GetTextureParams().m_usage & re::Texture::Usage::StencilTarget) != 0 ||
+			(depthTex->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget) != 0,
+			"Target texture must be a depth or stencil target");
+
+		re::TextureTarget::TargetParams const& depthTargetParams = depthTarget.GetTargetParams();
+
+		SEAssert(depthTargetParams.m_textureView.DepthWritesEnabled(), "Texture view has depth writes disabled");
+
+		// Ensure we're in a depth write state:
+		TransitionResource(depthTex, D3D12_RESOURCE_STATE_DEPTH_WRITE, depthTargetParams.m_textureView);
+
+		const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor = 
+			dx12::Texture::GetDSV(depthTex, depthTargetParams.m_textureView);
+
+		D3D12_CLEAR_FLAGS clearFlags;
+		if (depthClearMode && !stencilClearMode)
+		{
+			clearFlags = D3D12_CLEAR_FLAG_DEPTH;
+		}
+		else if (!depthClearMode && stencilClearMode)
+		{
+			clearFlags = D3D12_CLEAR_FLAG_STENCIL;
+		}
+		else
+		{
+			clearFlags = D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL;
+		}
+
+		m_commandList->ClearDepthStencilView(
+			targetDescriptor,
+			clearFlags,
+			depthClearVal,
+			stencilClearVal,
+			0,
+			nullptr);
 	}
 
 

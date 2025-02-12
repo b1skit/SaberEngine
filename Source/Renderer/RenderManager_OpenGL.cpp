@@ -126,7 +126,7 @@ namespace opengl
 		re::GPUTimer::Handle frameTimer = gpuTimer.StartTimer(nullptr, k_GPUFrameTimerName);
 
 		// Process RenderPiplines of each RenderSystem in turn:
-		for (std::unique_ptr<gr::RenderSystem>& renderSystem : m_renderSystems)
+		for (std::unique_ptr<gr::RenderSystem> const& renderSystem : m_renderSystems)
 		{
 			re::RenderPipeline const& renderPipeline = renderSystem->GetRenderPipeline();
 
@@ -141,7 +141,7 @@ namespace opengl
 
 				// Process Stages:
 				std::list<std::shared_ptr<re::Stage>> const& stages = stagePipeline.GetStages();
-				for (std::shared_ptr<re::Stage> stage : stages)
+				for (std::shared_ptr<re::Stage> const& stage : stages)
 				{
 					// Skip empty stages:
 					if (stage->IsSkippable())
@@ -168,219 +168,235 @@ namespace opengl
 					if (re::Stage::IsLibraryType(curStageType))
 					{
 						dynamic_cast<re::LibraryStage*>(stage.get())->Execute(nullptr);
-						stageTimer.StopTimer(nullptr);
-						SEEndOpenGLGPUEvent();
-						continue;
 					}
-
-					// Get the stage targets:
-					re::TextureTargetSet const* stageTargets = stage->GetTextureTargetSet();
-					if (!stageTargets && curStageType != re::Stage::Type::Compute)
+					else if (curStageType == re::Stage::Type::Clear)
 					{
-						opengl::SwapChain::PlatformParams* swapChainParams =
-							context->GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
-						SEAssert(swapChainParams && swapChainParams->m_backbufferTargetSet,
-							"Swap chain params and backbuffer cannot be null");
+						re::TextureTargetSet const* stageTargets = stage->GetTextureTargetSet();
 
-						stageTargets = swapChainParams->m_backbufferTargetSet.get(); // Draw to the swapchain backbuffer
-					}
-					SEAssert(stageTargets || curStageType == re::Stage::Type::Compute,
-						"The current stage does not have targets set. This is unexpected");
-
-
-					auto SetDrawState = [&stage, &context](
-						core::InvPtr<re::Shader> const& shader, bool doSetStageInputs)
-					{
-						opengl::Shader::Bind(*shader);
-
-						SEAssert(shader->GetPipelineState() || 
-							stage->GetStageType() == re::Stage::Type::Compute,
-							"Pipeline state is null. This is unexpected");
-
-						context->SetPipelineState(shader->GetPipelineState());
-
-						if (doSetStageInputs)
-						{
-							// Set stage param blocks:
-							for (re::BufferInput const& bufferInput : stage->GetPermanentBuffers())
-							{
-								opengl::Shader::SetBuffer(*shader, bufferInput);
-							}
-							for (re::BufferInput const& bufferInput : stage->GetPerFrameBuffers())
-							{
-								opengl::Shader::SetBuffer(*shader, bufferInput);
-							}
-
-							auto SetStageTextureInputs = [&shader](
-								std::vector<re::TextureAndSamplerInput> const& texInputs)
-								{
-									for (auto const& texSamplerInput : texInputs)
-									{
-										opengl::Shader::SetTextureAndSampler(*shader, texSamplerInput);
-									}
-								};
-							SetStageTextureInputs(stage->GetPermanentTextureInputs());
-							SetStageTextureInputs(stage->GetSingleFrameTextureInputs());
-
-							// Set compute inputs
-							opengl::Shader::SetImageTextureTargets(*shader, stage->GetPermanentRWTextureInputs());
-							opengl::Shader::SetImageTextureTargets(*shader, stage->GetSingleFrameRWTextureInputs());
-						}
-					};
-
-
-					switch (curStageType)
-					{
-					case re::Stage::Type::Compute:
-					{
-						//
-					}
-					break;
-					case re::Stage::Type::Graphics:
-					case re::Stage::Type::FullscreenQuad:
-					case re::Stage::Type::Clear:
-					{
 						opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
 						opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 
-						opengl::TextureTargetSet::ClearTargets(*stageTargets);
+						// TODO: Support compute target clearing
+
+						re::ClearStage const* clearStage = dynamic_cast<re::ClearStage const*>(stage.get());
+						SEAssert(clearStage, "Failed to get clear stage");
+
+						opengl::TextureTargetSet::ClearTargets(
+							clearStage->GetAllColorClearModes(),
+							clearStage->GetAllColorClearValues(),
+							clearStage->GetNumColorClearElements(),
+							clearStage->DepthClearEnabled(),
+							clearStage->GetDepthClearValue(),
+							clearStage->StencilClearEnabled(),
+							clearStage->GetStencilClearValue(),
+							*stageTargets);
 					}
-					break;
-					default:
-						SEAssertF("Invalid render stage type");
-					}
-
-					// OpenGL is stateful; We only need to set the stage inputs once
-					bool hasSetStageInputs = false;
-
-					core::InvPtr<re::Shader> currentShader;
-					GLuint currentVAO = 0;
-
-					// Stage batches:
-					std::vector<re::Batch> const& batches = stage->GetStageBatches();
-					for (re::Batch const& batch : batches)
+					else
 					{
-						core::InvPtr<re::Shader> const& batchShader = batch.GetShader();
-						SEAssert(batchShader != nullptr, "Batch must have a shader");
-
-						if (currentShader != batchShader)
+						// Get the stage targets:
+						re::TextureTargetSet const* stageTargets = stage->GetTextureTargetSet();
+						if (!stageTargets && curStageType != re::Stage::Type::Compute)
 						{
-							currentShader = batchShader;
+							opengl::SwapChain::PlatformParams* swapChainParams =
+								context->GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
+							SEAssert(swapChainParams && swapChainParams->m_backbufferTargetSet,
+								"Swap chain params and backbuffer cannot be null");
 
-							SetDrawState(currentShader, !hasSetStageInputs);
-							hasSetStageInputs = true;
+							stageTargets = swapChainParams->m_backbufferTargetSet.get(); // Draw to the swapchain backbuffer
 						}
-						SEAssert(currentShader, "Current shader is null");
+						SEAssert(stageTargets || curStageType == re::Stage::Type::Compute,
+							"The current stage does not have targets set. This is unexpected");
 
-						// Batch buffers:
-						std::vector<re::BufferInput> const& batchBuffers = batch.GetBuffers();
-						for (re::BufferInput const& batchBufferInput : batchBuffers)
-						{
-							opengl::Shader::SetBuffer(*currentShader, batchBufferInput);
-						}
 
-						// Set Batch Texture/Sampler inputs:
-						for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
-						{
-							opengl::Shader::SetTextureAndSampler(*currentShader, texSamplerInput);
-						}
+						auto SetDrawState = [&stage, &context](
+							core::InvPtr<re::Shader> const& shader, bool doSetStageInputs)
+							{
+								opengl::Shader::Bind(*shader);
 
-						// Batch compute inputs:
-						opengl::Shader::SetImageTextureTargets(*currentShader, batch.GetRWTextureInputs());
+								SEAssert(shader->GetPipelineState() ||
+									stage->GetStageType() == re::Stage::Type::Compute,
+									"Pipeline state is null. This is unexpected");
 
-						// Draw!
+								context->SetPipelineState(shader->GetPipelineState());
+
+								if (doSetStageInputs)
+								{
+									// Set stage param blocks:
+									for (re::BufferInput const& bufferInput : stage->GetPermanentBuffers())
+									{
+										opengl::Shader::SetBuffer(*shader, bufferInput);
+									}
+									for (re::BufferInput const& bufferInput : stage->GetPerFrameBuffers())
+									{
+										opengl::Shader::SetBuffer(*shader, bufferInput);
+									}
+
+									auto SetStageTextureInputs = [&shader](
+										std::vector<re::TextureAndSamplerInput> const& texInputs)
+										{
+											for (auto const& texSamplerInput : texInputs)
+											{
+												opengl::Shader::SetTextureAndSampler(*shader, texSamplerInput);
+											}
+										};
+									SetStageTextureInputs(stage->GetPermanentTextureInputs());
+									SetStageTextureInputs(stage->GetSingleFrameTextureInputs());
+
+									// Set compute inputs
+									opengl::Shader::SetImageTextureTargets(*shader, stage->GetPermanentRWTextureInputs());
+									opengl::Shader::SetImageTextureTargets(*shader, stage->GetSingleFrameRWTextureInputs());
+								}
+							};
+
+
 						switch (curStageType)
 						{
+						case re::Stage::Type::Compute:
+						{
+							//
+						}
+						break;
 						case re::Stage::Type::Graphics:
 						case re::Stage::Type::FullscreenQuad:
 						{
-							re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
+							opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
+							opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
+						}
+						break;
+						default: SEAssertF("Unexpected render stage type");
+						}
 
-							// Set the VAO:
-							// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
-							// batch
-							const GLuint vertexStreamVAO = context->GetCreateVAO(
-								batchGraphicsParams.m_vertexBuffers, 
-								batchGraphicsParams.m_indexBuffer);
-							if (vertexStreamVAO != currentVAO)
+						// OpenGL is stateful; We only need to set the stage inputs once
+						bool hasSetStageInputs = false;
+
+						core::InvPtr<re::Shader> currentShader;
+						GLuint currentVAO = 0;
+
+						// Stage batches:
+						std::vector<re::Batch> const& batches = stage->GetStageBatches();
+						for (re::Batch const& batch : batches)
+						{
+							core::InvPtr<re::Shader> const& batchShader = batch.GetShader();
+							SEAssert(batchShader != nullptr, "Batch must have a shader");
+
+							if (currentShader != batchShader)
 							{
-								glBindVertexArray(vertexStreamVAO);
-								currentVAO = vertexStreamVAO;
+								currentShader = batchShader;
+
+								SetDrawState(currentShader, !hasSetStageInputs);
+								hasSetStageInputs = true;
+							}
+							SEAssert(currentShader, "Current shader is null");
+
+							// Batch buffers:
+							std::vector<re::BufferInput> const& batchBuffers = batch.GetBuffers();
+							for (re::BufferInput const& batchBufferInput : batchBuffers)
+							{
+								opengl::Shader::SetBuffer(*currentShader, batchBufferInput);
 							}
 
-							// Bind the vertex streams:
-							for (uint8_t slotIdx = 0; slotIdx < gr::VertexStream::k_maxVertexStreams; slotIdx++)
+							// Set Batch Texture/Sampler inputs:
+							for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
 							{
-								if (batchGraphicsParams.m_vertexBuffers[slotIdx].GetStream() == nullptr)
-								{
-									break;
-								}
+								opengl::Shader::SetTextureAndSampler(*currentShader, texSamplerInput);
+							}
 
-								opengl::Buffer::Bind(
-									*batchGraphicsParams.m_vertexBuffers[slotIdx].GetBuffer(),
-									opengl::Buffer::Vertex,
-									batchGraphicsParams.m_vertexBuffers[slotIdx].m_view,
-									batchGraphicsParams.m_vertexBuffers[slotIdx].m_bindSlot);
-							}
-							if (batchGraphicsParams.m_indexBuffer.GetStream())
-							{
-								opengl::Buffer::Bind(
-									*batchGraphicsParams.m_indexBuffer.GetBuffer(),
-									opengl::Buffer::Index,
-									batchGraphicsParams.m_indexBuffer.m_view,
-									0); // Arbitrary: Slot is not used for indexes
-							}
+							// Batch compute inputs:
+							opengl::Shader::SetImageTextureTargets(*currentShader, batch.GetRWTextureInputs());
 
 							// Draw!
-							switch (batchGraphicsParams.m_batchGeometryMode)
+							switch (curStageType)
 							{
-							case re::Batch::GeometryMode::IndexedInstanced:
+							case re::Stage::Type::Graphics:
+							case re::Stage::Type::FullscreenQuad:
 							{
-								glDrawElementsInstanced(
-									PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),			// GLenum mode
-									static_cast<GLsizei>(batchGraphicsParams.m_indexBuffer.m_view.m_stream.m_numElements),	// GLsizei count
-									DataTypeToGLDataType(batchGraphicsParams.m_indexBuffer.m_view.m_stream.m_dataType), 	// GLenum type
-									0,									// Byte offset (into index buffer)
-									(GLsizei)batch.GetInstanceCount());	// Instance count
+								re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
+
+								// Set the VAO:
+								// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
+								// batch
+								const GLuint vertexStreamVAO = context->GetCreateVAO(
+									batchGraphicsParams.m_vertexBuffers,
+									batchGraphicsParams.m_indexBuffer);
+								if (vertexStreamVAO != currentVAO)
+								{
+									glBindVertexArray(vertexStreamVAO);
+									currentVAO = vertexStreamVAO;
+								}
+
+								// Bind the vertex streams:
+								for (uint8_t slotIdx = 0; slotIdx < gr::VertexStream::k_maxVertexStreams; slotIdx++)
+								{
+									if (batchGraphicsParams.m_vertexBuffers[slotIdx].GetStream() == nullptr)
+									{
+										break;
+									}
+
+									opengl::Buffer::Bind(
+										*batchGraphicsParams.m_vertexBuffers[slotIdx].GetBuffer(),
+										opengl::Buffer::Vertex,
+										batchGraphicsParams.m_vertexBuffers[slotIdx].m_view,
+										batchGraphicsParams.m_vertexBuffers[slotIdx].m_bindSlot);
+								}
+								if (batchGraphicsParams.m_indexBuffer.GetStream())
+								{
+									opengl::Buffer::Bind(
+										*batchGraphicsParams.m_indexBuffer.GetBuffer(),
+										opengl::Buffer::Index,
+										batchGraphicsParams.m_indexBuffer.m_view,
+										0); // Arbitrary: Slot is not used for indexes
+								}
+
+								// Draw!
+								switch (batchGraphicsParams.m_batchGeometryMode)
+								{
+								case re::Batch::GeometryMode::IndexedInstanced:
+								{
+									glDrawElementsInstanced(
+										PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),			// GLenum mode
+										static_cast<GLsizei>(batchGraphicsParams.m_indexBuffer.m_view.m_stream.m_numElements),	// GLsizei count
+										DataTypeToGLDataType(batchGraphicsParams.m_indexBuffer.m_view.m_stream.m_dataType), 	// GLenum type
+										0,									// Byte offset (into index buffer)
+										(GLsizei)batch.GetInstanceCount());	// Instance count
+								}
+								break;
+								case re::Batch::GeometryMode::ArrayInstanced:
+								{
+									const GLsizei numElements = static_cast<GLsizei>(
+										batchGraphicsParams.m_vertexBuffers[0].m_view.m_stream.m_numElements);
+
+									glDrawArraysInstanced(
+										PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),
+										0,
+										numElements,
+										(GLsizei)batch.GetInstanceCount());
+								}
+								break;
+								default: SEAssertF("Invalid batch geometry type");
+								}
 							}
 							break;
-							case re::Batch::GeometryMode::ArrayInstanced:
-							{							
-								const GLsizei numElements = static_cast<GLsizei>(
-									batchGraphicsParams.m_vertexBuffers[0].m_view.m_stream.m_numElements);
+							case re::Stage::Type::Compute:
+							{
+								glm::uvec3 const& threadGroupCount = batch.GetComputeParams().m_threadGroupCount;
+								glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
 
-								glDrawArraysInstanced(
-									PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),
-									0,
-									numElements,
-									(GLsizei)batch.GetInstanceCount());
+								// Barrier to prevent reading before texture writes have finished.
+								// TODO: Is this always necessary?
+								glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+								// TODO: I suspect we'll need this when sharing SSBOs between stages
+								//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 							}
 							break;
-							default: SEAssertF("Invalid batch geometry type");
+							default:
+								SEAssertF("Invalid render stage type");
 							}
-						}
-						break;
-						case re::Stage::Type::Compute:
-						{
-							glm::uvec3 const& threadGroupCount = batch.GetComputeParams().m_threadGroupCount;
-							glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
 
-							// Barrier to prevent reading before texture writes have finished.
-							// TODO: Is this always necessary?
-							glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
-							// TODO: I suspect we'll need this when sharing SSBOs between stages
-							//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-						}
-						break;
-						default:
-							SEAssertF("Invalid render stage type");
-						}
-
-					} // batches
+						} // batches
+					}
 
 					SEEndOpenGLGPUEvent();
-
 					stageTimer.StopTimer(nullptr);
 				}; // Stage loop
 

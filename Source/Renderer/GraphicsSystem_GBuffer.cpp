@@ -48,7 +48,6 @@ namespace gr
 		// World normal may have negative components, emissive values may be > 1
 		re::Texture::TextureParams gbuffer16bitParams = gBufferColorParams;
 		gbuffer16bitParams.m_format = re::Texture::Format::RGBA16F; 
-		gbuffer16bitParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		re::TextureTarget::TargetParams defaultTargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1)};
 
@@ -73,7 +72,6 @@ namespace gr
 			re::Texture::Usage::DepthTarget | re::Texture::Usage::ColorSrc);
 		depthTexParams.m_format = re::Texture::Format::Depth32F;
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		depthTexParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane
 
 		m_gBufferTargets->SetDepthStencilTarget(
 			re::Texture::Create(GBufferTexNameHashKeys[GBufferTexIdx::GBufferDepth].GetKey(), depthTexParams),
@@ -84,12 +82,13 @@ namespace gr
 		// Camera:		
 		m_gBufferStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
-
 		// Create a clear stage for the GBuffer targets:
-		re::Stage::ClearStageParams gbufferClearParams; // Clear both color and depth
-		gbufferClearParams.m_colorClearModes = { re::TextureTarget::ClearMode::Enabled };
-		gbufferClearParams.m_depthClearMode = re::TextureTarget::ClearMode::Enabled;
-		m_owningPipeline->AppendStage(re::Stage::CreateClearStage(gbufferClearParams, m_gBufferTargets));
+		std::shared_ptr<re::ClearStage> gbufferClearStage = 
+			re::Stage::CreateClearStage("GBuffer target clear stage", m_gBufferTargets);
+		gbufferClearStage->EnableAllColorClear();
+		gbufferClearStage->EnableDepthClear(1.f);
+
+		m_owningPipeline->AppendStage(gbufferClearStage);
 
 		// Finally, append the GBuffer stage to the pipeline:
 		m_owningPipeline->AppendStage(m_gBufferStage);
@@ -129,14 +128,12 @@ namespace gr
 		if (m_gBufferStage->GetStageBatches().empty())
 		{
 			// Append a clear stage, to ensure that the depth buffer is cleared when there is no batches (i.e. so the 
-			// skybox will still render in an empty scene)
-			re::Stage::ClearStageParams depthClearStageParams;
-			depthClearStageParams.m_colorClearModes = { re::TextureTarget::ClearMode::Disabled };
-			depthClearStageParams.m_depthClearMode = re::TextureTarget::ClearMode::Enabled;
-			
-			m_owningPipeline->AppendSingleFrameStage(re::Stage::CreateSingleFrameClearStage(
-				depthClearStageParams, 
-				m_gBufferTargets));
+			// skybox will still render in an empty scene)		
+			std::shared_ptr<re::ClearStage> gbufferClearStage =
+				re::Stage::CreateSingleFrameClearStage("GBuffer empty batches clear stage", m_gBufferTargets);
+			gbufferClearStage->EnableDepthClear(1.f);
+
+			m_owningPipeline->AppendSingleFrameStage(gbufferClearStage);
 		}
 	}
 

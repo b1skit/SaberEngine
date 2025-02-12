@@ -90,8 +90,6 @@ namespace gr
 			deferredLightTargetTex,
 			re::TextureTarget::TargetParams{.m_textureView = re::TextureView::Texture2DView(0, 1)});
 
-		emissiveTargetSet->SetAllTargetClearModes(re::TextureTarget::ClearMode::Disabled);
-
 		m_emissiveBlitStage->SetTextureTargetSet(emissiveTargetSet);
 
 		// Append the emissive blit stage:

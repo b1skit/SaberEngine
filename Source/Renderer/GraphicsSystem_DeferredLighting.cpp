@@ -186,7 +186,6 @@ namespace gr
 		brdfParams.m_format = re::Texture::Format::RGBA16F;
 		brdfParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		brdfParams.m_mipMode = re::Texture::MipMode::None;
-		brdfParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams);
 
@@ -473,7 +472,6 @@ namespace gr
 				.m_format = re::Texture::Format::Depth32F,
 				.m_colorSpace = re::Texture::ColorSpace::Linear,
 				.m_mipMode = re::Texture::MipMode::None,
-				.m_clear = re::Texture::TextureParams::ClearValues{},
 			},
 			glm::vec4(1.f, 1.f, 1.f, 1.f));
 
@@ -485,7 +483,6 @@ namespace gr
 				.m_format = re::Texture::Format::Depth32F,
 				.m_colorSpace = re::Texture::ColorSpace::Linear,
 				.m_mipMode = re::Texture::MipMode::None,
-				.m_clear = re::Texture::TextureParams::ClearValues{},
 			},
 			glm::vec4(1.f, 1.f, 1.f, 1.f));
 
@@ -506,13 +503,11 @@ namespace gr
 		lightTargetTexParams.m_format = re::Texture::Format::RGBA16F;
 		lightTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		lightTargetTexParams.m_mipMode = re::Texture::MipMode::None;
-		lightTargetTexParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		core::InvPtr<re::Texture> const& lightTargetTex = re::Texture::Create("DeferredLightTarget", lightTargetTexParams);
 
 		// Create the lighting target set (shared by all lights/stages):
 		re::TextureTarget::TargetParams deferredTargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1)};
-		deferredTargetParams.m_clearMode = re::TextureTarget::ClearMode::Disabled;
 
 		m_lightingTargetSet->SetColorTarget(0, lightTargetTex, deferredTargetParams);
 
@@ -526,10 +521,11 @@ namespace gr
 			depthTargetParams);
 
 		// Append a color-only clear stage to clear the lighting target:
-		re::Stage::ClearStageParams colorClearParams;
-		colorClearParams.m_colorClearModes = { re::TextureTarget::ClearMode::Enabled };
-		colorClearParams.m_depthClearMode = re::TextureTarget::ClearMode::Disabled;
-		pipeline.AppendStage(re::Stage::CreateClearStage(colorClearParams, m_lightingTargetSet));
+		std::shared_ptr<re::ClearStage> clearStage = 
+			re::Stage::CreateClearStage("DeferredLighting: Clear lighting targets", m_lightingTargetSet);
+		clearStage->EnableAllColorClear();
+
+		pipeline.AppendStage(clearStage);
 
 
 		// Ambient stage:

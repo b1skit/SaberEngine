@@ -56,7 +56,6 @@ namespace dx12
 		colorParams.m_format = re::Texture::Format::RGBA8_UNORM;
 		colorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		colorParams.m_mipMode = re::Texture::MipMode::None;
-		colorParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		// Ensure our format here matches the one that our texture will be created with:
 		const DXGI_FORMAT colorBufferFormat = dx12::Texture::GetTextureFormat(colorParams);

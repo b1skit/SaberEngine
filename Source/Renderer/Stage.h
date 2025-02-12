@@ -3,6 +3,7 @@
 #include "Batch.h"
 #include "Effect.h"
 #include "MeshFactory.h"
+#include "SysInfo_Platform.h"
 #include "TextureView.h"
 #include "TextureTarget.h"
 
@@ -19,6 +20,7 @@ namespace re
 	class Shader;
 	class Texture;
 
+	class ClearStage;
 
 	class Stage : public virtual core::INamedObject
 	{
@@ -28,13 +30,15 @@ namespace re
 		enum class Type
 		{
 			Parent, // Does not contribute batches
+
 			Graphics,
 			Compute,
-			
+
 			LibraryGraphics,
 			LibraryCompute,
 
 			FullscreenQuad, // Graphics queue
+
 			Clear, // Graphics queue
 
 			Invalid
@@ -77,27 +81,6 @@ namespace re
 			EffectID m_effectID;
 			effect::drawstyle::Bitmask m_drawStyleBitmask = effect::drawstyle::DefaultTechnique;
 		};
-		struct ClearStageParams final : public virtual IStageParams
-		{
-			// 1 entry: applied to all targets, or per-target if m_colorClearMode.size() == targetSet.GetNumColorTargets()
-			std::vector<re::TextureTarget::ClearMode> m_colorClearModes;
-			glm::vec4 m_clearColor = glm::vec4(0.f, 0.f, 0.f, 0.f);
-
-			re::TextureTarget::ClearMode m_depthClearMode = 
-				re::TextureTarget::ClearMode::Disabled;
-			float m_clearDepth = 1.f; // Far plane
-
-			std::string ColorClearModeToStr() const
-			{
-				SEAssert(!m_colorClearModes.empty(), "Color clear modes not set");
-				std::string result;
-				for (auto const& mode : m_colorClearModes)
-				{
-					result += re::TextureTarget::ClearModeToCStr(mode);
-				}
-				return result;
-			}
-		};
 
 
 	public:
@@ -114,10 +97,10 @@ namespace re
 		static std::shared_ptr<Stage> CreateFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
 		static std::shared_ptr<Stage> CreateSingleFrameFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
 
-		static std::shared_ptr<Stage> CreateClearStage(
-			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const> const&);
-		static std::shared_ptr<Stage> CreateSingleFrameClearStage(
-			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const>const&);
+		static std::shared_ptr<ClearStage> CreateClearStage(
+			char const* name, std::shared_ptr<re::TextureTargetSet> const&);
+		static std::shared_ptr<ClearStage> CreateSingleFrameClearStage(
+			char const* name, std::shared_ptr<re::TextureTargetSet>const&);
 
 
 	public:
@@ -192,7 +175,7 @@ namespace re
 		void AddPermanentBuffer(re::BufferInput const&);
 		void AddPermanentBuffer(re::BufferInput&&);
 		inline std::vector<re::BufferInput> const& GetPermanentBuffers() const;
-		
+
 		void AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&); // Infer a default BufferView
 		void AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
 		void AddSingleFrameBuffer(re::BufferInput const&);
@@ -220,7 +203,7 @@ namespace re
 	private:
 		void UpdateDepthTextureInputIndex();
 		void ValidateTexturesAndTargets();
-		
+
 
 	protected:
 		const Type m_type;
@@ -246,7 +229,7 @@ namespace re
 
 		effect::drawstyle::Bitmask m_drawStyleBits;
 
-		
+
 	private:
 		Stage() = delete;
 		Stage(Stage const&) = delete;
@@ -306,12 +289,169 @@ namespace re
 	class ClearStage final : public virtual Stage
 	{
 	public:
-		// 
+		void EnableAllColorClear(glm::vec4 const& colorClearVal = glm::vec4(0.f));
+		void EnableColorClear(uint8_t idx, glm::vec4 const& colorClearVal = glm::vec4(0.f));
+
+		void EnableDepthClear(float clearVal = 1.f);
+
+		void EnableStencilClear(uint8_t clearVal = 0);
+
+
+	public:
+		bool ColorClearEnabled() const; // Is color clearing enabled for any target?
+		bool ColorClearEnabled(uint8_t idx) const; // Is color clearing enabled for a specific target index?
+
+		bool const* GetAllColorClearModes() const;
+		glm::vec4 const* GetAllColorClearValues() const;
+		uint8_t GetNumColorClearElements() const;
+
+		bool DepthClearEnabled() const;
+		float GetDepthClearValue() const;
+
+		bool StencilClearEnabled() const;
+		uint8_t GetStencilClearValue() const;
+
+
+	private:
+		std::unique_ptr<bool[]> m_colorClearModes;
+		std::unique_ptr<glm::vec4[]> m_colorClearValues;
+
+		float m_depthClearVal;
+		uint8_t m_stencilClearVal;
+
+		uint8_t m_numColorClears;
+		bool m_depthClearMode;
+		bool m_stencilClearMode;
+
 
 	private:
 		ClearStage(char const* name, re::Lifetime);
 		friend class Stage;
 	};
+
+
+	inline void ClearStage::EnableAllColorClear(glm::vec4 const& colorClearVal /*= glm::vec4(0.f)*/)
+	{
+		SEAssert(m_colorClearModes == nullptr && m_colorClearValues == nullptr,
+			"Clear mode already set. This function should only be called once");
+
+		m_numColorClears = platform::SysInfo::GetMaxRenderTargets();
+
+		m_colorClearModes = std::unique_ptr<bool[]>(new bool[m_numColorClears]);
+		m_colorClearValues = std::unique_ptr<glm::vec4[]>(new glm::vec4[m_numColorClears]);
+
+		for (uint8_t i = 0; i < m_numColorClears; ++i)
+		{
+			m_colorClearModes[i] = true;
+			m_colorClearValues[i] = glm::vec4(0.f);
+		}
+	}
+
+
+	inline void ClearStage::EnableColorClear(uint8_t idx, glm::vec4 const& colorClearVal /*= glm::vec4(0.f)*/)
+	{
+		SEAssert((m_colorClearModes == nullptr) == (m_colorClearValues == nullptr),
+			"Color clear members are out of sync");
+
+		if (m_colorClearModes == nullptr)
+		{
+			m_numColorClears = platform::SysInfo::GetMaxRenderTargets();
+
+			m_colorClearModes = std::unique_ptr<bool[]>(new bool[m_numColorClears]);
+			m_colorClearValues = std::unique_ptr<glm::vec4[]>(new glm::vec4[m_numColorClears]);
+
+			for (uint8_t i = 0; i < m_numColorClears; ++i)
+			{
+				m_colorClearModes[i] = false;
+				m_colorClearValues[i] = glm::vec4(0.f);
+			}
+		}
+
+		SEAssert(idx < platform::SysInfo::GetMaxRenderTargets(), "OOB index");
+
+		m_colorClearModes[idx] = true;
+		m_colorClearValues[idx] = colorClearVal;
+	}
+
+
+	inline void ClearStage::EnableDepthClear(float clearVal /*= 1.f*/)
+	{
+		m_depthClearVal = clearVal;
+		m_depthClearMode = true;
+	}
+
+
+	inline void ClearStage::EnableStencilClear(uint8_t clearVal /*= 0*/)
+	{
+		m_stencilClearVal = clearVal;
+		m_stencilClearMode = true;
+	}
+
+
+	inline bool ClearStage::ColorClearEnabled() const
+	{
+		SEAssert((m_colorClearModes == nullptr) == (m_colorClearValues == nullptr),
+			"Color clear members are out of sync");
+
+		return m_colorClearModes != nullptr;
+	}
+
+
+	inline bool ClearStage::ColorClearEnabled(uint8_t idx) const
+	{
+		SEAssert((m_colorClearModes == nullptr) == (m_colorClearValues == nullptr),
+			"Color clear members are out of sync");
+
+		if (ColorClearEnabled())
+		{
+			SEAssert(idx < m_numColorClears, "OOB index");
+
+			return m_colorClearModes[idx];
+		}
+		return false;
+	}
+
+
+	inline bool const* ClearStage::GetAllColorClearModes() const
+	{
+		return m_colorClearModes.get();
+	}
+
+
+	inline glm::vec4 const* ClearStage::GetAllColorClearValues() const
+	{
+		return m_colorClearValues.get();
+	}
+
+
+	inline uint8_t ClearStage::GetNumColorClearElements() const
+	{
+		return m_numColorClears;
+	}
+
+
+	inline bool ClearStage::DepthClearEnabled() const
+	{
+		return m_depthClearMode;
+	}
+
+
+	inline float ClearStage::GetDepthClearValue() const
+	{
+		return m_depthClearVal;
+	}
+
+
+	inline bool ClearStage::StencilClearEnabled() const
+	{
+		return m_stencilClearMode;
+	}
+
+
+	inline uint8_t ClearStage::GetStencilClearValue() const
+	{
+		return m_stencilClearVal;
+	}
 
 
 	//---

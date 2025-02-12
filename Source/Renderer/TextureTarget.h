@@ -29,22 +29,11 @@ namespace re
 
 
 	public:
-		enum class ClearMode : bool
-		{
-			Enabled,
-			Disabled
-		};
-		static constexpr char const* ClearModeToCStr(ClearMode clearMode);
-
-
-	public:
 		struct TargetParams
 		{
 			re::TextureView m_textureView;
 
 			std::string m_shaderName; // For UAV targets
-
-			ClearMode m_clearMode = ClearMode::Disabled;
 		};
 
 	public:
@@ -68,9 +57,6 @@ namespace re
 
 		void SetTargetParams(TargetParams const& targetParams);
 		TargetParams const& GetTargetParams() const { return m_targetParams; }
-
-		void SetClearMode(re::TextureTarget::ClearMode);
-		re::TextureTarget::ClearMode GetClearMode() const;
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
@@ -195,11 +181,6 @@ namespace re
 		uint8_t GetNumColorTargets() const;
 		glm::vec4 GetTargetDimensions() const;
 
-		void SetColorTargetClearMode(size_t targetIdx, re::TextureTarget::ClearMode);
-		void SetAllColorTargetClearModes(re::TextureTarget::ClearMode);
-		void SetDepthTargetClearMode(re::TextureTarget::ClearMode);
-		void SetAllTargetClearModes(re::TextureTarget::ClearMode);
-
 		void SetViewport(re::Viewport const&);
 		inline re::Viewport const& GetViewport() const { return m_viewport; }
 
@@ -251,15 +232,4 @@ namespace re
 		TextureTargetSet& operator=(TextureTargetSet const&) = delete;
 		TextureTargetSet& operator=(TextureTargetSet&&) noexcept = delete;
 	};
-
-
-	inline constexpr char const* TextureTarget::ClearModeToCStr(ClearMode clearMode)
-	{
-		switch (clearMode)
-		{
-		case ClearMode::Enabled: return "Enabled";
-		case ClearMode::Disabled: return "Disabled";
-		default: return "Invalid ClearMode"; // This should never happen
-		}
-	}
 }

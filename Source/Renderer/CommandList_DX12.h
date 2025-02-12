@@ -4,6 +4,7 @@
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
 #include "ResourceStateTracker_DX12.h"
+#include "Stage.h"
 
 #include "Core/Logger.h"
 
@@ -91,12 +92,32 @@ namespace dx12
 
 		void SetRWTextures(std::vector<re::RWTextureInput> const&);
 
-		void ClearDepthTarget(re::TextureTarget const&);
+		void ClearColorTarget(
+			glm::vec4 const& clearVal,
+			re::TextureTarget const*);
+		
+		void ClearColorTargets(
+			bool const* clearModes,
+			glm::vec4 const* colorClearVals,
+			uint8_t numColorClears, 
+			re::TextureTargetSet const&);
 
-		void ClearColorTarget(re::TextureTarget const*);
-		void ClearColorTargets(re::TextureTargetSet const&);
+		void ClearTargets(
+			bool const* colorClearModes,
+			glm::vec4 const* colorClearVals,
+			uint8_t numColorClears,
+			bool depthClearMode,
+			float depthClearVal,
+			bool stencilClearMode,
+			uint8_t stencilClearVal,
+			re::TextureTargetSet const&);
 
-		void ClearTargets(re::TextureTargetSet const&);
+		void ClearDepthStencilTarget(
+			bool depthClearMode,
+			float depthClearVal,
+			bool stencilClearMode,
+			uint8_t stencilClearVal,
+			re::TextureTarget const&);
 
 		void SetViewport(re::TextureTargetSet const&) const;
 		void SetScissorRect(re::TextureTargetSet const&) const;

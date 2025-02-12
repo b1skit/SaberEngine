@@ -317,7 +317,8 @@ namespace
 
 
 	// Returns the initial state
-	D3D12_RESOURCE_STATES CreateTextureResource(core::InvPtr<re::Texture> const& texture, bool needsUAV, bool simultaneousAccess)
+	D3D12_RESOURCE_STATES CreateTextureResource(
+		core::InvPtr<re::Texture> const& texture, bool needsUAV, bool simultaneousAccess)
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		SEAssert(!texPlatParams->m_gpuResource, "Texture resource already created");
@@ -350,18 +351,18 @@ namespace
 		{
 			flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
-			optimizedClearValue.Color[0] = texParams.m_clear.m_color.r;
-			optimizedClearValue.Color[1] = texParams.m_clear.m_color.g;
-			optimizedClearValue.Color[2] = texParams.m_clear.m_color.b;
-			optimizedClearValue.Color[3] = texParams.m_clear.m_color.a;
+			optimizedClearValue.Color[0] = texParams.m_optimizedClear.m_color.r;
+			optimizedClearValue.Color[1] = texParams.m_optimizedClear.m_color.g;
+			optimizedClearValue.Color[2] = texParams.m_optimizedClear.m_color.b;
+			optimizedClearValue.Color[3] = texParams.m_optimizedClear.m_color.a;
 		}
 
 		if (texParams.m_usage & re::Texture::Usage::DepthTarget)
 		{
 			flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-			optimizedClearValue.DepthStencil.Depth = texParams.m_clear.m_depthStencil.m_depth;
-			optimizedClearValue.DepthStencil.Stencil = texParams.m_clear.m_depthStencil.m_stencil;
+			optimizedClearValue.DepthStencil.Depth = texParams.m_optimizedClear.m_depthStencil.m_depth;
+			optimizedClearValue.DepthStencil.Stencil = texParams.m_optimizedClear.m_depthStencil.m_stencil;
 
 			if (texture->HasInitialData())
 			{

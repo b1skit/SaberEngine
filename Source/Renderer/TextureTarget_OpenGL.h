@@ -31,17 +31,34 @@ namespace opengl
 			GLuint m_frameBufferObject;			
 		};
 
-		// Static members:
 		static void CreateColorTargets(re::TextureTargetSet const&);
 		static void AttachColorTargets(re::TextureTargetSet const&);
 
 		static void CreateDepthStencilTarget(re::TextureTargetSet const&);
 		static void AttachDepthStencilTarget(re::TextureTargetSet const&);
 
-		static void ClearColorTargets(re::TextureTargetSet const&);
-		static void ClearDepthStencilTarget(re::TextureTargetSet const&);
+		static void ClearColorTargets(
+			bool const* colorClearModes,
+			glm::vec4 const* colorClearVals,
+			uint8_t numColorClears, 
+			re::TextureTargetSet const&);
 
-		static void ClearTargets(re::TextureTargetSet const&);
+		static void ClearTargets(
+			bool const* colorClearModes,
+			glm::vec4 const* colorClearVals,
+			uint8_t numColorClears,
+			bool depthClearMode,
+			float depthClearVal,
+			bool stencilClearMode,
+			uint8_t stencilClearVal,
+			re::TextureTargetSet const&);
+
+		static void ClearDepthStencilTarget(
+			bool depthClearMode,
+			float depthClearVal,
+			bool stencilClearMode,
+			uint8_t stencilClearVal,
+			re::TextureTargetSet const&);
 
 		static void AttachTargetsAsImageTextures(re::TextureTargetSet const&); // ~Compute target/UAV
 	};

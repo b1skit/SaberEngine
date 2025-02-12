@@ -7,6 +7,7 @@
 #include "RenderSystem.h"
 #include "Sampler_DX12.h"
 #include "Shader_DX12.h"
+#include "Stage.h"
 #include "SwapChain_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
@@ -494,6 +495,28 @@ namespace dx12
 							// Library stages are executed with their own internal logic
 							dynamic_cast<re::LibraryStage*>((*stageItr).get())->Execute(cmdList.get());
 						}
+						else if (curStageType == re::Stage::Type::Clear)
+						{
+							SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Direct,
+								"Incorrect command list type");
+
+							// Note: We do not have to have SetRenderTargets() to clear them in DX12
+
+							// TODO: Support compute target clearing
+
+							re::ClearStage const* clearStage = dynamic_cast<re::ClearStage const*>((*stageItr).get());
+							SEAssert(clearStage, "Failed to get clear stage");
+
+							cmdList->ClearTargets(
+								clearStage->GetAllColorClearModes(),
+								clearStage->GetAllColorClearValues(),
+								clearStage->GetNumColorClearElements(),
+								clearStage->DepthClearEnabled(),
+								clearStage->GetDepthClearValue(),
+								clearStage->StencilClearEnabled(),
+								clearStage->GetStencilClearValue(),
+								*(*stageItr)->GetTextureTargetSet());
+						}
 						else
 						{
 							// Get the stage targets:
@@ -504,34 +527,6 @@ namespace dx12
 							}
 							SEAssert(stageTargets || curStageType == re::Stage::Type::Compute,
 								"The current stage does not have targets set. This is unexpected");
-
-
-							// Clear the targets
-							switch (curStageType)
-							{
-							case re::Stage::Type::Compute:
-							case re::Stage::Type::LibraryCompute:
-							{
-								SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Compute,
-									"Incorrect command list type");
-
-								// TODO: Support compute target clearing
-							}
-							break;
-							case re::Stage::Type::Graphics:
-							case re::Stage::Type::LibraryGraphics:
-							case re::Stage::Type::FullscreenQuad:
-							case re::Stage::Type::Clear:
-							{
-								SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Direct,
-									"Incorrect command list type");
-
-								// Note: We do not have to have SetRenderTargets() to clear them in DX12
-								cmdList->ClearTargets(*stageTargets);
-							}
-							break;
-							default: SEAssertF("Invalid stage type");
-							}
 
 							core::InvPtr<re::Shader> currentShader;
 							bool hasSetStageInputsAndTargets = false;

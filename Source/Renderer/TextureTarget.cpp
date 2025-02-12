@@ -96,18 +96,6 @@ namespace re
 	}
 
 
-	void TextureTarget::SetClearMode(re::TextureTarget::ClearMode clearMode)
-	{
-		m_targetParams.m_clearMode = clearMode;
-	}
-
-
-	re::TextureTarget::ClearMode TextureTarget::GetClearMode() const
-	{
-		return m_targetParams.m_clearMode;
-	}
-
-
 	/**********/
 	// Viewport
 	/**********/
@@ -384,35 +372,6 @@ namespace re
 		}
 
 		return targetDimensions;
-	}
-
-
-	void TextureTargetSet::SetColorTargetClearMode(size_t targetIdx, re::TextureTarget::ClearMode clearMode)
-	{
-		m_colorTargets[targetIdx].SetClearMode(clearMode);
-	}
-
-
-	void TextureTargetSet::SetAllColorTargetClearModes(re::TextureTarget::ClearMode clearMode)
-	{
-		for (size_t i = 0; i < m_colorTargets.size(); i++)
-		{
-			// Note: It's valid to set a clear mode even if a Target does not have a Texture
-			m_colorTargets[i].SetClearMode(clearMode);
-		}
-	}
-
-
-	void TextureTargetSet::SetDepthTargetClearMode(re::TextureTarget::ClearMode clearMode)
-	{
-		m_depthStencilTarget.SetClearMode(clearMode);
-	}
-
-
-	void TextureTargetSet::SetAllTargetClearModes(re::TextureTarget::ClearMode clearMode)
-	{
-		SetAllColorTargetClearModes(clearMode);
-		SetDepthTargetClearMode(clearMode);
 	}
 
 

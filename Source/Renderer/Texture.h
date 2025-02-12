@@ -194,18 +194,20 @@ namespace re
 
 			bool m_createAsPermanent = false; // Should this texture be kept alive beyond the scope of its InvPtr?
 
-			union ClearValues
+			// Optimized clear values: Choose the value that clear operations will be most commonly called with
+			// Note: No effect for OpenGL
+			union OptimizedClearVals
 			{
-				glm::vec4 m_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				glm::vec4 m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 				struct
 				{
-					float m_depth = 1.f;
+					float m_depth = 1.f; // Far plane
 					uint8_t m_stencil = 0;
 				} m_depthStencil;
 
-				ClearValues() { memset(this, 0, sizeof(ClearValues)); }
-			} m_clear;
+				OptimizedClearVals() { memset(this, 0, sizeof(OptimizedClearVals)); }
+			} m_optimizedClear;
 		};
 
 

@@ -480,86 +480,124 @@ namespace opengl
 	}
 
 
-	void TextureTargetSet::ClearColorTargets(re::TextureTargetSet const& targetSet)
+	void TextureTargetSet::ClearColorTargets(
+		bool const* colorClearModes,
+		glm::vec4 const* colorClearVals,
+		uint8_t numColorClears,
+		re::TextureTargetSet const& targetSet)
 	{
+		SEAssert(colorClearModes && colorClearVals && numColorClears > 0,
+			"Invalid color clear args");
+
 		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
 			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 
 		std::vector<re::TextureTarget> const& colorTargets = targetSet.GetColorTargets();
-		for (size_t i = 0; i < colorTargets.size(); i++)
+		
+		SEAssert(numColorClears > 0 && numColorClears >= colorTargets.size(),
+			"Not enough clear values to cover the number of texture targets");
+
+		for (size_t i = 0; i < colorTargets.size(); ++i)
 		{
 			if (!colorTargets[i].HasTexture())
 			{
-				break;  // Targets must be bound in monotonically-increasing order from slot 0
+				break; // Targets must be bound in monotonically-increasing order from slot 0
 			}
 
-			if (colorTargets[i].GetClearMode() == re::TextureTarget::ClearMode::Enabled)
+			if (colorClearModes[i])
 			{
-				opengl::TextureTarget::PlatformParams* targetParams =
-					colorTargets[i].GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
-
 				glClearNamedFramebufferfv(
 					targetSetParams->m_frameBufferObject,	// framebuffer
 					GL_COLOR,								// buffer
 					static_cast<GLint>(i),					// drawbuffer
-					&colorTargets[i].GetTexture()->GetTextureParams().m_clear.m_color.r);	// value
+					&colorClearVals[i].r);					// value
 			}
 		}
 	}
 
 
-	void TextureTargetSet::ClearDepthStencilTarget(re::TextureTargetSet const& targetSet)
+	void TextureTargetSet::ClearTargets(
+		bool const* colorClearModes,
+		glm::vec4 const* colorClearVals,
+		uint8_t numColorClears,
+		bool depthClearMode,
+		float depthClearVal,
+		bool stencilClearMode,
+		uint8_t stencilClearVal,
+		re::TextureTargetSet const& targetSet)
 	{
-		if (targetSet.GetDepthStencilTarget().GetClearMode() == re::TextureTarget::ClearMode::Enabled &&
-			targetSet.HasDepthTarget())
+		SEAssert((colorClearModes != nullptr) == (colorClearVals != nullptr) &&
+			(colorClearModes != nullptr) == (numColorClears != 0),
+			"Invalid color clear args");
+
+		if (colorClearModes)
 		{
-			opengl::TextureTargetSet::PlatformParams const* targetSetPlatParams =
-				targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
+			ClearColorTargets(colorClearModes, colorClearVals, numColorClears, targetSet);
+		}
 
-			core::InvPtr<re::Texture> const& depthStencilTex = targetSet.GetDepthStencilTarget().GetTexture();
-			re::Texture::TextureParams const& texParams = depthStencilTex->GetTextureParams();
-
-			opengl::TextureTarget::PlatformParams const* targetPlatParams =
-				targetSet.GetDepthStencilTarget().GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
-
-			SEAssert(targetPlatParams->m_drawBuffer == 0, "Drawbuffer must be 0 for depth/stencil targets");
-
-			// Clear depth:
-			if ((texParams.m_usage & re::Texture::Usage::DepthTarget) != 0 ||
-				(texParams.m_usage & re::Texture::Usage::DepthStencilTarget) != 0)
-			{
-				glClearNamedFramebufferfv(
-					targetSetPlatParams->m_frameBufferObject,	// framebuffer
-					GL_DEPTH,									// buffer
-					targetPlatParams->m_drawBuffer,				// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
-					&texParams.m_clear.m_depthStencil.m_depth);	// value
-			}
-
-			// Clear stencil:
-			if ((texParams.m_usage & re::Texture::Usage::StencilTarget) != 0 ||
-				(texParams.m_usage & re::Texture::Usage::DepthStencilTarget) != 0)
-			{
-				const GLint stencilClearValue = texParams.m_clear.m_depthStencil.m_stencil;
-
-				glClearNamedFramebufferiv(
-					targetSetPlatParams->m_frameBufferObject,	// framebuffer
-					GL_STENCIL,									// buffer
-					targetPlatParams->m_drawBuffer,				// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
-					&stencilClearValue);
-			}
-
-			// TODO: Use glClearNamedFramebufferfi to clear depth and stencil simultaneously
+		if (targetSet.HasDepthTarget() && (depthClearMode || stencilClearMode))
+		{
+			ClearDepthStencilTarget(depthClearMode, depthClearVal, stencilClearMode, stencilClearVal, targetSet);
 		}
 	}
 
 
-	void TextureTargetSet::ClearTargets(re::TextureTargetSet const& targetSet)
+	void TextureTargetSet::ClearDepthStencilTarget(
+		bool depthClearMode,
+		float depthClearVal,
+		bool stencilClearMode,
+		uint8_t stencilClearVal,
+		re::TextureTargetSet const& targetSet)
 	{
-		ClearColorTargets(targetSet);
-		if (targetSet.HasDepthTarget())
+		SEAssert((depthClearMode || stencilClearMode) &&
+			targetSet.HasDepthTarget() &&
+			targetSet.GetDepthStencilTarget().HasTexture(),
+			"Invalid parameters for depth/stencil clearing");
+
+		opengl::TextureTargetSet::PlatformParams const* targetSetPlatParams =
+			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
+
+		core::InvPtr<re::Texture> const& depthStencilTex = targetSet.GetDepthStencilTarget().GetTexture();
+		re::Texture::TextureParams const& texParams = depthStencilTex->GetTextureParams();
+
+		opengl::TextureTarget::PlatformParams const* targetPlatParams =
+			targetSet.GetDepthStencilTarget().GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
+
+		SEAssert(targetPlatParams->m_drawBuffer == 0, "Drawbuffer must be 0 for depth/stencil targets");
+
+		// Clear depth:
+		if (depthClearMode)
 		{
-			ClearDepthStencilTarget(targetSet);
+			SEAssert(
+				((texParams.m_usage & re::Texture::Usage::DepthTarget) != 0) ||
+				((texParams.m_usage & re::Texture::Usage::DepthStencilTarget) != 0),
+				"Trying to clear depth on a texture not marked for depth usage");
+
+			glClearNamedFramebufferfv(
+				targetSetPlatParams->m_frameBufferObject,	// framebuffer
+				GL_DEPTH,									// buffer
+				targetPlatParams->m_drawBuffer,				// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
+				&depthClearVal);							// value
 		}
+
+		// Clear stencil:
+		if (stencilClearMode)
+		{
+			SEAssert(
+				((texParams.m_usage & re::Texture::Usage::StencilTarget) != 0) ||
+				((texParams.m_usage & re::Texture::Usage::DepthStencilTarget) != 0),
+				"Trying to clear stencil on a texture not marked for stencil usage");
+
+			const GLint stencilClearValue = stencilClearVal;
+
+			glClearNamedFramebufferiv(
+				targetSetPlatParams->m_frameBufferObject,	// framebuffer
+				GL_STENCIL,									// buffer
+				targetPlatParams->m_drawBuffer,				// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
+				&stencilClearValue);
+		}
+
+		// TODO: Use glClearNamedFramebufferfi to clear depth and stencil simultaneously
 	}
 
 

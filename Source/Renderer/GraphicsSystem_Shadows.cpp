@@ -146,7 +146,6 @@ namespace gr
 
 		pointShadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(*m_pointShadowArrayTex));
 		pointShadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(*m_pointShadowArrayTex));
-		pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::ClearMode::Enabled);
 
 		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
 
@@ -166,10 +165,15 @@ namespace gr
 				}));
 
 		shadowStage->AddPermanentBuffer(cubeShadowBuf);
+		
+		std::shared_ptr<re::ClearStage> shadowClearStage =
+			re::Stage::CreateClearStage("Shadows: Cube shadow clear stage", pointShadowTargetSet);
+		shadowClearStage->EnableDepthClear(1.f);
 
 		dstStageData.emplace(
 			lightID,
 			ShadowStageData{
+				.m_clearStage = shadowClearStage,
 				.m_stage = shadowStage,
 				.m_shadowTargetSet = pointShadowTargetSet,
 				.m_shadowCamParamBlock = cubeShadowBuf });
@@ -243,13 +247,16 @@ namespace gr
 		shadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(shadowArrayTex));;
 		shadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(shadowArrayTex));	
 
-		shadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::ClearMode::Enabled);
-
 		shadowStage->SetTextureTargetSet(shadowTargetSet);
+
+		std::shared_ptr<re::ClearStage> shadowClearStage =
+			re::Stage::CreateClearStage("Shadows: 2D shadow clear stage", shadowTargetSet);
+		shadowClearStage->EnableDepthClear(1.f);
 
 		dstStageData.emplace(
 			lightID,
 			ShadowStageData{
+				.m_clearStage = shadowClearStage,
 				.m_stage = shadowStage,
 				.m_shadowTargetSet = shadowTargetSet,
 				.m_shadowCamParamBlock = shadowCamParams });
@@ -474,8 +481,11 @@ namespace gr
 				CreateShadowWriteView(
 					gr::Light::Directional, GetShadowArrayIdx(m_directionalShadowArrayIdxMap, lightID)));
 			
+			auto clearItr = m_stagePipeline->AppendStageForSingleFrame(
+				m_directionalParentStageItr, directionalStageItr.second.m_clearStage);
+
 			m_stagePipeline->AppendStageForSingleFrame(
-				m_directionalParentStageItr, directionalStageItr.second.m_stage);
+				clearItr, directionalStageItr.second.m_stage);
 		}
 		for (auto& pointStageItr : m_pointShadowStageData)
 		{
@@ -485,8 +495,11 @@ namespace gr
 				*m_pointShadowArrayTex,
 				CreateShadowWriteView(gr::Light::Point, GetShadowArrayIdx(m_pointShadowArrayIdxMap, lightID)));
 
+			auto clearItr = m_stagePipeline->AppendStageForSingleFrame(
+				m_pointParentStageItr, pointStageItr.second.m_clearStage);
+
 			m_stagePipeline->AppendStageForSingleFrame(
-				m_pointParentStageItr, pointStageItr.second.m_stage);
+				clearItr, pointStageItr.second.m_stage);
 		}
 		for (auto& spotStageItr : m_spotShadowStageData)
 		{
@@ -496,8 +509,11 @@ namespace gr
 				*m_spotShadowArrayTex,
 				CreateShadowWriteView(gr::Light::Spot, GetShadowArrayIdx(m_spotShadowArrayIdxMap, lightID)));
 
+			auto clearItr = m_stagePipeline->AppendStageForSingleFrame(
+				m_spotParentStageItr, spotStageItr.second.m_clearStage);
+
 			m_stagePipeline->AppendStageForSingleFrame(
-				m_spotParentStageItr, spotStageItr.second.m_stage);
+				clearItr, spotStageItr.second.m_stage);
 		}
 
 		CreateBatches();
