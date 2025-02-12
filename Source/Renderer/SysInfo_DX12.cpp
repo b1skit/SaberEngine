@@ -293,8 +293,8 @@ namespace dx12
 						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
 							D3D12_FEATURE_D3D12_OPTIONS3,
 							&optionsData,
-							sizeof(D3D12_FEATURE_DATA_ARCHITECTURE1));
-					CheckHResult(hr, "Failed to check D3D12_FEATURE_DATA_ARCHITECTURE1 support");
+							sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS3));
+					CheckHResult(hr, "Failed to check D3D12_FEATURE_DATA_D3D12_OPTIONS3 support");
 
 					firstQuery = false;
 				}
@@ -324,7 +324,24 @@ namespace dx12
 		break;
 		case D3D12_FEATURE_D3D12_OPTIONS5:
 		{
-			SEAssertF("TODO: Implement support for this query");
+			static D3D12_FEATURE_DATA_D3D12_OPTIONS5 optionsData{};
+			static bool firstQuery(true);
+			if (firstQuery)
+			{
+				std::lock_guard<std::mutex> lock(firstQueryMutex);
+				if (firstQuery)
+				{
+					const HRESULT hr =
+						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
+							D3D12_FEATURE_D3D12_OPTIONS5,
+							&optionsData,
+							sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+					CheckHResult(hr, "Failed to check D3D12_FEATURE_DATA_D3D12_OPTIONS5 support");
+
+					firstQuery = false;
+				}
+			}
+			return &optionsData;
 		}
 		break;
 		case D3D12_FEATURE_DISPLAYABLE:
