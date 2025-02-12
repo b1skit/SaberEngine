@@ -21,17 +21,16 @@ namespace dx12
 		void Create();
 		void Destroy();
 		
-		Microsoft::WRL::ComPtr<IDXGIAdapter> GetD3DAdapter() const { return m_dxgiAdapter; }
-		Microsoft::WRL::ComPtr<ID3D12Device> GetD3DDevice() const { return m_device; }
+		Microsoft::WRL::ComPtr<IDXGIAdapter> const& GetD3DAdapter() const { return m_dxgiAdapter; }
+		Microsoft::WRL::ComPtr<ID3D12Device> const& GetD3DDevice() const { return m_device; }
 
 
 	private:
-		Microsoft::WRL::ComPtr<IDXGIAdapter> m_dxgiAdapter = nullptr;
-		Microsoft::WRL::ComPtr<ID3D12Device> m_device = nullptr; // Display adapter device
+		Microsoft::WRL::ComPtr<IDXGIAdapter> m_dxgiAdapter;
+		Microsoft::WRL::ComPtr<ID3D12Device> m_device;
 
 
-	private:
-		// Copying not allowed:
+	private: // Copying not allowed:
 		Device(Device const&) = delete;
 		Device& operator=(Device const&) = delete;
 	};

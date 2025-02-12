@@ -227,7 +227,7 @@ namespace dx12
 
 		ImGui_ImplDX12_InitInfo initInfo{};
 		initInfo.Device = device.Get();
-		initInfo.CommandQueue = directQueue.GetD3DCommandQueue();
+		initInfo.CommandQueue = directQueue.GetD3DCommandQueue().Get();
 		initInfo.NumFramesInFlight = numFramesInFlight;
 		initInfo.RTVFormat = backbufferColorTarget0PlatParams->m_format;
 		
@@ -322,13 +322,13 @@ namespace dx12
 			SEAssert(commandList && commandList->GetCommandListType() == dx12::CommandListType::Direct,
 				"ImGui expects a graphics command list")
 
-			ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
+				Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> d3dCommandList = commandList->GetD3DCommandList();
 
 #if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
 			commandList->RecordStageName("<Library: ImGui>");
 #endif
 
-			SEBeginGPUEvent(d3dCommandList, perfmarkers::Type::GraphicsCommandList, "Render ImGui");
+			SEBeginGPUEvent(d3dCommandList.Get(), perfmarkers::Type::GraphicsCommandList, "Render ImGui");
 
 			ID3D12DescriptorHeap* descriptorHeap = platParams->m_imGuiGPUVisibleSRVDescriptorHeap.Get();
 			d3dCommandList->SetDescriptorHeaps(1, &descriptorHeap);
@@ -338,9 +338,9 @@ namespace dx12
 			commandList->SetRenderTargets(*dx12::SwapChain::GetBackBufferTargetSet(swapChain));
 
 			// Record our ImGui draws:
-			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3dCommandList);
+			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3dCommandList.Get());
 
-			SEEndGPUEvent(d3dCommandList);
+			SEEndGPUEvent(d3dCommandList.Get());
 		}
 
 		// Descriptor deferred delete queue:

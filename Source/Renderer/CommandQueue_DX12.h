@@ -19,7 +19,7 @@ namespace dx12
 		CommandQueue& operator=(CommandQueue&&) noexcept = default;
 		~CommandQueue() { Destroy(); };
 
-		[[nodiscard]] void Create(Microsoft::WRL::ComPtr<ID3D12Device> displayDevice, dx12::CommandListType type);
+		[[nodiscard]] void Create(Microsoft::WRL::ComPtr<ID3D12Device>, dx12::CommandListType type);
 		void Destroy();
 
 		bool IsCreated() const;
@@ -46,7 +46,7 @@ namespace dx12
 
 		std::shared_ptr<dx12::CommandList> GetCreateCommandList();
 		
-		ID3D12CommandQueue* GetD3DCommandQueue() const;
+		Microsoft::WRL::ComPtr<ID3D12CommandQueue> const& GetD3DCommandQueue() const;
 
 		CommandListType GetCommandListType() const;
 
@@ -108,9 +108,9 @@ namespace dx12
 	}
 
 
-	inline ID3D12CommandQueue* CommandQueue::GetD3DCommandQueue() const
+	inline Microsoft::WRL::ComPtr<ID3D12CommandQueue> const& CommandQueue::GetD3DCommandQueue() const
 	{
-		return m_commandQueue.Get();
+		return m_commandQueue;
 	}
 
 

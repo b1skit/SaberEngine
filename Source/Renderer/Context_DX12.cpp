@@ -225,14 +225,14 @@ namespace dx12
 		directCmdList->RecordStageName("<Present>");
 #endif
 
-		SEBeginGPUEvent(directCmdList->GetD3DCommandList(), perfmarkers::Type::GraphicsCommandList, "Swapchain transitions");
+		SEBeginGPUEvent(directCmdList->GetD3DCommandList().Get(), perfmarkers::Type::GraphicsCommandList, "Swapchain transitions");
 
 		directCmdList->TransitionResource(
 			swapChainTargetSet->GetColorTarget(0).GetTexture(),
 			D3D12_RESOURCE_STATE_PRESENT,
 			swapChainTargetSet->GetColorTarget(0).GetTargetParams().m_textureView);
 
-		SEEndGPUEvent(directCmdList->GetD3DCommandList());
+		SEEndGPUEvent(directCmdList->GetD3DCommandList().Get());
 
 		directQueue.Execute(1, &directCmdList);
 

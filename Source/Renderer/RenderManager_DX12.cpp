@@ -58,12 +58,14 @@ namespace dx12
 
 					dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
 
-					SEBeginGPUEvent(copyQueue->GetD3DCommandQueue(), perfmarkers::Type::CopyQueue, "Copy Queue: Create API Resources");
+					SEBeginGPUEvent(copyQueue->GetD3DCommandQueue().Get(), 
+						perfmarkers::Type::CopyQueue, 
+						"Copy Queue: Create API Resources");
 
 					std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
 
 					re::GPUTimer::Handle texCopyTimer = context->GetGPUTimer().StartCopyTimer(
-						copyCommandList->GetD3DCommandList(),
+						copyCommandList->GetD3DCommandList().Get(),
 						"Copy textures",
 						k_GPUFrameTimerName);
 
@@ -80,11 +82,11 @@ namespace dx12
 						renderManager.m_newTextures.ReleaseReadLock();
 					}
 
-					texCopyTimer.StopTimer(copyCommandList->GetD3DCommandList());
+					texCopyTimer.StopTimer(copyCommandList->GetD3DCommandList().Get());
 
 					copyQueue->Execute(1, &copyCommandList);
 
-					SEEndGPUEvent(copyQueue->GetD3DCommandQueue());
+					SEEndGPUEvent(copyQueue->GetD3DCommandQueue().Get());
 				};
 			
 			if (singleThreadResourceCreate)
@@ -440,9 +442,9 @@ namespace dx12
 					{
 						lastSeenRenderPipeline = renderPipeline;
 
-						renderPipelineTimer.StopTimer(cmdList->GetD3DCommandList());
+						renderPipelineTimer.StopTimer(cmdList->GetD3DCommandList().Get());
 
-						renderPipelineTimer = gpuTimer.StartTimer(cmdList->GetD3DCommandList(),
+						renderPipelineTimer = gpuTimer.StartTimer(cmdList->GetD3DCommandList().Get(),
 							renderPipeline->GetName().c_str(),
 							k_GPUFrameTimerName);
 
@@ -458,14 +460,14 @@ namespace dx12
 					{
 						lastSeenStagePipeline = &(*workRangeItr->m_stagePipelineItr);
 
-						stagePipelineTimer.StopTimer(cmdList->GetD3DCommandList());
+						stagePipelineTimer.StopTimer(cmdList->GetD3DCommandList().Get());
 
-						stagePipelineTimer = gpuTimer.StartTimer(cmdList->GetD3DCommandList(),
+						stagePipelineTimer = gpuTimer.StartTimer(cmdList->GetD3DCommandList().Get(),
 							stagePipeline.GetName().c_str(),
 							renderPipeline->GetName().c_str());
 
 						SEBeginGPUEvent( // StagePipeline
-							cmdList->GetD3DCommandList(),
+							cmdList->GetD3DCommandList().Get(),
 							perfMarkerType,
 							stagePipeline.GetName().c_str());
 					}
@@ -477,11 +479,11 @@ namespace dx12
 					while (stageItr != workRangeItr->m_stageEndItr)
 					{
 						SEBeginGPUEvent( // Stage
-							cmdList->GetD3DCommandList(),
+							cmdList->GetD3DCommandList().Get(),
 							perfMarkerType,
 							(*stageItr)->GetName().c_str());
 
-						re::GPUTimer::Handle stageTimer = gpuTimer.StartTimer(cmdList->GetD3DCommandList(),
+						re::GPUTimer::Handle stageTimer = gpuTimer.StartTimer(cmdList->GetD3DCommandList().Get(),
 							(*stageItr)->GetName().c_str(),
 							stagePipeline.GetName().c_str());
 
@@ -599,21 +601,21 @@ namespace dx12
 							}
 						}
 
-						stageTimer.StopTimer(cmdList->GetD3DCommandList());
-						SEEndGPUEvent(cmdList->GetD3DCommandList()); // Stage
+						stageTimer.StopTimer(cmdList->GetD3DCommandList().Get());
+						SEEndGPUEvent(cmdList->GetD3DCommandList().Get()); // Stage
 
 						++stageItr;
 					}
 
 					if (isLastOfStagePipeline)
 					{
-						stagePipelineTimer.StopTimer(cmdList->GetD3DCommandList());
-						SEEndGPUEvent(cmdList->GetD3DCommandList()); // StagePipeline
+						stagePipelineTimer.StopTimer(cmdList->GetD3DCommandList().Get());
+						SEEndGPUEvent(cmdList->GetD3DCommandList().Get()); // StagePipeline
 					}
 
 					if (isLastOfRenderSystem)
 					{
-						renderPipelineTimer.StopTimer(cmdList->GetD3DCommandList());
+						renderPipelineTimer.StopTimer(cmdList->GetD3DCommandList().Get());
 						// No RenderSystem GPUEvent marker to end
 					}
 					
@@ -654,7 +656,7 @@ namespace dx12
 				if (startGPUFrameTimer)
 				{
 					frameTimer = re::Context::Get()->GetGPUTimer().StartTimer(
-						cmdList->GetD3DCommandList(),
+						cmdList->GetD3DCommandList().Get(),
 						k_GPUFrameTimerName);
 				}
 
@@ -666,7 +668,7 @@ namespace dx12
 
 					if (stopGPUFrameTimer)
 					{
-						frameTimer.StopTimer(cmdList->GetD3DCommandList());
+						frameTimer.StopTimer(cmdList->GetD3DCommandList().Get());
 					}
 
 					switch (cmdListType)
@@ -698,7 +700,7 @@ namespace dx12
 
 							if (stopGPUFrameTimer)
 							{
-								frameTimer.StopTimer(populatedCmdList->GetD3DCommandList());
+								frameTimer.StopTimer(populatedCmdList->GetD3DCommandList().Get());
 							}
 
 							return populatedCmdList;

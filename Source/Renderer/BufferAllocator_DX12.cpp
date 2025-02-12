@@ -98,15 +98,14 @@ namespace dx12
 			dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 			dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
 
-			SEBeginGPUEvent(
-				copyQueue->GetD3DCommandQueue(),
+			SEBeginGPUEvent(copyQueue->GetD3DCommandQueue().Get(),
 				perfmarkers::Type::CopyQueue, 
 				"Copy Queue: Update default heap buffers");
 
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
 
 			re::GPUTimer::Handle copyTimer = context->GetGPUTimer().StartCopyTimer(
-				copyCommandList->GetD3DCommandList(),
+				copyCommandList->GetD3DCommandList().Get(),
 				"Copy buffers",
 				re::RenderManager::k_GPUFrameTimerName);
 
@@ -122,13 +121,13 @@ namespace dx12
 			}
 			SEEndCPUEvent();
 
-			copyTimer.StopTimer(copyCommandList->GetD3DCommandList());
+			copyTimer.StopTimer(copyCommandList->GetD3DCommandList().Get());
 
 			SEBeginCPUEvent("dx12::BufferAllocator::BufferDataPlatform: Execute copy queue");
 			copyQueue->Execute(1, &copyCommandList);
 			SEEndCPUEvent();
 
-			SEEndGPUEvent(copyQueue->GetD3DCommandQueue());
+			SEEndGPUEvent(copyQueue->GetD3DCommandQueue().Get());
 		}
 	}
 

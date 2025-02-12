@@ -249,11 +249,11 @@ namespace dx12
 	}
 
 
-	void CommandQueue::Create(ComPtr<ID3D12Device> displayDevice, dx12::CommandListType type)
+	void CommandQueue::Create(ComPtr<ID3D12Device> device, dx12::CommandListType type)
 	{
 		m_type = type;
 		m_d3dType = CommandList::TranslateToD3DCommandListType(type);
-		m_deviceCache = displayDevice; // Store a local copy, for convenience
+		m_deviceCache = device; // Store a local copy, for convenience
 
 		const D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {
 			.Type = m_d3dType,
@@ -912,7 +912,7 @@ namespace dx12
 #endif
 
 			finalCommandLists[i]->Close();
-			commandListPtrs.emplace_back(finalCommandLists[i]->GetD3DCommandList());
+			commandListPtrs.emplace_back(finalCommandLists[i]->GetD3DCommandList().Get());
 
 			SEAssert(finalCommandLists[i]->GetCommandListType() == m_type,
 				"We currently only support submitting command lists of the same type to a command queue. "

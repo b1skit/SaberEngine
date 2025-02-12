@@ -144,7 +144,7 @@ namespace dx12
 		void ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers);
 
 		CommandListType GetCommandListType() const;
-		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> const& GetD3DCommandList() const;
 
 		LocalResourceStateTracker const& GetLocalResourceStates() const;
 
@@ -169,7 +169,7 @@ namespace dx12
 			std::vector<uint32_t> subresourceIndexes);
 
 	private:
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> m_commandList;
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList;
 
 		CommandListType m_type;
 		D3D12_COMMAND_LIST_TYPE m_d3dType;
@@ -279,9 +279,9 @@ namespace dx12
 	}
 
 
-	inline ID3D12GraphicsCommandList2* CommandList::GetD3DCommandList() const
+	inline Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> const& CommandList::GetD3DCommandList() const
 	{
-		return m_commandList.Get();
+		return m_commandList;
 	}
 
 
