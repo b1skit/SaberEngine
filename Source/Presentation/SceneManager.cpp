@@ -55,7 +55,7 @@ namespace fr
 				std::string pipelineFileName;
 				if (!core::Config::Get()->TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName))
 				{
-					pipelineFileName = core::configkeys::k_defaultScenePipelineFileName;
+					pipelineFileName = core::configkeys::k_defaultRenderPipelineFileName;
 				}
 
 				gr::RenderSystem const* sceneRenderSystem =

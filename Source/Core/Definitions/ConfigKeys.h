@@ -10,9 +10,6 @@ namespace core::configkeys
 	constexpr char const* k_appDirName						= "SaberEngine\\";
 	constexpr char const* k_configDirName					= "Config\\";
 	constexpr char const* k_configFileName					= "config.cfg";
-	constexpr char const* k_pipelineDirName					= "Assets\\Pipelines\\";
-	constexpr char const* k_defaultScenePipelineFileName	= "scene.json";
-	constexpr char const* k_platformPipelineFileName_DX12	= "platformDX12.json";
 	constexpr char const* k_effectDirName					= "Assets\\Effects\\";
 	constexpr char const* k_effectManifestFilename			= "EffectManifest.json";
 	constexpr char const* k_defaultEngineIBLFilePath		= "Assets\\DefaultIBL\\default.hdr";
@@ -21,6 +18,11 @@ namespace core::configkeys
 	constexpr char const* k_hlslShaderDirName				= "Assets\\Shaders\\HLSL\\";
 	constexpr char const* k_commonShaderDirName				= "Assets\\Shaders\\Common\\";
 	constexpr char const* k_generatedGLSLShaderDirName		= "Assets\\Shaders\\Generated\\GLSL\\"; // Droid only
+
+	// Graphics pipelines:
+	constexpr char const* k_pipelineDirName					= "Assets\\Pipelines\\";
+	constexpr char const* k_platformPipelineFileName_DX12	= "platformDX12.json";
+	constexpr char const* k_defaultRenderPipelineFileName	= "deferredRasterization.json";
 
 	// Debug:
 	constexpr char const* k_pixCaptureFolderName		= "PIX Captures";
