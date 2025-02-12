@@ -205,10 +205,6 @@
           "Command": "-import Scenes\\Corset\\glTF\\Corset.gltf"
         },
         {
-          "Id": "a597a9cc-5fd1-4493-9515-92281f037b50",
-          "Command": "-import Scenes\\MyInstanceTest\\InstanceTest.gltf"
-        },
-        {
           "Id": "78b72e43-f264-490c-be44-81c5face5020",
           "Command": "-import Scenes\\Duck\\glTF\\Duck.gltf"
         },
@@ -319,6 +315,20 @@
             {
               "Id": "1f68c100-0068-4d3a-9f61-fc7b810d0bb6",
               "Command": "-import Scenes\\BoxVertexColors\\glTF-Embedded\\BoxVertexColors.gltf"
+            }
+          ]
+        },
+        {
+          "Id": "efe32e47-41b6-4867-b807-c4a1e41fa90a",
+          "Command": "Instancing",
+          "Items": [
+            {
+              "Id": "a597a9cc-5fd1-4493-9515-92281f037b50",
+              "Command": "-import Scenes\\MyInstanceTest\\InstanceTest.gltf"
+            },
+            {
+              "Id": "993e88e2-d17d-4419-818c-6ac53c4f138b",
+              "Command": "-import Scenes\\SimpleInstancing\\glTF\\SimpleInstancing.gltf"
             }
           ]
         },

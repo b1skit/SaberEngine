@@ -2121,6 +2121,142 @@ namespace
 	}
 
 
+	void AttachGLTFInstancedGeometry(
+		fr::EntityManager* em,
+		cgltf_node const* current,
+		size_t nodeIdx, // For default/fallback name
+		entt::entity sceneNodeEntity,
+		std::shared_ptr<FileMetadata>& fileMetadata)
+	{
+		SEAssert(current->has_mesh_gpu_instancing && current->mesh_gpu_instancing.attributes_count > 0,
+			"Invalid node configuration for GPU instancing");
+
+		SEAssert(current->mesh, "Current node does not have mesh data");
+
+		// Unpack the instance transform data:
+		std::vector<glm::vec3> translationData;
+		std::vector<glm::vec4> rotationData;
+		std::vector<glm::vec3> scaleData;
+		for (size_t attribIdx = 0; attribIdx < current->mesh_gpu_instancing.attributes_count; ++attribIdx)
+		{
+			std::string const& attributeName = current->mesh_gpu_instancing.attributes[attribIdx].name;
+			SEAssert(!attributeName.empty(), "Failed to get a valid attribute name");
+
+			if (attributeName == "TRANSLATION")
+			{
+				SEAssert(current->mesh_gpu_instancing.attributes[attribIdx].data->type == cgltf_type::cgltf_type_vec3,
+					"Unexpected data type when assembling instance transform");
+
+				SEAssert(translationData.empty(), "Already found translation data");
+
+				const size_t numTranslationFloats =
+					cgltf_accessor_unpack_floats(current->mesh_gpu_instancing.attributes[attribIdx].data, nullptr, 3);
+
+				translationData.resize(numTranslationFloats / 3);
+
+				const bool unpackResult = cgltf_accessor_unpack_floats(
+					current->mesh_gpu_instancing.attributes[attribIdx].data,
+					&translationData[0].x,
+					numTranslationFloats);
+				SEAssert(unpackResult, "Failed to unpack instance transform data");
+			}
+			else if (attributeName == "ROTATION")
+			{
+				SEAssert(current->mesh_gpu_instancing.attributes[attribIdx].data->type == cgltf_type::cgltf_type_vec4,
+					"Unexpected data type when assembling instance transform");
+
+				SEAssert(rotationData.empty(), "Already found rotation data");
+
+				const size_t numRotationFloats =
+					cgltf_accessor_unpack_floats(current->mesh_gpu_instancing.attributes[attribIdx].data, nullptr, 4);
+
+				rotationData.resize(numRotationFloats / 4);
+
+				const bool unpackResult = cgltf_accessor_unpack_floats(
+					current->mesh_gpu_instancing.attributes[attribIdx].data,
+					&rotationData[0].x,
+					numRotationFloats);
+				SEAssert(unpackResult, "Failed to unpack instance transform data");
+			}
+			else if (attributeName == "SCALE")
+			{
+				SEAssert(current->mesh_gpu_instancing.attributes[attribIdx].data->type == cgltf_type::cgltf_type_vec3,
+					"Unexpected data type when assembling instance transform");
+
+				SEAssert(scaleData.empty(), "Already found scale data");
+
+				const size_t numScaleFloats =
+					cgltf_accessor_unpack_floats(current->mesh_gpu_instancing.attributes[attribIdx].data, nullptr, 3);
+
+				scaleData.resize(numScaleFloats / 3);
+
+				const bool unpackResult = cgltf_accessor_unpack_floats(
+					current->mesh_gpu_instancing.attributes[attribIdx].data,
+					&scaleData[0].x,
+					numScaleFloats);
+				SEAssert(unpackResult, "Failed to unpack instance transform data");
+			}
+			else
+			{
+				LOG_ERROR("Unrecognized attribute name \"%s\" when parsing GPU instanced geometry", attributeName.c_str());
+			}
+		}
+		// GLTF specs: All attribute accessors in a given node must have the same count
+		SEAssert((translationData.empty() || rotationData.empty() || translationData.size() == rotationData.size()) &&
+			(translationData.empty() || scaleData.empty() || translationData.size() == scaleData.size()),
+			"All attribute accessors in a given node should have the same count");
+
+
+		// Create GPU-instanced nodes: Attach instances as children of the parent entity
+		std::string const& parentName = GenerateGLTFNodeName(fileMetadata, current, nodeIdx);
+		const size_t numInstances = translationData.size();
+		for (size_t instance = 0; instance < numInstances; ++instance)
+		{
+			std::string const& instanceName = std::format("{}_{}", parentName, instance);
+			entt::entity instanceEntity = fr::SceneNode::Create(*em, instanceName, sceneNodeEntity);
+			
+			fr::Transform& instanceTransform = 
+				fr::TransformComponent::AttachTransformComponent(*em, instanceEntity).GetTransform();
+
+			// Set the transform data:
+			for (size_t attribIdx = 0; attribIdx < current->mesh_gpu_instancing.attributes_count; ++attribIdx)
+			{
+				std::string const& attributeName = current->mesh_gpu_instancing.attributes[attribIdx].name;
+				SEAssert(!attributeName.empty(), "Failed to get a valid attribute name");
+
+				if (attributeName == "TRANSLATION")
+				{
+					instanceTransform.SetLocalTranslation(translationData[instance]);
+				}
+				else if (attributeName == "ROTATION")
+				{
+					SEAssert(current->mesh_gpu_instancing.attributes[attribIdx].data->type == cgltf_type::cgltf_type_vec4,
+						"Unexpected data type when assembling instance transform");
+
+					glm::vec4 const& instanceRotation = rotationData[instance];
+
+					instanceTransform.SetLocalRotation(glm::quat(
+						instanceRotation[3], 
+						instanceRotation[0],
+						instanceRotation[1], 
+						instanceRotation[2]));
+				}
+				else if (attributeName == "SCALE")
+				{
+					instanceTransform.SetLocalScale(scaleData[instance]);
+				}
+				else
+				{
+					LOG_ERROR("Unrecognized attribute name \"%s\" when parsing GPU instanced geometry",
+						attributeName.c_str());
+				}
+			}
+
+			AttachGLTFGeometry(em, current, nodeIdx, instanceEntity, fileMetadata);
+		}
+	}
+
+
 	void AttachGLTFMeshAnimationComponents(
 		fr::EntityManager* em,
 		std::shared_ptr<cgltf_data const> const& data,
@@ -2305,7 +2441,14 @@ namespace
 
 			if (current->mesh)
 			{
-				AttachGLTFGeometry(em, current, nodeIdx, curSceneNodeEntity, fileMetadata);
+				if (current->has_mesh_gpu_instancing)
+				{
+					AttachGLTFInstancedGeometry(em, current, nodeIdx, curSceneNodeEntity, fileMetadata);
+				}
+				else
+				{
+					AttachGLTFGeometry(em, current, nodeIdx, curSceneNodeEntity, fileMetadata);
+				}
 			}
 			if (current->light)
 			{
@@ -2362,6 +2505,7 @@ namespace
 				{
 					nodes.emplace(curNode->children[childIdx]);
 				}
+
 			}
 		}
 	}

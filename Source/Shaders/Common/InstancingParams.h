@@ -7,7 +7,7 @@
 // Arbitrary: The actual max is 4096 entries, where each entry can be a 4x 32-bit value
 // https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-constants
 // 16 entries fills out the minimum 256B required by the ConstantBuffer alignment rules
-#define INSTANCE_ARRAY_SIZE 16
+#define INSTANCE_ARRAY_SIZE 128
 
 struct InstanceIndices
 {
