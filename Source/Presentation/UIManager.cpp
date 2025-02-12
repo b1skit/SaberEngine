@@ -201,12 +201,10 @@ namespace fr
 
 		re::RenderManager::Get()->EnqueueRenderCommand([createdFlag, cmdMgrPtr, imguiMutexPtr]()
 			{
-				constexpr char const* k_debugUIRenderSystemName = "DebugImGui";
 				constexpr char const* k_debugUIPipelineFilename = "ui.json";
 
-				gr::RenderSystem const* debugUIRenderSystem = re::RenderManager::Get()->CreateAddRenderSystem(
-					k_debugUIRenderSystemName,
-					k_debugUIPipelineFilename);
+				gr::RenderSystem const* debugUIRenderSystem = 
+					re::RenderManager::Get()->CreateAddRenderSystem(k_debugUIPipelineFilename);
 
 				gr::GraphicsSystemManager const& gsm = debugUIRenderSystem->GetGraphicsSystemManager();
 

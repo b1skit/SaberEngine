@@ -16,8 +16,7 @@ namespace gr
 	class RenderSystem : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
-		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(
-			std::string const& name, std::string const& pipelineFileName);
+		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(std::string const& pipelineFileName);
 		
 		void Destroy();
 

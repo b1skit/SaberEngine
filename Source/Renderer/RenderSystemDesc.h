@@ -7,6 +7,8 @@ namespace gr
 	struct RenderSystemDescription
 	{
 		// JSON keys/values:
+		static constexpr char const* key_pipelineMetadataBlock = "PipelineMetadata";
+		static constexpr char const* key_pipelineName = "Name";
 		static constexpr char const* key_pipelineBlock = "Pipeline";
 		static constexpr char const* key_inputsList = "Inputs";
 		static constexpr char const* key_textureDependenciesList = "TextureDependencies";
@@ -34,11 +36,13 @@ namespace gr
 		std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_textureInputs;
 		std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_bufferInputs;		
 		std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_dataInputs;
+
+		std::string m_name = "UNNAMED RENDER SYSTEM";
 	};
 
 
 	void from_json(nlohmann::json const& jsonDesc, RenderSystemDescription& pipelineDesc);
 
 
-	RenderSystemDescription LoadRenderSystemDescription(char const* scriptPath);
+	RenderSystemDescription LoadPipelineDescription(char const* scriptPath);
 }

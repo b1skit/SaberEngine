@@ -34,7 +34,7 @@ namespace dx12
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		// Prepend DX12-specific render systems:
-		renderManager.CreateAddRenderSystem("PlatformDX12", core::configkeys::k_platformPipelineFileName_DX12);
+		renderManager.CreateAddRenderSystem(core::configkeys::k_platformPipelineFileName_DX12);
 	}
 
 

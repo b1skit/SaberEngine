@@ -361,19 +361,19 @@ namespace
 
 namespace gr
 {
-	std::unique_ptr<RenderSystem> RenderSystem::Create(std::string const& name, std::string const& pipelineFileName)
+	std::unique_ptr<RenderSystem> RenderSystem::Create(std::string const& pipelineFileName)
 	{
 		// Load the render system description:
 		std::string const& scriptPath = std::format("{}{}", core::configkeys::k_pipelineDirName, pipelineFileName);
 
-		gr::RenderSystemDescription const& renderSystemDesc = gr::LoadRenderSystemDescription(scriptPath.c_str());
+		gr::RenderSystemDescription const& renderSystemDesc = gr::LoadPipelineDescription(scriptPath.c_str());
 
 		LOG("Render pipeline description \"%s\" loaded!", pipelineFileName.c_str());
 
 		// Create the render system, and build its various pipeline stages:
 		std::unique_ptr<RenderSystem> newRenderSystem = nullptr;
 
-		newRenderSystem.reset(new RenderSystem(name));
+		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_name));
 
 		newRenderSystem->BuildPipeline(renderSystemDesc); // Builds initialization/update functions
 
@@ -384,7 +384,7 @@ namespace gr
 	RenderSystem::RenderSystem(std::string const& name)
 		: INamedObject(name)
 		, m_graphicsSystemManager(this)
-		, m_renderPipeline(name + " render pipeline")
+		, m_renderPipeline(name)
 		, m_initPipeline(nullptr)
 	{
 		m_graphicsSystemManager.Create();

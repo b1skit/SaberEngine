@@ -234,10 +234,9 @@ namespace re
 	}
 
 
-	gr::RenderSystem const* RenderManager::CreateAddRenderSystem(
-		std::string const& name, std::string const& pipelineFileName)
+	gr::RenderSystem const* RenderManager::CreateAddRenderSystem(std::string const& pipelineFileName)
 	{
-		m_renderSystems.emplace_back(gr::RenderSystem::Create(name, pipelineFileName));
+		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName));
 
 		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
 		m_renderSystems.back()->ExecuteInitializationPipeline();

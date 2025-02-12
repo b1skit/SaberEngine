@@ -11,10 +11,6 @@ namespace fr
 {
 	class SceneManager final : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
-	public: // Helper for identifying the scene render system
-		static constexpr char const* k_sceneRenderSystemName = "Scene";
-
-
 	public:
 		static SceneManager* Get(); // Singleton functionality
 

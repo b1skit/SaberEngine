@@ -77,7 +77,7 @@ namespace re
 		platform::RenderingAPI GetRenderingAPI() const;
 		uint64_t GetCurrentRenderFrameNum() const;
 
-		gr::RenderSystem const* CreateAddRenderSystem(std::string const& name, std::string const& pipelineFileName);
+		gr::RenderSystem const* CreateAddRenderSystem(std::string const& pipelineFileName);
 		std::vector<std::unique_ptr<gr::RenderSystem>> const& GetRenderSystems() const;
 		gr::RenderSystem* GetRenderSystem(util::HashKey const&);
 

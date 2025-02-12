@@ -1,4 +1,9 @@
 {
+	"PipelineMetadata":
+	{
+		"ExcludedPlatforms": [ "OpenGL" ],
+		"Name": "Platform DX12"
+	},
 	"Pipeline": [
 		{
 			"GraphicsSystem": "ComputeMips",

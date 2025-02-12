@@ -1,5 +1,8 @@
 {
-	"RenderSystemName": "Debug UI",
+	"PipelineMetadata":
+	{
+		"Name": "Debug UI"
+	},
 	"Pipeline": [
 		{
 			"GraphicsSystem": "ImGui"

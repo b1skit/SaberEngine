@@ -1,4 +1,8 @@
 {
+	"PipelineMetadata":
+	{
+		"Name": "Deferred Rasterization"
+	},
 	"Pipeline": [
 		{
 			"GraphicsSystem": "Culling"
