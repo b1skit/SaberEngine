@@ -804,7 +804,7 @@ namespace dx12
 				"Failed to serialize versioned root signature");
 
 			// Create the root signature:
-			ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+			Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 			hr = device->CreateRootSignature(
 				dx12::SysInfo::GetDeviceNodeMask(),

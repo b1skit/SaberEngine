@@ -96,9 +96,9 @@ namespace
 	}
 
 
-	ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter)
+	ComPtr<ID3D12Device> CreateDevice(ComPtr<IDXGIAdapter> adapter)
 	{
-		ComPtr<ID3D12Device2> device;
+		ComPtr<ID3D12Device> device;
 
 		uint32_t featureLevelIdx = 0;
 		while (featureLevelIdx < _countof(k_featureLevels))
@@ -190,28 +190,28 @@ namespace
 namespace dx12
 {
 	Device::Device()
-		: m_dxgiAdapter4(nullptr)
-		, m_displayDevice(nullptr)
+		: m_dxgiAdapter(nullptr)
+		, m_device(nullptr)
 	{
 	}
 
 
 	void Device::Create()
 	{
-		m_dxgiAdapter4 = GetBestDisplayAdapter(); // Find the display adapter with the most VRAM
-		m_displayDevice = CreateDevice(m_dxgiAdapter4); // Create a device from the selected adapter
+		m_dxgiAdapter = GetBestDisplayAdapter(); // Find the display adapter with the most VRAM
+		m_device = CreateDevice(m_dxgiAdapter); // Create a device from the selected adapter
 
 		const uint32_t debugLevel = core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
 		if (debugLevel > 0)
 		{
-			ConfigureD3DInfoQueue(m_displayDevice, debugLevel);
+			ConfigureD3DInfoQueue(m_device, debugLevel);
 		}
 	}
 
 
 	void Device::Destroy()
 	{
-		m_displayDevice = nullptr;
-		m_dxgiAdapter4 = nullptr;
+		m_device = nullptr;
+		m_dxgiAdapter = nullptr;
 	}
 }

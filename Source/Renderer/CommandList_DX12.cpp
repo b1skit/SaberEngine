@@ -71,7 +71,7 @@ namespace
 
 
 	ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(
-		ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type, std::wstring const& name)
+		Microsoft::WRL::ComPtr<ID3D12Device> const& device, D3D12_COMMAND_LIST_TYPE type, std::wstring const& name)
 	{
 		SEAssert(device, "Device cannot be null");
 
@@ -132,7 +132,7 @@ namespace dx12
 	}
 
 
-	CommandList::CommandList(ID3D12Device2* device, CommandListType type)
+	CommandList::CommandList(Microsoft::WRL::ComPtr<ID3D12Device> const& device, CommandListType type)
 		: m_commandList(nullptr)
 		, m_type(type)
 		, m_d3dType(TranslateToD3DCommandListType(type))

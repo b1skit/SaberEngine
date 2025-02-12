@@ -48,10 +48,10 @@ namespace dx12
 	}
 
 
-	void Fence::Create(ComPtr<ID3D12Device2> displayDevice, char const* eventName)
+	void Fence::Create(ComPtr<ID3D12Device> device, char const* eventName)
 	{
 		// Create our fence:
-		HRESULT hr = displayDevice->CreateFence(
+		HRESULT hr = device->CreateFence(
 			0,							// Initial value: Increase monotonically from hereONLY
 			D3D12_FENCE_FLAG_NONE,		// Fence flags: Shared, cross-adapter, etc
 			IID_PPV_ARGS(&m_fence));	// REFIIF and destination pointer for the populated fence

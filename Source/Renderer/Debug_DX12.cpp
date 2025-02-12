@@ -113,7 +113,7 @@ namespace
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
 		ComPtr<ID3D12DeviceRemovedExtendedData> dredQuery;
-		SEVerify(SUCCEEDED(context->GetDevice().GetD3DDisplayDevice()->QueryInterface(IID_PPV_ARGS(&dredQuery))),
+		SEVerify(SUCCEEDED(context->GetDevice().GetD3DDevice()->QueryInterface(IID_PPV_ARGS(&dredQuery))),
 			"Failed to get DRED query interface");
 
 		D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput;

@@ -353,7 +353,10 @@ namespace dx12
 
 	void PipelineState::Create(re::Shader const& shader, re::TextureTargetSet const* targetSet)
 	{
-		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
+		
+		Microsoft::WRL::ComPtr<ID3D12Device2> device2;		
+		SEAssert(SUCCEEDED(device.As(&device2)), "Failed to get ID3D12Device2 from ID3D12Device");
 
 		// Generate the PSO:
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
@@ -442,7 +445,7 @@ namespace dx12
 			};
 
 			// CreatePipelineState can create both graphics & compute pipelines from a D3D12_PIPELINE_STATE_STREAM_DESC
-			hr = device->CreatePipelineState(&graphicsPipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
+			hr = device2->CreatePipelineState(&graphicsPipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
 			CheckHResult(hr, "Failed to create graphics pipeline state");
 
 			// Name our PSO:
@@ -466,7 +469,7 @@ namespace dx12
 			};
 
 			// CreatePipelineState can create both graphics & compute pipelines from a D3D12_PIPELINE_STATE_STREAM_DESC
-			HRESULT hr = device->CreatePipelineState(&computePipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
+			HRESULT hr = device2->CreatePipelineState(&computePipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
 			CheckHResult(hr, "Failed to create compute pipeline state");
 
 			// Name our PSO:

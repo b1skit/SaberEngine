@@ -292,7 +292,7 @@ namespace dx12
 		std::queue<std::pair<uint64_t, GPUResource>> m_deferredGPUResourceDeletions;
 		std::recursive_mutex m_deferredGPUResourceDeletionsMutex;
 
-		ID3D12Device2* m_device;
+		Microsoft::WRL::ComPtr<ID3D12Device> m_device;
 
 		uint8_t m_numFramesInFlight;
 

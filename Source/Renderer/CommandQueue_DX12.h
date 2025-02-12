@@ -19,7 +19,7 @@ namespace dx12
 		CommandQueue& operator=(CommandQueue&&) noexcept = default;
 		~CommandQueue() { Destroy(); };
 
-		[[nodiscard]] void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, dx12::CommandListType type);
+		[[nodiscard]] void Create(Microsoft::WRL::ComPtr<ID3D12Device> displayDevice, dx12::CommandListType type);
 		void Destroy();
 
 		bool IsCreated() const;
@@ -66,7 +66,7 @@ namespace dx12
 		CommandListType m_type;
 		D3D12_COMMAND_LIST_TYPE m_d3dType;
 
-		Microsoft::WRL::ComPtr<ID3D12Device2> m_deviceCache;
+		Microsoft::WRL::ComPtr<ID3D12Device> m_deviceCache;
 
 		Fence m_fence;
 		uint64_t m_fenceValue; // Monotonically increasing: Most recent signalled value. Note: Pre-assigned to cmd lists

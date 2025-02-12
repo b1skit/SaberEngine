@@ -127,7 +127,7 @@ namespace dx12
 		m_cpuDescriptorHeapMgrs.emplace_back(CPUDescriptorHeapManager::HeapType::DSV);
 
 		// Command Queues:
-		ID3D12Device2* device = m_device.GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = m_device.GetD3DDevice();
 
 		m_commandQueues[CommandListType::Direct].Create(device, CommandListType::Direct);
 		m_commandQueues[CommandListType::Compute].Create(device, CommandListType::Compute);
@@ -459,7 +459,7 @@ namespace dx12
 			DescriptorAllocation descriptor =
 				std::move(m_cpuDescriptorHeapMgrs[CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV].Allocate(1));
 
-			ID3D12Device2* device = m_device.GetD3DDisplayDevice();
+			Microsoft::WRL::ComPtr<ID3D12Device> device = m_device.GetD3DDevice();
 
 			device->CreateShaderResourceView(
 				nullptr,
@@ -542,7 +542,7 @@ namespace dx12
 			DescriptorAllocation descriptor =
 				std::move(m_cpuDescriptorHeapMgrs[CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV].Allocate(1));
 
-			ID3D12Device2* device = m_device.GetD3DDisplayDevice();
+			Microsoft::WRL::ComPtr<ID3D12Device> device = m_device.GetD3DDevice();
 
 			device->CreateUnorderedAccessView(
 				nullptr,
@@ -574,7 +574,7 @@ namespace dx12
 				m_nullCBV = 
 					std::move(m_cpuDescriptorHeapMgrs[CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV].Allocate(1));
 
-				ID3D12Device2* device = m_device.GetD3DDisplayDevice();
+				Microsoft::WRL::ComPtr<ID3D12Device> device = m_device.GetD3DDevice();
 
 				device->CreateConstantBufferView(&nullCBVDesc, m_nullCBV.GetBaseDescriptor());
 			}

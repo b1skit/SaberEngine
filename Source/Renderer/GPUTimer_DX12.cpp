@@ -32,7 +32,7 @@ namespace dx12
 
 		dx12::Context* dx12Context = re::Context::Get()->GetAs<dx12::Context*>();
 
-		ID3D12Device2* d3dDevice = dx12Context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> d3dDevice = dx12Context->GetDevice().GetD3DDevice();
 
 		const uint8_t totalQueriesPerTimer = platParams->m_numFramesInFlight * 2; // x2 for start/end timestamps
 		const uint32_t totalQuerySlots = totalQueriesPerTimer * re::GPUTimer::k_maxGPUTimersPerFrame;

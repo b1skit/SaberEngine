@@ -163,7 +163,7 @@ namespace
 		}
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		device->CreateShaderResourceView(texPlatParams->m_gpuResource->Get(), &srvDesc, descriptor.GetBaseDescriptor());
 	}
@@ -266,7 +266,7 @@ namespace
 		}
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		device->CreateUnorderedAccessView(
 			texPlatParams->m_gpuResource->Get(),
@@ -370,7 +370,7 @@ namespace
 		}
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		device->CreateRenderTargetView(
 			texPlatParams->m_gpuResource->Get(),
@@ -472,7 +472,7 @@ namespace
 		}
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		device->CreateDepthStencilView(
 			texPlatParams->m_gpuResource->Get(),
@@ -503,7 +503,7 @@ namespace
 			}};
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
@@ -532,7 +532,7 @@ namespace
 		};
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
@@ -560,7 +560,7 @@ namespace
 		};
 		
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		device->CreateConstantBufferView(
 			&cbvDesc,
@@ -633,7 +633,7 @@ namespace dx12
 			if (cacheItr == m_descriptorCache.end() || cacheItr->first != texView.GetDataHash())
 			{
 				dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-				ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+				Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 				CacheEntry newCacheEntry{
 					texView.GetDataHash(),
@@ -713,7 +713,7 @@ namespace dx12
 			if (cacheItr == m_descriptorCache.end() || cacheItr->first != bufViewHash)
 			{
 				dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-				ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+				Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 				CacheEntry newCacheEntry{
 					bufViewHash,

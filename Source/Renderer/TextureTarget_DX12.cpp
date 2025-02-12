@@ -62,7 +62,7 @@ namespace dx12
 		SEAssert(texTargetSetPlatParams->m_isCommitted, "Target set has not been committed");
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 		
 		for (re::TextureTarget const& colorTarget : targetSet.GetColorTargets())
 		{

@@ -25,7 +25,7 @@ namespace dx12
 		util::ScopedThreadProtector scopedThreadProtector(m_threadProtector);
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {
 			.Type = k_heapType,
@@ -141,7 +141,7 @@ namespace dx12
 
 		// Copy the descriptor in:
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		const uint32_t numDescriptors = 1;
 
@@ -198,7 +198,7 @@ namespace dx12
 		platform::RLibraryImGui::CreateInternal(*dx12ImGuiLibrary);
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		re::SwapChain& swapChain = context->GetSwapChain();
 
@@ -226,7 +226,7 @@ namespace dx12
 		const uint8_t numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
 
 		ImGui_ImplDX12_InitInfo initInfo{};
-		initInfo.Device = device;
+		initInfo.Device = device.Get();
 		initInfo.CommandQueue = directQueue.GetD3DCommandQueue();
 		initInfo.NumFramesInFlight = numFramesInFlight;
 		initInfo.RTVFormat = backbufferColorTarget0PlatParams->m_format;

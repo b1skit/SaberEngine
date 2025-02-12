@@ -121,7 +121,7 @@ namespace dx12
 				if (firstQuery)
 				{
 					const HRESULT hr =
-						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CheckFeatureSupport(
+						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
 							D3D12_FEATURE_D3D12_OPTIONS,
 							&optionsData,
 							sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
@@ -162,7 +162,7 @@ namespace dx12
 				if (firstQuery)
 				{
 					const HRESULT hr =
-						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CheckFeatureSupport(
+						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
 							D3D12_FEATURE_FEATURE_LEVELS,
 							&featureLevels,
 							sizeof(D3D12_FEATURE_DATA_FEATURE_LEVELS));
@@ -219,7 +219,8 @@ namespace dx12
 
 				if (firstQuery)
 				{
-					ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+					Microsoft::WRL::ComPtr<ID3D12Device> device = 
+						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 					while(featureData.HighestVersion != D3D_ROOT_SIGNATURE_VERSION_1)
 					{
@@ -252,7 +253,7 @@ namespace dx12
 				if (firstQuery)
 				{
 					const HRESULT hr =
-						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CheckFeatureSupport(
+						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
 							D3D12_FEATURE_ARCHITECTURE1,
 							&architectureData,
 							sizeof(D3D12_FEATURE_DATA_ARCHITECTURE1));
@@ -289,7 +290,7 @@ namespace dx12
 				if (firstQuery)
 				{
 					const HRESULT hr =
-						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CheckFeatureSupport(
+						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
 							D3D12_FEATURE_D3D12_OPTIONS3,
 							&optionsData,
 							sizeof(D3D12_FEATURE_DATA_ARCHITECTURE1));
@@ -407,7 +408,7 @@ namespace dx12
 				if (firstQuery)
 				{
 					const HRESULT hr = 
-						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CheckFeatureSupport(
+						re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
 							D3D12_FEATURE_D3D12_OPTIONS16,
 							&options16,
 							sizeof(options16));
@@ -503,7 +504,7 @@ namespace dx12
 			return 0;
 		}
 
-		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		uint32_t sampleCount = 16;
 

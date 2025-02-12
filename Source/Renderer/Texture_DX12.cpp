@@ -220,7 +220,7 @@ namespace
 			return true;
 		}
 
-		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport;
 		formatSupport.Format = format;
@@ -691,7 +691,7 @@ namespace dx12
 		texPlatParams->m_isCreated = true;
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 

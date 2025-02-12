@@ -23,7 +23,7 @@ namespace dx12
 		Fence& operator=(Fence&&) noexcept = default;
 		~Fence() { Destroy(); };
 
-		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, char const* eventName);
+		void Create(Microsoft::WRL::ComPtr<ID3D12Device> displayDevice, char const* eventName);
 		void Destroy();
 
 		void CPUSignal(uint64_t fenceValue); // Updates the fence to the given value from the CPU side

@@ -249,7 +249,7 @@ namespace dx12
 	}
 
 
-	void CommandQueue::Create(ComPtr<ID3D12Device2> displayDevice, dx12::CommandListType type)
+	void CommandQueue::Create(ComPtr<ID3D12Device> displayDevice, dx12::CommandListType type)
 	{
 		m_type = type;
 		m_d3dType = CommandList::TranslateToD3DCommandListType(type);

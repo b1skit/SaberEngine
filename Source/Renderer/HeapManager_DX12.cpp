@@ -365,7 +365,7 @@ namespace
 
 
 	void GetResourceSizeAndAlignment(
-		ID3D12Device2* device,
+		ID3D12Device* device,
 		dx12::ResourceDesc const& resourceDesc,
 		uint32_t& numBytesOut,
 		uint32_t& alignmentOut)
@@ -565,7 +565,7 @@ namespace dx12
 		, m_heap(nullptr)
 		, m_threadProtector(false)
 	{
-		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		// Create our heap:
 		const D3D12_HEAP_DESC pageHeapDesc{
@@ -1033,7 +1033,7 @@ namespace dx12
 		, m_heapManager(heapMgr)
 	{
 		// Create a committed GPU resource:
-		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		const CD3DX12_HEAP_PROPERTIES heapProperties(committedResourceDesc.m_heapType);
 
@@ -1084,7 +1084,7 @@ namespace dx12
 			clearVal = &resourceDesc.m_optimizedClearValue;
 		}
 
-		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		const HRESULT hr = device->CreatePlacedResource(
 			m_heapAllocation.GetHeap(),
@@ -1205,7 +1205,7 @@ namespace dx12
 	
 	void HeapManager::Initialize()
 	{
-		m_device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+		m_device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
 		m_numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
 
 		const D3D12_RESOURCE_HEAP_TIER heapTier = dx12::SysInfo::GetResourceHeapTier();
@@ -1265,7 +1265,7 @@ namespace dx12
 		const uint32_t visibleNodeMask = creationNodeMask; // Must be the creationNodeMask | optional extra bits
 
 		uint32_t resourceNumBytes, resourceAlignment;
-		GetResourceSizeAndAlignment(m_device, resourceDesc, resourceNumBytes, resourceAlignment);
+		GetResourceSizeAndAlignment(m_device.Get(), resourceDesc, resourceNumBytes, resourceAlignment);
 
 		SEAssert(resourceAlignment > 0 &&
 			glm::fmod(glm::log2(static_cast<float>(resourceAlignment)), 1.f) == 0,

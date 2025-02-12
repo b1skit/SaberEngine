@@ -20,7 +20,7 @@ namespace dx12
 		: m_owningCommandListType(owningCmdListType)
 		, m_owningCommandList(owningCommandList)
 		, m_heapType(D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) // For now, this is all we ever need
-		, m_elementSize(re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()
+		, m_elementSize(re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()
 			->GetDescriptorHandleIncrementSize(m_heapType))
 		, m_gpuDescriptorTableHeap(nullptr)
 		, m_gpuDescriptorTableHeapCPUBase{0}
@@ -43,7 +43,7 @@ namespace dx12
 		SEAssert(m_elementSize > 0, "Invalid element size");
 
 		// Create our GPU-visible descriptor heap:
-		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = D3D12_DESCRIPTOR_HEAP_DESC{
 			.Type = m_heapType,
@@ -365,7 +365,7 @@ namespace dx12
 		{
 			SEAssert(m_gpuDescriptorTableHeap != nullptr, "Invalid descriptor heap");
 
-			ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+			Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 			uint32_t rootIdxBit = 0; // Updated immediately...
 			for (uint32_t rootIdx = 0; rootIdx < k_totalRootSigDescriptorTableIndices; rootIdx++)

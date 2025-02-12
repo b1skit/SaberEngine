@@ -27,7 +27,7 @@ namespace dx12
 	CPUDescriptorHeapManager::CPUDescriptorHeapManager(HeapType type)
 		: m_type(type)
 		, m_d3dType(TranslateHeapTypeToD3DHeapType(type))
-		, m_elementSize(re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()
+		, m_elementSize(re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()
 			->GetDescriptorHandleIncrementSize(TranslateHeapTypeToD3DHeapType(type)))
 	{
 	}
@@ -157,7 +157,7 @@ namespace dx12
 		// Note: CBV/SRV/UAV and sampler descriptors will NOT be shader visible with this flag:
 		heapDescriptor.Flags = D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-		HRESULT hr = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CreateDescriptorHeap(
+		HRESULT hr = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateDescriptorHeap(
 			&heapDescriptor, 
 			IID_PPV_ARGS(&m_descriptorHeap));
 		CheckHResult(hr, "Failed to create CPU-visible descriptor heap");
