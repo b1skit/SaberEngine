@@ -154,7 +154,7 @@ namespace grutil
 		{
 			if (use16BitIndices)
 			{
-				meshData->m_indicesStreamDesc->m_dataType = re::DataType::Short;
+				meshData->m_indicesStreamDesc->m_dataType = re::DataType::UShort;
 			}
 			else
 			{
