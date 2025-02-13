@@ -2219,37 +2219,25 @@ namespace
 				fr::TransformComponent::AttachTransformComponent(*em, instanceEntity).GetTransform();
 
 			// Set the transform data:
-			for (size_t attribIdx = 0; attribIdx < current->mesh_gpu_instancing.attributes_count; ++attribIdx)
+			if (!translationData.empty())
 			{
-				std::string const& attributeName = current->mesh_gpu_instancing.attributes[attribIdx].name;
-				SEAssert(!attributeName.empty(), "Failed to get a valid attribute name");
+				instanceTransform.SetLocalTranslation(translationData[instance]);
+			}
 
-				if (attributeName == "TRANSLATION")
-				{
-					instanceTransform.SetLocalTranslation(translationData[instance]);
-				}
-				else if (attributeName == "ROTATION")
-				{
-					SEAssert(current->mesh_gpu_instancing.attributes[attribIdx].data->type == cgltf_type::cgltf_type_vec4,
-						"Unexpected data type when assembling instance transform");
+			if (!rotationData.empty())
+			{
+				glm::vec4 const& instanceRotation = rotationData[instance];
 
-					glm::vec4 const& instanceRotation = rotationData[instance];
+				instanceTransform.SetLocalRotation(glm::quat(
+					instanceRotation[3],
+					instanceRotation[0],
+					instanceRotation[1],
+					instanceRotation[2]));
+			}
 
-					instanceTransform.SetLocalRotation(glm::quat(
-						instanceRotation[3], 
-						instanceRotation[0],
-						instanceRotation[1], 
-						instanceRotation[2]));
-				}
-				else if (attributeName == "SCALE")
-				{
-					instanceTransform.SetLocalScale(scaleData[instance]);
-				}
-				else
-				{
-					LOG_ERROR("Unrecognized attribute name \"%s\" when parsing GPU instanced geometry",
-						attributeName.c_str());
-				}
+			if (!scaleData.empty())
+			{
+				instanceTransform.SetLocalScale(scaleData[instance]);
 			}
 
 			AttachGLTFGeometry(em, current, nodeIdx, instanceEntity, fileMetadata);
