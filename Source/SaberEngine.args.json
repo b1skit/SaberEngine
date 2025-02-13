@@ -127,8 +127,12 @@
       "Command": "Pipeline",
       "Items": [
         {
+          "Id": "c359a213-60f6-498f-815a-26f53c9c9a67",
+          "Command": "-scenepipeline DeferredRasterization.json"
+        },
+        {
           "Id": "84306581-d976-4879-8c44-018b3d4130ac",
-          "Command": "-scenepipeline scene.json"
+          "Command": "-scenepipeline RayTracing_Experimental.json"
         }
       ]
     },

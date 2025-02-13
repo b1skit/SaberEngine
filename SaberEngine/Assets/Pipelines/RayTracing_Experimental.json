@@ -1,0 +1,459 @@
+{
+	"PipelineMetadata":
+	{
+		"Name": "Ray Tracing (Experimental)",
+		"ExcludedPlatforms": [ "OpenGL" ]
+	},
+	"Pipeline": [
+		{
+			"GraphicsSystem": "Culling"
+		},
+		{
+			"GraphicsSystem": "VertexAnimation",
+			"Inputs": [
+				{
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewCullingResults",
+							"DestinationName": "ViewCullingResults"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "BatchManager",
+			"Inputs": [
+				{
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewCullingResults",
+							"DestinationName": "ViewCullingResults"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "VertexAnimation",
+					"DataDependencies": [
+						{
+							"SourceName": "AnimatedVertexStreams",
+							"DestinationName": "AnimatedVertexStreams"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "LightManager"
+		},
+		{
+			"GraphicsSystem": "GBuffer",
+			"Inputs": [
+				{
+					"GraphicsSystem": "BatchManager",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewBatches",
+							"DestinationName": "ViewBatches"
+						},
+						{
+							"SourceName": "AllBatches",
+							"DestinationName": "AllBatches"
+						}
+					]
+				}
+			]
+		},
+		//{
+		//	"GraphicsSystem": "XeGTAO",
+		//	"ExcludedPlatforms": [ "OpenGL" ],
+		//	"Inputs": [
+		//		{
+		//			"GraphicsSystem": "GBuffer",
+		//			"TextureDependencies": [
+		//				{
+		//					"SourceName": "GBufferDepth",
+		//					"DestinationName": "SceneDepth"
+		//				},
+		//				{
+		//					"SourceName": "GBufferWNormal",
+		//					"DestinationName": "SceneWNormal"
+		//				}
+		//			]
+		//		}
+		//	]
+		//},
+		{
+			"GraphicsSystem": "Shadows",
+			"Inputs": [
+				{
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "PointLightCullingResults",
+							"DestinationName": "PointLightCullingResults"
+						},
+						{
+							"SourceName": "SpotLightCullingResults",
+							"DestinationName": "SpotLightCullingResults"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "BatchManager",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewBatches",
+							"DestinationName": "ViewBatches"
+						},
+						{
+							"SourceName": "AllBatches",
+							"DestinationName": "AllBatches"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "LightManager",
+					"TextureDependencies": [
+						{
+							"SourceName": "DirectionalShadowArrayTex",
+							"DestinationName": "DirectionalShadowArrayTex"
+						},
+						{
+							"SourceName": "PointShadowArrayTex",
+							"DestinationName": "PointShadowArrayTex"
+						},
+						{
+							"SourceName": "SpotShadowArrayTex",
+							"DestinationName": "SpotShadowArrayTex"
+						}
+					],
+					"DataDependencies": [
+						{
+							"SourceName": "RenderDataIDToDirectionalShadowArrayIdxMap",
+							"DestinationName": "RenderDataIDToDirectionalShadowArrayIdxMap"
+						},
+						{
+							"SourceName": "RenderDataIDToPointShadowArrayIdxMap",
+							"DestinationName": "RenderDataIDToPointShadowArrayIdxMap"
+						},
+						{
+							"SourceName": "RenderDataIDToSpotShadowArrayIdxMap",
+							"DestinationName": "RenderDataIDToSpotShadowArrayIdxMap"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "DeferredLighting",
+			"Inputs": [
+				{
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "PointLightCullingResults",
+							"DestinationName": "PointLightCullingResults"
+						},
+						{
+							"SourceName": "SpotLightCullingResults",
+							"DestinationName": "SpotLightCullingResults"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "LightManager",
+					"BufferDependencies": [
+						{
+							"SourceName": "DirectionalLightDataBuffer",
+							"DestinationName": "DirectionalLightDataBuffer"
+						},
+						{
+							"SourceName": "PointLightDataBuffer",
+							"DestinationName": "PointLightDataBuffer"
+						},
+						{
+							"SourceName": "SpotLightDataBuffer",
+							"DestinationName": "SpotLightDataBuffer"
+						},
+						{
+							"SourceName": "PCSSSampleParamsBuffer",
+							"DestinationName": "PCSSSampleParamsBuffer"
+						}
+					],
+					"DataDependencies": [
+						{
+							"SourceName": "RenderDataIDToDirectionalBufferIdxMap",
+							"DestinationName": "RenderDataIDToDirectionalBufferIdxMap"
+						},
+						{
+							"SourceName": "RenderDataIDToPointBufferIdxMap",
+							"DestinationName": "RenderDataIDToPointBufferIdxMap"
+						},
+						{
+							"SourceName": "RenderDataIDToSpotBufferIdxMap",
+							"DestinationName": "RenderDataIDToSpotBufferIdxMap"
+						},
+						{
+							"SourceName": "RenderDataIDToDirectionalShadowArrayIdxMap",
+							"DestinationName": "RenderDataIDToDirectionalShadowArrayIdxMap"
+						},
+						{
+							"SourceName": "RenderDataIDToPointShadowArrayIdxMap",
+							"DestinationName": "RenderDataIDToPointShadowArrayIdxMap"
+						},
+						{
+							"SourceName": "RenderDataIDToSpotShadowArrayIdxMap",
+							"DestinationName": "RenderDataIDToSpotShadowArrayIdxMap"
+						}
+					],
+					"TextureDependencies": [
+						{
+							"SourceName": "DirectionalShadowArrayTex",
+							"DestinationName": "DirectionalShadowArrayTex"
+						},
+						{
+							"SourceName": "PointShadowArrayTex",
+							"DestinationName": "PointShadowArrayTex"
+						},
+						{
+							"SourceName": "SpotShadowArrayTex",
+							"DestinationName": "SpotShadowArrayTex"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "GBuffer",
+					"TextureDependencies": [
+						{
+							"SourceName": "GBufferAlbedo",
+							"DestinationName": "GBufferAlbedo"
+						},
+						{
+							"SourceName": "GBufferWNormal",
+							"DestinationName": "GBufferWNormal"
+						},
+						{
+							"SourceName": "GBufferRMAO",
+							"DestinationName": "GBufferRMAO"
+						},
+						{
+							"SourceName": "GBufferMatProp0",
+							"DestinationName": "GBufferMatProp0"
+						},
+						{
+							"SourceName": "GBufferDepth",
+							"DestinationName": "GBufferDepth"
+						}
+					]
+				}//,
+				//{
+				//	"GraphicsSystem": "XeGTAO",
+				//	"TextureDependencies": [
+				//		{
+				//			"SourceName": "SSAOTex",
+				//			"DestinationName": "SSAOTex"
+				//		}
+				//	]
+				//}
+			]
+		},
+		{
+			"GraphicsSystem": "Skybox",
+			"Inputs": [
+				{
+					"GraphicsSystem": "DeferredLighting",
+					"TextureDependencies": [
+						{
+							"SourceName": "DeferredLightTarget",
+							"DestinationName": "SkyboxTarget"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "GBuffer",
+					"TextureDependencies": [
+						{
+							"SourceName": "GBufferDepth",
+							"DestinationName": "SceneDepth"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "Transparency",
+			"Inputs": [
+				{
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "PointLightCullingResults",
+							"DestinationName": "PointLightCullingResults"
+						},
+						{
+							"SourceName": "SpotLightCullingResults",
+							"DestinationName": "SpotLightCullingResults"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "BatchManager",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewBatches",
+							"DestinationName": "ViewBatches"
+						},
+						{
+							"SourceName": "AllBatches",
+							"DestinationName": "AllBatches"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "LightManager",
+					"BufferDependencies": [
+						{
+							"SourceName": "DirectionalLightDataBuffer",
+							"DestinationName": "DirectionalLightDataBuffer"
+						},
+						{
+							"SourceName": "PointLightDataBuffer",
+							"DestinationName": "PointLightDataBuffer"
+						},
+						{
+							"SourceName": "SpotLightDataBuffer",
+							"DestinationName": "SpotLightDataBuffer"
+						},
+						{
+							"SourceName": "PCSSSampleParamsBuffer",
+							"DestinationName": "PCSSSampleParamsBuffer"
+						}				
+					],
+					"DataDependencies": [
+						{
+							"SourceName": "RenderDataIDToPointBufferIdxMap",
+							"DestinationName": "RenderDataIDToPointBufferIdxMap"
+						},
+						{
+							"SourceName": "RenderDataIDToSpotBufferIdxMap",
+							"DestinationName": "RenderDataIDToSpotBufferIdxMap"
+						}
+					],
+					"TextureDependencies": [
+						{
+							"SourceName": "DirectionalShadowArrayTex",
+							"DestinationName": "DirectionalShadowArrayTex"
+						},
+						{
+							"SourceName": "PointShadowArrayTex",
+							"DestinationName": "PointShadowArrayTex"
+						},
+						{
+							"SourceName": "SpotShadowArrayTex",
+							"DestinationName": "SpotShadowArrayTex"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "GBuffer",
+					"TextureDependencies": [
+						{
+							"SourceName": "GBufferDepth",
+							"DestinationName": "SceneDepth"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "DeferredLighting",
+					"TextureDependencies": [
+						{
+							"SourceName": "DeferredLightTarget",
+							"DestinationName": "SceneLightingTarget"
+						},
+						{
+							"SourceName": "ActiveAmbientIEMTex",
+							"DestinationName": "AmbientIEMTex"
+						},
+						{
+							"SourceName": "ActiveAmbientPMREMTex",
+							"DestinationName": "AmbientPMREMTex"
+						},
+						{
+							"SourceName": "ActiveAmbientDFGTex",
+							"DestinationName": "AmbientDFGTex"
+						}
+					],
+					"BufferDependencies": [
+						{
+							"SourceName": "ActiveAmbientParamsBuffer",
+							"DestinationName": "AmbientParamsBuffer"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "Bloom",
+			"Inputs": [
+				{
+					"GraphicsSystem": "GBuffer",
+					"TextureDependencies": [
+						{
+							"SourceName": "GBufferEmissive",
+							"DestinationName": "EmissiveLight"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "DeferredLighting",
+					"TextureDependencies": [
+						{
+							"SourceName": "DeferredLightTarget",
+							"DestinationName": "BloomTarget"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "Tonemapping",
+			"Inputs": [
+				{
+					"GraphicsSystem": "DeferredLighting",
+					"TextureDependencies": [
+						{
+							"SourceName": "DeferredLightTarget",
+							"DestinationName": "TonemappingTarget"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "Bloom",
+					"TextureDependencies": [
+						{
+							"SourceName": "BloomResult",
+							"DestinationName": "BloomResult"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "Debug",
+			"Inputs": [
+				{
+					"GraphicsSystem": "BatchManager",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewBatches",
+							"DestinationName": "ViewBatches"
+						}
+					]
+				}
+			]
+		}
+	]
+}
