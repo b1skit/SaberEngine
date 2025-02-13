@@ -22,6 +22,11 @@
 using Microsoft::WRL::ComPtr;
 
 
+
+SE_DISABLE_OPTIMIZATIONS;
+
+
+
 namespace
 {
 	// TODO: Use D3D12_GRAPHICS_PIPELINE_STATE_DESC instead?
@@ -355,8 +360,9 @@ namespace dx12
 	{
 		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
 		
-		Microsoft::WRL::ComPtr<ID3D12Device2> device2;		
-		SEAssert(SUCCEEDED(device.As(&device2)), "Failed to get ID3D12Device2 from ID3D12Device");
+		Microsoft::WRL::ComPtr<ID3D12Device2> device2;
+		HRESULT hr = device.As(&device2);
+		SEAssert(SUCCEEDED(hr), "Failed to get ID3D12Device2 from ID3D12Device");
 
 		// Generate the PSO:
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
