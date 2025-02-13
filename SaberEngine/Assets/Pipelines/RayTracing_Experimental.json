@@ -6,6 +6,9 @@
 	},
 	"Pipeline": [
 		{
+			"GraphicsSystem": "AccelerationStructures"
+		},
+		{
 			"GraphicsSystem": "Culling"
 		},
 		{
@@ -66,25 +69,6 @@
 				}
 			]
 		},
-		//{
-		//	"GraphicsSystem": "XeGTAO",
-		//	"ExcludedPlatforms": [ "OpenGL" ],
-		//	"Inputs": [
-		//		{
-		//			"GraphicsSystem": "GBuffer",
-		//			"TextureDependencies": [
-		//				{
-		//					"SourceName": "GBufferDepth",
-		//					"DestinationName": "SceneDepth"
-		//				},
-		//				{
-		//					"SourceName": "GBufferWNormal",
-		//					"DestinationName": "SceneWNormal"
-		//				}
-		//			]
-		//		}
-		//	]
-		//},
 		{
 			"GraphicsSystem": "Shadows",
 			"Inputs": [
@@ -248,16 +232,7 @@
 							"DestinationName": "GBufferDepth"
 						}
 					]
-				}//,
-				//{
-				//	"GraphicsSystem": "XeGTAO",
-				//	"TextureDependencies": [
-				//		{
-				//			"SourceName": "SSAOTex",
-				//			"DestinationName": "SSAOTex"
-				//		}
-				//	]
-				//}
+				}
 			]
 		},
 		{
