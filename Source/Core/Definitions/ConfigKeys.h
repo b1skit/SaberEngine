@@ -21,8 +21,8 @@ namespace core::configkeys
 
 	// Graphics pipelines:
 	constexpr char const* k_pipelineDirName					= "Assets\\Pipelines\\";
-	constexpr char const* k_platformPipelineFileName_DX12	= "platformDX12.json";
-	constexpr char const* k_defaultRenderPipelineFileName	= "deferredRasterization.json";
+	constexpr char const* k_platformPipelineFileName_DX12	= "Platform_DX12.json";
+	constexpr char const* k_defaultRenderPipelineFileName	= "DeferredRasterization.json";
 
 	// Debug:
 	constexpr char const* k_pixCaptureFolderName		= "PIX Captures";

@@ -201,7 +201,7 @@ namespace fr
 
 		re::RenderManager::Get()->EnqueueRenderCommand([createdFlag, cmdMgrPtr, imguiMutexPtr]()
 			{
-				constexpr char const* k_debugUIPipelineFilename = "ui.json";
+				constexpr char const* k_debugUIPipelineFilename = "UI.json";
 
 				gr::RenderSystem const* debugUIRenderSystem = 
 					re::RenderManager::Get()->CreateAddRenderSystem(k_debugUIPipelineFilename);
