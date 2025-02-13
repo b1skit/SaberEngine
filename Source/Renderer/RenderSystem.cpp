@@ -25,10 +25,70 @@ namespace
 
 		gr::GraphicsSystem* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
 
-		// Initialize everything with a nullptr, incase no input is described
+		re::RenderManager* renderMgr = re::RenderManager::Get();
+
+		// Initialize everything with a default in case the input doesn't exist for some reason
 		for (auto const& input : dstGS->GetTextureInputs())
 		{
-			texDependencies.emplace(input.first, nullptr);
+			gr::GraphicsSystem::TextureInputDefault inputDefault = dstGS->GetTextureInputDefaultType(input.first);
+
+			switch (inputDefault)
+			{
+			case gr::GraphicsSystem::TextureInputDefault::OpaqueWhite:
+			{
+				texDependencies[input.first] =
+					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName);
+			}
+			break;
+			case gr::GraphicsSystem::TextureInputDefault::TransparentWhite:
+			{
+				texDependencies[input.first] =
+					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_transparentWhiteDefaultTexName);
+			}
+			break;
+			case gr::GraphicsSystem::TextureInputDefault::OpaqueBlack:
+			{
+				texDependencies[input.first] =
+					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_opaqueBlackDefaultTexName);
+			}
+			break;
+			case gr::GraphicsSystem::TextureInputDefault::TransparentBlack:
+			{
+				texDependencies[input.first] =
+					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_transparentBlackDefaultTexName);
+			}
+			break;
+			case gr::GraphicsSystem::TextureInputDefault::CubeMap_OpaqueWhite:
+			{
+				texDependencies[input.first] =
+					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName);
+			}
+			break;
+			case gr::GraphicsSystem::TextureInputDefault::CubeMap_TransparentWhite:
+			{
+				texDependencies[input.first] =
+					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName);
+			}
+			break;
+			case gr::GraphicsSystem::TextureInputDefault::CubeMap_OpaqueBlack:
+			{
+				texDependencies[input.first] =
+					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName);
+			}
+			break;
+			case gr::GraphicsSystem::TextureInputDefault::CubeMap_TransparentBlack:
+			{
+				texDependencies[input.first] =
+					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName);
+			}
+			break;
+			case gr::GraphicsSystem::TextureInputDefault::None:
+			{
+				texDependencies[input.first] = nullptr;
+			}
+			break;
+			default: SEAssertF("Invalid TextureInputDefault");
+			}
 		}
 
 		// It's possible our GS doesn't have any input dependencies
@@ -42,83 +102,17 @@ namespace
 				std::string const& srcGSScriptName = srcEntry.first;
 				gr::GraphicsSystem* srcGS = gsm.GetGraphicsSystemByScriptName(srcGSScriptName);
 
-				for (auto const& dependencySrcDstNameMapping : srcEntry.second)
+				if (srcGS)
 				{
-					std::string const& srcName = dependencySrcDstNameMapping.first;
-					
-					util::CHashKey const& dstName = util::CHashKey::Create(dependencySrcDstNameMapping.second);
-					SEAssert(dstGS->HasRegisteredTextureInput(dstName),
-						"Destination GS hasn't registered this input name");
-
-					if (srcGS)
+					for (auto const& dependencySrcDstNameMapping : srcEntry.second)
 					{
+						std::string const& srcName = dependencySrcDstNameMapping.first;
+
+						util::CHashKey const& dstName = util::CHashKey::Create(dependencySrcDstNameMapping.second);
+						SEAssert(dstGS->HasRegisteredTextureInput(dstName),
+							"Destination GS hasn't registered this input name");
+
 						texDependencies[dstName] = srcGS->GetTextureOutput(srcName);
-					}
-					else
-					{
-						// Source GS doesn't exist. Attempt to use a default texture as a fallback
-						re::RenderManager* renderMgr = re::RenderManager::Get();
-
-						gr::GraphicsSystem::TextureInputDefault inputDefault =
-							dstGS->GetTextureInputDefaultType(dstName);
-
-						switch (inputDefault)
-						{
-						case gr::GraphicsSystem::TextureInputDefault::OpaqueWhite:
-						{
-							texDependencies[dstName] = 
-								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName);
-						}
-						break;
-						case gr::GraphicsSystem::TextureInputDefault::TransparentWhite:
-						{
-							texDependencies[dstName] =
-								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_transparentWhiteDefaultTexName);
-						}
-						break;
-						case gr::GraphicsSystem::TextureInputDefault::OpaqueBlack:
-						{
-							texDependencies[dstName] =
-								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_opaqueBlackDefaultTexName);
-						}
-						break;
-						case gr::GraphicsSystem::TextureInputDefault::TransparentBlack:
-						{
-							texDependencies[dstName] =
-								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_transparentBlackDefaultTexName);
-						}
-						break;
-						case gr::GraphicsSystem::TextureInputDefault::CubeMap_OpaqueWhite:
-						{
-							texDependencies[dstName] =
-								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName);
-						}
-						break;
-						case gr::GraphicsSystem::TextureInputDefault::CubeMap_TransparentWhite:
-						{
-							texDependencies[dstName] =
-								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName);
-						}
-						break;
-						case gr::GraphicsSystem::TextureInputDefault::CubeMap_OpaqueBlack:
-						{
-							texDependencies[dstName] =
-								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName);
-						}
-						break;
-						case gr::GraphicsSystem::TextureInputDefault::CubeMap_TransparentBlack:
-						{
-							texDependencies[dstName] =
-								&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName);
-						}
-						break;
-						case gr::GraphicsSystem::TextureInputDefault::None:
-						{
-							continue; // We've already initialized the entry as a nullptr
-						}
-						break;
-						default: SEAssertF("Invalid TextureInputDefault");
-						}
 					}
 				}
 			}
