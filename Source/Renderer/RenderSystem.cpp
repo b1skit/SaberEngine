@@ -410,7 +410,7 @@ namespace gr
 	void RenderSystem::BuildPipeline(gr::RenderSystemDescription const& renderSysDesc)
 	{
 		// Create the GrpahicsSystems:
-		for (std::string const& gsName : renderSysDesc.m_graphicsSystemNames)
+		for (std::string const& gsName : renderSysDesc.m_pipelineOrder)
 		{
 			m_graphicsSystemManager.CreateAddGraphicsSystemByScriptName(gsName);
 		}
