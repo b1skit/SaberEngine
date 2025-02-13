@@ -1,13 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Platform.h"
 
-#include "Renderer/Context_DX12.h"
-#include "Renderer/Context_OpenGL.h"
-#include "Renderer/Context_Platform.h"
+#include "Renderer/AccelerationStructureManager_DX12.h"
+#include "Renderer/AccelerationStructureManager_Platform.h"
 
 #include "Renderer/Buffer_DX12.h"
 #include "Renderer/Buffer_OpenGL.h"
 #include "Renderer/Buffer_Platform.h"
+
+#include "Renderer/Context_DX12.h"
+#include "Renderer/Context_OpenGL.h"
+#include "Renderer/Context_Platform.h"
 
 #include "Renderer/GPUTimer_DX12.h"
 #include "Renderer/GPUTimer_OpenGL.h"
@@ -111,15 +114,15 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			// Context:
-			platform::Context::Destroy	= &opengl::Context::Destroy;
-
 			// Buffers:
 			platform::Buffer::Create			= &opengl::Buffer::Create;
 			platform::Buffer::Update			= &opengl::Buffer::Update;
 			platform::Buffer::Destroy			= &opengl::Buffer::Destroy;
 			platform::Buffer::MapCPUReadback	= &opengl::Buffer::MapCPUReadback;
 			platform::Buffer::UnmapCPUReadback	= &opengl::Buffer::UnmapCPUReadback;
+
+			// Context:
+			platform::Context::Destroy = &opengl::Context::Destroy;
 
 			// GPU Timer:
 			platform::GPUTimer::Create		= &opengl::GPUTimer::Create;
@@ -144,6 +147,7 @@ namespace platform
 			platform::SysInfo::GetMaxRenderTargets		= &opengl::SysInfo::GetMaxRenderTargets;
 			platform::SysInfo::GetMaxTextureBindPoints	= &opengl::SysInfo::GetMaxTextureBindPoints;
 			platform::SysInfo::GetMaxVertexAttributes	= &opengl::SysInfo::GetMaxVertexAttributes;
+			platform::SysInfo::GetRayTracingSupport		= &opengl::SysInfo::GetRayTracingSupport;
 
 			// Swap chain:
 			platform::SwapChain::Create			= &opengl::SwapChain::Create;
@@ -161,8 +165,10 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			// Context:
-			platform::Context::Destroy	= &dx12::Context::Destroy;
+			// Acceleration Manager:
+			platform::AccelerationStructureManager::Create	= &dx12::AccelerationStructureManager::Create;
+			platform::AccelerationStructureManager::Update	= &dx12::AccelerationStructureManager::Update;
+			platform::AccelerationStructureManager::Destroy = &dx12::AccelerationStructureManager::Destroy;
 
 			// Buffers:
 			platform::Buffer::Create			= &dx12::Buffer::Create;
@@ -170,6 +176,9 @@ namespace platform
 			platform::Buffer::Destroy			= &dx12::Buffer::Destroy;
 			platform::Buffer::MapCPUReadback	= &dx12::Buffer::MapCPUReadback;
 			platform::Buffer::UnmapCPUReadback	= &dx12::Buffer::UnmapCPUReadback;
+
+			// Context:
+			platform::Context::Destroy = &dx12::Context::Destroy;
 
 			// GPU Timer:
 			platform::GPUTimer::Create		= &dx12::GPUTimer::Create;
@@ -194,6 +203,7 @@ namespace platform
 			platform::SysInfo::GetMaxRenderTargets		= &dx12::SysInfo::GetMaxRenderTargets;
 			platform::SysInfo::GetMaxTextureBindPoints	= &dx12::SysInfo::GetMaxTextureBindPoints;
 			platform::SysInfo::GetMaxVertexAttributes	= &dx12::SysInfo::GetMaxVertexAttributes;
+			platform::SysInfo::GetRayTracingSupport		= &dx12::SysInfo::GetRayTracingSupport;
 
 			// Swap chain:
 			platform::SwapChain::Create			= &dx12::SwapChain::Create;

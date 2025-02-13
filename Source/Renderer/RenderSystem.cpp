@@ -4,6 +4,7 @@
 #include "RenderManager.h"
 #include "RenderSystem.h"
 #include "RenderSystemDesc.h"
+#include "SysInfo_Platform.h"
 
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
@@ -366,20 +367,26 @@ namespace gr
 
 		// Create the render system, and build its various pipeline stages:
 		std::unique_ptr<RenderSystem> newRenderSystem = nullptr;
+		newRenderSystem.reset(new RenderSystem(renderSystemDesc));
 
-		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_name));
+		const bool buildResult = newRenderSystem->BuildPipeline(renderSystemDesc); // Builds initialization/update functions
+		if (buildResult)
+		{
+			return std::move(newRenderSystem);
+		}
 
-		newRenderSystem->BuildPipeline(renderSystemDesc); // Builds initialization/update functions
-
-		return std::move(newRenderSystem);
+		SEAssertF("Failed to build RenderSystem \"%s\" pipeline. RenderSystem::Create is returning null",
+			renderSystemDesc.m_name.c_str());
+		return nullptr;
 	}
 
 
-	RenderSystem::RenderSystem(std::string const& name)
-		: INamedObject(name)
+	RenderSystem::RenderSystem(gr::RenderSystemDescription const& renderSystemDesc)
+		: INamedObject(renderSystemDesc.m_name)
 		, m_graphicsSystemManager(this)
-		, m_renderPipeline(name)
+		, m_renderPipeline(renderSystemDesc.m_name)
 		, m_initPipeline(nullptr)
+		, m_requiredFeatures(renderSystemDesc.m_requiredFeatures)
 	{
 		m_graphicsSystemManager.Create();
 	}
@@ -407,8 +414,19 @@ namespace gr
 	}
 
 
-	void RenderSystem::BuildPipeline(gr::RenderSystemDescription const& renderSysDesc)
+	bool RenderSystem::BuildPipeline(gr::RenderSystemDescription const& renderSysDesc)
 	{
+		// Check the current system supports any required features:
+		if (renderSysDesc.m_requiredFeatures.contains(gr::RenderSystemDescription::val_accelerationStructure))
+		{
+			if (!platform::SysInfo::GetRayTracingSupport())
+			{
+				SEAssertF("RenderSystem \"%s\" requires an acceleration structure, but this system does not support "
+					"ray tracing. This is unexpected. Aborting RenderSystem::BuildPipeline", renderSysDesc.m_name.c_str());
+				return false;
+			}
+		}
+
 		// Create the GrpahicsSystems:
 		for (std::string const& gsName : renderSysDesc.m_pipelineOrder)
 		{
@@ -492,11 +510,15 @@ namespace gr
 			}
 			LOG(updateOrderLog.c_str());
 		};
+
+		return true;
 	}
 
 
 	void RenderSystem::ExecuteInitializationPipeline()
 	{
+		SEAssert(m_initPipeline, "RenderSystem \"%s\" has no initialization pipeline to execute", GetName().c_str());
+		
 		m_initPipeline(this);
 	}
 

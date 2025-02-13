@@ -50,8 +50,14 @@ namespace gr
 				// "Name":
 				if (pipelineMetadata.contains(RenderSystemDescription::key_pipelineName))
 				{
-					renderSysDesc.m_name =
-						pipelineMetadata[RenderSystemDescription::key_pipelineName].template get<std::string>();
+					renderSysDesc.m_name = pipelineMetadata[RenderSystemDescription::key_pipelineName];
+				}
+
+				// "RequiredFeatures":
+				if (pipelineMetadata.contains(RenderSystemDescription::key_requiredFeatures) &&
+					!pipelineMetadata[RenderSystemDescription::key_requiredFeatures].empty())
+				{
+					renderSysDesc.m_requiredFeatures = pipelineMetadata[RenderSystemDescription::key_requiredFeatures];
 				}
 			}
 

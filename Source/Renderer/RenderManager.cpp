@@ -4,6 +4,7 @@
 #include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
+#include "RenderSystemDesc.h"
 #include "Sampler.h"
 #include "TextureTarget.h"
 #include "VertexStream.h"
@@ -236,12 +237,23 @@ namespace re
 
 	gr::RenderSystem const* RenderManager::CreateAddRenderSystem(std::string const& pipelineFileName)
 	{
-		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName));
+		std::unique_ptr<gr::RenderSystem> newRenderSystem = gr::RenderSystem::Create(pipelineFileName);
+		if (!newRenderSystem)
+		{
+			SEAssertF("Failed to create new render system from pipeline filename \"%s\"", pipelineFileName.c_str());
+			return nullptr;
+		}
+
+		// Ensure any required rendering feature system dependencies are created:
+		if (newRenderSystem->RequiresFeature(gr::RenderSystemDescription::val_accelerationStructure))
+		{
+			re::Context::Get()->CreateAccelerationStructureManager(); // Ensure the AM is immediately created
+		}
 
 		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
-		m_renderSystems.back()->ExecuteInitializationPipeline();
+		newRenderSystem->ExecuteInitializationPipeline();
 
-		return m_renderSystems.back().get();
+		return m_renderSystems.emplace_back(std::move(newRenderSystem)).get();
 	}
 
 
@@ -294,6 +306,9 @@ namespace re
 
 		// Update buffers
 		context->GetBufferAllocator()->BufferData(frameNum);
+
+		// Update the ray-tracing acceleration structure (IFF it exists)
+		context->UpdateAccelerationStructureManager();
 
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");

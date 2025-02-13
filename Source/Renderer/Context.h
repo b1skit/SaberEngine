@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "AccelerationStructureManager.h"
 #include "BufferAllocator.h"
 #include "GPUTimer.h"
 #include "RLibrary_Platform.h"
@@ -57,6 +58,10 @@ namespace re
 		re::BufferAllocator const* GetBufferAllocator() const;
 
 		platform::RLibrary* GetOrCreateRenderLibrary(platform::RLibrary::Type);
+		
+		void CreateAccelerationStructureManager();
+		void UpdateAccelerationStructureManager(); // Helper: No-op if ASM not created
+		re::AccelerationStructureManager* GetAccelerationStructureManager() const;
 
 		re::GPUTimer& GetGPUTimer();
 
@@ -71,6 +76,8 @@ namespace re
 	protected:
 		std::unique_ptr<re::BufferAllocator> m_bufferAllocator;
 		std::array<std::unique_ptr<platform::RLibrary>, platform::RLibrary::Type_Count> m_renderLibraries;
+		std::unique_ptr<re::AccelerationStructureManager> m_ASManager;
+
 
 	private:
 		host::Window* m_window;
@@ -127,6 +134,21 @@ namespace re
 	{
 		SEAssert(m_bufferAllocator && m_bufferAllocator->IsValid(), "Buffer allocator has already been destroyed");
 		return m_bufferAllocator.get();
+	}
+
+
+	inline void Context::UpdateAccelerationStructureManager()
+	{
+		if (m_ASManager)
+		{
+			m_ASManager->Update();
+		}
+	}
+
+
+	inline re::AccelerationStructureManager* Context::GetAccelerationStructureManager() const
+	{
+		return m_ASManager.get();
 	}
 
 

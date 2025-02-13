@@ -30,6 +30,15 @@ namespace dx12
 	}
 
 
+	bool SysInfo::GetRayTracingSupport()
+	{
+		D3D12_FEATURE_DATA_D3D12_OPTIONS5 const* options5 = 
+			static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS5 const*>(GetD3D12FeatureSupportData(D3D12_FEATURE_D3D12_OPTIONS5));
+
+		return options5->RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+	}
+
+
 	uint32_t SysInfo::GetMaxConstantBufferViews()
 	{
 		static const D3D12_RESOURCE_BINDING_TIER resourceBindingTier = 

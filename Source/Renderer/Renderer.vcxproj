@@ -110,6 +110,9 @@
     <ClInclude Include="..\Dependencies\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\Dependencies\imgui\imstb_textedit.h" />
     <ClInclude Include="..\Dependencies\imgui\imstb_truetype.h" />
+    <ClInclude Include="AccelerationStructureManager.h" />
+    <ClInclude Include="AccelerationStructureManager_DX12.h" />
+    <ClInclude Include="AccelerationStructureManager_Platform.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="BoundsRenderData.h" />
     <ClInclude Include="Buffer.h" />
@@ -227,6 +230,9 @@
     <ClCompile Include="..\Dependencies\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\Dependencies\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Dependencies\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="AccelerationStructureManager.cpp" />
+    <ClCompile Include="AccelerationStructureManager_DX12.cpp" />
+    <ClCompile Include="AccelerationStructureManager_Platform.cpp" />
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="BufferAllocator.cpp" />
