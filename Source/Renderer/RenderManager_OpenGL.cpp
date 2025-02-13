@@ -125,6 +125,50 @@ namespace opengl
 
 		re::GPUTimer::Handle frameTimer = gpuTimer.StartTimer(nullptr, k_GPUFrameTimerName);
 
+
+		auto SetDrawState = [&context](
+			re::Stage const* stage,
+			core::InvPtr<re::Shader> const& shader, 
+			bool doSetStageInputs)
+			{
+				opengl::Shader::Bind(*shader);
+
+				SEAssert(shader->GetPipelineState() ||
+					stage->GetStageType() == re::Stage::Type::Compute,
+					"Pipeline state is null. This is unexpected");
+
+				context->SetPipelineState(shader->GetPipelineState());
+
+				if (doSetStageInputs)
+				{
+					// Set stage param blocks:
+					for (re::BufferInput const& bufferInput : stage->GetPermanentBuffers())
+					{
+						opengl::Shader::SetBuffer(*shader, bufferInput);
+					}
+					for (re::BufferInput const& bufferInput : stage->GetPerFrameBuffers())
+					{
+						opengl::Shader::SetBuffer(*shader, bufferInput);
+					}
+
+					auto SetStageTextureInputs = [&shader](
+						std::vector<re::TextureAndSamplerInput> const& texInputs)
+						{
+							for (auto const& texSamplerInput : texInputs)
+							{
+								opengl::Shader::SetTextureAndSampler(*shader, texSamplerInput);
+							}
+						};
+					SetStageTextureInputs(stage->GetPermanentTextureInputs());
+					SetStageTextureInputs(stage->GetSingleFrameTextureInputs());
+
+					// Set compute inputs
+					opengl::Shader::SetImageTextureTargets(*shader, stage->GetPermanentRWTextureInputs());
+					opengl::Shader::SetImageTextureTargets(*shader, stage->GetSingleFrameRWTextureInputs());
+				}
+			};
+
+
 		// Process RenderPiplines of each RenderSystem in turn:
 		for (std::unique_ptr<gr::RenderSystem> const& renderSystem : m_renderSystems)
 		{
@@ -163,13 +207,16 @@ namespace opengl
 					re::GPUTimer::Handle stageTimer =
 						gpuTimer.StartTimer(nullptr, stage->GetName().c_str(), stagePipeline.GetName().c_str());
 
-					// Library stages are executed with their own internal logic:
 					const re::Stage::Type curStageType = stage->GetStageType();
-					if (re::Stage::IsLibraryType(curStageType))
+					switch (curStageType)
+					{
+					case re::Stage::Type::LibraryGraphics: // Library stages are executed with their own internal logic
+					case re::Stage::Type::LibraryCompute:
 					{
 						dynamic_cast<re::LibraryStage*>(stage.get())->Execute(nullptr);
 					}
-					else if (curStageType == re::Stage::Type::Clear)
+					break;
+					case re::Stage::Type::Clear:
 					{
 						re::TextureTargetSet const* stageTargets = stage->GetTextureTargetSet();
 
@@ -191,7 +238,10 @@ namespace opengl
 							clearStage->GetStencilClearValue(),
 							*stageTargets);
 					}
-					else
+					break;
+					case re::Stage::Type::Graphics:
+					case re::Stage::Type::FullscreenQuad:
+					case re::Stage::Type::Compute:
 					{
 						// Get the stage targets:
 						re::TextureTargetSet const* stageTargets = stage->GetTextureTargetSet();
@@ -206,48 +256,6 @@ namespace opengl
 						}
 						SEAssert(stageTargets || curStageType == re::Stage::Type::Compute,
 							"The current stage does not have targets set. This is unexpected");
-
-
-						auto SetDrawState = [&stage, &context](
-							core::InvPtr<re::Shader> const& shader, bool doSetStageInputs)
-							{
-								opengl::Shader::Bind(*shader);
-
-								SEAssert(shader->GetPipelineState() ||
-									stage->GetStageType() == re::Stage::Type::Compute,
-									"Pipeline state is null. This is unexpected");
-
-								context->SetPipelineState(shader->GetPipelineState());
-
-								if (doSetStageInputs)
-								{
-									// Set stage param blocks:
-									for (re::BufferInput const& bufferInput : stage->GetPermanentBuffers())
-									{
-										opengl::Shader::SetBuffer(*shader, bufferInput);
-									}
-									for (re::BufferInput const& bufferInput : stage->GetPerFrameBuffers())
-									{
-										opengl::Shader::SetBuffer(*shader, bufferInput);
-									}
-
-									auto SetStageTextureInputs = [&shader](
-										std::vector<re::TextureAndSamplerInput> const& texInputs)
-										{
-											for (auto const& texSamplerInput : texInputs)
-											{
-												opengl::Shader::SetTextureAndSampler(*shader, texSamplerInput);
-											}
-										};
-									SetStageTextureInputs(stage->GetPermanentTextureInputs());
-									SetStageTextureInputs(stage->GetSingleFrameTextureInputs());
-
-									// Set compute inputs
-									opengl::Shader::SetImageTextureTargets(*shader, stage->GetPermanentRWTextureInputs());
-									opengl::Shader::SetImageTextureTargets(*shader, stage->GetSingleFrameRWTextureInputs());
-								}
-							};
-
 
 						switch (curStageType)
 						{
@@ -266,6 +274,7 @@ namespace opengl
 						default: SEAssertF("Unexpected render stage type");
 						}
 
+
 						// OpenGL is stateful; We only need to set the stage inputs once
 						bool hasSetStageInputs = false;
 
@@ -283,7 +292,7 @@ namespace opengl
 							{
 								currentShader = batchShader;
 
-								SetDrawState(currentShader, !hasSetStageInputs);
+								SetDrawState(stage.get(), currentShader, !hasSetStageInputs);
 								hasSetStageInputs = true;
 							}
 							SEAssert(currentShader, "Current shader is null");
@@ -394,6 +403,9 @@ namespace opengl
 							}
 
 						} // batches
+					}
+					break;
+					default: SEAssertF("Unexpected stage type");
 					}
 
 					SEEndOpenGLGPUEvent();

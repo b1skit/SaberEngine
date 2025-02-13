@@ -492,12 +492,15 @@ namespace dx12
 #endif
 
 						const re::Stage::Type curStageType = (*stageItr)->GetStageType();
-						if (re::Stage::IsLibraryType(curStageType))
+						switch (curStageType)
 						{
-							// Library stages are executed with their own internal logic
+						case re::Stage::Type::LibraryGraphics: // Library stages are executed with their own internal logic
+						case re::Stage::Type::LibraryCompute:
+						{
 							dynamic_cast<re::LibraryStage*>((*stageItr).get())->Execute(cmdList.get());
 						}
-						else if (curStageType == re::Stage::Type::Clear)
+						break;
+						case re::Stage::Type::Clear:
 						{
 							SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Direct,
 								"Incorrect command list type");
@@ -519,7 +522,10 @@ namespace dx12
 								clearStage->GetStencilClearValue(),
 								*(*stageItr)->GetTextureTargetSet());
 						}
-						else
+						break;
+						case re::Stage::Type::Graphics:
+						case re::Stage::Type::FullscreenQuad:
+						case re::Stage::Type::Compute:
 						{
 							// Get the stage targets:
 							re::TextureTargetSet const* stageTargets = (*stageItr)->GetTextureTargetSet();
@@ -599,6 +605,9 @@ namespace dx12
 								default: SEAssertF("Unexpected render stage type");
 								}
 							}
+						}
+						break;
+						default: SEAssertF("Unexpected stage type");
 						}
 
 						stageTimer.StopTimer(cmdList->GetD3DCommandList().Get());
