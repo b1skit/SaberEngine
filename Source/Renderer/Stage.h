@@ -31,15 +31,15 @@ namespace re
 		{
 			Parent, // Does not contribute batches
 
+			// Graphics queue:
 			Graphics,
-			Compute,
-
+			FullscreenQuad,
+			Clear, 
 			LibraryGraphics,
+
+			// Compute queue:
+			Compute,			
 			LibraryCompute,
-
-			FullscreenQuad, // Graphics queue
-
-			Clear, // Graphics queue
 
 			Invalid
 		};
