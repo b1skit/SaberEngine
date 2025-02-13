@@ -22,11 +22,6 @@
 using Microsoft::WRL::ComPtr;
 
 
-
-SE_DISABLE_OPTIMIZATIONS;
-
-
-
 namespace
 {
 	// TODO: Use D3D12_GRAPHICS_PIPELINE_STATE_DESC instead?
