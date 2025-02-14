@@ -563,7 +563,7 @@ namespace dx12
 				streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 			
 			streamViews.emplace_back(
-				*streamBufferPlatParams->GetOrCreateVertexBufferView(*streamBuffer, vertexBuffers[streamIdx].m_view));
+				*dx12::Buffer::GetOrCreateVertexBufferView(*streamBuffer, vertexBuffers[streamIdx].m_view));
 
 			// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
 			if (streamBuffer->GetLifetime() != re::Lifetime::SingleFrame)
@@ -619,7 +619,7 @@ namespace dx12
 			indexBuffer.GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		m_commandList->IASetIndexBuffer(
-			streamBufferPlatParams->GetOrCreateIndexBufferView(*indexBuffer.GetBuffer(), indexBuffer.m_view));
+			dx12::Buffer::GetOrCreateIndexBufferView(*indexBuffer.GetBuffer(), indexBuffer.m_view));
 
 		// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
 		if (indexBuffer.GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame)

@@ -75,10 +75,6 @@ namespace dx12
 			mutable dx12::DescriptorCache m_uavDescriptors;
 			mutable dx12::DescriptorCache m_cbvDescriptors;
 
-			// Index/vertex views:
-			D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::BufferView const&);
-			D3D12_VERTEX_BUFFER_VIEW const* GetOrCreateVertexBufferView(re::Buffer const&, re::BufferView const&);
-
 			bool GPUResourceIsValid() const;
 
 		
@@ -115,6 +111,10 @@ namespace dx12
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRV(re::Buffer const*, re::BufferView const&);
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(re::Buffer const*, re::BufferView const&);
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetCBV(re::Buffer const*, re::BufferView const&);
+
+		// Index/vertex views:
+		static D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::BufferView const&);
+		static D3D12_VERTEX_BUFFER_VIEW const* GetOrCreateVertexBufferView(re::Buffer const&, re::BufferView const&);
 	};
 
 

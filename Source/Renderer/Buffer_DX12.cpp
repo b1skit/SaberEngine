@@ -400,7 +400,7 @@ namespace dx12
 	}
 
 
-	D3D12_INDEX_BUFFER_VIEW const* dx12::Buffer::PlatformParams::GetOrCreateIndexBufferView(
+	D3D12_INDEX_BUFFER_VIEW const* dx12::Buffer::GetOrCreateIndexBufferView(
 		re::Buffer const& buffer, re::BufferView const& view)
 	{
 		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Usage::VertexStream, buffer) &&
@@ -427,7 +427,7 @@ namespace dx12
 	}
 
 
-	D3D12_VERTEX_BUFFER_VIEW const* dx12::Buffer::PlatformParams::GetOrCreateVertexBufferView(
+	D3D12_VERTEX_BUFFER_VIEW const* dx12::Buffer::GetOrCreateVertexBufferView(
 		re::Buffer const& buffer, re::BufferView const& view)
 	{
 		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::VertexStream, buffer) &&
