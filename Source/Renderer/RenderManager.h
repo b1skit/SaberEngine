@@ -133,11 +133,14 @@ namespace re
 		template<typename T>
 		void RegisterForCreate(core::InvPtr<T> const&);
 
-		// Textures seen during CreateAPIResources() for the current frame:
-		std::vector<core::InvPtr<re::Texture>> const& GetNewlyCreatedTextures() const;
+		// Resources created during CreateAPIResources() for the current frame
+		template<typename T>
+		std::vector<core::InvPtr<T>> const& GetNewResources() const;
+
 
 	private: // API resource management:
-		void CreateAPIResources(bool clearCreatedTextures);
+		void CreateAPIResources();
+		void ClearNewObjectCache();
 
 		void SwapNewResourceDoubleBuffers();
 		void DestroyNewResourceDoubleBuffers();
@@ -152,6 +155,7 @@ namespace re
 		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
 		// Used as a holding ground for operations that must be performed once after creation (E.g. mip generation)
 		std::vector<core::InvPtr<re::Texture>> m_createdTextures;
+		std::vector<core::InvPtr<gr::VertexStream>> m_createdVertexStreams;
 
 	private:
 		void CreateSamplerLibrary();
@@ -304,12 +308,6 @@ namespace re
 	inline void RenderManager::EnqueueRenderCommand(std::function<void(void)>&& lambda)
 	{
 		m_renderCommandManager.Enqueue(std::move(lambda));
-	}
-
-
-	inline std::vector<core::InvPtr<re::Texture>> const& RenderManager::GetNewlyCreatedTextures() const
-	{
-		return m_createdTextures;
 	}
 
 

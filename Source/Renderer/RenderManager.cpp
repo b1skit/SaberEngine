@@ -290,7 +290,8 @@ namespace re
 
 		// We must create any API resources that were passed via render commands, as they may be required during GS
 		// updates (e.g. MeshPrimitive VertexStream Buffers need to be alive so we can set them on BufferInputs)
-		CreateAPIResources(false);
+		// TODO: Remove this once we have Buffer handles
+		CreateAPIResources();
 
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
 		SEBeginCPUEvent("Execute update pipeline");
@@ -301,14 +302,17 @@ namespace re
 		}
 		SEEndCPUEvent();
 
+		// Update the ray-tracing acceleration structure (IFF it exists)
+		context->UpdateAccelerationStructureManager();
+
+		// Clear our cache of new objects, now that our anything that needs them has had a chance to access them.
+		ClearNewObjectCache();
+
 		// Create any new resources that have been created by GS's during the ExecuteUpdatePipeline call:
-		CreateAPIResources(true);
+		CreateAPIResources();
 
 		// Update buffers
 		context->GetBufferAllocator()->BufferData(frameNum);
-
-		// Update the ray-tracing acceleration structure (IFF it exists)
-		context->UpdateAccelerationStructureManager();
 
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");
@@ -336,6 +340,8 @@ namespace re
 			}
 		}
 		SEEndCPUEvent();
+		
+		//ClearNewObjectCache();
 
 		ProcessDeferredDeletions(GetCurrentRenderFrameNum());
 
@@ -453,7 +459,7 @@ namespace re
 	}
 
 
-	void RenderManager::CreateAPIResources(bool clearCreatedTextures)
+	void RenderManager::CreateAPIResources()
 	{
 		SEBeginCPUEvent("platform::RenderManager::CreateAPIResources");
 
@@ -467,17 +473,19 @@ namespace re
 		m_newVertexStreams.AquireReadLock();
 		m_newTargetSets.AquireReadLock();
 
-		if (clearCreatedTextures)
+		// Record newly created objects. This provides an convenient way to post-process new objects
 		{
-			// Clear any textures created during the frame. We do this each frame after the RenderSystem updates to
-			// ensure anything that needs to know about new Textures being created (e.g. MIP generation GS) can see them
-			m_createdTextures.clear();
-		}
+			m_createdTextures.reserve(m_createdTextures.size() + m_newTextures.GetReadData().size());
+			m_createdTextures.insert(
+				m_createdTextures.end(),
+				m_newTextures.GetReadData().begin(),
+				m_newTextures.GetReadData().end());
 
-		// Record newly created textures. This provides an easy way to create MIPs, and clear initial data after buffering
-		for (auto const& newTexture : m_newTextures.GetReadData())
-		{
-			m_createdTextures.emplace_back(newTexture);
+			m_createdVertexStreams.reserve(m_createdVertexStreams.size() + m_newVertexStreams.GetReadData().size());
+			m_createdVertexStreams.insert(
+				m_createdVertexStreams.end(),
+				m_newVertexStreams.GetReadData().begin(),
+				m_newVertexStreams.GetReadData().end());
 		}
 
 		// Create the resources:
@@ -490,13 +498,22 @@ namespace re
 		m_newVertexStreams.ReleaseReadLock();
 		m_newTargetSets.ReleaseReadLock();
 
+		SEEndCPUEvent();
+	}
+
+
+	void RenderManager::ClearNewObjectCache()
+	{
 		// Clear the initial data of our new textures now that they have been buffered
 		for (auto const& newTexture : m_createdTextures)
 		{
 			newTexture->ClearTexelData();
 		}
 
-		SEEndCPUEvent();
+		// Clear any objects created during the frame. We do this each frame after the RenderSystem updates to
+		// ensure anything that needs to know about new objects being created (e.g. MIP generation GS) can see them
+		m_createdTextures.clear();
+		m_createdVertexStreams.clear();
 	}
 
 
@@ -557,6 +574,20 @@ namespace re
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::TextureTargetSet> const& newObject)
 	{
 		m_newTargetSets.EmplaceBack(newObject);
+	}
+
+
+	template<>
+	std::vector<core::InvPtr<re::Texture>> const& RenderManager::GetNewResources() const
+	{
+		return m_createdTextures;
+	}
+
+
+	template<>
+	std::vector<core::InvPtr<gr::VertexStream>> const& RenderManager::GetNewResources() const
+	{
+		return m_createdVertexStreams;
 	}
 
 
