@@ -1,23 +1,23 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Platform.h"
 
-#include "Renderer/Context_DX12.h"
-#include "Renderer/Context_OpenGL.h"
-#include "Renderer/Context_Platform.h"
-
 #include "Renderer/Buffer_DX12.h"
 #include "Renderer/Buffer_OpenGL.h"
 #include "Renderer/Buffer_Platform.h"
+
+#include "Renderer/Context_DX12.h"
+#include "Renderer/Context_OpenGL.h"
+#include "Renderer/Context_Platform.h"
 
 #include "Renderer/GPUTimer_DX12.h"
 #include "Renderer/GPUTimer_OpenGL.h"
 #include "Renderer/GPUTimer_Platform.h"
 
-#include "Renderer/RLibrary_Platform.h"
-
 #include "Renderer/RenderManager_DX12.h"
 #include "Renderer/RenderManager_OpenGL.h"
 #include "Renderer/RenderManager_Platform.h"
+
+#include "Renderer/RLibrary_Platform.h"
 
 #include "Renderer/Sampler_DX12.h"
 #include "Renderer/Sampler_OpenGL.h"
