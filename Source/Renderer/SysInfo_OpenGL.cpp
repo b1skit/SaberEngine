@@ -32,12 +32,6 @@ namespace opengl
 	}
 
 
-	bool SysInfo::GetRayTracingSupport()
-	{
-		return false;
-	}
-
-
 	GLint SysInfo::GetUniformBufferOffsetAlignment()
 	{
 		static GLint s_uniformBufferOffsetAlignment = 0;

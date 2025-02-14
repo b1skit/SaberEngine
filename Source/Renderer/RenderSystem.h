@@ -25,14 +25,12 @@ namespace gr
 		RenderSystem(RenderSystem&&) noexcept = default;
 		RenderSystem& operator=(RenderSystem&&) noexcept = default;
 
-		// Scriptable rendering pipeline:
-	private:
-		bool BuildPipeline(gr::RenderSystemDescription const&); // Creates graphics systems + init/update pipelines
+
 	public:
+		// Scriptable rendering pipeline:
+		void BuildPipeline(gr::RenderSystemDescription const&); // Creates graphics systems + init/update pipelines
 		void ExecuteInitializationPipeline();
 		void ExecuteUpdatePipeline();
-
-		bool RequiresFeature(std::string const&);
 
 
 	public:
@@ -56,9 +54,6 @@ namespace gr
 		std::function<void(gr::RenderSystem*)> m_creationPipeline;
 		std::function<void(gr::RenderSystem*)> m_initPipeline;
 
-		std::unordered_set<std::string> m_requiredFeatures;
-
-
 	private:
 		struct UpdateStep
 		{
@@ -73,7 +68,7 @@ namespace gr
 
 
 	private: // Use the Create() factory
-		RenderSystem(gr::RenderSystemDescription const&);
+		RenderSystem(std::string const& name);
 		RenderSystem() = delete; 
 
 
@@ -81,12 +76,6 @@ namespace gr
 		RenderSystem(RenderSystem const&) = delete;
 		RenderSystem& operator=(RenderSystem const&) = delete;
 	};
-
-
-	inline bool RenderSystem::RequiresFeature(std::string const& featureName)
-	{
-		return m_requiredFeatures.contains(featureName);
-	}
 
 
 	inline gr::GraphicsSystemManager& RenderSystem::GetGraphicsSystemManager()

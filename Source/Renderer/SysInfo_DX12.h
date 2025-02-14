@@ -13,14 +13,13 @@ namespace dx12
 		static uint8_t GetMaxRenderTargets();
 		static uint8_t GetMaxTextureBindPoints();
 		static uint8_t GetMaxVertexAttributes();
-		static bool GetRayTracingSupport();
 
-
-	public: // DX12-specific:	
 		static uint32_t GetMaxConstantBufferViews();
 		static uint32_t GetMaxShaderResourceViews();
 		static uint32_t GetMaxUnorderedAccessViews();
+		
 
+	public: // DX12-specific:		
 		static void const* GetD3D12FeatureSupportData(D3D12_FEATURE); // Statically caches query results for reuse
 
 		static D3D_ROOT_SIGNATURE_VERSION GetHighestSupportedRootSignatureVersion();

@@ -14,12 +14,11 @@ namespace opengl
 		static uint8_t GetMaxRenderTargets();
 		static uint8_t GetMaxTextureBindPoints();
 		static uint8_t GetMaxVertexAttributes();
-		static bool GetRayTracingSupport();
-
-		// OpenGL-specific:
+		
 		static uint32_t GetMaxUniformBufferBindings(re::Shader::ShaderType);
 		static uint32_t GetMaxShaderStorageBlockBindings(re::Shader::ShaderType);
 
+		// OpenGL-specific:
 		static GLint GetUniformBufferOffsetAlignment();		
 		static GLint GetShaderStorageBufferOffsetAlignment();
 		static GLint GetMaxAnisotropy();

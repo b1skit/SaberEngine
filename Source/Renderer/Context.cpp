@@ -139,11 +139,6 @@ namespace re
 				m_renderLibraries[i] = nullptr;
 			}
 		}
-		if (m_ASManager)
-		{
-			m_ASManager->Destroy();
-			m_ASManager = nullptr;
-		}
 		m_gpuTimer.Destroy();
 		platform::Context::Destroy(*this);
 	}
@@ -156,15 +151,5 @@ namespace re
 			m_renderLibraries[type] = platform::RLibrary::Create(type);
 		}
 		return m_renderLibraries[type].get();
-	}
-
-
-	void Context::CreateAccelerationStructureManager()
-	{
-		if (!m_ASManager) // Might already exist (E.g. multiple piplines require it)
-		{
-			m_ASManager = std::make_unique<re::AccelerationStructureManager>();
-			m_ASManager->Create();
-		}
 	}
 }

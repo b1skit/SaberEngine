@@ -446,15 +446,6 @@
     <ClInclude Include="GPUTimer_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="AccelerationStructureManager.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="AccelerationStructureManager_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="AccelerationStructureManager_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -785,15 +776,6 @@
       <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="GPUTimer_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="AccelerationStructureManager.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="AccelerationStructureManager_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
-    <ClCompile Include="AccelerationStructureManager_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
   </ItemGroup>

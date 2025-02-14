@@ -2,8 +2,7 @@
 	"PipelineMetadata":
 	{
 		"Name": "Ray Tracing (Experimental)",
-		"ExcludedPlatforms": [ "OpenGL" ],
-		"RequiredFeatures": ["AccelerationStructure"]
+		"ExcludedPlatforms": [ "OpenGL" ]
 	},
 	"Pipeline": [
 		{

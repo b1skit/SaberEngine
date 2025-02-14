@@ -17,13 +17,11 @@ namespace gr
 		static constexpr char const* key_srcName = "SourceName";
 		static constexpr char const* key_dstName = "DestinationName";
 		static constexpr char const* key_GSName = "GraphicsSystem";
+		static constexpr char const* key_excludedPlatforms = "ExcludedPlatforms";
 		
-		static constexpr char const* key_excludedPlatforms = "ExcludedPlatforms";		
 		static constexpr char const* val_platformDX12 = "DX12";
 		static constexpr char const* val_platformOpenGL = "OpenGL";
 
-		static constexpr char const* key_requiredFeatures = "RequiredFeatures";
-		static constexpr char const* val_accelerationStructure = "AccelerationStructure";
 
 		// ---
 
@@ -38,8 +36,6 @@ namespace gr
 		std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_textureInputs;
 		std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_bufferInputs;		
 		std::unordered_map<GSName, std::vector<std::pair<GSName, SrcDstNamePairs>>> m_dataInputs;
-
-		std::unordered_set<std::string> m_requiredFeatures;
 
 		std::string m_name = "UNNAMED RENDER SYSTEM";
 	};

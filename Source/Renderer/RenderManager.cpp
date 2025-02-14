@@ -4,7 +4,6 @@
 #include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
-#include "RenderSystemDesc.h"
 #include "Sampler.h"
 #include "TextureTarget.h"
 #include "VertexStream.h"
@@ -237,23 +236,12 @@ namespace re
 
 	gr::RenderSystem const* RenderManager::CreateAddRenderSystem(std::string const& pipelineFileName)
 	{
-		std::unique_ptr<gr::RenderSystem> newRenderSystem = gr::RenderSystem::Create(pipelineFileName);
-		if (!newRenderSystem)
-		{
-			SEAssertF("Failed to create new render system from pipeline filename \"%s\"", pipelineFileName.c_str());
-			return nullptr;
-		}
-
-		// Ensure any required rendering feature system dependencies are created:
-		if (newRenderSystem->RequiresFeature(gr::RenderSystemDescription::val_accelerationStructure))
-		{
-			re::Context::Get()->CreateAccelerationStructureManager(); // Ensure the AM is immediately created
-		}
+		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName));
 
 		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
-		newRenderSystem->ExecuteInitializationPipeline();
+		m_renderSystems.back()->ExecuteInitializationPipeline();
 
-		return m_renderSystems.emplace_back(std::move(newRenderSystem)).get();
+		return m_renderSystems.back().get();
 	}
 
 
@@ -301,9 +289,6 @@ namespace re
 			renderSystem->PostUpdatePreRender();
 		}
 		SEEndCPUEvent();
-
-		// Update the ray-tracing acceleration structure (IFF it exists)
-		context->UpdateAccelerationStructureManager();
 
 		// Clear our cache of new objects, now that our anything that needs them has had a chance to access them.
 		ClearNewObjectCache();
