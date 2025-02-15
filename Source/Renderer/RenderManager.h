@@ -155,7 +155,7 @@ namespace re
 		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
 		// Used as a holding ground for operations that must be performed once after creation (E.g. mip generation)
 		std::vector<core::InvPtr<re::Texture>> m_createdTextures;
-		std::vector<core::InvPtr<gr::VertexStream>> m_createdVertexStreams;
+
 
 	private:
 		void CreateSamplerLibrary();

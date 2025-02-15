@@ -465,12 +465,6 @@ namespace re
 				m_createdTextures.end(),
 				m_newTextures.GetReadData().begin(),
 				m_newTextures.GetReadData().end());
-
-			m_createdVertexStreams.reserve(m_createdVertexStreams.size() + m_newVertexStreams.GetReadData().size());
-			m_createdVertexStreams.insert(
-				m_createdVertexStreams.end(),
-				m_newVertexStreams.GetReadData().begin(),
-				m_newVertexStreams.GetReadData().end());
 		}
 
 		// Create the resources:
@@ -498,7 +492,6 @@ namespace re
 		// Clear any objects created during the frame. We do this each frame after the RenderSystem updates to
 		// ensure anything that needs to know about new objects being created (e.g. MIP generation GS) can see them
 		m_createdTextures.clear();
-		m_createdVertexStreams.clear();
 	}
 
 
@@ -566,13 +559,6 @@ namespace re
 	std::vector<core::InvPtr<re::Texture>> const& RenderManager::GetNewResources() const
 	{
 		return m_createdTextures;
-	}
-
-
-	template<>
-	std::vector<core::InvPtr<gr::VertexStream>> const& RenderManager::GetNewResources() const
-	{
-		return m_createdVertexStreams;
 	}
 
 
