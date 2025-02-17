@@ -198,15 +198,15 @@ namespace re
 			// Note: No effect for OpenGL
 			union OptimizedClearVals
 			{
-				glm::vec4 m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+				glm::vec4 m_color;
 
 				struct
 				{
-					float m_depth = 1.f; // Far plane
-					uint8_t m_stencil = 0;
+					float m_depth;
+					uint8_t m_stencil;
 				} m_depthStencil;
 
-				OptimizedClearVals() { memset(this, 0, sizeof(OptimizedClearVals)); }
+				OptimizedClearVals() { memset(this, 0, sizeof(OptimizedClearVals)); } // Zero-initialized
 			} m_optimizedClear;
 		};
 

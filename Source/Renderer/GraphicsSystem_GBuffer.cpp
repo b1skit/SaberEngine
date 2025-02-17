@@ -72,6 +72,7 @@ namespace gr
 			re::Texture::Usage::DepthTarget | re::Texture::Usage::ColorSrc);
 		depthTexParams.m_format = re::Texture::Format::Depth32F;
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		depthTexParams.m_optimizedClear.m_depthStencil.m_depth = 1.f;
 
 		m_gBufferTargets->SetDepthStencilTarget(
 			re::Texture::Create(GBufferTexNameHashKeys[GBufferTexIdx::GBufferDepth].GetKey(), depthTexParams),
