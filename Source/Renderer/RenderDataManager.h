@@ -69,6 +69,10 @@ namespace gr
 		template<typename T>
 		std::vector<gr::RenderDataID> const* GetIDsWithDirtyData() const;
 
+		// Get a unique list of IDs that have all Ts, where any/all of the Ts have dirty data for this frame
+		template<typename... Ts>
+		[[nodiscard]] std::vector<gr::RenderDataID> GetIDsWithAnyDirtyData() const;
+
 		template<typename T>
 		[[nodiscard]] bool IsDirty(gr::RenderDataID) const;
 
@@ -90,6 +94,20 @@ namespace gr
 		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; 
 
 		[[nodiscard]] std::vector<gr::TransformID> const& GetRegisteredTransformIDs() const;
+
+
+	private: // Variadic helpers:
+		template<typename T>
+		[[nodiscard]] void GetIDsWithAnyDirtyData(std::vector<gr::RenderDataID>&) const;
+
+		template<typename T, typename Next, typename... Rest>
+		[[nodiscard]] void GetIDsWithAnyDirtyData(std::vector<gr::RenderDataID>&) const;
+
+		template<typename T>
+		[[nodiscard]] size_t GetNumberOfDirtyIDs() const;
+
+		template<typename T, typename Next, typename... Rest>
+		[[nodiscard]] size_t GetNumberOfDirtyIDs() const;
 
 
 	private:
@@ -181,6 +199,9 @@ namespace gr
 
 		std::vector<gr::TransformID> m_perFrameDirtyTransformIDs;
 		std::unordered_set<gr::TransformID> m_perFrameSeenDirtyTransformIDs;
+
+		// Multiple RenderDataIDs can share the same TransformID
+		std::unordered_multimap<gr::TransformID, gr::RenderDataID> m_transformToRenderDataIDs;
 
 
 	public:
@@ -479,6 +500,9 @@ namespace gr
 	template<typename T>
 	T const& RenderDataManager::GetObjectData(gr::RenderDataID renderDataID) const
 	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false),
+			"This function does not (currently) support gr::Transform::RenderData queries");
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID), "renderDataID is not registered");
@@ -504,6 +528,11 @@ namespace gr
 	template<typename T>
 	bool RenderDataManager::HasObjectData(gr::RenderDataID renderDataID) const
 	{
+		if constexpr (std::is_same_v<T, gr::Transform::RenderData>)
+		{
+			return true; // All RenderDataIDs are associated with a gr::Transform::RenderData
+		}
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID), "renderDataID is not registered");
@@ -532,6 +561,11 @@ namespace gr
 	template<typename T>
 	bool RenderDataManager::HasObjectData() const
 	{
+		if constexpr (std::is_same_v<T, gr::Transform::RenderData>)
+		{
+			return !m_transformIDToTransformMetadata.empty();
+		}
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
@@ -550,6 +584,9 @@ namespace gr
 	template<typename T>
 	bool RenderDataManager::HasIDsWithNewData() const
 	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false),
+			"This function does not (currently) support gr::Transform::RenderData queries");
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
@@ -562,6 +599,9 @@ namespace gr
 	template<typename T>
 	std::vector<gr::RenderDataID> const* RenderDataManager::GetIDsWithNewData() const
 	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false),
+			"This function does not (currently) support gr::Transform::RenderData queries");
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
@@ -577,6 +617,9 @@ namespace gr
 	template<typename T>
 	bool RenderDataManager::HasIDsWithDeletedData() const
 	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false),
+			"This function does not (currently) support gr::Transform::RenderData queries");
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
@@ -589,6 +632,9 @@ namespace gr
 	template<typename T>
 	std::vector<gr::RenderDataID> const* RenderDataManager::GetIDsWithDeletedData() const
 	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false),
+			"This function does not (currently) support gr::Transform::RenderData queries");
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
@@ -604,6 +650,9 @@ namespace gr
 	template<typename T>
 	std::vector<gr::RenderDataID> const* RenderDataManager::GetIDsWithDirtyData() const
 	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false),
+			"This function does not (currently) support gr::Transform::RenderData queries");
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
@@ -617,8 +666,144 @@ namespace gr
 
 
 	template<typename T>
+	void RenderDataManager::GetIDsWithAnyDirtyData(std::vector<gr::RenderDataID>& dirtyIDs) const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		if constexpr (std::is_same_v<T, gr::Transform::RenderData>)
+		{
+			std::vector<gr::TransformID> const& dirtyTransformIDs = GetIDsWithDirtyTransformData();
+
+			for (gr::TransformID transformID : dirtyTransformIDs)
+			{
+				auto renderDataIDs = m_transformToRenderDataIDs.equal_range(transformID);
+				while (renderDataIDs.first != renderDataIDs.second)
+				{
+					dirtyIDs.emplace_back(renderDataIDs.first->first);
+					++renderDataIDs.first;
+				}
+			}
+		}
+		else
+		{
+			std::vector<gr::RenderDataID> const* dirtyTs = GetIDsWithDirtyData<T>();
+			if (dirtyTs)
+			{
+				dirtyIDs.insert(dirtyIDs.end(), dirtyTs->begin(), dirtyTs->end());
+			}
+		}
+	}
+
+
+	template<typename T, typename Next, typename... Rest>
+	void RenderDataManager::GetIDsWithAnyDirtyData(std::vector<gr::RenderDataID>& uniqueDirtyIDs) const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		GetIDsWithAnyDirtyData<T>(uniqueDirtyIDs);
+		GetIDsWithAnyDirtyData<Next, Rest...>(uniqueDirtyIDs);
+	}
+
+
+	template<typename... Ts>
+	std::vector<gr::RenderDataID> RenderDataManager::GetIDsWithAnyDirtyData() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		const size_t numDirtyIDs = GetNumberOfDirtyIDs<Ts...>(); // Likely an over-estimation
+		if (numDirtyIDs == 0)
+		{
+			return {}; // Early out
+		}
+
+		// Concatenate a list of all dirty RenderDataIDs for each type:
+		std::vector<gr::RenderDataID> dirtyIDs;
+		dirtyIDs.reserve(numDirtyIDs);
+		
+		GetIDsWithAnyDirtyData<Ts...>(dirtyIDs);
+		SEAssert(dirtyIDs.size() <= numDirtyIDs, "Found more dirty IDs than anticipated. This should not be possible");
+
+		// Post-process the RenderDataIDs in-place to remove duplicates or IDs that don't own ALL of the required types
+		std::unordered_set<gr::RenderDataID> seenIDs;
+		seenIDs.reserve(dirtyIDs.size());
+
+		auto idItr = dirtyIDs.begin();
+		while (idItr != dirtyIDs.end())
+		{
+			const gr::RenderDataID curID = *idItr;
+
+			// We return a list of unique IDs, that contains all of the types
+			// If we've seen this ID, or it doesn't have all the types, remove it
+			if (seenIDs.contains(curID) || !HasObjectData<Ts...>(curID))
+			{
+				bool isLast = false;
+				auto lastElementItr = std::prev(dirtyIDs.end());
+				if (lastElementItr != idItr)
+				{
+					*idItr = *lastElementItr;
+				}
+				else
+				{
+					isLast = true;
+				}
+				dirtyIDs.pop_back();
+
+				seenIDs.emplace(curID);
+
+				if (dirtyIDs.empty() || isLast)
+				{
+					break;
+				}
+			}
+			else
+			{
+				seenIDs.emplace(curID);
+				++idItr;
+			}
+		}
+
+		return dirtyIDs;
+	}
+
+
+	template<typename T>
+	size_t RenderDataManager::GetNumberOfDirtyIDs() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		if constexpr (std::is_same_v<T, gr::Transform::RenderData>)
+		{
+			size_t count = 0;
+			std::vector<gr::TransformID> const& dirtyTransformIDs = GetIDsWithDirtyTransformData();
+			for (gr::TransformID transformID : dirtyTransformIDs)
+			{
+				auto renderDataIDsItr = m_transformToRenderDataIDs.equal_range(transformID);
+				count += std::distance(renderDataIDsItr.first, renderDataIDsItr.second);
+			}
+			return count;
+		}
+		else
+		{
+			std::vector<gr::RenderDataID> const* dirtyIDs = GetIDsWithDirtyData<T>();
+			return dirtyIDs ? dirtyIDs->size() : 0;
+		}
+	}
+
+
+	template<typename T, typename Next, typename... Rest>
+	size_t RenderDataManager::GetNumberOfDirtyIDs() const
+	{
+		return GetNumberOfDirtyIDs<T>() + GetNumberOfDirtyIDs<Next, Rest...>();
+	}
+
+
+
+	template<typename T>
 	bool RenderDataManager::IsDirty(gr::RenderDataID renderDataID) const
 	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false),
+			"This function does not (currently) support gr::Transform::RenderData queries");
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID), "renderDataID is not registered");
@@ -661,6 +846,9 @@ namespace gr
 	template<typename T>
 	uint32_t RenderDataManager::GetNumElementsOfType() const
 	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false),
+			"This function does not (currently) support gr::Transform::RenderData queries");
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
@@ -678,6 +866,8 @@ namespace gr
 	template<typename T>
 	std::vector<gr::RenderDataID> const& RenderDataManager::GetRegisteredRenderDataIDs() const
 	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false), "Invalid type for this function");
+
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
@@ -706,6 +896,8 @@ namespace gr
 	template<typename T>
 	void RenderDataManager::DestroyObjectData(gr::RenderDataID renderDataID)
 	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false), "Invalid type for this function");
+
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 
 		// Catch illegal accesses during RenderData modification

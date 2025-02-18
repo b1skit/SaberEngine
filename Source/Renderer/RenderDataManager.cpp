@@ -65,6 +65,9 @@ namespace gr
 			SEAssert(m_registeredRenderObjectIDs.empty() && m_registeredTransformIDs.empty(),
 				"A registered ID list is not empty");
 
+			SEAssert(m_transformToRenderDataIDs.empty(),
+				"TransformID -> RenderDataID multi-map not empty. This should not be possible");
+
 			for (auto const& typeVector : m_perTypeRegisteredRenderDataIDs)
 			{
 				SEAssert(typeVector.empty(), "A per-type registered ID list is not empty");
@@ -133,6 +136,9 @@ namespace gr
 
 				renderObjectMetadata->second.m_referenceCount++;
 			}
+
+			// Multi-map our TransformID -> RenderDataID:
+			m_transformToRenderDataIDs.emplace(transformID, renderDataID);
 		}
 
 		RegisterTransform(transformID);
@@ -152,7 +158,7 @@ namespace gr
 
 			RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 			renderObjectTransformID = renderObjectMetadata.m_transformID;
-			
+
 			renderObjectMetadata.m_referenceCount--;
 			if (renderObjectMetadata.m_referenceCount == 0)
 			{
@@ -165,6 +171,19 @@ namespace gr
 				m_IDToRenderObjectMetadata.erase(renderDataID);
 				
 				RemoveIDFromTrackingList(m_registeredRenderObjectIDs, renderDataID);
+
+				// Remove the RenderDataID from our TransformID -> RenderDataID multi-map:
+				auto transformToRenderDataIDsItr = m_transformToRenderDataIDs.equal_range(renderObjectTransformID);
+				auto curItr = transformToRenderDataIDsItr.first;
+				while (curItr != transformToRenderDataIDsItr.second)
+				{
+					if (curItr->second == renderDataID)
+					{
+						m_transformToRenderDataIDs.erase(curItr);
+						break;
+					}
+					++curItr;
+				}
 			}
 		}
 
