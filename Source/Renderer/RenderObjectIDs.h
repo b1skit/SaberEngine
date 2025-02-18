@@ -18,7 +18,7 @@ namespace gr
 		IsMeshPrimitiveBounds	= 1 << 2,
 		IsLightBounds			= 1 << 3,
 		
-		IsMeshPrimitive			= 1 << 4,
+		IsMeshPrimitiveConcept	= 1 << 4,
 
 		Invalid
 	};

@@ -113,6 +113,30 @@ namespace re
 	}
 
 
+	std::shared_ptr<Stage> Stage::CreateRayTracingStage(
+		char const* name, RayTracingStageParams const& stageParams)
+	{
+		std::shared_ptr<Stage> newRTStage;
+		newRTStage.reset(new RayTracingStage(
+			name,
+			std::make_unique<RayTracingStageParams>(stageParams),
+			re::Lifetime::Permanent));
+		return newRTStage;
+	}
+
+
+	std::shared_ptr<Stage> Stage::CreateSingleFrameRayTracingStage(
+		char const* name, RayTracingStageParams const& stageParams)
+	{
+		std::shared_ptr<Stage> newRTStage;
+		newRTStage.reset(new RayTracingStage(
+			name,
+			std::make_unique<RayTracingStageParams>(stageParams),
+			re::Lifetime::SingleFrame));
+		return newRTStage;
+	}
+
+
 	std::shared_ptr<ClearStage> Stage::CreateClearStage(
 		char const* name,
 		std::shared_ptr<re::TextureTargetSet> const& targetSet)
@@ -194,6 +218,14 @@ namespace re
 			stageParams->m_effectID);
 		
 		AddBatch(*m_fullscreenQuadBatch);
+	}
+
+
+	RayTracingStage::RayTracingStage(
+		char const* name, std::unique_ptr<RayTracingStageParams>&& stageParams, re::Lifetime lifetime)
+		: INamedObject(name)
+		, Stage(name, std::move(stageParams), Type::RayTracing, lifetime)
+	{
 	}
 
 
@@ -743,11 +775,15 @@ namespace re
 		SEAssert(m_type != Type::FullscreenQuad || m_stageBatches.empty(),
 			"Cannot add batches to a fullscreen quad stage (except for the initial batch during construction)");
 
-		SEAssert(batch.GetEffectID() != 0, "Batch has not been assigned an Effect");
+		SEAssert(batch.GetEffectID() != 0 ||
+			(batch.GetType() == re::Batch::BatchType::RayTracing && 
+				batch.GetRayTracingParams().m_operation == Batch::RayTracingParams::Operation::BuildAS),
+			"Batch has not been assigned an Effect");
 
 		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics &&
-			(m_type == Type::Graphics || m_type == Type::FullscreenQuad)) ||
-			(batch.GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute),
+				(m_type == Type::Graphics || m_type == Type::FullscreenQuad)) ||
+			(batch.GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute) ||
+			(batch.GetType() == re::Batch::BatchType::RayTracing && m_type == Type::RayTracing),
 			"Incompatible batch type");
 
 #if defined(_DEBUG)
@@ -771,7 +807,11 @@ namespace re
 		if (batch.MatchesFilterBits(m_requiredBatchFilterBitmasks, m_excludedBatchFilterBitmasks))
 		{
 			re::Batch* duplicatedBatch = &m_stageBatches.emplace_back(re::Batch::Duplicate(batch, lifetime));
-			duplicatedBatch->Resolve(m_drawStyleBits);
+
+			if (batch.GetEffectID() != 0) // Some specialized batches (e.g. ray tracing) don't have an EffectID
+			{
+				duplicatedBatch->Resolve(m_drawStyleBits);
+			}
 
 			return duplicatedBatch;
 		}

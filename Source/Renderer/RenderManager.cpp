@@ -134,6 +134,7 @@ namespace re
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newVertexStreams(util::NBufferedVector<core::InvPtr<gr::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newAccelerationStructures(util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_quitEventRecieved(false)
 	{
 	}
@@ -457,6 +458,7 @@ namespace re
 		m_newSamplers.AquireReadLock();
 		m_newVertexStreams.AquireReadLock();
 		m_newTargetSets.AquireReadLock();
+		m_newAccelerationStructures.AquireReadLock();
 
 		// Record newly created objects. This provides an convenient way to post-process new objects
 		{
@@ -476,6 +478,7 @@ namespace re
 		m_newSamplers.ReleaseReadLock();
 		m_newVertexStreams.ReleaseReadLock();
 		m_newTargetSets.ReleaseReadLock();
+		m_newAccelerationStructures.ReleaseReadLock();
 
 		SEEndCPUEvent();
 	}
@@ -505,6 +508,7 @@ namespace re
 		m_newSamplers.SwapAndClear();
 		m_newVertexStreams.SwapAndClear();
 		m_newTargetSets.SwapAndClear();
+		m_newAccelerationStructures.SwapAndClear();
 
 		SEEndCPUEvent();
 	}
@@ -517,6 +521,7 @@ namespace re
 		m_newSamplers.Destroy();
 		m_newVertexStreams.Destroy();
 		m_newTargetSets.Destroy();
+		m_newAccelerationStructures.Destroy();
 	}
 
 
@@ -552,6 +557,13 @@ namespace re
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::TextureTargetSet> const& newObject)
 	{
 		m_newTargetSets.EmplaceBack(newObject);
+	}
+
+
+	template<>
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::AccelerationStructure> const& newObject)
+	{
+		m_newAccelerationStructures.EmplaceBack(newObject);
 	}
 
 

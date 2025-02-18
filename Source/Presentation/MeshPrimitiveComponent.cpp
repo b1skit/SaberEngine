@@ -83,7 +83,7 @@ namespace fr
 		fr::RenderDataComponent* meshPrimRenderCmpt = fr::RenderDataComponent::GetCreateRenderDataComponent(
 			em, meshPrimitiveConcept, transformComponent->GetTransformID());
 
-		meshPrimRenderCmpt->SetFeatureBit(gr::RenderObjectFeature::IsMeshPrimitive);
+		meshPrimRenderCmpt->SetFeatureBit(gr::RenderObjectFeature::IsMeshPrimitiveConcept);
 
 		AttachMeshPrimitiveComponentHelper(
 			em, meshPrimitiveConcept, meshPrimitive, *meshPrimRenderCmpt, positionMinXYZ, positionMaxXYZ);

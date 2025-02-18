@@ -244,7 +244,7 @@ namespace gr
 			{
 				const gr::RenderDataID newMeshPrimID = newMeshPrimDataItr.GetRenderDataID();
 
-				if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, newMeshPrimDataItr.GetFeatureBits()))
+				if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveConcept, newMeshPrimDataItr.GetFeatureBits()))
 				{
 					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 						newMeshPrimDataItr.Get<gr::MeshPrimitive::RenderData>();
@@ -429,7 +429,7 @@ namespace gr
 				{
 					const gr::RenderDataID dirtyMaterialID = dirtyMaterialItr.GetRenderDataID();
 
-					if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, dirtyMaterialItr.GetFeatureBits()))
+					if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveConcept, dirtyMaterialItr.GetFeatureBits()))
 					{
 						MaterialInstanceMetadata& matInstMeta =
 							m_materialInstanceMetadata[m_renderDataIDToBatchMetadata.at(dirtyMaterialID).m_matEffectID];

@@ -6,9 +6,6 @@
 	},
 	"Pipeline": [
 		{
-			"GraphicsSystem": "AccelerationStructures"
-		},
-		{
 			"GraphicsSystem": "Culling"
 		},
 		{
@@ -20,6 +17,20 @@
 						{
 							"SourceName": "ViewCullingResults",
 							"DestinationName": "ViewCullingResults"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "AccelerationStructures",
+			"Inputs": [
+				{
+					"GraphicsSystem": "VertexAnimation",
+					"DataDependencies": [
+						{
+							"SourceName": "AnimatedVertexStreams",
+							"DestinationName": "AnimatedVertexStreams"
 						}
 					]
 				}

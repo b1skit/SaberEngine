@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AccelerationStructure_DX12.h"
 #include "Batch.h"
 #include "Buffer_DX12.h"
 #include "Context_DX12.h"
@@ -214,6 +215,34 @@ namespace dx12
 				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateVertexStreams));
 			}
 		}
+		// Acceleration structures:
+		if (renderManager.m_newAccelerationStructures.HasReadData())
+		{
+			auto CreateAccelerationStructures = [&renderManager, singleThreaded = singleThreadResourceCreate]()
+				{
+					if (!singleThreaded)
+					{
+						renderManager.m_newAccelerationStructures.AquireReadLock();
+					}
+					for (auto& accelStructure : renderManager.m_newAccelerationStructures.GetReadData())
+					{
+						accelStructure->Create();
+					}
+					if (!singleThreaded)
+					{
+						renderManager.m_newAccelerationStructures.ReleaseReadLock();
+					}
+				};
+
+			if (singleThreadResourceCreate)
+			{
+				CreateAccelerationStructures();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateAccelerationStructures));
+			}
+		}
 
 		// Finally, wait for everything to complete:
 		if (!singleThreadResourceCreate)
@@ -268,6 +297,7 @@ namespace dx12
 					return dx12::CommandListType::Direct;
 				case re::Stage::Type::Compute:
 				case re::Stage::Type::LibraryCompute:
+				case re::Stage::Type::RayTracing:
 					return dx12::CommandListType::Compute;
 				case re::Stage::Type::Parent:
 				case re::Stage::Type::Invalid:
@@ -521,6 +551,47 @@ namespace dx12
 								clearStage->StencilClearEnabled(),
 								clearStage->GetStencilClearValue(),
 								*(*stageItr)->GetTextureTargetSet());
+						}
+						break;
+						case re::Stage::Type::RayTracing:
+						{
+							re::Stage::RayTracingStageParams const* rtStageParams = 
+								dynamic_cast<re::Stage::RayTracingStageParams const*>((*stageItr)->GetStageParams());
+							SEAssert(rtStageParams, "Failed to cast to RayTracingStageParams parameters");
+
+							std::vector<re::Batch> const& batches = (*stageItr)->GetStageBatches();
+							for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
+							{
+								re::Batch const& batch = batches[batchIdx];
+
+								re::Batch::RayTracingParams const& batchRTParams = batch.GetRayTracingParams();
+
+								switch (batchRTParams.m_operation)
+								{
+								case re::Batch::RayTracingParams::Operation::BuildAS:
+								{
+									SEAssert(batchRTParams.m_accelerationStructure, "Acceleration structure is null");
+									cmdList->BuildRaytracingAccelerationStructure(*batchRTParams.m_accelerationStructure);
+								}
+								break;
+								case re::Batch::RayTracingParams::Operation::UpdateAS:
+								{
+									SEAssertF("TODO: Implement this");
+								}
+								break;
+								case re::Batch::RayTracingParams::Operation::CompactAS:
+								{
+									SEAssertF("TODO: Implement this");
+								}
+								break;
+								case re::Batch::RayTracingParams::Operation::TraceRays:
+								{
+									SEAssertF("TODO: Implement this");
+								}
+								break;
+								default: SEAssertF("Invalid ray tracing batch operation type");
+								}
+							}
 						}
 						break;
 						case re::Stage::Type::Graphics:

@@ -333,7 +333,7 @@ namespace re
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
 		, m_batchShader(nullptr)
-		, m_effectID(materialInstanceData ? materialInstanceData->m_effectID : util::HashKey())
+		, m_effectID(materialInstanceData ? materialInstanceData->m_effectID : EffectID())
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
@@ -434,13 +434,27 @@ namespace re
 		EffectID effectID)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Compute)
-		, m_computeParams{}
+		, m_computeParams(computeParams)
 		, m_batchShader(nullptr)
 		, m_effectID(effectID)
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
-		m_computeParams = computeParams;
+	}
+
+
+	Batch::Batch(
+		re::Lifetime lifetime,
+		RayTracingParams const& rtParams,
+		EffectID effectID)
+		: m_lifetime(lifetime)
+		, m_type(BatchType::RayTracing)
+		, m_rayTracingParams(rtParams)
+		, m_batchShader(nullptr)
+		, m_effectID(effectID)
+		, m_drawStyleBitmask(0)
+		, m_batchFilterBitmask(0)
+	{
 	}
 
 
@@ -465,6 +479,14 @@ namespace re
 		case BatchType::Compute:
 		{
 			m_computeParams = {};
+		}
+		break;
+		case BatchType::RayTracing:
+		{
+			// Zero-initialize to ensure shared_ptr doesn't contain garbage
+			memset(&m_rayTracingParams, 0, sizeof(m_rayTracingParams));
+
+			m_rayTracingParams = {};
 		}
 		break;
 		default: SEAssertF("Invalid type");
@@ -493,6 +515,11 @@ namespace re
 				m_computeParams = std::move(rhs.m_computeParams);
 			}
 			break;
+			case BatchType::RayTracing:
+			{
+				m_rayTracingParams = std::move(rhs.m_rayTracingParams);
+			}
+			break;
 			default: SEAssertF("Invalid type");
 			}
 
@@ -519,8 +546,7 @@ namespace re
 
 	Batch::Batch(Batch const& rhs) noexcept
 		: m_lifetime(re::Lifetime::SingleFrame)
-		, m_type(BatchType::Graphics)
-		, m_graphicsParams{}
+		, m_type(rhs.m_type)
 		, m_batchShader(nullptr)
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
@@ -546,6 +572,11 @@ namespace re
 			case BatchType::Compute:
 			{
 				m_computeParams = rhs.m_computeParams;
+			}
+			break;
+			case BatchType::RayTracing:
+			{
+				m_rayTracingParams = rhs.m_rayTracingParams;
 			}
 			break;
 			default: SEAssertF("Invalid type");
@@ -581,6 +612,11 @@ namespace re
 			m_computeParams = {};
 		}
 		break;
+		case BatchType::RayTracing:
+		{
+			m_rayTracingParams = {};
+		}
+		break;
 		default: SEAssertF("Invalid type");
 		}
 		
@@ -590,7 +626,7 @@ namespace re
 
 	Batch Batch::Duplicate(Batch const& rhs, re::Lifetime newLifetime)
 	{
-		Batch result = rhs;
+		Batch result(rhs);
 		result.m_lifetime = newLifetime;
 
 #if defined(_DEBUG)

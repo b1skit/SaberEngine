@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AccelerationStructure_DX12.h"
 #include "Batch.h"
 #include "Buffer.h"
 #include "Buffer_DX12.h"
@@ -328,7 +329,7 @@ namespace dx12
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
 					rootSigIdx,
-					bufferPlatParams->m_resovedGPUResource,
+					bufferPlatParams->m_resolvedGPUResource,
 					bufferPlatParams->m_heapByteOffset);
 
 				toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
@@ -344,7 +345,7 @@ namespace dx12
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
 					rootSigIdx,
-					bufferPlatParams->m_resovedGPUResource,
+					bufferPlatParams->m_resolvedGPUResource,
 					bufferPlatParams->m_heapByteOffset);			
 
 				toState = (m_type == dx12::CommandListType::Compute ? 
@@ -364,14 +365,14 @@ namespace dx12
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
 					rootSigIdx,
-					bufferPlatParams->m_resovedGPUResource,
+					bufferPlatParams->m_resolvedGPUResource,
 					bufferPlatParams->m_heapByteOffset);
 
 				if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
 				{
-					// TODO: We should only insert a UAV barrier if the we're accessing the resource on the same
+					// TODO: We should only insert a UAV barrier if we're accessing the resource on the same
 					// command list where a prior modifying use was performed
-					InsertUAVBarrier(bufferPlatParams->m_resovedGPUResource);
+					InsertUAVBarrier(bufferPlatParams->m_resolvedGPUResource);
 				}
 
 				toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -423,7 +424,7 @@ namespace dx12
 					{
 						// TODO: We should only insert a UAV barrier if the we're accessing the resource on the same
 						// command list where a prior modifying use was performed
-						InsertUAVBarrier(bufferPlatParams->m_resovedGPUResource);
+						InsertUAVBarrier(bufferPlatParams->m_resolvedGPUResource);
 					}
 
 					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -461,7 +462,7 @@ namespace dx12
 			{
 				SEAssert(!isInSharedHeap, "Trying to transition a resource in a shared heap. This is unexpected");
 				SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state")
-				TransitionResource(bufferPlatParams->m_resovedGPUResource, toState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				TransitionResource(bufferPlatParams->m_resolvedGPUResource, toState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 			}
 
 			// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
@@ -470,7 +471,7 @@ namespace dx12
 				const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
 
 				m_seenReadbackResources.emplace_back(ReadbackResourceMetadata{
-					.m_srcResource = bufferPlatParams->m_resovedGPUResource,
+					.m_srcResource = bufferPlatParams->m_resolvedGPUResource,
 					.m_dstResource = bufferPlatParams->m_readbackResources[readbackIdx].m_readbackGPUResource->Get(),
 					.m_dstModificationFence = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFence,
 					.m_dstModificationFenceMutex = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFenceMutex });
@@ -569,7 +570,7 @@ namespace dx12
 			if (streamBuffer->GetLifetime() != re::Lifetime::SingleFrame)
 			{
 				TransitionResource(
-					streamBufferPlatParams->m_resovedGPUResource,
+					streamBufferPlatParams->m_resolvedGPUResource,
 					D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
 					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 			}
@@ -625,7 +626,7 @@ namespace dx12
 		if (indexBuffer.GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame)
 		{
 			TransitionResource(
-				streamBufferPlatParams->m_resovedGPUResource,
+				streamBufferPlatParams->m_resolvedGPUResource,
 				D3D12_RESOURCE_STATE_INDEX_BUFFER,
 				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 		}
@@ -918,6 +919,98 @@ namespace dx12
 	}
 
 
+	void CommandList::BuildRaytracingAccelerationStructure(re::AccelerationStructure& as)
+	{
+		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC const& blasDesc = 
+			dx12::AccelerationStructure::BuildAccelerationStructureDesc(as);
+		
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> cmdList4;
+		const HRESULT hr = m_commandList.As(&cmdList4);
+		SEAssert(SUCCEEDED(hr), "Failed to get command list as ID3D12GraphicsCommandList4");
+
+		switch (as.GetType())
+		{
+		case re::AccelerationStructure::Type::TLAS:
+		{
+			SEAssertF("TODO: Handle this");
+		}
+		break;
+		case re::AccelerationStructure::Type::BLAS:
+		{
+			re::AccelerationStructure::BLASCreateParams const* createParams =
+				dynamic_cast<re::AccelerationStructure::BLASCreateParams const*>(as.GetCreateParams());
+			SEAssert(createParams, "Failed to get AS create params");
+
+			// Transition the inputs:
+			for (auto const& instance : createParams->m_instances)
+			{
+				SEAssert(instance.m_positions->GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
+					"Single frame buffers are held in a shared heap, we can't transition them. DXR requires vertex"
+					"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
+
+				dx12::Buffer::PlatformParams* positionBufferPlatParams =
+					instance.m_positions->GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+				TransitionResource(
+					positionBufferPlatParams->m_resolvedGPUResource, 
+					D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, 
+					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				
+				if (instance.m_indices)
+				{
+					SEAssert(instance.m_indices->GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
+						"Single frame buffers are held in a shared heap, we can't transition them. DXR requires index"
+						"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
+
+					dx12::Buffer::PlatformParams* indexBufferPlatParams =
+						instance.m_indices->GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+					TransitionResource(
+						indexBufferPlatParams->m_resolvedGPUResource,
+						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				}
+
+				if (createParams->m_transform)
+				{
+					SEAssert(createParams->m_transform->GetLifetime() != re::Lifetime::SingleFrame,
+						"Single frame buffers are held in a shared heap, we can't transition them. DXR requires "
+						"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
+
+					dx12::Buffer::PlatformParams* bufferPlatParams =
+						createParams->m_transform->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+					TransitionResource(
+						bufferPlatParams->m_resolvedGPUResource, 
+						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, 
+						D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				}
+			}
+		}
+		break;
+		default: SEAssertF("Invalid AS type");
+		}
+
+		// Note: We use a raw ID3D12GraphicsCommandList4* here (instead of a dx12::CommandList) as DX12 Acceleration
+		// structures must be created in the D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE state, and cannot
+		// transition to any other state
+		cmdList4->BuildRaytracingAccelerationStructure(
+			&blasDesc,
+			0,			// NumPostbuildInfoDescs
+			nullptr);	// pPostbuildInfoDescs
+
+		// Add a barrier to prevent the AS from being accessed before the build is complete (E.g. if building a BLAS and
+		// TLAS on the same command list)
+		dx12::AccelerationStructure::PlatformParams* platParams =
+			as.GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
+
+		InsertUAVBarrier(platParams->m_ASBuffer->Get());
+
+		// Release the AccelerationStructure's CreateParams while we're here:
+		as.ReleaseCreateParams();
+	}
+
+
 	void CommandList::SetViewport(re::TextureTargetSet const& targetSet) const
 	{
 		SEAssert(m_type != CommandListType::Compute && m_type != CommandListType::Copy,
@@ -1019,12 +1112,12 @@ namespace dx12
 			"GPUResource is not valid. Buffers using a shared resource cannot be used here");
 
 		TransitionResource(
-			bufferPlatformParams->m_resovedGPUResource,
+			bufferPlatformParams->m_resolvedGPUResource,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 		m_commandList->CopyBufferRegion(
-			bufferPlatformParams->m_resovedGPUResource,	// pDstBuffer
+			bufferPlatformParams->m_resolvedGPUResource,	// pDstBuffer
 			dstOffset,									// DstOffset
 			srcResource,								// pSrcBuffer
 			srcOffset,									// SrcOffset

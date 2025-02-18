@@ -41,6 +41,8 @@ namespace re
 			Compute,			
 			LibraryCompute,
 
+			RayTracing,
+
 			Invalid
 		};
 		static constexpr bool IsLibraryType(Type type);
@@ -81,6 +83,10 @@ namespace re
 			EffectID m_effectID;
 			effect::drawstyle::Bitmask m_drawStyleBitmask = effect::drawstyle::DefaultTechnique;
 		};
+		struct RayTracingStageParams final : public virtual IStageParams
+		{
+			//
+		};
 
 
 	public:
@@ -96,6 +102,9 @@ namespace re
 
 		static std::shared_ptr<Stage> CreateFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
 		static std::shared_ptr<Stage> CreateSingleFrameFullscreenQuadStage(char const* name, FullscreenQuadParams const&);
+
+		static std::shared_ptr<Stage> CreateRayTracingStage(char const* name, RayTracingStageParams const&);
+		static std::shared_ptr<Stage> CreateSingleFrameRayTracingStage(char const* name, RayTracingStageParams const&);
 
 		static std::shared_ptr<ClearStage> CreateClearStage(
 			char const* name, std::shared_ptr<re::TextureTargetSet> const&);
@@ -279,6 +288,20 @@ namespace re
 
 	private:
 		FullscreenQuadStage(char const* name, std::unique_ptr<FullscreenQuadParams>&&, re::Lifetime);
+		friend class Stage;
+	};
+
+
+	//---
+
+
+	class RayTracingStage final : public virtual Stage
+	{
+	public:
+		// 
+
+	private:
+		RayTracingStage(char const* name, std::unique_ptr<RayTracingStageParams>&&, re::Lifetime);
 		friend class Stage;
 	};
 

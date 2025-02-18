@@ -490,7 +490,7 @@ namespace gr
 			while (meshPrimItr != meshPrimItrEnd)
 			{
 				// Skip deferred light meshes
-				if (!gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitive, meshPrimItr.GetFeatureBits()))
+				if (!gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveConcept, meshPrimItr.GetFeatureBits()))
 				{
 					++meshPrimItr;
 					continue;

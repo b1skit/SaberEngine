@@ -1,6 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Platform.h"
 
+#include "Renderer/AccelerationStructure_DX12.h"
+#include "Renderer/AccelerationStructure_Platform.h"
+
 #include "Renderer/Buffer_DX12.h"
 #include "Renderer/Buffer_OpenGL.h"
 #include "Renderer/Buffer_Platform.h"
@@ -161,8 +164,9 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			// Context:
-			platform::Context::Destroy	= &dx12::Context::Destroy;
+			// Acceleration Structure:
+			platform::AccelerationStructure::Create		= &dx12::AccelerationStructure::Create;
+			platform::AccelerationStructure::Destroy	= &dx12::AccelerationStructure::Destroy;
 
 			// Buffers:
 			platform::Buffer::Create			= &dx12::Buffer::Create;
@@ -170,6 +174,9 @@ namespace platform
 			platform::Buffer::Destroy			= &dx12::Buffer::Destroy;
 			platform::Buffer::MapCPUReadback	= &dx12::Buffer::MapCPUReadback;
 			platform::Buffer::UnmapCPUReadback	= &dx12::Buffer::UnmapCPUReadback;
+
+			// Context:
+			platform::Context::Destroy = &dx12::Context::Destroy;
 
 			// GPU Timer:
 			platform::GPUTimer::Create		= &dx12::GPUTimer::Create;

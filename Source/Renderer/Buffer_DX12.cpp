@@ -155,7 +155,7 @@ namespace dx12
 				bufferParams.m_usageMask,
 				GetAlignedSize(bufferParams.m_usageMask, requestedSize),
 				params->m_heapByteOffset,
-				params->m_resovedGPUResource);
+				params->m_resolvedGPUResource);
 
 			SEAssert(params->m_heapByteOffset % GetAlignment(
 				re::BufferAllocator::BufferUsageMaskToAllocationPool(bufferParams.m_usageMask)) == 0,
@@ -179,7 +179,7 @@ namespace dx12
 				},
 				debugName.c_str());
 
-			params->m_resovedGPUResource = params->m_gpuResource->Get();
+			params->m_resolvedGPUResource = params->m_gpuResource->Get();
 		}
 		
 		// CPU readback:
@@ -212,7 +212,7 @@ namespace dx12
 		// Get a CPU pointer to the subresource (i.e subresource 0)
 		void* cpuVisibleData = nullptr;
 		const CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
-		HRESULT hr = params->m_resovedGPUResource->Map(
+		HRESULT hr = params->m_resolvedGPUResource->Map(
 			0,									// Subresource index: Buffers only have a single subresource
 			&readRange,
 			&cpuVisibleData);
@@ -259,7 +259,7 @@ namespace dx12
 			params->m_heapByteOffset + baseOffset,
 			params->m_heapByteOffset + baseOffset + totalBytes };
 
-		params->m_resovedGPUResource->Unmap(
+		params->m_resolvedGPUResource->Unmap(
 			0,					// Subresource index: Buffers only have a single subresource
 			&writtenRange);		// Unmap range: The region the CPU may have modified. Nullptr = entire subresource
 	}
@@ -327,11 +327,11 @@ namespace dx12
 		params->m_isCreated = false;
 
 		SEAssert((params->m_gpuResource && params->m_gpuResource->IsValid()) || 
-			(!params->m_gpuResource && params->m_resovedGPUResource != nullptr),
+			(!params->m_gpuResource && params->m_resolvedGPUResource != nullptr),
 			"GPUResource should be valid");
 
 		params->m_gpuResource = nullptr;
-		params->m_resovedGPUResource = nullptr;
+		params->m_resolvedGPUResource = nullptr;
 		params->m_heapByteOffset = 0;
 	}
 
@@ -416,7 +416,7 @@ namespace dx12
 			if (params->m_views.m_indexBufferView.BufferLocation == 0)
 			{
 				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
-					.BufferLocation = params->m_resovedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
+					.BufferLocation = params->m_resolvedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
 					.SizeInBytes = buffer.GetTotalBytes(),
 					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_stream.m_dataType, false),
 				};
@@ -448,7 +448,7 @@ namespace dx12
 			if (params->m_views.m_vertexBufferView.BufferLocation == 0)
 			{
 				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
-					.BufferLocation = params->m_resovedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
+					.BufferLocation = params->m_resolvedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
 					.SizeInBytes = buffer.GetTotalBytes(),
 					.StrideInBytes = DataTypeToByteStride(view.m_stream.m_dataType),
 				};
@@ -489,5 +489,17 @@ namespace dx12
 			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
 
 		return bufferPlatParams->m_cbvDescriptors.GetCreateDescriptor(buffer, view);
+	}
+
+
+	D3D12_GPU_VIRTUAL_ADDRESS Buffer::GetGPUVirtualAddress(re::Buffer const* buffer)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		dx12::Buffer::PlatformParams const* bufferPlatParams =
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+
+		// Apply the heap byte offset to account for sub-allocated Buffers 
+		return bufferPlatParams->m_resolvedGPUResource->GetGPUVirtualAddress() + bufferPlatParams->m_heapByteOffset;
 	}
 }

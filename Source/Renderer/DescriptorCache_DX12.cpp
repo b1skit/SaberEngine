@@ -507,7 +507,7 @@ namespace
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-		device->CreateShaderResourceView(params->m_resovedGPUResource, &srvDesc, descriptor.GetBaseDescriptor());
+		device->CreateShaderResourceView(params->m_resolvedGPUResource, &srvDesc, descriptor.GetBaseDescriptor());
 	}
 
 
@@ -537,7 +537,7 @@ namespace
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		device->CreateUnorderedAccessView(
-			params->m_resovedGPUResource,
+			params->m_resolvedGPUResource,
 			nullptr,	// Optional counter resource
 			&uavDesc,
 			descriptor.GetBaseDescriptor());
@@ -553,7 +553,7 @@ namespace
 
 		const D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc
 		{
-			.BufferLocation = params->m_resovedGPUResource->GetGPUVirtualAddress(),
+			.BufferLocation = params->m_resolvedGPUResource->GetGPUVirtualAddress(),
 			.SizeInBytes = util::RoundUpToNearestMultiple<uint32_t>(
 				buffer.GetTotalBytes(),
 				D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT),

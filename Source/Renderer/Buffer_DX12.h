@@ -47,7 +47,7 @@ namespace dx12
 		{
 			PlatformParams()
 				: m_gpuResource(nullptr)
-				, m_resovedGPUResource(nullptr)
+				, m_resolvedGPUResource(nullptr)
 				, m_heapByteOffset(0)
 				, m_currentMapFrameLatency(std::numeric_limits<uint8_t>::max())
 				, m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
@@ -64,7 +64,7 @@ namespace dx12
 				m_cbvDescriptors.Destroy();
 			}
 
-			ID3D12Resource* m_resovedGPUResource; // Use this instead of m_gpuResource
+			ID3D12Resource* m_resolvedGPUResource; // Use this instead of m_gpuResource
 
 			uint64_t m_heapByteOffset; // For multiple resources sub-allocated from a single GPUResource
 
@@ -87,7 +87,7 @@ namespace dx12
 			std::mutex m_viewMutex; // Views created at first usage during command recording
 
 
-			// May be invalid (e.g. single-frame buffers in shared resource). Use m_resovedGPUResource instead
+			// May be invalid (e.g. single-frame buffers in shared resource). Use m_resolvedGPUResource instead
 			friend class Buffer;
 			std::unique_ptr<dx12::GPUResource> m_gpuResource; 
 		};
@@ -115,6 +115,8 @@ namespace dx12
 		// Index/vertex views:
 		static D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::BufferView const&);
 		static D3D12_VERTEX_BUFFER_VIEW const* GetOrCreateVertexBufferView(re::Buffer const&, re::BufferView const&);
+
+		static D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(re::Buffer const*);
 	};
 
 

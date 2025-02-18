@@ -22,6 +22,7 @@ namespace gr
 
 namespace re
 {
+	class AccelerationStructure;
 	class Buffer;
 	class Shader;
 	class Texture;
@@ -36,7 +37,8 @@ namespace re
 		enum class BatchType
 		{
 			Graphics,
-			Compute
+			Compute,
+			RayTracing,
 		};
 
 		enum class GeometryMode
@@ -91,6 +93,23 @@ namespace re
 			// No. groups dispatched in XYZ directions:
 			glm::uvec3 m_threadGroupCount = glm::uvec3(std::numeric_limits<uint32_t>::max()); 
 		};
+		struct RayTracingParams
+		{
+			// Note: Don't forget to update ComputeDataHash() if modifying this
+
+			enum class Operation : uint8_t
+			{
+				BuildAS,	// Acceleration structure operations do not require/use Batches
+				UpdateAS,
+				CompactAS,
+
+				TraceRays,	// Uses/require Batches
+
+				Invalid
+			} m_operation = Operation::Invalid;
+
+			std::shared_ptr<re::AccelerationStructure> m_accelerationStructure; // BLAS or TLAS, depending on the operation
+		};
 
 		using VertexStreamOverride = std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>;
 
@@ -107,6 +126,9 @@ namespace re
 
 		// Compute batches:
 		Batch(re::Lifetime, ComputeParams const&, EffectID);
+
+		// Ray tracing batches:
+		Batch(re::Lifetime, RayTracingParams const&, EffectID);
 
 
 	public:
@@ -162,6 +184,7 @@ namespace re
 
 		GraphicsParams const& GetGraphicsParams() const;
 		ComputeParams const& GetComputeParams() const;
+		RayTracingParams const& GetRayTracingParams() const;
 
 
 	private:
@@ -175,6 +198,7 @@ namespace re
 		{
 			GraphicsParams m_graphicsParams;
 			ComputeParams m_computeParams;
+			RayTracingParams m_rayTracingParams;
 		};
 		
 		core::InvPtr<re::Shader> m_batchShader;
@@ -275,5 +299,12 @@ namespace re
 	{
 		SEAssert(m_type == BatchType::Compute, "Invalid type");
 		return m_computeParams;
+	}
+
+
+	inline Batch::RayTracingParams const& Batch::GetRayTracingParams() const
+	{
+		SEAssert(m_type == BatchType::RayTracing, "Invalid type");
+		return m_rayTracingParams;
 	}
 }

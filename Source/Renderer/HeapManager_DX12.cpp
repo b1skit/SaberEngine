@@ -483,12 +483,12 @@ namespace
 				((resourceDesc.m_resourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS) == 0)),
 			"Flags are incompatible with the MSAA");
 
-		static const bool supportsMSAA = 
+		static const bool s_supportsMSAA = 
 			dx12::SysInfo::GetMaxMultisampleQualityLevel(resourceDesc.m_resourceDesc.Format) > 0;
 
 		SEAssert(!resourceDesc.m_isMSAATexture ||
 			(resourceDesc.m_resourceDesc.SampleDesc.Count > 0 &&
-				supportsMSAA),
+				s_supportsMSAA),
 			"Resource is misconfigured, or MSAA is not supported");
 #endif
 	}
@@ -1280,9 +1280,11 @@ namespace dx12
 		const util::HashKey resourceHeapKey =
 			ComputePagedResourceHeapHash(resourceDesc, destinationHeapAlignment, m_canMixResourceTypes);
 
-		PagedResourceHeap* pagedResourceHeap = nullptr;
+		HeapAllocation newAllocation;
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_pagedHeapsMutex);
+
+			PagedResourceHeap* pagedResourceHeap = nullptr;
 
 			if (!m_pagedHeaps.contains(resourceHeapKey))
 			{
@@ -1311,13 +1313,15 @@ namespace dx12
 			{
 				pagedResourceHeap = m_pagedHeaps.at(resourceHeapKey).get();
 			}
+
+			newAllocation = pagedResourceHeap->GetAllocation(util::CheckedCast<uint32_t>(resourceNumBytes));
 		}
 
 		// Now that we know which PagedResourceHeap will back our resource, we can create it
 		return std::make_unique<GPUResource>(
 			this,
 			resourceDesc,
-			pagedResourceHeap->GetAllocation(util::CheckedCast<uint32_t>(resourceNumBytes)),
+			std::move(newAllocation),
 			name,
 			GPUResource::PrivateCTORToken{});
 	}
