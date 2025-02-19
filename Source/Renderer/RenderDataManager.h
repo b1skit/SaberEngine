@@ -275,6 +275,8 @@ namespace gr
 			template<typename T>
 			[[nodiscard]] bool IsDirty() const;
 
+			bool AnyDirty() const;
+
 			gr::RenderDataID GetRenderDataID() const;
 
 			[[nodiscard]] gr::Transform::RenderData const& GetTransformData() const;
@@ -293,6 +295,12 @@ namespace gr
 		private:
 			template <typename T>
 			T const* GetPtrFromCurrentObjectDataIndicesItr() const;
+
+			template<typename T, typename Next, typename... Rest>
+			bool AnyDirtyHelper() const;
+
+			template<typename T>
+			bool AnyDirtyHelper() const;
 
 
 		private:
@@ -679,7 +687,7 @@ namespace gr
 				auto renderDataIDs = m_transformToRenderDataIDs.equal_range(transformID);
 				while (renderDataIDs.first != renderDataIDs.second)
 				{
-					dirtyIDs.emplace_back(renderDataIDs.first->first);
+					dirtyIDs.emplace_back(renderDataIDs.first->second);
 					++renderDataIDs.first;
 				}
 			}
@@ -1287,6 +1295,28 @@ namespace gr
 			"Invalid dirty frame value");
 
 		return m_renderObjectMetadataItr->second.m_dirtyFrameMap.at(dataTypeIndex) == m_currentFrame;
+	}
+
+
+	template<typename... Ts>
+	bool RenderDataManager::ObjectIterator<Ts...>::AnyDirty() const
+	{
+		return TransformIsDirty() || AnyDirtyHelper<Ts...>();
+	}
+
+
+	template<typename... Ts>
+	template<typename T, typename Next, typename... Rest>
+	bool RenderDataManager::ObjectIterator<Ts...>::AnyDirtyHelper() const
+	{
+		return IsDirty<T>() || AnyDirtyHelper<Next, Rest...>();
+	}
+
+	template<typename... Ts>
+	template<typename T>
+	bool RenderDataManager::ObjectIterator<Ts...>::AnyDirtyHelper() const
+	{
+		return IsDirty<T>();
 	}
 
 	
