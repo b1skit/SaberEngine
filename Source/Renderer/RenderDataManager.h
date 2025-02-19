@@ -259,7 +259,8 @@ namespace gr
 				std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator renderObjectMetadataBeginItr,
 				std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator const renderObjectMetadataEndItr,
 				std::tuple<Ts const*...> endPtrs,
-				uint64_t currentFrame);
+				uint64_t currentFrame,
+				FeatureBitmask featureMask);
 
 		public:
 			~ObjectIterator() = default;
@@ -312,6 +313,7 @@ namespace gr
 			std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator const m_renderObjectMetadataEndItr;
 
 			uint64_t m_currentFrame;
+			FeatureBitmask m_featureMask;
 		};
 
 
@@ -385,7 +387,7 @@ namespace gr
 		LinearIterator<T> LinearEnd() const;
 
 		template <typename... Ts>
-		ObjectIterator<Ts...> ObjectBegin() const;
+		ObjectIterator<Ts...> ObjectBegin(RenderObjectFeature = RenderObjectFeature::None) const;
 
 		template <typename... Ts>
 		ObjectIterator<Ts...> ObjectEnd() const;
@@ -1094,7 +1096,8 @@ namespace gr
 
 
 	template <typename... Ts>
-	RenderDataManager::ObjectIterator<Ts...> RenderDataManager::ObjectBegin() const
+	RenderDataManager::ObjectIterator<Ts...> RenderDataManager::ObjectBegin(
+		RenderObjectFeature featureMask/*= RenderObjectFeature::None*/) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -1103,7 +1106,8 @@ namespace gr
 			m_IDToRenderObjectMetadata.begin(),
 			m_IDToRenderObjectMetadata.end(),
 			std::make_tuple(GetEndPtr<Ts>()...),
-			m_currentFrame);
+			m_currentFrame,
+			featureMask);
 	}
 
 
@@ -1120,7 +1124,8 @@ namespace gr
 			objectDataIndicesEndItr,
 			objectDataIndicesEndItr,
 			std::make_tuple(GetEndPtr<Ts>()...),
-			m_currentFrame);
+			m_currentFrame,
+			RenderObjectFeature::None);
 	}
 
 
@@ -1185,12 +1190,14 @@ namespace gr
 		std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator objectIDToRenderObjectMetadataBeginItr,
 		std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator const objectIDToRenderObjectMetadataEndItr,
 		std::tuple<Ts const*...> endPtrs,
-		uint64_t currentFrame)
+		uint64_t currentFrame,
+		FeatureBitmask featureMask)
 		: m_endPtrs(endPtrs)
 		, m_renderData(renderData)
 		, m_renderObjectMetadataItr(objectIDToRenderObjectMetadataBeginItr)
 		, m_renderObjectMetadataEndItr(objectIDToRenderObjectMetadataEndItr)
 		, m_currentFrame(currentFrame)
+		, m_featureMask(featureMask)
 	{
 		// Find our first valid set of starting pointers:
 		bool hasValidPtrs = false;
@@ -1198,6 +1205,13 @@ namespace gr
 		{
 			// We have a set of gr::RenderDataID data indices. Try and make a tuple of valid pointers from all of them
 			m_ptrs = std::make_tuple(GetPtrFromCurrentObjectDataIndicesItr<Ts>()...);
+			
+			// Check the feature mask:
+			if (gr::HasAllFeatures(m_featureMask, m_renderObjectMetadataItr->second.m_featureBits) == false)
+			{
+				m_renderObjectMetadataItr++;
+				continue;
+			}
 
 			// If the current RenderDataID's object doesn't contain all data elements of the given template type (i.e.
 			// any of the tuple elements are null), skip to the next object:
@@ -1243,6 +1257,12 @@ namespace gr
 			{
 				hasValidPtrs = false;
 				break;
+			}
+
+			// Check the feature mask:
+			if (gr::HasAllFeatures(m_featureMask, m_renderObjectMetadataItr->second.m_featureBits) == false)
+			{
+				continue;
 			}
 
 			// We have a valid set of gr::RenderDataID data indices. Make a tuple from them

@@ -11,8 +11,9 @@ namespace gr
 
 	typedef uint32_t FeatureBitmask;
 
-	enum RenderObjectFeature : uint32_t
+	enum RenderObjectFeature : FeatureBitmask
 	{
+		None					= 0,
 		IsSceneBounds			= 1 << 0,
 		IsMeshBounds			= 1 << 1,
 		IsMeshPrimitiveBounds	= 1 << 2,
@@ -23,8 +24,17 @@ namespace gr
 		Invalid
 	};
 
+	// True if the featureBits contain the individual feature
 	inline bool HasFeature(RenderObjectFeature feature, FeatureBitmask featureBits)
 	{
-		return featureBits & (1 << feature);
+		return feature == RenderObjectFeature::None || 
+			featureBits & feature;
+	}
+
+	// True if the featureBits contain all of the features
+	inline bool HasAllFeatures(FeatureBitmask features, FeatureBitmask featureBits)
+	{
+		return features == RenderObjectFeature::None ||
+			(features & featureBits) == features;
 	}
 }
