@@ -119,7 +119,7 @@ namespace dx12
 			uint8_t stencilClearVal,
 			re::TextureTarget const&);
 
-		void BuildRaytracingAccelerationStructure(re::AccelerationStructure&);
+		void BuildRaytracingAccelerationStructure(re::AccelerationStructure&, bool doUpdate);
 
 		void SetViewport(re::TextureTargetSet const&) const;
 		void SetScissorRect(re::TextureTargetSet const&) const;

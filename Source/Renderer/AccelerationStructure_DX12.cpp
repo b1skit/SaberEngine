@@ -304,7 +304,7 @@ namespace dx12
 
 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructure::BuildAccelerationStructureDesc(
-		re::AccelerationStructure& as)
+		re::AccelerationStructure& as, bool doUpdate)
 	{
 		switch (as.GetType())
 		{
@@ -315,7 +315,7 @@ namespace dx12
 		break;
 		case re::AccelerationStructure::Type::BLAS:
 		{
-			return BuildBLASDesc(as, false);
+			return BuildBLASDesc(as, doUpdate);
 		}
 		break;
 		default: SEAssertF("Invalid AccelerationStructure Type");

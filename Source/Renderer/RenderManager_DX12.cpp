@@ -565,18 +565,20 @@ namespace dx12
 								re::Batch const& batch = batches[batchIdx];
 
 								re::Batch::RayTracingParams const& batchRTParams = batch.GetRayTracingParams();
+								SEAssert(batchRTParams.m_accelerationStructure, "AccelerationStructure is null");
 
 								switch (batchRTParams.m_operation)
 								{
 								case re::Batch::RayTracingParams::Operation::BuildAS:
 								{
-									SEAssert(batchRTParams.m_accelerationStructure, "Acceleration structure is null");
-									cmdList->BuildRaytracingAccelerationStructure(*batchRTParams.m_accelerationStructure);
+									cmdList->BuildRaytracingAccelerationStructure(
+										*batchRTParams.m_accelerationStructure, false);
 								}
 								break;
 								case re::Batch::RayTracingParams::Operation::UpdateAS:
 								{
-									SEAssertF("TODO: Implement this");
+									cmdList->BuildRaytracingAccelerationStructure(
+										*batchRTParams.m_accelerationStructure, true);
 								}
 								break;
 								case re::Batch::RayTracingParams::Operation::CompactAS:

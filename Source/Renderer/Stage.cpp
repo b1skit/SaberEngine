@@ -777,7 +777,7 @@ namespace re
 
 		SEAssert(batch.GetEffectID() != 0 ||
 			(batch.GetType() == re::Batch::BatchType::RayTracing && 
-				batch.GetRayTracingParams().m_operation == Batch::RayTracingParams::Operation::BuildAS),
+				batch.GetRayTracingParams().m_operation != Batch::RayTracingParams::Operation::TraceRays),
 			"Batch has not been assigned an Effect");
 
 		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics &&

@@ -38,7 +38,8 @@ namespace dx12
 
 
 	public: // DX12-specific functionality:
-		static D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC BuildAccelerationStructureDesc(re::AccelerationStructure&);
+		static D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC BuildAccelerationStructureDesc(
+			re::AccelerationStructure&, bool doUpdate);
 	};
 
 }

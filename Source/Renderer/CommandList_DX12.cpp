@@ -919,10 +919,10 @@ namespace dx12
 	}
 
 
-	void CommandList::BuildRaytracingAccelerationStructure(re::AccelerationStructure& as)
+	void CommandList::BuildRaytracingAccelerationStructure(re::AccelerationStructure& as, bool doUpdate)
 	{
 		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC const& blasDesc = 
-			dx12::AccelerationStructure::BuildAccelerationStructureDesc(as);
+			dx12::AccelerationStructure::BuildAccelerationStructureDesc(as, doUpdate);
 		
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> cmdList4;
 		const HRESULT hr = m_commandList.As(&cmdList4);
