@@ -485,17 +485,11 @@ namespace gr
 			m_showMeshCoordinateAxis || 
 			m_showAllVertexNormals)
 		{
-			auto meshPrimItr = renderData.ObjectBegin<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>();
+			auto meshPrimItr = renderData.ObjectBegin<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>(
+				gr::RenderObjectFeature::IsMeshPrimitiveConcept);
 			auto const& meshPrimItrEnd = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>();
 			while (meshPrimItr != meshPrimItrEnd)
 			{
-				// Skip deferred light meshes
-				if (!gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveConcept, meshPrimItr.GetFeatureBits()))
-				{
-					++meshPrimItr;
-					continue;
-				}
-
 				const gr::RenderDataID meshPrimRenderDataID = meshPrimItr.GetRenderDataID();
 
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(meshPrimRenderDataID))
