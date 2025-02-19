@@ -59,7 +59,7 @@ namespace dx12
 	class HeapPage
 	{
 	public:
-		HeapPage(HeapDesc const&, uint32_t pageSize);
+		HeapPage(HeapDesc const&, uint32_t pageSize, size_t pageIdx);
 		~HeapPage();
 
 		HeapPage(HeapPage&&) noexcept = default;

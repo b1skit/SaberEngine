@@ -558,7 +558,7 @@ namespace dx12
 	// -----------------------------------------------------------------------------------------------------------------
 
 
-	HeapPage::HeapPage(HeapDesc const& heapDesc, uint32_t pageSize)
+	HeapPage::HeapPage(HeapDesc const& heapDesc, uint32_t pageSize, size_t pageIdx)
 		: m_pageSize(pageSize)
 		, m_minAlignmentSize(heapDesc.m_allowMSAATextures ? (64 * 1024) : (4 * 1024))
 		, m_heapAlignment(heapDesc.m_alignment)
@@ -582,6 +582,10 @@ namespace dx12
 		};
 		const HRESULT hr = device->CreateHeap(&pageHeapDesc, IID_PPV_ARGS(&m_heap));
 		CheckHResult(hr, "Failed to create D3D12 heap for dx12::HeapPage");
+
+#if defined(_DEBUG)
+		m_heap->SetName(util::ToWideString(std::format("HeapManager HeapPage #{}", pageIdx)).c_str());
+#endif
 
 		// Add the intial page allocation block metadata:
 		m_freeBlocks.push_back(PageBlock(0, m_pageSize));
@@ -950,7 +954,8 @@ namespace dx12
 				k_defaultPageSize,
 				numBytes = util::RoundUpToNearestMultiple(numBytes, m_alignment) );
 
-			m_pages.emplace_back(std::make_unique<HeapPage>(m_heapDesc, pageSize));
+			const size_t pageIdx = m_pages.size(); // For debug naming
+			m_pages.emplace_back(std::make_unique<HeapPage>(m_heapDesc, pageSize, pageIdx));
 			
 			HeapAllocation requestedAllocation = m_pages.back()->Allocate(m_alignment, numBytes);
 			SEAssert(requestedAllocation.IsValid(),
