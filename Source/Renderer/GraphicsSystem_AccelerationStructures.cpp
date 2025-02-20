@@ -230,6 +230,7 @@ namespace gr
 			std::vector<glm::mat4 const*> blasMatrices;
 			auto blasParams = std::make_unique<re::AccelerationStructure::BLASParams>();
 			
+			gr::TransformID parentTransformID = gr::k_invalidTransformID; // Render data maps to the identity Transform
 			for (gr::RenderDataID meshPrimID : meshPrimIDs)
 			{
 				gr::MeshPrimitive::RenderData const& meshPrimRenderData =
@@ -255,7 +256,16 @@ namespace gr
 
 				// We use the MeshPrimitive's local TRS matrix for our BLAS, and then use the parent's global TRS to
 				// orient our BLAS in the TLAS
-				blasMatrices.emplace_back(&renderData.GetTransformDataFromRenderDataID(meshPrimID).g_local);
+				gr::Transform::RenderData const& meshPrimTransform = 
+					renderData.GetTransformDataFromRenderDataID(meshPrimID);
+				
+				SEAssert(parentTransformID == gr::k_invalidTransformID || 
+					parentTransformID == meshPrimTransform.m_parentTransformID,
+					"MeshPrimitive does not have the same parent transform ID as the previous iterations");
+
+				parentTransformID = meshPrimTransform.m_parentTransformID;
+
+				blasMatrices.emplace_back(&meshPrimTransform.g_local);
 
 				gr::Material::MaterialInstanceRenderData const& materialRenderData =
 					renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(meshPrimID);
@@ -268,7 +278,7 @@ namespace gr
 			// Set the world Transform for all geometries in the BLAS
 			// Note: AS matrices must be 3x4 in row-major order
 			blasParams->m_blasWorldMatrix = glm::transpose(
-				renderData.GetTransformDataFromRenderDataID(meshConceptID).g_model);
+				renderData.GetTransformDataFromTransformID(parentTransformID).g_model);
 
 			// Assume we'll always update and compact for now
 			blasParams->m_buildFlags = static_cast<re::AccelerationStructure::BuildFlags>
