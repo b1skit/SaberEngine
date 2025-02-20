@@ -182,7 +182,7 @@ namespace re
 		SEAssert(!buffer->GetPlatformParams()->m_isCreated,
 			"Buffer is already marked as created. This should not be possible");
 
-		const Buffer::StagingPool stagingPool = buffer->GetAllocationType();
+		const Buffer::StagingPool stagingPool = buffer->GetStagingPool();
 		SEAssert(stagingPool != re::Buffer::StagingPool::StagingPool_Invalid, "Invalid AllocationType");
 
 		const Handle uniqueID = buffer->GetUniqueID();
@@ -336,7 +336,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::Commit(Handle uniqueID, void const* data)
+	void BufferAllocator::Stage(Handle uniqueID, void const* data)
 	{
 		uint32_t startIdx;
 		uint32_t totalBytes;
@@ -367,7 +367,7 @@ namespace re
 		{
 		case Buffer::StagingPool::Permanent:
 		{
-			CommitMutable(uniqueID, data, totalBytes, 0); // Internally adds the buffer to m_dirtyBuffers
+			StageMutable(uniqueID, data, totalBytes, 0); // Internally adds the buffer to m_dirtyBuffers
 		}
 		break;
 		case Buffer::StagingPool::Temporary:
@@ -409,7 +409,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::CommitMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset)
+	void BufferAllocator::StageMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset)
 	{
 		SEAssert(numBytes > 0, "0 bytes is only valid for signalling the Buffer::Update to update all bytes");
 

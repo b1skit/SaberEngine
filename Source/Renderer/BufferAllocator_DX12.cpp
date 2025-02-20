@@ -34,7 +34,7 @@ namespace dx12
 			alignedSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0) ||
 			(allocationPool == re::BufferAllocator::Structured &&
 				alignedSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0) ||
-			(allocationPool == re::BufferAllocator::VertexStream &&
+			(allocationPool == re::BufferAllocator::Raw &&
 				alignedSize % 16 == 0),
 			"Invalid alignment");
 
@@ -78,7 +78,7 @@ namespace dx12
 				},
 				util::ToWideString(std::format("Shared structured buffer committed resource {}", bufferIdx)).c_str());
 
-			m_singleFrameBufferResources[re::BufferAllocator::VertexStream][bufferIdx] = heapMgr.CreateResource(
+			m_singleFrameBufferResources[re::BufferAllocator::Raw][bufferIdx] = heapMgr.CreateResource(
 				dx12::ResourceDesc{
 					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,

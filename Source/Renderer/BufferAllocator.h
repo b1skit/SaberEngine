@@ -60,7 +60,7 @@ namespace re
 		//
 		enum AllocationPool : uint8_t
 		{
-			VertexStream,	// Vertex/index buffers: 16B aligned
+			Raw,			// 16B aligned data (E.g. Vertex/index buffers, byte address buffers, etc)
 			Constant,		// 256B aligned
 			Structured,		// 64KB aligned			
 
@@ -175,8 +175,8 @@ namespace re
 		uint32_t Allocate(Handle uniqueID, uint32_t numBytes, Buffer::StagingPool, re::Lifetime bufferLifetime); // Returns the start index
 
 	protected:
-		void Commit(Handle uniqueID, void const* data);	// Update the buffer data
-		void CommitMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
+		void Stage(Handle uniqueID, void const* data);	// Update the buffer data
+		void StageMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
 		
 		void GetData(Handle uniqueID, void const** out_data) const;
 
@@ -210,11 +210,9 @@ namespace re
 			return AllocationPool::Constant;
 		}
 
-		SEAssert(re::Buffer::HasUsageBit(re::Buffer::VertexStream, mask) || 
-			re::Buffer::HasUsageBit(re::Buffer::IndexStream, mask),
-			"Unexpected usage mask");
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Raw, mask), "Unexpected usage mask");
 
-		return AllocationPool::VertexStream;
+		return AllocationPool::Raw;
 	}
 
 

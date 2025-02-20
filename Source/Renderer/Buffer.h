@@ -28,8 +28,7 @@ namespace re
 		{
 			Constant		= 1 << 0,
 			Structured		= 1 << 1,
-			VertexStream	= 1 << 2,
-			IndexStream		= 1 << 3,
+			Raw				= 1 << 2, // 16B aligned data (E.g. Vertex/index buffers, byte address buffers, etc)
 
 			Invalid			= 0
 		};
@@ -136,7 +135,7 @@ namespace re
 		void GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const;
 		uint32_t GetTotalBytes() const;
 		uint32_t GetStride() const;
-		StagingPool GetAllocationType() const;
+		StagingPool GetStagingPool() const;
 		uint8_t GetUsageMask() const;
 		re::Lifetime GetLifetime() const;
 
@@ -296,7 +295,9 @@ namespace re
 		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::None,
 			"Buffer specifies no CPU-side staging, but staging data received. Is this the correct create function?");
 
-		SEAssert(HasUsageBit(Usage::Structured, bufferParams), "Unexpected data type for a buffer array");
+		SEAssert(HasUsageBit(Usage::Structured, bufferParams) ||
+			HasUsageBit(Usage::Raw, bufferParams),
+			"Unexpected data type for a buffer array");
 
 		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
 
@@ -331,7 +332,7 @@ namespace re
 		std::string const& bufferName, void const* data, uint32_t numBytes, BufferParams const& bufferParams)
 	{
 		SEAssert(bufferParams.m_stagingPool == re::Buffer::StagingPool::Temporary,
-			"Invalid staging pool: It's (currently) not possible to Commit() via a nullptr");
+			"Invalid staging pool: It's (currently) not possible to Stage() via a nullptr");
 
 		const uint64_t voidHashCode = typeid(void const*).hash_code();
 
@@ -390,7 +391,7 @@ namespace re
 	}
 
 
-	inline Buffer::StagingPool Buffer::GetAllocationType() const
+	inline Buffer::StagingPool Buffer::GetStagingPool() const
 	{
 		return m_bufferParams.m_stagingPool;
 	}

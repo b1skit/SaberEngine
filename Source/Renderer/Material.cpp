@@ -151,7 +151,7 @@ namespace gr
 	{
 		SEAssert(instanceData, "Instance data is null");
 		SEAssert(baseOffset < buffer->GetArraySize(), "Base offset is OOB");
-		SEAssert(buffer->GetAllocationType() == re::Buffer::StagingPool::Permanent,
+		SEAssert(buffer->GetStagingPool() == re::Buffer::StagingPool::Permanent,
 			"Only mutable buffers can be partially updated");
 
 		switch (EffectIDToEffectMaterial(instanceData->m_effectID))

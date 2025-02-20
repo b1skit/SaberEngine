@@ -49,9 +49,9 @@ namespace opengl
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, ssboAlignment);
 		}
 		break;
-		case re::BufferAllocator::VertexStream:
+		case re::BufferAllocator::Raw:
 		{
-			bufferNameOut = m_singleFrameBuffers[re::BufferAllocator::VertexStream][writeIdx];
+			bufferNameOut = m_singleFrameBuffers[re::BufferAllocator::Raw][writeIdx];
 
 			constexpr GLint k_vertexAlignment = 16; // Minimum alignment of a float4 is 16B
 
@@ -115,17 +115,17 @@ namespace opengl
 				std::format("Single-frame shared SSBO {}", bufferIdx).c_str());
 
 			// VertexStream:
-			SEAssert(glIsBuffer(m_singleFrameBuffers[re::BufferAllocator::VertexStream][bufferIdx]),
+			SEAssert(glIsBuffer(m_singleFrameBuffers[re::BufferAllocator::Raw][bufferIdx]),
 				"Buffer name is not valid");
 
 			glNamedBufferData(
-				m_singleFrameBuffers[re::BufferAllocator::VertexStream][bufferIdx],
+				m_singleFrameBuffers[re::BufferAllocator::Raw][bufferIdx],
 				static_cast<GLsizeiptr>(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 				nullptr,
 				GL_DYNAMIC_DRAW);
 
 			glObjectLabel(GL_BUFFER,
-				m_singleFrameBuffers[re::BufferAllocator::VertexStream][bufferIdx],
+				m_singleFrameBuffers[re::BufferAllocator::Raw][bufferIdx],
 				-1,
 				std::format("Single-frame shared SSBO {}", bufferIdx).c_str());
 		}

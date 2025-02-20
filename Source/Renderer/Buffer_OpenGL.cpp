@@ -20,7 +20,7 @@ namespace opengl
 		uint32_t numBytes;
 		buffer.GetDataAndSize(&data, &numBytes);
 
-		const re::Buffer::StagingPool bufferAlloc = buffer.GetAllocationType();
+		const re::Buffer::StagingPool bufferAlloc = buffer.GetStagingPool();
 		const re::Lifetime bufferLifetime = buffer.GetLifetime();
 		switch (bufferLifetime)
 		{
@@ -101,7 +101,7 @@ namespace opengl
 			// Adjust our source pointer if we're doing a partial update:
 			if (!updateAllBytes)
 			{
-				SEAssert(buffer.GetAllocationType() == re::Buffer::StagingPool::Permanent,
+				SEAssert(buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent,
 					"Only mutable buffers can be partially updated");
 
 				// Update the source data pointer:
@@ -187,7 +187,7 @@ namespace opengl
 		break;
 		case BindTarget::Vertex:
 		{
-			SEAssert(re::Buffer::HasUsageBit(re::Buffer::VertexStream, buffer),
+			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Raw, buffer),
 				"Buffer is missing the VertexStream usage bit");
 
 			glBindVertexBuffer(
@@ -199,7 +199,7 @@ namespace opengl
 		break;
 		case BindTarget::Index:
 		{
-			SEAssert(re::Buffer::HasUsageBit(re::Buffer::IndexStream, buffer),
+			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Raw, buffer),
 				"Buffer is missing the VertexStream usage bit");
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatParams->m_bufferName);

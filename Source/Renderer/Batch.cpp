@@ -455,6 +455,9 @@ namespace re
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
+		SEAssert(effectID != 0 ||
+			rtParams.m_operation != re::Batch::RayTracingParams::Operation::DispatchRays, 
+			"Ray tracing batches require an EffectID for DispatchRays operations");
 	}
 
 

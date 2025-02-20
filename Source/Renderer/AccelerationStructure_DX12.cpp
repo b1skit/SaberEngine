@@ -15,11 +15,61 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
+#if 0
+	void DebugPrintASDesc(char const* asName, D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC const& desc, bool isUpdate)
+	{
+		LOG_ERROR("----------\n");
+		LOG_ERROR(asName);
+
+		LOG_ERROR(std::format("Is update? {}", isUpdate).c_str());
+
+		LOG_ERROR(std::format("DestAccelerationStructureData = {}", desc.DestAccelerationStructureData).c_str());
+
+		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS const& inputs = desc.Inputs;
+		LOG_ERROR(std::format("inputs.Type = {}", (uint64_t)inputs.Type).c_str());
+		LOG_ERROR(std::format("inputs.Flags = {}", (uint64_t)inputs.Flags).c_str());
+		LOG_ERROR(std::format("inputs.NumDescs = {}", inputs.NumDescs).c_str());
+		LOG_ERROR(std::format("inputs.DescsLayout = {}", (uint64_t)inputs.DescsLayout).c_str());
+
+		if (inputs.Type == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL)
+		{
+			for (size_t i = 0; i < inputs.NumDescs; ++i)
+			{
+				D3D12_RAYTRACING_GEOMETRY_DESC const& geoDesc = inputs.pGeometryDescs[i];
+
+				LOG_ERROR(std::format("inputs.pGeometryDescs[{}].Type = {}", i, (uint64_t)inputs.pGeometryDescs[i].Type).c_str());
+				LOG_ERROR(std::format("inputs.pGeometryDescs[{}].Flags = {}", i, (uint64_t)inputs.pGeometryDescs[i].Flags).c_str());
+
+				D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC const& triDesc = geoDesc.Triangles;
+				LOG_ERROR(std::format("inputs.pGeometryDescs[{}].Triangles.Transform3x4 = {}", i, (uint64_t)inputs.pGeometryDescs[i].Triangles.Transform3x4).c_str());
+				LOG_ERROR(std::format("inputs.pGeometryDescs[{}].Triangles.IndexFormat = {}", i, (uint64_t)inputs.pGeometryDescs[i].Triangles.IndexFormat).c_str());
+				LOG_ERROR(std::format("inputs.pGeometryDescs[{}].Triangles.VertexFormat = {}", i, (uint64_t)inputs.pGeometryDescs[i].Triangles.VertexFormat).c_str());
+
+				LOG_ERROR(std::format("inputs.pGeometryDescs[{}].Triangles.IndexCount = {}", i, (uint64_t)inputs.pGeometryDescs[i].Triangles.IndexCount).c_str());
+				LOG_ERROR(std::format("inputs.pGeometryDescs[{}].Triangles.VertexCount = {}", i, (uint64_t)inputs.pGeometryDescs[i].Triangles.VertexCount).c_str());
+				LOG_ERROR(std::format("inputs.pGeometryDescs[{}].Triangles.IndexBuffer = {}", i, (uint64_t)inputs.pGeometryDescs[i].Triangles.IndexBuffer).c_str());
+
+				LOG_ERROR(std::format("inputs.pGeometryDescs[{}].Triangles.VertexBuffer.StartAddress = {}", i, (uint64_t)inputs.pGeometryDescs[i].Triangles.VertexBuffer.StartAddress).c_str());
+				LOG_ERROR(std::format("inputs.pGeometryDescs[{}].Triangles.VertexBuffer.StrideInBytes = {}", i, (uint64_t)inputs.pGeometryDescs[i].Triangles.VertexBuffer.StrideInBytes).c_str());
+			}
+		}
+		else // D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL
+		{
+			LOG_ERROR(std::format("inputs.InstanceDescs = {}", (uint64_t)inputs.InstanceDescs).c_str());
+		}
+
+		LOG_ERROR(std::format("SourceAccelerationStructureData = {}", (uint64_t)desc.SourceAccelerationStructureData).c_str());
+		LOG_ERROR(std::format("ScratchAccelerationStructureData = {}", (uint64_t)desc.ScratchAccelerationStructureData).c_str());
+
+		LOG_ERROR("----------\n");
+	}
+#endif
+
 	constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS BuildFlagsToD3DBuildFlags(
 		re::AccelerationStructure::BuildFlags flags)
 	{
 		SEStaticAssert(
-			re::AccelerationStructure::BuildFlags::Default == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE &&
+			re::AccelerationStructure::BuildFlags::BuildFlags_None == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE &&
 			re::AccelerationStructure::BuildFlags::AllowUpdate == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE &&
 			re::AccelerationStructure::BuildFlags::AllowCompaction == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION &&
 			re::AccelerationStructure::BuildFlags::PreferFastTrace == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE &&
@@ -36,7 +86,7 @@ namespace
 		re::AccelerationStructure::GeometryFlags flags)
 	{
 		SEStaticAssert(
-			re::AccelerationStructure::GeometryFlags::None == D3D12_RAYTRACING_GEOMETRY_FLAG_NONE &&
+			re::AccelerationStructure::GeometryFlags::GeometryFlags_None == D3D12_RAYTRACING_GEOMETRY_FLAG_NONE &&
 			re::AccelerationStructure::GeometryFlags::Opaque == D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE &&
 			re::AccelerationStructure::GeometryFlags::NoDuplicateAnyHitInvocation == D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION,
 			"Geometry flags out of sync");
@@ -45,8 +95,24 @@ namespace
 	}
 
 
+	constexpr D3D12_RAYTRACING_INSTANCE_FLAGS InstanceFlagsToD3DInstanceFlags(
+		re::AccelerationStructure::InstanceFlags flags)
+	{
+		SEStaticAssert(
+			re::AccelerationStructure::InstanceFlags::InstanceFlags_None == D3D12_RAYTRACING_INSTANCE_FLAG_NONE &&
+			re::AccelerationStructure::InstanceFlags::TriangleCullDisable == D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE &&
+			re::AccelerationStructure::InstanceFlags::TriangleFrontCounterClockwise == D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE &&
+			re::AccelerationStructure::InstanceFlags::ForceOpaque == D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE &&
+			re::AccelerationStructure::InstanceFlags::ForceNonOpaque == D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE,
+			"Instance flags out of sync");
+
+		return static_cast<D3D12_RAYTRACING_INSTANCE_FLAGS>(flags);
+	}
+
+
+	// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_raytracing_acceleration_structure_prebuild_info
 	void ComputeASBufferSizes(
-		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS const& blasDesc,
+		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS const& asDesc,
 		ID3D12Device5* device,
 		uint64_t& resultDataMaxByteSizeOut,
 		uint64_t& scratchDataByteSizeOut,
@@ -56,36 +122,57 @@ namespace
 
 		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo{};
 
-		device->GetRaytracingAccelerationStructurePrebuildInfo(&blasDesc, &prebuildInfo);
+		device->GetRaytracingAccelerationStructurePrebuildInfo(&asDesc, &prebuildInfo);
 
-		resultDataMaxByteSizeOut = prebuildInfo.ResultDataMaxSizeInBytes;
-		scratchDataByteSizeOut = prebuildInfo.ScratchDataSizeInBytes;
-		updateScratchDataByteSizeOut = prebuildInfo.UpdateScratchDataSizeInBytes;
+		// Align buffers to 256B / D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT:
+		resultDataMaxByteSizeOut = util::RoundUpToNearestMultiple<uint64_t>(
+			prebuildInfo.ResultDataMaxSizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+
+		scratchDataByteSizeOut = util::RoundUpToNearestMultiple<uint64_t>(
+			prebuildInfo.ScratchDataSizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+
+		updateScratchDataByteSizeOut = util::RoundUpToNearestMultiple<uint64_t>(
+			prebuildInfo.UpdateScratchDataSizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 	}
 
 
-	void CreateBLAS(re::AccelerationStructure& blas)
+	uint64_t ComputeTLASInstancesBufferSize(re::AccelerationStructure::TLASParams const* tlasParams)
+	{
+		// Compute the size of the BLAS instance descriptors that will be stored in GPU memory:
+		return util::RoundUpToNearestMultiple<uint64_t>(
+			sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * tlasParams->m_blasInstances.size(),
+			D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+	}
+
+
+	void CreateBLASResources(re::AccelerationStructure& blas)
 	{
 		SEAssert(blas.GetType() == re::AccelerationStructure::Type::BLAS, "Invalid type");
 
-		dx12::AccelerationStructure::PlatformParams* platParams =
+		dx12::AccelerationStructure::PlatformParams* blasPlatParams =
 			blas.GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
 
-		re::AccelerationStructure::BLASCreateParams const* createParams = 
-			dynamic_cast<re::AccelerationStructure::BLASCreateParams const*>(blas.GetCreateParams());
-		SEAssert(createParams, "Failed to get AS create params");
+		re::AccelerationStructure::BLASParams const* blasParams = 
+			dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas.GetASParams());
+		SEAssert(blasParams, "Failed to get BLAS params");
+
+		SEAssert(blasParams->m_hitGroupIdx < re::AccelerationStructure::BLASParams::k_invalidSentinel,
+			"Invalid BLAS params");
 
 		std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geometryDescs;
-		geometryDescs.reserve(createParams->m_instances.size());
+		geometryDescs.reserve(blasParams->m_geometry.size());
 
-		for (auto const& instance : createParams->m_instances)
+		for (auto const& instance : blasParams->m_geometry)
 		{
+			SEAssert(instance.m_indices->GetType() == gr::VertexStream::Type::Index &&
+				instance.m_positions->GetType() == gr::VertexStream::Type::Position, "Invalid vertex stream type");
+
 			// Currently, our re::Buffers have not been created/allocated at this point (they're staged in CPU memory,
 			// and will be committed to GPU resources *after* RenderManager::CreateAPIResources). The DX12 AS prebuild
 			// info structure doesn't dereference GPU pointers, but it does check if they're null or not when
 			// computing the required buffer sizes. So here, we set a non-null GPU VA to ensure our buffer sizes are
 			// correct, and then use the correct GPU VA when we're actually building our BLAS
-			const D3D12_GPU_VIRTUAL_ADDRESS transform3x4DummyAddr = createParams->m_transform ? 1 : 0;
+			const D3D12_GPU_VIRTUAL_ADDRESS transform3x4DummyAddr = blasParams->m_transform ? 1 : 0;
 
 			const DXGI_FORMAT indexFormat = instance.m_indices ? 
 				dx12::DataTypeToDXGI_FORMAT(instance.m_indices->GetDataType(), false) : DXGI_FORMAT_UNKNOWN;
@@ -120,16 +207,16 @@ namespace
 		// Compute the estimated buffer sizes:
 		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS blasInputs{
 			.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL,
-			.Flags = BuildFlagsToD3DBuildFlags(createParams->m_buildFlags),
+			.Flags = BuildFlagsToD3DBuildFlags(blasParams->m_buildFlags),
 			.NumDescs = util::CheckedCast<uint32_t>(geometryDescs.size()),
 			.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY, // geometryDescs holds D3D12_RAYTRACING_GEOMETRY_DESC objects directly
 			.pGeometryDescs = geometryDescs.data(),
 		};
 		uint64_t resultDataMaxByteSize, scratchDataByteSize, updateScratchDataByteSize;
-		ComputeASBufferSizes(blasInputs, platParams->m_device, resultDataMaxByteSize, scratchDataByteSize, updateScratchDataByteSize);
-		
+		ComputeASBufferSizes(blasInputs, blasPlatParams->m_device, resultDataMaxByteSize, scratchDataByteSize, updateScratchDataByteSize);
+
 		// Create a the BLAS buffer:
-		platParams->m_ASBuffer = platParams->m_heapManager->CreateResource(
+		blasPlatParams->m_ASBuffer = blasPlatParams->m_heapManager->CreateResource(
 			dx12::ResourceDesc{
 				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
 					resultDataMaxByteSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
@@ -139,7 +226,7 @@ namespace
 	}
 
 
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC BuildBLASDesc(re::AccelerationStructure& blas, bool doUpdate)
+	void BuildBLAS(re::AccelerationStructure& blas, bool doUpdate, ID3D12GraphicsCommandList4* cmdList)
 	{
 		SEAssert(blas.GetType() == re::AccelerationStructure::Type::BLAS, "Invalid type");
 
@@ -147,25 +234,26 @@ namespace
 			blas.GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
 
 		SEAssert(platParams->m_ASBuffer, "BLAS buffer is null. This should not be possible");
+		SEAssert(!doUpdate || platParams->m_isBuilt, "Can't update a BLAS that has not been created");
 
-		re::AccelerationStructure::BLASCreateParams const* createParams =
-			dynamic_cast<re::AccelerationStructure::BLASCreateParams const*>(blas.GetCreateParams());
-		SEAssert(createParams, "Failed to get AS create params");
+		re::AccelerationStructure::BLASParams const* blasParams =
+			dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas.GetASParams());
+		SEAssert(blasParams, "Failed to get BLASParams");
 
 		std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geometryDescs;
-		geometryDescs.reserve(createParams->m_instances.size());
+		geometryDescs.reserve(blasParams->m_geometry.size());
 
-		for (size_t instanceIdx = 0; instanceIdx < createParams->m_instances.size(); ++instanceIdx)
+		for (size_t instanceIdx = 0; instanceIdx < blasParams->m_geometry.size(); ++instanceIdx)
 		{
-			re::AccelerationStructure::BLASCreateParams::Instance const& instance = createParams->m_instances[instanceIdx];
+			re::AccelerationStructure::BLASParams::Geometry const& geo = blasParams->m_geometry[instanceIdx];
 
 			// Transform:
 			D3D12_GPU_VIRTUAL_ADDRESS transform3x4Addr = NULL;
-			if (createParams->m_transform)
+			if (blasParams->m_transform)
 			{
-				transform3x4Addr = dx12::Buffer::GetGPUVirtualAddress(createParams->m_transform.get());
+				transform3x4Addr = dx12::Buffer::GetGPUVirtualAddress(blasParams->m_transform.get());
 
-				constexpr uint32_t transformByteSize = 16 * 3 * 4;
+				constexpr uint32_t transformByteSize = 4 * 3 * 4; // 4B float x 3x4 elements
 				transform3x4Addr += static_cast<uint64_t>(instanceIdx) * transformByteSize;
 
 				SEAssert(transform3x4Addr % D3D12_RAYTRACING_TRANSFORM3X4_BYTE_ALIGNMENT == 0,
@@ -176,28 +264,28 @@ namespace
 			DXGI_FORMAT indexFormat = DXGI_FORMAT_UNKNOWN;
 			uint32_t indexCount = 0;
 			D3D12_GPU_VIRTUAL_ADDRESS indexBufferAddr = NULL;
-			if (instance.m_indices)
+			if (geo.m_indices)
 			{
-				indexFormat = dx12::DataTypeToDXGI_FORMAT(instance.m_indices->GetDataType(), false);
+				indexFormat = dx12::DataTypeToDXGI_FORMAT(geo.m_indices->GetDataType(), false);
 				SEAssert(indexFormat == DXGI_FORMAT_UNKNOWN ||
 					indexFormat == DXGI_FORMAT_R32_UINT ||
 					indexFormat == DXGI_FORMAT_R16_UINT,
 					"Invalid index format");
 
-				indexCount = instance.m_indices->GetNumElements();
-				indexBufferAddr = dx12::Buffer::GetGPUVirtualAddress(instance.m_indices->GetBuffer());
+				indexCount = geo.m_indices->GetNumElements();
+				indexBufferAddr = dx12::Buffer::GetGPUVirtualAddress(geo.m_indices->GetBuffer());
 			}
 
 			// Positions:
-			const DXGI_FORMAT vertexFormat = dx12::DataTypeToDXGI_FORMAT(instance.m_positions->GetDataType(), false);
-			const uint32_t vertexCount = instance.m_positions->GetNumElements();
+			const DXGI_FORMAT vertexFormat = dx12::DataTypeToDXGI_FORMAT(geo.m_positions->GetDataType(), false);
+			const uint32_t vertexCount = geo.m_positions->GetNumElements();
 			const D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE positionBufferAddr = D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE{
-				.StartAddress = dx12::Buffer::GetGPUVirtualAddress(instance.m_positions->GetBuffer()),
-				.StrideInBytes = re::DataTypeToByteStride(instance.m_positions->GetDataType()), };
+				.StartAddress = dx12::Buffer::GetGPUVirtualAddress(geo.m_positions->GetBuffer()),
+				.StrideInBytes = re::DataTypeToByteStride(geo.m_positions->GetDataType()), };
 
 			geometryDescs.emplace_back(D3D12_RAYTRACING_GEOMETRY_DESC{
 				.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES,
-				.Flags = GeometryFlagsToD3DGeometryFlags(instance.m_geometryFlags),
+				.Flags = GeometryFlagsToD3DGeometryFlags(geo.m_geometryFlags),
 				.Triangles = D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC{
 					.Transform3x4 = transform3x4Addr,
 					.IndexFormat = indexFormat,
@@ -208,14 +296,21 @@ namespace
 					.VertexBuffer = positionBufferAddr, }
 				});
 		}
+		SEAssert(geometryDescs.size() < 0xFFFFFF, "Beyond D3D12 maximum no. geometries in a BLAS");
 
-		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = BuildFlagsToD3DBuildFlags(createParams->m_buildFlags);
+		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = BuildFlagsToD3DBuildFlags(blasParams->m_buildFlags);
 		if (doUpdate)
 		{
-			SEAssert(createParams->m_buildFlags & re::AccelerationStructure::BuildFlags::AllowUpdate,
+			SEAssert(blasParams->m_buildFlags & re::AccelerationStructure::BuildFlags::AllowUpdate,
 				"Trying to update a BLAS, but the build flags don't have the AllowUpdate bit set");
 
-			flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+			// Note: We must add the "perform update" flag to the exact same flags we used to create our original buffer,
+			// or else we'll get the wrong buffer sizes
+			flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+		}
+		else
+		{
+			platParams->m_isBuilt = true;
 		}
 
 		// Compute the estimated buffer sizes:
@@ -232,21 +327,185 @@ namespace
 		// Create a temporary scratch buffer:	
 		// Note: We allow the scratch buffer to immediately go out of scope and rely on the the dx12::HeapManager 
 		// deferred deletion to guarantee  lifetime
+		const uint64_t scratchBufferSize = doUpdate ? updateScratchDataByteSize : scratchDataByteSize;
+
 		std::unique_ptr<dx12::GPUResource> scratchBuffer = platParams->m_heapManager->CreateResource(
 			dx12::ResourceDesc{
 				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
-					scratchDataByteSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+					scratchBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
 				.m_heapType = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT,
 				.m_initialState = D3D12_RESOURCE_STATE_COMMON, },
 			L"BuildBLAS temporary scratch buffer");
 
-		// Generate/update the BLAS:
-		return D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC{
+		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC blasDesc{
 			.DestAccelerationStructureData = platParams->m_ASBuffer->GetGPUVirtualAddress(),
 			.Inputs = blasInputs,
 			.SourceAccelerationStructureData = doUpdate ? platParams->m_ASBuffer->GetGPUVirtualAddress() : NULL,
 			.ScratchAccelerationStructureData = scratchBuffer->GetGPUVirtualAddress(),
 		};
+
+		// Finally, record the work:
+		cmdList->BuildRaytracingAccelerationStructure(
+			&blasDesc,
+			0,			// NumPostbuildInfoDescs
+			nullptr);	// pPostbuildInfoDescs
+	}
+
+
+	void CreateTLASResources(re::AccelerationStructure& tlas)
+	{
+		SEAssert(tlas.GetType() == re::AccelerationStructure::Type::TLAS, "Invalid type");
+
+		dx12::AccelerationStructure::PlatformParams* platParams =
+			tlas.GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
+
+		re::AccelerationStructure::TLASParams const* tlasParams =
+			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas.GetASParams());
+		SEAssert(tlasParams, "Failed to get TLASParams");
+
+		// Compute the estimated buffer sizes:
+		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS tlasInputs{
+			.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL,
+			.Flags = BuildFlagsToD3DBuildFlags(tlasParams->m_buildFlags),
+			.NumDescs = util::CheckedCast<uint32_t>(tlasParams->m_blasInstances.size()),
+			.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY,
+		};
+		uint64_t resultDataMaxByteSize, scratchDataByteSize, updateScratchDataByteSize;
+		ComputeASBufferSizes(tlasInputs, platParams->m_device, resultDataMaxByteSize, scratchDataByteSize, updateScratchDataByteSize);
+
+		// Create a the TLAS buffer:
+		platParams->m_ASBuffer = platParams->m_heapManager->CreateResource(
+			dx12::ResourceDesc{
+				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
+					resultDataMaxByteSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+				.m_heapType = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT,
+				.m_initialState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, },
+			util::ToWideString(tlas.GetName()).c_str());
+	}
+
+
+	void BuildTLAS(re::AccelerationStructure& tlas, bool doUpdate, ID3D12GraphicsCommandList4* cmdList)
+	{
+		SEAssert(tlas.GetType() == re::AccelerationStructure::Type::TLAS, "Invalid type");
+
+		dx12::AccelerationStructure::PlatformParams* platParams =
+			tlas.GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
+
+		SEAssert(platParams->m_ASBuffer, "BLAS buffer is null. This should not be possible");
+		SEAssert(!doUpdate || platParams->m_isBuilt, "Can't update a BLAS that has not been created");
+
+		re::AccelerationStructure::TLASParams const* tlasParams =
+			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas.GetASParams());
+		SEAssert(tlasParams, "Failed to get TLASParams");
+
+		const uint64_t instanceDescriptorsSize = ComputeTLASInstancesBufferSize(tlasParams);
+
+		// Create a temporary TLAS instance descriptor buffer:	
+		// Note: We allow this resource to immediately go out of scope and rely on the the dx12::HeapManager 
+		// deferred deletion to guarantee lifetime
+		std::unique_ptr<dx12::GPUResource> TLASInstanceDescs = platParams->m_heapManager->CreateResource(
+			dx12::ResourceDesc{
+				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(instanceDescriptorsSize, D3D12_RESOURCE_FLAG_NONE),
+				.m_heapType = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD,
+				.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ, },
+				util::ToWideString(tlas.GetName()).c_str());
+
+		// Map our TLAS instance descriptor buffer:
+		D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs = nullptr;
+		const HRESULT hr = TLASInstanceDescs->Map(0, nullptr, reinterpret_cast<void**>(&instanceDescs));
+		SEAssert(SUCCEEDED(hr), "Failed to map TLAS instance descriptions buffer");
+
+		// Zero out the instance descriptors buffer:
+		memset(instanceDescs, 0, instanceDescriptorsSize);
+
+		// Copy in the instance descriptors:
+		const uint32_t numInstances = util::CheckedCast<uint32_t>(tlasParams->m_blasInstances.size());
+		SEAssert(numInstances < 0xFFFFFF, "Beyond D3D12 maximum no. instances in a TLAS");
+
+		for (uint32_t instanceIdx = 0; instanceIdx < numInstances; ++instanceIdx)
+		{
+			SEAssert(tlasParams->m_blasInstances[instanceIdx]->GetType() == re::AccelerationStructure::Type::BLAS,
+				"Invalid BLAS instance type");
+			SEAssert(instanceIdx <= 0xFFFFFF, "24 bit max instance IDs");
+
+			std::shared_ptr<re::AccelerationStructure> const& blasAS = tlasParams->m_blasInstances[instanceIdx];
+
+			re::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blasAS->GetASParams());
+			SEAssert(blasParams, "Failed to get BLASParams");
+
+			SEAssert(blasParams->m_hitGroupIdx < re::AccelerationStructure::BLASParams::k_invalidSentinel,
+				"Invalid BLAS params");
+
+			dx12::AccelerationStructure::PlatformParams* blasPlatParams =
+				blasAS->GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
+
+			instanceDescs[instanceIdx] = D3D12_RAYTRACING_INSTANCE_DESC{
+				// .Transform set below
+				.InstanceID = instanceIdx, // Identifies each unique BLAS instance to shaders
+				.InstanceMask = blasParams->m_instanceMask,
+				.InstanceContributionToHitGroupIndex = blasParams->m_hitGroupIdx,
+				.Flags = util::CheckedCast<uint32_t>(InstanceFlagsToD3DInstanceFlags(blasParams->m_instanceFlags)),
+				.AccelerationStructure = blasPlatParams->m_ASBuffer->GetGPUVirtualAddress(),
+			};
+			SEStaticAssert(sizeof(blasParams->m_blasWorldMatrix) == sizeof(instanceDescs[instanceIdx].Transform),
+				"Matrix size mismatch");
+
+			memcpy(&instanceDescs[instanceIdx].Transform,
+				&blasParams->m_blasWorldMatrix[0][0],
+				sizeof(instanceDescs[instanceIdx].Transform));			
+		}
+		TLASInstanceDescs->Unmap(0, nullptr);
+
+		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = BuildFlagsToD3DBuildFlags(tlasParams->m_buildFlags);
+		if (doUpdate)
+		{
+			SEAssert(tlasParams->m_buildFlags & re::AccelerationStructure::BuildFlags::AllowUpdate,
+				"Trying to update a TLAS, but the build flags don't have the AllowUpdate bit set");
+
+			flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+		}
+		else
+		{
+			platParams->m_isBuilt = true;
+		}
+
+		// Compute the estimated buffer sizes:
+		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS tlasInputs{
+			.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL,
+			.Flags = flags,
+			.NumDescs = util::CheckedCast<uint32_t>(tlasParams->m_blasInstances.size()),
+			.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY,
+			.InstanceDescs = TLASInstanceDescs->GetGPUVirtualAddress(),
+		};
+		uint64_t resultDataMaxByteSize, scratchDataByteSize, updateScratchDataByteSize;
+		ComputeASBufferSizes(tlasInputs, platParams->m_device, resultDataMaxByteSize, scratchDataByteSize, updateScratchDataByteSize);
+
+		// Create a temporary scratch buffer:	
+		// Note: We allow the scratch buffer to immediately go out of scope and rely on the the dx12::HeapManager 
+		// deferred deletion to guarantee  lifetime
+		const uint64_t scratchBufferSize = doUpdate ? updateScratchDataByteSize : scratchDataByteSize;
+
+		std::unique_ptr<dx12::GPUResource> scratchBuffer = platParams->m_heapManager->CreateResource(
+			dx12::ResourceDesc{
+				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
+					scratchBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+				.m_heapType = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT,
+				.m_initialState = D3D12_RESOURCE_STATE_COMMON, },
+			L"BuildTLAS temporary scratch buffer");
+		
+		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC tlasDesc {
+			.DestAccelerationStructureData = platParams->m_ASBuffer->GetGPUVirtualAddress(),
+			.Inputs = tlasInputs,
+			.SourceAccelerationStructureData = doUpdate ? platParams->m_ASBuffer->GetGPUVirtualAddress() : 0,
+			.ScratchAccelerationStructureData = scratchBuffer->GetGPUVirtualAddress(),
+		};
+
+		// Finally, record the work:
+		cmdList->BuildRaytracingAccelerationStructure(
+			&tlasDesc,
+			0,			// NumPostbuildInfoDescs
+			nullptr);	// pPostbuildInfoDescs
 	}
 }
 
@@ -271,6 +530,7 @@ namespace dx12
 		m_heapManager = nullptr;
 		m_device = nullptr;
 		m_ASBuffer = nullptr;
+		m_isBuilt = false;
 	}
 
 
@@ -283,12 +543,12 @@ namespace dx12
 		{
 		case re::AccelerationStructure::Type::TLAS:
 		{
-
+			CreateTLASResources(as);
 		}
 		break;
 		case re::AccelerationStructure::Type::BLAS:
 		{
-			CreateBLAS(as);
+			CreateBLASResources(as);
 		}
 		break;
 		default: SEAssertF("Invalid AccelerationStructure Type");
@@ -303,23 +563,26 @@ namespace dx12
 	}
 
 
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructure::BuildAccelerationStructureDesc(
-		re::AccelerationStructure& as, bool doUpdate)
+	void AccelerationStructure::BuildAccelerationStructure(
+		re::AccelerationStructure& as,
+		bool doUpdate,
+		ID3D12GraphicsCommandList4* cmdList)
 	{
+		// Note: We assume all resource state transitions have already been recorded
+
 		switch (as.GetType())
 		{
 		case re::AccelerationStructure::Type::TLAS:
 		{
-
+			BuildTLAS(as, doUpdate, cmdList);
 		}
 		break;
 		case re::AccelerationStructure::Type::BLAS:
 		{
-			return BuildBLASDesc(as, doUpdate);
+			BuildBLAS(as, doUpdate, cmdList);
 		}
 		break;
 		default: SEAssertF("Invalid AccelerationStructure Type");
 		}
-		return {}; // This should never happen
 	}
 }

@@ -182,8 +182,7 @@ namespace gr
 			m_streamDesc.m_lifetime == re::Lifetime::SingleFrame ? re::Buffer::UploadHeap : re::Buffer::DefaultHeap;
 
 		const re::Buffer::UsageMask bufferUsage =
-			(m_streamDesc.m_type == Type::Index ? re::Buffer::IndexStream : re::Buffer::VertexStream) | 
-			m_deferredBufferCreateParams->m_extraUsageBits;
+			re::Buffer::Raw | m_deferredBufferCreateParams->m_extraUsageBits;
 
 		re::Buffer::AccessMask bufAccessMask = re::Buffer::GPURead;
 		if (bufMemPoolPref == re::Buffer::UploadHeap)

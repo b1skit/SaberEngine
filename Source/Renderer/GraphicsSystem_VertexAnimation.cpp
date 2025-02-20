@@ -812,7 +812,7 @@ namespace gr
 						.m_stagingPool = re::Buffer::StagingPool::None,
 						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
 						.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::GPUWrite,
-						.m_usageMask = re::Buffer::Structured | re::Buffer::Usage::VertexStream,
+						.m_usageMask = re::Buffer::Structured | re::Buffer::Usage::Raw,
 					});
 
 				// Create a stream view matching the configuration of the VertexStream, but with our new buffer

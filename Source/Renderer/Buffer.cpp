@@ -44,11 +44,10 @@ namespace
 
 		SEAssert(bufferParams.m_usageMask != re::Buffer::Usage::Invalid, "Invalid usage mask");
 		
-		SEAssert(((re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams) || 
-			re::Buffer::HasUsageBit(re::Buffer::VertexStream, bufferParams) ||
-			re::Buffer::HasUsageBit(re::Buffer::IndexStream, bufferParams)) &&
+		SEAssert((re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams) &&
 					bufferParams.m_arraySize == 1) ||
-			(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams) && 
+			((re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams) ||
+				re::Buffer::HasUsageBit(re::Buffer::Raw, bufferParams)) &&
 				bufferParams.m_arraySize >= 1),
 			"Invalid number of elements");
 
@@ -60,10 +59,6 @@ namespace
 		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::Permanent ||
 			re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
 			"GPU reads must be enabled for immutable buffers");
-
-		SEAssert((re::Buffer::HasUsageBit(re::Buffer::Usage::VertexStream, bufferParams) && 
-			re::Buffer::HasUsageBit(re::Buffer::Usage::IndexStream, bufferParams)) == false,
-			"Buffer has both the vetex and index stream usage flags set. This is unexpected");
 #endif
 	}
 }
@@ -104,7 +99,7 @@ namespace re
 	{
 		Register(newBuffer, numBytes, typeIDHash);
 
-		re::Context::Get()->GetBufferAllocator()->Commit(newBuffer->GetUniqueID(), data);
+		re::Context::Get()->GetBufferAllocator()->Stage(newBuffer->GetUniqueID(), data);
 
 		newBuffer->m_platformParams->m_isCommitted = true;
 	}
@@ -116,7 +111,7 @@ namespace re
 			"Invalid type detected. Can only set data of the original type");
 		SEAssert(m_bufferParams.m_stagingPool == StagingPool::Permanent, "Cannot set data of an immutable buffer");
 
-		re::Context::Get()->GetBufferAllocator()->Commit(GetUniqueID(), data);
+		re::Context::Get()->GetBufferAllocator()->Stage(GetUniqueID(), data);
 		
 		m_platformParams->m_isCommitted = true;
 	}
@@ -128,10 +123,11 @@ namespace re
 			"Invalid type detected. Can only set data of the original type");
 		SEAssert(m_bufferParams.m_stagingPool == re::Buffer::StagingPool::Permanent,
 			"Only Permanent buffers can be partially updated");
-		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, m_bufferParams),
-			"Only structured buffers can be partially updated");
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, m_bufferParams) ||
+			re::Buffer::HasUsageBit(re::Buffer::Raw, m_bufferParams),
+			"Invalid buffer usage for partial updates");
 
-		re::Context::Get()->GetBufferAllocator()->CommitMutable(GetUniqueID(), data, numBytes, dstBaseOffset);
+		re::Context::Get()->GetBufferAllocator()->StageMutable(GetUniqueID(), data, numBytes, dstBaseOffset);
 
 		m_platformParams->m_isCommitted = true;
 	}

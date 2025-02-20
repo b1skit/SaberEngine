@@ -586,7 +586,7 @@ namespace dx12
 									SEAssertF("TODO: Implement this");
 								}
 								break;
-								case re::Batch::RayTracingParams::Operation::TraceRays:
+								case re::Batch::RayTracingParams::Operation::DispatchRays:
 								{
 									SEAssertF("TODO: Implement this");
 								}

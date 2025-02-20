@@ -8,17 +8,35 @@ namespace re
 {
 	std::shared_ptr<AccelerationStructure> AccelerationStructure::CreateBLAS(
 		char const* name,
-		std::unique_ptr<ICreateParams>&& blasCreateParams)
+		std::unique_ptr<BLASParams>&& blasParams)
 	{
-		SEAssert(blasCreateParams && dynamic_cast<BLASCreateParams*>(blasCreateParams.get()),
-			"Invalid blas create params");
+		SEAssert(blasParams, "Invalid BLASParams");
 
 		std::shared_ptr<AccelerationStructure> newAccelerationStructure;
 		newAccelerationStructure.reset(
 			new AccelerationStructure(
 				name, 
 				AccelerationStructure::Type::BLAS, 
-				std::move(blasCreateParams)));
+				std::move(blasParams)));
+
+		re::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);
+
+		return newAccelerationStructure;
+	}
+
+
+	std::shared_ptr<AccelerationStructure> AccelerationStructure::CreateTLAS(
+		char const* name,
+		std::unique_ptr<TLASParams>&& tlasParams)
+	{
+		SEAssert(tlasParams, "Invalid TLASParams");
+
+		std::shared_ptr<AccelerationStructure> newAccelerationStructure;
+		newAccelerationStructure.reset(
+			new AccelerationStructure(
+				name,
+				AccelerationStructure::Type::TLAS,
+				std::move(tlasParams)));
 
 		re::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);
 
@@ -47,10 +65,10 @@ namespace re
 	}
 
 
-	AccelerationStructure::AccelerationStructure(char const* name, Type type, std::unique_ptr<ICreateParams>&& createParams)
+	AccelerationStructure::AccelerationStructure(char const* name, Type type, std::unique_ptr<IASParams>&& createParams)
 		: core::INamedObject(name)
 		, m_platformParams(platform::AccelerationStructure::CreatePlatformParams())
-		, m_createParams(std::move(createParams))
+		, m_asParams(std::move(createParams))
 		, m_type(type)
 	{
 	}

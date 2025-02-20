@@ -18,17 +18,15 @@ namespace re
 			TLAS,
 			BLAS,
 		};
-
 		enum GeometryFlags : uint8_t
 		{
-			None						= 0,
+			GeometryFlags_None			= 0,
 			Opaque						= 1 << 0,
 			NoDuplicateAnyHitInvocation = 1 << 1, // Guarantee the any hit shader will be executed exactly once
 		};
-
 		enum BuildFlags : uint8_t
 		{
-			Default			= 0, // None
+			BuildFlags_None = 0,
 			AllowUpdate		= 1 << 0,
 			AllowCompaction = 1 << 1,
 			PreferFastTrace = 1 << 2,
@@ -36,26 +34,47 @@ namespace re
 			MinimizeMemory	= 1 << 4,
 			PerformUpdate	= 1 << 5,
 		};
-
-
-		struct ICreateParams
+		enum InstanceFlags : uint8_t
 		{
-			virtual ~ICreateParams() = 0;
+			InstanceFlags_None				= 0,
+			TriangleCullDisable				= 1 << 0,
+			TriangleFrontCounterClockwise	= 1 << 1,
+			ForceOpaque						= 1 << 2,
+			ForceNonOpaque					= 1 << 3,
 		};
 
-		struct BLASCreateParams : public virtual ICreateParams
+
+	public:
+		struct IASParams
 		{
-			struct Instance
+			virtual ~IASParams() = 0;
+
+			BuildFlags m_buildFlags;
+		};
+		struct BLASParams : public virtual IASParams
+		{
+			// 3x4 row-major world matrix: Applied to all BLAS geometry
+			glm::mat3x4 m_blasWorldMatrix = glm::mat3x4(1.f);
+
+			struct Geometry
 			{
 				core::InvPtr<gr::VertexStream> m_positions;
 				core::InvPtr<gr::VertexStream> m_indices; // Can be null/invalid
 
-				GeometryFlags m_geometryFlags;
+				GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
 			};
-			std::vector<Instance> m_instances;
-			std::shared_ptr<re::Buffer> m_transform; // Buffer of mat3x4 in row-major order. Indexes correspond with instances
+			std::vector<Geometry> m_geometry;
+			std::shared_ptr<re::Buffer> m_transform; // Buffer of mat3x4 in row-major order. Indexes correspond with m_geometry
 
-			BuildFlags m_buildFlags;
+			static constexpr uint32_t k_invalidSentinel = 0xFFFFFF + 1; // 24 bit max instance IDs and hit group indices
+
+			uint32_t m_hitGroupIdx = k_invalidSentinel; // Used to fetch shaders from the shader binding table
+			uint8_t m_instanceMask = 0xFF; // Visibility mask: 0 = never include/always rejected
+			InstanceFlags m_instanceFlags = InstanceFlags::InstanceFlags_None;
+		};
+		struct TLASParams : public virtual IASParams
+		{
+			std::vector<std::shared_ptr<re::AccelerationStructure>> m_blasInstances;
 		};
 
 
@@ -63,13 +82,19 @@ namespace re
 		struct PlatformParams : public core::IPlatformParams
 		{
 			virtual void Destroy() override = 0;
+
+			bool m_isBuilt = false; // true after first build recorded to a command list
 		};
 
 
 	public:
 		static std::shared_ptr<AccelerationStructure> CreateBLAS(
 			char const* name,
-			std::unique_ptr<ICreateParams>&& blasCreateParams);
+			std::unique_ptr<BLASParams>&& blasCreateParams);
+
+		static std::shared_ptr<AccelerationStructure> CreateTLAS(
+			char const* name,
+			std::unique_ptr<TLASParams>&& blasCreateParams);
 
 
 	public:
@@ -79,6 +104,8 @@ namespace re
 
 		~AccelerationStructure();
 
+
+	public:
 		void Create();
 		void Destroy();
 
@@ -86,22 +113,19 @@ namespace re
 
 
 	public:
-
-		ICreateParams const* GetCreateParams() const;
-		void ReleaseCreateParams();
+		IASParams const* GetASParams() const;
+		void UpdateASParams(std::unique_ptr<IASParams>&&); // Update the ASParams (e.g. when updating/refitting an AS)
 
 		Type GetType() const;
 
 
 	private:
-		AccelerationStructure(char const* name, Type, std::unique_ptr<ICreateParams>&&); // Use Create() instead
+		AccelerationStructure(char const* name, Type, std::unique_ptr<IASParams>&&); // Use Create() instead
 
 
 	private:
 		std::unique_ptr<PlatformParams> m_platformParams;
-
-		std::unique_ptr<ICreateParams> m_createParams;
-
+		std::unique_ptr<IASParams> m_asParams;
 		Type m_type;
 
 
@@ -111,7 +135,7 @@ namespace re
 	};
 
 
-	inline re::AccelerationStructure::ICreateParams::~ICreateParams() {} // Pure virtual: Must provide an impl
+	inline re::AccelerationStructure::IASParams::~IASParams() {} // Pure virtual: Must provide an impl
 
 
 	inline AccelerationStructure::PlatformParams* AccelerationStructure::GetPlatformParams() const
@@ -120,15 +144,17 @@ namespace re
 	}
 
 
-	inline AccelerationStructure::ICreateParams const* AccelerationStructure::GetCreateParams() const
+	inline AccelerationStructure::IASParams const* AccelerationStructure::GetASParams() const
 	{
-		return m_createParams.get();
+		return m_asParams.get();
 	}
 
 
-	inline void AccelerationStructure::ReleaseCreateParams()
+	inline void AccelerationStructure::UpdateASParams(std::unique_ptr<IASParams>&& asParams)
 	{
-		m_createParams = nullptr;
+		SEAssert(m_platformParams->m_isBuilt, "Setting ASParams on an AS that has not yet been built. This is unexpected");
+
+		m_asParams = std::move(asParams);
 	}
 
 

@@ -27,7 +27,7 @@ namespace
 		{
 		case re::BufferAllocator::Constant: return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT; // 256B
 		case re::BufferAllocator::Structured: return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT; // 64KB
-		case re::BufferAllocator::VertexStream: return 16; // Minimum alignment of a float4 is 16B
+		case re::BufferAllocator::Raw: return 16; // Minimum alignment of a float4 is 16B
 		case re::BufferAllocator::AllocationPool_Count:
 		default:
 			SEAssertF("Invalid buffer data type");
@@ -86,7 +86,7 @@ namespace
 		{
 		case re::Lifetime::Permanent:
 		{
-			switch (buffer.GetAllocationType())
+			switch (buffer.GetStagingPool())
 			{
 			case re::Buffer::StagingPool::Permanent:
 			{
@@ -136,7 +136,7 @@ namespace dx12
 
 		uint32_t requestedSize = buffer.GetTotalBytes();
 		if (bufferLifetime == re::Lifetime::Permanent &&
-			buffer.GetAllocationType() == re::Buffer::StagingPool::Permanent)
+			buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent)
 		{
 			// We allocate N aligned frames-worth of buffer space, and then set the m_heapByteOffset each frame
 			requestedSize = util::CheckedCast<uint32_t>(
@@ -226,7 +226,7 @@ namespace dx12
 		buffer.GetDataAndSize(&data, &totalBytes);
 
 		// Update the heap offset, if required
-		if (buffer.GetAllocationType() == re::Buffer::StagingPool::Permanent)
+		if (buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent)
 		{
 			const uint64_t alignedSize = GetAlignedSize(bufferParams.m_usageMask, totalBytes);
 			params->m_heapByteOffset = alignedSize * curFrameHeapOffsetFactor;
@@ -239,7 +239,7 @@ namespace dx12
 		// Adjust our pointers if we're doing a partial update:
 		if (!updateAllBytes)
 		{
-			SEAssert(buffer.GetAllocationType() == re::Buffer::StagingPool::Permanent,
+			SEAssert(buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent,
 				"Only mutable buffers can be partially updated");
 
 			// Update the source data pointer:
@@ -403,8 +403,7 @@ namespace dx12
 	D3D12_INDEX_BUFFER_VIEW const* dx12::Buffer::GetOrCreateIndexBufferView(
 		re::Buffer const& buffer, re::BufferView const& view)
 	{
-		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Usage::VertexStream, buffer) &&
-			re::Buffer::HasUsageBit(re::Buffer::Usage::IndexStream, buffer),
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer),
 			"Buffer does not have the correct usage flags set");
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
@@ -430,8 +429,7 @@ namespace dx12
 	D3D12_VERTEX_BUFFER_VIEW const* dx12::Buffer::GetOrCreateVertexBufferView(
 		re::Buffer const& buffer, re::BufferView const& view)
 	{
-		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::VertexStream, buffer) &&
-			!re::Buffer::HasUsageBit(re::Buffer::Usage::IndexStream, buffer),
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer),
 			"Buffer does not have the correct usage flags set");
 
 		SEAssert(view.m_stream.m_dataType != re::DataType::DataType_Count &&

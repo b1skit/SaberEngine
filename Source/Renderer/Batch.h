@@ -103,7 +103,7 @@ namespace re
 				UpdateAS,
 				CompactAS,
 
-				TraceRays,	// Uses/require Batches
+				DispatchRays,	// Uses/requires Batches w/valid EffectID
 
 				Invalid
 			} m_operation = Operation::Invalid;
@@ -128,7 +128,7 @@ namespace re
 		Batch(re::Lifetime, ComputeParams const&, EffectID);
 
 		// Ray tracing batches:
-		Batch(re::Lifetime, RayTracingParams const&, EffectID);
+		Batch(re::Lifetime, RayTracingParams const&, EffectID = EffectID()); // EffectID required for Operation::DispatchRays
 
 
 	public:

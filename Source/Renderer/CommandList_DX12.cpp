@@ -921,28 +921,21 @@ namespace dx12
 
 	void CommandList::BuildRaytracingAccelerationStructure(re::AccelerationStructure& as, bool doUpdate)
 	{
-		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC const& blasDesc = 
-			dx12::AccelerationStructure::BuildAccelerationStructureDesc(as, doUpdate);
-		
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> cmdList4;
-		const HRESULT hr = m_commandList.As(&cmdList4);
-		SEAssert(SUCCEEDED(hr), "Failed to get command list as ID3D12GraphicsCommandList4");
-
 		switch (as.GetType())
 		{
 		case re::AccelerationStructure::Type::TLAS:
 		{
-			SEAssertF("TODO: Handle this");
+			//
 		}
 		break;
 		case re::AccelerationStructure::Type::BLAS:
 		{
-			re::AccelerationStructure::BLASCreateParams const* createParams =
-				dynamic_cast<re::AccelerationStructure::BLASCreateParams const*>(as.GetCreateParams());
+			re::AccelerationStructure::BLASParams const* createParams =
+				dynamic_cast<re::AccelerationStructure::BLASParams const*>(as.GetASParams());
 			SEAssert(createParams, "Failed to get AS create params");
 
 			// Transition the inputs:
-			for (auto const& instance : createParams->m_instances)
+			for (auto const& instance : createParams->m_geometry)
 			{
 				SEAssert(instance.m_positions->GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
 					"Single frame buffers are held in a shared heap, we can't transition them. DXR requires vertex"
@@ -991,13 +984,11 @@ namespace dx12
 		default: SEAssertF("Invalid AS type");
 		}
 
-		// Note: We use a raw ID3D12GraphicsCommandList4* here (instead of a dx12::CommandList) as DX12 Acceleration
-		// structures must be created in the D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE state, and cannot
-		// transition to any other state
-		cmdList4->BuildRaytracingAccelerationStructure(
-			&blasDesc,
-			0,			// NumPostbuildInfoDescs
-			nullptr);	// pPostbuildInfoDescs
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> cmdList4;
+		const HRESULT hr = m_commandList.As(&cmdList4);
+		SEAssert(SUCCEEDED(hr), "Failed to get command list as ID3D12GraphicsCommandList4");
+
+		dx12::AccelerationStructure::BuildAccelerationStructure(as, doUpdate, cmdList4.Get());
 
 		// Add a barrier to prevent the AS from being accessed before the build is complete (E.g. if building a BLAS and
 		// TLAS on the same command list)
@@ -1005,9 +996,6 @@ namespace dx12
 			as.GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
 
 		InsertUAVBarrier(platParams->m_ASBuffer->Get());
-
-		// Release the AccelerationStructure's CreateParams while we're here:
-		as.ReleaseCreateParams();
 	}
 
 
