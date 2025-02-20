@@ -54,6 +54,8 @@ namespace fr
 			.g_model = transform.GetGlobalMatrix(),
 			.g_transposeInvModel = glm::transpose(glm::inverse(transform.GetGlobalMatrix())),
 
+			.g_local = transform.GetLocalMatrix(),
+
 			.m_globalPosition = transform.GetGlobalTranslation(),
 			.m_globalScale = transform.GetGlobalScale(),
 

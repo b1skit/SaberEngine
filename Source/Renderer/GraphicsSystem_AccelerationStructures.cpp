@@ -253,7 +253,9 @@ namespace gr
 				// Always the same instance buffer, regardless of animation
 				instance.m_indices = meshPrimRenderData.m_indexStream; // May be null
 
-				blasMatrices.emplace_back(&renderData.GetTransformDataFromRenderDataID(meshPrimID).g_model);
+				// We use the MeshPrimitive's local TRS matrix for our BLAS, and then use the parent's global TRS to
+				// orient our BLAS in the TLAS
+				blasMatrices.emplace_back(&renderData.GetTransformDataFromRenderDataID(meshPrimID).g_local);
 
 				gr::Material::MaterialInstanceRenderData const& materialRenderData =
 					renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(meshPrimID);
@@ -262,6 +264,11 @@ namespace gr
 					re::AccelerationStructure::GeometryFlags::Opaque :
 					re::AccelerationStructure::GeometryFlags::GeometryFlags_None;
 			}
+
+			// Set the world Transform for all geometries in the BLAS
+			// Note: AS matrices must be 3x4 in row-major order
+			blasParams->m_blasWorldMatrix = glm::transpose(
+				renderData.GetTransformDataFromRenderDataID(meshConceptID).g_model);
 
 			// Assume we'll always update and compact for now
 			blasParams->m_buildFlags = static_cast<re::AccelerationStructure::BuildFlags>

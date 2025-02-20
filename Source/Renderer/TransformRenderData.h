@@ -24,6 +24,8 @@ namespace gr
 			glm::mat4 g_model = glm::mat4(1.f); // Global TRS
 			glm::mat4 g_transposeInvModel = glm::mat4(1.f);
 
+			glm::mat4 g_local = glm::mat4(1.f); // Local TRS
+
 			glm::vec3 m_globalPosition = glm::vec3(0.f); // World-space position
 			glm::vec3 m_globalScale = glm::vec3(1.f);
 
