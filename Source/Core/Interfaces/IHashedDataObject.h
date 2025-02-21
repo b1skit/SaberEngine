@@ -20,7 +20,7 @@ namespace core
 
 
 	public:
-		util::HashKey GetDataHash() const;
+		virtual util::HashKey GetDataHash() const;
 
 		void AddDataBytesToHash(void const* const data, size_t numBytes);
 
