@@ -10,11 +10,17 @@
 
 namespace
 {
+	// Note: Incoming command line args are transformed to lower case before comparison with these keys
 	constexpr char const* k_delimiterChar = "-";
 	constexpr char const* k_projectRootCmdLineArg = "-projectroot";
 	constexpr char const* k_dx12ShaderCompilerCmdLineArg = "-dx12shadercompiler";
 	constexpr char const* k_buildConfigCmdLineArg = "-buildconfig";
 	constexpr char const* k_shadersOnlyCmdLineArg = "-shadersonly";
+	constexpr char const* k_cleanCmdLineArg = "-clean";
+	constexpr char const* k_cleanAndRebuildCmdLineArg = "-cleanandrebuild";
+	
+	constexpr char const* k_disallowJSONExceptionsCmdLineArg = "-disallowjsonexceptions";
+	constexpr char const* k_disallowJSONCommentsCmdLineArg = "-disallowjsoncomments";
 }
 
 
@@ -64,6 +70,7 @@ int main(int argc, char* argv[])
 	// Handle command line args:
 	bool doClean = false;
 	bool doBuild = true;
+	bool shadersOnly = false;
 	bool projectRootDirReceived = false;
 	bool dx12ShaderCompilerArgReceived = false;
 	bool buildConfigArgReceived = false;
@@ -89,26 +96,28 @@ int main(int argc, char* argv[])
 				currentArg.begin(),
 				[](unsigned char c) {return std::tolower(c); });
 
-			if (currentArg == "-disallowjsonexceptions")
+			if (currentArg == k_disallowJSONExceptionsCmdLineArg)
 			{
 				parseParams.m_allowJSONExceptions = false;
 			}
-			else if (currentArg == "-disallowjsoncomments")
+			else if (currentArg == k_disallowJSONCommentsCmdLineArg)
 			{
 				parseParams.m_ignoreJSONComments = false;
 			}
-			else if (currentArg == "-clean")
+			else if (currentArg == k_cleanCmdLineArg)
 			{
 				doClean = true;
 				doBuild = false;
 			}
-			else if (currentArg == "-cleanandrebuild")
+			else if (currentArg == k_cleanAndRebuildCmdLineArg)
 			{
 				doClean = true;
 				doBuild = true;
 			}
 			else if (currentArg == k_shadersOnlyCmdLineArg)
 			{
+				shadersOnly = true;
+
 				parseParams.m_doCppCodeGen = false;
 				parseParams.m_compileShaders = true;
 			}
@@ -234,17 +243,22 @@ int main(int argc, char* argv[])
 
 		if (doClean)
 		{
-			std::cout << "Cleaning generated code...\n";
+			if (!shadersOnly)
+			{
+				std::cout << "Cleaning generated C++ code...\n";
+				droid::CleanDirectory(parseParams.m_cppCodeGenOutputDir.c_str());
 
-			droid::CleanDirectory(parseParams.m_cppCodeGenOutputDir.c_str());
+				std::cout << "Cleaning runtime effects...\n";
+				droid::CleanDirectory(parseParams.m_runtimeEffectsDir.c_str());
+			}
 
+			std::cout << "Cleaning HLSL shaders...\n";
 			droid::CleanDirectory(parseParams.m_hlslCodeGenOutputDir.c_str());
 			droid::CleanDirectory(parseParams.m_hlslShaderOutputDir.c_str());
 
+			std::cout << "Cleaning GLSL shaders...\n";
 			droid::CleanDirectory(parseParams.m_glslCodeGenOutputDir.c_str());
 			droid::CleanDirectory(parseParams.m_glslShaderOutputDir.c_str());
-
-			droid::CleanDirectory(parseParams.m_runtimeEffectsDir.c_str());
 		}
 		if (doBuild)
 		{

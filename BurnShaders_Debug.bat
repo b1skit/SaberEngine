@@ -1,2 +1,2 @@
-Build\x64\Debug\DroidShaderBurner\DroidShaderBurner.exe -buildconfig Debug -projectRoot D:\Projects\Development\SaberEngine\ -DX12ShaderCompiler "C:\Program Files (x86)\Windows Kits\10\Redist\D3D\x64\dxc.exe" -shadersOnly
+Build\x64\Debug\DroidShaderBurner\DroidShaderBurner.exe -buildconfig Debug -projectRoot D:\Projects\Development\SaberEngine\ -DX12ShaderCompiler "C:\Program Files (x86)\Windows Kits\10\Redist\D3D\x64\dxc.exe" -cleanandrebuild -shadersOnly
 timeout /t 7
