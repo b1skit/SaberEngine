@@ -69,8 +69,7 @@ namespace platform
 		{
 		case platform::RenderingAPI::OpenGL: return "OpenGL";
 		case platform::RenderingAPI::DX12: return "DX12";
-		default: SEAssertF("Invalid rendering API");
-			return "INVALID";
+		default: return "platform::RenderingAPIToCStr: Invalid platform::RenderingAPI received";
 		}
 	}
 
