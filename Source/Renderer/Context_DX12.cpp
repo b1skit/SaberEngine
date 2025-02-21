@@ -41,7 +41,7 @@ namespace
 
 		if (pipelineState)
 		{
-			util::CombineHash(psoKey, pipelineState->GetPipelineStateDataHash());
+			util::CombineHash(psoKey, pipelineState->GetDataHash());
 
 			if (targetSet && 
 				(shader.HasShaderType(re::Shader::Vertex) || 

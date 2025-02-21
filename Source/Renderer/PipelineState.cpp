@@ -87,10 +87,10 @@ namespace re
 	}
 
 
-	uint64_t PipelineState::GetPipelineStateDataHash() const
+	util::HashKey PipelineState::GetDataHash() const
 	{
 		SEAssert(!m_isDirty, "Trying to get the data hash from a dirty pipeline state");
-		return GetDataHash();
+		return core::IHashedDataObject::GetDataHash();
 	}
 
 

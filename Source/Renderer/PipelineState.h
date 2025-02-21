@@ -5,7 +5,7 @@
 
 namespace re
 {
-	class PipelineState : public core::IHashedDataObject
+	class PipelineState : public virtual core::IHashedDataObject
 	{
 	public:
 		PipelineState();
@@ -15,9 +15,9 @@ namespace re
 		PipelineState& operator=(PipelineState const&) = default;
 		PipelineState& operator=(PipelineState&&) noexcept = default;
 		~PipelineState() = default;
-		
-
-		uint64_t GetPipelineStateDataHash() const; // Note: Use this instead of IHashedDataObject::GetDataHash()
+			
+	public: // IHashedDataObject:
+		util::HashKey GetDataHash() const override;
 
 	private:
 		void ComputeDataHash() override;
