@@ -541,13 +541,13 @@ namespace droid
 			case util::BuildConfiguration::DebugRelease:
 			{
 				compileOptions = HLSLCompileOptions{
-					.m_disableOptimizations = true,
+					.m_disableOptimizations = false,
 					.m_enableDebuggingInfo = true,
 					.m_allResourcesBound = false, // Default
 					.m_treatWarningsAsErrors = false, // Default
 					.m_enable16BitTypes = false, // Default
 					.m_targetProfile = "6_6", // Default
-					.m_optimizationLevel = 0,
+					.m_optimizationLevel = 1,
 				};
 			}
 			break;
