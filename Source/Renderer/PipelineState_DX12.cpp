@@ -5,6 +5,7 @@
 #include "MeshPrimitive.h"
 #include "PipelineState.h"
 #include "PipelineState_DX12.h"
+#include "RootSignature_DX12.h"
 #include "Shader.h"
 #include "Shader_DX12.h"
 #include "SysInfo_DX12.h"
@@ -24,7 +25,6 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-	// TODO: Use D3D12_GRAPHICS_PIPELINE_STATE_DESC instead?
 	struct GraphicsPipelineStateStream
 	{
 		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE rootSignature;
@@ -450,11 +450,10 @@ namespace dx12
 			CheckHResult(hr, "Failed to create graphics pipeline state");
 
 			// Name our PSO:
-			std::wstring const& psoDebugName = util::ToWideString(
+			m_pipelineState->SetName(util::ToWideString(
 				std::format("{}_{}_GraphicsPSO",
 					shader.GetName(),
-					targetSet ? targetSet->GetName() : "<no targets>"));
-			m_pipelineState->SetName(psoDebugName.c_str());
+					targetSet ? targetSet->GetName().c_str() : "<no targets>")).c_str());
 		}
 		else if (shaderParams->m_shaderBlobs[re::Shader::Compute])
 		{
@@ -473,11 +472,7 @@ namespace dx12
 			HRESULT hr = device2->CreatePipelineState(&computePipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
 			CheckHResult(hr, "Failed to create compute pipeline state");
 
-			// Name our PSO:
-			std::wstring const& psoDebugName = util::ToWideString(
-				std::format("{}_ComputePSO",
-					shader.GetName()));
-			m_pipelineState->SetName(psoDebugName.c_str());
+			m_pipelineState->SetName(util::ToWideString(std::format("{}_ComputePSO", shader.GetName())).c_str());
 		}
 		else
 		{

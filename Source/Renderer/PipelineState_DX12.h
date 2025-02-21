@@ -1,7 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "RootSignature_DX12.h"
-
 #include "Core/Interfaces/IHashedDataObject.h"
 
 #include <wrl.h>
@@ -10,7 +8,6 @@
 
 namespace re
 {
-	class PipelineState;
 	class Shader;
 	class TextureTargetSet;
 }
