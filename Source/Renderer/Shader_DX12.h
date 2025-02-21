@@ -21,7 +21,6 @@ namespace dx12
 			std::unique_ptr<dx12::RootSignature> m_rootSignature;
 		};
 
-		// TODO: Handle copying of d3dcompiler_47.dll into the same folder as the compiled Saber Engine .exe 
 
 	public:
 		static void Create(re::Shader& shader);
