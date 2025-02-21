@@ -245,20 +245,26 @@ int main(int argc, char* argv[])
 		{
 			if (!shadersOnly)
 			{
-				std::cout << "Cleaning generated C++ code...\n";
+				std::cout << "Cleaning generated C++ code from \"" << parseParams.m_cppCodeGenOutputDir.c_str() << "\"...\n";
 				droid::CleanDirectory(parseParams.m_cppCodeGenOutputDir.c_str());
 
-				std::cout << "Cleaning runtime effects...\n";
+				std::cout << "Cleaning runtime effects from \"" << parseParams.m_runtimeEffectsDir.c_str() << "\"...\n";
 				droid::CleanDirectory(parseParams.m_runtimeEffectsDir.c_str());
 			}
 
-			std::cout << "Cleaning HLSL shaders...\n";
+			std::cout << "Cleaning generated HLSL code from " << parseParams.m_hlslCodeGenOutputDir.c_str() << "\"...\n";
 			droid::CleanDirectory(parseParams.m_hlslCodeGenOutputDir.c_str());
+			
+			std::cout << "Cleaning HLSL shaders from " << parseParams.m_hlslShaderOutputDir.c_str() << "\"...\n";
 			droid::CleanDirectory(parseParams.m_hlslShaderOutputDir.c_str());
 
-			std::cout << "Cleaning GLSL shaders...\n";
+			std::cout << "Cleaning generated GLSL code from " << parseParams.m_glslCodeGenOutputDir.c_str() << "\"...\n";
 			droid::CleanDirectory(parseParams.m_glslCodeGenOutputDir.c_str());
+
+			std::cout << "Cleaning GLSL shaders from " << parseParams.m_glslShaderOutputDir.c_str() << "\"...\n";
 			droid::CleanDirectory(parseParams.m_glslShaderOutputDir.c_str());
+
+			std::cout << "Cleaning done!\n---\n";
 		}
 		if (doBuild)
 		{
