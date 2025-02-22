@@ -94,7 +94,10 @@ namespace
 
 
 	droid::ErrorCode ParseTechniquesBlock(
-		droid::ParseDB& parseDB, std::string const& owningEffectName, auto const& techniquesBlock)
+		droid::ParseDB& parseDB,
+		std::string const& owningEffectName,
+		auto const& techniquesBlock,
+		std::vector<std::string>&& effectExcludedPlatforms)
 	{
 		for (auto const& techniqueEntry : techniquesBlock)
 		{
@@ -115,6 +118,12 @@ namespace
 				droid::TechniqueDesc const& parent = parseDB.GetTechnique(owningEffectName, parentName);
 
 				newTechnique.InheritFrom(parent);
+			}
+
+			// If an Effect contains an "ExcludedPlatforms" entry, we propagate it to all of its effects
+			for (auto const& effectExcludedPlatform : effectExcludedPlatforms)
+			{
+				newTechnique.ExcludedPlatforms.emplace(std::move(effectExcludedPlatform));
 			}
 
 			const droid::ErrorCode result = parseDB.AddTechnique(owningEffectName, std::move(newTechnique));
@@ -297,10 +306,22 @@ namespace droid
 					return result;
 				}
 
+				// "ExcludedPlatforms": We'll propagate these to all Techniques in the Effect
+				std::vector<std::string> excludedPlatforms;
+				if (effectBlock.contains(key_excludedPlatforms))
+				{
+					excludedPlatforms = effectBlock.at(key_excludedPlatforms);
+					for (auto& platName : excludedPlatforms)
+					{
+						platName = util::ToLower(platName);
+					}
+				}
+
 				// "Techniques":
 				if (effectBlock.contains(key_techniques))
 				{
-					result = ParseTechniquesBlock(*this, effectBlockName, effectBlock.at(key_techniques));
+					result = ParseTechniquesBlock(
+						*this, effectBlockName, effectBlock.at(key_techniques), std::move(excludedPlatforms));
 					if (result != droid::ErrorCode::Success)
 					{
 						return result;
@@ -470,10 +491,14 @@ namespace droid
 			{
 				for (auto const& technique : effect.second)
 				{
+					if (technique.second.ExcludedPlatforms.contains("opengl"))
+					{
+						continue;
+					}
+
 					for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
 					{
-						if (technique.second._Shader[shaderTypeIdx].empty() ||
-							technique.second.ExcludedPlatforms.contains("opengl"))
+						if (technique.second._Shader[shaderTypeIdx].empty())
 						{
 							continue;
 						}
