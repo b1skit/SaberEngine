@@ -81,7 +81,7 @@ struct std::formatter<util::HashKey>
 	}
 
 	template <typename FormatContext>
-	auto format(const util::HashKey& hashKey, FormatContext& ctx)
+	auto format(util::HashKey const& hashKey, FormatContext& ctx) const
 	{
 		return std::format_to(ctx.out(), "{}", hashKey.m_hashKey);
 	}

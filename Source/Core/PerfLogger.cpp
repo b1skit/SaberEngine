@@ -351,7 +351,8 @@ namespace core
 
 					// Must fully specialize our function object to be able to recursively call it:
 					std::function<void(TimeRecord const&)> RecursiveNodeDisplay;
-					RecursiveNodeDisplay = [&BuildRecordText, this, &RecursiveNodeDisplay]
+					RecursiveNodeDisplay = 
+						[&BuildRecordText, this, &RecursiveNodeDisplay, &k_defaultColor, &k_warningColor, &k_alertColor]
 						(TimeRecord const& record)
 						{
 							std::string const& recordTex = BuildRecordText(record);
