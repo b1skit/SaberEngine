@@ -21,7 +21,7 @@ namespace effect
 
 		effect::Effect const* GetEffect(EffectID) const;
 		effect::Technique const* GetTechnique(TechniqueID) const;
-		re::PipelineState const* GetPipelineState(std::string const&) const;
+		re::RasterizationState const* GetRasterizationState(std::string const&) const;
 		re::VertexStreamMap const* GetVertexStreamMap(std::string const&) const;
 
 
@@ -34,8 +34,8 @@ namespace effect
 		bool HasTechnique(TechniqueID) const;
 		effect::Technique* AddTechnique(effect::Technique&&);
 
-		bool HasPipelineState(std::string const& name) const;
-		re::PipelineState* AddPipelineState(std::string const& name, re::PipelineState&&);
+		bool HasRasterizationState(std::string const& name) const;
+		re::RasterizationState* AddRasterizationState(std::string const& name, re::RasterizationState&&);
 
 		bool HasVertexStreamMap(std::string const& name) const;
 		re::VertexStreamMap* AddVertexStreamMap(std::string const& name, re::VertexStreamMap const&);
@@ -48,8 +48,8 @@ namespace effect
 		std::unordered_map<TechniqueID, effect::Technique> m_techniques;
 		mutable std::shared_mutex m_techniquesMutex;
 
-		std::unordered_map<std::string, re::PipelineState> m_pipelineStates;
-		mutable std::shared_mutex m_pipelineStatesMutex;
+		std::unordered_map<std::string, re::RasterizationState> m_rasterizationStates;
+		mutable std::shared_mutex m_rasterizationStatesMutex;
 
 		std::unordered_map<std::string, re::VertexStreamMap> m_vertexStreamMaps;
 		mutable std::shared_mutex m_vertexStreamMapsMutex;
@@ -86,15 +86,15 @@ namespace effect
 	}
 
 
-	inline re::PipelineState const* EffectDB::GetPipelineState(std::string const& pipelineStateName) const
+	inline re::RasterizationState const* EffectDB::GetRasterizationState(std::string const& rasterStateName) const
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_pipelineStatesMutex);
+			std::unique_lock<std::shared_mutex> lock(m_rasterizationStatesMutex);
 
-			SEAssert(m_pipelineStates.contains(pipelineStateName),
-				"No PipelineState with the given name exists");
+			SEAssert(m_rasterizationStates.contains(rasterStateName),
+				"No RasterizationState with the given name exists");
 
-			return &m_pipelineStates.at(pipelineStateName);
+			return &m_rasterizationStates.at(rasterStateName);
 		}
 	}
 

@@ -169,16 +169,16 @@ namespace
 
 
 	bool IsBatchAndShaderTopologyCompatible(
-		gr::MeshPrimitive::PrimitiveTopology topologyMode, re::PipelineState::PrimitiveTopologyType topologyType)
+		gr::MeshPrimitive::PrimitiveTopology topologyMode, re::RasterizationState::PrimitiveTopologyType topologyType)
 	{
 		switch (topologyType)
 		{
-		case re::PipelineState::PrimitiveTopologyType::Point:
+		case re::RasterizationState::PrimitiveTopologyType::Point:
 		{
 			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::PointList;
 		}
 		break;
-		case re::PipelineState::PrimitiveTopologyType::Line:
+		case re::RasterizationState::PrimitiveTopologyType::Line:
 		{
 			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineList ||
 				topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineStrip ||
@@ -190,7 +190,7 @@ namespace
 				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency;
 		}
 		break;
-		case re::PipelineState::PrimitiveTopologyType::Triangle:
+		case re::RasterizationState::PrimitiveTopologyType::Triangle:
 		{
 			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleList ||
 				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStrip ||
@@ -198,7 +198,7 @@ namespace
 				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency;
 		}
 		break;
-		case re::PipelineState::PrimitiveTopologyType::Patch:
+		case re::RasterizationState::PrimitiveTopologyType::Patch:
 		{
 			SEAssertF("Patch topology is (currently) unsupported");
 		}
@@ -657,7 +657,7 @@ namespace re
 		SEAssert(m_type != BatchType::Graphics ||
 			IsBatchAndShaderTopologyCompatible(
 				GetGraphicsParams().m_primitiveTopology,
-				m_batchShader->GetPipelineState()->GetPrimitiveTopologyType()),
+				m_batchShader->GetRasterizationState()->GetPrimitiveTopologyType()),
 			"Graphics topology mode is incompatible with shader pipeline state topology type");
 
 		// Resolve vertex input slots now that we've decided which shader will be used:

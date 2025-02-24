@@ -128,160 +128,160 @@ namespace
 	}
 
 
-	re::PipelineState ParsePipelineStateEntry(auto const& piplineStateEntry)
+	re::RasterizationState ParseRasterizationStateEntry(auto const& rasterizationStateEntry)
 	{
-		// Create a new PipelineState, and update it as necessary:
-		re::PipelineState newPipelineState;
+		// Create a new RasterizationState, and update it as necessary:
+		re::RasterizationState newRasterizationState;
 
 		// "TopologyType":
-		if (piplineStateEntry.contains(key_topologyType))
+		if (rasterizationStateEntry.contains(key_topologyType))
 		{
-			newPipelineState.SetPrimitiveTopologyType(re::PipelineState::CStrToPrimitiveTopologyType(
-				piplineStateEntry.at(key_topologyType).template get<std::string>().c_str()));
+			newRasterizationState.SetPrimitiveTopologyType(re::RasterizationState::CStrToPrimitiveTopologyType(
+				rasterizationStateEntry.at(key_topologyType).template get<std::string>().c_str()));
 		}
 
 		// "RasterizerState":
-		if (piplineStateEntry.contains(key_rasterizerState))
+		if (rasterizationStateEntry.contains(key_rasterizerState))
 		{
-			auto const& rasterizerBlock = piplineStateEntry.at(key_rasterizerState);
+			auto const& rasterizerBlock = rasterizationStateEntry.at(key_rasterizerState);
 
 			// "FillMode":
 			if (rasterizerBlock.contains(key_fillMode))
 			{
-				newPipelineState.SetFillMode(re::PipelineState::GetFillModeByName(
+				newRasterizationState.SetFillMode(re::RasterizationState::GetFillModeByName(
 					rasterizerBlock.at(key_fillMode).template get<std::string>().c_str()));
 			}
 
 			// "FaceCullingMode":
 			if (rasterizerBlock.contains(key_faceCullingMode))
 			{
-				newPipelineState.SetFaceCullingMode(re::PipelineState::GetFaceCullingModeByName(
+				newRasterizationState.SetFaceCullingMode(re::RasterizationState::GetFaceCullingModeByName(
 					rasterizerBlock.at(key_faceCullingMode).template get<std::string>().c_str()));
 			}
 
 			// "WindingOrder":
 			if (rasterizerBlock.contains(key_windingOrder))
 			{
-				newPipelineState.SetWindingOrder(re::PipelineState::GetWindingOrderByName(
+				newRasterizationState.SetWindingOrder(re::RasterizationState::GetWindingOrderByName(
 					rasterizerBlock.at(key_windingOrder).template get<std::string>().c_str()));
 			}
 
 			// "DepthBias":
 			if (rasterizerBlock.contains(key_depthBias))
 			{
-				newPipelineState.SetDepthBias(rasterizerBlock.at(key_depthBias).template get<int>());
+				newRasterizationState.SetDepthBias(rasterizerBlock.at(key_depthBias).template get<int>());
 			}
 
 			// "DepthBiasClamp":
 			if (rasterizerBlock.contains(key_depthBiasClamp))
 			{
-				newPipelineState.SetDepthBiasClamp(rasterizerBlock.at(key_depthBiasClamp).template get<float>());
+				newRasterizationState.SetDepthBiasClamp(rasterizerBlock.at(key_depthBiasClamp).template get<float>());
 			}
 
 			// "SlopeScaledDepthBias":
 			if (rasterizerBlock.contains(key_slopeScaledDepthBias))
 			{
-				newPipelineState.SetSlopeScaledDepthBias(rasterizerBlock.at(key_slopeScaledDepthBias).template get<float>());
+				newRasterizationState.SetSlopeScaledDepthBias(rasterizerBlock.at(key_slopeScaledDepthBias).template get<float>());
 			}
 
 			// "DepthClipEnable":
 			if (rasterizerBlock.contains(key_depthClipEnable))
 			{
-				newPipelineState.SetDepthClipEnabled(rasterizerBlock.at(key_depthClipEnable).template get<bool>());
+				newRasterizationState.SetDepthClipEnabled(rasterizerBlock.at(key_depthClipEnable).template get<bool>());
 			}
 
 			// "MultisampleEnable":
 			if (rasterizerBlock.contains(key_multisampleEnable))
 			{
-				newPipelineState.SetMultiSampleEnabled(rasterizerBlock.at(key_multisampleEnable).template get<bool>());
+				newRasterizationState.SetMultiSampleEnabled(rasterizerBlock.at(key_multisampleEnable).template get<bool>());
 			}
 
 			// "AntialiasedLineEnable":
 			if (rasterizerBlock.contains(key_antialiasedLineEnable))
 			{
-				newPipelineState.SetAntiAliasedLineEnabled(rasterizerBlock.at(key_antialiasedLineEnable).template get<bool>());
+				newRasterizationState.SetAntiAliasedLineEnabled(rasterizerBlock.at(key_antialiasedLineEnable).template get<bool>());
 			}
 
 			// "ForcedSampleCount":
 			if (rasterizerBlock.contains(key_forcedSampleCount))
 			{
-				newPipelineState.SetForcedSampleCount(rasterizerBlock.at(key_forcedSampleCount).template get<uint8_t>());
+				newRasterizationState.SetForcedSampleCount(rasterizerBlock.at(key_forcedSampleCount).template get<uint8_t>());
 			}
 
 			// "ConservativeRaster":
 			if (rasterizerBlock.contains(key_conservativeRaster))
 			{
-				newPipelineState.SetConservativeRaster(rasterizerBlock.at(key_conservativeRaster).template get<bool>());
+				newRasterizationState.SetConservativeRaster(rasterizerBlock.at(key_conservativeRaster).template get<bool>());
 			}
 		}
 
-		if (piplineStateEntry.contains(key_depthStencilState))
+		if (rasterizationStateEntry.contains(key_depthStencilState))
 		{
-			auto const& depthStencilBlock = piplineStateEntry.at(key_depthStencilState);
+			auto const& depthStencilBlock = rasterizationStateEntry.at(key_depthStencilState);
 
 			// "DepthTestEnabled":
 			if (depthStencilBlock.contains(key_depthTestEnabled))
 			{
-				newPipelineState.SetDepthTestEnabled(depthStencilBlock.at(key_depthTestEnabled).template get<bool>());
+				newRasterizationState.SetDepthTestEnabled(depthStencilBlock.at(key_depthTestEnabled).template get<bool>());
 			}
 
 			// "DepthWriteMask":
 			if (depthStencilBlock.contains(key_depthWriteMask))
 			{
-				newPipelineState.SetDepthWriteMask(re::PipelineState::GetDepthWriteMaskByName(
+				newRasterizationState.SetDepthWriteMask(re::RasterizationState::GetDepthWriteMaskByName(
 					depthStencilBlock.at(key_depthWriteMask).template get<std::string>().c_str()));
 			}
 
 			// "DepthComparison":
 			if (depthStencilBlock.contains(key_depthComparison))
 			{
-				newPipelineState.SetDepthComparison(re::PipelineState::GetComparisonByName(
+				newRasterizationState.SetDepthComparison(re::RasterizationState::GetComparisonByName(
 					depthStencilBlock.at(key_depthComparison).template get<std::string>().c_str()));
 			}
 
 			// "StencilEnabled":
 			if (depthStencilBlock.contains(key_stencilEnabled))
 			{
-				newPipelineState.SetStencilEnabled(depthStencilBlock.at(key_stencilEnabled).template get<bool>());
+				newRasterizationState.SetStencilEnabled(depthStencilBlock.at(key_stencilEnabled).template get<bool>());
 			}
 
 			// "StencilReadMask":
 			if (depthStencilBlock.contains(key_stencilReadMask))
 			{
-				newPipelineState.SetStencilReadMask(depthStencilBlock.at(key_stencilReadMask).template get<uint8_t>());
+				newRasterizationState.SetStencilReadMask(depthStencilBlock.at(key_stencilReadMask).template get<uint8_t>());
 			}
 
 			// "StencilWriteMask":
 			if (depthStencilBlock.contains(key_stencilWriteMask))
 			{
-				newPipelineState.SetStencilWriteMask(depthStencilBlock.at(key_stencilWriteMask).template get<uint8_t>());
+				newRasterizationState.SetStencilWriteMask(depthStencilBlock.at(key_stencilWriteMask).template get<uint8_t>());
 			}
 
-			auto ParseStencilOpDesc = [](auto const& stencilOpDesc) -> re::PipelineState::StencilOpDesc
+			auto ParseStencilOpDesc = [](auto const& stencilOpDesc) -> re::RasterizationState::StencilOpDesc
 				{
-					re::PipelineState::StencilOpDesc desc{};
+					re::RasterizationState::StencilOpDesc desc{};
 
 					if (stencilOpDesc.contains(key_stencilFailOp))
 					{
-						desc.m_failOp = re::PipelineState::GetStencilOpByName(
+						desc.m_failOp = re::RasterizationState::GetStencilOpByName(
 							stencilOpDesc.at(key_stencilFailOp).template get<std::string>().c_str());
 					}
 
 					if (stencilOpDesc.contains(key_stencilDepthFailOp))
 					{
-						desc.m_depthFailOp = re::PipelineState::GetStencilOpByName(
+						desc.m_depthFailOp = re::RasterizationState::GetStencilOpByName(
 							stencilOpDesc.at(key_stencilDepthFailOp).template get<std::string>().c_str());
 					}
 
 					if (stencilOpDesc.contains(key_stencilPassOp))
 					{
-						desc.m_passOp = re::PipelineState::GetStencilOpByName(
+						desc.m_passOp = re::RasterizationState::GetStencilOpByName(
 							stencilOpDesc.at(key_stencilPassOp).template get<std::string>().c_str());
 					}
 
 					if (stencilOpDesc.contains(key_stencilComparison))
 					{
-						desc.m_comparison = re::PipelineState::GetComparisonByName(
+						desc.m_comparison = re::RasterizationState::GetComparisonByName(
 							stencilOpDesc.at(key_stencilComparison).template get<std::string>().c_str());
 					}
 
@@ -290,34 +290,34 @@ namespace
 
 			if (depthStencilBlock.contains(key_frontStencilOpDesc))
 			{
-				auto const& frontStencilOpDesc = piplineStateEntry.at(key_frontStencilOpDesc);
-				re::PipelineState::StencilOpDesc desc = ParseStencilOpDesc(frontStencilOpDesc);
-				newPipelineState.SetFrontFaceStencilOpDesc(desc);
+				auto const& frontStencilOpDesc = rasterizationStateEntry.at(key_frontStencilOpDesc);
+				re::RasterizationState::StencilOpDesc desc = ParseStencilOpDesc(frontStencilOpDesc);
+				newRasterizationState.SetFrontFaceStencilOpDesc(desc);
 			}
 
 			if (depthStencilBlock.contains(key_backStencilOpDesc))
 			{
-				auto const& backStencilOpDesc = piplineStateEntry.at(key_backStencilOpDesc);
-				re::PipelineState::StencilOpDesc desc = ParseStencilOpDesc(backStencilOpDesc);
-				newPipelineState.SetBackFaceStencilOpDesc(desc);
+				auto const& backStencilOpDesc = rasterizationStateEntry.at(key_backStencilOpDesc);
+				re::RasterizationState::StencilOpDesc desc = ParseStencilOpDesc(backStencilOpDesc);
+				newRasterizationState.SetBackFaceStencilOpDesc(desc);
 			}
 		}
 
-		if (piplineStateEntry.contains(key_blendState))
+		if (rasterizationStateEntry.contains(key_blendState))
 		{
-			auto const& blendStateBlock = piplineStateEntry.at(key_blendState);
+			auto const& blendStateBlock = rasterizationStateEntry.at(key_blendState);
 
 			// "AlphaToCoverageEnable":
 			if (blendStateBlock.contains(key_alphaToCoverageEnable))
 			{
-				newPipelineState.SetAlphaToCoverageEnabled(
+				newRasterizationState.SetAlphaToCoverageEnabled(
 					blendStateBlock.at(key_alphaToCoverageEnable).template get<bool>());
 			}
 
 			// "IndependentBlendEnable":
 			if (blendStateBlock.contains(key_independentBlendEnable))
 			{
-				newPipelineState.SetIndependentBlendEnabled(
+				newRasterizationState.SetIndependentBlendEnabled(
 					blendStateBlock.at(key_independentBlendEnable).template get<bool>());
 			}
 
@@ -327,7 +327,7 @@ namespace
 				uint8_t index = 0;
 				for (auto const& renderTargetDesc : blendStateBlock.at(key_renderTargets))
 				{
-					re::PipelineState::RenderTargetBlendDesc blendDesc{};
+					re::RasterizationState::RenderTargetBlendDesc blendDesc{};
 
 					// "BlendEnable":
 					if (renderTargetDesc.contains(key_blendEnable))
@@ -344,49 +344,49 @@ namespace
 					// "SrcBlend":
 					if (renderTargetDesc.contains(key_srcBlend))
 					{
-						blendDesc.m_srcBlend = re::PipelineState::GetBlendModeByName(
+						blendDesc.m_srcBlend = re::RasterizationState::GetBlendModeByName(
 							renderTargetDesc.at(key_srcBlend).template get<std::string>().c_str());
 					}
 
 					// "DstBlend":
 					if (renderTargetDesc.contains(key_dstBlend))
 					{
-						blendDesc.m_dstBlend = re::PipelineState::GetBlendModeByName(
+						blendDesc.m_dstBlend = re::RasterizationState::GetBlendModeByName(
 							renderTargetDesc.at(key_dstBlend).template get<std::string>().c_str());
 					}
 
 					// "BlendOp":
 					if (renderTargetDesc.contains(key_blendOp))
 					{
-						blendDesc.m_blendOp = re::PipelineState::GetBlendOpByName(
+						blendDesc.m_blendOp = re::RasterizationState::GetBlendOpByName(
 							renderTargetDesc.at(key_blendOp).template get<std::string>().c_str());
 					}
 
 					// "SrcBlendAlpha":
 					if (renderTargetDesc.contains(key_srcBlendAlpha))
 					{
-						blendDesc.m_srcBlendAlpha = re::PipelineState::GetBlendModeByName(
+						blendDesc.m_srcBlendAlpha = re::RasterizationState::GetBlendModeByName(
 							renderTargetDesc.at(key_srcBlendAlpha).template get<std::string>().c_str());
 					}
 
 					// "DstBlendAlpha":
 					if (renderTargetDesc.contains(key_dstBlendAlpha))
 					{
-						blendDesc.m_dstBlendAlpha = re::PipelineState::GetBlendModeByName(
+						blendDesc.m_dstBlendAlpha = re::RasterizationState::GetBlendModeByName(
 							renderTargetDesc.at(key_dstBlendAlpha).template get<std::string>().c_str());
 					}
 
 					// "BlendOpAlpha":
 					if (renderTargetDesc.contains(key_blendOpAlpha))
 					{
-						blendDesc.m_blendOpAlpha = re::PipelineState::GetBlendOpByName(
+						blendDesc.m_blendOpAlpha = re::RasterizationState::GetBlendOpByName(
 							renderTargetDesc.at(key_blendOpAlpha).template get<std::string>().c_str());
 					}
 
 					// "LogicOp":
 					if (renderTargetDesc.contains(key_logicOp))
 					{
-						blendDesc.m_logicOp = re::PipelineState::GetLogicOpByName(
+						blendDesc.m_logicOp = re::RasterizationState::GetLogicOpByName(
 							renderTargetDesc.at(key_logicOp).template get<std::string>().c_str());
 					}
 
@@ -397,13 +397,13 @@ namespace
 							renderTargetDesc.at(key_renderTargetWriteMask).template get<uint8_t>();
 					}
 
-					newPipelineState.SetRenderTargetBlendDesc(blendDesc, index);
+					newRasterizationState.SetRenderTargetBlendDesc(blendDesc, index);
 					++index;
 				}
 			}
 		}
 
-		return newPipelineState;
+		return newRasterizationState;
 	}
 
 
@@ -433,24 +433,24 @@ namespace
 			}
 		}
 
-		SEAssert(isComputeTechnique || techniqueEntry.contains(key_pipelineState),
-			"Failed to find PipelineState entry. This is required except for compute shaders");
+		SEAssert(isComputeTechnique || techniqueEntry.contains(key_rasterizationState),
+			"Failed to find RasterizationState entry. This is required except for compute shaders");
 
 		SEAssert(isComputeTechnique || techniqueEntry.contains(key_vertexStream),
 			"Failed to find VertexStream entry. This is required except for compute shaders");
 
-		re::PipelineState const* pipelineState = nullptr;
+		re::RasterizationState const* rasterizationState = nullptr;
 		re::VertexStreamMap const* vertexStreamMap = nullptr;
 		if (!isComputeTechnique)
 		{
-			std::string const& pipelineStateName = techniqueEntry.at(key_pipelineState).template get<std::string>();
-			pipelineState = effectDB.GetPipelineState(pipelineStateName);
+			std::string const& rasterizationStateName = techniqueEntry.at(key_rasterizationState).template get<std::string>();
+			rasterizationState = effectDB.GetRasterizationState(rasterizationStateName);
 
 			std::string const& vertexStreamName = techniqueEntry.at(key_vertexStream).template get<std::string>();
 			vertexStreamMap = effectDB.GetVertexStreamMap(vertexStreamName);
 		}
 
-		return effect::Technique(techniqueName.c_str(), shaderNames, pipelineState, vertexStreamMap);
+		return effect::Technique(techniqueName.c_str(), shaderNames, rasterizationState, vertexStreamMap);
 	}
 
 
@@ -531,11 +531,11 @@ namespace effect
 	void EffectDB::Destroy()
 	{
 		{
-			std::scoped_lock lock(m_effectsMutex, m_techniquesMutex, m_pipelineStatesMutex, m_vertexStreamMapsMutex);
+			std::scoped_lock lock(m_effectsMutex, m_techniquesMutex, m_rasterizationStatesMutex, m_vertexStreamMapsMutex);
 
 			m_effects.clear();
 			m_techniques.clear();
-			m_pipelineStates.clear();
+			m_rasterizationStates.clear();
 			m_vertexStreamMaps.clear();
 		}
 	}
@@ -650,21 +650,21 @@ namespace effect
 
 			std::unordered_set<TechniqueID> excludedTechniques;
 
-			// "PipelineStates":
-			if (effectJSON.contains(key_pipelineStatesBlock) && !effectJSON.at(key_pipelineStatesBlock).empty())
+			// "RasterizationStates":
+			if (effectJSON.contains(key_RasterizationStatesBlock) && !effectJSON.at(key_RasterizationStatesBlock).empty())
 			{
-				auto const& pipelineStateBlock = effectJSON.at(key_pipelineStatesBlock);
-				for (auto const& piplineStateEntry : pipelineStateBlock)
+				auto const& rasterizationStateBlock = effectJSON.at(key_RasterizationStatesBlock);
+				for (auto const& piplineStateEntry : rasterizationStateBlock)
 				{
-					SEAssert(piplineStateEntry.contains(key_name), "Incomplete PipelineState definition");
+					SEAssert(piplineStateEntry.contains(key_name), "Incomplete RasterizationState definition");
 
 					if (ExcludesPlatform(piplineStateEntry))
 					{
 						continue;
 					}
 
-					std::string const& pipelineStateName = piplineStateEntry.at(key_name).template get<std::string>();
-					AddPipelineState(pipelineStateName, ParsePipelineStateEntry(piplineStateEntry));
+					std::string const& rasterizationStateName = piplineStateEntry.at(key_name).template get<std::string>();
+					AddRasterizationState(rasterizationStateName, ParseRasterizationStateEntry(piplineStateEntry));
 				}
 			}
 
@@ -835,29 +835,30 @@ namespace effect
 	}
 
 
-	bool EffectDB::HasPipelineState(std::string const& name) const
+	bool EffectDB::HasRasterizationState(std::string const& name) const
 	{
 		{
-			std::shared_lock<std::shared_mutex> lock(m_pipelineStatesMutex);
-			return m_pipelineStates.contains(name);
+			std::shared_lock<std::shared_mutex> lock(m_rasterizationStatesMutex);
+			return m_rasterizationStates.contains(name);
 		}
 	}
 
 
-	re::PipelineState* EffectDB::AddPipelineState(std::string const& name, re::PipelineState&& newPipelineState)
+	re::RasterizationState* EffectDB::AddRasterizationState(
+		std::string const& name, re::RasterizationState&& newRasterizationState)
 	{
 		{
-			std::unique_lock<std::shared_mutex> lock(m_pipelineStatesMutex);
+			std::unique_lock<std::shared_mutex> lock(m_rasterizationStatesMutex);
 
-			if (m_pipelineStates.contains(name))
+			if (m_rasterizationStates.contains(name))
 			{
-				SEAssert(m_pipelineStates.at(name).GetDataHash() == newPipelineState.GetDataHash(),
-					"A PipelineState with the given name but different data hash exists. Names must be unique");
+				SEAssert(m_rasterizationStates.at(name).GetDataHash() == newRasterizationState.GetDataHash(),
+					"A RasterizationState with the given name but different data hash exists. Names must be unique");
 
-				return &m_pipelineStates.at(name);
+				return &m_rasterizationStates.at(name);
 			}
 
-			auto result = m_pipelineStates.emplace(name, std::move(newPipelineState));
+			auto result = m_rasterizationStates.emplace(name, std::move(newRasterizationState));
 
 			return &(result.first->second);
 		}

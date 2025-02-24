@@ -133,11 +133,11 @@ namespace opengl
 			{
 				opengl::Shader::Bind(*shader);
 
-				SEAssert(shader->GetPipelineState() ||
+				SEAssert(shader->GetRasterizationState() ||
 					stage->GetStageType() == re::Stage::Type::Compute,
 					"Pipeline state is null. This is unexpected");
 
-				context->SetPipelineState(shader->GetPipelineState());
+				context->SetRasterizationState(shader->GetRasterizationState());
 
 				if (doSetStageInputs)
 				{

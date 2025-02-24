@@ -84,7 +84,7 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "Line",
 				"PShaderEntryPoint": "PShader",
-				"PipelineState": "Debug_Line",
+				"RasterizationState": "Debug_Line",
 				"VertexStream": "PositionColor"
 			},
 			{
@@ -92,7 +92,7 @@
 				"Parent" : "Debug_Line",
 				"VShaderDefines" : ["DEBUG_WIREFRAME"],
 				"PShaderDefines" : ["DEBUG_WIREFRAME"],
-				"PipelineState": "Debug_Wireframe",
+				"RasterizationState": "Debug_Wireframe",
 				"VertexStream": "PositionOnly"
 			},
 			{
@@ -103,7 +103,7 @@
 				"GShaderEntryPoint": "GShader",
 				"GShaderDefines" : ["DEBUG_NORMAL"],
 				"PShaderDefines" : ["DEBUG_NORMAL"],
-				"PipelineState": "Debug_Point",
+				"RasterizationState": "Debug_Point",
 				"VertexStream": "PositionNormal"
 			},
 			{
@@ -114,13 +114,13 @@
 				"GShaderEntryPoint": "GShader",
 				"GShaderDefines" : ["DEBUG_AXIS"],
 				"PShaderDefines" : ["DEBUG_AXIS"],
-				"PipelineState": "Debug_Point",
+				"RasterizationState": "Debug_Point",
 				"VertexStream": "PositionOnly"
 			}
 		]
 	},
 
-	"PipelineStates": [
+	"RasterizationStates": [
 		{
 			"Name": "Debug_Line",
 			"TopologyType": "Line",

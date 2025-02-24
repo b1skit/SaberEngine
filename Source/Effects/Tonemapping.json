@@ -12,7 +12,7 @@
 				"VShaderDefines": ["FLIP_FULLSCREEN_QUAD_UVS"], // OpenGL only
 				"PShader": "ToneMap_PShader",
 				"PShaderEntryPoint": "PShader",
-				"PipelineState": "FullscreenQuad_Always",
+				"RasterizationState": "FullscreenQuad_Always",
 				"VertexStream": "PositionUV"
 			}
 		]

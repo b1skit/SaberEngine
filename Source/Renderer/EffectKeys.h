@@ -30,8 +30,8 @@ namespace
 	constexpr char const* key_mode = "Mode";
 	constexpr char const* key_technique = "Technique";
 
-	// "PipelineStates":
-	constexpr char const* key_pipelineStatesBlock = "PipelineStates";
+	// "RasterizationStates":
+	constexpr char const* key_RasterizationStatesBlock = "RasterizationStates";
 	constexpr char const* key_topologyType = "TopologyType";
 
 	// "RasterizerState":
@@ -88,7 +88,7 @@ namespace
 	// "Techniques":
 	constexpr char const* key_techniques = "Techniques";
 	constexpr char const* key_parent = "Parent";
-	constexpr char const* key_pipelineState = "PipelineState";
+	constexpr char const* key_rasterizationState = "RasterizationState";
 	constexpr char const* key_vertexStream = "VertexStream";
 	
 

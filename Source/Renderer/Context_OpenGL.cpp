@@ -21,102 +21,102 @@
 
 namespace
 {
-	constexpr GLenum ComparisonFuncToGLEnum(re::PipelineState::ComparisonFunc comparisonFunc)
+	constexpr GLenum ComparisonFuncToGLEnum(re::RasterizationState::ComparisonFunc comparisonFunc)
 	{
 		switch (comparisonFunc)
 		{
-		case re::PipelineState::ComparisonFunc::Less: return GL_LESS;
-		case re::PipelineState::ComparisonFunc::Never: return GL_NEVER;
-		case re::PipelineState::ComparisonFunc::Equal: return GL_EQUAL;
-		case re::PipelineState::ComparisonFunc::LEqual: return GL_LEQUAL;
-		case re::PipelineState::ComparisonFunc::Greater: return GL_GREATER;
-		case re::PipelineState::ComparisonFunc::NotEqual: return GL_NOTEQUAL;
-		case re::PipelineState::ComparisonFunc::GEqual: return GL_GEQUAL;
-		case re::PipelineState::ComparisonFunc::Always: return GL_ALWAYS;
+		case re::RasterizationState::ComparisonFunc::Less: return GL_LESS;
+		case re::RasterizationState::ComparisonFunc::Never: return GL_NEVER;
+		case re::RasterizationState::ComparisonFunc::Equal: return GL_EQUAL;
+		case re::RasterizationState::ComparisonFunc::LEqual: return GL_LEQUAL;
+		case re::RasterizationState::ComparisonFunc::Greater: return GL_GREATER;
+		case re::RasterizationState::ComparisonFunc::NotEqual: return GL_NOTEQUAL;
+		case re::RasterizationState::ComparisonFunc::GEqual: return GL_GEQUAL;
+		case re::RasterizationState::ComparisonFunc::Always: return GL_ALWAYS;
 		}
 		return GL_ALWAYS; // This should never happen
 	}
 
 
-	constexpr GLenum StencilOpToGLEnum(re::PipelineState::StencilOp stencilOp)
+	constexpr GLenum StencilOpToGLEnum(re::RasterizationState::StencilOp stencilOp)
 	{
 		switch (stencilOp)
 		{
-		case re::PipelineState::StencilOp::Keep: return GL_KEEP;
-		case re::PipelineState::StencilOp::Zero: return GL_ZERO;
-		case re::PipelineState::StencilOp::Replace: return GL_REPLACE;
-		case re::PipelineState::StencilOp::IncrementSaturate: return GL_INCR;
-		case re::PipelineState::StencilOp::DecrementSaturate: return GL_DECR;
-		case re::PipelineState::StencilOp::Invert: return GL_INVERT;
-		case re::PipelineState::StencilOp::Increment: return GL_INCR_WRAP;
-		case re::PipelineState::StencilOp::Decrement: return GL_DECR_WRAP;
+		case re::RasterizationState::StencilOp::Keep: return GL_KEEP;
+		case re::RasterizationState::StencilOp::Zero: return GL_ZERO;
+		case re::RasterizationState::StencilOp::Replace: return GL_REPLACE;
+		case re::RasterizationState::StencilOp::IncrementSaturate: return GL_INCR;
+		case re::RasterizationState::StencilOp::DecrementSaturate: return GL_DECR;
+		case re::RasterizationState::StencilOp::Invert: return GL_INVERT;
+		case re::RasterizationState::StencilOp::Increment: return GL_INCR_WRAP;
+		case re::RasterizationState::StencilOp::Decrement: return GL_DECR_WRAP;
 		}
 		return GL_KEEP; // This should never happen
 	}
 
 
-	constexpr GLenum BlendModeToGLEnum(re::PipelineState::BlendMode blendMode)
+	constexpr GLenum BlendModeToGLEnum(re::RasterizationState::BlendMode blendMode)
 	{
 		switch (blendMode)
 		{
-		case re::PipelineState::BlendMode::Zero: return GL_ZERO;
-		case re::PipelineState::BlendMode::One: return GL_ONE;
-		case re::PipelineState::BlendMode::SrcColor: return GL_SRC_COLOR;
-		case re::PipelineState::BlendMode::InvSrcColor: return GL_ONE_MINUS_SRC_COLOR;
-		case re::PipelineState::BlendMode::SrcAlpha: return GL_SRC_ALPHA;
-		case re::PipelineState::BlendMode::InvSrcAlpha: return GL_ONE_MINUS_SRC_ALPHA;
-		case re::PipelineState::BlendMode::DstAlpha: return GL_DST_ALPHA;
-		case re::PipelineState::BlendMode::InvDstAlpha: return GL_ONE_MINUS_DST_ALPHA;
-		case re::PipelineState::BlendMode::DstColor: return GL_DST_COLOR;
-		case re::PipelineState::BlendMode::InvDstColor: return GL_ONE_MINUS_DST_COLOR;
-		case re::PipelineState::BlendMode::SrcAlphaSat: return GL_SRC_ALPHA_SATURATE;
-		case re::PipelineState::BlendMode::BlendFactor: return GL_CONSTANT_COLOR;
-		case re::PipelineState::BlendMode::InvBlendFactor: return GL_ONE_MINUS_CONSTANT_COLOR;
-		case re::PipelineState::BlendMode::SrcOneColor: return GL_SRC1_COLOR;
-		case re::PipelineState::BlendMode::InvSrcOneColor: return GL_ONE_MINUS_SRC1_COLOR;
-		case re::PipelineState::BlendMode::SrcOneAlpha: return GL_SRC1_ALPHA;
-		case re::PipelineState::BlendMode::InvSrcOneAlpha: return GL_ONE_MINUS_SRC1_ALPHA;
-		case re::PipelineState::BlendMode::AlphaFactor: return GL_CONSTANT_ALPHA;
-		case re::PipelineState::BlendMode::InvAlphaFactor: return GL_ONE_MINUS_CONSTANT_ALPHA;
+		case re::RasterizationState::BlendMode::Zero: return GL_ZERO;
+		case re::RasterizationState::BlendMode::One: return GL_ONE;
+		case re::RasterizationState::BlendMode::SrcColor: return GL_SRC_COLOR;
+		case re::RasterizationState::BlendMode::InvSrcColor: return GL_ONE_MINUS_SRC_COLOR;
+		case re::RasterizationState::BlendMode::SrcAlpha: return GL_SRC_ALPHA;
+		case re::RasterizationState::BlendMode::InvSrcAlpha: return GL_ONE_MINUS_SRC_ALPHA;
+		case re::RasterizationState::BlendMode::DstAlpha: return GL_DST_ALPHA;
+		case re::RasterizationState::BlendMode::InvDstAlpha: return GL_ONE_MINUS_DST_ALPHA;
+		case re::RasterizationState::BlendMode::DstColor: return GL_DST_COLOR;
+		case re::RasterizationState::BlendMode::InvDstColor: return GL_ONE_MINUS_DST_COLOR;
+		case re::RasterizationState::BlendMode::SrcAlphaSat: return GL_SRC_ALPHA_SATURATE;
+		case re::RasterizationState::BlendMode::BlendFactor: return GL_CONSTANT_COLOR;
+		case re::RasterizationState::BlendMode::InvBlendFactor: return GL_ONE_MINUS_CONSTANT_COLOR;
+		case re::RasterizationState::BlendMode::SrcOneColor: return GL_SRC1_COLOR;
+		case re::RasterizationState::BlendMode::InvSrcOneColor: return GL_ONE_MINUS_SRC1_COLOR;
+		case re::RasterizationState::BlendMode::SrcOneAlpha: return GL_SRC1_ALPHA;
+		case re::RasterizationState::BlendMode::InvSrcOneAlpha: return GL_ONE_MINUS_SRC1_ALPHA;
+		case re::RasterizationState::BlendMode::AlphaFactor: return GL_CONSTANT_ALPHA;
+		case re::RasterizationState::BlendMode::InvAlphaFactor: return GL_ONE_MINUS_CONSTANT_ALPHA;
 		}
 		return GL_ONE; // This should never happen
 	}
 
 
-	constexpr GLenum BlendOpToGLEnum(re::PipelineState::BlendOp blendOp)
+	constexpr GLenum BlendOpToGLEnum(re::RasterizationState::BlendOp blendOp)
 	{
 		switch (blendOp)
 		{
-		case re::PipelineState::BlendOp::Add: return GL_FUNC_ADD;
-		case re::PipelineState::BlendOp::Subtract: return GL_FUNC_SUBTRACT;
-		case re::PipelineState::BlendOp::RevSubtract: return GL_FUNC_REVERSE_SUBTRACT;
-		case re::PipelineState::BlendOp::Min: return GL_MIN;
-		case re::PipelineState::BlendOp::Max: return GL_MAX;
+		case re::RasterizationState::BlendOp::Add: return GL_FUNC_ADD;
+		case re::RasterizationState::BlendOp::Subtract: return GL_FUNC_SUBTRACT;
+		case re::RasterizationState::BlendOp::RevSubtract: return GL_FUNC_REVERSE_SUBTRACT;
+		case re::RasterizationState::BlendOp::Min: return GL_MIN;
+		case re::RasterizationState::BlendOp::Max: return GL_MAX;
 		}
 		return GL_FUNC_ADD; // This should never happen
 	}
 
 
-	constexpr GLenum LogicOpToGLenum(re::PipelineState::LogicOp logicOp)
+	constexpr GLenum LogicOpToGLenum(re::RasterizationState::LogicOp logicOp)
 	{
 		switch (logicOp)
 		{
-		case re::PipelineState::LogicOp::Clear: return GL_CLEAR;
-		case re::PipelineState::LogicOp::Set: return GL_SET;
-		case re::PipelineState::LogicOp::Copy: return GL_COPY;
-		case re::PipelineState::LogicOp::CopyInverted: return GL_COPY_INVERTED;
-		case re::PipelineState::LogicOp::NoOp: return GL_NOOP;
-		case re::PipelineState::LogicOp::Invert: return GL_INVERT;
-		case re::PipelineState::LogicOp::AND: return GL_AND;
-		case re::PipelineState::LogicOp::NAND: return GL_NAND;
-		case re::PipelineState::LogicOp::OR: return GL_OR;
-		case re::PipelineState::LogicOp::NOR: return GL_NOR;
-		case re::PipelineState::LogicOp::XOR: return GL_XOR;
-		case re::PipelineState::LogicOp::EQUIV: return GL_EQUIV;
-		case re::PipelineState::LogicOp::ANDReverse: return GL_AND_REVERSE;
-		case re::PipelineState::LogicOp::AndInverted: return GL_AND_INVERTED;
-		case re::PipelineState::LogicOp::ORReverse: return GL_OR_REVERSE;
-		case re::PipelineState::LogicOp::ORInverted: return GL_OR_INVERTED;
+		case re::RasterizationState::LogicOp::Clear: return GL_CLEAR;
+		case re::RasterizationState::LogicOp::Set: return GL_SET;
+		case re::RasterizationState::LogicOp::Copy: return GL_COPY;
+		case re::RasterizationState::LogicOp::CopyInverted: return GL_COPY_INVERTED;
+		case re::RasterizationState::LogicOp::NoOp: return GL_NOOP;
+		case re::RasterizationState::LogicOp::Invert: return GL_INVERT;
+		case re::RasterizationState::LogicOp::AND: return GL_AND;
+		case re::RasterizationState::LogicOp::NAND: return GL_NAND;
+		case re::RasterizationState::LogicOp::OR: return GL_OR;
+		case re::RasterizationState::LogicOp::NOR: return GL_NOR;
+		case re::RasterizationState::LogicOp::XOR: return GL_XOR;
+		case re::RasterizationState::LogicOp::EQUIV: return GL_EQUIV;
+		case re::RasterizationState::LogicOp::ANDReverse: return GL_AND_REVERSE;
+		case re::RasterizationState::LogicOp::AndInverted: return GL_AND_INVERTED;
+		case re::RasterizationState::LogicOp::ORReverse: return GL_OR_REVERSE;
+		case re::RasterizationState::LogicOp::ORInverted: return GL_OR_INVERTED;
 		}
 		return GL_NOOP; // This should never happen
 	}
@@ -470,30 +470,30 @@ namespace opengl
 	}
 
 
-	void Context::SetPipelineState(re::PipelineState const* pipelineState)
+	void Context::SetRasterizationState(re::RasterizationState const* rasterizationState)
 	{
-		if (pipelineState)
+		if (rasterizationState)
 		{
-			SetRasterizerState(pipelineState);
-			SetDepthStencilState(pipelineState);
-			SetBlendState(pipelineState);
+			SetRasterizerState(rasterizationState);
+			SetDepthStencilState(rasterizationState);
+			SetBlendState(rasterizationState);
 		}
 	}
 
 
-	void Context::SetRasterizerState(re::PipelineState const* pipelineState)
+	void Context::SetRasterizerState(re::RasterizationState const* rasterizationState)
 	{
 		// Fill mode:
 		{
 			GLenum fillMode = GL_FILL;
-			switch (pipelineState->GetFillMode())
+			switch (rasterizationState->GetFillMode())
 			{
-			case re::PipelineState::FillMode::Solid:
+			case re::RasterizationState::FillMode::Solid:
 			{
 				fillMode = GL_FILL;
 			}
 			break;
-			case re::PipelineState::FillMode::Wireframe:
+			case re::RasterizationState::FillMode::Wireframe:
 			{
 				fillMode = GL_LINE;
 			}
@@ -506,26 +506,26 @@ namespace opengl
 
 		// Culling mode:
 		{
-			const re::PipelineState::FaceCullingMode mode = pipelineState->GetFaceCullingMode();
+			const re::RasterizationState::FaceCullingMode mode = rasterizationState->GetFaceCullingMode();
 
-			if (mode != re::PipelineState::FaceCullingMode::Disabled)
+			if (mode != re::RasterizationState::FaceCullingMode::Disabled)
 			{
 				glEnable(GL_CULL_FACE);
 			}
 
 			switch (mode)
 			{
-			case re::PipelineState::FaceCullingMode::Disabled:
+			case re::RasterizationState::FaceCullingMode::Disabled:
 			{
 				glDisable(GL_CULL_FACE);
 			}
 			break;
-			case re::PipelineState::FaceCullingMode::Front:
+			case re::RasterizationState::FaceCullingMode::Front:
 			{
 				glCullFace(GL_FRONT);
 			}
 			break;
-			case re::PipelineState::FaceCullingMode::Back:
+			case re::RasterizationState::FaceCullingMode::Back:
 			{
 				glCullFace(GL_BACK);
 			}
@@ -537,26 +537,26 @@ namespace opengl
 
 		// 
 		{
-			SEAssert(pipelineState->GetMultiSampleEnabled() == false, "TODO: Handle this");
+			SEAssert(rasterizationState->GetMultiSampleEnabled() == false, "TODO: Handle this");
 		}
 
 		// 
 		{
-			SEAssert(pipelineState->GetForcedSampleCount() == 0, "TODO: Handle this");
+			SEAssert(rasterizationState->GetForcedSampleCount() == 0, "TODO: Handle this");
 		}
 
 		// 
 		{
-			SEAssert(pipelineState->GetConservativeRaster() == false, "TODO: Handle this");
+			SEAssert(rasterizationState->GetConservativeRaster() == false, "TODO: Handle this");
 		}
 	}
 
 
-	void Context::SetDepthStencilState(re::PipelineState const* pipelineState)
+	void Context::SetDepthStencilState(re::RasterizationState const* rasterizationState)
 	{
 		// Depth test:
 		{
-			if (pipelineState->GetDepthTestEnabled())
+			if (rasterizationState->GetDepthTestEnabled())
 			{
 				glEnable(GL_DEPTH_TEST);
 			}
@@ -568,14 +568,14 @@ namespace opengl
 
 		// Depth write mask:
 		{
-			switch (pipelineState->GetDepthWriteMask())
+			switch (rasterizationState->GetDepthWriteMask())
 			{
-			case re::PipelineState::DepthWriteMask::Zero:
+			case re::RasterizationState::DepthWriteMask::Zero:
 			{
 				glDepthMask(GL_FALSE);
 			}
 			break;
-			case re::PipelineState::DepthWriteMask::All:
+			case re::RasterizationState::DepthWriteMask::All:
 			{
 				glDepthMask(GL_TRUE);
 			}
@@ -586,34 +586,34 @@ namespace opengl
 
 		// Depth comparison:
 		{
-			glDepthFunc(ComparisonFuncToGLEnum(pipelineState->GetDepthComparison()));
+			glDepthFunc(ComparisonFuncToGLEnum(rasterizationState->GetDepthComparison()));
 		}
 
 		// Depth bias:
 		{
-			const re::PipelineState::PrimitiveTopologyType topologyType = pipelineState->GetPrimitiveTopologyType();
-			const int depthBias = pipelineState->GetDepthBias();
+			const re::RasterizationState::PrimitiveTopologyType topologyType = rasterizationState->GetPrimitiveTopologyType();
+			const int depthBias = rasterizationState->GetDepthBias();
 
 			if (depthBias == 0)
 			{
 				switch (topologyType)
 				{
-				case re::PipelineState::PrimitiveTopologyType::Triangle:
+				case re::RasterizationState::PrimitiveTopologyType::Triangle:
 				{
 					glDisable(GL_POLYGON_OFFSET_FILL);
 				}
 				break;
-				case re::PipelineState::PrimitiveTopologyType::Point:
+				case re::RasterizationState::PrimitiveTopologyType::Point:
 				{
 					glDisable(GL_POLYGON_OFFSET_POINT);
 				}
 				break;
-				case re::PipelineState::PrimitiveTopologyType::Line:
+				case re::RasterizationState::PrimitiveTopologyType::Line:
 				{
 					glDisable(GL_POLYGON_OFFSET_LINE);
 				}
 				break;
-				case re::PipelineState::PrimitiveTopologyType::Patch:
+				case re::RasterizationState::PrimitiveTopologyType::Patch:
 				default: SEAssertF("Invalid topology type");
 				}
 			}
@@ -621,28 +621,28 @@ namespace opengl
 			{
 				switch (topologyType)
 				{
-				case re::PipelineState::PrimitiveTopologyType::Triangle:
+				case re::RasterizationState::PrimitiveTopologyType::Triangle:
 				{
 					glEnable(GL_POLYGON_OFFSET_FILL);
 				}
 				break;
-				case re::PipelineState::PrimitiveTopologyType::Point:
+				case re::RasterizationState::PrimitiveTopologyType::Point:
 				{
 					glEnable(GL_POLYGON_OFFSET_POINT);
 				}
 				break;
-				case re::PipelineState::PrimitiveTopologyType::Line:
+				case re::RasterizationState::PrimitiveTopologyType::Line:
 				{
 					glEnable(GL_POLYGON_OFFSET_LINE);
 				}
 				break;
-				case re::PipelineState::PrimitiveTopologyType::Patch:
+				case re::RasterizationState::PrimitiveTopologyType::Patch:
 				default: SEAssertF("Invalid topology type");
 				}
 
 				SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
 
-				const GLfloat factor = pipelineState->GetSlopeScaledDepthBias();
+				const GLfloat factor = rasterizationState->GetSlopeScaledDepthBias();
 				const GLfloat units = depthBias / static_cast<float>(glm::pow(2.f, 24.f)); // TODO: This should depend on the depth buffer format?
 				glPolygonOffset(factor, units);
 			}
@@ -652,7 +652,7 @@ namespace opengl
 		{
 			// Somewhat counter-intuitively, enabling depth clamping disables depth clipping
 			// https://www.khronos.org/opengl/wiki/Vertex_Post-Processing
-			if (pipelineState->GetDepthClipEnabled())
+			if (rasterizationState->GetDepthClipEnabled())
 			{
 				glDisable(GL_DEPTH_CLAMP);
 			}
@@ -665,24 +665,24 @@ namespace opengl
 
 		// Stencil mode:
 		{
-			if (pipelineState->GetStencilEnabled())
+			if (rasterizationState->GetStencilEnabled())
 			{
 				// Note: The stencil READ mask is currently ignored here...
 				SEAssertF("TODO: If you hit this, this is the first time this code has been tested - test that it works!");
 
 				glEnable(GL_STENCIL_TEST);
 
-				re::PipelineState::StencilOpDesc const& frontDesc = pipelineState->GetFrontFaceStencilOpDesc();
-				re::PipelineState::StencilOpDesc const& backDesc = pipelineState->GetBackFaceStencilOpDesc();
+				re::RasterizationState::StencilOpDesc const& frontDesc = rasterizationState->GetFrontFaceStencilOpDesc();
+				re::RasterizationState::StencilOpDesc const& backDesc = rasterizationState->GetBackFaceStencilOpDesc();
 
-				glStencilMaskSeparate(GL_FRONT, pipelineState->GetStencilWriteMask());
+				glStencilMaskSeparate(GL_FRONT, rasterizationState->GetStencilWriteMask());
 
 				glStencilOpSeparate(GL_FRONT,
 					StencilOpToGLEnum(frontDesc.m_failOp),
 					StencilOpToGLEnum(frontDesc.m_depthFailOp),
 					StencilOpToGLEnum(frontDesc.m_passOp));
 
-				glStencilMaskSeparate(GL_BACK, pipelineState->GetStencilWriteMask());
+				glStencilMaskSeparate(GL_BACK, rasterizationState->GetStencilWriteMask());
 
 				glStencilOpSeparate(GL_BACK,
 					StencilOpToGLEnum(backDesc.m_failOp),
@@ -697,15 +697,15 @@ namespace opengl
 	}
 
 
-	void Context::SetBlendState(re::PipelineState const* pipelineState)
+	void Context::SetBlendState(re::RasterizationState const* rasterizationState)
 	{
-		if (pipelineState->GetIndependentBlendEnabled())
+		if (rasterizationState->GetIndependentBlendEnabled())
 		{
 			uint8_t index = 0;
-			for (auto const& renderTargetBlendDesc : pipelineState->GetRenderTargetBlendDescs())
+			for (auto const& renderTargetBlendDesc : rasterizationState->GetRenderTargetBlendDescs())
 			{
 				// https://www.khronos.org/opengl/wiki/Logical_Operation
-				SEAssert(renderTargetBlendDesc.m_logicOp == pipelineState->GetRenderTargetBlendDescs()[0].m_logicOp,
+				SEAssert(renderTargetBlendDesc.m_logicOp == rasterizationState->GetRenderTargetBlendDescs()[0].m_logicOp,
 					"OpenGL only supports a single logical operation for all targets, so this is unexpected");
 				SEAssert(!renderTargetBlendDesc.m_blendEnable || !renderTargetBlendDesc.m_logicOpEnable,
 					"If logic operations are enabled, blending operations are disabled, this is unexpected");
@@ -747,18 +747,18 @@ namespace opengl
 				// Write mask:
 				glColorMaski(
 					index,
-					(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Red) ? GL_TRUE : GL_FALSE,
-					(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Green) ? GL_TRUE : GL_FALSE,
-					(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Blue) ? GL_TRUE : GL_FALSE,
-					(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Alpha) ? GL_TRUE : GL_FALSE);
+					(renderTargetBlendDesc.m_renderTargetWriteMask & re::RasterizationState::ColorWriteEnable::Red) ? GL_TRUE : GL_FALSE,
+					(renderTargetBlendDesc.m_renderTargetWriteMask & re::RasterizationState::ColorWriteEnable::Green) ? GL_TRUE : GL_FALSE,
+					(renderTargetBlendDesc.m_renderTargetWriteMask & re::RasterizationState::ColorWriteEnable::Blue) ? GL_TRUE : GL_FALSE,
+					(renderTargetBlendDesc.m_renderTargetWriteMask & re::RasterizationState::ColorWriteEnable::Alpha) ? GL_TRUE : GL_FALSE);
 
 				++index;
 			}
 		}
 		else // Otherwise, just use element [0]
 		{
-			re::PipelineState::RenderTargetBlendDesc const& renderTargetBlendDesc = 
-				pipelineState->GetRenderTargetBlendDescs()[0];
+			re::RasterizationState::RenderTargetBlendDesc const& renderTargetBlendDesc = 
+				rasterizationState->GetRenderTargetBlendDescs()[0];
 
 			if (renderTargetBlendDesc.m_blendEnable)
 			{
@@ -791,10 +791,10 @@ namespace opengl
 			}
 
 			glColorMask(
-				(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Red) ? GL_TRUE : GL_FALSE,
-				(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Green) ? GL_TRUE : GL_FALSE,
-				(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Blue) ? GL_TRUE : GL_FALSE,
-				(renderTargetBlendDesc.m_renderTargetWriteMask & re::PipelineState::ColorWriteEnable::Alpha) ? GL_TRUE : GL_FALSE);
+				(renderTargetBlendDesc.m_renderTargetWriteMask & re::RasterizationState::ColorWriteEnable::Red) ? GL_TRUE : GL_FALSE,
+				(renderTargetBlendDesc.m_renderTargetWriteMask & re::RasterizationState::ColorWriteEnable::Green) ? GL_TRUE : GL_FALSE,
+				(renderTargetBlendDesc.m_renderTargetWriteMask & re::RasterizationState::ColorWriteEnable::Blue) ? GL_TRUE : GL_FALSE,
+				(renderTargetBlendDesc.m_renderTargetWriteMask & re::RasterizationState::ColorWriteEnable::Alpha) ? GL_TRUE : GL_FALSE);
 		}
 	}
 

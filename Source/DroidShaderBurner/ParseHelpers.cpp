@@ -120,9 +120,9 @@ namespace droid
 			}
 		}
 
-		if (PipelineState.empty())
+		if (RaterizationState.empty())
 		{
-			PipelineState = parent.PipelineState;
+			RaterizationState = parent.RaterizationState;
 		}
 		if (VertexStream.empty())
 		{
@@ -164,7 +164,7 @@ namespace droid
 			AddEntry(keys_entryPointNames[shaderTypeIdx], technique._ShaderEntryPoint[shaderTypeIdx]);
 		}
 
-		AddEntry(key_pipelineState, technique.PipelineState);
+		AddEntry(key_rasterizationState, technique.RaterizationState);
 		AddEntry(key_vertexStream, technique.VertexStream);
 
 		if (!technique.ExcludedPlatforms.empty())
@@ -196,9 +196,9 @@ namespace droid
 			}
 		}
 
-		if (json.contains(key_pipelineState))
+		if (json.contains(key_rasterizationState))
 		{
-			json.at(key_pipelineState).get_to(technique.PipelineState);
+			json.at(key_rasterizationState).get_to(technique.RaterizationState);
 		}
 		if (json.contains(key_vertexStream))
 		{

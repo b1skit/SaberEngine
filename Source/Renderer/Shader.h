@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "PipelineState.h"
+#include "RasterizationState.h"
 #include "VertexStream.h"
 #include "VertexStreamMap.h"
 
@@ -33,16 +33,19 @@ namespace re
 	public:
 		enum ShaderType : uint8_t
 		{
+			// Rasterization pipeline:
 			Vertex,
 			Geometry,
 			Pixel,
 
-			Hull,			// OpenGL: Tesselation Control Shader (.tesc)
-			Domain,			// OpenGL: Tesselation Evaluation Shader (.tese)
+			Hull,			// OpenGL: Tesselation Control Shader
+			Domain,			// OpenGL: Tesselation Evaluation Shader
 
-			Mesh,			// Not (currently) supported on OpenGL
+			// Mesh shading pipeline:
 			Amplification,  // Not (currently) supported on OpenGL
+			Mesh,			// Not (currently) supported on OpenGL
 
+			// Compute pipeline:
 			Compute,
 
 			ShaderType_Count
@@ -61,7 +64,7 @@ namespace re
 	public:
 		[[nodiscard]] static core::InvPtr<re::Shader> GetOrCreate(
 			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames,
-			re::PipelineState const*,
+			re::RasterizationState const*,
 			re::VertexStreamMap const*);
 
 		Shader(Shader&&) noexcept = default;
@@ -77,7 +80,7 @@ namespace re
 
 		bool HasShaderType(ShaderType) const;
 
-		re::PipelineState const* GetPipelineState() const;
+		re::RasterizationState const* GetRasterizationState() const;
 			
 		inline PlatformParams* GetPlatformParams() const;
 		inline void SetPlatformParams(std::unique_ptr<PlatformParams> params);
@@ -90,7 +93,7 @@ namespace re
 		explicit Shader(
 			std::string const& shaderName,
 			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames, 
-			re::PipelineState const*,
+			re::RasterizationState const*,
 			re::VertexStreamMap const*,
 			uint64_t shaderIdentifier);
 
@@ -101,7 +104,7 @@ namespace re
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 
-		re::PipelineState const* m_pipelineState;
+		re::RasterizationState const* m_rasterizationState;
 		re::VertexStreamMap const* m_vertexStreamMap;
 
 
@@ -152,9 +155,9 @@ namespace re
 	}
 
 
-	inline re::PipelineState const* Shader::GetPipelineState() const
+	inline re::RasterizationState const* Shader::GetRasterizationState() const
 	{
-		return m_pipelineState;
+		return m_rasterizationState;
 	}
 
 

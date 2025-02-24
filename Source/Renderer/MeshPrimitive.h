@@ -42,7 +42,7 @@ namespace gr
 	public:
 		// Specific format the IA will use to interpret the topology contained within the vertex/index buffers.
 		// Elements of the same basic type here can be used interchangeably with PSO's that map to the more general 
-		// re::PipelineState::PrimitiveTopologyType. E.g. PrimitiveTopology::Line* -> PrimitiveTopologyType::Line
+		// re::RasterizationState::PrimitiveTopologyType. E.g. PrimitiveTopology::Line* -> PrimitiveTopologyType::Line
 		enum class PrimitiveTopology : uint8_t
 		{
 			PointList,

@@ -19,7 +19,7 @@ namespace
 	// to represent a particular configuration
 	ShaderID ComputeShaderIdentifier(
 		std::vector<std::pair<std::string, re::Shader::ShaderType>> const& extensionlessSourceFilenames,
-		re::PipelineState const* rePipelineState)
+		re::RasterizationState const* rasterizationState)
 	{
 		ShaderID hashResult = 0;
 
@@ -40,11 +40,11 @@ namespace
 		SEAssert(!isComputeShader || extensionlessSourceFilenames.size() == 1,
 			"A compute shader should only have a single source file entry");
 
-		SEAssert(rePipelineState || isComputeShader, "Pipeline state is null. This is unexpected");
+		SEAssert(rasterizationState || isComputeShader, "Pipeline state is null. This is unexpected");
 
-		if (!isComputeShader && rePipelineState)
+		if (!isComputeShader && rasterizationState)
 		{
-			util::CombineHash(hashResult, rePipelineState->GetDataHash());
+			util::CombineHash(hashResult, rasterizationState->GetDataHash());
 		}
 		
 		return hashResult;
@@ -73,10 +73,10 @@ namespace re
 {
 	[[nodiscard]] core::InvPtr<re::Shader> Shader::GetOrCreate(
 		std::vector<std::pair<std::string, ShaderType>> const& extensionlessSourceFilenames,
-		re::PipelineState const* rePipelineState,
+		re::RasterizationState const* rasterizationState,
 		re::VertexStreamMap const* vertexStreamMap)
 	{
-		const ShaderID shaderID = ComputeShaderIdentifier(extensionlessSourceFilenames, rePipelineState);
+		const ShaderID shaderID = ComputeShaderIdentifier(extensionlessSourceFilenames, rasterizationState);
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
 		core::Inventory* inventory = re::RenderManager::Get()->GetInventory();
@@ -121,24 +121,24 @@ namespace re
 
 				SEAssert(!isComputeShader || m_extensionlessSrcFilenames.size() == 1,
 					"A compute shader should only have a single shader entry. This is unexpected");
-				SEAssert(m_rePipelineState || isComputeShader,
-					"PipelineState is null. This is unexpected for non-compute shaders");
+				SEAssert(m_rasterizationState || isComputeShader,
+					"RasterizationState is null. This is unexpected for non-compute shaders");
 				SEAssert(m_vertexStreamMap != nullptr || isComputeShader, "Invalid attempt to set a VertexStreamMap");
 
 				return std::unique_ptr<re::Shader>(new re::Shader(
-					shaderName, m_extensionlessSrcFilenames, m_rePipelineState, m_vertexStreamMap, m_shaderID));				
+					shaderName, m_extensionlessSrcFilenames, m_rasterizationState, m_vertexStreamMap, m_shaderID));				
 			}
 
 			ShaderID m_shaderID;
 			std::vector<std::pair<std::string, ShaderType>> m_extensionlessSrcFilenames;
-			re::PipelineState const* m_rePipelineState;
+			re::RasterizationState const* m_rasterizationState;
 			re::VertexStreamMap const* m_vertexStreamMap;
 		};
 		std::shared_ptr<ShaderLoadContext> shaderLoadContext = std::make_shared<ShaderLoadContext>();
 
 		shaderLoadContext->m_shaderID = shaderID;
 		shaderLoadContext->m_extensionlessSrcFilenames = extensionlessSourceFilenames;
-		shaderLoadContext->m_rePipelineState = rePipelineState;
+		shaderLoadContext->m_rasterizationState = rasterizationState;
 		shaderLoadContext->m_vertexStreamMap = vertexStreamMap;
 
 		return inventory->Get(
@@ -150,18 +150,18 @@ namespace re
 	Shader::Shader(
 		std::string const& shaderName,
 		std::vector<std::pair<std::string, ShaderType>> const& extensionlessSourceFilenames,
-		re::PipelineState const* rePipelineState,
+		re::RasterizationState const* rasterizationState,
 		re::VertexStreamMap const* m_vertexStreamMap,
 		uint64_t shaderIdentifier)
 		: INamedObject(shaderName)
 		, m_shaderIdentifier(shaderIdentifier)
 		, m_extensionlessSourceFilenames(extensionlessSourceFilenames)
-		, m_pipelineState(rePipelineState)
+		, m_rasterizationState(rasterizationState)
 		, m_vertexStreamMap(m_vertexStreamMap)
 	{
-		SEAssert(rePipelineState ||
+		SEAssert(rasterizationState ||
 		(m_extensionlessSourceFilenames.size() == 1 && m_extensionlessSourceFilenames[0].second == re::Shader::Compute),
-			"re PipelineState is null. This is unexpected");
+			"re RasterizationState is null. This is unexpected");
 
 		platform::Shader::CreatePlatformParams(*this);
 	}

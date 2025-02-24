@@ -19,7 +19,7 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "Blit_PShader",
 				"PShaderEntryPoint": "PShader",
-				"PipelineState": "EmissiveBlitPipelineState",
+				"RasterizationState": "EmissiveBlitRasterState",
 				"VertexStream": "PositionUV"
 			},
 			{
@@ -30,9 +30,9 @@
 		]
 	},
 
-	"PipelineStates": [
+	"RasterizationStates": [
 			{
-				"Name": "EmissiveBlitPipelineState",
+				"Name": "EmissiveBlitRasterState",
 				"DepthStencilState" : {
 					"DepthTestEnabled" : false,
 					"DepthComparison": "Always",

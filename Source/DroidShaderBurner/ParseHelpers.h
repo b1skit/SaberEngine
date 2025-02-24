@@ -25,7 +25,7 @@ namespace droid
 		std::array<std::string, re::Shader::ShaderType_Count> _Shader;
 		std::array<std::string, re::Shader::ShaderType_Count> _ShaderEntryPoint;
 		std::array<std::vector<std::string>, re::Shader::ShaderType_Count> _Defines;
-		std::string PipelineState;
+		std::string RaterizationState;
 		std::string VertexStream;
 		std::set<std::string> ExcludedPlatforms;
 		

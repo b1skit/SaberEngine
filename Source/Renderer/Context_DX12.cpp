@@ -34,14 +34,14 @@ namespace
 		uint64_t psoKey = 0;
 		util::CombineHash(psoKey, shader.GetShaderIdentifier());
 
-		re::PipelineState const* pipelineState = shader.GetPipelineState();
+		re::RasterizationState const* rasterizationState = shader.GetRasterizationState();
 
-		SEAssert(pipelineState || shader.HasShaderType(re::Shader::Compute),
+		SEAssert(rasterizationState || shader.HasShaderType(re::Shader::Compute),
 			"Shader does not have a pipeline state. This is unexpected");
 
-		if (pipelineState)
+		if (rasterizationState)
 		{
-			util::CombineHash(psoKey, pipelineState->GetDataHash());
+			util::CombineHash(psoKey, rasterizationState->GetDataHash());
 
 			if (targetSet && 
 				(shader.HasShaderType(re::Shader::Vertex) || 

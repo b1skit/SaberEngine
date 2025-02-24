@@ -1,5 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "PipelineState.h"
+#include "RasterizationState.h"
 #include "Technique.h"
 #include "VertexStreamMap.h"
 
@@ -9,10 +9,10 @@ namespace effect
 	Technique::Technique(
 		char const* name,
 		std::vector<std::pair<std::string, re::Shader::ShaderType>> const& shaderNames,
-		re::PipelineState const* pipelineState,
+		re::RasterizationState const* rasterizationState,
 		re::VertexStreamMap const* vertexStreamMap)
 		: INamedObject(name)
-		, m_resolvedShader(re::Shader::GetOrCreate(shaderNames, pipelineState, vertexStreamMap))
+		, m_resolvedShader(re::Shader::GetOrCreate(shaderNames, rasterizationState, vertexStreamMap))
 	{
 	}
 

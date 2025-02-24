@@ -27,7 +27,7 @@ namespace opengl
 		void Present() override;
 
 		// OpenGL-specific interface:
-		void SetPipelineState(re::PipelineState const* pipelineState);
+		void SetRasterizationState(re::RasterizationState const*);
 
 		static uint64_t ComputeVAOHash(
 			std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const&,
@@ -43,9 +43,9 @@ namespace opengl
 		friend class re::Context;
 
 	private:
-		void SetRasterizerState(re::PipelineState const*);
-		void SetDepthStencilState(re::PipelineState const*);
-		void SetBlendState(re::PipelineState const*);
+		void SetRasterizerState(re::RasterizationState const*);
+		void SetDepthStencilState(re::RasterizationState const*);
+		void SetBlendState(re::RasterizationState const*);
 
 
 	private:

@@ -5,16 +5,16 @@
 
 namespace re
 {
-	class PipelineState : public virtual core::IHashedDataObject
+	class RasterizationState : public virtual core::IHashedDataObject
 	{
 	public:
-		PipelineState();
+		RasterizationState();
 		
-		PipelineState(PipelineState const&) = default;
-		PipelineState(PipelineState&&) noexcept = default;
-		PipelineState& operator=(PipelineState const&) = default;
-		PipelineState& operator=(PipelineState&&) noexcept = default;
-		~PipelineState() = default;
+		RasterizationState(RasterizationState const&) = default;
+		RasterizationState(RasterizationState&&) noexcept = default;
+		RasterizationState& operator=(RasterizationState const&) = default;
+		RasterizationState& operator=(RasterizationState&&) noexcept = default;
+		~RasterizationState() = default;
 			
 	public: // IHashedDataObject:
 		util::HashKey GetDataHash() const override;
@@ -294,85 +294,85 @@ namespace re
 	};
 
 
-	inline int PipelineState::GetDepthBias() const
+	inline int RasterizationState::GetDepthBias() const
 	{
 		return m_depthBias;
 	}
 
 
-	inline void PipelineState::SetDepthBias(int depthBias)
+	inline void RasterizationState::SetDepthBias(int depthBias)
 	{
 		m_depthBias = depthBias;
 	}
 
 
-	inline float PipelineState::GetDepthBiasClamp() const
+	inline float RasterizationState::GetDepthBiasClamp() const
 	{
 		return m_depthBiasClamp;
 	}
 
 
-	inline void PipelineState::SetDepthBiasClamp(float depthBiasClamp)
+	inline void RasterizationState::SetDepthBiasClamp(float depthBiasClamp)
 	{
 		m_depthBiasClamp = depthBiasClamp;
 	}
 
 
-	inline float PipelineState::GetSlopeScaledDepthBias() const
+	inline float RasterizationState::GetSlopeScaledDepthBias() const
 	{
 		return m_slopeScaledDepthBias;
 	}
 
 
-	inline void PipelineState::SetSlopeScaledDepthBias(float slopeScaledDepthBias)
+	inline void RasterizationState::SetSlopeScaledDepthBias(float slopeScaledDepthBias)
 	{
 		m_slopeScaledDepthBias = slopeScaledDepthBias;
 	}
 
 
-	inline bool PipelineState::GetDepthClipEnabled() const
+	inline bool RasterizationState::GetDepthClipEnabled() const
 	{
 		return m_depthClipEnable;
 	}
 
 
-	inline void PipelineState::SetDepthClipEnabled(bool depthClipEnable)
+	inline void RasterizationState::SetDepthClipEnabled(bool depthClipEnable)
 	{
 		m_depthClipEnable = depthClipEnable;
 	}
 
 
-	inline bool PipelineState::GetMultiSampleEnabled() const
+	inline bool RasterizationState::GetMultiSampleEnabled() const
 	{
 		return m_multisampleEnable;
 	}
 
 
-	inline void PipelineState::SetMultiSampleEnabled(bool multisampleEnable)
+	inline void RasterizationState::SetMultiSampleEnabled(bool multisampleEnable)
 	{
 		m_multisampleEnable = multisampleEnable;
 	}
 
 
-	inline bool PipelineState::GetAntiAliasedLineEnabled() const
+	inline bool RasterizationState::GetAntiAliasedLineEnabled() const
 	{
 		return m_antialiasedLineEnable;
 	}
 
 
-	inline void PipelineState::SetAntiAliasedLineEnabled(bool antialiasedLineEnable)
+	inline void RasterizationState::SetAntiAliasedLineEnabled(bool antialiasedLineEnable)
 	{
 		m_antialiasedLineEnable = antialiasedLineEnable;
 	}
 
 
-	inline uint8_t PipelineState::GetForcedSampleCount() const
+	inline uint8_t RasterizationState::GetForcedSampleCount() const
 	{
 		return m_forcedSampleCount;
 	}
 
 
-	inline void PipelineState::SetForcedSampleCount(uint8_t forcedSampleCount)
+	inline void RasterizationState::SetForcedSampleCount(uint8_t forcedSampleCount)
 	{
 		SEAssert(forcedSampleCount == 0 ||
 			forcedSampleCount == 1 || 
@@ -384,133 +384,133 @@ namespace re
 	}
 
 
-	inline bool PipelineState::GetConservativeRaster() const
+	inline bool RasterizationState::GetConservativeRaster() const
 	{
 		return m_conservativeRaster;
 	}
 
 
-	inline void PipelineState::SetConservativeRaster(bool conservativeRaster)
+	inline void RasterizationState::SetConservativeRaster(bool conservativeRaster)
 	{
 		m_conservativeRaster = conservativeRaster;
 	}
 
 
-	inline bool PipelineState::GetDepthTestEnabled() const
+	inline bool RasterizationState::GetDepthTestEnabled() const
 	{
 		return m_depthTestEnable;
 	}
 
 
-	inline void PipelineState::SetDepthTestEnabled(bool depthTestEnable)
+	inline void RasterizationState::SetDepthTestEnabled(bool depthTestEnable)
 	{
 		m_depthTestEnable = depthTestEnable;
 	}
 
 
-	inline PipelineState::DepthWriteMask PipelineState::GetDepthWriteMask() const
+	inline RasterizationState::DepthWriteMask RasterizationState::GetDepthWriteMask() const
 	{
 		return m_depthWriteMask;
 	}
 
 
-	inline void PipelineState::SetDepthWriteMask(DepthWriteMask depthWriteMask)
+	inline void RasterizationState::SetDepthWriteMask(DepthWriteMask depthWriteMask)
 	{
 		m_depthWriteMask = depthWriteMask;
 	}
 
 
-	inline bool PipelineState::GetStencilEnabled() const
+	inline bool RasterizationState::GetStencilEnabled() const
 	{
 		return m_stencilEnabled;
 	}
 
 
-	inline void PipelineState::SetStencilEnabled(bool stencilEnabled)
+	inline void RasterizationState::SetStencilEnabled(bool stencilEnabled)
 	{
 		m_stencilEnabled = stencilEnabled;
 	}
 
 
-	inline uint8_t PipelineState::GetStencilReadMask() const
+	inline uint8_t RasterizationState::GetStencilReadMask() const
 	{
 		return m_stencilReadMask;
 	}
 
 
-	inline void PipelineState::SetStencilReadMask(uint8_t stencilReadMask)
+	inline void RasterizationState::SetStencilReadMask(uint8_t stencilReadMask)
 	{
 		m_stencilReadMask = stencilReadMask;
 	}
 
 
-	inline uint8_t PipelineState::GetStencilWriteMask() const
+	inline uint8_t RasterizationState::GetStencilWriteMask() const
 	{
 		return m_stencilWriteMask;
 	}
 
 
-	inline void PipelineState::SetStencilWriteMask(uint8_t stencilWriteMask)
+	inline void RasterizationState::SetStencilWriteMask(uint8_t stencilWriteMask)
 	{
 		m_stencilWriteMask = stencilWriteMask;
 	}
 
 
-	inline PipelineState::StencilOpDesc const& PipelineState::GetFrontFaceStencilOpDesc() const
+	inline RasterizationState::StencilOpDesc const& RasterizationState::GetFrontFaceStencilOpDesc() const
 	{
 		return m_frontFace;
 	}
 
 
-	inline void PipelineState::SetFrontFaceStencilOpDesc(StencilOpDesc const& frontFace)
+	inline void RasterizationState::SetFrontFaceStencilOpDesc(StencilOpDesc const& frontFace)
 	{
 		m_frontFace = frontFace;
 	}
 
 
-	inline PipelineState::StencilOpDesc const& PipelineState::GetBackFaceStencilOpDesc() const
+	inline RasterizationState::StencilOpDesc const& RasterizationState::GetBackFaceStencilOpDesc() const
 	{
 		return m_backFace;
 	}
 
 
-	inline void PipelineState::SetBackFaceStencilOpDesc(StencilOpDesc const& backFace)
+	inline void RasterizationState::SetBackFaceStencilOpDesc(StencilOpDesc const& backFace)
 	{
 		m_backFace = backFace;
 	}
 
 
-	inline bool PipelineState::GetAlphaToCoverageEnabled() const
+	inline bool RasterizationState::GetAlphaToCoverageEnabled() const
 	{
 		return m_alphaToCoverageEnable;
 	}
 
 
-	inline void PipelineState::SetAlphaToCoverageEnabled(bool alphaToCoverageEnable)
+	inline void RasterizationState::SetAlphaToCoverageEnabled(bool alphaToCoverageEnable)
 	{
 		m_alphaToCoverageEnable = alphaToCoverageEnable;
 	}
 
 
-	inline bool PipelineState::GetIndependentBlendEnabled() const
+	inline bool RasterizationState::GetIndependentBlendEnabled() const
 	{
 		return m_independentBlendEnable;
 	}
 
 
-	inline void PipelineState::SetIndependentBlendEnabled(bool independentBlendEnable)
+	inline void RasterizationState::SetIndependentBlendEnabled(bool independentBlendEnable)
 	{
 		m_independentBlendEnable = independentBlendEnable;
 	}
 
 
-	inline std::array<PipelineState::RenderTargetBlendDesc, 8> const& PipelineState::GetRenderTargetBlendDescs() const
+	inline std::array<RasterizationState::RenderTargetBlendDesc, 8> const& RasterizationState::GetRenderTargetBlendDescs() const
 	{
 		return m_renderTargetBlendDescs;
 	}
 
 
-	inline void PipelineState::SetRenderTargetBlendDesc(RenderTargetBlendDesc const& blendDesc, uint8_t index)
+	inline void RasterizationState::SetRenderTargetBlendDesc(RenderTargetBlendDesc const& blendDesc, uint8_t index)
 	{
 		SEAssert(blendDesc.m_logicOpEnable != blendDesc.m_blendEnable ||
 			(!blendDesc.m_logicOpEnable &&

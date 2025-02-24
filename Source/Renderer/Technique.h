@@ -12,7 +12,7 @@ using TechniqueID = util::HashKey;
 
 namespace re
 {
-	class PipelineState;
+	class RasterizationState;
 }
 
 namespace effect
@@ -27,7 +27,7 @@ namespace effect
 		Technique(
 			char const* name,
 			std::vector<std::pair<std::string, re::Shader::ShaderType>> const& shaderNames,
-			re::PipelineState const*,
+			re::RasterizationState const*,
 			re::VertexStreamMap const*);
 
 		Technique(Technique&&) noexcept = default;
