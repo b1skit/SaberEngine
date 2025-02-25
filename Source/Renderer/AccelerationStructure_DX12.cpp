@@ -74,8 +74,8 @@ namespace
 			re::AccelerationStructure::BuildFlags::AllowCompaction == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION &&
 			re::AccelerationStructure::BuildFlags::PreferFastTrace == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE &&
 			re::AccelerationStructure::BuildFlags::PreferFastBuild == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD &&
-			re::AccelerationStructure::BuildFlags::MinimizeMemory == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY &&
-			re::AccelerationStructure::BuildFlags::PerformUpdate == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE,
+			re::AccelerationStructure::BuildFlags::MinimizeMemory == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY/* &&
+			re::AccelerationStructure::BuildFlags::PerformUpdate == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE*/,
 			"Build flags out of sync");
 
 		return static_cast<D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS>(flags);

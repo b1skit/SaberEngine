@@ -24,7 +24,7 @@ namespace re
 			Opaque						= 1 << 0,
 			NoDuplicateAnyHitInvocation = 1 << 1, // Guarantee the any hit shader will be executed exactly once
 		};
-		enum BuildFlags : uint8_t
+		enum BuildFlags : uint8_t // Equivalent to D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS
 		{
 			BuildFlags_None = 0,
 			AllowUpdate		= 1 << 0,
@@ -32,7 +32,7 @@ namespace re
 			PreferFastTrace = 1 << 2,
 			PreferFastBuild = 1 << 3,
 			MinimizeMemory	= 1 << 4,
-			PerformUpdate	= 1 << 5,
+			//PerformUpdate	= 1 << 5, // Note: We omit this & infer updates from Batch::RayTracingParams::Operation instead
 		};
 		enum InstanceFlags : uint8_t
 		{
