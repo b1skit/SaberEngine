@@ -212,7 +212,7 @@ namespace gr
 		{
 			singleFrameBlasCreateStageItr = m_stagePipeline->AppendSingleFrameStage(m_rtParentStageItr,
 				re::Stage::CreateSingleFrameRayTracingStage(
-					"BLAS build/update stage",
+					"Acceleration structure build/update stages",
 					re::Stage::RayTracingStageParams{}));
 		}
 
