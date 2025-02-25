@@ -305,11 +305,11 @@ namespace gr
 			{
 				blas = m_meshConceptToBLAS.at(meshConceptID);
 
-				// Update the existing Transform buffer, and 
+				// Update the existing Transform buffer
 				re::AccelerationStructure::BLASParams const* existingBLASParams = 
 					dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
 
-				blasParams->m_transform = std::move(existingBLASParams->m_transform);
+				blasParams->m_transform = existingBLASParams->m_transform;
 				CreateUpdate3x4RowMajorTransformBuffer(meshConceptID, blasParams->m_transform, blasMatrices);
 				
 				blas->UpdateASParams(std::move(blasParams));
