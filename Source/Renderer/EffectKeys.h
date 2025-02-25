@@ -97,23 +97,46 @@ namespace
 		"VShaderDefines",
 		"GShaderDefines",
 		"PShaderDefines",
+
 		"HShaderDefines",
 		"DShaderDefines",
-		"MShaderDefines",
+
 		"AShaderDefines",
+		"MShaderDefines",
+		
 		"CShaderDefines",
+
+		"IntersectionShaderDefines",
+		"AnyHitShaderDefines",
+		"ClosestHitShaderDefines",
+
+		"CallableShaderDefines",
+		"RayGenerationShaderDefines",
+		"MissShaderDefines",		
 	};
+	SEStaticAssert(_countof(keys_shaderDefines) == re::Shader::ShaderType_Count, "keys_shaderDefines is out of sync");
 
 	constexpr char const* keys_shaderTypes[] =
 	{
 		"VShader",
 		"GShader",
 		"PShader",
+
 		"HShader",
 		"DShader",
-		"MShader",
+
 		"AShader",
+		"MShader",
+		
 		"CShader",
+		
+		"IntersectionShader",
+		"AnyHitShader",
+		"ClosestHitShader",
+		
+		"CallableShader",
+		"RayGenerationShader",
+		"MissShader",
 	};
 	SEStaticAssert(_countof(keys_shaderTypes) == re::Shader::ShaderType_Count, "keys_shaderTypes is out of sync");
 
@@ -122,11 +145,22 @@ namespace
 		"VShaderEntryPoint",
 		"GShaderEntryPoint",
 		"PShaderEntryPoint",
+
 		"HShaderEntryPoint",
 		"DShaderEntryPoint",
-		"MShaderEntryPoint",
+
 		"AShaderEntryPoint",
+		"MShaderEntryPoint",
+		
 		"CShaderEntryPoint",
+
+		"IntersectionShaderEntryPoint",
+		"AnyHitShaderEntryPoint",
+		"ClosestHitShaderEntryPoint",
+
+		"CallableShaderEntryPoint",
+		"RayGenerationShaderEntryPoint",
+		"MissShaderEntryPoint",
 	};
 	SEStaticAssert(_countof(keys_entryPointNames) == re::Shader::ShaderType_Count, "keys_entryPointNames is out of sync");
 }

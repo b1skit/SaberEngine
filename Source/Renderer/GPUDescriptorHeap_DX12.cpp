@@ -529,18 +529,17 @@ namespace dx12
 	
 	void GPUDescriptorHeap::CommitInlineDescriptors()
 	{
-		// Debug: Catch unset descriptors
-		if (m_unsetInlineDescriptors != 0)
+#if defined(_DEBUG)
+		if (m_unsetInlineDescriptors != 0) // Catch unset descriptors
 		{
 			std::string unsetInlineDescriptorNames;
 
 			std::vector<RootSignature::RootParameter> const& rootParams = m_currentRootSig->GetRootSignatureEntries();
-
 			for (auto const& rootParam : rootParams)
 			{
 				if (m_unsetInlineDescriptors & (1 << rootParam.m_index))
 				{
-					unsetInlineDescriptorNames += m_currentRootSig->DebugGetNameFromRootParamIdx(rootParam.m_index) + " ";;
+					unsetInlineDescriptorNames += m_currentRootSig->DebugGetNameFromRootParamIdx(rootParam.m_index) + " ";
 				}
 			}
 			
@@ -548,8 +547,7 @@ namespace dx12
 				"behavior: {}",
 				unsetInlineDescriptorNames).c_str());
 		}
-
-
+#endif
 
 		for (uint8_t inlineRootType = 0; inlineRootType < static_cast<uint8_t>(InlineRootType_Count); inlineRootType++)
 		{

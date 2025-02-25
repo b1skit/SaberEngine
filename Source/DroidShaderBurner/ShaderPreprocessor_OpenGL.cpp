@@ -11,33 +11,58 @@ namespace
 {
 	constexpr char const* k_shaderPreambles[] // Per-shader-type preamble
 	{
+		// Rasterization pipeline:
 		// ShaderType::Vertex:
 		"#define SE_VERTEX_SHADER\n",
 
 		// ShaderType::Geometry:
 		"#define SE_GEOMETRY_SHADER\n",
 
-		// ShaderType::Fragment:
-		"#define SE_FRAGMENT_SHADER\n"
+		// ShaderType::Pixel:
+		"#define SE_PIXEL_SHADER\n"
 		"layout(origin_upper_left) in vec4 gl_FragCoord;\n", // Make fragment coords ([0,xRes), [0,yRes)) match our UV(0,0) = top-left convention
 
 
-		// ShaderType::TesselationControl:
-		"#define SE_TESS_CONTROL_SHADER\n",
+		// ShaderType::Hull:
+		"#define SE_HULL_SHADER\n",
 
-		// ShaderType::TesselationEvaluation:
-		"#define SE_TESS_EVALUATION_SHADER\n",
+		// ShaderType::Domain:
+		"#define SE_DOMAIN_SHADER\n",
 
+
+		// Mesh shading pipeline:
+		// ShaderType::Amplification:
+		"#define SE_AMPLIFICATION_SHADER\n",
 
 		// ShaderType::Mesh:
 		"#define SE_MESH_SHADER\n",
 
-		// ShaderType::Amplification:
-		"#define SE_TASK_SHADER\n",
 
-
+		// Compute pipeline:
 		// ShaderType::Compute:
 		"#define SE_COMPUTE_SHADER\n",
+
+
+		// Ray tracing pipeline:
+		// Note: We include defines for ray tracing here for consistency, but they're not used in OpenGL
+
+		// ShaderType::HitGroup_Intersection:
+		"#define SE_INTERSECTION_SHADER\n",
+
+		// ShaderType::HitGroup_AnyHit:
+		"#define SE_ANYHIT_SHADER\n",
+
+		// ShaderType::HitGroup_ClosestHit:
+		"#define SE_CLOSESTHIT_SHADER\n",
+
+		// ShaderType::Callable:
+		"#define SE_CALLABLE_SHADER\n",
+
+		// ShaderType::RayGen:
+		"#define SE_RAYGEN_SHADER\n",
+
+		// ShaderType::Miss:
+		"#define SE_MISS_SHADER\n",
 	};
 	static_assert(_countof(k_shaderPreambles) == re::Shader::ShaderType_Count);
 

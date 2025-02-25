@@ -6,6 +6,7 @@
 
 #include "Core/Util/CHashKey.h"
 
+
 namespace core
 {
 	template<typename T>
@@ -13,6 +14,7 @@ namespace core
 }
 namespace re
 {
+	class AccelerationStructure;
 	class Batch;
 	class VertexBufferInput;
 }
@@ -30,6 +32,8 @@ namespace gr
 
 	using AnimatedVertexStreams = std::unordered_map<
 		gr::RenderDataID, std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>>;
+
+	using TLAS = std::shared_ptr<re::AccelerationStructure>;
 
 	using ViewBatches = std::unordered_map<gr::Camera::View const, std::vector<re::Batch>>;
 	using AllBatches = std::vector<re::Batch>;

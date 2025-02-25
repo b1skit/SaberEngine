@@ -39,7 +39,15 @@ namespace
 		GL_MESH_SHADER_BIT_NV,
 		GL_TASK_SHADER_BIT_NV,
 
-		GL_COMPUTE_SHADER
+		GL_COMPUTE_SHADER,
+
+		// Entires corresponding to ray tracing shader types included for consistency, but not ever used in OpenGL
+		GL_INVALID_ENUM, // ShaderType::HitGroup_Intersection
+		GL_INVALID_ENUM, // ShaderType::HitGroup_AnyHit
+		GL_INVALID_ENUM, // ShaderType::HitGroup_ClosestHit
+		GL_INVALID_ENUM, // ShaderType::Callable
+		GL_INVALID_ENUM, // ShaderType::RayGen
+		GL_INVALID_ENUM, // ShaderType::Miss
 	};
 	static_assert(_countof(k_shaderTypeFlags) == re::Shader::ShaderType_Count);
 
@@ -473,6 +481,7 @@ namespace opengl
 		LOG("Creating shader: \"%s\"", shaderFileName.c_str());
 
 		// Load the individual shader text files:
+		SEAssert(!shader.m_extensionlessSourceFilenames.empty(), "Shader does not contain any source filenames");
 		std::vector<std::future<void>> const& loadShaderTextsTaskFutures = 
 			LoadShaderTexts(shader.m_extensionlessSourceFilenames, platParams->m_shaderTexts);
 

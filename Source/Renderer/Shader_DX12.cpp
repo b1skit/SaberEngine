@@ -25,6 +25,7 @@ namespace dx12
 
 		constexpr wchar_t const* k_dx12ShaderExt = L".cso";
 
+		SEAssert(!shader.m_extensionlessSourceFilenames.empty(), "Shader does not contain any source filenames");
 		for (auto const& source : shader.m_extensionlessSourceFilenames)
 		{
 			std::wstring const& filenameWStr = shaderDirWStr + util::ToWideString(source.first) + k_dx12ShaderExt;

@@ -14,6 +14,7 @@ namespace
 
 	constexpr char const* k_shaderTypeDefines[] // Per-shader-type defines
 	{
+		// Rasterization pipeline:
 		// ShaderType::Vertex:
 		"SE_VERTEX_SHADER",
 
@@ -21,22 +22,46 @@ namespace
 		"SE_GEOMETRY_SHADER",
 
 		// ShaderType::Fragment:
-		"SE_FRAGMENT_SHADER",
+		"SE_PIXEL_SHADER",
 
-		// ShaderType::TesselationControl:
-		"SE_TESS_CONTROL_SHADER",
+		// ShaderType::Hull:
+		"SE_HULL_SHADER",
 
-		// ShaderType::TesselationEvaluation:
-		"SE_TESS_EVALUATION_SHADER",
+		// ShaderType::Domain:
+		"SE_DOMAIN_SHADER",
+
+
+		// Mesh shading pipeline:
+		// ShaderType::Amplification:
+		"SE_AMPLIFICATION_SHADER",
 
 		// ShaderType::Mesh:
 		"SE_MESH_SHADER",
 
-		// ShaderType::Amplification:
-		"SE_TASK_SHADER",
 
+		// Compute pipeline:
 		// ShaderType::Compute:
 		"SE_COMPUTE_SHADER",
+
+
+		// Ray tracing pipeline:
+		// ShaderType::HitGroup_Intersection:
+		"SE_INTERSECTION_SHADER",
+
+		// ShaderType::HitGroup_AnyHit:
+		"SE_ANYHIT_SHADER",
+
+		// ShaderType::HitGroup_ClosestHit:
+		"SE_CLOSESTHIT_SHADER",
+
+		// ShaderType::Callable:
+		"SE_CALLABLE_SHADER",
+
+		// ShaderType::RayGen:
+		"SE_RAYGEN_SHADER",
+
+		// ShaderType::Miss:
+		"SE_MISS_SHADER",
 	};
 	static_assert(_countof(k_shaderTypeDefines) == re::Shader::ShaderType_Count);
 
@@ -83,8 +108,17 @@ namespace
 		case re::Shader::Mesh: return "ms_" + targetProfileVersion;
 		case re::Shader::Amplification: return "as_" + targetProfileVersion;
 		case re::Shader::Compute: return "cs_" + targetProfileVersion;
+
+		case re::Shader::HitGroup_Intersection: return "lib_" + targetProfileVersion;
+		case re::Shader::HitGroup_AnyHit: return "lib_" + targetProfileVersion;
+		case re::Shader::HitGroup_ClosestHit: return "lib_" + targetProfileVersion;
+
+		case re::Shader::Callable: return "lib_" + targetProfileVersion;
+		case re::Shader::RayGen: return "lib_" + targetProfileVersion;
+		case re::Shader::Miss: return "lib_" + targetProfileVersion;
 		default: return "INVALID_SHADER_TYPE_RECEIVED_BY_BuildTargetProfileArg";
 		}
+		SEStaticAssert(re::Shader::ShaderType_Count == 14, "Shader types are out of sync");
 	}
 
 	constexpr wchar_t const* GetOptimizationLevelCStr(uint8_t optimizationLevel)

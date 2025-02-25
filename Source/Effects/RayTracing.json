@@ -1,0 +1,66 @@
+{
+	"Effect" : {
+		"Name" :  "RayTracing",
+		"ExcludedPlatforms": [ "OpenGL" ],
+		"Parents" : [],
+		//"DefaultTechnique": "RT_Experimental",
+		"DrawStyles" :  [
+			{
+				"Conditions": [
+					{ "Rule" : "RT_Experimental", "Mode" : "RT_Geometry_Experimental" }
+				],
+				"Technique": "RT_HitGroupTechnique_Experimental"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RT_Experimental", "Mode" : "RT_RayGen_Experimental" }
+				],
+				"Technique": "RT_RayGenTechnique_Experimental"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RT_Experimental", "Mode" : "RT_Miss_Experimental" }
+				],
+				"Technique": "RT_MissTechnique_Experimental"
+			}
+		],
+		"Techniques" :  [
+			{
+				"Name": "RT_HitGroupTechnique_Experimental",
+
+				// If defined: Procedural geometry only. Otherwise, triangle geometry only
+				//"IntersectionShader": "RayTracing_Experimental",	
+				//"IntersectionShaderEntryPoint" : "Intersection_Experimental",
+				//"IntersectionShaderDefines": []
+
+				// If not defined, all geo considered opaque
+				"AnyHitShader": "RayTracing_Experimental",
+				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShaderDefines": [],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": []
+			},
+			{
+				"Name": "RT_RayGenTechnique_Experimental",
+				"RayGenerationShader": "RayTracing_Experimental",
+				"RayGenerationShaderEntryPoint": "RayGeneration_Experimental",
+				"RayGenerationShaderDefines": []
+			},
+			{
+				"Name": "RT_MissTechnique_Experimental",
+				"MissShader": "RayTracing_Experimental",
+				"MissShaderEntryPoint": "Miss_Experimental",
+				"MissShaderDefines": []
+			},
+			{
+				"Name": "RT_CallableTechnique_Experimental",
+				"CallableShader": "RayTracing_Experimental",
+				"CallableShaderEntryPoint": "Callable_Experimental",
+				"CallableShaderDefines": []
+			}
+		],
+		"PipelineStates": []
+	}
+}

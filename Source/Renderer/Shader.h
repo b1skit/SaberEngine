@@ -48,9 +48,31 @@ namespace re
 			// Compute pipeline:
 			Compute,
 
+			// Ray tracing pipeline:
+			HitGroup_Intersection,	// If defined: Procedural geometry only. Otherwise, triangle geometry only
+			HitGroup_AnyHit,		// If not defined, all geo is considered opaque
+			HitGroup_ClosestHit,
+
+			Callable,
+			RayGen,
+			Miss,
+
 			ShaderType_Count
 		};
 		static constexpr char const* ShaderTypeToCStr(ShaderType);
+		static constexpr bool IsRasterizationType(ShaderType);
+		static constexpr bool IsMeshShadingType(ShaderType);
+		static constexpr bool IsComputeType(ShaderType);
+		static constexpr bool IsRayTracingType(ShaderType);
+		static constexpr bool IsSamePipelineType(ShaderType, ShaderType);
+
+		enum class PipelineType
+		{
+			Rasterization,
+			Mesh,
+			Compute,
+			RayTracing
+		};
 
 
 	public:
@@ -78,7 +100,7 @@ namespace re
 	public:		
 		ShaderID GetShaderIdentifier() const;
 
-		bool HasShaderType(ShaderType) const;
+		PipelineType GetPipelineType() const;
 
 		re::RasterizationState const* GetRasterizationState() const;
 			
@@ -101,6 +123,7 @@ namespace re
 	private:
 		const ShaderID m_shaderIdentifier;
 		std::vector<std::pair<std::string, ShaderType>> m_extensionlessSourceFilenames;
+		PipelineType m_pipelineType;
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 
@@ -128,11 +151,95 @@ namespace re
 		case re::Shader::ShaderType::Pixel: return "Pixel";
 		case re::Shader::ShaderType::Hull: return "Hull";
 		case re::Shader::ShaderType::Domain: return "Domain";
-		case re::Shader::ShaderType::Mesh: return "Mesh";
 		case re::Shader::ShaderType::Amplification: return "Amplification";
+		case re::Shader::ShaderType::Mesh: return "Mesh";
 		case re::Shader::ShaderType::Compute: return "Compute";
+		case re::Shader::ShaderType::HitGroup_Intersection: return "HitGroup_Intersection";
+		case re::Shader::ShaderType::HitGroup_AnyHit: return "HitGroup_AnyHit";
+		case re::Shader::ShaderType::HitGroup_ClosestHit: return "HitGroup_ClosestHit";
+		case re::Shader::ShaderType::Callable: return "Callable";
+		case re::Shader::ShaderType::RayGen: return "RayGen";
+		case re::Shader::ShaderType::Miss: return "Miss";
 		default: return "INVALID_SHADER_TYPE_RECEIVED";
 		}
+		SEStaticAssert(re::Shader::ShaderType::ShaderType_Count == 14, "Updated this if shader type count has changed");
+	}
+
+
+	inline constexpr bool Shader::IsRasterizationType(ShaderType shaderType)
+	{
+		switch (shaderType)
+		{
+		case re::Shader::ShaderType::Vertex:
+		case re::Shader::ShaderType::Geometry:
+		case re::Shader::ShaderType::Pixel:
+		case re::Shader::ShaderType::Hull:
+		case re::Shader::ShaderType::Domain:
+			return true;
+		default: return false;
+		}
+	}
+
+
+	inline constexpr bool Shader::IsMeshShadingType(ShaderType shaderType)
+	{
+		switch (shaderType)
+		{
+		case re::Shader::ShaderType::Amplification:
+		case re::Shader::ShaderType::Mesh:
+			return true;
+		default: return false;
+		}
+	}
+
+
+	inline constexpr bool Shader::IsComputeType(ShaderType shaderType)
+	{
+		return shaderType == ShaderType::Compute;
+	}
+
+
+	inline constexpr bool Shader::IsRayTracingType(ShaderType shaderType)
+	{
+		switch (shaderType)
+		{
+		case re::Shader::ShaderType::HitGroup_Intersection:
+		case re::Shader::ShaderType::HitGroup_AnyHit:
+		case re::Shader::ShaderType::HitGroup_ClosestHit:
+		case re::Shader::ShaderType::Callable:
+		case re::Shader::ShaderType::RayGen:
+		case re::Shader::ShaderType::Miss:
+			return true;
+		default: return false;
+		}
+	}
+
+
+	inline constexpr bool Shader::IsSamePipelineType(ShaderType lhs, ShaderType rhs)
+	{
+		switch (lhs)
+		{
+		case re::Shader::ShaderType::Vertex:
+		case re::Shader::ShaderType::Geometry:
+		case re::Shader::ShaderType::Pixel:
+		case re::Shader::ShaderType::Hull:
+		case re::Shader::ShaderType::Domain:
+			return IsRasterizationType(rhs);
+		case re::Shader::ShaderType::Amplification:
+		case re::Shader::ShaderType::Mesh:
+			return IsMeshShadingType(rhs);
+		case re::Shader::ShaderType::Compute:
+			return IsComputeType(rhs);
+		case re::Shader::ShaderType::HitGroup_Intersection:
+		case re::Shader::ShaderType::HitGroup_AnyHit:
+		case re::Shader::ShaderType::HitGroup_ClosestHit:
+		case re::Shader::ShaderType::Callable:
+		case re::Shader::ShaderType::RayGen:
+		case re::Shader::ShaderType::Miss:
+			return IsRayTracingType(rhs);
+		default: return false;
+		}
+		SEStaticAssert(re::Shader::ShaderType::ShaderType_Count == 14, "Updated this if shader type count has changed");
 	}
 
 
@@ -142,16 +249,9 @@ namespace re
 	}
 
 
-	inline bool Shader::HasShaderType(ShaderType shaderType) const
+	inline Shader::PipelineType Shader::GetPipelineType() const
 	{
-		for (auto const& source : m_extensionlessSourceFilenames)
-		{
-			if (source.second == shaderType)
-			{
-				return true;
-			}
-		}
-		return false;
+		return m_pipelineType;
 	}
 
 

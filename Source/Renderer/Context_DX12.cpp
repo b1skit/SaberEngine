@@ -36,19 +36,16 @@ namespace
 
 		re::RasterizationState const* rasterizationState = shader.GetRasterizationState();
 
-		SEAssert(rasterizationState || shader.HasShaderType(re::Shader::Compute),
+		SEAssert(rasterizationState || shader.GetPipelineType() != re::Shader::PipelineType::Rasterization,
 			"Shader does not have a pipeline state. This is unexpected");
 
 		if (rasterizationState)
 		{
 			util::CombineHash(psoKey, rasterizationState->GetDataHash());
 
-			if (targetSet && 
-				(shader.HasShaderType(re::Shader::Vertex) || 
-					shader.HasShaderType(re::Shader::Geometry) ||
-					shader.HasShaderType(re::Shader::Pixel) ))
+			if (targetSet && shader.GetPipelineType() == re::Shader::PipelineType::Rasterization)
 			{
-				// We must consider the target set, as we must specify the RTV/DSV formats when creating the graphics
+				// We must consider the target set, as we must specify the RTV/DSV formats when creating a rasterization
 				// pipeline state stream
 				util::CombineHash(psoKey, targetSet->GetTargetSetSignature());
 			}

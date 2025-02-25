@@ -38,7 +38,7 @@ struct VertexOut
 	#elif defined(SE_GEOMETRY_SHADER)
 		layout(location = 6) in VertexOut In[];
 		layout(location = 6) out VertexOut Out;
-	#elif defined(SE_FRAGMENT_SHADER)
+	#elif defined(SE_PIXEL_SHADER)
 		layout(location = 6) in VertexOut In;
 	#endif
 #endif // !defined(HAS_OWN_VERTEX_OUTPUT_DECLARATION)
@@ -47,7 +47,7 @@ struct VertexOut
 // Fragment shader outputs:
 //-------------------------
 
-#if defined(SE_FRAGMENT_SHADER) && !defined(HAS_OWN_FRAGMENT_OUTPUT_DECLARATION)
+#if defined(SE_PIXEL_SHADER) && !defined(HAS_OWN_FRAGMENT_OUTPUT_DECLARATION)
 	#if defined(SABER_VEC2_OUTPUT)
 		layout (location = 0) out vec2 FragColor;
 	#elif defined(SABER_VEC3_OUTPUT)
@@ -73,7 +73,7 @@ struct InstanceParams
 		layout(location = 5) flat in InstanceParams InstanceParamsIn[];
 		layout(location = 5) flat out InstanceParams InstanceParamsOut;
 
-	#elif defined(SE_FRAGMENT_SHADER)		
+	#elif defined(SE_PIXEL_SHADER)		
 		layout(location = 5) flat in InstanceParams InstanceParamsIn;
 
 	#endif 

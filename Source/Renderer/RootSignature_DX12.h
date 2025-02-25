@@ -1,10 +1,14 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "Shader.h"
+
 #include "Core/Interfaces/IHashedDataObject.h"
 
 #include <wrl.h>
 #include <d3d12.h>
+#include <d3d12shader.h>
 
+struct CD3DX12_ROOT_PARAMETER1;
 
 namespace re
 {
@@ -129,6 +133,7 @@ namespace dx12
 		~RootSignature();
 		void Destroy();
 
+	public:
 		uint32_t GetDescriptorTableIdxBitmask() const;
 		uint32_t GetNumDescriptorsInTable(uint8_t rootIndex) const;
 
@@ -140,20 +145,40 @@ namespace dx12
 
 		RootParameter const* GetRootSignatureEntry(std::string const& resourceName) const;
 
-		bool HasResource(std::string const& resourceName) const;
-
-
 		std::vector<DescriptorTable> const& GetDescriptorTableMetadata() const;
 
-		std::string DebugGetNameFromRootParamIdx(uint8_t) const; // Debug only
 
-	private:
-		RootSignature();
+	public: // Debug-only helpers:
+#if defined(_DEBUG)
+		bool HasResource(std::string const& resourceName) const;
+		std::string const& DebugGetNameFromRootParamIdx(uint8_t) const;
+#endif
+
+
+	private: 
+		RootSignature(); // Use Create() instead
+
+
+	private: // Create() helpers:
+		struct RangeInput : public D3D12_SHADER_INPUT_BIND_DESC
+		{
+			// We inherit from D3D12_SHADER_INPUT_BIND_DESC so we can store the visibility, and store the .Name in a
+			// std::string (as D3D12_SHADER_INPUT_BIND_DESC::Name is released when the 
+			// ID3D12LibraryReflection/ID3D12ShaderReflection go out of scope
+			std::string m_name;
+			D3D12_SHADER_VISIBILITY m_visibility;
+		};
+		static void ParseInputBindingDesc(
+			dx12::RootSignature*,
+			re::Shader::ShaderType,
+			D3D12_SHADER_INPUT_BIND_DESC const&,
+			std::array<std::vector<RangeInput>, DescriptorType::Type_Count>& rangeInputs,
+			std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters,
+			std::vector<D3D12_STATIC_SAMPLER_DESC>& staticSamplers);
 
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
-
 		uint64_t m_rootSigDescHash;
 
 

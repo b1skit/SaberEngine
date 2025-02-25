@@ -182,7 +182,7 @@ void GShader()
 #endif
 
 
-#if defined(SE_FRAGMENT_SHADER)
+#if defined(SE_PIXEL_SHADER)
 
 layout(location = 6) in LineVertexOut In;
 layout (location = 0) out vec4 FragColor;

@@ -458,6 +458,9 @@
     <ClInclude Include="RasterizationState.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsSystem_RayTracing_Experimental.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -801,6 +804,9 @@
     </ClCompile>
     <ClCompile Include="RasterizationState.cpp">
       <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSystem_RayTracing_Experimental.cpp">
+      <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

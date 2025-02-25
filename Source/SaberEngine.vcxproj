@@ -233,6 +233,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <None Include="Effects\FullscreenQuad.json" />
     <None Include="Effects\GLTF_PBRMetallicRoughness.json" />
     <None Include="Effects\MipGeneration.json" />
+    <None Include="Effects\RayTracing.json" />
     <None Include="Effects\Skybox.json" />
     <None Include="Effects\Tonemapping.json" />
     <None Include="Effects\VertexAnimation.json" />

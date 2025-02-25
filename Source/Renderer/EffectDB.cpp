@@ -417,15 +417,22 @@ namespace
 		std::string const& techniqueName = techniqueEntry.at(key_name).template get<std::string>();
 
 		// "*Shader" names:
-		const bool isComputeTechnique = techniqueEntry.contains(keys_shaderTypes[re::Shader::Compute]);
-
 		std::vector<std::pair<std::string, re::Shader::ShaderType>> shaderNames;
+		re::Shader::ShaderType firstShaderType = re::Shader::ShaderType::ShaderType_Count;
 		for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
 		{
 			if (techniqueEntry.contains(keys_shaderTypes[shaderTypeIdx]))
 			{
-				SEAssert(!isComputeTechnique || shaderTypeIdx == re::Shader::Compute,
-					"Compute Techniques cannot define another shader type");
+				if (firstShaderType == re::Shader::ShaderType::ShaderType_Count)
+				{
+					firstShaderType = static_cast<re::Shader::ShaderType>(shaderTypeIdx);
+				}
+				else
+				{
+					SEAssert(re::Shader::IsSamePipelineType(
+						firstShaderType, static_cast<re::Shader::ShaderType>(shaderTypeIdx)),
+						"Technique can only define shaders of the same pipeline type");
+				}
 
 				shaderNames.emplace_back(
 					techniqueEntry.at(keys_shaderTypes[shaderTypeIdx]).template get<std::string>(),
@@ -433,15 +440,15 @@ namespace
 			}
 		}
 
-		SEAssert(isComputeTechnique || techniqueEntry.contains(key_rasterizationState),
-			"Failed to find RasterizationState entry. This is required except for compute shaders");
+		SEAssert(!re::Shader::IsRasterizationType(firstShaderType) || techniqueEntry.contains(key_rasterizationState),
+			"Failed to find RasterizationState entry. This is required for rasterization pipeline shaders");
 
-		SEAssert(isComputeTechnique || techniqueEntry.contains(key_vertexStream),
-			"Failed to find VertexStream entry. This is required except for compute shaders");
+		SEAssert(!re::Shader::IsRasterizationType(firstShaderType) || techniqueEntry.contains(key_vertexStream),
+			"Failed to find VertexStream entry. This is required for rasterization pipeline shaders");
 
 		re::RasterizationState const* rasterizationState = nullptr;
 		re::VertexStreamMap const* vertexStreamMap = nullptr;
-		if (!isComputeTechnique)
+		if (re::Shader::IsRasterizationType(firstShaderType))
 		{
 			std::string const& rasterizationStateName = techniqueEntry.at(key_rasterizationState).template get<std::string>();
 			rasterizationState = effectDB.GetRasterizationState(rasterizationStateName);

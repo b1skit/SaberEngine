@@ -421,6 +421,9 @@
     <None Include="Shaders\HLSL\SkinningAnimation_CShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
     </None>
+    <None Include="Effects\RayTracing.json">
+      <Filter>Effects</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Dependencies\Icon\SaberEngineApplicationIcon.ico">
