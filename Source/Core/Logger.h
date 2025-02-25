@@ -27,17 +27,26 @@ namespace core
 		template<typename...Args>
 		static void Log(wchar_t const* msg, Args&&... args);
 
+		static void Log(std::string const&);
+		static void Log(std::wstring const&);
+
 		template<typename... Args>
 		static void LogWarning(char const* msg, Args&&... args);
 
 		template<typename... Args>
 		static void LogWarning(wchar_t const* msg, Args&&... args);
 
+		static void LogWarning(std::string const&);
+		static void LogWarning(std::wstring const&);
+
 		template<typename... Args>
 		static void LogError(char const* msg, Args&&... args);
 
 		template<typename... Args>
 		static void LogError(wchar_t const* msg, Args&&... args);
+
+		static void LogError(std::string const&);
+		static void LogError(std::wstring const&);
 
 
 	public:
@@ -91,7 +100,7 @@ namespace core
 		template<typename T>
 		static void InsertLogPrefix(
 			T const* alignPrefix,
-			size_t alignPrefixLen,
+			size_t aliLoggnPrefixLen,
 			T const* tag, 
 			size_t tagLen, 
 			T* destBuffer);
@@ -116,6 +125,19 @@ namespace core
 		LogInternal<wchar_t, Args...>(Logger::LogType::Log, msg, std::forward<Args>(args)...);
 	}
 
+
+	inline void Logger::Log(std::string const& str)
+	{
+		Log(str.c_str());
+	}
+
+
+	inline void Logger::Log(std::wstring const& wStr)
+	{
+		Log(wStr.c_str());
+	}
+
+
 	template<typename... Args>
 	inline void Logger::LogWarning(char const* msg, Args&&... args)
 	{
@@ -131,6 +153,18 @@ namespace core
 	}
 
 
+	inline void Logger::LogWarning(std::string const& str)
+	{
+		LogWarning(str.c_str());
+	}
+	
+	
+	inline void Logger::LogWarning(std::wstring const& wStr)
+	{
+		LogWarning(wStr.c_str());
+	}
+
+
 	template<typename... Args>
 	inline void Logger::LogError(char const* msg, Args&&... args)
 	{
@@ -142,6 +176,18 @@ namespace core
 	inline void Logger::LogError(wchar_t const* msg, Args&&... args)
 	{
 		LogInternal<wchar_t, Args...>(Logger::LogType::Error, msg, std::forward<Args>(args)...);
+	}
+
+
+	inline void Logger::LogError(std::string const& str)
+	{
+		LogError(str.c_str());
+	}
+
+
+	inline void Logger::LogError(std::wstring const& wStr)
+	{
+		LogError(wStr.c_str());
 	}
 
 
