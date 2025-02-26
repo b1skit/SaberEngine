@@ -148,9 +148,10 @@ namespace platform
 			platform::SysInfo::GetMaxVertexAttributes	= &opengl::SysInfo::GetMaxVertexAttributes;
 
 			// Swap chain:
-			platform::SwapChain::Create			= &opengl::SwapChain::Create;
-			platform::SwapChain::Destroy		= &opengl::SwapChain::Destroy;
-			platform::SwapChain::ToggleVSync	= &opengl::SwapChain::ToggleVSync;
+			platform::SwapChain::Create					= &opengl::SwapChain::Create;
+			platform::SwapChain::Destroy				= &opengl::SwapChain::Destroy;
+			platform::SwapChain::ToggleVSync			= &opengl::SwapChain::ToggleVSync;
+			platform::SwapChain::GetBackBufferTargetSet = &opengl::SwapChain::GetBackBufferTargetSet;
 
 			// Texture:
 			platform::Texture::Destroy			= &opengl::Texture::Destroy;
@@ -202,9 +203,10 @@ namespace platform
 			platform::SysInfo::GetMaxVertexAttributes	= &dx12::SysInfo::GetMaxVertexAttributes;
 
 			// Swap chain:
-			platform::SwapChain::Create			= &dx12::SwapChain::Create;
-			platform::SwapChain::Destroy		= &dx12::SwapChain::Destroy;
-			platform::SwapChain::ToggleVSync	= &dx12::SwapChain::ToggleVSync;
+			platform::SwapChain::Create					= &dx12::SwapChain::Create;
+			platform::SwapChain::Destroy				= &dx12::SwapChain::Destroy;
+			platform::SwapChain::ToggleVSync			= &dx12::SwapChain::ToggleVSync;
+			platform::SwapChain::GetBackBufferTargetSet = &dx12::SwapChain::GetBackBufferTargetSet;
 
 			// Texture:
 			platform::Texture::Destroy			= &dx12::Texture::Destroy;

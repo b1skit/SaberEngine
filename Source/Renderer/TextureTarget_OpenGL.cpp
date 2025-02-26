@@ -1,10 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
+#include "Context_OpenGL.h"
+#include "SwapChain_OpenGL.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
 #include "Texture_Platform.h"
 
+#include "Core/Assert.h"
+#include "Core/Config.h"
 #include "Core/Logger.h"
 
 #include "Core/Util/CastUtils.h"
@@ -25,6 +28,24 @@ namespace
 			glDepthMask(GL_FALSE);
 		}
 	}
+
+
+	constexpr GLenum GetTextureTargetEnum(re::Texture::Dimension dimension)
+	{
+		switch (dimension)
+		{
+		case re::Texture::Dimension::Texture1D: return GL_TEXTURE_1D;
+		case re::Texture::Dimension::Texture1DArray: return GL_TEXTURE_1D_ARRAY;
+		case re::Texture::Dimension::Texture2D: return GL_TEXTURE_2D;
+		case re::Texture::Dimension::Texture2DArray: return GL_TEXTURE_2D_ARRAY;
+		case re::Texture::Dimension::Texture3D: return GL_TEXTURE_3D;
+		case re::Texture::Dimension::TextureCube: return GL_TEXTURE_CUBE_MAP;
+		case re::Texture::Dimension::TextureCubeArray: return GL_TEXTURE_CUBE_MAP_ARRAY;
+		default: return GL_INVALID_ENUM; // This should never happen
+		}
+		SEStaticAssert(re::Texture::Dimension_Count == 7,
+			"This function must be updated if the number of Texture dimensions changes");
+	}
 }
 
 namespace opengl
@@ -40,7 +61,7 @@ namespace opengl
 	// Target Set
 	/************/
 	TextureTargetSet::PlatformParams::PlatformParams() :
-		m_frameBufferObject(0)
+		m_frameBufferObject(GL_NONE)
 	{
 	}
 
@@ -175,14 +196,9 @@ namespace opengl
 					"All framebuffer textures must have the same dimensions");
 			}
 
-			// Configure the target parameters:
-			// Note: We attach to the same slot/binding index as the texuture has in the target set
-			targetPlatParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + i;
-			targetPlatParams->m_drawBuffer = GL_COLOR_ATTACHMENT0 + i;
-			//targetPlatformParams->m_readBuffer		= GL_COLOR_ATTACHMENT0 + i; // Not needed...
-
 			// Record the texture in our drawbuffers array:
-			drawBuffers[numDrawBuffers++] = targetPlatParams->m_attachmentPoint;
+			// Note: We attach to the same slot/binding index as the texuture has in the target set
+			drawBuffers[numDrawBuffers++] = GL_COLOR_ATTACHMENT0 + i;
 		}
 
 		// Create framebuffer (not required if this target set represents the default framebuffer):
@@ -199,16 +215,13 @@ namespace opengl
 				SEAssert(glIsFramebuffer(targetSetParams->m_frameBufferObject),
 					"Failed to create framebuffer object during texture creation");
 			}
-			else
-			{
-				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
-			}
-			
-			// Attach the textures now that we know the framebuffer is created:
-			glDrawBuffers(numDrawBuffers, drawBuffers.data());
+
+			// Attach the textures now that we know the framebuffer is created ("Named" DSA function : no need to
+			// explicitely bind the framebuffer first)
+			glNamedFramebufferDrawBuffers(targetSetParams->m_frameBufferObject, numDrawBuffers, drawBuffers.data());
 
 			// For now, ensure the viewport dimensions are within the target dimensions
-			SEAssert(targetSet.GetViewport().Width() <= targetWidth  &&
+			SEAssert(targetSet.GetViewport().Width() <= targetWidth &&
 				targetSet.GetViewport().Height() <= targetHeight,
 				"Viewport is larger than the color targets");
 		}
@@ -269,10 +282,10 @@ namespace opengl
 			const GLuint textureID = opengl::Texture::GetOrCreateTextureView(texture, texView);
 
 			glNamedFramebufferTexture( // Note: "Named" DSA function: no need to explicitely bind the framebuffer first
-				targetSetParams->m_frameBufferObject,		// framebuffer
-				targetPlatformParams->m_attachmentPoint,	// attachment
-				textureID,									// texture
-				0);											// level: 0 as it's relative to the texView
+				targetSetParams->m_frameBufferObject,	// framebuffer
+				GL_COLOR_ATTACHMENT0 + i,				// attachment
+				textureID,								// texture
+				0);										// level: 0 as it's relative to the texView
 
 			uint32_t firstMip = re::Texture::k_allMips; // Invalid
 			switch (texView.m_viewDimension)
@@ -312,7 +325,7 @@ namespace opengl
 			}
 
 			// Record the attachment point so we can set the draw buffers later on:
-			buffers.emplace_back(targetPlatformParams->m_attachmentPoint);
+			buffers.emplace_back(GL_COLOR_ATTACHMENT0 + i);
 
 			SEAssert(firstTarget == nullptr ||
 				(texture->GetMipLevelDimensions(firstMip).x ==
@@ -403,11 +416,6 @@ namespace opengl
 				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 			}
 
-			// Configure the target parameters:
-			depthTargetPlatParams->m_attachmentPoint = GL_DEPTH_ATTACHMENT;
-			depthTargetPlatParams->m_drawBuffer = GL_NONE;
-			depthTargetPlatParams->m_readBuffer	= GL_NONE;
-
 			// For now, ensure the viewport dimensions are within the target dimensions
 			SEAssert(targetSet.GetViewport().Width() <= depthStencilTex->Width() &&
 				targetSet.GetViewport().Height() <= depthStencilTex->Height(),
@@ -444,16 +452,13 @@ namespace opengl
 			opengl::TextureTarget::PlatformParams const* depthTargetPlatParams =
 				depthTarget.GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
-			SEAssert(depthTargetPlatParams->m_attachmentPoint == GL_DEPTH_ATTACHMENT,
-				"Currently expecting a depth attachment. TODO: Support GL_STENCIL_ATTACHMENT");
-
 			re::TextureView const& texView = depthTarget.GetTargetParams().m_textureView;
 
 			const GLuint textureID = opengl::Texture::GetOrCreateTextureView(depthTex, texView);
 
 			glNamedFramebufferTexture( // Note: "Named" DSA function: no need to explicitely bind the framebuffer first
 				targetSetParams->m_frameBufferObject,		// framebuffer
-				depthTargetPlatParams->m_attachmentPoint,	// attachment
+				GL_DEPTH_ATTACHMENT,						// attachment point. TODO: Support GL_STENCIL_ATTACHMENT
 				textureID,									// texture
 				0);											// level: 0 as it's relative to the texView
 			
@@ -563,8 +568,6 @@ namespace opengl
 		opengl::TextureTarget::PlatformParams const* targetPlatParams =
 			targetSet.GetDepthStencilTarget().GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
-		SEAssert(targetPlatParams->m_drawBuffer == 0, "Drawbuffer must be 0 for depth/stencil targets");
-
 		// Clear depth:
 		if (depthClearMode)
 		{
@@ -576,7 +579,7 @@ namespace opengl
 			glClearNamedFramebufferfv(
 				targetSetPlatParams->m_frameBufferObject,	// framebuffer
 				GL_DEPTH,									// buffer
-				targetPlatParams->m_drawBuffer,				// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
+				0,											// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
 				&depthClearVal);							// value
 		}
 
@@ -593,7 +596,7 @@ namespace opengl
 			glClearNamedFramebufferiv(
 				targetSetPlatParams->m_frameBufferObject,	// framebuffer
 				GL_STENCIL,									// buffer
-				targetPlatParams->m_drawBuffer,				// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
+				0,											// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
 				&stencilClearValue);
 		}
 
@@ -624,5 +627,80 @@ namespace opengl
 		}
 
 		// TODO: Support compute target clearing
+	}
+
+
+	void TextureTargetSet::CopyTexture(core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst)
+	{
+		opengl::Texture::PlatformParams const* srcPlatParams =
+			src->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+
+		if (!dst.IsValid()) // If no valid destination is provided, we use the backbuffer
+		{
+			SEAssert(src->Width() == core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey) &&
+				src->Height() == core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey),
+				"Can only copy to the backbuffer from textures with identical dimensions");
+
+			re::TextureTargetSet const* backbufferTargetSet = 
+				opengl::SwapChain::GetBackBufferTargetSet(re::Context::GetAs<opengl::Context*>()->GetSwapChain()).get();
+			
+			opengl::TextureTargetSet::PlatformParams const* backbufferPlatParams =
+				backbufferTargetSet->GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
+
+			// We're (currently) just have texture handles, so we create a new FBO for the source texture to be read from
+			GLuint srcFBO = 0;
+			glGenFramebuffers(1, &srcFBO);
+			glBindFramebuffer(GL_FRAMEBUFFER, srcFBO);
+
+			// Attach the source texture to the new FBO:
+			glNamedFramebufferTexture(
+				srcFBO,						// framebuffer
+				GL_COLOR_ATTACHMENT0,		// attachment
+				srcPlatParams->m_textureID,	// texture
+				0);							// level: 0 as it's relative to the texView
+
+			glNamedFramebufferReadBuffer(srcFBO, GL_COLOR_ATTACHMENT0);
+
+			glBlitNamedFramebuffer(
+				srcFBO,
+				backbufferPlatParams->m_frameBufferObject,
+				0,
+				0,
+				src->Width(),
+				src->Height(),
+				0,
+				0,
+				src->Width(), // dstX1: We assume src has the same dimensions as the backbuffer
+				src->Height(), // dstY1: We assume src has the same dimensions as the backbuffer
+				GL_COLOR_BUFFER_BIT,
+				GL_NEAREST // 
+			);
+
+			// Cleanup:
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glDeleteFramebuffers(1, &srcFBO);
+		}
+		else
+		{
+			opengl::Texture::PlatformParams const* dstPlatParams =
+				dst->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+
+			glCopyImageSubData(
+				srcPlatParams->m_textureID,
+				GetTextureTargetEnum(src->GetTextureParams().m_dimension),
+				0, // srcLevel TODO: Support copying MIPs
+				0, // srcX
+				0, // srcY
+				0, // srcZ
+				dstPlatParams->m_textureID,
+				GetTextureTargetEnum(dst->GetTextureParams().m_dimension),
+				0, // dstLevel TODO: Support copying MIPs
+				0, // dstX
+				0, // dstY
+				0, // dstZ
+				src->Width(),	// srcWidth
+				src->Height(),	// srcHeight
+				src->GetTextureParams().m_arraySize); // srcDepth
+		}
 	}
 }

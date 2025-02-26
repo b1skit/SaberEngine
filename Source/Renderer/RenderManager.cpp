@@ -297,7 +297,7 @@ namespace re
 		// Create any new resources that have been created by GS's during the ExecuteUpdatePipeline call:
 		CreateAPIResources();
 
-		// Update buffers
+		// Update buffers now that all GS's and API resources have been processed
 		context->GetBufferAllocator()->BufferData(frameNum);
 
 		// API-specific rendering loop virtual implementations:
@@ -327,8 +327,6 @@ namespace re
 		}
 		SEEndCPUEvent();
 		
-		//ClearNewObjectCache();
-
 		ProcessDeferredDeletions(GetCurrentRenderFrameNum());
 
 		platform::RenderManager::EndFrame(*this);

@@ -49,7 +49,7 @@ namespace
 		}
 
 		std::string const& debugStr = std::format("{}: Texture \"{}\", mip {}\n{}{} -> {}",
-			dx12::GetDebugName(cmdList.GetD3DCommandList()).c_str(),
+			dx12::GetDebugName(cmdList.GetD3DCommandList().Get()).c_str(),
 			resourceName,
 			subresourceIdx,
 			(isSkipping ? "\t\tSkip: " : "\t"),
@@ -110,6 +110,15 @@ namespace
 			return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		}
 	}
+
+
+	inline uint32_t GetNumSubresources(ID3D12Resource* resource, ID3D12Device* device)
+	{
+		D3D12_RESOURCE_DESC const& desc = resource->GetDesc();
+		const uint32_t planeCount = D3D12GetFormatPlaneCount(device, desc.Format);
+
+		return planeCount * desc.DepthOrArraySize * desc.MipLevels;
+	}
 }
 
 
@@ -135,16 +144,17 @@ namespace dx12
 
 	CommandList::CommandList(Microsoft::WRL::ComPtr<ID3D12Device> const& device, CommandListType type)
 		: m_commandList(nullptr)
-		, m_type(type)
-		, m_d3dType(TranslateToD3DCommandListType(type))
 		, m_commandAllocator(nullptr)
 		, m_commandAllocatorReuseFenceValue(0)
+		, m_device(device.Get())
 		, k_commandListNumber(s_commandListNumber++)
+		, m_d3dType(TranslateToD3DCommandListType(type))
+		, m_type(type)
 		, m_gpuCbvSrvUavDescriptorHeaps(nullptr)
 		, m_currentRootSignature(nullptr)
 		, m_currentPSO(nullptr)
 	{
-		SEAssert(device, "Device cannot be null");
+		SEAssert(m_device, "Device cannot be null");
 
 		// Name the command list with a monotonically-increasing index to make it easier to identify
 		const std::wstring commandListname = std::wstring(
@@ -1122,6 +1132,14 @@ namespace dx12
 	}
 
 
+	void CommandList::CopyTexture(core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst)
+	{
+		CopyResource(
+			src->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_gpuResource->Get(),
+			dst->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_gpuResource->Get());
+	}
+
+
 	void CommandList::SetTexture(re::TextureAndSamplerInput const& texSamplerInput, bool skipTransition)
 	{
 		SEAssert(m_currentPSO, "Pipeline is not currently set");
@@ -1203,6 +1221,12 @@ namespace dx12
 				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) == subresourceIndexes.end(),
 			"Found an ALL transition in the vector of subresource indexes");
 
+		SEAssert(GetNumSubresources(resource, m_device) > 1 ||
+			(subresourceIndexes.size() == 1 &&
+				(subresourceIndexes[0] == 0 ||
+					subresourceIndexes[0] == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)),
+			"Invalid transition detected for a resource with a single subresource");
+
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
 		barriers.reserve(subresourceIndexes.size());
 
@@ -1249,7 +1273,8 @@ namespace dx12
 		for (uint32_t subresourceIdx : subresourceIndexes)
 		{
 			// Transition the appropriate subresources:
-			if (subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+			if (subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES ||
+				GetNumSubresources(resource, m_device) == 1) // Bug fix: Force all single subresources to use ALL
 			{
 				// We can only transition ALL subresources in a single barrier if the before state is the same for all
 				// subresources. If we have any pending transitions for individual subresources, this is not the case:
@@ -1276,7 +1301,6 @@ namespace dx12
 						doTransitionAllSubresources = false;
 
 						auto const& pendingStates = pendingResourceStates.GetStates();
-
 						for (auto const& pendingState : pendingStates)
 						{
 							if (pendingState.first == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)

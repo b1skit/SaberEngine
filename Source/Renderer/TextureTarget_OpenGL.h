@@ -12,10 +12,8 @@ namespace opengl
 	{
 	public:
 		struct PlatformParams final : public re::TextureTarget::PlatformParams
-		{		
-			GLuint m_attachmentPoint = GL_NONE;	// E.g. GL_COLOR_ATTACHMENT0 + i, GL_DEPTH_ATTACHMENT, etc
-			GLuint m_drawBuffer = GL_NONE;		// Which of the 4 color buffers should be drawn into for the DEFAULT framebuffer
-			GLuint m_readBuffer = GL_NONE;		// Which color buffer to use for subsequent reads
+		{
+			//
 		};
 	};
 
@@ -61,5 +59,7 @@ namespace opengl
 			re::TextureTargetSet const&);
 
 		static void AttachTargetsAsImageTextures(re::TextureTargetSet const&); // ~Compute target/UAV
+
+		static void CopyTexture(core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst);
 	};
 }

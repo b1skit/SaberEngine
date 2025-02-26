@@ -34,7 +34,6 @@ namespace opengl
 	{
 		opengl::SwapChain::PlatformParams* swapChainParams = 
 			swapChain.GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
-
 		if (!swapChainParams)
 		{
 			return;
@@ -79,5 +78,16 @@ namespace opengl
 		}
 
 		return swapChainParams->m_vsyncEnabled;
+	}
+
+
+	std::shared_ptr<re::TextureTargetSet> SwapChain::GetBackBufferTargetSet(re::SwapChain const& swapChain)
+	{
+		opengl::SwapChain::PlatformParams* swapChainParams =
+			swapChain.GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
+		SEAssert(swapChainParams && swapChainParams->m_backbufferTargetSet,
+			"Swap chain params and backbuffer cannot be null");
+
+		return swapChainParams->m_backbufferTargetSet;
 	}
 }

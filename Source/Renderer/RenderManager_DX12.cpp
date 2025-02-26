@@ -294,6 +294,7 @@ namespace dx12
 				case re::Stage::Type::LibraryGraphics:
 				case re::Stage::Type::FullscreenQuad:
 				case re::Stage::Type::Clear: // All clears are currently done on the graphics queue
+				case re::Stage::Type::Copy: // All copies are currently done on the graphics queue
 					return dx12::CommandListType::Direct;
 				case re::Stage::Type::Compute:
 				case re::Stage::Type::LibraryCompute:
@@ -551,6 +552,23 @@ namespace dx12
 								clearStage->StencilClearEnabled(),
 								clearStage->GetStencilClearValue(),
 								*(*stageItr)->GetTextureTargetSet());
+						}
+						break;
+						case re::Stage::Type::Copy:
+						{
+							re::CopyStage const* copyStage = dynamic_cast<re::CopyStage const*>((*stageItr).get());
+							SEAssert(copyStage, "Failed to get clear stage");
+
+							core::InvPtr<re::Texture> dstTexture = copyStage->GetDstTexture();
+							if (!dstTexture.IsValid()) // If no valid destination is provided, we use the backbuffer
+							{
+								re::TextureTargetSet const* backbufferTargets = 
+									dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain()).get();
+
+								dstTexture = backbufferTargets->GetColorTarget(0).GetTexture();
+							}
+
+							cmdList->CopyTexture(copyStage->GetSrcTexture(), dstTexture);
 						}
 						break;
 						case re::Stage::Type::RayTracing:

@@ -168,6 +168,35 @@ namespace re
 	}
 
 
+	std::shared_ptr<CopyStage> Stage::CreateCopyStage(
+		core::InvPtr<re::Texture> const& src,
+		core::InvPtr<re::Texture> const& dst)
+	{
+		SEAssert(src.IsValid(), "Copy source must be valid");
+		std::string const& stageName = 
+			std::format("Copy Stage: {} to {}", src->GetName(), dst.IsValid() ? dst->GetName().c_str() : "Backbuffer");
+		
+		std::shared_ptr<CopyStage> newCopyStage;
+		newCopyStage.reset(new CopyStage(stageName.c_str(), re::Lifetime::Permanent, src, dst));
+
+		return newCopyStage;
+	}
+
+
+	std::shared_ptr<CopyStage> Stage::CreateSingleFrameCopyStage(
+		core::InvPtr<re::Texture> const& src,
+		core::InvPtr<re::Texture> const& dst)
+	{
+		std::string const& stageName =
+			std::format("Copy Stage: {} to {}", src->GetName(), dst ? dst->GetName().c_str() : "Backbuffer");
+
+		std::shared_ptr<CopyStage> newCopyStage;
+		newCopyStage.reset(new CopyStage(stageName.c_str(), re::Lifetime::SingleFrame, src, dst));
+
+		return newCopyStage;
+	}
+
+
 	Stage::Stage(
 		char const* name, std::unique_ptr<IStageParams>&& stageParams, Type stageType, re::Lifetime lifetime)
 		: INamedObject(name)
@@ -240,6 +269,61 @@ namespace re
 		, m_depthClearMode(false)
 		, m_stencilClearMode(false)
 	{
+	}
+
+
+	CopyStage::CopyStage(
+		char const* name,
+		re::Lifetime lifetime,
+		core::InvPtr<re::Texture> const& src,
+		core::InvPtr<re::Texture> const& dst)
+		: INamedObject(name)
+		, Stage(name, nullptr, Type::Copy, lifetime)
+		, m_src(src)
+		, m_dst(dst)
+	{
+		SEAssert(m_src, "Invalid copy stage source");
+		SEAssert(m_src != m_dst, "Can only copy different resources");
+
+#if defined(_DEBUG)
+		if (dst.IsValid())
+		{
+			SEAssert(m_src->GetTotalBytesPerFace() == dst->GetTotalBytesPerFace(),
+				"Can only copy textures of the same size");
+
+			SEAssert(m_src->Width() == dst->Width() &&
+				m_src->Height() == dst->Height() &&
+				re::Texture::GetNumFaces(m_src) == re::Texture::GetNumFaces(dst) &&
+				m_src->GetNumMips() == dst->GetNumMips(),
+				"Can only copy textures with identical dimensions");
+
+			SEAssert(m_src->GetTextureParams().m_format == dst->GetTextureParams().m_format,
+				"Formats must be compatible. For now, we assume they'll be identical, but this is overly strict");
+
+			SEAssert((m_src->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) &&
+				((dst->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy) ||
+					((dst->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) ||
+					((dst->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) && 
+						m_src->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget))),
+				"Source/destination texture flags are incorrect");
+		}
+		else
+		{
+			// Hail mary: We're copying to the backbuffer, but we don't have a platform-agnostic way of accessing it in
+			// a clean manor to validate against. So, we do the best we can
+
+			SEAssert(m_src->Width() == core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey) &&
+				m_src->Height() == core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey),
+				"Can only copy to the backbuffer from textures with identical dimensions");
+
+			SEAssert(m_src->GetTextureParams().m_format == re::Texture::Format::RGBA8_UNORM,
+				"Source format must be compatible with the backbuffer format. For now, we assume they'll be identical, "
+				"but this is overly strict");
+
+			SEAssert((m_src->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc),
+				"Source texture flags are incorrect");
+		}
+#endif
 	}
 
 
@@ -713,11 +797,14 @@ namespace re
 
 	bool Stage::IsSkippable() const
 	{
-		if (m_type == Type::Clear || IsLibraryType(m_type))
+		if (m_type == Type::Clear || IsLibraryType(m_type) || m_type == Type::Copy)
 		{
-			return false; // Assume library and clear stages always do work
+			return false; // Assume library and utility stages always do work
 		}
 		return m_type == Type::Parent || m_stageBatches.empty();
+
+		SEStaticAssert(static_cast<uint8_t>(re::Stage::Type::Invalid) == 9,
+			"Number of stage types has changed. This must be updated");
 	}
 	
 

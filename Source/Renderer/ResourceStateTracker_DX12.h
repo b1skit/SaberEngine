@@ -7,7 +7,7 @@
 
 namespace dx12
 {
-	enum CommandListType; // CommandList_DX12.h
+	enum CommandListType : uint8_t; // CommandList_DX12.h
 
 	typedef uint32_t SubresourceIdx;
 

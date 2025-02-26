@@ -10,7 +10,7 @@
 
 namespace dx12
 {
-	enum CommandListType;
+	enum CommandListType : uint8_t; // CommandList_DX12.h
 	class DescriptorAllocation;
 	
 

@@ -239,6 +239,14 @@ namespace opengl
 							*stageTargets);
 					}
 					break;
+					case re::Stage::Type::Copy:
+					{
+						re::CopyStage const* copyStage = dynamic_cast<re::CopyStage const*>(stage.get());
+						SEAssert(copyStage, "Failed to get clear stage");
+
+						opengl::TextureTargetSet::CopyTexture(copyStage->GetSrcTexture(), copyStage->GetDstTexture());
+					}
+					break;
 					case re::Stage::Type::Graphics:
 					case re::Stage::Type::FullscreenQuad:
 					case re::Stage::Type::Compute:
@@ -247,12 +255,8 @@ namespace opengl
 						re::TextureTargetSet const* stageTargets = stage->GetTextureTargetSet();
 						if (!stageTargets && curStageType != re::Stage::Type::Compute)
 						{
-							opengl::SwapChain::PlatformParams* swapChainParams =
-								context->GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
-							SEAssert(swapChainParams && swapChainParams->m_backbufferTargetSet,
-								"Swap chain params and backbuffer cannot be null");
-
-							stageTargets = swapChainParams->m_backbufferTargetSet.get(); // Draw to the swapchain backbuffer
+							// Draw to the swapchain backbuffer
+							stageTargets = opengl::SwapChain::GetBackBufferTargetSet(context->GetSwapChain()).get();
 						}
 						SEAssert(stageTargets || curStageType == re::Stage::Type::Compute,
 							"The current stage does not have targets set. This is unexpected");

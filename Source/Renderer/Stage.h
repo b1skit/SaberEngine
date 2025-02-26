@@ -21,6 +21,7 @@ namespace re
 	class Texture;
 
 	class ClearStage;
+	class CopyStage;
 
 	class Stage : public virtual core::INamedObject
 	{
@@ -36,6 +37,7 @@ namespace re
 			FullscreenQuad,
 			Clear, 
 			LibraryGraphics,
+			Copy,
 
 			// Compute queue:
 			Compute,			
@@ -110,6 +112,11 @@ namespace re
 			char const* name, std::shared_ptr<re::TextureTargetSet> const&);
 		static std::shared_ptr<ClearStage> CreateSingleFrameClearStage(
 			char const* name, std::shared_ptr<re::TextureTargetSet>const&);
+
+		static std::shared_ptr<CopyStage> CreateCopyStage(
+			core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst); // Uses backbuffer if dst is null/invalid
+		static std::shared_ptr<CopyStage> CreateSingleFrameCopyStage(
+			core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst); // Uses backbuffer if dst is null/invalid
 
 
 	public:
@@ -474,6 +481,41 @@ namespace re
 	inline uint8_t ClearStage::GetStencilClearValue() const
 	{
 		return m_stencilClearVal;
+	}
+
+
+	//---
+
+
+	class CopyStage final : public virtual Stage
+	{
+	public:
+		core::InvPtr<re::Texture> const& GetSrcTexture() const;
+		core::InvPtr<re::Texture> const& GetDstTexture() const;
+
+	private:
+		core::InvPtr<re::Texture> m_src;
+		core::InvPtr<re::Texture> m_dst;
+
+
+	private:
+		friend class Stage;
+		CopyStage(char const* name, 
+			re::Lifetime, 
+			core::InvPtr<re::Texture> const& src, 
+			core::InvPtr<re::Texture> const& dst); // If dst is not valid, copies to backbuffer
+	};
+
+
+	inline core::InvPtr<re::Texture> const& CopyStage::GetSrcTexture() const
+	{
+		return m_src;
+	}
+
+
+	inline core::InvPtr<re::Texture> const& CopyStage::GetDstTexture() const
+	{
+		return m_dst;
 	}
 
 

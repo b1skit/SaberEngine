@@ -34,7 +34,7 @@ namespace dx12
 	class RootSignature;
 	class PipelineState;
 
-	enum CommandListType
+	enum CommandListType : uint8_t
 	{
 		Direct,
 		Bundle,
@@ -140,6 +140,7 @@ namespace dx12
 			re::Buffer const*, uint32_t dstOffset, ID3D12Resource* srcResource, uint32_t srcOffset, uint32_t numBytes);
 
 		void CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource);
+		void CopyTexture(core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst);
 
 		void TransitionResource(core::InvPtr<re::Texture> const&, D3D12_RESOURCE_STATES to, re::TextureView const&);
 
@@ -172,14 +173,16 @@ namespace dx12
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList;
-
-		CommandListType m_type;
-		D3D12_COMMAND_LIST_TYPE m_d3dType;
-
+		
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 		uint64_t m_commandAllocatorReuseFenceValue; // When the command allocator can be reused
 
+		ID3D12Device* m_device; // Cached for convenience
+
 		const size_t k_commandListNumber; // Monotonically increasing identifier assigned at creation
+
+		D3D12_COMMAND_LIST_TYPE m_d3dType;
+		CommandListType m_type;
 
 
 	private:

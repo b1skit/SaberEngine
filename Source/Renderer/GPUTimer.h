@@ -17,7 +17,7 @@ namespace re
 	{
 	public:
 		// Arbitrary: How many timers should we allocate? Each timer allocates 2 query elements (i.e. start + stop)
-		static constexpr uint32_t k_maxGPUTimersPerFrame = 256;
+		static constexpr uint32_t k_maxGPUTimersPerFrame = 512;
 		static constexpr uint32_t k_invalidQueryIdx = std::numeric_limits<uint32_t>::max(); // No timer record
 
 		// No. frames without update before deleting a record. Large to ensure nothing is freed while still in use

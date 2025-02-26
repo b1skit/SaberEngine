@@ -1,8 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core/Config.h"
 #include "SwapChain_DX12.h"
 #include "SwapChain_OpenGL.h"
 #include "SwapChain_Platform.h"
+#include "TextureTarget.h"
+
+#include "Core/Config.h"
 
 
 namespace platform
@@ -31,7 +33,8 @@ namespace platform
 	}
 
 
-	void (*platform::SwapChain::Create)(re::SwapChain&) = nullptr;
-	void (*platform::SwapChain::Destroy)(re::SwapChain&) = nullptr;
-	bool (*platform::SwapChain::ToggleVSync)(re::SwapChain const& swapChain) = nullptr;
+	void (*SwapChain::Create)(re::SwapChain&) = nullptr;
+	void (*SwapChain::Destroy)(re::SwapChain&) = nullptr;
+	bool (*SwapChain::ToggleVSync)(re::SwapChain const& swapChain) = nullptr;
+	std::shared_ptr<re::TextureTargetSet>(*SwapChain::GetBackBufferTargetSet)(re::SwapChain const&) = nullptr;
 }

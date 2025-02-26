@@ -814,7 +814,7 @@ namespace dx12
 #if defined(DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS)
 					LOG_WARNING("\nRecorded %llu resource transition barriers to fixup command list \"%s\"...\n",
 						barriers.size(),
-						GetDebugName(barrierCommandList->GetD3DCommandList()).c_str());
+						GetDebugName(barrierCommandList->GetD3DCommandList().Get()).c_str());
 #endif
 				}
 
@@ -908,7 +908,7 @@ namespace dx12
 				dx12::GetDebugName(m_commandQueue.Get()).c_str(),
 				(i + 1),
 				finalCommandLists.size(),
-				dx12::GetDebugName(finalCommandLists[i]->GetD3DCommandList()).c_str()).c_str());
+				dx12::GetDebugName(finalCommandLists[i]->GetD3DCommandList().Get()).c_str()).c_str());
 #endif
 
 			finalCommandLists[i]->Close();

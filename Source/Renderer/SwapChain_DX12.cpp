@@ -42,8 +42,8 @@ namespace dx12
 #endif
 
 		ComPtr<IDXGIFactory4> dxgiFactory4;
-		HRESULT hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4));
-		CheckHResult(hr, "Failed to create DXGIFactory2");
+		CheckHResult(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4)),
+			"Failed to create DXGIFactory2");
 
 		const int width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		const int height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
@@ -83,7 +83,7 @@ namespace dx12
 
 		// Create the swap chain:
 		ComPtr<IDXGISwapChain1> swapChain1;
-		hr = dxgiFactory4->CreateSwapChainForHwnd(
+		const HRESULT hr = dxgiFactory4->CreateSwapChainForHwnd(
 			context->GetCommandQueue(dx12::CommandListType::Direct).GetD3DCommandQueue().Get(),
 			windowPlatParams->m_hWindow, // Window handle associated with the swap chain
 			&swapChainDesc, // Swap chain descriptor
@@ -93,11 +93,11 @@ namespace dx12
 		CheckHResult(hr, "Failed to create swap chain");
 
 		// Disable the Alt+Enter fullscreen toggle feature. Switching to fullscreen will be handled manually
-		hr = dxgiFactory4->MakeWindowAssociation(windowPlatParams->m_hWindow, DXGI_MWA_NO_ALT_ENTER);
-		CheckHResult(hr, "Failed to make window association");
+		CheckHResult(dxgiFactory4->MakeWindowAssociation(windowPlatParams->m_hWindow, DXGI_MWA_NO_ALT_ENTER),
+			"Failed to make window association");
 
-		hr = swapChain1.As(&swapChainParams->m_swapChain);
-		CheckHResult(hr, "Failed to convert swap chain"); // Convert IDXGISwapChain1 -> IDXGISwapChain4
+		CheckHResult(swapChain1.As(&swapChainParams->m_swapChain), // Convert IDXGISwapChain1 -> IDXGISwapChain4
+			"Failed to convert swap chain");
  
 		swapChainParams->m_backBufferIdx = swapChainParams->m_swapChain->GetCurrentBackBufferIndex();
 
@@ -111,12 +111,12 @@ namespace dx12
 
 			// Get the pre-existing backbuffer resource from the swapchain:
 			ComPtr<ID3D12Resource> backbufferResource;
-			HRESULT hr = swapChainParams->m_swapChain->GetBuffer(backbufferIdx, IID_PPV_ARGS(&backbufferResource));
-			CheckHResult(hr, "Failed to get backbuffer");
+			CheckHResult(swapChainParams->m_swapChain->GetBuffer(backbufferIdx, IID_PPV_ARGS(&backbufferResource)),
+				"Failed to get backbuffer");
 
 			// Create (and name) a color target texture:
-			core::InvPtr<re::Texture> colorTargetTex = dx12::Texture::CreateFromExistingResource(
-				"SwapChainColorTarget_" + std::to_string(backbufferIdx), 
+			core::InvPtr<re::Texture> const& colorTargetTex = dx12::Texture::CreateFromExistingResource(
+				std::format("SwapChainColorTarget_{}", backbufferIdx),
 				colorParams, 
 				backbufferResource);
 
