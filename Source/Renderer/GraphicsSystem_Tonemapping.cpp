@@ -20,6 +20,19 @@ namespace gr
 	}
 
 
+	void TonemappingGraphicsSystem::RegisterInputs()
+	{
+		RegisterTextureInput(k_tonemappingTargetInput);
+		RegisterTextureInput(k_bloomResultInput, GraphicsSystem::TextureInputDefault::OpaqueBlack);
+	}
+
+
+	void TonemappingGraphicsSystem::RegisterOutputs()
+	{
+		//
+	}
+
+
 	void TonemappingGraphicsSystem::InitPipeline(
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
@@ -47,19 +60,6 @@ namespace gr
 			re::TextureView(*texDependencies.at(k_bloomResultInput)));
 
 		pipeline.AppendStage(m_tonemappingStage);
-	}
-
-
-	void TonemappingGraphicsSystem::RegisterInputs()
-	{
-		RegisterTextureInput(k_tonemappingTargetInput);
-		RegisterTextureInput(k_bloomResultInput);
-	}
-
-
-	void TonemappingGraphicsSystem::RegisterOutputs()
-	{
-		//
 	}
 
 
