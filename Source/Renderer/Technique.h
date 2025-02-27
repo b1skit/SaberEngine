@@ -26,7 +26,7 @@ namespace effect
 	public:
 		Technique(
 			char const* name,
-			std::vector<std::pair<std::string, re::Shader::ShaderType>> const& shaderNames,
+			std::vector<re::Shader::Metadata> const&,
 			re::RasterizationState const*,
 			re::VertexStreamMap const*);
 

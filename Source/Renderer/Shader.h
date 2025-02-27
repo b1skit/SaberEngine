@@ -84,8 +84,14 @@ namespace re
 
 
 	public:
+		struct Metadata
+		{
+			std::string m_extensionlessFilename;
+			std::string m_entryPoint;
+			ShaderType m_type;
+		};
 		[[nodiscard]] static core::InvPtr<re::Shader> GetOrCreate(
-			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames,
+			std::vector<Metadata> const& metadata,
 			re::RasterizationState const*,
 			re::VertexStreamMap const*);
 
@@ -114,15 +120,15 @@ namespace re
 	private:
 		explicit Shader(
 			std::string const& shaderName,
-			std::vector<std::pair<std::string, ShaderType>> const& extensionlessTypeFilenames, 
+			std::vector<Metadata> const&,
 			re::RasterizationState const*,
 			re::VertexStreamMap const*,
-			uint64_t shaderIdentifier);
+			ShaderID);
 
 
 	private:
 		const ShaderID m_shaderIdentifier;
-		std::vector<std::pair<std::string, ShaderType>> m_extensionlessSourceFilenames;
+		std::vector<Metadata> m_metadata;
 		PipelineType m_pipelineType;
 
 		std::unique_ptr<PlatformParams> m_platformParams;

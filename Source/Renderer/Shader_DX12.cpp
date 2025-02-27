@@ -25,17 +25,17 @@ namespace dx12
 
 		constexpr wchar_t const* k_dx12ShaderExt = L".cso";
 
-		SEAssert(!shader.m_extensionlessSourceFilenames.empty(), "Shader does not contain any source filenames");
-		for (auto const& source : shader.m_extensionlessSourceFilenames)
+		SEAssert(!shader.m_metadata.empty(), "Shader does not contain any metadata");
+		for (auto const& source : shader.m_metadata)
 		{
-			std::wstring const& filenameWStr = shaderDirWStr + util::ToWideString(source.first) + k_dx12ShaderExt;
+			std::wstring const& filenameWStr = 
+				shaderDirWStr + util::ToWideString(source.m_extensionlessFilename) + k_dx12ShaderExt;
 
 			ComPtr<ID3DBlob> shaderBlob = nullptr;
 			const HRESULT hr = ::D3DReadFileToBlob(filenameWStr.c_str(), &shaderBlob);
 			CheckHResult(hr, "Failed to read shader file to blob");
 
-			const re::Shader::ShaderType shaderType = source.second;
-			platformParams->m_shaderBlobs[shaderType] = shaderBlob;
+			platformParams->m_shaderBlobs[source.m_type] = shaderBlob;
 		}
 
 		// Now the shader blobs have been loaded, we can create the root signature:

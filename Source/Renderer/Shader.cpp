@@ -18,22 +18,22 @@ namespace
 	// We may reuse the same shader files, but with a different pipeline state. So here, we compute a unique identifier
 	// to represent a particular configuration
 	ShaderID ComputeShaderIdentifier(
-		std::vector<std::pair<std::string, re::Shader::ShaderType>> const& extensionlessSourceFilenames,
+		std::vector<re::Shader::Metadata> const& metadata,
 		re::RasterizationState const* rasterizationState)
 	{
-		SEAssert(!extensionlessSourceFilenames.empty(), "Shader source filenames is empty");
+		SEAssert(!metadata.empty(), "Shader source filenames is empty");
 
 		ShaderID hashResult = 0;
 
-		const re::Shader::ShaderType firstShaderType = extensionlessSourceFilenames[0].second;
-		for (auto const& shaderStage : extensionlessSourceFilenames)
+		const re::Shader::ShaderType firstShaderType = metadata[0].m_type;
+		for (auto const& shaderStage : metadata)
 		{
-			const re::Shader::ShaderType shaderType = shaderStage.second;
-			SEAssert(re::Shader::IsSamePipelineType(shaderType, firstShaderType),
+			SEAssert(re::Shader::IsSamePipelineType(shaderStage.m_type, firstShaderType),
 				"Found shaders with mixed pipeline types");
 
-			util::CombineHash(hashResult, util::HashString(shaderStage.first));
-			util::CombineHash(hashResult, shaderStage.second);
+			util::CombineHash(hashResult, util::HashString(shaderStage.m_extensionlessFilename));
+			util::CombineHash(hashResult, util::HashString(shaderStage.m_entryPoint));
+			util::CombineHash(hashResult, shaderStage.m_type);
 		}
 
 		if (re::Shader::IsRasterizationType(firstShaderType))
@@ -65,17 +65,16 @@ namespace
 	}
 
 
-	re::Shader::PipelineType FindPipelineType(
-		std::vector<std::pair<std::string, re::Shader::ShaderType>> const& extensionlessSourceFilenames)
+	re::Shader::PipelineType FindPipelineType(std::vector<re::Shader::Metadata> const& metadata)
 	{
-		SEAssert(!extensionlessSourceFilenames.empty(), "No source files to evaluate");
+		SEAssert(!metadata.empty(), "No source files to evaluate");
 
 		re::Shader::ShaderType firstType = re::Shader::ShaderType::ShaderType_Count;
-		for (auto const& source : extensionlessSourceFilenames)
+		for (auto const& source : metadata)
 		{
-			if (!source.first.empty())
+			if (!source.m_extensionlessFilename.empty())
 			{
-				firstType = source.second;
+				firstType = source.m_type;
 				break;
 			}
 		}
@@ -108,11 +107,11 @@ namespace
 namespace re
 {
 	[[nodiscard]] core::InvPtr<re::Shader> Shader::GetOrCreate(
-		std::vector<std::pair<std::string, ShaderType>> const& extensionlessSourceFilenames,
+		std::vector<Metadata> const& metadata,
 		re::RasterizationState const* rasterizationState,
 		re::VertexStreamMap const* vertexStreamMap)
 	{
-		const ShaderID shaderID = ComputeShaderIdentifier(extensionlessSourceFilenames, rasterizationState);
+		const ShaderID shaderID = ComputeShaderIdentifier(metadata, rasterizationState);
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
 		core::Inventory* inventory = re::RenderManager::Get()->GetInventory();
@@ -134,24 +133,24 @@ namespace re
 
 			std::unique_ptr<re::Shader> Load(core::InvPtr<re::Shader>&) override
 			{
-				SEAssert(!m_extensionlessSrcFilenames.empty(), "Shader source filenames is empty");
+				SEAssert(!m_metadata.empty(), "Shader metadata is empty");
 
 				// Concatenate the various filenames together to build a helpful identifier
 				std::string shaderName;
-				const re::Shader::ShaderType firstShaderType = m_extensionlessSrcFilenames[0].second;
-				for (size_t i = 0; i < m_extensionlessSrcFilenames.size(); ++i)
+				const re::Shader::ShaderType firstShaderType = m_metadata[0].m_type;
+				for (size_t i = 0; i < m_metadata.size(); ++i)
 				{
-					std::string const& filename = m_extensionlessSrcFilenames.at(i).first;
-					const ShaderType shaderType = m_extensionlessSrcFilenames.at(i).second;
+					std::string const& filename = m_metadata.at(i).m_extensionlessFilename;
+					const ShaderType shaderType = m_metadata.at(i).m_type;
 
 					shaderName += std::format("{}={}{}",
 						ShaderTypeToCStr(shaderType),
 						filename,
-						i == m_extensionlessSrcFilenames.size() - 1 ? "" : "__");
+						i == m_metadata.size() - 1 ? "" : "__");
 				}
 				LOG(std::format("Loading Shader \"{}\" (ID {})", shaderName, m_shaderID).c_str());
 
-				SEAssert(!re::Shader::IsComputeType(firstShaderType) || m_extensionlessSrcFilenames.size() == 1,
+				SEAssert(!re::Shader::IsComputeType(firstShaderType) || m_metadata.size() == 1,
 					"A compute shader should only have a single shader entry. This is unexpected");
 				SEAssert(m_rasterizationState || !re::Shader::IsRasterizationType(firstShaderType),
 					"RasterizationState is null. This is unexpected for rasterization pipelines");
@@ -159,18 +158,18 @@ namespace re
 					"VertexStreamMap is null. This is unexpected for rasterization pipelines");
 
 				return std::unique_ptr<re::Shader>(new re::Shader(
-					shaderName, m_extensionlessSrcFilenames, m_rasterizationState, m_vertexStreamMap, m_shaderID));				
+					shaderName, m_metadata, m_rasterizationState, m_vertexStreamMap, m_shaderID));
 			}
 
 			ShaderID m_shaderID;
-			std::vector<std::pair<std::string, ShaderType>> m_extensionlessSrcFilenames;
+			std::vector<Metadata> m_metadata;
 			re::RasterizationState const* m_rasterizationState;
 			re::VertexStreamMap const* m_vertexStreamMap;
 		};
 		std::shared_ptr<ShaderLoadContext> shaderLoadContext = std::make_shared<ShaderLoadContext>();
 
 		shaderLoadContext->m_shaderID = shaderID;
-		shaderLoadContext->m_extensionlessSrcFilenames = extensionlessSourceFilenames;
+		shaderLoadContext->m_metadata = metadata;
 		shaderLoadContext->m_rasterizationState = rasterizationState;
 		shaderLoadContext->m_vertexStreamMap = vertexStreamMap;
 
@@ -182,18 +181,18 @@ namespace re
 
 	Shader::Shader(
 		std::string const& shaderName,
-		std::vector<std::pair<std::string, ShaderType>> const& extensionlessSourceFilenames,
+		std::vector<Metadata> const& metadata,
 		re::RasterizationState const* rasterizationState,
 		re::VertexStreamMap const* m_vertexStreamMap,
-		uint64_t shaderIdentifier)
+		ShaderID shaderIdentifier)
 		: INamedObject(shaderName)
 		, m_shaderIdentifier(shaderIdentifier)
-		, m_extensionlessSourceFilenames(extensionlessSourceFilenames)
-		, m_pipelineType(FindPipelineType(extensionlessSourceFilenames))
+		, m_metadata(metadata)
+		, m_pipelineType(FindPipelineType(metadata))
 		, m_rasterizationState(rasterizationState)
 		, m_vertexStreamMap(m_vertexStreamMap)
 	{
-		SEAssert(rasterizationState || !IsRasterizationType(m_extensionlessSourceFilenames[0].second),
+		SEAssert(rasterizationState || !IsRasterizationType(m_metadata[0].m_type),
 			"RasterizationState is null. This is unexpected for rasterization pipelines");
 
 		platform::Shader::CreatePlatformParams(*this);

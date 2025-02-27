@@ -211,16 +211,16 @@ namespace
 
 
 	std::vector<std::future<void>> LoadShaderTexts(
-		std::vector<std::pair<std::string, re::Shader::ShaderType>>const& extensionlessSourceFilenames,
+		std::vector<re::Shader::Metadata>const& metadata,
 		std::array<std::string, re::Shader::ShaderType_Count>& shaderTextsOut)
 	{
 		std::vector<std::future<void>> taskFutures;
 		taskFutures.reserve(re::Shader::ShaderType_Count);
 
-		for (auto const& source : extensionlessSourceFilenames)
+		for (auto const& source : metadata)
 		{
-			std::string const& filename = source.first;
-			const re::Shader::ShaderType shaderType = source.second;
+			std::string const& filename = source.m_extensionlessFilename;
+			const re::Shader::ShaderType shaderType = source.m_type;
 
 			taskFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
 				[&shaderTextsOut, filename, shaderType]()
@@ -481,9 +481,9 @@ namespace opengl
 		LOG("Creating shader: \"%s\"", shaderFileName.c_str());
 
 		// Load the individual shader text files:
-		SEAssert(!shader.m_extensionlessSourceFilenames.empty(), "Shader does not contain any source filenames");
+		SEAssert(!shader.m_metadata.empty(), "Shader does not contain any metadata");
 		std::vector<std::future<void>> const& loadShaderTextsTaskFutures = 
-			LoadShaderTexts(shader.m_extensionlessSourceFilenames, platParams->m_shaderTexts);
+			LoadShaderTexts(shader.m_metadata, platParams->m_shaderTexts);
 
 		// Load the shaders, and assemble params we'll need soon:
 		std::array<std::string, re::Shader::ShaderType_Count> shaderFiles;

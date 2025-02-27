@@ -8,11 +8,11 @@ namespace effect
 {
 	Technique::Technique(
 		char const* name,
-		std::vector<std::pair<std::string, re::Shader::ShaderType>> const& shaderNames,
+		std::vector<re::Shader::Metadata> const& shaderMetadata,
 		re::RasterizationState const* rasterizationState,
 		re::VertexStreamMap const* vertexStreamMap)
 		: INamedObject(name)
-		, m_resolvedShader(re::Shader::GetOrCreate(shaderNames, rasterizationState, vertexStreamMap))
+		, m_resolvedShader(re::Shader::GetOrCreate(shaderMetadata, rasterizationState, vertexStreamMap))
 	{
 	}
 

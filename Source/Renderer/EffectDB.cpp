@@ -417,7 +417,7 @@ namespace
 		std::string const& techniqueName = techniqueEntry.at(key_name).template get<std::string>();
 
 		// "*Shader" names:
-		std::vector<std::pair<std::string, re::Shader::ShaderType>> shaderNames;
+		std::vector<re::Shader::Metadata> shaderMetadata;
 		re::Shader::ShaderType firstShaderType = re::Shader::ShaderType::ShaderType_Count;
 		for (uint8_t shaderTypeIdx = 0; shaderTypeIdx < re::Shader::ShaderType_Count; ++shaderTypeIdx)
 		{
@@ -434,9 +434,32 @@ namespace
 						"Technique can only define shaders of the same pipeline type");
 				}
 
-				shaderNames.emplace_back(
+				//const re::Shader::ShaderType shaderType = static_cast<re::Shader::ShaderType>(shaderTypeIdx);
+
+				//std::string entryPoint;
+				/*switch (shaderType)
+				{
+					case re::Shader::ShaderType::Vertex:
+					case re::Shader::ShaderType::Geometry:
+					case re::Shader::ShaderType::Pixel:
+					case re::Shader::ShaderType::Hull:
+					case re::Shader::ShaderType::Domain:
+					case re::Shader::ShaderType::Amplification:
+					case re::Shader::ShaderType::Mesh:
+					case re::Shader::ShaderType::Compute:
+					case re::Shader::ShaderType::HitGroup_Intersection:
+					case re::Shader::ShaderType::HitGroup_AnyHit:
+					case re::Shader::ShaderType::HitGroup_ClosestHit:
+					case re::Shader::ShaderType::Callable:
+					case re::Shader::ShaderType::RayGen:
+					case re::Shader::ShaderType::Miss:
+					default: SEAssertF("Invalid shader type");
+				}*/
+
+				shaderMetadata.emplace_back(re::Shader::Metadata{
 					techniqueEntry.at(keys_shaderTypes[shaderTypeIdx]).template get<std::string>(),
-					static_cast<re::Shader::ShaderType>(shaderTypeIdx));
+					techniqueEntry.at(keys_entryPointNames[shaderTypeIdx]).template get<std::string>(),
+					static_cast<re::Shader::ShaderType>(shaderTypeIdx) });
 			}
 		}
 
@@ -457,7 +480,7 @@ namespace
 			vertexStreamMap = effectDB.GetVertexStreamMap(vertexStreamName);
 		}
 
-		return effect::Technique(techniqueName.c_str(), shaderNames, rasterizationState, vertexStreamMap);
+		return effect::Technique(techniqueName.c_str(), shaderMetadata, rasterizationState, vertexStreamMap);
 	}
 
 
