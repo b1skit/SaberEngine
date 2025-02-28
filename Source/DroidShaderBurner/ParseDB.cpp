@@ -558,7 +558,6 @@ namespace droid
 					.m_allResourcesBound = false, // Default
 					.m_treatWarningsAsErrors = false, // Default
 					.m_enable16BitTypes = false, // Default
-					.m_targetProfile = "6_6", // Default
 					.m_optimizationLevel = 0,
 				};
 			}
@@ -571,7 +570,6 @@ namespace droid
 					.m_allResourcesBound = false, // Default
 					.m_treatWarningsAsErrors = false, // Default
 					.m_enable16BitTypes = false, // Default
-					.m_targetProfile = "6_6", // Default
 					.m_optimizationLevel = 1,
 				};
 			}
@@ -584,7 +582,6 @@ namespace droid
 					.m_allResourcesBound = false, // Default
 					.m_treatWarningsAsErrors = false, // Default
 					.m_enable16BitTypes = false, // Default
-					.m_targetProfile = "6_6",
 					.m_optimizationLevel = 3,
 				};
 			}
@@ -597,7 +594,6 @@ namespace droid
 					.m_allResourcesBound = false, // Default
 					.m_treatWarningsAsErrors = false, // Default
 					.m_enable16BitTypes = false, // Default
-					.m_targetProfile = "6_6",
 					.m_optimizationLevel = 3,
 				};
 			}
@@ -607,6 +603,12 @@ namespace droid
 			if (result != droid::ErrorCode::Success)
 			{
 				return result;
+			}
+
+			if (!m_parseParams.m_dx12TargetProfile.empty())
+			{
+				// Override the default:
+				compileOptions.m_targetProfile = m_parseParams.m_dx12TargetProfile;
 			}
 
 			const std::vector<std::string> hlslIncludeDirectories = {

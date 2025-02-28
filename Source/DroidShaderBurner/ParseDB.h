@@ -44,6 +44,9 @@ namespace droid
 		// File names:
 		std::string m_effectManifestFileName;
 
+		// Platform-specific args:
+		std::string m_dx12TargetProfile;
+
 		util::BuildConfiguration m_buildConfiguration;
 
 		bool m_doCppCodeGen = true;

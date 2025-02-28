@@ -13,7 +13,10 @@ namespace
 	// Note: Incoming command line args are transformed to lower case before comparison with these keys
 	constexpr char const* k_delimiterChar = "-";
 	constexpr char const* k_projectRootCmdLineArg = "-projectroot";
+	
 	constexpr char const* k_dx12ShaderCompilerCmdLineArg = "-dx12shadercompiler";
+	constexpr char const* k_dx12TargetProfileArg = "-dx12targetprofile";
+
 	constexpr char const* k_buildConfigCmdLineArg = "-buildconfig";
 	constexpr char const* k_shadersOnlyCmdLineArg = "-shadersonly";
 	constexpr char const* k_cleanCmdLineArg = "-clean";
@@ -142,6 +145,20 @@ int main(int argc, char* argv[])
 				{
 					dx12ShaderCompilerArgReceived = true;
 					parseParams.m_directXCompilerExePath = argv[i + 1];
+					AppendArg(argv[i + 1]);
+					++i;
+				}
+				else
+				{
+					result = droid::ErrorCode::ConfigurationError;
+					break;
+				}
+			}
+			else if (currentArg == k_dx12TargetProfileArg)
+			{
+				if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
+				{
+					parseParams.m_dx12TargetProfile = argv[i + 1];
 					AppendArg(argv[i + 1]);
 					++i;
 				}

@@ -35,6 +35,10 @@
         {
           "Id": "d47caeda-ca2c-4520-9c10-ec33a837dee0",
           "Command": "-DX12ShaderCompiler \"C:\\Program Files (x86)\\Windows Kits\\10\\Redist\\D3D\\x64\\dxc.exe\""
+        },
+        {
+          "Id": "6812a220-f0ef-49d1-8441-c131fb929c78",
+          "Command": "-DX12TargetProfile \"6_7\""
         }
       ]
     },
