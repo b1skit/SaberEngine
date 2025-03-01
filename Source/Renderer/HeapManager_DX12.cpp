@@ -477,6 +477,8 @@ namespace
 	void ValidateResourceDesc(dx12::ResourceDesc const& resourceDesc)
 	{
 #if defined(_DEBUG)
+		SEAssert(resourceDesc.m_resourceDesc.Width > 0, "invalid resource dimensions");
+
 		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_flags
 		SEAssert(!resourceDesc.m_isMSAATexture ||
 			((resourceDesc.m_resourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) == 0 &&
@@ -924,7 +926,6 @@ namespace dx12
 	PagedResourceHeap::PagedResourceHeap(HeapDesc const& heapDesc)
 		: m_heapDesc(heapDesc)
 		, m_alignment(m_heapDesc.m_alignment)
-		, m_threadProtector(false)
 	{
 		ValidateHeapConfig(m_heapDesc, m_alignment); // _DEBUG only
 	}
@@ -933,7 +934,7 @@ namespace dx12
 	HeapAllocation PagedResourceHeap::GetAllocation(uint32_t numBytes)
 	{
 		{
-			util::ScopedThreadProtector threadProtector(m_threadProtector);
+			std::lock_guard<std::mutex> lock(m_pagedResourceHeapMutex);
 
 			for (auto& resourcePage : m_pages)
 			{
@@ -943,24 +944,21 @@ namespace dx12
 					return requestedAllocation;
 				}
 			}
-		}
 
-		// If we made it this far, no page can fit the allocation (or there are no pages yet)
-		{
-			util::ScopedThreadProtector threadProtector(m_threadProtector);
+			// If we made it this far, no page can fit the allocation (or there are no pages yet)
 
 			// We support dynamic page sizes: Try to use the default page size, unless a larger request is made
 			const uint32_t pageSize = std::max(
 				k_defaultPageSize,
-				numBytes = util::RoundUpToNearestMultiple(numBytes, m_alignment) );
+				numBytes = util::RoundUpToNearestMultiple(numBytes, m_alignment));
 
 			const size_t pageIdx = m_pages.size(); // For debug naming
 			m_pages.emplace_back(std::make_unique<HeapPage>(m_heapDesc, pageSize, pageIdx));
-			
+
 			HeapAllocation requestedAllocation = m_pages.back()->Allocate(m_alignment, numBytes);
 			SEAssert(requestedAllocation.IsValid(),
 				"Allocation request was made on a brand new page. Failure should not be possible");
-			
+
 			return requestedAllocation;
 		}
 	}
@@ -969,7 +967,7 @@ namespace dx12
 	void PagedResourceHeap::EndOfFrame()
 	{
 		{
-			util::ScopedThreadProtector threadProtector(m_threadProtector);
+			std::lock_guard<std::mutex> lock(m_pagedResourceHeapMutex);
 
 			// Free any pages that have been empty for k_numEmptyFramesBeforePageRelease frames
 			std::unordered_map<HeapPage const*, uint8_t> emptyPageFrameCount;
@@ -1285,11 +1283,10 @@ namespace dx12
 		const util::HashKey resourceHeapKey =
 			ComputePagedResourceHeapHash(resourceDesc, destinationHeapAlignment, m_canMixResourceTypes);
 
-		HeapAllocation newAllocation;
+		// Find the PagedResourceHeap we need using a shared lock (unless we need to create a new PagedResourceHeap):
+		PagedResourceHeap* pagedResourceHeap = nullptr;
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_pagedHeapsMutex);
-
-			PagedResourceHeap* pagedResourceHeap = nullptr;
 
 			if (!m_pagedHeaps.contains(resourceHeapKey))
 			{
@@ -1318,9 +1315,10 @@ namespace dx12
 			{
 				pagedResourceHeap = m_pagedHeaps.at(resourceHeapKey).get();
 			}
-
-			newAllocation = pagedResourceHeap->GetAllocation(util::CheckedCast<uint32_t>(resourceNumBytes));
 		}
+
+		// We have the PagedResourceHeap, now get an exclusive lock and get our allocation:
+		HeapAllocation newAllocation = pagedResourceHeap->GetAllocation(util::CheckedCast<uint32_t>(resourceNumBytes));
 
 		// Now that we know which PagedResourceHeap will back our resource, we can create it
 		return std::make_unique<GPUResource>(

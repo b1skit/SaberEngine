@@ -170,12 +170,11 @@ namespace dx12
 		uint32_t m_alignment;
 
 		std::vector<std::unique_ptr<HeapPage>> m_pages;
-		
-		// Page access is all (currently) handled through the HeapManager; we use a thread protector in lieu of a mutex
-		util::ThreadProtector m_threadProtector;
 
 		std::unordered_map<HeapPage const*, uint8_t> m_emptyPageFrameCount;
 		static constexpr uint8_t k_numEmptyFramesBeforePageRelease = 10; // No. consecutive empty frames before page release
+
+		std::mutex m_pagedResourceHeapMutex;
 
 
 	private: // No copies allowed:
