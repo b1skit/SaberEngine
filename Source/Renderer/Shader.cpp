@@ -101,6 +101,7 @@ namespace
 			return re::Shader::PipelineType::RayTracing;
 		default: SEAssertF("Invalid type");
 		}
+		return re::Shader::PipelineType::Rasterization; // This should never happen
 	}
 }
 
