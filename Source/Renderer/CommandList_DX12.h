@@ -76,8 +76,8 @@ namespace dx12
 		// The pipeline state and root signature must be set before subsequent interactions with the command list
 		void SetPipelineState(dx12::PipelineState const&);
 
-		void SetGraphicsRootSignature(dx12::RootSignature const* rootSig); // Makes all descriptors stale
-		void SetComputeRootSignature(dx12::RootSignature const* rootSig); // Makes all descriptors stale
+		void SetGraphicsRootSignature(dx12::RootSignature const*); // Makes all descriptors stale
+		void SetComputeRootSignature(dx12::RootSignature const*); // Makes all descriptors stale
 
 		void CommitGPUDescriptors(); // GPU descriptors: Must be called before issuing draw commands
 
@@ -91,11 +91,7 @@ namespace dx12
 		void SetRenderTargets(re::TextureTargetSet const&);
 
 		void SetRWTextures(std::vector<re::RWTextureInput> const&);
-
-		void ClearColorTarget(
-			glm::vec4 const& clearVal,
-			re::TextureTarget const*);
-		
+	
 		void ClearColorTargets(
 			bool const* clearModes,
 			glm::vec4 const* colorClearVals,
@@ -126,7 +122,7 @@ namespace dx12
 		
 		void DrawBatchGeometry(re::Batch const&);
 
-		void Dispatch(glm::uvec3 const& numThreads);
+		void Dispatch(glm::uvec3 const& threadDimensions);
 
 		void UpdateSubresource(
 			core::InvPtr<re::Texture> const&,
@@ -164,12 +160,19 @@ namespace dx12
 
 		void SetIndexBuffer(re::VertexBufferInput const&);
 
-		void TransitionResource(ID3D12Resource*, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
-
 		void TransitionResourceInternal(
 			ID3D12Resource*,
 			D3D12_RESOURCE_STATES to,
-			std::vector<uint32_t> subresourceIndexes);
+			std::vector<uint32_t>&& subresourceIndexes);
+
+		struct TransitionMetadata
+		{
+			ID3D12Resource* m_resource;
+			D3D12_RESOURCE_STATES m_toState;
+			std::vector<uint32_t> m_subresourceIndexes;
+		};
+		void TransitionResourceInternal(std::vector<TransitionMetadata>&&);
+
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList;

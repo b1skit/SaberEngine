@@ -378,10 +378,11 @@ namespace dx12
 					bufferPlatParams->m_resolvedGPUResource,
 					bufferPlatParams->m_heapByteOffset);
 
-				if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
+				// Only insert a UAV barrier if we've used a resource as a UAV on this command list before
+				if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams) &&
+					m_resourceStates.HasSeenSubresourceInState(
+						bufferPlatParams->m_resolvedGPUResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
 				{
-					// TODO: We should only insert a UAV barrier if we're accessing the resource on the same
-					// command list where a prior modifying use was performed
 					InsertUAVBarrier(bufferPlatParams->m_resolvedGPUResource);
 				}
 
@@ -430,10 +431,11 @@ namespace dx12
 						rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
 						1);
 
-					if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams))
+					// Only insert a UAV barrier if we've used a resource as a UAV on this command list before
+					if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams) &&
+						m_resourceStates.HasSeenSubresourceInState(
+							bufferPlatParams->m_resolvedGPUResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
 					{
-						// TODO: We should only insert a UAV barrier if the we're accessing the resource on the same
-						// command list where a prior modifying use was performed
 						InsertUAVBarrier(bufferPlatParams->m_resolvedGPUResource);
 					}
 
@@ -471,8 +473,12 @@ namespace dx12
 			if (transitionResource)
 			{
 				SEAssert(!isInSharedHeap, "Trying to transition a resource in a shared heap. This is unexpected");
-				SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state")
-				TransitionResource(bufferPlatParams->m_resolvedGPUResource, toState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state");
+				
+				TransitionResourceInternal(
+					bufferPlatParams->m_resolvedGPUResource, 
+					toState, 
+					{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 			}
 
 			// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
@@ -490,16 +496,16 @@ namespace dx12
 	}
 
 
-	void CommandList::Dispatch(glm::uvec3 const& numThreads)
+	void CommandList::Dispatch(glm::uvec3 const& threadDimensions)
 	{
-		SEAssert(numThreads.x < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
-			numThreads.y < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
-			numThreads.z < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION,
+		SEAssert(threadDimensions.x < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
+			threadDimensions.y < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
+			threadDimensions.z < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION,
 			"Invalid dispatch dimensions");
 
 		CommitGPUDescriptors();
 
-		m_commandList->Dispatch(numThreads.x, numThreads.y, numThreads.z);
+		m_commandList->Dispatch(threadDimensions.x, threadDimensions.y, threadDimensions.z);
 	}
 
 
@@ -555,6 +561,36 @@ namespace dx12
 	void CommandList::SetVertexBuffers(
 		std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const& vertexBuffers)
 	{
+		// Batch all of the resource transitions in advance:
+		std::vector<TransitionMetadata> resourceTransitions;
+		resourceTransitions.reserve(vertexBuffers.size());
+
+		for (uint32_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
+		{
+			// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
+			if (!vertexBuffers[streamIdx].GetStream())
+			{
+				SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
+				break;
+			}
+			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].GetBuffer();
+
+			// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
+			if (streamBuffer->GetLifetime() != re::Lifetime::SingleFrame)
+			{
+				dx12::Buffer::PlatformParams* streamBufferPlatParams =
+					streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+				resourceTransitions.emplace_back(TransitionMetadata{
+					.m_resource = streamBufferPlatParams->m_resolvedGPUResource,
+					.m_toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+					.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
+					});
+			}
+		}
+		TransitionResourceInternal(std::move(resourceTransitions));
+
+
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
 		streamViews.reserve(gr::VertexStream::k_maxVertexStreams);
 
@@ -575,15 +611,6 @@ namespace dx12
 			
 			streamViews.emplace_back(
 				*dx12::Buffer::GetOrCreateVertexBufferView(*streamBuffer, vertexBuffers[streamIdx].m_view));
-
-			// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
-			if (streamBuffer->GetLifetime() != re::Lifetime::SingleFrame)
-			{
-				TransitionResource(
-					streamBufferPlatParams->m_resolvedGPUResource,
-					D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-			}
 
 			// Peek ahead: If there are no more contiguous slots, flush the stream views
 			const uint32_t nextStreamIdx = streamIdx + 1;
@@ -635,42 +662,11 @@ namespace dx12
 		// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
 		if (indexBuffer.GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame)
 		{
-			TransitionResource(
+			TransitionResourceInternal(
 				streamBufferPlatParams->m_resolvedGPUResource,
 				D3D12_RESOURCE_STATE_INDEX_BUFFER,
-				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 		}
-	}
-
-
-	void CommandList::ClearColorTarget(glm::vec4 const& clearVal, re::TextureTarget const* colorTarget)
-	{
-		SEAssert(colorTarget, "Target texture cannot be null");
-
-		SEAssert((colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) ||
-			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy),
-			"Target texture must be a color target");
-
-		core::InvPtr<re::Texture> const& colorTargetTex = colorTarget->GetTexture();
-
-		re::TextureTarget::TargetParams const& colorTargetParams = colorTarget->GetTargetParams();
-
-		const uint32_t subresourceIdx =
-			re::TextureView::GetSubresourceIndex(colorTargetTex, colorTargetParams.m_textureView);
-
-		TransitionResource(
-			colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_gpuResource->Get(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			subresourceIdx);
-
-		const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor =
-			dx12::Texture::GetRTV(colorTargetTex, colorTargetParams.m_textureView);
-
-		m_commandList->ClearRenderTargetView(
-			targetDescriptor,
-			&clearVal.r,
-			0,			// Number of rectangles in the proceeding D3D12_RECT ptr
-			nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
 	}
 
 
@@ -688,6 +684,49 @@ namespace dx12
 		SEAssert(numColorClears == 1 || 
 			(numColorClears > 0 && numColorClears == texTargets.size()),
 			"Number of clear values doesn't match the number of texture targets");
+
+		auto ClearColorTarget = [this](glm::vec4 const& clearVal, re::TextureTarget const* colorTarget)
+			{
+				SEAssert(colorTarget, "Target texture cannot be null");
+
+				SEAssert((colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) ||
+					(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy),
+					"Target texture must be a color target");
+
+				core::InvPtr<re::Texture> const& colorTargetTex = colorTarget->GetTexture();
+				re::TextureTarget::TargetParams const& colorTargetParams = colorTarget->GetTargetParams();
+
+				const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor =
+					dx12::Texture::GetRTV(colorTargetTex, colorTargetParams.m_textureView);
+
+				m_commandList->ClearRenderTargetView(
+					targetDescriptor,
+					&clearVal.r,
+					0,			// Number of rectangles in the proceeding D3D12_RECT ptr
+					nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
+			};
+
+		// Batch resource transitions together in advance:
+		std::vector<TransitionMetadata> resourceTransitions;
+		resourceTransitions.reserve(texTargets.size());
+		for (size_t i = 0; i < texTargets.size(); ++i)
+		{
+			if (!texTargets[i].HasTexture())
+			{
+				break; // Targets must be bound in monotonically-increasing order from slot 0
+			}
+
+			core::InvPtr<re::Texture> const& colorTargetTex = texTargets[i].GetTexture();
+			re::TextureTarget::TargetParams const& colorTargetParams = texTargets[i].GetTargetParams();
+
+			resourceTransitions.emplace_back(TransitionMetadata{
+				.m_resource = colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_gpuResource->Get(),
+				.m_toState = D3D12_RESOURCE_STATE_RENDER_TARGET,
+				.m_subresourceIndexes = {re::TextureView::GetSubresourceIndex(colorTargetTex, colorTargetParams.m_textureView)},
+				});
+		}
+		TransitionResourceInternal(std::move(resourceTransitions));
+
 		
 		for (size_t i = 0; i < texTargets.size(); ++i)
 		{
@@ -861,6 +900,10 @@ namespace dx12
 			"This function should only be called from direct or compute command lists");
 		SEAssert(m_currentRootSignature, "Root signature is not currently set");
 
+		// Batch our resource transitions together:
+		std::vector<TransitionMetadata> resourceTransitions;
+		resourceTransitions.reserve(rwTexInputs.size());
+
 		// Track the D3D resources we've seen during this call, to help us decide whether to insert a UAV barrier or not
 		std::unordered_set<ID3D12Resource const*> seenResources;
 		seenResources.reserve(rwTexInputs.size());
@@ -903,27 +946,30 @@ namespace dx12
 				dx12::Texture::PlatformParams const* texPlatParams =
 					rwTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
-				// We're writing to a UAV, we may need a UAV barrier:
+				// We're writing to a UAV, we may need a UAV barrier. We try and skip it if possible (i.e. don't add
+				// barriers if we haven't seen the subresource in a UAV state before)
 				ID3D12Resource* resource = texPlatParams->m_gpuResource->Get();
 				if (m_resourceStates.HasSeenSubresourceInState(resource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS) &&
-					!ResourceWasTransitionedInThisCall(resource))
+					!ResourceWasTransitionedInThisCall(resource)) // Ignore transitions recorded during this call
 				{
 					// We've accessed this resource before on this command list, and it was transitioned to a UAV
 					// state at some point before this call to SetRWTextures. We must ensure any previous work was
 					// done before we access it again
-					// TODO: This could/should be handled on a per-subresource level. Currently, this results in UAV
-					// barriers even when it's a different subresource that was used in a UAV operation
 					InsertUAVBarrier(rwTex);
 				}
 				seenResources.emplace(resource);
 
-				// Insert our resource transition:
-				TransitionResource(
-					rwTex,
-					D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-					rwTexInput.m_textureView);
+				resourceTransitions.emplace_back(TransitionMetadata{
+					.m_resource = texPlatParams->m_gpuResource->Get(),
+					.m_toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+					.m_subresourceIndexes = re::TextureView::GetSubresourceIndexes(
+						rwTexInput.m_texture, rwTexInput.m_textureView),
+					});
 			}
 		}
+
+		// Finally, insert our batched resource transitions:
+		TransitionResourceInternal(std::move(resourceTransitions));
 
 		// TODO: Support compute target clearing (tricky: Need a copy of descriptors in the GPU-visible heap)
 	}
@@ -944,6 +990,10 @@ namespace dx12
 				dynamic_cast<re::AccelerationStructure::BLASParams const*>(as.GetASParams());
 			SEAssert(createParams, "Failed to get AS create params");
 
+			// Batch resource transitions together in advance:
+			std::vector<TransitionMetadata> resourceTransitions;
+			resourceTransitions.reserve(createParams->m_geometry.size());
+
 			// Transition the inputs:
 			for (auto const& instance : createParams->m_geometry)
 			{
@@ -954,10 +1004,11 @@ namespace dx12
 				dx12::Buffer::PlatformParams* positionBufferPlatParams =
 					instance.m_positions->GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-				TransitionResource(
-					positionBufferPlatParams->m_resolvedGPUResource, 
-					D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, 
-					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				resourceTransitions.emplace_back(TransitionMetadata{
+					.m_resource = positionBufferPlatParams->m_resolvedGPUResource,
+					.m_toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+					.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
+					});
 				
 				if (instance.m_indices)
 				{
@@ -968,10 +1019,11 @@ namespace dx12
 					dx12::Buffer::PlatformParams* indexBufferPlatParams =
 						instance.m_indices->GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-					TransitionResource(
-						indexBufferPlatParams->m_resolvedGPUResource,
-						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-						D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+					resourceTransitions.emplace_back(TransitionMetadata{
+						.m_resource = indexBufferPlatParams->m_resolvedGPUResource,
+						.m_toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
+						});
 				}
 
 				if (createParams->m_transform)
@@ -983,12 +1035,15 @@ namespace dx12
 					dx12::Buffer::PlatformParams* bufferPlatParams =
 						createParams->m_transform->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-					TransitionResource(
-						bufferPlatParams->m_resolvedGPUResource, 
-						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, 
-						D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+					resourceTransitions.emplace_back(TransitionMetadata{
+						.m_resource = bufferPlatParams->m_resolvedGPUResource,
+						.m_toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
+						});
 				}
 			}
+
+			TransitionResourceInternal(std::move(resourceTransitions));
 		}
 		break;
 		default: SEAssertF("Invalid AS type");
@@ -1109,10 +1164,10 @@ namespace dx12
 		SEAssert(bufferPlatformParams->GPUResourceIsValid(),
 			"GPUResource is not valid. Buffers using a shared resource cannot be used here");
 
-		TransitionResource(
+		TransitionResourceInternal(
 			bufferPlatformParams->m_resolvedGPUResource,
 			D3D12_RESOURCE_STATE_COPY_DEST,
-			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+			{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 
 		m_commandList->CopyBufferRegion(
 			bufferPlatformParams->m_resolvedGPUResource,	// pDstBuffer
@@ -1125,8 +1180,8 @@ namespace dx12
 
 	void CommandList::CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource)
 	{
-		TransitionResource(srcResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-		TransitionResource(dstResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+		TransitionResourceInternal(srcResource, D3D12_RESOURCE_STATE_COPY_SOURCE, {D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES});
+		TransitionResourceInternal(dstResource, D3D12_RESOURCE_STATE_COPY_DEST, {D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES});
 
 		m_commandList->CopyResource(dstResource, srcResource);
 	}
@@ -1211,122 +1266,142 @@ namespace dx12
 	void CommandList::TransitionResourceInternal(
 		ID3D12Resource* resource,
 		D3D12_RESOURCE_STATES toState,
-		std::vector<uint32_t> subresourceIndexes)
+		std::vector<uint32_t>&& subresourceIndexes)
 	{
-		SEAssert(!subresourceIndexes.empty(), "Subresources vector is empty");
+		TransitionResourceInternal({ TransitionMetadata{
+			.m_resource = resource, 
+			.m_toState = toState, 
+			.m_subresourceIndexes = std::move(subresourceIndexes)} });
+	}
 
-		SEAssert((subresourceIndexes.size() == 1 && 
-				subresourceIndexes[0] == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) ||
-			std::find(subresourceIndexes.begin(), subresourceIndexes.end(), 
-				D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) == subresourceIndexes.end(),
-			"Found an ALL transition in the vector of subresource indexes");
 
-		SEAssert(GetNumSubresources(resource, m_device) > 1 ||
-			(subresourceIndexes.size() == 1 &&
-				(subresourceIndexes[0] == 0 ||
-					subresourceIndexes[0] == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)),
-			"Invalid transition detected for a resource with a single subresource");
-
-		std::vector<D3D12_RESOURCE_BARRIER> barriers;
-		barriers.reserve(subresourceIndexes.size());
-
-		auto AddBarrier = [this, &resource, &barriers](uint32_t subresourceIdx, D3D12_RESOURCE_STATES toState)
-			{
-				// If we've already seen this resource before, we can record the transition now (as we prepend any initial
-				// transitions when submitting the command list)	
-				if (m_resourceStates.HasResourceState(resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?
-				{
-					const D3D12_RESOURCE_STATES currentKnownState = m_resourceStates.GetResourceState(resource, subresourceIdx);
-
-#if defined(DEBUG_CMD_LIST_RESOURCE_TRANSITIONS)
-					DebugResourceTransitions(
-						*this, dx12::GetDebugName(resource).c_str(), currentKnownState, toState, subresourceIdx);
-#endif
-
-					if (currentKnownState == toState)
-					{
-						return; // Before and after states must be different
-					}
-
-					barriers.emplace_back(D3D12_RESOURCE_BARRIER{
-						.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-						.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
-						.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
-							.pResource = resource,
-							.Subresource = subresourceIdx,
-							.StateBefore = currentKnownState,
-							.StateAfter = toState}
-						});
-				}
-#if defined(DEBUG_CMD_LIST_RESOURCE_TRANSITIONS)
-				else
-				{
-					DebugResourceTransitions(
-						*this, dx12::GetDebugName(resource).c_str(), toState, toState, subresourceIdx, true); // PENDING
-				}
-#endif
-
-				// Record the pending state if necessary, and new state after the transition:
-				m_resourceStates.SetResourceState(resource, toState, subresourceIdx);
-			};
-
-		for (uint32_t subresourceIdx : subresourceIndexes)
+	void CommandList::TransitionResourceInternal(std::vector<TransitionMetadata>&& transitions)
+	{
+		if (transitions.empty())
 		{
-			// Transition the appropriate subresources:
-			if (subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES ||
-				GetNumSubresources(resource, m_device) == 1) // Bug fix: Force all single subresources to use ALL
-			{
-				// We can only transition ALL subresources in a single barrier if the before state is the same for all
-				// subresources. If we have any pending transitions for individual subresources, this is not the case:
-				// We must transition each pending subresource individually to ensure all subresources have the correct
-				// before and after state.
-
-				// We need to transition 1-by-1 if there are individual pending subresource states, and we've got an ALL
-				// transition
-				bool doTransitionAllSubresources = true;
-				if (m_resourceStates.GetPendingResourceStates().contains(resource))
-				{
-					auto const& pendingResourceStates = m_resourceStates.GetPendingResourceStates().at(resource);
-					const bool hasPendingAllSubresourcesRecord =
-						pendingResourceStates.HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-
-					const size_t numPendingTransitions = pendingResourceStates.GetStates().size();
-
-					const bool hasIndividualPendingSubresourceTransitions =
-						(!hasPendingAllSubresourcesRecord && numPendingTransitions > 0) ||
-						(hasPendingAllSubresourcesRecord && numPendingTransitions > 1);
-
-					if (hasIndividualPendingSubresourceTransitions)
-					{
-						doTransitionAllSubresources = false;
-
-						auto const& pendingStates = pendingResourceStates.GetStates();
-						for (auto const& pendingState : pendingStates)
-						{
-							if (pendingState.first == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
-							{
-								continue;
-							}
-
-							const uint32_t pendingSubresourceIdx = pendingState.first;
-
-							AddBarrier(pendingSubresourceIdx, toState);
-						}
-					}
-				}
-
-				// We didn't need to process our transitions one-by-one: Submit a single ALL transition:
-				if (doTransitionAllSubresources)
-				{
-					AddBarrier(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, toState);
-				}
-			}
-			else
-			{
-				AddBarrier(subresourceIdx, toState);
-			}
+			return;
 		}
 
+		// Batch all barriers into a single call:
+		std::vector<D3D12_RESOURCE_BARRIER> barriers;
+		barriers.reserve(transitions.size() * 12); // Estimate all mips for a 4K texture
+		for (auto const& transition : transitions)
+		{
+			SEAssert(!transition.m_subresourceIndexes.empty(), "Subresources vector is empty");
+
+			SEAssert((transition.m_subresourceIndexes.size() == 1 &&
+				transition.m_subresourceIndexes[0] == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) ||
+				std::find(transition.m_subresourceIndexes.begin(), transition.m_subresourceIndexes.end(),
+					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) == transition.m_subresourceIndexes.end(),
+				"Found an ALL transition in the vector of subresource indexes");
+
+			SEAssert(GetNumSubresources(transition.m_resource, m_device) > 1 ||
+				(transition.m_subresourceIndexes.size() == 1 &&
+					(transition.m_subresourceIndexes[0] == 0 ||
+						transition.m_subresourceIndexes[0] == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)),
+				"Invalid transition detected for a resource with a single subresource");
+
+			auto AddBarrier = [this, &transition, &barriers](uint32_t subresourceIdx, D3D12_RESOURCE_STATES toState)
+				{
+					// If we've already seen this resource before, we can record the transition now (as we prepend any initial
+					// transitions when submitting the command list)	
+					if (m_resourceStates.HasResourceState(transition.m_resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?
+					{
+						const D3D12_RESOURCE_STATES currentKnownState = m_resourceStates.GetResourceState(transition.m_resource, subresourceIdx);
+
+#if defined(DEBUG_CMD_LIST_RESOURCE_TRANSITIONS)
+						DebugResourceTransitions(
+							*this, dx12::GetDebugName(resource).c_str(), currentKnownState, toState, subresourceIdx);
+#endif
+
+						if (currentKnownState == toState)
+						{
+							return; // Before and after states must be different
+						}
+
+						barriers.emplace_back(D3D12_RESOURCE_BARRIER{
+							.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+							.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
+							.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
+								.pResource = transition.m_resource,
+								.Subresource = subresourceIdx,
+								.StateBefore = currentKnownState,
+								.StateAfter = toState}
+							});
+					}
+#if defined(DEBUG_CMD_LIST_RESOURCE_TRANSITIONS)
+					else
+					{
+						DebugResourceTransitions(
+							*this, dx12::GetDebugName(resource).c_str(), toState, toState, subresourceIdx, true); // PENDING
+					}
+#endif
+
+					// Record the pending state if necessary, and new state after the transition:
+					m_resourceStates.SetResourceState(transition.m_resource, toState, subresourceIdx);
+				};
+
+
+			for (uint32_t subresourceIdx : transition.m_subresourceIndexes)
+			{
+				// Transition the appropriate subresources:
+				if (subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES ||
+					GetNumSubresources(transition.m_resource, m_device) == 1) // Bug fix: Force all single subresources to use ALL
+				{
+					// We can only transition ALL subresources in a single barrier if the before state is the same for all
+					// subresources. If we have any pending transitions for individual subresources, this is not the case:
+					// We must transition each pending subresource individually to ensure all subresources have the correct
+					// before and after state.
+
+					// We need to transition 1-by-1 if there are individual pending subresource states, and we've got an ALL
+					// transition
+					bool doTransitionAllSubresources = true;
+					if (m_resourceStates.GetPendingResourceStates().contains(transition.m_resource))
+					{
+						auto const& pendingResourceStates = 
+							m_resourceStates.GetPendingResourceStates().at(transition.m_resource);
+
+						const bool hasPendingAllSubresourcesRecord =
+							pendingResourceStates.HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+
+						const size_t numPendingTransitions = pendingResourceStates.GetStates().size();
+
+						const bool hasIndividualPendingSubresourceTransitions =
+							(!hasPendingAllSubresourcesRecord && numPendingTransitions > 0) ||
+							(hasPendingAllSubresourcesRecord && numPendingTransitions > 1);
+
+						if (hasIndividualPendingSubresourceTransitions)
+						{
+							doTransitionAllSubresources = false;
+
+							auto const& pendingStates = pendingResourceStates.GetStates();
+							for (auto const& pendingState : pendingStates)
+							{
+								if (pendingState.first == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+								{
+									continue;
+								}
+
+								const uint32_t pendingSubresourceIdx = pendingState.first;
+
+								AddBarrier(pendingSubresourceIdx, transition.m_toState);
+							}
+						}
+					}
+
+					// We didn't need to process our transitions one-by-one: Submit a single ALL transition:
+					if (doTransitionAllSubresources)
+					{
+						AddBarrier(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, transition.m_toState);
+					}
+				}
+				else
+				{
+					AddBarrier(subresourceIdx, transition.m_toState);
+				}
+			}
+		}
+		
 		if (!barriers.empty()) // Might not have recored a barrier if it's the 1st time we've seen a resource
 		{
 			// Submit all of our transitions in a single batch
@@ -1336,20 +1411,24 @@ namespace dx12
 
 
 	void CommandList::TransitionResource(
-		ID3D12Resource* resource, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
-	{
-		TransitionResourceInternal(resource, toState, { subresourceIdx });
-	}
-
-
-	void CommandList::TransitionResource(
 		core::InvPtr<re::Texture> const& texture, D3D12_RESOURCE_STATES toState, re::TextureView const& texView)
 	{
 		dx12::Texture::PlatformParams const* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
+		ID3D12Resource* textureResource = texPlatParams->m_gpuResource->Get();
+
+		// This is a public function, so users may call it from anywhere. If we're transitioning to a UAV state and the
+		// resource has been previously used as a UAV on this command list, we need to add a UAV barrier
+		if (toState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS &&
+			m_resourceStates.HasSeenSubresourceInState(
+				texPlatParams->m_gpuResource->Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+		{
+			InsertUAVBarrier(textureResource);
+		}
+
 		TransitionResourceInternal(
-			texPlatParams->m_gpuResource->Get(),
+			textureResource,
 			toState,
 			re::TextureView::GetSubresourceIndexes(texture, texView));
 	}
@@ -1369,10 +1448,10 @@ namespace dx12
 		*/
 
 		const D3D12_RESOURCE_BARRIER barrier{
-				.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV,
-				.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
-				.UAV = D3D12_RESOURCE_UAV_BARRIER{
-					.pResource = resource}
+			.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV,
+			.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
+			.UAV = D3D12_RESOURCE_UAV_BARRIER{
+				.pResource = resource}
 		};
 
 		// TODO: Support batching of multiple barriers
