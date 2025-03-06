@@ -752,7 +752,8 @@ namespace gr
 			m_cameraFrustumTransformBuffers.clear();
 		}
 
-		if (m_showDeferredLightWireframe)
+		if (m_showDeferredLightWireframe && 
+			renderData.HasObjectData<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>())
 		{
 			auto pointItr = renderData.ObjectBegin<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
 			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
