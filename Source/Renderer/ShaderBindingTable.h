@@ -59,10 +59,6 @@ namespace re
 		void Update(std::shared_ptr<re::AccelerationStructure> const& tlas); 
 
 
-	public:
-		uint32_t GetNumHitGroupShaders() const;
-
-
 	private:
 		std::unique_ptr<PlatformParams> m_platformParams;
 
@@ -99,16 +95,5 @@ namespace re
 	inline ShaderBindingTable::SBTParams const& ShaderBindingTable::GetSBTParams() const
 	{
 		return m_sbtParams;
-	}
-
-
-	inline uint32_t ShaderBindingTable::GetNumHitGroupShaders() const
-	{
-		uint32_t result = 0;
-		for (auto const& entry : m_hitGroupNamesAndShaders)
-		{
-			result += util::CheckedCast<uint32_t>(entry.second->GetMetadata().size());
-		}
-		return result;
 	}
 }

@@ -53,7 +53,7 @@ namespace re
 			Opaque						= 1 << 0,
 			NoDuplicateAnyHitInvocation = 1 << 1, // Guarantee the any hit shader will be executed exactly once
 		};
-		enum BuildFlags : uint8_t // Equivalent to D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS
+		enum BuildFlags : uint8_t // Subset of D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS
 		{
 			BuildFlags_None = 0,
 			AllowUpdate		= 1 << 0,
@@ -61,7 +61,6 @@ namespace re
 			PreferFastTrace = 1 << 2,
 			PreferFastBuild = 1 << 3,
 			MinimizeMemory	= 1 << 4,
-			//PerformUpdate	= 1 << 5, // Note: We omit this & infer updates from Batch::RayTracingParams::Operation instead
 		};
 		enum InstanceFlags : uint8_t
 		{
@@ -100,6 +99,7 @@ namespace re
 			std::shared_ptr<re::Buffer> m_transform; // Buffer of mat3x4 in row-major order. Indexes correspond with m_geometry
 
 			uint8_t m_instanceMask = 0xFF; // Visibility mask: 0 = never include/always rejected
+			uint32_t m_instanceContributionToHitGroupIndex = 0; // Arbitrary: Per-instance hit group shader table offset
 			InstanceFlags m_instanceFlags = InstanceFlags::InstanceFlags_None;
 		};
 		struct TLASParams : public virtual IASParams

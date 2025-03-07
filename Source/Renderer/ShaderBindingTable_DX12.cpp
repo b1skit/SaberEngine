@@ -115,7 +115,7 @@ namespace
 		std::vector<core::InvPtr<re::Shader>> const& missShaders,
 		std::vector<std::pair<std::string, core::InvPtr<re::Shader>>> const& hitGroupShaders)
 	{
-		const size_t estimatedSize = rayGenShaders.size() + missShaders.size() + (hitGroupShaders.size() * 2);
+		const size_t estimatedSize = rayGenShaders.size() + missShaders.size() + hitGroupShaders.size();
 
 		ShaderExportSymbols exports;
 		exports.m_symbolNames.reserve(estimatedSize);
@@ -382,7 +382,7 @@ namespace
 		for (auto& association : rootSigAssociations)
 		{
 			// Add a sub-object to declare the root signature:
-			D3D12_STATE_SUBOBJECT& rootSigDeclaration = subObjects.emplace_back(D3D12_STATE_SUBOBJECT{
+			D3D12_STATE_SUBOBJECT const& rootSigDeclaration = subObjects.emplace_back(D3D12_STATE_SUBOBJECT{
 				.Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE,
 				.pDesc = &association.m_rootSignature,
 				});
@@ -431,8 +431,12 @@ namespace
 			device5->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&sbtPlatParams->m_rayTracingStateObject)),
 			"Failed to create ray tracing state object");
 
-		dx12::CheckHResult(sbtPlatParams->m_rayTracingStateObject->QueryInterface(
-			IID_PPV_ARGS(&sbtPlatParams->m_rayTracingStateObjectProperties)),
+		std::wstring const& rtStateObjectName = sbt.GetWName() + L"_RTStateObject";
+		sbtPlatParams->m_rayTracingStateObject->SetName(rtStateObjectName.c_str());
+
+		dx12::CheckHResult(
+			sbtPlatParams->m_rayTracingStateObject->QueryInterface(
+				IID_PPV_ARGS(&sbtPlatParams->m_rayTracingStateObjectProperties)),
 			"Failed to create the ray tracing state object properties query interface");
 	}
 
@@ -481,6 +485,11 @@ namespace
 			auto const& shader = shaders[i];
 
 			std::vector<re::Shader::Metadata> const& shaderMetadata = shader->GetMetadata();
+
+			// Start by zero-initializing the entire mapped region:
+			memset(mappedData, 0, shaderMetadata.size() * stride);
+
+			// Insert the shader identifiers as the first element at each stride:
 			for (auto const& entry : shaderMetadata)
 			{
 				void* shaderIdentifier = 
@@ -491,9 +500,6 @@ namespace
 
 				// Compute the starting offset for the current shader entry:
 				uint8_t* dst = mappedData + (i * stride);
-
-				// Start by zero-initializing the region:
-				memset(dst, 0, stride);
 
 				// Copy the shader identifier to the beginning of the region:
 				memcpy(dst, shaderIdentifier, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
@@ -560,7 +566,6 @@ namespace dx12
 		platParams->m_callableRegionTotalByteSize = ComputeIndividualEntrySize(sbt.m_callableShaders);
 
 		// Compute the total SBT size for N frames-in-flight-worth of data
-		// Note: We round size up to a multiple of 256B, as per the NVidia DXR sample
 		platParams->m_numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
 		
 		platParams->m_frameRegionByteSize = util::RoundUpToNearestMultiple(
@@ -568,7 +573,7 @@ namespace dx12
 			static_cast<uint64_t>(platParams->m_missRegionByteStride) +
 			static_cast<uint64_t>(platParams->m_hitGroupRegionByteStride) +
 			static_cast<uint64_t>(platParams->m_callableRegionTotalByteSize),
-			256llu);
+			256llu); // Note: We round size up to a multiple of 256B, as per the NVidia DXR sample
 
 		const uint64_t totalSBTByteSize = platParams->m_numFramesInFlight * platParams->m_frameRegionByteSize;
 
@@ -594,52 +599,49 @@ namespace dx12
 		platParams->m_rayGenRegionBaseOffset = 0; // Ray gen shader is the first entry
 		platParams->m_rayGenRegionTotalByteSize = 
 			platParams->m_rayGenRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_rayGenShaders.size());
-		const uint32_t numRayGenBytesWritten = InitializeShaderRegions(
+		numBytesWritten += InitializeShaderRegions(
 			platParams->m_rayTracingStateObjectProperties.Get(),
 			sbtData, 
 			platParams->m_rayGenRegionByteStride, 
 			sbt.m_rayGenShaders,
 			rayGenExportNameView);
-		sbtData += numRayGenBytesWritten;
-		numBytesWritten += numRayGenBytesWritten;
+		sbtData = baseSBTData + numBytesWritten;
 
 		// Miss:
 		platParams->m_missRegionBaseOffset = numBytesWritten;
 		platParams->m_missRegionTotalByteSize =
 			platParams->m_missRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_missShaders.size());
-		const uint32_t numMissBytesWritten = InitializeShaderRegions(
+		numBytesWritten += InitializeShaderRegions(
 			platParams->m_rayTracingStateObjectProperties.Get(),
 			sbtData,
 			platParams->m_missRegionByteStride,
 			sbt.m_missShaders,
 			missExportNameView);
-		sbtData += numMissBytesWritten;
-		numBytesWritten += numMissBytesWritten;
+		sbtData = baseSBTData + numBytesWritten;
 
 		// Hit groups:
 		platParams->m_hitGroupRegionBaseOffset = numBytesWritten;
-		platParams->m_hitGroupRegionTotalByteSize = platParams->m_hitGroupRegionByteStride * sbt.GetNumHitGroupShaders();
-		const uint32_t numHitGroupBytesWritten = InitializeShaderRegions(
+		platParams->m_hitGroupRegionTotalByteSize = 
+			platParams->m_hitGroupRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_hitGroupNamesAndShaders.size());
+		numBytesWritten += InitializeShaderRegions(
 			platParams->m_rayTracingStateObjectProperties.Get(),
 			sbtData,
 			platParams->m_hitGroupRegionByteStride,
 			hitGroupShaderView,
 			hitGroupExportNameView);
-		sbtData += numHitGroupBytesWritten;
-		numBytesWritten += numHitGroupBytesWritten;
+		sbtData = baseSBTData + numBytesWritten;
 
 		// Callable:
 		platParams->m_callableRegionBaseOffset = numBytesWritten;
 		platParams->m_callableRegionTotalByteSize =
 			platParams->m_callableRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_callableShaders.size());
-		const uint32_t numCallableBytesWritten = InitializeShaderRegions(
+		numBytesWritten += InitializeShaderRegions(
 			platParams->m_rayTracingStateObjectProperties.Get(),
 			sbtData,
 			platParams->m_callableRegionByteStride,
 			sbt.m_callableShaders,
 			callableExportNameView);
-		sbtData += numCallableBytesWritten;
-		numBytesWritten += numCallableBytesWritten;
+		sbtData = baseSBTData + numBytesWritten;
 
 		// Initialize the remaining frame data:
 		for (uint8_t curFrameIdx = 1; curFrameIdx < platParams->m_numFramesInFlight; ++curFrameIdx)
@@ -647,37 +649,33 @@ namespace dx12
 			// Re-set the sbtData pointer to the base of the next region:
 			sbtData = baseSBTData + (curFrameIdx * platParams->m_frameRegionByteSize);
 
-			const uint32_t numExtraRayGenBytesWritten = InitializeShaderRegions(
+			sbtData += InitializeShaderRegions(
 				platParams->m_rayTracingStateObjectProperties.Get(),
 				sbtData,
 				platParams->m_rayGenRegionByteStride,
 				sbt.m_rayGenShaders,
 				rayGenExportNameView);
-			sbtData += numExtraRayGenBytesWritten;
 
-			const uint32_t numExtraMissBytesWritten = InitializeShaderRegions(
+			sbtData += InitializeShaderRegions(
 				platParams->m_rayTracingStateObjectProperties.Get(),
 				sbtData,
 				platParams->m_missRegionByteStride,
 				sbt.m_missShaders,
 				missExportNameView);
-			sbtData += numExtraMissBytesWritten;
 
-			const uint32_t numExtraHitGroupBytesWritten = InitializeShaderRegions(
+			sbtData += InitializeShaderRegions(
 				platParams->m_rayTracingStateObjectProperties.Get(),
 				sbtData,
 				platParams->m_hitGroupRegionByteStride,
 				hitGroupShaderView,
 				hitGroupExportNameView);
-			sbtData += numExtraHitGroupBytesWritten;
 
-			const uint32_t numExtraCallableBytesWritten = InitializeShaderRegions(
+			sbtData += InitializeShaderRegions(
 				platParams->m_rayTracingStateObjectProperties.Get(),
 				sbtData,
 				platParams->m_callableRegionByteStride,
 				sbt.m_callableShaders,
 				callableExportNameView);
-			sbtData += numExtraCallableBytesWritten;
 		}
 
 		// Cleanup:
