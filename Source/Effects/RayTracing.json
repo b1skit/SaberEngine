@@ -4,14 +4,14 @@
 		"ExcludedPlatforms": [ "OpenGL" ],
 		"Parents" : [],
 		"DrawStyles" :  [
-			// Hit groups: For now, everything uses the same technique
+			// Hit groups:
 			{
 				"Conditions": [
 					{ "Rule" : "RT_Experimental", "Mode" : "RT_Geometry_Experimental" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "RT_HitGroupTechnique_Experimental"
+				"Technique": "RT_Experimental_HitGroup"
 			},
 			{
 				"Conditions": [
@@ -19,7 +19,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "RT_HitGroupTechnique_Experimental"
+				"Technique": "RT_Experimental_HitGroup"
 			},
 			{
 				"Conditions": [
@@ -27,7 +27,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "RT_HitGroupTechnique_Experimental"
+				"Technique": "RT_Experimental_HitGroup"
 			},
 			{
 				"Conditions": [
@@ -35,7 +35,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "RT_HitGroupTechnique_Experimental"
+				"Technique": "RT_Experimental_HitGroup"
 			},
 			{
 				"Conditions": [
@@ -43,7 +43,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "RT_HitGroupTechnique_Experimental"
+				"Technique": "RT_Experimental_HitGroup"
 			},
 			{
 				"Conditions": [
@@ -51,27 +51,27 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "RT_HitGroupTechnique_Experimental"
+				"Technique": "RT_Experimental_HitGroup"
 			},
 			// Ray gen:
 			{
 				"Conditions": [
 					{ "Rule" : "RT_Experimental", "Mode" : "RT_RayGen_Experimental" }
 				],
-				"Technique": "RT_RayGenTechnique_Experimental"
+				"Technique": "RT_Experimental_RayGen"
 			},
 			// Miss:
 			{
 				"Conditions": [
 					{ "Rule" : "RT_Experimental", "Mode" : "RT_Miss_Experimental" }
 				],
-				"Technique": "RT_MissTechnique_Experimental"
+				"Technique": "RT_Experimental_Miss"
 			}
 		],
 		"Techniques" :  [
 			{
 				// Note: For hit groups, we use the Technique name as the hit group name
-				"Name": "RT_HitGroupTechnique_Experimental",
+				"Name": "RT_Experimental_HitGroup",
 
 				// If defined: Procedural geometry only. Otherwise, triangle geometry only
 				//"IntersectionShader": "RayTracing_Experimental",	
@@ -88,24 +88,23 @@
 				"ClosestHitShaderDefines": []
 			},
 			{
-				"Name": "RT_RayGenTechnique_Experimental",
+				"Name": "RT_Experimental_RayGen",
 				"RayGenerationShader": "RayTracing_Experimental",
 				"RayGenerationShaderEntryPoint": "RayGeneration_Experimental",
 				"RayGenerationShaderDefines": []
 			},
 			{
-				"Name": "RT_MissTechnique_Experimental",
+				"Name": "RT_Experimental_Miss",
 				"MissShader": "RayTracing_Experimental",
 				"MissShaderEntryPoint": "Miss_Experimental",
 				"MissShaderDefines": []
 			},
 			{
-				"Name": "RT_CallableTechnique_Experimental",
+				"Name": "RT_Experimental_Callable",
 				"CallableShader": "RayTracing_Experimental",
 				"CallableShaderEntryPoint": "Callable_Experimental",
 				"CallableShaderDefines": []
 			}
-		],
-		"PipelineStates": []
+		]
 	}
 }

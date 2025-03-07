@@ -8,6 +8,27 @@
 #include "Shaders/Common/RayTracingParams.h"
 
 
+namespace
+{
+	std::shared_ptr<re::Buffer> CreateTraceRayParams()
+	{
+		const TraceRayData traceRayData{
+			.g_traceRayParams = glm::uvec4(
+				0xFF,	// InstanceInclusionMask
+				0,		// RayContributionToHitGroupIndex
+				0,		// MultiplierForGeometryContributionToHitGroupIndex
+				0),		// MissShaderIndex
+		};
+
+		const re::Buffer::BufferParams traceRayBufferParams{
+			.m_stagingPool = re::Buffer::StagingPool::Temporary,
+			.m_usageMask = re::Buffer::Usage::Constant,
+		};
+
+		return re::Buffer::Create("Trace Ray Params", traceRayData, traceRayBufferParams);
+	}
+}
+
 namespace gr
 {
 	RayTracing_ExperimentalGraphicsSystem::RayTracing_ExperimentalGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
@@ -66,6 +87,9 @@ namespace gr
 		
 		// Add the camera buffer:
 		m_rtStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
+
+		// Ray tracing params:
+		m_rtStage->AddPermanentBuffer(re::BufferInput("TraceRayParams", CreateTraceRayParams()));
 
 		// Add a UAV target:
 		m_rtTarget = re::Texture::Create("RayTracing_Experimental_Target",

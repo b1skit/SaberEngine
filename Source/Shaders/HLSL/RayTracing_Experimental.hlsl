@@ -25,6 +25,7 @@ RWTexture2D<float4> gOutput : register(u0);
 RaytracingAccelerationStructure SceneBVH : register(t0, space1);
 
 ConstantBuffer<CameraData> CameraParams;
+ConstantBuffer<TraceRayData> TraceRayParams;
 
 
 
@@ -94,8 +95,9 @@ void RayGeneration_Experimental()
 	// values
 	// #DXR Extra: Perspective Camera
 	float aspectRatio = dims.x / dims.y;
+	
 	// Perspective
-	RayDesc ray;
+	RayDesc ray; // https://learn.microsoft.com/en-us/windows/win32/direct3d12/raydesc
 	ray.Origin = mul(CameraParams.g_invView, float4(0, 0, 0, 1)).xyz;
 	float4 target = mul(CameraParams.g_invProjection, float4(d.x, -d.y, 1, 1));
 	ray.Direction = mul(CameraParams.g_invView, float4(target.xyz, 0)).xyz;
@@ -117,7 +119,7 @@ void RayGeneration_Experimental()
 		// Instance inclusion mask, which can be used to mask out some geometry to
 		// this ray by and-ing the mask with a geometry mask. The 0xFF flag then
 		// indicates no geometry will be masked
-		0xFF,
+		TraceRayParams.g_traceRayParams.x,
 
 		// Parameter name: RayContributionToHitGroupIndex
 		// Depending on the type of ray, a given object can have several hit
@@ -127,7 +129,7 @@ void RayGeneration_Experimental()
 		// indicates which offset (on 4 bits) to apply to the hit groups for this
 		// ray. In this sample we only have one hit group per object, hence an
 		// offset of 0.
-		0,
+		TraceRayParams.g_traceRayParams.y,
 
 		// Parameter name: MultiplierForGeometryContributionToHitGroupIndex
 		// The offsets in the SBT can be computed from the object ID, its instance
@@ -136,7 +138,7 @@ void RayGeneration_Experimental()
 		// the SBT in the same order as they are added in the AS, in which case
 		// the value below represents the stride (4 bits representing the number
 		// of hit groups) between two consecutive objects.
-		0,
+		TraceRayParams.g_traceRayParams.z,
 
 		// Parameter name: MissShaderIndex
 		// Index of the miss shader to use in case several consecutive miss
@@ -145,7 +147,7 @@ void RayGeneration_Experimental()
 		// sky color for regular rendering, and another returning a full
 		// visibility value for shadow rays. This sample has only one miss shader,
 		// hence an index 0
-		0,
+		TraceRayParams.g_traceRayParams.w,
 
 		// Parameter name: Ray
 		// Ray information to trace
