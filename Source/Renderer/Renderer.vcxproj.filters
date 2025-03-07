@@ -443,7 +443,7 @@
     <ClInclude Include="GPUTimer_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_AccelerationStructures.h">
+    <ClInclude Include="GraphicsSystem_SceneAccelerationStructure.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="AccelerationStructure.h">
@@ -799,7 +799,7 @@
     <ClCompile Include="GPUTimer_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_AccelerationStructures.cpp">
+    <ClCompile Include="GraphicsSystem_SceneAccelerationStructure.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="AccelerationStructure.cpp">

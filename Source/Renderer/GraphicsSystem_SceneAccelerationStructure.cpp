@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
-#include "GraphicsSystem_AccelerationStructures.h"
+#include "GraphicsSystem_SceneAccelerationStructure.h"
 #include "GraphicsSystemManager.h"
 
 
@@ -43,14 +43,14 @@ namespace
 
 namespace gr
 {
-	AccelerationStructuresGraphicsSystem::AccelerationStructuresGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+	SceneAccelerationStructureGraphicsSystem::SceneAccelerationStructureGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
 	{
 	}
 
 
-	AccelerationStructuresGraphicsSystem::~AccelerationStructuresGraphicsSystem()
+	SceneAccelerationStructureGraphicsSystem::~SceneAccelerationStructureGraphicsSystem()
 	{
 		if (m_sceneTLAS)
 		{
@@ -63,7 +63,7 @@ namespace gr
 	}
 
 
-	void AccelerationStructuresGraphicsSystem::InitPipeline(
+	void SceneAccelerationStructureGraphicsSystem::InitPipeline(
 		re::StagePipeline& pipeline,
 		TextureDependencies const&, 
 		BufferDependencies const&, 
@@ -78,19 +78,19 @@ namespace gr
 	}
 
 
-	void AccelerationStructuresGraphicsSystem::RegisterInputs()
+	void SceneAccelerationStructureGraphicsSystem::RegisterInputs()
 	{
 		RegisterDataInput(k_animatedVertexStreamsInput);
 	}
 
 
-	void AccelerationStructuresGraphicsSystem::RegisterOutputs()
+	void SceneAccelerationStructureGraphicsSystem::RegisterOutputs()
 	{
 		RegisterDataOutput(k_sceneTLASOutput, &m_sceneTLAS);
 	}
 
 
-	void AccelerationStructuresGraphicsSystem::PreRender()
+	void SceneAccelerationStructureGraphicsSystem::PreRender()
 	{
 		// Update the acceleration structure, if required:
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
@@ -371,7 +371,7 @@ namespace gr
 	}
 
 
-	void AccelerationStructuresGraphicsSystem::ShowImGuiWindow()
+	void SceneAccelerationStructureGraphicsSystem::ShowImGuiWindow()
 	{
 		ImGui::Text(std::format("BLAS Count: {}", m_meshConceptToBLAS.size()).c_str());
 	}

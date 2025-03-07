@@ -10,19 +10,19 @@ namespace re
 
 namespace gr
 {
-	class AccelerationStructuresGraphicsSystem final
+	class SceneAccelerationStructureGraphicsSystem final
 		: public virtual GraphicsSystem
-		, public virtual IScriptableGraphicsSystem<AccelerationStructuresGraphicsSystem>
+		, public virtual IScriptableGraphicsSystem<SceneAccelerationStructureGraphicsSystem>
 	{
 	public:
-		static constexpr char const* GetScriptName() { return "AccelerationStructures"; }
+		static constexpr char const* GetScriptName() { return "SceneAccelerationStructure"; }
 
 		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
 		{
 			RETURN_RUNTIME_BINDINGS
 			(
-				INIT_PIPELINE(INIT_PIPELINE_FN(AccelerationStructuresGraphicsSystem, InitPipeline))
-				PRE_RENDER(PRE_RENDER_FN(AccelerationStructuresGraphicsSystem, PreRender))
+				INIT_PIPELINE(INIT_PIPELINE_FN(SceneAccelerationStructureGraphicsSystem, InitPipeline))
+				PRE_RENDER(PRE_RENDER_FN(SceneAccelerationStructureGraphicsSystem, PreRender))
 			);
 		}
 
@@ -34,8 +34,8 @@ namespace gr
 
 
 	public:
-		AccelerationStructuresGraphicsSystem(gr::GraphicsSystemManager*);
-		~AccelerationStructuresGraphicsSystem();
+		SceneAccelerationStructureGraphicsSystem(gr::GraphicsSystemManager*);
+		~SceneAccelerationStructureGraphicsSystem();
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();

@@ -149,7 +149,7 @@
     <ClInclude Include="GraphicsSystem.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystemCommon.h" />
-    <ClInclude Include="GraphicsSystem_AccelerationStructures.h" />
+    <ClInclude Include="GraphicsSystem_SceneAccelerationStructure.h" />
     <ClInclude Include="GraphicsSystem_BatchManager.h" />
     <ClInclude Include="GraphicsSystem_Bloom.h" />
     <ClInclude Include="GraphicsSystem_ComputeMips.h" />
@@ -272,7 +272,7 @@
     <ClCompile Include="GraphicsSystem.cpp" />
     <ClCompile Include="GraphicsSystemCommon.cpp" />
     <ClCompile Include="GraphicsSystemManager.cpp" />
-    <ClCompile Include="GraphicsSystem_AccelerationStructures.cpp" />
+    <ClCompile Include="GraphicsSystem_SceneAccelerationStructure.cpp" />
     <ClCompile Include="GraphicsSystem_BatchManager.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />

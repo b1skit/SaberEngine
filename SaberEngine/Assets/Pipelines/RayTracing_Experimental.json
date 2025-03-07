@@ -23,7 +23,7 @@
 			]
 		},
 		{
-			"GraphicsSystem": "AccelerationStructures",
+			"GraphicsSystem": "SceneAccelerationStructure",
 			"Inputs": [
 				{
 					"GraphicsSystem": "VertexAnimation",
@@ -84,7 +84,7 @@
 			"GraphicsSystem": "RayTracing_Experimental",
 			"Inputs": [
 				{
-					"GraphicsSystem": "AccelerationStructures",
+					"GraphicsSystem": "SceneAccelerationStructure",
 					"DataDependencies": [
 						{
 							"SourceName": "SceneTLAS",
