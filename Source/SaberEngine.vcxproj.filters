@@ -334,12 +334,6 @@
     <None Include="Shaders\HLSL\GenerateIBL_VShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
     </None>
-    <None Include="Shaders\HLSL\GenerateMips_1D_CShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </None>
-    <None Include="Shaders\HLSL\GenerateMips_3D_CShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </None>
     <None Include="Shaders\HLSL\GenerateMips_CShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
     </None>

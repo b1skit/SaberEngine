@@ -27,8 +27,9 @@
 		"Techniques": [
 			{
 				"Name": "Generate1DMips",
-				"CShader": "GenerateMips_1D_CShader",
+				"CShader": "GenerateMips_CShader",
 				"CShaderEntryPoint" :  "CShader",
+				"CShaderDefines": ["GENERATE_1D_MIPS"],
 				"ExcludedPlatforms": [ "OpenGL" ]
 			},
 			{
@@ -39,8 +40,9 @@
 			},
 			{
 				"Name": "Generate3DMips",
-				"CShader": "GenerateMips_3D_CShader",
+				"CShader": "GenerateMips_CShader",
 				"CShaderEntryPoint" :  "CShader",
+				"CShaderDefines": ["GENERATE_3D_MIPS"],
 				"ExcludedPlatforms": [ "OpenGL" ]
 			}
 		]
