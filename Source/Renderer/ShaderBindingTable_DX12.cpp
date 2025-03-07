@@ -824,81 +824,113 @@ namespace dx12
 	}
 
 
-	void ShaderBindingTable::SetRWTextureOnLocalRoots(
+	void ShaderBindingTable::SetTexturesOnLocalRoots(
 		re::ShaderBindingTable const& sbt,
-		re::RWTextureInput const& rwTexInput,
+		std::vector<re::TextureAndSamplerInput> const& texInputs,
+		dx12::CommandList* cmdList,
 		dx12::GPUDescriptorHeap* gpuDescHeap,
 		uint64_t currentFrameNum)
 	{
 		dx12::ShaderBindingTable::PlatformParams const* sbtPlatParams =
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
 
-		auto SetData = [&rwTexInput, gpuDescHeap]
-			(uint8_t* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
-			{
-				switch (rootParam->m_type)
+		// Batch our resource transitions into a single call:
+		std::vector<dx12::CommandList::TransitionMetadata> resourceTransitions;
+		resourceTransitions.reserve(texInputs.size());
+
+		for (auto const& texInput : texInputs)
+		{
+			auto SetData = [&texInput, &resourceTransitions, cmdList, gpuDescHeap]
+				(uint8_t* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
 				{
-				case dx12::RootSignature::RootParameter::Type::Constant:
-				case dx12::RootSignature::RootParameter::Type::CBV:
-				case dx12::RootSignature::RootParameter::Type::SRV:
-				case dx12::RootSignature::RootParameter::Type::UAV:
-				{
-					SEAssertF("Trying to set a RWTexture to an unexpected root signature parameter type");
-				}
-				break;
-				case dx12::RootSignature::RootParameter::Type::DescriptorTable:
-				{
-					SEAssert(rootParam->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV,
-						"Trying to set a UAV on a descriptor table entry for a different type");
+					SEAssert(rootParam->m_type == RootSignature::RootParameter::Type::DescriptorTable,
+						"We currently assume all textures belong to descriptor tables");
 
-					D3D12_CPU_DESCRIPTOR_HANDLE const& texUAV = 
-						dx12::Texture::GetUAV(rwTexInput.m_texture, rwTexInput.m_textureView);
+					D3D12_CPU_DESCRIPTOR_HANDLE texDescriptor{};
+					switch (rootParam->m_tableEntry.m_type)
+					{
+					case dx12::RootSignature::DescriptorType::SRV:
+					{
+						texDescriptor = dx12::Texture::GetSRV(texInput.m_texture, texInput.m_textureView);
+					}
+					break;
+					case dx12::RootSignature::DescriptorType::UAV:
+					{
+						texDescriptor = dx12::Texture::GetUAV(texInput.m_texture, texInput.m_textureView);
+					}
+					break;
+					default: SEAssertF("Invalid descriptor range type for a texture");
+					}
 
-					D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTexUAV = gpuDescHeap->CommitToGPUVisibleHeap({ texUAV });
+					D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTexDescriptor = 
+						gpuDescHeap->CommitToGPUVisibleHeap({ texDescriptor });
 
-					memcpy(dst, &gpuVisibleTexUAV, dstByteSize);
-				}
-				break;
-				default: SEAssertF("Invalid descriptor type");
-				}
-			};
+					memcpy(dst, &gpuVisibleTexDescriptor, dstByteSize);
 
-		WriteSBTElement(
-			sbtPlatParams->m_SBT.get(),
-			SetData,
-			rwTexInput.m_shaderName,
-			sbt.m_rayGenShaders,
-			sbtPlatParams->m_rayGenRegionBaseOffset,
-			sbtPlatParams->m_rayGenRegionByteStride,
-			sbtPlatParams->m_frameRegionByteSize,
-			currentFrameNum,
-			sbtPlatParams->m_numFramesInFlight);
+					// Record a resource transition:
+					dx12::Texture::PlatformParams const* texPlatParams = 
+						texInput.m_texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
-		WriteSBTElement(
-			sbtPlatParams->m_SBT.get(),
-			SetData,
-			rwTexInput.m_shaderName,
-			sbt.m_missShaders,
-			sbtPlatParams->m_missRegionBaseOffset,
-			sbtPlatParams->m_missRegionByteStride,
-			sbtPlatParams->m_frameRegionByteSize,
-			currentFrameNum,
-			sbtPlatParams->m_numFramesInFlight);
+					resourceTransitions.emplace_back(dx12::CommandList::TransitionMetadata{
+							.m_resource = texPlatParams->m_gpuResource->Get(),
+							.m_toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+							.m_subresourceIndexes = re::TextureView::GetSubresourceIndexes(
+								texInput.m_texture, texInput.m_textureView),
+						});
+				};
 
-		WriteSBTElement(
-			sbtPlatParams->m_SBT.get(),
-			SetData,
-			rwTexInput.m_shaderName,
-			sbt.m_hitGroupNamesAndShaders | std::views::transform(
-				[](auto const& hitGroupNamesAndShader) -> core::InvPtr<re::Shader> const&
-				{
-					return hitGroupNamesAndShader.second;
-				}),
-			sbtPlatParams->m_hitGroupRegionBaseOffset,
-			sbtPlatParams->m_hitGroupRegionByteStride,
-			sbtPlatParams->m_frameRegionByteSize,
-			currentFrameNum,
-			sbtPlatParams->m_numFramesInFlight);
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				texInput.m_shaderName,
+				sbt.m_rayGenShaders,
+				sbtPlatParams->m_rayGenRegionBaseOffset,
+				sbtPlatParams->m_rayGenRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				texInput.m_shaderName,
+				sbt.m_missShaders,
+				sbtPlatParams->m_missRegionBaseOffset,
+				sbtPlatParams->m_missRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				texInput.m_shaderName,
+				sbt.m_hitGroupNamesAndShaders | std::views::transform(
+					[](auto const& hitGroupNamesAndShader) -> core::InvPtr<re::Shader> const&
+					{
+						return hitGroupNamesAndShader.second;
+					}),
+				sbtPlatParams->m_hitGroupRegionBaseOffset,
+				sbtPlatParams->m_hitGroupRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				texInput.m_shaderName,
+				sbt.m_callableShaders,
+				sbtPlatParams->m_callableRegionBaseOffset,
+				sbtPlatParams->m_callableRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
+		}
+
+		// Finally, record the resource transitions:
+		cmdList->TransitionResources(std::move(resourceTransitions));
 	}
 
 
@@ -1099,10 +1131,97 @@ namespace dx12
 				sbtPlatParams->m_frameRegionByteSize,
 				currentFrameNum,
 				sbtPlatParams->m_numFramesInFlight);
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				bufferInput.GetShaderName(),
+				sbt.m_callableShaders,
+				sbtPlatParams->m_callableRegionBaseOffset,
+				sbtPlatParams->m_callableRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
 		}
 
 		// Finally, record the resource transitions:
 		cmdList->TransitionResources(std::move(resourceTransitions));
+	}
+
+
+	void ShaderBindingTable::SetRWTextureOnLocalRoots(
+		re::ShaderBindingTable const& sbt,
+		re::RWTextureInput const& rwTexInput,
+		dx12::GPUDescriptorHeap* gpuDescHeap,
+		uint64_t currentFrameNum)
+	{
+		dx12::ShaderBindingTable::PlatformParams const* sbtPlatParams =
+			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
+
+		auto SetData = [&rwTexInput, gpuDescHeap]
+			(uint8_t* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
+			{
+				SEAssert(rootParam->m_type == RootSignature::RootParameter::Type::DescriptorTable,
+					"We currently assume all textures belong to descriptor tables");
+
+				SEAssert(rootParam->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV,
+					"Trying to set a UAV on a descriptor table entry for a different type");
+
+				D3D12_CPU_DESCRIPTOR_HANDLE const& texUAV =
+					dx12::Texture::GetUAV(rwTexInput.m_texture, rwTexInput.m_textureView);
+
+				D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTexUAV = gpuDescHeap->CommitToGPUVisibleHeap({ texUAV });
+
+				memcpy(dst, &gpuVisibleTexUAV, dstByteSize);
+			};
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				rwTexInput.m_shaderName,
+				sbt.m_rayGenShaders,
+				sbtPlatParams->m_rayGenRegionBaseOffset,
+				sbtPlatParams->m_rayGenRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				rwTexInput.m_shaderName,
+				sbt.m_missShaders,
+				sbtPlatParams->m_missRegionBaseOffset,
+				sbtPlatParams->m_missRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				rwTexInput.m_shaderName,
+				sbt.m_hitGroupNamesAndShaders | std::views::transform(
+					[](auto const& hitGroupNamesAndShader) -> core::InvPtr<re::Shader> const&
+					{
+						return hitGroupNamesAndShader.second;
+					}),
+				sbtPlatParams->m_hitGroupRegionBaseOffset,
+				sbtPlatParams->m_hitGroupRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				rwTexInput.m_shaderName,
+				sbt.m_callableShaders,
+				sbtPlatParams->m_callableRegionBaseOffset,
+				sbtPlatParams->m_callableRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
 	}
 
 

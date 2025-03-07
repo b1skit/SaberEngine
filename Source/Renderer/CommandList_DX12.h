@@ -92,7 +92,6 @@ namespace dx12
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
-		void SetTexture(re::TextureAndSamplerInput const&, bool skipTransition); // Note: Sampler is not used here
 		void SetRenderTargets(re::TextureTargetSet const&);
 		
 		void ClearColorTargets(
@@ -121,11 +120,14 @@ namespace dx12
 		void SetViewport(re::TextureTargetSet const&) const;
 		void SetScissorRect(re::TextureTargetSet const&) const;
 
+		void SetTextures(std::vector<re::TextureAndSamplerInput> const&, int depthTargetTexInputIdx = -1);
+		void SetTextures(std::vector<re::TextureAndSamplerInput> const&, re::ShaderBindingTable const&);
+
 		void SetBuffers(std::vector<re::BufferInput> const&);
 		void SetBuffers(std::vector<re::BufferInput> const&, re::ShaderBindingTable const&);
 
 		void SetRWTextures(std::vector<re::RWTextureInput> const&);
-		void SetRWTextures(re::ShaderBindingTable const&, std::vector<re::RWTextureInput> const&);
+		void SetRWTextures(std::vector<re::RWTextureInput> const&, re::ShaderBindingTable const&);
 
 		void BuildRaytracingAccelerationStructure(re::AccelerationStructure&, bool doUpdate);
 

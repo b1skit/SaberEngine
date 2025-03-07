@@ -13,6 +13,7 @@ namespace re
 	struct ASInput;
 	class BufferInput;
 	struct RWTextureInput;
+	struct re::TextureAndSamplerInput;
 }
 
 namespace dx12
@@ -65,12 +66,29 @@ namespace dx12
 
 
 	public: // DX12-specific functionality (to be called from dx12::CommandList)
-		static void SetTLASOnLocalRoots(re::ShaderBindingTable const&, re::ASInput const&, dx12::GPUDescriptorHeap*, uint64_t currentFrameNum);
-		static void SetRWTextureOnLocalRoots(re::ShaderBindingTable const&, re::RWTextureInput const&, dx12::GPUDescriptorHeap*, uint64_t currentFrameNum);
+		static void SetTLASOnLocalRoots(
+			re::ShaderBindingTable const&,
+			re::ASInput const&,
+			dx12::GPUDescriptorHeap*,
+			uint64_t currentFrameNum);
+
+		static void SetTexturesOnLocalRoots(
+			re::ShaderBindingTable const&,
+			std::vector<re::TextureAndSamplerInput> const&,
+			dx12::CommandList*,
+			dx12::GPUDescriptorHeap*,
+			uint64_t currentFrameNum);
+		
 		static void SetBuffersOnLocalRoots(
 			re::ShaderBindingTable const&, 
 			std::vector<re::BufferInput> const&,
 			dx12::CommandList*,
+			dx12::GPUDescriptorHeap*,
+			uint64_t currentFrameNum);
+
+		static void SetRWTextureOnLocalRoots(
+			re::ShaderBindingTable const&,
+			re::RWTextureInput const&,
 			dx12::GPUDescriptorHeap*,
 			uint64_t currentFrameNum);
 

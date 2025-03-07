@@ -310,15 +310,15 @@ namespace dx12
 			dx12::Buffer::PlatformParams* bufferPlatParams =
 				buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-			RootSignature::RootParameter const* rootSigEntry =
+			RootSignature::RootParameter const* rootParam =
 				m_currentRootSignature->GetRootSignatureEntry(bufferInput.GetShaderName());
-			SEAssert(rootSigEntry ||
+			SEAssert(rootParam ||
 				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");
 
-			if (rootSigEntry)
+			if (rootParam)
 			{
-				const uint32_t rootSigIdx = rootSigEntry->m_index;
+				const uint32_t rootSigIdx = rootParam->m_index;
 
 				bool transitionResource = false;
 				D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_COMMON; // Updated below
@@ -328,7 +328,7 @@ namespace dx12
 				// Don't transition resources representing shared heaps
 				const bool isInSharedHeap = bufferParams.m_lifetime == re::Lifetime::SingleFrame;
 
-				switch (rootSigEntry->m_type)
+				switch (rootParam->m_type)
 				{
 				case RootSignature::RootParameter::Type::Constant:
 				{
@@ -339,7 +339,7 @@ namespace dx12
 				{
 					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
 						"Buffer is missing the Constant usage bit");
-					SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
+					SEAssert(rootParam->m_type == RootSignature::RootParameter::Type::CBV,
 						"Unexpected root signature type");
 					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
 						!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
@@ -392,7 +392,7 @@ namespace dx12
 				break;
 				case RootSignature::RootParameter::Type::DescriptorTable:
 				{
-					switch (rootSigEntry->m_tableEntry.m_type)
+					switch (rootParam->m_tableEntry.m_type)
 					{
 					case dx12::RootSignature::DescriptorType::SRV:
 					{
@@ -405,9 +405,9 @@ namespace dx12
 						re::BufferView const& bufView = bufferInput.GetView();
 
 						m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
-							rootSigEntry->m_index,
+							rootParam->m_index,
 							dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView),
-							rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
+							rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
 							1);
 
 						toState = (m_type == dx12::CommandListType::Compute ?
@@ -426,9 +426,9 @@ namespace dx12
 						re::BufferView const& bufView = bufferInput.GetView();
 
 						m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
-							rootSigEntry->m_index,
+							rootParam->m_index,
 							dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufferInput.GetView()),
-							rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
+							rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
 							1);
 
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -446,9 +446,9 @@ namespace dx12
 						re::BufferView const& bufView = bufferInput.GetView();
 
 						m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
-							rootSigEntry->m_index,
+							rootParam->m_index,
 							dx12::Buffer::GetCBV(bufferInput.GetBuffer(), bufView),
-							rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
+							rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
 							1);
 
 						toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
@@ -933,19 +933,19 @@ namespace dx12
 		{
 			re::RWTextureInput const& rwTexInput = rwTexInputs[i];
 
-			RootSignature::RootParameter const* rootSigEntry =
+			RootSignature::RootParameter const* rootParam =
 				m_currentRootSignature->GetRootSignatureEntry(rwTexInput.m_shaderName);
 
-			SEAssert(rootSigEntry ||
+			SEAssert(rootParam ||
 				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");
 
-			if (rootSigEntry)
+			if (rootParam)
 			{
-				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable,
+				SEAssert(rootParam->m_type == RootSignature::RootParameter::Type::DescriptorTable,
 					"We currently assume all textures belong to descriptor tables");
 
-				SEAssert(rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV,
+				SEAssert(rootParam->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV,
 					"RW textures must be UAVs");
 
 				core::InvPtr<re::Texture> const& rwTex = rwTexInput.m_texture;
@@ -955,9 +955,9 @@ namespace dx12
 					"Unexpected texture usage for a RW texture");
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
-					rootSigEntry->m_index,
+					rootParam->m_index,
 					dx12::Texture::GetUAV(rwTex, rwTexInput.m_textureView),
-					rootSigEntry->m_tableEntry.m_offset,
+					rootParam->m_tableEntry.m_offset,
 					1);
 
 				dx12::Texture::PlatformParams const* texPlatParams =
@@ -1105,7 +1105,7 @@ namespace dx12
 
 
 	void CommandList::SetRWTextures(
-		re::ShaderBindingTable const& sbt, std::vector<re::RWTextureInput> const& rwTexInputs)
+		std::vector<re::RWTextureInput> const& rwTexInputs, re::ShaderBindingTable const& sbt)
 	{
 		// Batch our resource transitions together:
 		std::vector<TransitionMetadata> resourceTransitions;
@@ -1244,71 +1244,97 @@ namespace dx12
 	}
 
 
-	void CommandList::SetTexture(re::TextureAndSamplerInput const& texSamplerInput, bool skipTransition)
+	void CommandList::SetTextures(
+		std::vector<re::TextureAndSamplerInput> const& texInputs, int depthTargetTexInputIdx /*= -1*/)
 	{
 		SEAssert(m_currentPSO, "Pipeline is not currently set");
 
-		core::InvPtr<re::Texture> const& texture = texSamplerInput.m_texture;
+		SEAssert(m_d3dType == D3D12_COMMAND_LIST_TYPE_COMPUTE ||
+			m_d3dType == D3D12_COMMAND_LIST_TYPE_DIRECT,
+			"Unexpected command list type");
 
-		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+		// Batch our resource transitions into a single call:
+		std::vector<TransitionMetadata> resourceTransitions;
+		resourceTransitions.reserve(texInputs.size());
 
-		dx12::Texture::PlatformParams const* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
-
-		RootSignature::RootParameter const* rootSigEntry =
-			m_currentRootSignature->GetRootSignatureEntry(texSamplerInput.m_shaderName);
-		SEAssert(rootSigEntry ||
-			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
-			"Invalid root signature entry");
-
-		if (rootSigEntry)
+		for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
 		{
-			SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable,
-				"We currently assume all textures belong to descriptor tables");
+			re::TextureAndSamplerInput const& texSamplerInput = texInputs[texIdx];
 
-			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+			RootSignature::RootParameter const* rootParam =
+				m_currentRootSignature->GetRootSignatureEntry(texSamplerInput.m_shaderName);
+			SEAssert(rootParam ||
+				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+				"Invalid root signature entry");
 
-			D3D12_CPU_DESCRIPTOR_HANDLE descriptor{};
-
-			switch (rootSigEntry->m_tableEntry.m_type)
+			if (rootParam)
 			{
-			case dx12::RootSignature::DescriptorType::SRV:
-			{
-				SEAssert(m_d3dType == D3D12_COMMAND_LIST_TYPE_COMPUTE || m_d3dType == D3D12_COMMAND_LIST_TYPE_DIRECT,
-					"Unexpected command list type");
+				SEAssert(rootParam->m_type == RootSignature::RootParameter::Type::DescriptorTable,
+					"We currently assume all textures belong to descriptor tables");
 
-				if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE)
+				core::InvPtr<re::Texture> const& texture = texSamplerInput.m_texture;
+
+				D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+				D3D12_CPU_DESCRIPTOR_HANDLE descriptor{};
+
+				switch (rootParam->m_tableEntry.m_type)
 				{
-					toState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+				case dx12::RootSignature::DescriptorType::SRV:
+				{
+					if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE)
+					{
+						toState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+					}
+
+					descriptor = dx12::Texture::GetSRV(texture, texSamplerInput.m_textureView);
+				}
+				break;
+				case dx12::RootSignature::DescriptorType::UAV:
+				{
+					descriptor = dx12::Texture::GetUAV(texture, texSamplerInput.m_textureView);
+				}
+				break;
+				default: SEAssertF("Invalid descriptor range type for a texture");
 				}
 
-				descriptor = dx12::Texture::GetSRV(texture, texSamplerInput.m_textureView);				
-			}
-			break;
-			case dx12::RootSignature::DescriptorType::UAV:
-			{
-				descriptor = dx12::Texture::GetUAV(texture, texSamplerInput.m_textureView);
+				// If the depth target is read-only, and we've also used it as an input to a stage, we skip the resource
+				// transition (it's handled when binding the depth target as read only)
+				const bool skipTransition = (texIdx == depthTargetTexInputIdx);
+				if (!skipTransition)
+				{
+					dx12::Texture::PlatformParams const* texPlatParams =
+						texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
-				SEAssertF("TODO: Support/test setting UAVs as a texture input (need to handle UAV barriers?)");
-			}
-			break;
-			default:
-				SEAssertF("Invalid range type");
-			}
+					resourceTransitions.emplace_back(TransitionMetadata{
+						.m_resource = texPlatParams->m_gpuResource->Get(),
+						.m_toState = toState,
+						.m_subresourceIndexes = re::TextureView::GetSubresourceIndexes(
+							texture, texSamplerInput.m_textureView)
+						});
+				}
 
-			// If a depth resource is used as both an input and target, we'll record the (read only) transition when
-			// setting the target
-			if (!skipTransition)
-			{
-				TransitionResource(texture, toState, texSamplerInput.m_textureView);
+				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
+					rootParam->m_index,
+					descriptor,
+					rootParam->m_tableEntry.m_offset,
+					1);
 			}
-
-			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
-				rootSigEntry->m_index,
-				descriptor,
-				rootSigEntry->m_tableEntry.m_offset,
-				1);
 		}
+
+		// Finally, submit all of our resource transitions in a single batch
+		TransitionResourcesInternal(std::move(resourceTransitions));
+	}
+
+
+	void CommandList::SetTextures(
+		std::vector<re::TextureAndSamplerInput> const& texSamplerInputs, re::ShaderBindingTable const& sbt)
+	{
+		dx12::ShaderBindingTable::SetTexturesOnLocalRoots(
+			sbt,
+			texSamplerInputs,
+			this,
+			m_gpuCbvSrvUavDescriptorHeaps.get(),
+			re::RenderManager::Get()->GetCurrentRenderFrameNum());
 	}
 
 

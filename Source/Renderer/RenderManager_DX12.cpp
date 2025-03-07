@@ -382,22 +382,8 @@ namespace dx12
 						{
 							const int depthTargetTexInputIdx = stage->GetDepthTargetTextureInputIdx();
 
-							auto SetStageTextureInputs = [&commandList, depthTargetTexInputIdx]
-							(std::vector<re::TextureAndSamplerInput> const& texInputs)
-								{
-									for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
-									{
-										// If the depth target is read-only, and we've also used it as an input to the
-										// stage, we skip the resource transition (it's handled when binding the depth
-										// target as read only)
-										const bool skipTransition = (texIdx == depthTargetTexInputIdx);
-
-										commandList->SetTexture(texInputs[texIdx], skipTransition);
-										// Note: Static samplers have already been set during root signature creation
-									}
-								};
-							SetStageTextureInputs(stage->GetPermanentTextureInputs());
-							SetStageTextureInputs(stage->GetSingleFrameTextureInputs());
+							commandList->SetTextures(stage->GetPermanentTextureInputs(), depthTargetTexInputIdx);
+							commandList->SetTextures(stage->GetSingleFrameTextureInputs(), depthTargetTexInputIdx);
 
 							commandList->SetRWTextures(stage->GetPermanentRWTextureInputs());
 							commandList->SetRWTextures(stage->GetSingleFrameRWTextureInputs());
@@ -613,16 +599,16 @@ namespace dx12
 									cmdList->SetTLAS(batchRTParams.m_ASInput, *batchRTParams.m_shaderBindingTable);
 
 									cmdList->SetRWTextures(
-										*batchRTParams.m_shaderBindingTable,
-										(*stageItr)->GetPermanentRWTextureInputs());
+										(*stageItr)->GetPermanentRWTextureInputs(),
+										*batchRTParams.m_shaderBindingTable);
 									
 									cmdList->SetRWTextures(
-										*batchRTParams.m_shaderBindingTable,
-										(*stageItr)->GetSingleFrameRWTextureInputs());
+										(*stageItr)->GetSingleFrameRWTextureInputs(),
+										*batchRTParams.m_shaderBindingTable);
 
 									cmdList->SetRWTextures(
-										*batchRTParams.m_shaderBindingTable,
-										batch.GetRWTextureInputs());
+										batch.GetRWTextureInputs(),
+										*batchRTParams.m_shaderBindingTable);
 									
 									cmdList->SetBuffers(
 										(*stageItr)->GetPermanentBuffers(),
@@ -690,16 +676,16 @@ namespace dx12
 								cmdList->SetBuffers(batches[batchIdx].GetBuffers());
 
 								// Batch Texture / Sampler inputs :
+#if defined (_DEBUG)
 								for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 								{
 									SEAssert(!stageTargets->HasDepthTarget() ||
 										texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget().GetTexture(),
 										"We don't currently handle batches with the current depth buffer attached as "
 										"a texture input. We need to make sure skipping transitions is handled correctly here");
-
-									cmdList->SetTexture(texSamplerInput, false);
-									// Note: Static samplers have already been set during root signature creation
 								}
+#endif
+								cmdList->SetTextures(batches[batchIdx].GetTextureAndSamplerInputs());
 
 								// Batch compute inputs:
 								cmdList->SetRWTextures(batches[batchIdx].GetRWTextureInputs());
