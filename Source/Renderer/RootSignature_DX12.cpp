@@ -774,10 +774,7 @@ namespace dx12
 			const uint8_t rootIdx = util::CheckedCast<uint8_t>(rootParameters.size());
 			rootParameters.emplace_back();
 
-			// Create a new descriptor table record, and populate the metadata as we go:
-			DescriptorTable& newDescriptorTable = newRootSig->m_descriptorTables.emplace_back();
-			newDescriptorTable.m_index = rootIdx;
-			
+	
 			uint32_t totalRangeDescriptors = 0; // How many descriptors in the entire range
 
 			// Walk through the sorted descriptors, and build ranges from contiguous blocks:
@@ -816,12 +813,12 @@ namespace dx12
 				// Initialize the descriptor range:
 				const D3D12_DESCRIPTOR_RANGE_TYPE d3dRangeType = GetD3DRangeType(rangeType);
 				
-				tableRanges[rangeTypeIdx].emplace_back();
+				CD3DX12_DESCRIPTOR_RANGE1& newD3DDescriptorRange = tableRanges[rangeTypeIdx].emplace_back();
 
 				const uint32_t baseRegister = rangeInputs[rangeTypeIdx][rangeStart].BindPoint;
 				const uint32_t registerSpace = rangeInputs[rangeTypeIdx][rangeStart].Space;		
 
-				tableRanges[rangeTypeIdx].back().Init(
+				newD3DDescriptorRange.Init(
 					d3dRangeType,
 					numDescriptors,
 					baseRegister,
@@ -829,11 +826,12 @@ namespace dx12
 					D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); //  TODO: Is this flag appropriate?
 
 				// Populate the descriptor metadata:
+				DescriptorTable* newDescriptorTable = nullptr;
 				uint8_t baseRegisterOffset = 0; // We are processing contiguous ranges of registers only
 				for (size_t rangeIdx = rangeStart; rangeIdx < rangeEnd; rangeIdx++)
 				{
-					// Populate the binding metadata for our individual descriptor table entries:
-					RootParameter rootParameter = RootParameter{
+					// Create the binding metadata for our individual RootParameter descriptor table entries:
+					RootParameter rootParameter{
 						.m_index = rootIdx,
 						.m_type = RootParameter::Type::DescriptorTable,
 						.m_registerBindPoint = util::CheckedCast<uint8_t>(baseRegister + baseRegisterOffset++),
@@ -843,6 +841,22 @@ namespace dx12
 							.m_offset = util::CheckedCast<uint8_t>(rangeIdx),
 						}
 					};
+
+					// Create the binding metadata for contiguous descriptor ranges within DescriptorTables:
+					bool isNewRange = false;
+					if (rangeIdx == rangeStart ||
+						rangeInputs[rangeTypeIdx][rangeIdx].ReturnType != rangeInputs[rangeTypeIdx][rangeStart].ReturnType ||
+						rangeInputs[rangeTypeIdx][rangeIdx].Dimension != rangeInputs[rangeTypeIdx][rangeStart].Dimension)
+					{
+						newDescriptorTable = &newRootSig->m_descriptorTables.emplace_back();
+						newDescriptorTable->m_index = rootIdx;
+
+						isNewRange = true;
+					}
+					else
+					{
+						newDescriptorTable->m_ranges[rangeType].back().m_bindCount++;
+					}
 
 					// Populate the descriptor table metadata:
 					switch (rangeType)
@@ -854,12 +868,15 @@ namespace dx12
 
 						rootParameter.m_tableEntry.m_srvViewDimension = d3d12SrvDimension;
 
-						newDescriptorTable.m_ranges[DescriptorType::SRV].emplace_back(RangeEntry{
-							.m_bindCount = rangeInputs[rangeTypeIdx][rangeIdx].BindCount,
-							.m_srvDesc = {
-								.m_format = GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].ReturnType),
-								.m_viewDimension = d3d12SrvDimension,}
-							});
+						if (isNewRange)
+						{
+							newDescriptorTable->m_ranges[DescriptorType::SRV].emplace_back(RangeEntry{
+								.m_bindCount = 1, // We'll increment this in subsequent iterations
+								.m_srvDesc = {
+									.m_format = GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].ReturnType),
+									.m_viewDimension = d3d12SrvDimension,}
+								});
+						}
 					}
 					break;
 					case DescriptorType::UAV:
@@ -869,19 +886,25 @@ namespace dx12
 
 						rootParameter.m_tableEntry.m_uavViewDimension = d3d12UavDimension;
 
-						newDescriptorTable.m_ranges[DescriptorType::UAV].emplace_back(RangeEntry{
-							.m_bindCount = rangeInputs[rangeTypeIdx][rangeIdx].BindCount,
-							.m_uavDesc = {
-								.m_format = GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].ReturnType),
-								.m_viewDimension = d3d12UavDimension,}
-							});
+						if (isNewRange)
+						{
+							newDescriptorTable->m_ranges[DescriptorType::UAV].emplace_back(RangeEntry{
+								.m_bindCount = 1, // We'll increment this in subsequent iterations
+								.m_uavDesc = {
+									.m_format = GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].ReturnType),
+									.m_viewDimension = d3d12UavDimension,}
+								});
+						}
 					}
 					break;
 					case DescriptorType::CBV:
 					{
-						newDescriptorTable.m_ranges[DescriptorType::CBV].emplace_back(RangeEntry{
-							.m_bindCount = rangeInputs[rangeTypeIdx][rangeIdx].BindCount,
-						});
+						if (isNewRange)
+						{
+							newDescriptorTable->m_ranges[DescriptorType::CBV].emplace_back(RangeEntry{
+								.m_bindCount = 1, // We'll increment this in subsequent iterations
+							});
+						}
 					}
 					break;
 					default:
@@ -957,7 +980,7 @@ namespace dx12
 				"Failed to serialize versioned root signature");
 
 			// Create the root signature:
-			Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
+			ID3D12Device* device = context->GetDevice().GetD3DDevice().Get();
 
 			hr = device->CreateRootSignature(
 				dx12::SysInfo::GetDeviceNodeMask(),

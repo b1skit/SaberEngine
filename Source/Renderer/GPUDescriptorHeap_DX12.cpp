@@ -145,49 +145,51 @@ namespace dx12
 			uint32_t baseOffset = 0;
 			for (size_t rangeType = 0; rangeType < RootSignature::DescriptorType::Type_Count; rangeType++)
 			{
-				for (size_t rangeEntry = 0; rangeEntry < descriptorTable.m_ranges[rangeType].size(); rangeEntry++)
+				for (size_t rangeIdx = 0; rangeIdx < descriptorTable.m_ranges[rangeType].size(); rangeIdx++)
 				{
-					// Set 1 null descriptor per bind count
-					for (uint32_t bindIdx = 0; bindIdx < descriptorTable.m_ranges[rangeType][rangeEntry].m_bindCount; ++bindIdx)
+					dx12::RootSignature::RangeEntry const& rangeEntry = descriptorTable.m_ranges[rangeType][rangeIdx];
+
+					switch (rangeType)
 					{
-						switch (rangeType)
+					case RootSignature::DescriptorType::SRV:
+					{
+						D3D12_CPU_DESCRIPTOR_HANDLE const& nullSRVHandle = context->GetNullSRVDescriptor(
+							rangeEntry.m_srvDesc.m_viewDimension,
+							rangeEntry.m_srvDesc.m_format).GetBaseDescriptor();
+
+						for (uint32_t bindIdx = 0; bindIdx < rangeEntry.m_bindCount; ++bindIdx)
 						{
-						case RootSignature::DescriptorType::SRV:
-						{
-							SetDescriptorTableEntry(
-								descriptorTable.m_index,
-								context->GetNullSRVDescriptor(
-									descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_viewDimension,
-									descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_format).GetBaseDescriptor(),
-								baseOffset + bindIdx,
-								1);
-						}
-						break;
-						case RootSignature::DescriptorType::UAV:
-						{
-							SetDescriptorTableEntry(
-								descriptorTable.m_index,
-								context->GetNullUAVDescriptor(
-									descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_viewDimension,
-									descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_format).GetBaseDescriptor(),
-								baseOffset + bindIdx,
-								1);
-						}
-						break;
-						case RootSignature::DescriptorType::CBV:
-						{
-							SetDescriptorTableEntry(
-								descriptorTable.m_index,
-								context->GetNullCBVDescriptor().GetBaseDescriptor(),
-								baseOffset + bindIdx,
-								1);
-						}
-						break;
-						default: SEAssertF("Invalid range type");
+							SetDescriptorTableEntry(descriptorTable.m_index, nullSRVHandle, baseOffset + bindIdx, 1);
 						}
 					}
+					break;
+					case RootSignature::DescriptorType::UAV:
+					{
+						D3D12_CPU_DESCRIPTOR_HANDLE const& nullUAVHandle = context->GetNullUAVDescriptor(
+							rangeEntry.m_uavDesc.m_viewDimension,
+							rangeEntry.m_uavDesc.m_format).GetBaseDescriptor();
 
-					baseOffset += descriptorTable.m_ranges[rangeType][rangeEntry].m_bindCount;
+						for (uint32_t bindIdx = 0; bindIdx < rangeEntry.m_bindCount; ++bindIdx)
+						{
+							SetDescriptorTableEntry(descriptorTable.m_index, nullUAVHandle, baseOffset + bindIdx, 1);
+						}
+					}
+					break;
+					case RootSignature::DescriptorType::CBV:
+					{
+						D3D12_CPU_DESCRIPTOR_HANDLE const& nullCBVHandle = 
+							context->GetNullCBVDescriptor().GetBaseDescriptor();
+
+						for (uint32_t bindIdx = 0; bindIdx < rangeEntry.m_bindCount; ++bindIdx)
+						{
+							SetDescriptorTableEntry(descriptorTable.m_index, nullCBVHandle, baseOffset + bindIdx, 1);
+						}
+					}
+					break;
+					default: SEAssertF("Invalid range type");
+					}
+
+					baseOffset += rangeEntry.m_bindCount;
 				}
 			}			
 		}
