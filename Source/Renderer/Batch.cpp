@@ -248,7 +248,8 @@ namespace re
 		, m_shaderBindingTable{}
 		, m_dispatchDimensions(0)
 	{
-		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96, "Must update this if RayTracingParams size has changed");
+		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96 || sizeof(Batch::RayTracingParams) == 88,
+			"Must update this if RayTracingParams debug/release size has changed");
 	}
 
 
@@ -276,7 +277,8 @@ namespace re
 		}
 		return *this;
 
-		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96, "Must update this if RayTracingParams size has changed");
+		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96 || sizeof(Batch::RayTracingParams) == 88,
+			"Must update this if RayTracingParams debug/release size has changed");
 	}
 
 
@@ -294,7 +296,8 @@ namespace re
 		}
 		return *this;
 
-		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96, "Must update this if RayTracingParams size has changed");
+		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96 || sizeof(Batch::RayTracingParams) == 88,
+			"Must update this if RayTracingParams debug/release size has changed");
 	}
 
 
@@ -303,7 +306,8 @@ namespace re
 		m_ASInput = {};
 		m_shaderBindingTable = nullptr;
 
-		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96, "Must update this if RayTracingParams size has changed");
+		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96 || sizeof(Batch::RayTracingParams) == 88,
+			"Must update this if RayTracingParams debug/release size has changed");
 	}
 
 
@@ -837,7 +841,8 @@ namespace re
 		break;
 		case BatchType::RayTracing:
 		{
-			SEStaticAssert(sizeof(Batch::RayTracingParams) == 96, "Must update this if RayTracingParams size has changed");
+			SEStaticAssert(sizeof(Batch::RayTracingParams) == 96 || sizeof(Batch::RayTracingParams) == 88,
+				"Must update this if RayTracingParams debug/release size has changed");
 
 			AddDataBytesToHash(m_rayTracingParams.m_operation);
 			AddDataBytesToHash(m_rayTracingParams.m_ASInput.m_shaderName);
