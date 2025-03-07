@@ -27,6 +27,7 @@ namespace
 			if (!drawstyleEntry.contains(key_conditions) ||
 				!drawstyleEntry.contains(key_technique))
 			{
+				std::cout << "Error: Invalid DrawStyles block\n";
 				return droid::ErrorCode::JSONError;
 			}
 
@@ -40,6 +41,7 @@ namespace
 					!condition.contains(key_mode) ||
 					condition.at(key_mode).empty())
 				{
+					std::cout << "Error: Invalid Conditions block\n";
 					return droid::ErrorCode::JSONError;
 				}
 
@@ -255,7 +257,7 @@ namespace droid
 		std::ifstream effectInputStream(effectFilePath);
 		if (!effectInputStream.is_open())
 		{
-			std::cout << "Error: Failed to open effect input stream" << effectFilePath << "\n";
+			std::cout << "Error: Failed to open Effect file at \"" << effectFilePath << "\"\n";
 			return droid::ErrorCode::FileError;
 		}
 		std::cout << "Successfully opened effect file \"" << effectFilePath.c_str() << "\"!\n\n";
@@ -277,23 +279,18 @@ namespace droid
 			{
 				auto const& effectBlock = effectJSON.at(key_effectBlock);
 
+				// "Name":
 				if (!effectBlock.contains(key_name))
 				{
-					result = droid::ErrorCode::JSONError;
+					std::cout << "Error: Effect block has no \"Name\" entry\n";
+					return droid::ErrorCode::JSONError;
 				}
-				if (result != droid::ErrorCode::Success)
-				{
-					return result;
-				}
-
 				std::string const& effectBlockName = effectBlock.at(key_name).template get<std::string>();
 				if (effectBlockName != effectName)
 				{
-					result = droid::ErrorCode::JSONError;
-				}
-				if (result != droid::ErrorCode::Success)
-				{
-					return result;
+					std::cout << "Error: Effect block \"Name\" : \"" << effectBlockName.c_str() << "\" does not match "
+						"extensionless Effect file name \" "<< effectName.c_str() << "\" found in the manifest\n";
+					return droid::ErrorCode::JSONError;
 				}
 
 				// "DrawStyles":
