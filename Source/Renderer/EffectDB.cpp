@@ -427,34 +427,9 @@ namespace
 				{
 					firstShaderType = static_cast<re::Shader::ShaderType>(shaderTypeIdx);
 				}
-				else
-				{
-					SEAssert(re::Shader::IsSamePipelineType(
-						firstShaderType, static_cast<re::Shader::ShaderType>(shaderTypeIdx)),
-						"Technique can only define shaders of the same pipeline type");
-				}
-
-				//const re::Shader::ShaderType shaderType = static_cast<re::Shader::ShaderType>(shaderTypeIdx);
-
-				//std::string entryPoint;
-				/*switch (shaderType)
-				{
-					case re::Shader::ShaderType::Vertex:
-					case re::Shader::ShaderType::Geometry:
-					case re::Shader::ShaderType::Pixel:
-					case re::Shader::ShaderType::Hull:
-					case re::Shader::ShaderType::Domain:
-					case re::Shader::ShaderType::Amplification:
-					case re::Shader::ShaderType::Mesh:
-					case re::Shader::ShaderType::Compute:
-					case re::Shader::ShaderType::HitGroup_Intersection:
-					case re::Shader::ShaderType::HitGroup_AnyHit:
-					case re::Shader::ShaderType::HitGroup_ClosestHit:
-					case re::Shader::ShaderType::Callable:
-					case re::Shader::ShaderType::RayGen:
-					case re::Shader::ShaderType::Miss:
-					default: SEAssertF("Invalid shader type");
-				}*/
+				SEAssert(re::Shader::IsSamePipelineType(
+					firstShaderType, static_cast<re::Shader::ShaderType>(shaderTypeIdx)),
+					"Technique can only define shaders of the same pipeline type");
 
 				shaderMetadata.emplace_back(re::Shader::Metadata{
 					techniqueEntry.at(keys_shaderTypes[shaderTypeIdx]).template get<std::string>(),

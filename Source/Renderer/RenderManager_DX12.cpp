@@ -8,6 +8,7 @@
 #include "RenderSystem.h"
 #include "Sampler_DX12.h"
 #include "Shader_DX12.h"
+#include "ShaderBindingTable_DX12.h"
 #include "Stage.h"
 #include "SwapChain_DX12.h"
 #include "TextureTarget_DX12.h"
@@ -99,7 +100,6 @@ namespace dx12
 				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateTextures));
 			}
 		}
-
 		// Samplers:
 		if (renderManager.m_newSamplers.HasReadData())
 		{
@@ -374,16 +374,8 @@ namespace dx12
 						}
 
 						// Set buffers (Must happen after the root signature is set):
-						for (re::BufferInput const& bufferInput : stage->GetPermanentBuffers())
-						{
-							commandList->SetBuffer(bufferInput);
-						}
-						for (re::BufferInput const& bufferInput : stage->GetPerFrameBuffers())
-						{
-							commandList->SetBuffer(bufferInput);
-						}
-						// TODO: We should pass the whole list of buffers to the command list, to allow resource
-						// transitions to be processed in a single call
+						commandList->SetBuffers(stage->GetPermanentBuffers());
+						commandList->SetBuffers(stage->GetPerFrameBuffers());
 
 						// Set inputs and targets (once) now that the root signature is set
 						if (doSetStageInputsAndTargets)
@@ -583,20 +575,22 @@ namespace dx12
 								re::Batch const& batch = batches[batchIdx];
 
 								re::Batch::RayTracingParams const& batchRTParams = batch.GetRayTracingParams();
-								SEAssert(batchRTParams.m_accelerationStructure, "AccelerationStructure is null");
+								
+								SEAssert(batchRTParams.m_ASInput.m_accelerationStructure,
+									"AccelerationStructure is null");
 
 								switch (batchRTParams.m_operation)
 								{
 								case re::Batch::RayTracingParams::Operation::BuildAS:
 								{
 									cmdList->BuildRaytracingAccelerationStructure(
-										*batchRTParams.m_accelerationStructure, false);
+										*batchRTParams.m_ASInput.m_accelerationStructure, false);
 								}
 								break;
 								case re::Batch::RayTracingParams::Operation::UpdateAS:
 								{
 									cmdList->BuildRaytracingAccelerationStructure(
-										*batchRTParams.m_accelerationStructure, true);
+										*batchRTParams.m_ASInput.m_accelerationStructure, true);
 								}
 								break;
 								case re::Batch::RayTracingParams::Operation::CompactAS:
@@ -606,7 +600,47 @@ namespace dx12
 								break;
 								case re::Batch::RayTracingParams::Operation::DispatchRays:
 								{
-									SEAssertF("TODO: Implement this");
+									SEAssert(!batchRTParams.m_ASInput.m_shaderName.empty(),
+										"Acceleration structure input shader name is empty");
+
+									SEAssert(batchRTParams.m_shaderBindingTable, "ShaderBindingTable is null");
+
+									SEAssert(batchRTParams.m_dispatchDimensions.x > 0 || 
+										batchRTParams.m_dispatchDimensions.y > 0 ||
+										batchRTParams.m_dispatchDimensions.z > 0,
+										"Dispatch dimensions cannot be 0");
+									
+									cmdList->SetTLAS(batchRTParams.m_ASInput, *batchRTParams.m_shaderBindingTable);
+
+									cmdList->SetRWTextures(
+										*batchRTParams.m_shaderBindingTable,
+										(*stageItr)->GetPermanentRWTextureInputs());
+									
+									cmdList->SetRWTextures(
+										*batchRTParams.m_shaderBindingTable,
+										(*stageItr)->GetSingleFrameRWTextureInputs());
+
+									cmdList->SetRWTextures(
+										*batchRTParams.m_shaderBindingTable,
+										batch.GetRWTextureInputs());
+									
+									cmdList->SetBuffers(
+										(*stageItr)->GetPermanentBuffers(),
+										*batchRTParams.m_shaderBindingTable);
+
+									cmdList->SetBuffers(
+										(*stageItr)->GetPerFrameBuffers(),
+										*batchRTParams.m_shaderBindingTable);
+
+									cmdList->SetBuffers(
+										batch.GetBuffers(),
+										*batchRTParams.m_shaderBindingTable);
+
+									// TODO: Set other sorts of resources (e.g. Textures, VertexStreams etc)
+
+									cmdList->DispatchRays(
+										*batchRTParams.m_shaderBindingTable,
+										batchRTParams.m_dispatchDimensions);
 								}
 								break;
 								default: SEAssertF("Invalid ray tracing batch operation type");
@@ -653,11 +687,7 @@ namespace dx12
 								SEAssert(currentShader, "Current shader is null");
 
 								// Batch buffers:
-								std::vector<re::BufferInput> const& batchBuffers = batches[batchIdx].GetBuffers();
-								for (size_t bufferIdx = 0; bufferIdx < batchBuffers.size(); ++bufferIdx)
-								{
-									cmdList->SetBuffer(batchBuffers[bufferIdx]);
-								}
+								cmdList->SetBuffers(batches[batchIdx].GetBuffers());
 
 								// Batch Texture / Sampler inputs :
 								for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())

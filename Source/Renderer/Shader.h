@@ -64,6 +64,7 @@ namespace re
 		static constexpr bool IsMeshShadingType(ShaderType);
 		static constexpr bool IsComputeType(ShaderType);
 		static constexpr bool IsRayTracingType(ShaderType);
+		static constexpr bool IsRayTracingHitGroupType(ShaderType);
 		static constexpr bool IsSamePipelineType(ShaderType, ShaderType);
 
 		enum class PipelineType
@@ -115,6 +116,8 @@ namespace re
 
 		uint8_t GetVertexAttributeSlot(gr::VertexStream::Type, uint8_t semanticIdx) const;
 		re::VertexStreamMap const* GetVertexStreamMap() const;
+
+		std::vector<Metadata> const& GetMetadata() const;
 
 
 	private:
@@ -221,6 +224,19 @@ namespace re
 	}
 
 
+	inline constexpr bool Shader::IsRayTracingHitGroupType(ShaderType shaderType)
+	{
+		switch (shaderType)
+		{
+		case re::Shader::ShaderType::HitGroup_Intersection:
+		case re::Shader::ShaderType::HitGroup_AnyHit:
+		case re::Shader::ShaderType::HitGroup_ClosestHit:
+			return true;
+		default: return false;
+		}
+	}
+
+
 	inline constexpr bool Shader::IsSamePipelineType(ShaderType lhs, ShaderType rhs)
 	{
 		switch (lhs)
@@ -288,5 +304,11 @@ namespace re
 	inline re::VertexStreamMap const* Shader::GetVertexStreamMap() const
 	{
 		return m_vertexStreamMap;
+	}
+
+
+	inline std::vector<Shader::Metadata> const& Shader::GetMetadata() const
+	{
+		return m_metadata;
 	}
 }

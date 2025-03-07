@@ -95,6 +95,20 @@
 			]
 		},
 		{
+			"GraphicsSystem": "Tonemapping",
+			"Inputs": [
+				{
+					"GraphicsSystem": "RayTracing_Experimental",
+					"TextureDependencies": [
+						{
+							"SourceName": "RayTracingTarget",
+							"DestinationName": "TonemappingTarget"
+						}
+					]
+				}
+			]
+		},
+		{
 			"GraphicsSystem": "Debug",
 			"Inputs": [
 				{

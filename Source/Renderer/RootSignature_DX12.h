@@ -61,10 +61,8 @@ namespace dx12
 		};
 		struct DescriptorTable
 		{
-			DescriptorTable() { m_ranges.resize(DescriptorType::Type_Count); }
-			
 			uint8_t m_index = k_invalidRootSigIndex;
-			std::vector<std::vector<RangeEntry>> m_ranges; // A vector of RangeEntry for each DescriptorType
+			std::array<std::vector<RangeEntry>, DescriptorType::Type_Count> m_ranges; // A vector of RangeEntry for each DescriptorType
 		};
 
 
@@ -142,10 +140,11 @@ namespace dx12
 		uint64_t GetRootSigDescHash() const;
 
 		std::vector<RootParameter> const& GetRootSignatureEntries() const;
+		uint32_t GetNumRootSignatureEntries() const;
 
 		RootParameter const* GetRootSignatureEntry(std::string const& resourceName) const;
 
-		std::vector<DescriptorTable> const& GetDescriptorTableMetadata() const;
+		std::vector<DescriptorTable> const& GetDescriptorTableMetadata() const; // E.g. For pre-setting null descriptors
 
 
 	public: // Debug-only helpers:
@@ -192,11 +191,28 @@ namespace dx12
 
 		// Flattened root parameter entries. 1 element per descriptor, regardless of its root/table location
 		std::vector<RootParameter> m_rootParams; 
-
 		std::unordered_map<std::string, size_t> m_namesToRootParamsIdx;
 
 		std::vector<DescriptorTable> m_descriptorTables; // For null descriptor initialization
 	};
+
+
+	inline uint32_t RootSignature::GetDescriptorTableIdxBitmask() const
+	{
+		return m_rootSigDescriptorTableIdxBitmask;
+	}
+
+
+	inline uint32_t RootSignature::GetNumDescriptorsInTable(uint8_t rootIndex) const
+	{
+		return m_numDescriptorsPerTable[rootIndex];
+	}
+
+
+	inline ID3D12RootSignature* RootSignature::GetD3DRootSignature() const
+	{
+		return m_rootSignature.Get();
+	}
 
 
 	inline uint64_t RootSignature::GetRootSigDescHash() const
@@ -208,6 +224,12 @@ namespace dx12
 	inline std::vector<RootSignature::RootParameter> const& RootSignature::GetRootSignatureEntries() const
 	{
 		return m_rootParams;
+	}
+
+
+	inline uint32_t RootSignature::GetNumRootSignatureEntries() const
+	{
+		return util::CheckedCast<uint32_t>(m_rootParams.size());
 	}
 
 

@@ -19,6 +19,7 @@ namespace gr
 
 namespace re
 {
+	struct ASInput;
 	class Buffer;
 	class Texture;
 	class TextureTarget;
@@ -59,6 +60,15 @@ namespace dx12
 
 
 	public:
+		struct TransitionMetadata
+		{
+			ID3D12Resource* m_resource;
+			D3D12_RESOURCE_STATES m_toState;
+			std::vector<uint32_t> m_subresourceIndexes;
+		};
+
+
+	public:
 		CommandList(Microsoft::WRL::ComPtr<ID3D12Device> const&, CommandListType);
 		CommandList(CommandList&&) noexcept = default;
 		CommandList& operator=(CommandList&&) noexcept = default;
@@ -79,19 +89,12 @@ namespace dx12
 		void SetGraphicsRootSignature(dx12::RootSignature const*); // Makes all descriptors stale
 		void SetComputeRootSignature(dx12::RootSignature const*); // Makes all descriptors stale
 
-		void CommitGPUDescriptors(); // GPU descriptors: Must be called before issuing draw commands
-
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
-		void SetBuffer(re::BufferInput const&);
-
 		void SetTexture(re::TextureAndSamplerInput const&, bool skipTransition); // Note: Sampler is not used here
-
 		void SetRenderTargets(re::TextureTargetSet const&);
-
-		void SetRWTextures(std::vector<re::RWTextureInput> const&);
-	
+		
 		void ClearColorTargets(
 			bool const* clearModes,
 			glm::vec4 const* colorClearVals,
@@ -115,14 +118,22 @@ namespace dx12
 			uint8_t stencilClearVal,
 			re::TextureTarget const&);
 
-		void BuildRaytracingAccelerationStructure(re::AccelerationStructure&, bool doUpdate);
-
 		void SetViewport(re::TextureTargetSet const&) const;
 		void SetScissorRect(re::TextureTargetSet const&) const;
+
+		void SetBuffers(std::vector<re::BufferInput> const&);
+		void SetBuffers(std::vector<re::BufferInput> const&, re::ShaderBindingTable const&);
+
+		void SetRWTextures(std::vector<re::RWTextureInput> const&);
+		void SetRWTextures(re::ShaderBindingTable const&, std::vector<re::RWTextureInput> const&);
+
+		void BuildRaytracingAccelerationStructure(re::AccelerationStructure&, bool doUpdate);
+
+		void SetTLAS(re::ASInput const&, re::ShaderBindingTable const&);
 		
 		void DrawBatchGeometry(re::Batch const&);
-
 		void Dispatch(glm::uvec3 const& threadDimensions);
+		void DispatchRays(re::ShaderBindingTable const&, glm::uvec3 const& threadDimensions);
 
 		void UpdateSubresource(
 			core::InvPtr<re::Texture> const&,
@@ -139,6 +150,7 @@ namespace dx12
 		void CopyTexture(core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst);
 
 		void TransitionResource(core::InvPtr<re::Texture> const&, D3D12_RESOURCE_STATES to, re::TextureView const&);
+		void TransitionResources(std::vector<TransitionMetadata>&&);
 
 		void ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers);
 
@@ -151,6 +163,8 @@ namespace dx12
 
 
 	private:
+		void CommitGPUDescriptors(); // GPU descriptors: Must be called before issuing draw commands
+
 		void InsertUAVBarrier(ID3D12Resource*);
 		void InsertUAVBarrier(core::InvPtr<re::Texture> const&);
 
@@ -165,13 +179,7 @@ namespace dx12
 			D3D12_RESOURCE_STATES to,
 			std::vector<uint32_t>&& subresourceIndexes);
 
-		struct TransitionMetadata
-		{
-			ID3D12Resource* m_resource;
-			D3D12_RESOURCE_STATES m_toState;
-			std::vector<uint32_t> m_subresourceIndexes;
-		};
-		void TransitionResourceInternal(std::vector<TransitionMetadata>&&);
+		void TransitionResourcesInternal(std::vector<TransitionMetadata>&&);
 
 
 	private:
@@ -278,6 +286,12 @@ namespace dx12
 			count,			// Num32BitValuesToSet
 			srcData,		// pSrcData
 			dstOffset);
+	}
+
+
+	inline void CommandList::TransitionResources(std::vector<TransitionMetadata>&& resourceTransitions)
+	{
+		TransitionResourcesInternal(std::move(resourceTransitions));
 	}
 
 

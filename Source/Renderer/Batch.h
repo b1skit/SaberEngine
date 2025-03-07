@@ -1,11 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "AccelerationStructure.h"
 #include "BufferView.h"
 #include "Effect.h"
 #include "EnumTypes.h"
 #include "MeshPrimitive.h"
 #include "Sampler.h"
 #include "Shader_Platform.h"
+#include "ShaderBindingTable.h"
 #include "TextureView.h"
 #include "VertexStream.h"
 
@@ -22,7 +24,6 @@ namespace gr
 
 namespace re
 {
-	class AccelerationStructure;
 	class Buffer;
 	class Shader;
 	class Texture;
@@ -69,8 +70,6 @@ namespace re
 			GraphicsParams& operator=(GraphicsParams const&) noexcept;
 			GraphicsParams& operator=(GraphicsParams&&) noexcept;
 			~GraphicsParams();
-
-			// Note: Don't forget to update ComputeDataHash() if modifying this
 			
 			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
 			uint32_t m_numInstances = 0;
@@ -88,14 +87,17 @@ namespace re
 		};
 		struct ComputeParams
 		{
-			// Note: Don't forget to update ComputeDataHash() if modifying this
-
 			// No. groups dispatched in XYZ directions:
-			glm::uvec3 m_threadGroupCount = glm::uvec3(std::numeric_limits<uint32_t>::max()); 
+			glm::uvec3 m_threadGroupCount = glm::uvec3(0); 
 		};
 		struct RayTracingParams
 		{
-			// Note: Don't forget to update ComputeDataHash() if modifying this
+			RayTracingParams();
+			RayTracingParams(RayTracingParams const&) noexcept;
+			RayTracingParams(RayTracingParams&&) noexcept;
+			RayTracingParams& operator=(RayTracingParams const&) noexcept;
+			RayTracingParams& operator=(RayTracingParams&&) noexcept;
+			~RayTracingParams();
 
 			enum class Operation : uint8_t
 			{
@@ -108,9 +110,13 @@ namespace re
 				Invalid
 			} m_operation = Operation::Invalid;
 
-			std::shared_ptr<re::AccelerationStructure> m_accelerationStructure; // BLAS or TLAS, depending on the operation
-		};
+			
+			re::ASInput m_ASInput; // BLAS or TLAS, depending on the operation
 
+			std::shared_ptr<re::ShaderBindingTable> m_shaderBindingTable; // Required for DispatchRays only
+
+			glm::uvec3 m_dispatchDimensions = glm::uvec3(0); // .xyz = DispatchRays() width, height, depth
+		};
 		using VertexStreamOverride = std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>;
 
 	public:
@@ -128,7 +134,7 @@ namespace re
 		Batch(re::Lifetime, ComputeParams const&, EffectID);
 
 		// Ray tracing batches:
-		Batch(re::Lifetime, RayTracingParams const&, EffectID = EffectID()); // EffectID required for Operation::DispatchRays
+		Batch(re::Lifetime, RayTracingParams const&);
 
 
 	public:

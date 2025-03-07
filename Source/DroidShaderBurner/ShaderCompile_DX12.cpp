@@ -217,6 +217,14 @@ namespace droid
 			AppendCmdLineArg(dxcCommandLineArgsW, L"-enable-16bit-types", nullptr);
 		}
 
+		// Extra commands:
+		AppendCmdLineArg(dxcCommandLineArgsW, L"-auto-binding-space", L"0"); // Enable auto library resource binding (space 0)
+
+		if (compileOptions.m_targetProfile == "6_6")
+		{
+			AppendCmdLineArg(dxcCommandLineArgsW, L"-enable-payload-qualifiers", nullptr); // Enable PAQs in SM6.6
+		}
+
 		// Defines:
 		AppendCmdLineArg(dxcCommandLineArgsW, L"-D", k_dx12Flag);
 		AppendCmdLineArg(dxcCommandLineArgsW, L"-D", k_shaderTypeDefines[shaderType]);

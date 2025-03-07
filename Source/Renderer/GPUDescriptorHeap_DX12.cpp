@@ -43,19 +43,20 @@ namespace dx12
 		SEAssert(m_elementSize > 0, "Invalid element size");
 
 		// Create our GPU-visible descriptor heap:
-		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
+		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 
-		const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = D3D12_DESCRIPTOR_HEAP_DESC{
+		const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{
 			.Type = m_heapType,
 			.NumDescriptors = k_totalDescriptors,
 			.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 			.NodeMask = dx12::SysInfo::GetDeviceNodeMask() };
 
-		HRESULT hr = device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&m_gpuDescriptorTableHeap));
-		CheckHResult(hr, "Failed to create descriptor heap");
+		CheckHResult(
+			device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&m_gpuDescriptorTableHeap)),
+			"Failed to create descriptor heap");
 
 		// Name our descriptor heap. We extract the command list's debug name to ensure consistency
-		const std::wstring extractedName = dx12::GetWDebugName(m_owningCommandList);
+		std::wstring const& extractedName = dx12::GetWDebugName(m_owningCommandList);
 
 		const std::wstring descriptorTableHeapName = extractedName + L"_GPUDescriptorHeap";
 		m_gpuDescriptorTableHeap->SetName(descriptorTableHeapName.c_str());
@@ -140,6 +141,8 @@ namespace dx12
 
 		for (RootSignature::DescriptorTable const& descriptorTable : descriptorTableMetadata)
 		{
+			// We'll write our descriptors for each range entry consecutively:
+			uint32_t baseOffset = 0;
 			for (size_t rangeType = 0; rangeType < RootSignature::DescriptorType::Type_Count; rangeType++)
 			{
 				for (size_t rangeEntry = 0; rangeEntry < descriptorTable.m_ranges[rangeType].size(); rangeEntry++)
@@ -151,39 +154,40 @@ namespace dx12
 						{
 						case RootSignature::DescriptorType::SRV:
 						{
-							SetDescriptorTable(
+							SetDescriptorTableEntry(
 								descriptorTable.m_index,
 								context->GetNullSRVDescriptor(
 									descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_viewDimension,
 									descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_format).GetBaseDescriptor(),
-								static_cast<uint32_t>(rangeEntry) + bindIdx,
+								baseOffset + bindIdx,
 								1);
 						}
 						break;
 						case RootSignature::DescriptorType::UAV:
 						{
-							SetDescriptorTable(
+							SetDescriptorTableEntry(
 								descriptorTable.m_index,
 								context->GetNullUAVDescriptor(
 									descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_viewDimension,
 									descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_format).GetBaseDescriptor(),
-								static_cast<uint32_t>(rangeEntry) + bindIdx,
+								baseOffset + bindIdx,
 								1);
 						}
 						break;
 						case RootSignature::DescriptorType::CBV:
 						{
-							SetDescriptorTable(
+							SetDescriptorTableEntry(
 								descriptorTable.m_index,
 								context->GetNullCBVDescriptor().GetBaseDescriptor(),
-								static_cast<uint32_t>(rangeEntry) + bindIdx,
+								baseOffset + bindIdx,
 								1);
 						}
 						break;
-						default:
-							SEAssertF("Invalid range type");
+						default: SEAssertF("Invalid range type");
 						}
 					}
+
+					baseOffset += descriptorTable.m_ranges[rangeType][rangeEntry].m_bindCount;
 				}
 			}			
 		}
@@ -198,10 +202,8 @@ namespace dx12
 
 		// Get our descriptor table bitmask: Bits map to root signature indexes containing a descriptor table
 		m_rootSigDescriptorTableIdxBitmask = rootSig->GetDescriptorTableIdxBitmask();
-		// TODO: Just parse the bitmask here, rather than relying on the root sig object to parse it for us
 
 		uint32_t offset = 0;
-		uint32_t rootIdxBit = 0; // Updated immediately...
 		uint32_t descriptorTableIdxBitmask = m_rootSigDescriptorTableIdxBitmask;
 		for (uint32_t rootIdx = 0; rootIdx < k_totalRootSigDescriptorTableIndices && rootIdx < numParams; rootIdx++)
 		{
@@ -210,7 +212,7 @@ namespace dx12
 				break; // No point continuing if we've flipped the last bit back to 0
 			}
 
-			rootIdxBit = (1 << rootIdx); // 1, 10, 100, 1000, ..., 1000 0000 0000 0000 0000 0000 0000 0000
+			const uint32_t rootIdxBit = (1 << rootIdx); // 1, 10, 100, 1000, ..., 1000 0000 0000 0000 0000 0000 0000 0000
 
 			if (descriptorTableIdxBitmask & rootIdxBit)
 			{
@@ -235,7 +237,7 @@ namespace dx12
 	}
 
 
-	void GPUDescriptorHeap::SetDescriptorTable(
+	void GPUDescriptorHeap::SetDescriptorTableEntry(
 		uint32_t rootParamIdx, D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count)
 	{
 		SEAssert(rootParamIdx < k_totalRootSigDescriptorTableIndices, "Invalid root parameter index");
@@ -252,13 +254,13 @@ namespace dx12
 
 		// Make a local copy of the source descriptor(s):
 		D3D12_CPU_DESCRIPTOR_HANDLE* destDescriptorHandle = destCPUDescriptorTable.m_baseDescriptor + offset;
-		for (uint32_t currentDescriptor = 0; currentDescriptor < count; currentDescriptor++)
+		for (uint32_t destIdx = 0; destIdx < count; destIdx++)
 		{
-			const size_t srcBaseOffset = currentDescriptor * m_elementSize;
-			destDescriptorHandle[currentDescriptor] = D3D12_CPU_DESCRIPTOR_HANDLE(src.ptr + srcBaseOffset);
+			const size_t srcBaseOffset = destIdx * m_elementSize;
+			destDescriptorHandle[destIdx] = D3D12_CPU_DESCRIPTOR_HANDLE(src.ptr + srcBaseOffset);
 		}
 
-		// Mark our root parameter index as dirty:
+		// Mark the descriptor table at the given root parameter index as dirty:
 		m_dirtyDescriptorTableIdxBitmask |= (1 << rootParamIdx);
 	}
 
@@ -365,9 +367,8 @@ namespace dx12
 		{
 			SEAssert(m_gpuDescriptorTableHeap != nullptr, "Invalid descriptor heap");
 
-			Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
+			ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 
-			uint32_t rootIdxBit = 0; // Updated immediately...
 			for (uint32_t rootIdx = 0; rootIdx < k_totalRootSigDescriptorTableIndices; rootIdx++)
 			{
 				if (m_dirtyDescriptorTableIdxBitmask == 0)
@@ -375,16 +376,16 @@ namespace dx12
 					break; // No point continuing if we've flipped the last bit back to 0
 				}
 
-				rootIdxBit = (1 << rootIdx); // 1, 10, 100, 1000, ..., 1000 0000 0000 0000 0000 0000 0000 0000
+				const uint32_t rootIdxBit = (1 << rootIdx); // 1, 10, 100, 1000, ..., 1000 0000 0000 0000 0000 0000 0000 0000
 
 				// Only copy if the descriptor table at the current root signature index has changed
 				if (m_dirtyDescriptorTableIdxBitmask & rootIdxBit)
 				{
-					const D3D12_CPU_DESCRIPTOR_HANDLE* tableBaseDescriptor =
+					const D3D12_CPU_DESCRIPTOR_HANDLE* srcBaseDescriptor =
 						m_cpuDescriptorTableCacheLocations[rootIdx].m_baseDescriptor;
-					const uint32_t numTableDescriptors = m_cpuDescriptorTableCacheLocations[rootIdx].m_numElements;
+					const uint32_t numSrcDescriptors = m_cpuDescriptorTableCacheLocations[rootIdx].m_numElements;
 
-					const size_t tableSize = numTableDescriptors * m_elementSize;
+					const size_t tableSize = numSrcDescriptors * m_elementSize;
 
 					SEAssert(m_gpuDescriptorTableHeapCPUBase.ptr + tableSize <=
 							m_gpuDescriptorTableHeap->GetCPUDescriptorHandleForHeapStart().ptr + (k_totalDescriptors * m_elementSize),
@@ -394,12 +395,13 @@ namespace dx12
 							m_gpuDescriptorTableHeap->GetGPUDescriptorHandleForHeapStart().ptr + (k_totalDescriptors * m_elementSize),
 						"Out of bounds GPU destination. Consider increasing k_totalDescriptors");
 
+					// Note: Our source descriptors are not contiguous, but our destination descriptors are
 					device->CopyDescriptors(
 						1,									// UINT NumDestDescriptorRanges
 						&m_gpuDescriptorTableHeapCPUBase,	// const D3D12_CPU_DESCRIPTOR_HANDLE* pDestDescriptorRangeStarts
-						&numTableDescriptors,				// const UINT* pDestDescriptorRangeSizes
-						numTableDescriptors,				// UINT NumSrcDescriptorRanges
-						tableBaseDescriptor,				// const D3D12_CPU_DESCRIPTOR_HANDLE* pSrcDescriptorRangeStarts
+						&numSrcDescriptors,					// const UINT* pDestDescriptorRangeSizes
+						numSrcDescriptors,					// UINT NumSrcDescriptorRanges
+						srcBaseDescriptor,					// const D3D12_CPU_DESCRIPTOR_HANDLE* pSrcDescriptorRangeStarts
 						nullptr,							// const UINT* pSrcDescriptorRangeSizes
 						m_heapType							// D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType
 					);
@@ -429,6 +431,43 @@ namespace dx12
 				}	
 			}
 		}
+	}
+
+
+	D3D12_GPU_DESCRIPTOR_HANDLE GPUDescriptorHeap::CommitToGPUVisibleHeap(
+		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> const& src)
+	{
+		SEAssert(m_gpuDescriptorTableHeapCPUBase.ptr + m_elementSize <=
+			m_gpuDescriptorTableHeap->GetCPUDescriptorHandleForHeapStart().ptr + (k_totalDescriptors * m_elementSize),
+			"Out of bounds CPU destination. Consider increasing k_totalDescriptors");
+
+		SEAssert(m_gpuDescriptorTableHeapGPUBase.ptr + m_elementSize <=
+			m_gpuDescriptorTableHeap->GetGPUDescriptorHandleForHeapStart().ptr + (k_totalDescriptors * m_elementSize),
+			"Out of bounds GPU destination. Consider increasing k_totalDescriptors");
+
+		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
+
+		const uint32_t numSrcDescriptors = util::CheckedCast<uint32_t>(src.size());
+
+		// Note: Our source descriptors are not contiguous, but our destination descriptors are
+		device->CopyDescriptors(
+			1,									// UINT NumDestDescriptorRanges
+			&m_gpuDescriptorTableHeapCPUBase,	// const D3D12_CPU_DESCRIPTOR_HANDLE* pDestDescriptorRangeStarts
+			&numSrcDescriptors,					// const UINT* pDestDescriptorRangeSizes
+			numSrcDescriptors,					// UINT NumSrcDescriptorRanges
+			src.data(),							// const D3D12_CPU_DESCRIPTOR_HANDLE* pSrcDescriptorRangeStarts
+			nullptr,							// const UINT* pSrcDescriptorRangeSizes
+			m_heapType							// D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType
+		);
+
+		const D3D12_GPU_DESCRIPTOR_HANDLE destination = m_gpuDescriptorTableHeapGPUBase;
+
+		const uint64_t offset = numSrcDescriptors * m_elementSize;
+
+		m_gpuDescriptorTableHeapCPUBase.ptr += offset;
+		m_gpuDescriptorTableHeapGPUBase.ptr += offset;
+
+		return destination;
 	}
 
 

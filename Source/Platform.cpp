@@ -30,6 +30,9 @@
 #include "Renderer/Shader_OpenGL.h"
 #include "Renderer/Shader_Platform.h"
 
+#include "Renderer/ShaderBindingTable_DX12.h"
+#include "Renderer/ShaderBindingTable_Platform.h"
+
 #include "Renderer/SwapChain_DX12.h"
 #include "Renderer/SwapChain_OpenGL.h"
 #include "Renderer/SwapChain_Platform.h"
@@ -196,6 +199,9 @@ namespace platform
 			// Shader:
 			platform::Shader::Create	= &dx12::Shader::Create;
 			platform::Shader::Destroy	= &dx12::Shader::Destroy;
+
+			// Shader binding table:
+			platform::ShaderBindingTable::Update	= &dx12::ShaderBindingTable::Update;
 
 			// SysInfo:
 			platform::SysInfo::GetMaxRenderTargets		= &dx12::SysInfo::GetMaxRenderTargets;

@@ -1,5 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
+#include "Effect.h"
 #include "VertexStream.h"
 
 #include "Core/InvPtr.h"
@@ -10,6 +11,34 @@
 
 namespace re
 {
+	class AccelerationStructure;
+
+
+	struct ASInput
+	{
+		ASInput(char const* shaderName, std::shared_ptr<re::AccelerationStructure> const& as) // TLAS shader use
+			: m_shaderName(shaderName)
+			, m_accelerationStructure(as) 
+		{}
+
+		ASInput(std::shared_ptr<re::AccelerationStructure> const& as) // TLAS/BLAS Updates
+			: ASInput("<Unnamed ASInput>", as)
+		{}
+
+		ASInput() = default;
+		~ASInput() = default;
+		ASInput(ASInput const&) = default;
+		ASInput(ASInput&&) = default;
+		ASInput& operator=(ASInput const&) = default;
+		ASInput& operator=(ASInput&&) = default;
+
+
+	public:
+		std::string m_shaderName;
+		std::shared_ptr<re::AccelerationStructure> m_accelerationStructure;
+	};
+
+
 	class AccelerationStructure : public virtual core::INamedObject
 	{
 	public:
@@ -62,13 +91,14 @@ namespace re
 				core::InvPtr<gr::VertexStream> m_indices; // Can be null/invalid
 
 				GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
+				
+				// Effect ID and material drawstyle bits allow us to resolve a Technique from BLAS geometry
+				EffectID m_effectID;
+				effect::drawstyle::Bitmask m_materialDrawstyleBits;
 			};
 			std::vector<Geometry> m_geometry;
 			std::shared_ptr<re::Buffer> m_transform; // Buffer of mat3x4 in row-major order. Indexes correspond with m_geometry
 
-			static constexpr uint32_t k_invalidSentinel = 0xFFFFFF + 1; // 24 bit max instance IDs and hit group indices
-
-			uint32_t m_hitGroupIdx = k_invalidSentinel; // Used to fetch shaders from the shader binding table
 			uint8_t m_instanceMask = 0xFF; // Visibility mask: 0 = never include/always rejected
 			InstanceFlags m_instanceFlags = InstanceFlags::InstanceFlags_None;
 		};

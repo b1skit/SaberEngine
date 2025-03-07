@@ -52,7 +52,7 @@ namespace dx12
 			return;
 		}
 
-		params->m_shaderBlobs = { 0 };
+		std::fill(params->m_shaderBlobs.begin(), params->m_shaderBlobs.end(), nullptr);
 		params->m_isCreated = false;
 	}
 

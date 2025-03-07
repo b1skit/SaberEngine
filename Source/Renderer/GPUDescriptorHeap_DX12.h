@@ -53,7 +53,7 @@ namespace dx12
 		// Register a set of CPU descriptors for copy to a GPU-visible heap when CommitDescriptorTables() is called
 		// Each descriptor table/range entry = 1 DWORD each.
 		// Note: offset & count can be used to set individual descriptors within a table located at a given rootParamIdx
-		void SetDescriptorTable(
+		void SetDescriptorTableEntry(
 			uint32_t rootParamIdx, D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count);
 
 		// Set resource views directly in the GPU-visible descriptor heap:
@@ -62,6 +62,10 @@ namespace dx12
 		void SetInlineUAV(uint32_t rootParamIdx, ID3D12Resource*, uint64_t alignedByteOffset); // = 2 DWORDS each
 
 		void Commit(); // Copy all of our cached descriptors to our internal GPU-visible descriptor heap
+
+		// Directly write descriptors to the GPU-visible descriptor table heap/stack. Does not modify any metadata,
+		// other than the GPU-visible descriptor table CPU/GPU heap base offsets
+		D3D12_GPU_DESCRIPTOR_HANDLE CommitToGPUVisibleHeap(std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> const&);
 
 
 	private:
@@ -100,7 +104,7 @@ namespace dx12
 		// Bits map to root signature indexes that contain descriptor tables. Copied from root signature during parsing
 		uint32_t m_rootSigDescriptorTableIdxBitmask; 
 
-		// 1 bit per *dirty* descriptor table index. Marked when SetDescriptorTable() is called
+		// 1 bit per *dirty* descriptor table at a given root sig index. Marked when SetDescriptorTableEntry() is called
 		uint32_t m_dirtyDescriptorTableIdxBitmask;
 
 

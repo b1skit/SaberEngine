@@ -120,54 +120,6 @@ namespace
 	}
 
 
-	core::InvPtr<re::Shader> const& GetResolvedShader(EffectID effectID, effect::drawstyle::Bitmask drawStyleBitmask)
-	{
-		SEAssert(effectID != 0, "Invalid Effect");
-
-		effect::Effect const* effect = re::RenderManager::Get()->GetEffectDB().GetEffect(effectID);
-		effect::Technique const* technique = effect->GetResolvedTechnique(drawStyleBitmask);
-		return technique->GetShader();
-	}
-
-
-	effect::drawstyle::Bitmask ComputeBatchBitmask(
-		gr::Material::MaterialInstanceRenderData const* materialInstanceData)
-	{
-		effect::drawstyle::Bitmask bitmask = 0;
-
-		if (materialInstanceData)
-		{
-			// Alpha mode:
-			switch (materialInstanceData->m_alphaMode)
-			{
-			case gr::Material::AlphaMode::Opaque:
-			{
-				bitmask |= effect::drawstyle::MaterialAlphaMode_Opaque;
-			}
-			break;
-			case gr::Material::AlphaMode::Mask:
-			{
-				bitmask |= effect::drawstyle::MaterialAlphaMode_Clip;
-			}
-			break;
-			case gr::Material::AlphaMode::Blend:
-			{
-				bitmask |= effect::drawstyle::MaterialAlphaMode_Blend;
-			}
-			break;
-			default:
-				SEAssertF("Invalid Material AlphaMode");
-			}
-
-			// Material sidedness:
-			bitmask |= materialInstanceData->m_isDoubleSided ?
-				effect::drawstyle::MaterialSidedness_Double : effect::drawstyle::MaterialSidedness_Single;
-		}
-
-		return bitmask;
-	}
-
-
 	bool IsBatchAndShaderTopologyCompatible(
 		gr::MeshPrimitive::PrimitiveTopology topologyMode, re::RasterizationState::PrimitiveTopologyType topologyType)
 	{
@@ -219,6 +171,7 @@ namespace re
 		, m_indexBuffer{}
 		, m_materialUniqueID(core::IUniqueID::k_invalidUniqueID)
 	{
+		SEStaticAssert(sizeof(Batch::GraphicsParams) == 976, "Must update this if GraphicsParams size has changed");
 	}
 
 
@@ -251,6 +204,8 @@ namespace re
 			m_materialUniqueID = rhs.m_materialUniqueID;
 		}
 		return *this;
+
+		SEStaticAssert(sizeof(Batch::GraphicsParams) == 976, "Must update this if GraphicsParams size has changed");
 	}
 
 
@@ -275,6 +230,8 @@ namespace re
 			rhs.m_materialUniqueID = core::IUniqueID::k_invalidUniqueID;
 		}
 		return *this;
+
+		SEStaticAssert(sizeof(Batch::GraphicsParams) == 976, "Must update this if GraphicsParams size has changed");
 	}
 
 
@@ -282,6 +239,71 @@ namespace re
 	{
 		m_vertexBuffers = {};
 		m_indexBuffer = {};
+	}
+
+
+	Batch::RayTracingParams::RayTracingParams()
+		: m_operation(Operation::Invalid)
+		, m_ASInput{}
+		, m_shaderBindingTable{}
+		, m_dispatchDimensions(0)
+	{
+		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96, "Must update this if RayTracingParams size has changed");
+	}
+
+
+	Batch::RayTracingParams::RayTracingParams(RayTracingParams const& rhs) noexcept
+	{
+		*this = rhs;
+	}
+
+
+	Batch::RayTracingParams::RayTracingParams(RayTracingParams&& rhs) noexcept
+	{
+		*this = std::move(rhs);
+	}
+
+
+	Batch::RayTracingParams& Batch::RayTracingParams::operator=(Batch::RayTracingParams const& rhs) noexcept
+	{
+		if (this != &rhs)
+		{
+			m_operation = rhs.m_operation;
+			m_ASInput.m_shaderName = rhs.m_ASInput.m_shaderName;
+			m_ASInput.m_accelerationStructure = rhs.m_ASInput.m_accelerationStructure;
+			m_shaderBindingTable = rhs.m_shaderBindingTable;
+			m_dispatchDimensions = rhs.m_dispatchDimensions;
+		}
+		return *this;
+
+		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96, "Must update this if RayTracingParams size has changed");
+	}
+
+
+	Batch::RayTracingParams& Batch::RayTracingParams::operator=(Batch::RayTracingParams&& rhs) noexcept
+	{
+		if (this != &rhs)
+		{
+			m_operation = rhs.m_operation;
+			rhs.m_operation = Operation::Invalid;
+
+			m_ASInput.m_shaderName = std::move(rhs.m_ASInput.m_shaderName);
+			m_ASInput.m_accelerationStructure = std::move(rhs.m_ASInput.m_accelerationStructure);
+			m_shaderBindingTable = std::move(rhs.m_shaderBindingTable);
+			m_dispatchDimensions = std::move(rhs.m_dispatchDimensions);
+		}
+		return *this;
+
+		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96, "Must update this if RayTracingParams size has changed");
+	}
+
+
+	Batch::RayTracingParams::~RayTracingParams()
+	{
+		m_ASInput = {};
+		m_shaderBindingTable = nullptr;
+
+		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96, "Must update this if RayTracingParams size has changed");
 	}
 
 
@@ -399,7 +421,7 @@ namespace re
 			SetFilterMaskBit(Filter::CastsShadow, materialInstanceData->m_isShadowCaster);
 		}
 
-		m_drawStyleBitmask = ComputeBatchBitmask(materialInstanceData);
+		m_drawStyleBitmask = gr::Material::GetMaterialDrawstyleBits(materialInstanceData);
 
 		ComputeDataHash();
 	}
@@ -440,24 +462,19 @@ namespace re
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
+		ComputeDataHash();
 	}
 
 
-	Batch::Batch(
-		re::Lifetime lifetime,
-		RayTracingParams const& rtParams,
-		EffectID effectID)
+	Batch::Batch(re::Lifetime lifetime, RayTracingParams const& rtParams)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::RayTracing)
 		, m_rayTracingParams(rtParams)
 		, m_batchShader(nullptr)
-		, m_effectID(effectID)
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
-		SEAssert(effectID != 0 ||
-			rtParams.m_operation != re::Batch::RayTracingParams::Operation::DispatchRays, 
-			"Ray tracing batches require an EffectID for DispatchRays operations");
+		ComputeDataHash();
 	}
 
 
@@ -554,6 +571,33 @@ namespace re
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
 	{
+		switch (m_type)
+		{
+		case BatchType::Graphics:
+		{
+			// We must zero-initialize our InvPtrs to ensure they don't contain garbage before initializing GraphicsParams
+			memset(&m_graphicsParams.m_vertexBuffers, 0, sizeof(m_graphicsParams.m_vertexBuffers));
+			memset(&m_graphicsParams.m_indexBuffer, 0, sizeof(m_graphicsParams.m_indexBuffer));
+
+			m_graphicsParams = {};
+		}
+		break;
+		case BatchType::Compute:
+		{
+			m_computeParams = {};
+		}
+		break;
+		case BatchType::RayTracing:
+		{
+			// Zero-initialize to ensure shared_ptr doesn't contain garbage
+			memset(&m_rayTracingParams, 0, sizeof(m_rayTracingParams));
+
+			m_rayTracingParams = {};
+		}
+		break;
+		default: SEAssertF("Invalid type");
+		}
+
 		*this = rhs;
 	};
 
@@ -607,17 +651,17 @@ namespace re
 		{
 		case BatchType::Graphics:
 		{
-			m_graphicsParams = {};
+			m_graphicsParams.~GraphicsParams();
 		}
 		break;
 		case BatchType::Compute:
 		{
-			m_computeParams = {};
+			m_computeParams.~ComputeParams();
 		}
 		break;
 		case BatchType::RayTracing:
 		{
-			m_rayTracingParams = {};
+			m_rayTracingParams.~RayTracingParams();
 		}
 		break;
 		default: SEAssertF("Invalid type");
@@ -652,7 +696,7 @@ namespace re
 		// instancing has (currently) already been handled. This will probably change in future!
 		m_drawStyleBitmask |= stageBitmask;
 		
-		m_batchShader = GetResolvedShader(m_effectID, m_drawStyleBitmask);
+		m_batchShader = re::RenderManager::Get()->GetEffectDB().GetResolvedShader(m_effectID, m_drawStyleBitmask);
 
 		SEAssert(m_type != BatchType::Graphics ||
 			IsBatchAndShaderTopologyCompatible(
@@ -779,16 +823,29 @@ namespace re
 			}
 
 			AddDataBytesToHash(m_graphicsParams.m_materialUniqueID);
+
+			SEStaticAssert(sizeof(Batch::GraphicsParams) == 976, "Must update this if GraphicsParams size has changed");
 		}
 		break;
 		case BatchType::Compute:
 		{
 			// Instancing doesn't apply to compute shaders; m_threadGroupCount is included just as it's a differentiator
 			AddDataBytesToHash(m_computeParams.m_threadGroupCount);
+
+			SEStaticAssert(sizeof(Batch::ComputeParams) == 12, "Must update this if ComputeParams size has changed");
 		}
 		break;
-		default:
-			SEAssertF("Invalid type");
+		case BatchType::RayTracing:
+		{
+			SEStaticAssert(sizeof(Batch::RayTracingParams) == 96, "Must update this if RayTracingParams size has changed");
+
+			AddDataBytesToHash(m_rayTracingParams.m_operation);
+			AddDataBytesToHash(m_rayTracingParams.m_ASInput.m_shaderName);
+			AddDataBytesToHash(m_rayTracingParams.m_ASInput.m_accelerationStructure->GetNameHash());
+			AddDataBytesToHash(m_rayTracingParams.m_dispatchDimensions);
+		}
+		break;
+		default: SEAssertF("Invalid type");
 		}
 
 		// Shader:

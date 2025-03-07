@@ -3,20 +3,64 @@
 		"Name" :  "RayTracing",
 		"ExcludedPlatforms": [ "OpenGL" ],
 		"Parents" : [],
-		//"DefaultTechnique": "RT_Experimental",
 		"DrawStyles" :  [
+			// Hit groups: For now, everything uses the same technique
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Geometry_Experimental" }
+					{ "Rule" : "RT_Experimental", "Mode" : "RT_Geometry_Experimental" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
 				"Technique": "RT_HitGroupTechnique_Experimental"
 			},
+			{
+				"Conditions": [
+					{ "Rule" : "RT_Experimental", "Mode" : "RT_Geometry_Experimental" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "RT_HitGroupTechnique_Experimental"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RT_Experimental", "Mode" : "RT_Geometry_Experimental" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "RT_HitGroupTechnique_Experimental"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RT_Experimental", "Mode" : "RT_Geometry_Experimental" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "RT_HitGroupTechnique_Experimental"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RT_Experimental", "Mode" : "RT_Geometry_Experimental" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "RT_HitGroupTechnique_Experimental"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RT_Experimental", "Mode" : "RT_Geometry_Experimental" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "RT_HitGroupTechnique_Experimental"
+			},
+			// Ray gen:
 			{
 				"Conditions": [
 					{ "Rule" : "RT_Experimental", "Mode" : "RT_RayGen_Experimental" }
 				],
 				"Technique": "RT_RayGenTechnique_Experimental"
 			},
+			// Miss:
 			{
 				"Conditions": [
 					{ "Rule" : "RT_Experimental", "Mode" : "RT_Miss_Experimental" }
@@ -26,6 +70,7 @@
 		],
 		"Techniques" :  [
 			{
+				// Note: For hit groups, we use the Technique name as the hit group name
 				"Name": "RT_HitGroupTechnique_Experimental",
 
 				// If defined: Procedural geometry only. Otherwise, triangle geometry only

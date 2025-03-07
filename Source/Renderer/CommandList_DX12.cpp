@@ -10,6 +10,7 @@
 #include "PipelineState_DX12.h"
 #include "RenderManager.h"
 #include "RootSignature_DX12.h"
+#include "ShaderBindingTable_DX12.h"
 #include "SwapChain_DX12.h"
 #include "SysInfo_DX12.h"
 #include "Texture.h"
@@ -292,209 +293,216 @@ namespace dx12
 	}
 
 
-	void CommandList::SetBuffer(re::BufferInput const& bufferInput)
+	void CommandList::SetBuffers(std::vector<re::BufferInput> const& bufferInputs)
 	{
-		SEAssert(m_currentRootSignature != nullptr, "Root signature has not been set");
+		SEAssert(m_currentRootSignature, "Root signature has not been set");
+
 		SEAssert(m_type == CommandListType::Direct || m_type == CommandListType::Compute,
 			"Unexpected command list type for setting a buffer on");
 
-		re::Buffer const* buffer = bufferInput.GetBuffer();
-		dx12::Buffer::PlatformParams* bufferPlatParams = 
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		// Batch our resource transitions into a single call:
+		std::vector<TransitionMetadata> resourceTransitions;
+		resourceTransitions.reserve(bufferInputs.size());
 
-		RootSignature::RootParameter const* rootSigEntry = 
-			m_currentRootSignature->GetRootSignatureEntry(bufferInput.GetShaderName());
-		SEAssert(rootSigEntry ||
-			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
-			"Invalid root signature entry");
-
-		if (rootSigEntry)
+		for (re::BufferInput const& bufferInput : bufferInputs)
 		{
-			const uint32_t rootSigIdx = rootSigEntry->m_index;
+			re::Buffer const* buffer = bufferInput.GetBuffer();
+			dx12::Buffer::PlatformParams* bufferPlatParams =
+				buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-			bool transitionResource = false;
-			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_COMMON; // Updated below
+			RootSignature::RootParameter const* rootSigEntry =
+				m_currentRootSignature->GetRootSignatureEntry(bufferInput.GetShaderName());
+			SEAssert(rootSigEntry ||
+				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+				"Invalid root signature entry");
 
-			re::Buffer::BufferParams const& bufferParams = buffer->GetBufferParams();
-
-			// Don't transition resources representing shared heaps
-			const bool isInSharedHeap = bufferParams.m_lifetime == re::Lifetime::SingleFrame;
-
-			switch (rootSigEntry->m_type)
+			if (rootSigEntry)
 			{
-			case RootSignature::RootParameter::Type::Constant:
-			{
-				SEAssertF("Unexpected root parameter type for a buffer");
-			}
-			break;
-			case RootSignature::RootParameter::Type::CBV:
-			{
-				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
-					"Buffer is missing the Constant usage bit");
-				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
-					"Unexpected root signature type");
-				SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
-					!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
-					"Invalid usage flags for a constant buffer");
+				const uint32_t rootSigIdx = rootSigEntry->m_index;
 
-				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
-					rootSigIdx,
-					bufferPlatParams->m_resolvedGPUResource,
-					bufferPlatParams->m_heapByteOffset);
+				bool transitionResource = false;
+				D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_COMMON; // Updated below
 
-				toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-				transitionResource = !isInSharedHeap;
-			}
-			break;
-			case RootSignature::RootParameter::Type::SRV:
-			{
-				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
-					"Buffer is missing the Structured usage bit");
-				SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
-					"SRV buffers must have GPU reads enabled");
+				re::Buffer::BufferParams const& bufferParams = buffer->GetBufferParams();
 
-				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
-					rootSigIdx,
-					bufferPlatParams->m_resolvedGPUResource,
-					bufferPlatParams->m_heapByteOffset);			
+				// Don't transition resources representing shared heaps
+				const bool isInSharedHeap = bufferParams.m_lifetime == re::Lifetime::SingleFrame;
 
-				toState = (m_type == dx12::CommandListType::Compute ? 
-					D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-
-				transitionResource = !isInSharedHeap;
-			}
-			break;
-			case RootSignature::RootParameter::Type::UAV:
-			{
-				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
-					"Buffer is missing the Structured usage bit");
-				SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
-					"UAV buffers must have GPU writes enabled");
-				SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
-					"Buffer is missing the Structured usage bit");
-
-				m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
-					rootSigIdx,
-					bufferPlatParams->m_resolvedGPUResource,
-					bufferPlatParams->m_heapByteOffset);
-
-				// Only insert a UAV barrier if we've used a resource as a UAV on this command list before
-				if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams) &&
-					m_resourceStates.HasSeenSubresourceInState(
-						bufferPlatParams->m_resolvedGPUResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+				switch (rootSigEntry->m_type)
 				{
-					InsertUAVBarrier(bufferPlatParams->m_resolvedGPUResource);
-				}
-
-				toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-				transitionResource = true;
-			}
-			break;
-			case RootSignature::RootParameter::Type::DescriptorTable:
-			{
-				switch (rootSigEntry->m_tableEntry.m_type)
+				case RootSignature::RootParameter::Type::Constant:
 				{
-				case dx12::RootSignature::DescriptorType::SRV:
-				{
-					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
-						"Buffer is missing the Structured usage bit");
-					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
-						"SRV buffers must have GPU reads enabled");
-					SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
-
-					re::BufferView const& bufView = bufferInput.GetView();
-					
-					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
-						rootSigEntry->m_index,
-						dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView),
-						rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
-						1);
-
-					toState = (m_type == dx12::CommandListType::Compute ?
-						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-					transitionResource = !isInSharedHeap;
+					SEAssertF("Unexpected root parameter type for a buffer");
 				}
 				break;
-				case dx12::RootSignature::DescriptorType::UAV:
-				{
-					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
-						"Buffer is missing the Structured usage bit");
-					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
-						"UAV buffers must have GPU writes enabled");
-					SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
-
-					re::BufferView const& bufView = bufferInput.GetView();
-
-					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
-						rootSigEntry->m_index,
-						dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufferInput.GetView()),
-						rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
-						1);
-
-					// Only insert a UAV barrier if we've used a resource as a UAV on this command list before
-					if (re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams) &&
-						m_resourceStates.HasSeenSubresourceInState(
-							bufferPlatParams->m_resolvedGPUResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
-					{
-						InsertUAVBarrier(bufferPlatParams->m_resolvedGPUResource);
-					}
-
-					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-					transitionResource = true;
-				}
-				break;
-				case dx12::RootSignature::DescriptorType::CBV:
+				case RootSignature::RootParameter::Type::CBV:
 				{
 					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
 						"Buffer is missing the Constant usage bit");
+					SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::CBV,
+						"Unexpected root signature type");
 					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
 						!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
 						"Invalid usage flags for a constant buffer");
-					
-					re::BufferView const& bufView = bufferInput.GetView();
 
-					m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
-						rootSigEntry->m_index,
-						dx12::Buffer::GetCBV(bufferInput.GetBuffer(), bufView),
-						rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
-						1);
+					m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
+						rootSigIdx,
+						bufferPlatParams->m_resolvedGPUResource,
+						bufferPlatParams->m_heapByteOffset);
 
 					toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 					transitionResource = !isInSharedHeap;
 				}
 				break;
-				default: SEAssertF("Invalid type");
+				case RootSignature::RootParameter::Type::SRV:
+				{
+					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
+						"Buffer is missing the Structured usage bit");
+					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
+						"SRV buffers must have GPU reads enabled");
+
+					m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
+						rootSigIdx,
+						bufferPlatParams->m_resolvedGPUResource,
+						bufferPlatParams->m_heapByteOffset);
+
+					toState = (m_type == dx12::CommandListType::Compute ?
+						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+					transitionResource = !isInSharedHeap;
+				}
+				break;
+				case RootSignature::RootParameter::Type::UAV:
+				{
+					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
+						"Buffer is missing the Structured usage bit");
+					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
+						"UAV buffers must have GPU writes enabled");
+					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
+						"Buffer is missing the Structured usage bit");
+
+					m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
+						rootSigIdx,
+						bufferPlatParams->m_resolvedGPUResource,
+						bufferPlatParams->m_heapByteOffset);
+
+					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+					transitionResource = true;
+				}
+				break;
+				case RootSignature::RootParameter::Type::DescriptorTable:
+				{
+					switch (rootSigEntry->m_tableEntry.m_type)
+					{
+					case dx12::RootSignature::DescriptorType::SRV:
+					{
+						SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
+							"Buffer is missing the Structured usage bit");
+						SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
+							"SRV buffers must have GPU reads enabled");
+						SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
+
+						re::BufferView const& bufView = bufferInput.GetView();
+
+						m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
+							rootSigEntry->m_index,
+							dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView),
+							rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
+							1);
+
+						toState = (m_type == dx12::CommandListType::Compute ?
+							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+						transitionResource = !isInSharedHeap;
+					}
+					break;
+					case dx12::RootSignature::DescriptorType::UAV:
+					{
+						SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
+							"Buffer is missing the Structured usage bit");
+						SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
+							"UAV buffers must have GPU writes enabled");
+						SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
+
+						re::BufferView const& bufView = bufferInput.GetView();
+
+						m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
+							rootSigEntry->m_index,
+							dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufferInput.GetView()),
+							rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
+							1);
+
+						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+						transitionResource = true;
+					}
+					break;
+					case dx12::RootSignature::DescriptorType::CBV:
+					{
+						SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
+							"Buffer is missing the Constant usage bit");
+						SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
+							!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
+							"Invalid usage flags for a constant buffer");
+
+						re::BufferView const& bufView = bufferInput.GetView();
+
+						m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
+							rootSigEntry->m_index,
+							dx12::Buffer::GetCBV(bufferInput.GetBuffer(), bufView),
+							rootSigEntry->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
+							1);
+
+						toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+						transitionResource = !isInSharedHeap;
+					}
+					break;
+					default: SEAssertF("Invalid type");
+					}
+				}
+				break;
+				default: SEAssertF("Invalid root parameter type");
+				}
+
+				if (transitionResource)
+				{
+					SEAssert(!isInSharedHeap, "Trying to transition a resource in a shared heap. This is unexpected");
+					SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state");
+
+					resourceTransitions.emplace_back(TransitionMetadata{
+						.m_resource = bufferPlatParams->m_resolvedGPUResource,
+						.m_toState = toState,
+						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES }
+						});
+				}
+
+				// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
+				if (re::Buffer::HasAccessBit(re::Buffer::CPURead, bufferParams))
+				{
+					const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
+
+					m_seenReadbackResources.emplace_back(ReadbackResourceMetadata{
+						.m_srcResource = bufferPlatParams->m_resolvedGPUResource,
+						.m_dstResource = bufferPlatParams->m_readbackResources[readbackIdx].m_readbackGPUResource->Get(),
+						.m_dstModificationFence = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFence,
+						.m_dstModificationFenceMutex = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFenceMutex });
 				}
 			}
-			break;
-			default: SEAssertF("Invalid root parameter type");
-			}
-
-			if (transitionResource)
-			{
-				SEAssert(!isInSharedHeap, "Trying to transition a resource in a shared heap. This is unexpected");
-				SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state");
-				
-				TransitionResourceInternal(
-					bufferPlatParams->m_resolvedGPUResource, 
-					toState, 
-					{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
-			}
-
-			// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
-			if (re::Buffer::HasAccessBit(re::Buffer::CPURead, bufferParams))
-			{
-				const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
-
-				m_seenReadbackResources.emplace_back(ReadbackResourceMetadata{
-					.m_srcResource = bufferPlatParams->m_resolvedGPUResource,
-					.m_dstResource = bufferPlatParams->m_readbackResources[readbackIdx].m_readbackGPUResource->Get(),
-					.m_dstModificationFence = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFence,
-					.m_dstModificationFenceMutex = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFenceMutex });
-			}
 		}
+
+		// Finally, submit all of our resource transitions in a single batch
+		TransitionResourcesInternal(std::move(resourceTransitions));
 	}
 
+
+	void CommandList::SetBuffers(std::vector<re::BufferInput> const& bufferInputs, re::ShaderBindingTable const& sbt)
+	{
+		dx12::ShaderBindingTable::SetBuffersOnLocalRoots(
+			sbt,
+			bufferInputs,
+			this,
+			m_gpuCbvSrvUavDescriptorHeaps.get(),
+			re::RenderManager::Get()->GetCurrentRenderFrameNum());
+	}
+	
 
 	void CommandList::Dispatch(glm::uvec3 const& threadDimensions)
 	{
@@ -506,6 +514,23 @@ namespace dx12
 		CommitGPUDescriptors();
 
 		m_commandList->Dispatch(threadDimensions.x, threadDimensions.y, threadDimensions.z);
+	}
+
+
+	void CommandList::DispatchRays(re::ShaderBindingTable const& sbt, glm::uvec3 const& threadDimensions)
+	{
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList4;
+		CheckHResult(m_commandList.As(&commandList4), "Failed to get a ID3D12GraphicsCommandList4");
+
+		dx12::ShaderBindingTable::PlatformParams const* sbtPlatParams = 
+			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
+		
+		commandList4->SetPipelineState1(sbtPlatParams->m_rayTracingStateObject.Get());
+
+		D3D12_DISPATCH_RAYS_DESC const& dispatchRaysDesc =
+			dx12::ShaderBindingTable::BuildDispatchRaysDesc(sbt, threadDimensions);
+
+		commandList4->DispatchRays(&dispatchRaysDesc);
 	}
 
 
@@ -588,7 +613,7 @@ namespace dx12
 					});
 			}
 		}
-		TransitionResourceInternal(std::move(resourceTransitions));
+		TransitionResourcesInternal(std::move(resourceTransitions));
 
 
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
@@ -725,7 +750,7 @@ namespace dx12
 				.m_subresourceIndexes = {re::TextureView::GetSubresourceIndex(colorTargetTex, colorTargetParams.m_textureView)},
 				});
 		}
-		TransitionResourceInternal(std::move(resourceTransitions));
+		TransitionResourcesInternal(std::move(resourceTransitions));
 
 		
 		for (size_t i = 0; i < texTargets.size(); ++i)
@@ -904,14 +929,6 @@ namespace dx12
 		std::vector<TransitionMetadata> resourceTransitions;
 		resourceTransitions.reserve(rwTexInputs.size());
 
-		// Track the D3D resources we've seen during this call, to help us decide whether to insert a UAV barrier or not
-		std::unordered_set<ID3D12Resource const*> seenResources;
-		seenResources.reserve(rwTexInputs.size());
-		auto ResourceWasTransitionedInThisCall = [&seenResources](ID3D12Resource const* newResource) -> bool
-			{
-				return seenResources.contains(newResource);
-			};
-
 		for (size_t i = 0; i < rwTexInputs.size(); i++)
 		{
 			re::RWTextureInput const& rwTexInput = rwTexInputs[i];
@@ -937,7 +954,7 @@ namespace dx12
 					((rwTex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0),
 					"Unexpected texture usage for a RW texture");
 
-				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
+				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
 					rootSigEntry->m_index,
 					dx12::Texture::GetUAV(rwTex, rwTexInput.m_textureView),
 					rootSigEntry->m_tableEntry.m_offset,
@@ -945,19 +962,6 @@ namespace dx12
 
 				dx12::Texture::PlatformParams const* texPlatParams =
 					rwTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
-
-				// We're writing to a UAV, we may need a UAV barrier. We try and skip it if possible (i.e. don't add
-				// barriers if we haven't seen the subresource in a UAV state before)
-				ID3D12Resource* resource = texPlatParams->m_gpuResource->Get();
-				if (m_resourceStates.HasSeenSubresourceInState(resource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS) &&
-					!ResourceWasTransitionedInThisCall(resource)) // Ignore transitions recorded during this call
-				{
-					// We've accessed this resource before on this command list, and it was transitioned to a UAV
-					// state at some point before this call to SetRWTextures. We must ensure any previous work was
-					// done before we access it again
-					InsertUAVBarrier(rwTex);
-				}
-				seenResources.emplace(resource);
 
 				resourceTransitions.emplace_back(TransitionMetadata{
 					.m_resource = texPlatParams->m_gpuResource->Get(),
@@ -969,9 +973,35 @@ namespace dx12
 		}
 
 		// Finally, insert our batched resource transitions:
-		TransitionResourceInternal(std::move(resourceTransitions));
+		TransitionResourcesInternal(std::move(resourceTransitions));
 
 		// TODO: Support compute target clearing (tricky: Need a copy of descriptors in the GPU-visible heap)
+	}
+
+
+	void CommandList::SetViewport(re::TextureTargetSet const& targetSet) const
+	{
+		SEAssert(m_type != CommandListType::Compute && m_type != CommandListType::Copy,
+			"This method is not valid for compute or copy command lists");
+
+		dx12::TextureTargetSet::PlatformParams* targetSetParams =
+			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+
+		const uint32_t numViewports = 1;
+		m_commandList->RSSetViewports(numViewports, &targetSetParams->m_viewport);
+
+		// TODO: It is possible to have more than 1 viewport (eg. Geometry shaders), we should handle this (i.e. a 
+		// viewport per target?)
+	}
+
+
+	void CommandList::SetScissorRect(re::TextureTargetSet const& targetSet) const
+	{
+		dx12::TextureTargetSet::PlatformParams* targetSetParams =
+			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+
+		const uint32_t numScissorRects = 1; // 1 per viewport, in an array of viewports
+		m_commandList->RSSetScissorRects(numScissorRects, &targetSetParams->m_scissorRect);
 	}
 
 
@@ -1043,7 +1073,7 @@ namespace dx12
 				}
 			}
 
-			TransitionResourceInternal(std::move(resourceTransitions));
+			TransitionResourcesInternal(std::move(resourceTransitions));
 		}
 		break;
 		default: SEAssertF("Invalid AS type");
@@ -1064,29 +1094,48 @@ namespace dx12
 	}
 
 
-	void CommandList::SetViewport(re::TextureTargetSet const& targetSet) const
+	void CommandList::SetTLAS(re::ASInput const& tlas, re::ShaderBindingTable const& sbt)
 	{
-		SEAssert(m_type != CommandListType::Compute && m_type != CommandListType::Copy,
-			"This method is not valid for compute or copy command lists");
-
-		dx12::TextureTargetSet::PlatformParams* targetSetParams =
-			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-
-		const uint32_t numViewports = 1;
-		m_commandList->RSSetViewports(numViewports, &targetSetParams->m_viewport);
-
-		// TODO: It is possible to have more than 1 viewport (eg. Geometry shaders), we should handle this (i.e. a 
-		// viewport per target?)
+		dx12::ShaderBindingTable::SetTLASOnLocalRoots(
+			sbt,
+			tlas,
+			m_gpuCbvSrvUavDescriptorHeaps.get(),
+			re::RenderManager::Get()->GetCurrentRenderFrameNum());
 	}
 
 
-	void CommandList::SetScissorRect(re::TextureTargetSet const& targetSet) const
+	void CommandList::SetRWTextures(
+		re::ShaderBindingTable const& sbt, std::vector<re::RWTextureInput> const& rwTexInputs)
 	{
-		dx12::TextureTargetSet::PlatformParams* targetSetParams =
-			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+		// Batch our resource transitions together:
+		std::vector<TransitionMetadata> resourceTransitions;
+		resourceTransitions.reserve(rwTexInputs.size());
 
-		const uint32_t numScissorRects = 1; // 1 per viewport, in an array of viewports
-		m_commandList->RSSetScissorRects(numScissorRects, &targetSetParams->m_scissorRect);
+		for (auto const& rwTexInput : rwTexInputs)
+		{
+			core::InvPtr<re::Texture> const& rwTex = rwTexInput.m_texture;
+
+			dx12::Texture::PlatformParams const* texPlatParams =
+				rwTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+			resourceTransitions.emplace_back(TransitionMetadata{
+				.m_resource = texPlatParams->m_gpuResource->Get(),
+				.m_toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+				.m_subresourceIndexes = re::TextureView::GetSubresourceIndexes(
+					rwTexInput.m_texture, rwTexInput.m_textureView),
+				});
+
+			// DXR: We set our descriptors via the shader binding table (which internally stages them in our GPU-visible
+			// descriptor heap)
+			dx12::ShaderBindingTable::SetRWTextureOnLocalRoots(
+				sbt,
+				rwTexInput,
+				m_gpuCbvSrvUavDescriptorHeaps.get(),
+				re::RenderManager::Get()->GetCurrentRenderFrameNum());
+		}
+
+		// Finally, insert our batched resource transitions:
+		TransitionResourcesInternal(std::move(resourceTransitions));
 	}
 
 
@@ -1254,7 +1303,7 @@ namespace dx12
 				TransitionResource(texture, toState, texSamplerInput.m_textureView);
 			}
 
-			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
+			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
 				rootSigEntry->m_index,
 				descriptor,
 				rootSigEntry->m_tableEntry.m_offset,
@@ -1268,19 +1317,25 @@ namespace dx12
 		D3D12_RESOURCE_STATES toState,
 		std::vector<uint32_t>&& subresourceIndexes)
 	{
-		TransitionResourceInternal({ TransitionMetadata{
+		TransitionResourcesInternal({ TransitionMetadata{
 			.m_resource = resource, 
 			.m_toState = toState, 
 			.m_subresourceIndexes = std::move(subresourceIndexes)} });
 	}
 
 
-	void CommandList::TransitionResourceInternal(std::vector<TransitionMetadata>&& transitions)
+	void CommandList::TransitionResourcesInternal(std::vector<TransitionMetadata>&& transitions)
 	{
 		if (transitions.empty())
 		{
 			return;
 		}
+
+
+		// Track the D3D resources we've seen during this call, to help us decide whether to insert UAV barriers or not
+		std::unordered_set<ID3D12Resource const*> seenResources;
+		seenResources.reserve(transitions.size());
+
 
 		// Batch all barriers into a single call:
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
@@ -1301,13 +1356,15 @@ namespace dx12
 						transition.m_subresourceIndexes[0] == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)),
 				"Invalid transition detected for a resource with a single subresource");
 
+
 			auto AddBarrier = [this, &transition, &barriers](uint32_t subresourceIdx, D3D12_RESOURCE_STATES toState)
 				{
-					// If we've already seen this resource before, we can record the transition now (as we prepend any initial
-					// transitions when submitting the command list)	
+					// If we've already seen this resource before, we can record the transition now (as we prepend any
+					// initial transitions when submitting the command list)	
 					if (m_resourceStates.HasResourceState(transition.m_resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?
 					{
-						const D3D12_RESOURCE_STATES currentKnownState = m_resourceStates.GetResourceState(transition.m_resource, subresourceIdx);
+						const D3D12_RESOURCE_STATES currentKnownState = 
+							m_resourceStates.GetResourceState(transition.m_resource, subresourceIdx);
 
 #if defined(DEBUG_CMD_LIST_RESOURCE_TRANSITIONS)
 						DebugResourceTransitions(
@@ -1342,6 +1399,19 @@ namespace dx12
 				};
 
 
+			// We're transitioning to a UAV state, we may need a UAV barrier. We try and skip this when possible (i.e.
+			// don't add barriers if we haven't seen the resource in a UAV state before this call)
+			if (transition.m_toState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS &&
+				!seenResources.contains(transition.m_resource) && // Ignore resources already seen
+				m_resourceStates.HasSeenSubresourceInState(transition.m_resource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+			{
+				// We've accessed this resource before on this command list, and it was transitioned to a UAV state at
+				// some point before this call. We must ensure any previous work was done before we access it again
+				InsertUAVBarrier(transition.m_resource);
+			}
+			seenResources.emplace(transition.m_resource);
+
+			// Per-subresource transitions:
 			for (uint32_t subresourceIdx : transition.m_subresourceIndexes)
 			{
 				// Transition the appropriate subresources:
@@ -1416,21 +1486,11 @@ namespace dx12
 		dx12::Texture::PlatformParams const* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
-		ID3D12Resource* textureResource = texPlatParams->m_gpuResource->Get();
-
-		// This is a public function, so users may call it from anywhere. If we're transitioning to a UAV state and the
-		// resource has been previously used as a UAV on this command list, we need to add a UAV barrier
-		if (toState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS &&
-			m_resourceStates.HasSeenSubresourceInState(
-				texPlatParams->m_gpuResource->Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
-		{
-			InsertUAVBarrier(textureResource);
-		}
-
-		TransitionResourceInternal(
-			textureResource,
-			toState,
-			re::TextureView::GetSubresourceIndexes(texture, texView));
+		TransitionResources({ TransitionMetadata {
+			.m_resource = texPlatParams->m_gpuResource->Get(),
+			.m_toState = toState,
+			.m_subresourceIndexes = re::TextureView::GetSubresourceIndexes(texture, texView)
+			} });
 	}
 
 

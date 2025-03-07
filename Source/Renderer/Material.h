@@ -93,6 +93,8 @@ namespace gr
 			char m_materialName[k_shaderSamplerNameLength];
 			uint64_t m_srcMaterialUniqueID;
 		};
+
+		static effect::drawstyle::Bitmask GetMaterialDrawstyleBits(gr::Material::MaterialInstanceRenderData const*);
 		
 
 	public:

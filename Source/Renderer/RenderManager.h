@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "AccelerationStructure.h"
 #include "Context.h"
 #include "EffectDB.h"
 #include "Platform.h"
@@ -46,11 +45,10 @@ namespace opengl
 
 namespace re
 {
-	class TextureTarget;
-}
+	class AccelerationStructure;
+	class ShaderBindingTable;
 
-namespace re
-{
+
 	class RenderManager
 		: public virtual en::IEngineComponent, public virtual en::IEngineThread, public virtual core::IEventListener
 	{
@@ -151,8 +149,9 @@ namespace re
 		util::NBufferedVector<core::InvPtr<re::Texture>> m_newTextures;
 		util::NBufferedVector<core::InvPtr<re::Sampler>> m_newSamplers;
 		util::NBufferedVector<core::InvPtr<gr::VertexStream>> m_newVertexStreams;
-		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;
+
 		util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>> m_newAccelerationStructures;
+		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;		
 
 		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
 		// Used as a holding ground for operations that must be performed once after creation (E.g. mip generation)

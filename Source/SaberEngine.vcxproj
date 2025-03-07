@@ -218,6 +218,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClInclude Include="Shaders\Common\MaterialParams.h" />
     <ClInclude Include="Shaders\Common\MipGenerationParams.h" />
     <ClInclude Include="Shaders\Common\PlatformConversions.h" />
+    <ClInclude Include="Shaders\Common\RayTracingParams.h" />
     <ClInclude Include="Shaders\Common\ShadowRenderParams.h" />
     <ClInclude Include="Shaders\Common\SkyboxParams.h" />
     <ClInclude Include="Shaders\Common\TargetParams.h" />
@@ -315,6 +316,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
+    <None Include="Shaders\HLSL\RayTracingCommon.hlsli" />
     <None Include="Shaders\HLSL\XeGTAO_Denoise.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
@@ -745,6 +747,11 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <FileType>Document</FileType>
     </None>
     <None Include="Shaders\HLSL\SkinningAnimation_CShader.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\HLSL\RayTracing_Experimental.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

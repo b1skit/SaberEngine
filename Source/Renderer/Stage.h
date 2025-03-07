@@ -575,6 +575,8 @@ namespace re
 
 	inline void Stage::SetDrawStyle(effect::drawstyle::Bitmask drawStyleBits)
 	{
+		SEAssert(m_type == re::Stage::Type::Graphics || m_type == re::Stage::Type::Compute,
+			"Unexpected stage type for setting a drawstyle on");
 		m_drawStyleBits |= drawStyleBits;
 	}
 

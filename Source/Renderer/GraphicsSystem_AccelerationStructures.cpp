@@ -100,6 +100,8 @@ namespace gr
 		// Note: We pack all MeshPrimitives owned by a single MeshConcept into the same BLAS
 		std::unordered_map<gr::RenderDataID, re::Batch::RayTracingParams::Operation> meshConceptIDToBatchOp;
 
+		bool mustRebuildTLAS = false;
+
 		// Process any deleted MeshPrimitives:
 		std::vector<gr::RenderDataID> const* deletedMeshPrimIDs =
 			renderData.GetIDsWithDeletedData<gr::MeshPrimitive::RenderData>();
@@ -143,8 +145,11 @@ namespace gr
 						// only vertex positions can change in a BLAS (not the no. of geometries etc)
 						meshConceptIDToBatchOp.emplace(owningMeshConceptID, re::Batch::RayTracingParams::Operation::BuildAS);
 					}
+
+					// If we've removed geometry, we must rebuild the TLAS
+					mustRebuildTLAS = true;
 				}
-			}			
+			}
 		}
 
 		// Update BLAS's for new geoemtry, or geometry with dirty MeshPrimitives, Materials, or Transforms:
@@ -184,6 +189,7 @@ namespace gr
 				meshPrimItr.IsDirty<gr::Material::MaterialInstanceRenderData>())
 			{
 				meshConceptUpdateItr->second = re::Batch::RayTracingParams::Operation::BuildAS;
+				mustRebuildTLAS = true;
 			}
 
 			++meshPrimItr;
@@ -236,7 +242,7 @@ namespace gr
 				gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 					renderData.GetObjectData<gr::MeshPrimitive::RenderData>(meshPrimID);
 
-				auto& instance = blasParams->m_geometry.emplace_back();
+				re::AccelerationStructure::BLASParams::Geometry& instance = blasParams->m_geometry.emplace_back();
 
 				// Get the position buffer: Animated, or static
 				auto animatedStreamsItr = m_animatedVertexStreams->find(meshPrimID);
@@ -273,6 +279,9 @@ namespace gr
 				instance.m_geometryFlags = materialRenderData.m_alphaMode == gr::Material::AlphaMode::Opaque ?
 					re::AccelerationStructure::GeometryFlags::Opaque :
 					re::AccelerationStructure::GeometryFlags::GeometryFlags_None;
+
+				instance.m_effectID = materialRenderData.m_effectID;
+				instance.m_materialDrawstyleBits = gr::Material::GetMaterialDrawstyleBits(&materialRenderData);
 			}
 
 			// Set the world Transform for all geometries in the BLAS
@@ -285,7 +294,6 @@ namespace gr
 				(re::AccelerationStructure::BuildFlags::AllowUpdate |
 					re::AccelerationStructure::BuildFlags::AllowCompaction);
 
-			blasParams->m_hitGroupIdx = 0; // TODO: Set this correctly
 			blasParams->m_instanceMask = 0xFF; // Visiblity mask: Always visible, for now
 			blasParams->m_instanceFlags = re::AccelerationStructure::InstanceFlags::InstanceFlags_None;
 
@@ -316,10 +324,9 @@ namespace gr
 			}
 
 			// Add a single-frame stage to create/update the BLAS on the GPU:
-			const re::Batch::RayTracingParams blasCreateBatchParams{
-				.m_operation = batchOperation,
-				.m_accelerationStructure = blas,
-			};
+			re::Batch::RayTracingParams blasCreateBatchParams;
+			blasCreateBatchParams.m_operation = batchOperation;
+			blasCreateBatchParams.m_ASInput = re::ASInput(blas);
 
 			(*singleFrameBlasCreateStageItr)->AddBatch(re::Batch(re::Lifetime::SingleFrame, blasCreateBatchParams));
 		}
@@ -328,19 +335,9 @@ namespace gr
 		// Rebuild the scene TLAS if necessary
 		if (!meshConceptIDToBatchOp.empty())
 		{
-			bool isBuildingNewBLAS = false; // We'll update the TLAS, unless a BLAS has been (re)built
-			for (auto const& update : meshConceptIDToBatchOp)
-			{
-				if (update.second == re::Batch::RayTracingParams::Operation::BuildAS)
-				{
-					isBuildingNewBLAS = true;
-					break;
-				}
-			}		
-
 			// Schedule a single-frame stage to create/update the TLAS on the GPU:
 			re::Batch::RayTracingParams::Operation tlasOperation = re::Batch::RayTracingParams::Operation::Invalid;
-			if (isBuildingNewBLAS)
+			if (mustRebuildTLAS)
 			{
 				tlasOperation = re::Batch::RayTracingParams::Operation::BuildAS;
 
@@ -365,10 +362,9 @@ namespace gr
 				tlasOperation = re::Batch::RayTracingParams::Operation::UpdateAS;
 			}
 			
-			re::Batch::RayTracingParams tlasBatchParams{
-				.m_operation = tlasOperation,
-				.m_accelerationStructure = m_sceneTLAS,
-			};
+			re::Batch::RayTracingParams tlasBatchParams;
+			tlasBatchParams.m_operation = tlasOperation,
+			tlasBatchParams.m_ASInput = re::ASInput (m_sceneTLAS);
 
 			(*singleFrameBlasCreateStageItr)->AddBatch(re::Batch(re::Lifetime::SingleFrame, tlasBatchParams));
 		}

@@ -863,8 +863,7 @@ namespace re
 			"Cannot add batches to a fullscreen quad stage (except for the initial batch during construction)");
 
 		SEAssert(batch.GetEffectID() != 0 ||
-			(batch.GetType() == re::Batch::BatchType::RayTracing && 
-				batch.GetRayTracingParams().m_operation != Batch::RayTracingParams::Operation::DispatchRays),
+			batch.GetType() == re::Batch::BatchType::RayTracing,
 			"Batch has not been assigned an Effect");
 
 		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics &&

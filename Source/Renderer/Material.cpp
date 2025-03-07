@@ -100,6 +100,44 @@ namespace gr
 	}
 
 
+	effect::drawstyle::Bitmask Material::GetMaterialDrawstyleBits(
+		gr::Material::MaterialInstanceRenderData const* materialInstanceData)
+	{
+		effect::drawstyle::Bitmask bitmask = 0;
+
+		if (materialInstanceData)
+		{
+			// Alpha mode:
+			switch (materialInstanceData->m_alphaMode)
+			{
+			case gr::Material::AlphaMode::Opaque:
+			{
+				bitmask |= effect::drawstyle::MaterialAlphaMode_Opaque;
+			}
+			break;
+			case gr::Material::AlphaMode::Mask:
+			{
+				bitmask |= effect::drawstyle::MaterialAlphaMode_Clip;
+			}
+			break;
+			case gr::Material::AlphaMode::Blend:
+			{
+				bitmask |= effect::drawstyle::MaterialAlphaMode_Blend;
+			}
+			break;
+			default:
+				SEAssertF("Invalid Material AlphaMode");
+			}
+
+			// Material sidedness:
+			bitmask |= materialInstanceData->m_isDoubleSided ?
+				effect::drawstyle::MaterialSidedness_Double : effect::drawstyle::MaterialSidedness_Single;
+		}
+
+		return bitmask;
+	}
+
+
 	re::BufferInput Material::CreateInstancedBuffer(
 		re::Buffer::StagingPool bufferAlloc, 
 		std::vector<MaterialInstanceRenderData const*> const& instanceData)

@@ -20,9 +20,15 @@ namespace effect
 		void LoadEffectManifest();
 
 		effect::Effect const* GetEffect(EffectID) const;
+		
 		effect::Technique const* GetTechnique(TechniqueID) const;
+		effect::Technique const* GetTechnique(EffectID, effect::drawstyle::Bitmask drawStyleBitmask) const;
+
 		re::RasterizationState const* GetRasterizationState(std::string const&) const;
 		re::VertexStreamMap const* GetVertexStreamMap(std::string const&) const;
+		
+		core::InvPtr<re::Shader> const& GetResolvedShader(
+			EffectID effectID, effect::drawstyle::Bitmask drawStyleBitmask) const;
 
 
 	private:
@@ -86,6 +92,21 @@ namespace effect
 	}
 
 
+	inline effect::Technique const* EffectDB::GetTechnique(
+		EffectID effectID, effect::drawstyle::Bitmask drawStyleBitmask) const
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_effectsMutex);
+
+			SEAssert(m_effects.contains(effectID), std::format("No Effect with ID {} exists", effectID).c_str());
+
+			effect::Effect const& effect = m_effects.at(effectID);
+
+			return effect.GetResolvedTechnique(drawStyleBitmask);
+		}
+	}
+
+
 	inline re::RasterizationState const* EffectDB::GetRasterizationState(std::string const& rasterStateName) const
 	{
 		{
@@ -109,5 +130,16 @@ namespace effect
 
 			return &m_vertexStreamMaps.at(name);
 		}
+	}
+
+
+	inline core::InvPtr<re::Shader> const& EffectDB::GetResolvedShader(
+		EffectID effectID, effect::drawstyle::Bitmask drawStyleBitmask) const
+	{
+		SEAssert(effectID != 0, "Invalid Effect");
+
+		effect::Effect const* effect = GetEffect(effectID);
+		effect::Technique const* technique = effect->GetResolvedTechnique(drawStyleBitmask);
+		return technique->GetShader();
 	}
 }

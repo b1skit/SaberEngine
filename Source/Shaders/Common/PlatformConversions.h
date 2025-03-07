@@ -43,5 +43,20 @@
 
 #endif
 
+// Hijack HLSL's built-in preprocessor macros to detect if we're in shader code
+#if defined(__HLSL_VERSION)
+
+// Payload access qualifiers (PAQ's):
+#define raypayload [raypayload]
+#define read(...) : read(__VA_ARGS__)
+#define write(...) : write(__VA_ARGS__)
+
+#elif defined(__cplusplus)
+
+#define raypayload
+#define read(...)
+#define write(...)
+
+#endif
 
 #endif // SE_PLATFORM_CONVERSIONS

@@ -461,6 +461,15 @@
     <ClInclude Include="GraphicsSystem_RayTracing_Experimental.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
+    <ClInclude Include="ShaderBindingTable.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderBindingTable_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderBindingTable_Platform.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -807,6 +816,15 @@
     </ClCompile>
     <ClCompile Include="GraphicsSystem_RayTracing_Experimental.cpp">
       <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderBindingTable.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderBindingTable_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderBindingTable_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

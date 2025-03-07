@@ -1,11 +1,11 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
+#include "CPUDescriptorHeapManager_DX12.h"
 #include "HeapManager_DX12.h"
 
 #include "Core/InvPtr.h"
 
-#include <wrl.h>
 #include <d3d12.h>
 
 
@@ -29,6 +29,8 @@ namespace dx12
 
 			// Resources:
 			std::unique_ptr<dx12::GPUResource> m_ASBuffer;
+
+			dx12::DescriptorAllocation m_tlasSRV; // Invalid/unused for BLAS's
 		};
 
 

@@ -1,10 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AccelerationStructure.h"
 #include "GraphicsSystemManager.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
+#include "ShaderBindingTable.h"
 #include "TextureTarget.h"
 #include "VertexStream.h"
 
@@ -133,8 +135,8 @@ namespace re
 		, m_newTextures(util::NBufferedVector<core::InvPtr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newVertexStreams(util::NBufferedVector<core::InvPtr<gr::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
-		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newAccelerationStructures(util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_quitEventRecieved(false)
 	{
 	}
@@ -455,8 +457,9 @@ namespace re
 		m_newTextures.AquireReadLock();
 		m_newSamplers.AquireReadLock();
 		m_newVertexStreams.AquireReadLock();
-		m_newTargetSets.AquireReadLock();
 		m_newAccelerationStructures.AquireReadLock();
+		m_newTargetSets.AquireReadLock();
+		
 
 		// Record newly created objects. This provides an convenient way to post-process new objects
 		{
@@ -475,8 +478,8 @@ namespace re
 		m_newTextures.ReleaseReadLock();
 		m_newSamplers.ReleaseReadLock();
 		m_newVertexStreams.ReleaseReadLock();
-		m_newTargetSets.ReleaseReadLock();
 		m_newAccelerationStructures.ReleaseReadLock();
+		m_newTargetSets.ReleaseReadLock();
 
 		SEEndCPUEvent();
 	}
@@ -505,8 +508,8 @@ namespace re
 		m_newTextures.SwapAndClear();
 		m_newSamplers.SwapAndClear();
 		m_newVertexStreams.SwapAndClear();
-		m_newTargetSets.SwapAndClear();
 		m_newAccelerationStructures.SwapAndClear();
+		m_newTargetSets.SwapAndClear();
 
 		SEEndCPUEvent();
 	}
@@ -518,8 +521,8 @@ namespace re
 		m_newTextures.Destroy();
 		m_newSamplers.Destroy();
 		m_newVertexStreams.Destroy();
-		m_newTargetSets.Destroy();
 		m_newAccelerationStructures.Destroy();
+		m_newTargetSets.Destroy();
 	}
 
 
@@ -552,16 +555,16 @@ namespace re
 
 
 	template<>
-	void RenderManager::RegisterForCreate(std::shared_ptr<re::TextureTargetSet> const& newObject)
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::AccelerationStructure> const& newObject)
 	{
-		m_newTargetSets.EmplaceBack(newObject);
+		m_newAccelerationStructures.EmplaceBack(newObject);
 	}
 
 
 	template<>
-	void RenderManager::RegisterForCreate(std::shared_ptr<re::AccelerationStructure> const& newObject)
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::TextureTargetSet> const& newObject)
 	{
-		m_newAccelerationStructures.EmplaceBack(newObject);
+		m_newTargetSets.EmplaceBack(newObject);
 	}
 
 

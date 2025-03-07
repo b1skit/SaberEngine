@@ -6,6 +6,7 @@
 namespace re
 {
 	class AccelerationStructure;
+	class ShaderBindingTable;
 }
 
 namespace gr
@@ -28,12 +29,14 @@ namespace gr
 
 		static constexpr util::CHashKey k_sceneTLASInput = "SceneTLAS";
 		void RegisterInputs() override;
+
+		static constexpr util::CHashKey k_rtTargetOutput = "RayTracingTarget";
 		void RegisterOutputs() override;
 
 
 	public:
 		RayTracing_ExperimentalGraphicsSystem(gr::GraphicsSystemManager*);
-		~RayTracing_ExperimentalGraphicsSystem() = default;
+		~RayTracing_ExperimentalGraphicsSystem();
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
@@ -41,5 +44,9 @@ namespace gr
 
 	private:
 		std::shared_ptr<re::AccelerationStructure> const* m_sceneTLAS;
+		std::shared_ptr<re::ShaderBindingTable> m_sceneSBT;
+
+		std::shared_ptr<re::Stage> m_rtStage;
+		core::InvPtr<re::Texture> m_rtTarget;
 	};
 }

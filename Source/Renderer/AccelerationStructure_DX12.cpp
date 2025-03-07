@@ -156,9 +156,6 @@ namespace
 			dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas.GetASParams());
 		SEAssert(blasParams, "Failed to get BLAS params");
 
-		SEAssert(blasParams->m_hitGroupIdx < re::AccelerationStructure::BLASParams::k_invalidSentinel,
-			"Invalid BLAS params");
-
 		std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geometryDescs;
 		geometryDescs.reserve(blasParams->m_geometry.size());
 
@@ -373,7 +370,7 @@ namespace
 		uint64_t resultDataMaxByteSize, scratchDataByteSize, updateScratchDataByteSize;
 		ComputeASBufferSizes(tlasInputs, platParams->m_device, resultDataMaxByteSize, scratchDataByteSize, updateScratchDataByteSize);
 
-		// Create a the TLAS buffer:
+		// Create the TLAS buffer:
 		platParams->m_ASBuffer = platParams->m_heapManager->CreateResource(
 			dx12::ResourceDesc{
 				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(
@@ -381,6 +378,23 @@ namespace
 				.m_heapType = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT,
 				.m_initialState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, },
 			util::ToWideString(tlas.GetName()).c_str());
+
+		// Create an SRV to describe the TLAS:
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		platParams->m_tlasSRV = context->GetCPUDescriptorHeapMgr(dx12::CPUDescriptorHeapManager::CBV_SRV_UAV).Allocate(1);
+		
+		const D3D12_SHADER_RESOURCE_VIEW_DESC tlasSRVDesc{
+			.Format = DXGI_FORMAT_UNKNOWN,
+			.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE,
+			.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+			.RaytracingAccelerationStructure = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV{
+				.Location = platParams->m_ASBuffer->GetGPUVirtualAddress() },
+		};
+		
+		context->GetDevice().GetD3DDevice()->CreateShaderResourceView(
+			nullptr, // null as the resource location is passed via the D3D12_SHADER_RESOURCE_VIEW_DESC
+			&tlasSRVDesc,
+			platParams->m_tlasSRV.GetBaseDescriptor());
 	}
 
 
@@ -398,11 +412,44 @@ namespace
 			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas.GetASParams());
 		SEAssert(tlasParams, "Failed to get TLASParams");
 
-		const uint64_t instanceDescriptorsSize = ComputeTLASInstancesBufferSize(tlasParams);
+		// Compute the hit group indexes:
+		auto ComputeStyleHash = [](std::vector<re::AccelerationStructure::BLASParams::Geometry> const& geometry)
+			-> util::HashKey
+			{
+				util::HashKey styleHash;
+				for (auto const& geo : geometry)
+				{
+					// We don't have knowledge of what shaders will eventually be resolved, as we don't have the hit
+					// group drawstyle bits that will be passed to our ShaderBindingTable. However, these drawstyle bits
+					// are identical for all hit groups, thus we can use the geometry EffectID and material drawstyle
+					// bits to differentiate BLAS instances that will eventually resolve to a specific hit group shader					
+					util::AddDataToHash(styleHash, geo.m_effectID);
+					util::AddDataToHash(styleHash, geo.m_materialDrawstyleBits);
+				}
+				return styleHash;
+			};
+
+		uint32_t currentHitGroupIdx = 0;
+		std::map<util::HashKey, uint32_t> styleHashToHitGroupIdx;
+		for (auto const& blas : tlasParams->m_blasInstances)
+		{
+			re::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
+			SEAssert(blasParams, "Failed to get TLASParams");
+
+			util::HashKey const& styleHash = ComputeStyleHash(blasParams->m_geometry);
+			if (!styleHashToHitGroupIdx.contains(styleHash))
+			{
+				SEAssert(currentHitGroupIdx < 0xFFFFFF, "Hit group indexes have a maximum of 24 bits");
+
+				styleHashToHitGroupIdx.emplace(styleHash, currentHitGroupIdx++);
+			}
+		}
 
 		// Create a temporary TLAS instance descriptor buffer:	
 		// Note: We allow this resource to immediately go out of scope and rely on the the dx12::HeapManager 
 		// deferred deletion to guarantee lifetime
+		const uint64_t instanceDescriptorsSize = ComputeTLASInstancesBufferSize(tlasParams);
 		std::unique_ptr<dx12::GPUResource> TLASInstanceDescs = platParams->m_heapManager->CreateResource(
 			dx12::ResourceDesc{
 				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(instanceDescriptorsSize, D3D12_RESOURCE_FLAG_NONE),
@@ -415,8 +462,7 @@ namespace
 		const HRESULT hr = TLASInstanceDescs->Map(0, nullptr, reinterpret_cast<void**>(&instanceDescs));
 		SEAssert(SUCCEEDED(hr), "Failed to map TLAS instance descriptions buffer");
 
-		// Zero out the instance descriptors buffer:
-		memset(instanceDescs, 0, instanceDescriptorsSize);
+		memset(instanceDescs, 0, instanceDescriptorsSize); // Zero-initialize the mapped instance descriptors
 
 		// Copy in the instance descriptors:
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(tlasParams->m_blasInstances.size());
@@ -434,17 +480,17 @@ namespace
 				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blasAS->GetASParams());
 			SEAssert(blasParams, "Failed to get BLASParams");
 
-			SEAssert(blasParams->m_hitGroupIdx < re::AccelerationStructure::BLASParams::k_invalidSentinel,
-				"Invalid BLAS params");
+			util::HashKey const& styleHash = ComputeStyleHash(blasParams->m_geometry);
+			const uint32_t instanceContributionToHitGroupIndex = styleHashToHitGroupIdx.at(styleHash);
 
 			dx12::AccelerationStructure::PlatformParams* blasPlatParams =
 				blasAS->GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
 
 			instanceDescs[instanceIdx] = D3D12_RAYTRACING_INSTANCE_DESC{
 				// .Transform set below
-				.InstanceID = instanceIdx, // Identifies each unique BLAS instance to shaders
+				.InstanceID = instanceIdx, // Arbitrary: Identifies each unique BLAS instance to shaders
 				.InstanceMask = blasParams->m_instanceMask,
-				.InstanceContributionToHitGroupIndex = blasParams->m_hitGroupIdx,
+				.InstanceContributionToHitGroupIndex = instanceContributionToHitGroupIndex,
 				.Flags = util::CheckedCast<uint32_t>(InstanceFlagsToD3DInstanceFlags(blasParams->m_instanceFlags)),
 				.AccelerationStructure = blasPlatParams->m_ASBuffer->GetGPUVirtualAddress(),
 			};
@@ -517,9 +563,8 @@ namespace dx12
 
 		m_heapManager = &context->GetHeapManager();
 		
-		Microsoft::WRL::ComPtr<ID3D12Device5> device5;
-		const HRESULT hr = context->GetDevice().GetD3DDevice().As(&device5);
-		SEAssert(SUCCEEDED(hr), "Failed to get device5");
+		ComPtr<ID3D12Device5> device5;
+		CheckHResult(context->GetDevice().GetD3DDevice().As(&device5), "Failed to get device5");
 
 		m_device = device5.Get();
 	}
@@ -558,8 +603,7 @@ namespace dx12
 
 	void AccelerationStructure::Destroy(re::AccelerationStructure& as)
 	{
-		dx12::AccelerationStructure::PlatformParams* platParams =
-			as.GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
+		//
 	}
 
 

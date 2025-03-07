@@ -31,24 +31,21 @@ namespace
 		re::Shader const& shader,
 		re::TextureTargetSet const* targetSet)
 	{
-		uint64_t psoKey = 0;
-		util::CombineHash(psoKey, shader.GetShaderIdentifier());
+		uint64_t psoKey = shader.GetShaderIdentifier();
 
 		re::RasterizationState const* rasterizationState = shader.GetRasterizationState();
 
-		SEAssert(rasterizationState || shader.GetPipelineType() != re::Shader::PipelineType::Rasterization,
-			"Shader does not have a pipeline state. This is unexpected");
+		SEAssert(shader.GetPipelineType() != re::Shader::PipelineType::Rasterization ||
+			(rasterizationState && targetSet),
+			"Rasterization shader does not have a pipeline state or target set. This is unexpected");
 
 		if (rasterizationState)
 		{
 			util::CombineHash(psoKey, rasterizationState->GetDataHash());
-
-			if (targetSet && shader.GetPipelineType() == re::Shader::PipelineType::Rasterization)
-			{
-				// We must consider the target set, as we must specify the RTV/DSV formats when creating a rasterization
-				// pipeline state stream
-				util::CombineHash(psoKey, targetSet->GetTargetSetSignature());
-			}
+			
+			// We must consider the target set, as we must specify the RTV/DSV formats when creating a rasterization
+			// pipeline state stream
+			util::CombineHash(psoKey, targetSet->GetTargetSetSignature());
 		}	
 		
 		return psoKey;

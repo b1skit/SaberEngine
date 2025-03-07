@@ -130,6 +130,7 @@ namespace
 						util::AddDataToHash(hash, descriptorTable.pDescriptorRanges[rangeIdx].NumDescriptors);
 						util::AddDataToHash(hash, descriptorTable.pDescriptorRanges[rangeIdx].BaseShaderRegister);
 						util::AddDataToHash(hash, descriptorTable.pDescriptorRanges[rangeIdx].RegisterSpace);
+						util::AddDataToHash(hash, descriptorTable.pDescriptorRanges[rangeIdx].Flags);
 						util::AddDataToHash(hash, descriptorTable.pDescriptorRanges[rangeIdx].OffsetInDescriptorsFromTableStart);
 					}
 				}
@@ -152,8 +153,7 @@ namespace
 					util::AddDataToHash(hash, rootDescriptor.Flags);
 				}
 				break;
-				default:
-					SEAssertF("Invalid parameter type");
+				default: SEAssertF("Invalid parameter type");
 				}
 
 				util::AddDataToHash(hash, rootSigDesc.Desc_1_1.pParameters[paramIdx].ShaderVisibility);
@@ -293,6 +293,8 @@ namespace dx12
 		, m_rootSigDescHash(0)
 		, m_rootSigDescriptorTableIdxBitmask(0)
 	{
+		// Zero our descriptor table entry counters: For each root sig. index containing a descriptor table, this tracks
+		// how many descriptors are in that table
 		memset(&m_numDescriptorsPerTable, 0, sizeof(m_numDescriptorsPerTable));
 	}
 
@@ -624,13 +626,8 @@ namespace dx12
 		dx12::Shader::PlatformParams* shaderPlatParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 		SEAssert(shaderPlatParams->m_isCreated, "Shader must be created");
 
-		std::unique_ptr<dx12::RootSignature> newRootSig = nullptr;
+		std::unique_ptr<dx12::RootSignature> newRootSig;
 		newRootSig.reset(new dx12::RootSignature());
-
-		// Zero our descriptor table entry counters: For each root sig. index containing a descriptor table, this tracks
-		// how many descriptors are in that table
-		memset(&newRootSig->m_numDescriptorsPerTable, 0, sizeof(newRootSig->m_numDescriptorsPerTable));
-		newRootSig->m_rootSigDescriptorTableIdxBitmask = 0;
 
 		// We record details of descriptors we want to place into descriptor tables, and then build the tables later
 		std::array<std::vector<RangeInput>, DescriptorType::Type_Count> rangeInputs;
@@ -677,8 +674,6 @@ namespace dx12
 					D3D12_FUNCTION_DESC functionDesc{};
 					CheckHResult(funcReflection->GetDesc(&functionDesc), "Failed to get function description");
 
-					LOG_ERROR(std::format("Function {}: {}", funcIdx, functionDesc.Name));
-
 					// Bound resources:
 					D3D12_SHADER_INPUT_BIND_DESC inputBindingDesc{};
 					for (uint32_t resourceIdx = 0; resourceIdx < functionDesc.BoundResources; ++resourceIdx)
@@ -693,28 +688,6 @@ namespace dx12
 							rangeInputs,
 							rootParameters,
 							staticSamplers);
-					}
-
-					// Function parameters:
-					for (int32_t paramIdx = 0; paramIdx < functionDesc.FunctionParameterCount; ++paramIdx)
-					{
-						ID3D12FunctionParameterReflection* param = funcReflection->GetFunctionParameter(paramIdx);
-
-						D3D12_PARAMETER_DESC paramDesc{};
-						CheckHResult(param->GetDesc(&paramDesc), "Failed to get parameter description");
-
-
-						LOG_ERROR(std::format("Parameter {}: {}", paramIdx, paramDesc.Name));
-					}
-
-					// Function return:
-					if (functionDesc.HasReturn)
-					{
-						LOG_ERROR(std::format("Function {} has a return value", functionDesc.Name));
-					}
-					else
-					{
-						LOG_ERROR(std::format("Function {} is a subroutine with no return value", functionDesc.Name));
 					}
 				}
 			}
@@ -1001,24 +974,6 @@ namespace dx12
 		}
 
 		return newRootSig;
-	}
-
-
-	uint32_t RootSignature::GetDescriptorTableIdxBitmask() const
-	{
-		return m_rootSigDescriptorTableIdxBitmask;
-	}
-
-
-	uint32_t RootSignature::GetNumDescriptorsInTable(uint8_t rootIndex) const
-	{
-		return m_numDescriptorsPerTable[rootIndex];
-	}
-
-
-	ID3D12RootSignature* RootSignature::GetD3DRootSignature() const
-	{
-		return m_rootSignature.Get();
 	}
 
 
