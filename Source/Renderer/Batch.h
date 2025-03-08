@@ -115,7 +115,8 @@ namespace re
 
 			std::shared_ptr<re::ShaderBindingTable> m_shaderBindingTable; // Required for DispatchRays only
 
-			glm::uvec3 m_dispatchDimensions = glm::uvec3(0); // .xyz = DispatchRays() width, height, depth
+			glm::uvec3 m_dispatchDimensions = glm::uvec3(0); // .xyz = DispatchRays() width/height/depth
+			uint32_t m_rayGenShaderIdx = 0;
 		};
 		using VertexStreamOverride = std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>;
 

@@ -5,19 +5,21 @@
 
 #include "Core/Config.h"
 
+#include "Core/Util/ImGuiUtils.h"
+
 #include "Shaders/Common/RayTracingParams.h"
 
 
 namespace
 {
-	std::shared_ptr<re::Buffer> CreateTraceRayParams()
+	std::shared_ptr<re::Buffer> CreateTraceRayParams(uint32_t missShaderIdx)
 	{
 		const TraceRayData traceRayData{
 			.g_traceRayParams = glm::uvec4(
-				0xFF,	// InstanceInclusionMask
-				0,		// RayContributionToHitGroupIndex
-				0,		// MultiplierForGeometryContributionToHitGroupIndex
-				0),		// MissShaderIndex
+				0xFF,				// InstanceInclusionMask
+				0,					// RayContributionToHitGroupIndex
+				0,					// MultiplierForGeometryContributionToHitGroupIndex
+				missShaderIdx),		// MissShaderIndex
 		};
 
 		const re::Buffer::BufferParams traceRayBufferParams{
@@ -34,6 +36,8 @@ namespace gr
 	RayTracing_ExperimentalGraphicsSystem::RayTracing_ExperimentalGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
+		, m_rayGenIdx(0)
+		, m_missShaderIdx(0)
 	{
 	}
 
@@ -69,14 +73,18 @@ namespace gr
 		SEAssert(m_sceneTLAS, "Scene TLAS ptr cannot be null");
 
 		// Create a shader binding table to reflect our local use of the TLAS:
+		const EffectID rtEffectID = effect::Effect::ComputeEffectID("RayTracing");
+
 		const re::ShaderBindingTable::SBTParams sbtParams{
 			.m_rayGenStyles = { 
-				{effect::Effect::ComputeEffectID("RayTracing"), effect::drawstyle::RT_Experimental_RT_RayGen_Experimental}
+				{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_RayGen_A},
+				{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_RayGen_B},
 			},
 			.m_missStyles = { 
-				{effect::Effect::ComputeEffectID("RayTracing"), effect::drawstyle::RT_Experimental_RT_Miss_Experimental}
+				{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_Miss_Blue},
+				{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_Miss_Red},
 			},
-			.m_hitgroupStyles = effect::drawstyle::RT_Experimental_RT_Geometry_Experimental,
+			.m_hitgroupStyles = effect::drawstyle::RT_Experimental_RT_Experimental_Geometry,
 			.m_maxPayloadByteSize = sizeof(HitInfo_Experimental),
 			.m_maxRecursionDepth = 2,
 		};
@@ -87,9 +95,6 @@ namespace gr
 		
 		// Add the camera buffer:
 		m_rtStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
-
-		// Ray tracing params:
-		m_rtStage->AddPermanentBuffer(re::BufferInput("TraceRayParams", CreateTraceRayParams()));
 
 		// Add a UAV target:
 		m_rtTarget = re::Texture::Create("RayTracing_Experimental_Target",
@@ -125,8 +130,44 @@ namespace gr
 				static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
 				static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)),
 				1u);
+			rtParams.m_rayGenShaderIdx = m_rayGenIdx;
 
 			m_rtStage->AddBatch(re::Batch(re::Lifetime::SingleFrame, rtParams));
+
+			// Ray tracing params:
+			m_rtStage->AddSingleFrameBuffer(
+				re::BufferInput("TraceRayParams", CreateTraceRayParams(m_missShaderIdx)));
 		}
+	}
+
+
+	void RayTracing_ExperimentalGraphicsSystem::ShowImGuiWindow()
+	{
+		// Ray gen shader:
+		const uint32_t numRayGenStyles = util::CheckedCast<uint32_t>(m_sceneSBT->GetSBTParams().m_rayGenStyles.size());
+
+		std::vector<std::string> rayGenComboOptions;
+		rayGenComboOptions.reserve(numRayGenStyles);
+		for (uint32_t i = 0; i < numRayGenStyles; ++i)
+		{
+			rayGenComboOptions.emplace_back(std::format("{}", i));
+		}
+
+		static uint32_t curRayGenIdx = m_rayGenIdx;
+		util::ShowBasicComboBox("Ray gen shader index", rayGenComboOptions.data(), numRayGenStyles, m_rayGenIdx);
+
+
+		// Miss shader:
+		const uint32_t numMissStyles = util::CheckedCast<uint32_t>(m_sceneSBT->GetSBTParams().m_missStyles.size());
+
+		std::vector<std::string> comboOptions;
+		comboOptions.reserve(numMissStyles);
+		for (uint32_t i = 0; i < numMissStyles; ++i)
+		{
+			comboOptions.emplace_back(std::format("{}", i));
+		}
+
+		static uint32_t curMissIdx = m_missShaderIdx;
+		util::ShowBasicComboBox("Miss shader index", comboOptions.data(), numMissStyles, m_missShaderIdx);
 	}
 }

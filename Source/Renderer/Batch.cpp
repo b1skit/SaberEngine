@@ -247,6 +247,7 @@ namespace re
 		, m_ASInput{}
 		, m_shaderBindingTable{}
 		, m_dispatchDimensions(0)
+		, m_rayGenShaderIdx(0)
 	{
 		SEStaticAssert(sizeof(Batch::RayTracingParams) == 96 || sizeof(Batch::RayTracingParams) == 88,
 			"Must update this if RayTracingParams debug/release size has changed");
@@ -274,6 +275,7 @@ namespace re
 			m_ASInput.m_accelerationStructure = rhs.m_ASInput.m_accelerationStructure;
 			m_shaderBindingTable = rhs.m_shaderBindingTable;
 			m_dispatchDimensions = rhs.m_dispatchDimensions;
+			m_rayGenShaderIdx = rhs.m_rayGenShaderIdx;
 		}
 		return *this;
 
@@ -293,6 +295,9 @@ namespace re
 			m_ASInput.m_accelerationStructure = std::move(rhs.m_ASInput.m_accelerationStructure);
 			m_shaderBindingTable = std::move(rhs.m_shaderBindingTable);
 			m_dispatchDimensions = std::move(rhs.m_dispatchDimensions);
+			
+			m_rayGenShaderIdx = rhs.m_rayGenShaderIdx;
+			rhs.m_rayGenShaderIdx = 0;
 		}
 		return *this;
 

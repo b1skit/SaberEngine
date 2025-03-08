@@ -135,7 +135,7 @@ namespace dx12
 		
 		void DrawBatchGeometry(re::Batch const&);
 		void Dispatch(glm::uvec3 const& threadDimensions);
-		void DispatchRays(re::ShaderBindingTable const&, glm::uvec3 const& threadDimensions);
+		void DispatchRays(re::ShaderBindingTable const&, glm::uvec3 const& threadDimensions, uint32_t rayGenShaderIdx);
 
 		void UpdateSubresource(
 			core::InvPtr<re::Texture> const&,

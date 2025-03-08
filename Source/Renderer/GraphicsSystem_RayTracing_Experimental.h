@@ -42,11 +42,18 @@ namespace gr
 		void PreRender();
 
 
+	public:
+		void ShowImGuiWindow() override;
+
+
 	private:
 		std::shared_ptr<re::AccelerationStructure> const* m_sceneTLAS;
 		std::shared_ptr<re::ShaderBindingTable> m_sceneSBT;
 
 		std::shared_ptr<re::Stage> m_rtStage;
 		core::InvPtr<re::Texture> m_rtTarget;
+
+		uint32_t m_rayGenIdx;
+		uint32_t m_missShaderIdx;
 	};
 }

@@ -517,7 +517,8 @@ namespace dx12
 	}
 
 
-	void CommandList::DispatchRays(re::ShaderBindingTable const& sbt, glm::uvec3 const& threadDimensions)
+	void CommandList::DispatchRays(
+		re::ShaderBindingTable const& sbt, glm::uvec3 const& threadDimensions, uint32_t rayGenShaderIdx)
 	{
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList4;
 		CheckHResult(m_commandList.As(&commandList4), "Failed to get a ID3D12GraphicsCommandList4");
@@ -528,7 +529,7 @@ namespace dx12
 		commandList4->SetPipelineState1(sbtPlatParams->m_rayTracingStateObject.Get());
 
 		D3D12_DISPATCH_RAYS_DESC const& dispatchRaysDesc = dx12::ShaderBindingTable::BuildDispatchRaysDesc(
-			sbt, threadDimensions, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+			sbt, threadDimensions, re::RenderManager::Get()->GetCurrentRenderFrameNum(), rayGenShaderIdx);
 
 		commandList4->DispatchRays(&dispatchRaysDesc);
 	}

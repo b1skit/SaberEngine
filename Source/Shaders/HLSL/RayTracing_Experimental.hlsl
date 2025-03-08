@@ -175,7 +175,14 @@ void RayGeneration_Experimental()
 		// between the hit/miss shaders and the raygen
 		payload);
 	
+#if defined(RAY_GEN_A)
 	gOutput[launchIndex] = float4(payload.colorAndDistance.rgb, 1.f);
+#endif
+	
+#if defined(RAY_GEN_B)
+	const float scaleFactor = 0.5f;
+	gOutput[launchIndex] = float4(payload.colorAndDistance.rgb * scaleFactor, 1.f);
+#endif
 }
 
 
@@ -186,7 +193,14 @@ void Miss_Experimental(inout HitInfo_Experimental payload : SV_RayPayload)
 	float2 dims = float2(DispatchRaysDimensions().xy);
 
 	float ramp = launchIndex.y / dims.y;
+	
+#if defined(MISS_BLUE)
 	payload.colorAndDistance = float4(0.0f, 0.2f, 0.7f - 0.3f * ramp, -1.0f);
+#endif
+	
+#if defined(MISS_RED)
+	payload.colorAndDistance = float4(1.0f, 0.2f, 0.7f - 0.3f * ramp, -1.0f);
+#endif
 }
 
 

@@ -626,7 +626,8 @@ namespace dx12
 
 									cmdList->DispatchRays(
 										*batchRTParams.m_shaderBindingTable,
-										batchRTParams.m_dispatchDimensions);
+										batchRTParams.m_dispatchDimensions,
+										batchRTParams.m_rayGenShaderIdx);
 								}
 								break;
 								default: SEAssertF("Invalid ray tracing batch operation type");

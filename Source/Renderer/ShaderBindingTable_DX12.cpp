@@ -1248,7 +1248,10 @@ namespace dx12
 
 
 	D3D12_DISPATCH_RAYS_DESC ShaderBindingTable::BuildDispatchRaysDesc(
-		re::ShaderBindingTable const& sbt, glm::uvec3 const& threadDimensions, uint64_t currentFrameNum)
+		re::ShaderBindingTable const& sbt,
+		glm::uvec3 const& threadDimensions,
+		uint64_t currentFrameNum,
+		uint32_t rayGenShaderIdx)
 	{
 		dx12::ShaderBindingTable::PlatformParams const* platParams =
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
@@ -1262,9 +1265,12 @@ namespace dx12
 		const bool hasHitGroupRegion = platParams->m_hitGroupRegionTotalByteSize > 0;
 		const bool hasCallableRegion = platParams->m_callableRegionTotalByteSize > 0;		
 
+		const uint64_t rayGenShaderOffset = 
+			(static_cast<uint64_t>(rayGenShaderIdx) * platParams->m_rayGenRegionByteStride);
+
 		return D3D12_DISPATCH_RAYS_DESC{
 			.RayGenerationShaderRecord = D3D12_GPU_VIRTUAL_ADDRESS_RANGE{
-				.StartAddress = sbtGPUVA + platParams->m_rayGenRegionBaseOffset,
+				.StartAddress = sbtGPUVA + platParams->m_rayGenRegionBaseOffset + rayGenShaderOffset,
 				.SizeInBytes = platParams->m_rayGenRegionTotalByteSize,
 			},
 			.MissShaderTable = D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE{
