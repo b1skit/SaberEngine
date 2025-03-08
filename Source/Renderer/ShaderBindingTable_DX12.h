@@ -93,6 +93,6 @@ namespace dx12
 			uint64_t currentFrameNum);
 
 		static D3D12_DISPATCH_RAYS_DESC BuildDispatchRaysDesc(
-			re::ShaderBindingTable const&, glm::uvec3 const& threadDimensions);
+			re::ShaderBindingTable const&, glm::uvec3 const& threadDimensions, uint64_t currentFrameNum);
 	};
 }

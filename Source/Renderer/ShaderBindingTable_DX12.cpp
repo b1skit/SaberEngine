@@ -21,11 +21,25 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
+	inline std::wstring CreateExportName(core::InvPtr<re::Shader> const& shader, std::string const& entryPoint)
+	{
+		return util::ToWideString(std::format("{}_{}", entryPoint, shader->GetShaderIdentifier()));
+	}
+
+
+	inline uint64_t ComputePerFrameSBTBaseOffset(
+		uint64_t frameRegionByteSize, uint64_t currentFrameNum, uint8_t numFramesInFlight)
+	{
+		return frameRegionByteSize * (currentFrameNum % numFramesInFlight);
+	}
+
+
 	struct LibraryDesc
 	{
 		// We (currently) compile each shader type into its own DXIL library (with multiple libraries per re::Shader)
 		ID3DBlob* m_dxilLibraryBlob = nullptr;
-		std::wstring m_entryPointWStr; // So we can pass a wchar_t* to D3D
+		std::wstring m_name;
+		std::wstring m_exportedName; // So we can pass a wchar_t* to D3D
 		D3D12_EXPORT_DESC m_exportDesc;
 		D3D12_DXIL_LIBRARY_DESC m_dxilLibraryDesc;
 	};
@@ -64,11 +78,14 @@ namespace
 
 						libDesc.m_dxilLibraryBlob = shaderPlatParams->m_shaderBlobs[shaderType].Get();
 
-						libDesc.m_entryPointWStr = util::ToWideString(entry.m_entryPoint); // So we can pass a wchar_t* to D3D
+						libDesc.m_name = util::ToWideString(entry.m_entryPoint);
+
+						// Create a unique mangled name for the export
+						libDesc.m_exportedName = CreateExportName(shader, entry.m_entryPoint);
 
 						libDesc.m_exportDesc = D3D12_EXPORT_DESC{
-							.Name = libDesc.m_entryPointWStr.c_str(),
-							.ExportToRename = nullptr,
+							.Name = libDesc.m_exportedName.c_str(),
+							.ExportToRename = libDesc.m_name.c_str(),
 							.Flags = D3D12_EXPORT_FLAG_NONE,
 						};
 
@@ -127,7 +144,7 @@ namespace
 				{
 					for (auto const& metadata : shader->GetMetadata())
 					{
-						exports.m_symbolNames.emplace_back(util::ToWideString(metadata.m_entryPoint));
+						exports.m_symbolNames.emplace_back(CreateExportName(shader, metadata.m_entryPoint));
 						exports.m_symbolPtrs.emplace_back(exports.m_symbolNames.back().c_str());
 					}					
 				}
@@ -186,18 +203,18 @@ namespace
 				{
 				case re::Shader::ShaderType::HitGroup_Intersection:
 				{
-					hitGroupDesc.m_intersectionEntryPoint = util::ToWideString(entry.m_entryPoint);
+					hitGroupDesc.m_intersectionEntryPoint = CreateExportName(shader, entry.m_entryPoint);
 					hitGroupType = D3D12_HIT_GROUP_TYPE_PROCEDURAL_PRIMITIVE;
 				}
 				break;
 				case re::Shader::ShaderType::HitGroup_AnyHit:
 				{
-					hitGroupDesc.m_anyHitEntryPoint = util::ToWideString(entry.m_entryPoint);
+					hitGroupDesc.m_anyHitEntryPoint = CreateExportName(shader, entry.m_entryPoint);
 				}
 				break;
 				case re::Shader::ShaderType::HitGroup_ClosestHit:
 				{
-					hitGroupDesc.m_closestHitEntryPoint = util::ToWideString(entry.m_entryPoint);
+					hitGroupDesc.m_closestHitEntryPoint = CreateExportName(shader, entry.m_entryPoint);
 				}
 				break;
 				default: SEAssertF("Invalid hit group shader type");
@@ -261,8 +278,8 @@ namespace
 					// Add the export symbol names:
 					for (auto const& entry : shader->GetMetadata())
 					{
-						std::wstring const& symbolName =
-							rootSigAssociation.m_symbolNames.emplace_back(util::ToWideString(entry.m_entryPoint));
+						std::wstring const& symbolName = rootSigAssociation.m_symbolNames.emplace_back(
+							CreateExportName(shader, entry.m_entryPoint));
 						rootSigAssociation.m_symbolNamePtrs.emplace_back(symbolName.c_str());
 					}
 				}
@@ -342,7 +359,6 @@ namespace
 			hasIntersectionShader |= (hitGroup.m_intersectionEntryPoint.empty() == false);
 		}
 
-
 		re::ShaderBindingTable::SBTParams const& sbtParams = sbt.GetSBTParams();
 
 		// Shader payload configuration:
@@ -351,6 +367,9 @@ namespace
 			.MaxAttributeSizeInBytes = 2 * sizeof(float), // sizeof HLSL's BuiltInTriangleIntersectionAttributes (i.e. Barycentrics)
 		};
 		SEAssert(!hasIntersectionShader, "TODO: Handle MaxAttributeSizeInBytes for intersection shaders");
+
+		SEAssert(shaderConfig.MaxAttributeSizeInBytes <= D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES,
+			"The maximum attribute structure size is 32B");
 
 		D3D12_STATE_SUBOBJECT const& shaderConfigSubObject = subObjects.emplace_back(D3D12_STATE_SUBOBJECT{
 			.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG,
@@ -478,38 +497,36 @@ namespace
 		std::ranges::range auto&& shaders,
 		std::ranges::range auto&& exportNames)
 	{
-		uint32_t numEntriesWritten = 0;
+		SEAssert(shaders.size() == exportNames.size(), "Shaders and export names are out of sync");
+
+		SEAssert(reinterpret_cast<uint64_t>(mappedData) % D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
+			"Shader table start address must be aligned to 64B");
+
+		const uint32_t regionSize = util::CheckedCast<uint32_t>(shaders.size()) * stride;
+
+		// Start by zero-initializing the entire mapped region:
+		memset(mappedData, 0, regionSize);
 
 		for (size_t i = 0; i < shaders.size(); ++i)
 		{
-			auto const& shader = shaders[i];
+			void* shaderIdentifier = raytracingPipeline->GetShaderIdentifier(exportNames[i].c_str());
 
-			std::vector<re::Shader::Metadata> const& shaderMetadata = shader->GetMetadata();
+			SEAssert(shaderIdentifier,
+				"Failed to get a shader identifier for \"%s::%s\"",
+				shaders[i]->GetName().c_str(), exportNames[i].c_str());
 
-			// Start by zero-initializing the entire mapped region:
-			memset(mappedData, 0, shaderMetadata.size() * stride);
+			// Compute the starting offset for the current shader:
+			uint8_t* dst = mappedData + (i * stride);
 
-			// Insert the shader identifiers as the first element at each stride:
-			for (auto const& entry : shaderMetadata)
-			{
-				void* shaderIdentifier = 
-					raytracingPipeline->GetShaderIdentifier(util::ToWideString(exportNames[i]).c_str());
-				SEAssert(shaderIdentifier,
-					"Failed to get a shader identifier for \"%s::%s\"",
-					shader->GetName().c_str(), entry.m_entryPoint.c_str());
+			SEAssert(reinterpret_cast<uint64_t>(dst) % D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT == 0,
+				"Shader table entry addresses must be aligned to 32B");
 
-				// Compute the starting offset for the current shader entry:
-				uint8_t* dst = mappedData + (i * stride);
-
-				// Copy the shader identifier to the beginning of the region:
-				memcpy(dst, shaderIdentifier, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
-
-				numEntriesWritten++;
-			}
+			// Copy the shader identifier to the beginning of the region:
+			memcpy(dst, shaderIdentifier, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 		}
 
 		// Return the total bytes written for all entries (i.e. the offset for any subsquent writes):
-		return numEntriesWritten * stride;
+		return regionSize;
 	}
 }
 
@@ -535,15 +552,15 @@ namespace dx12
 		dx12::ShaderBindingTable::PlatformParams* platParams =
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams*>();
 
-		auto GetEntryPointTransform = std::views::transform([](auto const& shader) -> std::string const&
+		auto GetExportNameTransform = std::views::transform([](auto const& shader) -> std::wstring
 			{
 				SEAssert(shader->GetMetadata().size() == 1, "More Metadata than expected");
-				return shader->GetMetadata()[0].m_entryPoint;
+				return CreateExportName(shader, shader->GetMetadata()[0].m_entryPoint); // Mangled shader name
 			});
 
-		auto rayGenExportNameView = sbt.m_rayGenShaders | GetEntryPointTransform;
-		auto missExportNameView = sbt.m_missShaders | GetEntryPointTransform;
-		auto callableExportNameView = sbt.m_callableShaders | GetEntryPointTransform;
+		auto rayGenExportNameView = sbt.m_rayGenShaders | GetExportNameTransform;
+		auto missExportNameView = sbt.m_missShaders | GetExportNameTransform;
+		auto callableExportNameView = sbt.m_callableShaders | GetExportNameTransform;
 
 		// Hit group shaders are paired with the hit group name, a view isolates the InvPtr<Shader> for convenience
 		auto hitGroupShaderView = sbt.m_hitGroupNamesAndShaders | std::views::transform(
@@ -553,27 +570,39 @@ namespace dx12
 			});
 
 		auto hitGroupExportNameView = sbt.m_hitGroupNamesAndShaders | std::views::transform(
-			[](auto const& hitGroupNamesAndShader) -> std::string const&
+			[](auto const& hitGroupNamesAndShader) -> std::wstring
 			{
-				return hitGroupNamesAndShader.first;
+				return util::ToWideString(hitGroupNamesAndShader.first); // Technique name == hit group name
 			});
 
 
 		// Compute the region size for each type of shader:
 		platParams->m_rayGenRegionByteStride = ComputeIndividualEntrySize(sbt.m_rayGenShaders);
+		platParams->m_rayGenRegionTotalByteSize =
+			platParams->m_rayGenRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_rayGenShaders.size());
+
 		platParams->m_missRegionByteStride = ComputeIndividualEntrySize(sbt.m_missShaders);
+		platParams->m_missRegionTotalByteSize =
+			platParams->m_missRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_missShaders.size());
+
 		platParams->m_hitGroupRegionByteStride = ComputeIndividualEntrySize(hitGroupShaderView);
-		platParams->m_callableRegionTotalByteSize = ComputeIndividualEntrySize(sbt.m_callableShaders);
+		platParams->m_hitGroupRegionTotalByteSize =
+			platParams->m_hitGroupRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_hitGroupNamesAndShaders.size());
+
+		platParams->m_callableRegionByteStride = ComputeIndividualEntrySize(sbt.m_callableShaders);
+		platParams->m_callableRegionTotalByteSize =
+			platParams->m_callableRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_callableShaders.size());
+		
+		// Compute the total number of bytes for 1 frame's worth of data:
+		platParams->m_frameRegionByteSize = util::RoundUpToNearestMultiple(
+			static_cast<uint64_t>(platParams->m_rayGenRegionTotalByteSize) +
+			static_cast<uint64_t>(platParams->m_missRegionTotalByteSize) +
+			static_cast<uint64_t>(platParams->m_hitGroupRegionTotalByteSize) +
+			static_cast<uint64_t>(platParams->m_callableRegionTotalByteSize),
+			256llu); // Note: We round size up to a multiple of 256B, as per the NVidia DXR sample
 
 		// Compute the total SBT size for N frames-in-flight-worth of data
 		platParams->m_numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
-		
-		platParams->m_frameRegionByteSize = util::RoundUpToNearestMultiple(
-			static_cast<uint64_t>(platParams->m_rayGenRegionByteStride) +
-			static_cast<uint64_t>(platParams->m_missRegionByteStride) +
-			static_cast<uint64_t>(platParams->m_hitGroupRegionByteStride) +
-			static_cast<uint64_t>(platParams->m_callableRegionTotalByteSize),
-			256llu); // Note: We round size up to a multiple of 256B, as per the NVidia DXR sample
 
 		const uint64_t totalSBTByteSize = platParams->m_numFramesInFlight * platParams->m_frameRegionByteSize;
 
@@ -597,8 +626,6 @@ namespace dx12
 
 		// Ray gen:
 		platParams->m_rayGenRegionBaseOffset = 0; // Ray gen shader is the first entry
-		platParams->m_rayGenRegionTotalByteSize = 
-			platParams->m_rayGenRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_rayGenShaders.size());
 		numBytesWritten += InitializeShaderRegions(
 			platParams->m_rayTracingStateObjectProperties.Get(),
 			sbtData, 
@@ -609,8 +636,6 @@ namespace dx12
 
 		// Miss:
 		platParams->m_missRegionBaseOffset = numBytesWritten;
-		platParams->m_missRegionTotalByteSize =
-			platParams->m_missRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_missShaders.size());
 		numBytesWritten += InitializeShaderRegions(
 			platParams->m_rayTracingStateObjectProperties.Get(),
 			sbtData,
@@ -621,8 +646,6 @@ namespace dx12
 
 		// Hit groups:
 		platParams->m_hitGroupRegionBaseOffset = numBytesWritten;
-		platParams->m_hitGroupRegionTotalByteSize = 
-			platParams->m_hitGroupRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_hitGroupNamesAndShaders.size());
 		numBytesWritten += InitializeShaderRegions(
 			platParams->m_rayTracingStateObjectProperties.Get(),
 			sbtData,
@@ -633,8 +656,6 @@ namespace dx12
 
 		// Callable:
 		platParams->m_callableRegionBaseOffset = numBytesWritten;
-		platParams->m_callableRegionTotalByteSize =
-			platParams->m_callableRegionByteStride * util::CheckedCast<uint32_t>(sbt.m_callableShaders.size());
 		numBytesWritten += InitializeShaderRegions(
 			platParams->m_rayTracingStateObjectProperties.Get(),
 			sbtData,
@@ -646,8 +667,11 @@ namespace dx12
 		// Initialize the remaining frame data:
 		for (uint8_t curFrameIdx = 1; curFrameIdx < platParams->m_numFramesInFlight; ++curFrameIdx)
 		{
+			const uint64_t frameOffset = ComputePerFrameSBTBaseOffset(
+				platParams->m_frameRegionByteSize, curFrameIdx, platParams->m_numFramesInFlight);
+
 			// Re-set the sbtData pointer to the base of the next region:
-			sbtData = baseSBTData + (curFrameIdx * platParams->m_frameRegionByteSize);
+			sbtData = baseSBTData + frameOffset;
 
 			sbtData += InitializeShaderRegions(
 				platParams->m_rayTracingStateObjectProperties.Get(),
@@ -716,7 +740,7 @@ namespace dx12
 						"Failed to map SBT buffer");
 
 					// Apply the per-frame base offset:
-					sbtData += frameRegionByteSize * (currentFrameNum % numFramesInFlight);
+					sbtData += ComputePerFrameSBTBaseOffset(frameRegionByteSize, currentFrameNum, numFramesInFlight);
 				}
 
 				const uint32_t regionOffset = regionBaseOffset + (i * regionByteStride);
@@ -1224,12 +1248,15 @@ namespace dx12
 
 
 	D3D12_DISPATCH_RAYS_DESC ShaderBindingTable::BuildDispatchRaysDesc(
-		re::ShaderBindingTable const& sbt, glm::uvec3 const& threadDimensions)
+		re::ShaderBindingTable const& sbt, glm::uvec3 const& threadDimensions, uint64_t currentFrameNum)
 	{
 		dx12::ShaderBindingTable::PlatformParams const* platParams =
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
 
-		const D3D12_GPU_VIRTUAL_ADDRESS sbtGPUVA = platParams->m_SBT->GetGPUVirtualAddress();
+		const uint64_t baseOffset = ComputePerFrameSBTBaseOffset(
+			platParams->m_frameRegionByteSize, currentFrameNum, platParams->m_numFramesInFlight);
+
+		const D3D12_GPU_VIRTUAL_ADDRESS sbtGPUVA = platParams->m_SBT->GetGPUVirtualAddress() + baseOffset;
 
 		// Zero out a region's start address if no shaders exist
 		const bool hasHitGroupRegion = platParams->m_hitGroupRegionTotalByteSize > 0;

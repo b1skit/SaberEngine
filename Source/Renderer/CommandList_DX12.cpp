@@ -527,8 +527,8 @@ namespace dx12
 		
 		commandList4->SetPipelineState1(sbtPlatParams->m_rayTracingStateObject.Get());
 
-		D3D12_DISPATCH_RAYS_DESC const& dispatchRaysDesc =
-			dx12::ShaderBindingTable::BuildDispatchRaysDesc(sbt, threadDimensions);
+		D3D12_DISPATCH_RAYS_DESC const& dispatchRaysDesc = dx12::ShaderBindingTable::BuildDispatchRaysDesc(
+			sbt, threadDimensions, re::RenderManager::Get()->GetCurrentRenderFrameNum());
 
 		commandList4->DispatchRays(&dispatchRaysDesc);
 	}
