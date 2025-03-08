@@ -11,7 +11,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "RT_Experimental_HitGroup"
+				"Technique": "RT_Experimental_HitGroup_OpaqueSingleSided"
 			},
 			{
 				"Conditions": [
@@ -19,7 +19,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "RT_Experimental_HitGroup"
+				"Technique": "RT_Experimental_HitGroup_ClipSingleSided"
 			},
 			{
 				"Conditions": [
@@ -27,7 +27,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "RT_Experimental_HitGroup"
+				"Technique": "RT_Experimental_HitGroup_OpaqueDoubleSided"
 			},
 			{
 				"Conditions": [
@@ -35,7 +35,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "RT_Experimental_HitGroup"
+				"Technique": "RT_Experimental_HitGroup_ClipDoubleSided"
 			},
 			{
 				"Conditions": [
@@ -43,7 +43,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "RT_Experimental_HitGroup"
+				"Technique": "RT_Experimental_HitGroup_BlendSingleSided"
 			},
 			{
 				"Conditions": [
@@ -51,7 +51,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "RT_Experimental_HitGroup"
+				"Technique": "RT_Experimental_HitGroup_BlendDoubleSided"
 			},
 			// Ray gen:
 			{
@@ -69,24 +69,68 @@
 			}
 		],
 		"Techniques" :  [
+			// Note: For hit groups, we use the Technique name as the hit group name
 			{
-				// Note: For hit groups, we use the Technique name as the hit group name
-				"Name": "RT_Experimental_HitGroup",
-
-				// If defined: Procedural geometry only. Otherwise, triangle geometry only
-				//"IntersectionShader": "RayTracing_Experimental",	
-				//"IntersectionShaderEntryPoint" : "Intersection_Experimental",
-				//"IntersectionShaderDefines": []
-
-				// If not defined, all geo considered opaque
-				"AnyHitShader": "RayTracing_Experimental",
-				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
-				"AnyHitShaderDefines": [],
+				"Name": "RT_Experimental_HitGroup_OpaqueSingleSided",
 
 				"ClosestHitShader": "RayTracing_Experimental",
 				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
-				"ClosestHitShaderDefines": []
+				"ClosestHitShaderDefines": ["OPAQUE_SINGLE_SIDED"]
 			},
+			{
+				"Name": "RT_Experimental_HitGroup_ClipSingleSided",
+
+				"AnyHitShader": "RayTracing_Experimental",
+				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShaderDefines": ["CLIP_SINGLE_SIDED"],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["CLIP_SINGLE_SIDED"]
+			},
+			{
+				"Name": "RT_Experimental_HitGroup_OpaqueDoubleSided",
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["OPAQUE_DOUBLE_SIDED"]
+			},
+			{
+				"Name": "RT_Experimental_HitGroup_ClipDoubleSided",
+
+				"AnyHitShader": "RayTracing_Experimental",
+				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShaderDefines": ["CLIP_DOUBLE_SIDED"],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["CLIP_DOUBLE_SIDED"]
+			},
+			{
+				"Name": "RT_Experimental_HitGroup_BlendSingleSided",
+
+				"AnyHitShader": "RayTracing_Experimental",
+				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShaderDefines": ["BLEND_SINGLE_SIDED"],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["BLEND_SINGLE_SIDED"]
+			},
+			{
+				"Name": "RT_Experimental_HitGroup_BlendDoubleSided",
+
+				"AnyHitShader": "RayTracing_Experimental",
+				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShaderDefines": ["BLEND_DOUBLE_SIDED"],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["BLEND_DOUBLE_SIDED"]
+			},
+
+
+
 			{
 				"Name": "RT_Experimental_RayGen",
 				"RayGenerationShader": "RayTracing_Experimental",

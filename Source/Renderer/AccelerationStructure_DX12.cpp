@@ -429,6 +429,23 @@ namespace
 				return styleHash;
 			};
 
+		uint32_t currentHitGroupIdx = 0;
+		std::map<util::HashKey, uint32_t> styleHashToHitGroupIdx;
+		for (auto const& blas : tlasParams->m_blasInstances)
+		{
+			re::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
+			SEAssert(blasParams, "Failed to get TLASParams");
+
+			util::HashKey const& styleHash = ComputeStyleHash(blasParams->m_geometry);
+			if (!styleHashToHitGroupIdx.contains(styleHash))
+			{
+				SEAssert(currentHitGroupIdx < 0xFFFFFF, "Hit group indexes have a maximum of 24 bits");
+
+				styleHashToHitGroupIdx.emplace(styleHash, currentHitGroupIdx++);
+			}
+		}
+
 		// Create a temporary TLAS instance descriptor buffer:	
 		// Note: We allow this resource to immediately go out of scope and rely on the the dx12::HeapManager 
 		// deferred deletion to guarantee lifetime
@@ -463,6 +480,9 @@ namespace
 				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blasAS->GetASParams());
 			SEAssert(blasParams, "Failed to get BLASParams");
 
+			util::HashKey const& styleHash = ComputeStyleHash(blasParams->m_geometry);
+			const uint32_t instanceContributionToHitGroupIndex = styleHashToHitGroupIdx.at(styleHash);
+
 			dx12::AccelerationStructure::PlatformParams* blasPlatParams =
 				blasAS->GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
 
@@ -470,7 +490,7 @@ namespace
 				// .Transform set below
 				.InstanceID = instanceIdx, // Arbitrary: Identifies each unique BLAS instance to shaders
 				.InstanceMask = blasParams->m_instanceMask,
-				.InstanceContributionToHitGroupIndex = blasParams->m_instanceContributionToHitGroupIndex,
+				.InstanceContributionToHitGroupIndex = instanceContributionToHitGroupIndex,
 				.Flags = util::CheckedCast<uint32_t>(InstanceFlagsToD3DInstanceFlags(blasParams->m_instanceFlags)),
 				.AccelerationStructure = blasPlatParams->m_ASBuffer->GetGPUVirtualAddress(),
 			};

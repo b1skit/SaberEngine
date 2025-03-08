@@ -99,7 +99,6 @@ namespace re
 			std::shared_ptr<re::Buffer> m_transform; // Buffer of mat3x4 in row-major order. Indexes correspond with m_geometry
 
 			uint8_t m_instanceMask = 0xFF; // Visibility mask: 0 = never include/always rejected
-			uint32_t m_instanceContributionToHitGroupIndex = 0; // Arbitrary: Per-instance hit group shader table offset
 			InstanceFlags m_instanceFlags = InstanceFlags::InstanceFlags_None;
 		};
 		struct TLASParams : public virtual IASParams

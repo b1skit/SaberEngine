@@ -50,7 +50,24 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 
 	//payload.colorAndDistance = float4(hitColor, RayTCurrent());
 	
-	payload.colorAndDistance = float4(float3(0, 1, 0), RayTCurrent());
+	
+	float3 colorOut = float3(0, 0, 0);
+	
+#if defined(OPAQUE_SINGLE_SIDED)
+	colorOut = float3(0,1,0);
+#elif defined(CLIP_SINGLE_SIDED)
+	colorOut = float3(1,0,0);
+#elif defined(OPAQUE_DOUBLE_SIDED)
+	colorOut = float3(0,1,1);
+#elif defined(CLIP_DOUBLE_SIDED)
+	colorOut = float3(1,0,1);
+#elif defined(BLEND_SINGLE_SIDED)
+	colorOut = float3(1,1,0);
+#elif defined(BLEND_DOUBLE_SIDED)
+	colorOut = float3(1,1,1);
+#endif
+	
+	payload.colorAndDistance = float4(colorOut, RayTCurrent());
 }
 
 
