@@ -130,7 +130,7 @@ void RayGeneration_Experimental()
 		// Parameter name: RayFlags
 		// Flags can be used to specify the behavior upon hitting a surface
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/ray_flag
-		RAY_FLAG_NONE,
+		TraceRayParams.g_rayFlags.x,
 
 		// Parameter name: InstanceInclusionMask
 		// Instance inclusion mask, which can be used to mask out some geometry to

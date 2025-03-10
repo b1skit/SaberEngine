@@ -12,7 +12,7 @@
 
 namespace
 {
-	std::shared_ptr<re::Buffer> CreateTraceRayParams(uint32_t missShaderIdx)
+	std::shared_ptr<re::Buffer> CreateTraceRayParams(RayFlag rayFlags, uint32_t missShaderIdx)
 	{
 		const TraceRayData traceRayData{
 			.g_traceRayParams = glm::uvec4(
@@ -20,6 +20,11 @@ namespace
 				0,					// RayContributionToHitGroupIndex
 				0,					// MultiplierForGeometryContributionToHitGroupIndex
 				missShaderIdx),		// MissShaderIndex
+			.g_rayFlags = glm::uvec4(
+				rayFlags,
+				0,
+				0,
+				0),
 		};
 
 		const re::Buffer::BufferParams traceRayBufferParams{
@@ -136,7 +141,7 @@ namespace gr
 
 			// Ray tracing params:
 			m_rtStage->AddSingleFrameBuffer(
-				re::BufferInput("TraceRayParams", CreateTraceRayParams(m_missShaderIdx)));
+				re::BufferInput("TraceRayParams", CreateTraceRayParams(RayFlag::None, m_missShaderIdx)));
 		}
 	}
 
