@@ -1025,7 +1025,7 @@ namespace fr
 
 		while (!nodes.empty())
 		{
-			NodeState curNodeState = nodes.top();
+			const NodeState curNodeState = nodes.top();
 			nodes.pop();
 
 			// Add children for next iteration:
@@ -1041,7 +1041,12 @@ namespace fr
 				ImGui::SetNextItemOpen(expandAllState);
 			}
 
-			SEAssert(transformToEntity.contains(curNodeState.m_node), "Failed to find the Transform. This should not be possible");
+			// Start-up race condition: We might find a node in the Transformation heirarchy that didn't exist when we
+			// were building transformToEntity. If so, just skip this operation
+			if (!transformToEntity.contains(curNodeState.m_node))
+			{
+				continue;
+			}
 
 			const entt::entity curTransformEntity = transformToEntity.at(curNodeState.m_node);
 
