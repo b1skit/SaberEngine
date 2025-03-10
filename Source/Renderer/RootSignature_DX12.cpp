@@ -842,7 +842,7 @@ namespace dx12
 						}
 					};
 
-					// Create the binding metadata for contiguous descriptor ranges within DescriptorTables:
+					// Create a single metadata entry for the contiguous range of descriptors within DescriptorTables:
 					bool isNewRange = false;
 					if (rangeIdx == rangeStart ||
 						rangeInputs[rangeTypeIdx][rangeIdx].ReturnType != rangeInputs[rangeTypeIdx][rangeStart].ReturnType ||
@@ -852,10 +852,6 @@ namespace dx12
 						newDescriptorTable->m_index = rootIdx;
 
 						isNewRange = true;
-					}
-					else
-					{
-						newDescriptorTable->m_ranges[rangeType].back().m_bindCount++;
 					}
 
 					// Populate the descriptor table metadata:
@@ -871,7 +867,7 @@ namespace dx12
 						if (isNewRange)
 						{
 							newDescriptorTable->m_ranges[DescriptorType::SRV].emplace_back(RangeEntry{
-								.m_bindCount = 1, // We'll increment this in subsequent iterations
+								.m_bindCount = numDescriptors,
 								.m_srvDesc = {
 									.m_format = GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].ReturnType),
 									.m_viewDimension = d3d12SrvDimension,}
@@ -889,7 +885,7 @@ namespace dx12
 						if (isNewRange)
 						{
 							newDescriptorTable->m_ranges[DescriptorType::UAV].emplace_back(RangeEntry{
-								.m_bindCount = 1, // We'll increment this in subsequent iterations
+								.m_bindCount = numDescriptors,
 								.m_uavDesc = {
 									.m_format = GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].ReturnType),
 									.m_viewDimension = d3d12UavDimension,}
@@ -902,7 +898,7 @@ namespace dx12
 						if (isNewRange)
 						{
 							newDescriptorTable->m_ranges[DescriptorType::CBV].emplace_back(RangeEntry{
-								.m_bindCount = 1, // We'll increment this in subsequent iterations
+								.m_bindCount = numDescriptors,
 							});
 						}
 					}

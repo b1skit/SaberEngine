@@ -264,13 +264,12 @@ namespace gr
 					auto animatedStreamsItr = m_animatedVertexStreams->find(meshPrimID);
 					if (animatedStreamsItr != m_animatedVertexStreams->end())
 					{
-						re::Batch::VertexStreamOverride const& streamOverride = animatedStreamsItr->second;
-
-						instance.m_positions = streamOverride[gr::VertexStream::Position].GetStream();
+						instance.m_positions = animatedStreamsItr->second[gr::VertexStream::Position];
 					}
 					else
 					{
-						instance.m_positions = meshPrimRenderData.m_vertexStreams[gr::VertexStream::Position];
+						instance.m_positions = re::VertexBufferInput(
+							meshPrimRenderData.m_vertexStreams[gr::VertexStream::Position]);
 					}
 
 					// Always the same instance buffer, regardless of animation

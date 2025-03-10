@@ -1028,12 +1028,12 @@ namespace dx12
 			// Transition the inputs:
 			for (auto const& instance : createParams->m_geometry)
 			{
-				SEAssert(instance.m_positions->GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
+				SEAssert(instance.m_positions.GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
 					"Single frame buffers are held in a shared heap, we can't transition them. DXR requires vertex"
 					"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
 
 				dx12::Buffer::PlatformParams* positionBufferPlatParams =
-					instance.m_positions->GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+					instance.m_positions.GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 				resourceTransitions.emplace_back(TransitionMetadata{
 					.m_resource = positionBufferPlatParams->m_resolvedGPUResource,
@@ -1404,8 +1404,8 @@ namespace dx12
 						}
 
 						barriers.emplace_back(D3D12_RESOURCE_BARRIER{
-							.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-							.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
+							.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+							.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
 							.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
 								.pResource = transition.m_resource,
 								.Subresource = subresourceIdx,

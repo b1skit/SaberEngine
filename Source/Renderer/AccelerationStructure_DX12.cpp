@@ -162,7 +162,8 @@ namespace
 		for (auto const& instance : blasParams->m_geometry)
 		{
 			SEAssert(instance.m_indices->GetType() == gr::VertexStream::Type::Index &&
-				instance.m_positions->GetType() == gr::VertexStream::Type::Position, "Invalid vertex stream type");
+				instance.m_positions.GetStream()->GetType() == gr::VertexStream::Type::Position,
+				"Invalid vertex stream geometry inputs");
 
 			// Currently, our re::Buffers have not been created/allocated at this point (they're staged in CPU memory,
 			// and will be committed to GPU resources *after* RenderManager::CreateAPIResources). The DX12 AS prebuild
@@ -183,8 +184,9 @@ namespace
 			// Dummy GPU VA here for same reason as above
 			const D3D12_GPU_VIRTUAL_ADDRESS indexBufferDummyAddr = instance.m_indices ? 1 : 0;
 
-			const DXGI_FORMAT vertexFormat = dx12::DataTypeToDXGI_FORMAT(instance.m_positions->GetDataType(), false);
-			const uint32_t vertexCount = instance.m_positions->GetNumElements();
+			const DXGI_FORMAT vertexFormat =
+				dx12::DataTypeToDXGI_FORMAT(instance.m_positions.GetStream()->GetDataType(), false);
+			const uint32_t vertexCount = instance.m_positions.GetStream()->GetNumElements();
 			const D3D12_GPU_VIRTUAL_ADDRESS positionBufferDummyAddr = 1 ; // Dummy GPU VA here for same reason as above
 
 			geometryDescs.emplace_back(D3D12_RAYTRACING_GEOMETRY_DESC{
@@ -274,11 +276,11 @@ namespace
 			}
 
 			// Positions:
-			const DXGI_FORMAT vertexFormat = dx12::DataTypeToDXGI_FORMAT(geo.m_positions->GetDataType(), false);
-			const uint32_t vertexCount = geo.m_positions->GetNumElements();
+			const DXGI_FORMAT vertexFormat = dx12::DataTypeToDXGI_FORMAT(geo.m_positions.GetStream()->GetDataType(), false);
+			const uint32_t vertexCount = geo.m_positions.GetStream()->GetNumElements();
 			const D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE positionBufferAddr = D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE{
-				.StartAddress = dx12::Buffer::GetGPUVirtualAddress(geo.m_positions->GetBuffer()),
-				.StrideInBytes = re::DataTypeToByteStride(geo.m_positions->GetDataType()), };
+				.StartAddress = dx12::Buffer::GetGPUVirtualAddress(geo.m_positions.GetBuffer()),
+				.StrideInBytes = re::DataTypeToByteStride(geo.m_positions.GetStream()->GetDataType()),};
 
 			geometryDescs.emplace_back(D3D12_RAYTRACING_GEOMETRY_DESC{
 				.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES,

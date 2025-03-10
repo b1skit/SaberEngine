@@ -1,5 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
+#include "BufferView.h"
 #include "Effect.h"
 #include "VertexStream.h"
 
@@ -101,7 +102,7 @@ namespace re
 
 			struct Geometry
 			{
-				core::InvPtr<gr::VertexStream> m_positions;
+				re::VertexBufferInput m_positions; // Respects buffer overrides
 				core::InvPtr<gr::VertexStream> m_indices; // Can be null/invalid
 
 				GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
