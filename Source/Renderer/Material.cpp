@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AccelerationStructure.h"
 #include "Buffer.h"
 #include "Material.h"
 #include "Material_GLTF.h"
@@ -135,6 +136,47 @@ namespace gr
 		}
 
 		return bitmask;
+	}
+
+
+	uint8_t Material::CreateInstanceInclusionMask(gr::Material::MaterialInstanceRenderData const* materialInstanceData)
+	{
+		uint8_t geoInstanceInclusionMask = 0;
+
+		if (materialInstanceData)
+		{
+			// Alpha mode:
+			switch (materialInstanceData->m_alphaMode)
+			{
+			case gr::Material::AlphaMode::Opaque:
+			{
+				geoInstanceInclusionMask |= re::AccelerationStructure::AlphaMode_Opaque;
+			}
+			break;
+			case gr::Material::AlphaMode::Mask:
+			{
+				geoInstanceInclusionMask |= re::AccelerationStructure::AlphaMode_Mask;
+			}
+			break;
+			case gr::Material::AlphaMode::Blend:
+			{
+				geoInstanceInclusionMask |= re::AccelerationStructure::AlphaMode_Blend;
+			}
+			break;
+			default:
+				SEAssertF("Invalid Material AlphaMode");
+			}
+
+			// Material sidedness:
+			geoInstanceInclusionMask |= materialInstanceData->m_isDoubleSided ?
+				re::AccelerationStructure::DoubleSided : re::AccelerationStructure::SingleSided;
+
+			// Shadow casting:
+			geoInstanceInclusionMask |= materialInstanceData->m_isShadowCaster ?
+				re::AccelerationStructure::ShadowCaster : re::AccelerationStructure::NoShadow;
+		}
+
+		return geoInstanceInclusionMask;
 	}
 
 

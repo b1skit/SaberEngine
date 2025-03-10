@@ -123,7 +123,7 @@ namespace gr
 		std::shared_ptr<re::Stage> shadowStage =
 			re::Stage::CreateGraphicsStage(stageName.c_str(), re::Stage::GraphicsStageParams{});
 
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::Stage::FilterMode::Require, true);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::ShadowCaster, re::Stage::FilterMode::Require, true);
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::Stage::FilterMode::Exclude, true);
 
 		shadowStage->SetDrawStyle(effect::drawstyle::Shadow_Cube);
@@ -192,7 +192,7 @@ namespace gr
 		std::shared_ptr<re::Stage> shadowStage =
 			re::Stage::CreateGraphicsStage(stageName.c_str(), re::Stage::GraphicsStageParams{});
 
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::CastsShadow, re::Stage::FilterMode::Require, true);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::ShadowCaster, re::Stage::FilterMode::Require, true);
 
 		// Shadow camera buffer:
 		re::BufferInput shadowCamParams(

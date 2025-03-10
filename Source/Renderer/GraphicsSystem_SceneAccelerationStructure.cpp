@@ -231,104 +231,121 @@ namespace gr
 			SEAssert(m_meshConceptToPrimitiveIDs.contains(meshConceptID),
 				"Failed to find MeshConcept record. This should not be possible");
 
-			std::unordered_set<gr::RenderDataID> const& meshPrimIDs = m_meshConceptToPrimitiveIDs.at(meshConceptID);
-
-			std::vector<glm::mat4 const*> blasMatrices;
-			auto blasParams = std::make_unique<re::AccelerationStructure::BLASParams>();
-			
-			gr::TransformID parentTransformID = gr::k_invalidTransformID; // Render data maps to the identity Transform
-			for (gr::RenderDataID meshPrimID : meshPrimIDs)
+			// Create a BLAS for each group of geometry with the same material properties, to allow accurate filtering
+			std::unordered_map<
+				re::AccelerationStructure::InclusionMask, 
+				std::vector<gr::RenderDataID>> inclusionMaskToRenderDataIDs;
+			for (gr::RenderDataID meshPrimID : m_meshConceptToPrimitiveIDs.at(meshConceptID))
 			{
-				gr::MeshPrimitive::RenderData const& meshPrimRenderData =
-					renderData.GetObjectData<gr::MeshPrimitive::RenderData>(meshPrimID);
-
-				re::AccelerationStructure::BLASParams::Geometry& instance = blasParams->m_geometry.emplace_back();
-
-				// Get the position buffer: Animated, or static
-				auto animatedStreamsItr = m_animatedVertexStreams->find(meshPrimID);
-				if (animatedStreamsItr != m_animatedVertexStreams->end())
-				{
-					re::Batch::VertexStreamOverride const& streamOverride = animatedStreamsItr->second;
-
-					instance.m_positions = streamOverride[gr::VertexStream::Position].GetStream();
-				}
-				else
-				{
-					instance.m_positions = meshPrimRenderData.m_vertexStreams[gr::VertexStream::Position];
-				}
-
-				// Always the same instance buffer, regardless of animation
-				instance.m_indices = meshPrimRenderData.m_indexStream; // May be null
-
-				// We use the MeshPrimitive's local TRS matrix for our BLAS, and then use the parent's global TRS to
-				// orient our BLAS in the TLAS
-				gr::Transform::RenderData const& meshPrimTransform = 
-					renderData.GetTransformDataFromRenderDataID(meshPrimID);
-				
-				SEAssert(parentTransformID == gr::k_invalidTransformID || 
-					parentTransformID == meshPrimTransform.m_parentTransformID,
-					"MeshPrimitive does not have the same parent transform ID as the previous iterations");
-
-				parentTransformID = meshPrimTransform.m_parentTransformID;
-
-				blasMatrices.emplace_back(&meshPrimTransform.g_local);
-
 				gr::Material::MaterialInstanceRenderData const& materialRenderData =
 					renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(meshPrimID);
 
-				instance.m_geometryFlags = materialRenderData.m_alphaMode == gr::Material::AlphaMode::Opaque ?
-					re::AccelerationStructure::GeometryFlags::Opaque :
-					re::AccelerationStructure::GeometryFlags::GeometryFlags_None;
+				const re::AccelerationStructure::InclusionMask inclusionMask = 
+					static_cast<re::AccelerationStructure::InclusionMask>(gr::Material::CreateInstanceInclusionMask(&materialRenderData));
 
-				instance.m_effectID = materialRenderData.m_effectID;
-				instance.m_materialDrawstyleBits = gr::Material::GetMaterialDrawstyleBits(&materialRenderData);
+				inclusionMaskToRenderDataIDs[inclusionMask].emplace_back(meshPrimID);
 			}
 
-			// Set the world Transform for all geometries in the BLAS
-			// Note: AS matrices must be 3x4 in row-major order
-			blasParams->m_blasWorldMatrix = glm::transpose(
-				renderData.GetTransformDataFromTransformID(parentTransformID).g_model);
-
-			// Assume we'll always update and compact for now
-			blasParams->m_buildFlags = static_cast<re::AccelerationStructure::BuildFlags>
-				(re::AccelerationStructure::BuildFlags::AllowUpdate |
-					re::AccelerationStructure::BuildFlags::AllowCompaction);
-
-			blasParams->m_instanceMask = 0xFF; // Visiblity mask: Always visible, for now
-			blasParams->m_instanceFlags = re::AccelerationStructure::InstanceFlags::InstanceFlags_None;
-
-			std::shared_ptr<re::AccelerationStructure> blas;
-			if (batchOperation == re::Batch::RayTracingParams::Operation::BuildAS)
+			// Build a BLAS for each group of geometry with the same Material flags:
+			for (auto const& entry : inclusionMaskToRenderDataIDs)
 			{
-				// Create a Transform buffer:
-				CreateUpdate3x4RowMajorTransformBuffer(meshConceptID, blasParams->m_transform, blasMatrices);
+				std::vector<glm::mat4 const*> blasMatrices;
+				auto blasParams = std::make_unique<re::AccelerationStructure::BLASParams>();
 
-				blas = re::AccelerationStructure::CreateBLAS(
-					std::format("Mesh RenderDataID {} BLAS", meshConceptID).c_str(),
-					std::move(blasParams));
+				gr::TransformID parentTransformID = gr::k_invalidTransformID; // Maps to the identity Transform
+				for (gr::RenderDataID meshPrimID : entry.second)
+				{
+					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
+						renderData.GetObjectData<gr::MeshPrimitive::RenderData>(meshPrimID);
 
-				m_meshConceptToBLAS[meshConceptID] = blas; // Create/replace the BLAS
+					re::AccelerationStructure::BLASParams::Geometry& instance = blasParams->m_geometry.emplace_back();
+
+					// Get the position buffer: Animated, or static
+					auto animatedStreamsItr = m_animatedVertexStreams->find(meshPrimID);
+					if (animatedStreamsItr != m_animatedVertexStreams->end())
+					{
+						re::Batch::VertexStreamOverride const& streamOverride = animatedStreamsItr->second;
+
+						instance.m_positions = streamOverride[gr::VertexStream::Position].GetStream();
+					}
+					else
+					{
+						instance.m_positions = meshPrimRenderData.m_vertexStreams[gr::VertexStream::Position];
+					}
+
+					// Always the same instance buffer, regardless of animation
+					instance.m_indices = meshPrimRenderData.m_indexStream; // May be null
+
+					// We use the MeshPrimitive's local TRS matrix for our BLAS, and then use the parent's global TRS to
+					// orient our BLAS in the TLAS
+					gr::Transform::RenderData const& meshPrimTransform =
+						renderData.GetTransformDataFromRenderDataID(meshPrimID);
+
+					SEAssert(parentTransformID == gr::k_invalidTransformID ||
+						parentTransformID == meshPrimTransform.m_parentTransformID,
+						"MeshPrimitive does not have the same parent transform ID as the previous iterations");
+
+					parentTransformID = meshPrimTransform.m_parentTransformID;
+
+					blasMatrices.emplace_back(&meshPrimTransform.g_local);
+
+					gr::Material::MaterialInstanceRenderData const& materialRenderData =
+						renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(meshPrimID);
+
+					instance.m_geometryFlags = materialRenderData.m_alphaMode == gr::Material::AlphaMode::Opaque ?
+						re::AccelerationStructure::GeometryFlags::Opaque :
+						re::AccelerationStructure::GeometryFlags::GeometryFlags_None;
+
+					instance.m_effectID = materialRenderData.m_effectID;
+					instance.m_materialDrawstyleBits = gr::Material::GetMaterialDrawstyleBits(&materialRenderData);
+				}
+
+				// Set the world Transform for all geometries in the BLAS
+				// Note: AS matrices must be 3x4 in row-major order
+				blasParams->m_blasWorldMatrix = glm::transpose(
+					renderData.GetTransformDataFromTransformID(parentTransformID).g_model);
+
+				// Assume we'll always update and compact for now
+				blasParams->m_buildFlags = static_cast<re::AccelerationStructure::BuildFlags>
+					(re::AccelerationStructure::BuildFlags::AllowUpdate |
+						re::AccelerationStructure::BuildFlags::AllowCompaction);
+
+				blasParams->m_instanceMask = entry.first; // Visiblity mask
+				blasParams->m_instanceFlags = re::AccelerationStructure::InstanceFlags_None;
+
+				std::shared_ptr<re::AccelerationStructure> blas;
+				if (batchOperation == re::Batch::RayTracingParams::Operation::BuildAS)
+				{
+					// Create a Transform buffer:
+					CreateUpdate3x4RowMajorTransformBuffer(meshConceptID, blasParams->m_transform, blasMatrices);
+
+					blas = re::AccelerationStructure::CreateBLAS(
+						std::format("Mesh RenderDataID {} BLAS", meshConceptID).c_str(),
+						std::move(blasParams));
+
+					m_meshConceptToBLAS[meshConceptID] = blas; // Create/replace the BLAS
+				}
+				else // Updating an existing BLAS:
+				{
+					blas = m_meshConceptToBLAS.at(meshConceptID);
+
+					// Update the existing Transform buffer
+					re::AccelerationStructure::BLASParams const* existingBLASParams =
+						dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
+
+					blasParams->m_transform = existingBLASParams->m_transform;
+					CreateUpdate3x4RowMajorTransformBuffer(meshConceptID, blasParams->m_transform, blasMatrices);
+
+					blas->UpdateASParams(std::move(blasParams));
+				}
+
+				// Add a single-frame stage to create/update the BLAS on the GPU:
+				re::Batch::RayTracingParams blasCreateBatchParams;
+				blasCreateBatchParams.m_operation = batchOperation;
+				blasCreateBatchParams.m_ASInput = re::ASInput(blas);
+
+				(*singleFrameBlasCreateStageItr)->AddBatch(re::Batch(re::Lifetime::SingleFrame, blasCreateBatchParams));
 			}
-			else // Updating an existing BLAS:
-			{
-				blas = m_meshConceptToBLAS.at(meshConceptID);
-
-				// Update the existing Transform buffer
-				re::AccelerationStructure::BLASParams const* existingBLASParams = 
-					dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
-
-				blasParams->m_transform = existingBLASParams->m_transform;
-				CreateUpdate3x4RowMajorTransformBuffer(meshConceptID, blasParams->m_transform, blasMatrices);
-				
-				blas->UpdateASParams(std::move(blasParams));
-			}
-
-			// Add a single-frame stage to create/update the BLAS on the GPU:
-			re::Batch::RayTracingParams blasCreateBatchParams;
-			blasCreateBatchParams.m_operation = batchOperation;
-			blasCreateBatchParams.m_ASInput = re::ASInput(blas);
-
-			(*singleFrameBlasCreateStageItr)->AddBatch(re::Batch(re::Lifetime::SingleFrame, blasCreateBatchParams));
 		}
 
 

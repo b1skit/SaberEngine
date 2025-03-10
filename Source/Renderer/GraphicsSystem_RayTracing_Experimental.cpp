@@ -12,14 +12,17 @@
 
 namespace
 {
-	std::shared_ptr<re::Buffer> CreateTraceRayParams(RayFlag rayFlags, uint32_t missShaderIdx)
+	std::shared_ptr<re::Buffer> CreateTraceRayParams(
+		uint8_t instanceInclusionMask, RayFlag rayFlags, uint32_t missShaderIdx)
 	{
+		SEAssert(instanceInclusionMask <= 0xFF, "Instance inclusion mask has maximum 8 bits");
+
 		const TraceRayData traceRayData{
 			.g_traceRayParams = glm::uvec4(
-				0xFF,				// InstanceInclusionMask
-				0,					// RayContributionToHitGroupIndex
-				0,					// MultiplierForGeometryContributionToHitGroupIndex
-				missShaderIdx),		// MissShaderIndex
+				static_cast<uint32_t>(instanceInclusionMask),	// InstanceInclusionMask
+				0,												// RayContributionToHitGroupIndex
+				0,												// MultiplierForGeometryContributionToHitGroupIndex
+				missShaderIdx),									// MissShaderIndex
 			.g_rayFlags = glm::uvec4(
 				rayFlags,
 				0,
@@ -43,6 +46,7 @@ namespace gr
 		, INamedObject(GetScriptName())
 		, m_rayGenIdx(0)
 		, m_missShaderIdx(0)
+		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
 	{
 	}
 
@@ -140,8 +144,12 @@ namespace gr
 			m_rtStage->AddBatch(re::Batch(re::Lifetime::SingleFrame, rtParams));
 
 			// Ray tracing params:
-			m_rtStage->AddSingleFrameBuffer(
-				re::BufferInput("TraceRayParams", CreateTraceRayParams(RayFlag::None, m_missShaderIdx)));
+			m_rtStage->AddSingleFrameBuffer(re::BufferInput(
+				"TraceRayParams", 
+				CreateTraceRayParams(
+					m_geometryInstanceMask,
+					RayFlag::None, 
+					m_missShaderIdx)));
 		}
 	}
 
@@ -174,5 +182,60 @@ namespace gr
 
 		static uint32_t curMissIdx = m_missShaderIdx;
 		util::ShowBasicComboBox("Miss shader index", comboOptions.data(), numMissStyles, m_missShaderIdx);
+
+		// Geometry inclusion masks:
+		auto SetInclusionMaskBits = [this](re::AccelerationStructure::InclusionMask flag, bool enabled)
+			{
+				if (enabled)
+				{
+					m_geometryInstanceMask |= flag;
+				}
+				else
+				{
+					m_geometryInstanceMask &= (re::AccelerationStructure::InstanceInclusionMask_Always ^ flag);
+				}
+			};
+
+		static bool s_alphaMode_Opaque = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Opaque;
+		if (ImGui::Checkbox("AlphaMode_Opaque", &s_alphaMode_Opaque))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Opaque, s_alphaMode_Opaque);
+		}
+
+		static bool s_alphaMode_Mask = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Mask;
+		if (ImGui::Checkbox("AlphaMode_Mask", &s_alphaMode_Mask))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Mask, s_alphaMode_Mask);
+		}
+
+		static bool s_alphaMode_Blend = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Blend;
+		if (ImGui::Checkbox("AlphaMode_Blend", &s_alphaMode_Blend))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Blend, s_alphaMode_Blend);
+		}
+
+		static bool s_singleSided = m_geometryInstanceMask & re::AccelerationStructure::SingleSided;
+		if (ImGui::Checkbox("SingleSided", &s_singleSided))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::SingleSided, s_singleSided);
+		}
+
+		static bool s_doubleSided = m_geometryInstanceMask & re::AccelerationStructure::DoubleSided;
+		if (ImGui::Checkbox("DoubleSided", &s_doubleSided))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::DoubleSided, s_doubleSided);
+		}
+
+		static bool s_noShadow = m_geometryInstanceMask & re::AccelerationStructure::NoShadow;
+		if (ImGui::Checkbox("NoShadow", &s_noShadow))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::NoShadow, s_noShadow);
+		}
+
+		static bool s_shadowCaster = m_geometryInstanceMask & re::AccelerationStructure::ShadowCaster;
+		if (ImGui::Checkbox("ShadowCaster", &s_shadowCaster))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::ShadowCaster, s_shadowCaster);
+		}
 	}
 }

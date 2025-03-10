@@ -55,5 +55,6 @@ namespace gr
 
 		uint32_t m_rayGenIdx;
 		uint32_t m_missShaderIdx;
+		uint8_t m_geometryInstanceMask;
 	};
 }

@@ -427,7 +427,7 @@ namespace re
 
 			// Filter bits:
 			SetFilterMaskBit(Filter::AlphaBlended, materialInstanceData->m_alphaMode == gr::Material::AlphaMode::Blend);
-			SetFilterMaskBit(Filter::CastsShadow, materialInstanceData->m_isShadowCaster);
+			SetFilterMaskBit(Filter::ShadowCaster, materialInstanceData->m_isShadowCaster);
 		}
 
 		m_drawStyleBitmask = gr::Material::GetMaterialDrawstyleBits(materialInstanceData);

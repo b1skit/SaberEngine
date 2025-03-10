@@ -96,6 +96,9 @@ namespace gr
 
 		static effect::drawstyle::Bitmask GetMaterialDrawstyleBits(gr::Material::MaterialInstanceRenderData const*);
 		
+		// Create an 8-bit ray tracing acceleration structure geometry instance inclusion mask
+		static uint8_t CreateInstanceInclusionMask(gr::Material::MaterialInstanceRenderData const*);
+
 
 	public:
 		static re::BufferInput CreateInstancedBuffer(

@@ -54,8 +54,8 @@ namespace re
 		using FilterBitmask = uint32_t;
 		enum Filter : FilterBitmask
 		{
-			AlphaBlended		= 1 << 0,	// 0001
-			CastsShadow			= 1 << 1,	// ...
+			AlphaBlended	= 1 << 0,
+			ShadowCaster	= 1 << 1,
 
 			Filter_Count
 		};

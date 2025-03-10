@@ -70,6 +70,21 @@ namespace re
 			ForceOpaque						= 1 << 2,
 			ForceNonOpaque					= 1 << 3,
 		};
+		enum InclusionMask : uint8_t // Maximum 8 bits
+		{
+			// Acceleration structures register hits when the logical AND of the TraceRay() InstanceInclusionMask and
+			// geometry InstanceMask is non-zero (i.e. if ANY bit matches)
+
+			AlphaMode_Opaque	= 1 << 0,
+			AlphaMode_Mask		= 1 << 1,
+			AlphaMode_Blend		= 1 << 2,
+			SingleSided			= 1 << 3,
+			DoubleSided			= 1 << 4,
+			NoShadow			= 1 << 5,
+			ShadowCaster		= 1 << 6,
+
+			InstanceInclusionMask_Always = 0xFF,
+		};
 
 
 	public:
@@ -98,7 +113,7 @@ namespace re
 			std::vector<Geometry> m_geometry;
 			std::shared_ptr<re::Buffer> m_transform; // Buffer of mat3x4 in row-major order. Indexes correspond with m_geometry
 
-			uint8_t m_instanceMask = 0xFF; // Visibility mask: 0 = never include/always rejected
+			InclusionMask m_instanceMask = InstanceInclusionMask_Always; // Visibility mask: 0 = ignored, 1 = visible
 			InstanceFlags m_instanceFlags = InstanceFlags::InstanceFlags_None;
 		};
 		struct TLASParams : public virtual IASParams
