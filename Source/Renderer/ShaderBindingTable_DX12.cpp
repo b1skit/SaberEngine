@@ -1256,6 +1256,8 @@ namespace dx12
 		dx12::ShaderBindingTable::PlatformParams const* platParams =
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
 
+		SEAssert(rayGenShaderIdx < sbt.m_rayGenShaders.size(), "OOB Ray generation shader index");
+
 		const uint64_t baseOffset = ComputePerFrameSBTBaseOffset(
 			platParams->m_frameRegionByteSize, currentFrameNum, platParams->m_numFramesInFlight);
 
