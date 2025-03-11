@@ -244,7 +244,10 @@ namespace gr
 		};
 
 
-	public:
+	private:
+		template<typename... Ts>
+		friend class ObjectAdapter;
+
 		// Iterate over multiple data types, with each iteration's elements associated by gr::RenderDataID.
 		// This is slower than a LinearIterator, but elements of different data types are guaranteed to be associated
 		// with the same gr::RenderDataID.
@@ -278,7 +281,8 @@ namespace gr
 
 			bool AnyDirty() const;
 
-			gr::RenderDataID GetRenderDataID() const;
+			[[nodiscard]] gr::RenderDataID GetRenderDataID() const;
+			[[nodiscard]] gr::TransformID GetTransformID() const;
 
 			[[nodiscard]] gr::Transform::RenderData const& GetTransformData() const;
 			[[nodiscard]] bool TransformIsDirty() const;
@@ -287,6 +291,9 @@ namespace gr
 
 			ObjectIterator& operator++(); // Prefix increment
 			ObjectIterator operator++(int); // Postfix increment
+
+			ObjectIterator* operator*() { return this; }
+			ObjectIterator const* operator*() const { return this; }
 
 			// These are declared as friends so they're not classified as member functions
 			friend bool operator==(ObjectIterator const& lhs, ObjectIterator const& rhs) { return lhs.m_ptrs == rhs.m_ptrs; }
@@ -332,7 +339,8 @@ namespace gr
 				Container::const_iterator,
 				Container::const_iterator,
 				std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const*,
-				uint64_t currentFrame);
+				uint64_t currentFrame,
+				RenderObjectFeature featureMask);
 
 		public:
 			~IDIterator() = default;
@@ -351,16 +359,19 @@ namespace gr
 			template<typename T>
 			[[nodiscard]] bool IsDirty() const;
 
-			gr::RenderDataID GetRenderDataID() const;
-			gr::TransformID GetTransformID() const;
+			[[nodiscard]] gr::RenderDataID GetRenderDataID() const;
+			[[nodiscard]] gr::TransformID GetTransformID() const;
 
-			gr::Transform::RenderData const& GetTransformData() const;
+			[[nodiscard]] gr::Transform::RenderData const& GetTransformData() const;
 			[[nodiscard]] bool TransformIsDirty() const;
 
 			[[nodiscard]] gr::FeatureBitmask GetFeatureBits() const;
 
 			IDIterator& operator++(); // Prefix increment
 			IDIterator operator++(int); // Postfix increment
+
+			IDIterator* operator*() { return this; }
+			IDIterator const* operator*() const { return this; }
 
 			// These are declared as friends so they're not classified as member functions
 			friend bool operator==(IDIterator const& lhs, IDIterator const& rhs) { return lhs.m_idsIterator == rhs.m_idsIterator; }
@@ -375,7 +386,9 @@ namespace gr
 			std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const* m_IDToRenderObjectMetadata;
 			std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator m_currentObjectMetadata;
 
+
 			uint64_t m_currentFrame;
+			RenderObjectFeature m_featureMask;
 		};
 
 
@@ -393,7 +406,7 @@ namespace gr
 		ObjectIterator<Ts...> ObjectEnd() const;
 
 		template <typename Container>
-		IDIterator<Container> IDBegin(Container const&) const;
+		IDIterator<Container> IDBegin(Container const&, RenderObjectFeature = RenderObjectFeature::None) const;
 
 		template <typename Container>
 		IDIterator<Container> IDEnd(Container const&) const;
@@ -437,6 +450,83 @@ namespace gr
 		// we just use a thread protector to guard against any mistakes
 		mutable util::ThreadProtector m_threadProtector;
 	};
+
+
+	template<typename... Ts>
+	class ObjectAdapter
+	{
+	public:
+		ObjectAdapter(gr::RenderDataManager const& renderData, RenderObjectFeature featureMask = RenderObjectFeature::None)
+			: m_renderData(renderData)
+			, m_featureMask(featureMask)
+		{}
+
+		RenderDataManager::ObjectIterator<Ts...> begin()
+		{
+			return m_renderData.ObjectBegin<Ts...>(m_featureMask);
+		}
+		RenderDataManager::ObjectIterator<Ts...> end()
+		{
+			return m_renderData.ObjectEnd<Ts...>();
+		}
+
+		RenderDataManager::ObjectIterator<Ts...> cbegin() const
+		{
+			return m_renderData.ObjectBegin<Ts...>(m_featureMask);
+		}
+		RenderDataManager::ObjectIterator<Ts...> cend() const
+		{
+			return m_renderData.ObjectEnd<Ts...>();
+		}
+		
+
+	private:
+		gr::RenderDataManager const& m_renderData;
+		RenderObjectFeature m_featureMask;
+	};
+
+
+	template<typename Container>
+	class IDAdapter
+	{
+	public:
+		IDAdapter(
+			gr::RenderDataManager const& renderData,
+			Container const& renderDataIDs, 
+			RenderObjectFeature featureMask = RenderObjectFeature::None)
+			: m_renderData(renderData)
+			, m_renderDataIDs(renderDataIDs)
+			, m_featureMask(featureMask)
+		{
+		}
+
+		RenderDataManager::IDIterator<Container> begin()
+		{
+			return m_renderData.IDBegin<Container>(m_renderDataIDs, m_featureMask);
+		}
+		RenderDataManager::IDIterator<Container> end()
+		{
+			return m_renderData.IDEnd<Container>(m_renderDataIDs);
+		}
+
+		RenderDataManager::IDIterator<Container> cbegin() const
+		{
+			return m_renderData.IDBegin<Container>(m_renderDataIDs, m_featureMask);
+		}
+		RenderDataManager::IDIterator<Container> cend() const
+		{
+			return m_renderData.IDEnd<Container>(m_renderDataIDs);
+		}
+
+
+	private:
+		gr::RenderDataManager const& m_renderData;
+		Container const& m_renderDataIDs;
+		RenderObjectFeature m_featureMask;
+	};
+
+
+	// ---
 
 
 	template<typename T>
@@ -1130,7 +1220,8 @@ namespace gr
 
 
 	template <typename Container>
-	RenderDataManager::IDIterator<Container> RenderDataManager::IDBegin(Container const& renderDataIDs) const
+	RenderDataManager::IDIterator<Container> RenderDataManager::IDBegin(
+		Container const& renderDataIDs, RenderObjectFeature featureMask /*= RenderObjectFeature::None*/) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -1139,7 +1230,8 @@ namespace gr
 			renderDataIDs.cbegin(),
 			renderDataIDs.cend(),
 			&m_IDToRenderObjectMetadata,
-			m_currentFrame);
+			m_currentFrame,
+			featureMask);
 	}
 
 
@@ -1153,7 +1245,8 @@ namespace gr
 			renderDataIDs.cend(),
 			renderDataIDs.cend(),
 			&m_IDToRenderObjectMetadata,
-			m_currentFrame);
+			m_currentFrame,
+			RenderObjectFeature::None);
 	}
 
 
@@ -1347,6 +1440,13 @@ namespace gr
 	}
 
 
+	template<typename... Ts>
+	gr::RenderDataID RenderDataManager::ObjectIterator<Ts...>::GetTransformID() const
+	{
+		return m_renderObjectMetadataItr->second.m_transformID;
+	}
+
+
 	template <typename... Ts>
 	gr::Transform::RenderData const& RenderDataManager::ObjectIterator<Ts...>::GetTransformData() const
 	{
@@ -1398,13 +1498,22 @@ namespace gr
 		Container::const_iterator renderDataIDsBegin,
 		Container::const_iterator renderDataIDsEnd,
 		std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const* IDToRenderObjectMetadata,
-		uint64_t currentFrame)
+		uint64_t currentFrame,
+		RenderObjectFeature featureMask)
 		: m_renderData(renderData)
 		, m_idsIterator(renderDataIDsBegin)
 		, m_idsEndIterator(renderDataIDsEnd)
 		, m_IDToRenderObjectMetadata(IDToRenderObjectMetadata)
 		, m_currentFrame(currentFrame)
+		, m_featureMask(featureMask)
 	{
+		while (m_idsIterator != m_idsEndIterator &&
+			gr::HasAllFeatures(m_featureMask, 
+				m_IDToRenderObjectMetadata->find(*m_idsIterator)->second.m_featureBits) == false)
+		{
+			++m_idsIterator;
+		}
+
 		if (m_idsIterator != m_idsEndIterator)
 		{
 			m_currentObjectMetadata = m_IDToRenderObjectMetadata->find(*m_idsIterator);
@@ -1509,7 +1618,12 @@ namespace gr
 	template<typename Container>
 	inline RenderDataManager::IDIterator<Container>& RenderDataManager::IDIterator<Container>::operator++() // Prefix increment
 	{
-		++m_idsIterator;
+		while (++m_idsIterator != m_idsEndIterator &&
+			gr::HasAllFeatures(m_featureMask,
+				m_IDToRenderObjectMetadata->find(*m_idsIterator)->second.m_featureBits) == false)
+		{
+		}
+
 		if (m_idsIterator != m_idsEndIterator)
 		{
 			// As a small optimization, we cache the current RenderObjectMetadata iterator to save repeated queries
