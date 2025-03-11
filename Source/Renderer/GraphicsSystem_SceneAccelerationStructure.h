@@ -49,7 +49,12 @@ namespace gr
 		// BLAS tracking:
 		std::unordered_map<gr::RenderDataID, std::unordered_set<gr::RenderDataID>> m_meshConceptToPrimitiveIDs;
 		std::unordered_map<gr::RenderDataID, gr::RenderDataID> m_meshPrimToMeshConceptID;
-		std::unordered_map<gr::RenderDataID, std::shared_ptr<re::AccelerationStructure>> m_meshConceptToBLAS;
+		
+		std::unordered_map<gr::RenderDataID, // MeshConcept RenderDataID
+			std::map<util::HashKey, // BLAS key
+				std::pair<std::shared_ptr<re::AccelerationStructure>, uint32_t>>> m_meshConceptToBLASAndCount;
+
+		std::unordered_map<gr::RenderDataID, util::HashKey> m_meshPrimToBLASKey;
 
 		re::StagePipeline* m_stagePipeline;
 		re::StagePipeline::StagePipelineItr m_rtParentStageItr;

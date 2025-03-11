@@ -50,6 +50,8 @@ namespace gr
 		std::shared_ptr<re::AccelerationStructure> const* m_sceneTLAS;
 		std::shared_ptr<re::ShaderBindingTable> m_sceneSBT;
 
+		re::StagePipeline* m_stagePipeline;
+
 		std::shared_ptr<re::Stage> m_rtStage;
 		core::InvPtr<re::Texture> m_rtTarget;
 

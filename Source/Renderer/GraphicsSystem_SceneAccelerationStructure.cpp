@@ -39,6 +39,16 @@ namespace
 			transformBuffer->Commit(transformsRowMajor.data(), 0, util::CheckedCast<uint32_t>(worldMatrices.size()));
 		}
 	}
+
+
+	util::HashKey CreateBLASKey(
+		gr::RenderDataID owningMeshConceptID, re::AccelerationStructure::InclusionMask inclusionMask)
+	{
+		util::HashKey result;
+		util::AddDataToHash(result, owningMeshConceptID);
+		util::AddDataToHash(result, inclusionMask);
+		return result;
+	}
 }
 
 namespace gr
@@ -56,9 +66,12 @@ namespace gr
 		{
 			m_sceneTLAS->Destroy();
 		}
-		for (auto& blas : m_meshConceptToBLAS)
+		for (auto& entry : m_meshConceptToBLASAndCount)
 		{
-			blas.second->Destroy();
+			for (auto& blas : entry.second)
+			{
+				blas.second.first->Destroy();
+			}
 		}
 	}
 
@@ -118,19 +131,36 @@ namespace gr
 					// Erase the MeshPrimitive -> MeshConcept record:
 					m_meshPrimToMeshConceptID.erase(meshPrimToConceptItr);
 
+					SEAssert(m_meshPrimToBLASKey.contains(deletedPrimitiveID),
+						"Failed to find the MeshPrimtiveID. This should not be possible");
+
+					const util::HashKey blasKey = m_meshPrimToBLASKey.at(deletedPrimitiveID);
+
 					SEAssert(m_meshConceptToPrimitiveIDs.contains(owningMeshConceptID) &&
-						m_meshConceptToBLAS.contains(owningMeshConceptID),
+						m_meshConceptToBLASAndCount.contains(owningMeshConceptID) &&
+						m_meshConceptToBLASAndCount.at(owningMeshConceptID).contains(blasKey),
 						"Failed to find the owning MeshConcept entries. This should not be possible");
 
-					// Erase the MeshConcept -> MeshPrimitive record:
-					auto meshConceptItr = m_meshConceptToPrimitiveIDs.find(owningMeshConceptID);
-					meshConceptItr->second.erase(deletedPrimitiveID);
-
-					// If the MeshConcept record doesn't contain any more MeshPrimitive IDs, erase it
-					if (meshConceptItr->second.empty())
+					// Erase the MeshPrimitive -> BLAS and BLAS key records:
+					auto& blasAndCountMap = m_meshConceptToBLASAndCount.at(owningMeshConceptID);
+					if (--blasAndCountMap.at(blasKey).second == 0)
 					{
-						m_meshConceptToPrimitiveIDs.erase(meshConceptItr);
-						m_meshConceptToBLAS.erase(owningMeshConceptID);
+						blasAndCountMap.erase(blasKey);
+					}
+					m_meshPrimToBLASKey.erase(deletedPrimitiveID);
+
+					// Erase the MeshConcept -> MeshPrimitive record:
+					auto primitiveIDs = m_meshConceptToPrimitiveIDs.find(owningMeshConceptID);
+					primitiveIDs->second.erase(deletedPrimitiveID);
+					if (primitiveIDs->second.empty())
+					{
+						SEAssert(m_meshConceptToBLASAndCount.at(owningMeshConceptID).empty(),
+							"Trying to delete a MeshConcept record that still has a BLAS");
+
+						m_meshConceptToBLASAndCount.erase(owningMeshConceptID);
+
+						// If the MeshConcept record doesn't contain any more MeshPrimitive IDs, erase it
+						m_meshConceptToPrimitiveIDs.erase(primitiveIDs);
 
 						// If we previously recorded a Build operation, remove it
 						auto updateItr = meshConceptIDToBatchOp.find(owningMeshConceptID);
@@ -163,6 +193,7 @@ namespace gr
 				++meshPrimItr;
 				continue;
 			}
+
 			const gr::RenderDataID meshPrimID = meshPrimItr.GetRenderDataID();
 
 			gr::MeshPrimitive::RenderData const& meshPrimRenderData =
@@ -175,6 +206,18 @@ namespace gr
 
 			m_meshConceptToPrimitiveIDs[owningMeshConceptID].emplace(meshPrimID);
 			m_meshPrimToMeshConceptID[meshPrimID] = owningMeshConceptID;
+
+			// Create/update the BLAS count:
+			const util::HashKey blasKey = CreateBLASKey(
+				owningMeshConceptID, 
+				static_cast<re::AccelerationStructure::InclusionMask>(
+					gr::Material::CreateInstanceInclusionMask(&meshPrimItr.Get<gr::Material::MaterialInstanceRenderData>())));
+
+			if (m_meshPrimToBLASKey.emplace(meshPrimID, blasKey).second == true)
+			{
+				// A brand new MeshPrimitive: Increment the BLAS reference counter
+				m_meshConceptToBLASAndCount[owningMeshConceptID][blasKey].second++;
+			}
 
 			// Record a BLAS update:
 			auto meshConceptUpdateItr = meshConceptIDToBatchOp.find(owningMeshConceptID);
@@ -212,9 +255,9 @@ namespace gr
 			}
 		}
 
-		// If we're about to create a BLAS, add a single-frame stage to hold the work:
+		// If we're about to build or update an AS, add a single-frame stage to hold the work:
 		re::StagePipeline::StagePipelineItr singleFrameBlasCreateStageItr;
-		if (!meshConceptIDToBatchOp.empty())
+		if (!meshConceptIDToBatchOp.empty() || mustRebuildTLAS)
 		{
 			singleFrameBlasCreateStageItr = m_stagePipeline->AppendSingleFrameStage(m_rtParentStageItr,
 				re::Stage::CreateSingleFrameRayTracingStage(
@@ -251,6 +294,8 @@ namespace gr
 			{
 				std::vector<glm::mat4 const*> blasMatrices;
 				auto blasParams = std::make_unique<re::AccelerationStructure::BLASParams>();
+
+				util::HashKey const& blasKey = CreateBLASKey(meshConceptID, entry.first);
 
 				gr::TransformID parentTransformID = gr::k_invalidTransformID; // Maps to the identity Transform
 				for (gr::RenderDataID meshPrimID : entry.second)
@@ -297,6 +342,9 @@ namespace gr
 
 					instance.m_effectID = materialRenderData.m_effectID;
 					instance.m_materialDrawstyleBits = gr::Material::GetMaterialDrawstyleBits(&materialRenderData);
+
+					// Map the MeshPrimitive RenderDataID -> BLAS key:
+					m_meshPrimToBLASKey[meshPrimID] = blasKey;
 				}
 
 				// Set the world Transform for all geometries in the BLAS
@@ -312,6 +360,10 @@ namespace gr
 				blasParams->m_instanceMask = entry.first; // Visiblity mask
 				blasParams->m_instanceFlags = re::AccelerationStructure::InstanceFlags_None;
 
+				SEAssert(m_meshConceptToBLASAndCount.contains(meshConceptID) &&
+					m_meshConceptToBLASAndCount.at(meshConceptID).contains(blasKey),
+					"Could not find an existing BLAS record");
+
 				std::shared_ptr<re::AccelerationStructure> blas;
 				if (batchOperation == re::Batch::RayTracingParams::Operation::BuildAS)
 				{
@@ -322,11 +374,11 @@ namespace gr
 						std::format("Mesh RenderDataID {} BLAS", meshConceptID).c_str(),
 						std::move(blasParams));
 
-					m_meshConceptToBLAS[meshConceptID] = blas; // Create/replace the BLAS
+					m_meshConceptToBLASAndCount.at(meshConceptID).at(blasKey).first = blas; // Create/replace the BLAS
 				}
 				else // Updating an existing BLAS:
 				{
-					blas = m_meshConceptToBLAS.at(meshConceptID);
+					blas = m_meshConceptToBLASAndCount.at(meshConceptID).at(blasKey).first;
 
 					// Update the existing Transform buffer
 					re::AccelerationStructure::BLASParams const* existingBLASParams =
@@ -349,7 +401,7 @@ namespace gr
 
 
 		// Rebuild the scene TLAS if necessary
-		if (!meshConceptIDToBatchOp.empty())
+		if (!meshConceptIDToBatchOp.empty() || mustRebuildTLAS)
 		{
 			// Schedule a single-frame stage to create/update the TLAS on the GPU:
 			re::Batch::RayTracingParams::Operation tlasOperation = re::Batch::RayTracingParams::Operation::Invalid;
@@ -365,30 +417,48 @@ namespace gr
 						re::AccelerationStructure::BuildFlags::AllowCompaction);
 
 				// Pack the scene BLAS instances:
-				for (auto const& blasInstance : m_meshConceptToBLAS)
+				for (auto const& entry : m_meshConceptToBLASAndCount)
 				{
-					tlasParams->m_blasInstances.emplace_back(blasInstance.second);
+					for (auto const& blasInstance : entry.second)
+					{
+						tlasParams->m_blasInstances.emplace_back(blasInstance.second.first);
+					}
 				}
 
-				// Create a new AccelerationStructure:
-				m_sceneTLAS = re::AccelerationStructure::CreateTLAS("Scene TLAS", std::move(tlasParams));
+				if (!tlasParams->m_blasInstances.empty())
+				{
+					// Create a new AccelerationStructure:
+					m_sceneTLAS = re::AccelerationStructure::CreateTLAS("Scene TLAS", std::move(tlasParams));
+				}
+				else
+				{
+					m_sceneTLAS = nullptr; // Everything must have been deleted
+				}
 			}
 			else
 			{
 				tlasOperation = re::Batch::RayTracingParams::Operation::UpdateAS;
 			}
 			
-			re::Batch::RayTracingParams tlasBatchParams;
-			tlasBatchParams.m_operation = tlasOperation,
-			tlasBatchParams.m_ASInput = re::ASInput (m_sceneTLAS);
+			if (m_sceneTLAS) // Ensure we don't try and build a null TLAS
+			{
+				re::Batch::RayTracingParams tlasBatchParams;
+				tlasBatchParams.m_operation = tlasOperation,
+					tlasBatchParams.m_ASInput = re::ASInput(m_sceneTLAS);
 
-			(*singleFrameBlasCreateStageItr)->AddBatch(re::Batch(re::Lifetime::SingleFrame, tlasBatchParams));
+				(*singleFrameBlasCreateStageItr)->AddBatch(re::Batch(re::Lifetime::SingleFrame, tlasBatchParams));
+			}
 		}
 	}
 
 
 	void SceneAccelerationStructureGraphicsSystem::ShowImGuiWindow()
 	{
-		ImGui::Text(std::format("BLAS Count: {}", m_meshConceptToBLAS.size()).c_str());
+		size_t numBLASes = 0;
+		for (auto const& meshConceptRecord : m_meshConceptToBLASAndCount)
+		{
+			numBLASes += meshConceptRecord.second.size();
+		}
+		ImGui::Text(std::format("BLAS Count: {}", numBLASes).c_str());
 	}
 }

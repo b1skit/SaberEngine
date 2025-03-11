@@ -78,6 +78,8 @@ namespace gr
 		BufferDependencies const&, 
 		DataDependencies const& dataDependencies)
 	{
+		m_stagePipeline = &pipeline;
+
 		m_sceneTLAS = GetDataDependency<TLAS>(k_sceneTLASInput, dataDependencies);
 		SEAssert(m_sceneTLAS, "Scene TLAS ptr cannot be null");
 
@@ -150,6 +152,10 @@ namespace gr
 					m_geometryInstanceMask,
 					RayFlag::None, 
 					m_missShaderIdx)));
+		}
+		else
+		{
+			// TODO: Append a single-frame clear stage for the RT stage buffer to clear old output
 		}
 	}
 

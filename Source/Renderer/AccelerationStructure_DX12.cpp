@@ -418,6 +418,10 @@ namespace
 		auto ComputeStyleHash = [](std::vector<re::AccelerationStructure::BLASParams::Geometry> const& geometry)
 			-> util::HashKey
 			{
+				// We only want to include an EffectID/Material Drawstyle bit combination once in our hash (i.e. the
+				// style hash must be invariant to the number of geometry entries in a BLAS instance)
+				std::set<util::HashKey> uniqueEffectIDsAndDrawstyleBits;
+			
 				util::HashKey styleHash;
 				for (auto const& geo : geometry)
 				{
@@ -425,8 +429,15 @@ namespace
 					// group drawstyle bits that will be passed to our ShaderBindingTable. However, these drawstyle bits
 					// are identical for all hit groups, thus we can use the geometry EffectID and material drawstyle
 					// bits to differentiate BLAS instances that will eventually resolve to a specific hit group shader					
-					util::AddDataToHash(styleHash, geo.m_effectID);
-					util::AddDataToHash(styleHash, geo.m_materialDrawstyleBits);
+					util::HashKey curHash;
+					util::AddDataToHash(curHash, geo.m_effectID);
+					util::AddDataToHash(curHash, geo.m_materialDrawstyleBits);
+
+					if (!uniqueEffectIDsAndDrawstyleBits.contains(curHash))
+					{
+						util::AddDataToHash(styleHash, curHash);
+						uniqueEffectIDsAndDrawstyleBits.emplace(curHash);
+					}
 				}
 				return styleHash;
 			};
@@ -452,6 +463,8 @@ namespace
 		// Note: We allow this resource to immediately go out of scope and rely on the the dx12::HeapManager 
 		// deferred deletion to guarantee lifetime
 		const uint64_t instanceDescriptorsSize = ComputeTLASInstancesBufferSize(tlasParams);
+		SEAssert(instanceDescriptorsSize > 0, "Invalid TLAS buffer size. Trying to build an empty TLAS?");
+
 		std::unique_ptr<dx12::GPUResource> TLASInstanceDescs = platParams->m_heapManager->CreateResource(
 			dx12::ResourceDesc{
 				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(instanceDescriptorsSize, D3D12_RESOURCE_FLAG_NONE),
