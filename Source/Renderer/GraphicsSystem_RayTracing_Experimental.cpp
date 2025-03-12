@@ -155,7 +155,13 @@ namespace gr
 		}
 		else
 		{
-			// TODO: Append a single-frame clear stage for the RT stage buffer to clear old output
+			std::shared_ptr<re::ClearRWTexturesStage> clearStage =
+				re::Stage::CreateSingleFrameRWTextureClearStage("RayTracing_Experimental Target clear stage");
+
+			clearStage->AddSingleFrameRWTextureInput(m_rtTarget, re::TextureView(m_rtTarget));
+			clearStage->SetClearValue(glm::vec4(0.f));
+
+			m_stagePipeline->AppendSingleFrameStage(clearStage);
 		}
 	}
 

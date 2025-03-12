@@ -20,7 +20,8 @@ namespace re
 	class Shader;
 	class Texture;
 
-	class ClearStage;
+	class ClearTargetSetStage;
+	class ClearRWTexturesStage;
 	class CopyStage;
 
 	class Stage : public virtual core::INamedObject
@@ -35,13 +36,14 @@ namespace re
 			// Graphics queue:
 			Graphics,
 			FullscreenQuad,
-			Clear, 
+			ClearTargetSet,
 			LibraryGraphics,
 			Copy,
 
 			// Compute queue:
-			Compute,			
+			Compute,
 			LibraryCompute,
+			ClearRWTextures,
 
 			RayTracing,
 
@@ -108,10 +110,13 @@ namespace re
 		static std::shared_ptr<Stage> CreateRayTracingStage(char const* name, RayTracingStageParams const&);
 		static std::shared_ptr<Stage> CreateSingleFrameRayTracingStage(char const* name, RayTracingStageParams const&);
 
-		static std::shared_ptr<ClearStage> CreateClearStage(
+		static std::shared_ptr<ClearTargetSetStage> CreateTargetSetClearStage(
 			char const* name, std::shared_ptr<re::TextureTargetSet> const&);
-		static std::shared_ptr<ClearStage> CreateSingleFrameClearStage(
+		static std::shared_ptr<ClearTargetSetStage> CreateSingleFrameTargetSetClearStage(
 			char const* name, std::shared_ptr<re::TextureTargetSet>const&);
+
+		static std::shared_ptr<ClearRWTexturesStage> CreateRWTextureClearStage(char const* name);
+		static std::shared_ptr<ClearRWTexturesStage> CreateSingleFrameRWTextureClearStage(char const* name);
 
 		static std::shared_ptr<CopyStage> CreateCopyStage(
 			core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst); // Uses backbuffer if dst is null/invalid
@@ -316,7 +321,7 @@ namespace re
 	//---
 
 
-	class ClearStage final : public virtual Stage
+	class ClearTargetSetStage final : public virtual Stage
 	{
 	public:
 		void EnableAllColorClear(glm::vec4 const& colorClearVal = glm::vec4(0.f));
@@ -355,12 +360,12 @@ namespace re
 
 
 	private:
-		ClearStage(char const* name, re::Lifetime);
+		ClearTargetSetStage(char const* name, re::Lifetime);
 		friend class Stage;
 	};
 
 
-	inline void ClearStage::EnableAllColorClear(glm::vec4 const& colorClearVal /*= glm::vec4(0.f)*/)
+	inline void ClearTargetSetStage::EnableAllColorClear(glm::vec4 const& colorClearVal /*= glm::vec4(0.f)*/)
 	{
 		SEAssert(m_colorClearModes == nullptr && m_colorClearValues == nullptr,
 			"Clear mode already set. This function should only be called once");
@@ -378,7 +383,7 @@ namespace re
 	}
 
 
-	inline void ClearStage::EnableColorClear(uint8_t idx, glm::vec4 const& colorClearVal /*= glm::vec4(0.f)*/)
+	inline void ClearTargetSetStage::EnableColorClear(uint8_t idx, glm::vec4 const& colorClearVal /*= glm::vec4(0.f)*/)
 	{
 		SEAssert((m_colorClearModes == nullptr) == (m_colorClearValues == nullptr),
 			"Color clear members are out of sync");
@@ -404,21 +409,21 @@ namespace re
 	}
 
 
-	inline void ClearStage::EnableDepthClear(float clearVal /*= 1.f*/)
+	inline void ClearTargetSetStage::EnableDepthClear(float clearVal /*= 1.f*/)
 	{
 		m_depthClearVal = clearVal;
 		m_depthClearMode = true;
 	}
 
 
-	inline void ClearStage::EnableStencilClear(uint8_t clearVal /*= 0*/)
+	inline void ClearTargetSetStage::EnableStencilClear(uint8_t clearVal /*= 0*/)
 	{
 		m_stencilClearVal = clearVal;
 		m_stencilClearMode = true;
 	}
 
 
-	inline bool ClearStage::ColorClearEnabled() const
+	inline bool ClearTargetSetStage::ColorClearEnabled() const
 	{
 		SEAssert((m_colorClearModes == nullptr) == (m_colorClearValues == nullptr),
 			"Color clear members are out of sync");
@@ -427,7 +432,7 @@ namespace re
 	}
 
 
-	inline bool ClearStage::ColorClearEnabled(uint8_t idx) const
+	inline bool ClearTargetSetStage::ColorClearEnabled(uint8_t idx) const
 	{
 		SEAssert((m_colorClearModes == nullptr) == (m_colorClearValues == nullptr),
 			"Color clear members are out of sync");
@@ -442,45 +447,119 @@ namespace re
 	}
 
 
-	inline bool const* ClearStage::GetAllColorClearModes() const
+	inline bool const* ClearTargetSetStage::GetAllColorClearModes() const
 	{
 		return m_colorClearModes.get();
 	}
 
 
-	inline glm::vec4 const* ClearStage::GetAllColorClearValues() const
+	inline glm::vec4 const* ClearTargetSetStage::GetAllColorClearValues() const
 	{
 		return m_colorClearValues.get();
 	}
 
 
-	inline uint8_t ClearStage::GetNumColorClearElements() const
+	inline uint8_t ClearTargetSetStage::GetNumColorClearElements() const
 	{
 		return m_numColorClears;
 	}
 
 
-	inline bool ClearStage::DepthClearEnabled() const
+	inline bool ClearTargetSetStage::DepthClearEnabled() const
 	{
 		return m_depthClearMode;
 	}
 
 
-	inline float ClearStage::GetDepthClearValue() const
+	inline float ClearTargetSetStage::GetDepthClearValue() const
 	{
 		return m_depthClearVal;
 	}
 
 
-	inline bool ClearStage::StencilClearEnabled() const
+	inline bool ClearTargetSetStage::StencilClearEnabled() const
 	{
 		return m_stencilClearMode;
 	}
 
 
-	inline uint8_t ClearStage::GetStencilClearValue() const
+	inline uint8_t ClearTargetSetStage::GetStencilClearValue() const
 	{
 		return m_stencilClearVal;
+	}
+
+
+	//---
+
+
+	class ClearRWTexturesStage final : public virtual Stage
+	{
+	public:
+		enum class ValueType : bool
+		{
+			Float,
+			Uint,
+		} m_clearValueType;
+
+
+	public: // Set the clear value for ALL RW textures set on the stage
+		void SetClearValue(glm::vec4 const&);
+		void SetClearValue(glm::uvec4 const&);
+
+		ValueType GetClearValueType() const;
+		void const* GetClearValue() const;
+
+
+	public: // Override the Stage version, as we don't need shader names
+		void AddPermanentRWTextureInput(core::InvPtr<re::Texture> const&, re::TextureView const&);
+		void AddSingleFrameRWTextureInput(core::InvPtr<re::Texture> const&, re::TextureView const&);
+
+
+	private:
+		union
+		{
+			glm::vec4 m_clearFloat;
+			glm::uvec4 m_clearUint;
+		};
+
+		static constexpr char const* k_dummyShaderName = "UnusedTextureShaderName"; // Used to populate RWTextureInputs
+
+
+	private:
+		ClearRWTexturesStage(char const* name, re::Lifetime);
+		friend class Stage;
+	};
+
+
+	inline void ClearRWTexturesStage::SetClearValue(glm::vec4 const& floatVal)
+	{
+		m_clearFloat = floatVal;
+		m_clearValueType = ValueType::Float;
+	}
+
+
+	inline void ClearRWTexturesStage::SetClearValue(glm::uvec4 const& uintVal)
+	{
+		m_clearUint = uintVal;
+		m_clearValueType = ValueType::Uint;
+	}
+
+
+	inline ClearRWTexturesStage::ValueType ClearRWTexturesStage::GetClearValueType() const
+	{
+		return m_clearValueType;
+	}
+
+
+	inline void const* ClearRWTexturesStage::GetClearValue() const
+	{
+		switch (m_clearValueType)
+		{
+		case ValueType::Float: return &m_clearFloat.x;
+		case ValueType::Uint: return &m_clearUint.x;
+		default: SEAssertF("Invalid clear value type");
+		}
+		return nullptr; // This should never happen
 	}
 
 

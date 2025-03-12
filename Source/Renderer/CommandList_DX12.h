@@ -117,6 +117,9 @@ namespace dx12
 			uint8_t stencilClearVal,
 			re::TextureTarget const&);
 
+		void ClearUAV(std::vector<re::RWTextureInput> const&, glm::vec4 const& clearVal);
+		void ClearUAV(std::vector<re::RWTextureInput> const&, glm::uvec4 const& clearVal);
+
 		void SetViewport(re::TextureTargetSet const&) const;
 		void SetScissorRect(re::TextureTargetSet const&) const;
 

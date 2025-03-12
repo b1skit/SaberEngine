@@ -288,16 +288,20 @@ namespace dx12
 
 		auto StageTypeToCommandListType = [](const re::Stage::Type stageType) -> dx12::CommandListType
 			{
+				SEStaticAssert(static_cast<uint8_t>(re::Stage::Type::Invalid) == 10,
+					"Number of stage types has changed. This must be updated");
+
 				switch (stageType)
 				{
 				case re::Stage::Type::Graphics:
 				case re::Stage::Type::LibraryGraphics:
 				case re::Stage::Type::FullscreenQuad:
-				case re::Stage::Type::Clear: // All clears are currently done on the graphics queue
+				case re::Stage::Type::ClearTargetSet: // All clears are currently done on the graphics queue
 				case re::Stage::Type::Copy: // All copies are currently done on the graphics queue
 					return dx12::CommandListType::Direct;
 				case re::Stage::Type::Compute:
 				case re::Stage::Type::LibraryCompute:
+				case re::Stage::Type::ClearRWTextures:
 				case re::Stage::Type::RayTracing:
 					return dx12::CommandListType::Compute;
 				case re::Stage::Type::Parent:
@@ -398,7 +402,7 @@ namespace dx12
 							break;
 							case re::Stage::Type::Graphics:
 							case re::Stage::Type::FullscreenQuad:
-							case re::Stage::Type::Clear:
+							case re::Stage::Type::ClearTargetSet:
 							{
 								commandList->SetRenderTargets(*targetSet);
 							}
@@ -509,16 +513,15 @@ namespace dx12
 							dynamic_cast<re::LibraryStage*>((*stageItr).get())->Execute(cmdList.get());
 						}
 						break;
-						case re::Stage::Type::Clear:
+						case re::Stage::Type::ClearTargetSet:
 						{
 							SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Direct,
 								"Incorrect command list type");
 
 							// Note: We do not have to have SetRenderTargets() to clear them in DX12
 
-							// TODO: Support compute target clearing
-
-							re::ClearStage const* clearStage = dynamic_cast<re::ClearStage const*>((*stageItr).get());
+							re::ClearTargetSetStage const* clearStage = 
+								dynamic_cast<re::ClearTargetSetStage const*>((*stageItr).get());
 							SEAssert(clearStage, "Failed to get clear stage");
 
 							cmdList->ClearTargets(
@@ -530,6 +533,38 @@ namespace dx12
 								clearStage->StencilClearEnabled(),
 								clearStage->GetStencilClearValue(),
 								*(*stageItr)->GetTextureTargetSet());
+						}
+						break;
+						case re::Stage::Type::ClearRWTextures:
+						{
+							SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Compute,
+								"Incorrect command list type");
+
+							re::ClearRWTexturesStage const* clearStage =
+								dynamic_cast<re::ClearRWTexturesStage const*>((*stageItr).get());
+							SEAssert(clearStage, "Failed to get clear stage");
+
+							void const* clearValue = clearStage->GetClearValue();
+							switch (clearStage->GetClearValueType())
+							{
+							case re::ClearRWTexturesStage::ValueType::Float:
+							{
+								cmdList->ClearUAV(clearStage->GetPermanentRWTextureInputs(),
+									*static_cast<glm::vec4 const*>(clearValue));
+								cmdList->ClearUAV(clearStage->GetSingleFrameRWTextureInputs(),
+									*static_cast<glm::vec4 const*>(clearValue));
+							}
+							break;
+							case re::ClearRWTexturesStage::ValueType::Uint:
+							{
+								cmdList->ClearUAV(clearStage->GetPermanentRWTextureInputs(),
+									*static_cast<glm::uvec4 const*>(clearValue));
+								cmdList->ClearUAV(clearStage->GetSingleFrameRWTextureInputs(),
+									*static_cast<glm::uvec4 const*>(clearValue));
+							}
+							break;
+							default: SEAssertF("Invalid clear value type");
+							}
 						}
 						break;
 						case re::Stage::Type::Copy:

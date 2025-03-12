@@ -852,6 +852,54 @@ namespace dx12
 	}
 
 
+	void CommandList::ClearUAV(std::vector<re::RWTextureInput> const& rwTexInputs, glm::vec4 const& clearVal)
+	{
+		for (auto const& rwTexInput : rwTexInputs)
+		{
+			dx12::Texture::PlatformParams const* texPlatParams = 
+				rwTexInput.m_texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+			D3D12_CPU_DESCRIPTOR_HANDLE const& texDescriptor = 
+				dx12::Texture::GetUAV(rwTexInput.m_texture, rwTexInput.m_textureView);
+
+			D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTexDescriptor =
+				m_gpuCbvSrvUavDescriptorHeaps->CommitToGPUVisibleHeap({ texDescriptor });
+
+			m_commandList->ClearUnorderedAccessViewFloat(
+				gpuVisibleTexDescriptor, 
+				texDescriptor,
+				texPlatParams->m_gpuResource->Get(),
+				&clearVal.x,
+				0,			// NumRects: 0, as we currently just clear the whole resource
+				nullptr);	// D3D12_RECT*
+		}
+	}
+
+
+	void CommandList::ClearUAV(std::vector<re::RWTextureInput> const& rwTexInputs, glm::uvec4 const& clearVal)
+	{
+		for (auto const& rwTexInput : rwTexInputs)
+		{
+			dx12::Texture::PlatformParams const* texPlatParams =
+				rwTexInput.m_texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+			D3D12_CPU_DESCRIPTOR_HANDLE const& texDescriptor =
+				dx12::Texture::GetUAV(rwTexInput.m_texture, rwTexInput.m_textureView);
+
+			D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTexDescriptor =
+				m_gpuCbvSrvUavDescriptorHeaps->CommitToGPUVisibleHeap({ texDescriptor });
+
+			m_commandList->ClearUnorderedAccessViewUint(
+				gpuVisibleTexDescriptor,
+				texDescriptor,
+				texPlatParams->m_gpuResource->Get(),
+				&clearVal.x,
+				0,			// NumRects: 0, as we currently just clear the whole resource
+				nullptr);	// D3D12_RECT*
+		}
+	}
+
+
 	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet)
 	{
 		SEAssert(m_type != CommandListType::Compute && m_type != CommandListType::Copy,
@@ -975,8 +1023,6 @@ namespace dx12
 
 		// Finally, insert our batched resource transitions:
 		TransitionResourcesInternal(std::move(resourceTransitions));
-
-		// TODO: Support compute target clearing (tricky: Need a copy of descriptors in the GPU-visible heap)
 	}
 
 

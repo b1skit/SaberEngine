@@ -604,6 +604,129 @@ namespace opengl
 	}
 
 
+	static void ClearImageTexturesHelper(
+		std::vector<re::RWTextureInput> const& rwTexInputs, void const* clearVal, GLenum clearValType)
+	{
+		SEAssert(clearValType == GL_FLOAT || clearValType == GL_UNSIGNED_BYTE,
+			"Unexpected clear value type");
+
+		for (auto const& rwTexInput : rwTexInputs)
+		{
+			re::Texture::TextureParams const& texParams = rwTexInput.m_texture->GetTextureParams();
+
+			opengl::Texture::PlatformParams const* texPlatParams =
+				rwTexInput.m_texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+
+			re::TextureView const& texView = rwTexInput.m_textureView;
+
+			GLint firstLevel = 0;
+			GLint numLevels = 0;
+
+			// We'll update these below for special cases:
+			GLint xOffset = 0;
+			GLint yOffset = 0;
+			GLint zOffset = 0;
+
+			GLsizei width = static_cast<GLsizei>(rwTexInput.m_texture->Width());
+			GLsizei height = static_cast<GLsizei>(rwTexInput.m_texture->Height());;
+			GLsizei depth = 1;
+
+			switch (rwTexInput.m_textureView.m_viewDimension)
+			{
+			case re::Texture::Dimension::Texture1D:
+			{
+				firstLevel = texView.Texture1D.m_firstMip;
+				numLevels = texView.Texture1D.m_mipLevels;
+			}
+			break;
+			case re::Texture::Dimension::Texture1DArray:
+			{
+				firstLevel = texView.Texture1DArray.m_firstMip;
+				numLevels = texView.Texture1DArray.m_mipLevels;
+
+				yOffset = texView.Texture1DArray.m_firstArraySlice; // 1D arrays: yOffset = first layer to be cleared
+				height = texView.Texture1DArray.m_arraySize; // 1D arrays: height = No. of layers to clear
+			}
+			break;
+			case re::Texture::Dimension::Texture2D:
+			{
+				firstLevel = texView.Texture2D.m_firstMip;
+				numLevels = texView.Texture2D.m_mipLevels;
+			}
+			break;
+			case re::Texture::Dimension::Texture2DArray:
+			{
+				firstLevel = texView.Texture2DArray.m_firstMip;
+				numLevels = texView.Texture2DArray.m_mipLevels;
+
+				zOffset = texView.Texture2DArray.m_firstArraySlice; // 2D arrays: zOffset = first layer to be cleared 
+				depth = texView.Texture2DArray.m_arraySize;
+			}
+			break;
+			case re::Texture::Dimension::Texture3D:
+			{
+				SEAssertF("TODO: Test this when this is hit for the 1st time");
+
+				firstLevel = texView.Texture3D.m_firstMip;
+				numLevels = texView.Texture3D.m_mipLevels;
+
+				zOffset = texView.Texture3D.m_firstWSlice;
+				depth = texView.Texture3D.m_wSize;
+			}
+			break;
+			case re::Texture::Dimension::TextureCube:
+			{
+				firstLevel = texView.TextureCube.m_firstMip;
+				numLevels = texView.TextureCube.m_mipLevels;
+
+				zOffset = 0; // Cube maps: zOffset = cube map face for the corresponding layer
+				depth = 6; // Cube maps: depth = No. of faces to clear
+			}
+			break;
+			case re::Texture::Dimension::TextureCubeArray:
+			{
+				firstLevel = texView.TextureCubeArray.m_firstMip;
+				numLevels = texView.TextureCubeArray.m_mipLevels;
+
+				zOffset = texView.TextureCubeArray.m_first2DArrayFace; // Cube arrays: zOffset = 1st layer-face to clear
+				depth = texView.TextureCubeArray.m_numCubes; // Cube arrays: depth = No. of layer-faces to clear
+			}
+			break;
+			default: SEAssertF("Invalid dimension");
+			}
+
+			for (GLint level = firstLevel; level < numLevels; ++level)
+			{
+				glClearTexSubImage(
+					texPlatParams->m_textureID,
+					level,
+					xOffset,
+					yOffset,
+					zOffset,
+					width,
+					height,
+					depth,
+					texPlatParams->m_format,
+					clearValType,
+					clearVal);
+			}
+		}
+	}
+
+	void TextureTargetSet::ClearImageTextures(
+		std::vector<re::RWTextureInput> const& rwTexInputs, glm::vec4 const& clearVal)
+	{
+		ClearImageTexturesHelper(rwTexInputs, &clearVal.x, GL_FLOAT);
+	}
+
+
+	void TextureTargetSet::ClearImageTextures(
+		std::vector<re::RWTextureInput> const& rwTexInputs, glm::uvec4 const& clearVal)
+	{
+		ClearImageTexturesHelper(rwTexInputs, &clearVal.x, GL_UNSIGNED_BYTE);
+	}
+
+
 	void TextureTargetSet::AttachTargetsAsImageTextures(re::TextureTargetSet const& targetSet)
 	{
 		SEAssert(!targetSet.GetDepthStencilTarget().HasTexture(),
@@ -625,8 +748,6 @@ namespace opengl
 
 			opengl::Texture::BindAsImageTexture(texture, slot, targetParams.m_textureView, k_accessMode);
 		}
-
-		// TODO: Support compute target clearing
 	}
 
 

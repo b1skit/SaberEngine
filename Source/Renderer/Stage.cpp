@@ -137,13 +137,13 @@ namespace re
 	}
 
 
-	std::shared_ptr<ClearStage> Stage::CreateClearStage(
+	std::shared_ptr<ClearTargetSetStage> Stage::CreateTargetSetClearStage(
 		char const* name,
 		std::shared_ptr<re::TextureTargetSet> const& targetSet)
 	{
-		std::shared_ptr<ClearStage> newClearStage;
+		std::shared_ptr<ClearTargetSetStage> newClearStage;
 
-		newClearStage.reset(new ClearStage(
+		newClearStage.reset(new ClearTargetSetStage(
 			std::format("Clear Stage: {} ({})", name, targetSet->GetName()).c_str(),
 			re::Lifetime::Permanent));
 
@@ -153,17 +153,33 @@ namespace re
 	}
 
 
-	std::shared_ptr<ClearStage> Stage::CreateSingleFrameClearStage(
+	std::shared_ptr<ClearTargetSetStage> Stage::CreateSingleFrameTargetSetClearStage(
 		char const* name,
 		std::shared_ptr<re::TextureTargetSet> const& targetSet)
 	{
-		std::shared_ptr<ClearStage> newClearStage;
-		newClearStage.reset(new ClearStage(
+		std::shared_ptr<ClearTargetSetStage> newClearStage;
+		newClearStage.reset(new ClearTargetSetStage(
 			std::format("Clear Stage: {} ({})", name, targetSet->GetName()).c_str(),
 			re::Lifetime::SingleFrame));
 
 		newClearStage->SetTextureTargetSet(targetSet);
 
+		return newClearStage;
+	}
+
+
+	std::shared_ptr<ClearRWTexturesStage> Stage::CreateRWTextureClearStage(char const* name)
+	{
+		std::shared_ptr<ClearRWTexturesStage> newClearStage;
+		newClearStage.reset(new ClearRWTexturesStage(name, re::Lifetime::Permanent));
+		return newClearStage;
+	}
+
+
+	std::shared_ptr<ClearRWTexturesStage> Stage::CreateSingleFrameRWTextureClearStage(char const* name)
+	{
+		std::shared_ptr<ClearRWTexturesStage> newClearStage;
+		newClearStage.reset(new ClearRWTexturesStage(name, re::Lifetime::SingleFrame));
 		return newClearStage;
 	}
 
@@ -258,9 +274,9 @@ namespace re
 	}
 
 
-	ClearStage::ClearStage(char const* name, re::Lifetime lifetime)
+	ClearTargetSetStage::ClearTargetSetStage(char const* name, re::Lifetime lifetime)
 		: INamedObject(name)
-		, Stage(name, nullptr, Type::Clear, lifetime)
+		, Stage(name, nullptr, Type::ClearTargetSet, lifetime)
 		, m_colorClearModes(nullptr)
 		, m_colorClearValues(nullptr)
 		, m_numColorClears(0)
@@ -269,6 +285,73 @@ namespace re
 		, m_depthClearMode(false)
 		, m_stencilClearMode(false)
 	{
+	}
+
+
+	ClearRWTexturesStage::ClearRWTexturesStage(char const* name, re::Lifetime lifetime)
+		: INamedObject(name)
+		, Stage(name, nullptr, Type::ClearRWTextures, lifetime)
+		, m_clearValueType(ClearRWTexturesStage::ValueType::Float)
+		, m_clearFloat(0.f)
+	{
+	}
+
+
+	void ClearRWTexturesStage::AddPermanentRWTextureInput(
+		core::InvPtr<re::Texture> const& tex, re::TextureView const& texView)
+	{
+		SEAssert(tex != nullptr, "Invalid texture");
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::ColorTarget) != 0,
+			"Invalid usage");
+
+#if defined(_DEBUG)
+		for (auto const& singleFrameRWTexInput : m_singleFrameRWTextureInputs)
+		{
+			SEAssert(tex->GetName() != singleFrameRWTexInput.m_texture->GetName(),
+				"A texture input with the texture same name has already been added a single frame RW input. This may "
+				"be valid if the TextureView is different, but we need to implement TextureView comparisons");
+		}
+#endif
+
+		bool foundExistingEntry = false;
+		for (size_t i = 0; i < m_permanentRWTextureInputs.size(); ++i)
+		{
+			// If we find an input with the same name, replace it:
+			if (m_permanentRWTextureInputs[i].m_texture->GetNameHash() == tex->GetNameHash())
+			{
+				m_permanentRWTextureInputs[i] = re::RWTextureInput{ k_dummyShaderName, tex, texView };
+				foundExistingEntry = true;
+				break;
+			}
+		}
+		if (!foundExistingEntry)
+		{
+			m_permanentRWTextureInputs.emplace_back(re::RWTextureInput{ k_dummyShaderName, tex, texView });
+		}
+	}
+
+
+	void ClearRWTexturesStage::AddSingleFrameRWTextureInput(
+		core::InvPtr<re::Texture> const& tex, re::TextureView const& texView)
+	{
+		SEAssert(tex != nullptr, "Invalid texture");
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::ColorTarget) != 0,
+			"Invalid usage");
+
+#if defined(_DEBUG)
+		for (auto const& permanentRWTexInput : m_permanentRWTextureInputs)
+		{
+			SEAssert(permanentRWTexInput.m_texture->GetNameHash() != tex->GetNameHash(),
+				"A texture input with the same name has already been added a permanent input");
+		}
+		for (auto const& singleFrameRWTexInput : m_singleFrameRWTextureInputs)
+		{
+			SEAssert(singleFrameRWTexInput.m_texture->GetNameHash() != tex->GetNameHash(),
+				"A RW texture input with the same name has already been added a single frame input. Re-adding the same "
+				"single frame texture is not allowed");
+		}
+#endif
+		m_singleFrameRWTextureInputs.emplace_back(k_dummyShaderName, tex, texView);
 	}
 
 
@@ -797,13 +880,16 @@ namespace re
 
 	bool Stage::IsSkippable() const
 	{
-		if (m_type == Type::Clear || IsLibraryType(m_type) || m_type == Type::Copy)
+		if (m_type == Type::ClearTargetSet || 
+			m_type == Type::ClearRWTextures ||
+			IsLibraryType(m_type) || 
+			m_type == Type::Copy)
 		{
 			return false; // Assume library and utility stages always do work
 		}
 		return m_type == Type::Parent || m_stageBatches.empty();
 
-		SEStaticAssert(static_cast<uint8_t>(re::Stage::Type::Invalid) == 9,
+		SEStaticAssert(static_cast<uint8_t>(re::Stage::Type::Invalid) == 10,
 			"Number of stage types has changed. This must be updated");
 	}
 	
@@ -856,7 +942,7 @@ namespace re
 	re::Batch* Stage::AddBatchWithLifetime(re::Batch const& batch, re::Lifetime lifetime)
 	{
 		SEAssert(m_type != re::Stage::Type::Parent &&
-			m_type != re::Stage::Type::Clear,
+			m_type != re::Stage::Type::ClearTargetSet,
 			"Incompatible stage type: Cannot add batches");
 
 		SEAssert(m_type != Type::FullscreenQuad || m_stageBatches.empty(),

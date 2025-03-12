@@ -521,8 +521,8 @@ namespace gr
 			depthTargetParams);
 
 		// Append a color-only clear stage to clear the lighting target:
-		std::shared_ptr<re::ClearStage> clearStage = 
-			re::Stage::CreateClearStage("DeferredLighting: Clear lighting targets", m_lightingTargetSet);
+		std::shared_ptr<re::ClearTargetSetStage> clearStage = 
+			re::Stage::CreateTargetSetClearStage("DeferredLighting: Clear lighting targets", m_lightingTargetSet);
 		clearStage->EnableAllColorClear();
 
 		pipeline.AppendStage(clearStage);

@@ -216,16 +216,14 @@ namespace opengl
 						dynamic_cast<re::LibraryStage*>(stage.get())->Execute(nullptr);
 					}
 					break;
-					case re::Stage::Type::Clear:
+					case re::Stage::Type::ClearTargetSet:
 					{
 						re::TextureTargetSet const* stageTargets = stage->GetTextureTargetSet();
 
 						opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
 						opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 
-						// TODO: Support compute target clearing
-
-						re::ClearStage const* clearStage = dynamic_cast<re::ClearStage const*>(stage.get());
+						re::ClearTargetSetStage const* clearStage = dynamic_cast<re::ClearTargetSetStage const*>(stage.get());
 						SEAssert(clearStage, "Failed to get clear stage");
 
 						opengl::TextureTargetSet::ClearTargets(
@@ -237,6 +235,35 @@ namespace opengl
 							clearStage->StencilClearEnabled(),
 							clearStage->GetStencilClearValue(),
 							*stageTargets);
+					}
+					break;
+					case re::Stage::Type::ClearRWTextures:
+					{
+						re::ClearRWTexturesStage const* clearStage =
+							dynamic_cast<re::ClearRWTexturesStage const*>(stage.get());
+						SEAssert(clearStage, "Failed to get clear stage");
+
+						void const* clearValue = clearStage->GetClearValue();
+						switch (clearStage->GetClearValueType())
+						{
+						case re::ClearRWTexturesStage::ValueType::Float:
+						{
+							opengl::TextureTargetSet::ClearImageTextures(clearStage->GetPermanentRWTextureInputs(),
+								*static_cast<glm::vec4 const*>(clearValue));
+							opengl::TextureTargetSet::ClearImageTextures(clearStage->GetSingleFrameRWTextureInputs(),
+								*static_cast<glm::vec4 const*>(clearValue));
+						}
+						break;
+						case re::ClearRWTexturesStage::ValueType::Uint:
+						{
+							opengl::TextureTargetSet::ClearImageTextures(clearStage->GetPermanentRWTextureInputs(),
+								*static_cast<glm::uvec4 const*>(clearValue));
+							opengl::TextureTargetSet::ClearImageTextures(clearStage->GetSingleFrameRWTextureInputs(),
+								*static_cast<glm::uvec4 const*>(clearValue));
+						}
+						break;
+						default: SEAssertF("Invalid clear value type");
+						}
 					}
 					break;
 					case re::Stage::Type::Copy:

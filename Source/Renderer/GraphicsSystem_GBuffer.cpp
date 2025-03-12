@@ -84,8 +84,8 @@ namespace gr
 		m_gBufferStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 
 		// Create a clear stage for the GBuffer targets:
-		std::shared_ptr<re::ClearStage> gbufferClearStage = 
-			re::Stage::CreateClearStage("GBuffer target clear stage", m_gBufferTargets);
+		std::shared_ptr<re::ClearTargetSetStage> gbufferClearStage = 
+			re::Stage::CreateTargetSetClearStage("GBuffer target clear stage", m_gBufferTargets);
 		gbufferClearStage->EnableAllColorClear();
 		gbufferClearStage->EnableDepthClear(1.f);
 
@@ -130,8 +130,8 @@ namespace gr
 		{
 			// Append a clear stage, to ensure that the depth buffer is cleared when there is no batches (i.e. so the 
 			// skybox will still render in an empty scene)		
-			std::shared_ptr<re::ClearStage> gbufferClearStage =
-				re::Stage::CreateSingleFrameClearStage("GBuffer empty batches clear stage", m_gBufferTargets);
+			std::shared_ptr<re::ClearTargetSetStage> gbufferClearStage =
+				re::Stage::CreateSingleFrameTargetSetClearStage("GBuffer empty batches clear stage", m_gBufferTargets);
 			gbufferClearStage->EnableDepthClear(1.f);
 
 			m_owningPipeline->AppendSingleFrameStage(gbufferClearStage);

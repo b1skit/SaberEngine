@@ -58,6 +58,10 @@ namespace opengl
 			uint8_t stencilClearVal,
 			re::TextureTargetSet const&);
 
+		// TODO: Find a more suitable location than TextureTargetSet to own UAV clears
+		static void ClearImageTextures(std::vector<re::RWTextureInput> const&, glm::vec4 const& clearVal);
+		static void ClearImageTextures(std::vector<re::RWTextureInput> const&, glm::uvec4 const& clearVal);
+
 		static void AttachTargetsAsImageTextures(re::TextureTargetSet const&); // ~Compute target/UAV
 
 		static void CopyTexture(core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst);
