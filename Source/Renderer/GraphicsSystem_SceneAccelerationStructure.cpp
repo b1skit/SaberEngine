@@ -183,21 +183,18 @@ namespace gr
 		}
 
 		// Update BLAS's for new geoemtry, or geometry with dirty MeshPrimitives, Materials, or Transforms:
-		auto meshPrimItr = renderData.ObjectBegin<gr::MeshPrimitive::RenderData, gr::Material::MaterialInstanceRenderData>(
-			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
-		auto const& meshPrimEndItr = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, gr::Material::MaterialInstanceRenderData>();
-		while (meshPrimItr != meshPrimEndItr)
+		for (auto const& meshPrimItr : gr::ObjectAdapter<
+			gr::MeshPrimitive::RenderData, gr::Material::MaterialInstanceRenderData>(renderData))
 		{
-			if (meshPrimItr.AnyDirty() == false)
+			if (meshPrimItr->AnyDirty() == false)
 			{
-				++meshPrimItr;
 				continue;
 			}
 
-			const gr::RenderDataID meshPrimID = meshPrimItr.GetRenderDataID();
+			const gr::RenderDataID meshPrimID = meshPrimItr->GetRenderDataID();
 
 			gr::MeshPrimitive::RenderData const& meshPrimRenderData =
-				meshPrimItr.Get<gr::MeshPrimitive::RenderData>();
+				meshPrimItr->Get<gr::MeshPrimitive::RenderData>();
 
 			const gr::RenderDataID owningMeshConceptID = meshPrimRenderData.m_owningMeshRenderDataID;
 
@@ -211,7 +208,7 @@ namespace gr
 			const util::HashKey blasKey = CreateBLASKey(
 				owningMeshConceptID, 
 				static_cast<re::AccelerationStructure::InclusionMask>(
-					gr::Material::CreateInstanceInclusionMask(&meshPrimItr.Get<gr::Material::MaterialInstanceRenderData>())));
+					gr::Material::CreateInstanceInclusionMask(&meshPrimItr->Get<gr::Material::MaterialInstanceRenderData>())));
 
 			if (m_meshPrimToBLASKey.emplace(meshPrimID, blasKey).second == true)
 			{
@@ -228,14 +225,12 @@ namespace gr
 			}
 
 			// If the geometry or opaque-ness have changed, we must rebuild:
-			if (meshPrimItr.IsDirty<gr::MeshPrimitive::RenderData>() ||
-				meshPrimItr.IsDirty<gr::Material::MaterialInstanceRenderData>())
+			if (meshPrimItr->IsDirty<gr::MeshPrimitive::RenderData>() ||
+				meshPrimItr->IsDirty<gr::Material::MaterialInstanceRenderData>())
 			{
 				meshConceptUpdateItr->second = re::Batch::RayTracingParams::Operation::BuildAS;
 				mustRebuildTLAS = true;
 			}
-
-			++meshPrimItr;
 		}
 
 		// Update BLAS's for animated geometry:

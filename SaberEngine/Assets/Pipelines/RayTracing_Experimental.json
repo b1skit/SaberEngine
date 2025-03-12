@@ -9,18 +9,8 @@
 			"GraphicsSystem": "Culling"
 		},
 		{
-			"GraphicsSystem": "VertexAnimation",
-			"Inputs": [
-				{
-					"GraphicsSystem": "Culling",
-					"DataDependencies": [
-						{
-							"SourceName": "ViewCullingResults",
-							"DestinationName": "ViewCullingResults"
-						}
-					]
-				}
-			]
+			"GraphicsSystem": "VertexAnimation"
+			// No culling inputs: We must animate everything when ray tracing
 		},
 		{
 			"GraphicsSystem": "SceneAccelerationStructure",

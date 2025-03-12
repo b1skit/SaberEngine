@@ -330,22 +330,19 @@ namespace gr
 				return;
 			}
 
-			auto lightItr = renderData.IDBegin(*newLightIDs);
-			auto const& lightItrEnd = renderData.IDEnd(*newLightIDs);
-			while (lightItr != lightItrEnd)
+			for (auto const& lightItr : gr::IDAdapter(renderData, *newLightIDs))
 			{
-				if (lightItr.HasObjectData<gr::ShadowMap::RenderData>())
+				if (lightItr->HasObjectData<gr::ShadowMap::RenderData>())
 				{
-					SEAssert(lightItr.HasObjectData<gr::Camera::RenderData>(),
+					SEAssert(lightItr->HasObjectData<gr::Camera::RenderData>(),
 						"Shadow map and shadow camera render data are both required for shadows");
 
 					CreateRegister2DShadowStage(
 						dstStageData,
-						lightItr.GetRenderDataID(),
-						lightItr.Get<gr::ShadowMap::RenderData>(),
-						lightItr.Get<gr::Camera::RenderData>());
+						lightItr->GetRenderDataID(),
+						lightItr->Get<gr::ShadowMap::RenderData>(),
+						lightItr->Get<gr::Camera::RenderData>());
 				}
-				++lightItr;
 			}
 		};
 		Register2DShadowLights(renderData.GetIDsWithNewData<gr::Light::RenderDataDirectional>(), m_directionalShadowStageData);
@@ -356,23 +353,20 @@ namespace gr
 			renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
 		if (newPointIDs)
 		{
-			auto pointItr = renderData.IDBegin(*newPointIDs);
-			auto const& pointItrEnd = renderData.IDEnd(*newPointIDs);
-			while (pointItr != pointItrEnd)
+			for (auto const& pointItr : gr::IDAdapter(renderData, *newPointIDs))
 			{
-				if (pointItr.HasObjectData<gr::ShadowMap::RenderData>())
+				if (pointItr->HasObjectData<gr::ShadowMap::RenderData>())
 				{
-					SEAssert(pointItr.HasObjectData<gr::Camera::RenderData>(),
+					SEAssert(pointItr->HasObjectData<gr::Camera::RenderData>(),
 						"Shadow map and shadow camera render data are both required for shadows");
 
 					CreateRegisterCubeShadowStage(
 						m_pointShadowStageData,
-						pointItr.GetRenderDataID(),
-						pointItr.Get<gr::ShadowMap::RenderData>(),
-						pointItr.GetTransformData(),
-						pointItr.Get<gr::Camera::RenderData>());
+						pointItr->GetRenderDataID(),
+						pointItr->Get<gr::ShadowMap::RenderData>(),
+						pointItr->GetTransformData(),
+						pointItr->Get<gr::Camera::RenderData>());
 				}
-				++pointItr;
 			}
 		}
 
@@ -380,24 +374,24 @@ namespace gr
 		// Update directional and spot shadow buffers, if necessary:
 		auto Update2DShadowCamData = [](
 			gr::Light::Type lightType,
-			gr::RenderDataManager::IDIterator<std::vector<gr::RenderDataID>> const& lightItr,
+			auto&& lightItr,
 			std::unordered_map<gr::RenderDataID, ShadowStageData>& stageData,
 			bool hasShadow)
 			{
 				SEAssert(hasShadow == false ||
-					(lightItr.HasObjectData<gr::Camera::RenderData>() &&
-						lightItr.HasObjectData<gr::ShadowMap::RenderData>()),
+					(lightItr->HasObjectData<gr::Camera::RenderData>() &&
+						lightItr->HasObjectData<gr::ShadowMap::RenderData>()),
 					"If a light has a shadow, it must have a shadow camera");
 
 				if (hasShadow)
 				{
-					const gr::RenderDataID lightID = lightItr.GetRenderDataID();
+					const gr::RenderDataID lightID = lightItr->GetRenderDataID();
 
 					ShadowStageData& shadowStageData = stageData.at(lightID);
 
-					if (lightItr.IsDirty<gr::Camera::RenderData>() || lightItr.TransformIsDirty())
+					if (lightItr->IsDirty<gr::Camera::RenderData>() || lightItr->TransformIsDirty())
 					{
-						gr::Camera::RenderData const& shadowCamData = lightItr.Get<gr::Camera::RenderData>();
+						gr::Camera::RenderData const& shadowCamData = lightItr->Get<gr::Camera::RenderData>();
 
 						shadowStageData.m_shadowCamParamBlock.GetBuffer()->Commit(shadowCamData.m_cameraParams);
 					}
@@ -408,13 +402,10 @@ namespace gr
 			std::vector<gr::RenderDataID> const& directionalIDs = 
 				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
 
-			auto directionalItr = renderData.IDBegin(directionalIDs);
-			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
-			while (directionalItr != directionalItrEnd)
+			for (auto const& directionalItr : gr::IDAdapter(renderData, directionalIDs))
 			{
-				const bool hasShadow = directionalItr.Get<gr::Light::RenderDataDirectional>().m_hasShadow;
+				const bool hasShadow = directionalItr->Get<gr::Light::RenderDataDirectional>().m_hasShadow;
 				Update2DShadowCamData(gr::Light::Directional, directionalItr, m_directionalShadowStageData, hasShadow);
-				++directionalItr;
 			}
 		}
 		if (renderData.HasObjectData<gr::Light::RenderDataSpot>())
@@ -422,13 +413,10 @@ namespace gr
 			std::vector<gr::RenderDataID> const& spotIDs = 
 				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataSpot>();
 
-			auto spotItr = renderData.IDBegin(spotIDs);
-			auto const& spotItrEnd = renderData.IDEnd(spotIDs);
-			while (spotItr != spotItrEnd)
+			for (auto const& spotItr : gr::IDAdapter(renderData, spotIDs))
 			{
-				const bool hasShadow = spotItr.Get<gr::Light::RenderDataSpot>().m_hasShadow;
+				const bool hasShadow = spotItr->Get<gr::Light::RenderDataSpot>().m_hasShadow;
 				Update2DShadowCamData(gr::Light::Spot, spotItr, m_spotShadowStageData, hasShadow);
-				++spotItr;
 			}
 		}
 
@@ -437,36 +425,34 @@ namespace gr
 		{
 			std::vector<gr::RenderDataID> const& pointIDs =
 				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>();
-			auto pointItr = renderData.IDBegin(pointIDs);
-			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
-			while (pointItr != pointItrEnd)
+
+			for (auto const& pointItr : gr::IDAdapter(renderData, pointIDs))
 			{
-				const bool hasShadow = pointItr.Get<gr::Light::RenderDataPoint>().m_hasShadow;
+				const bool hasShadow = pointItr->Get<gr::Light::RenderDataPoint>().m_hasShadow;
 
 				SEAssert(hasShadow == false ||
-					(pointItr.HasObjectData<gr::Camera::RenderData>() &&
-						pointItr.HasObjectData<gr::ShadowMap::RenderData>()),
+					(pointItr->HasObjectData<gr::Camera::RenderData>() &&
+						pointItr->HasObjectData<gr::ShadowMap::RenderData>()),
 					"If a light has a shadow, it must have a shadow camera");
 
 				if (hasShadow)
 				{
-					const gr::RenderDataID pointLightID = pointItr.GetRenderDataID();
+					const gr::RenderDataID pointLightID = pointItr->GetRenderDataID();
 
 					ShadowStageData& pointShadowStageData = m_pointShadowStageData.at(pointLightID);
 
-					if (pointItr.IsDirty<gr::Camera::RenderData>() || pointItr.TransformIsDirty())
+					if (pointItr->IsDirty<gr::Camera::RenderData>() || pointItr->TransformIsDirty())
 					{
-						gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
-						gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+						gr::Camera::RenderData const& shadowCamData = pointItr->Get<gr::Camera::RenderData>();
+						gr::Transform::RenderData const& transformData = pointItr->GetTransformData();
 
 						CubemapShadowRenderData const& cubemapShadowParams =
 							GetCubemapShadowRenderParamsData(shadowCamData, transformData);
 
-						m_pointShadowStageData.at(pointItr.GetRenderDataID()).m_shadowCamParamBlock.GetBuffer()->Commit(
+						m_pointShadowStageData.at(pointItr->GetRenderDataID()).m_shadowCamParamBlock.GetBuffer()->Commit(
 							cubemapShadowParams);
 					}
 				}
-				++pointItr;
 			}
 		}
 
@@ -529,12 +515,10 @@ namespace gr
 			std::vector<gr::RenderDataID> directionalIDs =
 				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
 
-			auto directionalItr = renderData.IDBegin(directionalIDs);
-			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
-			while (directionalItr != directionalItrEnd)
+			for (auto const& directionalItr : gr::IDAdapter(renderData, directionalIDs))
 			{
 				gr::Light::RenderDataDirectional const& directionalData = 
-					directionalItr.Get<gr::Light::RenderDataDirectional>();
+					directionalItr->Get<gr::Light::RenderDataDirectional>();
 				if (directionalData.m_hasShadow && directionalData.m_canContribute)
 				{
 					const gr::RenderDataID lightID = directionalData.m_renderDataID;
@@ -554,17 +538,16 @@ namespace gr
 					}
 					
 				}
-				++directionalItr;
 			}
 		}
 
 		if (renderData.HasObjectData<gr::Light::RenderDataSpot>())
 		{
-			auto AddSpotLightBatches = [&](auto& spotItr, auto const& spotItrEnd)
+			auto AddSpotLightBatches = [&](auto const& spotObjects)
 				{
-					while (spotItr != spotItrEnd)
+					for (auto const& spotItr : spotObjects)
 					{
-						gr::Light::RenderDataSpot const& spotData = spotItr.Get<gr::Light::RenderDataSpot>();
+						gr::Light::RenderDataSpot const& spotData = spotItr->Get<gr::Light::RenderDataSpot>();
 						if (spotData.m_hasShadow && spotData.m_canContribute)
 						{
 							const gr::RenderDataID lightID = spotData.m_renderDataID;
@@ -582,31 +565,26 @@ namespace gr
 								spotStage.AddBatches(*m_allBatches);
 							}
 						}
-						++spotItr;
 					}
 				};
 
 			if (m_spotCullingResults)
 			{
-				auto spotItr = renderData.IDBegin(*m_spotCullingResults);
-				auto const& spotItrEnd = renderData.IDEnd(*m_spotCullingResults);
-				AddSpotLightBatches(spotItr, spotItrEnd);
+				AddSpotLightBatches(gr::IDAdapter(renderData, *m_spotCullingResults));
 			}
 			else
 			{
-				auto spotItr = renderData.LinearBegin<gr::Light::RenderDataSpot>();
-				auto const& spotItrEnd = renderData.LinearEnd<gr::Light::RenderDataSpot>();
-				AddSpotLightBatches(spotItr, spotItrEnd);
+				AddSpotLightBatches(gr::LinearAdapter<gr::Light::RenderDataSpot>(renderData));
 			}
 		}
 
 		if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
 		{
-			auto AddPointLightBatches = [&](auto& pointItr, auto const& pointItrEnd)
+			auto AddPointLightBatches = [&](auto&& pointObjects)
 				{
-					while (pointItr != pointItrEnd)
+					for (auto const& pointItr : pointObjects)
 					{
-						gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
+						gr::Light::RenderDataPoint const& pointData = pointItr->Get<gr::Light::RenderDataPoint>();
 						if (pointData.m_hasShadow && pointData.m_canContribute)
 						{
 							const gr::RenderDataID lightID = pointData.m_renderDataID;
@@ -644,22 +622,16 @@ namespace gr
 									*m_allBatches);
 							}
 						}
-						++pointItr;
 					}
 				};
 
 			if (m_pointCullingResults)
 			{
-				auto pointItr = renderData.IDBegin(*m_pointCullingResults);
-				auto const& pointItrEnd = renderData.IDEnd(*m_pointCullingResults);
-				AddPointLightBatches(pointItr, pointItrEnd);
+				AddPointLightBatches(gr::IDAdapter(renderData, *m_pointCullingResults));
 			}
 			else
 			{
-				auto pointItr = renderData.LinearBegin<gr::Light::RenderDataPoint>();
-				auto const& pointItrEnd = renderData.LinearEnd<gr::Light::RenderDataPoint>();
-				AddPointLightBatches(pointItr, pointItrEnd);
-
+				AddPointLightBatches(gr::LinearAdapter<gr::Light::RenderDataPoint>(renderData));
 			}
 		}
 	}

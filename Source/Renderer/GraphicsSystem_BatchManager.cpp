@@ -238,20 +238,18 @@ namespace gr
 			renderData.GetIDsWithNewData<gr::MeshPrimitive::RenderData>();
 		if (newMeshPrimIDs)
 		{
-			auto newMeshPrimDataItr = renderData.IDBegin(*newMeshPrimIDs);
-			auto const& newMeshPrimDataItrEnd = renderData.IDEnd(*newMeshPrimIDs);
-			while (newMeshPrimDataItr != newMeshPrimDataItrEnd)
+			for (auto const& newMeshPrimDataItr : gr::IDAdapter(renderData, *newMeshPrimIDs))
 			{
-				const gr::RenderDataID newMeshPrimID = newMeshPrimDataItr.GetRenderDataID();
+				const gr::RenderDataID newMeshPrimID = newMeshPrimDataItr->GetRenderDataID();
 
-				if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveConcept, newMeshPrimDataItr.GetFeatureBits()))
+				if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveConcept, newMeshPrimDataItr->GetFeatureBits()))
 				{
 					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
-						newMeshPrimDataItr.Get<gr::MeshPrimitive::RenderData>();
+						newMeshPrimDataItr->Get<gr::MeshPrimitive::RenderData>();
 					gr::Material::MaterialInstanceRenderData const& materialRenderData =
-						newMeshPrimDataItr.Get<gr::Material::MaterialInstanceRenderData>();
+						newMeshPrimDataItr->Get<gr::Material::MaterialInstanceRenderData>();
 
-					const gr::TransformID newBatchTransformID = newMeshPrimDataItr.GetTransformID();
+					const gr::TransformID newBatchTransformID = newMeshPrimDataItr->GetTransformID();
 					const size_t newBatchIdx = m_permanentCachedBatches.size();
 
 					// Get any animated vertex streams overrides, if they exist
@@ -294,8 +292,6 @@ namespace gr
 						m_materialInstanceMetadata[matEffectID].m_freeInstancedMaterialIndexes,
 						newMeshPrimID);
 				}
-
-				++newMeshPrimDataItr;
 			}
 		}
 
@@ -423,13 +419,11 @@ namespace gr
 				renderData.GetIDsWithDirtyData<gr::Material::MaterialInstanceRenderData>();
 			if (dirtyMaterials)
 			{
-				auto dirtyMaterialItr = renderData.IDBegin(*dirtyMaterials);
-				auto const& dirtyMaterialItrEnd = renderData.IDEnd(*dirtyMaterials);
-				while (dirtyMaterialItr != dirtyMaterialItrEnd)
+				for (auto const& dirtyMaterialItr : gr::IDAdapter(renderData, *dirtyMaterials))
 				{
-					const gr::RenderDataID dirtyMaterialID = dirtyMaterialItr.GetRenderDataID();
+					const gr::RenderDataID dirtyMaterialID = dirtyMaterialItr->GetRenderDataID();
 
-					if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveConcept, dirtyMaterialItr.GetFeatureBits()))
+					if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveConcept, dirtyMaterialItr->GetFeatureBits()))
 					{
 						MaterialInstanceMetadata& matInstMeta =
 							m_materialInstanceMetadata[m_renderDataIDToBatchMetadata.at(dirtyMaterialID).m_matEffectID];
@@ -458,7 +452,6 @@ namespace gr
 							&materialData,
 							&permanentBatch.GetGraphicsParams().m_vertexBuffers); // Keep any vertex stream overrides
 					}
-					++dirtyMaterialItr;
 				}
 			}
 		}

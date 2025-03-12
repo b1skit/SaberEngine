@@ -154,17 +154,15 @@ namespace gr
 		if (m_activeAmbientLightRenderDataID == gr::k_invalidRenderDataID &&
 			m_renderData->HasObjectData<gr::Light::RenderDataAmbientIBL>())
 		{
-			auto ambientItr = m_renderData->LinearBegin<gr::Light::RenderDataAmbientIBL>();
-			auto const& ambientItrEnd = m_renderData->LinearEnd<gr::Light::RenderDataAmbientIBL>();
-			while (ambientItr != ambientItrEnd)
+			for (auto const& ambientItr : gr::LinearAdapter<gr::Light::RenderDataAmbientIBL>(*m_renderData))
 			{
-				if (ambientItr->m_isActive)
+				gr::Light::RenderDataAmbientIBL const& ambientData = ambientItr->Get<gr::Light::RenderDataAmbientIBL>();
+				if (ambientData.m_isActive)
 				{
-					m_activeAmbientLightRenderDataID = ambientItr->m_renderDataID;
+					m_activeAmbientLightRenderDataID = ambientData.m_renderDataID;
 					m_activeAmbientLightHasChanged = true;
 					break;
 				}
-				++ambientItr;
 			}
 		}
 	}

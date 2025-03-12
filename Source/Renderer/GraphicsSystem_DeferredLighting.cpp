@@ -686,16 +686,14 @@ namespace gr
 
 			if (newAmbientIDs)
 			{
-				auto ambientItr = renderData.IDBegin(*newAmbientIDs);
-				auto const& ambientItrEnd = renderData.IDEnd(*newAmbientIDs);
-				while (ambientItr != ambientItrEnd)
+				for (auto const& ambientItr : gr::IDAdapter(renderData, *newAmbientIDs))
 				{
-					gr::Light::RenderDataAmbientIBL const& ambientData = ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
+					gr::Light::RenderDataAmbientIBL const& ambientData = ambientItr->Get<gr::Light::RenderDataAmbientIBL>();
 
 					const gr::RenderDataID lightID = ambientData.m_renderDataID;
 
 					gr::MeshPrimitive::RenderData const& ambientMeshPrimData =
-						ambientItr.Get<gr::MeshPrimitive::RenderData>();
+						ambientItr->Get<gr::MeshPrimitive::RenderData>();
 
 					core::InvPtr<re::Texture> const& iblTex = ambientData.m_iblTex;
 					SEAssert(iblTex, "IBL texture cannot be null");
@@ -751,8 +749,6 @@ namespace gr
 						re::TextureView(pmremTex));
 
 					ambientBatch.SetBuffer(AmbientLightData::s_shaderName, ambientParams);
-
-					++ambientItr;
 				}
 			}
 		}
@@ -803,17 +799,15 @@ namespace gr
 				renderData.GetIDsWithNewData<gr::Light::RenderDataDirectional>();
 			if (newDirectionalIDs)
 			{
-				auto directionalItr = renderData.IDBegin(*newDirectionalIDs);
-				auto const& directionalItrEnd = renderData.IDEnd(*newDirectionalIDs);
-				while (directionalItr != directionalItrEnd)
+				for (auto const& directionalItr : gr::IDAdapter(renderData, *newDirectionalIDs))
 				{
 					gr::Light::RenderDataDirectional const& directionalData =
-						directionalItr.Get<gr::Light::RenderDataDirectional>();
+						directionalItr->Get<gr::Light::RenderDataDirectional>();
 
-					gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformData();
-					gr::MeshPrimitive::RenderData const& meshData = directionalItr.Get<gr::MeshPrimitive::RenderData>();
+					gr::Transform::RenderData const& directionalTransformData = directionalItr->GetTransformData();
+					gr::MeshPrimitive::RenderData const& meshData = directionalItr->Get<gr::MeshPrimitive::RenderData>();
 
-					const gr::RenderDataID lightID = directionalItr.GetRenderDataID();
+					const gr::RenderDataID lightID = directionalItr->GetRenderDataID();
 
 					m_punctualLightData.emplace(
 						lightID,
@@ -829,22 +823,20 @@ namespace gr
 					directionalLightBatch.SetEffectID(k_deferredLightingEffectID);
 					
 					// Note: We set the shadow texture inputs per frame/batch if/as required
-
-					++directionalItr;
 				}
 			}
 		}
 
 
 		auto RegisterNewDeferredMeshLight = [&](
-			gr::RenderDataManager::IDIterator<std::vector<gr::RenderDataID>> const& lightItr,
+			auto const& lightItr,
 			gr::Light::Type lightType,
 			void const* lightRenderData,
 			bool hasShadow,
 			std::unordered_map<gr::RenderDataID, PunctualLightRenderData>& punctualLightData)
 			{
-				gr::MeshPrimitive::RenderData const& meshData = lightItr.Get<gr::MeshPrimitive::RenderData>();
-				gr::Transform::RenderData const& transformData = lightItr.GetTransformData();
+				gr::MeshPrimitive::RenderData const& meshData = lightItr->Get<gr::MeshPrimitive::RenderData>();
+				gr::Transform::RenderData const& transformData = lightItr->GetTransformData();
 
 				re::BufferInput const& transformBuffer = gr::Transform::CreateInstancedTransformBufferInput(
 					InstancedTransformData::s_shaderName, 
@@ -853,7 +845,7 @@ namespace gr
 					transformData);
 
 				punctualLightData.emplace(
-					lightItr.GetRenderDataID(),
+					lightItr->GetRenderDataID(),
 					PunctualLightRenderData{
 						.m_type = lightType,
 						.m_transformParams = transformBuffer,
@@ -861,7 +853,7 @@ namespace gr
 						.m_hasShadow = hasShadow
 					});
 
-				const gr::RenderDataID lightID = lightItr.GetRenderDataID();
+				const gr::RenderDataID lightID = lightItr->GetRenderDataID();
 
 				re::Batch& lightBatch = punctualLightData.at(lightID).m_batch;
 
@@ -876,35 +868,26 @@ namespace gr
 			std::vector<gr::RenderDataID> const* newPointIDs = renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
 			if (newPointIDs)
 			{
-				auto pointItr = renderData.IDBegin(*newPointIDs);
-				auto const& pointItrEnd = renderData.IDEnd(*newPointIDs);
-				while (pointItr != pointItrEnd)
+				for (auto const& pointItr : gr::IDAdapter(renderData, *newPointIDs))
 				{
-					gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
+					gr::Light::RenderDataPoint const& pointData = pointItr->Get<gr::Light::RenderDataPoint>();
 					const bool hasShadow = pointData.m_hasShadow;
 
 					RegisterNewDeferredMeshLight(pointItr, gr::Light::Point, &pointData, hasShadow, m_punctualLightData);
-
-					++pointItr;
 				}
 			}
 		}
 		if (renderData.HasIDsWithNewData<gr::Light::RenderDataSpot>())
 		{
 			std::vector<gr::RenderDataID> const* newSpotIDs = renderData.GetIDsWithNewData<gr::Light::RenderDataSpot>();
-
 			if (newSpotIDs)
 			{
-				auto spotItr = renderData.IDBegin(*newSpotIDs);
-				auto const& spotItrEnd = renderData.IDEnd(*newSpotIDs);
-				while (spotItr != spotItrEnd)
+				for (auto const& spotItr : gr::IDAdapter(renderData, *newSpotIDs))
 				{
-					gr::Light::RenderDataSpot const& spotData = spotItr.Get<gr::Light::RenderDataSpot>();
+					gr::Light::RenderDataSpot const& spotData = spotItr->Get<gr::Light::RenderDataSpot>();
 					const bool hasShadow = spotData.m_hasShadow;
 
 					RegisterNewDeferredMeshLight(spotItr, gr::Light::Spot, &spotData, hasShadow, m_punctualLightData);
-
-					++spotItr;
 				}
 			}
 		}
@@ -941,12 +924,11 @@ namespace gr
 					visibleLightIDs.emplace(lightID);
 				}
 			};
-		auto MarkAllIDsVisible = [&](auto& lightObjectItr, auto const& lightObjectItrEnd)
+		auto MarkAllIDsVisible = [&](auto&& lightObjectItr)
 			{
-				while (lightObjectItr != lightObjectItrEnd)
+				for (auto const& itr : lightObjectItr)
 				{
-					visibleLightIDs.emplace(lightObjectItr.GetRenderDataID());
-					++lightObjectItr;
+					visibleLightIDs.emplace(itr->GetRenderDataID());
 				}
 			};
 
@@ -956,9 +938,7 @@ namespace gr
 		}
 		else
 		{
-			auto spotItr = renderData.ObjectBegin<gr::Light::RenderDataSpot>();
-			auto const& spotItrEnd = renderData.ObjectEnd<gr::Light::RenderDataSpot>();
-			MarkAllIDsVisible(spotItr, spotItrEnd);
+			MarkAllIDsVisible(gr::ObjectAdapter<gr::Light::RenderDataSpot>(renderData));
 		}
 
 		if (m_pointCullingResults)
@@ -967,9 +947,7 @@ namespace gr
 		}
 		else
 		{
-			auto pointItr = renderData.ObjectBegin<gr::Light::RenderDataPoint>();
-			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint>();
-			MarkAllIDsVisible(pointItr, pointItrEnd);
+			MarkAllIDsVisible(gr::ObjectAdapter<gr::Light::RenderDataPoint>(renderData));
 		}
 
 

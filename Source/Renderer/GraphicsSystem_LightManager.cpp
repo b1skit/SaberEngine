@@ -304,13 +304,11 @@ namespace gr
 		std::vector<gr::RenderDataID> const* newShadows = renderData.GetIDsWithNewData<gr::ShadowMap::RenderData>();
 		if (newShadows && !newShadows->empty())
 		{
-			auto shadowItr = renderData.IDBegin(*newShadows);
-			auto const& shadowItrEnd = renderData.IDEnd(*newShadows);
-			while (shadowItr != shadowItrEnd)
+			for (auto const& shadowItr : gr::IDAdapter(renderData, *newShadows))
 			{
-				const gr::RenderDataID shadowID = shadowItr.GetRenderDataID();
+				const gr::RenderDataID shadowID = shadowItr->GetRenderDataID();
 
-				gr::ShadowMap::RenderData const& shadowMapRenderData = shadowItr.Get<gr::ShadowMap::RenderData>();
+				gr::ShadowMap::RenderData const& shadowMapRenderData = shadowItr->Get<gr::ShadowMap::RenderData>();
 
 				auto AddShadowToMetadata = [&shadowID](ShadowMetadata& shadowMetadata)
 					{
@@ -338,8 +336,6 @@ namespace gr
 				case gr::Light::Type::AmbientIBL:
 				default: SEAssertF("Invalid light type");
 				}
-
-				++shadowItr;
 			}
 		}
 	}
@@ -449,11 +445,9 @@ namespace gr
 				lightData.resize(lightMetadata.m_numLights);
 
 				// Populate the light data:
-				auto lightItr = renderData.ObjectBegin<T>();
-				auto const& lightItrEnd = renderData.ObjectEnd<T>();
-				while (lightItr != lightItrEnd)
+				for (auto const& lightItr : gr::ObjectAdapter<T>(renderData))
 				{
-					const gr::RenderDataID lightID = lightItr.GetRenderDataID();
+					const gr::RenderDataID lightID = lightItr->GetRenderDataID();
 
 					SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
 						"Light ID has not been registered");
@@ -467,8 +461,8 @@ namespace gr
 
 					SEAssert(lightIdx < lightMetadata.m_numLights, "Light index is OOB");
 
-					T const& lightRenderData = lightItr.Get<T>();
-					gr::Transform::RenderData const& transformData = lightItr.GetTransformData();
+					T const& lightRenderData = lightItr->Get<T>();
+					gr::Transform::RenderData const& transformData = lightItr->GetTransformData();
 
 					lightData[lightIdx] = GetLightParamDataHelper(
 						renderData,
@@ -478,8 +472,6 @@ namespace gr
 						lightType,
 						shadowMetadata.m_shadowArray,
 						shadowArrayIdx);
-
-					++lightItr;
 				}
 				SEAssert(lightMetadata.m_numLights == lightData.size(),
 					"Number of lights is out of sync with render data");
@@ -535,18 +527,16 @@ namespace gr
 				}
 
 				// Note: We iterate over ALL lights (not just those that passed culling)
-				auto lightItr = renderData.ObjectBegin<T>();
-				auto const& lightIterEnd = renderData.ObjectEnd<T>();
-				while (lightItr != lightIterEnd)
+				for (auto const& lightItr : gr::ObjectAdapter<T>(renderData))
 				{
-					const gr::RenderDataID lightID = lightItr.GetRenderDataID();
+					const gr::RenderDataID lightID = lightItr->GetRenderDataID();
 
 					if (!seenIDs.contains(lightID))// Don't double-update entries that were moved AND dirty
 					{
 						T const& lightRenderData = renderData.GetObjectData<T>(lightID);
 
 						// Check if any of the elements related to this light are dirty:
-						bool isDirty = lightItr.IsDirty<T>() || lightItr.TransformIsDirty();
+						bool isDirty = lightItr->IsDirty<T>() || lightItr->TransformIsDirty();
 						if (!isDirty && lightRenderData.m_hasShadow)
 						{
 							SEAssert((renderData.HasObjectData<gr::Camera::RenderData>() &&
@@ -583,8 +573,6 @@ namespace gr
 							lightMetadata.m_lightData->Commit(&lightData, dirtyLightIdx, 1);
 						}
 					}
-
-					++lightItr;
 				}
 			}
 

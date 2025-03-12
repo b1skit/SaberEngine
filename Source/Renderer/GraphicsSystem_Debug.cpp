@@ -485,20 +485,18 @@ namespace gr
 			m_showMeshCoordinateAxis || 
 			m_showAllVertexNormals)
 		{
-			auto meshPrimItr = renderData.ObjectBegin<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>(
-				gr::RenderObjectFeature::IsMeshPrimitiveConcept);
-			auto const& meshPrimItrEnd = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>();
-			while (meshPrimItr != meshPrimItrEnd)
+			for (auto const& meshPrimItr : gr::ObjectAdapter<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>(
+				renderData, gr::RenderObjectFeature::IsMeshPrimitiveConcept))
 			{
-				const gr::RenderDataID meshPrimRenderDataID = meshPrimItr.GetRenderDataID();
+				const gr::RenderDataID meshPrimRenderDataID = meshPrimItr->GetRenderDataID();
 
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(meshPrimRenderDataID))
 				{
 					gr::MeshPrimitive::RenderData const& meshPrimRenderData = 
-						meshPrimItr.Get<gr::MeshPrimitive::RenderData>();
-					gr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<gr::Bounds::RenderData>();
+						meshPrimItr->Get<gr::MeshPrimitive::RenderData>();
+					gr::Bounds::RenderData const& boundsRenderData = meshPrimItr->Get<gr::Bounds::RenderData>();
 
-					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = meshPrimItr->GetTransformData();
 
 					// Create/update a cached buffer:
 					if (!m_meshPrimTransformBuffers.contains(meshPrimRenderDataID))
@@ -524,10 +522,10 @@ namespace gr
 					if (m_showAllMeshPrimitiveBounds || m_showAllVertexNormals)
 					{
 						if (m_showAllMeshPrimitiveBounds && 
-							gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveBounds, meshPrimItr.GetFeatureBits()))
+							gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveBounds, meshPrimItr->GetFeatureBits()))
 						{
 							if (!m_meshPrimBoundsBatches.contains(meshPrimRenderDataID) ||
-								meshPrimItr.IsDirty<gr::Bounds::RenderData>())
+								meshPrimItr->IsDirty<gr::Bounds::RenderData>())
 							{
 								m_meshPrimBoundsBatches[meshPrimRenderDataID] =
 									BuildBoundingBoxBatch(re::Lifetime::Permanent, boundsRenderData, m_meshPrimBoundsColor);
@@ -569,7 +567,6 @@ namespace gr
 						m_debugStage->AddBatch(*m_meshCoordinateAxisBatches.at(meshPrimRenderDataID));
 					}
 				}
-				++meshPrimItr;
 			}
 		}
 		else
@@ -588,20 +585,18 @@ namespace gr
 			{
 				if (doShowBounds)
 				{
-					auto boundsItr = renderData.ObjectBegin<gr::Bounds::RenderData>();
-					auto boundsItrEnd = renderData.ObjectEnd<gr::Bounds::RenderData>();
-					while (boundsItr != boundsItrEnd)
+					for (auto const& boundsItr : gr::ObjectAdapter<gr::Bounds::RenderData>(renderData))
 					{
-						const gr::RenderDataID objectID = boundsItr.GetRenderDataID();
+						const gr::RenderDataID objectID = boundsItr->GetRenderDataID();
 
 						if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(objectID))
 						{
-							if (gr::HasFeature(boundsFeatureBit, boundsItr.GetFeatureBits()))
+							if (gr::HasFeature(boundsFeatureBit, boundsItr->GetFeatureBits()))
 							{
-								gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
+								gr::Bounds::RenderData const& boundsRenderData = boundsItr->Get<gr::Bounds::RenderData>();
 
 								if (!boundsBatches.contains(objectID) ||
-									boundsItr.IsDirty<gr::Bounds::RenderData>())
+									boundsItr->IsDirty<gr::Bounds::RenderData>())
 								{
 									boundsBatches[objectID] =
 										BuildBoundingBoxBatch(re::Lifetime::Permanent, boundsRenderData, boundsColor);
@@ -610,7 +605,6 @@ namespace gr
 								m_debugStage->AddBatch(*boundsBatches.at(objectID));
 							}
 						}
-						++boundsItr;
 					}
 				}
 				else
@@ -755,14 +749,12 @@ namespace gr
 		if (m_showDeferredLightWireframe && 
 			renderData.HasObjectData<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>())
 		{
-			auto pointItr = renderData.ObjectBegin<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
-			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
-			while (pointItr != pointItrEnd)
+			for (auto const& pointItr : gr::ObjectAdapter<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>(renderData))
 			{
-				const gr::RenderDataID pointID = pointItr.GetRenderDataID();
+				const gr::RenderDataID pointID = pointItr->GetRenderDataID();
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointID))
 				{
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = pointItr->GetTransformData();
 					glm::mat4 const& lightTRS = transformData.g_model;
 
 					if (!m_deferredLightWireframeTransformBuffers.contains(pointID))
@@ -784,7 +776,7 @@ namespace gr
 
 					if (!m_deferredLightWireframeBatches.contains(pointID))
 					{
-						gr::MeshPrimitive::RenderData const& meshPrimData = pointItr.Get<gr::MeshPrimitive::RenderData>();
+						gr::MeshPrimitive::RenderData const& meshPrimData = pointItr->Get<gr::MeshPrimitive::RenderData>();
 
 						m_deferredLightWireframeBatches.emplace(
 							pointID,
@@ -795,18 +787,16 @@ namespace gr
 					}
 					m_debugStage->AddBatch(*m_deferredLightWireframeBatches.at(pointID));
 				}
-
-				++pointItr;
 			}
 
-			auto spotItr = renderData.ObjectBegin<gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>();
-			auto const& spotItrEnd = renderData.ObjectEnd<gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>();
-			while (spotItr != spotItrEnd)
+			auto const& spotLightMeshObjects = 
+				gr::ObjectAdapter< gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>(renderData);
+			for (auto const& spotItr : spotLightMeshObjects)
 			{
-				const gr::RenderDataID spotID = spotItr.GetRenderDataID();
+				const gr::RenderDataID spotID = spotItr->GetRenderDataID();
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(spotID))
 				{
-					gr::Transform::RenderData const& transformData = spotItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = spotItr->GetTransformData();
 					glm::mat4 const& lightTRS = transformData.g_model;
 
 					if (!m_deferredLightWireframeTransformBuffers.contains(spotID))
@@ -828,7 +818,7 @@ namespace gr
 
 					if (!m_deferredLightWireframeBatches.contains(spotID))
 					{
-						gr::MeshPrimitive::RenderData const& meshPrimData = spotItr.Get<gr::MeshPrimitive::RenderData>();
+						gr::MeshPrimitive::RenderData const& meshPrimData = spotItr->Get<gr::MeshPrimitive::RenderData>();
 
 						m_deferredLightWireframeBatches.emplace(
 							spotID,
@@ -839,8 +829,6 @@ namespace gr
 					}
 					m_debugStage->AddBatch(*m_deferredLightWireframeBatches.at(spotID));
 				}
-
-				++spotItr;
 			}
 		}
 		else
@@ -890,59 +878,47 @@ namespace gr
 					}
 				};
 
-			auto directionalItr = renderData.ObjectBegin<gr::Light::RenderDataDirectional>();
-			auto const& directionalItrEnd = renderData.ObjectEnd<gr::Light::RenderDataDirectional>();
-			while (directionalItr != directionalItrEnd)
+			for (auto const& directionalItr : gr::ObjectAdapter<gr::Light::RenderDataDirectional>(renderData))
 			{
-				const gr::RenderDataID lightID = directionalItr.GetRenderDataID();
+				const gr::RenderDataID lightID = directionalItr->GetRenderDataID();
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(lightID))
 				{
-					gr::Transform::RenderData const& transformData = directionalItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = directionalItr->GetTransformData();
 
 					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
 					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
-
-				++directionalItr;
 			}
 
-			auto pointItr = renderData.ObjectBegin<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
-			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
-			while (pointItr != pointItrEnd)
+			for (auto const& pointItr : gr::ObjectAdapter<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>(renderData))
 			{
-				const gr::RenderDataID lightID = pointItr.GetRenderDataID();
+				const gr::RenderDataID lightID = pointItr->GetRenderDataID();
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(lightID))
 				{
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = pointItr->GetTransformData();
 
 					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
 					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
-
-				++pointItr;
 			}
 
-			auto spotItr = renderData.ObjectBegin<gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>();
-			auto const& spotItrEnd = renderData.ObjectEnd<gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>();
-			while (spotItr != spotItrEnd)
+			for (auto const& spotItr : gr::ObjectAdapter<gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>(renderData))
 			{
-				const gr::RenderDataID lightID = spotItr.GetRenderDataID();
+				const gr::RenderDataID lightID = spotItr->GetRenderDataID();
 
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(lightID))
 				{
-					gr::Transform::RenderData const& transformData = spotItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = spotItr->GetTransformData();
 
 					CreateUpdateLightCSAxisTransformBuffer(lightID, transformData);
 					BuildLightAxisBatch(lightID, transformData);
 
 					m_debugStage->AddBatch(*m_lightCoordinateAxisBatches.at(lightID));
 				}
-
-				++spotItr;
 			}
 		}
 		else
@@ -1125,13 +1101,11 @@ namespace gr
 
 			gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 			
-			auto camItr = renderData.ObjectBegin<gr::Camera::RenderData>();
-			auto const& camEnd = renderData.ObjectEnd<gr::Camera::RenderData>();
-			while (camItr != camEnd)
+			for (auto const& camItr : gr::ObjectAdapter<gr::Camera::RenderData>(renderData))
 			{
-				const gr::RenderDataID camID = camItr.GetRenderDataID();
-				gr::Camera::RenderData const* camData = &camItr.Get<gr::Camera::RenderData>();
-				gr::Transform::RenderData const* transformData = &camItr.GetTransformData();
+				const gr::RenderDataID camID = camItr->GetRenderDataID();
+				gr::Camera::RenderData const* camData = &camItr->Get<gr::Camera::RenderData>();
+				gr::Transform::RenderData const* transformData = &camItr->GetTransformData();
 
 				const bool cameraAlreadyAdded = m_camerasToDebug.contains(camID);
 				bool cameraSelected = cameraAlreadyAdded;
@@ -1146,8 +1120,6 @@ namespace gr
 				{
 					m_camerasToDebug.erase(camID);
 				}
-
-				++camItr;
 			}
 			ImGui::Unindent();
 		}

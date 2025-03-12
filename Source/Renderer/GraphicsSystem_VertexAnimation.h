@@ -39,8 +39,8 @@ namespace gr
 
 
 	private:
-		void CreateMorphAnimationBatches();
-		void CreateSkinningAnimationBatches();
+		void CreateMorphAnimationBatches(auto&& renderDataItr);
+		void CreateSkinningAnimationBatches(auto&& renderDataItr, std::unordered_set<gr::RenderDataID>& seenIDs);
 
 
 	private:

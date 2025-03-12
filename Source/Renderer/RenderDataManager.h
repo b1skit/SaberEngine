@@ -205,6 +205,9 @@ namespace gr
 
 
 	public:
+		template <typename T>
+		friend class LinearAdapter;
+
 		// LinearIterator: Iterate over a single type of data, in whatever order it is stored in memory.
 		// This is the fastest iterator type, but elements are accessed out of order with respect to the elements of
 		// different data types with the same gr::RenderDataID.
@@ -224,14 +227,21 @@ namespace gr
 			LinearIterator& operator=(LinearIterator&&) noexcept = default;
 
 		public:
-			[[nodiscard]] T const& operator*() const { return *m_ptr; }
-			[[nodiscard]] T const* operator->() { return m_ptr; }
+			template<typename Other>
+			[[nodiscard]] bool HasObjectData() const { return std::is_same_v<T, Other>; }
 
-			template<typename T>
-			[[nodiscard]] T const& Get() const { return *m_ptr; }
+			template<typename GetType>
+			[[nodiscard]] T const& Get() const
+			{
+				SEStaticAssert((std::is_same_v<T, GetType> == true), "Invalid type for a linear iterator");
+				return *m_ptr;
+			}
 
 			LinearIterator& operator++(); // Prefix increment
 			LinearIterator operator++(int); // Postfix increment
+
+			LinearIterator* operator*() { return this; }
+			LinearIterator const* operator*() const { return this; }
 
 			// These are declared as friends so they're not classified as member functions
 			friend bool operator==(LinearIterator const& lhs, LinearIterator const& rhs) { return lhs.m_ptr == rhs.m_ptr; }
@@ -274,6 +284,9 @@ namespace gr
 
 		public:
 			template<typename T>
+			[[nodiscard]] bool HasObjectData() const;
+
+			template<typename T>
 			[[nodiscard]] T const& Get() const;
 
 			template<typename T>
@@ -294,6 +307,8 @@ namespace gr
 
 			ObjectIterator* operator*() { return this; }
 			ObjectIterator const* operator*() const { return this; }
+
+			gr::RenderDataManager const* GetRenderDataManager() const { return m_renderData; }
 
 			// These are declared as friends so they're not classified as member functions
 			friend bool operator==(ObjectIterator const& lhs, ObjectIterator const& rhs) { return lhs.m_ptrs == rhs.m_ptrs; }
@@ -325,6 +340,9 @@ namespace gr
 
 
 	public:
+		template<typename Container>
+		friend class IDAdapter;
+
 		// Iterate over objects via std containers of RenderDataIDs. This is largely a convenience iterator; it functions 
 		// similarly to calling RenderDataManager::GetObjectData with each RenderDataID in the supplied container, except
 		// the results of the RenderDataID -> RenderObjectMetadata lookup are cached when the iterator is incremented.
@@ -373,6 +391,8 @@ namespace gr
 			IDIterator* operator*() { return this; }
 			IDIterator const* operator*() const { return this; }
 
+			gr::RenderDataManager const* GetRenderDataManager() const { return m_renderData; }
+
 			// These are declared as friends so they're not classified as member functions
 			friend bool operator==(IDIterator const& lhs, IDIterator const& rhs) { return lhs.m_idsIterator == rhs.m_idsIterator; }
 			friend bool operator!=(IDIterator const& lhs, IDIterator const& rhs) { return lhs.m_idsIterator != rhs.m_idsIterator; }
@@ -392,7 +412,7 @@ namespace gr
 		};
 
 
-	public:
+	private:
 		template <typename T>
 		LinearIterator<T> LinearBegin() const;
 
@@ -452,6 +472,35 @@ namespace gr
 	};
 
 
+	template<typename T>
+	class LinearAdapter
+	{
+	public:
+		LinearAdapter(gr::RenderDataManager const& renderData) : m_renderData(renderData) {}
+
+		RenderDataManager::LinearIterator<T> begin() const
+		{
+			return m_renderData.LinearBegin<T>();
+		}
+		RenderDataManager::LinearIterator<T> end() const
+		{
+			return m_renderData.LinearEnd<T>();
+		}
+
+		RenderDataManager::LinearIterator<T> cbegin() const
+		{
+			return m_renderData.LinearBegin<T>();
+		}
+		RenderDataManager::LinearIterator<T> cend() const
+		{
+			return m_renderData.LinearEnd<T>();
+		}
+
+	private:
+		gr::RenderDataManager const& m_renderData;
+	};
+
+
 	template<typename... Ts>
 	class ObjectAdapter
 	{
@@ -461,11 +510,11 @@ namespace gr
 			, m_featureMask(featureMask)
 		{}
 
-		RenderDataManager::ObjectIterator<Ts...> begin()
+		RenderDataManager::ObjectIterator<Ts...> begin() const
 		{
 			return m_renderData.ObjectBegin<Ts...>(m_featureMask);
 		}
-		RenderDataManager::ObjectIterator<Ts...> end()
+		RenderDataManager::ObjectIterator<Ts...> end() const
 		{
 			return m_renderData.ObjectEnd<Ts...>();
 		}
@@ -500,11 +549,11 @@ namespace gr
 		{
 		}
 
-		RenderDataManager::IDIterator<Container> begin()
+		RenderDataManager::IDIterator<Container> begin() const
 		{
 			return m_renderData.IDBegin<Container>(m_renderDataIDs, m_featureMask);
 		}
-		RenderDataManager::IDIterator<Container> end()
+		RenderDataManager::IDIterator<Container> end() const
 		{
 			return m_renderData.IDEnd<Container>(m_renderDataIDs);
 		}
@@ -1387,6 +1436,13 @@ namespace gr
 		ObjectIterator current = *this;
 		++(*this);
 		return current;
+	}
+
+
+	template<typename... Ts> template<typename T>
+	[[nodiscard]] bool RenderDataManager::ObjectIterator<Ts...>::HasObjectData() const
+	{
+		return std::disjunction_v<std::is_same<T, Ts>...>;
 	}
 
 

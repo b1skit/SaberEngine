@@ -82,30 +82,28 @@ namespace
 		spotLightIDsOut.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataSpot>());
 
 		auto DoCulling = [&renderData, &frustum, &cullingEnabled]<typename T>(
-			gr::RenderDataManager::LinearIterator<T> lightItr,
-			gr::RenderDataManager::LinearIterator<T> const& lightItrEnd,
+			gr::LinearAdapter<T>&& lightObjects,
 			std::vector<gr::RenderDataID>& lightIDs)
 		{
-			while (lightItr != lightItrEnd)
+			for (auto const& lightItr : lightObjects)
 			{
+				T const& lightRenderData = lightItr->Get<T>();
+				
 				gr::Bounds::RenderData const& lightBounds =
-					renderData.GetObjectData<gr::Bounds::RenderData>(lightItr->m_renderDataID);
+					renderData.GetObjectData<gr::Bounds::RenderData>(lightRenderData.m_renderDataID);
+
 				gr::Transform::RenderData const& lightTransform =
-					renderData.GetTransformDataFromTransformID(lightItr->m_transformID);
+					renderData.GetTransformDataFromTransformID(lightRenderData.m_transformID);
 
 				const bool lightIsVisible = TestBoundsVisibility(lightBounds, lightTransform, frustum);
 				if (lightIsVisible || !cullingEnabled)
 				{
-					lightIDs.emplace_back(lightItr->m_renderDataID);
+					lightIDs.emplace_back(lightRenderData.m_renderDataID);
 				}
-
-				++lightItr;
 			}
 		};
-		DoCulling(
-			renderData.LinearBegin<gr::Light::RenderDataPoint>(), renderData.LinearEnd<gr::Light::RenderDataPoint>(), pointLightIDsOut);
-		DoCulling(
-			renderData.LinearBegin<gr::Light::RenderDataSpot>(), renderData.LinearEnd<gr::Light::RenderDataSpot>(), spotLightIDsOut);
+		DoCulling(gr::LinearAdapter<gr::Light::RenderDataPoint>(renderData), pointLightIDsOut);
+		DoCulling(gr::LinearAdapter<gr::Light::RenderDataSpot>(renderData), spotLightIDsOut);
 	}
 
 
@@ -215,13 +213,11 @@ namespace gr
 		{
 			// Add any new bounds to our tracking tables:
 			std::vector<gr::RenderDataID> const* newBoundsIDS = renderData.GetIDsWithNewData<gr::Bounds::RenderData>();
-			auto newBoundsItr = renderData.IDBegin(*newBoundsIDS);
-			auto const& newBoundsItrEnd = renderData.IDEnd(*newBoundsIDS);
-			while (newBoundsItr != newBoundsItrEnd)
+			for (auto const& newBoundsItr : gr::IDAdapter(renderData, *newBoundsIDS))
 			{
-				gr::Bounds::RenderData const& boundsData = newBoundsItr.Get<gr::Bounds::RenderData>();
+				gr::Bounds::RenderData const& boundsData = newBoundsItr->Get<gr::Bounds::RenderData>();
 
-				const gr::RenderDataID newBoundsID = newBoundsItr.GetRenderDataID();
+				const gr::RenderDataID newBoundsID = newBoundsItr->GetRenderDataID();
 
 				const gr::RenderDataID encapsulatingBounds = boundsData.m_encapsulatingBounds;
 
@@ -254,8 +250,6 @@ namespace gr
 					// Map the MeshPrimitive back to its encapsulating Mesh:
 					m_meshPrimitivesToEncapsulatingMesh.emplace(newBoundsID, boundsData.m_encapsulatingBounds);
 				}
-
-				++newBoundsItr;
 			}
 		}		
 
@@ -329,17 +323,15 @@ namespace gr
 
 			// Cull every registered camera:
 			std::vector<gr::RenderDataID> const& cameraIDs = renderData.GetRegisteredRenderDataIDs<gr::Camera::RenderData>();
-			auto cameraItr = renderData.IDBegin(cameraIDs);
-			auto const& cameraItrEnd = renderData.IDEnd(cameraIDs);
-			while (cameraItr != cameraItrEnd)
+			for (auto const& cameraItr : gr::IDAdapter(renderData, cameraIDs))
 			{
 				// Gather the data we'll pass by value:
-				const gr::RenderDataID cameraID = cameraItr.GetRenderDataID();
+				const gr::RenderDataID cameraID = cameraItr->GetRenderDataID();
 
-				gr::Camera::RenderData const* camData = &cameraItr.Get<gr::Camera::RenderData>();
-				gr::Transform::RenderData const* camTransformData = &cameraItr.GetTransformData();
+				gr::Camera::RenderData const* camData = &cameraItr->Get<gr::Camera::RenderData>();
+				gr::Transform::RenderData const* camTransformData = &cameraItr->GetTransformData();
 
-				const bool cameraIsDirty = cameraItr.IsDirty<gr::Camera::RenderData>();
+				const bool cameraIsDirty = cameraItr->IsDirty<gr::Camera::RenderData>();
 
 				// Enqueue the culling job:
 				cullingFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
@@ -472,8 +464,6 @@ namespace gr
 							}
 						}
 					}));
-
-				++cameraItr;
 			}
 
 			// Wait for our jobs to complete
