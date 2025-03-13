@@ -26,7 +26,7 @@ namespace effect
 	public:
 		Technique(
 			char const* name,
-			std::vector<re::Shader::Metadata> const&,
+			std::vector<re::Shader::Metadata>&&,
 			re::RasterizationState const*,
 			re::VertexStreamMap const*);
 
@@ -45,7 +45,12 @@ namespace effect
 
 
 	private:
-		core::InvPtr<re::Shader> m_resolvedShader;
+		mutable core::InvPtr<re::Shader> m_resolvedShader;
+
+		// For deferred shader resolution:
+		std::vector<re::Shader::Metadata> m_shaderMetadata;
+		re::RasterizationState const* m_rasterizationState;
+		re::VertexStreamMap const* m_vertexStreamMap;
 
 
 	private: // No copying allowed
@@ -63,11 +68,5 @@ namespace effect
 	inline TechniqueID Technique::GetTechniqueID() const
 	{
 		return GetNameHash();
-	}
-
-
-	inline core::InvPtr<re::Shader> const& Technique::GetShader() const
-	{
-		return m_resolvedShader;
 	}
 }

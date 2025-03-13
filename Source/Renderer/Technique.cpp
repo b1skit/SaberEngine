@@ -8,11 +8,14 @@ namespace effect
 {
 	Technique::Technique(
 		char const* name,
-		std::vector<re::Shader::Metadata> const& shaderMetadata,
+		std::vector<re::Shader::Metadata>&& shaderMetadata,
 		re::RasterizationState const* rasterizationState,
 		re::VertexStreamMap const* vertexStreamMap)
 		: INamedObject(name)
-		, m_resolvedShader(re::Shader::GetOrCreate(shaderMetadata, rasterizationState, vertexStreamMap))
+		, m_resolvedShader(nullptr)
+		, m_shaderMetadata(std::move(shaderMetadata))
+		, m_rasterizationState(rasterizationState)
+		, m_vertexStreamMap(vertexStreamMap)
 	{
 	}
 
@@ -31,5 +34,15 @@ namespace effect
 			"Multiple Techniques with the same name detected");
 
 		return isSame;
+	}
+
+
+	core::InvPtr<re::Shader> const& Technique::GetShader() const
+	{
+		if (!m_resolvedShader.IsValid())
+		{
+			m_resolvedShader = re::Shader::GetOrCreate(m_shaderMetadata, m_rasterizationState, m_vertexStreamMap);
+		}
+		return m_resolvedShader;
 	}
 }

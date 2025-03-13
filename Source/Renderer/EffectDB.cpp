@@ -455,7 +455,7 @@ namespace
 			vertexStreamMap = effectDB.GetVertexStreamMap(vertexStreamName);
 		}
 
-		return effect::Technique(techniqueName.c_str(), shaderMetadata, rasterizationState, vertexStreamMap);
+		return effect::Technique(techniqueName.c_str(), std::move(shaderMetadata), rasterizationState, vertexStreamMap);
 	}
 
 
