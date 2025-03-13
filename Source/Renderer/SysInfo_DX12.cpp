@@ -30,7 +30,7 @@ namespace dx12
 	}
 
 
-	uint32_t SysInfo::GetMaxConstantBufferViews()
+	uint32_t SysInfo::GetMaxDescriptorTableCBVs()
 	{
 		static const D3D12_RESOURCE_BINDING_TIER resourceBindingTier = 
 			static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS const*>(
@@ -44,14 +44,14 @@ namespace dx12
 		case D3D12_RESOURCE_BINDING_TIER_2:
 			return 14;
 		case D3D12_RESOURCE_BINDING_TIER_3:
-			return 1'000'000; // Full heap
+			return std::numeric_limits<uint32_t>::max(); // Unlimited/full heap
 		default: SEAssertF("Invalid resource binding tier");
 		}
-		return 0; // This should never happen
+		return 14; // This should never happen
 	}
 
 
-	uint32_t SysInfo::GetMaxShaderResourceViews()
+	uint32_t SysInfo::GetMaxDescriptorTableSRVs()
 	{
 		static const D3D12_RESOURCE_BINDING_TIER resourceBindingTier =
 			static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS const*>(
@@ -66,14 +66,14 @@ namespace dx12
 			return 128;
 		case D3D12_RESOURCE_BINDING_TIER_2:
 		case D3D12_RESOURCE_BINDING_TIER_3:
-			return 1'000'000; // Full heap
+			return std::numeric_limits<uint32_t>::max(); // Unlimited/full heap
 		default: SEAssertF("Invalid resource binding tier");
 		}
 		return 0; // This should never happen
 	}
 
 
-	uint32_t SysInfo::GetMaxUnorderedAccessViews()
+	uint32_t SysInfo::GetMaxDescriptorTableUAVs()
 	{
 		static const D3D12_RESOURCE_BINDING_TIER resourceBindingTier =
 			static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS const*>(
@@ -97,7 +97,7 @@ namespace dx12
 		}
 		break;
 		case D3D12_RESOURCE_BINDING_TIER_2: return 64;
-		case D3D12_RESOURCE_BINDING_TIER_3: return 1'000'000; // Full heap
+			return std::numeric_limits<uint32_t>::max(); // Unlimited/full heap
 		default: SEAssertF("Invalid resource binding tier");
 		}
 		return 0; // This should never happen

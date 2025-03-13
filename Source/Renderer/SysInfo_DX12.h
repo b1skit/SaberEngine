@@ -14,9 +14,9 @@ namespace dx12
 		static uint8_t GetMaxTextureBindPoints();
 		static uint8_t GetMaxVertexAttributes();
 
-		static uint32_t GetMaxConstantBufferViews();
-		static uint32_t GetMaxShaderResourceViews();
-		static uint32_t GetMaxUnorderedAccessViews();
+		static uint32_t GetMaxDescriptorTableCBVs();
+		static uint32_t GetMaxDescriptorTableSRVs();
+		static uint32_t GetMaxDescriptorTableUAVs();
 		
 
 	public: // DX12-specific:		
