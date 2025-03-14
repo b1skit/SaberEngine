@@ -407,13 +407,20 @@ namespace dx12
 					RangeInput& newRangeInput = rangeInputs[descriptorType].emplace_back(inputBindingDesc);
 					newRangeInput.m_name = inputBindingDesc.Name; // Copy the name before it goes out of scope
 					newRangeInput.m_visibility = GetShaderVisibilityFlagFromShaderType(shaderType);
+
+					// Bind count zero signals an unbounded array (thus, we'll bind 1 descriptor with unbounded size)
+					if (newRangeInput.BindCount == 0)
+					{
+						newRangeInput.BindCount = 1;
+					}
 				}
 				else
 				{
 					SEAssert(result->BindPoint == inputBindingDesc.BindPoint &&
 						result->Space == inputBindingDesc.Space &&
 						result->Type == inputBindingDesc.Type &&
-						result->BindCount == inputBindingDesc.BindCount &&
+						(result->BindCount == inputBindingDesc.BindCount || 
+							(result->BindCount == 1 && inputBindingDesc.BindCount == 0)) &&
 						result->ReturnType == inputBindingDesc.ReturnType &&
 						result->Dimension == inputBindingDesc.Dimension &&
 						result->NumSamples == inputBindingDesc.NumSamples,
@@ -428,11 +435,7 @@ namespace dx12
 		{
 		case D3D_SIT_RTACCELERATIONSTRUCTURE:
 		{
-			if (inputBindingDesc.BindCount > 1)
-			{
-				AddRangeInput(dx12::RootSignature::DescriptorType::SRV);
-			}
-			else // Single RT AS: Bind in the root signature
+			if (inputBindingDesc.BindCount == 1) // Single RT AS: Bind in the root signature
 			{
 				if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
 				{
@@ -450,8 +453,8 @@ namespace dx12
 						RootParameter{
 							.m_index = rootIdx,
 							.m_type = RootParameter::Type::SRV,
-							.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
-							.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
+							.m_registerBindPoint = inputBindingDesc.BindPoint,
+							.m_registerSpace = inputBindingDesc.Space,
 							.m_rootSRV{ 
 								.m_viewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE,
 							}
@@ -464,6 +467,10 @@ namespace dx12
 						D3D12_SHADER_VISIBILITY_ALL;
 				}
 			}
+			else
+			{
+				AddRangeInput(dx12::RootSignature::DescriptorType::SRV);
+			}
 		}
 		break;
 		case D3D_SIT_UAV_FEEDBACKTEXTURE:
@@ -474,12 +481,8 @@ namespace dx12
 		case D3D_SIT_CBUFFER: // The shader resource is a constant buffer
 		{
 			SEAssert(strcmp(inputBindingDesc.Name, "$Globals") != 0, "TODO: Handle root constants");
-
-			if (inputBindingDesc.BindCount > 1)
-			{
-				AddRangeInput(dx12::RootSignature::DescriptorType::CBV);
-			}
-			else
+			
+			if (inputBindingDesc.BindCount == 1)
 			{
 				if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
 				{
@@ -496,8 +499,9 @@ namespace dx12
 						RootParameter{
 							.m_index = rootIdx,
 							.m_type = RootParameter::Type::CBV,
-							.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
-							.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space) });
+							.m_registerBindPoint = inputBindingDesc.BindPoint,
+							.m_registerSpace = inputBindingDesc.Space,
+						});
 				}
 				else
 				{
@@ -505,6 +509,10 @@ namespace dx12
 					rootParameters[newRootSig->m_rootParams[metadataIdx].m_index].ShaderVisibility =
 						D3D12_SHADER_VISIBILITY_ALL;
 				}
+			}
+			else
+			{
+				AddRangeInput(dx12::RootSignature::DescriptorType::CBV);
 			}
 		}
 		break;
@@ -566,12 +574,8 @@ namespace dx12
 		}
 		break;
 		case D3D_SIT_UAV_RWSTRUCTURED: // RW structured buffer
-		{
-			if (inputBindingDesc.BindCount > 1) // RWStructured buffer arrays: Bind as a range
-			{
-				AddRangeInput(dx12::RootSignature::DescriptorType::UAV);
-			}
-			else // Single RWStructured buffer: Bind in the root signature
+		{			
+			if (inputBindingDesc.BindCount == 1) // Single RWStructured buffer: Bind in the root signature
 			{
 				if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
 				{
@@ -588,10 +592,10 @@ namespace dx12
 						RootParameter{
 							.m_index = rootIdx,
 							.m_type = RootParameter::Type::UAV,
-							.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
-							.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
+							.m_registerBindPoint = inputBindingDesc.BindPoint,
+							.m_registerSpace = inputBindingDesc.Space,
 							.m_rootUAV{
-								.m_viewDimension = GetD3D12UAVDimension(inputBindingDesc.Dimension)
+								.m_viewDimension = GetD3D12UAVDimension(inputBindingDesc.Dimension),
 							}
 						});
 				}
@@ -602,15 +606,15 @@ namespace dx12
 						D3D12_SHADER_VISIBILITY_ALL;
 				}
 			}
+			else // RWStructured buffer arrays: Bind as a range
+			{
+				AddRangeInput(dx12::RootSignature::DescriptorType::UAV);
+			}
 		}
 		break;
 		case D3D_SIT_STRUCTURED: // Structured buffer
-		{
-			if (inputBindingDesc.BindCount > 1) // Structured buffer arrays: Bind as a range
-			{
-				AddRangeInput(dx12::RootSignature::DescriptorType::SRV);
-			}
-			else // Single structured buffer: Bind in the root signature
+		{			
+			if (inputBindingDesc.BindCount == 1) // Single structured buffer: Bind in the root signature
 			{
 				if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
 				{
@@ -627,10 +631,10 @@ namespace dx12
 						RootParameter{
 							.m_index = rootIdx,
 							.m_type = RootParameter::Type::SRV,
-							.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
-							.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
+							.m_registerBindPoint = inputBindingDesc.BindPoint,
+							.m_registerSpace = inputBindingDesc.Space,
 							.m_rootSRV{
-								.m_viewDimension = GetD3D12SRVDimension(inputBindingDesc.Dimension)
+								.m_viewDimension = GetD3D12SRVDimension(inputBindingDesc.Dimension),
 							}
 						});
 				}
@@ -640,6 +644,10 @@ namespace dx12
 					rootParameters[newRootSig->m_rootParams[metadataIdx].m_index].ShaderVisibility =
 						D3D12_SHADER_VISIBILITY_ALL;
 				}
+			}
+			else // Structured buffer arrays: Bind as a range
+			{
+				AddRangeInput(dx12::RootSignature::DescriptorType::SRV);
 			}
 		}
 		break;
@@ -673,7 +681,7 @@ namespace dx12
 		staticSamplers.reserve(k_expectedNumberOfSamplers);
 
 		std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
-		rootParameters.reserve(k_totalRootSigDescriptorTableIndices);
+		rootParameters.reserve(k_totalRootSigEntries);
 
 		// DxcUtils for shader/library reflection:
 		ComPtr<IDxcUtils> dxcUtils;
@@ -823,8 +831,8 @@ namespace dx12
 				// Store the names in order so we can update the binding metadata later:
 				namesInRange.emplace_back(rangeInputs[rangeType][rangeStart].m_name);
 
-				uint8_t numDescriptors = rangeInputs[rangeType][rangeStart].BindCount;
-				uint8_t expectedNextRegister = rangeInputs[rangeType][rangeStart].BindPoint + numDescriptors;
+				uint32_t numDescriptors = rangeInputs[rangeType][rangeStart].BindCount;
+				uint32_t expectedNextRegister = rangeInputs[rangeType][rangeStart].BindPoint + numDescriptors;
 
 				// Find the end of the current contiguous range:
 				while (rangeEnd < rangeInputs[rangeType].size() &&
@@ -863,15 +871,15 @@ namespace dx12
 
 				// Populate the descriptor metadata:
 				DescriptorTable* newDescriptorTable = nullptr;
-				uint8_t baseRegisterOffset = 0; // We are processing contiguous ranges of registers only
+				uint32_t baseRegisterOffset = 0; // We are processing contiguous ranges of registers only
 				for (size_t rangeIdx = rangeStart; rangeIdx < rangeEnd; rangeIdx++)
 				{
 					// Create the binding metadata for our individual RootParameter descriptor table entries:
 					RootParameter rootParameter{
 						.m_index = rootIdx,
 						.m_type = RootParameter::Type::DescriptorTable,
-						.m_registerBindPoint = util::CheckedCast<uint8_t>(baseRegister + baseRegisterOffset++),
-						.m_registerSpace = util::CheckedCast<uint8_t>(registerSpace),
+						.m_registerBindPoint = baseRegister + baseRegisterOffset++,
+						.m_registerSpace = registerSpace,
 						.m_tableEntry = RootSignature::TableEntry{
 							.m_type = rangeType,
 							.m_offset = util::CheckedCast<uint8_t>(rangeIdx),

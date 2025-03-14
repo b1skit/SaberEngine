@@ -20,13 +20,13 @@ namespace dx12
 		// The total CPU-visible descriptors cached/Size of the GPU-visible descriptor heap
 		static constexpr uint32_t k_totalDescriptors = 2048; // TODO: Should this be dynamic?
 	
-		static constexpr uint32_t k_totalRootSigDescriptorTableIndices = 32; // No. of root signature descriptor table indices
-		static_assert(k_totalRootSigDescriptorTableIndices == dx12::RootSignature::k_totalRootSigDescriptorTableIndices);
+		static constexpr uint32_t k_totalRootSigEntries = 32; // No. of root signature indexes
+		SEStaticAssert(k_totalRootSigEntries == dx12::RootSignature::k_totalRootSigEntries,
+			"RootSignature and GPUDescriptorHeap are out of sync");
 		
 		// TODO: According to the D3D specs, we're given a hard limit of 64 DWORDS of space. We should track the total
 		// space used, instead of hard-limiting ourselves to 32 root signature indicies
-		// static constexpr uint32_t k_maxRootArgDWORDS = 64; // Max root arg size = 64 DWORDS	
-
+		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/root-signature-limits
 
 	public:
 		enum InlineDescriptorType : uint8_t
@@ -51,7 +51,7 @@ namespace dx12
 		void ParseRootSignatureDescriptorTables(dx12::RootSignature const*);
 
 		// Register a set of CPU descriptors for copy to a GPU-visible heap when CommitDescriptorTables() is called
-		// Each descriptor table/range entry = 1 DWORD each.
+		// Each descriptor/range entry = 1 DWORD each.
 		// Note: offset & count can be used to set individual descriptors within a table located at a given rootParamIdx
 		void SetDescriptorTableEntry(
 			uint32_t rootParamIdx, D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count);
@@ -63,8 +63,8 @@ namespace dx12
 
 		void Commit(); // Copy all of our cached descriptors to our internal GPU-visible descriptor heap
 
-		// Directly write descriptors to the GPU-visible descriptor table heap/stack. Does not modify any metadata,
-		// other than the GPU-visible descriptor table CPU/GPU heap base offsets
+		// Directly write descriptors to the GPU-visible descriptor heap/stack. Does not modify any metadata, other than
+		// the GPU-visible descriptor CPU/GPU heap base offsets
 		D3D12_GPU_DESCRIPTOR_HANDLE CommitToGPUVisibleHeap(std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> const&);
 
 
@@ -85,37 +85,41 @@ namespace dx12
 
 	private: // Descriptor tables:
 
-		// Shader-visible descriptor table heap. Used as a stack for storing descriptors held by descriptor tables
-		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_gpuDescriptorTableHeap;
-		D3D12_CPU_DESCRIPTOR_HANDLE m_gpuDescriptorTableHeapCPUBase; 
-		D3D12_GPU_DESCRIPTOR_HANDLE m_gpuDescriptorTableHeapGPUBase;
+		// Shader-visible descriptor heap. Used as a stack for storing descriptors held by descriptor tables
+		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_gpuDescriptorHeap;
+		D3D12_CPU_DESCRIPTOR_HANDLE m_gpuDescriptorHeapCPUBase; 
+		D3D12_GPU_DESCRIPTOR_HANDLE m_gpuDescriptorHeapGPUBase;
 
 		// CPU-visible descriptors (copies) that will be in our final GPU-visible heap
-		D3D12_CPU_DESCRIPTOR_HANDLE m_cpuDescriptorTableHeapCache[k_totalDescriptors];
+		D3D12_CPU_DESCRIPTOR_HANDLE m_cpuDescriptorHeapCache[k_totalDescriptors];
 		                
-		// Details of the descriptor tables located within our CPU-visible descriptor cache
-		struct CPUDescriptorTableCacheMetadata 
+		// Details of the descriptor tables located within m_cpuDescriptorHeapCache (our CPU-visible descriptor cache)
+		struct CPUDescriptorCacheMetadata 
 		{
 			D3D12_CPU_DESCRIPTOR_HANDLE* m_baseDescriptor;
 			uint32_t m_numElements;
 		};
-		CPUDescriptorTableCacheMetadata m_cpuDescriptorTableCacheLocations[k_totalRootSigDescriptorTableIndices];
+		CPUDescriptorCacheMetadata m_cpuDescriptorHeapCacheLocations[k_totalRootSigEntries];
 
 		// Bits map to root signature indexes that contain descriptor tables. Copied from root signature during parsing
 		uint32_t m_rootSigDescriptorTableIdxBitmask; 
 
 		// 1 bit per *dirty* descriptor table at a given root sig index. Marked when SetDescriptorTableEntry() is called
 		uint32_t m_dirtyDescriptorTableIdxBitmask;
+		SEStaticAssert(k_totalRootSigEntries == (sizeof(m_dirtyDescriptorTableIdxBitmask) * 8),
+			"Not enough bits in the m_dirtyDescriptorTableIdxBitmask to represent all root signature entries");
 
 
 	private: // Inline root descriptors:
 
 		// 1 array entry each for CBVs, SRVs, UAVs, Samplers:
-		D3D12_GPU_VIRTUAL_ADDRESS m_inlineDescriptors[InlineRootType_Count][k_totalRootSigDescriptorTableIndices];
+		D3D12_GPU_VIRTUAL_ADDRESS m_inlineDescriptors[InlineRootType_Count][k_totalRootSigEntries];
+
 		uint32_t m_dirtyInlineDescriptorIdxBitmask[InlineRootType_Count]; // Marked during SetInlineCBV/SRV/UAV() calls
+		SEStaticAssert(k_totalRootSigEntries == (sizeof(m_dirtyInlineDescriptorIdxBitmask[0]) * 8),
+			"Not enough bits in the m_dirtyInlineDescriptorIdxBitmask to represent all root signature entries");
 
-
-	private: // Debugging and null descriptor table initialization
+	private: // Debugging and null descriptor initialization
 		void SetNullDescriptors(dx12::RootSignature const* rootSig);
 
 		// Debug: Track inline descriptors seen while parsing the root sig, so we can assert *something* is set for them
@@ -127,6 +131,6 @@ namespace dx12
 
 	inline ID3D12DescriptorHeap* GPUDescriptorHeap::GetD3DDescriptorHeap() const
 	{
-		return m_gpuDescriptorTableHeap.Get();
+		return m_gpuDescriptorHeap.Get();
 	}
 }

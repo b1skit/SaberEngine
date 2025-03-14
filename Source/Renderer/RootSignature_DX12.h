@@ -20,7 +20,7 @@ namespace dx12
 	class RootSignature final
 	{
 	public:
-		static constexpr uint32_t k_totalRootSigDescriptorTableIndices = 32u;
+		static constexpr uint32_t k_totalRootSigEntries = 32u;
 
 		static constexpr uint8_t k_invalidRootSigIndex	= std::numeric_limits<uint8_t>::max();
 		static constexpr uint8_t k_invalidOffset		= std::numeric_limits<uint8_t>::max();
@@ -111,8 +111,8 @@ namespace dx12
 				Type_Invalid = Type_Count
 			} m_type = Type::Type_Invalid;
 
-			uint8_t m_registerBindPoint = k_invalidRegisterVal;
-			uint8_t m_registerSpace = k_invalidRegisterVal;
+			uint32_t m_registerBindPoint = k_invalidRegisterVal;
+			uint32_t m_registerSpace = k_invalidRegisterVal;
 
 			union
 			{
@@ -183,8 +183,10 @@ namespace dx12
 
 	private: // Track which root sig indexes contain descriptor tables, and how many entries they have
 		uint32_t m_rootSigDescriptorTableIdxBitmask; 
-		uint32_t m_numDescriptorsPerTable[k_totalRootSigDescriptorTableIndices];
-		static_assert(k_totalRootSigDescriptorTableIndices == (sizeof(m_rootSigDescriptorTableIdxBitmask) * 8));
+		uint32_t m_numDescriptorsPerTable[k_totalRootSigEntries];
+		SEStaticAssert(k_totalRootSigEntries == (sizeof(m_rootSigDescriptorTableIdxBitmask) * 8),
+			"Not enough bits in the m_rootSigDescriptorTableIdxBitmask to represent all root signature entries");
+
 
 	private: // Binding metadata
 		void InsertNewRootParamMetadata(char const* name, RootParameter&&);
