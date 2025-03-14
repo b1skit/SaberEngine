@@ -62,7 +62,7 @@ namespace dx12
 		};
 
 	public: // Platform functionality:
-		static void Update(re::ShaderBindingTable&, uint64_t currentFrameNum);
+		static void Create(re::ShaderBindingTable&);
 
 
 	public: // DX12-specific functionality (to be called from dx12::CommandList)

@@ -71,6 +71,7 @@ namespace re
 		std::vector<core::InvPtr<re::Shader>> m_callableShaders;
 
 		std::shared_ptr<re::AccelerationStructure> m_TLAS;
+		std::weak_ptr<re::ShaderBindingTable> m_self; // In case we need to schedule API-re-creation
 
 		SBTParams m_sbtParams;
 

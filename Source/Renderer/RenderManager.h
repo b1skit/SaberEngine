@@ -151,6 +151,7 @@ namespace re
 		util::NBufferedVector<core::InvPtr<gr::VertexStream>> m_newVertexStreams;
 
 		util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>> m_newAccelerationStructures;
+		util::NBufferedVector<std::shared_ptr<re::ShaderBindingTable>> m_newShaderBindingTables;
 		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;		
 
 		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()

@@ -12,6 +12,6 @@ namespace platform
 
 
 	public:
-		static void (*Update)(re::ShaderBindingTable&, uint64_t currentFrameNum);
+		static void (*Create)(re::ShaderBindingTable&);
 	};
 }

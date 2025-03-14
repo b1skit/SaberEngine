@@ -46,6 +46,7 @@ namespace dx12
 
 		dx12::RenderManager& dx12RenderManager = dynamic_cast<dx12::RenderManager&>(renderManager);
 
+		constexpr size_t k_invalidCreateTaskIdx = std::numeric_limits<size_t>::max();
 		std::vector<std::future<void>> createTasks;
 
 		static const bool singleThreadResourceCreate = 
@@ -160,6 +161,7 @@ namespace dx12
 			}
 		}
 		// Shaders:
+		size_t shaderTasksIdx = k_invalidCreateTaskIdx;
 		if (renderManager.m_newShaders.HasReadData())
 		{
 			auto CreateShaders = [&renderManager, singleThreaded = singleThreadResourceCreate]()
@@ -184,6 +186,7 @@ namespace dx12
 			}
 			else
 			{
+				shaderTasksIdx = createTasks.size();
 				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateShaders));
 			}
 		}
@@ -241,6 +244,43 @@ namespace dx12
 			else
 			{
 				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateAccelerationStructures));
+			}
+		}
+		// Shader binding tables:
+		if (renderManager.m_newShaderBindingTables.HasReadData())
+		{
+			auto CreateShaderBindingTables =
+				[&renderManager, &createTasks, shaderTasksIdx, singleThreaded = singleThreadResourceCreate]()
+				{
+					// Shader binding tables require shaders to have already been loaded (as they access their loaded
+					// blobs etc). We must wait for loading to be complete before proceeding
+					if (!singleThreaded &&
+						shaderTasksIdx != k_invalidCreateTaskIdx)
+					{
+						createTasks[shaderTasksIdx].wait();
+					}
+
+					if (!singleThreaded)
+					{
+						renderManager.m_newShaderBindingTables.AquireReadLock();
+					}
+					for (auto& sbt : renderManager.m_newShaderBindingTables.GetReadData())
+					{
+						dx12::ShaderBindingTable::Create(*sbt);
+					}
+					if (!singleThreaded)
+					{
+						renderManager.m_newShaderBindingTables.ReleaseReadLock();
+					}
+				};
+
+			if (singleThreadResourceCreate)
+			{
+				CreateShaderBindingTables();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateShaderBindingTables));
 			}
 		}
 

@@ -544,7 +544,7 @@ namespace dx12
 	// ---
 
 
-	void ShaderBindingTable::Update(re::ShaderBindingTable& sbt, uint64_t currentFrameNum)
+	void ShaderBindingTable::Create(re::ShaderBindingTable& sbt)
 	{
 		// Create the D3D state object:
 		CreateD3DStateObject(sbt, sbt.m_rayGenShaders, sbt.m_missShaders, sbt.m_hitGroupNamesAndShaders);

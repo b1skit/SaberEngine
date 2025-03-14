@@ -28,5 +28,5 @@ namespace platform
 	}
 
 
-	void (*ShaderBindingTable::Update)(re::ShaderBindingTable&, uint64_t) = nullptr;
+	void (*ShaderBindingTable::Create)(re::ShaderBindingTable&) = nullptr;
 }

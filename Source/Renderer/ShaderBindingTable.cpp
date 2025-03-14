@@ -13,6 +13,10 @@ namespace re
 		std::shared_ptr<re::ShaderBindingTable> newSBT;
 		newSBT.reset(new ShaderBindingTable(name, sbtParams));
 
+		// The SBT we're creating stores a weak pointer to itself so it can pass a shared_ptr to the RenderManager in 
+		// case our API objects need to be re-created
+		newSBT->m_self = newSBT;
+
 		return newSBT;
 	}
 
@@ -143,6 +147,11 @@ namespace re
 		ValidateUniqueIDs(seenCallableShaders);
 #endif
 
-		platform::ShaderBindingTable::Update(*this, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+		// Finally, register our SBT for API (re)creation. This needs to be done to ensure any shaders we access have
+		// already been created (as we'll need their shader blobs etc)
+		std::shared_ptr<re::ShaderBindingTable> thisSBT = m_self.lock();
+		SEAssert(thisSBT, "Failed to convert SBT weak_ptr to a shared_ptr");
+
+		re::RenderManager::Get()->RegisterForCreate<re::ShaderBindingTable>(thisSBT);
 	}
 }

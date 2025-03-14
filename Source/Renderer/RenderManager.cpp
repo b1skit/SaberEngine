@@ -136,6 +136,7 @@ namespace re
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newVertexStreams(util::NBufferedVector<core::InvPtr<gr::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newAccelerationStructures(util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newShaderBindingTables(util::NBufferedVector<std::shared_ptr<re::ShaderBindingTable>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_quitEventRecieved(false)
 	{
@@ -458,6 +459,7 @@ namespace re
 		m_newSamplers.AquireReadLock();
 		m_newVertexStreams.AquireReadLock();
 		m_newAccelerationStructures.AquireReadLock();
+		m_newShaderBindingTables.AquireReadLock();
 		m_newTargetSets.AquireReadLock();
 		
 
@@ -479,6 +481,7 @@ namespace re
 		m_newSamplers.ReleaseReadLock();
 		m_newVertexStreams.ReleaseReadLock();
 		m_newAccelerationStructures.ReleaseReadLock();
+		m_newShaderBindingTables.ReleaseReadLock();
 		m_newTargetSets.ReleaseReadLock();
 
 		SEEndCPUEvent();
@@ -509,6 +512,7 @@ namespace re
 		m_newSamplers.SwapAndClear();
 		m_newVertexStreams.SwapAndClear();
 		m_newAccelerationStructures.SwapAndClear();
+		m_newShaderBindingTables.SwapAndClear();
 		m_newTargetSets.SwapAndClear();
 
 		SEEndCPUEvent();
@@ -522,6 +526,7 @@ namespace re
 		m_newSamplers.Destroy();
 		m_newVertexStreams.Destroy();
 		m_newAccelerationStructures.Destroy();
+		m_newShaderBindingTables.Destroy();
 		m_newTargetSets.Destroy();
 	}
 
@@ -558,6 +563,13 @@ namespace re
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::AccelerationStructure> const& newObject)
 	{
 		m_newAccelerationStructures.EmplaceBack(newObject);
+	}
+
+
+	template<>
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::ShaderBindingTable> const& newObject)
+	{
+		m_newShaderBindingTables.EmplaceBack(newObject);
 	}
 
 

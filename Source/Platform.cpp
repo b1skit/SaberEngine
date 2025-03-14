@@ -201,7 +201,7 @@ namespace platform
 			platform::Shader::Destroy	= &dx12::Shader::Destroy;
 
 			// Shader binding table:
-			platform::ShaderBindingTable::Update	= &dx12::ShaderBindingTable::Update;
+			platform::ShaderBindingTable::Create	= &dx12::ShaderBindingTable::Create;
 
 			// SysInfo:
 			platform::SysInfo::GetMaxRenderTargets		= &dx12::SysInfo::GetMaxRenderTargets;
