@@ -365,7 +365,7 @@ namespace dx12
 
 	inline void CommandList::CommitGPUDescriptors()
 	{
-		m_gpuCbvSrvUavDescriptorHeaps->Commit();
+		m_gpuCbvSrvUavDescriptorHeaps->Commit(*this);
 	}
 
 

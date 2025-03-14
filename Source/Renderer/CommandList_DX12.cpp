@@ -167,7 +167,7 @@ namespace dx12
 		// Create the command list:
 		HRESULT hr = device->CreateCommandList(
 			dx12::SysInfo::GetDeviceNodeMask(),
-			m_d3dType,							// Direct draw/compute/copy/etc
+			m_d3dType,						// Direct draw/compute/copy/etc
 			m_commandAllocator.Get(),		// The command allocator the command lists will be created on
 			nullptr,						// Optional: Command list initial pipeline state
 			IID_PPV_ARGS(&m_commandList));	// IID_PPV_ARGS: RIID & destination for the populated command list
@@ -175,11 +175,16 @@ namespace dx12
 
 		m_commandList->SetName(commandListname.c_str());
 
+		constexpr uint32_t k_numDescriptors = 2048; // Arbitrary: How many descriptors in our GPU-visible heap?
+
 		// Set the descriptor heaps (unless we're a copy command list):
 		if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
 		{
 			// Create our GPU-visible descriptor heaps:
-			m_gpuCbvSrvUavDescriptorHeaps = std::make_unique<GPUDescriptorHeap>(m_type, m_commandList.Get());
+			m_gpuCbvSrvUavDescriptorHeaps = std::make_unique<GPUDescriptorHeap>(
+				k_numDescriptors,
+				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+				commandListname + L"_GPUDescriptorHeap");
 		}
 
 		// Note: Command lists are created in the recording state by default. The render loop resets the command 
@@ -263,7 +268,7 @@ namespace dx12
 		}
 		m_currentRootSignature = rootSig;
 
-		m_gpuCbvSrvUavDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
+		m_gpuCbvSrvUavDescriptorHeaps->SetRootSignature(rootSig);
 
 		ID3D12RootSignature* rootSignature = rootSig->GetD3DRootSignature();
 		SEAssert(rootSignature, "Root signature is null. This is unexpected");
@@ -284,7 +289,7 @@ namespace dx12
 		}
 		m_currentRootSignature = rootSig;
 
-		m_gpuCbvSrvUavDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
+		m_gpuCbvSrvUavDescriptorHeaps->SetRootSignature(rootSig);
 
 		ID3D12RootSignature* rootSignature = rootSig->GetD3DRootSignature();
 		SEAssert(rootSignature, "Root signature is null. This is unexpected");

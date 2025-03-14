@@ -10,16 +10,12 @@
 
 namespace dx12
 {
-	enum CommandListType : uint8_t; // CommandList_DX12.h
-	class DescriptorAllocation;
+	class CommandList;
 	
 
 	class GPUDescriptorHeap
 	{
 	public:
-		// The total CPU-visible descriptors cached/Size of the GPU-visible descriptor heap
-		static constexpr uint32_t k_totalDescriptors = 2048; // TODO: Should this be dynamic?
-	
 		static constexpr uint32_t k_totalRootSigEntries = 32; // No. of root signature indexes
 		SEStaticAssert(k_totalRootSigEntries == dx12::RootSignature::k_totalRootSigEntries,
 			"RootSignature and GPUDescriptorHeap are out of sync");
@@ -34,21 +30,24 @@ namespace dx12
 			CBV,
 			SRV,
 			UAV,
-			// Note: We do not maintain a Sampler descriptor heap
 
 			InlineRootType_Count
 		};
 
 	public:		
-		GPUDescriptorHeap(dx12::CommandListType, ID3D12GraphicsCommandList*);
+		GPUDescriptorHeap(uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE, std::wstring const& debugName);
 
-		~GPUDescriptorHeap();
+		GPUDescriptorHeap(GPUDescriptorHeap&&) noexcept = default;
+		GPUDescriptorHeap& operator=(GPUDescriptorHeap&&) noexcept = default;
+		~GPUDescriptorHeap() = default;
+		
 
+	public:
 		ID3D12DescriptorHeap* GetD3DDescriptorHeap() const;
 
 		void Reset();
 
-		void ParseRootSignatureDescriptorTables(dx12::RootSignature const*);
+		void SetRootSignature(dx12::RootSignature const*);
 
 		// Register a set of CPU descriptors for copy to a GPU-visible heap when CommitDescriptorTables() is called
 		// Each descriptor/range entry = 1 DWORD each.
@@ -61,7 +60,9 @@ namespace dx12
 		void SetInlineSRV(uint32_t rootParamIdx, ID3D12Resource*, uint64_t alignedByteOffset); // = 2 DWORDS each
 		void SetInlineUAV(uint32_t rootParamIdx, ID3D12Resource*, uint64_t alignedByteOffset); // = 2 DWORDS each
 
-		void Commit(); // Copy all of our cached descriptors to our internal GPU-visible descriptor heap
+		// Copy staged descriptors from CPU to the GPU-visible descriptor heap
+		// Note: The command list must have already called SetDescriptorHeaps using our GetD3DDescriptorHeap()
+		void Commit(dx12::CommandList&); 
 
 		// Directly write descriptors to the GPU-visible descriptor heap/stack. Does not modify any metadata, other than
 		// the GPU-visible descriptor CPU/GPU heap base offsets
@@ -69,18 +70,17 @@ namespace dx12
 
 
 	private:
-		void CommitDescriptorTables();
-		void CommitInlineDescriptors();
+		void CommitDescriptorTables(dx12::CommandList&);
+		void CommitInlineDescriptors(dx12::CommandList&);
 
 		uint32_t GetNumDirtyTableDescriptors() const; // How many descriptors need to be (re)copied into the GPU-visible heap?
 
 		
 	private:
-		const CommandListType m_owningCommandListType;
-		ID3D12GraphicsCommandList* const m_owningCommandList;
-		
-		const D3D12_DESCRIPTOR_HEAP_TYPE m_heapType;
-		const size_t m_elementSize; 
+		ID3D12Device* m_deviceCache;
+		uint32_t m_numDescriptors;
+		D3D12_DESCRIPTOR_HEAP_TYPE m_heapType;
+		size_t m_elementSize;
 
 
 	private: // Descriptor tables:
@@ -91,7 +91,7 @@ namespace dx12
 		D3D12_GPU_DESCRIPTOR_HANDLE m_gpuDescriptorHeapGPUBase;
 
 		// CPU-visible descriptors (copies) that will be in our final GPU-visible heap
-		D3D12_CPU_DESCRIPTOR_HANDLE m_cpuDescriptorHeapCache[k_totalDescriptors];
+		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_cpuDescriptorHeapCache;
 		                
 		// Details of the descriptor tables located within m_cpuDescriptorHeapCache (our CPU-visible descriptor cache)
 		struct CPUDescriptorCacheMetadata 
@@ -119,6 +119,7 @@ namespace dx12
 		SEStaticAssert(k_totalRootSigEntries == (sizeof(m_dirtyInlineDescriptorIdxBitmask[0]) * 8),
 			"Not enough bits in the m_dirtyInlineDescriptorIdxBitmask to represent all root signature entries");
 
+
 	private: // Debugging and null descriptor initialization
 		void SetNullDescriptors(dx12::RootSignature const* rootSig);
 
@@ -126,6 +127,11 @@ namespace dx12
 		uint32_t m_unsetInlineDescriptors;
 
 		dx12::RootSignature const* m_currentRootSig; // The most recently parsed root sig (for debugging purposes)
+
+
+	private: // No copies allowed:
+		GPUDescriptorHeap(GPUDescriptorHeap const&) noexcept = delete;
+		GPUDescriptorHeap& operator=(GPUDescriptorHeap const&) noexcept = delete;
 	};
 
 
