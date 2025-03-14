@@ -97,10 +97,10 @@ namespace dx12
 		}
 		break;
 		case D3D12_RESOURCE_BINDING_TIER_2: return 64;
-			return std::numeric_limits<uint32_t>::max(); // Unlimited/full heap
+		case D3D12_RESOURCE_BINDING_TIER_3: return std::numeric_limits<uint32_t>::max(); // Unlimited/full heap
 		default: SEAssertF("Invalid resource binding tier");
 		}
-		return 0; // This should never happen
+		return 8; // This should never happen
 	}
 
 
