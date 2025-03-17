@@ -29,7 +29,7 @@ namespace re
 
 		struct VertexStreamType
 		{
-			gr::VertexStream::Type m_type = gr::VertexStream::Type::Color;
+			gr::VertexStream::Type m_type = gr::VertexStream::Type::Type_Count;
 			re::DataType m_dataType = re::DataType::DataType_Count;
 			bool m_isNormalized = false;
 			uint32_t m_numElements = 0;

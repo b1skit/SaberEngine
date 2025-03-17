@@ -9,14 +9,12 @@ namespace re
 {
 	BufferView::BufferView(BufferType const& view)
 		: m_buffer(view)
-		, m_dataHash(0)
 	{
 		util::AddDataBytesToHash(m_dataHash, m_buffer);
 	}
 
 
 	BufferView::BufferView(std::shared_ptr<re::Buffer> const& buffer)
-		: m_dataHash(0)
 	{
 		const uint32_t bufferArraySize = buffer->GetArraySize();
 
@@ -33,7 +31,6 @@ namespace re
 
 	BufferView::BufferView(VertexStreamType const& view)
 		: m_stream(view)
-		, m_dataHash(0)
 	{
 		util::AddDataBytesToHash(m_dataHash, m_stream);
 	}
@@ -41,7 +38,6 @@ namespace re
 
 	BufferView::BufferView()
 		: m_buffer{ BufferView::BufferType{} }
-		, m_dataHash(0)
 	{
 		/* Don't use this directly */
 	}
