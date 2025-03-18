@@ -177,7 +177,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::Register(std::shared_ptr<re::Buffer> buffer, uint32_t numBytes)
+	void BufferAllocator::Register(std::shared_ptr<re::Buffer> const& buffer, uint32_t numBytes)
 	{
 		SEAssert(!buffer->GetPlatformParams()->m_isCreated,
 			"Buffer is already marked as created. This should not be possible");
@@ -1086,7 +1086,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::AddToDeferredDeletions(uint64_t frameNum, std::shared_ptr<re::Buffer> buffer)
+	void BufferAllocator::AddToDeferredDeletions(uint64_t frameNum, std::shared_ptr<re::Buffer> const& buffer)
 	{
 		std::lock_guard<std::mutex> lock(m_deferredDeleteQueueMutex);
 

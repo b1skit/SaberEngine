@@ -150,7 +150,7 @@ namespace re
 
 	private:
 		void ClearDeferredDeletions(uint64_t frameNum);
-		void AddToDeferredDeletions(uint64_t frameNum, std::shared_ptr<re::Buffer>);
+		void AddToDeferredDeletions(uint64_t frameNum, std::shared_ptr<re::Buffer> const&);
 		std::queue<std::pair<uint64_t, std::shared_ptr<re::Buffer>>> m_deferredDeleteQueue;
 		std::mutex m_deferredDeleteQueueMutex;
 
@@ -168,7 +168,7 @@ namespace re
 
 	protected: // Interfaces for the Buffer friend class:
 		friend class re::Buffer;
-		void Register(std::shared_ptr<re::Buffer>, uint32_t numBytes);
+		void Register(std::shared_ptr<re::Buffer> const&, uint32_t numBytes);
 
 
 	private:		
