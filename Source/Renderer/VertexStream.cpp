@@ -82,24 +82,6 @@ namespace
 	}
 
 
-	constexpr char const* TypeToCStr(gr::VertexStream::Type type)
-	{
-		switch (type)
-		{
-		case gr::VertexStream::Type::Position: return "Position";
-		case gr::VertexStream::Type::Normal: return "Normal";
-		case gr::VertexStream::Type::Binormal: return "Binormal";
-		case gr::VertexStream::Type::Tangent: return "Tangent";
-		case gr::VertexStream::Type::TexCoord: return "TexCoord";
-		case gr::VertexStream::Type::Color: return "Color";
-		case gr::VertexStream::Type::BlendIndices: return "BlendIndices";
-		case gr::VertexStream::Type::BlendWeight: return "BlendWeight";
-		case gr::VertexStream::Type::Index: return "Index";
-		default: return "INVALID_TYPE";
-		}
-	}
-
-
 	util::HashKey ComputeVertexStreamDataHash(
 		gr::VertexStream::StreamDesc const& streamDesc, void const* data, size_t numBytes)
 	{
