@@ -242,11 +242,9 @@ namespace gr
 			const gr::RenderDataID owningMeshConceptID = m_meshPrimToMeshConceptID.at(entry.first);
 			
 			// Record a BLAS update:
-			auto meshConceptUpdateItr = meshConceptIDToBatchOp.find(owningMeshConceptID);
-			if (meshConceptUpdateItr == meshConceptIDToBatchOp.end())
+			if (!meshConceptIDToBatchOp.contains(owningMeshConceptID))
 			{
-				meshConceptUpdateItr = meshConceptIDToBatchOp.emplace(
-					owningMeshConceptID, re::Batch::RayTracingParams::Operation::UpdateAS).first;
+				meshConceptIDToBatchOp.emplace(owningMeshConceptID, re::Batch::RayTracingParams::Operation::UpdateAS);
 			}
 		}
 
@@ -279,7 +277,8 @@ namespace gr
 					renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(meshPrimID);
 
 				const re::AccelerationStructure::InclusionMask inclusionMask = 
-					static_cast<re::AccelerationStructure::InclusionMask>(gr::Material::CreateInstanceInclusionMask(&materialRenderData));
+					static_cast<re::AccelerationStructure::InclusionMask>(
+						gr::Material::CreateInstanceInclusionMask(&materialRenderData));
 
 				inclusionMaskToRenderDataIDs[inclusionMask].emplace_back(meshPrimID);
 			}
