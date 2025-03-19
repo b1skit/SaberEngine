@@ -204,7 +204,7 @@ namespace dx12
 	private:
 		// The D3D docs recommend using a single GPU-visible heap of each type (CBV/SRV/UAV or SAMPLER), and setting it
 		// once per frame, as changing descriptor heaps can cause pipeline flushes on some hardware
-		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuCbvSrvUavDescriptorHeaps;
+		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuCbvSrvUavDescriptorHeap;
 		dx12::LocalResourceStateTracker m_resourceStates;
 
 
@@ -365,7 +365,7 @@ namespace dx12
 
 	inline void CommandList::CommitGPUDescriptors()
 	{
-		m_gpuCbvSrvUavDescriptorHeaps->Commit(*this);
+		m_gpuCbvSrvUavDescriptorHeap->Commit(*this);
 	}
 
 

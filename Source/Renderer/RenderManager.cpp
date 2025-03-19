@@ -372,6 +372,8 @@ namespace re
 
 		LOG("Render manager shutting down...");
 
+		re::Context* context = re::Context::Get();
+
 		// Flush any remaining render work:
 		platform::RenderManager::Shutdown(*this);
 
@@ -399,7 +401,7 @@ namespace re
 
 		// Destroy the swap chain before forcing deferred deletions. This is safe, as we've already flushed any
 		// remaining outstanding work
-		re::Context::Get()->GetSwapChain().Destroy();
+		context->GetSwapChain().Destroy();
 
 		// We destroy this on behalf of the EngineApp, as the inventory typically contains GPU resources that need to
 		// be destroyed from the render thread (i.e. for OpenGL)
@@ -408,7 +410,7 @@ namespace re
 		ProcessDeferredDeletions(k_forceDeferredDeletionsFlag); // Force-delete everything
 
 		// Need to do this here so the EngineApp's Window can be destroyed
-		re::Context::Get()->Destroy();
+		context->Destroy();
 
 		SEEndCPUEvent();
 	}

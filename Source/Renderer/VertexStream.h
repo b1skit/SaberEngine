@@ -4,7 +4,6 @@
 #include "EnumTypes.h"
 
 #include "Core/Interfaces/IHashedDataObject.h"
-#include "Core/Interfaces/IPlatformParams.h"
 
 #include "Core/Util/ByteVector.h"
 
@@ -48,7 +47,7 @@ namespace gr
 		{
 			Position,
 			Normal,
-			Binormal,
+			//Binormal,
 			Tangent,
 			TexCoord,
 			Color,
@@ -191,7 +190,7 @@ namespace gr
 		{
 		case Type::Position: return "Position";
 		case Type::Normal: return "Normal";
-		case Type::Binormal: return "Binormal";
+		//case Type::Binormal: return "Binormal";
 		case Type::Tangent: return "Tangent";
 		case Type::TexCoord: return "TexCoord";
 		case Type::Color: return "Color";
@@ -200,5 +199,6 @@ namespace gr
 		case Type::Index: return "Index";
 		default: return "INVALID_VERTEX_STREAM_TYPE_ENUM_RECEIVED";
 		}
+		SEStaticAssert(gr::VertexStream::Type_Count == 8, "Number of vertex stream types changed. This must be updated");
 	}
 }

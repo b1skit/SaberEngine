@@ -62,7 +62,7 @@ namespace
 		}
 		break;
 		case gr::VertexStream::Type::Normal: return "NORMAL";
-		case gr::VertexStream::Type::Binormal: return "BINORMAL";
+		//case gr::VertexStream::Type::Binormal: return "BINORMAL";
 		case gr::VertexStream::Type::Tangent: return "TANGENT";
 		case gr::VertexStream::Type::TexCoord: return "TEXCOORD";
 		case gr::VertexStream::Type::Color: return "COLOR";
@@ -71,6 +71,7 @@ namespace
 		//case gr::VertexStream::Type::PointSize: return "PSIZE";
 		default: return "INVALID_RE_VERTEX_STREAM_TYPE";
 		}
+		SEStaticAssert(gr::VertexStream::Type_Count == 8, "Number of vertex stream types changed. This must be updated");
 	}
 
 

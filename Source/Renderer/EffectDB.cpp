@@ -464,17 +464,18 @@ namespace
 		static const std::unordered_map<util::CHashKey, gr::VertexStream::Type> s_semanticLowerToStreamType =
 		{
 			{ util::CHashKey("position"),		gr::VertexStream::Type::Position },
-			{ util::CHashKey("sv_position"),		gr::VertexStream::Type::Position },
+			{ util::CHashKey("sv_position"),	gr::VertexStream::Type::Position },
 			{ util::CHashKey("normal"),			gr::VertexStream::Type::Normal },
-			{ util::CHashKey("binormal"),		gr::VertexStream::Type::Binormal },
-			{ util::CHashKey("tangent"),			gr::VertexStream::Type::Tangent },
+			//{ util::CHashKey("binormal"),		gr::VertexStream::Type::Binormal },
+			{ util::CHashKey("tangent"),		gr::VertexStream::Type::Tangent },
 			{ util::CHashKey("texcoord"),		gr::VertexStream::Type::TexCoord },
 			{ util::CHashKey("color"),			gr::VertexStream::Type::Color },
 			{ util::CHashKey("blendindices"),	gr::VertexStream::Type::BlendIndices },
-			{ util::CHashKey("blendweight"),		gr::VertexStream::Type::BlendWeight },
-			/*{ util::CHashKey("pointsize"),		gr::VertexStream::Type::PointSize },*/
+			{ util::CHashKey("blendweight"),	gr::VertexStream::Type::BlendWeight },
+			/*{ util::CHashKey("pointsize"),	gr::VertexStream::Type::PointSize },*/
 			{ util::CHashKey("index"),			gr::VertexStream::Type::Index },
 		};
+		SEStaticAssert(gr::VertexStream::Type_Count == 8, "Number of vertex stream types changed. This must be updated");
 
 		const util::CHashKey semanticNameLowerHashkey = util::CHashKey::Create(util::ToLower(semanticName));
 

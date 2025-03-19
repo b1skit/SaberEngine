@@ -151,7 +151,7 @@ namespace dx12
 		, k_commandListNumber(s_commandListNumber++)
 		, m_d3dType(TranslateToD3DCommandListType(type))
 		, m_type(type)
-		, m_gpuCbvSrvUavDescriptorHeaps(nullptr)
+		, m_gpuCbvSrvUavDescriptorHeap(nullptr)
 		, m_currentRootSignature(nullptr)
 		, m_currentPSO(nullptr)
 	{
@@ -181,7 +181,7 @@ namespace dx12
 		if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
 		{
 			// Create our GPU-visible descriptor heaps:
-			m_gpuCbvSrvUavDescriptorHeaps = std::make_unique<GPUDescriptorHeap>(
+			m_gpuCbvSrvUavDescriptorHeap = std::make_unique<GPUDescriptorHeap>(
 				k_numDescriptors,
 				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 				commandListname + L"_GPUDescriptorHeap");
@@ -202,7 +202,7 @@ namespace dx12
 		m_d3dType = D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_NONE;
 		m_commandAllocator = nullptr;
 		m_commandAllocatorReuseFenceValue = 0;
-		m_gpuCbvSrvUavDescriptorHeaps = nullptr;
+		m_gpuCbvSrvUavDescriptorHeap = nullptr;
 		m_currentRootSignature = nullptr;
 		m_currentPSO = nullptr;
 	}
@@ -226,9 +226,9 @@ namespace dx12
 		if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
 		{
 			// Reset the GPU descriptor heap managers:
-			m_gpuCbvSrvUavDescriptorHeaps->Reset();
+			m_gpuCbvSrvUavDescriptorHeap->Reset();
 
-			ID3D12DescriptorHeap* descriptorHeap = m_gpuCbvSrvUavDescriptorHeaps->GetD3DDescriptorHeap();
+			ID3D12DescriptorHeap* descriptorHeap = m_gpuCbvSrvUavDescriptorHeap->GetD3DDescriptorHeap();
 			m_commandList->SetDescriptorHeaps(1, &descriptorHeap);
 		}
 
@@ -268,7 +268,7 @@ namespace dx12
 		}
 		m_currentRootSignature = rootSig;
 
-		m_gpuCbvSrvUavDescriptorHeaps->SetRootSignature(rootSig);
+		m_gpuCbvSrvUavDescriptorHeap->SetRootSignature(rootSig);
 
 		ID3D12RootSignature* rootSignature = rootSig->GetD3DRootSignature();
 		SEAssert(rootSignature, "Root signature is null. This is unexpected");
@@ -289,7 +289,7 @@ namespace dx12
 		}
 		m_currentRootSignature = rootSig;
 
-		m_gpuCbvSrvUavDescriptorHeaps->SetRootSignature(rootSig);
+		m_gpuCbvSrvUavDescriptorHeap->SetRootSignature(rootSig);
 
 		ID3D12RootSignature* rootSignature = rootSig->GetD3DRootSignature();
 		SEAssert(rootSignature, "Root signature is null. This is unexpected");
@@ -350,7 +350,7 @@ namespace dx12
 						!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
 						"Invalid usage flags for a constant buffer");
 
-					m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
+					m_gpuCbvSrvUavDescriptorHeap->SetInlineCBV(
 						rootSigIdx,
 						bufferPlatParams->m_resolvedGPUResource,
 						bufferPlatParams->m_heapByteOffset);
@@ -366,7 +366,7 @@ namespace dx12
 					SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
 						"SRV buffers must have GPU reads enabled");
 
-					m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
+					m_gpuCbvSrvUavDescriptorHeap->SetInlineSRV(
 						rootSigIdx,
 						bufferPlatParams->m_resolvedGPUResource,
 						bufferPlatParams->m_heapByteOffset);
@@ -386,7 +386,7 @@ namespace dx12
 					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
 						"Buffer is missing the Structured usage bit");
 
-					m_gpuCbvSrvUavDescriptorHeaps->SetInlineUAV(
+					m_gpuCbvSrvUavDescriptorHeap->SetInlineUAV(
 						rootSigIdx,
 						bufferPlatParams->m_resolvedGPUResource,
 						bufferPlatParams->m_heapByteOffset);
@@ -409,7 +409,7 @@ namespace dx12
 
 						re::BufferView const& bufView = bufferInput.GetView();
 
-						m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
+						m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
 							rootParam->m_index,
 							dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView),
 							rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
@@ -430,7 +430,7 @@ namespace dx12
 
 						re::BufferView const& bufView = bufferInput.GetView();
 
-						m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
+						m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
 							rootParam->m_index,
 							dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufferInput.GetView()),
 							rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
@@ -450,7 +450,7 @@ namespace dx12
 
 						re::BufferView const& bufView = bufferInput.GetView();
 
-						m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
+						m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
 							rootParam->m_index,
 							dx12::Buffer::GetCBV(bufferInput.GetBuffer(), bufView),
 							rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
@@ -504,7 +504,7 @@ namespace dx12
 			sbt,
 			bufferInputs,
 			this,
-			m_gpuCbvSrvUavDescriptorHeaps.get(),
+			m_gpuCbvSrvUavDescriptorHeap.get(),
 			re::RenderManager::Get()->GetCurrentRenderFrameNum());
 	}
 	
@@ -868,7 +868,7 @@ namespace dx12
 				dx12::Texture::GetUAV(rwTexInput.m_texture, rwTexInput.m_textureView);
 
 			D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTexDescriptor =
-				m_gpuCbvSrvUavDescriptorHeaps->CommitToGPUVisibleHeap({ texDescriptor });
+				m_gpuCbvSrvUavDescriptorHeap->CommitToGPUVisibleHeap({ texDescriptor });
 
 			m_commandList->ClearUnorderedAccessViewFloat(
 				gpuVisibleTexDescriptor, 
@@ -892,7 +892,7 @@ namespace dx12
 				dx12::Texture::GetUAV(rwTexInput.m_texture, rwTexInput.m_textureView);
 
 			D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTexDescriptor =
-				m_gpuCbvSrvUavDescriptorHeaps->CommitToGPUVisibleHeap({ texDescriptor });
+				m_gpuCbvSrvUavDescriptorHeap->CommitToGPUVisibleHeap({ texDescriptor });
 
 			m_commandList->ClearUnorderedAccessViewUint(
 				gpuVisibleTexDescriptor,
@@ -1008,7 +1008,7 @@ namespace dx12
 					((rwTex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0),
 					"Unexpected texture usage for a RW texture");
 
-				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
+				m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
 					rootParam->m_index,
 					dx12::Texture::GetUAV(rwTex, rwTexInput.m_textureView),
 					rootParam->m_tableEntry.m_offset,
@@ -1151,7 +1151,7 @@ namespace dx12
 		dx12::ShaderBindingTable::SetTLASOnLocalRoots(
 			sbt,
 			tlas,
-			m_gpuCbvSrvUavDescriptorHeaps.get(),
+			m_gpuCbvSrvUavDescriptorHeap.get(),
 			re::RenderManager::Get()->GetCurrentRenderFrameNum());
 	}
 
@@ -1182,7 +1182,7 @@ namespace dx12
 			dx12::ShaderBindingTable::SetRWTextureOnLocalRoots(
 				sbt,
 				rwTexInput,
-				m_gpuCbvSrvUavDescriptorHeaps.get(),
+				m_gpuCbvSrvUavDescriptorHeap.get(),
 				re::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 
@@ -1365,7 +1365,7 @@ namespace dx12
 						});
 				}
 
-				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTableEntry(
+				m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
 					rootParam->m_index,
 					descriptor,
 					rootParam->m_tableEntry.m_offset,
@@ -1385,7 +1385,7 @@ namespace dx12
 			sbt,
 			texSamplerInputs,
 			this,
-			m_gpuCbvSrvUavDescriptorHeaps.get(),
+			m_gpuCbvSrvUavDescriptorHeap.get(),
 			re::RenderManager::Get()->GetCurrentRenderFrameNum());
 	}
 

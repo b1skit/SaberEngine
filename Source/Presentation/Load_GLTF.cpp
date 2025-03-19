@@ -1685,11 +1685,6 @@ namespace
 						}
 					}
 					break;
-					case gr::VertexStream::Binormal:
-					{
-						SEAssertF("Binormal streams are nto supported by GLTF, this is unexpected");
-					}
-					break;
 					default: SEAssertF("Invalid stream type");
 					}
 
