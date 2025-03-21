@@ -68,18 +68,16 @@ namespace dx12
 		m_gpuDescriptorHeapGPUBase = m_gpuDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
 		memset(m_cpuDescriptorHeapCache.data(), 0, m_numDescriptors * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
-		memset(m_cpuDescriptorHeapCacheLocations, 0, k_totalRootSigEntries * sizeof(CPUDescriptorCacheMetadata));
+		memset(m_cpuDescriptorHeapCacheLocations, 0, k_maxRootSigEntries * sizeof(CPUDescriptorCacheMetadata));
 
 		m_rootSigDescriptorTableIdxBitmask = 0;
 		m_dirtyDescriptorTableIdxBitmask = 0;
 
-		for (uint8_t i = 0; i < InlineRootType_Count; i++)
-		{
-			memset(m_inlineDescriptors[i], 0, k_totalRootSigEntries * sizeof(D3D12_GPU_VIRTUAL_ADDRESS));
-		}
-		memset(m_dirtyInlineDescriptorIdxBitmask, 0, InlineRootType_Count * sizeof(uint32_t));
+		memset(&m_inlineDescriptors, 0, InlineDescriptorType_Count * k_maxRootSigEntries * sizeof(D3D12_GPU_VIRTUAL_ADDRESS));
 
-		m_unsetInlineDescriptors = std::numeric_limits<uint32_t>::max(); // Nothing has been set
+		memset(m_dirtyInlineDescriptorIdxBitmask, 0, InlineDescriptorType_Count * sizeof(uint64_t));
+
+		m_unsetInlineDescriptors = std::numeric_limits<uint64_t>::max(); // Nothing has been set
 
 		m_currentRootSig = nullptr;
 	}
@@ -113,7 +111,7 @@ namespace dx12
 			case RootSignature::RootParameter::Type::SRV:
 			case RootSignature::RootParameter::Type::UAV:
 			{
-				m_unsetInlineDescriptors |= 1 << rootIdx;
+				m_unsetInlineDescriptors |= (1llu << rootIdx);
 			}
 			break;
 			default:
@@ -189,23 +187,23 @@ namespace dx12
 		m_currentRootSig = rootSig;
 
 		// Parse the root signature:
-		const uint32_t numParams = static_cast<uint32_t>(rootSig->GetRootSignatureEntries().size());
-
+		const uint64_t numParams = static_cast<uint64_t>(rootSig->GetRootSignatureEntries().size());
+		
 		// Get our descriptor table bitmask: Bits map to root signature indexes containing a descriptor table
 		m_rootSigDescriptorTableIdxBitmask = rootSig->GetDescriptorTableIdxBitmask();
 
 		uint32_t offset = 0;
-		uint32_t descriptorTableIdxBitmask = m_rootSigDescriptorTableIdxBitmask;
-		for (uint32_t rootIdx = 0; rootIdx < k_totalRootSigEntries && rootIdx < numParams; rootIdx++)
+		uint64_t descriptorTableIdxBitmask = m_rootSigDescriptorTableIdxBitmask;
+		for (uint8_t rootIdx = 0; rootIdx < k_maxRootSigEntries && rootIdx < numParams; rootIdx++)
 		{
 			if (descriptorTableIdxBitmask == 0)
 			{
 				break; // No point continuing if we've flipped the last bit back to 0
 			}
 
-			const uint32_t rootIdxBit = (1 << rootIdx); // 1, 10, 100, 1000, ..., 1000 0000 0000 0000 0000 0000 0000 0000
+			const uint64_t rootIdxBitmask = (1llu << rootIdx); // 1, 10, 100, 1000, ..., 1000 0000 0000 0000 0000 0000 0000 0000
 
-			if (descriptorTableIdxBitmask & rootIdxBit)
+			if (descriptorTableIdxBitmask & rootIdxBitmask)
 			{
 				const uint32_t numDescriptors = rootSig->GetNumDescriptorsInTable(rootIdx);
 
@@ -215,7 +213,7 @@ namespace dx12
 
 				offset += numDescriptors;
 
-				descriptorTableIdxBitmask ^= rootIdxBit;
+				descriptorTableIdxBitmask ^= rootIdxBitmask;
 			}
 		}
 		SEAssert(offset < m_numDescriptors,
@@ -229,16 +227,16 @@ namespace dx12
 
 
 	void GPUDescriptorHeap::SetDescriptorTableEntry(
-		uint32_t rootParamIdx, D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count)
+		uint8_t rootIdx, D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count)
 	{
-		SEAssert(rootParamIdx < k_totalRootSigEntries, "Invalid root parameter index");
+		SEAssert(rootIdx < k_maxRootSigEntries, "Invalid root parameter index");
 		SEAssert(src.ptr != 0, "Source cannot be null");
 		SEAssert(offset < m_numDescriptors, "Invalid offset");
 		SEAssert(count < m_numDescriptors, "Too many descriptors");
 
 		// TODO: Handle this for Sampler heap type
 
-		CPUDescriptorCacheMetadata const& destCPUDescriptorTable = m_cpuDescriptorHeapCacheLocations[rootParamIdx];
+		CPUDescriptorCacheMetadata const& destCPUDescriptorTable = m_cpuDescriptorHeapCacheLocations[rootIdx];
 
 		SEAssert(offset + count <= destCPUDescriptorTable.m_numElements,
 			"Writing too many descriptors from the given offset");
@@ -252,72 +250,72 @@ namespace dx12
 		}
 
 		// Mark the descriptor table at the given root parameter index as dirty:
-		m_dirtyDescriptorTableIdxBitmask |= (1 << rootParamIdx);
+		m_dirtyDescriptorTableIdxBitmask |= (1llu << rootIdx);
 	}
 
 
 	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
-	void GPUDescriptorHeap::SetInlineCBV(uint32_t rootParamIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
+	void GPUDescriptorHeap::SetInlineCBV(uint8_t rootIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
 	{
-		SEAssert(rootParamIdx < k_totalRootSigEntries, "Invalid root parameter index");
+		SEAssert(rootIdx < k_maxRootSigEntries, "Invalid root parameter index");
 		SEAssert(buffer != nullptr, "Invalid resource pointer");
 		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Wrong heap type");
 
-		m_inlineDescriptors[CBV][rootParamIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
+		m_inlineDescriptors[CBV][rootIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
 		
 		// Mark our root parameter index as dirty:
-		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
+		const uint64_t rootIdxBitmask = (1llu << rootIdx);
 
-		m_dirtyInlineDescriptorIdxBitmask[CBV] |= rootParamIdxBitmask;
+		m_dirtyInlineDescriptorIdxBitmask[CBV] |= rootIdxBitmask;
 
-		if (m_unsetInlineDescriptors & rootParamIdxBitmask)
+		if (m_unsetInlineDescriptors & rootIdxBitmask)
 		{
 			// The inline root parameter at this index has been set at least once: Remove the unset flag
-			m_unsetInlineDescriptors ^= rootParamIdxBitmask;
+			m_unsetInlineDescriptors ^= rootIdxBitmask;
 		}
 	}
 
 
 	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
-	void GPUDescriptorHeap::SetInlineSRV(uint32_t rootParamIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
+	void GPUDescriptorHeap::SetInlineSRV(uint8_t rootIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
 	{
-		SEAssert(rootParamIdx < k_totalRootSigEntries, "Invalid root parameter index");
+		SEAssert(rootIdx < k_maxRootSigEntries, "Invalid root parameter index");
 		SEAssert(buffer != nullptr, "Invalid resource pointer");
 		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Wrong heap type");
 
-		m_inlineDescriptors[SRV][rootParamIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
+		m_inlineDescriptors[SRV][rootIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
 
 		// Mark our root parameter index as dirty:
-		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
+		const uint64_t rootIdxBitmask = (1llu << rootIdx);
 		
-		m_dirtyInlineDescriptorIdxBitmask[SRV] |= rootParamIdxBitmask;
+		m_dirtyInlineDescriptorIdxBitmask[SRV] |= rootIdxBitmask;
 
-		if (m_unsetInlineDescriptors & rootParamIdxBitmask)
+		if (m_unsetInlineDescriptors & rootIdxBitmask)
 		{
 			// The inline root parameter at this index has been set at least once: Remove the unset flag
-			m_unsetInlineDescriptors ^= rootParamIdxBitmask;
+			m_unsetInlineDescriptors ^= rootIdxBitmask;
 		}
 	}
 
 
 	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
-	void GPUDescriptorHeap::SetInlineUAV(uint32_t rootParamIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
+	void GPUDescriptorHeap::SetInlineUAV(uint8_t rootIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
 	{
-		SEAssert(rootParamIdx < k_totalRootSigEntries, "Invalid root parameter index");
+		SEAssert(rootIdx < k_maxRootSigEntries, "Invalid root parameter index");
 		SEAssert(buffer != nullptr, "Invalid resource pointer");
 		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Wrong heap type");
 		
-		m_inlineDescriptors[UAV][rootParamIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
+		m_inlineDescriptors[UAV][rootIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
 
 		// Mark our root parameter index as dirty:
-		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
+		const uint64_t rootIdxBitmask = (1llu << rootIdx);
 
-		m_dirtyInlineDescriptorIdxBitmask[UAV] |= rootParamIdxBitmask;
+		m_dirtyInlineDescriptorIdxBitmask[UAV] |= rootIdxBitmask;
 		
-		if (m_unsetInlineDescriptors & rootParamIdxBitmask)
+		if (m_unsetInlineDescriptors & rootIdxBitmask)
 		{
 			// The inline root parameter at this index has been set at least once: Remove the unset flag
-			m_unsetInlineDescriptors ^= rootParamIdxBitmask;
+			m_unsetInlineDescriptors ^= rootIdxBitmask;
 		}
 	}
 
@@ -328,12 +326,12 @@ namespace dx12
 		// Debug: Assert all of our root index bitmasks are unique
 		if (core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
 		{
-			for (uint8_t i = 0; i < InlineRootType_Count; i++)
+			for (uint8_t i = 0; i < InlineDescriptorType_Count; i++)
 			{
 				SEAssert((m_dirtyInlineDescriptorIdxBitmask[i] & m_rootSigDescriptorTableIdxBitmask) == 0,
 					"Inline descriptor index and descriptor table index overlap");
 
-				for (uint8_t j = 0; j < InlineRootType_Count; j++)
+				for (uint8_t j = 0; j < InlineDescriptorType_Count; j++)
 				{
 					if (i != j)
 					{
@@ -353,22 +351,21 @@ namespace dx12
 	{
 		// Note: The commandList should have already called SetDescriptorHeaps for m_gpuDescriptorHeap
 
-		const uint32_t numDirtyTableDescriptors = GetNumDirtyTableDescriptors();
-		if (numDirtyTableDescriptors > 0)
+		if (m_dirtyDescriptorTableIdxBitmask != 0) // i.e. any dirty bits?
 		{
 			SEAssert(m_gpuDescriptorHeap != nullptr, "Invalid descriptor heap");
 
-			for (uint32_t rootIdx = 0; rootIdx < k_totalRootSigEntries; rootIdx++)
+			for (uint8_t rootIdx = 0; rootIdx < k_maxRootSigEntries; rootIdx++)
 			{
 				if (m_dirtyDescriptorTableIdxBitmask == 0)
 				{
 					break; // No point continuing if we've flipped the last bit back to 0
 				}
 
-				const uint32_t rootIdxBit = (1 << rootIdx); // 1, 10, 100, 1000, ..., 1000 0000 0000 0000 0000 0000 0000 0000
+				const uint64_t rootIdxBitmask = (1llu << rootIdx); // 1, 10, 100, 1000, ..., 1000 0000 0000 0000 0000 0000 0000 0000
 
 				// Only copy if the descriptor table at the current root signature index has changed
-				if (m_dirtyDescriptorTableIdxBitmask & rootIdxBit)
+				if (m_dirtyDescriptorTableIdxBitmask & rootIdxBitmask)
 				{
 					const D3D12_CPU_DESCRIPTOR_HANDLE* srcBaseDescriptor =
 						m_cpuDescriptorHeapCacheLocations[rootIdx].m_baseDescriptor;
@@ -418,7 +415,7 @@ namespace dx12
 					m_gpuDescriptorHeapGPUBase.ptr += tableSize;
 
 					// Flip the dirty bit now that we've updated the GPU-visible descriptor table data:
-					m_dirtyDescriptorTableIdxBitmask ^= rootIdxBit;
+					m_dirtyDescriptorTableIdxBitmask ^= rootIdxBitmask;
 				}	
 			}
 		}
@@ -464,7 +461,7 @@ namespace dx12
 		ID3D12GraphicsCommandList* commandList, 
 		dx12::CommandListType commandListType,
 		GPUDescriptorHeap::InlineDescriptorType inlineType,
-		uint32_t& dirtyIdxBitmask, 
+		uint64_t& dirtyIdxBitmask, 
 		D3D12_GPU_VIRTUAL_ADDRESS* inlineDescriptors)
 	{
 		if (dirtyIdxBitmask == 0)
@@ -472,18 +469,17 @@ namespace dx12
 			return;
 		}
 
-		uint32_t rootIdxBit = 0; // Updated immediately...
-		for (uint32_t rootIdx = 0; rootIdx < GPUDescriptorHeap::k_totalRootSigEntries; rootIdx++)
+		for (uint8_t rootIdx = 0; rootIdx < GPUDescriptorHeap::k_maxRootSigEntries; rootIdx++)
 		{
 			if (dirtyIdxBitmask == 0)
 			{
 				break; // No point continuing if we've flipped the last bit back to 0
 			}
 
-			rootIdxBit = (1 << rootIdx); // 1, 10, 100, 1000, ..., 1000 0000 0000 0000 0000 0000 0000 0000
+			const uint64_t rootIdxBitmask = (1llu << rootIdx); // 1, 10, 100, 1000, ..., 1000 0000 0000 0000 0000 0000 0000 0000
 
 			// Only copy if the descriptor table at the current root signature index has changed
-			if (dirtyIdxBitmask & rootIdxBit)
+			if (dirtyIdxBitmask & rootIdxBitmask)
 			{
 				switch (inlineType)
 				{
@@ -549,7 +545,7 @@ namespace dx12
 				}
 
 				// Flip the dirty bit now that we've updated the GPU-visible descriptor table data:
-				dirtyIdxBitmask ^= rootIdxBit;
+				dirtyIdxBitmask ^= rootIdxBitmask;
 			}
 		}
 	}
@@ -565,7 +561,7 @@ namespace dx12
 			std::vector<RootSignature::RootParameter> const& rootParams = m_currentRootSig->GetRootSignatureEntries();
 			for (auto const& rootParam : rootParams)
 			{
-				if (m_unsetInlineDescriptors & (1 << rootParam.m_index))
+				if (m_unsetInlineDescriptors & (1llu << rootParam.m_index))
 				{
 					unsetInlineDescriptorNames += m_currentRootSig->DebugGetNameFromRootParamIdx(rootParam.m_index) + " ";
 				}
@@ -580,7 +576,7 @@ namespace dx12
 		ID3D12GraphicsCommandList* d3dCmdList = cmdList.GetD3DCommandList().Get();
 		const dx12::CommandListType commandListType = cmdList.GetCommandListType();
 
-		for (uint8_t inlineRootType = 0; inlineRootType < InlineRootType_Count; inlineRootType++)
+		for (uint8_t inlineRootType = 0; inlineRootType < InlineDescriptorType_Count; inlineRootType++)
 		{
 			CommitInlineDescriptorsHelper(
 				d3dCmdList,
@@ -589,33 +585,5 @@ namespace dx12
 				m_dirtyInlineDescriptorIdxBitmask[inlineRootType],
 				m_inlineDescriptors[inlineRootType]);
 		}
-	}
-
-
-	uint32_t GPUDescriptorHeap::GetNumDirtyTableDescriptors() const
-	{
-		uint32_t count = 0;
-
-#if defined(_DEBUG)
-		uint32_t dirtyDescriptorBitmask = m_dirtyDescriptorTableIdxBitmask;
-#endif
-		for (uint32_t i = 0; i < k_totalRootSigEntries; i++)
-		{
-			const uint32_t bitmask = (1 << i);
-			if (m_dirtyDescriptorTableIdxBitmask & bitmask)
-			{
-				count += m_cpuDescriptorHeapCacheLocations[i].m_numElements;
-
-#if defined(_DEBUG)
-				dirtyDescriptorBitmask ^= bitmask;
-#endif
-			}
-		}
-
-#if defined(_DEBUG)
-		SEAssert(dirtyDescriptorBitmask == 0, "Expected the bitmask to be all 0's");
-#endif
-
-		return count;
 	}
 }

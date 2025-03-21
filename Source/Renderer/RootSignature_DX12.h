@@ -12,6 +12,7 @@ struct CD3DX12_ROOT_PARAMETER1;
 
 namespace re
 {
+	class Sampler;
 	class Shader;
 }
 
@@ -20,20 +21,25 @@ namespace dx12
 	class RootSignature final
 	{
 	public:
-		static constexpr uint32_t k_totalRootSigEntries = 32u;
+		static constexpr uint32_t k_maxRootSigEntries = 64;
 
 		static constexpr uint8_t k_invalidRootSigIndex	= std::numeric_limits<uint8_t>::max();
 		static constexpr uint8_t k_invalidOffset		= std::numeric_limits<uint8_t>::max();
-		static constexpr uint8_t k_invalidCount			= std::numeric_limits<uint8_t>::max();
+		static constexpr uint32_t k_invalidCount		= std::numeric_limits<uint32_t>::max();
 
-		static constexpr uint8_t k_invalidRegisterVal	= std::numeric_limits<uint8_t>::max();
+		static constexpr uint32_t k_invalidRegisterVal	= std::numeric_limits<uint32_t>::max();
 
 
 	public: // Descriptor table metadata:
 		struct RangeEntry
 		{
 			// No. of descriptors bound to the same name (e.g. for arrays of buffers)
-			uint32_t m_bindCount = std::numeric_limits<uint32_t>::max();
+			uint32_t m_bindCount = std::numeric_limits<uint32_t>::max(); // -1 == unbounded size
+
+			uint32_t m_baseRegister = k_invalidRegisterVal; 
+			uint32_t m_registerSpace = k_invalidRegisterVal;
+
+			D3D12_DESCRIPTOR_RANGE_FLAGS m_flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
 
 			union
 			{
@@ -59,32 +65,35 @@ namespace dx12
 			Type_Count,
 			Type_Invalid = Type_Count
 		};
-		struct DescriptorTable
+		struct DescriptorTable // Describes the layout of a descriptor table: [[SRVs], [UAVs], [CBVs]]
 		{
-			uint8_t m_index = k_invalidRootSigIndex;
+			uint8_t m_index = k_invalidRootSigIndex; // All individual RootParameters in this table have the same index
 			std::array<std::vector<RangeEntry>, DescriptorType::Type_Count> m_ranges; // A vector of RangeEntry for each DescriptorType
+
+			D3D12_SHADER_VISIBILITY m_visibility = D3D12_SHADER_VISIBILITY_ALL;
 		};
 
 
 	public: // Binding metadata:
 		struct RootConstant
 		{
-			uint8_t m_num32BitValues = k_invalidCount;
-			uint8_t m_destOffsetIn32BitValues = k_invalidOffset; // TODO: Is this needed/used?
+			uint32_t m_num32BitValues = k_invalidCount;
 		};
 		struct RootCBV
 		{
-			// TODO...
+			D3D12_ROOT_DESCRIPTOR_FLAGS m_flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
 		};
 		struct RootSRV
 		{
 			D3D12_SRV_DIMENSION m_viewDimension;
+			D3D12_ROOT_DESCRIPTOR_FLAGS m_flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
 		};
 		struct RootUAV
 		{
 			D3D12_UAV_DIMENSION m_viewDimension;
+			D3D12_ROOT_DESCRIPTOR_FLAGS m_flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
 		};
-		struct TableEntry
+		struct TableEntry // Describes an individual (named) resource packed in a descriptor table
 		{
 			DescriptorType m_type = DescriptorType::Type_Invalid;
 			uint8_t m_offset = k_invalidOffset;
@@ -114,6 +123,8 @@ namespace dx12
 			uint32_t m_registerBindPoint = k_invalidRegisterVal;
 			uint32_t m_registerSpace = k_invalidRegisterVal;
 
+			D3D12_SHADER_VISIBILITY m_visibility = D3D12_SHADER_VISIBILITY_ALL;
+
 			union
 			{
 				RootConstant m_rootConstant;
@@ -125,14 +136,70 @@ namespace dx12
 		};
 
 
-	public:
+	public: // Create a root signature from shader reflection:
 		[[nodiscard]] static std::unique_ptr<dx12::RootSignature> Create(re::Shader const&);
 
+
+	public: // Manual root signature creation:
+		[[nodiscard]] static std::unique_ptr<dx12::RootSignature> CreateUninitialized();
+
+
+		struct RootParameterCreateDesc
+		{
+			std::string m_shaderName;
+			RootParameter::Type m_type = RootParameter::Type::Type_Invalid;
+			uint32_t m_registerBindPoint = 0;
+			uint32_t m_registerSpace = 0;
+			D3D12_ROOT_DESCRIPTOR_FLAGS m_flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE; // Volatile = root sig 1.0 default
+			D3D12_SHADER_VISIBILITY m_visibility = D3D12_SHADER_VISIBILITY_ALL;
+
+			union
+			{
+				D3D12_SRV_DIMENSION m_srvViewDimension;
+				D3D12_UAV_DIMENSION m_uavViewDimension;
+				uint8_t m_numRootConstants = 0;
+			};
+			
+		};
+		uint32_t AddRootParameter(RootParameterCreateDesc const&); // Returns the index of the new root parameter
+
+
+		struct DescriptorRangeCreateDesc
+		{
+			std::string m_shaderName;
+
+			D3D12_DESCRIPTOR_RANGE1 m_rangeDesc;
+
+			union
+			{
+				struct
+				{
+					DXGI_FORMAT m_format;
+					D3D12_SRV_DIMENSION m_viewDimension;
+				} m_srvDesc;
+				struct
+				{
+					DXGI_FORMAT m_format;
+					D3D12_UAV_DIMENSION m_viewDimension;
+				} m_uavDesc;
+			};
+		};
+		uint32_t AddDescriptorTable(
+			std::vector<DescriptorRangeCreateDesc> const&,
+			D3D12_SHADER_VISIBILITY = D3D12_SHADER_VISIBILITY_ALL);
+
+		void AddStaticSampler(core::InvPtr<re::Sampler> const&);
+
+		void Finalize(char const* name, D3D12_ROOT_SIGNATURE_FLAGS);
+
+
+	public:
 		~RootSignature();
 		void Destroy();
 
+
 	public:
-		uint32_t GetDescriptorTableIdxBitmask() const;
+		uint64_t GetDescriptorTableIdxBitmask() const;
 		uint32_t GetNumDescriptorsInTable(uint8_t rootIndex) const;
 
 		ID3D12RootSignature* GetD3DRootSignature() const;
@@ -154,6 +221,16 @@ namespace dx12
 #endif
 
 
+	private:
+		void ValidateRootSigSize(); // _DEBUG only
+
+		void FinalizeInternal(
+			std::wstring const& rootSigName,
+			std::vector<CD3DX12_ROOT_PARAMETER1> const&, 
+			std::vector<D3D12_STATIC_SAMPLER_DESC> const&,
+			D3D12_ROOT_SIGNATURE_FLAGS);
+
+
 	private: 
 		RootSignature(); // Use Create() instead
 
@@ -173,6 +250,7 @@ namespace dx12
 			D3D12_SHADER_INPUT_BIND_DESC const&,
 			std::array<std::vector<RangeInput>, DescriptorType::Type_Count>& rangeInputs,
 			std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters,
+			std::vector<std::string>& staticSamplerNames,
 			std::vector<D3D12_STATIC_SAMPLER_DESC>& staticSamplers);
 
 
@@ -182,9 +260,9 @@ namespace dx12
 
 
 	private: // Track which root sig indexes contain descriptor tables, and how many entries they have
-		uint32_t m_rootSigDescriptorTableIdxBitmask; 
-		uint32_t m_numDescriptorsPerTable[k_totalRootSigEntries];
-		SEStaticAssert(k_totalRootSigEntries == (sizeof(m_rootSigDescriptorTableIdxBitmask) * 8),
+		uint64_t m_rootSigDescriptorTableIdxBitmask; 
+		uint32_t m_numDescriptorsPerTable[k_maxRootSigEntries];
+		SEStaticAssert(k_maxRootSigEntries == (sizeof(m_rootSigDescriptorTableIdxBitmask) * 8),
 			"Not enough bits in the m_rootSigDescriptorTableIdxBitmask to represent all root signature entries");
 
 
@@ -192,14 +270,18 @@ namespace dx12
 		void InsertNewRootParamMetadata(char const* name, RootParameter&&);
 
 		// Flattened root parameter entries. 1 element per descriptor, regardless of its root/table location
-		std::vector<RootParameter> m_rootParams; 
-		std::unordered_map<std::string, size_t> m_namesToRootParamsIdx;
+		std::vector<RootParameter> m_rootParamMetadata; 
+		std::unordered_map<std::string, uint32_t> m_namesToRootParamsIdx;
 
 		std::vector<DescriptorTable> m_descriptorTables; // For null descriptor initialization
+
+		std::vector<std::string> m_staticSamplerNames;
+
+		bool m_isFinalized;
 	};
 
 
-	inline uint32_t RootSignature::GetDescriptorTableIdxBitmask() const
+	inline uint64_t RootSignature::GetDescriptorTableIdxBitmask() const
 	{
 		return m_rootSigDescriptorTableIdxBitmask;
 	}
@@ -225,13 +307,13 @@ namespace dx12
 
 	inline std::vector<RootSignature::RootParameter> const& RootSignature::GetRootSignatureEntries() const
 	{
-		return m_rootParams;
+		return m_rootParamMetadata;
 	}
 
 
 	inline uint32_t RootSignature::GetNumRootSignatureEntries() const
 	{
-		return util::CheckedCast<uint32_t>(m_rootParams.size());
+		return util::CheckedCast<uint32_t>(m_rootParamMetadata.size());
 	}
 
 
