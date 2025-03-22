@@ -159,7 +159,6 @@ namespace dx12
 				D3D12_UAV_DIMENSION m_uavViewDimension;
 				uint8_t m_numRootConstants = 0;
 			};
-			
 		};
 		uint32_t AddRootParameter(RootParameterCreateDesc const&); // Returns the index of the new root parameter
 

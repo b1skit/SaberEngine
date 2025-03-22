@@ -1366,12 +1366,11 @@ namespace dx12
 				numRootSigEntries++;
 			}
 		}
+		SEAssert(numRootSigEntries > 0, "No root signature entries. This is unexpected");
 
 		// Build our list of root signature parameters from the recorded metadata:
 		std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
 		rootParameters.resize(numRootSigEntries);
-
-		std::vector<std::pair<uint32_t, RootParameter const*>> descriptorTable;
 
 		for (auto const& rootParam : m_rootParamMetadata)
 		{
@@ -1422,16 +1421,19 @@ namespace dx12
 			}
 		}
 
+		std::vector<std::vector<D3D12_DESCRIPTOR_RANGE1>> allDescriptorRanges; // Keep these in scope until we're done
+		allDescriptorRanges.reserve(m_descriptorTables.size() * DescriptorType::Type_Count);
+
 		// Initialize rootParameters containing descriptor tables:
 		for (DescriptorTable const& tableMetadata : m_descriptorTables)
 		{
-			std::vector<D3D12_DESCRIPTOR_RANGE1> descriptorRanges;
+			std::vector<D3D12_DESCRIPTOR_RANGE1>& tableRanges = allDescriptorRanges.emplace_back();
 
 			for (uint8_t rangeTypeIdx = 0; rangeTypeIdx < DescriptorType::Type_Count; ++rangeTypeIdx)
 			{
 				for (RangeEntry const& rangeEntry : tableMetadata.m_ranges[rangeTypeIdx])
 				{
-					D3D12_DESCRIPTOR_RANGE1& descriptorRange = descriptorRanges.emplace_back();
+					D3D12_DESCRIPTOR_RANGE1& descriptorRange = tableRanges.emplace_back();
 
 					descriptorRange.RangeType = GetD3DRangeType(static_cast<DescriptorType>(rangeTypeIdx));
 					descriptorRange.NumDescriptors = rangeEntry.m_bindCount;
@@ -1444,8 +1446,8 @@ namespace dx12
 			}
 
 			rootParameters[tableMetadata.m_index].InitAsDescriptorTable(
-				util::CheckedCast<uint32_t>(descriptorRanges.size()),
-				descriptorRanges.data());
+				util::CheckedCast<uint32_t>(tableRanges.size()),
+				tableRanges.data());
 		}
 
 		// Static samplers:
