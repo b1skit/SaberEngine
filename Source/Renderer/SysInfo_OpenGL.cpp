@@ -32,6 +32,12 @@ namespace opengl
 	}
 
 
+	bool SysInfo::BindlessResourcesSupported()
+	{
+		return false;
+	}
+
+
 	GLint SysInfo::GetUniformBufferOffsetAlignment()
 	{
 		static GLint s_uniformBufferOffsetAlignment = 0;

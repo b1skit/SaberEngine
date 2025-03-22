@@ -30,6 +30,12 @@ namespace dx12
 	}
 
 
+	bool SysInfo::BindlessResourcesSupported()
+	{
+		return true;
+	}
+
+
 	uint32_t SysInfo::GetMaxDescriptorTableCBVs()
 	{
 		static const D3D12_RESOURCE_BINDING_TIER resourceBindingTier = 
