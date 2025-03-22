@@ -2,8 +2,6 @@
 #pragma once
 #include "Shader.h"
 
-#include "Core/Interfaces/IHashedDataObject.h"
-
 #include <wrl.h>
 #include <d3d12.h>
 #include <d3d12shader.h>

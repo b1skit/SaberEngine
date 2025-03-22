@@ -16,8 +16,6 @@
 
 #include <d3dx12.h>
 #include <dxcapi.h>
-#include <d3dcompiler.h> 
-#include <d3d12shader.h>
 
 using Microsoft::WRL::ComPtr;
 
