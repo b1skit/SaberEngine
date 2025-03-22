@@ -64,6 +64,9 @@ namespace dx12
 				m_cbvDescriptors.Destroy();
 			}
 
+			bool GPUResourceIsValid() const;
+
+		public:
 			ID3D12Resource* m_resolvedGPUResource; // Use this instead of m_gpuResource
 
 			uint64_t m_heapByteOffset; // For multiple resources sub-allocated from a single GPUResource
@@ -74,8 +77,6 @@ namespace dx12
 			mutable dx12::DescriptorCache m_srvDescriptors;
 			mutable dx12::DescriptorCache m_uavDescriptors;
 			mutable dx12::DescriptorCache m_cbvDescriptors;
-
-			bool GPUResourceIsValid() const;
 
 		
 		private:

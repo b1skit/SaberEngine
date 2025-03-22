@@ -242,7 +242,6 @@ namespace core
 
 			m_objectCache = rhs.m_objectCache;
 			rhs.m_objectCache = nullptr;
-
 		}
 		return *this;
 	}

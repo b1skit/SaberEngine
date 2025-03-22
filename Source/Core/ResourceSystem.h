@@ -131,7 +131,7 @@ namespace core
 			const RefCountType entryRefCount = entry.second.m_control->m_refCount.load();
 
 			SEAssert(entryRefCount == 0 ||
-				entryRefCount == 1 && entry.second.m_retentionPolicy == core::RetentionPolicy::Permanent,
+				(entryRefCount == 1 && entry.second.m_retentionPolicy == core::RetentionPolicy::Permanent),
 				"There is an outstanding InvPtr that has not been released yet. This might indicate a resource leak");
 		}
 #endif
