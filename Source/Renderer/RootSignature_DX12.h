@@ -11,7 +11,6 @@ struct CD3DX12_ROOT_PARAMETER1;
 namespace re
 {
 	class Sampler;
-	class Shader;
 }
 
 namespace dx12
