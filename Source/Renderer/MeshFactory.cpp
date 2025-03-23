@@ -3,6 +3,8 @@
 #include "MeshFactory.h"
 #include "VertexStreamBuilder.h"
 
+#include "Core/Inventory.h"
+
 #include "Core/Util/ByteVector.h"
 #include "Core/Util/HashUtils.h"
 

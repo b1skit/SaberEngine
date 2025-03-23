@@ -4,7 +4,6 @@
 #include "BufferView.h"
 #include "Effect.h"
 #include "Sampler.h"
-#include "Texture.h"
 
 #include "Core/InvPtr.h"
 

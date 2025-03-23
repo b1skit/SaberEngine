@@ -1,14 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "CameraRenderData.h"
+#include "Buffer.h"
 #include "GraphicsSystemCommon.h"
-#include "Stage.h"
 #include "RenderPipeline.h"
+#include "Texture.h"
+
+#include "Core/Assert.h"
+#include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
+#include "Core/Interfaces/IUniqueID.h"
 
 #include "Core/Util/CHashKey.h"
-#include "Core/Util/TextUtils.h"
 
 
 namespace re

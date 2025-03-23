@@ -2,7 +2,6 @@
 #pragma once
 #include "Core/InvPtr.h"
 
-#include "Core/Interfaces/ILoadContext.h"
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
 #include "Core/Interfaces/IUniqueID.h"

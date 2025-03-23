@@ -1,9 +1,19 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
+#include "Effect.h"
 #include "EffectDB.h"
 #include "RenderManager.h"
+#include "Shader.h"
 #include "ShaderBindingTable_Platform.h"
 #include "ShaderBindingTable.h"
+#include "Technique.h"
+
+#include "Core/Assert.h"
+#include "Core/InvPtr.h"
+
+#include "Core/Interfaces/INamedObject.h"
+
+#include "Generated/DrawStyles.h"
 
 
 namespace re

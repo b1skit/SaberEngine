@@ -6,7 +6,7 @@
 #include "Core/Assert.h"
 #include "Core/Logger.h"
 
-#include "Core/Util/CastUtils.h"
+#include "Core/Interfaces/ILoadContext.h"
 
 
 namespace

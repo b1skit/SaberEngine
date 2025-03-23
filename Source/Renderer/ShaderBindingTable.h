@@ -1,11 +1,14 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "Effect.h"
+#include "Shader.h"
+
+#include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformParams.h"
 
-#include "Core/Util/CastUtils.h"
+#include "Generated/DrawStyles.h"
 
 
 namespace dx12

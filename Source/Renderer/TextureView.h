@@ -161,7 +161,7 @@ namespace re
 
 	inline bool TextureView::DepthWritesEnabled() const
 	{
-		return (Flags.m_depthStencil & ViewFlags::DepthFlags::ReadOnlyDepth) == 0;
+		return (static_cast<uint8_t>(Flags.m_depthStencil) & static_cast<uint8_t>(ViewFlags::DepthFlags::ReadOnlyDepth)) == 0;
 	}
 
 

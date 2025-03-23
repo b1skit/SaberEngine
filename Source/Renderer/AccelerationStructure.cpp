@@ -3,6 +3,10 @@
 #include "AccelerationStructure_Platform.h"
 #include "RenderManager.h"
 
+#include "Core/Assert.h"
+
+#include "Core/Interfaces/INamedObject.h"
+
 
 namespace re
 {

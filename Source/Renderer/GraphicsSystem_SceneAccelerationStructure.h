@@ -1,6 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "GraphicsSystem.h"
+#include "GraphicsSystemCommon.h"
+#include "GraphicsSystemManager.h"
+#include "RenderObjectIDs.h"
+#include "RenderPipeline.h"
+
+#include "Core/Util/CHashKey.h"
+#include "Core/Util/HashKey.h"
 
 
 namespace re

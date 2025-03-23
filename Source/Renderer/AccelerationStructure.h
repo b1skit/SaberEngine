@@ -1,13 +1,17 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
+#include "Buffer.h"
 #include "BufferView.h"
 #include "Effect.h"
 #include "VertexStream.h"
 
+#include "Core/Assert.h"
 #include "Core/InvPtr.h"
 
 #include "Core/Interfaces/IPlatformParams.h"
 #include "Core/Interfaces/INamedObject.h"
+
+#include "Generated/DrawStyles.h"
 
 
 namespace re
@@ -93,7 +97,7 @@ namespace re
 		{
 			virtual ~IASParams() = 0;
 
-			BuildFlags m_buildFlags;
+			BuildFlags m_buildFlags = BuildFlags_None;
 		};
 		struct BLASParams : public virtual IASParams
 		{
@@ -109,7 +113,7 @@ namespace re
 				
 				// Effect ID and material drawstyle bits allow us to resolve a Technique from BLAS geometry
 				EffectID m_effectID;
-				effect::drawstyle::Bitmask m_materialDrawstyleBits;
+				effect::drawstyle::Bitmask m_materialDrawstyleBits = 0;
 			};
 			std::vector<Geometry> m_geometry;
 			std::shared_ptr<re::Buffer> m_transform; // Buffer of mat3x4 in row-major order. Indexes correspond with m_geometry

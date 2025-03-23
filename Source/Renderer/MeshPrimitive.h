@@ -1,14 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Material.h"
+#include "Buffer.h"
 #include "RenderObjectIDs.h"
 #include "VertexStream.h"
+
+#include "Core/InvPtr.h"
 
 #include "Core/Interfaces/IPlatformParams.h"
 #include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/INamedObject.h"
-
-#include "Shaders/Common/AnimationParams.h"
+#include "Core/Interfaces/IUniqueID.h"
 
 
 namespace
@@ -20,13 +21,13 @@ namespace
 namespace core
 {
 	class Inventory; 
-
-	template<typename T>
-	class InvPtr;
 }
 
 namespace gr
 {
+	class VertexStream;
+
+
 	class MeshPrimitive final : 
 		public virtual core::INamedObject, 
 		public virtual core::IHashedDataObject, 

@@ -1,7 +1,29 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
+#include "Batch.h"
+#include "Buffer.h"
+#include "BufferView.h"
+#include "EnumTypes.h"
 #include "GraphicsSystem_SceneAccelerationStructure.h"
+#include "GraphicsSystem.h"
+#include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
+#include "Material.h"
+#include "MeshPrimitive.h"
+#include "RenderDataManager.h"
+#include "RenderObjectIDs.h"
+#include "RenderPipeline.h"
+#include "Stage.h"
+#include "TransformRenderData.h"
+#include "VertexStream.h"
+
+#include "Core/Assert.h"
+
+#include "Core/Interfaces/INamedObject.h"
+
+#include "Core/Util/CastUtils.h"
+#include "Core/Util/HashUtils.h"
+#include "Core/Util/HashKey.h"
 
 
 namespace

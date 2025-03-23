@@ -6,6 +6,8 @@
 
 #include "Core/Util/MathUtils.h"
 
+#include "Shaders/Common/AnimationParams.h"
+
 
 namespace
 {

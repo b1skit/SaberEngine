@@ -2,6 +2,7 @@
 #pragma once
 #include "Buffer.h"
 #include "Material.h"
+#include "Texture.h"
 
 #include "Shaders/Common/MaterialParams.h"
 
