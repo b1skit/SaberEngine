@@ -133,6 +133,9 @@
     <ClInclude Include="Shaders\Common\RayTracingParams.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
+    <ClInclude Include="Shaders\Common\BindlessResourceParams.h">
+      <Filter>Shaders\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\HLSL\SaberCommon.hlsli">
@@ -421,10 +424,13 @@
     <None Include="Effects\RayTracing.json">
       <Filter>Effects</Filter>
     </None>
-    <None Include="Shaders\HLSL\RayTracing_Experimental.hlsl">
+    <None Include="Shaders\HLSL\RayTracingCommon.hlsli">
       <Filter>Shaders\HLSL</Filter>
     </None>
-    <None Include="Shaders\HLSL\RayTracingCommon.hlsli">
+    <None Include="Shaders\HLSL\BindlessResources.hlsli">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\RayTracing_Experimental.hlsl">
       <Filter>Shaders\HLSL</Filter>
     </None>
   </ItemGroup>

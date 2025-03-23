@@ -501,6 +501,9 @@ namespace
 			dx12::AccelerationStructure::PlatformParams* blasPlatParams =
 				blasAS->GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
 
+			SEAssert(blasPlatParams->m_ASBuffer->GetGPUVirtualAddress() % D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT == 0,
+				"Invalid AS GPU address");
+
 			instanceDescs[instanceIdx] = D3D12_RAYTRACING_INSTANCE_DESC{
 				// .Transform set below
 				.InstanceID = instanceIdx, // Arbitrary: Identifies each unique BLAS instance to shaders
@@ -531,6 +534,9 @@ namespace
 			platParams->m_isBuilt = true;
 		}
 
+		SEAssert(TLASInstanceDescs->GetGPUVirtualAddress() % 16 == 0,
+			"Invalid InstanceDescs alignment (D3D12_RAYTRACING_INSTANCE_DESC_BYTE_ALIGNMENT)");
+
 		// Compute the estimated buffer sizes:
 		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS tlasInputs{
 			.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL,
@@ -555,6 +561,11 @@ namespace
 				.m_initialState = D3D12_RESOURCE_STATE_COMMON, },
 			L"BuildTLAS temporary scratch buffer");
 		
+		SEAssert(platParams->m_ASBuffer->GetGPUVirtualAddress() % D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT == 0,
+			"Invalid AS GPU address");
+		SEAssert(scratchBuffer->GetGPUVirtualAddress() % D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT == 0,
+			"Invalid scratch AS GPU address");
+
 		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC tlasDesc {
 			.DestAccelerationStructureData = platParams->m_ASBuffer->GetGPUVirtualAddress(),
 			.Inputs = tlasInputs,

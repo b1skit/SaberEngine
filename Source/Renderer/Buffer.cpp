@@ -73,6 +73,8 @@ namespace re
 		, m_dataByteSize(dataByteSize)
 		, m_bufferParams(bufferParams)
 		, m_platformParams(nullptr)
+		, m_bindlessResourceHandle(k_invalidResourceHandle)
+		, m_isBindlessResource(false)
 		, m_isCurrentlyMapped(false)
 	{
 		SEAssert(m_dataByteSize % bufferParams.m_arraySize == 0,
@@ -165,8 +167,52 @@ namespace re
 		SEAssert(params->m_isCreated, "Buffer has not been created, or has already been destroyed");
 		SEAssert(!m_isCurrentlyMapped, "Buffer is currently mapped");
 
+		m_bindlessResourceHandleRegistration = nullptr;
+
+		if (m_isBindlessResource &&
+			m_bindlessResourceHandle != k_invalidResourceHandle)
+		{
+			SEAssert(m_bindlessResourceHandleRelease, "Callback is null");
+
+			m_bindlessResourceHandleRelease(m_bindlessResourceHandle);
+
+			m_bindlessResourceHandleRelease = nullptr; // Release the callback lambda
+		}
+
 		// Internally makes a (deferred) call to platform::Buffer::Destroy
 		re::Context::Get()->GetBufferAllocator()->Deallocate(GetUniqueID());
+	}
+
+
+	void Buffer::CreateBindlessResource()
+	{
+		SEAssert(m_isBindlessResource && 
+			m_bindlessResourceHandleRegistration &&
+			m_bindlessResourceHandle == k_invalidResourceHandle,
+			"Invalid Buffer for bindless resource creation");
+
+		m_bindlessResourceHandle = m_bindlessResourceHandleRegistration();
+
+		// Release the callback lambda to prevent it holding any captured values in scope
+		m_bindlessResourceHandleRegistration = nullptr;
+	}
+
+
+	void Buffer::SetBindlessCallbacks(
+		std::function<ResourceHandle(void)>&& resourceHandleRegistration, 
+		std::function<void(ResourceHandle&)>&& resourceHandleUnregistration)
+	{
+		SEAssert(m_bindlessResourceHandle == k_invalidResourceHandle,
+			"Bindless resource handle already set");
+
+		SEAssert(m_platformParams == nullptr ||
+			!m_platformParams->m_isCreated,
+			"Buffer has already been created. This method should be called immediately after buffer creation");
+
+		m_bindlessResourceHandleRegistration = std::move(resourceHandleRegistration);
+		m_bindlessResourceHandleRelease = resourceHandleUnregistration;
+
+		m_isBindlessResource = true;
 	}
 
 

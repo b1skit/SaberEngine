@@ -8,9 +8,11 @@
 #include <filesystem>
 #include <fstream>
 #include <future>
+#include <queue>
 #include <regex>
 #include <set>
 #include <thread>
+#include <typeindex>
 #include <unordered_map>
 #include <unordered_set>
 #include <variant>

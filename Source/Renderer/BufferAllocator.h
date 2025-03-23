@@ -36,6 +36,7 @@ namespace re
 
 
 	public:
+		void CreateBufferPlatformObjects() const; // Trigger platform creation for any new buffers in the dirty list
 		void BufferData(uint64_t renderFrameNum);
 
 	private:
@@ -132,8 +133,8 @@ namespace re
 		std::unordered_map<Handle, CommitMetadata> m_handleToCommitMetadata;
 		mutable std::recursive_mutex m_handleToCommitMetadataMutex;
 
-		std::unordered_set<Handle> m_dirtyBuffers;
-		std::mutex m_dirtyBuffersMutex;
+		std::unordered_set<std::shared_ptr<re::Buffer>> m_dirtyBuffers;
+		mutable std::mutex m_dirtyBuffersMutex;
 
 
 	protected:

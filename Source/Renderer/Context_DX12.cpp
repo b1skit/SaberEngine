@@ -140,6 +140,15 @@ namespace dx12
 	}
 
 
+	void Context::UpdateInternal(uint64_t currentFrame)
+	{
+		// Update the bindless resource manager.
+		// Note: At this point, any Buffers created by GS's and resources (e.g. VertexStreams) have had their platform
+		// objects created (although their data has not been buffered), and new resources have been API-created
+		m_bindlessResourceManager.Update(currentFrame);
+	}
+
+
 	void Context::Destroy(re::Context& context)
 	{
 		dx12::Context& dx12Context = dynamic_cast<dx12::Context&>(context);
@@ -165,6 +174,8 @@ namespace dx12
 		// NOTE: We must destroy anything that holds a buffer before the BufferAllocator is destroyed, 
 		// as buffers call the BufferAllocator in their destructor
 		dx12Context.GetBufferAllocator()->Destroy();
+
+		dx12Context.m_bindlessResourceManager.Destroy();
 
 		// Clear the null descriptor libraries:
 		{

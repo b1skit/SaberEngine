@@ -434,6 +434,12 @@ namespace opengl
 	}
 
 
+	void Context::UpdateInternal(uint64_t currentFrame)
+	{
+		//
+	}
+
+
 	void Context::Destroy(re::Context& reContext)
 	{
 		opengl::Context& context = dynamic_cast<opengl::Context&>(reContext);

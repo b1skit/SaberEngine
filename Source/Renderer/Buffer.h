@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "BindlessResourceManager.h"
 #include "EnumTypes.h"
 
 #include "Core/Interfaces/INamedObject.h"
@@ -146,6 +147,16 @@ namespace re
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 
+		// Bindless:
+	public:
+		bool IsBindlessResource() const;
+		ResourceHandle GetBindlessResourceHandle() const;
+
+		void SetBindlessCallbacks(
+			std::function<ResourceHandle(void)>&& resourceHandleRegistration,
+			std::function<void(ResourceHandle&)>&& resourceHandleUnregistration);
+		void CreateBindlessResource();
+
 
 		// CPU readback:
 	public:
@@ -173,6 +184,11 @@ namespace re
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 		
+		std::function<ResourceHandle(void)> m_bindlessResourceHandleRegistration;
+		std::function<void(ResourceHandle&)> m_bindlessResourceHandleRelease;
+		ResourceHandle m_bindlessResourceHandle;
+		bool m_isBindlessResource;
+
 		bool m_isCurrentlyMapped;
 
 
@@ -418,5 +434,17 @@ namespace re
 	inline Buffer::BufferParams const& Buffer::GetBufferParams() const
 	{
 		return m_bufferParams;
+	}
+
+
+	inline ResourceHandle Buffer::GetBindlessResourceHandle() const
+	{
+		return m_bindlessResourceHandle;
+	}
+
+
+	inline bool Buffer::IsBindlessResource() const
+	{
+		return m_isBindlessResource;
 	}
 }

@@ -17,8 +17,10 @@ namespace opengl
 	class Context final : public virtual re::Context
 	{
 	public:
-		void CreateInternal(uint64_t currentFrame) override;
 		~Context() override = default;
+
+		void CreateInternal(uint64_t currentFrame) override;
+		void UpdateInternal(uint64_t currentFrame) override;
 
 		// Platform implementations:
 		static void Destroy(re::Context& context);
@@ -26,7 +28,8 @@ namespace opengl
 		// Context interface:
 		void Present() override;
 
-		// OpenGL-specific interface:
+
+	public: // OpenGL-specific interface:
 		void SetRasterizationState(re::RasterizationState const*);
 
 		static uint64_t ComputeVAOHash(

@@ -470,6 +470,24 @@
     <ClInclude Include="ShaderBindingTable_Platform.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="BindlessResourceManager.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="BindlessResource_VertexStream_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="BindlessResource_VertexStream_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="BindlessResourceManager_Platform.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="BindlessResourceManager_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="BindlessResource_VertexStream.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -825,6 +843,24 @@
     </ClCompile>
     <ClCompile Include="ShaderBindingTable_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="BindlessResourceManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BindlessResource_VertexStream_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="BindlessResource_VertexStream_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="BindlessResourceManager_Platform.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="BindlessResourceManager_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="BindlessResource_VertexStream.cpp">
+      <Filter>Source Files\re</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

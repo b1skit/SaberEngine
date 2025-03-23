@@ -201,7 +201,7 @@ namespace dx12
 					}
 					for (auto& vertexStream : renderManager.m_newVertexStreams.GetReadData())
 					{
-						vertexStream->CreateBuffers();
+						vertexStream->CreateBuffers(vertexStream);
 					}
 					if (!singleThreaded)
 					{
@@ -670,6 +670,8 @@ namespace dx12
 										batchRTParams.m_dispatchDimensions.y > 0 ||
 										batchRTParams.m_dispatchDimensions.z > 0,
 										"Dispatch dimensions cannot be 0");
+									
+									cmdList->AttachBindlessResources(context->GetBindlessResourceManager());
 									
 									cmdList->SetTLAS(batchRTParams.m_ASInput, *batchRTParams.m_shaderBindingTable);
 

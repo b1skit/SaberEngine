@@ -281,7 +281,7 @@ namespace re
 		context->GetGPUTimer().BeginFrame(m_renderFrameNum); // Platform layers internally call GPUTimer::EndFrame()
 
 		// We must create any API resources that were passed via render commands, as they may be required during GS
-		// updates (e.g. MeshPrimitive VertexStream Buffers need to be alive so we can set them on BufferInputs)
+		// updates (e.g. MeshPrimitive VertexStream Buffer members need to be created so we can set them on BufferInputs)
 		// TODO: Remove this once we have Buffer handles
 		CreateAPIResources();
 
@@ -300,8 +300,8 @@ namespace re
 		// Create any new resources that have been created by GS's during the ExecuteUpdatePipeline call:
 		CreateAPIResources();
 
-		// Update buffers now that all GS's and API resources have been processed
-		context->GetBufferAllocator()->BufferData(frameNum);
+		// Update context objects (Buffers, BindlessResourceManager, etc)
+		context->Update(frameNum);
 
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");

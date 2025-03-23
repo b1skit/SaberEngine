@@ -131,7 +131,7 @@ namespace gr
 	protected:
 		friend class dx12::RenderManager;
 		friend class opengl::RenderManager;
-		void CreateBuffers();
+		void CreateBuffers(core::InvPtr<gr::VertexStream> const&);
 
 
 	private:

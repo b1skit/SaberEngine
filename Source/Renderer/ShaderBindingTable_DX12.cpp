@@ -7,7 +7,6 @@
 #include "GPUDescriptorHeap_DX12.h"
 #include "Shader_DX12.h"
 #include "ShaderBindingTable_DX12.h"
-#include "SysInfo_DX12.h"
 #include "Texture_DX12.h"
 #include "TextureView.h"
 
@@ -420,6 +419,9 @@ namespace
 		}
 
 		// Ray tracing pipeline configuration:
+		SEAssert(sbtParams.m_maxRecursionDepth <= D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH,
+			"Invalid recursion depth");
+
 		const D3D12_RAYTRACING_PIPELINE_CONFIG rtPipelineConfig{
 			.MaxTraceRecursionDepth = sbtParams.m_maxRecursionDepth,
 		};
@@ -483,7 +485,9 @@ namespace
 		entryByteSize = 
 			util::RoundUpToNearestMultiple<uint32_t>(entryByteSize, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
 
-		SEAssert(entryByteSize <= 4096, "Maximum shader region stride is 4096B with a 32B alignment");
+		SEAssert(entryByteSize <= 4096 &&
+			entryByteSize % D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT == 0,
+			"Maximum shader region stride is 4096B with a 32B alignment");
 
 		return entryByteSize;
 	}
@@ -502,10 +506,10 @@ namespace
 		SEAssert(reinterpret_cast<uint64_t>(mappedData) % D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
 			"Shader table start address must be aligned to 64B");
 
-		const uint32_t regionSize = util::CheckedCast<uint32_t>(shaders.size()) * stride;
+		SEAssert(stride % D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT == 0,
+			"Stride must be a multiple of 32B");
 
-		// Start by zero-initializing the entire mapped region:
-		memset(mappedData, 0, regionSize);
+		const uint32_t regionSize = util::CheckedCast<uint32_t>(shaders.size()) * stride;
 
 		for (size_t i = 0; i < shaders.size(); ++i)
 		{
@@ -548,6 +552,7 @@ namespace dx12
 	{
 		// Create the D3D state object:
 		CreateD3DStateObject(sbt, sbt.m_rayGenShaders, sbt.m_missShaders, sbt.m_hitGroupNamesAndShaders);
+		SEAssert(sbt.m_callableShaders.empty(), "TODO: Support callable shaders");
 
 		dx12::ShaderBindingTable::PlatformParams* platParams =
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams*>();
@@ -615,13 +620,20 @@ namespace dx12
 				.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
 			},
 			sbt.GetWName().c_str());
+		SEAssert(platParams->m_SBT, "Failed to create SBT GPUResource");
 
 		// Finally, pack the shader IDs into the SBT (and zero-initialize the remaining memory):
 		uint8_t* sbtData = nullptr;
 		CheckHResult(platParams->m_SBT->Map(0, nullptr, reinterpret_cast<void**>(&sbtData)), "Failed to map SBT buffer");
 		uint8_t* const baseSBTData = sbtData;
+
+		SEAssert(reinterpret_cast<uint64_t>(sbtData) % D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
+			"Invalid alignment for shader table start address");
 		
-		// Initialize the first frame's worth of data, and compute the relative offsets for the remaining data:
+		// Start by zero-initializing the entire mapped region:
+		memset(sbtData, 0, totalSBTByteSize);
+
+		// Initialize the first frame's worth of data while we compute the relative offsets for the remaining data:
 		uint32_t numBytesWritten = 0;
 
 		// Ray gen:
@@ -672,6 +684,9 @@ namespace dx12
 
 			// Re-set the sbtData pointer to the base of the next region:
 			sbtData = baseSBTData + frameOffset;
+
+			SEAssert(reinterpret_cast<uint64_t>(sbtData) % D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
+				"Invalid alignment for shader table start address");
 
 			sbtData += InitializeShaderRegions(
 				platParams->m_rayTracingStateObjectProperties.Get(),
@@ -741,9 +756,15 @@ namespace dx12
 
 					// Apply the per-frame base offset:
 					sbtData += ComputePerFrameSBTBaseOffset(frameRegionByteSize, currentFrameNum, numFramesInFlight);
+
+					SEAssert(reinterpret_cast<uint64_t>(sbtData) % D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
+						"sbtData is misaligned");
 				}
 
 				const uint32_t regionOffset = regionBaseOffset + (i * regionByteStride);
+
+				SEAssert(reinterpret_cast<uint64_t>(sbtData + regionOffset) % D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT == 0,
+					"Shader records must be 32B aligned");
 
 				constexpr uint32_t k_baseOffset = D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT; // Program ID is 1st element
 				constexpr uint8_t k_entrySize = 8; // Each parameter in a SBT entry requires 8B
@@ -770,6 +791,7 @@ namespace dx12
 	{
 		dx12::ShaderBindingTable::PlatformParams const* sbtPlatParams =
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
+		SEAssert(sbtPlatParams->m_SBT, "SBT GPUResource cannot be null");
 
 		dx12::AccelerationStructure::PlatformParams const* tlasPlatParams =
 			tlasInput.m_accelerationStructure->GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams const*>();
@@ -1270,6 +1292,16 @@ namespace dx12
 		const uint64_t rayGenShaderOffset = 
 			(static_cast<uint64_t>(rayGenShaderIdx) * platParams->m_rayGenRegionByteStride);
 
+		SEAssert((sbtGPUVA + platParams->m_rayGenRegionBaseOffset + rayGenShaderOffset) % 
+				D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0 &&
+			(sbtGPUVA + platParams->m_missRegionBaseOffset) %
+				D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0 &&
+			((sbtGPUVA + platParams->m_hitGroupRegionBaseOffset) * hasHitGroupRegion) %
+				D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0 &&
+			((sbtGPUVA + platParams->m_callableRegionBaseOffset) * hasCallableRegion) %
+				D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
+			"Shader records must be aligned to 64B");
+
 		return D3D12_DISPATCH_RAYS_DESC{
 			.RayGenerationShaderRecord = D3D12_GPU_VIRTUAL_ADDRESS_RANGE{
 				.StartAddress = sbtGPUVA + platParams->m_rayGenRegionBaseOffset + rayGenShaderOffset,
@@ -1281,7 +1313,7 @@ namespace dx12
 				.StrideInBytes = platParams->m_missRegionByteStride,
 			},
 			.HitGroupTable = D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE{
-				.StartAddress = sbtGPUVA + platParams->m_hitGroupRegionBaseOffset * hasHitGroupRegion,
+				.StartAddress = (sbtGPUVA + platParams->m_hitGroupRegionBaseOffset) * hasHitGroupRegion,
 				.SizeInBytes = platParams->m_hitGroupRegionTotalByteSize,
 				.StrideInBytes = platParams->m_hitGroupRegionByteStride,
 			},

@@ -209,6 +209,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Shaders\Common\AnimationParams.h" />
+    <ClInclude Include="Shaders\Common\BindlessResourceParams.h" />
     <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
     <ClInclude Include="Shaders\Common\CameraParams.h" />
     <ClInclude Include="Shaders\Common\DebugParams.h" />
@@ -241,6 +242,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <None Include="Effects\XeGTAO.json" />
     <None Include="Shaders\GLSL\MorphAnimation_CShader.glsl" />
     <None Include="Shaders\GLSL\SkinningAnimation_CShader.glsl" />
+    <None Include="Shaders\HLSL\BindlessResources.hlsli" />
     <None Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>

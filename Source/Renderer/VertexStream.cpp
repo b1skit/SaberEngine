@@ -2,7 +2,9 @@
 #include "Buffer.h"
 #include "BufferView.h"
 #include "RenderManager.h"
+#include "SysInfo_Platform.h"
 #include "VertexStream.h"
+#include "BindlessResource_VertexStream.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -152,7 +154,7 @@ namespace gr
 	}
 
 
-	void VertexStream::CreateBuffers()
+	void VertexStream::CreateBuffers(core::InvPtr<gr::VertexStream> const& vertexStream)
 	{
 		SEAssert(m_deferredBufferCreateParams, "Deferred create params cannot be null");
 
@@ -172,6 +174,23 @@ namespace gr
 			bufAccessMask |= re::Buffer::CPUWrite;
 		}
 
+		// In order to avoid falsely triggering some asserts, we get the bindless registration callback in advance
+		// before the m_streamBuffer is created, and set it later once it is
+		std::function<ResourceHandle(void)> bindlessRegistrationCallback;
+		std::function<void(ResourceHandle&)> bindlessUnregistrationCallback;
+
+		const bool createBindlessHandle = // We (currently) don't attach blend indices/weights as bindless resources
+			vertexStream->GetType() != gr::VertexStream::BlendIndices &&
+			vertexStream->GetType() != gr::VertexStream::BlendWeight &&
+			platform::SysInfo::BindlessResourcesSupported();
+		if (createBindlessHandle)
+		{
+			bindlessRegistrationCallback = 
+				re::IVertexStreamResource::GetRegistrationCallback(vertexStream);
+			bindlessUnregistrationCallback = 
+				re::IVertexStreamResource::GetUnregistrationCallback(vertexStream->GetType());
+		}	
+
 		m_streamBuffer = re::Buffer::Create(
 			bufferName,
 			m_deferredBufferCreateParams->m_data.data().data(),
@@ -182,7 +201,15 @@ namespace gr
 				.m_memPoolPreference = bufMemPoolPref,
 				.m_accessMask = bufAccessMask,
 				.m_usageMask = bufferUsage,
-				.m_arraySize = 1, });
+				.m_arraySize = 1,
+			});
+		
+		if (createBindlessHandle)
+		{
+			m_streamBuffer->SetBindlessCallbacks(
+				std::move(bindlessRegistrationCallback), 
+				std::move(bindlessUnregistrationCallback));
+		}
 
 		// Finally, release the data:
 		m_deferredBufferCreateParams = nullptr;

@@ -226,7 +226,7 @@ namespace re
 			{
 				std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
 
-				m_dirtyBuffers.emplace(uniqueID);
+				m_dirtyBuffers.emplace(buffer);
 			}
 		}
 		break;
@@ -372,6 +372,7 @@ namespace re
 		break;
 		case Buffer::StagingPool::Temporary:
 		{
+			std::shared_ptr<re::Buffer>* dirtyBuffer = nullptr;
 			switch (bufferLifetime)
 			{
 			case re::Lifetime::Permanent:
@@ -379,6 +380,8 @@ namespace re
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
 				void* dest = &m_immutableAllocations.m_committed[startIdx];
 				memcpy(dest, data, totalBytes);
+
+				dirtyBuffer = &m_immutableAllocations.m_handleToPtr.at(uniqueID);
 			}
 			break;
 			case re::Lifetime::SingleFrame:
@@ -386,6 +389,8 @@ namespace re
 				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 				void* dest = &m_singleFrameAllocations.m_committed[startIdx];
 				memcpy(dest, data, totalBytes);
+
+				dirtyBuffer = &m_singleFrameAllocations.m_handleToPtr.at(uniqueID);
 			}
 			break;
 			default: SEAssertF("Invalid lifetime");
@@ -395,7 +400,7 @@ namespace re
 			{
 				std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
 
-				m_dirtyBuffers.emplace(uniqueID);
+				m_dirtyBuffers.emplace(*dirtyBuffer);
 			}
 		}
 		break;
@@ -458,9 +463,9 @@ namespace re
 				// If we're committing all bytes, remove any other commits as we're guaranteed to write the data anyway
 				commitRecord.clear();
 				commitRecord.push_back(MutableAllocation::PartialCommit{
-						.m_baseOffset = 0,
-						.m_numBytes = numBytes,
-						.m_numRemainingUpdates = m_numFramesInFlight });
+					.m_baseOffset = 0,
+					.m_numBytes = numBytes,
+					.m_numRemainingUpdates = m_numFramesInFlight });
 			}
 			else
 			{
@@ -607,7 +612,7 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
 
-			m_dirtyBuffers.emplace(uniqueID); // Does nothing if the uniqueID was already recorded
+			m_dirtyBuffers.emplace(m_mutableAllocations.m_handleToPtr.at(uniqueID)); // No-op if the Buffer is already recorded
 		}
 	}
 
@@ -806,7 +811,31 @@ namespace re
 	}
 
 
-	// Buffer dirty data
+	void BufferAllocator::CreateBufferPlatformObjects() const
+	{
+		// Pre-create buffer platform objects:
+		{
+			std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
+
+			for (std::shared_ptr<re::Buffer> const& currentBuffer : m_dirtyBuffers)
+			{
+				if (!currentBuffer->GetPlatformParams()->m_isCreated)
+				{
+					platform::Buffer::Create(*currentBuffer);
+				}
+
+				if (currentBuffer->IsBindlessResource())
+				{
+					currentBuffer->CreateBindlessResource();
+
+					SEAssert(currentBuffer->GetBindlessResourceHandle() != k_invalidResourceHandle,
+						"Failed to update Buffer's bindless resource handle");
+				}
+			}
+		}
+	}
+
+
 	void BufferAllocator::BufferData(uint64_t renderFrameNum)
 	{
 		SEBeginCPUEvent("re::BufferAllocator::BufferData");
@@ -826,32 +855,17 @@ namespace re
 			// Start by resetting all of our indexes etc:
 			ResetForNewFrame(renderFrameNum);
 
-
 			SEBeginCPUEvent("re::BufferAllocator::BufferData: Dirty buffers");
 
 			// We keep mutable buffers committed within m_numFramesInFlight in the dirty list to ensure they're
 			// kept up to date
-			std::unordered_set<Handle> dirtyMutableBuffers;
+			std::unordered_set<std::shared_ptr<re::Buffer>> dirtyMutableBuffers;
 
 			const uint8_t curFrameHeapOffsetFactor = m_currentFrameNum % m_numFramesInFlight; // Only used for mutable buffers
 
 
-			auto PlatformCreate = [](re::Buffer* currentBuffer)
+			auto BufferTemporaryData = [&](Handle currentHandle, re::Buffer* currentBuffer)
 				{
-					if (!currentBuffer->GetPlatformParams()->m_isCreated)
-					{
-						platform::Buffer::Create(*currentBuffer);
-					}
-				};
-
-
-			auto BufferTemporaryData = [&](IAllocation& allocation, Handle currentHandle)
-				{
-					SEAssert(allocation.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-					re::Buffer* currentBuffer = allocation.m_handleToPtr.at(currentHandle).get();
-
-					PlatformCreate(currentBuffer); // Trigger platform creation, if necessary
-
 					SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
 						"Trying to buffer a buffer that has not had an initial commit made");
 
@@ -862,8 +876,18 @@ namespace re
 				};
 
 
-			for (Handle currentHandle : m_dirtyBuffers)
+			for (std::shared_ptr<re::Buffer> const& currentBuffer : m_dirtyBuffers)
 			{
+				// Trigger platform creation, if necessary.
+				// Note: It is possible we have buffers created *after* the CreateBufferPlatformObjects() call, we must
+				// still ensure they're created here:
+				if (!currentBuffer->GetPlatformParams()->m_isCreated)
+				{
+					platform::Buffer::Create(*currentBuffer);
+				}
+
+				const Handle currentHandle = currentBuffer->GetUniqueID();
+
 				SEAssert(m_handleToCommitMetadata.contains(currentHandle), "Failed to find current handle");
 
 				CommitMetadata const& commitMetadata = m_handleToCommitMetadata.at(currentHandle);
@@ -878,9 +902,6 @@ namespace re
 				case Buffer::StagingPool::Permanent:
 				{
 					SEAssert(m_mutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-					re::Buffer* currentBuffer = m_mutableAllocations.m_handleToPtr.at(currentHandle).get();
-
-					PlatformCreate(currentBuffer); // Trigger platform creation, if necessary
 
 					SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
 						"Trying to buffer a buffer that has not had an initial commit made");
@@ -900,7 +921,7 @@ namespace re
 						{
 							m_dirtyBuffersForPlatformUpdate.emplace_back(PlatformCommitMetadata
 								{
-									.m_buffer = currentBuffer,
+									.m_buffer = currentBuffer.get(),
 									.m_baseOffset = partialCommit->m_baseOffset,
 									.m_numBytes = partialCommit->m_numBytes,
 								});
@@ -929,7 +950,7 @@ namespace re
 						}
 						else
 						{
-							dirtyMutableBuffers.emplace(currentHandle); // No-op if the buffer was already recorded
+							dirtyMutableBuffers.emplace(currentBuffer); // No-op if the buffer was already recorded
 							++partialCommit;
 						}
 					}
@@ -942,9 +963,6 @@ namespace re
 					case re::Lifetime::Permanent:
 					{
 						SEAssert(m_immutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-						re::Buffer* currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
-
-						PlatformCreate(currentBuffer); // Trigger platform creation, if necessary
 
 						switch (currentBuffer->GetBufferParams().m_memPoolPreference)
 						{
@@ -954,7 +972,7 @@ namespace re
 							// the update metadata, we'll process these cases in a single batch at the end
 							m_dirtyBuffersForPlatformUpdate.emplace_back(PlatformCommitMetadata
 								{
-									.m_buffer = currentBuffer,
+									.m_buffer = currentBuffer.get(),
 									.m_baseOffset = 0,
 									.m_numBytes = currentBuffer->GetTotalBytes(),
 								});
@@ -962,7 +980,7 @@ namespace re
 						break;
 						case re::Buffer::UploadHeap:
 						{
-							BufferTemporaryData(m_immutableAllocations, currentHandle);
+							BufferTemporaryData(currentHandle, currentBuffer.get());
 						}
 						break;
 						default: SEAssertF("Invalid MemoryPoolPreference");
@@ -971,7 +989,7 @@ namespace re
 					break;
 					case re::Lifetime::SingleFrame:
 					{
-						BufferTemporaryData(m_singleFrameAllocations, currentHandle);
+						BufferTemporaryData(currentHandle, currentBuffer.get());
 					}
 					break;
 					default: SEAssertF("Invalid lifetime");
@@ -980,25 +998,7 @@ namespace re
 				break;
 				case Buffer::StagingPool::None:
 				{
-					re::Buffer* currentBuffer = nullptr;
-					switch (bufferLifetime)
-					{
-					case re::Lifetime::Permanent:
-					{
-						SEAssert(m_immutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-						currentBuffer = m_immutableAllocations.m_handleToPtr.at(currentHandle).get();
-					}
-					break;
-					case re::Lifetime::SingleFrame:
-					{
-						SEAssert(m_singleFrameAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
-						currentBuffer = m_singleFrameAllocations.m_handleToPtr.at(currentHandle).get();
-					}
-					break;
-					default: SEAssertF("Invalid lifetime");
-					}
-
-					PlatformCreate(currentBuffer); // Trigger platform creation
+					//
 				}
 				break;
 				default: SEAssertF("Invalid AllocationType");

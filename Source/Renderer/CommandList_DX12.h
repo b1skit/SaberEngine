@@ -20,6 +20,7 @@ namespace gr
 namespace re
 {
 	struct ASInput;
+	class BindlessResourceManager;
 	class Buffer;
 	class Texture;
 	class TextureTarget;
@@ -136,6 +137,8 @@ namespace dx12
 
 		void SetTLAS(re::ASInput const&, re::ShaderBindingTable const&);
 		
+		void AttachBindlessResources(re::BindlessResourceManager const&);
+
 		void DrawBatchGeometry(re::Batch const&);
 		void Dispatch(glm::uvec3 const& threadDimensions);
 		void DispatchRays(re::ShaderBindingTable const&, glm::uvec3 const& threadDimensions, uint32_t rayGenShaderIdx);

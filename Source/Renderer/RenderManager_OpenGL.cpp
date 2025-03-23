@@ -99,7 +99,7 @@ namespace opengl
 		{
 			for (auto& vertexStream : renderManager.m_newVertexStreams.GetReadData())
 			{
-				vertexStream->CreateBuffers();
+				vertexStream->CreateBuffers(vertexStream);
 			}
 		}
 	}

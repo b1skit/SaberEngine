@@ -128,6 +128,19 @@ namespace re
 	}
 
 
+	void Context::Update(uint64_t currentFrame)
+	{
+		// Ensure any new buffer objects have their platform-level resources created:
+		m_bufferAllocator->CreateBufferPlatformObjects();
+
+		// Platform-level updates:
+		UpdateInternal(currentFrame);
+
+		// Commit buffer data immediately before rendering
+		m_bufferAllocator->BufferData(currentFrame);
+	}
+
+
 	void Context::Destroy()
 	{
 		// Destroy any render libraries

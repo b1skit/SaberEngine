@@ -2,8 +2,8 @@
 #pragma once
 #include "EnumTypes.h"
 
-#include <d3dx12.h>
 
+enum DXGI_FORMAT;
 
 namespace dx12
 {

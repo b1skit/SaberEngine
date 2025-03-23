@@ -4,6 +4,12 @@
 #include "Renderer/AccelerationStructure_DX12.h"
 #include "Renderer/AccelerationStructure_Platform.h"
 
+#include "Renderer/BindlessResourceManager_DX12.h"
+#include "Renderer/BindlessResourceManager_Platform.h"
+
+#include "Renderer/BindlessResource_VertexStream_DX12.h"
+#include "Renderer/BindlessResource_VertexStream_Platform.h"
+
 #include "Renderer/Buffer_DX12.h"
 #include "Renderer/Buffer_OpenGL.h"
 #include "Renderer/Buffer_Platform.h"
@@ -45,12 +51,8 @@
 #include "Renderer/Texture_OpenGL.h"
 #include "Renderer/Texture_Platform.h"
 
-#include "Renderer/TextureTarget_DX12.h"
-#include "Renderer/TextureTarget_OpenGL.h"
-#include "Renderer/TextureTarget_Platform.h"
+#include "Core/Logger.h"
 
-#include "Core/Assert.h"
-#include "Core/Config.h"
 #include "Core/EventManager_Platform.h"
 #include "Core/EventManager_Win32.h"
 #include "Core/InputManager_Platform.h"
@@ -62,6 +64,7 @@
 #include "Core/Host/PerformanceTimer_Win32.h"
 #include "Core/Host/Window_Platform.h"
 #include "Core/Host/Window_Win32.h"
+
 
 
 namespace platform
@@ -146,9 +149,10 @@ namespace platform
 			platform::Shader::Destroy	= &opengl::Shader::Destroy;
 
 			// SysInfo:
-			platform::SysInfo::GetMaxRenderTargets		= &opengl::SysInfo::GetMaxRenderTargets;
-			platform::SysInfo::GetMaxTextureBindPoints	= &opengl::SysInfo::GetMaxTextureBindPoints;
-			platform::SysInfo::GetMaxVertexAttributes	= &opengl::SysInfo::GetMaxVertexAttributes;
+			platform::SysInfo::GetMaxRenderTargets			= &opengl::SysInfo::GetMaxRenderTargets;
+			platform::SysInfo::GetMaxTextureBindPoints		= &opengl::SysInfo::GetMaxTextureBindPoints;
+			platform::SysInfo::GetMaxVertexAttributes		= &opengl::SysInfo::GetMaxVertexAttributes;
+			platform::SysInfo::BindlessResourcesSupported	= &opengl::SysInfo::BindlessResourcesSupported;
 
 			// Swap chain:
 			platform::SwapChain::Create					= &opengl::SwapChain::Create;
@@ -170,6 +174,11 @@ namespace platform
 			// Acceleration Structure:
 			platform::AccelerationStructure::Create		= &dx12::AccelerationStructure::Create;
 			platform::AccelerationStructure::Destroy	= &dx12::AccelerationStructure::Destroy;
+
+			// Bindless resource manager:
+			platform::BindlessResourceManager::Create			= &dx12::BindlessResourceManager::Create;
+			platform::IBindlessResourceSet::Initialize			= &dx12::IBindlessResourceSet::Initialize;
+			platform::IBindlessResourceSet::SetResource		= &dx12::IBindlessResourceSet::SetResource;
 
 			// Buffers:
 			platform::Buffer::Create			= &dx12::Buffer::Create;
@@ -204,9 +213,10 @@ namespace platform
 			platform::ShaderBindingTable::Create	= &dx12::ShaderBindingTable::Create;
 
 			// SysInfo:
-			platform::SysInfo::GetMaxRenderTargets		= &dx12::SysInfo::GetMaxRenderTargets;
-			platform::SysInfo::GetMaxTextureBindPoints	= &dx12::SysInfo::GetMaxTextureBindPoints;
-			platform::SysInfo::GetMaxVertexAttributes	= &dx12::SysInfo::GetMaxVertexAttributes;
+			platform::SysInfo::GetMaxRenderTargets			= &dx12::SysInfo::GetMaxRenderTargets;
+			platform::SysInfo::GetMaxTextureBindPoints		= &dx12::SysInfo::GetMaxTextureBindPoints;
+			platform::SysInfo::GetMaxVertexAttributes		= &dx12::SysInfo::GetMaxVertexAttributes;
+			platform::SysInfo::BindlessResourcesSupported	= &dx12::SysInfo::BindlessResourcesSupported;
 
 			// Swap chain:
 			platform::SwapChain::Create					= &dx12::SwapChain::Create;
@@ -221,6 +231,14 @@ namespace platform
 			// Texture Samplers:
 			platform::Sampler::Create	= &dx12::Sampler::Create;
 			platform::Sampler::Destroy	= &dx12::Sampler::Destroy;
+
+			// Vertex streams:
+			platform::IVertexStreamResource::GetRegistrationCallback		= &dx12::IVertexStreamResource::GetRegistrationCallback;
+			platform::IVertexStreamResource::GetUnregistrationCallback		= &dx12::IVertexStreamResource::GetUnregistrationCallback;
+			platform::IVertexStreamResource::GetPlatformResource			= &dx12::IVertexStreamResource::GetPlatformResource;
+			platform::IVertexStreamResource::GetDescriptor					= &dx12::IVertexStreamResource::GetDescriptor;
+
+			platform::VertexStreamResourceSet::PopulateRootSignatureDesc	= &dx12::VertexStreamResourceSet::PopulateRootSignatureDesc;
 		}
 		break;
 		default:

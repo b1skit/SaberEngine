@@ -37,6 +37,7 @@ namespace re
 		virtual ~Context() = default;
 
 		void Create(uint64_t currentFrame);
+		void Update(uint64_t currentFrame);
 		void Destroy();
 
 
@@ -44,7 +45,7 @@ namespace re
 		virtual void Present() = 0;
 	private:
 		virtual void CreateInternal(uint64_t currentFrame) = 0;
-	
+		virtual void UpdateInternal(uint64_t currentFrame) = 0;
 
 	public:
 		void SetWindow(host::Window*); // Set once

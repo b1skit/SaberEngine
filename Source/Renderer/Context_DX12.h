@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "BindlessResourceManager.h"
 #include "CommandQueue_DX12.h"
 #include "Context.h"
 #include "CPUDescriptorHeapManager_DX12.h"
@@ -19,6 +20,7 @@ namespace dx12
 		~Context() override = default;
 
 		void CreateInternal(uint64_t currentFrame) override;
+		void UpdateInternal(uint64_t currentFrame) override;
 
 		// Platform implementations:
 		static void Destroy(re::Context& context);
@@ -27,7 +29,7 @@ namespace dx12
 		void Present() override;
 
 
-		// DX12-specific interface:
+	public: // DX12-specific interface:
 		dx12::CommandQueue& GetCommandQueue(dx12::CommandListType type);
 		dx12::CommandQueue& GetCommandQueue(uint64_t fenceValue); // Get the command queue that produced a fence value
 
@@ -47,6 +49,8 @@ namespace dx12
 		dx12::GlobalResourceStateTracker& GetGlobalResourceStates();
 
 		HeapManager& GetHeapManager();
+
+		re::BindlessResourceManager& GetBindlessResourceManager();
 		
 
 	public:// Null descriptor library
@@ -87,6 +91,8 @@ namespace dx12
 
 		std::vector<dx12::CPUDescriptorHeapManager> m_cpuDescriptorHeapMgrs; // HeapType_Count
 
+		re::BindlessResourceManager m_bindlessResourceManager;
+
 		// PIX programmatic capture models
 		HMODULE m_pixGPUCaptureModule;
 		HMODULE m_pixCPUCaptureModule;
@@ -119,5 +125,11 @@ namespace dx12
 	inline HeapManager& Context::GetHeapManager()
 	{
 		return m_heapManager;
+	}
+
+
+	inline re::BindlessResourceManager& Context::GetBindlessResourceManager()
+	{
+		return m_bindlessResourceManager;
 	}
 }

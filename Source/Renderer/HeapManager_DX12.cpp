@@ -1238,6 +1238,9 @@ namespace dx12
 			while (!m_deferredGPUResourceDeletions.empty() &&
 				m_deferredGPUResourceDeletions.front().first + m_numFramesInFlight < frameNum)
 			{
+				SEAssert(m_deferredGPUResourceDeletions.front().second.m_resource != nullptr,
+					"Found a null ID3D12Resource when processing deferred deletions");
+
 				m_deferredGPUResourceDeletions.pop();
 			}
 		}
@@ -1338,6 +1341,8 @@ namespace dx12
 			std::unique_lock<std::recursive_mutex> lock(m_deferredGPUResourceDeletionsMutex);
 
 			gpuResource.Invalidate(); // Prevent recursive re-enqueing
+
+			SEAssert(gpuResource.m_resource != nullptr, "Trying to release a GPU resource with a null ID3D12Resource");
 
 			m_deferredGPUResourceDeletions.emplace(
 				re::RenderManager::Get()->GetCurrentRenderFrameNum(),

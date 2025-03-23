@@ -1,17 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
 #include "Batch.h"
+#include "BindlessResourceManager_DX12.h"
 #include "Buffer.h"
 #include "Buffer_DX12.h"
-#include "Context_DX12.h"
 #include "CommandList_DX12.h"
 #include "Debug_DX12.h"
 #include "MeshPrimitive.h"
 #include "PipelineState_DX12.h"
 #include "RenderManager.h"
+#include "RenderManager_DX12.h"
 #include "RootSignature_DX12.h"
 #include "ShaderBindingTable_DX12.h"
-#include "SwapChain_DX12.h"
 #include "SysInfo_DX12.h"
 #include "Texture.h"
 #include "Texture_DX12.h"
@@ -22,7 +22,6 @@
 #include "Core/Config.h"
 
 #include "Core/Util/CastUtils.h"
-#include "Core/Util/MathUtils.h"
 
 #include <d3dx12.h>
 
@@ -214,13 +213,16 @@ namespace dx12
 		m_currentPSO = nullptr;
 
 		// Reset the command allocator BEFORE we reset the command list (to avoid leaking memory)
-		m_commandAllocator->Reset();
+		CheckHResult(
+			m_commandAllocator->Reset(),
+			"Failed to reset command allocator");
 
 		m_resourceStates.Reset();
 
 		// Note: pso is optional here; nullptr sets a dummy PSO
-		HRESULT hr = m_commandList->Reset(m_commandAllocator.Get(), nullptr);
-		CheckHResult(hr, "Failed to reset command list");
+		CheckHResult(
+			m_commandList->Reset(m_commandAllocator.Get(), nullptr),
+			"Failed to reset command list");
 
 		// Re-bind the descriptor heaps (unless we're a copy command list):
 		if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
@@ -1153,6 +1155,35 @@ namespace dx12
 			tlas,
 			m_gpuCbvSrvUavDescriptorHeap.get(),
 			re::RenderManager::Get()->GetCurrentRenderFrameNum());
+	}
+
+
+	void CommandList::AttachBindlessResources(re::BindlessResourceManager const& bindlessResourceMgr)
+	{
+		switch (m_type)
+		{
+		case CommandListType::Direct:
+		{
+			m_commandList->SetGraphicsRootSignature(
+				dx12::BindlessResourceManager::GetRootSignature(bindlessResourceMgr));
+		}
+		break;
+		case CommandListType::Compute:
+		{
+			m_commandList->SetComputeRootSignature(
+				dx12::BindlessResourceManager::GetRootSignature(bindlessResourceMgr));
+		}
+		break;
+		default: SEAssertF("Unexpected command list type for setting bindless resources on");
+		}
+
+		ID3D12DescriptorHeap* bindlessDescriptorHeap =
+			dx12::BindlessResourceManager::GetDescriptorHeap(bindlessResourceMgr);
+
+		m_commandList->SetDescriptorHeaps(1, &bindlessDescriptorHeap);
+
+		// Transition resources:
+		TransitionResources(dx12::BindlessResourceManager::BuildResourceTransitions(bindlessResourceMgr));
 	}
 
 
