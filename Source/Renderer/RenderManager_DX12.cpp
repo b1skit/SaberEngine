@@ -1,9 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
 #include "Batch.h"
-#include "Buffer_DX12.h"
 #include "Context_DX12.h"
-#include "Debug_DX12.h"
 #include "RenderManager_DX12.h"
 #include "RenderSystem.h"
 #include "Sampler_DX12.h"
@@ -15,12 +13,7 @@
 #include "Texture_DX12.h"
 
 #include "Core/Assert.h"
-#include "Core/PerfLogger.h"
 #include "Core/ProfilingMarkers.h"
-
-#include <d3dx12.h>
-
-using Microsoft::WRL::ComPtr;
 
 
 namespace dx12
