@@ -162,8 +162,10 @@ namespace dx12
 				"Heap byte offset does not have the correct buffer alignment");
 		}
 		else // Placed resources via the heap manager:
-		{
-			CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(requestedSize);
+		{		
+			CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
+				GetAlignedSize(bufferParams.m_usageMask, requestedSize));
+			
 			if (needsUAV)
 			{
 				bufferDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
