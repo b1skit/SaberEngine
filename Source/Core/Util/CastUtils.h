@@ -6,7 +6,7 @@
 namespace util
 {
     template<typename To, typename From>
-    static inline To CheckedCast(From value)
+    inline To CheckedCast(From value)
     {
         const To result = static_cast<To>(value);
         SEAssert(static_cast<From>(result) == value,
