@@ -1,4 +1,5 @@
 // © 2025 Adam Badke. All rights reserved.
+#include "BindlessResources.hlsli"
 #include "RayTracingCommon.hlsli"
 
 #include "../Common/CameraParams.h"
@@ -8,15 +9,6 @@
 // This shader is currently based on copy/pastes from the DXR raytracing tutorial, so we have something valid to compile
 // https://developer.nvidia.com/rtx/raytracing/dxr/dx12-raytracing-tutorial-part-1
 
-
-//struct STriVertex
-//{
-//	float3 vertex;
-//	float4 color;
-//};
-
-//StructuredBuffer<STriVertex> BTriVertex : register(t0, space0);
-//StructuredBuffer<int> indices : register(t1);
 
 // Raytracing output texture, accessed as a UAV
 RWTexture2D<float4> gOutput : register(u0);
@@ -32,42 +24,49 @@ ConstantBuffer<TraceRayData> TraceRayParams;
 [shader("closesthit")]
 void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-	////float3 barycentrics =
-	////  float3(1.f - attrib.barycentrics.x - attrib.barycentrics.y, attrib.barycentrics.x, attrib.barycentrics.y);
-	//const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
+	//float3 barycentrics =
+	//  float3(1.f - attrib.barycentrics.x - attrib.barycentrics.y, attrib.barycentrics.x, attrib.barycentrics.y);
+	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
 
-	//uint vertId = 3 * PrimitiveIndex();
-	//// #DXR Extra: Per-Instance Data
-	//float3 hitColor = float3(0.6, 0.7, 0.6);
-	//// Shade only the first 3 instances (triangles)
-	//if (InstanceID() < 3)
-	//{
-	//	// #DXR Extra: Per-Instance Data
-	//	hitColor = BTriVertex[indices[vertId + 0]].color.rgb * barycentrics.x +
-	//		   BTriVertex[indices[vertId + 1]].color.rgb * barycentrics.y +
-	//		   BTriVertex[indices[vertId + 2]].color.rgb * barycentrics.z;
-	//}
+	uint vertId = 3 * PrimitiveIndex();
+	
+	// #DXR Extra: Per-Instance Data
+	float3 hitColor = float3(0.6, 0.7, 0.6);
+	
+	// Fetch our bindless resources:
+	const uint lutIdx = InstanceID() + GeometryIndex();
+		
+	const uint colorStreamIdx = BindlessLUT[lutIdx].g_UV1ColorIndex.y;
+	const uint indexStreamIdx = BindlessLUT[lutIdx].g_UV1ColorIndex.z;
+		
+	StructuredBuffer<float4> colorStream = VertexStreams_Color[colorStreamIdx];
+	StructuredBuffer<uint16_t> indexStream = VertexStreams_Index[indexStreamIdx];
 
-	//payload.colorAndDistance = float4(hitColor, RayTCurrent());
+	// Interpolate the vertex color:
+	hitColor = colorStream[indexStream[vertId + 0]].rgb * barycentrics.x +
+			  colorStream[indexStream[vertId + 1]].rgb * barycentrics.y +
+			  colorStream[indexStream[vertId + 2]].rgb * barycentrics.z;
+
+	payload.colorAndDistance = float4(hitColor, RayTCurrent());
 	
 	
-	float3 colorOut = float3(0, 0, 0);
+//	float3 colorOut = float3(0, 0, 0);
 	
-#if defined(OPAQUE_SINGLE_SIDED)
-	colorOut = float3(0,1,0);
-#elif defined(CLIP_SINGLE_SIDED)
-	colorOut = float3(1,0,0);
-#elif defined(OPAQUE_DOUBLE_SIDED)
-	colorOut = float3(0,1,1);
-#elif defined(CLIP_DOUBLE_SIDED)
-	colorOut = float3(1,0,1);
-#elif defined(BLEND_SINGLE_SIDED)
-	colorOut = float3(1,1,0);
-#elif defined(BLEND_DOUBLE_SIDED)
-	colorOut = float3(1,1,1);
-#endif
+//#if defined(OPAQUE_SINGLE_SIDED)
+//	colorOut = float3(0,1,0);
+//#elif defined(CLIP_SINGLE_SIDED)
+//	colorOut = float3(1,0,0);
+//#elif defined(OPAQUE_DOUBLE_SIDED)
+//	colorOut = float3(0,1,1);
+//#elif defined(CLIP_DOUBLE_SIDED)
+//	colorOut = float3(1,0,1);
+//#elif defined(BLEND_SINGLE_SIDED)
+//	colorOut = float3(1,1,0);
+//#elif defined(BLEND_DOUBLE_SIDED)
+//	colorOut = float3(1,1,1);
+//#endif
 	
-	payload.colorAndDistance = float4(colorOut, RayTCurrent());
+//	payload.colorAndDistance = float4(colorOut, RayTCurrent());
 }
 
 

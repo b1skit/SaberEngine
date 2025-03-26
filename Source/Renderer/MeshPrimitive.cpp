@@ -2,6 +2,7 @@
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "VertexStream.h"
+#include "BindlessResource_VertexStream.h"
 
 #include "Core/InvPtr.h"
 
@@ -251,6 +252,73 @@ namespace gr
 		}
 
 		return result;
+	}
+
+
+	void MeshPrimitive::RenderData::RegisterBindlessResources(
+		gr::MeshPrimitive::RenderData const& meshPrimRenderData, re::AccelerationStructure::Geometry& geometry)
+	{
+		bool seenPositions = false;
+		for (auto const& stream : meshPrimRenderData.m_vertexStreams)
+		{
+			if (!stream)
+			{
+				break;
+			}
+
+			switch (stream->GetType())
+			{
+			case gr::VertexStream::Position:
+			{
+				geometry.SetVertexPositions(stream);
+				geometry.RegisterResource<re::VertexStreamResource_Position, gr::VertexStream>(stream);
+
+				SEAssert(seenPositions == false, "Found multiple position streams. This is unexpected");
+				seenPositions = true;
+			}
+			break;
+			case gr::VertexStream::Normal:
+			{
+				geometry.RegisterResource<re::VertexStreamResource_Normal, gr::VertexStream>(stream);
+			}
+			break;
+			case gr::VertexStream::Tangent:
+			{
+				geometry.RegisterResource<re::VertexStreamResource_Tangent, gr::VertexStream>(stream);
+			}
+			break;
+			case gr::VertexStream::TexCoord:
+			{
+				geometry.RegisterResource<re::VertexStreamResource_TexCoord, gr::VertexStream>(stream);
+			}
+			break;
+			case gr::VertexStream::Color:
+			{
+				geometry.RegisterResource<re::VertexStreamResource_Color, gr::VertexStream>(stream);
+			}
+			break;
+			case gr::VertexStream::BlendIndices:
+			case gr::VertexStream::BlendWeight:
+			{
+				// Do nothing: We don't (currently) attach blend indices/weights as bindless resources
+			}
+			break;
+			case gr::VertexStream::Index:
+			{
+				SEAssertF("Unexpect vertex stream type found in gr::MeshPrimitive::RenderData");
+			}
+			break;
+			default: SEAssertF("Invalid stream type");
+			}
+		}
+
+		if (meshPrimRenderData.m_indexStream)
+		{
+			geometry.SetVertexIndices(meshPrimRenderData.m_indexStream);
+			geometry.RegisterResource<re::VertexStreamResource_Index, gr::VertexStream>(meshPrimRenderData.m_indexStream);
+		}
+
+		SEAssert(geometry.GetVertexPositions().GetStream().IsValid(), "Failed to set valid vertex positions");
 	}
 
 

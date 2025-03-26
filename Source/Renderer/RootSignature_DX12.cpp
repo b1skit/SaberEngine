@@ -330,13 +330,13 @@ namespace
 			}
 		}
 
-		SEAssert(descriptorTypeCounts[dx12::RootSignature::SRV] < dx12::SysInfo::GetMaxDescriptorTableSRVs(),
+		SEAssert(descriptorTypeCounts[dx12::RootSignature::SRV] <= dx12::SysInfo::GetMaxDescriptorTableSRVs(),
 			"More SRVs requested than allowed across all descriptor tables per shader stage");
 
-		SEAssert(descriptorTypeCounts[dx12::RootSignature::UAV] < dx12::SysInfo::GetMaxDescriptorTableUAVs(),
+		SEAssert(descriptorTypeCounts[dx12::RootSignature::UAV] <= dx12::SysInfo::GetMaxDescriptorTableUAVs(),
 			"More UAVs requested than allowed across all descriptor tables per shader stage");
 
-		SEAssert(descriptorTypeCounts[dx12::RootSignature::CBV] < dx12::SysInfo::GetMaxDescriptorTableCBVs(),
+		SEAssert(descriptorTypeCounts[dx12::RootSignature::CBV] <= dx12::SysInfo::GetMaxDescriptorTableCBVs(),
 			"More CBVs requested than allowed across all descriptor tables per shader stage");
 #endif
 	}
@@ -433,10 +433,29 @@ namespace dx12
 					newRangeInput.m_name = inputBindingDesc.Name; // Copy the name before it goes out of scope
 					newRangeInput.m_visibility = GetShaderVisibilityFlagFromShaderType(shaderType);
 
-					// Bind count zero signals an unbounded array (thus, we'll bind 1 descriptor with unbounded size)
-					if (newRangeInput.BindCount == 0)
+					// Adjust bind counts for unbounded resoruce arrays to the max supported by the system
+					if (newRangeInput.BindCount == 0 || // Bind count zero signals an unbounded array in a library shader
+						newRangeInput.BindCount == std::numeric_limits<uint32_t>::max()) // Unbounded
 					{
-						newRangeInput.BindCount = 1;
+						switch (descriptorType)
+						{
+							case dx12::RootSignature::CBV:
+							{
+								newRangeInput.BindCount = dx12::SysInfo::GetMaxDescriptorTableCBVs();
+							}
+							break;
+							case dx12::RootSignature::SRV:
+							{
+								newRangeInput.BindCount = dx12::SysInfo::GetMaxDescriptorTableSRVs();
+							}
+							break;
+							case dx12::RootSignature::UAV:
+							{
+								newRangeInput.BindCount = dx12::SysInfo::GetMaxDescriptorTableUAVs();
+							}
+							break;
+							default: SEAssertF("Invalid descriptor type");
+						}
 					}
 				}
 				else
@@ -723,6 +742,235 @@ namespace dx12
 	}
 
 
+	void RootSignature::ParseTableRanges(
+		dx12::RootSignature* newRootSig, // Static function: Need our root sig object
+		std::array<std::vector<dx12::RootSignature::RangeInput>, DescriptorType::Type_Count>& rangeInputs,
+		std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters,
+		std::vector<std::vector<CD3DX12_DESCRIPTOR_RANGE1>>& tableRanges)
+	{
+		// Build a descriptor table for each type of resource (CBV/SRV/UAV):
+		for (size_t rangeTypeIdx = 0; rangeTypeIdx < DescriptorType::Type_Count; rangeTypeIdx++)
+		{
+			if (rangeInputs[rangeTypeIdx].size() == 0)
+			{
+				continue;
+			}
+
+			const DescriptorType rangeType = static_cast<DescriptorType>(rangeTypeIdx);
+
+			// Record the index of the first element we're about to append:
+			const size_t tableRangesBaseOffset = tableRanges[rangeType].size();
+
+			// We're going to build a descriptor table entry at the current root index:
+			const uint8_t rootIdx = util::CheckedCast<uint8_t>(rootParameters.size());
+			CD3DX12_ROOT_PARAMETER1& tableRootParam = rootParameters.emplace_back();
+
+			uint32_t numDescriptorRanges = 0; // How many ranges within the current range type
+			uint32_t totalRangeDescriptors = 0; // How many descriptors in the entire range			
+
+			// Walk through the sorted descriptors, and build ranges from contiguous blocks:
+			size_t rangeStart = 0;
+			size_t rangeEnd = 1;
+			std::vector<std::string> namesInRange;
+			D3D12_SHADER_VISIBILITY tableVisibility = rangeInputs[rangeType][rangeStart].m_visibility;
+			while (rangeStart < rangeInputs[rangeType].size())
+			{
+				SEAssert(((rangeType == CBV &&
+					rangeInputs[rangeType][rangeStart].BindPoint == 0) ||
+					rangeInputs[rangeType][rangeStart].BindCount != SysInfo::GetMaxDescriptorTableCBVs()) ||
+					((rangeType == SRV &&
+						rangeInputs[rangeType][rangeStart].BindPoint == 0) ||
+						rangeInputs[rangeType][rangeStart].BindCount != SysInfo::GetMaxDescriptorTableSRVs()) ||
+					((rangeType == UAV &&
+						rangeInputs[rangeType][rangeStart].BindPoint == 0) ||
+						rangeInputs[rangeType][rangeStart].BindCount != SysInfo::GetMaxDescriptorTableUAVs()),
+					"Unbounded descriptor range doesn't begin at bind point 0. Indexing is about to overflow");
+
+				// Store the names in order so we can update the binding metadata later:
+				namesInRange.emplace_back(rangeInputs[rangeType][rangeStart].m_name);
+
+				uint32_t numDescriptors = rangeInputs[rangeType][rangeStart].BindCount;
+				uint32_t expectedNextRegister = rangeInputs[rangeType][rangeStart].BindPoint + numDescriptors;
+
+				// Find the end of the current contiguous range:
+				while (rangeEnd < rangeInputs[rangeType].size() &&
+					rangeInputs[rangeType][rangeEnd].BindPoint == expectedNextRegister &&
+					rangeInputs[rangeType][rangeEnd].Space == rangeInputs[rangeType][rangeStart].Space)
+				{
+					namesInRange.emplace_back(rangeInputs[rangeType][rangeEnd].m_name);
+
+					if (rangeInputs[rangeType][rangeEnd].m_visibility != tableVisibility)
+					{
+						tableVisibility = D3D12_SHADER_VISIBILITY_ALL;
+					}
+
+					numDescriptors += rangeInputs[rangeType][rangeEnd].BindCount;
+					expectedNextRegister += rangeInputs[rangeType][rangeEnd].BindCount;
+
+					rangeEnd++;
+				}
+
+				totalRangeDescriptors += numDescriptors;
+
+				const uint32_t baseRegister = rangeInputs[rangeType][rangeStart].BindPoint;
+				const uint32_t registerSpace = rangeInputs[rangeType][rangeStart].Space;
+
+				constexpr D3D12_DESCRIPTOR_RANGE_FLAGS k_defaultRangeFlag =
+					D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE; // Volatile = root sig 1.0 default
+
+				bool isUnbounded = false;
+				switch (rangeType)
+				{
+				case CBV:
+				{
+					isUnbounded = baseRegister == 0 && numDescriptors == SysInfo::GetMaxDescriptorTableCBVs();
+				}
+				break;
+				case SRV:
+				{
+					isUnbounded = baseRegister == 0 && numDescriptors == SysInfo::GetMaxDescriptorTableSRVs();
+				}
+				break;
+				case UAV:
+				{
+					isUnbounded = baseRegister == 0 && numDescriptors == SysInfo::GetMaxDescriptorTableUAVs();
+				}
+				break;
+				default: SEAssertF("Invalid range type");
+				}
+
+				// Create and initialize a CD3DX12_DESCRIPTOR_RANGE1:
+				tableRanges[rangeType].emplace_back().Init(
+					GetD3DRangeType(rangeType),
+					numDescriptors,
+					baseRegister,
+					registerSpace,
+					k_defaultRangeFlag,
+					isUnbounded ? 0 : D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND);
+
+				numDescriptorRanges++;
+
+				// Populate the descriptor metadata:
+				DescriptorTable* newDescriptorTable = nullptr;
+				uint32_t baseRegisterOffset = 0; // We are processing contiguous ranges of registers only
+				for (size_t rangeIdx = rangeStart; rangeIdx < rangeEnd; rangeIdx++)
+				{
+					const uint32_t registerBindPoint = baseRegister + baseRegisterOffset++;
+
+					// Create the binding metadata for our individual RootParameter descriptor table entries:
+					RootParameter rootParameter{
+						.m_index = rootIdx,
+						.m_type = RootParameter::Type::DescriptorTable,
+						.m_registerBindPoint = registerBindPoint,
+						.m_registerSpace = registerSpace,
+						.m_visibility = tableVisibility,
+						.m_tableEntry = RootSignature::TableEntry{
+							.m_type = rangeType,
+							.m_offset = util::CheckedCast<uint8_t>(rangeIdx),
+							//.m_srv/uavViewDimension populated below
+						}
+					};
+
+					// Create a single metadata entry for the contiguous range of descriptors within DescriptorTables:
+					bool isNewRange = false;
+					if (rangeIdx == rangeStart ||
+						rangeInputs[rangeType][rangeIdx].ReturnType != rangeInputs[rangeType][rangeStart].ReturnType ||
+						rangeInputs[rangeType][rangeIdx].Dimension != rangeInputs[rangeType][rangeStart].Dimension)
+					{
+						newDescriptorTable = &newRootSig->m_descriptorTables.emplace_back();
+
+						newDescriptorTable->m_index = rootIdx;
+						newDescriptorTable->m_visibility = tableVisibility;
+
+						isNewRange = true;
+					}
+
+					// Populate the descriptor table metadata:
+					switch (rangeType)
+					{
+					case DescriptorType::SRV:
+					{
+						const D3D12_SRV_DIMENSION d3d12SrvDimension =
+							GetD3D12SRVDimension(rangeInputs[rangeType][rangeIdx].Dimension);
+
+						rootParameter.m_tableEntry.m_srvViewDimension = d3d12SrvDimension;
+
+						if (isNewRange)
+						{
+							newDescriptorTable->m_ranges[DescriptorType::SRV].emplace_back(RangeEntry{
+								.m_bindCount = numDescriptors,
+								.m_baseRegister = registerBindPoint,
+								.m_registerSpace = registerSpace,
+								.m_flags = k_defaultRangeFlag,
+								.m_srvDesc = {
+									.m_format = GetFormatFromReturnType(rangeInputs[rangeType][rangeIdx].ReturnType),
+									.m_viewDimension = d3d12SrvDimension,}
+								});
+						}
+					}
+					break;
+					case DescriptorType::UAV:
+					{
+						const D3D12_UAV_DIMENSION d3d12UavDimension =
+							GetD3D12UAVDimension(rangeInputs[rangeType][rangeIdx].Dimension);
+
+						rootParameter.m_tableEntry.m_uavViewDimension = d3d12UavDimension;
+
+						if (isNewRange)
+						{
+							newDescriptorTable->m_ranges[DescriptorType::UAV].emplace_back(RangeEntry{
+								.m_bindCount = numDescriptors,
+								.m_baseRegister = registerBindPoint,
+								.m_registerSpace = registerSpace,
+								.m_flags = k_defaultRangeFlag,
+								.m_uavDesc = {
+									.m_format = GetFormatFromReturnType(rangeInputs[rangeType][rangeIdx].ReturnType),
+									.m_viewDimension = d3d12UavDimension,}
+								});
+						}
+					}
+					break;
+					case DescriptorType::CBV:
+					{
+						if (isNewRange)
+						{
+							newDescriptorTable->m_ranges[DescriptorType::CBV].emplace_back(RangeEntry{
+								.m_bindCount = numDescriptors,
+								.m_baseRegister = registerBindPoint,
+								.m_registerSpace = registerSpace,
+								.m_flags = k_defaultRangeFlag,
+								});
+						}
+					}
+					break;
+					default:
+						SEAssertF("Invalid range type");
+					}
+
+					newRootSig->InsertNewRootParamMetadata(namesInRange[rangeIdx].c_str(), std::move(rootParameter));
+				} // end rangeIdx loop
+
+				// Prepare for the next iteration:
+				rangeStart = rangeEnd;
+				rangeEnd++;
+			}
+
+			// Initialize the root parameter as a descriptor table built from our ranges:
+			tableRootParam.InitAsDescriptorTable(
+				numDescriptorRanges,
+				&tableRanges[rangeType][tableRangesBaseOffset],
+				tableVisibility);
+
+			// How many descriptors are in the table stored at the given root sig index (i.e. including > 1 bind counts):
+			newRootSig->m_numDescriptorsPerTable[rootIdx] = totalRangeDescriptors;
+
+			const uint32_t descriptorTableBitmask = (1 << rootIdx);
+			newRootSig->m_rootSigDescriptorTableIdxBitmask |= descriptorTableBitmask;
+
+		} // End descriptor table DescriptorType loop
+	}
+
+
 	std::unique_ptr<dx12::RootSignature> RootSignature::Create(re::Shader const& shader)
 	{
 		dx12::Shader::PlatformParams* shaderPlatParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
@@ -843,31 +1091,28 @@ namespace dx12
 		}
 
 
-		// TODO: Sort rootParameters based on the .ParameterType, to ensure optimal/preferred ordering/grouping of 
-		// entries stored directly in the root signature
-		// - MS recommends binding the most frequently changing elements at the start of the root signature.
-		//		- For SaberEngine, that's probably buffers: CBVs and SRVs
+		// We (currently) isolate unbounded descriptor ranges and assign them a unique root index
+		// TODO: This is not necessary: We can overlap all unbounded descriptor tables on a single root index
+		std::vector<std::array<std::vector<RangeInput>, DescriptorType::Type_Count>> unboundedRanges;
+		std::array<std::vector<RangeInput>, DescriptorType::Type_Count> boundedRanges;
 
-		// TODO: We currently build a descriptor table for each type of resource (SRV/UAV/CBV). Instead, we could
-		// pack these into the same tables (respecting shader visibility) to reduce the total root signature entries
-		
-		std::vector<std::vector<CD3DX12_DESCRIPTOR_RANGE1>> tableRanges; // Must keep these in scope
-		tableRanges.resize(DescriptorType::Type_Count);
+		auto IsUnboundedRange = [](DescriptorType rangeType, RangeInput const& rangeInput) -> bool
+			{
+				switch (rangeType)
+				{
+				case CBV: return rangeInput.BindPoint == 0 && rangeInput.BindCount == dx12::SysInfo::GetMaxDescriptorTableCBVs();
+				case SRV: return rangeInput.BindPoint == 0 && rangeInput.BindCount == dx12::SysInfo::GetMaxDescriptorTableSRVs();
+				case UAV: return rangeInput.BindPoint == 0 && rangeInput.BindCount == dx12::SysInfo::GetMaxDescriptorTableUAVs();
+				default: SEAssertF("Invalid descriptor type");
+				}
+			};
 
-		// Build a descriptor table for each type of resource (SRV/UAV/CBV):
 		for (size_t rangeTypeIdx = 0; rangeTypeIdx < DescriptorType::Type_Count; rangeTypeIdx++)
 		{
-			if (rangeInputs[rangeTypeIdx].size() == 0)
-			{
-				continue;
-			}
-
-			const DescriptorType rangeType = static_cast<DescriptorType>(rangeTypeIdx);
-
 			// Sort the range entries by register value, so they can be packed contiguously
 			std::sort(
-				rangeInputs[rangeType].begin(),
-				rangeInputs[rangeType].end(),
+				rangeInputs[rangeTypeIdx].begin(),
+				rangeInputs[rangeTypeIdx].end(),
 				[](auto const& a, auto const& b)
 				{
 					if (a.BindPoint == b.BindPoint)
@@ -878,181 +1123,48 @@ namespace dx12
 					return a.BindPoint < b.BindPoint;
 				});
 
-			// We're going to build a descriptor table entry at the current root index:
-			const uint8_t rootIdx = util::CheckedCast<uint8_t>(rootParameters.size());
-			CD3DX12_ROOT_PARAMETER1& tableRootParam = rootParameters.emplace_back();
-	
-			uint32_t totalRangeDescriptors = 0; // How many descriptors in the entire range
-
-			// Walk through the sorted descriptors, and build ranges from contiguous blocks:
-			size_t rangeStart = 0;
-			size_t rangeEnd = 1;
-			std::vector<std::string> namesInRange;
-			D3D12_SHADER_VISIBILITY tableVisibility = rangeInputs[rangeType][rangeStart].m_visibility;
-			while (rangeStart < rangeInputs[rangeType].size())
+			// Separate unbounded ranges so we can assign them a unique root signature index
+			for (auto& range : rangeInputs[rangeTypeIdx])
 			{
-				// Store the names in order so we can update the binding metadata later:
-				namesInRange.emplace_back(rangeInputs[rangeType][rangeStart].m_name);
-
-				uint32_t numDescriptors = rangeInputs[rangeType][rangeStart].BindCount;
-				uint32_t expectedNextRegister = rangeInputs[rangeType][rangeStart].BindPoint + numDescriptors;
-
-				// Find the end of the current contiguous range:
-				while (rangeEnd < rangeInputs[rangeType].size() &&
-					rangeInputs[rangeType][rangeEnd].BindPoint == expectedNextRegister &&
-					rangeInputs[rangeType][rangeEnd].Space == rangeInputs[rangeType][rangeStart].Space)
+				if (IsUnboundedRange(static_cast<DescriptorType>(rangeTypeIdx), range))
 				{
-					namesInRange.emplace_back(rangeInputs[rangeType][rangeEnd].m_name);
-
-					if (rangeInputs[rangeType][rangeEnd].m_visibility != tableVisibility)
-					{
-						tableVisibility = D3D12_SHADER_VISIBILITY_ALL;
-					}
-
-					numDescriptors += rangeInputs[rangeType][rangeEnd].BindCount;
-					expectedNextRegister += rangeInputs[rangeType][rangeEnd].BindCount;
-
-					rangeEnd++;
+					unboundedRanges.emplace_back()[rangeTypeIdx].emplace_back(range);
 				}
-
-				totalRangeDescriptors += numDescriptors;
-
-				const uint32_t baseRegister = rangeInputs[rangeType][rangeStart].BindPoint;
-				const uint32_t registerSpace = rangeInputs[rangeType][rangeStart].Space;
-
-				constexpr D3D12_DESCRIPTOR_RANGE_FLAGS k_defaultRangeFlag = 
-					D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE; // Volatile = root sig 1.0 default
-
-				// Create and initialize a CD3DX12_DESCRIPTOR_RANGE1:
-				tableRanges[rangeType].emplace_back().Init(
-					GetD3DRangeType(rangeType),
-					numDescriptors,
-					baseRegister,
-					registerSpace,
-					k_defaultRangeFlag);
-
-				// Populate the descriptor metadata:
-				DescriptorTable* newDescriptorTable = nullptr;
-				uint32_t baseRegisterOffset = 0; // We are processing contiguous ranges of registers only
-				for (size_t rangeIdx = rangeStart; rangeIdx < rangeEnd; rangeIdx++)
+				else
 				{
-					const uint32_t registerBindPoint = baseRegister + baseRegisterOffset++;
-
-					// Create the binding metadata for our individual RootParameter descriptor table entries:
-					RootParameter rootParameter{
-						.m_index = rootIdx,
-						.m_type = RootParameter::Type::DescriptorTable,
-						.m_registerBindPoint = registerBindPoint,
-						.m_registerSpace = registerSpace,
-						.m_visibility = tableVisibility,
-						.m_tableEntry = RootSignature::TableEntry{
-							.m_type = rangeType,
-							.m_offset = util::CheckedCast<uint8_t>(rangeIdx),
-							//.m_srv/uavViewDimension populated below
-						}
-					};
-
-					// Create a single metadata entry for the contiguous range of descriptors within DescriptorTables:
-					bool isNewRange = false;
-					if (rangeIdx == rangeStart ||
-						rangeInputs[rangeType][rangeIdx].ReturnType != rangeInputs[rangeType][rangeStart].ReturnType ||
-						rangeInputs[rangeType][rangeIdx].Dimension != rangeInputs[rangeType][rangeStart].Dimension)
-					{
-						newDescriptorTable = &newRootSig->m_descriptorTables.emplace_back();
-						
-						newDescriptorTable->m_index = rootIdx;
-						newDescriptorTable->m_visibility = tableVisibility;
-
-						isNewRange = true;
-					}
-
-					// Populate the descriptor table metadata:
-					switch (rangeType)
-					{
-					case DescriptorType::SRV:
-					{
-						const D3D12_SRV_DIMENSION d3d12SrvDimension =
-							GetD3D12SRVDimension(rangeInputs[rangeType][rangeIdx].Dimension);
-
-						rootParameter.m_tableEntry.m_srvViewDimension = d3d12SrvDimension;
-
-						if (isNewRange)
-						{
-							newDescriptorTable->m_ranges[DescriptorType::SRV].emplace_back(RangeEntry{
-								.m_bindCount = numDescriptors,
-								.m_baseRegister = registerBindPoint,
-								.m_registerSpace = registerSpace,
-								.m_flags = k_defaultRangeFlag,
-								.m_srvDesc = {
-									.m_format = GetFormatFromReturnType(rangeInputs[rangeType][rangeIdx].ReturnType),
-									.m_viewDimension = d3d12SrvDimension,}
-								});
-						}
-					}
-					break;
-					case DescriptorType::UAV:
-					{
-						const D3D12_UAV_DIMENSION d3d12UavDimension =
-							GetD3D12UAVDimension(rangeInputs[rangeType][rangeIdx].Dimension);
-
-						rootParameter.m_tableEntry.m_uavViewDimension = d3d12UavDimension;
-
-						if (isNewRange)
-						{
-							newDescriptorTable->m_ranges[DescriptorType::UAV].emplace_back(RangeEntry{
-								.m_bindCount = numDescriptors,
-								.m_baseRegister = registerBindPoint,
-								.m_registerSpace = registerSpace,
-								.m_flags = k_defaultRangeFlag,
-								.m_uavDesc = {
-									.m_format = GetFormatFromReturnType(rangeInputs[rangeType][rangeIdx].ReturnType),
-									.m_viewDimension = d3d12UavDimension,}
-								});
-						}
-					}
-					break;
-					case DescriptorType::CBV:
-					{
-						if (isNewRange)
-						{
-							newDescriptorTable->m_ranges[DescriptorType::CBV].emplace_back(RangeEntry{
-								.m_bindCount = numDescriptors,
-								.m_baseRegister = registerBindPoint,
-								.m_registerSpace = registerSpace,
-								.m_flags = k_defaultRangeFlag,
-							});
-						}
-					}
-					break;
-					default:
-						SEAssertF("Invalid range type");
-					}
-
-					newRootSig->InsertNewRootParamMetadata(namesInRange[rangeIdx].c_str(), std::move(rootParameter));
-				} // end rangeIdx loop
-
-				// Prepare for the next iteration:
-				rangeStart = rangeEnd;
-				rangeEnd++;
+					boundedRanges[rangeTypeIdx].emplace_back(range);
+				}
 			}
+		}
 
-			// How many contiguous sub-ranges are within the current range type:
-			const uint32_t numDescriptorRanges = util::CheckedCast<uint32_t>(tableRanges[rangeType].size());
+		// TODO: Sort rootParameters based on the .ParameterType, to ensure optimal/preferred ordering/grouping of 
+		// entries stored directly in the root signature
+		// - MS recommends binding the most frequently changing elements at the start of the root signature.
+		//		- For SaberEngine, that's probably buffers: CBVs and SRVs
 
-			// Initialize the root parameter as a descriptor table built from our ranges:
-			tableRootParam.InitAsDescriptorTable(
-				numDescriptorRanges,
-				tableRanges[rangeType].data(),
-				tableVisibility);
+		// TODO: We currently build a descriptor table for each type of resource (SRV/UAV/CBV). Instead, we could
+		// pack these into the same tables (respecting shader visibility) to reduce the total root signature entries
 		
-			// How many descriptors are in the table stored at the given root sig index (i.e. including > 1 bind counts):
-			newRootSig->m_numDescriptorsPerTable[rootIdx] = totalRangeDescriptors;
-			
-			const uint32_t descriptorTableBitmask = (1 << rootIdx);
-			newRootSig->m_rootSigDescriptorTableIdxBitmask |= descriptorTableBitmask;
+		std::vector<std::vector<CD3DX12_DESCRIPTOR_RANGE1>> tableRanges; // Must keep these in scope
+		tableRanges.resize(DescriptorType::Type_Count);
+		for (auto& entry : tableRanges)
+		{
+			entry.reserve(k_maxRootSigEntries * DescriptorType::Type_Count); // Prevent reallocations while parsing
+		}
 
-		} // End descriptor table DescriptorType loop
+		ParseTableRanges(newRootSig.get(), boundedRanges, rootParameters, tableRanges);
+		for (auto& unboundedRange : unboundedRanges)
+		{
+			ParseTableRanges(newRootSig.get(), unboundedRange, rootParameters, tableRanges);
+		}
 
+#if defined(_DEBUG)
+		for (auto& entry : tableRanges)
+		{
+			SEAssert(entry.size() <= k_maxRootSigEntries * DescriptorType::Type_Count,
+				"Reallocation detected, internal pointers have been invalidated");
+		}
+#endif
 
 		// Allow/deny unnecessary shader access
 		const D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags = BuildRootSignatureFlags(shaderPlatParams->m_shaderBlobs);
@@ -1267,6 +1379,14 @@ namespace dx12
 		for (auto const& range : tableRanges)
 		{
 			D3D12_DESCRIPTOR_RANGE1 const& rangeDesc = range.m_rangeDesc;
+
+			SEAssert((rangeDesc.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_CBV &&
+				rangeDesc.NumDescriptors <= dx12::SysInfo::GetMaxDescriptorTableCBVs()) ||
+				(rangeDesc.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_SRV &&
+					rangeDesc.NumDescriptors <= dx12::SysInfo::GetMaxDescriptorTableSRVs()) ||
+				(rangeDesc.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_UAV &&
+					rangeDesc.NumDescriptors <= dx12::SysInfo::GetMaxDescriptorTableUAVs()),
+				"Too many descriptors for the current descriptor range type");
 
 			totalRangeDescriptors += rangeDesc.NumDescriptors;
 

@@ -40,7 +40,7 @@ namespace dx12
 		dx12::RenderManager& dx12RenderManager = dynamic_cast<dx12::RenderManager&>(renderManager);
 
 		constexpr size_t k_invalidCreateTaskIdx = std::numeric_limits<size_t>::max();
-		std::vector<std::future<void>> createTasks;
+		std::vector<std::shared_future<void>> createTasks;
 
 		static const bool singleThreadResourceCreate = 
 			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGPUResourceCreation);
@@ -664,7 +664,9 @@ namespace dx12
 										batchRTParams.m_dispatchDimensions.z > 0,
 										"Dispatch dimensions cannot be 0");
 									
-									cmdList->AttachBindlessResources(context->GetBindlessResourceManager());
+									cmdList->AttachBindlessResources(
+										*batchRTParams.m_shaderBindingTable,
+										context->GetBindlessResourceManager());
 									
 									cmdList->SetTLAS(batchRTParams.m_ASInput, *batchRTParams.m_shaderBindingTable);
 

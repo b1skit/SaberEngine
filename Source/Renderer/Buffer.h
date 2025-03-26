@@ -311,10 +311,6 @@ namespace re
 		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::None,
 			"Buffer specifies no CPU-side staging, but staging data received. Is this the correct create function?");
 
-		SEAssert(HasUsageBit(Usage::Structured, bufferParams) ||
-			HasUsageBit(Usage::Raw, bufferParams),
-			"Unexpected data type for a buffer array");
-
 		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
 
 		std::shared_ptr<re::Buffer> newBuffer;

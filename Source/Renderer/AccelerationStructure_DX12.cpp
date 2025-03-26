@@ -161,8 +161,8 @@ namespace
 
 		for (auto const& instance : blasParams->m_geometry)
 		{
-			SEAssert(instance.m_indices->GetType() == gr::VertexStream::Type::Index &&
-				instance.m_positions.GetStream()->GetType() == gr::VertexStream::Type::Position,
+			SEAssert(instance.GetVertexIndices()->GetType() == gr::VertexStream::Type::Index &&
+				instance.GetVertexPositions().GetStream()->GetType() == gr::VertexStream::Type::Position,
 				"Invalid vertex stream geometry inputs");
 
 			// Currently, our re::Buffers have not been created/allocated at this point (they're staged in CPU memory,
@@ -172,26 +172,26 @@ namespace
 			// correct, and then use the correct GPU VA when we're actually building our BLAS
 			const D3D12_GPU_VIRTUAL_ADDRESS transform3x4DummyAddr = blasParams->m_transform ? 1 : 0;
 
-			const DXGI_FORMAT indexFormat = instance.m_indices ? 
-				dx12::DataTypeToDXGI_FORMAT(instance.m_indices->GetDataType(), false) : DXGI_FORMAT_UNKNOWN;
+			const DXGI_FORMAT indexFormat = instance.GetVertexIndices() ? 
+				dx12::DataTypeToDXGI_FORMAT(instance.GetVertexIndices()->GetDataType(), false) : DXGI_FORMAT_UNKNOWN;
 			SEAssert(indexFormat == DXGI_FORMAT_UNKNOWN || 
 				indexFormat == DXGI_FORMAT_R32_UINT ||
 				indexFormat == DXGI_FORMAT_R16_UINT,
 				"Invalid index format");
 			
-			const uint32_t indexCount = instance.m_indices ? instance.m_indices->GetNumElements() : 0;
+			const uint32_t indexCount = instance.GetVertexIndices() ? instance.GetVertexIndices()->GetNumElements() : 0;
 
 			// Dummy GPU VA here for same reason as above
-			const D3D12_GPU_VIRTUAL_ADDRESS indexBufferDummyAddr = instance.m_indices ? 1 : 0;
+			const D3D12_GPU_VIRTUAL_ADDRESS indexBufferDummyAddr = instance.GetVertexIndices() ? 1 : 0;
 
 			const DXGI_FORMAT vertexFormat =
-				dx12::DataTypeToDXGI_FORMAT(instance.m_positions.GetStream()->GetDataType(), false);
-			const uint32_t vertexCount = instance.m_positions.GetStream()->GetNumElements();
+				dx12::DataTypeToDXGI_FORMAT(instance.GetVertexPositions().GetStream()->GetDataType(), false);
+			const uint32_t vertexCount = instance.GetVertexPositions().GetStream()->GetNumElements();
 			const D3D12_GPU_VIRTUAL_ADDRESS positionBufferDummyAddr = 1 ; // Dummy GPU VA here for same reason as above
 
 			geometryDescs.emplace_back(D3D12_RAYTRACING_GEOMETRY_DESC{
 				.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES,
-				.Flags = GeometryFlagsToD3DGeometryFlags(instance.m_geometryFlags),
+				.Flags = GeometryFlagsToD3DGeometryFlags(instance.GetGeometryFlags()),
 				.Triangles = D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC{
 					.Transform3x4 = transform3x4DummyAddr,
 					.IndexFormat = indexFormat,
@@ -244,7 +244,7 @@ namespace
 
 		for (size_t instanceIdx = 0; instanceIdx < blasParams->m_geometry.size(); ++instanceIdx)
 		{
-			re::AccelerationStructure::BLASParams::Geometry const& geo = blasParams->m_geometry[instanceIdx];
+			re::AccelerationStructure::Geometry const& geo = blasParams->m_geometry[instanceIdx];
 
 			// Transform:
 			D3D12_GPU_VIRTUAL_ADDRESS transform3x4Addr = NULL;
@@ -263,28 +263,28 @@ namespace
 			DXGI_FORMAT indexFormat = DXGI_FORMAT_UNKNOWN;
 			uint32_t indexCount = 0;
 			D3D12_GPU_VIRTUAL_ADDRESS indexBufferAddr = NULL;
-			if (geo.m_indices)
+			if (geo.GetVertexIndices())
 			{
-				indexFormat = dx12::DataTypeToDXGI_FORMAT(geo.m_indices->GetDataType(), false);
+				indexFormat = dx12::DataTypeToDXGI_FORMAT(geo.GetVertexIndices()->GetDataType(), false);
 				SEAssert(indexFormat == DXGI_FORMAT_UNKNOWN ||
 					indexFormat == DXGI_FORMAT_R32_UINT ||
 					indexFormat == DXGI_FORMAT_R16_UINT,
 					"Invalid index format");
 
-				indexCount = geo.m_indices->GetNumElements();
-				indexBufferAddr = dx12::Buffer::GetGPUVirtualAddress(geo.m_indices->GetBuffer());
+				indexCount = geo.GetVertexIndices()->GetNumElements();
+				indexBufferAddr = dx12::Buffer::GetGPUVirtualAddress(geo.GetVertexIndices()->GetBuffer());
 			}
 
 			// Positions:
-			const DXGI_FORMAT vertexFormat = dx12::DataTypeToDXGI_FORMAT(geo.m_positions.GetStream()->GetDataType(), false);
-			const uint32_t vertexCount = geo.m_positions.GetStream()->GetNumElements();
+			const DXGI_FORMAT vertexFormat = dx12::DataTypeToDXGI_FORMAT(geo.GetVertexPositions().GetStream()->GetDataType(), false);
+			const uint32_t vertexCount = geo.GetVertexPositions().GetStream()->GetNumElements();
 			const D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE positionBufferAddr = D3D12_GPU_VIRTUAL_ADDRESS_AND_STRIDE{
-				.StartAddress = dx12::Buffer::GetGPUVirtualAddress(geo.m_positions.GetBuffer()),
-				.StrideInBytes = re::DataTypeToByteStride(geo.m_positions.GetStream()->GetDataType()),};
+				.StartAddress = dx12::Buffer::GetGPUVirtualAddress(geo.GetVertexPositions().GetBuffer()),
+				.StrideInBytes = re::DataTypeToByteStride(geo.GetVertexPositions().GetStream()->GetDataType()),};
 
 			geometryDescs.emplace_back(D3D12_RAYTRACING_GEOMETRY_DESC{
 				.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES,
-				.Flags = GeometryFlagsToD3DGeometryFlags(geo.m_geometryFlags),
+				.Flags = GeometryFlagsToD3DGeometryFlags(geo.GetGeometryFlags()),
 				.Triangles = D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC{
 					.Transform3x4 = transform3x4Addr,
 					.IndexFormat = indexFormat,
@@ -415,7 +415,7 @@ namespace
 		SEAssert(tlasParams, "Failed to get TLASParams");
 
 		// Compute the hit group indexes:
-		auto ComputeStyleHash = [](std::vector<re::AccelerationStructure::BLASParams::Geometry> const& geometry)
+		auto ComputeStyleHash = [](std::vector<re::AccelerationStructure::Geometry> const& geometry)
 			-> util::HashKey
 			{
 				// We only want to include an EffectID/Material Drawstyle bit combination once in our hash (i.e. the
@@ -430,8 +430,8 @@ namespace
 					// are identical for all hit groups, thus we can use the geometry EffectID and material drawstyle
 					// bits to differentiate BLAS instances that will eventually resolve to a specific hit group shader					
 					util::HashKey curHash;
-					util::AddDataToHash(curHash, geo.m_effectID);
-					util::AddDataToHash(curHash, geo.m_materialDrawstyleBits);
+					util::AddDataToHash(curHash, geo.GetEffectID());
+					util::AddDataToHash(curHash, geo.GetDrawstyleBits());
 
 					if (!uniqueEffectIDsAndDrawstyleBits.contains(curHash))
 					{
@@ -483,13 +483,14 @@ namespace
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(tlasParams->m_blasInstances.size());
 		SEAssert(numInstances < 0xFFFFFF, "Beyond D3D12 maximum no. instances in a TLAS");
 
-		for (uint32_t instanceIdx = 0; instanceIdx < numInstances; ++instanceIdx)
+		uint32_t baseInstanceID = 0;
+		for (uint32_t blasInstanceIdx = 0; blasInstanceIdx < numInstances; ++blasInstanceIdx)
 		{
-			SEAssert(tlasParams->m_blasInstances[instanceIdx]->GetType() == re::AccelerationStructure::Type::BLAS,
+			SEAssert(tlasParams->m_blasInstances[blasInstanceIdx]->GetType() == re::AccelerationStructure::Type::BLAS,
 				"Invalid BLAS instance type");
-			SEAssert(instanceIdx <= 0xFFFFFF, "24 bit max instance IDs");
+			SEAssert(blasInstanceIdx <= 0xFFFFFF, "24 bit max instance IDs");
 
-			std::shared_ptr<re::AccelerationStructure> const& blasAS = tlasParams->m_blasInstances[instanceIdx];
+			std::shared_ptr<re::AccelerationStructure> const& blasAS = tlasParams->m_blasInstances[blasInstanceIdx];
 
 			re::AccelerationStructure::BLASParams const* blasParams =
 				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blasAS->GetASParams());
@@ -504,20 +505,23 @@ namespace
 			SEAssert(blasPlatParams->m_ASBuffer->GetGPUVirtualAddress() % D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT == 0,
 				"Invalid AS GPU address");
 
-			instanceDescs[instanceIdx] = D3D12_RAYTRACING_INSTANCE_DESC{
+			instanceDescs[blasInstanceIdx] = D3D12_RAYTRACING_INSTANCE_DESC{
 				// .Transform set below
-				.InstanceID = instanceIdx, // Arbitrary: Identifies each unique BLAS instance to shaders
+				.InstanceID = baseInstanceID, // HLSL: InstanceID() -> Arbitrary identifier for each unique BLAS instance
 				.InstanceMask = blasParams->m_instanceMask,
 				.InstanceContributionToHitGroupIndex = instanceContributionToHitGroupIndex,
 				.Flags = util::CheckedCast<uint32_t>(InstanceFlagsToD3DInstanceFlags(blasParams->m_instanceFlags)),
 				.AccelerationStructure = blasPlatParams->m_ASBuffer->GetGPUVirtualAddress(),
 			};
-			SEStaticAssert(sizeof(blasParams->m_blasWorldMatrix) == sizeof(instanceDescs[instanceIdx].Transform),
+			SEStaticAssert(sizeof(blasParams->m_blasWorldMatrix) == sizeof(instanceDescs[blasInstanceIdx].Transform),
 				"Matrix size mismatch");
 
-			memcpy(&instanceDescs[instanceIdx].Transform,
+			memcpy(&instanceDescs[blasInstanceIdx].Transform,
 				&blasParams->m_blasWorldMatrix[0][0],
-				sizeof(instanceDescs[instanceIdx].Transform));			
+				sizeof(instanceDescs[blasInstanceIdx].Transform));	
+
+			// In HLSL, we use InstanceID() + GeometryIndex() as our index into the bindless LUT
+			baseInstanceID += util::CheckedCast<uint32_t>(blasParams->m_geometry.size());
 		}
 		TLASInstanceDescs->Unmap(0, nullptr);
 

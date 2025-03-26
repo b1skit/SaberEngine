@@ -42,8 +42,6 @@ namespace re
 		IBindlessResourceSet(
 			BindlessResourceManager*,
 			char const* shaderName,
-			uint32_t registerSpace,
-			uint32_t baseOffset,
 			uint32_t numResources);
 
 		virtual ~IBindlessResourceSet() = default;
@@ -68,16 +66,15 @@ namespace re
 		// if IBindlessResource* is null
 		void SetResource(IBindlessResource*, ResourceHandle);
 
+
 	public:
-		// Write the platform root signature entry description at dest
-		virtual void PopulateRootSignatureDesc(void* dest) const = 0;
+		virtual void GetNullDescriptor(void* dest, size_t destByteSize) const = 0;
+		virtual void GetResourceUsageState(void* dest, size_t destByteSize) const = 0;
 
 
 	public: // Member accessors for platform:
 		BindlessResourceManager* GetBindlessResourceManager() const;
 		std::string const& GetShaderName() const;
-		uint32_t GetRegisterSpace() const;
-		uint32_t GetBaseOffset() const;
 		uint32_t GetMaxResourceCount() const;
 		
 
@@ -94,9 +91,7 @@ namespace re
 		std::unique_ptr<PlatformParams> m_platformParams;
 
 		std::string m_shaderName; 	// To query root sig metadata (E.g. for setting null descriptors from the BRM)
-		uint32_t m_registerSpace;
 
-		uint32_t m_baseOffset;		// Offset within the BRM's GPU-visible descriptor heap (in total descriptors)
 		uint32_t m_maxResources;	// Max. no. of resources managed by this resource system
 
 
@@ -143,18 +138,6 @@ namespace re
 	}
 
 
-	inline uint32_t IBindlessResourceSet::GetRegisterSpace() const
-	{
-		return m_registerSpace;
-	}
-
-
-	inline uint32_t IBindlessResourceSet::GetBaseOffset() const
-	{
-		return m_baseOffset;
-	}
-
-
 	inline uint32_t IBindlessResourceSet::GetMaxResourceCount() const
 	{
 		return m_maxResources;
@@ -167,16 +150,8 @@ namespace re
 	class BindlessResourceManager
 	{
 	public:
-		static constexpr uint32_t k_maxResourceCount = 1024;	// Max no. of descriptors per table
-		
-
-	public:
-		struct PlatformParams : public core::IPlatformParams
-		{
-			virtual void Destroy() override = 0;
-
-			bool m_isCreated = false;
-		};
+		// TODO: This should be dynamic, per resource set
+		static constexpr uint32_t k_maxResourceCount = 256;	// Max no. of descriptors per table
 		
 
 	public:
@@ -185,8 +160,6 @@ namespace re
 		BindlessResourceManager(BindlessResourceManager&&) noexcept = default;
 		BindlessResourceManager& operator=(BindlessResourceManager&&) noexcept = default;
 		~BindlessResourceManager() = default;
-
-		PlatformParams* GetPlatformParams() const;
 
 
 	public:
@@ -221,8 +194,6 @@ namespace re
 		std::vector<std::unique_ptr<IBindlessResourceSet>> m_resourceSets; // Ordered: Index * no. elements = base offset
 		std::map<std::type_index, uint8_t> m_resourceSetTypeIdx; // T -> m_resourceSets index
 
-		std::unique_ptr<PlatformParams> m_platformParams;
-
 		bool m_mustRecreate;
 
 		uint8_t m_numFramesInFlight;
@@ -234,12 +205,6 @@ namespace re
 		BindlessResourceManager(BindlessResourceManager const&) = delete;
 		BindlessResourceManager& operator=(BindlessResourceManager const&) = delete;
 	};
-
-
-	inline BindlessResourceManager::PlatformParams* BindlessResourceManager::GetPlatformParams() const
-	{
-		return m_platformParams.get();
-	}
 
 
 	inline std::vector<std::unique_ptr<IBindlessResourceSet>> const& BindlessResourceManager::GetResourceSets() const
@@ -292,9 +257,9 @@ namespace re
 		if (resourceSetIdxItr == m_resourceSetTypeIdx.end())
 		{
 			const uint8_t resourceSetIdx = util::CheckedCast<uint8_t>(m_resourceSets.size());
-			const uint32_t baseOffset = resourceSetIdx * k_maxResourceCount;
-			
-			m_resourceSets.emplace_back(T::CreateBindlessResourceSet(this, baseOffset, k_maxResourceCount));
+
+	
+			m_resourceSets.emplace_back(T::CreateBindlessResourceSet(this, k_maxResourceCount));
 			resourceSet = m_resourceSets.back().get();
 
 			m_resourceSetTypeIdx.emplace(typeIdx, resourceSetIdx);

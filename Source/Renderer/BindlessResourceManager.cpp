@@ -6,22 +6,16 @@
 #include "Core/Assert.h"
 #include "Core/Logger.h"
 
-#include "Core/Util/CastUtils.h"
-
 
 namespace re
 {
 	IBindlessResourceSet::IBindlessResourceSet(
 		BindlessResourceManager* brm,
 		char const* shaderName,
-		uint32_t registerSpace,
-		uint32_t baseOffset,
 		uint32_t numResources)
 		: m_bindlessResourceMgr(brm)
 		, m_platformParams(platform::IBindlessResourceSet::CreatePlatformParams())
 		, m_shaderName(shaderName)
-		, m_registerSpace(registerSpace)
-		, m_baseOffset(baseOffset)
 		, m_maxResources(numResources)
 		, m_threadProtector(false)
 		, m_numFramesInFlight(re::RenderManager::Get()->GetNumFramesInFlight())
@@ -48,6 +42,8 @@ namespace re
 			"Some resource handles have not been returned to the bindless resource set");
 
 		m_freeIndexes = {};
+
+		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
 	}
 
 
@@ -129,8 +125,7 @@ namespace re
 
 
 	BindlessResourceManager::BindlessResourceManager()
-		: m_platformParams(platform::BindlessResourceManager::CreatePlatformParams(*this))
-		, m_mustRecreate(true)
+		: m_mustRecreate(true)
 		, m_numFramesInFlight(re::RenderManager::Get()->GetNumFramesInFlight())
 		, m_threadProtector(false)
 	{
@@ -139,31 +134,14 @@ namespace re
 
 	void BindlessResourceManager::Initialize()
 	{
-		LOG("Initializing BindlessResourceManager to manage %llu resource sets of a maximum of %d resources each",
+		LOG("Initializing BindlessResourceManager to manage %llu IBindlessResourceSets with a max %d resources each",
 			m_resourceSets.size(), k_maxResourceCount);
 
 		m_threadProtector.ValidateThreadAccess();
 
-		// If the platform params already exist, register them for deferred deletion and recreate them:
-		SEAssert(m_platformParams, "Platform params is null");
-		if (m_platformParams->m_isCreated)
-		{
-			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
-
-			m_platformParams = platform::BindlessResourceManager::CreatePlatformParams(*this);
-		}
-
-		// If we've got any resources sets to manage, create our platform objects:
-		const uint32_t totalDescriptors = util::CheckedCast<uint32_t>(m_resourceSets.size()) * k_maxResourceCount;
-		if (totalDescriptors > 0)
-		{
-			platform::BindlessResourceManager::Create(*this, totalDescriptors);
-			m_platformParams->m_isCreated = true;
-		}
-
 		for (auto& resourceSet : m_resourceSets)
 		{
-			// Initialze resource sets, and copy cached descriptors into the GPU-visible heap:
+			// Initialze resource sets:
 			platform::IBindlessResourceSet::Initialize(*resourceSet);
 		}
 
@@ -175,7 +153,7 @@ namespace re
 	{
 		util::ScopedThreadProtector threadProtector(m_threadProtector);
 
-		if (m_mustRecreate || !m_platformParams->m_isCreated)
+		if (m_mustRecreate)
 		{
 			Initialize();
 		}
@@ -196,7 +174,5 @@ namespace re
 		{
 			resourceSet->Destroy();
 		}
-
-		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
 	}
 }

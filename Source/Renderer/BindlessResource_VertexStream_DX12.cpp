@@ -149,51 +149,19 @@ namespace dx12
 	{
 		SEAssert(descriptorOut && descriptorOutByteSize, "Invalid params received");
 
-		dx12::BindlessResourceManager::PlatformParams* brmPlatParams =
-			resourceSet.GetBindlessResourceManager()->GetPlatformParams()->As<dx12::BindlessResourceManager::PlatformParams*>();
-
-		dx12::RootSignature::RootParameter const* tableRootParam =
-			brmPlatParams->m_rootSignature->GetRootSignatureEntry(resourceSet.GetShaderName());
-		SEAssert(tableRootParam->m_type == dx12::RootSignature::RootParameter::Type::DescriptorTable,
-			"Unexpected root parameter type");
-
 		re::IVertexStreamResource const* vertexStreamResource =
 			dynamic_cast<re::IVertexStreamResource const*>(&resource);
 		SEAssert(vertexStreamResource, "Failed to cast to IVertexStreamResource");
 
-		re::Buffer const* streamBuffer = vertexStreamResource->m_vertexBufferInput.GetBuffer();
-
-		dx12::Buffer::PlatformParams const* streamBufferPlatParams =
-			streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
-
-		re::BufferView::BufferType bufferTypeView = re::BufferView::BufferType{
-			.m_firstElement = 0,
-			.m_numElements = vertexStreamResource->m_vertexBufferInput.GetStream()->GetNumElements(),
-			.m_structuredByteStride =
-				re::DataTypeToByteStride(vertexStreamResource->m_vertexBufferInput.GetStream()->GetDataType()),
-		};
-
-		D3D12_CPU_DESCRIPTOR_HANDLE descriptorHandle{};
-
-		switch (tableRootParam->m_tableEntry.m_type)
-		{
-		case dx12::RootSignature::DescriptorType::SRV:
-		{
-			descriptorHandle = dx12::Buffer::GetSRV(streamBuffer, bufferTypeView);
-		}
-		break;
-		case dx12::RootSignature::DescriptorType::UAV:
-		{
-			descriptorHandle = dx12::Buffer::GetUAV(streamBuffer, bufferTypeView);
-		}
-		break;
-		case dx12::RootSignature::DescriptorType::CBV:
-		{
-			descriptorHandle = dx12::Buffer::GetCBV(streamBuffer, bufferTypeView);
-		}
-		break;
-		default: SEAssertF("Invalid descriptor type");
-		}
+		// Vertex streams are (currently) always attached as SRVs:
+		D3D12_CPU_DESCRIPTOR_HANDLE descriptorHandle = dx12::Buffer::GetSRV(
+			vertexStreamResource->m_vertexBufferInput.GetBuffer(), 
+			re::BufferView::BufferType{
+				.m_firstElement = 0,
+				.m_numElements = vertexStreamResource->m_vertexBufferInput.GetStream()->GetNumElements(),
+				.m_structuredByteStride =
+					re::DataTypeToByteStride(vertexStreamResource->m_vertexBufferInput.GetStream()->GetDataType()),
+			});
 
 		SEAssert(descriptorOutByteSize == sizeof(D3D12_CPU_DESCRIPTOR_HANDLE), "Invalid destination size");
 		memcpy(descriptorOut, &descriptorHandle, descriptorOutByteSize);
@@ -203,32 +171,32 @@ namespace dx12
 	// ---
 
 
-	void VertexStreamResourceSet::PopulateRootSignatureDesc(
-		re::IBindlessResourceSet const& resourceSet,
-		void* destDescriptorRangeCreateDesc)
+	void VertexStreamResourceSet::GetNullDescriptor(
+		re::IBindlessResourceSet const& resourceSet, void* dest, size_t destByteSize)
 	{
-		SEAssert(destDescriptorRangeCreateDesc,
-			"Invalid destination parameters received");
-
-		dx12::RootSignature::DescriptorRangeCreateDesc* descriptorRangeCreateDesc = 
-			static_cast<dx12::RootSignature::DescriptorRangeCreateDesc*>(destDescriptorRangeCreateDesc);
-
-		descriptorRangeCreateDesc->m_shaderName = resourceSet.GetShaderName();
-
-		descriptorRangeCreateDesc->m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
-			.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-			.NumDescriptors = resourceSet.GetMaxResourceCount(),
-			.BaseShaderRegister = 0,
-			.RegisterSpace = resourceSet.GetRegisterSpace(),
-			.OffsetInDescriptorsFromTableStart = 0,
-		};
-
 		re::IVertexStreamResourceSet const* vertexStreamResourceSet =
 			dynamic_cast<re::IVertexStreamResourceSet const*>(&resourceSet);
+		SEAssert(vertexStreamResourceSet, "Failed to cast to re::IVertexStreamResourceSet");
 
-		descriptorRangeCreateDesc->m_srvDesc.m_format = dx12::DataTypeToDXGI_FORMAT(
-			vertexStreamResourceSet->GetStreamDataType(), false);
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
-		descriptorRangeCreateDesc->m_srvDesc.m_viewDimension = D3D12_SRV_DIMENSION_BUFFER;
+		// Vertex streams are (currently) always attached as SRVs:
+		D3D12_CPU_DESCRIPTOR_HANDLE const& result = context->GetNullSRVDescriptor(
+			D3D12_SRV_DIMENSION_BUFFER,
+			dx12::DataTypeToDXGI_FORMAT(vertexStreamResourceSet->GetStreamDataType(), false)).GetBaseDescriptor();
+
+		SEAssert(destByteSize == sizeof(D3D12_CPU_DESCRIPTOR_HANDLE), "Unexpected destination byte size");
+
+		memcpy(dest, &result, destByteSize);
+	}
+
+
+	void VertexStreamResourceSet::GetResourceUsageState(
+		re::IBindlessResourceSet const& resourceSet, void* dest, size_t destByteSize)
+	{
+		SEAssert(dest && destByteSize == sizeof(D3D12_RESOURCE_STATES), "Invalid or unexpected destination params");
+
+		constexpr D3D12_RESOURCE_STATES k_defaultVertexStreamState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+		memcpy(dest, &k_defaultVertexStreamState, destByteSize);
 	}
 }

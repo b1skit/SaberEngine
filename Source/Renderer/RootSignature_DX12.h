@@ -7,6 +7,7 @@
 #include <d3d12shader.h>
 
 struct CD3DX12_ROOT_PARAMETER1;
+struct CD3DX12_DESCRIPTOR_RANGE1;
 
 namespace re
 {
@@ -54,9 +55,9 @@ namespace dx12
 		};
 		enum DescriptorType : uint8_t // Entries stored in a descriptor table
 		{
-			SRV,
-			UAV,
 			CBV,
+			SRV,
+			UAV,			
 			// Note: Sampler type is omitted
 
 			Type_Count,
@@ -248,6 +249,12 @@ namespace dx12
 			std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters,
 			std::vector<std::string>& staticSamplerNames,
 			std::vector<D3D12_STATIC_SAMPLER_DESC>& staticSamplers);
+
+		static void ParseTableRanges(
+			dx12::RootSignature*,
+			std::array<std::vector<dx12::RootSignature::RangeInput>, DescriptorType::Type_Count>&,
+			std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters,
+			std::vector<std::vector<CD3DX12_DESCRIPTOR_RANGE1>>& tableRanges);
 
 
 	private:

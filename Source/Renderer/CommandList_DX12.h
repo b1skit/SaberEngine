@@ -4,9 +4,10 @@
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
 #include "ResourceStateTracker_DX12.h"
-#include "Stage.h"
 
+#if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
 #include "Core/Logger.h"
+#endif
 
 #include <wrl.h>
 #include <d3d12.h>
@@ -33,6 +34,7 @@ namespace re
 
 namespace dx12
 {
+	class GPUDescriptorHeap;
 	class RootSignature;
 	class PipelineState;
 
@@ -67,6 +69,10 @@ namespace dx12
 			D3D12_RESOURCE_STATES m_toState;
 			std::vector<uint32_t> m_subresourceIndexes;
 		};
+
+	public:
+		// Arbitrary: Total descriptors in our local GPU-visible descriptor heap
+		static constexpr uint32_t k_gpuDescriptorHeapSize = 4096;
 
 
 	public:
@@ -135,9 +141,9 @@ namespace dx12
 
 		void BuildRaytracingAccelerationStructure(re::AccelerationStructure&, bool doUpdate);
 
-		void SetTLAS(re::ASInput const&, re::ShaderBindingTable const&);
-		
-		void AttachBindlessResources(re::BindlessResourceManager const&);
+		void AttachBindlessResources(re::ShaderBindingTable const&, re::BindlessResourceManager const&);
+
+		void SetTLAS(re::ASInput const&, re::ShaderBindingTable const&);		
 
 		void DrawBatchGeometry(re::Batch const&);
 		void Dispatch(glm::uvec3 const& threadDimensions);

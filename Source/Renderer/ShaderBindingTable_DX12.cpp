@@ -1,10 +1,13 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
+#include "BindlessResourceManager.h"
+#include "BindlessResourceManager_DX12.h"
 #include "Buffer_DX12.h"
 #include "BufferView.h"
 #include "CommandList_DX12.h"
 #include "Context_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
+#include "RootSignature_DX12.h"
 #include "Shader_DX12.h"
 #include "ShaderBindingTable_DX12.h"
 #include "Texture_DX12.h"
@@ -668,13 +671,16 @@ namespace dx12
 
 		// Callable:
 		platParams->m_callableRegionBaseOffset = numBytesWritten;
-		numBytesWritten += InitializeShaderRegions(
-			platParams->m_rayTracingStateObjectProperties.Get(),
-			sbtData,
-			platParams->m_callableRegionByteStride,
-			sbt.m_callableShaders,
-			callableExportNameView);
-		sbtData = baseSBTData + numBytesWritten;
+		if (platParams->m_callableRegionTotalByteSize > 0)
+		{
+			numBytesWritten += InitializeShaderRegions(
+				platParams->m_rayTracingStateObjectProperties.Get(),
+				sbtData,
+				platParams->m_callableRegionByteStride,
+				sbt.m_callableShaders,
+				callableExportNameView);
+			sbtData = baseSBTData + numBytesWritten;
+		}
 
 		// Initialize the remaining frame data:
 		for (uint8_t curFrameIdx = 1; curFrameIdx < platParams->m_numFramesInFlight; ++curFrameIdx)
@@ -688,6 +694,7 @@ namespace dx12
 			SEAssert(reinterpret_cast<uint64_t>(sbtData) % D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
 				"Invalid alignment for shader table start address");
 
+			// Ray gen:
 			sbtData += InitializeShaderRegions(
 				platParams->m_rayTracingStateObjectProperties.Get(),
 				sbtData,
@@ -695,6 +702,7 @@ namespace dx12
 				sbt.m_rayGenShaders,
 				rayGenExportNameView);
 
+			// Miss:
 			sbtData += InitializeShaderRegions(
 				platParams->m_rayTracingStateObjectProperties.Get(),
 				sbtData,
@@ -702,6 +710,7 @@ namespace dx12
 				sbt.m_missShaders,
 				missExportNameView);
 
+			// Hit groups:
 			sbtData += InitializeShaderRegions(
 				platParams->m_rayTracingStateObjectProperties.Get(),
 				sbtData,
@@ -709,12 +718,16 @@ namespace dx12
 				hitGroupShaderView,
 				hitGroupExportNameView);
 
-			sbtData += InitializeShaderRegions(
-				platParams->m_rayTracingStateObjectProperties.Get(),
-				sbtData,
-				platParams->m_callableRegionByteStride,
-				sbt.m_callableShaders,
-				callableExportNameView);
+			// Callable:
+			if (platParams->m_callableRegionTotalByteSize > 0)
+			{
+				sbtData += InitializeShaderRegions(
+					platParams->m_rayTracingStateObjectProperties.Get(),
+					sbtData,
+					platParams->m_callableRegionByteStride,
+					sbt.m_callableShaders,
+					callableExportNameView);
+			}
 		}
 
 		// Cleanup:
@@ -865,6 +878,20 @@ namespace dx12
 			sbtPlatParams->m_frameRegionByteSize,
 			currentFrameNum,
 			sbtPlatParams->m_numFramesInFlight);
+
+		if (sbtPlatParams->m_callableRegionTotalByteSize > 0)
+		{
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				tlasInput.m_shaderName,
+				sbt.m_callableShaders,
+				sbtPlatParams->m_callableRegionBaseOffset,
+				sbtPlatParams->m_callableRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
+		}
 	}
 
 
@@ -961,16 +988,19 @@ namespace dx12
 				currentFrameNum,
 				sbtPlatParams->m_numFramesInFlight);
 
-			WriteSBTElement(
-				sbtPlatParams->m_SBT.get(),
-				SetData,
-				texInput.m_shaderName,
-				sbt.m_callableShaders,
-				sbtPlatParams->m_callableRegionBaseOffset,
-				sbtPlatParams->m_callableRegionByteStride,
-				sbtPlatParams->m_frameRegionByteSize,
-				currentFrameNum,
-				sbtPlatParams->m_numFramesInFlight);
+			if (sbtPlatParams->m_callableRegionTotalByteSize > 0)
+			{
+				WriteSBTElement(
+					sbtPlatParams->m_SBT.get(),
+					SetData,
+					texInput.m_shaderName,
+					sbt.m_callableShaders,
+					sbtPlatParams->m_callableRegionBaseOffset,
+					sbtPlatParams->m_callableRegionByteStride,
+					sbtPlatParams->m_frameRegionByteSize,
+					currentFrameNum,
+					sbtPlatParams->m_numFramesInFlight);
+			}
 		}
 
 		// Finally, record the resource transitions:
@@ -1024,7 +1054,9 @@ namespace dx12
 
 						memcpy(dst, &bufferGPUVA, dstByteSize);
 
-						toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+						toState = (cmdList->GetCommandListType() == dx12::CommandListType::Compute ?
+							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
 						transitionResource = !isInSharedHeap;
 					}
 					break;
@@ -1115,7 +1147,9 @@ namespace dx12
 
 							memcpy(dst, &gpuVisiblCBV, dstByteSize);
 
-							toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+							toState = (cmdList->GetCommandListType() == dx12::CommandListType::Compute ?
+								D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+							
 							transitionResource = !isInSharedHeap;
 						}
 						break;
@@ -1176,16 +1210,19 @@ namespace dx12
 				currentFrameNum,
 				sbtPlatParams->m_numFramesInFlight);
 
-			WriteSBTElement(
-				sbtPlatParams->m_SBT.get(),
-				SetData,
-				bufferInput.GetShaderName(),
-				sbt.m_callableShaders,
-				sbtPlatParams->m_callableRegionBaseOffset,
-				sbtPlatParams->m_callableRegionByteStride,
-				sbtPlatParams->m_frameRegionByteSize,
-				currentFrameNum,
-				sbtPlatParams->m_numFramesInFlight);
+			if (sbtPlatParams->m_callableRegionTotalByteSize > 0)
+			{
+				WriteSBTElement(
+					sbtPlatParams->m_SBT.get(),
+					SetData,
+					bufferInput.GetShaderName(),
+					sbt.m_callableShaders,
+					sbtPlatParams->m_callableRegionBaseOffset,
+					sbtPlatParams->m_callableRegionByteStride,
+					sbtPlatParams->m_frameRegionByteSize,
+					currentFrameNum,
+					sbtPlatParams->m_numFramesInFlight);
+			}
 		}
 
 		// Finally, record the resource transitions:
@@ -1256,16 +1293,100 @@ namespace dx12
 				currentFrameNum,
 				sbtPlatParams->m_numFramesInFlight);
 
+			if (sbtPlatParams->m_callableRegionTotalByteSize > 0)
+			{
+				WriteSBTElement(
+					sbtPlatParams->m_SBT.get(),
+					SetData,
+					rwTexInput.m_shaderName,
+					sbt.m_callableShaders,
+					sbtPlatParams->m_callableRegionBaseOffset,
+					sbtPlatParams->m_callableRegionByteStride,
+					sbtPlatParams->m_frameRegionByteSize,
+					currentFrameNum,
+					sbtPlatParams->m_numFramesInFlight);
+			}
+	}
+
+
+	void ShaderBindingTable::SetBindlessResourcesOnLocalRoots(
+		re::ShaderBindingTable const& sbt,
+		re::BindlessResourceManager const& brm,
+		dx12::GPUDescriptorHeap* gpuDescHeap,
+		uint64_t currentFrameNum)
+	{
+		dx12::ShaderBindingTable::PlatformParams const* sbtPlatParams =
+			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
+		SEAssert(sbtPlatParams->m_SBT, "SBT GPUResource cannot be null");
+
+		for (auto const& resourceSet : brm.GetResourceSets())
+		{
+			auto SetData = [&resourceSet, gpuDescHeap]
+				(uint8_t* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
+				{
+					SEAssert(rootParam->m_type == dx12::RootSignature::RootParameter::Type::DescriptorTable,
+						"Unexpected root parameter type for a bindless resource");
+
+					dx12::IBindlessResourceSet::PlatformParams const* resourceSetPlatParams =
+						resourceSet->GetPlatformParams()->As<dx12::IBindlessResourceSet::PlatformParams const*>();
+
+					D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTableHandle =
+						gpuDescHeap->CommitToGPUVisibleHeap(resourceSetPlatParams->m_cpuDescriptorCache);
+
+					memcpy(dst, &gpuVisibleTableHandle, dstByteSize);
+				};
+
 			WriteSBTElement(
 				sbtPlatParams->m_SBT.get(),
 				SetData,
-				rwTexInput.m_shaderName,
-				sbt.m_callableShaders,
-				sbtPlatParams->m_callableRegionBaseOffset,
-				sbtPlatParams->m_callableRegionByteStride,
+				resourceSet->GetShaderName(),
+				sbt.m_rayGenShaders,
+				sbtPlatParams->m_rayGenRegionBaseOffset,
+				sbtPlatParams->m_rayGenRegionByteStride,
 				sbtPlatParams->m_frameRegionByteSize,
 				currentFrameNum,
 				sbtPlatParams->m_numFramesInFlight);
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				resourceSet->GetShaderName(),
+				sbt.m_missShaders,
+				sbtPlatParams->m_missRegionBaseOffset,
+				sbtPlatParams->m_missRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
+
+			WriteSBTElement(
+				sbtPlatParams->m_SBT.get(),
+				SetData,
+				resourceSet->GetShaderName(),
+				sbt.m_hitGroupNamesAndShaders | std::views::transform(
+					[](auto const& hitGroupNamesAndShader) -> core::InvPtr<re::Shader> const&
+					{
+						return hitGroupNamesAndShader.second;
+					}),
+				sbtPlatParams->m_hitGroupRegionBaseOffset,
+				sbtPlatParams->m_hitGroupRegionByteStride,
+				sbtPlatParams->m_frameRegionByteSize,
+				currentFrameNum,
+				sbtPlatParams->m_numFramesInFlight);
+
+			if (sbtPlatParams->m_callableRegionTotalByteSize > 0)
+			{
+				WriteSBTElement(
+					sbtPlatParams->m_SBT.get(),
+					SetData,
+					resourceSet->GetShaderName(),
+					sbt.m_callableShaders,
+					sbtPlatParams->m_callableRegionBaseOffset,
+					sbtPlatParams->m_callableRegionByteStride,
+					sbtPlatParams->m_frameRegionByteSize,
+					currentFrameNum,
+					sbtPlatParams->m_numFramesInFlight);
+			}
+		}			
 	}
 
 

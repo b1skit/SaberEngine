@@ -31,6 +31,8 @@ namespace dx12
 
 			InlineDescriptorType_Count
 		};
+		SEStaticAssert(InlineDescriptorType_Count == dx12::RootSignature::DescriptorType::Type_Count,
+			"GPUDescriptorHeap and root signature are out of sync");
 
 	public:		
 		GPUDescriptorHeap(uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE, std::wstring const& debugName);
@@ -50,7 +52,11 @@ namespace dx12
 		// Register a set of CPU descriptors for copy to a GPU-visible heap when CommitDescriptorTables() is called
 		// Note: offset & count can be used to set individual descriptors within a table located at a given rootParamIdx
 		void SetDescriptorTableEntry(
-			uint8_t rootParamIdx, D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count);
+			uint8_t rootIdx, D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count);
+
+		// Set an entire descriptor table range from CPU-visible descriptors hosted in an externally-managed heap
+		void SetDescriptorTableFromExternalHeap(
+			uint8_t rootIdx, D3D12_CPU_DESCRIPTOR_HANDLE* srcBase, uint32_t count);
 
 		// Set resource views directly in the GPU-visible descriptor heap:
 		void SetInlineCBV(uint8_t rootIdx, ID3D12Resource*, uint64_t alignedByteOffset);

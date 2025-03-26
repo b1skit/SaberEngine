@@ -430,7 +430,7 @@ namespace re
 			SetFilterMaskBit(Filter::ShadowCaster, materialInstanceData->m_isShadowCaster);
 		}
 
-		m_drawStyleBitmask = gr::Material::GetMaterialDrawstyleBits(materialInstanceData);
+		m_drawStyleBitmask = gr::Material::MaterialInstanceRenderData::GetDrawstyleBits(materialInstanceData);
 
 		ComputeDataHash();
 	}

@@ -1,6 +1,7 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
-#include "Buffer.h"
+#include "BindlessResource_VertexStream.h"
+#include "BindlessResourceManager.h"
 #include "BufferView.h"
 #include "Effect.h"
 #include "VertexStream.h"
@@ -17,6 +18,7 @@
 namespace re
 {
 	class AccelerationStructure;
+	class Buffer;
 
 
 	struct ASInput
@@ -93,6 +95,52 @@ namespace re
 
 
 	public:
+		struct Geometry
+		{
+			void SetVertexPositions(re::VertexBufferInput const& positions);
+			re::VertexBufferInput const& GetVertexPositions() const;
+
+			void SetVertexIndices(core::InvPtr<gr::VertexStream> const& indices);
+			core::InvPtr<gr::VertexStream> const& GetVertexIndices() const;
+
+			void SetGeometryFlags(GeometryFlags geometryFlags);
+			GeometryFlags GetGeometryFlags() const;
+			
+			void SetEffectID(EffectID effectID);
+			EffectID GetEffectID() const;
+			
+			void SetDrawstyleBits(effect::drawstyle::Bitmask drawstyleBits);
+			effect::drawstyle::Bitmask GetDrawstyleBits() const;
+			
+			template<typename ResourceType, typename InvPtrType>
+			void RegisterResource(core::InvPtr<InvPtrType> const& resource);
+			
+			template<typename T>
+			void RegisterResource(core::InvPtr<T> const&);
+
+			template<typename T>
+			uint32_t GetResourceHandle() const;
+
+
+		private:
+			void RegisterResource(std::type_index typeIdx, ResourceHandle resourceHandle);
+
+
+		private:
+			re::VertexBufferInput m_positions; // Respects buffer overrides
+			core::InvPtr<gr::VertexStream> m_indices; // Can be null/invalid
+
+			std::map<std::type_index, ResourceHandle> m_resourceHandles;
+
+			GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
+
+			// Effect ID and material drawstyle bits allow us to resolve a Technique from BLAS geometry
+			EffectID m_effectID;
+			effect::drawstyle::Bitmask m_drawstyleBits = 0;
+		};
+
+
+	public:
 		struct IASParams
 		{
 			virtual ~IASParams() = 0;
@@ -104,18 +152,8 @@ namespace re
 			// 3x4 row-major world matrix: Applied to all BLAS geometry
 			glm::mat3x4 m_blasWorldMatrix = glm::mat3x4(1.f);
 
-			struct Geometry
-			{
-				re::VertexBufferInput m_positions; // Respects buffer overrides
-				core::InvPtr<gr::VertexStream> m_indices; // Can be null/invalid
-
-				GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
-				
-				// Effect ID and material drawstyle bits allow us to resolve a Technique from BLAS geometry
-				EffectID m_effectID;
-				effect::drawstyle::Bitmask m_materialDrawstyleBits = 0;
-			};
 			std::vector<Geometry> m_geometry;
+
 			std::shared_ptr<re::Buffer> m_transform; // Buffer of mat3x4 in row-major order. Indexes correspond with m_geometry
 
 			InclusionMask m_instanceMask = InstanceInclusionMask_Always; // Visibility mask: 0 = ignored, 1 = visible
@@ -124,6 +162,12 @@ namespace re
 		struct TLASParams : public virtual IASParams
 		{
 			std::vector<std::shared_ptr<re::AccelerationStructure>> m_blasInstances;
+
+			re::BufferInput GetBindlessResourceLUT() const;
+
+		private: // Populated internally:
+			friend class AccelerationStructure;
+			re::BufferInput m_bindlessResourceLUT; // BLAS instances -> bindless resource LUT
 		};
 
 
@@ -210,5 +254,109 @@ namespace re
 	inline AccelerationStructure::Type AccelerationStructure::GetType() const
 	{
 		return m_type;
+	}
+
+
+	// ---
+
+
+	inline void AccelerationStructure::Geometry::SetVertexPositions(re::VertexBufferInput const& positions)
+	{
+		m_positions = positions;
+
+		RegisterResource(typeid(re::VertexStreamResource_Position),
+			IVertexStreamResource::GetResourceHandle(m_positions));
+	}
+
+
+	inline re::VertexBufferInput const& AccelerationStructure::Geometry::GetVertexPositions() const
+	{
+		return m_positions;
+	}
+
+
+	inline void AccelerationStructure::Geometry::SetVertexIndices(core::InvPtr<gr::VertexStream> const& indices)
+	{
+		m_indices = indices;
+
+		if (m_indices)
+		{
+			RegisterResource(typeid(re::VertexStreamResource_Index),
+				IVertexStreamResource::GetResourceHandle(m_indices));
+		}
+	}
+
+
+	inline core::InvPtr<gr::VertexStream> const& AccelerationStructure::Geometry::GetVertexIndices() const
+	{
+		return m_indices;
+	}
+
+
+	inline void AccelerationStructure::Geometry::SetGeometryFlags(GeometryFlags geometryFlags)
+	{
+		m_geometryFlags = geometryFlags;
+	}
+
+
+	inline AccelerationStructure::GeometryFlags AccelerationStructure::Geometry::GetGeometryFlags() const
+	{
+		return m_geometryFlags;
+	}
+
+
+	inline void AccelerationStructure::Geometry::SetEffectID(EffectID effectID)
+	{
+		m_effectID = effectID;
+	}
+
+
+	inline EffectID AccelerationStructure::Geometry::GetEffectID() const
+	{
+		return m_effectID;
+	}
+
+
+	inline void AccelerationStructure::Geometry::SetDrawstyleBits(effect::drawstyle::Bitmask drawstyleBits)
+	{
+		m_drawstyleBits = drawstyleBits;
+	}
+
+
+	inline effect::drawstyle::Bitmask AccelerationStructure::Geometry::GetDrawstyleBits() const
+	{
+		return m_drawstyleBits;
+	}
+
+
+	inline void AccelerationStructure::Geometry::RegisterResource(std::type_index typeIdx, ResourceHandle resourceHandle)
+	{
+		m_resourceHandles.emplace(typeIdx, resourceHandle);
+	}
+
+
+	template<typename ResourceType, typename InvPtrType>
+	void AccelerationStructure::Geometry::RegisterResource(core::InvPtr<InvPtrType> const& resource)
+	{
+		RegisterResource(std::type_index(typeid(ResourceType)), ResourceType::GetResourceHandle(resource));
+	}
+
+
+	template<typename T>
+	inline void AccelerationStructure::Geometry::RegisterResource(core::InvPtr<T> const& resource)
+	{
+		RegisterResource(std::type_index(typeid(T)), T::GetResourceHandle(resource));
+	}
+
+
+	template<typename T>
+	uint32_t AccelerationStructure::Geometry::GetResourceHandle() const
+	{
+		auto const& result = m_resourceHandles.find(std::type_index(typeid(T)));
+		if (result != m_resourceHandles.end())
+		{
+			return result->second;
+		}
+		return k_invalidResourceHandle;
 	}
 }

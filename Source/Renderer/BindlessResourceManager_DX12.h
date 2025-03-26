@@ -2,10 +2,8 @@
 #pragma once
 #include "BindlessResourceManager.h"
 #include "CommandList_DX12.h"
-#include "RootSignature_DX12.h"
 
 #include <d3d12.h>
-#include <wrl.h>
 
 
 namespace dx12
@@ -21,6 +19,10 @@ namespace dx12
 
 			std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_cpuDescriptorCache;
 			std::vector<ID3D12Resource*> m_resourceCache;
+
+			D3D12_CPU_DESCRIPTOR_HANDLE m_nullDescriptor{0};
+			D3D12_RESOURCE_STATES m_usageState;
+
 			uint32_t m_numActiveResources = 0;
 		};
 
@@ -36,29 +38,7 @@ namespace dx12
 
 	class BindlessResourceManager
 	{
-	public:
-		struct PlatformParams : public re::BindlessResourceManager::PlatformParams
-		{
-			void Destroy() override;
-
-			std::unique_ptr<dx12::RootSignature> m_rootSignature;
-
-			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_gpuCbvSrvUavDescriptorHeap;
-			size_t m_elementSize;
-
-			ID3D12Device* m_deviceCache = nullptr;
-
-			static constexpr D3D12_DESCRIPTOR_HEAP_TYPE k_brmHeapType = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		};
-
-
-	public:
-		static void Create(re::BindlessResourceManager&, uint32_t totalDescriptors);
-
-
 	public: // DX12-specific functionality:
-		static ID3D12RootSignature* GetRootSignature(re::BindlessResourceManager const&);
-		static ID3D12DescriptorHeap* GetDescriptorHeap(re::BindlessResourceManager const&);
 		static std::vector<dx12::CommandList::TransitionMetadata> BuildResourceTransitions(re::BindlessResourceManager const&);
 	};
 }

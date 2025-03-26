@@ -547,7 +547,7 @@ namespace
 
 		const D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc
 		{
-			.BufferLocation = params->m_resolvedGPUResource->GetGPUVirtualAddress(),
+			.BufferLocation = params->m_resolvedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
 			.SizeInBytes = util::RoundUpToNearestMultiple<uint32_t>(
 				buffer.GetTotalBytes(),
 				D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT),

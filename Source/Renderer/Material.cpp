@@ -102,7 +102,20 @@ namespace gr
 	}
 
 
-	effect::drawstyle::Bitmask Material::GetMaterialDrawstyleBits(
+	void Material::MaterialInstanceRenderData::RegisterBindlessResources(
+		MaterialInstanceRenderData const& materialInstanceRenderData, re::AccelerationStructure::Geometry& geometry)
+	{
+		geometry.SetGeometryFlags(materialInstanceRenderData.m_alphaMode == gr::Material::AlphaMode::Opaque ?
+			re::AccelerationStructure::GeometryFlags::Opaque :
+			re::AccelerationStructure::GeometryFlags::GeometryFlags_None);
+
+		geometry.SetEffectID(materialInstanceRenderData.m_effectID);
+		geometry.SetDrawstyleBits(
+			gr::Material::MaterialInstanceRenderData::GetDrawstyleBits(&materialInstanceRenderData));
+	}
+
+
+	effect::drawstyle::Bitmask Material::MaterialInstanceRenderData::GetDrawstyleBits(
 		gr::Material::MaterialInstanceRenderData const* materialInstanceData)
 	{
 		effect::drawstyle::Bitmask bitmask = 0;
@@ -140,7 +153,8 @@ namespace gr
 	}
 
 
-	uint8_t Material::CreateInstanceInclusionMask(gr::Material::MaterialInstanceRenderData const* materialInstanceData)
+	uint8_t Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(
+		gr::Material::MaterialInstanceRenderData const* materialInstanceData)
 	{
 		uint8_t geoInstanceInclusionMask = 0;
 

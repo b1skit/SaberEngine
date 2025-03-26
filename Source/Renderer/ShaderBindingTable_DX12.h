@@ -1,16 +1,16 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "HeapManager_DX12.h"
-#include "RootSignature_DX12.h"
 #include "ShaderBindingTable.h"
 
-#include <wrl.h>
+#include <wrl/client.h>
 #include <d3d12.h>
 
 
 namespace re
 {
 	struct ASInput;
+	class BindlessResourceManager;
 	class BufferInput;
 	struct RWTextureInput;
 	struct re::TextureAndSamplerInput;
@@ -89,6 +89,12 @@ namespace dx12
 		static void SetRWTextureOnLocalRoots(
 			re::ShaderBindingTable const&,
 			re::RWTextureInput const&,
+			dx12::GPUDescriptorHeap*,
+			uint64_t currentFrameNum);
+
+		static void SetBindlessResourcesOnLocalRoots(
+			re::ShaderBindingTable const&,
+			re::BindlessResourceManager const&,
 			dx12::GPUDescriptorHeap*,
 			uint64_t currentFrameNum);
 

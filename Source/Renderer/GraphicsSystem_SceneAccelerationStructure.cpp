@@ -230,7 +230,8 @@ namespace gr
 			const util::HashKey blasKey = CreateBLASKey(
 				owningMeshConceptID, 
 				static_cast<re::AccelerationStructure::InclusionMask>(
-					gr::Material::CreateInstanceInclusionMask(&meshPrimItr->Get<gr::Material::MaterialInstanceRenderData>())));
+					gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(
+						&meshPrimItr->Get<gr::Material::MaterialInstanceRenderData>())));
 
 			if (m_meshPrimToBLASKey.emplace(meshPrimID, blasKey).second == true)
 			{
@@ -300,7 +301,7 @@ namespace gr
 
 				const re::AccelerationStructure::InclusionMask inclusionMask = 
 					static_cast<re::AccelerationStructure::InclusionMask>(
-						gr::Material::CreateInstanceInclusionMask(&materialRenderData));
+						gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(&materialRenderData));
 
 				inclusionMaskToRenderDataIDs[inclusionMask].emplace_back(meshPrimID);
 			}
@@ -319,22 +320,16 @@ namespace gr
 					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 						renderData.GetObjectData<gr::MeshPrimitive::RenderData>(meshPrimID);
 
-					re::AccelerationStructure::BLASParams::Geometry& instance = blasParams->m_geometry.emplace_back();
+					re::AccelerationStructure::Geometry& instance = blasParams->m_geometry.emplace_back();
 
-					// Get the position buffer: Animated, or static
+					gr::MeshPrimitive::RenderData::RegisterBindlessResources(meshPrimRenderData, instance);
+
+					// Replace the position buffer if it is animated:
 					auto animatedStreamsItr = m_animatedVertexStreams->find(meshPrimID);
 					if (animatedStreamsItr != m_animatedVertexStreams->end())
 					{
-						instance.m_positions = animatedStreamsItr->second[gr::VertexStream::Position];
+						instance.SetVertexPositions(animatedStreamsItr->second[gr::VertexStream::Position]);
 					}
-					else
-					{
-						instance.m_positions = re::VertexBufferInput(
-							meshPrimRenderData.m_vertexStreams[gr::VertexStream::Position]);
-					}
-
-					// Always the same instance buffer, regardless of animation
-					instance.m_indices = meshPrimRenderData.m_indexStream; // May be null
 
 					// We use the MeshPrimitive's local TRS matrix for our BLAS, and then use the parent's global TRS to
 					// orient our BLAS in the TLAS
@@ -352,12 +347,7 @@ namespace gr
 					gr::Material::MaterialInstanceRenderData const& materialRenderData =
 						renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(meshPrimID);
 
-					instance.m_geometryFlags = materialRenderData.m_alphaMode == gr::Material::AlphaMode::Opaque ?
-						re::AccelerationStructure::GeometryFlags::Opaque :
-						re::AccelerationStructure::GeometryFlags::GeometryFlags_None;
-
-					instance.m_effectID = materialRenderData.m_effectID;
-					instance.m_materialDrawstyleBits = gr::Material::GetMaterialDrawstyleBits(&materialRenderData);
+					gr::Material::MaterialInstanceRenderData::RegisterBindlessResources(materialRenderData, instance);
 
 					// Map the MeshPrimitive RenderDataID -> BLAS key:
 					m_meshPrimToBLASKey[meshPrimID] = blasKey;

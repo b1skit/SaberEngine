@@ -23,7 +23,8 @@
 
 #include "Core/Util/CastUtils.h"
 
-#include <d3dx12.h>
+#include <d3dx12_core.h>
+#include <d3dx12_resource_helpers.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -174,14 +175,12 @@ namespace dx12
 
 		m_commandList->SetName(commandListname.c_str());
 
-		constexpr uint32_t k_numDescriptors = 2048; // Arbitrary: How many descriptors in our GPU-visible heap?
-
 		// Set the descriptor heaps (unless we're a copy command list):
 		if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
 		{
 			// Create our GPU-visible descriptor heaps:
 			m_gpuCbvSrvUavDescriptorHeap = std::make_unique<GPUDescriptorHeap>(
-				k_numDescriptors,
+				k_gpuDescriptorHeapSize,
 				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 				commandListname + L"_GPUDescriptorHeap");
 		}
@@ -325,8 +324,6 @@ namespace dx12
 
 			if (rootParam)
 			{
-				const uint32_t rootSigIdx = rootParam->m_index;
-
 				bool transitionResource = false;
 				D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_COMMON; // Updated below
 
@@ -353,11 +350,13 @@ namespace dx12
 						"Invalid usage flags for a constant buffer");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineCBV(
-						rootSigIdx,
+						rootParam->m_index,
 						bufferPlatParams->m_resolvedGPUResource,
 						bufferPlatParams->m_heapByteOffset);
 
-					toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+					toState = (m_type == dx12::CommandListType::Compute ?
+						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
 					transitionResource = !isInSharedHeap;
 				}
 				break;
@@ -369,7 +368,7 @@ namespace dx12
 						"SRV buffers must have GPU reads enabled");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineSRV(
-						rootSigIdx,
+						rootParam->m_index,
 						bufferPlatParams->m_resolvedGPUResource,
 						bufferPlatParams->m_heapByteOffset);
 
@@ -389,7 +388,7 @@ namespace dx12
 						"Buffer is missing the Structured usage bit");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineUAV(
-						rootSigIdx,
+						rootParam->m_index,
 						bufferPlatParams->m_resolvedGPUResource,
 						bufferPlatParams->m_heapByteOffset);
 
@@ -399,8 +398,27 @@ namespace dx12
 				break;
 				case RootSignature::RootParameter::Type::DescriptorTable:
 				{
+					re::BufferView const& bufView = bufferInput.GetView();
+
+					D3D12_CPU_DESCRIPTOR_HANDLE tableDescriptor{};
 					switch (rootParam->m_tableEntry.m_type)
 					{
+					case dx12::RootSignature::DescriptorType::CBV:
+					{
+						SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
+							"Buffer is missing the Constant usage bit");
+						SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
+							!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
+							"Invalid usage flags for a constant buffer");
+
+						tableDescriptor = dx12::Buffer::GetCBV(bufferInput.GetBuffer(), bufView);
+
+						toState = (m_type == dx12::CommandListType::Compute ?
+							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+						transitionResource = !isInSharedHeap;
+					}
+					break;
 					case dx12::RootSignature::DescriptorType::SRV:
 					{
 						SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
@@ -409,13 +427,7 @@ namespace dx12
 							"SRV buffers must have GPU reads enabled");
 						SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
 
-						re::BufferView const& bufView = bufferInput.GetView();
-
-						m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
-							rootParam->m_index,
-							dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView),
-							rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
-							1);
+						tableDescriptor = dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView);
 
 						toState = (m_type == dx12::CommandListType::Compute ?
 							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -430,40 +442,20 @@ namespace dx12
 							"UAV buffers must have GPU writes enabled");
 						SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
 
-						re::BufferView const& bufView = bufferInput.GetView();
-
-						m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
-							rootParam->m_index,
-							dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufferInput.GetView()),
-							rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
-							1);
+						tableDescriptor = dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufView);
 
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 						transitionResource = true;
 					}
 					break;
-					case dx12::RootSignature::DescriptorType::CBV:
-					{
-						SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
-							"Buffer is missing the Constant usage bit");
-						SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
-							!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
-							"Invalid usage flags for a constant buffer");
-
-						re::BufferView const& bufView = bufferInput.GetView();
-
-						m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
-							rootParam->m_index,
-							dx12::Buffer::GetCBV(bufferInput.GetBuffer(), bufView),
-							rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
-							1);
-
-						toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-						transitionResource = !isInSharedHeap;
-					}
-					break;
 					default: SEAssertF("Invalid type");
 					}
+
+					m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
+						rootParam->m_index,
+						tableDescriptor,
+						rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
+						1);
 				}
 				break;
 				default: SEAssertF("Invalid root parameter type");
@@ -534,6 +526,9 @@ namespace dx12
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
 		
 		commandList4->SetPipelineState1(sbtPlatParams->m_rayTracingStateObject.Get());
+
+		// Note: All descriptors are (currently) set via local root signatures in the shader binding table,
+		// so no need to commit the GPU descriptor heap here
 
 		D3D12_DISPATCH_RAYS_DESC const& dispatchRaysDesc = dx12::ShaderBindingTable::BuildDispatchRaysDesc(
 			sbt, threadDimensions, re::RenderManager::Get()->GetCurrentRenderFrameNum(), rayGenShaderIdx);
@@ -1081,12 +1076,12 @@ namespace dx12
 			// Transition the inputs:
 			for (auto const& instance : createParams->m_geometry)
 			{
-				SEAssert(instance.m_positions.GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
+				SEAssert(instance.GetVertexPositions().GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
 					"Single frame buffers are held in a shared heap, we can't transition them. DXR requires vertex"
 					"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
 
 				dx12::Buffer::PlatformParams* positionBufferPlatParams =
-					instance.m_positions.GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+					instance.GetVertexPositions().GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 				resourceTransitions.emplace_back(TransitionMetadata{
 					.m_resource = positionBufferPlatParams->m_resolvedGPUResource,
@@ -1094,14 +1089,14 @@ namespace dx12
 					.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
 					});
 				
-				if (instance.m_indices)
+				if (instance.GetVertexIndices())
 				{
-					SEAssert(instance.m_indices->GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
+					SEAssert(instance.GetVertexIndices()->GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
 						"Single frame buffers are held in a shared heap, we can't transition them. DXR requires index"
 						"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
 
 					dx12::Buffer::PlatformParams* indexBufferPlatParams =
-						instance.m_indices->GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+						instance.GetVertexIndices()->GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 					resourceTransitions.emplace_back(TransitionMetadata{
 						.m_resource = indexBufferPlatParams->m_resolvedGPUResource,
@@ -1148,6 +1143,19 @@ namespace dx12
 	}
 
 
+	void CommandList::AttachBindlessResources(re::ShaderBindingTable const& sbt, re::BindlessResourceManager const& brm)
+	{
+		dx12::ShaderBindingTable::SetBindlessResourcesOnLocalRoots(
+			sbt, 
+			brm, 
+			m_gpuCbvSrvUavDescriptorHeap.get(), 
+			re::RenderManager::Get()->GetCurrentRenderFrameNum());
+
+		// Transition resources:
+		TransitionResources(dx12::BindlessResourceManager::BuildResourceTransitions(brm));
+	}
+
+
 	void CommandList::SetTLAS(re::ASInput const& tlas, re::ShaderBindingTable const& sbt)
 	{
 		dx12::ShaderBindingTable::SetTLASOnLocalRoots(
@@ -1155,35 +1163,14 @@ namespace dx12
 			tlas,
 			m_gpuCbvSrvUavDescriptorHeap.get(),
 			re::RenderManager::Get()->GetCurrentRenderFrameNum());
-	}
 
+		// Set the bindless LUT on the global root sig:
+		re::AccelerationStructure::TLASParams const* tlasParams =
+			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas.m_accelerationStructure->GetASParams());
+		SEAssert(tlasParams, "Failed to get TLASParams");
 
-	void CommandList::AttachBindlessResources(re::BindlessResourceManager const& bindlessResourceMgr)
-	{
-		switch (m_type)
-		{
-		case CommandListType::Direct:
-		{
-			m_commandList->SetGraphicsRootSignature(
-				dx12::BindlessResourceManager::GetRootSignature(bindlessResourceMgr));
-		}
-		break;
-		case CommandListType::Compute:
-		{
-			m_commandList->SetComputeRootSignature(
-				dx12::BindlessResourceManager::GetRootSignature(bindlessResourceMgr));
-		}
-		break;
-		default: SEAssertF("Unexpected command list type for setting bindless resources on");
-		}
-
-		ID3D12DescriptorHeap* bindlessDescriptorHeap =
-			dx12::BindlessResourceManager::GetDescriptorHeap(bindlessResourceMgr);
-
-		m_commandList->SetDescriptorHeaps(1, &bindlessDescriptorHeap);
-
-		// Transition resources:
-		TransitionResources(dx12::BindlessResourceManager::BuildResourceTransitions(bindlessResourceMgr));
+		// Set the bindless LUT buffer:
+		SetBuffers({ tlasParams->GetBindlessResourceLUT() }, sbt);
 	}
 
 

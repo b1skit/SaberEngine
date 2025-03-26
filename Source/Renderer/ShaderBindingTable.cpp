@@ -10,6 +10,7 @@
 
 #include "Core/Assert.h"
 #include "Core/InvPtr.h"
+#include "Core/Logger.h"
 
 #include "Core/Interfaces/INamedObject.h"
 
@@ -47,6 +48,8 @@ namespace re
 
 	void ShaderBindingTable::Destroy()
 	{
+		LOG("Destroying shader binding table \"%s\"", GetName().c_str());
+
 		// Guarantee the lifetime of any in-flight resources:
 		if (m_platformParams)
 		{
@@ -117,14 +120,14 @@ namespace re
 
 			for (auto const& geo : blasParams->m_geometry)
 			{
-				SEAssert(geo.m_effectID != 0, "Found an uninitialized EffectID on BLAS geometry record");
-				SEAssert(geo.m_materialDrawstyleBits != 0,
+				SEAssert(geo.GetEffectID() != 0, "Found an uninitialized EffectID on BLAS geometry record");
+				SEAssert(geo.GetDrawstyleBits() != 0,
 					"Found an uninitialized drawstyle bitmask on a BLAS geometry record. This is unexpected");
 
 				const effect::drawstyle::Bitmask finalBitmask =
-					geo.m_materialDrawstyleBits | m_sbtParams.m_hitgroupStyles;
+					geo.GetDrawstyleBits() | m_sbtParams.m_hitgroupStyles;
 
-				effect::Technique const* technique = effectDB.GetTechnique(geo.m_effectID, finalBitmask);
+				effect::Technique const* technique = effectDB.GetTechnique(geo.GetEffectID(), finalBitmask);
 				
 				core::InvPtr<re::Shader> const& shader = technique->GetShader();
 				if (seenHitShaders.emplace(shader->GetShaderIdentifier()).second)

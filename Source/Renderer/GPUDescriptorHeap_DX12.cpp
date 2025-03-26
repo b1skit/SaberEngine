@@ -10,8 +10,6 @@
 #include "Core/Assert.h"
 #include "Core/Config.h"
 
-#include <d3dx12.h>
-
 
 namespace dx12
 {
@@ -67,7 +65,7 @@ namespace dx12
 		m_gpuDescriptorHeapCPUBase = m_gpuDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 		m_gpuDescriptorHeapGPUBase = m_gpuDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
-		memset(m_cpuDescriptorHeapCache.data(), 0, m_numDescriptors * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+		memset(m_cpuDescriptorHeapCache.data(), 0, m_cpuDescriptorHeapCache.size() * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
 		memset(m_cpuDescriptorHeapCacheLocations, 0, k_maxRootSigEntries * sizeof(CPUDescriptorCacheMetadata));
 
 		m_rootSigDescriptorTableIdxBitmask = 0;
@@ -207,6 +205,10 @@ namespace dx12
 			{
 				const uint32_t numDescriptors = rootSig->GetNumDescriptorsInTable(rootIdx);
 
+				SEAssert(offset < m_cpuDescriptorHeapCache.size() &&
+					((offset + numDescriptors) <= m_cpuDescriptorHeapCache.size()),
+					"Offset is out of bounds, not enough descriptors allocated. Consider increasing m_numDescriptors");
+
 				// Update our cache:
 				m_cpuDescriptorHeapCacheLocations[rootIdx].m_baseDescriptor = &m_cpuDescriptorHeapCache[offset];
 				m_cpuDescriptorHeapCacheLocations[rootIdx].m_numElements = numDescriptors;
@@ -216,8 +218,6 @@ namespace dx12
 				descriptorTableIdxBitmask ^= rootIdxBitmask;
 			}
 		}
-		SEAssert(offset < m_numDescriptors,
-			"Offset is out of bounds, not enough descriptors allocated. Consider increasing m_numDescriptors");
 
 		// Remove all dirty flags: We'll need to call Set___() in order to mark any descriptors for copying
 		m_dirtyDescriptorTableIdxBitmask = 0;
@@ -232,9 +232,7 @@ namespace dx12
 		SEAssert(rootIdx < k_maxRootSigEntries, "Invalid root parameter index");
 		SEAssert(src.ptr != 0, "Source cannot be null");
 		SEAssert(offset < m_numDescriptors, "Invalid offset");
-		SEAssert(count < m_numDescriptors, "Too many descriptors");
-
-		// TODO: Handle this for Sampler heap type
+		SEAssert(offset + count <= m_numDescriptors, "Too many descriptors");
 
 		CPUDescriptorCacheMetadata const& destCPUDescriptorTable = m_cpuDescriptorHeapCacheLocations[rootIdx];
 
@@ -248,6 +246,23 @@ namespace dx12
 			const size_t srcBaseOffset = destIdx * m_elementSize;
 			destDescriptorHandle[destIdx] = D3D12_CPU_DESCRIPTOR_HANDLE(src.ptr + srcBaseOffset);
 		}
+
+		// Mark the descriptor table at the given root parameter index as dirty:
+		m_dirtyDescriptorTableIdxBitmask |= (1llu << rootIdx);
+	}
+
+
+	void GPUDescriptorHeap::SetDescriptorTableFromExternalHeap(
+		uint8_t rootIdx, D3D12_CPU_DESCRIPTOR_HANDLE* srcBase, uint32_t count)
+	{
+		SEAssert(rootIdx < k_maxRootSigEntries, "Invalid root parameter index");
+		SEAssert(srcBase && srcBase->ptr != 0, "Source cannot be null");
+		SEAssert(count <= m_numDescriptors, "Too many descriptors");
+
+		CPUDescriptorCacheMetadata& destCPUDescriptorTable = m_cpuDescriptorHeapCacheLocations[rootIdx];
+
+		destCPUDescriptorTable.m_baseDescriptor = srcBase;
+		destCPUDescriptorTable.m_numElements = count;
 
 		// Mark the descriptor table at the given root parameter index as dirty:
 		m_dirtyDescriptorTableIdxBitmask |= (1llu << rootIdx);
@@ -370,6 +385,8 @@ namespace dx12
 					const D3D12_CPU_DESCRIPTOR_HANDLE* srcBaseDescriptor =
 						m_cpuDescriptorHeapCacheLocations[rootIdx].m_baseDescriptor;
 					const uint32_t numSrcDescriptors = m_cpuDescriptorHeapCacheLocations[rootIdx].m_numElements;
+
+					SEAssert(srcBaseDescriptor && numSrcDescriptors, "Invalid source descriptor record");
 
 					const size_t tableSize = numSrcDescriptors * m_elementSize;
 

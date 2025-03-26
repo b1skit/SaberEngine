@@ -5,11 +5,14 @@
 #include "PlatformConversions.h"
 
 
-struct VertexStreamInstanceIndices
+struct BindlessLUTData
 {
-	uint4 g_posNmlTanUV0;				// .xyzw = Position, Normal, Tangent, TexCoord0
-	uint4 g_UV1ColBlendIdxBlendWgt;		// .xyzw = TexCoord1, Color, Blend Indices, BlendWeights
-	uint4 g_index;						// .x = Indices, .yzw = unused
+	uint4 g_posNmlTanUV0;	// .xyzw = Position, Normal, Tangent, TexCoord0
+	uint4 g_UV1ColorIndex;	// .xyzw = TexCoord1, Color, Index, .w = unused
+
+#if defined(__cplusplus)
+	static constexpr char const* const s_shaderName = "BindlessLUT";
+#endif
 };
 
 

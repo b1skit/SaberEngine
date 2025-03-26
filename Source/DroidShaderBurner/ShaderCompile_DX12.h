@@ -13,7 +13,7 @@ namespace droid
 		bool m_enableDebuggingInfo = false;
 		bool m_allResourcesBound = false; // -all-resources-bound TODO: Support/test this
 		bool m_treatWarningsAsErrors = false;
-		bool m_enable16BitTypes = false; // TODO: Support/test this
+		bool m_enable16BitTypes = true;
 
 		std::string m_targetProfile = "6_6"; // -T <profile>, for <profile>: ps_6_6/vs_6_6/gs_6_6/hs_6_6/ds_6_6/cs_6_6/etc
 

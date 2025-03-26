@@ -176,8 +176,7 @@ namespace platform
 			platform::AccelerationStructure::Destroy	= &dx12::AccelerationStructure::Destroy;
 
 			// Bindless resource manager:
-			platform::BindlessResourceManager::Create			= &dx12::BindlessResourceManager::Create;
-			platform::IBindlessResourceSet::Initialize			= &dx12::IBindlessResourceSet::Initialize;
+			platform::IBindlessResourceSet::Initialize		= &dx12::IBindlessResourceSet::Initialize;
 			platform::IBindlessResourceSet::SetResource		= &dx12::IBindlessResourceSet::SetResource;
 
 			// Buffers:
@@ -238,7 +237,8 @@ namespace platform
 			platform::IVertexStreamResource::GetPlatformResource			= &dx12::IVertexStreamResource::GetPlatformResource;
 			platform::IVertexStreamResource::GetDescriptor					= &dx12::IVertexStreamResource::GetDescriptor;
 
-			platform::VertexStreamResourceSet::PopulateRootSignatureDesc	= &dx12::VertexStreamResourceSet::PopulateRootSignatureDesc;
+			platform::VertexStreamResourceSet::GetNullDescriptor			= &dx12::VertexStreamResourceSet::GetNullDescriptor;
+			platform::VertexStreamResourceSet::GetResourceUsageState		= &dx12::VertexStreamResourceSet::GetResourceUsageState;
 		}
 		break;
 		default:

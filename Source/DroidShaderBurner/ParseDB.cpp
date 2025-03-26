@@ -554,7 +554,7 @@ namespace droid
 					.m_enableDebuggingInfo = true,
 					.m_allResourcesBound = false, // Default
 					.m_treatWarningsAsErrors = false, // Default
-					.m_enable16BitTypes = false, // Default
+					.m_enable16BitTypes = true, // Default
 					.m_optimizationLevel = 0,
 				};
 			}
@@ -566,7 +566,7 @@ namespace droid
 					.m_enableDebuggingInfo = true,
 					.m_allResourcesBound = false, // Default
 					.m_treatWarningsAsErrors = false, // Default
-					.m_enable16BitTypes = false, // Default
+					.m_enable16BitTypes = true, // Default
 					.m_optimizationLevel = 1,
 				};
 			}
@@ -578,7 +578,7 @@ namespace droid
 					.m_enableDebuggingInfo = false,
 					.m_allResourcesBound = false, // Default
 					.m_treatWarningsAsErrors = false, // Default
-					.m_enable16BitTypes = false, // Default
+					.m_enable16BitTypes = true, // Default
 					.m_optimizationLevel = 3,
 				};
 			}
@@ -590,7 +590,7 @@ namespace droid
 					.m_enableDebuggingInfo = false,
 					.m_allResourcesBound = false, // Default
 					.m_treatWarningsAsErrors = false, // Default
-					.m_enable16BitTypes = false, // Default
+					.m_enable16BitTypes = true, // Default
 					.m_optimizationLevel = 3,
 				};
 			}

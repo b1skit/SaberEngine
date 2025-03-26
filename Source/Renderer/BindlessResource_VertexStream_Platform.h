@@ -24,6 +24,7 @@ namespace platform
 	class VertexStreamResourceSet
 	{
 	public:
-		static void (*PopulateRootSignatureDesc)(re::IBindlessResourceSet const&, void*);
+		static void (*GetNullDescriptor)(re::IBindlessResourceSet const&, void*, size_t);
+		static void (*GetResourceUsageState)(re::IBindlessResourceSet const&, void*, size_t);
 	};
 }

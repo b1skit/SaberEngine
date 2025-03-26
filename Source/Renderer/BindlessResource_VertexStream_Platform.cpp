@@ -14,5 +14,6 @@ namespace platform
 	// ---
 
 
-	void (*VertexStreamResourceSet::PopulateRootSignatureDesc)(re::IBindlessResourceSet const&, void*) = nullptr;
+	void (*VertexStreamResourceSet::GetNullDescriptor)(re::IBindlessResourceSet const&, void*, size_t) = nullptr;
+	void (*VertexStreamResourceSet::GetResourceUsageState)(re::IBindlessResourceSet const&, void*, size_t) = nullptr;
 }

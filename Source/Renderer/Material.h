@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "AccelerationStructure.h"
 #include "Buffer.h"
 #include "BufferView.h"
 #include "Effect.h"
@@ -91,12 +92,18 @@ namespace gr
 			EffectID m_effectID;
 			char m_materialName[k_shaderSamplerNameLength];
 			uint64_t m_srcMaterialUniqueID;
-		};
 
-		static effect::drawstyle::Bitmask GetMaterialDrawstyleBits(gr::Material::MaterialInstanceRenderData const*);
-		
-		// Create an 8-bit ray tracing acceleration structure geometry instance inclusion mask
-		static uint8_t CreateInstanceInclusionMask(gr::Material::MaterialInstanceRenderData const*);
+
+			// Helpers: Get the drawstyle bits for a material instance:
+			static effect::drawstyle::Bitmask GetDrawstyleBits(gr::Material::MaterialInstanceRenderData const*);
+
+			// Helper: Create an 8-bit ray tracing acceleration structure geometry instance inclusion mask
+			static uint8_t CreateInstanceInclusionMask(gr::Material::MaterialInstanceRenderData const*);
+
+			// Helper: Registers all resources types on the MeshPrimitive RenderData with an AccelerationStructure
+			static void RegisterBindlessResources(
+				MaterialInstanceRenderData const&, re::AccelerationStructure::Geometry&);
+		};
 
 
 	public:

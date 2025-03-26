@@ -7,9 +7,15 @@
 
 namespace re
 {
-	void IVertexStreamResourceSet::PopulateRootSignatureDesc(void* dest) const
+	void IVertexStreamResourceSet::GetNullDescriptor(void* dest, size_t destByteSize) const
 	{
-		platform::VertexStreamResourceSet::PopulateRootSignatureDesc(*this, dest);
+		platform::VertexStreamResourceSet::GetNullDescriptor(*this, dest, destByteSize);
+	}
+
+
+	void IVertexStreamResourceSet::GetResourceUsageState(void* dest, size_t destByteSize) const
+	{
+		platform::VertexStreamResourceSet::GetResourceUsageState(*this, dest, destByteSize);
 	}
 
 
@@ -41,5 +47,27 @@ namespace re
 		gr::VertexStream::Type streamType)
 	{
 		return platform::IVertexStreamResource::GetUnregistrationCallback(streamType);
+	}
+
+
+	ResourceHandle IVertexStreamResource::GetResourceHandle(VertexBufferInput const& vertexBufferInput)
+	{
+		SEAssert(vertexBufferInput.GetStream().IsValid() &&
+			vertexBufferInput.GetBuffer() &&
+			vertexBufferInput.GetBuffer()->GetBindlessResourceHandle() != k_invalidResourceHandle,
+			"Vertex stream is not valid for use as a bindless resource");
+
+		return vertexBufferInput.GetBuffer()->GetBindlessResourceHandle();
+	}
+
+
+	ResourceHandle IVertexStreamResource::GetResourceHandle(core::InvPtr<gr::VertexStream> const& vertexStream)
+	{
+		SEAssert(vertexStream.IsValid() &&
+			vertexStream->GetBuffer() &&
+			vertexStream->GetBuffer()->GetBindlessResourceHandle() != k_invalidResourceHandle,
+			"Vertex stream is not valid for use as a bindless resource");
+
+		return vertexStream->GetBuffer()->GetBindlessResourceHandle();
 	}
 }
