@@ -9,23 +9,20 @@
 
 namespace re
 {
-	IBindlessResourceSet::IBindlessResourceSet(
-		BindlessResourceManager* brm,
-		char const* shaderName,
-		uint32_t numResources)
+	IBindlessResourceSet::IBindlessResourceSet(BindlessResourceManager* brm, char const* shaderName)
 		: m_bindlessResourceMgr(brm)
 		, m_platformParams(platform::IBindlessResourceSet::CreatePlatformParams())
 		, m_shaderName(shaderName)
-		, m_maxResources(numResources)
+		, m_currentResourceCount(k_initialResourceCount)
 		, m_threadProtector(false)
 		, m_numFramesInFlight(re::RenderManager::Get()->GetNumFramesInFlight())
 		
 	{
-		SEAssert(m_bindlessResourceMgr && m_maxResources > 0, "Invalid resource set parameters");
+		SEAssert(m_bindlessResourceMgr && m_currentResourceCount > 0, "Invalid resource set parameters");
 
 		// Initialize the free index queue:
 		uint32_t curIdx = 0;
-		while (curIdx < m_maxResources)
+		while (curIdx < m_currentResourceCount)
 		{
 			m_freeIndexes.emplace(curIdx++);
 		}
@@ -38,7 +35,7 @@ namespace re
 
 		ProcessUnregistrations(std::numeric_limits<uint64_t>::max()); // Immediately unregister everything
 
-		SEAssert(m_freeIndexes.size() == m_maxResources,
+		SEAssert(m_freeIndexes.size() == m_currentResourceCount,
 			"Some resource handles have not been returned to the bindless resource set");
 
 		m_freeIndexes = {};
@@ -47,13 +44,35 @@ namespace re
 	}
 
 
+	void IBindlessResourceSet::IncreaseSetSize()
+	{
+		m_threadProtector.ValidateThreadAccess();
+
+		const uint32_t currentNumResources = m_currentResourceCount;
+
+		m_currentResourceCount = static_cast<uint32_t>(glm::ceil(m_currentResourceCount * k_growthFactor));
+
+		for (uint32_t curIdx = currentNumResources; curIdx < m_currentResourceCount; ++curIdx)
+		{
+			m_freeIndexes.emplace(curIdx);
+		}
+
+		LOG("IBindlessResourceSet \"%s\" resource count increased from %d to %d",
+			GetShaderName().c_str(), currentNumResources, m_currentResourceCount);
+	}
+
+
 	ResourceHandle IBindlessResourceSet::RegisterResource(std::unique_ptr<IBindlessResource>&& newBindlessResource)
 	{
 		util::ScopedThreadProtector threadProtector(m_threadProtector);
 
-		SEAssert(!m_freeIndexes.empty(), "No more free indexes. Consider increasing k_maxResourceCount");
+		if (m_freeIndexes.empty())
+		{
+			IncreaseSetSize();
+		}
 
-		const ResourceHandle resourceIdx = m_freeIndexes.front();
+		
+		const ResourceHandle resourceIdx = m_freeIndexes.top();
 		m_freeIndexes.pop();
 
 		m_registrations.emplace_back(RegistrationMetadata{
@@ -134,8 +153,7 @@ namespace re
 
 	void BindlessResourceManager::Initialize()
 	{
-		LOG("Initializing BindlessResourceManager to manage %llu IBindlessResourceSets with a max %d resources each",
-			m_resourceSets.size(), k_maxResourceCount);
+		LOG("Initializing BindlessResourceManager to manage %llu IBindlessResourceSets", m_resourceSets.size());
 
 		m_threadProtector.ValidateThreadAccess();
 

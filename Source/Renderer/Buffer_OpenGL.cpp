@@ -12,6 +12,12 @@ namespace opengl
 {
 	void Buffer::Create(re::Buffer& buffer)
 	{
+		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Constant, buffer.GetBufferParams()) ||
+			buffer.GetBufferParams().m_arraySize == 1,
+			"TODO: Support Constant buffer arrays. Previously, we only allowed single element Constant buffers "
+			"and arrays were achieved as an array member variable within the buffer. This restriction was removed for "
+			"DX12 bindless resources, if you hit this we now need to solve this usage pattern for OpenGL buffers");
+
 		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
 		SEAssert(!bufferPlatParams->m_isCreated, "Buffer is already created");
 		bufferPlatParams->m_isCreated = true;

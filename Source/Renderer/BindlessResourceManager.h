@@ -30,6 +30,11 @@ namespace re
 	class IBindlessResourceSet
 	{
 	public:
+		static constexpr uint32_t k_initialResourceCount = 1;
+		static constexpr float k_growthFactor = 1.5f;
+
+
+	public:
 		struct PlatformParams : public core::IPlatformParams
 		{
 			virtual void Destroy() override = 0;
@@ -39,10 +44,7 @@ namespace re
 
 
 	public:
-		IBindlessResourceSet(
-			BindlessResourceManager*,
-			char const* shaderName,
-			uint32_t numResources);
+		IBindlessResourceSet(BindlessResourceManager*, char const* shaderName);
 
 		virtual ~IBindlessResourceSet() = default;
 
@@ -60,14 +62,14 @@ namespace re
 		void Update(uint64_t frameNum);
 
 
-	// Platform implementations:
+	
 	private:
 		// Store resources pointers and immediately write descriptors to both CPU and GPU-visible heaps. Writes nulls
 		// if IBindlessResource* is null
 		void SetResource(IBindlessResource*, ResourceHandle);
 
-
-	public:
+		
+	public: // Platform implementations:
 		virtual void GetNullDescriptor(void* dest, size_t destByteSize) const = 0;
 		virtual void GetResourceUsageState(void* dest, size_t destByteSize) const = 0;
 
@@ -75,7 +77,7 @@ namespace re
 	public: // Member accessors for platform:
 		BindlessResourceManager* GetBindlessResourceManager() const;
 		std::string const& GetShaderName() const;
-		uint32_t GetMaxResourceCount() const;
+		uint32_t GetCurrentResourceCount() const;
 		
 
 	private:
@@ -83,8 +85,14 @@ namespace re
 		void ProcessUnregistrations(uint64_t frameNum);
 
 
+	private: 
+		void IncreaseSetSize();
+
+
 	private:
-		std::queue<ResourceHandle> m_freeIndexes;
+		// We use a priority queue to ensure that ResourceHandles closest to 0 are reused first, to minimize the number
+		// of descriptors that are copied each frame
+		std::priority_queue<ResourceHandle, std::vector<ResourceHandle>, std::greater<ResourceHandle>> m_freeIndexes;
 	
 		BindlessResourceManager* m_bindlessResourceMgr;
 
@@ -92,7 +100,7 @@ namespace re
 
 		std::string m_shaderName; 	// To query root sig metadata (E.g. for setting null descriptors from the BRM)
 
-		uint32_t m_maxResources;	// Max. no. of resources managed by this resource system
+		uint32_t m_currentResourceCount;	// Max. no. of resources managed by this resource system
 
 
 	private:
@@ -138,9 +146,9 @@ namespace re
 	}
 
 
-	inline uint32_t IBindlessResourceSet::GetMaxResourceCount() const
+	inline uint32_t IBindlessResourceSet::GetCurrentResourceCount() const
 	{
-		return m_maxResources;
+		return m_currentResourceCount;
 	}
 
 	
@@ -149,11 +157,6 @@ namespace re
 
 	class BindlessResourceManager
 	{
-	public:
-		// TODO: This should be dynamic, per resource set
-		static constexpr uint32_t k_maxResourceCount = 256;	// Max no. of descriptors per table
-		
-
 	public:
 		BindlessResourceManager();
 
@@ -259,7 +262,7 @@ namespace re
 			const uint8_t resourceSetIdx = util::CheckedCast<uint8_t>(m_resourceSets.size());
 
 	
-			m_resourceSets.emplace_back(T::CreateBindlessResourceSet(this, k_maxResourceCount));
+			m_resourceSets.emplace_back(T::CreateBindlessResourceSet(this));
 			resourceSet = m_resourceSets.back().get();
 
 			m_resourceSetTypeIdx.emplace(typeIdx, resourceSetIdx);

@@ -17,12 +17,8 @@ namespace re
 	class IVertexStreamResourceSet : public virtual re::IBindlessResourceSet
 	{
 	public:
-		IVertexStreamResourceSet(
-			BindlessResourceManager* brm,
-			char const* shaderName,
-			uint32_t numResources,
-			re::DataType streamDataType)
-			: re::IBindlessResourceSet(brm, shaderName, numResources)
+		IVertexStreamResourceSet(BindlessResourceManager* brm, char const* shaderName, re::DataType streamDataType)
+			: re::IBindlessResourceSet(brm, shaderName)
 			, m_streamDataType(streamDataType)
 		{
 		}
@@ -58,13 +54,9 @@ namespace re
 	class VertexStreamResourceSet : public virtual IVertexStreamResourceSet
 	{
 	public:
-		VertexStreamResourceSet(
-			re::BindlessResourceManager* brm,
-			char const* shaderName,
-			uint32_t numResources,
-			re::DataType streamDataType)
-			: IVertexStreamResourceSet(brm, shaderName, numResources, streamDataType)
-			, re::IBindlessResourceSet(brm, shaderName, numResources)
+		VertexStreamResourceSet(re::BindlessResourceManager* brm, char const* shaderName, re::DataType streamDataType)
+			: IVertexStreamResourceSet(brm, shaderName, streamDataType)
+			, re::IBindlessResourceSet(brm, shaderName)
 		{
 		}
 
@@ -77,7 +69,8 @@ namespace re
 
 	struct IVertexStreamResource : public virtual IBindlessResource
 	{
-		IVertexStreamResource(VertexBufferInput const& vertexStream) : m_vertexBufferInput(vertexStream) {}
+		IVertexStreamResource(VertexBufferInput const& vertexStream)
+			: m_vertexBufferInput(vertexStream) {}
 
 		virtual ~IVertexStreamResource() override = 0;
 
@@ -92,7 +85,6 @@ namespace re
 		static std::unique_ptr<IBindlessResourceSet> CreateBindlessResourceSetBase(
 			re::BindlessResourceManager*,
 			char const* shaderName,
-			uint32_t numResources,
 			re::DataType streamDataType);
 
 
@@ -116,11 +108,9 @@ namespace re
 	inline std::unique_ptr<IBindlessResourceSet> IVertexStreamResource::CreateBindlessResourceSetBase(
 		re::BindlessResourceManager* brm,
 		char const* shaderName,
-		uint32_t numResources,
 		re::DataType streamDataType)
 	{
-		return std::make_unique<VertexStreamResourceSet<T>>(
-			brm, shaderName, numResources, streamDataType);
+		return std::make_unique<VertexStreamResourceSet<T>>(brm, shaderName, streamDataType);
 	}
 
 
@@ -137,11 +127,10 @@ struct VertexStreamResource_##StreamType \
 \
 		~VertexStreamResource_##StreamType() override = default;\
 \
-		static std::unique_ptr<IBindlessResourceSet> CreateBindlessResourceSet( \
-			re::BindlessResourceManager* brm, uint32_t numResources) \
+		static std::unique_ptr<IBindlessResourceSet> CreateBindlessResourceSet(re::BindlessResourceManager* brm) \
 		{ \
 			return CreateBindlessResourceSetBase<VertexStreamResource_##StreamType>( \
-				brm, "VertexStreams_"#StreamType, numResources, ##DataType); \
+				brm, "VertexStreams_"#StreamType, ##DataType); \
 		} \
 	}; \
 	

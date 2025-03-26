@@ -3,9 +3,9 @@
 #include "BindlessResourceManager_DX12.h"
 #include "Context_DX12.h"
 
-#include "Core/Util/CastUtils.h"
+#include "Core/Logger.h"
 
-#include "Shaders/Common/BindlessResourceParams.h"
+#include "Core/Util/CastUtils.h"
 
 #include <d3d12.h>
 #include <wrl/client.h>
@@ -37,20 +37,42 @@ namespace dx12
 
 			// Get the default usage state:
 			resourceSetPlatParams->m_usageState = D3D12_RESOURCE_STATE_COMMON;
-
 			resourceSet.GetResourceUsageState(&resourceSetPlatParams->m_usageState, sizeof(D3D12_RESOURCE_STATES));
 			SEAssert(resourceSetPlatParams->m_usageState != D3D12_RESOURCE_STATE_COMMON,
 				"Resource state is common. This is unexpected");
 
 			// Initialize the the descriptor cache with our null descriptor:
 			resourceSetPlatParams->m_cpuDescriptorCache.resize(
-				resourceSet.GetMaxResourceCount(),
+				resourceSet.GetCurrentResourceCount(),
 				resourceSetPlatParams->m_nullDescriptor);
 
-			resourceSetPlatParams->m_resourceCache.resize(resourceSet.GetMaxResourceCount(), nullptr);
+			resourceSetPlatParams->m_resourceCache.resize(resourceSet.GetCurrentResourceCount(), nullptr);
+
 			resourceSetPlatParams->m_numActiveResources = 0;
 			resourceSetPlatParams->m_isCreated = true;
 		}
+		else // Grow the current size:
+		{
+			SEAssert(resourceSetPlatParams->m_cpuDescriptorCache.size() <= resourceSet.GetCurrentResourceCount() &&
+				resourceSetPlatParams->m_resourceCache.size() <= resourceSet.GetCurrentResourceCount(),
+				"Re-initializing the resource set but the number of resources is less than previous. This is unexpected");
+
+			SEAssert(resourceSetPlatParams->m_numActiveResources == resourceSetPlatParams->m_cpuDescriptorCache.size(),
+				"Number of active resources is out of sync");
+
+			const uint32_t newSize = resourceSet.GetCurrentResourceCount();
+
+			resourceSetPlatParams->m_cpuDescriptorCache.resize( // Does nothing if old size == new size
+				newSize,
+				resourceSetPlatParams->m_nullDescriptor);
+
+			resourceSetPlatParams->m_resourceCache.resize(
+				newSize,
+				nullptr);
+		}
+
+		SEAssert(resourceSetPlatParams->m_cpuDescriptorCache.size() == resourceSetPlatParams->m_resourceCache.size(),
+			"CPU descriptors and resource pointers are out of sync");
 	}
 
 
@@ -60,7 +82,15 @@ namespace dx12
 		dx12::IBindlessResourceSet::PlatformParams* resourceSetPlatParams =
 			resourceSet.GetPlatformParams()->As<dx12::IBindlessResourceSet::PlatformParams*>();
 		SEAssert(resourceSetPlatParams->m_isCreated, "Resource set has not been created");
-		SEAssert(index < resourceSetPlatParams->m_cpuDescriptorCache.size(), "Index is OOB");
+
+		SEAssert(resourceSetPlatParams->m_cpuDescriptorCache.size() == resourceSetPlatParams->m_resourceCache.size(),
+			"CPU descriptors and resource pointers are out of sync");
+
+		// Reallocate if necessary:
+		if (index >= resourceSetPlatParams->m_cpuDescriptorCache.size())
+		{
+			dx12::IBindlessResourceSet::Initialize(resourceSet);
+		}
 
 		if (resource)
 		{
@@ -76,9 +106,17 @@ namespace dx12
 			resource->GetPlatformResource(&resourcePtr, sizeof(ID3D12Resource*));
 			SEAssert(resourcePtr != nullptr, "Failed to get a valid D3D resource");
 
+			SEAssert(std::find(
+				resourceSetPlatParams->m_resourceCache.begin(),
+				resourceSetPlatParams->m_resourceCache.end(),
+				resourcePtr) == resourceSetPlatParams->m_resourceCache.end(),
+				"Resource already set. This is unexpected");
+
 			resourceSetPlatParams->m_resourceCache[index] = resourcePtr;
 
 			resourceSetPlatParams->m_numActiveResources++;
+			SEAssert(resourceSetPlatParams->m_numActiveResources <= resourceSetPlatParams->m_resourceCache.size(),
+				"Number of active resources is out of bounds");
 		}
 		else // Otherwise, write a null resource and descriptor:
 		{
@@ -97,10 +135,16 @@ namespace dx12
 	std::vector<dx12::CommandList::TransitionMetadata> BindlessResourceManager::BuildResourceTransitions(
 		re::BindlessResourceManager const& brm)
 	{
+		// Pre-count the number of resources we'll be transitioning:
+		uint32_t totalResources = 0;
+		for (auto const& resourceSet : brm.GetResourceSets())
+		{
+			totalResources += resourceSet->GetCurrentResourceCount();
+		}
+
 		// Batch all transitions for all resources into a single call:
 		std::vector<dx12::CommandList::TransitionMetadata> transitions;
-		transitions.reserve(
-			static_cast<uint64_t>(brm.GetNumResourceSets()) * re::BindlessResourceManager::k_maxResourceCount);
+		transitions.reserve(static_cast<uint64_t>(totalResources));
 
 		for (auto const& resourceSet : brm.GetResourceSets())
 		{
