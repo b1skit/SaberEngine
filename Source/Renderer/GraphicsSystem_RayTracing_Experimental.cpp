@@ -128,7 +128,7 @@ namespace gr
 	void RayTracing_ExperimentalGraphicsSystem::PreRender()
 	{
 		// Update the SBT every frame (in case the scene TLAS has been (re)created/modified etc)
-		m_sceneSBT->Update(*m_sceneTLAS);
+		re::ShaderBindingTable::Update(m_sceneSBT, *m_sceneTLAS);
 
 		// If the TLAS is valid, create a ray tracing batch:
 		if (m_sceneTLAS && *m_sceneTLAS)

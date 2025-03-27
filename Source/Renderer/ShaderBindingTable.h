@@ -59,7 +59,8 @@ namespace re
 
 	public:
 		// This should be called every frame (in case the TLAS has been re/created/modified etc)
-		void Update(std::shared_ptr<re::AccelerationStructure> const& tlas); 
+		// Note: Replaces the std::shared_ptr<re::ShaderBindingTable> if the underlying object is recreated
+		static void Update(std::shared_ptr<re::ShaderBindingTable>&, std::shared_ptr<re::AccelerationStructure> const&);
 
 
 	private:
@@ -74,7 +75,6 @@ namespace re
 		std::vector<core::InvPtr<re::Shader>> m_callableShaders;
 
 		std::shared_ptr<re::AccelerationStructure> m_TLAS;
-		std::weak_ptr<re::ShaderBindingTable> m_self; // In case we need to schedule API-re-creation
 
 		SBTParams m_sbtParams;
 

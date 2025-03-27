@@ -23,11 +23,6 @@ namespace re
 	{
 		std::shared_ptr<re::ShaderBindingTable> newSBT;
 		newSBT.reset(new ShaderBindingTable(name, sbtParams));
-
-		// The SBT we're creating stores a weak pointer to itself so it can pass a shared_ptr to the RenderManager in 
-		// case our API objects need to be re-created
-		newSBT->m_self = newSBT;
-
 		return newSBT;
 	}
 
@@ -63,108 +58,112 @@ namespace re
 	}
 
 
-	void ShaderBindingTable::Update(std::shared_ptr<re::AccelerationStructure> const& receivedTLAS)
+	void ShaderBindingTable::Update(
+		std::shared_ptr<re::ShaderBindingTable>& sbt, std::shared_ptr<re::AccelerationStructure> const& receivedTLAS)
 	{
-		if (receivedTLAS == m_TLAS)
+		if (receivedTLAS == sbt->m_TLAS)
 		{
 			return; // Nothing to do: TLAS will be recreated IFF geometry/materials change
 		}
-		m_TLAS = receivedTLAS;
-
-		if (!m_TLAS) // TLAS either not created yet, or has been destroyed
+		else if (receivedTLAS == nullptr && sbt->m_TLAS) // TLAS may not have been created yet, or has been destroyed
 		{
-			return;
+			sbt->Destroy();
 		}
-
-		// If we made it this far, we need to (re)build the SBT:
-		Destroy();
-		m_platformParams = platform::ShaderBindingTable::CreatePlatformParams();
 		
-		// Resolve our shaders:
-		effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
+		if (receivedTLAS)
+		{
+			// Replace the SBT:
+			sbt = Create(sbt->GetName().c_str(), sbt->GetSBTParams());
 
-		auto ResolveShaders = [&effectDB](
-			std::set<ShaderID>& seenShaders,
-			std::vector<std::pair<EffectID, effect::drawstyle::Bitmask>> const& styles,
-			std::vector<core::InvPtr<re::Shader>>& shadersOut)
-			{
-				for (auto const& entry : styles)
+			SEAssert(sbt->m_platformParams, "Platform params should have been registered for deferred delete");
+			sbt->m_platformParams = platform::ShaderBindingTable::CreatePlatformParams();
+
+			sbt->m_TLAS = receivedTLAS;
+
+
+			// Resolve our shaders:
+			effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
+
+			auto ResolveShaders = [&effectDB](
+				std::set<ShaderID>& seenShaders,
+				std::vector<std::pair<EffectID, effect::drawstyle::Bitmask>> const& styles,
+				std::vector<core::InvPtr<re::Shader>>& shadersOut)
 				{
-					core::InvPtr<re::Shader> const& shader = effectDB.GetResolvedShader(entry.first, entry.second);
-					if (seenShaders.emplace(shader->GetShaderIdentifier()).second)
+					for (auto const& entry : styles)
 					{
-						shadersOut.emplace_back(shader);
+						core::InvPtr<re::Shader> const& shader = effectDB.GetResolvedShader(entry.first, entry.second);
+						if (seenShaders.emplace(shader->GetShaderIdentifier()).second)
+						{
+							shadersOut.emplace_back(shader);
+						}
+					}
+				};
+
+			// Ray generation shaders:
+			std::set<ShaderID> seenRayGenShaders;
+			ResolveShaders(seenRayGenShaders, sbt->m_sbtParams.m_rayGenStyles, sbt->m_rayGenShaders);
+
+			// Miss shaders:
+			std::set<ShaderID> seenMissShaders;
+			ResolveShaders(seenMissShaders, sbt->m_sbtParams.m_missStyles, sbt->m_missShaders);
+
+			// Hit group shaders: Build a unique list of shaders used across all BLAS instances:
+			re::AccelerationStructure::TLASParams const* tlasParams =
+				dynamic_cast<re::AccelerationStructure::TLASParams const*>(sbt->m_TLAS->GetASParams());
+			SEAssert(tlasParams, "Failed to get TLASParams");
+
+			std::set<ShaderID> seenHitShaders;
+			for (auto const& blas : tlasParams->m_blasInstances)
+			{
+				re::AccelerationStructure::BLASParams const* blasParams =
+					dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
+				SEAssert(blasParams, "Failed to get TLASParams");
+
+				for (auto const& geo : blasParams->m_geometry)
+				{
+					SEAssert(geo.GetEffectID() != 0, "Found an uninitialized EffectID on BLAS geometry record");
+					SEAssert(geo.GetDrawstyleBits() != 0,
+						"Found an uninitialized drawstyle bitmask on a BLAS geometry record. This is unexpected");
+
+					const effect::drawstyle::Bitmask finalBitmask =
+						geo.GetDrawstyleBits() | sbt->m_sbtParams.m_hitgroupStyles;
+
+					effect::Technique const* technique = effectDB.GetTechnique(geo.GetEffectID(), finalBitmask);
+
+					core::InvPtr<re::Shader> const& shader = technique->GetShader();
+					if (seenHitShaders.emplace(shader->GetShaderIdentifier()).second)
+					{
+						// Note: We use the Technique name as the hit group name
+						sbt->m_hitGroupNamesAndShaders.emplace_back(technique->GetName(), shader);
 					}
 				}
-			};
-
-		// Ray generation shaders:
-		std::set<ShaderID> seenRayGenShaders;
-		ResolveShaders(seenRayGenShaders, m_sbtParams.m_rayGenStyles, m_rayGenShaders);
-
-		// Miss shaders:
-		std::set<ShaderID> seenMissShaders;
-		ResolveShaders(seenMissShaders, m_sbtParams.m_missStyles, m_missShaders);
-
-		// Hit group shaders: Build a unique list of shaders used across all BLAS instances:
-		re::AccelerationStructure::TLASParams const* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams const*>(m_TLAS->GetASParams());
-		SEAssert(tlasParams, "Failed to get TLASParams");
-
-		std::set<ShaderID> seenHitShaders;
-		for (auto const& blas : tlasParams->m_blasInstances)
-		{
-			re::AccelerationStructure::BLASParams const* blasParams =
-				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
-			SEAssert(blasParams, "Failed to get TLASParams");
-
-			for (auto const& geo : blasParams->m_geometry)
-			{
-				SEAssert(geo.GetEffectID() != 0, "Found an uninitialized EffectID on BLAS geometry record");
-				SEAssert(geo.GetDrawstyleBits() != 0,
-					"Found an uninitialized drawstyle bitmask on a BLAS geometry record. This is unexpected");
-
-				const effect::drawstyle::Bitmask finalBitmask =
-					geo.GetDrawstyleBits() | m_sbtParams.m_hitgroupStyles;
-
-				effect::Technique const* technique = effectDB.GetTechnique(geo.GetEffectID(), finalBitmask);
-				
-				core::InvPtr<re::Shader> const& shader = technique->GetShader();
-				if (seenHitShaders.emplace(shader->GetShaderIdentifier()).second)
-				{
-					// Note: We use the Technique name as the hit group name
-					m_hitGroupNamesAndShaders.emplace_back(technique->GetName(), shader);
-				}
 			}
-		}
 
-		// Callable shaders:
-		std::set<ShaderID> seenCallableShaders;
-		ResolveShaders(seenCallableShaders, m_sbtParams.m_callableStyles, m_callableShaders);
+			// Callable shaders:
+			std::set<ShaderID> seenCallableShaders;
+			ResolveShaders(seenCallableShaders, sbt->m_sbtParams.m_callableStyles, sbt->m_callableShaders);
 
 
 #if defined (_DEBUG)
-		// Validate we don't have any duplicates between our various sets of shaders:
-		std::set<ShaderID> seenShaderIDs;
-		auto ValidateUniqueIDs = [&seenShaderIDs](std::set<ShaderID> const& ids)
-			{
-				for (ShaderID id : ids)
+			// Validate we don't have any duplicates between our various sets of shaders:
+			std::set<ShaderID> seenShaderIDs;
+			auto ValidateUniqueIDs = [&seenShaderIDs](std::set<ShaderID> const& ids)
 				{
-					const bool isUnique = seenShaderIDs.emplace(id).second;
-					SEAssert(isUnique, "Found a duplicate ShaderID. This should not be possible");
-				}
-			};
-		ValidateUniqueIDs(seenRayGenShaders);
-		ValidateUniqueIDs(seenMissShaders);
-		ValidateUniqueIDs(seenHitShaders);
-		ValidateUniqueIDs(seenCallableShaders);
+					for (ShaderID id : ids)
+					{
+						const bool isUnique = seenShaderIDs.emplace(id).second;
+						SEAssert(isUnique, "Found a duplicate ShaderID. This should not be possible");
+					}
+				};
+			ValidateUniqueIDs(seenRayGenShaders);
+			ValidateUniqueIDs(seenMissShaders);
+			ValidateUniqueIDs(seenHitShaders);
+			ValidateUniqueIDs(seenCallableShaders);
 #endif
 
-		// Finally, register our SBT for API (re)creation. This needs to be done to ensure any shaders we access have
-		// already been created (as we'll need their shader blobs etc)
-		std::shared_ptr<re::ShaderBindingTable> thisSBT = m_self.lock();
-		SEAssert(thisSBT, "Failed to convert SBT weak_ptr to a shared_ptr");
-
-		re::RenderManager::Get()->RegisterForCreate<re::ShaderBindingTable>(thisSBT);
+			// Finally, register our SBT for API creation. This needs to be done to ensure any shaders we access have
+			// already been created (as we'll need their shader blobs etc)
+			re::RenderManager::Get()->RegisterForCreate<re::ShaderBindingTable>(sbt);
+		}
 	}
 }
