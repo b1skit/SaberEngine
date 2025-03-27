@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "BoundsComponent.h"
 #include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "MaterialInstanceComponent.h"

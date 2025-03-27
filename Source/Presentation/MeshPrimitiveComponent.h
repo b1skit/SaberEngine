@@ -1,8 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "BoundsComponent.h"
-#include "RenderDataComponent.h"
-
 #include "Renderer/MeshPrimitive.h"
 
 
@@ -15,7 +12,7 @@ namespace core
 namespace fr
 {
 	class EntityManager;
-
+	class RenderDataComponent;
 
 	class MeshPrimitiveComponent
 	{

@@ -1,5 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "AnimationComponent.h"
+#include "BoundsComponent.h"
 #include "Camera.h"
 #include "CameraComponent.h"
 #include "EntityManager.h"
@@ -11,7 +12,6 @@
 #include "MeshMorphComponent.h"
 #include "MeshPrimitiveComponent.h"
 #include "RelationshipComponent.h"
-#include "SceneManager.h"
 #include "SceneNodeConcept.h"
 #include "SkinningComponent.h"
 #include "TransformComponent.h"
@@ -23,6 +23,7 @@
 #include "Core/Util/FileIOUtils.h"
 
 #include "Renderer/Material_GLTF.h"
+#include "Renderer/RenderManager.h"
 #include "Renderer/VertexStreamBuilder.h"
 
 #pragma warning(disable : 4996) // Suppress error C4996 (Caused by use of fopen, strcpy, strncpy in cgltf.h)
