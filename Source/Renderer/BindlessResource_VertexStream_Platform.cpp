@@ -6,7 +6,7 @@
 namespace platform
 {
 	std::function<ResourceHandle(void)> (*IVertexStreamResource::GetRegistrationCallback)(re::VertexBufferInput const&) = nullptr;
-	std::function<void(ResourceHandle&)>(*IVertexStreamResource::GetUnregistrationCallback)(gr::VertexStream::Type) = nullptr;
+	std::function<void(ResourceHandle&)>(*IVertexStreamResource::GetUnregistrationCallback)(re::DataType) = nullptr;
 	void (*IVertexStreamResource::GetPlatformResource)(re::IBindlessResource const&, void*, size_t) = nullptr;
 	void (*IVertexStreamResource::GetDescriptor)(re::IBindlessResourceSet const&, re::IBindlessResource const&, void*, size_t) = nullptr;
 

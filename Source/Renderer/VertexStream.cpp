@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Buffer.h"
-#include "BufferView.h"
 #include "RenderManager.h"
 #include "SysInfo_Platform.h"
 #include "VertexStream.h"
@@ -10,8 +9,10 @@
 #include "Core/Config.h"
 #include "Core/InvPtr.h"
 
+#include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/ILoadContext.h"
 
+#include "Core/Util/ByteVector.h"
 #include "Core/Util/HashKey.h"
 
 
@@ -188,7 +189,7 @@ namespace gr
 			bindlessRegistrationCallback = 
 				re::IVertexStreamResource::GetRegistrationCallback(vertexStream);
 			bindlessUnregistrationCallback = 
-				re::IVertexStreamResource::GetUnregistrationCallback(vertexStream->GetType());
+				re::IVertexStreamResource::GetUnregistrationCallback(vertexStream->GetDataType());
 		}	
 
 		m_streamBuffer = re::Buffer::Create(

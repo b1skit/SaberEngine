@@ -24,46 +24,42 @@ namespace dx12
 
 				re::BindlessResourceManager& brm = context->GetBindlessResourceManager();
 
-				switch (vertexBufferInput.GetStream()->GetType())
+				switch (vertexBufferInput.GetStream()->GetDataType())
 				{
-				case gr::VertexStream::Position:
+				case re::DataType::Float2:
 				{
-					return brm.RegisterResource<re::VertexStreamResource_Position>(
-						std::make_unique<re::VertexStreamResource_Position>(vertexBufferInput));
+					return brm.RegisterResource<re::VertexStreamResource_Float2>(
+						std::make_unique<re::VertexStreamResource_Float2>(vertexBufferInput));
 				}
 				break;
-				case gr::VertexStream::Normal:
+				case re::DataType::Float3:
 				{
-					return brm.RegisterResource<re::VertexStreamResource_Normal>(
-						std::make_unique<re::VertexStreamResource_Normal>(vertexBufferInput));
+					return brm.RegisterResource<re::VertexStreamResource_Float3>(
+						std::make_unique<re::VertexStreamResource_Float3>(vertexBufferInput));
 				}
 				break;
-				case gr::VertexStream::Tangent:
+				case re::DataType::Float4:
 				{
-					return brm.RegisterResource<re::VertexStreamResource_Tangent>(
-						std::make_unique<re::VertexStreamResource_Tangent>(vertexBufferInput));
+					return brm.RegisterResource<re::VertexStreamResource_Float4>(
+						std::make_unique<re::VertexStreamResource_Float4>(vertexBufferInput));
 				}
 				break;
-				case gr::VertexStream::TexCoord:
+				case re::DataType::UShort:
 				{
-					return brm.RegisterResource<re::VertexStreamResource_TexCoord>(
-							std::make_unique<re::VertexStreamResource_TexCoord>(vertexBufferInput));
+					return brm.RegisterResource<re::VertexStreamResource_UShort>(
+						std::make_unique<re::VertexStreamResource_UShort>(vertexBufferInput));
 				}
 				break;
-				case gr::VertexStream::Color:
+				case re::DataType::UInt:
 				{
-					return brm.RegisterResource<re::VertexStreamResource_Color>(
-							std::make_unique<re::VertexStreamResource_Color>(vertexBufferInput));
+					return brm.RegisterResource<re::VertexStreamResource_UInt>(
+						std::make_unique<re::VertexStreamResource_UInt>(vertexBufferInput));
 				}
 				break;
-				case gr::VertexStream::Index:
-				{
-					return brm.RegisterResource<re::VertexStreamResource_Index>(
-						std::make_unique<re::VertexStreamResource_Index>(vertexBufferInput));
+				default: SEAssertF("Data type is not currently supported");
 				}
-				break;
-				default: SEAssertF("Invalid vertex stream type");
-				}
+				SEStaticAssert(static_cast<uint8_t>(re::DataType::DataType_Count) == 24,
+					"Data type count has changed. This must be updated");
 			};
 
 		return RegisterVertexStream;
@@ -71,9 +67,9 @@ namespace dx12
 
 
 	std::function<void(ResourceHandle&)> IVertexStreamResource::GetUnregistrationCallback(
-		gr::VertexStream::Type streamType)
+		re::DataType dataType)
 	{
-		auto UnregisterVertexStream = [streamType](ResourceHandle& resourceHandle)
+		auto UnregisterVertexStream = [dataType](ResourceHandle& resourceHandle)
 			{
 				dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
@@ -81,40 +77,37 @@ namespace dx12
 
 				const uint64_t frameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
 
-				switch (streamType)
+				switch (dataType)
 				{
-				case gr::VertexStream::Position:
+				case re::DataType::Float2:
 				{
-					brm.UnregisterResource<re::VertexStreamResource_Position>(resourceHandle, frameNum);
+					brm.UnregisterResource<re::VertexStreamResource_Float2>(resourceHandle, frameNum);
 				}
 				break;
-				case gr::VertexStream::Normal:
+				case re::DataType::Float3:
 				{
-					brm.UnregisterResource<re::VertexStreamResource_Normal>(resourceHandle, frameNum);
+					brm.UnregisterResource<re::VertexStreamResource_Float3>(resourceHandle, frameNum);
 				}
 				break;
-				case gr::VertexStream::Tangent:
+				case re::DataType::Float4:
 				{
-					brm.UnregisterResource<re::VertexStreamResource_Tangent>(resourceHandle, frameNum);
+					brm.UnregisterResource<re::VertexStreamResource_Float4>(resourceHandle, frameNum);
 				}
 				break;
-				case gr::VertexStream::TexCoord:
+				case re::DataType::UShort:
 				{
-					brm.UnregisterResource<re::VertexStreamResource_TexCoord>(resourceHandle, frameNum);
+					brm.UnregisterResource<re::VertexStreamResource_UShort>(resourceHandle, frameNum);
 				}
 				break;
-				case gr::VertexStream::Color:
+				case re::DataType::UInt:
 				{
-					brm.UnregisterResource<re::VertexStreamResource_Color>(resourceHandle, frameNum);
+					brm.UnregisterResource<re::VertexStreamResource_UInt>(resourceHandle, frameNum);
 				}
 				break;
-				case gr::VertexStream::Index:
-				{
-					brm.UnregisterResource<re::VertexStreamResource_Index>(resourceHandle, frameNum);
+				default: SEAssertF("Data type is not currently supported");
 				}
-				break;
-				default: SEAssertF("Invalid vertex stream type");
-				}
+				SEStaticAssert(static_cast<uint8_t>(re::DataType::DataType_Count) == 24,
+					"Data type count has changed. This must be updated");
 			};
 
 		return UnregisterVertexStream;

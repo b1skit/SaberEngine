@@ -44,9 +44,9 @@ namespace re
 
 
 	std::function<void(ResourceHandle&)> IVertexStreamResource::GetUnregistrationCallback(
-		gr::VertexStream::Type streamType)
+		re::DataType dataType)
 	{
-		return platform::IVertexStreamResource::GetUnregistrationCallback(streamType);
+		return platform::IVertexStreamResource::GetUnregistrationCallback(dataType);
 	}
 
 

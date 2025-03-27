@@ -92,7 +92,7 @@ namespace re
 		static std::function<ResourceHandle(void)> GetRegistrationCallback(
 			core::InvPtr<gr::VertexStream> const&);
 
-		static std::function<void(ResourceHandle&)> GetUnregistrationCallback(gr::VertexStream::Type);
+		static std::function<void(ResourceHandle&)> GetUnregistrationCallback(re::DataType);
 
 		static ResourceHandle GetResourceHandle(VertexBufferInput const&);
 		static ResourceHandle GetResourceHandle(core::InvPtr<gr::VertexStream> const&);
@@ -117,29 +117,27 @@ namespace re
 	// ---
 
 
-	// Use a macro to cut down on boilerplate: Defines "VertexStreamResource_<VertexStream::Type> structures
-#define DEFINE_VERTEX_STREAM_RESOURCE(StreamType, DataType) \
-struct VertexStreamResource_##StreamType \
+	// Use a macro to cut down on boilerplate: Defines "VertexStreamResource_<DataTypeName> structures
+#define DEFINE_VERTEX_STREAM_RESOURCE(DataTypeName) \
+struct VertexStreamResource_##DataTypeName \
 	: public virtual IVertexStreamResource \
 	{ \
-		VertexStreamResource_##StreamType(VertexBufferInput const& vertexStream) \
+		VertexStreamResource_##DataTypeName(VertexBufferInput const& vertexStream) \
 			: IVertexStreamResource(vertexStream) {} \
 \
-		~VertexStreamResource_##StreamType() override = default;\
+		~VertexStreamResource_##DataTypeName() override = default;\
 \
 		static std::unique_ptr<IBindlessResourceSet> CreateBindlessResourceSet(re::BindlessResourceManager* brm) \
 		{ \
-			return CreateBindlessResourceSetBase<VertexStreamResource_##StreamType>( \
-				brm, "VertexStreams_"#StreamType, ##DataType); \
+			return CreateBindlessResourceSetBase<VertexStreamResource_##DataTypeName>( \
+				brm, "VertexStreams_"#DataTypeName, re::DataType::##DataTypeName); \
 		} \
 	}; \
 	
 	// Finally, declare our final vertex stream resource types:
-	DEFINE_VERTEX_STREAM_RESOURCE(Position, re::DataType::Float3);
-	DEFINE_VERTEX_STREAM_RESOURCE(Normal, re::DataType::Float3);
-	DEFINE_VERTEX_STREAM_RESOURCE(Tangent, re::DataType::Float4);
-	DEFINE_VERTEX_STREAM_RESOURCE(TexCoord, re::DataType::Float2);
-	DEFINE_VERTEX_STREAM_RESOURCE(Color, re::DataType::Float4);
-
-	DEFINE_VERTEX_STREAM_RESOURCE(Index, re::DataType::UInt);
+	DEFINE_VERTEX_STREAM_RESOURCE(Float2);
+	DEFINE_VERTEX_STREAM_RESOURCE(Float3);
+	DEFINE_VERTEX_STREAM_RESOURCE(Float4);
+	DEFINE_VERTEX_STREAM_RESOURCE(UShort);
+	DEFINE_VERTEX_STREAM_RESOURCE(UInt);
 }

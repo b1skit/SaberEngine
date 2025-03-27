@@ -121,7 +121,7 @@ namespace gr
 			// Helper: Get a specific vertex stream packed into a MeshPrimitive::RenderData.
 			// If the setIdx index < 0, the first matching type is returned
 			static core::InvPtr<gr::VertexStream> GetVertexStreamFromRenderData(
-				gr::MeshPrimitive::RenderData const&, gr::VertexStream::Type, int8_t setIdx = -1);
+				gr::MeshPrimitive::RenderData const&, gr::VertexStream::Type, int8_t setIdx = 0);
 
 			// Helper: Registers all resources types on the MeshPrimitive RenderData with an AccelerationStructure
 			static void RegisterBindlessResources(

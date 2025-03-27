@@ -112,25 +112,35 @@ namespace re
 			void SetDrawstyleBits(effect::drawstyle::Bitmask drawstyleBits);
 			effect::drawstyle::Bitmask GetDrawstyleBits() const;
 			
-			template<typename ResourceType, typename InvPtrType>
-			void RegisterResource(core::InvPtr<InvPtrType> const& resource);
+
+			void RegisterResource(core::InvPtr<gr::VertexStream> const&);
+			void RegisterResource(re::VertexBufferInput const&);
 			
-			template<typename T>
-			void RegisterResource(core::InvPtr<T> const&);
 
-			template<typename T>
-			uint32_t GetResourceHandle() const;
-
-
-		private:
-			void RegisterResource(std::type_index typeIdx, ResourceHandle resourceHandle);
+			// Note: For gr::VertexStream::Type::Index, setIdx 0 = 16 bit, setIdx 1 = 32 bit
+			ResourceHandle GetResourceHandle(gr::VertexStream::Type, uint8_t setIdx = 0) const;
 
 
 		private:
 			re::VertexBufferInput m_positions; // Respects buffer overrides
 			core::InvPtr<gr::VertexStream> m_indices; // Can be null/invalid
 
-			std::map<std::type_index, ResourceHandle> m_resourceHandles;
+			// We pack the VertexStreamMetadata the same way as vertex streams in MeshPrimitive::RenderData: 
+			// Streams of the same type are packed contiguously, in monotonically-increasing set order. Stream types are
+			// packed in the same order as the gr::VertexStream types are declared
+			struct VertexStreamMetadata
+			{
+				ResourceHandle m_resourceHandle = k_invalidResourceHandle;
+				gr::VertexStream::Type m_streamType = gr::VertexStream::Type::Type_Count;
+				uint8_t m_setIndex = 0;
+			};
+			std::array<VertexStreamMetadata, gr::VertexStream::k_maxVertexStreams> m_vertexStreamMetadata{};
+
+			// SaberEngine supports 16 and 32 bit uint index streams, we abuse the set index here to differentiate them:
+			VertexStreamMetadata m_indexStream16BitMetadata{}; // setIdx = 0
+			VertexStreamMetadata m_indexStream32BitMetadata{}; // setIdx = 1
+
+			void RegisterResourceInternal(ResourceHandle resolvedResourceHandle, gr::VertexStream::Type, re::DataType);
 
 			GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
 
@@ -263,9 +273,7 @@ namespace re
 	inline void AccelerationStructure::Geometry::SetVertexPositions(re::VertexBufferInput const& positions)
 	{
 		m_positions = positions;
-
-		RegisterResource(typeid(re::VertexStreamResource_Position),
-			IVertexStreamResource::GetResourceHandle(m_positions));
+		RegisterResource(m_positions);
 	}
 
 
@@ -281,8 +289,7 @@ namespace re
 
 		if (m_indices)
 		{
-			RegisterResource(typeid(re::VertexStreamResource_Index),
-				IVertexStreamResource::GetResourceHandle(m_indices));
+			RegisterResource(m_indices);
 		}
 	}
 
@@ -326,37 +333,5 @@ namespace re
 	inline effect::drawstyle::Bitmask AccelerationStructure::Geometry::GetDrawstyleBits() const
 	{
 		return m_drawstyleBits;
-	}
-
-
-	inline void AccelerationStructure::Geometry::RegisterResource(std::type_index typeIdx, ResourceHandle resourceHandle)
-	{
-		m_resourceHandles.emplace(typeIdx, resourceHandle);
-	}
-
-
-	template<typename ResourceType, typename InvPtrType>
-	void AccelerationStructure::Geometry::RegisterResource(core::InvPtr<InvPtrType> const& resource)
-	{
-		RegisterResource(std::type_index(typeid(ResourceType)), ResourceType::GetResourceHandle(resource));
-	}
-
-
-	template<typename T>
-	inline void AccelerationStructure::Geometry::RegisterResource(core::InvPtr<T> const& resource)
-	{
-		RegisterResource(std::type_index(typeid(T)), T::GetResourceHandle(resource));
-	}
-
-
-	template<typename T>
-	uint32_t AccelerationStructure::Geometry::GetResourceHandle() const
-	{
-		auto const& result = m_resourceHandles.find(std::type_index(typeid(T)));
-		if (result != m_resourceHandles.end())
-		{
-			return result->second;
-		}
-		return k_invalidResourceHandle;
 	}
 }

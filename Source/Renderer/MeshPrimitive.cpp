@@ -225,27 +225,26 @@ namespace gr
 	core::InvPtr<gr::VertexStream> MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData,
 		gr::VertexStream::Type streamType,
-		int8_t setIdx /*= -1*/)
+		int8_t setIdx /*= 0*/)
 	{
 		core::InvPtr<gr::VertexStream> result;
 
-		for (uint8_t streamIdx = 0; streamIdx < meshPrimRenderData.m_vertexStreams.size(); ++streamIdx)
+		for (uint8_t streamIdx = 0; streamIdx < meshPrimRenderData.m_numVertexStreams; ++streamIdx)
 		{
+			if (meshPrimRenderData.m_vertexStreams[streamIdx]->GetType() == gr::VertexStream::Type_Count)
+			{
+				break;
+			}
+
 			if (meshPrimRenderData.m_vertexStreams[streamIdx]->GetType() == streamType)
 			{
-				if (setIdx < 0)
-				{
-					result = meshPrimRenderData.m_vertexStreams[streamIdx];
-				}
-				else 
-				{
-					const uint8_t offsetIdx = streamIdx + setIdx;
+				const uint8_t offsetIdx = streamIdx + setIdx;
+				SEAssert(offsetIdx < meshPrimRenderData.m_vertexStreams.size(), "Invalid set index");
 
-					if (offsetIdx < meshPrimRenderData.m_vertexStreams.size() &&
-						meshPrimRenderData.m_vertexStreams[offsetIdx]->GetType() == streamType)
-					{
-						result = meshPrimRenderData.m_vertexStreams[offsetIdx];
-					}
+				// Note: It is valid to find a stream with a different type (e.g. UV1 doesn't exist)
+				if (meshPrimRenderData.m_vertexStreams[offsetIdx]->GetType() == streamType)
+				{
+					result = meshPrimRenderData.m_vertexStreams[offsetIdx];
 				}
 				break;
 			}
@@ -271,30 +270,17 @@ namespace gr
 			case gr::VertexStream::Position:
 			{
 				geometry.SetVertexPositions(stream);
-				geometry.RegisterResource<re::VertexStreamResource_Position, gr::VertexStream>(stream);
 
 				SEAssert(seenPositions == false, "Found multiple position streams. This is unexpected");
 				seenPositions = true;
 			}
 			break;
 			case gr::VertexStream::Normal:
-			{
-				geometry.RegisterResource<re::VertexStreamResource_Normal, gr::VertexStream>(stream);
-			}
-			break;
 			case gr::VertexStream::Tangent:
-			{
-				geometry.RegisterResource<re::VertexStreamResource_Tangent, gr::VertexStream>(stream);
-			}
-			break;
 			case gr::VertexStream::TexCoord:
-			{
-				geometry.RegisterResource<re::VertexStreamResource_TexCoord, gr::VertexStream>(stream);
-			}
-			break;
 			case gr::VertexStream::Color:
 			{
-				geometry.RegisterResource<re::VertexStreamResource_Color, gr::VertexStream>(stream);
+				geometry.RegisterResource(stream);
 			}
 			break;
 			case gr::VertexStream::BlendIndices:
@@ -314,8 +300,7 @@ namespace gr
 
 		if (meshPrimRenderData.m_indexStream)
 		{
-			geometry.SetVertexIndices(meshPrimRenderData.m_indexStream);
-			geometry.RegisterResource<re::VertexStreamResource_Index, gr::VertexStream>(meshPrimRenderData.m_indexStream);
+			geometry.SetVertexIndices(meshPrimRenderData.m_indexStream);			
 		}
 
 		SEAssert(geometry.GetVertexPositions().GetStream().IsValid(), "Failed to set valid vertex positions");

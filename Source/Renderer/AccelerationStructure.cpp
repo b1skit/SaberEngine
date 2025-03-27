@@ -32,6 +32,149 @@ namespace
 
 namespace re
 {
+	void AccelerationStructure::Geometry::RegisterResource(core::InvPtr<gr::VertexStream> const& vertexStream)
+	{
+		RegisterResourceInternal(
+			re::IVertexStreamResource::GetResourceHandle(vertexStream),
+			vertexStream->GetType(),
+			vertexStream->GetDataType());
+	}
+
+
+	void AccelerationStructure::Geometry::RegisterResource(re::VertexBufferInput const& vertexBufferInput)
+	{
+		RegisterResourceInternal(
+			re::IVertexStreamResource::GetResourceHandle(vertexBufferInput),
+			vertexBufferInput.GetStream()->GetType(),
+			vertexBufferInput.GetStream()->GetDataType());
+	}
+
+
+	void AccelerationStructure::Geometry::RegisterResourceInternal(
+		ResourceHandle resolvedResourceHandle, gr::VertexStream::Type streamType, re::DataType dataType)
+	{
+		if (streamType == gr::VertexStream::Index)
+		{
+			switch (dataType)
+			{
+			case re::DataType::UShort:
+			{
+				m_indexStream16BitMetadata = VertexStreamMetadata{
+					.m_resourceHandle = resolvedResourceHandle,
+					.m_streamType = streamType,
+					.m_setIndex = 0,
+				};
+			}
+			break;
+			case re::DataType::UInt:
+			{
+				m_indexStream32BitMetadata = VertexStreamMetadata{
+					.m_resourceHandle = resolvedResourceHandle,
+					.m_streamType = streamType,
+					.m_setIndex = 1, // Typically only 1 index stream is allowed: setIdx = 1 here for consistency only
+				};
+			}
+			break;
+			default: SEAssertF("Unexpected index stream type");
+			}
+		}
+		else
+		{
+			VertexStreamMetadata newStreamMetadata{
+				.m_resourceHandle = resolvedResourceHandle,
+				.m_streamType = streamType,
+				.m_setIndex = 0,
+			};
+
+			for (size_t i = 0; i < m_vertexStreamMetadata.size(); ++i)
+			{
+				SEAssert(m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count ||
+					m_vertexStreamMetadata[i].m_streamType <= streamType,
+					"Invalid insertion order. We currently assume streams will be added in the same order they're packed "
+					"into MeshPrimitive::RenderData");
+
+				if (static_cast<uint8_t>(m_vertexStreamMetadata[i].m_streamType) ==
+					static_cast<uint8_t>(gr::VertexStream::Type::Type_Count) ||
+					m_vertexStreamMetadata[i].m_streamType == streamType)
+				{
+					// If the current index has the same type as the new one, find first open spot:
+					while (i + 1 < m_vertexStreamMetadata.size() &&
+						m_vertexStreamMetadata[i].m_streamType == streamType)
+					{
+						++i;
+						newStreamMetadata.m_setIndex++;
+					}
+					SEAssert(i < m_vertexStreamMetadata.size() &&
+						m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count,
+						"Trying to add a new vertex stream with a set index > 0, but could not find a suitable location");
+
+					// Insert into the empty element we found:
+					m_vertexStreamMetadata[i] = newStreamMetadata;
+
+					break;
+				}
+			}
+
+			SEAssert(streamType != gr::VertexStream::Position ||
+				newStreamMetadata.m_setIndex == 0,
+				"Found multiple position streams. This is unexpected");
+		}
+	}
+
+
+	ResourceHandle AccelerationStructure::Geometry::GetResourceHandle(
+		gr::VertexStream::Type streamType, uint8_t setIdx /*= 0*/) const
+	{
+		if (streamType == gr::VertexStream::Type::Index)
+		{
+			switch (setIdx)
+			{
+			case 0:
+			{
+				return m_indexStream16BitMetadata.m_resourceHandle;
+			}
+			break;
+			case 1:
+			{
+				return m_indexStream32BitMetadata.m_resourceHandle;
+			}
+			break;
+			default: SEAssertF("Invalid setIdx. For gr::VertexStream::Type::Index, setIdx 0 = 16 bit, setIdx 1 = 32 bit");
+			}
+		}
+		else
+		{
+			for (size_t i = 0; i < m_vertexStreamMetadata.size(); ++i)
+			{
+				// Searched all contiguously-packed elements and couldn't find a stream with the given type:
+				if (m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count)
+				{
+					return k_invalidResourceHandle;
+				}
+
+				if (m_vertexStreamMetadata[i].m_streamType == streamType)
+				{
+					SEAssert(i + setIdx < m_vertexStreamMetadata.size(), "Invalid set index");
+
+					if (i + setIdx < m_vertexStreamMetadata.size() &&
+						m_vertexStreamMetadata[i + setIdx].m_streamType == streamType)
+					{
+						return m_vertexStreamMetadata[i + setIdx].m_resourceHandle;
+					}
+					
+					break;					
+				}
+			}
+		}		
+
+		// Searched all elements in a full array and couldn't find a stream with the given type:
+		return k_invalidResourceHandle;
+	}
+
+
+	// ---
+
+
 	std::shared_ptr<AccelerationStructure> AccelerationStructure::CreateBLAS(
 		char const* name,
 		std::unique_ptr<BLASParams>&& blasParams)
@@ -108,16 +251,16 @@ namespace re
 				{
 					bindlessLUTData.emplace_back(BindlessLUTData{
 						.g_posNmlTanUV0 = glm::uvec4(
-							geometry.GetResourceHandle<re::VertexStreamResource_Position>(),
-							geometry.GetResourceHandle<re::VertexStreamResource_Normal>(),
-							geometry.GetResourceHandle<re::VertexStreamResource_Tangent>(),
-							geometry.GetResourceHandle<re::VertexStreamResource_TexCoord>()
+							geometry.GetResourceHandle(gr::VertexStream::Position),
+							geometry.GetResourceHandle(gr::VertexStream::Normal),
+							geometry.GetResourceHandle(gr::VertexStream::Tangent),
+							geometry.GetResourceHandle(gr::VertexStream::TexCoord, 0)
 						),
 						.g_UV1ColorIndex = glm::uvec4(
-							k_invalidResourceHandle, // TODO: Support multiple UV sets
-							geometry.GetResourceHandle<re::VertexStreamResource_Color>(),
-							geometry.GetResourceHandle<re::VertexStreamResource_Index>(),
-							geometry.GetResourceHandle<re::VertexStreamResource_Tangent>()
+							geometry.GetResourceHandle(gr::VertexStream::TexCoord, 1),
+							geometry.GetResourceHandle(gr::VertexStream::Color),
+							geometry.GetResourceHandle(gr::VertexStream::Index, 0), // 16 bit
+							geometry.GetResourceHandle(gr::VertexStream::Index, 1) // 32 bit
 						),
 					});
 				}

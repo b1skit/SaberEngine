@@ -20,32 +20,29 @@ ConstantBuffer<CameraData> CameraParams;
 ConstantBuffer<TraceRayData> TraceRayParams;
 
 
-
 [shader("closesthit")]
 void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-	//float3 barycentrics =
-	//  float3(1.f - attrib.barycentrics.x - attrib.barycentrics.y, attrib.barycentrics.x, attrib.barycentrics.y);
 	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
 
 	uint vertId = 3 * PrimitiveIndex();
 	
 	// #DXR Extra: Per-Instance Data
-	float3 hitColor = float3(0.6, 0.7, 0.6);
+	float3(0.6, 0.7, 0.6);
 	
 	// Fetch our bindless resources:
 	const uint lutIdx = InstanceID() + GeometryIndex();
 		
 	const uint colorStreamIdx = BindlessLUT[lutIdx].g_UV1ColorIndex.y;
-	const uint indexStreamIdx = BindlessLUT[lutIdx].g_UV1ColorIndex.z;
-		
-	StructuredBuffer<float4> colorStream = VertexStreams_Color[colorStreamIdx];
-	StructuredBuffer<uint16_t> indexStream = VertexStreams_Index[indexStreamIdx];
+	StructuredBuffer<float4> colorStream = VertexStreams_Float4[colorStreamIdx];
 
+	const uint3 vertexIndexes = GetVertexIndexes(lutIdx, vertId);
+	
 	// Interpolate the vertex color:
-	hitColor = colorStream[indexStream[vertId + 0]].rgb * barycentrics.x +
-			  colorStream[indexStream[vertId + 1]].rgb * barycentrics.y +
-			  colorStream[indexStream[vertId + 2]].rgb * barycentrics.z;
+	float3 hitColor = 
+		colorStream[vertexIndexes.x].rgb * barycentrics.x +
+		colorStream[vertexIndexes.y].rgb * barycentrics.y +
+		colorStream[vertexIndexes.z].rgb * barycentrics.z;
 
 	payload.colorAndDistance = float4(hitColor, RayTCurrent());
 	
