@@ -290,7 +290,7 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::Create(core::InvPtr<re::Texture> const& texture)
+	void opengl::Texture::Create(core::InvPtr<re::Texture> const& texture, void*)
 	{
 		opengl::Texture::PlatformParams* params = texture->GetPlatformParams()->As<opengl::Texture::PlatformParams*>();
 		SEAssert(!glIsTexture(params->m_textureID) && !params->m_isCreated,

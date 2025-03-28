@@ -1,13 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "BindlessResourceManager.h"
 #include "BufferAllocator.h"
 #include "GPUTimer.h"
 #include "RLibrary_Platform.h"
 #include "SwapChain.h"
 
 #include "Core/Host/Window.h"
-
-#include "Core/Interfaces/IPlatformParams.h"
 
 #include "renderdoc_app.h"
 
@@ -43,6 +42,8 @@ namespace re
 
 	public: // Context interface:
 		virtual void Present() = 0;
+
+		virtual re::BindlessResourceManager* GetBindlessResourceManager() = 0;
 	private:
 		virtual void CreateInternal(uint64_t currentFrame) = 0;
 		virtual void UpdateInternal(uint64_t currentFrame) = 0;

@@ -4,11 +4,9 @@
 #include "HeapManager_DX12.h"
 #include "RenderManager_DX12.h"
 #include "RLibrary_ImGui_DX12.h"
-#include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
 
 #include "Core/Assert.h"
-#include "Core/Config.h"
 
 #include "Core/Util/MathUtils.h"
 #include "Core/Util/TextUtils.h"
@@ -684,8 +682,10 @@ namespace dx12
 	// -----------------------------------------------------------------------------------------------------------------
 
 
-	void Texture::Create(core::InvPtr<re::Texture> const& texture, dx12::CommandList* copyCmdList)
+	void Texture::Create(core::InvPtr<re::Texture> const& texture, void* dx12CopyCmdList)
 	{
+		dx12::CommandList* copyCmdList = static_cast<dx12::CommandList*>(dx12CopyCmdList);
+
 		dx12::Texture::PlatformParams* texPlatParams = texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		SEAssert(texPlatParams->m_isCreated == false, "Texture is already created");
 		texPlatParams->m_isCreated = true;

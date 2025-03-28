@@ -53,6 +53,11 @@ namespace re
 		PlatformParams* GetPlatformParams() const;
 
 
+	public: // Platform implementations:
+		virtual void GetNullDescriptor(void* dest, size_t destByteSize) const = 0;
+		virtual void GetResourceUsageState(void* dest, size_t destByteSize) const = 0;
+
+
 	private: // BindlessResourceManager interface:
 		friend class BindlessResourceManager;
 
@@ -62,16 +67,10 @@ namespace re
 		void Update(uint64_t frameNum);
 
 
-	
 	private:
 		// Store resources pointers and immediately write descriptors to both CPU and GPU-visible heaps. Writes nulls
 		// if IBindlessResource* is null
 		void SetResource(IBindlessResource*, ResourceHandle);
-
-		
-	public: // Platform implementations:
-		virtual void GetNullDescriptor(void* dest, size_t destByteSize) const = 0;
-		virtual void GetResourceUsageState(void* dest, size_t destByteSize) const = 0;
 
 
 	public: // Member accessors for platform:

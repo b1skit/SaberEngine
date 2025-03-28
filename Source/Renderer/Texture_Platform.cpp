@@ -5,12 +5,10 @@
 #include "Texture_OpenGL.h"
 #include "Texture_DX12.h"
 
-#include "Core/Assert.h"
-
 
 namespace platform
 {
-	void platform::Texture::CreatePlatformParams(re::Texture& texture)
+	void Texture::CreatePlatformParams(re::Texture& texture)
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -34,8 +32,15 @@ namespace platform
 	}
 
 
+	void Texture::CreateAPIResource(core::InvPtr<re::Texture> const& texture, void* platformObject)
+	{
+		platform::Texture::Create(texture, platformObject);
+	}
+
+
 	// platform::Texture static members:
 	/***********************************/
+	void (*Texture::Create)(core::InvPtr<re::Texture> const&, void*) = nullptr;
 	void (*Texture::Destroy)(re::Texture&) = nullptr;
 	void (*Texture::ShowImGuiWindow)(core::InvPtr<re::Texture> const&, float scale) = nullptr;
 }

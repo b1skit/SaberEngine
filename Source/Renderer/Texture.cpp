@@ -12,7 +12,7 @@
 namespace
 {
 	// Computes the maximum number of mip levels (e.g. 4x4 texture has 3 mip levels [0,2])
-	uint32_t ComputeMaxMips(uint32_t width, uint32_t height)
+	inline uint32_t ComputeMaxMips(uint32_t width, uint32_t height)
 	{
 		const uint32_t largestDimension = glm::max(width, height);
 		return static_cast<uint32_t>(glm::log2(static_cast<float>(std::max(width, height))) + 1);
@@ -61,7 +61,7 @@ namespace
 	}
 
 
-	glm::uvec2 GetMipWidthHeight(uint32_t width, uint32_t height, uint32_t mipLevel)
+	inline glm::uvec2 GetMipWidthHeight(uint32_t width, uint32_t height, uint32_t mipLevel)
 	{
 		return glm::uvec2(
 			static_cast<uint32_t>(width / static_cast<float>(glm::pow(2.0f, mipLevel))),
@@ -577,12 +577,6 @@ namespace re
 		// A power-of-two value will only have a single bit set to 1 in its binary representation; Use a logical AND
 		// to check if this is the case for both texture dimensions
 		return ((width & (width - 1)) == 0) && ((height & (height - 1)) == 0);
-	}
-
-
-	bool Texture::IsSRGB() const
-	{
-		return m_texParams.m_colorSpace == ColorSpace::sRGB;
 	}
 
 

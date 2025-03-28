@@ -2,6 +2,7 @@
 #pragma once
 #include "BindlessResourceManager.h"
 #include "BufferView.h"
+#include "EnumTypes.h"
 #include "VertexStream.h"
 
 
@@ -10,7 +11,6 @@ namespace core
 	template<typename T>
 	class InvPtr;
 }
-
 
 namespace re
 {
@@ -80,18 +80,14 @@ namespace re
 		void GetDescriptor(IBindlessResourceSet*, void* descriptorOut, size_t descriptorOutByteSize) override;
 
 
-	public:
+	public: // Static helpers:
 		template<typename T>
 		static std::unique_ptr<IBindlessResourceSet> CreateBindlessResourceSetBase(
 			re::BindlessResourceManager*,
 			char const* shaderName,
 			re::DataType streamDataType);
 
-
-	public:
-		static std::function<ResourceHandle(void)> GetRegistrationCallback(
-			core::InvPtr<gr::VertexStream> const&);
-
+		static std::function<ResourceHandle(void)> GetRegistrationCallback(core::InvPtr<gr::VertexStream> const&);
 		static std::function<void(ResourceHandle&)> GetUnregistrationCallback(re::DataType);
 
 		static ResourceHandle GetResourceHandle(VertexBufferInput const&);

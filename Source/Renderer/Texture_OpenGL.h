@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Texture_Platform.h"
 #include "Texture.h"
 
 #include "Core/Util/HashKey.h"
@@ -41,7 +40,7 @@ namespace opengl
 
 	public:
 		// OpenGL-specific functionality:
-		static void Create(core::InvPtr<re::Texture> const& texture);
+		static void Create(core::InvPtr<re::Texture> const& texture, void* unused);
 		
 		static void Bind(core::InvPtr<re::Texture> const&, uint32_t textureUnit);
 		static void Bind(core::InvPtr<re::Texture> const&, uint32_t textureUnit, re::TextureView const&);

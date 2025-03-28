@@ -1,8 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Batch.h"
 #include "Context.h"
-#include "Context_Platform.h"
+#include "VertexStream.h"
 
 
 #include <GL/glew.h>
@@ -10,6 +9,13 @@
 namespace gr
 {
 	class VertexStream;
+}
+
+namespace re
+{
+	class BindlessResourceManager;
+	class VertexBufferInput;
+	class RasterizationState;
 }
 
 namespace opengl
@@ -27,6 +33,8 @@ namespace opengl
 
 		// Context interface:
 		void Present() override;
+
+		re::BindlessResourceManager* GetBindlessResourceManager() override;
 
 
 	public: // OpenGL-specific interface:
@@ -76,4 +84,11 @@ namespace opengl
 		std::unordered_map<uint64_t, GLuint> m_VAOLibrary; // Maps bitmasks of enabled vertex attribute indexes to VAO name
 		std::mutex m_VAOLibraryMutex;
 	};
+
+
+	inline re::BindlessResourceManager* Context::GetBindlessResourceManager()
+	{
+		SEAssertF("OpenGL does not currently support bindless resources");
+		return nullptr;
+	}
 }

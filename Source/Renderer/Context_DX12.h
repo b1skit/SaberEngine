@@ -28,6 +28,8 @@ namespace dx12
 		// Context interface:
 		void Present() override;
 
+		re::BindlessResourceManager* GetBindlessResourceManager() override;
+
 
 	public: // DX12-specific interface:
 		dx12::CommandQueue& GetCommandQueue(dx12::CommandListType type);
@@ -49,8 +51,6 @@ namespace dx12
 		dx12::GlobalResourceStateTracker& GetGlobalResourceStates();
 
 		HeapManager& GetHeapManager();
-
-		re::BindlessResourceManager& GetBindlessResourceManager();
 		
 
 	public:// Null descriptor library
@@ -104,6 +104,11 @@ namespace dx12
 	};
 
 
+	inline re::BindlessResourceManager* Context::GetBindlessResourceManager()
+	{
+		return &m_bindlessResourceManager;
+	}
+
 	inline dx12::CPUDescriptorHeapManager& Context::GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType heapType)
 	{
 		return m_cpuDescriptorHeapMgrs[heapType];
@@ -125,11 +130,5 @@ namespace dx12
 	inline HeapManager& Context::GetHeapManager()
 	{
 		return m_heapManager;
-	}
-
-
-	inline re::BindlessResourceManager& Context::GetBindlessResourceManager()
-	{
-		return m_bindlessResourceManager;
 	}
 }

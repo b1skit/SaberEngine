@@ -12,12 +12,11 @@
 #include "SwapChain_OpenGL.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
-#include "Texture_OpenGL.h"
+#include "Texture_Platform.h"
 
 #include "Core/ProfilingMarkers.h"
 
 #include <GL/glew.h>
-#include <GL/GL.h> // Must follow glew.h...
 
 
 namespace
@@ -65,7 +64,7 @@ namespace opengl
 		{
 			for (auto const& newObject : renderManager.m_newTextures.GetReadData())
 			{
-				opengl::Texture::Create(newObject);
+				platform::Texture::CreateAPIResource(newObject, nullptr);
 			}
 		}
 		// Samplers:

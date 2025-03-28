@@ -230,8 +230,8 @@ namespace re
 		void Destroy();
 
 		glm::vec4 GetTextureDimenions() const;	// .xyzw = width, height, 1/width, 1/height
-		inline uint32_t const& Width() const { return m_texParams.m_width; }
-		inline uint32_t const& Height() const { return m_texParams.m_height; }		
+		uint32_t const& Width() const;
+		uint32_t const& Height() const;
 
 		uint32_t GetTotalBytesPerFace(uint32_t mipLevel = 0) const;
 
@@ -248,11 +248,10 @@ namespace re
 		bool IsPowerOfTwo() const;
 		bool IsSRGB() const;
 
-		re::Texture::PlatformParams* GetPlatformParams() { return m_platformParams.get(); }
-		re::Texture::PlatformParams const* GetPlatformParams() const { return m_platformParams.get(); }
+		re::Texture::PlatformParams* GetPlatformParams() const;
 		void SetPlatformParams(std::unique_ptr<re::Texture::PlatformParams> platformParams);
 
-		TextureParams const& GetTextureParams() const { return m_texParams; }
+		TextureParams const& GetTextureParams() const;
 
 		static void ShowImGuiWindow(core::InvPtr<re::Texture> const&);
 
@@ -318,6 +317,36 @@ namespace re
 	inline uint32_t Texture::GetTotalNumSubresources() const
 	{
 		return m_numSubresources;
+	}
+
+
+	inline uint32_t const& re::Texture::Width() const
+	{
+		return m_texParams.m_width;
+	}
+
+
+	inline uint32_t const& re::Texture::Height() const
+	{
+		return m_texParams.m_height;
+	}
+
+
+	inline bool Texture::IsSRGB() const
+	{
+		return m_texParams.m_colorSpace == ColorSpace::sRGB;
+	}
+
+
+	inline re::Texture::PlatformParams* re::Texture::GetPlatformParams() const
+	{
+		return m_platformParams.get();
+	}
+
+
+	inline re::Texture::TextureParams const& re::Texture::GetTextureParams() const
+	{
+		return m_texParams;
 	}
 }
 

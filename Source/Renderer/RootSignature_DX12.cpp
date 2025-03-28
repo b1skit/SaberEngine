@@ -1105,6 +1105,7 @@ namespace dx12
 				case UAV: return rangeInput.BindPoint == 0 && rangeInput.BindCount == dx12::SysInfo::GetMaxDescriptorTableUAVs();
 				default: SEAssertF("Invalid descriptor type");
 				}
+				return false; // This should never happen
 			};
 
 		for (size_t rangeTypeIdx = 0; rangeTypeIdx < DescriptorType::Type_Count; rangeTypeIdx++)

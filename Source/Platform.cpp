@@ -161,6 +161,7 @@ namespace platform
 			platform::SwapChain::GetBackBufferTargetSet = &opengl::SwapChain::GetBackBufferTargetSet;
 
 			// Texture:
+			platform::Texture::Create			= &opengl::Texture::Create;
 			platform::Texture::Destroy			= &opengl::Texture::Destroy;
 			platform::Texture::ShowImGuiWindow	= &opengl::Texture::ShowImGuiWindow;
 
@@ -224,6 +225,7 @@ namespace platform
 			platform::SwapChain::GetBackBufferTargetSet = &dx12::SwapChain::GetBackBufferTargetSet;
 
 			// Texture:
+			platform::Texture::Create			= &dx12::Texture::Create;
 			platform::Texture::Destroy			= &dx12::Texture::Destroy;
 			platform::Texture::ShowImGuiWindow	= &dx12::Texture::ShowImGuiWindow;
 
@@ -231,9 +233,7 @@ namespace platform
 			platform::Sampler::Create	= &dx12::Sampler::Create;
 			platform::Sampler::Destroy	= &dx12::Sampler::Destroy;
 
-			// Vertex streams:
-			platform::IVertexStreamResource::GetRegistrationCallback		= &dx12::IVertexStreamResource::GetRegistrationCallback;
-			platform::IVertexStreamResource::GetUnregistrationCallback		= &dx12::IVertexStreamResource::GetUnregistrationCallback;
+			// Bindless vertex streams:
 			platform::IVertexStreamResource::GetPlatformResource			= &dx12::IVertexStreamResource::GetPlatformResource;
 			platform::IVertexStreamResource::GetDescriptor					= &dx12::IVertexStreamResource::GetDescriptor;
 

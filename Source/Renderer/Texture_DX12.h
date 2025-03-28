@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "CPUDescriptorHeapManager_DX12.h"
 #include "DescriptorCache_DX12.h"
 #include "Texture.h"
 
@@ -38,7 +37,7 @@ namespace dx12
 
 	public:
 		// DX12-specific functionality:
-		static void Create(core::InvPtr<re::Texture> const&, dx12::CommandList* copyCmdList);
+		static void Create(core::InvPtr<re::Texture> const&, void* dx12CopyCmdList);
 		
 		static core::InvPtr<re::Texture> CreateFromExistingResource(
 			std::string const& name, re::Texture::TextureParams const&, Microsoft::WRL::ComPtr<ID3D12Resource>);

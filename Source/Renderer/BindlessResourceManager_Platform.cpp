@@ -23,11 +23,9 @@ namespace platform
 			return std::make_unique<dx12::IBindlessResourceSet::PlatformParams>();
 		}
 		break;
-		default:
-		{
-			SEAssertF("Invalid rendering API argument received");
+		default: SEAssertF("Invalid rendering API argument received");
 		}
-		}
+		return nullptr; // This should never happen
 	}
 
 

@@ -10,7 +10,7 @@
 #include "Stage.h"
 #include "SwapChain_DX12.h"
 #include "TextureTarget_DX12.h"
-#include "Texture_DX12.h"
+#include "Texture_Platform.h"
 
 #include "Core/Assert.h"
 #include "Core/ProfilingMarkers.h"
@@ -71,7 +71,7 @@ namespace dx12
 					}
 					for (auto& texture : renderManager.m_newTextures.GetReadData())
 					{
-						dx12::Texture::Create(texture, copyCommandList.get());
+						platform::Texture::CreateAPIResource(texture, copyCommandList.get());
 					}
 					if (!singleThreaded)
 					{
@@ -666,7 +666,7 @@ namespace dx12
 									
 									cmdList->AttachBindlessResources(
 										*batchRTParams.m_shaderBindingTable,
-										context->GetBindlessResourceManager());
+										*context->GetBindlessResourceManager());
 									
 									cmdList->SetTLAS(batchRTParams.m_ASInput, *batchRTParams.m_shaderBindingTable);
 
