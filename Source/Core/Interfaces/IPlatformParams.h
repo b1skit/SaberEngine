@@ -28,13 +28,13 @@ namespace core
 	template<typename T>
 	inline T IPlatformParams::As()
 	{
-		return static_cast<T>(this);
+		return dynamic_cast<T>(this);
 	}
 
 
 	template<typename T>
 	inline T const IPlatformParams::As() const
 	{
-		return static_cast<T const>(this);
+		return dynamic_cast<T const>(this);
 	}
 }
