@@ -481,12 +481,13 @@ namespace
 
 		constexpr uint8_t k_entrySize = 8; // Each parameter in a SBT entry requires 8B
 
-		uint32_t entryByteSize = D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT + // Program ID size (e.g. 32B)
-			(k_entrySize * maxParams);
+		uint32_t entryByteSize = 
+			D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT + // Program ID size (e.g. 32B)
+			(k_entrySize * maxParams); // 8B per argument
 
-		// Round up to maintain alignment for the rest of the table
+		// Round up to align the rest of the table: Each shader table start address must be aligned to 64B
 		entryByteSize = 
-			util::RoundUpToNearestMultiple<uint32_t>(entryByteSize, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
+			util::RoundUpToNearestMultiple<uint32_t>(entryByteSize, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
 
 		SEAssert(entryByteSize <= 4096 &&
 			entryByteSize % D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT == 0,
@@ -525,7 +526,7 @@ namespace
 			// Compute the starting offset for the current shader:
 			uint8_t* dst = mappedData + (i * stride);
 
-			SEAssert(reinterpret_cast<uint64_t>(dst) % D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT == 0,
+			SEAssert(reinterpret_cast<uint64_t>(dst) % D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
 				"Shader table entry addresses must be aligned to 32B");
 
 			// Copy the shader identifier to the beginning of the region:
@@ -738,7 +739,7 @@ namespace dx12
 	// Helper to reduce boilerplate:
 	static void WriteSBTElement(
 		GPUResource* sbtGPUResource,
-		std::function<void(uint8_t* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const*)>&& SetData,
+		std::function<void(void* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const*)>&& SetData,
 		std::string const& shaderName,
 		std::ranges::range auto&& shaders,
 		uint32_t regionBaseOffset,	// Base offset for start of shader region (e.g. rayGen/miss/hit groups)
@@ -771,7 +772,7 @@ namespace dx12
 					sbtData += ComputePerFrameSBTBaseOffset(frameRegionByteSize, currentFrameNum, numFramesInFlight);
 
 					SEAssert(reinterpret_cast<uint64_t>(sbtData) % D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
-						"sbtData is misaligned");
+						"sbtData is misaligned");					
 				}
 
 				const uint32_t regionOffset = regionBaseOffset + (i * regionByteStride);
@@ -810,7 +811,7 @@ namespace dx12
 			tlasInput.m_accelerationStructure->GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams const*>();
 
 		auto SetData = [&tlasPlatParams, gpuDescHeap]
-			(uint8_t* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
+			(void* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
 			{
 				switch (rootParam->m_type)
 				{
@@ -823,7 +824,7 @@ namespace dx12
 				break;				
 				case dx12::RootSignature::RootParameter::Type::SRV:
 				{
-					D3D12_GPU_VIRTUAL_ADDRESS const& tlasGPUVA = tlasPlatParams->m_ASBuffer->GetGPUVirtualAddress();
+					const D3D12_GPU_VIRTUAL_ADDRESS tlasGPUVA = tlasPlatParams->m_ASBuffer->GetGPUVirtualAddress();
 					memcpy(dst, &tlasGPUVA, dstByteSize);
 				}
 				break;
@@ -912,7 +913,7 @@ namespace dx12
 		for (auto const& texInput : texInputs)
 		{
 			auto SetData = [&texInput, &resourceTransitions, cmdList, gpuDescHeap]
-				(uint8_t* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
+				(void* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
 				{
 					SEAssert(rootParam->m_type == RootSignature::RootParameter::Type::DescriptorTable,
 						"We currently assume all textures belong to descriptor tables");
@@ -1032,7 +1033,7 @@ namespace dx12
 
 
 			auto SetData = [&bufferInput, buffer, &bufferParams, bufferPlatParams, &resourceTransitions, cmdList, gpuDescHeap]
-				(uint8_t* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
+				(void* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
 				{
 					bool transitionResource = false;
 					D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_COMMON; // Updated below
@@ -1106,8 +1107,7 @@ namespace dx12
 
 							memcpy(dst, &gpuVisibleSRV, dstByteSize);
 
-							toState = (cmdList->GetCommandListType() == dx12::CommandListType::Compute ?
-								D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+							toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 							transitionResource = !isInSharedHeap;
 						}
 						break;
@@ -1147,8 +1147,7 @@ namespace dx12
 
 							memcpy(dst, &gpuVisiblCBV, dstByteSize);
 
-							toState = (cmdList->GetCommandListType() == dx12::CommandListType::Compute ?
-								D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+							toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 							
 							transitionResource = !isInSharedHeap;
 						}
@@ -1240,7 +1239,7 @@ namespace dx12
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
 
 		auto SetData = [&rwTexInput, gpuDescHeap]
-			(uint8_t* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
+			(void* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
 			{
 				SEAssert(rootParam->m_type == RootSignature::RootParameter::Type::DescriptorTable,
 					"We currently assume all textures belong to descriptor tables");
@@ -1322,7 +1321,7 @@ namespace dx12
 		for (auto const& resourceSet : brm.GetResourceSets())
 		{
 			auto SetData = [&resourceSet, gpuDescHeap]
-				(uint8_t* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
+				(void* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
 				{
 					SEAssert(rootParam->m_type == dx12::RootSignature::RootParameter::Type::DescriptorTable,
 						"Unexpected root parameter type for a bindless resource");
@@ -1386,7 +1385,7 @@ namespace dx12
 					currentFrameNum,
 					sbtPlatParams->m_numFramesInFlight);
 			}
-		}			
+		}
 	}
 
 
@@ -1406,18 +1405,19 @@ namespace dx12
 
 		const D3D12_GPU_VIRTUAL_ADDRESS sbtGPUVA = platParams->m_SBT->GetGPUVirtualAddress() + baseOffset;
 
-		// Zero out a region's start address if no shaders exist
-		const bool hasHitGroupRegion = platParams->m_hitGroupRegionTotalByteSize > 0;
+		// Zero out callable region if no shaders exist
 		const bool hasCallableRegion = platParams->m_callableRegionTotalByteSize > 0;		
 
-		const uint64_t rayGenShaderOffset = 
-			(static_cast<uint64_t>(rayGenShaderIdx) * platParams->m_rayGenRegionByteStride);
+		// Shader table start addresses must be aligned to 64B:
+		const uint64_t rayGenShaderOffset = util::RoundUpToNearestMultiple<uint64_t>(
+			(static_cast<uint64_t>(rayGenShaderIdx) * platParams->m_rayGenRegionByteStride), 
+			D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
 
 		SEAssert((sbtGPUVA + platParams->m_rayGenRegionBaseOffset + rayGenShaderOffset) % 
 				D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0 &&
 			(sbtGPUVA + platParams->m_missRegionBaseOffset) %
 				D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0 &&
-			((sbtGPUVA + platParams->m_hitGroupRegionBaseOffset) * hasHitGroupRegion) %
+			((sbtGPUVA + platParams->m_hitGroupRegionBaseOffset)) %
 				D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0 &&
 			((sbtGPUVA + platParams->m_callableRegionBaseOffset) * hasCallableRegion) %
 				D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
@@ -1426,7 +1426,7 @@ namespace dx12
 		return D3D12_DISPATCH_RAYS_DESC{
 			.RayGenerationShaderRecord = D3D12_GPU_VIRTUAL_ADDRESS_RANGE{
 				.StartAddress = sbtGPUVA + platParams->m_rayGenRegionBaseOffset + rayGenShaderOffset,
-				.SizeInBytes = platParams->m_rayGenRegionTotalByteSize,
+				.SizeInBytes = platParams->m_rayGenRegionByteStride, // Size = 1 stride, only a 1 ray gen shader is used
 			},
 			.MissShaderTable = D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE{
 				.StartAddress = sbtGPUVA + platParams->m_missRegionBaseOffset,
@@ -1434,14 +1434,14 @@ namespace dx12
 				.StrideInBytes = platParams->m_missRegionByteStride,
 			},
 			.HitGroupTable = D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE{
-				.StartAddress = (sbtGPUVA + platParams->m_hitGroupRegionBaseOffset) * hasHitGroupRegion,
+				.StartAddress = (sbtGPUVA + platParams->m_hitGroupRegionBaseOffset),
 				.SizeInBytes = platParams->m_hitGroupRegionTotalByteSize,
 				.StrideInBytes = platParams->m_hitGroupRegionByteStride,
 			},
 			.CallableShaderTable = D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE{
 				.StartAddress = (sbtGPUVA + platParams->m_callableRegionBaseOffset) * hasCallableRegion,
-				.SizeInBytes = platParams->m_callableRegionTotalByteSize,
-				.StrideInBytes = platParams->m_callableRegionByteStride,
+				.SizeInBytes = platParams->m_callableRegionTotalByteSize * hasCallableRegion,
+				.StrideInBytes = platParams->m_callableRegionByteStride * hasCallableRegion,
 			},
 			.Width = threadDimensions.x,
 			.Height = threadDimensions.y,
