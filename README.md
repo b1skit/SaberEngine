@@ -11,32 +11,46 @@ Saber Engine is a multi-API, multi-threaded, real-time rendering R&D framework, 
 ---------
 Features:
 ---------
-Saber Engine is constantly improving. Its current features include:
-- Multi-threaded architecture programmed in C++ 20  
-- Rendering API agnostic. Supports:  
-	- DirectX 12 (Agility SDK 1.611.2) (Default)  
-	- OpenGL 4.6  
-	- Upcoming Vulkan support  
-- Asynchronous copy/graphics/compute pipelines  
-- Scriptable rendering pipeline  
-- Dynamic shader selection via an scriptable Effect/Technique/DrawStyle framework  
-- Droid: A custom offline shader compiler & C++ code generation tool  
-- Entity Component System (EnTT)  
-- GLTF 2.0 format support  
-- Supports skinned animations, morph targets, and key frame node/transform animations  
-- HDR physically-based lighting model (As per EA’s Frostbite, Lagarde et al.)  
-- Image-based indirect lighting  
-- Directional, point & spot punctual lights  
-- PCF & PCSS soft shadows  
-- Radiometrically-correct screen-space ambient occlusion (Intel XeGTAO)  
-- ACES filmic response tone mapping  
-- Physically-based camera & exposure settings  
-- Physically-based emissive & bloom  
-- Camera frustum culling  
-- Automatic GPU instancing  
-- ImGui menus & a robust suite of debugging tools  
-- Support for RenderDoc & PIX programmatic capture APIs  
-- And more!  
+Saber Engine is continuously evolving. Its current features include:
+
+- **Multi-threaded architecture** implemented in C++20
+- **Rendering API-agnostic**: Supports:
+  - **DirectX 12** (Agility SDK 1.611.2) *(default)*
+  - **OpenGL 4.6**
+  - *Upcoming Vulkan support*
+- **GPU-accelerated ray tracing** (DXR)
+- **Asynchronous** copy/graphics/compute pipelines
+- **Scriptable rendering pipeline**:
+  - Graphics systems are implemented using a high-level, API-agnostic abstraction layer and combined through input/output dependencies defined in `.json`
+  - Dynamically generates an optimized, thread-safe render graph at runtime
+- **Droid**: A custom offline shader compiler and C++ code generation tool
+  - Effects/Techniques/DrawStyles are described via `.json` for dynamic runtime shader resolution
+- Supports both **bindless** and **slot-based** resource binding models
+- **Entity Component System** (EnTT)
+- **GLTF 2.0** format support (cgltf)
+- **Advanced rendering features**:
+  - **Animation**: Skinning, morph targets, and keyframe node/transform animations
+  - **HDR Physically-Based Lighting Model** (based on EA's Frostbite, Lagarde et al.):
+    - Image-based indirect lighting
+    - Directional, point, and spot lights
+  - **Soft shadows**: PCF & PCSS
+  - **Radiometrically-correct screen-space ambient occlusion** (Intel XeGTAO)
+  - **ACES filmic response** tone mapping
+  - Physically-based **camera** & exposure settings
+  - Physically-based **emissive** lighting & bloom
+  - **Camera frustum culling**
+  - **GPU instancing**:
+    - Automatically detects and combines instanceable batches into single draw calls
+    - Supports GLTF’s **EXT_mesh_gpu_instancing** extension
+- **Interactive UI** (ImGui):
+  - Supports drag-and-drop loading of `.gltf` and `.hdr` files
+- **Comprehensive debugging tools**:
+  - Real-time CPU/GPU frame timers
+  - Support for **RenderDoc** and **PIX** programmatic capture APIs
+- **Asynchronous, reference-counted resource loading** system:
+  - Supports work stealing
+
+And much more!
 
 
 --------------
@@ -117,7 +131,7 @@ Image-based Lighting:
 ---------------------
 * A default HDR is included for IBL at `<project root>\Assets\DefaultIBL\default.hdr`  
   * GLTF files can override this default by placing a `default.hdr` file in an `IBL` folder alongside theGLTF file  
-	* E.g. When loading `Some\Folder\Example.gltf`, a HDR at `Some\Folder\IBL\default.hdr` will be loaded at the same time as the GLTF file  
+    * E.g. When loading `Some\Folder\Example.gltf`, a HDR at `Some\Folder\IBL\default.hdr` will be loaded at the same time as the GLTF file  
   * Additional HDRs can also be imported from any location at runtime via the ImGui menus  
 
 
