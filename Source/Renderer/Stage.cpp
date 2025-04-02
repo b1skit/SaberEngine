@@ -5,7 +5,6 @@
 #include "Stage.h"
 #include "RLibrary_Platform.h"
 #include "Sampler.h"
-#include "Shader.h"
 #include "Texture.h"
 
 #include "Core/ProfilingMarkers.h"

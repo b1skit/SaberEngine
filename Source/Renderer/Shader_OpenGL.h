@@ -2,13 +2,13 @@
 #pragma once
 #include "Buffer_OpenGL.h"
 #include "Shader.h"
-#include "Shader_Platform.h"
 
 #include <GL/glew.h> 
 
 
 namespace re
 {
+	class RootConstants;
 	class Shader;
 	class Texture;
 	class TextureTargetSet;
@@ -26,12 +26,24 @@ namespace opengl
 		{
 			Matrix4x4f,
 			Matrix3x3f,
+
+			Float,
+			Vec2f,
 			Vec3f,
 			Vec4f,
-			Float,
+			
 			Int,
-			Texture,
-			Sampler
+			Int2,
+			Int3,
+			Int4,
+
+			UInt,
+			UInt2,
+			UInt3,
+			UInt4,
+
+			/*Texture,
+			Sampler*/
 		};
 
 
@@ -59,18 +71,20 @@ namespace opengl
 
 
 	public:
-		static void Create(re::Shader& shader);
-		static void Destroy(re::Shader& shader);
+		static void Create(re::Shader&);
+		static void Destroy(re::Shader&);
 
 		// OpenGL-specific functions:
-		static void Bind(re::Shader const& shader);
+		static void Bind(re::Shader const&);
+
+		static void SetRootConstants(re::Shader const&, re::RootConstants const&);
 
 		static void SetUniform(
-			re::Shader const& shader,
+			re::Shader const&,
 			std::string const& uniformName, 
 			void const* value, 
-			opengl::Shader::UniformType const type, 
-			int const count);
+			opengl::Shader::UniformType const, 
+			int count);
 
 		static void SetTextureAndSampler(re::Shader const&, re::TextureAndSamplerInput const&);
 		

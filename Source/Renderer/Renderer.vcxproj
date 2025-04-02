@@ -186,6 +186,7 @@
     <ClInclude Include="RenderManager_Platform.h" />
     <ClInclude Include="RenderObjectIDs.h" />
     <ClInclude Include="RenderPipeline.h" />
+    <ClInclude Include="RootConstants.h" />
     <ClInclude Include="ShaderBindingTable.h" />
     <ClInclude Include="ShaderBindingTable_DX12.h" />
     <ClInclude Include="ShaderBindingTable_Platform.h" />
@@ -319,6 +320,7 @@
     <ClCompile Include="RenderManager_OpenGL.cpp" />
     <ClCompile Include="RenderManager_Platform.cpp" />
     <ClCompile Include="RenderPipeline.cpp" />
+    <ClCompile Include="RootConstants.cpp" />
     <ClCompile Include="ShaderBindingTable.cpp" />
     <ClCompile Include="ShaderBindingTable_DX12.cpp" />
     <ClCompile Include="ShaderBindingTable_Platform.cpp" />

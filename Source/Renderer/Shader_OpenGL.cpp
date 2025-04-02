@@ -1,14 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "Buffer_OpenGL.h"
-#include "Material.h"
+#include "RootConstants.h"
 #include "Sampler_OpenGL.h"
 #include "Shader.h"
-#include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
-#include "Texture.h"
 #include "Texture_OpenGL.h"
-#include "TextureTarget.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -424,6 +421,30 @@ namespace
 #endif
 		}
 	}
+
+
+	constexpr opengl::Shader::UniformType DataTypeToUniformType(re::DataType dataType)
+	{
+		switch (dataType)
+		{
+		case re::DataType::Float: return opengl::Shader::UniformType::Float;
+		case re::DataType::Float2: return opengl::Shader::UniformType::Vec2f;
+		case re::DataType::Float3: return opengl::Shader::UniformType::Vec3f;
+		case re::DataType::Float4: return opengl::Shader::UniformType::Vec4f;
+
+		case re::DataType::Int:	return opengl::Shader::UniformType::Int;
+		case re::DataType::Int2: return opengl::Shader::UniformType::Int2;
+		case re::DataType::Int3: return opengl::Shader::UniformType::Int3;
+		case re::DataType::Int4: return opengl::Shader::UniformType::Int4;
+
+		case re::DataType::UInt: return opengl::Shader::UniformType::UInt;
+		case re::DataType::UInt2: return opengl::Shader::UniformType::UInt2;
+		case re::DataType::UInt3: return opengl::Shader::UniformType::UInt3;
+		case re::DataType::UInt4: return opengl::Shader::UniformType::UInt4;
+
+		default: SEAssertF("Invalid/unsupported data type for con");
+		}
+	}
 }
 
 
@@ -595,12 +616,24 @@ namespace opengl
 	}
 
 
+	void Shader::SetRootConstants(re::Shader const& shader, re::RootConstants const& rootConstants)
+	{
+		for (uint8_t i = 0; i < rootConstants.GetRootConstantCount(); ++i)
+		{
+			const Shader::UniformType uniformType = DataTypeToUniformType(rootConstants.GetDataType(i));
+
+			void const* value = rootConstants.GetValue(i);
+			opengl::Shader::SetUniform(shader, rootConstants.GetShaderName(i), value, uniformType, 1);
+		}
+	}
+
+
 	void Shader::SetUniform(
 		re::Shader const& shader,
 		std::string const& uniformName,
 		void const* value, 
 		opengl::Shader::UniformType const type, 
-		int const count)
+		int count)
 	{
 		opengl::Shader::PlatformParams const* params = 
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
@@ -620,6 +653,16 @@ namespace opengl
 			glUniformMatrix3fv(uniformID, count, GL_FALSE, static_cast<GLfloat const*>(value));
 		}
 		break;
+		case opengl::Shader::UniformType::Float:
+		{
+			glUniform1fv(uniformID, count, static_cast<GLfloat const*>(value));
+		}
+		break;
+		case opengl::Shader::UniformType::Vec2f:
+		{
+			glUniform2fv(uniformID, count, static_cast<GLfloat const*>(value));
+		}
+		break;
 		case opengl::Shader::UniformType::Vec3f:
 		{
 			glUniform3fv(uniformID, count, static_cast<GLfloat const*>(value));
@@ -630,49 +673,77 @@ namespace opengl
 			glUniform4fv(uniformID, count, static_cast<GLfloat const*>(value));
 		}
 		break;
-		case opengl::Shader::UniformType::Float:
-		{
-			glUniform1f(uniformID, *static_cast<GLfloat const*>(value));
-		}
-		break;
 		case opengl::Shader::UniformType::Int:
 		{
-			glUniform1i(uniformID, *(GLint const*)value);
+			glUniform1iv(uniformID, count, static_cast<GLint const*>(value));
 		}
 		break;
-		case opengl::Shader::UniformType::Texture:
+		case opengl::Shader::UniformType::Int2:
 		{
-			SEAssertF("TODO: Re-implement this with support for core::InvPtr<re::Texture>");
-
-			//auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
-			//if (bindingUnit == params->m_samplerUnits.end())
-			//{
-			//	SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
-			//		std::format("Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
-			//			shader.GetName(), uniformName).c_str());
-			//	return;
-			//}
-
-			//opengl::Texture::Bind(*static_cast<re::Texture const*>(value), bindingUnit->second);
+			glUniform2iv(uniformID, count, static_cast<GLint const*>(value));
 		}
 		break;
-		case opengl::Shader::UniformType::Sampler:
+		case opengl::Shader::UniformType::Int3:
 		{
-			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
-
-			if (bindingUnit == params->m_samplerUnits.end())
-			{
-				SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
-					std::format("Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled", 
-						shader.GetName(), uniformName).c_str());
-				return;
-			}
-
-			opengl::Sampler::Bind(*static_cast<re::Sampler const*>(value), bindingUnit->second);
+			glUniform3iv(uniformID, count, static_cast<GLint const*>(value));
 		}
 		break;
-		default:
-			SEAssertF("Shader uniform upload failed: Recieved unimplemented uniform type");
+		case opengl::Shader::UniformType::Int4:
+		{
+			glUniform4iv(uniformID, count, static_cast<GLint const*>(value));
+		}
+		break;
+		case opengl::Shader::UniformType::UInt:
+		{
+			glUniform1uiv(uniformID, count, static_cast<GLuint const*>(value));
+		}
+		break;
+		case opengl::Shader::UniformType::UInt2:
+		{
+			glUniform2uiv(uniformID, count, static_cast<GLuint const*>(value));
+		}
+		break;
+		case opengl::Shader::UniformType::UInt3:
+		{
+			glUniform3uiv(uniformID, count, static_cast<GLuint const*>(value));
+		}
+		break;
+		case opengl::Shader::UniformType::UInt4:
+		{
+			glUniform4uiv(uniformID, count, static_cast<GLuint const*>(value));
+		}
+		break;
+
+		//case opengl::Shader::UniformType::Texture:
+		//{
+		//	//auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
+		//	//if (bindingUnit == params->m_samplerUnits.end())
+		//	//{
+		//	//	SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+		//	//		std::format("Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
+		//	//			shader.GetName(), uniformName).c_str());
+		//	//	return;
+		//	//}
+
+		//	//opengl::Texture::Bind(*static_cast<re::Texture const*>(value), bindingUnit->second);
+		//}
+		//break;
+		//case opengl::Shader::UniformType::Sampler:
+		//{
+		//	auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
+
+		//	if (bindingUnit == params->m_samplerUnits.end())
+		//	{
+		//		SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+		//			std::format("Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled", 
+		//				shader.GetName(), uniformName).c_str());
+		//		return;
+		//	}
+
+		//	opengl::Sampler::Bind(*static_cast<re::Sampler const*>(value), bindingUnit->second);
+		//}
+		//break;
+		default: SEAssertF("Invalid uniform type");
 		}
 	}
 

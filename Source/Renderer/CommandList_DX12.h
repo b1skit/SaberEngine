@@ -26,7 +26,8 @@ namespace re
 	class Texture;
 	class TextureTarget;
 	class TextureTargetSet;
-	
+	class RootConstants;
+
 	struct RWTextureInput;
 	struct TextureAndSamplerInput;
 	struct TextureView;
@@ -96,8 +97,7 @@ namespace dx12
 		void SetGraphicsRootSignature(dx12::RootSignature const*); // Makes all descriptors stale
 		void SetComputeRootSignature(dx12::RootSignature const*); // Makes all descriptors stale
 
-		void SetGraphicsRoot32BitConstants(
-			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
+		void SetRootConstants(re::RootConstants const&) const;
 
 		void SetRenderTargets(re::TextureTargetSet const&);
 		
@@ -289,17 +289,6 @@ namespace dx12
 	inline void CommandList::SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY topologyType) const
 	{
 		m_commandList->IASetPrimitiveTopology(topologyType);
-	}
-
-
-	inline void CommandList::SetGraphicsRoot32BitConstants(
-		uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const
-	{
-		m_commandList->SetGraphicsRoot32BitConstants(
-			rootParamIdx,	// RootParameterIndex (As set in our CD3DX12_ROOT_PARAMETER1)
-			count,			// Num32BitValuesToSet
-			srcData,		// pSrcData
-			dstOffset);
 	}
 
 

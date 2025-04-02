@@ -6,6 +6,7 @@
 #include "EnumTypes.h"
 #include "Material.h"
 #include "MeshPrimitive.h"
+#include "RootConstants.h"
 #include "Sampler.h"
 #include "ShaderBindingTable.h"
 #include "TextureView.h"
@@ -183,6 +184,10 @@ namespace re
 
 		std::vector<RWTextureInput> const& GetRWTextureInputs() const;
 
+		void SetRootConstant(char const* shaderName, void const* src, re::DataType);
+		void SetRootConstant(std::string const& shaderName, void const* src, re::DataType);
+		RootConstants const& GetRootConstants() const;
+
 		re::Lifetime GetLifetime() const;
 	
 		FilterBitmask GetBatchFilterMask() const;
@@ -221,6 +226,8 @@ namespace re
 
 		std::vector<TextureAndSamplerInput> m_batchTextureSamplerInputs;
 		std::vector<RWTextureInput> m_batchRWTextureInputs;
+
+		RootConstants m_batchRootConstants;
 
 
 	private:
@@ -280,6 +287,24 @@ namespace re
 	inline std::vector<RWTextureInput> const& Batch::GetRWTextureInputs() const
 	{
 		return m_batchRWTextureInputs;
+	}
+
+
+	inline void Batch::SetRootConstant(char const* shaderName, void const* src, re::DataType dataType)
+	{
+		m_batchRootConstants.SetRootConstant(shaderName, src, dataType);
+	}
+
+
+	inline void Batch::SetRootConstant(std::string const& shaderName, void const* src, re::DataType dataType)
+	{
+		m_batchRootConstants.SetRootConstant(shaderName, src, dataType);
+	}
+
+
+	inline RootConstants const& Batch::GetRootConstants() const
+	{
+		return m_batchRootConstants;
 	}
 
 

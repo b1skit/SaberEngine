@@ -8,8 +8,6 @@
 
 #include "Core/Assert.h"
 
-#include "Core/Util/CastUtils.h"
-
 
 namespace
 {
@@ -521,6 +519,8 @@ namespace re
 		default: SEAssertF("Invalid type");
 		}
 
+		m_batchRootConstants = std::move(rhs.m_batchRootConstants);
+
 		*this = std::move(rhs);
 	};
 
@@ -647,6 +647,8 @@ namespace re
 
 			m_batchTextureSamplerInputs = rhs.m_batchTextureSamplerInputs;
 			m_batchRWTextureInputs = rhs.m_batchRWTextureInputs;
+
+			m_batchRootConstants = std::move(rhs.m_batchRootConstants);
 
 			SetDataHash(rhs.GetDataHash());
 		}
@@ -868,7 +870,9 @@ namespace re
 		AddDataBytesToHash(m_drawStyleBitmask);
 		AddDataBytesToHash(m_batchFilterBitmask);
 
-
+		// Root constants:
+		AddDataBytesToHash(m_batchRootConstants.GetDataHash());
+		
 		// Note: We must consider buffers added before instancing has been calcualted, as they allow us to
 		// differentiate batches that are otherwise identical. We'll use the same, identical buffer on the merged
 		// instanced batches later

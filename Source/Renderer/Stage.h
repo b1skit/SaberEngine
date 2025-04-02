@@ -3,6 +3,7 @@
 #include "Batch.h"
 #include "Effect.h"
 #include "MeshFactory.h"
+#include "RootConstants.h"
 #include "SysInfo_Platform.h"
 #include "TextureView.h"
 #include "TextureTarget.h"
@@ -203,6 +204,10 @@ namespace re
 		void AddSingleFrameBuffer(re::BufferInput&&);
 		inline std::vector<re::BufferInput> const& GetPerFrameBuffers() const;
 
+		void SetRootConstant(char const* shaderName, void const* src, re::DataType);
+		void SetRootConstant(std::string const& shaderName, void const* src, re::DataType);
+		RootConstants const& GetRootConstants() const;
+
 		// Stage Batches:
 		std::vector<re::Batch> const& GetStageBatches() const;
 		void AddBatches(std::vector<re::Batch> const&);
@@ -242,6 +247,8 @@ namespace re
 		std::vector<re::BufferInput> m_singleFrameBuffers; // Cleared every frame
 
 		std::vector<re::BufferInput> m_permanentBuffers;
+
+		RootConstants m_stageRootConstants;
 
 		std::vector<re::Batch> m_stageBatches;
 
@@ -723,6 +730,28 @@ namespace re
 	inline std::vector<re::BufferInput> const& Stage::GetPerFrameBuffers() const
 	{
 		return m_singleFrameBuffers;
+	}
+
+
+	inline void Stage::SetRootConstant(char const* shaderName, void const* src, re::DataType dataType)
+	{
+		SEAssert(m_type != Stage::Type::ClearTargetSet &&
+			m_type != Stage::Type::Copy &&
+			m_type != Stage::Type::ClearRWTextures,
+			"Invalid stage type for setting root parameters");
+
+		m_stageRootConstants.SetRootConstant(shaderName, src, dataType);
+	}
+
+
+	inline void Stage::SetRootConstant(std::string const& shaderName, void const* src, re::DataType dataType)
+	{
+		m_stageRootConstants.SetRootConstant(shaderName, src, dataType);
+	}
+
+	inline RootConstants const& Stage::GetRootConstants() const
+	{
+		return m_stageRootConstants;
 	}
 
 

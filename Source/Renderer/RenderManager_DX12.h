@@ -1,13 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "HeapManager_DX12.h"
 #include "RenderManager.h"
 
-#include <wrl.h>
-#include <d3d12.h>
-
-
-enum D3D_FEATURE_LEVEL;
 
 namespace dx12
 {

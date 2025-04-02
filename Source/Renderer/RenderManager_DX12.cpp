@@ -4,6 +4,7 @@
 #include "Context_DX12.h"
 #include "RenderManager_DX12.h"
 #include "RenderSystem.h"
+#include "RootConstants.h"
 #include "Sampler_DX12.h"
 #include "Shader_DX12.h"
 #include "ShaderBindingTable_DX12.h"
@@ -444,6 +445,9 @@ namespace dx12
 								SEAssertF("Invalid stage type");
 							}
 						}
+
+						// Set root constants:
+						commandList->SetRootConstants(stage->GetRootConstants());
 					};			
 
 
@@ -543,6 +547,8 @@ namespace dx12
 						case re::Stage::Type::LibraryGraphics: // Library stages are executed with their own internal logic
 						case re::Stage::Type::LibraryCompute:
 						{
+							cmdList->SetRootConstants((*stageItr)->GetRootConstants());
+
 							dynamic_cast<re::LibraryStage*>((*stageItr).get())->Execute(cmdList.get());
 						}
 						break;
@@ -623,10 +629,14 @@ namespace dx12
 								dynamic_cast<re::Stage::RayTracingStageParams const*>((*stageItr)->GetStageParams());
 							SEAssert(rtStageParams, "Failed to cast to RayTracingStageParams parameters");
 
+							cmdList->SetRootConstants((*stageItr)->GetRootConstants());
+
 							std::vector<re::Batch> const& batches = (*stageItr)->GetStageBatches();
 							for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
 							{
 								re::Batch const& batch = batches[batchIdx];
+
+								cmdList->SetRootConstants(batch.GetRootConstants());
 
 								re::Batch::RayTracingParams const& batchRTParams = batch.GetRayTracingParams();
 								
@@ -762,6 +772,9 @@ namespace dx12
 
 								// Batch compute inputs:
 								cmdList->SetRWTextures(batches[batchIdx].GetRWTextureInputs());
+
+								// Set root constants:
+								cmdList->SetRootConstants(batches[batchIdx].GetRootConstants());
 
 								switch (curStageType)
 								{

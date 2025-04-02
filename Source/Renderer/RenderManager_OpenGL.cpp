@@ -4,6 +4,7 @@
 #include "EnumTypes_OpenGL.h"
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"
+#include "RootConstants.h"
 #include "Stage.h"
 #include "RenderSystem.h"
 #include "Sampler_OpenGL.h"
@@ -165,6 +166,9 @@ namespace opengl
 					opengl::Shader::SetImageTextureTargets(*shader, stage->GetPermanentRWTextureInputs());
 					opengl::Shader::SetImageTextureTargets(*shader, stage->GetSingleFrameRWTextureInputs());
 				}
+
+				// Set root constants:
+				opengl::Shader::SetRootConstants(*shader, stage->GetRootConstants());
 			};
 
 
@@ -212,6 +216,9 @@ namespace opengl
 					case re::Stage::Type::LibraryGraphics: // Library stages are executed with their own internal logic
 					case re::Stage::Type::LibraryCompute:
 					{
+						SEAssert(stage->GetRootConstants().GetRootConstantCount() == 0,
+							"TODO: Handle setting root constants for library stages");
+
 						dynamic_cast<re::LibraryStage*>(stage.get())->Execute(nullptr);
 					}
 					break;
@@ -342,6 +349,9 @@ namespace opengl
 
 							// Batch compute inputs:
 							opengl::Shader::SetImageTextureTargets(*currentShader, batch.GetRWTextureInputs());
+
+							// Batch root constants:
+							opengl::Shader::SetRootConstants(*currentShader, batch.GetRootConstants());							
 
 							// Draw!
 							switch (curStageType)

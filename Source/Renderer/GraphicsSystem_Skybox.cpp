@@ -6,8 +6,6 @@
 #include "Texture.h"
 #include "TextureTarget.h"
 
-#include "Core/Definitions/ConfigKeys.h"
-
 #include "Shaders/Common/SkyboxParams.h"
 
 

@@ -10,6 +10,7 @@
 #include "PipelineState_DX12.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
+#include "RootConstants.h"
 #include "RootSignature_DX12.h"
 #include "ShaderBindingTable_DX12.h"
 #include "SysInfo_DX12.h"
@@ -296,6 +297,57 @@ namespace dx12
 		SEAssert(rootSignature, "Root signature is null. This is unexpected");
 
 		m_commandList->SetComputeRootSignature(rootSignature);
+	}
+
+
+	void CommandList::SetRootConstants(re::RootConstants const& rootConstants) const
+	{
+		SEAssert(m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT ||
+			m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE,
+			"Only graphics or compute command lists can set root constants");
+
+		SEAssert(m_currentRootSignature, "Root signature has not been set");
+
+		for (uint8_t i = 0; i < rootConstants.GetRootConstantCount(); ++i)
+		{
+			RootSignature::RootParameter const* rootParam =
+				m_currentRootSignature->GetRootSignatureEntry(rootConstants.GetShaderName(i));
+			SEAssert(rootParam ||
+				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+				"Invalid root signature entry");
+
+			if (rootParam)
+			{
+				const uint8_t rootIdx = rootParam->m_index;
+
+				const uint32_t num32BitValues = DataTypeToNumComponents(rootConstants.GetDataType(i));
+				
+				SEAssert(num32BitValues > 0 && num32BitValues <= 4, "Invalid number of 32 bit values");
+				
+				switch (m_type)
+				{
+				case dx12::CommandListType::Direct:
+				{
+					m_commandList->SetGraphicsRoot32BitConstants(
+						rootIdx,
+						num32BitValues,
+						rootConstants.GetValue(i),
+						0);
+				}
+				break;
+				case dx12::CommandListType::Compute:
+				{
+					m_commandList->SetComputeRoot32BitConstants(
+						rootIdx,
+						num32BitValues,
+						rootConstants.GetValue(i),
+						0);
+				}
+				break;
+				default: SEAssertF("Invalid command list type");
+				}
+			}
+		}
 	}
 
 
