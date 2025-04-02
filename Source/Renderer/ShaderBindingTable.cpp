@@ -65,14 +65,10 @@ namespace re
 		{
 			return; // Nothing to do: TLAS will be recreated IFF geometry/materials change
 		}
-		else if (receivedTLAS == nullptr && sbt->m_TLAS) // TLAS may not have been created yet, or has been destroyed
-		{
-			sbt->Destroy();
-		}
 		
 		if (receivedTLAS)
 		{
-			// Replace the SBT:
+			// Replace the SBT (we'll rely on the DTOR to call Destroy()):
 			sbt = Create(sbt->GetName().c_str(), sbt->GetSBTParams());
 
 			SEAssert(sbt->m_platformParams, "Platform params should have been registered for deferred delete");

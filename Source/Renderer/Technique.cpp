@@ -39,7 +39,7 @@ namespace effect
 
 	core::InvPtr<re::Shader> const& Technique::GetShader() const
 	{
-		if (!m_resolvedShader.IsValid())
+		if (!m_resolvedShader)
 		{
 			m_resolvedShader = re::Shader::GetOrCreate(m_shaderMetadata, m_rasterizationState, m_vertexStreamMap);
 		}

@@ -629,14 +629,10 @@ namespace dx12
 								dynamic_cast<re::Stage::RayTracingStageParams const*>((*stageItr)->GetStageParams());
 							SEAssert(rtStageParams, "Failed to cast to RayTracingStageParams parameters");
 
-							cmdList->SetRootConstants((*stageItr)->GetRootConstants());
-
 							std::vector<re::Batch> const& batches = (*stageItr)->GetStageBatches();
 							for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
 							{
 								re::Batch const& batch = batches[batchIdx];
-
-								cmdList->SetRootConstants(batch.GetRootConstants());
 
 								re::Batch::RayTracingParams const& batchRTParams = batch.GetRayTracingParams();
 								
@@ -677,6 +673,9 @@ namespace dx12
 									cmdList->AttachBindlessResources(
 										*batchRTParams.m_shaderBindingTable,
 										*context->GetBindlessResourceManager());
+
+									cmdList->SetRootConstants((*stageItr)->GetRootConstants());
+									cmdList->SetRootConstants(batch.GetRootConstants());
 									
 									cmdList->SetTLAS(batchRTParams.m_ASInput, *batchRTParams.m_shaderBindingTable);
 

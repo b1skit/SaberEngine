@@ -2,12 +2,11 @@
 #pragma once
 #include "Buffer.h"
 #include "BufferAllocator.h"
-#include "CPUDescriptorHeapManager_DX12.h"
 #include "DescriptorCache_DX12.h"
 #include "HeapManager_DX12.h"
 
 #include <d3d12.h>
-#include <wrl.h>
+
 
 namespace re
 {
@@ -69,7 +68,9 @@ namespace dx12
 		public:
 			ID3D12Resource* m_resolvedGPUResource; // Use this instead of m_gpuResource
 
-			uint64_t m_heapByteOffset; // For multiple resources sub-allocated from a single GPUResource
+			// For multiple resources sub-allocated from a single GPUResource
+			// i.e. Single-frame buffers suballocated from the stack, or mutabable buffers with N-buffered allocations
+			uint64_t m_heapByteOffset; 
 
 			std::vector<ReadbackResource> m_readbackResources; // CPU readback
 			uint8_t m_currentMapFrameLatency; // Used to compute the resource index during unmapping
