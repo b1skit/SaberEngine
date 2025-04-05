@@ -2,7 +2,6 @@
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "VertexStream.h"
-#include "BindlessResource_VertexStream.h"
 
 #include "Core/InvPtr.h"
 
