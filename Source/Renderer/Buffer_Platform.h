@@ -15,10 +15,11 @@ namespace platform
 	public:
 		static void CreatePlatformParams(re::Buffer& buffer);
 
-	
+
+	public:
 		static void (*Create)(re::Buffer&);
 		static void (*Update)(re::Buffer const&, uint8_t heapOffsetFactor, uint32_t baseOffset, uint32_t numBytes);
-		static void (*Destroy)(re::Buffer&);
+
 		static void const* (*MapCPUReadback)(re::Buffer const&, uint8_t frameLatency);
 		static void (*UnmapCPUReadback)(re::Buffer const&);
 	};

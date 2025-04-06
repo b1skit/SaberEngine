@@ -14,10 +14,6 @@
 #include "Renderer/Buffer_OpenGL.h"
 #include "Renderer/Buffer_Platform.h"
 
-#include "Renderer/Context_DX12.h"
-#include "Renderer/Context_OpenGL.h"
-#include "Renderer/Context_Platform.h"
-
 #include "Renderer/GPUTimer_DX12.h"
 #include "Renderer/GPUTimer_OpenGL.h"
 #include "Renderer/GPUTimer_Platform.h"
@@ -119,13 +115,9 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			// Context:
-			platform::Context::Destroy	= &opengl::Context::Destroy;
-
 			// Buffers:
 			platform::Buffer::Create			= &opengl::Buffer::Create;
 			platform::Buffer::Update			= &opengl::Buffer::Update;
-			platform::Buffer::Destroy			= &opengl::Buffer::Destroy;
 			platform::Buffer::MapCPUReadback	= &opengl::Buffer::MapCPUReadback;
 			platform::Buffer::UnmapCPUReadback	= &opengl::Buffer::UnmapCPUReadback;
 
@@ -183,12 +175,8 @@ namespace platform
 			// Buffers:
 			platform::Buffer::Create			= &dx12::Buffer::Create;
 			platform::Buffer::Update			= &dx12::Buffer::Update;
-			platform::Buffer::Destroy			= &dx12::Buffer::Destroy;
 			platform::Buffer::MapCPUReadback	= &dx12::Buffer::MapCPUReadback;
 			platform::Buffer::UnmapCPUReadback	= &dx12::Buffer::UnmapCPUReadback;
-
-			// Context:
-			platform::Context::Destroy = &dx12::Context::Destroy;
 
 			// GPU Timer:
 			platform::GPUTimer::Create		= &dx12::GPUTimer::Create;

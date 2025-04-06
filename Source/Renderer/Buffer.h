@@ -75,6 +75,7 @@ namespace re
 		struct PlatformParams : public core::IPlatformParams
 		{
 			virtual ~PlatformParams() = default;
+			virtual void Destroy() override = 0;
 
 			bool m_isCommitted = false; // Has an initial data commitment been made?
 			bool m_isCreated = false; // Has the buffer been created at the API level?
@@ -121,8 +122,6 @@ namespace re
 		Buffer(Buffer&&) noexcept = default;
 		Buffer& operator=(Buffer&&) noexcept = default;
 		~Buffer();
-
-		void Destroy();
 
 
 	public:
@@ -191,16 +190,19 @@ namespace re
 
 		bool m_isCurrentlyMapped;
 
+#if defined(_DEBUG)
+		uint64_t m_creationFrameNum; // What frame was this buffer created on?
+#endif
 
 	private:
 		// Use the factory Create() method instead
 		Buffer(size_t typeIDHashCode, std::string const& bufferName, BufferParams const&, uint32_t dataByteSize);
 
 		static void Register(
-			std::shared_ptr<re::Buffer> newBuffer, uint32_t numBytes, uint64_t typeIDHash);
+			std::shared_ptr<re::Buffer> const& newBuffer, uint32_t numBytes, uint64_t typeIDHash);
 
 		static void RegisterAndCommit(
-			std::shared_ptr<re::Buffer> newBuffer, void const* data, uint32_t numBytes, uint64_t typeIDHash);
+			std::shared_ptr<re::Buffer> const& newBuffer, void const* data, uint32_t numBytes, uint64_t typeIDHash);
 		
 		void CommitInternal(void const* data, uint64_t typeIDHash);
 

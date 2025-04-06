@@ -133,7 +133,6 @@
     <ClInclude Include="Context.h" />
     <ClInclude Include="Context_DX12.h" />
     <ClInclude Include="Context_OpenGL.h" />
-    <ClInclude Include="Context_Platform.h" />
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Debug_DX12.h" />
     <ClInclude Include="DescriptorCache_DX12.h" />
@@ -264,7 +263,6 @@
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="Context_DX12.cpp" />
     <ClCompile Include="Context_OpenGL.cpp" />
-    <ClCompile Include="Context_Platform.cpp" />
     <ClCompile Include="CPUDescriptorHeapManager_DX12.cpp" />
     <ClCompile Include="Debug_DX12.cpp" />
     <ClCompile Include="DescriptorCache_DX12.cpp" />

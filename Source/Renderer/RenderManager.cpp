@@ -407,6 +407,9 @@ namespace re
 		// be destroyed from the render thread (i.e. for OpenGL)
 		m_inventory->Destroy();
 
+		// Destroy the BufferAllocator before we process deferred deletions, as Buffers free their PlatformParams there
+		context->GetBufferAllocator()->Destroy();
+
 		ProcessDeferredDeletions(k_forceDeferredDeletionsFlag); // Force-delete everything
 
 		// Need to do this here so the EngineApp's Window can be destroyed

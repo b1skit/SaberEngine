@@ -1,18 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
-#include "GPUTimer_DX12.h"
 #include "PipelineState_DX12.h"
 #include "RenderManager_DX12.h"
 #include "Shader.h"
 #include "SwapChain_DX12.h"
 #include "SysInfo_DX12.h"
-#include "TextureTarget_DX12.h"
-#include "Texture_DX12.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
 #include "Core/ProfilingMarkers.h"
+
+#include <wrl/client.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -149,62 +148,56 @@ namespace dx12
 	}
 
 
-	void Context::Destroy(re::Context& context)
+	void Context::DestroyInternal()
 	{
-		dx12::Context& dx12Context = dynamic_cast<dx12::Context&>(context);
-
-		if (dx12Context.m_pixGPUCaptureModule != nullptr)
+		if (m_pixGPUCaptureModule != nullptr)
 		{
 			LOG("Destroying PIX GPU programmatic capture module");
-			FreeLibrary(dx12Context.m_pixGPUCaptureModule);
+			FreeLibrary(m_pixGPUCaptureModule);
 		}
-		if (dx12Context.m_pixCPUCaptureModule != nullptr)
+		if (m_pixCPUCaptureModule != nullptr)
 		{
 			LOG("Destroying PIX CPU programmatic capture module");
-			FreeLibrary(dx12Context.m_pixCPUCaptureModule);
+			FreeLibrary(m_pixCPUCaptureModule);
 		}
 
 		// Make sure our command queues have finished all commands before closing.
-		dx12Context.m_commandQueues[dx12::CommandListType::Copy].Flush();
-		dx12Context.m_commandQueues[dx12::CommandListType::Copy].Destroy();
+		m_commandQueues[dx12::CommandListType::Copy].Flush();
+		m_commandQueues[dx12::CommandListType::Copy].Destroy();
 		
-		dx12Context.m_commandQueues[dx12::CommandListType::Direct].Flush();
-		dx12Context.m_commandQueues[dx12::CommandListType::Direct].Destroy();
+		m_commandQueues[dx12::CommandListType::Direct].Flush();
+		m_commandQueues[dx12::CommandListType::Direct].Destroy();
 
-		// NOTE: We must destroy anything that holds a buffer before the BufferAllocator is destroyed, 
-		// as buffers call the BufferAllocator in their destructor
-		dx12Context.GetBufferAllocator()->Destroy();
-
-		dx12Context.m_bindlessResourceManager.Destroy();
+		m_bindlessResourceManager.Destroy();
 
 		// Clear the null descriptor libraries:
 		{
 			std::scoped_lock lock(
-				dx12Context.m_nullSRVLibraryMutex, dx12Context.m_nullUAVLibraryMutex, dx12Context.m_nullCBVMutex);
+				m_nullSRVLibraryMutex, m_nullUAVLibraryMutex, m_nullCBVMutex);
 
-			dx12Context.s_nullSRVLibrary.clear();
-			dx12Context.s_nullUAVLibrary.clear();
-			dx12Context.m_nullCBV.Free(0); // Release immediately
+			s_nullSRVLibrary.clear();
+			s_nullUAVLibrary.clear();
+			m_nullCBV.Free(0); // Release immediately
 		}
 
 		// DX12 buffers contain cpu descriptors, so we must destroy the cpu descriptor heap manager after the
 		// buffer allocator
-		dx12Context.m_cpuDescriptorHeapMgrs.clear();
+		m_cpuDescriptorHeapMgrs.clear();
 
 		{
-			std::lock_guard<std::mutex> psoLibraryLock(dx12Context.m_PSOLibraryMutex);
-			dx12Context.m_PSOLibrary.clear();
+			std::lock_guard<std::mutex> psoLibraryLock(m_PSOLibraryMutex);
+			m_PSOLibrary.clear();
 		}
 
 		{
-			std::lock_guard<std::mutex> rootSigLibraryLock(dx12Context.m_rootSigLibraryMutex);
-			dx12Context.m_rootSigLibrary.clear();
+			std::lock_guard<std::mutex> rootSigLibraryLock(m_rootSigLibraryMutex);
+			m_rootSigLibrary.clear();
 		}
 
 		// The heap manager can only be destroyed after all GPUResources have been released
-		dx12Context.m_heapManager.Destroy();
+		m_heapManager.Destroy();
 
-		dx12Context.m_device.Destroy();
+		m_device.Destroy();
 	}
 
 

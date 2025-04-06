@@ -2,7 +2,6 @@
 #pragma once
 #include "BindlessResourceManager.h"
 #include "CommandQueue_DX12.h"
-#include "Context.h"
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "Device_DX12.h"
 #include "HeapManager_DX12.h"
@@ -19,13 +18,11 @@ namespace dx12
 	public:
 		~Context() override = default;
 
+		// Context interface:
 		void CreateInternal(uint64_t currentFrame) override;
 		void UpdateInternal(uint64_t currentFrame) override;
-
-		// Platform implementations:
-		static void Destroy(re::Context& context);
-
-		// Context interface:
+		void DestroyInternal() override;
+		
 		void Present() override;
 
 		re::BindlessResourceManager* GetBindlessResourceManager() override;

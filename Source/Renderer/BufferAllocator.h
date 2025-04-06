@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core/Interfaces/IPlatformParams.h"
 #include "Buffer.h"
 
 
@@ -96,7 +95,7 @@ namespace re
 		{
 			virtual ~IAllocation() = default;
 
-			std::unordered_map<Handle, std::shared_ptr<re::Buffer>> m_handleToPtr;
+			std::unordered_map<Handle, std::weak_ptr<re::Buffer>> m_handleToPtr;
 
 			uint32_t m_totalAllocations = 0;
 			uint32_t m_totalAllocationsByteSize = 0; // Total bytes over program lifetime
@@ -147,13 +146,6 @@ namespace re
 		};
 		std::vector<PlatformCommitMetadata> m_dirtyBuffersForPlatformUpdate;
 		std::mutex m_dirtyBuffersForPlatformUpdateMutex;
-
-
-	private:
-		void ClearDeferredDeletions(uint64_t frameNum);
-		void AddToDeferredDeletions(uint64_t frameNum, std::shared_ptr<re::Buffer> const&);
-		std::queue<std::pair<uint64_t, std::shared_ptr<re::Buffer>>> m_deferredDeleteQueue;
-		std::mutex m_deferredDeleteQueueMutex;
 
 
 	protected:

@@ -146,9 +146,6 @@
     <ClInclude Include="Context_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="Context_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
@@ -590,9 +587,6 @@
       <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="Buffer_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Context_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
     <ClCompile Include="RenderManager_Platform.cpp">

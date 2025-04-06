@@ -8,8 +8,6 @@
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
 
-#include "Core/Util/ImGuiUtils.h"
-
 using GSName = gr::RenderSystemDescription::GSName;
 using SrcDstNamePairs = gr::RenderSystemDescription::SrcDstNamePairs;
 
@@ -381,7 +379,6 @@ namespace gr
 		, m_renderPipeline(name)
 		, m_initPipeline(nullptr)
 	{
-		m_graphicsSystemManager.Create();
 	}
 
 
@@ -409,7 +406,9 @@ namespace gr
 
 	void RenderSystem::BuildPipeline(gr::RenderSystemDescription const& renderSysDesc)
 	{
-		// Create the GrpahicsSystems:
+		// Create our GraphicsSystems:
+		m_graphicsSystemManager.Create();
+
 		for (std::string const& gsName : renderSysDesc.m_pipelineOrder)
 		{
 			m_graphicsSystemManager.CreateAddGraphicsSystemByScriptName(gsName);
@@ -418,7 +417,6 @@ namespace gr
 		m_initPipeline = [this, renderSysDesc](gr::RenderSystem* renderSystem)
 		{
 			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
-			gsm.Create();
 
 			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
 

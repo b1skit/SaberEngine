@@ -15,6 +15,7 @@
 #include "Core/Util/MathUtils.h"
 
 #include <d3dx12.h>
+#include <wrl/client.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -117,6 +118,22 @@ namespace
 
 namespace dx12
 {
+	void Buffer::PlatformParams::Destroy()
+	{
+		SEAssert(m_isCreated, "Attempting to destroy a Buffer that has not been created");
+
+		m_isCreated = false;
+
+		SEAssert((m_gpuResource && m_gpuResource->IsValid()) ||
+			(!m_gpuResource && m_resolvedGPUResource != nullptr),
+			"GPUResource should be valid");
+
+		m_gpuResource = nullptr;
+		m_resolvedGPUResource = nullptr;
+		m_heapByteOffset = 0;
+	}
+
+
 	void Buffer::Create(re::Buffer& buffer)
 	{
 		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
@@ -318,23 +335,6 @@ namespace dx12
 
 		// Schedule a copy from the intermediate resource to default/L1/vid memory heap via the copy queue:
 		copyCmdList->UpdateSubresources(buffer, baseOffset, intermediateResource->Get(), 0, numBytes);
-	}
-
-
-	void Buffer::Destroy(re::Buffer& buffer)
-	{
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
-		SEAssert(params->m_isCreated, "Attempting to destroy a Buffer that has not been created");
-
-		params->m_isCreated = false;
-
-		SEAssert((params->m_gpuResource && params->m_gpuResource->IsValid()) || 
-			(!params->m_gpuResource && params->m_resolvedGPUResource != nullptr),
-			"GPUResource should be valid");
-
-		params->m_gpuResource = nullptr;
-		params->m_resolvedGPUResource = nullptr;
-		params->m_heapByteOffset = 0;
 	}
 
 

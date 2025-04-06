@@ -47,6 +47,8 @@ namespace re
 	private:
 		virtual void CreateInternal(uint64_t currentFrame) = 0;
 		virtual void UpdateInternal(uint64_t currentFrame) = 0;
+		virtual void DestroyInternal() = 0;
+
 
 	public:
 		void SetWindow(host::Window*); // Set once

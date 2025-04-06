@@ -444,6 +444,7 @@ namespace
 
 		default: SEAssertF("Invalid/unsupported data type for con");
 		}
+		return opengl::Shader::UniformType::UInt; // This should never happen
 	}
 }
 

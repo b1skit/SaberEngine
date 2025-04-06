@@ -1,12 +1,13 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
 #include "Buffer.h"
+#include "CameraRenderData.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
-#include "Core/Util/ImGuiUtils.h"
 #include "LightRenderData.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"
+
+#include "Core/Assert.h"
 
 
 namespace gr
@@ -18,12 +19,15 @@ namespace gr
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightRenderDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightHasChanged(true)
+		, m_isCreated(false)
 	{
 	}
 
 
 	void GraphicsSystemManager::Destroy()
 	{
+		SEAssert(m_isCreated == true, "GSM has not been created. This is unexpected");
+
 		m_graphicsSystems.clear();
 		m_renderData = nullptr;
 	}
@@ -31,6 +35,8 @@ namespace gr
 
 	void GraphicsSystemManager::Create()
 	{
+		SEAssert(m_isCreated == false, "GSM already created");
+
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
 		m_renderData = &renderManager->GetRenderDataManager();
@@ -38,9 +44,9 @@ namespace gr
 		CameraData defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
 
 		m_activeCameraParams = re::BufferInput(
-			CameraData::s_shaderName,
+			"CameraParams", // Buffer shader name
 			re::Buffer::Create(
-				CameraData::s_shaderName,
+				"GraphicsSystemManager CameraParams", // Buffer object name
 				defaultCameraParams,
 				re::Buffer::BufferParams{
 					.m_stagingPool = re::Buffer::StagingPool::Permanent,
@@ -48,11 +54,15 @@ namespace gr
 					.m_accessMask = re::Buffer::GPURead,
 					.m_usageMask = re::Buffer::Constant,
 				}));
+
+		m_isCreated = true;
 	}
 
 
 	void GraphicsSystemManager::PreRender()
 	{
+		SEAssert(m_isCreated == true, "GSM has not been created. This is unexpected");
+
 		if (m_activeCameraRenderDataID != gr::k_invalidRenderDataID &&
 			m_activeCameraTransformDataID != gr::k_invalidTransformID)
 		{
@@ -68,6 +78,8 @@ namespace gr
 
 	void GraphicsSystemManager::CreateAddGraphicsSystemByScriptName(char const* scriptName)
 	{
+		SEAssert(m_isCreated == true, "GSM has not been created. This is unexpected");
+
 		std::string lowercaseScriptName(util::ToLower(scriptName));
 
 		SEAssert(!m_scriptNameToIndex.contains(lowercaseScriptName), "Graphics system has already been added");
@@ -89,6 +101,8 @@ namespace gr
 
 	gr::GraphicsSystem* GraphicsSystemManager::GetGraphicsSystemByScriptName(char const* scriptName) const
 	{
+		SEAssert(m_isCreated == true, "GSM has not been created. This is unexpected");
+
 		std::string const& lowercaseScriptName(util::ToLower(scriptName));
 
 		if (m_scriptNameToIndex.contains(lowercaseScriptName))
@@ -107,6 +121,8 @@ namespace gr
 
 	void GraphicsSystemManager::EndOfFrame()
 	{
+		SEAssert(m_isCreated == true, "GSM has not been created. This is unexpected");
+
 		for (auto& gs : m_graphicsSystems)
 		{
 			gs->EndOfFrame();
@@ -182,24 +198,6 @@ namespace gr
 
 		m_activeCameraRenderDataID = cameraRenderDataID;
 		m_activeCameraTransformDataID = cameraTransformID;
-	}
-
-
-	bool GraphicsSystemManager::ActiveAmbientLightHasChanged() const
-	{
-		return m_activeAmbientLightHasChanged;
-	}
-
-
-	bool GraphicsSystemManager::HasActiveAmbientLight() const
-	{
-		return m_activeAmbientLightRenderDataID != gr::k_invalidRenderDataID;
-	}
-
-
-	gr::RenderDataID GraphicsSystemManager::GetActiveAmbientLightID() const
-	{
-		return m_activeAmbientLightRenderDataID;
 	}
 
 

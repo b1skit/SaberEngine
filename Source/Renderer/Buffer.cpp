@@ -71,11 +71,15 @@ namespace re
 		ValidateBufferParams(m_bufferParams); // _DEBUG only
 
 		platform::Buffer::CreatePlatformParams(*this);
+
+#if defined(_DEBUG)
+		m_creationFrameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
+#endif
 	}
 
 
 	void Buffer::Register(
-		std::shared_ptr<re::Buffer> newBuffer, uint32_t numBytes, uint64_t typeIDHash)
+		std::shared_ptr<re::Buffer> const& newBuffer, uint32_t numBytes, uint64_t typeIDHash)
 	{
 		SEAssert(typeIDHash == newBuffer->m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
@@ -85,7 +89,7 @@ namespace re
 
 
 	void Buffer::RegisterAndCommit(
-		std::shared_ptr<re::Buffer> newBuffer, void const* data, uint32_t numBytes, uint64_t typeIDHash)
+		std::shared_ptr<re::Buffer> const& newBuffer, void const* data, uint32_t numBytes, uint64_t typeIDHash)
 	{
 		Register(newBuffer, numBytes, typeIDHash);
 
@@ -141,34 +145,35 @@ namespace re
 
 	Buffer::~Buffer()
 	{
-		re::Buffer::PlatformParams* params = GetPlatformParams();
-		SEAssert(!params->m_isCreated,
-			"Buffer destructor called, but buffer is still marked as created. Did a parameter "
-			"block go out of scope without Destroy() being called?");
-		SEAssert(!m_isCurrentlyMapped, "Buffer is currently mapped");
-	}
-
-
-	void Buffer::Destroy()
-	{
-		re::Buffer::PlatformParams* params = GetPlatformParams();
-		SEAssert(params->m_isCreated, "Buffer has not been created, or has already been destroyed");
 		SEAssert(!m_isCurrentlyMapped, "Buffer is currently mapped");
 
-		m_bindlessResourceHandleRegistration = nullptr;
+#if defined(_DEBUG)
+		SEAssert(m_bufferParams.m_lifetime != re::Lifetime::SingleFrame ||
+			m_creationFrameNum == re::RenderManager::Get()->GetCurrentRenderFrameNum(),
+			"Single frame buffer being destroyed on the wrong frame. Does something still hold the buffer beyond its "
+			"lifetime? E.g. Has a single-frame batch been added to a stage, but the stage is not added to the pipeline "
+			"(thus has not been cleared)?");
+#endif
 
-		if (m_isBindlessResource &&
-			m_bindlessResourceHandle != k_invalidResourceHandle)
+		if (m_platformParams->m_isCreated)
 		{
-			SEAssert(m_bindlessResourceHandleRelease, "Callback is null");
+			m_bindlessResourceHandleRegistration = nullptr;
 
-			m_bindlessResourceHandleRelease(m_bindlessResourceHandle);
+			if (m_isBindlessResource &&
+				m_bindlessResourceHandle != k_invalidResourceHandle)
+			{
+				SEAssert(m_bindlessResourceHandleRelease, "Callback is null");
 
-			m_bindlessResourceHandleRelease = nullptr; // Release the callback lambda
-		}
+				m_bindlessResourceHandleRelease(m_bindlessResourceHandle);
 
-		// Internally makes a (deferred) call to platform::Buffer::Destroy
-		re::Context::Get()->GetBufferAllocator()->Deallocate(GetUniqueID());
+				m_bindlessResourceHandleRelease = nullptr; // Release the callback lambda
+			}
+
+			// Internally makes a (deferred) call to platform::Buffer::Destroy
+			re::Context::Get()->GetBufferAllocator()->Deallocate(GetUniqueID());
+
+			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
+		}		
 	}
 
 

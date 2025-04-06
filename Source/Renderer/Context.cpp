@@ -2,7 +2,6 @@
 #include "Context.h"
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
-#include "Context_Platform.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -153,7 +152,8 @@ namespace re
 			}
 		}
 		m_gpuTimer.Destroy();
-		platform::Context::Destroy(*this);
+		
+		DestroyInternal();
 	}
 
 

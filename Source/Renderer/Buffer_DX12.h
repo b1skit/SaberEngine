@@ -63,6 +63,8 @@ namespace dx12
 				m_cbvDescriptors.Destroy();
 			}
 
+			void Destroy() override;
+
 			bool GPUResourceIsValid() const;
 
 		public:
@@ -98,7 +100,6 @@ namespace dx12
 	public:
 		static void Create(re::Buffer&);
 		static void Update(re::Buffer const&, uint8_t heapOffsetFactor, uint32_t baseOffset, uint32_t numBytes);
-		static void Destroy(re::Buffer&);
 		
 		static void const* MapCPUReadback(re::Buffer const&, uint8_t frameLatency);
 		static void UnmapCPUReadback(re::Buffer const&);

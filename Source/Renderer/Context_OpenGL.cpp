@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BufferView.h"
 #include "Context_OpenGL.h"
-#include "Context.h"
 #include "EnumTypes_OpenGL.h"
 #include "MeshPrimitive.h"
 #include "RasterizationState.h"
@@ -439,32 +438,26 @@ namespace opengl
 	}
 
 
-	void Context::Destroy(re::Context& reContext)
+	void Context::DestroyInternal()
 	{
-		opengl::Context& context = dynamic_cast<opengl::Context&>(reContext);
-	
 		::wglMakeCurrent(NULL, NULL); // Make the rendering context not current  
 
 		win32::Window::PlatformParams* windowPlatformParams = 
-			reContext.GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+			GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
-		::ReleaseDC(windowPlatformParams->m_hWindow, context.m_hDeviceContext); // Release device context
-		::wglDeleteContext(context.m_glRenderContext); // Delete the rendering context
-
-		// NOTE: We must destroy anything that holds a buffer before the BufferAllocator is destroyed, 
-		// as buffers call the BufferAllocator in their destructor
-		context.GetBufferAllocator()->Destroy();
+		::ReleaseDC(windowPlatformParams->m_hWindow, m_hDeviceContext); // Release device context
+		::wglDeleteContext(m_glRenderContext); // Delete the rendering context
 
 		// Destroy VAO library:
 		{
-			std::lock_guard<std::mutex> lock(context.m_VAOLibraryMutex);
+			std::lock_guard<std::mutex> lock(m_VAOLibraryMutex);
 
-			for (auto& vao : context.m_VAOLibrary)
+			for (auto& vao : m_VAOLibrary)
 			{
 				glDeleteVertexArrays(1, &vao.second);
 				vao.second = 0;
 			}
-			context.m_VAOLibrary.clear();
+			m_VAOLibrary.clear();
 		}
 	}
 

@@ -104,6 +104,8 @@ namespace re
 
 	void BufferAllocator::Destroy()
 	{
+		m_dirtyBuffers.clear();
+
 		{
 			std::scoped_lock lock(
 				m_handleToCommitMetadataMutex,
@@ -144,19 +146,10 @@ namespace re
 					"increasing k_temporaryReservationBytes");
 			}
 
-			// Must clear the buffers shared_ptrs before clearing the committed memory
-			// Destroy() removes the buffer from our unordered_map & invalidates iterators; Just loop until it's empty
-			auto ClearBufferPtrs = [](IAllocation& allocation)
-				{
-					while (!allocation.m_handleToPtr.empty())
-					{
-						allocation.m_handleToPtr.begin()->second->Destroy();
-					}
-					SEAssert(allocation.m_handleToPtr.empty(), "Failed to clear the map");
-				};
-			ClearBufferPtrs(m_mutableAllocations);
-			ClearBufferPtrs(m_immutableAllocations);
-			ClearBufferPtrs(m_singleFrameAllocations);
+			SEAssert(m_mutableAllocations.m_handleToPtr.empty() && 
+				m_immutableAllocations.m_handleToPtr.empty() &&
+				m_singleFrameAllocations.m_handleToPtr.empty(),
+				"Some buffers have not been destroyed yet");
 
 			SEAssert(m_mutableAllocations.m_currentAllocationsByteSize == 0 &&
 				m_immutableAllocations.m_currentAllocationsByteSize == 0 &&
@@ -165,13 +158,6 @@ namespace re
 
 			SEAssert(m_handleToCommitMetadata.empty(), "Handle to type and byte map should be cleared by now");
 		}
-
-		m_dirtyBuffers.clear();
-
-		// The platform::RenderManager has already flushed all outstanding work; Force our deferred deletions to be
-		// immediately cleared
-		constexpr uint64_t k_maxFrameNum = std::numeric_limits<uint64_t>::max();
-		ClearDeferredDeletions(k_maxFrameNum);
 
 		m_isValid = false;
 	}
@@ -191,7 +177,7 @@ namespace re
 			{
 				std::lock_guard<std::recursive_mutex> lock(allocation.m_mutex);
 				SEAssert(!allocation.m_handleToPtr.contains(uniqueID), "Buffer is already registered");
-				allocation.m_handleToPtr[uniqueID] = buffer;
+				allocation.m_handleToPtr.emplace(uniqueID, buffer);
 			};
 
 
@@ -372,7 +358,7 @@ namespace re
 		break;
 		case Buffer::StagingPool::Temporary:
 		{
-			std::shared_ptr<re::Buffer>* dirtyBuffer = nullptr;
+			std::shared_ptr<re::Buffer> dirtyBuffer;
 			switch (bufferLifetime)
 			{
 			case re::Lifetime::Permanent:
@@ -381,7 +367,7 @@ namespace re
 				void* dest = &m_immutableAllocations.m_committed[startIdx];
 				memcpy(dest, data, totalBytes);
 
-				dirtyBuffer = &m_immutableAllocations.m_handleToPtr.at(uniqueID);
+				dirtyBuffer = m_immutableAllocations.m_handleToPtr.at(uniqueID).lock();
 			}
 			break;
 			case re::Lifetime::SingleFrame:
@@ -390,17 +376,18 @@ namespace re
 				void* dest = &m_singleFrameAllocations.m_committed[startIdx];
 				memcpy(dest, data, totalBytes);
 
-				dirtyBuffer = &m_singleFrameAllocations.m_handleToPtr.at(uniqueID);
+				dirtyBuffer = m_singleFrameAllocations.m_handleToPtr.at(uniqueID).lock();
 			}
 			break;
 			default: SEAssertF("Invalid lifetime");
 			}
+			SEAssert(dirtyBuffer != nullptr, "Failed to convert weak to shared_ptr: Buffer leaked?");
 
 			// Add the committed buffer to our dirty list, so we can buffer the data when required
 			{
 				std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
 
-				m_dirtyBuffers.emplace(*dirtyBuffer);
+				m_dirtyBuffers.emplace(dirtyBuffer);
 			}
 		}
 		break;
@@ -700,8 +687,6 @@ namespace re
 		// Add our buffer to the deferred deletion queue, then erase the pointer from our allocation list
 		auto ProcessErasure = [&](IAllocation& allocation, re::Buffer::StagingPool stagingPool)
 			{
-				AddToDeferredDeletions(m_currentFrameNum, allocation.m_handleToPtr.at(uniqueID));
-
 				// Erase the buffer from our allocations:
 				{
 					std::lock_guard<std::recursive_mutex> lock(allocation.m_mutex);
@@ -710,6 +695,8 @@ namespace re
 
 				if (stagingPool != re::Buffer::StagingPool::None)
 				{
+					SEAssert(allocation.m_currentAllocationsByteSize >= numBytes, "About to underflow");
+
 					allocation.m_currentAllocationsByteSize -= numBytes;
 				}
 			};
@@ -750,8 +737,8 @@ namespace re
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
 
-			auto const& buffer = m_handleToCommitMetadata.find(uniqueID);
-			m_handleToCommitMetadata.erase(buffer);
+			auto const& commitMetadataItr = m_handleToCommitMetadata.find(uniqueID);
+			m_handleToCommitMetadata.erase(commitMetadataItr);
 		}
 
 		// Finally, free any permanently committed memory:
@@ -1020,7 +1007,6 @@ namespace re
 			// We're done! Clear everything for the next round:
 			SEBeginCPUEvent("re::BufferAllocator: Clear temp staging and deferred deletions");
 			ClearTemporaryStaging();
-			ClearDeferredDeletions(m_currentFrameNum);
 			SEEndCPUEvent();
 		}
 
@@ -1034,63 +1020,13 @@ namespace re
 
 		SEBeginCPUEvent("re::BufferAllocator::ClearTemporaryStaging");
 
-		// Clear single-frame allocations:
-		// Note: Calling Destroy() on our Buffer recursively calls BufferAllocator::Deallocate, which
-		// erases an entry from m_singleFrameAllocations.m_handleToPtr. Thus, we can't use an iterator as it'll be
-		// invalidated. Instead, we just loop until it's empty
-		while (!m_singleFrameAllocations.m_handleToPtr.empty())
-		{
-			m_singleFrameAllocations.m_handleToPtr.begin()->second->Destroy();
-		}
-
 		m_singleFrameAllocations.m_handleToPtr.clear();
 		m_singleFrameAllocations.m_committed.clear();
-
-		SEAssert(m_singleFrameAllocations.m_currentAllocationsByteSize == 0,
-			"Single frame temporary deallocations are out of sync");
 
 		// Clear immutable allocations: We only write this data exactly once, no point keeping it around
 		m_immutableAllocations.m_committed.clear();
 
 		SEEndCPUEvent();
-	}
-
-
-	void BufferAllocator::ClearDeferredDeletions(uint64_t frameNum)
-	{
-		SEAssert(m_currentFrameNum != std::numeric_limits<uint64_t>::max(),
-			"Trying to clear before the first swap buffer call");
-
-		SEBeginCPUEvent(
-			std::format("BufferAllocator::ClearDeferredDeletions ({})", m_deferredDeleteQueue.size()).c_str());
-
-		{
-			std::lock_guard<std::mutex> lock(m_deferredDeleteQueueMutex);
-
-			while (!m_deferredDeleteQueue.empty() &&
-				m_deferredDeleteQueue.front().first + m_numFramesInFlight < frameNum)
-			{
-				SEAssert(m_deferredDeleteQueue.front().second.use_count() == 1,
-					std::format("Trying to deferred-delete the buffer \"{}\", but there is still a live "
-						"shared_ptr. Is something still holding onto the buffer beyond its lifetime? Has a single-frame"
-						" batch been added to a stage, but the stage is not added to the pipeline (thus has not been "
-						"cleared)?",
-						m_deferredDeleteQueue.front().second->GetName()).c_str());			
-
-				platform::Buffer::Destroy(*m_deferredDeleteQueue.front().second);
-				m_deferredDeleteQueue.pop();
-			}
-		}
-
-		SEEndCPUEvent();
-	}
-
-
-	void BufferAllocator::AddToDeferredDeletions(uint64_t frameNum, std::shared_ptr<re::Buffer> const& buffer)
-	{
-		std::lock_guard<std::mutex> lock(m_deferredDeleteQueueMutex);
-
-		m_deferredDeleteQueue.emplace(std::pair<uint64_t, std::shared_ptr<re::Buffer>>{frameNum, buffer});
 	}
 
 

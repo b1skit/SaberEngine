@@ -10,6 +10,22 @@
 
 namespace opengl
 {
+	void Buffer::PlatformParams::Destroy()
+	{
+		SEAssert(m_isCreated, "Attempting to destroy a Buffer that has not been created");
+
+		if (!m_isSharedBufferName &&
+			m_bufferName != 0)
+		{
+			glDeleteBuffers(1, &m_bufferName);
+			m_bufferName = 0;
+		}
+
+		m_baseOffset = 0;
+		m_isCreated = false;
+	}
+
+
 	void Buffer::Create(re::Buffer& buffer)
 	{
 		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Constant, buffer.GetBufferParams()) ||
@@ -64,6 +80,8 @@ namespace opengl
 				numBytes,
 				bufferPlatParams->m_bufferName,
 				bufferPlatParams->m_baseOffset);
+
+			bufferPlatParams->m_isSharedBufferName = true;
 		}
 		break;
 		default: SEAssertF("Invalid lifetime");
@@ -129,33 +147,6 @@ namespace opengl
 		break;
 		default: SEAssertF("Invalid MemoryPoolPreference");
 		}
-	}
-
-
-	void Buffer::Destroy(re::Buffer& buffer)
-	{
-		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
-		SEAssert(bufferPlatParams->m_isCreated, "Attempting to destroy a Buffer that has not been created");
-
-		const re::Lifetime bufferLifetime = buffer.GetLifetime();
-		switch (bufferLifetime)
-		{
-		case re::Lifetime::Permanent:
-		{
-			glDeleteBuffers(1, &bufferPlatParams->m_bufferName);
-		}
-		break;
-		case re::Lifetime::SingleFrame:
-		{
-			// Do nothing: Buffer allocator is responsible for destroying the shared buffers
-		}
-		break;
-		default: SEAssertF("Invalid lifetime");
-		}
-
-		bufferPlatParams->m_bufferName = 0;
-		bufferPlatParams->m_baseOffset = 0;
-		bufferPlatParams->m_isCreated = false;
 	}
 
 

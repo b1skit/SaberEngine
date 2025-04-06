@@ -3,7 +3,6 @@
 #include "BufferView.h"
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
-#include "CameraRenderData.h"
 
 
 namespace gr
@@ -79,6 +78,8 @@ namespace gr
 
 		gr::RenderSystem* const m_owningRenderSystem;
 
+		bool m_isCreated;
+
 
 	private: // No copying allwoed
 		GraphicsSystemManager(GraphicsSystemManager const&) = delete;
@@ -107,6 +108,24 @@ namespace gr
 	inline gr::RenderDataManager const& GraphicsSystemManager::GetRenderData() const
 	{
 		return *m_renderData;
+	}
+
+
+	inline bool GraphicsSystemManager::ActiveAmbientLightHasChanged() const
+	{
+		return m_activeAmbientLightHasChanged;
+	}
+
+
+	inline bool GraphicsSystemManager::HasActiveAmbientLight() const
+	{
+		return m_activeAmbientLightRenderDataID != gr::k_invalidRenderDataID;
+	}
+
+
+	inline gr::RenderDataID GraphicsSystemManager::GetActiveAmbientLightID() const
+	{
+		return m_activeAmbientLightRenderDataID;
 	}
 
 

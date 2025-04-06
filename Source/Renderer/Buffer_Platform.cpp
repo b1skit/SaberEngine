@@ -40,7 +40,7 @@ namespace platform
 	void (*platform::Buffer::Create)(re::Buffer&) = nullptr;
 	void (*platform::Buffer::Update)(
 		re::Buffer const&, uint8_t heapOffsetFactor, uint32_t baseOffset, uint32_t numBytes) = nullptr;
-	void (*platform::Buffer::Destroy)(re::Buffer&) = nullptr;
+
 	void const* (*platform::Buffer::MapCPUReadback)(re::Buffer const&, uint8_t frameLatency) = nullptr;
 	void (*platform::Buffer::UnmapCPUReadback)(re::Buffer const&) = nullptr;
 }

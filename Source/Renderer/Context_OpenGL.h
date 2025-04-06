@@ -25,13 +25,11 @@ namespace opengl
 	public:
 		~Context() override = default;
 
+		// Context interface:
 		void CreateInternal(uint64_t currentFrame) override;
 		void UpdateInternal(uint64_t currentFrame) override;
+		void DestroyInternal() override;
 
-		// Platform implementations:
-		static void Destroy(re::Context& context);
-
-		// Context interface:
 		void Present() override;
 
 		re::BindlessResourceManager* GetBindlessResourceManager() override;

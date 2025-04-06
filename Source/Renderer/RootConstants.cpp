@@ -79,6 +79,7 @@ namespace re
 
 		default: SEAssertF("Invalid/unsupported data type for root constants");
 		}
+		return nullptr; // This should never happen
 	}
 
 
