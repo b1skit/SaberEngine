@@ -19,6 +19,7 @@
 #include "Core/Host/PerformanceTimer.h"
 
 #include "Core/Util/FileIOUtils.h"
+#include "Core/Util/ImGuiUtils.h"
 
 
 namespace re
