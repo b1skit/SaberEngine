@@ -157,18 +157,12 @@ namespace dx12
 		break;
 		case re::ViewType::UAV:
 		{
-			// Cubemaps must be viewed as a Texture2D/Texture2DArray to create a UAV
+			// Cubemaps must be viewed as a Texture2DArray to create a UAV
 			switch (resource.m_resource->GetTextureParams().m_dimension)
 			{
 			case re::Texture::TextureCube:
-			{
-				descriptorHandle = dx12::Texture::GetUAV(
-					resource.m_resource,
-					re::TextureView::Texture2DView());
-			}
-			break;
 			case re::Texture::TextureCubeArray:
-			{
+						{
 				descriptorHandle = dx12::Texture::GetUAV(
 					resource.m_resource,
 					re::TextureView::Texture2DArrayView());

@@ -504,7 +504,9 @@ namespace dx12
 						(result->BindCount == inputBindingDesc.BindCount || 
 							(result->BindCount == maxDescriptorCount && inputBindingDesc.BindCount == 0)) &&
 						result->ReturnType == inputBindingDesc.ReturnType &&
-						result->Dimension == inputBindingDesc.Dimension &&
+						(result->Dimension == inputBindingDesc.Dimension ||
+							(result->Dimension == D3D_SRV_DIMENSION_BUFFEREX && 
+								inputBindingDesc.Dimension == D3D_SRV_DIMENSION_UNKNOWN)) &&
 						result->NumSamples == inputBindingDesc.NumSamples,
 						"Found resource with the same name but a different binding description");
 
@@ -555,7 +557,8 @@ namespace dx12
 			{
 				AddRangeInput(dx12::RootSignature::DescriptorType::SRV);
 
-				SEAssert(rangeInputs[dx12::RootSignature::DescriptorType::SRV].back().Dimension == D3D_SRV_DIMENSION_UNKNOWN,
+				SEAssert(rangeInputs[dx12::RootSignature::DescriptorType::SRV].back().Dimension == D3D_SRV_DIMENSION_UNKNOWN ||
+					rangeInputs[dx12::RootSignature::DescriptorType::SRV].back().Dimension == D3D_SRV_DIMENSION_BUFFEREX,
 					"Unexpected dimension");
 
 				// Shader reflection gives .Dimension = D3D_SRV_DIMENSION_UNKNOWN, switch it now so it's easier to get
