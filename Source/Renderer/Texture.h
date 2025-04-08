@@ -1,5 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "BindlessResourceManager.h"
+
 #include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
@@ -253,6 +255,10 @@ namespace re
 
 		TextureParams const& GetTextureParams() const;
 
+		bool HasUsageBit(Usage) const;
+
+		ResourceHandle GetBindlessResourceHandle(re::ViewType) const;
+
 		static void ShowImGuiWindow(core::InvPtr<re::Texture> const&);
 
 
@@ -299,6 +305,9 @@ namespace re
 
 		const uint32_t m_numMips; // No. of actual mip levels (computed from TextureParams::m_numMips)
 		const uint32_t m_numSubresources; // No. array elements * no. faces * no. of mips
+
+		ResourceHandle m_srvResourceHandle;
+		ResourceHandle m_uavResourceHandle;
 
 
 	private:
@@ -347,6 +356,33 @@ namespace re
 	inline re::Texture::TextureParams const& re::Texture::GetTextureParams() const
 	{
 		return m_texParams;
+	}
+
+
+	inline bool Texture::HasUsageBit(Texture::Usage usage) const
+	{
+		return m_texParams.m_usage & usage;
+	}
+
+
+	inline ResourceHandle Texture::GetBindlessResourceHandle(re::ViewType viewType) const
+	{
+		switch (viewType)
+		{
+		case re::ViewType::SRV:
+		{
+			return m_srvResourceHandle;
+		}
+		break;
+		case re::ViewType::UAV:
+		{
+			return m_uavResourceHandle;
+		}
+		break;
+		case re::ViewType::CBV:
+		default: SEAssertF("Invalid view type");
+		}
+		return k_invalidResourceHandle; // This should never happen
 	}
 }
 

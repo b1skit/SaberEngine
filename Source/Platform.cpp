@@ -7,12 +7,12 @@
 #include "Renderer/BindlessResourceManager_DX12.h"
 #include "Renderer/BindlessResourceManager_Platform.h"
 
-#include "Renderer/BindlessResource_VertexStream_DX12.h"
-#include "Renderer/BindlessResource_VertexStream_Platform.h"
-
 #include "Renderer/Buffer_DX12.h"
 #include "Renderer/Buffer_OpenGL.h"
 #include "Renderer/Buffer_Platform.h"
+
+#include "Renderer/BindlessResource_DX12.h"
+#include "Renderer/BindlessResource_Platform.h"
 
 #include "Renderer/GPUTimer_DX12.h"
 #include "Renderer/GPUTimer_OpenGL.h"
@@ -169,14 +169,31 @@ namespace platform
 			platform::AccelerationStructure::Destroy	= &dx12::AccelerationStructure::Destroy;
 
 			// Bindless resource manager:
-			platform::IBindlessResourceSet::Initialize		= &dx12::IBindlessResourceSet::Initialize;
-			platform::IBindlessResourceSet::SetResource		= &dx12::IBindlessResourceSet::SetResource;
+			platform::BindlessResourceManager::Initialize		= &dx12::BindlessResourceManager::Initialize;
+			platform::BindlessResourceManager::SetResource		= &dx12::BindlessResourceManager::SetResource;
 
 			// Buffers:
 			platform::Buffer::Create			= &dx12::Buffer::Create;
 			platform::Buffer::Update			= &dx12::Buffer::Update;
 			platform::Buffer::MapCPUReadback	= &dx12::Buffer::MapCPUReadback;
 			platform::Buffer::UnmapCPUReadback	= &dx12::Buffer::UnmapCPUReadback;
+
+			// Bindless resources:
+			platform::IBindlessResource::GetResourceUseState = &dx12::IBindlessResource::GetResourceUseState;
+
+			platform::AccelerationStructureResource::GetPlatformResource	= &dx12::AccelerationStructureResource::GetPlatformResource;
+			platform::AccelerationStructureResource::GetDescriptor			= &dx12::AccelerationStructureResource::GetDescriptor;
+			platform::AccelerationStructureResource::GetResourceUseState	= &dx12::AccelerationStructureResource::GetResourceUseState;
+
+			platform::BufferResource::GetPlatformResource	= &dx12::BufferResource::GetPlatformResource;
+			platform::BufferResource::GetDescriptor			= &dx12::BufferResource::GetDescriptor;
+
+			platform::TextureResource::GetPlatformResource	= &dx12::TextureResource::GetPlatformResource;
+			platform::TextureResource::GetDescriptor		= &dx12::TextureResource::GetDescriptor;
+			platform::TextureResource::GetResourceUseState	= &dx12::TextureResource::GetResourceUseState;
+
+			platform::VertexStreamResource::GetPlatformResource = &dx12::VertexStreamResource::GetPlatformResource;
+			platform::VertexStreamResource::GetDescriptor		= &dx12::VertexStreamResource::GetDescriptor;
 
 			// GPU Timer:
 			platform::GPUTimer::Create		= &dx12::GPUTimer::Create;
@@ -220,13 +237,6 @@ namespace platform
 			// Texture Samplers:
 			platform::Sampler::Create	= &dx12::Sampler::Create;
 			platform::Sampler::Destroy	= &dx12::Sampler::Destroy;
-
-			// Bindless vertex streams:
-			platform::IVertexStreamResource::GetPlatformResource			= &dx12::IVertexStreamResource::GetPlatformResource;
-			platform::IVertexStreamResource::GetDescriptor					= &dx12::IVertexStreamResource::GetDescriptor;
-
-			platform::VertexStreamResourceSet::GetNullDescriptor			= &dx12::VertexStreamResourceSet::GetNullDescriptor;
-			platform::VertexStreamResourceSet::GetResourceUsageState		= &dx12::VertexStreamResourceSet::GetResourceUsageState;
 		}
 		break;
 		default:

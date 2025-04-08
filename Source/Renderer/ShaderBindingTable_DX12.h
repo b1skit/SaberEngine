@@ -92,12 +92,6 @@ namespace dx12
 			dx12::GPUDescriptorHeap*,
 			uint64_t currentFrameNum);
 
-		static void SetBindlessResourcesOnLocalRoots(
-			re::ShaderBindingTable const&,
-			re::BindlessResourceManager const&,
-			dx12::GPUDescriptorHeap*,
-			uint64_t currentFrameNum);
-
 		static D3D12_DISPATCH_RAYS_DESC BuildDispatchRaysDesc(
 			re::ShaderBindingTable const&,
 			glm::uvec3 const& threadDimensions,

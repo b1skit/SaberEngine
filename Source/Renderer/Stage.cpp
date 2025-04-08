@@ -1071,8 +1071,8 @@ namespace re
 						(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, *bufferInput.GetBuffer()) &&
 							re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, *existingBuffer.GetBuffer())))
 					{
-						return bufferInput.GetView().m_buffer.m_firstDestIdx ==
-							existingBuffer.GetView().m_buffer.m_firstDestIdx;
+						return bufferInput.GetView().m_bufferView.m_firstDestIdx ==
+							existingBuffer.GetView().m_bufferView.m_firstDestIdx;
 					}
 				}
 				return false;
@@ -1093,8 +1093,8 @@ namespace re
 						(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, *bufferInput.GetBuffer()) &&
 							re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, *existingBuffer.GetBuffer())))
 					{
-						return bufferInput.GetView().m_buffer.m_firstDestIdx ==
-							existingBuffer.GetView().m_buffer.m_firstDestIdx;
+						return bufferInput.GetView().m_bufferView.m_firstDestIdx ==
+							existingBuffer.GetView().m_bufferView.m_firstDestIdx;
 					}
 				}
 				return false;

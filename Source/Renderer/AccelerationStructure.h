@@ -1,6 +1,5 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
-#include "BindlessResource_VertexStream.h"
 #include "BindlessResourceManager.h"
 #include "BufferView.h"
 #include "Effect.h"
@@ -173,11 +172,15 @@ namespace re
 		{
 			std::vector<std::shared_ptr<re::AccelerationStructure>> m_blasInstances;
 
-			re::BufferInput GetBindlessResourceLUT() const;
+			ResourceHandle GetResourceHandle() const;
+			re::BufferInput const& GetBindlessResourceLUT() const;
+
 
 		private: // Populated internally:
 			friend class AccelerationStructure;
 			re::BufferInput m_bindlessResourceLUT; // BLAS instances -> bindless resource LUT
+
+			ResourceHandle m_srvTLASResourceHandle;
 		};
 
 
@@ -220,6 +223,9 @@ namespace re
 		void UpdateASParams(std::unique_ptr<IASParams>&&); // Update the ASParams (e.g. when updating/refitting an AS)
 
 		Type GetType() const;
+
+		ResourceHandle GetResourceHandle() const;
+		re::BufferInput const& GetBindlessResourceLUT() const;
 
 
 	private:
@@ -264,6 +270,30 @@ namespace re
 	inline AccelerationStructure::Type AccelerationStructure::GetType() const
 	{
 		return m_type;
+	}
+
+
+	inline ResourceHandle AccelerationStructure::GetResourceHandle() const
+	{
+		SEAssert(m_type == re::AccelerationStructure::Type::TLAS, "Only a TLAS has a bindless resource handle");
+		
+		re::AccelerationStructure::TLASParams* tlasParams =
+			dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
+		SEAssert(tlasParams, "Failed to cast to TLASParams");
+
+		return tlasParams->GetResourceHandle();
+	}
+
+
+	inline re::BufferInput const& AccelerationStructure::GetBindlessResourceLUT() const
+	{
+		SEAssert(m_type == re::AccelerationStructure::Type::TLAS, "Only a TLAS has a bindless resource handle");
+
+		re::AccelerationStructure::TLASParams* tlasParams =
+			dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
+		SEAssert(tlasParams, "Failed to cast to TLASParams");
+
+		return tlasParams->GetBindlessResourceLUT();
 	}
 
 

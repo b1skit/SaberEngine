@@ -9,134 +9,9 @@
 
 namespace re
 {
-	IBindlessResourceSet::IBindlessResourceSet(BindlessResourceManager* brm, char const* shaderName)
-		: m_bindlessResourceMgr(brm)
-		, m_platformParams(platform::IBindlessResourceSet::CreatePlatformParams())
-		, m_shaderName(shaderName)
-		, m_currentResourceCount(k_initialResourceCount)
-		, m_threadProtector(false)
-		, m_numFramesInFlight(re::RenderManager::Get()->GetNumFramesInFlight())
-		
+	void IBindlessResource::GetResourceUseState(void* dest, size_t destByteSize) const
 	{
-		SEAssert(m_bindlessResourceMgr && m_currentResourceCount > 0, "Invalid resource set parameters");
-
-		// Initialize the free index queue:
-		uint32_t curIdx = 0;
-		while (curIdx < m_currentResourceCount)
-		{
-			m_freeIndexes.emplace(curIdx++);
-		}
-	}
-
-
-	void IBindlessResourceSet::Destroy()
-	{
-		util::ScopedThreadProtector threadProtector(m_threadProtector);
-
-		ProcessUnregistrations(std::numeric_limits<uint64_t>::max()); // Immediately unregister everything
-
-		SEAssert(m_freeIndexes.size() == m_currentResourceCount,
-			"Some resource handles have not been returned to the bindless resource set");
-
-		m_freeIndexes = {};
-
-		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
-	}
-
-
-	void IBindlessResourceSet::IncreaseSetSize()
-	{
-		m_threadProtector.ValidateThreadAccess();
-
-		const uint32_t currentNumResources = m_currentResourceCount;
-
-		m_currentResourceCount = static_cast<uint32_t>(glm::ceil(m_currentResourceCount * k_growthFactor));
-
-		for (uint32_t curIdx = currentNumResources; curIdx < m_currentResourceCount; ++curIdx)
-		{
-			m_freeIndexes.emplace(curIdx);
-		}
-
-		LOG("IBindlessResourceSet \"%s\" resource count increased from %d to %d",
-			GetShaderName().c_str(), currentNumResources, m_currentResourceCount);
-	}
-
-
-	ResourceHandle IBindlessResourceSet::RegisterResource(std::unique_ptr<IBindlessResource>&& newBindlessResource)
-	{
-		util::ScopedThreadProtector threadProtector(m_threadProtector);
-
-		if (m_freeIndexes.empty())
-		{
-			IncreaseSetSize();
-		}
-
-		
-		const ResourceHandle resourceIdx = m_freeIndexes.top();
-		m_freeIndexes.pop();
-
-		m_registrations.emplace_back(RegistrationMetadata{
-			.m_resource = std::move(newBindlessResource),
-			.m_resourceHandle = resourceIdx
-			});
-
-		return resourceIdx;
-	}
-
-
-	void IBindlessResourceSet::UnregisterResource(ResourceHandle& resourceIdx, uint64_t frameNum)
-	{
-		util::ScopedThreadProtector threadProtector(m_threadProtector);
-
-		m_unregistrations.emplace(UnregistrationMetadata{ frameNum , resourceIdx });
-
-		resourceIdx = k_invalidResourceHandle;
-	}
-
-
-	void IBindlessResourceSet::Update(uint64_t frameNum)
-	{
-		util::ScopedThreadProtector threadProtector(m_threadProtector);
-
-		ProcessUnregistrations(frameNum);
-
-		ProcessRegistrations();
-	}
-
-
-	void IBindlessResourceSet::ProcessRegistrations()
-	{
-		// Set the descriptors for any newly registered resources:
-		for (auto& registration : m_registrations)
-		{
-			SetResource(registration.m_resource.get(), registration.m_resourceHandle); // Write the descriptor
-		}
-		m_registrations.clear();
-	}
-
-
-	void IBindlessResourceSet::ProcessUnregistrations(uint64_t frameNum)
-	{
-		m_threadProtector.ValidateThreadAccess();
-
-		// Release freed resources after N frames have passed:
-		while (!m_unregistrations.empty() &&
-			m_unregistrations.front().m_unregistrationFrameNum + m_numFramesInFlight < frameNum)
-		{
-			// Set a null descriptor:
-			platform::IBindlessResourceSet::SetResource(*this, nullptr, m_unregistrations.front().m_resourceHandle);
-
-			// Resource sets immediate free resources
-			m_freeIndexes.emplace(m_unregistrations.front().m_resourceHandle);
-
-			m_unregistrations.pop();
-		}
-	}
-
-
-	void IBindlessResourceSet::SetResource(IBindlessResource* resource, ResourceHandle resourceHandle)
-	{
-		platform::IBindlessResourceSet::SetResource(*this, resource, resourceHandle);
+		platform::IBindlessResource::GetResourceUseState(dest, destByteSize);
 	}
 
 
@@ -144,53 +19,156 @@ namespace re
 
 
 	BindlessResourceManager::BindlessResourceManager()
-		: m_mustRecreate(true)
+		: m_platformParams(platform::BindlessResourceManager::CreatePlatformParams())
+		, m_mustReinitialize(true)
 		, m_numFramesInFlight(re::RenderManager::Get()->GetNumFramesInFlight())
-		, m_threadProtector(false)
 	{
+		// Initialize the free index queue:
+		uint32_t curIdx = 0;
+		while (curIdx < m_platformParams->m_currentMaxIndex)
+		{
+			m_freeIndexes.emplace(curIdx++);
+		}
 	}
 
 
-	void BindlessResourceManager::Initialize()
+	void BindlessResourceManager::Initialize(uint64_t frameNum)
 	{
-		LOG("Initializing BindlessResourceManager to manage %llu IBindlessResourceSets", m_resourceSets.size());
+		// Note: m_brmMutex must already be held
 
-		m_threadProtector.ValidateThreadAccess();
+		LOG("Initializing BindlessResourceManager to manage %d resources", m_platformParams->m_currentMaxIndex);
 
-		for (auto& resourceSet : m_resourceSets)
+		platform::BindlessResourceManager::Initialize(*this, frameNum);
+	}
+
+
+	void BindlessResourceManager::IncreaseSetSize()
+	{
+		// Note: m_brmMutex must already be held
 		{
-			// Initialze resource sets:
-			platform::IBindlessResourceSet::Initialize(*resourceSet);
-		}
+			std::lock_guard<std::mutex> lock(m_platformParams->m_platformParamsMutex);
 
-		m_mustRecreate = false;
+			const uint32_t currentNumResources = m_platformParams->m_currentMaxIndex;
+
+			m_platformParams->m_currentMaxIndex =
+				static_cast<uint32_t>(glm::ceil(m_platformParams->m_currentMaxIndex * k_growthFactor));
+
+			for (uint32_t curIdx = currentNumResources; curIdx < m_platformParams->m_currentMaxIndex; ++curIdx)
+			{
+				m_freeIndexes.emplace(curIdx);
+			}
+
+			m_mustReinitialize = true;
+
+			LOG("BindlessResourceManager resource count increased from %d to %d",
+				currentNumResources, m_platformParams->m_currentMaxIndex);
+		}
+	}
+
+
+	ResourceHandle BindlessResourceManager::RegisterResource(std::unique_ptr<IBindlessResource>&& newBindlessResource)
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_brmMutex);
+
+			if (m_freeIndexes.empty())
+			{
+				IncreaseSetSize();
+			}
+
+			const ResourceHandle resourceIdx = m_freeIndexes.top();
+			m_freeIndexes.pop();
+
+			m_registrations.emplace_back(RegistrationMetadata{
+				.m_resource = std::move(newBindlessResource),
+				.m_resourceHandle = resourceIdx
+				});
+
+			return resourceIdx;
+		}
+	}
+
+
+	void BindlessResourceManager::UnregisterResource(ResourceHandle& resourceIdx, uint64_t frameNum)
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_brmMutex);
+
+			m_unregistrations.emplace(UnregistrationMetadata{ 
+				.m_unregistrationFrameNum = frameNum,
+				.m_resourceHandle = resourceIdx,
+			});
+
+			resourceIdx = k_invalidResourceHandle;
+		}
 	}
 
 
 	void BindlessResourceManager::Update(uint64_t frameNum)
 	{
-		util::ScopedThreadProtector threadProtector(m_threadProtector);
-
-		if (m_mustRecreate)
 		{
-			Initialize();
-		}
+			std::lock_guard<std::mutex> lock(m_brmMutex);
 
-		// Update the resource sets:
-		for (auto& resourceSet : m_resourceSets)
-		{
-			resourceSet->Update(frameNum);
+			if (m_mustReinitialize)
+			{
+				Initialize(frameNum);
+
+				m_mustReinitialize = false;
+			}
+
+			ProcessUnregistrations(frameNum);
+			ProcessRegistrations();
 		}
+	}
+
+
+	void BindlessResourceManager::ProcessUnregistrations(uint64_t frameNum)
+	{
+		// Note: m_brmMutex must already be held
+
+		// Release freed resources after N frames have passed:
+		while (!m_unregistrations.empty() &&
+			m_unregistrations.front().m_unregistrationFrameNum + m_numFramesInFlight < frameNum)
+		{
+			// Null out the resource:
+			platform::BindlessResourceManager::SetResource(*this, nullptr, m_unregistrations.front().m_resourceHandle);
+
+			m_freeIndexes.emplace(m_unregistrations.front().m_resourceHandle);
+
+			m_unregistrations.pop();
+		}
+	}
+
+
+	void BindlessResourceManager::ProcessRegistrations()
+	{
+		// Note: m_brmMutex must already be held
+
+		// Write descriptors for any newly registered resources:
+		for (auto& registration : m_registrations)
+		{
+			platform::BindlessResourceManager::SetResource(
+				*this, registration.m_resource.get(), registration.m_resourceHandle);
+		}
+		m_registrations.clear();
 	}
 
 
 	void BindlessResourceManager::Destroy()
 	{
-		util::ScopedThreadProtector threadProtector(m_threadProtector);
+		std::lock_guard<std::mutex> lock(m_brmMutex);
 
-		for (auto& resourceSet : m_resourceSets)
+		ProcessUnregistrations(std::numeric_limits<uint64_t>::max()); // Immediately unregister everything
+
 		{
-			resourceSet->Destroy();
+			std::lock_guard<std::mutex> lockPlatParams(m_platformParams->m_platformParamsMutex);
+
+			SEAssert(m_freeIndexes.size() == m_platformParams->m_currentMaxIndex,
+				"Some resource handles have not been returned to the BindlessResourceManager");
 		}
+
+		m_freeIndexes = {};
+
+		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
 	}
 }

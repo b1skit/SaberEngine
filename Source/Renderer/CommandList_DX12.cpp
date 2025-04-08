@@ -506,7 +506,7 @@ namespace dx12
 					m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
 						rootParam->m_index,
 						tableDescriptor,
-						rootParam->m_tableEntry.m_offset + bufView.m_buffer.m_firstDestIdx,
+						rootParam->m_tableEntry.m_offset + bufView.m_bufferView.m_firstDestIdx,
 						1);
 				}
 				break;
@@ -542,17 +542,6 @@ namespace dx12
 		// Finally, submit all of our resource transitions in a single batch
 		TransitionResourcesInternal(std::move(resourceTransitions));
 	}
-
-
-	void CommandList::SetBuffers(std::vector<re::BufferInput> const& bufferInputs, re::ShaderBindingTable const& sbt)
-	{
-		dx12::ShaderBindingTable::SetBuffersOnLocalRoots(
-			sbt,
-			bufferInputs,
-			this,
-			m_gpuCbvSrvUavDescriptorHeap.get(),
-			re::RenderManager::Get()->GetCurrentRenderFrameNum());
-	}
 	
 
 	void CommandList::Dispatch(glm::uvec3 const& threadDimensions)
@@ -578,9 +567,6 @@ namespace dx12
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
 		
 		commandList4->SetPipelineState1(sbtPlatParams->m_rayTracingStateObject.Get());
-
-		// Note: All descriptors are (currently) set via local root signatures in the shader binding table,
-		// so no need to commit the GPU descriptor heap here
 
 		D3D12_DISPATCH_RAYS_DESC const& dispatchRaysDesc = dx12::ShaderBindingTable::BuildDispatchRaysDesc(
 			sbt, threadDimensions, re::RenderManager::Get()->GetCurrentRenderFrameNum(), rayGenShaderIdx);
@@ -610,7 +596,7 @@ namespace dx12
 			CommitGPUDescriptors();
 			
 			m_commandList->DrawIndexedInstanced(
-				batchGraphicsParams.m_indexBuffer.m_view.m_stream.m_numElements,	// Index count, per instance
+				batchGraphicsParams.m_indexBuffer.m_view.m_streamView.m_numElements,	// Index count, per instance
 				static_cast<uint32_t>(batch.GetInstanceCount()),		// Instance count
 				0,														// Start index location
 				0,														// Base vertex location
@@ -619,7 +605,7 @@ namespace dx12
 		break;
 		case re::Batch::GeometryMode::ArrayInstanced:
 		{		
-			SEAssert(batchGraphicsParams.m_vertexBuffers[0].m_view.m_stream.m_type == 
+			SEAssert(batchGraphicsParams.m_vertexBuffers[0].m_view.m_streamView.m_type == 
 				gr::VertexStream::Type::Position,
 				"We're currently assuming the first stream contains the correct number of elements for the entire draw."
 				" If you hit this, validate this logic and delete this assert");
@@ -627,7 +613,7 @@ namespace dx12
 			CommitGPUDescriptors();
 
 			m_commandList->DrawInstanced(
-				batchGraphicsParams.m_vertexBuffers[0].m_view.m_stream.m_numElements,	// VertexCountPerInstance
+				batchGraphicsParams.m_vertexBuffers[0].m_view.m_streamView.m_numElements,	// VertexCountPerInstance
 				batchGraphicsParams.m_numInstances,										// InstanceCount
 				0,																		// StartVertexLocation
 				0);																		// StartInstanceLocation
@@ -1197,67 +1183,19 @@ namespace dx12
 
 	void CommandList::AttachBindlessResources(re::ShaderBindingTable const& sbt, re::BindlessResourceManager const& brm)
 	{
-		dx12::ShaderBindingTable::SetBindlessResourcesOnLocalRoots(
-			sbt, 
-			brm, 
-			m_gpuCbvSrvUavDescriptorHeap.get(), 
-			re::RenderManager::Get()->GetCurrentRenderFrameNum());
+		SetComputeRootSignature(dx12::BindlessResourceManager::GetRootSignature(brm));
+
+		ID3D12DescriptorHeap* brmDescriptorHeap = 
+			dx12::BindlessResourceManager::GetDescriptorHeap(brm, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+
+		m_commandList->SetDescriptorHeaps(1, &brmDescriptorHeap);
+
+		m_commandList->SetComputeRootDescriptorTable(
+			0,
+			brmDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 		// Transition resources:
 		TransitionResources(dx12::BindlessResourceManager::BuildResourceTransitions(brm));
-	}
-
-
-	void CommandList::SetTLAS(re::ASInput const& tlas, re::ShaderBindingTable const& sbt)
-	{
-		dx12::ShaderBindingTable::SetTLASOnLocalRoots(
-			sbt,
-			tlas,
-			m_gpuCbvSrvUavDescriptorHeap.get(),
-			re::RenderManager::Get()->GetCurrentRenderFrameNum());
-
-		// Set the bindless LUT on the global root sig:
-		re::AccelerationStructure::TLASParams const* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas.m_accelerationStructure->GetASParams());
-		SEAssert(tlasParams, "Failed to get TLASParams");
-
-		// Set the bindless LUT buffer:
-		SetBuffers({ tlasParams->GetBindlessResourceLUT() }, sbt);
-	}
-
-
-	void CommandList::SetRWTextures(
-		std::vector<re::RWTextureInput> const& rwTexInputs, re::ShaderBindingTable const& sbt)
-	{
-		// Batch our resource transitions together:
-		std::vector<TransitionMetadata> resourceTransitions;
-		resourceTransitions.reserve(rwTexInputs.size());
-
-		for (auto const& rwTexInput : rwTexInputs)
-		{
-			core::InvPtr<re::Texture> const& rwTex = rwTexInput.m_texture;
-
-			dx12::Texture::PlatformParams const* texPlatParams =
-				rwTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
-
-			resourceTransitions.emplace_back(TransitionMetadata{
-				.m_resource = texPlatParams->m_gpuResource->Get(),
-				.m_toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-				.m_subresourceIndexes = re::TextureView::GetSubresourceIndexes(
-					rwTexInput.m_texture, rwTexInput.m_textureView),
-				});
-
-			// DXR: We set our descriptors via the shader binding table (which internally stages them in our GPU-visible
-			// descriptor heap)
-			dx12::ShaderBindingTable::SetRWTextureOnLocalRoots(
-				sbt,
-				rwTexInput,
-				m_gpuCbvSrvUavDescriptorHeap.get(),
-				re::RenderManager::Get()->GetCurrentRenderFrameNum());
-		}
-
-		// Finally, insert our batched resource transitions:
-		TransitionResourcesInternal(std::move(resourceTransitions));
 	}
 
 
@@ -1657,7 +1595,7 @@ namespace dx12
 
 		const D3D12_RESOURCE_BARRIER barrier{
 			.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV,
-			.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
+			.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
 			.UAV = D3D12_RESOURCE_UAV_BARRIER{
 				.pResource = resource}
 		};

@@ -1,9 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "BindlessResource.h"
 #include "Buffer.h"
 #include "RenderManager.h"
-#include "SysInfo_Platform.h"
 #include "VertexStream.h"
-#include "BindlessResource_VertexStream.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -125,6 +124,16 @@ namespace gr
 					new VertexStream(m_streamDesc, std::move(m_data), m_dataHash, m_extraUsageBits));
 			}
 
+			void OnLoadComplete(core::InvPtr<gr::VertexStream>& vertexStream) override
+			{
+				re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+				if (brm) // May be null (e.g. API does not support bindless resources)
+				{
+					vertexStream->m_srvResourceHandle = brm->RegisterResource(
+						std::make_unique<re::VertexStreamResource>(vertexStream));
+				}
+			}
+
 			util::HashKey m_dataHash;
 
 			StreamDesc m_streamDesc;
@@ -175,23 +184,6 @@ namespace gr
 			bufAccessMask |= re::Buffer::CPUWrite;
 		}
 
-		// In order to avoid falsely triggering some asserts, we get the bindless registration callback in advance
-		// before the m_streamBuffer is created, and set it later once it is
-		std::function<ResourceHandle(void)> bindlessRegistrationCallback;
-		std::function<void(ResourceHandle&)> bindlessUnregistrationCallback;
-
-		const bool createBindlessHandle = // We (currently) don't attach blend indices/weights as bindless resources
-			vertexStream->GetType() != gr::VertexStream::BlendIndices &&
-			vertexStream->GetType() != gr::VertexStream::BlendWeight &&
-			platform::SysInfo::BindlessResourcesSupported();
-		if (createBindlessHandle)
-		{
-			bindlessRegistrationCallback = 
-				re::IVertexStreamResource::GetRegistrationCallback(vertexStream);
-			bindlessUnregistrationCallback = 
-				re::IVertexStreamResource::GetUnregistrationCallback(vertexStream->GetDataType());
-		}	
-
 		m_streamBuffer = re::Buffer::Create(
 			bufferName,
 			m_deferredBufferCreateParams->m_data.data().data(),
@@ -204,13 +196,6 @@ namespace gr
 				.m_usageMask = bufferUsage,
 				.m_arraySize = 1,
 			});
-		
-		if (createBindlessHandle)
-		{
-			m_streamBuffer->SetBindlessCallbacks(
-				std::move(bindlessRegistrationCallback), 
-				std::move(bindlessUnregistrationCallback));
-		}
 
 		// Finally, release the data:
 		m_deferredBufferCreateParams = nullptr;
@@ -223,6 +208,7 @@ namespace gr
 		util::HashKey dataHash,
 		re::Buffer::UsageMask extraUsageBits)
 		: m_streamDesc(streamDesc)
+		, m_srvResourceHandle(k_invalidResourceHandle)
 	{
 		SEAssert(m_streamDesc.m_type != Type::Type_Count && m_streamDesc.m_dataType != re::DataType::DataType_Count,
 			"Invalid create params");
@@ -288,6 +274,14 @@ namespace gr
 
 		m_streamBuffer = nullptr;
 		m_deferredBufferCreateParams = nullptr;
+
+		if (m_srvResourceHandle != k_invalidResourceHandle)
+		{
+			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
+
+			brm->UnregisterResource(m_srvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+		}
 	}
 
 

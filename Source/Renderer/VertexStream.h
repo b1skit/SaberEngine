@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "BindlessResourceManager.h"
 #include "Buffer.h"
 #include "EnumTypes.h"
 
@@ -119,6 +120,8 @@ namespace gr
 		re::Buffer const* GetBuffer() const;
 		std::shared_ptr<re::Buffer> const& GetBufferSharedPtr() const;
 
+		ResourceHandle GetBindlessResourceHandle() const;
+
 
 	public:
 		void ShowImGuiWindow() const;
@@ -148,6 +151,8 @@ namespace gr
 			re::Buffer::UsageMask m_extraUsageBits;
 		};
 		std::unique_ptr<DeferredBufferCreateParams> m_deferredBufferCreateParams;
+
+		ResourceHandle m_srvResourceHandle; // SRV for a VertexStreamType BufferView
 
 
 	private: // Use the Create() factory instead
@@ -181,6 +186,12 @@ namespace gr
 	inline std::shared_ptr<re::Buffer> const& VertexStream::GetBufferSharedPtr() const
 	{
 		return m_streamBuffer;
+	}
+
+
+	inline ResourceHandle VertexStream::GetBindlessResourceHandle() const
+	{
+		return m_srvResourceHandle;
 	}
 
 

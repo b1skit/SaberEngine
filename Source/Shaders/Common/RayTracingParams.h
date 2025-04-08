@@ -40,7 +40,7 @@ struct TraceRayData
 	// .w = MissShaderIndex: Index of miss shader to use when multiple consecutive miss shaders are present in the SBT
 	uint4 g_traceRayParams;
 
-	uint4 g_rayFlags; // .x = RAY_FLAG, .yzw = unused
+	uint4 g_rayFlagsCameraIdx; // .x = RAY_FLAG, .y = CameraParams idx, .zw = unused
 };
 
 

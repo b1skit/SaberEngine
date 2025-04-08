@@ -1,7 +1,9 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "AccelerationStructure_Platform.h"
+#include "BindlessResource.h"
 #include "Buffer.h"
+#include "BufferView.h"
 #include "RenderManager.h"
 
 #include "Core/Assert.h"
@@ -11,6 +13,7 @@
 #include "Core/Util/CastUtils.h"
 
 #include "Shaders/Common/BindlessResourceParams.h"
+
 
 
 namespace
@@ -28,6 +31,54 @@ namespace
 		}
 		return result;
 	}
+
+
+	re::BufferInput CreateBindlessLUT(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances)
+	{
+		std::vector<BindlessLUTData> bindlessLUTData;
+		bindlessLUTData.reserve(GetTotalGeometryCount(blasInstances));
+
+		for (auto const& instance : blasInstances)
+		{
+			re::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<re::AccelerationStructure::BLASParams const*>(instance->GetASParams());
+			SEAssert(blasParams, "Failed to get BLASParams");
+
+			for (auto const& geometry : blasParams->m_geometry)
+			{
+				bindlessLUTData.emplace_back(BindlessLUTData{
+					.g_posNmlTanUV0 = glm::uvec4(
+						geometry.GetResourceHandle(gr::VertexStream::Position),
+						geometry.GetResourceHandle(gr::VertexStream::Normal),
+						geometry.GetResourceHandle(gr::VertexStream::Tangent),
+						geometry.GetResourceHandle(gr::VertexStream::TexCoord, 0)
+					),
+					.g_UV1ColorIndex = glm::uvec4(
+						geometry.GetResourceHandle(gr::VertexStream::TexCoord, 1),
+						geometry.GetResourceHandle(gr::VertexStream::Color),
+						geometry.GetResourceHandle(gr::VertexStream::Index, 0), // 16 bit
+						geometry.GetResourceHandle(gr::VertexStream::Index, 1) // 32 bit
+					),
+					});
+			}
+		}
+		SEStaticAssert(sizeof(BindlessLUTData) == 32, "BindlessLUTData size has changed: This must be updated");
+
+		return re::BufferInput(
+			BindlessLUTData::s_shaderName,
+			re::Buffer::CreateArray(
+				"TLAS Bindless LUT",
+				bindlessLUTData.data(),
+				re::Buffer::BufferParams{
+					.m_lifetime = re::Lifetime::Permanent,
+					.m_stagingPool = re::Buffer::StagingPool::Temporary,
+					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
+					.m_accessMask = re::Buffer::Access::GPURead,
+					.m_usageMask = re::Buffer::Usage::Structured,
+					.m_arraySize = util::CheckedCast<uint32_t>(bindlessLUTData.size()),
+				}));
+
+	}
 }
 
 namespace re
@@ -35,7 +86,7 @@ namespace re
 	void AccelerationStructure::Geometry::RegisterResource(core::InvPtr<gr::VertexStream> const& vertexStream)
 	{
 		RegisterResourceInternal(
-			re::IVertexStreamResource::GetResourceHandle(vertexStream),
+			vertexStream->GetBindlessResourceHandle(),
 			vertexStream->GetType(),
 			vertexStream->GetDataType());
 	}
@@ -44,7 +95,7 @@ namespace re
 	void AccelerationStructure::Geometry::RegisterResource(re::VertexBufferInput const& vertexBufferInput)
 	{
 		RegisterResourceInternal(
-			re::IVertexStreamResource::GetResourceHandle(vertexBufferInput),
+			vertexBufferInput.GetStream()->GetBindlessResourceHandle(),
 			vertexBufferInput.GetStream()->GetType(),
 			vertexBufferInput.GetStream()->GetDataType());
 	}
@@ -207,16 +258,37 @@ namespace re
 				AccelerationStructure::Type::TLAS,
 				std::move(tlasParams)));
 
+		// Get a bindless resource handle:
+		re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+		SEAssert(brm, "Failed to get BindlessResourceManager");
+		
+		re::AccelerationStructure::TLASParams* movedTlasParams =
+			dynamic_cast<re::AccelerationStructure::TLASParams*>(newAccelerationStructure->m_asParams.get());
+
+		movedTlasParams->m_srvTLASResourceHandle = brm->RegisterResource(
+			std::make_unique<re::AccelerationStructureResource>(newAccelerationStructure));
+
+		// Create the bindless LUT buffer:
+		movedTlasParams->m_bindlessResourceLUT = CreateBindlessLUT(movedTlasParams->m_blasInstances);
+
+		// Register for API creation:
 		re::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);
 
 		return newAccelerationStructure;
 	}
 
 
-	re::BufferInput AccelerationStructure::TLASParams::GetBindlessResourceLUT() const
+	ResourceHandle AccelerationStructure::TLASParams::GetResourceHandle() const
+	{
+		return m_srvTLASResourceHandle;
+	}
+
+
+	re::BufferInput const& AccelerationStructure::TLASParams::GetBindlessResourceLUT() const
 	{
 		return m_bindlessResourceLUT;
 	}
+
 
 	AccelerationStructure::~AccelerationStructure()
 	{
@@ -227,60 +299,6 @@ namespace re
 	void AccelerationStructure::Create()
 	{
 		platform::AccelerationStructure::Create(*this);
-
-		// Create the bindless LUT buffer:
-		if (m_type == re::AccelerationStructure::Type::TLAS)
-		{
-			re::AccelerationStructure::TLASParams* tlasParams =
-				dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
-			SEAssert(tlasParams, "Failed to get TLASParams");
-
-			SEAssert(tlasParams->m_bindlessResourceLUT.GetBuffer() == nullptr,
-				"Bindless resource LUT buffer already created. This is unexpected");
-
-			std::vector<BindlessLUTData> bindlessLUTData;
-			bindlessLUTData.reserve(GetTotalGeometryCount(tlasParams->m_blasInstances));
-
-			for (auto const& instance : tlasParams->m_blasInstances)
-			{
-				re::AccelerationStructure::BLASParams const* blasParams =
-					dynamic_cast<re::AccelerationStructure::BLASParams const*>(instance->GetASParams());
-				SEAssert(blasParams, "Failed to get BLASParams");
-
-				for (auto const& geometry : blasParams->m_geometry)
-				{
-					bindlessLUTData.emplace_back(BindlessLUTData{
-						.g_posNmlTanUV0 = glm::uvec4(
-							geometry.GetResourceHandle(gr::VertexStream::Position),
-							geometry.GetResourceHandle(gr::VertexStream::Normal),
-							geometry.GetResourceHandle(gr::VertexStream::Tangent),
-							geometry.GetResourceHandle(gr::VertexStream::TexCoord, 0)
-						),
-						.g_UV1ColorIndex = glm::uvec4(
-							geometry.GetResourceHandle(gr::VertexStream::TexCoord, 1),
-							geometry.GetResourceHandle(gr::VertexStream::Color),
-							geometry.GetResourceHandle(gr::VertexStream::Index, 0), // 16 bit
-							geometry.GetResourceHandle(gr::VertexStream::Index, 1) // 32 bit
-						),
-					});
-				}
-			}
-			SEStaticAssert(sizeof(BindlessLUTData) == 32, "BindlessLUTData size has changed: This must be updated");
-
-			tlasParams->m_bindlessResourceLUT = re::BufferInput(
-				BindlessLUTData::s_shaderName,
-				re::Buffer::CreateArray(
-					"TLAS Bindless LUT",
-					bindlessLUTData.data(),
-					re::Buffer::BufferParams{
-						.m_lifetime = re::Lifetime::Permanent,
-						.m_stagingPool = re::Buffer::StagingPool::Temporary,
-						.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
-						.m_accessMask = re::Buffer::Access::GPURead,
-						.m_usageMask = re::Buffer::Usage::Constant,
-						.m_arraySize = util::CheckedCast<uint32_t>(bindlessLUTData.size()),
-					}));
-		}
 	}
 
 
@@ -289,6 +307,21 @@ namespace re
 		if (m_platformParams)
 		{
 			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
+		}
+
+		if (m_type == re::AccelerationStructure::Type::TLAS &&
+			GetResourceHandle() != k_invalidResourceHandle)
+		{
+			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
+
+			re::AccelerationStructure::TLASParams* tlasParams =
+				dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
+			SEAssert(tlasParams, "Failed to cast to TLASParams");
+
+			brm->UnregisterResource(
+				tlasParams->m_srvTLASResourceHandle,
+				re::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 	}
 

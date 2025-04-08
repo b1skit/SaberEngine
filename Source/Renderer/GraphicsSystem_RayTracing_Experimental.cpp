@@ -13,7 +13,7 @@
 namespace
 {
 	std::shared_ptr<re::Buffer> CreateTraceRayParams(
-		uint8_t instanceInclusionMask, RayFlag rayFlags, uint32_t missShaderIdx)
+		uint8_t instanceInclusionMask, RayFlag rayFlags, uint32_t missShaderIdx, ResourceHandle cameraParamsHandle)
 	{
 		SEAssert(instanceInclusionMask <= 0xFF, "Instance inclusion mask has maximum 8 bits");
 
@@ -23,15 +23,18 @@ namespace
 				0,												// RayContributionToHitGroupIndex
 				0,												// MultiplierForGeometryContributionToHitGroupIndex
 				missShaderIdx),									// MissShaderIndex
-			.g_rayFlags = glm::uvec4(
+			.g_rayFlagsCameraIdx = glm::uvec4(
 				rayFlags,
-				0,
+				cameraParamsHandle,
 				0,
 				0),
 		};
 
 		const re::Buffer::BufferParams traceRayBufferParams{
+			.m_lifetime = re::Lifetime::Permanent,
 			.m_stagingPool = re::Buffer::StagingPool::Temporary,
+			.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
+			.m_accessMask = re::Buffer::Access::GPURead,
 			.m_usageMask = re::Buffer::Usage::Constant,
 		};
 
@@ -146,12 +149,30 @@ namespace gr
 			m_rtStage->AddBatch(re::Batch(re::Lifetime::SingleFrame, rtParams));
 
 			// Ray tracing params:
-			m_rtStage->AddSingleFrameBuffer(re::BufferInput(
-				"TraceRayParams", 
-				CreateTraceRayParams(
-					m_geometryInstanceMask,
-					RayFlag::None, 
-					m_missShaderIdx)));
+			std::shared_ptr<re::Buffer> traceRayParams = CreateTraceRayParams(
+				m_geometryInstanceMask,
+				RayFlag::None,
+				m_missShaderIdx,
+				m_graphicsSystemManager->GetActiveCameraParams().GetBuffer()->GetBindlessResourceHandle(re::ViewType::CBV));
+
+			// Note: We currently only set our TraceRayParams buffer on the m_rtStage to maintain its lifetime; RT uses
+			// bindless resources so the buffer is not directly bound
+			m_rtStage->AddSingleFrameBuffer(re::BufferInput("TraceRayParams", traceRayParams));
+
+			SEAssert((*m_sceneTLAS)->GetBindlessResourceLUT().GetBuffer()->GetBindlessResourceHandle(re::ViewType::SRV) != k_invalidResourceHandle &&
+				(*m_sceneTLAS)->GetResourceHandle() != k_invalidResourceHandle &&
+				m_rtTarget->GetBindlessResourceHandle(re::ViewType::UAV) != k_invalidResourceHandle &&
+				traceRayParams->GetBindlessResourceHandle(re::ViewType::CBV) != k_invalidResourceHandle,
+				"Invalid resource handle detected");
+
+			// Set root constants for the frame:
+			glm::uvec4 rootConstants(
+				(*m_sceneTLAS)->GetBindlessResourceLUT().GetBuffer()->GetBindlessResourceHandle(re::ViewType::SRV),
+				(*m_sceneTLAS)->GetResourceHandle(),
+				m_rtTarget->GetBindlessResourceHandle(re::ViewType::UAV),
+				traceRayParams->GetBindlessResourceHandle(re::ViewType::CBV));
+			
+			m_rtStage->SetRootConstant("GlobalConstants", &rootConstants, re::DataType::UInt4);		
 		}
 		else
 		{

@@ -134,16 +134,12 @@ namespace dx12
 		void SetTextures(std::vector<re::TextureAndSamplerInput> const&, re::ShaderBindingTable const&);
 
 		void SetBuffers(std::vector<re::BufferInput> const&);
-		void SetBuffers(std::vector<re::BufferInput> const&, re::ShaderBindingTable const&);
 
 		void SetRWTextures(std::vector<re::RWTextureInput> const&);
-		void SetRWTextures(std::vector<re::RWTextureInput> const&, re::ShaderBindingTable const&);
 
 		void BuildRaytracingAccelerationStructure(re::AccelerationStructure&, bool doUpdate);
 
 		void AttachBindlessResources(re::ShaderBindingTable const&, re::BindlessResourceManager const&);
-
-		void SetTLAS(re::ASInput const&, re::ShaderBindingTable const&);		
 
 		void DrawBatchGeometry(re::Batch const&);
 		void Dispatch(glm::uvec3 const& threadDimensions);

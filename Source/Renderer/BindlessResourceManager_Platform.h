@@ -5,14 +5,23 @@
 
 namespace platform
 {
-	class IBindlessResourceSet
+	struct IBindlessResource
+	{
+		static void (*GetResourceUseState)(void* dest, size_t destByteSize);
+	};
+
+
+	// ---
+
+
+	class BindlessResourceManager
 	{
 	public:
-		static std::unique_ptr<re::IBindlessResourceSet::PlatformParams> CreatePlatformParams();
+		static std::unique_ptr<re::BindlessResourceManager::PlatformParams> CreatePlatformParams();
 
 
 	public:
-		static void (*Initialize)(re::IBindlessResourceSet&);
-		static void (*SetResource)(re::IBindlessResourceSet&, re::IBindlessResource*, ResourceHandle);
+		static void (*Initialize)(re::BindlessResourceManager&, uint64_t frameNum);
+		static void (*SetResource)(re::BindlessResourceManager&, re::IBindlessResource*, ResourceHandle);
 	};
 }

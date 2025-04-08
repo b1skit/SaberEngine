@@ -71,7 +71,7 @@ namespace
 			SEAssert(vertexBuffers[i].GetStream() == nullptr ||
 				i + 1 == gr::VertexStream::k_maxVertexStreams ||
 				vertexBuffers[i + 1].GetStream() == nullptr ||
-				(vertexBuffers[i].m_view.m_stream.m_type < vertexBuffers[i + 1].m_view.m_stream.m_type) ||
+				(vertexBuffers[i].m_view.m_streamView.m_type < vertexBuffers[i + 1].m_view.m_streamView.m_type) ||
 				vertexBuffers[i].m_bindSlot + 1 == vertexBuffers[i + 1].m_bindSlot,
 				"Vertex streams of the same type must be stored in monotoically-increasing slot order");
 
@@ -107,7 +107,7 @@ namespace
 
 				SEAssert(i + 1 == gr::VertexStream::k_maxVertexStreams ||
 					(*overrides)[i + 1].GetStream() == nullptr ||
-					((*overrides)[i].m_view.m_stream.m_type < (*overrides)[i + 1].m_view.m_stream.m_type) ||
+					((*overrides)[i].m_view.m_streamView.m_type < (*overrides)[i + 1].m_view.m_streamView.m_type) ||
 					(*overrides)[i].m_bindSlot + 1 == (*overrides)[i + 1].m_bindSlot ||
 					((*overrides)[i].m_bindSlot == re::VertexBufferInput::k_invalidSlotIdx && 
 						(*overrides)[i + 1].m_bindSlot == re::VertexBufferInput::k_invalidSlotIdx),
@@ -169,7 +169,7 @@ namespace re
 		, m_indexBuffer{}
 		, m_materialUniqueID(core::IUniqueID::k_invalidUniqueID)
 	{
-		SEStaticAssert(sizeof(Batch::GraphicsParams) == 976, "Must update this if GraphicsParams size has changed");
+		SEStaticAssert(sizeof(Batch::GraphicsParams) == 1112, "Must update this if GraphicsParams size has changed");
 	}
 
 
@@ -203,7 +203,7 @@ namespace re
 		}
 		return *this;
 
-		SEStaticAssert(sizeof(Batch::GraphicsParams) == 976, "Must update this if GraphicsParams size has changed");
+		SEStaticAssert(sizeof(Batch::GraphicsParams) == 1112, "Must update this if GraphicsParams size has changed");
 	}
 
 
@@ -229,7 +229,7 @@ namespace re
 		}
 		return *this;
 
-		SEStaticAssert(sizeof(Batch::GraphicsParams) == 976, "Must update this if GraphicsParams size has changed");
+		SEStaticAssert(sizeof(Batch::GraphicsParams) == 1112, "Must update this if GraphicsParams size has changed");
 	}
 
 
@@ -729,13 +729,13 @@ namespace re
 				}
 				
 				const gr::VertexStream::Type curStreamType = 
-					m_graphicsParams.m_vertexBuffers[i].m_view.m_stream.m_type;
+					m_graphicsParams.m_vertexBuffers[i].m_view.m_streamView.m_type;
 				
 				// Find consecutive streams with the same type, and resolve the final vertex slot from the shader
 				uint8_t semanticIdx = 0; // Start at 0 to ensure we process the current stream
 				while (i + semanticIdx < gr::VertexStream::k_maxVertexStreams &&
 					m_graphicsParams.m_vertexBuffers[i + semanticIdx].GetStream() &&
-					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_view.m_stream.m_type == curStreamType)
+					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_view.m_streamView.m_type == curStreamType)
 				{					
 					const uint8_t vertexAttribSlot = m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
 					if (vertexAttribSlot != re::VertexStreamMap::k_invalidSlotIdx)
@@ -835,7 +835,7 @@ namespace re
 
 			AddDataBytesToHash(m_graphicsParams.m_materialUniqueID);
 
-			SEStaticAssert(sizeof(Batch::GraphicsParams) == 976, "Must update this if GraphicsParams size has changed");
+			SEStaticAssert(sizeof(Batch::GraphicsParams) == 1112, "Must update this if GraphicsParams size has changed");
 		}
 		break;
 		case BatchType::Compute:

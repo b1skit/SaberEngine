@@ -4,14 +4,12 @@
 #include "BufferView.h"
 #include "Context_DX12.h"
 #include "DescriptorCache_DX12.h"
-#include "Sampler.h"
+#include "EnumTypes.h"
 #include "Texture.h"
 #include "Texture_DX12.h"
 
 #include "Core/Assert.h"
 #include "Core/Util/MathUtils.h"
-
-#include <d3dx12.h>
 
 
 namespace
@@ -485,24 +483,46 @@ namespace
 		re::Buffer const& buffer,
 		re::BufferView const& bufView)
 	{
-		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
-
-		const D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{
-			.Format = DXGI_FORMAT_UNKNOWN, // Assume we're creating a view of a structured buffer
-			.ViewDimension = D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER,
-			.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-			.Buffer = D3D12_BUFFER_SRV{
-				.FirstElement = bufView.m_buffer.m_firstElement,
-				.NumElements = bufView.m_buffer.m_numElements,
-				.StructureByteStride = bufView.m_buffer.m_structuredByteStride, // Size of 1 element in the shader
-				.Flags = D3D12_BUFFER_SRV_FLAGS::D3D12_BUFFER_SRV_FLAG_NONE,
-			}};
-
-		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
-
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		
+		// TODO: Need to figure out how to apply the heap byte offset here (or if that is even possible). Perhaps we
+		// could apply it to the CPU-visible descriptor handle that gets returned by the caller above us? We probably
+		// also need to update the hashing function to prevent aliasing as well
+		SEAssert(params->m_heapByteOffset == 0, "Heap byte offset is non-zero");
 
-		device->CreateShaderResourceView(params->m_resolvedGPUResource, &srvDesc, descriptor.GetBaseDescriptor());
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+
+		if (bufView.IsVertexStreamView())
+		{
+			srvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
+				.Format = DXGI_FORMAT_UNKNOWN, // Mandatory when creating a view of a StructuredBuffer
+				.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+				.Buffer = D3D12_BUFFER_SRV{
+					.FirstElement = 0,
+					.NumElements = bufView.m_streamView.m_numElements,
+					.StructureByteStride = re::DataTypeToByteStride(bufView.m_streamView.m_dataType), // Size of 1 element in the shader
+					.Flags = D3D12_BUFFER_SRV_FLAG_NONE,
+				} };
+		}
+		else
+		{
+			srvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
+				.Format = DXGI_FORMAT_UNKNOWN, // Mandatory when creating a view of a StructuredBuffer
+				.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+				.Buffer = D3D12_BUFFER_SRV{
+					.FirstElement = bufView.m_bufferView.m_firstElement,
+					.NumElements = bufView.m_bufferView.m_numElements,
+					.StructureByteStride = bufView.m_bufferView.m_structuredByteStride, // Size of 1 element in the shader
+					.Flags = D3D12_BUFFER_SRV_FLAG_NONE,
+				}};
+		}
+		
+		re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateShaderResourceView(
+			params->m_resolvedGPUResource,
+			&srvDesc,
+			descriptor.GetBaseDescriptor());
 	}
 
 
@@ -511,26 +531,29 @@ namespace
 		re::Buffer const& buffer,
 		re::BufferView const& bufView)
 	{
-		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		
+		// TODO: Need to figure out how to apply the heap byte offset here (or if that is even possible). Perhaps we
+		// could apply it to the CPU-visible descriptor handle that gets returned by the caller above us? We probably
+		// also need to update the hashing function to prevent aliasing as well
+		SEAssert(params->m_heapByteOffset == 0, "Heap byte offset is non-zero");
+
+		SEAssert(bufView.IsVertexStreamView() == false, "TODO: Support UAV creation for vertex stream views");
 
 		const D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc
 		{
 			.Format = DXGI_FORMAT_UNKNOWN,
 			.ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
 			.Buffer = D3D12_BUFFER_UAV{
-				.FirstElement = bufView.m_buffer.m_firstElement,
-				.NumElements = bufView.m_buffer.m_numElements,
-				.StructureByteStride = bufView.m_buffer.m_structuredByteStride, // Size of the struct in the shader
+				.FirstElement = bufView.m_bufferView.m_firstElement,
+				.NumElements = bufView.m_bufferView.m_numElements,
+				.StructureByteStride = bufView.m_bufferView.m_structuredByteStride, // Size of the struct in the shader
 				.CounterOffsetInBytes = 0,
 				.Flags = D3D12_BUFFER_UAV_FLAG_NONE,
 			}
 		};
 
-		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
-
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
-
-		device->CreateUnorderedAccessView(
+		re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateUnorderedAccessView(
 			params->m_resolvedGPUResource,
 			nullptr,	// Optional counter resource
 			&uavDesc,
@@ -543,6 +566,9 @@ namespace
 		re::Buffer const& buffer,
 		re::BufferView const& bufView)
 	{
+		SEAssert(bufView.IsVertexStreamView() == false,
+			"Vertex streams are often larger than CBVs allow, so creating a CBV is unexpected");
+
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 		const D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc
@@ -553,9 +579,7 @@ namespace
 				D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT),
 		};
 		
-		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
-
-		device->CreateConstantBufferView(
+		re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateConstantBufferView(
 			&cbvDesc,
 			descriptor.GetBaseDescriptor());
 	}
@@ -714,6 +738,11 @@ namespace dx12
 
 				switch (m_descriptorType)
 				{
+				case DescriptorType::CBV:
+				{
+					InitializeBufferCBV(newCacheEntry.second, buffer, bufView);
+				}
+				break;
 				case DescriptorType::SRV:
 				{
 					InitializeBufferSRV(newCacheEntry.second, buffer, bufView);
@@ -722,11 +751,6 @@ namespace dx12
 				case DescriptorType::UAV:
 				{
 					InitializeBufferUAV(newCacheEntry.second, buffer, bufView);
-				}
-				break;
-				case DescriptorType::CBV:
-				{
-					InitializeBufferCBV(newCacheEntry.second, buffer, bufView);
 				}
 				break;
 				case DescriptorType::RTV:

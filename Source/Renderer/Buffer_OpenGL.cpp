@@ -188,10 +188,10 @@ namespace opengl
 				"Buffer is missing the VertexStream usage bit");
 
 			glBindVertexBuffer(
-				bindIndex,											// Slot index
-				bufferPlatParams->m_bufferName,						// Buffer
-				bufferPlatParams->m_baseOffset,						// Offset
-				DataTypeToByteStride(view.m_stream.m_dataType));	// Stride
+				bindIndex,												// Slot index
+				bufferPlatParams->m_bufferName,							// Buffer
+				bufferPlatParams->m_baseOffset,							// Offset
+				DataTypeToByteStride(view.m_streamView.m_dataType));	// Stride
 		}
 		break;
 		case BindTarget::Index:

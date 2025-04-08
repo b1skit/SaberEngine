@@ -22,7 +22,7 @@ namespace dx12
 		static constexpr uint32_t k_maxRootSigEntries = 64;
 
 		static constexpr uint8_t k_invalidRootSigIndex	= std::numeric_limits<uint8_t>::max();
-		static constexpr uint8_t k_invalidOffset		= std::numeric_limits<uint8_t>::max();
+		static constexpr uint32_t k_invalidOffset		= std::numeric_limits<uint32_t>::max();
 		static constexpr uint32_t k_invalidCount		= std::numeric_limits<uint32_t>::max();
 
 		static constexpr uint32_t k_invalidRegisterVal	= std::numeric_limits<uint32_t>::max();
@@ -69,6 +69,8 @@ namespace dx12
 			std::array<std::vector<RangeEntry>, DescriptorType::Type_Count> m_ranges; // A vector of RangeEntry for each DescriptorType
 
 			D3D12_SHADER_VISIBILITY m_visibility = D3D12_SHADER_VISIBILITY_ALL;
+
+			bool ContainsUnboundedArray() const;
 		};
 
 
@@ -94,7 +96,7 @@ namespace dx12
 		struct TableEntry // Describes an individual (named) resource packed in a descriptor table
 		{
 			DescriptorType m_type = DescriptorType::Type_Invalid;
-			uint8_t m_offset = k_invalidOffset;
+			uint32_t m_offset = k_invalidOffset;
 
 			union
 			{
@@ -210,6 +212,8 @@ namespace dx12
 
 		std::vector<DescriptorTable> const& GetDescriptorTableMetadata() const; // E.g. For pre-setting null descriptors
 
+		bool RootIndexContainsUnboundedArray(uint8_t rootIndex) const;
+
 
 	public: // Debug-only helpers:
 #if defined(_DEBUG)
@@ -252,9 +256,9 @@ namespace dx12
 
 		static void ParseTableRanges(
 			dx12::RootSignature*,
-			std::array<std::vector<dx12::RootSignature::RangeInput>, DescriptorType::Type_Count>&,
+			std::array<std::vector<dx12::RootSignature::RangeInput>, DescriptorType::Type_Count> const&,
 			std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters,
-			std::vector<std::vector<CD3DX12_DESCRIPTOR_RANGE1>>& tableRanges);
+			std::vector<CD3DX12_DESCRIPTOR_RANGE1>& tableRanges);
 
 
 	private:

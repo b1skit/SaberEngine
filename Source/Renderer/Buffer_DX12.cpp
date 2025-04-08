@@ -290,9 +290,10 @@ namespace dx12
 		uint32_t numBytes,
 		dx12::CommandList* copyCmdList)
 	{
-		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
+		SEAssert(buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>()->m_heapByteOffset == 0,
+			"Only permanent DX12 buffers expect a non-zero heap byte offset");
 
-		dx12::Buffer::PlatformParams* params = buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
 
 		void const* data = buffer->GetData();
 
@@ -419,7 +420,7 @@ namespace dx12
 				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
 					.BufferLocation = params->m_resolvedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
 					.SizeInBytes = buffer.GetTotalBytes(),
-					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_stream.m_dataType, false),
+					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_streamView.m_dataType, false),
 				};
 			}
 		}
@@ -434,9 +435,9 @@ namespace dx12
 		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer),
 			"Buffer does not have the correct usage flags set");
 
-		SEAssert(view.m_stream.m_dataType != re::DataType::DataType_Count &&
-			view.m_stream.m_dataType >= re::DataType::Float && 
-			view.m_stream.m_dataType <= re::DataType::UByte4,
+		SEAssert(view.m_streamView.m_dataType != re::DataType::DataType_Count &&
+			view.m_streamView.m_dataType >= re::DataType::Float && 
+			view.m_streamView.m_dataType <= re::DataType::UByte4,
 			"Invalid data type");
 
 		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
@@ -450,7 +451,7 @@ namespace dx12
 				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
 					.BufferLocation = params->m_resolvedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
 					.SizeInBytes = buffer.GetTotalBytes(),
-					.StrideInBytes = DataTypeToByteStride(view.m_stream.m_dataType),
+					.StrideInBytes = DataTypeToByteStride(view.m_streamView.m_dataType),
 				};
 			}
 		}

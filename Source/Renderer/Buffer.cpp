@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context.h"
+#include "BindlessResource.h"
 #include "Buffer.h"
 #include "Buffer_Platform.h"
 #include "RenderManager.h"
@@ -61,8 +62,8 @@ namespace re
 		, m_dataByteSize(dataByteSize)
 		, m_bufferParams(bufferParams)
 		, m_platformParams(nullptr)
-		, m_bindlessResourceHandle(k_invalidResourceHandle)
-		, m_isBindlessResource(false)
+		, m_cbvResourceHandle(k_invalidResourceHandle)
+		, m_srvResourceHandle(k_invalidResourceHandle)
 		, m_isCurrentlyMapped(false)
 	{
 		SEAssert(m_dataByteSize % bufferParams.m_arraySize == 0,
@@ -83,6 +84,26 @@ namespace re
 	{
 		SEAssert(typeIDHash == newBuffer->m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
+
+		// Get a bindless resource handle:
+		re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+		if (brm) // May be null (e.g. API does not support bindless resources)
+		{
+			if (HasUsageBit(re::Buffer::Usage::Constant, *newBuffer))
+			{
+				newBuffer->m_cbvResourceHandle = brm->RegisterResource(
+					std::make_unique<re::BufferResource>(newBuffer, re::ViewType::CBV));
+			}
+
+			// Note: Buffers with Raw usage (e.g. VertexStreams) can be larger than what is allowed for a CBV, so we
+			// only create a SRV handle for them
+			if (HasUsageBit(re::Buffer::Usage::Structured, *newBuffer) ||
+				HasUsageBit(re::Buffer::Usage::Raw, *newBuffer))
+			{
+				newBuffer->m_srvResourceHandle = brm->RegisterResource(
+					std::make_unique<re::BufferResource>(newBuffer, re::ViewType::SRV));
+			}
+		}
 
 		re::Context::Get()->GetBufferAllocator()->Register(newBuffer, numBytes);
 	}
@@ -155,57 +176,31 @@ namespace re
 			"(thus has not been cleared)?");
 #endif
 
+		// Free bindless resource handles:
+		if (m_srvResourceHandle != k_invalidResourceHandle)
+		{
+			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			SEAssert(brm,
+				"Failed to get BindlessResourceManager, but resource handle is valid. This should not be possible");
+
+			brm->UnregisterResource(m_srvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+		}
+
+		if (m_cbvResourceHandle != k_invalidResourceHandle)
+		{
+			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			SEAssert(brm,
+				"Failed to get BindlessResourceManager, but resource handle is valid. This should not be possible");
+
+			brm->UnregisterResource(m_cbvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+		}
+
 		if (m_platformParams->m_isCreated)
 		{
-			m_bindlessResourceHandleRegistration = nullptr;
-
-			if (m_isBindlessResource &&
-				m_bindlessResourceHandle != k_invalidResourceHandle)
-			{
-				SEAssert(m_bindlessResourceHandleRelease, "Callback is null");
-
-				m_bindlessResourceHandleRelease(m_bindlessResourceHandle);
-
-				m_bindlessResourceHandleRelease = nullptr; // Release the callback lambda
-			}
-
-			// Internally makes a (deferred) call to platform::Buffer::Destroy
 			re::Context::Get()->GetBufferAllocator()->Deallocate(GetUniqueID());
 
 			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
 		}		
-	}
-
-
-	void Buffer::CreateBindlessResource()
-	{
-		SEAssert(m_isBindlessResource && 
-			m_bindlessResourceHandleRegistration &&
-			m_bindlessResourceHandle == k_invalidResourceHandle,
-			"Invalid Buffer for bindless resource creation");
-
-		m_bindlessResourceHandle = m_bindlessResourceHandleRegistration();
-
-		// Release the callback lambda to prevent it holding any captured values in scope
-		m_bindlessResourceHandleRegistration = nullptr;
-	}
-
-
-	void Buffer::SetBindlessCallbacks(
-		std::function<ResourceHandle(void)>&& resourceHandleRegistration, 
-		std::function<void(ResourceHandle&)>&& resourceHandleUnregistration)
-	{
-		SEAssert(m_bindlessResourceHandle == k_invalidResourceHandle,
-			"Bindless resource handle already set");
-
-		SEAssert(m_platformParams == nullptr ||
-			!m_platformParams->m_isCreated,
-			"Buffer has already been created. This method should be called immediately after buffer creation");
-
-		m_bindlessResourceHandleRegistration = std::move(resourceHandleRegistration);
-		m_bindlessResourceHandleRelease = resourceHandleUnregistration;
-
-		m_isBindlessResource = true;
 	}
 
 

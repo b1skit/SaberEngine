@@ -117,7 +117,9 @@
     <ClInclude Include="BindlessResourceManager.h" />
     <ClInclude Include="BindlessResourceManager_DX12.h" />
     <ClInclude Include="BindlessResourceManager_Platform.h" />
-    <ClInclude Include="BindlessResource_VertexStream.h" />
+    <ClInclude Include="BindlessResource.h" />
+    <ClInclude Include="BindlessResource_DX12.h" />
+    <ClInclude Include="BindlessResource_Platform.h" />
     <ClInclude Include="BoundsRenderData.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="BufferAllocator.h" />
@@ -229,8 +231,6 @@
     <ClInclude Include="VertexStream.h" />
     <ClInclude Include="VertexStreamBuilder.h" />
     <ClInclude Include="VertexStreamMap.h" />
-    <ClInclude Include="BindlessResource_VertexStream_DX12.h" />
-    <ClInclude Include="BindlessResource_VertexStream_Platform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_dx12.cpp" />
@@ -248,7 +248,9 @@
     <ClCompile Include="BindlessResourceManager.cpp" />
     <ClCompile Include="BindlessResourceManager_DX12.cpp" />
     <ClCompile Include="BindlessResourceManager_Platform.cpp" />
-    <ClCompile Include="BindlessResource_VertexStream.cpp" />
+    <ClCompile Include="BindlessResource.cpp" />
+    <ClCompile Include="BindlessResource_DX12.cpp" />
+    <ClCompile Include="BindlessResource_Platform.cpp" />
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="BufferAllocator.cpp" />
     <ClCompile Include="BufferAllocator_DX12.cpp" />
@@ -360,8 +362,6 @@
     <ClCompile Include="TransformRenderData.cpp" />
     <ClCompile Include="VertexStream.cpp" />
     <ClCompile Include="VertexStreamBuilder.cpp" />
-    <ClCompile Include="BindlessResource_VertexStream_DX12.cpp" />
-    <ClCompile Include="BindlessResource_VertexStream_Platform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">

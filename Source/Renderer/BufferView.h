@@ -1,6 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
-#include "Buffer.h"
 #include "EnumTypes.h"
 #include "VertexStream.h"
 
@@ -39,22 +38,27 @@ namespace re
 	public:
 		union
 		{
-			BufferType m_buffer;
-			VertexStreamType m_stream;
+			BufferType m_bufferView;
+			VertexStreamType m_streamView;
 		};
 
 
 	private:
 		util::HashKey m_dataHash; // To sidestep headaches caused by our union, we manually handle our data hash
+		bool m_isVertexStreamView;
 
 
 	public:
+		BufferView(BufferType&&) noexcept;
 		BufferView(BufferType const&);
+		
 		BufferView(std::shared_ptr<re::Buffer> const&); // Infer a default view from the Buffer
 
+		BufferView(VertexStreamType&&) noexcept;
 		BufferView(VertexStreamType const&);
 
 
+	public:
 		BufferView(/* Don't use this directly */);
 
 
@@ -70,12 +74,19 @@ namespace re
 
 	public:
 		util::HashKey GetDataHash() const;
+		bool IsVertexStreamView() const;
 	};
 
 
 	inline util::HashKey BufferView::GetDataHash() const
 	{
 		return m_dataHash;
+	}
+
+
+	inline bool BufferView::IsVertexStreamView() const
+	{
+		return m_isVertexStreamView;
 	}
 
 
@@ -199,7 +210,7 @@ namespace re
 	inline VertexBufferInput::VertexBufferInput()
 		: m_vertexStream()
 		, m_bufferOverride(nullptr)
-		, m_view{}
+		, m_view(BufferView::VertexStreamType{})
 		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
 	{
 	}
@@ -208,7 +219,7 @@ namespace re
 	inline VertexBufferInput::VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream)
 		: m_vertexStream(stream)
 		, m_bufferOverride(nullptr)
-		, m_view{}
+		, m_view(BufferView::VertexStreamType{})
 		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
 	{
 		if (m_vertexStream)
@@ -226,7 +237,7 @@ namespace re
 	inline VertexBufferInput::VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream, re::Buffer const* bufferOverride)
 		: m_vertexStream(stream)
 		, m_bufferOverride(bufferOverride)
-		, m_view{}
+		, m_view(BufferView::VertexStreamType{})
 		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
 	{
 		SEAssert(m_vertexStream && m_bufferOverride, "Override constructure requires a valid stream and buffer");

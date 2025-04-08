@@ -148,13 +148,7 @@ namespace re
 
 		// Bindless:
 	public:
-		bool IsBindlessResource() const;
-		ResourceHandle GetBindlessResourceHandle() const;
-
-		void SetBindlessCallbacks(
-			std::function<ResourceHandle(void)>&& resourceHandleRegistration,
-			std::function<void(ResourceHandle&)>&& resourceHandleUnregistration);
-		void CreateBindlessResource();
+		ResourceHandle GetBindlessResourceHandle(re::ViewType) const;
 
 
 		// CPU readback:
@@ -183,10 +177,8 @@ namespace re
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 		
-		std::function<ResourceHandle(void)> m_bindlessResourceHandleRegistration;
-		std::function<void(ResourceHandle&)> m_bindlessResourceHandleRelease;
-		ResourceHandle m_bindlessResourceHandle;
-		bool m_isBindlessResource;
+		ResourceHandle m_cbvResourceHandle;
+		ResourceHandle m_srvResourceHandle;
 
 		bool m_isCurrentlyMapped;
 
@@ -435,14 +427,23 @@ namespace re
 	}
 
 
-	inline ResourceHandle Buffer::GetBindlessResourceHandle() const
+	inline ResourceHandle Buffer::GetBindlessResourceHandle(re::ViewType viewType) const
 	{
-		return m_bindlessResourceHandle;
-	}
-
-
-	inline bool Buffer::IsBindlessResource() const
-	{
-		return m_isBindlessResource;
+		switch (viewType)
+		{
+		case re::ViewType::CBV:
+		{
+			return m_cbvResourceHandle;
+		}
+		break;
+		case re::ViewType::SRV:
+		{
+			return m_srvResourceHandle;
+		}
+		break;
+		case re::ViewType::UAV:
+		default: SEAssertF("Invalid view type");
+		}
+		return k_invalidResourceHandle; // This should never happen
 	}
 }

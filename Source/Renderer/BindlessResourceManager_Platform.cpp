@@ -6,8 +6,8 @@
 
 namespace platform
 {
-	std::unique_ptr<re::IBindlessResourceSet::PlatformParams>
-		IBindlessResourceSet::CreatePlatformParams()
+	std::unique_ptr<re::BindlessResourceManager::PlatformParams>
+		BindlessResourceManager::CreatePlatformParams()
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -20,7 +20,7 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			return std::make_unique<dx12::IBindlessResourceSet::PlatformParams>();
+			return std::make_unique<dx12::BindlessResourceManager::PlatformParams>();
 		}
 		break;
 		default: SEAssertF("Invalid rendering API argument received");
@@ -28,7 +28,9 @@ namespace platform
 		return nullptr; // This should never happen
 	}
 
+	void (*IBindlessResource::GetResourceUseState)(void* dest, size_t destByteSize);
 
-	void (*IBindlessResourceSet::Initialize)(re::IBindlessResourceSet&) = nullptr;
-	void (*IBindlessResourceSet::SetResource)(re::IBindlessResourceSet&, re::IBindlessResource*, ResourceHandle) = nullptr;
+
+	void (*BindlessResourceManager::Initialize)(re::BindlessResourceManager&, uint64_t frameNum) = nullptr;
+	void (*BindlessResourceManager::SetResource)(re::BindlessResourceManager&, re::IBindlessResource*, ResourceHandle) = nullptr;
 }

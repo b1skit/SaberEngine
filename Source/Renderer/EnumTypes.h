@@ -51,4 +51,12 @@ namespace re
 	extern constexpr uint8_t DataTypeToComponentByteSize(DataType);
 	extern constexpr uint8_t DataTypeToByteStride(DataType);
 	extern re::DataType StrToDataType(std::string const& dataTypeStr);
+
+
+	enum class ViewType : uint8_t
+	{
+		CBV,
+		SRV,
+		UAV,
+	};
 }

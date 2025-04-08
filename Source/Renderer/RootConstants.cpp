@@ -8,14 +8,12 @@ namespace re
 {
 	void RootConstants::SetRootConstant(char const* shaderName, void const* src, re::DataType dataType)
 	{
-		const uint8_t numBytes = re::DataTypeToByteStride(dataType);
-
 		RootConstant* dest = nullptr;
 
 		bool foundExisting = false;
 		for (auto& existing : m_rootConstants)
 		{
-			if (strcmp(existing.m_shaderName.c_str(), shaderName) != 0)
+			if (strcmp(existing.m_shaderName.c_str(), shaderName) == 0)
 			{
 				SEAssert(existing.m_dataType == dataType,
 					"Root constant with the given name already exists, but with a different data type");
@@ -31,8 +29,11 @@ namespace re
 		{
 			dest = &m_rootConstants.emplace_back(RootConstant{
 				.m_shaderName = shaderName,
+				.m_dataType = dataType,
 				});
 		}
+
+		const uint8_t numBytes = re::DataTypeToByteStride(dataType);
 
 		switch (dataType)
 		{

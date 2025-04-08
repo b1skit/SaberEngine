@@ -403,8 +403,8 @@ namespace opengl
 								{
 									glDrawElementsInstanced(
 										PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),			// GLenum mode
-										static_cast<GLsizei>(batchGraphicsParams.m_indexBuffer.m_view.m_stream.m_numElements),	// GLsizei count
-										DataTypeToGLDataType(batchGraphicsParams.m_indexBuffer.m_view.m_stream.m_dataType), 	// GLenum type
+										static_cast<GLsizei>(batchGraphicsParams.m_indexBuffer.m_view.m_streamView.m_numElements),	// GLsizei count
+										DataTypeToGLDataType(batchGraphicsParams.m_indexBuffer.m_view.m_streamView.m_dataType), 	// GLenum type
 										0,									// Byte offset (into index buffer)
 										(GLsizei)batch.GetInstanceCount());	// Instance count
 								}
@@ -412,7 +412,7 @@ namespace opengl
 								case re::Batch::GeometryMode::ArrayInstanced:
 								{
 									const GLsizei numElements = static_cast<GLsizei>(
-										batchGraphicsParams.m_vertexBuffers[0].m_view.m_stream.m_numElements);
+										batchGraphicsParams.m_vertexBuffers[0].m_view.m_streamView.m_numElements);
 
 									glDrawArraysInstanced(
 										PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),

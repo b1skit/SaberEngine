@@ -40,6 +40,8 @@ namespace re
 
 			uint32_t m_maxPayloadByteSize = 0;
 			uint32_t m_maxRecursionDepth = 0;
+
+			bool m_useLocalRootSignatures = false;
 		};
 		static std::shared_ptr<re::ShaderBindingTable> Create(char const* name, SBTParams const&);
 

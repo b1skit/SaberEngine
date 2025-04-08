@@ -676,34 +676,6 @@ namespace dx12
 
 									cmdList->SetRootConstants((*stageItr)->GetRootConstants());
 									cmdList->SetRootConstants(batch.GetRootConstants());
-									
-									cmdList->SetTLAS(batchRTParams.m_ASInput, *batchRTParams.m_shaderBindingTable);
-
-									cmdList->SetRWTextures(
-										(*stageItr)->GetPermanentRWTextureInputs(),
-										*batchRTParams.m_shaderBindingTable);
-									
-									cmdList->SetRWTextures(
-										(*stageItr)->GetSingleFrameRWTextureInputs(),
-										*batchRTParams.m_shaderBindingTable);
-
-									cmdList->SetRWTextures(
-										batch.GetRWTextureInputs(),
-										*batchRTParams.m_shaderBindingTable);
-									
-									cmdList->SetBuffers(
-										(*stageItr)->GetPermanentBuffers(),
-										*batchRTParams.m_shaderBindingTable);
-
-									cmdList->SetBuffers(
-										(*stageItr)->GetPerFrameBuffers(),
-										*batchRTParams.m_shaderBindingTable);
-
-									cmdList->SetBuffers(
-										batch.GetBuffers(),
-										*batchRTParams.m_shaderBindingTable);
-
-									// TODO: Set other sorts of resources (e.g. Textures, VertexStreams etc)
 
 									cmdList->DispatchRays(
 										*batchRTParams.m_shaderBindingTable,

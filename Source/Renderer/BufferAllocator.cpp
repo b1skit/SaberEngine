@@ -810,14 +810,6 @@ namespace re
 				{
 					platform::Buffer::Create(*currentBuffer);
 				}
-
-				if (currentBuffer->IsBindlessResource())
-				{
-					currentBuffer->CreateBindlessResource();
-
-					SEAssert(currentBuffer->GetBindlessResourceHandle() != k_invalidResourceHandle,
-						"Failed to update Buffer's bindless resource handle");
-				}
 			}
 		}
 	}

@@ -768,7 +768,7 @@ namespace opengl
 			const opengl::Buffer::BindTarget bindTarget = bufferTypeItr->second.m_bindTarget;
 
 			const GLint bufferLoc = 
-				bufferTypeItr->second.m_bufferLocations.at(bufferInput.GetView().m_buffer.m_firstDestIdx);
+				bufferTypeItr->second.m_bufferLocations.at(bufferInput.GetView().m_bufferView.m_firstDestIdx);
 
 			opengl::Buffer::Bind(*bufferInput.GetBuffer(), bindTarget, bufferInput.GetView(), bufferLoc);
 		}

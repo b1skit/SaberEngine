@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "BindlessResource.h"
 #include "RenderManager.h"
 #include "Texture.h"
 #include "Texture_Platform.h"
@@ -7,6 +8,8 @@
 #include "Core/Logger.h"
 
 #include "Core/Interfaces/ILoadContext.h"
+
+#include "Core/Util/ImGuiUtils.h"
 
 
 namespace
@@ -153,6 +156,28 @@ namespace re
 				return newTexture;
 			}
 
+			void OnLoadComplete(core::InvPtr<re::Texture>& tex) override
+			{
+				if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
+				{
+					re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+					if (brm) // May be null (e.g. API does not support bindless resources)
+					{
+						if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
+						{
+							tex->m_srvResourceHandle = brm->RegisterResource(
+								std::make_unique<re::TextureResource>(tex, re::ViewType::SRV));
+						}
+						if (tex->HasUsageBit(re::Texture::Usage::ColorTarget))
+						{
+							tex->m_uavResourceHandle = brm->RegisterResource(
+								std::make_unique<re::TextureResource>(tex, re::ViewType::UAV));
+						}
+					}
+				}				
+			}
+
+
 			std::string m_texName;
 			TextureParams m_texParams;
 			std::vector<uint8_t> m_initialDataBytes;
@@ -202,6 +227,26 @@ namespace re
 				return std::unique_ptr<re::Texture>(new re::Texture(m_texName, m_texParams, std::move(initialData)));
 			}
 
+			void OnLoadComplete(core::InvPtr<re::Texture>& tex) override
+			{
+				if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
+				{
+					re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+					if (brm)
+					{
+						if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
+						{
+							tex->m_srvResourceHandle = brm->RegisterResource(std::make_unique<re::TextureResource>(tex));
+						}
+						if (tex->HasUsageBit(re::Texture::Usage::ColorTarget))
+						{
+							tex->m_uavResourceHandle = brm->RegisterResource(
+								std::make_unique<re::TextureResource>(tex, re::ViewType::UAV));
+						}
+					}
+				}
+			}
+
 			std::string m_texName;
 			re::Texture::TextureParams m_texParams;
 			glm::vec4 m_fillColor;
@@ -237,6 +282,26 @@ namespace re
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>&) override
 			{
 				return std::unique_ptr<re::Texture>(new re::Texture(m_idName, m_texParams));
+			}
+
+			void OnLoadComplete(core::InvPtr<re::Texture>& tex) override
+			{
+				if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
+				{
+					re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+					if (brm)
+					{
+						if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
+						{
+							tex->m_srvResourceHandle = brm->RegisterResource(std::make_unique<re::TextureResource>(tex));
+						}
+						if (tex->HasUsageBit(re::Texture::Usage::ColorTarget))
+						{
+							tex->m_uavResourceHandle = brm->RegisterResource(
+								std::make_unique<re::TextureResource>(tex, re::ViewType::UAV));
+						}
+					}
+				}
 			}
 
 			std::string m_idName;
@@ -277,6 +342,8 @@ namespace re
 		, m_initialData(nullptr)
 		, m_numMips(ComputeNumMips(params))
 		, m_numSubresources(ComputeNumSubresources(params))
+		, m_srvResourceHandle(k_invalidResourceHandle)
+		, m_uavResourceHandle(k_invalidResourceHandle)
 	{
 		SEAssert(m_texParams.m_usage != Texture::Usage::Invalid, "Invalid usage");
 		SEAssert(m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid, "Invalid dimension");
@@ -316,6 +383,8 @@ namespace re
 		, m_initialData(std::move(initialData))
 		, m_numMips(ComputeNumMips(params))
 		, m_numSubresources(ComputeNumSubresources(params))
+		, m_srvResourceHandle(k_invalidResourceHandle)
+		, m_uavResourceHandle(k_invalidResourceHandle)
 	{
 		SEAssert(m_texParams.m_usage != Texture::Usage::Invalid, "Invalid usage");
 		SEAssert(m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid, "Invalid dimension");
@@ -351,6 +420,22 @@ namespace re
 		platform::Texture::Destroy(*this);
 
 		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
+
+		if (m_srvResourceHandle != k_invalidResourceHandle)
+		{
+			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
+
+			brm->UnregisterResource(m_srvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+		}
+
+		if (m_uavResourceHandle != k_invalidResourceHandle)
+		{
+			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
+
+			brm->UnregisterResource(m_uavResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+		}
 	}
 
 

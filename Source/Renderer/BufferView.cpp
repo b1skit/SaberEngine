@@ -7,37 +7,56 @@
 
 namespace re
 {
-	BufferView::BufferView(BufferType const& view)
-		: m_buffer(view)
+	BufferView::BufferView(BufferType&& view) noexcept
+		: m_bufferView(std::move(view))
+		, m_isVertexStreamView(false)
 	{
-		util::AddDataBytesToHash(m_dataHash, m_buffer);
+		util::AddDataBytesToHash(m_dataHash, m_bufferView);
+		util::AddDataBytesToHash(m_dataHash, m_isVertexStreamView);
+	}
+
+
+	BufferView::BufferView(BufferType const& view)
+		: BufferView(BufferType(view))
+	{
 	}
 
 
 	BufferView::BufferView(std::shared_ptr<re::Buffer> const& buffer)
+		: m_isVertexStreamView(false)
 	{
 		const uint32_t bufferArraySize = buffer->GetArraySize();
 
-		m_buffer = BufferView::BufferType{
+		m_bufferView = BufferView::BufferType{
 			.m_firstElement = 0, 
 			.m_numElements = bufferArraySize,
 			.m_structuredByteStride = buffer->GetTotalBytes() / bufferArraySize,
 			.m_firstDestIdx = 0,
 		};
 
-		util::AddDataBytesToHash(m_dataHash, m_buffer);
+		util::AddDataBytesToHash(m_dataHash, m_bufferView);
+		util::AddDataBytesToHash(m_dataHash, m_isVertexStreamView);
+	}
+
+
+	BufferView::BufferView(VertexStreamType&& view) noexcept
+		: m_streamView(std::move(view))
+		, m_isVertexStreamView(true)
+	{
+		util::AddDataBytesToHash(m_dataHash, m_streamView);
+		util::AddDataBytesToHash(m_dataHash, m_isVertexStreamView);
 	}
 
 
 	BufferView::BufferView(VertexStreamType const& view)
-		: m_stream(view)
+		: BufferView(VertexStreamType(view))
 	{
-		util::AddDataBytesToHash(m_dataHash, m_stream);
 	}
 
 
 	BufferView::BufferView()
-		: m_buffer{ BufferView::BufferType{} }
+		: m_bufferView()
+		, m_isVertexStreamView(false)
 	{
 		/* Don't use this directly */
 	}
@@ -73,8 +92,8 @@ namespace re
 	BufferInput::BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> const& buffer)
 		: core::INamedObject(shaderName)
 		, m_buffer(buffer)
+		, m_view(buffer)
 	{
-		m_view = re::BufferView(buffer);
 	}
 
 

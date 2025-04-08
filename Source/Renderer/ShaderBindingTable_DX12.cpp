@@ -395,31 +395,46 @@ namespace
 			.pDesc = &exportsAssociation,
 			});
 
-
 		// Root signature associations:
-		std::vector<RootSignatureAssociation> rootSigAssociations = 
-			BuildRootSignatureAssociations(rayGenShaders, missShaders, hitGroupShaderView);
-
-		for (auto& association : rootSigAssociations)
+		if (sbtParams.m_useLocalRootSignatures)
 		{
-			// Add a sub-object to declare the root signature:
-			D3D12_STATE_SUBOBJECT const& rootSigDeclaration = subObjects.emplace_back(D3D12_STATE_SUBOBJECT{
-				.Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE,
-				.pDesc = &association.m_rootSignature,
-				});
+			std::vector<RootSignatureAssociation> rootSigAssociations =
+				BuildRootSignatureAssociations(rayGenShaders, missShaders, hitGroupShaderView);
 
-			// Now we can populate the association's D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION m_exportsAssociation:
-			association.m_exportsAssociation.pSubobjectToAssociate = &rootSigDeclaration;
-			association.m_exportsAssociation.NumExports = 
-				util::CheckedCast<uint32_t>(association.m_symbolNamePtrs.size());
-			association.m_exportsAssociation.pExports = association.m_symbolNamePtrs.data();
+			for (auto& association : rootSigAssociations)
+			{
+				// Add a sub-object to declare the root signature:
+				D3D12_STATE_SUBOBJECT const& rootSigDeclaration = subObjects.emplace_back(D3D12_STATE_SUBOBJECT{
+					.Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE,
+					.pDesc = &association.m_rootSignature,
+					});
 
-			// Add a sub-object for the association between the exported shader symbols and the root signature:
-			subObjects.emplace_back(D3D12_STATE_SUBOBJECT{
-				.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
-				.pDesc = &association.m_exportsAssociation,
-				});
+				// Now we can populate the association's D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION m_exportsAssociation:
+				association.m_exportsAssociation.pSubobjectToAssociate = &rootSigDeclaration;
+				association.m_exportsAssociation.NumExports =
+					util::CheckedCast<uint32_t>(association.m_symbolNamePtrs.size());
+				association.m_exportsAssociation.pExports = association.m_symbolNamePtrs.data();
+
+				// Add a sub-object for the association between the exported shader symbols and the root signature:
+				subObjects.emplace_back(D3D12_STATE_SUBOBJECT{
+					.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
+					.pDesc = &association.m_exportsAssociation,
+					});
+			}
 		}
+
+		SEAssert(sbtParams.m_useLocalRootSignatures == false, "TODO: Decouple the SBT from the BindlessResourceManager");
+
+		// Global root signature:
+		// TODO: We should decouple the ShaderBindingTable from the BindlessResourceManager
+		ID3D12RootSignature* globalRootSig = dx12::BindlessResourceManager::GetRootSignature(
+			*re::Context::Get()->GetBindlessResourceManager())->GetD3DRootSignature();
+
+		subObjects.emplace_back(D3D12_STATE_SUBOBJECT{
+			.Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE,
+			.pDesc = &globalRootSig,
+			});
+
 
 		// Ray tracing pipeline configuration:
 		SEAssert(sbtParams.m_maxRecursionDepth <= D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH,
@@ -769,7 +784,10 @@ namespace dx12
 						"Failed to map SBT buffer");
 
 					// Apply the per-frame base offset:
-					sbtData += ComputePerFrameSBTBaseOffset(frameRegionByteSize, currentFrameNum, numFramesInFlight);
+					const uint64_t perFrameOffset = 
+						ComputePerFrameSBTBaseOffset(frameRegionByteSize, currentFrameNum, numFramesInFlight);
+
+					sbtData += perFrameOffset;
 
 					SEAssert(reinterpret_cast<uint64_t>(sbtData) % D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT == 0,
 						"sbtData is misaligned");					
@@ -781,9 +799,14 @@ namespace dx12
 					"Shader records must be 32B aligned");
 
 				constexpr uint32_t k_baseOffset = D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT; // Program ID is 1st element
-				constexpr uint8_t k_entrySize = 8; // Each parameter in a SBT entry requires 8B
+				constexpr uint32_t k_entrySize = 8; // Each parameter in a SBT entry requires 8B
 
 				uint8_t* dst = sbtData + regionOffset + k_baseOffset + (rootParam->m_index * k_entrySize);
+
+				SEAssert(reinterpret_cast<uint64_t>(dst) % 8 == 0,
+					"Root descriptors and descriptor handles must be aligned to 8B");
+
+				SEAssert(dst - sbtData <= 4096, "Shader records are a maximum of 4096B");
 
 				SetData(dst, k_entrySize, rootParam);
 			}
@@ -1055,8 +1078,7 @@ namespace dx12
 
 						memcpy(dst, &bufferGPUVA, dstByteSize);
 
-						toState = (cmdList->GetCommandListType() == dx12::CommandListType::Compute ?
-							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+						toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
 						transitionResource = !isInSharedHeap;
 					}
@@ -1068,8 +1090,7 @@ namespace dx12
 
 						memcpy(dst, &bufferGPUVA, dstByteSize);
 
-						toState = (cmdList->GetCommandListType() == dx12::CommandListType::Compute ?
-							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+						toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
 						transitionResource = !isInSharedHeap;
 					}
@@ -1305,87 +1326,6 @@ namespace dx12
 					currentFrameNum,
 					sbtPlatParams->m_numFramesInFlight);
 			}
-	}
-
-
-	void ShaderBindingTable::SetBindlessResourcesOnLocalRoots(
-		re::ShaderBindingTable const& sbt,
-		re::BindlessResourceManager const& brm,
-		dx12::GPUDescriptorHeap* gpuDescHeap,
-		uint64_t currentFrameNum)
-	{
-		dx12::ShaderBindingTable::PlatformParams const* sbtPlatParams =
-			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
-		SEAssert(sbtPlatParams->m_SBT, "SBT GPUResource cannot be null");
-
-		for (auto const& resourceSet : brm.GetResourceSets())
-		{
-			auto SetData = [&resourceSet, gpuDescHeap]
-				(void* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
-				{
-					SEAssert(rootParam->m_type == dx12::RootSignature::RootParameter::Type::DescriptorTable,
-						"Unexpected root parameter type for a bindless resource");
-
-					dx12::IBindlessResourceSet::PlatformParams const* resourceSetPlatParams =
-						resourceSet->GetPlatformParams()->As<dx12::IBindlessResourceSet::PlatformParams const*>();
-
-					D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTableHandle =
-						gpuDescHeap->CommitToGPUVisibleHeap(resourceSetPlatParams->m_cpuDescriptorCache);
-
-					memcpy(dst, &gpuVisibleTableHandle, dstByteSize);
-				};
-
-			WriteSBTElement(
-				sbtPlatParams->m_SBT.get(),
-				SetData,
-				resourceSet->GetShaderName(),
-				sbt.m_rayGenShaders,
-				sbtPlatParams->m_rayGenRegionBaseOffset,
-				sbtPlatParams->m_rayGenRegionByteStride,
-				sbtPlatParams->m_frameRegionByteSize,
-				currentFrameNum,
-				sbtPlatParams->m_numFramesInFlight);
-
-			WriteSBTElement(
-				sbtPlatParams->m_SBT.get(),
-				SetData,
-				resourceSet->GetShaderName(),
-				sbt.m_missShaders,
-				sbtPlatParams->m_missRegionBaseOffset,
-				sbtPlatParams->m_missRegionByteStride,
-				sbtPlatParams->m_frameRegionByteSize,
-				currentFrameNum,
-				sbtPlatParams->m_numFramesInFlight);
-
-			WriteSBTElement(
-				sbtPlatParams->m_SBT.get(),
-				SetData,
-				resourceSet->GetShaderName(),
-				sbt.m_hitGroupNamesAndShaders | std::views::transform(
-					[](auto const& hitGroupNamesAndShader) -> core::InvPtr<re::Shader> const&
-					{
-						return hitGroupNamesAndShader.second;
-					}),
-				sbtPlatParams->m_hitGroupRegionBaseOffset,
-				sbtPlatParams->m_hitGroupRegionByteStride,
-				sbtPlatParams->m_frameRegionByteSize,
-				currentFrameNum,
-				sbtPlatParams->m_numFramesInFlight);
-
-			if (sbtPlatParams->m_callableRegionTotalByteSize > 0)
-			{
-				WriteSBTElement(
-					sbtPlatParams->m_SBT.get(),
-					SetData,
-					resourceSet->GetShaderName(),
-					sbt.m_callableShaders,
-					sbtPlatParams->m_callableRegionBaseOffset,
-					sbtPlatParams->m_callableRegionByteStride,
-					sbtPlatParams->m_frameRegionByteSize,
-					currentFrameNum,
-					sbtPlatParams->m_numFramesInFlight);
-			}
-		}
 	}
 
 

@@ -4,32 +4,17 @@
 #include "CommandList_DX12.h"
 
 #include <d3d12.h>
+#include <wrl/client.h>
 
 
 namespace dx12
 {
-	class IBindlessResourceSet
+	class RootSignature;
+
+
+	struct IBindlessResource
 	{
-	public:
-		struct PlatformParams : public re::IBindlessResourceSet::PlatformParams
-		{
-			void Destroy() override;
-
-			ID3D12Device* m_deviceCache = nullptr;
-
-			std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_cpuDescriptorCache;
-			std::vector<ID3D12Resource*> m_resourceCache;
-
-			D3D12_CPU_DESCRIPTOR_HANDLE m_nullDescriptor{0};
-			D3D12_RESOURCE_STATES m_usageState;
-
-			uint32_t m_numActiveResources = 0;
-		};
-
-
-	public:
-		static void Initialize(re::IBindlessResourceSet&);
-		static void SetResource(re::IBindlessResourceSet&, re::IBindlessResource*, ResourceHandle);
+		static void GetResourceUseState(void* dest, size_t destByteSize);
 	};
 
 
@@ -38,7 +23,43 @@ namespace dx12
 
 	class BindlessResourceManager
 	{
+	public:
+		struct PlatformParams final : public virtual re::BindlessResourceManager::PlatformParams
+		{
+			void Destroy() override;
+
+			std::vector<ID3D12Resource*> m_resourceCache;
+			std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_cpuDescriptorCache;
+			std::vector<D3D12_RESOURCE_STATES> m_usageStateCache;
+
+			ID3D12Device* m_deviceCache = nullptr;
+
+			// We use a null descriptor to simplify book keeping around unused elements in m_cpuDescriptorCache, which
+			// allows us to copy the entire range in a single call rather than checking for valid ranges to copy
+			D3D12_CPU_DESCRIPTOR_HANDLE m_nullDescriptor;
+			
+			uint32_t m_elementSize;
+			uint32_t m_numActiveResources = 0;
+			uint8_t m_numFramesInFlight;
+
+
+		private: // Use the static getters below:
+			friend class dx12::BindlessResourceManager;
+			std::unique_ptr<dx12::RootSignature> m_globalRootSig;
+			std::array<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>, 3> m_gpuDescriptorHeaps;
+		};
+
+	public:
+		static void Initialize(re::BindlessResourceManager&, uint64_t frameNum);
+		static void SetResource(re::BindlessResourceManager&, re::IBindlessResource*, ResourceHandle);
+
+
 	public: // DX12-specific functionality:
 		static std::vector<dx12::CommandList::TransitionMetadata> BuildResourceTransitions(re::BindlessResourceManager const&);
+
+
+		static dx12::RootSignature const* GetRootSignature(re::BindlessResourceManager const&);
+
+		static ID3D12DescriptorHeap* GetDescriptorHeap(re::BindlessResourceManager const&, uint64_t frameNum);
 	};
 }
