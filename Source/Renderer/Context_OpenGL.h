@@ -86,7 +86,7 @@ namespace opengl
 
 	inline re::BindlessResourceManager* Context::GetBindlessResourceManager()
 	{
-		SEAssertF("OpenGL does not currently support bindless resources");
+		// OpenGL does not currently support bindless resources
 		return nullptr;
 	}
 }

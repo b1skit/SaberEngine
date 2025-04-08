@@ -7,6 +7,8 @@
 
 #include "Core/InvPtr.h"
 
+#include "Core/Util/ImGuiUtils.h"
+
 
 namespace fr
 {
