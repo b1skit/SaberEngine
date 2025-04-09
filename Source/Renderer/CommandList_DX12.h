@@ -207,10 +207,20 @@ namespace dx12
 
 
 	private:
+		dx12::LocalResourceStateTracker m_resourceStates;
+
 		// The D3D docs recommend using a single GPU-visible heap of each type (CBV/SRV/UAV or SAMPLER), and setting it
 		// once per frame, as changing descriptor heaps can cause pipeline flushes on some hardware
 		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuCbvSrvUavDescriptorHeap;
-		dx12::LocalResourceStateTracker m_resourceStates;
+
+		enum class DescriptorHeapSource : uint8_t
+		{
+			Own,		// i.e. m_gpuCbvSrvUavDescriptorHeap
+			External,	// e.g. BindlessResourceManager
+
+			Unset,
+		} m_currentDescriptorHeapSource;
+		void SetDescriptorHeap(ID3D12DescriptorHeap*, DescriptorHeapSource);
 
 
 	public:
@@ -359,6 +369,9 @@ namespace dx12
 
 	inline void CommandList::CommitGPUDescriptors()
 	{
+		SEAssert(m_currentDescriptorHeapSource == DescriptorHeapSource::Own,
+			"Committing our own descriptor heap with the wrong heap attached");
+
 		m_gpuCbvSrvUavDescriptorHeap->Commit(*this);
 	}
 
@@ -366,5 +379,11 @@ namespace dx12
 	inline std::vector<CommandList::ReadbackResourceMetadata> const& CommandList::GetReadbackResources() const
 	{
 		return m_seenReadbackResources;
+	}
+
+
+	inline LocalResourceStateTracker const& CommandList::GetLocalResourceStates() const
+	{
+		return m_resourceStates;
 	}
 }

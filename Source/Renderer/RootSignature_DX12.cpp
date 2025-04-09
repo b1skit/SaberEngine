@@ -845,15 +845,17 @@ namespace dx12
 
 			while (rangeStart < rangeInputs[rangeType].size())
 			{
-				SEAssert(((rangeType == CBV &&
-					rangeInputs[rangeType][rangeStart].BindPoint == 0) ||
-					rangeInputs[rangeType][rangeStart].BindCount != SysInfo::GetMaxDescriptorTableCBVs()) ||
-					((rangeType == SRV &&
-						rangeInputs[rangeType][rangeStart].BindPoint == 0) ||
-						rangeInputs[rangeType][rangeStart].BindCount != SysInfo::GetMaxDescriptorTableSRVs()) ||
-					((rangeType == UAV &&
-						rangeInputs[rangeType][rangeStart].BindPoint == 0) ||
-						rangeInputs[rangeType][rangeStart].BindCount != SysInfo::GetMaxDescriptorTableUAVs()),
+				uint32_t maxRangeSize = 0;
+				switch (rangeType)
+				{
+				case DescriptorType::CBV: maxRangeSize = SysInfo::GetMaxDescriptorTableCBVs(); break;
+				case DescriptorType::SRV: maxRangeSize = SysInfo::GetMaxDescriptorTableSRVs(); break;
+				case DescriptorType::UAV: maxRangeSize = SysInfo::GetMaxDescriptorTableUAVs(); break;
+				default: SEAssertF("Invalid range type");
+				}
+
+				SEAssert(rangeInputs[rangeType][rangeStart].BindPoint == 0 ||
+					rangeInputs[rangeType][rangeStart].BindCount != maxRangeSize,
 					"Unbounded descriptor range doesn't begin at bind point 0. Indexing is about to overflow");
 
 				// Store the names in order so we can update the binding metadata later:
@@ -880,11 +882,14 @@ namespace dx12
 					rangeEnd++;
 				}
 
-				SEAssert(std::numeric_limits<uint32_t>::max() - totalRangeDescriptors >= 
-					std::numeric_limits<uint32_t>::max() - numDescriptors,
+				SEAssert(maxRangeSize - totalRangeDescriptors >= numDescriptors ||
+					(totalRangeDescriptors == maxRangeSize && numDescriptors == maxRangeSize),
 					"totalRangeDescriptors is about to overflow");
 
-				totalRangeDescriptors += numDescriptors;
+				if (totalRangeDescriptors != maxRangeSize)
+				{
+					totalRangeDescriptors += numDescriptors;
+				}
 
 				const uint32_t bindPoint = rangeInputs[rangeType][rangeStart].BindPoint;
 				const uint32_t registerSpace = rangeInputs[rangeType][rangeStart].Space;
