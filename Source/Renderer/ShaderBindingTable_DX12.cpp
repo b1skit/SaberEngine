@@ -7,6 +7,8 @@
 #include "CommandList_DX12.h"
 #include "Context_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
+#include "HeapManager_DX12.h"
+#include "RenderManager.h"
 #include "RootSignature_DX12.h"
 #include "Shader_DX12.h"
 #include "ShaderBindingTable_DX12.h"
@@ -305,8 +307,11 @@ namespace
 		re::ShaderBindingTable& sbt,
 		std::vector<core::InvPtr<re::Shader>> const& rayGenShaders, 
 		std::vector<core::InvPtr<re::Shader>> const& missShaders, 
-		std::vector<std::pair<std::string, core::InvPtr<re::Shader>>> const& hitGroupShaders)
+		std::vector<std::pair<std::string, core::InvPtr<re::Shader>>> const& hitGroupShaders,
+		std::vector<core::InvPtr<re::Shader>> const& callableShaders)
 	{
+		SEAssert(callableShaders.empty(), "TODO: Support callable shaders");
+
 		dx12::ShaderBindingTable::PlatformParams* sbtPlatParams = 
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams*>();
 
@@ -569,12 +574,15 @@ namespace dx12
 
 	void ShaderBindingTable::Create(re::ShaderBindingTable& sbt)
 	{
-		// Create the D3D state object:
-		CreateD3DStateObject(sbt, sbt.m_rayGenShaders, sbt.m_missShaders, sbt.m_hitGroupNamesAndShaders);
-		SEAssert(sbt.m_callableShaders.empty(), "TODO: Support callable shaders");
-
 		dx12::ShaderBindingTable::PlatformParams* platParams =
 			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams*>();
+
+		// Create the D3D state object:
+		CreateD3DStateObject(
+			sbt, sbt.m_rayGenShaders, sbt.m_missShaders, sbt.m_hitGroupNamesAndShaders, sbt.m_callableShaders);
+
+		SEAssert(platParams->m_rayTracingStateObject && platParams->m_rayTracingStateObjectProperties,
+			"Failed to create state objects");		
 
 		auto GetExportNameTransform = std::views::transform([](auto const& shader) -> std::wstring
 			{
