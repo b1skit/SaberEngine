@@ -103,13 +103,13 @@ namespace dx12
 			uint32_t numBytes,
 			dx12::CommandList* copyCmdList);
 
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetCBV(re::Buffer const*, re::BufferView const&);
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRV(re::Buffer const*, re::BufferView const&);
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(re::Buffer const*, re::BufferView const&);
-		static D3D12_CPU_DESCRIPTOR_HANDLE GetCBV(re::Buffer const*, re::BufferView const&);
 
 		// Index/vertex views:
-		static D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::BufferView const&);
 		static D3D12_VERTEX_BUFFER_VIEW const* GetOrCreateVertexBufferView(re::Buffer const&, re::BufferView const&);
+		static D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::BufferView const&);
 
 		static D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(re::Buffer const*);
 	};
@@ -140,6 +140,24 @@ namespace dx12
 
 
 	// ---
+
+
+	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetCBV(re::Buffer const* buffer, re::BufferView const& view)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, buffer->GetBufferParams()),
+			"Buffer is missing the Constant usage bit");
+
+		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, buffer->GetBufferParams()) &&
+			!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, buffer->GetBufferParams()),
+			"Invalid usage flags for a constant buffer");
+
+		dx12::Buffer::PlatformParams const* bufferPlatParams =
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+
+		return bufferPlatParams->m_cbvDescriptors.GetCreateDescriptor(buffer, view);
+	}
 
 
 	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetSRV(re::Buffer const* buffer, re::BufferView const& view)
@@ -177,24 +195,6 @@ namespace dx12
 		SEAssert(bufferPlatParams->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
 
 		return bufferPlatParams->m_uavDescriptors.GetCreateDescriptor(buffer, view);
-	}
-
-
-	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetCBV(re::Buffer const* buffer, re::BufferView const& view)
-	{
-		SEAssert(buffer, "Buffer cannot be null");
-
-		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, buffer->GetBufferParams()),
-			"Buffer is missing the Constant usage bit");
-
-		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, buffer->GetBufferParams()) &&
-			!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, buffer->GetBufferParams()),
-			"Invalid usage flags for a constant buffer");
-
-		dx12::Buffer::PlatformParams const* bufferPlatParams =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
-
-		return bufferPlatParams->m_cbvDescriptors.GetCreateDescriptor(buffer, view);
 	}
 
 

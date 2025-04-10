@@ -9,7 +9,6 @@
 #include "Core/Logger.h"
 #endif
 
-#include <wrl.h>
 #include <d3d12.h>
 
 

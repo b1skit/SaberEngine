@@ -426,32 +426,6 @@ namespace dx12
 	}
 
 
-	D3D12_INDEX_BUFFER_VIEW const* dx12::Buffer::GetOrCreateIndexBufferView(
-		re::Buffer const& buffer, re::BufferView const& view)
-	{
-		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer),
-			"Buffer does not have the correct usage flags set");
-
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
-
-		if (params->m_views.m_indexBufferView.BufferLocation == 0)
-		{
-			std::unique_lock<std::mutex> lock(params->m_viewMutex);
-
-			if (params->m_views.m_indexBufferView.BufferLocation == 0)
-			{
-				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
-					.BufferLocation = params->GetGPUVirtualAddress(),
-					.SizeInBytes = buffer.GetTotalBytes(),
-					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_streamView.m_dataType, false),
-				};
-			}
-		}
-
-		return &params->m_views.m_indexBufferView;
-	}
-
-
 	D3D12_VERTEX_BUFFER_VIEW const* dx12::Buffer::GetOrCreateVertexBufferView(
 		re::Buffer const& buffer, re::BufferView const& view)
 	{
@@ -480,5 +454,31 @@ namespace dx12
 		}
 
 		return &params->m_views.m_vertexBufferView;
+	}
+
+
+	D3D12_INDEX_BUFFER_VIEW const* dx12::Buffer::GetOrCreateIndexBufferView(
+		re::Buffer const& buffer, re::BufferView const& view)
+	{
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer),
+			"Buffer does not have the correct usage flags set");
+
+		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+
+		if (params->m_views.m_indexBufferView.BufferLocation == 0)
+		{
+			std::unique_lock<std::mutex> lock(params->m_viewMutex);
+
+			if (params->m_views.m_indexBufferView.BufferLocation == 0)
+			{
+				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
+					.BufferLocation = params->GetGPUVirtualAddress(),
+					.SizeInBytes = buffer.GetTotalBytes(),
+					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_streamView.m_dataType, false),
+				};
+			}
+		}
+
+		return &params->m_views.m_indexBufferView;
 	}
 }
