@@ -131,7 +131,7 @@ namespace re
 
 	private:
 		std::shared_ptr<re::Buffer> m_buffer;
-		BufferView m_view;
+		BufferView m_bufferView;
 	};
 
 
@@ -161,7 +161,7 @@ namespace re
 
 	inline BufferView const& BufferInput::GetView() const
 	{
-		return m_view;
+		return m_bufferView;
 	}
 
 

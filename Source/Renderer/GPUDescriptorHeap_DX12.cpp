@@ -269,13 +269,13 @@ namespace dx12
 
 
 	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
-	void GPUDescriptorHeap::SetInlineCBV(uint8_t rootIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
+	void GPUDescriptorHeap::SetInlineCBV(uint8_t rootIdx, D3D12_GPU_VIRTUAL_ADDRESS gpuVA)
 	{
 		SEAssert(rootIdx < k_maxRootSigEntries, "Invalid root parameter index");
-		SEAssert(buffer != nullptr, "Invalid resource pointer");
+		SEAssert(gpuVA != 0, "Invalid GPU Virtual Address");
 		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Wrong heap type");
 
-		m_inlineDescriptors[CBV][rootIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
+		m_inlineDescriptors[CBV][rootIdx] = gpuVA;
 		
 		// Mark our root parameter index as dirty:
 		const uint64_t rootIdxBitmask = (1llu << rootIdx);
@@ -291,13 +291,13 @@ namespace dx12
 
 
 	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
-	void GPUDescriptorHeap::SetInlineSRV(uint8_t rootIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
+	void GPUDescriptorHeap::SetInlineSRV(uint8_t rootIdx, D3D12_GPU_VIRTUAL_ADDRESS gpuVA)
 	{
 		SEAssert(rootIdx < k_maxRootSigEntries, "Invalid root parameter index");
-		SEAssert(buffer != nullptr, "Invalid resource pointer");
+		SEAssert(gpuVA != 0, "Invalid GPU Virtual Address");
 		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Wrong heap type");
 
-		m_inlineDescriptors[SRV][rootIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
+		m_inlineDescriptors[SRV][rootIdx] = gpuVA;
 
 		// Mark our root parameter index as dirty:
 		const uint64_t rootIdxBitmask = (1llu << rootIdx);
@@ -313,13 +313,13 @@ namespace dx12
 
 
 	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
-	void GPUDescriptorHeap::SetInlineUAV(uint8_t rootIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
+	void GPUDescriptorHeap::SetInlineUAV(uint8_t rootIdx, D3D12_GPU_VIRTUAL_ADDRESS gpuVA)
 	{
 		SEAssert(rootIdx < k_maxRootSigEntries, "Invalid root parameter index");
-		SEAssert(buffer != nullptr, "Invalid resource pointer");
+		SEAssert(gpuVA != 0, "Invalid GPU Virtual Address");
 		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Wrong heap type");
 		
-		m_inlineDescriptors[UAV][rootIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
+		m_inlineDescriptors[UAV][rootIdx] = gpuVA;
 
 		// Mark our root parameter index as dirty:
 		const uint64_t rootIdxBitmask = (1llu << rootIdx);

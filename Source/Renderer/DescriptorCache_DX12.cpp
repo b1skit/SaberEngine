@@ -488,7 +488,7 @@ namespace
 		// TODO: Need to figure out how to apply the heap byte offset here (or if that is even possible). Perhaps we
 		// could apply it to the CPU-visible descriptor handle that gets returned by the caller above us? We probably
 		// also need to update the hashing function to prevent aliasing as well
-		SEAssert(params->m_heapByteOffset == 0, "Heap byte offset is non-zero");
+		SEAssert(params->GetHeapByteOffset() == 0, "Heap byte offset is non-zero");
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 
@@ -520,7 +520,7 @@ namespace
 		}
 		
 		re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateShaderResourceView(
-			params->m_resolvedGPUResource,
+			params->GetGPUResource(),
 			&srvDesc,
 			descriptor.GetBaseDescriptor());
 	}
@@ -536,7 +536,7 @@ namespace
 		// TODO: Need to figure out how to apply the heap byte offset here (or if that is even possible). Perhaps we
 		// could apply it to the CPU-visible descriptor handle that gets returned by the caller above us? We probably
 		// also need to update the hashing function to prevent aliasing as well
-		SEAssert(params->m_heapByteOffset == 0, "Heap byte offset is non-zero");
+		SEAssert(params->GetHeapByteOffset() == 0, "Heap byte offset is non-zero");
 
 		SEAssert(bufView.IsVertexStreamView() == false, "TODO: Support UAV creation for vertex stream views");
 
@@ -554,7 +554,7 @@ namespace
 		};
 
 		re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateUnorderedAccessView(
-			params->m_resolvedGPUResource,
+			params->GetGPUResource(),
 			nullptr,	// Optional counter resource
 			&uavDesc,
 			descriptor.GetBaseDescriptor());
@@ -573,7 +573,7 @@ namespace
 
 		const D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc
 		{
-			.BufferLocation = params->m_resolvedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
+			.BufferLocation = params->GetGPUVirtualAddress(),
 			.SizeInBytes = util::RoundUpToNearestMultiple<uint32_t>(
 				buffer.GetTotalBytes(),
 				D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT),

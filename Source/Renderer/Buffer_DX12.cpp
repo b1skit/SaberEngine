@@ -118,6 +118,29 @@ namespace
 
 namespace dx12
 {
+	Buffer::PlatformParams::PlatformParams()
+		: m_gpuResource(nullptr)
+		, m_resolvedGPUResource(nullptr)
+		, m_heapByteOffset(0)
+		, m_currentMapFrameLatency(std::numeric_limits<uint8_t>::max())
+		, m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
+		, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
+		, m_cbvDescriptors(dx12::DescriptorCache::DescriptorType::CBV)
+		, m_views{ 0 }
+	{
+	}
+
+
+	Buffer::PlatformParams::~PlatformParams()
+	{
+		SEAssert(!m_isCreated, "Buffer destructor called before Destroy()");
+
+		m_srvDescriptors.Destroy();
+		m_uavDescriptors.Destroy();
+		m_cbvDescriptors.Destroy();
+	}
+
+
 	void Buffer::PlatformParams::Destroy()
 	{
 		SEAssert(m_isCreated, "Attempting to destroy a Buffer that has not been created");
@@ -418,7 +441,7 @@ namespace dx12
 			if (params->m_views.m_indexBufferView.BufferLocation == 0)
 			{
 				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
-					.BufferLocation = params->m_resolvedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
+					.BufferLocation = params->GetGPUVirtualAddress(),
 					.SizeInBytes = buffer.GetTotalBytes(),
 					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_streamView.m_dataType, false),
 				};
@@ -449,7 +472,7 @@ namespace dx12
 			if (params->m_views.m_vertexBufferView.BufferLocation == 0)
 			{
 				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
-					.BufferLocation = params->m_resolvedGPUResource->GetGPUVirtualAddress() + params->m_heapByteOffset,
+					.BufferLocation = params->GetGPUVirtualAddress(),
 					.SizeInBytes = buffer.GetTotalBytes(),
 					.StrideInBytes = DataTypeToByteStride(view.m_streamView.m_dataType),
 				};
@@ -457,50 +480,5 @@ namespace dx12
 		}
 
 		return &params->m_views.m_vertexBufferView;
-	}
-
-
-	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetSRV(re::Buffer const* buffer, re::BufferView const& view)
-	{
-		SEAssert(buffer, "Buffer cannot be null");
-
-		dx12::Buffer::PlatformParams const* bufferPlatParams =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
-
-		return bufferPlatParams->m_srvDescriptors.GetCreateDescriptor(buffer, view);
-	}
-
-
-	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetUAV(re::Buffer const* buffer, re::BufferView const& view)
-	{
-		SEAssert(buffer, "Buffer cannot be null");
-
-		dx12::Buffer::PlatformParams const* bufferPlatParams =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
-
-		return bufferPlatParams->m_uavDescriptors.GetCreateDescriptor(buffer, view);
-	}
-
-
-	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetCBV(re::Buffer const* buffer, re::BufferView const& view)
-	{
-		SEAssert(buffer, "Buffer cannot be null");
-
-		dx12::Buffer::PlatformParams const* bufferPlatParams =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
-
-		return bufferPlatParams->m_cbvDescriptors.GetCreateDescriptor(buffer, view);
-	}
-
-
-	D3D12_GPU_VIRTUAL_ADDRESS Buffer::GetGPUVirtualAddress(re::Buffer const* buffer)
-	{
-		SEAssert(buffer, "Buffer cannot be null");
-
-		dx12::Buffer::PlatformParams const* bufferPlatParams =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
-
-		// Apply the heap byte offset to account for sub-allocated Buffers 
-		return bufferPlatParams->m_resolvedGPUResource->GetGPUVirtualAddress() + bufferPlatParams->m_heapByteOffset;
 	}
 }

@@ -1072,6 +1072,9 @@ namespace dx12
 					// Don't transition resources representing shared heaps
 					const bool isInSharedHeap = bufferParams.m_lifetime == re::Lifetime::SingleFrame;
 
+					const D3D12_GPU_VIRTUAL_ADDRESS bufferGPUVA = bufferPlatParams->GetGPUVirtualAddress();
+					memcpy(dst, &bufferGPUVA, dstByteSize);
+
 					switch (rootParam->m_type)
 					{
 					case dx12::RootSignature::RootParameter::Type::Constant:
@@ -1081,11 +1084,6 @@ namespace dx12
 					break;
 					case dx12::RootSignature::RootParameter::Type::CBV:
 					{
-						const D3D12_GPU_VIRTUAL_ADDRESS bufferGPUVA =
-							bufferPlatParams->m_resolvedGPUResource->GetGPUVirtualAddress() + bufferPlatParams->m_heapByteOffset;
-
-						memcpy(dst, &bufferGPUVA, dstByteSize);
-
 						toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
 						transitionResource = !isInSharedHeap;
@@ -1093,11 +1091,6 @@ namespace dx12
 					break;
 					case dx12::RootSignature::RootParameter::Type::SRV:
 					{
-						const D3D12_GPU_VIRTUAL_ADDRESS bufferGPUVA =
-							bufferPlatParams->m_resolvedGPUResource->GetGPUVirtualAddress() + bufferPlatParams->m_heapByteOffset;
-
-						memcpy(dst, &bufferGPUVA, dstByteSize);
-
 						toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
 						transitionResource = !isInSharedHeap;
@@ -1105,11 +1098,6 @@ namespace dx12
 					break;
 					case dx12::RootSignature::RootParameter::Type::UAV:
 					{
-						const D3D12_GPU_VIRTUAL_ADDRESS bufferGPUVA =
-							bufferPlatParams->m_resolvedGPUResource->GetGPUVirtualAddress() + bufferPlatParams->m_heapByteOffset;
-
-						memcpy(dst, &bufferGPUVA, dstByteSize);
-
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 						transitionResource = true;
 					}
@@ -1126,7 +1114,7 @@ namespace dx12
 								"Buffer is missing the Structured usage bit");
 							SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
 								"SRV buffers must have GPU reads enabled");
-							SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
+							SEAssert(bufferPlatParams->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
 
 							D3D12_CPU_DESCRIPTOR_HANDLE const& bufferSRV = 
 								dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView);
@@ -1146,7 +1134,7 @@ namespace dx12
 								"Buffer is missing the Structured usage bit");
 							SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
 								"UAV buffers must have GPU writes enabled");
-							SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
+							SEAssert(bufferPlatParams->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
 
 							D3D12_CPU_DESCRIPTOR_HANDLE const& bufferUAV =
 								dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufferInput.GetView());
@@ -1194,7 +1182,7 @@ namespace dx12
 						SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state");
 
 						resourceTransitions.emplace_back(dx12::CommandList::TransitionMetadata{
-							.m_resource = bufferPlatParams->m_resolvedGPUResource,
+							.m_resource = bufferPlatParams->GetGPUResource(),
 							.m_toState = toState,
 							.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES }
 							});

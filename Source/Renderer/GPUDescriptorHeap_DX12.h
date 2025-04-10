@@ -59,9 +59,9 @@ namespace dx12
 			uint8_t rootIdx, D3D12_CPU_DESCRIPTOR_HANDLE* srcBase, uint32_t count);
 
 		// Set resource views directly in the GPU-visible descriptor heap:
-		void SetInlineCBV(uint8_t rootIdx, ID3D12Resource*, uint64_t alignedByteOffset);
-		void SetInlineSRV(uint8_t rootIdx, ID3D12Resource*, uint64_t alignedByteOffset);
-		void SetInlineUAV(uint8_t rootIdx, ID3D12Resource*, uint64_t alignedByteOffset);
+		void SetInlineCBV(uint8_t rootIdx, D3D12_GPU_VIRTUAL_ADDRESS);
+		void SetInlineSRV(uint8_t rootIdx, D3D12_GPU_VIRTUAL_ADDRESS);
+		void SetInlineUAV(uint8_t rootIdx, D3D12_GPU_VIRTUAL_ADDRESS);
 
 		// Copy staged descriptors from CPU to the GPU-visible descriptor heap
 		// Note: The command list must have already called SetDescriptorHeaps using our GetD3DDescriptorHeap()

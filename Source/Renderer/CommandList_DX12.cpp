@@ -386,11 +386,6 @@ namespace dx12
 
 				switch (rootParam->m_type)
 				{
-				case RootSignature::RootParameter::Type::Constant:
-				{
-					SEAssertF("Unexpected root parameter type for a buffer");
-				}
-				break;
 				case RootSignature::RootParameter::Type::CBV:
 				{
 					SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
@@ -402,9 +397,7 @@ namespace dx12
 						"Invalid usage flags for a constant buffer");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineCBV(
-						rootParam->m_index,
-						bufferPlatParams->m_resolvedGPUResource,
-						bufferPlatParams->m_heapByteOffset);
+						rootParam->m_index, bufferPlatParams->GetGPUVirtualAddress());
 
 					toState = (m_type == dx12::CommandListType::Compute ?
 						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -420,9 +413,7 @@ namespace dx12
 						"SRV buffers must have GPU reads enabled");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineSRV(
-						rootParam->m_index,
-						bufferPlatParams->m_resolvedGPUResource,
-						bufferPlatParams->m_heapByteOffset);
+						rootParam->m_index, bufferPlatParams->GetGPUVirtualAddress());
 
 					toState = (m_type == dx12::CommandListType::Compute ?
 						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -440,9 +431,7 @@ namespace dx12
 						"Buffer is missing the Structured usage bit");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineUAV(
-						rootParam->m_index,
-						bufferPlatParams->m_resolvedGPUResource,
-						bufferPlatParams->m_heapByteOffset);
+						rootParam->m_index, bufferPlatParams->GetGPUVirtualAddress());
 
 					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 					transitionResource = true;
@@ -457,12 +446,6 @@ namespace dx12
 					{
 					case dx12::RootSignature::DescriptorType::CBV:
 					{
-						SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
-							"Buffer is missing the Constant usage bit");
-						SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams) &&
-							!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
-							"Invalid usage flags for a constant buffer");
-
 						tableDescriptor = dx12::Buffer::GetCBV(bufferInput.GetBuffer(), bufView);
 
 						toState = (m_type == dx12::CommandListType::Compute ?
@@ -473,12 +456,6 @@ namespace dx12
 					break;
 					case dx12::RootSignature::DescriptorType::SRV:
 					{
-						SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
-							"Buffer is missing the Structured usage bit");
-						SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
-							"SRV buffers must have GPU reads enabled");
-						SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
-
 						tableDescriptor = dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView);
 
 						toState = (m_type == dx12::CommandListType::Compute ?
@@ -488,12 +465,6 @@ namespace dx12
 					break;
 					case dx12::RootSignature::DescriptorType::UAV:
 					{
-						SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
-							"Buffer is missing the Structured usage bit");
-						SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
-							"UAV buffers must have GPU writes enabled");
-						SEAssert(bufferPlatParams->m_heapByteOffset == 0, "Unexpected heap byte offset");
-
 						tableDescriptor = dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufView);
 
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -510,7 +481,8 @@ namespace dx12
 						1);
 				}
 				break;
-				default: SEAssertF("Invalid root parameter type");
+				case RootSignature::RootParameter::Type::Constant:
+				default: SEAssertF("Unexpected root parameter type for a buffer");
 				}
 
 				if (transitionResource)
@@ -519,7 +491,7 @@ namespace dx12
 					SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state");
 
 					resourceTransitions.emplace_back(TransitionMetadata{
-						.m_resource = bufferPlatParams->m_resolvedGPUResource,
+						.m_resource = bufferPlatParams->GetGPUResource(),
 						.m_toState = toState,
 						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES }
 						});
@@ -531,7 +503,7 @@ namespace dx12
 					const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
 
 					m_seenReadbackResources.emplace_back(ReadbackResourceMetadata{
-						.m_srcResource = bufferPlatParams->m_resolvedGPUResource,
+						.m_srcResource = bufferPlatParams->GetGPUResource(),
 						.m_dstResource = bufferPlatParams->m_readbackResources[readbackIdx].m_readbackGPUResource->Get(),
 						.m_dstModificationFence = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFence,
 						.m_dstModificationFenceMutex = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFenceMutex });
@@ -648,7 +620,7 @@ namespace dx12
 					streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 				resourceTransitions.emplace_back(TransitionMetadata{
-					.m_resource = streamBufferPlatParams->m_resolvedGPUResource,
+					.m_resource = streamBufferPlatParams->GetGPUResource(),
 					.m_toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
 					.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
 					});
@@ -729,7 +701,7 @@ namespace dx12
 		if (indexBuffer.GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame)
 		{
 			TransitionResourceInternal(
-				streamBufferPlatParams->m_resolvedGPUResource,
+				streamBufferPlatParams->GetGPUResource(),
 				D3D12_RESOURCE_STATE_INDEX_BUFFER,
 				{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 		}
@@ -1122,7 +1094,7 @@ namespace dx12
 					instance.GetVertexPositions().GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 				resourceTransitions.emplace_back(TransitionMetadata{
-					.m_resource = positionBufferPlatParams->m_resolvedGPUResource,
+					.m_resource = positionBufferPlatParams->GetGPUResource(),
 					.m_toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 					.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
 					});
@@ -1137,7 +1109,7 @@ namespace dx12
 						instance.GetVertexIndices()->GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 					resourceTransitions.emplace_back(TransitionMetadata{
-						.m_resource = indexBufferPlatParams->m_resolvedGPUResource,
+						.m_resource = indexBufferPlatParams->GetGPUResource(),
 						.m_toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
 						});
@@ -1153,7 +1125,7 @@ namespace dx12
 						createParams->m_transform->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
 					resourceTransitions.emplace_back(TransitionMetadata{
-						.m_resource = bufferPlatParams->m_resolvedGPUResource,
+						.m_resource = bufferPlatParams->GetGPUResource(),
 						.m_toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
 						});
@@ -1274,16 +1246,16 @@ namespace dx12
 			"GPUResource is not valid. Buffers using a shared resource cannot be used here");
 
 		TransitionResourceInternal(
-			bufferPlatformParams->m_resolvedGPUResource,
+			bufferPlatformParams->GetGPUResource(),
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 
 		m_commandList->CopyBufferRegion(
-			bufferPlatformParams->m_resolvedGPUResource,	// pDstBuffer
-			dstOffset,									// DstOffset
-			srcResource,								// pSrcBuffer
-			srcOffset,									// SrcOffset
-			numBytes);									// NumBytes
+			bufferPlatformParams->GetGPUResource(),	// pDstBuffer
+			dstOffset,								// DstOffset
+			srcResource,							// pSrcBuffer
+			srcOffset,								// SrcOffset
+			numBytes);								// NumBytes
 	}
 
 

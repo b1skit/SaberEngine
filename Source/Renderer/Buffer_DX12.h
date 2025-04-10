@@ -44,44 +44,30 @@ namespace dx12
 
 		struct PlatformParams final : public re::Buffer::PlatformParams
 		{
-			PlatformParams()
-				: m_gpuResource(nullptr)
-				, m_resolvedGPUResource(nullptr)
-				, m_heapByteOffset(0)
-				, m_currentMapFrameLatency(std::numeric_limits<uint8_t>::max())
-				, m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
-				, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
-				, m_cbvDescriptors(dx12::DescriptorCache::DescriptorType::CBV)
-				, m_views{0}
-			{
-			}
-
-			~PlatformParams()
-			{
-				m_srvDescriptors.Destroy();
-				m_uavDescriptors.Destroy();
-				m_cbvDescriptors.Destroy();
-			}
+			PlatformParams();
+			~PlatformParams();
 
 			void Destroy() override;
 
 			bool GPUResourceIsValid() const;
 
+			ID3D12Resource* const& GetGPUResource() const; // Get the resolved GPU resource
+
+			D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
+			uint64_t GetHeapByteOffset() const; // Debug only: GetGPUVirtualAddress() automatically applies this
+
+
 		public:
-			ID3D12Resource* m_resolvedGPUResource; // Use this instead of m_gpuResource
-
-			// For multiple resources sub-allocated from a single GPUResource
-			// i.e. Single-frame buffers suballocated from the stack, or mutabable buffers with N-buffered allocations
-			uint64_t m_heapByteOffset; 
-
 			std::vector<ReadbackResource> m_readbackResources; // CPU readback
 			uint8_t m_currentMapFrameLatency; // Used to compute the resource index during unmapping
 
+		
+		private:
 			mutable dx12::DescriptorCache m_srvDescriptors;
 			mutable dx12::DescriptorCache m_uavDescriptors;
 			mutable dx12::DescriptorCache m_cbvDescriptors;
 
-		
+
 		private:
 			union
 			{
@@ -90,10 +76,16 @@ namespace dx12
 			} m_views;
 			std::mutex m_viewMutex; // Views created at first usage during command recording
 
-
+		private:
 			// May be invalid (e.g. single-frame buffers in shared resource). Use m_resolvedGPUResource instead
 			friend class Buffer;
-			std::unique_ptr<dx12::GPUResource> m_gpuResource; 
+			std::unique_ptr<dx12::GPUResource> m_gpuResource;
+
+			ID3D12Resource* m_resolvedGPUResource; // Use this instead of m_gpuResource
+
+			// For multiple resources sub-allocated from a single GPUResource
+			// i.e. Single-frame buffers suballocated from the stack, or mutabable buffers with N-buffered allocations
+			uint64_t m_heapByteOffset;
 		};
 
 
@@ -126,6 +118,91 @@ namespace dx12
 	inline bool Buffer::PlatformParams::GPUResourceIsValid() const
 	{
 		return m_gpuResource && m_gpuResource->IsValid();
+	}
+
+
+	inline ID3D12Resource* const& Buffer::PlatformParams::GetGPUResource() const
+	{
+		return m_resolvedGPUResource;
+	}
+
+
+	inline D3D12_GPU_VIRTUAL_ADDRESS Buffer::PlatformParams::GetGPUVirtualAddress() const
+	{
+		return GetGPUResource()->GetGPUVirtualAddress() + GetHeapByteOffset();
+	}
+
+
+	inline uint64_t Buffer::PlatformParams::GetHeapByteOffset() const
+	{
+		return m_heapByteOffset;
+	}
+
+
+	// ---
+
+
+	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetSRV(re::Buffer const* buffer, re::BufferView const& view)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, buffer->GetBufferParams()) ||
+			re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer->GetBufferParams()),
+			"Buffer is missing the Structured usage bit");
+		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, buffer->GetBufferParams()),
+			"SRV buffers must have GPU reads enabled");
+
+		dx12::Buffer::PlatformParams const* bufferPlatParams =
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+
+		SEAssert(bufferPlatParams->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
+
+		return bufferPlatParams->m_srvDescriptors.GetCreateDescriptor(buffer, view);
+	}
+
+
+	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetUAV(re::Buffer const* buffer, re::BufferView const& view)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, buffer->GetBufferParams()) ||
+			re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer->GetBufferParams()),
+			"Buffer is missing the Structured usage bit");
+		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, buffer->GetBufferParams()),
+			"UAV buffers must have GPU writes enabled");
+
+		dx12::Buffer::PlatformParams const* bufferPlatParams =
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+
+		SEAssert(bufferPlatParams->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
+
+		return bufferPlatParams->m_uavDescriptors.GetCreateDescriptor(buffer, view);
+	}
+
+
+	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetCBV(re::Buffer const* buffer, re::BufferView const& view)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, buffer->GetBufferParams()),
+			"Buffer is missing the Constant usage bit");
+
+		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, buffer->GetBufferParams()) &&
+			!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, buffer->GetBufferParams()),
+			"Invalid usage flags for a constant buffer");
+
+		dx12::Buffer::PlatformParams const* bufferPlatParams =
+			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+
+		return bufferPlatParams->m_cbvDescriptors.GetCreateDescriptor(buffer, view);
+	}
+
+
+	inline D3D12_GPU_VIRTUAL_ADDRESS Buffer::GetGPUVirtualAddress(re::Buffer const* buffer)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		return buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>()->GetGPUVirtualAddress();
 	}
 
 

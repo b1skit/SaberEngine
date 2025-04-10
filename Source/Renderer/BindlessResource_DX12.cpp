@@ -72,11 +72,11 @@ namespace dx12
 			dx12::Buffer::PlatformParams* platParams =
 				resource.m_resource->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-			SEAssert(platParams->m_resolvedGPUResource, "Buffer resolved resource is null");
+			SEAssert(platParams->GetGPUResource(), "Buffer resolved resource is null");
 
 			SEAssert(destByteSize == sizeof(ID3D12Resource*), "Invalid destination size");
 
-			memcpy(dest, &platParams->m_resolvedGPUResource, destByteSize);
+			memcpy(dest, &platParams->GetGPUResource(), destByteSize);
 		}
 	}
 
@@ -235,11 +235,11 @@ namespace dx12
 			dx12::Buffer::PlatformParams* platParams =
 				resource.m_resource.GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
 
-			SEAssert(platParams->m_resolvedGPUResource, "Buffer resolved resource is null");
+			SEAssert(platParams->GetGPUResource(), "Buffer resolved resource is null");
 
 			SEAssert(destByteSize == sizeof(ID3D12Resource*), "Invalid destination size");
 
-			memcpy(dest, &platParams->m_resolvedGPUResource, destByteSize);
+			memcpy(dest, &platParams->GetGPUResource(), destByteSize);
 		}
 	}
 
