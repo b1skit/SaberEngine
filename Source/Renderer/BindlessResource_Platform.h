@@ -12,7 +12,7 @@ namespace re
 
 namespace platform
 {
-	class AccelerationStructureResource
+	struct AccelerationStructureResource
 	{
 	public:
 		static void (*GetPlatformResource)(re::AccelerationStructureResource const&, void*, size_t);
@@ -24,7 +24,7 @@ namespace platform
 	// ---
 
 
-	class BufferResource
+	struct BufferResource
 	{
 	public:
 		static void (*GetPlatformResource)(re::BufferResource const&, void*, size_t);
@@ -35,7 +35,7 @@ namespace platform
 	// ---
 
 
-	class TextureResource
+	struct TextureResource
 	{
 	public:
 		static void (*GetPlatformResource)(re::TextureResource const&, void*, size_t);
@@ -47,7 +47,7 @@ namespace platform
 	// ---
 
 
-	class VertexStreamResource
+	struct VertexStreamResource
 	{
 	public:
 		static void (*GetPlatformResource)(re::VertexStreamResource const&, void*, size_t);
