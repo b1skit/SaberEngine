@@ -8,7 +8,7 @@
 #include "Core/Assert.h"
 #include "Core/InvPtr.h"
 
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/INamedObject.h"
 
 #include "Generated/DrawStyles.h"
@@ -185,7 +185,7 @@ namespace re
 
 
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
 			virtual void Destroy() override = 0;
 
@@ -215,7 +215,7 @@ namespace re
 		void Create();
 		void Destroy();
 
-		PlatformParams* GetPlatformParams() const;
+		PlatObj* GetPlatformObject() const;
 
 
 	public:
@@ -233,7 +233,7 @@ namespace re
 
 
 	private:
-		std::unique_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatObj> m_platObj;
 		std::unique_ptr<IASParams> m_asParams;
 		Type m_type;
 
@@ -247,9 +247,9 @@ namespace re
 	inline re::AccelerationStructure::IASParams::~IASParams() {} // Pure virtual: Must provide an impl
 
 
-	inline AccelerationStructure::PlatformParams* AccelerationStructure::GetPlatformParams() const
+	inline AccelerationStructure::PlatObj* AccelerationStructure::GetPlatformObject() const
 	{
-		return m_platformParams.get();
+		return m_platObj.get();
 	}
 
 
@@ -261,7 +261,7 @@ namespace re
 
 	inline void AccelerationStructure::UpdateASParams(std::unique_ptr<IASParams>&& asParams)
 	{
-		SEAssert(m_platformParams->m_isBuilt, "Setting ASParams on an AS that has not yet been built. This is unexpected");
+		SEAssert(m_platObj->m_isBuilt, "Setting ASParams on an AS that has not yet been built. This is unexpected");
 
 		m_asParams = std::move(asParams);
 	}

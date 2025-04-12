@@ -338,7 +338,7 @@ namespace re
 	Texture::Texture(std::string const& name, TextureParams const& params, std::vector<ImageDataUniquePtr>&& initialData)
 		: INamedObject(name)
 		, m_texParams(params)
-		, m_platformParams(nullptr)
+		, m_platObj(nullptr)
 		, m_initialData(nullptr)
 		, m_numMips(ComputeNumMips(params))
 		, m_numSubresources(ComputeNumSubresources(params))
@@ -372,14 +372,14 @@ namespace re
 				std::move(initialData));
 		}
 
-		platform::Texture::CreatePlatformParams(*this);
+		platform::Texture::CreatePlatformObject(*this);
 	}
 
 
 	Texture::Texture(std::string const& name, TextureParams const& params, std::unique_ptr<InitialDataVec>&& initialData)
 		: INamedObject(name)
 		, m_texParams(params)
-		, m_platformParams(nullptr)
+		, m_platObj(nullptr)
 		, m_initialData(std::move(initialData))
 		, m_numMips(ComputeNumMips(params))
 		, m_numSubresources(ComputeNumSubresources(params))
@@ -402,14 +402,14 @@ namespace re
 			m_texParams.m_mipMode != re::Texture::MipMode::AllocateGenerate,
 			"Texture3D mip generation is not (currently) supported");
 
-		platform::Texture::CreatePlatformParams(*this);
+		platform::Texture::CreatePlatformObject(*this);
 	}
 
 
 	Texture::~Texture()
 	{
-		SEAssert(m_platformParams == nullptr,
-			"Texture dtor called, but platform params is not null. Was Destroy() called?");
+		SEAssert(m_platObj == nullptr,
+			"Texture dtor called, but platform object is not null. Was Destroy() called?");
 	}
 
 
@@ -419,7 +419,7 @@ namespace re
 
 		platform::Texture::Destroy(*this);
 
-		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
+		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 
 		if (m_srvResourceHandle != k_invalidResourceHandle)
 		{
@@ -439,9 +439,9 @@ namespace re
 	}
 
 
-	void Texture::SetPlatformParams(std::unique_ptr<re::Texture::PlatformParams> platformParams)
+	void Texture::SetPlatformObject(std::unique_ptr<re::Texture::PlatObj> platObj)
 	{ 
-		m_platformParams = std::move(platformParams);
+		m_platObj = std::move(platObj);
 	}
 
 
@@ -605,14 +605,14 @@ namespace re
 	void Texture::SetTexel(uint8_t arrayIdx, uint32_t faceIdx, uint32_t u, uint32_t v, glm::vec4 const& value)
 	{
 		SetTexel(m_initialData.get(), m_texParams, arrayIdx, faceIdx, u, v, value);
-		m_platformParams->m_isDirty = true;
+		m_platObj->m_isDirty = true;
 	}
 
 
 	void re::Texture::Fill(glm::vec4 const& solidColor)
 	{
 		Fill(m_initialData.get(), m_texParams, solidColor);
-		m_platformParams->m_isDirty = true;
+		m_platObj->m_isDirty = true;
 	}
 
 

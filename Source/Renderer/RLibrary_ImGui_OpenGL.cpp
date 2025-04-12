@@ -28,10 +28,10 @@ namespace opengl
 		host::Window* window = re::Context::Get()->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
-		win32::Window::PlatformParams* windowPlatParams =
-			window->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+		win32::Window::PlatObj* windowPlatObj =
+			window->GetPlatformObject()->As<win32::Window::PlatObj*>();
 
-		::ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
+		::ImGui_ImplWin32_Init(windowPlatObj->m_hWindow);
 		::ImGui_ImplWin32_EnableDpiAwareness();
 
 		constexpr char const* imguiGLSLVersionString = "#version 130";

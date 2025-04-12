@@ -11,7 +11,7 @@ namespace platform
 	class Sampler
 	{
 	public:
-		static void CreatePlatformParams(re::Sampler& sampler);
+		static void CreatePlatformObject(re::Sampler& sampler);
 
 
 		static void (*Create)(re::Sampler&);

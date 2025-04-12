@@ -635,12 +635,12 @@ namespace dx12
 		{
 			core::InvPtr<re::Sampler> const& sampler = re::Sampler::GetSampler(inputBindingDesc.Name);
 
-			dx12::Sampler::PlatformParams* samplerPlatParams =
-				sampler->GetPlatformParams()->As<dx12::Sampler::PlatformParams*>();
+			dx12::Sampler::PlatObj* samplerPlatObj =
+				sampler->GetPlatformObject()->As<dx12::Sampler::PlatObj*>();
 
-			auto HasSampler = [&inputBindingDesc, &samplerPlatParams](D3D12_STATIC_SAMPLER_DESC const& existing)
+			auto HasSampler = [&inputBindingDesc, &samplerPlatObj](D3D12_STATIC_SAMPLER_DESC const& existing)
 				{
-					D3D12_STATIC_SAMPLER_DESC const& samplerDesc = samplerPlatParams->m_staticSamplerDesc;
+					D3D12_STATIC_SAMPLER_DESC const& samplerDesc = samplerPlatObj->m_staticSamplerDesc;
 					return existing.Filter == samplerDesc.Filter &&
 						existing.AddressU == samplerDesc.AddressU &&
 						existing.AddressV == samplerDesc.AddressV &&
@@ -656,7 +656,7 @@ namespace dx12
 			auto result = std::find_if(staticSamplers.begin(), staticSamplers.end(), HasSampler);
 			if (result == staticSamplers.end())
 			{
-				staticSamplers.emplace_back(samplerPlatParams->m_staticSamplerDesc);
+				staticSamplers.emplace_back(samplerPlatObj->m_staticSamplerDesc);
 				staticSamplers.back().ShaderRegister = inputBindingDesc.BindPoint;
 				staticSamplers.back().RegisterSpace = inputBindingDesc.Space;
 				staticSamplers.back().ShaderVisibility =
@@ -1052,8 +1052,8 @@ namespace dx12
 
 	std::unique_ptr<dx12::RootSignature> RootSignature::Create(re::Shader const& shader)
 	{
-		dx12::Shader::PlatformParams* shaderPlatParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
-		SEAssert(shaderPlatParams->m_isCreated, "Shader must be created");
+		dx12::Shader::PlatObj* shaderPlatObj = shader.GetPlatformObject()->As<dx12::Shader::PlatObj*>();
+		SEAssert(shaderPlatObj->m_isCreated, "Shader must be created");
 
 		std::unique_ptr<dx12::RootSignature> newRootSig;
 		newRootSig.reset(new dx12::RootSignature());
@@ -1078,15 +1078,15 @@ namespace dx12
 			ComPtr<ID3D12LibraryReflection> libReflection;
 			for (uint8_t shaderIdx = 0; shaderIdx < re::Shader::ShaderType_Count; shaderIdx++)
 			{
-				if (shaderPlatParams->m_shaderBlobs[shaderIdx] == nullptr)
+				if (shaderPlatObj->m_shaderBlobs[shaderIdx] == nullptr)
 				{
 					continue;
 				}
 				
 				const DxcBuffer reflectionBuffer
 				{
-					.Ptr = shaderPlatParams->m_shaderBlobs[shaderIdx]->GetBufferPointer(),
-					.Size = shaderPlatParams->m_shaderBlobs[shaderIdx]->GetBufferSize(),
+					.Ptr = shaderPlatObj->m_shaderBlobs[shaderIdx]->GetBufferPointer(),
+					.Size = shaderPlatObj->m_shaderBlobs[shaderIdx]->GetBufferSize(),
 					.Encoding = 0, // 0 = non-text bytes
 				};
 				CheckHResult(dxcUtils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&libReflection)),
@@ -1128,7 +1128,7 @@ namespace dx12
 			ComPtr<ID3D12ShaderReflection> shaderReflection;
 			for (uint8_t shaderIdx = 0; shaderIdx < re::Shader::ShaderType_Count; shaderIdx++)
 			{
-				if (shaderPlatParams->m_shaderBlobs[shaderIdx] == nullptr)
+				if (shaderPlatObj->m_shaderBlobs[shaderIdx] == nullptr)
 				{
 					continue;
 				}
@@ -1136,8 +1136,8 @@ namespace dx12
 				// Get the reflection for the current shader stage:
 				const DxcBuffer reflectionBuffer
 				{
-					.Ptr = shaderPlatParams->m_shaderBlobs[shaderIdx]->GetBufferPointer(),
-					.Size = shaderPlatParams->m_shaderBlobs[shaderIdx]->GetBufferSize(),
+					.Ptr = shaderPlatObj->m_shaderBlobs[shaderIdx]->GetBufferPointer(),
+					.Size = shaderPlatObj->m_shaderBlobs[shaderIdx]->GetBufferSize(),
 					.Encoding = 0, // 0 = non-text bytes
 				};
 
@@ -1229,7 +1229,7 @@ namespace dx12
 			"Reallocation detected, internal pointers have been invalidated");
 
 		// Allow/deny unnecessary shader access
-		const D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags = BuildRootSignatureFlags(shaderPlatParams->m_shaderBlobs);
+		const D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags = BuildRootSignatureFlags(shaderPlatObj->m_shaderBlobs);
 
 		const std::wstring rootSigName = shader.GetWName();
 
@@ -1646,10 +1646,10 @@ namespace dx12
 		{
 			core::InvPtr<re::Sampler> const& sampler = re::Sampler::GetSampler(samplerName);
 
-			dx12::Sampler::PlatformParams* samplerPlatParams =
-				sampler->GetPlatformParams()->As<dx12::Sampler::PlatformParams*>();
+			dx12::Sampler::PlatObj* samplerPlatObj =
+				sampler->GetPlatformObject()->As<dx12::Sampler::PlatObj*>();
 
-			staticSamplers.emplace_back(samplerPlatParams->m_staticSamplerDesc);
+			staticSamplers.emplace_back(samplerPlatObj->m_staticSamplerDesc);
 		}
 		SEAssert(staticSamplers.size() <= 2032,
 			"The maximum number of unique static samplers across live root signatures is 2032 (+16 reserved "

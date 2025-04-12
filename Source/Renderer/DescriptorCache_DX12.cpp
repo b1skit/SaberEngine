@@ -33,13 +33,13 @@ namespace
 
 	inline DXGI_FORMAT GetTextureSRVFormat(core::InvPtr<re::Texture> const& texture)
 	{
-		dx12::Texture::PlatformParams const* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj =
+			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
-		switch (texPlatParams->m_format)
+		switch (texPlatObj->m_format)
 		{
 		case DXGI_FORMAT_D32_FLOAT: return DXGI_FORMAT_R32_FLOAT;
-		default: return texPlatParams->m_format;
+		default: return texPlatObj->m_format;
 		}
 	}
 
@@ -51,8 +51,8 @@ namespace
 	{
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
-		dx12::Texture::PlatformParams const* texPlatParams = 
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj = 
+			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 		srvDesc.Format = GetTextureSRVFormat(texture);
@@ -162,7 +162,7 @@ namespace
 
 		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 
-		device->CreateShaderResourceView(texPlatParams->m_gpuResource->Get(), &srvDesc, descriptor.GetBaseDescriptor());
+		device->CreateShaderResourceView(texPlatObj->m_gpuResource->Get(), &srvDesc, descriptor.GetBaseDescriptor());
 	}
 
 
@@ -173,10 +173,10 @@ namespace
 	{
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
-		dx12::Texture::PlatformParams const* texPlatParams = 
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj = 
+			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
-		const DXGI_FORMAT uavCompatibleFormat = dx12::Texture::GetEquivalentUAVCompatibleFormat(texPlatParams->m_format);
+		const DXGI_FORMAT uavCompatibleFormat = dx12::Texture::GetEquivalentUAVCompatibleFormat(texPlatObj->m_format);
 		SEAssert(uavCompatibleFormat != DXGI_FORMAT_UNKNOWN, "Failed to find equivalent UAV-compatible format");
 
 		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
@@ -265,7 +265,7 @@ namespace
 		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 
 		device->CreateUnorderedAccessView(
-			texPlatParams->m_gpuResource->Get(),
+			texPlatObj->m_gpuResource->Get(),
 			nullptr,		// Counter resource
 			&uavDesc,
 			descriptor.GetBaseDescriptor());
@@ -279,11 +279,11 @@ namespace
 	{
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
-		dx12::Texture::PlatformParams const* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj =
+			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
-		rtvDesc.Format = texPlatParams->m_format;
+		rtvDesc.Format = texPlatObj->m_format;
 
 		switch (texView.m_viewDimension)
 		{
@@ -368,7 +368,7 @@ namespace
 		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 
 		device->CreateRenderTargetView(
-			texPlatParams->m_gpuResource->Get(),
+			texPlatObj->m_gpuResource->Get(),
 			&rtvDesc,
 			descriptor.GetBaseDescriptor());
 
@@ -382,11 +382,11 @@ namespace
 	{
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
-		dx12::Texture::PlatformParams const* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj =
+			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
-		dsvDesc.Format = texPlatParams->m_format;
+		dsvDesc.Format = texPlatObj->m_format;
 
 		dsvDesc.Flags = static_cast<D3D12_DSV_FLAGS>(texView.Flags.m_depthStencil);
 		SEAssert(texView.StencilWritesEnabled(), "TODO: Support stencil buffers");
@@ -469,7 +469,7 @@ namespace
 		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 
 		device->CreateDepthStencilView(
-			texPlatParams->m_gpuResource->Get(),
+			texPlatObj->m_gpuResource->Get(),
 			&dsvDesc,
 			descriptor.GetBaseDescriptor());
 	}
@@ -483,12 +483,12 @@ namespace
 		re::Buffer const& buffer,
 		re::BufferView const& bufView)
 	{
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 		
 		// TODO: Need to figure out how to apply the heap byte offset here (or if that is even possible). Perhaps we
 		// could apply it to the CPU-visible descriptor handle that gets returned by the caller above us? We probably
 		// also need to update the hashing function to prevent aliasing as well
-		SEAssert(params->GetHeapByteOffset() == 0, "Heap byte offset is non-zero");
+		SEAssert(platObj->GetHeapByteOffset() == 0, "Heap byte offset is non-zero");
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 
@@ -520,7 +520,7 @@ namespace
 		}
 		
 		re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateShaderResourceView(
-			params->GetGPUResource(),
+			platObj->GetGPUResource(),
 			&srvDesc,
 			descriptor.GetBaseDescriptor());
 	}
@@ -531,12 +531,12 @@ namespace
 		re::Buffer const& buffer,
 		re::BufferView const& bufView)
 	{
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 		
 		// TODO: Need to figure out how to apply the heap byte offset here (or if that is even possible). Perhaps we
 		// could apply it to the CPU-visible descriptor handle that gets returned by the caller above us? We probably
 		// also need to update the hashing function to prevent aliasing as well
-		SEAssert(params->GetHeapByteOffset() == 0, "Heap byte offset is non-zero");
+		SEAssert(platObj->GetHeapByteOffset() == 0, "Heap byte offset is non-zero");
 
 		SEAssert(bufView.IsVertexStreamView() == false, "TODO: Support UAV creation for vertex stream views");
 
@@ -554,7 +554,7 @@ namespace
 		};
 
 		re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateUnorderedAccessView(
-			params->GetGPUResource(),
+			platObj->GetGPUResource(),
 			nullptr,	// Optional counter resource
 			&uavDesc,
 			descriptor.GetBaseDescriptor());
@@ -569,11 +569,11 @@ namespace
 		SEAssert(bufView.IsVertexStreamView() == false,
 			"Vertex streams are often larger than CBVs allow, so creating a CBV is unexpected");
 
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
 		const D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc
 		{
-			.BufferLocation = params->GetGPUVirtualAddress(),
+			.BufferLocation = platObj->GetGPUVirtualAddress(),
 			.SizeInBytes = util::RoundUpToNearestMultiple<uint32_t>(
 				buffer.GetTotalBytes(),
 				D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT),

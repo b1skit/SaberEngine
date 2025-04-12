@@ -107,17 +107,17 @@ namespace dx12
 {
 	void Sampler::Create(re::Sampler& sampler)
 	{
-		dx12::Sampler::PlatformParams* samplerPlatParams =
-			sampler.GetPlatformParams()->As<dx12::Sampler::PlatformParams*>();
-		SEAssert(samplerPlatParams->m_isCreated == false, "Sampler is already created");
-		samplerPlatParams->m_isCreated = true;
+		dx12::Sampler::PlatObj* samplerPlatObj =
+			sampler.GetPlatformObject()->As<dx12::Sampler::PlatObj*>();
+		SEAssert(samplerPlatObj->m_isCreated == false, "Sampler is already created");
+		samplerPlatObj->m_isCreated = true;
 
 		re::Sampler::SamplerDesc const& samplerDesc = sampler.GetSamplerDesc();
 		
 		SEAssert(samplerDesc.m_maxAnisotropy >= 1 && samplerDesc.m_maxAnisotropy <= 16, "Invalid max anisotropy");
 
 		// Populate our D3D12_STATIC_SAMPLER_DESC from our SE SamplerDesc:
-		D3D12_STATIC_SAMPLER_DESC& staticSamplerDesc = samplerPlatParams->m_staticSamplerDesc;
+		D3D12_STATIC_SAMPLER_DESC& staticSamplerDesc = samplerPlatObj->m_staticSamplerDesc;
 
 		staticSamplerDesc.Filter = GetD3DFilterMode(samplerDesc.m_filterMode);
 
@@ -144,9 +144,9 @@ namespace dx12
 
 	void Sampler::Destroy(re::Sampler& sampler)
 	{
-		dx12::Sampler::PlatformParams* samplerPlatParams =
-			sampler.GetPlatformParams()->As<dx12::Sampler::PlatformParams*>();
-		SEAssert(samplerPlatParams->m_isCreated == true, "Sampler has not been created");
-		samplerPlatParams->m_isCreated = false;
+		dx12::Sampler::PlatObj* samplerPlatObj =
+			sampler.GetPlatformObject()->As<dx12::Sampler::PlatObj*>();
+		SEAssert(samplerPlatObj->m_isCreated == true, "Sampler has not been created");
+		samplerPlatObj->m_isCreated = false;
 	}
 }

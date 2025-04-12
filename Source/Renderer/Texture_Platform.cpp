@@ -8,7 +8,7 @@
 
 namespace platform
 {
-	void Texture::CreatePlatformParams(re::Texture& texture)
+	void Texture::CreatePlatformObject(re::Texture& texture)
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -16,12 +16,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			texture.SetPlatformParams(std::make_unique<opengl::Texture::PlatformParams>(texture));
+			texture.SetPlatformObject(std::make_unique<opengl::Texture::PlatObj>(texture));
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			texture.SetPlatformParams(std::make_unique<dx12::Texture::PlatformParams>(texture));
+			texture.SetPlatformObject(std::make_unique<dx12::Texture::PlatObj>(texture));
 		}
 		break;
 		default:

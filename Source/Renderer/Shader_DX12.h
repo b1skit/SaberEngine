@@ -14,7 +14,7 @@ namespace dx12
 	class Shader
 	{
 	public:
-		struct PlatformParams final : public re::Shader::PlatformParams
+		struct PlatObj final : public re::Shader::PlatObj
 		{
 			std::array<Microsoft::WRL::ComPtr<ID3DBlob>, re::Shader::ShaderType_Count> m_shaderBlobs = {0};
 			

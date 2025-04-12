@@ -70,21 +70,21 @@ namespace re
 		: core::INamedObject(name)
 		, m_samplerDesc{ samplerDesc }
 	{
-		platform::Sampler::CreatePlatformParams(*this);
+		platform::Sampler::CreatePlatformObject(*this);
 	}
 
 
 	Sampler::~Sampler()
 	{
-		SEAssert(m_platformParams == nullptr,
-			"Sampler dtor called, but platform params is not null. Was Destroy() called?");
+		SEAssert(m_platObj == nullptr,
+			"Sampler dtor called, but platform object is not null. Was Destroy() called?");
 	}
 
 
 	void Sampler::Destroy()
 	{
-		SEAssert(m_platformParams->m_isCreated, "Sampler has not been created");
+		SEAssert(m_platObj->m_isCreated, "Sampler has not been created");
 		platform::Sampler::Destroy(*this);
-		m_platformParams = nullptr;
+		m_platObj = nullptr;
 	}
 }

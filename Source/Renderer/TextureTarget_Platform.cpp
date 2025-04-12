@@ -9,7 +9,7 @@
 
 namespace platform
 {
-	void TextureTarget::CreatePlatformParams(re::TextureTarget& texTarget)
+	void TextureTarget::CreatePlatformObject(re::TextureTarget& texTarget)
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -17,12 +17,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			texTarget.SetPlatformParams(std::make_unique<opengl::TextureTarget::PlatformParams>());
+			texTarget.SetPlatformObject(std::make_unique<opengl::TextureTarget::PlatObj>());
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			texTarget.SetPlatformParams(std::make_unique<dx12::TextureTarget::PlatformParams>());
+			texTarget.SetPlatformObject(std::make_unique<dx12::TextureTarget::PlatObj>());
 		}
 		break;
 		default:
@@ -33,7 +33,7 @@ namespace platform
 	}
 
 
-	void TextureTargetSet::CreatePlatformParams(re::TextureTargetSet& texTarget)
+	void TextureTargetSet::CreatePlatformObject(re::TextureTargetSet& texTarget)
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -41,12 +41,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			texTarget.SetPlatformParams(std::make_unique<opengl::TextureTargetSet::PlatformParams>());
+			texTarget.SetPlatformObject(std::make_unique<opengl::TextureTargetSet::PlatObj>());
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			texTarget.SetPlatformParams(std::make_unique<dx12::TextureTargetSet::PlatformParams>());
+			texTarget.SetPlatformObject(std::make_unique<dx12::TextureTargetSet::PlatObj>());
 		}
 		break;
 		default:

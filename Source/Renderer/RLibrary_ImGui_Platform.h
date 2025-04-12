@@ -4,7 +4,7 @@
 #include "Stage.h"
 
 #include "Core/CommandQueue.h"
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 
 
 namespace en
@@ -17,11 +17,11 @@ namespace platform
 	class RLibraryImGui : public virtual RLibrary
 	{
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
-			virtual ~PlatformParams() = 0;
+			virtual ~PlatObj() = 0;
 		};
-		static void CreatePlatformParams(RLibraryImGui&);
+		static void CreatePlatformObject(RLibraryImGui&);
 
 
 	public:
@@ -46,14 +46,14 @@ namespace platform
 
 
 	public:
-		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
-		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
+		inline PlatObj* GetPlatformObject() const { return m_platObj.get(); }
+		void SetPlatformObject(std::unique_ptr<PlatObj> platObj) { m_platObj = std::move(platObj); }
 
 
 	private:
-		std::unique_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatObj> m_platObj;
 	};
 
 
-	inline RLibraryImGui::PlatformParams::~PlatformParams() {}
+	inline RLibraryImGui::PlatObj::~PlatObj() {}
 }

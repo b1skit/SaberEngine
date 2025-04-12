@@ -31,10 +31,10 @@ namespace dx12
 		SEAssert(dest && destByteSize, "Invalid args received");
 		SEAssert(resource.m_viewType == re::ViewType::SRV, "Unexpected view type");
 
-		dx12::AccelerationStructure::PlatformParams const* tlasPlatParams =
-			resource.m_resource->GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams const*>();
+		dx12::AccelerationStructure::PlatObj const* tlasPlatObj =
+			resource.m_resource->GetPlatformObject()->As<dx12::AccelerationStructure::PlatObj const*>();
 
-		const D3D12_CPU_DESCRIPTOR_HANDLE tlasSRVHandle = tlasPlatParams->m_tlasSRV.GetBaseDescriptor();
+		const D3D12_CPU_DESCRIPTOR_HANDLE tlasSRVHandle = tlasPlatObj->m_tlasSRV.GetBaseDescriptor();
 
 		SEAssert(destByteSize == sizeof(D3D12_CPU_DESCRIPTOR_HANDLE), "Invalid destination size");
 		memcpy(dest, &tlasSRVHandle, destByteSize);
@@ -69,14 +69,14 @@ namespace dx12
 		}
 		else
 		{
-			dx12::Buffer::PlatformParams* platParams =
-				resource.m_resource->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+			dx12::Buffer::PlatObj* platObj =
+				resource.m_resource->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
-			SEAssert(platParams->GetGPUResource(), "Buffer resolved resource is null");
+			SEAssert(platObj->GetGPUResource(), "Buffer resolved resource is null");
 
 			SEAssert(destByteSize == sizeof(ID3D12Resource*), "Invalid destination size");
 
-			memcpy(dest, &platParams->GetGPUResource(), destByteSize);
+			memcpy(dest, &platObj->GetGPUResource(), destByteSize);
 		}
 	}
 
@@ -127,14 +127,14 @@ namespace dx12
 	{
 		SEAssert(dest && destByteSize, "Invalid args received");
 
-		dx12::Texture::PlatformParams* platParams =
-			resource.m_resource->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::Texture::PlatObj* platObj =
+			resource.m_resource->GetPlatformObject()->As<dx12::Texture::PlatObj*>();
 
-		SEAssert(platParams->m_gpuResource, "Texture GPU resource is null");
+		SEAssert(platObj->m_gpuResource, "Texture GPU resource is null");
 
 		SEAssert(destByteSize == sizeof(ID3D12Resource*), "Invalid destination size");
 
-		ID3D12Resource* textureResource = platParams->m_gpuResource->Get();
+		ID3D12Resource* textureResource = platObj->m_gpuResource->Get();
 		memcpy(dest, &textureResource, destByteSize);
 	}
 
@@ -232,14 +232,14 @@ namespace dx12
 		}
 		else
 		{
-			dx12::Buffer::PlatformParams* platParams =
-				resource.m_resource.GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+			dx12::Buffer::PlatObj* platObj =
+				resource.m_resource.GetBuffer()->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
-			SEAssert(platParams->GetGPUResource(), "Buffer resolved resource is null");
+			SEAssert(platObj->GetGPUResource(), "Buffer resolved resource is null");
 
 			SEAssert(destByteSize == sizeof(ID3D12Resource*), "Invalid destination size");
 
-			memcpy(dest, &platParams->GetGPUResource(), destByteSize);
+			memcpy(dest, &platObj->GetGPUResource(), destByteSize);
 		}
 	}
 

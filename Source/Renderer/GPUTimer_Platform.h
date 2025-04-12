@@ -8,11 +8,11 @@ namespace platform
 	class GPUTimer
 	{
 	public:
-		static std::unique_ptr<re::GPUTimer::PlatformParams> CreatePlatformParams();
+		static std::unique_ptr<re::GPUTimer::PlatObj> CreatePlatformObject();
 
 	public:
 		static void (*Create)(re::GPUTimer const&);
-		// Destroy is handled via GPUTimer::PlatformParams
+		// Destroy is handled via GPUTimer::PlatObj
 
 		static void (*BeginFrame)(re::GPUTimer const&);
 		static std::vector<uint64_t>(*EndFrame)(re::GPUTimer const&, re::GPUTimer::TimerType);

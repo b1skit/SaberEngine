@@ -26,7 +26,7 @@ namespace win32
 
 
 	public:
-		struct PlatformParams final : public host::Window::PlatformParams
+		struct PlatObj final : public host::Window::PlatObj
 		{
 			HWND m_hWindow = NULL;
 

@@ -75,17 +75,17 @@ namespace re
 
 
 	GPUTimer::GPUTimer(core::PerfLogger* perfLogger, uint8_t numFramesInFlight)
-		: m_platformParams(platform::GPUTimer::CreatePlatformParams())
+		: m_platObj(platform::GPUTimer::CreatePlatformObject())
 		, m_perfLogger(perfLogger)
 		, m_isEnabled(false)
 	{
 		SEAssert(m_perfLogger && numFramesInFlight > 0 && numFramesInFlight <= 3, "Invalid args received");
 
-		m_platformParams->m_numFramesInFlight = numFramesInFlight;		
-		m_platformParams->m_currentFrameNum = 0;
-		m_platformParams->m_currentFrameIdx = 0;
-		m_platformParams->m_currentDirectComputeTimerCount = 0;
-		m_platformParams->m_currentCopyTimerCount = 0;
+		m_platObj->m_numFramesInFlight = numFramesInFlight;		
+		m_platObj->m_currentFrameNum = 0;
+		m_platObj->m_currentFrameIdx = 0;
+		m_platObj->m_currentDirectComputeTimerCount = 0;
+		m_platObj->m_currentCopyTimerCount = 0;
 
 		core::EventManager::Get()->Subscribe(eventkey::TogglePerformanceTimers, this);
 	}
@@ -96,8 +96,8 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
-			SEAssert(m_platformParams && !m_platformParams->m_isCreated,
-				"Invalid Platform params state. Was Destroy() called?");
+			SEAssert(m_platObj && !m_platObj->m_isCreated,
+				"Invalid platform object state. Was Destroy() called?");
 		}
 	}
 	
@@ -107,11 +107,11 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
-			SEAssert(m_platformParams && !m_platformParams->m_isCreated, "Invalid Platform params state");
+			SEAssert(m_platObj && !m_platObj->m_isCreated, "Invalid platform object state");
 
 			platform::GPUTimer::Create(*this);
 
-			m_platformParams->m_isCreated = true;
+			m_platObj->m_isCreated = true;
 		}
 	}
 
@@ -121,13 +121,13 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
-			SEAssert(m_platformParams, "Invalid platform params state");
+			SEAssert(m_platObj, "Invalid platform object state");
 
-			if (m_platformParams->m_isCreated) // Not already destroyed
+			if (m_platObj->m_isCreated) // Not already destroyed
 			{
 				// Copy simple params in case we're re-created
-				std::unique_ptr<PlatformParams> newPlatformParams = platform::GPUTimer::CreatePlatformParams();
-				newPlatformParams->m_numFramesInFlight = m_platformParams->m_numFramesInFlight;
+				std::unique_ptr<PlatObj> newPlatformParams = platform::GPUTimer::CreatePlatformObject();
+				newPlatformParams->m_numFramesInFlight = m_platObj->m_numFramesInFlight;
 				newPlatformParams->m_currentFrameNum = 0;
 				newPlatformParams->m_currentFrameIdx = 0;
 				newPlatformParams->m_currentDirectComputeTimerCount = 0;
@@ -135,9 +135,9 @@ namespace re
 
 				newPlatformParams->m_isCreated = false;
 
-				re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
+				re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 
-				m_platformParams = std::move(newPlatformParams);
+				m_platObj = std::move(newPlatformParams);
 			}
 		}
 	}
@@ -155,13 +155,13 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
-			SEAssert(m_platformParams->m_isCreated, "GPU timer has not been created. Was Create() called?");
+			SEAssert(m_platObj->m_isCreated, "GPU timer has not been created. Was Create() called?");
 
-			m_platformParams->m_currentFrameNum = frameNum;
-			m_platformParams->m_currentFrameIdx = (frameNum % m_platformParams->m_numFramesInFlight);;
+			m_platObj->m_currentFrameNum = frameNum;
+			m_platObj->m_currentFrameIdx = (frameNum % m_platObj->m_numFramesInFlight);;
 
-			m_platformParams->m_currentDirectComputeTimerCount = 0;
-			m_platformParams->m_currentCopyTimerCount = 0;
+			m_platObj->m_currentDirectComputeTimerCount = 0;
+			m_platObj->m_currentCopyTimerCount = 0;
 
 			platform::GPUTimer::BeginFrame(*this);
 		}
@@ -178,7 +178,7 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
-			SEAssert(m_platformParams->m_isCreated, "GPU timer has not been created. Was Create() called?");
+			SEAssert(m_platObj->m_isCreated, "GPU timer has not been created. Was Create() called?");
 
 			// Clears any GPU timers that have not been updated in a while:
 			auto ClearOldTimers = [](std::multimap<util::HashKey, TimeRecord>& times)
@@ -196,13 +196,13 @@ namespace re
 						}
 					}
 				};
-			ClearOldTimers(m_platformParams->m_directComputeTimes);
-			ClearOldTimers(m_platformParams->m_copyTimes);
+			ClearOldTimers(m_platObj->m_directComputeTimes);
+			ClearOldTimers(m_platObj->m_copyTimes);
 
 
 			// Update the PerfLogger with the (oldest) frame results:
 			const uint8_t oldestFrameIdx = 
-				static_cast<uint8_t>((m_platformParams->m_currentFrameIdx + 1) % m_platformParams->m_numFramesInFlight);
+				static_cast<uint8_t>((m_platObj->m_currentFrameIdx + 1) % m_platObj->m_numFramesInFlight);
 
 			auto PostFrameResults = [this, oldestFrameIdx](
 				std::multimap<util::HashKey, TimeRecord>& timeRecords, 
@@ -229,7 +229,7 @@ namespace re
 								if (startIdx != re::GPUTimer::k_invalidQueryIdx)
 								{
 									const uint32_t endIdx = startIdx + 1;
-									SEAssert(endIdx < GPUTimer::k_maxGPUTimersPerFrame * m_platformParams->m_numFramesInFlight * 2,
+									SEAssert(endIdx < GPUTimer::k_maxGPUTimersPerFrame * m_platObj->m_numFramesInFlight * 2,
 										"OOB index");
 
 									totalTime += readbackTimes[endIdx] - readbackTimes[startIdx];
@@ -242,7 +242,7 @@ namespace re
 							}
 
 							m_perfLogger->NotifyPeriod(
-								totalTime * m_platformParams->m_invGPUFrequency,
+								totalTime * m_platObj->m_invGPUFrequency,
 								recordRange.first->second.m_name.c_str(),
 								recordRange.first->second.m_parentName.empty() ?
 								nullptr : recordRange.first->second.m_parentName.c_str());
@@ -251,10 +251,10 @@ namespace re
 				};
 
 			std::vector<uint64_t> const& directComputeTimes = platform::GPUTimer::EndFrame(*this, TimerType::DirectCompute);
-			PostFrameResults(m_platformParams->m_directComputeTimes, directComputeTimes);
+			PostFrameResults(m_platObj->m_directComputeTimes, directComputeTimes);
 
 			std::vector<uint64_t> const& copyTimes = platform::GPUTimer::EndFrame(*this, TimerType::Copy);
-			PostFrameResults(m_platformParams->m_copyTimes, copyTimes);
+			PostFrameResults(m_platObj->m_copyTimes, copyTimes);
 		}
 	}
 
@@ -340,20 +340,20 @@ namespace re
 			{
 			case TimerType::DirectCompute:
 			{
-				times = &m_platformParams->m_directComputeTimes;
-				timerCount = &m_platformParams->m_currentDirectComputeTimerCount;
+				times = &m_platObj->m_directComputeTimes;
+				timerCount = &m_platObj->m_currentDirectComputeTimerCount;
 			}
 			break;
 			case TimerType::Copy:
 			{
-				times = &m_platformParams->m_copyTimes;
-				timerCount = &m_platformParams->m_currentCopyTimerCount;
+				times = &m_platObj->m_copyTimes;
+				timerCount = &m_platObj->m_currentCopyTimerCount;
 			}
 			break;
 			default: SEAssertF("Invalid timer type");
 			}
 
-			const uint8_t frameIdx = m_platformParams->m_currentFrameIdx;
+			const uint8_t frameIdx = m_platObj->m_currentFrameIdx;
 			const uint32_t firstFrameQueryIdx = frameIdx * GPUTimer::k_maxGPUTimersPerFrame * 2;
 
 			auto recordRange = times->equal_range(nameHash);
@@ -410,7 +410,7 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
-			const uint8_t frameIdx = m_platformParams->m_currentFrameIdx;
+			const uint8_t frameIdx = m_platObj->m_currentFrameIdx;
 
 			TimeRecord& timeRecord = timeRecordItr->second;
 			if (timeRecord.m_queryIndexes[frameIdx] != re::GPUTimer::k_invalidQueryIdx)

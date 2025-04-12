@@ -61,7 +61,7 @@ namespace re
 		, m_typeIDHash(typeIDHashCode)
 		, m_dataByteSize(dataByteSize)
 		, m_bufferParams(bufferParams)
-		, m_platformParams(nullptr)
+		, m_platObj(nullptr)
 		, m_cbvResourceHandle(k_invalidResourceHandle)
 		, m_srvResourceHandle(k_invalidResourceHandle)
 		, m_isCurrentlyMapped(false)
@@ -71,7 +71,7 @@ namespace re
 		
 		ValidateBufferParams(m_bufferParams); // _DEBUG only
 
-		platform::Buffer::CreatePlatformParams(*this);
+		platform::Buffer::CreatePlatformObject(*this);
 
 #if defined(_DEBUG)
 		m_creationFrameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
@@ -116,7 +116,7 @@ namespace re
 
 		re::Context::Get()->GetBufferAllocator()->Stage(newBuffer->GetUniqueID(), data);
 
-		newBuffer->m_platformParams->m_isCommitted = true;
+		newBuffer->m_platObj->m_isCommitted = true;
 	}
 
 
@@ -128,7 +128,7 @@ namespace re
 
 		re::Context::Get()->GetBufferAllocator()->Stage(GetUniqueID(), data);
 		
-		m_platformParams->m_isCommitted = true;
+		m_platObj->m_isCommitted = true;
 	}
 
 
@@ -144,7 +144,7 @@ namespace re
 
 		re::Context::Get()->GetBufferAllocator()->StageMutable(GetUniqueID(), data, numBytes, dstBaseOffset);
 
-		m_platformParams->m_isCommitted = true;
+		m_platObj->m_isCommitted = true;
 	}
 
 
@@ -195,11 +195,11 @@ namespace re
 			brm->UnregisterResource(m_cbvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 
-		if (m_platformParams->m_isCreated)
+		if (m_platObj->m_isCreated)
 		{
 			re::Context::Get()->GetBufferAllocator()->Deallocate(GetUniqueID());
 
-			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
+			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 		}		
 	}
 

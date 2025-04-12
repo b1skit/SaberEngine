@@ -7,7 +7,7 @@
 
 namespace platform
 {
-	std::unique_ptr<re::GPUTimer::PlatformParams> platform::GPUTimer::CreatePlatformParams()
+	std::unique_ptr<re::GPUTimer::PlatObj> platform::GPUTimer::CreatePlatformObject()
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -15,12 +15,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			return std::make_unique<opengl::GPUTimer::PlatformParams>();
+			return std::make_unique<opengl::GPUTimer::PlatObj>();
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			return std::make_unique<dx12::GPUTimer::PlatformParams>();
+			return std::make_unique<dx12::GPUTimer::PlatObj>();
 		}
 		break;
 		default: SEAssertF("Invalid rendering API argument received");

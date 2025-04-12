@@ -6,7 +6,7 @@
 
 namespace platform
 {
-	std::unique_ptr<re::ShaderBindingTable::PlatformParams> platform::ShaderBindingTable::CreatePlatformParams()
+	std::unique_ptr<re::ShaderBindingTable::PlatObj> platform::ShaderBindingTable::CreatePlatformObject()
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -19,7 +19,7 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			return std::make_unique<dx12::ShaderBindingTable::PlatformParams>();
+			return std::make_unique<dx12::ShaderBindingTable::PlatObj>();
 		}
 		break;
 		default: SEAssertF("Invalid rendering API argument received");

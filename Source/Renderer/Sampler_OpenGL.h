@@ -12,7 +12,7 @@ namespace opengl
 	class Sampler
 	{
 	public:
-		struct PlatformParams final : public re::Sampler::PlatformParams
+		struct PlatObj final : public re::Sampler::PlatObj
 		{
 			GLuint m_samplerID = 0;		// Name of a sampler
 

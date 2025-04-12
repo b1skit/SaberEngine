@@ -15,7 +15,7 @@ namespace dx12
 	class SwapChain
 	{
 	public:
-		struct PlatformParams final : public re::SwapChain::PlatformParams
+		struct PlatObj final : public re::SwapChain::PlatObj
 		{
 			Microsoft::WRL::ComPtr<IDXGISwapChain4> m_swapChain = nullptr;
 

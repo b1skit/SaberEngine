@@ -11,7 +11,7 @@ namespace dx12
 	class Sampler
 	{
 	public:
-		struct PlatformParams final : public re::Sampler::PlatformParams
+		struct PlatObj final : public re::Sampler::PlatObj
 		{
 			D3D12_STATIC_SAMPLER_DESC m_staticSamplerDesc{};
 		};

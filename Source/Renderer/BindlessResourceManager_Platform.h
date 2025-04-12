@@ -17,7 +17,7 @@ namespace platform
 	class BindlessResourceManager
 	{
 	public:
-		static std::unique_ptr<re::BindlessResourceManager::PlatformParams> CreatePlatformParams();
+		static std::unique_ptr<re::BindlessResourceManager::PlatObj> CreatePlatformObject();
 
 
 	public:

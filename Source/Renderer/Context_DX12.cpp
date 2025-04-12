@@ -129,7 +129,7 @@ namespace dx12
 		m_heapManager.Initialize();
 
 		// NOTE: Must create the swapchain after our command queues. This is because the DX12 swapchain creation
-		// requires a direct command queue; dx12::SwapChain::Create recursively gets it from the Context platform params
+		// requires a direct command queue; dx12::SwapChain::Create recursively gets it from the Context platform object
 		re::SwapChain& swapChain = GetSwapChain();
 		swapChain.Create();
 
@@ -211,8 +211,8 @@ namespace dx12
 		// Get our swapchain and associated target set:
 		re::SwapChain& swapChain = GetSwapChain();
 
-		dx12::SwapChain::PlatformParams* swapChainPlatParams =
-			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		dx12::SwapChain::PlatObj* swapChainPlatObj =
+			swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj*>();
 
 		std::shared_ptr<re::TextureTargetSet> const& swapChainTargetSet = SwapChain::GetBackBufferTargetSet(swapChain);
 
@@ -235,12 +235,12 @@ namespace dx12
 		directQueue.Execute(1, &directCmdList);
 
 		// Present the backbuffer:
-		const bool vsyncEnabled = swapChainPlatParams->m_vsyncEnabled;
+		const bool vsyncEnabled = swapChainPlatObj->m_vsyncEnabled;
 		const uint32_t syncInterval = vsyncEnabled ? 1 : 0;
 		const uint32_t presentFlags = 
-			(swapChainPlatParams->m_tearingSupported && !vsyncEnabled) ? DXGI_PRESENT_ALLOW_TEARING : 0;
+			(swapChainPlatObj->m_tearingSupported && !vsyncEnabled) ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
-		const HRESULT hr = swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
+		const HRESULT hr = swapChainPlatObj->m_swapChain->Present(syncInterval, presentFlags);
 		if (hr == DXGI_STATUS_OCCLUDED)
 		{
 			// TODO: Handle this.

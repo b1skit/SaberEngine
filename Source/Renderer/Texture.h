@@ -5,7 +5,7 @@
 #include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
 
@@ -92,7 +92,7 @@ namespace re
 
 
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
 			virtual void Destroy() override = 0; // API-specific GPU bindings should be destroyed here
 
@@ -250,8 +250,8 @@ namespace re
 		bool IsPowerOfTwo() const;
 		bool IsSRGB() const;
 
-		re::Texture::PlatformParams* GetPlatformParams() const;
-		void SetPlatformParams(std::unique_ptr<re::Texture::PlatformParams> platformParams);
+		re::Texture::PlatObj* GetPlatformObject() const;
+		void SetPlatformObject(std::unique_ptr<re::Texture::PlatObj> platObj);
 
 		TextureParams const& GetTextureParams() const;
 
@@ -299,7 +299,7 @@ namespace re
 
 	private:
 		const TextureParams m_texParams;
-		std::unique_ptr<re::Texture::PlatformParams> m_platformParams;
+		std::unique_ptr<re::Texture::PlatObj> m_platObj;
 
 		std::unique_ptr<IInitialData> m_initialData; // Owns a vector with [1,6] faces of data
 
@@ -347,9 +347,9 @@ namespace re
 	}
 
 
-	inline re::Texture::PlatformParams* re::Texture::GetPlatformParams() const
+	inline re::Texture::PlatObj* re::Texture::GetPlatformObject() const
 	{
-		return m_platformParams.get();
+		return m_platObj.get();
 	}
 
 

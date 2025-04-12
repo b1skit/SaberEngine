@@ -361,7 +361,7 @@ namespace dx12
 		SEAssert(SUCCEEDED(hr), "Failed to get ID3D12Device2 from ID3D12Device");
 
 		// Generate the PSO:
-		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
+		dx12::Shader::PlatObj* shaderParams = shader.GetPlatformObject()->As<dx12::Shader::PlatObj*>();
 		
 		SEAssert(!shaderParams->m_shaderBlobs[re::Shader::Hull] &&
 			!shaderParams->m_shaderBlobs[re::Shader::Domain] &&
@@ -417,8 +417,8 @@ namespace dx12
 			}
 
 			// Target formats:
-			dx12::TextureTargetSet::PlatformParams* targetSetPlatParams =
-				targetSet->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+			dx12::TextureTargetSet::PlatObj* targetSetPlatObj =
+				targetSet->GetPlatformObject()->As<dx12::TextureTargetSet::PlatObj*>();
 			if (targetSet->HasColorTarget())
 			{
 				graphicsStateStream.RTVFormats = TextureTargetSet::GetColorTargetFormats(*targetSet);
@@ -426,7 +426,7 @@ namespace dx12
 			if (targetSet->HasDepthTarget())
 			{
 				graphicsStateStream.DSVFormat =
-					targetSet->GetDepthStencilTarget().GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
+					targetSet->GetDepthStencilTarget().GetTexture()->GetPlatformObject()->As<dx12::Texture::PlatObj*>()->m_format;
 			}			
 
 			// Rasterizer description:

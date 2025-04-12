@@ -16,7 +16,7 @@ namespace dx12
 	class TextureTarget
 	{
 	public:
-		struct PlatformParams final : public re::TextureTarget::PlatformParams
+		struct PlatObj final : public re::TextureTarget::PlatObj
 		{
 			//
 		};
@@ -31,7 +31,7 @@ namespace dx12
 	class TextureTargetSet
 	{
 	public:
-		struct PlatformParams final : public re::TextureTargetSet::PlatformParams
+		struct PlatObj final : public re::TextureTargetSet::PlatObj
 		{
 			D3D12_VIEWPORT m_viewport{};
 			D3D12_RECT m_scissorRect{};

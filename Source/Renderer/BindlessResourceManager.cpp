@@ -19,13 +19,13 @@ namespace re
 
 
 	BindlessResourceManager::BindlessResourceManager()
-		: m_platformParams(platform::BindlessResourceManager::CreatePlatformParams())
+		: m_platObj(platform::BindlessResourceManager::CreatePlatformObject())
 		, m_mustReinitialize(true)
 		, m_numFramesInFlight(re::RenderManager::Get()->GetNumFramesInFlight())
 	{
 		// Initialize the free index queue:
 		uint32_t curIdx = 0;
-		while (curIdx < m_platformParams->m_currentMaxIndex)
+		while (curIdx < m_platObj->m_currentMaxIndex)
 		{
 			m_freeIndexes.emplace(curIdx++);
 		}
@@ -36,7 +36,7 @@ namespace re
 	{
 		// Note: m_brmMutex must already be held
 
-		LOG("Initializing BindlessResourceManager to manage %d resources", m_platformParams->m_currentMaxIndex);
+		LOG("Initializing BindlessResourceManager to manage %d resources", m_platObj->m_currentMaxIndex);
 
 		platform::BindlessResourceManager::Initialize(*this, frameNum);
 	}
@@ -46,14 +46,14 @@ namespace re
 	{
 		// Note: m_brmMutex must already be held
 		{
-			std::lock_guard<std::mutex> lock(m_platformParams->m_platformParamsMutex);
+			std::lock_guard<std::mutex> lock(m_platObj->m_platformParamsMutex);
 
-			const uint32_t currentNumResources = m_platformParams->m_currentMaxIndex;
+			const uint32_t currentNumResources = m_platObj->m_currentMaxIndex;
 
-			m_platformParams->m_currentMaxIndex =
-				static_cast<uint32_t>(glm::ceil(m_platformParams->m_currentMaxIndex * k_growthFactor));
+			m_platObj->m_currentMaxIndex =
+				static_cast<uint32_t>(glm::ceil(m_platObj->m_currentMaxIndex * k_growthFactor));
 
-			for (uint32_t curIdx = currentNumResources; curIdx < m_platformParams->m_currentMaxIndex; ++curIdx)
+			for (uint32_t curIdx = currentNumResources; curIdx < m_platObj->m_currentMaxIndex; ++curIdx)
 			{
 				m_freeIndexes.emplace(curIdx);
 			}
@@ -61,7 +61,7 @@ namespace re
 			m_mustReinitialize = true;
 
 			LOG("BindlessResourceManager resource count increased from %d to %d",
-				currentNumResources, m_platformParams->m_currentMaxIndex);
+				currentNumResources, m_platObj->m_currentMaxIndex);
 		}
 	}
 
@@ -161,14 +161,14 @@ namespace re
 		ProcessUnregistrations(std::numeric_limits<uint64_t>::max()); // Immediately unregister everything
 
 		{
-			std::lock_guard<std::mutex> lockPlatParams(m_platformParams->m_platformParamsMutex);
+			std::lock_guard<std::mutex> lockPlatObj(m_platObj->m_platformParamsMutex);
 
-			SEAssert(m_freeIndexes.size() == m_platformParams->m_currentMaxIndex,
+			SEAssert(m_freeIndexes.size() == m_platObj->m_currentMaxIndex,
 				"Some resource handles have not been returned to the BindlessResourceManager");
 		}
 
 		m_freeIndexes = {};
 
-		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
+		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 	}
 }

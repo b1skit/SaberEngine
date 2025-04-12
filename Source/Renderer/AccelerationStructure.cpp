@@ -304,9 +304,9 @@ namespace re
 
 	void AccelerationStructure::Destroy()
 	{
-		if (m_platformParams)
+		if (m_platObj)
 		{
-			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
+			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 		}
 
 		if (m_type == re::AccelerationStructure::Type::TLAS &&
@@ -328,7 +328,7 @@ namespace re
 
 	AccelerationStructure::AccelerationStructure(char const* name, Type type, std::unique_ptr<IASParams>&& createParams)
 		: core::INamedObject(name)
-		, m_platformParams(platform::AccelerationStructure::CreatePlatformParams())
+		, m_platObj(platform::AccelerationStructure::CreatePlatformObject())
 		, m_asParams(std::move(createParams))
 		, m_type(type)
 	{

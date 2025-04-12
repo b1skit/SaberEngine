@@ -19,13 +19,13 @@ namespace
 {
 	void CreateViewportAndScissorRect(re::TextureTargetSet const& targetSet)
 	{
-		dx12::TextureTargetSet::PlatformParams* texTargetSetPlatParams =
-			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+		dx12::TextureTargetSet::PlatObj* texTargetSetPlatObj =
+			targetSet.GetPlatformObject()->As<dx12::TextureTargetSet::PlatObj*>();
 
 		// Configure the viewport:
 		re::Viewport const& viewport = targetSet.GetViewport();
 
-		texTargetSetPlatParams->m_viewport = CD3DX12_VIEWPORT(
+		texTargetSetPlatObj->m_viewport = CD3DX12_VIEWPORT(
 			static_cast<float>(viewport.xMin()),
 			static_cast<float>(viewport.yMin()),
 			static_cast<float>(viewport.Width()),
@@ -40,7 +40,7 @@ namespace
 			util::CheckedCast<uint32_t>(scissorRect.Bottom()) <= targetSet.GetViewport().Height(),
 			"Scissor rectangle is out of bounds of the viewport");
 
-		texTargetSetPlatParams->m_scissorRect = CD3DX12_RECT(
+		texTargetSetPlatObj->m_scissorRect = CD3DX12_RECT(
 			scissorRect.Left(),
 			scissorRect.Top(),
 			scissorRect.Right(),
@@ -57,9 +57,9 @@ namespace dx12
 			return;
 		}
 
-		dx12::TextureTargetSet::PlatformParams* texTargetSetPlatParams =
-			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-		SEAssert(texTargetSetPlatParams->m_isCommitted, "Target set has not been committed");
+		dx12::TextureTargetSet::PlatObj* texTargetSetPlatObj =
+			targetSet.GetPlatformObject()->As<dx12::TextureTargetSet::PlatObj*>();
+		SEAssert(texTargetSetPlatObj->m_isCommitted, "Target set has not been committed");
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
@@ -71,10 +71,10 @@ namespace dx12
 				break;
 			}
 
-			dx12::TextureTarget::PlatformParams* targetPlatParams =
-				colorTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-			SEAssert(!targetPlatParams->m_isCreated, "Target has already been created");
-			targetPlatParams->m_isCreated = true;
+			dx12::TextureTarget::PlatObj* targetPlatObj =
+				colorTarget.GetPlatformObject()->As<dx12::TextureTarget::PlatObj*>();
+			SEAssert(!targetPlatObj->m_isCreated, "Target has already been created");
+			targetPlatObj->m_isCreated = true;
 		}
 
 		CreateViewportAndScissorRect(targetSet);
@@ -88,15 +88,15 @@ namespace dx12
 			return;
 		}
 
-		SEAssert(targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>()->m_isCommitted,
+		SEAssert(targetSet.GetPlatformObject()->As<dx12::TextureTargetSet::PlatObj*>()->m_isCommitted,
 			"Target set has not been committed");
 
 		re::TextureTarget const* depthTarget = &targetSet.GetDepthStencilTarget();
 
-		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
-			depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-		SEAssert(!depthTargetPlatParams->m_isCreated, "Target has already been created");
-		depthTargetPlatParams->m_isCreated = true;
+		dx12::TextureTarget::PlatObj* depthTargetPlatObj =
+			depthTarget->GetPlatformObject()->As<dx12::TextureTarget::PlatObj*>();
+		SEAssert(!depthTargetPlatObj->m_isCreated, "Target has already been created");
+		depthTargetPlatObj->m_isCreated = true;
 
 		core::InvPtr<re::Texture> const& depthTex = depthTarget->GetTexture();
 		re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
@@ -124,10 +124,10 @@ namespace dx12
 				break;
 			}
 
-			dx12::Texture::PlatformParams const* targetTexPlatParams =
-				targetSet.GetColorTarget(i).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+			dx12::Texture::PlatObj const* targetTexPlatObj =
+				targetSet.GetColorTarget(i).GetTexture()->GetPlatformObject()->As<dx12::Texture::PlatObj*>();
 
-			colorTargetFormats.RTFormats[i] = targetTexPlatParams->m_format;
+			colorTargetFormats.RTFormats[i] = targetTexPlatObj->m_format;
 			numTargets++;
 		}
 		SEAssert(numTargets > 0, "No color targets found");

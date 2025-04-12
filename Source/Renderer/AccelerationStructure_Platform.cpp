@@ -6,7 +6,7 @@
 
 namespace platform
 {
-	std::unique_ptr<re::AccelerationStructure::PlatformParams> platform::AccelerationStructure::CreatePlatformParams()
+	std::unique_ptr<re::AccelerationStructure::PlatObj> platform::AccelerationStructure::CreatePlatformObject()
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -19,7 +19,7 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			return std::make_unique<dx12::AccelerationStructure::PlatformParams>();
+			return std::make_unique<dx12::AccelerationStructure::PlatObj>();
 		}
 		break;
 		default: SEAssertF("Invalid rendering API argument received");

@@ -8,7 +8,7 @@
 #include "Core/Assert.h"
 
 #include "Core/Interfaces/IHashedDataObject.h"
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/INamedObject.h"
 
 struct TargetData;
@@ -20,9 +20,9 @@ namespace re
 	class TextureTarget
 	{
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
-			virtual ~PlatformParams() = default;
+			virtual ~PlatObj() = default;
 
 			bool m_isCreated = false; // Targets are immutable after creation
 		};
@@ -58,13 +58,13 @@ namespace re
 		void SetTargetParams(TargetParams const& targetParams);
 		TargetParams const& GetTargetParams() const { return m_targetParams; }
 
-		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
-		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
+		PlatObj* GetPlatformObject() const { return m_platObj.get(); }
+		void SetPlatformObject(std::unique_ptr<PlatObj> platObj) { m_platObj = std::move(platObj); }
 
 
 	private:
 		core::InvPtr<re::Texture> m_texture;
-		std::unique_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatObj> m_platObj;
 
 		TargetParams m_targetParams;
 	};
@@ -138,9 +138,9 @@ namespace re
 	class TextureTargetSet final : public core::INamedObject, public core::IHashedDataObject
 	{
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
-			virtual ~PlatformParams() = default;
+			virtual ~PlatObj() = default;
 
 			bool m_isCommitted = false; // Target sets are immutable after commit
 		};
@@ -187,8 +187,8 @@ namespace re
 		void SetScissorRect(re::ScissorRect const&);
 		inline re::ScissorRect const& GetScissorRect() const { return m_scissorRect; }
 
-		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
-		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
+		inline PlatObj* GetPlatformObject() const { return m_platObj.get(); }
+		void SetPlatformObject(std::unique_ptr<PlatObj> platObj) { m_platObj = std::move(platObj); }
 		
 		// Commits and make immutable, then computes the data hash. Use this instead of IHashedDataObject::GetDataHash
 		uint64_t GetTargetSetSignature(); 
@@ -220,7 +220,7 @@ namespace re
 		re::Viewport m_viewport;
 		re::ScissorRect m_scissorRect;
 
-		std::unique_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatObj> m_platObj;
 
 		re::BufferInput m_targetParamsBuffer; // Only populated on demand
 

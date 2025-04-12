@@ -165,7 +165,7 @@ namespace re
 
 	void BufferAllocator::Register(std::shared_ptr<re::Buffer> const& buffer, uint32_t numBytes)
 	{
-		SEAssert(!buffer->GetPlatformParams()->m_isCreated,
+		SEAssert(!buffer->GetPlatformObject()->m_isCreated,
 			"Buffer is already marked as created. This should not be possible");
 
 		const Buffer::StagingPool stagingPool = buffer->GetStagingPool();
@@ -806,7 +806,7 @@ namespace re
 
 			for (std::shared_ptr<re::Buffer> const& currentBuffer : m_dirtyBuffers)
 			{
-				if (!currentBuffer->GetPlatformParams()->m_isCreated)
+				if (!currentBuffer->GetPlatformObject()->m_isCreated)
 				{
 					platform::Buffer::Create(*currentBuffer);
 				}
@@ -845,7 +845,7 @@ namespace re
 
 			auto BufferTemporaryData = [&](Handle currentHandle, re::Buffer* currentBuffer)
 				{
-					SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
+					SEAssert(currentBuffer->GetPlatformObject()->m_isCommitted,
 						"Trying to buffer a buffer that has not had an initial commit made");
 
 					platform::Buffer::Update(*currentBuffer, curFrameHeapOffsetFactor, 0, 0);
@@ -860,7 +860,7 @@ namespace re
 				// Trigger platform creation, if necessary.
 				// Note: It is possible we have buffers created *after* the CreateBufferPlatformObjects() call, we must
 				// still ensure they're created here:
-				if (!currentBuffer->GetPlatformParams()->m_isCreated)
+				if (!currentBuffer->GetPlatformObject()->m_isCreated)
 				{
 					platform::Buffer::Create(*currentBuffer);
 				}
@@ -882,7 +882,7 @@ namespace re
 				{
 					SEAssert(m_mutableAllocations.m_handleToPtr.contains(currentHandle), "Buffer is not registered");
 
-					SEAssert(currentBuffer->GetPlatformParams()->m_isCommitted,
+					SEAssert(currentBuffer->GetPlatformObject()->m_isCommitted,
 						"Trying to buffer a buffer that has not had an initial commit made");
 
 					SEAssert(m_mutableAllocations.m_partialCommits.contains(currentHandle),

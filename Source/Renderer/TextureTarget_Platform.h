@@ -17,7 +17,7 @@ namespace platform
 	class TextureTarget
 	{
 	public:
-		static void CreatePlatformParams(re::TextureTarget&);
+		static void CreatePlatformObject(re::TextureTarget&);
 	};
 
 
@@ -27,6 +27,6 @@ namespace platform
 	class TextureTargetSet
 	{
 	public:
-		static void CreatePlatformParams(re::TextureTargetSet&);
+		static void CreatePlatformObject(re::TextureTargetSet&);
 	};
 }

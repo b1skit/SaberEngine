@@ -14,13 +14,13 @@ namespace host
 		: m_hasFocus(false)
 		, m_relativeMouseModeEnabled(false)
 	{
-		platform::Window::CreatePlatformParams(*this);
+		platform::Window::CreatePlatformObject(*this);
 	}
 
 
 	Window::~Window()
 	{
-		SEAssert(!m_platformParams, "Window is being destructed with valid platform params. Was Destroy() called?");
+		SEAssert(!m_platObj, "Window is being destructed with valid platform object. Was Destroy() called?");
 	}
 
 
@@ -38,7 +38,7 @@ namespace host
 	void Window::Destroy()
 	{
 		platform::Window::Destroy(*this);
-		m_platformParams = nullptr;
+		m_platObj = nullptr;
 	}
 
 

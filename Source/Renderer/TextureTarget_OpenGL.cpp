@@ -60,15 +60,15 @@ namespace opengl
 	/************/
 	// Target Set
 	/************/
-	TextureTargetSet::PlatformParams::PlatformParams() :
+	TextureTargetSet::PlatObj::PlatObj() :
 		m_frameBufferObject(GL_NONE)
 	{
 	}
 
 
-	TextureTargetSet::PlatformParams::~PlatformParams()
+	TextureTargetSet::PlatObj::~PlatObj()
 	{
-		// Platform params are managed via shared_ptr, so we should deallocate OpenGL resources here
+		// platform object are managed via shared_ptr, so we should deallocate OpenGL resources here
 		glDeleteFramebuffers(1, &m_frameBufferObject);
 		m_frameBufferObject = GL_NONE;
 	}
@@ -76,8 +76,8 @@ namespace opengl
 
 	void TextureTargetSet::CreateColorTargets(re::TextureTargetSet const& targetSet)
 	{
-		opengl::TextureTargetSet::PlatformParams* targetSetParams =
-			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams*>();
+		opengl::TextureTargetSet::PlatObj* targetSetParams =
+			targetSet.GetPlatformObject()->As<opengl::TextureTargetSet::PlatObj*>();
 
 		// This is a bit of a hack: If we have a color target, we create it. If we have neither a color nor depth
 		// target, we assume this is the default framebuffer and create the color target here now well. This might not
@@ -111,11 +111,11 @@ namespace opengl
 				break;
 			}
 
-			opengl::TextureTarget::PlatformParams* targetPlatParams =
-				colorTarget.GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
+			opengl::TextureTarget::PlatObj* targetPlatObj =
+				colorTarget.GetPlatformObject()->As<opengl::TextureTarget::PlatObj*>();
 
-			SEAssert(!targetPlatParams->m_isCreated, "Target has already been created");
-			targetPlatParams->m_isCreated = true;
+			SEAssert(!targetPlatObj->m_isCreated, "Target has already been created");
+			targetPlatObj->m_isCreated = true;
 
 			core::InvPtr<re::Texture> const& texture = colorTarget.GetTexture();
 
@@ -240,8 +240,8 @@ namespace opengl
 
 	void TextureTargetSet::AttachColorTargets(re::TextureTargetSet const& targetSet)
 	{
-		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
-			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
+		opengl::TextureTargetSet::PlatObj const* targetSetParams =
+			targetSet.GetPlatformObject()->As<opengl::TextureTargetSet::PlatObj const*>();
 
 		SEAssert(targetSetParams->m_frameBufferObject == 0 ||
 				glIsFramebuffer(targetSetParams->m_frameBufferObject),
@@ -262,14 +262,14 @@ namespace opengl
 			}
 			
 			core::InvPtr<re::Texture> const& texture = targetSet.GetColorTarget(i).GetTexture();
-			SEAssert(texture->GetPlatformParams()->m_isCreated, "Texture is not created");
+			SEAssert(texture->GetPlatformObject()->m_isCreated, "Texture is not created");
 
 			re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
-			opengl::Texture::PlatformParams const* texPlatformParams =
-				texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+			opengl::Texture::PlatObj const* texPlatformParams =
+				texture->GetPlatformObject()->As<opengl::Texture::PlatObj const*>();
 
-			opengl::TextureTarget::PlatformParams const* targetPlatformParams =
-				targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
+			opengl::TextureTarget::PlatObj const* targetPlatformParams =
+				targetSet.GetColorTarget(i).GetPlatformObject()->As<opengl::TextureTarget::PlatObj const*>();
 
 			SEAssert((textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
 				(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy),
@@ -379,19 +379,19 @@ namespace opengl
 			return;
 		}
 
-		opengl::TextureTargetSet::PlatformParams* targetSetParams =
-			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams*>();
+		opengl::TextureTargetSet::PlatObj* targetSetParams =
+			targetSet.GetPlatformObject()->As<opengl::TextureTargetSet::PlatObj*>();
 
 		SEAssert(targetSetParams->m_isCommitted, "Target set has not been committed");
 
 		if (targetSet.GetDepthStencilTarget().HasTexture())
 		{
 			re::TextureTarget const* depthStencilTarget = &targetSet.GetDepthStencilTarget();
-			opengl::TextureTarget::PlatformParams* depthTargetPlatParams =
-				depthStencilTarget->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
+			opengl::TextureTarget::PlatObj* depthTargetPlatObj =
+				depthStencilTarget->GetPlatformObject()->As<opengl::TextureTarget::PlatObj*>();
 			
-			SEAssert(!depthTargetPlatParams->m_isCreated, "Target has already been created");
-			depthTargetPlatParams->m_isCreated = true;
+			SEAssert(!depthTargetPlatObj->m_isCreated, "Target has already been created");
+			depthTargetPlatObj->m_isCreated = true;
 
 			core::InvPtr<re::Texture> const& depthStencilTex = depthStencilTarget->GetTexture();
 
@@ -441,16 +441,16 @@ namespace opengl
 			re::TextureTarget const& depthTarget = targetSet.GetDepthStencilTarget();
 
 			core::InvPtr<re::Texture> const& depthTex = depthTarget.GetTexture();
-			SEAssert(depthTex->GetPlatformParams()->m_isCreated, "Texture is not created");
+			SEAssert(depthTex->GetPlatformObject()->m_isCreated, "Texture is not created");
 
 			SEAssert((depthTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget),
 				"Attempting to bind a depth target with a different texture use parameter");
 
-			opengl::TextureTargetSet::PlatformParams const* targetSetParams =
-				targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
+			opengl::TextureTargetSet::PlatObj const* targetSetParams =
+				targetSet.GetPlatformObject()->As<opengl::TextureTargetSet::PlatObj const*>();
 
-			opengl::TextureTarget::PlatformParams const* depthTargetPlatParams =
-				depthTarget.GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
+			opengl::TextureTarget::PlatObj const* depthTargetPlatObj =
+				depthTarget.GetPlatformObject()->As<opengl::TextureTarget::PlatObj const*>();
 
 			re::TextureView const& texView = depthTarget.GetTargetParams().m_textureView;
 
@@ -494,8 +494,8 @@ namespace opengl
 		SEAssert(colorClearModes && colorClearVals && numColorClears > 0,
 			"Invalid color clear args");
 
-		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
-			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
+		opengl::TextureTargetSet::PlatObj const* targetSetParams =
+			targetSet.GetPlatformObject()->As<opengl::TextureTargetSet::PlatObj const*>();
 
 		std::vector<re::TextureTarget> const& colorTargets = targetSet.GetColorTargets();
 		
@@ -559,14 +559,14 @@ namespace opengl
 			targetSet.GetDepthStencilTarget().HasTexture(),
 			"Invalid parameters for depth/stencil clearing");
 
-		opengl::TextureTargetSet::PlatformParams const* targetSetPlatParams =
-			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
+		opengl::TextureTargetSet::PlatObj const* targetSetPlatObj =
+			targetSet.GetPlatformObject()->As<opengl::TextureTargetSet::PlatObj const*>();
 
 		core::InvPtr<re::Texture> const& depthStencilTex = targetSet.GetDepthStencilTarget().GetTexture();
 		re::Texture::TextureParams const& texParams = depthStencilTex->GetTextureParams();
 
-		opengl::TextureTarget::PlatformParams const* targetPlatParams =
-			targetSet.GetDepthStencilTarget().GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
+		opengl::TextureTarget::PlatObj const* targetPlatObj =
+			targetSet.GetDepthStencilTarget().GetPlatformObject()->As<opengl::TextureTarget::PlatObj const*>();
 
 		// Clear depth:
 		if (depthClearMode)
@@ -577,7 +577,7 @@ namespace opengl
 				"Trying to clear depth on a texture not marked for depth usage");
 
 			glClearNamedFramebufferfv(
-				targetSetPlatParams->m_frameBufferObject,	// framebuffer
+				targetSetPlatObj->m_frameBufferObject,	// framebuffer
 				GL_DEPTH,									// buffer
 				0,											// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
 				&depthClearVal);							// value
@@ -594,7 +594,7 @@ namespace opengl
 			const GLint stencilClearValue = stencilClearVal;
 
 			glClearNamedFramebufferiv(
-				targetSetPlatParams->m_frameBufferObject,	// framebuffer
+				targetSetPlatObj->m_frameBufferObject,	// framebuffer
 				GL_STENCIL,									// buffer
 				0,											// drawbuffer: Must be 0 for GL_DEPTH / GL_STENCIL
 				&stencilClearValue);
@@ -614,8 +614,8 @@ namespace opengl
 		{
 			re::Texture::TextureParams const& texParams = rwTexInput.m_texture->GetTextureParams();
 
-			opengl::Texture::PlatformParams const* texPlatParams =
-				rwTexInput.m_texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+			opengl::Texture::PlatObj const* texPlatObj =
+				rwTexInput.m_texture->GetPlatformObject()->As<opengl::Texture::PlatObj const*>();
 
 			re::TextureView const& texView = rwTexInput.m_textureView;
 
@@ -698,7 +698,7 @@ namespace opengl
 			for (GLint level = firstLevel; level < numLevels; ++level)
 			{
 				glClearTexSubImage(
-					texPlatParams->m_textureID,
+					texPlatObj->m_textureID,
 					level,
 					xOffset,
 					yOffset,
@@ -706,7 +706,7 @@ namespace opengl
 					width,
 					height,
 					depth,
-					texPlatParams->m_format,
+					texPlatObj->m_format,
 					clearValType,
 					clearVal);
 			}
@@ -753,8 +753,8 @@ namespace opengl
 
 	void TextureTargetSet::CopyTexture(core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst)
 	{
-		opengl::Texture::PlatformParams const* srcPlatParams =
-			src->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+		opengl::Texture::PlatObj const* srcPlatObj =
+			src->GetPlatformObject()->As<opengl::Texture::PlatObj const*>();
 
 		if (!dst.IsValid()) // If no valid destination is provided, we use the backbuffer
 		{
@@ -765,8 +765,8 @@ namespace opengl
 			re::TextureTargetSet const* backbufferTargetSet = 
 				opengl::SwapChain::GetBackBufferTargetSet(re::Context::GetAs<opengl::Context*>()->GetSwapChain()).get();
 			
-			opengl::TextureTargetSet::PlatformParams const* backbufferPlatParams =
-				backbufferTargetSet->GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
+			opengl::TextureTargetSet::PlatObj const* backbufferPlatObj =
+				backbufferTargetSet->GetPlatformObject()->As<opengl::TextureTargetSet::PlatObj const*>();
 
 			// We're (currently) just have texture handles, so we create a new FBO for the source texture to be read from
 			GLuint srcFBO = 0;
@@ -777,14 +777,14 @@ namespace opengl
 			glNamedFramebufferTexture(
 				srcFBO,						// framebuffer
 				GL_COLOR_ATTACHMENT0,		// attachment
-				srcPlatParams->m_textureID,	// texture
+				srcPlatObj->m_textureID,	// texture
 				0);							// level: 0 as it's relative to the texView
 
 			glNamedFramebufferReadBuffer(srcFBO, GL_COLOR_ATTACHMENT0);
 
 			glBlitNamedFramebuffer(
 				srcFBO,
-				backbufferPlatParams->m_frameBufferObject,
+				backbufferPlatObj->m_frameBufferObject,
 				0,
 				0,
 				src->Width(),
@@ -803,17 +803,17 @@ namespace opengl
 		}
 		else
 		{
-			opengl::Texture::PlatformParams const* dstPlatParams =
-				dst->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+			opengl::Texture::PlatObj const* dstPlatObj =
+				dst->GetPlatformObject()->As<opengl::Texture::PlatObj const*>();
 
 			glCopyImageSubData(
-				srcPlatParams->m_textureID,
+				srcPlatObj->m_textureID,
 				GetTextureTargetEnum(src->GetTextureParams().m_dimension),
 				0, // srcLevel TODO: Support copying MIPs
 				0, // srcX
 				0, // srcY
 				0, // srcZ
-				dstPlatParams->m_textureID,
+				dstPlatObj->m_textureID,
 				GetTextureTargetEnum(dst->GetTextureParams().m_dimension),
 				0, // dstLevel TODO: Support copying MIPs
 				0, // dstX

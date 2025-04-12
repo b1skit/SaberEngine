@@ -2,7 +2,7 @@
 #pragma once
 #include "EnumTypes.h"
 
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 
 
 using ResourceHandle = uint32_t;	// Array index into overlapped unbounded descriptor arrays
@@ -35,7 +35,7 @@ namespace re
 
 
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
 			virtual void Destroy() override = 0;
 
@@ -68,7 +68,7 @@ namespace re
 
 
 	public:
-		PlatformParams* GetPlatformParams() const;
+		PlatObj* GetPlatformObject() const;
 
 
 	private:
@@ -100,7 +100,7 @@ namespace re
 		};
 		std::vector<RegistrationMetadata> m_registrations;
 
-		std::unique_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatObj> m_platObj;
 
 		bool m_mustReinitialize;
 		uint8_t m_numFramesInFlight;
@@ -112,8 +112,8 @@ namespace re
 	};
 
 
-	inline BindlessResourceManager::PlatformParams* BindlessResourceManager::GetPlatformParams() const
+	inline BindlessResourceManager::PlatObj* BindlessResourceManager::GetPlatformObject() const
 	{
-		return m_platformParams.get();
+		return m_platObj.get();
 	}
 }

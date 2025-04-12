@@ -2,14 +2,12 @@
 #include "Window_Platform.h"
 #include "Window_Win32.h"
 
-#include "../Assert.h"
-
 
 namespace platform
 {
-	void Window::CreatePlatformParams(host::Window& window)
+	void Window::CreatePlatformObject(host::Window& window)
 	{
-		window.SetPlatformParams(std::make_unique<win32::Window::PlatformParams>());
+		window.SetPlatformObject(std::make_unique<win32::Window::PlatObj>());
 	}
 
 

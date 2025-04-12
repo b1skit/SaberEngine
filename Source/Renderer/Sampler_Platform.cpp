@@ -11,7 +11,7 @@
 
 namespace platform
 {
-	void Sampler::CreatePlatformParams(re::Sampler& sampler)
+	void Sampler::CreatePlatformObject(re::Sampler& sampler)
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -19,12 +19,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			sampler.SetPlatformParams(std::make_unique<opengl::Sampler::PlatformParams>());
+			sampler.SetPlatformObject(std::make_unique<opengl::Sampler::PlatObj>());
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			sampler.SetPlatformParams(std::make_unique<dx12::Sampler::PlatformParams>());
+			sampler.SetPlatformObject(std::make_unique<dx12::Sampler::PlatObj>());
 		}
 		break;
 		default:

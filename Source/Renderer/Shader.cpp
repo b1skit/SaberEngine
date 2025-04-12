@@ -196,19 +196,19 @@ namespace re
 		SEAssert(rasterizationState || !IsRasterizationType(m_metadata[0].m_type),
 			"RasterizationState is null. This is unexpected for rasterization pipelines");
 
-		platform::Shader::CreatePlatformParams(*this);
+		platform::Shader::CreatePlatformObject(*this);
 	}
 
 
 	Shader::~Shader()
 	{
-		SEAssert(m_platformParams == nullptr, "Platform parameters is not null. Was Destroy() called?");
+		SEAssert(m_platObj == nullptr, "Platform parameters is not null. Was Destroy() called?");
 	}
 
 
 	void Shader::Destroy()
 	{
 		platform::Shader::Destroy(*this);
-		m_platformParams = nullptr;
+		m_platObj = nullptr;
 	}
 }

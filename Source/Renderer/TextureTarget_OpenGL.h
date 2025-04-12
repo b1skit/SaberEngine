@@ -11,7 +11,7 @@ namespace opengl
 	class TextureTarget
 	{
 	public:
-		struct PlatformParams final : public re::TextureTarget::PlatformParams
+		struct PlatObj final : public re::TextureTarget::PlatObj
 		{
 			//
 		};
@@ -21,10 +21,10 @@ namespace opengl
 	class TextureTargetSet
 	{
 	public:
-		struct PlatformParams final : public re::TextureTargetSet::PlatformParams
+		struct PlatObj final : public re::TextureTargetSet::PlatObj
 		{
-			PlatformParams();
-			~PlatformParams() override;
+			PlatObj();
+			~PlatObj() override;
 
 			GLuint m_frameBufferObject;			
 		};

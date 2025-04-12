@@ -6,7 +6,7 @@
 #include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 
 #include "Generated/DrawStyles.h"
 
@@ -23,7 +23,7 @@ namespace re
 	class ShaderBindingTable : public virtual core::INamedObject
 	{
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
 			virtual void Destroy() override = 0;
 		};
@@ -54,7 +54,7 @@ namespace re
 	public:
 		void Destroy();
 
-		PlatformParams* GetPlatformParams() const;
+		PlatObj* GetPlatformObject() const;
 
 		SBTParams const& GetSBTParams() const;
 
@@ -66,7 +66,7 @@ namespace re
 
 
 	private:
-		std::unique_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatObj> m_platObj;
 
 
 	private:
@@ -92,9 +92,9 @@ namespace re
 	};
 
 
-	inline ShaderBindingTable::PlatformParams* ShaderBindingTable::GetPlatformParams() const
+	inline ShaderBindingTable::PlatObj* ShaderBindingTable::GetPlatformObject() const
 	{
-		return m_platformParams.get();
+		return m_platObj.get();
 	}
 
 

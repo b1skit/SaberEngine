@@ -4,7 +4,7 @@
 #include "EnumTypes.h"
 
 #include "Core/Interfaces/INamedObject.h"
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
 
@@ -72,9 +72,9 @@ namespace re
 
 
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
-			virtual ~PlatformParams() = default;
+			virtual ~PlatObj() = default;
 			virtual void Destroy() override = 0;
 
 			bool m_isCommitted = false; // Has an initial data commitment been made?
@@ -143,8 +143,8 @@ namespace re
 
 		BufferParams const& GetBufferParams() const;
 
-		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
-		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
+		inline PlatObj* GetPlatformObject() const { return m_platObj.get(); }
+		void SetPlatformObject(std::unique_ptr<PlatObj> platObj) { m_platObj = std::move(platObj); }
 
 		// Bindless:
 	public:
@@ -175,7 +175,7 @@ namespace re
 
 		const BufferParams m_bufferParams;		
 
-		std::unique_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatObj> m_platObj;
 		
 		ResourceHandle m_cbvResourceHandle;
 		ResourceHandle m_srvResourceHandle;

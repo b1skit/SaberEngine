@@ -25,14 +25,14 @@ namespace dx12
 	class ShaderBindingTable
 	{
 	public:
-		struct PlatformParams final : public re::ShaderBindingTable::PlatformParams
+		struct PlatObj final : public re::ShaderBindingTable::PlatObj
 		{
 			void Destroy() override;
 
 			// We allocate enough memory for N frames-in-flight-worth of SBT data, and index into it each frame using 
 			// the current frame number.
 			// Note: The HeapManager's deferred delete will (unnecessarily) keep this alive for an additional N frames
-			// in flight after the IPlatformParams deferred delete happens
+			// in flight after the IPlatObj deferred delete happens
 			std::unique_ptr<GPUResource> m_SBT;
 			
 			// Relative offsets and strides within m_SBT (i.e. from the base offset of the current frame):

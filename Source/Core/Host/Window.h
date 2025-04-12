@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "../Interfaces/IPlatformParams.h"
+#include "../Interfaces/IPlatformObject.h"
 
 
 namespace fr
@@ -17,9 +17,9 @@ namespace host
 	class Window
 	{
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
-			virtual ~PlatformParams() = default;
+			virtual ~PlatObj() = default;
 		};
 
 
@@ -38,8 +38,8 @@ namespace host
 		Window& operator=(Window&&) noexcept = default;
 		~Window();
 
-		Window::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
-		void SetPlatformParams(std::unique_ptr<Window::PlatformParams> params) { m_platformParams = std::move(params); }
+		Window::PlatObj* GetPlatformObject() const { return m_platObj.get(); }
+		void SetPlatformObject(std::unique_ptr<Window::PlatObj> platObj) { m_platObj = std::move(platObj); }
 
 		// Platform wrappers:
 		bool Create(CreateParams const&); // Must be called from the thread that owns the OS event queue
@@ -57,7 +57,7 @@ namespace host
 
 
 	private:
-		std::unique_ptr<Window::PlatformParams> m_platformParams;
+		std::unique_ptr<Window::PlatObj> m_platObj;
 		bool m_hasFocus;
 		bool m_relativeMouseModeEnabled;
 

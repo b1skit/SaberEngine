@@ -8,7 +8,7 @@ namespace platform
 	class ShaderBindingTable
 	{
 	public:
-		static std::unique_ptr<re::ShaderBindingTable::PlatformParams> CreatePlatformParams();
+		static std::unique_ptr<re::ShaderBindingTable::PlatObj> CreatePlatformObject();
 
 
 	public:

@@ -5,7 +5,7 @@
 #include "Core/Inventory.h"
 #include "Core/InvPtr.h"
 
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
@@ -17,7 +17,7 @@ namespace re
 	class Sampler final : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
 			bool m_isCreated = false;
 		};
@@ -139,8 +139,8 @@ namespace re
 
 		SamplerDesc const& GetSamplerDesc() const { return m_samplerDesc; }
 
-		void SetPlatformParams(std::unique_ptr<Sampler::PlatformParams> params) { m_platformParams = std::move(params); }
-		Sampler::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
+		void SetPlatformObject(std::unique_ptr<Sampler::PlatObj> platObj) { m_platObj = std::move(platObj); }
+		Sampler::PlatObj* GetPlatformObject() const { return m_platObj.get(); }
 
 
 	private:
@@ -149,7 +149,7 @@ namespace re
 
 	private:
 		const SamplerDesc m_samplerDesc;
-		std::unique_ptr<Sampler::PlatformParams> m_platformParams;
+		std::unique_ptr<Sampler::PlatObj> m_platObj;
 
 		
 	private:

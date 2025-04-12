@@ -12,41 +12,41 @@
 namespace re
 {
 	SwapChain::SwapChain()
-		: m_platformParams(nullptr)
+		: m_platObj(nullptr)
 	{
-		platform::SwapChain::CreatePlatformParams(*this);
+		platform::SwapChain::CreatePlatformObject(*this);
 	}
 
 
 	SwapChain::~SwapChain()
 	{
-		SEAssert(m_platformParams == nullptr, "~SwapChain() called before Destroy()");
+		SEAssert(m_platObj == nullptr, "~SwapChain() called before Destroy()");
 	}
 
 
 	void SwapChain::Create()
 	{
-		m_platformParams->m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
+		m_platObj->m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
 
 		platform::SwapChain::Create(*this);
 
 		// Broadcast the starting VSync state:
 		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
 			.m_eventKey = eventkey::VSyncModeChanged,
-			.m_data = m_platformParams->m_vsyncEnabled, });
+			.m_data = m_platObj->m_vsyncEnabled, });
 	}
 
 
 	void SwapChain::Destroy()
 	{
 		platform::SwapChain::Destroy(*this);
-		m_platformParams = nullptr;
+		m_platObj = nullptr;
 	}
 
 
 	bool SwapChain::GetVSyncState() const
 	{
-		return m_platformParams->m_vsyncEnabled;
+		return m_platObj->m_vsyncEnabled;
 	}
 
 

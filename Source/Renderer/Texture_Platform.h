@@ -21,7 +21,7 @@ namespace platform
 	class Texture
 	{
 	public:
-		static void CreatePlatformParams(re::Texture& texture);
+		static void CreatePlatformObject(re::Texture& texture);
 
 
 		// API-specific function bindings:

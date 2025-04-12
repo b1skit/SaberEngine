@@ -42,10 +42,10 @@ namespace dx12
 		};
 
 
-		struct PlatformParams final : public re::Buffer::PlatformParams
+		struct PlatObj final : public re::Buffer::PlatObj
 		{
-			PlatformParams();
-			~PlatformParams();
+			PlatObj();
+			~PlatObj();
 
 			void Destroy() override;
 
@@ -115,25 +115,25 @@ namespace dx12
 	};
 
 
-	inline bool Buffer::PlatformParams::GPUResourceIsValid() const
+	inline bool Buffer::PlatObj::GPUResourceIsValid() const
 	{
 		return m_gpuResource && m_gpuResource->IsValid();
 	}
 
 
-	inline ID3D12Resource* const& Buffer::PlatformParams::GetGPUResource() const
+	inline ID3D12Resource* const& Buffer::PlatObj::GetGPUResource() const
 	{
 		return m_resolvedGPUResource;
 	}
 
 
-	inline D3D12_GPU_VIRTUAL_ADDRESS Buffer::PlatformParams::GetGPUVirtualAddress() const
+	inline D3D12_GPU_VIRTUAL_ADDRESS Buffer::PlatObj::GetGPUVirtualAddress() const
 	{
 		return GetGPUResource()->GetGPUVirtualAddress() + GetHeapByteOffset();
 	}
 
 
-	inline uint64_t Buffer::PlatformParams::GetHeapByteOffset() const
+	inline uint64_t Buffer::PlatObj::GetHeapByteOffset() const
 	{
 		return m_heapByteOffset;
 	}
@@ -153,10 +153,10 @@ namespace dx12
 			!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, buffer->GetBufferParams()),
 			"Invalid usage flags for a constant buffer");
 
-		dx12::Buffer::PlatformParams const* bufferPlatParams =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+		dx12::Buffer::PlatObj const* bufferPlatObj =
+			buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
 
-		return bufferPlatParams->m_cbvDescriptors.GetCreateDescriptor(buffer, view);
+		return bufferPlatObj->m_cbvDescriptors.GetCreateDescriptor(buffer, view);
 	}
 
 
@@ -170,12 +170,12 @@ namespace dx12
 		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, buffer->GetBufferParams()),
 			"SRV buffers must have GPU reads enabled");
 
-		dx12::Buffer::PlatformParams const* bufferPlatParams =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+		dx12::Buffer::PlatObj const* bufferPlatObj =
+			buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
 
-		SEAssert(bufferPlatParams->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
+		SEAssert(bufferPlatObj->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
 
-		return bufferPlatParams->m_srvDescriptors.GetCreateDescriptor(buffer, view);
+		return bufferPlatObj->m_srvDescriptors.GetCreateDescriptor(buffer, view);
 	}
 
 
@@ -189,12 +189,12 @@ namespace dx12
 		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, buffer->GetBufferParams()),
 			"UAV buffers must have GPU writes enabled");
 
-		dx12::Buffer::PlatformParams const* bufferPlatParams =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+		dx12::Buffer::PlatObj const* bufferPlatObj =
+			buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
 
-		SEAssert(bufferPlatParams->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
+		SEAssert(bufferPlatObj->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
 
-		return bufferPlatParams->m_uavDescriptors.GetCreateDescriptor(buffer, view);
+		return bufferPlatObj->m_uavDescriptors.GetCreateDescriptor(buffer, view);
 	}
 
 
@@ -202,7 +202,7 @@ namespace dx12
 	{
 		SEAssert(buffer, "Buffer cannot be null");
 
-		return buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>()->GetGPUVirtualAddress();
+		return buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>()->GetGPUVirtualAddress();
 	}
 
 

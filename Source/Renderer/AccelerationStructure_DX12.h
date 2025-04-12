@@ -12,9 +12,9 @@ namespace dx12
 	class AccelerationStructure
 	{
 	public:
-		struct PlatformParams final : public re::AccelerationStructure::PlatformParams
+		struct PlatObj final : public re::AccelerationStructure::PlatObj
 		{
-			PlatformParams();
+			PlatObj();
 
 			void Destroy() override;
 

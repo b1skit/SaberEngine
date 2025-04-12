@@ -24,7 +24,7 @@ namespace dx12
 	class BindlessResourceManager
 	{
 	public:
-		struct PlatformParams final : public virtual re::BindlessResourceManager::PlatformParams
+		struct PlatObj final : public virtual re::BindlessResourceManager::PlatObj
 		{
 			void Destroy() override;
 

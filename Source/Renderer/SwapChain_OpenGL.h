@@ -9,7 +9,7 @@ namespace opengl
 	class SwapChain
 	{
 	public:
-		struct PlatformParams final : public re::SwapChain::PlatformParams
+		struct PlatObj final : public re::SwapChain::PlatObj
 		{
 			// OpenGL manages the swap chain implicitly. We just maintain a single target set representing the default
 			// framebuffer instead

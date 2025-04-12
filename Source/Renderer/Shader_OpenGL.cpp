@@ -256,16 +256,16 @@ namespace
 		LOG("Building shader reflection for shader \"%s\"", shader.GetName().c_str());
 #endif
 
-		opengl::Shader::PlatformParams* platParams = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
+		opengl::Shader::PlatObj* platObj = shader.GetPlatformObject()->As<opengl::Shader::PlatObj*>();
 
 		// Populate the uniform locations
 		// Get the number of active uniforms found in the shader:
 		GLint numUniforms = 0;
-		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_UNIFORMS, &numUniforms);
+		glGetProgramiv(platObj->m_shaderReference, GL_ACTIVE_UNIFORMS, &numUniforms);
 
 		// Get the max length of the active uniform names found in the shader:
 		GLint maxUniformNameLength = 0;
-		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
+		glGetProgramiv(platObj->m_shaderReference, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
 		// Sampler uniforms:
 		GLint uniformSize = 0; // Size of the uniform variable; currently we just ignore this
@@ -275,7 +275,7 @@ namespace
 		{
 			// Get the size, type, and name of the uniform at the current index
 			glGetActiveUniform(
-				platParams->m_shaderReference,		// program
+				platObj->m_shaderReference,		// program
 				static_cast<GLuint>(uniformIdx),	// index
 				maxUniformNameLength,				// buffer size
 				nullptr,							// length
@@ -285,21 +285,21 @@ namespace
 
 			if (UniformIsSamplerType(uniformType))
 			{
-				const GLuint uniformLocation = glGetUniformLocation(platParams->m_shaderReference, samplerName.data());
+				const GLuint uniformLocation = glGetUniformLocation(platObj->m_shaderReference, samplerName.data());
 
 				// Get the texture unit binding value:
 				GLint bindIdx = 0;
 				glGetUniformiv(
-					platParams->m_shaderReference,	// program
+					platObj->m_shaderReference,	// program
 					uniformLocation,				// location
 					&bindIdx);						// params
 
 				// Populate the shader sampler unit map with unique entries:
 				std::string nameStr(samplerName.data());
-				SEAssert(platParams->m_samplerUnits.find(nameStr) == platParams->m_samplerUnits.end(),
+				SEAssert(platObj->m_samplerUnits.find(nameStr) == platObj->m_samplerUnits.end(),
 					"Sampler unit already found! Does the shader have a unique binding layout qualifier?");
 
-				platParams->m_samplerUnits.emplace(std::move(nameStr), bindIdx);
+				platObj->m_samplerUnits.emplace(std::move(nameStr), bindIdx);
 
 #if defined(LOG_SHADER_NAMES)
 				LOG("Shader \"%s\": Found sampler uniform %s = %d",
@@ -310,10 +310,10 @@ namespace
 
 		// Vertex attributes:
 		GLint numAttributes = 0;
-		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_ATTRIBUTES, &numAttributes);
+		glGetProgramiv(platObj->m_shaderReference, GL_ACTIVE_ATTRIBUTES, &numAttributes);
 
 		GLint maxAttributeNameLength = 0;
-		glGetProgramiv(platParams->m_shaderReference, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxAttributeNameLength);
+		glGetProgramiv(platObj->m_shaderReference, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxAttributeNameLength);
 
 		GLint attributeSize = 0; // Size of the uniform variable; currently we just ignore this
 		GLenum attributeType; // Data type of the uniform
@@ -322,7 +322,7 @@ namespace
 		for (GLint attributeIdx = 0; attributeIdx < numAttributes; attributeIdx++)
 		{
 			glGetActiveAttrib(
-				platParams->m_shaderReference,		// program
+				platObj->m_shaderReference,		// program
 				static_cast<GLuint>(attributeIdx),	// index
 				maxAttributeNameLength,				// buffer size
 				nullptr,							// length
@@ -330,11 +330,11 @@ namespace
 				&attributeType,						// type
 				attributeName.data());				// name
 
-			const GLint attributeLocation = glGetAttribLocation(platParams->m_shaderReference, attributeName.data());
+			const GLint attributeLocation = glGetAttribLocation(platObj->m_shaderReference, attributeName.data());
 
 			if (attributeLocation >= 0) // -1 for gl_InstanceID, gl_VertexID etc
 			{
-				platParams->m_vertexAttributeLocations.emplace(attributeName.data(), attributeLocation);
+				platObj->m_vertexAttributeLocations.emplace(attributeName.data(), attributeLocation);
 
 #if defined(LOG_SHADER_NAMES)
 				LOG("Shader \"%s\": Found vertex attribute %s = %d",
@@ -351,12 +351,12 @@ namespace
 		// UBOs:
 		GLint numActiveUniformBlocks = 0;
 		glGetProgramInterfaceiv(
-			platParams->m_shaderReference, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numActiveUniformBlocks);
+			platObj->m_shaderReference, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numActiveUniformBlocks);
 
 		for (GLint uboIdx = 0; uboIdx < numActiveUniformBlocks; ++uboIdx)
 		{
 			glGetProgramResourceName(
-				platParams->m_shaderReference,					// program
+				platObj->m_shaderReference,					// program
 				GL_UNIFORM_BLOCK,								// programInterface
 				static_cast<GLuint>(uboIdx),			// index
 				static_cast<GLsizei>(k_maxResourceNameLength),	// bufSize
@@ -366,7 +366,7 @@ namespace
 			GLint uboBindIdx = 0;
 
 			glGetProgramResourceiv(
-				platParams->m_shaderReference,
+				platObj->m_shaderReference,
 				GL_UNIFORM_BLOCK,
 				uboIdx,
 				1,
@@ -378,7 +378,7 @@ namespace
 
 			constexpr opengl::Buffer::BindTarget k_bindTarget = opengl::Buffer::BindTarget::UBO;
 
-			platParams->AddBufferMetadata(resourceName.data(), k_bindTarget, uboBindIdx);
+			platObj->AddBufferMetadata(resourceName.data(), k_bindTarget, uboBindIdx);
 
 #if defined(LOG_SHADER_NAMES)
 			LOG("Shader \"%s\": Found UBO %s = %d", shader.GetName().c_str(), resourceName.data(), uboBindIdx);
@@ -388,12 +388,12 @@ namespace
 		// SSBOs:
 		GLint numActiveShaderStorageBlocks = 0;
 		glGetProgramInterfaceiv(
-			platParams->m_shaderReference, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numActiveShaderStorageBlocks);
+			platObj->m_shaderReference, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numActiveShaderStorageBlocks);
 
 		for (GLint ssboIdx = 0; ssboIdx < numActiveShaderStorageBlocks; ++ssboIdx)
 		{
 			glGetProgramResourceName(
-				platParams->m_shaderReference,					// program
+				platObj->m_shaderReference,					// program
 				GL_SHADER_STORAGE_BLOCK,						// programInterface
 				static_cast<GLuint>(ssboIdx),					// index
 				static_cast<GLsizei>(k_maxResourceNameLength),	// bufSize
@@ -403,7 +403,7 @@ namespace
 			GLint storageBlockBindIdx = 0;
 
 			glGetProgramResourceiv(
-				platParams->m_shaderReference,
+				platObj->m_shaderReference,
 				GL_SHADER_STORAGE_BLOCK,
 				ssboIdx,
 				1,
@@ -414,7 +414,7 @@ namespace
 
 			constexpr opengl::Buffer::BindTarget k_bindTarget = opengl::Buffer::BindTarget::SSBO;
 
-			platParams->AddBufferMetadata(resourceName.data(), k_bindTarget, storageBlockBindIdx);
+			platObj->AddBufferMetadata(resourceName.data(), k_bindTarget, storageBlockBindIdx);
 
 #if defined(LOG_SHADER_NAMES)
 			LOG("Shader \"%s\": Found SSBO %s = %d", shader.GetName().c_str(), resourceName.data(), storageBlockBindIdx);
@@ -451,7 +451,7 @@ namespace
 
 namespace opengl
 {
-	void opengl::Shader::PlatformParams::AddBufferMetadata(
+	void opengl::Shader::PlatObj::AddBufferMetadata(
 		char const* name, opengl::Buffer::BindTarget bindTarget, GLint bufferLocation)
 	{
 		constexpr GLint k_invalidLocationIdx = -1;
@@ -481,7 +481,7 @@ namespace opengl
 			bufLocations[arrayIdx] = bufferLocation;
 
 			m_bufferMetadata.emplace(strippedNameHash,
-				opengl::Shader::PlatformParams::BufferMetadata{
+				opengl::Shader::PlatObj::BufferMetadata{
 				.m_bindTarget = bindTarget,
 				.m_bufferLocations = std::move(bufLocations),
 				});
@@ -494,10 +494,10 @@ namespace opengl
 		host::PerformanceTimer timer;
 		timer.Start();
 
-		opengl::Shader::PlatformParams* platParams = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
+		opengl::Shader::PlatObj* platObj = shader.GetPlatformObject()->As<opengl::Shader::PlatObj*>();
 
-		SEAssert(!platParams->m_isCreated, "Shader has already been created");
-		platParams->m_isCreated = true;
+		SEAssert(!platObj->m_isCreated, "Shader has already been created");
+		platObj->m_isCreated = true;
 
 		std::string const& shaderFileName = shader.GetName();
 		LOG("Creating shader: \"%s\"", shaderFileName.c_str());
@@ -505,7 +505,7 @@ namespace opengl
 		// Load the individual shader text files:
 		SEAssert(!shader.m_metadata.empty(), "Shader does not contain any metadata");
 		std::vector<std::future<void>> const& loadShaderTextsTaskFutures = 
-			LoadShaderTexts(shader.m_metadata, platParams->m_shaderTexts);
+			LoadShaderTexts(shader.m_metadata, platObj->m_shaderTexts);
 
 		// Load the shaders, and assemble params we'll need soon:
 		std::array<std::string, re::Shader::ShaderType_Count> shaderFiles;
@@ -523,10 +523,10 @@ namespace opengl
 		// Determine which shaders we've loaded:
 		for (size_t i = 0; i < re::Shader::ShaderType_Count; i++)
 		{
-			if (!platParams->m_shaderTexts[i].empty())
+			if (!platObj->m_shaderTexts[i].empty())
 			{
 				foundShaderTypeFlags[i] = k_shaderTypeFlags[i]; // Mark the shader as seen
-				shaderFiles[i] = std::move(platParams->m_shaderTexts[i]); // Move the shader texts, they're no longer needed
+				shaderFiles[i] = std::move(platObj->m_shaderTexts[i]); // Move the shader texts, they're no longer needed
 				shaderFileNames[i] = shaderFileName + ".glsl";
 			}
 		}
@@ -538,7 +538,7 @@ namespace opengl
 			"now, we don't support them.");
 
 		// Create an empty shader program object:
-		platParams->m_shaderReference = glCreateProgram();
+		platObj->m_shaderReference = glCreateProgram();
 
 		// Create and attach the shader stages:
 		for (size_t i = 0; i < shaderFiles.size(); i++)
@@ -573,19 +573,19 @@ namespace opengl
 
 			AssertShaderIsValid(shader.GetName(), shaderObject, GL_COMPILE_STATUS, false/*= isProgram*/);
 
-			glAttachShader(platParams->m_shaderReference, shaderObject); // Attach our shaders to the shader program
+			glAttachShader(platObj->m_shaderReference, shaderObject); // Attach our shaders to the shader program
 
 			// Delete the shader stage now that we've attached it
 			glDeleteShader(shaderObject);
 		}
 
 		// Link our program object:
-		glLinkProgram(platParams->m_shaderReference);
-		AssertShaderIsValid(shader.GetName(), platParams->m_shaderReference, GL_LINK_STATUS, true/*= isProgram*/);
+		glLinkProgram(platObj->m_shaderReference);
+		AssertShaderIsValid(shader.GetName(), platObj->m_shaderReference, GL_LINK_STATUS, true/*= isProgram*/);
 
 		// Validate our program objects can execute with our current OpenGL state:
-		glValidateProgram(platParams->m_shaderReference);
-		AssertShaderIsValid(shader.GetName(), platParams->m_shaderReference, GL_VALIDATE_STATUS, true/*= isProgram*/);
+		glValidateProgram(platObj->m_shaderReference);
+		AssertShaderIsValid(shader.GetName(), platObj->m_shaderReference, GL_VALIDATE_STATUS, true/*= isProgram*/);
 
 		BuildShaderReflection(shader);
 
@@ -595,25 +595,25 @@ namespace opengl
 
 	void Shader::Destroy(re::Shader& shader)
 	{
-		PlatformParams* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
-		if (!params->m_isCreated)
+		PlatObj* platObj = shader.GetPlatformObject()->As<opengl::Shader::PlatObj*>();
+		if (!platObj->m_isCreated)
 		{
 			return;
 		}
-		params->m_isCreated = false;
+		platObj->m_isCreated = false;
 
-		glDeleteProgram(params->m_shaderReference);
-		params->m_shaderReference = 0;
+		glDeleteProgram(platObj->m_shaderReference);
+		platObj->m_shaderReference = 0;
 		glUseProgram(0); // Unbind, as glGetIntegerv(GL_CURRENT_PROGRAM, shaderRef) still returns the shader ref otherwise
 	}
 
 
 	void Shader::Bind(re::Shader const& shader)
 	{
-		opengl::Shader::PlatformParams const* params = 
-			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
+		opengl::Shader::PlatObj const* platObj = 
+			shader.GetPlatformObject()->As<opengl::Shader::PlatObj const*>();
 
-		glUseProgram(params->m_shaderReference);
+		glUseProgram(platObj->m_shaderReference);
 	}
 
 
@@ -636,11 +636,11 @@ namespace opengl
 		opengl::Shader::UniformType const type, 
 		int count)
 	{
-		opengl::Shader::PlatformParams const* params = 
-			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
-		SEAssert(params->m_isCreated == true, "Shader has not been created yet");
+		opengl::Shader::PlatObj const* platObj = 
+			shader.GetPlatformObject()->As<opengl::Shader::PlatObj const*>();
+		SEAssert(platObj->m_isCreated == true, "Shader has not been created yet");
 
-		GLuint uniformID = glGetUniformLocation(params->m_shaderReference, uniformName.c_str());
+		GLuint uniformID = glGetUniformLocation(platObj->m_shaderReference, uniformName.c_str());
 
 		switch (type)
 		{
@@ -717,8 +717,8 @@ namespace opengl
 
 		//case opengl::Shader::UniformType::Texture:
 		//{
-		//	//auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
-		//	//if (bindingUnit == params->m_samplerUnits.end())
+		//	//auto const& bindingUnit = platObj->m_samplerUnits.find(uniformName);
+		//	//if (bindingUnit == platObj->m_samplerUnits.end())
 		//	//{
 		//	//	SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 		//	//		std::format("Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
@@ -731,9 +731,9 @@ namespace opengl
 		//break;
 		//case opengl::Shader::UniformType::Sampler:
 		//{
-		//	auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
+		//	auto const& bindingUnit = platObj->m_samplerUnits.find(uniformName);
 
-		//	if (bindingUnit == params->m_samplerUnits.end())
+		//	if (bindingUnit == platObj->m_samplerUnits.end())
 		//	{
 		//		SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 		//			std::format("Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled", 
@@ -751,19 +751,19 @@ namespace opengl
 
 	void Shader::SetBuffer(re::Shader const& shader, re::BufferInput const& bufferInput)
 	{
-		opengl::Shader::PlatformParams const* shaderPlatParams = 
-			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
+		opengl::Shader::PlatObj const* shaderPlatObj = 
+			shader.GetPlatformObject()->As<opengl::Shader::PlatObj const*>();
 
-		SEAssert(shaderPlatParams->m_isCreated == true, "Shader has not been created yet");
+		SEAssert(shaderPlatObj->m_isCreated == true, "Shader has not been created yet");
 		
-		re::Buffer::PlatformParams const* bufferPlatformParams = bufferInput.GetBuffer()->GetPlatformParams();
+		re::Buffer::PlatObj const* bufferPlatformParams = bufferInput.GetBuffer()->GetPlatformObject();
 
-		SEAssert(shaderPlatParams->m_bufferMetadata.contains(bufferInput.GetShaderNameHash()) ||
+		SEAssert(shaderPlatObj->m_bufferMetadata.contains(bufferInput.GetShaderNameHash()) ||
 			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Failed to find buffer with the given shader name. This is is not an error, but a useful debugging helper");
 
-		auto bufferTypeItr = shaderPlatParams->m_bufferMetadata.find(bufferInput.GetShaderNameHash());
-		if (bufferTypeItr != shaderPlatParams->m_bufferMetadata.end())
+		auto bufferTypeItr = shaderPlatObj->m_bufferMetadata.find(bufferInput.GetShaderNameHash());
+		if (bufferTypeItr != shaderPlatObj->m_bufferMetadata.end())
 		{
 			const opengl::Buffer::BindTarget bindTarget = bufferTypeItr->second.m_bindTarget;
 
@@ -777,12 +777,12 @@ namespace opengl
 
 	void Shader::SetTextureAndSampler(re::Shader const& shader, re::TextureAndSamplerInput const& texSamplerInput)
 	{
-		PlatformParams const* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
-		SEAssert(params->m_isCreated == true, "Shader has not been created yet");
+		PlatObj const* platObj = shader.GetPlatformObject()->As<opengl::Shader::PlatObj const*>();
+		SEAssert(platObj->m_isCreated == true, "Shader has not been created yet");
 
 		// Bind the texture:
-		auto const& textureBindingUnit = params->m_samplerUnits.find(texSamplerInput.m_shaderName);
-		if (textureBindingUnit == params->m_samplerUnits.end())
+		auto const& textureBindingUnit = platObj->m_samplerUnits.find(texSamplerInput.m_shaderName);
+		if (textureBindingUnit == platObj->m_samplerUnits.end())
 		{
 			
 			SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
@@ -794,8 +794,8 @@ namespace opengl
 
 
 		// Bind the sampler:
-		auto const& samplerBindingUnit = params->m_samplerUnits.find(texSamplerInput.m_shaderName);
-		if (samplerBindingUnit == params->m_samplerUnits.end())
+		auto const& samplerBindingUnit = platObj->m_samplerUnits.find(texSamplerInput.m_shaderName);
+		if (samplerBindingUnit == platObj->m_samplerUnits.end())
 		{
 			SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				std::format("Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled",
@@ -808,14 +808,14 @@ namespace opengl
 
 	void Shader::SetImageTextureTargets(re::Shader const& shader, std::vector<re::RWTextureInput> const& rwTexInputs)
 	{
-		opengl::Shader::PlatformParams const* params =
-			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
+		opengl::Shader::PlatObj const* platObj =
+			shader.GetPlatformObject()->As<opengl::Shader::PlatObj const*>();
 
 		for (uint32_t slot = 0; slot < rwTexInputs.size(); slot++)
 		{
 			re::RWTextureInput const& rwTexInput = rwTexInputs[slot];
 
-			auto const& bindingUnit = params->m_samplerUnits.find(rwTexInput.m_shaderName);
+			auto const& bindingUnit = platObj->m_samplerUnits.find(rwTexInput.m_shaderName);
 
 			constexpr uint32_t k_accessMode = GL_READ_WRITE;
 			opengl::Texture::BindAsImageTexture(rwTexInput.m_texture, bindingUnit->second, rwTexInput.m_textureView, k_accessMode);

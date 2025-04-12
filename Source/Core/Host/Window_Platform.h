@@ -8,7 +8,7 @@ namespace platform
 	class Window
 	{
 	public:
-		static void CreatePlatformParams(host::Window&);
+		static void CreatePlatformObject(host::Window&);
 
 	public:
 		static bool (*Create)(host::Window&, host::Window::CreateParams const&);

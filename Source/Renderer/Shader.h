@@ -5,7 +5,7 @@
 #include "VertexStreamMap.h"
 
 #include "Core/Interfaces/INamedObject.h"
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 
 #include "Core/Util/HashKey.h"
 
@@ -77,9 +77,9 @@ namespace re
 
 
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
-			virtual ~PlatformParams() = default;
+			virtual ~PlatObj() = default;
 			bool m_isCreated = false;
 		};
 
@@ -111,8 +111,8 @@ namespace re
 
 		re::RasterizationState const* GetRasterizationState() const;
 			
-		inline PlatformParams* GetPlatformParams() const;
-		inline void SetPlatformParams(std::unique_ptr<PlatformParams> params);
+		inline PlatObj* GetPlatformObject() const;
+		inline void SetPlatformObject(std::unique_ptr<PlatObj>);
 
 		uint8_t GetVertexAttributeSlot(gr::VertexStream::Type, uint8_t semanticIdx) const;
 		re::VertexStreamMap const* GetVertexStreamMap() const;
@@ -134,7 +134,7 @@ namespace re
 		std::vector<Metadata> m_metadata;
 		PipelineType m_pipelineType;
 
-		std::unique_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatObj> m_platObj;
 
 		re::RasterizationState const* m_rasterizationState;
 		re::VertexStreamMap const* m_vertexStreamMap;
@@ -283,15 +283,15 @@ namespace re
 	}
 
 
-	inline Shader::PlatformParams* Shader::GetPlatformParams() const
+	inline Shader::PlatObj* Shader::GetPlatformObject() const
 	{
-		return m_platformParams.get();
+		return m_platObj.get();
 	}
 
 
-	inline void Shader::SetPlatformParams(std::unique_ptr<PlatformParams> params)
+	inline void Shader::SetPlatformObject(std::unique_ptr<PlatObj> platObj)
 	{
-		m_platformParams = std::move(params);
+		m_platObj = std::move(platObj);
 	}
 
 

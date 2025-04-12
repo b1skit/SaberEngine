@@ -15,10 +15,10 @@ namespace dx12
 {
 	void Shader::Create(re::Shader& shader)
 	{
-		dx12::Shader::PlatformParams* platformParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
+		dx12::Shader::PlatObj* platObj = shader.GetPlatformObject()->As<dx12::Shader::PlatObj*>();
 
-		SEAssert(!platformParams->m_isCreated, "Shader has already been created");
-		platformParams->m_isCreated = true;
+		SEAssert(!platObj->m_isCreated, "Shader has already been created");
+		platObj->m_isCreated = true;
 
 		std::wstring const& shaderDirWStr = 
 			core::Config::Get()->GetValueAsWString(core::configkeys::k_shaderDirectoryKey);
@@ -35,33 +35,33 @@ namespace dx12
 			const HRESULT hr = ::D3DReadFileToBlob(filenameWStr.c_str(), &shaderBlob);
 			CheckHResult(hr, "Failed to read shader file to blob");
 
-			platformParams->m_shaderBlobs[source.m_type] = shaderBlob;
+			platObj->m_shaderBlobs[source.m_type] = shaderBlob;
 		}
 
 		// Now the shader blobs have been loaded, we can create the root signature:
-		platformParams->m_rootSignature = std::move(dx12::RootSignature::Create(shader));
+		platObj->m_rootSignature = std::move(dx12::RootSignature::Create(shader));
 	}
 
 
 	void Shader::Destroy(re::Shader& shader)
 	{
-		dx12::Shader::PlatformParams* params = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
+		dx12::Shader::PlatObj* platObj = shader.GetPlatformObject()->As<dx12::Shader::PlatObj*>();
 
-		if (!params->m_isCreated)
+		if (!platObj->m_isCreated)
 		{
 			return;
 		}
 
-		std::fill(params->m_shaderBlobs.begin(), params->m_shaderBlobs.end(), nullptr);
-		params->m_isCreated = false;
+		std::fill(platObj->m_shaderBlobs.begin(), platObj->m_shaderBlobs.end(), nullptr);
+		platObj->m_isCreated = false;
 	}
 
 
 	dx12::RootSignature* Shader::GetRootSignature(re::Shader const& shader)
 	{
-		dx12::Shader::PlatformParams* platformParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
-		SEAssert(platformParams->m_isCreated, "Shader has not been created");
+		dx12::Shader::PlatObj* platObj = shader.GetPlatformObject()->As<dx12::Shader::PlatObj*>();
+		SEAssert(platObj->m_isCreated, "Shader has not been created");
 
-		return platformParams->m_rootSignature.get();
+		return platObj->m_rootSignature.get();
 	}
 }

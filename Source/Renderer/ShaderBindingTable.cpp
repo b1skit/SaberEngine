@@ -29,7 +29,7 @@ namespace re
 
 	ShaderBindingTable::ShaderBindingTable(char const* name, SBTParams const& sbtParams)
 		: core::INamedObject(name)
-		, m_platformParams(platform::ShaderBindingTable::CreatePlatformParams())
+		, m_platObj(platform::ShaderBindingTable::CreatePlatformObject())
 		, m_sbtParams(sbtParams)
 	{
 	}
@@ -46,9 +46,9 @@ namespace re
 		LOG("Destroying shader binding table \"%s\"", GetName().c_str());
 
 		// Guarantee the lifetime of any in-flight resources:
-		if (m_platformParams)
+		if (m_platObj)
 		{
-			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platformParams));
+			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 		}
 
 		m_rayGenShaders.clear();
@@ -71,8 +71,8 @@ namespace re
 			// Replace the SBT (we'll rely on the DTOR to call Destroy()):
 			sbt = Create(sbt->GetName().c_str(), sbt->GetSBTParams());
 
-			SEAssert(sbt->m_platformParams, "Platform params should have been registered for deferred delete");
-			sbt->m_platformParams = platform::ShaderBindingTable::CreatePlatformParams();
+			SEAssert(sbt->m_platObj, "platform object should have been registered for deferred delete");
+			sbt->m_platObj = platform::ShaderBindingTable::CreatePlatformObject();
 
 			sbt->m_TLAS = receivedTLAS;
 

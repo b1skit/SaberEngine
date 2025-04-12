@@ -7,7 +7,7 @@
 
 #include "Core/InvPtr.h"
 
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IUniqueID.h"
@@ -35,9 +35,9 @@ namespace gr
 		public virtual core::IUniqueID
 	{
 	public:
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
-			virtual ~PlatformParams() = default;
+			virtual ~PlatObj() = default;
 		};
 
 

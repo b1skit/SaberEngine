@@ -8,7 +8,7 @@
 
 namespace opengl
 {
-	void GPUTimer::PlatformParams::Destroy()
+	void GPUTimer::PlatObj::Destroy()
 	{
 		SEAssert(!m_directComputeQueryIDs.empty() && !m_copyQueryIDs.empty(),
 			"Trying to destroy an empty list of query IDs");
@@ -23,41 +23,41 @@ namespace opengl
 
 	void GPUTimer::Create(re::GPUTimer const& timer)
 	{
-		opengl::GPUTimer::PlatformParams* platParams = timer.GetPlatformParams()->As<opengl::GPUTimer::PlatformParams*>();
+		opengl::GPUTimer::PlatObj* platObj = timer.GetPlatformObject()->As<opengl::GPUTimer::PlatObj*>();
 
-		const uint8_t totalQueriesPerTimer = platParams->m_numFramesInFlight * 2; // x2 for start/end timestamps
+		const uint8_t totalQueriesPerTimer = platObj->m_numFramesInFlight * 2; // x2 for start/end timestamps
 		const GLsizei totalQuerySlots = totalQueriesPerTimer * re::GPUTimer::k_maxGPUTimersPerFrame;
 
-		platParams->m_directComputeQueryIDs.resize(totalQuerySlots, 0);
-		glGenQueries(totalQuerySlots, platParams->m_directComputeQueryIDs.data());
+		platObj->m_directComputeQueryIDs.resize(totalQuerySlots, 0);
+		glGenQueries(totalQuerySlots, platObj->m_directComputeQueryIDs.data());
 
-		platParams->m_copyQueryIDs.resize(totalQuerySlots, 0);
-		glGenQueries(totalQuerySlots, platParams->m_copyQueryIDs.data());
+		platObj->m_copyQueryIDs.resize(totalQuerySlots, 0);
+		glGenQueries(totalQuerySlots, platObj->m_copyQueryIDs.data());
 		
 		// Associate our query names and objects, and name our objects (New query names are not associated with a query
 		// object until glBeginQuery is called)
 		for (size_t i = 0; i < totalQuerySlots; ++i)
 		{
 			// Direct/compute:
-			glBeginQuery(GL_TIME_ELAPSED, platParams->m_directComputeQueryIDs[i]);
+			glBeginQuery(GL_TIME_ELAPSED, platObj->m_directComputeQueryIDs[i]);
 			glEndQuery(GL_TIME_ELAPSED);
 
-			SEAssert(glIsQuery(platParams->m_directComputeQueryIDs[i]), "GPUTimer::Create failed to create OpenGL query object");
+			SEAssert(glIsQuery(platObj->m_directComputeQueryIDs[i]), "GPUTimer::Create failed to create OpenGL query object");
 
-			glObjectLabel(GL_QUERY, platParams->m_directComputeQueryIDs[i], -1, 
+			glObjectLabel(GL_QUERY, platObj->m_directComputeQueryIDs[i], -1, 
 				std::format("Direct/Compute:GPUTimer{}:{}Query", i, i % 2 == 0 ? "Start" : "End").c_str());
 
 			// Copy:
-			glBeginQuery(GL_TIME_ELAPSED, platParams->m_copyQueryIDs[i]);
+			glBeginQuery(GL_TIME_ELAPSED, platObj->m_copyQueryIDs[i]);
 			glEndQuery(GL_TIME_ELAPSED);
 
-			SEAssert(glIsQuery(platParams->m_copyQueryIDs[i]), "GPUTimer::Create failed to create OpenGL query object");
+			SEAssert(glIsQuery(platObj->m_copyQueryIDs[i]), "GPUTimer::Create failed to create OpenGL query object");
 
-			glObjectLabel(GL_QUERY, platParams->m_copyQueryIDs[i], -1,
+			glObjectLabel(GL_QUERY, platObj->m_copyQueryIDs[i], -1,
 				std::format("Copy:GPUTimer{}:{}Query", i, i % 2 == 0 ? "Start" : "End").c_str());
 		}
 
-		platParams->m_invGPUFrequency = 1.f / 1000000.0; // OpenGL reports time in nanoseconds (ns)
+		platObj->m_invGPUFrequency = 1.f / 1000000.0; // OpenGL reports time in nanoseconds (ns)
 	}
 
 
@@ -69,31 +69,31 @@ namespace opengl
 
 	std::vector<uint64_t> GPUTimer::EndFrame(re::GPUTimer const& timer, re::GPUTimer::TimerType timerType)
 	{
-		opengl::GPUTimer::PlatformParams* platParams = timer.GetPlatformParams()->As<opengl::GPUTimer::PlatformParams*>();
+		opengl::GPUTimer::PlatObj* platObj = timer.GetPlatformObject()->As<opengl::GPUTimer::PlatObj*>();
 
 		std::vector<GLuint>* queryIDs = nullptr;
 		switch (timerType)
 		{
 		case re::GPUTimer::TimerType::DirectCompute:
 		{
-			queryIDs = &platParams->m_directComputeQueryIDs;
+			queryIDs = &platObj->m_directComputeQueryIDs;
 		}
 		break;
 		case re::GPUTimer::TimerType::Copy:
 		{
-			queryIDs = &platParams->m_copyQueryIDs;
+			queryIDs = &platObj->m_copyQueryIDs;
 		}
 		break;
 		default: SEAssertF("Invalid timer type");
 		}
 
-		const uint8_t frameIdx = platParams->m_currentFrameIdx;
+		const uint8_t frameIdx = platObj->m_currentFrameIdx;
 
 		// Readback our oldest queries:
 		const uint32_t totalTimes = re::GPUTimer::k_maxGPUTimersPerFrame * 2;
 		std::vector<uint64_t> gpuTimes(totalTimes, 0);
 
-		const uint8_t oldestFrameIdx = (frameIdx + 1) % platParams->m_numFramesInFlight;
+		const uint8_t oldestFrameIdx = (frameIdx + 1) % platObj->m_numFramesInFlight;
 		const uint32_t queryStartOffset = oldestFrameIdx * re::GPUTimer::k_maxGPUTimersPerFrame * 2;
 
 		for (size_t curQueryIdx = 0; curQueryIdx < totalTimes; curQueryIdx += 2) // Iterate over start/end pairs
@@ -114,19 +114,19 @@ namespace opengl
 
 	void GPUTimer::StartTimer(re::GPUTimer const& timer, re::GPUTimer::TimerType timerType, uint32_t startQueryIdx, void*)
 	{
-		opengl::GPUTimer::PlatformParams* platParams = timer.GetPlatformParams()->As<opengl::GPUTimer::PlatformParams*>();
+		opengl::GPUTimer::PlatObj* platObj = timer.GetPlatformObject()->As<opengl::GPUTimer::PlatObj*>();
 
 		std::vector<GLuint>* queryIDs = nullptr;
 		switch (timerType)
 		{
 		case re::GPUTimer::TimerType::DirectCompute:
 		{
-			queryIDs = &platParams->m_directComputeQueryIDs;
+			queryIDs = &platObj->m_directComputeQueryIDs;
 		}
 		break;
 		case re::GPUTimer::TimerType::Copy:
 		{
-			queryIDs = &platParams->m_copyQueryIDs;
+			queryIDs = &platObj->m_copyQueryIDs;
 		}
 		break;
 		default: SEAssertF("Invalid timer type");
@@ -138,19 +138,19 @@ namespace opengl
 
 	void GPUTimer::StopTimer(re::GPUTimer const& timer, re::GPUTimer::TimerType timerType, uint32_t endQueryIdx, void*)
 	{
-		opengl::GPUTimer::PlatformParams* platParams = timer.GetPlatformParams()->As<opengl::GPUTimer::PlatformParams*>();
+		opengl::GPUTimer::PlatObj* platObj = timer.GetPlatformObject()->As<opengl::GPUTimer::PlatObj*>();
 
 		std::vector<GLuint>* queryIDs = nullptr;
 		switch (timerType)
 		{
 		case re::GPUTimer::TimerType::DirectCompute:
 		{
-			queryIDs = &platParams->m_directComputeQueryIDs;
+			queryIDs = &platObj->m_directComputeQueryIDs;
 		}
 		break;
 		case re::GPUTimer::TimerType::Copy:
 		{
-			queryIDs = &platParams->m_copyQueryIDs;
+			queryIDs = &platObj->m_copyQueryIDs;
 		}
 		break;
 		default: SEAssertF("Invalid timer type");

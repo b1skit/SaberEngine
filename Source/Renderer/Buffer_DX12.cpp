@@ -118,7 +118,7 @@ namespace
 
 namespace dx12
 {
-	Buffer::PlatformParams::PlatformParams()
+	Buffer::PlatObj::PlatObj()
 		: m_gpuResource(nullptr)
 		, m_resolvedGPUResource(nullptr)
 		, m_heapByteOffset(0)
@@ -131,7 +131,7 @@ namespace dx12
 	}
 
 
-	Buffer::PlatformParams::~PlatformParams()
+	Buffer::PlatObj::~PlatObj()
 	{
 		SEAssert(!m_isCreated, "Buffer destructor called before Destroy()");
 
@@ -141,7 +141,7 @@ namespace dx12
 	}
 
 
-	void Buffer::PlatformParams::Destroy()
+	void Buffer::PlatObj::Destroy()
 	{
 		SEAssert(m_isCreated, "Attempting to destroy a Buffer that has not been created");
 
@@ -164,9 +164,9 @@ namespace dx12
 		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams) ||
 			bufferParams.m_arraySize <= 1024, "Maximum offset of 1024 allowed into an SRV");
 
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
-		SEAssert(!params->m_isCreated, "Buffer is already created");
-		params->m_isCreated = true;
+		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+		SEAssert(!platObj->m_isCreated, "Buffer is already created");
+		platObj->m_isCreated = true;
 
 		const uint8_t numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
 
@@ -194,10 +194,10 @@ namespace dx12
 			bufferAllocator->GetSubAllocation(
 				bufferParams.m_usageMask,
 				GetAlignedSize(bufferParams.m_usageMask, requestedSize),
-				params->m_heapByteOffset,
-				params->m_resolvedGPUResource);
+				platObj->m_heapByteOffset,
+				platObj->m_resolvedGPUResource);
 
-			SEAssert(params->m_heapByteOffset % GetAlignment(
+			SEAssert(platObj->m_heapByteOffset % GetAlignment(
 				re::BufferAllocator::BufferUsageMaskToAllocationPool(bufferParams.m_usageMask)) == 0,
 				"Heap byte offset does not have the correct buffer alignment");
 		}
@@ -213,7 +213,7 @@ namespace dx12
 
 			std::wstring const& debugName = CreateDebugName(buffer);
 
-			params->m_gpuResource = re::Context::GetAs<dx12::Context*>()->GetHeapManager().CreateResource(
+			platObj->m_gpuResource = re::Context::GetAs<dx12::Context*>()->GetHeapManager().CreateResource(
 				dx12::ResourceDesc{
 					.m_resourceDesc = bufferDesc,
 					.m_heapType = MemoryPoolPreferenceToD3DHeapType(bufferParams.m_memPoolPreference),
@@ -221,7 +221,7 @@ namespace dx12
 				},
 				debugName.c_str());
 
-			params->m_resolvedGPUResource = params->m_gpuResource->Get();
+			platObj->m_resolvedGPUResource = platObj->m_gpuResource->Get();
 		}
 		
 		// CPU readback:
@@ -233,7 +233,7 @@ namespace dx12
 				std::wstring const& readbackDebugName = 
 					buffer.GetWName() + L"_ReadbackBuffer" + std::to_wstring(resourceIdx);
 
-				params->m_readbackResources.emplace_back(
+				platObj->m_readbackResources.emplace_back(
 					CreateReadbackResource(buffer.GetTotalBytes(), readbackDebugName.c_str()));
 			}
 		}
@@ -249,12 +249,12 @@ namespace dx12
 			bufferParams.m_memPoolPreference == re::Buffer::UploadHeap,
 			"CPU writes must be enabled to allow mapping");
 
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
 		// Get a CPU pointer to the subresource (i.e subresource 0)
 		void* cpuVisibleData = nullptr;
 		const CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
-		HRESULT hr = params->m_resolvedGPUResource->Map(
+		HRESULT hr = platObj->m_resolvedGPUResource->Map(
 			0,									// Subresource index: Buffers only have a single subresource
 			&readRange,
 			&cpuVisibleData);
@@ -271,7 +271,7 @@ namespace dx12
 		if (buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent)
 		{
 			const uint64_t alignedSize = GetAlignedSize(bufferParams.m_usageMask, totalBytes);
-			params->m_heapByteOffset = alignedSize * curFrameHeapOffsetFactor;
+			platObj->m_heapByteOffset = alignedSize * curFrameHeapOffsetFactor;
 		}
 
 		const bool updateAllBytes = baseOffset == 0 && (numBytes == 0 || numBytes == totalBytes);
@@ -293,15 +293,15 @@ namespace dx12
 		}
 
 		// Copy our data to the appropriate offset in the cpu-visible heap:
-		void* offsetPtr = static_cast<uint8_t*>(cpuVisibleData) + params->m_heapByteOffset;
+		void* offsetPtr = static_cast<uint8_t*>(cpuVisibleData) + platObj->m_heapByteOffset;
 		memcpy(offsetPtr, data, totalBytes);
 	
 		// Release the map:
 		const D3D12_RANGE writtenRange{
-			params->m_heapByteOffset + baseOffset,
-			params->m_heapByteOffset + baseOffset + totalBytes };
+			platObj->m_heapByteOffset + baseOffset,
+			platObj->m_heapByteOffset + baseOffset + totalBytes };
 
-		params->m_resolvedGPUResource->Unmap(
+		platObj->m_resolvedGPUResource->Unmap(
 			0,					// Subresource index: Buffers only have a single subresource
 			&writtenRange);		// Unmap range: The region the CPU may have modified. Nullptr = entire subresource
 	}
@@ -313,7 +313,7 @@ namespace dx12
 		uint32_t numBytes,
 		dx12::CommandList* copyCmdList)
 	{
-		SEAssert(buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>()->m_heapByteOffset == 0,
+		SEAssert(buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>()->m_heapByteOffset == 0,
 			"Only permanent DX12 buffers expect a non-zero heap byte offset");
 
 		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
@@ -364,7 +364,7 @@ namespace dx12
 
 	void const* Buffer::MapCPUReadback(re::Buffer const& buffer, uint8_t frameLatency)
 	{
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 		re::RenderManager const* renderManager = re::RenderManager::Get();
 
 		const uint32_t bufferSize = buffer.GetTotalBytes();
@@ -376,15 +376,15 @@ namespace dx12
 
 		// Ensure the GPU is finished with the buffer:
 		{
-			std::lock_guard<std::mutex> lock(params->m_readbackResources[readbackResourceIdx].m_readbackFenceMutex);
+			std::lock_guard<std::mutex> lock(platObj->m_readbackResources[readbackResourceIdx].m_readbackFenceMutex);
 
 			const dx12::CommandListType resourceCopyCmdListType = dx12::Fence::GetCommandListTypeFromFenceValue(
-				params->m_readbackResources[readbackResourceIdx].m_readbackFence);
+				platObj->m_readbackResources[readbackResourceIdx].m_readbackFence);
 
 			dx12::CommandQueue& resourceCopyQueue =
 				re::Context::GetAs<dx12::Context*>()->GetCommandQueue(resourceCopyCmdListType);
 
-			resourceCopyQueue.CPUWait(params->m_readbackResources[readbackResourceIdx].m_readbackFence);
+			resourceCopyQueue.CPUWait(platObj->m_readbackResources[readbackResourceIdx].m_readbackFence);
 		}
 
 		const D3D12_RANGE readbackBufferRange{
@@ -393,13 +393,13 @@ namespace dx12
 		
 		void* cpuVisibleData = nullptr;
 
-		HRESULT hr = params->m_readbackResources[readbackResourceIdx].m_readbackGPUResource->Map(
+		HRESULT hr = platObj->m_readbackResources[readbackResourceIdx].m_readbackGPUResource->Map(
 			0,						// Subresource
 			&readbackBufferRange,	// pReadRange
 			&cpuVisibleData);		// ppData
 		CheckHResult(hr, "Buffer::MapCPUReadback: Failed to map readback resource");
 
-		params->m_currentMapFrameLatency = frameLatency;
+		platObj->m_currentMapFrameLatency = frameLatency;
 
 		return cpuVisibleData;
 	}
@@ -407,20 +407,20 @@ namespace dx12
 
 	void Buffer::UnmapCPUReadback(re::Buffer const& buffer)
 	{
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 		re::RenderManager const* renderManager = re::RenderManager::Get();
 
 		// Compute the index of the readback resource we're unmapping:
-		SEAssert(renderManager->GetCurrentRenderFrameNum() >= params->m_currentMapFrameLatency,
+		SEAssert(renderManager->GetCurrentRenderFrameNum() >= platObj->m_currentMapFrameLatency,
 			"Frame latency would result in OOB access");
 		const uint8_t readbackResourceIdx =
-			(renderManager->GetCurrentRenderFrameNum() - params->m_currentMapFrameLatency) % renderManager->GetNumFramesInFlight();
+			(renderManager->GetCurrentRenderFrameNum() - platObj->m_currentMapFrameLatency) % renderManager->GetNumFramesInFlight();
 
 		const D3D12_RANGE writtenRange{
 			0,		// Begin
 			0 };	// End: Signifies CPU did not write any data when End <= Begin
 
-		params->m_readbackResources[readbackResourceIdx].m_readbackGPUResource->Unmap(
+		platObj->m_readbackResources[readbackResourceIdx].m_readbackGPUResource->Unmap(
 			0,				// Subresource
 			&writtenRange);	// pWrittenRange
 	}
@@ -437,23 +437,23 @@ namespace dx12
 			view.m_streamView.m_dataType <= re::DataType::UByte4,
 			"Invalid data type");
 
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
-		if (params->m_views.m_vertexBufferView.BufferLocation == 0)
+		if (platObj->m_views.m_vertexBufferView.BufferLocation == 0)
 		{
-			std::unique_lock<std::mutex> lock(params->m_viewMutex);
+			std::unique_lock<std::mutex> lock(platObj->m_viewMutex);
 
-			if (params->m_views.m_vertexBufferView.BufferLocation == 0)
+			if (platObj->m_views.m_vertexBufferView.BufferLocation == 0)
 			{
-				params->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
-					.BufferLocation = params->GetGPUVirtualAddress(),
+				platObj->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
+					.BufferLocation = platObj->GetGPUVirtualAddress(),
 					.SizeInBytes = buffer.GetTotalBytes(),
 					.StrideInBytes = DataTypeToByteStride(view.m_streamView.m_dataType),
 				};
 			}
 		}
 
-		return &params->m_views.m_vertexBufferView;
+		return &platObj->m_views.m_vertexBufferView;
 	}
 
 
@@ -463,22 +463,22 @@ namespace dx12
 		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer),
 			"Buffer does not have the correct usage flags set");
 
-		dx12::Buffer::PlatformParams* params = buffer.GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
-		if (params->m_views.m_indexBufferView.BufferLocation == 0)
+		if (platObj->m_views.m_indexBufferView.BufferLocation == 0)
 		{
-			std::unique_lock<std::mutex> lock(params->m_viewMutex);
+			std::unique_lock<std::mutex> lock(platObj->m_viewMutex);
 
-			if (params->m_views.m_indexBufferView.BufferLocation == 0)
+			if (platObj->m_views.m_indexBufferView.BufferLocation == 0)
 			{
-				params->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
-					.BufferLocation = params->GetGPUVirtualAddress(),
+				platObj->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
+					.BufferLocation = platObj->GetGPUVirtualAddress(),
 					.SizeInBytes = buffer.GetTotalBytes(),
 					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_streamView.m_dataType, false),
 				};
 			}
 		}
 
-		return &params->m_views.m_indexBufferView;
+		return &platObj->m_views.m_indexBufferView;
 	}
 }

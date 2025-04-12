@@ -19,7 +19,7 @@ namespace dx12
 	class RLibraryImGui final : public virtual platform::RLibraryImGui
 	{
 	public:
-		struct PlatformParams : public platform::RLibraryImGui::PlatformParams
+		struct PlatObj : public platform::RLibraryImGui::PlatObj
 		{
 			// ImGui callbacks:
 			static void Allocate(ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE*, D3D12_GPU_DESCRIPTOR_HANDLE*);

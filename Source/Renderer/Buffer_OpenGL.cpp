@@ -10,7 +10,7 @@
 
 namespace opengl
 {
-	void Buffer::PlatformParams::Destroy()
+	void Buffer::PlatObj::Destroy()
 	{
 		SEAssert(m_isCreated, "Attempting to destroy a Buffer that has not been created");
 
@@ -34,9 +34,9 @@ namespace opengl
 			"and arrays were achieved as an array member variable within the buffer. This restriction was removed for "
 			"DX12 bindless resources, if you hit this we now need to solve this usage pattern for OpenGL buffers");
 
-		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
-		SEAssert(!bufferPlatParams->m_isCreated, "Buffer is already created");
-		bufferPlatParams->m_isCreated = true;
+		PlatObj* bufferPlatObj = buffer.GetPlatformObject()->As<opengl::Buffer::PlatObj*>();
+		SEAssert(!bufferPlatObj->m_isCreated, "Buffer is already created");
+		bufferPlatObj->m_isCreated = true;
 
 		void const* data;
 		uint32_t numBytes;
@@ -53,13 +53,13 @@ namespace opengl
 			// sub-allocating from within a larger buffer each frame
 
 			// Generate the buffer name:
-			glCreateBuffers(1, &bufferPlatParams->m_bufferName);
+			glCreateBuffers(1, &bufferPlatObj->m_bufferName);
 
-			bufferPlatParams->m_baseOffset = 0; // Permanent buffers have their own dedicated buffers
+			bufferPlatObj->m_baseOffset = 0; // Permanent buffers have their own dedicated buffers
 
 			// Create the data store (contents remain uninitialized/undefined):
 			glNamedBufferData(
-				bufferPlatParams->m_bufferName,
+				bufferPlatObj->m_bufferName,
 				static_cast<GLsizeiptr>(numBytes),
 				nullptr,
 				bufferAlloc == re::Buffer::StagingPool::Permanent ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
@@ -67,7 +67,7 @@ namespace opengl
 			// RenderDoc label:
 			std::string const& bufferName =
 				buffer.GetName() + (bufferAlloc == re::Buffer::StagingPool::Permanent ? "_CPUMutable" : "_CPUImmutable");
-			glObjectLabel(GL_BUFFER, bufferPlatParams->m_bufferName, -1, bufferName.c_str());
+			glObjectLabel(GL_BUFFER, bufferPlatObj->m_bufferName, -1, bufferName.c_str());
 		}
 		break;
 		case re::Lifetime::SingleFrame:
@@ -78,10 +78,10 @@ namespace opengl
 			bufferAllocator->GetSubAllocation(
 				buffer.GetUsageMask(),
 				numBytes,
-				bufferPlatParams->m_bufferName,
-				bufferPlatParams->m_baseOffset);
+				bufferPlatObj->m_bufferName,
+				bufferPlatObj->m_baseOffset);
 
-			bufferPlatParams->m_isSharedBufferName = true;
+			bufferPlatObj->m_isSharedBufferName = true;
 		}
 		break;
 		default: SEAssertF("Invalid lifetime");
@@ -95,7 +95,7 @@ namespace opengl
 		// Note: OpenGL manages heap synchronization for us, so we don't need to manually manage mutable buffers of
 		// size * numFramesInFlight bytes. Thus, curFrameHeapOffsetFactor is unused here.
 
-		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
+		PlatObj* bufferPlatObj = buffer.GetPlatformObject()->As<opengl::Buffer::PlatObj*>();
 
 		void const* data;
 		uint32_t totalBytes;
@@ -106,8 +106,8 @@ namespace opengl
 		case re::Buffer::DefaultHeap:
 		{
 			glNamedBufferSubData(
-				bufferPlatParams->m_bufferName,			// Target
-				bufferPlatParams->m_baseOffset,			// Offset
+				bufferPlatObj->m_bufferName,			// Target
+				bufferPlatObj->m_baseOffset,			// Offset
 				static_cast<GLsizeiptr>(totalBytes),	// Size
 				data);									// Data
 		}
@@ -135,14 +135,14 @@ namespace opengl
 
 			// Map and copy the data:
 			void* cpuVisibleData = glMapNamedBufferRange(
-				bufferPlatParams->m_bufferName,
-				bufferPlatParams->m_baseOffset + baseOffset,
+				bufferPlatObj->m_bufferName,
+				bufferPlatObj->m_baseOffset + baseOffset,
 				(GLsizeiptr)totalBytes,
 				access);
 
 			memcpy(cpuVisibleData, data, totalBytes);
 
-			glUnmapNamedBuffer(bufferPlatParams->m_bufferName);
+			glUnmapNamedBuffer(bufferPlatObj->m_bufferName);
 		}
 		break;
 		default: SEAssertF("Invalid MemoryPoolPreference");
@@ -154,7 +154,7 @@ namespace opengl
 	{
 		const uint32_t numBytes = buffer.GetTotalBytes();
 
-		PlatformParams const* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams const*>();
+		PlatObj const* bufferPlatObj = buffer.GetPlatformObject()->As<opengl::Buffer::PlatObj const*>();
 
 		switch (bindTarget)
 		{
@@ -165,8 +165,8 @@ namespace opengl
 
 			glBindBufferRange(GL_UNIFORM_BUFFER,
 				bindIndex,
-				bufferPlatParams->m_bufferName,
-				bufferPlatParams->m_baseOffset,
+				bufferPlatObj->m_bufferName,
+				bufferPlatObj->m_baseOffset,
 				numBytes);
 		}
 		break;
@@ -177,8 +177,8 @@ namespace opengl
 
 			glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
 				bindIndex,
-				bufferPlatParams->m_bufferName,
-				bufferPlatParams->m_baseOffset,
+				bufferPlatObj->m_bufferName,
+				bufferPlatObj->m_baseOffset,
 				numBytes);
 		}
 		break;
@@ -189,8 +189,8 @@ namespace opengl
 
 			glBindVertexBuffer(
 				bindIndex,												// Slot index
-				bufferPlatParams->m_bufferName,							// Buffer
-				bufferPlatParams->m_baseOffset,							// Offset
+				bufferPlatObj->m_bufferName,							// Buffer
+				bufferPlatObj->m_baseOffset,							// Offset
 				DataTypeToByteStride(view.m_streamView.m_dataType));	// Stride
 		}
 		break;
@@ -199,7 +199,7 @@ namespace opengl
 			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Raw, buffer),
 				"Buffer is missing the VertexStream usage bit");
 
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatParams->m_bufferName);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatObj->m_bufferName);
 		}
 		break;
 		default: SEAssertF("Invalid view type");
@@ -211,11 +211,11 @@ namespace opengl
 	{
 		const uint32_t bufferSize = buffer.GetTotalBytes();
 
-		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
+		PlatObj* bufferPlatObj = buffer.GetPlatformObject()->As<opengl::Buffer::PlatObj*>();
 
 		void* cpuVisibleData = glMapNamedBufferRange(
-			bufferPlatParams->m_bufferName,
-			bufferPlatParams->m_baseOffset,	// offset
+			bufferPlatObj->m_bufferName,
+			bufferPlatObj->m_baseOffset,	// offset
 			(GLsizeiptr)bufferSize,			// length
 			GL_MAP_READ_BIT);				// access
 
@@ -225,8 +225,8 @@ namespace opengl
 
 	void Buffer::UnmapCPUReadback(re::Buffer const& buffer)
 	{
-		PlatformParams* bufferPlatParams = buffer.GetPlatformParams()->As<opengl::Buffer::PlatformParams*>();
+		PlatObj* bufferPlatObj = buffer.GetPlatformObject()->As<opengl::Buffer::PlatObj*>();
 
-		glUnmapNamedBuffer(bufferPlatParams->m_bufferName);
+		glUnmapNamedBuffer(bufferPlatObj->m_bufferName);
 	}
 }

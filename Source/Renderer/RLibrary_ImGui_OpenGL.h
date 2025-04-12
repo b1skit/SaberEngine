@@ -13,7 +13,7 @@ namespace opengl
 	class RLibraryImGui final : public virtual platform::RLibraryImGui
 	{
 	public:
-		struct PlatformParams : public platform::RLibraryImGui::PlatformParams
+		struct PlatObj : public platform::RLibraryImGui::PlatObj
 		{
 			//
 		};

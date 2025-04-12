@@ -367,8 +367,8 @@ namespace dx12
 		for (re::BufferInput const& bufferInput : bufferInputs)
 		{
 			re::Buffer const* buffer = bufferInput.GetBuffer();
-			dx12::Buffer::PlatformParams* bufferPlatParams =
-				buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+			dx12::Buffer::PlatObj* bufferPlatObj =
+				buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
 			RootSignature::RootParameter const* rootParam =
 				m_currentRootSignature->GetRootSignatureEntry(bufferInput.GetShaderName());
@@ -399,7 +399,7 @@ namespace dx12
 						"Invalid usage flags for a constant buffer");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineCBV(
-						rootParam->m_index, bufferPlatParams->GetGPUVirtualAddress());
+						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress());
 
 					toState = (m_type == dx12::CommandListType::Compute ?
 						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -415,7 +415,7 @@ namespace dx12
 						"SRV buffers must have GPU reads enabled");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineSRV(
-						rootParam->m_index, bufferPlatParams->GetGPUVirtualAddress());
+						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress());
 
 					toState = (m_type == dx12::CommandListType::Compute ?
 						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
@@ -433,7 +433,7 @@ namespace dx12
 						"Buffer is missing the Structured usage bit");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineUAV(
-						rootParam->m_index, bufferPlatParams->GetGPUVirtualAddress());
+						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress());
 
 					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 					transitionResource = true;
@@ -493,7 +493,7 @@ namespace dx12
 					SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state");
 
 					resourceTransitions.emplace_back(TransitionMetadata{
-						.m_resource = bufferPlatParams->GetGPUResource(),
+						.m_resource = bufferPlatObj->GetGPUResource(),
 						.m_toState = toState,
 						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES }
 						});
@@ -505,10 +505,10 @@ namespace dx12
 					const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
 
 					m_seenReadbackResources.emplace_back(ReadbackResourceMetadata{
-						.m_srcResource = bufferPlatParams->GetGPUResource(),
-						.m_dstResource = bufferPlatParams->m_readbackResources[readbackIdx].m_readbackGPUResource->Get(),
-						.m_dstModificationFence = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFence,
-						.m_dstModificationFenceMutex = &bufferPlatParams->m_readbackResources[readbackIdx].m_readbackFenceMutex });
+						.m_srcResource = bufferPlatObj->GetGPUResource(),
+						.m_dstResource = bufferPlatObj->m_readbackResources[readbackIdx].m_readbackGPUResource->Get(),
+						.m_dstModificationFence = &bufferPlatObj->m_readbackResources[readbackIdx].m_readbackFence,
+						.m_dstModificationFenceMutex = &bufferPlatObj->m_readbackResources[readbackIdx].m_readbackFenceMutex });
 				}
 			}
 		}
@@ -537,10 +537,10 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList4;
 		CheckHResult(m_commandList.As(&commandList4), "Failed to get a ID3D12GraphicsCommandList4");
 
-		dx12::ShaderBindingTable::PlatformParams const* sbtPlatParams = 
-			sbt.GetPlatformParams()->As<dx12::ShaderBindingTable::PlatformParams const*>();
+		dx12::ShaderBindingTable::PlatObj const* sbtPlatObj = 
+			sbt.GetPlatformObject()->As<dx12::ShaderBindingTable::PlatObj const*>();
 		
-		commandList4->SetPipelineState1(sbtPlatParams->m_rayTracingStateObject.Get());
+		commandList4->SetPipelineState1(sbtPlatObj->m_rayTracingStateObject.Get());
 
 		D3D12_DISPATCH_RAYS_DESC const& dispatchRaysDesc = dx12::ShaderBindingTable::BuildDispatchRaysDesc(
 			sbt, threadDimensions, re::RenderManager::Get()->GetCurrentRenderFrameNum(), rayGenShaderIdx);
@@ -618,11 +618,11 @@ namespace dx12
 			// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
 			if (streamBuffer->GetLifetime() != re::Lifetime::SingleFrame)
 			{
-				dx12::Buffer::PlatformParams* streamBufferPlatParams =
-					streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+				dx12::Buffer::PlatObj* streamBufferPlatObj =
+					streamBuffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
 				resourceTransitions.emplace_back(TransitionMetadata{
-					.m_resource = streamBufferPlatParams->GetGPUResource(),
+					.m_resource = streamBufferPlatObj->GetGPUResource(),
 					.m_toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
 					.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
 					});
@@ -646,8 +646,8 @@ namespace dx12
 			}
 			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].GetBuffer();
 
-			dx12::Buffer::PlatformParams* streamBufferPlatParams =
-				streamBuffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+			dx12::Buffer::PlatObj* streamBufferPlatObj =
+				streamBuffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 			
 			streamViews.emplace_back(
 				*dx12::Buffer::GetOrCreateVertexBufferView(*streamBuffer, vertexBuffers[streamIdx].m_view));
@@ -693,8 +693,8 @@ namespace dx12
 	{
 		SEAssert(indexBuffer.GetStream(), "Index stream buffer is null");
 
-		dx12::Buffer::PlatformParams* streamBufferPlatParams =
-			indexBuffer.GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+		dx12::Buffer::PlatObj* streamBufferPlatObj =
+			indexBuffer.GetBuffer()->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
 		m_commandList->IASetIndexBuffer(
 			dx12::Buffer::GetOrCreateIndexBufferView(*indexBuffer.GetBuffer(), indexBuffer.m_view));
@@ -703,7 +703,7 @@ namespace dx12
 		if (indexBuffer.GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame)
 		{
 			TransitionResourceInternal(
-				streamBufferPlatParams->GetGPUResource(),
+				streamBufferPlatObj->GetGPUResource(),
 				D3D12_RESOURCE_STATE_INDEX_BUFFER,
 				{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 		}
@@ -760,7 +760,7 @@ namespace dx12
 			re::TextureTarget::TargetParams const& colorTargetParams = texTargets[i].GetTargetParams();
 
 			resourceTransitions.emplace_back(TransitionMetadata{
-				.m_resource = colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_gpuResource->Get(),
+				.m_resource = colorTargetTex->GetPlatformObject()->As<dx12::Texture::PlatObj const*>()->m_gpuResource->Get(),
 				.m_toState = D3D12_RESOURCE_STATE_RENDER_TARGET,
 				.m_subresourceIndexes = {re::TextureView::GetSubresourceIndex(colorTargetTex, colorTargetParams.m_textureView)},
 				});
@@ -870,8 +870,8 @@ namespace dx12
 	{
 		for (auto const& rwTexInput : rwTexInputs)
 		{
-			dx12::Texture::PlatformParams const* texPlatParams = 
-				rwTexInput.m_texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			dx12::Texture::PlatObj const* texPlatObj = 
+				rwTexInput.m_texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 			D3D12_CPU_DESCRIPTOR_HANDLE const& texDescriptor = 
 				dx12::Texture::GetUAV(rwTexInput.m_texture, rwTexInput.m_textureView);
@@ -882,7 +882,7 @@ namespace dx12
 			m_commandList->ClearUnorderedAccessViewFloat(
 				gpuVisibleTexDescriptor, 
 				texDescriptor,
-				texPlatParams->m_gpuResource->Get(),
+				texPlatObj->m_gpuResource->Get(),
 				&clearVal.x,
 				0,			// NumRects: 0, as we currently just clear the whole resource
 				nullptr);	// D3D12_RECT*
@@ -894,8 +894,8 @@ namespace dx12
 	{
 		for (auto const& rwTexInput : rwTexInputs)
 		{
-			dx12::Texture::PlatformParams const* texPlatParams =
-				rwTexInput.m_texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			dx12::Texture::PlatObj const* texPlatObj =
+				rwTexInput.m_texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 			D3D12_CPU_DESCRIPTOR_HANDLE const& texDescriptor =
 				dx12::Texture::GetUAV(rwTexInput.m_texture, rwTexInput.m_textureView);
@@ -906,7 +906,7 @@ namespace dx12
 			m_commandList->ClearUnorderedAccessViewUint(
 				gpuVisibleTexDescriptor,
 				texDescriptor,
-				texPlatParams->m_gpuResource->Get(),
+				texPlatObj->m_gpuResource->Get(),
 				&clearVal.x,
 				0,			// NumRects: 0, as we currently just clear the whole resource
 				nullptr);	// D3D12_RECT*
@@ -931,8 +931,8 @@ namespace dx12
 			}
 			core::InvPtr<re::Texture> const& targetTexture = target.GetTexture();
 
-			dx12::Texture::PlatformParams const* texPlatParams =
-				targetTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			dx12::Texture::PlatObj const* texPlatObj =
+				targetTexture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 			re::TextureTarget::TargetParams const& targetParams = target.GetTargetParams();
 
@@ -957,8 +957,8 @@ namespace dx12
 				D3D12_RESOURCE_STATE_DEPTH_WRITE :
 				(D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-			dx12::Texture::PlatformParams const* texPlatParams =
-				depthTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+			dx12::Texture::PlatObj const* texPlatObj =
+				depthTex->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 			TransitionResource(depthTex, depthState, depthTargetParams.m_textureView);
 
@@ -1023,11 +1023,11 @@ namespace dx12
 					rootParam->m_tableEntry.m_offset,
 					1);
 
-				dx12::Texture::PlatformParams const* texPlatParams =
-					rwTex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+				dx12::Texture::PlatObj const* texPlatObj =
+					rwTex->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 				resourceTransitions.emplace_back(TransitionMetadata{
-					.m_resource = texPlatParams->m_gpuResource->Get(),
+					.m_resource = texPlatObj->m_gpuResource->Get(),
 					.m_toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 					.m_subresourceIndexes = re::TextureView::GetSubresourceIndexes(
 						rwTexInput.m_texture, rwTexInput.m_textureView),
@@ -1045,8 +1045,8 @@ namespace dx12
 		SEAssert(m_type != CommandListType::Compute && m_type != CommandListType::Copy,
 			"This method is not valid for compute or copy command lists");
 
-		dx12::TextureTargetSet::PlatformParams* targetSetParams =
-			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+		dx12::TextureTargetSet::PlatObj* targetSetParams =
+			targetSet.GetPlatformObject()->As<dx12::TextureTargetSet::PlatObj*>();
 
 		const uint32_t numViewports = 1;
 		m_commandList->RSSetViewports(numViewports, &targetSetParams->m_viewport);
@@ -1058,8 +1058,8 @@ namespace dx12
 
 	void CommandList::SetScissorRect(re::TextureTargetSet const& targetSet) const
 	{
-		dx12::TextureTargetSet::PlatformParams* targetSetParams =
-			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+		dx12::TextureTargetSet::PlatObj* targetSetParams =
+			targetSet.GetPlatformObject()->As<dx12::TextureTargetSet::PlatObj*>();
 
 		const uint32_t numScissorRects = 1; // 1 per viewport, in an array of viewports
 		m_commandList->RSSetScissorRects(numScissorRects, &targetSetParams->m_scissorRect);
@@ -1092,11 +1092,11 @@ namespace dx12
 					"Single frame buffers are held in a shared heap, we can't transition them. DXR requires vertex"
 					"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
 
-				dx12::Buffer::PlatformParams* positionBufferPlatParams =
-					instance.GetVertexPositions().GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+				dx12::Buffer::PlatObj* positionBufferPlatObj =
+					instance.GetVertexPositions().GetBuffer()->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
 				resourceTransitions.emplace_back(TransitionMetadata{
-					.m_resource = positionBufferPlatParams->GetGPUResource(),
+					.m_resource = positionBufferPlatObj->GetGPUResource(),
 					.m_toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 					.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
 					});
@@ -1107,11 +1107,11 @@ namespace dx12
 						"Single frame buffers are held in a shared heap, we can't transition them. DXR requires index"
 						"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
 
-					dx12::Buffer::PlatformParams* indexBufferPlatParams =
-						instance.GetVertexIndices()->GetBuffer()->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+					dx12::Buffer::PlatObj* indexBufferPlatObj =
+						instance.GetVertexIndices()->GetBuffer()->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
 					resourceTransitions.emplace_back(TransitionMetadata{
-						.m_resource = indexBufferPlatParams->GetGPUResource(),
+						.m_resource = indexBufferPlatObj->GetGPUResource(),
 						.m_toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
 						});
@@ -1123,11 +1123,11 @@ namespace dx12
 						"Single frame buffers are held in a shared heap, we can't transition them. DXR requires "
 						"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
 
-					dx12::Buffer::PlatformParams* bufferPlatParams =
-						createParams->m_transform->GetPlatformParams()->As<dx12::Buffer::PlatformParams*>();
+					dx12::Buffer::PlatObj* bufferPlatObj =
+						createParams->m_transform->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
 					resourceTransitions.emplace_back(TransitionMetadata{
-						.m_resource = bufferPlatParams->GetGPUResource(),
+						.m_resource = bufferPlatObj->GetGPUResource(),
 						.m_toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
 						});
@@ -1148,10 +1148,10 @@ namespace dx12
 
 		// Add a barrier to prevent the AS from being accessed before the build is complete (E.g. if building a BLAS and
 		// TLAS on the same command list)
-		dx12::AccelerationStructure::PlatformParams* platParams =
-			as.GetPlatformParams()->As<dx12::AccelerationStructure::PlatformParams*>();
+		dx12::AccelerationStructure::PlatObj* platObj =
+			as.GetPlatformObject()->As<dx12::AccelerationStructure::PlatObj*>();
 
-		InsertUAVBarrier(platParams->m_ASBuffer->Get());
+		InsertUAVBarrier(platObj->m_ASBuffer->Get());
 	}
 
 
@@ -1185,8 +1185,8 @@ namespace dx12
 
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
-		dx12::Texture::PlatformParams const* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj =
+			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 	
 		glm::vec4 const& mipDimensions = texture->GetMipLevelDimensions(mipLevel);
 		const uint32_t texWidth = static_cast<uint32_t>(mipDimensions.x);
@@ -1218,13 +1218,13 @@ namespace dx12
 		const uint32_t subresourceIdx = texture->GetSubresourceIndex(arrayIdx, faceIdx, mipLevel);
 		
 		TransitionResourceInternal(
-			texPlatParams->m_gpuResource->Get(), D3D12_RESOURCE_STATE_COPY_DEST, {subresourceIdx});
+			texPlatObj->m_gpuResource->Get(), D3D12_RESOURCE_STATE_COPY_DEST, {subresourceIdx});
 
 		// Record the update:
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/updatesubresources2
 		const uint64_t bufferSizeResult = ::UpdateSubresources(
 			m_commandList.Get(),					// Command list
-			texPlatParams->m_gpuResource->Get(),	// Destination resource
+			texPlatObj->m_gpuResource->Get(),	// Destination resource
 			intermediate,							// Intermediate resource
 			0,										// Byte offset to the intermediate resource
 			subresourceIdx,							// Index of 1st subresource in the resource
@@ -1241,8 +1241,8 @@ namespace dx12
 		SEAssert((buffer->GetBufferParams().m_memPoolPreference == re::Buffer::DefaultHeap),
 			"Only expecting resources on the default heap to be updated via a copy queue");
 
-		dx12::Buffer::PlatformParams const* bufferPlatformParams =
-			buffer->GetPlatformParams()->As<dx12::Buffer::PlatformParams const*>();
+		dx12::Buffer::PlatObj const* bufferPlatformParams =
+			buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
 		
 		SEAssert(bufferPlatformParams->GPUResourceIsValid(),
 			"GPUResource is not valid. Buffers using a shared resource cannot be used here");
@@ -1273,8 +1273,8 @@ namespace dx12
 	void CommandList::CopyTexture(core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst)
 	{
 		CopyResource(
-			src->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_gpuResource->Get(),
-			dst->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_gpuResource->Get());
+			src->GetPlatformObject()->As<dx12::Texture::PlatObj*>()->m_gpuResource->Get(),
+			dst->GetPlatformObject()->As<dx12::Texture::PlatObj*>()->m_gpuResource->Get());
 	}
 
 
@@ -1336,11 +1336,11 @@ namespace dx12
 				const bool skipTransition = (texIdx == depthTargetTexInputIdx);
 				if (!skipTransition)
 				{
-					dx12::Texture::PlatformParams const* texPlatParams =
-						texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+					dx12::Texture::PlatObj const* texPlatObj =
+						texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 					resourceTransitions.emplace_back(TransitionMetadata{
-						.m_resource = texPlatParams->m_gpuResource->Get(),
+						.m_resource = texPlatObj->m_gpuResource->Get(),
 						.m_toState = toState,
 						.m_subresourceIndexes = re::TextureView::GetSubresourceIndexes(
 							texture, texSamplerInput.m_textureView)
@@ -1543,11 +1543,11 @@ namespace dx12
 	void CommandList::TransitionResource(
 		core::InvPtr<re::Texture> const& texture, D3D12_RESOURCE_STATES toState, re::TextureView const& texView)
 	{
-		dx12::Texture::PlatformParams const* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj =
+			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 		TransitionResources({ TransitionMetadata {
-			.m_resource = texPlatParams->m_gpuResource->Get(),
+			.m_resource = texPlatObj->m_gpuResource->Get(),
 			.m_toState = toState,
 			.m_subresourceIndexes = re::TextureView::GetSubresourceIndexes(texture, texView)
 			} });
@@ -1581,7 +1581,7 @@ namespace dx12
 
 	void CommandList::InsertUAVBarrier(core::InvPtr<re::Texture> const& texture)
 	{
-		InsertUAVBarrier(texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>()->m_gpuResource->Get());
+		InsertUAVBarrier(texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>()->m_gpuResource->Get());
 	}
 
 

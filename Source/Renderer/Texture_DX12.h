@@ -16,10 +16,10 @@ namespace dx12
 	class Texture
 	{
 	public:
-		struct PlatformParams final : public re::Texture::PlatformParams
+		struct PlatObj final : public re::Texture::PlatObj
 		{
-			PlatformParams(re::Texture&);
-			~PlatformParams();
+			PlatObj(re::Texture&);
+			~PlatObj();
 
 			void Destroy() override;
 

@@ -13,7 +13,7 @@ namespace platform
 	class SwapChain
 	{
 	public:
-		static void CreatePlatformParams(re::SwapChain&);
+		static void CreatePlatformObject(re::SwapChain&);
 
 
 	public:

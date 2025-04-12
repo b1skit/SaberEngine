@@ -17,11 +17,11 @@ namespace opengl
 	class Texture
 	{
 	public:
-		struct PlatformParams final : public re::Texture::PlatformParams
+		struct PlatObj final : public re::Texture::PlatObj
 		{
-			PlatformParams(re::Texture&);
+			PlatObj(re::Texture&);
 
-			~PlatformParams() override;
+			~PlatObj() override;
 
 			void Destroy() override;
 

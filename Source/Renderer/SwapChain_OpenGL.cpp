@@ -12,8 +12,8 @@ namespace opengl
 {
 	void SwapChain::Create(re::SwapChain& swapChain)
 	{
-		opengl::SwapChain::PlatformParams* swapChainParams = 
-			swapChain.GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
+		opengl::SwapChain::PlatObj* swapChainParams = 
+			swapChain.GetPlatformObject()->As<opengl::SwapChain::PlatObj*>();
 
 		// Default target set:
 		LOG("Creating default texure target set");
@@ -32,8 +32,8 @@ namespace opengl
 
 	void SwapChain::Destroy(re::SwapChain& swapChain)
 	{
-		opengl::SwapChain::PlatformParams* swapChainParams = 
-			swapChain.GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
+		opengl::SwapChain::PlatObj* swapChainParams = 
+			swapChain.GetPlatformObject()->As<opengl::SwapChain::PlatObj*>();
 		if (!swapChainParams)
 		{
 			return;
@@ -45,8 +45,8 @@ namespace opengl
 
 	bool SwapChain::ToggleVSync(re::SwapChain const& swapChain)
 	{
-		opengl::SwapChain::PlatformParams* swapChainParams =
-			swapChain.GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
+		opengl::SwapChain::PlatObj* swapChainParams =
+			swapChain.GetPlatformObject()->As<opengl::SwapChain::PlatObj*>();
 
 		swapChainParams->m_vsyncEnabled = !swapChainParams->m_vsyncEnabled;
 
@@ -83,8 +83,8 @@ namespace opengl
 
 	std::shared_ptr<re::TextureTargetSet> SwapChain::GetBackBufferTargetSet(re::SwapChain const& swapChain)
 	{
-		opengl::SwapChain::PlatformParams* swapChainParams =
-			swapChain.GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
+		opengl::SwapChain::PlatObj* swapChainParams =
+			swapChain.GetPlatformObject()->As<opengl::SwapChain::PlatObj*>();
 		SEAssert(swapChainParams && swapChainParams->m_backbufferTargetSet,
 			"Swap chain params and backbuffer cannot be null");
 

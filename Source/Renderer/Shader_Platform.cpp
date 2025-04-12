@@ -9,7 +9,7 @@
 
 namespace platform
 {
-	void platform::Shader::CreatePlatformParams(re::Shader& shader)
+	void platform::Shader::CreatePlatformObject(re::Shader& shader)
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -17,12 +17,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			shader.SetPlatformParams(std::make_unique<opengl::Shader::PlatformParams>());
+			shader.SetPlatformObject(std::make_unique<opengl::Shader::PlatObj>());
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			shader.SetPlatformParams(std::make_unique<dx12::Shader::PlatformParams>());
+			shader.SetPlatformObject(std::make_unique<dx12::Shader::PlatObj>());
 		}
 		break;
 		default:

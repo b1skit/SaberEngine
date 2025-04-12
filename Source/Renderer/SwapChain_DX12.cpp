@@ -23,8 +23,8 @@ namespace dx12
 {
 	void SwapChain::Create(re::SwapChain& swapChain)
 	{
-		dx12::SwapChain::PlatformParams* swapChainParams =
-			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		dx12::SwapChain::PlatObj* swapChainParams =
+			swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj*>();
 		
 		swapChainParams->m_backbufferTargetSets.resize(dx12::RenderManager::GetNumFramesInFlight(), nullptr);
 
@@ -78,14 +78,14 @@ namespace dx12
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
 		SEAssert(context->GetWindow(), "Window cannot be null");
-		win32::Window::PlatformParams* windowPlatParams =
-			context->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+		win32::Window::PlatObj* windowPlatObj =
+			context->GetWindow()->GetPlatformObject()->As<win32::Window::PlatObj*>();
 
 		// Create the swap chain:
 		ComPtr<IDXGISwapChain1> swapChain1;
 		const HRESULT hr = dxgiFactory4->CreateSwapChainForHwnd(
 			context->GetCommandQueue(dx12::CommandListType::Direct).GetD3DCommandQueue().Get(),
-			windowPlatParams->m_hWindow, // Window handle associated with the swap chain
+			windowPlatObj->m_hWindow, // Window handle associated with the swap chain
 			&swapChainDesc, // Swap chain descriptor
 			nullptr, // Full-screen swap chain descriptor. Creates a window swap chain if null
 			nullptr, // Pointer to an interface that content should be restricted to. Content is unrestricted if null
@@ -93,7 +93,7 @@ namespace dx12
 		CheckHResult(hr, "Failed to create swap chain");
 
 		// Disable the Alt+Enter fullscreen toggle feature. Switching to fullscreen will be handled manually
-		CheckHResult(dxgiFactory4->MakeWindowAssociation(windowPlatParams->m_hWindow, DXGI_MWA_NO_ALT_ENTER),
+		CheckHResult(dxgiFactory4->MakeWindowAssociation(windowPlatObj->m_hWindow, DXGI_MWA_NO_ALT_ENTER),
 			"Failed to make window association");
 
 		CheckHResult(swapChain1.As(&swapChainParams->m_swapChain), // Convert IDXGISwapChain1 -> IDXGISwapChain4
@@ -102,7 +102,7 @@ namespace dx12
 		swapChainParams->m_backBufferIdx = swapChainParams->m_swapChain->GetCurrentBackBufferIndex();
 
 		// Create color target textures, attach them to our target set, & copy the backbuffer resource into their
-		// platform params:
+		// platform object:
 		for (uint8_t backbufferIdx = 0; backbufferIdx < dx12::RenderManager::GetNumFramesInFlight(); backbufferIdx++)
 		{
 			// Create a target set to hold our backbuffer targets:
@@ -124,7 +124,7 @@ namespace dx12
 
 			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetColorTarget(0, colorTargetTex, targetParams);
 
-			SEAssert(colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format == colorBufferFormat,
+			SEAssert(colorTargetTex->GetPlatformObject()->As<dx12::Texture::PlatObj*>()->m_format == colorBufferFormat,
 				"Unexpected texture format selected");
 
 			// Set default viewports and scissor rects. Note: This is NOT required, just included for clarity
@@ -139,8 +139,8 @@ namespace dx12
 
 	void SwapChain::Destroy(re::SwapChain& swapChain)
 	{
-		dx12::SwapChain::PlatformParams* swapChainParams =
-			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		dx12::SwapChain::PlatObj* swapChainParams =
+			swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj*>();
 		if (!swapChainParams)
 		{
 			return;
@@ -158,8 +158,8 @@ namespace dx12
 
 	bool SwapChain::ToggleVSync(re::SwapChain const& swapChain)
 	{
-		dx12::SwapChain::PlatformParams* swapchainParams =
-			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		dx12::SwapChain::PlatObj* swapchainParams =
+			swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj*>();
 
 		swapchainParams->m_vsyncEnabled = !swapchainParams->m_vsyncEnabled;
 
@@ -169,32 +169,32 @@ namespace dx12
 
 	uint8_t SwapChain::GetCurrentBackBufferIdx(re::SwapChain const& swapChain)
 	{
-		dx12::SwapChain::PlatformParams* swapChainPlatParams = 
-			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		dx12::SwapChain::PlatObj* swapChainPlatObj = 
+			swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj*>();
 
-		return swapChainPlatParams->m_backBufferIdx;
+		return swapChainPlatObj->m_backBufferIdx;
 	}
 
 
 	uint8_t SwapChain::IncrementBackBufferIdx(re::SwapChain& swapChain)
 	{
-		dx12::SwapChain::PlatformParams* swapChainPlatParams =
-			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		dx12::SwapChain::PlatObj* swapChainPlatObj =
+			swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj*>();
 
 		// Note: Backbuffer indices are not guaranteed to be sequential if we're using  DXGI_SWAP_EFFECT_FLIP_DISCARD
-		swapChainPlatParams->m_backBufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
+		swapChainPlatObj->m_backBufferIdx = swapChainPlatObj->m_swapChain->GetCurrentBackBufferIndex();
 		
-		return swapChainPlatParams->m_backBufferIdx;
+		return swapChainPlatObj->m_backBufferIdx;
 	}
 
 
 	std::shared_ptr<re::TextureTargetSet> SwapChain::GetBackBufferTargetSet(re::SwapChain const& swapChain)
 	{
-		dx12::SwapChain::PlatformParams* swapChainPlatParams =
-			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		dx12::SwapChain::PlatObj* swapChainPlatObj =
+			swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj*>();
 
-		const uint8_t backbufferIdx = swapChainPlatParams->m_backBufferIdx;
+		const uint8_t backbufferIdx = swapChainPlatObj->m_backBufferIdx;
 
-		return swapChainPlatParams->m_backbufferTargetSets[backbufferIdx];
+		return swapChainPlatObj->m_backbufferTargetSets[backbufferIdx];
 	}
 }

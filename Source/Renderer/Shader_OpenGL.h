@@ -48,7 +48,7 @@ namespace opengl
 
 
 	public:
-		struct PlatformParams final : public re::Shader::PlatformParams
+		struct PlatObj final : public re::Shader::PlatObj
 		{
 			std::array<std::string, re::Shader::ShaderType_Count> m_shaderTexts;
 

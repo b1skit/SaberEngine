@@ -318,8 +318,8 @@ namespace
 	D3D12_RESOURCE_STATES CreateTextureResource(
 		core::InvPtr<re::Texture> const& texture, bool needsUAV, bool simultaneousAccess)
 	{
-		dx12::Texture::PlatformParams* texPlatParams = texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-		SEAssert(!texPlatParams->m_gpuResource, "Texture resource already created");
+		dx12::Texture::PlatObj* texPlatObj = texture->GetPlatformObject()->As<dx12::Texture::PlatObj*>();
+		SEAssert(!texPlatObj->m_gpuResource, "Texture resource already created");
 		
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
@@ -343,7 +343,7 @@ namespace
 		// - D3D12_RESOURCE_DESC::Dimension is D3D12_RESOURCE_DIMENSION_BUFFER,
 		// - D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET or D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL are set in flags
 		D3D12_CLEAR_VALUE optimizedClearValue = {};
-		optimizedClearValue.Format = texPlatParams->m_format;
+		optimizedClearValue.Format = texPlatObj->m_format;
 		
 		if (texParams.m_usage & re::Texture::Usage::ColorTarget)
 		{
@@ -379,7 +379,7 @@ namespace
 			SEAssert(texParams.m_height == 1, "Invalid height for a 1D texture");
 
 			resourceDesc = CD3DX12_RESOURCE_DESC::Tex1D(
-				texPlatParams->m_format,
+				texPlatObj->m_format,
 				texParams.m_width,
 				texParams.m_arraySize,
 				numMips,
@@ -392,7 +392,7 @@ namespace
 		case re::Texture::Dimension::Texture2DArray:
 		{
 			resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				texPlatParams->m_format,
+				texPlatObj->m_format,
 				texParams.m_width,
 				texParams.m_height,
 				texParams.m_arraySize,
@@ -407,7 +407,7 @@ namespace
 		case re::Texture::Dimension::Texture3D:
 		{
 			resourceDesc = CD3DX12_RESOURCE_DESC::Tex3D(
-				texPlatParams->m_format,
+				texPlatObj->m_format,
 				texParams.m_width,
 				texParams.m_height,
 				texParams.m_arraySize,			// Number of depth slices
@@ -421,7 +421,7 @@ namespace
 		case re::Texture::Dimension::TextureCubeArray:
 		{
 			resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				texPlatParams->m_format,
+				texPlatObj->m_format,
 				texParams.m_width,
 				texParams.m_height,
 				texParams.m_arraySize * 6,
@@ -439,7 +439,7 @@ namespace
 
 		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
 
-		texPlatParams->m_gpuResource = heapMgr.CreateResource(dx12::ResourceDesc{
+		texPlatObj->m_gpuResource = heapMgr.CreateResource(dx12::ResourceDesc{
 				.m_resourceDesc = resourceDesc,
 				.m_optimizedClearValue = optimizedClearValue,
 				.m_heapType = D3D12_HEAP_TYPE_DEFAULT,
@@ -454,8 +454,8 @@ namespace
 	void UpdateTopLevelSubresources(
 		dx12::CommandList* copyCmdList, core::InvPtr<re::Texture> const& texture, ID3D12Resource* intermediate)
 	{
-		dx12::Texture::PlatformParams const* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj =
+			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
@@ -647,7 +647,7 @@ namespace dx12
 	}
 
 
-	Texture::PlatformParams::PlatformParams(re::Texture& texture)
+	Texture::PlatObj::PlatObj(re::Texture& texture)
 		: m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
 		, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
 		, m_rtvDescriptors(dx12::DescriptorCache::DescriptorType::RTV)
@@ -659,14 +659,14 @@ namespace dx12
 	}
 
 
-	Texture::PlatformParams::~PlatformParams()
+	Texture::PlatObj::~PlatObj()
 	{
 		SEAssert(m_gpuResource == nullptr && m_format == DXGI_FORMAT_UNKNOWN,
-			"dx12::Texture::PlatformParams::~PlatformParams() called before Destroy()");
+			"dx12::Texture::PlatObj::~PlatObj() called before Destroy()");
 	}
 
 
-	void Texture::PlatformParams::Destroy()
+	void Texture::PlatObj::Destroy()
 	{
 		m_format = DXGI_FORMAT_UNKNOWN;
 		m_gpuResource = nullptr;
@@ -686,9 +686,9 @@ namespace dx12
 	{
 		dx12::CommandList* copyCmdList = static_cast<dx12::CommandList*>(dx12CopyCmdList);
 
-		dx12::Texture::PlatformParams* texPlatParams = texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-		SEAssert(texPlatParams->m_isCreated == false, "Texture is already created");
-		texPlatParams->m_isCreated = true;
+		dx12::Texture::PlatObj* texPlatObj = texture->GetPlatformObject()->As<dx12::Texture::PlatObj*>();
+		SEAssert(texPlatObj->m_isCreated == false, "Texture is already created");
+		texPlatObj->m_isCreated = true;
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
@@ -717,7 +717,7 @@ namespace dx12
 		const bool needsSimultaneousAccess = SimultaneousAccessIsNeeded(texParams);
 
 		// Figure out our resource needs:
-		const bool needsUAV = UAVIsNeeded(texParams, texPlatParams->m_format);
+		const bool needsUAV = UAVIsNeeded(texParams, texPlatObj->m_format);
 		const uint32_t numMips = texture->GetNumMips();
 		const uint32_t numSubresources = texture->GetTotalNumSubresources();
 
@@ -771,7 +771,7 @@ namespace dx12
 			UpdateTopLevelSubresources(copyCmdList, texture, intermediateResource->Get());
 		}
 
-		texPlatParams->m_isDirty = false;
+		texPlatObj->m_isDirty = false;
 	}
 
 
@@ -789,11 +789,11 @@ namespace dx12
 		// dx12::Texture::Create above
 		core::InvPtr<re::Texture> newTexture = re::Texture::Create(name, params);
 
-		dx12::Texture::PlatformParams* texPlatParams = 
-			newTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-		SEAssert(!texPlatParams->m_gpuResource, "Texture is already created");
+		dx12::Texture::PlatObj* texPlatObj = 
+			newTexture->GetPlatformObject()->As<dx12::Texture::PlatObj*>();
+		SEAssert(!texPlatObj->m_gpuResource, "Texture is already created");
 
-		texPlatParams->m_gpuResource = std::make_unique<dx12::GPUResource>(
+		texPlatObj->m_gpuResource = std::make_unique<dx12::GPUResource>(
 			textureResource, D3D12_RESOURCE_STATE_COMMON, util::ToWideString(name).c_str());
 
 		return newTexture;
@@ -804,10 +804,10 @@ namespace dx12
 	{
 		SEAssert(tex, "Texture cannot be null");
 
-		dx12::Texture::PlatformParams const* texPlatParams = 
-			tex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj = 
+			tex->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
-		return texPlatParams->m_srvDescriptors.GetCreateDescriptor(tex, texView);
+		return texPlatObj->m_srvDescriptors.GetCreateDescriptor(tex, texView);
 	}
 
 
@@ -815,10 +815,10 @@ namespace dx12
 	{
 		SEAssert(tex, "Texture cannot be null");
 
-		dx12::Texture::PlatformParams const* texPlatParams =
-			tex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj =
+			tex->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
-		return texPlatParams->m_uavDescriptors.GetCreateDescriptor(tex, texView);
+		return texPlatObj->m_uavDescriptors.GetCreateDescriptor(tex, texView);
 	}
 
 
@@ -826,10 +826,10 @@ namespace dx12
 	{
 		SEAssert(tex, "Texture cannot be null");
 
-		dx12::Texture::PlatformParams const* texPlatParams =
-			tex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj =
+			tex->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
-		return texPlatParams->m_rtvDescriptors.GetCreateDescriptor(tex, texView);
+		return texPlatObj->m_rtvDescriptors.GetCreateDescriptor(tex, texView);
 	}
 
 
@@ -837,28 +837,28 @@ namespace dx12
 	{
 		SEAssert(tex, "Texture cannot be null");
 
-		dx12::Texture::PlatformParams const* texPlatParams =
-			tex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj =
+			tex->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
-		return texPlatParams->m_dsvDescriptors.GetCreateDescriptor(tex, texView);
+		return texPlatObj->m_dsvDescriptors.GetCreateDescriptor(tex, texView);
 	}
 
 
 	void Texture::Destroy(re::Texture& tex)
 	{
-		dx12::Texture::PlatformParams* texPlatParams = tex.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::Texture::PlatObj* texPlatObj = tex.GetPlatformObject()->As<dx12::Texture::PlatObj*>();
 
-		texPlatParams->m_gpuResource = nullptr;
+		texPlatObj->m_gpuResource = nullptr;
 	}
 
 
 	void Texture::ShowImGuiWindow(core::InvPtr<re::Texture> const& tex, float scale)
 	{
-		dx12::Texture::PlatformParams const* texPlatParams =
-			tex->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+		dx12::Texture::PlatObj const* texPlatObj =
+			tex->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 		const D3D12_CPU_DESCRIPTOR_HANDLE texSRV = 
-			texPlatParams->m_srvDescriptors.GetCreateDescriptor(tex, re::TextureView::Texture2DView());
+			texPlatObj->m_srvDescriptors.GetCreateDescriptor(tex, re::TextureView::Texture2DView());
 
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuDesc{};
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuDesc{};

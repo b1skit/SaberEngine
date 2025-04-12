@@ -15,7 +15,7 @@ namespace opengl
 	class Buffer
 	{
 	public:
-		struct PlatformParams final : public re::Buffer::PlatformParams
+		struct PlatObj final : public re::Buffer::PlatObj
 		{
 			void Destroy() override;
 

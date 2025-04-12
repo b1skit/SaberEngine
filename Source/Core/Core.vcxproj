@@ -135,7 +135,7 @@
     <ClInclude Include="Interfaces\IHashedDataObject.h" />
     <ClInclude Include="Interfaces\ILoadContext.h" />
     <ClInclude Include="Interfaces\INamedObject.h" />
-    <ClInclude Include="Interfaces\IPlatformParams.h" />
+    <ClInclude Include="Interfaces\IPlatformObject.h" />
     <ClInclude Include="Interfaces\IUniqueID.h" />
     <ClInclude Include="Inventory.h" />
     <ClInclude Include="InvPtr.h" />

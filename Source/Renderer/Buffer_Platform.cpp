@@ -10,10 +10,10 @@
 
 namespace platform
 {
-	void platform::Buffer::CreatePlatformParams(re::Buffer& buffer)
+	void platform::Buffer::CreatePlatformObject(re::Buffer& buffer)
 	{
-		SEAssert(buffer.GetPlatformParams() == nullptr,
-			"Attempting to create platform params for a buffer that already exists");
+		SEAssert(buffer.GetPlatformObject() == nullptr,
+			"Attempting to create platform object for a buffer that already exists");
 
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -21,12 +21,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			buffer.SetPlatformParams(std::make_unique<opengl::Buffer::PlatformParams>());
+			buffer.SetPlatformObject(std::make_unique<opengl::Buffer::PlatObj>());
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			buffer.SetPlatformParams(std::make_unique<dx12::Buffer::PlatformParams>());
+			buffer.SetPlatformObject(std::make_unique<dx12::Buffer::PlatObj>());
 		}
 		break;
 		default:

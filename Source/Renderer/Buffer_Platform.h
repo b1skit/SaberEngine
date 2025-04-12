@@ -13,7 +13,7 @@ namespace platform
 	class Buffer
 	{
 	public:
-		static void CreatePlatformParams(re::Buffer& buffer);
+		static void CreatePlatformObject(re::Buffer& buffer);
 
 
 	public:

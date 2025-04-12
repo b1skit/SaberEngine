@@ -12,10 +12,10 @@
 
 namespace platform
 {
-	void RLibraryImGui::CreatePlatformParams(RLibraryImGui& imguiLibrary)
+	void RLibraryImGui::CreatePlatformObject(RLibraryImGui& imguiLibrary)
 	{
-		SEAssert(imguiLibrary.GetPlatformParams() == nullptr,
-			"Attempting to create platform params for a buffer that already exists");
+		SEAssert(imguiLibrary.GetPlatformObject() == nullptr,
+			"Attempting to create platform object for a buffer that already exists");
 
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -23,12 +23,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			imguiLibrary.SetPlatformParams(std::make_unique<opengl::RLibraryImGui::PlatformParams>());
+			imguiLibrary.SetPlatformObject(std::make_unique<opengl::RLibraryImGui::PlatObj>());
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			imguiLibrary.SetPlatformParams(std::make_unique<dx12::RLibraryImGui::PlatformParams>());
+			imguiLibrary.SetPlatformObject(std::make_unique<dx12::RLibraryImGui::PlatObj>());
 		}
 		break;
 		default:
@@ -41,7 +41,7 @@ namespace platform
 
 	void RLibraryImGui::CreateInternal(RLibraryImGui& imguiLibrary)
 	{
-		CreatePlatformParams(imguiLibrary);
+		CreatePlatformObject(imguiLibrary);
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -61,15 +61,15 @@ namespace platform
 		host::Window* window = re::Context::Get()->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
-		win32::Window::PlatformParams* windowPlatParams =
-			window->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+		win32::Window::PlatObj* windowPlatObj =
+			window->GetPlatformObject()->As<win32::Window::PlatObj*>();
 
 		ImGuiIO& io = ImGui::GetIO();
 
-		const float fontPixelSize = 15 * windowPlatParams->m_windowScale;
+		const float fontPixelSize = 15 * windowPlatObj->m_windowScale;
 		io.Fonts->AddFontFromFileTTF("Assets\\Fonts\\source-code-pro.regular.ttf", fontPixelSize);
 
-		ImGui::GetStyle().ScaleAllSizes(windowPlatParams->m_windowScale);
+		ImGui::GetStyle().ScaleAllSizes(windowPlatObj->m_windowScale);
 	}
 
 

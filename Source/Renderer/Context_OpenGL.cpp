@@ -274,11 +274,11 @@ namespace opengl
 		host::Window* window = GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
-		win32::Window::PlatformParams* windowPlatParams = 
-			window->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+		win32::Window::PlatObj* windowPlatObj = 
+			window->GetPlatformObject()->As<win32::Window::PlatObj*>();
 
 		// Get the Device Context Handle
-		m_hDeviceContext = GetDC(windowPlatParams->m_hWindow);
+		m_hDeviceContext = GetDC(windowPlatObj->m_hWindow);
 
 		// Now we can choose a pixel format using wglChoosePixelFormatARB:
 		int pixel_format_attribs[] = {
@@ -442,8 +442,8 @@ namespace opengl
 	{
 		::wglMakeCurrent(NULL, NULL); // Make the rendering context not current  
 
-		win32::Window::PlatformParams* windowPlatformParams = 
-			GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+		win32::Window::PlatObj* windowPlatformParams = 
+			GetWindow()->GetPlatformObject()->As<win32::Window::PlatObj*>();
 
 		::ReleaseDC(windowPlatformParams->m_hWindow, m_hDeviceContext); // Release device context
 		::wglDeleteContext(m_glRenderContext); // Delete the rendering context

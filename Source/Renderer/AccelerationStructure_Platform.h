@@ -8,7 +8,7 @@ namespace platform
 	class AccelerationStructure
 	{
 	public:
-		static std::unique_ptr<re::AccelerationStructure::PlatformParams> CreatePlatformParams();
+		static std::unique_ptr<re::AccelerationStructure::PlatObj> CreatePlatformObject();
 
 
 	public:

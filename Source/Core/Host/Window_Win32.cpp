@@ -276,11 +276,11 @@ namespace win32
 		const int windowX = std::max<int>(0, (screenWidth - windowWidth) / 2);
 		const int windowY = std::max<int>(0, (screenHeight - windowHeight) / 2);
 
-		win32::Window::PlatformParams* platformParams = window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
+		win32::Window::PlatObj* platObj = window.GetPlatformObject()->As<win32::Window::PlatObj*>();
 
 		std::wstring const& titleWideStr = util::ToWideString(createParams.m_title);
 
-		platformParams->m_hWindow = ::CreateWindowExW(
+		platObj->m_hWindow = ::CreateWindowExW(
 			NULL, // Extended window styles: https://learn.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
 			windowClass.lpszClassName, // Unique window class name
 			titleWideStr.c_str(), // Window/titlebar name
@@ -294,13 +294,13 @@ namespace win32
 			win32::Window::s_platformState.m_hInstance, // Handle to the instance of the module associated with the window
 			&window // lpParam: A pointer that will be passed to the window through the CREATESTRUCT
 		);
-		SEAssert(platformParams->m_hWindow, "Failed to create hWnd");
+		SEAssert(platObj->m_hWindow, "Failed to create hWnd");
 		
 		// Get window scaling:
 		{
 			::SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
-			const HMONITOR monitor = MonitorFromWindow(platformParams->m_hWindow, MONITOR_DEFAULTTONEAREST);
+			const HMONITOR monitor = MonitorFromWindow(platObj->m_hWindow, MONITOR_DEFAULTTONEAREST);
 
 			uint32_t dpiX = 0;
 			uint32_t dpiY = 0;
@@ -309,13 +309,13 @@ namespace win32
 
 			// The DPI of a 100% scaled monitor is 96; Thus DPI/96 = scale factor
 			constexpr float k_dpi100PercentScale = 96.f;
-			platformParams->m_windowScale = dpiY / k_dpi100PercentScale;
+			platObj->m_windowScale = dpiY / k_dpi100PercentScale;
 
 			const std::string scalingResults = std::format(
 				"Display device reported DPI X/Y = ({}, {}). Assuming scaling factor = {}%%",
 				dpiX,
 				dpiY,
-				platformParams->m_windowScale * 100.f);
+				platObj->m_windowScale * 100.f);
 			if (dpiX == dpiY)
 			{
 				LOG(scalingResults.c_str());
@@ -326,20 +326,20 @@ namespace win32
 			}
 		}
 
-		::ShowWindow(platformParams->m_hWindow, SW_SHOW);
-		::UpdateWindow(platformParams->m_hWindow);
+		::ShowWindow(platObj->m_hWindow, SW_SHOW);
+		::UpdateWindow(platObj->m_hWindow);
 
 		// Initialize the OLE (Object Linking and Embedding) library for the thread 
 		const HRESULT hr = ::OleInitialize(NULL);
-		platformParams->m_OLEIInitialized = SUCCEEDED(hr);
-		SEAssert(platformParams->m_OLEIInitialized, "Failed to initialize OLE");
+		platObj->m_OLEIInitialized = SUCCEEDED(hr);
+		SEAssert(platObj->m_OLEIInitialized, "Failed to initialize OLE");
 
 		// Register the window as a target for drag-and-drop operations:
-		if (createParams.m_allowDragAndDrop && platformParams->m_OLEIInitialized)
+		if (createParams.m_allowDragAndDrop && platObj->m_OLEIInitialized)
 		{
-			platformParams->m_dropTarget = std::make_unique<SEWindowDropTarget>();
+			platObj->m_dropTarget = std::make_unique<SEWindowDropTarget>();
 
-			::RegisterDragDrop(platformParams->m_hWindow, platformParams->m_dropTarget.get());
+			::RegisterDragDrop(platObj->m_hWindow, platObj->m_dropTarget.get());
 		}		
 
 		// Register the mouse as a raw input device:
@@ -350,7 +350,7 @@ namespace win32
 			rawInputDevice[0].usUsage = HID_USAGE_GENERIC_MOUSE;
 			rawInputDevice[0].dwFlags = RIDEV_INPUTSINK;
 
-			rawInputDevice[0].hwndTarget = platformParams->m_hWindow;
+			rawInputDevice[0].hwndTarget = platObj->m_hWindow;
 			RegisterRawInputDevices(rawInputDevice, 1, sizeof(rawInputDevice[0]));
 		}
 
@@ -360,18 +360,18 @@ namespace win32
 
 	void Window::Destroy(host::Window& window)
 	{
-		win32::Window::PlatformParams* platformParams = 
-			window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
+		win32::Window::PlatObj* platObj = 
+			window.GetPlatformObject()->As<win32::Window::PlatObj*>();
 
-		::DestroyWindow(platformParams->m_hWindow);
+		::DestroyWindow(platObj->m_hWindow);
 
-		platformParams->m_dropTarget = nullptr;
+		platObj->m_dropTarget = nullptr;
 
 		// Uninitialize the OLE (Object Linking and Embedding) library for the thread
-		if (platformParams->m_OLEIInitialized)
+		if (platObj->m_OLEIInitialized)
 		{
 			::OleUninitialize();
-			platformParams->m_OLEIInitialized = false;
+			platObj->m_OLEIInitialized = false;
 		}
 	}
 
@@ -380,22 +380,22 @@ namespace win32
 	{
 		if (relativeModeEnabled)
 		{
-			win32::Window::PlatformParams* platformParams = 
-				window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
+			win32::Window::PlatObj* platObj = 
+				window.GetPlatformObject()->As<win32::Window::PlatObj*>();
 
 			// Wrap mouse movements about the screen rectangle:
 			RECT rect;
-			::GetClientRect(platformParams->m_hWindow, &rect);
+			::GetClientRect(platObj->m_hWindow, &rect);
 
 			POINT upperLeft;
 			upperLeft.x = rect.left;
 			upperLeft.y = rect.top;
-			::MapWindowPoints(platformParams->m_hWindow, nullptr, &upperLeft, 1);
+			::MapWindowPoints(platObj->m_hWindow, nullptr, &upperLeft, 1);
 
 			POINT lowerRight;
 			lowerRight.x = rect.right;
 			lowerRight.y = rect.bottom;
-			::MapWindowPoints(platformParams->m_hWindow, nullptr, &lowerRight, 1);
+			::MapWindowPoints(platObj->m_hWindow, nullptr, &lowerRight, 1);
 
 			rect.left = upperLeft.x;
 			rect.top = upperLeft.y;

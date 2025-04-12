@@ -9,7 +9,7 @@
 
 namespace platform
 {
-	void SwapChain::CreatePlatformParams(re::SwapChain& swapChain)
+	void SwapChain::CreatePlatformObject(re::SwapChain& swapChain)
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -17,12 +17,12 @@ namespace platform
 		{
 		case platform::RenderingAPI::OpenGL:
 		{
-			swapChain.SetPlatformParams(std::make_unique<opengl::SwapChain::PlatformParams>());
+			swapChain.SetPlatformObject(std::make_unique<opengl::SwapChain::PlatObj>());
 		}
 		break;
 		case platform::RenderingAPI::DX12:
 		{
-			swapChain.SetPlatformParams(std::make_unique<dx12::SwapChain::PlatformParams>());
+			swapChain.SetPlatformObject(std::make_unique<dx12::SwapChain::PlatObj>());
 		}
 		break;
 		default:

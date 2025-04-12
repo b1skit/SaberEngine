@@ -169,81 +169,81 @@ namespace opengl
 {
 	void Sampler::Create(re::Sampler& sampler)
 	{
-		SEAssert(!sampler.GetPlatformParams()->m_isCreated, "Sampler is already created");
+		SEAssert(!sampler.GetPlatformObject()->m_isCreated, "Sampler is already created");
 
 		LOG("Creating sampler: \"%s\"", sampler.GetName().c_str());
 
-		opengl::Sampler::PlatformParams* params = sampler.GetPlatformParams()->As<opengl::Sampler::PlatformParams*>();
+		opengl::Sampler::PlatObj* platObj = sampler.GetPlatformObject()->As<opengl::Sampler::PlatObj*>();
 
-		SEAssert(!glIsSampler(params->m_samplerID), "Attempting to create a sampler that already has been created");
+		SEAssert(!glIsSampler(platObj->m_samplerID), "Attempting to create a sampler that already has been created");
 
-		glGenSamplers(1, &params->m_samplerID);
-		glBindSampler(0, params->m_samplerID);
+		glGenSamplers(1, &platObj->m_samplerID);
+		glBindSampler(0, platObj->m_samplerID);
 
 		// RenderDoc object name:
-		glObjectLabel(GL_SAMPLER, params->m_samplerID, -1, (sampler.GetName() + " sampler").c_str());
+		glObjectLabel(GL_SAMPLER, platObj->m_samplerID, -1, (sampler.GetName() + " sampler").c_str());
 
-		if (!glIsSampler(params->m_samplerID))
+		if (!glIsSampler(platObj->m_samplerID))
 		{
 			LOG_ERROR("Texture sampler creation failed");
-			SEAssert(glIsSampler(params->m_samplerID), "Texture sampler creation failed");
+			SEAssert(glIsSampler(platObj->m_samplerID), "Texture sampler creation failed");
 		}
 
 		re::Sampler::SamplerDesc const& samplerDesc = sampler.GetSamplerDesc();
 
 		// Populate our sampler parameters from our SE SamplerDesc:
-		params->m_textureMinFilter = GetOpenGLMinFilter(samplerDesc.m_filterMode);
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
+		platObj->m_textureMinFilter = GetOpenGLMinFilter(samplerDesc.m_filterMode);
+		glSamplerParameteri(platObj->m_samplerID, GL_TEXTURE_MIN_FILTER, platObj->m_textureMinFilter);
 
-		params->m_textureMagFilter = GetOpenGLMagFilter(samplerDesc.m_filterMode);
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MAG_FILTER, params->m_textureMagFilter);
+		platObj->m_textureMagFilter = GetOpenGLMagFilter(samplerDesc.m_filterMode);
+		glSamplerParameteri(platObj->m_samplerID, GL_TEXTURE_MAG_FILTER, platObj->m_textureMagFilter);
 
-		params->m_textureWrapS = GetOpenGLEdgeMode(samplerDesc.m_edgeModeU);
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_S, params->m_textureWrapS);
+		platObj->m_textureWrapS = GetOpenGLEdgeMode(samplerDesc.m_edgeModeU);
+		glSamplerParameteri(platObj->m_samplerID, GL_TEXTURE_WRAP_S, platObj->m_textureWrapS);
 
-		params->m_textureWrapT = GetOpenGLEdgeMode(samplerDesc.m_edgeModeV);
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_T, params->m_textureWrapT);
+		platObj->m_textureWrapT = GetOpenGLEdgeMode(samplerDesc.m_edgeModeV);
+		glSamplerParameteri(platObj->m_samplerID, GL_TEXTURE_WRAP_T, platObj->m_textureWrapT);
 
-		params->m_textureWrapR = GetOpenGLEdgeMode(samplerDesc.m_edgeModeW);
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_R, params->m_textureWrapR);
+		platObj->m_textureWrapR = GetOpenGLEdgeMode(samplerDesc.m_edgeModeW);
+		glSamplerParameteri(platObj->m_samplerID, GL_TEXTURE_WRAP_R, platObj->m_textureWrapR);
 
-		glTextureParameterf(params->m_samplerID, GL_TEXTURE_LOD_BIAS, samplerDesc.m_mipLODBias);
+		glTextureParameterf(platObj->m_samplerID, GL_TEXTURE_LOD_BIAS, samplerDesc.m_mipLODBias);
 
 		SEAssert(samplerDesc.m_maxAnisotropy <= util::CheckedCast<uint32_t>(opengl::SysInfo::GetMaxAnisotropy()),
 			"Max anisotropy exceeds what the system is capable of");
-		glTextureParameteri(params->m_samplerID, GL_TEXTURE_MAX_ANISOTROPY, samplerDesc.m_maxAnisotropy);
+		glTextureParameteri(platObj->m_samplerID, GL_TEXTURE_MAX_ANISOTROPY, samplerDesc.m_maxAnisotropy);
 		
-		params->m_comparisonFunc = GetOpenGLComparisonFunc(samplerDesc.m_comparisonFunc);
+		platObj->m_comparisonFunc = GetOpenGLComparisonFunc(samplerDesc.m_comparisonFunc);
 		if (samplerDesc.m_comparisonFunc == re::Sampler::ComparisonFunc::None)
 		{
-			glSamplerParameteri(params->m_samplerID, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+			glSamplerParameteri(platObj->m_samplerID, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 		}
 		else
 		{
-			glSamplerParameteri(params->m_samplerID, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-			glSamplerParameteri(params->m_samplerID, GL_TEXTURE_COMPARE_FUNC, params->m_comparisonFunc);
+			glSamplerParameteri(platObj->m_samplerID, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+			glSamplerParameteri(platObj->m_samplerID, GL_TEXTURE_COMPARE_FUNC, platObj->m_comparisonFunc);
 		}
 
 		if (samplerDesc.m_borderColor == re::Sampler::BorderColor::OpaqueBlack_UInt ||
 			samplerDesc.m_borderColor == re::Sampler::BorderColor::OpaqueWhite_UInt)
 		{
-			glSamplerParameteriv(params->m_samplerID, 
+			glSamplerParameteriv(platObj->m_samplerID, 
 				GL_TEXTURE_BORDER_COLOR, 
 				static_cast<GLint const*>(GetBorderColor(samplerDesc)));
 		}
 		else
 		{
-			glSamplerParameterfv(params->m_samplerID, 
+			glSamplerParameterfv(platObj->m_samplerID, 
 				GL_TEXTURE_BORDER_COLOR, 
 				static_cast<GLfloat const*>(GetBorderColor(samplerDesc)));
 		}
 		
-		glTextureParameterf(params->m_samplerID, GL_TEXTURE_MIN_LOD, samplerDesc.m_minLOD);
-		glTextureParameterf(params->m_samplerID, GL_TEXTURE_MAX_LOD, samplerDesc.m_maxLOD);
+		glTextureParameterf(platObj->m_samplerID, GL_TEXTURE_MIN_LOD, samplerDesc.m_minLOD);
+		glTextureParameterf(platObj->m_samplerID, GL_TEXTURE_MAX_LOD, samplerDesc.m_maxLOD);
 
 		
 		// Finally, update the platform state:
-		params->m_isCreated = true;
+		platObj->m_isCreated = true;
 
 		// Note: We leave the sampler bound
 	}
@@ -251,17 +251,17 @@ namespace opengl
 
 	void Sampler::Bind(re::Sampler const& sampler, uint32_t textureUnit)
 	{
-		opengl::Sampler::PlatformParams* params = sampler.GetPlatformParams()->As<opengl::Sampler::PlatformParams*>();
+		opengl::Sampler::PlatObj* platObj = sampler.GetPlatformObject()->As<opengl::Sampler::PlatObj*>();
 
-		glBindSampler(textureUnit, params->m_samplerID);
+		glBindSampler(textureUnit, platObj->m_samplerID);
 	}
 
 
 	void Sampler::Destroy(re::Sampler& sampler)
 	{
-		opengl::Sampler::PlatformParams* params = sampler.GetPlatformParams()->As<opengl::Sampler::PlatformParams*>();
-		glDeleteSamplers(1, &params->m_samplerID);
-		params->m_samplerID = 0;
-		params->m_isCreated = false;
+		opengl::Sampler::PlatObj* platObj = sampler.GetPlatformObject()->As<opengl::Sampler::PlatObj*>();
+		glDeleteSamplers(1, &platObj->m_samplerID);
+		platObj->m_samplerID = 0;
+		platObj->m_isCreated = false;
 	}
 }

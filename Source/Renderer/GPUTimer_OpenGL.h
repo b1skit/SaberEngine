@@ -15,7 +15,7 @@ namespace opengl
 	class GPUTimer
 	{
 	public:
-		struct PlatformParams final : public re::GPUTimer::PlatformParams
+		struct PlatObj final : public re::GPUTimer::PlatObj
 		{
 			void Destroy() override;
 
@@ -28,7 +28,7 @@ namespace opengl
 
 	public:
 		static void Create(re::GPUTimer const&);
-		// Destroy is handled via GPUTimer::PlatformParams
+		// Destroy is handled via GPUTimer::PlatObj
 
 		static void BeginFrame(re::GPUTimer const&);
 		static std::vector<uint64_t> EndFrame(re::GPUTimer const&, re::GPUTimer::TimerType);

@@ -138,7 +138,7 @@
     <ClInclude Include="InputManager_Win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interfaces\IPlatformParams.h">
+    <ClInclude Include="Interfaces\IPlatformObject.h">
       <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Definitions\ConfigKeys.h">

@@ -1,7 +1,7 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Interfaces/IEventListener.h"
-#include "Core/Interfaces/IPlatformParams.h"
+#include "Core/Interfaces/IPlatformObject.h"
 
 #include "Core/Util/HashKey.h"
 
@@ -36,7 +36,7 @@ namespace re
 			uint8_t m_numFramesSinceUpdated = 0;
 		};
 
-		struct PlatformParams : public core::IPlatformParams
+		struct PlatObj : public core::IPlatObj
 		{
 			virtual void Destroy() override = 0;
 
@@ -101,7 +101,7 @@ namespace re
 
 		void Destroy();
 
-		PlatformParams* GetPlatformParams() const;
+		PlatObj* GetPlatformObject() const;
 
 
 	public: // Note: Use platformObject to pass external dependencies (e.g. DX12 graphics command lists)
@@ -127,7 +127,7 @@ namespace re
 
 
 	private:
-		std::unique_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatObj> m_platObj;
 		mutable std::mutex m_platformParamsMutex;
 
 		core::PerfLogger* m_perfLogger;
@@ -142,8 +142,8 @@ namespace re
 	};
 
 
-	inline GPUTimer::PlatformParams* GPUTimer::GetPlatformParams() const
+	inline GPUTimer::PlatObj* GPUTimer::GetPlatformObject() const
 	{
-		return m_platformParams.get();
+		return m_platObj.get();
 	}
 }

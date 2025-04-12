@@ -339,13 +339,13 @@ namespace re
 	}
 
 
-	void RenderManager::RegisterForDeferredDelete(std::unique_ptr<core::IPlatformParams>&& platParams)
+	void RenderManager::RegisterForDeferredDelete(std::unique_ptr<core::IPlatObj>&& platObj)
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
 
 			m_deletedPlatObjects.emplace(PlatformDeferredDelete{
-				.m_platformParams = std::move(platParams),
+				.m_platObj = std::move(platObj),
 				.m_frameNum = GetCurrentRenderFrameNum() });
 		}
 	}
@@ -360,7 +360,7 @@ namespace re
 			while (!m_deletedPlatObjects.empty() &&
 				m_deletedPlatObjects.front().m_frameNum + numFramesInFlight < frameNum)
 			{
-				m_deletedPlatObjects.front().m_platformParams->Destroy();
+				m_deletedPlatObjects.front().m_platObj->Destroy();
 				m_deletedPlatObjects.pop();
 			}
 		}
@@ -408,7 +408,7 @@ namespace re
 		// be destroyed from the render thread (i.e. for OpenGL)
 		m_inventory->Destroy();
 
-		// Destroy the BufferAllocator before we process deferred deletions, as Buffers free their PlatformParams there
+		// Destroy the BufferAllocator before we process deferred deletions, as Buffers free their PlatObj there
 		context->GetBufferAllocator()->Destroy();
 
 		ProcessDeferredDeletions(k_forceDeferredDeletionsFlag); // Force-delete everything
