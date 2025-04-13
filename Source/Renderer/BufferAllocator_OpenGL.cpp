@@ -9,6 +9,44 @@
 
 namespace opengl
 {
+	uint32_t BufferAllocator::GetAlignedSize(uint32_t bufferByteSize, re::Buffer::UsageMask usageMask)
+	{
+		const re::BufferAllocator::AllocationPool allocationPool =
+			re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask);
+
+		switch (allocationPool)
+		{
+		case re::BufferAllocator::Constant:
+		{
+			const GLint uboAlignment = opengl::SysInfo::GetUniformBufferOffsetAlignment(); // e.g. 256
+			SEAssert(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize % uboAlignment == 0,
+				"Incompatible alignment");
+
+			return util::RoundUpToNearestMultiple<uint32_t>(bufferByteSize, uboAlignment);
+		}
+		break;
+		case re::BufferAllocator::Structured:
+		{
+			const GLint ssboAlignment = opengl::SysInfo::GetShaderStorageBufferOffsetAlignment(); // e.g. 16
+			SEAssert(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize % ssboAlignment == 0,
+				"Incompatible alignment");
+
+			return util::RoundUpToNearestMultiple<uint32_t>(bufferByteSize, ssboAlignment);
+		}
+		break;
+		case re::BufferAllocator::Raw:
+		{
+			constexpr GLint k_vertexAlignment = 16; // Minimum alignment of a float4 is 16B
+
+			return util::RoundUpToNearestMultiple<uint32_t>(bufferByteSize, k_vertexAlignment);
+		}
+		break;
+		default: SEAssertF("Invalid AllocationPool");
+		}
+		return 0; // This should never happen
+	}
+
+	
 	void BufferAllocator::GetSubAllocation(
 		re::Buffer::UsageMask usageMask, 
 		uint32_t size, 
@@ -17,13 +55,14 @@ namespace opengl
 	{
 		const uint8_t writeIdx = GetSingleFrameGPUWriteIndex();
 
+		const uint32_t alignedSize = GetAlignedSize(size, usageMask);
+
 		const re::BufferAllocator::AllocationPool allocationPool = 
 			re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask);
 
 		SEAssert(allocationPool != re::BufferAllocator::Constant || size <= 4096 * sizeof(glm::vec4),
 			"Constant buffers can only hold up to 4096 float4's");
 
-		uint32_t alignedSize = 0;
 		switch (allocationPool)
 		{
 		case re::BufferAllocator::Constant:
@@ -33,8 +72,6 @@ namespace opengl
 			const GLint uboAlignment = opengl::SysInfo::GetUniformBufferOffsetAlignment(); // e.g. 256
 			SEAssert(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize % uboAlignment == 0,
 				"Incompatible alignment");
-
-			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, uboAlignment);
 		}
 		break;
 		case re::BufferAllocator::Structured:
@@ -44,17 +81,11 @@ namespace opengl
 			const GLint ssboAlignment = opengl::SysInfo::GetShaderStorageBufferOffsetAlignment(); // e.g. 16
 			SEAssert(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize % ssboAlignment == 0,
 				"Incompatible alignment");
-
-			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, ssboAlignment);
 		}
 		break;
 		case re::BufferAllocator::Raw:
 		{
 			bufferNameOut = m_singleFrameBuffers[re::BufferAllocator::Raw][writeIdx];
-
-			constexpr GLint k_vertexAlignment = 16; // Minimum alignment of a float4 is 16B
-
-			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, k_vertexAlignment);
 		}
 		break;
 		default: SEAssertF("Invalid AllocationPool");
@@ -131,7 +162,7 @@ namespace opengl
 	}
 
 
-	void BufferAllocator::BufferDataPlatform()
+	void BufferAllocator::BufferDataPlatform(uint8_t frameOffsetIdx)
 	{
 		// Note: BufferAllocator::m_dirtyBuffersForPlatformUpdateMutex is already locked by this point
 		

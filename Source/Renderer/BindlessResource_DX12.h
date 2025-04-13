@@ -16,7 +16,7 @@ namespace dx12
 	{
 	public:
 		static void GetPlatformResource(re::AccelerationStructureResource const&, void*, size_t);
-		static void GetDescriptor(re::AccelerationStructureResource const&, void*, size_t);
+		static void GetDescriptor(re::AccelerationStructureResource const&, void*, size_t, uint8_t frameOffsetIdx);
 		static void GetResourceUseState(re::AccelerationStructureResource const&, void*, size_t);
 	};
 
@@ -28,7 +28,7 @@ namespace dx12
 	{
 	public:
 		static void GetPlatformResource(re::BufferResource const&, void*, size_t);
-		static void GetDescriptor(re::BufferResource const&, void*, size_t);
+		static void GetDescriptor(re::BufferResource const&, void*, size_t, uint8_t frameOffsetIdx);
 	};
 
 
@@ -39,7 +39,7 @@ namespace dx12
 	{
 	public:
 		static void GetPlatformResource(re::TextureResource const&, void*, size_t);
-		static void GetDescriptor(re::TextureResource const&, void*, size_t);
+		static void GetDescriptor(re::TextureResource const&, void*, size_t, uint8_t frameOffsetIdx);
 		static void GetResourceUseState(re::TextureResource const&, void*, size_t);
 	};
 
@@ -51,6 +51,6 @@ namespace dx12
 	{
 	public:
 		static void GetPlatformResource(re::VertexStreamResource const&, void*, size_t);
-		static void GetDescriptor(re::VertexStreamResource const&, void*, size_t);
+		static void GetDescriptor(re::VertexStreamResource const&, void*, size_t, uint8_t frameOffsetIdx);
 	};
 }

@@ -15,7 +15,7 @@ namespace re
 		virtual ~IBindlessResource() = default;
 
 		virtual void GetPlatformResource(void* resourceOut, size_t resourceOutByteSize) const = 0;
-		virtual void GetDescriptor(void* descriptorOut, size_t descriptorOutByteSize) const = 0;
+		virtual void GetDescriptor(void* descriptorOut, size_t descriptorOutByteSize, uint8_t frameOffsetIdx) const = 0;
 
 		// Optional: Returns a default state otherwise
 		virtual void GetResourceUseState(void* dest, size_t destByteSize) const;

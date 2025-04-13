@@ -28,10 +28,11 @@ namespace re
 
 		struct VertexStreamType
 		{
+			uint32_t m_firstElement = 0;		// Index of first vertex element to be accessed
+			uint32_t m_numElements = 0;
 			gr::VertexStream::Type m_type = gr::VertexStream::Type::Type_Count;
 			re::DataType m_dataType = re::DataType::DataType_Count;
 			bool m_isNormalized = false;
-			uint32_t m_numElements = 0;
 		};
 
 
@@ -225,10 +226,11 @@ namespace re
 		if (m_vertexStream)
 		{
 			m_view = re::BufferView::VertexStreamType{
+				.m_firstElement = 0,
+				.m_numElements = stream->GetNumElements(),
 				.m_type = stream->GetType(),
 				.m_dataType = stream->GetDataType(),
 				.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
-				.m_numElements = stream->GetNumElements(),
 			};
 		}
 	}
@@ -243,10 +245,11 @@ namespace re
 		SEAssert(m_vertexStream && m_bufferOverride, "Override constructure requires a valid stream and buffer");
 
 		m_view = re::BufferView::VertexStreamType{
+			.m_firstElement = 0,
+			.m_numElements = stream->GetNumElements(),
 			.m_type = stream->GetType(),
 			.m_dataType = stream->GetDataType(),
-			.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
-			.m_numElements = stream->GetNumElements(),
+			.m_isNormalized = static_cast<bool>(stream->DoNormalize()),			
 		};
 	}
 

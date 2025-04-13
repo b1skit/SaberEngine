@@ -13,7 +13,7 @@ namespace dx12
 
 
 	public:
-		static uint8_t GetIntermediateResourceIdx(); // Get an index in [0, NumFramesInFight)
+		static uint8_t GetFrameOffsetIdx(); // Get an index in [0, NumFramesInFight)
 
 
 	public: // Platform PIMPL:
@@ -41,7 +41,7 @@ namespace dx12
 	}
 
 
-	inline uint8_t RenderManager::GetIntermediateResourceIdx()
+	inline uint8_t RenderManager::GetFrameOffsetIdx()
 	{
 		re::RenderManager const* renderMgr = re::RenderManager::Get();
 		return renderMgr->GetCurrentRenderFrameNum() % renderMgr->GetNumFramesInFlight();

@@ -27,7 +27,7 @@ namespace re
 
 	public: // IBindlessResource:
 		void GetPlatformResource(void* dest, size_t resourceOutByteSize) const override;
-		void GetDescriptor(void* dest, size_t descriptorOutByteSize) const override;
+		void GetDescriptor(void* dest, size_t descriptorOutByteSize, uint8_t frameOffsetIdx) const override;
 		void GetResourceUseState(void* dest, size_t destByteSize) const override;
 
 
@@ -52,7 +52,7 @@ namespace re
 
 	public: // IBindlessResource:
 		void GetPlatformResource(void* dest, size_t resourceOutByteSize) const override;
-		void GetDescriptor(void* dest, size_t descriptorOutByteSize) const override;
+		void GetDescriptor(void* dest, size_t descriptorOutByteSize, uint8_t frameOffsetIdx) const override;
 
 
 	public:
@@ -76,7 +76,7 @@ namespace re
 
 	public: // IBindlessResource:
 		void GetPlatformResource(void* dest, size_t resourceOutByteSize) const override;
-		void GetDescriptor(void* dest, size_t descriptorOutByteSize) const override;
+		void GetDescriptor(void* dest, size_t descriptorOutByteSize, uint8_t frameOffsetIdx) const override;
 		void GetResourceUseState(void* dest, size_t destByteSize) const override;
 
 
@@ -101,7 +101,7 @@ namespace re
 
 	public: // IBindlessResource:
 		void GetPlatformResource(void* dest, size_t resourceOutByteSize) const override;
-		void GetDescriptor(void* dest, size_t descriptorOutByteSize) const override;
+		void GetDescriptor(void* dest, size_t descriptorOutByteSize, uint8_t frameOffsetIdx) const override;
 
 
 	public:

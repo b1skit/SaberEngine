@@ -10,7 +10,9 @@
 
 namespace re
 {
+	struct BufferResource;
 	class BufferView;
+	struct VertexStreamResource;
 }
 
 namespace dx12
@@ -54,7 +56,7 @@ namespace dx12
 			ID3D12Resource* const& GetGPUResource() const; // Get the resolved GPU resource
 
 			D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
-			uint64_t GetHeapByteOffset() const; // Debug only: GetGPUVirtualAddress() automatically applies this
+			uint64_t GetBaseByteOffset() const; // Debug only: GetGPUVirtualAddress() automatically applies this
 
 
 		public:
@@ -76,6 +78,7 @@ namespace dx12
 			} m_views;
 			std::mutex m_viewMutex; // Views created at first usage during command recording
 
+
 		private:
 			// May be invalid (e.g. single-frame buffers in shared resource). Use m_resolvedGPUResource instead
 			friend class Buffer;
@@ -85,7 +88,7 @@ namespace dx12
 
 			// For multiple resources sub-allocated from a single GPUResource
 			// i.e. Single-frame buffers suballocated from the stack, or mutabable buffers with N-buffered allocations
-			uint64_t m_heapByteOffset;
+			uint64_t m_baseByteOffset;
 		};
 
 
@@ -99,10 +102,20 @@ namespace dx12
 		// DX12-specific functionality:
 		static void Update(
 			re::Buffer const*,
+			uint8_t frameOffsetIdx,
 			uint32_t baseOffset,
 			uint32_t numBytes,
 			dx12::CommandList* copyCmdList);
 
+
+	public: // Helper accessors: Prefer using the PlatObj helpers over these
+		static D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(re::Buffer const*); // Convenience wrapper for PlatObj::GetGPUVirtualAddress()
+		static uint64_t GetAlignedSize(re::Buffer::UsageMask usageMask, uint32_t bufferSize);
+
+		static bool IsInSharedHeap(re::Buffer const*);
+
+
+	public: // Resource views:
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetCBV(re::Buffer const*, re::BufferView const&);
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRV(re::Buffer const*, re::BufferView const&);
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(re::Buffer const*, re::BufferView const&);
@@ -111,7 +124,19 @@ namespace dx12
 		static D3D12_VERTEX_BUFFER_VIEW const* GetOrCreateVertexBufferView(re::Buffer const&, re::BufferView const&);
 		static D3D12_INDEX_BUFFER_VIEW const* GetOrCreateIndexBufferView(re::Buffer const&, re::BufferView const&);
 
-		static D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(re::Buffer const*);
+
+	protected: // Bindless buffer resources: Get a unique descriptor for the Nth frame that respects shared heap offsets
+		friend struct BufferResource;
+		friend struct VertexStreamResource;
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetCBV(re::Buffer const*, re::BufferView const&, uint8_t frameOffsetIdx);
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRV(re::Buffer const*, re::BufferView const&, uint8_t frameOffsetIdx);
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(re::Buffer const*, re::BufferView const&, uint8_t frameOffsetIdx);
+
+
+	private:
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetCBVInternal(re::Buffer const*, re::BufferView const&, uint64_t baseByteOffset);
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetSRVInternal(re::Buffer const*, re::BufferView const&, uint64_t baseByteOffset);
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetUAVInternal(re::Buffer const*, re::BufferView const&, uint64_t baseByteOffset);
 	};
 
 
@@ -129,73 +154,17 @@ namespace dx12
 
 	inline D3D12_GPU_VIRTUAL_ADDRESS Buffer::PlatObj::GetGPUVirtualAddress() const
 	{
-		return GetGPUResource()->GetGPUVirtualAddress() + GetHeapByteOffset();
+		return GetGPUResource()->GetGPUVirtualAddress() + GetBaseByteOffset();
 	}
 
 
-	inline uint64_t Buffer::PlatObj::GetHeapByteOffset() const
+	inline uint64_t Buffer::PlatObj::GetBaseByteOffset() const
 	{
-		return m_heapByteOffset;
+		return m_baseByteOffset;
 	}
 
 
 	// ---
-
-
-	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetCBV(re::Buffer const* buffer, re::BufferView const& view)
-	{
-		SEAssert(buffer, "Buffer cannot be null");
-
-		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, buffer->GetBufferParams()),
-			"Buffer is missing the Constant usage bit");
-
-		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, buffer->GetBufferParams()) &&
-			!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, buffer->GetBufferParams()),
-			"Invalid usage flags for a constant buffer");
-
-		dx12::Buffer::PlatObj const* bufferPlatObj =
-			buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
-
-		return bufferPlatObj->m_cbvDescriptors.GetCreateDescriptor(buffer, view);
-	}
-
-
-	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetSRV(re::Buffer const* buffer, re::BufferView const& view)
-	{
-		SEAssert(buffer, "Buffer cannot be null");
-
-		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, buffer->GetBufferParams()) ||
-			re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer->GetBufferParams()),
-			"Buffer is missing the Structured usage bit");
-		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, buffer->GetBufferParams()),
-			"SRV buffers must have GPU reads enabled");
-
-		dx12::Buffer::PlatObj const* bufferPlatObj =
-			buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
-
-		SEAssert(bufferPlatObj->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
-
-		return bufferPlatObj->m_srvDescriptors.GetCreateDescriptor(buffer, view);
-	}
-
-
-	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetUAV(re::Buffer const* buffer, re::BufferView const& view)
-	{
-		SEAssert(buffer, "Buffer cannot be null");
-
-		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, buffer->GetBufferParams()) ||
-			re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer->GetBufferParams()),
-			"Buffer is missing the Structured usage bit");
-		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, buffer->GetBufferParams()),
-			"UAV buffers must have GPU writes enabled");
-
-		dx12::Buffer::PlatObj const* bufferPlatObj =
-			buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
-
-		SEAssert(bufferPlatObj->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
-
-		return bufferPlatObj->m_uavDescriptors.GetCreateDescriptor(buffer, view);
-	}
 
 
 	inline D3D12_GPU_VIRTUAL_ADDRESS Buffer::GetGPUVirtualAddress(re::Buffer const* buffer)
@@ -203,6 +172,42 @@ namespace dx12
 		SEAssert(buffer, "Buffer cannot be null");
 
 		return buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>()->GetGPUVirtualAddress();
+	}
+
+
+	inline bool Buffer::IsInSharedHeap(re::Buffer const* buffer)
+	{
+		return buffer->GetBufferParams().m_lifetime == re::Lifetime::SingleFrame;
+	}
+
+
+	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetCBV(re::Buffer const* buffer, re::BufferView const& view)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
+
+		return GetCBVInternal(buffer, view, platObj->GetBaseByteOffset());
+	}
+
+
+	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetSRV(re::Buffer const* buffer, re::BufferView const& view)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
+
+		return GetSRVInternal(buffer, view, platObj->GetBaseByteOffset());
+	}
+
+
+	inline D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetUAV(re::Buffer const* buffer, re::BufferView const& view)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
+
+		return GetUAVInternal(buffer, view, platObj->GetBaseByteOffset());
 	}
 
 

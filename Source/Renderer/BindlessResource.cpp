@@ -12,9 +12,10 @@ namespace re
 	}
 
 
-	void AccelerationStructureResource::GetDescriptor(void* descriptorOut, size_t descriptorOutByteSize) const
+	void AccelerationStructureResource::GetDescriptor(
+		void* descriptorOut, size_t descriptorOutByteSize, uint8_t frameOffsetIdx) const
 	{
-		return platform::AccelerationStructureResource::GetDescriptor(*this, descriptorOut, descriptorOutByteSize);
+		return platform::AccelerationStructureResource::GetDescriptor(*this, descriptorOut, descriptorOutByteSize, frameOffsetIdx);
 	}
 
 
@@ -33,9 +34,9 @@ namespace re
 	}
 
 
-	void BufferResource::GetDescriptor(void* descriptorOut, size_t descriptorOutByteSize) const
+	void BufferResource::GetDescriptor(void* descriptorOut, size_t descriptorOutByteSize, uint8_t frameOffsetIdx) const
 	{
-		return platform::BufferResource::GetDescriptor(*this, descriptorOut, descriptorOutByteSize);
+		return platform::BufferResource::GetDescriptor(*this, descriptorOut, descriptorOutByteSize, frameOffsetIdx);
 	}
 
 
@@ -48,9 +49,9 @@ namespace re
 	}
 
 
-	void TextureResource::GetDescriptor(void* descriptorOut, size_t descriptorOutByteSize) const
+	void TextureResource::GetDescriptor(void* descriptorOut, size_t descriptorOutByteSize, uint8_t frameOffsetIdx) const
 	{
-		return platform::TextureResource::GetDescriptor(*this, descriptorOut, descriptorOutByteSize);
+		return platform::TextureResource::GetDescriptor(*this, descriptorOut, descriptorOutByteSize, frameOffsetIdx);
 	}
 
 
@@ -69,8 +70,9 @@ namespace re
 	}
 
 
-	void VertexStreamResource::GetDescriptor(void* descriptorOut, size_t descriptorOutByteSize) const
+	void VertexStreamResource::GetDescriptor(
+		void* descriptorOut, size_t descriptorOutByteSize, uint8_t frameOffsetIdx) const
 	{
-		return platform::VertexStreamResource::GetDescriptor(*this, descriptorOut, descriptorOutByteSize);
+		return platform::VertexStreamResource::GetDescriptor(*this, descriptorOut, descriptorOutByteSize, frameOffsetIdx);
 	}
 }

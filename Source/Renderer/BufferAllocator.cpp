@@ -815,6 +815,12 @@ namespace re
 	}
 
 
+	uint8_t BufferAllocator::GetFrameOffsetIndex() const
+	{
+		return m_currentFrameNum % m_numFramesInFlight;
+	}
+
+
 	void BufferAllocator::BufferData(uint64_t renderFrameNum)
 	{
 		SEBeginCPUEvent("re::BufferAllocator::BufferData");
@@ -840,8 +846,7 @@ namespace re
 			// kept up to date
 			std::unordered_set<std::shared_ptr<re::Buffer>> dirtyMutableBuffers;
 
-			const uint8_t curFrameHeapOffsetFactor = m_currentFrameNum % m_numFramesInFlight; // Only used for mutable buffers
-
+			const uint8_t curFrameHeapOffsetFactor = GetFrameOffsetIndex();
 
 			auto BufferTemporaryData = [&](Handle currentHandle, re::Buffer* currentBuffer)
 				{
@@ -992,7 +997,7 @@ namespace re
 
 			// Perform any platform-specific buffering (e.g. update buffers that do not have CPU writes enabled)
 			SEBeginCPUEvent("re::BufferAllocator::BufferDataPlatform");
-			BufferDataPlatform();
+			BufferDataPlatform(GetFrameOffsetIndex());
 			m_dirtyBuffersForPlatformUpdate.clear();
 			SEEndCPUEvent();
 

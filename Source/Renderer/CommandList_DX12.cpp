@@ -378,13 +378,11 @@ namespace dx12
 
 			if (rootParam)
 			{
-				bool transitionResource = false;
 				D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_COMMON; // Updated below
 
 				re::Buffer::BufferParams const& bufferParams = buffer->GetBufferParams();
 
-				// Don't transition resources representing shared heaps
-				const bool isInSharedHeap = bufferParams.m_lifetime == re::Lifetime::SingleFrame;
+				const bool isInSharedHeap = dx12::Buffer::IsInSharedHeap(buffer);
 
 				switch (rootParam->m_type)
 				{
@@ -402,9 +400,9 @@ namespace dx12
 						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress());
 
 					toState = (m_type == dx12::CommandListType::Compute ?
-						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-
-					transitionResource = !isInSharedHeap;
+						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : 
+							(isInSharedHeap ? 
+								D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
 				}
 				break;
 				case RootSignature::RootParameter::Type::SRV:
@@ -418,9 +416,9 @@ namespace dx12
 						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress());
 
 					toState = (m_type == dx12::CommandListType::Compute ?
-						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-
-					transitionResource = !isInSharedHeap;
+						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE :
+						(isInSharedHeap ?
+							D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
 				}
 				break;
 				case RootSignature::RootParameter::Type::UAV:
@@ -435,8 +433,9 @@ namespace dx12
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineUAV(
 						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress());
 
+					SEAssert(buffer->GetLifetime() != re::Lifetime::SingleFrame, "Unexpected resource lifetime for UAV");
+
 					toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-					transitionResource = true;
 				}
 				break;
 				case RootSignature::RootParameter::Type::DescriptorTable:
@@ -451,9 +450,9 @@ namespace dx12
 						tableDescriptor = dx12::Buffer::GetCBV(bufferInput.GetBuffer(), bufView);
 
 						toState = (m_type == dx12::CommandListType::Compute ?
-							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-
-						transitionResource = !isInSharedHeap;
+							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE :
+							(isInSharedHeap ?
+								D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
 					}
 					break;
 					case dx12::RootSignature::DescriptorType::SRV:
@@ -461,16 +460,18 @@ namespace dx12
 						tableDescriptor = dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView);
 
 						toState = (m_type == dx12::CommandListType::Compute ?
-							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-						transitionResource = !isInSharedHeap;
+							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE :
+							(isInSharedHeap ?
+								D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
 					}
 					break;
 					case dx12::RootSignature::DescriptorType::UAV:
 					{
 						tableDescriptor = dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufView);
 
+						SEAssert(buffer->GetLifetime() != re::Lifetime::SingleFrame, "Unexpected resource lifetime for UAV");
+
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-						transitionResource = true;
 					}
 					break;
 					default: SEAssertF("Invalid type");
@@ -487,22 +488,18 @@ namespace dx12
 				default: SEAssertF("Unexpected root parameter type for a buffer");
 				}
 
-				if (transitionResource)
-				{
-					SEAssert(!isInSharedHeap, "Trying to transition a resource in a shared heap. This is unexpected");
-					SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state");
+				SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state");
 
-					resourceTransitions.emplace_back(TransitionMetadata{
-						.m_resource = bufferPlatObj->GetGPUResource(),
-						.m_toState = toState,
-						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES }
-						});
-				}
+				resourceTransitions.emplace_back(TransitionMetadata{
+					.m_resource = bufferPlatObj->GetGPUResource(),
+					.m_toState = toState,
+					.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES }
+					});
 
 				// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
 				if (re::Buffer::HasAccessBit(re::Buffer::CPURead, bufferParams))
 				{
-					const uint8_t readbackIdx = dx12::RenderManager::GetIntermediateResourceIdx();
+					const uint8_t readbackIdx = dx12::RenderManager::GetFrameOffsetIdx();
 
 					m_seenReadbackResources.emplace_back(ReadbackResourceMetadata{
 						.m_srcResource = bufferPlatObj->GetGPUResource(),
@@ -601,6 +598,8 @@ namespace dx12
 	void CommandList::SetVertexBuffers(
 		std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const& vertexBuffers)
 	{
+		SEAssert(m_type == dx12::CommandListType::Direct, "Unexpected command list type");
+
 		// Batch all of the resource transitions in advance:
 		std::vector<TransitionMetadata> resourceTransitions;
 		resourceTransitions.reserve(vertexBuffers.size());
@@ -615,18 +614,17 @@ namespace dx12
 			}
 			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].GetBuffer();
 
-			// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
-			if (streamBuffer->GetLifetime() != re::Lifetime::SingleFrame)
-			{
-				dx12::Buffer::PlatObj* streamBufferPlatObj =
-					streamBuffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+			const bool isInSharedHeap = dx12::Buffer::IsInSharedHeap(streamBuffer);
+			const D3D12_RESOURCE_STATES toState = isInSharedHeap ? 
+				D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 
-				resourceTransitions.emplace_back(TransitionMetadata{
-					.m_resource = streamBufferPlatObj->GetGPUResource(),
-					.m_toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-					.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
-					});
-			}
+			dx12::Buffer::PlatObj* streamBufferPlatObj = streamBuffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+
+			resourceTransitions.emplace_back(TransitionMetadata{
+				.m_resource = streamBufferPlatObj->GetGPUResource(),
+				.m_toState = toState,
+				.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES },
+				});
 		}
 		TransitionResourcesInternal(std::move(resourceTransitions));
 
@@ -693,20 +691,22 @@ namespace dx12
 	{
 		SEAssert(indexBuffer.GetStream(), "Index stream buffer is null");
 
+		SEAssert(m_type == dx12::CommandListType::Direct, "Unexpected command list type");
+
 		dx12::Buffer::PlatObj* streamBufferPlatObj =
 			indexBuffer.GetBuffer()->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
 		m_commandList->IASetIndexBuffer(
 			dx12::Buffer::GetOrCreateIndexBufferView(*indexBuffer.GetBuffer(), indexBuffer.m_view));
 
-		// Currently, single-frame buffers are held in a shared heap so we can't/don't need to transition them here
-		if (indexBuffer.GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame)
-		{
-			TransitionResourceInternal(
-				streamBufferPlatObj->GetGPUResource(),
-				D3D12_RESOURCE_STATE_INDEX_BUFFER,
-				{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
-		}
+		const bool isInSharedHeap = dx12::Buffer::IsInSharedHeap(indexBuffer.GetBuffer());
+		const D3D12_RESOURCE_STATES toState = isInSharedHeap ?
+			D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_INDEX_BUFFER;
+
+		TransitionResourceInternal(
+			streamBufferPlatObj->GetGPUResource(),
+			toState,
+			{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 	}
 
 
@@ -1088,12 +1088,11 @@ namespace dx12
 			// Transition the inputs:
 			for (auto const& instance : createParams->m_geometry)
 			{
-				SEAssert(instance.GetVertexPositions().GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
-					"Single frame buffers are held in a shared heap, we can't transition them. DXR requires vertex"
-					"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
-
 				dx12::Buffer::PlatObj* positionBufferPlatObj =
 					instance.GetVertexPositions().GetBuffer()->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+
+				SEAssert(dx12::Buffer::IsInSharedHeap(instance.GetVertexPositions().GetBuffer()) == false,
+					"Vertex buffer is in a shared heap. This is currently unexpected, but could be fine");
 
 				resourceTransitions.emplace_back(TransitionMetadata{
 					.m_resource = positionBufferPlatObj->GetGPUResource(),
@@ -1103,12 +1102,11 @@ namespace dx12
 				
 				if (instance.GetVertexIndices())
 				{
-					SEAssert(instance.GetVertexIndices()->GetBuffer()->GetLifetime() != re::Lifetime::SingleFrame,
-						"Single frame buffers are held in a shared heap, we can't transition them. DXR requires index"
-						"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
-
 					dx12::Buffer::PlatObj* indexBufferPlatObj =
 						instance.GetVertexIndices()->GetBuffer()->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+
+					SEAssert(dx12::Buffer::IsInSharedHeap(instance.GetVertexIndices()->GetBuffer()) == false,
+						"Index buffer is in a shared heap. This is currently unexpected, but could be fine");
 
 					resourceTransitions.emplace_back(TransitionMetadata{
 						.m_resource = indexBufferPlatObj->GetGPUResource(),
@@ -1119,10 +1117,6 @@ namespace dx12
 
 				if (createParams->m_transform)
 				{
-					SEAssert(createParams->m_transform->GetLifetime() != re::Lifetime::SingleFrame,
-						"Single frame buffers are held in a shared heap, we can't transition them. DXR requires "
-						"buffers to be in the D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state");
-
 					dx12::Buffer::PlatObj* bufferPlatObj =
 						createParams->m_transform->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 

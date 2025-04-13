@@ -170,6 +170,10 @@ namespace
 				dx12::GetResourceStateAsCStr(beforeState),
 				dx12::GetResourceStateAsCStr(afterState),
 				dx12::CommandList::GetCommandListTypeName(cmdListType)).c_str());
+#else
+		SEAssert(CommandListTypeSupportsState(cmdListType, beforeState) &&
+			CommandListTypeSupportsState(cmdListType, afterState),
+			"Invalid before state for the current command list type");
 #endif
 
 		// TODO: This check is duplicated in CommandList::TransitionResource

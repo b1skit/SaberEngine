@@ -5,7 +5,7 @@
 namespace platform
 {
 	void (*AccelerationStructureResource::GetPlatformResource)(re::AccelerationStructureResource const&, void*, size_t) = nullptr;
-	void (*AccelerationStructureResource::GetDescriptor)(re::AccelerationStructureResource const&, void*, size_t) = nullptr;
+	void (*AccelerationStructureResource::GetDescriptor)(re::AccelerationStructureResource const&, void*, size_t, uint8_t) = nullptr;
 	void (*AccelerationStructureResource::GetResourceUseState)(re::AccelerationStructureResource const&, void*, size_t) = nullptr;
 
 
@@ -13,14 +13,14 @@ namespace platform
 
 
 	void (*BufferResource::GetPlatformResource)(re::BufferResource const&, void*, size_t) = nullptr;
-	void (*BufferResource::GetDescriptor)(re::BufferResource const&, void*, size_t) = nullptr;
+	void (*BufferResource::GetDescriptor)(re::BufferResource const&, void*, size_t, uint8_t) = nullptr;
 
 
 	// ---
 
 
 	void (*TextureResource::GetPlatformResource)(re::TextureResource const&, void*, size_t) = nullptr;
-	void (*TextureResource::GetDescriptor)(re::TextureResource const&, void*, size_t) = nullptr;
+	void (*TextureResource::GetDescriptor)(re::TextureResource const&, void*, size_t, uint8_t) = nullptr;
 	void (*TextureResource::GetResourceUseState)(re::TextureResource const&, void*, size_t) = nullptr;
 
 
@@ -28,5 +28,5 @@ namespace platform
 
 
 	void (*VertexStreamResource::GetPlatformResource)(re::VertexStreamResource const&, void*, size_t) = nullptr;
-	void (*VertexStreamResource::GetDescriptor)(re::VertexStreamResource const&, void*, size_t) = nullptr;
+	void (*VertexStreamResource::GetDescriptor)(re::VertexStreamResource const&, void*, size_t, uint8_t) = nullptr;
 }

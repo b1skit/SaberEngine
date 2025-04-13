@@ -29,7 +29,7 @@ namespace re
 
 		virtual void Destroy();
 
-		virtual void BufferDataPlatform() = 0; // API-specific data buffering
+		virtual void BufferDataPlatform(uint8_t frameOffsetIdx) = 0; // API-specific data buffering
 
 		bool IsValid() const; // Has Destroy() been called?
 
@@ -150,11 +150,12 @@ namespace re
 
 	protected:
 		uint8_t m_numFramesInFlight;
-
-
 	private:
 		uint64_t m_currentFrameNum; // Render thread read frame # is always 1 behind the front end thread frame
 		
+		uint8_t GetFrameOffsetIndex() const;
+
+
 	private:
 		bool m_isValid;
 

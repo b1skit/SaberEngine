@@ -65,8 +65,10 @@ namespace dx12
 			}
 		};
 
-		std::vector<CacheEntry> m_descriptorCache;
 		std::mutex m_descriptorCacheMutex;
+		std::vector<CacheEntry> m_descriptorCache;
+
+		ID3D12Device* m_deviceCache;
 
 		DescriptorType m_descriptorType;
 

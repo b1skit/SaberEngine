@@ -9,7 +9,7 @@
 #include "Texture_DX12.h"
 
 #include "Core/Assert.h"
-#include "Core/Util/MathUtils.h"
+#include "Core/Util/CastUtils.h"
 
 
 namespace
@@ -45,6 +45,7 @@ namespace
 
 
 	void InitializeTextureSRV(
+		ID3D12Device* device,
 		dx12::DescriptorAllocation& descriptor,
 		core::InvPtr<re::Texture> const& texture,
 		re::TextureView const& texView)
@@ -160,13 +161,12 @@ namespace
 		default: SEAssertF("Invalid dimension");
 		}
 
-		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
-
 		device->CreateShaderResourceView(texPlatObj->m_gpuResource->Get(), &srvDesc, descriptor.GetBaseDescriptor());
 	}
 
 
 	void InitializeTextureUAV(
+		ID3D12Device* device,
 		dx12::DescriptorAllocation& descriptor,
 		core::InvPtr<re::Texture> const& texture,
 		re::TextureView const& texView)
@@ -262,8 +262,6 @@ namespace
 		default: SEAssertF("Invalid dimension");
 		}
 
-		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
-
 		device->CreateUnorderedAccessView(
 			texPlatObj->m_gpuResource->Get(),
 			nullptr,		// Counter resource
@@ -273,6 +271,7 @@ namespace
 
 
 	void InitializeTextureRTV(
+		ID3D12Device* device,
 		dx12::DescriptorAllocation& descriptor,
 		core::InvPtr<re::Texture> const& texture,
 		re::TextureView const& texView)
@@ -365,8 +364,6 @@ namespace
 		default: SEAssertF("Invalid dimension");
 		}
 
-		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
-
 		device->CreateRenderTargetView(
 			texPlatObj->m_gpuResource->Get(),
 			&rtvDesc,
@@ -376,6 +373,7 @@ namespace
 
 
 	void InitializeTextureDSV(
+		ID3D12Device* device,
 		dx12::DescriptorAllocation& descriptor,
 		core::InvPtr<re::Texture> const& texture,
 		re::TextureView const& texView)
@@ -466,8 +464,6 @@ namespace
 		default: SEAssertF("Invalid dimension");
 		}
 
-		ID3D12Device* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
-
 		device->CreateDepthStencilView(
 			texPlatObj->m_gpuResource->Get(),
 			&dsvDesc,
@@ -478,18 +474,52 @@ namespace
 	// ---
 
 
+	void InitializeBufferCBV(
+		ID3D12Device* device,
+		dx12::DescriptorAllocation& descriptor,
+		re::Buffer const& buffer,
+		re::BufferView const& bufView)
+	{
+		SEAssert(bufView.IsVertexStreamView() == false,
+			"Vertex streams are often larger than CBVs allow, so creating a CBV is unexpected");
+
+		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+		
+		const uint64_t alignedSize = 
+			dx12::Buffer::GetAlignedSize(buffer.GetBufferParams().m_usageMask, buffer.GetTotalBytes());
+
+		// Note: We intentionally don't apply the heap base byte offset here: Incoming BufferViews must have already
+		// been transformed to be relative to the backing GPU resource
+		const D3D12_GPU_VIRTUAL_ADDRESS bufferLocation =
+			platObj->GetGPUResource()->GetGPUVirtualAddress() + (alignedSize * bufView.m_bufferView.m_firstElement);
+
+		const uint32_t sizeInBytes = util::CheckedCast<uint32_t>(alignedSize * bufView.m_bufferView.m_numElements);
+
+		SEAssert(sizeInBytes % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0,
+			"Invalid alignment for a CBV");
+
+		const D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc
+		{
+			.BufferLocation = bufferLocation,
+			.SizeInBytes = sizeInBytes,
+		};
+
+		device->CreateConstantBufferView(
+			&cbvDesc,
+			descriptor.GetBaseDescriptor());
+	}
+
+
 	void InitializeBufferSRV(
+		ID3D12Device* device,
 		dx12::DescriptorAllocation& descriptor,
 		re::Buffer const& buffer,
 		re::BufferView const& bufView)
 	{
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 		
-		// TODO: Need to figure out how to apply the heap byte offset here (or if that is even possible). Perhaps we
-		// could apply it to the CPU-visible descriptor handle that gets returned by the caller above us? We probably
-		// also need to update the hashing function to prevent aliasing as well
-		SEAssert(platObj->GetHeapByteOffset() == 0, "Heap byte offset is non-zero");
-
+		// Note: Incoming buffer views must have already been transformed to be relative to the backing resource
+		
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 
 		if (bufView.IsVertexStreamView())
@@ -499,7 +529,7 @@ namespace
 				.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
 				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
 				.Buffer = D3D12_BUFFER_SRV{
-					.FirstElement = 0,
+					.FirstElement = bufView.m_streamView.m_firstElement,
 					.NumElements = bufView.m_streamView.m_numElements,
 					.StructureByteStride = re::DataTypeToByteStride(bufView.m_streamView.m_dataType), // Size of 1 element in the shader
 					.Flags = D3D12_BUFFER_SRV_FLAG_NONE,
@@ -519,7 +549,7 @@ namespace
 				}};
 		}
 		
-		re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateShaderResourceView(
+		device->CreateShaderResourceView(
 			platObj->GetGPUResource(),
 			&srvDesc,
 			descriptor.GetBaseDescriptor());
@@ -527,17 +557,15 @@ namespace
 
 
 	void InitializeBufferUAV(
+		ID3D12Device* device,
 		dx12::DescriptorAllocation& descriptor,
 		re::Buffer const& buffer,
 		re::BufferView const& bufView)
 	{
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 		
-		// TODO: Need to figure out how to apply the heap byte offset here (or if that is even possible). Perhaps we
-		// could apply it to the CPU-visible descriptor handle that gets returned by the caller above us? We probably
-		// also need to update the hashing function to prevent aliasing as well
-		SEAssert(platObj->GetHeapByteOffset() == 0, "Heap byte offset is non-zero");
-
+		// Note: Incoming buffer views must have already been transformed to be relative to the backing resource
+		
 		SEAssert(bufView.IsVertexStreamView() == false, "TODO: Support UAV creation for vertex stream views");
 
 		const D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc
@@ -553,34 +581,10 @@ namespace
 			}
 		};
 
-		re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateUnorderedAccessView(
+		device->CreateUnorderedAccessView(
 			platObj->GetGPUResource(),
 			nullptr,	// Optional counter resource
 			&uavDesc,
-			descriptor.GetBaseDescriptor());
-	}
-
-
-	void InitializeBufferCBV(
-		dx12::DescriptorAllocation& descriptor,
-		re::Buffer const& buffer,
-		re::BufferView const& bufView)
-	{
-		SEAssert(bufView.IsVertexStreamView() == false,
-			"Vertex streams are often larger than CBVs allow, so creating a CBV is unexpected");
-
-		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
-
-		const D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc
-		{
-			.BufferLocation = platObj->GetGPUVirtualAddress(),
-			.SizeInBytes = util::RoundUpToNearestMultiple<uint32_t>(
-				buffer.GetTotalBytes(),
-				D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT),
-		};
-		
-		re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateConstantBufferView(
-			&cbvDesc,
 			descriptor.GetBaseDescriptor());
 	}
 }
@@ -589,8 +593,11 @@ namespace dx12
 {
 	DescriptorCache::DescriptorCache(DescriptorType descriptorType)
 		: m_descriptorType(descriptorType)
+		, m_deviceCache(nullptr)
 	{
 		SEAssert(m_descriptorType != DescriptorType::DescriptorType_Count, "Invalid descriptor type");
+
+		m_deviceCache = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 	}
 
 
@@ -650,7 +657,6 @@ namespace dx12
 			if (cacheItr == m_descriptorCache.end() || cacheItr->first != texView.GetDataHash())
 			{
 				dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-				ID3D12Device* device = context->GetDevice().GetD3DDevice().Get();
 
 				CacheEntry newCacheEntry{
 					texView.GetDataHash(),
@@ -660,22 +666,22 @@ namespace dx12
 				{
 				case DescriptorType::SRV:
 				{
-					InitializeTextureSRV(newCacheEntry.second, texture, texView);
+					InitializeTextureSRV(m_deviceCache, newCacheEntry.second, texture, texView);
 				}
 				break;
 				case DescriptorType::UAV:
 				{
-					InitializeTextureUAV(newCacheEntry.second, texture, texView);
+					InitializeTextureUAV(m_deviceCache, newCacheEntry.second, texture, texView);
 				}
 				break;
 				case DescriptorType::RTV:
 				{
-					InitializeTextureRTV(newCacheEntry.second, texture, texView);
+					InitializeTextureRTV(m_deviceCache, newCacheEntry.second, texture, texView);
 				}
 				break;
 				case DescriptorType::DSV:
 				{
-					InitializeTextureDSV(newCacheEntry.second, texture, texView);
+					InitializeTextureDSV(m_deviceCache, newCacheEntry.second, texture, texView);
 				}
 				break;
 				default: SEAssertF("Invalid heap type");
@@ -730,7 +736,6 @@ namespace dx12
 			if (cacheItr == m_descriptorCache.end() || cacheItr->first != bufViewHash)
 			{
 				dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-				ID3D12Device* device = context->GetDevice().GetD3DDevice().Get();
 
 				CacheEntry newCacheEntry{
 					bufViewHash,
@@ -740,17 +745,17 @@ namespace dx12
 				{
 				case DescriptorType::CBV:
 				{
-					InitializeBufferCBV(newCacheEntry.second, buffer, bufView);
+					InitializeBufferCBV(m_deviceCache, newCacheEntry.second, buffer, bufView);
 				}
 				break;
 				case DescriptorType::SRV:
 				{
-					InitializeBufferSRV(newCacheEntry.second, buffer, bufView);
+					InitializeBufferSRV(m_deviceCache, newCacheEntry.second, buffer, bufView);
 				}
 				break;
 				case DescriptorType::UAV:
 				{
-					InitializeBufferUAV(newCacheEntry.second, buffer, bufView);
+					InitializeBufferUAV(m_deviceCache, newCacheEntry.second, buffer, bufView);
 				}
 				break;
 				case DescriptorType::RTV:

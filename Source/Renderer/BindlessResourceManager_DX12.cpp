@@ -255,7 +255,7 @@ namespace
 	}
 
 
-	inline uint8_t GetFrameIndex(uint64_t frameNum, uint8_t numFramesInFlight)
+	inline uint8_t GetFrameOffsetIdx(uint64_t frameNum, uint8_t numFramesInFlight)
 	{
 		return frameNum % numFramesInFlight;
 	}
@@ -285,8 +285,12 @@ namespace dx12
 
 			if (m_isCreated)
 			{
+				for (auto& cache : m_cpuDescriptorCache)
+				{
+					cache.clear();
+				}
+
 				m_resourceCache.clear();
-				m_cpuDescriptorCache.clear();
 				m_usageStateCache.clear();
 
 				m_deviceCache = nullptr;
@@ -345,11 +349,6 @@ namespace dx12
 				brmPlatObj->m_isCreated = true;
 			}
 
-			// Initialize/grow our CPU-visible cache vectors (No-op if old size == new size)
-			brmPlatObj->m_resourceCache.resize(totalResourceIndexes, nullptr);
-			brmPlatObj->m_cpuDescriptorCache.resize(totalResourceIndexes, brmPlatObj->m_nullDescriptor);
-			brmPlatObj->m_usageStateCache.resize(totalResourceIndexes, D3D12_RESOURCE_STATE_COMMON);
-
 			// Deferred-delete any existing shader-visible descriptor heap via a temporary PlatObj:
 			std::unique_ptr<dx12::BindlessResourceManager::PlatObj> paramsToDelete =
 				std::make_unique<dx12::BindlessResourceManager::PlatObj>();
@@ -357,27 +356,36 @@ namespace dx12
 			paramsToDelete->m_gpuDescriptorHeaps = std::move(brmPlatObj->m_gpuDescriptorHeaps);
 			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(paramsToDelete));
 
+			// Initialize/grow our non-frame-indexed cache vectors (No-op if old size == new size)
+			brmPlatObj->m_resourceCache.resize(totalResourceIndexes, nullptr);
+			brmPlatObj->m_usageStateCache.resize(totalResourceIndexes, D3D12_RESOURCE_STATE_COMMON);
 
 			// Create and initialize replacement heaps:
-			for (uint8_t i = 0; i < brmPlatObj->m_numFramesInFlight; ++i)
+			for (uint8_t frameIdx = 0; frameIdx < brmPlatObj->m_numFramesInFlight; ++frameIdx)
 			{
-				brmPlatObj->m_gpuDescriptorHeaps[i] = CreateShaderVisibleDescriptorHeaps(
+				// Initialize/grow the CPU-visible descriptor cache:
+				brmPlatObj->m_cpuDescriptorCache[frameIdx].resize(
+					totalResourceIndexes,
+					brmPlatObj->m_nullDescriptor);
+
+				// Initialize/grow the GPU-visible descriptor cache:
+				brmPlatObj->m_gpuDescriptorHeaps[frameIdx] = CreateShaderVisibleDescriptorHeaps(
 					brmPlatObj->m_deviceCache,
 					totalResourceIndexes,
-					i);
+					frameIdx);
 
 				// Copy descriptors into the new heap:
 				const D3D12_CPU_DESCRIPTOR_HANDLE destHandle =
-					brmPlatObj->m_gpuDescriptorHeaps[i]->GetCPUDescriptorHandleForHeapStart();
+					brmPlatObj->m_gpuDescriptorHeaps[frameIdx]->GetCPUDescriptorHandleForHeapStart();
 
 				brmPlatObj->m_deviceCache->CopyDescriptors(
-					1,											// UINT NumDestDescriptorRanges
-					&destHandle,								// const D3D12_CPU_DESCRIPTOR_HANDLE* pDestDescriptorRangeStarts
-					&totalResourceIndexes,						// const UINT* pDestDescriptorRangeSizes
-					totalResourceIndexes,						// UINT NumSrcDescriptorRanges
-					brmPlatObj->m_cpuDescriptorCache.data(),	// const D3D12_CPU_DESCRIPTOR_HANDLE* pSrcDescriptorRangeStarts
-					nullptr,									// const UINT* pSrcDescriptorRangeSizes
-					k_brmHeapType								// D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType
+					1,													// UINT NumDestDescriptorRanges
+					&destHandle,										// const D3D12_CPU_DESCRIPTOR_HANDLE* pDestDescriptorRangeStarts
+					&totalResourceIndexes,								// const UINT* pDestDescriptorRangeSizes
+					totalResourceIndexes,								// UINT NumSrcDescriptorRanges
+					brmPlatObj->m_cpuDescriptorCache[frameIdx].data(),	// const D3D12_CPU_DESCRIPTOR_HANDLE* pSrcDescriptorRangeStarts
+					nullptr,											// const UINT* pSrcDescriptorRangeSizes
+					k_brmHeapType										// D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType
 				);
 			}
 		}
@@ -398,7 +406,6 @@ namespace dx12
 			if (resource)
 			{
 				SEAssert(brmPlatObj->m_resourceCache[index] == nullptr &&
-					brmPlatObj->m_cpuDescriptorCache[index].ptr == brmPlatObj->m_nullDescriptor.ptr &&
 					brmPlatObj->m_usageStateCache[index] == D3D12_RESOURCE_STATE_COMMON,
 					"A resource cache entry is not zero-initialized");
 
@@ -406,11 +413,20 @@ namespace dx12
 				// Note: May be null if resource doesn't want to participate in resource transitions
 				resource->GetPlatformResource(&brmPlatObj->m_resourceCache[index], sizeof(ID3D12Resource*));
 
-				// Add the resource descriptor to the CPU-visible descriptor cache:
-				resource->GetDescriptor(
-					&brmPlatObj->m_cpuDescriptorCache[index],
-					sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
-				SEAssert(brmPlatObj->m_cpuDescriptorCache[index].ptr != 0, "Failed to get descriptor handle");
+				for (uint8_t frameOffsetIdx = 0; frameOffsetIdx < brmPlatObj->m_numFramesInFlight; ++frameOffsetIdx)
+				{
+					SEAssert(brmPlatObj->m_cpuDescriptorCache[frameOffsetIdx][index].ptr == brmPlatObj->m_nullDescriptor.ptr,
+						"A resource cache entry is not zero-initialized");
+
+					// Add the resource descriptor to the CPU-visible descriptor cache:
+					resource->GetDescriptor(
+						&brmPlatObj->m_cpuDescriptorCache[frameOffsetIdx][index],
+						sizeof(D3D12_CPU_DESCRIPTOR_HANDLE),
+						frameOffsetIdx);
+					
+					SEAssert(brmPlatObj->m_cpuDescriptorCache[frameOffsetIdx][index].ptr != 0,
+						"Failed to get descriptor handle");
+				}
 
 				// Add the default resource usage state to the cache:
 				resource->GetResourceUseState(&brmPlatObj->m_usageStateCache[index], sizeof(D3D12_RESOURCE_STATES));
@@ -423,13 +439,19 @@ namespace dx12
 			}
 			else // Otherwise, zero out the caches:
 			{
-				SEAssert(brmPlatObj->m_cpuDescriptorCache[index].ptr != brmPlatObj->m_nullDescriptor.ptr &&
-					brmPlatObj->m_usageStateCache[index] != D3D12_RESOURCE_STATE_COMMON,
+				SEAssert(brmPlatObj->m_usageStateCache[index] != D3D12_RESOURCE_STATE_COMMON,
 					"Trying to release a resource cache entry that is already zero-initialized");
 
 				brmPlatObj->m_resourceCache[index] = nullptr;
-				brmPlatObj->m_cpuDescriptorCache[index] = brmPlatObj->m_nullDescriptor;
 				brmPlatObj->m_usageStateCache[index] = D3D12_RESOURCE_STATE_COMMON;
+
+				for (auto& frameEntry : brmPlatObj->m_cpuDescriptorCache)
+				{
+					SEAssert(frameEntry[index].ptr != brmPlatObj->m_nullDescriptor.ptr,
+						"Trying to release a resource cache entry that is already zero-initialized");
+
+					frameEntry[index] = brmPlatObj->m_nullDescriptor;
+				}
 
 				SEAssert(brmPlatObj->m_numActiveResources > 0, "About to underflow m_numActiveResources");
 				brmPlatObj->m_numActiveResources--;
@@ -437,21 +459,18 @@ namespace dx12
 
 			// Finally, copy the descriptor into our GPU-visible heaps. This is safe for all N buffers, as we're either
 			// inserting into an empty location, or replacing a descriptor that was released N frames ago
-			for (uint8_t i = 0; i < brmPlatObj->m_numFramesInFlight; ++i)
+			const uint32_t destOffset = (index * brmPlatObj->m_elementSize);
+			for (uint8_t frameOffsetIdx = 0; frameOffsetIdx < brmPlatObj->m_numFramesInFlight; ++frameOffsetIdx)
 			{
 				const D3D12_CPU_DESCRIPTOR_HANDLE destHandle(
-					brmPlatObj->m_gpuDescriptorHeaps[i]->GetCPUDescriptorHandleForHeapStart().ptr +
-					(index * brmPlatObj->m_elementSize));
+					brmPlatObj->m_gpuDescriptorHeaps[frameOffsetIdx]->GetCPUDescriptorHandleForHeapStart().ptr + destOffset);
 
 				brmPlatObj->m_deviceCache->CopyDescriptorsSimple(
 					1,
 					destHandle,
-					brmPlatObj->m_cpuDescriptorCache[index],
+					brmPlatObj->m_cpuDescriptorCache[frameOffsetIdx][index],
 					k_brmHeapType);
 			}
-
-			// TODO: Handle cases where we use **DIFFERENT** parts of the same resource, depending on the frame
-			// -> e.g. mutable buffers
 		}
 	}
 
@@ -520,9 +539,9 @@ namespace dx12
 
 			SEAssert(brmPlatObj->m_isCreated, "BindlessResourceManager has not been created");
 
-			const uint8_t frameIndex = GetFrameIndex(frameNum, brmPlatObj->m_numFramesInFlight);
+			const uint8_t frameOffsetIdx = GetFrameOffsetIdx(frameNum, brmPlatObj->m_numFramesInFlight);
 
-			return brmPlatObj->m_gpuDescriptorHeaps[frameIndex].Get();
+			return brmPlatObj->m_gpuDescriptorHeaps[frameOffsetIdx].Get();
 		}
 	}
 }

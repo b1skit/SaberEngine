@@ -31,10 +31,10 @@ namespace
 		};
 
 		const re::Buffer::BufferParams traceRayBufferParams{
-			.m_lifetime = re::Lifetime::Permanent,
+			.m_lifetime = re::Lifetime::SingleFrame,
 			.m_stagingPool = re::Buffer::StagingPool::Temporary,
-			.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
-			.m_accessMask = re::Buffer::Access::GPURead,
+			.m_memPoolPreference = re::Buffer::MemoryPoolPreference::UploadHeap,
+			.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
 			.m_usageMask = re::Buffer::Usage::Constant,
 		};
 

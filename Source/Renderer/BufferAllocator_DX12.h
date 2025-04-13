@@ -16,7 +16,7 @@ namespace dx12
 
 		void Destroy() override;
 
-		void BufferDataPlatform() override;
+		void BufferDataPlatform(uint8_t frameOffsetIdx) override;
 
 
 	public: // DX12-specific functionality:

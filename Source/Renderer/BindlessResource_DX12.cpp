@@ -26,7 +26,7 @@ namespace dx12
 
 
 	void AccelerationStructureResource::GetDescriptor(
-		re::AccelerationStructureResource const& resource, void* dest, size_t destByteSize)
+		re::AccelerationStructureResource const& resource, void* dest, size_t destByteSize, uint8_t frameOffsetIdx)
 	{
 		SEAssert(dest && destByteSize, "Invalid args received");
 		SEAssert(resource.m_viewType == re::ViewType::SRV, "Unexpected view type");
@@ -61,28 +61,19 @@ namespace dx12
 	{
 		SEAssert(dest && destByteSize, "Invalid args received");
 
-		// Single frame buffers are (currently) stack allocated from a shared heap and thus we don't change state
-		const bool isInSharedHeap = resource.m_resource->GetBufferParams().m_lifetime == re::Lifetime::SingleFrame;
-		if (isInSharedHeap)
-		{
-			memset(dest, 0, destByteSize);
-		}
-		else
-		{
-			dx12::Buffer::PlatObj* platObj =
-				resource.m_resource->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+		dx12::Buffer::PlatObj* platObj =
+			resource.m_resource->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
-			SEAssert(platObj->GetGPUResource(), "Buffer resolved resource is null");
+		SEAssert(platObj->GetGPUResource(), "Buffer resolved resource is null");
 
-			SEAssert(destByteSize == sizeof(ID3D12Resource*), "Invalid destination size");
+		SEAssert(destByteSize == sizeof(ID3D12Resource*), "Invalid destination size");
 
-			memcpy(dest, &platObj->GetGPUResource(), destByteSize);
-		}
+		memcpy(dest, &platObj->GetGPUResource(), destByteSize);
 	}
 
 
 	void BufferResource::GetDescriptor(
-		re::BufferResource const& resource, void* dest, size_t destByteSize)
+		re::BufferResource const& resource, void* dest, size_t destByteSize, uint8_t frameOffsetIdx)
 	{
 		SEAssert(dest && destByteSize, "Invalid args received");
 
@@ -94,21 +85,24 @@ namespace dx12
 		{
 			descriptorHandle = dx12::Buffer::GetCBV(
 				resource.m_resource.get(),
-				re::BufferView(resource.m_resource));
+				re::BufferView(resource.m_resource),
+				frameOffsetIdx);
 		}
 		break;
 		case re::ViewType::SRV:
 		{
 			descriptorHandle = dx12::Buffer::GetSRV(
 				resource.m_resource.get(),
-				re::BufferView(resource.m_resource));
+				re::BufferView(resource.m_resource),
+				frameOffsetIdx);
 		}
 		break;
 		case re::ViewType::UAV:
 		{
 			descriptorHandle = dx12::Buffer::GetUAV(
 				resource.m_resource.get(),
-				re::BufferView(resource.m_resource));
+				re::BufferView(resource.m_resource),
+				frameOffsetIdx);
 		}
 		break;
 		default: SEAssertF("Invalid view type");
@@ -140,7 +134,7 @@ namespace dx12
 
 
 	void TextureResource::GetDescriptor(
-		re::TextureResource const& resource, void* dest, size_t destByteSize)
+		re::TextureResource const& resource, void* dest, size_t destByteSize, uint8_t frameOffsetIdx)
 	{
 		SEAssert(dest && destByteSize, "Invalid args received");
 
@@ -223,29 +217,19 @@ namespace dx12
 	{
 		SEAssert(dest && destByteSize, "Invalid args received");
 
-		// Single frame buffers are (currently) stack allocated from a shared heap and thus we don't change state
-		const bool isInSharedHeap = 
-			resource.m_resource.GetBuffer()->GetBufferParams().m_lifetime == re::Lifetime::SingleFrame;
-		if (isInSharedHeap)
-		{
-			memset(dest, 0, destByteSize);
-		}
-		else
-		{
-			dx12::Buffer::PlatObj* platObj =
-				resource.m_resource.GetBuffer()->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+		dx12::Buffer::PlatObj* platObj =
+			resource.m_resource.GetBuffer()->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
-			SEAssert(platObj->GetGPUResource(), "Buffer resolved resource is null");
+		SEAssert(platObj->GetGPUResource(), "Buffer resolved resource is null");
 
-			SEAssert(destByteSize == sizeof(ID3D12Resource*), "Invalid destination size");
+		SEAssert(destByteSize == sizeof(ID3D12Resource*), "Invalid destination size");
 
-			memcpy(dest, &platObj->GetGPUResource(), destByteSize);
-		}
+		memcpy(dest, &platObj->GetGPUResource(), destByteSize);
 	}
 
 
 	void VertexStreamResource::GetDescriptor(
-		re::VertexStreamResource const& resource, void* dest, size_t destByteSize)
+		re::VertexStreamResource const& resource, void* dest, size_t destByteSize, uint8_t frameOffsetIdx)
 	{
 		SEAssert(dest && destByteSize, "Invalid args received");
 
@@ -257,7 +241,8 @@ namespace dx12
 		{
 			descriptorHandle = dx12::Buffer::GetSRV(
 				resource.m_resource.GetBuffer(),
-				resource.m_resource.m_view);
+				resource.m_resource.m_view,
+				frameOffsetIdx);
 		}
 		break;
 		case re::ViewType::CBV:

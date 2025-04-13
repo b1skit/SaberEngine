@@ -10,6 +10,10 @@ namespace opengl
 	class BufferAllocator final : public virtual re::BufferAllocator
 	{
 	public:
+		static uint32_t GetAlignedSize(uint32_t bufferByteSize, re::Buffer::UsageMask);
+
+
+	public:
 		BufferAllocator() = default;
 		~BufferAllocator() override = default;
 
@@ -17,7 +21,7 @@ namespace opengl
 
 		void Destroy() override;
 
-		void BufferDataPlatform() override;
+		void BufferDataPlatform(uint8_t frameOffsetIdx) override;
 
 
 	public: // OpenGL-specific functionality:

@@ -40,8 +40,8 @@ namespace
 
 		SEAssert(!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams) || 
 		bufferParams.m_lifetime != re::Lifetime::SingleFrame,
-			"We currently expect single-frame resources to be read-only (as we expect single-frame resources to always"
-			"be in a read state, and can't transition to another state without transitioning the whole shared heap)");
+			"We currently expect single-frame resources to be read-only as any resource transitions will affect the "
+			"entire backing resource");
 
 		SEAssert(bufferParams.m_usageMask != re::Buffer::Usage::Invalid, "Invalid usage mask");
 		

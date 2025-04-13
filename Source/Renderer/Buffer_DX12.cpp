@@ -37,14 +37,6 @@ namespace
 	}
 
 
-	inline uint64_t GetAlignedSize(re::Buffer::UsageMask usageMask, uint32_t bufferSize)
-	{
-		return util::RoundUpToNearestMultiple<uint64_t>(
-			bufferSize,
-			GetAlignment(re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask)));
-	}
-
-
 	inline D3D12_HEAP_TYPE MemoryPoolPreferenceToD3DHeapType(re::Buffer::MemoryPoolPreference memPoolPreference)
 	{
 		switch (memPoolPreference)
@@ -113,6 +105,58 @@ namespace
 		}
 		return L"CreateDebugName failed"; // This should never happen
 	}
+
+
+	// Translate a BufferView to map to the backing GPU resource
+	re::BufferView TranslateBufferView(re::Buffer const* buffer, re::BufferView const& view, uint64_t baseByteOffset)
+	{
+		const uint64_t alignedSize =
+			dx12::Buffer::GetAlignedSize(buffer->GetBufferParams().m_usageMask, buffer->GetTotalBytes());
+
+		// We translate our views for buffers in shared heaps or buffers with N-buffered allocations by assuming the
+		// entire resource is filled with the same type of data, and computing our first element offset to match
+		if (view.IsVertexStreamView())
+		{
+			const uint32_t firstElement =
+				util::CheckedCast<uint32_t>(baseByteOffset / alignedSize) + view.m_streamView.m_firstElement;
+
+			return re::BufferView(re::BufferView::VertexStreamType{
+				.m_firstElement = firstElement,
+				.m_numElements = view.m_streamView.m_numElements,
+				.m_type = view.m_streamView.m_type,
+				.m_dataType = view.m_streamView.m_dataType,
+				.m_isNormalized = view.m_streamView.m_isNormalized,
+			});
+		}
+		else
+		{
+			const uint32_t firstElement =
+				util::CheckedCast<uint32_t>(baseByteOffset / alignedSize) + view.m_bufferView.m_firstElement;
+
+			return re::BufferView(re::BufferView::BufferType{
+				.m_firstElement = firstElement,
+				.m_numElements = view.m_bufferView.m_numElements,
+				.m_structuredByteStride = view.m_bufferView.m_structuredByteStride,
+				.m_firstDestIdx = view.m_bufferView.m_firstDestIdx,
+			});
+		}
+	}
+
+
+	// Clamp the frame offset index for Buffers that only have a single backing resource
+	void ClampFrameOffsetIdx(re::Buffer const* buffer, uint8_t& frameOffsetIdx)
+	{
+		SEStaticAssert(static_cast<uint8_t>(re::Buffer::StagingPool::StagingPool_Invalid) == 3u,
+			"Number of staging pools has changed. This must be updated");
+
+		SEAssert(frameOffsetIdx >= 0 && frameOffsetIdx < 3, "Unexpected frame offset index");
+
+		if (buffer->GetLifetime() == re::Lifetime::SingleFrame || 
+			buffer->GetStagingPool() != re::Buffer::StagingPool::Permanent) // i.e. Temporary, or none
+		{
+			frameOffsetIdx = 0;
+		}
+	}
 }
 
 
@@ -121,7 +165,7 @@ namespace dx12
 	Buffer::PlatObj::PlatObj()
 		: m_gpuResource(nullptr)
 		, m_resolvedGPUResource(nullptr)
-		, m_heapByteOffset(0)
+		, m_baseByteOffset(0)
 		, m_currentMapFrameLatency(std::numeric_limits<uint8_t>::max())
 		, m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
 		, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
@@ -153,7 +197,7 @@ namespace dx12
 
 		m_gpuResource = nullptr;
 		m_resolvedGPUResource = nullptr;
-		m_heapByteOffset = 0;
+		m_baseByteOffset = 0;
 	}
 
 
@@ -178,7 +222,7 @@ namespace dx12
 		if (bufferLifetime == re::Lifetime::Permanent &&
 			buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent)
 		{
-			// We allocate N aligned frames-worth of buffer space, and then set the m_heapByteOffset each frame
+			// We allocate N aligned frames-worth of buffer space, and then set the m_baseByteOffset each frame
 			requestedSize = util::CheckedCast<uint32_t>(
 				GetAlignedSize(bufferParams.m_usageMask, requestedSize) * numFramesInFlight);
 		}
@@ -194,12 +238,12 @@ namespace dx12
 			bufferAllocator->GetSubAllocation(
 				bufferParams.m_usageMask,
 				GetAlignedSize(bufferParams.m_usageMask, requestedSize),
-				platObj->m_heapByteOffset,
+				platObj->m_baseByteOffset,
 				platObj->m_resolvedGPUResource);
 
-			SEAssert(platObj->m_heapByteOffset % GetAlignment(
+			SEAssert(platObj->m_baseByteOffset % GetAlignment(
 				re::BufferAllocator::BufferUsageMaskToAllocationPool(bufferParams.m_usageMask)) == 0,
-				"Heap byte offset does not have the correct buffer alignment");
+				"Base offset does not have the correct buffer alignment");
 		}
 		else // Placed resources via the heap manager:
 		{		
@@ -241,7 +285,7 @@ namespace dx12
 
 
 	void Buffer::Update(
-		re::Buffer const& buffer, uint8_t curFrameHeapOffsetFactor, uint32_t baseOffset, uint32_t numBytes)
+		re::Buffer const& buffer, uint8_t curFrameHeapOffsetFactor, uint32_t commitBaseOffset, uint32_t numBytes)
 	{
 		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
 
@@ -271,11 +315,11 @@ namespace dx12
 		if (buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent)
 		{
 			const uint64_t alignedSize = GetAlignedSize(bufferParams.m_usageMask, totalBytes);
-			platObj->m_heapByteOffset = alignedSize * curFrameHeapOffsetFactor;
+			platObj->m_baseByteOffset = alignedSize * curFrameHeapOffsetFactor;
 		}
 
-		const bool updateAllBytes = baseOffset == 0 && (numBytes == 0 || numBytes == totalBytes);
-		SEAssert(updateAllBytes || (baseOffset + numBytes <= totalBytes),
+		const bool updateAllBytes = commitBaseOffset == 0 && (numBytes == 0 || numBytes == totalBytes);
+		SEAssert(updateAllBytes || (commitBaseOffset + numBytes <= totalBytes),
 			"Base offset and number of bytes are out of bounds");
 
 		// Adjust our pointers if we're doing a partial update:
@@ -285,21 +329,21 @@ namespace dx12
 				"Only mutable buffers can be partially updated");
 
 			// Update the source data pointer:
-			data = static_cast<uint8_t const*>(data) + baseOffset;
+			data = static_cast<uint8_t const*>(data) + commitBaseOffset;
 			totalBytes = numBytes;
 
 			// Update the destination pointer:
-			cpuVisibleData = static_cast<uint8_t*>(cpuVisibleData) + baseOffset;
+			cpuVisibleData = static_cast<uint8_t*>(cpuVisibleData) + commitBaseOffset;
 		}
 
 		// Copy our data to the appropriate offset in the cpu-visible heap:
-		void* offsetPtr = static_cast<uint8_t*>(cpuVisibleData) + platObj->m_heapByteOffset;
+		void* offsetPtr = static_cast<uint8_t*>(cpuVisibleData) + platObj->m_baseByteOffset;
 		memcpy(offsetPtr, data, totalBytes);
 	
 		// Release the map:
 		const D3D12_RANGE writtenRange{
-			platObj->m_heapByteOffset + baseOffset,
-			platObj->m_heapByteOffset + baseOffset + totalBytes };
+			platObj->m_baseByteOffset + commitBaseOffset,
+			platObj->m_baseByteOffset + commitBaseOffset + totalBytes };
 
 		platObj->m_resolvedGPUResource->Unmap(
 			0,					// Subresource index: Buffers only have a single subresource
@@ -309,18 +353,26 @@ namespace dx12
 
 	void Buffer::Update(
 		re::Buffer const* buffer,
-		uint32_t baseOffset,
+		uint8_t frameOffsetIdx,
+		uint32_t commitBaseOffset,
 		uint32_t numBytes,
 		dx12::CommandList* copyCmdList)
 	{
-		SEAssert(buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>()->m_heapByteOffset == 0,
-			"Only permanent DX12 buffers expect a non-zero heap byte offset");
+		dx12::Buffer::PlatObj* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+
+		// Update the heap offset, if required
+		if (buffer->GetStagingPool() == re::Buffer::StagingPool::Permanent)
+		{
+			dx12::Buffer::PlatObj* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+
+			const uint64_t alignedSize = GetAlignedSize(buffer->GetBufferParams().m_usageMask, buffer->GetTotalBytes());
+
+			platObj->m_baseByteOffset = alignedSize * frameOffsetIdx;
+		}
 
 		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
 
-		void const* data = buffer->GetData();
-
-		data = static_cast<uint8_t const*>(data) + baseOffset;
+		void const* const data = buffer->GetData();
 
 		// Use the incoming numBytes rather than the buffer size: Might require a smaller buffer for partial updates
 		const uint64_t alignedIntermediateBufferSize = GetAlignedSize(buffer->GetBufferParams().m_usageMask, numBytes);
@@ -358,7 +410,8 @@ namespace dx12
 			&writtenRange);		// Unmap range: The region the CPU may have modified. Nullptr = entire subresource
 
 		// Schedule a copy from the intermediate resource to default/L1/vid memory heap via the copy queue:
-		copyCmdList->UpdateSubresources(buffer, baseOffset, intermediateResource->Get(), 0, numBytes);
+		const uint32_t dstOffset = platObj->m_baseByteOffset + commitBaseOffset;
+		copyCmdList->UpdateSubresources(buffer, dstOffset, intermediateResource->Get(), commitBaseOffset, numBytes);
 	}
 
 
@@ -426,9 +479,157 @@ namespace dx12
 	}
 
 
+	uint64_t Buffer::GetAlignedSize(re::Buffer::UsageMask usageMask, uint32_t bufferSize)
+	{
+		return util::RoundUpToNearestMultiple<uint64_t>(
+			bufferSize,
+			GetAlignment(re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask)));
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetCBV(
+		re::Buffer const* buffer, re::BufferView const& view, uint8_t frameOffsetIdx)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
+		SEAssert(platObj->m_isCreated == true, "Platform object has not been created");
+
+		uint64_t baseByteOffset = 0;
+		if (IsInSharedHeap(buffer))
+		{
+			baseByteOffset = platObj->GetBaseByteOffset();
+		}
+		else
+		{
+			ClampFrameOffsetIdx(buffer, frameOffsetIdx);
+
+			const uint64_t alignedSize =
+				dx12::Buffer::GetAlignedSize(buffer->GetBufferParams().m_usageMask, buffer->GetTotalBytes());
+
+			baseByteOffset = alignedSize * frameOffsetIdx;
+		}
+
+		return GetCBVInternal(buffer, view, baseByteOffset);
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetSRV(
+		re::Buffer const* buffer, re::BufferView const& view, uint8_t frameOffsetIdx)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
+		SEAssert(platObj->m_isCreated == true, "Platform object has not been created");
+
+		uint64_t baseByteOffset = 0;
+		if (IsInSharedHeap(buffer))
+		{
+			baseByteOffset = platObj->GetBaseByteOffset();
+		}
+		else
+		{
+			ClampFrameOffsetIdx(buffer, frameOffsetIdx);
+
+			const uint64_t alignedSize =
+				dx12::Buffer::GetAlignedSize(buffer->GetBufferParams().m_usageMask, buffer->GetTotalBytes());
+
+			baseByteOffset = alignedSize * frameOffsetIdx;
+		}
+
+		return GetSRVInternal(buffer, view, baseByteOffset);
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetUAV(
+		re::Buffer const* buffer, re::BufferView const& view, uint8_t frameOffsetIdx)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+		SEAssert(IsInSharedHeap(buffer) == false, "Buffer is in a shared heap. This is unexpected for a UAV");
+
+		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
+		SEAssert(platObj->m_isCreated == true, "Platform object has not been created");
+		
+		ClampFrameOffsetIdx(buffer, frameOffsetIdx);
+
+		const uint64_t alignedSize =
+			dx12::Buffer::GetAlignedSize(buffer->GetBufferParams().m_usageMask, buffer->GetTotalBytes());
+
+		const uint64_t baseByteOffset = alignedSize * frameOffsetIdx;
+
+		return GetUAVInternal(buffer, view, baseByteOffset);
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetCBVInternal(
+		re::Buffer const* buffer, re::BufferView const& view, uint64_t baseByteOffset)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, buffer->GetBufferParams()),
+			"Buffer is missing the Constant usage bit");
+
+		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, buffer->GetBufferParams()) &&
+			!re::Buffer::HasAccessBit(re::Buffer::GPUWrite, buffer->GetBufferParams()),
+			"Invalid usage flags for a constant buffer");
+
+		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
+
+		SEAssert(platObj->m_isCreated == true, "Platform object has not been created");
+
+		return platObj->m_cbvDescriptors.GetCreateDescriptor(
+			buffer,
+			TranslateBufferView(buffer, view, baseByteOffset));
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetSRVInternal(
+		re::Buffer const* buffer, re::BufferView const& view, uint64_t baseByteOffset)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, buffer->GetBufferParams()) ||
+			re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer->GetBufferParams()),
+			"Buffer is missing the Structured usage bit");
+		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, buffer->GetBufferParams()),
+			"SRV buffers must have GPU reads enabled");
+
+		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
+
+		SEAssert(platObj->m_isCreated == true, "Platform object has not been created");
+
+		return platObj->m_srvDescriptors.GetCreateDescriptor(
+			buffer,
+			TranslateBufferView(buffer, view, baseByteOffset));
+	}
+
+
+	D3D12_CPU_DESCRIPTOR_HANDLE Buffer::GetUAVInternal(
+		re::Buffer const* buffer, re::BufferView const& view, uint64_t baseByteOffset)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+
+		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, buffer->GetBufferParams()) ||
+			re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer->GetBufferParams()),
+			"Buffer is missing the Structured usage bit");
+		SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, buffer->GetBufferParams()),
+			"UAV buffers must have GPU writes enabled");
+
+		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
+
+		SEAssert(platObj->m_isCreated == true, "Platform object has not been created");
+
+		return platObj->m_uavDescriptors.GetCreateDescriptor(
+			buffer,
+			TranslateBufferView(buffer, view, baseByteOffset));
+	}
+
+
 	D3D12_VERTEX_BUFFER_VIEW const* dx12::Buffer::GetOrCreateVertexBufferView(
 		re::Buffer const& buffer, re::BufferView const& view)
 	{
+		SEAssert(view.IsVertexStreamView(), "Invalid view type");
+
 		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer),
 			"Buffer does not have the correct usage flags set");
 
@@ -438,6 +639,8 @@ namespace dx12
 			"Invalid data type");
 
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+
+		SEAssert(platObj->GetBaseByteOffset() == 0, "TODO: Handle non-zero base byte offsets for stream buffer views");
 
 		if (platObj->m_views.m_vertexBufferView.BufferLocation == 0)
 		{
@@ -460,10 +663,14 @@ namespace dx12
 	D3D12_INDEX_BUFFER_VIEW const* dx12::Buffer::GetOrCreateIndexBufferView(
 		re::Buffer const& buffer, re::BufferView const& view)
 	{
+		SEAssert(view.IsVertexStreamView(), "Invalid view type");
+
 		SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, buffer),
 			"Buffer does not have the correct usage flags set");
 
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+
+		SEAssert(platObj->GetBaseByteOffset() == 0, "TODO: Handle non-zero base byte offsets for stream buffer views");
 
 		if (platObj->m_views.m_indexBufferView.BufferLocation == 0)
 		{

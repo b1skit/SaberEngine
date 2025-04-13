@@ -21,7 +21,7 @@ namespace opengl
 			m_bufferName = 0;
 		}
 
-		m_baseOffset = 0;
+		m_baseByteOffset = 0;
 		m_isCreated = false;
 	}
 
@@ -42,7 +42,7 @@ namespace opengl
 		uint32_t numBytes;
 		buffer.GetDataAndSize(&data, &numBytes);
 
-		const re::Buffer::StagingPool bufferAlloc = buffer.GetStagingPool();
+		const re::Buffer::StagingPool stagingPool = buffer.GetStagingPool();
 		const re::Lifetime bufferLifetime = buffer.GetLifetime();
 		switch (bufferLifetime)
 		{
@@ -55,18 +55,18 @@ namespace opengl
 			// Generate the buffer name:
 			glCreateBuffers(1, &bufferPlatObj->m_bufferName);
 
-			bufferPlatObj->m_baseOffset = 0; // Permanent buffers have their own dedicated buffers
+			bufferPlatObj->m_baseByteOffset = 0; // Permanent buffers have their own dedicated buffers
 
 			// Create the data store (contents remain uninitialized/undefined):
 			glNamedBufferData(
 				bufferPlatObj->m_bufferName,
 				static_cast<GLsizeiptr>(numBytes),
 				nullptr,
-				bufferAlloc == re::Buffer::StagingPool::Permanent ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
+				stagingPool == re::Buffer::StagingPool::Permanent ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
 			// RenderDoc label:
 			std::string const& bufferName =
-				buffer.GetName() + (bufferAlloc == re::Buffer::StagingPool::Permanent ? "_CPUMutable" : "_CPUImmutable");
+				buffer.GetName() + (stagingPool == re::Buffer::StagingPool::Permanent ? "_CPUMutable" : "_CPUImmutable");
 			glObjectLabel(GL_BUFFER, bufferPlatObj->m_bufferName, -1, bufferName.c_str());
 		}
 		break;
@@ -79,7 +79,7 @@ namespace opengl
 				buffer.GetUsageMask(),
 				numBytes,
 				bufferPlatObj->m_bufferName,
-				bufferPlatObj->m_baseOffset);
+				bufferPlatObj->m_baseByteOffset);
 
 			bufferPlatObj->m_isSharedBufferName = true;
 		}
@@ -107,7 +107,7 @@ namespace opengl
 		{
 			glNamedBufferSubData(
 				bufferPlatObj->m_bufferName,			// Target
-				bufferPlatObj->m_baseOffset,			// Offset
+				bufferPlatObj->m_baseByteOffset,		// Offset
 				static_cast<GLsizeiptr>(totalBytes),	// Size
 				data);									// Data
 		}
@@ -136,7 +136,7 @@ namespace opengl
 			// Map and copy the data:
 			void* cpuVisibleData = glMapNamedBufferRange(
 				bufferPlatObj->m_bufferName,
-				bufferPlatObj->m_baseOffset + baseOffset,
+				bufferPlatObj->m_baseByteOffset + baseOffset,
 				(GLsizeiptr)totalBytes,
 				access);
 
@@ -156,6 +156,10 @@ namespace opengl
 
 		PlatObj const* bufferPlatObj = buffer.GetPlatformObject()->As<opengl::Buffer::PlatObj const*>();
 
+		// Compute an additional offset for buffer views with a non-zero first element offset
+		const uint32_t alignedSize = 
+			opengl::BufferAllocator::GetAlignedSize(numBytes, buffer.GetBufferParams().m_usageMask);
+		
 		switch (bindTarget)
 		{
 		case BindTarget::UBO:
@@ -163,10 +167,12 @@ namespace opengl
 			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, buffer),
 				"Buffer is missing the Constant usage bit");
 
+			const uint32_t viewByteOffset = alignedSize * view.m_bufferView.m_firstElement;
+
 			glBindBufferRange(GL_UNIFORM_BUFFER,
 				bindIndex,
 				bufferPlatObj->m_bufferName,
-				bufferPlatObj->m_baseOffset,
+				bufferPlatObj->m_baseByteOffset + viewByteOffset,
 				numBytes);
 		}
 		break;
@@ -175,10 +181,12 @@ namespace opengl
 			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, buffer),
 				"Buffer is missing the Structured usage bit");
 
+			const uint32_t viewByteOffset = alignedSize * view.m_bufferView.m_firstElement;
+
 			glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
 				bindIndex,
 				bufferPlatObj->m_bufferName,
-				bufferPlatObj->m_baseOffset,
+				bufferPlatObj->m_baseByteOffset + viewByteOffset,
 				numBytes);
 		}
 		break;
@@ -187,10 +195,12 @@ namespace opengl
 			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Raw, buffer),
 				"Buffer is missing the VertexStream usage bit");
 
+			const uint32_t viewByteOffset = alignedSize * view.m_streamView.m_firstElement;
+
 			glBindVertexBuffer(
 				bindIndex,												// Slot index
 				bufferPlatObj->m_bufferName,							// Buffer
-				bufferPlatObj->m_baseOffset,							// Offset
+				bufferPlatObj->m_baseByteOffset + viewByteOffset,		// Offset
 				DataTypeToByteStride(view.m_streamView.m_dataType));	// Stride
 		}
 		break;
@@ -198,6 +208,8 @@ namespace opengl
 		{
 			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Raw, buffer),
 				"Buffer is missing the VertexStream usage bit");
+
+			SEAssert(view.m_streamView.m_firstElement == 0, "TODO: Support binding subranges within index streams");
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferPlatObj->m_bufferName);
 		}
@@ -215,7 +227,7 @@ namespace opengl
 
 		void* cpuVisibleData = glMapNamedBufferRange(
 			bufferPlatObj->m_bufferName,
-			bufferPlatObj->m_baseOffset,	// offset
+			bufferPlatObj->m_baseByteOffset,// offset
 			(GLsizeiptr)bufferSize,			// length
 			GL_MAP_READ_BIT);				// access
 

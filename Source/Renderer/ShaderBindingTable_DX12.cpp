@@ -1066,11 +1066,7 @@ namespace dx12
 			auto SetData = [&bufferInput, buffer, &bufferParams, bufferPlatObj, &resourceTransitions, cmdList, gpuDescHeap]
 				(void* dst, uint8_t dstByteSize, dx12::RootSignature::RootParameter const* rootParam)
 				{
-					bool transitionResource = false;
 					D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_COMMON; // Updated below
-
-					// Don't transition resources representing shared heaps
-					const bool isInSharedHeap = bufferParams.m_lifetime == re::Lifetime::SingleFrame;
 
 					const D3D12_GPU_VIRTUAL_ADDRESS bufferGPUVA = bufferPlatObj->GetGPUVirtualAddress();
 					memcpy(dst, &bufferGPUVA, dstByteSize);
@@ -1083,23 +1079,14 @@ namespace dx12
 					}
 					break;
 					case dx12::RootSignature::RootParameter::Type::CBV:
-					{
-						toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-
-						transitionResource = !isInSharedHeap;
-					}
-					break;
 					case dx12::RootSignature::RootParameter::Type::SRV:
 					{
 						toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-
-						transitionResource = !isInSharedHeap;
 					}
 					break;
 					case dx12::RootSignature::RootParameter::Type::UAV:
 					{
 						toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-						transitionResource = true;
 					}
 					break;
 					case dx12::RootSignature::RootParameter::Type::DescriptorTable:
@@ -1108,46 +1095,6 @@ namespace dx12
 
 						switch (rootParam->m_tableEntry.m_type)
 						{
-						case dx12::RootSignature::DescriptorType::SRV:
-						{
-							SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
-								"Buffer is missing the Structured usage bit");
-							SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
-								"SRV buffers must have GPU reads enabled");
-							SEAssert(bufferPlatObj->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
-
-							D3D12_CPU_DESCRIPTOR_HANDLE const& bufferSRV = 
-								dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView);
-
-							D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleSRV = 
-								gpuDescHeap->CommitToGPUVisibleHeap({ bufferSRV });
-
-							memcpy(dst, &gpuVisibleSRV, dstByteSize);
-
-							toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-							transitionResource = !isInSharedHeap;
-						}
-						break;
-						case dx12::RootSignature::DescriptorType::UAV:
-						{
-							SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
-								"Buffer is missing the Structured usage bit");
-							SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
-								"UAV buffers must have GPU writes enabled");
-							SEAssert(bufferPlatObj->GetHeapByteOffset() == 0, "Unexpected heap byte offset");
-
-							D3D12_CPU_DESCRIPTOR_HANDLE const& bufferUAV =
-								dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufferInput.GetView());
-
-							D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisiblUAV =
-								gpuDescHeap->CommitToGPUVisibleHeap({ bufferUAV });
-
-							memcpy(dst, &gpuVisiblUAV, dstByteSize);
-
-							toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-							transitionResource = true;
-						}
-						break;
 						case dx12::RootSignature::DescriptorType::CBV:
 						{
 							SEAssert(re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams),
@@ -1165,8 +1112,44 @@ namespace dx12
 							memcpy(dst, &gpuVisiblCBV, dstByteSize);
 
 							toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-							
-							transitionResource = !isInSharedHeap;
+						}
+						break;
+						case dx12::RootSignature::DescriptorType::SRV:
+						{
+							SEAssert(re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, bufferParams),
+								"Buffer is missing the Structured usage bit");
+							SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
+								"SRV buffers must have GPU reads enabled");
+							SEAssert(bufferPlatObj->GetBaseByteOffset() == 0, "Unexpected base byte offset");
+
+							D3D12_CPU_DESCRIPTOR_HANDLE const& bufferSRV = 
+								dx12::Buffer::GetSRV(bufferInput.GetBuffer(), bufView);
+
+							D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleSRV = 
+								gpuDescHeap->CommitToGPUVisibleHeap({ bufferSRV });
+
+							memcpy(dst, &gpuVisibleSRV, dstByteSize);
+
+							toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+						}
+						break;
+						case dx12::RootSignature::DescriptorType::UAV:
+						{
+							SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams),
+								"Buffer is missing the Structured usage bit");
+							SEAssert(re::Buffer::HasAccessBit(re::Buffer::GPUWrite, bufferParams),
+								"UAV buffers must have GPU writes enabled");
+							SEAssert(bufferPlatObj->GetBaseByteOffset() == 0, "Unexpected base byte offset");
+
+							D3D12_CPU_DESCRIPTOR_HANDLE const& bufferUAV =
+								dx12::Buffer::GetUAV(bufferInput.GetBuffer(), bufferInput.GetView());
+
+							D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisiblUAV =
+								gpuDescHeap->CommitToGPUVisibleHeap({ bufferUAV });
+
+							memcpy(dst, &gpuVisiblUAV, dstByteSize);
+
+							toState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 						}
 						break;
 						default: SEAssertF("Invalid type");
@@ -1176,17 +1159,13 @@ namespace dx12
 					default: SEAssertF("Invalid descriptor type");
 					}
 
-					if (transitionResource)
-					{
-						SEAssert(!isInSharedHeap, "Trying to transition a resource in a shared heap. This is unexpected");
-						SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state");
+					SEAssert(toState != D3D12_RESOURCE_STATE_COMMON, "Unexpected to state");
 
-						resourceTransitions.emplace_back(dx12::CommandList::TransitionMetadata{
-							.m_resource = bufferPlatObj->GetGPUResource(),
-							.m_toState = toState,
-							.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES }
-							});
-					}
+					resourceTransitions.emplace_back(dx12::CommandList::TransitionMetadata{
+						.m_resource = bufferPlatObj->GetGPUResource(),
+						.m_toState = toState,
+						.m_subresourceIndexes = { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES }
+						});
 				};
 
 			WriteSBTElement(

@@ -28,8 +28,8 @@ namespace dx12
 		{
 			void Destroy() override;
 
+			std::array<std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>, 3> m_cpuDescriptorCache; // 1st m_numFramesInFlight elements used only
 			std::vector<ID3D12Resource*> m_resourceCache;
-			std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_cpuDescriptorCache;
 			std::vector<D3D12_RESOURCE_STATES> m_usageStateCache;
 
 			ID3D12Device* m_deviceCache = nullptr;

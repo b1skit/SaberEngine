@@ -18,7 +18,7 @@ namespace dx12
 	void BufferAllocator::GetSubAllocation(
 		re::Buffer::UsageMask usageMask,
 		uint64_t alignedSize, 
-		uint64_t& heapOffsetOut,
+		uint64_t& baseByteOffsetOut,
 		ID3D12Resource*& resourcePtrOut)
 	{
 		const uint8_t writeIdx = GetSingleFrameGPUWriteIndex();
@@ -40,7 +40,7 @@ namespace dx12
 		resourcePtrOut = m_singleFrameBufferResources[allocationPool][writeIdx]->Get();
 
 		// Our heap offset is the base index of the stack we've allocated for each Type
-		heapOffsetOut = AdvanceBaseIdx(allocationPool, util::CheckedCast<uint32_t>(alignedSize));
+		baseByteOffsetOut = AdvanceBaseIdx(allocationPool, util::CheckedCast<uint32_t>(alignedSize));
 	}
 
 
@@ -59,13 +59,16 @@ namespace dx12
 
 		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
 
+		// Note: We must start in the common state to ensure all command list types are able to transition the resource
+		constexpr D3D12_RESOURCE_STATES k_initialSharedResourceState = D3D12_RESOURCE_STATE_COMMON;
+
 		for (uint8_t bufferIdx = 0; bufferIdx < m_numFramesInFlight; bufferIdx++)
 		{	
 			m_singleFrameBufferResources[re::BufferAllocator::Constant][bufferIdx] = heapMgr.CreateResource(
 				dx12::ResourceDesc{
 					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,
-					.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
+					.m_initialState = k_initialSharedResourceState,
 				},
 				util::ToWideString(std::format("Shared constant buffer committed resource {}", bufferIdx)).c_str() );
 
@@ -73,7 +76,7 @@ namespace dx12
 				dx12::ResourceDesc{
 					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,
-					.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
+					.m_initialState = k_initialSharedResourceState,
 				},
 				util::ToWideString(std::format("Shared structured buffer committed resource {}", bufferIdx)).c_str());
 
@@ -81,14 +84,14 @@ namespace dx12
 				dx12::ResourceDesc{
 					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,
-					.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
+					.m_initialState = k_initialSharedResourceState,
 				},
 				util::ToWideString(std::format("Shared vertex buffer committed resource {}", bufferIdx)).c_str());
 		}
 	}
 
 
-	void BufferAllocator::BufferDataPlatform()
+	void BufferAllocator::BufferDataPlatform(uint8_t frameOffsetIdx)
 	{
 		// Note: BufferAllocator::m_dirtyBuffersForPlatformUpdateMutex is already locked by this point
 
@@ -114,6 +117,7 @@ namespace dx12
 			{
 				dx12::Buffer::Update(
 					entry.m_buffer,
+					frameOffsetIdx,
 					entry.m_baseOffset,
 					entry.m_numBytes,
 					copyCommandList.get());
