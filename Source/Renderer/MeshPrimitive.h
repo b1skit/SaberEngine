@@ -124,7 +124,7 @@ namespace gr
 				gr::MeshPrimitive::RenderData const&, gr::VertexStream::Type, int8_t setIdx = 0);
 
 			// Helper: Registers all resources types on the MeshPrimitive RenderData with an AccelerationStructure
-			static void RegisterBindlessResources(
+			static void RegisterGeometryResources(
 				gr::MeshPrimitive::RenderData const&, re::AccelerationStructure::Geometry&);
 		};
 

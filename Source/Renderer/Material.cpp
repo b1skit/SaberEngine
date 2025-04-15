@@ -102,7 +102,7 @@ namespace gr
 	}
 
 
-	void Material::MaterialInstanceRenderData::RegisterBindlessResources(
+	void Material::MaterialInstanceRenderData::RegisterGeometryResources(
 		MaterialInstanceRenderData const& materialInstanceRenderData, re::AccelerationStructure::Geometry& geometry)
 	{
 		geometry.SetGeometryFlags(materialInstanceRenderData.m_alphaMode == gr::Material::AlphaMode::Opaque ?

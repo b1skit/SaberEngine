@@ -321,7 +321,7 @@ namespace gr
 
 					re::AccelerationStructure::Geometry& instance = blasParams->m_geometry.emplace_back();
 
-					gr::MeshPrimitive::RenderData::RegisterBindlessResources(meshPrimRenderData, instance);
+					gr::MeshPrimitive::RenderData::RegisterGeometryResources(meshPrimRenderData, instance);
 
 					// Replace the position buffer if it is animated:
 					auto animatedStreamsItr = m_animatedVertexStreams->find(meshPrimID);
@@ -346,7 +346,7 @@ namespace gr
 					gr::Material::MaterialInstanceRenderData const& materialRenderData =
 						renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(meshPrimID);
 
-					gr::Material::MaterialInstanceRenderData::RegisterBindlessResources(materialRenderData, instance);
+					gr::Material::MaterialInstanceRenderData::RegisterGeometryResources(materialRenderData, instance);
 
 					// Map the MeshPrimitive RenderDataID -> BLAS key:
 					m_meshPrimToBLASKey[meshPrimID] = blasKey;

@@ -253,7 +253,7 @@ namespace gr
 	}
 
 
-	void MeshPrimitive::RenderData::RegisterBindlessResources(
+	void MeshPrimitive::RenderData::RegisterGeometryResources(
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, re::AccelerationStructure::Geometry& geometry)
 	{
 		bool seenPositions = false;

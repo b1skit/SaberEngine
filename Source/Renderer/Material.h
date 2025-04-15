@@ -101,7 +101,7 @@ namespace gr
 			static uint8_t CreateInstanceInclusionMask(gr::Material::MaterialInstanceRenderData const*);
 
 			// Helper: Registers all resources types on the MeshPrimitive RenderData with an AccelerationStructure
-			static void RegisterBindlessResources(
+			static void RegisterGeometryResources(
 				MaterialInstanceRenderData const&, re::AccelerationStructure::Geometry&);
 		};
 
