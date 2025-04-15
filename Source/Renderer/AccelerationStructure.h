@@ -180,7 +180,7 @@ namespace re
 			friend class AccelerationStructure;
 			re::BufferInput m_bindlessResourceLUT; // BLAS instances -> bindless resource LUT
 
-			ResourceHandle m_srvTLASResourceHandle;
+			ResourceHandle m_srvTLASResourceHandle = k_invalidResourceHandle;
 		};
 
 
