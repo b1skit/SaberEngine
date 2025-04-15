@@ -410,7 +410,7 @@ namespace dx12
 			&writtenRange);		// Unmap range: The region the CPU may have modified. Nullptr = entire subresource
 
 		// Schedule a copy from the intermediate resource to default/L1/vid memory heap via the copy queue:
-		const uint32_t dstOffset = platObj->m_baseByteOffset + commitBaseOffset;
+		const uint32_t dstOffset = util::CheckedCast<uint32_t>(platObj->m_baseByteOffset + commitBaseOffset);
 		copyCmdList->UpdateSubresources(buffer, dstOffset, intermediateResource->Get(), commitBaseOffset, numBytes);
 	}
 
