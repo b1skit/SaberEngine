@@ -93,6 +93,7 @@ namespace re
 		VertexStreamResource(VertexBufferInput const& input)
 			: m_resource(input)
 		{
+			SEAssert(m_resource.GetBuffer() != nullptr, "Cannot add a resource with a null Buffer");
 			m_viewType = re::ViewType::SRV;
 		}
 

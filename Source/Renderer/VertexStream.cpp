@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BindlessResource.h"
+#include "BindlessResourceManager.h"
 #include "Buffer.h"
 #include "RenderManager.h"
 #include "VertexStream.h"
@@ -124,16 +125,6 @@ namespace gr
 					new VertexStream(m_streamDesc, std::move(m_data), m_dataHash, m_extraUsageBits));
 			}
 
-			void OnLoadComplete(core::InvPtr<gr::VertexStream>& vertexStream) override
-			{
-				re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
-				if (brm) // May be null (e.g. API does not support bindless resources)
-				{
-					vertexStream->m_srvResourceHandle = brm->RegisterResource(
-						std::make_unique<re::VertexStreamResource>(vertexStream));
-				}
-			}
-
 			util::HashKey m_dataHash;
 
 			StreamDesc m_streamDesc;
@@ -197,8 +188,16 @@ namespace gr
 				.m_arraySize = 1,
 			});
 
-		// Finally, release the data:
+		// Release the data:
 		m_deferredBufferCreateParams = nullptr;
+
+		// Create the bindless resource handle after we're released the deferred buffer create params to avoid an assert
+		re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+		if (brm) // May be null (e.g. API does not support bindless resources)
+		{
+			vertexStream->m_srvResourceHandle = brm->RegisterResource(
+				std::make_unique<re::VertexStreamResource>(vertexStream));
+		}
 	}
 
 
