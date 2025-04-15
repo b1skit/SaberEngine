@@ -43,8 +43,8 @@
 
 #endif
 
-// Hijack HLSL's built-in preprocessor macros to detect if we're in shader code
-#if defined(__HLSL_VERSION)
+// Use HLSL's built-in preprocessor macros to detect if we're in shader code
+#if defined(__hlsl_dx_compiler)
 
 // Payload access qualifiers (PAQ's):
 #define raypayload [raypayload]
