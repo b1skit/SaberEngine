@@ -10,9 +10,6 @@
 
 namespace re
 {
-	class Sampler;
-
-
 	struct TextureView : public virtual core::IHashedDataObject
 	{	
 		const re::Texture::Dimension m_viewDimension; // Also hashed to differentiate union byte patterns
@@ -161,7 +158,7 @@ namespace re
 
 	inline bool TextureView::DepthWritesEnabled() const
 	{
-		return (static_cast<uint8_t>(Flags.m_depthStencil) & static_cast<uint8_t>(ViewFlags::DepthFlags::ReadOnlyDepth)) == 0;
+		return (Flags.m_depthStencil & ViewFlags::DepthFlags::ReadOnlyDepth) == 0;
 	}
 
 

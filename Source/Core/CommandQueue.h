@@ -32,7 +32,7 @@ namespace core
 	private:
 		struct CommandMetadata
 		{
-			void* m_commandData;
+			void* m_commandData = nullptr;
 			void (*Execute)(void*) = nullptr;
 			void (*Destroy)(void*) = nullptr;
 		};

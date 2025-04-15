@@ -30,7 +30,7 @@ namespace util
 		};
 		static ByteVector Clone(ByteVector const&, CloneMode);
 		
-		ByteVector() = default;
+		ByteVector();
 		~ByteVector() = default;
 
 		ByteVector(ByteVector const&) = default;
@@ -105,6 +105,13 @@ namespace util
 		uint8_t m_elementByteSize; // Total bytes for a single element. E.g. glm::vec2 = 2x 4B floats = 8
 		std::vector<uint8_t> m_data;
 	};
+
+
+	inline ByteVector::ByteVector()
+		: m_typeInfoHash(0)
+		, m_elementByteSize(0)
+	{
+	}
 
 
 	template<typename T>

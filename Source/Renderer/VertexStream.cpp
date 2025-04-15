@@ -129,7 +129,7 @@ namespace gr
 
 			StreamDesc m_streamDesc;
 			util::ByteVector m_data;
-			re::Buffer::UsageMask m_extraUsageBits;
+			re::Buffer::UsageMask m_extraUsageBits = 0;
 		};
 		std::shared_ptr<VertexStreamLoadContext> loadContext = std::make_shared<VertexStreamLoadContext>();
 
