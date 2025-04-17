@@ -21,7 +21,7 @@ layout(binding=10) uniform AllLightIndexesParams { AllLightIndexesData _AllLight
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
 layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
 
-layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	InstancedPBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
+layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	PBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
 layout(std430, binding=3) readonly buffer DirectionalLightParams { LightData _DirectionalLightParams[]; };
 layout(std430, binding=4) readonly buffer PointLightParams { LightData _PointLightParams[]; };
 layout(std430, binding=5) readonly buffer SpotLightParams { LightData _SpotLightParams[]; };

@@ -29,7 +29,7 @@ struct InstanceIndexData
 };
 
 
-struct InstancedTransformData
+struct TransformData
 {
 	float4x4 g_model;
 	float4x4 g_transposeInvModel;

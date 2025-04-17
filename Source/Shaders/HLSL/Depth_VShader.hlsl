@@ -11,7 +11,7 @@
 // We (currently) use space1 for all explicit bindings, preventing conflicts with non-explicit bindings in space0
 ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space1);
 
-StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
+StructuredBuffer<TransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
 
 
 VertexOut VShader(VertexIn In)

@@ -306,8 +306,8 @@ namespace gr
 			requestedTransformBufferElements > 0)
 		{
 			m_instancedTransforms = re::BufferInput(
-				InstancedTransformData::s_shaderName,
-				re::Buffer::CreateUncommittedArray<InstancedTransformData>(
+				TransformData::s_shaderName,
+				re::Buffer::CreateUncommittedArray<TransformData>(
 					k_instancedTransformBufferName,
 					re::Buffer::BufferParams{
 						.m_lifetime = re::Lifetime::Permanent,
@@ -333,7 +333,7 @@ namespace gr
 					gr::Transform::RenderData const& transformData =
 						renderData.GetTransformDataFromTransformID(transformID);
 
-					InstancedTransformData const& transformParams =
+					TransformData const& transformParams =
 						gr::Transform::CreateInstancedTransformData(transformData);
 
 					m_instancedTransforms.GetBuffer()->Commit(
@@ -400,7 +400,7 @@ namespace gr
 
 				gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromTransformID(transformID);
 
-				InstancedTransformData const& transformParams =
+				TransformData const& transformParams =
 					gr::Transform::CreateInstancedTransformData(transformData);
 
 				m_instancedTransforms.GetBuffer()->Commit(

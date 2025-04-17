@@ -11,9 +11,9 @@
 
 namespace gr
 {
-	InstancedPBRMetallicRoughnessData Material_GLTF::GetPBRMetallicRoughnessParamsData() const
+	PBRMetallicRoughnessData Material_GLTF::GetPBRMetallicRoughnessParamsData() const
 	{
-		return InstancedPBRMetallicRoughnessData
+		return PBRMetallicRoughnessData
 		{
 			.g_baseColorFactor = m_baseColorFactor,
 
@@ -42,8 +42,8 @@ namespace gr
 				0),
 		};
 
-		SEStaticAssert(sizeof(InstancedPBRMetallicRoughnessData) <= gr::Material::k_paramDataBlockByteSize,
-			"InstancedPBRMetallicRoughnessData is too large to fit in "
+		SEStaticAssert(sizeof(PBRMetallicRoughnessData) <= gr::Material::k_paramDataBlockByteSize,
+			"PBRMetallicRoughnessData is too large to fit in "
 			"gr::Material::MaterialInstanceRenderData::m_materialParamData. Consider increasing "
 			"gr::Material::k_paramDataBlockByteSize");
 	}
@@ -80,10 +80,10 @@ namespace gr
 
 	void Material_GLTF::PackMaterialParamsData(void* dst, size_t maxSize) const
 	{
-		SEAssert(maxSize <= sizeof(InstancedPBRMetallicRoughnessData), "Not enough space to pack material instance data");
+		SEAssert(maxSize <= sizeof(PBRMetallicRoughnessData), "Not enough space to pack material instance data");
 
-		InstancedPBRMetallicRoughnessData const& materialParamData = GetPBRMetallicRoughnessParamsData();
-		memcpy(dst, &materialParamData, sizeof(InstancedPBRMetallicRoughnessData));
+		PBRMetallicRoughnessData const& materialParamData = GetPBRMetallicRoughnessParamsData();
+		memcpy(dst, &materialParamData, sizeof(PBRMetallicRoughnessData));
 	}
 
 
@@ -93,7 +93,7 @@ namespace gr
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(instanceData.size());
 
-		std::vector<InstancedPBRMetallicRoughnessData> instancedMaterialData;
+		std::vector<PBRMetallicRoughnessData> instancedMaterialData;
 		instancedMaterialData.reserve(numInstances);
 
 		for (size_t matIdx = 0; matIdx < numInstances; matIdx++)
@@ -101,11 +101,11 @@ namespace gr
 			SEAssert(instanceData[matIdx]->m_effectID == EffectID("GLTF_PBRMetallicRoughness"),
 				"Incorrect material EffectID found. All instanceData entries must have the same type");
 
-			InstancedPBRMetallicRoughnessData& instancedEntry = instancedMaterialData.emplace_back();
+			PBRMetallicRoughnessData& instancedEntry = instancedMaterialData.emplace_back();
 
 			memcpy(&instancedEntry, 
 				&instanceData[matIdx]->m_materialParamData, 
-				sizeof(InstancedPBRMetallicRoughnessData));
+				sizeof(PBRMetallicRoughnessData));
 		}
 
 		// Note: Material Buffer names are used to associate Effects with Buffers when building batches
@@ -113,7 +113,7 @@ namespace gr
 			gr::Material::k_effectMaterialNames[gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness];
 
 		return re::BufferInput(
-			InstancedPBRMetallicRoughnessData::s_shaderName,
+			PBRMetallicRoughnessData::s_shaderName,
 			re::Buffer::CreateArray(
 				bufferName,
 				instancedMaterialData.data(),
@@ -135,8 +135,8 @@ namespace gr
 
 		// We commit single elements for now as we need to access each element's material param data. This isn't ideal,
 		// but it avoids copying the data into a temporary location and materials are typically updated infrequently
-		InstancedPBRMetallicRoughnessData const* matData = 
-			reinterpret_cast<InstancedPBRMetallicRoughnessData const*>(instanceData->m_materialParamData.data());
+		PBRMetallicRoughnessData const* matData = 
+			reinterpret_cast<PBRMetallicRoughnessData const*>(instanceData->m_materialParamData.data());
 		
 		buffer->Commit(matData, baseOffset, 1);
 	}
@@ -151,8 +151,8 @@ namespace gr
 		{
 			ImGui::Indent();
 
-			InstancedPBRMetallicRoughnessData* matData =
-				reinterpret_cast<InstancedPBRMetallicRoughnessData*>(instanceData.m_materialParamData.data());
+			PBRMetallicRoughnessData* matData =
+				reinterpret_cast<PBRMetallicRoughnessData*>(instanceData.m_materialParamData.data());
 			
 			isDirty |= ImGui::ColorEdit3(
 				std::format("Base color factor##{}", util::PtrToID(&instanceData)).c_str(),

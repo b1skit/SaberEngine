@@ -14,7 +14,7 @@
 
 layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
 
-layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	InstancedPBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
+layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	PBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
 
 layout(binding=0) uniform sampler2D BaseColorTex;
 layout(binding=1) uniform sampler2D MetallicRoughnessTex;

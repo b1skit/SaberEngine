@@ -222,9 +222,9 @@ namespace gr
 		case gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness:
 		{
 			return re::BufferInput(
-				InstancedPBRMetallicRoughnessData::s_shaderName,
-				re::Buffer::CreateUncommittedArray<InstancedPBRMetallicRoughnessData>(
-					InstancedPBRMetallicRoughnessData::s_shaderName,
+				PBRMetallicRoughnessData::s_shaderName,
+				re::Buffer::CreateUncommittedArray<PBRMetallicRoughnessData>(
+					PBRMetallicRoughnessData::s_shaderName,
 					re::Buffer::BufferParams{
 						.m_stagingPool = re::Buffer::StagingPool::Permanent,
 						.m_memPoolPreference = re::Buffer::UploadHeap,

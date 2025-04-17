@@ -12,7 +12,7 @@ Texture2D<float4> BaseColorTex;
 // We (currently) use space1 for all explicit bindings, preventing conflicts with non-explicit bindings in space0
 ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space1);
 
-StructuredBuffer<InstancedPBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t1, space1);
+StructuredBuffer<PBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t1, space1);
 
 
 float4 PShader(VertexOut In) : SV_Target

@@ -17,8 +17,8 @@
 // We (currently) use space1 for all explicit bindings, preventing conflicts with non-explicit bindings in space0
 ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space1);
 
-StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
-StructuredBuffer<InstancedPBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t1, space1);
+StructuredBuffer<TransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
+StructuredBuffer<PBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t1, space1);
 
 
 VertexOut VShader(VertexIn In)

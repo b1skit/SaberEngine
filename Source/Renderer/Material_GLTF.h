@@ -105,7 +105,7 @@ namespace gr
 
 
 	private:
-		InstancedPBRMetallicRoughnessData GetPBRMetallicRoughnessParamsData() const;
+		PBRMetallicRoughnessData GetPBRMetallicRoughnessParamsData() const;
 	};
 
 

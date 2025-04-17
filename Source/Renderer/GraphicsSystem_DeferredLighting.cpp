@@ -839,7 +839,7 @@ namespace gr
 				gr::Transform::RenderData const& transformData = lightItr->GetTransformData();
 
 				re::BufferInput const& transformBuffer = gr::Transform::CreateInstancedTransformBufferInput(
-					InstancedTransformData::s_shaderName, 
+					TransformData::s_shaderName, 
 					re::Lifetime::Permanent, 
 					re::Buffer::StagingPool::Permanent, 
 					transformData);

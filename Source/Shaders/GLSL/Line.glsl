@@ -28,7 +28,7 @@ layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndex
 #endif
 
 // UBOs can't have a dynamic length; We use SSBOs for instancing instead
-layout(std430, binding=1) readonly buffer InstancedTransformParams { InstancedTransformData _InstancedTransformParams[]; };
+layout(std430, binding=1) readonly buffer InstancedTransformParams { TransformData _InstancedTransformParams[]; };
 
 
 struct LineVertexOut

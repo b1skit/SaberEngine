@@ -8,20 +8,20 @@
 
 namespace gr
 {
-	InstancedTransformData Transform::CreateInstancedTransformData(
+	TransformData Transform::CreateInstancedTransformData(
 		gr::Transform::RenderData const& transformData)
 	{
-		return InstancedTransformData {
+		return TransformData {
 			.g_model = transformData.g_model,
 			.g_transposeInvModel = transformData.g_transposeInvModel
 		};
 	}
 
 
-	InstancedTransformData Transform::CreateInstancedTransformData(
+	TransformData Transform::CreateInstancedTransformData(
 		glm::mat4 const* model, glm::mat4 const* transposeInvModel)
 	{
-		InstancedTransformData instancedMeshData{};
+		TransformData instancedMeshData{};
 
 		instancedMeshData.g_model = model ? *model : glm::mat4(1.f);
 		instancedMeshData.g_transposeInvModel = transposeInvModel ? *transposeInvModel : glm::mat4(1.f);
@@ -36,7 +36,7 @@ namespace gr
 		glm::mat4 const* model,
 		glm::mat4 const* transposeInvModel)
 	{
-		InstancedTransformData const& transformData =
+		TransformData const& transformData =
 			CreateInstancedTransformData(model, transposeInvModel);
 
 		return re::Buffer::CreateArray(
@@ -58,7 +58,7 @@ namespace gr
 		re::Buffer::StagingPool stagingPool,
 		gr::Transform::RenderData const& transformData)
 	{
-		InstancedTransformData const& instancedMeshData =
+		TransformData const& instancedMeshData =
 			CreateInstancedTransformData(transformData);
 
 		return re::Buffer::CreateArray(
@@ -82,7 +82,7 @@ namespace gr
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(transformRenderDatas.size());
 
-		std::vector<InstancedTransformData> instancedMeshData;
+		std::vector<TransformData> instancedMeshData;
 		instancedMeshData.reserve(numInstances);
 
 		for (size_t transformIdx = 0; transformIdx < numInstances; transformIdx++)

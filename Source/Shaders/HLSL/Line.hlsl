@@ -17,7 +17,7 @@
 ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space1);
 #endif
 
-StructuredBuffer<InstancedTransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
+StructuredBuffer<TransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
 
 
 struct LineVertexOut
