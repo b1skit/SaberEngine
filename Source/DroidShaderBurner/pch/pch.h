@@ -1,6 +1,12 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 
+#define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+
 // std library:
 #include <algorithm>
 #include <chrono>
@@ -8,6 +14,7 @@
 #include <filesystem>
 #include <fstream>
 #include <future>
+#include <limits>
 #include <queue>
 #include <regex>
 #include <set>
@@ -19,10 +26,6 @@
 #include <vector>
 
 // Win32 API:
-#define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
 #include <Windows.h>
 #include <processthreadsapi.h>
 // TODO: Move these OS-specific out of the PCH and into platform-specific files that require them

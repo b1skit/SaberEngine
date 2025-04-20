@@ -861,7 +861,7 @@ namespace dx12
 
 	uint64_t CommandQueue::Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
-		SEBeginCPUEvent(std::format("CommandQueue::Execute ({})", CommandList::GetCommandListTypeName(m_type)).c_str());
+		SEBeginCPUEvent("CommandQueue::Execute");
 
 		// Ensure any resources used with states only other queue types can manage are in the common state before we
 		// attempt to use them. Builds and submits command lists to the appropriate queue(s), and GPU waits on them

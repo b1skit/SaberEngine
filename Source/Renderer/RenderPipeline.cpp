@@ -182,7 +182,7 @@ namespace re
 
 	void RenderPipeline::PostUpdatePreRender()
 	{
-		SEBeginCPUEvent(std::format("{} RenderPipeline::PostUpdatePreRender", GetName().c_str()).c_str());
+		SEBeginCPUEvent(GetName().c_str());
 
 		for (StagePipeline& stagePipeline : m_stagePipeline)
 		{
@@ -195,7 +195,7 @@ namespace re
 
 	void RenderPipeline::EndOfFrame()
 	{
-		SEBeginCPUEvent(std::format("{} RenderPipeline::EndOfFrame", GetName().c_str()).c_str());
+		SEBeginCPUEvent(GetName().c_str());
 
 		for (StagePipeline& stagePipeline : m_stagePipeline)
 		{

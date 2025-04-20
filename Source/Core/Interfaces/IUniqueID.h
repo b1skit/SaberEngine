@@ -1,9 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Assert.h"
+
 
 using UniqueID = uint64_t;
-
 
 namespace core
 {

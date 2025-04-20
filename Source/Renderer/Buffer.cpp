@@ -45,6 +45,13 @@ namespace
 
 		SEAssert(bufferParams.m_usageMask != re::Buffer::Usage::Invalid, "Invalid usage mask");
 		
+		SEAssert((re::Buffer::HasUsageBit(re::Buffer::Constant, bufferParams) &&
+			bufferParams.m_arraySize == 1) ||
+			((re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams) ||
+				re::Buffer::HasUsageBit(re::Buffer::Raw, bufferParams)) &&
+				bufferParams.m_arraySize >= 1),
+			"Invalid number of elements. Arrays are only valid for Usage types with operator[] (not descriptor arrays)");
+
 		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::Permanent ||
 			re::Buffer::HasAccessBit(re::Buffer::GPURead, bufferParams),
 			"GPU reads must be enabled for immutable buffers");

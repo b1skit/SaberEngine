@@ -6,10 +6,10 @@
 
 #include "Core/Host/Window_Win32.h"
 
+#include "Core/Logger.h"
 #include "Core/ProfilingMarkers.h"
 
-#include <GL/glew.h>
-#include <GL/GL.h> // Must follow glew.h...
+#include <GL/glew.h> // Required by ProfilingMarkers.h
 
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_opengl3.h"

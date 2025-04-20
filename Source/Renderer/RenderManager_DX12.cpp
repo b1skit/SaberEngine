@@ -4,7 +4,6 @@
 #include "Context_DX12.h"
 #include "RenderManager_DX12.h"
 #include "RenderSystem.h"
-#include "RootConstants.h"
 #include "Sampler_DX12.h"
 #include "Shader_DX12.h"
 #include "ShaderBindingTable_DX12.h"
@@ -14,6 +13,7 @@
 #include "Texture_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/Config.h"
 #include "Core/ProfilingMarkers.h"
 
 

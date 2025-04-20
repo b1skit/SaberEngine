@@ -1,6 +1,12 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 
+#define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+
 // ImGui
 // Supress error C4996 ("This function or variable may be unsafe"), e.g. 'sscanf', 'strcpy', 'strcat', 'sscanf'
 // Note: This block needs to come before the std includes
@@ -20,6 +26,7 @@
 #include <future>
 #include <iostream>
 #include <latch>
+#include <limits>
 #include <map>
 #include <numbers>
 #include <set>

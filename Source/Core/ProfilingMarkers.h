@@ -1,10 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Platform.h"
+#include <d3d12.h>
 
-#include "Core/Assert.h"
-#include "Core/Config.h"
-
+//#define PIX_USE_GPU_MARKERS_V2
 #include <pix3.h>
 
 

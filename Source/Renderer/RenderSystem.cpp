@@ -5,8 +5,12 @@
 #include "RenderSystem.h"
 #include "RenderSystemDesc.h"
 
+#include "Core/Config.h"
+#include "Core/Logger.h"
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
+
+#include "Core/Definitions/ConfigKeys.h"
 
 using GSName = gr::RenderSystemDescription::GSName;
 using SrcDstNamePairs = gr::RenderSystemDescription::SrcDstNamePairs;
@@ -501,7 +505,7 @@ namespace gr
 
 	void RenderSystem::ExecuteUpdatePipeline()
 	{
-		SEBeginCPUEvent(std::format("{} ExecuteUpdatePipeline", GetName()).c_str());
+		SEBeginCPUEvent(GetName().c_str());
 
 		static const bool s_singleThreadGSExecution = DisableThreadedGraphicsSystemUpdates();
 

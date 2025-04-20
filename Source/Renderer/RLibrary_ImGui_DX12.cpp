@@ -8,6 +8,7 @@
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
 
+#include "Core/Logger.h"
 #include "Core/ProfilingMarkers.h"
 
 #include "Core/Host/Window_Win32.h"

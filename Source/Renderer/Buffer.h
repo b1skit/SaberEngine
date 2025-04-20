@@ -67,7 +67,8 @@ namespace re
 			AccessMask m_accessMask = Access::GPURead;
 			UsageMask m_usageMask = Usage::Invalid;
 
-			uint32_t m_arraySize = 1; // Must be 1 for constant buffers, and vertex/index streams
+			// Array size != 1 is only valid for Usage types with operator[] (e.g Structured, Raw)
+			uint32_t m_arraySize = 1; // Must be 1 for constant buffers
 		};
 
 
@@ -378,6 +379,8 @@ namespace re
 	template <typename T>
 	void Buffer::Commit(T const* data, uint32_t baseIdx, uint32_t numElements)
 	{
+		SEAssert(data && numElements > 0, "Cannot commit zero elements");
+
 		const uint32_t dstBaseByteOffset = baseIdx * sizeof(T);
 		const uint32_t numBytes = numElements * sizeof(T);
 
