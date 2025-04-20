@@ -496,6 +496,8 @@ namespace re
 
 	void RenderManager::ClearNewObjectCache()
 	{
+		SEBeginCPUEvent("RenderManager::ClearNewObjectCache");
+
 		// Clear the initial data of our new textures now that they have been buffered
 		for (auto const& newTexture : m_createdTextures)
 		{
@@ -505,6 +507,8 @@ namespace re
 		// Clear any objects created during the frame. We do this each frame after the RenderSystem updates to
 		// ensure anything that needs to know about new objects being created (e.g. MIP generation GS) can see them
 		m_createdTextures.clear();
+
+		SEEndCPUEvent();
 	}
 
 

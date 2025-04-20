@@ -6,6 +6,7 @@
 #include "RenderManager.h"
 
 #include "Core/Logger.h"
+#include "Core/ProfilingMarkers.h"
 
 #include "Core/Util/MathUtils.h"
 
@@ -161,6 +162,8 @@ namespace gr
 
 	void BatchManagerGraphicsSystem::PreRender()
 	{
+		SEBeginCPUEvent("BatchManagerGraphicsSystem::PreRender");
+
 		SEAssert(m_permanentCachedBatches.size() == m_renderDataIDToBatchMetadata.size() &&
 			m_permanentCachedBatches.size() == m_cacheIdxToRenderDataID.size(),
 			"Batch cache and batch maps are out of sync");
@@ -168,6 +171,7 @@ namespace gr
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		// Remove deleted batches
+		SEBeginCPUEvent("BatchManagerGraphicsSystem: Remove deleted batches");
 		std::vector<gr::RenderDataID> const* deletedMeshPrimIDs =
 			renderData.GetIDsWithDeletedData<gr::MeshPrimitive::RenderData>();
 		if (deletedMeshPrimIDs)
@@ -229,9 +233,10 @@ namespace gr
 				}
 			}
 		}
-
+		SEEndCPUEvent();
 
 		// Create batches for newly added IDs
+		SEBeginCPUEvent("BatchManagerGraphicsSystem: Create new batches");
 		std::vector<gr::RenderDataID> const* newMeshPrimIDs =
 			renderData.GetIDsWithNewData<gr::MeshPrimitive::RenderData>();
 		if (newMeshPrimIDs)
@@ -292,9 +297,10 @@ namespace gr
 				}
 			}
 		}
-
+		SEEndCPUEvent();
 
 		// Create/grow our permanent Transform instance buffers:
+		SEBeginCPUEvent("BatchManagerGraphicsSystem: Create/grow Transform buffers");
 		const bool mustReallocateTransformBuffer = m_instancedTransforms.GetBuffer() != nullptr &&
 			m_instancedTransforms.GetBuffer()->GetArraySize() < m_instancedTransformIndexes.size();
 
@@ -343,8 +349,10 @@ namespace gr
 				}
 			}
 		}
+		SEEndCPUEvent();
 
 		// Create/grow our permanent Material instance buffers:
+		SEBeginCPUEvent("BatchManagerGraphicsSystem: Create/grow Material buffers");
 		for (auto& materialMetadataEntry : m_materialInstanceMetadata)
 		{
 			const EffectID matEffectID = materialMetadataEntry.first;
@@ -387,8 +395,10 @@ namespace gr
 				}
 			}
 		}
+		SEEndCPUEvent();
 
 		// Update dirty instanced Transform data:
+		SEBeginCPUEvent("BatchManagerGraphicsSystem: Update dirty Transform buffers");
 		std::vector<gr::TransformID> const& dirtyTransforms = renderData.GetIDsWithDirtyTransformData();
 		for (gr::TransformID transformID : dirtyTransforms)
 		{
@@ -409,8 +419,10 @@ namespace gr
 					1);
 			}
 		}
+		SEEndCPUEvent();
 
 		// Update dirty instanced Material data:
+		SEBeginCPUEvent("BatchManagerGraphicsSystem: Update dirty Material buffers");
 		if (renderData.HasObjectData<gr::Material::MaterialInstanceRenderData>())
 		{
 			std::vector<gr::RenderDataID> const* dirtyMaterials =
@@ -453,8 +465,11 @@ namespace gr
 				}
 			}
 		}
+		SEEndCPUEvent();
 
 		BuildViewBatches();
+
+		SEEndCPUEvent();
 	}
 
 
@@ -468,12 +483,16 @@ namespace gr
 	
 	void BatchManagerGraphicsSystem::BuildViewBatches()
 	{
+		SEBeginCPUEvent("BatchManagerGraphicsSystem::BuildViewBatches");
+
 		SEAssert(m_allBatches.empty(), "Batch vectors should have been cleared");
 
 		std::unordered_set<gr::RenderDataID> seenIDs; // Ensure no duplicates in m_allBatches
 
 		for (auto const& viewAndCulledIDs : *m_viewCullingResults)
 		{
+			SEBeginCPUEvent("viewAndCulledIDs entry");
+
 			gr::Camera::View const& curView = viewAndCulledIDs.first;
 			std::vector<gr::RenderDataID> const& renderDataIDs = viewAndCulledIDs.second;
 
@@ -609,6 +628,10 @@ namespace gr
 
 				} while (unmergedIdx < batchMetadata.size());
 			}
+
+			SEEndCPUEvent();
 		}
+
+		SEEndCPUEvent();
 	}
 }

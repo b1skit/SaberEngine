@@ -3,7 +3,6 @@
 #include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "NameComponent.h"
-#include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "TransformComponent.h"
 

@@ -6,6 +6,7 @@
 #include "Core/Assert.h"
 #include "Core/Config.h"
 #include "Core/PerfLogger.h"
+#include "Core/ProfilingMarkers.h"
 
 #include "Core/Util/TextUtils.h"
 
@@ -129,14 +130,20 @@ namespace re
 
 	void Context::Update(uint64_t currentFrame)
 	{
+		SEBeginCPUEvent("re::Context::Update");
+
 		// Ensure any new buffer objects have their platform-level resources created:
 		m_bufferAllocator->CreateBufferPlatformObjects();
 
 		// Platform-level updates:
+		SEBeginCPUEvent("re::Context::UpdateInternal");
 		UpdateInternal(currentFrame);
+		SEEndCPUEvent();
 
 		// Commit buffer data immediately before rendering
 		m_bufferAllocator->BufferData(currentFrame);
+
+		SEEndCPUEvent();
 	}
 
 

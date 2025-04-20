@@ -5,6 +5,8 @@
 #include "Buffer_Platform.h"
 #include "RenderManager.h"
 
+#include "Core/ProfilingMarkers.h"
+
 
 namespace
 {
@@ -89,6 +91,8 @@ namespace re
 	void Buffer::Register(
 		std::shared_ptr<re::Buffer> const& newBuffer, uint32_t numBytes, uint64_t typeIDHash)
 	{
+		SEBeginCPUEvent("Buffer::Register");
+
 		SEAssert(typeIDHash == newBuffer->m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
 
@@ -113,22 +117,30 @@ namespace re
 		}
 
 		re::Context::Get()->GetBufferAllocator()->Register(newBuffer, numBytes);
+
+		SEEndCPUEvent();
 	}
 
 
 	void Buffer::RegisterAndCommit(
 		std::shared_ptr<re::Buffer> const& newBuffer, void const* data, uint32_t numBytes, uint64_t typeIDHash)
 	{
+		SEBeginCPUEvent("Buffer::RegisterAndCommit");
+
 		Register(newBuffer, numBytes, typeIDHash);
 
 		re::Context::Get()->GetBufferAllocator()->Stage(newBuffer->GetUniqueID(), data);
 
 		newBuffer->m_platObj->m_isCommitted = true;
+
+		SEEndCPUEvent();
 	}
 
 
 	void Buffer::CommitInternal(void const* data, uint64_t typeIDHash)
 	{
+		SEBeginCPUEvent("Buffer::CommitInternal");
+
 		SEAssert(typeIDHash == m_typeIDHash,
 			"Invalid type detected. Can only set data of the original type");
 		SEAssert(m_bufferParams.m_stagingPool == StagingPool::Permanent, "Cannot set data of an immutable buffer");
@@ -136,6 +148,8 @@ namespace re
 		re::Context::Get()->GetBufferAllocator()->Stage(GetUniqueID(), data);
 		
 		m_platObj->m_isCommitted = true;
+
+		SEEndCPUEvent();
 	}
 
 

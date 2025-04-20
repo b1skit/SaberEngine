@@ -165,6 +165,8 @@ namespace re
 
 	void BufferAllocator::Register(std::shared_ptr<re::Buffer> const& buffer, uint32_t numBytes)
 	{
+		SEBeginCPUEvent("BufferAllocator::Register");
+
 		SEAssert(!buffer->GetPlatformObject()->m_isCreated,
 			"Buffer is already marked as created. This should not be possible");
 
@@ -230,12 +232,16 @@ namespace re
 			m_handleToCommitMetadata.insert(
 				{ uniqueID, CommitMetadata{stagingPool, buffer->GetLifetime(), k_invalidStartIdx, numBytes} });
 		}
+
+		SEEndCPUEvent();
 	}
 
 
 	uint32_t BufferAllocator::Allocate(
 		Handle uniqueID, uint32_t totalBytes, Buffer::StagingPool stagingPool, re::Lifetime bufferLifetime)
 	{
+		SEBeginCPUEvent("BufferAllocator::Allocate");
+
 		// Get the index we'll be inserting the 1st byte of our data to, resize the vector, and initialize it with zeros
 		uint32_t startIdx = k_invalidStartIdx;
 
@@ -318,12 +324,17 @@ namespace re
 
 			m_handleToCommitMetadata.at(uniqueID).m_startIndex = startIdx;
 		}
+
+		SEEndCPUEvent();
+
 		return startIdx;
 	}
 
 
 	void BufferAllocator::Stage(Handle uniqueID, void const* data)
 	{
+		SEBeginCPUEvent("BufferAllocator::Stage");
+
 		uint32_t startIdx;
 		uint32_t totalBytes;
 		Buffer::StagingPool stagingPool;
@@ -397,12 +408,16 @@ namespace re
 		}
 		break;
 		default: SEAssertF("Invalid AllocationType");
-		}		
+		}
+
+		SEEndCPUEvent();
 	}
 
 
 	void BufferAllocator::StageMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset)
 	{
+		SEBeginCPUEvent("BufferAllocator::StageMutable");
+
 		SEAssert(numBytes > 0, "0 bytes is only valid for signalling the Buffer::Update to update all bytes");
 
 		uint32_t startIdx;
@@ -601,11 +616,15 @@ namespace re
 
 			m_dirtyBuffers.emplace(m_mutableAllocations.m_handleToPtr.at(uniqueID)); // No-op if the Buffer is already recorded
 		}
+
+		SEEndCPUEvent();
 	}
 
 
 	void BufferAllocator::GetData(Handle uniqueID, void const** out_data) const
 	{
+		SEBeginCPUEvent("BufferAllocator::GetData");
+
 		Buffer::StagingPool stagingPool;
 		re::Lifetime bufferLifetime;
 		uint32_t startIdx = -1;
@@ -663,11 +682,15 @@ namespace re
 		break;
 		default: SEAssertF("Invalid AllocationType");
 		}
+
+		SEEndCPUEvent();
 	}
 
 
 	void BufferAllocator::Deallocate(Handle uniqueID)
 	{
+		SEBeginCPUEvent("BufferAllocator::Deallocate");
+
 		Buffer::StagingPool stagingPool = re::Buffer::StagingPool::StagingPool_Invalid;
 		re::Lifetime bufferLifetime;
 		uint32_t startIdx = -1;
@@ -775,11 +798,15 @@ namespace re
 				m_mutableAllocations.m_committed.pop_back();
 			}
 		}
+
+		SEEndCPUEvent();
 	}
 
 
 	void BufferAllocator::ResetForNewFrame(uint64_t renderFrameNum)
 	{
+		SEBeginCPUEvent("BufferAllocator::ResetForNewFrame");
+
 		// Avoid stomping existing data when the BufferAllocator has already been accessed (e.g. during
 		// RenderManager::Initialize, before BufferAllocator::BufferData has been called)
 		if (renderFrameNum != m_currentFrameNum)
@@ -795,11 +822,15 @@ namespace re
 				m_bufferBaseIndexes[allocationPoolIdx].store(0);
 			}
 		}
+
+		SEEndCPUEvent();
 	}
 
 
 	void BufferAllocator::CreateBufferPlatformObjects() const
 	{
+		SEBeginCPUEvent("BufferAllocator::CreateBufferPlatformObjects");
+
 		// Pre-create buffer platform objects:
 		{
 			std::lock_guard<std::mutex> lock(m_dirtyBuffersMutex);
@@ -812,6 +843,8 @@ namespace re
 				}
 			}
 		}
+
+		SEEndCPUEvent();
 	}
 
 

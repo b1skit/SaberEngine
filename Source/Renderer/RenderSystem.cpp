@@ -397,19 +397,24 @@ namespace gr
 
 	void RenderSystem::PostUpdatePreRender()
 	{
+		SEBeginCPUEvent(GetName().c_str());
 		m_renderPipeline.PostUpdatePreRender();
+		SEEndCPUEvent();
 	}
 
 
 	void RenderSystem::EndOfFrame()
 	{
+		SEBeginCPUEvent(GetName().c_str());
 		m_renderPipeline.EndOfFrame();
 		m_graphicsSystemManager.EndOfFrame();
+		SEEndCPUEvent();
 	}
 
 
 	void RenderSystem::BuildPipeline(gr::RenderSystemDescription const& renderSysDesc)
 	{
+		SEBeginCPUEvent(GetName().c_str());
 		// Create our GraphicsSystems:
 		m_graphicsSystemManager.Create();
 
@@ -494,12 +499,15 @@ namespace gr
 			}
 			LOG(updateOrderLog.c_str());
 		};
+		SEEndCPUEvent();
 	}
 
 
 	void RenderSystem::ExecuteInitializationPipeline()
 	{
+		SEBeginCPUEvent(GetName().c_str());
 		m_initPipeline(this);
+		SEEndCPUEvent();
 	}
 
 
@@ -510,8 +518,9 @@ namespace gr
 		static const bool s_singleThreadGSExecution = DisableThreadedGraphicsSystemUpdates();
 
 
-		auto ExecuteUpdateStep = [](UpdateStep const& currentStep)
+		auto ExecuteUpdateStep = [this](UpdateStep const& currentStep)
 			{
+				SEBeginCPUEvent(currentStep.m_gs->GetName().c_str());
 				try
 				{
 					currentStep.m_preRenderFunc();
@@ -524,6 +533,7 @@ namespace gr
 						currentStep.m_scriptFunctionName.c_str(),
 						e.what()).c_str());
 				}
+				SEEndCPUEvent();
 			};
 
 

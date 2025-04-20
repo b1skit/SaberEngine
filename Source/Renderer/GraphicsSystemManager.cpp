@@ -8,6 +8,7 @@
 #include "RenderSystem.h"
 
 #include "Core/Assert.h"
+#include "Core/ProfilingMarkers.h"
 
 
 namespace gr
@@ -61,6 +62,8 @@ namespace gr
 
 	void GraphicsSystemManager::PreRender()
 	{
+		SEBeginCPUEvent("GraphicsSystemManager::PreRender");
+
 		SEAssert(m_isCreated == true, "GSM has not been created. This is unexpected");
 
 		if (m_activeCameraRenderDataID != gr::k_invalidRenderDataID &&
@@ -73,6 +76,8 @@ namespace gr
 		}
 
 		UpdateActiveAmbientLight();
+
+		SEEndCPUEvent();
 	}
 
 
