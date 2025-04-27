@@ -10,7 +10,7 @@ layout(std430, binding = 1) readonly buffer InstancedTransformParams { Transform
 
 void VShader()
 {
-	const uint transformIdx = _InstanceIndexParams[gl_InstanceID].g_transformIdx;
+	const uint transformIdx = _InstanceIndexParams[gl_InstanceID].g_indexes.x;
 
 	gl_Position = _InstancedTransformParams[transformIdx].g_model * vec4(Position.xyz, 1.0);
 

@@ -7,9 +7,7 @@
 
 struct InstanceIndexData
 {
-	uint g_transformIdx;
-	uint g_materialIdx;
-	// Note: This is exclusively a StructuredBuffer, so we don't use any padding
+	uint4 g_indexes; // .x = transform idx, .y = material idx, .zw = unused
 
 
 #if defined(__cplusplus)
@@ -17,12 +15,12 @@ struct InstanceIndexData
 
 	inline static void WriteTransformIndex(uint32_t lutIdx, void* dst)
 	{
-		static_cast<InstanceIndexData*>(dst)->g_transformIdx = lutIdx;
+		static_cast<InstanceIndexData*>(dst)->g_indexes.x = lutIdx;
 	}
 
 	inline static void WriteMaterialIndex(uint32_t lutIdx, void* dst)
 	{
-		static_cast<InstanceIndexData*>(dst)->g_materialIdx = lutIdx;
+		static_cast<InstanceIndexData*>(dst)->g_indexes.y = lutIdx;
 	}
 #endif
 };

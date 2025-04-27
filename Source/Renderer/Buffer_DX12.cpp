@@ -269,8 +269,10 @@ namespace dx12
 
 
 	void Buffer::Update(
-		re::Buffer const& buffer, uint8_t curFrameHeapOffsetFactor, uint32_t commitBaseOffset, uint32_t numBytes)
+		re::Buffer const& buffer, uint8_t frameOffsetIdx, uint32_t commitBaseOffset, uint32_t numBytes)
 	{
+		SEAssert(numBytes > 0, "Invalid update size");
+
 		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
 
 		SEAssert(re::Buffer::HasAccessBit(re::Buffer::CPUWrite, bufferParams) &&
@@ -286,11 +288,17 @@ namespace dx12
 		uint32_t totalBytes = 0;
 		buffer.GetDataAndSize(&srcData, &totalBytes);
 
+		SEAssert(commitBaseOffset + numBytes <= totalBytes,
+			"Base offset and number of bytes are out of bounds");
+
+		// Update the source data pointer:
+		srcData = static_cast<uint8_t const*>(srcData) + commitBaseOffset;
+
 		// Update the heap offset, if required
 		if (buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent)
 		{
 			const uint64_t alignedSize = GetAlignedSize(bufferParams.m_usageMask, totalBytes);
-			platObj->m_baseByteOffset = alignedSize * curFrameHeapOffsetFactor;
+			platObj->m_baseByteOffset = alignedSize * frameOffsetIdx;
 		}
 
 		// Get a CPU pointer to the subresource (i.e subresource 0)
@@ -302,33 +310,14 @@ namespace dx12
 				&cpuVisibleData),
 			"Buffer::Update: Failed to map committed resource");
 
-		const bool updateAllBytes = commitBaseOffset == 0 && (numBytes == 0 || numBytes == totalBytes);
-		SEAssert(updateAllBytes || (commitBaseOffset + numBytes <= totalBytes),
-			"Base offset and number of bytes are out of bounds");
-
-		// Adjust our pointers if we're doing a partial update:
-		if (!updateAllBytes)
-		{
-			SEAssert(buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent,
-				"Only mutable buffers can be partially updated");
-
-			// Update the source data pointer:
-			srcData = static_cast<uint8_t const*>(srcData) + commitBaseOffset;
-			totalBytes = numBytes;
-
-			// Update the destination pointer:
-			cpuVisibleData = static_cast<uint8_t*>(cpuVisibleData) + commitBaseOffset;
-		}
-		SEAssert(!updateAllBytes || commitBaseOffset == 0, "Invalid base offset");
-
 		// Copy our data to the appropriate offset in the cpu-visible heap:
-		void* offsetPtr = static_cast<uint8_t*>(cpuVisibleData) + platObj->m_baseByteOffset;
-		memcpy(offsetPtr, srcData, totalBytes);
+		void* offsetPtr = static_cast<uint8_t*>(cpuVisibleData) + platObj->m_baseByteOffset + commitBaseOffset;
+		memcpy(offsetPtr, srcData, numBytes);
 	
 		// Release the map:
 		const D3D12_RANGE writtenRange{
 			platObj->m_baseByteOffset + commitBaseOffset,
-			platObj->m_baseByteOffset + commitBaseOffset + totalBytes };
+			platObj->m_baseByteOffset + commitBaseOffset + numBytes };
 
 		platObj->m_resolvedGPUResource->Unmap(
 			0,					// Subresource index: Buffers only have a single subresource

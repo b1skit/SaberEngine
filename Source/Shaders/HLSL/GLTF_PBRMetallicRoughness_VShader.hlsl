@@ -25,8 +25,8 @@ VertexOut VShader(VertexIn In)
 {
 	VertexOut Out;
 
-	const uint transformIdx = InstanceIndexParams[In.InstanceID].g_transformIdx;
-	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_materialIdx;
+	const uint transformIdx = InstanceIndexParams[In.InstanceID].g_indexes.x;
+	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_indexes.y;
 	
 	float3 position = In.Position;
 	

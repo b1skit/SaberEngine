@@ -41,7 +41,7 @@ GBufferOut PShader(VertexOut In)
 {
 	GBufferOut output;
 	
-	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_materialIdx;
+	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_indexes.y;
 	
 	const float2 albedoUV = GetUV(In, 
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.x);

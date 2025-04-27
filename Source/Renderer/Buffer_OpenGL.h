@@ -19,7 +19,7 @@ namespace opengl
 		{
 			void Destroy() override;
 
-			GLuint m_bufferName = 0;	// UBO or SSBO handle
+			GLuint m_bufferName = 0;		// UBO or SSBO handle
 			GLintptr m_baseByteOffset = 0;	// 0 for permanent buffers, or >= 0 for single-frame buffers
 
 			bool m_isSharedBufferName = false; // If true, do not call glDeleteBuffers() in Destroy()

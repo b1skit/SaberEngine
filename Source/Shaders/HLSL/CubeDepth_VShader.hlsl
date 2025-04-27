@@ -17,7 +17,7 @@ VertexOut VShader(VertexIn In)
 {
 	VertexOut Out;
 	
-	const uint transformIdx = InstanceIndexParams[In.InstanceID].g_transformIdx;
+	const uint transformIdx = InstanceIndexParams[In.InstanceID].g_indexes.x;
 	const float4 worldPos = mul(InstancedTransformParams[NonUniformResourceIndex(transformIdx)].g_model, float4(In.Position, 1.0f));
 	
 	Out.Position = worldPos;

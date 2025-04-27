@@ -98,18 +98,19 @@ namespace opengl
 		// Note: OpenGL manages heap synchronization for us, so we don't need to manually manage mutable buffers of
 		// size * numFramesInFlight bytes. Thus, frameOffsetIdx_UNUSED is unused here.
 
-		PlatObj* bufferPlatObj = buffer.GetPlatformObject()->As<opengl::Buffer::PlatObj*>();
+		PlatObj const* bufferPlatObj = buffer.GetPlatformObject()->As<opengl::Buffer::PlatObj const*>();
 
 		void const* srcData;
 		uint32_t totalBytes;
 		buffer.GetDataAndSize(&srcData, &totalBytes);
 
+		// Update the source data pointer:
+		srcData = static_cast<uint8_t const*>(srcData) + commitBaseOffset;
+
 		switch (buffer.GetBufferParams().m_memPoolPreference)
 		{
 		case re::Buffer::DefaultHeap:
 		{
-			srcData = static_cast<uint8_t const*>(srcData) + commitBaseOffset;
-
 			glNamedBufferSubData(
 				bufferPlatObj->m_bufferName,						// Target
 				bufferPlatObj->m_baseByteOffset + commitBaseOffset,	// Offset
@@ -119,33 +120,23 @@ namespace opengl
 		break;
 		case re::Buffer::UploadHeap:
 		{
-			const GLbitfield access = GL_MAP_WRITE_BIT;
-
-			const bool updateAllBytes = commitBaseOffset == 0 && numBytes == totalBytes;
-
-			SEAssert(updateAllBytes ||
-				(commitBaseOffset + numBytes <= totalBytes),
+			SEAssert(commitBaseOffset + numBytes <= totalBytes,
 				"Base offset and number of bytes are out of bounds");
 
-			// Adjust our source pointer if we're doing a partial update:
-			if (!updateAllBytes)
-			{
-				SEAssert(buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent,
-					"Only mutable buffers can be partially updated");
+			SEAssert(buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent ||
+				commitBaseOffset == 0 && numBytes == totalBytes,
+				"Only mutable buffers can be partially updated");
 
-				// Update the source data pointer:
-				srcData = static_cast<uint8_t const*>(srcData) + commitBaseOffset;
-				totalBytes = numBytes;
-			}
+			const GLbitfield access = GL_MAP_WRITE_BIT;
 
 			// Map and copy the data:
 			void* cpuVisibleData = glMapNamedBufferRange(
 				bufferPlatObj->m_bufferName,						// buffer
 				bufferPlatObj->m_baseByteOffset + commitBaseOffset,	// offset
-				(GLsizeiptr)totalBytes,								// length
+				static_cast<GLsizeiptr>(numBytes),					// length
 				access);											// access
 
-			memcpy(cpuVisibleData, srcData, totalBytes);
+			memcpy(cpuVisibleData, srcData, numBytes);
 
 			glUnmapNamedBuffer(bufferPlatObj->m_bufferName);
 		}
@@ -185,7 +176,7 @@ namespace opengl
 		{
 			SEAssert(re::Buffer::HasUsageBit(re::Buffer::Structured, buffer),
 				"Buffer is missing the Structured usage bit");
-			
+		
 			const uint32_t viewByteOffset = view.m_bufferView.m_structuredByteStride * view.m_bufferView.m_firstElement;
 
 			glBindBufferRange(GL_SHADER_STORAGE_BUFFER,

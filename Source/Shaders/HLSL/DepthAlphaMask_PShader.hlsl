@@ -17,7 +17,7 @@ StructuredBuffer<PBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams :
 
 float4 PShader(VertexOut In) : SV_Target
 {
-	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_materialIdx;
+	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_indexes.y;
 	
 	const float4 matAlbedo = BaseColorTex.Sample(WrapAnisotropic, In.UV0);
 	

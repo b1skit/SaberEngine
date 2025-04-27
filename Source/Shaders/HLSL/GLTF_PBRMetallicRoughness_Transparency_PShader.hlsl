@@ -45,7 +45,7 @@ uint UnpackSpotLightIndex(uint arrayIdx)
 
 float4 PShader(VertexOut In) : SV_Target
 {
-	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_materialIdx;
+	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_indexes.y;
 	
 	const float2 albedoUV = GetUV(In,
 		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.x);

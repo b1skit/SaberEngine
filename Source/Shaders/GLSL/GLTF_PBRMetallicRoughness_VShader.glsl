@@ -20,8 +20,8 @@ layout(std430, binding = 2) readonly buffer InstancedPBRMetallicRoughnessParams 
 
 void VShader()
 {
-	const uint transformIdx = _InstanceIndexParams[gl_InstanceID].g_transformIdx;
-	const uint materialIdx = _InstanceIndexParams[gl_InstanceID].g_materialIdx;
+	const uint transformIdx = _InstanceIndexParams[gl_InstanceID].g_indexes.x;
+	const uint materialIdx = _InstanceIndexParams[gl_InstanceID].g_indexes.y;
 
 	vec3 position = Position;
 	

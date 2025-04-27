@@ -66,7 +66,7 @@ LineVertexOut VShader(VertexIn In)
 #else
 	
 #if defined(DEBUG_WIREFRAME)
-	const uint transformIdx = InstanceIndexParams[In.InstanceID].g_transformIdx;
+	const uint transformIdx = InstanceIndexParams[In.InstanceID].g_indexes.x;
 #else
 	const uint transformIdx = In.InstanceID;
 #endif

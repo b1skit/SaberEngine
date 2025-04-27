@@ -78,7 +78,7 @@ void VShader()
 #else
 	
 #if defined(DEBUG_WIREFRAME)
-	const uint transformIdx = _InstanceIndexParams[gl_InstanceID].g_transformIdx;
+	const uint transformIdx = _InstanceIndexParams[gl_InstanceID].g_indexes.x;
 #else
 	const uint transformIdx = gl_InstanceID;
 #endif
