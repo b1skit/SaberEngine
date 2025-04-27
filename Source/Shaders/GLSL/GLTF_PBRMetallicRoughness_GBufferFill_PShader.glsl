@@ -12,9 +12,9 @@
 #include "../Common/MaterialParams.h"
 
 
-layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
+layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };
 
-layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	PBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
+layout(std430, binding = 2) readonly buffer InstancedPBRMetallicRoughnessParams {	PBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
 
 layout(binding=0) uniform sampler2D BaseColorTex;
 layout(binding=1) uniform sampler2D MetallicRoughnessTex;
@@ -32,7 +32,7 @@ layout (location = 4) out vec4 MatProp0Vn;
 
 void PShader()
 {
-	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[InstanceParamsIn.InstanceID].g_materialIdx;
+	const uint materialIdx = _InstanceIndexParams[InstanceParamsIn.InstanceID].g_materialIdx;
 
 	const vec2 albedoUV = GetUV(In, 
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.x);

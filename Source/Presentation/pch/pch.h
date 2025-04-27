@@ -29,6 +29,7 @@
 #include <limits>
 #include <map>
 #include <numbers>
+#include <ranges>
 #include <set>
 #include <queue>
 #include <shared_mutex>

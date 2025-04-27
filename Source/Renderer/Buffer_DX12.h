@@ -1,8 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Buffer.h"
+#include "BufferView.h"
 #include "BufferAllocator.h"
 #include "DescriptorCache_DX12.h"
+#include "EnumTypes.h"
 #include "HeapManager_DX12.h"
 
 #include <d3d12.h>
@@ -11,7 +13,6 @@
 namespace re
 {
 	struct BufferResource;
-	class BufferView;
 	struct VertexStreamResource;
 }
 
@@ -56,6 +57,8 @@ namespace dx12
 			ID3D12Resource* const& GetGPUResource() const; // Get the resolved GPU resource
 
 			D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
+			D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(re::BufferView const&) const;
+			D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(re::BufferInput const&) const;
 			uint64_t GetBaseByteOffset() const; // Debug only: GetGPUVirtualAddress() automatically applies this
 
 
@@ -105,12 +108,15 @@ namespace dx12
 			uint8_t frameOffsetIdx,
 			uint32_t baseOffset,
 			uint32_t numBytes,
-			dx12::CommandList* copyCmdList);
+			dx12::CommandList* copyCmdList,
+			dx12::GPUResource* intermediateResource,
+			uint64_t itermediateBaseOffset);
 
 
 	public: // Helper accessors: Prefer using the PlatObj helpers over these
 		static D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(re::Buffer const*); // Convenience wrapper for PlatObj::GetGPUVirtualAddress()
 		static uint64_t GetAlignedSize(re::Buffer::UsageMask usageMask, uint32_t bufferSize);
+		static constexpr uint32_t GetAlignment(re::BufferAllocator::AllocationPool);
 
 		static bool IsInSharedHeap(re::Buffer const*);
 
@@ -158,6 +164,34 @@ namespace dx12
 	}
 
 
+	inline D3D12_GPU_VIRTUAL_ADDRESS Buffer::PlatObj::GetGPUVirtualAddress(re::BufferView const& view) const
+	{
+		uint32_t firstElement = 0;
+		uint32_t structuredByteStride = 0;
+
+		if (view.IsVertexStreamView())
+		{
+			firstElement = view.m_streamView.m_firstElement;
+			structuredByteStride = re::DataTypeToByteStride(view.m_streamView.m_dataType);
+		}
+		else
+		{
+			firstElement = view.m_bufferView.m_firstElement;
+			structuredByteStride = view.m_bufferView.m_structuredByteStride;
+		}
+
+		const uint32_t firstElementOffset = firstElement * structuredByteStride;
+
+		return GetGPUVirtualAddress() + firstElementOffset;
+	}
+
+	
+	inline D3D12_GPU_VIRTUAL_ADDRESS Buffer::PlatObj::GetGPUVirtualAddress(re::BufferInput const& bufferInput) const
+	{
+		return GetGPUVirtualAddress(bufferInput.GetView());
+	}
+
+
 	inline uint64_t Buffer::PlatObj::GetBaseByteOffset() const
 	{
 		return m_baseByteOffset;
@@ -172,6 +206,21 @@ namespace dx12
 		SEAssert(buffer, "Buffer cannot be null");
 
 		return buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>()->GetGPUVirtualAddress();
+	}
+
+
+	inline constexpr uint32_t Buffer::GetAlignment(re::BufferAllocator::AllocationPool allocationPool)
+	{
+		switch (allocationPool)
+		{
+		case re::BufferAllocator::Constant: return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT; // 256B
+		case re::BufferAllocator::Structured: return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT; // 64KB
+		case re::BufferAllocator::Raw: return 16; // Minimum alignment of a float4 is 16B
+		case re::BufferAllocator::AllocationPool_Count:
+		default:
+			SEAssertF("Invalid buffer data type");
+		}
+		return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT; // This should never happen
 	}
 
 

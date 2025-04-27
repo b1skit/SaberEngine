@@ -105,16 +105,11 @@ namespace gr
 				MaterialInstanceRenderData const&, re::AccelerationStructure::Geometry&);
 		};
 
+		template<typename T>
+		static T CreateInstancedMaterialData(gr::Material::MaterialInstanceRenderData const&);
+
 
 	public:
-		static re::BufferInput CreateInstancedBuffer(
-			re::Buffer::StagingPool, std::vector<MaterialInstanceRenderData const*> const&);
-
-		static re::BufferInput ReserveInstancedBuffer(EffectID, uint32_t maxInstances);
-
-		// Convenience helper: Partially update elements of an already committed (mutable) buffer
-		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);
-
 		static bool ShowImGuiWindow(MaterialInstanceRenderData&); // Returns true if data was modified
 
 
@@ -181,6 +176,16 @@ namespace gr
 		Material(Material const&) = delete;
 		Material& operator=(Material const&) = delete;
 	};
+
+
+	template<typename T>
+	static T Material::CreateInstancedMaterialData(gr::Material::MaterialInstanceRenderData const& materialInstanceData)
+	{
+		SEAssert(sizeof(T) <= gr::Material::k_paramDataBlockByteSize, "Requested type is too large");
+		// TODO: We should assert that T is indeed what is packed in m_materialParamData
+
+		return *reinterpret_cast<T const*>(materialInstanceData.m_materialParamData.data());
+	}
 
 
 	template <typename T>

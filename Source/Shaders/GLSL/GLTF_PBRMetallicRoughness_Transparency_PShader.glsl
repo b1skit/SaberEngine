@@ -19,7 +19,7 @@
 
 layout(binding=10) uniform AllLightIndexesParams { AllLightIndexesData _AllLightIndexesParams; };
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
-layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
+layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };
 
 layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	PBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
 layout(std430, binding=3) readonly buffer DirectionalLightParams { LightData _DirectionalLightParams[]; };
@@ -54,7 +54,7 @@ uint UnpackSpotLightIndex(uint arrayIdx)
 
 void PShader()
 {
-	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[InstanceParamsIn.InstanceID].g_materialIdx;
+	const uint materialIdx = _InstanceIndexParams[InstanceParamsIn.InstanceID].g_materialIdx;
 
 	const vec2 albedoUV = GetUV(In, 
 		_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.x);

@@ -14,10 +14,10 @@
 #endif
 
 #if defined(DEBUG_WIREFRAME)
-ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space1);
+StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
 #endif
 
-StructuredBuffer<TransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
+StructuredBuffer<TransformData> InstancedTransformParams : register(t1, space1);
 
 
 struct LineVertexOut
@@ -66,12 +66,12 @@ LineVertexOut VShader(VertexIn In)
 #else
 	
 #if defined(DEBUG_WIREFRAME)
-	const uint transformIdx = InstanceIndexParams.g_instanceIndices[In.InstanceID].g_transformIdx;
+	const uint transformIdx = InstanceIndexParams[In.InstanceID].g_transformIdx;
 #else
 	const uint transformIdx = In.InstanceID;
 #endif
 	
-	const float4 worldPos = mul(InstancedTransformParams[transformIdx].g_model, float4(In.Position, 1.f));
+	const float4 worldPos = mul(InstancedTransformParams[NonUniformResourceIndex(transformIdx)].g_model, float4(In.Position, 1.f));
 	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 	
 #if !defined(DEBUG_WIREFRAME)
@@ -90,7 +90,7 @@ void GShader(point LineVertexOut In[1], inout LineStream<LineGeometryOut> Stream
 {
 	LineGeometryOut Out;
 		
-	const float4 worldPos = mul(InstancedTransformParams[In[0].InstanceID].g_model, In[0].Position);
+	const float4 worldPos = mul(InstancedTransformParams[NonUniformResourceIndex(In[0].InstanceID)].g_model, In[0].Position);
 	const float4 ndcPos = mul(CameraParams.g_viewProjection, worldPos);
 	Out.Position = ndcPos;
 		
@@ -98,7 +98,7 @@ void GShader(point LineVertexOut In[1], inout LineStream<LineGeometryOut> Stream
 		
 	// In[0], extended in the direction of the normal:
 	const float4 offsetWorldPos =
-		mul(InstancedTransformParams[In[0].InstanceID].g_model, float4(In[0].Position.xyz + In[0].Normal.xyz, 1.f));
+		mul(InstancedTransformParams[NonUniformResourceIndex(In[0].InstanceID)].g_model, float4(In[0].Position.xyz + In[0].Normal.xyz, 1.f));
 
 	const float3 scaledOffsetDir = normalize(offsetWorldPos.xyz - worldPos.xyz) * DebugParams.g_scales.x;
 
@@ -115,7 +115,7 @@ void GShader(point LineVertexOut In[1], inout LineStream<LineGeometryOut> Stream
 void GShader(point LineVertexOut In[1], inout LineStream<LineGeometryOut> StreamOut)
 {
 	// Origin:		
-	const float4 worldPos = mul(InstancedTransformParams[In[0].InstanceID].g_model, In[0].Position);
+	const float4 worldPos = mul(InstancedTransformParams[NonUniformResourceIndex(In[0].InstanceID)].g_model, In[0].Position);
 	const float4 ndcPos = mul(CameraParams.g_viewProjection, worldPos);
 	
 	// Append the axis offsets:
@@ -136,7 +136,7 @@ void GShader(point LineVertexOut In[1], inout LineStream<LineGeometryOut> Stream
 		
 		// Axis offset:
 		const float4 offsetWorldPos =
-			mul(InstancedTransformParams[In[0].InstanceID].g_model, float4(In[0].Position.xyz + axisDirs[i], 1.f));
+			mul(InstancedTransformParams[NonUniformResourceIndex(In[0].InstanceID)].g_model, float4(In[0].Position.xyz + axisDirs[i], 1.f));
 
 		const float3 scaledOffsetDir = normalize(offsetWorldPos.xyz - worldPos.xyz) * axisScale;
 

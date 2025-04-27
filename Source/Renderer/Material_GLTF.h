@@ -41,11 +41,6 @@ namespace gr
 		static constexpr re::Texture::Format GetDefaultTextureFormat(gr::Material_GLTF::TextureSlotIdx);
 		static constexpr re::Texture::ColorSpace GetDefaultTextureColorSpace(gr::Material_GLTF::TextureSlotIdx);
 
-		[[nodiscard]] static re::BufferInput CreateInstancedBuffer(
-			re::Buffer::StagingPool, std::vector<MaterialInstanceRenderData const*> const&);
-		
-		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);
-
 		static bool ShowImGuiWindow(MaterialInstanceRenderData&); // Returns true if data was modified
 
 

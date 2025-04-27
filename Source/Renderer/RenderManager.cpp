@@ -333,6 +333,16 @@ namespace re
 		
 		ProcessDeferredDeletions(GetCurrentRenderFrameNum());
 
+		// Clear the new resource read data: This prevents any single frame resources held by the NBufferedVectors
+		// living into the next frame
+		m_newShaders.ClearReadData();
+		m_newTextures.ClearReadData();
+		m_newSamplers.ClearReadData();
+		m_newVertexStreams.ClearReadData();
+		m_newAccelerationStructures.ClearReadData();
+		m_newShaderBindingTables.ClearReadData();
+		m_newTargetSets.ClearReadData();
+
 		platform::RenderManager::EndFrame(*this);
 
 		SEEndCPUEvent();

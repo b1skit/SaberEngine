@@ -171,6 +171,7 @@
     <ClInclude Include="GraphicsSystem_Transparency.h" />
     <ClInclude Include="GraphicsSystem_VertexAnimation.h" />
     <ClInclude Include="GraphicsSystem_XeGTAO.h" />
+    <ClInclude Include="IndexedBuffer.h" />
     <ClInclude Include="LightParamsHelpers.h" />
     <ClInclude Include="LightRenderData.h" />
     <ClInclude Include="Material.h" />
@@ -300,6 +301,7 @@
     <ClCompile Include="GraphicsSystem_Transparency.cpp" />
     <ClCompile Include="GraphicsSystem_VertexAnimation.cpp" />
     <ClCompile Include="GraphicsSystem_XeGTAO.cpp" />
+    <ClCompile Include="IndexedBuffer.cpp" />
     <ClCompile Include="LightParamsHelpers.cpp" />
     <ClCompile Include="LightRenderData.cpp" />
     <ClCompile Include="Material.cpp" />

@@ -29,8 +29,6 @@ namespace re
 
 		virtual void Destroy();
 
-		virtual void BufferDataPlatform(uint8_t frameOffsetIdx) = 0; // API-specific data buffering
-
 		bool IsValid() const; // Has Destroy() been called?
 
 
@@ -132,7 +130,7 @@ namespace re
 		std::unordered_map<Handle, CommitMetadata> m_handleToCommitMetadata;
 		mutable std::recursive_mutex m_handleToCommitMetadataMutex;
 
-		std::unordered_set<std::shared_ptr<re::Buffer>> m_dirtyBuffers;
+		std::unordered_set<std::shared_ptr<re::Buffer>> m_dirtyBuffers; // We use a set to avoid duplicate entries
 		mutable std::mutex m_dirtyBuffersMutex;
 
 
@@ -144,8 +142,13 @@ namespace re
 			uint32_t m_baseOffset;
 			uint32_t m_numBytes;
 		};
-		std::vector<PlatformCommitMetadata> m_dirtyBuffersForPlatformUpdate;
-		std::mutex m_dirtyBuffersForPlatformUpdateMutex;
+		virtual void BufferDefaultHeapDataPlatform(std::vector<PlatformCommitMetadata> const&, uint8_t frameOffsetIdx) = 0; // API-specific data buffering
+
+
+	private:
+		void BufferDataPlatform(
+			std::vector<PlatformCommitMetadata>&& defaultHeapCommits,
+			std::vector<PlatformCommitMetadata>&& uploadHeapCommits);
 
 
 	protected:

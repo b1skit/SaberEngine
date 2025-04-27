@@ -488,6 +488,9 @@
     <ClInclude Include="BindlessResource_Platform.h">
       <Filter>Header Files\re\platform</Filter>
     </ClInclude>
+    <ClInclude Include="IndexedBuffer.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -861,6 +864,9 @@
     </ClCompile>
     <ClCompile Include="BindlessResourceManager.cpp">
       <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="IndexedBuffer.cpp">
+      <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

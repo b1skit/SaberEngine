@@ -91,11 +91,11 @@ namespace dx12
 	}
 
 
-	void BufferAllocator::BufferDataPlatform(uint8_t frameOffsetIdx)
+	void BufferAllocator::BufferDefaultHeapDataPlatform(
+		std::vector<PlatformCommitMetadata> const& dirtyBuffersForPlatformUpdate,
+		uint8_t frameOffsetIdx)
 	{
-		// Note: BufferAllocator::m_dirtyBuffersForPlatformUpdateMutex is already locked by this point
-
-		if (!m_dirtyBuffersForPlatformUpdate.empty())
+		if (!dirtyBuffersForPlatformUpdate.empty())
 		{
 			dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 			dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
@@ -111,22 +111,61 @@ namespace dx12
 				"Copy buffers",
 				re::RenderManager::k_GPUFrameTimerName);
 
-			// Record our updates:
-			SEBeginCPUEvent("dx12::BufferAllocator::BufferDataPlatform: dx12::Buffer::Update(s)");
-			for (auto const& entry : m_dirtyBuffersForPlatformUpdate)
+			// Allocate a single intermediate resource for all buffer uploads:
+			uint64_t totalAlignedBytes = 0;
+			for (auto const& entry : dirtyBuffersForPlatformUpdate)
 			{
+				const uint32_t alignment = dx12::Buffer::GetAlignment(
+					re::BufferAllocator::BufferUsageMaskToAllocationPool(entry.m_buffer->GetUsageMask()));
+
+				totalAlignedBytes = util::RoundUpToNearestMultiple<uint64_t>(totalAlignedBytes, alignment);
+
+				totalAlignedBytes += dx12::Buffer::GetAlignedSize(
+					entry.m_buffer->GetBufferParams().m_usageMask,
+					entry.m_numBytes);
+			}
+			
+			// GPUResources automatically use a deferred deletion, it is safe to let this go out of scope immediately
+			dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
+			std::unique_ptr<dx12::GPUResource> intermediateResource = heapMgr.CreateResource(dx12::ResourceDesc{
+					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalAlignedBytes),
+					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,
+					.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ, },
+				L"Intermediate GPU buffer resource");
+
+			// Record our updates:
+			SEBeginCPUEvent("dx12::BufferAllocator::BufferDefaultHeapDataPlatform: dx12::Buffer::Update(s)");
+
+			uint64_t intermediateAlignedBaseOffset = 0;
+			for (auto const& entry : dirtyBuffersForPlatformUpdate)
+			{
+				const uint32_t alignment = dx12::Buffer::GetAlignment(
+					re::BufferAllocator::BufferUsageMaskToAllocationPool(entry.m_buffer->GetUsageMask()));
+
+				intermediateAlignedBaseOffset =
+					util::RoundUpToNearestMultiple<uint64_t>(intermediateAlignedBaseOffset, alignment);
+
+				SEAssert(intermediateAlignedBaseOffset + entry.m_numBytes <= totalAlignedBytes,
+					"Base offset and number of bytes will overflow");
+
 				dx12::Buffer::Update(
 					entry.m_buffer,
 					frameOffsetIdx,
 					entry.m_baseOffset,
 					entry.m_numBytes,
-					copyCommandList.get());
+					copyCommandList.get(),
+					intermediateResource.get(),
+					intermediateAlignedBaseOffset);
+
+				// Update the base offset:
+				intermediateAlignedBaseOffset +=
+					dx12::Buffer::GetAlignedSize(entry.m_buffer->GetBufferParams().m_usageMask, entry.m_numBytes);
 			}
 			SEEndCPUEvent();
 
 			copyTimer.StopTimer(copyCommandList->GetD3DCommandList().Get());
 
-			SEBeginCPUEvent("dx12::BufferAllocator::BufferDataPlatform: Execute copy queue");
+			SEBeginCPUEvent("dx12::BufferAllocator::BufferDefaultHeapDataPlatform: Execute copy queue");
 			copyQueue->Execute(1, &copyCommandList);
 			SEEndCPUEvent();
 

@@ -488,7 +488,7 @@ namespace re
 							});
 					};
 
-				MutableAllocation::PartialCommit newCommit = MutableAllocation::PartialCommit{
+				const MutableAllocation::PartialCommit newCommit{
 					.m_baseOffset = dstBaseByteOffset,
 					.m_numBytes = numBytes,
 					.m_numRemainingUpdates = m_numFramesInFlight };
@@ -513,12 +513,12 @@ namespace re
 					{
 						if (prev->m_numRemainingUpdates != current->m_numRemainingUpdates)
 						{
-							const MutableAllocation::PartialCommit lowerSplit = MutableAllocation::PartialCommit{
+							const MutableAllocation::PartialCommit lowerSplit{
 									.m_baseOffset = prev->m_baseOffset,
 									.m_numBytes = (current->m_baseOffset - prev->m_baseOffset),
 									.m_numRemainingUpdates = prev->m_numRemainingUpdates};
 
-							const MutableAllocation::PartialCommit upperSplit = MutableAllocation::PartialCommit{
+							const MutableAllocation::PartialCommit upperSplit{
 									.m_baseOffset = current->m_baseOffset,
 									.m_numBytes = prevFirstOOBByte - current->m_baseOffset,
 									.m_numRemainingUpdates = prev->m_numRemainingUpdates};
@@ -693,18 +693,18 @@ namespace re
 
 		Buffer::StagingPool stagingPool = re::Buffer::StagingPool::StagingPool_Invalid;
 		re::Lifetime bufferLifetime;
-		uint32_t startIdx = -1;
-		uint32_t numBytes = -1;
+		uint32_t startIdx = std::numeric_limits<uint32_t>::max();
+		uint32_t numBytes = std::numeric_limits<uint32_t>::max();
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
 
-			auto const& buffer = m_handleToCommitMetadata.find(uniqueID);
-			SEAssert(buffer != m_handleToCommitMetadata.end(), "Cannot deallocate a buffer that does not exist");
+			auto const& metadata = m_handleToCommitMetadata.find(uniqueID);
+			SEAssert(metadata != m_handleToCommitMetadata.end(), "Cannot deallocate a buffer that does not exist");
 
-			stagingPool = buffer->second.m_stagingPool;
-			bufferLifetime = buffer->second.m_bufferLifetime;
-			startIdx = buffer->second.m_startIndex;
-			numBytes = buffer->second.m_totalBytes;
+			stagingPool = metadata->second.m_stagingPool;
+			bufferLifetime = metadata->second.m_bufferLifetime;
+			startIdx = metadata->second.m_startIndex;
+			numBytes = metadata->second.m_totalBytes;
 		}
 
 		// Add our buffer to the deferred deletion queue, then erase the pointer from our allocation list
@@ -723,6 +723,7 @@ namespace re
 					allocation.m_currentAllocationsByteSize -= numBytes;
 				}
 			};
+
 		switch (stagingPool)
 		{
 		case Buffer::StagingPool::Permanent:
@@ -760,8 +761,7 @@ namespace re
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToCommitMetadataMutex);
 
-			auto const& commitMetadataItr = m_handleToCommitMetadata.find(uniqueID);
-			m_handleToCommitMetadata.erase(commitMetadataItr);
+			m_handleToCommitMetadata.erase(uniqueID);
 		}
 
 		// Finally, free any permanently committed memory:
@@ -867,8 +867,7 @@ namespace re
 				m_immutableAllocations.m_mutex,
 				m_singleFrameAllocations.m_mutex,
 				m_handleToCommitMetadataMutex,
-				m_dirtyBuffersMutex,
-				m_dirtyBuffersForPlatformUpdateMutex);
+				m_dirtyBuffersMutex);
 
 			// Start by resetting all of our indexes etc:
 			ResetForNewFrame(renderFrameNum);
@@ -877,24 +876,37 @@ namespace re
 
 			// We keep mutable buffers committed within m_numFramesInFlight in the dirty list to ensure they're
 			// kept up to date
-			std::unordered_set<std::shared_ptr<re::Buffer>> dirtyMutableBuffers;
+			std::unordered_set<std::shared_ptr<re::Buffer>> stillDirtyMutableBuffers;
+			std::vector<PlatformCommitMetadata> dirtyDefaultHeapBuffers;
+			std::vector<PlatformCommitMetadata> dirtyUploadHeapBuffers;
 
-			const uint8_t curFrameHeapOffsetFactor = GetFrameOffsetIndex();
+			std::vector<decltype(m_handleToCommitMetadata)::iterator> temporaryMetadataToInvalidate;
 
 			auto BufferTemporaryData = [&](Handle currentHandle, re::Buffer* currentBuffer)
 				{
 					SEAssert(currentBuffer->GetPlatformObject()->m_isCommitted,
 						"Trying to buffer a buffer that has not had an initial commit made");
 
-					platform::Buffer::Update(*currentBuffer, curFrameHeapOffsetFactor, 0, 0);
+					dirtyUploadHeapBuffers.emplace_back(PlatformCommitMetadata
+						{
+							.m_buffer = currentBuffer,
+							.m_baseOffset = 0,
+							.m_numBytes = currentBuffer->GetTotalBytes(),
+						});
 
-					// Invalidate the commit metadata:
-					m_handleToCommitMetadata.at(currentHandle).m_startIndex = k_invalidCommitValue;
+					temporaryMetadataToInvalidate.emplace_back(m_handleToCommitMetadata.find(currentHandle));
 				};
 
 
 			for (std::shared_ptr<re::Buffer> const& currentBuffer : m_dirtyBuffers)
 			{
+				// If m_dirtyBuffers is the only thing keeping our Buffer alive, skip the update as the buffer is about
+				// to go out of scope
+				if (currentBuffer.use_count() == 1)
+				{
+					continue;
+				}
+
 				// Trigger platform creation, if necessary.
 				// Note: It is possible we have buffers created *after* the CreateBufferPlatformObjects() call, we must
 				// still ensure they're created here:
@@ -936,7 +948,7 @@ namespace re
 						{
 						case re::Buffer::DefaultHeap:
 						{
-							m_dirtyBuffersForPlatformUpdate.emplace_back(PlatformCommitMetadata
+							dirtyDefaultHeapBuffers.emplace_back(PlatformCommitMetadata
 								{
 									.m_buffer = currentBuffer.get(),
 									.m_baseOffset = partialCommit->m_baseOffset,
@@ -946,11 +958,12 @@ namespace re
 						break;
 						case re::Buffer::UploadHeap:
 						{
-							platform::Buffer::Update(
-								*currentBuffer,
-								curFrameHeapOffsetFactor,
-								partialCommit->m_baseOffset,
-								partialCommit->m_numBytes);
+							dirtyUploadHeapBuffers.emplace_back(PlatformCommitMetadata
+								{
+									.m_buffer = currentBuffer.get(),
+									.m_baseOffset = partialCommit->m_baseOffset,
+									.m_numBytes = partialCommit->m_numBytes,
+								});
 						}
 						break;
 						default: SEAssertF("Invalid MemoryPoolPreference");
@@ -961,13 +974,11 @@ namespace re
 						partialCommit->m_numRemainingUpdates--;
 						if (partialCommit->m_numRemainingUpdates == 0)
 						{
-							auto itrToDelete = partialCommit;
-							++partialCommit;
-							commitRecords.erase(itrToDelete);
+							partialCommit = commitRecords.erase(partialCommit); // Returns itr after the erased element
 						}
 						else
 						{
-							dirtyMutableBuffers.emplace(currentBuffer); // No-op if the buffer was already recorded
+							stillDirtyMutableBuffers.emplace(currentBuffer); // No-op if the buffer was already recorded
 							++partialCommit;
 						}
 					}
@@ -987,7 +998,7 @@ namespace re
 						{
 							// If CPU writes are disabled, our buffer will need to be updated via a command list. Record
 							// the update metadata, we'll process these cases in a single batch at the end
-							m_dirtyBuffersForPlatformUpdate.emplace_back(PlatformCommitMetadata
+							dirtyDefaultHeapBuffers.emplace_back(PlatformCommitMetadata
 								{
 									.m_buffer = currentBuffer.get(),
 									.m_baseOffset = 0,
@@ -1023,24 +1034,96 @@ namespace re
 			}
 
 			// Swap in our dirty list for the next frame
-			m_dirtyBuffers = std::move(dirtyMutableBuffers);
+			m_dirtyBuffers = std::move(stillDirtyMutableBuffers);
 
 			SEEndCPUEvent(); // "re::BufferAllocator::BufferData: Dirty buffers"
 
-
-			// Perform any platform-specific buffering (e.g. update buffers that do not have CPU writes enabled)
-			SEBeginCPUEvent("re::BufferAllocator::BufferDataPlatform");
-			BufferDataPlatform(GetFrameOffsetIndex());
-			m_dirtyBuffersForPlatformUpdate.clear();
-			SEEndCPUEvent();
+			// Trigger platform buffering:
+			BufferDataPlatform(std::move(dirtyDefaultHeapBuffers), std::move(dirtyUploadHeapBuffers));
 
 			// We're done! Clear everything for the next round:
 			SEBeginCPUEvent("re::BufferAllocator: Clear temp staging and deferred deletions");
+
+			// Book keeping: Invalidate m_startIndex now that we've buffered temporary buffer data:
+			for (auto const& temporaryItr : temporaryMetadataToInvalidate)
+			{
+				temporaryItr->second.m_startIndex = k_invalidCommitValue;
+			}
+
 			ClearTemporaryStaging();
 			SEEndCPUEvent();
 		}
 
 		SEEndCPUEvent(); // "re::BufferAllocator::BufferData"
+	}
+
+
+	void BufferAllocator::BufferDataPlatform(
+		std::vector<PlatformCommitMetadata>&& defaultHeapCommits,
+		std::vector<PlatformCommitMetadata>&& uploadHeapCommits)
+	{
+		// Perform any platform-specific buffering (e.g. update buffers that do not have CPU writes enabled)
+		SEBeginCPUEvent("re::BufferAllocator::BufferDataPlatform");
+
+		// Optimization: We sort the dirty buffers, and then merge contiguous updates
+		auto MergeContiguousCommits = [](std::vector<PlatformCommitMetadata>& dirtyBuffers)
+			-> std::vector<PlatformCommitMetadata>
+			{
+				std::sort(
+					dirtyBuffers.begin(),
+					dirtyBuffers.end(),
+					[](PlatformCommitMetadata const& a, PlatformCommitMetadata const& b)
+					{
+						if (a.m_buffer->GetUniqueID() == b.m_buffer->GetUniqueID())
+						{
+							return a.m_baseOffset < b.m_baseOffset;
+						}
+						return a.m_buffer->GetUniqueID() < b.m_buffer->GetUniqueID();
+					});
+
+				// Merge contiguous commits into a single call:
+				std::vector<PlatformCommitMetadata> mergedDirtyBuffers;
+				mergedDirtyBuffers.reserve(dirtyBuffers.size());
+				auto itr = dirtyBuffers.begin();
+				while (itr != dirtyBuffers.end())
+				{
+					auto nextItr = std::next(itr);
+
+					// Nothing to merge:
+					if (nextItr == dirtyBuffers.end() ||
+						itr->m_buffer->GetUniqueID() != nextItr->m_buffer->GetUniqueID() ||
+						itr->m_baseOffset + itr->m_numBytes < nextItr->m_baseOffset)
+					{
+						mergedDirtyBuffers.emplace_back(*itr);
+					}
+					else // Merge neighboring commits:
+					{
+						SEAssert(itr->m_buffer->GetUniqueID() == nextItr->m_buffer->GetUniqueID() &&
+							itr->m_baseOffset + itr->m_numBytes == nextItr->m_baseOffset,
+							"Iterators are out of sync");
+
+						mergedDirtyBuffers.emplace_back(PlatformCommitMetadata{
+							.m_buffer = itr->m_buffer,
+							.m_baseOffset = itr->m_baseOffset,
+							.m_numBytes = itr->m_numBytes + nextItr->m_numBytes, });
+						++itr; // Ensure we double-increment, as we just merged the current and next records
+					}
+					++itr;
+				}
+				return mergedDirtyBuffers;
+			};
+
+
+		const uint8_t frameOffsetIdx = GetFrameOffsetIndex();
+
+		BufferDefaultHeapDataPlatform(MergeContiguousCommits(defaultHeapCommits), frameOffsetIdx);
+
+		for (auto const& commit : MergeContiguousCommits(uploadHeapCommits))
+		{
+			platform::Buffer::Update(*commit.m_buffer, frameOffsetIdx, commit.m_baseOffset, commit.m_numBytes);
+		}
+
+		SEEndCPUEvent(); // "re::BufferAllocator::BufferDataPlatform"
 	}
 
 

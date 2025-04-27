@@ -6,8 +6,6 @@
 #include "LightRenderData.h"
 #include "TransformRenderData.h"
 
-#include "Core/Definitions/ConfigKeys.h"
-
 #include "Core/Util/ByteVector.h"
 #include "Core/Util/ImGuiUtils.h"
 

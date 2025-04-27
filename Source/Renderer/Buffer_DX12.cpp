@@ -4,7 +4,6 @@
 #include "BufferView.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
-#include "EnumTypes.h"
 #include "EnumTypes_DX12.h"
 #include "Fence_DX12.h"
 #include "RenderManager.h"
@@ -22,21 +21,6 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-	constexpr uint32_t GetAlignment(re::BufferAllocator::AllocationPool allocationPool)
-	{
-		switch (allocationPool)
-		{
-		case re::BufferAllocator::Constant: return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT; // 256B
-		case re::BufferAllocator::Structured: return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT; // 64KB
-		case re::BufferAllocator::Raw: return 16; // Minimum alignment of a float4 is 16B
-		case re::BufferAllocator::AllocationPool_Count:
-		default:
-			SEAssertF("Invalid buffer data type");
-		}
-		return D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT; // This should never happen
-	}
-
-
 	inline D3D12_HEAP_TYPE MemoryPoolPreferenceToD3DHeapType(re::Buffer::MemoryPoolPreference memPoolPreference)
 	{
 		switch (memPoolPreference)
@@ -218,14 +202,7 @@ namespace dx12
 
 		const bool needsUAV = NeedsUAV(bufferParams);
 
-		uint32_t requestedSize = buffer.GetTotalBytes();
-		if (bufferLifetime == re::Lifetime::Permanent &&
-			buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent)
-		{
-			// We allocate N aligned frames-worth of buffer space, and then set the m_baseByteOffset each frame
-			requestedSize = util::CheckedCast<uint32_t>(
-				GetAlignedSize(bufferParams.m_usageMask, requestedSize) * numFramesInFlight);
-		}
+		uint32_t totalBytes = buffer.GetTotalBytes();
 
 		// Single frame buffers sub-allocated from a single resource:
 		if (bufferLifetime == re::Lifetime::SingleFrame &&
@@ -237,7 +214,7 @@ namespace dx12
 
 			bufferAllocator->GetSubAllocation(
 				bufferParams.m_usageMask,
-				GetAlignedSize(bufferParams.m_usageMask, requestedSize),
+				GetAlignedSize(bufferParams.m_usageMask, totalBytes),
 				platObj->m_baseByteOffset,
 				platObj->m_resolvedGPUResource);
 
@@ -246,9 +223,16 @@ namespace dx12
 				"Base offset does not have the correct buffer alignment");
 		}
 		else // Placed resources via the heap manager:
-		{		
+		{
+			if (buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent)
+			{
+				// We allocate N aligned frames-worth of buffer space, and then set the m_baseByteOffset each frame
+				totalBytes = util::CheckedCast<uint32_t>(
+					GetAlignedSize(bufferParams.m_usageMask, totalBytes) * numFramesInFlight);
+			}
+
 			CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
-				GetAlignedSize(bufferParams.m_usageMask, requestedSize));
+				GetAlignedSize(bufferParams.m_usageMask, totalBytes));
 			
 			if (needsUAV)
 			{
@@ -295,21 +279,12 @@ namespace dx12
 
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
-		// Get a CPU pointer to the subresource (i.e subresource 0)
-		void* cpuVisibleData = nullptr;
-		const CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
-		HRESULT hr = platObj->m_resolvedGPUResource->Map(
-			0,									// Subresource index: Buffers only have a single subresource
-			&readRange,
-			&cpuVisibleData);
-		CheckHResult(hr, "Buffer::Update: Failed to map committed resource");
-
 		// We map and then unmap immediately; Microsoft recommends resources be left unmapped while the CPU will not 
 		// modify them, and use tight, accurate ranges at all times
 		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-map
-		void const* data = nullptr;
+		void const* srcData = nullptr;
 		uint32_t totalBytes = 0;
-		buffer.GetDataAndSize(&data, &totalBytes);
+		buffer.GetDataAndSize(&srcData, &totalBytes);
 
 		// Update the heap offset, if required
 		if (buffer.GetStagingPool() == re::Buffer::StagingPool::Permanent)
@@ -317,6 +292,15 @@ namespace dx12
 			const uint64_t alignedSize = GetAlignedSize(bufferParams.m_usageMask, totalBytes);
 			platObj->m_baseByteOffset = alignedSize * curFrameHeapOffsetFactor;
 		}
+
+		// Get a CPU pointer to the subresource (i.e subresource 0)
+		void* cpuVisibleData = nullptr;
+		const D3D12_RANGE readRange{ .Begin = 0, .End = 0 }; // We won't read from this resource on the CPU (end <= begin)
+		CheckHResult(platObj->m_resolvedGPUResource->Map(
+				0,									// Subresource index: Buffers only have a single subresource
+				&readRange,
+				&cpuVisibleData),
+			"Buffer::Update: Failed to map committed resource");
 
 		const bool updateAllBytes = commitBaseOffset == 0 && (numBytes == 0 || numBytes == totalBytes);
 		SEAssert(updateAllBytes || (commitBaseOffset + numBytes <= totalBytes),
@@ -329,16 +313,17 @@ namespace dx12
 				"Only mutable buffers can be partially updated");
 
 			// Update the source data pointer:
-			data = static_cast<uint8_t const*>(data) + commitBaseOffset;
+			srcData = static_cast<uint8_t const*>(srcData) + commitBaseOffset;
 			totalBytes = numBytes;
 
 			// Update the destination pointer:
 			cpuVisibleData = static_cast<uint8_t*>(cpuVisibleData) + commitBaseOffset;
 		}
+		SEAssert(!updateAllBytes || commitBaseOffset == 0, "Invalid base offset");
 
 		// Copy our data to the appropriate offset in the cpu-visible heap:
 		void* offsetPtr = static_cast<uint8_t*>(cpuVisibleData) + platObj->m_baseByteOffset;
-		memcpy(offsetPtr, data, totalBytes);
+		memcpy(offsetPtr, srcData, totalBytes);
 	
 		// Release the map:
 		const D3D12_RANGE writtenRange{
@@ -356,9 +341,17 @@ namespace dx12
 		uint8_t frameOffsetIdx,
 		uint32_t commitBaseOffset,
 		uint32_t numBytes,
-		dx12::CommandList* copyCmdList)
+		dx12::CommandList* copyCmdList,
+		dx12::GPUResource* intermediateResource,
+		uint64_t alignedItermediateBaseOffset)
 	{
+		SEAssert(numBytes > 0, "Invalid update size");
+
 		dx12::Buffer::PlatObj* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
+
+		SEAssert(alignedItermediateBaseOffset % GetAlignment(
+				re::BufferAllocator::BufferUsageMaskToAllocationPool(buffer->GetUsageMask())) == 0,
+			"Invalid intermediate resource base offset");
 
 		// Update the heap offset, if required
 		if (buffer->GetStagingPool() == re::Buffer::StagingPool::Permanent)
@@ -370,40 +363,28 @@ namespace dx12
 			platObj->m_baseByteOffset = alignedSize * frameOffsetIdx;
 		}
 
-		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
-
-		void const* const data = buffer->GetData();
-
-		// Use the incoming numBytes rather than the buffer size: Might require a smaller buffer for partial updates
-		const uint64_t alignedIntermediateBufferSize = GetAlignedSize(buffer->GetBufferParams().m_usageMask, numBytes);
-		
-		// GPUResources automatically use a deferred deletion, it is safe to let this go out of scope immediately
-		std::wstring const& intermediateName = buffer->GetWName() + L" intermediate GPU buffer resource";
-		std::unique_ptr<dx12::GPUResource> intermediateResource = heapMgr.CreateResource(dx12::ResourceDesc{
-				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedIntermediateBufferSize),
-				.m_heapType = D3D12_HEAP_TYPE_UPLOAD,
-				.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
-			},
-			intermediateName.c_str());
-
 		constexpr uint32_t k_intermediateSubresourceIdx = 0;
 
 		// Map the intermediate resource, and copy our data into it
 		void* cpuVisibleData = nullptr;
-		const CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
+		const CD3DX12_RANGE readRange(0, 0);	// We don't read from this resource on the CPU (end <= begin)
 		const HRESULT hr = intermediateResource->Map(
 			k_intermediateSubresourceIdx,
 			&readRange,
 			&cpuVisibleData);
 		CheckHResult(hr, "Buffer::Update: Failed to map intermediate committed resource");
 
+		// Offset our mapping into the intermediate resource:
+		cpuVisibleData = static_cast<uint8_t*>(cpuVisibleData) + alignedItermediateBaseOffset;
+
 		// Copy our data to the appropriate offset in the cpu-visible heap:
-		memcpy(cpuVisibleData, data, numBytes);
+		void const* const srcData = static_cast<uint8_t const*>(buffer->GetData()) + commitBaseOffset;
+		memcpy(cpuVisibleData, srcData, numBytes);
 
 		// Release the map:
-		D3D12_RANGE writtenRange{
-			0,
-			numBytes };
+		const D3D12_RANGE writtenRange{
+			.Begin = alignedItermediateBaseOffset,
+			.End = numBytes };
 
 		intermediateResource->Unmap(
 			k_intermediateSubresourceIdx,
@@ -411,7 +392,8 @@ namespace dx12
 
 		// Schedule a copy from the intermediate resource to default/L1/vid memory heap via the copy queue:
 		const uint32_t dstOffset = util::CheckedCast<uint32_t>(platObj->m_baseByteOffset + commitBaseOffset);
-		copyCmdList->UpdateSubresources(buffer, dstOffset, intermediateResource->Get(), commitBaseOffset, numBytes);
+		copyCmdList->UpdateSubresources(
+			buffer, dstOffset, intermediateResource->Get(), alignedItermediateBaseOffset, numBytes);
 	}
 
 
@@ -640,18 +622,19 @@ namespace dx12
 
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
-		SEAssert(platObj->GetBaseByteOffset() == 0, "TODO: Handle non-zero base byte offsets for stream buffer views");
-
-		if (platObj->m_views.m_vertexBufferView.BufferLocation == 0)
+		if (platObj->m_views.m_vertexBufferView.BufferLocation == 0) // Has not been created yet
 		{
 			std::unique_lock<std::mutex> lock(platObj->m_viewMutex);
 
-			if (platObj->m_views.m_vertexBufferView.BufferLocation == 0)
+			if (platObj->m_views.m_vertexBufferView.BufferLocation == 0) // Confirm: Still not created
 			{
+				const uint32_t byteStride = DataTypeToByteStride(view.m_streamView.m_dataType);
+				const uint32_t sizeInBytes = buffer.GetTotalBytes() - (byteStride * view.m_streamView.m_firstElement);
+
 				platObj->m_views.m_vertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
-					.BufferLocation = platObj->GetGPUVirtualAddress(),
-					.SizeInBytes = buffer.GetTotalBytes(),
-					.StrideInBytes = DataTypeToByteStride(view.m_streamView.m_dataType),
+					.BufferLocation = platObj->GetGPUVirtualAddress(view),
+					.SizeInBytes = sizeInBytes,
+					.StrideInBytes = byteStride,
 				};
 			}
 		}
@@ -670,17 +653,18 @@ namespace dx12
 
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
-		SEAssert(platObj->GetBaseByteOffset() == 0, "TODO: Handle non-zero base byte offsets for stream buffer views");
-
-		if (platObj->m_views.m_indexBufferView.BufferLocation == 0)
+		if (platObj->m_views.m_indexBufferView.BufferLocation == 0) // Has not been created yet
 		{
 			std::unique_lock<std::mutex> lock(platObj->m_viewMutex);
 
-			if (platObj->m_views.m_indexBufferView.BufferLocation == 0)
+			if (platObj->m_views.m_indexBufferView.BufferLocation == 0) // Confirm: Still not created
 			{
+				const uint32_t byteStride = DataTypeToByteStride(view.m_streamView.m_dataType);
+				const uint32_t sizeInBytes = buffer.GetTotalBytes() - (byteStride * view.m_streamView.m_firstElement);
+
 				platObj->m_views.m_indexBufferView = D3D12_INDEX_BUFFER_VIEW{
-					.BufferLocation = platObj->GetGPUVirtualAddress(),
-					.SizeInBytes = buffer.GetTotalBytes(),
+					.BufferLocation = platObj->GetGPUVirtualAddress(view),
+					.SizeInBytes = sizeInBytes,
 					.Format = dx12::DataTypeToDXGI_FORMAT(view.m_streamView.m_dataType, false),
 				};
 			}

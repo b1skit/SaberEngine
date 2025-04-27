@@ -162,11 +162,11 @@ namespace opengl
 	}
 
 
-	void BufferAllocator::BufferDataPlatform(uint8_t frameOffsetIdx)
-	{
-		// Note: BufferAllocator::m_dirtyBuffersForPlatformUpdateMutex is already locked by this point
-		
-		for (auto const& entry : m_dirtyBuffersForPlatformUpdate)
+	void BufferAllocator::BufferDefaultHeapDataPlatform(
+		std::vector<PlatformCommitMetadata> const& dirtyBuffersForPlatformUpdate,
+		uint8_t frameOffsetIdx)
+	{	
+		for (auto const& entry : dirtyBuffersForPlatformUpdate)
 		{
 			// OpenGL allows buffers to be updated via a CPU-side map, regardless of where the actual resource data is
 			// held in memory. So we just forward our buffers on to the standard update function here

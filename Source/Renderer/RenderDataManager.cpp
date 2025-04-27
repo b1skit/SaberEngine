@@ -94,6 +94,7 @@ namespace gr
 			{
 				prevFrameDeletedTypes.clear();
 			}
+			m_perFrameDeletedDataIDs.clear();
 			for (auto& prevFrameDirtyTypes : m_perFramePerTypeDirtyDataIDs)
 			{
 				prevFrameDirtyTypes.clear();

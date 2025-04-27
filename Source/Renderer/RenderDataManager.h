@@ -65,9 +65,14 @@ namespace gr
 		template<typename T>
 		std::vector<gr::RenderDataID> const* GetIDsWithDeletedData() const;
 
+		std::unordered_set<gr::RenderDataID> const& GetIDsWithAnyDeletedData() const;
+
 		// Get a list of IDs that had data of a specific type modified (i.e. SetObjectData() was called) this frame
 		template<typename T>
 		std::vector<gr::RenderDataID> const* GetIDsWithDirtyData() const;
+
+		template<typename... Ts>
+		[[nodiscard]] bool HasAnyDirtyData() const;
 
 		// Get a unique list of IDs that have all Ts, where any/all of the Ts have dirty data for this frame
 		template<typename... Ts>
@@ -81,6 +86,9 @@ namespace gr
 
 		template<typename T>
 		[[nodiscard]] uint32_t GetNumElementsOfType() const;
+
+		template<typename T>
+		[[nodiscard]] uint32_t GetNumElementsOfType(gr::RenderObjectFeature) const;
 
 		void SetFeatureBits(gr::RenderDataID, gr::FeatureBitmask); // Logical OR
 		
@@ -97,6 +105,12 @@ namespace gr
 
 
 	private: // Variadic helpers:
+		template<typename T>
+		[[nodiscard]] bool HasAnyDirtyDataInternal() const;
+
+		template<typename T, typename Next, typename... Rest>
+		[[nodiscard]] bool HasAnyDirtyDataInternal() const;
+
 		template<typename T>
 		[[nodiscard]] void GetIDsWithAnyDirtyData(std::vector<gr::RenderDataID>&) const;
 
@@ -133,6 +147,10 @@ namespace gr
 
 		[[nodiscard]] std::vector<gr::TransformID> const& GetNewTransformIDs() const;
 		[[nodiscard]] std::vector<gr::TransformID> const& GetDeletedTransformIDs() const;
+
+		[[nodiscard]] gr::TransformID GetTransformIDFromRenderDataID(gr::RenderDataID) const;
+
+		[[nodiscard]] uint32_t GetNumTransforms() const;
 
 
 	public:
@@ -186,6 +204,7 @@ namespace gr
 		
 		// IDs/IDs with data deleted in the current frame
 		std::vector<std::vector<gr::RenderDataID>> m_perFramePerTypeDeletedDataIDs;
+		std::unordered_set<gr::RenderDataID> m_perFrameDeletedDataIDs; // IDs with ANY deleted data, regardless of type
 
 		// IDs that had data of a given type modified in the current frame. We track the IDs we've modified so we don't 
 		// double-add IDs to the vector
@@ -301,6 +320,7 @@ namespace gr
 			[[nodiscard]] bool TransformIsDirty() const;
 
 			[[nodiscard]] gr::FeatureBitmask GetFeatureBits() const;
+			[[nodiscard]] bool HasAllFeatures() const;
 
 			ObjectIterator& operator++(); // Prefix increment
 			ObjectIterator operator++(int); // Postfix increment
@@ -796,6 +816,14 @@ namespace gr
 	}
 
 
+	inline std::unordered_set<gr::RenderDataID> const& RenderDataManager::GetIDsWithAnyDeletedData() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		return m_perFrameDeletedDataIDs;
+	}
+
+
 	template<typename T>
 	std::vector<gr::RenderDataID> const* RenderDataManager::GetIDsWithDirtyData() const
 	{
@@ -811,6 +839,44 @@ namespace gr
 			return &m_perFramePerTypeDirtyDataIDs[dataTypeIndex];
 		}
 		return nullptr;
+	}
+
+
+	template<>
+	inline std::vector<gr::TransformID> const* RenderDataManager::GetIDsWithDirtyData<gr::Transform::RenderData>() const
+	{
+		return &GetIDsWithDirtyTransformData();
+	}
+
+
+	template<typename... Ts>
+	[[nodiscard]] bool RenderDataManager::HasAnyDirtyData() const
+	{
+		return HasAnyDirtyDataInternal<Ts...>();
+	}
+
+
+	template<typename T>
+	[[nodiscard]] bool RenderDataManager::HasAnyDirtyDataInternal() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		if constexpr (std::is_same_v<T, gr::Transform::RenderData>)
+		{
+			return m_perFrameDirtyTransformIDs.empty() == false;
+		}
+		else
+		{
+			std::vector<gr::RenderDataID> const* dirtyIDs = GetIDsWithDirtyData<T>();
+			return dirtyIDs != nullptr && dirtyIDs->empty() == false;
+		}
+	}
+
+
+	template<typename T, typename Next, typename... Rest>
+	[[nodiscard]] bool RenderDataManager::HasAnyDirtyDataInternal() const
+	{
+		return HasAnyDirtyDataInternal<T>() && HasAnyDirtyDataInternal<Next, Rest...>();
 	}
 
 
@@ -995,8 +1061,10 @@ namespace gr
 	template<typename T>
 	uint32_t RenderDataManager::GetNumElementsOfType() const
 	{
-		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false),
-			"This function does not (currently) support gr::Transform::RenderData queries");
+		if constexpr (std::is_same_v<T, gr::Transform::RenderData>)
+		{
+			return GetNumTransforms();
+		}
 
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -1009,6 +1077,61 @@ namespace gr
 		std::vector<T> const& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 		
 		return util::CheckedCast<uint32_t>(dataVector.size());
+	}
+
+
+	template<typename T>
+	[[nodiscard]] uint32_t RenderDataManager::GetNumElementsOfType(gr::RenderObjectFeature featureBits) const
+	{
+		if constexpr (std::is_same_v<T, gr::Transform::RenderData>)
+		{
+			SEAssert(featureBits == gr::RenderObjectFeature::None, "Feature bits are not valid for Transforms");
+			return GetNumTransforms();
+		}
+
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		// Avoid explicit counting if we can:
+		if (featureBits == RenderObjectFeature::None)
+		{
+			return GetNumElementsOfType<T>();
+		}
+
+		// Manually count each element that matches the feature bits:
+		uint32_t count = 0;
+
+		ObjectAdapter<T> objAdapter(*this, featureBits);
+		for (auto const& itr : objAdapter)
+		{
+			if (itr->HasAllFeatures())
+			{
+				++count;
+			}
+		}
+		return count;
+	}
+
+
+	[[nodiscard]] inline gr::TransformID RenderDataManager::GetTransformIDFromRenderDataID(
+		gr::RenderDataID renderDataID) const
+	{
+		// Note: This function is slower than direct access via the TransformID. If you have a TransformID, use it
+
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID), "Trying to find an object that does not exist");
+
+		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
+
+		return renderObjectMetadata.m_transformID;
+	}
+
+
+	[[nodiscard]] inline uint32_t RenderDataManager::GetNumTransforms() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		return util::CheckedCast<uint32_t>(m_registeredTransformIDs.size());
 	}
 
 
@@ -1130,8 +1253,9 @@ namespace gr
 		m_perTypeRegisteredRenderDataIDs[dataTypeIndex].erase(
 			m_perTypeRegisteredRenderDataIDs[dataTypeIndex].begin() + perTypeIDIndexToDelete);
 
-		// Add the RenderDataID to the per-frame deleted data tracker:
+		// Add the RenderDataID to the deleted data trackers:
 		m_perFramePerTypeDeletedDataIDs[dataTypeIndex].emplace_back(renderDataID);
+		m_perFrameDeletedDataIDs.emplace(renderDataID);
 
 		// Finally, remove the index in the object's data index map:
 		renderObjectMetadata.m_dataTypeToDataIndexMap.erase(dataTypeIndex);
@@ -1521,6 +1645,14 @@ namespace gr
 	gr::FeatureBitmask RenderDataManager::ObjectIterator<Ts...>::GetFeatureBits() const
 	{
 		return m_renderObjectMetadataItr->second.m_featureBits;
+	}
+
+
+	template <typename... Ts>
+	inline bool RenderDataManager::ObjectIterator<Ts...>::HasAllFeatures() const
+	{
+		return m_featureMask == RenderObjectFeature::None ||
+			(m_featureMask & GetFeatureBits()) == m_featureMask;
 	}
 
 

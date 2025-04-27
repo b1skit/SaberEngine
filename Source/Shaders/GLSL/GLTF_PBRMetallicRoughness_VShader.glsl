@@ -12,18 +12,16 @@
 #include "../Generated/GLSL/VertexStreams_PosNmlTanUvCol.glsli"
 
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
-layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
+layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };
 
-layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	PBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
-
-// UBOs can't have a dynamic length; We use SSBOs for instancing instead
-layout(std430, binding=1) readonly buffer InstancedTransformParams { TransformData _InstancedTransformParams[]; };
+layout(std430, binding = 1) readonly buffer InstancedTransformParams { TransformData _InstancedTransformParams[]; };
+layout(std430, binding = 2) readonly buffer InstancedPBRMetallicRoughnessParams {	PBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
 
 
 void VShader()
 {
-	const uint transformIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_transformIdx;
-	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_materialIdx;
+	const uint transformIdx = _InstanceIndexParams[gl_InstanceID].g_transformIdx;
+	const uint materialIdx = _InstanceIndexParams[gl_InstanceID].g_materialIdx;
 
 	vec3 position = Position;
 	

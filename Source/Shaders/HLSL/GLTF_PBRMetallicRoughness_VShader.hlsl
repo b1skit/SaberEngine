@@ -12,21 +12,21 @@
 #include "../Generated/HLSL/VertexStreams_PosNmlTanUvCol.hlsli"
 
 
-// If a resource is used in multiple shader stages, we need to explicitely specify the register and space. Otherwise,
-// shader reflection will assign the resource different registers for each stage (while SE expects them to be consistent).
-// We (currently) use space1 for all explicit bindings, preventing conflicts with non-explicit bindings in space0
-ConstantBuffer<InstanceIndexData> InstanceIndexParams : register(b0, space1);
-
-StructuredBuffer<TransformData> InstancedTransformParams : register(t0, space1); // Indexed by instance ID
-StructuredBuffer<PBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t1, space1);
+// Note: If a resource is used in multiple shader stages, we need to explicitely specify the register and space.
+// Otherwise, shader reflection will assign the resource different registers for each stage (while SE expects them to be
+// consistent). We (currently) use space1 for all explicit bindings, preventing conflicts with non-explicit bindings in
+// space0
+StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
+StructuredBuffer<TransformData> InstancedTransformParams : register(t1, space1);
+StructuredBuffer<PBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t2, space1);
 
 
 VertexOut VShader(VertexIn In)
 {
 	VertexOut Out;
 
-	const uint transformIdx = InstanceIndexParams.g_instanceIndices[In.InstanceID].g_transformIdx;
-	const uint materialIdx = InstanceIndexParams.g_instanceIndices[In.InstanceID].g_materialIdx;
+	const uint transformIdx = InstanceIndexParams[In.InstanceID].g_transformIdx;
+	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_materialIdx;
 	
 	float3 position = In.Position;
 	

@@ -16,7 +16,9 @@ namespace dx12
 
 		void Destroy() override;
 
-		void BufferDataPlatform(uint8_t frameOffsetIdx) override;
+
+	protected:
+		void BufferDefaultHeapDataPlatform(std::vector<PlatformCommitMetadata> const&, uint8_t frameOffsetIdx) override;
 
 
 	public: // DX12-specific functionality:

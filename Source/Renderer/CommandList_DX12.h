@@ -153,7 +153,7 @@ namespace dx12
 			size_t intermediateOffset);
 
 		void UpdateSubresources(
-			re::Buffer const*, uint32_t dstOffset, ID3D12Resource* srcResource, uint32_t srcOffset, uint32_t numBytes);
+			re::Buffer const*, uint32_t dstOffset, ID3D12Resource* srcResource, uint64_t srcOffset, uint64_t numBytes);
 
 		void CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource);
 		void CopyTexture(core::InvPtr<re::Texture> const& src, core::InvPtr<re::Texture> const& dst);

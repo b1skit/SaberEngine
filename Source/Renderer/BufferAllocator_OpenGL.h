@@ -21,7 +21,7 @@ namespace opengl
 
 		void Destroy() override;
 
-		void BufferDataPlatform(uint8_t frameOffsetIdx) override;
+		void BufferDefaultHeapDataPlatform(std::vector<PlatformCommitMetadata> const&, uint8_t frameOffsetIdx) override;
 
 
 	public: // OpenGL-specific functionality:

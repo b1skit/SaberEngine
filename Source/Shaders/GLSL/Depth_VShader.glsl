@@ -6,15 +6,14 @@
 #include "../Common/InstancingParams.h"
 
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
-layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
 
-// UBOs can't have a dynamic length; We use SSBOs for instancing instead
-layout(std430, binding=1) readonly buffer InstancedTransformParams { TransformData _InstancedTransformParams[]; };
+layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };
+layout(std430, binding = 1) readonly buffer InstancedTransformParams { TransformData _InstancedTransformParams[]; };
 
 
 void VShader()
 {
-	const uint transformIdx = _InstanceIndexParams.g_instanceIndices[gl_InstanceID].g_transformIdx;
+	const uint transformIdx = _InstanceIndexParams[gl_InstanceID].g_transformIdx;
 
 	gl_Position = 
 		_CameraParams.g_viewProjection * _InstancedTransformParams[transformIdx].g_model * vec4(Position.xyz, 1.0);

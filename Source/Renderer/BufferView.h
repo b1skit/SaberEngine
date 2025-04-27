@@ -23,7 +23,7 @@ namespace re
 			uint32_t m_structuredByteStride;	// Structured buffer: Byte size of 1 struct/element. CBV: Size in bytes
 
 			// TODO: This binding information probably shouldn't be part of the view, but it's convenient for now
-			uint32_t m_firstDestIdx = 0;		// Shader-side arrays of Buffers: First slot to bind against
+			uint32_t m_firstDestIdx = 0;		// Shader-side arrays of Buffers: First element to bind against
 		};
 
 		struct VertexStreamType

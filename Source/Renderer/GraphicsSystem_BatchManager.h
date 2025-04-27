@@ -3,6 +3,7 @@
 #include "Batch.h"
 #include "BufferView.h"
 #include "Effect.h"
+#include "IndexedBuffer.h"
 #include "RenderObjectIDs.h"
 #include "GraphicsSystem.h"
 
@@ -44,7 +45,7 @@ namespace gr
 	public:
 		BatchManagerGraphicsSystem(gr::GraphicsSystemManager*);
 
-		~BatchManagerGraphicsSystem() override = default;
+		~BatchManagerGraphicsSystem() override;
 
 		void InitPipeline(
 			re::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
@@ -70,7 +71,6 @@ namespace gr
 		{
 			uint64_t m_batchHash;
 			gr::RenderDataID m_renderDataID;
-			gr::TransformID m_transformID;
 			EffectID m_matEffectID;
 			size_t m_cacheIndex; // m_permanentCachedBatches
 		};
@@ -78,25 +78,12 @@ namespace gr
 		std::unordered_map<gr::RenderDataID, BatchMetadata> m_renderDataIDToBatchMetadata;
 		std::unordered_map<size_t, gr::RenderDataID> m_cacheIdxToRenderDataID;
 
-		// Instanced Transforms: We maintain a single, monolithic Transform buffer, and index into it
-		std::unordered_map<gr::TransformID, ::RefCountedIndex> m_instancedTransformIndexes;
-		std::vector<uint32_t> m_freeTransformIndexes;
-		re::BufferInput m_instancedTransforms;
-
-		// Instanced Materials: We maintain a monolithic Material buffer per Material type, and index into it
-		struct MaterialInstanceMetadata
-		{
-			std::unordered_map<gr::RenderDataID, ::RefCountedIndex> m_instancedMaterialIndexes;
-			std::vector<uint32_t> m_freeInstancedMaterialIndexes;
-			re::BufferInput m_instancedMaterials;
-		};
-		std::unordered_map<EffectID, MaterialInstanceMetadata> m_materialInstanceMetadata;
-
 		ViewCullingResults const* m_viewCullingResults; // From the Culling GS
 		AnimatedVertexStreams const* m_animatedVertexStreams; // From the vertex animation GS
 		
 		ViewBatches m_viewBatches; // Map of gr::Camera::View to vectors of Batches that passed culling
 		std::vector<re::Batch> m_allBatches; // Per-frame copy of m_permanentCachedBatches, with Buffers set
-		std::unordered_map<util::HashKey, re::BufferInput> m_instanceIndiciesBuffers;
+
+		gr::IndexedBufferManager m_instanceBuffers;
 	};
 }

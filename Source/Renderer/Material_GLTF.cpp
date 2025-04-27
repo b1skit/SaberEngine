@@ -5,7 +5,6 @@
 
 #include "Core/Assert.h"
 
-#include "Core/Util/CastUtils.h"
 #include "Core/Util/ImGuiUtils.h"
 
 
@@ -84,61 +83,6 @@ namespace gr
 
 		PBRMetallicRoughnessData const& materialParamData = GetPBRMetallicRoughnessParamsData();
 		memcpy(dst, &materialParamData, sizeof(PBRMetallicRoughnessData));
-	}
-
-
-	re::BufferInput Material_GLTF::CreateInstancedBuffer(
-		re::Buffer::StagingPool bufferAlloc,
-		std::vector<MaterialInstanceRenderData const*> const& instanceData)
-	{
-		const uint32_t numInstances = util::CheckedCast<uint32_t>(instanceData.size());
-
-		std::vector<PBRMetallicRoughnessData> instancedMaterialData;
-		instancedMaterialData.reserve(numInstances);
-
-		for (size_t matIdx = 0; matIdx < numInstances; matIdx++)
-		{
-			SEAssert(instanceData[matIdx]->m_effectID == EffectID("GLTF_PBRMetallicRoughness"),
-				"Incorrect material EffectID found. All instanceData entries must have the same type");
-
-			PBRMetallicRoughnessData& instancedEntry = instancedMaterialData.emplace_back();
-
-			memcpy(&instancedEntry, 
-				&instanceData[matIdx]->m_materialParamData, 
-				sizeof(PBRMetallicRoughnessData));
-		}
-
-		// Note: Material Buffer names are used to associate Effects with Buffers when building batches
-		char const* bufferName = 
-			gr::Material::k_effectMaterialNames[gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness];
-
-		return re::BufferInput(
-			PBRMetallicRoughnessData::s_shaderName,
-			re::Buffer::CreateArray(
-				bufferName,
-				instancedMaterialData.data(),
-				re::Buffer::BufferParams{
-					.m_stagingPool = bufferAlloc,
-					.m_memPoolPreference = re::Buffer::UploadHeap,
-					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
-					.m_usageMask = re::Buffer::Structured,
-					.m_arraySize = numInstances,
-				}));
-	}
-
-
-	void Material_GLTF::CommitMaterialInstanceData(
-		re::Buffer* buffer, MaterialInstanceRenderData const* instanceData, uint32_t baseOffset)
-	{
-		SEAssert(instanceData->m_effectID == EffectID("GLTF_PBRMetallicRoughness"),
-			"Incorrect material EffectID found. All instanceData entries must have the same type");
-
-		// We commit single elements for now as we need to access each element's material param data. This isn't ideal,
-		// but it avoids copying the data into a temporary location and materials are typically updated infrequently
-		PBRMetallicRoughnessData const* matData = 
-			reinterpret_cast<PBRMetallicRoughnessData const*>(instanceData->m_materialParamData.data());
-		
-		buffer->Commit(matData, baseOffset, 1);
 	}
 
 

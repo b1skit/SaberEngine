@@ -4,27 +4,26 @@
 
 #include "PlatformConversions.h"
 
-// Arbitrary: The actual max is 4096 entries, where each entry can be a 4x 32-bit value
-// https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-constants
-// 16 entries fills out the minimum 256B required by the ConstantBuffer alignment rules
-#define INSTANCE_ARRAY_SIZE 128
-
-struct InstanceIndices
-{
-	uint g_transformIdx;
-	uint g_materialIdx;
-
-	uint2 _padding;
-};
 
 struct InstanceIndexData
 {
-	// Indexed by instance ID: .x = transform, .y = material, .zw = unused
-	InstanceIndices g_instanceIndices[INSTANCE_ARRAY_SIZE];
+	uint g_transformIdx;
+	uint g_materialIdx;
+	// Note: This is exclusively a StructuredBuffer, so we don't use any padding
+
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "InstanceIndexParams";
-	static constexpr uint8_t k_maxInstances = INSTANCE_ARRAY_SIZE;
+
+	inline static void WriteTransformIndex(uint32_t lutIdx, void* dst)
+	{
+		static_cast<InstanceIndexData*>(dst)->g_transformIdx = lutIdx;
+	}
+
+	inline static void WriteMaterialIndex(uint32_t lutIdx, void* dst)
+	{
+		static_cast<InstanceIndexData*>(dst)->g_materialIdx = lutIdx;
+	}
 #endif
 };
 
@@ -38,10 +37,6 @@ struct TransformData
 	static constexpr char const* const s_shaderName = "InstancedTransformParams";
 #endif
 };
-
-
-// Cleanup:
-#undef INSTANCE_ARRAY_SIZE
 
 
 #endif // SE_INSTANCING_PARAMS

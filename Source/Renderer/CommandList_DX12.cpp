@@ -397,7 +397,7 @@ namespace dx12
 						"Invalid usage flags for a constant buffer");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineCBV(
-						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress());
+						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress(bufferInput));
 
 					toState = (m_type == dx12::CommandListType::Compute ?
 						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : 
@@ -413,7 +413,7 @@ namespace dx12
 						"SRV buffers must have GPU reads enabled");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineSRV(
-						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress());
+						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress(bufferInput));
 
 					toState = (m_type == dx12::CommandListType::Compute ?
 						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE :
@@ -431,7 +431,7 @@ namespace dx12
 						"Buffer is missing the Structured usage bit");
 
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineUAV(
-						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress());
+						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress(bufferInput));
 
 					SEAssert(buffer->GetLifetime() != re::Lifetime::SingleFrame, "Unexpected resource lifetime for UAV");
 
@@ -1229,7 +1229,7 @@ namespace dx12
 
 
 	void CommandList::UpdateSubresources(
-		re::Buffer const* buffer, uint32_t dstOffset, ID3D12Resource* srcResource, uint32_t srcOffset, uint32_t numBytes)
+		re::Buffer const* buffer, uint32_t dstOffset, ID3D12Resource* srcResource, uint64_t srcOffset, uint64_t numBytes)
 	{
 		SEAssert(m_type == dx12::CommandListType::Copy, "Expected a copy command list");
 		SEAssert((buffer->GetBufferParams().m_memPoolPreference == re::Buffer::DefaultHeap),

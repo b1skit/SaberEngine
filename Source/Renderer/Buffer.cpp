@@ -192,9 +192,11 @@ namespace re
 #if defined(_DEBUG)
 		SEAssert(m_bufferParams.m_lifetime != re::Lifetime::SingleFrame ||
 			m_creationFrameNum == re::RenderManager::Get()->GetCurrentRenderFrameNum(),
-			"Single frame buffer being destroyed on the wrong frame. Does something still hold the buffer beyond its "
-			"lifetime? E.g. Has a single-frame batch been added to a stage, but the stage is not added to the pipeline "
-			"(thus has not been cleared)?");
+			"Single frame buffer created on frame %llu being destroyed on frame %llu. Does something still hold the "
+			"buffer beyond its lifetime? E.g. Has a single-frame batch been added to a stage, but the stage is not "
+			"added to the pipeline (thus has not been cleared)?",
+			m_creationFrameNum,
+			re::RenderManager::Get()->GetCurrentRenderFrameNum());
 #endif
 
 		// Free bindless resource handles:

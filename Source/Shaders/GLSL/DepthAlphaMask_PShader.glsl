@@ -4,9 +4,8 @@
 #include "../Common/InstancingParams.h"
 #include "../Common/MaterialParams.h"
 
-layout(binding=0) uniform InstanceIndexParams {	InstanceIndexData _InstanceIndexParams; };
-
-layout(std430, binding=2) readonly buffer InstancedPBRMetallicRoughnessParams {	PBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
+layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };
+layout(std430, binding = 2) readonly buffer InstancedPBRMetallicRoughnessParams {	PBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
 
 layout(binding=0) uniform sampler2D BaseColorTex;
 
@@ -14,7 +13,7 @@ layout(binding=0) uniform sampler2D BaseColorTex;
 void PShader()
 {
 	const uint instanceID = InstanceParamsIn.InstanceID;
-	const uint materialIdx = _InstanceIndexParams.g_instanceIndices[instanceID].g_materialIdx;
+	const uint materialIdx = _InstanceIndexParams[instanceID].g_materialIdx;
 
 	const vec4 matAlbedo = texture(BaseColorTex, In.UV0.xy);
 

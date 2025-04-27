@@ -30,6 +30,7 @@
 #include <mutex>
 #include <numbers>
 #include <queue>
+#include <ranges>
 #include <set>
 #include <shared_mutex>
 #include <stack>
